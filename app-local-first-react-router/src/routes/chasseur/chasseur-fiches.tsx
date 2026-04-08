@@ -21,7 +21,6 @@ import {
 import { useSaveScroll } from '@app/services/useSaveScroll';
 import CardFiche from '@app/components/CardFiche';
 import DropDownMenu from '@app/components/DropDownMenu';
-import MultiSelectDropDownMenu from '@app/components/MultiSelectDropDownMenu';
 import { filterCarcassesForFei, useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { useMyCarcassesForFei } from '@app/utils/filter-my-carcasses';
 import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
@@ -35,6 +34,26 @@ import { useIsCircuitCourt } from '@app/utils/circuit-court';
 import { useLocalStorage } from '@uidotdev/usehooks';
 import type { FeiWithIntermediaires } from '@api/src/types/fei';
 import { useEntitiesIdsWorkingDirectlyFor } from '@app/utils/get-entity-relations';
+
+function CollapsibleSection({ title, children, defaultOpen = true, badge }: { title: string; children: React.ReactNode; defaultOpen?: boolean; badge?: React.ReactNode }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="border-b border-gray-200 py-2">
+      <button
+        type="button"
+        className="flex w-full items-center justify-between py-1 text-left text-sm font-bold text-gray-800"
+        onClick={() => setOpen(!open)}
+      >
+        <span className="flex items-center gap-2">
+          {title}
+          {badge}
+        </span>
+        <span className={`fr-icon--sm transition-transform ${open ? 'fr-icon-arrow-up-s-line' : 'fr-icon-arrow-down-s-line'}`} aria-hidden="true" />
+      </button>
+      {open && <div className="pt-2">{children}</div>}
+    </div>
+  );
+}
 
 async function loadData() {
   // FIXME: await syncData is useless, as syncData queues stuff - so there will be bugs
@@ -253,6 +272,9 @@ export default function ChasseurFiches() {
     localStorage.setItem('chasseur-fiches-filter-ccgs', JSON.stringify(filterCCGs));
   }, [filterCCGs]);
 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
+
   const allFeis = useMemo(() => {
     return [...feisAssigned, ...feisOngoing, ...feisDone];
   }, [feisAssigned, feisOngoing, feisDone]);
@@ -307,6 +329,15 @@ export default function ChasseurFiches() {
 
   const filteredFeis = useMemo(() => {
     let feis = allFeis;
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      feis = feis.filter(
+        (fei) =>
+          fei.numero.toLowerCase().includes(q) ||
+          (fei.commune_mise_a_mort && fei.commune_mise_a_mort.toLowerCase().includes(q)) ||
+          (fei.premier_detenteur_name_cache && fei.premier_detenteur_name_cache.toLowerCase().includes(q)),
+      );
+    }
     if (filterStatuses.length > 0) {
       feis = feis.filter((fei) => {
         const intermediaires = filterFeiIntermediaires(carcassesIntermediaireById, fei.numero);
@@ -334,6 +365,7 @@ export default function ChasseurFiches() {
     return feis;
   }, [
     allFeis,
+    searchQuery,
     filterStatuses,
     filterPremierDetenteurs,
     filterCCGs,
@@ -350,260 +382,371 @@ export default function ChasseurFiches() {
     return filteredFeis.slice(start, start + perPage);
   }, [filteredFeis, page, itemsPerPage]);
 
-  function Actions() {
-    return (
-      <div className="flex flex-col gap-2 py-2 md:gap-3 md:py-3">
-        <div className="flex flex-col justify-between gap-1.5 md:flex-row md:gap-2">
-          <div className="flex flex-wrap items-center gap-1.5 md:gap-2">
-            <MultiSelectDropDownMenu
-              text={dropDownMenuFilterText}
-              isActive={filterStatuses.length > 0}
-              className="w-full md:w-auto"
-              clearLabel="Toutes les fiches"
-              onClear={() => setFilterStatuses([])}
-              options={[
-                {
-                  value: 'À compléter',
-                  label: 'Fiches à compléter',
-                  isActive: filterStatuses.includes('À compléter'),
-                },
-                { value: 'En cours', label: 'Fiches en cours', isActive: filterStatuses.includes('En cours') },
-                { value: 'Clôturée', label: 'Fiches clôturées', isActive: filterStatuses.includes('Clôturée') },
-              ]}
-              onToggle={(value) => {
-                const v = value as FeiStepSimpleStatus;
-                if (filterStatuses.includes(v)) {
-                  setFilterStatuses(filterStatuses.filter((s) => s !== v));
-                } else {
-                  setFilterStatuses([...filterStatuses, v]);
-                }
-              }}
-            />
-            {premierDetenteurOptions.length > 1 && (
-              <MultiSelectDropDownMenu
-                text={dropDownMenuFilterTextPremierDetenteur}
-                isActive={filterPremierDetenteurs.length > 0}
-                className="w-full md:w-auto"
-                clearLabel="Tous les premiers détenteurs"
-                onClear={() => setFilterPremierDetenteurs([])}
-                options={premierDetenteurOptions.map((option) => ({
-                  value: option.id,
-                  label: option.name,
-                  isActive: filterPremierDetenteurs.includes(option.id),
-                }))}
-                onToggle={(value) => {
-                  if (filterPremierDetenteurs.includes(value)) {
-                    setFilterPremierDetenteurs(filterPremierDetenteurs.filter((v) => v !== value));
-                  } else {
-                    setFilterPremierDetenteurs([...filterPremierDetenteurs, value]);
-                  }
-                }}
-              />
-            )}
-            {ccgOptions.length > 1 && (
-              <MultiSelectDropDownMenu
-                text={dropDownMenuFilterTextCCG}
-                isActive={filterCCGs.length > 0}
-                className="w-full md:w-auto"
-                clearLabel="Tous les CCG"
-                onClear={() => setFilterCCGs([])}
-                options={ccgOptions.map((option) => ({
-                  value: option.id,
-                  label: option.name,
-                  isActive: filterCCGs.includes(option.id),
-                }))}
-                onToggle={(value) => {
-                  if (filterCCGs.includes(value)) {
-                    setFilterCCGs(filterCCGs.filter((v) => v !== value));
-                  } else {
-                    setFilterCCGs([...filterCCGs, value]);
-                  }
-                }}
-              />
-            )}
+  const hasActiveFilters = filterStatuses.length > 0 || filterPremierDetenteurs.length > 0 || filterCCGs.length > 0 || searchQuery.trim().length > 0;
 
-            <Button
-              priority="tertiary"
-              className="w-full shrink-0 bg-white md:w-auto"
-              iconId="ri-refresh-line"
-              disabled={!isOnline || loading}
-              onClick={async () => {
-                setLoading(true);
-                await loadData();
-                setLoading(false);
-              }}
-              title="Mettre à jour"
-            >
-              <span>Mettre à jour</span>
-            </Button>
-          </div>
-          <div className="flex shrink-0 items-center flex-col md:flex-row gap-1.5 sm:gap-2">
-            <SegmentedControl
-              hideLegend
-              className="hidden md:block"
-              segments={[
-                {
-                  label: 'Grille',
-                  iconId: 'ri-grid-line',
-                  nativeInputProps: {
-                    checked: viewType === 'grid',
-                    onChange: () => setViewType('grid'),
-                    name: 'view-type',
-                    value: 'grid',
-                  },
-                },
-                {
-                  label: 'Table',
-                  iconId: 'ri-table-line',
-                  nativeInputProps: {
-                    checked: viewType === 'table',
-                    onChange: () => setViewType('table'),
-                    name: 'view-type',
-                    value: 'table',
-                  },
-                },
-              ]}
-            />
-            {user.numero_cfei && (
-              <Button
-                iconId="fr-icon-add-circle-line"
-                priority="primary"
-                className="w-full shrink-0 md:w-auto"
-                onClick={async () => {
-                  const newFei = await createNewFei();
-                  navigate(`/app/chasseur/fei/${newFei.numero}`);
-                }}
-                title="Nouvelle fiche"
-              >
-                <span>Nouvelle fiche</span>
-              </Button>
-            )}
-            <DropDownMenu
-              text="Actions"
-              className="w-full md:max-w-[321px]"
-              isActive={selectedFeis.length > 0}
-              menuLinks={[
-                {
-                  linkProps: {
-                    href: '#',
-                    'aria-disabled': selectedFeis.length === 0,
-                    className: isExporting || !selectedFeis.length ? 'cursor-not-allowed opacity-50' : '',
-                    title:
-                      selectedFeis.length === 0
-                        ? 'Sélectionnez des fiches avec la case à cocher en haut à droite de chaque carte'
-                        : '',
-                    onClick: (e) => {
-                      e.preventDefault();
-                      if (selectedFeis.length === 0) return;
-                      if (isExporting) return;
-                      onExportToXlsx(selectedFeis);
-                    },
-                  },
-                  text: 'Télécharger un fichier Excel avec les fiches sélectionnées (complètes)',
-                },
-                {
-                  linkProps: {
-                    href: '#',
-                    'aria-disabled': selectedFeis.length === 0,
-                    className: isExporting || !selectedFeis.length ? 'cursor-not-allowed opacity-50' : '',
-                    title:
-                      selectedFeis.length === 0
-                        ? 'Sélectionnez des fiches avec la case à cocher en haut à droite de chaque carte'
-                        : '',
-                    onClick: (e) => {
-                      e.preventDefault();
-                      if (selectedFeis.length === 0) return;
-                      if (isExporting) return;
-                      onExportSimplifiedToXlsx(selectedFeis);
-                    },
-                  },
-                  text: 'Télécharger un fichier Excel avec les fiches sélectionnées (simplifiées)',
-                },
-              ]}
-            />
-          </div>
-        </div>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1">
-            <span className="text-sm opacity-50">Fiches par page:</span>
-            {[20, 50, 100].map((option) => (
-              <button
-                key={option}
-                className={[
-                  'px-2 py-1 text-sm',
-                  (itemsPerPage ?? 20) === option ? 'font-semibold underline' : '',
-                ].join(' ')}
-                onClick={() => {
-                  const firstItemIndex = (page - 1) * (itemsPerPage ?? 20);
-                  const newPage = Math.floor(firstItemIndex / option) + 1;
-                  setItemsPerPage(option);
-                  setSearchParams(newPage > 1 ? { page: String(newPage) } : {});
-                }}
-              >
-                {option}
-              </button>
-            ))}
-          </div>
-          <span className="text-sm opacity-50">
-            {filteredFeis.length} fiche{filteredFeis.length > 1 ? 's' : ''}
-          </span>
+  const clearAllFilters = () => {
+    setFilterStatuses([]);
+    setFilterPremierDetenteurs([]);
+    setFilterCCGs([]);
+    setSearchQuery('');
+  };
+
+  const sidebarContent = (
+    <>
+      {/* Nouvelle fiche */}
+      {user.numero_cfei && (
+        <Button
+          iconId="fr-icon-add-circle-line"
+          priority="primary"
+          className="w-full"
+          onClick={async () => {
+            const newFei = await createNewFei();
+            navigate(`/app/chasseur/fei/${newFei.numero}`);
+          }}
+        >
+          Nouvelle fiche
+        </Button>
+      )}
+
+      {/* Recherche */}
+      <div className="mt-4">
+        <div className="relative">
+          <span className="fr-icon--sm fr-icon-search-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden="true" />
+
+          <input
+            type="search"
+            placeholder="Rechercher une fiche..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full rounded border border-gray-300 py-2 pl-10 pr-3 text-sm outline-none transition-colors focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          />
         </div>
       </div>
-    );
-  }
+
+      {/* Compteur */}
+      <div className="flex items-center justify-between border-b border-gray-200 pb-3">
+        <span className="text-sm font-medium text-gray-600">
+          {filteredFeis.length} fiche{filteredFeis.length > 1 ? 's' : ''}
+        </span>
+        {hasActiveFilters && (
+          <button className="text-action-high-blue-france text-xs underline" onClick={clearAllFilters}>
+            Réinitialiser
+          </button>
+        )}
+      </div>
+
+      {/* Filtre Statut */}
+      <CollapsibleSection
+        title="Statut"
+        badge={filterStatuses.length > 0 ? <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">{filterStatuses.length}</span> : undefined}
+      >
+        <div className="flex flex-col gap-1.5">
+          {(['À compléter', 'En cours', 'Clôturée'] as FeiStepSimpleStatus[]).map((status) => (
+            <label
+              key={status}
+              className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-gray-50"
+            >
+              <input
+                type="checkbox"
+                checked={filterStatuses.includes(status)}
+                className="checked:accent-action-high-blue-france h-4 w-4"
+                onChange={() => {
+                  if (filterStatuses.includes(status)) {
+                    setFilterStatuses(filterStatuses.filter((s) => s !== status));
+                  } else {
+                    setFilterStatuses([...filterStatuses, status]);
+                  }
+                }}
+              />
+              <span
+                className={`inline-block rounded px-2 py-0.5 text-xs font-semibold ${statusColors[status].bg} ${statusColors[status].text}`}
+              >
+                {status}
+              </span>
+            </label>
+          ))}
+        </div>
+      </CollapsibleSection>
+
+      {/* Filtre Premier détenteur */}
+      {premierDetenteurOptions.length > 1 && (
+        <CollapsibleSection
+          title="Premier détenteur"
+          badge={filterPremierDetenteurs.length > 0 ? <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">{filterPremierDetenteurs.length}</span> : undefined}
+        >
+          <div className="flex max-h-40 flex-col gap-1 overflow-y-auto">
+            {premierDetenteurOptions.map((option) => (
+              <label
+                key={option.id}
+                className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-gray-50"
+              >
+                <input
+                  type="checkbox"
+                  checked={filterPremierDetenteurs.includes(option.id)}
+                  className="checked:accent-action-high-blue-france h-4 w-4 shrink-0"
+                  onChange={() => {
+                    if (filterPremierDetenteurs.includes(option.id)) {
+                      setFilterPremierDetenteurs(filterPremierDetenteurs.filter((v) => v !== option.id));
+                    } else {
+                      setFilterPremierDetenteurs([...filterPremierDetenteurs, option.id]);
+                    }
+                  }}
+                />
+                <span className="truncate text-sm">{option.name}</span>
+              </label>
+            ))}
+          </div>
+        </CollapsibleSection>
+      )}
+
+      {/* Filtre CCG */}
+      {ccgOptions.length > 1 && (
+        <CollapsibleSection
+          title="Centre de collecte (CCG)"
+          badge={filterCCGs.length > 0 ? <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">{filterCCGs.length}</span> : undefined}
+        >
+          <div className="flex max-h-40 flex-col gap-1 overflow-y-auto">
+            {ccgOptions.map((option) => (
+              <label
+                key={option.id}
+                className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-gray-50"
+              >
+                <input
+                  type="checkbox"
+                  checked={filterCCGs.includes(option.id)}
+                  className="checked:accent-action-high-blue-france h-4 w-4 shrink-0"
+                  onChange={() => {
+                    if (filterCCGs.includes(option.id)) {
+                      setFilterCCGs(filterCCGs.filter((v) => v !== option.id));
+                    } else {
+                      setFilterCCGs([...filterCCGs, option.id]);
+                    }
+                  }}
+                />
+                <span className="truncate text-sm">{option.name}</span>
+              </label>
+            ))}
+          </div>
+        </CollapsibleSection>
+      )}
+
+      {/* Vue */}
+      <CollapsibleSection title="Affichage" defaultOpen={false}>
+        <SegmentedControl
+          hideLegend
+          small
+          segments={[
+            {
+              label: 'Grille',
+              iconId: 'ri-grid-line',
+              nativeInputProps: {
+                checked: viewType === 'grid',
+                onChange: () => setViewType('grid'),
+                name: 'view-type-sidebar',
+                value: 'grid',
+              },
+            },
+            {
+              label: 'Table',
+              iconId: 'ri-table-line',
+              nativeInputProps: {
+                checked: viewType === 'table',
+                onChange: () => setViewType('table'),
+                name: 'view-type-sidebar',
+                value: 'table',
+              },
+            },
+          ]}
+        />
+      </CollapsibleSection>
+
+      {/* Fiches par page */}
+      <CollapsibleSection title="Fiches par page" defaultOpen={false}>
+        <div className="flex gap-1">
+          {[20, 50, 100].map((option) => (
+            <button
+              key={option}
+              className={[
+                'rounded px-3 py-1 text-sm transition-colors',
+                (itemsPerPage ?? 20) === option
+                  ? 'bg-action-high-blue-france text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200',
+              ].join(' ')}
+              onClick={() => {
+                const firstItemIndex = (page - 1) * (itemsPerPage ?? 20);
+                const newPage = Math.floor(firstItemIndex / option) + 1;
+                setItemsPerPage(option);
+                setSearchParams(newPage > 1 ? { page: String(newPage) } : {});
+              }}
+            >
+              {option}
+            </button>
+          ))}
+        </div>
+      </CollapsibleSection>
+
+      {/* Actions export */}
+      <CollapsibleSection title="Actions" defaultOpen={false}>
+        <DropDownMenu
+          text={`Exporter${selectedFeis.length > 0 ? ` (${selectedFeis.length})` : ''}`}
+          className="w-full"
+          isActive={selectedFeis.length > 0}
+          menuLinks={[
+            {
+              linkProps: {
+                href: '#',
+                'aria-disabled': selectedFeis.length === 0,
+                className: isExporting || !selectedFeis.length ? 'cursor-not-allowed opacity-50' : '',
+                title:
+                  selectedFeis.length === 0
+                    ? 'Sélectionnez des fiches avec la case à cocher en haut à droite de chaque carte'
+                    : '',
+                onClick: (e) => {
+                  e.preventDefault();
+                  if (selectedFeis.length === 0) return;
+                  if (isExporting) return;
+                  onExportToXlsx(selectedFeis);
+                },
+              },
+              text: 'Excel complet',
+            },
+            {
+              linkProps: {
+                href: '#',
+                'aria-disabled': selectedFeis.length === 0,
+                className: isExporting || !selectedFeis.length ? 'cursor-not-allowed opacity-50' : '',
+                title:
+                  selectedFeis.length === 0
+                    ? 'Sélectionnez des fiches avec la case à cocher en haut à droite de chaque carte'
+                    : '',
+                onClick: (e) => {
+                  e.preventDefault();
+                  if (selectedFeis.length === 0) return;
+                  if (isExporting) return;
+                  onExportSimplifiedToXlsx(selectedFeis);
+                },
+              },
+              text: 'Excel simplifié',
+            },
+          ]}
+        />
+      </CollapsibleSection>
+
+      {/* Mettre à jour */}
+      <Button
+        priority="tertiary"
+        className="w-full"
+        iconId="ri-refresh-line"
+        disabled={!isOnline || loading}
+        onClick={async () => {
+          setLoading(true);
+          await loadData();
+          setLoading(false);
+        }}
+      >
+        Mettre à jour
+      </Button>
+    </>
+  );
 
   return (
     <div className="relative">
-      <div className="fr-background-alt--blue-france top-0 z-30 block w-full md:sticky">
-        <div className="fr-container">
-          <div className="fr-grid-row fr-grid-row--center fr-grid-row-gutters">
-            <div className="fr-col-12 fr-col-md-10 px-3 py-2 md:p-0">
-              <Actions />
-            </div>
-          </div>
+      <title>Mes fiches | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
+
+      {/* Mobile : bouton filtres sticky */}
+      <div className="fr-background-alt--blue-france sticky top-0 z-30 flex items-center justify-between px-4 py-2 md:hidden">
+        <span className="text-sm font-medium">
+          {filteredFeis.length} fiche{filteredFeis.length > 1 ? 's' : ''}
+        </span>
+        <div className="flex gap-2">
+          {user.numero_cfei && (
+            <Button
+              iconId="fr-icon-add-circle-line"
+              priority="primary"
+              size="small"
+              onClick={async () => {
+                const newFei = await createNewFei();
+                navigate(`/app/chasseur/fei/${newFei.numero}`);
+              }}
+            >
+              Nouvelle fiche
+            </Button>
+          )}
+          <Button
+            iconId="ri-filter-3-line"
+            priority="secondary"
+            size="small"
+            onClick={() => setShowMobileFilters(!showMobileFilters)}
+          >
+            Filtres{hasActiveFilters ? ` (${filterStatuses.length + filterPremierDetenteurs.length + filterCCGs.length})` : ''}
+          </Button>
         </div>
       </div>
-      <div className="fr-container fr-container--fluid">
-        <title>Mes fiches | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
-        <div className="fr-grid-row fr-grid-row--center fr-grid-row-gutters pt-4">
-          <div className="fr-col-12 fr-col-md-10 min-h-96 p-4 md:p-0">
-            <OnboardingChasseInfoBanner />
-            <FeisWrapper
-              viewType={viewType}
-              handleSelectAll={handleSelectAll}
-              selectedFeis={selectedFeis}
-              filter={'Toutes les fiches'}
-            >
-              {paginatedFeis.map((fei) => {
-                if (!fei) return null;
-                return (
-                  <CardFiche
-                    key={fei.numero}
-                    fei={fei}
-                    filter={'Toutes les fiches'}
-                    onPrintSelect={handleCheckboxClick}
-                    isPrintSelected={selectedFeis.includes(fei.numero)}
-                    linkTo={`/app/chasseur/fei/${fei.numero}`}
-                  />
-                );
-              })}
-            </FeisWrapper>
-            {totalPages > 1 && (
-              <div className="flex justify-center py-6">
-                <Pagination
-                  count={totalPages}
-                  defaultPage={page}
-                  getPageLinkProps={(pageNumber) => ({
-                    to: `/app/chasseur?page=${pageNumber}`,
-                  })}
-                />
-              </div>
-            )}
-            <div className="my-4 flex flex-col items-start justify-between gap-4 px-8">
-              <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left mb-4" href="#top">
-                Haut de page
-              </a>
+
+      {/* Mobile : panneau filtres */}
+      {showMobileFilters && (
+        <div className="fixed inset-0 z-40 md:hidden">
+          <div className="absolute inset-0 bg-black/30" onClick={() => setShowMobileFilters(false)} />
+          <div className="absolute bottom-0 right-0 top-0 w-80 overflow-y-auto bg-white p-4 shadow-xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-bold">Filtres</h2>
+              <button
+                className="text-action-high-blue-france text-sm underline"
+                onClick={() => setShowMobileFilters(false)}
+              >
+                Fermer
+              </button>
             </div>
+            {sidebarContent}
+          </div>
+        </div>
+      )}
+
+      {/* Layout principal */}
+      <div className="flex">
+        {/* Sidebar gauche - desktop, collée au bord */}
+        <aside className="sticky top-0 hidden h-screen w-64 shrink-0 overflow-y-auto border-r border-gray-200 bg-white p-4 md:block">
+          {sidebarContent}
+        </aside>
+
+        {/* Contenu principal */}
+        <div className="min-w-0 max-w-5xl mx-auto flex-1 px-4 pt-4 md:px-6">
+          <OnboardingChasseInfoBanner />
+          <FeisWrapper
+            viewType={viewType}
+            handleSelectAll={handleSelectAll}
+            selectedFeis={selectedFeis}
+            filter={'Toutes les fiches'}
+          >
+            {paginatedFeis.map((fei) => {
+              if (!fei) return null;
+              return (
+                <CardFiche
+                  key={fei.numero}
+                  fei={fei}
+                  filter={'Toutes les fiches'}
+                  onPrintSelect={handleCheckboxClick}
+                  isPrintSelected={selectedFeis.includes(fei.numero)}
+                  linkTo={`/app/chasseur/fei/${fei.numero}`}
+                />
+              );
+            })}
+          </FeisWrapper>
+          {totalPages > 1 && (
+            <div className="flex justify-center py-6">
+              <Pagination
+                count={totalPages}
+                defaultPage={page}
+                getPageLinkProps={(pageNumber) => ({
+                  to: `/app/chasseur?page=${pageNumber}`,
+                })}
+              />
+            </div>
+          )}
+          <div className="my-4">
+            <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
+              Haut de page
+            </a>
           </div>
         </div>
       </div>
