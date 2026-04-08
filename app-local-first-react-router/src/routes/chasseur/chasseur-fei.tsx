@@ -594,29 +594,35 @@ function FEIChasseurLoaded() {
                   )}
                 </div>
               )}
-              <div className="bg-white flex items-center justify-between px-4 py-3">
-                <Button
-                  priority="tertiary"
-                  iconId="fr-icon-arrow-left-line"
-                  linkProps={{
-                    to: `/app/chasseur/`,
-                  }}
-                >
-                  Retour
-                </Button>
-                {canEdit && (
+              <div className="bg-white flex flex-col md:flex-row items-center justify-between px-4 py-3">
+                <div className='flex justify-between w-full'>
+
                   <Button
-                    iconId="fr-icon-send-plane-line"
-                    disabled={!carcasses.length || !!jobIsMissing || !approbation}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleTransmettre();
+                    priority="tertiary"
+                    iconId="fr-icon-arrow-left-line"
+                    linkProps={{
+                      to: `/app/chasseur/`,
                     }}
                   >
-                    Transmettre
+                    Retour
                   </Button>
-                )}
-                {canEdit && <ExaminateurInitialDeleteFei />}
+                  <div className='hidden md:block'>{canEdit && <ExaminateurInitialDeleteFei />}</div>
+
+                  {canEdit && (
+                    <Button
+                      iconId="fr-icon-send-plane-line"
+                      disabled={!carcasses.length || !!jobIsMissing || !approbation}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleTransmettre();
+                      }}
+                    >
+                      Transmettre
+                    </Button>
+                  )}
+                </div>
+                <span className='h-5 md:h-0' />
+                <div className='md:hidden'>{canEdit && <ExaminateurInitialDeleteFei />}</div>
               </div>
             </div>
           </div>
