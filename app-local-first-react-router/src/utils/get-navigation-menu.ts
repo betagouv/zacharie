@@ -11,7 +11,6 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
   const apiKeyApprovals = useZustandStore((state) => state.apiKeyApprovals);
   const isCircuitCourt = useIsCircuitCourt();
 
-  const isAdmin = user?.isZacharieAdmin;
   const isChasseur = user?.roles.includes(UserRoles.CHASSEUR);
   const isSvi = user?.roles.includes(UserRoles.SVI);
   const isEtg = user?.roles.includes(UserRoles.ETG);
@@ -136,17 +135,6 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
           linkProps: { to: '/app/tableau-de-bord/mon-entreprise/utilisateurs', href: '#' },
         },
       ],
-    });
-  }
-
-  if (isAdmin) {
-    navigationBase.push({
-      text: 'Admin',
-      isActive: location.pathname.startsWith('/app/admin'),
-      linkProps: {
-        to: '/app/admin/users',
-        href: '#',
-      },
     });
   }
 

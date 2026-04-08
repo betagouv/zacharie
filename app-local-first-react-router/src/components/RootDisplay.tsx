@@ -70,6 +70,17 @@ export default function RootDisplay({
     },
   ];
 
+  if (user?.isZacharieAdmin) {
+    quickAccessItemsConnected.push({
+      linkProps: {
+        to: '/app/admin/dashboard',
+        href: '#',
+      },
+      iconId: 'ri-admin-line',
+      text: 'Admin',
+    });
+  }
+
   const quickAccessItemsDisconnected: Array<HeaderProps.QuickAccessItem> = [
     {
       linkProps: {
@@ -162,88 +173,88 @@ export default function RootDisplay({
           embedded
             ? undefined
             : [
-                {
-                  categoryName: 'Connexion',
-                  links: [
-                    {
-                      linkProps: {
-                        to: '/app/connexion',
-                        href: '#',
-                      },
-                      text: 'Se connecter',
+              {
+                categoryName: 'Connexion',
+                links: [
+                  {
+                    linkProps: {
+                      to: '/app/connexion',
+                      href: '#',
                     },
-                    {
-                      linkProps: {
-                        to: user?.roles.includes(UserRoles.CHASSEUR)
-                          ? '/app/chasseur'
-                          : '/app/tableau-de-bord',
-                        href: '#',
-                      },
-                      text: 'Accéder à mon compte',
+                    text: 'Se connecter',
+                  },
+                  {
+                    linkProps: {
+                      to: user?.roles.includes(UserRoles.CHASSEUR)
+                        ? '/app/chasseur'
+                        : '/app/tableau-de-bord',
+                      href: '#',
                     },
-                    {
-                      linkProps: {
-                        to: '/modalites-d-utilisation',
-                        href: '#',
-                      },
-                      text: "Modalités d'utilisation",
+                    text: 'Accéder à mon compte',
+                  },
+                  {
+                    linkProps: {
+                      to: '/modalites-d-utilisation',
+                      href: '#',
                     },
-                    {
-                      linkProps: {
-                        to: '/politique-de-confidentialite',
-                        href: '#',
-                      },
-                      text: 'Politique de confidentialité',
+                    text: "Modalités d'utilisation",
+                  },
+                  {
+                    linkProps: {
+                      to: '/politique-de-confidentialite',
+                      href: '#',
                     },
-                    {
-                      linkProps: {
-                        to: '/mentions-legales',
-                        href: '#',
-                      },
-                      text: 'Mentions légales',
+                    text: 'Politique de confidentialité',
+                  },
+                  {
+                    linkProps: {
+                      to: '/mentions-legales',
+                      href: '#',
                     },
-                    {
-                      linkProps: {
-                        to: '/stats',
-                        href: '#',
-                      },
-                      text: 'Statistiques',
+                    text: 'Mentions légales',
+                  },
+                  {
+                    linkProps: {
+                      to: '/stats',
+                      href: '#',
                     },
-                  ],
-                },
-                {
-                  categoryName: 'Assistance',
-                  links: [
-                    {
-                      linkProps: {
-                        href: '#',
-                        onClick: () => {
-                          if (isOnline) {
-                            clearCache().then(() => window.location.reload());
-                          } else {
-                            alert('Vous devez être connecté à internet pour effectuer cette action');
-                          }
-                        },
+                    text: 'Statistiques',
+                  },
+                ],
+              },
+              {
+                categoryName: 'Assistance',
+                links: [
+                  {
+                    linkProps: {
+                      href: '#',
+                      onClick: () => {
+                        if (isOnline) {
+                          clearCache().then(() => window.location.reload());
+                        } else {
+                          alert('Vous devez être connecté à internet pour effectuer cette action');
+                        }
                       },
-                      text: "Obtenir la dernière version de l'app",
                     },
-                    {
-                      linkProps: {
-                        to: '/faq',
-                        href: '#',
-                      },
-                      text: 'FAQ',
+                    text: "Obtenir la dernière version de l'app",
+                  },
+                  {
+                    linkProps: {
+                      to: '/faq',
+                      href: '#',
                     },
-                    {
-                      linkProps: {
-                        to: contactLink ?? '/contact',
-                        href: '#',
-                      },
-                      text: 'Contactez-nous',
+                    text: 'FAQ',
+                  },
+                  {
+                    linkProps: {
+                      to: contactLink ?? '/contact',
+                      href: '#',
                     },
-                  ],
-                },
-              ]
+                    text: 'Contactez-nous',
+                  },
+                ],
+              },
+            ]
         }
       />
     </>
