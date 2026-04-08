@@ -65,7 +65,7 @@ test("Pas de stockage - Transporter les carcasses soi-même", async ({ page }) =
   const jeTransporte2 = page.getByText("Je transporte les carcasses").first();
   await jeTransporte2.scrollIntoViewIfNeeded();
   await jeTransporte2.click();
-  const transmettreBtn = page.getByRole("button", { name: "Transmettre la fiche" });
+  const transmettreBtn = page.getByRole("button", { name: "Transmettre" });
   await transmettreBtn.scrollIntoViewIfNeeded();
   await transmettreBtn.click();
   await expect(page.getByText(/Votre fiche a bien été créée/i).first()).toBeVisible({ timeout: 10000 });
@@ -89,16 +89,16 @@ test("Stockage - Transporter les carcasses soi-même", async ({ page }) => {
   await page.getByRole("button", { name: "Ajouter cette chambre froide" }).click();
   // Modal closes and CCG is auto-selected
   await expect(page.getByText("CCG Chasseurs - CCG-01")).toBeVisible();
-  const cliquezIci = page.getByRole("button", { name: /Cliquez ici pour définir la/ }).first();
+  const cliquezIci = page.getByRole("button", { name: /Définir la date du jour et maintenant/ }).first();
   await cliquezIci.scrollIntoViewIfNeeded();
   await cliquezIci.click();
   const jeTransporte = page.getByText("Je transporte les carcasses moi").first();
   await jeTransporte.scrollIntoViewIfNeeded();
   await jeTransporte.click();
-  const cliquezIci2 = page.getByRole("button", { name: /Cliquez ici pour définir la date du jour/ }).last();
+  const cliquezIci2 = page.getByRole("button", { name: /Définir la date du jour/ }).last();
   await cliquezIci2.scrollIntoViewIfNeeded();
   await cliquezIci2.click();
-  const transmettreBtn = page.getByRole("button", { name: "Transmettre la fiche" });
+  const transmettreBtn = page.getByRole("button", { name: "Transmettre" });
   await transmettreBtn.scrollIntoViewIfNeeded();
   await transmettreBtn.click();
   await expect(page.getByText(/ETG 1.*a été notifi/i)).toBeVisible({ timeout: 10000 });
@@ -121,13 +121,13 @@ test("Stockage - Le transport est réalisé par un collecteur professionnel", as
   await page.getByRole("button", { name: "Ajouter cette chambre froide" }).click();
   // Modal closes and CCG is auto-selected
   await expect(page.getByText("CCG Chasseurs - CCG-01")).toBeVisible();
-  const cliquezIci = page.getByRole("button", { name: /Cliquez ici pour définir la/ }).first();
+  const cliquezIci = page.getByRole("button", { name: /Définir la date du jour/ }).first();
   await cliquezIci.scrollIntoViewIfNeeded();
   await cliquezIci.click();
   const leTransport = page.getByText("Le transport est réalisé par un collecteur professionnel");
   await leTransport.scrollIntoViewIfNeeded();
   await leTransport.click();
-  const transmettreBtn = page.getByRole("button", { name: "Transmettre la fiche" });
+  const transmettreBtn = page.getByRole("button", { name: "Transmettre" });
   await transmettreBtn.scrollIntoViewIfNeeded();
   await transmettreBtn.click();
   await expect(page.getByText(/ETG 1.*a été notifi/i)).toBeVisible({ timeout: 10000 });
