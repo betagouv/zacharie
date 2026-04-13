@@ -28,6 +28,7 @@ import ExaminateurInitialDeleteFei from './examinateur-initial-delete-fei';
 import DateHeureValidationAlerts from '../fei/date-heure-validation-alerts';
 import HeaderFiche from '../fei/Headerfiche';
 import CurrentOwnerConfirm from './chasseur-current-owner-confirm';
+import { toast } from 'react-toastify';
 
 export default function ChasseurFei() {
   const params = useParams();
@@ -522,14 +523,12 @@ function FEIChasseurLoaded() {
                     </>
                   )}
                   {canEdit && !showBloc3 && (
-                    <Button className="mt-4" disabled>
-                      {carcasses.length === 0
-                        ? 'Ajoutez au moins une carcasse pour continuer'
-                        : !fei.heure_mise_a_mort_premiere_carcasse
-                          ? "Remplissez l'heure de mise à mort pour continuer"
-                          : !onlyPetitGibier && !fei.heure_evisceration_derniere_carcasse
-                            ? "Remplissez l'heure d'éviscération pour continuer"
-                            : 'Continuer'}
+                    <Button
+                      className="mt-4"
+                      type="button"
+                      onClick={() => setShowErrors(true)}
+                    >
+                      Continuer
                     </Button>
                   )}
                 </div>
@@ -632,8 +631,9 @@ function FEIChasseurLoaded() {
                       <Button
                         priority="secondary"
                         type="button"
-                        onClick={() => {
-                          syncData('brouillon');
+                        onClick={async () => {
+                          await syncData('brouillon');
+                          toast.success('Brouillon enregistré');
                         }}
                       >
                         Enregistrer comme brouillon
