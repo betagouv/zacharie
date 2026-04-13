@@ -15,7 +15,13 @@ import API from '@app/services/api';
 import { usePrefillPremierDétenteurInfos } from '@app/utils/usePrefillPremierDétenteur';
 import { useEntitiesIdsWorkingDirectlyFor, useDetenteursInitiaux } from '@app/utils/get-entity-relations';
 
-export default function SelectNextForExaminateur({ disabled = false }: { disabled?: boolean }) {
+export default function SelectNextForExaminateur({
+  disabled = false,
+  onShowErrors,
+}: {
+  disabled?: boolean;
+  onShowErrors?: () => void;
+}) {
   const params = useParams();
   const navigate = useNavigate();
   const user = useUser((state) => state.user)!;
@@ -174,6 +180,8 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
             label=""
             key={fei.premier_detenteur_user_id ?? fei.premier_detenteur_entity_id ?? 'no-choice-yet'}
             disabled={disabled}
+            state={showValidationErrors && !nextOwnerUserOrEntityId ? 'error' : 'default'}
+            stateRelatedMessage={showValidationErrors && !nextOwnerUserOrEntityId ? 'Veuillez sélectionner le premier détenteur' : undefined}
             hint={
               <>
                 {!nextOwnerUserOrEntityId && !disabled ? (
@@ -263,6 +271,7 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
                   onClick={() => {
                     if (validationErrors.length > 0) {
                       setShowValidationErrors(true);
+                      onShowErrors?.();
                       return;
                     }
                     setShowValidationErrors(false);
