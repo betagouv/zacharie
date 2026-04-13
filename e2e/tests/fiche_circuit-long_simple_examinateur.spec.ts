@@ -26,21 +26,27 @@ test("Création d'une fiche", async ({ page }) => {
   await page.getByRole("button", { name: "CHASSENARD" }).click();
   // Select premier détenteur
   await page.getByRole("button", { name: "Pierre Petit" }).click();
-  await page.getByRole("button", { name: "Continuer" }).click();
+  await page.getByRole("button", { name: "Continuer" }).first().click();
   // Bloc 2 — Carcasses
+  await page.getByLabel("Espèce (grand et petit gibier)").selectOption("Daim");
+  await page.getByRole("button", { name: "Utiliser" }).click();
+  await page.getByRole("button", { name: "Ajouter la carcasse" }).click();
+  await page.getByRole("button", { name: "Ajouter une autre carcasse" }).click();
+  await page.getByRole("button", { name: "Utiliser" }).click();
+  await page.getByRole("button", { name: "Ajouter la carcasse" }).click();
+  await page.getByRole("button", { name: "Ajouter une autre carcasse" }).click();
+  await page.getByRole("button", { name: "Utiliser" }).click();
+  await page.getByRole("button", { name: "Ajouter la carcasse" }).click();
+  await page.getByRole("button", { name: "Ajouter une autre carcasse" }).click();
+  await page.getByRole("button", { name: "Utiliser" }).click();
+  await page.getByRole("button", { name: "Ajouter la carcasse" }).click();
+  // Confirm all carcasses entered
+  await page.getByRole("button", { name: "Continuer" }).click();
+  // Fill hours
   await page
     .getByRole("textbox", { name: "Heure de mise à mort de la" })
     .fill(dayjs().startOf("day").add(1, "hour").format("HH:mm"));
   await page.getByRole("textbox", { name: "Heure de mise à mort de la" }).blur();
-  await page.getByLabel("Espèce (grand et petit gibier)").selectOption("Daim");
-  await page.getByRole("button", { name: "Utiliser" }).click();
-  await page.getByRole("button", { name: "Ajouter la carcasse" }).click();
-  await page.getByRole("button", { name: "Utiliser" }).click();
-  await page.getByRole("button", { name: "Ajouter la carcasse" }).click();
-  await page.getByRole("button", { name: "Utiliser" }).click();
-  await page.getByRole("button", { name: "Ajouter la carcasse" }).click();
-  await page.getByRole("button", { name: "Utiliser" }).click();
-  await page.getByRole("button", { name: "Ajouter la carcasse" }).click();
   await page
     .getByRole("textbox", { name: "Heure d'éviscération de la" })
     .fill(dayjs().startOf("day").add(2, "hour").format("HH:mm"));
