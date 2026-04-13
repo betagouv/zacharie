@@ -28,6 +28,11 @@ export default function TableauDeBordLayout({ navigation }: { navigation: MainNa
     return <Navigate to={newPathName} />;
   }
 
+  if (user.roles.includes(UserRoles.SVI)) {
+    const newPathName = location.pathname.replace('/app/tableau-de-bord', '/app/svi');
+    return <Navigate to={newPathName} />;
+  }
+
   return (
     <>
       <RootDisplay

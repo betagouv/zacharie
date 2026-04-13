@@ -350,10 +350,10 @@ router.get(
                     entity.type === EntityTypes.ETG || entity.type === EntityTypes.COLLECTEUR_PRO
                       ? [UserRoles.CHASSEUR, UserRoles.ETG, UserRoles.COLLECTEUR_PRO]
                       : entity.type === EntityTypes.PREMIER_DETENTEUR
-                      ? [UserRoles.CHASSEUR]
-                      : entity.type === EntityTypes.SVI
-                      ? [UserRoles.ETG]
-                      : [],
+                        ? [UserRoles.CHASSEUR]
+                        : entity.type === EntityTypes.SVI
+                          ? [UserRoles.ETG]
+                          : [],
                 },
               },
               orderBy: {
@@ -366,12 +366,12 @@ router.get(
         entity.type !== EntityTypes.ETG
           ? null
           : !entity.etg_linked_to_svi_id
-          ? null
-          : await prisma.entity.findUnique({
-              where: {
-                id: entity.etg_linked_to_svi_id,
-              },
-            });
+            ? null
+            : await prisma.entity.findUnique({
+                where: {
+                  id: entity.etg_linked_to_svi_id,
+                },
+              });
 
       const potentialSvisRelatedToETG = await prisma.entity.findMany({
         where: {
@@ -664,17 +664,20 @@ router.get(
               nom_d_usage: '',
             },
             ...Object.values(
-              fei.CarcasseIntermediaire.reduce((acc, intermediaire) => {
-                if (acc[intermediaire.intermediaire_entity_id]) return acc;
-                return {
-                  ...acc,
-                  [intermediaire.intermediaire_entity_id]: {
-                    type: intermediaire.intermediaire_role,
-                    email: '',
-                    nom_d_usage: intermediaire.CarcasseIntermediaireEntity.nom_d_usage,
-                  },
-                };
-              }, {} as Record<string, { type: string; email: string; nom_d_usage: string }>),
+              fei.CarcasseIntermediaire.reduce(
+                (acc, intermediaire) => {
+                  if (acc[intermediaire.intermediaire_entity_id]) return acc;
+                  return {
+                    ...acc,
+                    [intermediaire.intermediaire_entity_id]: {
+                      type: intermediaire.intermediaire_role,
+                      email: '',
+                      nom_d_usage: intermediaire.CarcasseIntermediaireEntity.nom_d_usage,
+                    },
+                  };
+                },
+                {} as Record<string, { type: string; email: string; nom_d_usage: string }>,
+              ),
             ),
             {
               type: 'SVI',
@@ -874,13 +877,13 @@ router.post(
             },
           }
         : body.entity_id
-        ? {
-            api_key_id_entity_id: {
-              api_key_id: body.api_key_id,
-              entity_id: body.entity_id,
-            },
-          }
-        : undefined;
+          ? {
+              api_key_id_entity_id: {
+                api_key_id: body.api_key_id,
+                entity_id: body.entity_id,
+              },
+            }
+          : undefined;
       if (action === 'delete') {
         await prisma.apiKeyApprovalByUserOrEntity.delete({
           where,
@@ -1054,7 +1057,13 @@ router.get(
       if (carcasse.premier_detenteur_depot_entity_id) {
         depotEntity = await prisma.entity.findUnique({
           where: { id: carcasse.premier_detenteur_depot_entity_id },
-          select: { nom_d_usage: true, numero_ddecpp: true, address_ligne_1: true, code_postal: true, ville: true },
+          select: {
+            nom_d_usage: true,
+            numero_ddecpp: true,
+            address_ligne_1: true,
+            code_postal: true,
+            ville: true,
+          },
         });
       }
 

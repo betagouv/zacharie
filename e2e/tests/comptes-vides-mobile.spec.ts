@@ -54,7 +54,7 @@ test("Connexion avec compte établissement de traitement", async ({ page }) => {
 
 test("Connexion avec compte svi", async ({ page }) => {
   await connectWith(page, "svi@example.fr");
-  await expect(page).toHaveURL("http://localhost:3290/app/tableau-de-bord");
+  await expect(page).toHaveURL("http://localhost:3290/app/svi");
   await expect(page.getByRole("heading", { name: "Pas encore de fiches cette saison" })).toBeVisible();
   await expect(page.locator("#content").getByRole("button", { name: "Nouvelle fiche" })).not.toBeVisible();
   await expect(page.getByRole("button", { name: "Mettre à jour" }).nth(1)).not.toBeVisible();

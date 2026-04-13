@@ -13,6 +13,12 @@ export function getUserOnboardingRoute(user: User): string {
     }
     return '/app/etg/onboarding/coordonnees';
   }
+  if (user.roles.includes(UserRoles.SVI)) {
+    if (user.onboarded_at) {
+      return '/app/svi';
+    }
+    return '/app/svi/onboarding/coordonnees';
+  }
   if (user.onboarded_at) {
     return '/app/tableau-de-bord';
   }

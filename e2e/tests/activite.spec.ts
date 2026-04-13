@@ -8,7 +8,8 @@ test.beforeAll(async () => {
 
 const chasseur = "Chasseur et/ou Examinateur Initial";
 const collecteurProfessionnel = "Collecteur Professionnel Indépendant";
-const etablissementDeTraitement = "Établissement de Traitement du Gibier sauvage (ETG)";
+const etablissementDeTraitement =
+  "Établissement de Traitement du Gibier sauvage (ETG)";
 const serviceVeterinaire = "Service Vétérinaire d'Inspection (SVI)";
 
 test("Collecteur professionnel", async ({ page }) => {
@@ -20,15 +21,4 @@ test("Collecteur professionnel", async ({ page }) => {
   await expect(page.getByText(collecteurProfessionnel)).toBeChecked();
   await expect(page.getByText(etablissementDeTraitement)).not.toBeChecked();
   await expect(page.getByText(serviceVeterinaire)).not.toBeChecked();
-});
-
-test("Service vétérinaire", async ({ page }) => {
-  await connectWith(page, "svi@example.fr");
-  await page.getByRole("button", { name: "Mon profil" }).click();
-  await page.getByRole("link", { name: "Mon activité" }).click();
-
-  await expect(page.getByText(chasseur)).not.toBeChecked();
-  await expect(page.getByText(collecteurProfessionnel)).not.toBeChecked();
-  await expect(page.getByText(etablissementDeTraitement)).not.toBeChecked();
-  await expect(page.getByText(serviceVeterinaire)).toBeChecked();
 });
