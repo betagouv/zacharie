@@ -27,6 +27,7 @@ export default function ExaminateurInitialDeleteFei() {
       title="Voulez-vous vraiment supprimer la fiche ?"
       buttonText="Supprimer la fiche"
       textToConfirm="SUPPRIMER LA FICHE"
+      className="border-0.5 border-gray-200 text-red-500! hover:bg-red-100! bg-white"
       onConfirm={() => {
         const nextFei = { deleted_at: dayjs().toDate() };
         updateFei(fei.numero, nextFei);

@@ -13,7 +13,6 @@ import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import API from '@app/services/api';
 import { usePrefillPremierDétenteurInfos } from '@app/utils/usePrefillPremierDétenteur';
-import { Tag } from '@codegouvfr/react-dsfr/Tag';
 import { useEntitiesIdsWorkingDirectlyFor, useDetenteursInitiaux } from '@app/utils/get-entity-relations';
 
 export default function SelectNextForExaminateur({ disabled = false }: { disabled?: boolean }) {
@@ -138,10 +137,10 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
 
   return (
     <>
-      <label className="mb-4 block">Qui est le premier détenteur&nbsp;?&nbsp;*</label>
+      <label className="mb-1 block">Premier détenteur&nbsp;*</label>
       {isFirstFei &&
-      !Object.values(associationsDeChasse).length &&
-      !Object.values(detenteursInitiaux).length ? (
+        !Object.values(associationsDeChasse).length &&
+        !Object.values(detenteursInitiaux).length ? (
         <>
           {!showSearchUserByEmail && (
             <div>
@@ -178,39 +177,33 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
             hint={
               <>
                 {!nextOwnerUserOrEntityId && !disabled ? (
-                  <div>
+                  <div className="flex flex-wrap gap-1">
                     {Object.values(associationsDeChasse).map((entity) => {
                       return (
-                        <Tag
+                        <button
                           key={entity.id}
-                          iconId="fr-icon-checkbox-circle-line"
-                          className="mr-2"
-                          nativeButtonProps={{
-                            type: 'button',
-                            onClick: () => {
-                              setNextOwnerUserOrEntityId(entity.id);
-                            },
+                          type="button"
+                          className="mr-2 rounded-full bg-[#E8EDFF] px-3 py-1 text-sm text-[#000091]"
+                          onClick={() => {
+                            setNextOwnerUserOrEntityId(entity.id);
                           }}
                         >
                           {entity.nom_d_usage}
-                        </Tag>
+                        </button>
                       );
                     })}
                     {Object.values(detenteursInitiaux).map((user) => {
                       return (
-                        <Tag
+                        <button
                           key={user.id}
-                          iconId="fr-icon-checkbox-circle-line"
-                          className="mr-2"
-                          nativeButtonProps={{
-                            type: 'button',
-                            onClick: () => {
-                              setNextOwnerUserOrEntityId(user.id);
-                            },
+                          type="button"
+                          className="mr-2 rounded-full bg-[#E8EDFF] px-3 py-1 text-sm text-[#000091]"
+                          onClick={() => {
+                            setNextOwnerUserOrEntityId(user.id);
                           }}
                         >
                           {`${user.prenom} ${user.nom_de_famille}`}
-                        </Tag>
+                        </button>
                       );
                     })}
                   </div>
@@ -263,35 +256,35 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
           {(!nextOwnerUserOrEntityId ||
             (nextOwnerUserOrEntityId !== fei.premier_detenteur_user_id &&
               nextOwnerUserOrEntityId !== fei.premier_detenteur_entity_id)) && (
-            <>
-              <Button
-                type="button"
-                disabled={disabled}
-                onClick={() => {
-                  if (validationErrors.length > 0) {
-                    setShowValidationErrors(true);
-                    return;
-                  }
-                  setShowValidationErrors(false);
-                  handleSubmitFromSelect(nextOwnerUser?.id);
-                }}
-              >
-                Continuer
-              </Button>
-              {showValidationErrors && validationErrors.length > 0 && (
-                <Alert
-                  severity="error"
-                  title="Champs manquants"
-                  description={validationErrors.map((msg, i) => (
-                    <p key={i} className="fr-mb-0">
-                      {msg}
-                    </p>
-                  ))}
-                  className="mt-4"
-                />
-              )}
-            </>
-          )}
+              <>
+                <Button
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => {
+                    if (validationErrors.length > 0) {
+                      setShowValidationErrors(true);
+                      return;
+                    }
+                    setShowValidationErrors(false);
+                    handleSubmitFromSelect(nextOwnerUser?.id);
+                  }}
+                >
+                  Continuer
+                </Button>
+                {showValidationErrors && validationErrors.length > 0 && (
+                  <Alert
+                    severity="error"
+                    title="Champs manquants"
+                    description={validationErrors.map((msg, i) => (
+                      <p key={i} className="fr-mb-0">
+                        {msg}
+                      </p>
+                    ))}
+                    className="mt-4"
+                  />
+                )}
+              </>
+            )}
         </div>
       )}
 

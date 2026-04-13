@@ -224,16 +224,14 @@ function DispatchGroupForm({
               <div>
                 {canTransmitCarcassesToEntities.map((entity) => {
                   return (
-                    <Tag
+                    <button
                       key={entity.id}
-                      iconId="fr-icon-checkbox-circle-line"
-                      className="mr-2"
-                      nativeButtonProps={{
-                        onClick: () => onUpdateGroup(group.id, { recipientEntityId: entity.id }),
-                      }}
+                      type="button"
+                      className="mr-2 rounded-full bg-[#E8EDFF] px-3 py-1 text-sm text-[#000091]"
+                      onClick={() => onUpdateGroup(group.id, { recipientEntityId: entity.id })}
                     >
                       {entity.nom_d_usage}
-                    </Tag>
+                    </button>
                   );
                 })}
               </div>
@@ -315,18 +313,16 @@ function DispatchGroupForm({
                     <div>
                       {ccgsWorkingWith.map((entity) => {
                         return (
-                          <Tag
+                          <button
                             key={entity.id}
-                            iconId="fr-icon-checkbox-circle-line"
-                            className="mr-2"
-                            nativeButtonProps={{
-                              onClick: () => {
-                                onUpdateGroup(group.id, { depotEntityId: entity.id });
-                              },
+                            type="button"
+                            className="mr-2 rounded-full bg-[#E8EDFF] px-3 py-1 text-sm text-[#000091]"
+                            onClick={() => {
+                              onUpdateGroup(group.id, { depotEntityId: entity.id });
                             }}
                           >
                             {entity.nom_d_usage}
-                          </Tag>
+                          </button>
                         );
                       })}
                     </div>
@@ -357,7 +353,7 @@ function DispatchGroupForm({
               hintText={
                 canEdit ? (
                   <button
-                    className="inline-block text-left"
+                    className="rounded-full bg-[#E8EDFF] px-3 py-1 text-sm text-[#000091]"
                     type="button"
                     disabled={group.depotType !== DepotType.CCG}
                     onClick={() => {
@@ -366,7 +362,7 @@ function DispatchGroupForm({
                       });
                     }}
                   >
-                    <u className="inline">Cliquez ici</u> pour définir la date du jour et maintenant
+                    Définir la date du jour et maintenant
                   </button>
                 ) : null
               }
@@ -456,7 +452,7 @@ function DispatchGroupForm({
                 canEdit ? (
                   <>
                     <button
-                      className="mr-1 inline-block text-left"
+                      className="mr-1 rounded-full bg-[#E8EDFF] px-3 py-1 text-sm text-[#000091]"
                       type="button"
                       disabled={
                         group.transportType !== TransportType.PREMIER_DETENTEUR ||
@@ -468,7 +464,7 @@ function DispatchGroupForm({
                         });
                       }}
                     >
-                      <u className="inline">Cliquez ici</u> pour définir la date du jour et maintenant.
+                      Définir la date du jour et maintenant.
                     </button>
                     À ne remplir que si vous êtes le transporteur et que vous stockez les carcasses dans un
                     CCG. Indiquer une date permettra au prochain détenteur de s'organiser.
