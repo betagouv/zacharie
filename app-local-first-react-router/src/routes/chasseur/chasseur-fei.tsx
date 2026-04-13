@@ -97,6 +97,7 @@ function FEIChasseurLoaded() {
   const [approbation, setApprobation] = useState(
     fei.examinateur_initial_approbation_mise_sur_le_marche ? true : false,
   );
+  const [showErrors, setShowErrors] = useState(false);
   const destinataireRef = useRef<DestinatairePremierDetenteurHandle | null>(null);
 
   const countCarcassesByEspece = useMemo(() => formatCountCarcasseByEspece(carcasses), [carcasses]);
@@ -173,32 +174,55 @@ function FEIChasseurLoaded() {
   const Component = canEdit ? Input : InputNotEditable;
   const VilleComponent = canEdit ? InputVille : InputNotEditable;
 
-  const jobIsMissing = useMemo(() => {
+  const validationErrors = useMemo(() => {
+    const errors: { field: string; message: string }[] = [];
     if (!fei.date_mise_a_mort) {
-      return 'Il manque la date de mise à mort';
+      errors.push({ field: 'date_mise_a_mort', message: 'Il manque la date de mise à mort' });
     }
     if (!fei.commune_mise_a_mort) {
-      return 'Il manque la commune de mise à mort';
+      errors.push({ field: 'commune_mise_a_mort', message: 'Il manque la commune de mise à mort' });
+    }
+    if (!fei.premier_detenteur_user_id && !fei.premier_detenteur_entity_id) {
+      errors.push({ field: 'premier_detenteur', message: 'Il manque le premier détenteur' });
     }
     if (!fei.heure_mise_a_mort_premiere_carcasse) {
-      return "Il manque l'heure de mise à mort de la première carcasse";
+      errors.push({
+        field: 'heure_mise_a_mort_premiere_carcasse',
+        message: "Il manque l'heure de mise à mort de la première carcasse",
+      });
     }
-    if (!onlyPetitGibier) {
-      if (!fei.heure_evisceration_derniere_carcasse) {
-        return "Il manque l'heure d'éviscération de la dernière carcasse";
-      }
+    if (!onlyPetitGibier && !fei.heure_evisceration_derniere_carcasse) {
+      errors.push({
+        field: 'heure_evisceration_derniere_carcasse',
+        message: "Il manque l'heure d'éviscération de la dernière carcasse",
+      });
     }
     if (carcasses.length === 0) {
-      return "Il n'y a pas de carcasses";
+      errors.push({ field: 'carcasses', message: "Il n'y a pas de carcasses" });
     }
     if (carcassesNotReady.length > 0) {
-      return 'Il manque des informations sur certaines carcasses';
+      errors.push({
+        field: 'carcasses',
+        message: 'Il manque des informations sur certaines carcasses',
+      });
     }
     if (!fei.examinateur_initial_date_approbation_mise_sur_le_marche) {
-      return 'Il manque la date de validation de l\u2019examen initial';
+      errors.push({
+        field: 'examinateur_initial_date_approbation_mise_sur_le_marche',
+        message: 'Il manque la date de validation de l\u2019examen initial',
+      });
     }
-    return null;
-  }, [fei, carcassesNotReady, carcasses, onlyPetitGibier]);
+    if (!approbation) {
+      errors.push({
+        field: 'examinateur_initial_approbation_mise_sur_le_marche',
+        message: 'Vous devez cocher la case pour valider la mise sur le marché',
+      });
+    }
+    return errors;
+  }, [fei, carcassesNotReady, carcasses, onlyPetitGibier, approbation]);
+
+  const fieldHasError = (field: string) => showErrors && validationErrors.some((e) => e.field === field);
+  const fieldErrorMessage = (field: string) => validationErrors.find((e) => e.field === field)?.message;
 
   const checkboxLabel = useMemo(() => {
     let label = '';
@@ -254,14 +278,12 @@ function FEIChasseurLoaded() {
   const showBloc4 = showBloc3;
 
   const handleTransmettre = () => {
-    if (jobIsMissing) {
-      alert(jobIsMissing);
+    if (validationErrors.length > 0) {
+      setShowErrors(true);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
-    if (!approbation) {
-      alert('Vous devez cocher la case pour valider la mise sur le marché');
-      return;
-    }
+    setShowErrors(false);
     if (examinateurIsPremierDetenteur) {
       const destinataireError = destinataireRef.current?.validate();
       if (destinataireError) {
@@ -326,6 +348,8 @@ function FEIChasseurLoaded() {
                 <h4 className="fr-h5">Informations de chasse</h4>
                 <Component
                   label="Date de mise à mort (et d'éviscération)&nbsp;*"
+                  state={fieldHasError('date_mise_a_mort') ? 'error' : 'default'}
+                  stateRelatedMessage={fieldErrorMessage('date_mise_a_mort')}
                   hintText={
                     canEdit ? (
                       <button
@@ -373,6 +397,8 @@ function FEIChasseurLoaded() {
                 />
                 <VilleComponent
                   label="Commune de mise à mort&nbsp;*"
+                  state={fieldHasError('commune_mise_a_mort') ? 'error' : 'default'}
+                  stateRelatedMessage={fieldErrorMessage('commune_mise_a_mort')}
                   key={fei?.commune_mise_a_mort}
                   onSelect={(commune_mise_a_mort) => updateFei(fei.numero, { commune_mise_a_mort })}
                   hintText={
@@ -401,7 +427,7 @@ function FEIChasseurLoaded() {
                     defaultValue: fei?.commune_mise_a_mort ?? '',
                   }}
                 />
-                <SelectNextForExaminateur />
+                <SelectNextForExaminateur onShowErrors={() => setShowErrors(true)} />
               </div>
 
               {/* Bloc 2 — Carcasses */}
@@ -412,10 +438,15 @@ function FEIChasseurLoaded() {
                     canEdit={canEdit}
                     canEditAsPremierDetenteur={canEditAsPremierDetenteur}
                   />
+                  {fieldHasError('carcasses') && (
+                    <p className="fr-error-text mt-2">{fieldErrorMessage('carcasses')}</p>
+                  )}
                   <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
                   <Component
                     className="mt-4"
                     label="Heure de mise à mort de la première carcasse&nbsp;*"
+                    state={fieldHasError('heure_mise_a_mort_premiere_carcasse') ? 'error' : 'default'}
+                    stateRelatedMessage={fieldErrorMessage('heure_mise_a_mort_premiere_carcasse')}
                     nativeInputProps={{
                       id: Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse,
                       name: Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse,
@@ -453,6 +484,8 @@ function FEIChasseurLoaded() {
                     <>
                       <Component
                         label="Heure d'éviscération de la dernière carcasse&nbsp;*"
+                        state={fieldHasError('heure_evisceration_derniere_carcasse') ? 'error' : 'default'}
+                        stateRelatedMessage={fieldErrorMessage('heure_evisceration_derniere_carcasse')}
                         nativeInputProps={{
                           id: Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,
                           name: Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,
@@ -520,6 +553,8 @@ function FEIChasseurLoaded() {
                   <h4 className="fr-h5">Validation de l'examen initial</h4>
                   <Component
                     label="Date de validation de l'examen initial et de mise sur le marché *"
+                    state={fieldHasError('examinateur_initial_date_approbation_mise_sur_le_marche') ? 'error' : 'default'}
+                    stateRelatedMessage={fieldErrorMessage('examinateur_initial_date_approbation_mise_sur_le_marche')}
                     hintText={
                       canEdit ? (
                         <button
@@ -561,6 +596,8 @@ function FEIChasseurLoaded() {
                   />
                   <Checkbox
                     className={canEdit ? '' : 'checkbox-black'}
+                    state={fieldHasError('examinateur_initial_approbation_mise_sur_le_marche') ? 'error' : 'default'}
+                    stateRelatedMessage={fieldErrorMessage('examinateur_initial_approbation_mise_sur_le_marche')}
                     options={[
                       {
                         label: checkboxLabel,
@@ -576,8 +613,19 @@ function FEIChasseurLoaded() {
                       },
                     ]}
                   />
-                  {!!jobIsMissing?.length && (
-                    <Alert title="Attention" className="mt-4" severity="error" description={jobIsMissing} />
+                  {showErrors && validationErrors.length > 0 && (
+                    <Alert
+                      title="Champs manquants pour transmettre"
+                      className="mt-4"
+                      severity="error"
+                      description={
+                        <ul className="mb-0 list-disc pl-4">
+                          {validationErrors.map((e) => (
+                            <li key={e.field}>{e.message}</li>
+                          ))}
+                        </ul>
+                      }
+                    />
                   )}
                   {canEdit && (
                     <div className="mt-6">
@@ -594,7 +642,7 @@ function FEIChasseurLoaded() {
                   )}
                 </div>
               )}
-              <div className="bg-white flex flex-col md:flex-row items-center justify-between px-4 py-3">
+              <div className="bg-white flex flex-col md:flex-row items-center justify-between px-8 py-3">
                 <div className='flex justify-between w-full'>
 
                   <Button
@@ -611,7 +659,6 @@ function FEIChasseurLoaded() {
                   {canEdit && (
                     <Button
                       iconId="fr-icon-send-plane-line"
-                      disabled={!carcasses.length || !!jobIsMissing || !approbation}
                       onClick={(e) => {
                         e.preventDefault();
                         handleTransmettre();
