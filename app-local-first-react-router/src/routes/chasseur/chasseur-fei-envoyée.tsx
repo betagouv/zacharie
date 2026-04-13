@@ -7,6 +7,7 @@ import { Button } from '@codegouvfr/react-dsfr/Button';
 import { createNewFei } from '@app/utils/create-new-fei';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import useUser from '@app/zustand/user';
+import MailCheck from '@app/assets/svg/mail-send.svg';
 
 export default function ChasseurFeiEnvoyée() {
   const params = useParams();
@@ -65,17 +66,18 @@ export default function ChasseurFeiEnvoyée() {
         <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
           <div className="fr-col-12 fr-col-md-10 bg-alt-blue-france m-4 md:m-0 md:p-0">
             <div className="bg-white p-4 md:p-8">
-              <div className="flex flex-col items-center gap-4 p-5 text-center">
-                <span className="fr-icon-mail-check-line text-[#18753C]" aria-hidden="true" />
+              <div className="flex flex-col items-start gap-4 p-5 pt-0 text-center">
+                <div className='w-full flex justify-center'>
+                  <img src={MailCheck} alt="Fiche envoyée" className="w-44 h-44" />
+                </div>
                 <h1 className="fr-h4 fr-mb-0">
-                  Votre fiche a bien été créée et transmise au destinataire que vous avez choisi
+                  Votre fiche a été transmise à :
                 </h1>
                 {sentByRecipient.length > 0 && (
-                  <ul className="fr-mb-0 w-full list-none p-0 text-left">
+                  <ul className="fr-mb-0 w-full p-0 text-left ml-10">
                     {sentByRecipient.map((recipient) => (
                       <li key={recipient.entityName} className="fr-mb-1w text-sm">
-                        <span className="fr-icon-arrow-right-s-line fr-icon--sm mr-1" aria-hidden="true" />
-                        {recipient.entityName} {notificationStatus} ({recipient.count} carcasse
+                        - {recipient.entityName} {notificationStatus} ({recipient.count} carcasse
                         {recipient.count > 1 ? 's' : ''})
                       </li>
                     ))}
@@ -106,35 +108,30 @@ export default function ChasseurFeiEnvoyée() {
                     }
                   />
                 )}
-                <div className="mt-4 flex w-full flex-col justify-start gap-4">
-                  <Button
-                    linkProps={{
-                      to: `/app/chasseur/`,
-                    }}
-                  >
-                    Voir toutes mes fiches
-                  </Button>
-                  <Button
-                    type="button"
-                    priority="tertiary"
-                    // className="bg-white"
-                    onClick={async () => {
-                      const newFei = await createNewFei();
-                      navigate(`/app/chasseur/fei/${newFei.numero}`);
-                    }}
-                  >
-                    Nouvelle fiche
-                  </Button>
-                  <Button
-                    priority="tertiary"
-                    // className="bg-white"
-                    linkProps={{
-                      to: `/app/chasseur/fei/${params.fei_numero}`,
-                    }}
-                  >
-                    Retour à la fiche
-                  </Button>
-                </div>
+              </div>
+            </div>
+            <div className="bg-white p-4 md:p-8 mt-4">
+              <div className="mt-4 flex w-full flex-col md:flex-row justify-between gap-4">
+                <Button
+                  priority="secondary"
+                  linkProps={{
+                    to: `/app/chasseur/`,
+                  }}
+                  iconId="fr-icon-arrow-left-line"
+                >
+                  Voir toutes les fiches
+                </Button>
+                <Button
+                  type="button"
+                  // className="bg-white"
+                  onClick={async () => {
+                    const newFei = await createNewFei();
+                    navigate(`/app/chasseur/fei/${newFei.numero}`);
+                  }}
+                  iconId="fr-icon-add-circle-line"
+                >
+                  Nouvelle fiche
+                </Button>
               </div>
             </div>
           </div>
