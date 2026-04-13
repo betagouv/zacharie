@@ -95,10 +95,14 @@ function FEIChasseurLoaded() {
     syncData('examinateur-initial-update-fei');
   };
 
+  const [allCarcassesConfirmed, setAllCarcassesConfirmed] = useState(
+    !!fei.heure_mise_a_mort_premiere_carcasse,
+  );
   const [approbation, setApprobation] = useState(
     fei.examinateur_initial_approbation_mise_sur_le_marche ? true : false,
   );
   const [showErrors, setShowErrors] = useState(false);
+  const [showBloc2Errors, setShowBloc2Errors] = useState(false);
   const destinataireRef = useRef<DestinatairePremierDetenteurHandle | null>(null);
 
   const countCarcassesByEspece = useMemo(() => formatCountCarcasseByEspece(carcasses), [carcasses]);
@@ -222,7 +226,8 @@ function FEIChasseurLoaded() {
     return errors;
   }, [fei, carcassesNotReady, carcasses, onlyPetitGibier, approbation]);
 
-  const fieldHasError = (field: string) => showErrors && validationErrors.some((e) => e.field === field);
+  const fieldHasError = (field: string, extraShow = false) =>
+    (showErrors || extraShow) && validationErrors.some((e) => e.field === field);
   const fieldErrorMessage = (field: string) => validationErrors.find((e) => e.field === field)?.message;
 
   const checkboxLabel = useMemo(() => {
@@ -438,98 +443,105 @@ function FEIChasseurLoaded() {
                   <CarcassesExaminateur
                     canEdit={canEdit}
                     canEditAsPremierDetenteur={canEditAsPremierDetenteur}
+                    allCarcassesConfirmed={allCarcassesConfirmed}
+                    onAllCarcassesConfirmed={() => setAllCarcassesConfirmed(true)}
+                    onAddMoreCarcasses={() => setAllCarcassesConfirmed(false)}
                   />
                   {fieldHasError('carcasses') && (
                     <p className="fr-error-text mt-2">{fieldErrorMessage('carcasses')}</p>
                   )}
                   <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
-                  <Component
-                    className="mt-4"
-                    label="Heure de mise à mort de la première carcasse&nbsp;*"
-                    state={fieldHasError('heure_mise_a_mort_premiere_carcasse') ? 'error' : 'default'}
-                    stateRelatedMessage={fieldErrorMessage('heure_mise_a_mort_premiere_carcasse')}
-                    nativeInputProps={{
-                      id: Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse,
-                      name: Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse,
-                      type: 'time',
-                      required: true,
-                      onChange: (e) => {
-                        updateFei(fei.numero, { heure_mise_a_mort_premiere_carcasse: e.target.value });
-                      },
-                      onBlur: (e) => {
-                        const heure_mise_a_mort_premiere_carcasse = e.target.value;
-                        if (!fei.heure_evisceration_derniere_carcasse) {
-                          updateFei(fei.numero, { heure_mise_a_mort_premiere_carcasse });
-                        } else if (
-                          fei.heure_evisceration_derniere_carcasse <= heure_mise_a_mort_premiere_carcasse
-                        ) {
-                          alert(
-                            "L'heure de mise à mort de la première carcasse doit être inférieure à l'heure d'éviscération de la dernière carcasse",
-                          );
-                          e.target.value = '';
-                          updateFei(fei.numero, { heure_mise_a_mort_premiere_carcasse: '' });
-                        } else {
-                          updateFei(fei.numero, { heure_mise_a_mort_premiere_carcasse });
-                        }
-                      },
-                      autoComplete: 'off',
-                      defaultValue: fei?.heure_mise_a_mort_premiere_carcasse ?? '',
-                    }}
-                  />
-                  <DateHeureValidationAlerts
-                    fei={fei}
-                    showDateAlert={false}
-                    showHeureEviscerationAlert={false}
-                  />
-                  {!onlyPetitGibier && (
+                  {allCarcassesConfirmed && (
                     <>
                       <Component
-                        label="Heure d'éviscération de la dernière carcasse&nbsp;*"
-                        state={fieldHasError('heure_evisceration_derniere_carcasse') ? 'error' : 'default'}
-                        stateRelatedMessage={fieldErrorMessage('heure_evisceration_derniere_carcasse')}
+                        className="mt-4"
+                        label="Heure de mise à mort de la première carcasse&nbsp;*"
+                        state={fieldHasError('heure_mise_a_mort_premiere_carcasse', showBloc2Errors) ? 'error' : 'default'}
+                        stateRelatedMessage={fieldErrorMessage('heure_mise_a_mort_premiere_carcasse')}
                         nativeInputProps={{
-                          id: Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,
-                          name: Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,
+                          id: Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse,
+                          name: Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse,
                           type: 'time',
                           required: true,
-                          autoComplete: 'off',
                           onChange: (e) => {
-                            updateFei(fei.numero, { heure_evisceration_derniere_carcasse: e.target.value });
+                            updateFei(fei.numero, { heure_mise_a_mort_premiere_carcasse: e.target.value });
                           },
                           onBlur: (e) => {
-                            const heure_evisceration_derniere_carcasse = e.target.value;
-                            if (!fei.heure_mise_a_mort_premiere_carcasse) {
-                              updateFei(fei.numero, { heure_evisceration_derniere_carcasse });
+                            const heure_mise_a_mort_premiere_carcasse = e.target.value;
+                            if (!fei.heure_evisceration_derniere_carcasse) {
+                              updateFei(fei.numero, { heure_mise_a_mort_premiere_carcasse });
                             } else if (
-                              fei.heure_mise_a_mort_premiere_carcasse >= heure_evisceration_derniere_carcasse
+                              fei.heure_evisceration_derniere_carcasse <= heure_mise_a_mort_premiere_carcasse
                             ) {
                               alert(
-                                "L'heure d'éviscération de la dernière carcasse doit être supérieure à l'heure de mise à mort de la première carcasse",
+                                "L'heure de mise à mort de la première carcasse doit être inférieure à l'heure d'éviscération de la dernière carcasse",
                               );
                               e.target.value = '';
-                              updateFei(fei.numero, { heure_evisceration_derniere_carcasse: '' });
+                              updateFei(fei.numero, { heure_mise_a_mort_premiere_carcasse: '' });
                             } else {
-                              updateFei(fei.numero, { heure_evisceration_derniere_carcasse });
+                              updateFei(fei.numero, { heure_mise_a_mort_premiere_carcasse });
                             }
                           },
-                          defaultValue: fei?.heure_evisceration_derniere_carcasse ?? '',
+                          autoComplete: 'off',
+                          defaultValue: fei?.heure_mise_a_mort_premiere_carcasse ?? '',
                         }}
                       />
                       <DateHeureValidationAlerts
                         fei={fei}
                         showDateAlert={false}
-                        showHeureMiseAMortAlert={false}
+                        showHeureEviscerationAlert={false}
                       />
+                      {!onlyPetitGibier && (
+                        <>
+                          <Component
+                            label="Heure d'éviscération de la dernière carcasse&nbsp;*"
+                            state={fieldHasError('heure_evisceration_derniere_carcasse', showBloc2Errors) ? 'error' : 'default'}
+                            stateRelatedMessage={fieldErrorMessage('heure_evisceration_derniere_carcasse')}
+                            nativeInputProps={{
+                              id: Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,
+                              name: Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,
+                              type: 'time',
+                              required: true,
+                              autoComplete: 'off',
+                              onChange: (e) => {
+                                updateFei(fei.numero, { heure_evisceration_derniere_carcasse: e.target.value });
+                              },
+                              onBlur: (e) => {
+                                const heure_evisceration_derniere_carcasse = e.target.value;
+                                if (!fei.heure_mise_a_mort_premiere_carcasse) {
+                                  updateFei(fei.numero, { heure_evisceration_derniere_carcasse });
+                                } else if (
+                                  fei.heure_mise_a_mort_premiere_carcasse >= heure_evisceration_derniere_carcasse
+                                ) {
+                                  alert(
+                                    "L'heure d'éviscération de la dernière carcasse doit être supérieure à l'heure de mise à mort de la première carcasse",
+                                  );
+                                  e.target.value = '';
+                                  updateFei(fei.numero, { heure_evisceration_derniere_carcasse: '' });
+                                } else {
+                                  updateFei(fei.numero, { heure_evisceration_derniere_carcasse });
+                                }
+                              },
+                              defaultValue: fei?.heure_evisceration_derniere_carcasse ?? '',
+                            }}
+                          />
+                          <DateHeureValidationAlerts
+                            fei={fei}
+                            showDateAlert={false}
+                            showHeureMiseAMortAlert={false}
+                          />
+                        </>
+                      )}
+                      {canEdit && !showBloc3 && (
+                        <Button
+                          className="mt-4"
+                          type="button"
+                          onClick={() => setShowBloc2Errors(true)}
+                        >
+                          Continuer
+                        </Button>
+                      )}
                     </>
-                  )}
-                  {canEdit && !showBloc3 && (
-                    <Button
-                      className="mt-4"
-                      type="button"
-                      onClick={() => setShowErrors(true)}
-                    >
-                      Continuer
-                    </Button>
                   )}
                 </div>
               )}
