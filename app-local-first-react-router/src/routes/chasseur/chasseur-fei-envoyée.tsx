@@ -66,12 +66,10 @@ export default function ChasseurFeiEnvoyée() {
         <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
           <div className="fr-col-12 fr-col-md-10 bg-alt-blue-france m-4 md:m-0 md:p-0">
             <div className="bg-white p-4 md:p-8">
-              <div className="flex flex-col items-start gap-4 p-5 pt-0 text-center">
-                <div className='w-full flex justify-center'>
-                  <img src={MailCheck} alt="Fiche envoyée" className="w-44 h-44" />
-                </div>
+              <div className="flex flex-col items-center gap-4 p-5 pt-0 text-center">
+                <img src={MailCheck} alt="Fiche envoyée" className="w-44 h-44" />
                 <h1 className="fr-h4 fr-mb-0">
-                  Votre fiche a été transmise à :
+                  Votre fiche a été transmise
                 </h1>
                 {sentByRecipient.length > 0 && (
                   <ul className="fr-mb-0 w-full p-0 text-left ml-10">

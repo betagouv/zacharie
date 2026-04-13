@@ -68,7 +68,7 @@ test("Pas de stockage - Transporter les carcasses soi-même", async ({ page }) =
   const transmettreBtn = page.getByRole("button", { name: "Transmettre" });
   await transmettreBtn.scrollIntoViewIfNeeded();
   await transmettreBtn.click();
-  await expect(page.getByText(/Votre fiche a bien été créée/i).first()).toBeVisible({ timeout: 10000 });
+  await expect(page.getByText(/Votre fiche a été transmise/i).first()).toBeVisible({ timeout: 10000 });
   await expect(page.getByText(/ETG 1.*a été notifi/i)).toBeVisible();
 });
 
