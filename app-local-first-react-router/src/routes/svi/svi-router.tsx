@@ -8,7 +8,6 @@ import SviOnboardingEntreprise from './onboarding/2-entreprise';
 import SviProfilCoordonnees from './profil/svi-coordonnees';
 import SviProfilEntreprise from './profil/svi-entreprise';
 import SviProfilNotifications from './profil/svi-notifications';
-import SviProfilPartageDeMesDonnees from './profil/svi-partage-de-mes-donnees';
 import SviProfilEntrepriseUtilisateurs from './profil/svi-entreprise-utilisateurs';
 import SviFei from './svi-fei';
 import SviInspectionCarcasseLoader from './svi-carcasse-svi-inspection';
@@ -26,7 +25,6 @@ export default function RouterSvi() {
       <Route path="profil" element={<Outlet />}>
         <Route path="coordonnees" element={<SviProfilCoordonnees />} />
         <Route path="notifications" element={<SviProfilNotifications />} />
-        <Route path="partage-de-mes-donnees" element={<SviProfilPartageDeMesDonnees />} />
       </Route>
       <Route path="entreprise" element={<Outlet />}>
         <Route path="informations" element={<SviProfilEntreprise />} />
