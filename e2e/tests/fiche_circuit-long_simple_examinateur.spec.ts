@@ -50,11 +50,11 @@ test("Création d'une fiche", async ({ page }) => {
   await page.getByText("Je, Martin Marie, certifie qu").click();
   await expect(page.getByRole("button", { name: "Transmettre", exact: true })).not.toBeDisabled();
   await page.getByRole("button", { name: "Transmettre", exact: true }).click();
-  await expect(page.getByText(/Votre fiche a bien été créée/i).first()).toBeVisible({ timeout: 10000 });
+  await expect(page.getByText(/Votre fiche a été transmise/i).first()).toBeVisible({ timeout: 10000 });
   // get fei id
   const feiId = RegExp(/ZACH-\d+-\w+-\d+/).exec(page.url())?.[0];
   expect(feiId).toBeDefined();
-  await page.getByRole("link", { name: "Voir toutes mes fiches" }).click();
+  await page.getByRole("link", { name: "Voir toutes les fiches" }).click();
   await expect(page.getByRole("link", { name: feiId })).toBeVisible();
   await expect(page.getByRole("link", { name: feiId })).toContainText("En cours");
   await expect(page.getByRole("link", { name: feiId })).toContainText("chassenard");

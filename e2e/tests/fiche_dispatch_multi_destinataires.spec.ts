@@ -75,7 +75,7 @@ test("Dispatch 4 carcasses vers 2 destinataires ETG", async ({ page, context }) 
   const transmettreBtn = page.getByRole("button", { name: /Transmettre/ });
   await transmettreBtn.scrollIntoViewIfNeeded();
   await transmettreBtn.click();
-  await expect(page.getByText(/Votre fiche a bien été créée/i).first()).toBeVisible({ timeout: 10000 });
+  await expect(page.getByText(/Votre fiche a été transmise/i).first()).toBeVisible({ timeout: 10000 });
   await expect(page.getByText(/ETG 1.*2 carcasse/)).toBeVisible();
   await expect(page.getByText(/ETG 2.*2 carcasse/)).toBeVisible();
 
