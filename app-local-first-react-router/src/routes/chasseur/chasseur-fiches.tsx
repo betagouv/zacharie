@@ -272,6 +272,20 @@ export default function ChasseurFiches() {
     localStorage.setItem('chasseur-fiches-filter-ccgs', JSON.stringify(filterCCGs));
   }, [filterCCGs]);
 
+  const [filterCollecteurs, setFilterCollecteurs] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('chasseur-fiches-filter-collecteurs');
+      if (saved) return JSON.parse(saved) as string[];
+    } catch {
+      // ignore
+    }
+    return [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('chasseur-fiches-filter-collecteurs', JSON.stringify(filterCollecteurs));
+  }, [filterCollecteurs]);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
@@ -302,6 +316,20 @@ export default function ChasseurFiches() {
         if (!map.has(id)) {
           map.set(id, name);
         }
+      }
+    }
+    return Array.from(map.entries())
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [allFeis]);
+
+  const collecteurOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const fei of allFeis) {
+      const id = fei.latest_intermediaire_user_id || fei.latest_intermediaire_entity_id;
+      const name = fei.latest_intermediaire_name_cache;
+      if (id && name && !map.has(id)) {
+        map.set(id, name);
       }
     }
     return Array.from(map.entries())
@@ -362,6 +390,13 @@ export default function ChasseurFiches() {
     if (filterCCGs.length > 0) {
       feis = feis.filter((fei) => filterCCGs.includes(fei.premier_detenteur_depot_entity_id ?? ''));
     }
+    if (filterCollecteurs.length > 0) {
+      feis = feis.filter(
+        (fei) =>
+          filterCollecteurs.includes(fei.latest_intermediaire_user_id ?? '') ||
+          filterCollecteurs.includes(fei.latest_intermediaire_entity_id ?? ''),
+      );
+    }
     return feis;
   }, [
     allFeis,
@@ -369,6 +404,7 @@ export default function ChasseurFiches() {
     filterStatuses,
     filterPremierDetenteurs,
     filterCCGs,
+    filterCollecteurs,
     carcassesIntermediaireById,
     carcasses,
     entitiesIdsWorkingDirectlyFor,
@@ -382,12 +418,13 @@ export default function ChasseurFiches() {
     return filteredFeis.slice(start, start + perPage);
   }, [filteredFeis, page, itemsPerPage]);
 
-  const hasActiveFilters = filterStatuses.length > 0 || filterPremierDetenteurs.length > 0 || filterCCGs.length > 0 || searchQuery.trim().length > 0;
+  const hasActiveFilters = filterStatuses.length > 0 || filterPremierDetenteurs.length > 0 || filterCCGs.length > 0 || filterCollecteurs.length > 0 || searchQuery.trim().length > 0;
 
   const clearAllFilters = () => {
     setFilterStatuses([]);
     setFilterPremierDetenteurs([]);
     setFilterCCGs([]);
+    setFilterCollecteurs([]);
     setSearchQuery('');
   };
 
@@ -409,10 +446,9 @@ export default function ChasseurFiches() {
       )}
 
       {/* Recherche */}
-      <div className="mt-4">
+      <div className="mt-2">
         <div className="relative">
           <span className="fr-icon--sm fr-icon-search-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden="true" />
-
           <input
             type="search"
             placeholder="Rechercher une fiche..."
@@ -424,7 +460,7 @@ export default function ChasseurFiches() {
       </div>
 
       {/* Compteur */}
-      <div className="flex items-center justify-between border-b border-gray-200 pb-3">
+      <div className="flex items-center justify-between border-b border-gray-200 pb-3 mt-2">
         <span className="text-sm font-medium text-gray-600">
           {filteredFeis.length} fiche{filteredFeis.length > 1 ? 's' : ''}
         </span>
@@ -530,6 +566,37 @@ export default function ChasseurFiches() {
         </CollapsibleSection>
       )}
 
+      {/* Filtre Collecteur */}
+      {collecteurOptions.length > 1 && (
+        <CollapsibleSection
+          title="Collecteur"
+          badge={filterCollecteurs.length > 0 ? <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">{filterCollecteurs.length}</span> : undefined}
+        >
+          <div className="flex max-h-40 flex-col gap-1 overflow-y-auto">
+            {collecteurOptions.map((option) => (
+              <label
+                key={option.id}
+                className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-gray-50"
+              >
+                <input
+                  type="checkbox"
+                  checked={filterCollecteurs.includes(option.id)}
+                  className="checked:accent-action-high-blue-france h-4 w-4 shrink-0"
+                  onChange={() => {
+                    if (filterCollecteurs.includes(option.id)) {
+                      setFilterCollecteurs(filterCollecteurs.filter((v) => v !== option.id));
+                    } else {
+                      setFilterCollecteurs([...filterCollecteurs, option.id]);
+                    }
+                  }}
+                />
+                <span className="truncate text-sm">{option.name}</span>
+              </label>
+            ))}
+          </div>
+        </CollapsibleSection>
+      )}
+
       {/* Vue */}
       <CollapsibleSection title="Affichage" defaultOpen={false}>
         <SegmentedControl
@@ -587,55 +654,28 @@ export default function ChasseurFiches() {
 
       {/* Actions export */}
       <CollapsibleSection title="Actions" defaultOpen={false}>
-        <DropDownMenu
-          text={`Exporter${selectedFeis.length > 0 ? ` (${selectedFeis.length})` : ''}`}
-          className="w-full"
-          isActive={selectedFeis.length > 0}
-          menuLinks={[
-            {
-              linkProps: {
-                href: '#',
-                'aria-disabled': selectedFeis.length === 0,
-                className: isExporting || !selectedFeis.length ? 'cursor-not-allowed opacity-50' : '',
-                title:
-                  selectedFeis.length === 0
-                    ? 'Sélectionnez des fiches avec la case à cocher en haut à droite de chaque carte'
-                    : '',
-                onClick: (e) => {
-                  e.preventDefault();
-                  if (selectedFeis.length === 0) return;
-                  if (isExporting) return;
-                  onExportToXlsx(selectedFeis);
-                },
-              },
-              text: 'Excel complet',
-            },
-            {
-              linkProps: {
-                href: '#',
-                'aria-disabled': selectedFeis.length === 0,
-                className: isExporting || !selectedFeis.length ? 'cursor-not-allowed opacity-50' : '',
-                title:
-                  selectedFeis.length === 0
-                    ? 'Sélectionnez des fiches avec la case à cocher en haut à droite de chaque carte'
-                    : '',
-                onClick: (e) => {
-                  e.preventDefault();
-                  if (selectedFeis.length === 0) return;
-                  if (isExporting) return;
-                  onExportSimplifiedToXlsx(selectedFeis);
-                },
-              },
-              text: 'Excel simplifié',
-            },
-          ]}
-        />
+        <Button size='small' disabled={selectedFeis.length === 0} priority="secondary" className="w-full" iconId="ri-download-line" onClick={(e) => {
+          e.preventDefault();
+          if (selectedFeis.length === 0) return;
+          if (isExporting) return;
+          onExportToXlsx(selectedFeis);
+        }}>
+          Exporter (complet)
+        </Button>
+
+        <Button size='small' disabled={selectedFeis.length === 0} priority="secondary" className="w-full mt-2" iconId="ri-download-line" onClick={(e) => {
+          e.preventDefault();
+          if (selectedFeis.length === 0) return;
+          if (isExporting) return;
+          onExportSimplifiedToXlsx(selectedFeis);
+        }}>Exporter (simplifié)</Button>
       </CollapsibleSection>
 
       {/* Mettre à jour */}
       <Button
         priority="tertiary"
-        className="w-full"
+        size="small"
+        className="w-full mt-2"
         iconId="ri-refresh-line"
         disabled={!isOnline || loading}
         onClick={async () => {
@@ -678,14 +718,14 @@ export default function ChasseurFiches() {
             size="small"
             onClick={() => setShowMobileFilters(!showMobileFilters)}
           >
-            Filtres{hasActiveFilters ? ` (${filterStatuses.length + filterPremierDetenteurs.length + filterCCGs.length})` : ''}
+            Filtres{hasActiveFilters ? ` (${filterStatuses.length + filterPremierDetenteurs.length + filterCCGs.length + filterCollecteurs.length})` : ''}
           </Button>
         </div>
       </div>
 
       {/* Mobile : panneau filtres */}
       {showMobileFilters && (
-        <div className="fixed inset-0 z-40 md:hidden">
+        <div className="fixed inset-0 z-[800] md:hidden">
           <div className="absolute inset-0 bg-black/30" onClick={() => setShowMobileFilters(false)} />
           <div className="absolute bottom-0 right-0 top-0 w-80 overflow-y-auto bg-white p-4 shadow-xl">
             <div className="mb-4 flex items-center justify-between">
