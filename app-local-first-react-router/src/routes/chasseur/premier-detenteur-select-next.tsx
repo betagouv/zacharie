@@ -362,7 +362,7 @@ function DispatchGroupForm({
                       });
                     }}
                   >
-                    Définir la date du jour et maintenant
+                    Définir comme étant la date du jour et maintenant
                   </button>
                 ) : null
               }
@@ -464,7 +464,7 @@ function DispatchGroupForm({
                         });
                       }}
                     >
-                      Définir la date du jour et maintenant.
+                      Définir comme étant la date du jour et maintenant.
                     </button>
                     À ne remplir que si vous êtes le transporteur et que vous stockez les carcasses dans un
                     CCG. Indiquer une date permettra au prochain détenteur de s'organiser.
@@ -586,6 +586,7 @@ export default function DestinatairePremierDetenteur({
       ),
     [allCarcasses],
   );
+
   const carcassesRestantes = useMemo(
     () =>
       allCarcasses.filter(
@@ -597,6 +598,7 @@ export default function DestinatairePremierDetenteur({
       ),
     [allCarcasses],
   );
+
   const carcassesRestantesIds = useMemo(
     () => carcassesRestantes.map((c) => c.zacharie_carcasse_id),
     [carcassesRestantes],

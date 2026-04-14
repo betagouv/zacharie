@@ -52,7 +52,7 @@ test("Création d'une fiche", async ({ page }) => {
     .fill(dayjs().startOf("day").add(2, "hour").format("HH:mm"));
   await page.getByRole("textbox", { name: "Heure d'éviscération de la" }).blur();
   // Bloc 4 — Validation
-  await page.getByRole("button", { name: "Définir la date du jour et maintenant" }).click();
+  await page.getByRole("button", { name: "Définir comme étant la date du jour et maintenant" }).click();
   await page.getByText("Je, Martin Marie, certifie qu").click();
   await expect(page.getByRole("button", { name: "Transmettre", exact: true })).not.toBeDisabled();
   await page.getByRole("button", { name: "Transmettre", exact: true }).click();

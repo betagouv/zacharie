@@ -89,7 +89,7 @@ test("Stockage - Transporter les carcasses soi-même", async ({ page }) => {
   await page.getByRole("button", { name: "Ajouter cette chambre froide" }).click();
   // Modal closes and CCG is auto-selected
   await expect(page.getByText("CCG Chasseurs - CCG-01")).toBeVisible();
-  const cliquezIci = page.getByRole("button", { name: /Définir la date du jour et maintenant/ }).first();
+  const cliquezIci = page.getByRole("button", { name: /Définir comme étant la date du jour et maintenant/ }).first();
   await cliquezIci.scrollIntoViewIfNeeded();
   await cliquezIci.click();
   const jeTransporte = page.getByText("Je transporte les carcasses moi").first();

@@ -330,6 +330,24 @@ function FEIChasseurLoaded() {
     }
   };
 
+  const carcassesDejaEnvoyees = useMemo(
+    () =>
+      carcasses.filter(
+        (c) =>
+          c.next_owner_entity_id != null ||
+          (c.current_owner_role != null &&
+            c.current_owner_role !== FeiOwnerRole.PREMIER_DETENTEUR &&
+            c.current_owner_role !== FeiOwnerRole.EXAMINATEUR_INITIAL),
+      ),
+    [carcasses],
+  );
+
+  const submitIsDisabled = useMemo(() => {
+    if (!showBloc4) return true;
+    if (carcassesDejaEnvoyees.length === carcasses.length) return true;
+    return false;
+  }, [showBloc4, carcassesDejaEnvoyees.length, carcasses.length]);
+
   return (
     <>
       <title>
@@ -357,19 +375,24 @@ function FEIChasseurLoaded() {
                   state={fieldHasError('date_mise_a_mort') ? 'error' : 'default'}
                   stateRelatedMessage={fieldErrorMessage('date_mise_a_mort')}
                   hintText={
-                    canEdit ? (
-                      <button
-                        className="rounded-full bg-[#E8EDFF] px-3 py-1 text-sm text-[#000091]"
-                        type="button"
-                        onClick={() => {
-                          const date = dayjs.utc().startOf('day').toDate();
-                          updateFei(fei.numero, {
-                            date_mise_a_mort: date,
-                          });
-                        }}
-                      >
-                        Définir la date du jour
-                      </button>
+                    canEdit && !fei.date_mise_a_mort ? (
+                      <>
+                        {[
+                          dayjs.utc().add(-1, 'day').startOf('day').toDate(),
+                          dayjs.utc().startOf('day').toDate(),
+                        ].map((date) => (
+                          <button
+                            key={dayjs(date).format('dddd DD MMMM')}
+                            className="mr-2 rounded-full bg-[#E8EDFF] px-3 py-1 text-sm text-[#000091]"
+                            type="button"
+                            onClick={() => {
+                              updateFei(fei.numero, { date_mise_a_mort: date });
+                            }}
+                          >
+                            {dayjs(date).format('dddd DD MMMM')}
+                          </button>
+                        ))}
+                      </>
                     ) : null
                   }
                   nativeInputProps={{
@@ -456,7 +479,11 @@ function FEIChasseurLoaded() {
                       <Component
                         className="mt-4"
                         label="Heure de mise à mort de la première carcasse&nbsp;*"
-                        state={fieldHasError('heure_mise_a_mort_premiere_carcasse', showBloc2Errors) ? 'error' : 'default'}
+                        state={
+                          fieldHasError('heure_mise_a_mort_premiere_carcasse', showBloc2Errors)
+                            ? 'error'
+                            : 'default'
+                        }
                         stateRelatedMessage={fieldErrorMessage('heure_mise_a_mort_premiere_carcasse')}
                         nativeInputProps={{
                           id: Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse,
@@ -495,7 +522,11 @@ function FEIChasseurLoaded() {
                         <>
                           <Component
                             label="Heure d'éviscération de la dernière carcasse&nbsp;*"
-                            state={fieldHasError('heure_evisceration_derniere_carcasse', showBloc2Errors) ? 'error' : 'default'}
+                            state={
+                              fieldHasError('heure_evisceration_derniere_carcasse', showBloc2Errors)
+                                ? 'error'
+                                : 'default'
+                            }
                             stateRelatedMessage={fieldErrorMessage('heure_evisceration_derniere_carcasse')}
                             nativeInputProps={{
                               id: Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse,
@@ -504,14 +535,17 @@ function FEIChasseurLoaded() {
                               required: true,
                               autoComplete: 'off',
                               onChange: (e) => {
-                                updateFei(fei.numero, { heure_evisceration_derniere_carcasse: e.target.value });
+                                updateFei(fei.numero, {
+                                  heure_evisceration_derniere_carcasse: e.target.value,
+                                });
                               },
                               onBlur: (e) => {
                                 const heure_evisceration_derniere_carcasse = e.target.value;
                                 if (!fei.heure_mise_a_mort_premiere_carcasse) {
                                   updateFei(fei.numero, { heure_evisceration_derniere_carcasse });
                                 } else if (
-                                  fei.heure_mise_a_mort_premiere_carcasse >= heure_evisceration_derniere_carcasse
+                                  fei.heure_mise_a_mort_premiere_carcasse >=
+                                  heure_evisceration_derniere_carcasse
                                 ) {
                                   alert(
                                     "L'heure d'éviscération de la dernière carcasse doit être supérieure à l'heure de mise à mort de la première carcasse",
@@ -533,11 +567,7 @@ function FEIChasseurLoaded() {
                         </>
                       )}
                       {canEdit && !showBloc3 && (
-                        <Button
-                          className="mt-4"
-                          type="button"
-                          onClick={() => setShowBloc2Errors(true)}
-                        >
+                        <Button className="mt-4" type="button" onClick={() => setShowBloc2Errors(true)}>
                           Continuer
                         </Button>
                       )}
@@ -564,12 +594,18 @@ function FEIChasseurLoaded() {
                   <h4 className="fr-h5">Validation de l'examen initial</h4>
                   <Component
                     label="Date de validation de l'examen initial et de mise sur le marché *"
-                    state={fieldHasError('examinateur_initial_date_approbation_mise_sur_le_marche') ? 'error' : 'default'}
-                    stateRelatedMessage={fieldErrorMessage('examinateur_initial_date_approbation_mise_sur_le_marche')}
+                    state={
+                      fieldHasError('examinateur_initial_date_approbation_mise_sur_le_marche')
+                        ? 'error'
+                        : 'default'
+                    }
+                    stateRelatedMessage={fieldErrorMessage(
+                      'examinateur_initial_date_approbation_mise_sur_le_marche',
+                    )}
                     hintText={
-                      canEdit ? (
+                      canEdit && !fei.examinateur_initial_date_approbation_mise_sur_le_marche ? (
                         <button
-                          className="rounded-full bg-[#E8EDFF] px-3 py-1 text-sm text-[#000091]"
+                          className="rounded-full bg-[#E8EDFF] px-3 py-1 text-left text-sm text-[#000091]"
                           type="button"
                           onClick={() => {
                             updateFei(fei.numero, {
@@ -578,7 +614,7 @@ function FEIChasseurLoaded() {
                             });
                           }}
                         >
-                          Définir la date du jour et maintenant
+                          Définir comme étant la date du jour et maintenant
                         </button>
                       ) : (
                         "Cette date vaut date d'approbation de mise sur le marché"
@@ -600,15 +636,21 @@ function FEIChasseurLoaded() {
                       },
                       defaultValue: fei?.examinateur_initial_date_approbation_mise_sur_le_marche
                         ? dayjs(fei?.examinateur_initial_date_approbation_mise_sur_le_marche).format(
-                          'YYYY-MM-DDTHH:mm',
-                        )
+                            'YYYY-MM-DDTHH:mm',
+                          )
                         : undefined,
                     }}
                   />
                   <Checkbox
                     className={canEdit ? '' : 'checkbox-black'}
-                    state={fieldHasError('examinateur_initial_approbation_mise_sur_le_marche') ? 'error' : 'default'}
-                    stateRelatedMessage={fieldErrorMessage('examinateur_initial_approbation_mise_sur_le_marche')}
+                    state={
+                      fieldHasError('examinateur_initial_approbation_mise_sur_le_marche')
+                        ? 'error'
+                        : 'default'
+                    }
+                    stateRelatedMessage={fieldErrorMessage(
+                      'examinateur_initial_approbation_mise_sur_le_marche',
+                    )}
                     options={[
                       {
                         label: checkboxLabel,
@@ -638,7 +680,7 @@ function FEIChasseurLoaded() {
                       }
                     />
                   )}
-                  {canEdit && (
+                  {canEdit && !carcassesDejaEnvoyees.length && (
                     <div className="mt-6">
                       <Button
                         priority="secondary"
@@ -654,9 +696,8 @@ function FEIChasseurLoaded() {
                   )}
                 </div>
               )}
-              <div className="bg-white flex flex-col md:flex-row items-center justify-between px-8 py-3">
-                <div className='flex justify-between w-full'>
-
+              <div className="flex flex-col items-center justify-between bg-white px-8 py-3 md:flex-row">
+                <div className="flex w-full justify-between">
                   <Button
                     priority="tertiary"
                     iconId="fr-icon-arrow-left-line"
@@ -666,11 +707,12 @@ function FEIChasseurLoaded() {
                   >
                     Retour
                   </Button>
-                  <div className='hidden md:block'>{canEdit && <ExaminateurInitialDeleteFei />}</div>
+                  <div className="hidden md:block">{canEdit && <ExaminateurInitialDeleteFei />}</div>
 
                   {canEdit && (
                     <Button
                       iconId="fr-icon-send-plane-line"
+                      disabled={submitIsDisabled}
                       onClick={(e) => {
                         e.preventDefault();
                         handleTransmettre();
@@ -680,8 +722,8 @@ function FEIChasseurLoaded() {
                     </Button>
                   )}
                 </div>
-                <span className='h-5 md:h-0' />
-                <div className='md:hidden'>{canEdit && <ExaminateurInitialDeleteFei />}</div>
+                <span className="h-5 md:h-0" />
+                <div className="md:hidden">{canEdit && <ExaminateurInitialDeleteFei />}</div>
               </div>
             </div>
           </div>

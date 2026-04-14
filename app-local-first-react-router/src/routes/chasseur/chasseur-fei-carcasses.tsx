@@ -37,16 +37,6 @@ export default function CarcassesExaminateur({
 
   return (
     <>
-      {canEdit && hasCarcasses && (
-        <p className="my-4 ml-4 text-sm text-gray-500">
-          Carcasses enregistrées sur cette fiche&nbsp;:
-          {countCarcassesByEspece.map((line) => (
-            <span className="ml-4 block" key={line}>
-              {line}
-            </span>
-          ))}
-        </p>
-      )}
       <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
         {carcasses.map((carcasse) => {
           return (
@@ -73,6 +63,7 @@ export default function CarcassesExaminateur({
         <div className="mt-4">
           <Button
             type="button"
+            id="add-more-carcasses-button"
             priority="secondary"
             iconId="fr-icon-add-line"
             onClick={() => setShowForm(true)}
@@ -80,6 +71,16 @@ export default function CarcassesExaminateur({
             Ajouter une autre carcasse
           </Button>
         </div>
+      )}
+      {canEdit && hasCarcasses && (
+        <p className="my-4 ml-4 text-sm text-gray-500">
+          Carcasses enregistrées sur cette fiche&nbsp;:
+          {countCarcassesByEspece.map((line) => (
+            <span className="ml-4 block" key={line}>
+              {line}
+            </span>
+          ))}
+        </p>
       )}
       {canEdit && hasCarcasses && !allCarcassesConfirmed && (
         <div className="mt-4">
@@ -97,6 +98,7 @@ export default function CarcassesExaminateur({
       {canEdit && hasCarcasses && allCarcassesConfirmed && (
         <Button
           type="button"
+          id="add-more-carcasses"
           priority="secondary"
           className="mt-4"
           iconId="fr-icon-add-line"
@@ -140,38 +142,38 @@ export function CarcasseExaminateur({
         !canEditAsExaminateurInitial
           ? undefined
           : () => {
-            navigate(`/app/chasseur/carcasse/${fei.numero}/${carcasse.zacharie_carcasse_id}`);
-          }
+              navigate(`/app/chasseur/carcasse/${fei.numero}/${carcasse.zacharie_carcasse_id}`);
+            }
       }
       onClick={
         !canEditAsExaminateurInitial
           ? undefined
           : () => {
-            navigate(`/app/chasseur/carcasse/${fei.numero}/${carcasse.zacharie_carcasse_id}`);
-          }
+              navigate(`/app/chasseur/carcasse/${fei.numero}/${carcasse.zacharie_carcasse_id}`);
+            }
       }
       onDelete={
         !canEditAsExaminateurInitial && !canEditAsPremierDetenteur
           ? undefined
           : () => {
-            if (window.confirm('Voulez-vous supprimer cette carcasse ? Cette opération est irréversible')) {
-              const nextPartialCarcasse: Partial<Carcasse> = {
-                deleted_at: dayjs().toDate(),
-              };
-              updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse, true);
-              addLog({
-                user_id: user.id,
-                user_role: UserRoles.CHASSEUR,
-                fei_numero: fei.numero,
-                action: 'examinateur-carcasse-delete',
-                history: createHistoryInput(carcasse, nextPartialCarcasse),
-                entity_id: null,
-                zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
-                intermediaire_id: null,
-                carcasse_intermediaire_id: null,
-              });
+              if (window.confirm('Voulez-vous supprimer cette carcasse ? Cette opération est irréversible')) {
+                const nextPartialCarcasse: Partial<Carcasse> = {
+                  deleted_at: dayjs().toDate(),
+                };
+                updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse, true);
+                addLog({
+                  user_id: user.id,
+                  user_role: UserRoles.CHASSEUR,
+                  fei_numero: fei.numero,
+                  action: 'examinateur-carcasse-delete',
+                  history: createHistoryInput(carcasse, nextPartialCarcasse),
+                  entity_id: null,
+                  zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
+                  intermediaire_id: null,
+                  carcasse_intermediaire_id: null,
+                });
+              }
             }
-          }
       }
     />
   );
