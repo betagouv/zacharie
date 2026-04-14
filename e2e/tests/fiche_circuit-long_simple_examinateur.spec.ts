@@ -19,7 +19,7 @@ test.beforeAll(async () => {
 test("Création d'une fiche", async ({ page }) => {
   await connectWith(page, "examinateur@example.fr");
   await expect(page).toHaveURL("http://localhost:3290/app/chasseur");
-  await page.getByTitle("Nouvelle fiche").click();
+  await page.getByRole("button", { name: "Nouvelle fiche" }).first().click();
   await page.getByText("Date de mise à mort (et d'éviscération) *").click();
   await page.getByRole("button", { name: "Définir la date du jour", exact: true }).click();
   await page.getByRole("textbox", { name: "Commune de mise à mort *" }).fill("CHASS");
