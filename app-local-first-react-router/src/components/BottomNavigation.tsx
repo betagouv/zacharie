@@ -190,8 +190,9 @@ export default function BottomNavigation({
 
   return (
     <nav
-      className="fixed right-0 bottom-0 left-0 z-[60] flex h-16 items-stretch border-t border-gray-200 bg-white md:hidden"
+      className="fixed right-0 bottom-0 left-0 z-[60] flex h-16 items-stretch border-t border-gray-200 bg-white md:hidden md:h-0"
       aria-label="Navigation mobile"
+      id="bottom-navigation"
     >
       {visibleItems.map((item, i) => (
         <NavButton key={getTextString(item) || i} item={item} />

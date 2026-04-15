@@ -1,6 +1,7 @@
 import NouvelleCarcasse from './examinateur-carcasses-nouvelle';
 import { Carcasse, UserRoles } from '@prisma/client';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { Button } from '@codegouvfr/react-dsfr/Button';
 import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
 import { useParams, useNavigate } from 'react-router';
 import useUser from '@app/zustand/user';
@@ -13,38 +14,29 @@ import CardCarcasse from '@app/components/CardCarcasse';
 export default function CarcassesExaminateur({
   canEdit,
   canEditAsPremierDetenteur,
+  allCarcassesConfirmed,
+  onAllCarcassesConfirmed,
+  onAddMoreCarcasses,
 }: {
   canEdit: boolean;
   canEditAsPremierDetenteur: boolean;
+  allCarcassesConfirmed: boolean;
+  onAllCarcassesConfirmed: () => void;
+  onAddMoreCarcasses: () => void;
 }) {
-  // canEdit = true;
   const params = useParams();
   const feis = useZustandStore((state) => state.feis);
   const fei = feis[params.fei_numero!];
   const carcasses = useMyCarcassesForFei(params.fei_numero);
+  const [showForm, setShowForm] = useState(!allCarcassesConfirmed);
 
   const countCarcassesByEspece = useMemo(() => formatCountCarcasseByEspece(carcasses), [carcasses]);
 
+  const hasCarcasses = carcasses.length > 0;
+  const lastEspece = hasCarcasses ? carcasses[carcasses.length - 1].espece : null;
+
   return (
     <>
-      <div
-        className={[
-          'mb-2 transition-all duration-1000',
-          !canEdit ? 'max-h-0 overflow-hidden' : 'max-h-[300vh]',
-        ].join(' ')}
-      >
-        <NouvelleCarcasse key={fei.commune_mise_a_mort} />
-      </div>
-      {canEdit && carcasses.length > 0 && (
-        <p className="my-4 ml-4 text-sm text-gray-500">
-          Carcasses enregistrées sur cette fiche&nbsp;:
-          {countCarcassesByEspece.map((line) => (
-            <span className="ml-4 block" key={line}>
-              {line}
-            </span>
-          ))}
-        </p>
-      )}
       <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
         {carcasses.map((carcasse) => {
           return (
@@ -57,6 +49,67 @@ export default function CarcassesExaminateur({
           );
         })}
       </div>
+      {(!hasCarcasses || (showForm && !allCarcassesConfirmed)) && canEdit && (
+        <div className="my-2">
+          <NouvelleCarcasse
+            key={`${fei.commune_mise_a_mort}-${lastEspece}`}
+            defaultEspece={lastEspece ?? undefined}
+            onCarcasseAdded={() => setShowForm(false)}
+          />
+        </div>
+      )}
+
+      {canEdit && hasCarcasses && !allCarcassesConfirmed && !showForm && (
+        <div className="mt-4">
+          <Button
+            type="button"
+            id="add-more-carcasses-button"
+            priority="secondary"
+            iconId="fr-icon-add-line"
+            onClick={() => setShowForm(true)}
+          >
+            Ajouter une autre carcasse
+          </Button>
+        </div>
+      )}
+      {canEdit && hasCarcasses && (
+        <p className="my-4 ml-4 text-sm text-gray-500">
+          Carcasses enregistrées sur cette fiche&nbsp;:
+          {countCarcassesByEspece.map((line) => (
+            <span className="ml-4 block" key={line}>
+              {line}
+            </span>
+          ))}
+        </p>
+      )}
+      {canEdit && hasCarcasses && !allCarcassesConfirmed && (
+        <div className="mt-4">
+          <Button
+            type="button"
+            priority="primary"
+            onClick={() => {
+              onAllCarcassesConfirmed();
+            }}
+          >
+            Continuer
+          </Button>
+        </div>
+      )}
+      {canEdit && hasCarcasses && allCarcassesConfirmed && (
+        <Button
+          type="button"
+          id="add-more-carcasses"
+          priority="secondary"
+          className="mt-4"
+          iconId="fr-icon-add-line"
+          onClick={() => {
+            onAddMoreCarcasses();
+            setShowForm(true);
+          }}
+        >
+          Ajouter une autre carcasse
+        </Button>
+      )}
     </>
   );
 }
