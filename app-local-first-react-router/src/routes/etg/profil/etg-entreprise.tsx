@@ -69,8 +69,8 @@ export default function EtgProfilEntreprise() {
               formId="onboarding-etape-2-etg-data"
               setRefreshKey={setRefreshKey}
               refreshKey={refreshKey}
-              sectionLabel="Mon Établissement de Traitement du Gibier sauvage (ETG)"
-              selectLabel={!etgsDone ? 'Sélectionnez un ETG' : ''}
+              sectionLabel="Mon entreprise"
+              selectLabel={!etgsDone ? 'Sélectionnez une entreprise' : ''}
               canChange={!etgsDone}
               allEntitiesById={allEntitiesById}
               userEntitiesById={userEntitiesById}

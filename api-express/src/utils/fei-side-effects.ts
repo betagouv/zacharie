@@ -8,7 +8,7 @@ import {
 } from '@prisma/client';
 import prisma from '~/prisma';
 import sendNotificationToUser from '~/service/notifications';
-import { formatManualValidationSviEmail, formatSviAssignedEmail } from '~/utils/formatCarcasseEmail';
+import { formatManualValidationSviChasseurEmail, formatSviAssignedEmail } from '~/utils/formatCarcasseEmail';
 import { sendWebhook } from '~/utils/api';
 import {
   updateBrevoChasseurDeal,
@@ -222,7 +222,7 @@ export async function notifyCircuitCourt(
       const email = [
         `Bonjour,`,
         `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche. Vous trouverez un résumé en pièce jointe, à conserver pour votre enregistrement.`,
-        `Pour consulter la fiche, rendez-vous sur Zacharie avec votre email ${nextOwner.email} : https://zacharie.beta.gouv.fr/app/tableau-de-bord/fei/${savedFei.numero}`,
+        `Pour consulter la fiche, rendez-vous sur Zacharie avec votre email ${nextOwner.email} : https://zacharie.beta.gouv.fr/app/circuit-court/fei/${savedFei.numero}`,
         `Ce message a été généré automatiquement par l'application Zacharie. Si vous avez des questions sur l'attribution de cette fiche, n'hésitez pas à contacter la personne qui vous l'a envoyée.`,
       ].join('\n\n');
       await sendNotificationToUser({
@@ -272,10 +272,20 @@ export async function notifyNextOwnerUser(existingFei: FeiPopulated, savedFei: F
     const nextOwner = await prisma.user.findUnique({
       where: { id: nextOwnerId },
     });
+    const role = nextOwner?.roles[0];
+    let url = 'https://zacharie.beta.gouv.fr/app/';
+    if (role === UserRoles.CHASSEUR) url += 'chasseur/';
+    else if (role === UserRoles.SVI) url += 'svi/';
+    else if (role === UserRoles.ETG) url += 'etg/';
+    else if (role === UserRoles.COLLECTEUR_PRO) url += 'collecteur-pro/';
+    else {
+      throw new Error('Unknown role in notifying next owner user', { cause: role });
+    }
+    url += `fei/${savedFei.numero}`;
     const email = [
       `Bonjour,`,
       `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche. Rendez vous sur Zacharie pour la traiter.`,
-      `Pour consulter la fiche, rendez-vous sur Zacharie : https://zacharie.beta.gouv.fr/app/tableau-de-bord/fei/${savedFei.numero}`,
+      `Pour consulter la fiche, rendez-vous sur Zacharie : ${url}`,
       `Ce message a été généré automatiquement par l'application Zacharie. Si vous avez des questions sur l'attribution de cette fiche, n'hésitez pas à contacter la personne qui vous l'a envoyée.`,
     ].join('\n\n');
     await sendNotificationToUser({
@@ -298,7 +308,6 @@ export async function notifyNextOwnerUser(existingFei: FeiPopulated, savedFei: F
       `Bonjour,`,
       `${user.prenom} ${user.nom_de_famille} vous avait attribué par erreur la fiche d'examen initial n° ${savedFei?.numero}.`,
       'Cette erreur vient d\u2019être corrigée : vous n\u2019êtes plus destinataire de cette fiche.',
-      `Pour consulter la fiche, rendez-vous sur Zacharie : https://zacharie.beta.gouv.fr/app/tableau-de-bord/fei/${savedFei.numero}`,
       `Ce message a été généré automatiquement par l'application Zacharie. Si vous avez des questions sur l'attribution de cette fiche, n'hésitez pas à contacter la personne qui vous l'a envoyée.`,
     ].join('\n\n');
     await sendNotificationToUser({
@@ -338,6 +347,7 @@ export async function notifyNextOwnerEntity(existingFei: FeiPopulated, savedFei:
             notifications: true,
             prenom: true,
             nom_de_famille: true,
+            roles: true,
             email: true,
           },
         },
@@ -347,10 +357,20 @@ export async function notifyNextOwnerEntity(existingFei: FeiPopulated, savedFei:
 
   for (const nextOwner of usersWorkingForEntity) {
     if (nextOwner.id !== user.id) {
+      const role = nextOwner?.roles[0];
+      let url = 'https://zacharie.beta.gouv.fr/app/';
+      if (role === UserRoles.CHASSEUR) url += 'chasseur/';
+      else if (role === UserRoles.SVI) url += 'svi/';
+      else if (role === UserRoles.ETG) url += 'etg/';
+      else if (role === UserRoles.COLLECTEUR_PRO) url += 'collecteur-pro/';
+      else {
+        throw new Error('Unknown role in notifying next owner entity', { cause: role });
+      }
+      url += `fei/${savedFei.numero}`;
       const email = [
         `Bonjour,`,
         `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche. Rendez vous sur Zacharie pour la traiter.`,
-        `Pour consulter la fiche, rendez-vous sur Zacharie : https://zacharie.beta.gouv.fr/app/tableau-de-bord/fei/${savedFei.numero}`,
+        `Pour consulter la fiche, rendez-vous sur Zacharie : ${url}`,
         `Ce message a été généré automatiquement par l'application Zacharie. Si vous avez des questions sur l'attribution de cette fiche, n'hésitez pas à contacter la personne qui vous l'a envoyée.`,
       ].join('\n\n');
       await sendNotificationToUser({
@@ -377,12 +397,12 @@ export async function notifyNextOwnerEntity(existingFei: FeiPopulated, savedFei:
   }
 }
 
-export async function notifySviClose(existingFei: FeiPopulated, savedFei: FeiPopulated) {
+export async function notifyChasseurSviClose(existingFei: FeiPopulated, savedFei: FeiPopulated) {
   if (existingFei.svi_closed_by_user_id || !savedFei.svi_closed_by_user_id) {
     return;
   }
 
-  const [object, email] = await formatManualValidationSviEmail(savedFei, savedFei.Carcasses);
+  const [object, email] = await formatManualValidationSviChasseurEmail(savedFei, savedFei.Carcasses);
   const notification = {
     title: object,
     body: email,
@@ -445,6 +465,6 @@ export async function runFeiUpdateSideEffects(existingFei: FeiPopulated, savedFe
 
   await notifyNextOwnerUser(existingFei, savedFei, user);
   await notifyNextOwnerEntity(existingFei, savedFei, user);
-  await notifySviClose(existingFei, savedFei);
+  await notifyChasseurSviClose(existingFei, savedFei);
   await webhookIntermediaireClose(existingFei, savedFei);
 }

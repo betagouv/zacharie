@@ -28,6 +28,7 @@ import { EntitiesById, entityAdminInclude } from '~/types/entity';
 import { sanitize } from '~/utils/sanitize';
 import { z } from 'zod';
 import createUserId from '~/utils/createUserId';
+import { inviteUser } from '~/utils/invite-user';
 
 router.get(
   '/fei/:entity_id/:fei_numero',
@@ -463,6 +464,8 @@ router.post(
 
       ownerUser = await createBrevoContact(ownerUser, 'USER');
       await linkBrevoCompanyToContact(createdEntity, ownerUser);
+
+      await inviteUser(ownerUser, user);
 
       res
         .status(200)

@@ -53,6 +53,7 @@ export default function ListAndSelectEntities({
               relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
           );
           if (!relation) return null;
+          console.log(entity);
           return (
             <RelationEntityUser
               key={relation.id}
