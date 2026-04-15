@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router';
-import { EntityTypes, Prisma, User } from '@prisma/client';
+import { Prisma, User } from '@prisma/client';
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
@@ -10,13 +10,13 @@ import useUser from '@app/zustand/user';
 import API from '@app/services/api';
 import ListAndSelectEntities from '@app/components/ListAndSelectEntities';
 
-export default function CollecteurProfilEntreprise() {
+export default function CircuitCourtProfilEntreprise() {
   const user = useUser((state) => state.user)!;
   const [allEntitiesById, setAllEntitiesById] = useState<EntitiesById>({});
   const [userEntitiesById, setUserEntitiesById] = useState<EntitiesById>({});
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const collecteursDone = Object.keys(userEntitiesById).length > 0;
+  const circuitCourtDone = Object.keys(userEntitiesById).length > 0;
 
   const [visibilityChecked, setVisibilityChecked] = useState(user.user_entities_vivible_checkbox === true);
 
@@ -27,11 +27,13 @@ export default function CollecteurProfilEntreprise() {
       .then((res) => res as EntitiesWorkingForResponse)
       .then((res) => {
         if (res.ok) {
-          setAllEntitiesById(res.data.allEntitiesByTypeAndId[EntityTypes.COLLECTEUR_PRO]);
-          setUserEntitiesById(res.data.userEntitiesByTypeAndId[EntityTypes.COLLECTEUR_PRO]);
+          // @ts-expect-error Property 'ADMIN' does not exist on type 'EntitiesByTypeAndId'
+          setAllEntitiesById(res.data.allEntitiesByTypeAndId[user.roles[0]]);
+          // @ts-expect-error Property 'ADMIN' does not exist on type 'EntitiesByTypeAndId'
+          setUserEntitiesById(res.data.userEntitiesByTypeAndId[user.roles[0]]);
         }
       });
-  }, [refreshKey]);
+  }, [refreshKey, user.roles]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -65,12 +67,12 @@ export default function CollecteurProfilEntreprise() {
               Lorsqu'une fiche lui sera attribuée, vous pourrez la prendre en charge.
             </CallOut>
             <ListAndSelectEntities
-              formId="onboarding-etape-2-collecteur-data"
+              formId="onboarding-etape-2-circuit-court-data"
               setRefreshKey={setRefreshKey}
               refreshKey={refreshKey}
               sectionLabel="Mon Entreprise"
-              selectLabel={!collecteursDone ? 'Sélectionnez une entreprise' : ''}
-              canChange={!collecteursDone}
+              selectLabel={!circuitCourtDone ? 'Sélectionnez une entreprise' : ''}
+              canChange={!circuitCourtDone}
               allEntitiesById={allEntitiesById}
               userEntitiesById={userEntitiesById}
             />
@@ -116,14 +118,14 @@ export default function CollecteurProfilEntreprise() {
                       type: 'button',
                       nativeButtonProps: {
                         onClick: () => {
-                          navigate('/app/collecteur');
+                          navigate('/app/circuit-court');
                         },
                       },
                     },
                     {
                       children: 'Modifier mes coordonnées',
                       linkProps: {
-                        to: '/app/collecteur/onboarding/coordonnees',
+                        to: '/app/circuit-court/onboarding/coordonnees',
                         href: '#',
                       },
                       priority: 'secondary',

@@ -1,4 +1,5 @@
 import { User, UserRoles } from '@prisma/client';
+import { isCircuitCourt } from './circuit-court';
 
 export function getUserOnboardingRoute(user: User): string {
   if (user.roles.includes(UserRoles.CHASSEUR)) {
@@ -24,6 +25,12 @@ export function getUserOnboardingRoute(user: User): string {
       return '/app/svi';
     }
     return '/app/svi/onboarding/coordonnees';
+  }
+  if (isCircuitCourt(user)) {
+    if (user.onboarded_at) {
+      return '/app/circuit-court';
+    }
+    return '/app/circuit-court/onboarding/coordonnees';
   }
   if (user.onboarded_at) {
     return '/app/tableau-de-bord';

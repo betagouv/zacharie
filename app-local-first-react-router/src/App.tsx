@@ -30,6 +30,7 @@ import RouterEtg from './routes/etg/etg-router';
 import RouterTableauDeBord from './routes/tableau-de-bord/tableau-de-bord-router';
 import RouterAdmin from './routes/admin/admin-router';
 import NouvelleFiche from './routes/nouvelle-fiche';
+import RouterCircuitCourt from './routes/circuit-court/circuit-court-router';
 
 const SentryRoutes = Sentry.withSentryReactRouterV6Routing(Routes);
 
@@ -80,6 +81,7 @@ function App() {
           {RouterEtg()}
           {RouterCollecteur()}
           {RouterTableauDeBord({ navigation: generalNavigation })}
+          {RouterCircuitCourt()}
           {RouterSvi()}
           {RouterAdmin()}
           <Route

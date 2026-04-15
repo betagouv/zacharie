@@ -9,9 +9,7 @@ import dayjs from 'dayjs';
 import crypto from 'crypto';
 import {
   createBrevoContact,
-  linkBrevoCompanyToContact,
   sendEmail,
-  unlinkBrevoCompanyToContact,
   updateBrevoChasseurDeal,
   updateBrevoContact,
 } from '~/third-parties/brevo';
@@ -48,6 +46,7 @@ import { autoActivatePremierDetenteur, hasAllRequiredFields } from '~/utils/user
 import { z } from 'zod';
 import { sanitize } from '~/utils/sanitize';
 import { captureException } from '@sentry/node';
+import { inviteUser } from '~/utils/invite-user';
 // import { refreshMaterializedViews } from '~/utils/refreshMaterializedViews';
 
 // Schemas for validation
@@ -921,26 +920,6 @@ router.post(
       });
       await createBrevoContact(newUser, 'USER');
     }
-    let url = 'https://zacharie.beta.gouv.fr/app/connexion';
-    let password = await prisma.password.findUnique({
-      where: {
-        user_id: newUser.id,
-      },
-    });
-    if (!password) {
-      const token = crypto.randomUUID();
-      password = await prisma.password.create({
-        data: {
-          user_id: newUser.id,
-          password: '',
-          reset_password_token: token,
-          reset_password_last_email_sent_at: new Date(),
-        },
-      });
-      url = `https://zacharie.beta.gouv.fr/app/connexion/invitation?invitation-token=${token}&email=${encodeURIComponent(
-        email,
-      )}`;
-    }
     const existingRelation = await prisma.entityAndUserRelations.findFirst({
       where: {
         owner_id: newUser.id,
@@ -958,19 +937,10 @@ router.post(
           relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
         },
       });
-      const invitationEmail = [
-        `Bonjour,`,
-        `Votre compte Zacharie a été créé, vous pouvez désormais accéder à l'application en cliquant sur le lien suivant: ${url}.`,
-        `N’hésitez pas à nous contacter si besoin,`,
-        `L’équipe Zacharie`,
-        `Ce message a été généré automatiquement par l’application Zacharie. Si c'est une erreur, veuillez ignorer ce message.`,
-      ].join('\n\n');
-      await sendEmail({
-        emails: [newUser.email],
-        subject: `${user.prenom} ${user.nom_de_famille} vous a invité à rejoindre Zacharie`,
-        text: invitationEmail,
-      });
     }
+
+    await inviteUser(newUser, user);
+
     res.status(200).send({ ok: true, error: '', data: { newUser } });
   }),
 );

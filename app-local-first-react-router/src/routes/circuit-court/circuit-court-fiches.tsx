@@ -10,7 +10,7 @@ import useZustandStore, { syncData } from '@app/zustand/store';
 import { useMostFreshUser, refreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { getFeisSorted } from '@app/utils/get-fei-sorted';
 import { createNewFei } from '@app/utils/create-new-fei';
-import { useNavigate, useSearchParams, Link } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 import { loadFeis } from '@app/utils/load-feis';
 import { loadMyRelations } from '@app/utils/load-my-relations';
 import useExportFeis from '@app/utils/export-feis';
@@ -33,11 +33,11 @@ import { useFeiSteps, computeFeiSteps } from '@app/utils/fei-steps';
 import { useIsCircuitCourt } from '@app/utils/circuit-court';
 import { useLocalStorage } from '@uidotdev/usehooks';
 import type { FeiWithIntermediaires } from '@api/src/types/fei';
-import { useEtgIds, useEntitiesIdsWorkingDirectlyFor } from '@app/utils/get-entity-relations';
+import { useEntitiesIdsWorkingDirectlyFor } from '@app/utils/get-entity-relations';
 
 async function loadData() {
   // FIXME: await syncData is useless, as syncData queues stuff - so there will be bugs
-  await syncData('tableau-de-bord');
+  await syncData('circuit-court-fiches');
   await loadMyRelations();
   await loadFeis();
 }
@@ -59,53 +59,9 @@ const statusColors: Record<FeiStepSimpleStatus, { bg: string; text: string }> = 
   },
 };
 
-function OnboardingChasseInfoBanner() {
-  const user = useUser((state) => state.user)!;
-  const isChasseur = user.roles.includes(UserRoles.CHASSEUR);
-
-  // Ne pas afficher si l'utilisateur n'est pas chasseur ou a déjà répondu
-  if (!isChasseur || user.onboarding_chasse_info_done_at !== null) {
-    return null;
-  }
-
-  const handleSkip = async () => {
-    const response = await API.post({
-      path: `/user/${user.id}`,
-      body: { onboarding_chasse_info_done_at: new Date().toISOString() },
-    }).then((data) => data as UserConnexionResponse);
-    if (response.ok && response.data?.user?.id) {
-      useUser.setState({ user: response.data.user });
-    }
-  };
-
-  return (
-    <div className="fr-mb-4w flex flex-col gap-4 rounded border border-[var(--border-default-grey)] bg-white p-4 md:flex-row md:items-center md:justify-between">
-      <div>
-        <p className="m-0 text-lg font-medium">Complétez vos informations de chasse</p>
-        <p className="m-0 mt-1 text-sm text-[var(--text-mention-grey)]">
-          Ces informations seront reportées automatiquement sur vos fiches.
-        </p>
-      </div>
-      <div className="flex shrink-0 flex-col gap-2 md:flex-row">
-        <Link
-          to="/app/tableau-de-bord/onboarding/mes-informations-de-chasse"
-          className="fr-btn fr-btn--primary"
-        >
-          Compléter mon profil
-        </Link>
-        <Button priority="secondary" onClick={handleSkip}>
-          Ne plus afficher
-        </Button>
-      </div>
-    </div>
-  );
-}
-
 export default function TableauDeBordIndex() {
   const navigate = useNavigate();
-  const user = useMostFreshUser('tableau de bord index')!;
-  const entities = useZustandStore((state) => state.entities);
-  const allEtgIds = useEtgIds();
+  const user = useMostFreshUser('circuit-court-fiches')!;
   const entitiesIdsWorkingDirectlyFor = useEntitiesIdsWorkingDirectlyFor();
   const { feisOngoing, feisToTake, feisUnderMyResponsability, feisDone } = getFeisSorted();
   const { onExportToXlsx, onExportSimplifiedToXlsx, isExporting } = useExportFeis();
@@ -119,7 +75,7 @@ export default function TableauDeBordIndex() {
 
   const [searchParams, setSearchParams] = useSearchParams();
   const page = parseInt(searchParams.get('page') || '1');
-  const [itemsPerPage, setItemsPerPage] = useLocalStorage<number>('tableau-de-bord-items-per-page', 20);
+  const [itemsPerPage, setItemsPerPage] = useLocalStorage<number>('circuit-court-fiches-items-per-page', 20);
 
   useEffect(() => {
     window.onNativePushToken = async function handleNativePushToken(token) {
@@ -153,37 +109,16 @@ export default function TableauDeBordIndex() {
     }
   }, [user]);
 
-  const isSvi = user.roles.includes(UserRoles.SVI);
-
-  const { feiActivesForSvi, feisDoneForSvi } = feisDone.reduce(
-    (acc, fei) => {
-      if (fei.automatic_closed_at) {
-        acc.feisDoneForSvi.push(fei);
-      } else if (fei.svi_closed_at) {
-        acc.feisDoneForSvi.push(fei);
-      } else if (dayjs(fei.svi_assigned_at).isBefore(dayjs().subtract(10, 'days'))) {
-        acc.feisDoneForSvi.push(fei);
-      } else {
-        acc.feiActivesForSvi.push(fei);
-      }
-      return acc;
-    },
-    {
-      feiActivesForSvi: [] as Array<FeiWithIntermediaires>,
-      feisDoneForSvi: [] as Array<FeiWithIntermediaires>,
-    },
-  );
-
   const hackForCounterDoubleEffectInDevMode = useRef(false);
   useEffect(() => {
     if (hackForCounterDoubleEffectInDevMode.current) {
       return;
     }
     hackForCounterDoubleEffectInDevMode.current = true;
-    refreshUser('tableau-de-bord').then(loadData);
+    refreshUser('circuit-court-fiches').then(loadData);
   }, []);
 
-  useSaveScroll('tableau-de-bord-scrollY');
+  useSaveScroll('circuit-court-fiches-scrollY');
 
   const [selectedFeis, setSelectedFeis] = useState<string[]>([]);
   const handleCheckboxClick = (id: string) => {
@@ -216,7 +151,7 @@ export default function TableauDeBordIndex() {
   };
 
   const [filter, setFilter] = useState<FeiStepSimpleStatus[]>(() => {
-    const savedFilter = localStorage.getItem('tableau-de-bord-filter');
+    const savedFilter = localStorage.getItem('circuit-court-fiches-filter');
     if (savedFilter) {
       try {
         const parsed = JSON.parse(savedFilter);
@@ -233,11 +168,11 @@ export default function TableauDeBordIndex() {
   };
 
   useEffect(() => {
-    localStorage.setItem('tableau-de-bord-filter', JSON.stringify(filter));
+    localStorage.setItem('circuit-court-fiches-filter', JSON.stringify(filter));
   }, [filter]);
 
   const [viewType, setViewType] = useState<ViewType>(() => {
-    const savedViewType = localStorage.getItem('tableau-de-bord-view-type');
+    const savedViewType = localStorage.getItem('circuit-court-fiches-view-type');
     if (savedViewType === 'grid' || savedViewType === 'table') {
       return savedViewType as ViewType;
     }
@@ -245,7 +180,7 @@ export default function TableauDeBordIndex() {
   });
 
   useEffect(() => {
-    localStorage.setItem('tableau-de-bord-view-type', viewType);
+    localStorage.setItem('circuit-court-fiches-view-type', viewType);
   }, [viewType]);
 
   const dropDownMenuFilterText = useMemo(() => {
@@ -260,37 +195,16 @@ export default function TableauDeBordIndex() {
     }
     return `${filter.length} statuts sélectionnés`;
   }, [filter]);
+
   const [filterPremierDetenteur, setFilterPremierDetenteur] = useLocalStorage<string>(
-    'tableau-de-bord-filter-premier-detenteur',
+    'circuit-court-fiches-filter-premier-detenteur',
     '',
   );
-  const [filterCCG, setFilterCCG] = useLocalStorage<string>('tableau-de-bord-filter-ccg', '');
-
-  const [filterETG, setFilterETG] = useState<string>('');
-  const [sviWorkingForEtgIds, dropDownMenuFilterTextSvi] = useMemo(() => {
-    const _sviWorkingForEtgIds = !isSvi
-      ? []
-      : allEtgIds.filter((id) => {
-          const etgLinkedToSviId = entities[id]?.etg_linked_to_svi_id;
-          if (!etgLinkedToSviId) return false;
-          return entitiesIdsWorkingDirectlyFor.includes(etgLinkedToSviId);
-        });
-    if (_sviWorkingForEtgIds.includes(filterETG)) {
-      return [_sviWorkingForEtgIds, `Fiches de ${entities[filterETG]?.nom_d_usage}`];
-    }
-    return [_sviWorkingForEtgIds, 'Filtrer par ETG'];
-  }, [filterETG, entities, entitiesIdsWorkingDirectlyFor, allEtgIds, isSvi]);
+  const [filterCCG, setFilterCCG] = useLocalStorage<string>('circuit-court-fiches-filter-ccg', '');
 
   const allFeis = useMemo(() => {
-    if (isSvi) {
-      let feis = [...feisAssigned, ...feiActivesForSvi, ...feisDoneForSvi];
-      if (filterETG) {
-        feis = feis.filter((fei) => fei.latest_intermediaire_entity_id === filterETG);
-      }
-      return feis;
-    }
     return [...feisAssigned, ...feisOngoing, ...feisDone];
-  }, [isSvi, feisAssigned, feisOngoing, feisDone, feiActivesForSvi, feisDoneForSvi, filterETG]);
+  }, [feisAssigned, feisOngoing, feisDone]);
 
   const premierDetenteurOptions = useMemo(() => {
     const map = new Map<string, string>();
@@ -382,21 +296,6 @@ export default function TableauDeBordIndex() {
     const start = (page - 1) * perPage;
     return filteredFeis.slice(start, start + perPage);
   }, [filteredFeis, page, itemsPerPage]);
-
-  console.log('allFeis', allFeis);
-  console.log('feisAssigned', feisAssigned);
-  console.log('feisOngoing', feisOngoing);
-  console.log('feisDone', feisDone);
-  console.log(
-    'ZACH-20260216-IKO5X-063936',
-    `allFeis: ${allFeis.findIndex((fei) => fei.numero === 'ZACH-20260216-IKO5X-063936')}`,
-    `paginatedFeis: ${paginatedFeis.findIndex((fei) => fei.numero === 'ZACH-20260216-IKO5X-063936')}`,
-    `feisAssigned: ${feisAssigned.findIndex((fei) => fei.numero === 'ZACH-20260216-IKO5X-063936')}`,
-    `feisOngoing: ${feisOngoing.findIndex((fei) => fei.numero === 'ZACH-20260216-IKO5X-063936')}`,
-    `feisDone: ${feisDone.findIndex((fei) => fei.numero === 'ZACH-20260216-IKO5X-063936')}`,
-    `feisToTake: ${feisToTake.findIndex((fei) => fei.numero === 'ZACH-20260216-IKO5X-063936')}`,
-    `feisUnderMyResponsability: ${feisUnderMyResponsability.findIndex((fei) => fei.numero === 'ZACH-20260216-IKO5X-063936')}`,
-  );
 
   function Actions() {
     return (
@@ -524,39 +423,6 @@ export default function TableauDeBordIndex() {
                 ]}
               />
             )}
-            {isSvi && sviWorkingForEtgIds.length > 1 && (
-              <DropDownMenu
-                text={dropDownMenuFilterTextSvi}
-                isActive={filterETG !== 'Toutes les fiches'}
-                className="w-full md:w-auto"
-                menuLinks={[
-                  {
-                    linkProps: {
-                      href: '#',
-                      title: 'Toutes les fiches',
-                      onClick: (e) => {
-                        e.preventDefault();
-                        setFilterETG('');
-                      },
-                    },
-                    text: 'Toutes les fiches',
-                    isActive: !filterETG,
-                  },
-                  ...[...sviWorkingForEtgIds].map((etgId) => ({
-                    linkProps: {
-                      href: '#',
-                      title: `Fiches de ${entities[etgId]?.nom_d_usage}`,
-                      onClick: (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
-                        e.preventDefault();
-                        setFilterETG(etgId);
-                      },
-                    },
-                    text: `Fiches de ${entities[etgId]?.nom_d_usage}`,
-                    isActive: filterETG === etgId,
-                  })),
-                ]}
-              />
-            )}
 
             <Button
               priority="tertiary"
@@ -607,7 +473,7 @@ export default function TableauDeBordIndex() {
                 className="w-full shrink-0 md:w-auto"
                 onClick={async () => {
                   const newFei = await createNewFei();
-                  navigate(`/app/tableau-de-bord/fei/${newFei.numero}`);
+                  navigate(`/app/circuit-court/fei/${newFei.numero}`);
                 }}
                 title="Nouvelle fiche"
               >
@@ -703,7 +569,6 @@ export default function TableauDeBordIndex() {
         <title>Mes fiches | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
         <div className="fr-grid-row fr-grid-row--center fr-grid-row-gutters pt-4">
           <div className="fr-col-12 fr-col-md-10 min-h-96 p-4 md:p-0">
-            <OnboardingChasseInfoBanner />
             <FeisWrapper
               viewType={viewType}
               handleSelectAll={handleSelectAll}
@@ -719,7 +584,7 @@ export default function TableauDeBordIndex() {
                     filter={'Toutes les fiches'}
                     onPrintSelect={handleCheckboxClick}
                     isPrintSelected={selectedFeis.includes(fei.numero)}
-                    linkTo={`/app/tableau-de-bord/fei/${fei.numero}`}
+                    linkTo={`/app/circuit-court/fei/${fei.numero}`}
                   />
                 );
               })}
@@ -730,7 +595,7 @@ export default function TableauDeBordIndex() {
                   count={totalPages}
                   defaultPage={page}
                   getPageLinkProps={(pageNumber) => ({
-                    to: `/app/tableau-de-bord?page=${pageNumber}`,
+                    to: `/app/circuit-court?page=${pageNumber}`,
                   })}
                 />
               </div>
@@ -760,7 +625,7 @@ function FeisWrapper({
   selectedFeis?: string[];
   filter?: FeiStepSimpleStatus | 'Toutes les fiches';
 }) {
-  const user = useMostFreshUser('tableau de bord index')!;
+  const user = useMostFreshUser('circuit-court-fiches')!;
   const navigate = useNavigate();
   const nothingToShow = !children || React.Children.toArray(children).length === 0;
 
@@ -781,7 +646,7 @@ function FeisWrapper({
                     iconId="fr-icon-add-circle-line"
                     onClick={async () => {
                       const newFei = await createNewFei();
-                      navigate(`/app/tableau-de-bord/fei/${newFei.numero}`);
+                      navigate(`/app/circuit-court/fei/${newFei.numero}`);
                     }}
                   >
                     Créer une fiche
@@ -890,7 +755,7 @@ function FeisTableRow({
     <tr
       key={fei.numero}
       className={`cursor-pointer border-b border-gray-200 hover:bg-gray-50 ${isSelected ? 'bg-blue-50' : ''}`}
-      onClick={() => navigate(`/app/tableau-de-bord/fei/${fei.numero}`)}
+      onClick={() => navigate(`/app/circuit-court/fei/${fei.numero}`)}
     >
       <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
         <div className="flex h-full items-center justify-center">

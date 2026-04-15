@@ -207,7 +207,7 @@ export async function formatAutomaticClosingEmail(
   return [object, email.filter(Boolean).join('\n\n')];
 }
 
-export async function formatManualValidationSviEmail(
+export async function formatManualValidationSviChasseurEmail(
   fei: Fei,
   carcasses: Carcasse[],
 ): Promise<[string, string]> {
@@ -240,7 +240,7 @@ export async function formatManualValidationSviEmail(
     `Bilan de cette fiche:`,
     `- ${numberOfValidatedCarcasses} carcasses ont été acceptées`,
     `- ${numberOfRefusedCarcasses} carcasses ont été refusées`,
-    `Pour consulter le détail de la fiche, rendez-vous sur Zacharie : https://zacharie.beta.gouv.fr/app/tableau-de-bord/fei/${fei.numero}`,
+    `Pour consulter le détail de la fiche, rendez-vous sur Zacharie : https://zacharie.beta.gouv.fr/app/chasseur/fei/${fei.numero}`,
     `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur des saisies ou refus, merci de contacter l’établissement qui a traité votre fiche.`,
   ];
 
@@ -279,7 +279,7 @@ export async function formatSviAssignedEmail(fei: Fei): Promise<[string, string]
           } (${carcasse.numero_bracelet})`,
       )
       .join('\n'),
-    `Pour consulter la fiche, rendez-vous sur Zacharie : https://zacharie.beta.gouv.fr/app/tableau-de-bord/fei/${fei.numero}`,
+    `Pour consulter la fiche, rendez-vous sur Zacharie : https://zacharie.beta.gouv.fr/app/svi/fei/${fei.numero}`,
     `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur l'attribution de cette fiche, merci de contacter l’établissement qui a traité votre fiche.`,
   ];
   const object = `L’établissement ${currentEntity?.nom_d_usage} vous a transmis une fiche comprenant ${feiCarcasses.length} carcasses (ou lots) à inspecter:`;

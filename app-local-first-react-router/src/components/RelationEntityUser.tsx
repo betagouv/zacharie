@@ -148,7 +148,7 @@ export default function RelationEntityUser({
         )}
       </div>
       <div className="flex flex-row gap-2 pr-4">
-        {enableUsersView && (
+        {enableUsersView && user.activated && (
           <div className="flex flex-col gap-2 py-4">
             <Button
               type="button"
@@ -216,7 +216,7 @@ export default function RelationEntityUser({
           </div>
         )}
       </div>
-      {enableUsersView && (
+      {enableUsersView && user.activated && (
         <entityUsersModal.Component
           size="large"
           title={`${entity.nom_d_usage} - Liste des utilisateurs`}
