@@ -14,7 +14,7 @@ export default function SviDeactivated() {
   }, []);
 
   return (
-    <RootDisplay hideMinistereName navigation={navigation} id="svi-layout-not-activated">
+    <RootDisplay hideMinistereName navigation={navigation} id="svi-layout-not-activated" mainLink="/app/svi">
       <main
         role="main"
         id="content"

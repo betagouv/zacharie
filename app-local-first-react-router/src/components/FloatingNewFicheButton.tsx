@@ -10,8 +10,9 @@ const HIDDEN_PATH_PREFIXES = [
   '/app/chasseur/fei/',
   '/app/chasseur/carcasse/',
   '/app/chasseur/onboarding/',
-  '/app/tableau-de-bord/carcasse-svi/',
+  '/app/chasseur/carcasse-svi/',
   '/app/etg/carcasse-svi/',
+  '/app/collecteur/carcasse-svi/',
 ];
 
 export default function FloatingNewFicheButton() {

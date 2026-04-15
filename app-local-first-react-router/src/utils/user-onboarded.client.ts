@@ -13,6 +13,12 @@ export function getUserOnboardingRoute(user: User): string {
     }
     return '/app/etg/onboarding/coordonnees';
   }
+  if (user.roles.includes(UserRoles.COLLECTEUR_PRO)) {
+    if (user.onboarded_at) {
+      return '/app/collecteur';
+    }
+    return '/app/collecteur/onboarding/coordonnees';
+  }
   if (user.roles.includes(UserRoles.SVI)) {
     if (user.onboarded_at) {
       return '/app/svi';

@@ -38,7 +38,7 @@ export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifie
     ? {
         type: 'button' as const,
         onClick: () => {
-          navigate(`/app/tableau-de-bord/carcasse-svi/${fei.numero}/${carcasse.zacharie_carcasse_id}`);
+          navigate(`/app/svi/carcasse-svi/${fei.numero}/${carcasse.zacharie_carcasse_id}`);
         },
       }
     : {};

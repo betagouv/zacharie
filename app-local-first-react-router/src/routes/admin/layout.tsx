@@ -1,6 +1,6 @@
 import RootDisplay from '@app/components/RootDisplay';
 import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
-import useLoggedInNavigationMenu from '@app/utils/get-navigation-menu';
+import { UserRoles } from '@prisma/client';
 import { Link, Navigate, Outlet, useLocation } from 'react-router';
 
 const adminLinks = [
@@ -19,13 +19,25 @@ const adminLinks = [
 export default function AdminLayout() {
   const location = useLocation();
   const user = useMostFreshUser('RouterAdmin');
-  const generalNavigation = useLoggedInNavigationMenu();
   if (!user?.isZacharieAdmin) {
     return <Navigate to="/app/connexion" />;
   }
+  let mainLink = '/app/tableau-de-bord';
+  if (user.roles.includes(UserRoles.CHASSEUR)) {
+    mainLink = '/app/chasseur';
+  }
+  if (user.roles.includes(UserRoles.SVI)) {
+    mainLink = '/app/svi';
+  }
+  if (user.roles.includes(UserRoles.ETG)) {
+    mainLink = '/app/etg';
+  }
+  if (user.roles.includes(UserRoles.COLLECTEUR_PRO)) {
+    mainLink = '/app/collecteur';
+  }
 
   return (
-    <RootDisplay id="admin-layout" navigation={generalNavigation}>
+    <RootDisplay id="admin-layout" mainLink={mainLink}>
       <div className="flex">
         <nav className="sticky top-0 max-h-screen min-h-screen shrink-0 self-start overflow-y-auto border-r border-gray-200 bg-white py-2">
           <ul className="m-0 mt-2 list-none px-2">

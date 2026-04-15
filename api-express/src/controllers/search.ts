@@ -67,7 +67,7 @@ async function handleSviSearch(searchQuery: string, userId: string): Promise<Sea
       ok: true,
       data: carcasses.map((carcasse) => ({
         searchQuery,
-        redirectUrl: `/app/tableau-de-bord/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`,
+        redirectUrl: `/app/svi/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`,
         carcasse_numero_bracelet: carcasse.numero_bracelet,
         carcasse_espece: carcasse.espece || '',
         carcasse_type: carcasse.type,
@@ -120,7 +120,7 @@ async function handleSviSearch(searchQuery: string, userId: string): Promise<Sea
         ok: true,
         data: foundCarcasses.map((carcasse) => ({
           searchQuery,
-          redirectUrl: `/app/tableau-de-bord/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`,
+          redirectUrl: `/app/svi/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`,
           carcasse_numero_bracelet: carcasse.numero_bracelet,
           carcasse_espece: carcasse.espece || '',
           carcasse_type: carcasse.type,

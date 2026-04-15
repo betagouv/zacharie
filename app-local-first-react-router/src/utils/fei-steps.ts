@@ -230,7 +230,7 @@ export function computeFeiSteps({
             }
             if (
               currentStepLabel !== 'Fiche envoyée, pas encore traitée' &&
-              currentStepLabel !== 'Transport'
+              !currentStepLabel.includes('Transport')
             ) {
               return 'En cours';
             }

@@ -1,24 +1,22 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router';
-import { EntityTypes, Prisma, User, UserEtgRoles } from '@prisma/client';
+import { EntityTypes, Prisma, User } from '@prisma/client';
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
-import { Stepper } from '@codegouvfr/react-dsfr/Stepper';
 import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
-import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
 import type { EntitiesWorkingForResponse, UserConnexionResponse } from '@api/src/types/responses';
 import type { EntitiesById } from '@api/src/types/entity';
 import useUser from '@app/zustand/user';
 import API from '@app/services/api';
 import ListAndSelectEntities from '@app/components/ListAndSelectEntities';
 
-export default function EtgOnboardingEntreprise() {
+export default function CollecteurProfilEntreprise() {
   const user = useUser((state) => state.user)!;
   const [allEntitiesById, setAllEntitiesById] = useState<EntitiesById>({});
   const [userEntitiesById, setUserEntitiesById] = useState<EntitiesById>({});
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const etgsDone = Object.keys(userEntitiesById).length > 0;
+  const collecteursDone = Object.keys(userEntitiesById).length > 0;
 
   const [visibilityChecked, setVisibilityChecked] = useState(user.user_entities_vivible_checkbox === true);
 
@@ -29,8 +27,8 @@ export default function EtgOnboardingEntreprise() {
       .then((res) => res as EntitiesWorkingForResponse)
       .then((res) => {
         if (res.ok) {
-          setAllEntitiesById(res.data.allEntitiesByTypeAndId[EntityTypes.ETG]);
-          setUserEntitiesById(res.data.userEntitiesByTypeAndId[EntityTypes.ETG]);
+          setAllEntitiesById(res.data.allEntitiesByTypeAndId[EntityTypes.COLLECTEUR_PRO]);
+          setUserEntitiesById(res.data.userEntitiesByTypeAndId[EntityTypes.COLLECTEUR_PRO]);
         }
       });
   }, [refreshKey]);
@@ -60,7 +58,6 @@ export default function EtgOnboardingEntreprise() {
       <div className="fr-container fr-container--fluid fr-my-md-14v">
         <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
           <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
-            <Stepper currentStep={2} stepCount={2} title="Entreprise" />
             <h1 className="fr-h2 fr-mb-2w">Renseignez votre entreprise</h1>
             <CallOut title="✍️ Pour pouvoir remplir les fiches qui lui sont attribuées" className="bg-white">
               Quelle est votre entreprise ?
@@ -68,65 +65,15 @@ export default function EtgOnboardingEntreprise() {
               Lorsqu'une fiche lui sera attribuée, vous pourrez la prendre en charge.
             </CallOut>
             <ListAndSelectEntities
-              formId="onboarding-etape-2-etg-data"
+              formId="onboarding-etape-2-collecteur-data"
               setRefreshKey={setRefreshKey}
               refreshKey={refreshKey}
-              sectionLabel="Mon Établissement de Traitement du Gibier sauvage (ETG)"
-              selectLabel={!etgsDone ? 'Sélectionnez un ETG' : ''}
-              canChange={!etgsDone}
+              sectionLabel="Mon Collecteur Professionnel Indépendant"
+              selectLabel={!collecteursDone ? 'Sélectionnez un Collecteur Professionnel' : ''}
+              canChange={!collecteursDone}
               allEntitiesById={allEntitiesById}
               userEntitiesById={userEntitiesById}
-            >
-              {etgsDone && (
-                <form
-                  id="etg_roles_form"
-                  className="mt-8 px-4"
-                  onChange={async (e) => {
-                    e.preventDefault();
-                    const formData = new FormData(e.currentTarget);
-                    const etgRole = formData.get(Prisma.UserScalarFieldEnum.etg_role) as UserEtgRoles;
-                    const body: Partial<User> = { etg_role: etgRole as UserEtgRoles };
-                    const response = await API.post({
-                      path: `/user/${user.id}`,
-                      body,
-                    }).then((data) => data as UserConnexionResponse);
-                    if (response.ok && response.data?.user?.id) {
-                      useUser.setState({ user: response.data.user });
-                    }
-                  }}
-                  onSubmit={(e) => e.preventDefault()}
-                >
-                  <RadioButtons
-                    legend="Que faites-vous au sein de votre ETG ?"
-                    key={user.etg_role}
-                    options={[
-                      {
-                        label: 'Transport des carcasses uniquement',
-                        hintText:
-                          'Si vous cochez cette case, les futures fiches seront automatiquement réassignées à votre entreprise pour la réception ultérieure',
-                        nativeInputProps: {
-                          name: Prisma.UserScalarFieldEnum.etg_role,
-                          value: UserEtgRoles.TRANSPORT,
-                          defaultChecked: user.etg_role === UserEtgRoles.TRANSPORT,
-                          form: 'etg_roles_form',
-                        },
-                      },
-                      {
-                        label: 'Réception des carcasses et gestion de la logistique',
-                        hintText:
-                          'En cochant cette case, vous pourrez réceptionner les carcasses, et vous pourrez aussi préciser le cas échéant que votre entreprise a également transporté les carcasses vers votre entreprise.',
-                        nativeInputProps: {
-                          name: Prisma.UserScalarFieldEnum.etg_role,
-                          value: UserEtgRoles.RECEPTION,
-                          defaultChecked: user.etg_role === UserEtgRoles.RECEPTION || !user.etg_role,
-                          form: 'etg_roles_form',
-                        },
-                      },
-                    ]}
-                  />
-                </form>
-              )}
-            </ListAndSelectEntities>
+            />
             <div className="mb-6 bg-white md:shadow-sm">
               <div className="p-4 md:p-8">
                 <form
@@ -169,14 +116,14 @@ export default function EtgOnboardingEntreprise() {
                       type: 'button',
                       nativeButtonProps: {
                         onClick: () => {
-                          navigate('/app/etg');
+                          navigate('/app/collecteur');
                         },
                       },
                     },
                     {
                       children: 'Modifier mes coordonnées',
                       linkProps: {
-                        to: '/app/etg/onboarding/coordonnees',
+                        to: '/app/collecteur/onboarding/coordonnees',
                         href: '#',
                       },
                       priority: 'secondary',
