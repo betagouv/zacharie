@@ -5,6 +5,7 @@ import Connexion from '.';
 import CreationDeCompte from './creation-de-compte';
 import MotDePasseOublie from './mot-de-passe-oublie';
 import ResetMotDePasse from './reset-mot-de-passe';
+import Invitation from './invitation';
 
 export default function RouterConnexion() {
   const landingPageNavigationMenu = useLandingPageNavigationMenu();
@@ -19,6 +20,7 @@ export default function RouterConnexion() {
     >
       <Route index element={<Connexion />} />
       <Route path="creation-de-compte" element={<CreationDeCompte />} />
+      <Route path="invitation" element={<Invitation />} />
       <Route path="mot-de-passe-oublie" element={<MotDePasseOublie />} />
       <Route path="reset-mot-de-passe" element={<ResetMotDePasse />} />
     </Route>

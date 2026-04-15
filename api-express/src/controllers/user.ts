@@ -63,6 +63,13 @@ const signupSchema = z.object({
   passwordUser: z.string().min(12, 'Le mot de passe doit contenir au moins 12 caractères'),
 });
 
+const signupWithInvitationTokenSchema = z.object({
+  email: z.string().email('Email invalide'),
+  username: z.string().optional(),
+  passwordUser: z.string().min(12, 'Le mot de passe doit contenir au moins 12 caractères'),
+  invitationToken: z.string().optional(),
+});
+
 const forgetPasswordSchema = z.object({
   email: z.string().email('Email invalide'),
   username: z.string().optional(),
@@ -225,6 +232,7 @@ router.post(
       }
 
       let user = await prisma.user.findUnique({ where: { email } });
+
       if (user) {
         res.status(400).send({
           ok: false,
@@ -254,6 +262,140 @@ router.post(
       const hashedPassword = await hashPassword(passwordUser);
       await prisma.password.create({
         data: { user_id: user.id, password: hashedPassword },
+      });
+
+      const token = jwt.sign({ userId: user.id }, SECRET, {
+        expiresIn: JWT_MAX_AGE,
+      });
+      res.cookie(
+        'zacharie_express_jwt',
+        token,
+        cookieOptions(req.headers.host.includes('localhost') ? true : false),
+      );
+      res.status(200).send({ ok: true, data: { user }, message: '', error: '' });
+    },
+  ),
+);
+
+// Route: POST /user/signup - Création de compte
+router.post(
+  '/signup-with-invitation-token',
+  catchErrors(
+    async (
+      req: express.Request,
+      res: express.Response<UserConnexionResponse>,
+      next: express.NextFunction,
+    ) => {
+      let result = signupWithInvitationTokenSchema.safeParse(req.body);
+      if (!result.success) {
+        res.status(406).send({
+          ok: false,
+          data: { user: null },
+          message: '',
+          error: result.error.errors[0].message,
+        });
+        return;
+      }
+      let { email, username, passwordUser, invitationToken } = result.data;
+
+      email = email.toLowerCase().trim();
+      if (username) {
+        capture(new Error('Spam detected'), {
+          extra: { email, message: 'Spam detected' },
+        });
+        // honey pot
+        res.status(200).send({ ok: true, data: null, message: null, error: null });
+        return;
+      }
+      if (!email) {
+        res.status(400).send({
+          ok: false,
+          data: { user: null },
+          message: '',
+          error: 'Veuillez renseigner votre email',
+        });
+        return;
+      }
+      if (!passwordUser) {
+        res.status(400).send({
+          ok: false,
+          data: { user: null },
+          message: '',
+          error: 'Veuillez renseigner votre mot de passe',
+        });
+        return;
+      }
+      if (!invitationToken) {
+        res.status(400).send({
+          ok: false,
+          data: { user: null },
+          message: '',
+          error: "Le token d'invitation est requis",
+        });
+        return;
+      }
+
+      let user = await prisma.user.findUnique({ where: { email } });
+
+      if (!user) {
+        res.status(400).send({
+          ok: false,
+          data: { user: null },
+          message: '',
+          error: "L'invitation liée à cet email n'est pas valide",
+        });
+        return;
+      }
+
+      const existingPassword = await prisma.password.findFirst({
+        where: { user_id: user?.id },
+      });
+      if (!existingPassword) {
+        res.status(400).send({
+          ok: false,
+          data: { user: null },
+          message: '',
+          error: "L'invitation liée à cet email n'est pas valide",
+        });
+        return;
+      }
+      const isOk = existingPassword.reset_password_token === invitationToken;
+      if (!isOk) {
+        res.status(400).send({
+          ok: false,
+          data: { user: null },
+          message: '',
+          error: "L'invitation liée à cet email n'est pas valide",
+        });
+        return;
+      }
+      const delay = dayjs().diff(existingPassword.reset_password_last_email_sent_at, 'days');
+      if (delay > 7) {
+        await prisma.password.delete({
+          where: { id: existingPassword.id },
+        });
+        await prisma.entityAndUserRelations.deleteMany({
+          where: {
+            owner_id: user.id,
+            relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+          },
+        });
+        res.status(400).send({
+          ok: false,
+          data: { user: null },
+          message: '',
+          error:
+            "L'invitation liée à cet email n'est plus valide, veuillez en demander une nouvelle à votre entreprise",
+        });
+        return;
+      }
+      await prisma.password.update({
+        where: { id: existingPassword.id },
+        data: {
+          reset_password_token: null,
+          reset_password_last_email_sent_at: null,
+          password: await hashPassword(passwordUser),
+        },
       });
 
       const token = jwt.sign({ userId: user.id }, SECRET, {
@@ -777,6 +919,27 @@ router.post(
           prefilled: false,
         },
       });
+      await createBrevoContact(newUser, 'USER');
+    }
+    let url = 'https://zacharie.beta.gouv.fr/app/connexion';
+    let password = await prisma.password.findUnique({
+      where: {
+        user_id: newUser.id,
+      },
+    });
+    if (!password) {
+      const token = crypto.randomUUID();
+      password = await prisma.password.create({
+        data: {
+          user_id: newUser.id,
+          password: '',
+          reset_password_token: token,
+          reset_password_last_email_sent_at: new Date(),
+        },
+      });
+      url = `https://zacharie.beta.gouv.fr/app/connexion/invitation?invitation-token=${token}&email=${encodeURIComponent(
+        email,
+      )}`;
     }
     const existingRelation = await prisma.entityAndUserRelations.findFirst({
       where: {
@@ -797,7 +960,7 @@ router.post(
       });
       const invitationEmail = [
         `Bonjour,`,
-        `Votre compte Zacharie a été créé, vous pouvez désormais accéder à l'application en cliquant sur le lien suivant: https://zacharie.beta.gouv.fr/app/connexion.`,
+        `Votre compte Zacharie a été créé, vous pouvez désormais accéder à l'application en cliquant sur le lien suivant: ${url}.`,
         `N’hésitez pas à nous contacter si besoin,`,
         `L’équipe Zacharie`,
         `Ce message a été généré automatiquement par l’application Zacharie. Si c'est une erreur, veuillez ignorer ce message.`,

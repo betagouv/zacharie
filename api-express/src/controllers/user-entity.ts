@@ -394,6 +394,19 @@ router.delete(
         if (existingEntityRelation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
           await unlinkBrevoCompanyToContact(entity, req.user);
         }
+        const user = await prisma.user.findFirst({
+          where: {
+            id: body.owner_id,
+          },
+        });
+        if (user && !user.last_login_at) {
+          // user was wrongly invited, we need to delete him
+          await prisma.user.delete({
+            where: {
+              id: body.owner_id,
+            },
+          });
+        }
       }
 
       res.status(200).send({ ok: true, data: { relation: null, entity: null }, error: '' });
