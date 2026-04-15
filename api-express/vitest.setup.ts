@@ -24,7 +24,9 @@ vi.mock('./src/prisma', () => ({
     },
     user: {
       findUnique: vi.fn(),
+      findFirst: vi.fn(),
       update: vi.fn(),
+      delete: vi.fn(),
     },
     entity: {
       findFirst: vi.fn(),
