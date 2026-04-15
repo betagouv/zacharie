@@ -14,7 +14,12 @@ export default function DeactivatedAccount() {
   }, []);
 
   return (
-    <RootDisplay hideMinistereName navigation={navigation} id="chasseur-layout-not-activated">
+    <RootDisplay
+      hideMinistereName
+      navigation={navigation}
+      id="chasseur-layout-not-activated"
+      mainLink="/app/tableau-de-bord"
+    >
       <main
         role="main"
         id="content"

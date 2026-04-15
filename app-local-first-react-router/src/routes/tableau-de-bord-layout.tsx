@@ -40,6 +40,7 @@ export default function TableauDeBordLayout({ navigation }: { navigation: MainNa
         hideMinistereName
         id="tableau-de-bord-layout-activated"
         contactLink="/app/contact"
+        mainLink="/app/tableau-de-bord"
       >
         <main
           role="main"

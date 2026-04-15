@@ -5,9 +5,9 @@ import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { useEffect } from 'react';
 import { hasAllRequiredFields } from '@app/utils/user';
 
-export default function ChasseurDeactivated() {
+export default function CollecteurDeactivated() {
   const navigation = useLoggedInNavigationMenu();
-  const user = useMostFreshUser('ChasseurDeactivated');
+  const user = useMostFreshUser('CollecteurDeactivated');
   const isProfileCompleted = hasAllRequiredFields(user!);
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -17,8 +17,8 @@ export default function ChasseurDeactivated() {
     <RootDisplay
       hideMinistereName
       navigation={navigation}
-      id="chasseur-layout-not-activated"
-      mainLink="/app/chasseur"
+      id="collecteur-layout-not-activated"
+      mainLink="/app/collecteur"
     >
       <main
         role="main"
@@ -35,11 +35,7 @@ export default function ChasseurDeactivated() {
               <div className="mb-6 bg-white md:shadow-sm">
                 <div className="p-4 md:p-8">
                   <h1 className="fr-h2 fr-mb-2w">
-                    {isProfileCompleted ? (
-                      <>Merci pour votre inscription à Zacharie&nbsp;!</>
-                    ) : (
-                      <>Pour créer une fiche, compléter votre profil.</>
-                    )}
+                    <>Merci pour votre inscription à Zacharie&nbsp;!</>
                   </h1>
                   {isProfileCompleted ? (
                     <p className="fr-text--sm fr-mb-3w">
@@ -55,7 +51,7 @@ export default function ChasseurDeactivated() {
                       </p>
                       <ul className="fr-btns-group fr-btns-group--inline-md fr-mb-3w">
                         <li>
-                          <Link className="fr-btn" to="/app/chasseur/onboarding/mes-coordonnees">
+                          <Link className="fr-btn" to="/app/collecteur/profil/coordonnees">
                             Compléter votre profil
                           </Link>
                         </li>

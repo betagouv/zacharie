@@ -31,6 +31,8 @@ const createMockUser = (roles: UserRoles[], numero_cfei: string | null = null): 
   ville: null,
   user_entities_vivible_checkbox: null,
   roles,
+  role: null,
+  isZacharieAdmin: false,
   etg_role: UserEtgRoles.RECEPTION,
   created_at: new Date(),
   updated_at: new Date(),
@@ -693,7 +695,7 @@ describe('computeFeiSteps', () => {
 
         expect(result.currentStepLabel).toBe('Transport vers un établissement de traitement');
         // Should follow existing logic, not the new early return
-        expect(result.simpleStatus).toBe('En cours');
+        expect(result.simpleStatus).toBe('À compléter');
       });
     });
 

@@ -22,10 +22,10 @@ import Stats from './routes/stats';
 import Contact from './routes/contact';
 import Faq from './routes/faq';
 
-
 import RouterConnexion from './routes/connexion/connexion-router';
 import RouterSvi from './routes/svi/svi-router';
 import RouterChasseur from './routes/chasseur/chasseur-router';
+import RouterCollecteur from './routes/collecteur/collecteur-router';
 import RouterEtg from './routes/etg/etg-router';
 import RouterTableauDeBord from './routes/tableau-de-bord/tableau-de-bord-router';
 import RouterAdmin from './routes/admin/admin-router';
@@ -56,7 +56,7 @@ function App() {
         <Route
           path="/"
           element={
-            <RootDisplay id="landing" navigation={landingPageNavigationMenu}>
+            <RootDisplay id="landing" navigation={landingPageNavigationMenu} mainLink="/app/tableau-de-bord">
               <Outlet />
             </RootDisplay>
           }
@@ -78,13 +78,14 @@ function App() {
           {RouterConnexion()}
           {RouterChasseur()}
           {RouterEtg()}
+          {RouterCollecteur()}
           {RouterTableauDeBord({ navigation: generalNavigation })}
           {RouterSvi()}
           {RouterAdmin()}
           <Route
             path="contact"
             element={
-              <RootDisplay id="contact" navigation={generalNavigation}>
+              <RootDisplay id="contact" navigation={generalNavigation} mainLink="/app/tableau-de-bord">
                 <Contact />
               </RootDisplay>
             }
@@ -104,7 +105,7 @@ function AppLayout() {
   const _hasHydrated = useZustandStore((state) => state._hasHydrated);
   if (!_hasHydrated) {
     return (
-      <RootDisplay id="app-layout" navigation={generalNavigation}>
+      <RootDisplay id="app-layout" navigation={generalNavigation} mainLink="/app/tableau-de-bord">
         <Chargement />
       </RootDisplay>
     );

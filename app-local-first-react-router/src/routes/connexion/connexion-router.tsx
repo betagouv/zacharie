@@ -12,7 +12,7 @@ export default function RouterConnexion() {
     <Route
       path="connexion"
       element={
-        <RootDisplay id="connexion" navigation={landingPageNavigationMenu}>
+        <RootDisplay id="connexion" navigation={landingPageNavigationMenu} mainLink="/app/tableau-de-bord">
           <Outlet />
         </RootDisplay>
       }
