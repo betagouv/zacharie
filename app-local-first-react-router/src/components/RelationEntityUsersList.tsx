@@ -76,6 +76,7 @@ export default function RelationEntityUsersList({
           <RelationEntityUser
             key={otherUserRelation.id}
             entity={entity}
+            relationType={otherUserRelation.relation}
             user={otherUserRelation.UserRelatedWithEntity as User}
             enableUsersView={false}
             displayEntity={false}
