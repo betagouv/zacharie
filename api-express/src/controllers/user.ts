@@ -797,7 +797,7 @@ router.post(
       });
       const invitationEmail = [
         `Bonjour,`,
-        `Votre compte Zacharie a été créé, vous pouvez désormais accéder à l'application en cliquant sur le lien suivant: https://zacharie.beta.gouv.fr/app/connexion?type=compte-existant.`,
+        `Votre compte Zacharie a été créé, vous pouvez désormais accéder à l'application en cliquant sur le lien suivant: https://zacharie.beta.gouv.fr/app/connexion.`,
         `N’hésitez pas à nous contacter si besoin,`,
         `L’équipe Zacharie`,
         `Ce message a été généré automatiquement par l’application Zacharie. Si c'est une erreur, veuillez ignorer ce message.`,
@@ -1081,7 +1081,7 @@ ${
       if (savedUser.activated && !user.activated) {
         const email = [
           `Bonjour,`,
-          `Votre compte Zacharie a été activé, vous pouvez désormais accéder à l'application en cliquant sur le lien suivant: https://zacharie.beta.gouv.fr/app/connexion?type=compte-existant`,
+          `Votre compte Zacharie a été activé, vous pouvez désormais accéder à l'application en cliquant sur le lien suivant: https://zacharie.beta.gouv.fr/app/connexion`,
           "Attention : pour l'instant, seuls certains collecteurs et ateliers de traitement du gibier acceptent des fiches en format numérique. En cas de doute, merci de contacter le destinataire de vos carcasses avant de créer votre première fiche numérique.",
           // "Des manuels d'utilisation de Zacharie sont disponibles en cliquant ici.",
           `N’hésitez pas à nous contacter,`,
