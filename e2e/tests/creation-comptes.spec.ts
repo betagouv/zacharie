@@ -83,8 +83,6 @@ test("Création de compte collecteur pro", async ({ page }) => {
     )
     .click();
   await page.getByRole("button", { name: "Enregistrer et continuer" }).click();
-  await expect(page.locator("#user_roles_form")).toMatchAriaSnapshot(`- heading "Activez les notifications" [level=1]`);
-  await page.getByRole("button", { name: "Continuer" }).click();
   await expect(page.getByText("Pas encore de fiches cette saison")).toBeVisible();
 });
 
