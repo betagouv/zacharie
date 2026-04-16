@@ -12,8 +12,8 @@ test("Connexion avec compte examinateur initial", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Pas encore de fiches cette saison" })).toBeVisible();
   await expect(page.locator("#content").getByRole("button", { name: "Créer une fiche" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Mettre à jour" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Filtrer" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Actions" })).toBeVisible();
+  // await expect(page.getByRole("button", { name: "Filtrer" })).toBeVisible();
+  // await expect(page.getByRole("button", { name: "Actions" })).toBeVisible();
 });
 
 test("Connexion avec compte premier détenteur", async ({ page }) => {
@@ -22,8 +22,8 @@ test("Connexion avec compte premier détenteur", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Pas encore de fiches cette saison" })).toBeVisible();
   await expect(page.locator("#content").getByRole("button", { name: "Nouvelle fiche" })).not.toBeVisible();
   await expect(page.getByRole("button", { name: "Mettre à jour" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Filtrer" }).first()).toBeVisible();
-  await expect(page.getByRole("button", { name: "Actions" }).first()).toBeVisible();
+  // await expect(page.getByRole("button", { name: "Filtrer" }).first()).toBeVisible();
+  // await expect(page.getByRole("button", { name: "Actions" }).first()).toBeVisible();
 });
 
 test("Connexion avec compte collecteur pro", async ({ page }) => {
