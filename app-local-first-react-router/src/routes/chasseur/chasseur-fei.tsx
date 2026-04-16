@@ -378,7 +378,6 @@ function FEIChasseurLoaded() {
                     canEdit && !fei.date_mise_a_mort ? (
                       <>
                         {[
-                          dayjs.utc().add(-1, 'day').startOf('day').toDate(),
                           dayjs.utc().startOf('day').toDate(),
                         ].map((date) => (
                           <button
@@ -679,20 +678,6 @@ function FEIChasseurLoaded() {
                         </ul>
                       }
                     />
-                  )}
-                  {canEdit && !carcassesDejaEnvoyees.length && (
-                    <div className="mt-6">
-                      <Button
-                        priority="secondary"
-                        type="button"
-                        onClick={async () => {
-                          await syncData('brouillon');
-                          toast.success('Brouillon enregistré');
-                        }}
-                      >
-                        Enregistrer comme brouillon
-                      </Button>
-                    </div>
                   )}
                 </div>
               )}
