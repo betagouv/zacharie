@@ -83,10 +83,7 @@ export async function saveCarcasse(
             owner_id: user.id,
             entity_id: { in: feiEntityIds },
             relation: {
-              in: [
-                EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-                EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-              ],
+              in: [EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY],
             },
             status: { in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER] },
           },
