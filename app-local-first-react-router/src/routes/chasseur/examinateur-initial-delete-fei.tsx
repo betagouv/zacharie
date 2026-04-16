@@ -25,7 +25,7 @@ export default function ExaminateurInitialDeleteFei() {
   return (
     <ConfirmModal
       title="Voulez-vous vraiment supprimer la fiche ?"
-      buttonText="Supprimer la fiche"
+      buttonText="Supprimer"
       textToConfirm="SUPPRIMER LA FICHE"
       className="border-0.5 border-gray-200 text-red-500! hover:bg-red-100! bg-white"
       onConfirm={() => {
