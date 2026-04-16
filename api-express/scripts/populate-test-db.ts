@@ -239,6 +239,53 @@ Christine
         activated: true,
         activated_at: dayjs().toDate(),
       },
+      {
+        id: await createUserId(),
+        email: 'examinateur-onboarding@example.fr',
+        roles: [UserRoles.CHASSEUR],
+        activated: true,
+        activated_at: dayjs().toDate(),
+        // Intentionally no prenom, nom, address, telephone, est_forme_a_l_examen_initial
+        // Used by specs 9/10 to test onboarding-incomplete gate
+      },
+      {
+        id: await createUserId(),
+        email: 'examinateur-sans-formation@example.fr',
+        roles: [UserRoles.CHASSEUR],
+        activated: true,
+        activated_at: dayjs().toDate(),
+        prenom: 'Anne',
+        nom_de_famille: 'Lefebvre',
+        addresse_ligne_1: '11 rue de la paix',
+        code_postal: '75000',
+        ville: 'Paris',
+        telephone: '0606060609',
+        // est_forme_a_l_examen_initial is null (default)
+        // Used by spec 11: profile complete but formation missing
+      },
+      {
+        id: await createUserId(),
+        email: 'premier-detenteur-onboarding@example.fr',
+        roles: [UserRoles.CHASSEUR],
+        activated: true,
+        activated_at: dayjs().toDate(),
+        est_forme_a_l_examen_initial: false,
+        // No prenom, nom, address — used by spec 31
+      },
+      {
+        id: await createUserId(),
+        email: 'svi-2@example.fr',
+        roles: [UserRoles.SVI],
+        activated: true,
+        activated_at: dayjs().toDate(),
+        prenom: 'François',
+        nom_de_famille: 'Garcia',
+        addresse_ligne_1: '12 rue de la paix',
+        code_postal: '75000',
+        ville: 'Paris',
+        telephone: '0606060610',
+        onboarded_at: dayjs().toDate(),
+      },
     ],
   });
 
@@ -466,6 +513,12 @@ Christine
         relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
         status: EntityRelationStatus.MEMBER,
       },
+      {
+        owner_id: users.find((user) => user.email === 'svi-2@example.fr')?.id,
+        entity_id: entities.find((entity) => entity.raison_sociale === 'SVI 2')?.id,
+        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        status: EntityRelationStatus.ADMIN,
+      },
     ],
   });
   console.log('Entity and user relations created for test', entityAndUserRelations.count);
@@ -514,6 +567,18 @@ Christine
       const fei = await prisma.fei.create({ data: feiClosedBySvi });
       const carcasses = await prisma.carcasse.createMany({ data: getCarcasses(fei) });
       console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (SVI closed)`);
+    }
+    if ((role as string) === 'ETG_REFUSED') {
+      const fei = await prisma.fei.create({ data: feiRefusedByEtg });
+      const carcasses = await prisma.carcasse.createMany({
+        data: getCarcasses(fei).map((c) => ({
+          ...c,
+          intermediaire_carcasse_refus_intermediaire_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
+          intermediaire_carcasse_refus_motif: ['Présence de souillures'],
+          intermediaire_carcasse_signed_at: dayjs().subtract(1, 'day').toDate(),
+        })),
+      });
+      console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (ETG refused)`);
     }
   }
 
@@ -613,6 +678,18 @@ const feiClosedBySvi: Prisma.FeiUncheckedCreateInput = {
   svi_closed_at: dayjs().subtract(2, 'day').toDate(),
   // SVI users created via createUserId are dynamic; real closure would set svi_closed_by_user_id.
   // For fixture simplicity we leave it null; assert on svi_closed_at in tests.
+};
+
+const feiRefusedByEtg: Prisma.FeiUncheckedCreateInput = {
+  ...feiValidatedByPremierDetenteur,
+  numero: 'ZACH-20250707-QZ6E0-215242',
+  fei_current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+  fei_current_owner_user_id: '0Y545',
+  fei_current_owner_user_name_cache: 'Pierre Petit',
+  fei_prev_owner_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
+  fei_prev_owner_role: FeiOwnerRole.ETG,
+  fei_next_owner_entity_id: null,
+  fei_next_owner_role: null,
 };
 
 function getCarcasses(fei: Fei): Array<Prisma.CarcasseUncheckedCreateInput> {

@@ -13,16 +13,16 @@ test.beforeEach(async () => {
   await resetDb("EXAMINATEUR_INITIAL");
 });
 
-test("Onboarding incomplet — redirigé vers mes-coordonnees + accès fiche bloqué", async ({ page }) => {
-  // TODO: requires seed d'un user sans coordonnées. Ajouter dans populate-test-db.ts si absent.
+test("Onboarding incomplet — ChasseurDeactivated affiché, accès fiche bloqué", async ({ page }) => {
   await connectWith(page, "examinateur-onboarding@example.fr");
-  await expect(page).toHaveURL(/\/app\/chasseur\/onboarding\/mes-coordonnees/);
 
-  // Tenter d'accéder à /chasseur
+  // The gate does NOT redirect to onboarding — it shows ChasseurDeactivated on /app/chasseur
   await page.goto("http://localhost:3290/app/chasseur");
-  await expect(page).toHaveURL(/\/app\/chasseur\/onboarding/);
 
-  // Tenter d'accéder à /chasseur/fei/XYZ
+  // ChasseurDeactivated shows "compléter votre profil" when profile fields are missing
+  await expect(page.getByText(/compléter votre profil/i).first()).toBeVisible({ timeout: 10000 });
+
+  // Attempting to access a fiche still shows the deactivated content
   await page.goto("http://localhost:3290/app/chasseur/fei/ZACH-FAKE");
-  await expect(page).toHaveURL(/\/app\/chasseur\/onboarding/);
+  await expect(page.getByText(/compléter votre profil/i).first()).toBeVisible({ timeout: 10000 });
 });

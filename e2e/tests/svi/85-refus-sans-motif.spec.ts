@@ -27,6 +27,8 @@ test("85 - SVI tente d'enregistrer IPM1 MISE_EN_CONSIGNE sans motif/lésions : b
   await saveBtn.scrollIntoViewIfNeeded();
   await saveBtn.click();
 
-  // Alert d'erreur visible
-  await expect(page.getByText(/Il manque (les pièces|les lésions)/i)).toBeVisible({ timeout: 10000 });
+  // Alert d'erreur visible (IPM1 validation requires pièces or lésions)
+  await expect(
+    page.getByText(/Il manque les pièces inspectées|Il manque les lésions/i).first()
+  ).toBeVisible({ timeout: 10000 });
 });

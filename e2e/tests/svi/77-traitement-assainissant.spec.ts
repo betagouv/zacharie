@@ -10,8 +10,9 @@ test.beforeEach(async () => {
 
 /**
  * Traitement assainissant = IPM2Decision.TRAITEMENT_ASSAINISSANT.
- * Ne peut être choisi que si IPM1 n'est pas ACCEPTE (i.e. MISE_EN_CONSIGNE).
- * TODO: verify IPM2 form selectors — best-effort checks on the presence of the option.
+ * IPM2 section appears after IPM1 is saved with MISE_EN_CONSIGNE.
+ * Verify the "Traitement assainissant" radio is available and that
+ * selecting it reveals treatment checkboxes (Cuisson, Congélation, Autre).
  */
 test("77 - SVI inspection : traitement assainissant (IPM2)", async ({ page }) => {
   const feiId = "ZACH-20250707-QZ6E0-185242";
@@ -22,9 +23,41 @@ test("77 - SVI inspection : traitement assainissant (IPM2)", async ({ page }) =>
   await page.getByRole("button", { name: /Daim.*MM-001-001/ }).click();
   await expect(page).toHaveURL(/\/app\/svi\/carcasse-svi\//);
 
-  // Vérifier que la section IPM2 est visible (car IPM1 pas encore signée / pas ACCEPTE)
-  await expect(page.getByText(/Inspection Post-Mortem 2/)).toBeVisible();
+  // First complete IPM1 with MISE_EN_CONSIGNE so IPM2 appears
+  await expect(page.getByText(/Inspection Post-Mortem 1/)).toBeVisible();
+  await expect(page.getByLabel("Mise en consigne", { exact: true })).toBeChecked();
 
-  // Vérifier que l'option "Traitement assainissant" est présente dans l'IPM2
-  await expect(page.getByText(/Traitement assainissant/i).first()).toBeVisible({ timeout: 10000 });
+  // Date inspection
+  await page.getByRole("button", { name: /Cliquez ici/ }).first().click();
+
+  // Fill pièces via multi-select
+  await page.locator(".input-for-search-prefilled-data__input-container").first().click();
+  await page.getByRole("option").first().click();
+
+  // Fill lésions via multi-select
+  await page.locator(".input-for-search-prefilled-data__input-container").nth(1).click();
+  await page.getByRole("option").first().click();
+
+  // Fill durée de consigne
+  await page.getByLabel(/Durée de la consigne/).fill("24");
+  await page.getByLabel(/Durée de la consigne/).blur();
+
+  // Enregistrer IPM1
+  page.once("dialog", (d) => d.accept());
+  const saveBtn = page.getByRole("button", { name: "Enregistrer" }).first();
+  await saveBtn.scrollIntoViewIfNeeded();
+  await saveBtn.click();
+
+  // IPM2 section should now be visible
+  await expect(page.getByText(/Inspection Post-Mortem 2/)).toBeVisible({ timeout: 10000 });
+
+  // Verify "Traitement assainissant" radio option is present in IPM2
+  const traitementRadio = page.getByLabel("Traitement assainissant", { exact: true });
+  await expect(traitementRadio).toBeVisible();
+
+  // Select it and verify treatment checkboxes appear
+  await traitementRadio.check();
+  await expect(page.getByLabel("Cuisson")).toBeVisible();
+  await expect(page.getByLabel("Congélation")).toBeVisible();
+  await expect(page.getByLabel("Autre")).toBeVisible();
 });

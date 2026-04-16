@@ -38,13 +38,13 @@ test("Création fiche mixte — 3 daims + 10 pigeons", async ({ page }) => {
 
   // 10 pigeons (lot)
   await page.getByRole("button", { name: "Ajouter une autre carcasse" }).click();
-  await page.getByLabel("Espèce (grand et petit gibier)").selectOption("Pigeons"); // TODO: verify option value
-  const quantite = page.getByRole("spinbutton", { name: /Nombre|Quantité/i }).first();
+  await page.getByLabel("Espèce (grand et petit gibier)").selectOption("Pigeons");
+  const quantite = page.getByLabel(/Nombre de carcasses dans le lot/);
   await quantite.scrollIntoViewIfNeeded();
   await quantite.fill("10");
   await quantite.blur();
   await page.getByRole("button", { name: "Utiliser" }).click();
-  await page.getByRole("button", { name: "Ajouter la carcasse" }).click();
+  await page.getByRole("button", { name: "Ajouter le lot de carcasses" }).click();
 
   await page.getByRole("button", { name: "Continuer" }).click();
 

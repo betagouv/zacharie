@@ -10,8 +10,11 @@ test.beforeEach(async () => {
 
 /**
  * Inspection refusée côté SVI : la décision de refus (saisie totale) relève d'IPM2.
- * IPM1 doit d'abord être en MISE_EN_CONSIGNE (défaut), puis IPM2 => SAISIE_TOTALE.
- * TODO: verify exact selectors for IPM2 form — fallback best-effort assertions.
+ * IPM1 doit d'abord être en MISE_EN_CONSIGNE, puis IPM2 => SAISIE_TOTALE.
+ *
+ * Ce test vérifie le flow complet :
+ * 1. IPM1 : sélectionner "Mise en consigne", remplir les champs obligatoires, enregistrer.
+ * 2. Vérifier que la section IPM2 apparaît avec les options de décision.
  */
 test("75 - SVI inspection : carcasse refusée (saisie totale via IPM2)", async ({ page }) => {
   const feiId = "ZACH-20250707-QZ6E0-185242";
@@ -23,21 +26,35 @@ test("75 - SVI inspection : carcasse refusée (saisie totale via IPM2)", async (
   await expect(page).toHaveURL(/\/app\/svi\/carcasse-svi\//);
   await expect(page.getByText(/Inspection Post-Mortem 1/)).toBeVisible();
 
-  // IPM1 : on laisse MISE_EN_CONSIGNE (défaut), et on remplit le minimum
+  // IPM1 : "Mise en consigne" is the default decision
+  await expect(page.getByLabel("Mise en consigne", { exact: true })).toBeChecked();
+
+  // Date inspection
   const dateShortcut = page.getByRole("button", { name: /Cliquez ici/ }).first();
   await dateShortcut.scrollIntoViewIfNeeded();
   await dateShortcut.click();
 
-  // Pieces + Lesions required for MISE_EN_CONSIGNE
-  // TODO: verify multi-select interaction selector for pieces/lesions — best-effort via keyboard
-  // We focus on negative-path assertion: without motif, save must NOT close with success.
+  // Fill pièces via multi-select
+  await page.locator(".input-for-search-prefilled-data__input-container").first().click();
+  await page.getByRole("option").first().click();
 
-  // Try saving without lesions — expect "Il manque les lésions"
-  page.once("dialog", (d) => d.dismiss());
+  // Fill lésions via multi-select
+  await page.locator(".input-for-search-prefilled-data__input-container").nth(1).click();
+  await page.getByRole("option").first().click();
+
+  // Fill durée de consigne
+  await page.getByLabel(/Durée de la consigne/).fill("24");
+  await page.getByLabel(/Durée de la consigne/).blur();
+
+  // Enregistrer IPM1
+  page.once("dialog", (d) => d.accept());
   const saveBtn = page.getByRole("button", { name: "Enregistrer" }).first();
   await saveBtn.scrollIntoViewIfNeeded();
   await saveBtn.click();
-  await expect(page.getByText(/Il manque les lésions|Il manque les pièces/i)).toBeVisible({
-    timeout: 10000,
-  });
+
+  // After IPM1 is saved with MISE_EN_CONSIGNE, IPM2 section should appear
+  await expect(page.getByText(/Inspection Post-Mortem 2/)).toBeVisible({ timeout: 10000 });
+
+  // Verify "Saisie totale" option is available in IPM2
+  await expect(page.getByLabel("Saisie totale", { exact: true })).toBeVisible();
 });

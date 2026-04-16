@@ -13,14 +13,15 @@ test.beforeEach(async () => {
   await resetDb("PREMIER_DETENTEUR");
 });
 
-test("PD sans coordonnées → redirigé onboarding, pas d'accès aux fiches", async ({ page }) => {
-  // TODO: requires seed user PD sans coordonnées
+test("PD sans coordonnées → ChasseurDeactivated affiché, pas d'accès aux fiches", async ({ page }) => {
+  // premier-detenteur-onboarding@example.fr has no prenom/nom/address — profile incomplete
   await connectWith(page, "premier-detenteur-onboarding@example.fr");
-  await expect(page).toHaveURL(/\/app\/chasseur\/onboarding/);
 
+  // The gate shows ChasseurDeactivated instead of redirecting to onboarding
   await page.goto("http://localhost:3290/app/chasseur");
-  await expect(page).toHaveURL(/\/app\/chasseur\/onboarding/);
+  await expect(page.getByText(/compléter votre profil/i).first()).toBeVisible({ timeout: 10000 });
 
+  // Attempting to access a fiche still shows the deactivated content
   await page.goto("http://localhost:3290/app/chasseur/fei/ZACH-20250707-QZ6E0-155242");
-  await expect(page).toHaveURL(/\/app\/chasseur\/onboarding/);
+  await expect(page.getByText(/compléter votre profil/i).first()).toBeVisible({ timeout: 10000 });
 });

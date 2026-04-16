@@ -9,16 +9,13 @@ test.beforeEach(async () => {
 });
 
 /**
- * TODO: seed second SVI user for SVI 2 — actuellement non disponible dans populate-test-db.ts.
- * Sans cet utilisateur, on ne peut que vérifier qu'un SVI d'un autre département
- * (non connecté à la fiche) ne voit pas la fiche ZACH-20250707-QZ6E0-185242.
- *
- * Placeholder test : skippé jusqu'à ce que la seed soit disponible.
+ * SVI d'un autre département tente d'accéder à une fiche assignée au SVI 1.
+ * svi-2@example.fr est rattaché à "SVI 2" (un autre département).
+ * L'accès doit être refusé (redirection ou message d'erreur).
  */
-test.skip("88 - SVI d'un autre département : accès refusé à une fiche hors périmètre", async ({ page }) => {
+test("88 - SVI d'un autre département : accès refusé à une fiche hors périmètre", async ({ page }) => {
   const feiId = "ZACH-20250707-QZ6E0-185242";
-  // TODO: connectWith(page, 'svi-2@example.fr')
-  await connectWith(page, "svi@example.fr");
+  await connectWith(page, "svi-2@example.fr");
   await page.goto(`http://localhost:3290/app/svi/fei/${feiId}`);
-  await expect(page.getByText(/(Accès refusé|Fiche introuvable|NotFound)/i)).toBeVisible();
+  await expect(page.getByText(/(Accès refusé|Fiche introuvable|NotFound)/i)).toBeVisible({ timeout: 10000 });
 });

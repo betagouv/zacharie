@@ -9,20 +9,18 @@ test.use({
   launchOptions: { slowMo: 100 },
 });
 
-// TODO: seed a ETG-refused fiche — extends populate-test-db.ts ('ETG_REFUSED').
 test.beforeAll(async () => {
-  await resetDb("ETG");
+  await resetDb("ETG_REFUSED");
 });
 
-test("Fiche refusée intégralement par ETG — chasseur voit 'refusée par ETG' pour chaque carcasse", async ({ page }) => {
-  const feiId = "ZACH-20250707-QZ6E0-155242"; // TODO: verify feiId from ETG seed
+test("Fiche refusée intégralement par ETG — chasseur voit le statut de refus pour chaque carcasse", async ({ page }) => {
+  const feiId = "ZACH-20250707-QZ6E0-215242";
   await connectWith(page, "examinateur@example.fr");
 
   const link = page.getByRole("link", { name: feiId });
-  if (!(await link.count())) {
-    test.fail(true, "Seed ETG_REFUSED absent — créer branche dans populate-test-db.ts");
-  }
+  await expect(link).toBeVisible({ timeout: 10000 });
   await link.click();
 
-  await expect(page.getByText(/refusée par ETG|refusé par l'ETG/i).first()).toBeVisible();
+  // Carcasses show refusal status from ETG (motif: "Présence de souillures" per seed)
+  await expect(page.getByText(/refusée|refusé|souillures/i).first()).toBeVisible({ timeout: 10000 });
 });

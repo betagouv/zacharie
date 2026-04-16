@@ -42,7 +42,8 @@ export type SeedRole =
   | 'COLLECTEUR_PRO'
   | 'SVI'
   | 'COMMERCE_DE_DETAIL'
-  | 'SVI_CLOSED';
+  | 'SVI_CLOSED'
+  | 'ETG_REFUSED';
 
 export async function resetDb(role?: SeedRole) {
   try {

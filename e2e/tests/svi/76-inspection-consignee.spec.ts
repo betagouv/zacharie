@@ -23,9 +23,9 @@ test("76 - SVI inspection : carcasse consignée (IPM1 MISE_EN_CONSIGNE)", async 
   await expect(page).toHaveURL(/\/app\/svi\/carcasse-svi\//);
   await expect(page.getByText(/Inspection Post-Mortem 1/)).toBeVisible();
 
-  // Mise en consigne is the default decision; durée de consigne appears
+  // "Mise en consigne" is the default IPM1 decision; durée de consigne field appears
   await expect(page.getByLabel("Mise en consigne", { exact: true })).toBeChecked();
-  await expect(page.getByText(/Durée de la consigne/)).toBeVisible();
+  await expect(page.getByLabel(/Durée de la consigne/)).toBeVisible();
 
   const dateShortcut = page.getByRole("button", { name: /Cliquez ici/ }).first();
   await dateShortcut.scrollIntoViewIfNeeded();
@@ -40,5 +40,7 @@ test("76 - SVI inspection : carcasse consignée (IPM1 MISE_EN_CONSIGNE)", async 
   const saveBtn = page.getByRole("button", { name: "Enregistrer" }).first();
   await saveBtn.scrollIntoViewIfNeeded();
   await saveBtn.click();
-  await expect(page.getByText(/Il manque (les pièces|les lésions)/i)).toBeVisible({ timeout: 10000 });
+  await expect(
+    page.getByText(/Il manque les pièces inspectées|Il manque les lésions/i).first()
+  ).toBeVisible({ timeout: 10000 });
 });

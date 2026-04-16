@@ -27,25 +27,21 @@ test("Création fiche petit gibier en lot — 10 pigeons", async ({ page }) => {
   await page.getByRole("button", { name: "Continuer" }).first().click();
 
   // Bloc 2 — Lot de pigeons
-  await page.getByLabel("Espèce (grand et petit gibier)").selectOption("Pigeons"); // TODO: verify selector
+  await page.getByLabel("Espèce (grand et petit gibier)").selectOption("Pigeons");
   // Quantité du lot
-  const quantite = page.getByRole("spinbutton", { name: /Nombre|Quantité/i }).first();
+  const quantite = page.getByLabel(/Nombre de carcasses dans le lot/);
   await quantite.scrollIntoViewIfNeeded();
   await quantite.fill("10");
   await quantite.blur();
   await page.getByRole("button", { name: "Utiliser" }).click();
-  await page.getByRole("button", { name: "Ajouter la carcasse" }).click();
+  await page.getByRole("button", { name: "Ajouter le lot de carcasses" }).click();
   await page.getByRole("button", { name: "Continuer" }).click();
 
-  // Heures
+  // Heures — petit gibier only: no éviscération field
   await page
     .getByRole("textbox", { name: "Heure de mise à mort de la" })
     .fill(dayjs().startOf("day").add(1, "hour").format("HH:mm"));
   await page.getByRole("textbox", { name: "Heure de mise à mort de la" }).blur();
-  await page
-    .getByRole("textbox", { name: "Heure d'éviscération de la" })
-    .fill(dayjs().startOf("day").add(2, "hour").format("HH:mm"));
-  await page.getByRole("textbox", { name: "Heure d'éviscération de la" }).blur();
 
   await page.getByRole("button", { name: "Définir comme étant la date du jour et maintenant" }).click();
   await page.getByText("Je, Martin Marie, certifie qu").click();
