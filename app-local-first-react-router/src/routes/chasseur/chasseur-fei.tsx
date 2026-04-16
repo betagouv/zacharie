@@ -696,35 +696,35 @@ function FEIChasseurLoaded() {
                   )}
                 </div>
               )}
-              <div className="flex flex-col items-center justify-between bg-white px-8 py-3 md:flex-row">
-                <div className="flex w-full justify-between">
+              <div className="flex flex-col items-center justify-between px-4 md:px-0 py-3 md:flex-row">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 w-full grid-rows-2">
                   <Button
                     priority="tertiary"
                     iconId="fr-icon-arrow-left-line"
-                    className="bg-white"
+                    className="bg-white col-span-2 md:col-span-1"
                     linkProps={{
                       to: `/app/chasseur/`,
                     }}
                   >
                     Retour
                   </Button>
-                  <div className="hidden md:block">{canEdit && <ExaminateurInitialDeleteFei />}</div>
-
+                  <div className="text-left md:text-center">{canEdit && <ExaminateurInitialDeleteFei />}</div>
                   {canEdit && (
-                    <Button
-                      iconId="fr-icon-send-plane-line"
-                      disabled={submitIsDisabled}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleTransmettre();
-                      }}
-                    >
-                      Transmettre
-                    </Button>
+                    <div className="w-full flex justify-end">
+                      <Button
+                        iconId="fr-icon-send-plane-line"
+                        disabled={submitIsDisabled}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleTransmettre();
+                        }}
+                      >
+                        Transmettre
+                      </Button>
+                    </div>
                   )}
                 </div>
                 <span className="h-5 md:h-0" />
-                <div className="md:hidden">{canEdit && <ExaminateurInitialDeleteFei />}</div>
               </div>
             </div>
           </div>
