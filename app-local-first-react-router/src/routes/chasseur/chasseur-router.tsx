@@ -14,6 +14,7 @@ import ChasseurOnboardingExaminateurInitial from './onboarding/2-examinateur-ini
 import ChasseurCoordonnees from './profil/chasseur-coordonnees';
 import ChasseurOnboardingMesInformationsDeChasse from './onboarding/3-informations-de-chasse';
 import ChasseurCCGEdit from './profil/chasseur-ccg-edit';
+import ChasseurSviInspectionCarcasseLoader from './chasseur-svi-inspection-carcasse';
 
 export default function RouterChasseur() {
   return (
@@ -50,6 +51,10 @@ export default function RouterChasseur() {
       <Route path="fei/:fei_numero/envoyée" element={<ChasseurFeiEnvoyée />} />
       <Route path="carcasse/:fei_numero/:zacharie_carcasse_id" element={<ExaminateurCarcasseDetail />} />
       <Route path="tableau-de-bord" element={<MesChasses />} />
+      <Route
+        path="carcasse-svi/:fei_numero/:zacharie_carcasse_id"
+        element={<ChasseurSviInspectionCarcasseLoader />}
+      />
     </Route>
   );
 }

@@ -72,10 +72,12 @@ export default function RelationEntityUsersList({
         if (otherUserRelation.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY) {
           return null;
         }
+        console.log(otherUserRelation);
         return (
           <RelationEntityUser
             key={otherUserRelation.id}
             entity={entity}
+            relationType={otherUserRelation.relation}
             user={otherUserRelation.UserRelatedWithEntity as User}
             enableUsersView={false}
             displayEntity={false}

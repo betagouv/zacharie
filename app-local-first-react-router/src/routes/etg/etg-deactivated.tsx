@@ -14,7 +14,7 @@ export default function EtgDeactivated() {
   }, []);
 
   return (
-    <RootDisplay hideMinistereName navigation={navigation} id="etg-layout-not-activated">
+    <RootDisplay hideMinistereName navigation={navigation} id="etg-layout-not-activated" mainLink="/app/etg">
       <main
         role="main"
         id="content"

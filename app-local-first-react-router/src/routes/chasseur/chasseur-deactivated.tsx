@@ -14,7 +14,12 @@ export default function ChasseurDeactivated() {
   }, []);
 
   return (
-    <RootDisplay hideMinistereName navigation={navigation} id="chasseur-layout-not-activated">
+    <RootDisplay
+      hideMinistereName
+      navigation={navigation}
+      id="chasseur-layout-not-activated"
+      mainLink="/app/chasseur"
+    >
       <main
         role="main"
         id="content"

@@ -46,6 +46,7 @@ export default function EtgLayout() {
         hideMinistereName
         id="etg-layout-activated"
         contactLink="/app/etg/contact"
+        mainLink="/app/etg"
       >
         <main
           role="main"

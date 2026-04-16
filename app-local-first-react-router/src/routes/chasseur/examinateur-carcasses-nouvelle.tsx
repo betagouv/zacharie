@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useLayoutEffect, useMemo, useState } from 'react';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Prisma, type User, UserRoles } from '@prisma/client';
@@ -28,7 +28,13 @@ function getNewDefaultNumeroBracelet(user: User) {
   return `${prenom}${nom}${numeroCfei}-${prochain_bracelet_a_utiliser}`;
 }
 
-export default function NouvelleCarcasse() {
+export default function NouvelleCarcasse({
+  onCarcasseAdded,
+  defaultEspece,
+}: {
+  onCarcasseAdded?: () => void;
+  defaultEspece?: string;
+}) {
   const params = useParams();
   const userState = useUser((state) => state);
   const user = userState.user!;
@@ -39,7 +45,7 @@ export default function NouvelleCarcasse() {
   const defaultNumeroBracelet = getNewDefaultNumeroBracelet(user);
   const [numeroBracelet, setNumeroBracelet] = useState<string>('');
   const [nombreDAnimaux, setNombreDAnimaux] = useState<string>('1');
-  const [espece, setEspece] = useState<string>('');
+  const [espece, setEspece] = useState<string>(defaultEspece ?? '');
   const [error, setError] = useState<string | null>(null);
 
   const isPetitGibier = useMemo(() => {
@@ -47,6 +53,21 @@ export default function NouvelleCarcasse() {
   }, [espece]);
 
   const zacharieCarcasseId = `${fei.numero}_${numeroBracelet}`;
+
+  useLayoutEffect(() => {
+    requestAnimationFrame(() => {
+      const submitButton = document.getElementById('add-carcasse-submit-button');
+      if (!submitButton) {
+        return;
+      }
+      const navHeight = document.getElementById('bottom-navigation')?.getBoundingClientRect().height ?? 0;
+      const buttonHeight = submitButton.getBoundingClientRect().height;
+      const targetTop = window.innerHeight - navHeight - buttonHeight;
+      const delta = submitButton.getBoundingClientRect().top - targetTop;
+      const marginWithBottomBar = 10;
+      window.scrollBy({ top: delta + marginWithBottomBar, behavior: 'smooth' });
+    });
+  }, []);
 
   return (
     <form method="POST" className="flex w-full flex-col items-stretch">
@@ -98,13 +119,18 @@ export default function NouvelleCarcasse() {
         hintText={
           <>
             {defaultNumeroBracelet ? (
-              <div className="flex items-center gap-2">
+              <div
+                className={[
+                  'flex flex-col items-start md:flex-row md:gap-2',
+                  numeroBracelet ? 'pointer-events-none opacity-60' : '',
+                ].join(' ')}
+              >
                 Pas de dispositif de marquage ?
                 <button
                   type="button"
                   className={[
                     'rounded-full bg-[#E8EDFF] px-3 py-1 text-sm text-[#000091]',
-                    numeroBracelet ? 'pointer-events-none opacity-20' : '',
+                    // numeroBracelet ? 'pointer-events-none opacity-20' : '',
                   ].join(' ')}
                   onClick={() => {
                     incProchainBraceletAUtiliser();
@@ -114,9 +140,7 @@ export default function NouvelleCarcasse() {
                   Utiliser {defaultNumeroBracelet}
                 </button>
               </div>
-            ) : (
-              <>Veuillez renseigner la commune de mise à mort avant d'enregistrer une carcasse</>
-            )}
+            ) : null}
           </>
         }
         disabled={!espece}
@@ -133,6 +157,7 @@ export default function NouvelleCarcasse() {
       />
       <Button
         type="submit"
+        id="add-carcasse-submit-button"
         disabled={!espece || !numeroBracelet}
         onClick={async (e) => {
           try {
@@ -157,8 +182,8 @@ export default function NouvelleCarcasse() {
             });
             syncData('examinateur-carcasse-create');
             setNumeroBracelet('');
-
             setError(null);
+            onCarcasseAdded?.();
           } catch (error) {
             if (error instanceof Error) {
               setError(error.message);

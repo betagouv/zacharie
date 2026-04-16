@@ -221,7 +221,9 @@ export default function TableauDeBordIndex() {
       try {
         const parsed = JSON.parse(savedFilter);
         if (Array.isArray(parsed)) return parsed;
-      } catch {}
+      } catch {
+        return [];
+      }
     }
     return [];
   });

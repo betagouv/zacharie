@@ -61,6 +61,7 @@ export default function ChasseurLayout() {
         hideMinistereName
         id="chasseur-layout-activated"
         contactLink="/app/chasseur/contact"
+        mainLink="/app/chasseur"
       >
         <main
           role="main"

@@ -45,7 +45,7 @@ export async function formatCarcasseChasseurEmail(carcasse: Carcasse) {
         .map((motif) => ` -> ${getMotifForChasseur(motif, carcasse.type)}`)
         .join('\n')}`,
       carcasse.svi_carcasse_commentaire ? `Commentaire\u00A0:\n${carcasse.svi_carcasse_commentaire}` : null,
-      `Rendez-vous sur Zacharie pour consulter le détail de la carcasse : https://zacharie.beta.gouv.fr/app/tableau-de-bord/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`,
+      `Rendez-vous sur Zacharie pour consulter le détail de la carcasse : https://zacharie.beta.gouv.fr/app/chasseur/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`,
     ];
     return email.filter(Boolean).join('\n');
   }
@@ -81,9 +81,9 @@ export async function formatCarcasseChasseurEmail(carcasse: Carcasse) {
   return email.filter(Boolean).join('\n');
 }
 
-export function formatSaisieEmail(carcasse: Carcasse): [string, string] {
+export function formatSaisieChasseurEmail(carcasse: Carcasse): [string, string] {
   const saisieLabel = getCarcasseStatusLabelForEmail(carcasse).toLowerCase();
-  const url = `https://zacharie.beta.gouv.fr/app/tableau-de-bord/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`;
+  const url = `https://zacharie.beta.gouv.fr/app/chasseur/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`;
   const motifs = carcasse.svi_ipm2_lesions_ou_motifs
     .map((motif) => `-> ${getMotifForChasseur(motif, carcasse.type)}`)
     .join('\n');
@@ -108,7 +108,9 @@ export function formatSaisieEmail(carcasse: Carcasse): [string, string] {
   return [object, email.filter(Boolean).join('\n\n')];
 }
 
-export async function formatCarcasseManquanteOrRefusEmail(carcasse: Carcasse): Promise<[string, string]> {
+export async function formatCarcasseManquanteOrRefusChasseurEmail(
+  carcasse: Carcasse,
+): Promise<[string, string]> {
   const carcasseIntermediaire = await prisma.carcasseIntermediaire.findUnique({
     where: {
       fei_numero_zacharie_carcasse_id_intermediaire_id: {
@@ -130,7 +132,7 @@ export async function formatCarcasseManquanteOrRefusEmail(carcasse: Carcasse): P
   const entite = carcasseIntermediaire?.CarcasseIntermediaireEntity.nom_d_usage;
   const commentaire = carcasseIntermediaire?.commentaire;
 
-  const url = `https://zacharie.beta.gouv.fr/app/tableau-de-bord/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`;
+  const url = `https://zacharie.beta.gouv.fr/app/chasseur/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`;
 
   const no = carcasse.numero_bracelet;
   const carcasseLabel = carcasse.type === CarcasseType.GROS_GIBIER ? 'La carcasse' : 'Le lot de carcasses';
@@ -205,7 +207,7 @@ export async function formatAutomaticClosingEmail(
   return [object, email.filter(Boolean).join('\n\n')];
 }
 
-export async function formatManualValidationSviEmail(
+export async function formatManualValidationSviChasseurEmail(
   fei: Fei,
   carcasses: Carcasse[],
 ): Promise<[string, string]> {
@@ -238,7 +240,7 @@ export async function formatManualValidationSviEmail(
     `Bilan de cette fiche:`,
     `- ${numberOfValidatedCarcasses} carcasses ont été acceptées`,
     `- ${numberOfRefusedCarcasses} carcasses ont été refusées`,
-    `Pour consulter le détail de la fiche, rendez-vous sur Zacharie : https://zacharie.beta.gouv.fr/app/tableau-de-bord/fei/${fei.numero}`,
+    `Pour consulter le détail de la fiche, rendez-vous sur Zacharie : https://zacharie.beta.gouv.fr/app/chasseur/fei/${fei.numero}`,
     `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur des saisies ou refus, merci de contacter l’établissement qui a traité votre fiche.`,
   ];
 
@@ -277,7 +279,7 @@ export async function formatSviAssignedEmail(fei: Fei): Promise<[string, string]
           } (${carcasse.numero_bracelet})`,
       )
       .join('\n'),
-    `Pour consulter la fiche, rendez-vous sur Zacharie : https://zacharie.beta.gouv.fr/app/tableau-de-bord/fei/${fei.numero}`,
+    `Pour consulter la fiche, rendez-vous sur Zacharie : https://zacharie.beta.gouv.fr/app/svi/fei/${fei.numero}`,
     `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur l'attribution de cette fiche, merci de contacter l’établissement qui a traité votre fiche.`,
   ];
   const object = `L’établissement ${currentEntity?.nom_d_usage} vous a transmis une fiche comprenant ${feiCarcasses.length} carcasses (ou lots) à inspecter:`;

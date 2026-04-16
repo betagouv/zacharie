@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
-import { EntityTypes, EntityRelationType, Prisma, EntityRelationStatus } from '@prisma/client';
+import { EntityRelationType, Prisma, EntityRelationStatus } from '@prisma/client';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import type { EntitiesById } from '@api/src/types/entity';
 import useUser from '@app/zustand/user';
@@ -12,9 +12,6 @@ interface ListAndSelectEntitiesProps {
   setRefreshKey: React.Dispatch<React.SetStateAction<number>>;
   refreshKey: number;
   canChange: boolean;
-  done: boolean;
-  entityType: EntityTypes;
-  addLabel: string;
   selectLabel: string;
   sectionLabel: string;
   formId: string;
@@ -56,6 +53,7 @@ export default function ListAndSelectEntities({
               relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
           );
           if (!relation) return null;
+          console.log(entity);
           return (
             <RelationEntityUser
               key={relation.id}

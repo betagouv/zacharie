@@ -46,6 +46,7 @@ export default function SviLayout() {
         hideMinistereName
         id="svi-layout-activated"
         contactLink="/app/svi/contact"
+        mainLink="/app/svi"
       >
         <main
           role="main"
