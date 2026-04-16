@@ -35,7 +35,16 @@ function waitForExecOutput(command: string, expectedOutput: string, timeout: num
   });
 }
 
-export async function resetDb(role?: 'EXAMINATEUR_INITIAL' | 'PREMIER_DETENTEUR' | 'ETG') {
+export type SeedRole =
+  | 'EXAMINATEUR_INITIAL'
+  | 'PREMIER_DETENTEUR'
+  | 'ETG'
+  | 'COLLECTEUR_PRO'
+  | 'SVI'
+  | 'COMMERCE_DE_DETAIL'
+  | 'SVI_CLOSED';
+
+export async function resetDb(role?: SeedRole) {
   try {
     console.log('Resetting database...');
 
