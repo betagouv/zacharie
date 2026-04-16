@@ -49,6 +49,9 @@ export async function saveCarcasse(
   if (!fei_numero) {
     throw new Error('Le numéro de fiche est obligatoire');
   }
+  if (!zacharie_carcasse_id) {
+    throw new Error('Le numéro de la carcasse est obligatoire');
+  }
   const existingFei = await prisma.fei.findUnique({
     where: { numero: fei_numero },
   });
@@ -56,56 +59,95 @@ export async function saveCarcasse(
     throw new Error('Fiche non trouvée');
   }
 
-  // Authorization: check user is related to this FEI
-  if (!user.isZacharieAdmin) {
-    const isDirectUser = [
-      existingFei.created_by_user_id,
-      existingFei.examinateur_initial_user_id,
-      existingFei.premier_detenteur_user_id,
-      existingFei.fei_current_owner_user_id,
-      existingFei.fei_next_owner_user_id,
-      existingFei.svi_user_id,
-    ].includes(user.id);
-
-    if (!isDirectUser) {
-      const feiEntityIds = [
-        existingFei.fei_current_owner_entity_id,
-        existingFei.fei_next_owner_entity_id,
-        existingFei.premier_detenteur_entity_id,
-        existingFei.premier_detenteur_depot_entity_id,
-        existingFei.svi_entity_id,
-      ].filter(Boolean) as string[];
-
-      let isEntityMember = false;
-      if (feiEntityIds.length > 0) {
-        const relation = await prisma.entityAndUserRelations.findFirst({
-          where: {
-            owner_id: user.id,
-            entity_id: { in: feiEntityIds },
-            relation: {
-              in: [EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY],
-            },
-            status: { in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER] },
-          },
-        });
-        isEntityMember = !!relation;
-      }
-
-      if (!isEntityMember) {
-        throw new Error('Unauthorized');
-      }
-    }
-  }
-
-  if (!zacharie_carcasse_id) {
-    throw new Error('Le numéro de la carcasse est obligatoire');
-  }
   let existingCarcasse = await prisma.carcasse.findFirst({
     where: {
       zacharie_carcasse_id: zacharie_carcasse_id,
       fei_numero: fei_numero,
     },
   });
+
+  // Authorization: check user is related to this carcasse (or FEI for creation)
+  if (!user.isZacharieAdmin) {
+    if (existingCarcasse) {
+      // Update: check against carcasse fields
+      const isDirectUser = [
+        existingCarcasse.created_by_user_id,
+        existingCarcasse.examinateur_initial_user_id,
+        existingCarcasse.premier_detenteur_user_id,
+        existingCarcasse.current_owner_user_id,
+        existingCarcasse.next_owner_user_id,
+        existingCarcasse.svi_user_id,
+      ].includes(user.id);
+
+      if (!isDirectUser) {
+        const carcasseEntityIds = [
+          existingCarcasse.current_owner_entity_id,
+          existingCarcasse.next_owner_entity_id,
+          existingCarcasse.premier_detenteur_entity_id,
+          existingCarcasse.premier_detenteur_depot_entity_id,
+          existingCarcasse.svi_entity_id,
+        ].filter(Boolean) as string[];
+
+        let isEntityMember = false;
+        if (carcasseEntityIds.length > 0) {
+          const relation = await prisma.entityAndUserRelations.findFirst({
+            where: {
+              owner_id: user.id,
+              entity_id: { in: carcasseEntityIds },
+              relation: {
+                in: [EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY],
+              },
+              status: { in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER] },
+            },
+          });
+          isEntityMember = !!relation;
+        }
+
+        if (!isEntityMember) {
+          throw new Error('Unauthorized');
+        }
+      }
+    } else {
+      // Creation: fallback to FEI-based auth
+      const isDirectUser = [
+        existingFei.created_by_user_id,
+        existingFei.examinateur_initial_user_id,
+        existingFei.premier_detenteur_user_id,
+        existingFei.fei_current_owner_user_id,
+        existingFei.fei_next_owner_user_id,
+        existingFei.svi_user_id,
+      ].includes(user.id);
+
+      if (!isDirectUser) {
+        const feiEntityIds = [
+          existingFei.fei_current_owner_entity_id,
+          existingFei.fei_next_owner_entity_id,
+          existingFei.premier_detenteur_entity_id,
+          existingFei.premier_detenteur_depot_entity_id,
+          existingFei.svi_entity_id,
+        ].filter(Boolean) as string[];
+
+        let isEntityMember = false;
+        if (feiEntityIds.length > 0) {
+          const relation = await prisma.entityAndUserRelations.findFirst({
+            where: {
+              owner_id: user.id,
+              entity_id: { in: feiEntityIds },
+              relation: {
+                in: [EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY],
+              },
+              status: { in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER] },
+            },
+          });
+          isEntityMember = !!relation;
+        }
+
+        if (!isEntityMember) {
+          throw new Error('Unauthorized');
+        }
+      }
+    }
+  }
   if (!existingCarcasse) {
     const numeroBracelet = body.numero_bracelet;
     if (!numeroBracelet) {
