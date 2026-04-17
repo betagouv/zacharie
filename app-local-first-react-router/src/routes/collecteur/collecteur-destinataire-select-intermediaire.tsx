@@ -1,5 +1,6 @@
 import { useParams } from 'react-router';
 import { useMemo, useState } from 'react';
+import dayjs from 'dayjs';
 import {
   Prisma,
   EntityTypes,
@@ -190,6 +191,12 @@ export default function CollecteurDestinataireIntermediaire({
       intermediaire_depot_entity_id: depotType === DepotType.AUCUN ? null : depotEntityId,
     };
     updateAllCarcasseIntermediaire(fei.numero, feiAndIntermediaireIds, nextCarcasseIntermediaire);
+    updateAllCarcasseIntermediaire(
+      fei.numero,
+      feiAndIntermediaireIds,
+      { decision_at: dayjs().toDate() },
+      (ci) => !ci.decision_at,
+    );
     updateFei(fei.numero, nextFei);
     addLog({
       user_id: user.id,
