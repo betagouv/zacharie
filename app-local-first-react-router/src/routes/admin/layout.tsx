@@ -1,6 +1,7 @@
 import RootDisplay from '@app/components/RootDisplay';
 import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { UserRoles } from '@prisma/client';
+import { useEffect, useState } from 'react';
 import { Link, Navigate, Outlet, useLocation } from 'react-router';
 
 const adminLinks = [
@@ -19,6 +20,14 @@ const adminLinks = [
 export default function AdminLayout() {
   const location = useLocation();
   const user = useMostFreshUser('RouterAdmin');
+  const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 768);
+
+  useEffect(() => {
+    if (window.innerWidth < 768) {
+      setSidebarOpen(false);
+    }
+  }, [location.pathname]);
+
   if (!user?.isZacharieAdmin) {
     return <Navigate to="/app/connexion" />;
   }
@@ -38,9 +47,28 @@ export default function AdminLayout() {
 
   return (
     <RootDisplay id="admin-layout" mainLink={mainLink}>
-      <div className="flex">
-        <nav className="sticky top-0 max-h-screen min-h-screen shrink-0 self-start overflow-y-auto border-r border-gray-200 bg-white py-2">
-          <ul className="m-0 mt-2 list-none px-2">
+      <div className="relative flex">
+        {/* Backdrop mobile */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 z-20 bg-black/30 md:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+        {/* Sidebar */}
+        <nav
+          className={`fixed top-0 z-[800] max-h-screen min-h-screen shrink-0 overflow-y-auto border-r border-gray-200 bg-white py-2 transition-transform duration-200 md:sticky md:z-auto ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+            }`}
+        >
+          <div className="flex md:hidden justify-end px-2">
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(false)}
+              className="fr-btn fr-btn--tertiary-no-outline fr-btn--sm fr-icon-close-line"
+              aria-label="Fermer le menu"
+            />
+          </div>
+          <ul className="m-0 list-none px-2">
             {adminLinks.map((link) => {
               const isActive = location.pathname.startsWith(link.to);
               return (
@@ -48,11 +76,10 @@ export default function AdminLayout() {
                   <Link
                     style={{ backgroundImage: 'none' }}
                     to={link.to}
-                    className={`flex items-center gap-2 border-l-2 px-3 py-1.5 text-sm no-underline hover:bg-gray-100 ${
-                      isActive
-                        ? 'bg-open-blue-975 text-action-high-blue-france border-action-high-blue-france font-medium'
-                        : 'text-title-grey border-transparent'
-                    }`}
+                    className={`flex items-center gap-2 border-l-2 px-3 py-1.5 text-sm no-underline hover:bg-gray-100 ${isActive
+                      ? 'bg-open-blue-975 text-action-high-blue-france border-action-high-blue-france font-medium'
+                      : 'text-title-grey border-transparent'
+                      }`}
                   >
                     <span className={`${link.icon} fr-icon--sm mr-1 shrink-0`} aria-hidden="true" />
                     {link.label}
@@ -75,6 +102,14 @@ export default function AdminLayout() {
           </ul>
         </nav>
         <main className="fr-container min-w-0 flex-1">
+          {!sidebarOpen && (
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(true)}
+              className="fr-btn fr-btn--tertiary-no-outline fr-btn--sm ri-menu-line mt-2"
+              aria-label="Ouvrir le menu"
+            />
+          )}
           <Outlet />
         </main>
       </div>
