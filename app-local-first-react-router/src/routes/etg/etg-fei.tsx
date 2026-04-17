@@ -205,7 +205,6 @@ function EtgFeiContent({
   const params = useParams();
   const user = useUser((state) => state.user)!;
   const updateAllCarcasseIntermediaire = useZustandStore((state) => state.updateAllCarcasseIntermediaire);
-  const updateCarcasseIntermediaire = useZustandStore((state) => state.updateCarcasseIntermediaire);
   const updateFei = useZustandStore((state) => state.updateFei);
   const addLog = useZustandStore((state) => state.addLog);
   const feis = useZustandStore((state) => state.feis);
@@ -590,13 +589,12 @@ function EtgFeiContent({
     updateAllCarcasseIntermediaire(fei.numero, feiAndIntermediaireIds, {
       prise_en_charge_at: _priseEnChargeAt,
     });
-    for (const intermediaireCarcasse of intermediaireCarcasses) {
-      if (intermediaireCarcasse.prise_en_charge && !intermediaireCarcasse.decision_at) {
-        updateCarcasseIntermediaire(getFeiAndCarcasseAndIntermediaireIds(intermediaireCarcasse), {
-          decision_at: _priseEnChargeAt,
-        });
-      }
-    }
+    updateAllCarcasseIntermediaire(
+      fei.numero,
+      feiAndIntermediaireIds,
+      { decision_at: _priseEnChargeAt },
+      (ci) => !ci.decision_at,
+    );
     addLog({
       user_id: user.id,
       action: 'intermediaire-check-finished-at',

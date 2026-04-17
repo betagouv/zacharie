@@ -117,6 +117,7 @@ interface Actions {
     fei_numero: Fei['numero'],
     feiAndIntermediaireIds: FeiAndIntermediaireIds,
     partialCarcasseIntermediaire: Partial<CarcasseIntermediaire>,
+    predicate?: (ci: CarcasseIntermediaire) => boolean,
   ) => void;
   updateCarcasseIntermediaire: (
     feiAndCarcasseAndIntermediaireIds: FeiAndCarcasseAndIntermediaireIds,
@@ -319,6 +320,7 @@ const useZustandStore = create<State & Actions>()(
           _fei_numero: Fei['numero'],
           feiAndIntermediaireIds: FeiAndIntermediaireIds,
           nextCarcasseIntermediaire: Partial<CarcasseIntermediaire>,
+          predicate?: (ci: CarcasseIntermediaire) => boolean,
         ) => {
           const carcassesIntermediaireById = useZustandStore.getState().carcassesIntermediaireById;
           const nextCarcassesIntermediaireById: Record<
@@ -331,6 +333,7 @@ const useZustandStore = create<State & Actions>()(
           );
           for (const [carcassesIntermediaireId, carcassesIntermediaire] of matchingEntries) {
             if (!carcassesIntermediaire.prise_en_charge) continue;
+            if (predicate && !predicate(carcassesIntermediaire)) continue;
             nextCarcassesIntermediaireById[carcassesIntermediaireId as FeiAndCarcasseAndIntermediaireIds] = {
               ...carcassesIntermediaire,
               ...nextCarcasseIntermediaire,
