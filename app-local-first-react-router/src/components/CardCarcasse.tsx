@@ -179,35 +179,44 @@ export default function CardCarcasse({
           .join(' ')}
       >
         <button
-          className="flex flex-1 flex-col border-none p-4 text-left hover:bg-transparent"
+          className="flex flex-1 flex-row items-center gap-3 border-none p-4 text-left hover:bg-transparent"
           type="button"
           onClick={onClick ? onClick : cacasseModal.open}
         >
-          <p className="order-1 text-base font-bold">
-            {carcasse.espece} {nombreDAnimauxDisplay}
-          </p>
-          <p className="order-2 text-sm/4 font-bold">N° {carcasse.numero_bracelet}</p>
-          {miseAMort && <p className="order-3 text-sm/4">{miseAMort}</p>}
-          {showStatusLine && statusLabel && (
-            <p
-              className={[
-                'order-4 flex items-center gap-1 text-sm/4 font-bold first-letter:uppercase',
-                accentTextClass,
-              ]
+          {statusIconId && (
+            <span
+              className={[statusIconId, 'shrink-0 text-2xl', accentTextClass]
                 .filter(Boolean)
                 .join(' ')}
-            >
-              {statusIconId && <span className={statusIconId} aria-hidden="true" />}
-              <span>{statusLabel}</span>
-            </p>
+              aria-hidden="true"
+            />
           )}
-          {descriptionLine && (
-            <p
-              className={['order-5 text-sm/4', accentTextClass].filter(Boolean).join(' ')}
-            >
-              {descriptionLine}
+          <div className="flex flex-1 flex-col">
+            <p className="text-base font-bold">
+              {carcasse.espece} {nombreDAnimauxDisplay}
             </p>
-          )}
+            <p className="text-sm/4 font-bold">N° {carcasse.numero_bracelet}</p>
+            {miseAMort && <p className="text-sm/4">{miseAMort}</p>}
+            {showStatusLine && statusLabel && (
+              <p
+                className={[
+                  'text-sm/4 font-bold first-letter:uppercase',
+                  accentTextClass,
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+              >
+                {statusLabel}
+              </p>
+            )}
+            {descriptionLine && (
+              <p
+                className={['text-sm/4', accentTextClass].filter(Boolean).join(' ')}
+              >
+                {descriptionLine}
+              </p>
+            )}
+          </div>
         </button>
         {(onEdit || onDelete) && (
           <div className="flex flex-row gap-2 pr-4">
