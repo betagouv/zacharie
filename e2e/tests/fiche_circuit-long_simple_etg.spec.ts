@@ -125,36 +125,34 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
   // await new Promise((resolve) => setTimeout(resolve, 200)); // to maybe prevent cache-lookup bug from postgres in backend
   await expect(page.getByText("SVI 1 a été notifié")).toBeVisible({ timeout: 5000 });
   await expect(page.locator("#content")).toMatchAriaSnapshot(`
-      - 'button /Daim N° MM-\\d+-\\d+ Mise à mort : \\d+\\/\\d+\\/\\d+ 1 anomalie accepté/':
+      - 'button /Daim N° MM-\\d+-\\d+ Mise à mort : \\d+\\/\\d+\\/\\d+ Acceptée par ETG 1 1 anomalie/':
         - paragraph: Daim
         - paragraph: /N° MM-\\d+-\\d+/
         - paragraph: "/Mise à mort : \\\\d+\\\\/\\\\d+\\\\/\\\\d+/"
+        - paragraph: Acceptée par ETG 1
         - paragraph: 1 anomalie
-        - paragraph: accepté par ETG 1 ETG
       `);
   await expect(page.locator("#content")).toMatchAriaSnapshot(`
-        - 'button /Daim N° MM-\\d+-\\d+ Mise à mort : \\d+\\/\\d+\\/\\d+ 1 anomalie, 1 commentaire refusé par ETG 1/':
+        - 'button /Daim N° MM-\\d+-\\d+ Mise à mort : \\d+\\/\\d+\\/\\d+ Refusée par ETG 1 1 anomalie, 1 commentaire/':
           - paragraph: Daim
           - paragraph: /N° MM-\\d+-\\d+/
           - paragraph: "/Mise à mort : \\\\d+\\\\/\\\\d+\\\\/\\\\d+/"
+          - paragraph: Refusée par ETG 1
           - paragraph: 1 anomalie, 1 commentaire
-          - paragraph: refusé par ETG 1
         `);
   await expect(page.locator("#content")).toMatchAriaSnapshot(`
-      - 'button /Daim N° MM-\\d+-\\d+ Mise à mort : \\d+\\/\\d+\\/\\d+ Aucune anomalie manquant pour ETG 1/':
+      - 'button /Daim N° MM-\\d+-\\d+ Mise à mort : \\d+\\/\\d+\\/\\d+ Manquante pour ETG 1/':
         - paragraph: Daim
         - paragraph: /N° MM-\\d+-\\d+/
         - paragraph: "/Mise à mort : \\\\d+\\\\/\\\\d+\\\\/\\\\d+/"
-        - paragraph: Aucune anomalie
-        - paragraph: manquant pour ETG 1
+        - paragraph: Manquante pour ETG 1
       `);
   await expect(page.locator("#content")).toMatchAriaSnapshot(`
-      - 'button /Pigeons \\(\\d+\\) N° MM-\\d+-\\d+ Mise à mort : \\d+\\/\\d+\\/\\d+ Aucune anomalie en cours de traitement/':
+      - 'button /Pigeons \\(\\d+\\) N° MM-\\d+-\\d+ Mise à mort : \\d+\\/\\d+\\/\\d+ Accepté par ETG 1/':
         - paragraph: /Pigeons \\(\\d+\\)/
         - paragraph: /N° MM-\\d+-\\d+/
         - paragraph: "/Mise à mort : \\\\d+\\\\/\\\\d+\\\\/\\\\d+/"
-        - paragraph: Aucune anomalie
-        - paragraph: en cours de traitement
+        - paragraph: Accepté par ETG 1
       `);
   await page.getByRole("link", { name: "Voir toutes mes fiches" }).click();
   await expect(page.locator("#content")).toMatchAriaSnapshot(`
