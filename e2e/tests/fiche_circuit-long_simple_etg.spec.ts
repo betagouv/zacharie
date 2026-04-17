@@ -572,20 +572,19 @@ test("Pas de stockage - Je transfère à un autre ETG", async ({ page, context }
 
   await page.getByRole("button", { name: "Afficher les carcasses déjà" }).click();
   await expect(page.locator("#content")).toMatchAriaSnapshot(`
-      - 'button /Daim N° MM-\\d+-\\d+ Mise à mort : \\d+\\/\\d+\\/\\d+ 1 anomalie, 1 commentaire refusé par ETG 1/':
+      - 'button /Daim N° MM-\\d+-\\d+ Mise à mort : \\d+\\/\\d+\\/\\d+ Refusée par ETG 1 1 anomalie, 1 commentaire/':
         - paragraph: Daim
         - paragraph: /N° MM-\\d+-\\d+/
         - paragraph: "/Mise à mort : \\\\d+\\\\/\\\\d+\\\\/\\\\d+/"
+        - paragraph: Refusée par ETG 1
         - paragraph: 1 anomalie, 1 commentaire
-        - paragraph: refusé par ETG 1
       `);
   await expect(page.locator("#content")).toMatchAriaSnapshot(`
-    - 'button /Daim N° MM-\\d+-\\d+ Mise à mort : \\d+\\/\\d+\\/\\d+ Aucune anomalie manquant pour ETG 1/':
+    - 'button /Daim N° MM-\\d+-\\d+ Mise à mort : \\d+\\/\\d+\\/\\d+ Manquante pour ETG 1/':
       - paragraph: Daim
       - paragraph: /N° MM-\\d+-\\d+/
       - paragraph: "/Mise à mort : \\\\d+\\\\/\\\\d+\\\\/\\\\d+/"
-      - paragraph: Aucune anomalie
-      - paragraph: manquant pour ETG 1
+      - paragraph: Manquante pour ETG 1
     `);
   await expect(
     page.locator("p").filter({
