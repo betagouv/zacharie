@@ -21,9 +21,8 @@ test.beforeAll(async () => {
 test("Création d'une fiche", async ({ page }) => {
   await connectWith(page, "examinateur@example.fr");
   await expect(page).toHaveURL("http://localhost:3290/app/chasseur");
-  await page.getByTitle("Nouvelle fiche").click();
+  await page.getByRole("button", { name: "Nouvelle fiche" }).first().click();
   await expect(page.getByText("Date de mise à mort (et d'éviscération) *")).toBeVisible();
-  console.log(dayjs().format("dddd DD MMMM"));
   await page.getByRole("button", { name: dayjs().format("dddd DD MMMM") }).click();
   await page.getByRole("textbox", { name: "Commune de mise à mort *" }).fill("CHASS");
   await page.getByRole("button", { name: "CHASSENARD" }).click();
