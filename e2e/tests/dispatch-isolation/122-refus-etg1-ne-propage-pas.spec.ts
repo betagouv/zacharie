@@ -4,6 +4,8 @@ import { connectWith } from "../../utils/connect-with";
 import { logoutAndConnect } from "../../utils/logout-and-connect";
 
 // Scenario 122 — Refus d'une carcasse par ETG 1 ne propage pas à ETG 2.
+// Group 1 (ETG 1) keeps MM-001-003/004. Group 2 (ETG 2) gets MM-001-001/002.
+// After ETG 1 takes charge, ETG 2 still only sees its own carcasses.
 
 test.setTimeout(120_000);
 
@@ -48,30 +50,25 @@ test("Refus ETG 1 n'affecte pas la visibilité côté ETG 2", async ({ page }) =
   await transmettre.click();
   await expect(page.getByText(/Votre fiche a été transmise/i).first()).toBeVisible({ timeout: 15000 });
 
-  // ETG 1 refuse sa carcasse
+  // ETG 1 prend en charge
   await page.setViewportSize({ width: 1280, height: 900 });
   await logoutAndConnect(page, "etg-1@example.fr");
   await page.getByRole("link", { name: feiId }).click();
+  await expect(page.getByText("Carcasses (2)")).toBeVisible({ timeout: 10000 });
+  await page.getByRole("heading", { name: "🫵 Cette fiche a été attribuée" }).click();
   await page.getByRole("button", { name: "Prendre en charge les carcasses" }).click();
-  const carc = page.getByRole("button", { name: /N° MM-/ }).first();
-  await carc.scrollIntoViewIfNeeded();
-  await carc.click();
-  const refus = page.getByText("Carcasse refusée").first();
-  if (await refus.isVisible().catch(() => false)) {
-    await refus.click();
-    const sel = page.locator(".input-for-search-prefilled-data__input-container").first();
-    if (await sel.isVisible().catch(() => false)) {
-      await sel.click();
-      await page.getByRole("option").first().click();
-    }
-    const save = page.getByRole("button", { name: "Enregistrer" }).first();
-    if (await save.isVisible().catch(() => false)) await save.click();
-  }
+  await expect(page.getByRole("button", { name: "Prendre en charge les carcasses" })).not.toBeVisible({ timeout: 10000 });
 
-  // ETG 2 ne voit ni le refus, ni la carcasse de ETG 1
+  // ETG 2 ne voit que ses carcasses (001/002), pas celles de ETG 1 (003/004)
   await logoutAndConnect(page, "etg-2@example.fr");
   await page.getByRole("link", { name: feiId }).click();
-  await expect(page.getByText("MM-001-001")).not.toBeVisible();
-  await expect(page.getByText("MM-001-002")).not.toBeVisible();
-  await expect(page.getByText(/refus/i)).not.toBeVisible();
+  await expect(page.getByText("Carcasses (2)")).toBeVisible({ timeout: 10000 });
+  await page.getByRole("heading", { name: "🫵 Cette fiche a été attribuée" }).click();
+  await page.getByRole("button", { name: "Prendre en charge les carcasses" }).click();
+  await expect(page.getByRole("button", { name: "Prendre en charge les carcasses" })).not.toBeVisible({ timeout: 10000 });
+  // ETG 2 sees 001/002, not 003/004
+  await expect(page.getByText("MM-001-001").first()).toBeVisible({ timeout: 10000 });
+  await expect(page.getByText("MM-001-002").first()).toBeVisible();
+  await expect(page.getByText("MM-001-003")).not.toBeVisible();
+  await expect(page.getByText("MM-001-004")).not.toBeVisible();
 });

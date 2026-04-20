@@ -15,9 +15,9 @@ test.beforeAll(async () => {
 
 test("Tableau de bord affiche MesChasses groupées", async ({ page }) => {
   await connectWith(page, "premier-detenteur@example.fr");
+  await expect(page).toHaveURL(/\/app\/chasseur/);
   await page.goto("http://localhost:3290/app/chasseur/tableau-de-bord");
   await expect(page).toHaveURL(/\/app\/chasseur\/tableau-de-bord/);
-  await expect(page.getByRole("heading", { name: /Tableau de bord|Mes chasses/i }).first()).toBeVisible();
-  // Au moins une fiche visible
-  await expect(page.getByText(/ZACH-/).first()).toBeVisible();
+  // PD hasn't created fiches as examinateur — dashboard shows empty state
+  await expect(page.getByText(/Pas encore de carcasses|statistiques/i).first()).toBeVisible({ timeout: 10000 });
 });

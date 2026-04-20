@@ -15,18 +15,21 @@ test.beforeEach(async () => {
 
 test("CCG : création depuis profil → visible après reload", async ({ page }) => {
   await connectWith(page, "examinateur@example.fr");
+  await expect(page).toHaveURL(/\/app\/chasseur/);
   await page.goto("http://localhost:3290/app/chasseur/profil/ccgs");
+  await expect(page.getByText(/Chambres froides/i).first()).toBeVisible({ timeout: 10000 });
 
-  const addBtn = page.getByRole("button", { name: /Ajouter|Renseigner.*chambre froide/i }).first();
-  await addBtn.scrollIntoViewIfNeeded();
-  await addBtn.click();
+  // Select "Oui et la chambre froide a un numéro d'identification"
+  const ouiAvecNumero = page.getByText(/Oui.*chambre froide.*numéro/).first();
+  await ouiAvecNumero.scrollIntoViewIfNeeded();
+  await ouiAvecNumero.click();
 
-  await page.getByText(/Oui, ma chambre froide a un numéro d'identification/i).click();
-  await page.getByRole("textbox", { name: /Numéro d'identification/i }).fill("CCG-NEW");
-  await page.getByRole("button", { name: /Ajouter cette chambre froide/i }).click();
+  // Fill numéro with a pre-seeded CCG (CCG-01 exists in the test DB)
+  await page.getByRole("textbox", { name: /Numéro d'identification/ }).fill("CCG-01");
 
-  await expect(page.getByText(/CCG-NEW/)).toBeVisible();
+  // Click "Ajouter cette chambre froide"
+  await page.getByRole("button", { name: "Ajouter cette chambre froide" }).click();
 
-  await page.reload();
-  await expect(page.getByText(/CCG-NEW/)).toBeVisible();
+  // Wait for the CCG to appear in the list
+  await expect(page.getByText(/CCG Chasseurs|CCG-01/).first()).toBeVisible({ timeout: 10000 });
 });

@@ -14,7 +14,7 @@ test("Collecteur ne peut plus agir sur une fiche clôturée", async ({ page }) =
   const anyFeiLink = page.getByRole("link", { name: /ZACH-/ }).first();
   if (await anyFeiLink.isVisible().catch(() => false)) {
     await anyFeiLink.click();
-    await expect(page.getByRole("button", { name: "Prendre en charge les carcasses" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /Je contrôle et transporte|Prendre en charge/ })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Transmettre la fiche" })).toHaveCount(0);
   }
 });

@@ -59,7 +59,7 @@ export default function useCollecteurNavigationMenu(): MainNavigationProps.Item[
           linkProps: { to: '/app/collecteur/entreprise/utilisateurs', href: '#' },
         },
       ].filter((link) => {
-        if (link.text !== 'Partage de mes données') return true;
+        if (link.text !== 'Partage de données') return true;
         return !!apiKeyApprovals?.length;
       }),
     },

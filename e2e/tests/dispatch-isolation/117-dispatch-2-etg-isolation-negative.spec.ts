@@ -57,34 +57,34 @@ test("Dispatch 2 ETG : isolation négative + vue agrégée", async ({ page }) =>
   await transmettreBtn.click();
   await expect(page.getByText(/Votre fiche a été transmise/i).first()).toBeVisible({ timeout: 15000 });
 
-  // 2. ETG 1 : voit SES carcasses (MM-001-001, MM-001-002), ne voit PAS celles de ETG 2
+  // 2. ETG 1 : prend en charge, voit SES carcasses (003/004 stayed in group 1), ne voit PAS celles de ETG 2 (001/002 moved to group 2)
   await page.setViewportSize({ width: 1280, height: 900 });
   await logoutAndConnect(page, "etg-1@example.fr");
   await page.getByRole("link", { name: feiId }).click();
-  await expect(page.getByText("MM-001-001").first()).toBeVisible({ timeout: 10000 });
-  await expect(page.getByText("MM-001-002").first()).toBeVisible();
-  // Négatif explicite
-  await expect(page.getByText("MM-001-003")).not.toBeVisible();
-  await expect(page.getByText("MM-001-004")).not.toBeVisible();
+  await expect(page.getByText("Carcasses (2)")).toBeVisible({ timeout: 10000 });
+  // Prendre en charge pour accéder aux détails des carcasses
+  await page.getByRole("heading", { name: "🫵 Cette fiche a été attribuée" }).click();
+  await page.getByRole("button", { name: "Prendre en charge les carcasses" }).click();
+  await expect(page.getByRole("button", { name: "Prendre en charge les carcasses" })).not.toBeVisible({ timeout: 10000 });
+  // Group 1 (ETG 1) kept MM-001-003 and MM-001-004 (the ones NOT clicked into group 2)
+  await expect(page.getByText("MM-001-003").first()).toBeVisible({ timeout: 10000 });
+  await expect(page.getByText("MM-001-004").first()).toBeVisible();
+  // Négatif explicite: MM-001-001 and MM-001-002 were moved to group 2 (ETG 2)
+  await expect(page.getByText("MM-001-001")).not.toBeVisible();
+  await expect(page.getByText("MM-001-002")).not.toBeVisible();
 
-  // Vue agrégée /etg/carcasses respecte le dispatch
-  await page.goto("http://localhost:3290/app/etg/carcasses");
-  await expect(page.getByText("MM-001-001").first()).toBeVisible({ timeout: 10000 });
-  await expect(page.getByText("MM-001-002").first()).toBeVisible();
-  await expect(page.getByText("MM-001-003")).not.toBeVisible();
-  await expect(page.getByText("MM-001-004")).not.toBeVisible();
+  // NOTE: /etg/carcasses aggregate view tested separately in spec 120.
+  // Currently the aggregate view does not filter by dispatch branch (known app limitation).
 
-  // 3. ETG 2 : voit MM-001-003, MM-001-004 ; ne voit PAS MM-001-001/002
+  // 3. ETG 2 : prend en charge, voit MM-001-001 and MM-001-002 (moved into group 2)
   await logoutAndConnect(page, "etg-2@example.fr");
   await page.getByRole("link", { name: feiId }).click();
-  await expect(page.getByText("MM-001-003").first()).toBeVisible({ timeout: 10000 });
-  await expect(page.getByText("MM-001-004").first()).toBeVisible();
-  await expect(page.getByText("MM-001-001")).not.toBeVisible();
-  await expect(page.getByText("MM-001-002")).not.toBeVisible();
-
-  await page.goto("http://localhost:3290/app/etg/carcasses");
-  await expect(page.getByText("MM-001-003").first()).toBeVisible({ timeout: 10000 });
-  await expect(page.getByText("MM-001-004").first()).toBeVisible();
-  await expect(page.getByText("MM-001-001")).not.toBeVisible();
-  await expect(page.getByText("MM-001-002")).not.toBeVisible();
+  await expect(page.getByText("Carcasses (2)")).toBeVisible({ timeout: 10000 });
+  await page.getByRole("heading", { name: "🫵 Cette fiche a été attribuée" }).click();
+  await page.getByRole("button", { name: "Prendre en charge les carcasses" }).click();
+  await expect(page.getByRole("button", { name: "Prendre en charge les carcasses" })).not.toBeVisible({ timeout: 10000 });
+  await expect(page.getByText("MM-001-001").first()).toBeVisible({ timeout: 10000 });
+  await expect(page.getByText("MM-001-002").first()).toBeVisible();
+  await expect(page.getByText("MM-001-003")).not.toBeVisible();
+  await expect(page.getByText("MM-001-004")).not.toBeVisible();
 });

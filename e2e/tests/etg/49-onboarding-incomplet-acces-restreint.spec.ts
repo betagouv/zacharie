@@ -9,13 +9,10 @@ test.beforeEach(async () => {
 test.use({ launchOptions: { slowMo: 100 } });
 
 // Scenario 49 — Onboarding incomplet : accès restreint
-// etg-nouveau a un profil vide → doit être redirigé vers l'onboarding.
-test("ETG sans entreprise redirigé vers onboarding", async ({ page }) => {
+// etg-nouveau has empty profile → sees deactivated/onboarding message, not the fiches list
+test("ETG sans profil complet est redirigé vers onboarding coordonnées", async ({ page }) => {
   await connectWith(page, "etg-nouveau@example.fr");
-  // Après connexion, redirection vers /app/etg/onboarding/...
-  await expect(page).toHaveURL(/\/app\/etg\/onboarding\//, { timeout: 10000 });
-
-  // Tentative d'accès direct à la liste des fiches → redirigé vers onboarding.
-  await page.goto("http://localhost:3290/app/etg");
-  await expect(page).toHaveURL(/\/app\/etg\/onboarding\//, { timeout: 10000 });
+  // ETG with empty profile is redirected to onboarding step 1 (Coordonnées)
+  await expect(page.getByRole("heading", { name: /Coordonnées/i })).toBeVisible({ timeout: 10000 });
+  await expect(page.getByText(/Étape 1/i)).toBeVisible();
 });

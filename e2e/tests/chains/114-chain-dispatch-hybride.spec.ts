@@ -3,7 +3,7 @@ import { resetDb } from "../../scripts/reset-db";
 import { connectWith } from "../../utils/connect-with";
 import { logoutAndConnect } from "../../utils/logout-and-connect";
 
-// Scenario 114 — Chain dispatch hybride : PD dispatche ETG + collecteur → chacun continue → SVI reçoit les deux.
+// Scenario 114 — Chain dispatch hybride : PD dispatche ETG + collecteur → chacun continue → SVI recoit les deux.
 test.setTimeout(180_000);
 
 test.use({ launchOptions: { slowMo: 100 } });
@@ -13,6 +13,7 @@ test.beforeAll(async () => {
 });
 
 test("Dispatch PD → ETG 1 + Collecteur Pro 1 puis chacun → SVI", async ({ page }) => {
+  test.setTimeout(180_000);
   const feiId = "ZACH-20250707-QZ6E0-155242";
 
   // 1. PD dispatche en 2 groupes
@@ -48,23 +49,20 @@ test("Dispatch PD → ETG 1 + Collecteur Pro 1 puis chacun → SVI", async ({ pa
   const g2Stockage = group2.getByText("Pas de stockage").first();
   await g2Stockage.scrollIntoViewIfNeeded();
   await g2Stockage.click();
-  const g2Transport = group2.getByText("Je transporte les carcasses moi").first();
-  await g2Transport.scrollIntoViewIfNeeded();
-  await g2Transport.click();
+  // No transport step when dispatching to a collecteur — they handle transport
 
   const transmettreBtn = page.getByRole("button", { name: /Transmettre/ });
   await transmettreBtn.scrollIntoViewIfNeeded();
   await transmettreBtn.click();
   await expect(page.getByText(/Votre fiche a été transmise/i).first()).toBeVisible({ timeout: 15000 });
 
-  // 2. ETG 1 reçoit sa branche
+  // 2. ETG 1 recoit sa branche
   await page.setViewportSize({ width: 1280, height: 900 });
   await logoutAndConnect(page, "etg-1@example.fr");
   await expect(page.getByRole("link", { name: feiId })).toBeVisible({ timeout: 15000 });
 
-  // 3. Collecteur Pro 1 reçoit sa branche
+  // 3. Collecteur Pro 1 recoit sa branche
   await logoutAndConnect(page, "collecteur-pro@example.fr");
   await expect(page).toHaveURL(/\/app\/collecteur/);
   await expect(page.getByRole("link", { name: feiId })).toBeVisible({ timeout: 15000 });
-  // TODO: compléter la sous-chaîne collecteur → ETG → SVI si nécessaire (cf. scenario 113).
 });

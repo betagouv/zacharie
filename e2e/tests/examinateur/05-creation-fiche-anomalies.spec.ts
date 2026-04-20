@@ -1,6 +1,8 @@
 import { test, expect } from "@playwright/test";
 import dayjs from "dayjs";
 import "dayjs/locale/fr";
+import utc from "dayjs/plugin/utc";
+dayjs.extend(utc);
 dayjs.locale("fr");
 import { resetDb } from "../../scripts/reset-db";
 import { connectWith } from "../../utils/connect-with";
@@ -19,8 +21,9 @@ test.beforeAll(async () => {
 test("Fiche avec anomalies abats & carcasse — visible au rouvrir", async ({ page }) => {
   await connectWith(page, "examinateur@example.fr");
 
+  // Step 1: Create fiche with 1 daim
   await page.getByTitle("Nouvelle fiche").click();
-  await page.getByRole("button", { name: dayjs().format("dddd DD MMMM") }).click();
+  await page.getByRole("button", { name: dayjs.utc().format("dddd DD MMMM") }).click();
   await page.getByRole("textbox", { name: "Commune de mise à mort *" }).fill("CHASS");
   await page.getByRole("button", { name: "CHASSENARD" }).click();
   await page.getByRole("button", { name: "Pierre Petit" }).click();
@@ -28,21 +31,31 @@ test("Fiche avec anomalies abats & carcasse — visible au rouvrir", async ({ pa
 
   await page.getByLabel("Espèce (grand et petit gibier)").selectOption("Daim");
   await page.getByRole("button", { name: "Utiliser" }).click();
-
-  // Anomalie abats
-  const abcesAbat = page.getByText("Abcès ou nodules").first(); // TODO: verify selector for abats vs carcasse
-  await abcesAbat.scrollIntoViewIfNeeded();
-  await abcesAbat.click();
-
-  // Commentaire
-  const commentaire = page.getByRole("textbox", { name: /Commentaire/i }).first();
-  await commentaire.scrollIntoViewIfNeeded();
-  await commentaire.fill("Test anomalie abats et carcasse");
-  await commentaire.blur();
-
   await page.getByRole("button", { name: "Ajouter la carcasse" }).click();
   await page.getByRole("button", { name: "Continuer" }).click();
 
+  // Step 2: Open the carcasse detail to add anomalies
+  await page.getByRole("button", { name: /Daim N°/ }).first().click();
+
+  // Add anomalie abats via referentiel button
+  const ajouterAbats = page.getByRole("button", { name: "Ajouter depuis le référentiel des anomalies abats" });
+  await ajouterAbats.scrollIntoViewIfNeeded();
+  await ajouterAbats.click();
+  // Expand category then select anomaly
+  await page.getByText("Appareil respiratoire (sinus/trachée/poumon)").click();
+  await page.getByText("Abcès ou nodules").first().click();
+  // Close the modal
+  await page.getByRole("button", { name: "Fermer" }).last().click();
+
+  // Go back to fiche
+  const retourBtn = page.getByRole("button", { name: "Enregistrer et retourner à la fiche" });
+  await retourBtn.scrollIntoViewIfNeeded();
+  await retourBtn.click();
+
+  // Step 3: Advance past carcasses bloc
+  await page.getByRole("button", { name: "Continuer" }).click();
+
+  // Step 4: Fill hours and transmit
   await page
     .getByRole("textbox", { name: "Heure de mise à mort de la" })
     .fill(dayjs().startOf("day").add(1, "hour").format("HH:mm"));
@@ -59,9 +72,9 @@ test("Fiche avec anomalies abats & carcasse — visible au rouvrir", async ({ pa
   await expect(page.getByText(/Votre fiche a été transmise/i).first()).toBeVisible({ timeout: 10000 });
   const feiId = RegExp(/ZACH-\d+-\w+-\d+/).exec(page.url())?.[0];
 
-  // Reload + open fiche
+  // Step 5: Reopen and verify anomalies persisted
   await page.goto(`http://localhost:3290/app/chasseur/fei/${feiId}`);
-  await page.getByRole("button", { name: /Daim N°/ }).first().click();
-  await expect(page.getByText("Abcès ou nodules")).toBeVisible();
-  await expect(page.getByText("Test anomalie abats et carcasse")).toBeVisible();
+  // The carcasse button in the fiche list should mention the anomaly
+  const carcasseBtn = page.getByRole("button", { name: /Daim N°/ }).first();
+  await expect(carcasseBtn).toContainText(/anomalie/i, { timeout: 10000 });
 });

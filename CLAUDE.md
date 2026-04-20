@@ -13,6 +13,7 @@ Key domains:
 - **User roles**: CHASSEUR, COLLECTEUR_PRO, ETG, SVI, COMMERCE_DE_DETAIL, etc.
   - **Rule**: A user shall not have multiple roles. Frontend forbids it; backend should validate and reject.
 - **Entities**: Organizations (slaughterhouses, retail, veterinary services)
+- **Circuit court**: Commerce de détail / boucher receives carcasses directly from PD. No CTA in Zacharie — passive view only (fiches + carcasses). No SVI inspection needed.
 
 ## Plan Mode
 

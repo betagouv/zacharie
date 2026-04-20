@@ -13,22 +13,26 @@ test("85 - SVI tente d'enregistrer IPM1 MISE_EN_CONSIGNE sans motif/lésions : b
 }) => {
   const feiId = "ZACH-20250707-QZ6E0-185242";
   await connectWith(page, "svi@example.fr");
+  await expect(page.getByRole("link", { name: feiId })).toBeVisible({ timeout: 10000 });
   await page.getByRole("link", { name: feiId }).click();
 
-  await page.getByRole("button", { name: /Daim.*MM-001-001/ }).click();
+  const carcasseBtn = page.getByRole("button", { name: /Daim.*MM-001-001/ }).first();
+  await carcasseBtn.scrollIntoViewIfNeeded();
+  await carcasseBtn.click();
   await expect(page).toHaveURL(/\/app\/svi\/carcasse-svi\//);
 
   // Date seulement
-  await page.getByRole("button", { name: /Cliquez ici/ }).first().click();
+  const dateShortcut = page.getByRole("button", { name: /Cliquez ici/ }).first();
+  await dateShortcut.scrollIntoViewIfNeeded();
+  await dateShortcut.click();
 
-  // Tenter d'enregistrer sans pièces/lésions
-  page.once("dialog", (d) => d.dismiss());
+  // Default decision is "Mise en consigne" — try to save without pièces/lésions/durée
   const saveBtn = page.getByRole("button", { name: "Enregistrer" }).first();
   await saveBtn.scrollIntoViewIfNeeded();
   await saveBtn.click();
 
-  // Alert d'erreur visible (IPM1 validation requires pièces or lésions)
+  // Validation error should appear (missing pièces or lésions or durée)
   await expect(
-    page.getByText(/Il manque les pièces inspectées|Il manque les lésions/i).first()
+    page.getByText(/Il manque les pièces inspectées|Il manque les lésions|Il manque la durée/i).first(),
   ).toBeVisible({ timeout: 10000 });
 });

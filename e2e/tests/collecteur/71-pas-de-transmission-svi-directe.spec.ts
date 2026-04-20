@@ -14,7 +14,7 @@ test("Collecteur : le dropdown prochain détenteur n'inclut pas de SVI", async (
   const feiId = "ZACH-20250707-QZ6E0-175242";
   await connectWith(page, "collecteur-pro@example.fr");
   await page.getByRole("link", { name: new RegExp(feiId) }).click();
-  await page.getByRole("button", { name: "Prendre en charge les carcasses" }).click();
+  await page.getByRole("button", { name: /Je contrôle et transporte les carcasses|Prendre en charge/ }).click();
 
   await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").click();
 

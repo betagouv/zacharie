@@ -1,6 +1,8 @@
 import { test, expect } from "@playwright/test";
 import dayjs from "dayjs";
 import "dayjs/locale/fr";
+import utc from "dayjs/plugin/utc";
+dayjs.extend(utc);
 dayjs.locale("fr");
 import { resetDb } from "../../scripts/reset-db";
 import { connectWith } from "../../utils/connect-with";
@@ -19,7 +21,7 @@ test.beforeAll(async () => {
 test("Double-clic Transmettre — pas de double soumission", async ({ page }) => {
   await connectWith(page, "examinateur@example.fr");
   await page.getByTitle("Nouvelle fiche").click();
-  await page.getByRole("button", { name: dayjs().format("dddd DD MMMM") }).click();
+  await page.getByRole("button", { name: dayjs.utc().format("dddd DD MMMM") }).click();
   await page.getByRole("textbox", { name: "Commune de mise à mort *" }).fill("CHASS");
   await page.getByRole("button", { name: "CHASSENARD" }).click();
   await page.getByRole("button", { name: "Pierre Petit" }).click();
@@ -39,9 +41,8 @@ test("Double-clic Transmettre — pas de double soumission", async ({ page }) =>
   await page.getByText("Je, Martin Marie, certifie qu").click();
 
   const transmettre = page.getByRole("button", { name: "Transmettre", exact: true });
-  await transmettre.click();
-  // Tenter un second clic immédiat (bouton devrait être disabled/absent) — ne doit pas créer de 2e fiche
-  await transmettre.click({ force: true }).catch(() => {});
+  // Double-click rapidly — should not create 2 fiches
+  await transmettre.dblclick();
 
   await expect(page.getByText(/Votre fiche a été transmise/i).first()).toBeVisible({ timeout: 10000 });
 

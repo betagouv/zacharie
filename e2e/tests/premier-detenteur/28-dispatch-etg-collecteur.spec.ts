@@ -43,13 +43,11 @@ test("Dispatch mixte ETG + collecteur : chacun reçoit sa part", async ({ page }
   await g2Carcasses.nth(1).click();
 
   await group2.locator("[class*='select-prochain-detenteur'][class*='input-container']").click();
-  await page.getByRole("option", { name: /Collecteur.*1/i }).click(); // TODO: verify option label
+  await page.getByRole("option", { name: /Collecteur Pro 1/i }).click();
   const g2Stockage = group2.getByText("Pas de stockage").first();
   await g2Stockage.scrollIntoViewIfNeeded();
   await g2Stockage.click();
-  const g2Transport = group2.getByText(/Le transport est réalisé par un collecteur/i).first();
-  await g2Transport.scrollIntoViewIfNeeded();
-  await g2Transport.click();
+  // No transport step when dispatching to a collecteur — they handle transport
 
   const transmettre = page.getByRole("button", { name: /Transmettre/ });
   await transmettre.scrollIntoViewIfNeeded();
@@ -62,7 +60,7 @@ test("Dispatch mixte ETG + collecteur : chacun reçoit sa part", async ({ page }
   await expect(page.getByText("Carcasses (2)")).toBeVisible();
 
   // Collecteur ne voit que 2 carcasses
-  await logoutAndConnect(page, "collecteur-pro-1@example.fr"); // TODO: verify email
+  await logoutAndConnect(page, "collecteur-pro@example.fr");
   await page.getByRole("link", { name: feiId }).click();
   await expect(page.getByText("Carcasses (2)")).toBeVisible();
 });

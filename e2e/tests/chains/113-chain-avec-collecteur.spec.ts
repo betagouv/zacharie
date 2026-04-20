@@ -13,6 +13,7 @@ test.beforeAll(async () => {
 });
 
 test("Chain : PD → collecteur → ETG → SVI", async ({ page }) => {
+  test.setTimeout(120_000);
   const feiId = "ZACH-20250707-QZ6E0-155242";
 
   // 1. PD transmet au Collecteur Pro 1
@@ -25,34 +26,44 @@ test("Chain : PD → collecteur → ETG → SVI", async ({ page }) => {
   const pasDeStockage = page.getByText("Pas de stockage").first();
   await pasDeStockage.scrollIntoViewIfNeeded();
   await pasDeStockage.click();
-  const jeTransporte = page.getByText("Je transporte les carcasses moi").first();
-  await jeTransporte.scrollIntoViewIfNeeded();
-  await jeTransporte.click();
-  await page.getByRole("button", { name: "Transmettre" }).click();
-  await expect(page.getByText(/Collecteur Pro 1.*a été notifi/i)).toBeVisible({ timeout: 15000 });
+  // No transport step when dispatching to a collecteur — they handle transport
+  const transmettreBtn1 = page.getByRole("button", { name: "Transmettre" });
+  await transmettreBtn1.scrollIntoViewIfNeeded();
+  await transmettreBtn1.click();
+  await expect(page.getByText(/Votre fiche a été transmise/i).first()).toBeVisible({ timeout: 15000 });
 
-  // 2. Collecteur Pro prend en charge + transmet à ETG 1
+  // 2. Collecteur Pro prend en charge + transmet a ETG 1
   await page.setViewportSize({ width: 1280, height: 900 });
   await logoutAndConnect(page, "collecteur-pro@example.fr");
   await expect(page).toHaveURL(/\/app\/collecteur/);
   await page.getByRole("link", { name: feiId }).click();
-  await page.getByRole("button", { name: /Prendre en charge/i }).first().click();
+  // Collecteur button text is different from ETG
+  await page.getByRole("button", { name: /Je contrôle et transporte les carcasses/ }).click();
+  // Set date
+  await page.getByRole("button", { name: /Cliquez ici pour définir/ }).click();
+  // Select ETG
   await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").click();
-  await page.getByRole("option", { name: "ETG 1 - 75000 Paris (" }).click();
-  await page.getByRole("button", { name: /Transmettre/i }).first().click();
-  await expect(page.getByText(/ETG 1.*a été notifi/i)).toBeVisible({ timeout: 15000 });
+  await page.getByRole("option", { name: /ETG 1/ }).click();
+  // Storage
+  const pasDeStockage2 = page.getByText("Pas de stockage").first();
+  await pasDeStockage2.scrollIntoViewIfNeeded();
+  await pasDeStockage2.click();
+  // Transmit
+  const transmettre = page.getByRole("button", { name: "Transmettre la fiche" });
+  await transmettre.scrollIntoViewIfNeeded();
+  await transmettre.click();
+  await expect(page.getByText(/ETG 1.*notifié|fiche.*transmise/i).first()).toBeVisible({ timeout: 15000 });
 
   // 3. ETG 1 prend en charge + transmet au SVI
   await logoutAndConnect(page, "etg-1@example.fr");
   await page.getByRole("link", { name: feiId }).click();
   await page.getByRole("button", { name: "Prendre en charge les carcasses" }).click();
-  // Accepter rapidement la 1ère carcasse pour satisfaire l'UI
-  const daimBtn = page.getByRole("button", { name: /Daim N° MM-/ }).first();
-  await daimBtn.scrollIntoViewIfNeeded();
-  await daimBtn.click();
-  const accept = page.getByText("Carcasse acceptée").first();
-  if (await accept.isVisible().catch(() => false)) await accept.click();
-  await page.keyboard.press("Escape").catch(() => void 0);
+  await new Promise((resolve) => setTimeout(resolve, 500));
+  // Accept first carcasse
+  await page.getByRole("button", { name: /Daim N° MM-/ }).first().click();
+  await page.getByLabel(/Daim - N° MM-/).getByText("Carcasse acceptée").first().click();
+  await expect(page.getByRole("button", { name: /Daim N° MM-/ }).first()).toBeVisible();
+  // Set date + select SVI
   await page.getByRole("button", { name: "Cliquez ici pour définir" }).click();
   await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").click();
   await page.getByRole("option", { name: "SVI 1 - 75000 Paris (Service" }).click();

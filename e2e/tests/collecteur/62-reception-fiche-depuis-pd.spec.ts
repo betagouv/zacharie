@@ -19,11 +19,13 @@ test("Collecteur reçoit la fiche du PD et peut la prendre en charge", async ({ 
   await link.click();
   await expect(page).toHaveURL(new RegExp(`/app/collecteur/fei/${feiId}`));
 
-  await page.getByRole("button", { name: "Prendre en charge les carcasses" }).click();
+  // Collecteur take-charge button has different text than ETG
+  const takeCharge = page.getByRole("button", { name: /Je contrôle et transporte les carcasses|Prendre en charge/i });
+  await takeCharge.click();
   await expect(
     page
-      .getByRole("heading", { name: /R.ception/i })
-      .or(page.getByText(/Prise en charge/i))
+      .getByRole("heading", { name: /R.ception|Transport/i })
+      .or(page.getByText(/Prise en charge|contrôle/i))
       .first(),
   ).toBeVisible({ timeout: 10000 });
 });

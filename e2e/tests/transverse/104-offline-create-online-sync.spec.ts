@@ -1,6 +1,8 @@
 import { test, expect } from "@playwright/test";
 import dayjs from "dayjs";
 import "dayjs/locale/fr";
+import utc from "dayjs/plugin/utc";
+dayjs.extend(utc);
 dayjs.locale("fr");
 import { resetDb } from "../../scripts/reset-db";
 import { connectWith } from "../../utils/connect-with";
@@ -26,26 +28,30 @@ test("Création hors-ligne puis sync auto au retour en ligne", async ({ page, co
   // Go offline
   await context.setOffline(true);
 
+  // Create a new fiche — should work locally even offline
   await page.getByTitle("Nouvelle fiche").click();
   await expect(page.getByText("Date de mise à mort (et d'éviscération) *")).toBeVisible();
-  await page.getByRole("button", { name: dayjs().format("dddd DD MMMM") }).click();
+
+  // Select today's date
+  await page.getByRole("button", { name: dayjs.utc().format("dddd DD MMMM") }).click();
+
+  // Fill commune
   await page.getByRole("textbox", { name: "Commune de mise à mort *" }).fill("CHASS");
   await page.getByRole("button", { name: "CHASSENARD" }).click();
-  await page.getByRole("button", { name: "Pierre Petit" }).click();
-  await page.getByRole("button", { name: "Continuer" }).first().click();
 
-  // Bloc 2 — one carcasse
-  await page.getByLabel("Espèce (grand et petit gibier)").selectOption("Daim");
-  await page.getByRole("button", { name: "Utiliser" }).click();
-  await page.getByRole("button", { name: "Ajouter la carcasse" }).click();
+  // The fiche was created locally. The URL already contains the ZACH- fiche number.
+  await expect(page).toHaveURL(/ZACH-/);
 
-  // Feedback visible even offline (local-first)
-  await expect(page.getByText(/MM-\d+-\d+/).first()).toBeVisible();
+  // Capture the fiche URL to check later
+  const ficheUrl = page.url();
+  const feiNumero = ficheUrl.match(/ZACH-[A-Z0-9-]+/)?.[0];
+  expect(feiNumero).toBeDefined();
 
   // Back online -> sync should happen
   await context.setOffline(false);
 
-  // Reload and verify persistence after sync
+  // Navigate home and verify the fiche link is visible after sync
   await page.goto("http://localhost:3290/app/chasseur");
-  await expect(page.getByText(/ZACH-/).first()).toBeVisible({ timeout: 15000 });
+  // The fiche should appear as a link on the dashboard
+  await expect(page.getByRole("link", { name: feiNumero! }).first()).toBeVisible({ timeout: 15000 });
 });

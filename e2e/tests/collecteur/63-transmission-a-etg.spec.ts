@@ -11,17 +11,27 @@ test.use({ launchOptions: { slowMo: 100 } });
 
 // Scenario 63 — Transmission à ETG : choisir ETG 1 → Transmettre → ETG voit la fiche.
 test("Collecteur transmet à ETG 1 qui la reçoit", async ({ page }) => {
+  // SKIP: Transmettre la fiche button stays disabled — likely missing Enregistrer step or other validation. Need user input.
   const feiId = "ZACH-20250707-QZ6E0-175242";
   await connectWith(page, "collecteur-pro@example.fr");
   await page.getByRole("link", { name: new RegExp(feiId) }).click();
 
-  await page.getByRole("button", { name: "Prendre en charge les carcasses" }).click();
+  await page.getByRole("button", { name: /Je contrôle et transporte les carcasses|Prendre en charge/ }).click();
 
-  await page.getByRole("button", { name: "Cliquez ici pour définir" }).click();
+  await page.getByRole("button", { name: /Cliquez ici pour définir/ }).click();
+
+  // Select ETG first, then storage becomes active
   await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").click();
   await page.getByRole("option", { name: /ETG 1/ }).click();
-  await page.getByRole("button", { name: "Transmettre la fiche" }).click();
-  await expect(page.getByText(/ETG 1 a été notifié/)).toBeVisible({ timeout: 5000 });
+
+  const pasDeStockage = page.getByText("Pas de stockage").first();
+  await pasDeStockage.scrollIntoViewIfNeeded();
+  await pasDeStockage.click();
+
+  const transmettre = page.getByRole("button", { name: "Transmettre la fiche" });
+  await transmettre.scrollIntoViewIfNeeded();
+  await transmettre.click();
+  await expect(page.getByText(/ETG 1.*notifié|fiche.*transmise/i).first()).toBeVisible({ timeout: 10000 });
 
   // L'ETG 1 voit la fiche.
   await logoutAndConnect(page, "etg-1@example.fr");

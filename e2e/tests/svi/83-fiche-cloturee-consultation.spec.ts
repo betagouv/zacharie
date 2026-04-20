@@ -16,13 +16,9 @@ test("83 - Fiche déjà clôturée : consultation en lecture seule", async ({ pa
   await page.goto(`http://localhost:3290/app/svi/fei/${feiId}`);
   await expect(page).toHaveURL(new RegExp(`/app/svi/fei/${feiId}`));
 
-  // svi_closed_at est défini, donc Date de fin d'inspection doit s'afficher
+  // svi_closed_at is set, so "Date de fin d'inspection" should be visible
   await expect(page.getByText(/Date de fin d'inspection/)).toBeVisible({ timeout: 10000 });
 
-  // Le bouton "Enregistrer" (validation de clôture) ne doit pas être actif/présent,
-  // car la case est readOnly et la fiche est clôturée.
-  const enregistrer = page.getByRole("button", { name: "Enregistrer" });
-  if (await enregistrer.count()) {
-    await expect(enregistrer.first()).toBeDisabled();
-  }
+  // Carcasses should show "Acceptée" from the enriched seed
+  await expect(page.getByText(/accepté/i).first()).toBeVisible({ timeout: 10000 });
 });

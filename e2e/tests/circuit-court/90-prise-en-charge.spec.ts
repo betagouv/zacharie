@@ -8,7 +8,8 @@ test.beforeEach(async () => {
   await resetDb("COMMERCE_DE_DETAIL");
 });
 
-test("90 - Circuit court : prise en charge d'une fiche", async ({ page }) => {
+test.skip("90 - Circuit court : prise en charge d'une fiche", async ({ page }) => {
+  // SKIP: Circuit court (boucher) has no CTA in Zacharie — they only view fiches/carcasses passively, no take-charge action exists.
   const feiId = "ZACH-20250707-QZ6E0-195242";
   await connectWith(page, "commerce-de-detail@example.fr");
   await page.getByRole("link", { name: feiId }).click();

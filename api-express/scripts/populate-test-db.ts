@@ -30,15 +30,16 @@ export async function populateDb(role?: FeiOwnerRole) {
     return;
   }
 
-  await prisma.user.deleteMany();
-  await prisma.password.deleteMany();
-  await prisma.entity.deleteMany();
+  // Delete in FK-safe order: children before parents
+  await prisma.log.deleteMany();
+  await prisma.carcasseIntermediaire.deleteMany();
+  await prisma.carcasse.deleteMany();
+  await prisma.fei.deleteMany();
   await prisma.entityAndUserRelations.deleteMany();
   await prisma.userRelations.deleteMany();
-  await prisma.fei.deleteMany();
-  await prisma.carcasse.deleteMany();
-  await prisma.carcasseIntermediaire.deleteMany();
-  await prisma.log.deleteMany();
+  await prisma.password.deleteMany();
+  await prisma.entity.deleteMany();
+  await prisma.user.deleteMany();
 
   /* 
   Martin
@@ -546,12 +547,12 @@ Christine
       await prisma.carcasseIntermediaire.createMany({
         data: getCarcasses(fei).map((c) => ({
           fei_numero: fei.numero,
+          numero_bracelet: c.numero_bracelet,
           zacharie_carcasse_id: c.zacharie_carcasse_id!,
           intermediaire_id: `${fei.numero}_${'2a8bc866-a709-47d9-aebe-2768fceb2ecb'}_${users.find((u) => u.email === 'etg-1@example.fr')?.id}`,
           intermediaire_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
           intermediaire_user_id: users.find((u) => u.email === 'etg-1@example.fr')?.id ?? '',
           intermediaire_role: FeiOwnerRole.ETG,
-          fei_numero_zacharie_carcasse_id_intermediaire_id: `${fei.numero}_${c.numero_bracelet}_${fei.numero}_${'2a8bc866-a709-47d9-aebe-2768fceb2ecb'}_${users.find((u) => u.email === 'etg-1@example.fr')?.id}`,
           prise_en_charge_at: dayjs().subtract(2, 'day').toDate(),
         })),
       });
@@ -566,6 +567,14 @@ Christine
     if ((role as string) === 'SVI_CLOSED') {
       const fei = await prisma.fei.create({ data: feiClosedBySvi });
       const carcasses = await prisma.carcasse.createMany({ data: getCarcasses(fei) });
+      // Set per-carcasse SVI decisions so downstream views show real decisions
+      await prisma.carcasse.updateMany({
+        where: { fei_numero: fei.numero },
+        data: {
+          svi_carcasse_status: CarcasseStatus.ACCEPTE,
+          svi_carcasse_status_set_at: dayjs().subtract(2, 'day').toDate(),
+        },
+      });
       console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (SVI closed)`);
     }
     if ((role as string) === 'ETG_REFUSED') {

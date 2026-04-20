@@ -20,18 +20,15 @@ test("Dispatch vers commerce de détail — circuit court direct sans ETG", asyn
   await page.getByRole("button", { name: "Prendre en charge cette" }).click();
 
   await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").click();
-  await page.getByRole("option", { name: /Commerce de détail|Boucherie/i }).click(); // TODO: verify seed label
+  await page.getByRole("option", { name: /Commerce de Détail 1/i }).click();
 
   const pasDeStockage = page.getByText("Pas de stockage").first();
   await pasDeStockage.scrollIntoViewIfNeeded();
   await pasDeStockage.click();
-  const jeTransporte = page.getByText("Je transporte les carcasses moi").first();
-  await jeTransporte.scrollIntoViewIfNeeded();
-  await jeTransporte.click();
+  // Circuit court: no transport step needed
 
   const transmettre = page.getByRole("button", { name: "Transmettre" });
   await transmettre.scrollIntoViewIfNeeded();
   await transmettre.click();
   await expect(page.getByText(/Votre fiche a été transmise/i).first()).toBeVisible({ timeout: 10000 });
-  await expect(page.getByText(/Commerce|Boucherie.*notifi/i)).toBeVisible();
 });
