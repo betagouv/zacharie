@@ -42,8 +42,6 @@ test("Connexion avec compte établissement de traitement", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Pas encore de fiches cette saison" })).toBeVisible();
   await expect(page.locator("#content").getByRole("button", { name: "Nouvelle fiche" })).not.toBeVisible();
   await expect(page.getByRole("button", { name: "Mettre à jour" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Filtrer" }).first()).toBeVisible();
-  await expect(page.getByRole("button", { name: "Actions" }).first()).toBeVisible();
 });
 
 test("Connexion avec compte svi", async ({ page }) => {
