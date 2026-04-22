@@ -578,17 +578,15 @@ router.get(
 
     // Base query conditions
     const where: Prisma.CarcasseWhereInput = {
-      Fei: {
-        svi_assigned_at: { not: null },
-        deleted_at: null,
-        FeiSviEntity: {
-          EntityRelationsWithUsers: {
-            some: {
-              owner_id: req.user!.id,
-              relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-              status: {
-                in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
-              },
+      svi_assigned_at: { not: null },
+      deleted_at: null,
+      CarcasseSviEntity: {
+        EntityRelationsWithUsers: {
+          some: {
+            owner_id: req.user!.id,
+            relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+            status: {
+              in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
             },
           },
         },
@@ -662,18 +660,15 @@ router.get(
 
     // Base query conditions
     const where: Prisma.CarcasseWhereInput = {
-      Fei: {
-        deleted_at: null,
-        CarcasseIntermediaire: {
-          some: {
-            CarcasseIntermediaireEntity: {
-              EntityRelationsWithUsers: {
-                some: {
-                  owner_id: req.user.id,
-                  relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-                  status: {
-                    in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
-                  },
+      CarcasseIntermediaire: {
+        some: {
+          CarcasseIntermediaireEntity: {
+            EntityRelationsWithUsers: {
+              some: {
+                owner_id: req.user.id,
+                relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+                status: {
+                  in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
                 },
               },
             },
@@ -749,19 +744,16 @@ router.get(
 
     // Base query conditions
     const where: Prisma.CarcasseWhereInput = {
-      Fei: {
-        deleted_at: null,
-        CarcasseIntermediaire: {
-          some: {
-            intermediaire_role: FeiOwnerRole.COLLECTEUR_PRO,
-            CarcasseIntermediaireEntity: {
-              EntityRelationsWithUsers: {
-                some: {
-                  owner_id: req.user.id,
-                  relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-                  status: {
-                    in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
-                  },
+      CarcasseIntermediaire: {
+        some: {
+          intermediaire_role: FeiOwnerRole.COLLECTEUR_PRO,
+          CarcasseIntermediaireEntity: {
+            EntityRelationsWithUsers: {
+              some: {
+                owner_id: req.user.id,
+                relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+                status: {
+                  in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
                 },
               },
             },

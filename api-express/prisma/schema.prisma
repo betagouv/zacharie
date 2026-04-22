@@ -147,6 +147,7 @@ model Entity {
   FeisDepotEntity            Fei[]                          @relation("FeiDepotEntity")
   FeisPremierDetenteurEntity Fei[]                          @relation("FeiPremierDetenteurEntity")
   FeisSviEntity              Fei[]                          @relation("FeiSviEntity")
+  CarcassesSviEntity         Carcasse[]                     @relation("CarcasseSviEntity")
   CarcasseIntermediaires     CarcasseIntermediaire[]        @relation("CarcasseIntermediaireEntity")
   ApiKeyApprovals            ApiKeyApprovalByUserOrEntity[]
   ApiKeyLogs                 ApiKeyLog[]
@@ -610,6 +611,7 @@ model Carcasse {
   CarcasseIntermediaire                                   CarcasseIntermediaire[]
   SviIpm1User                                             User?                   @relation("SviIpm1User", fields: [svi_ipm1_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   CarcasseCertificats                                     CarcasseCertificat[]
+  CarcasseSviEntity                                       Entity?                 @relation("CarcasseSviEntity", fields: [svi_entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@index([fei_numero, numero_bracelet])
   @@index([deleted_at, date_mise_a_mort, numero_bracelet(sort: Desc)])
