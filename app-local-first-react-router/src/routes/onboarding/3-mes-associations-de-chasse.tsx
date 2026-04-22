@@ -140,7 +140,10 @@ export default function MesAssociationsDeChasse() {
   return (
     <div className="mb-6 bg-white md:shadow-sm">
       <div className="p-4 md:p-8">
-        <h3 className="mb-8 text-lg font-semibold text-gray-900" id="onboarding-etape-2-associations-data-title">
+        <h3
+          className="mb-8 text-lg font-semibold text-gray-900"
+          id="onboarding-etape-2-associations-data-title"
+        >
           Association, société et domaine de chasse
         </h3>
         <Fragment key={refreshKey}>
@@ -217,7 +220,11 @@ export default function MesAssociationsDeChasse() {
                 <div className="mt-8">
                   <div className="rounded-lg border border-gray-300 px-8 py-6">
                     <p className="mb-5 text-sm text-gray-500">* Les champs marqués d'un astérisque (*) sont obligatoires.</p>
-                    <form id="association_data_form" method="POST" onSubmit={handleEntitySubmit}>
+                    <form
+                      id="association_data_form"
+                      method="POST"
+                      onSubmit={handleEntitySubmit}
+                    >
                       {isUnregisteredEntity ? (
                         <div className="mb-6">
                           <Input
@@ -414,7 +421,10 @@ export default function MesAssociationsDeChasse() {
                           )}
                         </div>
                       </div>
-                      <Button type="submit" nativeButtonProps={{ form: 'association_data_form' }}>
+                      <Button
+                        type="submit"
+                        nativeButtonProps={{ form: 'association_data_form' }}
+                      >
                         Me rattacher à cette entité
                       </Button>
                     </form>

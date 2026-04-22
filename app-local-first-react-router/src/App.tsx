@@ -57,25 +57,68 @@ function App() {
         <Route
           path="/"
           element={
-            <RootDisplay id="landing" navigation={landingPageNavigationMenu} mainLink="/app/tableau-de-bord">
+            <RootDisplay
+              id="landing"
+              navigation={landingPageNavigationMenu}
+              mainLink="/app/tableau-de-bord"
+            >
               <Outlet />
             </RootDisplay>
           }
         >
-          <Route index element={<LandingPage />} />
-          <Route path="pros" element={<LandingProsPage />} />
-          <Route path="demarches" element={<LandingDemarchesPage />} />
-          <Route path="test-sentry" element={<TestSentry />} />
-          <Route path="mentions-legales" element={<MentionsLegales />} />
-          <Route path="accessibilite" element={<Accessibility />} />
-          <Route path="politique-de-confidentialite" element={<PolitiqueDeConfidentialite />} />
-          <Route path="modalites-d-utilisation" element={<ModalitesDutilisation />} />
-          <Route path="stats" element={<Stats />} />
-          <Route path="stats/matrice-impact" element={<ImpactMatrix />} />
-          <Route path="contact" element={<Contact />} />
-          <Route path="faq" element={<Faq />} />
+          <Route
+            index
+            element={<LandingPage />}
+          />
+          <Route
+            path="pros"
+            element={<LandingProsPage />}
+          />
+          <Route
+            path="demarches"
+            element={<LandingDemarchesPage />}
+          />
+          <Route
+            path="test-sentry"
+            element={<TestSentry />}
+          />
+          <Route
+            path="mentions-legales"
+            element={<MentionsLegales />}
+          />
+          <Route
+            path="accessibilite"
+            element={<Accessibility />}
+          />
+          <Route
+            path="politique-de-confidentialite"
+            element={<PolitiqueDeConfidentialite />}
+          />
+          <Route
+            path="modalites-d-utilisation"
+            element={<ModalitesDutilisation />}
+          />
+          <Route
+            path="stats"
+            element={<Stats />}
+          />
+          <Route
+            path="stats/matrice-impact"
+            element={<ImpactMatrix />}
+          />
+          <Route
+            path="contact"
+            element={<Contact />}
+          />
+          <Route
+            path="faq"
+            element={<Faq />}
+          />
         </Route>
-        <Route path="app" element={<AppLayout />}>
+        <Route
+          path="app"
+          element={<AppLayout />}
+        >
           {RouterConnexion()}
           {RouterChasseur()}
           {RouterEtg()}
@@ -87,12 +130,19 @@ function App() {
           <Route
             path="contact"
             element={
-              <RootDisplay id="contact" navigation={generalNavigation} mainLink="/app/tableau-de-bord">
+              <RootDisplay
+                id="contact"
+                navigation={generalNavigation}
+                mainLink="/app/tableau-de-bord"
+              >
                 <Contact />
               </RootDisplay>
             }
           />
-          <Route path="nouvelle-fiche" element={<NouvelleFiche />} />
+          <Route
+            path="nouvelle-fiche"
+            element={<NouvelleFiche />}
+          />
         </Route>
       </SentryRoutes>
       <MatomoTracker />
@@ -107,7 +157,11 @@ function AppLayout() {
   const _hasHydrated = useZustandStore((state) => state._hasHydrated);
   if (!_hasHydrated) {
     return (
-      <RootDisplay id="app-layout" navigation={generalNavigation} mainLink="/app/tableau-de-bord">
+      <RootDisplay
+        id="app-layout"
+        navigation={generalNavigation}
+        mainLink="/app/tableau-de-bord"
+      >
         <Chargement />
       </RootDisplay>
     );

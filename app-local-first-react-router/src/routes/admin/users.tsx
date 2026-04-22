@@ -145,7 +145,10 @@ export default function AdminUsers() {
         >
           <option value="">Tous</option>
           {uniqueRoles.map((role) => (
-            <option key={role} value={role}>
+            <option
+              key={role}
+              value={role}
+            >
               {role}
             </option>
           ))}
@@ -190,7 +193,10 @@ export default function AdminUsers() {
             <option value="missing">Non renseigné</option>
           </Select>
         )}
-        <Button size="small" linkProps={{ to: '/app/admin/add-user' }}>
+        <Button
+          size="small"
+          linkProps={{ to: '/app/admin/add-user' }}
+        >
           + Ajouter des utilisateurs
         </Button>
       </div>
@@ -224,12 +230,18 @@ export default function AdminUsers() {
                   const officialDetails = isChasseur ? getOfficialCfeiDetails(user) : null;
 
                   return (
-                    <tr key={user.id} className="border-b border-gray-200 align-top hover:bg-gray-50">
+                    <tr
+                      key={user.id}
+                      className="border-b border-gray-200 align-top hover:bg-gray-50"
+                    >
                       <td className="px-2 py-1">
                         <span className="flex flex-col">
                           <span className="font-medium">
                             <span className="text-xs text-gray-400">{index + 1}. </span>
-                            <Link to={`/app/admin/user/${user.id}`} className="no-underline">
+                            <Link
+                              to={`/app/admin/user/${user.id}`}
+                              className="no-underline"
+                            >
                               {user.nom_de_famille} {user.prenom}
                             </Link>
                           </span>
@@ -245,7 +257,11 @@ export default function AdminUsers() {
                         <span className="flex flex-col gap-1">
                           <span className="flex flex-wrap gap-0.5">
                             {user.roles.map((role) => (
-                              <Badge key={role} severity="info" small>
+                              <Badge
+                                key={role}
+                                severity="info"
+                                small
+                              >
                                 {role}
                               </Badge>
                             ))}
@@ -255,17 +271,29 @@ export default function AdminUsers() {
                               <span>
                                 {user.numero_cfei || <span className="text-gray-400 italic">—</span>}
                                 {officialCfeis.length > 0 && cfeiStatus === 'valid' && (
-                                  <Badge severity="success" small className="ml-1">
+                                  <Badge
+                                    severity="success"
+                                    small
+                                    className="ml-1"
+                                  >
                                     Validé
                                   </Badge>
                                 )}
                                 {officialCfeis.length > 0 && cfeiStatus === 'invalid' && (
-                                  <Badge severity="error" small className="ml-1">
+                                  <Badge
+                                    severity="error"
+                                    small
+                                    className="ml-1"
+                                  >
                                     Non trouvé
                                   </Badge>
                                 )}
                                 {officialCfeis.length > 0 && cfeiStatus === 'missing' && (
-                                  <Badge severity="warning" small className="ml-1">
+                                  <Badge
+                                    severity="warning"
+                                    small
+                                    className="ml-1"
+                                  >
                                     Non renseigné
                                   </Badge>
                                 )}
@@ -283,19 +311,31 @@ export default function AdminUsers() {
                       <td className="px-2 py-1">
                         <span className="flex flex-col gap-0.5">
                           <span className="flex flex-wrap gap-0.5">
-                            <Badge severity={user.activated ? 'success' : 'error'} small>
+                            <Badge
+                              severity={user.activated ? 'success' : 'error'}
+                              small
+                            >
                               {user.activated ? 'Activé' : 'Inactif'}
                             </Badge>
-                            <Badge severity={user.onboarded_at ? 'success' : 'warning'} small>
+                            <Badge
+                              severity={user.onboarded_at ? 'success' : 'warning'}
+                              small
+                            >
                               {user.onboarded_at ? 'Onboardé' : 'Onb. incomplet'}
                             </Badge>
                             {isChasseur && (
-                              <Badge severity={user.est_forme_a_l_examen_initial ? 'success' : 'warning'} small>
+                              <Badge
+                                severity={user.est_forme_a_l_examen_initial ? 'success' : 'warning'}
+                                small
+                              >
                                 {user.est_forme_a_l_examen_initial ? 'Formé EI' : 'Non formé EI'}
                               </Badge>
                             )}
                           </span>
-                          <span className="text-xs text-gray-500" suppressHydrationWarning>
+                          <span
+                            className="text-xs text-gray-500"
+                            suppressHydrationWarning
+                          >
                             Créé {dayjs(user.created_at).format('DD/MM/YY')}
                             {user.last_seen_at && ` · Vu ${dayjs(user.last_seen_at).format('DD/MM/YY')}`}
                           </span>
@@ -340,7 +380,10 @@ export default function AdminUsers() {
                               await refreshUser('admin/user/connect-as');
                             }}
                           >
-                            <button type="submit" className="text-action-high-blue-france text-center text-xs">
+                            <button
+                              type="submit"
+                              className="text-action-high-blue-france text-center text-xs"
+                            >
                               Connexion
                             </button>
                           </form>
@@ -353,7 +396,10 @@ export default function AdminUsers() {
           </table>
         </div>
         <div className="flex items-start bg-white px-4 py-2">
-          <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left text-sm" href="#top">
+          <a
+            className="fr-link fr-icon-arrow-up-fill fr-link--icon-left text-sm"
+            href="#top"
+          >
             Haut de page
           </a>
         </div>

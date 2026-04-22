@@ -13,13 +13,21 @@ export default function CircuitCourt() {
 
   return (
     <>
-      <Section open={false} title="Données de chasse">
+      <Section
+        open={false}
+        title="Données de chasse"
+      >
         <FEIDonneesDeChasse />
       </Section>
       <Section title={`Carcasses (${allCarcassesForFei.length})`}>
         <div className="flex flex-col gap-4">
           {allCarcassesForFei.map((carcasse) => {
-            return <CardCarcasse carcasse={carcasse} key={carcasse.numero_bracelet} />;
+            return (
+              <CardCarcasse
+                carcasse={carcasse}
+                key={carcasse.numero_bracelet}
+              />
+            );
           })}
         </div>
       </Section>

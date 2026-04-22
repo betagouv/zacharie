@@ -21,7 +21,11 @@ export default function HygieneScoreCard({ score }: HygieneScoreCardProps) {
         <HygieneScoreGauge score={score} />
         <div className="mt-4 text-center">
           <div className="text-action-high-blue-france-light mb-2 text-xl font-bold">score de respect des pratiques d'hygiène</div>
-          <Tooltip style={{ textAlign: 'center' }} kind="hover" title={getTooltipText(score)} />
+          <Tooltip
+            style={{ textAlign: 'center' }}
+            kind="hover"
+            title={getTooltipText(score)}
+          />
         </div>
       </div>
     </div>

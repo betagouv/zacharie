@@ -54,7 +54,10 @@ export default function AdminNewUser() {
                   autoComplete: 'off',
                 }}
               />
-              <RolesCheckBoxes withAdmin legend="Sélectionnez tous les rôles du nouvel utilisateur" />
+              <RolesCheckBoxes
+                withAdmin
+                legend="Sélectionnez tous les rôles du nouvel utilisateur"
+              />
             </div>
             <div className="fixed bottom-16 left-0 z-50 flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:relative md:bottom-0 md:w-auto md:items-center md:shadow-none md:[&_ul]:min-w-96">
               <ButtonsGroup

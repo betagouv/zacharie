@@ -61,13 +61,21 @@ function CircuitCourtFei() {
             key={fei.fei_current_owner_entity_id! + fei.fei_current_owner_user_id!}
           >
             <h1 className="fr-h3 fr-mb-2w">Fiche {fei?.numero}</h1>
-            <Section open={false} title="Données de chasse">
+            <Section
+              open={false}
+              title="Données de chasse"
+            >
               <FEIDonneesDeChasse />
             </Section>
             <Section title={`Carcasses (${allCarcassesForFei.length})`}>
               <div className="flex flex-col gap-4">
                 {allCarcassesForFei.map((carcasse) => {
-                  return <CardCarcasse carcasse={carcasse} key={carcasse.numero_bracelet} />;
+                  return (
+                    <CardCarcasse
+                      carcasse={carcasse}
+                      key={carcasse.numero_bracelet}
+                    />
+                  );
                 })}
               </div>
             </Section>

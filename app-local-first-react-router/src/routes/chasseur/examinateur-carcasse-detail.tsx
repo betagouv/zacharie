@@ -216,7 +216,12 @@ function ExaminateurCarcasseDetailLoaded() {
                 </div>
               </form>
             )}
-            <form id="carcasse-metadata-form" method="POST" ref={formRef} className="mb-6 bg-white py-2 md:shadow-sm">
+            <form
+              id="carcasse-metadata-form"
+              method="POST"
+              ref={formRef}
+              className="mb-6 bg-white py-2 md:shadow-sm"
+            >
               <div className="p-4 pb-8 md:p-8 md:pb-4">
                 {!canEdit && (
                   <InputNotEditable
@@ -251,10 +256,16 @@ function ExaminateurCarcasseDetailLoaded() {
                     <hr />
                     {Object.entries(gibierSelect).map(([typeGibier, _especes]) => {
                       return (
-                        <optgroup label={typeGibier} key={typeGibier}>
+                        <optgroup
+                          label={typeGibier}
+                          key={typeGibier}
+                        >
                           {_especes.map((_espece: string) => {
                             return (
-                              <option value={_espece} key={_espece}>
+                              <option
+                                value={_espece}
+                                key={_espece}
+                              >
                                 {_espece}
                               </option>
                             );
@@ -325,7 +336,11 @@ function ExaminateurCarcasseDetailLoaded() {
                               }}
                               values={anomaliesCarcasse}
                             />
-                            <Button priority="secondary" type="button" onClick={() => anomaliesCarcasseModal.open()}>
+                            <Button
+                              priority="secondary"
+                              type="button"
+                              onClick={() => anomaliesCarcasseModal.open()}
+                            >
                               Ajouter depuis le référentiel des anomalies carcasse
                             </Button>
                             <ModalTreeDisplay
@@ -380,7 +395,11 @@ function ExaminateurCarcasseDetailLoaded() {
                                 }}
                                 values={anomaliesAbats}
                               />
-                              <Button priority="secondary" type="button" onClick={() => anomaliesAbatsModal.open()}>
+                              <Button
+                                priority="secondary"
+                                type="button"
+                                onClick={() => anomaliesAbatsModal.open()}
+                              >
                                 Ajouter depuis le référentiel des anomalies abats
                               </Button>
                               <ModalTreeDisplay

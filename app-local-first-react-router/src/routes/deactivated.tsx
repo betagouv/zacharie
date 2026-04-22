@@ -14,8 +14,17 @@ export default function DeactivatedAccount() {
   }, []);
 
   return (
-    <RootDisplay hideMinistereName navigation={navigation} id="chasseur-layout-not-activated" mainLink="/app/tableau-de-bord">
-      <main role="main" id="content" className="fr-background-alt--blue-france relative min-h-full overflow-auto">
+    <RootDisplay
+      hideMinistereName
+      navigation={navigation}
+      id="chasseur-layout-not-activated"
+      mainLink="/app/tableau-de-bord"
+    >
+      <main
+        role="main"
+        id="content"
+        className="fr-background-alt--blue-france relative min-h-full overflow-auto"
+      >
         <title>Compte en attente d’activation | Zacharie | Ministère de l’Agriculture et de la Souveraineté Alimentaire</title>
         <div className="fr-container fr-container--fluid fr-my-md-14v">
           <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
@@ -36,7 +45,10 @@ export default function DeactivatedAccount() {
                       <p className="fr-text--sm fr-mb-3w">Il semble que certaines informations soient manquantes sur votre profil.</p>
                       <ul className="fr-btns-group fr-btns-group--inline-md fr-mb-3w">
                         <li>
-                          <Link className="fr-btn" to="/app/chasseur/profil/coordonnees">
+                          <Link
+                            className="fr-btn"
+                            to="/app/chasseur/profil/coordonnees"
+                          >
                             Compléter votre profil
                           </Link>
                         </li>

@@ -61,7 +61,13 @@ export default function CarcassesExaminateur({
 
       {canEdit && hasCarcasses && !allCarcassesConfirmed && !showForm && (
         <div className="mt-4">
-          <Button type="button" id="add-more-carcasses-button" priority="secondary" iconId="fr-icon-add-line" onClick={() => setShowForm(true)}>
+          <Button
+            type="button"
+            id="add-more-carcasses-button"
+            priority="secondary"
+            iconId="fr-icon-add-line"
+            onClick={() => setShowForm(true)}
+          >
             Ajouter une autre carcasse
           </Button>
         </div>
@@ -70,7 +76,10 @@ export default function CarcassesExaminateur({
         <p className="my-4 ml-4 text-sm text-gray-500">
           Carcasses enregistrées sur cette fiche&nbsp;:
           {countCarcassesByEspece.map((line) => (
-            <span className="ml-4 block" key={line}>
+            <span
+              className="ml-4 block"
+              key={line}
+            >
               {line}
             </span>
           ))}

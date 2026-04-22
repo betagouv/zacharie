@@ -57,7 +57,10 @@ export default function MotDePasseOublie() {
   };
 
   return (
-    <main role="main" id="content">
+    <main
+      role="main"
+      id="content"
+    >
       <title>Mot de passe oublié | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
       <div className="fr-container fr-container--fluid fr-my-md-14v">
         <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
@@ -65,17 +68,29 @@ export default function MotDePasseOublie() {
             {communication && <CallOut>{decodeURIComponent(communication)}</CallOut>}
             {userResponse?.message && <CallOut>{userResponse?.message}</CallOut>}
             {userResponse?.error && !userResponse?.message && <CallOut title="Erreur">{userResponse.error}</CallOut>}
-            <form onSubmit={handleSubmit} id="forget_password_form" method="POST" className="fr-background-alt--blue-france p-4 md:p-8">
+            <form
+              onSubmit={handleSubmit}
+              id="forget_password_form"
+              method="POST"
+              className="fr-background-alt--blue-france p-4 md:p-8"
+            >
               <fieldset
                 className="fr-fieldset"
                 id="forget-password-fieldset"
                 aria-labelledby="forget-password-fieldset-legend forget-password-fieldset-messages"
               >
-                <legend className="fr-fieldset__legend" id="forget-password-fieldset-legend">
+                <legend
+                  className="fr-fieldset__legend"
+                  id="forget-password-fieldset-legend"
+                >
                   <h2 className="fr-h3">Mot de passe oublié</h2>
                 </legend>
               </fieldset>
-              <input type="text" name="name" className="hidden" />
+              <input
+                type="text"
+                name="name"
+                className="hidden"
+              />
               <Input
                 hintText="Renseignez votre email ci-dessous. Vous recevrez un email avec un lien pour réinitialiser votre mot de passe."
                 label="Mon email"

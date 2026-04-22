@@ -47,7 +47,11 @@ export default function CurrentOwner() {
     return (
       <div className="bg-alt-blue-france pb-8">
         <div className="bg-white">
-          <Alert severity="success" description="Merci à l'ensemble des acteurs pour la prise en charge de cette fiche." title="Fiche clôturée" />
+          <Alert
+            severity="success"
+            description="Merci à l'ensemble des acteurs pour la prise en charge de cette fiche."
+            title="Fiche clôturée"
+          />
         </div>
       </div>
     );

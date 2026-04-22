@@ -357,7 +357,10 @@ export default function CarcasseIntermediaireComp({ carcasse, canEdit, intermedi
               <br />
               {commentairesIntermediaires.map((commentaire, index) => {
                 return (
-                  <p key={commentaire + index} className="mt-2 block text-sm font-normal opacity-70">
+                  <p
+                    key={commentaire + index}
+                    className="mt-2 block text-sm font-normal opacity-70"
+                  >
                     {commentaire}
                   </p>
                 );
@@ -368,7 +371,10 @@ export default function CarcasseIntermediaireComp({ carcasse, canEdit, intermedi
                   <br />
                   {carcasse.examinateur_anomalies_abats.map((anomalie) => {
                     return (
-                      <span className="m-0 ml-2 block font-normal opacity-70" key={anomalie}>
+                      <span
+                        className="m-0 ml-2 block font-normal opacity-70"
+                        key={anomalie}
+                      >
                         {anomalie}
                       </span>
                     );
@@ -381,7 +387,10 @@ export default function CarcasseIntermediaireComp({ carcasse, canEdit, intermedi
                   <br />
                   {carcasse.examinateur_anomalies_carcasse.map((anomalie) => {
                     return (
-                      <span className="m-0 ml-2 block font-normal opacity-70" key={anomalie}>
+                      <span
+                        className="m-0 ml-2 block font-normal opacity-70"
+                        key={anomalie}
+                      >
                         {anomalie}
                       </span>
                     );
@@ -392,7 +401,12 @@ export default function CarcasseIntermediaireComp({ carcasse, canEdit, intermedi
           }
         >
           {isRefusIntermediaireModalOpen && (
-            <form method="POST" ref={formRef} onSubmit={(e) => e.preventDefault()} id={`intermediaire-carcasse-${carcasse.numero_bracelet}`}>
+            <form
+              method="POST"
+              ref={formRef}
+              onSubmit={(e) => e.preventDefault()}
+              id={`intermediaire-carcasse-${carcasse.numero_bracelet}`}
+            >
               <div className="mt-4">
                 {/* cutsom radio buttons en reprenant le code de @codegouvfr/react-dsfr/RadioButtons pour y insérer un input pour le nombre d'animaux acceptés */}
                 <fieldset className="fr-fieldset">
@@ -421,7 +435,10 @@ export default function CarcasseIntermediaireComp({ carcasse, canEdit, intermedi
                         }}
                         disabled={!canEdit}
                       />
-                      <label className="fr-label" htmlFor="carcasse-status-accept">
+                      <label
+                        className="fr-label"
+                        htmlFor="carcasse-status-accept"
+                      >
                         {carcasse.type === CarcasseType.GROS_GIBIER ? 'Carcasse acceptée' : 'Lot accepté'}
                       </label>
                     </div>
@@ -441,7 +458,10 @@ export default function CarcasseIntermediaireComp({ carcasse, canEdit, intermedi
                             }}
                             disabled={!canEdit}
                           />
-                          <label className="fr-label" htmlFor="carcasse-status-accept-partiel">
+                          <label
+                            className="fr-label"
+                            htmlFor="carcasse-status-accept-partiel"
+                          >
                             Lot partiellement accepté
                           </label>
                         </div>
@@ -497,7 +517,10 @@ export default function CarcasseIntermediaireComp({ carcasse, canEdit, intermedi
                         }}
                         disabled={!canEdit}
                       />
-                      <label className="fr-label" htmlFor="carcasse-status-refus">
+                      <label
+                        className="fr-label"
+                        htmlFor="carcasse-status-refus"
+                      >
                         {carcasse.type === CarcasseType.GROS_GIBIER ? 'Carcasse refusée' : 'Lot refusé'}
                       </label>
                       {carcasse.type === CarcasseType.PETIT_GIBIER && (
@@ -538,7 +561,10 @@ export default function CarcasseIntermediaireComp({ carcasse, canEdit, intermedi
                         }}
                         disabled={!canEdit}
                       />
-                      <label className="fr-label" htmlFor="carcasse-status-manquante">
+                      <label
+                        className="fr-label"
+                        htmlFor="carcasse-status-manquante"
+                      >
                         {carcasse.type === CarcasseType.GROS_GIBIER ? 'Carcasse manquante' : 'Lot manquant'}
                       </label>
                     </div>

@@ -131,7 +131,11 @@ export default function MesInformationsDeChasse({
             <>
               <div className="mb-6 bg-white md:shadow-sm">
                 <div className="p-4 md:p-8">
-                  <form id="user_data_form" method="POST" onSubmit={(e) => e.preventDefault()}>
+                  <form
+                    id="user_data_form"
+                    method="POST"
+                    onSubmit={(e) => e.preventDefault()}
+                  >
                     {/* <h3 className="inline-flex items-center text-lg font-semibold text-gray-900">
                       <span>Examen initial</span>
                     </h3> */}
@@ -198,7 +202,10 @@ export default function MesInformationsDeChasse({
           {withAssociationsDeChasse && (
             <div className="mb-6 bg-white md:shadow-sm">
               <div className="p-4 md:p-8">
-                <h3 className="mb-8 text-lg font-semibold text-gray-900" id={`onboarding-etape-2-associations-data-title`}>
+                <h3
+                  className="mb-8 text-lg font-semibold text-gray-900"
+                  id={`onboarding-etape-2-associations-data-title`}
+                >
                   Association, société et domaine de chasse
                 </h3>
                 <MesAssociationsDeChasse />
@@ -211,7 +218,10 @@ export default function MesInformationsDeChasse({
           {withPartenaires && (
             <div className="mb-6 bg-white md:shadow-sm">
               <div className="p-4 md:p-8">
-                <h3 className="mb-8 text-lg font-semibold text-gray-900" id={`onboarding-etape-2-associations-data-title`}>
+                <h3
+                  className="mb-8 text-lg font-semibold text-gray-900"
+                  id={`onboarding-etape-2-associations-data-title`}
+                >
                   Partenaires
                 </h3>
                 <MesPartenaires />
@@ -221,7 +231,12 @@ export default function MesInformationsDeChasse({
           {showEntrpriseVisibilityCheckbox && (
             <div className="mb-6 bg-white md:shadow-sm">
               <div className="p-4 md:p-8">
-                <form id="user_data_form" method="POST" onSubmit={(e) => e.preventDefault()} className="px-8">
+                <form
+                  id="user_data_form"
+                  method="POST"
+                  onSubmit={(e) => e.preventDefault()}
+                  className="px-8"
+                >
                   <Checkbox
                     options={[
                       {

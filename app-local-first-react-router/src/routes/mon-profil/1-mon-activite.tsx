@@ -43,8 +43,14 @@ export default function MesRoles() {
             <h1 className="fr-h2 fr-mb-2w">Mon activité</h1>
             <div className="mb-6 bg-white md:shadow-sm">
               <div className="p-4 pb-32 md:p-8 md:pb-0">
-                <RolesCheckBoxes user={user} legend="Sélectionnez l’activité qui vous correspond" />
-                <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
+                <RolesCheckBoxes
+                  user={user}
+                  legend="Sélectionnez l’activité qui vous correspond"
+                />
+                <a
+                  className="fr-link fr-icon-arrow-up-fill fr-link--icon-left"
+                  href="#top"
+                >
                   Haut de page
                 </a>
               </div>

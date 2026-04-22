@@ -63,7 +63,10 @@ export default function SearchInput({ className, id, type }: SearchInputProps) {
   }, [cachedValue, value]);
 
   return (
-    <div ref={containerRef} className="relative flex w-full flex-col">
+    <div
+      ref={containerRef}
+      className="relative flex w-full flex-col"
+    >
       <input
         ref={searchRef}
         className={className}

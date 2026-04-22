@@ -73,7 +73,10 @@ export default function Filters<T extends Filter = Filter>({
             const filterValue = getFilterValue(filter.value);
             if (!filterValue) return null;
             return (
-              <li key={index} className="list-disc">
+              <li
+                key={index}
+                className="list-disc"
+              >
                 {current.label}: {filterValue}
               </li>
             );
@@ -287,7 +290,10 @@ function ValueSelector({ index, field, filterValues, value, onChangeValue, base 
               onChangeValue(unfilledChecked ? '' : 'Non renseigné');
             }}
           />
-          <label htmlFor="unfilled" className="text-xs">
+          <label
+            htmlFor="unfilled"
+            className="text-xs"
+          >
             Non renseigné
           </label>
         </div>

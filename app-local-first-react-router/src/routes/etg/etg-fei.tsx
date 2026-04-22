@@ -115,13 +115,32 @@ function EtgFeiLoader(props: Props) {
 
   return (
     <Fragment key={intermediaire?.id}>
-      <EtgFeiContent key={intermediaire?.id} {...props} intermediaire={intermediaire!}>
+      <EtgFeiContent
+        key={intermediaire?.id}
+        {...props}
+        intermediaire={intermediaire!}
+      >
         {intermediaires.length > 0 && (
-          <nav id="fr-breadcrumb-:r54:" role="navigation" className="fr-breadcrumb" aria-label="vous êtes ici :" data-fr-js-breadcrumb="true">
-            <button className="fr-breadcrumb__button" aria-expanded="false" aria-controls="breadcrumb-:r55:" data-fr-js-collapse-button="true">
+          <nav
+            id="fr-breadcrumb-:r54:"
+            role="navigation"
+            className="fr-breadcrumb"
+            aria-label="vous êtes ici :"
+            data-fr-js-breadcrumb="true"
+          >
+            <button
+              className="fr-breadcrumb__button"
+              aria-expanded="false"
+              aria-controls="breadcrumb-:r55:"
+              data-fr-js-collapse-button="true"
+            >
               Voir les destinataires
             </button>
-            <div className="fr-collapse" id="breadcrumb-:r55:" data-fr-js-collapse="true">
+            <div
+              className="fr-collapse"
+              id="breadcrumb-:r55:"
+              data-fr-js-collapse="true"
+            >
               <ol className="fr-breadcrumb__list">
                 <li>
                   <span className="fr-breadcrumb__link bg-none! no-underline!">{fei.premier_detenteur_name_cache}</span>
@@ -152,7 +171,10 @@ function EtgFeiLoader(props: Props) {
             </div>
           </nav>
         )}
-        <Section open={!!intermediaires.length} title="Données de traçabilité">
+        <Section
+          open={!!intermediaires.length}
+          title="Données de traçabilité"
+        >
           <FEIDonneesDeChasse />
         </Section>
       </EtgFeiContent>
@@ -622,7 +644,11 @@ function EtgFeiContent({ intermediaire, children, ...props }: Props & { intermed
                     const carcasse = carcasses[intermediaireCarcasse.zacharie_carcasse_id];
                     return (
                       <Fragment key={carcasse.numero_bracelet}>
-                        <CarcasseIntermediaireComp intermediaire={intermediaire} canEdit={effectiveCanEdit} carcasse={carcasse} />
+                        <CarcasseIntermediaireComp
+                          intermediaire={intermediaire}
+                          canEdit={effectiveCanEdit}
+                          carcasse={carcasse}
+                        />
                       </Fragment>
                     );
                   })}
@@ -642,13 +668,21 @@ function EtgFeiContent({ intermediaire, children, ...props }: Props & { intermed
                 {showRefusedCarcasses && (
                   <div className="flex flex-col gap-4">
                     {carcassesDejaRefusees.map((carcasse) => {
-                      return <CardCarcasse carcasse={carcasse} key={carcasse.numero_bracelet} />;
+                      return (
+                        <CardCarcasse
+                          carcasse={carcasse}
+                          key={carcasse.numero_bracelet}
+                        />
+                      );
                     })}
                   </div>
                 )}
                 {canCloseFeiWithOnlyManquantesOrRejetees && (
                   <div className="my-8 flex justify-center">
-                    <Button onClick={handleCloseFei} priority="primary">
+                    <Button
+                      onClick={handleCloseFei}
+                      priority="primary"
+                    >
                       Clôturer la fiche (
                       {carcassesSorted.carcassesManquantes.length > 0 && carcassesSorted.carcassesRejetees.length > 0
                         ? 'toutes les carcasses sont manquantes ou refusées'
@@ -682,7 +716,10 @@ function EtgFeiContent({ intermediaire, children, ...props }: Props & { intermed
 
             {!!labelCheckDone.length && (
               <>
-                <Section title="Prise en charge des carcasses acceptées" key={intermediaire?.id}>
+                <Section
+                  title="Prise en charge des carcasses acceptées"
+                  key={intermediaire?.id}
+                >
                   <form
                     method="POST"
                     className="flex flex-col gap-y-4"
@@ -734,7 +771,10 @@ function EtgFeiContent({ intermediaire, children, ...props }: Props & { intermed
                       }}
                     />
                     {!!canEdit && (
-                      <Button type="submit" disabled={!!submitDisabled}>
+                      <Button
+                        type="submit"
+                        disabled={!!submitDisabled}
+                      >
                         Enregistrer
                       </Button>
                     )}
@@ -759,7 +799,10 @@ function EtgFeiContent({ intermediaire, children, ...props }: Props & { intermed
                   </form>
                 </Section>
                 {couldSelectNextUser && (
-                  <Section title="Sélection du prochain destinataire" key={intermediaire?.id + needSelectNextUser}>
+                  <Section
+                    title="Sélection du prochain destinataire"
+                    key={intermediaire?.id + needSelectNextUser}
+                  >
                     <DestinataireSelectIntermediaire
                       disabled={!needSelectNextUser || props.readOnly}
                       canEdit={effectiveCanEdit}

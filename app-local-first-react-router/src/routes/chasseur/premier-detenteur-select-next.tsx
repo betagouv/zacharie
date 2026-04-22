@@ -114,7 +114,13 @@ function DispatchGroupForm({
         <h4 className="m-0 text-lg font-bold">
           {totalGroups > 1 && <>Destinataire {groupIndex + 1} </>}
           {allCarcassesRestantes.length > 1 && (
-            <Badge severity={group.carcasseIds.length > 0 ? 'info' : 'warning'} small noIcon as="span" className="ml-2">
+            <Badge
+              severity={group.carcasseIds.length > 0 ? 'info' : 'warning'}
+              small
+              noIcon
+              as="span"
+              className="ml-2"
+            >
               {group.carcasseIds.length} carcasse{group.carcasseIds.length !== 1 ? 's' : ''}
             </Badge>
           )}
@@ -980,13 +986,22 @@ export default function DestinatairePremierDetenteur({
                     <div key={entityId}>
                       <p className="mb-1 text-sm font-bold">
                         {entity?.nom_d_usage ?? entityId}
-                        <Badge severity="success" small noIcon as="span" className="ml-2">
+                        <Badge
+                          severity="success"
+                          small
+                          noIcon
+                          as="span"
+                          className="ml-2"
+                        >
                           {carcasses.length} carcasse{carcasses.length > 1 ? 's' : ''}
                         </Badge>
                       </p>
                       <div className="flex flex-wrap gap-1">
                         {carcasses.map((c) => (
-                          <Tag key={c.zacharie_carcasse_id} small>
+                          <Tag
+                            key={c.zacharie_carcasse_id}
+                            small
+                          >
                             {c.numero_bracelet} - {c.espece}
                           </Tag>
                         ))}
@@ -1000,7 +1015,11 @@ export default function DestinatairePremierDetenteur({
         )}
 
         {carcassesRestantes.length === 0 && carcassesDejaEnvoyees.length > 0 && (
-          <Alert severity="info" title="Toutes les carcasses ont été attribuées" description="Il n'y a plus de carcasses à envoyer." />
+          <Alert
+            severity="info"
+            title="Toutes les carcasses ont été attribuées"
+            description="Il n'y a plus de carcasses à envoyer."
+          />
         )}
 
         {carcassesRestantes.length > 0 && (
@@ -1057,7 +1076,10 @@ export default function DestinatairePremierDetenteur({
                 description={
                   <div className="mt-1 flex flex-wrap gap-1">
                     {unassignedCarcasses.map((c) => (
-                      <Tag key={c.zacharie_carcasse_id} small>
+                      <Tag
+                        key={c.zacharie_carcasse_id}
+                        small
+                      >
                         {c.numero_bracelet} - {c.espece}
                       </Tag>
                     ))}
@@ -1094,12 +1116,24 @@ export default function DestinatairePremierDetenteur({
               )}
               {/* Add another recipient button */}
               {canEdit && carcassesRestantes.length > 1 && (
-                <Button priority="secondary" type="button" iconId="fr-icon-add-line" nativeButtonProps={{ onClick: addGroup }}>
+                <Button
+                  priority="secondary"
+                  type="button"
+                  iconId="fr-icon-add-line"
+                  nativeButtonProps={{ onClick: addGroup }}
+                >
                   Ajouter un autre destinataire
                 </Button>
               )}
             </div>
-            {!disabled && globalValidationError && <Alert title="Attention" className="mt-4" severity="error" description={globalValidationError} />}
+            {!disabled && globalValidationError && (
+              <Alert
+                title="Attention"
+                className="mt-4"
+                severity="error"
+                description={globalValidationError}
+              />
+            )}
           </>
         )}
       </div>

@@ -272,7 +272,11 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
   const Component = canDoIPM2 ? Input : InputNotEditable;
 
   return (
-    <form method="POST" id={`svi-carcasse-${carcasse.numero_bracelet}`} onSubmit={(e) => e.preventDefault()}>
+    <form
+      method="POST"
+      id={`svi-carcasse-${carcasse.numero_bracelet}`}
+      onSubmit={(e) => e.preventDefault()}
+    >
       {carcasse.svi_ipm1_decision === IPM1Decision.ACCEPTE && (
         <Alert
           severity="info"
@@ -418,7 +422,10 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
                 <>
                   Rappel IPM1: {carcasse.svi_ipm1_pieces.join('; ')}
                   <br />
-                  <button type="button" onClick={() => piecesGibier.open()}>
+                  <button
+                    type="button"
+                    onClick={() => piecesGibier.open()}
+                  >
                     Voir le référentiel des pièces en <u className="inline">cliquant ici</u>
                   </button>
                 </>
@@ -449,7 +456,10 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
                 <>
                   Rappel IPM1: {carcasse.svi_ipm1_lesions_ou_motifs.join('; ')}
                   <br />
-                  <button type="button" onClick={() => lesionsOuMotifsConsigneModal.open()}>
+                  <button
+                    type="button"
+                    onClick={() => lesionsOuMotifsConsigneModal.open()}
+                  >
                     Voir le référentiel des lésions de carcasse en <u className="inline">cliquant ici</u>
                   </button>
                 </>
@@ -686,7 +696,10 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
             label="N° d'agrément de l'établissement désigné pour réaliser le traitement assainissant *"
             hintText={
               <>
-                <button type="button" onClick={() => etablissementsTraitementSanitaireModal.open()}>
+                <button
+                  type="button"
+                  onClick={() => etablissementsTraitementSanitaireModal.open()}
+                >
                   Voir les établissements de traitement sanitaire en <u className="inline">cliquant ici.</u>
                 </button>{' '}
                 Source: section IV de la page{' '}
@@ -774,11 +787,21 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
         </>
       )}
       <div>
-        <Button type="button" onClick={handleSave}>
+        <Button
+          type="button"
+          onClick={handleSave}
+        >
           Enregistrer
         </Button>
       </div>
-      {triedToSave && missingFields && <Alert title="Attention" className="mt-4" severity="error" description={missingFields} />}
+      {triedToSave && missingFields && (
+        <Alert
+          title="Attention"
+          className="mt-4"
+          severity="error"
+          description={missingFields}
+        />
+      )}
     </form>
   );
 }

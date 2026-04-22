@@ -134,13 +134,23 @@ function SviInspectionCarcasse() {
             <>
               <FEIDonneesDeChasse carcasseId={carcasse.zacharie_carcasse_id} />
               {carcasse.type === CarcasseType.PETIT_GIBIER && (
-                <ItemNotEditable label="Nombre d'animaux initialement prélevés" value={carcasse.nombre_d_animaux!.toString()} />
+                <ItemNotEditable
+                  label="Nombre d'animaux initialement prélevés"
+                  value={carcasse.nombre_d_animaux!.toString()}
+                />
               )}
-              <ItemNotEditable label="Commentaires des destinataires" value={commentairesIntermediaires.join('\n') || 'N/A'} />
+              <ItemNotEditable
+                label="Commentaires des destinataires"
+                value={commentairesIntermediaires.join('\n') || 'N/A'}
+              />
             </>
           </Section>
           <Section title="Résumé de la décision">
-            <CardCarcasseSvi carcasse={carcasse} canClick={false} key={dayjs(carcasse.updated_at).toISOString()} />
+            <CardCarcasseSvi
+              carcasse={carcasse}
+              canClick={false}
+              key={dayjs(carcasse.updated_at).toISOString()}
+            />
           </Section>
           {canEdit && (
             <>

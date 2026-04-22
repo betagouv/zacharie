@@ -57,7 +57,10 @@ export default function MesPartenaires() {
   return (
     <div className="mb-6 bg-white md:shadow-sm">
       <div className="p-4 md:p-8">
-        <h3 className="mb-8 text-lg font-semibold text-gray-900" id="onboarding-etape-2-partenaires-data-title">
+        <h3
+          className="mb-8 text-lg font-semibold text-gray-900"
+          id="onboarding-etape-2-partenaires-data-title"
+        >
           Partenaires
         </h3>
         <Fragment key={refreshKey}>

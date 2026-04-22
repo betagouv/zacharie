@@ -42,7 +42,10 @@ export default function ListAndSelectEntities({
   return (
     <div className="mb-6 bg-white md:shadow-sm">
       <div className="p-4 md:p-8">
-        <h3 className="mb-8 text-lg font-semibold text-gray-900" id={`${formId}-title`}>
+        <h3
+          className="mb-8 text-lg font-semibold text-gray-900"
+          id={`${formId}-title`}
+        >
           {sectionLabel}
         </h3>
         {description}
@@ -70,7 +73,11 @@ export default function ListAndSelectEntities({
           );
         })}
         {canChange && (
-          <form id={formId} className="flex w-full flex-col gap-4" method="POST">
+          <form
+            id={formId}
+            className="flex w-full flex-col gap-4"
+            method="POST"
+          >
             <p className="py-5 pr-5">
               Vous pouvez en ajouter d'autre via la liste ci-dessous.
               <br />

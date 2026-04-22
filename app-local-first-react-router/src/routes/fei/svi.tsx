@@ -73,7 +73,10 @@ export default function FEI_SVI() {
 
   return (
     <>
-      <Section open={false} title="Données de chasse">
+      <Section
+        open={false}
+        title="Données de chasse"
+      >
         <FEIDonneesDeChasse />
       </Section>
       <Section title={`Carcasses à inspecter (${carcassesAAfficher.length})`}>
@@ -113,7 +116,13 @@ export default function FEI_SVI() {
         )} */}
         <div className="flex flex-col gap-4">
           {carcassesAAfficher.map((carcasse) => {
-            return <CardCarcasseSvi canClick key={carcasse.numero_bracelet} carcasse={carcasse} />;
+            return (
+              <CardCarcasseSvi
+                canClick
+                key={carcasse.numero_bracelet}
+                carcasse={carcasse}
+              />
+            );
           })}
         </div>
         {carcassesDejaRefusees.length > 0 && (
@@ -131,7 +140,12 @@ export default function FEI_SVI() {
         {showRefusedCarcasses && (
           <div className="flex flex-col gap-4">
             {carcassesDejaRefusees.map((carcasse) => {
-              return <CardCarcasse carcasse={carcasse} key={carcasse.numero_bracelet} />;
+              return (
+                <CardCarcasse
+                  carcasse={carcasse}
+                  key={carcasse.numero_bracelet}
+                />
+              );
             })}
           </div>
         )}
@@ -222,7 +236,11 @@ export default function FEI_SVI() {
                   },
                 ]}
               />
-              <Button type="submit" className="my-4" disabled={!canEdit}>
+              <Button
+                type="submit"
+                className="my-4"
+                disabled={!canEdit}
+              >
                 Enregistrer
               </Button>
             </>

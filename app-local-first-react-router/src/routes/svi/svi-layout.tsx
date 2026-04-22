@@ -39,8 +39,18 @@ export default function SviLayout() {
 
   return (
     <>
-      <RootDisplay navigation={sviNavigation} hideMinistereName id="svi-layout-activated" contactLink="/app/svi/contact" mainLink="/app/svi">
-        <main role="main" id="content" className="fr-background-alt--blue-france relative flex min-h-full flex-col overflow-visible pb-16 md:pb-0">
+      <RootDisplay
+        navigation={sviNavigation}
+        hideMinistereName
+        id="svi-layout-activated"
+        contactLink="/app/svi/contact"
+        mainLink="/app/svi"
+      >
+        <main
+          role="main"
+          id="content"
+          className="fr-background-alt--blue-france relative flex min-h-full flex-col overflow-visible pb-16 md:pb-0"
+        >
           {!_hasHydrated ? <Chargement /> : showDeactivatedAccount ? <SviDeactivated /> : <Outlet />}
         </main>
       </RootDisplay>

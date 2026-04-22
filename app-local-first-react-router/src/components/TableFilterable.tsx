@@ -94,7 +94,10 @@ export default function TableFilterable<T>({
         <thead>
           {!!title && (
             <tr>
-              <td className="title" colSpan={columns.length}>
+              <td
+                className="title"
+                colSpan={columns.length}
+              >
                 {title}
               </td>
             </tr>
@@ -115,7 +118,12 @@ export default function TableFilterable<T>({
         <thead className="hidden border-b border-gray-200 sm:table-header-group">
           {!!title && (
             <tr>
-              <td tabIndex={0} aria-label={title} className="title" colSpan={columns.length}>
+              <td
+                tabIndex={0}
+                aria-label={title}
+                className="title"
+                colSpan={columns.length}
+              >
                 {title}
               </td>
             </tr>
@@ -153,7 +161,11 @@ export default function TableFilterable<T>({
                   key={String(dataKey) + String(column.title)}
                 >
                   {onSortBy ? (
-                    <button aria-label="Changer l'ordre de tri" type="button" onClick={onNameClick}>
+                    <button
+                      aria-label="Changer l'ordre de tri"
+                      type="button"
+                      onClick={onNameClick}
+                    >
                       {column.title}
                     </button>
                   ) : (
@@ -161,9 +173,23 @@ export default function TableFilterable<T>({
                   )}
                   {column.help && <>{column.help}</>}
                   {!!onSortBy && (sortBy === sortableKey || sortBy === dataKey) && (
-                    <button onClick={onNameClick} type="button" aria-label="Changer l'ordre de tri">
-                      {sortOrder === 'ASC' && <span className="mx-1" onClick={() => onSortOrder?.('DESC')}>{`\u00A0\u2193`}</span>}
-                      {sortOrder === 'DESC' && <span className="mx-1" onClick={() => onSortOrder?.('ASC')}>{`\u00A0\u2191`}</span>}
+                    <button
+                      onClick={onNameClick}
+                      type="button"
+                      aria-label="Changer l'ordre de tri"
+                    >
+                      {sortOrder === 'ASC' && (
+                        <span
+                          className="mx-1"
+                          onClick={() => onSortOrder?.('DESC')}
+                        >{`\u00A0\u2193`}</span>
+                      )}
+                      {sortOrder === 'DESC' && (
+                        <span
+                          className="mx-1"
+                          onClick={() => onSortOrder?.('ASC')}
+                        >{`\u00A0\u2191`}</span>
+                      )}
                     </button>
                   )}
                 </td>

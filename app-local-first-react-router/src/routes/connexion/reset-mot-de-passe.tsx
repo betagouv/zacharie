@@ -88,7 +88,10 @@ export default function ResetMotDePasse() {
 
   if (!resetPasswordToken) {
     return (
-      <main role="main" id="content">
+      <main
+        role="main"
+        id="content"
+      >
         <title>Réinitialisation de mot de passe | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
         <div className="fr-container fr-container--fluid fr-my-md-14v">
           <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
@@ -109,7 +112,10 @@ export default function ResetMotDePasse() {
   }
 
   return (
-    <main role="main" id="content">
+    <main
+      role="main"
+      id="content"
+    >
       <title>Réinitialisation de mot de passe | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
       <div className="fr-container fr-container--fluid fr-my-md-14v">
         <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
@@ -118,17 +124,29 @@ export default function ResetMotDePasse() {
             <CallOut>Vous pouvez maintenant définir votre nouveau mot de passe</CallOut>
             {userResponse?.message && <CallOut>{userResponse?.message}</CallOut>}
             {userResponse?.error && !userResponse?.message && <CallOut title="Erreur">{userResponse.error}</CallOut>}
-            <form onSubmit={handleSubmit} id="reset_password_form" method="POST" className="fr-background-alt--blue-france p-4 md:p-8">
+            <form
+              onSubmit={handleSubmit}
+              id="reset_password_form"
+              method="POST"
+              className="fr-background-alt--blue-france p-4 md:p-8"
+            >
               <fieldset
                 className="fr-fieldset"
                 id="reset-password-fieldset"
                 aria-labelledby="reset-password-fieldset-legend reset-password-fieldset-messages"
               >
-                <legend className="fr-fieldset__legend" id="reset-password-fieldset-legend">
+                <legend
+                  className="fr-fieldset__legend"
+                  id="reset-password-fieldset-legend"
+                >
                   <h2 className="fr-h3">Réinitialiser mon mot de passe</h2>
                 </legend>
               </fieldset>
-              <input type="text" name="name" className="hidden" />
+              <input
+                type="text"
+                name="name"
+                className="hidden"
+              />
               <PasswordInput
                 hintText="Veuillez entrer votre nouveau mot de passe (minimum 12 caractères)"
                 label="Mon nouveau mot de passe"

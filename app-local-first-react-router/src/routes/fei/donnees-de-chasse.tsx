@@ -132,17 +132,43 @@ export default function FEIDonneesDeChasse({ carcasseId }: { carcasseId?: Carcas
 
   return (
     <>
-      <ItemNotEditable label="Fiche d'Examen Initial n°" value={fei.numero} />
-      <ItemNotEditable label={carcasses.length > 1 ? 'Espèces' : 'Espèce'} value={[...new Set(carcasses.map((c) => c.espece))].join(', ')} />
-      <ItemNotEditable label="Informations clés" value={milestones} />
+      <ItemNotEditable
+        label="Fiche d'Examen Initial n°"
+        value={fei.numero}
+      />
+      <ItemNotEditable
+        label={carcasses.length > 1 ? 'Espèces' : 'Espèce'}
+        value={[...new Set(carcasses.map((c) => c.espece))].join(', ')}
+      />
+      <ItemNotEditable
+        label="Informations clés"
+        value={milestones}
+      />
       <p className="mb-2 font-bold">Acteurs</p>
       <div className="flex flex-col px-2">
-        <ItemNotEditable label="Examinateur Initial" value={examinateurInitialInput} />
-        <ItemNotEditable label="Premier Détenteur" value={premierDetenteurInput} />
+        <ItemNotEditable
+          label="Examinateur Initial"
+          value={examinateurInitialInput}
+        />
+        <ItemNotEditable
+          label="Premier Détenteur"
+          value={premierDetenteurInput}
+        />
         {intermediairesInputs.map((intermediaireInput, index) => {
-          return <ItemNotEditable key={index} label={intermediaireInput.label!} value={intermediaireInput.value} />;
+          return (
+            <ItemNotEditable
+              key={index}
+              label={intermediaireInput.label!}
+              value={intermediaireInput.value}
+            />
+          );
         })}
-        {sviInput.length > 0 && <ItemNotEditable label="Service d'Inspection Vétérinaire (SVI)" value={sviInput} />}
+        {sviInput.length > 0 && (
+          <ItemNotEditable
+            label="Service d'Inspection Vétérinaire (SVI)"
+            value={sviInput}
+          />
+        )}
       </div>
     </>
   );

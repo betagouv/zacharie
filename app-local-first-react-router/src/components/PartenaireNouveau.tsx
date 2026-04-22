@@ -149,7 +149,11 @@ export default function PartenaireNouveau({ newEntityNomDUsageProps, onFinish }:
 
   return (
     <>
-      <form id="partenaire_data_form" method="POST" onSubmit={handleEntitySubmit}>
+      <form
+        id="partenaire_data_form"
+        method="POST"
+        onSubmit={handleEntitySubmit}
+      >
         <Alert
           closable
           className="mb-8 bg-white"
@@ -395,7 +399,10 @@ export default function PartenaireNouveau({ newEntityNomDUsageProps, onFinish }:
             )}
           </div>
         </div>
-        <Button type="submit" nativeButtonProps={{ form: 'partenaire_data_form' }}>
+        <Button
+          type="submit"
+          nativeButtonProps={{ form: 'partenaire_data_form' }}
+        >
           Me rattacher à ce partenaire
         </Button>
       </form>

@@ -12,7 +12,10 @@ export default function Section({ title = 'Titre de section', children, classNam
   const Component = titleAs;
 
   return (
-    <details open={open} className={['bg-white p-4 md:p-8 [&_+details]:mt-8', className].join(' ')}>
+    <details
+      open={open}
+      className={['bg-white p-4 md:p-8 [&_+details]:mt-8', className].join(' ')}
+    >
       <summary>
         <Component className="ml-2 inline text-lg font-semibold text-gray-900">{title}</Component>
       </summary>

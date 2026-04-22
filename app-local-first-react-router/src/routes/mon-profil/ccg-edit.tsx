@@ -102,7 +102,10 @@ export default function CCGEdit() {
         <h3 className="text-lg font-semibold text-gray-900">Modifier la chambre froide (CCG)</h3>
         <p className="mb-5 text-sm text-gray-500">* Les champs marqués d'un astérisque (*) sont obligatoires.</p>
         {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
-        <form method="POST" onSubmit={handleSubmit}>
+        <form
+          method="POST"
+          onSubmit={handleSubmit}
+        >
           <Input
             label="Nom usuel *"
             nativeInputProps={{

@@ -7,7 +7,12 @@ import { UserRoles } from '@prisma/client';
 
 function GuideLink({ href, children }: { href: string; children: React.ReactNode }) {
   return (
-    <a href={href} target="_blank" rel="noopener noreferrer" className="fr-link">
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="fr-link"
+    >
       {children}
     </a>
   );
@@ -17,7 +22,10 @@ function GuideList({ guides }: { guides: { href: string; label: string; descript
   return (
     <ul className="fr-mt-1w">
       {guides.map((guide) => (
-        <li key={guide.href} className="fr-mb-1w">
+        <li
+          key={guide.href}
+          className="fr-mb-1w"
+        >
           <GuideLink href={guide.href}>{guide.label}</GuideLink>
           {guide.description && <span className="fr-text--sm fr-ml-1w text-grey-625">{guide.description}</span>}
         </li>
@@ -61,14 +69,23 @@ export default function Faq() {
   ];
 
   return (
-    <main role="main" id="content" className="fr-background-alt--blue-france relative min-h-full overflow-auto">
+    <main
+      role="main"
+      id="content"
+      className="fr-background-alt--blue-france relative min-h-full overflow-auto"
+    >
       <div className="fr-container fr-container--fluid fr-my-md-14v">
         <title>Mode d'emploi et questions fréquentes | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
         <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
           <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
             {/* Section 1 : Guides par rôle */}
             <h2 className="fr-h3 fr-mb-2w">Mode d'emploi</h2>
-            <Tabs selectedTabId={selectedTabId} tabs={tabs} onTabChange={setSelectedTabId} className="mb-6">
+            <Tabs
+              selectedTabId={selectedTabId}
+              tabs={tabs}
+              onTabChange={setSelectedTabId}
+              className="mb-6"
+            >
               {selectedTabId === 'chasseurs' && <TabChasseurs />}
               {selectedTabId === 'collecteurs-etg' && <TabCollecteurs />}
               {selectedTabId === 'svi' && isSVI && <TabSVI />}
@@ -78,10 +95,16 @@ export default function Faq() {
             <h2 className="fr-h3 fr-mb-2w">Questions fréquentes</h2>
             <div className="mb-6 bg-white md:shadow-sm">
               <div className="p-4 md:p-8">
-                <Accordion label="Comment créer mon compte ?" titleAs="h3">
+                <Accordion
+                  label="Comment créer mon compte ?"
+                  titleAs="h3"
+                >
                   <p>
                     Pour créer votre compte, rendez-vous sur{' '}
-                    <a href="https://zacharie.beta.gouv.fr" className="fr-link">
+                    <a
+                      href="https://zacharie.beta.gouv.fr"
+                      className="fr-link"
+                    >
                       zacharie.beta.gouv.fr
                     </a>{' '}
                     et cliquez sur « Commencer ». Renseignez votre adresse e-mail et suivez les instructions. Un code de connexion vous sera envoyé
@@ -93,7 +116,10 @@ export default function Faq() {
                     </GuideLink>
                   </p>
                 </Accordion>
-                <Accordion label="Comment installer l'application sur mon téléphone ?" titleAs="h3">
+                <Accordion
+                  label="Comment installer l'application sur mon téléphone ?"
+                  titleAs="h3"
+                >
                   <p>Zacharie est disponible gratuitement sur les stores. Téléchargez l'application directement depuis votre téléphone :</p>
                   <ul className="fr-mt-1w">
                     <li className="fr-mb-1w">
@@ -106,14 +132,20 @@ export default function Faq() {
                     </li>
                   </ul>
                 </Accordion>
-                <Accordion label="Comment fonctionne Zacharie hors connexion ?" titleAs="h3">
+                <Accordion
+                  label="Comment fonctionne Zacharie hors connexion ?"
+                  titleAs="h3"
+                >
                   <p>
                     Zacharie fonctionne en mode « local-first » : vos données sont enregistrées sur votre appareil même sans connexion internet.
                     Lorsque vous retrouvez une connexion, vos fiches se synchronisent automatiquement avec le serveur. Vous pouvez donc créer et
                     remplir des fiches en pleine nature, même sans réseau.
                   </p>
                 </Accordion>
-                <Accordion label="Comment transmettre une fiche ?" titleAs="h3">
+                <Accordion
+                  label="Comment transmettre une fiche ?"
+                  titleAs="h3"
+                >
                   <p>
                     Une fois votre fiche d'accompagnement remplie, cliquez sur « Transmettre » pour l'envoyer au destinataire suivant (collecteur, ETG
                     ou SVI). La fiche sera automatiquement synchronisée dès que vous aurez une connexion internet.
@@ -124,7 +156,10 @@ export default function Faq() {
                     </GuideLink>
                   </p>
                 </Accordion>
-                <Accordion label="Comment télécharger mes fiches en Excel ?" titleAs="h3">
+                <Accordion
+                  label="Comment télécharger mes fiches en Excel ?"
+                  titleAs="h3"
+                >
                   <p>
                     Depuis votre tableau de bord, sélectionnez les fiches souhaitées puis cliquez sur « Télécharger en Excel ». Vous pouvez aussi
                     exporter l'ensemble de votre registre de carcasses.
@@ -135,14 +170,23 @@ export default function Faq() {
                     </GuideLink>
                   </p>
                 </Accordion>
-                <Accordion label="Comment contacter le support ?" titleAs="h3">
+                <Accordion
+                  label="Comment contacter le support ?"
+                  titleAs="h3"
+                >
                   <p>
                     Vous pouvez nous contacter en nous appelant au <a href="tel:+33189316644">01 89 31 66 44</a>, en écrivant à{' '}
-                    <a href="mailto:contact@zacharie.beta.gouv.fr" className="fr-link">
+                    <a
+                      href="mailto:contact@zacharie.beta.gouv.fr"
+                      className="fr-link"
+                    >
                       contact@zacharie.beta.gouv.fr
                     </a>{' '}
                     ou via notre{' '}
-                    <a href="/contact" className="fr-link">
+                    <a
+                      href="/contact"
+                      className="fr-link"
+                    >
                       formulaire de contact
                     </a>
                     .
@@ -155,7 +199,10 @@ export default function Faq() {
             <CallOut className="bg-white">
               Besoin d'aide ? Contactez-nous au <a href="tel:+33189316644">01 89 31 66 44</a> ou par e-mail à{' '}
               <a href="mailto:contact@zacharie.beta.gouv.fr">contact@zacharie.beta.gouv.fr</a>. Vous pouvez aussi utiliser notre{' '}
-              <a href="/contact" className="fr-link">
+              <a
+                href="/contact"
+                className="fr-link"
+              >
                 formulaire de contact
               </a>
               .
@@ -170,7 +217,11 @@ export default function Faq() {
 function TabChasseurs() {
   return (
     <div className="p-4 md:p-8">
-      <Accordion label="Avant de créer votre première fiche" titleAs="h3" defaultExpanded>
+      <Accordion
+        label="Avant de créer votre première fiche"
+        titleAs="h3"
+        defaultExpanded
+      >
         <GuideList
           guides={[
             {
@@ -192,7 +243,10 @@ function TabChasseurs() {
           ]}
         />
       </Accordion>
-      <Accordion label="Créer et gérer vos fiches" titleAs="h3">
+      <Accordion
+        label="Créer et gérer vos fiches"
+        titleAs="h3"
+      >
         <GuideList
           guides={[
             {
@@ -218,7 +272,11 @@ function TabChasseurs() {
 function TabCollecteurs() {
   return (
     <div className="p-4 md:p-8">
-      <Accordion label="Se connecter et configurer son compte" titleAs="h3" defaultExpanded>
+      <Accordion
+        label="Se connecter et configurer son compte"
+        titleAs="h3"
+        defaultExpanded
+      >
         <GuideList
           guides={[
             {
@@ -232,7 +290,10 @@ function TabCollecteurs() {
           ]}
         />
       </Accordion>
-      <Accordion label="Enregistrer des décisions" titleAs="h3">
+      <Accordion
+        label="Enregistrer des décisions"
+        titleAs="h3"
+      >
         <GuideList
           guides={[
             {
@@ -242,7 +303,10 @@ function TabCollecteurs() {
           ]}
         />
       </Accordion>
-      <Accordion label="Créer et exporter des listes" titleAs="h3">
+      <Accordion
+        label="Créer et exporter des listes"
+        titleAs="h3"
+      >
         <GuideList
           guides={[
             {
@@ -268,7 +332,11 @@ function TabCollecteurs() {
 function TabSVI() {
   return (
     <div className="p-4 md:p-8">
-      <Accordion label="Se connecter et configurer son compte" titleAs="h3" defaultExpanded>
+      <Accordion
+        label="Se connecter et configurer son compte"
+        titleAs="h3"
+        defaultExpanded
+      >
         <GuideList
           guides={[
             {
@@ -290,7 +358,10 @@ function TabSVI() {
           ]}
         />
       </Accordion>
-      <Accordion label="Enregistrer des décisions" titleAs="h3">
+      <Accordion
+        label="Enregistrer des décisions"
+        titleAs="h3"
+      >
         <GuideList
           guides={[
             {
@@ -308,7 +379,10 @@ function TabSVI() {
           ]}
         />
       </Accordion>
-      <Accordion label="Créer et exporter des listes" titleAs="h3">
+      <Accordion
+        label="Créer et exporter des listes"
+        titleAs="h3"
+      >
         <GuideList
           guides={[
             {

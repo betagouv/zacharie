@@ -45,7 +45,10 @@ export default function SviProfilEntrepriseUtilisateurs() {
               if (!relation) return null;
               if (relation.status !== EntityRelationStatus.ADMIN && relation.status !== EntityRelationStatus.MEMBER) return null;
               return (
-                <div className="mb-6 bg-white md:shadow-sm" key={entity.id}>
+                <div
+                  className="mb-6 bg-white md:shadow-sm"
+                  key={entity.id}
+                >
                   <div className="p-4 md:p-8">
                     <Input
                       label="Inviter par email un nouvel utilisateur *"

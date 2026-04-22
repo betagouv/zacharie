@@ -80,9 +80,15 @@ export default function ImpactMatrix() {
         <h2 className="mb-2 text-2xl font-bold">Matrice d'impact</h2>
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
           {PILLARS.map((pillar) => (
-            <div key={pillar.title} className={`rounded-lg border-1 border-gray-200 p-5`}>
+            <div
+              key={pillar.title}
+              className={`rounded-lg border-1 border-gray-200 p-5`}
+            >
               <div className="mb-3 flex items-center gap-2">
-                <Badge severity={pillar.severity} noIcon>
+                <Badge
+                  severity={pillar.severity}
+                  noIcon
+                >
                   {pillar.title}
                 </Badge>
               </div>

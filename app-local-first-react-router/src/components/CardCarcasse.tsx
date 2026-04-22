@@ -169,7 +169,12 @@ export default function CardCarcasse({
           type="button"
           onClick={onClick ? onClick : cacasseModal.open}
         >
-          {statusIconId && <span className={[statusIconId, 'shrink-0 text-2xl', accentTextClass].filter(Boolean).join(' ')} aria-hidden="true" />}
+          {statusIconId && (
+            <span
+              className={[statusIconId, 'shrink-0 text-2xl', accentTextClass].filter(Boolean).join(' ')}
+              aria-hidden="true"
+            />
+          )}
           <div className="flex flex-1 flex-col">
             <p className="text-base font-bold">
               {carcasse.espece} {nombreDAnimauxDisplay}
@@ -185,7 +190,13 @@ export default function CardCarcasse({
         {(onEdit || onDelete) && (
           <div className="flex flex-row gap-2 pr-4">
             {onEdit && (
-              <Button type="button" iconId="fr-icon-pencil-line" onClick={onEdit} title="Éditer la carcasse" priority="tertiary no outline" />
+              <Button
+                type="button"
+                iconId="fr-icon-pencil-line"
+                onClick={onEdit}
+                title="Éditer la carcasse"
+                priority="tertiary no outline"
+              />
             )}
             {onDelete && !isBlockingState && (
               <Button
@@ -210,7 +221,13 @@ export default function CardCarcasse({
           },
         ]}
       >
-        {isCarcasseModalOpen && <CarcasseDetails carcasseId={carcasse.zacharie_carcasse_id} statusNewCard={statusNewCard} motifRefus={motifRefus} />}
+        {isCarcasseModalOpen && (
+          <CarcasseDetails
+            carcasseId={carcasse.zacharie_carcasse_id}
+            statusNewCard={statusNewCard}
+            motifRefus={motifRefus}
+          />
+        )}
       </cacasseModal.Component>
     </>
   );
@@ -500,35 +517,79 @@ function CarcasseDetails({
   return (
     <>
       <hr className="mt-4 bg-none" />
-      <ItemNotEditable label="Informations clés" value={milestones} withDiscs />
+      <ItemNotEditable
+        label="Informations clés"
+        value={milestones}
+        withDiscs
+      />
       {carcasse.examinateur_anomalies_abats?.length > 0 && (
-        <ItemNotEditable label="Anomalies abats" value={carcasse.examinateur_anomalies_abats} withDiscs />
+        <ItemNotEditable
+          label="Anomalies abats"
+          value={carcasse.examinateur_anomalies_abats}
+          withDiscs
+        />
       )}
       {carcasse.examinateur_anomalies_carcasse?.length > 0 && (
-        <ItemNotEditable label="Anomalies carcasse" value={carcasse.examinateur_anomalies_carcasse} withDiscs />
+        <ItemNotEditable
+          label="Anomalies carcasse"
+          value={carcasse.examinateur_anomalies_carcasse}
+          withDiscs
+        />
       )}
       {statusNewCard.includes('refus') && motifRefus && (
-        <ItemNotEditable label={motifRefus.split(':')[0]} value={motifRefus.split(':')[1] || "Aucun motif de refus n'a été renseigné"} withDiscs />
+        <ItemNotEditable
+          label={motifRefus.split(':')[0]}
+          value={motifRefus.split(':')[1] || "Aucun motif de refus n'a été renseigné"}
+          withDiscs
+        />
       )}
       {commentairesIntermediaires.length > 0 && (
-        <ItemNotEditable label="Commentaires des intermédiaires" value={commentairesIntermediaires} withDiscs />
+        <ItemNotEditable
+          label="Commentaires des intermédiaires"
+          value={commentairesIntermediaires}
+          withDiscs
+        />
       )}
       {showIpm1AndIpm2 ? (
         <>
-          <ItemNotEditable label="Inspection Post-Mortem 1" value={carcasse.svi_ipm1_date ? ipm1 : 'N/A'} withDiscs />
-          <ItemNotEditable label="Inspection Post-Mortem 2" value={carcasse.svi_ipm2_date ? ipm2 : 'N/A'} withDiscs />
+          <ItemNotEditable
+            label="Inspection Post-Mortem 1"
+            value={carcasse.svi_ipm1_date ? ipm1 : 'N/A'}
+            withDiscs
+          />
+          <ItemNotEditable
+            label="Inspection Post-Mortem 2"
+            value={carcasse.svi_ipm2_date ? ipm2 : 'N/A'}
+            withDiscs
+          />
         </>
       ) : isCircuitCourt ? null : (
         <>
-          <ItemNotEditable label="Inspection du Service Vétérinaire" value={carcasse.svi_ipm2_date ? ipm2 : 'N/A'} withDiscs />
+          <ItemNotEditable
+            label="Inspection du Service Vétérinaire"
+            value={carcasse.svi_ipm2_date ? ipm2 : 'N/A'}
+            withDiscs
+          />
         </>
       )}
       <hr className="my-4" />
       <h2 className="mb-4 ml-2 text-lg font-semibold text-gray-900">Acteurs de la chasse</h2>
-      <ItemNotEditable label="Examinateur Initial" value={examinateurInitialInput} />
-      <ItemNotEditable label="Premier Détenteur" value={premierDetenteurInput} />
+      <ItemNotEditable
+        label="Examinateur Initial"
+        value={examinateurInitialInput}
+      />
+      <ItemNotEditable
+        label="Premier Détenteur"
+        value={premierDetenteurInput}
+      />
       {intermediairesInputs.map((intermediaireInput, index) => {
-        return <ItemNotEditable key={index} label={intermediaireInput.label} value={intermediaireInput.value} />;
+        return (
+          <ItemNotEditable
+            key={index}
+            label={intermediaireInput.label}
+            value={intermediaireInput.value}
+          />
+        );
       })}
     </>
   );

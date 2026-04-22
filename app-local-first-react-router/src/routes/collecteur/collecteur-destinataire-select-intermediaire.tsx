@@ -375,7 +375,14 @@ export default function CollecteurDestinataireIntermediaire({
             Transmettre la fiche
           </Button>
         )}
-        {!disabled && !!jobIsMissing?.length && <Alert title="Attention" className="mt-4" severity="error" description={jobIsMissing} />}
+        {!disabled && !!jobIsMissing?.length && (
+          <Alert
+            title="Attention"
+            className="mt-4"
+            severity="error"
+            description={jobIsMissing}
+          />
+        )}
         {canEdit && !needToSubmit && fei.fei_next_owner_entity_id && (
           <>
             <Alert

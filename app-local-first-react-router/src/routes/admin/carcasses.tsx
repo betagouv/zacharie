@@ -54,13 +54,21 @@ export default function AdminCarcassesIntermediaires() {
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-bold">Carcasses ({total})</h3>
           <div className="flex items-center gap-2">
-            <button className="fr-btn fr-btn--sm fr-btn--secondary" disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - limit))}>
+            <button
+              className="fr-btn fr-btn--sm fr-btn--secondary"
+              disabled={offset === 0}
+              onClick={() => setOffset(Math.max(0, offset - limit))}
+            >
               Précédent
             </button>
             <span className="text-sm tabular-nums">
               {offset + 1}–{Math.min(offset + limit, total)} / {total}
             </span>
-            <button className="fr-btn fr-btn--sm fr-btn--secondary" disabled={offset + limit >= total} onClick={() => setOffset(offset + limit)}>
+            <button
+              className="fr-btn fr-btn--sm fr-btn--secondary"
+              disabled={offset + limit >= total}
+              onClick={() => setOffset(offset + limit)}
+            >
               Suivant
             </button>
           </div>
@@ -86,15 +94,24 @@ export default function AdminCarcassesIntermediaires() {
         </thead>
         <tbody>
           {rows.map((row) => (
-            <tr key={row.zacharie_carcasse_id} className="border-b hover:bg-blue-50">
+            <tr
+              key={row.zacharie_carcasse_id}
+              className="border-b hover:bg-blue-50"
+            >
               <td className="p-1">
-                <Link to={`/app/admin/carcasse/${encodeURIComponent(row.zacharie_carcasse_id)}`} className="text-blue-600 underline">
+                <Link
+                  to={`/app/admin/carcasse/${encodeURIComponent(row.zacharie_carcasse_id)}`}
+                  className="text-blue-600 underline"
+                >
                   {row.numero_bracelet}
                 </Link>
               </td>
               <td className="p-1">{row.espece}</td>
               <td className="p-1">{row.type}</td>
-              <td className="max-w-[120px] truncate p-1" title={row.fei_numero}>
+              <td
+                className="max-w-[120px] truncate p-1"
+                title={row.fei_numero}
+              >
                 {row.fei_numero}
               </td>
               <td className="p-1">{row._count.CarcasseIntermediaire}</td>

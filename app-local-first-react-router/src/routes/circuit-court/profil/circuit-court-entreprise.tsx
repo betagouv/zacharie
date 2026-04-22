@@ -61,7 +61,10 @@ export default function CircuitCourtProfilEntreprise() {
         <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
           <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
             <h1 className="fr-h2 fr-mb-2w">Renseignez votre entreprise</h1>
-            <CallOut title="✍️ Pour pouvoir remplir les fiches qui lui sont attribuées" className="bg-white">
+            <CallOut
+              title="✍️ Pour pouvoir remplir les fiches qui lui sont attribuées"
+              className="bg-white"
+            >
               Quelle est votre entreprise ?
               <br />
               Lorsqu'une fiche lui sera attribuée, vous pourrez la prendre en charge.
@@ -104,7 +107,10 @@ export default function CircuitCourtProfilEntreprise() {
                   />
                 </form>
                 <div className="mt-6 ml-6">
-                  <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
+                  <a
+                    className="fr-link fr-icon-arrow-up-fill fr-link--icon-left"
+                    href="#top"
+                  >
                     Haut de page
                   </a>
                 </div>

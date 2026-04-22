@@ -168,7 +168,10 @@ export default function LandingDemarchesPage() {
                 </p>
                 <p>
                   Contactez votre{' '}
-                  <a href="https://www.chasseurdefrance.com/pratiquer/annuaire-des-federations/" target="_blank">
+                  <a
+                    href="https://www.chasseurdefrance.com/pratiquer/annuaire-des-federations/"
+                    target="_blank"
+                  >
                     Fédération Départementale des Chasseurs (FDC)
                   </a>{' '}
                   pour connaitre les prochaines dates de formation à l’examen initial.
@@ -205,7 +208,10 @@ export default function LandingDemarchesPage() {
               <Section title="Comment déclarer sa chambre froide où j’entrepose du gibier&nbsp;?">
                 <p>
                   Pour déclarer votre chambre froide, il vous suffit de remplir le{' '}
-                  <a href="https://entreprendre.service-public.fr/vosdroits/R17520" target="_blank">
+                  <a
+                    href="https://entreprendre.service-public.fr/vosdroits/R17520"
+                    target="_blank"
+                  >
                     CERFA 13984
                   </a>{' '}
                   et de le renvoyer à la direction départementale en charge de la protection des populations (DDPP/DDETSPP) du département où se
@@ -218,7 +224,10 @@ export default function LandingDemarchesPage() {
                 </p>
                 <p className="mt-8">
                   Pour en savoir plus sur cette démarche et comment la réaliser vous pouvez{' '}
-                  <a href="https://scribehow.com/shared/Declarer_un_centre_de_collecte_de_gibier_CCG__f9XrNsQYQx68Mk-WDBJr0w" target="_blank">
+                  <a
+                    href="https://scribehow.com/shared/Declarer_un_centre_de_collecte_de_gibier_CCG__f9XrNsQYQx68Mk-WDBJr0w"
+                    target="_blank"
+                  >
                     consulter notre tutoriel.
                   </a>
                 </p>

@@ -26,7 +26,13 @@ export default function Stats() {
         </Button>
       </div>
       <section className="space-y-4">
-        <iframe src={DASHBOARD_URL} title="Tableau de bord des statistiques" className="w-full" height={2200} allowTransparency={true} />
+        <iframe
+          src={DASHBOARD_URL}
+          title="Tableau de bord des statistiques"
+          className="w-full"
+          height={2200}
+          allowTransparency={true}
+        />
       </section>
     </main>
   );

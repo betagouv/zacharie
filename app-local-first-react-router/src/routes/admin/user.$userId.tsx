@@ -200,7 +200,11 @@ export default function AdminUser() {
                     await refreshUser('admin/user/connect-as');
                   }}
                 >
-                  <Button type="submit" priority="primary" size="small">
+                  <Button
+                    type="submit"
+                    priority="primary"
+                    size="small"
+                  >
                     Connexion
                   </Button>
                 </form>
@@ -253,7 +257,11 @@ export default function AdminUser() {
                   onBlur={handleUserFormBlur(rolesFormRef)}
                   onSubmit={(event) => event.preventDefault()}
                 >
-                  <RolesCheckBoxes withAdmin user={user} legend="Sélectionnez tous les rôles de cet utilisateur" />
+                  <RolesCheckBoxes
+                    withAdmin
+                    user={user}
+                    legend="Sélectionnez tous les rôles de cet utilisateur"
+                  />
                   <div className="relative flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:w-auto md:items-center md:shadow-none md:[&_ul]:min-w-96">
                     <ButtonsGroup
                       buttons={[
@@ -277,7 +285,11 @@ export default function AdminUser() {
                   onBlur={handleUserFormBlur(idFormRef)}
                   onSubmit={(event) => event.preventDefault()}
                 >
-                  <input type="hidden" name={Prisma.UserScalarFieldEnum.prefilled} value="true" />
+                  <input
+                    type="hidden"
+                    name={Prisma.UserScalarFieldEnum.prefilled}
+                    value="true"
+                  />
                   <Input
                     label="Email"
                     nativeInputProps={{
@@ -392,10 +404,20 @@ export default function AdminUser() {
                             description={`CFEI trouvé dans la liste officielle : ${officialCfei.nom ?? ''} ${officialCfei.prenom ?? ''}${officialCfei.departement ? ` — Département ${officialCfei.departement}` : ''}`}
                           />
                         ) : (
-                          <Alert severity="error" small className="mb-4" description="CFEI non trouvé dans la liste officielle" />
+                          <Alert
+                            severity="error"
+                            small
+                            className="mb-4"
+                            description="CFEI non trouvé dans la liste officielle"
+                          />
                         )
                       ) : (
-                        <Alert severity="warning" small className="mb-4" description="Numéro CFEI non renseigné" />
+                        <Alert
+                          severity="warning"
+                          small
+                          className="mb-4"
+                          description="Numéro CFEI non renseigné"
+                        />
                       )}
                     </>
                   )}
@@ -440,7 +462,10 @@ export default function AdminUser() {
                 />
               )}
               <div className="mt-6 mb-16 ml-6">
-                <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
+                <a
+                  className="fr-link fr-icon-arrow-up-fill fr-link--icon-left"
+                  href="#top"
+                >
                   Haut de page
                 </a>
               </div>
@@ -655,7 +680,10 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
                   });
                 }}
               >
-                <Link to={`/app/admin/entity/${entity.id}`} className="inline-flex! size-full items-center justify-start bg-none! no-underline!">
+                <Link
+                  to={`/app/admin/entity/${entity.id}`}
+                  className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
+                >
                   {entity.nom_d_usage}
                   <br />
                   {entity.siret}
@@ -663,11 +691,17 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
                   <br />
                   {entity.code_postal} {entity.ville}
                 </Link>
-                <Button type="submit" className="m-2">
+                <Button
+                  type="submit"
+                  className="m-2"
+                >
                   Ajouter
                 </Button>
               </form>,
-              <p key={user.id} className="inline-flex! size-full items-center justify-start bg-none! no-underline!">
+              <p
+                key={user.id}
+                className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
+              >
                 {entity.type}
               </p>,
             ])}

@@ -132,7 +132,10 @@ export default function SviCarcasses() {
   const renderMobileCarcasse = (carcasse: (typeof carcassesRegistry)[number]) => {
     const isChecked = selectedCarcassesIds.includes(carcasse.zacharie_carcasse_id);
     return (
-      <tr key={carcasse.zacharie_carcasse_id} className={`border-b border-gray-200 ${isChecked ? 'bg-blue-50' : ''}`}>
+      <tr
+        key={carcasse.zacharie_carcasse_id}
+        className={`border-b border-gray-200 ${isChecked ? 'bg-blue-50' : ''}`}
+      >
         <td className="p-3">
           <div className="flex flex-col gap-2">
             <div className="flex items-start gap-2">
@@ -203,7 +206,10 @@ export default function SviCarcasses() {
               </div>
               <div>
                 <span className="font-semibold">Fiche: </span>
-                <Link to={`/app/svi/fei/${carcasse.fei_numero}`} className="text-blue-600 hover:underline">
+                <Link
+                  to={`/app/svi/fei/${carcasse.fei_numero}`}
+                  className="text-blue-600 hover:underline"
+                >
                   {carcasse.fei_numero}
                 </Link>
               </div>
@@ -230,7 +236,12 @@ export default function SviCarcasses() {
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 sm:py-4">
           <section className="fr-container mb-4 overflow-x-auto bg-white">
-            <Filters onChange={setFilters} base={filterableFields} filters={filters} saveInURLParams={false} />
+            <Filters
+              onChange={setFilters}
+              base={filterableFields}
+              filters={filters}
+              saveInURLParams={false}
+            />
           </section>
           <section className="mb-4 flex flex-col gap-4 sm:mb-0 sm:flex-row sm:justify-between">
             <div className="flex flex-col">
@@ -304,7 +315,10 @@ export default function SviCarcasses() {
                   render: (carcasse) => {
                     return (
                       <div className="flex flex-col items-start">
-                        <Link to={`/app/svi/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`} className="mr-auto block">
+                        <Link
+                          to={`/app/svi/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`}
+                          className="mr-auto block"
+                        >
                           {carcasse.numero_bracelet}
                         </Link>
                         <small className="text-xs text-gray-400">{carcasse.espece}</small>

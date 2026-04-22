@@ -148,10 +148,19 @@ export default function SelectNextForExaminateur({ disabled = false, onShowError
                 >
                   Ajouter une association / société / domaine de chasse
                 </Button>
-                <Button priority="secondary" type="button" onClick={() => setShowSearchUserByEmail(true)} className="text-left">
+                <Button
+                  priority="secondary"
+                  type="button"
+                  onClick={() => setShowSearchUserByEmail(true)}
+                  className="text-left"
+                >
                   Chercher un Premier Détenteur par email
                 </Button>
-                <Button priority="tertiary" type="button" onClick={() => handleSubmitFromSelect(user.id)}>
+                <Button
+                  priority="tertiary"
+                  type="button"
+                  onClick={() => handleSubmitFromSelect(user.id)}
+                >
                   Je suis le Premier Détenteur
                 </Button>
               </div>
@@ -159,7 +168,10 @@ export default function SelectNextForExaminateur({ disabled = false, onShowError
           )}
         </>
       ) : (
-        <div id="select-next-owner" aria-disabled={disabled}>
+        <div
+          id="select-next-owner"
+          aria-disabled={disabled}
+        >
           <Select
             label=""
             key={fei.premier_detenteur_user_id ?? fei.premier_detenteur_entity_id ?? 'no-choice-yet'}
@@ -219,10 +231,24 @@ export default function SelectNextForExaminateur({ disabled = false, onShowError
           >
             <option value="">{nextOwnerSelectLabel}</option>
             {Object.values(associationsDeChasse).map((potentielOwner) => {
-              return <NextOwnerOption nextOwnerIsEntity key={potentielOwner.id} potentielOwner={potentielOwner} user={user} />;
+              return (
+                <NextOwnerOption
+                  nextOwnerIsEntity
+                  key={potentielOwner.id}
+                  potentielOwner={potentielOwner}
+                  user={user}
+                />
+              );
             })}
             {Object.values(detenteursInitiaux).map((potentielOwner) => {
-              return <NextOwnerOption nextOwnerIsUser key={potentielOwner.id} potentielOwner={potentielOwner} user={user} />;
+              return (
+                <NextOwnerOption
+                  nextOwnerIsUser
+                  key={potentielOwner.id}
+                  potentielOwner={potentielOwner}
+                  user={user}
+                />
+              );
             })}
             <option value="new-entity">+ Ajouter une association / société / domaine de chasse</option>
             <option value="new-user">+ Chercher par email un autre Premier Détenteur inscrit dans Zacharie</option>
@@ -250,7 +276,10 @@ export default function SelectNextForExaminateur({ disabled = false, onShowError
                   severity="error"
                   title="Champs manquants"
                   description={validationErrors.map((msg, i) => (
-                    <p key={i} className="fr-mb-0">
+                    <p
+                      key={i}
+                      className="fr-mb-0"
+                    >
                       {msg}
                     </p>
                   ))}
@@ -336,7 +365,10 @@ export default function SelectNextForExaminateur({ disabled = false, onShowError
                 autoComplete: 'off',
               }}
             />
-            <Button type="submit" disabled={isSearchingUser || disabled}>
+            <Button
+              type="submit"
+              disabled={isSearchingUser || disabled}
+            >
               {!isSearchingUser ? 'Rechercher' : 'Recherche en cours...'}
             </Button>
             {!isOnline && (
@@ -357,7 +389,11 @@ export default function SelectNextForExaminateur({ disabled = false, onShowError
                   className="mt-4"
                 />
               ) : (
-                <Alert severity="error" title={searchingUserError} className="mt-4" />
+                <Alert
+                  severity="error"
+                  title={searchingUserError}
+                  className="mt-4"
+                />
               )}
             </>
           )}
@@ -370,7 +406,12 @@ export default function SelectNextForExaminateur({ disabled = false, onShowError
           >
             Ajouter une association / société / domaine de chasse
           </Button>
-          <Button priority="tertiary no outline" className="mt-4 block" type="button" onClick={() => setShowSearchUserByEmail(false)}>
+          <Button
+            priority="tertiary no outline"
+            className="mt-4 block"
+            type="button"
+            onClick={() => setShowSearchUserByEmail(false)}
+          >
             Retour
           </Button>
         </>
@@ -406,7 +447,10 @@ const NextOwnerOption = ({ potentielOwner, nextOwnerIsEntity, nextOwnerIsUser, u
     label = `Vous (${label})`;
   }
   return (
-    <option key={potentielOwner.id} value={potentielOwner.id}>
+    <option
+      key={potentielOwner.id}
+      value={potentielOwner.id}
+    >
       {label}
     </option>
   );

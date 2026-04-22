@@ -47,7 +47,11 @@ export default function CircuitCourtLayout() {
         contactLink="/app/circuit-court/contact"
         mainLink="/app/circuit-court"
       >
-        <main role="main" id="content" className="fr-background-alt--blue-france relative flex min-h-full flex-col overflow-visible pb-16 md:pb-0">
+        <main
+          role="main"
+          id="content"
+          className="fr-background-alt--blue-france relative flex min-h-full flex-col overflow-visible pb-16 md:pb-0"
+        >
           {!_hasHydrated ? <Chargement /> : showDeactivatedAccount ? <CircuitCourtDeactivated /> : <Outlet />}
         </main>
       </RootDisplay>

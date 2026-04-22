@@ -107,20 +107,39 @@ export default function CreationDeCompte() {
   }
 
   return (
-    <main role="main" id="content">
+    <main
+      role="main"
+      id="content"
+    >
       <title>Création de compte | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
       <div className="fr-container fr-container--fluid fr-my-md-14v">
         <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
           <div className="fr-col-12 fr-col-md-10 fr-col-lg-8">
             {communication && <CallOut>{decodeURIComponent(communication)}</CallOut>}
             {userResponse?.message && <CallOut>{userResponse?.message}</CallOut>}
-            <form onSubmit={handleSubmit} id="login_form" method="POST" className="fr-background-alt--blue-france p-4 md:p-8">
-              <fieldset className="fr-fieldset" id="login-1760-fieldset" aria-labelledby="login-1760-fieldset-legend login-1760-fieldset-messages">
-                <legend className="fr-fieldset__legend" id="login-1760-fieldset-legend">
+            <form
+              onSubmit={handleSubmit}
+              id="login_form"
+              method="POST"
+              className="fr-background-alt--blue-france p-4 md:p-8"
+            >
+              <fieldset
+                className="fr-fieldset"
+                id="login-1760-fieldset"
+                aria-labelledby="login-1760-fieldset-legend login-1760-fieldset-messages"
+              >
+                <legend
+                  className="fr-fieldset__legend"
+                  id="login-1760-fieldset-legend"
+                >
                   <h2 className="fr-h3">Créer mon compte</h2>
                 </legend>
               </fieldset>
-              <input type="text" name="name" className="hidden" />
+              <input
+                type="text"
+                name="name"
+                className="hidden"
+              />
               <Input
                 hintText="Renseignez l'email avec lequel vous avez été invité ci-dessous"
                 label="Mon email"

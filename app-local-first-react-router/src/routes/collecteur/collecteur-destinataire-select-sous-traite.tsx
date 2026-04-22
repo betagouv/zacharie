@@ -146,7 +146,10 @@ export default function CollecteurDestinataireSousTraite({
 
   return (
     <>
-      <div className={[className, 'space-y-6'].join(' ')} key={prochainDetenteurEntityId}>
+      <div
+        className={[className, 'space-y-6'].join(' ')}
+        key={prochainDetenteurEntityId}
+      >
         <SelectCustom
           label="Prochain détenteur des carcasses *"
           hint={
@@ -213,7 +216,14 @@ export default function CollecteurDestinataireSousTraite({
         >
           Transmettre la fiche
         </Button>
-        {!!jobIsMissing?.length && <Alert title="Attention" className="mt-4" severity="error" description={jobIsMissing} />}
+        {!!jobIsMissing?.length && (
+          <Alert
+            title="Attention"
+            className="mt-4"
+            severity="error"
+            description={jobIsMissing}
+          />
+        )}
         {!needToSubmit && fei.fei_next_owner_entity_id && (
           <>
             <Alert

@@ -272,7 +272,10 @@ function TimelineEventData({ data }: { data: Record<string, unknown> }) {
   return (
     <dl className="mt-1 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 rounded bg-gray-50 p-2 text-xs">
       {entries.map(([key, value]) => (
-        <div key={key} className="contents">
+        <div
+          key={key}
+          className="contents"
+        >
           <dt className="text-gray-500">{key}</dt>
           <dd className="text-gray-700">{String(value)}</dd>
         </div>
@@ -308,8 +311,14 @@ export default function AdminCarcasseDetail() {
 
   return (
     <>
-      <Link to="/app/admin/carcasses" className="fr-btn fr-btn--sm fr-btn--tertiary-no-outline">
-        <span className="fr-icon-arrow-left-line fr-icon--sm mr-1" aria-hidden="true" />
+      <Link
+        to="/app/admin/carcasses"
+        className="fr-btn fr-btn--sm fr-btn--tertiary-no-outline"
+      >
+        <span
+          className="fr-icon-arrow-left-line fr-icon--sm mr-1"
+          aria-hidden="true"
+        />
         Retour à la liste
       </Link>
       <div className="grid grid-cols-1 gap-4 space-y-6 py-4 md:grid-cols-2">
@@ -323,7 +332,10 @@ export default function AdminCarcasseDetail() {
             <Field label="Type">{carcasse.type ?? '—'}</Field>
             <Field label="Nombre d'animaux">{carcasse.nombre_d_animaux ?? '—'}</Field>
             <Field label="FEI numéro">
-              <Link to={`/app/tableau-de-bord/fei/${encodeURIComponent(carcasse.fei_numero)}`} className="text-blue-600 underline">
+              <Link
+                to={`/app/tableau-de-bord/fei/${encodeURIComponent(carcasse.fei_numero)}`}
+                className="text-blue-600 underline"
+              >
                 {carcasse.fei_numero}
               </Link>
             </Field>
@@ -422,7 +434,10 @@ export default function AdminCarcasseDetail() {
                 </thead>
                 <tbody>
                   {carcasse.CarcasseIntermediaire.map((ci) => (
-                    <tr key={`${ci.fei_numero}_${ci.zacharie_carcasse_id}_${ci.intermediaire_id}`} className="border-b">
+                    <tr
+                      key={`${ci.fei_numero}_${ci.zacharie_carcasse_id}_${ci.intermediaire_id}`}
+                      className="border-b"
+                    >
                       <td className="p-2">{ci.CarcasseIntermediaireEntity.nom_d_usage}</td>
                       <td className="p-2">{ci.CarcasseIntermediaireEntity.type}</td>
                       <td className="p-2">{ci.CarcasseIntermediaireUser.email}</td>
@@ -433,11 +448,17 @@ export default function AdminCarcasseDetail() {
                       </td>
                       <td className="p-2">{formatDate(ci.decision_at)}</td>
                       <td className="p-2">{ci.intermediaire_poids ?? '—'}</td>
-                      <td className="max-w-[120px] truncate p-2" title={ci.refus ?? ''}>
+                      <td
+                        className="max-w-[120px] truncate p-2"
+                        title={ci.refus ?? ''}
+                      >
                         {ci.refus ?? '—'}
                       </td>
                       <td className="p-2">{ci.manquante == null ? '—' : ci.manquante ? 'Oui' : 'Non'}</td>
-                      <td className="max-w-[120px] truncate p-2" title={ci.commentaire ?? ''}>
+                      <td
+                        className="max-w-[120px] truncate p-2"
+                        title={ci.commentaire ?? ''}
+                      >
                         {ci.commentaire ?? '—'}
                       </td>
                       <td className="p-2">{ci.intermediaire_depot_type ?? '—'}</td>
@@ -553,7 +574,10 @@ export default function AdminCarcasseDetail() {
         <Section title="Fil de vie">
           <div className="relative border-l-2 border-gray-300 pl-4">
             {timeline.map((event, i) => (
-              <div key={i} className="relative mb-4">
+              <div
+                key={i}
+                className="relative mb-4"
+              >
                 <div className="absolute top-1 -left-[21px] h-2.5 w-2.5 rounded-full border-2 border-blue-600 bg-white" />
                 <div className="text-xs text-gray-500">{event.date ? formatDate(event.date) : '—'}</div>
                 <div className="text-sm font-semibold">{event.label}</div>

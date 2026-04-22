@@ -55,7 +55,10 @@ function CollapsibleSection({
           {title}
           {badge}
         </span>
-        <span className={`fr-icon--sm transition-transform ${open ? 'fr-icon-arrow-up-s-line' : 'fr-icon-arrow-down-s-line'}`} aria-hidden="true" />
+        <span
+          className={`fr-icon--sm transition-transform ${open ? 'fr-icon-arrow-up-s-line' : 'fr-icon-arrow-down-s-line'}`}
+          aria-hidden="true"
+        />
       </button>
       {open && <div className="pt-2">{children}</div>}
     </div>
@@ -111,10 +114,16 @@ function OnboardingChasseInfoBanner() {
         <p className="m-0 mt-1 text-sm text-[var(--text-mention-grey)]">Ces informations seront reportées automatiquement sur vos fiches.</p>
       </div>
       <div className="flex shrink-0 flex-col gap-2 md:flex-row">
-        <Link to="/app/chasseur/onboarding/mes-informations-de-chasse" className="fr-btn fr-btn--primary">
+        <Link
+          to="/app/chasseur/onboarding/mes-informations-de-chasse"
+          className="fr-btn fr-btn--primary"
+        >
           Compléter mon profil
         </Link>
-        <Button priority="secondary" onClick={handleSkip}>
+        <Button
+          priority="secondary"
+          onClick={handleSkip}
+        >
           Ne plus afficher
         </Button>
       </div>
@@ -457,7 +466,10 @@ export default function ChasseurFiches() {
       {/* Recherche */}
       <div className="mt-2">
         <div className="relative">
-          <span className="fr-icon--sm fr-icon-search-line absolute top-1/2 left-3 -translate-y-1/2 text-gray-400" aria-hidden="true" />
+          <span
+            className="fr-icon--sm fr-icon-search-line absolute top-1/2 left-3 -translate-y-1/2 text-gray-400"
+            aria-hidden="true"
+          />
           <input
             type="search"
             placeholder="Rechercher une fiche..."
@@ -474,7 +486,10 @@ export default function ChasseurFiches() {
           {filteredFeis.length} fiche{filteredFeis.length > 1 ? 's' : ''}
         </span>
         {hasActiveFilters && (
-          <button className="text-action-high-blue-france text-xs underline" onClick={clearAllFilters}>
+          <button
+            className="text-action-high-blue-france text-xs underline"
+            onClick={clearAllFilters}
+          >
             Réinitialiser
           </button>
         )}
@@ -491,7 +506,10 @@ export default function ChasseurFiches() {
       >
         <div className="flex flex-col gap-1.5">
           {(['À compléter', 'En cours', 'Clôturée'] as FeiStepSimpleStatus[]).map((status) => (
-            <label key={status} className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-gray-50">
+            <label
+              key={status}
+              className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-gray-50"
+            >
               <input
                 type="checkbox"
                 checked={filterStatuses.includes(status)}
@@ -524,7 +542,10 @@ export default function ChasseurFiches() {
         >
           <div className="flex max-h-40 flex-col gap-1 overflow-y-auto">
             {premierDetenteurOptions.map((option) => (
-              <label key={option.id} className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-gray-50">
+              <label
+                key={option.id}
+                className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-gray-50"
+              >
                 <input
                   type="checkbox"
                   checked={filterPremierDetenteurs.includes(option.id)}
@@ -556,7 +577,10 @@ export default function ChasseurFiches() {
         >
           <div className="flex max-h-40 flex-col gap-1 overflow-y-auto">
             {ccgOptions.map((option) => (
-              <label key={option.id} className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-gray-50">
+              <label
+                key={option.id}
+                className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-gray-50"
+              >
                 <input
                   type="checkbox"
                   checked={filterCCGs.includes(option.id)}
@@ -588,7 +612,10 @@ export default function ChasseurFiches() {
         >
           <div className="flex max-h-40 flex-col gap-1 overflow-y-auto">
             {collecteurOptions.map((option) => (
-              <label key={option.id} className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-gray-50">
+              <label
+                key={option.id}
+                className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-gray-50"
+              >
                 <input
                   type="checkbox"
                   checked={filterCollecteurs.includes(option.id)}
@@ -609,7 +636,10 @@ export default function ChasseurFiches() {
       )}
 
       {/* Vue */}
-      <CollapsibleSection title="Affichage" defaultOpen={false}>
+      <CollapsibleSection
+        title="Affichage"
+        defaultOpen={false}
+      >
         <SegmentedControl
           hideLegend
           small
@@ -639,7 +669,10 @@ export default function ChasseurFiches() {
       </CollapsibleSection>
 
       {/* Fiches par page */}
-      <CollapsibleSection title="Fiches par page" defaultOpen={false}>
+      <CollapsibleSection
+        title="Fiches par page"
+        defaultOpen={false}
+      >
         <div className="flex gap-1">
           {[20, 50, 100].map((option) => (
             <button
@@ -662,7 +695,10 @@ export default function ChasseurFiches() {
       </CollapsibleSection>
 
       {/* Actions export */}
-      <CollapsibleSection title="Actions" defaultOpen={false}>
+      <CollapsibleSection
+        title="Actions"
+        defaultOpen={false}
+      >
         <Button
           size="small"
           disabled={selectedFeis.length === 0}
@@ -737,7 +773,12 @@ export default function ChasseurFiches() {
               Nouvelle fiche
             </Button>
           )}
-          <Button iconId="ri-filter-3-line" priority="secondary" size="small" onClick={() => setShowMobileFilters(!showMobileFilters)}>
+          <Button
+            iconId="ri-filter-3-line"
+            priority="secondary"
+            size="small"
+            onClick={() => setShowMobileFilters(!showMobileFilters)}
+          >
             Filtres
             {hasActiveFilters ? ` (${filterStatuses.length + filterPremierDetenteurs.length + filterCCGs.length + filterCollecteurs.length})` : ''}
           </Button>
@@ -747,11 +788,17 @@ export default function ChasseurFiches() {
       {/* Mobile : panneau filtres */}
       {showMobileFilters && (
         <div className="fixed inset-0 z-[800] md:hidden">
-          <div className="absolute inset-0 bg-black/30" onClick={() => setShowMobileFilters(false)} />
+          <div
+            className="absolute inset-0 bg-black/30"
+            onClick={() => setShowMobileFilters(false)}
+          />
           <div className="absolute top-0 right-0 bottom-0 w-80 overflow-y-auto bg-white p-4 shadow-xl">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-bold">Filtres</h2>
-              <button className="text-action-high-blue-france text-sm underline" onClick={() => setShowMobileFilters(false)}>
+              <button
+                className="text-action-high-blue-france text-sm underline"
+                onClick={() => setShowMobileFilters(false)}
+              >
                 Fermer
               </button>
             </div>
@@ -770,7 +817,12 @@ export default function ChasseurFiches() {
         {/* Contenu principal */}
         <div className="mx-auto max-w-5xl min-w-0 flex-1 px-4 pt-4 md:px-6">
           <OnboardingChasseInfoBanner />
-          <FeisWrapper viewType={viewType} handleSelectAll={handleSelectAll} selectedFeis={selectedFeis} filter={'Toutes les fiches'}>
+          <FeisWrapper
+            viewType={viewType}
+            handleSelectAll={handleSelectAll}
+            selectedFeis={selectedFeis}
+            filter={'Toutes les fiches'}
+          >
             {paginatedFeis.map((fei) => {
               if (!fei) return null;
               return (
@@ -797,7 +849,10 @@ export default function ChasseurFiches() {
             </div>
           )}
           <div className="my-4">
-            <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
+            <a
+              className="fr-link fr-icon-arrow-up-fill fr-link--icon-left"
+              href="#top"
+            >
               Haut de page
             </a>
           </div>
@@ -859,7 +914,11 @@ function FeisWrapper({
 
   if (viewType === 'table') {
     return (
-      <FeisTable handleSelectAll={handleSelectAll} selectedFeis={selectedFeis} filter={filter as FeiStepSimpleStatus | 'Toutes les fiches'}>
+      <FeisTable
+        handleSelectAll={handleSelectAll}
+        selectedFeis={selectedFeis}
+        filter={filter as FeiStepSimpleStatus | 'Toutes les fiches'}
+      >
         {children}
       </FeisTable>
     );
@@ -937,7 +996,10 @@ function FeisTableRow({
       className={`cursor-pointer border-b border-gray-200 hover:bg-gray-50 ${isSelected ? 'bg-blue-50' : ''}`}
       onClick={() => navigate(`/app/chasseur/fei/${fei.numero}`)}
     >
-      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+      <td
+        className="px-4 py-3"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex h-full items-center justify-center">
           <input
             type="checkbox"
@@ -966,7 +1028,10 @@ function FeisTableRow({
             </Tag>
           )}
           {currentStepLabelShort && (
-            <Tag small className="items-center rounded-[4px] font-semibold uppercase">
+            <Tag
+              small
+              className="items-center rounded-[4px] font-semibold uppercase"
+            >
               {currentStepLabelShort}
             </Tag>
           )}
@@ -989,7 +1054,10 @@ function FeisTableRow({
           {formattedCarcassesAcceptées.length > 0 ? (
             <div>
               {formattedCarcassesAcceptées.map((carcasse, index) => (
-                <p className="m-0 text-sm" key={carcasse + index}>
+                <p
+                  className="m-0 text-sm"
+                  key={carcasse + index}
+                >
                   {carcasse}
                 </p>
               ))}

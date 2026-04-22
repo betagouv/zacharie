@@ -108,7 +108,11 @@ function NavButton({ item, isOverflow }: { item: NavItem; isOverflow?: boolean }
   // "Nouvelle fiche" has onClick only, no `to`
   if (onClick && !to) {
     return (
-      <button type="button" onClick={onClick} className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 ${activeClass}`}>
+      <button
+        type="button"
+        onClick={onClick}
+        className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 ${activeClass}`}
+      >
         <i className={`${icon} text-xl`} />
         <span className="truncate text-[10px] leading-tight">{label}</span>
       </button>
@@ -117,7 +121,10 @@ function NavButton({ item, isOverflow }: { item: NavItem; isOverflow?: boolean }
 
   if (to) {
     return (
-      <Link to={to} className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 no-underline ${activeClass}`}>
+      <Link
+        to={to}
+        className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 no-underline ${activeClass}`}
+      >
         <i className={`${icon} text-xl`} />
         <span className="truncate text-[10px] leading-tight">{label}</span>
       </Link>
@@ -181,10 +188,16 @@ export default function BottomNavigation({ items, onNewFiche }: { items: MainNav
       id="bottom-navigation"
     >
       {visibleItems.map((item, i) => (
-        <NavButton key={getTextString(item) || i} item={item} />
+        <NavButton
+          key={getTextString(item) || i}
+          item={item}
+        />
       ))}
       {needsOverflow && (
-        <div ref={moreRef} className="relative flex min-w-0 flex-1">
+        <div
+          ref={moreRef}
+          className="relative flex min-w-0 flex-1"
+        >
           <button
             type="button"
             onClick={() => setMoreOpen((prev) => !prev)}
@@ -200,8 +213,14 @@ export default function BottomNavigation({ items, onNewFiche }: { items: MainNav
           {moreOpen && (
             <div className="absolute right-0 bottom-full mb-1 min-w-48 rounded-t-lg border border-gray-200 bg-white shadow-lg">
               {overflowItems.map((item, i) => (
-                <div key={getTextString(item) || i} onClick={() => setMoreOpen(false)}>
-                  <NavButton item={item} isOverflow />
+                <div
+                  key={getTextString(item) || i}
+                  onClick={() => setMoreOpen(false)}
+                >
+                  <NavButton
+                    item={item}
+                    isOverflow
+                  />
                 </div>
               ))}
             </div>

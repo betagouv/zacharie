@@ -136,7 +136,11 @@ export default function CCGNouveau({ onFinish }: CCGNouveauProps) {
       )}
 
       {mode === 'quick' && (
-        <form method="POST" className="w-full gap-4" onSubmit={handleQuickAdd}>
+        <form
+          method="POST"
+          className="w-full gap-4"
+          onSubmit={handleQuickAdd}
+        >
           <Input
             label="Numéro d'identification *"
             state={error ? 'error' : 'default'}
@@ -151,7 +155,10 @@ export default function CCGNouveau({ onFinish }: CCGNouveauProps) {
             }}
           />
           <div className="mt-4 flex gap-2">
-            <Button type="submit" disabled={isSubmitting}>
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+            >
               {!isSubmitting ? 'Ajouter cette chambre froide' : 'Recherche en cours...'}
             </Button>
             <Button
@@ -169,7 +176,11 @@ export default function CCGNouveau({ onFinish }: CCGNouveauProps) {
       )}
 
       {mode === 'full' && (
-        <form id="ccg_data_form" method="POST" onSubmit={handleFullSubmit}>
+        <form
+          id="ccg_data_form"
+          method="POST"
+          onSubmit={handleFullSubmit}
+        >
           <p className="mb-4 font-semibold">Pré-enregistrer une nouvelle chambre froide (CCG)</p>
           <Input
             label="Nom usuel *"
@@ -252,7 +263,10 @@ export default function CCGNouveau({ onFinish }: CCGNouveauProps) {
             son enregistrement.
           </p>
           <div className="flex gap-2">
-            <Button type="submit" disabled={isSubmitting}>
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+            >
               {!isSubmitting ? 'Enregistrer ma chambre froide' : 'Enregistrement en cours...'}
             </Button>
             <Button

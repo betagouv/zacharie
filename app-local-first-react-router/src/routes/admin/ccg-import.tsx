@@ -188,7 +188,14 @@ export default function CcgImport() {
       <title>Import CCG | Admin | Zacharie</title>
       <h1>Importer des CCG depuis un fichier CSV/XLS</h1>
 
-      {error && <Alert severity="error" title="Erreur" description={error} className="mb-4" />}
+      {error && (
+        <Alert
+          severity="error"
+          title="Erreur"
+          description={error}
+          className="mb-4"
+        />
+      )}
 
       {step === 'upload' && (
         <div className="mb-8">
@@ -252,11 +259,17 @@ export default function CcgImport() {
                 };
                 return [
                   isModified ? (
-                    <Badge key="badge" severity="warning">
+                    <Badge
+                      key="badge"
+                      severity="warning"
+                    >
                       Existant
                     </Badge>
                   ) : (
-                    <Badge key="badge" severity="success">
+                    <Badge
+                      key="badge"
+                      severity="success"
+                    >
                       Nouveau
                     </Badge>
                   ),
@@ -289,10 +302,17 @@ export default function CcgImport() {
           </div>
 
           <div className="flex gap-4">
-            <Button onClick={handleImport} disabled={loading}>
+            <Button
+              onClick={handleImport}
+              disabled={loading}
+            >
               {loading ? 'Import en cours...' : `Importer (${displayedRows.length} CCG)`}
             </Button>
-            <Button priority="secondary" onClick={reset} disabled={loading}>
+            <Button
+              priority="secondary"
+              onClick={reset}
+              disabled={loading}
+            >
               Annuler
             </Button>
           </div>

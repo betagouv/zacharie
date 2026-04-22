@@ -195,7 +195,11 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
   const Component = canDoIPM1 ? Input : InputNotEditable;
 
   return (
-    <form method="POST" id={`svi-carcasse-${carcasse.numero_bracelet}`} onSubmit={(e) => e.preventDefault()}>
+    <form
+      method="POST"
+      id={`svi-carcasse-${carcasse.numero_bracelet}`}
+      onSubmit={(e) => e.preventDefault()}
+    >
       <RadioButtons
         legend={carcasse.type === CarcasseType.PETIT_GIBIER ? "Lot présenté à l'inspection *" : "Carcasse présentée à l'inspection *"}
         orientation="horizontal"
@@ -324,7 +328,10 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
             <InputMultiSelect
               label="Pièces inspectées nécessitant une observation *"
               hintText={
-                <button type="button" onClick={() => piecesGibier.open()}>
+                <button
+                  type="button"
+                  onClick={() => piecesGibier.open()}
+                >
                   Voir le référentiel des pièces en <u className="inline">cliquant ici</u>
                 </button>
               }
@@ -359,7 +366,11 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
               </div>
               <p className="text-sm md:mb-3">ou</p>
               <div className="flex-1">
-                <Button type="button" priority="tertiary no outline" onClick={() => lesionsOuMotifsConsigneModal.open()}>
+                <Button
+                  type="button"
+                  priority="tertiary no outline"
+                  onClick={() => lesionsOuMotifsConsigneModal.open()}
+                >
                   Filtrez par catégorie de lésion
                 </Button>
               </div>
@@ -484,11 +495,21 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
         </>
       )}
       <div>
-        <Button type="button" onClick={handleSave}>
+        <Button
+          type="button"
+          onClick={handleSave}
+        >
           Enregistrer
         </Button>
       </div>
-      {triedToSave && missingFields && <Alert title="Attention" className="mt-4" severity="error" description={missingFields} />}
+      {triedToSave && missingFields && (
+        <Alert
+          title="Attention"
+          className="mt-4"
+          severity="error"
+          description={missingFields}
+        />
+      )}
     </form>
   );
 }

@@ -166,7 +166,11 @@ export default function AdminApiKey() {
                 onBlur={handleApiKeyFormBlur(activeFormRef)}
                 onSubmit={(event) => event.preventDefault()}
               >
-                <input type="hidden" name="route" value={`/api/action/api-key/${apiKey.id}`} />
+                <input
+                  type="hidden"
+                  name="route"
+                  value={`/api/action/api-key/${apiKey.id}`}
+                />
 
                 <RadioButtons
                   key={apiKey.active ? 'true' : 'false'}
@@ -195,11 +199,17 @@ export default function AdminApiKey() {
             </div>
             <CallOut>
               {apiKey.dedicated_to_entity_id ? (
-                <a href={`${import.meta.env.VITE_API_URL}/v1/docs/cle-dediee`} target="_blank">
+                <a
+                  href={`${import.meta.env.VITE_API_URL}/v1/docs/cle-dediee`}
+                  target="_blank"
+                >
                   Cliquez ici pour la documentation API pour les clés dédiées à une entité
                 </a>
               ) : (
-                <a href={`${import.meta.env.VITE_API_URL}/v1/docs/tierces-parties`} target="_blank">
+                <a
+                  href={`${import.meta.env.VITE_API_URL}/v1/docs/tierces-parties`}
+                  target="_blank"
+                >
                   Cliquez ici pour la documentation API pour les clés pour les tierces parties
                 </a>
               )}
@@ -352,7 +362,10 @@ export default function AdminApiKey() {
                 />
               )}
               <div className="mt-6 mb-16 ml-6">
-                <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
+                <a
+                  className="fr-link fr-icon-arrow-up-fill fr-link--icon-left"
+                  href="#top"
+                >
                   Haut de page
                 </a>
               </div>
@@ -400,7 +413,10 @@ function EntitiesRelatedTo({ apiKeyReponseData, setApiKeyResponseData, setIsSavi
             }}
           >
             <div className="flex flex-1 flex-col border-none p-4 text-left font-bold">
-              <Link to={`/app/admin/entity/${entity.id}`} className="inline-flex! size-full items-center justify-start bg-none! no-underline!">
+              <Link
+                to={`/app/admin/entity/${entity.id}`}
+                className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
+              >
                 {entity.nom_d_usage}
                 <br />
                 Raison sociale: {entity.raison_sociale}
@@ -419,7 +435,10 @@ function EntitiesRelatedTo({ apiKeyReponseData, setApiKeyResponseData, setIsSavi
             </div>
             <div className="flex flex-row gap-2 pr-4">
               <div className="flex basis-3xs flex-col justify-center gap-2 py-4">
-                <ApprovalStatusSelector entity={entity} approval={approval} />
+                <ApprovalStatusSelector
+                  entity={entity}
+                  approval={approval}
+                />
               </div>
               <div className="flex flex-col justify-center gap-2 py-4">
                 <Button
@@ -480,7 +499,10 @@ function EntitiesRelatedTo({ apiKeyReponseData, setApiKeyResponseData, setIsSavi
                     });
                 }}
               >
-                <Link to={`/app/admin/entity/${entity.id}`} className="inline-flex! size-full items-center justify-start bg-none! no-underline!">
+                <Link
+                  to={`/app/admin/entity/${entity.id}`}
+                  className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
+                >
                   {entity.type}
                   <br />
                   {entity.nom_d_usage}
@@ -555,7 +577,10 @@ function UsersRelatedTo({ apiKeyReponseData, setApiKeyResponseData, setIsSaving 
               .join(' ')}
           >
             <div className="flex flex-1 flex-col border-none p-4 text-left font-bold">
-              <Link to={`/app/admin/user/${user.id}`} className="inline-flex! size-full items-center justify-start bg-none! no-underline!">
+              <Link
+                to={`/app/admin/user/${user.id}`}
+                className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
+              >
                 {user.email}
                 <br />
                 {user.roles.join(', ')}
@@ -573,7 +598,10 @@ function UsersRelatedTo({ apiKeyReponseData, setApiKeyResponseData, setIsSaving 
             </div>
             <div className="flex flex-row gap-2 pr-4">
               <div className="flex basis-3xs flex-col justify-center gap-2 py-4">
-                <ApprovalStatusSelector user={user} approval={approval} />
+                <ApprovalStatusSelector
+                  user={user}
+                  approval={approval}
+                />
               </div>
               <div className="flex flex-col justify-center gap-2 py-4">
                 <Button
@@ -634,17 +662,26 @@ function UsersRelatedTo({ apiKeyReponseData, setApiKeyResponseData, setIsSaving 
                     });
                 }}
               >
-                <Link to={`/app/admin/user/${user.id}`} className="inline-flex! size-full items-center justify-start bg-none! no-underline!">
+                <Link
+                  to={`/app/admin/user/${user.id}`}
+                  className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
+                >
                   {user.prenom} {user.nom_de_famille}
                   <br />＠ {user.email}
                   <br />
                   🏡 {user.code_postal} {user.ville}
                 </Link>
-                <Button type="submit" className="m-2">
+                <Button
+                  type="submit"
+                  className="m-2"
+                >
                   Ajouter
                 </Button>
               </form>,
-              <p key={user.id} className="inline-flex! size-full items-center justify-start bg-none! no-underline!">
+              <p
+                key={user.id}
+                className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
+              >
                 {user.roles.map((role) => (
                   <Fragment key={role}>
                     {role}

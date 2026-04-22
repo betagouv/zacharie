@@ -54,7 +54,10 @@ export default function CollecteurProfilPartageDeMesDonnees() {
                   }}
                 >
                   La documentation pour l'utilisation de l'API est disponible{' '}
-                  <a href={`${import.meta.env.VITE_API_URL}/v1/docs/cle-dediee`} target="_blank">
+                  <a
+                    href={`${import.meta.env.VITE_API_URL}/v1/docs/cle-dediee`}
+                    target="_blank"
+                  >
                     ici
                   </a>
                   .<br />
@@ -103,7 +106,11 @@ export default function CollecteurProfilPartageDeMesDonnees() {
                       </div>
                       <div className="flex flex-row gap-2 pr-4">
                         <div className="flex shrink-0 flex-col justify-center gap-2 py-4">
-                          <ApprovalStatusSelector entity={entity} approval={approval} refreshApiApprovals={refreshApiApprovals} />
+                          <ApprovalStatusSelector
+                            entity={entity}
+                            approval={approval}
+                            refreshApiApprovals={refreshApiApprovals}
+                          />
                         </div>
                       </div>
                     </div>
@@ -165,7 +172,11 @@ export default function CollecteurProfilPartageDeMesDonnees() {
                       </div>
                       <div className="flex flex-row gap-2 pr-4">
                         <div className="flex shrink-0 flex-col justify-center gap-2 py-4">
-                          <ApprovalStatusSelector user={user} approval={approval} refreshApiApprovals={refreshApiApprovals} />
+                          <ApprovalStatusSelector
+                            user={user}
+                            approval={approval}
+                            refreshApiApprovals={refreshApiApprovals}
+                          />
                         </div>
                       </div>
                     </div>
@@ -228,7 +239,11 @@ export default function CollecteurProfilPartageDeMesDonnees() {
                       </div>
                       <div className="flex flex-row gap-2 pr-4">
                         <div className="flex shrink-0 flex-col justify-center gap-2 py-4">
-                          <ApprovalStatusSelector entity={entity} approval={approval} refreshApiApprovals={refreshApiApprovals} />
+                          <ApprovalStatusSelector
+                            entity={entity}
+                            approval={approval}
+                            refreshApiApprovals={refreshApiApprovals}
+                          />
                         </div>
                       </div>
                     </div>

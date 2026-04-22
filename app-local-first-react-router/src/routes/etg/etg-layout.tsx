@@ -39,8 +39,18 @@ export default function EtgLayout() {
 
   return (
     <>
-      <RootDisplay navigation={etgNavigation} hideMinistereName id="etg-layout-activated" contactLink="/app/etg/contact" mainLink="/app/etg">
-        <main role="main" id="content" className="fr-background-alt--blue-france relative flex min-h-full flex-col overflow-visible pb-16 md:pb-0">
+      <RootDisplay
+        navigation={etgNavigation}
+        hideMinistereName
+        id="etg-layout-activated"
+        contactLink="/app/etg/contact"
+        mainLink="/app/etg"
+      >
+        <main
+          role="main"
+          id="content"
+          className="fr-background-alt--blue-france relative flex min-h-full flex-col overflow-visible pb-16 md:pb-0"
+        >
           {!_hasHydrated ? <Chargement /> : showDeactivatedAccount ? <EtgDeactivated /> : <Outlet />}
         </main>
       </RootDisplay>

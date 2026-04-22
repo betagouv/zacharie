@@ -89,7 +89,10 @@ export default function RelationEntityUser({
         {displayEntity && (
           <>
             {entityLink ? (
-              <Link to={entityLink} className="block bg-none px-3 py-4 no-underline!">
+              <Link
+                to={entityLink}
+                className="block bg-none px-3 py-4 no-underline!"
+              >
                 {entity.nom_d_usage}
                 <br />
                 {getUserRoleLabel(entity.type)}
@@ -116,7 +119,10 @@ export default function RelationEntityUser({
         {displayUser && (
           <>
             {userLink ? (
-              <Link to={userLink} className="block bg-none px-3 py-4 no-underline!">
+              <Link
+                to={userLink}
+                className="block bg-none px-3 py-4 no-underline!"
+              >
                 <span className="font-bold">
                   {user.prenom} {user.nom_de_famille} {user.id === me.id ? ' (Vous)' : ''}
                 </span>
@@ -166,7 +172,12 @@ export default function RelationEntityUser({
         )}
         {canApproveRelation && (
           <div className="flex basis-3xs flex-col justify-center gap-2 py-4">
-            <RelationStatusSelector entity={entity} relation={canHandleCarcassesForEntity} user={user} onChange={onChange} />
+            <RelationStatusSelector
+              entity={entity}
+              relation={canHandleCarcassesForEntity}
+              user={user}
+              onChange={onChange}
+            />
           </div>
         )}
         {canDelete && (
@@ -206,7 +217,14 @@ export default function RelationEntityUser({
             },
           ]}
         >
-          {isOpen && <RelationEntityUsersList entity={entity} refreshKey={refreshKey} user={user} onChange={onChange} />}
+          {isOpen && (
+            <RelationEntityUsersList
+              entity={entity}
+              refreshKey={refreshKey}
+              user={user}
+              onChange={onChange}
+            />
+          )}
         </entityUsersModal.Component>
       )}
     </div>

@@ -99,7 +99,10 @@ export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifie
           <br />
           {carcasse.examinateur_anomalies_abats.map((anomalie) => {
             return (
-              <span className="m-0 ml-2 block font-bold" key={anomalie}>
+              <span
+                className="m-0 ml-2 block font-bold"
+                key={anomalie}
+              >
                 {anomalie}
               </span>
             );
@@ -112,7 +115,10 @@ export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifie
           <br />
           {carcasse.examinateur_anomalies_carcasse.map((anomalie) => {
             return (
-              <span className="m-0 ml-2 block font-bold" key={anomalie}>
+              <span
+                className="m-0 ml-2 block font-bold"
+                key={anomalie}
+              >
                 {anomalie}
               </span>
             );
@@ -121,13 +127,19 @@ export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifie
       )}
       {commentairesIntermediaires.map((commentaire, index) => {
         return (
-          <p key={commentaire + index} className="mt-2 block text-sm font-normal">
+          <p
+            key={commentaire + index}
+            className="mt-2 block text-sm font-normal"
+          >
             {commentaire}
           </p>
         );
       })}
       {carcasse.svi_ipm1_date && (
-        <p className="m-0 mt-2 block text-sm font-bold" key={JSON.stringify(carcasse.svi_ipm1_signed_at)}>
+        <p
+          className="m-0 mt-2 block text-sm font-bold"
+          key={JSON.stringify(carcasse.svi_ipm1_signed_at)}
+        >
           SVI Inspection Post Mortem 1 du {dayjs(carcasse.svi_ipm1_date).format('DD-MM-YYYY')}&nbsp;:
           <br />
           {!carcasse.svi_ipm1_presentee_inspection ? (
@@ -141,7 +153,10 @@ export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifie
               {!!carcasse.svi_ipm1_pieces.length && <span className="m-0 ml-2 block font-medium">- Pièces observées&nbsp;:</span>}
               {carcasse.svi_ipm1_pieces.map((piece, index) => {
                 return (
-                  <span className="m-0 ml-6 block font-medium" key={piece + index}>
+                  <span
+                    className="m-0 ml-6 block font-medium"
+                    key={piece + index}
+                  >
                     - {piece}
                   </span>
                 );
@@ -151,7 +166,10 @@ export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifie
               )}
               {carcasse.svi_ipm1_lesions_ou_motifs.map((type, index) => {
                 return (
-                  <span className="m-0 ml-6 block font-medium" key={type + index}>
+                  <span
+                    className="m-0 ml-6 block font-medium"
+                    key={type + index}
+                  >
                     - {type}
                   </span>
                 );
@@ -172,7 +190,10 @@ export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifie
         </p>
       )}
       {carcasse.svi_ipm2_date && (
-        <p className="m-0 mt-2 block text-sm font-bold" key={JSON.stringify(carcasse.svi_ipm2_signed_at)}>
+        <p
+          className="m-0 mt-2 block text-sm font-bold"
+          key={JSON.stringify(carcasse.svi_ipm2_signed_at)}
+        >
           SVI Inspection Post Mortem 2 du {dayjs(carcasse.svi_ipm2_date).format('DD-MM-YYYY')}&nbsp;:
           <br />
           {!carcasse.svi_ipm2_presentee_inspection ? (
@@ -186,7 +207,10 @@ export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifie
               {!!carcasse.svi_ipm2_pieces.length && <span className="m-0 ml-2 block font-medium">- Pièces observées&nbsp;:</span>}
               {carcasse.svi_ipm2_pieces.map((piece, index) => {
                 return (
-                  <span className="m-0 ml-6 block font-medium" key={piece + index}>
+                  <span
+                    className="m-0 ml-6 block font-medium"
+                    key={piece + index}
+                  >
                     - {piece}
                   </span>
                 );
@@ -196,7 +220,10 @@ export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifie
               )}
               {carcasse.svi_ipm2_lesions_ou_motifs.map((type, index) => {
                 return (
-                  <span className="m-0 ml-6 block font-medium" key={type + index}>
+                  <span
+                    className="m-0 ml-6 block font-medium"
+                    key={type + index}
+                  >
                     - {type}
                   </span>
                 );
@@ -251,7 +278,10 @@ export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifie
           <span className="m-0 ml-2 block border-l-2 border-l-gray-400 pl-4 font-medium">
             {carcasse.svi_carcasse_commentaire.split('\n').map((line, index) => {
               return (
-                <span key={line + index} className="block">
+                <span
+                  key={line + index}
+                  className="block"
+                >
                   {line}
                 </span>
               );

@@ -19,7 +19,11 @@ export default function Stats() {
   }, []);
 
   return (
-    <main role="main" id="content" className="fr-background-alt--blue-france relative min-h-full overflow-auto">
+    <main
+      role="main"
+      id="content"
+      className="fr-background-alt--blue-france relative min-h-full overflow-auto"
+    >
       <div className="fr-container fr-container--fluid fr-my-md-14v">
         <title>Contact | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
         <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
@@ -122,7 +126,10 @@ export default function Stats() {
                       rows: 5,
                     }}
                   />
-                  <Button type="submit" disabled={sent}>
+                  <Button
+                    type="submit"
+                    disabled={sent}
+                  >
                     {sent ? 'Message envoyé, merci !' : 'Envoyer'}
                   </Button>
                 </form>

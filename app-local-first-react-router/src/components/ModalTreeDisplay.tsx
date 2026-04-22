@@ -27,7 +27,10 @@ const renderNestedDetails = (
     return (
       <ul className="ml-4 list-inside list-disc">
         {data.map((item, index) => (
-          <li key={index} className="block">
+          <li
+            key={index}
+            className="block"
+          >
             <button
               type="button"
               onClick={() => {
@@ -50,7 +53,10 @@ const renderNestedDetails = (
   return Object.entries(data).map(([key, value]) => {
     if (Array.isArray(value) && value.length === 0) {
       return (
-        <div key={key} className="mb-2">
+        <div
+          key={key}
+          className="mb-2"
+        >
           <button
             type="button"
             onClick={() => {
@@ -68,7 +74,10 @@ const renderNestedDetails = (
       );
     }
     return (
-      <details key={key} className="mb-2">
+      <details
+        key={key}
+        className="mb-2"
+      >
         <summary className="hover:text-action-high-blue-france cursor-pointer font-semibold focus:outline-hidden">{key}</summary>
         <div className="mt-2 ml-4">{renderNestedDetails(value, onItemClick, skipParent, key)}</div>
       </details>

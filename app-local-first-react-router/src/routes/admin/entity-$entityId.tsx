@@ -146,7 +146,10 @@ export default function AdminEntity() {
           <span className="p-4 text-white">Enregistrement en cours</span>
         </div>
       )}
-      <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center" key={entity.id}>
+      <div
+        className="fr-grid-row fr-grid-row-gutters fr-grid-row--center"
+        key={entity.id}
+      >
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
           <small className="mx-8 italic">{entity.type}</small>
           <div className="mx-8 flex items-center justify-between gap-12">
@@ -195,7 +198,11 @@ export default function AdminEntity() {
               className="[&_.fr-tabs\_\_list]:bg-alt-blue-france! mb-6 bg-white md:shadow-sm [&_.fr-tabs\_\_list]:shadow-none!"
             >
               {selectedTabId === 'Raison Sociale' && (
-                <form id="entity_data_form" method="POST" ref={formRef}>
+                <form
+                  id="entity_data_form"
+                  method="POST"
+                  ref={formRef}
+                >
                   <div className="flex items-center gap-12">
                     <Checkbox
                       className="mb-4"
@@ -408,7 +415,10 @@ export default function AdminEntity() {
                 />
               )}
               <div className="mt-6 mb-16 ml-6">
-                <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
+                <a
+                  className="fr-link fr-icon-arrow-up-fill fr-link--icon-left"
+                  href="#top"
+                >
                   Haut de page
                 </a>
               </div>
@@ -512,17 +522,26 @@ function UserWorkingWithOrFor({
                   });
               }}
             >
-              <Link to={`/app/admin/user/${user.id}`} className="inline-flex! size-full items-center justify-start bg-none! no-underline!">
+              <Link
+                to={`/app/admin/user/${user.id}`}
+                className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
+              >
                 {user.prenom} {user.nom_de_famille}
                 <br />＠ {user.email}
                 <br />
                 🏡 {user.code_postal} {user.ville}
               </Link>
-              <Button type="submit" className="m-2">
+              <Button
+                type="submit"
+                className="m-2"
+              >
                 Ajouter
               </Button>
             </form>,
-            <p key={user.id} className="inline-flex! size-full items-center justify-start bg-none! no-underline!">
+            <p
+              key={user.id}
+              className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
+            >
               {user.roles.map((role) => (
                 <Fragment key={role}>
                   {role}
@@ -631,7 +650,10 @@ function EntitiesRelatedTo({
                 });
             }}
             title={
-              <Link to={`/app/admin/entity/${coupledEntity.id}`} className="inline-flex! size-full items-center justify-start bg-none! no-underline!">
+              <Link
+                to={`/app/admin/entity/${coupledEntity.id}`}
+                className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
+              >
                 {coupledEntity.nom_d_usage}
                 <br />
                 Raison sociale: {coupledEntity.raison_sociale}

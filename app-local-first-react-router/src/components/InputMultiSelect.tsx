@@ -44,7 +44,10 @@ export default function InputMultiSelect<T extends string>({
 
   return (
     <div className={['fr-input-group', disabled ? 'fr-input-group--disabled' : ''].join(' ')}>
-      <label className="fr-label" htmlFor="input-«re»">
+      <label
+        className="fr-label"
+        htmlFor="input-«re»"
+      >
         {label}
         {hintText && <span className="fr-hint-text">{hintText}</span>}
       </label>

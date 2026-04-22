@@ -52,12 +52,30 @@ export default function RouterTableauDeBord({ navigation }: { navigation: MainNa
           </RestrictedRoute>
         }
       >
-        <Route path="mon-activite" element={<OnboardingMesRoles />} />
-        <Route path="mes-coordonnees" element={<OnboardingMesCoordonnees />} />
-        <Route path="formation-examen-initial" element={<OnboardingExaminateurInitial />} />
-        <Route path="mes-informations-de-chasse" element={<OnboardingMesInformationsDeChasse />} />
-        <Route path="mon-entreprise" element={<OnboardingMonEntreprise />} />
-        <Route path="mes-notifications" element={<OnboardingMesNotifications />} />
+        <Route
+          path="mon-activite"
+          element={<OnboardingMesRoles />}
+        />
+        <Route
+          path="mes-coordonnees"
+          element={<OnboardingMesCoordonnees />}
+        />
+        <Route
+          path="formation-examen-initial"
+          element={<OnboardingExaminateurInitial />}
+        />
+        <Route
+          path="mes-informations-de-chasse"
+          element={<OnboardingMesInformationsDeChasse />}
+        />
+        <Route
+          path="mon-entreprise"
+          element={<OnboardingMonEntreprise />}
+        />
+        <Route
+          path="mes-notifications"
+          element={<OnboardingMesNotifications />}
+        />
       </Route>
       <Route
         path="fei/:fei_numero"
@@ -104,7 +122,12 @@ export default function RouterTableauDeBord({ navigation }: { navigation: MainNa
         path="mon-profil/mes-informations-de-chasse"
         element={
           <RestrictedRoute id="mes-informations-de-chasse">
-            <MesInformationsDeChasse withExaminateurInitial withAssociationsDeChasse withCCGs withPartenaires />
+            <MesInformationsDeChasse
+              withExaminateurInitial
+              withAssociationsDeChasse
+              withCCGs
+              withPartenaires
+            />
           </RestrictedRoute>
         }
       />

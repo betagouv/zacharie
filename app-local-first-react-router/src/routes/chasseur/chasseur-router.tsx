@@ -18,33 +18,103 @@ import ChasseurSviInspectionCarcasseLoader from './chasseur-svi-inspection-carca
 
 export default function RouterChasseur() {
   return (
-    <Route path="chasseur" element={<ChasseurLayout />}>
-      <Route index element={<ChasseurFiches />} />
-      <Route path="contact" element={<Contact />} />
-      <Route path="onboarding" element={<Outlet />}>
-        <Route path="mes-coordonnees" element={<ChasseurOnboardingMesCoordonnees />} />
-        <Route path="formation-examen-initial" element={<ChasseurOnboardingExaminateurInitial />} />
-        <Route path="mes-informations-de-chasse" element={<ChasseurOnboardingMesInformationsDeChasse />} />
+    <Route
+      path="chasseur"
+      element={<ChasseurLayout />}
+    >
+      <Route
+        index
+        element={<ChasseurFiches />}
+      />
+      <Route
+        path="contact"
+        element={<Contact />}
+      />
+      <Route
+        path="onboarding"
+        element={<Outlet />}
+      >
+        <Route
+          path="mes-coordonnees"
+          element={<ChasseurOnboardingMesCoordonnees />}
+        />
+        <Route
+          path="formation-examen-initial"
+          element={<ChasseurOnboardingExaminateurInitial />}
+        />
+        <Route
+          path="mes-informations-de-chasse"
+          element={<ChasseurOnboardingMesInformationsDeChasse />}
+        />
       </Route>
-      <Route path="profil" element={<Outlet />}>
-        <Route path="coordonnees" element={<ChasseurCoordonnees />} />
+      <Route
+        path="profil"
+        element={<Outlet />}
+      >
+        <Route
+          path="coordonnees"
+          element={<ChasseurCoordonnees />}
+        />
         <Route
           path="informations-de-chasse"
-          element={<MesInformationsDeChasse withExaminateurInitial withAssociationsDeChasse withCCGs withPartenaires />}
+          element={
+            <MesInformationsDeChasse
+              withExaminateurInitial
+              withAssociationsDeChasse
+              withCCGs
+              withPartenaires
+            />
+          }
         />
-        <Route path="associations-de-chasse" element={<MesInformationsDeChasse withAssociationsDeChasse />} />
-        <Route path="partenaires" element={<MesInformationsDeChasse withPartenaires />} />
-        <Route path="ccgs" element={<MesInformationsDeChasse withCCGs />} />
-        <Route path="ccgs/:entityId" element={<ChasseurCCGEdit />} />
-        <Route path="notifications" element={<MesNotifications />} />
-        <Route path="partage-de-mes-donnees" element={<PartageDeMesDonnees />} />
+        <Route
+          path="associations-de-chasse"
+          element={<MesInformationsDeChasse withAssociationsDeChasse />}
+        />
+        <Route
+          path="partenaires"
+          element={<MesInformationsDeChasse withPartenaires />}
+        />
+        <Route
+          path="ccgs"
+          element={<MesInformationsDeChasse withCCGs />}
+        />
+        <Route
+          path="ccgs/:entityId"
+          element={<ChasseurCCGEdit />}
+        />
+        <Route
+          path="notifications"
+          element={<MesNotifications />}
+        />
+        <Route
+          path="partage-de-mes-donnees"
+          element={<PartageDeMesDonnees />}
+        />
       </Route>
-      <Route path="fiches" element={<ChasseurFiches />} />
-      <Route path="fei/:fei_numero" element={<ChasseurFei />} />
-      <Route path="fei/:fei_numero/envoyée" element={<ChasseurFeiEnvoyée />} />
-      <Route path="carcasse/:fei_numero/:zacharie_carcasse_id" element={<ExaminateurCarcasseDetail />} />
-      <Route path="tableau-de-bord" element={<MesChasses />} />
-      <Route path="carcasse-svi/:fei_numero/:zacharie_carcasse_id" element={<ChasseurSviInspectionCarcasseLoader />} />
+      <Route
+        path="fiches"
+        element={<ChasseurFiches />}
+      />
+      <Route
+        path="fei/:fei_numero"
+        element={<ChasseurFei />}
+      />
+      <Route
+        path="fei/:fei_numero/envoyée"
+        element={<ChasseurFeiEnvoyée />}
+      />
+      <Route
+        path="carcasse/:fei_numero/:zacharie_carcasse_id"
+        element={<ExaminateurCarcasseDetail />}
+      />
+      <Route
+        path="tableau-de-bord"
+        element={<MesChasses />}
+      />
+      <Route
+        path="carcasse-svi/:fei_numero/:zacharie_carcasse_id"
+        element={<ChasseurSviInspectionCarcasseLoader />}
+      />
     </Route>
   );
 }

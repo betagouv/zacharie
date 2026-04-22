@@ -388,7 +388,11 @@ function FEIChasseurLoaded() {
                     defaultValue: fei?.date_mise_a_mort ? dayjs(fei?.date_mise_a_mort).format('YYYY-MM-DD') : '',
                   }}
                 />
-                <DateHeureValidationAlerts fei={fei} showHeureMiseAMortAlert={false} showHeureEviscerationAlert={false} />
+                <DateHeureValidationAlerts
+                  fei={fei}
+                  showHeureMiseAMortAlert={false}
+                  showHeureEviscerationAlert={false}
+                />
                 <VilleComponent
                   label="Commune de mise à mort&nbsp;*"
                   state={fieldHasError('commune_mise_a_mort') ? 'error' : 'default'}
@@ -436,7 +440,11 @@ function FEIChasseurLoaded() {
                     onAddMoreCarcasses={() => setAllCarcassesConfirmed(false)}
                   />
                   {fieldHasError('carcasses') && <p className="fr-error-text mt-2">{fieldErrorMessage('carcasses')}</p>}
-                  <input type="hidden" name={Prisma.FeiScalarFieldEnum.numero} value={fei.numero} />
+                  <input
+                    type="hidden"
+                    name={Prisma.FeiScalarFieldEnum.numero}
+                    value={fei.numero}
+                  />
                   {allCarcassesConfirmed && (
                     <>
                       <Component
@@ -470,7 +478,11 @@ function FEIChasseurLoaded() {
                           defaultValue: fei?.heure_mise_a_mort_premiere_carcasse ?? '',
                         }}
                       />
-                      <DateHeureValidationAlerts fei={fei} showDateAlert={false} showHeureEviscerationAlert={false} />
+                      <DateHeureValidationAlerts
+                        fei={fei}
+                        showDateAlert={false}
+                        showHeureEviscerationAlert={false}
+                      />
                       {!onlyPetitGibier && (
                         <>
                           <Component
@@ -505,11 +517,19 @@ function FEIChasseurLoaded() {
                               defaultValue: fei?.heure_evisceration_derniere_carcasse ?? '',
                             }}
                           />
-                          <DateHeureValidationAlerts fei={fei} showDateAlert={false} showHeureMiseAMortAlert={false} />
+                          <DateHeureValidationAlerts
+                            fei={fei}
+                            showDateAlert={false}
+                            showHeureMiseAMortAlert={false}
+                          />
                         </>
                       )}
                       {canEdit && !showBloc3 && (
-                        <Button className="mt-4" type="button" onClick={() => setShowBloc2Errors(true)}>
+                        <Button
+                          className="mt-4"
+                          type="button"
+                          onClick={() => setShowBloc2Errors(true)}
+                        >
                           Continuer
                         </Button>
                       )}
@@ -522,7 +542,11 @@ function FEIChasseurLoaded() {
               {showBloc3 && examinateurIsPremierDetenteur && (
                 <div className="bg-white p-4 md:p-8">
                   <h4 className="fr-h5">Destinataire</h4>
-                  <DestinataireSelectPremierDetenteur canEdit={canEditAsPremierDetenteur} submitRef={destinataireRef} hideSubmitButton={canEdit} />
+                  <DestinataireSelectPremierDetenteur
+                    canEdit={canEditAsPremierDetenteur}
+                    submitRef={destinataireRef}
+                    hideSubmitButton={canEdit}
+                  />
                 </div>
               )}
 

@@ -198,7 +198,11 @@ export default function CurrentOwnerConfirm() {
         title={fei.fei_next_owner_user_id ? '🫵  Cette fiche vous a été attribuée' : '🫵  Cette fiche a été attribuée à votre société'}
         className="m-0 bg-white"
       >
-        <Button type="submit" className="my-4 block" onClick={handlePriseEnCharge}>
+        <Button
+          type="submit"
+          className="my-4 block"
+          onClick={handlePriseEnCharge}
+        >
           Prendre en charge cette fiche et les carcasses associées
         </Button>
         <>

@@ -273,7 +273,11 @@ export default function MesAssociationsDeChasse() {
                   </>
                 )}
                 {currentEntityId && currentEntity && !isUnregisteredEntity && (
-                  <form id="association_data_form" method="POST" onSubmit={handleEntitySubmit}>
+                  <form
+                    id="association_data_form"
+                    method="POST"
+                    onSubmit={handleEntitySubmit}
+                  >
                     <div className="bg-contrast-grey rounded-lg p-4">
                       <p className="mb-1 text-lg font-bold">{currentEntity.nom_d_usage}</p>
                       {currentEntity.siret && <p className="mb-1 text-sm">SIRET : {currentEntity.siret}</p>}
@@ -286,7 +290,10 @@ export default function MesAssociationsDeChasse() {
                       )}
                     </div>
                     <div className="mt-4 flex items-center gap-4">
-                      <Button type="submit" nativeButtonProps={{ form: 'association_data_form' }}>
+                      <Button
+                        type="submit"
+                        nativeButtonProps={{ form: 'association_data_form' }}
+                      >
                         Me rattacher à cette entité
                       </Button>
                       <button
@@ -305,7 +312,11 @@ export default function MesAssociationsDeChasse() {
                 {isUnregisteredEntity && (
                   <>
                     <p className="mb-5 text-sm text-gray-500">* Les champs marqués d'un astérisque (*) sont obligatoires.</p>
-                    <form id="association_data_form" method="POST" onSubmit={handleEntitySubmit}>
+                    <form
+                      id="association_data_form"
+                      method="POST"
+                      onSubmit={handleEntitySubmit}
+                    >
                       <Input
                         label="Raison Sociale *"
                         className="mb-6"
@@ -380,7 +391,10 @@ export default function MesAssociationsDeChasse() {
                         </div>
                       </div>
                       <div className="mt-4 flex items-center gap-4">
-                        <Button type="submit" nativeButtonProps={{ form: 'association_data_form' }}>
+                        <Button
+                          type="submit"
+                          nativeButtonProps={{ form: 'association_data_form' }}
+                        >
                           Créer et me rattacher à cette entité
                         </Button>
                         <button

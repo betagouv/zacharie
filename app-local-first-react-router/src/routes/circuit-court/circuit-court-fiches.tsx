@@ -543,7 +543,12 @@ export default function TableauDeBordIndex() {
         <title>Mes fiches | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
         <div className="fr-grid-row fr-grid-row--center fr-grid-row-gutters pt-4">
           <div className="fr-col-12 fr-col-md-10 min-h-96 p-4 md:p-0">
-            <FeisWrapper viewType={viewType} handleSelectAll={handleSelectAll} selectedFeis={selectedFeis} filter={'Toutes les fiches'}>
+            <FeisWrapper
+              viewType={viewType}
+              handleSelectAll={handleSelectAll}
+              selectedFeis={selectedFeis}
+              filter={'Toutes les fiches'}
+            >
               {paginatedFeis.map((fei) => {
                 if (!fei) return null;
                 return (
@@ -570,7 +575,10 @@ export default function TableauDeBordIndex() {
               </div>
             )}
             <div className="my-4 flex flex-col items-start justify-between gap-4 px-8">
-              <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left mb-4" href="#top">
+              <a
+                className="fr-link fr-icon-arrow-up-fill fr-link--icon-left mb-4"
+                href="#top"
+              >
                 Haut de page
               </a>
             </div>
@@ -633,7 +641,11 @@ function FeisWrapper({
 
   if (viewType === 'table') {
     return (
-      <FeisTable handleSelectAll={handleSelectAll} selectedFeis={selectedFeis} filter={filter as FeiStepSimpleStatus | 'Toutes les fiches'}>
+      <FeisTable
+        handleSelectAll={handleSelectAll}
+        selectedFeis={selectedFeis}
+        filter={filter as FeiStepSimpleStatus | 'Toutes les fiches'}
+      >
         {children}
       </FeisTable>
     );
@@ -711,7 +723,10 @@ function FeisTableRow({
       className={`cursor-pointer border-b border-gray-200 hover:bg-gray-50 ${isSelected ? 'bg-blue-50' : ''}`}
       onClick={() => navigate(`/app/circuit-court/fei/${fei.numero}`)}
     >
-      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+      <td
+        className="px-4 py-3"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex h-full items-center justify-center">
           <input
             type="checkbox"
@@ -740,7 +755,10 @@ function FeisTableRow({
             </Tag>
           )}
           {currentStepLabelShort && (
-            <Tag small className="items-center rounded-[4px] font-semibold uppercase">
+            <Tag
+              small
+              className="items-center rounded-[4px] font-semibold uppercase"
+            >
               {currentStepLabelShort}
             </Tag>
           )}
@@ -763,7 +781,10 @@ function FeisTableRow({
           {formattedCarcassesAcceptées.length > 0 ? (
             <div>
               {formattedCarcassesAcceptées.map((carcasse, index) => (
-                <p className="m-0 text-sm" key={carcasse + index}>
+                <p
+                  className="m-0 text-sm"
+                  key={carcasse + index}
+                >
                   {carcasse}
                 </p>
               ))}

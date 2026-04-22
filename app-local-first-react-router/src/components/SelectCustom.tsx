@@ -73,7 +73,10 @@ function SelectCustom<Option, IsMulti extends boolean = false, Group extends Gro
   return (
     <Wrapper>
       {label && (
-        <label className={['fr-label mb-2', props.isDisabled ? 'text-disabled-grey' : ''].join(' ')} htmlFor={props.inputId}>
+        <label
+          className={['fr-label mb-2', props.isDisabled ? 'text-disabled-grey' : ''].join(' ')}
+          htmlFor={props.inputId}
+        >
           {label}
           {hint && typeof hint === 'string' && <span className="fr-hint-text mt-1">{hint}</span>}
           {hint && typeof hint !== 'string' && <div className="fr-hint-text mt-1 flex flex-col gap-1">{hint}</div>}
