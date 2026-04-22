@@ -70,9 +70,7 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
             - paragraph: /\\d+ Paris/
       `);
   await page.getByRole("heading", { name: "🫵 Cette fiche vous a été" }).click();
-  await expect(page.getByText("Étape 2 sur")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Fiche envoyée, pas encore" })).toBeVisible();
-  await expect(page.getByText("Étape suivante : Transport")).toBeVisible();
+  await expect(page.getByText("Fiche reçue, pas encore prise en charge")).toBeVisible();
   await page.getByRole("button", { name: "Daim N° MM-001-004 Mise à" }).click();
   await page.getByRole("listitem").filter({ hasText: "Fermer" }).getByRole("button").click();
   await page.getByRole("button", { name: "Pigeons (10) N° MM-001-003" }).click();
@@ -85,8 +83,7 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
   await expect(page.getByText("Abcès ou nodules Unique -")).toBeVisible();
   await page.getByRole("listitem").filter({ hasText: "Fermer" }).getByRole("button").click();
   await page.getByRole("button", { name: "Prendre en charge les carcasses" }).click();
-  await expect(page.getByRole("heading", { name: "Réception par mon établissement de traitement" })).toBeVisible();
-  await expect(page.getByText("Étape suivante : Inspection")).toBeVisible();
+  await expect(page.getByText("Prise en charge par l'atelier")).toBeVisible();
   await expect(
     page.getByText("Sélection du prochain destinataireProchain détenteur des carcasses *Indiquez"),
   ).toBeVisible();
@@ -232,9 +229,7 @@ test("Pas de stockage - Je transfère à un autre collecteur", async ({ page }) 
             - paragraph: /\\d+ Paris/
       `);
   await page.getByRole("heading", { name: "🫵 Cette fiche vous a été" }).click();
-  await expect(page.getByText("Étape 2 sur")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Fiche envoyée, pas encore" })).toBeVisible();
-  await expect(page.getByText("Étape suivante : Transport")).toBeVisible();
+  await expect(page.getByText("Fiche reçue, pas encore prise en charge")).toBeVisible();
   await page.getByRole("button", { name: "Daim N° MM-001-004 Mise à" }).click();
   await page.getByRole("listitem").filter({ hasText: "Fermer" }).getByRole("button").click();
   await page.getByRole("button", { name: "Pigeons (10) N° MM-001-003" }).click();
@@ -247,8 +242,7 @@ test("Pas de stockage - Je transfère à un autre collecteur", async ({ page }) 
   await expect(page.getByText("Abcès ou nodules Unique -")).toBeVisible();
   await page.getByRole("listitem").filter({ hasText: "Fermer" }).getByRole("button").click();
   await page.getByRole("button", { name: "Prendre en charge les carcasses" }).click();
-  await expect(page.getByRole("heading", { name: "Réception par mon établissement de traitement" })).toBeVisible();
-  await expect(page.getByText("Étape suivante : Inspection")).toBeVisible();
+  await expect(page.getByText("Prise en charge par l'atelier")).toBeVisible();
   await expect(
     page.getByText("Sélection du prochain destinataireProchain détenteur des carcasses *Indiquez"),
   ).toBeVisible();
@@ -366,9 +360,7 @@ test("Pas de stockage - Je transfère à un autre ETG", async ({ page, context }
             - paragraph: /\\d+ Paris/
       `);
   await page.getByRole("heading", { name: "🫵 Cette fiche vous a été" }).click();
-  await expect(page.getByText("Étape 2 sur")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Fiche envoyée, pas encore" })).toBeVisible();
-  await expect(page.getByText("Étape suivante : Transport")).toBeVisible();
+  await expect(page.getByText("Fiche reçue, pas encore prise en charge")).toBeVisible();
   await page.getByRole("button", { name: "Daim N° MM-001-004 Mise à" }).click();
   await page.getByRole("listitem").filter({ hasText: "Fermer" }).getByRole("button").click();
   await page.getByRole("button", { name: "Pigeons (10) N° MM-001-003" }).click();
@@ -381,8 +373,7 @@ test("Pas de stockage - Je transfère à un autre ETG", async ({ page, context }
   await expect(page.getByText("Abcès ou nodules Unique -")).toBeVisible();
   await page.getByRole("listitem").filter({ hasText: "Fermer" }).getByRole("button").click();
   await page.getByRole("button", { name: "Prendre en charge les carcasses" }).click();
-  await expect(page.getByRole("heading", { name: "Réception par mon établissement de traitement" })).toBeVisible();
-  await expect(page.getByText("Étape suivante : Inspection")).toBeVisible();
+  await expect(page.getByText("Prise en charge par l'atelier")).toBeVisible();
   await expect(
     page.getByText("Sélection du prochain destinataireProchain détenteur des carcasses *Indiquez"),
   ).toBeVisible();
