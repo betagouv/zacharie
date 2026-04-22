@@ -20,7 +20,6 @@ import {
 } from '@app/utils/get-carcasses-intermediaires';
 import { useSaveScroll } from '@app/services/useSaveScroll';
 import CardFiche from '@app/components/CardFiche';
-import DropDownMenu from '@app/components/DropDownMenu';
 import { filterCarcassesForFei, useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { useMyCarcassesForFei } from '@app/utils/filter-my-carcasses';
 import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
@@ -534,7 +533,7 @@ export default function ChasseurFiches() {
                 }}
               />
               <span
-                className={`inline-block rounded px-2 py-0.5 text-xs font-semibold ${statusColors[status].bg} ${statusColors[status].text}`}
+                className={`inline-block rounded px-2 py-0.5 text-xs uppercase font-semibold ${statusColors[status].bg} ${statusColors[status].text}`}
               >
                 {status}
               </span>
@@ -654,67 +653,6 @@ export default function ChasseurFiches() {
         </CollapsibleSection>
       )}
 
-      {/* Vue */}
-      <CollapsibleSection
-        title="Affichage"
-        defaultOpen={false}
-      >
-        <SegmentedControl
-          hideLegend
-          small
-          segments={[
-            {
-              label: 'Grille',
-              iconId: 'ri-grid-line',
-              nativeInputProps: {
-                checked: viewType === 'grid',
-                onChange: () => setViewType('grid'),
-                name: 'view-type-sidebar',
-                value: 'grid',
-              },
-            },
-            {
-              label: 'Table',
-              iconId: 'ri-table-line',
-              nativeInputProps: {
-                checked: viewType === 'table',
-                onChange: () => setViewType('table'),
-                name: 'view-type-sidebar',
-                value: 'table',
-              },
-            },
-          ]}
-        />
-      </CollapsibleSection>
-
-      {/* Fiches par page */}
-      <CollapsibleSection
-        title="Fiches par page"
-        defaultOpen={false}
-      >
-        <div className="flex gap-1">
-          {[20, 50, 100].map((option) => (
-            <button
-              key={option}
-              className={[
-                'rounded px-3 py-1 text-sm transition-colors',
-                (itemsPerPage ?? 20) === option
-                  ? 'bg-action-high-blue-france text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200',
-              ].join(' ')}
-              onClick={() => {
-                const firstItemIndex = (page - 1) * (itemsPerPage ?? 20);
-                const newPage = Math.floor(firstItemIndex / option) + 1;
-                setItemsPerPage(option);
-                setSearchParams(newPage > 1 ? { page: String(newPage) } : {});
-              }}
-            >
-              {option}
-            </button>
-          ))}
-        </div>
-      </CollapsibleSection>
-
       {/* Actions export */}
       <CollapsibleSection
         title="Actions"
@@ -795,6 +733,15 @@ export default function ChasseurFiches() {
             </Button>
           )}
           <Button
+            iconId={viewType === 'grid' ? 'ri-table-line' : 'ri-grid-line'}
+            priority="secondary"
+            size="small"
+            title={viewType === 'grid' ? 'Afficher en table' : 'Afficher en grille'}
+            onClick={() => setViewType(viewType === 'grid' ? 'table' : 'grid')}
+          >
+            {viewType === 'grid' ? 'Table' : 'Grille'}
+          </Button>
+          <Button
             iconId="ri-filter-3-line"
             priority="secondary"
             size="small"
@@ -860,15 +807,70 @@ export default function ChasseurFiches() {
               );
             })}
           </FeisWrapper>
-          {totalPages > 1 && (
-            <div className="flex justify-center py-6">
-              <Pagination
-                count={totalPages}
-                defaultPage={page}
-                getPageLinkProps={(pageNumber) => ({
-                  to: `/app/chasseur?page=${pageNumber}`,
-                })}
-              />
+          {filteredFeis.length > 0 && (
+            <div className="flex flex-wrap items-center justify-center gap-4 py-6 md:justify-between">
+              <div className="hidden md:block md:w-40">
+                <SegmentedControl
+                  hideLegend
+                  small
+                  legend="Affichage"
+                  segments={[
+                    {
+                      label: 'Grille',
+                      iconId: 'ri-grid-line',
+                      nativeInputProps: {
+                        checked: viewType === 'grid',
+                        onChange: () => setViewType('grid'),
+                        name: 'view-type',
+                        value: 'grid',
+                      },
+                    },
+                    {
+                      label: 'Table',
+                      iconId: 'ri-table-line',
+                      nativeInputProps: {
+                        checked: viewType === 'table',
+                        onChange: () => setViewType('table'),
+                        name: 'view-type',
+                        value: 'table',
+                      },
+                    },
+                  ]}
+                />
+              </div>
+              {totalPages > 1 && (
+                <Pagination
+                  count={totalPages}
+                  defaultPage={page}
+                  getPageLinkProps={(pageNumber) => ({
+                    to: `/app/chasseur?page=${pageNumber}`,
+                  })}
+                />
+              )}
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">Par page</span>
+                <div className="flex gap-1">
+                  {[20, 50, 100].map((option) => (
+                    <button
+                      key={option}
+                      className={[
+                        'rounded px-3 py-1 text-sm transition-colors',
+                        (itemsPerPage ?? 20) === option
+                          ? 'bg-action-high-blue-france text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200',
+                      ].join(' ')}
+                      onClick={() => {
+                        const firstItemIndex = (page - 1) * (itemsPerPage ?? 20);
+                        const newPage = Math.floor(firstItemIndex / option) + 1;
+                        setItemsPerPage(option);
+                        setSearchParams(newPage > 1 ? { page: String(newPage) } : {});
+                      }}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
           <div className="my-4">
