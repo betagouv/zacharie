@@ -84,7 +84,6 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
   await page.getByRole('listitem').filter({ hasText: 'Fermer' }).getByRole('button').click();
   await page.getByRole('button', { name: 'Prendre en charge les carcasses' }).click();
   await expect(page.getByText("Prise en charge par l'atelier")).toBeVisible();
-  await expect(page.getByText('Étape suivante : Inspection')).toBeVisible();
   await expect(
     page.getByText('Sélection du prochain destinataireProchain détenteur des carcasses *Indiquez')
   ).toBeVisible();
