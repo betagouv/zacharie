@@ -36,7 +36,7 @@ import { addAnSToWord, formatCountCarcasseByEspece } from '@app/utils/count-carc
 import FEIDonneesDeChasse from '@app/routes/fei/donnees-de-chasse';
 import Section from '@app/components/Section';
 import CardCarcasse from '@app/components/CardCarcasse';
-import HeaderFiche from '@app/routes/fei/Headerfiche';
+import EtgHeaderFiche from './etg-header-fiche';
 import { useEtgIds } from '@app/utils/get-entity-relations';
 import DestinataireSelectIntermediaire from './etg-destinataire-select-intermediaire';
 import FeiSousTraite from './etg-current-owner-sous-traite';
@@ -653,7 +653,7 @@ function EtgFeiContent({
             className="fr-col-12 fr-col-md-10 bg-alt-blue-france [&_.fr-tabs\\_\\_list]:bg-alt-blue-france m-4 md:m-0 md:p-0"
             key={fei.fei_current_owner_entity_id! + fei.fei_current_owner_user_id!}
           >
-            <HeaderFiche fei={fei} variant="etg" />
+            <EtgHeaderFiche fei={fei} />
             <FeiSousTraite />
             <CurrentOwnerConfirm />
             {/* <Section title="Transport" key={intermediaire?.id}>

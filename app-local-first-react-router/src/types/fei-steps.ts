@@ -14,7 +14,8 @@ export type FeiStep =
 export type FeiStepSimpleStatus = 'À compléter' | 'Clôturée' | 'En cours';
 
 export type FeiStepForEtg =
-  | 'Fiche attribuée à votre établissement'
-  | 'Réception par votre établissement de traitement'
-  | 'Inspection par le service vétérinaire'
-  | 'Carcasses traitées';
+  | 'Fiche reçue, pas encore prise en charge'
+  | 'Prise en charge par le transporteur'
+  | "Prise en charge par l'atelier"
+  | 'Fiche envoyée, pas encore prise en charge'
+  | "Prise en charge par le service vétérinaire d'inspection";

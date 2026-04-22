@@ -19,17 +19,21 @@ const statusColors: Record<FeiStepSimpleStatus, { bg: string; text: string }> = 
   },
 };
 
-export default function HeaderFiche({ fei }: { fei: FeiWithIntermediaires }) {
-  const { simpleStatus, currentStepLabel } = useFeiSteps(fei);
+export default function EtgHeaderFiche({ fei }: { fei: FeiWithIntermediaires }) {
+  const { simpleStatus, currentStepLabelForEtg } = useFeiSteps(fei);
 
   const isNewFiche = !fei.date_mise_a_mort && !fei.commune_mise_a_mort;
-  const title = isNewFiche
+  const chasseTitle = isNewFiche
     ? 'Nouvelle fiche'
     : fei.date_mise_a_mort
       ? `Chasse du ${dayjs(fei.date_mise_a_mort).format('DD/MM/YYYY')}`
       : 'Chasse';
+  const title = fei.premier_detenteur_name_cache
+    ? `${chasseTitle} | ${fei.premier_detenteur_name_cache}`
+    : chasseTitle;
 
-  const stepIcon = currentStepLabel === 'Clôturée' ? '🔒' : '⏳';
+  const isClosed = simpleStatus === 'Clôturée';
+  const stepIcon = isClosed ? '🔒' : '⏳';
 
   return (
     <div className="fr-mb-2w rounded bg-white p-4">
@@ -47,9 +51,7 @@ export default function HeaderFiche({ fei }: { fei: FeiWithIntermediaires }) {
             {simpleStatus}
           </Tag>
           <span className="text-sm">{stepIcon}</span>
-          <span className="text-sm">
-            {currentStepLabel}
-          </span>
+          <span className="text-sm">{currentStepLabelForEtg}</span>
         </div>
       )}
     </div>

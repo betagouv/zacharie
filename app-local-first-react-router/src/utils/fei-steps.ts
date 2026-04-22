@@ -268,37 +268,23 @@ export function computeFeiSteps({
   })();
 
   const currentStepLabelForEtg: FeiStepForEtg = (() => {
-    if (fei.intermediaire_closed_at || fei.svi_closed_at || fei.automatic_closed_at) {
-      return 'Carcasses traitées';
+    if (currentStepLabel === 'Clôturée') {
+      return "Prise en charge par le service vétérinaire d'inspection";
     }
-    if (fei.svi_assigned_at) {
-      return 'Inspection par le service vétérinaire';
+    if (currentStepLabel === 'Inspection par le SVI') {
+      return 'Fiche envoyée, pas encore prise en charge';
     }
-    const myCarcasses = carcasses?.filter(
-      (c) =>
-        (c.next_owner_entity_id && entitiesIdsWorkingDirectlyFor.includes(c.next_owner_entity_id)) ||
-        c.next_owner_user_id === user?.id ||
-        (c.current_owner_entity_id && entitiesIdsWorkingDirectlyFor.includes(c.current_owner_entity_id)) ||
-        c.current_owner_user_id === user?.id,
-    );
-    const isCurrentOwnerOfMyCarcasses = myCarcasses?.some(
-      (c) =>
-        c.current_owner_user_id === user?.id ||
-        (c.current_owner_entity_id && entitiesIdsWorkingDirectlyFor.includes(c.current_owner_entity_id)),
-    );
-    if (fei.fei_current_owner_role === FeiOwnerRole.ETG) {
-      const currentOwnerIsMe =
-        fei.fei_current_owner_user_id === user?.id ||
-        (!!fei.fei_current_owner_entity_id &&
-          entitiesIdsWorkingDirectlyFor.includes(fei.fei_current_owner_entity_id));
-      if (currentOwnerIsMe || isCurrentOwnerOfMyCarcasses) {
-        return 'Réception par votre établissement de traitement';
-      }
+    if (currentStepLabel === 'Réception par un établissement de traitement') {
+      return "Prise en charge par l'atelier";
     }
-    if (isCurrentOwnerOfMyCarcasses) {
-      return 'Réception par votre établissement de traitement';
+    if (
+      currentStepLabel === 'Transport' ||
+      currentStepLabel === 'Transport vers un établissement de traitement' ||
+      currentStepLabel === 'Transport vers un autre établissement de traitement'
+    ) {
+      return 'Prise en charge par le transporteur';
     }
-    return 'Fiche attribuée à votre établissement';
+    return 'Fiche reçue, pas encore prise en charge';
   })();
 
   const currentStepLabelShort = (() => {
