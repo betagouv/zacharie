@@ -42,12 +42,23 @@ import DestinataireSelectIntermediaire from './collecteur-destinataire-select-in
 import FeiSousTraite from './collecteur-current-owner-sous-traite';
 import CarcasseIntermediaireComp from './collecteur-carcasse';
 import CurrentOwnerConfirm from './collecteur-current-owner-confirm';
+import NotFound from '@app/components/NotFound';
 
 interface Props {
   readOnly?: boolean;
 }
 
 export default function CollecteurFei(props: Props) {
+  const params = useParams();
+  const feis = useZustandStore((state) => state.feis);
+  const fei = feis[params.fei_numero!];
+  if (!fei) {
+    return <NotFound />;
+  }
+  return <CollecteurFeiLoader {...props} />;
+}
+
+function CollecteurFeiLoader(props: Props) {
   const params = useParams();
   const user = useUser((state) => state.user)!;
   const feis = useZustandStore((state) => state.feis);

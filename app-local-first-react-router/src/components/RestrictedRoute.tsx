@@ -37,7 +37,7 @@ export default function RestrictedRoute({
   }
 
   const isRestrictedPage =
-    !location.pathname.includes('mon-profil') &&
+    !location.pathname.includes('profil') &&
     !location.pathname.includes('onboarding') &&
     !location.pathname.includes('admin');
 
