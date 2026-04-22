@@ -32,7 +32,8 @@ export default function MesPartenaires() {
   const handleUserSubmit = useCallback(
     async (checked_has_partenaires: boolean) => {
       const body: Record<string, string | null> = {};
-      body.checked_has_partenaires = checked_has_partenaires == null ? null : checked_has_partenaires ? 'true' : 'false';
+      body.checked_has_partenaires =
+        checked_has_partenaires == null ? null : checked_has_partenaires ? 'true' : 'false';
       const response = await API.post({
         path: `/user/${user.id}`,
         body,
@@ -89,7 +90,8 @@ export default function MesPartenaires() {
       )}
       {userEntities.map((entity) => {
         const relation = entity.EntityRelationsWithUsers.find(
-          (relation) => relation.owner_id === user.id && relation.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY
+          (relation) =>
+            relation.owner_id === user.id && relation.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY
         );
         if (!relation) return null;
         return (

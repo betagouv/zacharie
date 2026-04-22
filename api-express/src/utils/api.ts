@@ -1,4 +1,12 @@
-import { ApiKey, ApiKeyApprovalByUserOrEntity, ApiKeyApprovalStatus, ApiKeyLogAction, ApiKeyScope, Entity, User } from '@prisma/client';
+import {
+  ApiKey,
+  ApiKeyApprovalByUserOrEntity,
+  ApiKeyApprovalStatus,
+  ApiKeyLogAction,
+  ApiKeyScope,
+  Entity,
+  User,
+} from '@prisma/client';
 import prisma from '~/prisma';
 import { carcasseForApiSelect, CarcasseGetForApi } from '~/types/carcasse';
 import { feiForApiSelect, FeiGetForApi } from '~/types/fei';
@@ -87,7 +95,8 @@ export function mapCarcasseForApi(carcasse: CarcasseGetForApi, fei: FeiGetForApi
     fei_heure_evisceration_derniere_carcasse: fei.heure_evisceration_derniere_carcasse,
     fei_resume_nombre_de_carcasses: fei.resume_nombre_de_carcasses,
     fei_examinateur_initial_approbation_mise_sur_le_marche: fei.examinateur_initial_approbation_mise_sur_le_marche,
-    fei_examinateur_initial_date_approbation_mise_sur_le_marche: fei.examinateur_initial_date_approbation_mise_sur_le_marche,
+    fei_examinateur_initial_date_approbation_mise_sur_le_marche:
+      fei.examinateur_initial_date_approbation_mise_sur_le_marche,
     fei_automatic_closed_at: fei.automatic_closed_at,
     fei_intermediaire_closed_at: fei.intermediaire_closed_at,
     fei_svi_assigned_at: fei.svi_assigned_at,
@@ -117,7 +126,9 @@ export function mapFeiForApi(fei: FeiGetForApi, carcasses: CarcasseGetForApi[]) 
     }
   }
   if (fei.intermediaire_closed_at) {
-    intermediaireClosedByName = carcasseIntermediaires.find((entity) => entity.id === fei.intermediaire_closed_by_entity_id)?.raison_sociale;
+    intermediaireClosedByName = carcasseIntermediaires.find(
+      (entity) => entity.id === fei.intermediaire_closed_by_entity_id
+    )?.raison_sociale;
   }
   if (fei.CarcasseIntermediaire.length > 0) {
     latestIntermediaireByName = carcasseIntermediaires[0]?.raison_sociale;
@@ -131,9 +142,11 @@ export function mapFeiForApi(fei: FeiGetForApi, carcasses: CarcasseGetForApi[]) 
     heure_mise_a_mort_premiere_carcasse: fei.heure_mise_a_mort_premiere_carcasse,
     heure_evisceration_derniere_carcasse: fei.heure_evisceration_derniere_carcasse,
     resume_nombre_de_carcasses: fei.resume_nombre_de_carcasses,
-    examinateur_initial_name: fei.FeiExaminateurInitialUser?.prenom + ' ' + fei.FeiExaminateurInitialUser?.nom_de_famille,
+    examinateur_initial_name:
+      fei.FeiExaminateurInitialUser?.prenom + ' ' + fei.FeiExaminateurInitialUser?.nom_de_famille,
     examinateur_initial_approbation_mise_sur_le_marche: fei.examinateur_initial_approbation_mise_sur_le_marche,
-    examinateur_initial_date_approbation_mise_sur_le_marche: fei.examinateur_initial_date_approbation_mise_sur_le_marche,
+    examinateur_initial_date_approbation_mise_sur_le_marche:
+      fei.examinateur_initial_date_approbation_mise_sur_le_marche,
     premier_detenteur_name: fei.FeiPremierDetenteurEntity
       ? fei.FeiPremierDetenteurEntity?.raison_sociale
       : fei.FeiPremierDetenteurUser?.prenom + ' ' + fei.FeiPremierDetenteurUser?.nom_de_famille,

@@ -4,7 +4,17 @@ import { useCarcassesIntermediairesForCarcasse } from '@app/utils/get-carcasses-
 import useUser from '@app/zustand/user';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
-import { Carcasse, CarcasseStatus, CarcasseType, DepotType, FeiOwnerRole, IPM1Decision, IPM2Decision, PoidsType, UserRoles } from '@prisma/client';
+import {
+  Carcasse,
+  CarcasseStatus,
+  CarcasseType,
+  DepotType,
+  FeiOwnerRole,
+  IPM1Decision,
+  IPM2Decision,
+  PoidsType,
+  UserRoles,
+} from '@prisma/client';
 import dayjs from 'dayjs';
 import { useMemo, useRef } from 'react';
 import { useParams } from 'react-router';
@@ -62,7 +72,9 @@ export default function CardCarcasse({
     for (const _carcasseIntermediaire of carcassesIntermediaires) {
       if (_carcasseIntermediaire?.commentaire) {
         const _intermediaireEntity = entities[_carcasseIntermediaire.intermediaire_entity_id];
-        commentaires.push(`Commentaire de ${_intermediaireEntity?.nom_d_usage}\u00A0: ${_carcasseIntermediaire?.commentaire}`);
+        commentaires.push(
+          `Commentaire de ${_intermediaireEntity?.nom_d_usage}\u00A0: ${_carcasseIntermediaire?.commentaire}`
+        );
       }
     }
     return commentaires;
@@ -78,7 +90,8 @@ export default function CardCarcasse({
     }
   }
 
-  let anomaliesExaminateurs = carcasse.examinateur_anomalies_abats?.length + carcasse.examinateur_anomalies_carcasse?.length;
+  let anomaliesExaminateurs =
+    carcasse.examinateur_anomalies_abats?.length + carcasse.examinateur_anomalies_carcasse?.length;
   let descriptionLine = '';
   if (anomaliesExaminateurs) {
     descriptionLine = `${anomaliesExaminateurs} anomalie`;
@@ -102,7 +115,8 @@ export default function CardCarcasse({
   });
 
   const isEcarteePourInspection =
-    !!latestIntermediaire?.ecarte_pour_inspection && (cardDisplay.uiState === 'transmise' || cardDisplay.uiState === 'acceptee-etg');
+    !!latestIntermediaire?.ecarte_pour_inspection &&
+    (cardDisplay.uiState === 'transmise' || cardDisplay.uiState === 'acceptee-etg');
 
   const accentBorderClass = (() => {
     if (isEcarteePourInspection) return 'border-error-main-525 border-l-3';
@@ -182,9 +196,13 @@ export default function CardCarcasse({
             <p className="text-sm/4 font-bold">N° {carcasse.numero_bracelet}</p>
             {miseAMort && <p className="text-sm/4">{miseAMort}</p>}
             {showStatusLine && statusLabel && (
-              <p className={['text-sm/4 font-bold first-letter:uppercase', accentTextClass].filter(Boolean).join(' ')}>{statusLabel}</p>
+              <p className={['text-sm/4 font-bold first-letter:uppercase', accentTextClass].filter(Boolean).join(' ')}>
+                {statusLabel}
+              </p>
             )}
-            {descriptionLine && <p className={['text-sm/4', accentTextClass].filter(Boolean).join(' ')}>{descriptionLine}</p>}
+            {descriptionLine && (
+              <p className={['text-sm/4', accentTextClass].filter(Boolean).join(' ')}>{descriptionLine}</p>
+            )}
           </div>
         </button>
         {(onEdit || onDelete) && (
@@ -320,12 +338,18 @@ function CarcasseDetails({
   }, [carcassesIntermediaires, entities]);
 
   const ccgDate =
-    fei.premier_detenteur_depot_type === DepotType.CCG ? dayjs(fei.premier_detenteur_depot_ccg_at).format('dddd D MMMM YYYY à HH:mm') : null;
+    fei.premier_detenteur_depot_type === DepotType.CCG
+      ? dayjs(fei.premier_detenteur_depot_ccg_at).format('dddd D MMMM YYYY à HH:mm')
+      : null;
   const etgDate = latestIntermediaire
-    ? dayjs(latestIntermediaire.prise_en_charge_at || latestIntermediaire.decision_at).format('dddd D MMMM YYYY à HH:mm')
+    ? dayjs(latestIntermediaire.prise_en_charge_at || latestIntermediaire.decision_at).format(
+        'dddd D MMMM YYYY à HH:mm'
+      )
     : null;
 
-  const sviAssignedToFeiAt = carcasse.svi_assigned_to_fei_at ? dayjs(carcasse.svi_assigned_to_fei_at).format('dddd D MMMM YYYY à HH:mm') : null;
+  const sviAssignedToFeiAt = carcasse.svi_assigned_to_fei_at
+    ? dayjs(carcasse.svi_assigned_to_fei_at).format('dddd D MMMM YYYY à HH:mm')
+    : null;
 
   const milestones = useMemo(() => {
     const _milestones = [
@@ -333,10 +357,14 @@ function CarcasseDetails({
       `Date de mise à mort\u00A0: ${dayjs(fei.date_mise_a_mort).format('dddd D MMMM YYYY')}`,
     ];
     if (carcasse.heure_mise_a_mort_premiere_carcasse_fei) {
-      _milestones.push(`Heure de mise à mort de la première carcasse de la fiche\u00A0: ${carcasse.heure_mise_a_mort_premiere_carcasse_fei}`);
+      _milestones.push(
+        `Heure de mise à mort de la première carcasse de la fiche\u00A0: ${carcasse.heure_mise_a_mort_premiere_carcasse_fei}`
+      );
     }
     if (onlyPetitGibier && carcasse.heure_evisceration_derniere_carcasse_fei) {
-      _milestones.push(`Heure d'éviscération de la dernière carcasse de la fiche\u00A0: ${carcasse.heure_evisceration_derniere_carcasse_fei}`);
+      _milestones.push(
+        `Heure d'éviscération de la dernière carcasse de la fiche\u00A0: ${carcasse.heure_evisceration_derniere_carcasse_fei}`
+      );
     }
     if (ccgDate) _milestones.push(`Date et heure de dépôt dans le CCG\u00A0: ${ccgDate}`);
     if (etgDate) _milestones.push(`Date et heure de prise en charge par l'ETG\u00A0: ${etgDate}`);
@@ -346,7 +374,9 @@ function CarcasseDetails({
     }
     // if (carcasse.svi_ipm1_date) _milestones.push(`Date de l'inspection\u00A0: ${dayjs(carcasse.svi_ipm1_date).format('dddd D MMMM YYYY')}`);
     if (carcasse.svi_ipm2_date)
-      _milestones.push(`Date de l'inspection du service vétérinaire\u00A0: ${dayjs(carcasse.svi_ipm2_date).format('dddd D MMMM YYYY')}`);
+      _milestones.push(
+        `Date de l'inspection du service vétérinaire\u00A0: ${dayjs(carcasse.svi_ipm2_date).format('dddd D MMMM YYYY')}`
+      );
     return _milestones;
   }, [
     fei?.commune_mise_a_mort,
@@ -661,7 +691,8 @@ function deriveCarcasseUiState(
       return 'accepte-svi';
     case CarcasseStatus.SANS_DECISION: {
       const isCreation =
-        (fei?.fei_current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL || fei?.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR) &&
+        (fei?.fei_current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL ||
+          fei?.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR) &&
         !fei?.fei_next_owner_role;
       if (isCreation) return 'creation';
       if (latestIntermediaire?.decision_at && latestIntermediaire?.intermediaire_role === FeiOwnerRole.ETG) {
@@ -693,7 +724,9 @@ function getCarcasseCardDisplay(params: CardDisplayParams): CardDisplay {
   const refuseWord = isPetitGibier ? 'Refusé' : 'Refusée';
   const accepteWord = isPetitGibier ? 'Accepté' : 'Acceptée';
 
-  const intermediaireEntity = latestIntermediaire?.intermediaire_entity_id ? entities[latestIntermediaire.intermediaire_entity_id] : null;
+  const intermediaireEntity = latestIntermediaire?.intermediaire_entity_id
+    ? entities[latestIntermediaire.intermediaire_entity_id]
+    : null;
   const intermediaireName = intermediaireEntity?.nom_d_usage ?? '';
 
   if (viewRole === 'chasseur') {

@@ -24,10 +24,13 @@ export default function ChasseurLayout() {
 
   const showDeactivatedAccount = useMemo(() => {
     const isRestrictedPage =
-      !location.pathname.includes('profil') && !location.pathname.includes('onboarding') && !location.pathname.includes('admin');
+      !location.pathname.includes('profil') &&
+      !location.pathname.includes('onboarding') &&
+      !location.pathname.includes('admin');
     if (!isRestrictedPage) return false;
     if (!user) return false;
-    const needToCompleteExaminateurInitial = user?.roles.includes(UserRoles.CHASSEUR) && user?.est_forme_a_l_examen_initial == null;
+    const needToCompleteExaminateurInitial =
+      user?.roles.includes(UserRoles.CHASSEUR) && user?.est_forme_a_l_examen_initial == null;
     const isProfileCompleted = hasAllRequiredFields(user!) && !needToCompleteExaminateurInitial;
     return !isProfileCompleted;
   }, [user, location.pathname]);

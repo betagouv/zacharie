@@ -5,7 +5,14 @@ import * as Sentry from '@sentry/react';
 import App from './App.tsx';
 import { registerServiceWorker } from './sw/register.ts';
 import '@af-utils/scrollend-polyfill';
-import { BrowserRouter, Link, createRoutesFromChildren, matchRoutes, useLocation, useNavigationType } from 'react-router';
+import {
+  BrowserRouter,
+  Link,
+  createRoutesFromChildren,
+  matchRoutes,
+  useLocation,
+  useNavigationType,
+} from 'react-router';
 import { ErrorBoundary } from 'react-error-boundary';
 import UnexpectedError from './components/UnexpectedError.tsx';
 import { capture, getPerformanceContext } from './services/sentry.ts';

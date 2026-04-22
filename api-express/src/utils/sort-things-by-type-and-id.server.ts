@@ -1,4 +1,12 @@
-import { EntityTypes, EntityAndUserRelations, UserRelations, UserRoles, type Entity, type User, UserRelationType } from '@prisma/client';
+import {
+  EntityTypes,
+  EntityAndUserRelations,
+  UserRelations,
+  UserRoles,
+  type Entity,
+  type User,
+  UserRelationType,
+} from '@prisma/client';
 import type { EntitiesById, EntitiesByTypeAndId, EntityWithUserRelations } from '~/types/entity';
 
 export function sortEntitiesByTypeAndId(entities: Array<EntityWithUserRelations>): [EntitiesById, EntitiesByTypeAndId] {
@@ -16,7 +24,10 @@ export function sortEntitiesByTypeAndId(entities: Array<EntityWithUserRelations>
   return [allEntitiesIds, allEntitiesByTypeAndId];
 }
 
-export function sortEntitiesRelationsByTypeAndId(entities: Array<EntityWithUserRelations>, entitiesById: EntitiesById): EntitiesByTypeAndId {
+export function sortEntitiesRelationsByTypeAndId(
+  entities: Array<EntityWithUserRelations>,
+  entitiesById: EntitiesById
+): EntitiesByTypeAndId {
   const entitiesByTypeAndId: EntitiesByTypeAndId = Object.values(EntityTypes).reduce((acc, type) => {
     acc[type] = {};
     return acc;

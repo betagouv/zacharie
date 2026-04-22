@@ -55,7 +55,9 @@ export default function CircuitCourtProfilCoordonnees() {
                 <h3 className="text-lg font-semibold text-gray-900">
                   <span>Votre identité</span>
                 </h3>
-                <p className="mb-5 text-sm text-gray-500">* Les champs marqués d'un astérisque (*) sont obligatoires.</p>
+                <p className="mb-5 text-sm text-gray-500">
+                  * Les champs marqués d'un astérisque (*) sont obligatoires.
+                </p>
                 <Input
                   label="Nom *"
                   nativeInputProps={{

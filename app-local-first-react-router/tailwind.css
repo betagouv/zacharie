@@ -217,7 +217,8 @@ label.tailwindui {
 }
 
 .radio-black .fr-radio-group input[type='radio']:checked + label {
-  background-image: radial-gradient(transparent 10px, #000 11px, transparent 12px), radial-gradient(#000 5px, transparent 6px);
+  background-image:
+    radial-gradient(transparent 10px, #000 11px, transparent 12px), radial-gradient(#000 5px, transparent 6px);
 }
 
 .radio-black * {

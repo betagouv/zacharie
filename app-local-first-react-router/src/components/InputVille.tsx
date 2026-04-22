@@ -14,7 +14,10 @@ export default function InputVille(props: InputVilleProps) {
     const defaultValue = props.nativeInputProps?.defaultValue;
     return typeof defaultValue === 'string' ? defaultValue : '';
   });
-  const debouncedVilleSearched = useDebounce(`${postCode ? postCode + ' ' : ''}${villeSearched.toLocaleUpperCase()}`, 300);
+  const debouncedVilleSearched = useDebounce(
+    `${postCode ? postCode + ' ' : ''}${villeSearched.toLocaleUpperCase()}`,
+    300
+  );
   const [villesResults, setVillesResults] = useState<string[]>([]);
   const canSearch = useRef(false);
 
@@ -172,7 +175,11 @@ export default function InputVille(props: InputVilleProps) {
           onChange: handleChange,
         }}
       />
-      <div className={['flex w-full flex-col border border-gray-200', villesResults.length > 0 ? '-mt-6' : 'hidden'].join(' ')}>
+      <div
+        className={['flex w-full flex-col border border-gray-200', villesResults.length > 0 ? '-mt-6' : 'hidden'].join(
+          ' '
+        )}
+      >
         {villesResults.map((ville) => {
           return (
             <button

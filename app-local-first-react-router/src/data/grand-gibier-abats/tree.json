@@ -28,7 +28,11 @@
       "Zones verdâtres",
       "Autres anomalies de couleur"
     ],
-    "Anomalies ganglionnaires": ["Ganglions hémorragiques", "Ganglions anormalement volumineux", "Autres anomalies observées sur les ganglions"],
+    "Anomalies ganglionnaires": [
+      "Ganglions hémorragiques",
+      "Ganglions anormalement volumineux",
+      "Autres anomalies observées sur les ganglions"
+    ],
     "Anomalies d'odeur": ["Odeur nauséabonde", "Autres anomalies d'odeur"],
     "Parasites": [
       "Echinococcose : présence à la surface du poumon d'une ou plusieurs « boule(s) d'eau » à demi enchâssées dans ce dernier",
@@ -41,7 +45,13 @@
   },
   "Appareil circulatoire (cœur)": {
     "Abcès ou nodules": ["Unique", "Multiples"],
-    "Anomalies de consistance": ["Aspect flasque", "Aspect friable", "Aspect rugueux", "Aspect visqueux, humide", "Autres anomalies de consistance"],
+    "Anomalies de consistance": [
+      "Aspect flasque",
+      "Aspect friable",
+      "Aspect rugueux",
+      "Aspect visqueux, humide",
+      "Autres anomalies de consistance"
+    ],
     "Anomalies de couleur": [
       "Cœur anormalement pâle",
       "Cœur anormalement foncé",
@@ -55,7 +65,10 @@
       "Autres anomalies observées sur les ganglions"
     ],
     "Anomalies d'odeur": ["Odeur nauséabonde", "Autres anomalies d'odeur"],
-    "Parasites": ["Cysticercose : Présence de « boules d'eau » translucides avec au centre un point blanc", "Autres parasites"],
+    "Parasites": [
+      "Cysticercose : Présence de « boules d'eau » translucides avec au centre un point blanc",
+      "Autres parasites"
+    ],
     "Tumeurs": ["Présence d'une ou plusieurs masses sur le coeur"],
     "Autres anomalies": []
   },
@@ -97,7 +110,11 @@
       "Lésions hémorragiques sur le tractus digestif (pétéchies ou ulcères)",
       "Autres anomalies de couleur"
     ],
-    "Anomalies ganglionnaires": ["Ganglions hémorragiques", "Ganglions anormalement volumineux", "Autres anomalies sur les ganglions"],
+    "Anomalies ganglionnaires": [
+      "Ganglions hémorragiques",
+      "Ganglions anormalement volumineux",
+      "Autres anomalies sur les ganglions"
+    ],
     "Anomalies d'odeur": ["Odeur anormale"],
     "Parasites": [
       "Ascaridiose : Présence à la surface du foie de tâches blanchâtres dites « en goutte de lait ». La lobulation du foie est accentuée. Présence à la sortie du rectum de longs vers ronds",
@@ -106,7 +123,10 @@
       "Echinococcose : Présence à la surface du foie, d'une ou plusieurs « grosses boules » à demi-enchâssées",
       "Strongylose : Présence massive à la surface du foie de petites adhérences ou villosités ou présence à l'ouverture de l'estomac de filaments blancs"
     ],
-    "Tumeurs": ["Présence d'une ou plusieurs masses sur le foie", "Présence d'une ou plusieurs masses sur le tube digestif"],
+    "Tumeurs": [
+      "Présence d'une ou plusieurs masses sur le foie",
+      "Présence d'une ou plusieurs masses sur le tube digestif"
+    ],
     "Autres anomalies": []
   },
   "Appareil génito-urinaire (reins/appareil génital)": {

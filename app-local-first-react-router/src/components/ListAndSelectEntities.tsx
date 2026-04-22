@@ -51,7 +51,9 @@ export default function ListAndSelectEntities({
         {description}
         {userEntities.map((entity) => {
           const relation = entity.EntityRelationsWithUsers.find(
-            (relation) => relation.owner_id === user.id && relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
+            (relation) =>
+              relation.owner_id === user.id &&
+              relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
           );
           if (!relation) return null;
           console.log(entity);
@@ -81,7 +83,8 @@ export default function ListAndSelectEntities({
             <p className="py-5 pr-5">
               Vous pouvez en ajouter d'autre via la liste ci-dessous.
               <br />
-              Si vous ne trouvez pas votre entreprise, veuillez nous contacter via <Link to="/app/contact">le formulaire de contact</Link>.
+              Si vous ne trouvez pas votre entreprise, veuillez nous contacter via{' '}
+              <Link to="/app/contact">le formulaire de contact</Link>.
             </p>
             <div className="flex w-full flex-col gap-4 md:flex-row [&_.fr-select-group]:mb-0">
               <SelectCustom
@@ -118,7 +121,8 @@ export default function ListAndSelectEntities({
                     path: '/user-entity',
                     body: {
                       [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
-                      [Prisma.EntityAndUserRelationsScalarFieldEnum.relation]: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+                      [Prisma.EntityAndUserRelationsScalarFieldEnum.relation]:
+                        EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
                       [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entityId,
                       [Prisma.EntityAndUserRelationsScalarFieldEnum.status]: EntityRelationStatus.REQUESTED,
                     },

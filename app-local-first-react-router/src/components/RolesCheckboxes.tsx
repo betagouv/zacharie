@@ -65,7 +65,8 @@ export default function RolesCheckBoxes({
     },
     {
       label: 'Commerce de détail',
-      hintText: 'Boucherie, charcuterie, restaurant, traiteur, alimentation générale, supérette, grande et moyenne surface...',
+      hintText:
+        'Boucherie, charcuterie, restaurant, traiteur, alimentation générale, supérette, grande et moyenne surface...',
       nativeInputProps: {
         name: Prisma.UserScalarFieldEnum.roles,
         value: UserRoles.COMMERCE_DE_DETAIL,

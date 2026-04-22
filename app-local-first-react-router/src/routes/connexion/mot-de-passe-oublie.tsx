@@ -121,7 +121,8 @@ export default function MotDePasseOublie() {
               />
               <hr />
               <p className="text-xs">
-                Vous vous souvenez de votre mot de passe ? <Link to="/app/connexion">Cliquez ici pour vous connecter</Link>
+                Vous vous souvenez de votre mot de passe ?{' '}
+                <Link to="/app/connexion">Cliquez ici pour vous connecter</Link>
               </p>
             </form>
           </div>

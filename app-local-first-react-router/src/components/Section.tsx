@@ -8,7 +8,13 @@ interface SectionProps {
   open?: boolean;
 }
 
-export default function Section({ title = 'Titre de section', children, className = '', titleAs = 'h3', open = true }: SectionProps) {
+export default function Section({
+  title = 'Titre de section',
+  children,
+  className = '',
+  titleAs = 'h3',
+  open = true,
+}: SectionProps) {
   const Component = titleAs;
 
   return (

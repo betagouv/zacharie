@@ -156,7 +156,11 @@ export default function TableFilterable<T>({
               };
               return (
                 <td
-                  className={['whitespace-nowrap', column.className || '', onSortBy ? 'cursor-pointer' : 'cursor-default'].join(' ')}
+                  className={[
+                    'whitespace-nowrap',
+                    column.className || '',
+                    onSortBy ? 'cursor-pointer' : 'cursor-default',
+                  ].join(' ')}
                   style={column.style || {}}
                   key={String(dataKey) + String(column.title)}
                 >
@@ -215,7 +219,13 @@ export default function TableFilterable<T>({
                   data-test-id={dataTestId ? item[dataTestId] : item[rowKey]}
                   tabIndex={0}
                   className={[
-                    rowDisabled(item) ? 'cursor-not-allowed' : isSortable ? 'cursor-move' : onRowClick ? 'cursor-pointer' : 'cursor-auto',
+                    rowDisabled(item)
+                      ? 'cursor-not-allowed'
+                      : isSortable
+                        ? 'cursor-move'
+                        : onRowClick
+                          ? 'cursor-pointer'
+                          : 'cursor-auto',
                   ].join(' ')}
                 >
                   {withCheckbox && (
@@ -235,7 +245,9 @@ export default function TableFilterable<T>({
                         className={([column.className || ''].join(' '), column.small ? 'small' : 'not-small')}
                         key={`${item[rowKey] as string}${String(column.dataKey)}`}
                       >
-                        {column.render ? column.render(item, index) : renderForType(item[column.dataKey], column.type || 'string')}
+                        {column.render
+                          ? column.render(item, index)
+                          : renderForType(item[column.dataKey], column.type || 'string')}
                       </td>
                     );
                   })}

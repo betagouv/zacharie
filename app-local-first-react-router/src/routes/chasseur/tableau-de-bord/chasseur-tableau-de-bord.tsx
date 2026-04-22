@@ -135,7 +135,8 @@ export default function MesChasses() {
                 />
                 <h3 className="fr-h6 text-action-high-blue-france-light mb-2">Absence de retour sur vos carcasses</h3>
                 <p className="fr-text--sm text-action-high-blue-france-light mb-2">
-                  Il semble que vous valorisez vos carcasses directement auprès des consommateurs et des commerces de bouche.
+                  Il semble que vous valorisez vos carcasses directement auprès des consommateurs et des commerces de
+                  bouche.
                 </p>
               </div>
             ) : (

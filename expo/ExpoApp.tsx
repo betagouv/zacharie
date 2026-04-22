@@ -151,7 +151,12 @@ function App() {
           javaScriptEnabled
           injectedJavaScript={initScript}
         />
-        <Modal visible={!!externalLink} onRequestClose={() => setExternalLink(null)} animationType="slide" presentationStyle="formSheet">
+        <Modal
+          visible={!!externalLink}
+          onRequestClose={() => setExternalLink(null)}
+          animationType="slide"
+          presentationStyle="formSheet"
+        >
           <SafeAreaView style={styles.safeContainer}>
             <View style={styles.modalContainer}>
               <TouchableOpacity onPress={() => setExternalLink(null)} style={styles.closeButton}>

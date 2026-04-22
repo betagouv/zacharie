@@ -9,7 +9,9 @@ function getEtablissementDisplay(etablissement: Etablissement): EtablissementDis
 
 export const etablissementsTree = etablissementsTraitementSanitaire.data.map(getEtablissementDisplay);
 
-export function retrieveEtablissementAgremenet(etablissementDisplay: EtablissementDisplay): Etablissement['Numéro agrément/Approval number'] {
+export function retrieveEtablissementAgremenet(
+  etablissementDisplay: EtablissementDisplay
+): Etablissement['Numéro agrément/Approval number'] {
   const etablissement = etablissementsTraitementSanitaire.data.find(
     (etablissement) => getEtablissementDisplay(etablissement) === etablissementDisplay
   );

@@ -99,7 +99,9 @@ router.get(
       FeiOwnerRole.ASSOCIATION_CARITATIVE,
       FeiOwnerRole.CONSOMMATEUR_FINAL,
     ];
-    const sviEligibleCarcasses = bigGameCarcasses.filter((c) => !c.next_owner_role || !circuitCourtRoles.includes(c.next_owner_role));
+    const sviEligibleCarcasses = bigGameCarcasses.filter(
+      (c) => !c.next_owner_role || !circuitCourtRoles.includes(c.next_owner_role)
+    );
     const hasAnySviReturn = sviEligibleCarcasses.some((c) => c.svi_carcasse_status !== null);
 
     // Get refusal causes from intermediaire refusals and SVI lesions/motifs
@@ -111,7 +113,10 @@ router.get(
         refusalCausesMap.set(motif, (refusalCausesMap.get(motif) || 0) + 1);
       }
       // SVI IPM1 and IPM2 lesions/motifs (deduplicated to avoid counting same motif twice)
-      const sviMotifs = new Set([...(carcasse.svi_ipm1_lesions_ou_motifs ?? []), ...(carcasse.svi_ipm2_lesions_ou_motifs ?? [])]);
+      const sviMotifs = new Set([
+        ...(carcasse.svi_ipm1_lesions_ou_motifs ?? []),
+        ...(carcasse.svi_ipm2_lesions_ou_motifs ?? []),
+      ]);
       for (const motif of sviMotifs) {
         refusalCausesMap.set(motif, (refusalCausesMap.get(motif) || 0) + 1);
       }
@@ -123,7 +128,9 @@ router.get(
 
     // Calculate personal seizure rate for SVI-eligible big game carcasses
     const seizedBigGame = sviEligibleCarcasses.filter(
-      (c) => c.svi_carcasse_status === CarcasseStatus.SAISIE_TOTALE || c.svi_carcasse_status === CarcasseStatus.SAISIE_PARTIELLE
+      (c) =>
+        c.svi_carcasse_status === CarcasseStatus.SAISIE_TOTALE ||
+        c.svi_carcasse_status === CarcasseStatus.SAISIE_PARTIELLE
     );
     const personalSeizureRate =
       sviEligibleCarcasses.length > 0 && hasAnySviReturn
@@ -152,11 +159,15 @@ router.get(
           lte: dayjs('2024-12-31').toDate(),
         },
         deleted_at: null,
-        OR: [{ svi_carcasse_status: CarcasseStatus.SAISIE_TOTALE }, { svi_carcasse_status: CarcasseStatus.SAISIE_PARTIELLE }],
+        OR: [
+          { svi_carcasse_status: CarcasseStatus.SAISIE_TOTALE },
+          { svi_carcasse_status: CarcasseStatus.SAISIE_PARTIELLE },
+        ],
       },
     });
 
-    const nationalSeizureRate = nationalBigGame2024 > 0 ? (nationalSeizedBigGame2024 / nationalBigGame2024) * 100 : 10.44;
+    const nationalSeizureRate =
+      nationalBigGame2024 > 0 ? (nationalSeizedBigGame2024 / nationalBigGame2024) * 100 : 10.44;
 
     // Calculate hygiene score based on BPH (Bonnes Pratiques d'Hygiène)
     // Formula: 100 × (1 - (personal seizure rate / (2 × national seizure rate)))
@@ -206,9 +217,14 @@ router.get(
           // Hygiene score calculation
           formula: '100 × (1 - (personalSeizureRate / (2 × nationalSeizureRate)))',
           divisor: 2 * nationalSeizureRate,
-          ratio: nationalSeizureRate > 0 && personalSeizureRate !== null ? personalSeizureRate / (2 * nationalSeizureRate) : 0,
+          ratio:
+            nationalSeizureRate > 0 && personalSeizureRate !== null
+              ? personalSeizureRate / (2 * nationalSeizureRate)
+              : 0,
           hygieneScoreBeforeClamp:
-            nationalSeizureRate > 0 && personalSeizureRate !== null ? 100 * (1 - personalSeizureRate / (2 * nationalSeizureRate)) : 0,
+            nationalSeizureRate > 0 && personalSeizureRate !== null
+              ? 100 * (1 - personalSeizureRate / (2 * nationalSeizureRate))
+              : 0,
         },
       },
     });

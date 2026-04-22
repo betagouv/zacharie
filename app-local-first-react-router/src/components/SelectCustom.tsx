@@ -5,11 +5,11 @@ import CreatableSelect from 'react-select/creatable';
 import type { GroupBase, Props, StylesConfig } from 'react-select';
 import InputNotEditable from './InputNotEditable';
 
-export interface SelectCustomProps<Option, IsMulti extends boolean = false, Group extends GroupBase<Option> = GroupBase<Option>> extends Props<
+export interface SelectCustomProps<
   Option,
-  IsMulti,
-  Group
-> {
+  IsMulti extends boolean = false,
+  Group extends GroupBase<Option> = GroupBase<Option>,
+> extends Props<Option, IsMulti, Group> {
   creatable?: boolean;
   label?: string;
   hint?: React.ReactNode;
@@ -29,7 +29,9 @@ function SelectCustom<Option, IsMulti extends boolean = false, Group extends Gro
       border: 'none',
       borderBottomLeftRadius: '0',
       borderBottomRightRadius: '0',
-      boxShadow: props.isDisabled ? 'inset 0 -2px 0 0 var(--border-disabled-grey)' : 'inset 0 -2px 0 0 var(--border-plain-grey)',
+      boxShadow: props.isDisabled
+        ? 'inset 0 -2px 0 0 var(--border-disabled-grey)'
+        : 'inset 0 -2px 0 0 var(--border-plain-grey)',
     }),
     dropdownIndicator: (styles) => ({
       ...styles,

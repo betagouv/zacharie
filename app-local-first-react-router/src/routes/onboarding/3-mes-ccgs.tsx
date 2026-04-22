@@ -287,7 +287,9 @@ export default function MesCCGs() {
               {!!newCCGExpanded && !!registerOneMoreCCG && (
                 <div className="rounded-lg border border-gray-300 px-8 py-6">
                   <p className="font-semibold">Pré-enregistrer une nouvelle chambre froide (CCG)</p>
-                  <p className="mb-5 text-sm text-gray-500">* Les champs marqués d'un astérisque (*) sont obligatoires.</p>
+                  <p className="mb-5 text-sm text-gray-500">
+                    * Les champs marqués d'un astérisque (*) sont obligatoires.
+                  </p>
                   <form
                     id="association_data_form"
                     method="POST"
@@ -383,8 +385,9 @@ export default function MesCCGs() {
                       className="my-4"
                       description={
                         <>
-                          Cette étape ne remplace pas l'enregistrement officiel du CCG : elle sert seulement à le renseigner dans Zacharie. Pour être
-                          reconnu, le CCG doit être enregistré auprès de la DDPP/DDETSPP de votre département. Pour déclarer votre CCG,{' '}
+                          Cette étape ne remplace pas l'enregistrement officiel du CCG : elle sert seulement à le
+                          renseigner dans Zacharie. Pour être reconnu, le CCG doit être enregistré auprès de la
+                          DDPP/DDETSPP de votre département. Pour déclarer votre CCG,{' '}
                           <a
                             href="https://scribehow.com/shared/Declarer_un_centre_de_collecte_de_gibier_CCG__f9XrNsQYQx68Mk-WDBJr0w"
                             target="_blank"
@@ -412,7 +415,9 @@ export default function MesCCGs() {
                         handleUserSubmit(false);
                         setRegisterOneMoreCCG(false);
                         setTimeout(() => {
-                          document.getElementById('onboarding-etape-2-ccgs-data')?.scrollIntoView({ behavior: 'smooth' });
+                          document
+                            .getElementById('onboarding-etape-2-ccgs-data')
+                            ?.scrollIntoView({ behavior: 'smooth' });
                         }, 100);
                       },
                     }}

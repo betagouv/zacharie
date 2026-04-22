@@ -22,7 +22,9 @@ export default function CircuitCourtLayout() {
 
   const showDeactivatedAccount = useMemo(() => {
     const isRestrictedPage =
-      !location.pathname.includes('profil') && !location.pathname.includes('onboarding') && !location.pathname.includes('admin');
+      !location.pathname.includes('profil') &&
+      !location.pathname.includes('onboarding') &&
+      !location.pathname.includes('admin');
     if (!isRestrictedPage) return false;
     if (!user) return false;
     const isProfileCompleted = hasAllRequiredFields(user!);

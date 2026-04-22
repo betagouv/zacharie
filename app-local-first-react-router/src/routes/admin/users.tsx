@@ -96,7 +96,9 @@ export default function AdminUsers() {
     return true;
   });
 
-  const chasseursToActivate = filteredUsers.filter((user) => !user.activated && user.roles?.includes(UserRoles.CHASSEUR));
+  const chasseursToActivate = filteredUsers.filter(
+    (user) => !user.activated && user.roles?.includes(UserRoles.CHASSEUR)
+  );
 
   const tabs: TabsProps['tabs'] = [
     { tabId: 'all', label: `Tous (${filteredUsers.length})` },
@@ -219,7 +221,8 @@ export default function AdminUsers() {
             <tbody>
               {filteredUsers
                 .filter((user) => {
-                  if (selectedTabId === 'chasseurs-a-activer') return !user.activated && user.roles?.includes(UserRoles.CHASSEUR);
+                  if (selectedTabId === 'chasseurs-a-activer')
+                    return !user.activated && user.roles?.includes(UserRoles.CHASSEUR);
                   if (selectedTabId === 'activated') return user.activated;
                   if (selectedTabId === 'deactivated') return !user.activated;
                   return true;
@@ -248,7 +251,9 @@ export default function AdminUsers() {
                           <span className="text-xs">{user.email}</span>
                           {(user.telephone || user.code_postal || user.ville) && (
                             <span className="text-xs text-gray-500">
-                              {[user.telephone, [user.code_postal, user.ville].filter(Boolean).join(' ')].filter(Boolean).join(' · ')}
+                              {[user.telephone, [user.code_postal, user.ville].filter(Boolean).join(' ')]
+                                .filter(Boolean)
+                                .join(' · ')}
                             </span>
                           )}
                         </span>
@@ -353,7 +358,9 @@ export default function AdminUsers() {
                                   body: { activated: 'true' },
                                 }).then((res) => {
                                   if (res.ok) {
-                                    setUsers((prev) => prev.map((u) => (u.id === user.id ? { ...u, activated: true } : u)));
+                                    setUsers((prev) =>
+                                      prev.map((u) => (u.id === user.id ? { ...u, activated: true } : u))
+                                    );
                                   }
                                 });
                               }}

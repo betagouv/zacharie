@@ -549,7 +549,13 @@
           },
           "svi_ipm2_decision": {
             "type": "string",
-            "enum": ["NON_RENSEIGNEE", "LEVEE_DE_LA_CONSIGNE", "SAISIE_TOTALE", "SAISIE_PARTIELLE", "TRAITEMENT_ASSAINISSANT"],
+            "enum": [
+              "NON_RENSEIGNEE",
+              "LEVEE_DE_LA_CONSIGNE",
+              "SAISIE_TOTALE",
+              "SAISIE_PARTIELLE",
+              "TRAITEMENT_ASSAINISSANT"
+            ],
             "nullable": true,
             "description": "Décision IPM2"
           },

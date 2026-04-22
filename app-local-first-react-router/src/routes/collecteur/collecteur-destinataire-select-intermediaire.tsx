@@ -1,6 +1,13 @@
 import { useParams } from 'react-router';
 import { useMemo, useState } from 'react';
-import { Prisma, EntityTypes, DepotType, CarcasseIntermediaire, EntityRelationType, FeiOwnerRole } from '@prisma/client';
+import {
+  Prisma,
+  EntityTypes,
+  DepotType,
+  CarcasseIntermediaire,
+  EntityRelationType,
+  FeiOwnerRole,
+} from '@prisma/client';
 import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import useUser from '@app/zustand/user';
@@ -86,7 +93,9 @@ export default function CollecteurDestinataireIntermediaire({
   }, [etgs, collecteursPros]);
 
   const canTransmitCarcassesToEntities = useMemo(() => {
-    return prochainsDetenteurs.filter((entity) => entity.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY);
+    return prochainsDetenteurs.filter(
+      (entity) => entity.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY
+    );
   }, [prochainsDetenteurs]);
 
   const ccgsOptions = useMemo(() => {
@@ -212,7 +221,12 @@ export default function CollecteurDestinataireIntermediaire({
   return (
     <>
       <div
-        className={[className, disabled ? 'cursor-not-allowed opacity-50' : '', canEdit ? '' : 'cursor-not-allowed', 'space-y-6'].join(' ')}
+        className={[
+          className,
+          disabled ? 'cursor-not-allowed opacity-50' : '',
+          canEdit ? '' : 'cursor-not-allowed',
+          'space-y-6',
+        ].join(' ')}
         key={prochainDetenteurEntityId}
       >
         <SelectCustom
@@ -220,7 +234,9 @@ export default function CollecteurDestinataireIntermediaire({
           isDisabled={disabled}
           hint={
             <>
-              <span>Indiquez ici la personne ou la structure avec qui vous êtes en contact pour prendre en charge le gibier.</span>
+              <span>
+                Indiquez ici la personne ou la structure avec qui vous êtes en contact pour prendre en charge le gibier.
+              </span>
               {!prochainDetenteurEntityId && !disabled && (
                 <div>
                   {canTransmitCarcassesToEntities.map((entity) => {

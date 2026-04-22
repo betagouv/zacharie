@@ -59,7 +59,9 @@ export default function CarcasseIntermediaireComp({ carcasse, canEdit, intermedi
 
   const [carcasseManquante, setCarcasseManquante] = useState(!!carcasse.intermediaire_carcasse_manquante);
   const [carcasseRefusCheckbox, setCarcasseRefusCheckbox] = useState(!!carcasseIntermediaire.refus);
-  const [carcasseEcarteePourInspectionCheckbox, setCarcasseEcarteePourInspectionCheckbox] = useState(!!carcasseIntermediaire.ecarte_pour_inspection);
+  const [carcasseEcarteePourInspectionCheckbox, setCarcasseEcarteePourInspectionCheckbox] = useState(
+    !!carcasseIntermediaire.ecarte_pour_inspection
+  );
   const [carcasseAcceptPartielCheckbox, setCarcasseAcceptPartielCheckbox] = useState(
     !!carcasseIntermediaire.check_manuel &&
       !carcasseIntermediaire.refus &&
@@ -588,7 +590,8 @@ export default function CarcasseIntermediaireComp({ carcasse, canEdit, intermedi
                       </label>
                       {carcasse.type === CarcasseType.PETIT_GIBIER && (
                         <p className="fr-hint-text">
-                          Si vous refusez seulement quelques animaux, utilisez plutôt l'option "Lot partiellement accepté"
+                          Si vous refusez seulement quelques animaux, utilisez plutôt l'option "Lot partiellement
+                          accepté"
                         </p>
                       )}
                     </div>
@@ -634,7 +637,8 @@ export default function CarcasseIntermediaireComp({ carcasse, canEdit, intermedi
                       </label>
                       {carcasse.type === CarcasseType.PETIT_GIBIER && (
                         <p className="fr-hint-text">
-                          Si vous écartez seulement quelques animaux, utilisez plutôt l'option "Lot partiellement accepté"
+                          Si vous écartez seulement quelques animaux, utilisez plutôt l'option "Lot partiellement
+                          accepté"
                         </p>
                       )}
                     </div>
@@ -743,7 +747,10 @@ export default function CarcasseIntermediaireComp({ carcasse, canEdit, intermedi
                               children: 'Enregistrer',
                               type: 'submit',
                               disabled:
-                                !canEdit || nombreAnimauxAcceptes === null || nombreAnimauxAcceptes < 0 || nombreAnimauxAcceptes > nombreAnimauxTotal,
+                                !canEdit ||
+                                nombreAnimauxAcceptes === null ||
+                                nombreAnimauxAcceptes < 0 ||
+                                nombreAnimauxAcceptes > nombreAnimauxTotal,
                               nativeButtonProps: {
                                 onClick: (e) => {
                                   e.preventDefault();

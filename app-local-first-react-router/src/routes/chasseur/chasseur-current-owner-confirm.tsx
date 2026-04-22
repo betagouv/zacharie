@@ -30,7 +30,10 @@ export default function CurrentOwnerConfirm() {
   }, [entities]);
 
   const myCarcasses = useMemo(() => {
-    return feiCarcasses.filter((c) => (c.next_owner_entity_id && userEntityIds.includes(c.next_owner_entity_id)) || c.next_owner_user_id === user.id);
+    return feiCarcasses.filter(
+      (c) =>
+        (c.next_owner_entity_id && userEntityIds.includes(c.next_owner_entity_id)) || c.next_owner_user_id === user.id
+    );
   }, [feiCarcasses, userEntityIds, user.id]);
 
   const myCarcasseIds = useMemo(() => myCarcasses.map((c) => c.zacharie_carcasse_id), [myCarcasses]);
@@ -56,7 +59,10 @@ export default function CurrentOwnerConfirm() {
   // Detect if user already took charge of their assigned carcasses
   const myAlreadyHandledCarcasses = useMemo(() => {
     return feiCarcasses.filter(
-      (c) => c.current_owner_user_id === user.id && c.current_owner_entity_id != null && userEntityIds.includes(c.current_owner_entity_id)
+      (c) =>
+        c.current_owner_user_id === user.id &&
+        c.current_owner_entity_id != null &&
+        userEntityIds.includes(c.current_owner_entity_id)
     );
   }, [feiCarcasses, userEntityIds, user.id]);
 
@@ -195,7 +201,11 @@ export default function CurrentOwnerConfirm() {
   return (
     <div className="bg-alt-blue-france pb-8">
       <CallOut
-        title={fei.fei_next_owner_user_id ? '🫵  Cette fiche vous a été attribuée' : '🫵  Cette fiche a été attribuée à votre société'}
+        title={
+          fei.fei_next_owner_user_id
+            ? '🫵  Cette fiche vous a été attribuée'
+            : '🫵  Cette fiche a été attribuée à votre société'
+        }
         className="m-0 bg-white"
       >
         <Button

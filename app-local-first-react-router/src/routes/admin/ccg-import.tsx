@@ -6,7 +6,12 @@ import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import { Badge } from '@codegouvfr/react-dsfr/Badge';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import API from '@app/services/api';
-import type { AdminCcgPreviewResponse, AdminCcgImportResponse, CcgPreviewRow, CcgPreviewModifiedRow } from '@api/src/types/responses';
+import type {
+  AdminCcgPreviewResponse,
+  AdminCcgImportResponse,
+  CcgPreviewRow,
+  CcgPreviewModifiedRow,
+} from '@api/src/types/responses';
 
 type Step = 'upload' | 'preview' | 'result';
 
@@ -58,11 +63,22 @@ export default function CcgImport() {
         }
         return {
           numero_ddecpp: (() => {
-            const raw = col(normalizedRow, 'Unité Activité (UA) : Identifier métier (Type : Valorisation)', 'numero_ddecpp', 'Numéro DDECPP');
+            const raw = col(
+              normalizedRow,
+              'Unité Activité (UA) : Identifier métier (Type : Valorisation)',
+              'numero_ddecpp',
+              'Numéro DDECPP'
+            );
             const match = raw.match(/\d{2,3}-CCG-\d+/);
             return match ? match[0] : raw;
           })(),
-          nom_d_usage: col(normalizedRow, 'Établissement : Enseigne usuelle (RESYTAL)', 'nom_d_usage', 'raison_sociale', 'Raison sociale'),
+          nom_d_usage: col(
+            normalizedRow,
+            'Établissement : Enseigne usuelle (RESYTAL)',
+            'nom_d_usage',
+            'raison_sociale',
+            'Raison sociale'
+          ),
           address_ligne_1: col(
             normalizedRow,
             'Unité Activité (UA) : Adresse de localisation : Concaténations des lignes adresses 1, 2 & 3',
@@ -201,8 +217,9 @@ export default function CcgImport() {
         <div className="mb-8">
           <p className="mb-4">
             Sélectionnez un fichier Excel CCG (format RESYTAL, en-têtes en ligne 5). Les colonnes utilisées sont&nbsp;:{' '}
-            <code>Unité Activité (UA) : Identifier métier</code>, <code>Établissement : Enseigne usuelle</code>, <code>Adresse postale</code>,{' '}
-            <code>Code postal</code>, <code>Bureau distributeur</code>, <code>SIRET/NUMAGRIT</code>
+            <code>Unité Activité (UA) : Identifier métier</code>, <code>Établissement : Enseigne usuelle</code>,{' '}
+            <code>Adresse postale</code>, <code>Code postal</code>, <code>Bureau distributeur</code>,{' '}
+            <code>SIRET/NUMAGRIT</code>
           </p>
           <input
             type="file"
@@ -221,7 +238,9 @@ export default function CcgImport() {
           <div className="mb-4 flex items-center gap-4">
             <Badge severity="success">{nouveaux.length} nouveau(x)</Badge>
             <Badge severity="warning">{modifies.length} existant(s) avec modifications</Badge>
-            {unchangedCount > 0 && <Badge severity="info">{unchangedCount} existant(s) sans modification (masqués)</Badge>}
+            {unchangedCount > 0 && (
+              <Badge severity="info">{unchangedCount} existant(s) sans modification (masqués)</Badge>
+            )}
           </div>
 
           {modifies.length > 0 && (
@@ -253,7 +272,8 @@ export default function CcgImport() {
                   if (!existing || oldVal === undefined || oldVal === newVal) return newVal;
                   return (
                     <span>
-                      <span className="text-red-500 line-through">{oldVal}</span> <span className="font-bold text-green-600">{newVal}</span>
+                      <span className="text-red-500 line-through">{oldVal}</span>{' '}
+                      <span className="font-bold text-green-600">{newVal}</span>
                     </span>
                   );
                 };

@@ -2,7 +2,15 @@ import { useState, type RefObject, useRef, useMemo, useEffect } from 'react';
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Input } from '@codegouvfr/react-dsfr/Input';
-import { Entity, EntityRelationType, UserRoles, Prisma, UserNotifications, EntityTypes, UserEtgRoles } from '@prisma/client';
+import {
+  Entity,
+  EntityRelationType,
+  UserRoles,
+  Prisma,
+  UserNotifications,
+  EntityTypes,
+  UserEtgRoles,
+} from '@prisma/client';
 import InputVille from '@app/components/InputVille';
 import RolesCheckBoxes from '@app/components/RolesCheckboxes';
 import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
@@ -146,7 +154,8 @@ export default function AdminUser() {
   if (!user.roles.includes(UserRoles.SVI)) {
     let numberOfWOrkingWith = userEntitiesRelations.filter(
       (rel) =>
-        rel.EntityRelationsWithUsers.some((r) => r.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY) && rel.type !== EntityTypes.CCG
+        rel.EntityRelationsWithUsers.some((r) => r.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY) &&
+        rel.type !== EntityTypes.CCG
     ).length;
     if (user.roles.includes(UserRoles.ETG)) {
       numberOfWOrkingWith += 1;
@@ -505,7 +514,9 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
     const etgId = userEntitiesRelations.find((entity) => {
       return (
         entity.type === EntityTypes.ETG &&
-        entity.EntityRelationsWithUsers.some((r) => r.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY)
+        entity.EntityRelationsWithUsers.some(
+          (r) => r.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
+        )
       );
     })?.id;
     if (!etgId) return null;
@@ -524,7 +535,9 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
     const userEntityIds: Record<Entity['id'], boolean> = {};
     for (const userEntityRelation of userEntitiesRelations) {
       if (userEntityRelation.EntityRelationsWithUsers.some((r) => r.relation === relationType)) {
-        userEntityIds[userEntityRelation.id] = forCCG ? userEntityRelation.type === EntityTypes.CCG : userEntityRelation.type !== EntityTypes.CCG;
+        userEntityIds[userEntityRelation.id] = forCCG
+          ? userEntityRelation.type === EntityTypes.CCG
+          : userEntityRelation.type !== EntityTypes.CCG;
       }
     }
     const entities = [];
@@ -548,7 +561,11 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
       }
       if (relationType === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY) {
         if (user.roles.includes(UserRoles.CHASSEUR)) {
-          if (entity.type === EntityTypes.ETG || entity.type === EntityTypes.COLLECTEUR_PRO || entity.type === EntityTypes.CCG) {
+          if (
+            entity.type === EntityTypes.ETG ||
+            entity.type === EntityTypes.COLLECTEUR_PRO ||
+            entity.type === EntityTypes.CCG
+          ) {
             entities.push(entity);
           }
         } else if (user.roles.includes(UserRoles.ETG)) {
@@ -613,7 +630,9 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
         .map((entity) => {
           if (!entity) return null;
           if (!entity?.EntityRelationsWithUsers) return null;
-          const relation = entity.EntityRelationsWithUsers.find((relation) => relation.owner_id === user.id && relation.relation === relationType);
+          const relation = entity.EntityRelationsWithUsers.find(
+            (relation) => relation.owner_id === user.id && relation.relation === relationType
+          );
           if (!relation) return null;
           const isSviLinkedToEtg = associatedSvi?.id === entity.id;
 
@@ -640,18 +659,19 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
             return null;
           }
         })}
-      {relationType === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY && user.roles.includes(UserRoles.COLLECTEUR_PRO) && (
-        <Highlight
-          className="m-0 mt-8"
-          // classes={{
-          //   root: 'fr-highlight--green-emeraude',
-          // }}
-        >
-          Un collecteur indépendant ne peut pas gérer de fiches pour un ETG. <br />
-          Si un ETG a un besoin de transport, c'est dans le profil de l'utilisateur que ça se gère : cet utilisateur n'a que le rôle ETG mais peut
-          cocher la case "Gérer le transport dans l'ETG"
-        </Highlight>
-      )}
+      {relationType === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY &&
+        user.roles.includes(UserRoles.COLLECTEUR_PRO) && (
+          <Highlight
+            className="m-0 mt-8"
+            // classes={{
+            //   root: 'fr-highlight--green-emeraude',
+            // }}
+          >
+            Un collecteur indépendant ne peut pas gérer de fiches pour un ETG. <br />
+            Si un ETG a un besoin de transport, c'est dans le profil de l'utilisateur que ça se gère : cet utilisateur
+            n'a que le rôle ETG mais peut cocher la case "Gérer le transport dans l'ETG"
+          </Highlight>
+        )}
       {!!potentialEntities.length && (
         <div className="p-4 md:p-8 md:pb-0 [&_a]:block [&_a]:p-4 [&_a]:no-underline has-[a]:[&_td]:p-0!">
           <Table

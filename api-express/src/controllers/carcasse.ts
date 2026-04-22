@@ -4,7 +4,15 @@ import { catchErrors } from '~/middlewares/errors';
 import type { CarcasseResponse, CarcassesGetForRegistryResponse } from '~/types/responses';
 const router: express.Router = express.Router();
 import prisma from '~/prisma';
-import { Carcasse, EntityRelationStatus, EntityRelationType, FeiOwnerRole, Prisma, User, UserRoles } from '@prisma/client';
+import {
+  Carcasse,
+  EntityRelationStatus,
+  EntityRelationType,
+  FeiOwnerRole,
+  Prisma,
+  User,
+  UserRoles,
+} from '@prisma/client';
 import { RequestWithUser } from '~/types/request';
 import { carcasseForRegistrySelect, CarcasseForResponseForRegistry } from '~/types/carcasse';
 import updateCarcasseStatus from '~/utils/get-carcasse-status';
@@ -120,13 +128,16 @@ export async function saveCarcasse(
     nextCarcasse.heure_mise_a_mort = body[Prisma.CarcasseScalarFieldEnum.heure_mise_a_mort];
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.heure_mise_a_mort_premiere_carcasse_fei)) {
-    nextCarcasse.heure_mise_a_mort_premiere_carcasse_fei = body[Prisma.CarcasseScalarFieldEnum.heure_mise_a_mort_premiere_carcasse_fei];
+    nextCarcasse.heure_mise_a_mort_premiere_carcasse_fei =
+      body[Prisma.CarcasseScalarFieldEnum.heure_mise_a_mort_premiere_carcasse_fei];
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.consommateur_final_usage_domestique)) {
-    nextCarcasse.consommateur_final_usage_domestique = body[Prisma.CarcasseScalarFieldEnum.consommateur_final_usage_domestique];
+    nextCarcasse.consommateur_final_usage_domestique =
+      body[Prisma.CarcasseScalarFieldEnum.consommateur_final_usage_domestique];
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.heure_evisceration_derniere_carcasse_fei)) {
-    nextCarcasse.heure_evisceration_derniere_carcasse_fei = body[Prisma.CarcasseScalarFieldEnum.heure_evisceration_derniere_carcasse_fei];
+    nextCarcasse.heure_evisceration_derniere_carcasse_fei =
+      body[Prisma.CarcasseScalarFieldEnum.heure_evisceration_derniere_carcasse_fei];
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.espece)) {
     nextCarcasse.espece = body[Prisma.CarcasseScalarFieldEnum.espece];
@@ -189,10 +200,12 @@ export async function saveCarcasse(
     nextCarcasse.premier_detenteur_transport_date = body.premier_detenteur_transport_date || null;
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_prochain_detenteur_role_cache)) {
-    nextCarcasse.premier_detenteur_prochain_detenteur_role_cache = body.premier_detenteur_prochain_detenteur_role_cache || null;
+    nextCarcasse.premier_detenteur_prochain_detenteur_role_cache =
+      body.premier_detenteur_prochain_detenteur_role_cache || null;
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache)) {
-    nextCarcasse.premier_detenteur_prochain_detenteur_id_cache = body.premier_detenteur_prochain_detenteur_id_cache || null;
+    nextCarcasse.premier_detenteur_prochain_detenteur_id_cache =
+      body.premier_detenteur_prochain_detenteur_id_cache || null;
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_offline)) {
     nextCarcasse.premier_detenteur_offline = body[Prisma.CarcasseScalarFieldEnum.premier_detenteur_offline];
@@ -213,7 +226,8 @@ export async function saveCarcasse(
     nextCarcasse.intermediaire_closed_by_user_id = body[Prisma.CarcasseScalarFieldEnum.intermediaire_closed_by_user_id];
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.intermediaire_closed_by_entity_id)) {
-    nextCarcasse.intermediaire_closed_by_entity_id = body[Prisma.CarcasseScalarFieldEnum.intermediaire_closed_by_entity_id];
+    nextCarcasse.intermediaire_closed_by_entity_id =
+      body[Prisma.CarcasseScalarFieldEnum.intermediaire_closed_by_entity_id];
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.latest_intermediaire_user_id)) {
     nextCarcasse.latest_intermediaire_user_id = body[Prisma.CarcasseScalarFieldEnum.latest_intermediaire_user_id];
@@ -261,10 +275,12 @@ export async function saveCarcasse(
     nextCarcasse.next_owner_sous_traite_at = body[Prisma.CarcasseScalarFieldEnum.next_owner_sous_traite_at];
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.next_owner_sous_traite_by_user_id)) {
-    nextCarcasse.next_owner_sous_traite_by_user_id = body[Prisma.CarcasseScalarFieldEnum.next_owner_sous_traite_by_user_id];
+    nextCarcasse.next_owner_sous_traite_by_user_id =
+      body[Prisma.CarcasseScalarFieldEnum.next_owner_sous_traite_by_user_id];
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.next_owner_sous_traite_by_entity_id)) {
-    nextCarcasse.next_owner_sous_traite_by_entity_id = body[Prisma.CarcasseScalarFieldEnum.next_owner_sous_traite_by_entity_id];
+    nextCarcasse.next_owner_sous_traite_by_entity_id =
+      body[Prisma.CarcasseScalarFieldEnum.next_owner_sous_traite_by_entity_id];
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.next_owner_user_id)) {
     nextCarcasse.next_owner_user_id = body[Prisma.CarcasseScalarFieldEnum.next_owner_user_id];
@@ -313,10 +329,12 @@ export async function saveCarcasse(
     nextCarcasse.intermediaire_carcasse_manquante = nextValue;
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_intermediaire_id)) {
-    nextCarcasse.intermediaire_carcasse_refus_intermediaire_id = body[Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_intermediaire_id];
+    nextCarcasse.intermediaire_carcasse_refus_intermediaire_id =
+      body[Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_intermediaire_id];
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_motif)) {
-    nextCarcasse.intermediaire_carcasse_refus_motif = body[Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_motif];
+    nextCarcasse.intermediaire_carcasse_refus_motif =
+      body[Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_motif];
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_assigned_to_fei_at)) {
     nextCarcasse.svi_assigned_to_fei_at = body.svi_assigned_to_fei_at;
@@ -405,14 +423,16 @@ export async function saveCarcasse(
       nextCarcasse.svi_ipm2_decision = body[Prisma.CarcasseScalarFieldEnum.svi_ipm2_decision];
     }
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant)) {
-      nextCarcasse.svi_ipm2_traitement_assainissant = body[Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant];
+      nextCarcasse.svi_ipm2_traitement_assainissant =
+        body[Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant];
     }
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant_cuisson_temps)) {
       nextCarcasse.svi_ipm2_traitement_assainissant_cuisson_temps =
         body[Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant_cuisson_temps];
     }
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant_cuisson_temp)) {
-      nextCarcasse.svi_ipm2_traitement_assainissant_cuisson_temp = body[Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant_cuisson_temp];
+      nextCarcasse.svi_ipm2_traitement_assainissant_cuisson_temp =
+        body[Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant_cuisson_temp];
     }
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant_congelation_temps)) {
       nextCarcasse.svi_ipm2_traitement_assainissant_congelation_temps =
@@ -423,17 +443,20 @@ export async function saveCarcasse(
         body[Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant_congelation_temp];
     }
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant_type)) {
-      nextCarcasse.svi_ipm2_traitement_assainissant_type = body[Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant_type];
+      nextCarcasse.svi_ipm2_traitement_assainissant_type =
+        body[Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant_type];
     }
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant_paramètres)) {
-      nextCarcasse.svi_ipm2_traitement_assainissant_paramètres = body[Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant_paramètres];
+      nextCarcasse.svi_ipm2_traitement_assainissant_paramètres =
+        body[Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant_paramètres];
     }
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant_etablissement)) {
       nextCarcasse.svi_ipm2_traitement_assainissant_etablissement =
         body[Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant_etablissement];
     }
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant_poids)) {
-      nextCarcasse.svi_ipm2_traitement_assainissant_poids = body[Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant_poids];
+      nextCarcasse.svi_ipm2_traitement_assainissant_poids =
+        body[Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant_poids];
     }
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_ipm2_poids_saisie)) {
       nextCarcasse.svi_ipm2_poids_saisie = body[Prisma.CarcasseScalarFieldEnum.svi_ipm2_poids_saisie];

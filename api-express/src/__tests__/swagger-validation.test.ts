@@ -264,7 +264,8 @@ describe('Swagger Documentation Validation', () => {
     });
 
     test('Carcasse user endpoint should have correct path and query parameters', () => {
-      const carcasseUserEndpoint = swaggerThirdPartyDocument.paths['/carcasse/user/{date_mise_a_mort}/{numero_bracelet}'].get;
+      const carcasseUserEndpoint =
+        swaggerThirdPartyDocument.paths['/carcasse/user/{date_mise_a_mort}/{numero_bracelet}'].get;
       const parameters = carcasseUserEndpoint.parameters;
 
       const dateMiseAMortParam = parameters.find((p) => p.name === 'date_mise_a_mort');
@@ -330,7 +331,8 @@ describe('Swagger Documentation Validation', () => {
       expect(entitySpecificEndpoint.responses['404']).toBeDefined();
 
       // Third-party specific endpoint
-      const thirdPartySpecificEndpoint = swaggerThirdPartyDocument.paths['/carcasse/user/{date_mise_a_mort}/{numero_bracelet}'].get;
+      const thirdPartySpecificEndpoint =
+        swaggerThirdPartyDocument.paths['/carcasse/user/{date_mise_a_mort}/{numero_bracelet}'].get;
       expect(thirdPartySpecificEndpoint.responses['404']).toBeDefined();
     });
 
@@ -391,25 +393,38 @@ describe('Swagger Documentation Validation', () => {
     test('endpoints should reject invalid API keys', async () => {
       await new Promise((resolve) => setTimeout(resolve, 150));
       // Test with invalid API key
-      await request(app).get('/v1/fei?date_from=2025-01-01&date_to=2025-01-31').set('Authorization', 'Bearer invalid-key').expect(401);
+      await request(app)
+        .get('/v1/fei?date_from=2025-01-01&date_to=2025-01-31')
+        .set('Authorization', 'Bearer invalid-key')
+        .expect(401);
     });
   });
 
   describe('Parameter Validation', () => {
     test('should validate date format in FEI endpoint', async () => {
       await new Promise((resolve) => setTimeout(resolve, 150));
-      await request(app).get('/v1/fei?date_from=invalid-date&date_to=2025-01-31').set('Authorization', 'Bearer test-api-key').expect(400);
+      await request(app)
+        .get('/v1/fei?date_from=invalid-date&date_to=2025-01-31')
+        .set('Authorization', 'Bearer test-api-key')
+        .expect(400);
     });
 
     test('should validate email format in carcasse user endpoint', async () => {
       await new Promise((resolve) => setTimeout(resolve, 150));
-      await request(app).get('/v1/carcasse/user/2025-01-01/BRACELET123?email=invalid-email').set('Authorization', 'Bearer test-api-key').expect(400);
+      await request(app)
+        .get('/v1/carcasse/user/2025-01-01/BRACELET123?email=invalid-email')
+        .set('Authorization', 'Bearer test-api-key')
+        .expect(400);
     });
 
     test('should validate request body in approval request endpoints', async () => {
       await new Promise((resolve) => setTimeout(resolve, 150));
       // Test invalid email format
-      await request(app).post('/v1/approval-request/user').set('Authorization', 'Bearer test-api-key').send({ email: 'invalid-email' }).expect(400);
+      await request(app)
+        .post('/v1/approval-request/user')
+        .set('Authorization', 'Bearer test-api-key')
+        .send({ email: 'invalid-email' })
+        .expect(400);
 
       // Test invalid SIRET format
       // await request(app)
@@ -430,7 +445,10 @@ describe('Swagger Documentation Validation', () => {
     test('should validate parameters in FEI user by numero endpoint', async () => {
       await new Promise((resolve) => setTimeout(resolve, 150));
       // Test invalid email format
-      await request(app).get('/v1/fei/user/2025-01-001?email=invalid-email').set('Authorization', 'Bearer test-api-key').expect(400);
+      await request(app)
+        .get('/v1/fei/user/2025-01-001?email=invalid-email')
+        .set('Authorization', 'Bearer test-api-key')
+        .expect(400);
 
       // Test missing email
       await request(app).get('/v1/fei/user/2025-01-001').set('Authorization', 'Bearer test-api-key').expect(400);
@@ -457,7 +475,11 @@ describe('Swagger Documentation Validation', () => {
     test('should validate request body in access token endpoint', async () => {
       await new Promise((resolve) => setTimeout(resolve, 150));
       // Test invalid email format
-      await request(app).post('/v1/access-token/user').set('Authorization', 'Bearer test-api-key').send({ email: 'invalid-email' }).expect(400);
+      await request(app)
+        .post('/v1/access-token/user')
+        .set('Authorization', 'Bearer test-api-key')
+        .send({ email: 'invalid-email' })
+        .expect(400);
     });
   });
 
@@ -558,7 +580,9 @@ describe('Documentation Completeness', () => {
         const operation = pathItem[method];
         expect(operation.tags).toBeDefined();
         expect(operation.tags.length).toBeGreaterThan(0);
-        expect(['FEI - Accès Direct', 'Carcasses - Accès Direct', 'Webhooks - Accès Direct']).toContain(operation.tags[0]);
+        expect(['FEI - Accès Direct', 'Carcasses - Accès Direct', 'Webhooks - Accès Direct']).toContain(
+          operation.tags[0]
+        );
       });
     });
   });

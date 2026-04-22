@@ -40,15 +40,19 @@ export async function registerForPushNotificationsAsync({ force = false, expo = 
     }
     console.log('finalStatus', finalStatus);
     if (finalStatus !== 'granted' && force) {
-      Alert.alert('Les notifications sont désactivées', 'Vous pouvez activer les notifications dans les paramètres de votre téléphone.', [
-        {
-          text: 'Open Settings',
-          onPress: async () => {
-            await Linking.openSettings();
+      Alert.alert(
+        'Les notifications sont désactivées',
+        'Vous pouvez activer les notifications dans les paramètres de votre téléphone.',
+        [
+          {
+            text: 'Open Settings',
+            onPress: async () => {
+              await Linking.openSettings();
+            },
           },
-        },
-        { text: 'OK', style: 'cancel', onPress: () => {} },
-      ]);
+          { text: 'OK', style: 'cancel', onPress: () => {} },
+        ]
+      );
       return;
     }
     const token = expo

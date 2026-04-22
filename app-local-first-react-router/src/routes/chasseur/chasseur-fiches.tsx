@@ -14,7 +14,10 @@ import { useNavigate, useSearchParams, Link } from 'react-router';
 import { loadFeis } from '@app/utils/load-feis';
 import { loadMyRelations } from '@app/utils/load-my-relations';
 import useExportFeis from '@app/utils/export-feis';
-import { filterCarcassesIntermediairesForCarcasse, filterFeiIntermediaires } from '@app/utils/get-carcasses-intermediaires';
+import {
+  filterCarcassesIntermediairesForCarcasse,
+  filterFeiIntermediaires,
+} from '@app/utils/get-carcasses-intermediaires';
 import { useSaveScroll } from '@app/services/useSaveScroll';
 import CardFiche from '@app/components/CardFiche';
 import DropDownMenu from '@app/components/DropDownMenu';
@@ -111,7 +114,9 @@ function OnboardingChasseInfoBanner() {
     <div className="fr-mb-4w flex flex-col gap-4 rounded border border-[var(--border-default-grey)] bg-white p-4 md:flex-row md:items-center md:justify-between">
       <div>
         <p className="m-0 text-lg font-medium">Complétez vos informations de chasse</p>
-        <p className="m-0 mt-1 text-sm text-[var(--text-mention-grey)]">Ces informations seront reportées automatiquement sur vos fiches.</p>
+        <p className="m-0 mt-1 text-sm text-[var(--text-mention-grey)]">
+          Ces informations seront reportées automatiquement sur vos fiches.
+        </p>
       </div>
       <div className="flex shrink-0 flex-col gap-2 md:flex-row">
         <Link
@@ -407,7 +412,8 @@ export default function ChasseurFiches() {
     if (filterCollecteurs.length > 0) {
       feis = feis.filter(
         (fei) =>
-          filterCollecteurs.includes(fei.latest_intermediaire_user_id ?? '') || filterCollecteurs.includes(fei.latest_intermediaire_entity_id ?? '')
+          filterCollecteurs.includes(fei.latest_intermediaire_user_id ?? '') ||
+          filterCollecteurs.includes(fei.latest_intermediaire_entity_id ?? '')
       );
     }
     return feis;
@@ -500,7 +506,9 @@ export default function ChasseurFiches() {
         title="Statut"
         badge={
           filterStatuses.length > 0 ? (
-            <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">{filterStatuses.length}</span>
+            <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">
+              {filterStatuses.length}
+            </span>
           ) : undefined
         }
       >
@@ -522,7 +530,9 @@ export default function ChasseurFiches() {
                   }
                 }}
               />
-              <span className={`inline-block rounded px-2 py-0.5 text-xs font-semibold ${statusColors[status].bg} ${statusColors[status].text}`}>
+              <span
+                className={`inline-block rounded px-2 py-0.5 text-xs font-semibold ${statusColors[status].bg} ${statusColors[status].text}`}
+              >
                 {status}
               </span>
             </label>
@@ -536,7 +546,9 @@ export default function ChasseurFiches() {
           title="Premier détenteur"
           badge={
             filterPremierDetenteurs.length > 0 ? (
-              <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">{filterPremierDetenteurs.length}</span>
+              <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">
+                {filterPremierDetenteurs.length}
+              </span>
             ) : undefined
           }
         >
@@ -606,7 +618,9 @@ export default function ChasseurFiches() {
           title="Collecteur"
           badge={
             filterCollecteurs.length > 0 ? (
-              <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">{filterCollecteurs.length}</span>
+              <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">
+                {filterCollecteurs.length}
+              </span>
             ) : undefined
           }
         >
@@ -679,7 +693,9 @@ export default function ChasseurFiches() {
               key={option}
               className={[
                 'rounded px-3 py-1 text-sm transition-colors',
-                (itemsPerPage ?? 20) === option ? 'bg-action-high-blue-france text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200',
+                (itemsPerPage ?? 20) === option
+                  ? 'bg-action-high-blue-france text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200',
               ].join(' ')}
               onClick={() => {
                 const firstItemIndex = (page - 1) * (itemsPerPage ?? 20);
@@ -780,7 +796,9 @@ export default function ChasseurFiches() {
             onClick={() => setShowMobileFilters(!showMobileFilters)}
           >
             Filtres
-            {hasActiveFilters ? ` (${filterStatuses.length + filterPremierDetenteurs.length + filterCCGs.length + filterCollecteurs.length})` : ''}
+            {hasActiveFilters
+              ? ` (${filterStatuses.length + filterPremierDetenteurs.length + filterCCGs.length + filterCollecteurs.length})`
+              : ''}
           </Button>
         </div>
       </div>
@@ -903,7 +921,9 @@ function FeisWrapper({
                   </Button>
                 </>
               ) : (
-                <p className="fr-text--regular mb-6 max-w-md">Vos fiches apparaîtront ici dès qu'une fiche vous sera attribuée.</p>
+                <p className="fr-text--regular mb-6 max-w-md">
+                  Vos fiches apparaîtront ici dès qu'une fiche vous sera attribuée.
+                </p>
               )}
             </div>
           </div>
@@ -969,7 +989,10 @@ function FeisTableRow({
             const carcasse = feiCarcasses.find((c) => c?.type === CarcasseType.PETIT_GIBIER && c.espece === espece);
             if (carcasse) {
               const nombreDAnimaux = carcasse.nombre_d_animaux ?? 0;
-              const intermediaires = filterCarcassesIntermediairesForCarcasse(carcassesIntermediaireById, carcasse.zacharie_carcasse_id!);
+              const intermediaires = filterCarcassesIntermediairesForCarcasse(
+                carcassesIntermediaireById,
+                carcasse.zacharie_carcasse_id!
+              );
               const latestIntermediaire = intermediaires[0];
               const nombreDAnimauxAcceptes = latestIntermediaire?.nombre_d_animaux_acceptes ?? 0;
               if (nombreDAnimaux > 1 && nombreDAnimauxAcceptes > 0) {
@@ -1065,7 +1088,9 @@ function FeisTableRow({
           ) : (
             <span className="text-gray-400">À renseigner</span>
           )}
-          {_carcassesOuLotsRefusés && <span className="text-warning-main-525 font-semibold">{_carcassesOuLotsRefusés}</span>}
+          {_carcassesOuLotsRefusés && (
+            <span className="text-warning-main-525 font-semibold">{_carcassesOuLotsRefusés}</span>
+          )}
         </div>
       </td>
     </tr>
@@ -1095,7 +1120,8 @@ function FeisTable({
     return null;
   }
 
-  const allSelected = visibleFeisNumbers.length > 0 ? visibleFeisNumbers.every((numero) => selectedFeis?.includes(numero)) : false;
+  const allSelected =
+    visibleFeisNumbers.length > 0 ? visibleFeisNumbers.every((numero) => selectedFeis?.includes(numero)) : false;
 
   const handleSelectAllInTable = () => {
     if (handleSelectAll) {

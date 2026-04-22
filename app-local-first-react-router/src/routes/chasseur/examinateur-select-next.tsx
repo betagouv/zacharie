@@ -15,7 +15,13 @@ import API from '@app/services/api';
 import { usePrefillPremierDétenteurInfos } from '@app/utils/usePrefillPremierDétenteur';
 import { useEntitiesIdsWorkingDirectlyFor, useDetenteursInitiaux } from '@app/utils/get-entity-relations';
 
-export default function SelectNextForExaminateur({ disabled = false, onShowErrors }: { disabled?: boolean; onShowErrors?: () => void }) {
+export default function SelectNextForExaminateur({
+  disabled = false,
+  onShowErrors,
+}: {
+  disabled?: boolean;
+  onShowErrors?: () => void;
+}) {
   const params = useParams();
   const navigate = useNavigate();
   const user = useUser((state) => state.user)!;
@@ -44,7 +50,9 @@ export default function SelectNextForExaminateur({ disabled = false, onShowError
   const isOnline = useIsOnline();
 
   const nextOwnerSelectLabel = 'Sélectionnez le Premier Détenteur de pour cette fiche *';
-  const [nextOwnerUserOrEntityId, setNextOwnerUserOrEntityId] = useState(fei.premier_detenteur_user_id ?? fei.premier_detenteur_entity_id ?? '');
+  const [nextOwnerUserOrEntityId, setNextOwnerUserOrEntityId] = useState(
+    fei.premier_detenteur_user_id ?? fei.premier_detenteur_entity_id ?? ''
+  );
 
   const [isSearchingUser, setIsSearchingUser] = useState(false);
   const [searchingUserError, setSearchingUserError] = useState<string | null>(null);
@@ -177,7 +185,11 @@ export default function SelectNextForExaminateur({ disabled = false, onShowError
             key={fei.premier_detenteur_user_id ?? fei.premier_detenteur_entity_id ?? 'no-choice-yet'}
             disabled={disabled}
             state={showValidationErrors && !nextOwnerUserOrEntityId ? 'error' : 'default'}
-            stateRelatedMessage={showValidationErrors && !nextOwnerUserOrEntityId ? 'Veuillez sélectionner le premier détenteur' : undefined}
+            stateRelatedMessage={
+              showValidationErrors && !nextOwnerUserOrEntityId
+                ? 'Veuillez sélectionner le premier détenteur'
+                : undefined
+            }
             hint={
               <>
                 {!nextOwnerUserOrEntityId && !disabled ? (
@@ -254,7 +266,8 @@ export default function SelectNextForExaminateur({ disabled = false, onShowError
             <option value="new-user">+ Chercher par email un autre Premier Détenteur inscrit dans Zacharie</option>
           </Select>
           {(!nextOwnerUserOrEntityId ||
-            (nextOwnerUserOrEntityId !== fei.premier_detenteur_user_id && nextOwnerUserOrEntityId !== fei.premier_detenteur_entity_id)) && (
+            (nextOwnerUserOrEntityId !== fei.premier_detenteur_user_id &&
+              nextOwnerUserOrEntityId !== fei.premier_detenteur_entity_id)) && (
             <>
               <Button
                 type="button"

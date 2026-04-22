@@ -12,7 +12,9 @@ export default function useCircuitCourtNavigationMenu(): MainNavigationProps.Ite
     },
     {
       text: 'Paramètres',
-      isActive: location.pathname.startsWith('/app/circuit-court/profil') || location.pathname.startsWith('/app/circuit-court/entreprise'),
+      isActive:
+        location.pathname.startsWith('/app/circuit-court/profil') ||
+        location.pathname.startsWith('/app/circuit-court/entreprise'),
       menuLinks: [
         {
           text: 'Coordonnées',

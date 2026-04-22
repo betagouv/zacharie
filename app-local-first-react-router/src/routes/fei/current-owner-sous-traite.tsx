@@ -22,7 +22,9 @@ export default function FeiSousTraite() {
   const carcasseIds = feiCarcasses.map((c) => c.zacharie_carcasse_id);
   const intermediaires = useFeiIntermediaires(fei.numero);
   const latestIntermediaire = intermediaires[0];
-  const feiAndIntermediaireIds = latestIntermediaire ? getFeiAndIntermediaireIdsFromFeiIntermediaire(latestIntermediaire) : undefined;
+  const feiAndIntermediaireIds = latestIntermediaire
+    ? getFeiAndIntermediaireIdsFromFeiIntermediaire(latestIntermediaire)
+    : undefined;
 
   if (!fei.fei_next_owner_wants_to_sous_traite) {
     return null;

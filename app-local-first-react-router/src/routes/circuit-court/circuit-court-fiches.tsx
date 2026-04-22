@@ -14,7 +14,10 @@ import { useNavigate, useSearchParams } from 'react-router';
 import { loadFeis } from '@app/utils/load-feis';
 import { loadMyRelations } from '@app/utils/load-my-relations';
 import useExportFeis from '@app/utils/export-feis';
-import { filterCarcassesIntermediairesForCarcasse, filterFeiIntermediaires } from '@app/utils/get-carcasses-intermediaires';
+import {
+  filterCarcassesIntermediairesForCarcasse,
+  filterFeiIntermediaires,
+} from '@app/utils/get-carcasses-intermediaires';
 import { useSaveScroll } from '@app/services/useSaveScroll';
 import CardFiche from '@app/components/CardFiche';
 import DropDownMenu from '@app/components/DropDownMenu';
@@ -193,7 +196,10 @@ export default function TableauDeBordIndex() {
     return `${filter.length} statuts sélectionnés`;
   }, [filter]);
 
-  const [filterPremierDetenteur, setFilterPremierDetenteur] = useLocalStorage<string>('circuit-court-fiches-filter-premier-detenteur', '');
+  const [filterPremierDetenteur, setFilterPremierDetenteur] = useLocalStorage<string>(
+    'circuit-court-fiches-filter-premier-detenteur',
+    ''
+  );
   const [filterCCG, setFilterCCG] = useLocalStorage<string>('circuit-court-fiches-filter-ccg', '');
 
   const allFeis = useMemo(() => {
@@ -264,14 +270,25 @@ export default function TableauDeBordIndex() {
     }
     if (filterPremierDetenteur) {
       feis = feis.filter(
-        (fei) => fei.premier_detenteur_user_id === filterPremierDetenteur || fei.premier_detenteur_entity_id === filterPremierDetenteur
+        (fei) =>
+          fei.premier_detenteur_user_id === filterPremierDetenteur ||
+          fei.premier_detenteur_entity_id === filterPremierDetenteur
       );
     }
     if (filterCCG) {
       feis = feis.filter((fei) => fei.premier_detenteur_depot_entity_id === filterCCG);
     }
     return feis;
-  }, [allFeis, filter, filterPremierDetenteur, filterCCG, carcassesIntermediaireById, carcasses, entitiesIdsWorkingDirectlyFor, user]);
+  }, [
+    allFeis,
+    filter,
+    filterPremierDetenteur,
+    filterCCG,
+    carcassesIntermediaireById,
+    carcasses,
+    entitiesIdsWorkingDirectlyFor,
+    user,
+  ]);
 
   const totalPages = Math.ceil(filteredFeis.length / (itemsPerPage ?? 20));
   const paginatedFeis = useMemo(() => {
@@ -473,7 +490,10 @@ export default function TableauDeBordIndex() {
                     href: '#',
                     'aria-disabled': selectedFeis.length === 0,
                     className: isExporting || !selectedFeis.length ? 'cursor-not-allowed opacity-50' : '',
-                    title: selectedFeis.length === 0 ? 'Sélectionnez des fiches avec la case à cocher en haut à droite de chaque carte' : '',
+                    title:
+                      selectedFeis.length === 0
+                        ? 'Sélectionnez des fiches avec la case à cocher en haut à droite de chaque carte'
+                        : '',
                     onClick: (e) => {
                       e.preventDefault();
                       if (selectedFeis.length === 0) return;
@@ -488,7 +508,10 @@ export default function TableauDeBordIndex() {
                     href: '#',
                     'aria-disabled': selectedFeis.length === 0,
                     className: isExporting || !selectedFeis.length ? 'cursor-not-allowed opacity-50' : '',
-                    title: selectedFeis.length === 0 ? 'Sélectionnez des fiches avec la case à cocher en haut à droite de chaque carte' : '',
+                    title:
+                      selectedFeis.length === 0
+                        ? 'Sélectionnez des fiches avec la case à cocher en haut à droite de chaque carte'
+                        : '',
                     onClick: (e) => {
                       e.preventDefault();
                       if (selectedFeis.length === 0) return;
@@ -508,7 +531,9 @@ export default function TableauDeBordIndex() {
             {[20, 50, 100].map((option) => (
               <button
                 key={option}
-                className={['px-2 py-1 text-sm', (itemsPerPage ?? 20) === option ? 'font-semibold underline' : ''].join(' ')}
+                className={['px-2 py-1 text-sm', (itemsPerPage ?? 20) === option ? 'font-semibold underline' : ''].join(
+                  ' '
+                )}
                 onClick={() => {
                   const firstItemIndex = (page - 1) * (itemsPerPage ?? 20);
                   const newPage = Math.floor(firstItemIndex / option) + 1;
@@ -630,7 +655,9 @@ function FeisWrapper({
                   </Button>
                 </>
               ) : (
-                <p className="fr-text--regular mb-6 max-w-md">Vos fiches apparaîtront ici dès qu'une fiche vous sera attribuée.</p>
+                <p className="fr-text--regular mb-6 max-w-md">
+                  Vos fiches apparaîtront ici dès qu'une fiche vous sera attribuée.
+                </p>
               )}
             </div>
           </div>
@@ -696,7 +723,10 @@ function FeisTableRow({
             const carcasse = feiCarcasses.find((c) => c?.type === CarcasseType.PETIT_GIBIER && c.espece === espece);
             if (carcasse) {
               const nombreDAnimaux = carcasse.nombre_d_animaux ?? 0;
-              const intermediaires = filterCarcassesIntermediairesForCarcasse(carcassesIntermediaireById, carcasse.zacharie_carcasse_id!);
+              const intermediaires = filterCarcassesIntermediairesForCarcasse(
+                carcassesIntermediaireById,
+                carcasse.zacharie_carcasse_id!
+              );
               const latestIntermediaire = intermediaires[0];
               const nombreDAnimauxAcceptes = latestIntermediaire?.nombre_d_animaux_acceptes ?? 0;
               if (nombreDAnimaux > 1 && nombreDAnimauxAcceptes > 0) {
@@ -792,7 +822,9 @@ function FeisTableRow({
           ) : (
             <span className="text-gray-400">À renseigner</span>
           )}
-          {_carcassesOuLotsRefusés && <span className="text-warning-main-525 font-semibold">{_carcassesOuLotsRefusés}</span>}
+          {_carcassesOuLotsRefusés && (
+            <span className="text-warning-main-525 font-semibold">{_carcassesOuLotsRefusés}</span>
+          )}
         </div>
       </td>
     </tr>
@@ -822,7 +854,8 @@ function FeisTable({
     return null;
   }
 
-  const allSelected = visibleFeisNumbers.length > 0 ? visibleFeisNumbers.every((numero) => selectedFeis?.includes(numero)) : false;
+  const allSelected =
+    visibleFeisNumbers.length > 0 ? visibleFeisNumbers.every((numero) => selectedFeis?.includes(numero)) : false;
 
   const handleSelectAllInTable = () => {
     if (handleSelectAll) {

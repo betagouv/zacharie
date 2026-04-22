@@ -25,7 +25,9 @@ export default function CollecteurDeactivated() {
         id="content"
         className="fr-background-alt--blue-france relative min-h-full overflow-auto"
       >
-        <title>Compte en attente d’activation | Zacharie | Ministère de l’Agriculture et de la Souveraineté Alimentaire</title>
+        <title>
+          Compte en attente d’activation | Zacharie | Ministère de l’Agriculture et de la Souveraineté Alimentaire
+        </title>
         <div className="fr-container fr-container--fluid fr-my-md-14v">
           <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
             <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
@@ -38,11 +40,14 @@ export default function CollecteurDeactivated() {
                     <p className="fr-text--sm fr-mb-3w">
                       Nous vérifions les informations que vous avez renseignées.
                       <br />
-                      Nous vous enverrons un mail pour confirmer l’activation de votre compte ou vous demander des informations complémentaires.
+                      Nous vous enverrons un mail pour confirmer l’activation de votre compte ou vous demander des
+                      informations complémentaires.
                     </p>
                   ) : (
                     <>
-                      <p className="fr-text--sm fr-mb-3w">Il semble que certaines informations soient manquantes sur votre profil.</p>
+                      <p className="fr-text--sm fr-mb-3w">
+                        Il semble que certaines informations soient manquantes sur votre profil.
+                      </p>
                       <ul className="fr-btns-group fr-btns-group--inline-md fr-mb-3w">
                         <li>
                           <Link

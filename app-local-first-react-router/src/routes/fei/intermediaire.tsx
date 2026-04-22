@@ -1,5 +1,14 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
-import { Prisma, CarcasseIntermediaire, Carcasse, UserRoles, CarcasseStatus, EntityRelationType, EntityTypes, FeiOwnerRole } from '@prisma/client';
+import {
+  Prisma,
+  CarcasseIntermediaire,
+  Carcasse,
+  UserRoles,
+  CarcasseStatus,
+  EntityRelationType,
+  EntityTypes,
+  FeiOwnerRole,
+} from '@prisma/client';
 import InputNotEditable from '@app/components/InputNotEditable';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Input } from '@codegouvfr/react-dsfr/Input';
@@ -8,9 +17,15 @@ import CarcasseIntermediaireComp from './intermediaire-carcasse';
 import { useParams } from 'react-router';
 import useUser from '@app/zustand/user';
 import useZustandStore, { syncData } from '@app/zustand/store';
-import { getFeiAndIntermediaireIdsFromFeiIntermediaire, getFeiAndCarcasseAndIntermediaireIds } from '@app/utils/get-carcasse-intermediaire-id';
+import {
+  getFeiAndIntermediaireIdsFromFeiIntermediaire,
+  getFeiAndCarcasseAndIntermediaireIds,
+} from '@app/utils/get-carcasse-intermediaire-id';
 import type { FeiAndCarcasseAndIntermediaireIds, FeiIntermediaire } from '@app/types/fei-intermediaire';
-import { useCarcassesIntermediairesForIntermediaire, useFeiIntermediaires } from '@app/utils/get-carcasses-intermediaires';
+import {
+  useCarcassesIntermediairesForIntermediaire,
+  useFeiIntermediaires,
+} from '@app/utils/get-carcasses-intermediaires';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import { sortCarcassesApproved } from '@app/utils/sort';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
@@ -84,7 +99,10 @@ export default function FEICurrentIntermediaire(props: Props) {
                 .map((_intermediaire) => {
                   const entity = entities[_intermediaire.intermediaire_entity_id!];
                   let label = entity?.nom_d_usage;
-                  if (entity?.type === EntityTypes.ETG && _intermediaire.intermediaire_role === FeiOwnerRole.COLLECTEUR_PRO) {
+                  if (
+                    entity?.type === EntityTypes.ETG &&
+                    _intermediaire.intermediaire_role === FeiOwnerRole.COLLECTEUR_PRO
+                  ) {
                     label += ` (${getIntermediaireRoleLabel(FeiOwnerRole.COLLECTEUR_PRO).toLowerCase()})`;
                   }
 
@@ -152,7 +170,9 @@ function FEICurrentIntermediaireContent({
 
   const [showRefusedCarcasses, setShowRefusedCarcasses] = useState(false);
 
-  const feiAndIntermediaireIds = intermediaire ? getFeiAndIntermediaireIdsFromFeiIntermediaire(intermediaire) : undefined;
+  const feiAndIntermediaireIds = intermediaire
+    ? getFeiAndIntermediaireIdsFromFeiIntermediaire(intermediaire)
+    : undefined;
 
   const [priseEnChargeAt, setPriseEnChargeAt] = useState<Date | null>(intermediaire?.prise_en_charge_at || null);
 
@@ -195,7 +215,10 @@ function FEICurrentIntermediaireContent({
   useEffect(() => {
     if (intermediaire?.id) {
       const theoreticalNumberOfCarcassesToCheck = originalCarcasses.length - carcassesDejaRefusees.length;
-      if (allIntermediaireCarcasses.length !== theoreticalNumberOfCarcassesToCheck && !warnedForIncoherentNumberOfCarcasses.current) {
+      if (
+        allIntermediaireCarcasses.length !== theoreticalNumberOfCarcassesToCheck &&
+        !warnedForIncoherentNumberOfCarcasses.current
+      ) {
         warnedForIncoherentNumberOfCarcasses.current = true;
         capture(new Error('Incoherent number of carcasses'), {
           extra: {
@@ -233,7 +256,11 @@ function FEICurrentIntermediaireContent({
         }
       }
     }
-    if (fei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO && fei.fei_next_owner_role === UserRoles.ETG && !!fei.fei_next_owner_entity_id) {
+    if (
+      fei.fei_current_owner_role === UserRoles.COLLECTEUR_PRO &&
+      fei.fei_next_owner_role === UserRoles.ETG &&
+      !!fei.fei_next_owner_entity_id
+    ) {
       if (user.roles.includes(UserRoles.ETG)) {
         if (etgsIds.includes(fei.fei_next_owner_entity_id)) {
           const etg = entities[fei.fei_next_owner_entity_id];
@@ -244,7 +271,10 @@ function FEICurrentIntermediaireContent({
       }
     }
     // Multi-recipient: check if any carcasse has me as next_owner
-    if (fei.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR || fei.fei_current_owner_role === FeiOwnerRole.COLLECTEUR_PRO) {
+    if (
+      fei.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR ||
+      fei.fei_current_owner_role === FeiOwnerRole.COLLECTEUR_PRO
+    ) {
       if (user.roles.includes(UserRoles.ETG)) {
         if (
           myFeiCarcasses.some((c) => {
@@ -289,7 +319,8 @@ function FEICurrentIntermediaireContent({
   const formattedInitialPriseEnChargeAt = intermediaire?.prise_en_charge_at
     ? dayjs(intermediaire.prise_en_charge_at).format('YYYY-MM-DDTHH:mm')
     : undefined;
-  const submitDisabled = !effectiveCanEdit || (formattedPriseEnChargeAt && formattedPriseEnChargeAt === formattedInitialPriseEnChargeAt);
+  const submitDisabled =
+    !effectiveCanEdit || (formattedPriseEnChargeAt && formattedPriseEnChargeAt === formattedInitialPriseEnChargeAt);
 
   const PriseEnChargeInput = effectiveCanEdit ? Input : InputNotEditable;
 
@@ -378,7 +409,9 @@ function FEICurrentIntermediaireContent({
       );
     }
     if (carcassesSorted.carcassesEcarteesPourInspection.length > 0) {
-      label.push(`J'écarte ${formatCountCarcasseByEspece(carcassesSorted.carcassesEcarteesPourInspection)} pour inspection.`);
+      label.push(
+        `J'écarte ${formatCountCarcasseByEspece(carcassesSorted.carcassesEcarteesPourInspection)} pour inspection.`
+      );
     }
     return label;
   }, [
@@ -408,14 +441,22 @@ function FEICurrentIntermediaireContent({
     if (!couldSelectNextUser) {
       return false;
     }
-    if (carcassesSorted.carcassesApproved.length === 0 && carcassesSorted.carcassesEcarteesPourInspection.length === 0) {
+    if (
+      carcassesSorted.carcassesApproved.length === 0 &&
+      carcassesSorted.carcassesEcarteesPourInspection.length === 0
+    ) {
       return false;
     }
     if (!priseEnChargeAt) {
       return false;
     }
     return true;
-  }, [couldSelectNextUser, carcassesSorted.carcassesApproved.length, carcassesSorted.carcassesEcarteesPourInspection.length, priseEnChargeAt]);
+  }, [
+    couldSelectNextUser,
+    carcassesSorted.carcassesApproved.length,
+    carcassesSorted.carcassesEcarteesPourInspection.length,
+    priseEnChargeAt,
+  ]);
 
   const canCloseFeiWithOnlyManquantesOrRejetees = useMemo(() => {
     if (!effectiveCanEdit) {
@@ -560,11 +601,15 @@ function FEICurrentIntermediaireContent({
             <>
               {intermediaireCarcasses.length > 0 ? (
                 <div className="mb-8">
-                  <p className="text-sm text-gray-600">Veuillez cliquer sur une carcasse pour la refuser, la signaler, l'annoter</p>
+                  <p className="text-sm text-gray-600">
+                    Veuillez cliquer sur une carcasse pour la refuser, la signaler, l'annoter
+                  </p>
                 </div>
               ) : (
                 <div className="mb-8">
-                  <p className="text-sm text-gray-600">Le chasseur a dû supprimer la carcasse sans supprimer la fiche, désolé pour le dérangement.</p>
+                  <p className="text-sm text-gray-600">
+                    Le chasseur a dû supprimer la carcasse sans supprimer la fiche, désolé pour le dérangement.
+                  </p>
                 </div>
               )}
             </>
@@ -591,7 +636,8 @@ function FEICurrentIntermediaireContent({
                 }}
                 priority="secondary"
               >
-                {showRefusedCarcasses ? 'Masquer' : 'Afficher'} les carcasses déjà refusées ({carcassesDejaRefusees.length})
+                {showRefusedCarcasses ? 'Masquer' : 'Afficher'} les carcasses déjà refusées (
+                {carcassesDejaRefusees.length})
               </Button>
             </div>
           )}
@@ -625,7 +671,9 @@ function FEICurrentIntermediaireContent({
           )}
         </Section>
       ) : (
-        <Section title={`Carcasses (${originalCarcasses.filter((c) => c.svi_carcasse_status === CarcasseStatus.SANS_DECISION).length})`}>
+        <Section
+          title={`Carcasses (${originalCarcasses.filter((c) => c.svi_carcasse_status === CarcasseStatus.SANS_DECISION).length})`}
+        >
           <div className="flex flex-col gap-4">
             {originalCarcasses
               .filter((c) => c.svi_carcasse_status === CarcasseStatus.SANS_DECISION)
@@ -678,12 +726,14 @@ function FEICurrentIntermediaireContent({
                         setPriseEnChargeAt(dayjs().toDate());
                       }}
                     >
-                      <u className="inline">Cliquez ici</u> pour définir cette date comme étant aujourd'hui et maintenant
+                      <u className="inline">Cliquez ici</u> pour définir cette date comme étant aujourd'hui et
+                      maintenant
                     </button>
                   ) : null
                 }
                 label={
-                  carcassesSorted.carcassesApproved.length > 0 || carcassesSorted.carcassesEcarteesPourInspection.length > 0
+                  carcassesSorted.carcassesApproved.length > 0 ||
+                  carcassesSorted.carcassesEcarteesPourInspection.length > 0
                     ? 'Date de prise en charge'
                     : 'Date de décision'
                 }
@@ -708,24 +758,26 @@ function FEICurrentIntermediaireContent({
                   Enregistrer
                 </Button>
               )}
-              {!carcassesApprovedSorted.length && !carcassesSorted.carcassesEcarteesPourInspection.length && fei.intermediaire_closed_at && (
-                <>
-                  <Alert
-                    severity="info"
-                    className="mt-6"
-                    description="Vous n'avez pas pris en charge de carcasse acceptée, la fiche est donc clôturée."
-                    title="Aucune carcasse acceptée"
-                  />
-                  <Button
-                    className="mt-6"
-                    linkProps={{
-                      to: `/app/tableau-de-bord/`,
-                    }}
-                  >
-                    Voir toutes mes fiches
-                  </Button>
-                </>
-              )}
+              {!carcassesApprovedSorted.length &&
+                !carcassesSorted.carcassesEcarteesPourInspection.length &&
+                fei.intermediaire_closed_at && (
+                  <>
+                    <Alert
+                      severity="info"
+                      className="mt-6"
+                      description="Vous n'avez pas pris en charge de carcasse acceptée, la fiche est donc clôturée."
+                      title="Aucune carcasse acceptée"
+                    />
+                    <Button
+                      className="mt-6"
+                      linkProps={{
+                        to: `/app/tableau-de-bord/`,
+                      }}
+                    >
+                      Voir toutes mes fiches
+                    </Button>
+                  </>
+                )}
             </form>
           </Section>
           {couldSelectNextUser && (

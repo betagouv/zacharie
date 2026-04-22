@@ -32,7 +32,10 @@ export default function RegistreCarcasses() {
   const [searchParams] = useSearchParams();
   const page = parseInt(searchParams.get('page') || '1');
 
-  const [sortBy, setSortBy] = useLocalStorage<keyof (typeof carcassesRegistry)[number]>('registre-carcasses-sort-by', 'numero_bracelet');
+  const [sortBy, setSortBy] = useLocalStorage<keyof (typeof carcassesRegistry)[number]>(
+    'registre-carcasses-sort-by',
+    'numero_bracelet'
+  );
   const [sortOrder, setSortOrder] = useLocalStorage<'ASC' | 'DESC'>('registre-carcasses-sort-order', 'ASC');
 
   const [itemsPerPage, setItemsPerPage] = useLocalStorage<number>('registre-carcasses-items-per-page', 50);
@@ -273,7 +276,10 @@ export default function RegistreCarcasses() {
                 {itemsPerPageOptions.map((option) => {
                   return (
                     <button
-                      className={['px-2 py-1 text-sm sm:px-4 sm:py-2', itemsPerPage === option ? 'font-semibold underline' : ''].join(' ')}
+                      className={[
+                        'px-2 py-1 text-sm sm:px-4 sm:py-2',
+                        itemsPerPage === option ? 'font-semibold underline' : '',
+                      ].join(' ')}
                       onClick={() => setItemsPerPage(option)}
                       key={option}
                     >
@@ -290,7 +296,9 @@ export default function RegistreCarcasses() {
                   for (const carcasseId of selectedCarcassesIds) {
                     selectedCarcassesObject[carcasseId] = true;
                   }
-                  onExportToXlsx(filteredData.filter((carcasse) => selectedCarcassesObject[carcasse.zacharie_carcasse_id]));
+                  onExportToXlsx(
+                    filteredData.filter((carcasse) => selectedCarcassesObject[carcasse.zacharie_carcasse_id])
+                  );
                 }}
                 disabled={selectedCarcassesIds.length === 0 || isExporting}
                 className="w-full sm:w-auto"
@@ -392,7 +400,9 @@ export default function RegistreCarcasses() {
                   onSortBy: setSortBy,
                   sortBy: sortBy,
                   sortOrder: sortOrder,
-                  render: (carcasse) => <Link to={`/app/tableau-de-bord/fei/${carcasse.fei_numero}`}>{carcasse.fei_numero}</Link>,
+                  render: (carcasse) => (
+                    <Link to={`/app/tableau-de-bord/fei/${carcasse.fei_numero}`}>{carcasse.fei_numero}</Link>
+                  ),
                 },
                 {
                   dataKey: 'collecteur' as keyof (typeof carcassesRegistry)[number],

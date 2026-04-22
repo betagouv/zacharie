@@ -1,4 +1,14 @@
-export type FieldType = 'text' | 'textarea' | 'number' | 'date' | 'duration' | 'date-with-time' | 'yes-no' | 'enum' | 'multi-choice' | 'boolean';
+export type FieldType =
+  | 'text'
+  | 'textarea'
+  | 'number'
+  | 'date'
+  | 'duration'
+  | 'date-with-time'
+  | 'yes-no'
+  | 'enum'
+  | 'multi-choice'
+  | 'boolean';
 
 export interface FilterableField {
   name: string; // same as name

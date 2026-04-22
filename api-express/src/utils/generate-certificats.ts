@@ -1,4 +1,12 @@
-import { Carcasse, CarcasseCertificatType, Entity, EntityTypes, IPM1Decision, IPM2Decision, IPM2Traitement } from '@prisma/client';
+import {
+  Carcasse,
+  CarcasseCertificatType,
+  Entity,
+  EntityTypes,
+  IPM1Decision,
+  IPM2Decision,
+  IPM2Traitement,
+} from '@prisma/client';
 import dayjs from 'dayjs';
 import prisma from '~/prisma';
 import { CertificatResponse } from '~/types/responses';
@@ -171,12 +179,14 @@ export async function generateDBCertificat(
 
   const fei = existingCarcasse.Fei;
   const examinateur = fei.FeiExaminateurInitialUser;
-  const etg = fei.CarcasseIntermediaire.find((intermediaire) => intermediaire.intermediaire_role === EntityTypes.ETG)?.CarcasseIntermediaireEntity;
+  const etg = fei.CarcasseIntermediaire.find(
+    (intermediaire) => intermediaire.intermediaire_role === EntityTypes.ETG
+  )?.CarcasseIntermediaireEntity;
   const collecteursPro = Array.from(
     new Set(
-      fei.CarcasseIntermediaire.filter((intermediaire) => intermediaire.intermediaire_role === EntityTypes.COLLECTEUR_PRO).map(
-        (intermediaire) => intermediaire.CarcasseIntermediaireEntity.nom_d_usage
-      )
+      fei.CarcasseIntermediaire.filter(
+        (intermediaire) => intermediaire.intermediaire_role === EntityTypes.COLLECTEUR_PRO
+      ).map((intermediaire) => intermediaire.CarcasseIntermediaireEntity.nom_d_usage)
     )
   ).join(', ');
 
@@ -222,14 +232,27 @@ export async function generateDBCertificat(
         examinateur_initial: `${examinateur?.prenom} ${examinateur?.nom_de_famille}`,
         premier_detenteur: fei.premier_detenteur_name_cache,
         collecteur_pro: collecteursPro,
-        pieces: certificatType === CarcasseCertificatType.CC ? existingCarcasse.svi_ipm1_pieces : existingCarcasse.svi_ipm2_pieces,
+        pieces:
+          certificatType === CarcasseCertificatType.CC
+            ? existingCarcasse.svi_ipm1_pieces
+            : existingCarcasse.svi_ipm2_pieces,
         motifs:
-          certificatType === CarcasseCertificatType.CC ? existingCarcasse.svi_ipm1_lesions_ou_motifs : existingCarcasse.svi_ipm2_lesions_ou_motifs,
-        commentaire: certificatType === CarcasseCertificatType.CC ? existingCarcasse.svi_ipm1_commentaire : existingCarcasse.svi_ipm2_commentaire,
-        poids: certificatType === CarcasseCertificatType.CC ? existingCarcasse.svi_ipm1_poids_consigne : existingCarcasse.svi_ipm2_poids_saisie,
+          certificatType === CarcasseCertificatType.CC
+            ? existingCarcasse.svi_ipm1_lesions_ou_motifs
+            : existingCarcasse.svi_ipm2_lesions_ou_motifs,
+        commentaire:
+          certificatType === CarcasseCertificatType.CC
+            ? existingCarcasse.svi_ipm1_commentaire
+            : existingCarcasse.svi_ipm2_commentaire,
+        poids:
+          certificatType === CarcasseCertificatType.CC
+            ? existingCarcasse.svi_ipm1_poids_consigne
+            : existingCarcasse.svi_ipm2_poids_saisie,
         duree_consigne: certificatType === CarcasseCertificatType.CC ? existingCarcasse.svi_ipm1_duree_consigne : null,
-        traitement_type: certificatType === CarcasseCertificatType.LPS ? getTraitementAssainissant(existingCarcasse).type : null,
-        traitement_parametre: certificatType === CarcasseCertificatType.LPS ? getTraitementAssainissant(existingCarcasse).parametre : null,
+        traitement_type:
+          certificatType === CarcasseCertificatType.LPS ? getTraitementAssainissant(existingCarcasse).type : null,
+        traitement_parametre:
+          certificatType === CarcasseCertificatType.LPS ? getTraitementAssainissant(existingCarcasse).parametre : null,
 
         svi_ipm1_signed_at: existingCarcasse.svi_ipm1_signed_at,
         svi_ipm2_signed_at: existingCarcasse.svi_ipm2_signed_at,

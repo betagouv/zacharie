@@ -16,7 +16,9 @@ export default function TotalCarcassesCard({ total, season }: TotalCarcassesCard
           />
         </div>
         {/* Number */}
-        <div className="text-action-high-blue-france-light mb-2 text-5xl font-bold">{total.toLocaleString('fr-FR')}</div>
+        <div className="text-action-high-blue-france-light mb-2 text-5xl font-bold">
+          {total.toLocaleString('fr-FR')}
+        </div>
         {/* Label */}
         <div className="text-action-high-blue-france-light mb-1 text-xl font-bold">carcasses prélevées</div>
         {/* Season */}

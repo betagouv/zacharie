@@ -89,7 +89,8 @@ export default function MesNotifications() {
               title="🔔 Soyez notifié d'une fiche qui vous est attribuée"
               className="bg-white"
             >
-              Vous pouvez être notifié par mail ou par une notification sur votre smartphone dès qu'une Fiche d'Examen Initial vous est attribuée.
+              Vous pouvez être notifié par mail ou par une notification sur votre smartphone dès qu'une Fiche d'Examen
+              Initial vous est attribuée.
             </CallOut>
             <div className="mb-6 bg-white md:shadow-sm">
               <div className="p-4 pb-32 md:p-8 md:pb-0">

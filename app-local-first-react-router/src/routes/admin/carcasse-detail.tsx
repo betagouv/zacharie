@@ -83,8 +83,14 @@ function FieldGrid({ children }: { children: React.ReactNode }) {
   return <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">{children}</dl>;
 }
 
-function formatEntityAddress(entity: { address_ligne_1: string | null; code_postal: string | null; ville: string | null }): string | null {
-  const parts = [entity.address_ligne_1, [entity.code_postal, entity.ville].filter(Boolean).join(' ')].filter(Boolean).join(', ');
+function formatEntityAddress(entity: {
+  address_ligne_1: string | null;
+  code_postal: string | null;
+  ville: string | null;
+}): string | null {
+  const parts = [entity.address_ligne_1, [entity.code_postal, entity.ville].filter(Boolean).join(' ')]
+    .filter(Boolean)
+    .join(', ');
   return parts || null;
 }
 
@@ -355,7 +361,9 @@ export default function AdminCarcasseDetail() {
               <Field label="Heure de mise à mort">{carcasse.heure_mise_a_mort ?? '—'}</Field>
               <Field label="Heure d'éviscération">{carcasse.heure_evisceration ?? '—'}</Field>
               {carcasse.consommateur_final_usage_domestique && (
-                <Field label="Consommateur final usage domestique">{formatDate(carcasse.consommateur_final_usage_domestique)}</Field>
+                <Field label="Consommateur final usage domestique">
+                  {formatDate(carcasse.consommateur_final_usage_domestique)}
+                </Field>
               )}
             </FieldGrid>
           </Section>
@@ -366,7 +374,11 @@ export default function AdminCarcasseDetail() {
           <Section title="Examen initial (Examinateur)">
             <FieldGrid>
               <Field label="Sans anomalie">
-                {carcasse.examinateur_carcasse_sans_anomalie == null ? '—' : carcasse.examinateur_carcasse_sans_anomalie ? 'Oui' : 'Non'}
+                {carcasse.examinateur_carcasse_sans_anomalie == null
+                  ? '—'
+                  : carcasse.examinateur_carcasse_sans_anomalie
+                    ? 'Oui'
+                    : 'Non'}
               </Field>
               {carcasse.examinateur_anomalies_carcasse.length > 0 && (
                 <Field label="Anomalies carcasse">{carcasse.examinateur_anomalies_carcasse.join(', ')}</Field>
@@ -385,7 +397,9 @@ export default function AdminCarcasseDetail() {
                     : 'Non'}
               </Field>
               {carcasse.examinateur_initial_date_approbation_mise_sur_le_marche && (
-                <Field label="Date approbation">{formatDate(carcasse.examinateur_initial_date_approbation_mise_sur_le_marche)}</Field>
+                <Field label="Date approbation">
+                  {formatDate(carcasse.examinateur_initial_date_approbation_mise_sur_le_marche)}
+                </Field>
               )}
             </FieldGrid>
           </Section>
@@ -400,13 +414,19 @@ export default function AdminCarcasseDetail() {
               <Field label="Entité ID">{carcasse.premier_detenteur_entity_id ?? '—'}</Field>
               <Field label="Type de dépôt">{carcasse.premier_detenteur_depot_type ?? '—'}</Field>
               <Field label="Entité dépôt">{carcasse.premier_detenteur_depot_entity_name_cache ?? '—'}</Field>
-              {carcasse.premier_detenteur_depot_ccg_at && <Field label="Date dépôt CCG">{formatDate(carcasse.premier_detenteur_depot_ccg_at)}</Field>}
+              {carcasse.premier_detenteur_depot_ccg_at && (
+                <Field label="Date dépôt CCG">{formatDate(carcasse.premier_detenteur_depot_ccg_at)}</Field>
+              )}
               <Field label="Transport type">{carcasse.premier_detenteur_transport_type ?? '—'}</Field>
               {carcasse.premier_detenteur_transport_date && (
                 <Field label="Transport date">{formatDate(carcasse.premier_detenteur_transport_date)}</Field>
               )}
-              <Field label="Prochain détenteur rôle">{carcasse.premier_detenteur_prochain_detenteur_role_cache ?? '—'}</Field>
-              <Field label="Prochain détenteur ID">{carcasse.premier_detenteur_prochain_detenteur_id_cache ?? '—'}</Field>
+              <Field label="Prochain détenteur rôle">
+                {carcasse.premier_detenteur_prochain_detenteur_role_cache ?? '—'}
+              </Field>
+              <Field label="Prochain détenteur ID">
+                {carcasse.premier_detenteur_prochain_detenteur_id_cache ?? '—'}
+              </Field>
             </FieldGrid>
           </Section>
         )}
@@ -444,7 +464,9 @@ export default function AdminCarcasseDetail() {
                       <td className="p-2">{ci.intermediaire_role ?? '—'}</td>
                       <td className="p-2">
                         {ci.prise_en_charge == null ? '—' : ci.prise_en_charge ? 'Oui' : 'Non'}
-                        {ci.prise_en_charge_at && <span className="block text-gray-400">{formatDate(ci.prise_en_charge_at)}</span>}
+                        {ci.prise_en_charge_at && (
+                          <span className="block text-gray-400">{formatDate(ci.prise_en_charge_at)}</span>
+                        )}
                       </td>
                       <td className="p-2">{formatDate(ci.decision_at)}</td>
                       <td className="p-2">{ci.intermediaire_poids ?? '—'}</td>
@@ -483,18 +505,28 @@ export default function AdminCarcasseDetail() {
               <Field label="Date">{formatDate(carcasse.svi_ipm1_date)}</Field>
               <Field label="Protocole">{carcasse.svi_ipm1_protocole ?? '—'}</Field>
               <Field label="Présentée à l'inspection">
-                {carcasse.svi_ipm1_presentee_inspection == null ? '—' : carcasse.svi_ipm1_presentee_inspection ? 'Oui' : 'Non'}
+                {carcasse.svi_ipm1_presentee_inspection == null
+                  ? '—'
+                  : carcasse.svi_ipm1_presentee_inspection
+                    ? 'Oui'
+                    : 'Non'}
               </Field>
-              {carcasse.svi_ipm1_pieces.length > 0 && <Field label="Pièces examinées">{carcasse.svi_ipm1_pieces.join(', ')}</Field>}
+              {carcasse.svi_ipm1_pieces.length > 0 && (
+                <Field label="Pièces examinées">{carcasse.svi_ipm1_pieces.join(', ')}</Field>
+              )}
               {carcasse.svi_ipm1_lesions_ou_motifs.length > 0 && (
                 <Field label="Lésions / motifs">{carcasse.svi_ipm1_lesions_ou_motifs.join(', ')}</Field>
               )}
               <Field label="Nombre d'animaux">{carcasse.svi_ipm1_nombre_animaux ?? '—'}</Field>
               <Field label="Décision">{carcasse.svi_ipm1_decision ?? '—'}</Field>
               <Field label="Commentaire">{carcasse.svi_ipm1_commentaire ?? '—'}</Field>
-              {carcasse.svi_ipm1_poids_consigne != null && <Field label="Poids consigne">{carcasse.svi_ipm1_poids_consigne} kg</Field>}
+              {carcasse.svi_ipm1_poids_consigne != null && (
+                <Field label="Poids consigne">{carcasse.svi_ipm1_poids_consigne} kg</Field>
+              )}
               {carcasse.svi_ipm1_poids_type && <Field label="Type poids">{carcasse.svi_ipm1_poids_type}</Field>}
-              {carcasse.svi_ipm1_duree_consigne != null && <Field label="Durée consigne">{carcasse.svi_ipm1_duree_consigne}h</Field>}
+              {carcasse.svi_ipm1_duree_consigne != null && (
+                <Field label="Durée consigne">{carcasse.svi_ipm1_duree_consigne}h</Field>
+              )}
               <Field label="Inspecteur">{carcasse.svi_ipm1_user_name_cache ?? carcasse.svi_ipm1_user_id ?? '—'}</Field>
               <Field label="Signé le">{formatDate(carcasse.svi_ipm1_signed_at)}</Field>
             </FieldGrid>
@@ -508,9 +540,15 @@ export default function AdminCarcasseDetail() {
               <Field label="Date">{formatDate(carcasse.svi_ipm2_date)}</Field>
               <Field label="Protocole">{carcasse.svi_ipm2_protocole ?? '—'}</Field>
               <Field label="Présentée à l'inspection">
-                {carcasse.svi_ipm2_presentee_inspection == null ? '—' : carcasse.svi_ipm2_presentee_inspection ? 'Oui' : 'Non'}
+                {carcasse.svi_ipm2_presentee_inspection == null
+                  ? '—'
+                  : carcasse.svi_ipm2_presentee_inspection
+                    ? 'Oui'
+                    : 'Non'}
               </Field>
-              {carcasse.svi_ipm2_pieces.length > 0 && <Field label="Pièces examinées">{carcasse.svi_ipm2_pieces.join(', ')}</Field>}
+              {carcasse.svi_ipm2_pieces.length > 0 && (
+                <Field label="Pièces examinées">{carcasse.svi_ipm2_pieces.join(', ')}</Field>
+              )}
               {carcasse.svi_ipm2_lesions_ou_motifs.length > 0 && (
                 <Field label="Lésions / motifs">{carcasse.svi_ipm2_lesions_ou_motifs.join(', ')}</Field>
               )}
@@ -533,9 +571,13 @@ export default function AdminCarcasseDetail() {
                 <Field label="Congélation temp.">{carcasse.svi_ipm2_traitement_assainissant_congelation_temp}</Field>
               )}
               {carcasse.svi_ipm2_traitement_assainissant_etablissement && (
-                <Field label="Établissement traitement">{carcasse.svi_ipm2_traitement_assainissant_etablissement}</Field>
+                <Field label="Établissement traitement">
+                  {carcasse.svi_ipm2_traitement_assainissant_etablissement}
+                </Field>
               )}
-              {carcasse.svi_ipm2_poids_saisie != null && <Field label="Poids saisie">{carcasse.svi_ipm2_poids_saisie} kg</Field>}
+              {carcasse.svi_ipm2_poids_saisie != null && (
+                <Field label="Poids saisie">{carcasse.svi_ipm2_poids_saisie} kg</Field>
+              )}
               {carcasse.svi_ipm2_poids_type && <Field label="Type poids">{carcasse.svi_ipm2_poids_type}</Field>}
               <Field label="Inspecteur">{carcasse.svi_ipm2_user_name_cache ?? carcasse.svi_ipm2_user_id ?? '—'}</Field>
               <Field label="Signé le">{formatDate(carcasse.svi_ipm2_signed_at)}</Field>
@@ -554,11 +596,19 @@ export default function AdminCarcasseDetail() {
         {(carcasse.current_owner_user_id || carcasse.next_owner_user_id || carcasse.prev_owner_user_id) && (
           <Section title="Propriété actuelle">
             <FieldGrid>
-              <Field label="Owner actuel (user)">{carcasse.current_owner_user_name_cache ?? carcasse.current_owner_user_id ?? '—'}</Field>
-              <Field label="Owner actuel (entité)">{carcasse.current_owner_entity_name_cache ?? carcasse.current_owner_entity_id ?? '—'}</Field>
+              <Field label="Owner actuel (user)">
+                {carcasse.current_owner_user_name_cache ?? carcasse.current_owner_user_id ?? '—'}
+              </Field>
+              <Field label="Owner actuel (entité)">
+                {carcasse.current_owner_entity_name_cache ?? carcasse.current_owner_entity_id ?? '—'}
+              </Field>
               <Field label="Owner actuel (rôle)">{carcasse.current_owner_role ?? '—'}</Field>
-              <Field label="Next owner (user)">{carcasse.next_owner_user_name_cache ?? carcasse.next_owner_user_id ?? '—'}</Field>
-              <Field label="Next owner (entité)">{carcasse.next_owner_entity_name_cache ?? carcasse.next_owner_entity_id ?? '—'}</Field>
+              <Field label="Next owner (user)">
+                {carcasse.next_owner_user_name_cache ?? carcasse.next_owner_user_id ?? '—'}
+              </Field>
+              <Field label="Next owner (entité)">
+                {carcasse.next_owner_entity_name_cache ?? carcasse.next_owner_entity_id ?? '—'}
+              </Field>
               <Field label="Next owner (rôle)">{carcasse.next_owner_role ?? '—'}</Field>
               {carcasse.next_owner_wants_to_sous_traite && (
                 <Field label="Sous-traitance">Oui — {formatDate(carcasse.next_owner_sous_traite_at)}</Field>

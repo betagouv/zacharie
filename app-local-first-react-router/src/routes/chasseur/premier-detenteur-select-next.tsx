@@ -1,6 +1,15 @@
 import { useNavigate, useParams } from 'react-router';
 import { useCallback, useMemo, useState, type MutableRefObject } from 'react';
-import { UserRoles, Prisma, EntityTypes, DepotType, TransportType, EntityRelationType, FeiOwnerRole, type Carcasse } from '@prisma/client';
+import {
+  UserRoles,
+  Prisma,
+  EntityTypes,
+  DepotType,
+  TransportType,
+  EntityRelationType,
+  FeiOwnerRole,
+  type Carcasse,
+} from '@prisma/client';
 import dayjs from 'dayjs';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
@@ -143,7 +152,9 @@ function DispatchGroupForm({
       {allCarcassesRestantes.length > 1 && (
         <div>
           <p className="mb-2 text-sm font-bold">
-            {totalGroups > 1 ? 'Sélectionnez les carcasses pour ce destinataire' : 'Sélectionnez les carcasses à transmettre'}
+            {totalGroups > 1
+              ? 'Sélectionnez les carcasses pour ce destinataire'
+              : 'Sélectionnez les carcasses à transmettre'}
           </p>
           <div className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-4">
             {allCarcassesRestantes.map((carcasse) => {
@@ -179,7 +190,9 @@ function DispatchGroupForm({
                   <span className="flex flex-col">
                     <span className="text-sm font-bold">
                       {carcasse.espece}
-                      {carcasse.nombre_d_animaux && carcasse.nombre_d_animaux > 1 ? ` (${carcasse.nombre_d_animaux})` : ''}
+                      {carcasse.nombre_d_animaux && carcasse.nombre_d_animaux > 1
+                        ? ` (${carcasse.nombre_d_animaux})`
+                        : ''}
                     </span>
                     <span className="text-xs">N° {carcasse.numero_bracelet}</span>
                     {otherGroupLabel && <span className="mt-0.5 text-xs text-gray-500">→ {otherGroupLabel}</span>}
@@ -196,7 +209,9 @@ function DispatchGroupForm({
         isDisabled={disabled}
         hint={
           <>
-            <span>Indiquez ici la personne ou la structure avec qui vous êtes en contact pour prendre en charge le gibier.</span>
+            <span>
+              Indiquez ici la personne ou la structure avec qui vous êtes en contact pour prendre en charge le gibier.
+            </span>
             {!group.recipientEntityId && !disabled && (
               <div>
                 {canTransmitCarcassesToEntities.map((entity) => {
@@ -386,7 +401,8 @@ function DispatchGroupForm({
                     N'oubliez pas de notifier le prochain détenteur des carcasses de votre dépôt.{' '}
                     {group.depotType === DepotType.AUCUN ? (
                       <>
-                        Sans stockage en chambre froide, les carcasses doivent être transportées <b>le jour-même du tir</b>
+                        Sans stockage en chambre froide, les carcasses doivent être transportées{' '}
+                        <b>le jour-même du tir</b>
                       </>
                     ) : (
                       ''
@@ -427,7 +443,9 @@ function DispatchGroupForm({
                     <button
                       className="mr-1 rounded-full bg-[#E8EDFF] px-3 py-1 text-sm text-[#000091]"
                       type="button"
-                      disabled={group.transportType !== TransportType.PREMIER_DETENTEUR || group.depotType !== DepotType.CCG}
+                      disabled={
+                        group.transportType !== TransportType.PREMIER_DETENTEUR || group.depotType !== DepotType.CCG
+                      }
                       onClick={() => {
                         onUpdateGroup(group.id, {
                           transportDate: dayjs().format('YYYY-MM-DDTHH:mm'),
@@ -436,8 +454,8 @@ function DispatchGroupForm({
                     >
                       Définir comme étant la date du jour et maintenant.
                     </button>
-                    À ne remplir que si vous êtes le transporteur et que vous stockez les carcasses dans un CCG. Indiquer une date permettra au
-                    prochain détenteur de s'organiser.
+                    À ne remplir que si vous êtes le transporteur et que vous stockez les carcasses dans un CCG.
+                    Indiquer une date permettra au prochain détenteur de s'organiser.
                   </>
                 ) : null
               }
@@ -463,7 +481,10 @@ function DispatchGroupForm({
   );
 }
 
-function getGroupValidationError(group: DispatchGroup, entities: Record<string, EntityWithUserRelation>): string | null {
+function getGroupValidationError(
+  group: DispatchGroup,
+  entities: Record<string, EntityWithUserRelation>
+): string | null {
   if (!group.recipientEntityId) {
     return 'Il manque le prochain détenteur des carcasses';
   }
@@ -494,7 +515,11 @@ function getGroupValidationError(group: DispatchGroup, entities: Record<string, 
     if (!group.transportType) {
       return 'Il manque le type de transport';
     }
-    if (group.transportType === TransportType.PREMIER_DETENTEUR && group.depotType === DepotType.CCG && !group.transportDate) {
+    if (
+      group.transportType === TransportType.PREMIER_DETENTEUR &&
+      group.depotType === DepotType.CCG &&
+      !group.transportDate
+    ) {
       return 'Il manque la date de transport';
     }
   }
@@ -562,7 +587,10 @@ export default function DestinatairePremierDetenteur({
     [allCarcasses]
   );
 
-  const carcassesRestantesIds = useMemo(() => carcassesRestantes.map((c) => c.zacharie_carcasse_id), [carcassesRestantes]);
+  const carcassesRestantesIds = useMemo(
+    () => carcassesRestantes.map((c) => c.zacharie_carcasse_id),
+    [carcassesRestantes]
+  );
 
   const ccgs = ccgsIds.map((id) => entities[id]);
   const etgs = etgsIds.map((id) => entities[id]);
@@ -578,7 +606,9 @@ export default function DestinatairePremierDetenteur({
   }, [etgs, collecteursPros, circuitCourt]);
 
   const canTransmitCarcassesToEntities = useMemo(() => {
-    return prochainsDetenteurs.filter((entity) => entity.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY);
+    return prochainsDetenteurs.filter(
+      (entity) => entity.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY
+    );
   }, [prochainsDetenteurs]);
 
   const ccgsOptions = useMemo(() => {
@@ -670,9 +700,13 @@ export default function DestinatairePremierDetenteur({
         carcasseIds: carcassesRestantesIds,
         depotType: initialDepotType,
         depotEntityId: initialDepotEntityId,
-        depotDate: fei.premier_detenteur_depot_ccg_at ? dayjs(fei.premier_detenteur_depot_ccg_at).format('YYYY-MM-DDTHH:mm') : undefined,
+        depotDate: fei.premier_detenteur_depot_ccg_at
+          ? dayjs(fei.premier_detenteur_depot_ccg_at).format('YYYY-MM-DDTHH:mm')
+          : undefined,
         transportType: initialTransportType,
-        transportDate: fei.premier_detenteur_transport_date ? dayjs(fei.premier_detenteur_transport_date).format('YYYY-MM-DDTHH:mm') : undefined,
+        transportDate: fei.premier_detenteur_transport_date
+          ? dayjs(fei.premier_detenteur_transport_date).format('YYYY-MM-DDTHH:mm')
+          : undefined,
       },
     ];
   });
@@ -758,8 +792,8 @@ export default function DestinatairePremierDetenteur({
                 <strong>Les carcasses de sanglier transmises nécessitent un test trichine obligatoire.</strong>
               </p>
               <p>
-                Conformément à la réglementation, vous devez vous assurer que le test trichine a été réalisé avant toute mise sur le marché ou
-                consommation de ces carcasses.
+                Conformément à la réglementation, vous devez vous assurer que le test trichine a été réalisé avant toute
+                mise sur le marché ou consommation de ces carcasses.
               </p>
             </>
           ),
@@ -774,12 +808,12 @@ export default function DestinatairePremierDetenteur({
                 <strong>Les carcasses de sanglier transmises nécessitent un test trichine recommandé.</strong>
               </p>
               <p className="mb-3">
-                Si le test trichine n'a pas été réalisé, vous devez impérativement informer le consommateur du risque trichine et de l'obligation de
-                cuisson complète de la viande avant consommation.
+                Si le test trichine n'a pas été réalisé, vous devez impérativement informer le consommateur du risque
+                trichine et de l'obligation de cuisson complète de la viande avant consommation.
               </p>
               <p className="text-sm text-gray-600">
-                <strong>Important :</strong> La cuisson doit être complète (cœur de la viande à 70°C minimum) pour éliminer tout risque de
-                contamination.
+                <strong>Important :</strong> La cuisson doit être complète (cœur de la viande à 70°C minimum) pour
+                éliminer tout risque de contamination.
               </p>
             </>
           ),
@@ -843,7 +877,11 @@ export default function DestinatairePremierDetenteur({
       const nextDepotEntityId = group.depotType === DepotType.AUCUN ? null : group.depotEntityId;
       const nextDepotDate = group.depotDate ? dayjs(group.depotDate).toDate() : null;
       const nextTransportType = needTransport ? group.transportType : null;
-      const nextTransportDate = nextTransportType ? (group.transportDate ? dayjs(group.transportDate).toDate() : null) : null;
+      const nextTransportDate = nextTransportType
+        ? group.transportDate
+          ? dayjs(group.transportDate).toDate()
+          : null
+        : null;
 
       // Update transmission (next_owner) for the carcasses in this group
       updateCarcassesTransmission(group.carcasseIds, {
@@ -860,7 +898,9 @@ export default function DestinatairePremierDetenteur({
             premier_detenteur_prochain_detenteur_id_cache: group.recipientEntityId,
             premier_detenteur_depot_type: group.depotType,
             premier_detenteur_depot_entity_id: nextDepotEntityId,
-            premier_detenteur_depot_entity_name_cache: nextDepotEntityId ? entities[nextDepotEntityId]?.nom_d_usage : null,
+            premier_detenteur_depot_entity_name_cache: nextDepotEntityId
+              ? entities[nextDepotEntityId]?.nom_d_usage
+              : null,
             premier_detenteur_depot_ccg_at: nextDepotDate,
             premier_detenteur_transport_type: nextTransportType,
             premier_detenteur_transport_date: nextTransportDate,
@@ -887,7 +927,11 @@ export default function DestinatairePremierDetenteur({
       const nextDepotEntityId = firstGroup.depotType === DepotType.AUCUN ? null : firstGroup.depotEntityId;
       const nextDepotDate = firstGroup.depotDate ? dayjs(firstGroup.depotDate).toDate() : null;
       const nextTransportType = needTransport ? firstGroup.transportType : null;
-      const nextTransportDate = nextTransportType ? (firstGroup.transportDate ? dayjs(firstGroup.transportDate).toDate() : null) : null;
+      const nextTransportDate = nextTransportType
+        ? firstGroup.transportDate
+          ? dayjs(firstGroup.transportDate).toDate()
+          : null
+        : null;
 
       const nextFei: Partial<typeof fei> = {
         fei_next_owner_entity_id: firstGroup.recipientEntityId,
@@ -972,7 +1016,14 @@ export default function DestinatairePremierDetenteur({
 
   return (
     <>
-      <div className={[className, disabled ? 'cursor-not-allowed opacity-50' : '', canEdit ? '' : 'cursor-not-allowed', 'space-y-4'].join(' ')}>
+      <div
+        className={[
+          className,
+          disabled ? 'cursor-not-allowed opacity-50' : '',
+          canEdit ? '' : 'cursor-not-allowed',
+          'space-y-4',
+        ].join(' ')}
+      >
         {/* Already-sent carcasses summary */}
         {carcassesDejaEnvoyees.length > 0 && (
           <Alert
@@ -1031,7 +1082,9 @@ export default function DestinatairePremierDetenteur({
               for (const g of dispatchGroups) {
                 if (g.id === group.id) continue;
                 const gIndex = dispatchGroups.indexOf(g);
-                const label = g.recipientEntityId ? (entities[g.recipientEntityId]?.nom_d_usage ?? `Dest. ${gIndex + 1}`) : `Dest. ${gIndex + 1}`;
+                const label = g.recipientEntityId
+                  ? (entities[g.recipientEntityId]?.nom_d_usage ?? `Dest. ${gIndex + 1}`)
+                  : `Dest. ${gIndex + 1}`;
                 for (const cId of g.carcasseIds) {
                   carcasseToGroupLabel[cId] = label;
                 }

@@ -19,7 +19,11 @@ export default function ChasseurFeiEnvoyée() {
   const carcasses = useCarcassesForFei(params.fei_numero);
   const isOnline = useIsOnline();
 
-  const notificationStatus = fei?.is_synced ? 'a été notifié' : !isOnline ? 'sera notifié dès que vous aurez retrouvé du réseau' : 'va être notifié';
+  const notificationStatus = fei?.is_synced
+    ? 'a été notifié'
+    : !isOnline
+      ? 'sera notifié dès que vous aurez retrouvé du réseau'
+      : 'va être notifié';
 
   const sentByRecipient = useMemo(() => {
     const grouped: Record<string, { entityName: string; count: number }> = {};

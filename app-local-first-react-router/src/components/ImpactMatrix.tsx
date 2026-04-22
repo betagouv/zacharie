@@ -56,7 +56,11 @@ const PILLARS: Pillar[] = [
     severity: 'success',
     bgClass: 'bg-[var(--background-alt-green-tilleul-verveine)]',
     metrics: [
-      { value: '3,73%', label: "Saisies vétérinaires dues à de mauvaises pratiques d'hygiène", description: 'vs 7,6% hors Zacharie' },
+      {
+        value: '3,73%',
+        label: "Saisies vétérinaires dues à de mauvaises pratiques d'hygiène",
+        description: 'vs 7,6% hors Zacharie',
+      },
       { value: '0,4%', label: 'Anomalies non-éliminatoires déclarées par les chasseurs', description: 'Grand gibier' },
     ],
   },

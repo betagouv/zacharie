@@ -339,7 +339,9 @@ async function updateBrevoContact(props: User): Promise<User> {
 
 interface BrevoCompany extends brevo.Company {
   attributes: {
-    cat_gorie?: Array<'premier_d_tenteur__chasseur' | 'collecteur' | 'etg' | 'svi' | 'partenaire' | 'examinateur_initial'>; // Rôle
+    cat_gorie?: Array<
+      'premier_d_tenteur__chasseur' | 'collecteur' | 'etg' | 'svi' | 'partenaire' | 'examinateur_initial'
+    >; // Rôle
     created_at?: string; // Création le
     d_partement?: string; // Département
     code_postal?: string; // Code postal
@@ -519,7 +521,14 @@ interface BrevoChasseurPipeline extends brevo.Pipeline {
   pipelineName: 'Chasseurs';
   stages: Array<{
     id: string;
-    name: 'Pas de réponse' | 'Inscription à valider' | "Liste d'attente" | 'Recrutement en cours' | 'Compte créé' | '1ere fiche envoyée' | 'Refus';
+    name:
+      | 'Pas de réponse'
+      | 'Inscription à valider'
+      | "Liste d'attente"
+      | 'Recrutement en cours'
+      | 'Compte créé'
+      | '1ere fiche envoyée'
+      | 'Refus';
   }>;
 }
 
@@ -527,7 +536,13 @@ interface BrevoSviPipeline extends brevo.Pipeline {
   pipelineName: 'SVI';
   stages: Array<{
     id: string;
-    name: 'Pas de réponse' | "En attente - pas d'ETG" | 'Recrutement en cours' | 'Compte créé' | '1ère fiche reçue' | 'Refus';
+    name:
+      | 'Pas de réponse'
+      | "En attente - pas d'ETG"
+      | 'Recrutement en cours'
+      | 'Compte créé'
+      | '1ère fiche reçue'
+      | 'Refus';
   }>;
 }
 
@@ -535,7 +550,14 @@ interface BrevoETGPipeline extends brevo.Pipeline {
   pipelineName: 'ETG';
   stages: Array<{
     id: string;
-    name: 'Pas de coordonnées' | 'Pas de réponse' | 'Recrutement en cours' | 'Compte créé' | 'Chasseurs contactés' | '1ère fiche traitée' | 'Refus';
+    name:
+      | 'Pas de coordonnées'
+      | 'Pas de réponse'
+      | 'Recrutement en cours'
+      | 'Compte créé'
+      | 'Chasseurs contactés'
+      | '1ère fiche traitée'
+      | 'Refus';
   }>;
 }
 
@@ -543,13 +565,22 @@ interface BrevoCollecteursPipeline extends brevo.Pipeline {
   pipelineName: 'Collecteurs';
   stages: Array<{
     id: string;
-    name: 'Pas de coordonnées' | 'Pas de réponse' | 'Inscription à valider' | 'Recrutement en cours' | '1ère fiche traitée' | 'Refus';
+    name:
+      | 'Pas de coordonnées'
+      | 'Pas de réponse'
+      | 'Inscription à valider'
+      | 'Recrutement en cours'
+      | '1ère fiche traitée'
+      | 'Refus';
   }>;
 }
 
 type BrevoPipeline = BrevoChasseurPipeline | BrevoSviPipeline | BrevoETGPipeline | BrevoCollecteursPipeline;
 
-function getChasseurPipelineStep(chasseur: User, pipelineStages: BrevoChasseurPipeline['stages']): BrevoChasseurPipeline['stages'][number]['id'] {
+function getChasseurPipelineStep(
+  chasseur: User,
+  pipelineStages: BrevoChasseurPipeline['stages']
+): BrevoChasseurPipeline['stages'][number]['id'] {
   let allFieldUpFields = true;
   if (!chasseur.telephone) allFieldUpFields = false;
   if (!chasseur.email) allFieldUpFields = false;
@@ -596,7 +627,9 @@ async function updateBrevoChasseurDeal(chasseur: User) {
     let deals = getDealsResult?.body?.items as Array<BrevoDeal>;
     const allPipelines = await apiInstance.crmPipelineDetailsAllGet();
     const pipelines = allPipelines.body as Array<BrevoPipeline>;
-    const chasseurPipeline = pipelines.find((pipeline) => pipeline.pipelineName === 'Chasseurs') as BrevoChasseurPipeline;
+    const chasseurPipeline = pipelines.find(
+      (pipeline) => pipeline.pipelineName === 'Chasseurs'
+    ) as BrevoChasseurPipeline;
 
     const dealToUpdate = deals?.find((deal) => deal.attributes.pipeline === chasseurPipeline.pipeline);
 

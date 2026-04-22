@@ -49,7 +49,13 @@ interface ComputeFeiStepsParams {
   carcasses?: Array<Carcasse>;
 }
 
-export function computeFeiSteps({ fei, intermediaires, entitiesIdsWorkingDirectlyFor, user, carcasses }: ComputeFeiStepsParams): UseFeiStepsReturn {
+export function computeFeiSteps({
+  fei,
+  intermediaires,
+  entitiesIdsWorkingDirectlyFor,
+  user,
+  carcasses,
+}: ComputeFeiStepsParams): UseFeiStepsReturn {
   const steps: Array<IntermediaireStep> = (() => {
     if (fei.consommateur_final_usage_domestique) {
       return [
@@ -226,7 +232,11 @@ export function computeFeiSteps({ fei, intermediaires, entitiesIdsWorkingDirectl
           }
         }
         // Check per-carcasse next_owner_entity_id (multi-recipient dispatch)
-        if (carcasses?.some((c) => c.next_owner_entity_id && entitiesIdsWorkingDirectlyFor.includes(c.next_owner_entity_id))) {
+        if (
+          carcasses?.some(
+            (c) => c.next_owner_entity_id && entitiesIdsWorkingDirectlyFor.includes(c.next_owner_entity_id)
+          )
+        ) {
           return 'À compléter';
         }
         // Fallback FEI-level

@@ -410,7 +410,11 @@ export default function AdminEntity() {
                   adminEntityResponse={adminEntityResponse}
                   setAdminEntityResponse={setAdminEntityResponse}
                   entityType={EntityTypes.SVI}
-                  description={!sviRelatedToETG ? "Un utilisateur d'un ETG ne peut envoyer des fiches qu'à un SVI listé ci-dessous" : ''}
+                  description={
+                    !sviRelatedToETG
+                      ? "Un utilisateur d'un ETG ne peut envoyer des fiches qu'à un SVI listé ci-dessous"
+                      : ''
+                  }
                   setIsSaving={setIsSaving}
                 />
               )}
@@ -570,7 +574,8 @@ function EntitiesRelatedTo({
   description: string;
   setIsSaving: (isSaving: boolean) => void;
 }) {
-  const { entity, etgsRelatedWithSvi, sviRelatedToETG, potentialEtgsRelatedWithSvi, potentialSvisRelatedToETG } = adminEntityResponse;
+  const { entity, etgsRelatedWithSvi, sviRelatedToETG, potentialEtgsRelatedWithSvi, potentialSvisRelatedToETG } =
+    adminEntityResponse;
 
   const entitiesRelated = useMemo(() => {
     switch (entityType) {

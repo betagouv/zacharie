@@ -148,7 +148,13 @@ function flattenItems(items: NavItem[]): NavItem[] {
   return result;
 }
 
-export default function BottomNavigation({ items, onNewFiche }: { items: MainNavigationProps.Item[]; onNewFiche?: () => void }) {
+export default function BottomNavigation({
+  items,
+  onNewFiche,
+}: {
+  items: MainNavigationProps.Item[];
+  onNewFiche?: () => void;
+}) {
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
 

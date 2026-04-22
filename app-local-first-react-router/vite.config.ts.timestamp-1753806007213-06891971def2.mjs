@@ -7,7 +7,8 @@ import { resolve } from 'path';
 import dayjs from 'file:///Users/arnaudambroselli/Pro/2024-09-064_Betagouv_Zacharie/zacharie/app-local-first-react-router/node_modules/dayjs/dayjs.min.js';
 import { VitePWA } from 'file:///Users/arnaudambroselli/Pro/2024-09-064_Betagouv_Zacharie/zacharie/app-local-first-react-router/node_modules/vite-plugin-pwa/dist/index.js';
 import tailwindcss from 'file:///Users/arnaudambroselli/Pro/2024-09-064_Betagouv_Zacharie/zacharie/app-local-first-react-router/node_modules/@tailwindcss/vite/dist/index.mjs';
-var __vite_injected_original_dirname = '/Users/arnaudambroselli/Pro/2024-09-064_Betagouv_Zacharie/zacharie/app-local-first-react-router';
+var __vite_injected_original_dirname =
+  '/Users/arnaudambroselli/Pro/2024-09-064_Betagouv_Zacharie/zacharie/app-local-first-react-router';
 var buildId = JSON.stringify(`${dayjs().format('DD-MM-YYYY')} vers ${dayjs().format('HH')}:00`);
 process.env.VITE_BUILD_ID = buildId;
 var vite_config_default = defineConfig({

@@ -73,7 +73,9 @@ async function handleSviSearch(searchQuery: string, userId: string): Promise<Sea
         carcasse_type: carcasse.type,
         fei_numero: carcasse.fei_numero,
         fei_date_mise_a_mort: dayjs(carcasse.Fei.date_mise_a_mort).format('DD/MM/YYYY'),
-        fei_svi_assigned_at: carcasse.Fei.svi_assigned_at ? dayjs(carcasse.Fei.svi_assigned_at).format('DD/MM/YYYY') : '',
+        fei_svi_assigned_at: carcasse.Fei.svi_assigned_at
+          ? dayjs(carcasse.Fei.svi_assigned_at).format('DD/MM/YYYY')
+          : '',
         fei_commune_mise_a_mort: carcasse.Fei.commune_mise_a_mort!,
       })),
       error: '',
@@ -124,7 +126,9 @@ async function handleSviSearch(searchQuery: string, userId: string): Promise<Sea
           carcasse_type: carcasse.type,
           fei_numero: carcasse.fei_numero,
           fei_date_mise_a_mort: dayjs(carcasse.Fei.date_mise_a_mort).format('DD/MM/YYYY'),
-          fei_svi_assigned_at: carcasse.Fei.svi_assigned_at ? dayjs(carcasse.Fei.svi_assigned_at).format('DD/MM/YYYY') : '',
+          fei_svi_assigned_at: carcasse.Fei.svi_assigned_at
+            ? dayjs(carcasse.Fei.svi_assigned_at).format('DD/MM/YYYY')
+            : '',
           fei_commune_mise_a_mort: carcasse.Fei.commune_mise_a_mort!,
         })),
         error: '',
@@ -232,7 +236,9 @@ async function handleEtgSearch(searchQuery: string, userId: string): Promise<Sea
         carcasse_type: carcasse.type,
         fei_numero: carcasse.fei_numero,
         fei_date_mise_a_mort: dayjs(carcasse.Fei.date_mise_a_mort).format('DD/MM/YYYY'),
-        fei_svi_assigned_at: carcasse.Fei.svi_assigned_at ? dayjs(carcasse.Fei.svi_assigned_at).format('DD/MM/YYYY') : '',
+        fei_svi_assigned_at: carcasse.Fei.svi_assigned_at
+          ? dayjs(carcasse.Fei.svi_assigned_at).format('DD/MM/YYYY')
+          : '',
         fei_commune_mise_a_mort: carcasse.Fei.commune_mise_a_mort!,
       })),
       error: '',
@@ -325,7 +331,9 @@ async function handleEtgSearch(searchQuery: string, userId: string): Promise<Sea
           carcasse_type: carcasse.type,
           fei_numero: carcasse.fei_numero,
           fei_date_mise_a_mort: dayjs(carcasse.Fei.date_mise_a_mort).format('DD/MM/YYYY'),
-          fei_svi_assigned_at: carcasse.Fei.svi_assigned_at ? dayjs(carcasse.Fei.svi_assigned_at).format('DD/MM/YYYY') : '',
+          fei_svi_assigned_at: carcasse.Fei.svi_assigned_at
+            ? dayjs(carcasse.Fei.svi_assigned_at).format('DD/MM/YYYY')
+            : '',
           fei_commune_mise_a_mort: carcasse.Fei.commune_mise_a_mort!,
         })),
         error: '',
@@ -425,7 +433,9 @@ async function handleChasseurSearch(searchQuery: string, userId: string): Promis
         carcasse_type: carcasse.type,
         fei_numero: carcasse.fei_numero,
         fei_date_mise_a_mort: dayjs(carcasse.Fei.date_mise_a_mort).format('DD/MM/YYYY'),
-        fei_svi_assigned_at: carcasse.Fei.svi_assigned_at ? dayjs(carcasse.Fei.svi_assigned_at).format('DD/MM/YYYY') : '',
+        fei_svi_assigned_at: carcasse.Fei.svi_assigned_at
+          ? dayjs(carcasse.Fei.svi_assigned_at).format('DD/MM/YYYY')
+          : '',
         fei_commune_mise_a_mort: carcasse.Fei.commune_mise_a_mort!,
       })),
       error: '',
@@ -476,7 +486,9 @@ async function handleChasseurSearch(searchQuery: string, userId: string): Promis
           carcasse_type: carcasse.type,
           fei_numero: carcasse.fei_numero,
           fei_date_mise_a_mort: dayjs(carcasse.Fei.date_mise_a_mort).format('DD/MM/YYYY'),
-          fei_svi_assigned_at: carcasse.Fei.svi_assigned_at ? dayjs(carcasse.Fei.svi_assigned_at).format('DD/MM/YYYY') : '',
+          fei_svi_assigned_at: carcasse.Fei.svi_assigned_at
+            ? dayjs(carcasse.Fei.svi_assigned_at).format('DD/MM/YYYY')
+            : '',
           fei_commune_mise_a_mort: carcasse.Fei.commune_mise_a_mort!,
         })),
         error: '',

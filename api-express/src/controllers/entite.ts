@@ -7,7 +7,13 @@ const router: express.Router = express.Router();
 import prisma from '~/prisma';
 import { EntityRelationStatus, EntityRelationType, EntityTypes, Prisma, User, UserRoles } from '@prisma/client';
 import { sortEntitiesByTypeAndId, sortEntitiesRelationsByTypeAndId } from '~/utils/sort-things-by-type-and-id.server';
-import { createBrevoContact, linkBrevoCompanyToContact, sendEmail, updateBrevoContact, updateOrCreateBrevoCompany } from '~/third-parties/brevo';
+import {
+  createBrevoContact,
+  linkBrevoCompanyToContact,
+  sendEmail,
+  updateBrevoContact,
+  updateOrCreateBrevoCompany,
+} from '~/third-parties/brevo';
 import { EntitiesById, entityAdminInclude } from '~/types/entity';
 import { sanitize } from '~/utils/sanitize';
 import { z } from 'zod';
@@ -65,65 +71,67 @@ router.get(
 router.get(
   '/working-for',
   passport.authenticate('user', { session: false }),
-  catchErrors(async (req: RequestWithUser, res: express.Response<EntitiesWorkingForResponse>, next: express.NextFunction) => {
-    const user = req.user!;
+  catchErrors(
+    async (req: RequestWithUser, res: express.Response<EntitiesWorkingForResponse>, next: express.NextFunction) => {
+      const user = req.user!;
 
-    const entityOnboardingInclude = {
-      EntityRelationsWithUsers: {
-        where: { owner_id: user.id },
-        select: {
-          id: true,
-          relation: true,
-          status: true,
-          owner_id: true,
-          entity_id: true,
-        },
-      },
-    } as unknown as typeof entityAdminInclude;
-
-    const include = user.activated ? entityAdminInclude : entityOnboardingInclude;
-
-    const allEntities = await prisma.entity.findMany({
-      where: {
-        deleted_at: null,
-        type: { not: EntityTypes.CCG },
-        ...(user.isZacharieAdmin ? {} : { for_testing: false }),
-      },
-      include,
-      orderBy: {
-        nom_d_usage: 'asc',
-      },
-    });
-
-    const entitiesUserCanHandleOnBehalf = await prisma.entity.findMany({
-      where: {
-        deleted_at: null,
+      const entityOnboardingInclude = {
         EntityRelationsWithUsers: {
-          some: {
-            owner_id: user.id,
-            relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-            deleted_at: null,
+          where: { owner_id: user.id },
+          select: {
+            id: true,
+            relation: true,
+            status: true,
+            owner_id: true,
+            entity_id: true,
           },
         },
-      },
-      include,
-      orderBy: {
-        nom_d_usage: 'asc',
-      },
-    });
+      } as unknown as typeof entityAdminInclude;
 
-    const [allEntitiesIds, allEntitiesByTypeAndId] = sortEntitiesByTypeAndId(allEntities);
-    const userEntitiesByTypeAndId = sortEntitiesRelationsByTypeAndId(entitiesUserCanHandleOnBehalf, allEntitiesIds);
+      const include = user.activated ? entityAdminInclude : entityOnboardingInclude;
 
-    res.status(200).send({
-      ok: true,
-      data: {
-        allEntitiesByTypeAndId,
-        userEntitiesByTypeAndId,
-      },
-      error: '',
-    });
-  })
+      const allEntities = await prisma.entity.findMany({
+        where: {
+          deleted_at: null,
+          type: { not: EntityTypes.CCG },
+          ...(user.isZacharieAdmin ? {} : { for_testing: false }),
+        },
+        include,
+        orderBy: {
+          nom_d_usage: 'asc',
+        },
+      });
+
+      const entitiesUserCanHandleOnBehalf = await prisma.entity.findMany({
+        where: {
+          deleted_at: null,
+          EntityRelationsWithUsers: {
+            some: {
+              owner_id: user.id,
+              relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+              deleted_at: null,
+            },
+          },
+        },
+        include,
+        orderBy: {
+          nom_d_usage: 'asc',
+        },
+      });
+
+      const [allEntitiesIds, allEntitiesByTypeAndId] = sortEntitiesByTypeAndId(allEntities);
+      const userEntitiesByTypeAndId = sortEntitiesRelationsByTypeAndId(entitiesUserCanHandleOnBehalf, allEntitiesIds);
+
+      res.status(200).send({
+        ok: true,
+        data: {
+          allEntitiesByTypeAndId,
+          userEntitiesByTypeAndId,
+        },
+        error: '',
+      });
+    }
+  )
 );
 
 router.get(
@@ -177,7 +185,11 @@ router.get(
             deleted_at: null,
             EntityRelatedWithUser: {
               type: {
-                in: [EntityTypes.COMMERCE_DE_DETAIL, EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF, EntityTypes.CONSOMMATEUR_FINAL],
+                in: [
+                  EntityTypes.COMMERCE_DE_DETAIL,
+                  EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF,
+                  EntityTypes.CONSOMMATEUR_FINAL,
+                ],
               },
             },
           },

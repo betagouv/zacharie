@@ -504,7 +504,11 @@ export default function CarcasseIntermediaireComp({ carcasse, canEdit, intermedi
                         id="carcasse-status-refus"
                         name="carcasse-status"
                         required
-                        checked={(!!carcasseRefusCheckbox || !!carcasseIntermediaire.refus) && !carcasseManquante && !carcasseAcceptPartielCheckbox}
+                        checked={
+                          (!!carcasseRefusCheckbox || !!carcasseIntermediaire.refus) &&
+                          !carcasseManquante &&
+                          !carcasseAcceptPartielCheckbox
+                        }
                         onChange={() => {
                           setCarcasseManquante(false);
                           setCarcasseRefusCheckbox(true);
@@ -525,7 +529,8 @@ export default function CarcasseIntermediaireComp({ carcasse, canEdit, intermedi
                       </label>
                       {carcasse.type === CarcasseType.PETIT_GIBIER && (
                         <p className="fr-hint-text">
-                          Si vous refusez seulement quelques animaux, utilisez plutôt l'option "Lot partiellement accepté"
+                          Si vous refusez seulement quelques animaux, utilisez plutôt l'option "Lot partiellement
+                          accepté"
                         </p>
                       )}
                     </div>
@@ -651,7 +656,10 @@ export default function CarcasseIntermediaireComp({ carcasse, canEdit, intermedi
                               children: 'Enregistrer',
                               type: 'submit',
                               disabled:
-                                !canEdit || nombreAnimauxAcceptes === null || nombreAnimauxAcceptes < 0 || nombreAnimauxAcceptes > nombreAnimauxTotal,
+                                !canEdit ||
+                                nombreAnimauxAcceptes === null ||
+                                nombreAnimauxAcceptes < 0 ||
+                                nombreAnimauxAcceptes > nombreAnimauxTotal,
                               nativeButtonProps: {
                                 onClick: (e) => {
                                   e.preventDefault();

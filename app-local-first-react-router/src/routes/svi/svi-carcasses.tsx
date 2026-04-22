@@ -31,7 +31,10 @@ export default function SviCarcasses() {
   const [searchParams] = useSearchParams();
   const page = parseInt(searchParams.get('page') || '1');
 
-  const [sortBy, setSortBy] = useLocalStorage<keyof (typeof carcassesRegistry)[number]>('svi-carcasses-sort-by', 'numero_bracelet');
+  const [sortBy, setSortBy] = useLocalStorage<keyof (typeof carcassesRegistry)[number]>(
+    'svi-carcasses-sort-by',
+    'numero_bracelet'
+  );
   const [sortOrder, setSortOrder] = useLocalStorage<'ASC' | 'DESC'>('svi-carcasses-sort-order', 'ASC');
 
   const [itemsPerPage, setItemsPerPage] = useLocalStorage<number>('svi-carcasses-items-per-page', 50);
@@ -261,7 +264,10 @@ export default function SviCarcasses() {
                 {itemsPerPageOptions.map((option) => {
                   return (
                     <button
-                      className={['px-2 py-1 text-sm sm:px-4 sm:py-2', itemsPerPage === option ? 'font-semibold underline' : ''].join(' ')}
+                      className={[
+                        'px-2 py-1 text-sm sm:px-4 sm:py-2',
+                        itemsPerPage === option ? 'font-semibold underline' : '',
+                      ].join(' ')}
                       onClick={() => setItemsPerPage(option)}
                       key={option}
                     >
@@ -278,7 +284,9 @@ export default function SviCarcasses() {
                   for (const carcasseId of selectedCarcassesIds) {
                     selectedCarcassesObject[carcasseId] = true;
                   }
-                  onExportToXlsx(filteredData.filter((carcasse) => selectedCarcassesObject[carcasse.zacharie_carcasse_id]));
+                  onExportToXlsx(
+                    filteredData.filter((carcasse) => selectedCarcassesObject[carcasse.zacharie_carcasse_id])
+                  );
                 }}
                 disabled={selectedCarcassesIds.length === 0 || isExporting}
                 className="w-full sm:w-auto"

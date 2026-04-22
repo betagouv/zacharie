@@ -8,8 +8,8 @@ export default function LandingProsPage() {
   return (
     <>
       <title>
-        Zacharie pour les professionnels de la filière de valorisation du gibier sauvage | Garantir des viandes de gibier sauvage saines et sûres |
-        Ministère de l'Agriculture et de la Souveraineté Alimentaire
+        Zacharie pour les professionnels de la filière de valorisation du gibier sauvage | Garantir des viandes de
+        gibier sauvage saines et sûres | Ministère de l'Agriculture et de la Souveraineté Alimentaire
       </title>
       <main className="fr-container my-auto flex min-h-[50vh] flex-col justify-center">
         <div className="fr-grid-row fr-grid-row--gutters fr-py-6w my-auto flex flex-col justify-center">
@@ -27,22 +27,24 @@ export default function LandingProsPage() {
             </div>
             <div className="my-8 flex flex-col gap-4 md:col-start-2 md:row-span-2 md:row-start-1 md:m-0">
               <h2 className="text-action-high-blue-france text-justify text-lg font-bold text-pretty">
-                Zacharie accompagne les professionnels de la filière gibier sauvage – collecteurs, établissements de traitement et services
-                vétérinaires d’inspection – dans la gestion et la transmission des fiches d’examen initial (FEI).
+                Zacharie accompagne les professionnels de la filière gibier sauvage – collecteurs, établissements de
+                traitement et services vétérinaires d’inspection – dans la gestion et la transmission des fiches
+                d’examen initial (FEI).
               </h2>
               <p className="text-justify font-normal text-pretty text-gray-700 [&_b]:font-bold [&_b]:text-gray-900">
-                Avec Zacharie, les FEI sont créées et transmises dans un <b>format numérique unique, sécurisé et traçable</b>, garantissant une
-                circulation fluide et fiable de l’information tout au long de la chaîne de valorisation des viandes de gibier sauvage.
+                Avec Zacharie, les FEI sont créées et transmises dans un{' '}
+                <b>format numérique unique, sécurisé et traçable</b>, garantissant une circulation fluide et fiable de
+                l’information tout au long de la chaîne de valorisation des viandes de gibier sauvage.
               </p>
               <p className="text-justify font-normal text-pretty text-gray-700 [&_b]:font-bold [&_b]:text-gray-900">
-                Zacharie est aujourd’hui la seule alternative officielle au support papier, et devient progressivement un <b>outil de référence</b>{' '}
-                pour l’ensemble des acteurs de la filière.
+                Zacharie est aujourd’hui la seule alternative officielle au support papier, et devient progressivement
+                un <b>outil de référence</b> pour l’ensemble des acteurs de la filière.
               </p>
               <p className="text-justify font-normal text-pretty text-gray-700 [&_b]:font-bold [&_b]:text-gray-900">
                 Actuellement{' '}
                 <b>
-                  ouvert à tous les chasseurs, collecteurs professionnels et établissements de traitement du gibier sauvage et services vétérinaires
-                  d’inspection
+                  ouvert à tous les chasseurs, collecteurs professionnels et établissements de traitement du gibier
+                  sauvage et services vétérinaires d’inspection
                 </b>
                 , Zacharie sera bientôt ouvert aux commerces de proximité dans le cadre de la vente directe.
               </p>
@@ -63,27 +65,32 @@ export default function LandingProsPage() {
                 />
               </div>
               <div className="my-8 md:col-span-1 md:col-start-1 md:row-start-1">
-                <h3 className="fr-h3 text-center text-balance md:text-right">Quels bénéfices pour les professionnels&nbsp;?</h3>
+                <h3 className="fr-h3 text-center text-balance md:text-right">
+                  Quels bénéfices pour les professionnels&nbsp;?
+                </h3>
                 <ul className="mt-8 flex flex-col gap-2 md:gap-6 md:text-right">
                   <li className="ml-4 flex flex-col">
-                    <h4 className="text-action-high-blue-france mb-1 text-lg font-bold">Sécurité sanitaire renforcée</h4>
+                    <h4 className="text-action-high-blue-france mb-1 text-lg font-bold">
+                      Sécurité sanitaire renforcée
+                    </h4>
                     <p className="ml-4 text-sm md:ml-0 md:text-base">
-                      Des informations lisibles, fiables et complètes, directement transmises par les chasseurs via des fiches numériques
-                      standardisées.
+                      Des informations lisibles, fiables et complètes, directement transmises par les chasseurs via des
+                      fiches numériques standardisées.
                     </p>
                   </li>
                   <li className="ml-4 flex flex-col">
                     <h4 className="text-action-high-blue-france mb-1 text-lg font-bold">Traçabilité simplifiée</h4>
                     <p className="mt-1 ml-4 text-sm md:ml-0 md:text-base">
-                      Un archivage automatique et organisé des FEI, indispensable pour la conformité réglementaire et la commercialisation des viandes
-                      de gibier.
+                      Un archivage automatique et organisé des FEI, indispensable pour la conformité réglementaire et la
+                      commercialisation des viandes de gibier.
                     </p>
                   </li>
                   <li className="ml-4 flex flex-col">
                     <h4 className="text-action-high-blue-france mb-1 text-lg font-bold">Collaboration fluide</h4>
                     <p className="mt-1 ml-4 text-sm md:ml-0 md:text-base">
-                      Possibilité de partager, d’annoter et de mettre à jour les FEI en temps réel entre collecteurs, établissements de traitement et
-                      services vétérinaires. Les décisions sur les carcasses sont automatiquement transmises aux chasseurs.
+                      Possibilité de partager, d’annoter et de mettre à jour les FEI en temps réel entre collecteurs,
+                      établissements de traitement et services vétérinaires. Les décisions sur les carcasses sont
+                      automatiquement transmises aux chasseurs.
                     </p>
                   </li>
                   <li className="ml-4 flex flex-col">
@@ -117,14 +124,17 @@ export default function LandingProsPage() {
               <li className="flex items-center gap-4">
                 <p className="text-action-high-blue-france shrink-0 basis-20 pl-4 text-6xl font-bold md:text-8xl">2</p>
                 <div className="flex flex-col">
-                  <p className="mt-1">Informez vos partenaires (chasses, professionels) que vous acceptez désormais les fiches numériques.</p>
+                  <p className="mt-1">
+                    Informez vos partenaires (chasses, professionels) que vous acceptez désormais les fiches numériques.
+                  </p>
                 </div>
               </li>
               <li className="flex items-center gap-4">
                 <p className="text-action-high-blue-france shrink-0 basis-20 pl-4 text-6xl font-bold md:text-8xl">3</p>
                 <div className="flex flex-col">
                   <p className="mt-1">
-                    Recevez et validez les fiches d’examen initial (FEI) qui vous sont adressées, en ajoutant si besoin vos observations.
+                    Recevez et validez les fiches d’examen initial (FEI) qui vous sont adressées, en ajoutant si besoin
+                    vos observations.
                   </p>
                 </div>
               </li>
@@ -132,8 +142,8 @@ export default function LandingProsPage() {
                 <p className="text-action-high-blue-france shrink-0 basis-20 pl-4 text-6xl font-bold md:text-8xl">4</p>
                 <div className="flex flex-col">
                   <p className="mt-1">
-                    Collaborez avec l’ensemble de la chaîne : chasseurs, collecteurs, établissements de traitement et services vétérinaires accèdent
-                    aux mêmes informations, de façon claire et fiable.
+                    Collaborez avec l’ensemble de la chaîne : chasseurs, collecteurs, établissements de traitement et
+                    services vétérinaires accèdent aux mêmes informations, de façon claire et fiable.
                   </p>
                 </div>
               </li>

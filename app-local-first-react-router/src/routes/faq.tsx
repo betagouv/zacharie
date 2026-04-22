@@ -75,7 +75,10 @@ export default function Faq() {
       className="fr-background-alt--blue-france relative min-h-full overflow-auto"
     >
       <div className="fr-container fr-container--fluid fr-my-md-14v">
-        <title>Mode d'emploi et questions fréquentes | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
+        <title>
+          Mode d'emploi et questions fréquentes | Zacharie | Ministère de l'Agriculture et de la Souveraineté
+          Alimentaire
+        </title>
         <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
           <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
             {/* Section 1 : Guides par rôle */}
@@ -107,8 +110,8 @@ export default function Faq() {
                     >
                       zacharie.beta.gouv.fr
                     </a>{' '}
-                    et cliquez sur « Commencer ». Renseignez votre adresse e-mail et suivez les instructions. Un code de connexion vous sera envoyé
-                    par e-mail à chaque connexion.
+                    et cliquez sur « Commencer ». Renseignez votre adresse e-mail et suivez les instructions. Un code de
+                    connexion vous sera envoyé par e-mail à chaque connexion.
                   </p>
                   <p className="fr-mt-1w">
                     <GuideLink href="https://scribehow.com/shared/Creer_son_compte_sur_Zacharie_sur_ordinateur__z7KxXFXpRwaH7rmc2LLX4g">
@@ -120,10 +123,15 @@ export default function Faq() {
                   label="Comment installer l'application sur mon téléphone ?"
                   titleAs="h3"
                 >
-                  <p>Zacharie est disponible gratuitement sur les stores. Téléchargez l'application directement depuis votre téléphone :</p>
+                  <p>
+                    Zacharie est disponible gratuitement sur les stores. Téléchargez l'application directement depuis
+                    votre téléphone :
+                  </p>
                   <ul className="fr-mt-1w">
                     <li className="fr-mb-1w">
-                      <GuideLink href="https://apps.apple.com/fr/app/id6753714911">Télécharger sur l'App Store (iPhone)</GuideLink>
+                      <GuideLink href="https://apps.apple.com/fr/app/id6753714911">
+                        Télécharger sur l'App Store (iPhone)
+                      </GuideLink>
                     </li>
                     <li className="fr-mb-1w">
                       <GuideLink href="https://play.google.com/store/apps/details?id=fr.gouv.zacharie.v1">
@@ -137,9 +145,10 @@ export default function Faq() {
                   titleAs="h3"
                 >
                   <p>
-                    Zacharie fonctionne en mode « local-first » : vos données sont enregistrées sur votre appareil même sans connexion internet.
-                    Lorsque vous retrouvez une connexion, vos fiches se synchronisent automatiquement avec le serveur. Vous pouvez donc créer et
-                    remplir des fiches en pleine nature, même sans réseau.
+                    Zacharie fonctionne en mode « local-first » : vos données sont enregistrées sur votre appareil même
+                    sans connexion internet. Lorsque vous retrouvez une connexion, vos fiches se synchronisent
+                    automatiquement avec le serveur. Vous pouvez donc créer et remplir des fiches en pleine nature, même
+                    sans réseau.
                   </p>
                 </Accordion>
                 <Accordion
@@ -147,8 +156,9 @@ export default function Faq() {
                   titleAs="h3"
                 >
                   <p>
-                    Une fois votre fiche d'accompagnement remplie, cliquez sur « Transmettre » pour l'envoyer au destinataire suivant (collecteur, ETG
-                    ou SVI). La fiche sera automatiquement synchronisée dès que vous aurez une connexion internet.
+                    Une fois votre fiche d'accompagnement remplie, cliquez sur « Transmettre » pour l'envoyer au
+                    destinataire suivant (collecteur, ETG ou SVI). La fiche sera automatiquement synchronisée dès que
+                    vous aurez une connexion internet.
                   </p>
                   <p className="fr-mt-1w">
                     <GuideLink href="https://scribehow.com/shared/Creer_et_remplir_une_fiche_daccompagnement_sur_ordinateur__2eulqOaiTk-6fw5iYJFOnQ">
@@ -161,8 +171,8 @@ export default function Faq() {
                   titleAs="h3"
                 >
                   <p>
-                    Depuis votre tableau de bord, sélectionnez les fiches souhaitées puis cliquez sur « Télécharger en Excel ». Vous pouvez aussi
-                    exporter l'ensemble de votre registre de carcasses.
+                    Depuis votre tableau de bord, sélectionnez les fiches souhaitées puis cliquez sur « Télécharger en
+                    Excel ». Vous pouvez aussi exporter l'ensemble de votre registre de carcasses.
                   </p>
                   <p className="fr-mt-1w">
                     <GuideLink href="https://scribehow.com/shared/Telecharger_une_ou_plusieurs_fiches_en_format_Excel__MxMBdZBvSDKWaJoHe6sQJQ">
@@ -175,7 +185,8 @@ export default function Faq() {
                   titleAs="h3"
                 >
                   <p>
-                    Vous pouvez nous contacter en nous appelant au <a href="tel:+33189316644">01 89 31 66 44</a>, en écrivant à{' '}
+                    Vous pouvez nous contacter en nous appelant au <a href="tel:+33189316644">01 89 31 66 44</a>, en
+                    écrivant à{' '}
                     <a
                       href="mailto:contact@zacharie.beta.gouv.fr"
                       className="fr-link"
@@ -198,7 +209,8 @@ export default function Faq() {
             {/* CallOut contact */}
             <CallOut className="bg-white">
               Besoin d'aide ? Contactez-nous au <a href="tel:+33189316644">01 89 31 66 44</a> ou par e-mail à{' '}
-              <a href="mailto:contact@zacharie.beta.gouv.fr">contact@zacharie.beta.gouv.fr</a>. Vous pouvez aussi utiliser notre{' '}
+              <a href="mailto:contact@zacharie.beta.gouv.fr">contact@zacharie.beta.gouv.fr</a>. Vous pouvez aussi
+              utiliser notre{' '}
               <a
                 href="/contact"
                 className="fr-link"

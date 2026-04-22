@@ -2,7 +2,11 @@ import { useMemo } from 'react';
 import type { CarcasseIntermediaire } from '@prisma/client';
 import useZustandStore from '@app/zustand/store';
 import { getFeiAndIntermediaireIds } from '@app/utils/get-carcasse-intermediaire-id';
-import type { FeiAndCarcasseAndIntermediaireIds, FeiAndIntermediaireIds, FeiIntermediaire } from '@app/types/fei-intermediaire';
+import type {
+  FeiAndCarcasseAndIntermediaireIds,
+  FeiAndIntermediaireIds,
+  FeiIntermediaire,
+} from '@app/types/fei-intermediaire';
 import dayjs from 'dayjs';
 
 export function filterCarcassesIntermediairesForCarcasse(
@@ -23,7 +27,9 @@ export function filterCarcassesIntermediairesForIntermediaire(
     .sort((a, b) => (dayjs(a.created_at).diff(b.created_at) < 0 ? 1 : -1));
 }
 
-export function useCarcassesIntermediairesForCarcasse(zacharie_carcasse_id: string | undefined): Array<CarcasseIntermediaire> {
+export function useCarcassesIntermediairesForCarcasse(
+  zacharie_carcasse_id: string | undefined
+): Array<CarcasseIntermediaire> {
   const byId = useZustandStore((state) => state.carcassesIntermediaireById);
   return useMemo(() => {
     if (!zacharie_carcasse_id) return [];
@@ -31,7 +37,9 @@ export function useCarcassesIntermediairesForCarcasse(zacharie_carcasse_id: stri
   }, [byId, zacharie_carcasse_id]);
 }
 
-export function useCarcassesIntermediairesForIntermediaire(feiAndIntermediaireIds: FeiAndIntermediaireIds | undefined): Array<CarcasseIntermediaire> {
+export function useCarcassesIntermediairesForIntermediaire(
+  feiAndIntermediaireIds: FeiAndIntermediaireIds | undefined
+): Array<CarcasseIntermediaire> {
   const byId = useZustandStore((state) => state.carcassesIntermediaireById);
   return useMemo(() => {
     if (!feiAndIntermediaireIds) return [];

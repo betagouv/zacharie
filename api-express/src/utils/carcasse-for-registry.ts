@@ -66,7 +66,8 @@ export function mapCarcasseForRegistry(carcasse: CarcasseGetForRegistry): Carcas
     fei_commune_mise_a_mort: fei.commune_mise_a_mort,
     fei_heure_mise_a_mort_premiere_carcasse: fei.heure_mise_a_mort_premiere_carcasse,
     fei_heure_evisceration_derniere_carcasse: fei.heure_evisceration_derniere_carcasse,
-    fei_examinateur_initial_date_approbation_mise_sur_le_marche: fei.examinateur_initial_date_approbation_mise_sur_le_marche,
+    fei_examinateur_initial_date_approbation_mise_sur_le_marche:
+      fei.examinateur_initial_date_approbation_mise_sur_le_marche,
     fei_premier_detenteur_name_cache: fei.premier_detenteur_name_cache,
     fei_premier_detenteur_depot_ccg_at: fei.premier_detenteur_depot_ccg_at,
     fei_premier_detenteur_depot_entity_name_cache: fei.premier_detenteur_depot_entity_name_cache,

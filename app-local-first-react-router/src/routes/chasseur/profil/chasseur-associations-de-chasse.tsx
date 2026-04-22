@@ -45,7 +45,8 @@ export default function MesAssociationsDeChasse() {
   const handleUserSubmit = useCallback(
     async (checked_has_asso_de_chasse: boolean) => {
       const body: Record<string, string | null> = {};
-      body.checked_has_asso_de_chasse = checked_has_asso_de_chasse == null ? null : checked_has_asso_de_chasse ? 'true' : 'false';
+      body.checked_has_asso_de_chasse =
+        checked_has_asso_de_chasse == null ? null : checked_has_asso_de_chasse ? 'true' : 'false';
       const response = await API.post({
         path: `/user/${user.id}`,
         body,
@@ -109,7 +110,8 @@ export default function MesAssociationsDeChasse() {
           path: '/user-entity',
           body: {
             [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
-            [Prisma.EntityAndUserRelationsScalarFieldEnum.relation]: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+            [Prisma.EntityAndUserRelationsScalarFieldEnum.relation]:
+              EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
             [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: currentEntityId,
           },
         }).then((res) => {
@@ -117,7 +119,9 @@ export default function MesAssociationsDeChasse() {
             setRefreshKey((k) => k + 1);
             setCurrentEntityId(null);
             setShowForm(false);
-            document.getElementById('onboarding-etape-2-associations-data-title')?.scrollIntoView({ behavior: 'smooth' });
+            document
+              .getElementById('onboarding-etape-2-associations-data-title')
+              ?.scrollIntoView({ behavior: 'smooth' });
           }
         });
       }
@@ -161,7 +165,9 @@ export default function MesAssociationsDeChasse() {
         .filter((entity) => entity.type === EntityTypes.PREMIER_DETENTEUR)
         .map((entity) => {
           const relation = entity.EntityRelationsWithUsers.find(
-            (relation) => relation.owner_id === user.id && relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
+            (relation) =>
+              relation.owner_id === user.id &&
+              relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
           );
           if (!relation) return null;
           return (
@@ -311,7 +317,9 @@ export default function MesAssociationsDeChasse() {
                 )}
                 {isUnregisteredEntity && (
                   <>
-                    <p className="mb-5 text-sm text-gray-500">* Les champs marqués d'un astérisque (*) sont obligatoires.</p>
+                    <p className="mb-5 text-sm text-gray-500">
+                      * Les champs marqués d'un astérisque (*) sont obligatoires.
+                    </p>
                     <form
                       id="association_data_form"
                       method="POST"

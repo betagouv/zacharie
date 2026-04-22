@@ -67,7 +67,9 @@ export default function PartenaireNouveau({ newEntityNomDUsageProps, onFinish }:
     userEntities
       .find((entity) => entity.id === currentEntityId)
       ?.EntityRelationsWithUsers.find(
-        (relation) => relation.owner_id === user.id && relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
+        (relation) =>
+          relation.owner_id === user.id &&
+          relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
       )?.status === EntityRelationStatus.ADMIN;
 
   const ComponentToDisplay = isAdminOfEntity ? Input : InputNotEditable;
@@ -117,7 +119,8 @@ export default function PartenaireNouveau({ newEntityNomDUsageProps, onFinish }:
           path: '/user-entity',
           body: {
             [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
-            [Prisma.EntityAndUserRelationsScalarFieldEnum.relation]: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+            [Prisma.EntityAndUserRelationsScalarFieldEnum.relation]:
+              EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
             [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: currentEntityId,
           },
         })

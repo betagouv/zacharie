@@ -7,7 +7,9 @@ export function getFeiKeyDates(fei: FeiWithIntermediaires | Fei) {
     <>
       Mise à mort&nbsp;:
       <br />
-      <span className="ml-4">{fei.date_mise_a_mort ? dayjs(fei.date_mise_a_mort).format('DD/MM/YYYY') : 'À remplir'}</span>
+      <span className="ml-4">
+        {fei.date_mise_a_mort ? dayjs(fei.date_mise_a_mort).format('DD/MM/YYYY') : 'À remplir'}
+      </span>
       <br />
       Dernière éviscération&nbsp;:
       <br />
@@ -24,7 +26,11 @@ export function getFeiKeyDates(fei: FeiWithIntermediaires | Fei) {
       Dépôt en chambre froide&nbsp;:
       <br />
       <span className="ml-4">
-        {fei.premier_detenteur_depot_ccg_at ? <>{dayjs(fei.premier_detenteur_depot_ccg_at).format('DD/MM/YYYY à HH:mm')}</> : '/'}
+        {fei.premier_detenteur_depot_ccg_at ? (
+          <>{dayjs(fei.premier_detenteur_depot_ccg_at).format('DD/MM/YYYY à HH:mm')}</>
+        ) : (
+          '/'
+        )}
       </span>
     </>
   );

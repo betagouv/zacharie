@@ -1,6 +1,14 @@
 import { useParams } from 'react-router';
 import { useMemo, useState } from 'react';
-import { UserRoles, Prisma, EntityTypes, DepotType, CarcasseIntermediaire, EntityRelationType, FeiOwnerRole } from '@prisma/client';
+import {
+  UserRoles,
+  Prisma,
+  EntityTypes,
+  DepotType,
+  CarcasseIntermediaire,
+  EntityRelationType,
+  FeiOwnerRole,
+} from '@prisma/client';
 import dayjs from 'dayjs';
 import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
@@ -93,7 +101,9 @@ export default function DestinataireIntermediaire({
   // const circuitCourt = circuitCourtIds.map((id) => entities[id]);
   const svis = svisIds.map((id) => entities[id]);
 
-  const intermediaireEntity = intermediaire?.intermediaire_entity_id ? entities[intermediaire.intermediaire_entity_id] : null;
+  const intermediaireEntity = intermediaire?.intermediaire_entity_id
+    ? entities[intermediaire.intermediaire_entity_id]
+    : null;
   const intermediaireEntityType = intermediaireEntity?.type;
 
   const prochainsDetenteurs = useMemo(() => {
@@ -113,7 +123,9 @@ export default function DestinataireIntermediaire({
   }, [etgs, collecteursPros, svis, myCurrentRole]);
 
   const canTransmitCarcassesToEntities = useMemo(() => {
-    return prochainsDetenteurs.filter((entity) => entity.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY);
+    return prochainsDetenteurs.filter(
+      (entity) => entity.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY
+    );
   }, [prochainsDetenteurs]);
 
   const ccgsOptions = useMemo(() => {
@@ -269,7 +281,12 @@ export default function DestinataireIntermediaire({
   return (
     <>
       <div
-        className={[className, disabled ? 'cursor-not-allowed opacity-50' : '', canEdit ? '' : 'cursor-not-allowed', 'space-y-6'].join(' ')}
+        className={[
+          className,
+          disabled ? 'cursor-not-allowed opacity-50' : '',
+          canEdit ? '' : 'cursor-not-allowed',
+          'space-y-6',
+        ].join(' ')}
         key={prochainDetenteurEntityId}
       >
         <SelectCustom
@@ -277,7 +294,9 @@ export default function DestinataireIntermediaire({
           isDisabled={disabled}
           hint={
             <>
-              <span>Indiquez ici la personne ou la structure avec qui vous êtes en contact pour prendre en charge le gibier.</span>
+              <span>
+                Indiquez ici la personne ou la structure avec qui vous êtes en contact pour prendre en charge le gibier.
+              </span>
               {!prochainDetenteurEntityId && !disabled && (
                 <div>
                   {canTransmitCarcassesToEntities.map((entity) => {

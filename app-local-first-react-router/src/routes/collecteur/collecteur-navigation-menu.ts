@@ -19,7 +19,9 @@ export default function useCollecteurNavigationMenu(): MainNavigationProps.Item[
     },
     {
       text: 'Paramètres',
-      isActive: location.pathname.startsWith('/app/collecteur/profil') || location.pathname.startsWith('/app/collecteur/entreprise'),
+      isActive:
+        location.pathname.startsWith('/app/collecteur/profil') ||
+        location.pathname.startsWith('/app/collecteur/entreprise'),
       menuLinks: [
         {
           text: 'Coordonnées',

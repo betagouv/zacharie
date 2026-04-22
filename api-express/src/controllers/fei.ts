@@ -167,7 +167,11 @@ const feiBodyZodSchema = z.object({
   fei_prev_owner_entity_id: z.string().optional().nullable(),
   fei_prev_owner_role: z.string().optional().nullable(),
 });
-export async function saveFei(numero: string, body: Prisma.FeiUncheckedCreateInput, user: User): Promise<SaveFeiResult> {
+export async function saveFei(
+  numero: string,
+  body: Prisma.FeiUncheckedCreateInput,
+  user: User
+): Promise<SaveFeiResult> {
   let result = feiBodyZodSchema.safeParse(body);
   if (!result.success) {
     throw new Error(result.error.message);
@@ -278,16 +282,20 @@ export async function saveFei(numero: string, body: Prisma.FeiUncheckedCreateInp
   */
 
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.examinateur_initial_user_id)) {
-    nextFei.examinateur_initial_user_id = body.examinateur_initial_user_id ? sanitize(body.examinateur_initial_user_id as string) : null;
+    nextFei.examinateur_initial_user_id = body.examinateur_initial_user_id
+      ? sanitize(body.examinateur_initial_user_id as string)
+      : null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.examinateur_initial_offline)) {
     nextFei.examinateur_initial_offline = body.examinateur_initial_offline || null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.examinateur_initial_approbation_mise_sur_le_marche)) {
-    nextFei.examinateur_initial_approbation_mise_sur_le_marche = body.examinateur_initial_approbation_mise_sur_le_marche || null;
+    nextFei.examinateur_initial_approbation_mise_sur_le_marche =
+      body.examinateur_initial_approbation_mise_sur_le_marche || null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.examinateur_initial_date_approbation_mise_sur_le_marche)) {
-    nextFei.examinateur_initial_date_approbation_mise_sur_le_marche = body.examinateur_initial_date_approbation_mise_sur_le_marche || null;
+    nextFei.examinateur_initial_date_approbation_mise_sur_le_marche =
+      body.examinateur_initial_date_approbation_mise_sur_le_marche || null;
   }
 
   /*
@@ -300,16 +308,22 @@ export async function saveFei(numero: string, body: Prisma.FeiUncheckedCreateInp
   */
 
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id)) {
-    nextFei.premier_detenteur_user_id = body.premier_detenteur_user_id ? sanitize(body.premier_detenteur_user_id as string) : null;
+    nextFei.premier_detenteur_user_id = body.premier_detenteur_user_id
+      ? sanitize(body.premier_detenteur_user_id as string)
+      : null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_offline)) {
     nextFei.premier_detenteur_offline = body.premier_detenteur_offline || null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_entity_id)) {
-    nextFei.premier_detenteur_entity_id = body.premier_detenteur_entity_id ? sanitize(body.premier_detenteur_entity_id as string) : null;
+    nextFei.premier_detenteur_entity_id = body.premier_detenteur_entity_id
+      ? sanitize(body.premier_detenteur_entity_id as string)
+      : null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_name_cache)) {
-    nextFei.premier_detenteur_name_cache = body.premier_detenteur_name_cache ? sanitize(body.premier_detenteur_name_cache as string) : null;
+    nextFei.premier_detenteur_name_cache = body.premier_detenteur_name_cache
+      ? sanitize(body.premier_detenteur_name_cache as string)
+      : null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id)) {
     nextFei.premier_detenteur_depot_entity_id = body.premier_detenteur_depot_entity_id
@@ -334,7 +348,8 @@ export async function saveFei(numero: string, body: Prisma.FeiUncheckedCreateInp
     nextFei.premier_detenteur_transport_date = body.premier_detenteur_transport_date || null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_prochain_detenteur_role_cache)) {
-    nextFei.premier_detenteur_prochain_detenteur_role_cache = body.premier_detenteur_prochain_detenteur_role_cache || null;
+    nextFei.premier_detenteur_prochain_detenteur_role_cache =
+      body.premier_detenteur_prochain_detenteur_role_cache || null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache)) {
     nextFei.premier_detenteur_prochain_detenteur_id_cache = body.premier_detenteur_prochain_detenteur_id_cache
@@ -353,7 +368,9 @@ Responsabilités
   /*  Current Owner */
 
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_current_owner_user_id)) {
-    nextFei.fei_current_owner_user_id = body.fei_current_owner_user_id ? sanitize(body.fei_current_owner_user_id as string) : null;
+    nextFei.fei_current_owner_user_id = body.fei_current_owner_user_id
+      ? sanitize(body.fei_current_owner_user_id as string)
+      : null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_current_owner_user_name_cache)) {
     nextFei.fei_current_owner_user_name_cache = body.fei_current_owner_user_name_cache
@@ -361,7 +378,9 @@ Responsabilités
       : null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_current_owner_entity_id)) {
-    nextFei.fei_current_owner_entity_id = body.fei_current_owner_entity_id ? sanitize(body.fei_current_owner_entity_id as string) : null;
+    nextFei.fei_current_owner_entity_id = body.fei_current_owner_entity_id
+      ? sanitize(body.fei_current_owner_entity_id as string)
+      : null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_current_owner_entity_name_cache)) {
     nextFei.fei_current_owner_entity_name_cache = body.fei_current_owner_entity_name_cache
@@ -390,13 +409,19 @@ Responsabilités
   }
   /*  Next Owner */
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id)) {
-    nextFei.fei_next_owner_user_id = body.fei_next_owner_user_id ? sanitize(body.fei_next_owner_user_id as string) : null;
+    nextFei.fei_next_owner_user_id = body.fei_next_owner_user_id
+      ? sanitize(body.fei_next_owner_user_id as string)
+      : null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_next_owner_user_name_cache)) {
-    nextFei.fei_next_owner_user_name_cache = body.fei_next_owner_user_name_cache ? sanitize(body.fei_next_owner_user_name_cache as string) : null;
+    nextFei.fei_next_owner_user_name_cache = body.fei_next_owner_user_name_cache
+      ? sanitize(body.fei_next_owner_user_name_cache as string)
+      : null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id)) {
-    nextFei.fei_next_owner_entity_id = body.fei_next_owner_entity_id ? sanitize(body.fei_next_owner_entity_id as string) : null;
+    nextFei.fei_next_owner_entity_id = body.fei_next_owner_entity_id
+      ? sanitize(body.fei_next_owner_entity_id as string)
+      : null;
     if (body.fei_next_owner_entity_id) {
       const nextRelation: Prisma.EntityAndUserRelationsUncheckedCreateInput = {
         entity_id: body.fei_next_owner_entity_id,
@@ -422,10 +447,14 @@ Responsabilités
   }
   /*  Prev Owner */
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_prev_owner_user_id)) {
-    nextFei.fei_prev_owner_user_id = body.fei_prev_owner_user_id ? sanitize(body.fei_prev_owner_user_id as string) : null;
+    nextFei.fei_prev_owner_user_id = body.fei_prev_owner_user_id
+      ? sanitize(body.fei_prev_owner_user_id as string)
+      : null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_prev_owner_entity_id)) {
-    nextFei.fei_prev_owner_entity_id = body.fei_prev_owner_entity_id ? sanitize(body.fei_prev_owner_entity_id as string) : null;
+    nextFei.fei_prev_owner_entity_id = body.fei_prev_owner_entity_id
+      ? sanitize(body.fei_prev_owner_entity_id as string)
+      : null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_prev_owner_role)) {
     nextFei.fei_prev_owner_role = body.fei_prev_owner_role || null;
@@ -443,7 +472,9 @@ Intermédiaire
     nextFei.intermediaire_closed_at = body.intermediaire_closed_at || null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.intermediaire_closed_by_user_id)) {
-    nextFei.intermediaire_closed_by_user_id = body.intermediaire_closed_by_user_id ? sanitize(body.intermediaire_closed_by_user_id as string) : null;
+    nextFei.intermediaire_closed_by_user_id = body.intermediaire_closed_by_user_id
+      ? sanitize(body.intermediaire_closed_by_user_id as string)
+      : null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.intermediaire_closed_by_entity_id)) {
     nextFei.intermediaire_closed_by_entity_id = body.intermediaire_closed_by_entity_id
@@ -451,13 +482,19 @@ Intermédiaire
       : null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.latest_intermediaire_user_id)) {
-    nextFei.latest_intermediaire_user_id = body.latest_intermediaire_user_id ? sanitize(body.latest_intermediaire_user_id as string) : null;
+    nextFei.latest_intermediaire_user_id = body.latest_intermediaire_user_id
+      ? sanitize(body.latest_intermediaire_user_id as string)
+      : null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.latest_intermediaire_entity_id)) {
-    nextFei.latest_intermediaire_entity_id = body.latest_intermediaire_entity_id ? sanitize(body.latest_intermediaire_entity_id as string) : null;
+    nextFei.latest_intermediaire_entity_id = body.latest_intermediaire_entity_id
+      ? sanitize(body.latest_intermediaire_entity_id as string)
+      : null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.latest_intermediaire_name_cache)) {
-    nextFei.latest_intermediaire_name_cache = body.latest_intermediaire_name_cache ? sanitize(body.latest_intermediaire_name_cache as string) : null;
+    nextFei.latest_intermediaire_name_cache = body.latest_intermediaire_name_cache
+      ? sanitize(body.latest_intermediaire_name_cache as string)
+      : null;
   }
 
   /*
@@ -678,9 +715,15 @@ router.get(
         user,
         feisDone: feisDone.sort((a, b) => {
           const aDate =
-            a.automatic_closed_at || a.intermediaire_closed_at || a.svi_closed_at || a.examinateur_initial_date_approbation_mise_sur_le_marche;
+            a.automatic_closed_at ||
+            a.intermediaire_closed_at ||
+            a.svi_closed_at ||
+            a.examinateur_initial_date_approbation_mise_sur_le_marche;
           const bDate =
-            b.automatic_closed_at || b.intermediaire_closed_at || b.svi_closed_at || b.examinateur_initial_date_approbation_mise_sur_le_marche;
+            b.automatic_closed_at ||
+            b.intermediaire_closed_at ||
+            b.svi_closed_at ||
+            b.examinateur_initial_date_approbation_mise_sur_le_marche;
           return bDate < aDate ? -1 : 1;
         }),
       },
@@ -1082,9 +1125,15 @@ router.get(
         feisOngoing,
         feisDone: feisDone.sort((a, b) => {
           const aDate =
-            a.automatic_closed_at || a.intermediaire_closed_at || a.svi_closed_at || a.examinateur_initial_date_approbation_mise_sur_le_marche;
+            a.automatic_closed_at ||
+            a.intermediaire_closed_at ||
+            a.svi_closed_at ||
+            a.examinateur_initial_date_approbation_mise_sur_le_marche;
           const bDate =
-            b.automatic_closed_at || b.intermediaire_closed_at || b.svi_closed_at || b.examinateur_initial_date_approbation_mise_sur_le_marche;
+            b.automatic_closed_at ||
+            b.intermediaire_closed_at ||
+            b.svi_closed_at ||
+            b.examinateur_initial_date_approbation_mise_sur_le_marche;
           return bDate < aDate ? -1 : 1;
         }),
       },

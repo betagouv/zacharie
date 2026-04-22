@@ -259,8 +259,8 @@ export default function CCGNouveau({ onFinish }: CCGNouveauProps) {
           </div>
           {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
           <p className="my-4 text-sm">
-            Ceci ne remplace pas la déclaration officielle du CCG. Cela permet simplement de pouvoir en faire référence dans Zacharie, en attendant
-            son enregistrement.
+            Ceci ne remplace pas la déclaration officielle du CCG. Cela permet simplement de pouvoir en faire référence
+            dans Zacharie, en attendant son enregistrement.
           </p>
           <div className="flex gap-2">
             <Button

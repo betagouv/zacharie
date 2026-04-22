@@ -72,7 +72,10 @@ async function sendNotificationToUser({
         return;
       }
       if (IS_TEST) {
-        console.log('SENDING WEB PUSH NOTIFICATION IN DEV', JSON.stringify({ user, body, title, email, notificationLogAction, img }, null, 2));
+        console.log(
+          'SENDING WEB PUSH NOTIFICATION IN DEV',
+          JSON.stringify({ user, body, title, email, notificationLogAction, img }, null, 2)
+        );
         await prisma.notificationLog.create({
           data: {
             user_id: user.id,
@@ -145,7 +148,10 @@ async function sendNotificationToUser({
         return;
       }
       if (IS_TEST) {
-        console.log('SENDING WEB PUSH NOTIFICATION IN DEV', JSON.stringify({ user, body, title, email, notificationLogAction, img }, null, 2));
+        console.log(
+          'SENDING WEB PUSH NOTIFICATION IN DEV',
+          JSON.stringify({ user, body, title, email, notificationLogAction, img }, null, 2)
+        );
         await prisma.notificationLog.create({
           data: {
             user_id: user.id,
@@ -192,7 +198,10 @@ async function sendNotificationToUser({
       return;
     }
     if (IS_TEST) {
-      console.log('SENDING EMAIL NOTIFICATION IN DEV', JSON.stringify({ user: user.email, body, title, email, notificationLogAction, img }, null, 2));
+      console.log(
+        'SENDING EMAIL NOTIFICATION IN DEV',
+        JSON.stringify({ user: user.email, body, title, email, notificationLogAction, img }, null, 2)
+      );
       await prisma.notificationLog.create({
         data: {
           user_id: user.id,

@@ -72,7 +72,8 @@ export default function CurrentOwner() {
           root: 'fr-highlight--green-emeraude',
         }}
       >
-        Cette fiche est présentement sous la responsabilité <b>{getUserRoleLabelPrefixed(fei.fei_current_owner_role as UserRoles)}</b>.<br />
+        Cette fiche est présentement sous la responsabilité{' '}
+        <b>{getUserRoleLabelPrefixed(fei.fei_current_owner_role as UserRoles)}</b>.<br />
         {currentOwnerEntity?.nom_d_usage && (
           <>
             <b>{currentOwnerEntity.nom_d_usage}</b> - {currentOwnerEntity.code_postal} {currentOwnerEntity.ville}

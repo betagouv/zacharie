@@ -59,7 +59,9 @@ export default function ChasseurOnboardingMesInformationsDeChasse() {
   };
 
   const showEntrpriseVisibilityCheckbox =
-    !!user.checked_has_asso_de_chasse || user.roles.includes(UserRoles.COLLECTEUR_PRO) || user.roles.includes(UserRoles.ETG);
+    !!user.checked_has_asso_de_chasse ||
+    user.roles.includes(UserRoles.COLLECTEUR_PRO) ||
+    user.roles.includes(UserRoles.ETG);
 
   const isChasseur = user.roles.includes(UserRoles.CHASSEUR);
 
@@ -137,7 +139,9 @@ export default function ChasseurOnboardingMesInformationsDeChasse() {
                   linkProps: {
                     to:
                       redirect ??
-                      (isChasseur ? '/app/tableau-de-bord/onboarding/formation-examen-initial' : '/app/tableau-de-bord/onboarding/mes-coordonnees'),
+                      (isChasseur
+                        ? '/app/tableau-de-bord/onboarding/formation-examen-initial'
+                        : '/app/tableau-de-bord/onboarding/mes-coordonnees'),
                     href: '#',
                   },
                   priority: 'secondary',

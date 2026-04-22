@@ -42,7 +42,9 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
   const feiCarcasses = useCarcassesForFei(params.fei_numero);
   const carcasseIds = feiCarcasses.map((c) => c.zacharie_carcasse_id);
 
-  const [sviIpm1PresenteeInspection, setSviIpm1PresenteeInspection] = useState(carcasse.svi_ipm1_presentee_inspection ?? true);
+  const [sviIpm1PresenteeInspection, setSviIpm1PresenteeInspection] = useState(
+    carcasse.svi_ipm1_presentee_inspection ?? true
+  );
   const [sviIpm1Date, setSviIpm1Date] = useState(carcasse.svi_ipm1_date);
   const [sviIpm1Protocole, setSviIpm1Protocole] = useState(carcasse.svi_ipm1_protocole ?? IPM1Protocole.STANDARD);
   const [sviIpm1Pieces, setSviIpm1Pieces] = useState(carcasse.svi_ipm1_pieces);
@@ -53,7 +55,9 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
   const [sviIpm1DureeConsigne, setSviIpm1DureeConsigne] = useState(carcasse.svi_ipm1_duree_consigne);
   const [sviIpm1PoidsConsigne, setSviIpm1PoidsConsigne] = useState(carcasse.svi_ipm1_poids_consigne);
   const [sviIpm1PoidsType, setSviIpm1PoidsType] = useState(carcasse.svi_ipm1_poids_type);
-  const [sviIpm1UserName, setSviIpm1UserName] = useState(carcasse.svi_ipm1_user_name_cache ?? `${user.prenom} ${user.nom_de_famille}`);
+  const [sviIpm1UserName, setSviIpm1UserName] = useState(
+    carcasse.svi_ipm1_user_name_cache ?? `${user.prenom} ${user.nom_de_famille}`
+  );
   const [triedToSave, setTriedToSave] = useState(false);
 
   const missingFields = useMemo(() => {
@@ -153,7 +157,8 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
         fei_current_owner_entity_id: fei.fei_next_owner_entity_id,
         fei_current_owner_entity_name_cache: fei.fei_next_owner_entity_name_cache,
         fei_current_owner_user_id: user.id,
-        fei_current_owner_user_name_cache: fei.fei_next_owner_user_name_cache || `${user.prenom} ${user.nom_de_famille}`,
+        fei_current_owner_user_name_cache:
+          fei.fei_next_owner_user_name_cache || `${user.prenom} ${user.nom_de_famille}`,
         fei_next_owner_role: null,
         fei_next_owner_user_id: null,
         fei_next_owner_user_name_cache: null,
@@ -201,7 +206,11 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
       onSubmit={(e) => e.preventDefault()}
     >
       <RadioButtons
-        legend={carcasse.type === CarcasseType.PETIT_GIBIER ? "Lot présenté à l'inspection *" : "Carcasse présentée à l'inspection *"}
+        legend={
+          carcasse.type === CarcasseType.PETIT_GIBIER
+            ? "Lot présenté à l'inspection *"
+            : "Carcasse présentée à l'inspection *"
+        }
         orientation="horizontal"
         options={[
           {
@@ -345,7 +354,9 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
             <ModalTreeDisplay
               data={piecesTree[carcasse.type ?? CarcasseType.GROS_GIBIER]}
               modal={piecesGibier}
-              title={carcasse.type === CarcasseType.PETIT_GIBIER ? 'Pièces de petits gibiers' : 'Pièces de grands gibiers'}
+              title={
+                carcasse.type === CarcasseType.PETIT_GIBIER ? 'Pièces de petits gibiers' : 'Pièces de grands gibiers'
+              }
               onItemClick={(newPiece) => {
                 const nextPieces = [...sviIpm1Pieces.filter((p) => p !== newPiece), newPiece];
                 setSviIpm1Pieces(nextPieces);

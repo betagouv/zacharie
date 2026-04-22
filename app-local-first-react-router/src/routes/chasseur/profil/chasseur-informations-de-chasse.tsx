@@ -160,7 +160,10 @@ export default function MesInformationsDeChasse({
                             checked: isExaminateurInitial === false,
                             name: 'pas_forme_a_l_examen_initial',
                             onChange: () => {
-                              if (!user.numero_cfei || window.confirm("N'êtes vous vraiment pas formé à l'examen initial ?")) {
+                              if (
+                                !user.numero_cfei ||
+                                window.confirm("N'êtes vous vraiment pas formé à l'examen initial ?")
+                              ) {
                                 setIsExaminateurInitial(false);
                                 handleUserSubmit({
                                   isExaminateurInitial: false,

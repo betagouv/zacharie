@@ -87,7 +87,9 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
   await page.getByRole('button', { name: 'Prendre en charge les carcasses' }).click();
   await expect(page.getByRole('heading', { name: 'Réception par mon établissement de traitement' })).toBeVisible();
   await expect(page.getByText('Étape suivante : Inspection')).toBeVisible();
-  await expect(page.getByText('Sélection du prochain destinataireProchain détenteur des carcasses *Indiquez')).toBeVisible();
+  await expect(
+    page.getByText('Sélection du prochain destinataireProchain détenteur des carcasses *Indiquez')
+  ).toBeVisible();
   await new Promise((resolve) => setTimeout(resolve, 500)); // if not, react-dsfr modal is having a bad time cause too many re-renders (I think)
   await page.getByRole('button', { name: 'Daim N° MM-001-001 Mise à' }).click();
   await page.getByText('Anomalies abats:Abcès ou').click();
@@ -106,7 +108,9 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
   await page.getByRole('button', { name: 'Daim N° MM-001-004 Mise à' }).click();
   await page.getByLabel('Daim - N° MM-001-004').getByText('Carcasse manquante').click();
   await expect(page.getByRole('button', { name: 'Daim N° MM-001-004 Mise à' })).toBeVisible();
-  await expect(page.getByText('Prise en charge des carcasses acceptées ou non refusées (10 pigeons, 1 daim).')).toBeVisible();
+  await expect(
+    page.getByText('Prise en charge des carcasses acceptées ou non refusées (10 pigeons, 1 daim).')
+  ).toBeVisible();
   await expect(page.getByText('Refus de 1 carcasse.')).toBeVisible();
   await expect(page.getByText('Je signale 1 carcasse manquante.')).toBeVisible();
   // await new Promise((resolve) => setTimeout(resolve, 200)); // to maybe prevent cache-lookup bug from postgres in backend
@@ -242,7 +246,9 @@ test('Pas de stockage - Je transfère à un autre collecteur', async ({ page }) 
   await page.getByRole('button', { name: 'Prendre en charge les carcasses' }).click();
   await expect(page.getByRole('heading', { name: 'Réception par mon établissement de traitement' })).toBeVisible();
   await expect(page.getByText('Étape suivante : Inspection')).toBeVisible();
-  await expect(page.getByText('Sélection du prochain destinataireProchain détenteur des carcasses *Indiquez')).toBeVisible();
+  await expect(
+    page.getByText('Sélection du prochain destinataireProchain détenteur des carcasses *Indiquez')
+  ).toBeVisible();
   await new Promise((resolve) => setTimeout(resolve, 500)); // if not, react-dsfr modal is having a bad time cause too many re-renders (I think)
   await page.getByRole('button', { name: 'Daim N° MM-001-001 Mise à' }).click();
   await page.getByText('Anomalies abats:Abcès ou').click();
@@ -262,7 +268,9 @@ test('Pas de stockage - Je transfère à un autre collecteur', async ({ page }) 
   await page.getByRole('button', { name: 'Daim N° MM-001-004 Mise à' }).click();
   await page.getByLabel('Daim - N° MM-001-004').getByText('Carcasse manquante').click();
   await expect(page.getByRole('button', { name: 'Daim N° MM-001-004 Mise à' })).toBeVisible();
-  await expect(page.getByText('Prise en charge des carcasses acceptées ou non refusées (10 pigeons, 1 daim).')).toBeVisible();
+  await expect(
+    page.getByText('Prise en charge des carcasses acceptées ou non refusées (10 pigeons, 1 daim).')
+  ).toBeVisible();
   await expect(page.getByText('Refus de 1 carcasse.')).toBeVisible();
   await expect(page.getByText('Je signale 1 carcasse manquante.')).toBeVisible();
   await page.getByRole('button', { name: 'Cliquez ici pour définir' }).click();
@@ -372,7 +380,9 @@ test('Pas de stockage - Je transfère à un autre ETG', async ({ page, context }
   await page.getByRole('button', { name: 'Prendre en charge les carcasses' }).click();
   await expect(page.getByRole('heading', { name: 'Réception par mon établissement de traitement' })).toBeVisible();
   await expect(page.getByText('Étape suivante : Inspection')).toBeVisible();
-  await expect(page.getByText('Sélection du prochain destinataireProchain détenteur des carcasses *Indiquez')).toBeVisible();
+  await expect(
+    page.getByText('Sélection du prochain destinataireProchain détenteur des carcasses *Indiquez')
+  ).toBeVisible();
   await new Promise((resolve) => setTimeout(resolve, 500)); // if not, react-dsfr modal is having a bad time cause too many re-renders (I think)
   await page.getByRole('button', { name: 'Daim N° MM-001-001 Mise à' }).click();
   await page.getByText('Anomalies abats:Abcès ou').click();
@@ -390,7 +400,9 @@ test('Pas de stockage - Je transfère à un autre ETG', async ({ page, context }
   await page.getByRole('button', { name: 'Daim N° MM-001-004 Mise à' }).click();
   await page.getByLabel('Daim - N° MM-001-004').getByText('Carcasse manquante').click();
   await expect(page.getByRole('button', { name: 'Daim N° MM-001-004 Mise à' })).toBeVisible();
-  await expect(page.getByText('Prise en charge des carcasses acceptées ou non refusées (10 pigeons, 1 daim).')).toBeVisible();
+  await expect(
+    page.getByText('Prise en charge des carcasses acceptées ou non refusées (10 pigeons, 1 daim).')
+  ).toBeVisible();
   await expect(page.getByText('Refus de 1 carcasse.')).toBeVisible();
   await expect(page.getByText('Je signale 1 carcasse manquante.')).toBeVisible();
   await page.getByRole('button', { name: 'Cliquez ici pour définir' }).click();

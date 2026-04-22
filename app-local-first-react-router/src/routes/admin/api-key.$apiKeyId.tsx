@@ -119,11 +119,15 @@ export default function AdminApiKey() {
     },
     {
       tabId: 'Entités',
-      label: apiKey.dedicated_to_entity_id ? 'Entité (1) 🔒' : `Entités (${apiKey.approvals.filter((rel) => rel.entity_id).length})`,
+      label: apiKey.dedicated_to_entity_id
+        ? 'Entité (1) 🔒'
+        : `Entités (${apiKey.approvals.filter((rel) => rel.entity_id).length})`,
     },
     {
       tabId: 'Utilisateurs',
-      label: apiKey.dedicated_to_entity_id ? 'Utilisateurs (0) 🔒' : `Utilisateurs (${apiKey.approvals.filter((rel) => rel.user_id).length})`,
+      label: apiKey.dedicated_to_entity_id
+        ? 'Utilisateurs (0) 🔒'
+        : `Utilisateurs (${apiKey.approvals.filter((rel) => rel.user_id).length})`,
     },
   ];
 
@@ -572,7 +576,10 @@ function UsersRelatedTo({ apiKeyReponseData, setApiKeyResponseData, setIsSaving 
         const user = approval.User;
         return (
           <div
-            className={['flex basis-full flex-row items-center justify-between border-solid text-left', 'bg-contrast-grey mb-2 border-0']
+            className={[
+              'flex basis-full flex-row items-center justify-between border-solid text-left',
+              'bg-contrast-grey mb-2 border-0',
+            ]
               .filter(Boolean)
               .join(' ')}
           >

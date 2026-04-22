@@ -122,7 +122,9 @@ function ExaminateurInitial() {
             legend={
               <div>
                 Êtes-vous formé à l'examen initial ? <span className="text-red-500">*</span>
-                <p className="text-sm text-gray-500">Cette information déterminera si vous pouvez créer des fiches d'examen initial</p>
+                <p className="text-sm text-gray-500">
+                  Cette information déterminera si vous pouvez créer des fiches d'examen initial
+                </p>
               </div>
             }
             orientation="horizontal"

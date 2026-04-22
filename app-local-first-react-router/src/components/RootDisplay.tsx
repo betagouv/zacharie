@@ -110,7 +110,9 @@ export default function RootDisplay({
     },
   ];
 
-  const quickAccessItems: Array<HeaderProps.QuickAccessItem> | undefined = user ? quickAccessItemsConnected : quickAccessItemsDisconnected;
+  const quickAccessItems: Array<HeaderProps.QuickAccessItem> | undefined = user
+    ? quickAccessItemsConnected
+    : quickAccessItemsDisconnected;
 
   return (
     <>

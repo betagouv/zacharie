@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'react';
 import API from '@app/services/api';
 import Chargement from '@app/components/Chargement';
-import type { AdminDashboardResponse, AdminDeltaBphResponse, AdminPartsDeMarcheResponse, AdminSaisiesSviResponse } from '@api/src/types/responses';
+import type {
+  AdminDashboardResponse,
+  AdminDeltaBphResponse,
+  AdminPartsDeMarcheResponse,
+  AdminSaisiesSviResponse,
+} from '@api/src/types/responses';
 import dayjs from 'dayjs';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Tabs } from '@codegouvfr/react-dsfr/Tabs';
@@ -168,7 +173,9 @@ export default function AdminDashboard() {
                         >
                           {count.toLocaleString('fr-FR')}
                         </div>
-                        <span className="absolute top-1/2 right-2 -translate-y-1/2 text-xs text-gray-400 tabular-nums">{pct.toFixed(1)}%</span>
+                        <span className="absolute top-1/2 right-2 -translate-y-1/2 text-xs text-gray-400 tabular-nums">
+                          {pct.toFixed(1)}%
+                        </span>
                       </div>
                     </div>
                   );
@@ -270,7 +277,8 @@ export default function AdminDashboard() {
               <div className="rounded-lg border border-gray-100 bg-white p-6 shadow-sm">
                 <h3 className="mb-1 text-lg font-semibold">Parts de marché par circuit</h3>
                 <p className="mb-5 text-sm text-gray-500">
-                  Part de marché absolue, potentielle et réelle sur l&apos;ensemble du circuit long, par saison de chasse
+                  Part de marché absolue, potentielle et réelle sur l&apos;ensemble du circuit long, par saison de
+                  chasse
                 </p>
                 <ResponsiveContainer
                   width="100%"
@@ -346,10 +354,12 @@ export default function AdminDashboard() {
 
                 return (
                   <div className="rounded-lg border border-gray-100 bg-white p-6 shadow-sm">
-                    <h3 className="mb-1 text-lg font-semibold">Répartition des examinateurs initiaux par delta de score BPH</h3>
+                    <h3 className="mb-1 text-lg font-semibold">
+                      Répartition des examinateurs initiaux par delta de score BPH
+                    </h3>
                     <p className="mb-5 text-sm text-gray-500">
-                      Différence entre la moyenne des 5 fiches les plus récentes et les 5 premières fiches (score BPH absolu). Examinateurs avec au
-                      moins 10 fiches.
+                      Différence entre la moyenne des 5 fiches les plus récentes et les 5 premières fiches (score BPH
+                      absolu). Examinateurs avec au moins 10 fiches.
                     </p>
                     <ResponsiveContainer
                       width="100%"
@@ -364,7 +374,12 @@ export default function AdminDashboard() {
                         />
                         <YAxis
                           allowDecimals={false}
-                          label={{ value: "Nombre d'examinateurs initiaux", angle: -90, position: 'insideLeft', offset: 10 }}
+                          label={{
+                            value: "Nombre d'examinateurs initiaux",
+                            angle: -90,
+                            position: 'insideLeft',
+                            offset: 10,
+                          }}
                         />
                         <Tooltip
                           labelFormatter={(d) => `Delta : ${d} à ${Number(d) + bucketSize}`}
@@ -408,7 +423,9 @@ export default function AdminDashboard() {
                   >
                     {saisiesSvi.taux_saisie_global}%
                   </p>
-                  <p className="mt-1 text-xs text-gray-400">{saisiesSvi.total_saisies.toLocaleString('fr-FR')} carcasses saisies</p>
+                  <p className="mt-1 text-xs text-gray-400">
+                    {saisiesSvi.total_saisies.toLocaleString('fr-FR')} carcasses saisies
+                  </p>
                 </div>
                 <div className="rounded-lg border border-gray-100 bg-white p-5 shadow-sm">
                   <p className="text-sm text-gray-500">Taux mauvaises pratiques</p>
@@ -429,7 +446,9 @@ export default function AdminDashboard() {
             {saisiesSvi && saisiesSvi.motifs.length > 0 && (
               <div className="rounded-lg border border-gray-100 bg-white p-6 shadow-sm">
                 <h3 className="mb-1 text-lg font-semibold">Tous les motifs de saisie totale (IPM2)</h3>
-                <p className="mb-5 text-sm text-gray-500">Fréquence des motifs sur l&apos;ensemble des saisies totales</p>
+                <p className="mb-5 text-sm text-gray-500">
+                  Fréquence des motifs sur l&apos;ensemble des saisies totales
+                </p>
                 <div className="space-y-2">
                   {saisiesSvi.motifs.map(({ motif, count, is_mauvaise_pratique }, i) => {
                     const maxCount = saisiesSvi.motifs[0].count;
@@ -472,7 +491,9 @@ export default function AdminDashboard() {
                 return (
                   <div className="rounded-lg border border-gray-100 bg-white p-6 shadow-sm">
                     <h3 className="mb-1 text-lg font-semibold">Motifs mauvaises pratiques (saisie totale)</h3>
-                    <p className="mb-5 text-sm text-gray-500">Sous-ensemble des motifs liés aux mauvaises pratiques d&apos;hygiène</p>
+                    <p className="mb-5 text-sm text-gray-500">
+                      Sous-ensemble des motifs liés aux mauvaises pratiques d&apos;hygiène
+                    </p>
                     <div className="space-y-2">
                       {mauvaises.map(({ motif, count }, i) => {
                         const maxCount = mauvaises[0].count;

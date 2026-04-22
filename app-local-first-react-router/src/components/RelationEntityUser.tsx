@@ -57,10 +57,13 @@ export default function RelationEntityUser({
   //     relation.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
   // );
   const canHandleCarcassesForEntity = entity.EntityRelationsWithUsers?.find(
-    (relation) => relation.owner_id === user.id && relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
+    (relation) =>
+      relation.owner_id === user.id && relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
   );
   const relationsToApprove = entity.EntityRelationsWithUsers?.filter(
-    (relation) => relation.status === EntityRelationStatus.REQUESTED && relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
+    (relation) =>
+      relation.status === EntityRelationStatus.REQUESTED &&
+      relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
   );
 
   const isAdminOfEntity = !canHandleCarcassesForEntity
@@ -68,10 +71,17 @@ export default function RelationEntityUser({
     : canHandleCarcassesForEntity.status === EntityRelationStatus.ADMIN &&
       canHandleCarcassesForEntity.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY;
 
-  const myRelationIsPending = !canHandleCarcassesForEntity ? false : canHandleCarcassesForEntity.status === EntityRelationStatus.REQUESTED;
+  const myRelationIsPending = !canHandleCarcassesForEntity
+    ? false
+    : canHandleCarcassesForEntity.status === EntityRelationStatus.REQUESTED;
 
   useEffect(() => {
-    if (isAdminOfEntity && entityUsersModal?.open && searchParams.get('open-entity') === entity.id.toString() && !isOpen) {
+    if (
+      isAdminOfEntity &&
+      entityUsersModal?.open &&
+      searchParams.get('open-entity') === entity.id.toString() &&
+      !isOpen
+    ) {
       setTimeout(() => {
         entityUsersModal.open?.();
         searchParams.delete('open-entity');
@@ -81,7 +91,10 @@ export default function RelationEntityUser({
 
   return (
     <div
-      className={['flex basis-full flex-row items-center justify-between border-solid text-left', 'bg-contrast-grey mb-2 border-0']
+      className={[
+        'flex basis-full flex-row items-center justify-between border-solid text-left',
+        'bg-contrast-grey mb-2 border-0',
+      ]
         .filter(Boolean)
         .join(' ')}
     >
@@ -165,11 +178,13 @@ export default function RelationEntityUser({
             )}
           </div>
         )}
-        {myRelationIsPending && !canApproveRelation && relationType === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY && (
-          <div className="flex flex-col justify-center gap-2 py-4">
-            <p className="italic">En attente de validation</p>
-          </div>
-        )}
+        {myRelationIsPending &&
+          !canApproveRelation &&
+          relationType === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY && (
+            <div className="flex flex-col justify-center gap-2 py-4">
+              <p className="italic">En attente de validation</p>
+            </div>
+          )}
         {canApproveRelation && (
           <div className="flex basis-3xs flex-col justify-center gap-2 py-4">
             <RelationStatusSelector

@@ -77,19 +77,23 @@ export async function saveCarcasseIntermediaire(
     data.prise_en_charge_at = body[Prisma.CarcasseIntermediaireScalarFieldEnum.prise_en_charge_at];
   }
   if (body.hasOwnProperty(Prisma.CarcasseIntermediaireScalarFieldEnum.intermediaire_prochain_detenteur_id_cache)) {
-    data.intermediaire_prochain_detenteur_id_cache = body[Prisma.CarcasseIntermediaireScalarFieldEnum.intermediaire_prochain_detenteur_id_cache];
+    data.intermediaire_prochain_detenteur_id_cache =
+      body[Prisma.CarcasseIntermediaireScalarFieldEnum.intermediaire_prochain_detenteur_id_cache];
   }
   if (body.hasOwnProperty(Prisma.CarcasseIntermediaireScalarFieldEnum.intermediaire_prochain_detenteur_role_cache)) {
-    data.intermediaire_prochain_detenteur_role_cache = body[Prisma.CarcasseIntermediaireScalarFieldEnum.intermediaire_prochain_detenteur_role_cache];
+    data.intermediaire_prochain_detenteur_role_cache =
+      body[Prisma.CarcasseIntermediaireScalarFieldEnum.intermediaire_prochain_detenteur_role_cache];
   }
   if (body.hasOwnProperty(Prisma.CarcasseIntermediaireScalarFieldEnum.intermediaire_depot_type)) {
     data.intermediaire_depot_type = body[Prisma.CarcasseIntermediaireScalarFieldEnum.intermediaire_depot_type];
   }
   if (body.hasOwnProperty(Prisma.CarcasseIntermediaireScalarFieldEnum.intermediaire_depot_entity_id)) {
-    data.intermediaire_depot_entity_id = body[Prisma.CarcasseIntermediaireScalarFieldEnum.intermediaire_depot_entity_id];
+    data.intermediaire_depot_entity_id =
+      body[Prisma.CarcasseIntermediaireScalarFieldEnum.intermediaire_depot_entity_id];
   }
   if (body.hasOwnProperty(Prisma.CarcasseIntermediaireScalarFieldEnum.nombre_d_animaux_acceptes)) {
-    data.nombre_d_animaux_acceptes = body[Prisma.CarcasseIntermediaireScalarFieldEnum.nombre_d_animaux_acceptes] ?? null;
+    data.nombre_d_animaux_acceptes =
+      body[Prisma.CarcasseIntermediaireScalarFieldEnum.nombre_d_animaux_acceptes] ?? null;
   }
 
   const carcasseIntermediaire = await prisma.carcasseIntermediaire.upsert({
@@ -110,93 +114,102 @@ export async function saveCarcasseIntermediaire(
 router.post(
   '/:fei_numero/:intermediaire_id/:zacharie_carcasse_id',
   passport.authenticate('user', { session: false }),
-  catchErrors(async (req: express.Request, res: express.Response<CarcasseIntermediaireResponse>, next: express.NextFunction) => {
-    const user = req.user;
-    if (!user.activated) {
-      res.status(400).send({
-        ok: false,
-        data: { carcasseIntermediaire: null },
-        error: "Le compte n'est pas activé",
-      });
-      return;
-    }
-    const { fei_numero, intermediaire_id, zacharie_carcasse_id } = req.params;
+  catchErrors(
+    async (req: express.Request, res: express.Response<CarcasseIntermediaireResponse>, next: express.NextFunction) => {
+      const user = req.user;
+      if (!user.activated) {
+        res.status(400).send({
+          ok: false,
+          data: { carcasseIntermediaire: null },
+          error: "Le compte n'est pas activé",
+        });
+        return;
+      }
+      const { fei_numero, intermediaire_id, zacharie_carcasse_id } = req.params;
 
-    try {
-      const carcasseIntermediaire = await saveCarcasseIntermediaire(fei_numero, intermediaire_id, zacharie_carcasse_id, req.body);
+      try {
+        const carcasseIntermediaire = await saveCarcasseIntermediaire(
+          fei_numero,
+          intermediaire_id,
+          zacharie_carcasse_id,
+          req.body
+        );
+
+        res.status(200).send({
+          ok: true,
+          data: { carcasseIntermediaire },
+          error: '',
+        });
+      } catch (error) {
+        res.status(400).send({
+          ok: false,
+          data: { carcasseIntermediaire: null },
+          error: (error as Error).message,
+        });
+      }
+    }
+  )
+);
+
+router.get(
+  '/:fei_numero/:intermediaire_id/:zacharie_carcasse_id',
+  passport.authenticate('user', { session: false }),
+  catchErrors(
+    async (req: express.Request, res: express.Response<CarcasseIntermediaireResponse>, next: express.NextFunction) => {
+      if (!req.user.activated) {
+        res.status(400).send({
+          ok: false,
+          data: { carcasseIntermediaire: null },
+          error: "Le compte n'est pas activé",
+        });
+        return;
+      }
+      if (!req.params.fei_numero) {
+        res.status(400).send({ ok: false, data: null, error: 'Missing fei_numero' });
+        return;
+      }
+      const fei = await prisma.fei.findUnique({
+        where: {
+          numero: req.params.fei_numero as string,
+        },
+      });
+      if (!fei) {
+        res.status(400).send({ ok: false, data: null, error: 'Unauthorized' });
+        return;
+      }
+      if (!req.params.intermediaire_id) {
+        res.status(400).send({ ok: false, data: null, error: 'Missing intermediaire_id' });
+        return;
+      }
+      if (!req.params.zacharie_carcasse_id) {
+        res.status(400).send({ ok: false, data: null, error: 'Missing zacharie_carcasse_id' });
+        return;
+      }
+      const carcasseIntermediaire = await prisma.carcasseIntermediaire.findUnique({
+        where: {
+          fei_numero_zacharie_carcasse_id_intermediaire_id: {
+            fei_numero: req.params.fei_numero,
+            zacharie_carcasse_id: req.params.zacharie_carcasse_id,
+            intermediaire_id: req.params.intermediaire_id,
+          },
+        },
+      });
+      if (!carcasseIntermediaire) {
+        res.status(400).send({
+          ok: false,
+          data: null,
+          error: 'Missing caracsse intermediaire',
+        });
+        return;
+      }
 
       res.status(200).send({
         ok: true,
         data: { carcasseIntermediaire },
         error: '',
       });
-    } catch (error) {
-      res.status(400).send({
-        ok: false,
-        data: { carcasseIntermediaire: null },
-        error: (error as Error).message,
-      });
     }
-  })
-);
-
-router.get(
-  '/:fei_numero/:intermediaire_id/:zacharie_carcasse_id',
-  passport.authenticate('user', { session: false }),
-  catchErrors(async (req: express.Request, res: express.Response<CarcasseIntermediaireResponse>, next: express.NextFunction) => {
-    if (!req.user.activated) {
-      res.status(400).send({
-        ok: false,
-        data: { carcasseIntermediaire: null },
-        error: "Le compte n'est pas activé",
-      });
-      return;
-    }
-    if (!req.params.fei_numero) {
-      res.status(400).send({ ok: false, data: null, error: 'Missing fei_numero' });
-      return;
-    }
-    const fei = await prisma.fei.findUnique({
-      where: {
-        numero: req.params.fei_numero as string,
-      },
-    });
-    if (!fei) {
-      res.status(400).send({ ok: false, data: null, error: 'Unauthorized' });
-      return;
-    }
-    if (!req.params.intermediaire_id) {
-      res.status(400).send({ ok: false, data: null, error: 'Missing intermediaire_id' });
-      return;
-    }
-    if (!req.params.zacharie_carcasse_id) {
-      res.status(400).send({ ok: false, data: null, error: 'Missing zacharie_carcasse_id' });
-      return;
-    }
-    const carcasseIntermediaire = await prisma.carcasseIntermediaire.findUnique({
-      where: {
-        fei_numero_zacharie_carcasse_id_intermediaire_id: {
-          fei_numero: req.params.fei_numero,
-          zacharie_carcasse_id: req.params.zacharie_carcasse_id,
-          intermediaire_id: req.params.intermediaire_id,
-        },
-      },
-    });
-    if (!carcasseIntermediaire) {
-      res.status(400).send({
-        ok: false,
-        data: null,
-        error: 'Missing caracsse intermediaire',
-      });
-      return;
-    }
-
-    res.status(200).send({
-      ok: true,
-      data: { carcasseIntermediaire },
-      error: '',
-    });
-  })
+  )
 );
 
 export default router;

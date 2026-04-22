@@ -78,7 +78,9 @@ const renderNestedDetails = (
         key={key}
         className="mb-2"
       >
-        <summary className="hover:text-action-high-blue-france cursor-pointer font-semibold focus:outline-hidden">{key}</summary>
+        <summary className="hover:text-action-high-blue-france cursor-pointer font-semibold focus:outline-hidden">
+          {key}
+        </summary>
         <div className="mt-2 ml-4">{renderNestedDetails(value, onItemClick, skipParent, key)}</div>
       </details>
     );
@@ -104,7 +106,11 @@ const ModalTreeDisplay: React.FC<HierarchicalDataModalProps> = ({ modal, data, t
         },
       ]}
     >
-      {isModalOpen && <div className="max-h-[70vh] overflow-y-auto p-4">{renderNestedDetails(data, _onItemClick, skipParent, '')}</div>}
+      {isModalOpen && (
+        <div className="max-h-[70vh] overflow-y-auto p-4">
+          {renderNestedDetails(data, _onItemClick, skipParent, '')}
+        </div>
+      )}
     </modal.Component>
   );
 };

@@ -190,7 +190,9 @@ test('Examinateur initial ajoute une association de chasse depuis son profil', a
   await page.getByRole('button', { name: 'Créer et me rattacher à cette entité', exact: true }).click();
   // Verify the association was added - check for button "Retirer" which appears next to added associations
   await expect(page.getByRole('button', { name: 'Retirer' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Chambres froides (Centres de Collecte du Gibier sauvage)' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Chambres froides (Centres de Collecte du Gibier sauvage)' })
+  ).toBeVisible();
   await page
     .getByText(
       "Autoriser Zacharie à faire apparaître dans les champs de transmission des fiches les sociétés ou associations pour lesquelles l'utilisateur travaille ou auxquelles il appartient."
@@ -204,7 +206,9 @@ test('Examinateur initial ajoute une association de chasse existante depuis son 
   // First complete basic onboarding
   await page.goto('http://localhost:3290/');
   await page.getByRole('link', { name: 'Créer un compte' }).first().click();
-  await page.getByRole('textbox', { name: 'Mon email Renseignez votre' }).fill('examinateur-avec-asso-existante@example.fr');
+  await page
+    .getByRole('textbox', { name: 'Mon email Renseignez votre' })
+    .fill('examinateur-avec-asso-existante@example.fr');
   await page.getByRole('textbox', { name: 'Mon mot de passe Veuillez' }).fill('secret-secret');
   await page.getByRole('button', { name: 'Créer mon compte' }).click();
   await page.getByRole('textbox', { name: 'Nom *', exact: true }).fill('Jean');
@@ -276,7 +280,9 @@ test('Premier détenteur devient examinateur initial depuis son profil', async (
   // First complete basic onboarding as non-examinateur
   await page.goto('http://localhost:3290/');
   await page.getByRole('link', { name: 'Créer un compte' }).first().click();
-  await page.getByRole('textbox', { name: 'Mon email Renseignez votre' }).fill('detenteur-devient-examinateur@example.fr');
+  await page
+    .getByRole('textbox', { name: 'Mon email Renseignez votre' })
+    .fill('detenteur-devient-examinateur@example.fr');
   await page.getByRole('textbox', { name: 'Mon mot de passe Veuillez' }).fill('secret-secret');
   await page.getByRole('button', { name: 'Créer mon compte' }).click();
   await page.getByRole('textbox', { name: 'Nom *', exact: true }).fill('Paul');

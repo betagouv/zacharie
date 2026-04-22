@@ -16,8 +16,15 @@ import { syncProchainBraceletAUtiliser } from './user';
 import updateCarcasseStatus from '@app/utils/get-carcasse-status';
 import { CarcasseForResponseForRegistry } from '@api/src/types/carcasse';
 // PQueue removed - using bulk sync via POST /sync
-import { getFeiAndCarcasseAndIntermediaireIds, getFeiAndIntermediaireIds } from '@app/utils/get-carcasse-intermediaire-id';
-import type { FeiAndCarcasseAndIntermediaireIds, FeiAndIntermediaireIds, FeiIntermediaire } from '@app/types/fei-intermediaire';
+import {
+  getFeiAndCarcasseAndIntermediaireIds,
+  getFeiAndIntermediaireIds,
+} from '@app/utils/get-carcasse-intermediaire-id';
+import type {
+  FeiAndCarcasseAndIntermediaireIds,
+  FeiAndIntermediaireIds,
+  FeiIntermediaire,
+} from '@app/types/fei-intermediaire';
 import API from '@app/services/api';
 import { capture } from '@app/services/sentry';
 import { mapFeiFieldsToCarcasse } from '@app/utils/map-fei-fields-to-carcasse';
@@ -72,7 +79,11 @@ interface Actions {
   createFei: (newFei: FeiWithIntermediaires) => void;
   updateFei: (fei_numero: FeiWithIntermediaires['numero'], fei: Partial<FeiWithIntermediaires>) => void;
   createCarcasse: (newCarcasse: Carcasse) => void;
-  updateCarcasse: (zacharie_carcasse_id: Carcasse['zacharie_carcasse_id'], carcasse: Partial<Carcasse>, updateFei: boolean) => void;
+  updateCarcasse: (
+    zacharie_carcasse_id: Carcasse['zacharie_carcasse_id'],
+    carcasse: Partial<Carcasse>,
+    updateFei: boolean
+  ) => void;
   updateCarcassesTransmission: (
     zacharie_carcasse_ids: string[],
     transmissionFields: Partial<
@@ -199,7 +210,11 @@ const useZustandStore = create<State & Actions>()(
           });
           get().updateFei(newCarcasse.fei_numero, { updated_at: dayjs().toDate() });
         },
-        updateCarcasse: (zacharie_carcasse_id: Carcasse['zacharie_carcasse_id'], partialCarcasse: Partial<Carcasse>, updateFei: boolean) => {
+        updateCarcasse: (
+          zacharie_carcasse_id: Carcasse['zacharie_carcasse_id'],
+          partialCarcasse: Partial<Carcasse>,
+          updateFei: boolean
+        ) => {
           const carcasses = useZustandStore.getState().carcasses;
           const nextCarcasse = {
             ...carcasses[zacharie_carcasse_id],
@@ -234,7 +249,9 @@ const useZustandStore = create<State & Actions>()(
           return new Promise((resolve) => {
             const feiNumero = newIntermediaires[0].fei_numero;
             const allCarcasses = filterCarcassesForFei(useZustandStore.getState().carcasses, feiNumero);
-            const carcasses = specificCarcasseIds ? allCarcasses.filter((c) => specificCarcasseIds.includes(c.zacharie_carcasse_id)) : allCarcasses;
+            const carcasses = specificCarcasseIds
+              ? allCarcasses.filter((c) => specificCarcasseIds.includes(c.zacharie_carcasse_id))
+              : allCarcasses;
             const byId: Record<FeiAndCarcasseAndIntermediaireIds, CarcasseIntermediaire> = {};
             for (const newIntermediaire of newIntermediaires) {
               const carcassesIntermediaires: Array<CarcasseIntermediaire> = carcasses
@@ -327,7 +344,8 @@ const useZustandStore = create<State & Actions>()(
           feiAndCarcasseAndIntermediaireIds: FeiAndCarcasseAndIntermediaireIds,
           partialCarcasseIntermediaire: Partial<CarcasseIntermediaire>
         ) => {
-          const carcasseIntermediaire = useZustandStore.getState().carcassesIntermediaireById[feiAndCarcasseAndIntermediaireIds];
+          const carcasseIntermediaire =
+            useZustandStore.getState().carcassesIntermediaireById[feiAndCarcasseAndIntermediaireIds];
 
           useZustandStore.setState((state) => {
             return {
@@ -434,7 +452,12 @@ export async function syncData(calledFrom: string) {
   const unsyncedLogs = state.logs.filter((l) => !l.is_synced);
 
   // Nothing to sync
-  if (unsyncedFeis.length === 0 && unsyncedCarcasses.length === 0 && unsyncedIntermediaires.length === 0 && unsyncedLogs.length === 0) {
+  if (
+    unsyncedFeis.length === 0 &&
+    unsyncedCarcasses.length === 0 &&
+    unsyncedIntermediaires.length === 0 &&
+    unsyncedLogs.length === 0
+  ) {
     useZustandStore.setState({ dataIsSynced: true });
     return;
   }

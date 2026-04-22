@@ -5,7 +5,10 @@ export default function LandingPage() {
   const setVideoUrl = useVideo((state) => state.setVideoUrl);
   return (
     <>
-      <title>Zacharie | Garantir des viandes de gibier sauvage saines et sûres | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
+      <title>
+        Zacharie | Garantir des viandes de gibier sauvage saines et sûres | Ministère de l'Agriculture et de la
+        Souveraineté Alimentaire
+      </title>
       <main>
         {/* Hero Section */}
         <section className="min-h-96 bg-[#A38A6C] bg-[url('/landing/gradient-cerf.webp')] bg-cover bg-center bg-no-repeat py-16 lg:min-h-auto lg:py-24 2xl:py-36">
@@ -13,7 +16,8 @@ export default function LandingPage() {
             <div className="grid h-full items-center gap-12 lg:grid-cols-2">
               <div className="flex h-full max-w-[75vw] flex-col justify-center sm:max-w-[50vw] 2xl:max-w-[35vw]">
                 <h1 className="3xl:text-5xl text-2xl leading-tight font-bold text-white! text-shadow-xs lg:text-3xl 2xl:text-4xl">
-                  Réalisez vos fiches d'examen initial du gibier directement depuis votre smartphone ou votre ordinateur, où que vous soyez.
+                  Réalisez vos fiches d'examen initial du gibier directement depuis votre smartphone ou votre
+                  ordinateur, où que vous soyez.
                 </h1>
                 <p className="3xl:text-5xl mt-8 text-2xl leading-tight font-bold text-white! text-shadow-xs lg:mt-[10%] lg:text-3xl 2xl:text-4xl">
                   Simple, rapide et 100% gratuit, Zacharie accélère vos démarches.

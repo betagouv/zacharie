@@ -72,7 +72,9 @@ export default function DestinataireSousTraite({
   }, [etgs, collecteursPros, svis, fei.fei_current_owner_role]);
 
   const canTransmitCarcassesToEntities = useMemo(() => {
-    return prochainsDetenteurs.filter((entity) => entity.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY);
+    return prochainsDetenteurs.filter(
+      (entity) => entity.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY
+    );
   }, [prochainsDetenteurs]);
 
   const prochainsDetenteursOptions = useMemo(() => {
@@ -170,7 +172,12 @@ export default function DestinataireSousTraite({
       }
     }
     return null;
-  }, [prochainDetenteurEntityId, fei.fei_next_owner_wants_to_sous_traite, prochainDetenteurType, intermediaire?.intermediaire_role]);
+  }, [
+    prochainDetenteurEntityId,
+    fei.fei_next_owner_wants_to_sous_traite,
+    prochainDetenteurType,
+    intermediaire?.intermediaire_role,
+  ]);
 
   return (
     <>
@@ -182,7 +189,9 @@ export default function DestinataireSousTraite({
           label="Prochain détenteur des carcasses *"
           hint={
             <>
-              <span>Indiquez ici la personne ou la structure avec qui vous êtes en contact pour prendre en charge le gibier.</span>
+              <span>
+                Indiquez ici la personne ou la structure avec qui vous êtes en contact pour prendre en charge le gibier.
+              </span>
               {!prochainDetenteurEntityId && (
                 <div>
                   {canTransmitCarcassesToEntities.map((entity) => {

@@ -53,7 +53,9 @@ export default function CollecteurDestinataireSousTraite({
   }, [etgs, collecteursPros]);
 
   const canTransmitCarcassesToEntities = useMemo(() => {
-    return prochainsDetenteurs.filter((entity) => entity.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY);
+    return prochainsDetenteurs.filter(
+      (entity) => entity.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY
+    );
   }, [prochainsDetenteurs]);
 
   const prochainsDetenteursOptions = useMemo(() => {
@@ -154,7 +156,9 @@ export default function CollecteurDestinataireSousTraite({
           label="Prochain détenteur des carcasses *"
           hint={
             <>
-              <span>Indiquez ici la personne ou la structure avec qui vous êtes en contact pour prendre en charge le gibier.</span>
+              <span>
+                Indiquez ici la personne ou la structure avec qui vous êtes en contact pour prendre en charge le gibier.
+              </span>
               {!prochainDetenteurEntityId && (
                 <div>
                   {canTransmitCarcassesToEntities.map((entity) => {

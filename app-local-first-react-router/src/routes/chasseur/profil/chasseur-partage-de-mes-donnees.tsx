@@ -32,7 +32,9 @@ export default function PartageDeMesDonnees() {
   }, []);
 
   const accessToPersonalAccount = apiKeyApprovals.filter((approval) => !!approval.user_id);
-  const accessToEntities = apiKeyApprovals.filter((approval) => !!approval.entity_id && !approval.ApiKey.dedicated_to_entity_id);
+  const accessToEntities = apiKeyApprovals.filter(
+    (approval) => !!approval.entity_id && !approval.ApiKey.dedicated_to_entity_id
+  );
   const dedicatedToMyEntities = apiKeyApprovals.filter((approval) => !!approval.ApiKey.dedicated_to_entity_id);
 
   return (
@@ -63,10 +65,10 @@ export default function PartageDeMesDonnees() {
                   </a>
                   .<br />
                   <br />
-                  Si vous êtes vous-même éditeur de logiciel et que vous avez besoin de la valeur de votre clé privée, veuillez nous{' '}
-                  <Link to="/contact">contacter</Link>.<br />
-                  Si vous pensez que votre clé est compromise, veuillez la révoquer ci-dessous et nous <Link to="/contact">contacter</Link> pour la
-                  régénérer.
+                  Si vous êtes vous-même éditeur de logiciel et que vous avez besoin de la valeur de votre clé privée,
+                  veuillez nous <Link to="/contact">contacter</Link>.<br />
+                  Si vous pensez que votre clé est compromise, veuillez la révoquer ci-dessous et nous{' '}
+                  <Link to="/contact">contacter</Link> pour la régénérer.
                 </Highlight>
                 {dedicatedToMyEntities.map((approval) => {
                   const entity = entities[approval.entity_id!];
@@ -76,7 +78,10 @@ export default function PartageDeMesDonnees() {
                   return (
                     <div
                       key={approval.id && approval.status}
-                      className={['flex basis-full flex-row items-center justify-between border-solid text-left', 'bg-contrast-grey mb-2 border-0']
+                      className={[
+                        'flex basis-full flex-row items-center justify-between border-solid text-left',
+                        'bg-contrast-grey mb-2 border-0',
+                      ]
                         .filter(Boolean)
                         .join(' ')}
                     >
@@ -132,8 +137,8 @@ export default function PartageDeMesDonnees() {
                     root: 'fr-highlight--green-emeraude',
                   }}
                 >
-                  Certains éditeurs de logiciels souhaitent accéder à vos données Zacharie pour vous proposer des services via leur application. Vous
-                  pouvez gérer les autorisations ci-dessous.
+                  Certains éditeurs de logiciels souhaitent accéder à vos données Zacharie pour vous proposer des
+                  services via leur application. Vous pouvez gérer les autorisations ci-dessous.
                 </Highlight>
                 {accessToPersonalAccount.map((approval) => {
                   if (approval.user_id !== user.id) {
@@ -142,7 +147,10 @@ export default function PartageDeMesDonnees() {
                   return (
                     <div
                       key={approval.id && approval.status}
-                      className={['flex basis-full flex-row items-center justify-between border-solid text-left', 'bg-contrast-grey mb-2 border-0']
+                      className={[
+                        'flex basis-full flex-row items-center justify-between border-solid text-left',
+                        'bg-contrast-grey mb-2 border-0',
+                      ]
                         .filter(Boolean)
                         .join(' ')}
                     >
@@ -198,8 +206,8 @@ export default function PartageDeMesDonnees() {
                     root: 'fr-highlight--green-emeraude',
                   }}
                 >
-                  Certains éditeurs de logiciels souhaitent accéder à vos données Zacharie pour vous proposer des services via leur application. Vous
-                  pouvez gérer les autorisations ci-dessous.
+                  Certains éditeurs de logiciels souhaitent accéder à vos données Zacharie pour vous proposer des
+                  services via leur application. Vous pouvez gérer les autorisations ci-dessous.
                 </Highlight>
                 {accessToEntities.map((approval) => {
                   const entity = entities[approval.entity_id!];
@@ -209,7 +217,10 @@ export default function PartageDeMesDonnees() {
                   return (
                     <div
                       key={approval.id && approval.status}
-                      className={['flex basis-full flex-row items-center justify-between border-solid text-left', 'bg-contrast-grey mb-2 border-0']
+                      className={[
+                        'flex basis-full flex-row items-center justify-between border-solid text-left',
+                        'bg-contrast-grey mb-2 border-0',
+                      ]
                         .filter(Boolean)
                         .join(' ')}
                     >

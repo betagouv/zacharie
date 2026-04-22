@@ -73,7 +73,9 @@ export function setFeiInStore(fei: FeiForRefresh) {
   }
 
   for (const carcasseIntermediaire of fei.CarcasseIntermediaire || []) {
-    const feiAndCarcasseAndIntermediaireId = getFeiAndCarcasseAndIntermediaireIds(carcasseIntermediaire) as FeiAndCarcasseAndIntermediaireIds;
+    const feiAndCarcasseAndIntermediaireId = getFeiAndCarcasseAndIntermediaireIds(
+      carcasseIntermediaire
+    ) as FeiAndCarcasseAndIntermediaireIds;
 
     const localCarcasseIntermediaire = prevState.carcassesIntermediaireById[feiAndCarcasseAndIntermediaireId];
 
@@ -81,9 +83,13 @@ export function setFeiInStore(fei: FeiForRefresh) {
       prevState.carcassesIntermediaireById[feiAndCarcasseAndIntermediaireId] = carcasseIntermediaire;
     } else {
       const newestCarcasseIntermediaire =
-        dayjs(localCarcasseIntermediaire.updated_at).diff(carcasseIntermediaire.updated_at) > 0 ? localCarcasseIntermediaire : carcasseIntermediaire;
+        dayjs(localCarcasseIntermediaire.updated_at).diff(carcasseIntermediaire.updated_at) > 0
+          ? localCarcasseIntermediaire
+          : carcasseIntermediaire;
       const oldestCarcasseIntermediaire =
-        dayjs(localCarcasseIntermediaire.updated_at).diff(carcasseIntermediaire.updated_at) > 0 ? carcasseIntermediaire : localCarcasseIntermediaire;
+        dayjs(localCarcasseIntermediaire.updated_at).diff(carcasseIntermediaire.updated_at) > 0
+          ? carcasseIntermediaire
+          : localCarcasseIntermediaire;
       prevState.carcassesIntermediaireById[feiAndCarcasseAndIntermediaireId] = {
         ...oldestCarcasseIntermediaire,
         ...newestCarcasseIntermediaire,

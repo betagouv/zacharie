@@ -3,7 +3,14 @@ import request from 'supertest';
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
 import userEntityRouter from '~/controllers/user-entity';
 import prisma from '~/prisma';
-import { Entity, EntityAndUserRelations, EntityRelationStatus, EntityRelationType, EntityTypes, UserRoles } from '@prisma/client';
+import {
+  Entity,
+  EntityAndUserRelations,
+  EntityRelationStatus,
+  EntityRelationType,
+  EntityTypes,
+  UserRoles,
+} from '@prisma/client';
 
 // Mock third-party side effects
 vi.mock('~/third-parties/brevo', () => ({
@@ -256,7 +263,10 @@ describe('POST /user-entity/', () => {
     });
 
     test('missing relation → 400', async () => {
-      const res = await authed(request(app).post(BASE).send({ owner_id: regularUser.id, entity_id: 'entity-1' }), regularUser);
+      const res = await authed(
+        request(app).post(BASE).send({ owner_id: regularUser.id, entity_id: 'entity-1' }),
+        regularUser
+      );
 
       expect(res.status).toBe(400);
     });
@@ -692,7 +702,10 @@ describe('PUT /user-entity/', () => {
     });
 
     test('missing relation → 400', async () => {
-      const res = await authed(request(app).put(BASE).send({ owner_id: regularUser.id, entity_id: 'entity-1' }), regularUser);
+      const res = await authed(
+        request(app).put(BASE).send({ owner_id: regularUser.id, entity_id: 'entity-1' }),
+        regularUser
+      );
 
       expect(res.status).toBe(400);
     });

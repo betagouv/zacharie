@@ -57,7 +57,9 @@ export default function UtilisateursDeMonEntreprise() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
-  const title = user.roles.includes(UserRoles.SVI) ? 'Ajouter un utilisateur à mon service' : 'Ajouter un utilisateur à mon entreprise';
+  const title = user.roles.includes(UserRoles.SVI)
+    ? 'Ajouter un utilisateur à mon service'
+    : 'Ajouter un utilisateur à mon entreprise';
 
   return (
     <>
@@ -70,10 +72,13 @@ export default function UtilisateursDeMonEntreprise() {
               .filter((entity) => entity.type === entityType)
               .map((entity) => {
                 const relation = entity.EntityRelationsWithUsers.find(
-                  (relation) => relation.owner_id === user.id && relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
+                  (relation) =>
+                    relation.owner_id === user.id &&
+                    relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
                 );
                 if (!relation) return null;
-                if (relation.status !== EntityRelationStatus.ADMIN && relation.status !== EntityRelationStatus.MEMBER) return null;
+                if (relation.status !== EntityRelationStatus.ADMIN && relation.status !== EntityRelationStatus.MEMBER)
+                  return null;
                 return (
                   <div className="mb-6 bg-white md:shadow-sm">
                     <div className="p-4 md:p-8">
@@ -107,7 +112,9 @@ export default function UtilisateursDeMonEntreprise() {
                             },
                           }).then((res) => {
                             if (res.ok) {
-                              alert('Utilisateur invité avec succès. Il recevra un email pour se connecter à Zacharie.');
+                              alert(
+                                'Utilisateur invité avec succès. Il recevra un email pour se connecter à Zacharie.'
+                              );
                               setNewUserEmail('');
                               setRefreshKey((k) => k + 1);
                             }
@@ -116,7 +123,9 @@ export default function UtilisateursDeMonEntreprise() {
                       >
                         Inviter
                       </Button>
-                      <h3 className="my-8 text-lg font-semibold text-gray-900">Utilisateurs existants de {entity.nom_d_usage}</h3>
+                      <h3 className="my-8 text-lg font-semibold text-gray-900">
+                        Utilisateurs existants de {entity.nom_d_usage}
+                      </h3>
                       <RelationEntityUsersList
                         entity={entity}
                         refreshKey={refreshKey}

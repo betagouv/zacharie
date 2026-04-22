@@ -13,7 +13,13 @@ type InitialParamsProps = {
   fei: FeiWithIntermediaires;
 };
 
-export async function createNewCarcasse({ zacharieCarcasseId, numeroBracelet, espece, nombreDAnimaux, fei }: InitialParamsProps): Promise<Carcasse> {
+export async function createNewCarcasse({
+  zacharieCarcasseId,
+  numeroBracelet,
+  espece,
+  nombreDAnimaux,
+  fei,
+}: InitialParamsProps): Promise<Carcasse> {
   const user = useUser.getState().user;
   if (!user?.id) {
     throw new Error('No user found');
@@ -107,7 +113,8 @@ export async function createNewCarcasse({ zacharieCarcasseId, numeroBracelet, es
     examinateur_initial_offline: fei.examinateur_initial_offline,
     examinateur_initial_user_id: fei.examinateur_initial_user_id,
     examinateur_initial_approbation_mise_sur_le_marche: fei.examinateur_initial_approbation_mise_sur_le_marche,
-    examinateur_initial_date_approbation_mise_sur_le_marche: fei.examinateur_initial_date_approbation_mise_sur_le_marche,
+    examinateur_initial_date_approbation_mise_sur_le_marche:
+      fei.examinateur_initial_date_approbation_mise_sur_le_marche,
     premier_detenteur_offline: null,
     premier_detenteur_user_id: null,
     premier_detenteur_entity_id: null,

@@ -16,10 +16,17 @@
     "Testicules gonflés",
     "Autres anomalies de conformation"
   ],
-  "Anomalies de consistance": ["Consistance anormalement ferme, dure des testicules", "Autres anomalies de consistance"],
+  "Anomalies de consistance": [
+    "Consistance anormalement ferme, dure des testicules",
+    "Autres anomalies de consistance"
+  ],
   "Anomalies de couleur": ["Couleur anormale"],
   "Anomalies d’odeur": ["Odeur anormale"],
   "Parasites": ["Poux", "Sangsues", "Tiques", "Autres parasites"],
-  "Traumatisme (autres que liés à l’impact du projectile de chasse)": ["Fracture", "Morsure de chien", "Autres lésions de traumatisme"],
+  "Traumatisme (autres que liés à l’impact du projectile de chasse)": [
+    "Fracture",
+    "Morsure de chien",
+    "Autres lésions de traumatisme"
+  ],
   "Autres anomalies *(champ libre)*": []
 }

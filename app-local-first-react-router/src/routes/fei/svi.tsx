@@ -37,7 +37,10 @@ export default function FEI_SVI() {
     [allCarcassesForFei]
   );
 
-  const carcassesAAfficher = useMemo(() => allCarcassesForFei.filter((c) => !c.intermediaire_carcasse_refus_intermediaire_id), [allCarcassesForFei]);
+  const carcassesAAfficher = useMemo(
+    () => allCarcassesForFei.filter((c) => !c.intermediaire_carcasse_refus_intermediaire_id),
+    [allCarcassesForFei]
+  );
 
   const [showRefusedCarcasses, setShowRefusedCarcasses] = useState(false);
 
@@ -133,7 +136,8 @@ export default function FEI_SVI() {
               }}
               priority="secondary"
             >
-              {showRefusedCarcasses ? 'Masquer' : 'Afficher'} les carcasses déjà refusées ({carcassesDejaRefusees.length})
+              {showRefusedCarcasses ? 'Masquer' : 'Afficher'} les carcasses déjà refusées (
+              {carcassesDejaRefusees.length})
             </Button>
           </div>
         )}
@@ -164,7 +168,8 @@ export default function FEI_SVI() {
               nextFei.fei_current_owner_entity_id = fei.fei_next_owner_entity_id;
               nextFei.fei_current_owner_entity_name_cache = fei.fei_next_owner_entity_name_cache;
               nextFei.fei_current_owner_user_id = user.id;
-              nextFei.fei_current_owner_user_name_cache = fei.fei_next_owner_user_name_cache || `${user.prenom} ${user.nom_de_famille}`;
+              nextFei.fei_current_owner_user_name_cache =
+                fei.fei_next_owner_user_name_cache || `${user.prenom} ${user.nom_de_famille}`;
               nextFei.fei_next_owner_role = null;
               nextFei.fei_next_owner_user_id = null;
               nextFei.fei_next_owner_user_name_cache = null;
@@ -193,7 +198,8 @@ export default function FEI_SVI() {
                 current_owner_entity_id: fei.fei_next_owner_entity_id ?? null,
                 current_owner_entity_name_cache: fei.fei_next_owner_entity_name_cache ?? null,
                 current_owner_user_id: user.id,
-                current_owner_user_name_cache: fei.fei_next_owner_user_name_cache || `${user.prenom} ${user.nom_de_famille}`,
+                current_owner_user_name_cache:
+                  fei.fei_next_owner_user_name_cache || `${user.prenom} ${user.nom_de_famille}`,
                 next_owner_role: null,
                 next_owner_user_id: null,
                 next_owner_user_name_cache: null,
@@ -263,7 +269,8 @@ export default function FEI_SVI() {
                     nextFei.fei_current_owner_entity_id = fei.fei_next_owner_entity_id;
                     nextFei.fei_current_owner_entity_name_cache = fei.fei_next_owner_entity_name_cache;
                     nextFei.fei_current_owner_user_id = user.id;
-                    nextFei.fei_current_owner_user_name_cache = fei.fei_next_owner_user_name_cache || `${user.prenom} ${user.nom_de_famille}`;
+                    nextFei.fei_current_owner_user_name_cache =
+                      fei.fei_next_owner_user_name_cache || `${user.prenom} ${user.nom_de_famille}`;
                     nextFei.fei_next_owner_role = null;
                     nextFei.fei_next_owner_user_id = null;
                     nextFei.fei_next_owner_user_name_cache = null;
@@ -275,7 +282,10 @@ export default function FEI_SVI() {
                     nextFei.svi_user_id = user.id;
                   }
                   for (const carcasse of carcassesAAfficher) {
-                    if (!carcasse.svi_carcasse_status || carcasse.svi_carcasse_status === CarcasseStatus.SANS_DECISION) {
+                    if (
+                      !carcasse.svi_carcasse_status ||
+                      carcasse.svi_carcasse_status === CarcasseStatus.SANS_DECISION
+                    ) {
                       updateCarcasse(
                         carcasse.zacharie_carcasse_id,
                         {
@@ -292,7 +302,8 @@ export default function FEI_SVI() {
                       current_owner_entity_id: fei.fei_next_owner_entity_id ?? null,
                       current_owner_entity_name_cache: fei.fei_next_owner_entity_name_cache ?? null,
                       current_owner_user_id: user.id,
-                      current_owner_user_name_cache: fei.fei_next_owner_user_name_cache || `${user.prenom} ${user.nom_de_famille}`,
+                      current_owner_user_name_cache:
+                        fei.fei_next_owner_user_name_cache || `${user.prenom} ${user.nom_de_famille}`,
                       next_owner_role: null,
                       next_owner_user_id: null,
                       next_owner_user_name_cache: null,
