@@ -12,3 +12,10 @@ export type FeiStep =
   | 'Inspection par le SVI';
 
 export type FeiStepSimpleStatus = 'À compléter' | 'Clôturée' | 'En cours';
+
+export type FeiStepForEtg =
+  | 'Fiche reçue, pas encore prise en charge'
+  | 'Prise en charge par le transporteur'
+  | "Prise en charge par l'atelier"
+  | 'Fiche envoyée, pas encore prise en charge'
+  | "Prise en charge par le service vétérinaire d'inspection";

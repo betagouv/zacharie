@@ -32,7 +32,7 @@ export default function HeaderFiche({ fei }: { fei: FeiWithIntermediaires }) {
   const stepIcon = currentStepLabel === 'Clôturée' ? '🔒' : '⏳';
 
   return (
-    <div className="fr-mb-2w rounded bg-white p-4">
+    <div className="fr-mb-2w rounded bg-white p-4 md:p-8">
       <h1 className="fr-h3 fr-mb-1w">{title}</h1>
       {!isNewFiche && (
         <div className="flex items-center gap-2">

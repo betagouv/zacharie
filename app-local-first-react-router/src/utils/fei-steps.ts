@@ -1,5 +1,5 @@
 import type { FeiWithIntermediaires } from '@api/src/types/fei';
-import type { FeiStep, FeiStepSimpleStatus } from '@app/types/fei-steps';
+import type { FeiStep, FeiStepForEtg, FeiStepSimpleStatus } from '@app/types/fei-steps';
 import useUser from '@app/zustand/user';
 import { Carcasse, Entity, EntityTypes, FeiOwnerRole, User, UserRoles } from '@prisma/client';
 import { useEntitiesIdsWorkingDirectlyFor } from '@app/utils/get-entity-relations';
@@ -17,6 +17,7 @@ type IntermediaireStep = {
 type UseFeiStepsReturn = {
   currentStep: number;
   currentStepLabel: FeiStep;
+  currentStepLabelForEtg: FeiStepForEtg;
   nextStepLabel: FeiStep;
   currentStepLabelShort: string;
   simpleStatus: FeiStepSimpleStatus;
@@ -266,6 +267,26 @@ export function computeFeiSteps({
     }
   })();
 
+  const currentStepLabelForEtg: FeiStepForEtg = (() => {
+    if (currentStepLabel === 'Clôturée') {
+      return "Prise en charge par le service vétérinaire d'inspection";
+    }
+    if (currentStepLabel === 'Inspection par le SVI') {
+      return 'Fiche envoyée, pas encore prise en charge';
+    }
+    if (currentStepLabel === 'Réception par un établissement de traitement') {
+      return "Prise en charge par l'atelier";
+    }
+    if (
+      currentStepLabel === 'Transport' ||
+      currentStepLabel === 'Transport vers un établissement de traitement' ||
+      currentStepLabel === 'Transport vers un autre établissement de traitement'
+    ) {
+      return 'Prise en charge par le transporteur';
+    }
+    return 'Fiche reçue, pas encore prise en charge';
+  })();
+
   const currentStepLabelShort = (() => {
     if (fei.fei_next_owner_sous_traite_by_entity_id) {
       if (entitiesIdsWorkingDirectlyFor.includes(fei.fei_next_owner_sous_traite_by_entity_id)) {
@@ -289,6 +310,7 @@ export function computeFeiSteps({
   return {
     currentStep: currentStepIndex + 1,
     currentStepLabel,
+    currentStepLabelForEtg,
     currentStepLabelShort,
     nextStepLabel,
     simpleStatus,
