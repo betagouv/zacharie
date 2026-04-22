@@ -530,12 +530,6 @@ function FEICurrentIntermediaireContent({
     updateAllCarcasseIntermediaire(fei.numero, feiAndIntermediaireIds, {
       prise_en_charge_at: _priseEnChargeAt,
     });
-    updateAllCarcasseIntermediaire(
-      fei.numero,
-      feiAndIntermediaireIds,
-      { decision_at: _priseEnChargeAt },
-      (ci) => !ci.decision_at,
-    );
     addLog({
       user_id: user.id,
       action: 'intermediaire-check-finished-at',
