@@ -264,7 +264,9 @@ export interface CertificatResponse {
 export interface AdminApiKeysResponse {
   ok: boolean;
   data: {
-    apiKeys: Array<ApiKey & { approvals: Array<ApiKeyApprovalByUserOrEntity & { User: User; Entity: Entity }> }>;
+    apiKeys: Array<
+      ApiKey & { approvals: Array<ApiKeyApprovalByUserOrEntity & { User: User; Entity: Entity }> }
+    >;
   };
   error: string;
 }

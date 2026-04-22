@@ -194,7 +194,9 @@ function ExaminateurCarcasseDetailLoaded() {
                 onSubmit={(e) => {
                   e.preventDefault();
                   const formData = new FormData(numeroFormRef.current!);
-                  const nextNumeroBracelet = formData.get(Prisma.CarcasseScalarFieldEnum.numero_bracelet) as string;
+                  const nextNumeroBracelet = formData.get(
+                    Prisma.CarcasseScalarFieldEnum.numero_bracelet
+                  ) as string;
                   if (existingsNumeroBracelet.includes(nextNumeroBracelet)) {
                     setNumeroError('Le numéro de marquage est déjà utilisé pour cette fiche');
                     return;
@@ -210,7 +212,9 @@ function ExaminateurCarcasseDetailLoaded() {
                 <div className="p-4 pb-8 md:p-8 md:pb-4">
                   <Input
                     label={
-                      carcasse.type === CarcasseType.PETIT_GIBIER ? "Numéro d'identification" : 'Numéro de bracelet'
+                      carcasse.type === CarcasseType.PETIT_GIBIER
+                        ? "Numéro d'identification"
+                        : 'Numéro de bracelet'
                     }
                     state={numeroError ? 'error' : 'default'}
                     stateRelatedMessage={numeroError ?? ''}
@@ -236,7 +240,9 @@ function ExaminateurCarcasseDetailLoaded() {
                 {!canEdit && (
                   <InputNotEditable
                     label={
-                      carcasse.type === CarcasseType.PETIT_GIBIER ? "Numéro d'identification" : 'Numéro de bracelet'
+                      carcasse.type === CarcasseType.PETIT_GIBIER
+                        ? "Numéro d'identification"
+                        : 'Numéro de bracelet'
                     }
                     nativeInputProps={{
                       type: 'text',
@@ -300,13 +306,16 @@ function ExaminateurCarcasseDetailLoaded() {
                 )}
                 <Component
                   label="Nombre de carcasses"
-                  className={['mb-0! grow', carcasse.type === CarcasseType.GROS_GIBIER ? 'hidden' : ''].join(' ')}
+                  className={['mb-0! grow', carcasse.type === CarcasseType.GROS_GIBIER ? 'hidden' : ''].join(
+                    ' '
+                  )}
                   hintText="Optionel"
                   nativeInputProps={{
                     type: 'number',
                     min: 0,
                     name: Prisma.CarcasseScalarFieldEnum.nombre_d_animaux,
-                    defaultValue: carcasse.type === CarcasseType.GROS_GIBIER ? '1' : (carcasse.nombre_d_animaux ?? ''),
+                    defaultValue:
+                      carcasse.type === CarcasseType.GROS_GIBIER ? '1' : (carcasse.nombre_d_animaux ?? ''),
                     disabled: carcasse.type === CarcasseType.GROS_GIBIER,
                     onChange: (e) => {
                       updateCarcasse(carcasse.zacharie_carcasse_id, {
@@ -464,7 +473,8 @@ function ExaminateurCarcasseDetailLoaded() {
                   e.preventDefault();
                   updateCarcasse(carcasse.zacharie_carcasse_id, {
                     examinateur_signed_at: dayjs().toDate(),
-                    examinateur_carcasse_sans_anomalie: anomaliesAbats.length === 0 && anomaliesCarcasse.length === 0,
+                    examinateur_carcasse_sans_anomalie:
+                      anomaliesAbats.length === 0 && anomaliesCarcasse.length === 0,
                   });
                 }}
               >

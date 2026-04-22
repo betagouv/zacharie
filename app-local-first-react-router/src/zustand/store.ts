@@ -109,7 +109,10 @@ interface Actions {
       >
     >
   ) => void;
-  createFeiIntermediaires: (newFeiIntermediaires: FeiIntermediaire[], specificCarcasseIds?: string[]) => Promise<void>;
+  createFeiIntermediaires: (
+    newFeiIntermediaires: FeiIntermediaire[],
+    specificCarcasseIds?: string[]
+  ) => Promise<void>;
   updateAllCarcasseIntermediaire: (
     fei_numero: Fei['numero'],
     feiAndIntermediaireIds: FeiAndIntermediaireIds,
@@ -160,9 +163,15 @@ const useZustandStore = create<State & Actions>()(
             dataIsSynced: false,
           }));
         },
-        updateFei: (fei_numero: FeiWithIntermediaires['numero'], partialFei: Partial<FeiWithIntermediaires>) => {
+        updateFei: (
+          fei_numero: FeiWithIntermediaires['numero'],
+          partialFei: Partial<FeiWithIntermediaires>
+        ) => {
           console.log('updateFei', fei_numero, JSON.stringify(partialFei, null, 2));
-          const carcassefeiCarcasses = filterCarcassesForFei(useZustandStore.getState().carcasses, fei_numero);
+          const carcassefeiCarcasses = filterCarcassesForFei(
+            useZustandStore.getState().carcasses,
+            fei_numero
+          );
           const countCarcassesByEspece = formatCountCarcasseByEspece(carcassefeiCarcasses);
           const nextFei: FeiWithIntermediaires = {
             ...useZustandStore.getState().feis[fei_numero],
@@ -244,7 +253,10 @@ const useZustandStore = create<State & Actions>()(
             get().updateCarcasse(id, transmissionFields, false);
           }
         },
-        createFeiIntermediaires: async (newIntermediaires: FeiIntermediaire[], specificCarcasseIds?: string[]) => {
+        createFeiIntermediaires: async (
+          newIntermediaires: FeiIntermediaire[],
+          specificCarcasseIds?: string[]
+        ) => {
           if (newIntermediaires.length === 0) return;
           return new Promise((resolve) => {
             const feiNumero = newIntermediaires[0].fei_numero;
@@ -309,7 +321,10 @@ const useZustandStore = create<State & Actions>()(
           nextCarcasseIntermediaire: Partial<CarcasseIntermediaire>
         ) => {
           const carcassesIntermediaireById = useZustandStore.getState().carcassesIntermediaireById;
-          const nextCarcassesIntermediaireById: Record<FeiAndCarcasseAndIntermediaireIds, CarcasseIntermediaire> = {};
+          const nextCarcassesIntermediaireById: Record<
+            FeiAndCarcasseAndIntermediaireIds,
+            CarcasseIntermediaire
+          > = {};
           const matchingEntries = Object.entries(carcassesIntermediaireById).filter(
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             ([_id, ci]) => getFeiAndIntermediaireIds(ci) === feiAndIntermediaireIds
@@ -410,7 +425,8 @@ const useZustandStore = create<State & Actions>()(
         onRehydrateStorage: (state) => {
           return () => state.setHasHydrated(true);
         },
-        partialize: (state) => Object.fromEntries(PERSISTED_KEYS.map((key) => [key, state[key]])) as Partial<State>,
+        partialize: (state) =>
+          Object.fromEntries(PERSISTED_KEYS.map((key) => [key, state[key]])) as Partial<State>,
       }
     )
   )
@@ -448,7 +464,9 @@ export async function syncData(calledFrom: string) {
   // Collect all unsynced items
   const unsyncedFeis = Object.values(state.feis).filter((f) => !f.is_synced);
   const unsyncedCarcasses = Object.values(state.carcasses).filter((c) => !c.is_synced);
-  const unsyncedIntermediaires = Object.values(state.carcassesIntermediaireById).filter((ci) => !ci.is_synced);
+  const unsyncedIntermediaires = Object.values(state.carcassesIntermediaireById).filter(
+    (ci) => !ci.is_synced
+  );
   const unsyncedLogs = state.logs.filter((l) => !l.is_synced);
 
   // Nothing to sync

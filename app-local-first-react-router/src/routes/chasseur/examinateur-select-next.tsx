@@ -138,12 +138,15 @@ export default function SelectNextForExaminateur({
     syncData('examinateur-select-next');
   }
 
-  const isFirstFei = !prefilledInfos?.premier_detenteur_entity_id && !prefilledInfos?.premier_detenteur_user_id;
+  const isFirstFei =
+    !prefilledInfos?.premier_detenteur_entity_id && !prefilledInfos?.premier_detenteur_user_id;
 
   return (
     <>
       <label className="mb-1 block">Premier détenteur&nbsp;*</label>
-      {isFirstFei && !Object.values(associationsDeChasse).length && !Object.values(detenteursInitiaux).length ? (
+      {isFirstFei &&
+      !Object.values(associationsDeChasse).length &&
+      !Object.values(detenteursInitiaux).length ? (
         <>
           {!showSearchUserByEmail && (
             <div>
@@ -234,7 +237,9 @@ export default function SelectNextForExaminateur({
                 if (event.target.value === 'new-user') {
                   setShowSearchUserByEmail(true);
                 } else if (event.target.value === 'new-entity') {
-                  navigate(`/app/chasseur/profil/associations-de-chasse?redirect=/app/chasseur/fei/${fei.numero}`);
+                  navigate(
+                    `/app/chasseur/profil/associations-de-chasse?redirect=/app/chasseur/fei/${fei.numero}`
+                  );
                 } else {
                   setNextOwnerUserOrEntityId(event.target.value);
                 }
@@ -263,7 +268,9 @@ export default function SelectNextForExaminateur({
               );
             })}
             <option value="new-entity">+ Ajouter une association / société / domaine de chasse</option>
-            <option value="new-user">+ Chercher par email un autre Premier Détenteur inscrit dans Zacharie</option>
+            <option value="new-user">
+              + Chercher par email un autre Premier Détenteur inscrit dans Zacharie
+            </option>
           </Select>
           {(!nextOwnerUserOrEntityId ||
             (nextOwnerUserOrEntityId !== fei.premier_detenteur_user_id &&
@@ -440,7 +447,12 @@ type NextOwnerOptionProps = {
   nextOwnerIsUser?: boolean;
 };
 
-const NextOwnerOption = ({ potentielOwner, nextOwnerIsEntity, nextOwnerIsUser, user }: NextOwnerOptionProps) => {
+const NextOwnerOption = ({
+  potentielOwner,
+  nextOwnerIsEntity,
+  nextOwnerIsUser,
+  user,
+}: NextOwnerOptionProps) => {
   let label = '';
   if (nextOwnerIsEntity) {
     potentielOwner = potentielOwner as unknown as Entity;

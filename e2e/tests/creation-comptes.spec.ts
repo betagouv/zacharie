@@ -14,7 +14,9 @@ test.use({
 test('Création de compte examinateur initial', async ({ page }) => {
   await page.goto('http://localhost:3290/');
   await page.getByRole('link', { name: 'Créer un compte' }).first().click();
-  await page.getByRole('textbox', { name: 'Mon email Renseignez votre' }).fill('examinateur-nouveau@example.fr');
+  await page
+    .getByRole('textbox', { name: 'Mon email Renseignez votre' })
+    .fill('examinateur-nouveau@example.fr');
   await page.getByRole('textbox', { name: 'Mon mot de passe Veuillez' }).fill('secret-secret');
   await page.getByRole('button', { name: 'Créer mon compte' }).click();
   await page.getByRole('textbox', { name: 'Nom *', exact: true }).fill('Marcel');
@@ -35,7 +37,9 @@ test('Création de compte examinateur initial', async ({ page }) => {
 test('Création de compte premier détenteur', async ({ page }) => {
   await page.goto('http://localhost:3290/');
   await page.getByRole('link', { name: 'Créer un compte' }).first().click();
-  await page.getByRole('textbox', { name: 'Mon email Renseignez votre' }).fill('premier-detenteur-nouveau@example.fr');
+  await page
+    .getByRole('textbox', { name: 'Mon email Renseignez votre' })
+    .fill('premier-detenteur-nouveau@example.fr');
   await page.getByRole('textbox', { name: 'Mon mot de passe Veuillez' }).fill('secret-secret');
   await page.getByRole('button', { name: 'Créer mon compte' }).click();
   await page.getByRole('textbox', { name: 'Nom *', exact: true }).fill('Marcel');
@@ -55,13 +59,17 @@ test('Création de compte premier détenteur', async ({ page }) => {
 test('Création de compte collecteur pro', async ({ page }) => {
   await page.goto('http://localhost:3290/');
   await page.getByRole('link', { name: 'Créer un compte' }).first().click();
-  await page.getByRole('textbox', { name: 'Mon email Renseignez votre' }).fill('collecteur-pro-nouveau@example.fr');
+  await page
+    .getByRole('textbox', { name: 'Mon email Renseignez votre' })
+    .fill('collecteur-pro-nouveau@example.fr');
   await page.getByRole('textbox', { name: 'Mon mot de passe Veuillez' }).fill('secret-secret');
   await page.getByRole('button', { name: 'Créer mon compte' }).click();
   await page.getByText('Un compte existe déjà avec').click();
   await page.getByRole('link', { name: 'Cliquez ici pour vous' }).click();
   await page.getByRole('button', { name: 'Me connecter' }).waitFor({ state: 'visible' });
-  await page.getByRole('textbox', { name: 'Mon email Renseignez votre' }).fill('collecteur-pro-nouveau@example.fr');
+  await page
+    .getByRole('textbox', { name: 'Mon email Renseignez votre' })
+    .fill('collecteur-pro-nouveau@example.fr');
   await page.getByRole('textbox', { name: 'Mon mot de passe Veuillez' }).fill('secret-secret');
   await page.getByRole('button', { name: 'Me connecter' }).click();
   await page.getByRole('textbox', { name: 'Nom *', exact: true }).fill('Marcel');
@@ -158,7 +166,9 @@ test('Examinateur initial ajoute une association de chasse depuis son profil', a
   // First complete basic onboarding
   await page.goto('http://localhost:3290/');
   await page.getByRole('link', { name: 'Créer un compte' }).first().click();
-  await page.getByRole('textbox', { name: 'Mon email Renseignez votre' }).fill('examinateur-avec-asso@example.fr');
+  await page
+    .getByRole('textbox', { name: 'Mon email Renseignez votre' })
+    .fill('examinateur-avec-asso@example.fr');
   await page.getByRole('textbox', { name: 'Mon mot de passe Veuillez' }).fill('secret-secret');
   await page.getByRole('button', { name: 'Créer mon compte' }).click();
   await page.getByRole('textbox', { name: 'Nom *', exact: true }).fill('Jean');
@@ -181,7 +191,9 @@ test('Examinateur initial ajoute une association de chasse depuis son profil', a
   await expect(page.getByRole('heading', { name: 'Informations de chasse' })).toBeVisible();
 
   await page.getByText('Oui').nth(1).click();
-  await page.getByRole('button', { name: 'Créer une nouvelle association, société ou domaine de chasse' }).click();
+  await page
+    .getByRole('button', { name: 'Créer une nouvelle association, société ou domaine de chasse' })
+    .click();
   await page.getByRole('textbox', { name: 'Raison Sociale *' }).fill('Association de lapins chasseurs');
   await page.getByRole('textbox', { name: 'SIRET' }).fill('1234');
   await page.getByRole('textbox', { name: 'Adresse *' }).fill('120 rue de la paix');
@@ -243,7 +255,9 @@ test('Examinateur initial ajoute une chambre froide (CCG) depuis son profil', as
   // First complete basic onboarding
   await page.goto('http://localhost:3290/');
   await page.getByRole('link', { name: 'Créer un compte' }).first().click();
-  await page.getByRole('textbox', { name: 'Mon email Renseignez votre' }).fill('examinateur-avec-ccg@example.fr');
+  await page
+    .getByRole('textbox', { name: 'Mon email Renseignez votre' })
+    .fill('examinateur-avec-ccg@example.fr');
   await page.getByRole('textbox', { name: 'Mon mot de passe Veuillez' }).fill('secret-secret');
   await page.getByRole('button', { name: 'Créer mon compte' }).click();
   await page.getByRole('textbox', { name: 'Nom *', exact: true }).fill('Marc');
@@ -320,7 +334,9 @@ test('Premier détenteur devient examinateur initial depuis son profil', async (
 test('Premier détenteur ajoute association et CCG depuis son profil', async ({ page }) => {
   await page.goto('http://localhost:3290/');
   await page.getByRole('link', { name: 'Créer un compte' }).first().click();
-  await page.getByRole('textbox', { name: 'Mon email Renseignez votre' }).fill('detenteur-complet@example.fr');
+  await page
+    .getByRole('textbox', { name: 'Mon email Renseignez votre' })
+    .fill('detenteur-complet@example.fr');
   await page.getByRole('textbox', { name: 'Mon mot de passe Veuillez' }).fill('secret-secret');
   await page.getByRole('button', { name: 'Créer mon compte' }).click();
   await page.getByRole('textbox', { name: 'Nom *', exact: true }).fill('Louis');

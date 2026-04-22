@@ -274,7 +274,10 @@ export default function ChasseurFiches() {
   });
 
   useEffect(() => {
-    localStorage.setItem('chasseur-fiches-filter-premier-detenteurs', JSON.stringify(filterPremierDetenteurs));
+    localStorage.setItem(
+      'chasseur-fiches-filter-premier-detenteurs',
+      JSON.stringify(filterPremierDetenteurs)
+    );
   }, [filterPremierDetenteurs]);
 
   const [filterCCGs, setFilterCCGs] = useState<string[]>(() => {
@@ -583,7 +586,9 @@ export default function ChasseurFiches() {
           title="Centre de collecte (CCG)"
           badge={
             filterCCGs.length > 0 ? (
-              <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">{filterCCGs.length}</span>
+              <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">
+                {filterCCGs.length}
+              </span>
             ) : undefined
           }
         >
@@ -944,7 +949,11 @@ function FeisWrapper({
     );
   }
 
-  return <div className="grid w-full grid-cols-1 gap-4 justify-self-end sm:grid-cols-2 lg:grid-cols-3">{children}</div>;
+  return (
+    <div className="grid w-full grid-cols-1 gap-4 justify-self-end sm:grid-cols-2 lg:grid-cols-3">
+      {children}
+    </div>
+  );
 }
 
 function FeisTableRow({
@@ -986,7 +995,9 @@ function FeisTableRow({
         let enrichedLine = line;
         for (const [espece, abbreviation] of Object.entries(abbreviations)) {
           if (line.toLowerCase().includes(abbreviation.toLowerCase())) {
-            const carcasse = feiCarcasses.find((c) => c?.type === CarcasseType.PETIT_GIBIER && c.espece === espece);
+            const carcasse = feiCarcasses.find(
+              (c) => c?.type === CarcasseType.PETIT_GIBIER && c.espece === espece
+            );
             if (carcasse) {
               const nombreDAnimaux = carcasse.nombre_d_animaux ?? 0;
               const intermediaires = filterCarcassesIntermediairesForCarcasse(
@@ -1121,7 +1132,9 @@ function FeisTable({
   }
 
   const allSelected =
-    visibleFeisNumbers.length > 0 ? visibleFeisNumbers.every((numero) => selectedFeis?.includes(numero)) : false;
+    visibleFeisNumbers.length > 0
+      ? visibleFeisNumbers.every((numero) => selectedFeis?.includes(numero))
+      : false;
 
   const handleSelectAllInTable = () => {
     if (handleSelectAll) {

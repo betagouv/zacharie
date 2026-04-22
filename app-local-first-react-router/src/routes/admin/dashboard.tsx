@@ -25,7 +25,14 @@ const funnelLabels: Array<{ key: keyof AdminDashboardResponse['data']['funnel'];
   { key: 'envoye_3_fiches', label: 'Envoyé >= 3 fiches' },
 ];
 
-const dsfrBlues = ['var(--background-action-high-blue-france)', '#3a55d1', '#4e66d8', '#6277df', '#7688e5', '#8a99ec'];
+const dsfrBlues = [
+  'var(--background-action-high-blue-france)',
+  '#3a55d1',
+  '#4e66d8',
+  '#6277df',
+  '#7688e5',
+  '#8a99ec',
+];
 
 function getSeasons(): Array<{ label: string; from: string; to: string }> {
   const now = dayjs();
@@ -132,7 +139,8 @@ export default function AdminDashboard() {
                   {data.funnel.compte_valide.toLocaleString('fr-FR')}
                 </p>
                 <p className="mt-1 text-xs text-gray-400">
-                  {maxFunnel > 0 ? ((data.funnel.compte_valide / maxFunnel) * 100).toFixed(1) : 0}% des inscrits
+                  {maxFunnel > 0 ? ((data.funnel.compte_valide / maxFunnel) * 100).toFixed(1) : 0}% des
+                  inscrits
                 </p>
               </div>
               <div className="rounded-lg border border-gray-100 bg-white p-5 shadow-sm">
@@ -277,8 +285,8 @@ export default function AdminDashboard() {
               <div className="rounded-lg border border-gray-100 bg-white p-6 shadow-sm">
                 <h3 className="mb-1 text-lg font-semibold">Parts de marché par circuit</h3>
                 <p className="mb-5 text-sm text-gray-500">
-                  Part de marché absolue, potentielle et réelle sur l&apos;ensemble du circuit long, par saison de
-                  chasse
+                  Part de marché absolue, potentielle et réelle sur l&apos;ensemble du circuit long, par
+                  saison de chasse
                 </p>
                 <ResponsiveContainer
                   width="100%"
@@ -358,8 +366,8 @@ export default function AdminDashboard() {
                       Répartition des examinateurs initiaux par delta de score BPH
                     </h3>
                     <p className="mb-5 text-sm text-gray-500">
-                      Différence entre la moyenne des 5 fiches les plus récentes et les 5 premières fiches (score BPH
-                      absolu). Examinateurs avec au moins 10 fiches.
+                      Différence entre la moyenne des 5 fiches les plus récentes et les 5 premières fiches
+                      (score BPH absolu). Examinateurs avec au moins 10 fiches.
                     </p>
                     <ResponsiveContainer
                       width="100%"
@@ -436,7 +444,8 @@ export default function AdminDashboard() {
                     {saisiesSvi.taux_mauvaises_pratiques}%
                   </p>
                   <p className="mt-1 text-xs text-gray-400">
-                    {saisiesSvi.total_mauvaises_pratiques.toLocaleString('fr-FR')} carcasses (mauvaises pratiques)
+                    {saisiesSvi.total_mauvaises_pratiques.toLocaleString('fr-FR')} carcasses (mauvaises
+                    pratiques)
                   </p>
                 </div>
               </div>
@@ -469,7 +478,11 @@ export default function AdminDashboard() {
                             className="flex h-full items-center rounded px-2 text-xs font-semibold text-white"
                             style={{
                               width: `${Math.max(pct, 3)}%`,
-                              backgroundColor: is_mauvaise_pratique ? '#e1000f' : i === 0 ? '#000091' : '#6a6af4',
+                              backgroundColor: is_mauvaise_pratique
+                                ? '#e1000f'
+                                : i === 0
+                                  ? '#000091'
+                                  : '#6a6af4',
                               minWidth: '40px',
                             }}
                           >

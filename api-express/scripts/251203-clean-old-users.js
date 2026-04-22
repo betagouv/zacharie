@@ -320,7 +320,9 @@ async function main() {
 
     // Demander confirmation
     console.log('\n' + '='.repeat(80));
-    console.log('⚠️  ATTENTION: Cette action va supprimer définitivement les utilisateurs et leurs relations');
+    console.log(
+      '⚠️  ATTENTION: Cette action va supprimer définitivement les utilisateurs et leurs relations'
+    );
     console.log('='.repeat(80));
 
     const answer = await question('\n❓ Voulez-vous continuer avec la suppression? (oui/non): ');

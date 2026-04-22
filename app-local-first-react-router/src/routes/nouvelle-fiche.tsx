@@ -59,7 +59,9 @@ const searchParamsSchema = z.object({
       return values.map((carcasseString) => {
         const parts = carcasseString.split(',');
         if (parts.length < 2) {
-          throw new Error('Format invalide pour carcasse, attendu: numero_bracelet,espece[,nombre_d_animaux]');
+          throw new Error(
+            'Format invalide pour carcasse, attendu: numero_bracelet,espece[,nombre_d_animaux]'
+          );
         }
         const [numero_bracelet, espece, nombre_d_animaux = '1'] = parts;
         return {
@@ -118,8 +120,10 @@ export default function NouvelleFiche() {
               ? dayjs(validatedParams.date_mise_a_mort).toDate()
               : undefined,
             commune_mise_a_mort: validatedParams.commune_mise_a_mort ?? undefined,
-            heure_mise_a_mort_premiere_carcasse: validatedParams.heure_mise_a_mort_premiere_carcasse ?? undefined,
-            heure_evisceration_derniere_carcasse: validatedParams.heure_evisceration_derniere_carcasse ?? undefined,
+            heure_mise_a_mort_premiere_carcasse:
+              validatedParams.heure_mise_a_mort_premiere_carcasse ?? undefined,
+            heure_evisceration_derniere_carcasse:
+              validatedParams.heure_evisceration_derniere_carcasse ?? undefined,
           });
 
           // Create carcasses if provided

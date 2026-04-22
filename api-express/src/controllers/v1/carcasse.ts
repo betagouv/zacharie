@@ -43,7 +43,11 @@ router.get(
   passport.authenticate('apiKey', { session: false }),
   checkApiKeyIsValidMiddleware([ApiKeyScope.CARCASSE_READ_FOR_USER]),
   catchErrors(
-    async (req: RequestWithApiKey, res: express.Response<CarcasseForResponseForApi>, next: express.NextFunction) => {
+    async (
+      req: RequestWithApiKey,
+      res: express.Response<CarcasseForResponseForApi>,
+      next: express.NextFunction
+    ) => {
       const paramsSchema = z.object({
         date_mise_a_mort: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format de date attendu: YYYY-MM-DD'),
         numero_bracelet: z.string(),
@@ -145,7 +149,11 @@ router.get(
   passport.authenticate('apiKey', { session: false }),
   checkApiKeyIsValidMiddleware([ApiKeyScope.CARCASSE_READ_FOR_ENTITY]),
   catchErrors(
-    async (req: RequestWithApiKey, res: express.Response<CarcasseForResponseForApi>, next: express.NextFunction) => {
+    async (
+      req: RequestWithApiKey,
+      res: express.Response<CarcasseForResponseForApi>,
+      next: express.NextFunction
+    ) => {
       const paramsSchema = z.object({
         date_mise_a_mort: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format de date attendu: YYYY-MM-DD'),
         numero_bracelet: z.string(),
@@ -258,7 +266,11 @@ router.get(
   passport.authenticate('apiKey', { session: false }),
   checkApiKeyIsValidMiddleware([ApiKeyScope.CARCASSE_READ_FOR_USER]),
   catchErrors(
-    async (req: RequestWithApiKey, res: express.Response<CarcassesForResponseForApi>, next: express.NextFunction) => {
+    async (
+      req: RequestWithApiKey,
+      res: express.Response<CarcassesForResponseForApi>,
+      next: express.NextFunction
+    ) => {
       // Validate query params inline
       const querySchema = z.object({
         date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format de date attendu: YYYY-MM-DD'),
@@ -350,7 +362,11 @@ router.get(
   passport.authenticate('apiKey', { session: false }),
   checkApiKeyIsValidMiddleware([ApiKeyScope.CARCASSE_READ_FOR_ENTITY]),
   catchErrors(
-    async (req: RequestWithApiKey, res: express.Response<CarcassesForResponseForApi>, next: express.NextFunction) => {
+    async (
+      req: RequestWithApiKey,
+      res: express.Response<CarcassesForResponseForApi>,
+      next: express.NextFunction
+    ) => {
       // Validate query params inline
       const querySchema = z.object({
         date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format de date attendu: YYYY-MM-DD'),

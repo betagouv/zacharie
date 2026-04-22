@@ -8,7 +8,11 @@ import { getIntermediaireRoleLabel } from '@app/utils/get-user-roles-label';
 import { useFeiIntermediaires } from '@app/utils/get-carcasses-intermediaires';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 
-export default function FEIDonneesDeChasse({ carcasseId }: { carcasseId?: Carcasse['zacharie_carcasse_id'] }) {
+export default function FEIDonneesDeChasse({
+  carcasseId,
+}: {
+  carcasseId?: Carcasse['zacharie_carcasse_id'];
+}) {
   const params = useParams();
   const feis = useZustandStore((state) => state.feis);
   const carcassesState = useZustandStore((state) => state.carcasses);
@@ -21,9 +25,13 @@ export default function FEIDonneesDeChasse({ carcasseId }: { carcasseId?: Carcas
   const carcasses = carcasseId
     ? [carcassesState[carcasseId]].filter(Boolean).filter((c) => !c.deleted_at)
     : feiCarcasses;
-  const examinateurInitialUser = fei.examinateur_initial_user_id ? users[fei.examinateur_initial_user_id!] : null;
+  const examinateurInitialUser = fei.examinateur_initial_user_id
+    ? users[fei.examinateur_initial_user_id!]
+    : null;
   const premierDetenteurUser = fei.premier_detenteur_user_id ? users[fei.premier_detenteur_user_id!] : null;
-  const premierDetenteurEntity = fei.premier_detenteur_entity_id ? entities[fei.premier_detenteur_entity_id!] : null;
+  const premierDetenteurEntity = fei.premier_detenteur_entity_id
+    ? entities[fei.premier_detenteur_entity_id!]
+    : null;
 
   const onlyPetitGibier = useMemo(() => {
     for (const carcasse of carcasses) {
@@ -65,7 +73,10 @@ export default function FEIDonneesDeChasse({ carcasseId }: { carcasseId?: Carcas
     for (let i = intermediaires.length - 1; i >= 0; i--) {
       const intermediaire = intermediaires[i];
       const entity = entities[intermediaire.intermediaire_entity_id!];
-      if (entity?.type === EntityTypes.ETG && intermediaire.intermediaire_role === FeiOwnerRole.COLLECTEUR_PRO) {
+      if (
+        entity?.type === EntityTypes.ETG &&
+        intermediaire.intermediaire_role === FeiOwnerRole.COLLECTEUR_PRO
+      ) {
         continue;
       }
       const intermediaireLines = [];
@@ -113,7 +124,9 @@ export default function FEIDonneesDeChasse({ carcasseId }: { carcasseId?: Carcas
   const etgDate = latestIntermediaire?.prise_en_charge_at
     ? dayjs(latestIntermediaire.prise_en_charge_at).format('dddd D MMMM YYYY à HH:mm')
     : null;
-  const sviAssignedToFeiAt = fei.svi_assigned_at ? dayjs(fei.svi_assigned_at).format('dddd D MMMM YYYY à HH:mm') : null;
+  const sviAssignedToFeiAt = fei.svi_assigned_at
+    ? dayjs(fei.svi_assigned_at).format('dddd D MMMM YYYY à HH:mm')
+    : null;
 
   const milestones = useMemo(() => {
     const _milestones = [
@@ -131,11 +144,14 @@ export default function FEIDonneesDeChasse({ carcasseId }: { carcasseId?: Carcas
       );
     }
     if (ccgDate) {
-      _milestones.push(`Nom du Centre de Collecte (CCG)\u00A0: ${fei.premier_detenteur_depot_entity_name_cache}`);
+      _milestones.push(
+        `Nom du Centre de Collecte (CCG)\u00A0: ${fei.premier_detenteur_depot_entity_name_cache}`
+      );
       _milestones.push(`Date et heure de dépôt dans le CCG\u00A0: ${ccgDate}`);
     }
     if (etgDate) _milestones.push(`Date et heure de prise en charge par l'ETG\u00A0: ${etgDate}`);
-    if (sviAssignedToFeiAt) _milestones.push(`Date et heure d'assignation au SVI\u00A0: ${sviAssignedToFeiAt}`);
+    if (sviAssignedToFeiAt)
+      _milestones.push(`Date et heure d'assignation au SVI\u00A0: ${sviAssignedToFeiAt}`);
     return _milestones;
   }, [
     fei.commune_mise_a_mort,

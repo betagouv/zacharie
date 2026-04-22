@@ -17,7 +17,10 @@ import { CarcasseCertificat, User } from '@prisma/client';
 import etablissements from '../assets/etablissements-traitement-sanitaire.json';
 import dayjs from 'dayjs';
 
-export async function generateLaissezPasserSanitaireDocx(data: CarcasseCertificat, user: User): Promise<Buffer> {
+export async function generateLaissezPasserSanitaireDocx(
+  data: CarcasseCertificat,
+  user: User
+): Promise<Buffer> {
   const etablissementDeTraitementAssainissant = etablissements.data.find(
     (e) => e['Numéro agrément/Approval number'] === data.traitement_assainissant_etablissement
   );

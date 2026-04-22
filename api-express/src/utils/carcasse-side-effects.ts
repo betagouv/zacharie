@@ -1,7 +1,10 @@
 import { Carcasse, IPM2Decision } from '@prisma/client';
 import prisma from '~/prisma';
 import sendNotificationToUser from '~/service/notifications';
-import { formatCarcasseManquanteOrRefusChasseurEmail, formatSaisieChasseurEmail } from '~/utils/formatCarcasseEmail';
+import {
+  formatCarcasseManquanteOrRefusChasseurEmail,
+  formatSaisieChasseurEmail,
+} from '~/utils/formatCarcasseEmail';
 import { checkGenerateCertificat } from '~/utils/generate-certificats';
 
 async function notifyExaminateurAndPremierDetenteur(
@@ -58,7 +61,10 @@ export async function notifySaisieChasseur(existingCarcasse: Carcasse, updatedCa
 }
 
 export async function notifyManquanteChasseur(existingCarcasse: Carcasse, updatedCarcasse: Carcasse) {
-  if (!existingCarcasse.intermediaire_carcasse_manquante && updatedCarcasse.intermediaire_carcasse_manquante) {
+  if (
+    !existingCarcasse.intermediaire_carcasse_manquante &&
+    updatedCarcasse.intermediaire_carcasse_manquante
+  ) {
     const [object, email] = await formatCarcasseManquanteOrRefusChasseurEmail(updatedCarcasse);
     await notifyExaminateurAndPremierDetenteur(
       existingCarcasse.fei_numero,

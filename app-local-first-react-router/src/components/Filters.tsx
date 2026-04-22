@@ -48,14 +48,17 @@ export default function Filters<T extends Filter = Filter>({
     if (typeof filterValue === 'object') {
       if (filterValue?.date != null) {
         if (filterValue.comparator === 'unfilled') return 'Non renseigné';
-        if (filterValue.comparator === 'before') return `Avant le ${dayjs(filterValue.date).format('DD/MM/YYYY')}`;
-        if (filterValue.comparator === 'after') return `Après le ${dayjs(filterValue.date).format('DD/MM/YYYY')}`;
+        if (filterValue.comparator === 'before')
+          return `Avant le ${dayjs(filterValue.date).format('DD/MM/YYYY')}`;
+        if (filterValue.comparator === 'after')
+          return `Après le ${dayjs(filterValue.date).format('DD/MM/YYYY')}`;
         if (filterValue.comparator === 'equals') return `Le ${dayjs(filterValue.date).format('DD/MM/YYYY')}`;
         return '';
       }
       if (filterValue?.number != null) {
         if (filterValue.comparator === 'unfilled') return 'Non renseigné';
-        if (filterValue.comparator === 'between') return `Entre ${filterValue.number} et ${filterValue.number2}`;
+        if (filterValue.comparator === 'between')
+          return `Entre ${filterValue.number} et ${filterValue.number2}`;
         if (filterValue.comparator === 'equals') return `Égal à ${filterValue.number}`;
         if (filterValue.comparator === 'lower') return `Inférieur à ${filterValue.number}`;
         if (filterValue.comparator === 'greater') return `Supérieur à ${filterValue.number}`;
@@ -100,7 +103,9 @@ export default function Filters<T extends Filter = Filter>({
               if (newField) {
                 onChange(
                   filters.map((_filter, i) =>
-                    i === index ? ({ field: newField?.field, value: null, type: newField?.type } as T) : _filter
+                    i === index
+                      ? ({ field: newField?.field, value: null, type: newField?.type } as T)
+                      : _filter
                   ),
                   saveInURLParams
                 );
@@ -410,7 +415,10 @@ function ValueSelector({ index, field, filterValues, value, onChangeValue, base 
         </div>
         {value?.comparator !== 'unfilled' && (
           <div
-            className={['w-full sm:pr-4', value?.comparator === 'between' ? 'sm:basis-3/12' : 'sm:basis-1/2'].join(' ')}
+            className={[
+              'w-full sm:pr-4',
+              value?.comparator === 'between' ? 'sm:basis-3/12' : 'sm:basis-1/2',
+            ].join(' ')}
           >
             <input
               name={name}

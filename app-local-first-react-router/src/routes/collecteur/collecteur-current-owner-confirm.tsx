@@ -39,7 +39,8 @@ export default function CurrentOwnerConfirm() {
   const myCarcasses = useMemo(() => {
     return feiCarcasses.filter(
       (c) =>
-        (c.next_owner_entity_id && userEntityIds.includes(c.next_owner_entity_id)) || c.next_owner_user_id === user.id
+        (c.next_owner_entity_id && userEntityIds.includes(c.next_owner_entity_id)) ||
+        c.next_owner_user_id === user.id
     );
   }, [feiCarcasses, userEntityIds, user.id]);
 
@@ -74,15 +75,20 @@ export default function CurrentOwnerConfirm() {
   }, [feiCarcasses, userEntityIds, user.id]);
 
   // Fallback: if no per-carcasse assignment, use all carcasses (retrocompat)
-  const carcasseIds = myCarcasseIds.length > 0 ? myCarcasseIds : feiCarcasses.map((c) => c.zacharie_carcasse_id);
+  const carcasseIds =
+    myCarcasseIds.length > 0 ? myCarcasseIds : feiCarcasses.map((c) => c.zacharie_carcasse_id);
 
   // Check if there are remaining carcasses not yet taken in charge by anyone
   const hasRemainingUntakenCarcasses = useMemo(() => {
-    return feiCarcasses.some((c) => c.next_owner_entity_id != null && !myCarcasseIds.includes(c.zacharie_carcasse_id));
+    return feiCarcasses.some(
+      (c) => c.next_owner_entity_id != null && !myCarcasseIds.includes(c.zacharie_carcasse_id)
+    );
   }, [feiCarcasses, myCarcasseIds]);
 
   const hasUnsendCarcasses = useMemo(() => {
-    return feiCarcasses.some((c) => c.next_owner_entity_id == null && !myCarcasseIds.includes(c.zacharie_carcasse_id));
+    return feiCarcasses.some(
+      (c) => c.next_owner_entity_id == null && !myCarcasseIds.includes(c.zacharie_carcasse_id)
+    );
   }, [feiCarcasses, myCarcasseIds]);
 
   const canConfirmCurrentOwner = useMemo(() => {
@@ -150,7 +156,8 @@ export default function CurrentOwnerConfirm() {
       fei_current_owner_entity_id: myEntityId,
       fei_current_owner_entity_name_cache: myEntityName,
       fei_current_owner_user_id: fei.fei_next_owner_user_id || user.id,
-      fei_current_owner_user_name_cache: fei.fei_next_owner_user_name_cache || `${user.prenom} ${user.nom_de_famille}`,
+      fei_current_owner_user_name_cache:
+        fei.fei_next_owner_user_name_cache || `${user.prenom} ${user.nom_de_famille}`,
       fei_next_owner_wants_to_sous_traite: sousTraite ? true : null,
       fei_next_owner_role: sousTraite ? fei.fei_next_owner_role : null,
       fei_next_owner_user_id: sousTraite ? fei.fei_next_owner_user_id : null,

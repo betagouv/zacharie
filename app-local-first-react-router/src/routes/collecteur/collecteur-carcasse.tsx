@@ -22,7 +22,11 @@ interface CarcasseIntermediaireProps {
   intermediaire: FeiIntermediaire;
 }
 
-export default function CarcasseIntermediaireComp({ carcasse, canEdit, intermediaire }: CarcasseIntermediaireProps) {
+export default function CarcasseIntermediaireComp({
+  carcasse,
+  canEdit,
+  intermediaire,
+}: CarcasseIntermediaireProps) {
   const params = useParams();
   const user = useUser((state) => state.user)!;
   const updateCarcasseIntermediaire = useZustandStore((state) => state.updateCarcasseIntermediaire);
@@ -31,7 +35,10 @@ export default function CarcasseIntermediaireComp({ carcasse, canEdit, intermedi
   const fei = useZustandStore((state) => state.feis[params.fei_numero!]);
   const entities = useZustandStore((state) => state.entities);
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
-  const carcasseIntermediaireId = getFeiAndCarcasseAndIntermediaireIdsFromCarcasse(carcasse, intermediaire.id);
+  const carcasseIntermediaireId = getFeiAndCarcasseAndIntermediaireIdsFromCarcasse(
+    carcasse,
+    intermediaire.id
+  );
   const carcasseIntermediaire = carcassesIntermediaireById[carcasseIntermediaireId];
   const carcassesIntermediaires = useCarcassesIntermediairesForCarcasse(carcasse.zacharie_carcasse_id);
 
@@ -41,7 +48,9 @@ export default function CarcasseIntermediaireComp({ carcasse, canEdit, intermedi
       if (_carcasseIntermediaire.intermediaire_id === carcasseIntermediaire.intermediaire_id) continue;
       if (_carcasseIntermediaire?.commentaire) {
         const intermediaireEntity = entities[_carcasseIntermediaire.intermediaire_entity_id];
-        commentaires.push(`${intermediaireEntity?.nom_d_usage}\u00A0: ${_carcasseIntermediaire?.commentaire}`);
+        commentaires.push(
+          `${intermediaireEntity?.nom_d_usage}\u00A0: ${_carcasseIntermediaire?.commentaire}`
+        );
       }
     }
     return commentaires;
@@ -67,7 +76,9 @@ export default function CarcasseIntermediaireComp({ carcasse, canEdit, intermedi
       carcasseIntermediaire.nombre_d_animaux_acceptes !== null &&
       carcasseIntermediaire.nombre_d_animaux_acceptes !== (carcasse.nombre_d_animaux ?? 0)
   );
-  const [refus, setRefus] = useState(carcasse.intermediaire_carcasse_refus_motif ?? carcasseIntermediaire.refus ?? '');
+  const [refus, setRefus] = useState(
+    carcasse.intermediaire_carcasse_refus_motif ?? carcasseIntermediaire.refus ?? ''
+  );
   const [commentaire, setCommentaire] = useState(carcasseIntermediaire.commentaire ?? '');
   const [poids, setPoids] = useState(carcasseIntermediaire.intermediaire_poids ?? '');
 
@@ -529,8 +540,8 @@ export default function CarcasseIntermediaireComp({ carcasse, canEdit, intermedi
                       </label>
                       {carcasse.type === CarcasseType.PETIT_GIBIER && (
                         <p className="fr-hint-text">
-                          Si vous refusez seulement quelques animaux, utilisez plutôt l'option "Lot partiellement
-                          accepté"
+                          Si vous refusez seulement quelques animaux, utilisez plutôt l'option "Lot
+                          partiellement accepté"
                         </p>
                       )}
                     </div>

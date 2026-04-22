@@ -154,8 +154,9 @@ export default function AdminUser() {
   if (!user.roles.includes(UserRoles.SVI)) {
     let numberOfWOrkingWith = userEntitiesRelations.filter(
       (rel) =>
-        rel.EntityRelationsWithUsers.some((r) => r.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY) &&
-        rel.type !== EntityTypes.CCG
+        rel.EntityRelationsWithUsers.some(
+          (r) => r.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY
+        ) && rel.type !== EntityTypes.CCG
     ).length;
     if (user.roles.includes(UserRoles.ETG)) {
       numberOfWOrkingWith += 1;
@@ -189,7 +190,11 @@ export default function AdminUser() {
                 ) : (
                   <>{user.email}</>
                 )}
-                {!user.activated ? <small>❌ Utilisateur inactif</small> : <small>✅ Utilisateur activé</small>}
+                {!user.activated ? (
+                  <small>❌ Utilisateur inactif</small>
+                ) : (
+                  <small>✅ Utilisateur activé</small>
+                )}
                 <form
                   method="POST"
                   onSubmit={async (event) => {
@@ -668,8 +673,8 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
             // }}
           >
             Un collecteur indépendant ne peut pas gérer de fiches pour un ETG. <br />
-            Si un ETG a un besoin de transport, c'est dans le profil de l'utilisateur que ça se gère : cet utilisateur
-            n'a que le rôle ETG mais peut cocher la case "Gérer le transport dans l'ETG"
+            Si un ETG a un besoin de transport, c'est dans le profil de l'utilisateur que ça se gère : cet
+            utilisateur n'a que le rôle ETG mais peut cocher la case "Gérer le transport dans l'ETG"
           </Highlight>
         )}
       {!!potentialEntities.length && (

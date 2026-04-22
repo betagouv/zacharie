@@ -51,7 +51,9 @@ export default function AdminApiKeys() {
 
   return (
     <div className="p-2 md:p-4">
-      <title>Clés API | Admin | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
+      <title>
+        Clés API | Admin | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire
+      </title>
       <div className="mb-2 flex items-center justify-between gap-2">
         <span className="text-sm text-gray-600">
           Doc :{' '}

@@ -25,7 +25,9 @@ import updateCarcasseStatus from '~/utils/get-carcasse-status';
     } else {
       const newStatus = updateCarcasseStatus(carcasse);
       if (newStatus === 'SANS_DECISION') {
-        if (dayjs(carcasse.Fei.svi_assigned_at).isBefore(dayjs().subtract(10, 'days').startOf('day').toDate())) {
+        if (
+          dayjs(carcasse.Fei.svi_assigned_at).isBefore(dayjs().subtract(10, 'days').startOf('day').toDate())
+        ) {
           console.log(
             index,
             'SANS_DECISION PROBLEMATIC',

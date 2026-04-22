@@ -129,7 +129,9 @@ export default function CcgImport() {
       setSelectedForUpdate(new Set(response.data.modifies.map((r) => r.numero_ddecpp)));
       setStep('preview');
     } catch {
-      setError("Erreur lors de la lecture du fichier. Vérifiez qu'il s'agit d'un fichier CSV ou Excel valide.");
+      setError(
+        "Erreur lors de la lecture du fichier. Vérifiez qu'il s'agit d'un fichier CSV ou Excel valide."
+      );
     } finally {
       setLoading(false);
     }
@@ -216,10 +218,10 @@ export default function CcgImport() {
       {step === 'upload' && (
         <div className="mb-8">
           <p className="mb-4">
-            Sélectionnez un fichier Excel CCG (format RESYTAL, en-têtes en ligne 5). Les colonnes utilisées sont&nbsp;:{' '}
-            <code>Unité Activité (UA) : Identifier métier</code>, <code>Établissement : Enseigne usuelle</code>,{' '}
-            <code>Adresse postale</code>, <code>Code postal</code>, <code>Bureau distributeur</code>,{' '}
-            <code>SIRET/NUMAGRIT</code>
+            Sélectionnez un fichier Excel CCG (format RESYTAL, en-têtes en ligne 5). Les colonnes utilisées
+            sont&nbsp;: <code>Unité Activité (UA) : Identifier métier</code>,{' '}
+            <code>Établissement : Enseigne usuelle</code>, <code>Adresse postale</code>,{' '}
+            <code>Code postal</code>, <code>Bureau distributeur</code>, <code>SIRET/NUMAGRIT</code>
           </p>
           <input
             type="file"

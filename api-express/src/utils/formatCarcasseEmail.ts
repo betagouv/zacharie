@@ -104,7 +104,9 @@ export function formatSaisieChasseurEmail(carcasse: Carcasse): [string, string] 
   return [object, email.filter(Boolean).join('\n\n')];
 }
 
-export async function formatCarcasseManquanteOrRefusChasseurEmail(carcasse: Carcasse): Promise<[string, string]> {
+export async function formatCarcasseManquanteOrRefusChasseurEmail(
+  carcasse: Carcasse
+): Promise<[string, string]> {
   const carcasseIntermediaire = await prisma.carcasseIntermediaire.findUnique({
     where: {
       fei_numero_zacharie_carcasse_id_intermediaire_id: {
@@ -160,7 +162,10 @@ export async function formatCarcasseManquanteOrRefusChasseurEmail(carcasse: Carc
   return [object, email.filter(Boolean).join('\n\n')];
 }
 
-export async function formatAutomaticClosingEmail(fei: Fei, carcasses: Carcasse[]): Promise<[string, string]> {
+export async function formatAutomaticClosingEmail(
+  fei: Fei,
+  carcasses: Carcasse[]
+): Promise<[string, string]> {
   let numberOfValidatedCarcasses = 0;
   let numberOfRefusedCarcasses = 0;
   for (const carcasse of carcasses) {

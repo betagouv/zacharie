@@ -18,7 +18,9 @@ export default function CurrentOwner() {
   const addLog = state.addLog;
   const fei = state.feis[params.fei_numero!];
   const currentOwnerUser = fei.fei_current_owner_user_id ? state.users[fei.fei_current_owner_user_id] : null;
-  const currentOwnerEntity = fei.fei_current_owner_entity_id ? state.entities[fei.fei_current_owner_entity_id] : null;
+  const currentOwnerEntity = fei.fei_current_owner_entity_id
+    ? state.entities[fei.fei_current_owner_entity_id]
+    : null;
 
   const navigate = useNavigate();
 
@@ -76,7 +78,8 @@ export default function CurrentOwner() {
         <b>{getUserRoleLabelPrefixed(fei.fei_current_owner_role as UserRoles)}</b>.<br />
         {currentOwnerEntity?.nom_d_usage && (
           <>
-            <b>{currentOwnerEntity.nom_d_usage}</b> - {currentOwnerEntity.code_postal} {currentOwnerEntity.ville}
+            <b>{currentOwnerEntity.nom_d_usage}</b> - {currentOwnerEntity.code_postal}{' '}
+            {currentOwnerEntity.ville}
             <br />
           </>
         )}

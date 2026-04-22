@@ -61,7 +61,11 @@ const PILLARS: Pillar[] = [
         label: "Saisies vétérinaires dues à de mauvaises pratiques d'hygiène",
         description: 'vs 7,6% hors Zacharie',
       },
-      { value: '0,4%', label: 'Anomalies non-éliminatoires déclarées par les chasseurs', description: 'Grand gibier' },
+      {
+        value: '0,4%',
+        label: 'Anomalies non-éliminatoires déclarées par les chasseurs',
+        description: 'Grand gibier',
+      },
     ],
   },
   {

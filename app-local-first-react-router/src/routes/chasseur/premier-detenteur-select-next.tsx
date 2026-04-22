@@ -18,7 +18,12 @@ import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import useUser from '@app/zustand/user';
 import useZustandStore, { syncData } from '@app/zustand/store';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
-import { useCcgIds, useEtgIds, useCollecteursProIds, useCircuitCourtIds } from '@app/utils/get-entity-relations';
+import {
+  useCcgIds,
+  useEtgIds,
+  useCollecteursProIds,
+  useCircuitCourtIds,
+} from '@app/utils/get-entity-relations';
 import { usePrefillPremierDétenteurInfos } from '@app/utils/usePrefillPremierDétenteur';
 import SelectCustom from '@app/components/SelectCustom';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
@@ -195,7 +200,9 @@ function DispatchGroupForm({
                         : ''}
                     </span>
                     <span className="text-xs">N° {carcasse.numero_bracelet}</span>
-                    {otherGroupLabel && <span className="mt-0.5 text-xs text-gray-500">→ {otherGroupLabel}</span>}
+                    {otherGroupLabel && (
+                      <span className="mt-0.5 text-xs text-gray-500">→ {otherGroupLabel}</span>
+                    )}
                   </span>
                 </button>
               );
@@ -210,7 +217,8 @@ function DispatchGroupForm({
         hint={
           <>
             <span>
-              Indiquez ici la personne ou la structure avec qui vous êtes en contact pour prendre en charge le gibier.
+              Indiquez ici la personne ou la structure avec qui vous êtes en contact pour prendre en charge le
+              gibier.
             </span>
             {!group.recipientEntityId && !disabled && (
               <div>
@@ -264,7 +272,8 @@ function DispatchGroupForm({
             label: <span className="inline-block">Pas de stockage</span>,
             hintText: (
               <span>
-                Sans stockage en chambre froide, les carcasses doivent être transportées <b>le jour-même du tir</b>
+                Sans stockage en chambre froide, les carcasses doivent être transportées{' '}
+                <b>le jour-même du tir</b>
               </span>
             ),
             nativeInputProps: {
@@ -436,7 +445,9 @@ function DispatchGroupForm({
           {group.transportType === TransportType.PREMIER_DETENTEUR && group.depotType === DepotType.CCG && (
             <Component
               label="Date à laquelle je transporte les carcasses"
-              disabled={group.transportType !== TransportType.PREMIER_DETENTEUR || group.depotType !== DepotType.CCG}
+              disabled={
+                group.transportType !== TransportType.PREMIER_DETENTEUR || group.depotType !== DepotType.CCG
+              }
               hintText={
                 canEdit ? (
                   <>
@@ -444,7 +455,8 @@ function DispatchGroupForm({
                       className="mr-1 rounded-full bg-[#E8EDFF] px-3 py-1 text-sm text-[#000091]"
                       type="button"
                       disabled={
-                        group.transportType !== TransportType.PREMIER_DETENTEUR || group.depotType !== DepotType.CCG
+                        group.transportType !== TransportType.PREMIER_DETENTEUR ||
+                        group.depotType !== DepotType.CCG
                       }
                       onClick={() => {
                         onUpdateGroup(group.id, {
@@ -454,8 +466,8 @@ function DispatchGroupForm({
                     >
                       Définir comme étant la date du jour et maintenant.
                     </button>
-                    À ne remplir que si vous êtes le transporteur et que vous stockez les carcasses dans un CCG.
-                    Indiquer une date permettra au prochain détenteur de s'organiser.
+                    À ne remplir que si vous êtes le transporteur et que vous stockez les carcasses dans un
+                    CCG. Indiquer une date permettra au prochain détenteur de s'organiser.
                   </>
                 ) : null
               }
@@ -789,11 +801,13 @@ export default function DestinatairePremierDetenteur({
           content: (
             <>
               <p className="mb-3">
-                <strong>Les carcasses de sanglier transmises nécessitent un test trichine obligatoire.</strong>
+                <strong>
+                  Les carcasses de sanglier transmises nécessitent un test trichine obligatoire.
+                </strong>
               </p>
               <p>
-                Conformément à la réglementation, vous devez vous assurer que le test trichine a été réalisé avant toute
-                mise sur le marché ou consommation de ces carcasses.
+                Conformément à la réglementation, vous devez vous assurer que le test trichine a été réalisé
+                avant toute mise sur le marché ou consommation de ces carcasses.
               </p>
             </>
           ),
@@ -808,12 +822,12 @@ export default function DestinatairePremierDetenteur({
                 <strong>Les carcasses de sanglier transmises nécessitent un test trichine recommandé.</strong>
               </p>
               <p className="mb-3">
-                Si le test trichine n'a pas été réalisé, vous devez impérativement informer le consommateur du risque
-                trichine et de l'obligation de cuisson complète de la viande avant consommation.
+                Si le test trichine n'a pas été réalisé, vous devez impérativement informer le consommateur du
+                risque trichine et de l'obligation de cuisson complète de la viande avant consommation.
               </p>
               <p className="text-sm text-gray-600">
-                <strong>Important :</strong> La cuisson doit être complète (cœur de la viande à 70°C minimum) pour
-                éliminer tout risque de contamination.
+                <strong>Important :</strong> La cuisson doit être complète (cœur de la viande à 70°C minimum)
+                pour éliminer tout risque de contamination.
               </p>
             </>
           ),
@@ -894,7 +908,8 @@ export default function DestinatairePremierDetenteur({
         updateCarcasse(
           carcasseId,
           {
-            premier_detenteur_prochain_detenteur_role_cache: entities[group.recipientEntityId]?.type as FeiOwnerRole,
+            premier_detenteur_prochain_detenteur_role_cache: entities[group.recipientEntityId]
+              ?.type as FeiOwnerRole,
             premier_detenteur_prochain_detenteur_id_cache: group.recipientEntityId,
             premier_detenteur_depot_type: group.depotType,
             premier_detenteur_depot_entity_id: nextDepotEntityId,
@@ -937,10 +952,13 @@ export default function DestinatairePremierDetenteur({
         fei_next_owner_entity_id: firstGroup.recipientEntityId,
         fei_next_owner_role: entities[firstGroup.recipientEntityId]?.type as FeiOwnerRole,
         premier_detenteur_prochain_detenteur_id_cache: firstGroup.recipientEntityId,
-        premier_detenteur_prochain_detenteur_role_cache: entities[firstGroup.recipientEntityId]?.type as FeiOwnerRole,
+        premier_detenteur_prochain_detenteur_role_cache: entities[firstGroup.recipientEntityId]
+          ?.type as FeiOwnerRole,
         premier_detenteur_depot_type: firstGroup.depotType,
         premier_detenteur_depot_entity_id: nextDepotEntityId,
-        premier_detenteur_depot_entity_name_cache: nextDepotEntityId ? entities[nextDepotEntityId]?.nom_d_usage : null,
+        premier_detenteur_depot_entity_name_cache: nextDepotEntityId
+          ? entities[nextDepotEntityId]?.nom_d_usage
+          : null,
         premier_detenteur_depot_ccg_at: nextDepotDate,
         premier_detenteur_transport_type: nextTransportType,
         premier_detenteur_transport_date: nextTransportDate,
@@ -995,7 +1013,9 @@ export default function DestinatairePremierDetenteur({
         if (g.id === groupId) {
           return {
             ...g,
-            carcasseIds: isIn ? g.carcasseIds.filter((id) => id !== carcasseId) : [...g.carcasseIds, carcasseId],
+            carcasseIds: isIn
+              ? g.carcasseIds.filter((id) => id !== carcasseId)
+              : [...g.carcasseIds, carcasseId],
           };
         }
         // Remove from other groups when adding to this one

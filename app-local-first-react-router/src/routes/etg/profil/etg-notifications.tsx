@@ -11,7 +11,13 @@ import { toast } from 'react-toastify';
 export default function EtgProfilNotifications() {
   const user = useUser((state) => state.user)!;
 
-  const { subscribeToPush, canSendPush, isSubscribed, pushSubscription, pushAvailable: pushAvailableOnWeb } = usePush();
+  const {
+    subscribeToPush,
+    canSendPush,
+    isSubscribed,
+    pushSubscription,
+    pushAvailable: pushAvailableOnWeb,
+  } = usePush();
 
   const [nativePushTokenRegistered, setNativePushTokenRegistered] = useState(false);
   useEffect(() => {

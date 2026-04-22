@@ -132,7 +132,9 @@ export function getPerformanceContext(): {
 
   const timing = {
     ttfb: navTiming ? Math.round(navTiming.responseStart - navTiming.requestStart) : null,
-    domContentLoaded: navTiming ? Math.round(navTiming.domContentLoadedEventEnd - navTiming.fetchStart) : null,
+    domContentLoaded: navTiming
+      ? Math.round(navTiming.domContentLoadedEventEnd - navTiming.fetchStart)
+      : null,
     loadComplete: navTiming ? Math.round(navTiming.loadEventEnd - navTiming.fetchStart) : null,
   };
 

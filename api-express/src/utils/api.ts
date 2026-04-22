@@ -78,8 +78,10 @@ export function mapCarcasseForApi(carcasse: CarcasseGetForApi, fei: FeiGetForApi
     svi_ipm2_traitement_assainissant: carcasse.svi_ipm2_traitement_assainissant,
     svi_ipm2_traitement_assainissant_cuisson_temps: carcasse.svi_ipm2_traitement_assainissant_cuisson_temps,
     svi_ipm2_traitement_assainissant_cuisson_temp: carcasse.svi_ipm2_traitement_assainissant_cuisson_temp,
-    svi_ipm2_traitement_assainissant_congelation_temps: carcasse.svi_ipm2_traitement_assainissant_congelation_temps,
-    svi_ipm2_traitement_assainissant_congelation_temp: carcasse.svi_ipm2_traitement_assainissant_congelation_temp,
+    svi_ipm2_traitement_assainissant_congelation_temps:
+      carcasse.svi_ipm2_traitement_assainissant_congelation_temps,
+    svi_ipm2_traitement_assainissant_congelation_temp:
+      carcasse.svi_ipm2_traitement_assainissant_congelation_temp,
     svi_ipm2_traitement_assainissant_type: carcasse.svi_ipm2_traitement_assainissant_type,
     svi_ipm2_traitement_assainissant_paramètres: carcasse.svi_ipm2_traitement_assainissant_paramètres,
     svi_ipm2_traitement_assainissant_etablissement: carcasse.svi_ipm2_traitement_assainissant_etablissement,
@@ -94,7 +96,8 @@ export function mapCarcasseForApi(carcasse: CarcasseGetForApi, fei: FeiGetForApi
     fei_heure_mise_a_mort_premiere_carcasse: fei.heure_mise_a_mort_premiere_carcasse,
     fei_heure_evisceration_derniere_carcasse: fei.heure_evisceration_derniere_carcasse,
     fei_resume_nombre_de_carcasses: fei.resume_nombre_de_carcasses,
-    fei_examinateur_initial_approbation_mise_sur_le_marche: fei.examinateur_initial_approbation_mise_sur_le_marche,
+    fei_examinateur_initial_approbation_mise_sur_le_marche:
+      fei.examinateur_initial_approbation_mise_sur_le_marche,
     fei_examinateur_initial_date_approbation_mise_sur_le_marche:
       fei.examinateur_initial_date_approbation_mise_sur_le_marche,
     fei_automatic_closed_at: fei.automatic_closed_at,
@@ -144,7 +147,8 @@ export function mapFeiForApi(fei: FeiGetForApi, carcasses: CarcasseGetForApi[]) 
     resume_nombre_de_carcasses: fei.resume_nombre_de_carcasses,
     examinateur_initial_name:
       fei.FeiExaminateurInitialUser?.prenom + ' ' + fei.FeiExaminateurInitialUser?.nom_de_famille,
-    examinateur_initial_approbation_mise_sur_le_marche: fei.examinateur_initial_approbation_mise_sur_le_marche,
+    examinateur_initial_approbation_mise_sur_le_marche:
+      fei.examinateur_initial_approbation_mise_sur_le_marche,
     examinateur_initial_date_approbation_mise_sur_le_marche:
       fei.examinateur_initial_date_approbation_mise_sur_le_marche,
     premier_detenteur_name: fei.FeiPremierDetenteurEntity
@@ -195,7 +199,10 @@ export async function getDedicatedEntityLinkedToApiKey(apiKey: ApiKey): Promise<
   return entity;
 }
 
-export async function getRequestedUser(apiKey: ApiKey, email: string): Promise<{ error?: string; user?: User }> {
+export async function getRequestedUser(
+  apiKey: ApiKey,
+  email: string
+): Promise<{ error?: string; user?: User }> {
   if (!email) {
     return {
       error: `Il manque l'email dans la requête. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`,
@@ -251,7 +258,8 @@ export async function getRequestedUser(apiKey: ApiKey, email: string): Promise<{
 }
 
 export const checkApiKeyIsValidMiddleware =
-  (scopes: Array<ApiKeyScope>) => async (req: RequestWithApiKey, res: express.Response, next: express.NextFunction) => {
+  (scopes: Array<ApiKeyScope>) =>
+  async (req: RequestWithApiKey, res: express.Response, next: express.NextFunction) => {
     const apiKey = req.apiKey;
     if (!apiKey.active || (apiKey.expires_at && apiKey.expires_at < new Date())) {
       const error = new Error(

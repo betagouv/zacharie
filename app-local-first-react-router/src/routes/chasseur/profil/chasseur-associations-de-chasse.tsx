@@ -28,8 +28,10 @@ const empytEntitiesByTypeAndId: EntitiesByTypeAndId = {
 
 export default function MesAssociationsDeChasse() {
   const user = useUser((state) => state.user)!;
-  const [allEntitiesByTypeAndId, setAllEntitiesByTypeAndId] = useState<EntitiesByTypeAndId>(empytEntitiesByTypeAndId);
-  const [userEntitiesByTypeAndId, setUserEntitiesByTypeAndId] = useState<EntitiesByTypeAndId>(empytEntitiesByTypeAndId);
+  const [allEntitiesByTypeAndId, setAllEntitiesByTypeAndId] =
+    useState<EntitiesByTypeAndId>(empytEntitiesByTypeAndId);
+  const [userEntitiesByTypeAndId, setUserEntitiesByTypeAndId] =
+    useState<EntitiesByTypeAndId>(empytEntitiesByTypeAndId);
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
@@ -63,7 +65,8 @@ export default function MesAssociationsDeChasse() {
     (entity) => !userEntitiesByTypeAndId[EntityTypes.PREMIER_DETENTEUR][entity.id]
   );
 
-  const userHasAssociationsChasses = Object.values(userEntitiesByTypeAndId[EntityTypes.PREMIER_DETENTEUR]).length > 0;
+  const userHasAssociationsChasses =
+    Object.values(userEntitiesByTypeAndId[EntityTypes.PREMIER_DETENTEUR]).length > 0;
 
   const [showForm, setShowForm] = useState(!userHasAssociationsChasses);
   useEffect(() => {
@@ -103,7 +106,9 @@ export default function MesAssociationsDeChasse() {
           setCurrentEntityId(null);
           setAssoPostalCode('');
           setShowForm(false);
-          document.getElementById('onboarding-etape-2-associations-data-title')?.scrollIntoView({ behavior: 'smooth' });
+          document
+            .getElementById('onboarding-etape-2-associations-data-title')
+            ?.scrollIntoView({ behavior: 'smooth' });
         }
       } else {
         API.post({
@@ -210,7 +215,9 @@ export default function MesAssociationsDeChasse() {
                     <SelectCustom
                       key={'Raison Sociale *' + currentEntityId}
                       options={selectOptions}
-                      getOptionLabel={(entity) => `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`}
+                      getOptionLabel={(entity) =>
+                        `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`
+                      }
                       getOptionValue={(entity) => entity.id}
                       formatOptionLabel={(entity, options) => {
                         if (options.context === 'menu') {
@@ -287,8 +294,12 @@ export default function MesAssociationsDeChasse() {
                     <div className="bg-contrast-grey rounded-lg p-4">
                       <p className="mb-1 text-lg font-bold">{currentEntity.nom_d_usage}</p>
                       {currentEntity.siret && <p className="mb-1 text-sm">SIRET : {currentEntity.siret}</p>}
-                      {currentEntity.address_ligne_1 && <p className="mb-1 text-sm">{currentEntity.address_ligne_1}</p>}
-                      {currentEntity.address_ligne_2 && <p className="mb-1 text-sm">{currentEntity.address_ligne_2}</p>}
+                      {currentEntity.address_ligne_1 && (
+                        <p className="mb-1 text-sm">{currentEntity.address_ligne_1}</p>
+                      )}
+                      {currentEntity.address_ligne_2 && (
+                        <p className="mb-1 text-sm">{currentEntity.address_ligne_2}</p>
+                      )}
                       {(currentEntity.code_postal || currentEntity.ville) && (
                         <p className="text-sm">
                           {currentEntity.code_postal} {currentEntity.ville}

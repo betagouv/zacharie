@@ -109,7 +109,9 @@ export default function CreationDeCompte() {
       role="main"
       id="content"
     >
-      <title>Création de compte | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
+      <title>
+        Création de compte | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire
+      </title>
       <div className="fr-container fr-container--fluid fr-my-md-14v">
         <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
           <div className="fr-col-12 fr-col-md-10 fr-col-lg-8">

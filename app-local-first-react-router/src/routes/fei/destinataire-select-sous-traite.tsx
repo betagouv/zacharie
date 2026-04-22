@@ -6,7 +6,12 @@ import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import useUser from '@app/zustand/user';
 import useZustandStore, { syncData } from '@app/zustand/store';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
-import { useEtgIds, useSviIds, useCollecteursProIds, useCircuitCourtIds } from '@app/utils/get-entity-relations';
+import {
+  useEtgIds,
+  useSviIds,
+  useCollecteursProIds,
+  useCircuitCourtIds,
+} from '@app/utils/get-entity-relations';
 import SelectCustom from '@app/components/SelectCustom';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
 import { getEntityDisplay } from '@app/utils/get-entity-display';
@@ -143,7 +148,8 @@ export default function DestinataireSousTraite({
     if (feiAndIntermediaireIds && intermediaire) {
       let nextCarcasseIntermediaire: Partial<CarcasseIntermediaire> = {
         intermediaire_prochain_detenteur_id_cache: prochainDetenteurEntityId,
-        intermediaire_prochain_detenteur_role_cache: entities[prochainDetenteurEntityId]?.type as FeiOwnerRole,
+        intermediaire_prochain_detenteur_role_cache: entities[prochainDetenteurEntityId]
+          ?.type as FeiOwnerRole,
         intermediaire_depot_type: null,
         intermediaire_depot_entity_id: null,
       };
@@ -202,7 +208,8 @@ export default function DestinataireSousTraite({
           hint={
             <>
               <span>
-                Indiquez ici la personne ou la structure avec qui vous êtes en contact pour prendre en charge le gibier.
+                Indiquez ici la personne ou la structure avec qui vous êtes en contact pour prendre en charge
+                le gibier.
               </span>
               {!prochainDetenteurEntityId && (
                 <div>
@@ -226,7 +233,9 @@ export default function DestinataireSousTraite({
           }
           options={prochainsDetenteursOptions}
           placeholder="Sélectionnez le prochain détenteur des carcasses"
-          value={prochainsDetenteursOptions.find((option) => option.value === prochainDetenteurEntityId) ?? null}
+          value={
+            prochainsDetenteursOptions.find((option) => option.value === prochainDetenteurEntityId) ?? null
+          }
           getOptionLabel={(f) => f.label!}
           getOptionValue={(f) => f.value}
           onChange={(f) => (f ? setProchainDetenteurEntityId(f.value) : setProchainDetenteurEntityId(null))}

@@ -91,7 +91,8 @@ export default function MesPartenaires() {
       {userEntities.map((entity) => {
         const relation = entity.EntityRelationsWithUsers.find(
           (relation) =>
-            relation.owner_id === user.id && relation.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY
+            relation.owner_id === user.id &&
+            relation.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY
         );
         if (!relation) return null;
         return (

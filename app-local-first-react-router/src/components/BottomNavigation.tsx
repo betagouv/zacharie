@@ -21,7 +21,8 @@ function getIcon(text: string): string {
   if (lowerText === 'partage de mes données') return 'ri-share-line';
   if (lowerText === 'informations') return 'ri-information-line';
   if (lowerText === 'ajouter un utilisateur') return 'ri-user-add-line';
-  if (lowerText.startsWith('mon entreprise') || lowerText.startsWith('mon service')) return 'ri-building-line';
+  if (lowerText.startsWith('mon entreprise') || lowerText.startsWith('mon service'))
+    return 'ri-building-line';
   if (lowerText === 'admin') return 'ri-admin-line';
   if (lowerText.startsWith('liste des')) return 'ri-list-check';
   if (lowerText === 'contact') return 'ri-mail-line';

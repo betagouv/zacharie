@@ -42,93 +42,95 @@ router.get(
   apiRateLimit,
   passport.authenticate('apiKey', { session: false }),
   checkApiKeyIsValidMiddleware([ApiKeyScope.FEI_READ_FOR_USER]),
-  catchErrors(async (req: RequestWithApiKey, res: express.Response<FeiGetForApi>, next: express.NextFunction) => {
-    const querySchema = z.object({
-      date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format de date attendu: YYYY-MM-DD'),
-      date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format de date attendu: YYYY-MM-DD'),
-      email: z.string().email("Format d'email invalide"),
-    });
+  catchErrors(
+    async (req: RequestWithApiKey, res: express.Response<FeiGetForApi>, next: express.NextFunction) => {
+      const querySchema = z.object({
+        date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format de date attendu: YYYY-MM-DD'),
+        date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format de date attendu: YYYY-MM-DD'),
+        email: z.string().email("Format d'email invalide"),
+      });
 
-    const queryResult = querySchema.safeParse(req.query);
+      const queryResult = querySchema.safeParse(req.query);
 
-    if (!queryResult.success) {
-      const errors = queryResult.error.issues.map((i) => i.message).join('. ');
-      const error = new Error(
-        `${errors}. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`
-      );
-      res.status(400);
-      return next(error);
-    }
+      if (!queryResult.success) {
+        const errors = queryResult.error.issues.map((i) => i.message).join('. ');
+        const error = new Error(
+          `${errors}. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`
+        );
+        res.status(400);
+        return next(error);
+      }
 
-    const { date_from: dateFrom, date_to: dateTo, email } = queryResult.data;
-    const apiKey = req.apiKey;
+      const { date_from: dateFrom, date_to: dateTo, email } = queryResult.data;
+      const apiKey = req.apiKey;
 
-    const { user, error } = await getRequestedUser(apiKey, email);
+      const { user, error } = await getRequestedUser(apiKey, email);
 
-    if (error) {
-      res.status(403);
-      return next(error);
-    }
+      if (error) {
+        res.status(403);
+        return next(error);
+      }
 
-    const feiQuery: Prisma.FeiFindManyArgs = {
-      where: {
-        date_mise_a_mort: {
-          gte: dayjs(dateFrom).utc(true).toISOString(),
-          lte: dayjs(dateTo).utc(true).toISOString(),
-        },
-        deleted_at: null,
-      },
-    };
-
-    const role = user.roles[0];
-    if (role === UserRoles.CHASSEUR) {
-      feiQuery.where.OR = [
-        {
-          examinateur_initial_user_id: user.id,
-        },
-        {
-          premier_detenteur_user_id: user.id,
-        },
-      ];
-    } else if (role === UserRoles.ETG || role === UserRoles.COLLECTEUR_PRO) {
-      feiQuery.where.CarcasseIntermediaire = {
-        some: {
-          intermediaire_user_id: user.id,
+      const feiQuery: Prisma.FeiFindManyArgs = {
+        where: {
+          date_mise_a_mort: {
+            gte: dayjs(dateFrom).utc(true).toISOString(),
+            lte: dayjs(dateTo).utc(true).toISOString(),
+          },
+          deleted_at: null,
         },
       };
-    } else if (role === UserRoles.SVI) {
-      feiQuery.where.svi_user_id = user.id;
-    }
 
-    const feis = await prisma.fei.findMany({
-      where: feiQuery.where,
-      select: feiForApiSelect,
-    });
+      const role = user.roles[0];
+      if (role === UserRoles.CHASSEUR) {
+        feiQuery.where.OR = [
+          {
+            examinateur_initial_user_id: user.id,
+          },
+          {
+            premier_detenteur_user_id: user.id,
+          },
+        ];
+      } else if (role === UserRoles.ETG || role === UserRoles.COLLECTEUR_PRO) {
+        feiQuery.where.CarcasseIntermediaire = {
+          some: {
+            intermediaire_user_id: user.id,
+          },
+        };
+      } else if (role === UserRoles.SVI) {
+        feiQuery.where.svi_user_id = user.id;
+      }
 
-    const carcasses = await prisma.carcasse.findMany({
-      where: {
-        fei_numero: {
-          in: feis.map((fei) => fei.numero),
+      const feis = await prisma.fei.findMany({
+        where: feiQuery.where,
+        select: feiForApiSelect,
+      });
+
+      const carcasses = await prisma.carcasse.findMany({
+        where: {
+          fei_numero: {
+            in: feis.map((fei) => fei.numero),
+          },
+          deleted_at: null,
         },
-        deleted_at: null,
-      },
-      select: carcasseForApiSelect,
-    });
+        select: carcasseForApiSelect,
+      });
 
-    res.status(200).send({
-      ok: true,
-      data: {
-        feis: feis.map((fei) =>
-          mapFeiForApi(
-            fei,
-            carcasses.filter((carcasse) => carcasse.fei_numero === fei.numero)
-          )
-        ),
-      },
-      message:
-        'Pour toute question ou remarque, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.',
-    });
-  })
+      res.status(200).send({
+        ok: true,
+        data: {
+          feis: feis.map((fei) =>
+            mapFeiForApi(
+              fei,
+              carcasses.filter((carcasse) => carcasse.fei_numero === fei.numero)
+            )
+          ),
+        },
+        message:
+          'Pour toute question ou remarque, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.',
+      });
+    }
+  )
 );
 
 router.get(
@@ -137,7 +139,11 @@ router.get(
   passport.authenticate('apiKey', { session: false }),
   checkApiKeyIsValidMiddleware([ApiKeyScope.FEI_READ_FOR_USER]),
   catchErrors(
-    async (req: RequestWithApiKey, res: express.Response<FeiGetByNumeroForApi>, next: express.NextFunction) => {
+    async (
+      req: RequestWithApiKey,
+      res: express.Response<FeiGetByNumeroForApi>,
+      next: express.NextFunction
+    ) => {
       const querySchema = z.object({
         email: z.string().email("Format d'email invalide"),
       });
@@ -245,86 +251,88 @@ router.get(
   apiRateLimit,
   passport.authenticate('apiKey', { session: false }),
   checkApiKeyIsValidMiddleware([ApiKeyScope.FEI_READ_FOR_ENTITY, ApiKeyScope.FEI_READ_FOR_USER]),
-  catchErrors(async (req: RequestWithApiKey, res: express.Response<FeiGetForApi>, next: express.NextFunction) => {
-    const querySchema = z.object({
-      date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format de date attendu: YYYY-MM-DD'),
-      date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format de date attendu: YYYY-MM-DD'),
-    });
+  catchErrors(
+    async (req: RequestWithApiKey, res: express.Response<FeiGetForApi>, next: express.NextFunction) => {
+      const querySchema = z.object({
+        date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format de date attendu: YYYY-MM-DD'),
+        date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format de date attendu: YYYY-MM-DD'),
+      });
 
-    const queryResult = querySchema.safeParse(req.query);
+      const queryResult = querySchema.safeParse(req.query);
 
-    if (!queryResult.success) {
-      const errors = queryResult.error.issues.map((i) => i.message).join('. ');
-      const error = new Error(
-        `${errors}. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`
-      );
-      res.status(400);
-      return next(error);
-    }
+      if (!queryResult.success) {
+        const errors = queryResult.error.issues.map((i) => i.message).join('. ');
+        const error = new Error(
+          `${errors}. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`
+        );
+        res.status(400);
+        return next(error);
+      }
 
-    const dateFrom = queryResult.data.date_from; // format: 2025-09-17
-    const dateTo = queryResult.data.date_to; // format: 2025-09-17
-    const apiKey = req.apiKey;
+      const dateFrom = queryResult.data.date_from; // format: 2025-09-17
+      const dateTo = queryResult.data.date_to; // format: 2025-09-17
+      const apiKey = req.apiKey;
 
-    const entity = await getDedicatedEntityLinkedToApiKey(apiKey);
-    if (!entity) {
-      const error = new Error(
-        `Votre clé n'est pas autorisée à accéder à des fiches d'examen initial par cette requête. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`
-      );
-      res.status(403);
-      return next(error);
-    }
+      const entity = await getDedicatedEntityLinkedToApiKey(apiKey);
+      if (!entity) {
+        const error = new Error(
+          `Votre clé n'est pas autorisée à accéder à des fiches d'examen initial par cette requête. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`
+        );
+        res.status(403);
+        return next(error);
+      }
 
-    const feiQuery: Prisma.FeiFindManyArgs = {
-      where: {
-        date_mise_a_mort: {
-          gte: dayjs(dateFrom).utc(true).toISOString(),
-          lte: dayjs(dateTo).utc(true).toISOString(),
-        },
-        deleted_at: null,
-      },
-    };
-    if (entity.type === EntityTypes.PREMIER_DETENTEUR) {
-      feiQuery.where.premier_detenteur_entity_id = entity.id;
-    } else if (entity.type === EntityTypes.SVI) {
-      feiQuery.where.svi_entity_id = entity.id;
-    } else {
-      feiQuery.where.CarcasseIntermediaire = {
-        some: {
-          intermediaire_entity_id: entity.id,
+      const feiQuery: Prisma.FeiFindManyArgs = {
+        where: {
+          date_mise_a_mort: {
+            gte: dayjs(dateFrom).utc(true).toISOString(),
+            lte: dayjs(dateTo).utc(true).toISOString(),
+          },
+          deleted_at: null,
         },
       };
-    }
+      if (entity.type === EntityTypes.PREMIER_DETENTEUR) {
+        feiQuery.where.premier_detenteur_entity_id = entity.id;
+      } else if (entity.type === EntityTypes.SVI) {
+        feiQuery.where.svi_entity_id = entity.id;
+      } else {
+        feiQuery.where.CarcasseIntermediaire = {
+          some: {
+            intermediaire_entity_id: entity.id,
+          },
+        };
+      }
 
-    const feis = await prisma.fei.findMany({
-      where: feiQuery.where,
-      select: feiForApiSelect,
-    });
+      const feis = await prisma.fei.findMany({
+        where: feiQuery.where,
+        select: feiForApiSelect,
+      });
 
-    const carcasses = await prisma.carcasse.findMany({
-      where: {
-        fei_numero: {
-          in: feis.map((fei) => fei.numero),
+      const carcasses = await prisma.carcasse.findMany({
+        where: {
+          fei_numero: {
+            in: feis.map((fei) => fei.numero),
+          },
+          deleted_at: null,
         },
-        deleted_at: null,
-      },
-      select: carcasseForApiSelect,
-    });
+        select: carcasseForApiSelect,
+      });
 
-    res.status(200).send({
-      ok: true,
-      data: {
-        feis: feis.map((fei) =>
-          mapFeiForApi(
-            fei,
-            carcasses.filter((carcasse) => carcasse.fei_numero === fei.numero)
-          )
-        ),
-      },
-      message:
-        'Pour toute question ou remarque, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.',
-    });
-  })
+      res.status(200).send({
+        ok: true,
+        data: {
+          feis: feis.map((fei) =>
+            mapFeiForApi(
+              fei,
+              carcasses.filter((carcasse) => carcasse.fei_numero === fei.numero)
+            )
+          ),
+        },
+        message:
+          'Pour toute question ou remarque, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.',
+      });
+    }
+  )
 );
 
 export default router;

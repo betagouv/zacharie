@@ -1,4 +1,13 @@
-import { StyleSheet, Platform, BackHandler, Linking, Modal, View, TouchableOpacity, Text } from 'react-native';
+import {
+  StyleSheet,
+  Platform,
+  BackHandler,
+  Linking,
+  Modal,
+  View,
+  TouchableOpacity,
+  Text,
+} from 'react-native';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import { registerForPushNotificationsAsync } from './services/expo-push-notifs';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -26,7 +35,9 @@ function App() {
         .then((response) => {
           console.log('getLastNotificationResponseAsync', response);
           if (response) {
-            ref.current?.injectJavaScript(`window.onNotificationResponseReceived('${JSON.stringify(response)}');`);
+            ref.current?.injectJavaScript(
+              `window.onNotificationResponseReceived('${JSON.stringify(response)}');`
+            );
             Notifications.clearLastNotificationResponseAsync();
           }
         })
@@ -113,7 +124,9 @@ function App() {
     responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
       console.log('responseListener', response);
       setTimeout(() => {
-        ref.current?.injectJavaScript(`window.onNotificationResponseReceived('${JSON.stringify(response)}');`);
+        ref.current?.injectJavaScript(
+          `window.onNotificationResponseReceived('${JSON.stringify(response)}');`
+        );
       }, 1500);
     });
 
@@ -127,7 +140,9 @@ function App() {
   useEffect(() => {
     setTimeout(() => {
       console.log('Constants.expoConfig?.version', Constants.expoConfig?.version);
-      ref.current?.injectJavaScript(`window.onAppVersion('${JSON.stringify(Constants.expoConfig?.version)}');`);
+      ref.current?.injectJavaScript(
+        `window.onAppVersion('${JSON.stringify(Constants.expoConfig?.version)}');`
+      );
     }, 3000);
   }, []);
 

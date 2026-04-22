@@ -112,7 +112,8 @@ export async function createNewCarcasse({
     created_by_user_id: user.id,
     examinateur_initial_offline: fei.examinateur_initial_offline,
     examinateur_initial_user_id: fei.examinateur_initial_user_id,
-    examinateur_initial_approbation_mise_sur_le_marche: fei.examinateur_initial_approbation_mise_sur_le_marche,
+    examinateur_initial_approbation_mise_sur_le_marche:
+      fei.examinateur_initial_approbation_mise_sur_le_marche,
     examinateur_initial_date_approbation_mise_sur_le_marche:
       fei.examinateur_initial_date_approbation_mise_sur_le_marche,
     premier_detenteur_offline: null,

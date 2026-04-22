@@ -69,9 +69,9 @@ type SimplifiedCarcasseExcelData = {
   Éspèce: string | null;
 };
 
-function createSheet<T extends keyof CarcasseExcelData | keyof FeiExcelData | keyof SimplifiedCarcasseExcelData>(
-  data: Array<Record<T, unknown>>
-) {
+function createSheet<
+  T extends keyof CarcasseExcelData | keyof FeiExcelData | keyof SimplifiedCarcasseExcelData,
+>(data: Array<Record<T, unknown>>) {
   /*
   [
     [the, first, array, is, the, header],
@@ -221,7 +221,10 @@ function sortCarcassesApprovedForExcel(carcasseA: CarcasseExcelData, carcasseB: 
   return carcasseA.Éspèce!.localeCompare(carcasseB.Éspèce!);
 }
 
-function sortSimplifiedCarcasses(carcasseA: SimplifiedCarcasseExcelData, carcasseB: SimplifiedCarcasseExcelData) {
+function sortSimplifiedCarcasses(
+  carcasseA: SimplifiedCarcasseExcelData,
+  carcasseB: SimplifiedCarcasseExcelData
+) {
   if (carcasseA.Éspèce === carcasseB.Éspèce) {
     return carcasseA['Numéro de bracelet'].localeCompare(carcasseB['Numéro de bracelet']);
   }
@@ -343,7 +346,9 @@ export default function useExportFeis() {
             const intermediaireCarcasse = carcassesIntermediaireById[id];
             if (intermediaireCarcasse?.commentaire) {
               const intermediaireEntity = entities[intermediaire.intermediaire_entity_id];
-              commentaires.push(`${intermediaireEntity?.nom_d_usage}\u00A0: ${intermediaireCarcasse?.commentaire}`);
+              commentaires.push(
+                `${intermediaireEntity?.nom_d_usage}\u00A0: ${intermediaireCarcasse?.commentaire}`
+              );
             }
             if (intermediaireCarcasse?.intermediaire_poids) {
               poids = intermediaireCarcasse.intermediaire_poids;
@@ -372,7 +377,9 @@ export default function useExportFeis() {
             'Numéro suivi trichine': '',
             // Estampille: '',
             // infos de SVI
-            'SVI - Consigne': carcasse.svi_ipm1_decision?.includes(IPM1Decision.MISE_EN_CONSIGNE) ? 'Oui' : '',
+            'SVI - Consigne': carcasse.svi_ipm1_decision?.includes(IPM1Decision.MISE_EN_CONSIGNE)
+              ? 'Oui'
+              : '',
             'SVI - Motif Consigne': 'BA P S OA CA pap', // colonne pré-remplie pour entourage manuscrit à l'impression
             'SVI - Pièces Consigne': carcasse.svi_ipm1_pieces.join('\n') || null,
             'SVI - Motifs Consigne': carcasse.svi_ipm1_lesions_ou_motifs.join('\n') || null,
@@ -380,7 +387,9 @@ export default function useExportFeis() {
             'SVI - Saisie partielle': carcasse.svi_ipm2_decision?.includes(IPM2Decision.SAISIE_PARTIELLE)
               ? carcasse.svi_ipm2_pieces.join(' - ')
               : '',
-            'SVI - Saisie totale': carcasse.svi_ipm2_decision?.includes(IPM2Decision.SAISIE_TOTALE) ? 'Oui' : '',
+            'SVI - Saisie totale': carcasse.svi_ipm2_decision?.includes(IPM2Decision.SAISIE_TOTALE)
+              ? 'Oui'
+              : '',
             'SVI - Saisie motif': carcasse.svi_ipm2_lesions_ou_motifs.join('\n'),
             'SVI - Certificat de saisie OK': '',
             "SVI - Date d'examen": carcasse.svi_ipm2_date,
@@ -462,7 +471,9 @@ export default function useExportFeis() {
         const premierDetenteurEntity = entities[fei.premier_detenteur_entity_id!];
         const fournisseur =
           premierDetenteurEntity?.nom_d_usage ||
-          (premierDetenteur?.nom_de_famille ? `${premierDetenteur?.prenom} ${premierDetenteur?.nom_de_famille}` : '');
+          (premierDetenteur?.nom_de_famille
+            ? `${premierDetenteur?.prenom} ${premierDetenteur?.nom_de_famille}`
+            : '');
 
         for (const carcasse of filterCarcassesForFei(useZustandStore.getState().carcasses, fei.numero)) {
           if (!carcasse) {

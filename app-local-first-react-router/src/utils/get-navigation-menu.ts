@@ -82,7 +82,8 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
     {
       text: 'Fiches',
       isActive:
-        location.pathname.startsWith('/app/tableau-de-bord/fei') || location.pathname === '/app/tableau-de-bord',
+        location.pathname.startsWith('/app/tableau-de-bord/fei') ||
+        location.pathname === '/app/tableau-de-bord',
       linkProps: { to: '/app/tableau-de-bord', href: '#' },
     },
   ];

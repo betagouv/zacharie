@@ -196,7 +196,11 @@ export default function CardCarcasse({
             <p className="text-sm/4 font-bold">N° {carcasse.numero_bracelet}</p>
             {miseAMort && <p className="text-sm/4">{miseAMort}</p>}
             {showStatusLine && statusLabel && (
-              <p className={['text-sm/4 font-bold first-letter:uppercase', accentTextClass].filter(Boolean).join(' ')}>
+              <p
+                className={['text-sm/4 font-bold first-letter:uppercase', accentTextClass]
+                  .filter(Boolean)
+                  .join(' ')}
+              >
                 {statusLabel}
               </p>
             )}
@@ -284,9 +288,13 @@ function CarcasseDetails({
     return commentaires;
   }, [carcassesIntermediaires, entities]);
 
-  const examinateurInitialUser = fei.examinateur_initial_user_id ? users[fei.examinateur_initial_user_id!] : null;
+  const examinateurInitialUser = fei.examinateur_initial_user_id
+    ? users[fei.examinateur_initial_user_id!]
+    : null;
   const premierDetenteurUser = fei.premier_detenteur_user_id ? users[fei.premier_detenteur_user_id!] : null;
-  const premierDetenteurEntity = fei.premier_detenteur_entity_id ? entities[fei.premier_detenteur_entity_id!] : null;
+  const premierDetenteurEntity = fei.premier_detenteur_entity_id
+    ? entities[fei.premier_detenteur_entity_id!]
+    : null;
 
   const onlyPetitGibier = useMemo(() => {
     if (carcasse?.type !== CarcasseType.PETIT_GIBIER) {
@@ -327,7 +335,9 @@ function CarcasseDetails({
     for (const carcasseIntermediaire of carcassesIntermediaires) {
       const intermediaireLines = [];
       const isCollecteur = carcasseIntermediaire.intermediaire_role === UserRoles.COLLECTEUR_PRO;
-      const label = isCollecteur ? `Collecteur ${collecteurs + 1}` : 'Établissement de Traitement du Gibier Sauvage';
+      const label = isCollecteur
+        ? `Collecteur ${collecteurs + 1}`
+        : 'Établissement de Traitement du Gibier Sauvage';
       const entity = entities[carcasseIntermediaire.intermediaire_entity_id!];
       intermediaireLines.push(entity.nom_d_usage);
       intermediaireLines.push(entity.siret);
@@ -368,7 +378,8 @@ function CarcasseDetails({
     }
     if (ccgDate) _milestones.push(`Date et heure de dépôt dans le CCG\u00A0: ${ccgDate}`);
     if (etgDate) _milestones.push(`Date et heure de prise en charge par l'ETG\u00A0: ${etgDate}`);
-    if (sviAssignedToFeiAt) _milestones.push(`Date et heure d'assignation au SVI\u00A0: ${sviAssignedToFeiAt}`);
+    if (sviAssignedToFeiAt)
+      _milestones.push(`Date et heure d'assignation au SVI\u00A0: ${sviAssignedToFeiAt}`);
     if (statusNewCard.includes('manquant')) {
       _milestones.push(motifRefus);
     }
@@ -513,13 +524,19 @@ function CarcasseDetails({
       imp2Lines.push(`Temps de cuisson\u00A0: ${carcasse.svi_ipm2_traitement_assainissant_cuisson_temps}`);
     }
     if (carcasse.svi_ipm2_traitement_assainissant_cuisson_temp) {
-      imp2Lines.push(`Température de cuisson\u00A0: ${carcasse.svi_ipm2_traitement_assainissant_cuisson_temp}`);
+      imp2Lines.push(
+        `Température de cuisson\u00A0: ${carcasse.svi_ipm2_traitement_assainissant_cuisson_temp}`
+      );
     }
     if (carcasse.svi_ipm2_traitement_assainissant_congelation_temps) {
-      imp2Lines.push(`Temps de congélation\u00A0: ${carcasse.svi_ipm2_traitement_assainissant_congelation_temps}`);
+      imp2Lines.push(
+        `Temps de congélation\u00A0: ${carcasse.svi_ipm2_traitement_assainissant_congelation_temps}`
+      );
     }
     if (carcasse.svi_ipm2_traitement_assainissant_congelation_temp) {
-      imp2Lines.push(`Température de congélation\u00A0: ${carcasse.svi_ipm2_traitement_assainissant_congelation_temp}`);
+      imp2Lines.push(
+        `Température de congélation\u00A0: ${carcasse.svi_ipm2_traitement_assainissant_congelation_temp}`
+      );
     }
     if (carcasse.svi_ipm2_traitement_assainissant_type) {
       imp2Lines.push(`Type de traitement\u00A0: ${carcasse.svi_ipm2_traitement_assainissant_type}`);
@@ -711,7 +728,8 @@ function deriveCarcasseUiState(
 }
 
 function getCarcasseCardDisplay(params: CardDisplayParams): CardDisplay {
-  const { carcasse, fei, latestIntermediaire, entities, viewRole, forceRefus, forceManquante, forceAccept } = params;
+  const { carcasse, fei, latestIntermediaire, entities, viewRole, forceRefus, forceManquante, forceAccept } =
+    params;
 
   const uiState = deriveCarcasseUiState(carcasse, fei, latestIntermediaire, {
     forceRefus,

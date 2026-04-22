@@ -16,7 +16,10 @@ import {
 import { lesionsList, lesionsTree } from '@app/utils/lesions';
 import piecesTree from '@app/data/svi/pieces-tree.json';
 import piecesList from '@app/data/svi/pieces-list.json';
-import { etablissementsTree, retrieveEtablissementAgremenet } from '@app/utils/etablissementsTraitementSaintaire';
+import {
+  etablissementsTree,
+  retrieveEtablissementAgremenet,
+} from '@app/utils/etablissementsTraitementSaintaire';
 import dayjs from 'dayjs';
 import InputNotEditable from '@app/components/InputNotEditable';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
@@ -63,7 +66,9 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
     carcasse.svi_ipm2_presentee_inspection ?? true
   );
   const [sviIpm2Date, setSviIpm2Date] = useState(carcasse.svi_ipm2_date);
-  const [sviIpm2Protocole, setSviIpm2Protocole] = useState(carcasse.svi_ipm2_protocole ?? IPM1Protocole.STANDARD);
+  const [sviIpm2Protocole, setSviIpm2Protocole] = useState(
+    carcasse.svi_ipm2_protocole ?? IPM1Protocole.STANDARD
+  );
   const [sviIpm2Pieces, setSviIpm2Pieces] = useState(
     carcasse.svi_ipm2_date ? carcasse.svi_ipm2_pieces : carcasse.svi_ipm1_pieces
   );
@@ -90,21 +95,18 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
   const [sviIpm2TraitementAssainissantCuissonTemp, setSviIpm2TraitementAssainissantCuissonTemp] = useState(
     carcasse.svi_ipm2_traitement_assainissant_cuisson_temp
   );
-  const [sviIpm2TraitementAssainissantCongelationTemps, setSviIpm2TraitementAssainissantCongelationTemps] = useState(
-    carcasse.svi_ipm2_traitement_assainissant_congelation_temps
-  );
-  const [sviIpm2TraitementAssainissantCongelationTemp, setSviIpm2TraitementAssainissantCongelationTemp] = useState(
-    carcasse.svi_ipm2_traitement_assainissant_congelation_temp
-  );
+  const [sviIpm2TraitementAssainissantCongelationTemps, setSviIpm2TraitementAssainissantCongelationTemps] =
+    useState(carcasse.svi_ipm2_traitement_assainissant_congelation_temps);
+  const [sviIpm2TraitementAssainissantCongelationTemp, setSviIpm2TraitementAssainissantCongelationTemp] =
+    useState(carcasse.svi_ipm2_traitement_assainissant_congelation_temp);
   const [sviIpm2TraitementAssainissantType, setSviIpm2TraitementAssainissantType] = useState(
     carcasse.svi_ipm2_traitement_assainissant_type
   );
   const [sviIpm2TraitementAssainissantParamètres, setSviIpm2TraitementAssainissantParamètres] = useState(
     carcasse.svi_ipm2_traitement_assainissant_paramètres
   );
-  const [sviIpm2TraitementAssainissantEtablissement, setSviIpm2TraitementAssainissantEtablissement] = useState(
-    carcasse.svi_ipm2_traitement_assainissant_etablissement
-  );
+  const [sviIpm2TraitementAssainissantEtablissement, setSviIpm2TraitementAssainissantEtablissement] =
+    useState(carcasse.svi_ipm2_traitement_assainissant_etablissement);
   const [sviIpm2TraitementAssainissantPoids, setSviIpm2TraitementAssainissantPoids] = useState(
     carcasse.svi_ipm2_traitement_assainissant_poids
   );
@@ -237,7 +239,8 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
         current_owner_entity_id: fei.fei_next_owner_entity_id ?? null,
         current_owner_entity_name_cache: fei.fei_next_owner_entity_name_cache ?? null,
         current_owner_user_id: user.id,
-        current_owner_user_name_cache: fei.fei_next_owner_user_name_cache || `${user.prenom} ${user.nom_de_famille}`,
+        current_owner_user_name_cache:
+          fei.fei_next_owner_user_name_cache || `${user.prenom} ${user.nom_de_famille}`,
         next_owner_role: null,
         next_owner_user_id: null,
         next_owner_user_name_cache: null,
@@ -470,7 +473,9 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
               data={piecesTree[carcasse.type ?? CarcasseType.GROS_GIBIER]}
               modal={piecesGibier}
               title={
-                carcasse.type === CarcasseType.PETIT_GIBIER ? 'Pièces de petits gibiers' : 'Pièces de grands gibiers'
+                carcasse.type === CarcasseType.PETIT_GIBIER
+                  ? 'Pièces de petits gibiers'
+                  : 'Pièces de grands gibiers'
               }
               onItemClick={(newPiece) => {
                 const nextPieces = [...sviIpm2Pieces.filter((p) => p !== newPiece), newPiece];
@@ -608,7 +613,10 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
                         sviIpm2TraitementAssainissant.filter((t) => t !== IPM2Traitement.CUISSON)
                       );
                     } else {
-                      setSviIpm2TraitementAssainissant([...sviIpm2TraitementAssainissant, IPM2Traitement.CUISSON]);
+                      setSviIpm2TraitementAssainissant([
+                        ...sviIpm2TraitementAssainissant,
+                        IPM2Traitement.CUISSON,
+                      ]);
                     }
                   },
                 },
@@ -624,7 +632,10 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
                         sviIpm2TraitementAssainissant.filter((t) => t !== IPM2Traitement.CONGELATION)
                       );
                     } else {
-                      setSviIpm2TraitementAssainissant([...sviIpm2TraitementAssainissant, IPM2Traitement.CONGELATION]);
+                      setSviIpm2TraitementAssainissant([
+                        ...sviIpm2TraitementAssainissant,
+                        IPM2Traitement.CONGELATION,
+                      ]);
                     }
                   },
                 },
@@ -640,7 +651,10 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
                         sviIpm2TraitementAssainissant.filter((t) => t !== IPM2Traitement.AUTRE)
                       );
                     } else {
-                      setSviIpm2TraitementAssainissant([...sviIpm2TraitementAssainissant, IPM2Traitement.AUTRE]);
+                      setSviIpm2TraitementAssainissant([
+                        ...sviIpm2TraitementAssainissant,
+                        IPM2Traitement.AUTRE,
+                      ]);
                     }
                   },
                 },
@@ -759,7 +773,9 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
             modal={etablissementsTraitementSanitaireModal}
             title="Etablissements de traitement sanitaire"
             onItemClick={(etablissementDisplay) => {
-              setSviIpm2TraitementAssainissantEtablissement(retrieveEtablissementAgremenet(etablissementDisplay));
+              setSviIpm2TraitementAssainissantEtablissement(
+                retrieveEtablissementAgremenet(etablissementDisplay)
+              );
             }}
           />
           <Input
@@ -777,7 +793,8 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
           />
         </>
       )}
-      {(sviIpm2Decision === IPM2Decision.SAISIE_TOTALE || sviIpm2Decision === IPM2Decision.SAISIE_PARTIELLE) && (
+      {(sviIpm2Decision === IPM2Decision.SAISIE_TOTALE ||
+        sviIpm2Decision === IPM2Decision.SAISIE_PARTIELLE) && (
         <>
           <Input
             label="Poids de la saisie"

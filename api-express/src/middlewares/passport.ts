@@ -105,7 +105,11 @@ passport.use(
   new HeaderAPIKeyStrategy(
     { header: 'Authorization', prefix: 'Bearer ' },
     true,
-    async (apiKey: string, done: (error: Error | null, apiKey?: ApiKey, info?: any) => void, req: Request) => {
+    async (
+      apiKey: string,
+      done: (error: Error | null, apiKey?: ApiKey, info?: any) => void,
+      req: Request
+    ) => {
       try {
         const key = await prisma.apiKey.findFirst({
           where: {

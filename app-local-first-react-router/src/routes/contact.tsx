@@ -30,10 +30,12 @@ export default function Stats() {
           <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
             <h1 className="fr-h2 fr-mb-2w">Contact</h1>
             <CallOut className="bg-white">
-              {searchParams.get('for-delete-account') ? 'Vous souhaitez supprimer votre compte Zacharie ? ' : ''}
-              Vous pouvez nous contacter en nous appelant au <a href="tel:+33189316644">01 89 31 66 44</a>, en écrivant
-              à <a href="mailto:contact@zacharie.beta.gouv.fr">contact@zacharie.beta.gouv.fr</a> ou en remplissant le
-              formulaire ci-dessous.
+              {searchParams.get('for-delete-account')
+                ? 'Vous souhaitez supprimer votre compte Zacharie ? '
+                : ''}
+              Vous pouvez nous contacter en nous appelant au <a href="tel:+33189316644">01 89 31 66 44</a>, en
+              écrivant à <a href="mailto:contact@zacharie.beta.gouv.fr">contact@zacharie.beta.gouv.fr</a> ou
+              en remplissant le formulaire ci-dessous.
             </CallOut>
             <div className="mb-6 bg-white md:shadow-sm">
               <div className="p-4 md:p-8">
@@ -139,8 +141,8 @@ export default function Stats() {
               </div>
             </div>
             <CallOut className="bg-white">
-              Les informations que vous avez transmises via les fiches d'examen initial seront toutefois conservées pour
-              archive.
+              Les informations que vous avez transmises via les fiches d'examen initial seront toutefois
+              conservées pour archive.
             </CallOut>
           </div>
         </div>

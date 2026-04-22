@@ -93,7 +93,8 @@ function EtgFeiLoader(props: Props) {
   const myCarcasses = useMemo(() => {
     return feiCarcasses.filter(
       (c) =>
-        (c.next_owner_entity_id && userEntityIds.includes(c.next_owner_entity_id)) || c.next_owner_user_id === user.id
+        (c.next_owner_entity_id && userEntityIds.includes(c.next_owner_entity_id)) ||
+        c.next_owner_user_id === user.id
     );
   }, [feiCarcasses, userEntityIds, user.id]);
 
@@ -108,10 +109,16 @@ function EtgFeiLoader(props: Props) {
     if (fei.fei_current_owner_role === FeiOwnerRole.SVI || myCarcassesNextOwnerRole === FeiOwnerRole.SVI) {
       return FeiOwnerRole.ETG;
     }
-    if (fei.fei_current_owner_role === FeiOwnerRole.COLLECTEUR_PRO && fei.fei_current_owner_user_id === user.id) {
+    if (
+      fei.fei_current_owner_role === FeiOwnerRole.COLLECTEUR_PRO &&
+      fei.fei_current_owner_user_id === user.id
+    ) {
       return FeiOwnerRole.COLLECTEUR_PRO;
     }
-    if (fei.fei_current_owner_role === FeiOwnerRole.COLLECTEUR_PRO && myCarcassesNextOwnerRole === FeiOwnerRole.ETG) {
+    if (
+      fei.fei_current_owner_role === FeiOwnerRole.COLLECTEUR_PRO &&
+      myCarcassesNextOwnerRole === FeiOwnerRole.ETG
+    ) {
       return FeiOwnerRole.COLLECTEUR_PRO;
     }
     if (fei.fei_current_owner_role === FeiOwnerRole.ETG || myCarcassesNextOwnerRole === FeiOwnerRole.ETG) {
@@ -126,7 +133,13 @@ function EtgFeiLoader(props: Props) {
       }
     }
     return null;
-  }, [user.id, fei.fei_current_owner_role, fei.fei_current_owner_user_id, intermediaires, myCarcassesNextOwnerRole]);
+  }, [
+    user.id,
+    fei.fei_current_owner_role,
+    fei.fei_current_owner_user_id,
+    intermediaires,
+    myCarcassesNextOwnerRole,
+  ]);
 
   if (!showInterface) {
     return null;
@@ -162,7 +175,9 @@ function EtgFeiLoader(props: Props) {
             >
               <ol className="fr-breadcrumb__list">
                 <li>
-                  <span className="fr-breadcrumb__link bg-none! no-underline!">{fei.premier_detenteur_name_cache}</span>
+                  <span className="fr-breadcrumb__link bg-none! no-underline!">
+                    {fei.premier_detenteur_name_cache}
+                  </span>
                 </li>
                 {intermediaires
                   .map((_intermediaire) => {
@@ -237,7 +252,9 @@ function EtgFeiContent({
     ? getFeiAndIntermediaireIdsFromFeiIntermediaire(intermediaire)
     : undefined;
 
-  const [priseEnChargeAt, setPriseEnChargeAt] = useState<Date | null>(intermediaire?.prise_en_charge_at || null);
+  const [priseEnChargeAt, setPriseEnChargeAt] = useState<Date | null>(
+    intermediaire?.prise_en_charge_at || null
+  );
 
   useEffect(() => {
     if (!priseEnChargeAt && intermediaire?.prise_en_charge_at) {
@@ -372,12 +389,15 @@ function EtgFeiContent({
   }, [fei, user, intermediaire, isEtgWorkingFor, isCurrentOwnerOfMyCarcasses]);
 
   const effectiveCanEdit = canEdit && !props.readOnly;
-  const formattedPriseEnChargeAt = priseEnChargeAt ? dayjs(priseEnChargeAt).format('YYYY-MM-DDTHH:mm') : undefined;
+  const formattedPriseEnChargeAt = priseEnChargeAt
+    ? dayjs(priseEnChargeAt).format('YYYY-MM-DDTHH:mm')
+    : undefined;
   const formattedInitialPriseEnChargeAt = intermediaire?.prise_en_charge_at
     ? dayjs(intermediaire.prise_en_charge_at).format('YYYY-MM-DDTHH:mm')
     : undefined;
   const submitDisabled =
-    !effectiveCanEdit || (formattedPriseEnChargeAt && formattedPriseEnChargeAt === formattedInitialPriseEnChargeAt);
+    !effectiveCanEdit ||
+    (formattedPriseEnChargeAt && formattedPriseEnChargeAt === formattedInitialPriseEnChargeAt);
 
   const PriseEnChargeInput = effectiveCanEdit ? Input : InputNotEditable;
 
@@ -440,7 +460,9 @@ function EtgFeiContent({
     let label = [];
     if (carcassesApprovedSorted.length > 0) {
       label.push(
-        `Prise en charge des carcasses acceptées ou non refusées (${formatCountCarcasseByEspece(carcassesApprovedSorted)
+        `Prise en charge des carcasses acceptées ou non refusées (${formatCountCarcasseByEspece(
+          carcassesApprovedSorted
+        )
           .filter((c) => !c?.includes('refus'))
           .join(', ')}).`
       );
@@ -479,7 +501,12 @@ function EtgFeiContent({
   ]);
 
   const couldSelectNextUser = useMemo(() => {
-    if (fei.intermediaire_closed_at || fei.svi_closed_at || fei.automatic_closed_at || fei.intermediaire_closed_at) {
+    if (
+      fei.intermediaire_closed_at ||
+      fei.svi_closed_at ||
+      fei.automatic_closed_at ||
+      fei.intermediaire_closed_at
+    ) {
       return false;
     }
     if (isEtgWorkingFor) {
@@ -527,7 +554,10 @@ function EtgFeiContent({
       return false;
     }
     // Pas de carcasses acceptées ou écartées pour inspection
-    if (carcassesSorted.carcassesApproved.length > 0 || carcassesSorted.carcassesEcarteesPourInspection.length > 0) {
+    if (
+      carcassesSorted.carcassesApproved.length > 0 ||
+      carcassesSorted.carcassesEcarteesPourInspection.length > 0
+    ) {
       return false;
     }
     return true;
@@ -594,7 +624,10 @@ function EtgFeiContent({
       zacharie_carcasse_id: null,
       carcasse_intermediaire_id: null,
     });
-    if (!carcassesSorted.carcassesApproved.length && !carcassesSorted.carcassesEcarteesPourInspection.length) {
+    if (
+      !carcassesSorted.carcassesApproved.length &&
+      !carcassesSorted.carcassesEcarteesPourInspection.length
+    ) {
       updateFei(fei.numero, {
         intermediaire_closed_at: _priseEnChargeAt,
         intermediaire_closed_by_entity_id: intermediaire.intermediaire_entity_id,
@@ -680,7 +713,8 @@ function EtgFeiContent({
                     ) : (
                       <div className="mb-8">
                         <p className="text-sm text-gray-600">
-                          Le chasseur a dû supprimer la carcasse sans supprimer la fiche, désolé pour le dérangement.
+                          Le chasseur a dû supprimer la carcasse sans supprimer la fiche, désolé pour le
+                          dérangement.
                         </p>
                       </div>
                     )}
@@ -732,7 +766,8 @@ function EtgFeiContent({
                       priority="primary"
                     >
                       Clôturer la fiche (
-                      {carcassesSorted.carcassesManquantes.length > 0 && carcassesSorted.carcassesRejetees.length > 0
+                      {carcassesSorted.carcassesManquantes.length > 0 &&
+                      carcassesSorted.carcassesRejetees.length > 0
                         ? 'toutes les carcasses sont manquantes ou refusées'
                         : carcassesSorted.carcassesManquantes.length > 0
                           ? 'toutes les carcasses sont manquantes'
@@ -798,8 +833,8 @@ function EtgFeiContent({
                               setPriseEnChargeAt(dayjs().toDate());
                             }}
                           >
-                            <u className="inline">Cliquez ici</u> pour définir cette date comme étant aujourd'hui et
-                            maintenant
+                            <u className="inline">Cliquez ici</u> pour définir cette date comme étant
+                            aujourd'hui et maintenant
                           </button>
                         ) : null
                       }

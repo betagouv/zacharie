@@ -9,18 +9,22 @@ export function useCarcasseStatusAndRefus(carcasse: Carcasse, fei: Fei) {
   const entities = useZustandStore((state) => state.entities);
   const carcassesIntermediaires = useZustandStore((state) => state.carcassesIntermediaireById);
 
-  const status: 'en cours de création' | 'en cours de traitement' | 'refusé' | 'accepté' | 'saisie partielle' =
-    useMemo(() => {
-      if (
-        fei.fei_current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL ||
-        fei.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR
-      ) {
-        if (!fei.fei_next_owner_role) {
-          return 'en cours de création';
-        }
+  const status:
+    | 'en cours de création'
+    | 'en cours de traitement'
+    | 'refusé'
+    | 'accepté'
+    | 'saisie partielle' = useMemo(() => {
+    if (
+      fei.fei_current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL ||
+      fei.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR
+    ) {
+      if (!fei.fei_next_owner_role) {
+        return 'en cours de création';
       }
-      return getSimplifiedCarcasseStatus(carcasse);
-    }, [carcasse, fei.fei_current_owner_role, fei.fei_next_owner_role]);
+    }
+    return getSimplifiedCarcasseStatus(carcasse);
+  }, [carcasse, fei.fei_current_owner_role, fei.fei_next_owner_role]);
 
   const motifRefus: string = useMemo(() => {
     switch (carcasse.svi_carcasse_status) {

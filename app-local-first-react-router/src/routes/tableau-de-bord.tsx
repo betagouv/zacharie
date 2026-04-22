@@ -668,9 +668,10 @@ export default function TableauDeBordIndex() {
             {[20, 50, 100].map((option) => (
               <button
                 key={option}
-                className={['px-2 py-1 text-sm', (itemsPerPage ?? 20) === option ? 'font-semibold underline' : ''].join(
-                  ' '
-                )}
+                className={[
+                  'px-2 py-1 text-sm',
+                  (itemsPerPage ?? 20) === option ? 'font-semibold underline' : '',
+                ].join(' ')}
                 onClick={() => {
                   const firstItemIndex = (page - 1) * (itemsPerPage ?? 20);
                   const newPage = Math.floor(firstItemIndex / option) + 1;
@@ -816,7 +817,11 @@ function FeisWrapper({
     );
   }
 
-  return <div className="grid w-full grid-cols-1 gap-4 justify-self-end sm:grid-cols-2 lg:grid-cols-3">{children}</div>;
+  return (
+    <div className="grid w-full grid-cols-1 gap-4 justify-self-end sm:grid-cols-2 lg:grid-cols-3">
+      {children}
+    </div>
+  );
 }
 
 function FeisTableRow({
@@ -858,7 +863,9 @@ function FeisTableRow({
         let enrichedLine = line;
         for (const [espece, abbreviation] of Object.entries(abbreviations)) {
           if (line.toLowerCase().includes(abbreviation.toLowerCase())) {
-            const carcasse = feiCarcasses.find((c) => c?.type === CarcasseType.PETIT_GIBIER && c.espece === espece);
+            const carcasse = feiCarcasses.find(
+              (c) => c?.type === CarcasseType.PETIT_GIBIER && c.espece === espece
+            );
             if (carcasse) {
               const nombreDAnimaux = carcasse.nombre_d_animaux ?? 0;
               const intermediaires = filterCarcassesIntermediairesForCarcasse(
@@ -993,7 +1000,9 @@ function FeisTable({
   }
 
   const allSelected =
-    visibleFeisNumbers.length > 0 ? visibleFeisNumbers.every((numero) => selectedFeis?.includes(numero)) : false;
+    visibleFeisNumbers.length > 0
+      ? visibleFeisNumbers.every((numero) => selectedFeis?.includes(numero))
+      : false;
 
   const handleSelectAllInTable = () => {
     if (handleSelectAll) {

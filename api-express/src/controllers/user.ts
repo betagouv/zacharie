@@ -7,7 +7,12 @@ import prisma from '~/prisma';
 import jwt from 'jsonwebtoken';
 import dayjs from 'dayjs';
 import crypto from 'crypto';
-import { createBrevoContact, sendEmail, updateBrevoChasseurDeal, updateBrevoContact } from '~/third-parties/brevo';
+import {
+  createBrevoContact,
+  sendEmail,
+  updateBrevoChasseurDeal,
+  updateBrevoContact,
+} from '~/third-parties/brevo';
 import { capture } from '~/third-parties/sentry';
 import createUserId from '~/utils/createUserId';
 import { comparePassword, hashPassword } from '~/service/crypto';
@@ -79,7 +84,11 @@ const resetPasswordSchema = z.object({
 router.post(
   '/login',
   catchErrors(
-    async (req: express.Request, res: express.Response<UserConnexionResponse>, next: express.NextFunction) => {
+    async (
+      req: express.Request,
+      res: express.Response<UserConnexionResponse>,
+      next: express.NextFunction
+    ) => {
       let result = loginSchema.safeParse(req.body);
       if (!result.success) {
         res.status(406).send({
@@ -162,7 +171,11 @@ router.post(
         where: { id: user.id },
         data: { last_login_at: new Date() },
       });
-      res.cookie('zacharie_express_jwt', token, cookieOptions(req.headers.host.includes('localhost') ? true : false));
+      res.cookie(
+        'zacharie_express_jwt',
+        token,
+        cookieOptions(req.headers.host.includes('localhost') ? true : false)
+      );
       res.status(200).send({ ok: true, data: { user }, message: '', error: '' });
     }
   )
@@ -172,7 +185,11 @@ router.post(
 router.post(
   '/signup',
   catchErrors(
-    async (req: express.Request, res: express.Response<UserConnexionResponse>, next: express.NextFunction) => {
+    async (
+      req: express.Request,
+      res: express.Response<UserConnexionResponse>,
+      next: express.NextFunction
+    ) => {
       let result = signupSchema.safeParse(req.body);
       if (!result.success) {
         res.status(406).send({
@@ -249,7 +266,11 @@ router.post(
       const token = jwt.sign({ userId: user.id }, SECRET, {
         expiresIn: JWT_MAX_AGE,
       });
-      res.cookie('zacharie_express_jwt', token, cookieOptions(req.headers.host.includes('localhost') ? true : false));
+      res.cookie(
+        'zacharie_express_jwt',
+        token,
+        cookieOptions(req.headers.host.includes('localhost') ? true : false)
+      );
       res.status(200).send({ ok: true, data: { user }, message: '', error: '' });
     }
   )
@@ -259,7 +280,11 @@ router.post(
 router.post(
   '/signup-with-invitation-token',
   catchErrors(
-    async (req: express.Request, res: express.Response<UserConnexionResponse>, next: express.NextFunction) => {
+    async (
+      req: express.Request,
+      res: express.Response<UserConnexionResponse>,
+      next: express.NextFunction
+    ) => {
       let result = signupWithInvitationTokenSchema.safeParse(req.body);
       if (!result.success) {
         res.status(406).send({
@@ -375,7 +400,11 @@ router.post(
       const token = jwt.sign({ userId: user.id }, SECRET, {
         expiresIn: JWT_MAX_AGE,
       });
-      res.cookie('zacharie_express_jwt', token, cookieOptions(req.headers.host.includes('localhost') ? true : false));
+      res.cookie(
+        'zacharie_express_jwt',
+        token,
+        cookieOptions(req.headers.host.includes('localhost') ? true : false)
+      );
       res.status(200).send({ ok: true, data: { user }, message: '', error: '' });
     }
   )
@@ -385,7 +414,11 @@ router.post(
 router.post(
   '/forget-password',
   catchErrors(
-    async (req: express.Request, res: express.Response<UserConnexionResponse>, next: express.NextFunction) => {
+    async (
+      req: express.Request,
+      res: express.Response<UserConnexionResponse>,
+      next: express.NextFunction
+    ) => {
       let result = forgetPasswordSchema.safeParse(req.body);
       if (!result.success) {
         res.status(406).send({
@@ -466,7 +499,11 @@ router.post(
 router.post(
   '/reset-password',
   catchErrors(
-    async (req: express.Request, res: express.Response<UserConnexionResponse>, next: express.NextFunction) => {
+    async (
+      req: express.Request,
+      res: express.Response<UserConnexionResponse>,
+      next: express.NextFunction
+    ) => {
       let result = resetPasswordSchema.safeParse(req.body);
       if (!result.success) {
         res.status(406).send({
@@ -551,7 +588,11 @@ router.post(
         where: { id: user.id },
         data: { last_login_at: new Date() },
       });
-      res.cookie('zacharie_express_jwt', token, cookieOptions(req.headers.host.includes('localhost') ? true : false));
+      res.cookie(
+        'zacharie_express_jwt',
+        token,
+        cookieOptions(req.headers.host.includes('localhost') ? true : false)
+      );
       res.status(200).send({ ok: true, data: { user: updatedUser }, message: '', error: '' });
     }
   )
@@ -563,7 +604,11 @@ const accessTokenSchema = z.object({
 router.post(
   '/access-token',
   catchErrors(
-    async (req: express.Request, res: express.Response<UserConnexionResponse>, next: express.NextFunction) => {
+    async (
+      req: express.Request,
+      res: express.Response<UserConnexionResponse>,
+      next: express.NextFunction
+    ) => {
       let result = accessTokenSchema.safeParse(req.body);
       if (!result.success) {
         const error = new Error(result.error.message);
@@ -649,7 +694,11 @@ router.post(
         data: { last_login_at: new Date() },
       });
       // refreshMaterializedViews();
-      res.cookie('zacharie_express_jwt', token, cookieOptions(req.headers.host.includes('localhost') ? true : false));
+      res.cookie(
+        'zacharie_express_jwt',
+        token,
+        cookieOptions(req.headers.host.includes('localhost') ? true : false)
+      );
       await prisma.apiKeyApprovalByUserOrEntity.update({
         where: { access_token: accessToken },
         data: { access_token: null, access_token_created_at: null },
@@ -668,7 +717,10 @@ router.post(
   '/logout',
   passport.authenticate('user', { session: false, failWithError: true }),
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    res.clearCookie('zacharie_express_jwt', logoutCookieOptions(req.headers.host.includes('localhost') ? true : false));
+    res.clearCookie(
+      'zacharie_express_jwt',
+      logoutCookieOptions(req.headers.host.includes('localhost') ? true : false)
+    );
     res.status(200).send({ ok: true });
   })
 );
@@ -680,125 +732,127 @@ const trouverPremierDetenteurBodySchema = z.object({
 router.post(
   '/fei/trouver-premier-detenteur',
   passport.authenticate('user', { session: false, failWithError: true }),
-  catchErrors(async (req: RequestWithUser, res: express.Response<UserForFeiResponse>, next: express.NextFunction) => {
-    const user = req.user!;
-    let result = trouverPremierDetenteurBodySchema.safeParse(req.body);
-    if (!result.success) {
-      res.status(406).send({
-        ok: false,
-        data: { user: null },
-        error: result.error.errors[0].message,
-      });
-      return;
-    }
-    let body = result.data;
+  catchErrors(
+    async (req: RequestWithUser, res: express.Response<UserForFeiResponse>, next: express.NextFunction) => {
+      const user = req.user!;
+      let result = trouverPremierDetenteurBodySchema.safeParse(req.body);
+      if (!result.success) {
+        res.status(406).send({
+          ok: false,
+          data: { user: null },
+          error: result.error.errors[0].message,
+        });
+        return;
+      }
+      let body = result.data;
 
-    if (!body.hasOwnProperty(Prisma.UserScalarFieldEnum.email)) {
-      res.status(400).send({
-        ok: false,
-        data: {
-          user: null,
+      if (!body.hasOwnProperty(Prisma.UserScalarFieldEnum.email)) {
+        res.status(400).send({
+          ok: false,
+          data: {
+            user: null,
+          },
+          error: "L'email est obligatoire",
+        });
+        return;
+      }
+      if (!body.hasOwnProperty(Prisma.FeiScalarFieldEnum.numero)) {
+        res.status(400).send({
+          ok: false,
+          data: { user: null },
+          error: 'Le numéro de la fiche est obligatoire',
+        });
+        return;
+      }
+      const fei = await prisma.fei.findUnique({
+        where: {
+          numero: body[Prisma.FeiScalarFieldEnum.numero],
+          fei_current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
         },
-        error: "L'email est obligatoire",
       });
-      return;
-    }
-    if (!body.hasOwnProperty(Prisma.FeiScalarFieldEnum.numero)) {
-      res.status(400).send({
-        ok: false,
-        data: { user: null },
-        error: 'Le numéro de la fiche est obligatoire',
+      if (!fei) {
+        res.status(400).send({
+          ok: false,
+          data: { user: null },
+          error: "La fiche n'existe pas",
+        });
+        return;
+      }
+      const nextPremierDetenteur = await prisma.user.findUnique({
+        where: {
+          email: body[Prisma.UserScalarFieldEnum.email].toLowerCase(),
+        },
       });
-      return;
-    }
-    const fei = await prisma.fei.findUnique({
-      where: {
-        numero: body[Prisma.FeiScalarFieldEnum.numero],
-        fei_current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
-      },
-    });
-    if (!fei) {
-      res.status(400).send({
-        ok: false,
-        data: { user: null },
-        error: "La fiche n'existe pas",
-      });
-      return;
-    }
-    const nextPremierDetenteur = await prisma.user.findUnique({
-      where: {
-        email: body[Prisma.UserScalarFieldEnum.email].toLowerCase(),
-      },
-    });
-    if (!nextPremierDetenteur) {
-      res.status(400).send({
-        ok: false,
-        data: { user: null },
-        error: "L'utilisateur n'existe pas",
-      });
-      return;
-    }
-    if (!nextPremierDetenteur.roles.includes(UserRoles.CHASSEUR)) {
-      res.status(400).send({
-        ok: false,
-        data: { user: null },
-        error: "L'utilisateur n'est pas un chasseur",
-      });
-      return;
-    }
+      if (!nextPremierDetenteur) {
+        res.status(400).send({
+          ok: false,
+          data: { user: null },
+          error: "L'utilisateur n'existe pas",
+        });
+        return;
+      }
+      if (!nextPremierDetenteur.roles.includes(UserRoles.CHASSEUR)) {
+        res.status(400).send({
+          ok: false,
+          data: { user: null },
+          error: "L'utilisateur n'est pas un chasseur",
+        });
+        return;
+      }
 
-    const existingRelation = await prisma.userRelations.findFirst({
-      where: {
-        owner_id: user.id,
-        related_id: nextPremierDetenteur.id,
-        relation: UserRelationType.PREMIER_DETENTEUR,
-      },
-    });
-
-    if (!existingRelation) {
-      await prisma.userRelations.create({
-        data: {
+      const existingRelation = await prisma.userRelations.findFirst({
+        where: {
           owner_id: user.id,
           related_id: nextPremierDetenteur.id,
           relation: UserRelationType.PREMIER_DETENTEUR,
         },
       });
+
+      if (!existingRelation) {
+        await prisma.userRelations.create({
+          data: {
+            owner_id: user.id,
+            related_id: nextPremierDetenteur.id,
+            relation: UserRelationType.PREMIER_DETENTEUR,
+          },
+        });
+      }
+
+      // await prisma.fei.update({
+      //   where: {
+      //     numero: fei.numero,
+      //   },
+      //   data: {
+      //     fei_next_owner_user_id: nextPremierDetenteur.id,
+      //   },
+      // });
+
+      // if (nextPremierDetenteur.id !== user.id) {
+      //   const email = [
+      //     `Bonjour,`,
+      //     `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche. Rendez vous sur Zacharie pour la traiter.`,
+      //     `Pour consulter la fiche, rendez-vous sur Zacharie : https://zacharie.beta.gouv.fr/app/chasseur/fei/${fei.numero}`,
+      //     `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur l'attribution de cette fiche, n'hésitez pas à contacter la personne qui vous l'a envoyée.`,
+      //   ].join('\n\n');
+      //   await sendNotificationToUser({
+      //     user: nextPremierDetenteur!,
+      //     title: `${user.prenom} ${user.nom_de_famille} vous a attribué la fiche ${fei?.numero}`,
+      //     body: email,
+      //     email: email,
+      //     notificationLogAction: `FEI_ASSIGNED_TO_${UserRelationType.PREMIER_DETENTEUR}_${fei.numero}`,
+      //   });
+      // }
+
+      const nextPremierDetenteurForFei = await prisma.user.findUnique({
+        where: {
+          email: body[Prisma.UserScalarFieldEnum.email].toLowerCase(),
+        },
+        select: userFeiSelect,
+      });
+
+      res.status(200).send({ ok: true, data: { user: nextPremierDetenteurForFei }, error: '' });
     }
-
-    // await prisma.fei.update({
-    //   where: {
-    //     numero: fei.numero,
-    //   },
-    //   data: {
-    //     fei_next_owner_user_id: nextPremierDetenteur.id,
-    //   },
-    // });
-
-    // if (nextPremierDetenteur.id !== user.id) {
-    //   const email = [
-    //     `Bonjour,`,
-    //     `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche. Rendez vous sur Zacharie pour la traiter.`,
-    //     `Pour consulter la fiche, rendez-vous sur Zacharie : https://zacharie.beta.gouv.fr/app/chasseur/fei/${fei.numero}`,
-    //     `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur l'attribution de cette fiche, n'hésitez pas à contacter la personne qui vous l'a envoyée.`,
-    //   ].join('\n\n');
-    //   await sendNotificationToUser({
-    //     user: nextPremierDetenteur!,
-    //     title: `${user.prenom} ${user.nom_de_famille} vous a attribué la fiche ${fei?.numero}`,
-    //     body: email,
-    //     email: email,
-    //     notificationLogAction: `FEI_ASSIGNED_TO_${UserRelationType.PREMIER_DETENTEUR}_${fei.numero}`,
-    //   });
-    // }
-
-    const nextPremierDetenteurForFei = await prisma.user.findUnique({
-      where: {
-        email: body[Prisma.UserScalarFieldEnum.email].toLowerCase(),
-      },
-      select: userFeiSelect,
-    });
-
-    res.status(200).send({ ok: true, data: { user: nextPremierDetenteurForFei }, error: '' });
-  })
+  )
 );
 
 const inviteUserBodySchema = z.object({
@@ -908,7 +962,9 @@ const userUpdateSchema = z.object({
   [Prisma.UserScalarFieldEnum.addresse_ligne_2]: z.string().optional(),
   [Prisma.UserScalarFieldEnum.code_postal]: z.string().optional(),
   [Prisma.UserScalarFieldEnum.roles]: z
-    .array(z.enum(Object.values(UserRoles).filter((r) => r !== UserRoles.ADMIN) as [UserRoles, ...UserRoles[]]))
+    .array(
+      z.enum(Object.values(UserRoles).filter((r) => r !== UserRoles.ADMIN) as [UserRoles, ...UserRoles[]])
+    )
     .optional(),
   [Prisma.UserScalarFieldEnum.isZacharieAdmin]: z.boolean().optional(),
   [Prisma.UserScalarFieldEnum.ville]: z.string().optional(),
@@ -929,7 +985,11 @@ router.post(
   '/:user_id',
   passport.authenticate('user', { session: false, failWithError: true }),
   catchErrors(
-    async (req: RequestWithUser, res: express.Response<UserConnexionResponse>, next: express.NextFunction) => {
+    async (
+      req: RequestWithUser,
+      res: express.Response<UserConnexionResponse>,
+      next: express.NextFunction
+    ) => {
       let result = userUpdateSchema.safeParse(req.body);
       if (!result.success) {
         const error = new Error(result.error.message);
@@ -991,7 +1051,8 @@ router.post(
           body[Prisma.UserScalarFieldEnum.checked_has_asso_de_chasse] === 'true' ? new Date() : null;
       }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.checked_has_ccg)) {
-        nextUser.checked_has_ccg = body[Prisma.UserScalarFieldEnum.checked_has_ccg] === 'true' ? new Date() : null;
+        nextUser.checked_has_ccg =
+          body[Prisma.UserScalarFieldEnum.checked_has_ccg] === 'true' ? new Date() : null;
       }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.checked_has_partenaires)) {
         nextUser.checked_has_partenaires =
@@ -1004,7 +1065,9 @@ router.post(
         nextUser.prenom = sanitize(body[Prisma.UserScalarFieldEnum.prenom] as string);
       }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.prochain_bracelet_a_utiliser)) {
-        nextUser.prochain_bracelet_a_utiliser = body[Prisma.UserScalarFieldEnum.prochain_bracelet_a_utiliser] as number;
+        nextUser.prochain_bracelet_a_utiliser = body[
+          Prisma.UserScalarFieldEnum.prochain_bracelet_a_utiliser
+        ] as number;
       }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.telephone)) {
         nextUser.telephone = sanitize(body[Prisma.UserScalarFieldEnum.telephone] as string);
@@ -1026,8 +1089,8 @@ router.post(
       }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.roles)) {
         if (req.user.isZacharieAdmin) {
-          nextUser.roles = ([...new Set(body[Prisma.UserScalarFieldEnum.roles])] as UserRoles[]).sort((a, b) =>
-            b.localeCompare(a)
+          nextUser.roles = ([...new Set(body[Prisma.UserScalarFieldEnum.roles])] as UserRoles[]).sort(
+            (a, b) => b.localeCompare(a)
           );
         } else {
           throw new Error('User tried to update roles without being admin');
@@ -1168,7 +1231,11 @@ router.get(
   '/me',
   passport.authenticate('user', { session: false, failWithError: true }),
   catchErrors(
-    async (req: RequestWithUser, res: express.Response<UserConnexionResponse>, next: express.NextFunction) => {
+    async (
+      req: RequestWithUser,
+      res: express.Response<UserConnexionResponse>,
+      next: express.NextFunction
+    ) => {
       const user = req.user!;
       const entites = await prisma.entityAndUserRelations.findMany({
         where: {
@@ -1182,7 +1249,8 @@ router.get(
         user.roles.includes(UserRoles.COLLECTEUR_PRO)
       ) {
         const approvedRelations = entites?.filter(
-          (entity) => entity.status === EntityRelationStatus.MEMBER || entity.status === EntityRelationStatus.ADMIN
+          (entity) =>
+            entity.status === EntityRelationStatus.MEMBER || entity.status === EntityRelationStatus.ADMIN
         );
         if (!approvedRelations?.length) {
           req.user.activated = false;
@@ -1257,7 +1325,11 @@ router.get(
   '/my-relations',
   passport.authenticate('user', { session: false, failWithError: true }),
   catchErrors(
-    async (req: RequestWithUser, res: express.Response<UserMyRelationsResponse>, next: express.NextFunction) => {
+    async (
+      req: RequestWithUser,
+      res: express.Response<UserMyRelationsResponse>,
+      next: express.NextFunction
+    ) => {
       const user = req.user!;
       /*
       I need to fetch
@@ -1302,7 +1374,9 @@ router.get(
               where: {
                 type: EntityTypes.SVI,
                 id: {
-                  in: entitiesICanHandleCarcassOnBehalf.map((entity) => entity.etg_linked_to_svi_id).filter(Boolean),
+                  in: entitiesICanHandleCarcassOnBehalf
+                    .map((entity) => entity.etg_linked_to_svi_id)
+                    .filter(Boolean),
                 },
                 deleted_at: null,
               },
@@ -1367,7 +1441,9 @@ router.get(
           },
         })
         .then((entities) =>
-          entities.map((entity): EntityWithUserRelation => ({ ...entity, relation: 'NONE', relationStatus: undefined }))
+          entities.map(
+            (entity): EntityWithUserRelation => ({ ...entity, relation: 'NONE', relationStatus: undefined })
+          )
         );
 
       const userRelationsWithOtherUsers = await prisma.userRelations.findMany({
@@ -1410,7 +1486,8 @@ router.get(
 
       const svis = allEntities.filter(
         (entity) =>
-          entity.type === EntityTypes.SVI && entity.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY
+          entity.type === EntityTypes.SVI &&
+          entity.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY
       );
 
       const circuitCourt = allEntities.filter(
@@ -1433,7 +1510,8 @@ router.get(
           collecteursPro: collecteursPro satisfies Array<EntityWithUserRelation>,
           etgs: etgs satisfies Array<EntityWithUserRelation>,
           svis: svis satisfies Array<EntityWithUserRelation>,
-          entitiesICanHandleCarcassOnBehalf: entitiesICanHandleCarcassOnBehalf satisfies Array<EntityWithUserRelation>,
+          entitiesICanHandleCarcassOnBehalf:
+            entitiesICanHandleCarcassOnBehalf satisfies Array<EntityWithUserRelation>,
           circuitCourt: circuitCourt satisfies Array<EntityWithUserRelation>,
         },
         error: '',

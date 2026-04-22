@@ -147,7 +147,11 @@ export default function AdminApiKey() {
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
           <div className="p-4 pb-32 md:p-8 md:pb-0">
             <Tag
-              iconId={apiKey.dedicated_to_entity_id ? 'fr-icon-checkbox-circle-line' : 'fr-icon-checkbox-circle-line'}
+              iconId={
+                apiKey.dedicated_to_entity_id
+                  ? 'fr-icon-checkbox-circle-line'
+                  : 'fr-icon-checkbox-circle-line'
+              }
               nativeButtonProps={{
                 onClick: function noRefCheck() {},
                 className: '-mt-24 mb-6',
@@ -388,7 +392,11 @@ interface EntitiesRelatedToProps {
   setIsSaving: (isSaving: boolean) => void;
 }
 
-function EntitiesRelatedTo({ apiKeyReponseData, setApiKeyResponseData, setIsSaving }: EntitiesRelatedToProps) {
+function EntitiesRelatedTo({
+  apiKeyReponseData,
+  setApiKeyResponseData,
+  setIsSaving,
+}: EntitiesRelatedToProps) {
   const { apiKey, allEntities } = apiKeyReponseData;
 
   return (
@@ -725,7 +733,15 @@ const approvalStatusOptions: Array<{
 
 type Approval = State['apiKey']['approvals'][number];
 
-function ApprovalStatusSelector({ approval, entity, user }: { approval: Approval; entity?: Entity; user?: User }) {
+function ApprovalStatusSelector({
+  approval,
+  entity,
+  user,
+}: {
+  approval: Approval;
+  entity?: Entity;
+  user?: User;
+}) {
   const [status, setStatus] = useState<Approval['status']>(approval?.status);
   return (
     <SelectCustom

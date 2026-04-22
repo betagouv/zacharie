@@ -15,7 +15,12 @@ interface RelationEntityUserProps {
   onChange?: () => void;
 }
 
-export default function RelationEntityUsersList({ entity, refreshKey, user, onChange }: RelationEntityUserProps) {
+export default function RelationEntityUsersList({
+  entity,
+  refreshKey,
+  user,
+  onChange,
+}: RelationEntityUserProps) {
   const [searchParams] = useSearchParams();
   const entityUsersModal = useRef(
     createModal({
@@ -34,7 +39,8 @@ export default function RelationEntityUsersList({ entity, refreshKey, user, onCh
   // );
   const canHandleCarcassesForEntity = entity.EntityRelationsWithUsers?.find(
     (relation) =>
-      relation.owner_id === user.id && relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
+      relation.owner_id === user.id &&
+      relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
   );
 
   const isAdminOfEntity = !canHandleCarcassesForEntity

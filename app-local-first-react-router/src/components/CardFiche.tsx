@@ -102,7 +102,9 @@ export default function CardFiche({
       visibleLines.push('fin de liste');
     }
 
-    visibleLines.push(hiddenCount > 0 ? `+ ${hiddenCount} espèce${hiddenCount > 1 ? 's' : ''}` : 'fin de liste');
+    visibleLines.push(
+      hiddenCount > 0 ? `+ ${hiddenCount} espèce${hiddenCount > 1 ? 's' : ''}` : 'fin de liste'
+    );
 
     return visibleLines;
   }, [carcassesAcceptées]);
@@ -123,7 +125,9 @@ export default function CardFiche({
       );
       const dernierAccepte = intermediaires
         .filter((ci) => !!ci.prise_en_charge_at)
-        .sort((a, b) => new Date(b.prise_en_charge_at!).getTime() - new Date(a.prise_en_charge_at!).getTime())[0];
+        .sort(
+          (a, b) => new Date(b.prise_en_charge_at!).getTime() - new Date(a.prise_en_charge_at!).getTime()
+        )[0];
 
       if (dernierAccepte?.nombre_d_animaux_acceptes == null) continue;
 
@@ -217,16 +221,19 @@ export default function CardFiche({
             )}
           </div>
         )}
-        <div className="text-xl font-bold">{dayjs(fei.date_mise_a_mort || fei.created_at).format('DD/MM/YYYY')}</div>
+        <div className="text-xl font-bold">
+          {dayjs(fei.date_mise_a_mort || fei.created_at).format('DD/MM/YYYY')}
+        </div>
 
         <div className="flex flex-col">
           <div className="flex flex-row gap-x-2">
             <div className="flex shrink basis-1/2 flex-col gap-y-1">
               <CommuneIcon />
               <p
-                className={['line-clamp-2 text-sm', fei.commune_mise_a_mort ? 'text-black' : 'text-neutral-400'].join(
-                  ' '
-                )}
+                className={[
+                  'line-clamp-2 text-sm',
+                  fei.commune_mise_a_mort ? 'text-black' : 'text-neutral-400',
+                ].join(' ')}
               >
                 {fei.commune_mise_a_mort
                   ?.split(' ')

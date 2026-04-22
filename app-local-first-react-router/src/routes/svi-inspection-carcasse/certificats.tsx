@@ -33,10 +33,18 @@ export default function CarcasseSVICertificats() {
           console.log({ error });
         });
     }
-  }, [params.zacharie_carcasse_id, carcasse.is_synced, carcasse.svi_ipm1_date, carcasse.svi_ipm2_date, isOnline]);
+  }, [
+    params.zacharie_carcasse_id,
+    carcasse.is_synced,
+    carcasse.svi_ipm1_date,
+    carcasse.svi_ipm2_date,
+    isOnline,
+  ]);
 
   if (!isOnline) {
-    return <p>Vous n'êtes pas connecté à internet, les certificats ne sont pas disponibles en mode hors-ligne</p>;
+    return (
+      <p>Vous n'êtes pas connecté à internet, les certificats ne sont pas disponibles en mode hors-ligne</p>
+    );
   }
   if (isLoading) {
     return <p>Chargement des certificats...</p>;
@@ -96,10 +104,14 @@ function CertificatCard({ certificat }: { certificat: Certificat }) {
         <p className="order-2 text-sm/4 font-medium text-gray-600">N° {certificat.certificat_id}</p>
         <p className="order-3 text-sm/4 text-gray-500">{dayjs(certificat.created_at).format('DD/MM/YYYY')}</p>
         {certificat.remplace_par_certificat_id && (
-          <p className="order-4 text-sm/4 text-gray-500">Remplacé par {certificat.remplace_par_certificat_id}</p>
+          <p className="order-4 text-sm/4 text-gray-500">
+            Remplacé par {certificat.remplace_par_certificat_id}
+          </p>
         )}
         {certificat.remplace_certificat_id && (
-          <p className="order-4 text-sm/4 text-gray-500">Annule et remplace {certificat.remplace_certificat_id}</p>
+          <p className="order-4 text-sm/4 text-gray-500">
+            Annule et remplace {certificat.remplace_certificat_id}
+          </p>
         )}
       </button>
       <div className="flex flex-row gap-2 pr-4">

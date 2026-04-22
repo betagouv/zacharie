@@ -28,7 +28,11 @@ router.post(
   passport.authenticate('apiKey', { session: false }),
   checkApiKeyIsValidMiddleware([ApiKeyScope.CARCASSE_READ_FOR_USER, ApiKeyScope.FEI_READ_FOR_USER]),
   catchErrors(
-    async (req: RequestWithApiKey, res: express.Response<ApprovalRequestForApi>, next: express.NextFunction) => {
+    async (
+      req: RequestWithApiKey,
+      res: express.Response<ApprovalRequestForApi>,
+      next: express.NextFunction
+    ) => {
       const bodySchema = z.object({
         email: z.string().email("Format d'email invalide"),
       });

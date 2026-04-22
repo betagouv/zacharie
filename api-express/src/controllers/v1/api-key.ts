@@ -22,7 +22,9 @@ router.get(
       where: { access_token: access_token },
     });
     if (!apiKey) {
-      res.status(404).send({ ok: false, data: null, error: 'Le lien est invalide. Veuillez nous contacter.' });
+      res
+        .status(404)
+        .send({ ok: false, data: null, error: 'Le lien est invalide. Veuillez nous contacter.' });
       return;
     }
     if (apiKey.access_token_read_at) {

@@ -93,7 +93,8 @@ export default function ResetMotDePasse() {
         id="content"
       >
         <title>
-          Réinitialisation de mot de passe | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire
+          Réinitialisation de mot de passe | Zacharie | Ministère de l'Agriculture et de la Souveraineté
+          Alimentaire
         </title>
         <div className="fr-container fr-container--fluid fr-my-md-14v">
           <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
@@ -120,7 +121,8 @@ export default function ResetMotDePasse() {
       id="content"
     >
       <title>
-        Réinitialisation de mot de passe | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire
+        Réinitialisation de mot de passe | Zacharie | Ministère de l'Agriculture et de la Souveraineté
+        Alimentaire
       </title>
       <div className="fr-container fr-container--fluid fr-my-md-14v">
         <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
@@ -128,7 +130,9 @@ export default function ResetMotDePasse() {
             {communication && <CallOut>{decodeURIComponent(communication)}</CallOut>}
             <CallOut>Vous pouvez maintenant définir votre nouveau mot de passe</CallOut>
             {userResponse?.message && <CallOut>{userResponse?.message}</CallOut>}
-            {userResponse?.error && !userResponse?.message && <CallOut title="Erreur">{userResponse.error}</CallOut>}
+            {userResponse?.error && !userResponse?.message && (
+              <CallOut title="Erreur">{userResponse.error}</CallOut>
+            )}
             <form
               onSubmit={handleSubmit}
               id="reset_password_form"

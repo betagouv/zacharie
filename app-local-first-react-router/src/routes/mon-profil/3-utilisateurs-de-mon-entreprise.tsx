@@ -25,7 +25,8 @@ const empytEntitiesByTypeAndId: EntitiesByTypeAndId = {
 export default function UtilisateursDeMonEntreprise() {
   const user = useUser((state) => state.user)!;
   const [newUserEmail, setNewUserEmail] = useState('');
-  const [userEntitiesByTypeAndId, setUserEntitiesByTypeAndId] = useState<EntitiesByTypeAndId>(empytEntitiesByTypeAndId);
+  const [userEntitiesByTypeAndId, setUserEntitiesByTypeAndId] =
+    useState<EntitiesByTypeAndId>(empytEntitiesByTypeAndId);
   const [refreshKey, setRefreshKey] = useState(0);
 
   let entityType: EntityTypes = EntityTypes.COLLECTEUR_PRO;
@@ -77,7 +78,10 @@ export default function UtilisateursDeMonEntreprise() {
                     relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
                 );
                 if (!relation) return null;
-                if (relation.status !== EntityRelationStatus.ADMIN && relation.status !== EntityRelationStatus.MEMBER)
+                if (
+                  relation.status !== EntityRelationStatus.ADMIN &&
+                  relation.status !== EntityRelationStatus.MEMBER
+                )
                   return null;
                 return (
                   <div className="mb-6 bg-white md:shadow-sm">

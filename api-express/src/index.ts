@@ -81,12 +81,16 @@ app.use(Sentry.Handlers.tracingHandler());
 
 if (process.env.NODE_ENV === 'production') {
   // regex .zacharie.beta.gouv.fr
-  app.use(cors({ credentials: true, origin: ['https://zacharie.beta.gouv.fr', /\.zacharie\.beta\.gouv\.fr$/] }));
+  app.use(
+    cors({ credentials: true, origin: ['https://zacharie.beta.gouv.fr', /\.zacharie\.beta\.gouv\.fr$/] })
+  );
 } else {
   app.use(
     cors({
       credentials: true,
-      origin: ['http://localhost:3234', 'http://localhost:3290', process.env.VITE_APP_URL ?? ''].filter(Boolean),
+      origin: ['http://localhost:3234', 'http://localhost:3290', process.env.VITE_APP_URL ?? ''].filter(
+        Boolean
+      ),
     })
   );
 }

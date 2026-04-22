@@ -61,8 +61,10 @@ export function setFeiInStore(fei: FeiForRefresh) {
     if (!localCarcasse) {
       prevState.carcasses[carcasse.zacharie_carcasse_id] = carcasse;
     } else {
-      const newestCarcasse = dayjs(localCarcasse.updated_at).diff(carcasse.updated_at) > 0 ? localCarcasse : carcasse;
-      const oldestCarcasse = dayjs(localCarcasse.updated_at).diff(carcasse.updated_at) > 0 ? carcasse : localCarcasse;
+      const newestCarcasse =
+        dayjs(localCarcasse.updated_at).diff(carcasse.updated_at) > 0 ? localCarcasse : carcasse;
+      const oldestCarcasse =
+        dayjs(localCarcasse.updated_at).diff(carcasse.updated_at) > 0 ? carcasse : localCarcasse;
 
       prevState.carcasses[carcasse.zacharie_carcasse_id] = {
         ...oldestCarcasse,

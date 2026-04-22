@@ -12,7 +12,9 @@ export default function ExaminateurInitialDeleteFei() {
   const updateFei = state.updateFei;
   const addLog = state.addLog;
   const fei = state.feis[params.fei_numero!];
-  const currentOwnerEntity = fei.fei_current_owner_entity_id ? state.entities[fei.fei_current_owner_entity_id] : null;
+  const currentOwnerEntity = fei.fei_current_owner_entity_id
+    ? state.entities[fei.fei_current_owner_entity_id]
+    : null;
 
   const navigate = useNavigate();
 

@@ -9,7 +9,8 @@ export default function useCollecteurNavigationMenu(): MainNavigationProps.Item[
   const navigationBase: MainNavigationProps.Item[] = [
     {
       text: 'Fiches',
-      isActive: location.pathname.startsWith('/app/collecteur/fei') || location.pathname === '/app/collecteur',
+      isActive:
+        location.pathname.startsWith('/app/collecteur/fei') || location.pathname === '/app/collecteur',
       linkProps: { to: '/app/collecteur', href: '#' },
     },
     {

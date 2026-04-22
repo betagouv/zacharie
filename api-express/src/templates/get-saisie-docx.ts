@@ -394,7 +394,8 @@ export async function generateSaisieDocx(data: CarcasseCertificat, user: User): 
           }),
           // Troisième tableau: Désignation des denrées consignées
           new Table({
-            columnWidths: data.type === CarcasseCertificatType.CSP ? [1500, 3500, 4000, 1500] : [3500, 5500, 1500],
+            columnWidths:
+              data.type === CarcasseCertificatType.CSP ? [1500, 3500, 4000, 1500] : [3500, 5500, 1500],
             margins: {
               top: 50,
             },

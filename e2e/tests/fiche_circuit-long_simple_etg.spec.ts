@@ -85,7 +85,9 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
   await expect(page.getByText('Abcès ou nodules Unique -')).toBeVisible();
   await page.getByRole('listitem').filter({ hasText: 'Fermer' }).getByRole('button').click();
   await page.getByRole('button', { name: 'Prendre en charge les carcasses' }).click();
-  await expect(page.getByRole('heading', { name: 'Réception par mon établissement de traitement' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Réception par mon établissement de traitement' })
+  ).toBeVisible();
   await expect(page.getByText('Étape suivante : Inspection')).toBeVisible();
   await expect(
     page.getByText('Sélection du prochain destinataireProchain détenteur des carcasses *Indiquez')
@@ -244,7 +246,9 @@ test('Pas de stockage - Je transfère à un autre collecteur', async ({ page }) 
   await expect(page.getByText('Abcès ou nodules Unique -')).toBeVisible();
   await page.getByRole('listitem').filter({ hasText: 'Fermer' }).getByRole('button').click();
   await page.getByRole('button', { name: 'Prendre en charge les carcasses' }).click();
-  await expect(page.getByRole('heading', { name: 'Réception par mon établissement de traitement' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Réception par mon établissement de traitement' })
+  ).toBeVisible();
   await expect(page.getByText('Étape suivante : Inspection')).toBeVisible();
   await expect(
     page.getByText('Sélection du prochain destinataireProchain détenteur des carcasses *Indiquez')
@@ -378,7 +382,9 @@ test('Pas de stockage - Je transfère à un autre ETG', async ({ page, context }
   await expect(page.getByText('Abcès ou nodules Unique -')).toBeVisible();
   await page.getByRole('listitem').filter({ hasText: 'Fermer' }).getByRole('button').click();
   await page.getByRole('button', { name: 'Prendre en charge les carcasses' }).click();
-  await expect(page.getByRole('heading', { name: 'Réception par mon établissement de traitement' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Réception par mon établissement de traitement' })
+  ).toBeVisible();
   await expect(page.getByText('Étape suivante : Inspection')).toBeVisible();
   await expect(
     page.getByText('Sélection du prochain destinataireProchain détenteur des carcasses *Indiquez')

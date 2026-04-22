@@ -58,7 +58,8 @@ export default function RelationEntityUser({
   // );
   const canHandleCarcassesForEntity = entity.EntityRelationsWithUsers?.find(
     (relation) =>
-      relation.owner_id === user.id && relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
+      relation.owner_id === user.id &&
+      relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
   );
   const relationsToApprove = entity.EntityRelationsWithUsers?.filter(
     (relation) =>
@@ -284,7 +285,8 @@ function RelationStatusSelector({
       onChange={(f) => {
         const newStatus = f?.value;
         if (status === EntityRelationStatus.ADMIN && newStatus !== EntityRelationStatus.ADMIN) {
-          if (!window.confirm("Voulez-vous vraiment retirer les droits d'administrateur à cet utilisateur ?")) return;
+          if (!window.confirm("Voulez-vous vraiment retirer les droits d'administrateur à cet utilisateur ?"))
+            return;
         }
         API.put({
           path: '/user-entity',

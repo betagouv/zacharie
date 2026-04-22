@@ -6,8 +6,8 @@ export default function LandingPage() {
   return (
     <>
       <title>
-        Zacharie | Garantir des viandes de gibier sauvage saines et sûres | Ministère de l'Agriculture et de la
-        Souveraineté Alimentaire
+        Zacharie | Garantir des viandes de gibier sauvage saines et sûres | Ministère de l'Agriculture et de
+        la Souveraineté Alimentaire
       </title>
       <main>
         {/* Hero Section */}
@@ -118,7 +118,8 @@ export default function LandingPage() {
                 Une application qui fonctionne <b>même hors réseau</b>.
               </li>
               <li>
-                Toute la chasse du jour sur <b>une seule fiche</b>, peu importe le nombre de carcasses ou d'espèces.
+                Toute la chasse du jour sur <b>une seule fiche</b>, peu importe le nombre de carcasses ou
+                d'espèces.
               </li>
               <li>
                 Des <b>informations pré-enregistrées</b> pour un remplissage rapide et complet à coup sûr.

@@ -86,7 +86,13 @@ function ExaminateurInitial() {
   const [numeroCfei, setNumeroCfei] = useState(user.numero_cfei ?? '');
 
   const handleUserSubmit = useCallback(
-    async ({ isExaminateurInitial, numeroCfei }: { isExaminateurInitial: boolean | null; numeroCfei: string }) => {
+    async ({
+      isExaminateurInitial,
+      numeroCfei,
+    }: {
+      isExaminateurInitial: boolean | null;
+      numeroCfei: string;
+    }) => {
       const body: Record<string, string | null> = {};
       if (isExaminateurInitial) {
         body.est_forme_a_l_examen_initial = 'true';
@@ -147,7 +153,10 @@ function ExaminateurInitial() {
                   checked: isExaminateurInitial === false,
                   name: 'pas_forme_a_l_examen_initial',
                   onChange: () => {
-                    if (!user.numero_cfei || window.confirm("N'êtes vous vraiment pas formé à l'examen initial ?")) {
+                    if (
+                      !user.numero_cfei ||
+                      window.confirm("N'êtes vous vraiment pas formé à l'examen initial ?")
+                    ) {
                       setIsExaminateurInitial(false);
                       handleUserSubmit({
                         isExaminateurInitial: false,
@@ -164,7 +173,8 @@ function ExaminateurInitial() {
             <Input
               label={
                 <span>
-                  Numéro d'attestation de Chasseur Formé à l'Examen Initial <span className="text-red-500">*</span>
+                  Numéro d'attestation de Chasseur Formé à l'Examen Initial{' '}
+                  <span className="text-red-500">*</span>
                 </span>
               }
               hintText="De la forme CFEI-DEP-AA-123"

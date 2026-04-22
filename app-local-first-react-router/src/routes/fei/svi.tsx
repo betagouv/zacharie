@@ -181,7 +181,10 @@ export default function FEI_SVI() {
               nextFei.svi_user_id = user.id;
             }
             for (const carcasse of carcassesAAfficher) {
-              if (!carcasse.svi_carcasse_status || carcasse.svi_carcasse_status === CarcasseStatus.SANS_DECISION) {
+              if (
+                !carcasse.svi_carcasse_status ||
+                carcasse.svi_carcasse_status === CarcasseStatus.SANS_DECISION
+              ) {
                 updateCarcasse(
                   carcasse.zacharie_carcasse_id,
                   {

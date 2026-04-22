@@ -46,7 +46,10 @@ export default function CircuitCourtProfilEntrepriseUtilisateurs() {
                   relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
               );
               if (!relation) return null;
-              if (relation.status !== EntityRelationStatus.ADMIN && relation.status !== EntityRelationStatus.MEMBER)
+              if (
+                relation.status !== EntityRelationStatus.ADMIN &&
+                relation.status !== EntityRelationStatus.MEMBER
+              )
                 return null;
               return (
                 <div className="mb-6 bg-white md:shadow-sm">
@@ -82,7 +85,9 @@ export default function CircuitCourtProfilEntrepriseUtilisateurs() {
                           },
                         }).then((res) => {
                           if (res.ok) {
-                            alert('Utilisateur invité avec succès. Il recevra un email pour se connecter à Zacharie.');
+                            alert(
+                              'Utilisateur invité avec succès. Il recevra un email pour se connecter à Zacharie.'
+                            );
                             setNewUserEmail('');
                             setRefreshKey((k) => k + 1);
                           }

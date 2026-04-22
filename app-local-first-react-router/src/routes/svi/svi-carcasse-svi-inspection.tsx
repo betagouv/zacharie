@@ -63,7 +63,9 @@ function SviInspectionCarcasse() {
     for (const carcassesIntermediaire of carcassesIntermediaires) {
       if (carcassesIntermediaire?.commentaire) {
         const intermediaireEntity = entities[carcassesIntermediaire.intermediaire_entity_id];
-        commentaires.push(`${intermediaireEntity?.nom_d_usage}\u00A0: ${carcassesIntermediaire?.commentaire}`);
+        commentaires.push(
+          `${intermediaireEntity?.nom_d_usage}\u00A0: ${carcassesIntermediaire?.commentaire}`
+        );
       }
     }
     return commentaires;
@@ -95,7 +97,9 @@ function SviInspectionCarcasse() {
   }, [fei, user, isSviWorkingFor]);
 
   const initIMP1Open = useRef(!carcasse.svi_ipm1_decision);
-  const initIMP2Open = useRef(carcasse.svi_ipm1_decision !== IPM1Decision.ACCEPTE && !carcasse.svi_ipm2_decision);
+  const initIMP2Open = useRef(
+    carcasse.svi_ipm1_decision !== IPM1Decision.ACCEPTE && !carcasse.svi_ipm2_decision
+  );
 
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
@@ -164,7 +168,9 @@ function SviInspectionCarcasse() {
                 open={initIMP2Open.current}
                 key={dayjs(carcasse.svi_ipm1_date || undefined).toISOString()}
                 title={`Inspection Post-Mortem 2 (IPM2)${carcasse.svi_ipm2_date ? ` - ${dayjs(carcasse.svi_ipm2_date).format('DD-MM-YYYY')}` : ''}`}
-                className={carcasse.svi_ipm1_decision === IPM1Decision.ACCEPTE ? '[&_summary]:opacity-50' : ''}
+                className={
+                  carcasse.svi_ipm1_decision === IPM1Decision.ACCEPTE ? '[&_summary]:opacity-50' : ''
+                }
               >
                 <div>
                   <CarcasseIPM2 canEdit={canEdit && carcasse.svi_ipm1_decision !== IPM1Decision.ACCEPTE} />

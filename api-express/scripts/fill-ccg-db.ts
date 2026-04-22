@@ -34,7 +34,9 @@ function insertCCGsDéclarésInDB() {
         raison_sociale: row['Établissement :\nEnseigne usuelle\n(RESYTAL)'],
         numero_ddecpp: numeroDdecpp,
         address_ligne_1:
-          row[' Unité Activité (UA) :\nAdresse de localisation :\nConcaténations des lignes adresses 1, 2 & 3']?.trim(),
+          row[
+            ' Unité Activité (UA) :\nAdresse de localisation :\nConcaténations des lignes adresses 1, 2 & 3'
+          ]?.trim(),
         code_postal: row["Unité d'Activité (UA) :\nCode postal\n(Adresse de localisation)"],
         ville: row[' Unité Activité (UA) :\nAdresse de localisation :\nCommune Nom'],
         ccg_status: 'Déclaré',

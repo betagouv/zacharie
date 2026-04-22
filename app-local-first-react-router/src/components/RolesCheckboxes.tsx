@@ -55,7 +55,8 @@ export default function RolesCheckBoxes({
     },
     {
       label: 'Établissement de Traitement du Gibier sauvage (ETG)',
-      hintText: "Vous êtes salarié ou responsable d'un établissement qui peut traiter et transporter du gibier sauvage",
+      hintText:
+        "Vous êtes salarié ou responsable d'un établissement qui peut traiter et transporter du gibier sauvage",
       nativeInputProps: {
         name: Prisma.UserScalarFieldEnum.roles,
         value: UserRoles.ETG,

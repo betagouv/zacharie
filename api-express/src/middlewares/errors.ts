@@ -26,7 +26,11 @@ function catchErrors<T extends express.Request>(fn: MiddlewareFn<T>) {
 
   If we hit a route that is not found, we mark it as 404 and pass it along to the next error handler to display
 */
-const notFound = (req: express.Request | RequestWithUser, _res: express.Response, next: express.NextFunction) => {
+const notFound = (
+  req: express.Request | RequestWithUser,
+  _res: express.Response,
+  next: express.NextFunction
+) => {
   const url = req.protocol + '://' + req.get('host') + req.originalUrl;
   const customError = new Error(`Url not Found : ${url}`) as CustomError;
   customError.status = 404;

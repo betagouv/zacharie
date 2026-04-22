@@ -9,7 +9,11 @@ import { useSaveScroll } from '@app/services/useSaveScroll';
 import { getCarcasseStatusLabel } from '@app/utils/get-carcasse-status';
 import { loadCarcasses } from '@app/utils/load-carcasses';
 import Filters from '@app/components/Filters';
-import { CarcasseFilter, carcasseFilterableFields, filterCarcassesInRegistre } from '@app/utils/filter-carcasse';
+import {
+  CarcasseFilter,
+  carcasseFilterableFields,
+  filterCarcassesInRegistre,
+} from '@app/utils/filter-carcasse';
 import { useLocalStorage } from '@uidotdev/usehooks';
 import Chargement from '@app/components/Chargement';
 import Button from '@codegouvfr/react-dsfr/Button';
@@ -148,7 +152,9 @@ export default function EtgCarcasses() {
                   if (e.target.checked) {
                     setSelectedCarcassesIds([...selectedCarcassesIds, carcasse.zacharie_carcasse_id]);
                   } else {
-                    setSelectedCarcassesIds(selectedCarcassesIds.filter((id) => id !== carcasse.zacharie_carcasse_id));
+                    setSelectedCarcassesIds(
+                      selectedCarcassesIds.filter((id) => id !== carcasse.zacharie_carcasse_id)
+                    );
                   }
                 }}
               />
@@ -290,7 +296,8 @@ export default function EtgCarcasses() {
                 className="w-full sm:w-auto"
               >
                 <span className="hidden sm:inline">
-                  Télécharger un fichier Excel avec les carcasses sélectionnées ({selectedCarcassesIds.length})
+                  Télécharger un fichier Excel avec les carcasses sélectionnées ({selectedCarcassesIds.length}
+                  )
                 </span>
                 <span className="sm:hidden">Exporter ({selectedCarcassesIds.length})</span>
               </Button>
@@ -386,7 +393,9 @@ export default function EtgCarcasses() {
                   onSortBy: setSortBy,
                   sortBy: sortBy,
                   sortOrder: sortOrder,
-                  render: (carcasse) => <Link to={`/app/etg/fei/${carcasse.fei_numero}`}>{carcasse.fei_numero}</Link>,
+                  render: (carcasse) => (
+                    <Link to={`/app/etg/fei/${carcasse.fei_numero}`}>{carcasse.fei_numero}</Link>
+                  ),
                 },
                 {
                   dataKey: 'collecteur' as keyof (typeof carcassesRegistry)[number],

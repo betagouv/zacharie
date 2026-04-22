@@ -9,7 +9,9 @@ import {
 } from '@prisma/client';
 import type { EntitiesById, EntitiesByTypeAndId, EntityWithUserRelations } from '~/types/entity';
 
-export function sortEntitiesByTypeAndId(entities: Array<EntityWithUserRelations>): [EntitiesById, EntitiesByTypeAndId] {
+export function sortEntitiesByTypeAndId(
+  entities: Array<EntityWithUserRelations>
+): [EntitiesById, EntitiesByTypeAndId] {
   const allEntitiesIds: EntitiesById = {};
   const allEntitiesByTypeAndId: EntitiesByTypeAndId = Object.values(EntityTypes).reduce((acc, type) => {
     acc[type] = {};
@@ -35,7 +37,8 @@ export function sortEntitiesRelationsByTypeAndId(
   for (const entityWithUserRelations of entities) {
     if (entityWithUserRelations) {
       if (!entitiesByTypeAndId[entityWithUserRelations.type][entityWithUserRelations.id]) {
-        entitiesByTypeAndId[entityWithUserRelations.type][entityWithUserRelations.id] = entityWithUserRelations;
+        entitiesByTypeAndId[entityWithUserRelations.type][entityWithUserRelations.id] =
+          entityWithUserRelations;
       }
     }
   }

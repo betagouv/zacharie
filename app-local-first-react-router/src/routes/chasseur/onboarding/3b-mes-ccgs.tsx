@@ -83,7 +83,8 @@ export default function MesCCGs() {
         </h3>
         {hasPreregisteredCCG && (
           <p className="mb-4 text-sm text-gray-600">
-            Une chambre froide en cours de déclaration peut apparaître à déclarer. Dans ce cas, ignorer le message.
+            Une chambre froide en cours de déclaration peut apparaître à déclarer. Dans ce cas, ignorer le
+            message.
           </p>
         )}
         {!userCCGs.length && (
@@ -165,7 +166,9 @@ export default function MesCCGs() {
                           DÉCLARÉ
                         </Badge>
                       )}
-                      {entity.numero_ddecpp && <p className="mt-2 text-sm font-bold">{entity.numero_ddecpp}</p>}
+                      {entity.numero_ddecpp && (
+                        <p className="mt-2 text-sm font-bold">{entity.numero_ddecpp}</p>
+                      )}
                       <p className="mt-1 text-sm">{entity.nom_d_usage}</p>
                       <p className="text-sm">
                         {entity.code_postal} {entity.ville}
@@ -202,7 +205,9 @@ export default function MesCCGs() {
                         title="Supprimer"
                         nativeButtonProps={{
                           onClick: () => {
-                            if (!window.confirm('Êtes-vous sûr de vouloir supprimer cette chambre froide ?')) {
+                            if (
+                              !window.confirm('Êtes-vous sûr de vouloir supprimer cette chambre froide ?')
+                            ) {
                               return;
                             }
                             API.delete({
@@ -385,9 +390,9 @@ export default function MesCCGs() {
                       className="my-4"
                       description={
                         <>
-                          Cette étape ne remplace pas l'enregistrement officiel du CCG : elle sert seulement à le
-                          renseigner dans Zacharie. Pour être reconnu, le CCG doit être enregistré auprès de la
-                          DDPP/DDETSPP de votre département. Pour déclarer votre CCG,{' '}
+                          Cette étape ne remplace pas l'enregistrement officiel du CCG : elle sert seulement à
+                          le renseigner dans Zacharie. Pour être reconnu, le CCG doit être enregistré auprès
+                          de la DDPP/DDETSPP de votre département. Pour déclarer votre CCG,{' '}
                           <a
                             href="https://scribehow.com/shared/Declarer_un_centre_de_collecte_de_gibier_CCG__f9XrNsQYQx68Mk-WDBJr0w"
                             target="_blank"
@@ -452,7 +457,9 @@ function InputCCG({ addCCG }: { addCCG: (ccg: Entity) => void }) {
           body: {
             [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
             relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-            [Prisma.EntityScalarFieldEnum.numero_ddecpp]: formData.get(Prisma.EntityScalarFieldEnum.numero_ddecpp),
+            [Prisma.EntityScalarFieldEnum.numero_ddecpp]: formData.get(
+              Prisma.EntityScalarFieldEnum.numero_ddecpp
+            ),
             [Prisma.EntityScalarFieldEnum.type]: EntityTypes.CCG,
           },
         })

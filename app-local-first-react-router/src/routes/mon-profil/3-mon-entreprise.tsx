@@ -38,19 +38,27 @@ const empytEntitiesByTypeAndId: EntitiesByTypeAndId = {
 
 export default function MonEntreprise() {
   const user = useUser((state) => state.user)!;
-  const [allEntitiesByTypeAndId, setAllEntitiesByTypeAndId] = useState<EntitiesByTypeAndId>(empytEntitiesByTypeAndId);
-  const [userEntitiesByTypeAndId, setUserEntitiesByTypeAndId] = useState<EntitiesByTypeAndId>(empytEntitiesByTypeAndId);
+  const [allEntitiesByTypeAndId, setAllEntitiesByTypeAndId] =
+    useState<EntitiesByTypeAndId>(empytEntitiesByTypeAndId);
+  const [userEntitiesByTypeAndId, setUserEntitiesByTypeAndId] =
+    useState<EntitiesByTypeAndId>(empytEntitiesByTypeAndId);
   const [refreshKey, setRefreshKey] = useState(0);
 
   const userCollecteursPro = user.roles.includes(UserRoles.COLLECTEUR_PRO)
     ? Object.values(userEntitiesByTypeAndId[EntityTypes.COLLECTEUR_PRO])
     : [];
-  const userEtgs = user.roles.includes(UserRoles.ETG) ? Object.values(userEntitiesByTypeAndId[EntityTypes.ETG]) : [];
-  const userSvis = user.roles.includes(UserRoles.SVI) ? Object.values(userEntitiesByTypeAndId[EntityTypes.SVI]) : [];
+  const userEtgs = user.roles.includes(UserRoles.ETG)
+    ? Object.values(userEntitiesByTypeAndId[EntityTypes.ETG])
+    : [];
+  const userSvis = user.roles.includes(UserRoles.SVI)
+    ? Object.values(userEntitiesByTypeAndId[EntityTypes.SVI])
+    : [];
   const userCommerceDeDetail = user.roles.includes(UserRoles.COMMERCE_DE_DETAIL)
     ? Object.values(userEntitiesByTypeAndId[EntityTypes.COMMERCE_DE_DETAIL])
     : [];
-  const userCantineOuRestaurationCollective = user.roles.includes(UserRoles.CANTINE_OU_RESTAURATION_COLLECTIVE)
+  const userCantineOuRestaurationCollective = user.roles.includes(
+    UserRoles.CANTINE_OU_RESTAURATION_COLLECTIVE
+  )
     ? Object.values(userEntitiesByTypeAndId[EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE])
     : [];
   const userAssociationCaritative = user.roles.includes(UserRoles.ASSOCIATION_CARITATIVE)
@@ -59,11 +67,15 @@ export default function MonEntreprise() {
   const userRepasDeChasseOuAssociatif = user.roles.includes(UserRoles.REPAS_DE_CHASSE_OU_ASSOCIATIF)
     ? Object.values(userEntitiesByTypeAndId[EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF])
     : [];
-  const collecteursProDone = user.roles.includes(UserRoles.COLLECTEUR_PRO) ? userCollecteursPro.length > 0 : true;
+  const collecteursProDone = user.roles.includes(UserRoles.COLLECTEUR_PRO)
+    ? userCollecteursPro.length > 0
+    : true;
   const commerceDeDetailDone = user.roles.includes(UserRoles.COMMERCE_DE_DETAIL)
     ? userCommerceDeDetail.length > 0
     : true;
-  const cantineOuRestaurationCollectiveDone = user.roles.includes(UserRoles.CANTINE_OU_RESTAURATION_COLLECTIVE)
+  const cantineOuRestaurationCollectiveDone = user.roles.includes(
+    UserRoles.CANTINE_OU_RESTAURATION_COLLECTIVE
+  )
     ? userCantineOuRestaurationCollective.length > 0
     : true;
   const associationCaritativeDone = user.roles.includes(UserRoles.ASSOCIATION_CARITATIVE)
@@ -205,7 +217,9 @@ export default function MonEntreprise() {
                 setRefreshKey={setRefreshKey}
                 refreshKey={refreshKey}
                 sectionLabel="Mon Association Caritative"
-                addLabel={!associationCaritativeDone ? 'Ajouter une Association Caritative' : 'Mon entreprise'}
+                addLabel={
+                  !associationCaritativeDone ? 'Ajouter une Association Caritative' : 'Mon entreprise'
+                }
                 selectLabel="Cherchez une autre Association Caritative"
                 done={associationCaritativeDone}
                 canChange
@@ -221,7 +235,9 @@ export default function MonEntreprise() {
                 refreshKey={refreshKey}
                 sectionLabel="Mon Repas de Chasse ou Associatif"
                 addLabel={
-                  !repasDeChasseOuAssociatifDone ? 'Ajouter un Repas de Chasse ou Associatif' : 'Mon entreprise'
+                  !repasDeChasseOuAssociatifDone
+                    ? 'Ajouter un Repas de Chasse ou Associatif'
+                    : 'Mon entreprise'
                 }
                 selectLabel="Cherchez un autre Repas de Chasse ou Associatif"
                 done={repasDeChasseOuAssociatifDone}
@@ -488,7 +504,9 @@ function ListAndSelectEntities({
                     ? {
                         label: remainingEntities
                           .filter((entity) => entity.id === entityId)
-                          .map((entity) => `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`)?.[0],
+                          .map(
+                            (entity) => `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`
+                          )?.[0],
                         value: entityId,
                       }
                     : null

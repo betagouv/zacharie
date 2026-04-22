@@ -76,7 +76,8 @@ function Fei() {
   const myCarcasses = useMemo(() => {
     return feiCarcasses.filter(
       (c) =>
-        (c.next_owner_entity_id && userEntityIds.includes(c.next_owner_entity_id)) || c.next_owner_user_id === user.id
+        (c.next_owner_entity_id && userEntityIds.includes(c.next_owner_entity_id)) ||
+        c.next_owner_user_id === user.id
     );
   }, [feiCarcasses, userEntityIds, user.id]);
 
@@ -101,7 +102,10 @@ function Fei() {
       if (user.roles.includes(UserRoles.COLLECTEUR_PRO)) return FeiOwnerRole.COLLECTEUR_PRO;
       return null;
     }
-    if (fei.fei_current_owner_role === FeiOwnerRole.COLLECTEUR_PRO && fei.fei_current_owner_user_id === user.id) {
+    if (
+      fei.fei_current_owner_role === FeiOwnerRole.COLLECTEUR_PRO &&
+      fei.fei_current_owner_user_id === user.id
+    ) {
       return FeiOwnerRole.COLLECTEUR_PRO;
     }
     if (

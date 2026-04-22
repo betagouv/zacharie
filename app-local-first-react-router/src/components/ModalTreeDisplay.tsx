@@ -87,7 +87,13 @@ const renderNestedDetails = (
   });
 };
 
-const ModalTreeDisplay: React.FC<HierarchicalDataModalProps> = ({ modal, data, title, skipParent, onItemClick }) => {
+const ModalTreeDisplay: React.FC<HierarchicalDataModalProps> = ({
+  modal,
+  data,
+  title,
+  skipParent,
+  onItemClick,
+}) => {
   const _onItemClick = (item: string) => {
     onItemClick(item);
     modal.close();

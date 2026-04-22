@@ -26,7 +26,8 @@ export default function CircuitCourtDeactivated() {
         className="fr-background-alt--blue-france relative min-h-full overflow-auto"
       >
         <title>
-          Compte en attente d’activation | Zacharie | Ministère de l’Agriculture et de la Souveraineté Alimentaire
+          Compte en attente d’activation | Zacharie | Ministère de l’Agriculture et de la Souveraineté
+          Alimentaire
         </title>
         <div className="fr-container fr-container--fluid fr-my-md-14v">
           <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
@@ -40,8 +41,8 @@ export default function CircuitCourtDeactivated() {
                     <p className="fr-text--sm fr-mb-3w">
                       Nous vérifions les informations que vous avez renseignées.
                       <br />
-                      Nous vous enverrons un mail pour confirmer l’activation de votre compte ou vous demander des
-                      informations complémentaires.
+                      Nous vous enverrons un mail pour confirmer l’activation de votre compte ou vous demander
+                      des informations complémentaires.
                     </p>
                   ) : (
                     <>
@@ -63,7 +64,8 @@ export default function CircuitCourtDeactivated() {
                   <p className="fr-text--sm fr-mb-2w">Des questions ? Contactez-nous :</p>
                   <ul className="fr-text--sm mb-0 list-inside list-disc">
                     <li>
-                      par mail : <a href="mailto:contact@zacharie.beta.gouv.fr">contact@zacharie.beta.gouv.fr</a>
+                      par mail :{' '}
+                      <a href="mailto:contact@zacharie.beta.gouv.fr">contact@zacharie.beta.gouv.fr</a>
                     </li>
                     <li>
                       par téléphone : <a href="tel:+33189316640">01 89 31 66 40</a>

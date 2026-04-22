@@ -19,7 +19,9 @@ export default function useSviNavigationMenu(): MainNavigationProps.Item[] {
     },
     {
       text: 'Paramètres',
-      isActive: location.pathname.startsWith('/app/svi/profil') || location.pathname.startsWith('/app/svi/entreprise'),
+      isActive:
+        location.pathname.startsWith('/app/svi/profil') ||
+        location.pathname.startsWith('/app/svi/entreprise'),
       menuLinks: [
         {
           text: 'Coordonnées',

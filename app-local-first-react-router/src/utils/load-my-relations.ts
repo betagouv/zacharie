@@ -11,7 +11,9 @@ export async function loadMyRelations() {
     return;
   }
   try {
-    const myRelationsData = await API.get({ path: 'user/my-relations' }).then((res) => res as UserMyRelationsResponse);
+    const myRelationsData = await API.get({ path: 'user/my-relations' }).then(
+      (res) => res as UserMyRelationsResponse
+    );
 
     const entities: Record<EntityWithUserRelation['id'], EntityWithUserRelation> = {};
     for (const entity of [

@@ -25,8 +25,10 @@ const empytEntitiesByTypeAndId: EntitiesByTypeAndId = {
 
 export default function CircuitCourtOnboardingEntreprise() {
   const user = useUser((state) => state.user)!;
-  const [allEntitiesByTypeAndId, setAllEntitiesByTypeAndId] = useState<EntitiesByTypeAndId>(empytEntitiesByTypeAndId);
-  const [userEntitiesByTypeAndId, setUserEntitiesByTypeAndId] = useState<EntitiesByTypeAndId>(empytEntitiesByTypeAndId);
+  const [allEntitiesByTypeAndId, setAllEntitiesByTypeAndId] =
+    useState<EntitiesByTypeAndId>(empytEntitiesByTypeAndId);
+  const [userEntitiesByTypeAndId, setUserEntitiesByTypeAndId] =
+    useState<EntitiesByTypeAndId>(empytEntitiesByTypeAndId);
   const [refreshKey, setRefreshKey] = useState(0);
 
   const navigate = useNavigate();

@@ -1,4 +1,11 @@
-import { EntityRelationStatus, EntityRelationType, EntityTypes, FeiOwnerRole, User, UserRoles } from '@prisma/client';
+import {
+  EntityRelationStatus,
+  EntityRelationType,
+  EntityTypes,
+  FeiOwnerRole,
+  User,
+  UserRoles,
+} from '@prisma/client';
 import prisma from '~/prisma';
 import sendNotificationToUser from '~/service/notifications';
 import { formatManualValidationSviChasseurEmail, formatSviAssignedEmail } from '~/utils/formatCarcasseEmail';
@@ -70,7 +77,10 @@ export async function trackFirstFeiTreated(existingFei: FeiPopulated, savedFei: 
 }
 
 export async function trackEtgFirstFei(existingFei: FeiPopulated, savedFei: FeiPopulated) {
-  if (existingFei.fei_current_owner_role === UserRoles.ETG && savedFei.fei_current_owner_role !== UserRoles.ETG) {
+  if (
+    existingFei.fei_current_owner_role === UserRoles.ETG &&
+    savedFei.fei_current_owner_role !== UserRoles.ETG
+  ) {
     const etg = await prisma.entity.findUnique({
       where: {
         id: savedFei.fei_current_owner_entity_id,
@@ -97,8 +107,14 @@ export async function webhookOwnerChange(existingFei: FeiPopulated, savedFei: Fe
  * Notifies SVI users when a FEI is assigned to them.
  * Returns true if this side effect fired (to skip generic next-owner notifications).
  */
-export async function notifySviAssignment(existingFei: FeiPopulated, savedFei: FeiPopulated): Promise<boolean> {
-  if (existingFei.fei_next_owner_role === FeiOwnerRole.SVI || savedFei.fei_next_owner_role !== FeiOwnerRole.SVI) {
+export async function notifySviAssignment(
+  existingFei: FeiPopulated,
+  savedFei: FeiPopulated
+): Promise<boolean> {
+  if (
+    existingFei.fei_next_owner_role === FeiOwnerRole.SVI ||
+    savedFei.fei_next_owner_role !== FeiOwnerRole.SVI
+  ) {
     return false;
   }
 

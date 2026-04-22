@@ -14,7 +14,13 @@ export default function MesNotifications() {
   const user = useUser((state) => state.user)!;
   const navigate = useNavigate();
 
-  const { subscribeToPush, canSendPush, isSubscribed, pushSubscription, pushAvailable: pushAvailableOnWeb } = usePush();
+  const {
+    subscribeToPush,
+    canSendPush,
+    isSubscribed,
+    pushSubscription,
+    pushAvailable: pushAvailableOnWeb,
+  } = usePush();
 
   const [nativePushTokenRegistered, setNativePushTokenRegistered] = useState(false);
   useEffect(() => {
@@ -75,7 +81,9 @@ export default function MesNotifications() {
         }
       }}
     >
-      <title>Mes notifications | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
+      <title>
+        Mes notifications | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire
+      </title>
       <div className="fr-container fr-container--fluid fr-my-md-14v">
         <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
           <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
@@ -89,8 +97,8 @@ export default function MesNotifications() {
               title="🔔 Soyez notifié d'une fiche qui vous est attribuée"
               className="bg-white"
             >
-              Vous pouvez être notifié par mail ou par une notification sur votre smartphone dès qu'une Fiche d'Examen
-              Initial vous est attribuée.
+              Vous pouvez être notifié par mail ou par une notification sur votre smartphone dès qu'une Fiche
+              d'Examen Initial vous est attribuée.
             </CallOut>
             <div className="mb-6 bg-white md:shadow-sm">
               <div className="p-4 pb-32 md:p-8 md:pb-0">

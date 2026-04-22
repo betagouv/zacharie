@@ -69,7 +69,9 @@ function sortCarcassesApprovedForExcel(carcasseA: CarcasseExcelData, carcasseB: 
   return carcasseA.Éspèce!.localeCompare(carcasseB.Éspèce!);
 }
 
-function createSheet<T extends keyof CarcasseExcelData | keyof FeiExcelData>(data: Array<Record<T, unknown>>) {
+function createSheet<T extends keyof CarcasseExcelData | keyof FeiExcelData>(
+  data: Array<Record<T, unknown>>
+) {
   /*
   [
     [the, first, array, is, the, header],
@@ -232,7 +234,9 @@ export default function useExportCarcasses() {
           const intermediaireCarcasse = carcassesIntermediaireById[id];
           if (intermediaireCarcasse?.commentaire) {
             const intermediaireEntity = entities[intermediaire.intermediaire_entity_id];
-            commentaires.push(`${intermediaireEntity?.nom_d_usage}\u00A0: ${intermediaireCarcasse?.commentaire}`);
+            commentaires.push(
+              `${intermediaireEntity?.nom_d_usage}\u00A0: ${intermediaireCarcasse?.commentaire}`
+            );
           }
           if (intermediaireCarcasse?.intermediaire_poids) {
             poids = intermediaireCarcasse.intermediaire_poids;
@@ -259,7 +263,9 @@ export default function useExportCarcasses() {
           'SVI - Saisie partielle': carcasse.svi_ipm2_decision?.includes(IPM2Decision.SAISIE_PARTIELLE)
             ? carcasse.svi_ipm2_pieces.join(' - ')
             : '',
-          'SVI - Saisie totale': carcasse.svi_ipm2_decision?.includes(IPM2Decision.SAISIE_TOTALE) ? 'Oui' : '',
+          'SVI - Saisie totale': carcasse.svi_ipm2_decision?.includes(IPM2Decision.SAISIE_TOTALE)
+            ? 'Oui'
+            : '',
           'SVI - Saisie motif': carcasse.svi_ipm2_lesions_ou_motifs.join('\n'),
           'SVI - Certificat de saisie OK': '',
           "SVI - Date d'examen": carcasse.svi_ipm2_date || carcasse.svi_ipm1_date,

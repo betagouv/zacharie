@@ -69,9 +69,13 @@ function FEIChasseurLoaded() {
   const users = useZustandStore((state) => state.users);
   const entities = useZustandStore((state) => state.entities);
 
-  const examinateurInitialUser = fei.examinateur_initial_user_id ? users[fei.examinateur_initial_user_id!] : null;
+  const examinateurInitialUser = fei.examinateur_initial_user_id
+    ? users[fei.examinateur_initial_user_id!]
+    : null;
   const premierDetenteurUser = fei.premier_detenteur_user_id ? users[fei.premier_detenteur_user_id!] : null;
-  const premierDetenteurEntity = fei.premier_detenteur_entity_id ? entities[fei.premier_detenteur_entity_id!] : null;
+  const premierDetenteurEntity = fei.premier_detenteur_entity_id
+    ? entities[fei.premier_detenteur_entity_id!]
+    : null;
   const updateFeiState = useZustandStore((state) => state.updateFei);
   const addLog = useZustandStore((state) => state.addLog);
   const updateFei: typeof updateFeiState = (fei_numero, nextFei) => {
@@ -90,8 +94,12 @@ function FEIChasseurLoaded() {
     syncData('examinateur-initial-update-fei');
   };
 
-  const [allCarcassesConfirmed, setAllCarcassesConfirmed] = useState(!!fei.heure_mise_a_mort_premiere_carcasse);
-  const [approbation, setApprobation] = useState(fei.examinateur_initial_approbation_mise_sur_le_marche ? true : false);
+  const [allCarcassesConfirmed, setAllCarcassesConfirmed] = useState(
+    !!fei.heure_mise_a_mort_premiere_carcasse
+  );
+  const [approbation, setApprobation] = useState(
+    fei.examinateur_initial_approbation_mise_sur_le_marche ? true : false
+  );
   const [showErrors, setShowErrors] = useState(false);
   const [showBloc2Errors, setShowBloc2Errors] = useState(false);
   const destinataireRef = useRef<DestinatairePremierDetenteurHandle | null>(null);
@@ -150,7 +158,10 @@ function FEIChasseurLoaded() {
     if (fei.examinateur_initial_user_id === user.id) {
       return true;
     }
-    if (fei.fei_current_owner_user_id === user.id && fei.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR) {
+    if (
+      fei.fei_current_owner_user_id === user.id &&
+      fei.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR
+    ) {
       return true;
     }
     if (premierDetenteurEntity?.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
@@ -297,7 +308,8 @@ function FEIChasseurLoaded() {
       updateFei(fei.numero, {
         examinateur_initial_approbation_mise_sur_le_marche: approbation,
         fei_current_owner_user_id: fei.premier_detenteur_user_id,
-        fei_current_owner_user_name_cache: premierDetenteurUser?.prenom + ' ' + premierDetenteurUser?.nom_de_famille,
+        fei_current_owner_user_name_cache:
+          premierDetenteurUser?.prenom + ' ' + premierDetenteurUser?.nom_de_famille,
         fei_current_owner_entity_id: fei.premier_detenteur_entity_id,
         fei_current_owner_entity_name_cache: premierDetenteurEntity?.nom_d_usage ?? null,
         fei_current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
@@ -305,7 +317,8 @@ function FEIChasseurLoaded() {
       updateCarcassesTransmission(carcasseIds, {
         current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
         current_owner_user_id: fei.premier_detenteur_user_id,
-        current_owner_user_name_cache: premierDetenteurUser?.prenom + ' ' + premierDetenteurUser?.nom_de_famille,
+        current_owner_user_name_cache:
+          premierDetenteurUser?.prenom + ' ' + premierDetenteurUser?.nom_de_famille,
         current_owner_entity_id: fei.premier_detenteur_entity_id ?? null,
         current_owner_entity_name_cache: premierDetenteurEntity?.nom_d_usage ?? null,
       });
@@ -395,7 +408,9 @@ function FEIChasseurLoaded() {
                         date_mise_a_mort: date.toDate(),
                       });
                     },
-                    defaultValue: fei?.date_mise_a_mort ? dayjs(fei?.date_mise_a_mort).format('YYYY-MM-DD') : '',
+                    defaultValue: fei?.date_mise_a_mort
+                      ? dayjs(fei?.date_mise_a_mort).format('YYYY-MM-DD')
+                      : '',
                   }}
                 />
                 <DateHeureValidationAlerts
@@ -449,7 +464,9 @@ function FEIChasseurLoaded() {
                     onAllCarcassesConfirmed={() => setAllCarcassesConfirmed(true)}
                     onAddMoreCarcasses={() => setAllCarcassesConfirmed(false)}
                   />
-                  {fieldHasError('carcasses') && <p className="fr-error-text mt-2">{fieldErrorMessage('carcasses')}</p>}
+                  {fieldHasError('carcasses') && (
+                    <p className="fr-error-text mt-2">{fieldErrorMessage('carcasses')}</p>
+                  )}
                   <input
                     type="hidden"
                     name={Prisma.FeiScalarFieldEnum.numero}
@@ -461,7 +478,9 @@ function FEIChasseurLoaded() {
                         className="mt-4"
                         label="Heure de mise à mort de la première carcasse&nbsp;*"
                         state={
-                          fieldHasError('heure_mise_a_mort_premiere_carcasse', showBloc2Errors) ? 'error' : 'default'
+                          fieldHasError('heure_mise_a_mort_premiere_carcasse', showBloc2Errors)
+                            ? 'error'
+                            : 'default'
                         }
                         stateRelatedMessage={fieldErrorMessage('heure_mise_a_mort_premiere_carcasse')}
                         nativeInputProps={{
@@ -523,7 +542,8 @@ function FEIChasseurLoaded() {
                                 if (!fei.heure_mise_a_mort_premiere_carcasse) {
                                   updateFei(fei.numero, { heure_evisceration_derniere_carcasse });
                                 } else if (
-                                  fei.heure_mise_a_mort_premiere_carcasse >= heure_evisceration_derniere_carcasse
+                                  fei.heure_mise_a_mort_premiere_carcasse >=
+                                  heure_evisceration_derniere_carcasse
                                 ) {
                                   alert(
                                     "L'heure d'éviscération de la dernière carcasse doit être supérieure à l'heure de mise à mort de la première carcasse"
@@ -577,9 +597,13 @@ function FEIChasseurLoaded() {
                   <Component
                     label="Date de validation de l'examen initial et de mise sur le marché *"
                     state={
-                      fieldHasError('examinateur_initial_date_approbation_mise_sur_le_marche') ? 'error' : 'default'
+                      fieldHasError('examinateur_initial_date_approbation_mise_sur_le_marche')
+                        ? 'error'
+                        : 'default'
                     }
-                    stateRelatedMessage={fieldErrorMessage('examinateur_initial_date_approbation_mise_sur_le_marche')}
+                    stateRelatedMessage={fieldErrorMessage(
+                      'examinateur_initial_date_approbation_mise_sur_le_marche'
+                    )}
                     hintText={
                       canEdit && !fei.examinateur_initial_date_approbation_mise_sur_le_marche ? (
                         <button
@@ -606,19 +630,29 @@ function FEIChasseurLoaded() {
                       suppressHydrationWarning: true,
                       onBlur: (e) => {
                         updateFei(fei.numero, {
-                          examinateur_initial_date_approbation_mise_sur_le_marche: dayjs(e.target.value).toDate(),
+                          examinateur_initial_date_approbation_mise_sur_le_marche: dayjs(
+                            e.target.value
+                          ).toDate(),
                           resume_nombre_de_carcasses: countCarcassesByEspece.join('\n'),
                         });
                       },
                       defaultValue: fei?.examinateur_initial_date_approbation_mise_sur_le_marche
-                        ? dayjs(fei?.examinateur_initial_date_approbation_mise_sur_le_marche).format('YYYY-MM-DDTHH:mm')
+                        ? dayjs(fei?.examinateur_initial_date_approbation_mise_sur_le_marche).format(
+                            'YYYY-MM-DDTHH:mm'
+                          )
                         : undefined,
                     }}
                   />
                   <Checkbox
                     className={canEdit ? '' : 'checkbox-black'}
-                    state={fieldHasError('examinateur_initial_approbation_mise_sur_le_marche') ? 'error' : 'default'}
-                    stateRelatedMessage={fieldErrorMessage('examinateur_initial_approbation_mise_sur_le_marche')}
+                    state={
+                      fieldHasError('examinateur_initial_approbation_mise_sur_le_marche')
+                        ? 'error'
+                        : 'default'
+                    }
+                    stateRelatedMessage={fieldErrorMessage(
+                      'examinateur_initial_approbation_mise_sur_le_marche'
+                    )}
                     options={[
                       {
                         label: checkboxLabel,

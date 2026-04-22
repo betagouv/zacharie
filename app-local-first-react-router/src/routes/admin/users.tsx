@@ -124,7 +124,9 @@ export default function AdminUsers() {
 
   return (
     <div className="py-2">
-      <title>Utilisateurs | Admin | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
+      <title>
+        Utilisateurs | Admin | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire
+      </title>
       <div className="mb-2 flex items-center justify-end"></div>
       <div className="flex flex-wrap items-end gap-2 pb-2 [&_.fr-input-group]:mb-0 [&_.fr-label]:text-xs [&_.fr-select-group]:mb-0">
         <Input

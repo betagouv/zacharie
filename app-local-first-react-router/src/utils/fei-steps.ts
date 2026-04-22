@@ -227,7 +227,10 @@ export function computeFeiSteps({
           if (currentStepLabel === 'Réception par un établissement de traitement') {
             return 'En cours';
           }
-          if (currentStepLabel !== 'Fiche envoyée, pas encore traitée' && !currentStepLabel.includes('Transport')) {
+          if (
+            currentStepLabel !== 'Fiche envoyée, pas encore traitée' &&
+            !currentStepLabel.includes('Transport')
+          ) {
             return 'En cours';
           }
         }

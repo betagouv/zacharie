@@ -170,7 +170,9 @@ function buildTimeline(carcasse: CarcasseDetail, depotEntity: DepotEntityInfo | 
     };
     events.push({
       date: new Date(carcasse.premier_detenteur_transport_date),
-      label: transportLabels[carcasse.premier_detenteur_transport_type ?? ''] ?? 'Transport premier d\u00e9tenteur',
+      label:
+        transportLabels[carcasse.premier_detenteur_transport_type ?? ''] ??
+        'Transport premier d\u00e9tenteur',
       data: {
         'Type de transport': carcasse.premier_detenteur_transport_type,
         'Type de d\u00e9p\u00f4t': carcasse.premier_detenteur_depot_type,
@@ -185,7 +187,8 @@ function buildTimeline(carcasse: CarcasseDetail, depotEntity: DepotEntityInfo | 
       ETG: 'ETG',
       CCG: 'CCG',
     };
-    const roleLabel = roleLabels[ci.intermediaire_role ?? ''] ?? ci.intermediaire_role ?? 'Interm\u00e9diaire';
+    const roleLabel =
+      roleLabels[ci.intermediaire_role ?? ''] ?? ci.intermediaire_role ?? 'Interm\u00e9diaire';
 
     const entityData: Record<string, unknown> = {
       'R\u00f4le': roleLabel,
@@ -487,7 +490,9 @@ export default function AdminCarcasseDetail() {
                       <td className="p-2">
                         {ci.intermediaire_prochain_detenteur_role_cache ?? '—'}
                         {ci.intermediaire_prochain_detenteur_id_cache && (
-                          <span className="block text-gray-400">{ci.intermediaire_prochain_detenteur_id_cache}</span>
+                          <span className="block text-gray-400">
+                            {ci.intermediaire_prochain_detenteur_id_cache}
+                          </span>
                         )}
                       </td>
                     </tr>
@@ -523,11 +528,15 @@ export default function AdminCarcasseDetail() {
               {carcasse.svi_ipm1_poids_consigne != null && (
                 <Field label="Poids consigne">{carcasse.svi_ipm1_poids_consigne} kg</Field>
               )}
-              {carcasse.svi_ipm1_poids_type && <Field label="Type poids">{carcasse.svi_ipm1_poids_type}</Field>}
+              {carcasse.svi_ipm1_poids_type && (
+                <Field label="Type poids">{carcasse.svi_ipm1_poids_type}</Field>
+              )}
               {carcasse.svi_ipm1_duree_consigne != null && (
                 <Field label="Durée consigne">{carcasse.svi_ipm1_duree_consigne}h</Field>
               )}
-              <Field label="Inspecteur">{carcasse.svi_ipm1_user_name_cache ?? carcasse.svi_ipm1_user_id ?? '—'}</Field>
+              <Field label="Inspecteur">
+                {carcasse.svi_ipm1_user_name_cache ?? carcasse.svi_ipm1_user_id ?? '—'}
+              </Field>
               <Field label="Signé le">{formatDate(carcasse.svi_ipm1_signed_at)}</Field>
             </FieldGrid>
           </Section>
@@ -556,7 +565,9 @@ export default function AdminCarcasseDetail() {
               <Field label="Décision">{carcasse.svi_ipm2_decision ?? '—'}</Field>
               <Field label="Commentaire">{carcasse.svi_ipm2_commentaire ?? '—'}</Field>
               {carcasse.svi_ipm2_traitement_assainissant.length > 0 && (
-                <Field label="Traitement assainissant">{carcasse.svi_ipm2_traitement_assainissant.join(', ')}</Field>
+                <Field label="Traitement assainissant">
+                  {carcasse.svi_ipm2_traitement_assainissant.join(', ')}
+                </Field>
               )}
               {carcasse.svi_ipm2_traitement_assainissant_cuisson_temps && (
                 <Field label="Cuisson temps">{carcasse.svi_ipm2_traitement_assainissant_cuisson_temps}</Field>
@@ -565,10 +576,14 @@ export default function AdminCarcasseDetail() {
                 <Field label="Cuisson temp.">{carcasse.svi_ipm2_traitement_assainissant_cuisson_temp}</Field>
               )}
               {carcasse.svi_ipm2_traitement_assainissant_congelation_temps && (
-                <Field label="Congélation temps">{carcasse.svi_ipm2_traitement_assainissant_congelation_temps}</Field>
+                <Field label="Congélation temps">
+                  {carcasse.svi_ipm2_traitement_assainissant_congelation_temps}
+                </Field>
               )}
               {carcasse.svi_ipm2_traitement_assainissant_congelation_temp && (
-                <Field label="Congélation temp.">{carcasse.svi_ipm2_traitement_assainissant_congelation_temp}</Field>
+                <Field label="Congélation temp.">
+                  {carcasse.svi_ipm2_traitement_assainissant_congelation_temp}
+                </Field>
               )}
               {carcasse.svi_ipm2_traitement_assainissant_etablissement && (
                 <Field label="Établissement traitement">
@@ -578,8 +593,12 @@ export default function AdminCarcasseDetail() {
               {carcasse.svi_ipm2_poids_saisie != null && (
                 <Field label="Poids saisie">{carcasse.svi_ipm2_poids_saisie} kg</Field>
               )}
-              {carcasse.svi_ipm2_poids_type && <Field label="Type poids">{carcasse.svi_ipm2_poids_type}</Field>}
-              <Field label="Inspecteur">{carcasse.svi_ipm2_user_name_cache ?? carcasse.svi_ipm2_user_id ?? '—'}</Field>
+              {carcasse.svi_ipm2_poids_type && (
+                <Field label="Type poids">{carcasse.svi_ipm2_poids_type}</Field>
+              )}
+              <Field label="Inspecteur">
+                {carcasse.svi_ipm2_user_name_cache ?? carcasse.svi_ipm2_user_id ?? '—'}
+              </Field>
               <Field label="Signé le">{formatDate(carcasse.svi_ipm2_signed_at)}</Field>
             </FieldGrid>
           </Section>

@@ -157,7 +157,9 @@ export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifie
                 </span>
               )}
               {carcasse.svi_ipm1_commentaire && (
-                <span className="m-0 ml-2 block font-medium">- Commentaire : {carcasse.svi_ipm1_commentaire}</span>
+                <span className="m-0 ml-2 block font-medium">
+                  - Commentaire : {carcasse.svi_ipm1_commentaire}
+                </span>
               )}
               {!!carcasse.svi_ipm1_pieces.length && (
                 <span className="m-0 ml-2 block font-medium">- Pièces observées&nbsp;:</span>
@@ -186,7 +188,8 @@ export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifie
                 );
               })}
               <span className="m-0 ml-2 block font-medium">
-                - Décision IPM1 : {carcasse.svi_ipm1_decision === IPM1Decision.NON_RENSEIGNEE && 'Non renseigné'}
+                - Décision IPM1 :{' '}
+                {carcasse.svi_ipm1_decision === IPM1Decision.NON_RENSEIGNEE && 'Non renseigné'}
                 {carcasse.svi_ipm1_decision === IPM1Decision.ACCEPTE && 'Acceptée'}
                 {carcasse.svi_ipm1_decision === IPM1Decision.MISE_EN_CONSIGNE && 'Mise en consigne'}
               </span>
@@ -195,11 +198,12 @@ export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifie
                   - Durée de la consigne : {carcasse.svi_ipm1_duree_consigne} heures
                 </span>
               )}
-              {carcasse.svi_ipm1_decision === IPM1Decision.MISE_EN_CONSIGNE && carcasse.svi_ipm1_poids_consigne && (
-                <span className="m-0 ml-2 block font-medium">
-                  - Poids de la consigne : {carcasse.svi_ipm1_poids_consigne}kg
-                </span>
-              )}
+              {carcasse.svi_ipm1_decision === IPM1Decision.MISE_EN_CONSIGNE &&
+                carcasse.svi_ipm1_poids_consigne && (
+                  <span className="m-0 ml-2 block font-medium">
+                    - Poids de la consigne : {carcasse.svi_ipm1_poids_consigne}kg
+                  </span>
+                )}
             </>
           )}
         </p>
@@ -221,7 +225,9 @@ export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifie
                 </span>
               )}
               {carcasse.svi_ipm2_commentaire && (
-                <span className="m-0 ml-2 block font-medium">- Commentaire : {carcasse.svi_ipm2_commentaire}</span>
+                <span className="m-0 ml-2 block font-medium">
+                  - Commentaire : {carcasse.svi_ipm2_commentaire}
+                </span>
               )}
               {!!carcasse.svi_ipm2_pieces.length && (
                 <span className="m-0 ml-2 block font-medium">- Pièces observées&nbsp;:</span>
@@ -254,7 +260,8 @@ export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifie
                 {carcasse.svi_ipm2_decision === IPM2Decision.LEVEE_DE_LA_CONSIGNE && 'Levée de la consigne'}
                 {carcasse.svi_ipm2_decision === IPM2Decision.SAISIE_TOTALE && 'Saisie totale'}
                 {carcasse.svi_ipm2_decision === IPM2Decision.SAISIE_PARTIELLE && 'Saisie partielle'}
-                {carcasse.svi_ipm2_decision === IPM2Decision.TRAITEMENT_ASSAINISSANT && 'Traitement assainissant'}
+                {carcasse.svi_ipm2_decision === IPM2Decision.TRAITEMENT_ASSAINISSANT &&
+                  'Traitement assainissant'}
               </span>
               {carcasse.svi_ipm2_traitement_assainissant_cuisson_temps && (
                 <span className="m-0 ml-6 block font-medium">

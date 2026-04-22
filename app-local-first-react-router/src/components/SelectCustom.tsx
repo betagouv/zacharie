@@ -16,9 +16,11 @@ export interface SelectCustomProps<
   isReadOnly?: boolean;
 }
 
-function SelectCustom<Option, IsMulti extends boolean = false, Group extends GroupBase<Option> = GroupBase<Option>>(
-  allProps: SelectCustomProps<Option, IsMulti, Group>
-) {
+function SelectCustom<
+  Option,
+  IsMulti extends boolean = false,
+  Group extends GroupBase<Option> = GroupBase<Option>,
+>(allProps: SelectCustomProps<Option, IsMulti, Group>) {
   const { creatable, isReadOnly, label, hint, ...props } = allProps;
   const Component = creatable ? CreatableSelect : Select;
 
@@ -81,7 +83,9 @@ function SelectCustom<Option, IsMulti extends boolean = false, Group extends Gro
         >
           {label}
           {hint && typeof hint === 'string' && <span className="fr-hint-text mt-1">{hint}</span>}
-          {hint && typeof hint !== 'string' && <div className="fr-hint-text mt-1 flex flex-col gap-1">{hint}</div>}
+          {hint && typeof hint !== 'string' && (
+            <div className="fr-hint-text mt-1 flex flex-col gap-1">{hint}</div>
+          )}
         </label>
       )}
       <Component

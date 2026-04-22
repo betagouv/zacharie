@@ -46,8 +46,10 @@ export function mapCarcasseForRegistry(carcasse: CarcasseGetForRegistry): Carcas
     svi_ipm2_traitement_assainissant: carcasse.svi_ipm2_traitement_assainissant,
     svi_ipm2_traitement_assainissant_cuisson_temps: carcasse.svi_ipm2_traitement_assainissant_cuisson_temps,
     svi_ipm2_traitement_assainissant_cuisson_temp: carcasse.svi_ipm2_traitement_assainissant_cuisson_temp,
-    svi_ipm2_traitement_assainissant_congelation_temps: carcasse.svi_ipm2_traitement_assainissant_congelation_temps,
-    svi_ipm2_traitement_assainissant_congelation_temp: carcasse.svi_ipm2_traitement_assainissant_congelation_temp,
+    svi_ipm2_traitement_assainissant_congelation_temps:
+      carcasse.svi_ipm2_traitement_assainissant_congelation_temps,
+    svi_ipm2_traitement_assainissant_congelation_temp:
+      carcasse.svi_ipm2_traitement_assainissant_congelation_temp,
     svi_ipm2_traitement_assainissant_type: carcasse.svi_ipm2_traitement_assainissant_type,
     svi_ipm2_traitement_assainissant_paramètres: carcasse.svi_ipm2_traitement_assainissant_paramètres,
     svi_ipm2_traitement_assainissant_etablissement: carcasse.svi_ipm2_traitement_assainissant_etablissement,
@@ -59,7 +61,8 @@ export function mapCarcasseForRegistry(carcasse: CarcasseGetForRegistry): Carcas
     deleted_at: carcasse.deleted_at,
     is_synced: carcasse.is_synced,
     svi_carcasse_status: carcasse.svi_carcasse_status || updateCarcasseStatus(carcasse),
-    svi_carcasse_status_set_at: carcasse.svi_carcasse_status_set_at || fei.automatic_closed_at || fei.svi_closed_at,
+    svi_carcasse_status_set_at:
+      carcasse.svi_carcasse_status_set_at || fei.automatic_closed_at || fei.svi_closed_at,
     svi_assigned_to_fei_at: carcasse.svi_assigned_to_fei_at || fei.svi_assigned_at,
     svi_carcasse_archived: !!fei.automatic_closed_at || dayjs().diff(fei.svi_assigned_at, 'day') > 10,
     fei_date_mise_a_mort: fei.date_mise_a_mort,

@@ -22,7 +22,9 @@ router.post(
       return;
     }
     if (!!approval.user_id && approval.user_id !== user.id) {
-      res.status(403).send({ ok: false, data: null, error: 'You are not authorized to update this approval' });
+      res
+        .status(403)
+        .send({ ok: false, data: null, error: 'You are not authorized to update this approval' });
       return;
     }
     if (approval.entity_id) {
@@ -34,7 +36,9 @@ router.post(
         },
       });
       if (!entityRelatedToUser) {
-        res.status(403).send({ ok: false, data: null, error: 'You are not authorized to update this approval' });
+        res
+          .status(403)
+          .send({ ok: false, data: null, error: 'You are not authorized to update this approval' });
         return;
       }
     }

@@ -53,7 +53,11 @@ router.post(
   '/user/connect-as',
   passport.authenticate('admin', { session: false }),
   catchErrors(
-    async (req: express.Request, res: express.Response<UserConnexionResponse>, next: express.NextFunction) => {
+    async (
+      req: express.Request,
+      res: express.Response<UserConnexionResponse>,
+      next: express.NextFunction
+    ) => {
       const body = req.body;
       const email = body.email;
       console.log('body', body);
@@ -80,7 +84,11 @@ router.post(
       const token = jwt.sign({ userId: user.id }, SECRET, {
         expiresIn: JWT_MAX_AGE,
       });
-      res.cookie('zacharie_express_jwt', token, cookieOptions(req.headers.platform === 'native' ? false : true));
+      res.cookie(
+        'zacharie_express_jwt',
+        token,
+        cookieOptions(req.headers.platform === 'native' ? false : true)
+      );
       res.status(200).send({
         ok: true,
         data: { user },
@@ -95,7 +103,11 @@ router.post(
   '/user/nouveau',
   passport.authenticate('admin', { session: false }),
   catchErrors(
-    async (req: express.Request, res: express.Response<AdminNewUserDataResponse>, next: express.NextFunction) => {
+    async (
+      req: express.Request,
+      res: express.Response<AdminNewUserDataResponse>,
+      next: express.NextFunction
+    ) => {
       const body = req.body;
 
       const createdUser = await prisma.user.create({
@@ -118,7 +130,11 @@ router.get(
   '/user/:user_id',
   passport.authenticate('admin', { session: false }),
   catchErrors(
-    async (req: express.Request, res: express.Response<AdminUserDataResponse>, next: express.NextFunction) => {
+    async (
+      req: express.Request,
+      res: express.Response<AdminUserDataResponse>,
+      next: express.NextFunction
+    ) => {
       const userId = req.params.user_id;
       const user = await prisma.user.findUnique({
         where: {
@@ -193,25 +209,31 @@ router.get(
 router.get(
   '/users',
   passport.authenticate('admin', { session: false }),
-  catchErrors(async (req: express.Request, res: express.Response<AdminUsersResponse>, next: express.NextFunction) => {
-    const users = await prisma.user.findMany({
-      orderBy: {
-        last_seen_at: { sort: 'desc', nulls: 'last' },
-      },
-    });
-    res.status(200).send({
-      ok: true,
-      data: { users },
-      error: '',
-    });
-  })
+  catchErrors(
+    async (req: express.Request, res: express.Response<AdminUsersResponse>, next: express.NextFunction) => {
+      const users = await prisma.user.findMany({
+        orderBy: {
+          last_seen_at: { sort: 'desc', nulls: 'last' },
+        },
+      });
+      res.status(200).send({
+        ok: true,
+        data: { users },
+        error: '',
+      });
+    }
+  )
 );
 
 router.get(
   '/entities',
   passport.authenticate('admin', { session: false }),
   catchErrors(
-    async (req: express.Request, res: express.Response<AdminEntitiesResponse>, next: express.NextFunction) => {
+    async (
+      req: express.Request,
+      res: express.Response<AdminEntitiesResponse>,
+      next: express.NextFunction
+    ) => {
       const { search, type, zacharie_compatible } = req.query as Record<string, string | undefined>;
       const where: Prisma.EntityWhereInput = { deleted_at: null };
       if (type) where.type = type as EntityTypes;
@@ -261,7 +283,11 @@ router.get(
   '/entity/:entity_id',
   passport.authenticate('admin', { session: false }),
   catchErrors(
-    async (req: express.Request, res: express.Response<AdminGetEntityResponse>, next: express.NextFunction) => {
+    async (
+      req: express.Request,
+      res: express.Response<AdminGetEntityResponse>,
+      next: express.NextFunction
+    ) => {
       const entity = await prisma.entity.findUnique({
         where: {
           id: req.params.entity_id,
@@ -315,7 +341,8 @@ router.get(
               where: {
                 id: {
                   notIn: entity.EntityRelationsWithUsers.filter(
-                    (entityRelation) => entityRelation.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY
+                    (entityRelation) =>
+                      entityRelation.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY
                   ).map((entityRelation) => entityRelation.UserRelatedWithEntity.id),
                 },
                 roles: {
@@ -415,55 +442,61 @@ router.get(
 router.post(
   '/entity-dedicated-api-key/:entity_id',
   passport.authenticate('admin', { session: false }),
-  catchErrors(async (req: express.Request, res: express.Response<AdminApiKeyResponse>, next: express.NextFunction) => {
-    const entity = await prisma.entity.findUnique({
-      where: {
-        id: req.params.entity_id,
-        deleted_at: null,
-      },
-    });
-    if (!entity) {
-      res.status(404).send({ ok: false, data: null, error: 'Entity not found' });
-      return;
+  catchErrors(
+    async (req: express.Request, res: express.Response<AdminApiKeyResponse>, next: express.NextFunction) => {
+      const entity = await prisma.entity.findUnique({
+        where: {
+          id: req.params.entity_id,
+          deleted_at: null,
+        },
+      });
+      if (!entity) {
+        res.status(404).send({ ok: false, data: null, error: 'Entity not found' });
+        return;
+      }
+
+      const createdApiKey = await prisma.apiKey.create({
+        data: {
+          name: `${entity.nom_d_usage} - Clé API dédiée`,
+          slug_for_context: slugify(entity.nom_d_usage, {
+            replacement: '-', // replace spaces with replacement character
+            remove: undefined, // remove colons and parentheses
+            lower: true, // convert to lower case, defaults to `false`
+            strict: true, // strip special characters except replacement, defaults to `false`
+            locale: 'fr',
+            trim: true, // trim leading and trailing replacement chars, defaults to `true`
+          }),
+          dedicated_to_entity_id: entity.id,
+          description: `Clé API dédiée pour l'entité ${entity.nom_d_usage}`,
+          private_key: crypto.randomBytes(32).toString('hex'),
+          public_key: crypto.randomBytes(32).toString('hex'),
+          scopes: [ApiKeyScope.FEI_READ_FOR_ENTITY, ApiKeyScope.CARCASSE_READ_FOR_ENTITY],
+          active: true,
+        },
+      });
+
+      await prisma.apiKeyApprovalByUserOrEntity.create({
+        data: {
+          api_key_id: createdApiKey.id,
+          entity_id: entity.id,
+          status: ApiKeyApprovalStatus.APPROVED,
+        },
+      });
+
+      res.status(200).send({ ok: true, data: { apiKey: createdApiKey }, error: '' });
     }
-
-    const createdApiKey = await prisma.apiKey.create({
-      data: {
-        name: `${entity.nom_d_usage} - Clé API dédiée`,
-        slug_for_context: slugify(entity.nom_d_usage, {
-          replacement: '-', // replace spaces with replacement character
-          remove: undefined, // remove colons and parentheses
-          lower: true, // convert to lower case, defaults to `false`
-          strict: true, // strip special characters except replacement, defaults to `false`
-          locale: 'fr',
-          trim: true, // trim leading and trailing replacement chars, defaults to `true`
-        }),
-        dedicated_to_entity_id: entity.id,
-        description: `Clé API dédiée pour l'entité ${entity.nom_d_usage}`,
-        private_key: crypto.randomBytes(32).toString('hex'),
-        public_key: crypto.randomBytes(32).toString('hex'),
-        scopes: [ApiKeyScope.FEI_READ_FOR_ENTITY, ApiKeyScope.CARCASSE_READ_FOR_ENTITY],
-        active: true,
-      },
-    });
-
-    await prisma.apiKeyApprovalByUserOrEntity.create({
-      data: {
-        api_key_id: createdApiKey.id,
-        entity_id: entity.id,
-        status: ApiKeyApprovalStatus.APPROVED,
-      },
-    });
-
-    res.status(200).send({ ok: true, data: { apiKey: createdApiKey }, error: '' });
-  })
+  )
 );
 
 router.post(
   '/entity/nouvelle',
   passport.authenticate('admin', { session: false }),
   catchErrors(
-    async (req: express.Request, res: express.Response<AdminNewEntityResponse>, next: express.NextFunction) => {
+    async (
+      req: express.Request,
+      res: express.Response<AdminNewEntityResponse>,
+      next: express.NextFunction
+    ) => {
       const body = req.body;
 
       const type = body[Prisma.EntityScalarFieldEnum.type] as EntityTypes;
@@ -488,7 +521,9 @@ router.post(
           nom_d_usage: body[Prisma.EntityScalarFieldEnum.raison_sociale],
           type: body[Prisma.EntityScalarFieldEnum.type],
           zacharie_compatible,
-          code_etbt_certificat: code_etbt_certificat ? code_etbt_certificat.toString().padStart(2, '0') : null,
+          code_etbt_certificat: code_etbt_certificat
+            ? code_etbt_certificat.toString().padStart(2, '0')
+            : null,
         },
         include: entityAdminInclude,
       });
@@ -504,7 +539,11 @@ router.post(
   '/entity/:entity_id',
   passport.authenticate('admin', { session: false }),
   catchErrors(
-    async (req: express.Request, res: express.Response<AdminActionEntityResponse>, next: express.NextFunction) => {
+    async (
+      req: express.Request,
+      res: express.Response<AdminActionEntityResponse>,
+      next: express.NextFunction
+    ) => {
       const body = req.body;
 
       const data: Prisma.EntityUncheckedUpdateInput = {};
@@ -656,74 +695,80 @@ router.get(
 router.get(
   '/api-keys',
   passport.authenticate('admin', { session: false }),
-  catchErrors(async (req: express.Request, res: express.Response<AdminApiKeysResponse>, next: express.NextFunction) => {
-    const apiKeys = await prisma.apiKey.findMany({
-      orderBy: {
-        created_at: 'desc',
-      },
-      include: {
-        approvals: {
-          include: {
-            User: true,
-            Entity: true,
+  catchErrors(
+    async (req: express.Request, res: express.Response<AdminApiKeysResponse>, next: express.NextFunction) => {
+      const apiKeys = await prisma.apiKey.findMany({
+        orderBy: {
+          created_at: 'desc',
+        },
+        include: {
+          approvals: {
+            include: {
+              User: true,
+              Entity: true,
+            },
           },
         },
-      },
-    });
+      });
 
-    res.status(200).send({ ok: true, data: { apiKeys }, error: '' });
-  })
+      res.status(200).send({ ok: true, data: { apiKeys }, error: '' });
+    }
+  )
 );
 
 router.post(
   '/api-key/nouvelle',
   passport.authenticate('admin', { session: false }),
-  catchErrors(async (req: express.Request, res: express.Response<AdminApiKeyResponse>, next: express.NextFunction) => {
-    const body = req.body;
-    const createdApiKey = await prisma.apiKey.create({
-      data: {
-        name: body[Prisma.ApiKeyScalarFieldEnum.name],
-        slug_for_context: slugify(body[Prisma.ApiKeyScalarFieldEnum.name], {
-          replacement: '-', // replace spaces with replacement character
-          remove: undefined, // remove colons and parentheses
-          lower: true, // convert to lower case, defaults to `false`
-          strict: true, // strip special characters except replacement, defaults to `false`
-          locale: 'fr',
-          trim: true, // trim leading and trailing replacement chars, defaults to `true`
-        }),
-        description: body[Prisma.ApiKeyScalarFieldEnum.description],
-        private_key: crypto.randomBytes(32).toString('hex'),
-        public_key: crypto.randomBytes(32).toString('hex'),
-        scopes: body[Prisma.ApiKeyScalarFieldEnum.scopes] as ApiKeyScope[],
-        active: true,
-      },
-    });
+  catchErrors(
+    async (req: express.Request, res: express.Response<AdminApiKeyResponse>, next: express.NextFunction) => {
+      const body = req.body;
+      const createdApiKey = await prisma.apiKey.create({
+        data: {
+          name: body[Prisma.ApiKeyScalarFieldEnum.name],
+          slug_for_context: slugify(body[Prisma.ApiKeyScalarFieldEnum.name], {
+            replacement: '-', // replace spaces with replacement character
+            remove: undefined, // remove colons and parentheses
+            lower: true, // convert to lower case, defaults to `false`
+            strict: true, // strip special characters except replacement, defaults to `false`
+            locale: 'fr',
+            trim: true, // trim leading and trailing replacement chars, defaults to `true`
+          }),
+          description: body[Prisma.ApiKeyScalarFieldEnum.description],
+          private_key: crypto.randomBytes(32).toString('hex'),
+          public_key: crypto.randomBytes(32).toString('hex'),
+          scopes: body[Prisma.ApiKeyScalarFieldEnum.scopes] as ApiKeyScope[],
+          active: true,
+        },
+      });
 
-    res.status(200).send({ ok: true, data: { apiKey: createdApiKey }, error: '' });
-  })
+      res.status(200).send({ ok: true, data: { apiKey: createdApiKey }, error: '' });
+    }
+  )
 );
 
 router.post(
   '/api-key/new-access-token/:api_key_id',
   passport.authenticate('admin', { session: false }),
-  catchErrors(async (req: express.Request, res: express.Response<AdminApiKeyResponse>, next: express.NextFunction) => {
-    const apiKey = await prisma.apiKey.findUnique({
-      where: { id: req.params.api_key_id },
-    });
-    if (!apiKey) {
-      res.status(404).send({ ok: false, data: null, error: 'API key not found' });
-      return;
+  catchErrors(
+    async (req: express.Request, res: express.Response<AdminApiKeyResponse>, next: express.NextFunction) => {
+      const apiKey = await prisma.apiKey.findUnique({
+        where: { id: req.params.api_key_id },
+      });
+      if (!apiKey) {
+        res.status(404).send({ ok: false, data: null, error: 'API key not found' });
+        return;
+      }
+      const accessToken = crypto.randomBytes(32).toString('hex');
+      const updatedApiKey = await prisma.apiKey.update({
+        where: { id: req.params.api_key_id },
+        data: {
+          access_token: accessToken,
+          access_token_read_at: null,
+        },
+      });
+      res.status(200).send({ ok: true, data: { apiKey: updatedApiKey }, error: '' });
     }
-    const accessToken = crypto.randomBytes(32).toString('hex');
-    const updatedApiKey = await prisma.apiKey.update({
-      where: { id: req.params.api_key_id },
-      data: {
-        access_token: accessToken,
-        access_token_read_at: null,
-      },
-    });
-    res.status(200).send({ ok: true, data: { apiKey: updatedApiKey }, error: '' });
-  })
+  )
 );
 
 router.get(
@@ -790,7 +835,11 @@ router.get(
   '/official-cfeis',
   passport.authenticate('admin', { session: false }),
   catchErrors(
-    async (req: express.Request, res: express.Response<AdminOfficialCfeisResponse>, next: express.NextFunction) => {
+    async (
+      req: express.Request,
+      res: express.Response<AdminOfficialCfeisResponse>,
+      next: express.NextFunction
+    ) => {
       const officialCfeis = await prisma.officialCfei.findMany({
         select: {
           numero_cfei: true,
@@ -899,7 +948,11 @@ router.get(
   '/carcasses',
   passport.authenticate('admin', { session: false }),
   catchErrors(
-    async (req: express.Request, res: express.Response<AdminCarcassesResponse>, next: express.NextFunction) => {
+    async (
+      req: express.Request,
+      res: express.Response<AdminCarcassesResponse>,
+      next: express.NextFunction
+    ) => {
       const limit = parseInt(req.query.limit as string) || 100;
       const offset = parseInt(req.query.offset as string) || 0;
       const search = (req.query.search as string) || '';
@@ -967,7 +1020,11 @@ router.get(
   '/carcasse/:zacharie_carcasse_id',
   passport.authenticate('admin', { session: false }),
   catchErrors(
-    async (req: express.Request, res: express.Response<AdminCarcasseDetailResponse>, next: express.NextFunction) => {
+    async (
+      req: express.Request,
+      res: express.Response<AdminCarcasseDetailResponse>,
+      next: express.NextFunction
+    ) => {
       const carcasse = await prisma.carcasse.findUnique({
         where: { zacharie_carcasse_id: req.params.zacharie_carcasse_id },
         include: {
@@ -1019,7 +1076,11 @@ router.get(
   '/dashboard',
   passport.authenticate('admin', { session: false }),
   catchErrors(
-    async (req: express.Request, res: express.Response<AdminDashboardResponse>, next: express.NextFunction) => {
+    async (
+      req: express.Request,
+      res: express.Response<AdminDashboardResponse>,
+      next: express.NextFunction
+    ) => {
       const dateFrom = (req.query.date_from as string) || null;
       const dateTo = (req.query.date_to as string) || null;
 
@@ -1111,7 +1172,11 @@ router.get(
   '/saisies-svi',
   passport.authenticate('admin', { session: false }),
   catchErrors(
-    async (req: express.Request, res: express.Response<AdminSaisiesSviResponse>, next: express.NextFunction) => {
+    async (
+      req: express.Request,
+      res: express.Response<AdminSaisiesSviResponse>,
+      next: express.NextFunction
+    ) => {
       const [rows, tauxRows] = await Promise.all([
         prisma.$queryRaw<Array<{ motif: string; count: bigint }>>`
           SELECT motif, COUNT(*) as count
@@ -1124,7 +1189,9 @@ router.get(
           GROUP BY motif
           ORDER BY count DESC
         `,
-        prisma.$queryRaw<Array<{ total_inspectees: bigint; total_saisies: bigint; total_mauvaises_pratiques: bigint }>>`
+        prisma.$queryRaw<
+          Array<{ total_inspectees: bigint; total_saisies: bigint; total_mauvaises_pratiques: bigint }>
+        >`
           SELECT
             COUNT(*) as total_inspectees,
             COUNT(*) FILTER (
@@ -1183,7 +1250,8 @@ router.get(
           })),
           total_inspectees: totalInspectees,
           total_saisies: totalSaisies,
-          taux_saisie_global: totalInspectees > 0 ? Math.round((totalSaisies / totalInspectees) * 1000) / 10 : 0,
+          taux_saisie_global:
+            totalInspectees > 0 ? Math.round((totalSaisies / totalInspectees) * 1000) / 10 : 0,
           total_mauvaises_pratiques: totalMauvaises,
           taux_mauvaises_pratiques:
             totalInspectees > 0 ? Math.round((totalMauvaises / totalInspectees) * 1000) / 10 : 0,
@@ -1210,7 +1278,11 @@ router.get(
   '/parts-de-marche',
   passport.authenticate('admin', { session: false }),
   catchErrors(
-    async (req: express.Request, res: express.Response<AdminPartsDeMarcheResponse>, next: express.NextFunction) => {
+    async (
+      req: express.Request,
+      res: express.Response<AdminPartsDeMarcheResponse>,
+      next: express.NextFunction
+    ) => {
       const now = dayjs();
       const currentYear = now.year();
       const currentSeasonStart = now.month() < 6 ? currentYear - 1 : currentYear;
@@ -1312,7 +1384,11 @@ router.get(
   '/delta-bph',
   passport.authenticate('admin', { session: false }),
   catchErrors(
-    async (req: express.Request, res: express.Response<AdminDeltaBphResponse>, next: express.NextFunction) => {
+    async (
+      req: express.Request,
+      res: express.Response<AdminDeltaBphResponse>,
+      next: express.NextFunction
+    ) => {
       const rows = await prisma.$queryRaw<Array<{ delta: number }>>`
         WITH fei_scores AS (
           SELECT
@@ -1389,7 +1465,11 @@ router.post(
   '/ccg/preview',
   passport.authenticate('admin', { session: false }),
   catchErrors(
-    async (req: express.Request, res: express.Response<AdminCcgPreviewResponse>, next: express.NextFunction) => {
+    async (
+      req: express.Request,
+      res: express.Response<AdminCcgPreviewResponse>,
+      next: express.NextFunction
+    ) => {
       const { ccgs } = req.body as { ccgs: CcgPreviewRow[] };
       if (!Array.isArray(ccgs) || ccgs.length === 0) {
         res.status(400).send({
@@ -1461,7 +1541,11 @@ router.post(
   '/ccg/import',
   passport.authenticate('admin', { session: false }),
   catchErrors(
-    async (req: express.Request, res: express.Response<AdminCcgImportResponse>, next: express.NextFunction) => {
+    async (
+      req: express.Request,
+      res: express.Response<AdminCcgImportResponse>,
+      next: express.NextFunction
+    ) => {
       const { ccgs } = req.body as {
         ccgs: Array<{
           numero_ddecpp: string;
@@ -1475,7 +1559,9 @@ router.post(
         }>;
       };
       if (!Array.isArray(ccgs) || ccgs.length === 0) {
-        res.status(400).send({ ok: false, data: { created: 0, updated: 0, skipped: 0 }, error: 'ccgs requis' });
+        res
+          .status(400)
+          .send({ ok: false, data: { created: 0, updated: 0, skipped: 0 }, error: 'ccgs requis' });
         return;
       }
 

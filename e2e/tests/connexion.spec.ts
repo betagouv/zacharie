@@ -32,7 +32,9 @@ test('Création de compte avec email existant', async ({ page }) => {
   await page.getByRole('textbox', { name: 'Mon email Renseignez votre' }).click();
   await page.getByRole('textbox', { name: 'Mon email Renseignez votre' }).fill('examinateur@example.fr');
   await page.getByRole('textbox', { name: 'Mon mot de passe Veuillez' }).fill('secret-secret');
-  await expect(page.getByRole('textbox', { name: 'Mon email Renseignez votre' })).toHaveValue('examinateur@example.fr');
+  await expect(page.getByRole('textbox', { name: 'Mon email Renseignez votre' })).toHaveValue(
+    'examinateur@example.fr'
+  );
   await expect(page.getByRole('textbox', { name: 'Mon mot de passe Veuillez' })).toHaveValue('secret-secret');
   await page.getByRole('button', { name: 'Me connecter' }).click();
   await expect(page).toHaveURL('http://localhost:3290/app/chasseur');
@@ -56,7 +58,9 @@ test.describe('Connexion avec email incorrect', () => {
     await expect(page.getByRole('textbox', { name: 'Mon email Renseignez votre' })).toHaveValue(
       'examinateur-pas-encore-existe@example.fr'
     );
-    await expect(page.getByRole('textbox', { name: 'Mon mot de passe Veuillez' })).toHaveValue('secret-mauvais-secret');
+    await expect(page.getByRole('textbox', { name: 'Mon mot de passe Veuillez' })).toHaveValue(
+      'secret-mauvais-secret'
+    );
     await page.getByRole('button', { name: 'Créer mon compte' }).click();
     await expect(page.getByRole('heading', { name: 'Coordonnées' })).toBeVisible();
   });

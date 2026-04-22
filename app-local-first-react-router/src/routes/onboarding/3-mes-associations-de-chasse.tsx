@@ -29,8 +29,10 @@ const empytEntitiesByTypeAndId: EntitiesByTypeAndId = {
 
 export default function MesAssociationsDeChasse() {
   const user = useUser((state) => state.user)!;
-  const [allEntitiesByTypeAndId, setAllEntitiesByTypeAndId] = useState<EntitiesByTypeAndId>(empytEntitiesByTypeAndId);
-  const [userEntitiesByTypeAndId, setUserEntitiesByTypeAndId] = useState<EntitiesByTypeAndId>(empytEntitiesByTypeAndId);
+  const [allEntitiesByTypeAndId, setAllEntitiesByTypeAndId] =
+    useState<EntitiesByTypeAndId>(empytEntitiesByTypeAndId);
+  const [userEntitiesByTypeAndId, setUserEntitiesByTypeAndId] =
+    useState<EntitiesByTypeAndId>(empytEntitiesByTypeAndId);
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
@@ -64,7 +66,8 @@ export default function MesAssociationsDeChasse() {
     (entity) => !userEntitiesByTypeAndId[EntityTypes.PREMIER_DETENTEUR][entity.id]
   );
 
-  const userHasAssociationsChasses = Object.values(userEntitiesByTypeAndId[EntityTypes.PREMIER_DETENTEUR]).length > 0;
+  const userHasAssociationsChasses =
+    Object.values(userEntitiesByTypeAndId[EntityTypes.PREMIER_DETENTEUR]).length > 0;
 
   const [showForm, setShowForm] = useState(!userHasAssociationsChasses);
   useEffect(() => {
@@ -117,7 +120,9 @@ export default function MesAssociationsDeChasse() {
           setCurrentEntityId(null);
           setAssoPostalCode('');
           setShowForm(false);
-          document.getElementById('onboarding-etape-2-associations-data-title')?.scrollIntoView({ behavior: 'smooth' });
+          document
+            .getElementById('onboarding-etape-2-associations-data-title')
+            ?.scrollIntoView({ behavior: 'smooth' });
         }
       } else {
         API.post({
@@ -264,7 +269,9 @@ export default function MesAssociationsDeChasse() {
                         <SelectCustom
                           key={'Raison Sociale *' + currentEntityId}
                           options={selectOptions}
-                          getOptionLabel={(entity) => `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`}
+                          getOptionLabel={(entity) =>
+                            `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`
+                          }
                           getOptionValue={(entity) => entity.id}
                           formatOptionLabel={(entity, options) => {
                             if (options.context === 'menu') {

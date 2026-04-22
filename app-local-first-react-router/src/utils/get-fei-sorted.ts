@@ -95,7 +95,8 @@ export function getFeisSorted(): FeiSorted {
       !fei.svi_assigned_at &&
       !fei.svi_closed_at &&
       (fei.fei_next_owner_user_id === user.id ||
-        (fei.fei_next_owner_entity_id != null && entitiesIdsWorkingDirectlyFor.includes(fei.fei_next_owner_entity_id)));
+        (fei.fei_next_owner_entity_id != null &&
+          entitiesIdsWorkingDirectlyFor.includes(fei.fei_next_owner_entity_id)));
 
     if ((isToTake || isToTakeFallback) && !fei.svi_assigned_at && !fei.intermediaire_closed_at) {
       feisSorted.feisToTake.push(fei);

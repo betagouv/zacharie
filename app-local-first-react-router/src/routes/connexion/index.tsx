@@ -175,8 +175,8 @@ export default function Connexion() {
                 className="py-1 text-xs! text-gray-500"
               >
                 <span>
-                  Mot de passe oublié ? <u className="inline">Cliquez ici</u>, vous recevrez un email avec un lien pour
-                  le réinitialiser
+                  Mot de passe oublié ? <u className="inline">Cliquez ici</u>, vous recevrez un email avec un
+                  lien pour le réinitialiser
                 </span>
               </Link>
               <hr />

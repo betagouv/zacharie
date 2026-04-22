@@ -32,11 +32,15 @@ export function filterSvis(entities: Record<string, EntityWithUserRelation>): En
   return Object.values(entities).filter((e) => !e.deleted_at && e.type === EntityTypes.SVI);
 }
 
-export function filterCollecteursPro(entities: Record<string, EntityWithUserRelation>): EntityWithUserRelation[] {
+export function filterCollecteursPro(
+  entities: Record<string, EntityWithUserRelation>
+): EntityWithUserRelation[] {
   return Object.values(entities).filter((e) => !e.deleted_at && e.type === EntityTypes.COLLECTEUR_PRO);
 }
 
-export function filterCircuitCourt(entities: Record<string, EntityWithUserRelation>): EntityWithUserRelation[] {
+export function filterCircuitCourt(
+  entities: Record<string, EntityWithUserRelation>
+): EntityWithUserRelation[] {
   return Object.values(entities).filter((e) => !e.deleted_at && circuitCourtTypes.includes(e.type!));
 }
 

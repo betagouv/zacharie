@@ -218,7 +218,10 @@ export default function AdminEntity() {
                             checked: entity.zacharie_compatible === true,
                             onChange: async (event) => {
                               event.preventDefault();
-                              handleSave(Prisma.EntityScalarFieldEnum.zacharie_compatible, !entity.zacharie_compatible);
+                              handleSave(
+                                Prisma.EntityScalarFieldEnum.zacharie_compatible,
+                                !entity.zacharie_compatible
+                              );
                             },
                           },
                         },
@@ -462,28 +465,30 @@ function UserWorkingWithOrFor({
   const { entity } = adminEntityResponse;
   return (
     <>
-      {entity.EntityRelationsWithUsers.filter((entity) => entity.relation === relationType).map((entityRelation) => {
-        const owner = entityRelation.UserRelatedWithEntity;
-        return (
-          <RelationEntityUser
-            relationType={relationType}
-            entity={entity}
-            key={owner.id}
-            user={owner as User}
-            enableUsersView={false}
-            displayEntity={false}
-            displayUser={true}
-            canApproveRelation
-            canDelete
-            userLink={`/app/admin/user/${owner.id}`}
-            onChange={() => {
-              loadData(entity.id).then((response) => {
-                if (response.data) setAdminEntityResponse(response.data!);
-              });
-            }}
-          />
-        );
-      })}
+      {entity.EntityRelationsWithUsers.filter((entity) => entity.relation === relationType).map(
+        (entityRelation) => {
+          const owner = entityRelation.UserRelatedWithEntity;
+          return (
+            <RelationEntityUser
+              relationType={relationType}
+              entity={entity}
+              key={owner.id}
+              user={owner as User}
+              enableUsersView={false}
+              displayEntity={false}
+              displayUser={true}
+              canApproveRelation
+              canDelete
+              userLink={`/app/admin/user/${owner.id}`}
+              onChange={() => {
+                loadData(entity.id).then((response) => {
+                  if (response.data) setAdminEntityResponse(response.data!);
+                });
+              }}
+            />
+          );
+        }
+      )}
       <div className="p-4 md:p-8 md:pb-0 [&_a]:block [&_a]:p-4 [&_a]:no-underline has-[a]:[&_td]:p-0!">
         <Table
           fixed
@@ -574,8 +579,13 @@ function EntitiesRelatedTo({
   description: string;
   setIsSaving: (isSaving: boolean) => void;
 }) {
-  const { entity, etgsRelatedWithSvi, sviRelatedToETG, potentialEtgsRelatedWithSvi, potentialSvisRelatedToETG } =
-    adminEntityResponse;
+  const {
+    entity,
+    etgsRelatedWithSvi,
+    sviRelatedToETG,
+    potentialEtgsRelatedWithSvi,
+    potentialSvisRelatedToETG,
+  } = adminEntityResponse;
 
   const entitiesRelated = useMemo(() => {
     switch (entityType) {

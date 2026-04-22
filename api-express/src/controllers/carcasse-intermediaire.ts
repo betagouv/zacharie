@@ -76,16 +76,23 @@ export async function saveCarcasseIntermediaire(
   if (body.hasOwnProperty(Prisma.CarcasseIntermediaireScalarFieldEnum.prise_en_charge_at)) {
     data.prise_en_charge_at = body[Prisma.CarcasseIntermediaireScalarFieldEnum.prise_en_charge_at];
   }
-  if (body.hasOwnProperty(Prisma.CarcasseIntermediaireScalarFieldEnum.intermediaire_prochain_detenteur_id_cache)) {
+  if (
+    body.hasOwnProperty(Prisma.CarcasseIntermediaireScalarFieldEnum.intermediaire_prochain_detenteur_id_cache)
+  ) {
     data.intermediaire_prochain_detenteur_id_cache =
       body[Prisma.CarcasseIntermediaireScalarFieldEnum.intermediaire_prochain_detenteur_id_cache];
   }
-  if (body.hasOwnProperty(Prisma.CarcasseIntermediaireScalarFieldEnum.intermediaire_prochain_detenteur_role_cache)) {
+  if (
+    body.hasOwnProperty(
+      Prisma.CarcasseIntermediaireScalarFieldEnum.intermediaire_prochain_detenteur_role_cache
+    )
+  ) {
     data.intermediaire_prochain_detenteur_role_cache =
       body[Prisma.CarcasseIntermediaireScalarFieldEnum.intermediaire_prochain_detenteur_role_cache];
   }
   if (body.hasOwnProperty(Prisma.CarcasseIntermediaireScalarFieldEnum.intermediaire_depot_type)) {
-    data.intermediaire_depot_type = body[Prisma.CarcasseIntermediaireScalarFieldEnum.intermediaire_depot_type];
+    data.intermediaire_depot_type =
+      body[Prisma.CarcasseIntermediaireScalarFieldEnum.intermediaire_depot_type];
   }
   if (body.hasOwnProperty(Prisma.CarcasseIntermediaireScalarFieldEnum.intermediaire_depot_entity_id)) {
     data.intermediaire_depot_entity_id =
@@ -115,7 +122,11 @@ router.post(
   '/:fei_numero/:intermediaire_id/:zacharie_carcasse_id',
   passport.authenticate('user', { session: false }),
   catchErrors(
-    async (req: express.Request, res: express.Response<CarcasseIntermediaireResponse>, next: express.NextFunction) => {
+    async (
+      req: express.Request,
+      res: express.Response<CarcasseIntermediaireResponse>,
+      next: express.NextFunction
+    ) => {
       const user = req.user;
       if (!user.activated) {
         res.status(400).send({
@@ -155,7 +166,11 @@ router.get(
   '/:fei_numero/:intermediaire_id/:zacharie_carcasse_id',
   passport.authenticate('user', { session: false }),
   catchErrors(
-    async (req: express.Request, res: express.Response<CarcasseIntermediaireResponse>, next: express.NextFunction) => {
+    async (
+      req: express.Request,
+      res: express.Response<CarcasseIntermediaireResponse>,
+      next: express.NextFunction
+    ) => {
       if (!req.user.activated) {
         res.status(400).send({
           ok: false,

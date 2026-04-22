@@ -129,7 +129,10 @@ export async function generateDBCertificat(
   }
 
   if (certificatType === CarcasseCertificatType.CC) {
-    if (!existingCarcasse.svi_ipm1_signed_at || existingCarcasse.svi_ipm1_decision !== IPM1Decision.MISE_EN_CONSIGNE) {
+    if (
+      !existingCarcasse.svi_ipm1_signed_at ||
+      existingCarcasse.svi_ipm1_decision !== IPM1Decision.MISE_EN_CONSIGNE
+    ) {
       return {
         ok: false,
         data: { certificat: null },
@@ -222,7 +225,8 @@ export async function generateDBCertificat(
         nom_etg_personne_physique: etg.nom_prenom_responsable,
         nom_etg_personne_morale: etg.raison_sociale,
         siret_etg: etg.siret,
-        traitement_assainissant_etablissement: existingCarcasse.svi_ipm2_traitement_assainissant_etablissement,
+        traitement_assainissant_etablissement:
+          existingCarcasse.svi_ipm2_traitement_assainissant_etablissement,
         fei_numero: existingCarcasse.fei_numero,
         numero_bracelet: existingCarcasse.numero_bracelet,
         espece: existingCarcasse.espece,
@@ -248,11 +252,16 @@ export async function generateDBCertificat(
           certificatType === CarcasseCertificatType.CC
             ? existingCarcasse.svi_ipm1_poids_consigne
             : existingCarcasse.svi_ipm2_poids_saisie,
-        duree_consigne: certificatType === CarcasseCertificatType.CC ? existingCarcasse.svi_ipm1_duree_consigne : null,
+        duree_consigne:
+          certificatType === CarcasseCertificatType.CC ? existingCarcasse.svi_ipm1_duree_consigne : null,
         traitement_type:
-          certificatType === CarcasseCertificatType.LPS ? getTraitementAssainissant(existingCarcasse).type : null,
+          certificatType === CarcasseCertificatType.LPS
+            ? getTraitementAssainissant(existingCarcasse).type
+            : null,
         traitement_parametre:
-          certificatType === CarcasseCertificatType.LPS ? getTraitementAssainissant(existingCarcasse).parametre : null,
+          certificatType === CarcasseCertificatType.LPS
+            ? getTraitementAssainissant(existingCarcasse).parametre
+            : null,
 
         svi_ipm1_signed_at: existingCarcasse.svi_ipm1_signed_at,
         svi_ipm2_signed_at: existingCarcasse.svi_ipm2_signed_at,

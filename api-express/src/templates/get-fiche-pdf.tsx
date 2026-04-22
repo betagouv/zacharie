@@ -259,7 +259,9 @@ export async function getFichePdf(fei: Fei) {
   const address_ligne_2 = premierDetenteurEntity
     ? premierDetenteurEntity!.address_ligne_2
     : premierDetenteurUser!.addresse_ligne_1;
-  const code_postal = premierDetenteurEntity ? premierDetenteurEntity!.code_postal : premierDetenteurUser!.code_postal;
+  const code_postal = premierDetenteurEntity
+    ? premierDetenteurEntity!.code_postal
+    : premierDetenteurUser!.code_postal;
   const ville = premierDetenteurEntity ? premierDetenteurEntity!.ville : premierDetenteurUser!.ville;
   const examinateurInitialUser = await prisma.user.findUnique({
     where: {
@@ -339,9 +341,13 @@ export async function getFichePdf(fei: Fei) {
 
             <View style={[styles.fieldValue]}>
               <Text style={[styles.fieldValue, styles.borderLess, styles.paddingLess]}>Adresse :</Text>
-              <Text style={[styles.fieldValue, styles.borderLess, styles.paddingLess]}>{address_ligne_1}</Text>
+              <Text style={[styles.fieldValue, styles.borderLess, styles.paddingLess]}>
+                {address_ligne_1}
+              </Text>
               {!!address_ligne_2 && (
-                <Text style={[styles.fieldValue, styles.borderLess, styles.paddingLess]}>{address_ligne_2}</Text>
+                <Text style={[styles.fieldValue, styles.borderLess, styles.paddingLess]}>
+                  {address_ligne_2}
+                </Text>
               )}
               <Text style={[styles.fieldValue, styles.borderLess, styles.paddingLess]}>
                 {code_postal} {ville}
@@ -387,7 +393,9 @@ export async function getFichePdf(fei: Fei) {
           return (
             <View style={styles.row} key={carcasse.zacharie_carcasse_id} wrap={false}>
               <View style={styles.rowWithMultipleText}>
-                <Text style={[styles.rowContent, styles.fieldValue, styles.borderLess, styles.leftFieldValue]}>
+                <Text
+                  style={[styles.rowContent, styles.fieldValue, styles.borderLess, styles.leftFieldValue]}
+                >
                   Espèce : {carcasse.espece}
                 </Text>
                 <Text style={[styles.rowContent, styles.fieldValue, styles.borderLess]}>
@@ -483,16 +491,20 @@ export async function getFichePdf(fei: Fei) {
             <Text style={[styles.rowContent, styles.fieldValue, styles.leftFieldValue]}>
               Tel : {examinateurInitialUser!.telephone}
             </Text>
-            <Text style={[styles.rowContent, styles.fieldValue]}>Email : {examinateurInitialUser!.email}</Text>
+            <Text style={[styles.rowContent, styles.fieldValue]}>
+              Email : {examinateurInitialUser!.email}
+            </Text>
           </View>
         </View>
         <Text style={styles.footer}>
           L’examinateur initial susnommé a certifié le{' '}
-          {dayjs(fei.examinateur_initial_date_approbation_mise_sur_le_marche).format('DD MMMM YYYY')} que les carcasses
-          en peau examinées peuvent être mises sur le marché (sous réserve de résultats trichine négatifs).
+          {dayjs(fei.examinateur_initial_date_approbation_mise_sur_le_marche).format('DD MMMM YYYY')} que les
+          carcasses en peau examinées peuvent être mises sur le marché (sous réserve de résultats trichine
+          négatifs).
         </Text>
         <Text style={styles.footer}>
-          Validée le {dayjs(fei.examinateur_initial_date_approbation_mise_sur_le_marche).format('DD/MM/YYYY à HH:mm')},
+          Validée le{' '}
+          {dayjs(fei.examinateur_initial_date_approbation_mise_sur_le_marche).format('DD/MM/YYYY à HH:mm')},
           via le service public Zacharie.beta.gouv.fr
         </Text>
       </Page>

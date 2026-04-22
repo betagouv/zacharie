@@ -9,7 +9,11 @@ import { Link, useSearchParams } from 'react-router';
 import { loadCarcasses } from '@app/utils/load-carcasses';
 import { UserRoles } from '@prisma/client';
 import Filters from '@app/components/Filters';
-import { CarcasseFilter, carcasseFilterableFields, filterCarcassesInRegistre } from '@app/utils/filter-carcasse';
+import {
+  CarcasseFilter,
+  carcasseFilterableFields,
+  filterCarcassesInRegistre,
+} from '@app/utils/filter-carcasse';
 import { useLocalStorage } from '@uidotdev/usehooks';
 import Chargement from '@app/components/Chargement';
 import Button from '@codegouvfr/react-dsfr/Button';
@@ -34,7 +38,10 @@ export default function CollecteurCarcasses() {
   const [sortOrder, setSortOrder] = useLocalStorage<'ASC' | 'DESC'>('collecteur-carcasses-sort-order', 'ASC');
 
   const [itemsPerPage, setItemsPerPage] = useLocalStorage<number>('collecteur-carcasses-items-per-page', 50);
-  const [filters, setFilters] = useLocalStorage<Array<CarcasseFilter>>('collecteur-carcasses-filters-preset', []);
+  const [filters, setFilters] = useLocalStorage<Array<CarcasseFilter>>(
+    'collecteur-carcasses-filters-preset',
+    []
+  );
 
   const filterableFields = useMemo(() => {
     const motifs = new Set<string>();
@@ -127,7 +134,9 @@ export default function CollecteurCarcasses() {
                   if (e.target.checked) {
                     setSelectedCarcassesIds([...selectedCarcassesIds, carcasse.zacharie_carcasse_id]);
                   } else {
-                    setSelectedCarcassesIds(selectedCarcassesIds.filter((id) => id !== carcasse.zacharie_carcasse_id));
+                    setSelectedCarcassesIds(
+                      selectedCarcassesIds.filter((id) => id !== carcasse.zacharie_carcasse_id)
+                    );
                   }
                 }}
               />
@@ -206,7 +215,9 @@ export default function CollecteurCarcasses() {
 
   return (
     <div className="fr-container fr-my-4 sm:fr-my-md-14v">
-      <title>Registre de carcasses | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
+      <title>
+        Registre de carcasses | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire
+      </title>
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 sm:py-4">
           <section className="fr-container mb-4 overflow-x-auto bg-white">
@@ -263,7 +274,8 @@ export default function CollecteurCarcasses() {
                 className="w-full sm:w-auto"
               >
                 <span className="hidden sm:inline">
-                  Télécharger un fichier Excel avec les carcasses sélectionnées ({selectedCarcassesIds.length})
+                  Télécharger un fichier Excel avec les carcasses sélectionnées ({selectedCarcassesIds.length}
+                  )
                 </span>
                 <span className="sm:hidden">Exporter ({selectedCarcassesIds.length})</span>
               </Button>

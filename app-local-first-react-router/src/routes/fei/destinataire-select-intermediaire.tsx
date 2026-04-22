@@ -210,8 +210,8 @@ export default function DestinataireIntermediaire({
               <strong>Les carcasses de sanglier transmises nécessitent un test trichine obligatoire.</strong>
             </p>
             <p>
-              Conformément à la réglementation, vous devez vous assurer que le test trichine a été réalisé avant toute
-              mise sur le marché ou consommation de ces carcasses.
+              Conformément à la réglementation, vous devez vous assurer que le test trichine a été réalisé
+              avant toute mise sur le marché ou consommation de ces carcasses.
             </p>
           </>
         ),
@@ -226,12 +226,12 @@ export default function DestinataireIntermediaire({
               <strong>Les carcasses de sanglier transmises nécessitent un test trichine recommandé.</strong>
             </p>
             <p className="mb-3">
-              Si le test trichine n'a pas été réalisé, vous devez impérativement informer le consommateur du risque
-              trichine et de l'obligation de cuisson complète de la viande avant consommation.
+              Si le test trichine n'a pas été réalisé, vous devez impérativement informer le consommateur du
+              risque trichine et de l'obligation de cuisson complète de la viande avant consommation.
             </p>
             <p className="text-sm text-gray-600">
-              <strong>Important :</strong> La cuisson doit être complète (cœur de la viande à 70°C minimum) pour
-              éliminer tout risque de contamination.
+              <strong>Important :</strong> La cuisson doit être complète (cœur de la viande à 70°C minimum)
+              pour éliminer tout risque de contamination.
             </p>
           </>
         ),
@@ -382,7 +382,8 @@ export default function DestinataireIntermediaire({
           hint={
             <>
               <span>
-                Indiquez ici la personne ou la structure avec qui vous êtes en contact pour prendre en charge le gibier.
+                Indiquez ici la personne ou la structure avec qui vous êtes en contact pour prendre en charge
+                le gibier.
               </span>
               {!prochainDetenteurEntityId && !disabled && (
                 <div>
@@ -406,7 +407,9 @@ export default function DestinataireIntermediaire({
           }
           options={prochainsDetenteursOptions}
           placeholder="Sélectionnez le prochain détenteur des carcasses"
-          value={prochainsDetenteursOptions.find((option) => option.value === prochainDetenteurEntityId) ?? null}
+          value={
+            prochainsDetenteursOptions.find((option) => option.value === prochainDetenteurEntityId) ?? null
+          }
           getOptionLabel={(f) => f.label!}
           getOptionValue={(f) => f.value}
           onChange={(f) => (f ? setProchainDetenteurEntityId(f.value) : setProchainDetenteurEntityId(null))}

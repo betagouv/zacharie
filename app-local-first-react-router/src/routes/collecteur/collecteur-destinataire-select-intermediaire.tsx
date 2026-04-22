@@ -235,7 +235,8 @@ export default function CollecteurDestinataireIntermediaire({
           hint={
             <>
               <span>
-                Indiquez ici la personne ou la structure avec qui vous êtes en contact pour prendre en charge le gibier.
+                Indiquez ici la personne ou la structure avec qui vous êtes en contact pour prendre en charge
+                le gibier.
               </span>
               {!prochainDetenteurEntityId && !disabled && (
                 <div>
@@ -259,7 +260,9 @@ export default function CollecteurDestinataireIntermediaire({
           }
           options={prochainsDetenteursOptions}
           placeholder="Sélectionnez le prochain détenteur des carcasses"
-          value={prochainsDetenteursOptions.find((option) => option.value === prochainDetenteurEntityId) ?? null}
+          value={
+            prochainsDetenteursOptions.find((option) => option.value === prochainDetenteurEntityId) ?? null
+          }
           getOptionLabel={(f) => f.label!}
           getOptionValue={(f) => f.value}
           onChange={(f) => (f ? setProchainDetenteurEntityId(f.value) : setProchainDetenteurEntityId(null))}
