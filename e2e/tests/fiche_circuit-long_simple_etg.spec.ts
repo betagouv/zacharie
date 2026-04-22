@@ -69,20 +69,20 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
           - listitem:
             - paragraph: /\\d+ Paris/
       `);
-  await page.getByRole("heading", { name: "🫵 Cette fiche vous a été" }).click();
-  await expect(page.getByText("Fiche reçue, pas encore prise en charge")).toBeVisible();
-  await page.getByRole("button", { name: "Daim N° MM-001-004 Mise à" }).click();
-  await page.getByRole("listitem").filter({ hasText: "Fermer" }).getByRole("button").click();
-  await page.getByRole("button", { name: "Pigeons (10) N° MM-001-003" }).click();
-  await page.getByRole("heading", { name: "Pigeons - N° MM-001-" }).click();
-  await page.getByLabel("Pigeons - N° MM-001-").getByTitle("Fermer").click();
-  await page.getByRole("button", { name: "Daim N° MM-001-002 Mise à" }).click();
-  await expect(page.getByText("Unique - Abcès ou nodules")).toBeVisible();
-  await page.getByLabel("Daim - N° MM-001-002").getByTitle("Fermer").click();
-  await page.getByRole("button", { name: "Daim N° MM-001-001 Mise à" }).click();
-  await expect(page.getByText("Abcès ou nodules Unique -")).toBeVisible();
-  await page.getByRole("listitem").filter({ hasText: "Fermer" }).getByRole("button").click();
-  await page.getByRole("button", { name: "Prendre en charge les carcasses" }).click();
+  await page.getByRole('heading', { name: '🫵 Cette fiche vous a été' }).click();
+  await expect(page.getByText('Fiche reçue, pas encore prise en charge')).toBeVisible();
+  await page.getByRole('button', { name: 'Daim N° MM-001-004 Mise à' }).click();
+  await page.getByRole('listitem').filter({ hasText: 'Fermer' }).getByRole('button').click();
+  await page.getByRole('button', { name: 'Pigeons (10) N° MM-001-003' }).click();
+  await page.getByRole('heading', { name: 'Pigeons - N° MM-001-' }).click();
+  await page.getByLabel('Pigeons - N° MM-001-').getByTitle('Fermer').click();
+  await page.getByRole('button', { name: 'Daim N° MM-001-002 Mise à' }).click();
+  await expect(page.getByText('Unique - Abcès ou nodules')).toBeVisible();
+  await page.getByLabel('Daim - N° MM-001-002').getByTitle('Fermer').click();
+  await page.getByRole('button', { name: 'Daim N° MM-001-001 Mise à' }).click();
+  await expect(page.getByText('Abcès ou nodules Unique -')).toBeVisible();
+  await page.getByRole('listitem').filter({ hasText: 'Fermer' }).getByRole('button').click();
+  await page.getByRole('button', { name: 'Prendre en charge les carcasses' }).click();
   await expect(page.getByText("Prise en charge par l'atelier")).toBeVisible();
   await expect(
     page.getByRole('heading', { name: 'Réception par mon établissement de traitement' })
@@ -229,20 +229,20 @@ test('Pas de stockage - Je transfère à un autre collecteur', async ({ page }) 
           - listitem:
             - paragraph: /\\d+ Paris/
       `);
-  await page.getByRole("heading", { name: "🫵 Cette fiche vous a été" }).click();
-  await expect(page.getByText("Fiche reçue, pas encore prise en charge")).toBeVisible();
-  await page.getByRole("button", { name: "Daim N° MM-001-004 Mise à" }).click();
-  await page.getByRole("listitem").filter({ hasText: "Fermer" }).getByRole("button").click();
-  await page.getByRole("button", { name: "Pigeons (10) N° MM-001-003" }).click();
-  await page.getByRole("heading", { name: "Pigeons - N° MM-001-" }).click();
-  await page.getByLabel("Pigeons - N° MM-001-").getByTitle("Fermer").click();
-  await page.getByRole("button", { name: "Daim N° MM-001-002 Mise à" }).click();
-  await expect(page.getByText("Unique - Abcès ou nodules")).toBeVisible();
-  await page.getByLabel("Daim - N° MM-001-002").getByTitle("Fermer").click();
-  await page.getByRole("button", { name: "Daim N° MM-001-001 Mise à" }).click();
-  await expect(page.getByText("Abcès ou nodules Unique -")).toBeVisible();
-  await page.getByRole("listitem").filter({ hasText: "Fermer" }).getByRole("button").click();
-  await page.getByRole("button", { name: "Prendre en charge les carcasses" }).click();
+  await page.getByRole('heading', { name: '🫵 Cette fiche vous a été' }).click();
+  await expect(page.getByText('Fiche reçue, pas encore prise en charge')).toBeVisible();
+  await page.getByRole('button', { name: 'Daim N° MM-001-004 Mise à' }).click();
+  await page.getByRole('listitem').filter({ hasText: 'Fermer' }).getByRole('button').click();
+  await page.getByRole('button', { name: 'Pigeons (10) N° MM-001-003' }).click();
+  await page.getByRole('heading', { name: 'Pigeons - N° MM-001-' }).click();
+  await page.getByLabel('Pigeons - N° MM-001-').getByTitle('Fermer').click();
+  await page.getByRole('button', { name: 'Daim N° MM-001-002 Mise à' }).click();
+  await expect(page.getByText('Unique - Abcès ou nodules')).toBeVisible();
+  await page.getByLabel('Daim - N° MM-001-002').getByTitle('Fermer').click();
+  await page.getByRole('button', { name: 'Daim N° MM-001-001 Mise à' }).click();
+  await expect(page.getByText('Abcès ou nodules Unique -')).toBeVisible();
+  await page.getByRole('listitem').filter({ hasText: 'Fermer' }).getByRole('button').click();
+  await page.getByRole('button', { name: 'Prendre en charge les carcasses' }).click();
   await expect(page.getByText("Prise en charge par l'atelier")).toBeVisible();
   await expect(
     page.getByText('Sélection du prochain destinataireProchain détenteur des carcasses *Indiquez')
@@ -360,20 +360,20 @@ test('Pas de stockage - Je transfère à un autre ETG', async ({ page, context }
           - listitem:
             - paragraph: /\\d+ Paris/
       `);
-  await page.getByRole("heading", { name: "🫵 Cette fiche vous a été" }).click();
-  await expect(page.getByText("Fiche reçue, pas encore prise en charge")).toBeVisible();
-  await page.getByRole("button", { name: "Daim N° MM-001-004 Mise à" }).click();
-  await page.getByRole("listitem").filter({ hasText: "Fermer" }).getByRole("button").click();
-  await page.getByRole("button", { name: "Pigeons (10) N° MM-001-003" }).click();
-  await page.getByRole("heading", { name: "Pigeons - N° MM-001-" }).click();
-  await page.getByLabel("Pigeons - N° MM-001-").getByTitle("Fermer").click();
-  await page.getByRole("button", { name: "Daim N° MM-001-002 Mise à" }).click();
-  await expect(page.getByText("Unique - Abcès ou nodules")).toBeVisible();
-  await page.getByLabel("Daim - N° MM-001-002").getByTitle("Fermer").click();
-  await page.getByRole("button", { name: "Daim N° MM-001-001 Mise à" }).click();
-  await expect(page.getByText("Abcès ou nodules Unique -")).toBeVisible();
-  await page.getByRole("listitem").filter({ hasText: "Fermer" }).getByRole("button").click();
-  await page.getByRole("button", { name: "Prendre en charge les carcasses" }).click();
+  await page.getByRole('heading', { name: '🫵 Cette fiche vous a été' }).click();
+  await expect(page.getByText('Fiche reçue, pas encore prise en charge')).toBeVisible();
+  await page.getByRole('button', { name: 'Daim N° MM-001-004 Mise à' }).click();
+  await page.getByRole('listitem').filter({ hasText: 'Fermer' }).getByRole('button').click();
+  await page.getByRole('button', { name: 'Pigeons (10) N° MM-001-003' }).click();
+  await page.getByRole('heading', { name: 'Pigeons - N° MM-001-' }).click();
+  await page.getByLabel('Pigeons - N° MM-001-').getByTitle('Fermer').click();
+  await page.getByRole('button', { name: 'Daim N° MM-001-002 Mise à' }).click();
+  await expect(page.getByText('Unique - Abcès ou nodules')).toBeVisible();
+  await page.getByLabel('Daim - N° MM-001-002').getByTitle('Fermer').click();
+  await page.getByRole('button', { name: 'Daim N° MM-001-001 Mise à' }).click();
+  await expect(page.getByText('Abcès ou nodules Unique -')).toBeVisible();
+  await page.getByRole('listitem').filter({ hasText: 'Fermer' }).getByRole('button').click();
+  await page.getByRole('button', { name: 'Prendre en charge les carcasses' }).click();
   await expect(page.getByText("Prise en charge par l'atelier")).toBeVisible();
   await expect(
     page.getByText('Sélection du prochain destinataireProchain détenteur des carcasses *Indiquez')
