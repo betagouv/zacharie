@@ -17,7 +17,7 @@ import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
 import { Tabs, type TabsProps } from '@codegouvfr/react-dsfr/Tabs';
 import { Table } from '@codegouvfr/react-dsfr/Table';
 import type { AdminUserDataResponse } from '@api/src/types/responses';
-import { Link, useParams } from 'react-router';
+import { Link, useNavigate, useParams } from 'react-router';
 import Chargement from '@app/components/Chargement';
 import { Highlight } from '@codegouvfr/react-dsfr/Highlight';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
@@ -25,6 +25,8 @@ import API from '@app/services/api';
 import RelationEntityUser from '@app/components/RelationEntityUser';
 import { EntityWithUserRelations } from '@api/src/types/entity';
 import { toast } from 'react-toastify';
+import { clearCache } from '@app/services/indexed-db';
+import { refreshUser } from '@app/utils-offline/get-most-fresh-user';
 
 const loadData = (userId: string): Promise<AdminUserDataResponse> =>
   API.get({ path: `admin/user/${userId}` }).then((res) => res as AdminUserDataResponse);
@@ -79,6 +81,7 @@ const initialState: State = {
 
 export default function AdminUser() {
   const params = useParams();
+  const navigate = useNavigate();
   const [userResponseData, setUserResponseData] = useState<State>(initialState);
   const { user, identityDone, examinateurDone, userEntitiesRelations, officialCfei } = userResponseData;
 
@@ -177,54 +180,78 @@ export default function AdminUser() {
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
           <div className="p-4 pb-32 md:p-8 md:pb-0">
             <div className="flex flex-row items-center justify-between">
-              <h1 className="fr-h2 fr-mb-2w">
+              <div className="fr-h2 fr-mb-2w">
                 {user.prenom ? (
-                  <>
+                  <h1 className="m-0">
                     {user.nom_de_famille} {user.prenom}
                     <br />
                     <small>{user.email}</small>
-                  </>
+                  </h1>
                 ) : (
                   <>{user.email}</>
                 )}
-                <br />
                 {!user.activated ? (
                   <small>❌ Utilisateur inactif</small>
                 ) : (
                   <small>✅ Utilisateur activé</small>
                 )}
-              </h1>
-              <form
-                id="user_active_form"
-                method="POST"
-                ref={activeFormRef}
-                onBlur={handleUserFormBlur(activeFormRef)}
-                onSubmit={(event) => event.preventDefault()}
-              >
-                <RadioButtons
-                  key={user.activated ? 'true' : 'false'}
-                  options={[
-                    {
-                      label: 'Utilisateur activé',
-                      nativeInputProps: {
-                        name: Prisma.UserScalarFieldEnum.activated,
-                        value: 'true',
-                        onChange: !user.activated ? handleUserFormBlur(activeFormRef) : undefined,
-                        defaultChecked: user.activated,
+                <form
+                  method="POST"
+                  onSubmit={async (event) => {
+                    event.preventDefault();
+                    await API.post({
+                      path: 'admin/user/connect-as',
+                      body: { email: user.email! },
+                    });
+                    if (user.roles.includes(UserRoles.CHASSEUR)) {
+                      navigate('/app/chasseur', { replace: true });
+                    } else if (user.roles.includes(UserRoles.ETG)) {
+                      navigate('/app/etg', { replace: true });
+                    } else {
+                      navigate('/app/tableau-de-bord', { replace: true });
+                    }
+                    await clearCache();
+                    await refreshUser('admin/user/connect-as');
+                  }}
+                >
+                  <Button type="submit" priority="primary" size="small">
+                    Connexion
+                  </Button>
+                </form>
+              </div>
+              <div className="flex flex-col items-end gap-2">
+                <form
+                  id="user_active_form"
+                  method="POST"
+                  ref={activeFormRef}
+                  onBlur={handleUserFormBlur(activeFormRef)}
+                  onSubmit={(event) => event.preventDefault()}
+                >
+                  <RadioButtons
+                    key={user.activated ? 'true' : 'false'}
+                    options={[
+                      {
+                        label: 'Utilisateur activé',
+                        nativeInputProps: {
+                          name: Prisma.UserScalarFieldEnum.activated,
+                          value: 'true',
+                          onChange: !user.activated ? handleUserFormBlur(activeFormRef) : undefined,
+                          defaultChecked: user.activated,
+                        },
                       },
-                    },
-                    {
-                      label: 'Utilisateur inactif',
-                      nativeInputProps: {
-                        name: Prisma.UserScalarFieldEnum.activated,
-                        value: 'false',
-                        onChange: user.activated ? handleUserFormBlur(activeFormRef) : undefined,
-                        defaultChecked: !user.activated,
+                      {
+                        label: 'Utilisateur inactif',
+                        nativeInputProps: {
+                          name: Prisma.UserScalarFieldEnum.activated,
+                          value: 'false',
+                          onChange: user.activated ? handleUserFormBlur(activeFormRef) : undefined,
+                          defaultChecked: !user.activated,
+                        },
                       },
-                    },
-                  ]}
-                />
-              </form>
+                    ]}
+                  />
+                </form>
+              </div>
             </div>
             <Tabs
               selectedTabId={selectedTabId}
