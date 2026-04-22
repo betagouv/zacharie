@@ -11,7 +11,6 @@ test.use({ launchOptions: { slowMo: 100 } });
 
 // Scenario 63 — Transmission à ETG : choisir ETG 1 → Transmettre → ETG voit la fiche.
 test("Collecteur transmet à ETG 1 qui la reçoit", async ({ page }) => {
-  // SKIP: Transmettre la fiche button stays disabled — likely missing Enregistrer step or other validation. Need user input.
   const feiId = "ZACH-20250707-QZ6E0-175242";
   await connectWith(page, "collecteur-pro@example.fr");
   await page.getByRole("link", { name: new RegExp(feiId) }).click();
