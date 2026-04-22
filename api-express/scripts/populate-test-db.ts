@@ -229,7 +229,7 @@ Christine
       users.map(async (user) => ({
         user_id: user.id,
         password: await hashPassword('secret-secret'),
-      })),
+      }))
     ),
   });
 

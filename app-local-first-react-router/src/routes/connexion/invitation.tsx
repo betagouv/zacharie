@@ -97,7 +97,7 @@ export default function CreationDeCompte() {
         } else {
           handleRedirect(user);
         }
-      }),
+      })
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -107,7 +107,10 @@ export default function CreationDeCompte() {
   }
 
   return (
-    <main role="main" id="content">
+    <main
+      role="main"
+      id="content"
+    >
       <title>
         Création de compte | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire
       </title>
@@ -127,11 +130,18 @@ export default function CreationDeCompte() {
                 id="login-1760-fieldset"
                 aria-labelledby="login-1760-fieldset-legend login-1760-fieldset-messages"
               >
-                <legend className="fr-fieldset__legend" id="login-1760-fieldset-legend">
+                <legend
+                  className="fr-fieldset__legend"
+                  id="login-1760-fieldset-legend"
+                >
                   <h2 className="fr-h3">Créer mon compte</h2>
                 </legend>
               </fieldset>
-              <input type="text" name="name" className="hidden" />
+              <input
+                type="text"
+                name="name"
+                className="hidden"
+              />
               <Input
                 hintText="Renseignez l'email avec lequel vous avez été invité ci-dessous"
                 label="Mon email"

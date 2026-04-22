@@ -42,8 +42,15 @@ export default function MultiSelectDropDownMenu({
   }, [isOpen, handleClickOutside]);
 
   return (
-    <div ref={containerRef} className={`drop-down ${className}`} style={{ position: 'relative' }}>
-      <div className="fr-nav__item" style={{ position: 'relative' }}>
+    <div
+      ref={containerRef}
+      className={`drop-down ${className}`}
+      style={{ position: 'relative' }}
+    >
+      <div
+        className="fr-nav__item"
+        style={{ position: 'relative' }}
+      >
         <button
           className="fr-nav__btn fr-btn--tertiary"
           aria-expanded={isOpen}
@@ -54,7 +61,10 @@ export default function MultiSelectDropDownMenu({
           {text}
         </button>
         {isOpen && (
-          <div className="fr-menu" style={{ display: 'block' }}>
+          <div
+            className="fr-menu"
+            style={{ display: 'block' }}
+          >
             <ul className="fr-menu__list">
               <li>
                 <button

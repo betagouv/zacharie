@@ -25,7 +25,7 @@ export default function CircuitCourtProfilCoordonnees() {
         useUser.setState({ user: response.data.user });
       }
     },
-    [user.id],
+    [user.id]
   );
 
   const handleSubmit = () => {

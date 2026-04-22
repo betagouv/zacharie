@@ -26,7 +26,7 @@ export default function RelationEntityUsersList({
     createModal({
       id: `entity-users-modal-${entity.id}`,
       isOpenedByDefault: false,
-    }),
+    })
   ).current;
   const isOpen = useIsModalOpen(entityUsersModal);
 
@@ -40,7 +40,7 @@ export default function RelationEntityUsersList({
   const canHandleCarcassesForEntity = entity.EntityRelationsWithUsers?.find(
     (relation) =>
       relation.owner_id === user.id &&
-      relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+      relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
   );
 
   const isAdminOfEntity = !canHandleCarcassesForEntity

@@ -321,7 +321,7 @@ async function main() {
     // Demander confirmation
     console.log('\n' + '='.repeat(80));
     console.log(
-      '⚠️  ATTENTION: Cette action va supprimer définitivement les utilisateurs et leurs relations',
+      '⚠️  ATTENTION: Cette action va supprimer définitivement les utilisateurs et leurs relations'
     );
     console.log('='.repeat(80));
 

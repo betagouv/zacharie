@@ -33,14 +33,14 @@ export default function CollecteurCarcasses() {
 
   const [sortBy, setSortBy] = useLocalStorage<keyof (typeof carcassesRegistry)[number]>(
     'collecteur-carcasses-sort-by',
-    'numero_bracelet',
+    'numero_bracelet'
   );
   const [sortOrder, setSortOrder] = useLocalStorage<'ASC' | 'DESC'>('collecteur-carcasses-sort-order', 'ASC');
 
   const [itemsPerPage, setItemsPerPage] = useLocalStorage<number>('collecteur-carcasses-items-per-page', 50);
   const [filters, setFilters] = useLocalStorage<Array<CarcasseFilter>>(
     'collecteur-carcasses-filters-preset',
-    [],
+    []
   );
 
   const filterableFields = useMemo(() => {
@@ -135,7 +135,7 @@ export default function CollecteurCarcasses() {
                     setSelectedCarcassesIds([...selectedCarcassesIds, carcasse.zacharie_carcasse_id]);
                   } else {
                     setSelectedCarcassesIds(
-                      selectedCarcassesIds.filter((id) => id !== carcasse.zacharie_carcasse_id),
+                      selectedCarcassesIds.filter((id) => id !== carcasse.zacharie_carcasse_id)
                     );
                   }
                 }}
@@ -267,7 +267,7 @@ export default function CollecteurCarcasses() {
                     selectedCarcassesObject[carcasseId] = true;
                   }
                   onExportToXlsx(
-                    filteredData.filter((carcasse) => selectedCarcassesObject[carcasse.zacharie_carcasse_id]),
+                    filteredData.filter((carcasse) => selectedCarcassesObject[carcasse.zacharie_carcasse_id])
                   );
                 }}
                 disabled={selectedCarcassesIds.length === 0 || isExporting}

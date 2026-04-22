@@ -33,10 +33,10 @@ export default function PartageDeMesDonnees() {
 
   const accessToPersonalAccount = apiKeyApprovals.filter((approval) => !!approval.user_id);
   const accessToEntities = apiKeyApprovals.filter(
-    (approval) => !!approval.entity_id && !approval.ApiKey.dedicated_to_entity_id,
+    (approval) => !!approval.entity_id && !approval.ApiKey.dedicated_to_entity_id
   );
   const dedicatedToMyEntities = apiKeyApprovals.filter(
-    (approval) => !!approval.ApiKey.dedicated_to_entity_id,
+    (approval) => !!approval.ApiKey.dedicated_to_entity_id
   );
 
   return (
@@ -61,7 +61,10 @@ export default function PartageDeMesDonnees() {
                   }}
                 >
                   La documentation pour l'utilisation de l'API est disponible{' '}
-                  <a href={`${import.meta.env.VITE_API_URL}/v1/docs/cle-dediee`} target="_blank">
+                  <a
+                    href={`${import.meta.env.VITE_API_URL}/v1/docs/cle-dediee`}
+                    target="_blank"
+                  >
                     ici
                   </a>
                   .<br />

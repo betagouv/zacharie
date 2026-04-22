@@ -68,7 +68,7 @@ function EtgFeiLoader(props: Props) {
   const feiCarcasses = useCarcassesForFei(params.fei_numero);
 
   const [selectedIntermediaireId, setSelectedIntermediaireId] = useState<string | null>(
-    () => intermediaires.find((i) => i.intermediaire_user_id === user.id)?.id ?? null,
+    () => intermediaires.find((i) => i.intermediaire_user_id === user.id)?.id ?? null
   );
 
   // Update when intermediaires change (e.g., after take-charge creates new intermediaire)
@@ -94,7 +94,7 @@ function EtgFeiLoader(props: Props) {
     return feiCarcasses.filter(
       (c) =>
         (c.next_owner_entity_id && userEntityIds.includes(c.next_owner_entity_id)) ||
-        c.next_owner_user_id === user.id,
+        c.next_owner_user_id === user.id
     );
   }, [feiCarcasses, userEntityIds, user.id]);
 
@@ -126,7 +126,7 @@ function EtgFeiLoader(props: Props) {
     }
     if (intermediaires.length > 0) {
       const userWasIntermediaire = intermediaires.find(
-        (intermediaire) => intermediaire.intermediaire_user_id === user.id,
+        (intermediaire) => intermediaire.intermediaire_user_id === user.id
       );
       if (userWasIntermediaire) {
         return userWasIntermediaire.intermediaire_role;
@@ -147,7 +147,11 @@ function EtgFeiLoader(props: Props) {
 
   return (
     <Fragment key={intermediaire?.id}>
-      <EtgFeiContent key={intermediaire?.id} {...props} intermediaire={intermediaire!}>
+      <EtgFeiContent
+        key={intermediaire?.id}
+        {...props}
+        intermediaire={intermediaire!}
+      >
         {intermediaires.length > 0 && (
           <nav
             id="fr-breadcrumb-:r54:"
@@ -164,7 +168,11 @@ function EtgFeiLoader(props: Props) {
             >
               Voir les destinataires
             </button>
-            <div className="fr-collapse" id="breadcrumb-:r55:" data-fr-js-collapse="true">
+            <div
+              className="fr-collapse"
+              id="breadcrumb-:r55:"
+              data-fr-js-collapse="true"
+            >
               <ol className="fr-breadcrumb__list">
                 <li>
                   <span className="fr-breadcrumb__link bg-none! no-underline!">
@@ -200,7 +208,10 @@ function EtgFeiLoader(props: Props) {
             </div>
           </nav>
         )}
-        <Section open={!!intermediaires.length} title="Données de traçabilité">
+        <Section
+          open={!!intermediaires.length}
+          title="Données de traçabilité"
+        >
           <FEIDonneesDeChasse />
         </Section>
       </EtgFeiContent>
@@ -242,7 +253,7 @@ function EtgFeiContent({
     : undefined;
 
   const [priseEnChargeAt, setPriseEnChargeAt] = useState<Date | null>(
-    intermediaire?.prise_en_charge_at || null,
+    intermediaire?.prise_en_charge_at || null
   );
 
   useEffect(() => {
@@ -277,7 +288,7 @@ function EtgFeiContent({
       (c) =>
         !intermediaireCarcassesIds.includes(c.zacharie_carcasse_id) &&
         c.svi_carcasse_status !== CarcasseStatus.SANS_DECISION &&
-        c.svi_carcasse_status !== CarcasseStatus.ACCEPTE,
+        c.svi_carcasse_status !== CarcasseStatus.ACCEPTE
     );
   }, [originalCarcasses, intermediaireCarcasses]);
 
@@ -450,10 +461,10 @@ function EtgFeiContent({
     if (carcassesApprovedSorted.length > 0) {
       label.push(
         `Prise en charge des carcasses acceptées ou non refusées (${formatCountCarcasseByEspece(
-          carcassesApprovedSorted,
+          carcassesApprovedSorted
         )
           .filter((c) => !c?.includes('refus'))
-          .join(', ')}).`,
+          .join(', ')}).`
       );
     }
     if (carcassesSorted.carcassesRejetees.length > 0) {
@@ -465,20 +476,20 @@ function EtgFeiContent({
             c
               .split(' ')
               .filter((w) => !w.includes('refus'))
-              .join(' '),
+              .join(' ')
           )
-          .join(' et ')}.`,
+          .join(' et ')}.`
       );
     }
     const nbCarcassesManquantes = carcassesSorted.carcassesManquantes.length;
     if (nbCarcassesManquantes > 0) {
       label.push(
-        `Je signale ${nbCarcassesManquantes} ${addAnSToWord('carcasse', nbCarcassesManquantes)} ${addAnSToWord('manquante', nbCarcassesManquantes)}.`,
+        `Je signale ${nbCarcassesManquantes} ${addAnSToWord('carcasse', nbCarcassesManquantes)} ${addAnSToWord('manquante', nbCarcassesManquantes)}.`
       );
     }
     if (carcassesSorted.carcassesEcarteesPourInspection.length > 0) {
       label.push(
-        `J'écarte ${formatCountCarcasseByEspece(carcassesSorted.carcassesEcarteesPourInspection)} pour inspection.`,
+        `J'écarte ${formatCountCarcasseByEspece(carcassesSorted.carcassesEcarteesPourInspection)} pour inspection.`
       );
     }
     return label;
@@ -639,9 +650,7 @@ function EtgFeiContent({
 
   return (
     <Fragment key={intermediaire?.id}>
-      <title>
-        {`${params.fei_numero} | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}
-      </title>
+      <title>{`${params.fei_numero} | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}</title>
       {fei.deleted_at && (
         <div className="bg-error-main-525 mb-2 py-2 text-center text-white">
           <p>Fiche supprimée</p>
@@ -741,13 +750,21 @@ function EtgFeiContent({
                 {showRefusedCarcasses && (
                   <div className="flex flex-col gap-4">
                     {carcassesDejaRefusees.map((carcasse) => {
-                      return <CardCarcasse carcasse={carcasse} key={carcasse.numero_bracelet} />;
+                      return (
+                        <CardCarcasse
+                          carcasse={carcasse}
+                          key={carcasse.numero_bracelet}
+                        />
+                      );
                     })}
                   </div>
                 )}
                 {canCloseFeiWithOnlyManquantesOrRejetees && (
                   <div className="my-8 flex justify-center">
-                    <Button onClick={handleCloseFei} priority="primary">
+                    <Button
+                      onClick={handleCloseFei}
+                      priority="primary"
+                    >
                       Clôturer la fiche (
                       {carcassesSorted.carcassesManquantes.length > 0 &&
                       carcassesSorted.carcassesRejetees.length > 0
@@ -784,7 +801,10 @@ function EtgFeiContent({
 
             {!!labelCheckDone.length && (
               <>
-                <Section title="Prise en charge des carcasses acceptées" key={intermediaire?.id}>
+                <Section
+                  title="Prise en charge des carcasses acceptées"
+                  key={intermediaire?.id}
+                >
                   <form
                     method="POST"
                     className="flex flex-col gap-y-4"
@@ -838,7 +858,10 @@ function EtgFeiContent({
                       }}
                     />
                     {!!canEdit && (
-                      <Button type="submit" disabled={!!submitDisabled}>
+                      <Button
+                        type="submit"
+                        disabled={!!submitDisabled}
+                      >
                         Enregistrer
                       </Button>
                     )}

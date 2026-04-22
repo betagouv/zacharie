@@ -72,13 +72,13 @@ function getTraitementAssainissant(existingCarcasse: Carcasse) {
   if (existingCarcasse.svi_ipm2_traitement_assainissant.includes(IPM2Traitement.CUISSON)) {
     types.push('Cuisson');
     parametres.push(
-      `${existingCarcasse.svi_ipm2_traitement_assainissant_cuisson_temp}°C ${existingCarcasse.svi_ipm2_traitement_assainissant_cuisson_temps}`,
+      `${existingCarcasse.svi_ipm2_traitement_assainissant_cuisson_temp}°C ${existingCarcasse.svi_ipm2_traitement_assainissant_cuisson_temps}`
     );
   }
   if (existingCarcasse.svi_ipm2_traitement_assainissant.includes(IPM2Traitement.CONGELATION)) {
     types.push('Congélation');
     parametres.push(
-      `${existingCarcasse.svi_ipm2_traitement_assainissant_congelation_temp}°C ${existingCarcasse.svi_ipm2_traitement_assainissant_congelation_temps}`,
+      `${existingCarcasse.svi_ipm2_traitement_assainissant_congelation_temp}°C ${existingCarcasse.svi_ipm2_traitement_assainissant_congelation_temps}`
     );
   }
   if (existingCarcasse.svi_ipm2_traitement_assainissant.includes(IPM2Traitement.AUTRE)) {
@@ -93,7 +93,7 @@ function getTraitementAssainissant(existingCarcasse: Carcasse) {
 
 export async function generateDBCertificat(
   certificatType: CarcasseCertificatType,
-  zacharie_carcasse_id: Carcasse['zacharie_carcasse_id'],
+  zacharie_carcasse_id: Carcasse['zacharie_carcasse_id']
 ): Promise<CertificatResponse> {
   if (!zacharie_carcasse_id) {
     return {
@@ -183,14 +183,14 @@ export async function generateDBCertificat(
   const fei = existingCarcasse.Fei;
   const examinateur = fei.FeiExaminateurInitialUser;
   const etg = fei.CarcasseIntermediaire.find(
-    (intermediaire) => intermediaire.intermediaire_role === EntityTypes.ETG,
+    (intermediaire) => intermediaire.intermediaire_role === EntityTypes.ETG
   )?.CarcasseIntermediaireEntity;
   const collecteursPro = Array.from(
     new Set(
       fei.CarcasseIntermediaire.filter(
-        (intermediaire) => intermediaire.intermediaire_role === EntityTypes.COLLECTEUR_PRO,
-      ).map((intermediaire) => intermediaire.CarcasseIntermediaireEntity.nom_d_usage),
-    ),
+        (intermediaire) => intermediaire.intermediaire_role === EntityTypes.COLLECTEUR_PRO
+      ).map((intermediaire) => intermediaire.CarcasseIntermediaireEntity.nom_d_usage)
+    )
   ).join(', ');
 
   if (!certificat) {

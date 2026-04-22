@@ -46,7 +46,7 @@ router.get(
     async (
       req: RequestWithApiKey,
       res: express.Response<CarcasseForResponseForApi>,
-      next: express.NextFunction,
+      next: express.NextFunction
     ) => {
       const paramsSchema = z.object({
         date_mise_a_mort: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format de date attendu: YYYY-MM-DD'),
@@ -57,7 +57,7 @@ router.get(
       if (!paramsResult.success) {
         const errors = paramsResult.error.issues.map((i) => i.message).join('. ');
         const error = new Error(
-          `${errors}. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`,
+          `${errors}. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`
         );
         res.status(400);
         return next(error);
@@ -72,7 +72,7 @@ router.get(
       if (!queryResult.success) {
         const errors = queryResult.error.issues.map((i) => i.message).join('. ');
         const error = new Error(
-          `${errors}. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`,
+          `${errors}. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`
         );
         res.status(400);
         return next(error);
@@ -127,7 +127,7 @@ router.get(
 
       if (!canAccess) {
         const error = new Error(
-          "Vous n'avez pas les permissions pour accéder à cette carcasse. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.",
+          "Vous n'avez pas les permissions pour accéder à cette carcasse. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact."
         );
         res.status(403);
         return next(error);
@@ -139,8 +139,8 @@ router.get(
         message:
           'Pour toute question ou remarque, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.',
       });
-    },
-  ),
+    }
+  )
 );
 
 router.get(
@@ -152,7 +152,7 @@ router.get(
     async (
       req: RequestWithApiKey,
       res: express.Response<CarcasseForResponseForApi>,
-      next: express.NextFunction,
+      next: express.NextFunction
     ) => {
       const paramsSchema = z.object({
         date_mise_a_mort: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format de date attendu: YYYY-MM-DD'),
@@ -163,7 +163,7 @@ router.get(
       if (!paramsResult.success) {
         const errors = paramsResult.error.issues.map((i) => i.message).join('. ');
         const error = new Error(
-          `${errors}. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`,
+          `${errors}. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`
         );
         res.status(400);
         return next(error);
@@ -173,7 +173,7 @@ router.get(
       const entity = await getDedicatedEntityLinkedToApiKey(apiKey);
       if (!entity) {
         const error = new Error(
-          `Votre clé n'est pas autorisée à accéder à des carcasses par cette requête. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`,
+          `Votre clé n'est pas autorisée à accéder à des carcasses par cette requête. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`
         );
         res.status(403);
         return next(error);
@@ -215,7 +215,7 @@ router.get(
         case EntityTypes.ETG:
         case EntityTypes.COLLECTEUR_PRO: {
           const carcasseIntermediaires = fei.CarcasseIntermediaire.filter(
-            (c) => c.numero_bracelet === carcasse.numero_bracelet,
+            (c) => c.numero_bracelet === carcasse.numero_bracelet
           );
           console.log('carcasseIntermediaires', carcasseIntermediaires.length);
           const intermediaires = carcasseIntermediaires.filter((c) => c.intermediaire_role === entity.type);
@@ -244,7 +244,7 @@ router.get(
 
       if (!canAccess) {
         const error = new Error(
-          "Vous n'avez pas les permissions pour accéder à cette carcasse. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.",
+          "Vous n'avez pas les permissions pour accéder à cette carcasse. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact."
         );
         res.status(403);
         return next(error);
@@ -256,8 +256,8 @@ router.get(
         message:
           'Pour toute question ou remarque, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.',
       });
-    },
-  ),
+    }
+  )
 );
 
 router.get(
@@ -269,7 +269,7 @@ router.get(
     async (
       req: RequestWithApiKey,
       res: express.Response<CarcassesForResponseForApi>,
-      next: express.NextFunction,
+      next: express.NextFunction
     ) => {
       // Validate query params inline
       const querySchema = z.object({
@@ -282,7 +282,7 @@ router.get(
       if (!queryResult.success) {
         const errors = queryResult.error.issues.map((i) => i.message).join('. ');
         const error = new Error(
-          `${errors}. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`,
+          `${errors}. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`
         );
         res.status(400);
         return next(error);
@@ -346,14 +346,14 @@ router.get(
         ok: true,
         data: {
           carcasses: carcasses.map((carcasse) =>
-            mapCarcasseForApi(carcasse, feis.find((fei) => fei.numero === carcasse.fei_numero)!),
+            mapCarcasseForApi(carcasse, feis.find((fei) => fei.numero === carcasse.fei_numero)!)
           ),
         },
         message:
           'Pour toute question ou remarque, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.',
       });
-    },
-  ),
+    }
+  )
 );
 
 router.get(
@@ -365,7 +365,7 @@ router.get(
     async (
       req: RequestWithApiKey,
       res: express.Response<CarcassesForResponseForApi>,
-      next: express.NextFunction,
+      next: express.NextFunction
     ) => {
       // Validate query params inline
       const querySchema = z.object({
@@ -379,8 +379,8 @@ router.get(
           `${queryResult.error.issues
             .map((i) => i.message)
             .join(
-              '. ',
-            )}. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`,
+              '. '
+            )}. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`
         );
         res.status(400);
         return next(error);
@@ -392,7 +392,7 @@ router.get(
       const entity = await getDedicatedEntityLinkedToApiKey(apiKey);
       if (!entity) {
         const error = new Error(
-          `Votre clé n'est pas autorisée à accéder à des carcasses par cette requête. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`,
+          `Votre clé n'est pas autorisée à accéder à des carcasses par cette requête. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`
         );
         res.status(403);
         return next(error);
@@ -439,14 +439,14 @@ router.get(
         ok: true,
         data: {
           carcasses: carcasses.map((carcasse) =>
-            mapCarcasseForApi(carcasse, feis.find((fei) => fei.numero === carcasse.fei_numero)!),
+            mapCarcasseForApi(carcasse, feis.find((fei) => fei.numero === carcasse.fei_numero)!)
           ),
         },
         message:
           'Pour toute question ou remarque, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.',
       });
-    },
-  ),
+    }
+  )
 );
 
 export default router;

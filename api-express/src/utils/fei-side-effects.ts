@@ -109,7 +109,7 @@ export async function webhookOwnerChange(existingFei: FeiPopulated, savedFei: Fe
  */
 export async function notifySviAssignment(
   existingFei: FeiPopulated,
-  savedFei: FeiPopulated,
+  savedFei: FeiPopulated
 ): Promise<boolean> {
   if (
     existingFei.fei_next_owner_role === FeiOwnerRole.SVI ||
@@ -174,7 +174,7 @@ export async function notifySviAssignment(
 export async function notifyCircuitCourt(
   existingFei: FeiPopulated,
   savedFei: FeiPopulated,
-  user: User,
+  user: User
 ): Promise<boolean> {
   if (existingFei.fei_next_owner_role === savedFei.fei_next_owner_role) {
     return false;

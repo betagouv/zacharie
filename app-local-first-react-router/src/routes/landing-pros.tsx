@@ -52,7 +52,10 @@ export default function LandingProsPage() {
               </p>
             </div>
           </section>
-          <CTA mobile desktop />
+          <CTA
+            mobile
+            desktop
+          />
           <hr className="mt-8" />
           <section className="mt-8 flex flex-col md:gap-16">
             <div className="mt-8 flex flex-col gap-4 md:grid md:grid-cols-2 md:grid-rows-1 md:gap-16">
@@ -110,7 +113,10 @@ export default function LandingProsPage() {
               </div>
             </div>
           </section>
-          <CTA mobile desktop />
+          <CTA
+            mobile
+            desktop
+          />
           <hr className="mt-8" />
           <section className="mt-8 flex flex-col items-center">
             <h2 className="fr-h2 text-action-high-blue-france text-center text-balance md:text-left">

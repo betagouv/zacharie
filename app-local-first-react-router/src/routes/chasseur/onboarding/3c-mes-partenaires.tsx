@@ -42,7 +42,7 @@ export default function MesPartenaires() {
         useUser.setState({ user: response.data.user });
       }
     },
-    [user.id],
+    [user.id]
   );
 
   const userEntities = Object.values(userEntitiesById);
@@ -100,7 +100,7 @@ export default function MesPartenaires() {
             const relation = entity.EntityRelationsWithUsers.find(
               (relation) =>
                 relation.owner_id === user.id &&
-                relation.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+                relation.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY
             );
             if (!relation) return null;
             return (

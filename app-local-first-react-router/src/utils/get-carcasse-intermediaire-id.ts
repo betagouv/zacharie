@@ -9,32 +9,32 @@ import type {
 
 export function getNewCarcasseIntermediaireId(
   userId: string,
-  feiNumero: string,
+  feiNumero: string
 ): CarcasseIntermediaire['intermediaire_id'] {
   return `${userId}_${feiNumero}_${dayjs().format('HHmmss')}`;
 }
 
 export function getFeiAndIntermediaireIds(
-  carcasseIntermediaire: CarcasseIntermediaire,
+  carcasseIntermediaire: CarcasseIntermediaire
 ): FeiAndIntermediaireIds {
   return `${carcasseIntermediaire.fei_numero}_${carcasseIntermediaire.intermediaire_id}`;
 }
 
 export function getFeiAndCarcasseAndIntermediaireIds(
-  carcasseIntermediaire: CarcasseIntermediaire,
+  carcasseIntermediaire: CarcasseIntermediaire
 ): FeiAndCarcasseAndIntermediaireIds {
   return `${carcasseIntermediaire.fei_numero}_${carcasseIntermediaire.zacharie_carcasse_id}_${carcasseIntermediaire.intermediaire_id}`;
 }
 
 export function getFeiAndCarcasseAndIntermediaireIdsFromCarcasse(
   carcasse: CarcasseForResponseForRegistry | Carcasse,
-  intermediaireId: FeiIntermediaire['id'],
+  intermediaireId: FeiIntermediaire['id']
 ): FeiAndCarcasseAndIntermediaireIds {
   return `${carcasse.fei_numero}_${carcasse.zacharie_carcasse_id}_${intermediaireId}`;
 }
 
 export function getFeiAndIntermediaireIdsFromFeiIntermediaire(
-  intermediaire: FeiIntermediaire,
+  intermediaire: FeiIntermediaire
 ): FeiAndIntermediaireIds {
   return `${intermediaire.fei_numero}_${intermediaire.id}`;
 }

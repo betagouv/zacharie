@@ -64,8 +64,8 @@ passport.use(
         // console.error('Error in Passport strategy:', error);
         return done(error as Error, null);
       }
-    },
-  ),
+    }
+  )
 );
 
 passport.use(
@@ -96,8 +96,8 @@ passport.use(
         // console.error('Error in Passport strategy:', error);
         return done(error as Error, null);
       }
-    },
-  ),
+    }
+  )
 );
 
 passport.use(
@@ -108,7 +108,7 @@ passport.use(
     async (
       apiKey: string,
       done: (error: Error | null, apiKey?: ApiKey, info?: any) => void,
-      req: Request,
+      req: Request
     ) => {
       try {
         const key = await prisma.apiKey.findFirst({
@@ -144,6 +144,6 @@ passport.use(
         console.error('Error in Passport strategy:', error);
         return done(error as Error);
       }
-    },
-  ),
+    }
+  )
 );

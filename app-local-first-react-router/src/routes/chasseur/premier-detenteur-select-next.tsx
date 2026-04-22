@@ -495,7 +495,7 @@ function DispatchGroupForm({
 
 function getGroupValidationError(
   group: DispatchGroup,
-  entities: Record<string, EntityWithUserRelation>,
+  entities: Record<string, EntityWithUserRelation>
 ): string | null {
   if (!group.recipientEntityId) {
     return 'Il manque le prochain détenteur des carcasses';
@@ -582,9 +582,9 @@ export default function DestinatairePremierDetenteur({
           c.next_owner_entity_id != null ||
           (c.current_owner_role != null &&
             c.current_owner_role !== FeiOwnerRole.PREMIER_DETENTEUR &&
-            c.current_owner_role !== FeiOwnerRole.EXAMINATEUR_INITIAL),
+            c.current_owner_role !== FeiOwnerRole.EXAMINATEUR_INITIAL)
       ),
-    [allCarcasses],
+    [allCarcasses]
   );
 
   const carcassesRestantes = useMemo(
@@ -594,14 +594,14 @@ export default function DestinatairePremierDetenteur({
           c.next_owner_entity_id == null &&
           (c.current_owner_role == null ||
             c.current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR ||
-            c.current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL),
+            c.current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL)
       ),
-    [allCarcasses],
+    [allCarcasses]
   );
 
   const carcassesRestantesIds = useMemo(
     () => carcassesRestantes.map((c) => c.zacharie_carcasse_id),
-    [carcassesRestantes],
+    [carcassesRestantes]
   );
 
   const ccgs = ccgsIds.map((id) => entities[id]);
@@ -619,7 +619,7 @@ export default function DestinatairePremierDetenteur({
 
   const canTransmitCarcassesToEntities = useMemo(() => {
     return prochainsDetenteurs.filter(
-      (entity) => entity.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+      (entity) => entity.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY
     );
   }, [prochainsDetenteurs]);
 
@@ -920,7 +920,7 @@ export default function DestinatairePremierDetenteur({
             premier_detenteur_transport_type: nextTransportType,
             premier_detenteur_transport_date: nextTransportDate,
           },
-          false,
+          false
         );
       }
     }
@@ -1057,13 +1057,22 @@ export default function DestinatairePremierDetenteur({
                     <div key={entityId}>
                       <p className="mb-1 text-sm font-bold">
                         {entity?.nom_d_usage ?? entityId}
-                        <Badge severity="success" small noIcon as="span" className="ml-2">
+                        <Badge
+                          severity="success"
+                          small
+                          noIcon
+                          as="span"
+                          className="ml-2"
+                        >
                           {carcasses.length} carcasse{carcasses.length > 1 ? 's' : ''}
                         </Badge>
                       </p>
                       <div className="flex flex-wrap gap-1">
                         {carcasses.map((c) => (
-                          <Tag key={c.zacharie_carcasse_id} small>
+                          <Tag
+                            key={c.zacharie_carcasse_id}
+                            small
+                          >
                             {c.numero_bracelet} - {c.espece}
                           </Tag>
                         ))}
@@ -1140,7 +1149,10 @@ export default function DestinatairePremierDetenteur({
                 description={
                   <div className="mt-1 flex flex-wrap gap-1">
                     {unassignedCarcasses.map((c) => (
-                      <Tag key={c.zacharie_carcasse_id} small>
+                      <Tag
+                        key={c.zacharie_carcasse_id}
+                        small
+                      >
                         {c.numero_bracelet} - {c.espece}
                       </Tag>
                     ))}

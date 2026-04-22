@@ -107,7 +107,7 @@ export default function DestinataireIntermediaire({
           return true;
         })
         .map((ci) => ci.zacharie_carcasse_id),
-    [carcassesIntermediaires, carcassesStore, intermediaire?.intermediaire_entity_id],
+    [carcassesIntermediaires, carcassesStore, intermediaire?.intermediaire_entity_id]
   );
 
   const ccgs = ccgsIds.map((id) => entities[id]);
@@ -139,7 +139,7 @@ export default function DestinataireIntermediaire({
 
   const canTransmitCarcassesToEntities = useMemo(() => {
     return prochainsDetenteurs.filter(
-      (entity) => entity.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+      (entity) => entity.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY
     );
   }, [prochainsDetenteurs]);
 
@@ -320,7 +320,7 @@ export default function DestinataireIntermediaire({
             svi_assigned_to_fei_at: nextFei.svi_assigned_at,
             svi_entity_id: prochainDetenteurEntityId,
           },
-          false,
+          false
         );
       }
     }
@@ -554,7 +554,12 @@ export default function DestinataireIntermediaire({
           </Button>
         )}
         {!disabled && !!jobIsMissing?.length && (
-          <Alert title="Attention" className="mt-4" severity="error" description={jobIsMissing} />
+          <Alert
+            title="Attention"
+            className="mt-4"
+            severity="error"
+            description={jobIsMissing}
+          />
         )}
         {canEdit && !needToSubmit && fei.fei_next_owner_entity_id && (
           <>

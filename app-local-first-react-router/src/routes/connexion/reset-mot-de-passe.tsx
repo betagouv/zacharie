@@ -88,7 +88,10 @@ export default function ResetMotDePasse() {
 
   if (!resetPasswordToken) {
     return (
-      <main role="main" id="content">
+      <main
+        role="main"
+        id="content"
+      >
         <title>
           Réinitialisation de mot de passe | Zacharie | Ministère de l'Agriculture et de la Souveraineté
           Alimentaire
@@ -113,7 +116,10 @@ export default function ResetMotDePasse() {
   }
 
   return (
-    <main role="main" id="content">
+    <main
+      role="main"
+      id="content"
+    >
       <title>
         Réinitialisation de mot de passe | Zacharie | Ministère de l'Agriculture et de la Souveraineté
         Alimentaire
@@ -138,11 +144,18 @@ export default function ResetMotDePasse() {
                 id="reset-password-fieldset"
                 aria-labelledby="reset-password-fieldset-legend reset-password-fieldset-messages"
               >
-                <legend className="fr-fieldset__legend" id="reset-password-fieldset-legend">
+                <legend
+                  className="fr-fieldset__legend"
+                  id="reset-password-fieldset-legend"
+                >
                   <h2 className="fr-h3">Réinitialiser mon mot de passe</h2>
                 </legend>
               </fieldset>
-              <input type="text" name="name" className="hidden" />
+              <input
+                type="text"
+                name="name"
+                className="hidden"
+              />
               <PasswordInput
                 hintText="Veuillez entrer votre nouveau mot de passe (minimum 12 caractères)"
                 label="Mon nouveau mot de passe"

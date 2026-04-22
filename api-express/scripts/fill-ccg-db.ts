@@ -20,7 +20,7 @@ function insertCCGsDéclarésInDB() {
       parse({
         columns: true, // Use first row as column headers
         skip_empty_lines: true,
-      }),
+      })
     )
     .on('data', async (row) => {
       // |CCG:82-CCG-2|LIBRE:82-CCG-02| -> 82-CCG-2
@@ -91,7 +91,7 @@ function insertCCGsAgréésInDB() {
         skip_empty_lines: true,
         relax_column_count: true, // Allow inconsistent column counts
         skip_records_with_error: false, // Skip problematic records instead of failing
-      }),
+      })
     )
     .on('data', async (row) => {
       const cleanRow: Prisma.EntityUncheckedCreateInput = {

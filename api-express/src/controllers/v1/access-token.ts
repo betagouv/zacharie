@@ -37,7 +37,7 @@ router.post(
       if (!bodyResult.success) {
         const errors = bodyResult.error.issues.map((i) => i.message).join('. ');
         const error = new Error(
-          `${errors}. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`,
+          `${errors}. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`
         );
         res.status(400);
         return next(error);
@@ -53,7 +53,7 @@ router.post(
 
       if (!user) {
         const error = new Error(
-          `L'email ${email} n'est pas trouvé dans la base de données. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`,
+          `L'email ${email} n'est pas trouvé dans la base de données. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`
         );
         res.status(400);
         return next(error);
@@ -70,7 +70,7 @@ router.post(
 
       if (!approval) {
         const error = new Error(
-          `Vous n'avez pas fait de demande d'accès pour cet email. Faites un appel POST /approval-request/user avec l'email de l'utilisateur auparavant. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`,
+          `Vous n'avez pas fait de demande d'accès pour cet email. Faites un appel POST /approval-request/user avec l'email de l'utilisateur auparavant. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`
         );
         res.status(400);
         return next(error);
@@ -78,7 +78,7 @@ router.post(
 
       if (approval.status !== ApiKeyApprovalStatus.APPROVED) {
         const error = new Error(
-          `Votre demande d'accès n'a pas été approuvée. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`,
+          `Votre demande d'accès n'a pas été approuvée. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`
         );
         res.status(400);
         return next(error);
@@ -98,8 +98,8 @@ router.post(
         message:
           "L'access token a été créé. Vous pouvez l'utiliser en paramètre d'URL pour connecter l'utilisateur à son compte Zacharie. Par exemple https://zacharie.beta.gouv.fr/app/nouvelle-fiche?access_token={accessToken}&date_mise_a_mort=2025-01-01&commune_mise_a_mort=Paris&heure_mise_a_mort_premiere_carcasse=10:00&heure_evisceration_derniere_carcasse=12:00",
       });
-    },
-  ),
+    }
+  )
 );
 
 export default router;

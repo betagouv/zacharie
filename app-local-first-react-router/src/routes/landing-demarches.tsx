@@ -253,7 +253,10 @@ export default function LandingDemarchesPage() {
               <Section title="Comment déclarer sa chambre froide où j’entrepose du gibier&nbsp;?">
                 <p>
                   Pour déclarer votre chambre froide, il vous suffit de remplir le{' '}
-                  <a href="https://entreprendre.service-public.fr/vosdroits/R17520" target="_blank">
+                  <a
+                    href="https://entreprendre.service-public.fr/vosdroits/R17520"
+                    target="_blank"
+                  >
                     CERFA 13984
                   </a>{' '}
                   et de le renvoyer à la direction départementale en charge de la protection des populations

@@ -67,7 +67,7 @@ export default function CcgImport() {
               normalizedRow,
               'Unité Activité (UA) : Identifier métier (Type : Valorisation)',
               'numero_ddecpp',
-              'Numéro DDECPP',
+              'Numéro DDECPP'
             );
             const match = raw.match(/\d{2,3}-CCG-\d+/);
             return match ? match[0] : raw;
@@ -77,14 +77,14 @@ export default function CcgImport() {
             'Établissement : Enseigne usuelle (RESYTAL)',
             'nom_d_usage',
             'raison_sociale',
-            'Raison sociale',
+            'Raison sociale'
           ),
           address_ligne_1: col(
             normalizedRow,
             'Unité Activité (UA) : Adresse de localisation : Concaténations des lignes adresses 1, 2 & 3',
             'Établissement : Adresse postale : Concaténations des lignes adresses 1, 2 & 3',
             'address_ligne_1',
-            'Adresse',
+            'Adresse'
           ),
           address_ligne_2: '',
           code_postal: col(
@@ -92,14 +92,14 @@ export default function CcgImport() {
             "Unité d'Activité (UA) : Code postal (Adresse de localisation)",
             'Établissement : Adresse postale: Code postal',
             'code_postal',
-            'Code postal',
+            'Code postal'
           ),
           ville: col(
             normalizedRow,
             'Unité Activité (UA) : Adresse de localisation : Commune Nom',
             'Établissement : Adresse postale: Bureau distributeur',
             'ville',
-            'Ville',
+            'Ville'
           ),
           siret: col(normalizedRow, 'Établissement : SIRET/NUMAGRIT', 'siret', 'SIRET'),
         };
@@ -130,7 +130,7 @@ export default function CcgImport() {
       setStep('preview');
     } catch {
       setError(
-        "Erreur lors de la lecture du fichier. Vérifiez qu'il s'agit d'un fichier CSV ou Excel valide.",
+        "Erreur lors de la lecture du fichier. Vérifiez qu'il s'agit d'un fichier CSV ou Excel valide."
       );
     } finally {
       setLoading(false);
@@ -159,7 +159,7 @@ export default function CcgImport() {
         setSelectedForUpdate(new Set());
       }
     },
-    [modifies],
+    [modifies]
   );
 
   const handleImport = useCallback(async () => {
@@ -206,7 +206,14 @@ export default function CcgImport() {
       <title>Import CCG | Admin | Zacharie</title>
       <h1>Importer des CCG depuis un fichier CSV/XLS</h1>
 
-      {error && <Alert severity="error" title="Erreur" description={error} className="mb-4" />}
+      {error && (
+        <Alert
+          severity="error"
+          title="Erreur"
+          description={error}
+          className="mb-4"
+        />
+      )}
 
       {step === 'upload' && (
         <div className="mb-8">
@@ -274,11 +281,17 @@ export default function CcgImport() {
                 };
                 return [
                   isModified ? (
-                    <Badge key="badge" severity="warning">
+                    <Badge
+                      key="badge"
+                      severity="warning"
+                    >
                       Existant
                     </Badge>
                   ) : (
-                    <Badge key="badge" severity="success">
+                    <Badge
+                      key="badge"
+                      severity="success"
+                    >
                       Nouveau
                     </Badge>
                   ),
@@ -311,10 +324,17 @@ export default function CcgImport() {
           </div>
 
           <div className="flex gap-4">
-            <Button onClick={handleImport} disabled={loading}>
+            <Button
+              onClick={handleImport}
+              disabled={loading}
+            >
               {loading ? 'Import en cours...' : `Importer (${displayedRows.length} CCG)`}
             </Button>
-            <Button priority="secondary" onClick={reset} disabled={loading}>
+            <Button
+              priority="secondary"
+              onClick={reset}
+              disabled={loading}
+            >
               Annuler
             </Button>
           </div>

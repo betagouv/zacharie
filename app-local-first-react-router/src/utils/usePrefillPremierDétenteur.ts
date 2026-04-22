@@ -36,7 +36,7 @@ export function usePrefillPremierDétenteurInfos(): PrefillPremierDétenteurInfo
       return nullDefaults;
     }
     const matchingFeis = Object.values(feis).filter(
-      (otherFei) => otherFei.commune_mise_a_mort === fei.commune_mise_a_mort && otherFei.numero !== feiNumero,
+      (otherFei) => otherFei.commune_mise_a_mort === fei.commune_mise_a_mort && otherFei.numero !== feiNumero
     );
     // Prefer done FEIs (those with svi_assigned_at or intermediaire_closed_at)
     const match =

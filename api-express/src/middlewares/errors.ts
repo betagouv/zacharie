@@ -12,7 +12,7 @@ import type { RequestWithUser } from '~/types/request';
 type MiddlewareFn<T extends express.Request> = (
   req: T,
   res: express.Response,
-  next: express.NextFunction,
+  next: express.NextFunction
 ) => Promise<void> | void;
 
 function catchErrors<T extends express.Request>(fn: MiddlewareFn<T>) {
@@ -29,7 +29,7 @@ function catchErrors<T extends express.Request>(fn: MiddlewareFn<T>) {
 const notFound = (
   req: express.Request | RequestWithUser,
   _res: express.Response,
-  next: express.NextFunction,
+  next: express.NextFunction
 ) => {
   const url = req.protocol + '://' + req.get('host') + req.originalUrl;
   const customError = new Error(`Url not Found : ${url}`) as CustomError;
@@ -47,7 +47,7 @@ const sendError = (
   err: CustomError,
   req: express.Request | RequestWithUser,
   res: express.Response,
-  _next: express.NextFunction,
+  _next: express.NextFunction
 ) => {
   const { body, query, params, route, method, originalUrl, headers } = req;
   const { auth, appversion, appbuild, appdevice } = headers;

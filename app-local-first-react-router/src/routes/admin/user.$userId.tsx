@@ -155,8 +155,8 @@ export default function AdminUser() {
     let numberOfWOrkingWith = userEntitiesRelations.filter(
       (rel) =>
         rel.EntityRelationsWithUsers.some(
-          (r) => r.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-        ) && rel.type !== EntityTypes.CCG,
+          (r) => r.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY
+        ) && rel.type !== EntityTypes.CCG
     ).length;
     if (user.roles.includes(UserRoles.ETG)) {
       numberOfWOrkingWith += 1;
@@ -214,7 +214,11 @@ export default function AdminUser() {
                     await refreshUser('admin/user/connect-as');
                   }}
                 >
-                  <Button type="submit" priority="primary" size="small">
+                  <Button
+                    type="submit"
+                    priority="primary"
+                    size="small"
+                  >
                     Connexion
                   </Button>
                 </form>
@@ -295,7 +299,11 @@ export default function AdminUser() {
                   onBlur={handleUserFormBlur(idFormRef)}
                   onSubmit={(event) => event.preventDefault()}
                 >
-                  <input type="hidden" name={Prisma.UserScalarFieldEnum.prefilled} value="true" />
+                  <input
+                    type="hidden"
+                    name={Prisma.UserScalarFieldEnum.prefilled}
+                    value="true"
+                  />
                   <Input
                     label="Email"
                     nativeInputProps={{
@@ -468,7 +476,10 @@ export default function AdminUser() {
                 />
               )}
               <div className="mt-6 mb-16 ml-6">
-                <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
+                <a
+                  className="fr-link fr-icon-arrow-up-fill fr-link--icon-left"
+                  href="#top"
+                >
                   Haut de page
                 </a>
               </div>
@@ -509,7 +520,7 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
       return (
         entity.type === EntityTypes.ETG &&
         entity.EntityRelationsWithUsers.some(
-          (r) => r.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+          (r) => r.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
         )
       );
     })?.id;
@@ -625,7 +636,7 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
           if (!entity) return null;
           if (!entity?.EntityRelationsWithUsers) return null;
           const relation = entity.EntityRelationsWithUsers.find(
-            (relation) => relation.owner_id === user.id && relation.relation === relationType,
+            (relation) => relation.owner_id === user.id && relation.relation === relationType
           );
           if (!relation) return null;
           const isSviLinkedToEtg = associatedSvi?.id === entity.id;
@@ -705,7 +716,10 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
                   <br />
                   {entity.code_postal} {entity.ville}
                 </Link>
-                <Button type="submit" className="m-2">
+                <Button
+                  type="submit"
+                  className="m-2"
+                >
                   Ajouter
                 </Button>
               </form>,

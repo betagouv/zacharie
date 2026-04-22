@@ -54,7 +54,7 @@ router.get(
         });
       });
     res.status(200).send({ ok: true, data: certificats });
-  }),
+  })
 );
 
 router.get(
@@ -114,7 +114,7 @@ router.get(
       const docBuffer = await generateLaissezPasserSanitaireDocx(certificatResponse.data.certificat, user);
       res.send(docBuffer);
     }
-  }),
+  })
 );
 
 router.get(
@@ -177,7 +177,7 @@ router.get(
       const docBuffer = await generateLaissezPasserSanitaireDocx(certificat, user);
       res.send(docBuffer);
     }
-  }),
+  })
 );
 
 export default router;

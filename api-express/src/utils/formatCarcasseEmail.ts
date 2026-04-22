@@ -41,9 +41,7 @@ export async function formatCarcasseChasseurEmail(carcasse: Carcasse) {
       `Nombre d'animaux\u00A0: ${carcasse.nombre_d_animaux || 1}`,
       `Numéro d'identification\u00A0: ${carcasse.numero_bracelet}`,
       `Décision du service vétérinaire\u00A0: ${getCarcasseStatusLabelForEmail(carcasse)}`,
-      `Motifs de saisie\u00A0:\n${carcasse.svi_ipm2_lesions_ou_motifs
-        .map((motif) => ` -> ${getMotifForChasseur(motif, carcasse.type)}`)
-        .join('\n')}`,
+      `Motifs de saisie\u00A0:\n${carcasse.svi_ipm2_lesions_ou_motifs.map((motif) => ` -> ${getMotifForChasseur(motif, carcasse.type)}`).join('\n')}`,
       carcasse.svi_carcasse_commentaire ? `Commentaire\u00A0:\n${carcasse.svi_carcasse_commentaire}` : null,
       `Rendez-vous sur Zacharie pour consulter le détail de la carcasse : https://zacharie.beta.gouv.fr/app/chasseur/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`,
     ];
@@ -102,14 +100,12 @@ export function formatSaisieChasseurEmail(carcasse: Carcasse): [string, string] 
     `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur cette saisie, merci de contacter l’établissement où a été effectuée l’inspection.`,
   ];
 
-  const object = `${saisieLabel} ${carcasseLabel} de ${carcasse.espece.toLowerCase()} n°${
-    carcasse.numero_bracelet
-  }.`;
+  const object = `${saisieLabel} ${carcasseLabel} de ${carcasse.espece.toLowerCase()} n°${carcasse.numero_bracelet}.`;
   return [object, email.filter(Boolean).join('\n\n')];
 }
 
 export async function formatCarcasseManquanteOrRefusChasseurEmail(
-  carcasse: Carcasse,
+  carcasse: Carcasse
 ): Promise<[string, string]> {
   const carcasseIntermediaire = await prisma.carcasseIntermediaire.findUnique({
     where: {
@@ -168,7 +164,7 @@ export async function formatCarcasseManquanteOrRefusChasseurEmail(
 
 export async function formatAutomaticClosingEmail(
   fei: Fei,
-  carcasses: Carcasse[],
+  carcasses: Carcasse[]
 ): Promise<[string, string]> {
   let numberOfValidatedCarcasses = 0;
   let numberOfRefusedCarcasses = 0;
@@ -209,7 +205,7 @@ export async function formatAutomaticClosingEmail(
 
 export async function formatManualValidationSviChasseurEmail(
   fei: Fei,
-  carcasses: Carcasse[],
+  carcasses: Carcasse[]
 ): Promise<[string, string]> {
   let numberOfValidatedCarcasses = 0;
   let numberOfRefusedCarcasses = 0;
@@ -274,9 +270,7 @@ export async function formatSviAssignedEmail(fei: Fei): Promise<[string, string]
     feiCarcasses
       .map(
         (carcasse) =>
-          `-> ${carcasse.type === CarcasseType.PETIT_GIBIER ? `${carcasse.nombre_d_animaux} ` : ''}${
-            carcasse.espece
-          } (${carcasse.numero_bracelet})`,
+          `-> ${carcasse.type === CarcasseType.PETIT_GIBIER ? `${carcasse.nombre_d_animaux} ` : ''}${carcasse.espece} (${carcasse.numero_bracelet})`
       )
       .join('\n'),
     `Pour consulter la fiche, rendez-vous sur Zacharie : https://zacharie.beta.gouv.fr/app/svi/fei/${fei.numero}`,

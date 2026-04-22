@@ -63,56 +63,56 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
   const carcasseIds = feiCarcasses.map((c) => c.zacharie_carcasse_id);
 
   const [sviIpm2PresenteeInspection, setSviIpm2PresenteeInspection] = useState(
-    carcasse.svi_ipm2_presentee_inspection ?? true,
+    carcasse.svi_ipm2_presentee_inspection ?? true
   );
   const [sviIpm2Date, setSviIpm2Date] = useState(carcasse.svi_ipm2_date);
   const [sviIpm2Protocole, setSviIpm2Protocole] = useState(
-    carcasse.svi_ipm2_protocole ?? IPM1Protocole.STANDARD,
+    carcasse.svi_ipm2_protocole ?? IPM1Protocole.STANDARD
   );
   const [sviIpm2Pieces, setSviIpm2Pieces] = useState(
-    carcasse.svi_ipm2_date ? carcasse.svi_ipm2_pieces : carcasse.svi_ipm1_pieces,
+    carcasse.svi_ipm2_date ? carcasse.svi_ipm2_pieces : carcasse.svi_ipm1_pieces
   );
   const [sviIpm2LesionsOuMotifs, setSviIpm2LesionsOuMotifs] = useState(
-    carcasse.svi_ipm2_date ? carcasse.svi_ipm2_lesions_ou_motifs : carcasse.svi_ipm1_lesions_ou_motifs,
+    carcasse.svi_ipm2_date ? carcasse.svi_ipm2_lesions_ou_motifs : carcasse.svi_ipm1_lesions_ou_motifs
   );
   const [sviIpm2NombreAnimaux, setSviIpm2NombreAnimaux] = useState(
-    carcasse.svi_ipm2_date ? carcasse.svi_ipm2_nombre_animaux : carcasse.svi_ipm1_nombre_animaux,
+    carcasse.svi_ipm2_date ? carcasse.svi_ipm2_nombre_animaux : carcasse.svi_ipm1_nombre_animaux
   );
   const [sviIpm2Commentaire, setSviIpm2Commentaire] = useState(carcasse.svi_ipm2_commentaire);
   const [sviIpm2Decision, setSviIpm2Decision] = useState(carcasse.svi_ipm2_decision);
   const [sviIpm2PoidsSaisie, setSviIpm2PoidsSaisie] = useState(
-    carcasse.svi_ipm2_date ? carcasse.svi_ipm2_poids_saisie : carcasse.svi_ipm1_poids_consigne,
+    carcasse.svi_ipm2_date ? carcasse.svi_ipm2_poids_saisie : carcasse.svi_ipm1_poids_consigne
   );
   const [sviIpm2PoidsType, setSviIpm2PoidsType] = useState(
-    carcasse.svi_ipm2_date ? carcasse.svi_ipm2_poids_type : carcasse.svi_ipm1_poids_type,
+    carcasse.svi_ipm2_date ? carcasse.svi_ipm2_poids_type : carcasse.svi_ipm1_poids_type
   );
   const [sviIpm2TraitementAssainissant, setSviIpm2TraitementAssainissant] = useState(
-    carcasse.svi_ipm2_traitement_assainissant || [],
+    carcasse.svi_ipm2_traitement_assainissant || []
   );
   const [sviIpm2TraitementAssainissantCuissonTemps, setSviIpm2TraitementAssainissantCuissonTemps] = useState(
-    carcasse.svi_ipm2_traitement_assainissant_cuisson_temps,
+    carcasse.svi_ipm2_traitement_assainissant_cuisson_temps
   );
   const [sviIpm2TraitementAssainissantCuissonTemp, setSviIpm2TraitementAssainissantCuissonTemp] = useState(
-    carcasse.svi_ipm2_traitement_assainissant_cuisson_temp,
+    carcasse.svi_ipm2_traitement_assainissant_cuisson_temp
   );
   const [sviIpm2TraitementAssainissantCongelationTemps, setSviIpm2TraitementAssainissantCongelationTemps] =
     useState(carcasse.svi_ipm2_traitement_assainissant_congelation_temps);
   const [sviIpm2TraitementAssainissantCongelationTemp, setSviIpm2TraitementAssainissantCongelationTemp] =
     useState(carcasse.svi_ipm2_traitement_assainissant_congelation_temp);
   const [sviIpm2TraitementAssainissantType, setSviIpm2TraitementAssainissantType] = useState(
-    carcasse.svi_ipm2_traitement_assainissant_type,
+    carcasse.svi_ipm2_traitement_assainissant_type
   );
   const [sviIpm2TraitementAssainissantParamètres, setSviIpm2TraitementAssainissantParamètres] = useState(
-    carcasse.svi_ipm2_traitement_assainissant_paramètres,
+    carcasse.svi_ipm2_traitement_assainissant_paramètres
   );
   const [sviIpm2TraitementAssainissantEtablissement, setSviIpm2TraitementAssainissantEtablissement] =
     useState(carcasse.svi_ipm2_traitement_assainissant_etablissement);
   const [sviIpm2TraitementAssainissantPoids, setSviIpm2TraitementAssainissantPoids] = useState(
-    carcasse.svi_ipm2_traitement_assainissant_poids,
+    carcasse.svi_ipm2_traitement_assainissant_poids
   );
 
   const [sviIpm2UserName, setSviIpm2UserName] = useState(
-    carcasse.svi_ipm2_user_name_cache ?? `${user.prenom} ${user.nom_de_famille}`,
+    carcasse.svi_ipm2_user_name_cache ?? `${user.prenom} ${user.nom_de_famille}`
   );
   const [triedToSave, setTriedToSave] = useState(false);
 
@@ -301,7 +301,11 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
   const Component = canDoIPM2 ? Input : InputNotEditable;
 
   return (
-    <form method="POST" id={`svi-carcasse-${carcasse.numero_bracelet}`} onSubmit={(e) => e.preventDefault()}>
+    <form
+      method="POST"
+      id={`svi-carcasse-${carcasse.numero_bracelet}`}
+      onSubmit={(e) => e.preventDefault()}
+    >
       {carcasse.svi_ipm1_decision === IPM1Decision.ACCEPTE && (
         <Alert
           severity="info"
@@ -451,7 +455,10 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
                 <>
                   Rappel IPM1: {carcasse.svi_ipm1_pieces.join('; ')}
                   <br />
-                  <button type="button" onClick={() => piecesGibier.open()}>
+                  <button
+                    type="button"
+                    onClick={() => piecesGibier.open()}
+                  >
                     Voir le référentiel des pièces en <u className="inline">cliquant ici</u>
                   </button>
                 </>
@@ -486,7 +493,10 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
                 <>
                   Rappel IPM1: {carcasse.svi_ipm1_lesions_ou_motifs.join('; ')}
                   <br />
-                  <button type="button" onClick={() => lesionsOuMotifsConsigneModal.open()}>
+                  <button
+                    type="button"
+                    onClick={() => lesionsOuMotifsConsigneModal.open()}
+                  >
                     Voir le référentiel des lésions de carcasse en <u className="inline">cliquant ici</u>
                   </button>
                 </>
@@ -600,7 +610,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
                   onChange: () => {
                     if (sviIpm2TraitementAssainissant.includes(IPM2Traitement.CUISSON)) {
                       setSviIpm2TraitementAssainissant(
-                        sviIpm2TraitementAssainissant.filter((t) => t !== IPM2Traitement.CUISSON),
+                        sviIpm2TraitementAssainissant.filter((t) => t !== IPM2Traitement.CUISSON)
                       );
                     } else {
                       setSviIpm2TraitementAssainissant([
@@ -619,7 +629,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
                   onChange: () => {
                     if (sviIpm2TraitementAssainissant.includes(IPM2Traitement.CONGELATION)) {
                       setSviIpm2TraitementAssainissant(
-                        sviIpm2TraitementAssainissant.filter((t) => t !== IPM2Traitement.CONGELATION),
+                        sviIpm2TraitementAssainissant.filter((t) => t !== IPM2Traitement.CONGELATION)
                       );
                     } else {
                       setSviIpm2TraitementAssainissant([
@@ -638,7 +648,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
                   onChange: () => {
                     if (sviIpm2TraitementAssainissant.includes(IPM2Traitement.AUTRE)) {
                       setSviIpm2TraitementAssainissant(
-                        sviIpm2TraitementAssainissant.filter((t) => t !== IPM2Traitement.AUTRE),
+                        sviIpm2TraitementAssainissant.filter((t) => t !== IPM2Traitement.AUTRE)
                       );
                     } else {
                       setSviIpm2TraitementAssainissant([
@@ -738,7 +748,10 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
             label="N° d'agrément de l'établissement désigné pour réaliser le traitement assainissant *"
             hintText={
               <>
-                <button type="button" onClick={() => etablissementsTraitementSanitaireModal.open()}>
+                <button
+                  type="button"
+                  onClick={() => etablissementsTraitementSanitaireModal.open()}
+                >
                   Voir les établissements de traitement sanitaire en <u className="inline">cliquant ici.</u>
                 </button>{' '}
                 Source: section IV de la page{' '}
@@ -761,7 +774,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
             title="Etablissements de traitement sanitaire"
             onItemClick={(etablissementDisplay) => {
               setSviIpm2TraitementAssainissantEtablissement(
-                retrieveEtablissementAgremenet(etablissementDisplay),
+                retrieveEtablissementAgremenet(etablissementDisplay)
               );
             }}
           />
@@ -829,12 +842,20 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
         </>
       )}
       <div>
-        <Button type="button" onClick={handleSave}>
+        <Button
+          type="button"
+          onClick={handleSave}
+        >
           Enregistrer
         </Button>
       </div>
       {triedToSave && missingFields && (
-        <Alert title="Attention" className="mt-4" severity="error" description={missingFields} />
+        <Alert
+          title="Attention"
+          className="mt-4"
+          severity="error"
+          description={missingFields}
+        />
       )}
     </form>
   );

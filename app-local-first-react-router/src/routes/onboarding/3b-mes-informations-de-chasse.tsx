@@ -37,7 +37,7 @@ export default function ChasseurOnboardingMesInformationsDeChasse() {
         useUser.setState({ user: response.data.user });
       }
     },
-    [user.id],
+    [user.id]
   );
 
   const nextPage = '/app/tableau-de-bord';
@@ -70,7 +70,12 @@ export default function ChasseurOnboardingMesInformationsDeChasse() {
       <title>{`Mes informations de chasse | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}</title>
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
-          <Stepper currentStep={3} nextTitle={undefined} stepCount={3} title="Informations de chasse" />
+          <Stepper
+            currentStep={3}
+            nextTitle={undefined}
+            stepCount={3}
+            title="Informations de chasse"
+          />
           <Alert
             className="mb-8 bg-white"
             small
@@ -78,7 +83,10 @@ export default function ChasseurOnboardingMesInformationsDeChasse() {
             description="Ces informations seront reportées automatiquement sur chacune des fiches que vous allez créer."
           />
           <p className="mb-8 text-sm text-gray-500">
-            <Link to={redirect ?? nextPage} className="text-gray-500">
+            <Link
+              to={redirect ?? nextPage}
+              className="text-gray-500"
+            >
               Passer cette étape
             </Link>{' '}
             — vous pourrez compléter ces informations plus tard.

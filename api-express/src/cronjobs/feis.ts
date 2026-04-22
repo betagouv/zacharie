@@ -43,7 +43,7 @@ export async function initFeisCron() {
           cronTime: '0 8 * * *',
           job: automaticClosingOfFeis,
           runOnInit: true,
-        }),
+        })
     )
     .then(() => {
       console.log('All feis cron jobs are set up');

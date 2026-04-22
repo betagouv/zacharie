@@ -57,7 +57,10 @@ export default function CarcasseSVICertificats() {
   return (
     <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
       {certificats.map((certificat) => (
-        <CertificatCard key={certificat.certificat_id} certificat={certificat} />
+        <CertificatCard
+          key={certificat.certificat_id}
+          certificat={certificat}
+        />
       ))}
     </div>
   );
@@ -92,7 +95,11 @@ function CertificatCard({ certificat }: { certificat: Certificat }) {
         certificat.remplace_par_certificat_id && 'opacity-50',
       ].join(' ')}
     >
-      <button type="button" className="flex flex-1 flex-col p-4 text-left" onClick={handleDownload}>
+      <button
+        type="button"
+        className="flex flex-1 flex-col p-4 text-left"
+        onClick={handleDownload}
+      >
         <p className="order-1 text-base font-bold">{mapCertificatTypeToLabel(certificat.type!)}</p>
         <p className="order-2 text-sm/4 font-medium text-gray-600">N° {certificat.certificat_id}</p>
         <p className="order-3 text-sm/4 text-gray-500">{dayjs(certificat.created_at).format('DD/MM/YYYY')}</p>

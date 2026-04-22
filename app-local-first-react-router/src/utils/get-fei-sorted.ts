@@ -123,7 +123,7 @@ export function getFeisSorted(): FeiSorted {
       const hasSousTraite = carcasses.some(
         (c) =>
           c.next_owner_sous_traite_by_entity_id &&
-          entitiesIdsWorkingDirectlyFor.includes(c.next_owner_sous_traite_by_entity_id),
+          entitiesIdsWorkingDirectlyFor.includes(c.next_owner_sous_traite_by_entity_id)
       );
       if (hasSousTraite) {
         feisSorted.feisOngoing.push(fei);

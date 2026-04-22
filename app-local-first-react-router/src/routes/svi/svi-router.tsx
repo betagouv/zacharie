@@ -14,24 +14,69 @@ import SviInspectionCarcasseLoader from './svi-carcasse-svi-inspection';
 
 export default function RouterSvi() {
   return (
-    <Route path="svi" element={<SviLayout />}>
-      <Route index element={<SviFiches />} />
-      <Route path="contact" element={<Contact />} />
-      <Route path="carcasses" element={<SviCarcasses />} />
-      <Route path="onboarding" element={<Outlet />}>
-        <Route path="coordonnees" element={<SviOnboardingCoordonnees />} />
-        <Route path="entreprise" element={<SviOnboardingEntreprise />} />
+    <Route
+      path="svi"
+      element={<SviLayout />}
+    >
+      <Route
+        index
+        element={<SviFiches />}
+      />
+      <Route
+        path="contact"
+        element={<Contact />}
+      />
+      <Route
+        path="carcasses"
+        element={<SviCarcasses />}
+      />
+      <Route
+        path="onboarding"
+        element={<Outlet />}
+      >
+        <Route
+          path="coordonnees"
+          element={<SviOnboardingCoordonnees />}
+        />
+        <Route
+          path="entreprise"
+          element={<SviOnboardingEntreprise />}
+        />
       </Route>
-      <Route path="profil" element={<Outlet />}>
-        <Route path="coordonnees" element={<SviProfilCoordonnees />} />
-        <Route path="notifications" element={<SviProfilNotifications />} />
+      <Route
+        path="profil"
+        element={<Outlet />}
+      >
+        <Route
+          path="coordonnees"
+          element={<SviProfilCoordonnees />}
+        />
+        <Route
+          path="notifications"
+          element={<SviProfilNotifications />}
+        />
       </Route>
-      <Route path="entreprise" element={<Outlet />}>
-        <Route path="informations" element={<SviProfilEntreprise />} />
-        <Route path="utilisateurs" element={<SviProfilEntrepriseUtilisateurs />} />
+      <Route
+        path="entreprise"
+        element={<Outlet />}
+      >
+        <Route
+          path="informations"
+          element={<SviProfilEntreprise />}
+        />
+        <Route
+          path="utilisateurs"
+          element={<SviProfilEntrepriseUtilisateurs />}
+        />
       </Route>
-      <Route path="fei/:fei_numero" element={<SviFei />} />
-      <Route path="carcasse-svi/:fei_numero/:zacharie_carcasse_id" element={<SviInspectionCarcasseLoader />} />
+      <Route
+        path="fei/:fei_numero"
+        element={<SviFei />}
+      />
+      <Route
+        path="carcasse-svi/:fei_numero/:zacharie_carcasse_id"
+        element={<SviInspectionCarcasseLoader />}
+      />
     </Route>
   );
 }

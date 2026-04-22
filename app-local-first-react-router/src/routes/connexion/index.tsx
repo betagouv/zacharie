@@ -96,7 +96,10 @@ export default function Connexion() {
   }
 
   return (
-    <main role="main" id="content">
+    <main
+      role="main"
+      id="content"
+    >
       <title>Connexion | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
       <div className="fr-container fr-container--fluid fr-my-md-14v">
         <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
@@ -117,11 +120,18 @@ export default function Connexion() {
                 id="login-1760-fieldset"
                 aria-labelledby="login-1760-fieldset-legend login-1760-fieldset-messages"
               >
-                <legend className="fr-fieldset__legend" id="login-1760-fieldset-legend">
+                <legend
+                  className="fr-fieldset__legend"
+                  id="login-1760-fieldset-legend"
+                >
                   <h2 className="fr-h3">Me connecter</h2>
                 </legend>
               </fieldset>
-              <input type="text" name="name" className="hidden" />
+              <input
+                type="text"
+                name="name"
+                className="hidden"
+              />
               <Input
                 hintText="Renseignez votre email ci-dessous"
                 label="Mon email"
@@ -160,7 +170,10 @@ export default function Connexion() {
                   },
                 ]}
               />
-              <Link to="/app/connexion/mot-de-passe-oublie" className="py-1 text-xs! text-gray-500">
+              <Link
+                to="/app/connexion/mot-de-passe-oublie"
+                className="py-1 text-xs! text-gray-500"
+              >
                 <span>
                   Mot de passe oublié ? <u className="inline">Cliquez ici</u>, vous recevrez un email avec un
                   lien pour le réinitialiser

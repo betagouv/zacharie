@@ -31,7 +31,7 @@ export function filterMyCarcasses(
   carcasses: Array<Carcasse>,
   userId: string,
   entityIds: string[],
-  carcassesIntermediaireById: Record<FeiAndCarcasseAndIntermediaireIds, CarcasseIntermediaire>,
+  carcassesIntermediaireById: Record<FeiAndCarcasseAndIntermediaireIds, CarcasseIntermediaire>
 ): Array<Carcasse> {
   const entityIdSet = new Set(entityIds);
 

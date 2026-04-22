@@ -61,7 +61,7 @@ router.post(
           carcasseData.fei_numero,
           carcasseData.zacharie_carcasse_id,
           carcasseData as Prisma.CarcasseUncheckedCreateInput,
-          user,
+          user
         );
         carcasseResults.push(result);
       } catch (error) {
@@ -83,7 +83,7 @@ router.post(
           ciData.fei_numero,
           ciData.intermediaire_id,
           ciData.zacharie_carcasse_id,
-          ciData as Prisma.CarcasseIntermediaireUncheckedCreateInput,
+          ciData as Prisma.CarcasseIntermediaireUncheckedCreateInput
         );
         savedIntermediaires.push(saved);
       } catch (error) {
@@ -191,7 +191,7 @@ router.post(
       },
       error: '',
     });
-  }),
+  })
 );
 
 export default router;

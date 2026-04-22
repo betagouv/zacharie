@@ -238,7 +238,7 @@ export function computeFeiSteps({
         // Check per-carcasse next_owner_entity_id (multi-recipient dispatch)
         if (
           carcasses?.some(
-            (c) => c.next_owner_entity_id && entitiesIdsWorkingDirectlyFor.includes(c.next_owner_entity_id),
+            (c) => c.next_owner_entity_id && entitiesIdsWorkingDirectlyFor.includes(c.next_owner_entity_id)
           )
         ) {
           return 'À compléter';

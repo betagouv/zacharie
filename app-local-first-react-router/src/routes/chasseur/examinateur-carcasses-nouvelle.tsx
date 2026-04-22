@@ -70,7 +70,10 @@ export default function NouvelleCarcasse({
   }, []);
 
   return (
-    <form method="POST" className="flex w-full flex-col items-stretch">
+    <form
+      method="POST"
+      className="flex w-full flex-col items-stretch"
+    >
       <Select
         label="Espèce (grand et petit gibier) *"
         className="group grow"
@@ -87,10 +90,16 @@ export default function NouvelleCarcasse({
         {/* <hr /> */}
         {Object.entries(gibierSelect).map(([typeGibier, _especes]) => {
           return (
-            <optgroup label={typeGibier} key={typeGibier}>
+            <optgroup
+              label={typeGibier}
+              key={typeGibier}
+            >
               {_especes.map((_espece: string) => {
                 return (
-                  <option value={_espece} key={_espece}>
+                  <option
+                    value={_espece}
+                    key={_espece}
+                  >
                     {_espece}
                   </option>
                 );

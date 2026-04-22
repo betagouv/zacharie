@@ -14,7 +14,12 @@ export default function SviDeactivated() {
   }, []);
 
   return (
-    <RootDisplay hideMinistereName navigation={navigation} id="svi-layout-not-activated" mainLink="/app/svi">
+    <RootDisplay
+      hideMinistereName
+      navigation={navigation}
+      id="svi-layout-not-activated"
+      mainLink="/app/svi"
+    >
       <main
         role="main"
         id="content"
@@ -46,7 +51,10 @@ export default function SviDeactivated() {
                       </p>
                       <ul className="fr-btns-group fr-btns-group--inline-md fr-mb-3w">
                         <li>
-                          <Link className="fr-btn" to="/app/svi/profil/coordonnees">
+                          <Link
+                            className="fr-btn"
+                            to="/app/svi/profil/coordonnees"
+                          >
                             Compléter votre profil
                           </Link>
                         </li>

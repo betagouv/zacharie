@@ -14,7 +14,12 @@ export default function EtgDeactivated() {
   }, []);
 
   return (
-    <RootDisplay hideMinistereName navigation={navigation} id="etg-layout-not-activated" mainLink="/app/etg">
+    <RootDisplay
+      hideMinistereName
+      navigation={navigation}
+      id="etg-layout-not-activated"
+      mainLink="/app/etg"
+    >
       <main
         role="main"
         id="content"
@@ -46,7 +51,10 @@ export default function EtgDeactivated() {
                       </p>
                       <ul className="fr-btns-group fr-btns-group--inline-md fr-mb-3w">
                         <li>
-                          <Link className="fr-btn" to="/app/etg/profil/coordonnees">
+                          <Link
+                            className="fr-btn"
+                            to="/app/etg/profil/coordonnees"
+                          >
                             Compléter votre profil
                           </Link>
                         </li>

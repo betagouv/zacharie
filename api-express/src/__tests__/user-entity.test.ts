@@ -139,7 +139,7 @@ describe('POST /user-entity/', () => {
           entity_id: 'entity-1',
           relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
         }),
-        regularUser,
+        regularUser
       );
 
       expect(res.status).toBe(200);
@@ -160,7 +160,7 @@ describe('POST /user-entity/', () => {
           entity_id: 'entity-1',
           relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
         }),
-        regularUser,
+        regularUser
       );
 
       expect(res.status).toBe(403);
@@ -195,7 +195,7 @@ describe('POST /user-entity/', () => {
           relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
           status: EntityRelationStatus.MEMBER,
         }),
-        regularUser,
+        regularUser
       );
 
       expect(res.status).toBe(200);
@@ -230,7 +230,7 @@ describe('POST /user-entity/', () => {
           entity_id: 'entity-1',
           relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
         }),
-        platformAdmin as any,
+        platformAdmin as any
       );
 
       expect(res.status).toBe(200);
@@ -244,7 +244,7 @@ describe('POST /user-entity/', () => {
           entity_id: 'entity-1',
           relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
         }),
-        regularUser,
+        regularUser
       );
 
       expect(res.status).toBe(406);
@@ -256,7 +256,7 @@ describe('POST /user-entity/', () => {
           owner_id: regularUser.id,
           relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
         }),
-        regularUser,
+        regularUser
       );
 
       expect(res.status).toBe(400);
@@ -265,7 +265,7 @@ describe('POST /user-entity/', () => {
     test('missing relation → 400', async () => {
       const res = await authed(
         request(app).post(BASE).send({ owner_id: regularUser.id, entity_id: 'entity-1' }),
-        regularUser,
+        regularUser
       );
 
       expect(res.status).toBe(400);
@@ -305,7 +305,7 @@ describe('POST /user-entity/', () => {
           entity_id: 'entity-1',
           relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
         }),
-        regularUser,
+        regularUser
       );
 
       expect(res.status).toBe(409);
@@ -321,7 +321,7 @@ describe('POST /user-entity/', () => {
           type: EntityTypes.CCG,
           relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
         }),
-        regularUser,
+        regularUser
       );
 
       expect(res.status).toBe(400);
@@ -357,7 +357,7 @@ describe('POST /user-entity/', () => {
           type: EntityTypes.CCG,
           relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
         }),
-        regularUser,
+        regularUser
       );
 
       expect(res.status).toBe(200);
@@ -389,7 +389,7 @@ describe('POST /user-entity/', () => {
           relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
           status: EntityRelationStatus.ADMIN, // basic user trying to set status should not be allowed
         }),
-        regularUser,
+        regularUser
       );
 
       expect(res.status).toBe(200);
@@ -439,7 +439,7 @@ describe('POST /user-entity/', () => {
           entity_id: 'entity-1',
           relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
         }),
-        regularUser,
+        regularUser
       );
 
       expect(res.status).toBe(200);
@@ -478,7 +478,7 @@ describe('POST /user-entity/', () => {
           entity_id: 'entity-1',
           relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
         }),
-        regularUser,
+        regularUser
       );
 
       expect(res.status).toBe(200);
@@ -524,7 +524,7 @@ describe('POST /user-entity/', () => {
           entity_id: 'entity-1',
           relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
         }),
-        regularUser,
+        regularUser
       );
 
       expect(res.status).toBe(200);
@@ -532,7 +532,7 @@ describe('POST /user-entity/', () => {
         expect.objectContaining({
           user: adminUser,
           notificationLogAction: `NEW_USER_IN_ENTITY_entity-1`,
-        }),
+        })
       );
     });
   });
@@ -565,7 +565,7 @@ describe('POST /user-entity/', () => {
           entity_id: 'entity-2',
           relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
         }),
-        regularUser,
+        regularUser
       );
 
       expect(res.status).toBe(403); // blocked: not admin of entity-2
@@ -603,7 +603,7 @@ describe('PUT /user-entity/', () => {
           entity_id: 'entity-1',
           relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
         }),
-        regularUser,
+        regularUser
       );
 
       expect(res.status).toBe(404);
@@ -641,7 +641,7 @@ describe('PUT /user-entity/', () => {
           relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
           status: EntityRelationStatus.MEMBER,
         }),
-        regularUser,
+        regularUser
       );
 
       expect(res.status).toBe(200);
@@ -685,7 +685,7 @@ describe('PUT /user-entity/', () => {
           relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
           status: EntityRelationStatus.ADMIN,
         }),
-        platformAdmin as any,
+        platformAdmin as any
       );
 
       expect(res.status).toBe(200);
@@ -704,7 +704,7 @@ describe('PUT /user-entity/', () => {
     test('missing relation → 400', async () => {
       const res = await authed(
         request(app).put(BASE).send({ owner_id: regularUser.id, entity_id: 'entity-1' }),
-        regularUser,
+        regularUser
       );
 
       expect(res.status).toBe(400);
@@ -716,7 +716,7 @@ describe('PUT /user-entity/', () => {
           owner_id: regularUser.id,
           relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
         }),
-        regularUser,
+        regularUser
       );
 
       expect(res.status).toBe(400);
@@ -740,7 +740,7 @@ describe('PUT /user-entity/', () => {
           entity_id: 'entity-1',
           relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
         }),
-        regularUser,
+        regularUser
       );
 
       expect(res.status).toBe(403);
@@ -782,7 +782,7 @@ describe('PUT /user-entity/', () => {
           relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
           status: EntityRelationStatus.ADMIN,
         }),
-        regularUser,
+        regularUser
       );
 
       expect(res.status).toBe(200);
@@ -813,7 +813,7 @@ describe('PUT /user-entity/', () => {
           relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
           status: EntityRelationStatus.MEMBER,
         }),
-        regularUser,
+        regularUser
       );
 
       expect(res.status).toBe(403); // blocked: not admin of entity-2, can't manage others
@@ -870,7 +870,7 @@ describe('DELETE /user-entity/', () => {
           entity_id: 'entity-1',
           relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
         }),
-        regularUser,
+        regularUser
       );
 
       expect(res.status).toBe(200);
@@ -892,7 +892,7 @@ describe('DELETE /user-entity/', () => {
           entity_id: 'entity-1',
           relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
         }),
-        regularUser,
+        regularUser
       );
 
       expect(res.status).toBe(200);
@@ -932,7 +932,7 @@ describe('DELETE /user-entity/', () => {
           entity_id: 'entity-1',
           relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
         }),
-        regularUser,
+        regularUser
       );
 
       expect(res.status).toBe(200);
@@ -964,7 +964,7 @@ describe('DELETE /user-entity/', () => {
           entity_id: 'entity-1',
           relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
         }),
-        regularUser,
+        regularUser
       );
 
       expect(res.status).toBe(200);
@@ -988,7 +988,7 @@ describe('DELETE /user-entity/', () => {
           entity_id: 'entity-1',
           relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
         }),
-        regularUser,
+        regularUser
       );
 
       expect(res.status).toBe(406);
@@ -1000,7 +1000,7 @@ describe('DELETE /user-entity/', () => {
           owner_id: regularUser.id,
           entity_id: 'entity-1',
         }),
-        regularUser,
+        regularUser
       );
 
       expect(res.status).toBe(400);
@@ -1012,7 +1012,7 @@ describe('DELETE /user-entity/', () => {
           owner_id: regularUser.id,
           relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
         }),
-        regularUser,
+        regularUser
       );
 
       expect(res.status).toBe(400);
@@ -1038,7 +1038,7 @@ describe('DELETE /user-entity/', () => {
           entity_id: 'entity-1',
           relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
         }),
-        regularUser,
+        regularUser
       );
 
       expect(res.status).toBe(403);

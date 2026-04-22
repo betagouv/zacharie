@@ -16,7 +16,7 @@ export default function InputVille(props: InputVilleProps) {
   });
   const debouncedVilleSearched = useDebounce(
     `${postCode ? postCode + ' ' : ''}${villeSearched.toLocaleUpperCase()}`,
-    300,
+    300
   );
   const [villesResults, setVillesResults] = useState<string[]>([]);
   const canSearch = useRef(false);

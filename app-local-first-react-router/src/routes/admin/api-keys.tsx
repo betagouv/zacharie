@@ -57,11 +57,17 @@ export default function AdminApiKeys() {
       <div className="mb-2 flex items-center justify-between gap-2">
         <span className="text-sm text-gray-600">
           Doc :{' '}
-          <a href={`${import.meta.env.VITE_API_URL}/v1/docs/tierces-parties`} target="_blank">
+          <a
+            href={`${import.meta.env.VITE_API_URL}/v1/docs/tierces-parties`}
+            target="_blank"
+          >
             Tierces parties
           </a>
           {' · '}
-          <a href={`${import.meta.env.VITE_API_URL}/v1/docs/cle-dediee`} target="_blank">
+          <a
+            href={`${import.meta.env.VITE_API_URL}/v1/docs/cle-dediee`}
+            target="_blank"
+          >
             Entités
           </a>
         </span>
@@ -105,13 +111,16 @@ export default function AdminApiKeys() {
                 })
                 .map((apiKey, index) => {
                   const approvedUsers = apiKey.approvals.filter(
-                    (approval) => approval.status === ApiKeyApprovalStatus.APPROVED && approval.User,
+                    (approval) => approval.status === ApiKeyApprovalStatus.APPROVED && approval.User
                   ).length;
                   const approvedEntities = apiKey.approvals.filter(
-                    (approval) => approval.status === ApiKeyApprovalStatus.APPROVED && approval.Entity,
+                    (approval) => approval.status === ApiKeyApprovalStatus.APPROVED && approval.Entity
                   ).length;
                   return [
-                    <div key={apiKey.id} className="flex size-full flex-row items-start">
+                    <div
+                      key={apiKey.id}
+                      className="flex size-full flex-row items-start"
+                    >
                       <span className="p-4">{index + 1}</span>
                       <Link
                         to={`/app/admin/api-key/${apiKey.id}`}
@@ -157,7 +166,10 @@ export default function AdminApiKeys() {
             />
           </div>
           <div className="flex flex-col items-start bg-white px-8 md:[&_ul]:min-w-96">
-            <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left mb-4" href="#top">
+            <a
+              className="fr-link fr-icon-arrow-up-fill fr-link--icon-left mb-4"
+              href="#top"
+            >
               Haut de page
             </a>
           </div>

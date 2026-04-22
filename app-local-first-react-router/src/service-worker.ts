@@ -37,10 +37,10 @@ self.addEventListener('install', (event: ExtendableEvent) => {
             } else {
               return cache.add(entry.url);
             }
-          }),
+          })
         );
       })
-      .then(() => self.skipWaiting()),
+      .then(() => self.skipWaiting())
   );
 });
 
@@ -54,10 +54,10 @@ self.addEventListener('activate', (event: ExtendableEvent) => {
             if (cacheName !== CACHE_NAME) {
               return caches.delete(cacheName);
             }
-          }),
+          })
         );
       })
-      .then(() => self.clients.claim()),
+      .then(() => self.clients.claim())
   );
 });
 
@@ -126,7 +126,7 @@ async function handleFetchRequest(request: Request): Promise<Response> {
     {
       status: 404,
       headers: { 'Content-Type': 'text/html' },
-    },
+    }
   );
 }
 
@@ -182,7 +182,7 @@ async function processOfflineQueue(processingFrom: string) {
           credentials: request.credentials,
           headers: request.headers,
           body: request.body,
-        }),
+        })
       );
       if (response.ok) {
         await IDB.del(key, store);
@@ -278,7 +278,7 @@ self.addEventListener('push', (event: PushEvent) => {
 
       // await self.registration.showNotification(data.title, options);
       await processOfflineQueue('PUSH_NOTIFICATION');
-    })(),
+    })()
   );
 });
 

@@ -58,7 +58,7 @@ export function ChasseurSviInspectionCarcasse() {
       if (carcassesIntermediaire?.commentaire) {
         const intermediaireEntity = entities[carcassesIntermediaire.intermediaire_entity_id];
         commentaires.push(
-          `${intermediaireEntity?.nom_d_usage}\u00A0: ${carcassesIntermediaire?.commentaire}`,
+          `${intermediaireEntity?.nom_d_usage}\u00A0: ${carcassesIntermediaire?.commentaire}`
         );
       }
     }

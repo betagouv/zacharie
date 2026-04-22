@@ -94,7 +94,10 @@ export default function AdminCarcassesIntermediaires() {
         </thead>
         <tbody>
           {rows.map((row) => (
-            <tr key={row.zacharie_carcasse_id} className="border-b hover:bg-blue-50">
+            <tr
+              key={row.zacharie_carcasse_id}
+              className="border-b hover:bg-blue-50"
+            >
               <td className="p-1">
                 <Link
                   to={`/app/admin/carcasse/${encodeURIComponent(row.zacharie_carcasse_id)}`}
@@ -105,7 +108,10 @@ export default function AdminCarcassesIntermediaires() {
               </td>
               <td className="p-1">{row.espece}</td>
               <td className="p-1">{row.type}</td>
-              <td className="max-w-[120px] truncate p-1" title={row.fei_numero}>
+              <td
+                className="max-w-[120px] truncate p-1"
+                title={row.fei_numero}
+              >
                 {row.fei_numero}
               </td>
               <td className="p-1">{row._count.CarcasseIntermediaire}</td>

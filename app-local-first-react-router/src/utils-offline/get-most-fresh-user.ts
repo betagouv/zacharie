@@ -36,7 +36,7 @@ export async function refreshUser(_calledFrom: string) {
       setTimeout(() => {
         controller.abort(); // Abort the fetch when the timeout occurs
         reject(new Error('Timeout'));
-      }, 5000),
+      }, 5000)
     );
 
     const cachedUser = useUser.getState().user;

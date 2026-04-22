@@ -57,7 +57,10 @@ export default function MotDePasseOublie() {
   };
 
   return (
-    <main role="main" id="content">
+    <main
+      role="main"
+      id="content"
+    >
       <title>
         Mot de passe oublié | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire
       </title>
@@ -80,11 +83,18 @@ export default function MotDePasseOublie() {
                 id="forget-password-fieldset"
                 aria-labelledby="forget-password-fieldset-legend forget-password-fieldset-messages"
               >
-                <legend className="fr-fieldset__legend" id="forget-password-fieldset-legend">
+                <legend
+                  className="fr-fieldset__legend"
+                  id="forget-password-fieldset-legend"
+                >
                   <h2 className="fr-h3">Mot de passe oublié</h2>
                 </legend>
               </fieldset>
-              <input type="text" name="name" className="hidden" />
+              <input
+                type="text"
+                name="name"
+                className="hidden"
+              />
               <Input
                 hintText="Renseignez votre email ci-dessous. Vous recevrez un email avec un lien pour réinitialiser votre mot de passe."
                 label="Mon email"

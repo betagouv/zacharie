@@ -51,7 +51,7 @@ export default function SelectNextForExaminateur({
 
   const nextOwnerSelectLabel = 'Sélectionnez le Premier Détenteur de pour cette fiche *';
   const [nextOwnerUserOrEntityId, setNextOwnerUserOrEntityId] = useState(
-    fei.premier_detenteur_user_id ?? fei.premier_detenteur_entity_id ?? '',
+    fei.premier_detenteur_user_id ?? fei.premier_detenteur_entity_id ?? ''
   );
 
   const [isSearchingUser, setIsSearchingUser] = useState(false);
@@ -145,8 +145,8 @@ export default function SelectNextForExaminateur({
     <>
       <label className="mb-1 block">Premier détenteur&nbsp;*</label>
       {isFirstFei &&
-        !Object.values(associationsDeChasse).length &&
-        !Object.values(detenteursInitiaux).length ? (
+      !Object.values(associationsDeChasse).length &&
+      !Object.values(detenteursInitiaux).length ? (
         <>
           {!showSearchUserByEmail && (
             <div>
@@ -167,7 +167,11 @@ export default function SelectNextForExaminateur({
                 >
                   Chercher un Premier Détenteur par email
                 </Button>
-                <Button priority="tertiary" type="button" onClick={() => handleSubmitFromSelect(user.id)}>
+                <Button
+                  priority="tertiary"
+                  type="button"
+                  onClick={() => handleSubmitFromSelect(user.id)}
+                >
                   Je suis le Premier Détenteur
                 </Button>
               </div>
@@ -175,13 +179,20 @@ export default function SelectNextForExaminateur({
           )}
         </>
       ) : (
-        <div id="select-next-owner" aria-disabled={disabled}>
+        <div
+          id="select-next-owner"
+          aria-disabled={disabled}
+        >
           <Select
             label=""
             key={fei.premier_detenteur_user_id ?? fei.premier_detenteur_entity_id ?? 'no-choice-yet'}
             disabled={disabled}
             state={showValidationErrors && !nextOwnerUserOrEntityId ? 'error' : 'default'}
-            stateRelatedMessage={showValidationErrors && !nextOwnerUserOrEntityId ? 'Veuillez sélectionner le premier détenteur' : undefined}
+            stateRelatedMessage={
+              showValidationErrors && !nextOwnerUserOrEntityId
+                ? 'Veuillez sélectionner le premier détenteur'
+                : undefined
+            }
             hint={
               <>
                 {!nextOwnerUserOrEntityId && !disabled ? (
@@ -227,7 +238,7 @@ export default function SelectNextForExaminateur({
                   setShowSearchUserByEmail(true);
                 } else if (event.target.value === 'new-entity') {
                   navigate(
-                    `/app/chasseur/profil/associations-de-chasse?redirect=/app/chasseur/fei/${fei.numero}`,
+                    `/app/chasseur/profil/associations-de-chasse?redirect=/app/chasseur/fei/${fei.numero}`
                   );
                 } else {
                   setNextOwnerUserOrEntityId(event.target.value);
@@ -264,36 +275,39 @@ export default function SelectNextForExaminateur({
           {(!nextOwnerUserOrEntityId ||
             (nextOwnerUserOrEntityId !== fei.premier_detenteur_user_id &&
               nextOwnerUserOrEntityId !== fei.premier_detenteur_entity_id)) && (
-              <>
-                <Button
-                  type="button"
-                  disabled={disabled}
-                  onClick={() => {
-                    if (validationErrors.length > 0) {
-                      setShowValidationErrors(true);
-                      onShowErrors?.();
-                      return;
-                    }
-                    setShowValidationErrors(false);
-                    handleSubmitFromSelect(nextOwnerUser?.id);
-                  }}
-                >
-                  Continuer
-                </Button>
-                {showValidationErrors && validationErrors.length > 0 && (
-                  <Alert
-                    severity="error"
-                    title="Champs manquants"
-                    description={validationErrors.map((msg, i) => (
-                      <p key={i} className="fr-mb-0">
-                        {msg}
-                      </p>
-                    ))}
-                    className="mt-4"
-                  />
-                )}
-              </>
-            )}
+            <>
+              <Button
+                type="button"
+                disabled={disabled}
+                onClick={() => {
+                  if (validationErrors.length > 0) {
+                    setShowValidationErrors(true);
+                    onShowErrors?.();
+                    return;
+                  }
+                  setShowValidationErrors(false);
+                  handleSubmitFromSelect(nextOwnerUser?.id);
+                }}
+              >
+                Continuer
+              </Button>
+              {showValidationErrors && validationErrors.length > 0 && (
+                <Alert
+                  severity="error"
+                  title="Champs manquants"
+                  description={validationErrors.map((msg, i) => (
+                    <p
+                      key={i}
+                      className="fr-mb-0"
+                    >
+                      {msg}
+                    </p>
+                  ))}
+                  className="mt-4"
+                />
+              )}
+            </>
+          )}
         </div>
       )}
 
@@ -371,7 +385,10 @@ export default function SelectNextForExaminateur({
                 autoComplete: 'off',
               }}
             />
-            <Button type="submit" disabled={isSearchingUser || disabled}>
+            <Button
+              type="submit"
+              disabled={isSearchingUser || disabled}
+            >
               {!isSearchingUser ? 'Rechercher' : 'Recherche en cours...'}
             </Button>
             {!isOnline && (
@@ -392,7 +409,11 @@ export default function SelectNextForExaminateur({
                   className="mt-4"
                 />
               ) : (
-                <Alert severity="error" title={searchingUserError} className="mt-4" />
+                <Alert
+                  severity="error"
+                  title={searchingUserError}
+                  className="mt-4"
+                />
               )}
             </>
           )}
@@ -451,7 +472,10 @@ const NextOwnerOption = ({
     label = `Vous (${label})`;
   }
   return (
-    <option key={potentielOwner.id} value={potentielOwner.id}>
+    <option
+      key={potentielOwner.id}
+      value={potentielOwner.id}
+    >
       {label}
     </option>
   );

@@ -117,7 +117,7 @@ export default function CircuitCourtProfilNotifications() {
                             },
                             (error) => {
                               console.error('Error subscribing user to push notifications!', error);
-                            },
+                            }
                           );
                         },
                       },

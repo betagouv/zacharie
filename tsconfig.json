@@ -1,7 +1,4 @@
 {
-  "references": [
-    { "path": "./api-express" },
-    { "path": "./app-local-first-react-router" }
-  ],
+  "references": [{ "path": "./api-express" }, { "path": "./app-local-first-react-router" }],
   "files": []
-} 
+}

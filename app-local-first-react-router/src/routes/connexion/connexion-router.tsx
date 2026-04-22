@@ -13,16 +13,35 @@ export default function RouterConnexion() {
     <Route
       path="connexion"
       element={
-        <RootDisplay id="connexion" navigation={landingPageNavigationMenu} mainLink="/app/tableau-de-bord">
+        <RootDisplay
+          id="connexion"
+          navigation={landingPageNavigationMenu}
+          mainLink="/app/tableau-de-bord"
+        >
           <Outlet />
         </RootDisplay>
       }
     >
-      <Route index element={<Connexion />} />
-      <Route path="creation-de-compte" element={<CreationDeCompte />} />
-      <Route path="invitation" element={<Invitation />} />
-      <Route path="mot-de-passe-oublie" element={<MotDePasseOublie />} />
-      <Route path="reset-mot-de-passe" element={<ResetMotDePasse />} />
+      <Route
+        index
+        element={<Connexion />}
+      />
+      <Route
+        path="creation-de-compte"
+        element={<CreationDeCompte />}
+      />
+      <Route
+        path="invitation"
+        element={<Invitation />}
+      />
+      <Route
+        path="mot-de-passe-oublie"
+        element={<MotDePasseOublie />}
+      />
+      <Route
+        path="reset-mot-de-passe"
+        element={<ResetMotDePasse />}
+      />
     </Route>
   );
 }

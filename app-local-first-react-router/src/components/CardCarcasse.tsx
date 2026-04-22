@@ -4,7 +4,6 @@ import { useCarcassesIntermediairesForCarcasse } from '@app/utils/get-carcasses-
 import useUser from '@app/zustand/user';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
-import { Badge } from '@codegouvfr/react-dsfr/Badge';
 import {
   Carcasse,
   CarcasseStatus,
@@ -50,7 +49,7 @@ export default function CardCarcasse({
     createModal({
       id: `carcasse-modal-${carcasse.zacharie_carcasse_id}`,
       isOpenedByDefault: false,
-    }),
+    })
   ).current;
 
   const isCarcasseModalOpen = useIsModalOpen(cacasseModal);
@@ -61,6 +60,12 @@ export default function CardCarcasse({
   const carcassesIntermediaires = useCarcassesIntermediairesForCarcasse(carcasse.zacharie_carcasse_id);
   const latestIntermediaire = carcassesIntermediaires[0];
   const entities = useZustandStore((state) => state.entities);
+  const user = useUser((state) => state.user)!;
+  const viewRole: CardViewRole = user.roles.includes(UserRoles.SVI)
+    ? 'svi'
+    : user.roles.includes(UserRoles.ETG) || user.roles.includes(UserRoles.COLLECTEUR_PRO)
+      ? 'etg-coll'
+      : 'chasseur';
 
   const commentairesIntermediaires = useMemo(() => {
     const commentaires = [];
@@ -68,14 +73,14 @@ export default function CardCarcasse({
       if (_carcasseIntermediaire?.commentaire) {
         const _intermediaireEntity = entities[_carcasseIntermediaire.intermediaire_entity_id];
         commentaires.push(
-          `Commentaire de ${_intermediaireEntity?.nom_d_usage}\u00A0: ${_carcasseIntermediaire?.commentaire}`,
+          `Commentaire de ${_intermediaireEntity?.nom_d_usage}\u00A0: ${_carcasseIntermediaire?.commentaire}`
         );
       }
     }
     return commentaires;
   }, [carcassesIntermediaires, entities]);
 
-  let { statusNewCard, motifRefus } = useCarcasseStatusAndRefus(carcasse, fei);
+  const { statusNewCard, motifRefus } = useCarcasseStatusAndRefus(carcasse, fei);
 
   let miseAMort = '';
   if (!hideDateMiseAMort) {
@@ -98,43 +103,59 @@ export default function CardCarcasse({
     if (commentairesIntermediaires.length > 1) descriptionLine += 's';
   }
 
-  if (!carcasse.svi_ipm1_date && !carcasse.svi_ipm2_date) {
-    if (forceRefus) {
-      if (!statusNewCard.includes('refusé')) statusNewCard = 'refusé';
-    } else if (forceManquante) {
-      if (!statusNewCard.includes('manquant')) statusNewCard = 'manquant';
-    } else if (forceAccept) {
-      if (!statusNewCard.includes('accepté')) statusNewCard = 'accepté';
-    }
-  }
-
-  // Déterminer qui a accepté en dernier (SVI ou ETG) et récupérer les informations de l'entité
-  let acceptInfo: { type: 'SVI' | 'ETG'; entity: (typeof entities)[string] | null } | null = null;
-  if (statusNewCard.includes('accepté') || statusNewCard.includes('saisie partielle')) {
-    const hasSviStatus =
-      !!carcasse.svi_carcasse_status && carcasse.svi_carcasse_status !== CarcasseStatus.SANS_DECISION;
-    const sviEntity = hasSviStatus && fei.svi_entity_id ? entities[fei.svi_entity_id] : null;
-
-    const isEtgAccepted =
-      latestIntermediaire?.decision_at && latestIntermediaire?.intermediaire_role === FeiOwnerRole.ETG;
-    const etgEntity =
-      isEtgAccepted && latestIntermediaire?.intermediaire_entity_id
-        ? entities[latestIntermediaire.intermediaire_entity_id]
-        : null;
-
-    if (hasSviStatus) {
-      acceptInfo = { type: 'SVI', entity: sviEntity };
-    } else if (isEtgAccepted) {
-      acceptInfo = { type: 'ETG', entity: etgEntity };
-    }
-  }
+  const cardDisplay = getCarcasseCardDisplay({
+    carcasse,
+    fei,
+    latestIntermediaire,
+    entities,
+    viewRole,
+    forceRefus,
+    forceManquante,
+    forceAccept,
+  });
 
   const isEcarteePourInspection =
-    !!latestIntermediaire?.ecarte_pour_inspection && statusNewCard.includes('cours');
-  const isEnCours = !latestIntermediaire?.ecarte_pour_inspection && statusNewCard.includes('cours');
-  const isRefus = statusNewCard.includes('refus');
-  const isManquante = statusNewCard.includes('manquant');
-  const isAccept = statusNewCard.includes('accepté') || statusNewCard.includes('saisie partielle');
+    !!latestIntermediaire?.ecarte_pour_inspection &&
+    (cardDisplay.uiState === 'transmise' || cardDisplay.uiState === 'acceptee-etg');
+
+  const accentBorderClass = (() => {
+    if (isEcarteePourInspection) return 'border-error-main-525 border-l-3';
+    switch (cardDisplay.accentColor) {
+      case 'red':
+        return 'border-error-main-525 border-l-3';
+      case 'blue':
+        return 'border-action-high-blue-france border-l-3';
+      case 'orange':
+        return 'border-warning-main-525 border-l-3';
+      default:
+        return '';
+    }
+  })();
+
+  const accentTextClass = (() => {
+    if (isEcarteePourInspection) return 'text-error-main-525';
+    switch (cardDisplay.accentColor) {
+      case 'red':
+        return 'text-error-main-525';
+      case 'blue':
+        return 'text-action-high-blue-france';
+      case 'orange':
+        return 'text-warning-main-525';
+      case 'gray':
+        return 'text-gray-600';
+      default:
+        return '';
+    }
+  })();
+
+  const statusLabel = isEcarteePourInspection ? 'Écarté pour inspection' : cardDisplay.statusLabel;
+  const statusIconId = isEcarteePourInspection ? 'fr-icon-alert-line' : cardDisplay.iconId;
+  const showStatusLine = isEcarteePourInspection || cardDisplay.showStatusLine;
+  const isBlockingState =
+    cardDisplay.uiState === 'refusee-etg' ||
+    cardDisplay.uiState === 'manquante-etg' ||
+    cardDisplay.uiState === 'manquante-svi' ||
+    cardDisplay.uiState === 'saisie-totale';
 
   const nombreDAnimaux = carcasse.nombre_d_animaux ?? 0;
   const nombreDAnimauxAcceptes = latestIntermediaire?.nombre_d_animaux_acceptes ?? 0;
@@ -149,66 +170,44 @@ export default function CardCarcasse({
     <>
       <div
         className={[
-          'flex basis-full flex-row items-center justify-between border-solid border-1 border-transparent hover:border-gray-300! text-left',
+          'flex basis-full flex-row items-center justify-between border-1 border-solid border-transparent text-left hover:border-gray-300!',
           'bg-contrast-grey border-0',
-          isEcarteePourInspection && 'border-error-main-525 border-l-3',
-          isRefus && 'border-error-main-525 border-l-3',
-          isManquante && 'border-manquante border-error-main-525 border-l-3',
-          isAccept && 'border-action-high-blue-france border-l-3',
+          accentBorderClass,
           className || '',
         ]
           .filter(Boolean)
           .join(' ')}
       >
         <button
-          className="flex flex-1 flex-col border-none p-4 text-left hover:bg-transparent"
+          className="flex flex-1 flex-row items-center gap-3 border-none p-4 text-left hover:bg-transparent"
           type="button"
           onClick={onClick ? onClick : cacasseModal.open}
         >
-          <p className="order-1 text-base font-bold">
-            {carcasse.espece} {nombreDAnimauxDisplay}
-          </p>
-          <p className="order-2 text-sm/4 font-bold">N° {carcasse.numero_bracelet}</p>
-          {miseAMort && <p className="order-3 text-sm/4">{miseAMort}</p>}
-          <p
-            className={[
-              'text-sm/4',
-              !descriptionLine && 'text-transparent',
-              isEnCours ? 'order-4' : 'order-6',
-              isEcarteePourInspection && 'text-error-main-525',
-              isRefus && 'text-error-main-525',
-              isManquante && 'text-error-main-525',
-              isAccept && 'text-action-high-blue-france',
-            ].join(' ')}
-          >
-            {descriptionLine || 'Aucune anomalie'}
-          </p>
-          <p
-            className={[
-              'order-5 text-sm/4 first-letter:uppercase',
-              isEnCours && 'text-transparent!',
-              !isEnCours && 'font-bold', // bold pour accepté et refusé et manquant
-              isEcarteePourInspection && 'text-error-main-525',
-              isRefus && 'text-error-main-525',
-              isManquante && 'text-manquante text-error-main-525',
-              isAccept && 'text-action-high-blue-france',
-            ]
-              .filter(Boolean)
-              .join(' ')}
-          >
-            {isEcarteePourInspection ? (
-              'Écarté pour inspection'
-            ) : acceptInfo && acceptInfo.entity?.nom_d_usage ? (
-              <>
-                {statusNewCard} par {acceptInfo.entity.nom_d_usage}{' '}
-                <Badge severity="new" small noIcon as="span">
-                  {acceptInfo.type}
-                </Badge>
-              </>
-            ) : (
-              statusNewCard
+          {statusIconId && (
+            <span
+              className={[statusIconId, 'shrink-0 text-2xl', accentTextClass].filter(Boolean).join(' ')}
+              aria-hidden="true"
+            />
+          )}
+          <div className="flex flex-1 flex-col">
+            <p className="text-base font-bold">
+              {carcasse.espece} {nombreDAnimauxDisplay}
+            </p>
+            <p className="text-sm/4 font-bold">N° {carcasse.numero_bracelet}</p>
+            {miseAMort && <p className="text-sm/4">{miseAMort}</p>}
+            {showStatusLine && statusLabel && (
+              <p
+                className={['text-sm/4 font-bold first-letter:uppercase', accentTextClass]
+                  .filter(Boolean)
+                  .join(' ')}
+              >
+                {statusLabel}
+              </p>
             )}
-          </p>
+            {descriptionLine && (
+              <p className={['text-sm/4', accentTextClass].filter(Boolean).join(' ')}>{descriptionLine}</p>
+            )}
+          </div>
         </button>
         {(onEdit || onDelete) && (
           <div className="flex flex-row gap-2 pr-4">
@@ -221,7 +220,7 @@ export default function CardCarcasse({
                 priority="tertiary no outline"
               />
             )}
-            {onDelete && !isRefus && !isManquante && (
+            {onDelete && !isBlockingState && (
               <Button
                 type="button"
                 iconId="fr-icon-delete-bin-line"
@@ -354,8 +353,8 @@ function CarcasseDetails({
       : null;
   const etgDate = latestIntermediaire
     ? dayjs(latestIntermediaire.prise_en_charge_at || latestIntermediaire.decision_at).format(
-      'dddd D MMMM YYYY à HH:mm',
-    )
+        'dddd D MMMM YYYY à HH:mm'
+      )
     : null;
 
   const sviAssignedToFeiAt = carcasse.svi_assigned_to_fei_at
@@ -369,12 +368,12 @@ function CarcasseDetails({
     ];
     if (carcasse.heure_mise_a_mort_premiere_carcasse_fei) {
       _milestones.push(
-        `Heure de mise à mort de la première carcasse de la fiche\u00A0: ${carcasse.heure_mise_a_mort_premiere_carcasse_fei}`,
+        `Heure de mise à mort de la première carcasse de la fiche\u00A0: ${carcasse.heure_mise_a_mort_premiere_carcasse_fei}`
       );
     }
     if (onlyPetitGibier && carcasse.heure_evisceration_derniere_carcasse_fei) {
       _milestones.push(
-        `Heure d'éviscération de la dernière carcasse de la fiche\u00A0: ${carcasse.heure_evisceration_derniere_carcasse_fei}`,
+        `Heure d'éviscération de la dernière carcasse de la fiche\u00A0: ${carcasse.heure_evisceration_derniere_carcasse_fei}`
       );
     }
     if (ccgDate) _milestones.push(`Date et heure de dépôt dans le CCG\u00A0: ${ccgDate}`);
@@ -387,7 +386,7 @@ function CarcasseDetails({
     // if (carcasse.svi_ipm1_date) _milestones.push(`Date de l'inspection\u00A0: ${dayjs(carcasse.svi_ipm1_date).format('dddd D MMMM YYYY')}`);
     if (carcasse.svi_ipm2_date)
       _milestones.push(
-        `Date de l'inspection du service vétérinaire\u00A0: ${dayjs(carcasse.svi_ipm2_date).format('dddd D MMMM YYYY')}`,
+        `Date de l'inspection du service vétérinaire\u00A0: ${dayjs(carcasse.svi_ipm2_date).format('dddd D MMMM YYYY')}`
       );
     return _milestones;
   }, [
@@ -427,7 +426,7 @@ function CarcasseDetails({
               return <li key={index}>{piece}</li>;
             })}
           </ul>
-        </>,
+        </>
       );
     }
     if (carcasse.svi_ipm1_lesions_ou_motifs.length) {
@@ -439,7 +438,7 @@ function CarcasseDetails({
               return <li key={index}>{type}</li>;
             })}
           </ul>
-        </>,
+        </>
       );
     }
     switch (carcasse.svi_ipm1_decision) {
@@ -489,7 +488,7 @@ function CarcasseDetails({
               return <li key={index}>{piece}</li>;
             })}
           </ul>
-        </>,
+        </>
       );
     }
     if (carcasse.svi_ipm2_lesions_ou_motifs.length) {
@@ -501,7 +500,7 @@ function CarcasseDetails({
               return <li key={index}>{type}</li>;
             })}
           </ul>
-        </>,
+        </>
       );
     }
     switch (carcasse.svi_ipm2_decision) {
@@ -526,17 +525,17 @@ function CarcasseDetails({
     }
     if (carcasse.svi_ipm2_traitement_assainissant_cuisson_temp) {
       imp2Lines.push(
-        `Température de cuisson\u00A0: ${carcasse.svi_ipm2_traitement_assainissant_cuisson_temp}`,
+        `Température de cuisson\u00A0: ${carcasse.svi_ipm2_traitement_assainissant_cuisson_temp}`
       );
     }
     if (carcasse.svi_ipm2_traitement_assainissant_congelation_temps) {
       imp2Lines.push(
-        `Temps de congélation\u00A0: ${carcasse.svi_ipm2_traitement_assainissant_congelation_temps}`,
+        `Temps de congélation\u00A0: ${carcasse.svi_ipm2_traitement_assainissant_congelation_temps}`
       );
     }
     if (carcasse.svi_ipm2_traitement_assainissant_congelation_temp) {
       imp2Lines.push(
-        `Température de congélation\u00A0: ${carcasse.svi_ipm2_traitement_assainissant_congelation_temp}`,
+        `Température de congélation\u00A0: ${carcasse.svi_ipm2_traitement_assainissant_congelation_temp}`
       );
     }
     if (carcasse.svi_ipm2_traitement_assainissant_type) {
@@ -547,7 +546,7 @@ function CarcasseDetails({
     }
     if (carcasse.svi_ipm2_traitement_assainissant_etablissement) {
       imp2Lines.push(
-        `Établissement désigné pour réaliser le traitement assainissant\u00A0: ${carcasse.svi_ipm2_traitement_assainissant_etablissement}`,
+        `Établissement désigné pour réaliser le traitement assainissant\u00A0: ${carcasse.svi_ipm2_traitement_assainissant_etablissement}`
       );
     }
     if (carcasse.svi_ipm2_traitement_assainissant_poids) {
@@ -565,9 +564,17 @@ function CarcasseDetails({
   return (
     <>
       <hr className="mt-4 bg-none" />
-      <ItemNotEditable label="Informations clés" value={milestones} withDiscs />
+      <ItemNotEditable
+        label="Informations clés"
+        value={milestones}
+        withDiscs
+      />
       {carcasse.examinateur_anomalies_abats?.length > 0 && (
-        <ItemNotEditable label="Anomalies abats" value={carcasse.examinateur_anomalies_abats} withDiscs />
+        <ItemNotEditable
+          label="Anomalies abats"
+          value={carcasse.examinateur_anomalies_abats}
+          withDiscs
+        />
       )}
       {carcasse.examinateur_anomalies_carcasse?.length > 0 && (
         <ItemNotEditable
@@ -614,13 +621,236 @@ function CarcasseDetails({
       )}
       <hr className="my-4" />
       <h2 className="mb-4 ml-2 text-lg font-semibold text-gray-900">Acteurs de la chasse</h2>
-      <ItemNotEditable label="Examinateur Initial" value={examinateurInitialInput} />
-      <ItemNotEditable label="Premier Détenteur" value={premierDetenteurInput} />
+      <ItemNotEditable
+        label="Examinateur Initial"
+        value={examinateurInitialInput}
+      />
+      <ItemNotEditable
+        label="Premier Détenteur"
+        value={premierDetenteurInput}
+      />
       {intermediairesInputs.map((intermediaireInput, index) => {
         return (
-          <ItemNotEditable key={index} label={intermediaireInput.label} value={intermediaireInput.value} />
+          <ItemNotEditable
+            key={index}
+            label={intermediaireInput.label}
+            value={intermediaireInput.value}
+          />
         );
       })}
     </>
   );
+}
+
+type CardViewRole = 'chasseur' | 'etg-coll' | 'svi';
+type CardUiState =
+  | 'creation'
+  | 'transmise'
+  | 'manquante-etg'
+  | 'refusee-etg'
+  | 'acceptee-etg'
+  | 'manquante-svi'
+  | 'mise-en-consigne'
+  | 'saisie-partielle'
+  | 'saisie-totale'
+  | 'accepte-svi';
+type CardAccent = 'red' | 'blue' | 'orange' | 'gray' | null;
+
+interface CardDisplay {
+  uiState: CardUiState;
+  iconId: string | null;
+  accentColor: CardAccent;
+  statusLabel: string | null;
+  showStatusLine: boolean;
+}
+
+interface CardDisplayParams {
+  carcasse: Carcasse;
+  fei: ReturnType<typeof useZustandStore.getState>['feis'][string];
+  latestIntermediaire: ReturnType<typeof useCarcassesIntermediairesForCarcasse>[number] | undefined;
+  entities: ReturnType<typeof useZustandStore.getState>['entities'];
+  viewRole: CardViewRole;
+  forceRefus?: boolean;
+  forceManquante?: boolean;
+  forceAccept?: boolean;
+}
+
+function deriveCarcasseUiState(
+  carcasse: Carcasse,
+  fei: CardDisplayParams['fei'],
+  latestIntermediaire: CardDisplayParams['latestIntermediaire'],
+  overrides: { forceRefus?: boolean; forceManquante?: boolean; forceAccept?: boolean }
+): CardUiState {
+  if (!carcasse.svi_ipm1_date && !carcasse.svi_ipm2_date) {
+    if (overrides.forceRefus) return 'refusee-etg';
+    if (overrides.forceManquante) return 'manquante-etg';
+    if (overrides.forceAccept) return 'acceptee-etg';
+  }
+
+  const status = carcasse.svi_carcasse_status ?? CarcasseStatus.SANS_DECISION;
+
+  switch (status) {
+    case CarcasseStatus.MANQUANTE_ETG_COLLECTEUR:
+      return 'manquante-etg';
+    case CarcasseStatus.REFUS_ETG_COLLECTEUR:
+      return 'refusee-etg';
+    case CarcasseStatus.MANQUANTE_SVI:
+      return 'manquante-svi';
+    case CarcasseStatus.SAISIE_TOTALE:
+      return 'saisie-totale';
+    case CarcasseStatus.SAISIE_PARTIELLE:
+      return 'saisie-partielle';
+    case CarcasseStatus.CONSIGNE:
+      return 'mise-en-consigne';
+    case CarcasseStatus.ACCEPTE:
+    case CarcasseStatus.LEVEE_DE_CONSIGNE:
+    case CarcasseStatus.TRAITEMENT_ASSAINISSANT:
+      return 'accepte-svi';
+    case CarcasseStatus.SANS_DECISION: {
+      const isCreation =
+        (fei?.fei_current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL ||
+          fei?.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR) &&
+        !fei?.fei_next_owner_role;
+      if (isCreation) return 'creation';
+      if (latestIntermediaire?.decision_at && latestIntermediaire?.intermediaire_role === FeiOwnerRole.ETG) {
+        return 'acceptee-etg';
+      }
+      return 'transmise';
+    }
+    default: {
+      // Exhaustiveness check — adding a new CarcasseStatus enum value breaks the build
+      // here until the case is wired. Runtime fallback = transmise (carte nue).
+      const _exhaustive: never = status;
+      void _exhaustive;
+      return 'transmise';
+    }
+  }
+}
+
+function getCarcasseCardDisplay(params: CardDisplayParams): CardDisplay {
+  const { carcasse, fei, latestIntermediaire, entities, viewRole, forceRefus, forceManquante, forceAccept } =
+    params;
+
+  const uiState = deriveCarcasseUiState(carcasse, fei, latestIntermediaire, {
+    forceRefus,
+    forceManquante,
+    forceAccept,
+  });
+
+  const isPetitGibier = carcasse.type === CarcasseType.PETIT_GIBIER;
+  const manquantWord = isPetitGibier ? 'Manquant' : 'Manquante';
+  const refuseWord = isPetitGibier ? 'Refusé' : 'Refusée';
+  const accepteWord = isPetitGibier ? 'Accepté' : 'Acceptée';
+
+  const intermediaireEntity = latestIntermediaire?.intermediaire_entity_id
+    ? entities[latestIntermediaire.intermediaire_entity_id]
+    : null;
+  const intermediaireName = intermediaireEntity?.nom_d_usage ?? '';
+
+  if (viewRole === 'chasseur') {
+    if (uiState === 'creation') {
+      return { uiState, iconId: null, accentColor: null, statusLabel: null, showStatusLine: false };
+    }
+    if (uiState === 'transmise' || uiState === 'acceptee-etg' || uiState === 'mise-en-consigne') {
+      return {
+        uiState,
+        iconId: 'fr-icon-refresh-line',
+        accentColor: 'gray',
+        statusLabel: 'En cours de traitement',
+        showStatusLine: true,
+      };
+    }
+    if (uiState === 'saisie-partielle') {
+      return {
+        uiState,
+        iconId: 'fr-icon-checkbox-circle-line',
+        accentColor: 'blue',
+        statusLabel: `${accepteWord} partiellement par le service vétérinaire`,
+        showStatusLine: true,
+      };
+    }
+    if (uiState === 'saisie-totale') {
+      return {
+        uiState,
+        iconId: 'fr-icon-close-circle-line',
+        accentColor: 'red',
+        statusLabel: `${refuseWord} par le service vétérinaire`,
+        showStatusLine: true,
+      };
+    }
+  }
+
+  if (viewRole === 'svi' && (uiState === 'acceptee-etg' || uiState === 'transmise')) {
+    return { uiState, iconId: null, accentColor: null, statusLabel: null, showStatusLine: false };
+  }
+
+  switch (uiState) {
+    case 'creation':
+    case 'transmise':
+      return { uiState, iconId: null, accentColor: null, statusLabel: null, showStatusLine: false };
+    case 'manquante-etg':
+      return {
+        uiState,
+        iconId: 'fr-icon-alert-line',
+        accentColor: 'red',
+        statusLabel: intermediaireName ? `${manquantWord} pour ${intermediaireName}` : `${manquantWord}`,
+        showStatusLine: true,
+      };
+    case 'refusee-etg':
+      return {
+        uiState,
+        iconId: 'fr-icon-close-circle-line',
+        accentColor: 'red',
+        statusLabel: intermediaireName ? `${refuseWord} par ${intermediaireName}` : `${refuseWord}`,
+        showStatusLine: true,
+      };
+    case 'acceptee-etg':
+      return {
+        uiState,
+        iconId: 'fr-icon-checkbox-circle-line',
+        accentColor: 'blue',
+        statusLabel: intermediaireName ? `${accepteWord} par ${intermediaireName}` : `${accepteWord}`,
+        showStatusLine: true,
+      };
+    case 'manquante-svi':
+      return {
+        uiState,
+        iconId: 'fr-icon-alert-line',
+        accentColor: 'red',
+        statusLabel: `${manquantWord} pour le service vétérinaire`,
+        showStatusLine: true,
+      };
+    case 'mise-en-consigne':
+      return {
+        uiState,
+        iconId: 'fr-icon-time-line',
+        accentColor: 'orange',
+        statusLabel: 'Mise en consigne par le service vétérinaire',
+        showStatusLine: true,
+      };
+    case 'saisie-partielle':
+      return {
+        uiState,
+        iconId: 'fr-icon-error-warning-line',
+        accentColor: 'red',
+        statusLabel: `${refuseWord} partiellement par le service vétérinaire`,
+        showStatusLine: true,
+      };
+    case 'saisie-totale':
+      return {
+        uiState,
+        iconId: 'fr-icon-close-circle-line',
+        accentColor: 'red',
+        statusLabel: `${refuseWord} par le service vétérinaire`,
+        showStatusLine: true,
+      };
+    case 'accepte-svi':
+      return {
+        uiState,
+        iconId: 'fr-icon-checkbox-circle-line',
+        accentColor: 'blue',
+        statusLabel: `${accepteWord} par le service vétérinaire`,
+        showStatusLine: true,
+      };
+  }
 }

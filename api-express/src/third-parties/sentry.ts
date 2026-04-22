@@ -8,7 +8,7 @@ function capture(
   context?: {
     extra?: any;
     [key: string]: unknown;
-  },
+  }
 ) {
   if (!sentryEnabled) {
     console.log('capture', error, JSON.stringify(context, null, 2));

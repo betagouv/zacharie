@@ -31,7 +31,7 @@ router.post(
     async (
       req: RequestWithApiKey,
       res: express.Response<ApprovalRequestForApi>,
-      next: express.NextFunction,
+      next: express.NextFunction
     ) => {
       const bodySchema = z.object({
         email: z.string().email("Format d'email invalide"),
@@ -41,7 +41,7 @@ router.post(
       if (!bodyResult.success) {
         const errors = bodyResult.error.issues.map((i) => i.message).join('. ');
         const error = new Error(
-          `${errors}. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`,
+          `${errors}. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`
         );
         res.status(400);
         return next(error);
@@ -57,7 +57,7 @@ router.post(
 
       if (!user) {
         const error = new Error(
-          `L'email ${email} n'est pas trouvé dans la base de données. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`,
+          `L'email ${email} n'est pas trouvé dans la base de données. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`
         );
         res.status(400);
         return next(error);
@@ -91,8 +91,8 @@ router.post(
         message:
           "La demande d'approbation a été envoyée. L'utilisateur doit désormais se rendre sur https://zacharie.beta.gouv.fr/app/chasseur/profil/partage-de-mes-donnees pour approuver ou rejeter la demande. Il se connecte puis clique sur 'Paramètres' puis 'Partage de mes données'. Pour toute question ou remarque, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.",
       });
-    },
-  ),
+    }
+  )
 );
 
 /* 

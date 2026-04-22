@@ -37,7 +37,7 @@ export default function CarcasseIntermediaireComp({
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
   const carcasseIntermediaireId = getFeiAndCarcasseAndIntermediaireIdsFromCarcasse(
     carcasse,
-    intermediaire.id,
+    intermediaire.id
   );
   const carcasseIntermediaire = carcassesIntermediaireById[carcasseIntermediaireId];
   const carcassesIntermediaires = useCarcassesIntermediairesForCarcasse(carcasse.zacharie_carcasse_id);
@@ -49,7 +49,7 @@ export default function CarcasseIntermediaireComp({
       if (_carcasseIntermediaire?.commentaire) {
         const intermediaireEntity = entities[_carcasseIntermediaire.intermediaire_entity_id];
         commentaires.push(
-          `${intermediaireEntity?.nom_d_usage}\u00A0: ${_carcasseIntermediaire?.commentaire}`,
+          `${intermediaireEntity?.nom_d_usage}\u00A0: ${_carcasseIntermediaire?.commentaire}`
         );
       }
     }
@@ -62,7 +62,7 @@ export default function CarcasseIntermediaireComp({
     createModal({
       isOpenedByDefault: false,
       id: `refus-intermediaire-modal-carcasse-${carcasseIntermediaireId}`,
-    }),
+    })
   ).current;
   const isRefusIntermediaireModalOpen = useIsModalOpen(refusIntermediaireModal);
 
@@ -74,10 +74,10 @@ export default function CarcasseIntermediaireComp({
       !carcasse.intermediaire_carcasse_manquante &&
       carcasse.type === CarcasseType.PETIT_GIBIER &&
       carcasseIntermediaire.nombre_d_animaux_acceptes !== null &&
-      carcasseIntermediaire.nombre_d_animaux_acceptes !== (carcasse.nombre_d_animaux ?? 0),
+      carcasseIntermediaire.nombre_d_animaux_acceptes !== (carcasse.nombre_d_animaux ?? 0)
   );
   const [refus, setRefus] = useState(
-    carcasse.intermediaire_carcasse_refus_motif ?? carcasseIntermediaire.refus ?? '',
+    carcasse.intermediaire_carcasse_refus_motif ?? carcasseIntermediaire.refus ?? ''
   );
   const [commentaire, setCommentaire] = useState(carcasseIntermediaire.commentaire ?? '');
   const [poids, setPoids] = useState(carcasseIntermediaire.intermediaire_poids ?? '');
@@ -93,7 +93,7 @@ export default function CarcasseIntermediaireComp({
       ? isLotRefuse
         ? 0 // Si le lot est refusé, 0 animaux acceptés
         : (nombreAnimauxAccepteFromDb ?? null)
-      : null,
+      : null
   );
 
   const submitCarcasseManquante = () => {
@@ -339,7 +339,7 @@ export default function CarcasseIntermediaireComp({
     commentaireHint.push(`Un commentaire à ajouter\u00A0?`);
   } else {
     commentaireHint.push(
-      `Un commentaire à ajouter\u00A0? Une carcasse retirée d'un lot de petit gibier\u00A0? Indiquez le ici et précisez-en les motifs le cas échéant.`,
+      `Un commentaire à ajouter\u00A0? Une carcasse retirée d'un lot de petit gibier\u00A0? Indiquez le ici et précisez-en les motifs le cas échéant.`
     );
   }
   if (commentairesIntermediaires.length) {
@@ -368,7 +368,10 @@ export default function CarcasseIntermediaireComp({
               <br />
               {commentairesIntermediaires.map((commentaire, index) => {
                 return (
-                  <p key={commentaire + index} className="mt-2 block text-sm font-normal opacity-70">
+                  <p
+                    key={commentaire + index}
+                    className="mt-2 block text-sm font-normal opacity-70"
+                  >
                     {commentaire}
                   </p>
                 );
@@ -379,7 +382,10 @@ export default function CarcasseIntermediaireComp({
                   <br />
                   {carcasse.examinateur_anomalies_abats.map((anomalie) => {
                     return (
-                      <span className="m-0 ml-2 block font-normal opacity-70" key={anomalie}>
+                      <span
+                        className="m-0 ml-2 block font-normal opacity-70"
+                        key={anomalie}
+                      >
                         {anomalie}
                       </span>
                     );
@@ -392,7 +398,10 @@ export default function CarcasseIntermediaireComp({
                   <br />
                   {carcasse.examinateur_anomalies_carcasse.map((anomalie) => {
                     return (
-                      <span className="m-0 ml-2 block font-normal opacity-70" key={anomalie}>
+                      <span
+                        className="m-0 ml-2 block font-normal opacity-70"
+                        key={anomalie}
+                      >
                         {anomalie}
                       </span>
                     );
@@ -437,7 +446,10 @@ export default function CarcasseIntermediaireComp({
                         }}
                         disabled={!canEdit}
                       />
-                      <label className="fr-label" htmlFor="carcasse-status-accept">
+                      <label
+                        className="fr-label"
+                        htmlFor="carcasse-status-accept"
+                      >
                         {carcasse.type === CarcasseType.GROS_GIBIER ? 'Carcasse acceptée' : 'Lot accepté'}
                       </label>
                     </div>
@@ -457,7 +469,10 @@ export default function CarcasseIntermediaireComp({
                             }}
                             disabled={!canEdit}
                           />
-                          <label className="fr-label" htmlFor="carcasse-status-accept-partiel">
+                          <label
+                            className="fr-label"
+                            htmlFor="carcasse-status-accept-partiel"
+                          >
                             Lot partiellement accepté
                           </label>
                         </div>
@@ -517,7 +532,10 @@ export default function CarcasseIntermediaireComp({
                         }}
                         disabled={!canEdit}
                       />
-                      <label className="fr-label" htmlFor="carcasse-status-refus">
+                      <label
+                        className="fr-label"
+                        htmlFor="carcasse-status-refus"
+                      >
                         {carcasse.type === CarcasseType.GROS_GIBIER ? 'Carcasse refusée' : 'Lot refusé'}
                       </label>
                       {carcasse.type === CarcasseType.PETIT_GIBIER && (
@@ -559,7 +577,10 @@ export default function CarcasseIntermediaireComp({
                         }}
                         disabled={!canEdit}
                       />
-                      <label className="fr-label" htmlFor="carcasse-status-manquante">
+                      <label
+                        className="fr-label"
+                        htmlFor="carcasse-status-manquante"
+                      >
                         {carcasse.type === CarcasseType.GROS_GIBIER ? 'Carcasse manquante' : 'Lot manquant'}
                       </label>
                     </div>

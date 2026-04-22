@@ -64,7 +64,7 @@ export function SviInspectionCarcasse() {
       if (carcassesIntermediaire?.commentaire) {
         const intermediaireEntity = entities[carcassesIntermediaire.intermediaire_entity_id];
         commentaires.push(
-          `${intermediaireEntity?.nom_d_usage}\u00A0: ${carcassesIntermediaire?.commentaire}`,
+          `${intermediaireEntity?.nom_d_usage}\u00A0: ${carcassesIntermediaire?.commentaire}`
         );
       }
     }
@@ -109,7 +109,7 @@ export function SviInspectionCarcasse() {
 
   const initIMP1Open = useRef(!carcasse.svi_ipm1_decision);
   const initIMP2Open = useRef(
-    carcasse.svi_ipm1_decision !== IPM1Decision.ACCEPTE && !carcasse.svi_ipm2_decision,
+    carcasse.svi_ipm1_decision !== IPM1Decision.ACCEPTE && !carcasse.svi_ipm2_decision
   );
 
   return (

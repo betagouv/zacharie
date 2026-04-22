@@ -60,7 +60,7 @@ const searchParamsSchema = z.object({
         const parts = carcasseString.split(',');
         if (parts.length < 2) {
           throw new Error(
-            'Format invalide pour carcasse, attendu: numero_bracelet,espece[,nombre_d_animaux]',
+            'Format invalide pour carcasse, attendu: numero_bracelet,espece[,nombre_d_animaux]'
           );
         }
         const [numero_bracelet, espece, nombre_d_animaux = '1'] = parts;
@@ -180,7 +180,10 @@ export default function NouvelleFiche() {
 
 function CantCreateNewFiche({ validationError }: { validationError?: string | null }) {
   return (
-    <main role="main" id="content">
+    <main
+      role="main"
+      id="content"
+    >
       <div className="fr-container">
         <div className="fr-my-7w fr-mt-md-12w fr-mb-md-10w fr-grid-row fr-grid-row--gutters fr-grid-row--middle fr-grid-row--center">
           <div className="fr-py-0 fr-col-12 fr-col-md-6">

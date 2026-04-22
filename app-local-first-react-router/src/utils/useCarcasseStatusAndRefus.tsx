@@ -33,7 +33,7 @@ export function useCarcasseStatusAndRefus(carcasse: Carcasse, fei: Fei) {
       case CarcasseStatus.MANQUANTE_ETG_COLLECTEUR: {
         const id = getFeiAndCarcasseAndIntermediaireIdsFromCarcasse(
           carcasse,
-          carcasse.intermediaire_carcasse_refus_intermediaire_id!,
+          carcasse.intermediaire_carcasse_refus_intermediaire_id!
         );
         const carcasseIntermediaire = carcassesIntermediaires[id];
         const entity = entities[carcasseIntermediaire.intermediaire_entity_id!];
@@ -45,7 +45,7 @@ export function useCarcasseStatusAndRefus(carcasse: Carcasse, fei: Fei) {
       case CarcasseStatus.REFUS_ETG_COLLECTEUR: {
         const id = getFeiAndCarcasseAndIntermediaireIdsFromCarcasse(
           carcasse,
-          carcasse.intermediaire_carcasse_refus_intermediaire_id!,
+          carcasse.intermediaire_carcasse_refus_intermediaire_id!
         );
         const carcasseIntermediaire = carcassesIntermediaires[id];
         const entity = entities[carcasseIntermediaire.intermediaire_entity_id!];
@@ -76,7 +76,7 @@ export function useCarcasseStatusAndRefus(carcasse: Carcasse, fei: Fei) {
       case CarcasseStatus.MANQUANTE_ETG_COLLECTEUR: {
         const id = getFeiAndCarcasseAndIntermediaireIdsFromCarcasse(
           carcasse,
-          carcasse.intermediaire_carcasse_refus_intermediaire_id!,
+          carcasse.intermediaire_carcasse_refus_intermediaire_id!
         );
         const carcasseIntermediaire = carcassesIntermediaires[id];
         const entity = entities[carcasseIntermediaire.intermediaire_entity_id!];
@@ -87,7 +87,7 @@ export function useCarcasseStatusAndRefus(carcasse: Carcasse, fei: Fei) {
       case CarcasseStatus.REFUS_ETG_COLLECTEUR: {
         const id = getFeiAndCarcasseAndIntermediaireIdsFromCarcasse(
           carcasse,
-          carcasse.intermediaire_carcasse_refus_intermediaire_id!,
+          carcasse.intermediaire_carcasse_refus_intermediaire_id!
         );
         const carcasseIntermediaire = carcassesIntermediaires[id];
         const entity = entities[carcasseIntermediaire.intermediaire_entity_id!];

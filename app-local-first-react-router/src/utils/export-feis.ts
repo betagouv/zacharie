@@ -117,7 +117,7 @@ function createSheet<
       });
       return [...xlsxData, row];
     },
-    [header],
+    [header]
   );
   const worksheet = utils.aoa_to_sheet(sheet);
   worksheet['!rows'] = rowHeights;
@@ -223,7 +223,7 @@ function sortCarcassesApprovedForExcel(carcasseA: CarcasseExcelData, carcasseB: 
 
 function sortSimplifiedCarcasses(
   carcasseA: SimplifiedCarcasseExcelData,
-  carcasseB: SimplifiedCarcasseExcelData,
+  carcasseB: SimplifiedCarcasseExcelData
 ) {
   if (carcasseA.Éspèce === carcasseB.Éspèce) {
     return carcasseA['Numéro de bracelet'].localeCompare(carcasseB['Numéro de bracelet']);
@@ -347,7 +347,7 @@ export default function useExportFeis() {
             if (intermediaireCarcasse?.commentaire) {
               const intermediaireEntity = entities[intermediaire.intermediaire_entity_id];
               commentaires.push(
-                `${intermediaireEntity?.nom_d_usage}\u00A0: ${intermediaireCarcasse?.commentaire}`,
+                `${intermediaireEntity?.nom_d_usage}\u00A0: ${intermediaireCarcasse?.commentaire}`
               );
             }
             if (intermediaireCarcasse?.intermediaire_poids) {
@@ -424,7 +424,7 @@ export default function useExportFeis() {
         carcassesWorkbook,
         createSheet(allCarcasses.sort(sortCarcassesApprovedForExcel)),
         'Carcasses',
-        true,
+        true
       );
 
       for (const [feiNumero, feiSheetData] of Object.entries(feiSheets)) {
@@ -441,7 +441,7 @@ export default function useExportFeis() {
     } catch (e: unknown) {
       capture(e as Error);
       alert(
-        "Une erreur est survenue lors de l'exportation des fiches. L'équipe technique a été notifiée. Veuillez nous excuser pour la gêne occasionnée, et réessayer plus tard",
+        "Une erreur est survenue lors de l'exportation des fiches. L'équipe technique a été notifiée. Veuillez nous excuser pour la gêne occasionnée, et réessayer plus tard"
       );
     }
     setIsExporting(false);
@@ -521,7 +521,7 @@ export default function useExportFeis() {
     } catch (e: unknown) {
       capture(e as Error);
       alert(
-        "Une erreur est survenue lors de l'exportation simplifiée des fiches. L'équipe technique a été notifiée. Veuillez nous excuser pour la gêne occasionnée, et réessayer plus tard",
+        "Une erreur est survenue lors de l'exportation simplifiée des fiches. L'équipe technique a été notifiée. Veuillez nous excuser pour la gêne occasionnée, et réessayer plus tard"
       );
     }
     setIsExporting(false);

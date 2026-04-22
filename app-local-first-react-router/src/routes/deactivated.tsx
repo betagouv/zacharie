@@ -55,7 +55,10 @@ export default function DeactivatedAccount() {
                       </p>
                       <ul className="fr-btns-group fr-btns-group--inline-md fr-mb-3w">
                         <li>
-                          <Link className="fr-btn" to="/app/chasseur/profil/coordonnees">
+                          <Link
+                            className="fr-btn"
+                            to="/app/chasseur/profil/coordonnees"
+                          >
                             Compléter votre profil
                           </Link>
                         </li>

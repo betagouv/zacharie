@@ -82,9 +82,7 @@ export async function generateSaisieDocx(data: CarcasseCertificat, user: User): 
           new Paragraph({
             children: [
               new TextRun({
-                text: `CERTIFICAT DE ${
-                  data.type === CarcasseCertificatType.CSP ? 'SAISIE PARTIELLE' : 'SAISIE TOTALE'
-                } : ${data.certificat_id}`,
+                text: `CERTIFICAT DE ${data.type === CarcasseCertificatType.CSP ? 'SAISIE PARTIELLE' : 'SAISIE TOTALE'} : ${data.certificat_id}`,
                 bold: true,
                 size: 24,
                 underline: {

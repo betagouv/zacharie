@@ -73,7 +73,10 @@ export default function FEIDonneesDeChasse({
     for (let i = intermediaires.length - 1; i >= 0; i--) {
       const intermediaire = intermediaires[i];
       const entity = entities[intermediaire.intermediaire_entity_id!];
-      if (entity?.type === EntityTypes.ETG && intermediaire.intermediaire_role === FeiOwnerRole.COLLECTEUR_PRO) {
+      if (
+        entity?.type === EntityTypes.ETG &&
+        intermediaire.intermediaire_role === FeiOwnerRole.COLLECTEUR_PRO
+      ) {
         continue;
       }
       const intermediaireLines = [];
@@ -82,7 +85,7 @@ export default function FEIDonneesDeChasse({
       intermediaireLines.push(`${entity?.code_postal} ${entity?.ville}`);
       if (intermediaire.prise_en_charge_at) {
         intermediaireLines.push(
-          `Prise en charge\u00A0: ${dayjs(intermediaire.prise_en_charge_at).format('dddd D MMMM à HH:mm')}`,
+          `Prise en charge\u00A0: ${dayjs(intermediaire.prise_en_charge_at).format('dddd D MMMM à HH:mm')}`
         );
       }
       lines.push({ label: entity?.nom_d_usage, value: intermediaireLines });
@@ -99,17 +102,17 @@ export default function FEIDonneesDeChasse({
     }
     if (fei.svi_assigned_at) {
       lines.push(
-        `Date et heure d'assignation au SVI\u00A0: ${dayjs(fei.svi_assigned_at).format('dddd D MMMM YYYY à HH:mm')}`,
+        `Date et heure d'assignation au SVI\u00A0: ${dayjs(fei.svi_assigned_at).format('dddd D MMMM YYYY à HH:mm')}`
       );
     }
     if (fei.svi_closed_at) {
       lines.push(
-        `Date et heure de clôture manuelle du SVI\u00A0: ${dayjs(fei.svi_closed_at).format('dddd D MMMM YYYY à HH:mm')}`,
+        `Date et heure de clôture manuelle du SVI\u00A0: ${dayjs(fei.svi_closed_at).format('dddd D MMMM YYYY à HH:mm')}`
       );
     }
     if (fei.automatic_closed_at) {
       lines.push(
-        `Date et heure de clôture automatique du SVI\u00A0: ${dayjs(fei.automatic_closed_at).format('dddd D MMMM YYYY à HH:mm')}`,
+        `Date et heure de clôture automatique du SVI\u00A0: ${dayjs(fei.automatic_closed_at).format('dddd D MMMM YYYY à HH:mm')}`
       );
     }
     return lines;
@@ -132,17 +135,17 @@ export default function FEIDonneesDeChasse({
     ];
     if (carcasses[0]?.heure_mise_a_mort_premiere_carcasse_fei) {
       _milestones.push(
-        `Heure de mise à mort de la première carcasse de la fiche\u00A0: ${carcasses[0].heure_mise_a_mort_premiere_carcasse_fei}`,
+        `Heure de mise à mort de la première carcasse de la fiche\u00A0: ${carcasses[0].heure_mise_a_mort_premiere_carcasse_fei}`
       );
     }
     if (!onlyPetitGibier && carcasses[0]?.heure_evisceration_derniere_carcasse_fei) {
       _milestones.push(
-        `Heure d'éviscération de la dernière carcasse de la fiche\u00A0: ${carcasses[0].heure_evisceration_derniere_carcasse_fei}`,
+        `Heure d'éviscération de la dernière carcasse de la fiche\u00A0: ${carcasses[0].heure_evisceration_derniere_carcasse_fei}`
       );
     }
     if (ccgDate) {
       _milestones.push(
-        `Nom du Centre de Collecte (CCG)\u00A0: ${fei.premier_detenteur_depot_entity_name_cache}`,
+        `Nom du Centre de Collecte (CCG)\u00A0: ${fei.premier_detenteur_depot_entity_name_cache}`
       );
       _milestones.push(`Date et heure de dépôt dans le CCG\u00A0: ${ccgDate}`);
     }
@@ -163,23 +166,42 @@ export default function FEIDonneesDeChasse({
 
   return (
     <>
-      <ItemNotEditable label="Fiche d'Examen Initial n°" value={fei.numero} />
+      <ItemNotEditable
+        label="Fiche d'Examen Initial n°"
+        value={fei.numero}
+      />
       <ItemNotEditable
         label={carcasses.length > 1 ? 'Espèces' : 'Espèce'}
         value={[...new Set(carcasses.map((c) => c.espece))].join(', ')}
       />
-      <ItemNotEditable label="Informations clés" value={milestones} />
+      <ItemNotEditable
+        label="Informations clés"
+        value={milestones}
+      />
       <p className="mb-2 font-bold">Acteurs</p>
       <div className="flex flex-col px-2">
-        <ItemNotEditable label="Examinateur Initial" value={examinateurInitialInput} />
-        <ItemNotEditable label="Premier Détenteur" value={premierDetenteurInput} />
+        <ItemNotEditable
+          label="Examinateur Initial"
+          value={examinateurInitialInput}
+        />
+        <ItemNotEditable
+          label="Premier Détenteur"
+          value={premierDetenteurInput}
+        />
         {intermediairesInputs.map((intermediaireInput, index) => {
           return (
-            <ItemNotEditable key={index} label={intermediaireInput.label!} value={intermediaireInput.value} />
+            <ItemNotEditable
+              key={index}
+              label={intermediaireInput.label!}
+              value={intermediaireInput.value}
+            />
           );
         })}
         {sviInput.length > 0 && (
-          <ItemNotEditable label="Service d'Inspection Vétérinaire (SVI)" value={sviInput} />
+          <ItemNotEditable
+            label="Service d'Inspection Vétérinaire (SVI)"
+            value={sviInput}
+          />
         )}
       </div>
     </>

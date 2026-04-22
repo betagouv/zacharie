@@ -8,7 +8,7 @@ const viteDevServer =
     : await import('vite').then((vite) =>
         vite.createServer({
           server: { middlewareMode: true },
-        }),
+        })
       );
 
 const app = express();
@@ -35,7 +35,7 @@ app.use((req, res, next) => {
       "form-action 'self'",
       "frame-ancestors 'self'",
       'upgrade-insecure-requests',
-    ].join('; '),
+    ].join('; ')
   );
   res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
   res.setHeader('X-Content-Type-Options', 'nosniff');

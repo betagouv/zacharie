@@ -54,9 +54,7 @@ export default function ChasseurFeiEnvoyée() {
   }
   return (
     <>
-      <title>
-        {`${params.fei_numero} | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}
-      </title>
+      <title>{`${params.fei_numero} | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}</title>
       {fei?.deleted_at && (
         <div className="bg-error-main-525 mb-2 py-2 text-center text-white">
           <p>Fiche supprimée</p>
@@ -67,14 +65,19 @@ export default function ChasseurFeiEnvoyée() {
           <div className="fr-col-12 fr-col-md-10 bg-alt-blue-france m-4 md:m-0 md:p-0">
             <div className="bg-white p-4 md:p-8">
               <div className="flex flex-col items-center gap-4 p-5 pt-0 text-center">
-                <img src={MailCheck} alt="Fiche envoyée" className="w-44 h-44" />
-                <h1 className="fr-h4 fr-mb-0">
-                  Votre fiche a été transmise
-                </h1>
+                <img
+                  src={MailCheck}
+                  alt="Fiche envoyée"
+                  className="h-44 w-44"
+                />
+                <h1 className="fr-h4 fr-mb-0">Votre fiche a été transmise</h1>
                 {sentByRecipient.length > 0 && (
-                  <ul className="fr-mb-0 w-full p-0 text-left ml-10">
+                  <ul className="fr-mb-0 ml-10 w-full p-0 text-left">
                     {sentByRecipient.map((recipient) => (
-                      <li key={recipient.entityName} className="fr-mb-1w text-sm">
+                      <li
+                        key={recipient.entityName}
+                        className="fr-mb-1w text-sm"
+                      >
                         - {recipient.entityName} {notificationStatus} ({recipient.count} carcasse
                         {recipient.count > 1 ? 's' : ''})
                       </li>
@@ -83,7 +86,10 @@ export default function ChasseurFeiEnvoyée() {
                 )}
                 {sentByRecipient.length === 0 && fei?.fei_next_owner_entity_id && (
                   <p className="fr-mb-0">
-                    <span className="fr-icon-arrow-right-s-line fr-icon--sm mr-1" aria-hidden="true" />
+                    <span
+                      className="fr-icon-arrow-right-s-line fr-icon--sm mr-1"
+                      aria-hidden="true"
+                    />
                     {entities[fei.fei_next_owner_entity_id]?.nom_d_usage ?? ''} — {notificationStatus}
                   </p>
                 )}
@@ -108,8 +114,8 @@ export default function ChasseurFeiEnvoyée() {
                 )}
               </div>
             </div>
-            <div className="bg-white p-4 md:p-8 mt-4">
-              <div className="mt-4 flex w-full flex-col md:flex-row justify-between gap-4">
+            <div className="mt-4 bg-white p-4 md:p-8">
+              <div className="mt-4 flex w-full flex-col justify-between gap-4 md:flex-row">
                 <Button
                   priority="secondary"
                   linkProps={{

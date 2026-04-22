@@ -87,7 +87,7 @@ export default function MesInformationsDeChasse({
         useUser.setState({ user: response.data.user });
       }
     },
-    [user.id],
+    [user.id]
   );
 
   const showEntrpriseVisibilityCheckbox = !!user.checked_has_asso_de_chasse;
@@ -130,7 +130,11 @@ export default function MesInformationsDeChasse({
             <>
               <div className="mb-6 bg-white md:shadow-sm">
                 <div className="p-4 md:p-8">
-                  <form id="user_data_form" method="POST" onSubmit={(e) => e.preventDefault()}>
+                  <form
+                    id="user_data_form"
+                    method="POST"
+                    onSubmit={(e) => e.preventDefault()}
+                  >
                     {/* <h3 className="inline-flex items-center text-lg font-semibold text-gray-900">
                       <span>Examen initial</span>
                     </h3> */}
@@ -230,7 +234,12 @@ export default function MesInformationsDeChasse({
           {showEntrpriseVisibilityCheckbox && (
             <div className="mb-6 bg-white md:shadow-sm">
               <div className="p-4 md:p-8">
-                <form id="user_data_form" method="POST" onSubmit={(e) => e.preventDefault()} className="px-8">
+                <form
+                  id="user_data_form"
+                  method="POST"
+                  onSubmit={(e) => e.preventDefault()}
+                  className="px-8"
+                >
                   <Checkbox
                     options={[
                       {

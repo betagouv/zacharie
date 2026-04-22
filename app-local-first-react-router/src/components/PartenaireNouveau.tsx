@@ -45,7 +45,7 @@ export default function PartenaireNouveau({ newEntityNomDUsageProps, onFinish }:
   const [currentEntityId, setCurrentEntityId] = useState<string | null>(null);
   const currentEntity = remainingEntities.find((entity) => entity.id === currentEntityId);
   const currentEntityUser = currentEntity?.EntityRelationsWithUsers.find(
-    (relation) => relation.status === EntityRelationStatus.ADMIN,
+    (relation) => relation.status === EntityRelationStatus.ADMIN
   )?.UserRelatedWithEntity;
   const [newEntityNomDUsage, setNewEntityNomDUsage] = useState(newEntityNomDUsageProps);
   const [isUnregisteredEntity, setIsUnregisteredEntity] = useState(false);
@@ -69,7 +69,7 @@ export default function PartenaireNouveau({ newEntityNomDUsageProps, onFinish }:
       ?.EntityRelationsWithUsers.find(
         (relation) =>
           relation.owner_id === user.id &&
-          relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+          relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
       )?.status === EntityRelationStatus.ADMIN;
 
   const ComponentToDisplay = isAdminOfEntity ? Input : InputNotEditable;
@@ -147,12 +147,16 @@ export default function PartenaireNouveau({ newEntityNomDUsageProps, onFinish }:
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [isUnregisteredEntity, currentEntityId, newEntityNomDUsage, entityType, user.id],
+    [isUnregisteredEntity, currentEntityId, newEntityNomDUsage, entityType, user.id]
   );
 
   return (
     <>
-      <form id="partenaire_data_form" method="POST" onSubmit={handleEntitySubmit}>
+      <form
+        id="partenaire_data_form"
+        method="POST"
+        onSubmit={handleEntitySubmit}
+      >
         <Alert
           closable
           className="mb-8 bg-white"
@@ -398,7 +402,10 @@ export default function PartenaireNouveau({ newEntityNomDUsageProps, onFinish }:
             )}
           </div>
         </div>
-        <Button type="submit" nativeButtonProps={{ form: 'partenaire_data_form' }}>
+        <Button
+          type="submit"
+          nativeButtonProps={{ form: 'partenaire_data_form' }}
+        >
           Me rattacher à ce partenaire
         </Button>
       </form>

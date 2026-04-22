@@ -23,9 +23,9 @@ const PILLARS: Pillar[] = [
     bgClass: 'bg-[var(--background-alt-blue-france)]',
     metrics: [
       { value: '9,3/10', label: 'NPS Chasseurs' },
-      { value: '8,5/10', label: 'NPS Etablissements de Traitement du Gibier', },
-      { value: '8,6/10', label: 'NPS Collecteurs', },
-      { value: '8,5/10', label: 'NPS Services Vétérinaires d\'Inspection', },
+      { value: '8,5/10', label: 'NPS Etablissements de Traitement du Gibier' },
+      { value: '8,6/10', label: 'NPS Collecteurs' },
+      { value: '8,5/10', label: "NPS Services Vétérinaires d'Inspection" },
     ],
   },
   {
@@ -36,7 +36,6 @@ const PILLARS: Pillar[] = [
     metrics: [
       { value: '136', label: 'Chasseurs actifs', description: 'Ayant soumis ≥1 FEI (saison 25-26)' },
       { value: '72,8%', label: 'Taux de rétention', description: 'Chasseurs soumettant ≥2 FEI' },
-
     ],
   },
   {
@@ -57,8 +56,16 @@ const PILLARS: Pillar[] = [
     severity: 'success',
     bgClass: 'bg-[var(--background-alt-green-tilleul-verveine)]',
     metrics: [
-      { value: '3,73%', label: 'Saisies vétérinaires dues à de mauvaises pratiques d\'hygiène', description: 'vs 7,6% hors Zacharie' },
-      { value: '0,4%', label: 'Anomalies non-éliminatoires déclarées par les chasseurs', description: 'Grand gibier' },
+      {
+        value: '3,73%',
+        label: "Saisies vétérinaires dues à de mauvaises pratiques d'hygiène",
+        description: 'vs 7,6% hors Zacharie',
+      },
+      {
+        value: '0,4%',
+        label: 'Anomalies non-éliminatoires déclarées par les chasseurs',
+        description: 'Grand gibier',
+      },
     ],
   },
   {
@@ -81,14 +88,22 @@ export default function ImpactMatrix() {
         <h2 className="mb-2 text-2xl font-bold">Matrice d'impact</h2>
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
           {PILLARS.map((pillar) => (
-            <div key={pillar.title} className={`rounded-lg p-5 border-1 border-gray-200`}>
+            <div
+              key={pillar.title}
+              className={`rounded-lg border-1 border-gray-200 p-5`}
+            >
               <div className="mb-3 flex items-center gap-2">
-                <Badge severity={pillar.severity} noIcon>{pillar.title}</Badge>
+                <Badge
+                  severity={pillar.severity}
+                  noIcon
+                >
+                  {pillar.title}
+                </Badge>
               </div>
               <div className="space-y-3">
                 {pillar.metrics.map((metric) => (
                   <div key={metric.label}>
-                    <div className="text-2xl font-bold leading-tight">{metric.value}</div>
+                    <div className="text-2xl leading-tight font-bold">{metric.value}</div>
                     <div className="text-sm font-medium">{metric.label}</div>
                     <div className="text-xs text-gray-600">{metric.description}</div>
                   </div>
@@ -97,9 +112,7 @@ export default function ImpactMatrix() {
             </div>
           ))}
         </div>
-        <p className="mt-4 text-right text-xs text-gray-500">
-          Données : saison 2025-2026
-        </p>
+        <p className="mt-4 text-right text-xs text-gray-500">Données : saison 2025-2026</p>
       </section>
       <Button
         className="m-0"

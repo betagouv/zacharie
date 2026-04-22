@@ -19,7 +19,7 @@ router.get(
         saisiesUrl: getIframeUrl(37),
       },
     });
-  }),
+  })
 );
 
 router.get(
@@ -100,7 +100,7 @@ router.get(
       FeiOwnerRole.CONSOMMATEUR_FINAL,
     ];
     const sviEligibleCarcasses = bigGameCarcasses.filter(
-      (c) => !c.next_owner_role || !circuitCourtRoles.includes(c.next_owner_role),
+      (c) => !c.next_owner_role || !circuitCourtRoles.includes(c.next_owner_role)
     );
     const hasAnySviReturn = sviEligibleCarcasses.some((c) => c.svi_carcasse_status !== null);
 
@@ -130,14 +130,14 @@ router.get(
     const seizedBigGame = sviEligibleCarcasses.filter(
       (c) =>
         c.svi_carcasse_status === CarcasseStatus.SAISIE_TOTALE ||
-        c.svi_carcasse_status === CarcasseStatus.SAISIE_PARTIELLE,
+        c.svi_carcasse_status === CarcasseStatus.SAISIE_PARTIELLE
     );
     const personalSeizureRate =
       sviEligibleCarcasses.length > 0 && hasAnySviReturn
         ? (seizedBigGame.length / sviEligibleCarcasses.length) * 100
         : sviEligibleCarcasses.length > 0
-        ? null
-        : null;
+          ? null
+          : null;
 
     // Calculate national seizure rate (all big game carcasses in 2024)
     const nationalBigGame2024 = await prisma.carcasse.count({
@@ -169,26 +169,32 @@ router.get(
     const nationalSeizureRate =
       nationalBigGame2024 > 0 ? (nationalSeizedBigGame2024 / nationalBigGame2024) * 100 : 10.44;
 
-    // Calculate hygiene score based on BPH (Bonnes Pratiques d'Hygiène)
-    // Formula: 100 × (1 - (personal seizure rate / (2 × national seizure rate)))
-    // Score = 50 means equal to national average
-    // Score > 50 means better than average
-    // Score < 50 means worse than average
+    // Hygiene score (BPH — Bonnes Pratiques d'Hygiène)
+    // score = 100 - (carcasses with ≥1 BPH motif / SVI-eligible big game) × 100
+    // Only motifs linked to hygiene practices count (aligned with admin /delta-bph).
+    const BPH_PATTERNS = [
+      "souillures d'origine digestive",
+      'souillures telluriques',
+      'odeur anormale',
+      'putréfaction superficielle',
+      'putréfaction profonde',
+      'moisissures',
+      'œufs ou larves de mouche',
+      'orsure de chien',
+      'viande à évolution anormale',
+    ];
+    const hasBphMotif = (motifs: string[] | null) =>
+      (motifs ?? []).some((m) => {
+        const s = m.toLowerCase();
+        return BPH_PATTERNS.some((p) => s.includes(p));
+      });
+    const bphCarcasses = sviEligibleCarcasses.filter((c) => hasBphMotif(c.svi_ipm2_lesions_ou_motifs));
     let hygieneScore: number | null;
-    if (sviEligibleCarcasses.length === 0) {
-      // No SVI-eligible big game carcasses, cannot calculate
+    if (sviEligibleCarcasses.length === 0 || !hasAnySviReturn) {
       hygieneScore = null;
-    } else if (!hasAnySviReturn) {
-      // SVI-eligible big game exists but no SVI return yet
-      hygieneScore = null;
-    } else if (nationalSeizureRate === 0) {
-      // No national seizures, perfect score if personal rate is also 0
-      hygieneScore = personalSeizureRate === 0 ? 100 : 0;
     } else {
-      // Formula: 100 × (1 - (personal rate / (2 × national rate)))
-      hygieneScore = Math.round(100 * (1 - personalSeizureRate / (2 * nationalSeizureRate)));
-      // Clamp between 0 and 100
-      hygieneScore = Math.max(0, Math.min(100, hygieneScore));
+      const bphRate = (bphCarcasses.length / sviEligibleCarcasses.length) * 100;
+      hygieneScore = Math.max(0, Math.min(100, Math.round(100 - bphRate)));
     }
 
     res.status(200).send({
@@ -208,27 +214,20 @@ router.get(
           seasonEnd,
           // Personal seizure rate calculation
           bigGameCarcassesCount: bigGameCarcasses.length,
-          seizedBigGameCount: seizedBigGame,
+          seizedBigGameCount: seizedBigGame.length,
           personalSeizureRateRaw: personalSeizureRate,
           // National seizure rate calculation
           nationalBigGame2024Count: nationalBigGame2024,
           nationalSeizedBigGame2024Count: nationalSeizedBigGame2024,
           nationalSeizureRateRaw: nationalSeizureRate,
-          // Hygiene score calculation
-          formula: '100 × (1 - (personalSeizureRate / (2 × nationalSeizureRate)))',
-          divisor: 2 * nationalSeizureRate,
-          ratio:
-            nationalSeizureRate > 0 && personalSeizureRate !== null
-              ? personalSeizureRate / (2 * nationalSeizureRate)
-              : 0,
-          hygieneScoreBeforeClamp:
-            nationalSeizureRate > 0 && personalSeizureRate !== null
-              ? 100 * (1 - personalSeizureRate / (2 * nationalSeizureRate))
-              : 0,
+          // Hygiene score calculation (BPH)
+          formula: '100 - (bphCarcasses / sviEligibleCarcasses) × 100',
+          sviEligibleCount: sviEligibleCarcasses.length,
+          bphCount: bphCarcasses.length,
         },
       },
     });
-  }),
+  })
 );
 
 export default router;

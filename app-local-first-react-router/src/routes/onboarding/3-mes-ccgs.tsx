@@ -30,7 +30,7 @@ export default function MesCCGs() {
         useUser.setState({ user: response.data.user });
       }
     },
-    [user.id],
+    [user.id]
   );
 
   function refreshUserCCGs() {
@@ -73,7 +73,10 @@ export default function MesCCGs() {
   const hasPreregisteredCCG = userCCGs.some((ccg) => ccg.ccg_status === 'Pré-enregistré dans Zacharie');
 
   return (
-    <div className="mb-6 bg-white md:shadow-sm" id="onboarding-etape-2-ccgs-data">
+    <div
+      className="mb-6 bg-white md:shadow-sm"
+      id="onboarding-etape-2-ccgs-data"
+    >
       <div className="p-4 md:p-8">
         <h3 className="inline-flex items-center text-lg font-semibold text-gray-900">
           <span>Chambres froides (Centres de Collecte du Gibier sauvage)</span>
@@ -149,11 +152,17 @@ export default function MesCCGs() {
                   <div className="flex items-center justify-between">
                     <div>
                       {isPreregistered ? (
-                        <Badge severity="warning" small>
+                        <Badge
+                          severity="warning"
+                          small
+                        >
                           À DÉCLARER
                         </Badge>
                       ) : (
-                        <Badge severity="success" small>
+                        <Badge
+                          severity="success"
+                          small
+                        >
                           DÉCLARÉ
                         </Badge>
                       )}
@@ -286,7 +295,11 @@ export default function MesCCGs() {
                   <p className="mb-5 text-sm text-gray-500">
                     * Les champs marqués d'un astérisque (*) sont obligatoires.
                   </p>
-                  <form id="association_data_form" method="POST" onSubmit={handleNewCCGSubmit}>
+                  <form
+                    id="association_data_form"
+                    method="POST"
+                    onSubmit={handleNewCCGSubmit}
+                  >
                     <Input
                       label="Nom usuel *"
                       nativeInputProps={{
@@ -390,7 +403,10 @@ export default function MesCCGs() {
                         </>
                       }
                     />
-                    <Button type="submit" nativeButtonProps={{ form: 'association_data_form' }}>
+                    <Button
+                      type="submit"
+                      nativeButtonProps={{ form: 'association_data_form' }}
+                    >
                       Enregistrer ma chambre froide (CCG)
                     </Button>
                   </form>
@@ -442,7 +458,7 @@ function InputCCG({ addCCG }: { addCCG: (ccg: Entity) => void }) {
             [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
             relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
             [Prisma.EntityScalarFieldEnum.numero_ddecpp]: formData.get(
-              Prisma.EntityScalarFieldEnum.numero_ddecpp,
+              Prisma.EntityScalarFieldEnum.numero_ddecpp
             ),
             [Prisma.EntityScalarFieldEnum.type]: EntityTypes.CCG,
           },
@@ -472,7 +488,10 @@ function InputCCG({ addCCG }: { addCCG: (ccg: Entity) => void }) {
           name: Prisma.EntityScalarFieldEnum.numero_ddecpp,
         }}
       />
-      <Button type="submit" disabled={isSubmitting}>
+      <Button
+        type="submit"
+        disabled={isSubmitting}
+      >
         {!isSubmitting ? 'Ajouter cette chambre froide' : 'Recherche en cours...'}
       </Button>
     </form>

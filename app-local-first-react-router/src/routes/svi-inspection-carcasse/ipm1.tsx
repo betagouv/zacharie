@@ -52,24 +52,24 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
   const carcasseIds = feiCarcasses.map((c) => c.zacharie_carcasse_id);
 
   const [sviIpm1PresenteeInspection, setSviIpm1PresenteeInspection] = useState(
-    carcasse.svi_ipm1_presentee_inspection ?? true,
+    carcasse.svi_ipm1_presentee_inspection ?? true
   );
   const [sviIpm1Date, setSviIpm1Date] = useState(carcasse.svi_ipm1_date);
   const [sviIpm1Protocole, setSviIpm1Protocole] = useState(
-    carcasse.svi_ipm1_protocole ?? IPM1Protocole.STANDARD,
+    carcasse.svi_ipm1_protocole ?? IPM1Protocole.STANDARD
   );
   const [sviIpm1Pieces, setSviIpm1Pieces] = useState(carcasse.svi_ipm1_pieces);
   const [sviIpm1LesionsOuMotifs, setSviIpm1LesionsOuMotifs] = useState(carcasse.svi_ipm1_lesions_ou_motifs);
   const [sviIpm1NombreAnimaux, setSviIpm1NombreAnimaux] = useState(carcasse.svi_ipm1_nombre_animaux);
   const [sviIpm1Commentaire, setSviIpm1Commentaire] = useState(carcasse.svi_ipm1_commentaire);
   const [sviIpm1Decision, setSviIpm1Decision] = useState(
-    carcasse.svi_ipm1_decision ?? IPM1Decision.MISE_EN_CONSIGNE,
+    carcasse.svi_ipm1_decision ?? IPM1Decision.MISE_EN_CONSIGNE
   );
   const [sviIpm1DureeConsigne, setSviIpm1DureeConsigne] = useState(carcasse.svi_ipm1_duree_consigne);
   const [sviIpm1PoidsConsigne, setSviIpm1PoidsConsigne] = useState(carcasse.svi_ipm1_poids_consigne);
   const [sviIpm1PoidsType, setSviIpm1PoidsType] = useState(carcasse.svi_ipm1_poids_type);
   const [sviIpm1UserName, setSviIpm1UserName] = useState(
-    carcasse.svi_ipm1_user_name_cache ?? `${user.prenom} ${user.nom_de_famille}`,
+    carcasse.svi_ipm1_user_name_cache ?? `${user.prenom} ${user.nom_de_famille}`
   );
   const [triedToSave, setTriedToSave] = useState(false);
 
@@ -214,7 +214,11 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
   const Component = canDoIPM1 ? Input : InputNotEditable;
 
   return (
-    <form method="POST" id={`svi-carcasse-${carcasse.numero_bracelet}`} onSubmit={(e) => e.preventDefault()}>
+    <form
+      method="POST"
+      id={`svi-carcasse-${carcasse.numero_bracelet}`}
+      onSubmit={(e) => e.preventDefault()}
+    >
       <RadioButtons
         legend={
           carcasse.type === CarcasseType.PETIT_GIBIER
@@ -339,7 +343,7 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
                 onChange: (e) => {
                   const clampedValue = Math.max(
                     0,
-                    Math.min(Number(e.target.value), Number(carcasse.nombre_d_animaux)),
+                    Math.min(Number(e.target.value), Number(carcasse.nombre_d_animaux))
                   );
                   setSviIpm1NombreAnimaux(clampedValue);
                 },
@@ -350,7 +354,10 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
             <InputMultiSelect
               label="Pièces inspectées nécessitant une observation *"
               hintText={
-                <button type="button" onClick={() => piecesGibier.open()}>
+                <button
+                  type="button"
+                  onClick={() => piecesGibier.open()}
+                >
                   Voir le référentiel des pièces en <u className="inline">cliquant ici</u>
                 </button>
               }
@@ -518,12 +525,20 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
         </>
       )}
       <div>
-        <Button type="button" onClick={handleSave}>
+        <Button
+          type="button"
+          onClick={handleSave}
+        >
           Enregistrer
         </Button>
       </div>
       {triedToSave && missingFields && (
-        <Alert title="Attention" className="mt-4" severity="error" description={missingFields} />
+        <Alert
+          title="Attention"
+          className="mt-4"
+          severity="error"
+          description={missingFields}
+        />
       )}
     </form>
   );

@@ -37,7 +37,7 @@ export default function SviCarcasses() {
 
   const [sortBy, setSortBy] = useLocalStorage<keyof (typeof carcassesRegistry)[number]>(
     'svi-carcasses-sort-by',
-    'numero_bracelet',
+    'numero_bracelet'
   );
   const [sortOrder, setSortOrder] = useLocalStorage<'ASC' | 'DESC'>('svi-carcasses-sort-order', 'ASC');
 
@@ -155,7 +155,7 @@ export default function SviCarcasses() {
                     setSelectedCarcassesIds([...selectedCarcassesIds, carcasse.zacharie_carcasse_id]);
                   } else {
                     setSelectedCarcassesIds(
-                      selectedCarcassesIds.filter((id) => id !== carcasse.zacharie_carcasse_id),
+                      selectedCarcassesIds.filter((id) => id !== carcasse.zacharie_carcasse_id)
                     );
                   }
                 }}
@@ -293,7 +293,7 @@ export default function SviCarcasses() {
                     selectedCarcassesObject[carcasseId] = true;
                   }
                   onExportToXlsx(
-                    filteredData.filter((carcasse) => selectedCarcassesObject[carcasse.zacharie_carcasse_id]),
+                    filteredData.filter((carcasse) => selectedCarcassesObject[carcasse.zacharie_carcasse_id])
                   );
                 }}
                 disabled={selectedCarcassesIds.length === 0 || isExporting}

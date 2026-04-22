@@ -12,7 +12,7 @@ export async function loadMyRelations() {
   }
   try {
     const myRelationsData = await API.get({ path: 'user/my-relations' }).then(
-      (res) => res as UserMyRelationsResponse,
+      (res) => res as UserMyRelationsResponse
     );
 
     const entities: Record<EntityWithUserRelation['id'], EntityWithUserRelation> = {};

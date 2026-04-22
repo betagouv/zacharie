@@ -54,7 +54,7 @@ async function importOfficialCfei() {
           skip_empty_lines: true,
           trim: true,
           relax_column_count: true,
-        }),
+        })
       )
       .on('data', (row) => {
         const numeroCfei = row.numero_cfei?.trim();

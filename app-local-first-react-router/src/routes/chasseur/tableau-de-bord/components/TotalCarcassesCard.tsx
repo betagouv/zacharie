@@ -9,7 +9,11 @@ export default function TotalCarcassesCard({ total, season }: TotalCarcassesCard
       <div className="flex flex-col items-center justify-center text-center">
         {/* Icon */}
         <div className="mb-4 flex items-center justify-center">
-          <CarcassesIcon width={45} height={45} className="text-action-high-blue-france-light" />
+          <CarcassesIcon
+            width={45}
+            height={45}
+            className="text-action-high-blue-france-light"
+          />
         </div>
         {/* Number */}
         <div className="text-action-high-blue-france-light mb-2 text-5xl font-bold">

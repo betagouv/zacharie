@@ -40,7 +40,7 @@ router.get(
       data: { api_key: apiKey.private_key, context_creation: apiKey.slug_for_context },
       message: `Voici votre clé privée. Veuillez la conserver en toute sécurité. Une fois ouvert, ce lien ne sera plus valide. Si vous avez perdu votre clé et que vous avez besoin d'un nouveau lien, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact. Voici aussi la valeur du champ \`context_creation\` que vous retrouverez dans chaque fiche créée via cette clé API.`,
     });
-  }),
+  })
 );
 
 export default router;

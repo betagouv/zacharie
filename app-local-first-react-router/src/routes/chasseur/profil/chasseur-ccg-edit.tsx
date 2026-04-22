@@ -54,7 +54,7 @@ export default function ChasseurCCGEdit() {
         setError(response.error || 'Erreur lors de la mise à jour');
       }
     },
-    [entityId, navigate],
+    [entityId, navigate]
   );
 
   if (loading) {
@@ -101,7 +101,10 @@ export default function ChasseurCCGEdit() {
           * Les champs marqués d'un astérisque (*) sont obligatoires.
         </p>
         {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
-        <form method="POST" onSubmit={handleSubmit}>
+        <form
+          method="POST"
+          onSubmit={handleSubmit}
+        >
           <Input
             label="Nom usuel *"
             nativeInputProps={{
