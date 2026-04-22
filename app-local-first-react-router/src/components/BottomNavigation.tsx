@@ -1,8 +1,14 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router';
 import type { MainNavigationProps } from '@codegouvfr/react-dsfr/MainNavigation';
+import { FORCE_SCROLL_TOP_FLAG } from '@app/services/useSaveScroll';
 
 const MAX_VISIBLE_ITEMS = 4;
+
+function handleNavClick() {
+  window.sessionStorage.setItem(FORCE_SCROLL_TOP_FLAG, '1');
+  window.scrollTo({ top: 0, behavior: 'instant' });
+}
 
 type NavItem = MainNavigationProps.Item;
 
@@ -94,6 +100,7 @@ function NavButton({ item, isOverflow }: { item: NavItem; isOverflow?: boolean }
       return (
         <Link
           to={to}
+          onClick={handleNavClick}
           className={`flex w-full items-center gap-3 px-4 py-3 text-sm no-underline hover:bg-gray-100 ${
             isActive ? 'text-action-high-blue-france font-bold' : 'text-mention-grey'
           }`}
@@ -124,6 +131,7 @@ function NavButton({ item, isOverflow }: { item: NavItem; isOverflow?: boolean }
     return (
       <Link
         to={to}
+        onClick={handleNavClick}
         className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 no-underline ${activeClass}`}
       >
         <i className={`${icon} text-xl`} />
