@@ -19,27 +19,26 @@ test.beforeAll(async () => {
 });
 
 test.skip("Examinateur == PD via CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY — self-handoff", async ({ page }) => {
-  // SKIP: need to verify how Association de chasseurs entity selector + self-handoff flow works in UI
-  // L'utilisateur examinateur-premier-detenteur@example.fr appartient à une Association
-  // de chasseurs avec CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY ; il doit pouvoir enchaîner
-  // la création (EI) puis le dispatch PD dans la même session.
+  // SKIP: entity PD selector needs live verification
   await connectWith(page, "examinateur-premier-detenteur@example.fr");
   await expect(page).toHaveURL("http://localhost:3290/app/chasseur");
 
-  await page.getByTitle("Nouvelle fiche").click();
+  await page.getByRole("button", { name: "Nouvelle fiche" }).first().click();
   await page.getByRole("button", { name: dayjs.utc().format("dddd DD MMMM") }).click();
   await page.getByRole("textbox", { name: "Commune de mise à mort *" }).fill("CHASS");
   await page.getByRole("button", { name: "CHASSENARD" }).click();
 
-  // Assigner le PD à son association de chasse (entity)
-  await page.getByRole("button", { name: /Association de chasseurs/i }).click(); // TODO: verify selector
+  // Sélectionner l'association de chasseurs comme PD (pill button)
+  await page.getByRole("button", { name: /Association de chasseurs/i }).click();
   await page.getByRole("button", { name: "Continuer" }).first().click();
 
+  // Bloc 2 — 1 carcasse
   await page.getByLabel("Espèce (grand et petit gibier)").selectOption("Daim");
   await page.getByRole("button", { name: "Utiliser" }).click();
   await page.getByRole("button", { name: "Ajouter la carcasse" }).click();
   await page.getByRole("button", { name: "Continuer" }).click();
 
+  // Heures
   await page
     .getByRole("textbox", { name: "Heure de mise à mort de la" })
     .fill(dayjs().startOf("day").add(1, "hour").format("HH:mm"));
@@ -49,6 +48,7 @@ test.skip("Examinateur == PD via CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY — self-
     .fill(dayjs().startOf("day").add(2, "hour").format("HH:mm"));
   await page.getByRole("textbox", { name: "Heure d'éviscération de la" }).blur();
 
+  // Validation
   await page.getByRole("button", { name: "Définir comme étant la date du jour et maintenant" }).click();
   await page.getByText(/Je, .* certifie qu/i).first().click();
   await page.getByRole("button", { name: "Transmettre", exact: true }).click();
@@ -57,20 +57,25 @@ test.skip("Examinateur == PD via CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY — self-
   const feiId = RegExp(/ZACH-\d+-\w+-\d+/).exec(page.url())?.[0];
   expect(feiId).toBeDefined();
 
-  // Même session : ouvrir la fiche et enchaîner dispatch PD
+  // Même session : ouvrir la fiche — en tant que PD, on voit le dispatch
   await page.goto(`http://localhost:3290/app/chasseur/fei/${feiId}`);
+
+  // L'utilisateur peut prendre en charge la fiche
   const prendreEnCharge = page.getByRole("button", { name: /Prendre en charge/i });
-  await expect(prendreEnCharge).toBeVisible();
+  await expect(prendreEnCharge).toBeVisible({ timeout: 10000 });
   await prendreEnCharge.click();
 
-  const selectContainer = page.locator("[class*='select-prochain-detenteur'][class*='input-container']");
-  await selectContainer.scrollIntoViewIfNeeded();
-  await selectContainer.click();
-  await page.getByRole("option", { name: /ETG 1/ }).click();
+  // Sélectionner ETG 1 comme prochain détenteur (pill button)
+  const etg1Pill = page.getByRole("button", { name: /ETG 1/i });
+  await etg1Pill.scrollIntoViewIfNeeded();
+  await etg1Pill.click();
 
+  // Pas de stockage
   const pasDeStockage = page.getByText("Pas de stockage").first();
   await pasDeStockage.scrollIntoViewIfNeeded();
   await pasDeStockage.click();
+
+  // Je transporte moi-même
   const jeTransporte = page.getByText("Je transporte les carcasses moi").first();
   await jeTransporte.scrollIntoViewIfNeeded();
   await jeTransporte.click();

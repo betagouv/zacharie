@@ -20,7 +20,7 @@ test.beforeEach(async () => {
 
 test("Déconnexion en plein formulaire — store local nettoyé → reconnexion formulaire vide", async ({ page }) => {
   await connectWith(page, "examinateur@example.fr");
-  await page.getByTitle("Nouvelle fiche").click();
+  await page.getByRole("button", { name: "Nouvelle fiche" }).first().click();
   await page.getByRole("button", { name: dayjs.utc().format("dddd DD MMMM") }).click();
   await page.getByRole("textbox", { name: "Commune de mise à mort *" }).fill("CHASS");
   await page.getByRole("button", { name: "CHASSENARD" }).click();

@@ -20,7 +20,7 @@ test.beforeAll(async () => {
 
 test("0 carcasse → bouton Transmettre désactivé", async ({ page }) => {
   await connectWith(page, "examinateur@example.fr");
-  await page.getByTitle("Nouvelle fiche").click();
+  await page.getByRole("button", { name: "Nouvelle fiche" }).first().click();
   await page.getByRole("button", { name: dayjs.utc().format("dddd DD MMMM") }).click();
   await page.getByRole("textbox", { name: "Commune de mise à mort *" }).fill("CHASS");
   await page.getByRole("button", { name: "CHASSENARD" }).click();
@@ -33,6 +33,8 @@ test("0 carcasse → bouton Transmettre désactivé", async ({ page }) => {
     await expect(transmettre).toBeDisabled();
   } else {
     // Transmettre pas encore atteignable tant que bloc 2 non validé — attendu
-    await expect(page.getByRole("button", { name: /Ajouter la carcasse|Ajouter une autre carcasse/i }).first()).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /Ajouter la carcasse|Ajouter une autre carcasse/i }).first(),
+    ).toBeVisible();
   }
 });

@@ -18,12 +18,11 @@ test.beforeAll(async () => {
   await resetDb("EXAMINATEUR_INITIAL");
 });
 
-test.skip("Edition carcasse depuis /chasseur/carcasse/:fei/:id", async ({ page }) => {
-  // SKIP: need to verify carcasse detail edit flow — anomaly editing UX unclear from screenshots
+test("Edition carcasse depuis /chasseur/carcasse/:fei/:id", async ({ page }) => {
   await connectWith(page, "examinateur@example.fr");
 
-  // Crée une fiche minimale pour avoir un carcasse id
-  await page.getByTitle("Nouvelle fiche").click();
+  // Crée une fiche minimale avec 1 carcasse
+  await page.getByRole("button", { name: "Nouvelle fiche" }).first().click();
   await page.getByRole("button", { name: dayjs.utc().format("dddd DD MMMM") }).click();
   await page.getByRole("textbox", { name: "Commune de mise à mort *" }).fill("CHASS");
   await page.getByRole("button", { name: "CHASSENARD" }).click();
@@ -33,21 +32,29 @@ test.skip("Edition carcasse depuis /chasseur/carcasse/:fei/:id", async ({ page }
   await page.getByLabel("Espèce (grand et petit gibier)").selectOption("Daim");
   await page.getByRole("button", { name: "Utiliser" }).click();
   await page.getByRole("button", { name: "Ajouter la carcasse" }).click();
+  await page.getByRole("button", { name: "Continuer" }).click();
 
-  const feiId = RegExp(/ZACH-\d+-\w+-\d+/).exec(page.url())?.[0];
-  expect(feiId).toBeDefined();
-
-  // Ouvrir détail carcasse depuis la fiche
-  await page.goto(`http://localhost:3290/app/chasseur/fei/${feiId}`);
+  // Ouvrir détail carcasse
   await page.getByRole("button", { name: /Daim N°/ }).first().click();
 
-  // Ajouter une anomalie
-  const abces = page.getByText("Abcès ou nodules").first();
-  await abces.scrollIntoViewIfNeeded();
-  await abces.click();
+  // Ajouter une anomalie abats via référentiel
+  const ajouterAbats = page.getByRole("button", { name: "Ajouter depuis le référentiel des anomalies abats" });
+  await ajouterAbats.scrollIntoViewIfNeeded();
+  await ajouterAbats.click();
 
-  // Retour liste de carcasses — anomalie visible
-  const close = page.getByRole("listitem").filter({ hasText: "Fermer" }).getByRole("button");
-  await close.click();
-  await expect(page.getByText(/Abcès ou nodules/i).first()).toBeVisible();
+  // Expand category then select anomaly
+  await page.getByText("Appareil respiratoire (sinus/trachée/poumon)").click();
+  await page.getByText("Abcès ou nodules").first().click();
+
+  // Close the modal
+  await page.getByRole("button", { name: "Fermer" }).last().click();
+
+  // Go back to fiche
+  const retourBtn = page.getByRole("button", { name: "Enregistrer et retourner à la fiche" });
+  await retourBtn.scrollIntoViewIfNeeded();
+  await retourBtn.click();
+
+  // Verify anomaly text on the carcasse button
+  const carcasseBtn = page.getByRole("button", { name: /Daim N°/ }).first();
+  await expect(carcasseBtn).toContainText(/anomalie/i, { timeout: 10000 });
 });

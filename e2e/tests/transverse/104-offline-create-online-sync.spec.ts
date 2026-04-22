@@ -29,7 +29,7 @@ test("Création hors-ligne puis sync auto au retour en ligne", async ({ page, co
   await context.setOffline(true);
 
   // Create a new fiche — should work locally even offline
-  await page.getByTitle("Nouvelle fiche").click();
+  await page.getByRole("button", { name: "Nouvelle fiche" }).first().click();
   await expect(page.getByText("Date de mise à mort (et d'éviscération) *")).toBeVisible();
 
   // Select today's date

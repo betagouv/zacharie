@@ -43,7 +43,8 @@ export type SeedRole =
   | 'SVI'
   | 'COMMERCE_DE_DETAIL'
   | 'SVI_CLOSED'
-  | 'ETG_REFUSED';
+  | 'ETG_REFUSED'
+  | 'ETG_ALL_REFUSED_TO_SVI';
 
 export async function resetDb(role?: SeedRole) {
   try {

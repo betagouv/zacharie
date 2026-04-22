@@ -18,11 +18,11 @@ test.beforeAll(async () => {
   await resetDb("EXAMINATEUR_INITIAL");
 });
 
-test.skip("Brouillon : quitter puis reprendre — formulaire préservé (local-first)", async ({ page }) => {
-  // SKIP: draft fiche not appearing in list — need to understand local-first draft visibility rules
+test("Brouillon : quitter puis reprendre — formulaire préservé (local-first)", async ({ page }) => {
   await connectWith(page, "examinateur@example.fr");
+  await expect(page).toHaveURL("http://localhost:3290/app/chasseur", { timeout: 15000 });
 
-  await page.getByTitle("Nouvelle fiche").click();
+  await page.getByRole("button", { name: "Nouvelle fiche" }).first().click();
   await page.getByRole("button", { name: dayjs.utc().format("dddd DD MMMM") }).click();
   await page.getByRole("textbox", { name: "Commune de mise à mort *" }).fill("CHASS");
   await page.getByRole("button", { name: "CHASSENARD" }).click();
@@ -35,10 +35,14 @@ test.skip("Brouillon : quitter puis reprendre — formulaire préservé (local-f
 
   // Quitter vers la liste
   await page.goto("http://localhost:3290/app/chasseur");
-  await expect(page.getByRole("link", { name: feiId })).toBeVisible();
+  await expect(page.getByRole("link", { name: feiId! })).toBeVisible();
 
   // Reprendre
-  await page.getByRole("link", { name: feiId }).click();
-  await expect(page.getByText(/CHASSENARD/i)).toBeVisible();
-  await expect(page.getByText(/Pierre Petit/i)).toBeVisible();
+  await page.getByRole("link", { name: feiId! }).click();
+  await expect(page.getByRole("textbox", { name: "Commune de mise à mort *" })).toHaveValue(/CHASSENARD/i);
+  // Verify Pierre Petit is selected in the PD dropdown
+  const pdSelect = page.locator("select[name='next_owner']");
+  await expect(pdSelect).toHaveValue(/.+/); // non-empty = something selected
+  const selectedText = await pdSelect.locator("option:checked").textContent();
+  expect(selectedText).toMatch(/Pierre Petit/);
 });

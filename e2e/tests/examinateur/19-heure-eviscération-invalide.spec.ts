@@ -20,7 +20,7 @@ test.beforeAll(async () => {
 
 test("Heure d'éviscération < heure de mise à mort → erreur ou auto-correction", async ({ page }) => {
   await connectWith(page, "examinateur@example.fr");
-  await page.getByTitle("Nouvelle fiche").click();
+  await page.getByRole("button", { name: "Nouvelle fiche" }).first().click();
   await page.getByRole("button", { name: dayjs.utc().format("dddd DD MMMM") }).click();
   await page.getByRole("textbox", { name: "Commune de mise à mort *" }).fill("CHASS");
   await page.getByRole("button", { name: "CHASSENARD" }).click();
@@ -43,7 +43,11 @@ test("Heure d'éviscération < heure de mise à mort → erreur ou auto-correcti
 
   // Soit message d'erreur, soit auto-correction (la valeur redevient >= mise à mort)
   // TODO: verify expected behavior
-  const errorVisible = await page.getByText(/éviscération.*avant|invalide|doit être après/i).first().isVisible().catch(() => false);
+  const errorVisible = await page
+    .getByText(/éviscération.*avant|invalide|doit être après/i)
+    .first()
+    .isVisible()
+    .catch(() => false);
   if (!errorVisible) {
     // Auto-correction attendue : blur a reset à 10:00 ou plus
     const val = await evisc.inputValue();

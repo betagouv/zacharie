@@ -8,28 +8,28 @@ test.beforeEach(async () => {
 
 test.use({ launchOptions: { slowMo: 100 } });
 
-// Scenario 65 — Refus carcasse en collecte avant transmission ETG.
-test.skip("Collecteur refuse une carcasse puis transmet à ETG", async ({ page }) => {
-  // SKIP: collecteur carcasse refusal UX unknown — need user input
+// Scenario 65 — Collecteur clicks "Je renvoie la fiche à l'expéditeur"
+test("Collecteur renvoie la fiche à l'expéditeur", async ({ page }) => {
   const feiId = "ZACH-20250707-QZ6E0-175242";
   await connectWith(page, "collecteur-pro@example.fr");
+  await expect(page).toHaveURL("http://localhost:3290/app/collecteur");
+
   await page.getByRole("link", { name: new RegExp(feiId) }).click();
+  await expect(page).toHaveURL(new RegExp(`/app/collecteur/fei/${feiId}`));
 
-  await page.getByRole("button", { name: /Je contrôle et transporte les carcasses|Prendre en charge/ }).click();
-  await new Promise((r) => setTimeout(r, 500)); // DSFR modal settle
+  // The collecteur sees the CallOut with take-charge and return buttons
+  await expect(page.getByRole("button", { name: /Je contrôle et transporte les carcasses/ })).toBeVisible({
+    timeout: 10000,
+  });
 
-  await page.getByRole("button", { name: "Daim N° MM-001-002 Mise à" }).click();
-  await page.getByLabel("Daim - N° MM-001-002").getByText("Carcasse refusée").click();
-  await page.locator(".input-for-search-prefilled-data__input-container").click();
-  await page.getByRole("option", { name: "Présence de souillures" }).click();
-  await page.getByRole("textbox", { name: "Votre commentaire Un" }).fill("Refus collecteur");
-  await page.getByLabel("Daim - N° MM-001-002").getByRole("button", { name: "Enregistrer" }).click();
+  // Click "Je renvoie la fiche à l'expéditeur"
+  const returnBtn = page.getByRole("button", { name: /Je renvoie la fiche à l'expéditeur/ });
+  await expect(returnBtn).toBeVisible();
+  await returnBtn.click();
 
-  await expect(page.getByText(/Refus de 1 carcasse/)).toBeVisible({ timeout: 5000 });
-
-  await page.getByRole("button", { name: "Cliquez ici pour définir" }).click();
-  await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").click();
-  await page.getByRole("option", { name: /ETG 1/ }).click();
-  await page.getByRole("button", { name: "Transmettre la fiche" }).click();
-  await expect(page.getByText(/ETG 1 a été notifié/)).toBeVisible({ timeout: 5000 });
+  // After returning, the fiche should no longer show the take-charge UI
+  // The collecteur should be redirected or the fiche should reflect the return
+  await expect(page.getByRole("button", { name: /Je contrôle et transporte les carcasses/ })).not.toBeVisible({
+    timeout: 10000,
+  });
 });

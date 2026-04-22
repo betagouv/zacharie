@@ -22,7 +22,7 @@ test("Fiche avec anomalies abats & carcasse — visible au rouvrir", async ({ pa
   await connectWith(page, "examinateur@example.fr");
 
   // Step 1: Create fiche with 1 daim
-  await page.getByTitle("Nouvelle fiche").click();
+  await page.getByRole("button", { name: "Nouvelle fiche" }).first().click();
   await page.getByRole("button", { name: dayjs.utc().format("dddd DD MMMM") }).click();
   await page.getByRole("textbox", { name: "Commune de mise à mort *" }).fill("CHASS");
   await page.getByRole("button", { name: "CHASSENARD" }).click();
@@ -35,7 +35,10 @@ test("Fiche avec anomalies abats & carcasse — visible au rouvrir", async ({ pa
   await page.getByRole("button", { name: "Continuer" }).click();
 
   // Step 2: Open the carcasse detail to add anomalies
-  await page.getByRole("button", { name: /Daim N°/ }).first().click();
+  await page
+    .getByRole("button", { name: /Daim N°/ })
+    .first()
+    .click();
 
   // Add anomalie abats via referentiel button
   const ajouterAbats = page.getByRole("button", { name: "Ajouter depuis le référentiel des anomalies abats" });

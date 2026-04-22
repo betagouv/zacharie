@@ -1,4 +1,5 @@
 import {
+  ApiKeyScope,
   CarcasseStatus,
   CarcasseType,
   DepotType,
@@ -37,6 +38,9 @@ export async function populateDb(role?: FeiOwnerRole) {
   await prisma.fei.deleteMany();
   await prisma.entityAndUserRelations.deleteMany();
   await prisma.userRelations.deleteMany();
+  await prisma.apiKeyLog.deleteMany();
+  await prisma.apiKeyApprovalByUserOrEntity.deleteMany();
+  await prisma.apiKey.deleteMany();
   await prisma.password.deleteMany();
   await prisma.entity.deleteMany();
   await prisma.user.deleteMany();
@@ -120,6 +124,8 @@ Christine
         prenom: 'Pierre',
         nom_de_famille: 'Petit',
         addresse_ligne_1: '3 rue de la paix',
+        est_forme_a_l_examen_initial: true,
+        numero_cfei: 'CFEI-075-25-002',
         code_postal: '75000',
         ville: 'Paris',
         telephone: '0606060603',
@@ -461,6 +467,11 @@ Christine
         status: EntityRelationStatus.ADMIN,
       },
       {
+        owner_id: users.find((user) => user.email === 'examinateur-premier-detenteur@example.fr')?.id,
+        entity_id: entities.find((entity) => entity.raison_sociale === 'ETG 1')?.id,
+        relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+      },
+      {
         owner_id: users.find((user) => user.email === 'collecteur-pro@example.fr')?.id,
         entity_id: entities.find((entity) => entity.raison_sociale === 'Collecteur Pro 1')?.id,
         relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
@@ -524,6 +535,49 @@ Christine
   });
   console.log('Entity and user relations created for test', entityAndUserRelations.count);
 
+  // API key for partage-de-mes-donnees test
+  const apiKeyDedicated = await prisma.apiKey.create({
+    data: {
+      name: 'Test API Key Dedicated',
+      description: 'Clé dédiée pour tests E2E',
+      private_key: 'test-private-key-dedicated',
+      public_key: 'test-public-key-dedicated',
+      active: true,
+      dedicated_to_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb', // ETG 1
+      scopes: [ApiKeyScope.FEI_READ_FOR_ENTITY, ApiKeyScope.CARCASSE_READ_FOR_ENTITY],
+    },
+  });
+  await prisma.apiKeyApprovalByUserOrEntity.create({
+    data: {
+      api_key_id: apiKeyDedicated.id,
+      entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb', // ETG 1
+      status: 'PENDING',
+    },
+  });
+
+  const apiKeyUser = await prisma.apiKey.create({
+    data: {
+      name: 'Test API Key User',
+      description: 'Clé utilisateur pour tests E2E',
+      private_key: 'test-private-key-user',
+      public_key: 'test-public-key-user',
+      active: true,
+      scopes: [ApiKeyScope.FEI_READ_FOR_USER, ApiKeyScope.CARCASSE_READ_FOR_USER],
+    },
+  });
+  const etg1User = users.find((u) => u.email === 'etg-1@example.fr');
+  if (etg1User) {
+    await prisma.apiKeyApprovalByUserOrEntity.create({
+      data: {
+        api_key_id: apiKeyUser.id,
+        user_id: etg1User.id,
+        status: 'PENDING',
+      },
+    });
+  }
+
+  console.log('API keys created for test');
+
   if (role) {
     if (role === FeiOwnerRole.PREMIER_DETENTEUR) {
       const fei = await prisma.fei.create({ data: feiValidatedByExaminateur });
@@ -533,11 +587,35 @@ Christine
     if (role === FeiOwnerRole.ETG) {
       const fei = await prisma.fei.create({ data: feiValidatedByPremierDetenteur });
       const carcasses = await prisma.carcasse.createMany({ data: getCarcasses(fei) });
+      await prisma.carcasseIntermediaire.createMany({
+        data: getCarcasses(fei).map((c) => ({
+          fei_numero: fei.numero,
+          numero_bracelet: c.numero_bracelet,
+          zacharie_carcasse_id: c.zacharie_carcasse_id!,
+          intermediaire_id: `${fei.numero}_${'2a8bc866-a709-47d9-aebe-2768fceb2ecb'}_${users.find((u) => u.email === 'etg-1@example.fr')?.id}`,
+          intermediaire_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
+          intermediaire_user_id: users.find((u) => u.email === 'etg-1@example.fr')?.id ?? '',
+          intermediaire_role: FeiOwnerRole.ETG,
+          prise_en_charge_at: dayjs().subtract(2, 'day').toDate(),
+        })),
+      });
       console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (for etg)`);
     }
     if (role === FeiOwnerRole.COLLECTEUR_PRO) {
       const fei = await prisma.fei.create({ data: feiValidatedByPremierDetenteurToCollecteur });
       const carcasses = await prisma.carcasse.createMany({ data: getCarcasses(fei) });
+      await prisma.carcasseIntermediaire.createMany({
+        data: getCarcasses(fei).map((c) => ({
+          fei_numero: fei.numero,
+          numero_bracelet: c.numero_bracelet,
+          zacharie_carcasse_id: c.zacharie_carcasse_id!,
+          intermediaire_id: `${fei.numero}_${'a447bab1-8796-48a4-b955-3a5466116bca'}_${users.find((u) => u.email === 'collecteur-pro@example.fr')?.id}`,
+          intermediaire_entity_id: 'a447bab1-8796-48a4-b955-3a5466116bca',
+          intermediaire_user_id: users.find((u) => u.email === 'collecteur-pro@example.fr')?.id ?? '',
+          intermediaire_role: FeiOwnerRole.COLLECTEUR_PRO,
+          prise_en_charge_at: dayjs().subtract(2, 'day').toDate(),
+        })),
+      });
       console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (for collecteur pro)`);
     }
     if (role === FeiOwnerRole.SVI) {
@@ -567,6 +645,19 @@ Christine
     if ((role as string) === 'SVI_CLOSED') {
       const fei = await prisma.fei.create({ data: feiClosedBySvi });
       const carcasses = await prisma.carcasse.createMany({ data: getCarcasses(fei) });
+      // Create CarcasseIntermediaire for ETG 1 so the traçabilité chain is coherent
+      await prisma.carcasseIntermediaire.createMany({
+        data: getCarcasses(fei).map((c) => ({
+          fei_numero: fei.numero,
+          numero_bracelet: c.numero_bracelet,
+          zacharie_carcasse_id: c.zacharie_carcasse_id!,
+          intermediaire_id: `${fei.numero}_${'2a8bc866-a709-47d9-aebe-2768fceb2ecb'}_${users.find((u) => u.email === 'etg-1@example.fr')?.id}`,
+          intermediaire_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
+          intermediaire_user_id: users.find((u) => u.email === 'etg-1@example.fr')?.id ?? '',
+          intermediaire_role: FeiOwnerRole.ETG,
+          prise_en_charge_at: dayjs().subtract(2, 'day').toDate(),
+        })),
+      });
       // Set per-carcasse SVI decisions so downstream views show real decisions
       await prisma.carcasse.updateMany({
         where: { fei_numero: fei.numero },
@@ -588,6 +679,30 @@ Christine
         })),
       });
       console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (ETG refused)`);
+    }
+    if ((role as string) === 'ETG_ALL_REFUSED_TO_SVI') {
+      const fei = await prisma.fei.create({ data: feiAllRefusedByEtgToSvi });
+      const carcasses = await prisma.carcasse.createMany({ data: getCarcasses(fei) });
+      await prisma.carcasseIntermediaire.createMany({
+        data: getCarcasses(fei).map((c) => ({
+          fei_numero: fei.numero,
+          numero_bracelet: c.numero_bracelet,
+          zacharie_carcasse_id: c.zacharie_carcasse_id!,
+          intermediaire_id: `${fei.numero}_${'2a8bc866-a709-47d9-aebe-2768fceb2ecb'}_${users.find((u) => u.email === 'etg-1@example.fr')?.id}`,
+          intermediaire_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
+          intermediaire_user_id: users.find((u) => u.email === 'etg-1@example.fr')?.id ?? '',
+          intermediaire_role: FeiOwnerRole.ETG,
+          prise_en_charge_at: dayjs().subtract(2, 'day').toDate(),
+        })),
+      });
+      await prisma.carcasse.updateMany({
+        where: { fei_numero: fei.numero },
+        data: {
+          intermediaire_carcasse_refus_intermediaire_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
+          intermediaire_carcasse_refus_motif: 'Présence de souillures',
+        },
+      });
+      console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (ETG all refused to SVI)`);
     }
   }
 
@@ -687,6 +802,11 @@ const feiClosedBySvi: Prisma.FeiUncheckedCreateInput = {
   svi_closed_at: dayjs().subtract(2, 'day').toDate(),
   // SVI users created via createUserId are dynamic; real closure would set svi_closed_by_user_id.
   // For fixture simplicity we leave it null; assert on svi_closed_at in tests.
+};
+
+const feiAllRefusedByEtgToSvi: Prisma.FeiUncheckedCreateInput = {
+  ...feiTransmittedByEtgToSvi,
+  numero: 'ZACH-20250707-QZ6E0-225242',
 };
 
 const feiRefusedByEtg: Prisma.FeiUncheckedCreateInput = {
