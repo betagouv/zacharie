@@ -120,7 +120,7 @@ Two API types:
 
 - Node.js >= 20 required
 - TypeScript throughout
-- Prettier config: semicolons, 110-120 char width, single quotes in backend
+- Prettier config in each package.json: { "singleQuote": true, "trailingComma": "es5", "semi": true, "printWidth": 110, "tabWidth": 2 }
 - Language: French for user-facing content, English for code
 - Pre-commit hooks run `format` and `typecheck`
 
