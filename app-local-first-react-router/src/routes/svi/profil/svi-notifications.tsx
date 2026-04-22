@@ -11,13 +11,7 @@ import { toast } from 'react-toastify';
 export default function SviProfilNotifications() {
   const user = useUser((state) => state.user)!;
 
-  const {
-    subscribeToPush,
-    canSendPush,
-    isSubscribed,
-    pushSubscription,
-    pushAvailable: pushAvailableOnWeb,
-  } = usePush();
+  const { subscribeToPush, canSendPush, isSubscribed, pushSubscription, pushAvailable: pushAvailableOnWeb } = usePush();
 
   const [nativePushTokenRegistered, setNativePushTokenRegistered] = useState(false);
   useEffect(() => {
@@ -115,7 +109,7 @@ export default function SviProfilNotifications() {
                             },
                             (error) => {
                               console.error('Error subscribing user to push notifications!', error);
-                            },
+                            }
                           );
                         },
                       },

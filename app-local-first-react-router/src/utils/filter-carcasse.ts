@@ -65,11 +65,7 @@ type CarcasseFilterableField = FilterableField & {
   name: keyof CarcasseForResponseForRegistry;
 };
 
-export function carcasseFilterableFields(
-  motifs: Array<string>,
-  etgNames: Array<string>,
-  ccgNames: Array<string>,
-): Array<CarcasseFilterableField> {
+export function carcasseFilterableFields(motifs: Array<string>, etgNames: Array<string>, ccgNames: Array<string>): Array<CarcasseFilterableField> {
   const filters: Array<CarcasseFilterableField> = [
     { name: 'numero_bracelet', label: "Numéro de bracelet ou d'identification", type: 'text' },
     { name: 'fei_numero', label: 'Numéro FEI', type: 'text' },

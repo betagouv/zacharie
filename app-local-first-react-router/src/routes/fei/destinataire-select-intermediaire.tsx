@@ -1,14 +1,6 @@
 import { useParams } from 'react-router';
 import { useMemo, useState } from 'react';
-import {
-  UserRoles,
-  Prisma,
-  EntityTypes,
-  DepotType,
-  CarcasseIntermediaire,
-  EntityRelationType,
-  FeiOwnerRole,
-} from '@prisma/client';
+import { UserRoles, Prisma, EntityTypes, DepotType, CarcasseIntermediaire, EntityRelationType, FeiOwnerRole } from '@prisma/client';
 import dayjs from 'dayjs';
 import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
@@ -16,13 +8,7 @@ import useUser from '@app/zustand/user';
 import useZustandStore, { syncData } from '@app/zustand/store';
 import { useCarcassesIntermediairesForIntermediaire } from '@app/utils/get-carcasses-intermediaires';
 import { useMyCarcassesForFei } from '@app/utils/filter-my-carcasses';
-import {
-  useCcgIds,
-  useEtgIds,
-  useSviIds,
-  useCollecteursProIds,
-  useCircuitCourtIds,
-} from '@app/utils/get-entity-relations';
+import { useCcgIds, useEtgIds, useSviIds, useCollecteursProIds, useCircuitCourtIds } from '@app/utils/get-entity-relations';
 import SelectCustom from '@app/components/SelectCustom';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
 import { getEntityDisplay } from '@app/utils/get-entity-display';
@@ -107,7 +93,7 @@ export default function DestinataireIntermediaire({
           return true;
         })
         .map((ci) => ci.zacharie_carcasse_id),
-    [carcassesIntermediaires, carcassesStore, intermediaire?.intermediaire_entity_id],
+    [carcassesIntermediaires, carcassesStore, intermediaire?.intermediaire_entity_id]
   );
 
   const ccgs = ccgsIds.map((id) => entities[id]);
@@ -116,9 +102,7 @@ export default function DestinataireIntermediaire({
   const circuitCourt = circuitCourtIds.map((id) => entities[id]);
   const svis = svisIds.map((id) => entities[id]);
 
-  const intermediaireEntity = intermediaire?.intermediaire_entity_id
-    ? entities[intermediaire.intermediaire_entity_id]
-    : null;
+  const intermediaireEntity = intermediaire?.intermediaire_entity_id ? entities[intermediaire.intermediaire_entity_id] : null;
   const intermediaireEntityType = intermediaireEntity?.type;
 
   const prochainsDetenteurs = useMemo(() => {
@@ -138,9 +122,7 @@ export default function DestinataireIntermediaire({
   }, [etgs, collecteursPros, svis, myCurrentRole, circuitCourt]);
 
   const canTransmitCarcassesToEntities = useMemo(() => {
-    return prochainsDetenteurs.filter(
-      (entity) => entity.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-    );
+    return prochainsDetenteurs.filter((entity) => entity.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY);
   }, [prochainsDetenteurs]);
 
   const ccgsOptions = useMemo(() => {
@@ -210,8 +192,8 @@ export default function DestinataireIntermediaire({
               <strong>Les carcasses de sanglier transmises nécessitent un test trichine obligatoire.</strong>
             </p>
             <p>
-              Conformément à la réglementation, vous devez vous assurer que le test trichine a été réalisé
-              avant toute mise sur le marché ou consommation de ces carcasses.
+              Conformément à la réglementation, vous devez vous assurer que le test trichine a été réalisé avant toute mise sur le marché ou
+              consommation de ces carcasses.
             </p>
           </>
         ),
@@ -226,12 +208,12 @@ export default function DestinataireIntermediaire({
               <strong>Les carcasses de sanglier transmises nécessitent un test trichine recommandé.</strong>
             </p>
             <p className="mb-3">
-              Si le test trichine n'a pas été réalisé, vous devez impérativement informer le consommateur du
-              risque trichine et de l'obligation de cuisson complète de la viande avant consommation.
+              Si le test trichine n'a pas été réalisé, vous devez impérativement informer le consommateur du risque trichine et de l'obligation de
+              cuisson complète de la viande avant consommation.
             </p>
             <p className="text-sm text-gray-600">
-              <strong>Important :</strong> La cuisson doit être complète (cœur de la viande à 70°C minimum)
-              pour éliminer tout risque de contamination.
+              <strong>Important :</strong> La cuisson doit être complète (cœur de la viande à 70°C minimum) pour éliminer tout risque de
+              contamination.
             </p>
           </>
         ),
@@ -320,7 +302,7 @@ export default function DestinataireIntermediaire({
             svi_assigned_to_fei_at: nextFei.svi_assigned_at,
             svi_entity_id: prochainDetenteurEntityId,
           },
-          false,
+          false
         );
       }
     }
@@ -368,12 +350,7 @@ export default function DestinataireIntermediaire({
   return (
     <>
       <div
-        className={[
-          className,
-          disabled ? 'cursor-not-allowed opacity-50' : '',
-          canEdit ? '' : 'cursor-not-allowed',
-          'space-y-6',
-        ].join(' ')}
+        className={[className, disabled ? 'cursor-not-allowed opacity-50' : '', canEdit ? '' : 'cursor-not-allowed', 'space-y-6'].join(' ')}
         key={prochainDetenteurEntityId}
       >
         <SelectCustom
@@ -381,10 +358,7 @@ export default function DestinataireIntermediaire({
           isDisabled={disabled}
           hint={
             <>
-              <span>
-                Indiquez ici la personne ou la structure avec qui vous êtes en contact pour prendre en charge
-                le gibier.
-              </span>
+              <span>Indiquez ici la personne ou la structure avec qui vous êtes en contact pour prendre en charge le gibier.</span>
               {!prochainDetenteurEntityId && !disabled && (
                 <div>
                   {canTransmitCarcassesToEntities.map((entity) => {
@@ -407,9 +381,7 @@ export default function DestinataireIntermediaire({
           }
           options={prochainsDetenteursOptions}
           placeholder="Sélectionnez le prochain détenteur des carcasses"
-          value={
-            prochainsDetenteursOptions.find((option) => option.value === prochainDetenteurEntityId) ?? null
-          }
+          value={prochainsDetenteursOptions.find((option) => option.value === prochainDetenteurEntityId) ?? null}
           getOptionLabel={(f) => f.label!}
           getOptionValue={(f) => f.value}
           onChange={(f) => (f ? setProchainDetenteurEntityId(f.value) : setProchainDetenteurEntityId(null))}
@@ -553,9 +525,7 @@ export default function DestinataireIntermediaire({
             Transmettre la fiche
           </Button>
         )}
-        {!disabled && !!jobIsMissing?.length && (
-          <Alert title="Attention" className="mt-4" severity="error" description={jobIsMissing} />
-        )}
+        {!disabled && !!jobIsMissing?.length && <Alert title="Attention" className="mt-4" severity="error" description={jobIsMissing} />}
         {canEdit && !needToSubmit && fei.fei_next_owner_entity_id && (
           <>
             <Alert

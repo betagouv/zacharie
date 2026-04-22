@@ -5,19 +5,15 @@ export default function Accessibility() {
 
       <section className="space-y-4">
         <p className="text-gray-700">
-          Zacharie s'engage à rendre son site internet, et son application accessibles (y compris en version
-          mobile) conformément à l'article 47 de la loi n°2005-102 du 11 février 2005.
+          Zacharie s'engage à rendre son site internet, et son application accessibles (y compris en version mobile) conformément à l'article 47 de la
+          loi n°2005-102 du 11 février 2005.
         </p>
 
-        <p className="text-gray-700">
-          À cette fin, elle met en œuvre la stratégie et les actions suivantes :
-        </p>
+        <p className="text-gray-700">À cette fin, elle met en œuvre la stratégie et les actions suivantes :</p>
 
         <div className="space-y-6">
           <p>
-            <strong className="text-gray-900">
-              Schéma pluriannuel de mise en accessibilité : en cours d'élaboration.
-            </strong>
+            <strong className="text-gray-900">Schéma pluriannuel de mise en accessibilité : en cours d'élaboration.</strong>
           </p>
 
           <div className="space-y-4">
@@ -39,10 +35,7 @@ export default function Accessibility() {
             <h2 className="text-xl font-semibold text-gray-900">Plan d'actions 2025-2026 :</h2>
             <ul className="list-disc space-y-2 pl-5 text-gray-700">
               <li>Semestre 1 : lecture audio des titres mise en français, test avec le logiciel NVDA</li>
-              <li>
-                Semestre 2 : Ajout d'un plan du site vitrine, ajout des liens d'évitements sur l'en-têtre de
-                page
-              </li>
+              <li>Semestre 2 : Ajout d'un plan du site vitrine, ajout des liens d'évitements sur l'en-têtre de page</li>
             </ul>
           </div>
 
@@ -70,15 +63,13 @@ export default function Accessibility() {
           <a href="http://www.zacharie.beta.gouv.fr" className="text-blue-600 hover:underline">
             www.zacharie.beta.gouv.fr
           </a>
-          ) est partiellement conforme avec le référentiel général d'amélioration de l'accessibilité (RGAA),
-          version 4 en raison des non-conformités et des dérogations énumérées ci-dessous.
+          ) est partiellement conforme avec le référentiel général d'amélioration de l'accessibilité (RGAA), version 4 en raison des non-conformités
+          et des dérogations énumérées ci-dessous.
         </p>
 
         <div className="space-y-2">
           <h3 className="text-lg font-semibold text-gray-900">Résultats des tests</h3>
-          <p className="text-gray-700">
-            L'audit de conformité réalisé par nom de l'entité qui a réalisé l'audit révèle que :
-          </p>
+          <p className="text-gray-700">L'audit de conformité réalisé par nom de l'entité qui a réalisé l'audit révèle que :</p>
           <ul className="list-disc pl-5 text-gray-700">
             <li>50% des critères du RGAA version 4 sont respectés</li>
           </ul>
@@ -97,15 +88,11 @@ export default function Accessibility() {
       </section>
 
       <section className="space-y-4">
-        <h2 className="text-2xl font-semibold text-gray-900">
-          Établissement de cette déclaration d'accessibilité
-        </h2>
+        <h2 className="text-2xl font-semibold text-gray-900">Établissement de cette déclaration d'accessibilité</h2>
         <p className="text-gray-700">Cette déclaration a été établie le 01/02/2025 (première version).</p>
 
         <div className="space-y-2">
-          <h3 className="text-lg font-semibold text-gray-900">
-            Technologies utilisées pour la réalisation de Zacharie
-          </h3>
+          <h3 className="text-lg font-semibold text-gray-900">Technologies utilisées pour la réalisation de Zacharie</h3>
           <ul className="list-disc pl-5 text-gray-700">
             <li>HTML5</li>
             <li>CSS</li>
@@ -116,8 +103,8 @@ export default function Accessibility() {
         <div className="space-y-2">
           <h3 className="text-lg font-semibold text-gray-900">Environnement de test</h3>
           <p className="text-gray-700">
-            Les vérifications de restitution de contenus ont été réalisées sur la base de la combinaison
-            fournie par la base de référence du RGAA, avec les versions suivantes :
+            Les vérifications de restitution de contenus ont été réalisées sur la base de la combinaison fournie par la base de référence du RGAA,
+            avec les versions suivantes :
           </p>
           <ul className="list-disc pl-5 text-gray-700">
             <li>Firefox</li>
@@ -135,9 +122,7 @@ export default function Accessibility() {
         </div>
 
         <div className="space-y-2">
-          <h3 className="text-lg font-semibold text-gray-900">
-            Pages du site ayant fait l'objet de la vérification de conformité
-          </h3>
+          <h3 className="text-lg font-semibold text-gray-900">Pages du site ayant fait l'objet de la vérification de conformité</h3>
           <ul className="list-disc pl-5 text-gray-700">
             <li>
               page d'accueil{' '}
@@ -164,9 +149,8 @@ export default function Accessibility() {
       <section className="space-y-4">
         <h2 className="text-2xl font-semibold text-gray-900">Retour d'information et contact</h2>
         <p className="text-gray-700">
-          Si vous n'arrivez pas à accéder à un contenu ou à un service, vous pouvez contacter le responsable
-          de Zacharie pour être orienté vers une alternative accessible ou obtenir le contenu sous une autre
-          forme.
+          Si vous n'arrivez pas à accéder à un contenu ou à un service, vous pouvez contacter le responsable de Zacharie pour être orienté vers une
+          alternative accessible ou obtenir le contenu sous une autre forme.
         </p>
         <ul className="space-y-4 text-gray-700">
           <li>
@@ -191,10 +175,9 @@ export default function Accessibility() {
       <section className="space-y-4">
         <h2 className="text-2xl font-semibold text-gray-900">Voies de recours</h2>
         <p className="text-gray-700">
-          Si vous constatez un défaut d'accessibilité vous empêchant d'accéder à un contenu ou une
-          fonctionnalité du site, que vous nous le signalez et que vous ne parvenez pas à obtenir une réponse
-          de notre part, vous êtes en droit de faire parvenir vos doléances ou une demande de saisine au
-          Défenseur des droits.
+          Si vous constatez un défaut d'accessibilité vous empêchant d'accéder à un contenu ou une fonctionnalité du site, que vous nous le signalez
+          et que vous ne parvenez pas à obtenir une réponse de notre part, vous êtes en droit de faire parvenir vos doléances ou une demande de
+          saisine au Défenseur des droits.
         </p>
 
         <p className="text-gray-700">Plusieurs moyens sont à votre disposition :</p>

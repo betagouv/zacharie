@@ -51,7 +51,7 @@ export default function CircuitCourtProfilEntreprise() {
         useUser.setState({ user: response.data.user });
       }
     },
-    [user.id],
+    [user.id]
   );
 
   return (

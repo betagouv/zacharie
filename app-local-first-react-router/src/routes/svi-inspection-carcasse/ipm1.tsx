@@ -1,16 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router';
 import { Input } from '@codegouvfr/react-dsfr/Input';
-import {
-  Prisma,
-  CarcasseType,
-  UserRoles,
-  IPM1Protocole,
-  IPM1Decision,
-  Carcasse,
-  Fei,
-  PoidsType,
-} from '@prisma/client';
+import { Prisma, CarcasseType, UserRoles, IPM1Protocole, IPM1Decision, Carcasse, Fei, PoidsType } from '@prisma/client';
 import { lesionsList, lesionsTree } from '@app/utils/lesions';
 import piecesList from '@app/data/svi/pieces-list.json';
 import piecesTree from '@app/data/svi/pieces-tree.json';
@@ -51,26 +42,18 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
   const feiCarcasses = useCarcassesForFei(params.fei_numero);
   const carcasseIds = feiCarcasses.map((c) => c.zacharie_carcasse_id);
 
-  const [sviIpm1PresenteeInspection, setSviIpm1PresenteeInspection] = useState(
-    carcasse.svi_ipm1_presentee_inspection ?? true,
-  );
+  const [sviIpm1PresenteeInspection, setSviIpm1PresenteeInspection] = useState(carcasse.svi_ipm1_presentee_inspection ?? true);
   const [sviIpm1Date, setSviIpm1Date] = useState(carcasse.svi_ipm1_date);
-  const [sviIpm1Protocole, setSviIpm1Protocole] = useState(
-    carcasse.svi_ipm1_protocole ?? IPM1Protocole.STANDARD,
-  );
+  const [sviIpm1Protocole, setSviIpm1Protocole] = useState(carcasse.svi_ipm1_protocole ?? IPM1Protocole.STANDARD);
   const [sviIpm1Pieces, setSviIpm1Pieces] = useState(carcasse.svi_ipm1_pieces);
   const [sviIpm1LesionsOuMotifs, setSviIpm1LesionsOuMotifs] = useState(carcasse.svi_ipm1_lesions_ou_motifs);
   const [sviIpm1NombreAnimaux, setSviIpm1NombreAnimaux] = useState(carcasse.svi_ipm1_nombre_animaux);
   const [sviIpm1Commentaire, setSviIpm1Commentaire] = useState(carcasse.svi_ipm1_commentaire);
-  const [sviIpm1Decision, setSviIpm1Decision] = useState(
-    carcasse.svi_ipm1_decision ?? IPM1Decision.MISE_EN_CONSIGNE,
-  );
+  const [sviIpm1Decision, setSviIpm1Decision] = useState(carcasse.svi_ipm1_decision ?? IPM1Decision.MISE_EN_CONSIGNE);
   const [sviIpm1DureeConsigne, setSviIpm1DureeConsigne] = useState(carcasse.svi_ipm1_duree_consigne);
   const [sviIpm1PoidsConsigne, setSviIpm1PoidsConsigne] = useState(carcasse.svi_ipm1_poids_consigne);
   const [sviIpm1PoidsType, setSviIpm1PoidsType] = useState(carcasse.svi_ipm1_poids_type);
-  const [sviIpm1UserName, setSviIpm1UserName] = useState(
-    carcasse.svi_ipm1_user_name_cache ?? `${user.prenom} ${user.nom_de_famille}`,
-  );
+  const [sviIpm1UserName, setSviIpm1UserName] = useState(carcasse.svi_ipm1_user_name_cache ?? `${user.prenom} ${user.nom_de_famille}`);
   const [triedToSave, setTriedToSave] = useState(false);
 
   const missingFields = useMemo(() => {
@@ -155,8 +138,7 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
         current_owner_entity_id: fei.fei_next_owner_entity_id ?? null,
         current_owner_entity_name_cache: fei.fei_next_owner_entity_name_cache ?? null,
         current_owner_user_id: user.id,
-        current_owner_user_name_cache:
-          fei.fei_next_owner_user_name_cache || `${user.prenom} ${user.nom_de_famille}`,
+        current_owner_user_name_cache: fei.fei_next_owner_user_name_cache || `${user.prenom} ${user.nom_de_famille}`,
         next_owner_role: null,
         next_owner_user_id: null,
         next_owner_user_name_cache: null,
@@ -171,8 +153,7 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
         fei_current_owner_entity_id: fei.fei_next_owner_entity_id,
         fei_current_owner_entity_name_cache: fei.fei_next_owner_entity_name_cache,
         fei_current_owner_user_id: user.id,
-        fei_current_owner_user_name_cache:
-          fei.fei_next_owner_user_name_cache || `${user.prenom} ${user.nom_de_famille}`,
+        fei_current_owner_user_name_cache: fei.fei_next_owner_user_name_cache || `${user.prenom} ${user.nom_de_famille}`,
         fei_next_owner_role: null,
         fei_next_owner_user_id: null,
         fei_next_owner_user_name_cache: null,
@@ -216,11 +197,7 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
   return (
     <form method="POST" id={`svi-carcasse-${carcasse.numero_bracelet}`} onSubmit={(e) => e.preventDefault()}>
       <RadioButtons
-        legend={
-          carcasse.type === CarcasseType.PETIT_GIBIER
-            ? "Lot présenté à l'inspection *"
-            : "Carcasse présentée à l'inspection *"
-        }
+        legend={carcasse.type === CarcasseType.PETIT_GIBIER ? "Lot présenté à l'inspection *" : "Carcasse présentée à l'inspection *"}
         orientation="horizontal"
         options={[
           {
@@ -337,10 +314,7 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
                 value: sviIpm1NombreAnimaux ?? '',
                 // max: Number(carcasse.nombre_d_animaux),
                 onChange: (e) => {
-                  const clampedValue = Math.max(
-                    0,
-                    Math.min(Number(e.target.value), Number(carcasse.nombre_d_animaux)),
-                  );
+                  const clampedValue = Math.max(0, Math.min(Number(e.target.value), Number(carcasse.nombre_d_animaux)));
                   setSviIpm1NombreAnimaux(clampedValue);
                 },
               }}
@@ -364,11 +338,7 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
             <ModalTreeDisplay
               data={piecesTree[carcasse.type ?? CarcasseType.GROS_GIBIER]}
               modal={piecesGibier}
-              title={
-                carcasse.type === CarcasseType.PETIT_GIBIER
-                  ? 'Pièces de petits gibiers'
-                  : 'Pièces de grands gibiers'
-              }
+              title={carcasse.type === CarcasseType.PETIT_GIBIER ? 'Pièces de petits gibiers' : 'Pièces de grands gibiers'}
               onItemClick={(newPiece) => {
                 const nextPieces = [...sviIpm1Pieces.filter((p) => p !== newPiece), newPiece];
                 setSviIpm1Pieces(nextPieces);
@@ -389,11 +359,7 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
               </div>
               <p className="text-sm md:mb-3">ou</p>
               <div className="flex-1">
-                <Button
-                  type="button"
-                  priority="tertiary no outline"
-                  onClick={() => lesionsOuMotifsConsigneModal.open()}
-                >
+                <Button type="button" priority="tertiary no outline" onClick={() => lesionsOuMotifsConsigneModal.open()}>
                   Filtrez par catégorie de lésion
                 </Button>
               </div>
@@ -522,9 +488,7 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
           Enregistrer
         </Button>
       </div>
-      {triedToSave && missingFields && (
-        <Alert title="Attention" className="mt-4" severity="error" description={missingFields} />
-      )}
+      {triedToSave && missingFields && <Alert title="Attention" className="mt-4" severity="error" description={missingFields} />}
     </form>
   );
 }

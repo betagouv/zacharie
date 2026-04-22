@@ -11,27 +11,23 @@ export default function PolitiqueDeConfidentialite() {
     <article className="fr-container fr-container--fluid fr-my-md-14v">
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div>
-          <title>
-            Politique de confidentialité | Zacharie | Ministère de l'Agriculture et de la Souveraineté
-            Alimentaire
-          </title>
+          <title>Politique de confidentialité | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
           <h1 className="mt-0 mb-3 text-2xl font-bold">Politique de confidentialité de « Zacharie »</h1>
 
           <p>Dernière mise à jour : Octobre 2025</p>
 
           <h2 className="mt-6 mb-2 text-xl font-semibold">1. Introduction</h2>
           <p>
-            La Direction générale de l'Alimentation (DGAL) du ministère de l'Agriculture, de la Souveraineté
-            alimentaire et de la Forêt (MASAF) s'engage à protéger la vie privée des utilisateurs de la
-            plateforme Zacharie. Cette politique de confidentialité explique comment nous collectons,
-            utilisons et protégeons vos données personnelles conformément au Règlement Général sur la
-            Protection des Données (RGPD) et à la loi Informatique et Libertés.
+            La Direction générale de l'Alimentation (DGAL) du ministère de l'Agriculture, de la Souveraineté alimentaire et de la Forêt (MASAF)
+            s'engage à protéger la vie privée des utilisateurs de la plateforme Zacharie. Cette politique de confidentialité explique comment nous
+            collectons, utilisons et protégeons vos données personnelles conformément au Règlement Général sur la Protection des Données (RGPD) et à
+            la loi Informatique et Libertés.
           </p>
 
           <h2 className="mt-6 mb-2 text-xl font-semibold">2. Responsable du traitement</h2>
           <p>
-            Le responsable du traitement des données est la Direction générale de l'Alimentation (DGAL) du
-            ministère de l'Agriculture, de la Souveraineté alimentaire et de la Forêt.
+            Le responsable du traitement des données est la Direction générale de l'Alimentation (DGAL) du ministère de l'Agriculture, de la
+            Souveraineté alimentaire et de la Forêt.
           </p>
 
           <h2 className="mt-6 mb-2 text-xl font-semibold">3. Données collectées</h2>
@@ -76,12 +72,12 @@ export default function PolitiqueDeConfidentialite() {
             <li>Aux agents habilités de la DGAL</li>
             <li>Aux agents des Directions Départementales en charge de la Protection des Populations</li>
             <li>
-              Aux autres utilisateurs de la plateforme, uniquement pour les données nécessaires à la
-              traçabilité des carcasses (dans le cadre de leurs attributions respectives)
+              Aux autres utilisateurs de la plateforme, uniquement pour les données nécessaires à la traçabilité des carcasses (dans le cadre de leurs
+              attributions respectives)
             </li>
             <li>
-              Aux sous-traitants intervenant pour le compte du responsable de traitement (articles 13 et 14 du
-              RGPD), strictement pour les finalités techniques suivantes :
+              Aux sous-traitants intervenant pour le compte du responsable de traitement (articles 13 et 14 du RGPD), strictement pour les finalités
+              techniques suivantes :
               <ul className="mt-1 list-disc pl-6">
                 <li>Clever Cloud : hébergement de la plateforme</li>
                 <li>OVH : gestion des noms de domaine</li>
@@ -95,21 +91,13 @@ export default function PolitiqueDeConfidentialite() {
           <h2 className="mt-6 mb-2 text-xl font-semibold">7. Durée de conservation</h2>
           <p>Nous conservons vos données selon les durées suivantes :</p>
           <ul className="mt-2 list-disc pl-6">
-            <li>
-              Données du compte utilisateur : pendant la durée d'utilisation du service et jusqu'à 3 ans après
-              la dernière utilisation
-            </li>
-            <li>
-              Fiches d'accompagnement et données de traçabilité : 5 ans conformément aux obligations légales
-            </li>
+            <li>Données du compte utilisateur : pendant la durée d'utilisation du service et jusqu'à 3 ans après la dernière utilisation</li>
+            <li>Fiches d'accompagnement et données de traçabilité : 5 ans conformément aux obligations légales</li>
             <li>Logs de connexion : 1 an</li>
           </ul>
 
           <h2 className="mt-6 mb-2 text-xl font-semibold">8. Sécurité des données</h2>
-          <p>
-            Nous mettons en œuvre les mesures techniques et organisationnelles appropriées pour assurer la
-            sécurité de vos données, notamment :
-          </p>
+          <p>Nous mettons en œuvre les mesures techniques et organisationnelles appropriées pour assurer la sécurité de vos données, notamment :</p>
           <ul className="mt-2 list-disc pl-6">
             <li>Chiffrement des données en transit et au repos</li>
             <li>Authentification sécurisée des utilisateurs</li>
@@ -119,9 +107,7 @@ export default function PolitiqueDeConfidentialite() {
           </ul>
 
           <h2 className="mt-6 mb-2 text-xl font-semibold">9. Vos droits</h2>
-          <p>
-            Conformément au RGPD et à la loi Informatique et Libertés, vous disposez des droits suivants :
-          </p>
+          <p>Conformément au RGPD et à la loi Informatique et Libertés, vous disposez des droits suivants :</p>
           <ul className="mt-2 list-disc pl-6">
             <li>Droit d'accès à vos données</li>
             <li>Droit de rectification des données inexactes</li>
@@ -132,10 +118,7 @@ export default function PolitiqueDeConfidentialite() {
           </ul>
 
           <h2 className="mt-6 mb-2 text-xl font-semibold">10. Exercice de vos droits</h2>
-          <p>
-            Pour exercer vos droits ou pour toute question sur le traitement de vos données, vous pouvez
-            contacter :
-          </p>
+          <p>Pour exercer vos droits ou pour toute question sur le traitement de vos données, vous pouvez contacter :</p>
           <p className="mt-2">
             Le Délégué à la Protection des Données du ministère de l'Agriculture :<br />
             Par email : [Adresse email du DPO]
@@ -149,13 +132,10 @@ export default function PolitiqueDeConfidentialite() {
             75007 Paris
           </p>
 
-          <h2 className="mt-6 mb-2 text-xl font-semibold">
-            11. Modifications de la politique de confidentialité
-          </h2>
+          <h2 className="mt-6 mb-2 text-xl font-semibold">11. Modifications de la politique de confidentialité</h2>
           <p>
-            La présente politique de confidentialité peut être mise à jour à tout moment. En cas de
-            modification substantielle, nous vous en informerons par email ou via la plateforme. La date de
-            dernière mise à jour en haut de cette politique sera également actualisée.
+            La présente politique de confidentialité peut être mise à jour à tout moment. En cas de modification substantielle, nous vous en
+            informerons par email ou via la plateforme. La date de dernière mise à jour en haut de cette politique sera également actualisée.
           </p>
         </div>
       </div>

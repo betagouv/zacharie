@@ -229,7 +229,7 @@ Christine
       users.map(async (user) => ({
         user_id: user.id,
         password: await hashPassword('secret-secret'),
-      })),
+      }))
     ),
   });
 
@@ -565,10 +565,8 @@ function mapFeiFieldsToCarcasse(fei: Fei, carcasse: Prisma.CarcasseUncheckedCrea
     premier_detenteur_prochain_detenteur_id_cache: fei.premier_detenteur_prochain_detenteur_id_cache,
     examinateur_initial_offline: fei.examinateur_initial_offline,
     examinateur_initial_user_id: fei.examinateur_initial_user_id,
-    examinateur_initial_approbation_mise_sur_le_marche:
-      fei.examinateur_initial_approbation_mise_sur_le_marche,
-    examinateur_initial_date_approbation_mise_sur_le_marche:
-      fei.examinateur_initial_date_approbation_mise_sur_le_marche,
+    examinateur_initial_approbation_mise_sur_le_marche: fei.examinateur_initial_approbation_mise_sur_le_marche,
+    examinateur_initial_date_approbation_mise_sur_le_marche: fei.examinateur_initial_date_approbation_mise_sur_le_marche,
     premier_detenteur_offline: fei.premier_detenteur_offline,
     premier_detenteur_user_id: fei.premier_detenteur_user_id,
     premier_detenteur_entity_id: fei.premier_detenteur_entity_id,

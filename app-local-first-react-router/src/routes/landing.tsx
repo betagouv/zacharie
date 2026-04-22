@@ -5,10 +5,7 @@ export default function LandingPage() {
   const setVideoUrl = useVideo((state) => state.setVideoUrl);
   return (
     <>
-      <title>
-        Zacharie | Garantir des viandes de gibier sauvage saines et sûres | Ministère de l'Agriculture et de
-        la Souveraineté Alimentaire
-      </title>
+      <title>Zacharie | Garantir des viandes de gibier sauvage saines et sûres | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
       <main>
         {/* Hero Section */}
         <section className="min-h-96 bg-[#A38A6C] bg-[url('/landing/gradient-cerf.webp')] bg-cover bg-center bg-no-repeat py-16 lg:min-h-auto lg:py-24 2xl:py-36">
@@ -16,8 +13,7 @@ export default function LandingPage() {
             <div className="grid h-full items-center gap-12 lg:grid-cols-2">
               <div className="flex h-full max-w-[75vw] flex-col justify-center sm:max-w-[50vw] 2xl:max-w-[35vw]">
                 <h1 className="3xl:text-5xl text-2xl leading-tight font-bold text-white! text-shadow-xs lg:text-3xl 2xl:text-4xl">
-                  Réalisez vos fiches d'examen initial du gibier directement depuis votre smartphone ou votre
-                  ordinateur, où que vous soyez.
+                  Réalisez vos fiches d'examen initial du gibier directement depuis votre smartphone ou votre ordinateur, où que vous soyez.
                 </h1>
                 <p className="3xl:text-5xl mt-8 text-2xl leading-tight font-bold text-white! text-shadow-xs lg:mt-[10%] lg:text-3xl 2xl:text-4xl">
                   Simple, rapide et 100% gratuit, Zacharie accélère vos démarches.
@@ -28,13 +24,7 @@ export default function LandingPage() {
                     className="rounded-full transition-transform hover:scale-110 focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#A38A6C] focus:outline-none"
                     aria-label="Regarder la vidéo de démonstration"
                   >
-                    <svg
-                      width="60"
-                      height="60"
-                      viewBox="0 0 85 85"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
+                    <svg width="60" height="60" viewBox="0 0 85 85" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M68 42L30.5 63.6506L30.5 20.3494L68 42Z" fill="white" />
                       <circle cx="42.5" cy="42.5" r="40" stroke="white" strokeWidth="5" />
                     </svg>
@@ -68,13 +58,7 @@ export default function LandingPage() {
                   className="rounded-full transition-transform hover:scale-110 focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#A38A6C] focus:outline-none"
                   aria-label="Regarder la vidéo de démonstration"
                 >
-                  <svg
-                    width="85"
-                    height="85"
-                    viewBox="0 0 85 85"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
+                  <svg width="85" height="85" viewBox="0 0 85 85" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M68 42L30.5 63.6506L30.5 20.3494L68 42Z" fill="white" />
                     <circle cx="42.5" cy="42.5" r="40" stroke="white" strokeWidth="5" />
                   </svg>
@@ -100,8 +84,7 @@ export default function LandingPage() {
                 Une application qui fonctionne <b>même hors réseau</b>.
               </li>
               <li>
-                Toute la chasse du jour sur <b>une seule fiche</b>, peu importe le nombre de carcasses ou
-                d'espèces.
+                Toute la chasse du jour sur <b>une seule fiche</b>, peu importe le nombre de carcasses ou d'espèces.
               </li>
               <li>
                 Des <b>informations pré-enregistrées</b> pour un remplissage rapide et complet à coup sûr.
@@ -209,11 +192,7 @@ export default function LandingPage() {
             </Button>
           </div>
           <div className="hidden max-w-2xl justify-end lg:block 2xl:max-w-5xl">
-            <img
-              src="/landing/laptop-scene-1.webp"
-              alt="Interface desktop de Zacharie"
-              className="hidden size-full object-fill lg:block"
-            />
+            <img src="/landing/laptop-scene-1.webp" alt="Interface desktop de Zacharie" className="hidden size-full object-fill lg:block" />
           </div>
         </section>
 

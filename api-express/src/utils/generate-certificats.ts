@@ -1,12 +1,4 @@
-import {
-  Carcasse,
-  CarcasseCertificatType,
-  Entity,
-  EntityTypes,
-  IPM1Decision,
-  IPM2Decision,
-  IPM2Traitement,
-} from '@prisma/client';
+import { Carcasse, CarcasseCertificatType, Entity, EntityTypes, IPM1Decision, IPM2Decision, IPM2Traitement } from '@prisma/client';
 import dayjs from 'dayjs';
 import prisma from '~/prisma';
 import { CertificatResponse } from '~/types/responses';
@@ -72,13 +64,13 @@ function getTraitementAssainissant(existingCarcasse: Carcasse) {
   if (existingCarcasse.svi_ipm2_traitement_assainissant.includes(IPM2Traitement.CUISSON)) {
     types.push('Cuisson');
     parametres.push(
-      `${existingCarcasse.svi_ipm2_traitement_assainissant_cuisson_temp}°C ${existingCarcasse.svi_ipm2_traitement_assainissant_cuisson_temps}`,
+      `${existingCarcasse.svi_ipm2_traitement_assainissant_cuisson_temp}°C ${existingCarcasse.svi_ipm2_traitement_assainissant_cuisson_temps}`
     );
   }
   if (existingCarcasse.svi_ipm2_traitement_assainissant.includes(IPM2Traitement.CONGELATION)) {
     types.push('Congélation');
     parametres.push(
-      `${existingCarcasse.svi_ipm2_traitement_assainissant_congelation_temp}°C ${existingCarcasse.svi_ipm2_traitement_assainissant_congelation_temps}`,
+      `${existingCarcasse.svi_ipm2_traitement_assainissant_congelation_temp}°C ${existingCarcasse.svi_ipm2_traitement_assainissant_congelation_temps}`
     );
   }
   if (existingCarcasse.svi_ipm2_traitement_assainissant.includes(IPM2Traitement.AUTRE)) {
@@ -93,7 +85,7 @@ function getTraitementAssainissant(existingCarcasse: Carcasse) {
 
 export async function generateDBCertificat(
   certificatType: CarcasseCertificatType,
-  zacharie_carcasse_id: Carcasse['zacharie_carcasse_id'],
+  zacharie_carcasse_id: Carcasse['zacharie_carcasse_id']
 ): Promise<CertificatResponse> {
   if (!zacharie_carcasse_id) {
     return {
@@ -129,10 +121,7 @@ export async function generateDBCertificat(
   }
 
   if (certificatType === CarcasseCertificatType.CC) {
-    if (
-      !existingCarcasse.svi_ipm1_signed_at ||
-      existingCarcasse.svi_ipm1_decision !== IPM1Decision.MISE_EN_CONSIGNE
-    ) {
+    if (!existingCarcasse.svi_ipm1_signed_at || existingCarcasse.svi_ipm1_decision !== IPM1Decision.MISE_EN_CONSIGNE) {
       return {
         ok: false,
         data: { certificat: null },
@@ -182,15 +171,13 @@ export async function generateDBCertificat(
 
   const fei = existingCarcasse.Fei;
   const examinateur = fei.FeiExaminateurInitialUser;
-  const etg = fei.CarcasseIntermediaire.find(
-    (intermediaire) => intermediaire.intermediaire_role === EntityTypes.ETG,
-  )?.CarcasseIntermediaireEntity;
+  const etg = fei.CarcasseIntermediaire.find((intermediaire) => intermediaire.intermediaire_role === EntityTypes.ETG)?.CarcasseIntermediaireEntity;
   const collecteursPro = Array.from(
     new Set(
-      fei.CarcasseIntermediaire.filter(
-        (intermediaire) => intermediaire.intermediaire_role === EntityTypes.COLLECTEUR_PRO,
-      ).map((intermediaire) => intermediaire.CarcasseIntermediaireEntity.nom_d_usage),
-    ),
+      fei.CarcasseIntermediaire.filter((intermediaire) => intermediaire.intermediaire_role === EntityTypes.COLLECTEUR_PRO).map(
+        (intermediaire) => intermediaire.CarcasseIntermediaireEntity.nom_d_usage
+      )
+    )
   ).join(', ');
 
   if (!certificat) {
@@ -225,8 +212,7 @@ export async function generateDBCertificat(
         nom_etg_personne_physique: etg.nom_prenom_responsable,
         nom_etg_personne_morale: etg.raison_sociale,
         siret_etg: etg.siret,
-        traitement_assainissant_etablissement:
-          existingCarcasse.svi_ipm2_traitement_assainissant_etablissement,
+        traitement_assainissant_etablissement: existingCarcasse.svi_ipm2_traitement_assainissant_etablissement,
         fei_numero: existingCarcasse.fei_numero,
         numero_bracelet: existingCarcasse.numero_bracelet,
         espece: existingCarcasse.espece,
@@ -236,32 +222,14 @@ export async function generateDBCertificat(
         examinateur_initial: `${examinateur?.prenom} ${examinateur?.nom_de_famille}`,
         premier_detenteur: fei.premier_detenteur_name_cache,
         collecteur_pro: collecteursPro,
-        pieces:
-          certificatType === CarcasseCertificatType.CC
-            ? existingCarcasse.svi_ipm1_pieces
-            : existingCarcasse.svi_ipm2_pieces,
+        pieces: certificatType === CarcasseCertificatType.CC ? existingCarcasse.svi_ipm1_pieces : existingCarcasse.svi_ipm2_pieces,
         motifs:
-          certificatType === CarcasseCertificatType.CC
-            ? existingCarcasse.svi_ipm1_lesions_ou_motifs
-            : existingCarcasse.svi_ipm2_lesions_ou_motifs,
-        commentaire:
-          certificatType === CarcasseCertificatType.CC
-            ? existingCarcasse.svi_ipm1_commentaire
-            : existingCarcasse.svi_ipm2_commentaire,
-        poids:
-          certificatType === CarcasseCertificatType.CC
-            ? existingCarcasse.svi_ipm1_poids_consigne
-            : existingCarcasse.svi_ipm2_poids_saisie,
-        duree_consigne:
-          certificatType === CarcasseCertificatType.CC ? existingCarcasse.svi_ipm1_duree_consigne : null,
-        traitement_type:
-          certificatType === CarcasseCertificatType.LPS
-            ? getTraitementAssainissant(existingCarcasse).type
-            : null,
-        traitement_parametre:
-          certificatType === CarcasseCertificatType.LPS
-            ? getTraitementAssainissant(existingCarcasse).parametre
-            : null,
+          certificatType === CarcasseCertificatType.CC ? existingCarcasse.svi_ipm1_lesions_ou_motifs : existingCarcasse.svi_ipm2_lesions_ou_motifs,
+        commentaire: certificatType === CarcasseCertificatType.CC ? existingCarcasse.svi_ipm1_commentaire : existingCarcasse.svi_ipm2_commentaire,
+        poids: certificatType === CarcasseCertificatType.CC ? existingCarcasse.svi_ipm1_poids_consigne : existingCarcasse.svi_ipm2_poids_saisie,
+        duree_consigne: certificatType === CarcasseCertificatType.CC ? existingCarcasse.svi_ipm1_duree_consigne : null,
+        traitement_type: certificatType === CarcasseCertificatType.LPS ? getTraitementAssainissant(existingCarcasse).type : null,
+        traitement_parametre: certificatType === CarcasseCertificatType.LPS ? getTraitementAssainissant(existingCarcasse).parametre : null,
 
         svi_ipm1_signed_at: existingCarcasse.svi_ipm1_signed_at,
         svi_ipm2_signed_at: existingCarcasse.svi_ipm2_signed_at,

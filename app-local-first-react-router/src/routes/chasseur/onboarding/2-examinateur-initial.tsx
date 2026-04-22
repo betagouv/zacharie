@@ -29,12 +29,7 @@ export default function ChasseurOnboardingExaminateurInitial() {
       <title>{`Formation examen initial | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}</title>
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
-          <Stepper
-            currentStep={2}
-            nextTitle="Informations de chasse"
-            stepCount={3}
-            title="Formation à l'examen initial"
-          />
+          <Stepper currentStep={2} nextTitle="Informations de chasse" stepCount={3} title="Formation à l'examen initial" />
           <ExaminateurInitial />
           <div className="relative bottom-0 left-0 z-50 flex w-auto flex-col items-center justify-center p-4 pb-2 shadow-none [&_ul]:min-w-96 [&_ul]:justify-center">
             <ButtonsGroup
@@ -74,13 +69,7 @@ function ExaminateurInitial() {
   const [numeroCfei, setNumeroCfei] = useState(user.numero_cfei ?? '');
 
   const handleUserSubmit = useCallback(
-    async ({
-      isExaminateurInitial,
-      numeroCfei,
-    }: {
-      isExaminateurInitial: boolean | null;
-      numeroCfei: string;
-    }) => {
+    async ({ isExaminateurInitial, numeroCfei }: { isExaminateurInitial: boolean | null; numeroCfei: string }) => {
       const body: Record<string, string | null> = {};
       if (isExaminateurInitial) {
         body.est_forme_a_l_examen_initial = 'true';
@@ -97,7 +86,7 @@ function ExaminateurInitial() {
         useUser.setState({ user: response.data.user });
       }
     },
-    [user.id],
+    [user.id]
   );
 
   return (
@@ -108,9 +97,7 @@ function ExaminateurInitial() {
             legend={
               <div>
                 Êtes-vous formé à l'examen initial ? <span className="text-red-500">*</span>
-                <p className="text-sm text-gray-500">
-                  Cette information déterminera si vous pouvez créer des fiches d'examen initial
-                </p>
+                <p className="text-sm text-gray-500">Cette information déterminera si vous pouvez créer des fiches d'examen initial</p>
               </div>
             }
             orientation="horizontal"
@@ -133,10 +120,7 @@ function ExaminateurInitial() {
                   checked: isExaminateurInitial === false,
                   name: 'pas_forme_a_l_examen_initial',
                   onChange: () => {
-                    if (
-                      !user.numero_cfei ||
-                      window.confirm("N'êtes vous vraiment pas formé à l'examen initial ?")
-                    ) {
+                    if (!user.numero_cfei || window.confirm("N'êtes vous vraiment pas formé à l'examen initial ?")) {
                       setIsExaminateurInitial(false);
                       handleUserSubmit({
                         isExaminateurInitial: false,
@@ -153,8 +137,7 @@ function ExaminateurInitial() {
             <Input
               label={
                 <span>
-                  Numéro d'attestation de Chasseur Formé à l'Examen Initial{' '}
-                  <span className="text-red-500">*</span>
+                  Numéro d'attestation de Chasseur Formé à l'Examen Initial <span className="text-red-500">*</span>
                 </span>
               }
               hintText="De la forme CFEI-DEP-AA-123"

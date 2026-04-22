@@ -115,22 +115,9 @@ export default function SchemaPros({ className }: { className: string }) {
         fill="#01008B"
       />
       <defs>
-        <filter
-          id="filter0_d_0_1"
-          x="0"
-          y="0"
-          width="229"
-          height="372"
-          filterUnits="userSpaceOnUse"
-          colorInterpolationFilters="sRGB"
-        >
+        <filter id="filter0_d_0_1" x="0" y="0" width="229" height="372" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
           <feFlood floodOpacity="0" result="BackgroundImageFix" />
-          <feColorMatrix
-            in="SourceAlpha"
-            type="matrix"
-            values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
-            result="hardAlpha"
-          />
+          <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha" />
           <feOffset dy="4" />
           <feGaussianBlur stdDeviation="2" />
           <feComposite in2="hardAlpha" operator="out" />
@@ -138,22 +125,9 @@ export default function SchemaPros({ className }: { className: string }) {
           <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_0_1" />
           <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_0_1" result="shape" />
         </filter>
-        <filter
-          id="filter1_d_0_1"
-          x="246"
-          y="0"
-          width="229"
-          height="372"
-          filterUnits="userSpaceOnUse"
-          colorInterpolationFilters="sRGB"
-        >
+        <filter id="filter1_d_0_1" x="246" y="0" width="229" height="372" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
           <feFlood floodOpacity="0" result="BackgroundImageFix" />
-          <feColorMatrix
-            in="SourceAlpha"
-            type="matrix"
-            values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
-            result="hardAlpha"
-          />
+          <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha" />
           <feOffset dy="4" />
           <feGaussianBlur stdDeviation="2" />
           <feComposite in2="hardAlpha" operator="out" />
@@ -161,22 +135,9 @@ export default function SchemaPros({ className }: { className: string }) {
           <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_0_1" />
           <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_0_1" result="shape" />
         </filter>
-        <filter
-          id="filter2_d_0_1"
-          x="492"
-          y="0"
-          width="229"
-          height="372"
-          filterUnits="userSpaceOnUse"
-          colorInterpolationFilters="sRGB"
-        >
+        <filter id="filter2_d_0_1" x="492" y="0" width="229" height="372" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
           <feFlood floodOpacity="0" result="BackgroundImageFix" />
-          <feColorMatrix
-            in="SourceAlpha"
-            type="matrix"
-            values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
-            result="hardAlpha"
-          />
+          <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha" />
           <feOffset dy="4" />
           <feGaussianBlur stdDeviation="2" />
           <feComposite in2="hardAlpha" operator="out" />
@@ -184,22 +145,9 @@ export default function SchemaPros({ className }: { className: string }) {
           <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_0_1" />
           <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_0_1" result="shape" />
         </filter>
-        <filter
-          id="filter3_d_0_1"
-          x="738"
-          y="0"
-          width="229"
-          height="372"
-          filterUnits="userSpaceOnUse"
-          colorInterpolationFilters="sRGB"
-        >
+        <filter id="filter3_d_0_1" x="738" y="0" width="229" height="372" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
           <feFlood floodOpacity="0" result="BackgroundImageFix" />
-          <feColorMatrix
-            in="SourceAlpha"
-            type="matrix"
-            values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
-            result="hardAlpha"
-          />
+          <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha" />
           <feOffset dy="4" />
           <feGaussianBlur stdDeviation="2" />
           <feComposite in2="hardAlpha" operator="out" />
@@ -207,22 +155,9 @@ export default function SchemaPros({ className }: { className: string }) {
           <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_0_1" />
           <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_0_1" result="shape" />
         </filter>
-        <filter
-          id="filter4_d_0_1"
-          x="984"
-          y="0"
-          width="229"
-          height="372"
-          filterUnits="userSpaceOnUse"
-          colorInterpolationFilters="sRGB"
-        >
+        <filter id="filter4_d_0_1" x="984" y="0" width="229" height="372" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
           <feFlood floodOpacity="0" result="BackgroundImageFix" />
-          <feColorMatrix
-            in="SourceAlpha"
-            type="matrix"
-            values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
-            result="hardAlpha"
-          />
+          <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha" />
           <feOffset dy="4" />
           <feGaussianBlur stdDeviation="2" />
           <feComposite in2="hardAlpha" operator="out" />

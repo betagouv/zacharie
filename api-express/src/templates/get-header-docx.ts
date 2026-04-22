@@ -1,17 +1,6 @@
 import path from 'path';
 import fs from 'fs/promises';
-import {
-  Paragraph,
-  Table,
-  TableRow,
-  TableCell,
-  TextRun,
-  AlignmentType,
-  Header,
-  ImageRun,
-  WidthType,
-  BorderStyle,
-} from 'docx';
+import { Paragraph, Table, TableRow, TableCell, TextRun, AlignmentType, Header, ImageRun, WidthType, BorderStyle } from 'docx';
 import { CarcasseCertificat } from '@prisma/client';
 
 export async function generateHeaderDocx(data: CarcasseCertificat) {

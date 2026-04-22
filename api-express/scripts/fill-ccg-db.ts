@@ -20,7 +20,7 @@ function insertCCGsDéclarésInDB() {
       parse({
         columns: true, // Use first row as column headers
         skip_empty_lines: true,
-      }),
+      })
     )
     .on('data', async (row) => {
       // |CCG:82-CCG-2|LIBRE:82-CCG-02| -> 82-CCG-2
@@ -33,10 +33,7 @@ function insertCCGsDéclarésInDB() {
         nom_d_usage: row['Établissement :\nEnseigne usuelle\n(RESYTAL)'],
         raison_sociale: row['Établissement :\nEnseigne usuelle\n(RESYTAL)'],
         numero_ddecpp: numeroDdecpp,
-        address_ligne_1:
-          row[
-            ' Unité Activité (UA) :\nAdresse de localisation :\nConcaténations des lignes adresses 1, 2 & 3'
-          ]?.trim(),
+        address_ligne_1: row[' Unité Activité (UA) :\nAdresse de localisation :\nConcaténations des lignes adresses 1, 2 & 3']?.trim(),
         code_postal: row["Unité d'Activité (UA) :\nCode postal\n(Adresse de localisation)"],
         ville: row[' Unité Activité (UA) :\nAdresse de localisation :\nCommune Nom'],
         ccg_status: 'Déclaré',
@@ -91,7 +88,7 @@ function insertCCGsAgréésInDB() {
         skip_empty_lines: true,
         relax_column_count: true, // Allow inconsistent column counts
         skip_records_with_error: false, // Skip problematic records instead of failing
-      }),
+      })
     )
     .on('data', async (row) => {
       const cleanRow: Prisma.EntityUncheckedCreateInput = {

@@ -1,7 +1,7 @@
 /// <reference types="node" />
 
-import type { PlaywrightTestConfig } from "@playwright/test";
-import { devices } from "@playwright/test";
+import type { PlaywrightTestConfig } from '@playwright/test';
+import { devices } from '@playwright/test';
 
 // uncomment many things if you need to debug
 
@@ -9,7 +9,7 @@ import { devices } from "@playwright/test";
  * See https://playwright.dev/docs/test-configuration.
  */
 const config: PlaywrightTestConfig = {
-  testDir: "./tests",
+  testDir: './tests',
   timeout: 60 * 1000,
   expect: {
     timeout: 5000,
@@ -20,17 +20,17 @@ const config: PlaywrightTestConfig = {
   workers: 1,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
-    ["html"], // HTML report for artifacts
+    ['html'], // HTML report for artifacts
     // ["github"], // GitHub Actions integration // ONLY FOR DEBUG
     // ["list"], // Detailed console output // ONLY FOR DEBUG
     // ["junit", { outputFile: "test-results/junit.xml" }], // For CI integration // ONLY FOR DEBUG
   ],
   use: {
     actionTimeout: 0,
-    baseURL: "http://localhost:3290",
-    trace: "retain-on-failure",
-    screenshot: "only-on-failure",
-    video: "retain-on-failure",
+    baseURL: 'http://localhost:3290',
+    trace: 'retain-on-failure',
+    screenshot: 'only-on-failure',
+    video: 'retain-on-failure',
     // launchOptions: {
     //   logger: {
     //     isEnabled: () => true,
@@ -47,9 +47,9 @@ const config: PlaywrightTestConfig = {
       },
     }, */
     {
-      name: "chromium",
+      name: 'chromium',
       use: {
-        ...devices["Desktop Chrome"],
+        ...devices['Desktop Chrome'],
         /* CI-specific browser options for better debugging */
         // launchOptions: {
         //   args: [
@@ -65,37 +65,37 @@ const config: PlaywrightTestConfig = {
       },
     },
   ],
-  outputDir: "test-results/",
+  outputDir: 'test-results/',
   webServer: [
     {
       command:
-        "VITE_HOST=127.0.0.1:3290 VITE_SCHEME=http VITE_TEST=true VITE_TEST_PLAYWRIGHT=true VITE_API_URL=http://localhost:3291 PORT=3290 npm run dev-test --prefix ../app-local-first-react-router",
+        'VITE_HOST=127.0.0.1:3290 VITE_SCHEME=http VITE_TEST=true VITE_TEST_PLAYWRIGHT=true VITE_API_URL=http://localhost:3291 PORT=3290 npm run dev-test --prefix ../app-local-first-react-router',
       port: 3290,
       timeout: 120 * 1000,
       reuseExistingServer: true, // FALSE FOR DEBUG
       // server logs are too verbose, only display when current browser logs are not enough
-      stdout: "ignore", // PIPE FOR DEBUG
-      stderr: "ignore", // PIPE FOR DEBUG
+      stdout: 'ignore', // PIPE FOR DEBUG
+      stderr: 'ignore', // PIPE FOR DEBUG
       env: {
-        PORT: "3290",
-        VITE_HOST: "127.0.0.1:3290",
-        VITE_SCHEME: "http",
-        VITE_TEST: "true",
-        VITE_TEST_PLAYWRIGHT: "true",
+        PORT: '3290',
+        VITE_HOST: '127.0.0.1:3290',
+        VITE_SCHEME: 'http',
+        VITE_TEST: 'true',
+        VITE_TEST_PLAYWRIGHT: 'true',
       },
     },
     {
-      command: "PORT=3291 NODE_ENV=test PGDATABASE=zacharietest npm run dev-test --prefix ../api-express",
+      command: 'PORT=3291 NODE_ENV=test PGDATABASE=zacharietest npm run dev-test --prefix ../api-express',
       port: 3291,
       timeout: 120 * 1000,
       reuseExistingServer: true, // FALSE FOR DEBUG
       // server logs are too verbose, only display when current browser logs are not enough
-      stdout: "ignore", // PIPE FOR DEBUG
-      stderr: "ignore", // PIPE FOR DEBUG
+      stdout: 'ignore', // PIPE FOR DEBUG
+      stderr: 'ignore', // PIPE FOR DEBUG
       env: {
-        PORT: "3291",
-        NODE_ENV: "test",
-        PGDATABASE: "zacharietest",
+        PORT: '3291',
+        NODE_ENV: 'test',
+        PGDATABASE: 'zacharietest',
       },
     },
   ],

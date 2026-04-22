@@ -37,14 +37,7 @@ class ApiService {
     url.search = new URLSearchParams(query).toString();
     return url.toString();
   };
-  execute = async ({
-    method = 'GET',
-    path = '',
-    query = {},
-    headers = {},
-    body = null,
-    signal,
-  }: ApiServiceArgs) => {
+  execute = async ({ method = 'GET', path = '', query = {}, headers = {}, body = null, signal }: ApiServiceArgs) => {
     try {
       const config = {
         method,

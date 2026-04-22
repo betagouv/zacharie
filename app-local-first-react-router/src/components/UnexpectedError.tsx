@@ -12,12 +12,9 @@ export default function UnexpectedError({ resetErrorBoundary }: { resetErrorBoun
             <h1 className="fr-h1">Erreur inattendue</h1>
             <p className="fr-h2 fr-text--sm fr-mb-3w">Erreur 500</p>
             <p className="fr-text--sm fr-mb-5w">
-              Désolé, le service rencontre un problème, nous travaillons pour le résoudre le plus rapidement
-              possible.
+              Désolé, le service rencontre un problème, nous travaillons pour le résoudre le plus rapidement possible.
             </p>
-            <p className="fr-text--lead fr-mb-3w">
-              Essayez de rafraîchir la page ou bien ressayez plus tard.
-            </p>
+            <p className="fr-text--lead fr-mb-3w">Essayez de rafraîchir la page ou bien ressayez plus tard.</p>
             <ul className="fr-btns-group fr-btns-group--inline-md">
               <li>
                 <button type="button" className="fr-btn" onClick={resetErrorBoundary}>

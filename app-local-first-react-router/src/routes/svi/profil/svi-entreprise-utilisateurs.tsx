@@ -40,16 +40,10 @@ export default function SviProfilEntrepriseUtilisateurs() {
             <h1 className="fr-h2 fr-mb-2w">Gérer les utilisateurs du service</h1>
             {userEntities.map((entity) => {
               const relation = entity.EntityRelationsWithUsers.find(
-                (relation) =>
-                  relation.owner_id === user.id &&
-                  relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+                (relation) => relation.owner_id === user.id && relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
               );
               if (!relation) return null;
-              if (
-                relation.status !== EntityRelationStatus.ADMIN &&
-                relation.status !== EntityRelationStatus.MEMBER
-              )
-                return null;
+              if (relation.status !== EntityRelationStatus.ADMIN && relation.status !== EntityRelationStatus.MEMBER) return null;
               return (
                 <div className="mb-6 bg-white md:shadow-sm" key={entity.id}>
                   <div className="p-4 md:p-8">
@@ -84,9 +78,7 @@ export default function SviProfilEntrepriseUtilisateurs() {
                           },
                         }).then((res) => {
                           if (res.ok) {
-                            alert(
-                              'Utilisateur invité avec succès. Il recevra un email pour se connecter à Zacharie.',
-                            );
+                            alert('Utilisateur invité avec succès. Il recevra un email pour se connecter à Zacharie.');
                             setNewUserEmail('');
                             setRefreshKey((k) => k + 1);
                           }
@@ -95,9 +87,7 @@ export default function SviProfilEntrepriseUtilisateurs() {
                     >
                       Inviter
                     </Button>
-                    <h3 className="my-8 text-lg font-semibold text-gray-900">
-                      Utilisateurs existants de {entity.nom_d_usage}
-                    </h3>
+                    <h3 className="my-8 text-lg font-semibold text-gray-900">Utilisateurs existants de {entity.nom_d_usage}</h3>
                     <RelationEntityUsersList
                       entity={entity}
                       refreshKey={refreshKey}

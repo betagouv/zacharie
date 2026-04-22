@@ -140,9 +140,7 @@ export default function AdminEntity() {
 
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v relative">
-      <title>
-        {`${entity.nom_d_usage} (${entity.type}) | Admin | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}
-      </title>
+      <title>{`${entity.nom_d_usage} (${entity.type}) | Admin | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}</title>
       {isSaving && (
         <div className="bg-action-high-blue-france fixed top-0 right-0">
           <span className="p-4 text-white">Enregistrement en cours</span>
@@ -213,10 +211,7 @@ export default function AdminEntity() {
                             checked: entity.zacharie_compatible === true,
                             onChange: async (event) => {
                               event.preventDefault();
-                              handleSave(
-                                Prisma.EntityScalarFieldEnum.zacharie_compatible,
-                                !entity.zacharie_compatible,
-                              );
+                              handleSave(Prisma.EntityScalarFieldEnum.zacharie_compatible, !entity.zacharie_compatible);
                             },
                           },
                         },
@@ -408,11 +403,7 @@ export default function AdminEntity() {
                   adminEntityResponse={adminEntityResponse}
                   setAdminEntityResponse={setAdminEntityResponse}
                   entityType={EntityTypes.SVI}
-                  description={
-                    !sviRelatedToETG
-                      ? "Un utilisateur d'un ETG ne peut envoyer des fiches qu'à un SVI listé ci-dessous"
-                      : ''
-                  }
+                  description={!sviRelatedToETG ? "Un utilisateur d'un ETG ne peut envoyer des fiches qu'à un SVI listé ci-dessous" : ''}
                   setIsSaving={setIsSaving}
                 />
               )}
@@ -457,30 +448,28 @@ function UserWorkingWithOrFor({
   const { entity } = adminEntityResponse;
   return (
     <>
-      {entity.EntityRelationsWithUsers.filter((entity) => entity.relation === relationType).map(
-        (entityRelation) => {
-          const owner = entityRelation.UserRelatedWithEntity;
-          return (
-            <RelationEntityUser
-              relationType={relationType}
-              entity={entity}
-              key={owner.id}
-              user={owner as User}
-              enableUsersView={false}
-              displayEntity={false}
-              displayUser={true}
-              canApproveRelation
-              canDelete
-              userLink={`/app/admin/user/${owner.id}`}
-              onChange={() => {
-                loadData(entity.id).then((response) => {
-                  if (response.data) setAdminEntityResponse(response.data!);
-                });
-              }}
-            />
-          );
-        },
-      )}
+      {entity.EntityRelationsWithUsers.filter((entity) => entity.relation === relationType).map((entityRelation) => {
+        const owner = entityRelation.UserRelatedWithEntity;
+        return (
+          <RelationEntityUser
+            relationType={relationType}
+            entity={entity}
+            key={owner.id}
+            user={owner as User}
+            enableUsersView={false}
+            displayEntity={false}
+            displayUser={true}
+            canApproveRelation
+            canDelete
+            userLink={`/app/admin/user/${owner.id}`}
+            onChange={() => {
+              loadData(entity.id).then((response) => {
+                if (response.data) setAdminEntityResponse(response.data!);
+              });
+            }}
+          />
+        );
+      })}
       <div className="p-4 md:p-8 md:pb-0 [&_a]:block [&_a]:p-4 [&_a]:no-underline has-[a]:[&_td]:p-0!">
         <Table
           fixed
@@ -523,10 +512,7 @@ function UserWorkingWithOrFor({
                   });
               }}
             >
-              <Link
-                to={`/app/admin/user/${user.id}`}
-                className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
-              >
+              <Link to={`/app/admin/user/${user.id}`} className="inline-flex! size-full items-center justify-start bg-none! no-underline!">
                 {user.prenom} {user.nom_de_famille}
                 <br />＠ {user.email}
                 <br />
@@ -536,10 +522,7 @@ function UserWorkingWithOrFor({
                 Ajouter
               </Button>
             </form>,
-            <p
-              key={user.id}
-              className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
-            >
+            <p key={user.id} className="inline-flex! size-full items-center justify-start bg-none! no-underline!">
               {user.roles.map((role) => (
                 <Fragment key={role}>
                   {role}
@@ -568,13 +551,7 @@ function EntitiesRelatedTo({
   description: string;
   setIsSaving: (isSaving: boolean) => void;
 }) {
-  const {
-    entity,
-    etgsRelatedWithSvi,
-    sviRelatedToETG,
-    potentialEtgsRelatedWithSvi,
-    potentialSvisRelatedToETG,
-  } = adminEntityResponse;
+  const { entity, etgsRelatedWithSvi, sviRelatedToETG, potentialEtgsRelatedWithSvi, potentialSvisRelatedToETG } = adminEntityResponse;
 
   const entitiesRelated = useMemo(() => {
     switch (entityType) {
@@ -654,10 +631,7 @@ function EntitiesRelatedTo({
                 });
             }}
             title={
-              <Link
-                to={`/app/admin/entity/${coupledEntity.id}`}
-                className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
-              >
+              <Link to={`/app/admin/entity/${coupledEntity.id}`} className="inline-flex! size-full items-center justify-start bg-none! no-underline!">
                 {coupledEntity.nom_d_usage}
                 <br />
                 Raison sociale: {coupledEntity.raison_sociale}

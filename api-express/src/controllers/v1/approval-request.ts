@@ -27,72 +27,63 @@ router.post(
   apiRateLimit,
   passport.authenticate('apiKey', { session: false }),
   checkApiKeyIsValidMiddleware([ApiKeyScope.CARCASSE_READ_FOR_USER, ApiKeyScope.FEI_READ_FOR_USER]),
-  catchErrors(
-    async (
-      req: RequestWithApiKey,
-      res: express.Response<ApprovalRequestForApi>,
-      next: express.NextFunction,
-    ) => {
-      const bodySchema = z.object({
-        email: z.string().email("Format d'email invalide"),
-      });
+  catchErrors(async (req: RequestWithApiKey, res: express.Response<ApprovalRequestForApi>, next: express.NextFunction) => {
+    const bodySchema = z.object({
+      email: z.string().email("Format d'email invalide"),
+    });
 
-      const bodyResult = bodySchema.safeParse(req.body);
-      if (!bodyResult.success) {
-        const errors = bodyResult.error.issues.map((i) => i.message).join('. ');
-        const error = new Error(
-          `${errors}. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`,
-        );
-        res.status(400);
-        return next(error);
-      }
+    const bodyResult = bodySchema.safeParse(req.body);
+    if (!bodyResult.success) {
+      const errors = bodyResult.error.issues.map((i) => i.message).join('. ');
+      const error = new Error(
+        `${errors}. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`
+      );
+      res.status(400);
+      return next(error);
+    }
 
-      const { email } = bodyResult.data;
+    const { email } = bodyResult.data;
 
-      const user = await prisma.user.findUnique({
-        where: {
-          email: email,
-        },
-      });
+    const user = await prisma.user.findUnique({
+      where: {
+        email: email,
+      },
+    });
 
-      if (!user) {
-        const error = new Error(
-          `L'email ${email} n'est pas trouvé dans la base de données. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`,
-        );
-        res.status(400);
-        return next(error);
-      }
+    if (!user) {
+      const error = new Error(
+        `L'email ${email} n'est pas trouvé dans la base de données. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`
+      );
+      res.status(400);
+      return next(error);
+    }
 
-      const approval = await prisma.apiKeyApprovalByUserOrEntity.upsert({
-        where: {
-          api_key_id_user_id: {
-            api_key_id: req.apiKey.id,
-            user_id: user.id,
-          },
-        },
-        update: {},
-        create: {
+    const approval = await prisma.apiKeyApprovalByUserOrEntity.upsert({
+      where: {
+        api_key_id_user_id: {
           api_key_id: req.apiKey.id,
           user_id: user.id,
-          status: ApiKeyApprovalStatus.PENDING,
         },
-      });
+      },
+      update: {},
+      create: {
+        api_key_id: req.apiKey.id,
+        user_id: user.id,
+        status: ApiKeyApprovalStatus.PENDING,
+      },
+    });
 
-      res.status(200).send({
-        ok: true,
-        data: {
-          approvalStatus: approval.status,
-          habilitePourExamenInitial:
-            user.roles.includes(UserRoles.CHASSEUR) &&
-            !!user.est_forme_a_l_examen_initial &&
-            !!user.numero_cfei &&
-            user.activated,
-        },
-        message:
-          "La demande d'approbation a été envoyée. L'utilisateur doit désormais se rendre sur https://zacharie.beta.gouv.fr/app/chasseur/profil/partage-de-mes-donnees pour approuver ou rejeter la demande. Il se connecte puis clique sur 'Paramètres' puis 'Partage de mes données'. Pour toute question ou remarque, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.",
-      });
-    },
-  ),
+    res.status(200).send({
+      ok: true,
+      data: {
+        approvalStatus: approval.status,
+        habilitePourExamenInitial:
+          user.roles.includes(UserRoles.CHASSEUR) && !!user.est_forme_a_l_examen_initial && !!user.numero_cfei && user.activated,
+      },
+      message:
+        "La demande d'approbation a été envoyée. L'utilisateur doit désormais se rendre sur https://zacharie.beta.gouv.fr/app/chasseur/profil/partage-de-mes-donnees pour approuver ou rejeter la demande. Il se connecte puis clique sur 'Paramètres' puis 'Partage de mes données'. Pour toute question ou remarque, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.",
+    });
+  })
 );
 
 /* 

@@ -29,9 +29,7 @@ export interface SlicedStorage<S> {
   removeItem: (name: string) => Promise<void>;
 }
 
-export function createSlicedIDBStorage<S extends Record<string, unknown>>(
-  persistedKeys: string[],
-): SlicedStorage<S> {
+export function createSlicedIDBStorage<S extends Record<string, unknown>>(persistedKeys: string[]): SlicedStorage<S> {
   // Track previous value references so we only write changed slices
   const prevRefs = new Map<string, unknown>();
   // Block writes until the first getItem completes, so early setState calls

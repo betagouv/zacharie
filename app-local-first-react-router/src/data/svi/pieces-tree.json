@@ -15,17 +15,7 @@
     "Quartier avant": []
   },
   "PETIT_GIBIER": {
-    "Abats": [
-      "Appareil génital",
-      "Coeur",
-      "Foie",
-      "Poumon",
-      "Rate",
-      "Reins",
-      "Sacs aériens",
-      "Tube digestif",
-      "Carcasse"
-    ],
+    "Abats": ["Appareil génital", "Coeur", "Foie", "Poumon", "Rate", "Reins", "Sacs aériens", "Tube digestif", "Carcasse"],
     "Carcasse": []
   }
 }

@@ -18,9 +18,7 @@ export default function CurrentOwner() {
   const addLog = state.addLog;
   const fei = state.feis[params.fei_numero!];
   const currentOwnerUser = fei.fei_current_owner_user_id ? state.users[fei.fei_current_owner_user_id] : null;
-  const currentOwnerEntity = fei.fei_current_owner_entity_id
-    ? state.entities[fei.fei_current_owner_entity_id]
-    : null;
+  const currentOwnerEntity = fei.fei_current_owner_entity_id ? state.entities[fei.fei_current_owner_entity_id] : null;
 
   const navigate = useNavigate();
 
@@ -49,11 +47,7 @@ export default function CurrentOwner() {
     return (
       <div className="bg-alt-blue-france pb-8">
         <div className="bg-white">
-          <Alert
-            severity="success"
-            description="Merci à l'ensemble des acteurs pour la prise en charge de cette fiche."
-            title="Fiche clôturée"
-          />
+          <Alert severity="success" description="Merci à l'ensemble des acteurs pour la prise en charge de cette fiche." title="Fiche clôturée" />
         </div>
       </div>
     );
@@ -74,12 +68,10 @@ export default function CurrentOwner() {
           root: 'fr-highlight--green-emeraude',
         }}
       >
-        Cette fiche est présentement sous la responsabilité{' '}
-        <b>{getUserRoleLabelPrefixed(fei.fei_current_owner_role as UserRoles)}</b>.<br />
+        Cette fiche est présentement sous la responsabilité <b>{getUserRoleLabelPrefixed(fei.fei_current_owner_role as UserRoles)}</b>.<br />
         {currentOwnerEntity?.nom_d_usage && (
           <>
-            <b>{currentOwnerEntity.nom_d_usage}</b> - {currentOwnerEntity.code_postal}{' '}
-            {currentOwnerEntity.ville}
+            <b>{currentOwnerEntity.nom_d_usage}</b> - {currentOwnerEntity.code_postal} {currentOwnerEntity.ville}
             <br />
           </>
         )}

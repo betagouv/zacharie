@@ -24,17 +24,13 @@ export default function Filters<T extends Filter = Filter>({
     .filter((_filter) => _filter.name !== 'alertness')
     .map((f) => ({ label: f.label!, field: f.name!, type: f.type!, value: null }));
 
-  function getFilterOptionsByField(
-    fieldName: FilterableField['name'],
-    base: Array<FilterableField>,
-    index: number,
-  ): Array<string> {
+  function getFilterOptionsByField(fieldName: FilterableField['name'], base: Array<FilterableField>, index: number): Array<string> {
     if (!fieldName) return [];
     const current = base.find((filter) => filter.name === fieldName);
     if (!current) {
       onChange(
         filters.filter((_f, i) => i !== index),
-        saveInURLParams,
+        saveInURLParams
       );
       return [];
     }
@@ -48,17 +44,14 @@ export default function Filters<T extends Filter = Filter>({
     if (typeof filterValue === 'object') {
       if (filterValue?.date != null) {
         if (filterValue.comparator === 'unfilled') return 'Non renseigné';
-        if (filterValue.comparator === 'before')
-          return `Avant le ${dayjs(filterValue.date).format('DD/MM/YYYY')}`;
-        if (filterValue.comparator === 'after')
-          return `Après le ${dayjs(filterValue.date).format('DD/MM/YYYY')}`;
+        if (filterValue.comparator === 'before') return `Avant le ${dayjs(filterValue.date).format('DD/MM/YYYY')}`;
+        if (filterValue.comparator === 'after') return `Après le ${dayjs(filterValue.date).format('DD/MM/YYYY')}`;
         if (filterValue.comparator === 'equals') return `Le ${dayjs(filterValue.date).format('DD/MM/YYYY')}`;
         return '';
       }
       if (filterValue?.number != null) {
         if (filterValue.comparator === 'unfilled') return 'Non renseigné';
-        if (filterValue.comparator === 'between')
-          return `Entre ${filterValue.number} et ${filterValue.number2}`;
+        if (filterValue.comparator === 'between') return `Entre ${filterValue.number} et ${filterValue.number2}`;
         if (filterValue.comparator === 'equals') return `Égal à ${filterValue.number}`;
         if (filterValue.comparator === 'lower') return `Inférieur à ${filterValue.number}`;
         if (filterValue.comparator === 'greater') return `Supérieur à ${filterValue.number}`;
@@ -99,34 +92,26 @@ export default function Filters<T extends Filter = Filter>({
               console.log('newField', newField);
               if (newField) {
                 onChange(
-                  filters.map((_filter, i) =>
-                    i === index
-                      ? ({ field: newField?.field, value: null, type: newField?.type } as T)
-                      : _filter,
-                  ),
-                  saveInURLParams,
+                  filters.map((_filter, i) => (i === index ? ({ field: newField?.field, value: null, type: newField?.type } as T) : _filter)),
+                  saveInURLParams
                 );
               } else {
                 onChange(
-                  filters.map((_filter, i) =>
-                    i === index ? ({ field: '', value: null, type: '' } as unknown as T) : _filter,
-                  ),
-                  saveInURLParams,
+                  filters.map((_filter, i) => (i === index ? ({ field: '', value: null, type: '' } as unknown as T) : _filter)),
+                  saveInURLParams
                 );
               }
             };
             const onChangeValue = (newValue: T['value']) => {
               onChange(
-                filters.map((f: T, i: number) =>
-                  i === index ? ({ field: filter.field, value: newValue, type: filter.type } as T) : f,
-                ),
-                saveInURLParams,
+                filters.map((f: T, i: number) => (i === index ? ({ field: filter.field, value: newValue, type: filter.type } as T) : f)),
+                saveInURLParams
               );
             };
             const onRemoveFilter = () => {
               onChange(
                 filters.filter((_f: T, i: number) => i !== index),
-                saveInURLParams,
+                saveInURLParams
               );
             };
 
@@ -168,9 +153,7 @@ export default function Filters<T extends Filter = Filter>({
                       options={filterFields}
                       value={filter.field ? filter : null}
                       onChange={onChangeField}
-                      getOptionLabel={(_option) =>
-                        filterFields.find((_filter) => _filter.field === _option.field)?.label || ''
-                      }
+                      getOptionLabel={(_option) => filterFields.find((_filter) => _filter.field === _option.field)?.label || ''}
                       getOptionValue={(_option) => _option.field || ''}
                       isClearable={true}
                       isMulti={false}
@@ -316,10 +299,7 @@ function ValueSelector({ index, field, filterValues, value, onChangeValue, base 
     return (
       <div className="flex flex-wrap items-stretch sm:-mx-4">
         <div
-          className={[
-            'h-full sm:pl-4',
-            value?.comparator !== 'unfilled' ? 'w-full sm:basis-1/2 sm:pr-2' : 'w-full sm:basis-full sm:pr-4',
-          ].join(' ')}
+          className={['h-full sm:pl-4', value?.comparator !== 'unfilled' ? 'w-full sm:basis-1/2 sm:pr-2' : 'w-full sm:basis-full sm:pr-4'].join(' ')}
         >
           {/* <Select
             label=""
@@ -408,12 +388,7 @@ function ValueSelector({ index, field, filterValues, value, onChangeValue, base 
           />
         </div>
         {value?.comparator !== 'unfilled' && (
-          <div
-            className={[
-              'w-full sm:pr-4',
-              value?.comparator === 'between' ? 'sm:basis-3/12' : 'sm:basis-1/2',
-            ].join(' ')}
-          >
+          <div className={['w-full sm:pr-4', value?.comparator === 'between' ? 'sm:basis-3/12' : 'sm:basis-1/2'].join(' ')}>
             <input
               name={name}
               className="tailwindui w-full"

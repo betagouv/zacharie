@@ -50,7 +50,7 @@ export default function CollecteurOnboardingEntreprise() {
         useUser.setState({ user: response.data.user });
       }
     },
-    [user.id],
+    [user.id]
   );
 
   return (

@@ -22,5 +22,5 @@ export default tseslint.config(
       'prefer-const': 'off',
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
     },
-  },
+  }
 );

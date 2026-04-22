@@ -29,10 +29,8 @@ const empytEntitiesByTypeAndId: EntitiesByTypeAndId = {
 
 export default function MesAssociationsDeChasse() {
   const user = useUser((state) => state.user)!;
-  const [allEntitiesByTypeAndId, setAllEntitiesByTypeAndId] =
-    useState<EntitiesByTypeAndId>(empytEntitiesByTypeAndId);
-  const [userEntitiesByTypeAndId, setUserEntitiesByTypeAndId] =
-    useState<EntitiesByTypeAndId>(empytEntitiesByTypeAndId);
+  const [allEntitiesByTypeAndId, setAllEntitiesByTypeAndId] = useState<EntitiesByTypeAndId>(empytEntitiesByTypeAndId);
+  const [userEntitiesByTypeAndId, setUserEntitiesByTypeAndId] = useState<EntitiesByTypeAndId>(empytEntitiesByTypeAndId);
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
@@ -48,8 +46,7 @@ export default function MesAssociationsDeChasse() {
   const handleUserSubmit = useCallback(
     async (checked_has_asso_de_chasse: boolean) => {
       const body: Record<string, string | null> = {};
-      body.checked_has_asso_de_chasse =
-        checked_has_asso_de_chasse == null ? null : checked_has_asso_de_chasse ? 'true' : 'false';
+      body.checked_has_asso_de_chasse = checked_has_asso_de_chasse == null ? null : checked_has_asso_de_chasse ? 'true' : 'false';
       const response = await API.post({
         path: `/user/${user.id}`,
         body,
@@ -58,16 +55,15 @@ export default function MesAssociationsDeChasse() {
         useUser.setState({ user: response.data.user });
       }
     },
-    [user.id],
+    [user.id]
   );
 
   const userEntities = Object.values(userEntitiesByTypeAndId[EntityTypes.PREMIER_DETENTEUR]);
   const remainingEntities = Object.values(allEntitiesByTypeAndId[EntityTypes.PREMIER_DETENTEUR]).filter(
-    (entity) => !userEntitiesByTypeAndId[EntityTypes.PREMIER_DETENTEUR][entity.id],
+    (entity) => !userEntitiesByTypeAndId[EntityTypes.PREMIER_DETENTEUR][entity.id]
   );
 
-  const userHasAssociationsChasses =
-    Object.values(userEntitiesByTypeAndId[EntityTypes.PREMIER_DETENTEUR]).length > 0;
+  const userHasAssociationsChasses = Object.values(userEntitiesByTypeAndId[EntityTypes.PREMIER_DETENTEUR]).length > 0;
 
   const [showForm, setShowForm] = useState(!userHasAssociationsChasses);
   useEffect(() => {
@@ -96,9 +92,7 @@ export default function MesAssociationsDeChasse() {
     userEntities
       .find((entity) => entity.id === currentEntityId)
       ?.EntityRelationsWithUsers.find(
-        (relation) =>
-          relation.owner_id === user.id &&
-          relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        (relation) => relation.owner_id === user.id && relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
       )?.status === EntityRelationStatus.ADMIN;
 
   const ComponentToDisplay = isAdminOfEntity ? Input : InputNotEditable;
@@ -120,17 +114,14 @@ export default function MesAssociationsDeChasse() {
           setCurrentEntityId(null);
           setAssoPostalCode('');
           setShowForm(false);
-          document
-            .getElementById('onboarding-etape-2-associations-data-title')
-            ?.scrollIntoView({ behavior: 'smooth' });
+          document.getElementById('onboarding-etape-2-associations-data-title')?.scrollIntoView({ behavior: 'smooth' });
         }
       } else {
         API.post({
           path: '/user-entity',
           body: {
             [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
-            [Prisma.EntityAndUserRelationsScalarFieldEnum.relation]:
-              EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+            [Prisma.EntityAndUserRelationsScalarFieldEnum.relation]: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
             [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: currentEntityId,
           },
         }).then((res) => {
@@ -138,23 +129,18 @@ export default function MesAssociationsDeChasse() {
             setRefreshKey((k) => k + 1);
             setCurrentEntityId(null);
             setShowForm(false);
-            document
-              .getElementById('onboarding-etape-2-associations-data-title')
-              ?.scrollIntoView({ behavior: 'smooth' });
+            document.getElementById('onboarding-etape-2-associations-data-title')?.scrollIntoView({ behavior: 'smooth' });
           }
         });
       }
     },
-    [isUnregisteredEntity, setRefreshKey, user.id, currentEntityId, newEntityNomDUsage],
+    [isUnregisteredEntity, setRefreshKey, user.id, currentEntityId, newEntityNomDUsage]
   );
 
   return (
     <div className="mb-6 bg-white md:shadow-sm">
       <div className="p-4 md:p-8">
-        <h3
-          className="mb-8 text-lg font-semibold text-gray-900"
-          id="onboarding-etape-2-associations-data-title"
-        >
+        <h3 className="mb-8 text-lg font-semibold text-gray-900" id="onboarding-etape-2-associations-data-title">
           Association, société et domaine de chasse
         </h3>
         <Fragment key={refreshKey}>
@@ -192,9 +178,7 @@ export default function MesAssociationsDeChasse() {
             .filter((entity) => entity.type === EntityTypes.PREMIER_DETENTEUR)
             .map((entity) => {
               const relation = entity.EntityRelationsWithUsers.find(
-                (relation) =>
-                  relation.owner_id === user.id &&
-                  relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+                (relation) => relation.owner_id === user.id && relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
               );
               if (!relation) return null;
               return (
@@ -232,9 +216,7 @@ export default function MesAssociationsDeChasse() {
               ) : (
                 <div className="mt-8">
                   <div className="rounded-lg border border-gray-300 px-8 py-6">
-                    <p className="mb-5 text-sm text-gray-500">
-                      * Les champs marqués d'un astérisque (*) sont obligatoires.
-                    </p>
+                    <p className="mb-5 text-sm text-gray-500">* Les champs marqués d'un astérisque (*) sont obligatoires.</p>
                     <form id="association_data_form" method="POST" onSubmit={handleEntitySubmit}>
                       {isUnregisteredEntity ? (
                         <div className="mb-6">
@@ -265,9 +247,7 @@ export default function MesAssociationsDeChasse() {
                         <SelectCustom
                           key={'Raison Sociale *' + currentEntityId}
                           options={selectOptions}
-                          getOptionLabel={(entity) =>
-                            `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`
-                          }
+                          getOptionLabel={(entity) => `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`}
                           getOptionValue={(entity) => entity.id}
                           formatOptionLabel={(entity, options) => {
                             if (options.context === 'menu') {

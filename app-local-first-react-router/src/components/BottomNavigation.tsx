@@ -21,8 +21,7 @@ function getIcon(text: string): string {
   if (lowerText === 'partage de mes données') return 'ri-share-line';
   if (lowerText === 'informations') return 'ri-information-line';
   if (lowerText === 'ajouter un utilisateur') return 'ri-user-add-line';
-  if (lowerText.startsWith('mon entreprise') || lowerText.startsWith('mon service'))
-    return 'ri-building-line';
+  if (lowerText.startsWith('mon entreprise') || lowerText.startsWith('mon service')) return 'ri-building-line';
   if (lowerText === 'admin') return 'ri-admin-line';
   if (lowerText.startsWith('liste des')) return 'ri-list-check';
   if (lowerText === 'contact') return 'ri-mail-line';
@@ -109,11 +108,7 @@ function NavButton({ item, isOverflow }: { item: NavItem; isOverflow?: boolean }
   // "Nouvelle fiche" has onClick only, no `to`
   if (onClick && !to) {
     return (
-      <button
-        type="button"
-        onClick={onClick}
-        className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 ${activeClass}`}
-      >
+      <button type="button" onClick={onClick} className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 ${activeClass}`}>
         <i className={`${icon} text-xl`} />
         <span className="truncate text-[10px] leading-tight">{label}</span>
       </button>
@@ -122,10 +117,7 @@ function NavButton({ item, isOverflow }: { item: NavItem; isOverflow?: boolean }
 
   if (to) {
     return (
-      <Link
-        to={to}
-        className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 no-underline ${activeClass}`}
-      >
+      <Link to={to} className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 no-underline ${activeClass}`}>
         <i className={`${icon} text-xl`} />
         <span className="truncate text-[10px] leading-tight">{label}</span>
       </Link>
@@ -149,13 +141,7 @@ function flattenItems(items: NavItem[]): NavItem[] {
   return result;
 }
 
-export default function BottomNavigation({
-  items,
-  onNewFiche,
-}: {
-  items: MainNavigationProps.Item[];
-  onNewFiche?: () => void;
-}) {
+export default function BottomNavigation({ items, onNewFiche }: { items: MainNavigationProps.Item[]; onNewFiche?: () => void }) {
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
 

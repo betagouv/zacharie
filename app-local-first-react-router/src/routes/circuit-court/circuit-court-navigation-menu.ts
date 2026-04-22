@@ -7,15 +7,12 @@ export default function useCircuitCourtNavigationMenu(): MainNavigationProps.Ite
   const navigationBase: MainNavigationProps.Item[] = [
     {
       text: 'Fiches',
-      isActive:
-        location.pathname.startsWith('/app/circuit-court/fei') || location.pathname === '/app/circuit-court',
+      isActive: location.pathname.startsWith('/app/circuit-court/fei') || location.pathname === '/app/circuit-court',
       linkProps: { to: '/app/circuit-court', href: '#' },
     },
     {
       text: 'Paramètres',
-      isActive:
-        location.pathname.startsWith('/app/circuit-court/profil') ||
-        location.pathname.startsWith('/app/circuit-court/entreprise'),
+      isActive: location.pathname.startsWith('/app/circuit-court/profil') || location.pathname.startsWith('/app/circuit-court/entreprise'),
       menuLinks: [
         {
           text: 'Coordonnées',

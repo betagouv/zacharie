@@ -69,9 +69,7 @@ function sortCarcassesApprovedForExcel(carcasseA: CarcasseExcelData, carcasseB: 
   return carcasseA.Éspèce!.localeCompare(carcasseB.Éspèce!);
 }
 
-function createSheet<T extends keyof CarcasseExcelData | keyof FeiExcelData>(
-  data: Array<Record<T, unknown>>,
-) {
+function createSheet<T extends keyof CarcasseExcelData | keyof FeiExcelData>(data: Array<Record<T, unknown>>) {
   /*
   [
     [the, first, array, is, the, header],
@@ -117,7 +115,7 @@ function createSheet<T extends keyof CarcasseExcelData | keyof FeiExcelData>(
       });
       return [...xlsxData, row];
     },
-    [header],
+    [header]
   );
   const worksheet = utils.aoa_to_sheet(sheet);
   worksheet['!rows'] = rowHeights;
@@ -234,9 +232,7 @@ export default function useExportCarcasses() {
           const intermediaireCarcasse = carcassesIntermediaireById[id];
           if (intermediaireCarcasse?.commentaire) {
             const intermediaireEntity = entities[intermediaire.intermediaire_entity_id];
-            commentaires.push(
-              `${intermediaireEntity?.nom_d_usage}\u00A0: ${intermediaireCarcasse?.commentaire}`,
-            );
+            commentaires.push(`${intermediaireEntity?.nom_d_usage}\u00A0: ${intermediaireCarcasse?.commentaire}`);
           }
           if (intermediaireCarcasse?.intermediaire_poids) {
             poids = intermediaireCarcasse.intermediaire_poids;
@@ -260,12 +256,8 @@ export default function useExportCarcasses() {
           'SVI - Pièces Consigne': carcasse.svi_ipm1_pieces.join('\n') || null,
           'SVI - Motifs Consigne': carcasse.svi_ipm1_lesions_ou_motifs.join('\n') || null,
           'SVI - Commentaire': carcasse.svi_carcasse_commentaire,
-          'SVI - Saisie partielle': carcasse.svi_ipm2_decision?.includes(IPM2Decision.SAISIE_PARTIELLE)
-            ? carcasse.svi_ipm2_pieces.join(' - ')
-            : '',
-          'SVI - Saisie totale': carcasse.svi_ipm2_decision?.includes(IPM2Decision.SAISIE_TOTALE)
-            ? 'Oui'
-            : '',
+          'SVI - Saisie partielle': carcasse.svi_ipm2_decision?.includes(IPM2Decision.SAISIE_PARTIELLE) ? carcasse.svi_ipm2_pieces.join(' - ') : '',
+          'SVI - Saisie totale': carcasse.svi_ipm2_decision?.includes(IPM2Decision.SAISIE_TOTALE) ? 'Oui' : '',
           'SVI - Saisie motif': carcasse.svi_ipm2_lesions_ou_motifs.join('\n'),
           'SVI - Certificat de saisie OK': '',
           "SVI - Date d'examen": carcasse.svi_ipm2_date || carcasse.svi_ipm1_date,
@@ -278,9 +270,7 @@ export default function useExportCarcasses() {
           'Examinateur initial téléphone': examinateur?.telephone || '',
           'Examinateur initial email': examinateur?.email || '',
           // Observations ETG
-          Réceptionnée: carcasse.latest_intermediaire_signed_at
-            ? dayjs(carcasse.latest_intermediaire_signed_at).format('DD/MM/YYYY HH:mm')
-            : null,
+          Réceptionnée: carcasse.latest_intermediaire_signed_at ? dayjs(carcasse.latest_intermediaire_signed_at).format('DD/MM/YYYY HH:mm') : null,
           // Plus d'infos
           'Heure de première mise à mort': carcasse.fei_heure_mise_a_mort_premiere_carcasse,
           'Heure de dernière éviscération': carcasse.fei_heure_evisceration_derniere_carcasse,
@@ -293,12 +283,7 @@ export default function useExportCarcasses() {
         });
       }
 
-      utils.book_append_sheet(
-        carcassesWorkbook,
-        createSheet(allCarcasses.sort(sortCarcassesApprovedForExcel)),
-        'Carcasses',
-        true,
-      );
+      utils.book_append_sheet(carcassesWorkbook, createSheet(allCarcasses.sort(sortCarcassesApprovedForExcel)), 'Carcasses', true);
 
       writeFile(carcassesWorkbook, `export-carcasses-zacharie-${dayjs().format('YYYY-MM-DD-HH-mm')}.xlsx`, {
         cellStyles: true,
@@ -310,7 +295,7 @@ export default function useExportCarcasses() {
     } catch (e: unknown) {
       capture(e as Error);
       alert(
-        "Une erreur est survenue lors de l'exportation des fiches. L'équipe technique a été notifiée. Veuillez nous excuser pour la gêne occasionnée, et réessayer plus tard",
+        "Une erreur est survenue lors de l'exportation des fiches. L'équipe technique a été notifiée. Veuillez nous excuser pour la gêne occasionnée, et réessayer plus tard"
       );
     }
     setIsExporting(false);

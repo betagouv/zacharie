@@ -28,13 +28,7 @@ function getNewDefaultNumeroBracelet(user: User) {
   return `${prenom}${nom}${numeroCfei}-${prochain_bracelet_a_utiliser}`;
 }
 
-export default function NouvelleCarcasse({
-  onCarcasseAdded,
-  defaultEspece,
-}: {
-  onCarcasseAdded?: () => void;
-  defaultEspece?: string;
-}) {
+export default function NouvelleCarcasse({ onCarcasseAdded, defaultEspece }: { onCarcasseAdded?: () => void; defaultEspece?: string }) {
   const params = useParams();
   const userState = useUser((state) => state);
   const user = userState.user!;
@@ -119,12 +113,7 @@ export default function NouvelleCarcasse({
         hintText={
           <>
             {defaultNumeroBracelet ? (
-              <div
-                className={[
-                  'flex flex-col items-start md:flex-row md:gap-2',
-                  numeroBracelet ? 'pointer-events-none opacity-60' : '',
-                ].join(' ')}
-              >
+              <div className={['flex flex-col items-start md:flex-row md:gap-2', numeroBracelet ? 'pointer-events-none opacity-60' : ''].join(' ')}>
                 Pas de dispositif de marquage ?
                 <button
                   type="button"

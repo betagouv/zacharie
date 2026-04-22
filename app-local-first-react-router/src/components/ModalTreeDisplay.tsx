@@ -18,7 +18,7 @@ const renderNestedDetails = (
   data: TreeNode | string[],
   onItemClick: (item: string) => void,
   skipParent: boolean = false,
-  parent: string = '',
+  parent: string = ''
 ): React.ReactNode => {
   if (Array.isArray(data)) {
     if (data.length === 0) {
@@ -69,22 +69,14 @@ const renderNestedDetails = (
     }
     return (
       <details key={key} className="mb-2">
-        <summary className="hover:text-action-high-blue-france cursor-pointer font-semibold focus:outline-hidden">
-          {key}
-        </summary>
+        <summary className="hover:text-action-high-blue-france cursor-pointer font-semibold focus:outline-hidden">{key}</summary>
         <div className="mt-2 ml-4">{renderNestedDetails(value, onItemClick, skipParent, key)}</div>
       </details>
     );
   });
 };
 
-const ModalTreeDisplay: React.FC<HierarchicalDataModalProps> = ({
-  modal,
-  data,
-  title,
-  skipParent,
-  onItemClick,
-}) => {
+const ModalTreeDisplay: React.FC<HierarchicalDataModalProps> = ({ modal, data, title, skipParent, onItemClick }) => {
   const _onItemClick = (item: string) => {
     onItemClick(item);
     modal.close();
@@ -103,11 +95,7 @@ const ModalTreeDisplay: React.FC<HierarchicalDataModalProps> = ({
         },
       ]}
     >
-      {isModalOpen && (
-        <div className="max-h-[70vh] overflow-y-auto p-4">
-          {renderNestedDetails(data, _onItemClick, skipParent, '')}
-        </div>
-      )}
+      {isModalOpen && <div className="max-h-[70vh] overflow-y-auto p-4">{renderNestedDetails(data, _onItemClick, skipParent, '')}</div>}
     </modal.Component>
   );
 };

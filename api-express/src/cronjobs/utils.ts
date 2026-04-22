@@ -73,12 +73,7 @@ interface SetupCronJob {
   runOnInit: boolean;
 }
 
-export async function setupCronJob({
-  cronTime,
-  name,
-  job,
-  runOnInit = true,
-}: SetupCronJob): Promise<boolean> {
+export async function setupCronJob({ cronTime, name, job, runOnInit = true }: SetupCronJob): Promise<boolean> {
   return await new Promise((resolve) => {
     cron.CronJob.from({
       cronTime,

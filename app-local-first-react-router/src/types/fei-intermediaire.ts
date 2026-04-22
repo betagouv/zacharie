@@ -20,7 +20,6 @@ export type FeiIntermediaire = {
   intermediaire_prochain_detenteur_id_cache: string | null;
 };
 
-export type FeiAndIntermediaireIds =
-  `${CarcasseIntermediaire['fei_numero']}_${CarcasseIntermediaire['intermediaire_id']}`;
+export type FeiAndIntermediaireIds = `${CarcasseIntermediaire['fei_numero']}_${CarcasseIntermediaire['intermediaire_id']}`;
 export type FeiAndCarcasseAndIntermediaireIds =
   `${CarcasseIntermediaire['fei_numero']}_${CarcasseIntermediaire['zacharie_carcasse_id']}_${CarcasseIntermediaire['intermediaire_id']}`;

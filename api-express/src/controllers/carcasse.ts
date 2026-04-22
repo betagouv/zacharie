@@ -4,15 +4,7 @@ import { catchErrors } from '~/middlewares/errors';
 import type { CarcasseResponse, CarcassesGetForRegistryResponse } from '~/types/responses';
 const router: express.Router = express.Router();
 import prisma from '~/prisma';
-import {
-  Carcasse,
-  EntityRelationStatus,
-  EntityRelationType,
-  FeiOwnerRole,
-  Prisma,
-  User,
-  UserRoles,
-} from '@prisma/client';
+import { Carcasse, EntityRelationStatus, EntityRelationType, FeiOwnerRole, Prisma, User, UserRoles } from '@prisma/client';
 import { RequestWithUser } from '~/types/request';
 import { carcasseForRegistrySelect, CarcasseForResponseForRegistry } from '~/types/carcasse';
 import updateCarcasseStatus from '~/utils/get-carcasse-status';
@@ -44,7 +36,7 @@ export async function saveCarcasse(
   fei_numero: string,
   zacharie_carcasse_id: string,
   body: Prisma.CarcasseUncheckedCreateInput,
-  user: User,
+  user: User
 ): Promise<SaveCarcasseResult> {
   if (!fei_numero) {
     throw new Error('Le numéro de fiche est obligatoire');
@@ -128,16 +120,13 @@ export async function saveCarcasse(
     nextCarcasse.heure_mise_a_mort = body[Prisma.CarcasseScalarFieldEnum.heure_mise_a_mort];
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.heure_mise_a_mort_premiere_carcasse_fei)) {
-    nextCarcasse.heure_mise_a_mort_premiere_carcasse_fei =
-      body[Prisma.CarcasseScalarFieldEnum.heure_mise_a_mort_premiere_carcasse_fei];
+    nextCarcasse.heure_mise_a_mort_premiere_carcasse_fei = body[Prisma.CarcasseScalarFieldEnum.heure_mise_a_mort_premiere_carcasse_fei];
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.consommateur_final_usage_domestique)) {
-    nextCarcasse.consommateur_final_usage_domestique =
-      body[Prisma.CarcasseScalarFieldEnum.consommateur_final_usage_domestique];
+    nextCarcasse.consommateur_final_usage_domestique = body[Prisma.CarcasseScalarFieldEnum.consommateur_final_usage_domestique];
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.heure_evisceration_derniere_carcasse_fei)) {
-    nextCarcasse.heure_evisceration_derniere_carcasse_fei =
-      body[Prisma.CarcasseScalarFieldEnum.heure_evisceration_derniere_carcasse_fei];
+    nextCarcasse.heure_evisceration_derniere_carcasse_fei = body[Prisma.CarcasseScalarFieldEnum.heure_evisceration_derniere_carcasse_fei];
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.espece)) {
     nextCarcasse.espece = body[Prisma.CarcasseScalarFieldEnum.espece];
@@ -154,24 +143,16 @@ export async function saveCarcasse(
     nextCarcasse.created_by_user_id = body[Prisma.CarcasseScalarFieldEnum.created_by_user_id];
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.examinateur_initial_offline)) {
-    nextCarcasse.examinateur_initial_offline =
-      body[Prisma.CarcasseScalarFieldEnum.examinateur_initial_offline];
+    nextCarcasse.examinateur_initial_offline = body[Prisma.CarcasseScalarFieldEnum.examinateur_initial_offline];
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.examinateur_initial_user_id)) {
-    nextCarcasse.examinateur_initial_user_id =
-      body[Prisma.CarcasseScalarFieldEnum.examinateur_initial_user_id];
+    nextCarcasse.examinateur_initial_user_id = body[Prisma.CarcasseScalarFieldEnum.examinateur_initial_user_id];
   }
-  if (
-    body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.examinateur_initial_approbation_mise_sur_le_marche)
-  ) {
+  if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.examinateur_initial_approbation_mise_sur_le_marche)) {
     nextCarcasse.examinateur_initial_approbation_mise_sur_le_marche =
       body[Prisma.CarcasseScalarFieldEnum.examinateur_initial_approbation_mise_sur_le_marche];
   }
-  if (
-    body.hasOwnProperty(
-      Prisma.CarcasseScalarFieldEnum.examinateur_initial_date_approbation_mise_sur_le_marche,
-    )
-  ) {
+  if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.examinateur_initial_date_approbation_mise_sur_le_marche)) {
     nextCarcasse.examinateur_initial_date_approbation_mise_sur_le_marche =
       body[Prisma.CarcasseScalarFieldEnum.examinateur_initial_date_approbation_mise_sur_le_marche];
   }
@@ -193,8 +174,7 @@ export async function saveCarcasse(
     nextCarcasse.premier_detenteur_depot_entity_id = body.premier_detenteur_depot_entity_id || null;
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_depot_entity_name_cache)) {
-    nextCarcasse.premier_detenteur_depot_entity_name_cache =
-      body.premier_detenteur_depot_entity_name_cache || null;
+    nextCarcasse.premier_detenteur_depot_entity_name_cache = body.premier_detenteur_depot_entity_name_cache || null;
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_depot_type)) {
     nextCarcasse.premier_detenteur_depot_type = body.premier_detenteur_depot_type || null;
@@ -209,12 +189,10 @@ export async function saveCarcasse(
     nextCarcasse.premier_detenteur_transport_date = body.premier_detenteur_transport_date || null;
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_prochain_detenteur_role_cache)) {
-    nextCarcasse.premier_detenteur_prochain_detenteur_role_cache =
-      body.premier_detenteur_prochain_detenteur_role_cache || null;
+    nextCarcasse.premier_detenteur_prochain_detenteur_role_cache = body.premier_detenteur_prochain_detenteur_role_cache || null;
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache)) {
-    nextCarcasse.premier_detenteur_prochain_detenteur_id_cache =
-      body.premier_detenteur_prochain_detenteur_id_cache || null;
+    nextCarcasse.premier_detenteur_prochain_detenteur_id_cache = body.premier_detenteur_prochain_detenteur_id_cache || null;
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_offline)) {
     nextCarcasse.premier_detenteur_offline = body[Prisma.CarcasseScalarFieldEnum.premier_detenteur_offline];
@@ -223,35 +201,28 @@ export async function saveCarcasse(
     nextCarcasse.premier_detenteur_user_id = body[Prisma.CarcasseScalarFieldEnum.premier_detenteur_user_id];
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_entity_id)) {
-    nextCarcasse.premier_detenteur_entity_id =
-      body[Prisma.CarcasseScalarFieldEnum.premier_detenteur_entity_id];
+    nextCarcasse.premier_detenteur_entity_id = body[Prisma.CarcasseScalarFieldEnum.premier_detenteur_entity_id];
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_name_cache)) {
-    nextCarcasse.premier_detenteur_name_cache =
-      body[Prisma.CarcasseScalarFieldEnum.premier_detenteur_name_cache];
+    nextCarcasse.premier_detenteur_name_cache = body[Prisma.CarcasseScalarFieldEnum.premier_detenteur_name_cache];
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.intermediaire_closed_at)) {
     nextCarcasse.intermediaire_closed_at = body[Prisma.CarcasseScalarFieldEnum.intermediaire_closed_at];
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.intermediaire_closed_by_user_id)) {
-    nextCarcasse.intermediaire_closed_by_user_id =
-      body[Prisma.CarcasseScalarFieldEnum.intermediaire_closed_by_user_id];
+    nextCarcasse.intermediaire_closed_by_user_id = body[Prisma.CarcasseScalarFieldEnum.intermediaire_closed_by_user_id];
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.intermediaire_closed_by_entity_id)) {
-    nextCarcasse.intermediaire_closed_by_entity_id =
-      body[Prisma.CarcasseScalarFieldEnum.intermediaire_closed_by_entity_id];
+    nextCarcasse.intermediaire_closed_by_entity_id = body[Prisma.CarcasseScalarFieldEnum.intermediaire_closed_by_entity_id];
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.latest_intermediaire_user_id)) {
-    nextCarcasse.latest_intermediaire_user_id =
-      body[Prisma.CarcasseScalarFieldEnum.latest_intermediaire_user_id];
+    nextCarcasse.latest_intermediaire_user_id = body[Prisma.CarcasseScalarFieldEnum.latest_intermediaire_user_id];
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.latest_intermediaire_entity_id)) {
-    nextCarcasse.latest_intermediaire_entity_id =
-      body[Prisma.CarcasseScalarFieldEnum.latest_intermediaire_entity_id];
+    nextCarcasse.latest_intermediaire_entity_id = body[Prisma.CarcasseScalarFieldEnum.latest_intermediaire_entity_id];
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.latest_intermediaire_name_cache)) {
-    nextCarcasse.latest_intermediaire_name_cache =
-      body[Prisma.CarcasseScalarFieldEnum.latest_intermediaire_name_cache];
+    nextCarcasse.latest_intermediaire_name_cache = body[Prisma.CarcasseScalarFieldEnum.latest_intermediaire_name_cache];
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_assigned_at)) {
     nextCarcasse.svi_assigned_at = body[Prisma.CarcasseScalarFieldEnum.svi_assigned_at];
@@ -272,33 +243,28 @@ export async function saveCarcasse(
     nextCarcasse.current_owner_user_id = body[Prisma.CarcasseScalarFieldEnum.current_owner_user_id];
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.current_owner_user_name_cache)) {
-    nextCarcasse.current_owner_user_name_cache =
-      body[Prisma.CarcasseScalarFieldEnum.current_owner_user_name_cache];
+    nextCarcasse.current_owner_user_name_cache = body[Prisma.CarcasseScalarFieldEnum.current_owner_user_name_cache];
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.current_owner_entity_id)) {
     nextCarcasse.current_owner_entity_id = body[Prisma.CarcasseScalarFieldEnum.current_owner_entity_id];
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.current_owner_entity_name_cache)) {
-    nextCarcasse.current_owner_entity_name_cache =
-      body[Prisma.CarcasseScalarFieldEnum.current_owner_entity_name_cache];
+    nextCarcasse.current_owner_entity_name_cache = body[Prisma.CarcasseScalarFieldEnum.current_owner_entity_name_cache];
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.current_owner_role)) {
     nextCarcasse.current_owner_role = body[Prisma.CarcasseScalarFieldEnum.current_owner_role];
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.next_owner_wants_to_sous_traite)) {
-    nextCarcasse.next_owner_wants_to_sous_traite =
-      body[Prisma.CarcasseScalarFieldEnum.next_owner_wants_to_sous_traite];
+    nextCarcasse.next_owner_wants_to_sous_traite = body[Prisma.CarcasseScalarFieldEnum.next_owner_wants_to_sous_traite];
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.next_owner_sous_traite_at)) {
     nextCarcasse.next_owner_sous_traite_at = body[Prisma.CarcasseScalarFieldEnum.next_owner_sous_traite_at];
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.next_owner_sous_traite_by_user_id)) {
-    nextCarcasse.next_owner_sous_traite_by_user_id =
-      body[Prisma.CarcasseScalarFieldEnum.next_owner_sous_traite_by_user_id];
+    nextCarcasse.next_owner_sous_traite_by_user_id = body[Prisma.CarcasseScalarFieldEnum.next_owner_sous_traite_by_user_id];
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.next_owner_sous_traite_by_entity_id)) {
-    nextCarcasse.next_owner_sous_traite_by_entity_id =
-      body[Prisma.CarcasseScalarFieldEnum.next_owner_sous_traite_by_entity_id];
+    nextCarcasse.next_owner_sous_traite_by_entity_id = body[Prisma.CarcasseScalarFieldEnum.next_owner_sous_traite_by_entity_id];
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.next_owner_user_id)) {
     nextCarcasse.next_owner_user_id = body[Prisma.CarcasseScalarFieldEnum.next_owner_user_id];
@@ -325,8 +291,7 @@ export async function saveCarcasse(
     }
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.next_owner_entity_name_cache)) {
-    nextCarcasse.next_owner_entity_name_cache =
-      body[Prisma.CarcasseScalarFieldEnum.next_owner_entity_name_cache];
+    nextCarcasse.next_owner_entity_name_cache = body[Prisma.CarcasseScalarFieldEnum.next_owner_entity_name_cache];
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.next_owner_role)) {
     nextCarcasse.next_owner_role = body[Prisma.CarcasseScalarFieldEnum.next_owner_role];
@@ -348,12 +313,10 @@ export async function saveCarcasse(
     nextCarcasse.intermediaire_carcasse_manquante = nextValue;
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_intermediaire_id)) {
-    nextCarcasse.intermediaire_carcasse_refus_intermediaire_id =
-      body[Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_intermediaire_id];
+    nextCarcasse.intermediaire_carcasse_refus_intermediaire_id = body[Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_intermediaire_id];
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_motif)) {
-    nextCarcasse.intermediaire_carcasse_refus_motif =
-      body[Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_motif];
+    nextCarcasse.intermediaire_carcasse_refus_motif = body[Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_motif];
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_assigned_to_fei_at)) {
     nextCarcasse.svi_assigned_to_fei_at = body.svi_assigned_to_fei_at;
@@ -373,8 +336,7 @@ export async function saveCarcasse(
       nextCarcasse.svi_ipm1_date = body[Prisma.CarcasseScalarFieldEnum.svi_ipm1_date];
     }
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_ipm1_presentee_inspection)) {
-      nextCarcasse.svi_ipm1_presentee_inspection =
-        body[Prisma.CarcasseScalarFieldEnum.svi_ipm1_presentee_inspection];
+      nextCarcasse.svi_ipm1_presentee_inspection = body[Prisma.CarcasseScalarFieldEnum.svi_ipm1_presentee_inspection];
     }
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_ipm1_user_id)) {
       nextCarcasse.svi_ipm1_user_id = body[Prisma.CarcasseScalarFieldEnum.svi_ipm1_user_id];
@@ -389,8 +351,7 @@ export async function saveCarcasse(
       nextCarcasse.svi_ipm1_pieces = body[Prisma.CarcasseScalarFieldEnum.svi_ipm1_pieces];
     }
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_ipm1_lesions_ou_motifs)) {
-      nextCarcasse.svi_ipm1_lesions_ou_motifs =
-        body[Prisma.CarcasseScalarFieldEnum.svi_ipm1_lesions_ou_motifs];
+      nextCarcasse.svi_ipm1_lesions_ou_motifs = body[Prisma.CarcasseScalarFieldEnum.svi_ipm1_lesions_ou_motifs];
     }
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_ipm1_nombre_animaux)) {
       nextCarcasse.svi_ipm1_nombre_animaux = body[Prisma.CarcasseScalarFieldEnum.svi_ipm1_nombre_animaux];
@@ -417,8 +378,7 @@ export async function saveCarcasse(
       nextCarcasse.svi_ipm2_date = body[Prisma.CarcasseScalarFieldEnum.svi_ipm2_date];
     }
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_ipm2_presentee_inspection)) {
-      nextCarcasse.svi_ipm2_presentee_inspection =
-        body[Prisma.CarcasseScalarFieldEnum.svi_ipm2_presentee_inspection];
+      nextCarcasse.svi_ipm2_presentee_inspection = body[Prisma.CarcasseScalarFieldEnum.svi_ipm2_presentee_inspection];
     }
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_ipm2_user_id)) {
       nextCarcasse.svi_ipm2_user_id = body[Prisma.CarcasseScalarFieldEnum.svi_ipm2_user_id];
@@ -433,8 +393,7 @@ export async function saveCarcasse(
       nextCarcasse.svi_ipm2_pieces = body[Prisma.CarcasseScalarFieldEnum.svi_ipm2_pieces];
     }
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_ipm2_lesions_ou_motifs)) {
-      nextCarcasse.svi_ipm2_lesions_ou_motifs =
-        body[Prisma.CarcasseScalarFieldEnum.svi_ipm2_lesions_ou_motifs];
+      nextCarcasse.svi_ipm2_lesions_ou_motifs = body[Prisma.CarcasseScalarFieldEnum.svi_ipm2_lesions_ou_motifs];
     }
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_ipm2_nombre_animaux)) {
       nextCarcasse.svi_ipm2_nombre_animaux = body[Prisma.CarcasseScalarFieldEnum.svi_ipm2_nombre_animaux];
@@ -446,44 +405,35 @@ export async function saveCarcasse(
       nextCarcasse.svi_ipm2_decision = body[Prisma.CarcasseScalarFieldEnum.svi_ipm2_decision];
     }
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant)) {
-      nextCarcasse.svi_ipm2_traitement_assainissant =
-        body[Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant];
+      nextCarcasse.svi_ipm2_traitement_assainissant = body[Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant];
     }
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant_cuisson_temps)) {
       nextCarcasse.svi_ipm2_traitement_assainissant_cuisson_temps =
         body[Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant_cuisson_temps];
     }
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant_cuisson_temp)) {
-      nextCarcasse.svi_ipm2_traitement_assainissant_cuisson_temp =
-        body[Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant_cuisson_temp];
+      nextCarcasse.svi_ipm2_traitement_assainissant_cuisson_temp = body[Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant_cuisson_temp];
     }
-    if (
-      body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant_congelation_temps)
-    ) {
+    if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant_congelation_temps)) {
       nextCarcasse.svi_ipm2_traitement_assainissant_congelation_temps =
         body[Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant_congelation_temps];
     }
-    if (
-      body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant_congelation_temp)
-    ) {
+    if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant_congelation_temp)) {
       nextCarcasse.svi_ipm2_traitement_assainissant_congelation_temp =
         body[Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant_congelation_temp];
     }
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant_type)) {
-      nextCarcasse.svi_ipm2_traitement_assainissant_type =
-        body[Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant_type];
+      nextCarcasse.svi_ipm2_traitement_assainissant_type = body[Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant_type];
     }
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant_paramètres)) {
-      nextCarcasse.svi_ipm2_traitement_assainissant_paramètres =
-        body[Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant_paramètres];
+      nextCarcasse.svi_ipm2_traitement_assainissant_paramètres = body[Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant_paramètres];
     }
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant_etablissement)) {
       nextCarcasse.svi_ipm2_traitement_assainissant_etablissement =
         body[Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant_etablissement];
     }
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant_poids)) {
-      nextCarcasse.svi_ipm2_traitement_assainissant_poids =
-        body[Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant_poids];
+      nextCarcasse.svi_ipm2_traitement_assainissant_poids = body[Prisma.CarcasseScalarFieldEnum.svi_ipm2_traitement_assainissant_poids];
     }
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_ipm2_poids_saisie)) {
       nextCarcasse.svi_ipm2_poids_saisie = body[Prisma.CarcasseScalarFieldEnum.svi_ipm2_poids_saisie];
@@ -509,45 +459,43 @@ export async function saveCarcasse(
 router.post(
   '/:fei_numero/:zacharie_carcasse_id',
   passport.authenticate('user', { session: false }),
-  catchErrors(
-    async (req: express.Request, res: express.Response<CarcasseResponse>, next: express.NextFunction) => {
-      const body: Prisma.CarcasseUncheckedCreateInput = req.body;
-      const user = req.user;
-      if (!user.activated) {
-        res.status(400).send({
-          ok: false,
-          data: { carcasse: null },
-          error: "Le compte n'est pas activé",
-        });
-        return;
-      }
-      const { fei_numero, zacharie_carcasse_id } = req.params;
-
-      let result: SaveCarcasseResult;
-      try {
-        result = await saveCarcasse(fei_numero, zacharie_carcasse_id, body, user);
-      } catch (error) {
-        const message = error instanceof Error ? error.message : 'Erreur inconnue';
-        const status = message === 'Fiche non trouvée' ? 404 : 400;
-        res.status(status).send({
-          ok: false,
-          data: { carcasse: null },
-          error: message,
-        });
-        return;
-      }
-
-      if (!result.isDeleted) {
-        await runCarcasseUpdateSideEffects(result.existingCarcasse, result.savedCarcasse);
-      }
-
-      res.status(200).send({
-        ok: true,
-        data: { carcasse: result.savedCarcasse },
-        error: '',
+  catchErrors(async (req: express.Request, res: express.Response<CarcasseResponse>, next: express.NextFunction) => {
+    const body: Prisma.CarcasseUncheckedCreateInput = req.body;
+    const user = req.user;
+    if (!user.activated) {
+      res.status(400).send({
+        ok: false,
+        data: { carcasse: null },
+        error: "Le compte n'est pas activé",
       });
-    },
-  ),
+      return;
+    }
+    const { fei_numero, zacharie_carcasse_id } = req.params;
+
+    let result: SaveCarcasseResult;
+    try {
+      result = await saveCarcasse(fei_numero, zacharie_carcasse_id, body, user);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erreur inconnue';
+      const status = message === 'Fiche non trouvée' ? 404 : 400;
+      res.status(status).send({
+        ok: false,
+        data: { carcasse: null },
+        error: message,
+      });
+      return;
+    }
+
+    if (!result.isDeleted) {
+      await runCarcasseUpdateSideEffects(result.existingCarcasse, result.savedCarcasse);
+    }
+
+    res.status(200).send({
+      ok: true,
+      data: { carcasse: result.savedCarcasse },
+      error: '',
+    });
+  })
 );
 
 router.get(
@@ -630,7 +578,7 @@ router.get(
       },
       error: '',
     });
-  }),
+  })
 );
 
 router.get(
@@ -714,7 +662,7 @@ router.get(
       },
       error: '',
     });
-  }),
+  })
 );
 
 router.get(
@@ -799,7 +747,7 @@ router.get(
       },
       error: '',
     });
-  }),
+  })
 );
 
 router.get(
@@ -844,43 +792,41 @@ router.get(
       data: { carcasse },
       error: '',
     });
-  }),
+  })
 );
 
 router.get(
   '/:zacharie_carcasse_id',
   passport.authenticate('user', { session: false }),
-  catchErrors(
-    async (req: express.Request, res: express.Response<CarcasseResponse>, next: express.NextFunction) => {
-      if (!req.user.activated) {
-        res.status(400).send({
-          ok: false,
-          data: null,
-          error: "Le compte n'est pas activé",
-        });
-        return;
-      }
-
-      const carcasse = await prisma.carcasse.findUnique({
-        where: {
-          zacharie_carcasse_id: req.params.zacharie_carcasse_id,
-        },
-        include: {
-          Fei: true,
-        },
+  catchErrors(async (req: express.Request, res: express.Response<CarcasseResponse>, next: express.NextFunction) => {
+    if (!req.user.activated) {
+      res.status(400).send({
+        ok: false,
+        data: null,
+        error: "Le compte n'est pas activé",
       });
-      if (!carcasse) {
-        res.status(400).send({ ok: false, data: null, error: 'Unauthorized' });
-        return;
-      }
+      return;
+    }
 
-      res.status(200).send({
-        ok: true,
-        data: { carcasse },
-        error: '',
-      });
-    },
-  ),
+    const carcasse = await prisma.carcasse.findUnique({
+      where: {
+        zacharie_carcasse_id: req.params.zacharie_carcasse_id,
+      },
+      include: {
+        Fei: true,
+      },
+    });
+    if (!carcasse) {
+      res.status(400).send({ ok: false, data: null, error: 'Unauthorized' });
+      return;
+    }
+
+    res.status(200).send({
+      ok: true,
+      data: { carcasse },
+      error: '',
+    });
+  })
 );
 
 export default router;

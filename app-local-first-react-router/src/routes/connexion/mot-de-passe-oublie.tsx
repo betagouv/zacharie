@@ -58,23 +58,14 @@ export default function MotDePasseOublie() {
 
   return (
     <main role="main" id="content">
-      <title>
-        Mot de passe oublié | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire
-      </title>
+      <title>Mot de passe oublié | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
       <div className="fr-container fr-container--fluid fr-my-md-14v">
         <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
           <div className="fr-col-12 fr-col-md-10 fr-col-lg-8">
             {communication && <CallOut>{decodeURIComponent(communication)}</CallOut>}
             {userResponse?.message && <CallOut>{userResponse?.message}</CallOut>}
-            {userResponse?.error && !userResponse?.message && (
-              <CallOut title="Erreur">{userResponse.error}</CallOut>
-            )}
-            <form
-              onSubmit={handleSubmit}
-              id="forget_password_form"
-              method="POST"
-              className="fr-background-alt--blue-france p-4 md:p-8"
-            >
+            {userResponse?.error && !userResponse?.message && <CallOut title="Erreur">{userResponse.error}</CallOut>}
+            <form onSubmit={handleSubmit} id="forget_password_form" method="POST" className="fr-background-alt--blue-france p-4 md:p-8">
               <fieldset
                 className="fr-fieldset"
                 id="forget-password-fieldset"
@@ -115,8 +106,7 @@ export default function MotDePasseOublie() {
               />
               <hr />
               <p className="text-xs">
-                Vous vous souvenez de votre mot de passe ?{' '}
-                <Link to="/app/connexion">Cliquez ici pour vous connecter</Link>
+                Vous vous souvenez de votre mot de passe ? <Link to="/app/connexion">Cliquez ici pour vous connecter</Link>
               </p>
             </form>
           </div>

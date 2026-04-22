@@ -1,12 +1,7 @@
 import { useEffect, useState } from 'react';
 import API from '@app/services/api';
 import Chargement from '@app/components/Chargement';
-import type {
-  AdminDashboardResponse,
-  AdminDeltaBphResponse,
-  AdminPartsDeMarcheResponse,
-  AdminSaisiesSviResponse,
-} from '@api/src/types/responses';
+import type { AdminDashboardResponse, AdminDeltaBphResponse, AdminPartsDeMarcheResponse, AdminSaisiesSviResponse } from '@api/src/types/responses';
 import dayjs from 'dayjs';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Tabs } from '@codegouvfr/react-dsfr/Tabs';
@@ -25,14 +20,7 @@ const funnelLabels: Array<{ key: keyof AdminDashboardResponse['data']['funnel'];
   { key: 'envoye_3_fiches', label: 'Envoyé >= 3 fiches' },
 ];
 
-const dsfrBlues = [
-  'var(--background-action-high-blue-france)',
-  '#3a55d1',
-  '#4e66d8',
-  '#6277df',
-  '#7688e5',
-  '#8a99ec',
-];
+const dsfrBlues = ['var(--background-action-high-blue-france)', '#3a55d1', '#4e66d8', '#6277df', '#7688e5', '#8a99ec'];
 
 function getSeasons(): Array<{ label: string; from: string; to: string }> {
   const now = dayjs();
@@ -112,30 +100,20 @@ export default function AdminDashboard() {
     <div className="space-y-6 py-6">
       <h2 className="text-xl font-bold">Tableau de bord</h2>
 
-      <Tabs
-        selectedTabId={selectedTab}
-        tabs={dashboardTabs}
-        onTabChange={setSelectedTab}
-      >
+      <Tabs selectedTabId={selectedTab} tabs={dashboardTabs} onTabChange={setSelectedTab}>
         {selectedTab === 'general' && (
           <div className="space-y-6 pt-4">
             {/* KPI cards */}
             <div className="grid grid-cols-3 gap-4">
               <div className="rounded-lg border border-gray-100 bg-white p-5 shadow-sm">
                 <p className="text-sm text-gray-500">Chasseurs inscrits</p>
-                <p
-                  className="mt-1 text-3xl font-bold"
-                  style={{ color: 'var(--background-action-high-blue-france)' }}
-                >
+                <p className="mt-1 text-3xl font-bold" style={{ color: 'var(--background-action-high-blue-france)' }}>
                   {data.funnel.chasseurs_inscrits.toLocaleString('fr-FR')}
                 </p>
               </div>
               <div className="rounded-lg border border-gray-100 bg-white p-5 shadow-sm">
                 <p className="text-sm text-gray-500">Comptes validés</p>
-                <p
-                  className="mt-1 text-3xl font-bold"
-                  style={{ color: 'var(--background-action-high-blue-france)' }}
-                >
+                <p className="mt-1 text-3xl font-bold" style={{ color: 'var(--background-action-high-blue-france)' }}>
                   {data.funnel.compte_valide.toLocaleString('fr-FR')}
                 </p>
                 <p className="mt-1 text-xs text-gray-400">
@@ -144,10 +122,7 @@ export default function AdminDashboard() {
               </div>
               <div className="rounded-lg border border-gray-100 bg-white p-5 shadow-sm">
                 <p className="text-sm text-gray-500">Inscriptions (période)</p>
-                <p
-                  className="mt-1 text-3xl font-bold"
-                  style={{ color: 'var(--background-action-high-blue-france)' }}
-                >
+                <p className="mt-1 text-3xl font-bold" style={{ color: 'var(--background-action-high-blue-france)' }}>
                   {totalInscriptions.toLocaleString('fr-FR')}
                 </p>
                 <p className="mt-1 text-xs text-gray-400">
@@ -177,9 +152,7 @@ export default function AdminDashboard() {
                         >
                           {count.toLocaleString('fr-FR')}
                         </div>
-                        <span className="absolute top-1/2 right-2 -translate-y-1/2 text-xs text-gray-400 tabular-nums">
-                          {pct.toFixed(1)}%
-                        </span>
+                        <span className="absolute top-1/2 right-2 -translate-y-1/2 text-xs text-gray-400 tabular-nums">{pct.toFixed(1)}%</span>
                       </div>
                     </div>
                   );
@@ -234,13 +207,7 @@ export default function AdminDashboard() {
                     <label className="fr-label mb-1 text-xs" htmlFor="date-to">
                       Fin
                     </label>
-                    <input
-                      id="date-to"
-                      className="fr-input fr-input--sm"
-                      type="date"
-                      value={dateTo}
-                      onChange={(e) => setDateTo(e.target.value)}
-                    />
+                    <input id="date-to" className="fr-input fr-input--sm" type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
                   </div>
                 </div>
               </div>
@@ -266,8 +233,7 @@ export default function AdminDashboard() {
               <div className="rounded-lg border border-gray-100 bg-white p-6 shadow-sm">
                 <h3 className="mb-1 text-lg font-semibold">Parts de marché par circuit</h3>
                 <p className="mb-5 text-sm text-gray-500">
-                  Part de marché absolue, potentielle et réelle sur l&apos;ensemble du circuit long, par saison de
-                  chasse
+                  Part de marché absolue, potentielle et réelle sur l&apos;ensemble du circuit long, par saison de chasse
                 </p>
                 <ResponsiveContainer width="100%" height={350}>
                   <BarChart data={partsDeMarche.circuit_long}>
@@ -284,20 +250,8 @@ export default function AdminDashboard() {
                     />
                     <Tooltip formatter={(value, name) => [`${value} t`, name]} />
                     <Legend />
-                    <Bar
-                      dataKey="volume_absolu"
-                      name="Volume absolu"
-                      xAxisId="absolu"
-                      fill="#cacafb"
-                      barSize={60}
-                    />
-                    <Bar
-                      dataKey="volume_potentiel"
-                      name="Volume potentiel"
-                      xAxisId="potentiel"
-                      fill="#6a6af4"
-                      barSize={40}
-                    />
+                    <Bar dataKey="volume_absolu" name="Volume absolu" xAxisId="absolu" fill="#cacafb" barSize={60} />
+                    <Bar dataKey="volume_potentiel" name="Volume potentiel" xAxisId="potentiel" fill="#6a6af4" barSize={40} />
                     <Bar dataKey="volume_reel" name="Volume réel" xAxisId="reel" fill="#000091" barSize={24} />
                   </BarChart>
                 </ResponsiveContainer>
@@ -305,55 +259,43 @@ export default function AdminDashboard() {
             )}
 
             {/* Delta BPH distribution */}
-            {deltaBph && deltaBph.deltas.length > 0 && (() => {
-              const bucketSize = 5;
-              const buckets: Record<number, number> = {};
-              for (let b = -100; b <= 100; b += bucketSize) {
-                buckets[b] = 0;
-              }
-              for (const d of deltaBph.deltas) {
-                const b = Math.max(-100, Math.min(100, Math.floor(d / bucketSize) * bucketSize));
-                buckets[b] = (buckets[b] ?? 0) + 1;
-              }
-              const chartData = Object.entries(buckets)
-                .map(([key, count]) => ({ delta: Number(key), count }))
-                .sort((a, b) => a.delta - b.delta);
+            {deltaBph &&
+              deltaBph.deltas.length > 0 &&
+              (() => {
+                const bucketSize = 5;
+                const buckets: Record<number, number> = {};
+                for (let b = -100; b <= 100; b += bucketSize) {
+                  buckets[b] = 0;
+                }
+                for (const d of deltaBph.deltas) {
+                  const b = Math.max(-100, Math.min(100, Math.floor(d / bucketSize) * bucketSize));
+                  buckets[b] = (buckets[b] ?? 0) + 1;
+                }
+                const chartData = Object.entries(buckets)
+                  .map(([key, count]) => ({ delta: Number(key), count }))
+                  .sort((a, b) => a.delta - b.delta);
 
-              return (
-                <div className="rounded-lg border border-gray-100 bg-white p-6 shadow-sm">
-                  <h3 className="mb-1 text-lg font-semibold">
-                    Répartition des examinateurs initiaux par delta de score BPH
-                  </h3>
-                  <p className="mb-5 text-sm text-gray-500">
-                    Différence entre la moyenne des 5 fiches les plus récentes et les 5 premières fiches (score BPH
-                    absolu). Examinateurs avec au moins 10 fiches.
-                  </p>
-                  <ResponsiveContainer width="100%" height={350}>
-                    <AreaChart data={chartData}>
-                      <XAxis
-                        dataKey="delta"
-                        type="number"
-                        domain={[-100, 100]}
-                        ticks={[-100, -75, -50, -25, 0, 25, 50, 75, 100]}
-                      />
-                      <YAxis allowDecimals={false} label={{ value: "Nombre d'examinateurs initiaux", angle: -90, position: 'insideLeft', offset: 10 }} />
-                      <Tooltip
-                        labelFormatter={(d) => `Delta : ${d} à ${Number(d) + bucketSize}`}
-                        formatter={(value) => [value, 'Examinateurs']}
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="count"
-                        stroke="#e3a902"
-                        fill="#e3a902"
-                        fillOpacity={0.1}
-                        strokeWidth={2.5}
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              );
-            })()}
+                return (
+                  <div className="rounded-lg border border-gray-100 bg-white p-6 shadow-sm">
+                    <h3 className="mb-1 text-lg font-semibold">Répartition des examinateurs initiaux par delta de score BPH</h3>
+                    <p className="mb-5 text-sm text-gray-500">
+                      Différence entre la moyenne des 5 fiches les plus récentes et les 5 premières fiches (score BPH absolu). Examinateurs avec au
+                      moins 10 fiches.
+                    </p>
+                    <ResponsiveContainer width="100%" height={350}>
+                      <AreaChart data={chartData}>
+                        <XAxis dataKey="delta" type="number" domain={[-100, 100]} ticks={[-100, -75, -50, -25, 0, 25, 50, 75, 100]} />
+                        <YAxis
+                          allowDecimals={false}
+                          label={{ value: "Nombre d'examinateurs initiaux", angle: -90, position: 'insideLeft', offset: 10 }}
+                        />
+                        <Tooltip labelFormatter={(d) => `Delta : ${d} à ${Number(d) + bucketSize}`} formatter={(value) => [value, 'Examinateurs']} />
+                        <Area type="monotone" dataKey="count" stroke="#e3a902" fill="#e3a902" fillOpacity={0.1} strokeWidth={2.5} />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                );
+              })()}
           </div>
         )}
 
@@ -364,31 +306,20 @@ export default function AdminDashboard() {
               <div className="grid grid-cols-3 gap-4">
                 <div className="rounded-lg border border-gray-100 bg-white p-5 shadow-sm">
                   <p className="text-sm text-gray-500">Carcasses inspectées (SVI)</p>
-                  <p
-                    className="mt-1 text-3xl font-bold"
-                    style={{ color: 'var(--background-action-high-blue-france)' }}
-                  >
+                  <p className="mt-1 text-3xl font-bold" style={{ color: 'var(--background-action-high-blue-france)' }}>
                     {saisiesSvi.total_inspectees.toLocaleString('fr-FR')}
                   </p>
                 </div>
                 <div className="rounded-lg border border-gray-100 bg-white p-5 shadow-sm">
                   <p className="text-sm text-gray-500">Taux de saisie global</p>
-                  <p
-                    className="mt-1 text-3xl font-bold"
-                    style={{ color: 'var(--background-action-high-blue-france)' }}
-                  >
+                  <p className="mt-1 text-3xl font-bold" style={{ color: 'var(--background-action-high-blue-france)' }}>
                     {saisiesSvi.taux_saisie_global}%
                   </p>
-                  <p className="mt-1 text-xs text-gray-400">
-                    {saisiesSvi.total_saisies.toLocaleString('fr-FR')} carcasses saisies
-                  </p>
+                  <p className="mt-1 text-xs text-gray-400">{saisiesSvi.total_saisies.toLocaleString('fr-FR')} carcasses saisies</p>
                 </div>
                 <div className="rounded-lg border border-gray-100 bg-white p-5 shadow-sm">
                   <p className="text-sm text-gray-500">Taux mauvaises pratiques</p>
-                  <p
-                    className="mt-1 text-3xl font-bold"
-                    style={{ color: 'var(--background-action-high-blue-france)' }}
-                  >
+                  <p className="mt-1 text-3xl font-bold" style={{ color: 'var(--background-action-high-blue-france)' }}>
                     {saisiesSvi.taux_mauvaises_pratiques}%
                   </p>
                   <p className="mt-1 text-xs text-gray-400">
@@ -402,16 +333,14 @@ export default function AdminDashboard() {
             {saisiesSvi && saisiesSvi.motifs.length > 0 && (
               <div className="rounded-lg border border-gray-100 bg-white p-6 shadow-sm">
                 <h3 className="mb-1 text-lg font-semibold">Tous les motifs de saisie totale (IPM2)</h3>
-                <p className="mb-5 text-sm text-gray-500">
-                  Fréquence des motifs sur l&apos;ensemble des saisies totales
-                </p>
+                <p className="mb-5 text-sm text-gray-500">Fréquence des motifs sur l&apos;ensemble des saisies totales</p>
                 <div className="space-y-2">
                   {saisiesSvi.motifs.map(({ motif, count, is_mauvaise_pratique }, i) => {
                     const maxCount = saisiesSvi.motifs[0].count;
                     const pct = maxCount > 0 ? (count / maxCount) * 100 : 0;
                     return (
                       <div key={motif} className="flex items-center gap-3">
-                        <div className="w-80 shrink-0 text-right text-sm text-gray-600 truncate" title={motif}>
+                        <div className="w-80 shrink-0 truncate text-right text-sm text-gray-600" title={motif}>
                           {motif}
                         </div>
                         <div className="relative h-7 flex-1 rounded bg-gray-50">
@@ -434,42 +363,42 @@ export default function AdminDashboard() {
             )}
 
             {/* Saisies SVI — motifs mauvaises pratiques uniquement */}
-            {saisiesSvi && saisiesSvi.motifs.filter((m) => m.is_mauvaise_pratique).length > 0 && (() => {
-              const mauvaises = saisiesSvi.motifs.filter((m) => m.is_mauvaise_pratique);
-              return (
-                <div className="rounded-lg border border-gray-100 bg-white p-6 shadow-sm">
-                  <h3 className="mb-1 text-lg font-semibold">Motifs mauvaises pratiques (saisie totale)</h3>
-                  <p className="mb-5 text-sm text-gray-500">
-                    Sous-ensemble des motifs liés aux mauvaises pratiques d&apos;hygiène
-                  </p>
-                  <div className="space-y-2">
-                    {mauvaises.map(({ motif, count }, i) => {
-                      const maxCount = mauvaises[0].count;
-                      const pct = maxCount > 0 ? (count / maxCount) * 100 : 0;
-                      return (
-                        <div key={motif} className="flex items-center gap-3">
-                          <div className="w-80 shrink-0 text-right text-sm text-gray-600 truncate" title={motif}>
-                            {motif}
-                          </div>
-                          <div className="relative h-7 flex-1 rounded bg-gray-50">
-                            <div
-                              className="flex h-full items-center rounded px-2 text-xs font-semibold text-white"
-                              style={{
-                                width: `${Math.max(pct, 3)}%`,
-                                backgroundColor: i === 0 ? '#e1000f' : '#f28f8f',
-                                minWidth: '40px',
-                              }}
-                            >
-                              {count}
+            {saisiesSvi &&
+              saisiesSvi.motifs.filter((m) => m.is_mauvaise_pratique).length > 0 &&
+              (() => {
+                const mauvaises = saisiesSvi.motifs.filter((m) => m.is_mauvaise_pratique);
+                return (
+                  <div className="rounded-lg border border-gray-100 bg-white p-6 shadow-sm">
+                    <h3 className="mb-1 text-lg font-semibold">Motifs mauvaises pratiques (saisie totale)</h3>
+                    <p className="mb-5 text-sm text-gray-500">Sous-ensemble des motifs liés aux mauvaises pratiques d&apos;hygiène</p>
+                    <div className="space-y-2">
+                      {mauvaises.map(({ motif, count }, i) => {
+                        const maxCount = mauvaises[0].count;
+                        const pct = maxCount > 0 ? (count / maxCount) * 100 : 0;
+                        return (
+                          <div key={motif} className="flex items-center gap-3">
+                            <div className="w-80 shrink-0 truncate text-right text-sm text-gray-600" title={motif}>
+                              {motif}
+                            </div>
+                            <div className="relative h-7 flex-1 rounded bg-gray-50">
+                              <div
+                                className="flex h-full items-center rounded px-2 text-xs font-semibold text-white"
+                                style={{
+                                  width: `${Math.max(pct, 3)}%`,
+                                  backgroundColor: i === 0 ? '#e1000f' : '#f28f8f',
+                                  minWidth: '40px',
+                                }}
+                              >
+                                {count}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              );
-            })()}
+                );
+              })()}
           </div>
         )}
       </Tabs>

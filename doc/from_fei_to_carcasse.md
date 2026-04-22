@@ -13,6 +13,7 @@ Aujourd'hui, on a une vue pour tous, la même, c'est la merde
 Donc on va splitter par rôles : chaque rôle aura sa propre vue, et ça sera BEAUCOUP plus propre et sinmple à comprendre/
 
 Vues :
+
 - Examinateur initial :
   - Fiches d'Examen Initial
     - Fiche d'Examen Initial (avec carcasses)
@@ -26,14 +27,13 @@ Vues :
   - Carcasses
     - Carcasse, avec données de chasse et résumé de la décision SVI
 - SVI :
-  - Carcasse Intermédiaire [final, ETG] (le numéro de fiche sera indiqué dans les "Données de chasse")  (mais on appelle ça quand même la vue "Fiche ?")
+  - Carcasse Intermédiaire [final, ETG] (le numéro de fiche sera indiqué dans les "Données de chasse") (mais on appelle ça quand même la vue "Fiche ?")
     - Carcasse Intermédiaire [final, ETG] (avec carcasses)
   - Carcasses
     - Carcasse, avec données de chasse et résumé de la décision SVI
 - Admin : app admin à part entière
 
 Chaque vue aura son propre endpoint API, et son propre affichage.
-
 
 ### Endpoints API
 
@@ -66,13 +66,13 @@ On va avoir des endpoints par role OU un endpoint splitté par rôle à la racin
   - GET /carcasse-intermediaire/{carcasse_intermediaire_id} (qui inclue toutes les carcasses)
   - GET /carcasse/{carcasse_id}
 
-
 ### Synchronisation des données et gestion du store en local
 
 Aujourd'hui, chaque MAJ de Fei trigger une synchronisation globale. Que faut-il faire de ça ?
 Aussi, le store est une réplique de la base de données, comment s'occupe-t-on des regroupements par Fei/CarcasseIntermediaire ?
 
 Réponses :
+
 - on trigger le `sync` manuellement quand on en a besoin
 - on créée des fonctions utilitaires pour faire les regroupements par Fei/CarcasseIntermediaire
 
@@ -81,7 +81,8 @@ Réponses :
 Comment structurer le store, tout de même ? Parce que si on a des dizaines de milliers de carcasses, il faut être efficace - tout en maintenant la lisibilité et la maintenabilité.
 
 Proposition :
-- trois objets : 
+
+- trois objets :
   - carcasses (clé: zacharie_carcasse_id, valeur: Carcasse), avec une référence à la Fei
   - feiByNumero (clé: fei_numero, valeur: Fei), sans référence aux carcasses
   - carcassesIntermediaires (clé: carcassesIntermediairesId, valeur: CarcasseIntermediaire), avec une référence à la Fei, à une carcasse à un intermédiaireId (mais y'a pas de table Intermediaire, toutes les infos de l'intermediaire sont inclues dans la ligne)
@@ -93,6 +94,7 @@ Donc on a qu'à se dire : on met tout en mémoire pour les données < 1 an, glis
 Pas besoin d'indexer genre "carcassesByFei" ou autre : parce qu'on limite les données en mémoire à celles de l'année en cours, le pire cas est environ 50k carcasses dans l'année, et 1000 carcasses par Fei. Donc on peut se permettre de faire des loops et ne rien indexer/memoriser.
 
 Use cases :
+
 - Examinateur initial / Premier détenteur :
   - on veut avoir un regroupement des carcasses par Fei, pour l'affichage principal, trié par status de carcasses, ou par date de mise à mort, etc.
     - on loop sur toutes les carcasses, et on groupe par Fei : `groupByFeiNumero(carcasses)` (O(n))
@@ -118,15 +120,16 @@ Itération 1: pagination seulement côté front.
 Itération 2: pagination côté back, pour les données > 1 an.
 
 Implications de l'itération 1 :
+
 - au chargement initial de Zacharie, on télécharge tout.
 - aux chargements ultérieurs, on télécharge les données avec un `after` paramétré à la date du dernier chargement.
 - pagination côté front : aucun call API, tout va bien.
 
 Implications de l'itération 2 :
+
 - au chargement initial de Zacharie, on télécharge toutes les données < 1 an.
 - aux chargements ultérieurs, on télécharge les données avec un `after` paramétré à la date du dernier chargement.
 - pagination côté front : TODO
-
 
 ### Suppression des champs depreciés de la Fei
 

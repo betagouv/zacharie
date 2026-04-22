@@ -50,7 +50,7 @@ export default function EtgProfilEntreprise() {
         useUser.setState({ user: response.data.user });
       }
     },
-    [user.id],
+    [user.id]
   );
 
   return (

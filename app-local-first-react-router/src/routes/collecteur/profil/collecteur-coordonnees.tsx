@@ -25,7 +25,7 @@ export default function CollecteurProfilCoordonnees() {
         useUser.setState({ user: response.data.user });
       }
     },
-    [user.id],
+    [user.id]
   );
 
   const handleSubmit = () => {
@@ -48,18 +48,11 @@ export default function CollecteurProfilCoordonnees() {
           <h1 className="fr-h2 fr-mb-2w">Coordonnées</h1>
           <div className="mb-6 bg-white md:shadow-sm">
             <div className="p-4 md:p-8">
-              <form
-                id="user_data_form"
-                method="POST"
-                onBlur={handleUserFormBlur}
-                onSubmit={(e) => e.preventDefault()}
-              >
+              <form id="user_data_form" method="POST" onBlur={handleUserFormBlur} onSubmit={(e) => e.preventDefault()}>
                 <h3 className="text-lg font-semibold text-gray-900">
                   <span>Votre identité</span>
                 </h3>
-                <p className="mb-5 text-sm text-gray-500">
-                  * Les champs marqués d'un astérisque (*) sont obligatoires.
-                </p>
+                <p className="mb-5 text-sm text-gray-500">* Les champs marqués d'un astérisque (*) sont obligatoires.</p>
                 <Input
                   label="Nom *"
                   nativeInputProps={{

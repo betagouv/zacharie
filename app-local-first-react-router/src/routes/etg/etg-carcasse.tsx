@@ -22,11 +22,7 @@ interface CarcasseIntermediaireProps {
   intermediaire: FeiIntermediaire;
 }
 
-export default function CarcasseIntermediaireComp({
-  carcasse,
-  canEdit,
-  intermediaire,
-}: CarcasseIntermediaireProps) {
+export default function CarcasseIntermediaireComp({ carcasse, canEdit, intermediaire }: CarcasseIntermediaireProps) {
   const params = useParams();
   const user = useUser((state) => state.user)!;
   const updateCarcasseIntermediaire = useZustandStore((state) => state.updateCarcasseIntermediaire);
@@ -35,10 +31,7 @@ export default function CarcasseIntermediaireComp({
   const fei = useZustandStore((state) => state.feis[params.fei_numero!]);
   const entities = useZustandStore((state) => state.entities);
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
-  const carcasseIntermediaireId = getFeiAndCarcasseAndIntermediaireIdsFromCarcasse(
-    carcasse,
-    intermediaire.id,
-  );
+  const carcasseIntermediaireId = getFeiAndCarcasseAndIntermediaireIdsFromCarcasse(carcasse, intermediaire.id);
   const carcasseIntermediaire = carcassesIntermediaireById[carcasseIntermediaireId];
   const carcassesIntermediaires = useCarcassesIntermediairesForCarcasse(carcasse.zacharie_carcasse_id);
 
@@ -48,9 +41,7 @@ export default function CarcasseIntermediaireComp({
       if (_carcasseIntermediaire.intermediaire_id === carcasseIntermediaire.intermediaire_id) continue;
       if (_carcasseIntermediaire?.commentaire) {
         const intermediaireEntity = entities[_carcasseIntermediaire.intermediaire_entity_id];
-        commentaires.push(
-          `${intermediaireEntity?.nom_d_usage}\u00A0: ${_carcasseIntermediaire?.commentaire}`,
-        );
+        commentaires.push(`${intermediaireEntity?.nom_d_usage}\u00A0: ${_carcasseIntermediaire?.commentaire}`);
       }
     }
     return commentaires;
@@ -62,26 +53,22 @@ export default function CarcasseIntermediaireComp({
     createModal({
       isOpenedByDefault: false,
       id: `refus-intermediaire-modal-carcasse-${carcasseIntermediaireId}`,
-    }),
+    })
   ).current;
   const isRefusIntermediaireModalOpen = useIsModalOpen(refusIntermediaireModal);
 
   const [carcasseManquante, setCarcasseManquante] = useState(!!carcasse.intermediaire_carcasse_manquante);
   const [carcasseRefusCheckbox, setCarcasseRefusCheckbox] = useState(!!carcasseIntermediaire.refus);
-  const [carcasseEcarteePourInspectionCheckbox, setCarcasseEcarteePourInspectionCheckbox] = useState(
-    !!carcasseIntermediaire.ecarte_pour_inspection,
-  );
+  const [carcasseEcarteePourInspectionCheckbox, setCarcasseEcarteePourInspectionCheckbox] = useState(!!carcasseIntermediaire.ecarte_pour_inspection);
   const [carcasseAcceptPartielCheckbox, setCarcasseAcceptPartielCheckbox] = useState(
     !!carcasseIntermediaire.check_manuel &&
       !carcasseIntermediaire.refus &&
       !carcasse.intermediaire_carcasse_manquante &&
       carcasse.type === CarcasseType.PETIT_GIBIER &&
       carcasseIntermediaire.nombre_d_animaux_acceptes !== null &&
-      carcasseIntermediaire.nombre_d_animaux_acceptes !== (carcasse.nombre_d_animaux ?? 0),
+      carcasseIntermediaire.nombre_d_animaux_acceptes !== (carcasse.nombre_d_animaux ?? 0)
   );
-  const [refus, setRefus] = useState(
-    carcasse.intermediaire_carcasse_refus_motif ?? carcasseIntermediaire.refus ?? '',
-  );
+  const [refus, setRefus] = useState(carcasse.intermediaire_carcasse_refus_motif ?? carcasseIntermediaire.refus ?? '');
   const [commentaire, setCommentaire] = useState(carcasseIntermediaire.commentaire ?? '');
   const [poids, setPoids] = useState(carcasseIntermediaire.intermediaire_poids ?? '');
 
@@ -96,7 +83,7 @@ export default function CarcasseIntermediaireComp({
       ? isLotRefuse
         ? 0 // Si le lot est refusé, 0 animaux acceptés
         : (nombreAnimauxAccepteFromDb ?? null)
-      : null,
+      : null
   );
 
   const submitCarcasseManquante = () => {
@@ -397,7 +384,7 @@ export default function CarcasseIntermediaireComp({
     commentaireHint.push(`Un commentaire à ajouter\u00A0?`);
   } else {
     commentaireHint.push(
-      `Un commentaire à ajouter\u00A0? Une carcasse retirée d'un lot de petit gibier\u00A0? Indiquez le ici et précisez-en les motifs le cas échéant.`,
+      `Un commentaire à ajouter\u00A0? Une carcasse retirée d'un lot de petit gibier\u00A0? Indiquez le ici et précisez-en les motifs le cas échéant.`
     );
   }
   if (commentairesIntermediaires.length) {
@@ -461,12 +448,7 @@ export default function CarcasseIntermediaireComp({
           }
         >
           {isRefusIntermediaireModalOpen && (
-            <form
-              method="POST"
-              ref={formRef}
-              onSubmit={(e) => e.preventDefault()}
-              id={`intermediaire-carcasse-${carcasse.numero_bracelet}`}
-            >
+            <form method="POST" ref={formRef} onSubmit={(e) => e.preventDefault()} id={`intermediaire-carcasse-${carcasse.numero_bracelet}`}>
               <div className="mt-4">
                 {/* cutsom radio buttons en reprenant le code de @codegouvfr/react-dsfr/RadioButtons pour y insérer un input pour le nombre d'animaux acceptés */}
                 <fieldset className="fr-fieldset">
@@ -583,8 +565,7 @@ export default function CarcasseIntermediaireComp({
                       </label>
                       {carcasse.type === CarcasseType.PETIT_GIBIER && (
                         <p className="fr-hint-text">
-                          Si vous refusez seulement quelques animaux, utilisez plutôt l'option "Lot
-                          partiellement accepté"
+                          Si vous refusez seulement quelques animaux, utilisez plutôt l'option "Lot partiellement accepté"
                         </p>
                       )}
                     </div>
@@ -627,8 +608,7 @@ export default function CarcasseIntermediaireComp({
                       </label>
                       {carcasse.type === CarcasseType.PETIT_GIBIER && (
                         <p className="fr-hint-text">
-                          Si vous écartez seulement quelques animaux, utilisez plutôt l'option "Lot
-                          partiellement accepté"
+                          Si vous écartez seulement quelques animaux, utilisez plutôt l'option "Lot partiellement accepté"
                         </p>
                       )}
                     </div>
@@ -734,10 +714,7 @@ export default function CarcasseIntermediaireComp({
                               children: 'Enregistrer',
                               type: 'submit',
                               disabled:
-                                !canEdit ||
-                                nombreAnimauxAcceptes === null ||
-                                nombreAnimauxAcceptes < 0 ||
-                                nombreAnimauxAcceptes > nombreAnimauxTotal,
+                                !canEdit || nombreAnimauxAcceptes === null || nombreAnimauxAcceptes < 0 || nombreAnimauxAcceptes > nombreAnimauxTotal,
                               nativeButtonProps: {
                                 onClick: (e) => {
                                   e.preventDefault();

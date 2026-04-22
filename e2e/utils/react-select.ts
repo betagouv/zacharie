@@ -1,4 +1,4 @@
-import { expect, Page } from "@playwright/test";
+import { expect, Page } from '@playwright/test';
 
 export async function clickOnEmptyReactSelect(page: Page, name: string, text: string) {
   await page.locator(`.${name}__dropdown-indicator`).click();

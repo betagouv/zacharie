@@ -6,13 +6,7 @@ interface SendEmailProps {
   from?: string;
 }
 
-export async function sendEmail({
-  emails = ['arnaud@ambroselli.io'],
-  text,
-  html,
-  subject,
-  from = 'contact@zacharie.beta.gouv.fr',
-}: SendEmailProps) {
+export async function sendEmail({ emails = ['arnaud@ambroselli.io'], text, html, subject, from = 'contact@zacharie.beta.gouv.fr' }: SendEmailProps) {
   if (process.env.NODE_ENV !== 'production') {
     console.log({ emails, text, html, subject, from });
     return Promise.resolve({ status: 'success' });

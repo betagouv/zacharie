@@ -1,10 +1,7 @@
 import { describe, test, expect } from 'vitest';
 import dayjs from 'dayjs';
 
-import updateCarcasseStatus, {
-  getCarcasseStatusLabel,
-  getSimplifiedCarcasseStatus,
-} from '../src/utils/get-carcasse-status';
+import updateCarcasseStatus, { getCarcasseStatusLabel, getSimplifiedCarcasseStatus } from '../src/utils/get-carcasse-status';
 import { Carcasse, CarcasseStatus, CarcasseType, IPM1Decision, IPM2Decision } from '@prisma/client';
 import { CarcasseForResponseForRegistry } from '../../api-express/src/types/carcasse';
 

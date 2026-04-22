@@ -14,12 +14,7 @@ type FeiSorted = {
 };
 
 export function isFeiDone(fei: FeiWithIntermediaires): boolean {
-  return !!(
-    fei.svi_closed_at ||
-    fei.automatic_closed_at ||
-    fei.intermediaire_closed_at ||
-    fei.consommateur_final_usage_domestique
-  );
+  return !!(fei.svi_closed_at || fei.automatic_closed_at || fei.intermediaire_closed_at || fei.consommateur_final_usage_domestique);
 }
 
 export function getFeisSorted(): FeiSorted {
@@ -70,8 +65,7 @@ export function getFeisSorted(): FeiSorted {
       !fei.svi_closed_at &&
       !fei.fei_next_owner_user_id &&
       !fei.fei_next_owner_entity_id &&
-      (fei.fei_current_owner_user_id === user.id ||
-        entitiesIdsWorkingDirectlyFor.includes(fei.fei_current_owner_entity_id!));
+      (fei.fei_current_owner_user_id === user.id || entitiesIdsWorkingDirectlyFor.includes(fei.fei_current_owner_entity_id!));
 
     if (isUnderMyResponsability || isUnderMyResponsabilityFallback) {
       feisSorted.feisUnderMyResponsability.push(fei);
@@ -95,8 +89,7 @@ export function getFeisSorted(): FeiSorted {
       !fei.svi_assigned_at &&
       !fei.svi_closed_at &&
       (fei.fei_next_owner_user_id === user.id ||
-        (fei.fei_next_owner_entity_id != null &&
-          entitiesIdsWorkingDirectlyFor.includes(fei.fei_next_owner_entity_id)));
+        (fei.fei_next_owner_entity_id != null && entitiesIdsWorkingDirectlyFor.includes(fei.fei_next_owner_entity_id)));
 
     if ((isToTake || isToTakeFallback) && !fei.svi_assigned_at && !fei.intermediaire_closed_at) {
       feisSorted.feisToTake.push(fei);
@@ -121,9 +114,7 @@ export function getFeisSorted(): FeiSorted {
       }
       // Check sous-traite at carcasse level
       const hasSousTraite = carcasses.some(
-        (c) =>
-          c.next_owner_sous_traite_by_entity_id &&
-          entitiesIdsWorkingDirectlyFor.includes(c.next_owner_sous_traite_by_entity_id),
+        (c) => c.next_owner_sous_traite_by_entity_id && entitiesIdsWorkingDirectlyFor.includes(c.next_owner_sous_traite_by_entity_id)
       );
       if (hasSousTraite) {
         feisSorted.feisOngoing.push(fei);

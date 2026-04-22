@@ -54,7 +54,7 @@ export default function ChasseurCCGEdit() {
         setError(response.error || 'Erreur lors de la mise à jour');
       }
     },
-    [entityId, navigate],
+    [entityId, navigate]
   );
 
   if (loading) {
@@ -97,9 +97,7 @@ export default function ChasseurCCGEdit() {
           Retour aux chambres froides
         </Button>
         <h3 className="text-lg font-semibold text-gray-900">Modifier la chambre froide (CCG)</h3>
-        <p className="mb-5 text-sm text-gray-500">
-          * Les champs marqués d'un astérisque (*) sont obligatoires.
-        </p>
+        <p className="mb-5 text-sm text-gray-500">* Les champs marqués d'un astérisque (*) sont obligatoires.</p>
         {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
         <form method="POST" onSubmit={handleSubmit}>
           <Input

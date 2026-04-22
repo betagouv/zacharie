@@ -87,7 +87,7 @@
     "eslint": "~9.18.0",
     "fs-extra": "^11.2.0",
     "globals": "~15.14.0",
-    "prettier": "^3.5.3",
+    "prettier": "^3.8.3",
     "prettier-plugin-prisma": "^5.0.0",
     "supertest": "^7.1.4",
     "ts-node": "10.9.1",
@@ -97,12 +97,9 @@
   },
   "prettier": {
     "singleQuote": true,
-    "trailingComma": "all",
+    "trailingComma": "es5",
     "semi": true,
-    "printWidth": 110,
+    "printWidth": 150,
     "tabWidth": 2
-  },
-  "resolutions": {
-    "prettier": "^3.5.3"
   }
 }

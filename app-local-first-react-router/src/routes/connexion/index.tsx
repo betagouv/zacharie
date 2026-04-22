@@ -103,20 +103,9 @@ export default function Connexion() {
           <div className="fr-col-12 fr-col-md-10 fr-col-lg-8">
             {communication && <CallOut>{decodeURIComponent(communication)}</CallOut>}
             {userResponse?.message && <CallOut>{userResponse?.message}</CallOut>}
-            {userResponse?.error && userResponse.error.includes('Trop de tentatives') && (
-              <CallOut>{userResponse.error}</CallOut>
-            )}
-            <form
-              onSubmit={handleSubmit}
-              id="login_form"
-              method="POST"
-              className="fr-background-alt--blue-france p-4 md:p-8"
-            >
-              <fieldset
-                className="fr-fieldset"
-                id="login-1760-fieldset"
-                aria-labelledby="login-1760-fieldset-legend login-1760-fieldset-messages"
-              >
+            {userResponse?.error && userResponse.error.includes('Trop de tentatives') && <CallOut>{userResponse.error}</CallOut>}
+            <form onSubmit={handleSubmit} id="login_form" method="POST" className="fr-background-alt--blue-france p-4 md:p-8">
+              <fieldset className="fr-fieldset" id="login-1760-fieldset" aria-labelledby="login-1760-fieldset-legend login-1760-fieldset-messages">
                 <legend className="fr-fieldset__legend" id="login-1760-fieldset-legend">
                   <h2 className="fr-h3">Me connecter</h2>
                 </legend>
@@ -162,14 +151,12 @@ export default function Connexion() {
               />
               <Link to="/app/connexion/mot-de-passe-oublie" className="py-1 text-xs! text-gray-500">
                 <span>
-                  Mot de passe oublié ? <u className="inline">Cliquez ici</u>, vous recevrez un email avec un
-                  lien pour le réinitialiser
+                  Mot de passe oublié ? <u className="inline">Cliquez ici</u>, vous recevrez un email avec un lien pour le réinitialiser
                 </span>
               </Link>
               <hr />
               <p className="text-xs">
-                Vous n'avez pas encore de compte ?{' '}
-                <Link to="/app/connexion/creation-de-compte">Cliquez ici pour en créer un</Link>
+                Vous n'avez pas encore de compte ? <Link to="/app/connexion/creation-de-compte">Cliquez ici pour en créer un</Link>
               </p>
             </form>
           </div>

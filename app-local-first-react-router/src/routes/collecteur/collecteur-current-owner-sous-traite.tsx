@@ -22,9 +22,7 @@ export default function CollecteurFeiSousTraite() {
   const carcasseIds = feiCarcasses.map((c) => c.zacharie_carcasse_id);
   const intermediaires = useFeiIntermediaires(fei.numero);
   const latestIntermediaire = intermediaires[0];
-  const feiAndIntermediaireIds = latestIntermediaire
-    ? getFeiAndIntermediaireIdsFromFeiIntermediaire(latestIntermediaire)
-    : undefined;
+  const feiAndIntermediaireIds = latestIntermediaire ? getFeiAndIntermediaireIdsFromFeiIntermediaire(latestIntermediaire) : undefined;
 
   if (!fei.fei_next_owner_wants_to_sous_traite) {
     return null;
@@ -37,10 +35,7 @@ export default function CollecteurFeiSousTraite() {
     <div className="bg-alt-blue-france pb-4">
       <CallOut title="Vous souhaitez sous-traiter le transport des carcasses" className="bg-white">
         <div className="flex w-full flex-col bg-white md:items-start md:[&_ul]:min-w-96">
-          <DestinataireSelectSousTraite
-            feiAndIntermediaireIds={feiAndIntermediaireIds}
-            intermediaire={latestIntermediaire}
-          />
+          <DestinataireSelectSousTraite feiAndIntermediaireIds={feiAndIntermediaireIds} intermediaire={latestIntermediaire} />
         </div>
         <span className="text-sm">Vous avez changé d'avis&nbsp;?</span>
         <Button

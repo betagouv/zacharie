@@ -15,18 +15,13 @@ interface RelationEntityUserProps {
   onChange?: () => void;
 }
 
-export default function RelationEntityUsersList({
-  entity,
-  refreshKey,
-  user,
-  onChange,
-}: RelationEntityUserProps) {
+export default function RelationEntityUsersList({ entity, refreshKey, user, onChange }: RelationEntityUserProps) {
   const [searchParams] = useSearchParams();
   const entityUsersModal = useRef(
     createModal({
       id: `entity-users-modal-${entity.id}`,
       isOpenedByDefault: false,
-    }),
+    })
   ).current;
   const isOpen = useIsModalOpen(entityUsersModal);
 
@@ -38,9 +33,7 @@ export default function RelationEntityUsersList({
   //     relation.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
   // );
   const canHandleCarcassesForEntity = entity.EntityRelationsWithUsers?.find(
-    (relation) =>
-      relation.owner_id === user.id &&
-      relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+    (relation) => relation.owner_id === user.id && relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
   );
 
   const isAdminOfEntity = !canHandleCarcassesForEntity
@@ -49,12 +42,7 @@ export default function RelationEntityUsersList({
       canHandleCarcassesForEntity.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY;
 
   useEffect(() => {
-    if (
-      isAdminOfEntity &&
-      entityUsersModal?.open &&
-      searchParams.get('open-entity') === entity.id.toString() &&
-      !isOpen
-    ) {
+    if (isAdminOfEntity && entityUsersModal?.open && searchParams.get('open-entity') === entity.id.toString() && !isOpen) {
       setTimeout(() => {
         entityUsersModal.open?.();
         searchParams.delete('open-entity');

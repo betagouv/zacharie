@@ -3,14 +3,5 @@
     "Petit gibier à plumes": ["Canards", "Faisans de chasse", "Perdrix", "Pigeons", "Autres oiseaux"],
     "Petit gibier à poils": ["Lapins", "Lièvres", "Autres petits gibiers à poils"]
   },
-  "especes": [
-    "Canards",
-    "Faisans de chasse",
-    "Perdrix",
-    "Pigeons",
-    "Autres oiseaux",
-    "Lapins",
-    "Lièvres",
-    "Autres petits gibiers à poils"
-  ]
+  "especes": ["Canards", "Faisans de chasse", "Perdrix", "Pigeons", "Autres oiseaux", "Lapins", "Lièvres", "Autres petits gibiers à poils"]
 }

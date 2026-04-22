@@ -55,8 +55,7 @@ export default function RolesCheckBoxes({
     },
     {
       label: 'Établissement de Traitement du Gibier sauvage (ETG)',
-      hintText:
-        "Vous êtes salarié ou responsable d'un établissement qui peut traiter et transporter du gibier sauvage",
+      hintText: "Vous êtes salarié ou responsable d'un établissement qui peut traiter et transporter du gibier sauvage",
       nativeInputProps: {
         name: Prisma.UserScalarFieldEnum.roles,
         value: UserRoles.ETG,
@@ -66,8 +65,7 @@ export default function RolesCheckBoxes({
     },
     {
       label: 'Commerce de détail',
-      hintText:
-        'Boucherie, charcuterie, restaurant, traiteur, alimentation générale, supérette, grande et moyenne surface...',
+      hintText: 'Boucherie, charcuterie, restaurant, traiteur, alimentation générale, supérette, grande et moyenne surface...',
       nativeInputProps: {
         name: Prisma.UserScalarFieldEnum.roles,
         value: UserRoles.COMMERCE_DE_DETAIL,

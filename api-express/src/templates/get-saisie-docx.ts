@@ -82,9 +82,7 @@ export async function generateSaisieDocx(data: CarcasseCertificat, user: User): 
           new Paragraph({
             children: [
               new TextRun({
-                text: `CERTIFICAT DE ${
-                  data.type === CarcasseCertificatType.CSP ? 'SAISIE PARTIELLE' : 'SAISIE TOTALE'
-                } : ${data.certificat_id}`,
+                text: `CERTIFICAT DE ${data.type === CarcasseCertificatType.CSP ? 'SAISIE PARTIELLE' : 'SAISIE TOTALE'} : ${data.certificat_id}`,
                 bold: true,
                 size: 24,
                 underline: {
@@ -396,8 +394,7 @@ export async function generateSaisieDocx(data: CarcasseCertificat, user: User): 
           }),
           // Troisième tableau: Désignation des denrées consignées
           new Table({
-            columnWidths:
-              data.type === CarcasseCertificatType.CSP ? [1500, 3500, 4000, 1500] : [3500, 5500, 1500],
+            columnWidths: data.type === CarcasseCertificatType.CSP ? [1500, 3500, 4000, 1500] : [3500, 5500, 1500],
             margins: {
               top: 50,
             },

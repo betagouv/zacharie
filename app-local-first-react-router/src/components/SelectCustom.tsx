@@ -5,22 +5,20 @@ import CreatableSelect from 'react-select/creatable';
 import type { GroupBase, Props, StylesConfig } from 'react-select';
 import InputNotEditable from './InputNotEditable';
 
-export interface SelectCustomProps<
+export interface SelectCustomProps<Option, IsMulti extends boolean = false, Group extends GroupBase<Option> = GroupBase<Option>> extends Props<
   Option,
-  IsMulti extends boolean = false,
-  Group extends GroupBase<Option> = GroupBase<Option>,
-> extends Props<Option, IsMulti, Group> {
+  IsMulti,
+  Group
+> {
   creatable?: boolean;
   label?: string;
   hint?: React.ReactNode;
   isReadOnly?: boolean;
 }
 
-function SelectCustom<
-  Option,
-  IsMulti extends boolean = false,
-  Group extends GroupBase<Option> = GroupBase<Option>,
->(allProps: SelectCustomProps<Option, IsMulti, Group>) {
+function SelectCustom<Option, IsMulti extends boolean = false, Group extends GroupBase<Option> = GroupBase<Option>>(
+  allProps: SelectCustomProps<Option, IsMulti, Group>
+) {
   const { creatable, isReadOnly, label, hint, ...props } = allProps;
   const Component = creatable ? CreatableSelect : Select;
 
@@ -31,9 +29,7 @@ function SelectCustom<
       border: 'none',
       borderBottomLeftRadius: '0',
       borderBottomRightRadius: '0',
-      boxShadow: props.isDisabled
-        ? 'inset 0 -2px 0 0 var(--border-disabled-grey)'
-        : 'inset 0 -2px 0 0 var(--border-plain-grey)',
+      boxShadow: props.isDisabled ? 'inset 0 -2px 0 0 var(--border-disabled-grey)' : 'inset 0 -2px 0 0 var(--border-plain-grey)',
     }),
     dropdownIndicator: (styles) => ({
       ...styles,
@@ -77,15 +73,10 @@ function SelectCustom<
   return (
     <Wrapper>
       {label && (
-        <label
-          className={['fr-label mb-2', props.isDisabled ? 'text-disabled-grey' : ''].join(' ')}
-          htmlFor={props.inputId}
-        >
+        <label className={['fr-label mb-2', props.isDisabled ? 'text-disabled-grey' : ''].join(' ')} htmlFor={props.inputId}>
           {label}
           {hint && typeof hint === 'string' && <span className="fr-hint-text mt-1">{hint}</span>}
-          {hint && typeof hint !== 'string' && (
-            <div className="fr-hint-text mt-1 flex flex-col gap-1">{hint}</div>
-          )}
+          {hint && typeof hint !== 'string' && <div className="fr-hint-text mt-1 flex flex-col gap-1">{hint}</div>}
         </label>
       )}
       <Component

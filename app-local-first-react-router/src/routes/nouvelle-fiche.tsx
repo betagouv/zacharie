@@ -59,9 +59,7 @@ const searchParamsSchema = z.object({
       return values.map((carcasseString) => {
         const parts = carcasseString.split(',');
         if (parts.length < 2) {
-          throw new Error(
-            'Format invalide pour carcasse, attendu: numero_bracelet,espece[,nombre_d_animaux]',
-          );
+          throw new Error('Format invalide pour carcasse, attendu: numero_bracelet,espece[,nombre_d_animaux]');
         }
         const [numero_bracelet, espece, nombre_d_animaux = '1'] = parts;
         return {
@@ -90,9 +88,7 @@ export default function NouvelleFiche() {
     const validationResult = searchParamsSchema.safeParse(searchParamsObject);
 
     if (!validationResult.success) {
-      const errorMessages = validationResult.error.issues
-        .map((err) => `${err.path.join('.')}: ${err.message}`)
-        .join(', ');
+      const errorMessages = validationResult.error.issues.map((err) => `${err.path.join('.')}: ${err.message}`).join(', ');
       setValidationError(`Paramètres invalides: ${errorMessages}`);
       setError(true);
       return;
@@ -116,14 +112,10 @@ export default function NouvelleFiche() {
 
           const newFei = await createNewFei({
             contexte: contexte,
-            date_mise_a_mort: validatedParams.date_mise_a_mort
-              ? dayjs(validatedParams.date_mise_a_mort).toDate()
-              : undefined,
+            date_mise_a_mort: validatedParams.date_mise_a_mort ? dayjs(validatedParams.date_mise_a_mort).toDate() : undefined,
             commune_mise_a_mort: validatedParams.commune_mise_a_mort ?? undefined,
-            heure_mise_a_mort_premiere_carcasse:
-              validatedParams.heure_mise_a_mort_premiere_carcasse ?? undefined,
-            heure_evisceration_derniere_carcasse:
-              validatedParams.heure_evisceration_derniere_carcasse ?? undefined,
+            heure_mise_a_mort_premiere_carcasse: validatedParams.heure_mise_a_mort_premiere_carcasse ?? undefined,
+            heure_evisceration_derniere_carcasse: validatedParams.heure_evisceration_derniere_carcasse ?? undefined,
           });
 
           // Create carcasses if provided
@@ -190,9 +182,7 @@ function CantCreateNewFiche({ validationError }: { validationError?: string | nu
                 ? `Paramètres invalides: ${validationError}`
                 : "Il semble que l'URL fournie est invalide. Veuillez contacter l'administrateur de votre service."}
             </p>
-            <p className="fr-text--lead fr-mb-3w">
-              Vous pouvez aussi vous connecter avec votre compte et créer une nouvelle fiche.
-            </p>
+            <p className="fr-text--lead fr-mb-3w">Vous pouvez aussi vous connecter avec votre compte et créer une nouvelle fiche.</p>
             <Button
               linkProps={{
                 to: `/app/connexion`,

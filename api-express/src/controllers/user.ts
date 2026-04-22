@@ -7,22 +7,12 @@ import prisma from '~/prisma';
 import jwt from 'jsonwebtoken';
 import dayjs from 'dayjs';
 import crypto from 'crypto';
-import {
-  createBrevoContact,
-  sendEmail,
-  updateBrevoChasseurDeal,
-  updateBrevoContact,
-} from '~/third-parties/brevo';
+import { createBrevoContact, sendEmail, updateBrevoChasseurDeal, updateBrevoContact } from '~/third-parties/brevo';
 import { capture } from '~/third-parties/sentry';
 import createUserId from '~/utils/createUserId';
 import { comparePassword, hashPassword } from '~/service/crypto';
 import { userFeiSelect, type UserForFei } from '~/types/user';
-import type {
-  UserConnexionResponse,
-  UserMyRelationsResponse,
-  UserForFeiResponse,
-  UserEntityResponse,
-} from '~/types/responses';
+import type { UserConnexionResponse, UserMyRelationsResponse, UserForFeiResponse, UserEntityResponse } from '~/types/responses';
 import type { EntityWithUserRelation } from '~/types/entity';
 import {
   EntityRelationType,
@@ -83,407 +73,339 @@ const resetPasswordSchema = z.object({
 // Route: POST /user/login - Connexion (compte existant)
 router.post(
   '/login',
-  catchErrors(
-    async (
-      req: express.Request,
-      res: express.Response<UserConnexionResponse>,
-      next: express.NextFunction,
-    ) => {
-      let result = loginSchema.safeParse(req.body);
-      if (!result.success) {
-        res.status(406).send({
-          ok: false,
-          data: { user: null },
-          message: '',
-          error: result.error.errors[0].message,
-        });
-        return;
-      }
-      let { email, username, passwordUser } = result.data;
-
-      email = email.toLowerCase().trim();
-      if (username) {
-        capture(new Error('Spam detected'), {
-          extra: { email, message: 'Spam detected' },
-        });
-        // honey pot
-        res.status(200).send({ ok: true, data: null, message: null, error: null });
-        return;
-      }
-      if (!email) {
-        res.status(400).send({
-          ok: false,
-          data: { user: null },
-          message: '',
-          error: 'Veuillez renseigner votre email',
-        });
-        return;
-      }
-      if (!passwordUser) {
-        res.status(400).send({
-          ok: false,
-          data: { user: null },
-          message: '',
-          error: 'Veuillez renseigner votre mot de passe',
-        });
-        return;
-      }
-
-      let user = await prisma.user.findUnique({ where: { email } });
-      if (!user) {
-        res.status(400).send({
-          ok: false,
-          data: { user: null },
-          message: '',
-          error: 'Email ou mot de passe incorrect',
-        });
-        return;
-      }
-
-      const existingPassword = await prisma.password.findFirst({
-        where: { user_id: user.id },
+  catchErrors(async (req: express.Request, res: express.Response<UserConnexionResponse>, next: express.NextFunction) => {
+    let result = loginSchema.safeParse(req.body);
+    if (!result.success) {
+      res.status(406).send({
+        ok: false,
+        data: { user: null },
+        message: '',
+        error: result.error.errors[0].message,
       });
-      if (!existingPassword) {
-        res.status(400).send({
-          ok: false,
-          data: { user: null },
-          message: '',
-          error: 'Email ou mot de passe incorrect',
-        });
-        return;
-      }
+      return;
+    }
+    let { email, username, passwordUser } = result.data;
 
-      const isOk = await comparePassword(passwordUser, existingPassword.password);
-      if (!isOk) {
-        res.status(400).send({
-          ok: false,
-          data: { user: null },
-          message: '',
-          error: 'Email ou mot de passe incorrect',
-        });
-        return;
-      }
+    email = email.toLowerCase().trim();
+    if (username) {
+      capture(new Error('Spam detected'), {
+        extra: { email, message: 'Spam detected' },
+      });
+      // honey pot
+      res.status(200).send({ ok: true, data: null, message: null, error: null });
+      return;
+    }
+    if (!email) {
+      res.status(400).send({
+        ok: false,
+        data: { user: null },
+        message: '',
+        error: 'Veuillez renseigner votre email',
+      });
+      return;
+    }
+    if (!passwordUser) {
+      res.status(400).send({
+        ok: false,
+        data: { user: null },
+        message: '',
+        error: 'Veuillez renseigner votre mot de passe',
+      });
+      return;
+    }
 
-      const token = jwt.sign({ userId: user.id }, SECRET, {
-        expiresIn: JWT_MAX_AGE,
+    let user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      res.status(400).send({
+        ok: false,
+        data: { user: null },
+        message: '',
+        error: 'Email ou mot de passe incorrect',
       });
-      user = await prisma.user.update({
-        where: { id: user.id },
-        data: { last_login_at: new Date() },
+      return;
+    }
+
+    const existingPassword = await prisma.password.findFirst({
+      where: { user_id: user.id },
+    });
+    if (!existingPassword) {
+      res.status(400).send({
+        ok: false,
+        data: { user: null },
+        message: '',
+        error: 'Email ou mot de passe incorrect',
       });
-      res.cookie(
-        'zacharie_express_jwt',
-        token,
-        cookieOptions(req.headers.host.includes('localhost') ? true : false),
-      );
-      res.status(200).send({ ok: true, data: { user }, message: '', error: '' });
-    },
-  ),
+      return;
+    }
+
+    const isOk = await comparePassword(passwordUser, existingPassword.password);
+    if (!isOk) {
+      res.status(400).send({
+        ok: false,
+        data: { user: null },
+        message: '',
+        error: 'Email ou mot de passe incorrect',
+      });
+      return;
+    }
+
+    const token = jwt.sign({ userId: user.id }, SECRET, {
+      expiresIn: JWT_MAX_AGE,
+    });
+    user = await prisma.user.update({
+      where: { id: user.id },
+      data: { last_login_at: new Date() },
+    });
+    res.cookie('zacharie_express_jwt', token, cookieOptions(req.headers.host.includes('localhost') ? true : false));
+    res.status(200).send({ ok: true, data: { user }, message: '', error: '' });
+  })
 );
 
 // Route: POST /user/signup - Création de compte
 router.post(
   '/signup',
-  catchErrors(
-    async (
-      req: express.Request,
-      res: express.Response<UserConnexionResponse>,
-      next: express.NextFunction,
-    ) => {
-      let result = signupSchema.safeParse(req.body);
-      if (!result.success) {
-        res.status(406).send({
-          ok: false,
-          data: { user: null },
-          message: '',
-          error: result.error.errors[0].message,
-        });
-        return;
-      }
-      let { email, username, passwordUser } = result.data;
-
-      email = email.toLowerCase().trim();
-      if (username) {
-        capture(new Error('Spam detected'), {
-          extra: { email, message: 'Spam detected' },
-        });
-        // honey pot
-        res.status(200).send({ ok: true, data: null, message: null, error: null });
-        return;
-      }
-      if (!email) {
-        res.status(400).send({
-          ok: false,
-          data: { user: null },
-          message: '',
-          error: 'Veuillez renseigner votre email',
-        });
-        return;
-      }
-      if (!passwordUser) {
-        res.status(400).send({
-          ok: false,
-          data: { user: null },
-          message: '',
-          error: 'Veuillez renseigner votre mot de passe',
-        });
-        return;
-      }
-
-      let user = await prisma.user.findUnique({ where: { email } });
-
-      if (user) {
-        res.status(400).send({
-          ok: false,
-          data: { user: null },
-          message: '',
-          error: 'Un compte existe déjà avec cet email',
-        });
-        return;
-      }
-
-      user = await prisma.user.create({
-        data: {
-          id: await createUserId(),
-          email,
-          activated: false,
-          prefilled: false,
-          // depuis le 14 octobre 2025, on ne peut plus créer de compte ETG/SVI/COLLECTEUR_PRO
-          // sans avoir au préalable été invité par un membre de son entreprise/service
-          // de sorte que tous les utilisateurs créés depuis le 14 octobre 2025 sont CHASSEURS
-          // et qu'en mettant ce rôle ici, on permet de passer à l'étape suivante dans l'onboarding (ie. mes coordonnées)
-          roles: [UserRoles.CHASSEUR],
-        },
+  catchErrors(async (req: express.Request, res: express.Response<UserConnexionResponse>, next: express.NextFunction) => {
+    let result = signupSchema.safeParse(req.body);
+    if (!result.success) {
+      res.status(406).send({
+        ok: false,
+        data: { user: null },
+        message: '',
+        error: result.error.errors[0].message,
       });
-      await createBrevoContact(user, 'USER');
-      await updateBrevoChasseurDeal(user);
+      return;
+    }
+    let { email, username, passwordUser } = result.data;
 
-      const hashedPassword = await hashPassword(passwordUser);
-      await prisma.password.create({
-        data: { user_id: user.id, password: hashedPassword },
+    email = email.toLowerCase().trim();
+    if (username) {
+      capture(new Error('Spam detected'), {
+        extra: { email, message: 'Spam detected' },
       });
+      // honey pot
+      res.status(200).send({ ok: true, data: null, message: null, error: null });
+      return;
+    }
+    if (!email) {
+      res.status(400).send({
+        ok: false,
+        data: { user: null },
+        message: '',
+        error: 'Veuillez renseigner votre email',
+      });
+      return;
+    }
+    if (!passwordUser) {
+      res.status(400).send({
+        ok: false,
+        data: { user: null },
+        message: '',
+        error: 'Veuillez renseigner votre mot de passe',
+      });
+      return;
+    }
 
-      const token = jwt.sign({ userId: user.id }, SECRET, {
-        expiresIn: JWT_MAX_AGE,
+    let user = await prisma.user.findUnique({ where: { email } });
+
+    if (user) {
+      res.status(400).send({
+        ok: false,
+        data: { user: null },
+        message: '',
+        error: 'Un compte existe déjà avec cet email',
       });
-      res.cookie(
-        'zacharie_express_jwt',
-        token,
-        cookieOptions(req.headers.host.includes('localhost') ? true : false),
-      );
-      res.status(200).send({ ok: true, data: { user }, message: '', error: '' });
-    },
-  ),
+      return;
+    }
+
+    user = await prisma.user.create({
+      data: {
+        id: await createUserId(),
+        email,
+        activated: false,
+        prefilled: false,
+        // depuis le 14 octobre 2025, on ne peut plus créer de compte ETG/SVI/COLLECTEUR_PRO
+        // sans avoir au préalable été invité par un membre de son entreprise/service
+        // de sorte que tous les utilisateurs créés depuis le 14 octobre 2025 sont CHASSEURS
+        // et qu'en mettant ce rôle ici, on permet de passer à l'étape suivante dans l'onboarding (ie. mes coordonnées)
+        roles: [UserRoles.CHASSEUR],
+      },
+    });
+    await createBrevoContact(user, 'USER');
+    await updateBrevoChasseurDeal(user);
+
+    const hashedPassword = await hashPassword(passwordUser);
+    await prisma.password.create({
+      data: { user_id: user.id, password: hashedPassword },
+    });
+
+    const token = jwt.sign({ userId: user.id }, SECRET, {
+      expiresIn: JWT_MAX_AGE,
+    });
+    res.cookie('zacharie_express_jwt', token, cookieOptions(req.headers.host.includes('localhost') ? true : false));
+    res.status(200).send({ ok: true, data: { user }, message: '', error: '' });
+  })
 );
 
 // Route: POST /user/signup - Création de compte
 router.post(
   '/signup-with-invitation-token',
-  catchErrors(
-    async (
-      req: express.Request,
-      res: express.Response<UserConnexionResponse>,
-      next: express.NextFunction,
-    ) => {
-      let result = signupWithInvitationTokenSchema.safeParse(req.body);
-      if (!result.success) {
-        res.status(406).send({
-          ok: false,
-          data: { user: null },
-          message: '',
-          error: result.error.errors[0].message,
-        });
-        return;
-      }
-      let { email, username, passwordUser, invitationToken } = result.data;
-
-      email = email.toLowerCase().trim();
-      if (username) {
-        capture(new Error('Spam detected'), {
-          extra: { email, message: 'Spam detected' },
-        });
-        // honey pot
-        res.status(200).send({ ok: true, data: null, message: null, error: null });
-        return;
-      }
-      if (!email) {
-        res.status(400).send({
-          ok: false,
-          data: { user: null },
-          message: '',
-          error: 'Veuillez renseigner votre email',
-        });
-        return;
-      }
-      if (!passwordUser) {
-        res.status(400).send({
-          ok: false,
-          data: { user: null },
-          message: '',
-          error: 'Veuillez renseigner votre mot de passe',
-        });
-        return;
-      }
-      if (!invitationToken) {
-        res.status(400).send({
-          ok: false,
-          data: { user: null },
-          message: '',
-          error: "Le token d'invitation est requis",
-        });
-        return;
-      }
-
-      let user = await prisma.user.findUnique({ where: { email } });
-
-      if (!user) {
-        res.status(400).send({
-          ok: false,
-          data: { user: null },
-          message: '',
-          error: "L'invitation liée à cet email n'est pas valide",
-        });
-        return;
-      }
-
-      const existingPassword = await prisma.password.findFirst({
-        where: { user_id: user?.id },
+  catchErrors(async (req: express.Request, res: express.Response<UserConnexionResponse>, next: express.NextFunction) => {
+    let result = signupWithInvitationTokenSchema.safeParse(req.body);
+    if (!result.success) {
+      res.status(406).send({
+        ok: false,
+        data: { user: null },
+        message: '',
+        error: result.error.errors[0].message,
       });
-      if (!existingPassword) {
-        res.status(400).send({
-          ok: false,
-          data: { user: null },
-          message: '',
-          error: "L'invitation liée à cet email n'est pas valide",
-        });
-        return;
-      }
-      const isOk = existingPassword.reset_password_token === invitationToken;
-      if (!isOk) {
-        res.status(400).send({
-          ok: false,
-          data: { user: null },
-          message: '',
-          error: "L'invitation liée à cet email n'est pas valide",
-        });
-        return;
-      }
-      const delay = dayjs().diff(existingPassword.reset_password_last_email_sent_at, 'days');
-      if (delay > 7) {
-        await prisma.password.delete({
-          where: { id: existingPassword.id },
-        });
-        await prisma.entityAndUserRelations.deleteMany({
-          where: {
-            owner_id: user.id,
-            relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-          },
-        });
-        res.status(400).send({
-          ok: false,
-          data: { user: null },
-          message: '',
-          error:
-            "L'invitation liée à cet email n'est plus valide, veuillez en demander une nouvelle à votre entreprise",
-        });
-        return;
-      }
-      await prisma.password.update({
+      return;
+    }
+    let { email, username, passwordUser, invitationToken } = result.data;
+
+    email = email.toLowerCase().trim();
+    if (username) {
+      capture(new Error('Spam detected'), {
+        extra: { email, message: 'Spam detected' },
+      });
+      // honey pot
+      res.status(200).send({ ok: true, data: null, message: null, error: null });
+      return;
+    }
+    if (!email) {
+      res.status(400).send({
+        ok: false,
+        data: { user: null },
+        message: '',
+        error: 'Veuillez renseigner votre email',
+      });
+      return;
+    }
+    if (!passwordUser) {
+      res.status(400).send({
+        ok: false,
+        data: { user: null },
+        message: '',
+        error: 'Veuillez renseigner votre mot de passe',
+      });
+      return;
+    }
+    if (!invitationToken) {
+      res.status(400).send({
+        ok: false,
+        data: { user: null },
+        message: '',
+        error: "Le token d'invitation est requis",
+      });
+      return;
+    }
+
+    let user = await prisma.user.findUnique({ where: { email } });
+
+    if (!user) {
+      res.status(400).send({
+        ok: false,
+        data: { user: null },
+        message: '',
+        error: "L'invitation liée à cet email n'est pas valide",
+      });
+      return;
+    }
+
+    const existingPassword = await prisma.password.findFirst({
+      where: { user_id: user?.id },
+    });
+    if (!existingPassword) {
+      res.status(400).send({
+        ok: false,
+        data: { user: null },
+        message: '',
+        error: "L'invitation liée à cet email n'est pas valide",
+      });
+      return;
+    }
+    const isOk = existingPassword.reset_password_token === invitationToken;
+    if (!isOk) {
+      res.status(400).send({
+        ok: false,
+        data: { user: null },
+        message: '',
+        error: "L'invitation liée à cet email n'est pas valide",
+      });
+      return;
+    }
+    const delay = dayjs().diff(existingPassword.reset_password_last_email_sent_at, 'days');
+    if (delay > 7) {
+      await prisma.password.delete({
         where: { id: existingPassword.id },
-        data: {
-          reset_password_token: null,
-          reset_password_last_email_sent_at: null,
-          password: await hashPassword(passwordUser),
+      });
+      await prisma.entityAndUserRelations.deleteMany({
+        where: {
+          owner_id: user.id,
+          relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
         },
       });
-
-      const token = jwt.sign({ userId: user.id }, SECRET, {
-        expiresIn: JWT_MAX_AGE,
+      res.status(400).send({
+        ok: false,
+        data: { user: null },
+        message: '',
+        error: "L'invitation liée à cet email n'est plus valide, veuillez en demander une nouvelle à votre entreprise",
       });
-      res.cookie(
-        'zacharie_express_jwt',
-        token,
-        cookieOptions(req.headers.host.includes('localhost') ? true : false),
-      );
-      res.status(200).send({ ok: true, data: { user }, message: '', error: '' });
-    },
-  ),
+      return;
+    }
+    await prisma.password.update({
+      where: { id: existingPassword.id },
+      data: {
+        reset_password_token: null,
+        reset_password_last_email_sent_at: null,
+        password: await hashPassword(passwordUser),
+      },
+    });
+
+    const token = jwt.sign({ userId: user.id }, SECRET, {
+      expiresIn: JWT_MAX_AGE,
+    });
+    res.cookie('zacharie_express_jwt', token, cookieOptions(req.headers.host.includes('localhost') ? true : false));
+    res.status(200).send({ ok: true, data: { user }, message: '', error: '' });
+  })
 );
 
 // Route: POST /user/forget-password - Demande de réinitialisation de mot de passe
 router.post(
   '/forget-password',
-  catchErrors(
-    async (
-      req: express.Request,
-      res: express.Response<UserConnexionResponse>,
-      next: express.NextFunction,
-    ) => {
-      let result = forgetPasswordSchema.safeParse(req.body);
-      if (!result.success) {
-        res.status(406).send({
-          ok: false,
-          data: { user: null },
-          message: '',
-          error: result.error.errors[0].message,
-        });
-        return;
-      }
-      let { email, username } = result.data;
-
-      email = email.toLowerCase().trim();
-      if (username) {
-        capture(new Error('Spam detected'), {
-          extra: { email, message: 'Spam detected' },
-        });
-        // honey pot
-        res.status(200).send({ ok: true, data: null, message: null, error: null });
-        return;
-      }
-      if (!email) {
-        res.status(400).send({
-          ok: false,
-          data: { user: null },
-          message: '',
-          error: 'Veuillez renseigner votre email',
-        });
-        return;
-      }
-
-      const user = await prisma.user.findUnique({ where: { email } });
-      if (!user) {
-        res.status(200).send({
-          ok: true,
-          data: { user: null },
-          error: '',
-          message:
-            'Si cet email existe, un email de réinitialisation de mot de passe a été envoyé\nCliquez sur le lien dans cet email pour réinitialiser votre mot de passe',
-        });
-        return;
-      }
-
-      const token = crypto.randomUUID();
-      await prisma.password.upsert({
-        where: { user_id: user.id },
-        update: {
-          reset_password_token: token,
-          reset_password_last_email_sent_at: new Date(),
-        },
-        create: {
-          User: { connect: { id: user.id } },
-          password: '',
-          reset_password_token: token,
-          reset_password_last_email_sent_at: new Date(),
-        },
+  catchErrors(async (req: express.Request, res: express.Response<UserConnexionResponse>, next: express.NextFunction) => {
+    let result = forgetPasswordSchema.safeParse(req.body);
+    if (!result.success) {
+      res.status(406).send({
+        ok: false,
+        data: { user: null },
+        message: '',
+        error: result.error.errors[0].message,
       });
-      const text = `Bonjour, vous avez demandé à réinitialiser votre mot de passe. Pour ce faire, veuillez cliquer sur le lien suivant : ${process.env.VITE_APP_URL}/app/connexion/reset-mot-de-passe?reset-password-token=${token}`;
-      await sendEmail({
-        emails: process.env.NODE_ENV !== 'production' ? ['arnaud@ambroselli.io'] : [user.email!],
-        subject: '[Zacharie] Réinitialisation de votre mot de passe',
-        text,
-      });
+      return;
+    }
+    let { email, username } = result.data;
 
-      // Pour des raisons de sécurité, on ne révèle pas si l'email existe ou non
+    email = email.toLowerCase().trim();
+    if (username) {
+      capture(new Error('Spam detected'), {
+        extra: { email, message: 'Spam detected' },
+      });
+      // honey pot
+      res.status(200).send({ ok: true, data: null, message: null, error: null });
+      return;
+    }
+    if (!email) {
+      res.status(400).send({
+        ok: false,
+        data: { user: null },
+        message: '',
+        error: 'Veuillez renseigner votre email',
+      });
+      return;
+    }
+
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
       res.status(200).send({
         ok: true,
         data: { user: null },
@@ -491,111 +413,132 @@ router.post(
         message:
           'Si cet email existe, un email de réinitialisation de mot de passe a été envoyé\nCliquez sur le lien dans cet email pour réinitialiser votre mot de passe',
       });
-    },
-  ),
+      return;
+    }
+
+    const token = crypto.randomUUID();
+    await prisma.password.upsert({
+      where: { user_id: user.id },
+      update: {
+        reset_password_token: token,
+        reset_password_last_email_sent_at: new Date(),
+      },
+      create: {
+        User: { connect: { id: user.id } },
+        password: '',
+        reset_password_token: token,
+        reset_password_last_email_sent_at: new Date(),
+      },
+    });
+    const text = `Bonjour, vous avez demandé à réinitialiser votre mot de passe. Pour ce faire, veuillez cliquer sur le lien suivant : ${process.env.VITE_APP_URL}/app/connexion/reset-mot-de-passe?reset-password-token=${token}`;
+    await sendEmail({
+      emails: process.env.NODE_ENV !== 'production' ? ['arnaud@ambroselli.io'] : [user.email!],
+      subject: '[Zacharie] Réinitialisation de votre mot de passe',
+      text,
+    });
+
+    // Pour des raisons de sécurité, on ne révèle pas si l'email existe ou non
+    res.status(200).send({
+      ok: true,
+      data: { user: null },
+      error: '',
+      message:
+        'Si cet email existe, un email de réinitialisation de mot de passe a été envoyé\nCliquez sur le lien dans cet email pour réinitialiser votre mot de passe',
+    });
+  })
 );
 
 // Route: POST /user/reset-mot-de-passe - Réinitialisation de mot de passe avec token
 router.post(
   '/reset-password',
-  catchErrors(
-    async (
-      req: express.Request,
-      res: express.Response<UserConnexionResponse>,
-      next: express.NextFunction,
-    ) => {
-      let result = resetPasswordSchema.safeParse(req.body);
-      if (!result.success) {
-        res.status(406).send({
-          ok: false,
-          data: { user: null },
-          message: '',
-          error: result.error.errors[0].message,
-        });
-        return;
-      }
-      let { username, passwordUser, resetPasswordToken } = result.data;
-
-      if (username) {
-        capture(new Error('Spam detected'), {
-          extra: { message: 'Spam detected' },
-        });
-        // honey pot
-        res.status(200).send({ ok: true, data: null, message: null, error: null });
-        return;
-      }
-      if (!passwordUser) {
-        res.status(400).send({
-          ok: false,
-          data: { user: null },
-          message: '',
-          error: 'Veuillez renseigner votre mot de passe',
-        });
-        return;
-      }
-      if (!resetPasswordToken) {
-        res.status(400).send({
-          ok: false,
-          data: { user: null },
-          message: '',
-          error: 'Le token de réinitialisation est requis',
-        });
-        return;
-      }
-
-      const password = await prisma.password.findFirst({
-        where: { reset_password_token: resetPasswordToken },
-        include: { User: true },
+  catchErrors(async (req: express.Request, res: express.Response<UserConnexionResponse>, next: express.NextFunction) => {
+    let result = resetPasswordSchema.safeParse(req.body);
+    if (!result.success) {
+      res.status(406).send({
+        ok: false,
+        data: { user: null },
+        message: '',
+        error: result.error.errors[0].message,
       });
-      if (!password) {
-        res.status(400).send({
-          ok: false,
-          data: { user: null },
-          error: '',
-          message: 'Le lien de réinitialisation de mot de passe est invalide. Veuillez réessayer.',
-        });
-        return;
-      }
-      if (dayjs().diff(password.reset_password_last_email_sent_at, 'minutes') > 60) {
-        await prisma.password.update({
-          where: { id: password.id },
-          data: { reset_password_token: null, reset_password_last_email_sent_at: null },
-        });
-        res.status(400).send({
-          ok: false,
-          data: { user: null },
-          error: '',
-          message: 'Le lien de réinitialisation de mot de passe a expiré. Veuillez réessayer.',
-        });
-        return;
-      }
+      return;
+    }
+    let { username, passwordUser, resetPasswordToken } = result.data;
 
-      const hashedPassword = await hashPassword(passwordUser);
+    if (username) {
+      capture(new Error('Spam detected'), {
+        extra: { message: 'Spam detected' },
+      });
+      // honey pot
+      res.status(200).send({ ok: true, data: null, message: null, error: null });
+      return;
+    }
+    if (!passwordUser) {
+      res.status(400).send({
+        ok: false,
+        data: { user: null },
+        message: '',
+        error: 'Veuillez renseigner votre mot de passe',
+      });
+      return;
+    }
+    if (!resetPasswordToken) {
+      res.status(400).send({
+        ok: false,
+        data: { user: null },
+        message: '',
+        error: 'Le token de réinitialisation est requis',
+      });
+      return;
+    }
+
+    const password = await prisma.password.findFirst({
+      where: { reset_password_token: resetPasswordToken },
+      include: { User: true },
+    });
+    if (!password) {
+      res.status(400).send({
+        ok: false,
+        data: { user: null },
+        error: '',
+        message: 'Le lien de réinitialisation de mot de passe est invalide. Veuillez réessayer.',
+      });
+      return;
+    }
+    if (dayjs().diff(password.reset_password_last_email_sent_at, 'minutes') > 60) {
       await prisma.password.update({
-        where: { user_id: password.user_id },
-        data: {
-          password: hashedPassword,
-          reset_password_token: null,
-          reset_password_last_email_sent_at: null,
-        },
+        where: { id: password.id },
+        data: { reset_password_token: null, reset_password_last_email_sent_at: null },
       });
+      res.status(400).send({
+        ok: false,
+        data: { user: null },
+        error: '',
+        message: 'Le lien de réinitialisation de mot de passe a expiré. Veuillez réessayer.',
+      });
+      return;
+    }
 
-      const user = password.User;
-      const token = jwt.sign({ userId: user.id }, SECRET, {
-        expiresIn: JWT_MAX_AGE,
-      });
-      const updatedUser = await prisma.user.update({
-        where: { id: user.id },
-        data: { last_login_at: new Date() },
-      });
-      res.cookie(
-        'zacharie_express_jwt',
-        token,
-        cookieOptions(req.headers.host.includes('localhost') ? true : false),
-      );
-      res.status(200).send({ ok: true, data: { user: updatedUser }, message: '', error: '' });
-    },
-  ),
+    const hashedPassword = await hashPassword(passwordUser);
+    await prisma.password.update({
+      where: { user_id: password.user_id },
+      data: {
+        password: hashedPassword,
+        reset_password_token: null,
+        reset_password_last_email_sent_at: null,
+      },
+    });
+
+    const user = password.User;
+    const token = jwt.sign({ userId: user.id }, SECRET, {
+      expiresIn: JWT_MAX_AGE,
+    });
+    const updatedUser = await prisma.user.update({
+      where: { id: user.id },
+      data: { last_login_at: new Date() },
+    });
+    res.cookie('zacharie_express_jwt', token, cookieOptions(req.headers.host.includes('localhost') ? true : false));
+    res.status(200).send({ ok: true, data: { user: updatedUser }, message: '', error: '' });
+  })
 );
 
 const accessTokenSchema = z.object({
@@ -603,126 +546,113 @@ const accessTokenSchema = z.object({
 });
 router.post(
   '/access-token',
-  catchErrors(
-    async (
-      req: express.Request,
-      res: express.Response<UserConnexionResponse>,
-      next: express.NextFunction,
-    ) => {
-      let result = accessTokenSchema.safeParse(req.body);
-      if (!result.success) {
-        const error = new Error(result.error.message);
-        res.status(406);
-        return next(error);
-      }
-      let { accessToken } = result.data;
-      if (!accessToken) {
-        res.status(400).send({
-          ok: false,
-          data: { user: null },
-          message: '',
-          error: 'Veuillez renseigner votre access token',
-        });
-        return;
-      }
-
-      let approval = await prisma.apiKeyApprovalByUserOrEntity.findUnique({
-        where: { access_token: accessToken },
-        include: {
-          User: true,
-          ApiKey: true,
-        },
+  catchErrors(async (req: express.Request, res: express.Response<UserConnexionResponse>, next: express.NextFunction) => {
+    let result = accessTokenSchema.safeParse(req.body);
+    if (!result.success) {
+      const error = new Error(result.error.message);
+      res.status(406);
+      return next(error);
+    }
+    let { accessToken } = result.data;
+    if (!accessToken) {
+      res.status(400).send({
+        ok: false,
+        data: { user: null },
+        message: '',
+        error: 'Veuillez renseigner votre access token',
       });
+      return;
+    }
 
-      if (!approval) {
-        res.status(400).send({
-          ok: false,
-          data: { user: null },
-          message: '',
-          error: 'Le lien de connexion est invalide. Veuillez réessayer.',
-        });
-        return;
-      }
-      if (dayjs().diff(approval.access_token_created_at, 'minutes') > 5) {
-        await prisma.apiKeyApprovalByUserOrEntity.update({
-          where: { access_token: accessToken },
-          data: { access_token: null, access_token_created_at: null },
-        });
-        res.status(400).send({
-          ok: false,
-          data: { user: null },
-          message: '',
-          error: 'Le lien de connexion a expiré. Veuillez réessayer.',
-        });
-        return;
-      }
-      if (approval.status !== ApiKeyApprovalStatus.APPROVED) {
-        await prisma.apiKeyApprovalByUserOrEntity.update({
-          where: { access_token: accessToken },
-          data: { access_token: null, access_token_created_at: null },
-        });
-        res.status(400).send({
-          ok: false,
-          data: { user: null },
-          message: '',
-          error: "Le lien de connexion n'a pas été approuvé. Veuillez réessayer.",
-        });
-        return;
-      }
+    let approval = await prisma.apiKeyApprovalByUserOrEntity.findUnique({
+      where: { access_token: accessToken },
+      include: {
+        User: true,
+        ApiKey: true,
+      },
+    });
 
-      let user = approval.User;
-
-      if (!user) {
-        await prisma.apiKeyApprovalByUserOrEntity.update({
-          where: { access_token: accessToken },
-          data: { access_token: null, access_token_created_at: null },
-        });
-        res.status(400).send({
-          ok: false,
-          data: { user: null },
-          message: '',
-          error: 'Une erreur est survenue. Veuillez réessayer.',
-        });
-        return;
-      }
-
-      const token = jwt.sign({ userId: user.id }, SECRET, {
-        expiresIn: JWT_MAX_AGE,
+    if (!approval) {
+      res.status(400).send({
+        ok: false,
+        data: { user: null },
+        message: '',
+        error: 'Le lien de connexion est invalide. Veuillez réessayer.',
       });
-      user = await prisma.user.update({
-        where: { id: user.id },
-        data: { last_login_at: new Date() },
-      });
-      // refreshMaterializedViews();
-      res.cookie(
-        'zacharie_express_jwt',
-        token,
-        cookieOptions(req.headers.host.includes('localhost') ? true : false),
-      );
+      return;
+    }
+    if (dayjs().diff(approval.access_token_created_at, 'minutes') > 5) {
       await prisma.apiKeyApprovalByUserOrEntity.update({
         where: { access_token: accessToken },
         data: { access_token: null, access_token_created_at: null },
       });
-      res.status(200).send({
-        ok: true,
-        data: { user, contexte: approval.ApiKey.slug_for_context },
+      res.status(400).send({
+        ok: false,
+        data: { user: null },
         message: '',
-        error: '',
+        error: 'Le lien de connexion a expiré. Veuillez réessayer.',
       });
-    },
-  ),
+      return;
+    }
+    if (approval.status !== ApiKeyApprovalStatus.APPROVED) {
+      await prisma.apiKeyApprovalByUserOrEntity.update({
+        where: { access_token: accessToken },
+        data: { access_token: null, access_token_created_at: null },
+      });
+      res.status(400).send({
+        ok: false,
+        data: { user: null },
+        message: '',
+        error: "Le lien de connexion n'a pas été approuvé. Veuillez réessayer.",
+      });
+      return;
+    }
+
+    let user = approval.User;
+
+    if (!user) {
+      await prisma.apiKeyApprovalByUserOrEntity.update({
+        where: { access_token: accessToken },
+        data: { access_token: null, access_token_created_at: null },
+      });
+      res.status(400).send({
+        ok: false,
+        data: { user: null },
+        message: '',
+        error: 'Une erreur est survenue. Veuillez réessayer.',
+      });
+      return;
+    }
+
+    const token = jwt.sign({ userId: user.id }, SECRET, {
+      expiresIn: JWT_MAX_AGE,
+    });
+    user = await prisma.user.update({
+      where: { id: user.id },
+      data: { last_login_at: new Date() },
+    });
+    // refreshMaterializedViews();
+    res.cookie('zacharie_express_jwt', token, cookieOptions(req.headers.host.includes('localhost') ? true : false));
+    await prisma.apiKeyApprovalByUserOrEntity.update({
+      where: { access_token: accessToken },
+      data: { access_token: null, access_token_created_at: null },
+    });
+    res.status(200).send({
+      ok: true,
+      data: { user, contexte: approval.ApiKey.slug_for_context },
+      message: '',
+      error: '',
+    });
+  })
 );
 
 router.post(
   '/logout',
   passport.authenticate('user', { session: false, failWithError: true }),
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    res.clearCookie(
-      'zacharie_express_jwt',
-      logoutCookieOptions(req.headers.host.includes('localhost') ? true : false),
-    );
+    res.clearCookie('zacharie_express_jwt', logoutCookieOptions(req.headers.host.includes('localhost') ? true : false));
     res.status(200).send({ ok: true });
-  }),
+  })
 );
 
 const trouverPremierDetenteurBodySchema = z.object({
@@ -732,127 +662,125 @@ const trouverPremierDetenteurBodySchema = z.object({
 router.post(
   '/fei/trouver-premier-detenteur',
   passport.authenticate('user', { session: false, failWithError: true }),
-  catchErrors(
-    async (req: RequestWithUser, res: express.Response<UserForFeiResponse>, next: express.NextFunction) => {
-      const user = req.user!;
-      let result = trouverPremierDetenteurBodySchema.safeParse(req.body);
-      if (!result.success) {
-        res.status(406).send({
-          ok: false,
-          data: { user: null },
-          error: result.error.errors[0].message,
-        });
-        return;
-      }
-      let body = result.data;
-
-      if (!body.hasOwnProperty(Prisma.UserScalarFieldEnum.email)) {
-        res.status(400).send({
-          ok: false,
-          data: {
-            user: null,
-          },
-          error: "L'email est obligatoire",
-        });
-        return;
-      }
-      if (!body.hasOwnProperty(Prisma.FeiScalarFieldEnum.numero)) {
-        res.status(400).send({
-          ok: false,
-          data: { user: null },
-          error: 'Le numéro de la fiche est obligatoire',
-        });
-        return;
-      }
-      const fei = await prisma.fei.findUnique({
-        where: {
-          numero: body[Prisma.FeiScalarFieldEnum.numero],
-          fei_current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
-        },
+  catchErrors(async (req: RequestWithUser, res: express.Response<UserForFeiResponse>, next: express.NextFunction) => {
+    const user = req.user!;
+    let result = trouverPremierDetenteurBodySchema.safeParse(req.body);
+    if (!result.success) {
+      res.status(406).send({
+        ok: false,
+        data: { user: null },
+        error: result.error.errors[0].message,
       });
-      if (!fei) {
-        res.status(400).send({
-          ok: false,
-          data: { user: null },
-          error: "La fiche n'existe pas",
-        });
-        return;
-      }
-      const nextPremierDetenteur = await prisma.user.findUnique({
-        where: {
-          email: body[Prisma.UserScalarFieldEnum.email].toLowerCase(),
-        },
-      });
-      if (!nextPremierDetenteur) {
-        res.status(400).send({
-          ok: false,
-          data: { user: null },
-          error: "L'utilisateur n'existe pas",
-        });
-        return;
-      }
-      if (!nextPremierDetenteur.roles.includes(UserRoles.CHASSEUR)) {
-        res.status(400).send({
-          ok: false,
-          data: { user: null },
-          error: "L'utilisateur n'est pas un chasseur",
-        });
-        return;
-      }
+      return;
+    }
+    let body = result.data;
 
-      const existingRelation = await prisma.userRelations.findFirst({
-        where: {
+    if (!body.hasOwnProperty(Prisma.UserScalarFieldEnum.email)) {
+      res.status(400).send({
+        ok: false,
+        data: {
+          user: null,
+        },
+        error: "L'email est obligatoire",
+      });
+      return;
+    }
+    if (!body.hasOwnProperty(Prisma.FeiScalarFieldEnum.numero)) {
+      res.status(400).send({
+        ok: false,
+        data: { user: null },
+        error: 'Le numéro de la fiche est obligatoire',
+      });
+      return;
+    }
+    const fei = await prisma.fei.findUnique({
+      where: {
+        numero: body[Prisma.FeiScalarFieldEnum.numero],
+        fei_current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
+      },
+    });
+    if (!fei) {
+      res.status(400).send({
+        ok: false,
+        data: { user: null },
+        error: "La fiche n'existe pas",
+      });
+      return;
+    }
+    const nextPremierDetenteur = await prisma.user.findUnique({
+      where: {
+        email: body[Prisma.UserScalarFieldEnum.email].toLowerCase(),
+      },
+    });
+    if (!nextPremierDetenteur) {
+      res.status(400).send({
+        ok: false,
+        data: { user: null },
+        error: "L'utilisateur n'existe pas",
+      });
+      return;
+    }
+    if (!nextPremierDetenteur.roles.includes(UserRoles.CHASSEUR)) {
+      res.status(400).send({
+        ok: false,
+        data: { user: null },
+        error: "L'utilisateur n'est pas un chasseur",
+      });
+      return;
+    }
+
+    const existingRelation = await prisma.userRelations.findFirst({
+      where: {
+        owner_id: user.id,
+        related_id: nextPremierDetenteur.id,
+        relation: UserRelationType.PREMIER_DETENTEUR,
+      },
+    });
+
+    if (!existingRelation) {
+      await prisma.userRelations.create({
+        data: {
           owner_id: user.id,
           related_id: nextPremierDetenteur.id,
           relation: UserRelationType.PREMIER_DETENTEUR,
         },
       });
+    }
 
-      if (!existingRelation) {
-        await prisma.userRelations.create({
-          data: {
-            owner_id: user.id,
-            related_id: nextPremierDetenteur.id,
-            relation: UserRelationType.PREMIER_DETENTEUR,
-          },
-        });
-      }
+    // await prisma.fei.update({
+    //   where: {
+    //     numero: fei.numero,
+    //   },
+    //   data: {
+    //     fei_next_owner_user_id: nextPremierDetenteur.id,
+    //   },
+    // });
 
-      // await prisma.fei.update({
-      //   where: {
-      //     numero: fei.numero,
-      //   },
-      //   data: {
-      //     fei_next_owner_user_id: nextPremierDetenteur.id,
-      //   },
-      // });
+    // if (nextPremierDetenteur.id !== user.id) {
+    //   const email = [
+    //     `Bonjour,`,
+    //     `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche. Rendez vous sur Zacharie pour la traiter.`,
+    //     `Pour consulter la fiche, rendez-vous sur Zacharie : https://zacharie.beta.gouv.fr/app/chasseur/fei/${fei.numero}`,
+    //     `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur l'attribution de cette fiche, n'hésitez pas à contacter la personne qui vous l'a envoyée.`,
+    //   ].join('\n\n');
+    //   await sendNotificationToUser({
+    //     user: nextPremierDetenteur!,
+    //     title: `${user.prenom} ${user.nom_de_famille} vous a attribué la fiche ${fei?.numero}`,
+    //     body: email,
+    //     email: email,
+    //     notificationLogAction: `FEI_ASSIGNED_TO_${UserRelationType.PREMIER_DETENTEUR}_${fei.numero}`,
+    //   });
+    // }
 
-      // if (nextPremierDetenteur.id !== user.id) {
-      //   const email = [
-      //     `Bonjour,`,
-      //     `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche. Rendez vous sur Zacharie pour la traiter.`,
-      //     `Pour consulter la fiche, rendez-vous sur Zacharie : https://zacharie.beta.gouv.fr/app/chasseur/fei/${fei.numero}`,
-      //     `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur l'attribution de cette fiche, n'hésitez pas à contacter la personne qui vous l'a envoyée.`,
-      //   ].join('\n\n');
-      //   await sendNotificationToUser({
-      //     user: nextPremierDetenteur!,
-      //     title: `${user.prenom} ${user.nom_de_famille} vous a attribué la fiche ${fei?.numero}`,
-      //     body: email,
-      //     email: email,
-      //     notificationLogAction: `FEI_ASSIGNED_TO_${UserRelationType.PREMIER_DETENTEUR}_${fei.numero}`,
-      //   });
-      // }
+    const nextPremierDetenteurForFei = await prisma.user.findUnique({
+      where: {
+        email: body[Prisma.UserScalarFieldEnum.email].toLowerCase(),
+      },
+      select: userFeiSelect,
+    });
 
-      const nextPremierDetenteurForFei = await prisma.user.findUnique({
-        where: {
-          email: body[Prisma.UserScalarFieldEnum.email].toLowerCase(),
-        },
-        select: userFeiSelect,
-      });
-
-      res.status(200).send({ ok: true, data: { user: nextPremierDetenteurForFei }, error: '' });
-    },
-  ),
+    res.status(200).send({ ok: true, data: { user: nextPremierDetenteurForFei }, error: '' });
+  })
 );
 
 const inviteUserBodySchema = z.object({
@@ -942,7 +870,7 @@ router.post(
     await inviteUser(newUser, user);
 
     res.status(200).send({ ok: true, error: '', data: { newUser } });
-  }),
+  })
 );
 
 const userUpdateSchema = z.object({
@@ -962,15 +890,11 @@ const userUpdateSchema = z.object({
   [Prisma.UserScalarFieldEnum.addresse_ligne_2]: z.string().optional(),
   [Prisma.UserScalarFieldEnum.code_postal]: z.string().optional(),
   [Prisma.UserScalarFieldEnum.roles]: z
-    .array(
-      z.enum(Object.values(UserRoles).filter((r) => r !== UserRoles.ADMIN) as [UserRoles, ...UserRoles[]]),
-    )
+    .array(z.enum(Object.values(UserRoles).filter((r) => r !== UserRoles.ADMIN) as [UserRoles, ...UserRoles[]]))
     .optional(),
   [Prisma.UserScalarFieldEnum.isZacharieAdmin]: z.boolean().optional(),
   [Prisma.UserScalarFieldEnum.ville]: z.string().optional(),
-  [Prisma.UserScalarFieldEnum.etg_role]: z
-    .enum(Object.values(UserEtgRoles) as [UserEtgRoles, ...UserEtgRoles[]])
-    .optional(),
+  [Prisma.UserScalarFieldEnum.etg_role]: z.enum(Object.values(UserEtgRoles) as [UserEtgRoles, ...UserEtgRoles[]]).optional(),
   [Prisma.UserScalarFieldEnum.notifications]: z
     .array(z.enum(Object.values(UserNotifications) as [UserNotifications, ...UserNotifications[]]))
     .optional(),
@@ -984,208 +908,189 @@ const userUpdateSchema = z.object({
 router.post(
   '/:user_id',
   passport.authenticate('user', { session: false, failWithError: true }),
-  catchErrors(
-    async (
-      req: RequestWithUser,
-      res: express.Response<UserConnexionResponse>,
-      next: express.NextFunction,
-    ) => {
-      let result = userUpdateSchema.safeParse(req.body);
-      if (!result.success) {
-        const error = new Error(result.error.message);
-        res.status(406);
-        return next(error);
-      }
-      let body = result.data;
-      const user = await prisma.user.findUnique({
-        where: {
-          id: req.params.user_id,
-        },
+  catchErrors(async (req: RequestWithUser, res: express.Response<UserConnexionResponse>, next: express.NextFunction) => {
+    let result = userUpdateSchema.safeParse(req.body);
+    if (!result.success) {
+      const error = new Error(result.error.message);
+      res.status(406);
+      return next(error);
+    }
+    let body = result.data;
+    const user = await prisma.user.findUnique({
+      where: {
+        id: req.params.user_id,
+      },
+    });
+    if (!user) {
+      res.status(400).send({
+        ok: false,
+        data: { user: null },
+        error: 'User not found',
+        message: '',
       });
-      if (!user) {
+      return;
+    }
+
+    if (!req.user.isZacharieAdmin) {
+      if (user.id !== req.user.id) {
         res.status(400).send({
           ok: false,
           data: { user: null },
-          error: 'User not found',
+          error: 'User not authorized',
           message: '',
         });
         return;
       }
+    }
 
-      if (!req.user.isZacharieAdmin) {
-        if (user.id !== req.user.id) {
-          res.status(400).send({
-            ok: false,
-            data: { user: null },
-            error: 'User not authorized',
-            message: '',
-          });
-          return;
-        }
-      }
+    const nextUser: Prisma.UserUpdateInput = {};
 
-      const nextUser: Prisma.UserUpdateInput = {};
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.activated)) {
+      if (req.user.isZacharieAdmin) {
+        nextUser.activated = body[Prisma.UserScalarFieldEnum.activated] === 'true' ? true : false;
+        if (nextUser.activated && !user.activated) {
+          nextUser.activated_at = new Date();
+        }
+      }
+    }
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.user_entities_vivible_checkbox)) {
+      nextUser.user_entities_vivible_checkbox = body[Prisma.UserScalarFieldEnum.user_entities_vivible_checkbox] === 'true' ? true : false;
+    }
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.prefilled)) {
+      nextUser.prefilled = body[Prisma.UserScalarFieldEnum.prefilled] === 'true' ? true : false;
+    }
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.onboarding_chasse_info_done_at)) {
+      nextUser.onboarding_chasse_info_done_at = new Date(body[Prisma.UserScalarFieldEnum.onboarding_chasse_info_done_at] as string);
+    }
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.checked_has_asso_de_chasse)) {
+      nextUser.checked_has_asso_de_chasse = body[Prisma.UserScalarFieldEnum.checked_has_asso_de_chasse] === 'true' ? new Date() : null;
+    }
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.checked_has_ccg)) {
+      nextUser.checked_has_ccg = body[Prisma.UserScalarFieldEnum.checked_has_ccg] === 'true' ? new Date() : null;
+    }
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.checked_has_partenaires)) {
+      nextUser.checked_has_partenaires = body[Prisma.UserScalarFieldEnum.checked_has_partenaires] === 'true' ? new Date() : null;
+    }
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.nom_de_famille)) {
+      nextUser.nom_de_famille = sanitize(body[Prisma.UserScalarFieldEnum.nom_de_famille] as string);
+    }
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.prenom)) {
+      nextUser.prenom = sanitize(body[Prisma.UserScalarFieldEnum.prenom] as string);
+    }
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.prochain_bracelet_a_utiliser)) {
+      nextUser.prochain_bracelet_a_utiliser = body[Prisma.UserScalarFieldEnum.prochain_bracelet_a_utiliser] as number;
+    }
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.telephone)) {
+      nextUser.telephone = sanitize(body[Prisma.UserScalarFieldEnum.telephone] as string);
+    }
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.email)) {
+      nextUser.email = sanitize(body[Prisma.UserScalarFieldEnum.email].toLowerCase() as string);
+    }
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.addresse_ligne_1)) {
+      nextUser.addresse_ligne_1 = sanitize(body[Prisma.UserScalarFieldEnum.addresse_ligne_1] as string);
+    }
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.addresse_ligne_2)) {
+      nextUser.addresse_ligne_2 = sanitize(body[Prisma.UserScalarFieldEnum.addresse_ligne_2] as string);
+    }
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.code_postal)) {
+      nextUser.code_postal = sanitize(body[Prisma.UserScalarFieldEnum.code_postal] as string);
+    }
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.ville)) {
+      nextUser.ville = sanitize(body[Prisma.UserScalarFieldEnum.ville] as string);
+    }
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.roles)) {
+      if (req.user.isZacharieAdmin) {
+        nextUser.roles = ([...new Set(body[Prisma.UserScalarFieldEnum.roles])] as UserRoles[]).sort((a, b) => b.localeCompare(a));
+      } else {
+        throw new Error('User tried to update roles without being admin');
+      }
+    }
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.isZacharieAdmin)) {
+      if (req.user.isZacharieAdmin) {
+        nextUser.isZacharieAdmin = body[Prisma.UserScalarFieldEnum.isZacharieAdmin] ? true : false;
+      } else {
+        throw new Error('User tried to update roles without being admin');
+      }
+    }
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.etg_role)) {
+      nextUser.etg_role = body[Prisma.UserScalarFieldEnum.etg_role] as UserEtgRoles;
+    }
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.notifications)) {
+      nextUser.notifications = body[Prisma.UserScalarFieldEnum.notifications];
+    }
+    if (body.hasOwnProperty('web_push_token')) {
+      const web_push_token = sanitize(body.web_push_token as string);
+      const existingSubscriptions = user.web_push_tokens || [];
+      if (!existingSubscriptions.includes(web_push_token)) {
+        nextUser.web_push_tokens = [...existingSubscriptions, web_push_token];
+      }
+    }
+    if (body.hasOwnProperty('native_push_token')) {
+      const native_push_token = sanitize(body.native_push_token as string);
+      const existingSubscriptions = user.native_push_tokens || [];
+      if (!existingSubscriptions.includes(native_push_token)) {
+        nextUser.native_push_tokens = [...existingSubscriptions, native_push_token];
+      }
+    }
 
-      if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.activated)) {
-        if (req.user.isZacharieAdmin) {
-          nextUser.activated = body[Prisma.UserScalarFieldEnum.activated] === 'true' ? true : false;
-          if (nextUser.activated && !user.activated) {
-            nextUser.activated_at = new Date();
-          }
-        }
-      }
-      if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.user_entities_vivible_checkbox)) {
-        nextUser.user_entities_vivible_checkbox =
-          body[Prisma.UserScalarFieldEnum.user_entities_vivible_checkbox] === 'true' ? true : false;
-      }
-      if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.prefilled)) {
-        nextUser.prefilled = body[Prisma.UserScalarFieldEnum.prefilled] === 'true' ? true : false;
-      }
-      if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.onboarding_chasse_info_done_at)) {
-        nextUser.onboarding_chasse_info_done_at = new Date(
-          body[Prisma.UserScalarFieldEnum.onboarding_chasse_info_done_at] as string,
-        );
-      }
-      if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.checked_has_asso_de_chasse)) {
-        nextUser.checked_has_asso_de_chasse =
-          body[Prisma.UserScalarFieldEnum.checked_has_asso_de_chasse] === 'true' ? new Date() : null;
-      }
-      if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.checked_has_ccg)) {
-        nextUser.checked_has_ccg =
-          body[Prisma.UserScalarFieldEnum.checked_has_ccg] === 'true' ? new Date() : null;
-      }
-      if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.checked_has_partenaires)) {
-        nextUser.checked_has_partenaires =
-          body[Prisma.UserScalarFieldEnum.checked_has_partenaires] === 'true' ? new Date() : null;
-      }
-      if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.nom_de_famille)) {
-        nextUser.nom_de_famille = sanitize(body[Prisma.UserScalarFieldEnum.nom_de_famille] as string);
-      }
-      if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.prenom)) {
-        nextUser.prenom = sanitize(body[Prisma.UserScalarFieldEnum.prenom] as string);
-      }
-      if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.prochain_bracelet_a_utiliser)) {
-        nextUser.prochain_bracelet_a_utiliser = body[
-          Prisma.UserScalarFieldEnum.prochain_bracelet_a_utiliser
-        ] as number;
-      }
-      if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.telephone)) {
-        nextUser.telephone = sanitize(body[Prisma.UserScalarFieldEnum.telephone] as string);
-      }
-      if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.email)) {
-        nextUser.email = sanitize(body[Prisma.UserScalarFieldEnum.email].toLowerCase() as string);
-      }
-      if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.addresse_ligne_1)) {
-        nextUser.addresse_ligne_1 = sanitize(body[Prisma.UserScalarFieldEnum.addresse_ligne_1] as string);
-      }
-      if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.addresse_ligne_2)) {
-        nextUser.addresse_ligne_2 = sanitize(body[Prisma.UserScalarFieldEnum.addresse_ligne_2] as string);
-      }
-      if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.code_postal)) {
-        nextUser.code_postal = sanitize(body[Prisma.UserScalarFieldEnum.code_postal] as string);
-      }
-      if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.ville)) {
-        nextUser.ville = sanitize(body[Prisma.UserScalarFieldEnum.ville] as string);
-      }
-      if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.roles)) {
-        if (req.user.isZacharieAdmin) {
-          nextUser.roles = ([...new Set(body[Prisma.UserScalarFieldEnum.roles])] as UserRoles[]).sort(
-            (a, b) => b.localeCompare(a),
-          );
-        } else {
-          throw new Error('User tried to update roles without being admin');
-        }
-      }
-      if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.isZacharieAdmin)) {
-        if (req.user.isZacharieAdmin) {
-          nextUser.isZacharieAdmin = body[Prisma.UserScalarFieldEnum.isZacharieAdmin] ? true : false;
-        } else {
-          throw new Error('User tried to update roles without being admin');
-        }
-      }
-      if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.etg_role)) {
-        nextUser.etg_role = body[Prisma.UserScalarFieldEnum.etg_role] as UserEtgRoles;
-      }
-      if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.notifications)) {
-        nextUser.notifications = body[Prisma.UserScalarFieldEnum.notifications];
-      }
-      if (body.hasOwnProperty('web_push_token')) {
-        const web_push_token = sanitize(body.web_push_token as string);
-        const existingSubscriptions = user.web_push_tokens || [];
-        if (!existingSubscriptions.includes(web_push_token)) {
-          nextUser.web_push_tokens = [...existingSubscriptions, web_push_token];
-        }
-      }
-      if (body.hasOwnProperty('native_push_token')) {
-        const native_push_token = sanitize(body.native_push_token as string);
-        const existingSubscriptions = user.native_push_tokens || [];
-        if (!existingSubscriptions.includes(native_push_token)) {
-          nextUser.native_push_tokens = [...existingSubscriptions, native_push_token];
-        }
-      }
-
-      if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.numero_cfei)) {
-        nextUser.numero_cfei = sanitize(body[Prisma.UserScalarFieldEnum.numero_cfei] as string);
-        if (nextUser.numero_cfei !== user.numero_cfei) {
-          if (!req.user.isZacharieAdmin) {
-            nextUser.activated = false;
-            if (nextUser.activated_at) nextUser.activated_at = new Date();
-          }
-        }
-      }
-
-      if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.est_forme_a_l_examen_initial)) {
-        nextUser.est_forme_a_l_examen_initial =
-          body[Prisma.UserScalarFieldEnum.est_forme_a_l_examen_initial] === 'true' ? true : false;
-        if (!req.user.isZacharieAdmin && !nextUser.est_forme_a_l_examen_initial && user.numero_cfei) {
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.numero_cfei)) {
+      nextUser.numero_cfei = sanitize(body[Prisma.UserScalarFieldEnum.numero_cfei] as string);
+      if (nextUser.numero_cfei !== user.numero_cfei) {
+        if (!req.user.isZacharieAdmin) {
           nextUser.activated = false;
-          nextUser.numero_cfei = null;
           if (nextUser.activated_at) nextUser.activated_at = new Date();
         }
       }
+    }
 
-      if (body.hasOwnProperty('onboarding_finished')) {
-        nextUser.onboarded_at = new Date();
+    if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.est_forme_a_l_examen_initial)) {
+      nextUser.est_forme_a_l_examen_initial = body[Prisma.UserScalarFieldEnum.est_forme_a_l_examen_initial] === 'true' ? true : false;
+      if (!req.user.isZacharieAdmin && !nextUser.est_forme_a_l_examen_initial && user.numero_cfei) {
+        nextUser.activated = false;
+        nextUser.numero_cfei = null;
+        if (nextUser.activated_at) nextUser.activated_at = new Date();
       }
+    }
 
-      let savedUser: User | null = null;
-      const userId = req.params.user_id;
-      if (!userId) {
-        res.status(400).send({
-          ok: false,
-          data: {
-            user: null,
-          },
-          error: 'Missing user_id',
-          message: '',
-        });
-        return;
-      }
+    if (body.hasOwnProperty('onboarding_finished')) {
+      nextUser.onboarded_at = new Date();
+    }
 
-      // user update / self-update
-      savedUser = await prisma.user.update({
-        where: { id: userId },
-        data: nextUser,
+    let savedUser: User | null = null;
+    const userId = req.params.user_id;
+    if (!userId) {
+      res.status(400).send({
+        ok: false,
+        data: {
+          user: null,
+        },
+        error: 'Missing user_id',
+        message: '',
       });
-      await updateBrevoContact(savedUser);
-      await updateBrevoChasseurDeal(savedUser);
+      return;
+    }
 
-      const userHasNowAllRequiredFields =
-        !hasAllRequiredFields(user, `original user update ${savedUser.id}`) &&
-        hasAllRequiredFields(savedUser, `saved user update ${savedUser.id}`);
-      const userChangedCFEINumber = user.numero_cfei !== savedUser.numero_cfei;
+    // user update / self-update
+    savedUser = await prisma.user.update({
+      where: { id: userId },
+      data: nextUser,
+    });
+    await updateBrevoContact(savedUser);
+    await updateBrevoChasseurDeal(savedUser);
 
-      if (userHasNowAllRequiredFields || userChangedCFEINumber) {
-        let subject = `Inscription finie pour ${savedUser.email} (${savedUser.prenom} ${savedUser.nom_de_famille})`;
-        if (userChangedCFEINumber) {
-          subject = `Numéro CFEI changé pour ${savedUser.email} (${savedUser.prenom} ${savedUser.nom_de_famille})`;
-        }
-        await sendEmail({
-          emails: ['contact@zacharie.beta.gouv.fr'],
-          subject,
-          text: `L'utilisateur ${savedUser.email} a ${
-            userHasNowAllRequiredFields ? 'fini son inscription' : 'changé son numéro CFEI'
-          } :
+    const userHasNowAllRequiredFields =
+      !hasAllRequiredFields(user, `original user update ${savedUser.id}`) && hasAllRequiredFields(savedUser, `saved user update ${savedUser.id}`);
+    const userChangedCFEINumber = user.numero_cfei !== savedUser.numero_cfei;
+
+    if (userHasNowAllRequiredFields || userChangedCFEINumber) {
+      let subject = `Inscription finie pour ${savedUser.email} (${savedUser.prenom} ${savedUser.nom_de_famille})`;
+      if (userChangedCFEINumber) {
+        subject = `Numéro CFEI changé pour ${savedUser.email} (${savedUser.prenom} ${savedUser.nom_de_famille})`;
+      }
+      await sendEmail({
+        emails: ['contact@zacharie.beta.gouv.fr'],
+        subject,
+        text: `L'utilisateur ${savedUser.email} a ${userHasNowAllRequiredFields ? 'fini son inscription' : 'changé son numéro CFEI'} :
 - Roles\u00A0: ${savedUser.roles.join(', ')}
 - Prénom et nom\u00A0: ${savedUser.prenom} ${savedUser.nom_de_famille}
 - Adresse\u00A0: ${savedUser.addresse_ligne_1}
@@ -1193,113 +1098,97 @@ router.post(
 - Email\u00A0: ${savedUser.email}
 - Téléphone\u00A0: ${savedUser.telephone}
 - Formé à l'examen initial\u00A0: ${savedUser.est_forme_a_l_examen_initial ? 'Oui' : 'Non'}
-${
-  savedUser.roles.includes(UserRoles.CHASSEUR) && savedUser.est_forme_a_l_examen_initial
-    ? `- Numéro CFEI\u00A0: ${savedUser.numero_cfei}`
-    : ''
-}
+${savedUser.roles.includes(UserRoles.CHASSEUR) && savedUser.est_forme_a_l_examen_initial ? `- Numéro CFEI\u00A0: ${savedUser.numero_cfei}` : ''}
           `,
-        });
-      }
+      });
+    }
 
-      if (autoActivatePremierDetenteur(savedUser, `check auto activate ${savedUser.id}`)) {
-        nextUser.activated = true;
-        nextUser.activated_at = new Date();
-        savedUser = await prisma.user.update({
-          where: { id: userId },
-          data: nextUser,
-        });
-      }
+    if (autoActivatePremierDetenteur(savedUser, `check auto activate ${savedUser.id}`)) {
+      nextUser.activated = true;
+      nextUser.activated_at = new Date();
+      savedUser = await prisma.user.update({
+        where: { id: userId },
+        data: nextUser,
+      });
+    }
 
-      if (savedUser.activated && !user.activated) {
-        const email = [
-          `Bonjour,`,
-          `Votre compte Zacharie a été activé, vous pouvez désormais accéder à l'application en cliquant sur le lien suivant: https://zacharie.beta.gouv.fr/app/connexion`,
-          "Attention : pour l'instant, seuls certains collecteurs et ateliers de traitement du gibier acceptent des fiches en format numérique. En cas de doute, merci de contacter le destinataire de vos carcasses avant de créer votre première fiche numérique.",
-          // "Des manuels d'utilisation de Zacharie sont disponibles en cliquant ici.",
-          `N’hésitez pas à nous contacter,`,
-          `L’équipe Zacharie`,
-          `Ce message a été généré automatiquement par l’application Zacharie. Si c'est une erreur, veuillez ignorer ce message.`,
-        ].join('\n\n');
-        await sendEmail({
-          emails: [savedUser.email],
-          subject: 'Votre compte Zacharie a été activé',
-          text: email,
-        });
-      }
+    if (savedUser.activated && !user.activated) {
+      const email = [
+        `Bonjour,`,
+        `Votre compte Zacharie a été activé, vous pouvez désormais accéder à l'application en cliquant sur le lien suivant: https://zacharie.beta.gouv.fr/app/connexion`,
+        "Attention : pour l'instant, seuls certains collecteurs et ateliers de traitement du gibier acceptent des fiches en format numérique. En cas de doute, merci de contacter le destinataire de vos carcasses avant de créer votre première fiche numérique.",
+        // "Des manuels d'utilisation de Zacharie sont disponibles en cliquant ici.",
+        `N’hésitez pas à nous contacter,`,
+        `L’équipe Zacharie`,
+        `Ce message a été généré automatiquement par l’application Zacharie. Si c'est une erreur, veuillez ignorer ce message.`,
+      ].join('\n\n');
+      await sendEmail({
+        emails: [savedUser.email],
+        subject: 'Votre compte Zacharie a été activé',
+        text: email,
+      });
+    }
 
-      res.status(200).send({ ok: true, data: { user: savedUser }, error: '', message: '' });
-    },
-  ),
+    res.status(200).send({ ok: true, data: { user: savedUser }, error: '', message: '' });
+  })
 );
 
 router.get(
   '/me',
   passport.authenticate('user', { session: false, failWithError: true }),
-  catchErrors(
-    async (
-      req: RequestWithUser,
-      res: express.Response<UserConnexionResponse>,
-      next: express.NextFunction,
-    ) => {
-      const user = req.user!;
-      const entites = await prisma.entityAndUserRelations.findMany({
-        where: {
-          owner_id: user.id,
-          relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-        },
-      });
-      if (
-        user.roles.includes(UserRoles.ETG) ||
-        user.roles.includes(UserRoles.SVI) ||
-        user.roles.includes(UserRoles.COLLECTEUR_PRO)
-      ) {
-        const approvedRelations = entites?.filter(
-          (entity) =>
-            entity.status === EntityRelationStatus.MEMBER || entity.status === EntityRelationStatus.ADMIN,
-        );
-        if (!approvedRelations?.length) {
-          req.user.activated = false;
-          res.status(200).send({ ok: true, data: { user: req.user }, error: null, message: '' });
-          return;
-        }
+  catchErrors(async (req: RequestWithUser, res: express.Response<UserConnexionResponse>, next: express.NextFunction) => {
+    const user = req.user!;
+    const entites = await prisma.entityAndUserRelations.findMany({
+      where: {
+        owner_id: user.id,
+        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+      },
+    });
+    if (user.roles.includes(UserRoles.ETG) || user.roles.includes(UserRoles.SVI) || user.roles.includes(UserRoles.COLLECTEUR_PRO)) {
+      const approvedRelations = entites?.filter(
+        (entity) => entity.status === EntityRelationStatus.MEMBER || entity.status === EntityRelationStatus.ADMIN
+      );
+      if (!approvedRelations?.length) {
+        req.user.activated = false;
+        res.status(200).send({ ok: true, data: { user: req.user }, error: null, message: '' });
+        return;
       }
-      const apiKeyApprovals = await prisma.apiKeyApprovalByUserOrEntity.findMany({
-        where: {
-          OR: [
-            {
-              user_id: user.id,
-            },
-            {
-              entity_id: {
-                in: entites.map((entity) => entity.entity_id),
-              },
-            },
-          ],
-        },
-        include: {
-          ApiKey: {
-            select: {
-              id: true,
-              dedicated_to_entity_id: true,
-              name: true,
-              description: true,
-              active: true,
-              webhook_url: true,
-              expires_at: true,
-              last_used_at: true,
-              scopes: true,
-              rate_limit: true,
-              created_at: true,
-              updated_at: true,
-              deleted_at: true,
+    }
+    const apiKeyApprovals = await prisma.apiKeyApprovalByUserOrEntity.findMany({
+      where: {
+        OR: [
+          {
+            user_id: user.id,
+          },
+          {
+            entity_id: {
+              in: entites.map((entity) => entity.entity_id),
             },
           },
+        ],
+      },
+      include: {
+        ApiKey: {
+          select: {
+            id: true,
+            dedicated_to_entity_id: true,
+            name: true,
+            description: true,
+            active: true,
+            webhook_url: true,
+            expires_at: true,
+            last_used_at: true,
+            scopes: true,
+            rate_limit: true,
+            created_at: true,
+            updated_at: true,
+            deleted_at: true,
+          },
         },
-      });
-      res.status(200).send({ ok: true, data: { user: req.user, apiKeyApprovals }, error: null, message: '' });
-    },
-  ),
+      },
+    });
+    res.status(200).send({ ok: true, data: { user: req.user, apiKeyApprovals }, error: null, message: '' });
+  })
 );
 
 router.get(
@@ -1324,20 +1213,15 @@ router.get(
     ).map((relation) => relation.EntityRelatedWithUser) satisfies Array<Entity>;
 
     res.status(200).send({ ok: true, data: { userCCGs }, error: null });
-  }),
+  })
 );
 
 router.get(
   '/my-relations',
   passport.authenticate('user', { session: false, failWithError: true }),
-  catchErrors(
-    async (
-      req: RequestWithUser,
-      res: express.Response<UserMyRelationsResponse>,
-      next: express.NextFunction,
-    ) => {
-      const user = req.user!;
-      /*
+  catchErrors(async (req: RequestWithUser, res: express.Response<UserMyRelationsResponse>, next: express.NextFunction) => {
+    const user = req.user!;
+    /*
       I need to fetch
       - the entities the user can handle carcasses on behalf of (salarié, dirigeant, etc.)
       - the SVI linked to the ETGs the user can handle carcasses on behalf of
@@ -1349,181 +1233,169 @@ router.get(
       - the other entities I could work with (partnership not confirmed), which are all the rest
       */
 
-      const entitiesICanHandleCarcassOnBehalf = await prisma.entityAndUserRelations
-        .findMany({
-          where: {
-            owner_id: user.id,
-            relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-            deleted_at: null,
-          },
-          include: {
-            EntityRelatedWithUser: true,
-          },
-          orderBy: {
-            updated_at: 'desc',
-          },
-        })
-        .then((entityRelations) =>
-          entityRelations.map(
-            (rel): EntityWithUserRelation => ({
-              ...rel.EntityRelatedWithUser,
-              relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-              relationStatus: rel.status,
-            }),
-          ),
-        );
-
-      const svisICanTransmitCarcassesTo = !user.roles.includes(UserRoles.ETG)
-        ? []
-        : await prisma.entity
-            .findMany({
-              where: {
-                type: EntityTypes.SVI,
-                id: {
-                  in: entitiesICanHandleCarcassOnBehalf
-                    .map((entity) => entity.etg_linked_to_svi_id)
-                    .filter(Boolean),
-                },
-                deleted_at: null,
-              },
-            })
-            .then((entities) =>
-              entities.map(
-                (entity): EntityWithUserRelation => ({
-                  ...entity,
-                  relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-                  relationStatus: EntityRelationStatus.MEMBER,
-                }),
-              ),
-            );
-
-      const entitiesICanTransmitCarcasseTo = await prisma.entityAndUserRelations
-        .findMany({
-          where: {
-            owner_id: user.id,
-            relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-            deleted_at: null,
-          },
-          include: {
-            EntityRelatedWithUser: true,
-          },
-          orderBy: {
-            updated_at: 'desc',
-          },
-        })
-        .then((entityRelations) =>
-          entityRelations.map(
-            (rel): EntityWithUserRelation => ({
-              ...rel.EntityRelatedWithUser,
-              relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-              relationStatus: undefined,
-            }),
-          ),
-        );
-
-      const allOtherEntities = await prisma.entity
-        .findMany({
-          where: {
-            // for_testing: ETG test, CCG test, SVI test, etc.
-            ...(user.isZacharieAdmin ? {} : { for_testing: false }),
-            type: {
-              notIn: [
-                EntityTypes.CCG, // les CCG doivent rester confidentiels contrairement aux ETG et SVI
-                EntityTypes.PREMIER_DETENTEUR, // les associations de chasse doivent rester confidentielles
-                EntityTypes.SVI, // les SVI sont déjà inclus dans les ETGs
-                EntityTypes.CONSOMMATEUR_FINAL, // les collecteurs pro sont déjà inclus dans les associations de chasse
-              ],
-            },
-            id: {
-              notIn: [
-                ...entitiesICanHandleCarcassOnBehalf.map((entity) => entity.id),
-                ...entitiesICanTransmitCarcasseTo.map((entity) => entity.id),
-                ...svisICanTransmitCarcassesTo.map((entity) => entity.id),
-              ],
-            },
-          },
-          orderBy: {
-            updated_at: 'desc',
-          },
-        })
-        .then((entities) =>
-          entities.map(
-            (entity): EntityWithUserRelation => ({ ...entity, relation: 'NONE', relationStatus: undefined }),
-          ),
-        );
-
-      const userRelationsWithOtherUsers = await prisma.userRelations.findMany({
+    const entitiesICanHandleCarcassOnBehalf = await prisma.entityAndUserRelations
+      .findMany({
         where: {
           owner_id: user.id,
+          relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+          deleted_at: null,
         },
         include: {
-          UserRelatedOfUserRelation: {
-            select: userFeiSelect,
+          EntityRelatedWithUser: true,
+        },
+        orderBy: {
+          updated_at: 'desc',
+        },
+      })
+      .then((entityRelations) =>
+        entityRelations.map(
+          (rel): EntityWithUserRelation => ({
+            ...rel.EntityRelatedWithUser,
+            relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+            relationStatus: rel.status,
+          })
+        )
+      );
+
+    const svisICanTransmitCarcassesTo = !user.roles.includes(UserRoles.ETG)
+      ? []
+      : await prisma.entity
+          .findMany({
+            where: {
+              type: EntityTypes.SVI,
+              id: {
+                in: entitiesICanHandleCarcassOnBehalf.map((entity) => entity.etg_linked_to_svi_id).filter(Boolean),
+              },
+              deleted_at: null,
+            },
+          })
+          .then((entities) =>
+            entities.map(
+              (entity): EntityWithUserRelation => ({
+                ...entity,
+                relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+                relationStatus: EntityRelationStatus.MEMBER,
+              })
+            )
+          );
+
+    const entitiesICanTransmitCarcasseTo = await prisma.entityAndUserRelations
+      .findMany({
+        where: {
+          owner_id: user.id,
+          relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+          deleted_at: null,
+        },
+        include: {
+          EntityRelatedWithUser: true,
+        },
+        orderBy: {
+          updated_at: 'desc',
+        },
+      })
+      .then((entityRelations) =>
+        entityRelations.map(
+          (rel): EntityWithUserRelation => ({
+            ...rel.EntityRelatedWithUser,
+            relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+            relationStatus: undefined,
+          })
+        )
+      );
+
+    const allOtherEntities = await prisma.entity
+      .findMany({
+        where: {
+          // for_testing: ETG test, CCG test, SVI test, etc.
+          ...(user.isZacharieAdmin ? {} : { for_testing: false }),
+          type: {
+            notIn: [
+              EntityTypes.CCG, // les CCG doivent rester confidentiels contrairement aux ETG et SVI
+              EntityTypes.PREMIER_DETENTEUR, // les associations de chasse doivent rester confidentielles
+              EntityTypes.SVI, // les SVI sont déjà inclus dans les ETGs
+              EntityTypes.CONSOMMATEUR_FINAL, // les collecteurs pro sont déjà inclus dans les associations de chasse
+            ],
+          },
+          id: {
+            notIn: [
+              ...entitiesICanHandleCarcassOnBehalf.map((entity) => entity.id),
+              ...entitiesICanTransmitCarcasseTo.map((entity) => entity.id),
+              ...svisICanTransmitCarcassesTo.map((entity) => entity.id),
+            ],
           },
         },
         orderBy: {
           updated_at: 'desc',
         },
-      });
+      })
+      .then((entities) => entities.map((entity): EntityWithUserRelation => ({ ...entity, relation: 'NONE', relationStatus: undefined })));
 
-      const detenteursInitiaux = userRelationsWithOtherUsers
-        .filter((userRelation) => userRelation.relation === UserRelationType.PREMIER_DETENTEUR)
-        .map((userRelation) => userRelation.UserRelatedOfUserRelation);
-      if (user.roles.includes(UserRoles.CHASSEUR)) {
-        detenteursInitiaux.unshift(user);
-      }
-
-      const allEntities = [
-        ...entitiesICanHandleCarcassOnBehalf,
-        ...entitiesICanTransmitCarcasseTo,
-        ...svisICanTransmitCarcassesTo,
-        ...allOtherEntities.map((entity) => ({ ...entity, relation: EntityRelationType.NONE })),
-      ].filter((entity, index, array) => array.findIndex((e) => e.id === entity.id) === index); // remove duplicates
-
-      const ccgs = entitiesICanTransmitCarcasseTo.filter((entity) => entity.type === EntityTypes.CCG);
-
-      const associationsDeChasse = entitiesICanHandleCarcassOnBehalf.filter(
-        (entity) => entity.type === EntityTypes.PREMIER_DETENTEUR,
-      );
-
-      const collecteursPro = allEntities.filter((entity) => entity.type === EntityTypes.COLLECTEUR_PRO);
-
-      const etgs = allEntities.filter((entity) => entity.type === EntityTypes.ETG);
-
-      const svis = allEntities.filter(
-        (entity) =>
-          entity.type === EntityTypes.SVI &&
-          entity.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-      );
-
-      const circuitCourt = allEntities.filter(
-        (entity) =>
-          entity.type === EntityTypes.COMMERCE_DE_DETAIL ||
-          entity.type === EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE ||
-          entity.type === EntityTypes.ASSOCIATION_CARITATIVE ||
-          entity.type === EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF ||
-          entity.type === EntityTypes.CONSOMMATEUR_FINAL,
-      );
-
-      res.status(200).send({
-        ok: true,
-        data: {
-          user: user satisfies User,
-          detenteursInitiaux: detenteursInitiaux satisfies Array<UserForFei>,
-          // examinateursInitiaux: examinateursInitiaux satisfies Array<User>,
-          associationsDeChasse: associationsDeChasse satisfies Array<EntityWithUserRelation>,
-          ccgs: ccgs satisfies Array<EntityWithUserRelation>,
-          collecteursPro: collecteursPro satisfies Array<EntityWithUserRelation>,
-          etgs: etgs satisfies Array<EntityWithUserRelation>,
-          svis: svis satisfies Array<EntityWithUserRelation>,
-          entitiesICanHandleCarcassOnBehalf:
-            entitiesICanHandleCarcassOnBehalf satisfies Array<EntityWithUserRelation>,
-          circuitCourt: circuitCourt satisfies Array<EntityWithUserRelation>,
+    const userRelationsWithOtherUsers = await prisma.userRelations.findMany({
+      where: {
+        owner_id: user.id,
+      },
+      include: {
+        UserRelatedOfUserRelation: {
+          select: userFeiSelect,
         },
-        error: '',
-      });
-    },
-  ),
+      },
+      orderBy: {
+        updated_at: 'desc',
+      },
+    });
+
+    const detenteursInitiaux = userRelationsWithOtherUsers
+      .filter((userRelation) => userRelation.relation === UserRelationType.PREMIER_DETENTEUR)
+      .map((userRelation) => userRelation.UserRelatedOfUserRelation);
+    if (user.roles.includes(UserRoles.CHASSEUR)) {
+      detenteursInitiaux.unshift(user);
+    }
+
+    const allEntities = [
+      ...entitiesICanHandleCarcassOnBehalf,
+      ...entitiesICanTransmitCarcasseTo,
+      ...svisICanTransmitCarcassesTo,
+      ...allOtherEntities.map((entity) => ({ ...entity, relation: EntityRelationType.NONE })),
+    ].filter((entity, index, array) => array.findIndex((e) => e.id === entity.id) === index); // remove duplicates
+
+    const ccgs = entitiesICanTransmitCarcasseTo.filter((entity) => entity.type === EntityTypes.CCG);
+
+    const associationsDeChasse = entitiesICanHandleCarcassOnBehalf.filter((entity) => entity.type === EntityTypes.PREMIER_DETENTEUR);
+
+    const collecteursPro = allEntities.filter((entity) => entity.type === EntityTypes.COLLECTEUR_PRO);
+
+    const etgs = allEntities.filter((entity) => entity.type === EntityTypes.ETG);
+
+    const svis = allEntities.filter(
+      (entity) => entity.type === EntityTypes.SVI && entity.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY
+    );
+
+    const circuitCourt = allEntities.filter(
+      (entity) =>
+        entity.type === EntityTypes.COMMERCE_DE_DETAIL ||
+        entity.type === EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE ||
+        entity.type === EntityTypes.ASSOCIATION_CARITATIVE ||
+        entity.type === EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF ||
+        entity.type === EntityTypes.CONSOMMATEUR_FINAL
+    );
+
+    res.status(200).send({
+      ok: true,
+      data: {
+        user: user satisfies User,
+        detenteursInitiaux: detenteursInitiaux satisfies Array<UserForFei>,
+        // examinateursInitiaux: examinateursInitiaux satisfies Array<User>,
+        associationsDeChasse: associationsDeChasse satisfies Array<EntityWithUserRelation>,
+        ccgs: ccgs satisfies Array<EntityWithUserRelation>,
+        collecteursPro: collecteursPro satisfies Array<EntityWithUserRelation>,
+        etgs: etgs satisfies Array<EntityWithUserRelation>,
+        svis: svis satisfies Array<EntityWithUserRelation>,
+        entitiesICanHandleCarcassOnBehalf: entitiesICanHandleCarcassOnBehalf satisfies Array<EntityWithUserRelation>,
+        circuitCourt: circuitCourt satisfies Array<EntityWithUserRelation>,
+      },
+      error: '',
+    });
+  })
 );
 
 export default router;

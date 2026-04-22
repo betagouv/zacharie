@@ -13,7 +13,7 @@ export default function Stats() {
   return (
     <main className="mx-auto max-w-4xl space-y-8 px-4 py-8">
       <title>Statistiques | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
-      <div className="flex justify-between items-center mb-6">
+      <div className="mb-6 flex items-center justify-between">
         <h1 className="text-3xl font-bold">Statistiques</h1>
         <Button
           className="m-0"

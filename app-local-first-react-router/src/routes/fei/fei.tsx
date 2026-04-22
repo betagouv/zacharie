@@ -74,11 +74,7 @@ function Fei() {
   }, [entities]);
 
   const myCarcasses = useMemo(() => {
-    return feiCarcasses.filter(
-      (c) =>
-        (c.next_owner_entity_id && userEntityIds.includes(c.next_owner_entity_id)) ||
-        c.next_owner_user_id === user.id,
-    );
+    return feiCarcasses.filter((c) => (c.next_owner_entity_id && userEntityIds.includes(c.next_owner_entity_id)) || c.next_owner_user_id === user.id);
   }, [feiCarcasses, userEntityIds, user.id]);
 
   const myNextOwnerRole = useMemo(() => {
@@ -102,16 +98,10 @@ function Fei() {
       if (user.roles.includes(UserRoles.COLLECTEUR_PRO)) return FeiOwnerRole.COLLECTEUR_PRO;
       return null;
     }
-    if (
-      fei.fei_current_owner_role === FeiOwnerRole.COLLECTEUR_PRO &&
-      fei.fei_current_owner_user_id === user.id
-    ) {
+    if (fei.fei_current_owner_role === FeiOwnerRole.COLLECTEUR_PRO && fei.fei_current_owner_user_id === user.id) {
       return FeiOwnerRole.COLLECTEUR_PRO;
     }
-    if (
-      myNextOwnerRole === FeiOwnerRole.COLLECTEUR_PRO &&
-      nextOwnerEntity?.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
-    ) {
+    if (myNextOwnerRole === FeiOwnerRole.COLLECTEUR_PRO && nextOwnerEntity?.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
       return FeiOwnerRole.COLLECTEUR_PRO;
     }
     if (
@@ -121,16 +111,11 @@ function Fei() {
     ) {
       return FeiOwnerRole.COLLECTEUR_PRO;
     }
-    if (
-      user.roles.includes(UserRoles.ETG) &&
-      (fei.fei_current_owner_role === FeiOwnerRole.ETG || myNextOwnerRole === FeiOwnerRole.ETG)
-    ) {
+    if (user.roles.includes(UserRoles.ETG) && (fei.fei_current_owner_role === FeiOwnerRole.ETG || myNextOwnerRole === FeiOwnerRole.ETG)) {
       return FeiOwnerRole.ETG;
     }
     if (intermediaires.length > 0) {
-      const userWasIntermediaire = intermediaires.find(
-        (intermediaire) => intermediaire.intermediaire_user_id === user.id,
-      );
+      const userWasIntermediaire = intermediaires.find((intermediaire) => intermediaire.intermediaire_user_id === user.id);
       if (userWasIntermediaire) {
         return userWasIntermediaire.intermediaire_role;
       }
@@ -149,9 +134,7 @@ function Fei() {
 
   return (
     <>
-      <title>
-        {`${params.fei_numero} | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}
-      </title>
+      <title>{`${params.fei_numero} | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}</title>
       {fei.deleted_at && (
         <div className="bg-error-main-525 mb-2 py-2 text-center text-white">
           <p>Fiche supprimée</p>
@@ -163,9 +146,7 @@ function Fei() {
             className="fr-col-12 fr-col-md-10 bg-alt-blue-france [&_.fr-tabs\\_\\_list]:bg-alt-blue-france m-4 md:m-0 md:p-0"
             key={fei.fei_current_owner_entity_id! + fei.fei_current_owner_user_id!}
           >
-            {(showInterface === FeiOwnerRole.SVI || isCircuitCourt) && (
-              <h1 className="fr-h3 fr-mb-2w">Fiche {fei?.numero}</h1>
-            )}
+            {(showInterface === FeiOwnerRole.SVI || isCircuitCourt) && <h1 className="fr-h3 fr-mb-2w">Fiche {fei?.numero}</h1>}
             <FeiSousTraite />
             {showInterface !== FeiOwnerRole.SVI && <CurrentOwnerConfirm />}
             {showInterface !== FeiOwnerRole.SVI &&
@@ -174,8 +155,7 @@ function Fei() {
               !isCircuitCourt &&
               !fei.consommateur_final_usage_domestique && <FeiStepper />}
             {showInterface === FeiOwnerRole.COLLECTEUR_PRO && <FEICurrentIntermediaire />}
-            {(showInterface === FeiOwnerRole.EXAMINATEUR_INITIAL ||
-              showInterface === FeiOwnerRole.PREMIER_DETENTEUR) && <HeaderFiche fei={fei} />}
+            {(showInterface === FeiOwnerRole.EXAMINATEUR_INITIAL || showInterface === FeiOwnerRole.PREMIER_DETENTEUR) && <HeaderFiche fei={fei} />}
             {showInterface === FeiOwnerRole.EXAMINATEUR_INITIAL && <FEIExaminateurInitial />}
             {showInterface === FeiOwnerRole.PREMIER_DETENTEUR && <FEIExaminateurInitial />}
             {showInterface === FeiOwnerRole.ETG && <FEICurrentIntermediaire />}

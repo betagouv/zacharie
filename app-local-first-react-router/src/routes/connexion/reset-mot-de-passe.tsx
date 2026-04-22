@@ -89,16 +89,12 @@ export default function ResetMotDePasse() {
   if (!resetPasswordToken) {
     return (
       <main role="main" id="content">
-        <title>
-          Réinitialisation de mot de passe | Zacharie | Ministère de l'Agriculture et de la Souveraineté
-          Alimentaire
-        </title>
+        <title>Réinitialisation de mot de passe | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
         <div className="fr-container fr-container--fluid fr-my-md-14v">
           <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
             <div className="fr-col-12 fr-col-md-10 fr-col-lg-8">
               <CallOut title="Token manquant">
-                Le lien de réinitialisation est invalide ou a expiré. Veuillez demander un nouveau lien de
-                réinitialisation.
+                Le lien de réinitialisation est invalide ou a expiré. Veuillez demander un nouveau lien de réinitialisation.
               </CallOut>
               <div className="mt-4">
                 <Link to="/app/connexion/mot-de-passe-oublie">
@@ -114,25 +110,15 @@ export default function ResetMotDePasse() {
 
   return (
     <main role="main" id="content">
-      <title>
-        Réinitialisation de mot de passe | Zacharie | Ministère de l'Agriculture et de la Souveraineté
-        Alimentaire
-      </title>
+      <title>Réinitialisation de mot de passe | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
       <div className="fr-container fr-container--fluid fr-my-md-14v">
         <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
           <div className="fr-col-12 fr-col-md-10 fr-col-lg-8">
             {communication && <CallOut>{decodeURIComponent(communication)}</CallOut>}
             <CallOut>Vous pouvez maintenant définir votre nouveau mot de passe</CallOut>
             {userResponse?.message && <CallOut>{userResponse?.message}</CallOut>}
-            {userResponse?.error && !userResponse?.message && (
-              <CallOut title="Erreur">{userResponse.error}</CallOut>
-            )}
-            <form
-              onSubmit={handleSubmit}
-              id="reset_password_form"
-              method="POST"
-              className="fr-background-alt--blue-france p-4 md:p-8"
-            >
+            {userResponse?.error && !userResponse?.message && <CallOut title="Erreur">{userResponse.error}</CallOut>}
+            <form onSubmit={handleSubmit} id="reset_password_form" method="POST" className="fr-background-alt--blue-france p-4 md:p-8">
               <fieldset
                 className="fr-fieldset"
                 id="reset-password-fieldset"
@@ -146,11 +132,7 @@ export default function ResetMotDePasse() {
               <PasswordInput
                 hintText="Veuillez entrer votre nouveau mot de passe (minimum 12 caractères)"
                 label="Mon nouveau mot de passe"
-                messages={
-                  getErrorMessage('mot de passe')
-                    ? [{ message: getErrorMessage('mot de passe'), severity: 'error' }]
-                    : undefined
-                }
+                messages={getErrorMessage('mot de passe') ? [{ message: getErrorMessage('mot de passe'), severity: 'error' }] : undefined}
                 nativeInputProps={{
                   name: 'password-utilisateur',
                   minLength: 12,
@@ -176,8 +158,7 @@ export default function ResetMotDePasse() {
               />
               <hr />
               <p className="text-xs">
-                Vous vous souvenez de votre mot de passe ?{' '}
-                <Link to="/app/connexion">Cliquez ici pour vous connecter</Link>
+                Vous vous souvenez de votre mot de passe ? <Link to="/app/connexion">Cliquez ici pour vous connecter</Link>
               </p>
             </form>
           </div>

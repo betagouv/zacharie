@@ -85,17 +85,12 @@ export default function SearchInput({ className, id, type }: SearchInputProps) {
             >
               {data.carcasse_numero_bracelet && (
                 <span className="text-sm font-bold">
-                  {data.carcasse_type === CarcasseType.PETIT_GIBIER ? 'Lot' : 'Carcasse'}{' '}
-                  {data.carcasse_numero_bracelet}: {data.carcasse_espece}
+                  {data.carcasse_type === CarcasseType.PETIT_GIBIER ? 'Lot' : 'Carcasse'} {data.carcasse_numero_bracelet}: {data.carcasse_espece}
                 </span>
               )}
               {data.fei_numero && <span className="text-sm">Fiche {data.fei_numero}</span>}
-              {data.fei_svi_assigned_at && (
-                <span className="text-xs text-gray-500 italic">Transmise le {data.fei_svi_assigned_at}</span>
-              )}
-              {data.fei_date_mise_a_mort && (
-                <span className="text-xs text-gray-500 italic">Chasse du {data.fei_date_mise_a_mort}</span>
-              )}
+              {data.fei_svi_assigned_at && <span className="text-xs text-gray-500 italic">Transmise le {data.fei_svi_assigned_at}</span>}
+              {data.fei_date_mise_a_mort && <span className="text-xs text-gray-500 italic">Chasse du {data.fei_date_mise_a_mort}</span>}
             </a>
           ))}
         </div>

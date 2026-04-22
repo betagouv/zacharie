@@ -28,7 +28,7 @@ export default function MesCoordonnees() {
         useUser.setState({ user: response.data.user });
       }
     },
-    [user.id],
+    [user.id]
   );
 
   const nextTitle = useMemo(() => {
@@ -66,12 +66,7 @@ export default function MesCoordonnees() {
           />
           <div className="mb-6 bg-white md:shadow-sm">
             <div className="p-4 md:p-8">
-              <form
-                id="user_data_form"
-                method="POST"
-                onBlur={handleUserFormBlur}
-                onSubmit={(e) => e.preventDefault()}
-              >
+              <form id="user_data_form" method="POST" onBlur={handleUserFormBlur} onSubmit={(e) => e.preventDefault()}>
                 <Input
                   label={
                     <span>

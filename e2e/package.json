@@ -19,7 +19,15 @@
     "dotenv": "^17.0.1",
     "nanoid": "^5.1.5",
     "pg": "^8.16.3",
+    "prettier": "^3.8.3",
     "tsx": "^4.20.3",
     "uuid": "^11.1.0"
+  },
+  "prettier": {
+    "singleQuote": true,
+    "trailingComma": "es5",
+    "semi": true,
+    "printWidth": 150,
+    "tabWidth": 2
   }
 }

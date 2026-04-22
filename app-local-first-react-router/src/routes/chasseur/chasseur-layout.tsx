@@ -24,13 +24,10 @@ export default function ChasseurLayout() {
 
   const showDeactivatedAccount = useMemo(() => {
     const isRestrictedPage =
-      !location.pathname.includes('profil') &&
-      !location.pathname.includes('onboarding') &&
-      !location.pathname.includes('admin');
+      !location.pathname.includes('profil') && !location.pathname.includes('onboarding') && !location.pathname.includes('admin');
     if (!isRestrictedPage) return false;
     if (!user) return false;
-    const needToCompleteExaminateurInitial =
-      user?.roles.includes(UserRoles.CHASSEUR) && user?.est_forme_a_l_examen_initial == null;
+    const needToCompleteExaminateurInitial = user?.roles.includes(UserRoles.CHASSEUR) && user?.est_forme_a_l_examen_initial == null;
     const isProfileCompleted = hasAllRequiredFields(user!) && !needToCompleteExaminateurInitial;
     return !isProfileCompleted;
   }, [user, location.pathname]);
@@ -63,11 +60,7 @@ export default function ChasseurLayout() {
         contactLink="/app/chasseur/contact"
         mainLink="/app/chasseur"
       >
-        <main
-          role="main"
-          id="content"
-          className="fr-background-alt--blue-france relative flex min-h-full flex-col overflow-visible pb-16 md:pb-0"
-        >
+        <main role="main" id="content" className="fr-background-alt--blue-france relative flex min-h-full flex-col overflow-visible pb-16 md:pb-0">
           {!_hasHydrated ? <Chargement /> : showDeactivatedAccount ? <ChasseurDeactivated /> : <Outlet />}
         </main>
       </RootDisplay>

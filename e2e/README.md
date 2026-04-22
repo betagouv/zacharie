@@ -39,4 +39,3 @@ Ensuite lancer la commande `Record new` depuis VSCode. Pour chaque test, on peut
 
 - Email : `admin1@example.org`, `admin2@example.org`, etc.
 - Mot de passe : `secret`
-

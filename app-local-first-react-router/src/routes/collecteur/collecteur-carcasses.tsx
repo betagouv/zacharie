@@ -9,11 +9,7 @@ import { Link, useSearchParams } from 'react-router';
 import { loadCarcasses } from '@app/utils/load-carcasses';
 import { UserRoles } from '@prisma/client';
 import Filters from '@app/components/Filters';
-import {
-  CarcasseFilter,
-  carcasseFilterableFields,
-  filterCarcassesInRegistre,
-} from '@app/utils/filter-carcasse';
+import { CarcasseFilter, carcasseFilterableFields, filterCarcassesInRegistre } from '@app/utils/filter-carcasse';
 import { useLocalStorage } from '@uidotdev/usehooks';
 import Chargement from '@app/components/Chargement';
 import Button from '@codegouvfr/react-dsfr/Button';
@@ -31,17 +27,11 @@ export default function CollecteurCarcasses() {
   const [searchParams] = useSearchParams();
   const page = parseInt(searchParams.get('page') || '1');
 
-  const [sortBy, setSortBy] = useLocalStorage<keyof (typeof carcassesRegistry)[number]>(
-    'collecteur-carcasses-sort-by',
-    'numero_bracelet',
-  );
+  const [sortBy, setSortBy] = useLocalStorage<keyof (typeof carcassesRegistry)[number]>('collecteur-carcasses-sort-by', 'numero_bracelet');
   const [sortOrder, setSortOrder] = useLocalStorage<'ASC' | 'DESC'>('collecteur-carcasses-sort-order', 'ASC');
 
   const [itemsPerPage, setItemsPerPage] = useLocalStorage<number>('collecteur-carcasses-items-per-page', 50);
-  const [filters, setFilters] = useLocalStorage<Array<CarcasseFilter>>(
-    'collecteur-carcasses-filters-preset',
-    [],
-  );
+  const [filters, setFilters] = useLocalStorage<Array<CarcasseFilter>>('collecteur-carcasses-filters-preset', []);
 
   const filterableFields = useMemo(() => {
     const motifs = new Set<string>();
@@ -119,10 +109,7 @@ export default function CollecteurCarcasses() {
   const renderMobileCarcasse = (carcasse: (typeof carcassesRegistry)[number]) => {
     const isChecked = selectedCarcassesIds.includes(carcasse.zacharie_carcasse_id);
     return (
-      <tr
-        key={carcasse.zacharie_carcasse_id}
-        className={`border-b border-gray-200 ${isChecked ? 'bg-blue-50' : ''}`}
-      >
+      <tr key={carcasse.zacharie_carcasse_id} className={`border-b border-gray-200 ${isChecked ? 'bg-blue-50' : ''}`}>
         <td className="p-3">
           <div className="flex flex-col gap-2">
             <div className="flex items-start gap-2">
@@ -134,9 +121,7 @@ export default function CollecteurCarcasses() {
                   if (e.target.checked) {
                     setSelectedCarcassesIds([...selectedCarcassesIds, carcasse.zacharie_carcasse_id]);
                   } else {
-                    setSelectedCarcassesIds(
-                      selectedCarcassesIds.filter((id) => id !== carcasse.zacharie_carcasse_id),
-                    );
+                    setSelectedCarcassesIds(selectedCarcassesIds.filter((id) => id !== carcasse.zacharie_carcasse_id));
                   }
                 }}
               />
@@ -195,10 +180,7 @@ export default function CollecteurCarcasses() {
               </div>
               <div>
                 <span className="font-semibold">Fiche: </span>
-                <Link
-                  to={`/app/collecteur/fei/${carcasse.fei_numero}`}
-                  className="text-blue-600 hover:underline"
-                >
+                <Link to={`/app/collecteur/fei/${carcasse.fei_numero}`} className="text-blue-600 hover:underline">
                   {carcasse.fei_numero}
                 </Link>
               </div>
@@ -215,18 +197,11 @@ export default function CollecteurCarcasses() {
 
   return (
     <div className="fr-container fr-my-4 sm:fr-my-md-14v">
-      <title>
-        Registre de carcasses | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire
-      </title>
+      <title>Registre de carcasses | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 sm:py-4">
           <section className="fr-container mb-4 overflow-x-auto bg-white">
-            <Filters
-              onChange={setFilters}
-              base={filterableFields}
-              filters={filters}
-              saveInURLParams={false}
-            />
+            <Filters onChange={setFilters} base={filterableFields} filters={filters} saveInURLParams={false} />
           </section>
           <section className="mb-4 flex flex-col gap-4 sm:mb-0 sm:flex-row sm:justify-between">
             <div className="flex flex-col">
@@ -246,10 +221,7 @@ export default function CollecteurCarcasses() {
                 {itemsPerPageOptions.map((option) => {
                   return (
                     <button
-                      className={[
-                        'px-2 py-1 text-sm sm:px-4 sm:py-2',
-                        itemsPerPage === option ? 'font-semibold underline' : '',
-                      ].join(' ')}
+                      className={['px-2 py-1 text-sm sm:px-4 sm:py-2', itemsPerPage === option ? 'font-semibold underline' : ''].join(' ')}
                       onClick={() => setItemsPerPage(option)}
                       key={option}
                     >
@@ -266,16 +238,13 @@ export default function CollecteurCarcasses() {
                   for (const carcasseId of selectedCarcassesIds) {
                     selectedCarcassesObject[carcasseId] = true;
                   }
-                  onExportToXlsx(
-                    filteredData.filter((carcasse) => selectedCarcassesObject[carcasse.zacharie_carcasse_id]),
-                  );
+                  onExportToXlsx(filteredData.filter((carcasse) => selectedCarcassesObject[carcasse.zacharie_carcasse_id]));
                 }}
                 disabled={selectedCarcassesIds.length === 0 || isExporting}
                 className="w-full sm:w-auto"
               >
                 <span className="hidden sm:inline">
-                  Télécharger un fichier Excel avec les carcasses sélectionnées ({selectedCarcassesIds.length}
-                  )
+                  Télécharger un fichier Excel avec les carcasses sélectionnées ({selectedCarcassesIds.length})
                 </span>
                 <span className="sm:hidden">Exporter ({selectedCarcassesIds.length})</span>
               </Button>
@@ -306,10 +275,7 @@ export default function CollecteurCarcasses() {
                   render: (carcasse) => {
                     return (
                       <div className="flex flex-col items-start">
-                        <Link
-                          to={`/app/collecteur/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`}
-                          className="mr-auto block"
-                        >
+                        <Link to={`/app/collecteur/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`} className="mr-auto block">
                           {carcasse.numero_bracelet}
                         </Link>
                         <small className="text-xs text-gray-400">{carcasse.espece}</small>
@@ -371,9 +337,7 @@ export default function CollecteurCarcasses() {
                   onSortBy: setSortBy,
                   sortBy: sortBy,
                   sortOrder: sortOrder,
-                  render: (carcasse) => (
-                    <Link to={`/app/collecteur/fei/${carcasse.fei_numero}`}>{carcasse.fei_numero}</Link>
-                  ),
+                  render: (carcasse) => <Link to={`/app/collecteur/fei/${carcasse.fei_numero}`}>{carcasse.fei_numero}</Link>,
                 },
               ]}
               // onSort={() => {}}

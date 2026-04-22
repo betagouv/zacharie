@@ -122,9 +122,7 @@ describe('Swagger Documentation Validation', () => {
       expect(heureMiseAMortParam.required).toBe(false);
       expect(heureMiseAMortParam.schema.pattern).toBe('^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$');
 
-      const heureEviscerationsParam = parameters.find(
-        (p) => p.name === 'heure_evisceration_derniere_carcasse',
-      );
+      const heureEviscerationsParam = parameters.find((p) => p.name === 'heure_evisceration_derniere_carcasse');
       expect(heureEviscerationsParam).toBeDefined();
       expect(heureEviscerationsParam.required).toBe(false);
       expect(heureEviscerationsParam.schema.pattern).toBe('^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$');
@@ -147,14 +145,11 @@ describe('Swagger Documentation Validation', () => {
       expect(feiResponseSchema.properties.data.properties.feis).toBeDefined();
       expect(feiResponseSchema.properties.message).toBeDefined();
 
-      const approvalRequestResponseSchema =
-        swaggerThirdPartyDocument.components.schemas.ApprovalRequestResponse;
+      const approvalRequestResponseSchema = swaggerThirdPartyDocument.components.schemas.ApprovalRequestResponse;
       expect(approvalRequestResponseSchema.properties.ok).toBeDefined();
       expect(approvalRequestResponseSchema.properties.data).toBeDefined();
       expect(approvalRequestResponseSchema.properties.data.properties.approvalStatus).toBeDefined();
-      expect(
-        approvalRequestResponseSchema.properties.data.properties.habilitePourExamenInitial,
-      ).toBeDefined();
+      expect(approvalRequestResponseSchema.properties.data.properties.habilitePourExamenInitial).toBeDefined();
       expect(approvalRequestResponseSchema.properties.message).toBeDefined();
 
       const accessTokenResponseSchema = swaggerThirdPartyDocument.components.schemas.AccessTokenResponse;
@@ -269,8 +264,7 @@ describe('Swagger Documentation Validation', () => {
     });
 
     test('Carcasse user endpoint should have correct path and query parameters', () => {
-      const carcasseUserEndpoint =
-        swaggerThirdPartyDocument.paths['/carcasse/user/{date_mise_a_mort}/{numero_bracelet}'].get;
+      const carcasseUserEndpoint = swaggerThirdPartyDocument.paths['/carcasse/user/{date_mise_a_mort}/{numero_bracelet}'].get;
       const parameters = carcasseUserEndpoint.parameters;
 
       const dateMiseAMortParam = parameters.find((p) => p.name === 'date_mise_a_mort');
@@ -293,8 +287,7 @@ describe('Swagger Documentation Validation', () => {
     });
 
     test('Entity carcasse endpoint should NOT have email parameter', () => {
-      const carcasseEntityEndpoint =
-        swaggerEntityDocument.paths['/carcasse/{date_mise_a_mort}/{numero_bracelet}'].get;
+      const carcasseEntityEndpoint = swaggerEntityDocument.paths['/carcasse/{date_mise_a_mort}/{numero_bracelet}'].get;
       const parameters = carcasseEntityEndpoint.parameters;
 
       const emailParam = parameters.find((p) => p.name === 'email');
@@ -333,13 +326,11 @@ describe('Swagger Documentation Validation', () => {
 
     test('specific endpoints should have 404 responses', () => {
       // Entity specific endpoint
-      const entitySpecificEndpoint =
-        swaggerEntityDocument.paths['/carcasse/{date_mise_a_mort}/{numero_bracelet}'].get;
+      const entitySpecificEndpoint = swaggerEntityDocument.paths['/carcasse/{date_mise_a_mort}/{numero_bracelet}'].get;
       expect(entitySpecificEndpoint.responses['404']).toBeDefined();
 
       // Third-party specific endpoint
-      const thirdPartySpecificEndpoint =
-        swaggerThirdPartyDocument.paths['/carcasse/user/{date_mise_a_mort}/{numero_bracelet}'].get;
+      const thirdPartySpecificEndpoint = swaggerThirdPartyDocument.paths['/carcasse/user/{date_mise_a_mort}/{numero_bracelet}'].get;
       expect(thirdPartySpecificEndpoint.responses['404']).toBeDefined();
     });
 
@@ -389,9 +380,7 @@ describe('Swagger Documentation Validation', () => {
 
     test('FEI user endpoint should require authentication', async () => {
       await new Promise((resolve) => setTimeout(resolve, 150));
-      await request(app)
-        .get('/v1/fei/user?date_from=2025-01-01&date_to=2025-01-31&email=test@example.com')
-        .expect(401);
+      await request(app).get('/v1/fei/user?date_from=2025-01-01&date_to=2025-01-31&email=test@example.com').expect(401);
     });
 
     test('FEI user by numero endpoint should require authentication', async () => {
@@ -402,38 +391,25 @@ describe('Swagger Documentation Validation', () => {
     test('endpoints should reject invalid API keys', async () => {
       await new Promise((resolve) => setTimeout(resolve, 150));
       // Test with invalid API key
-      await request(app)
-        .get('/v1/fei?date_from=2025-01-01&date_to=2025-01-31')
-        .set('Authorization', 'Bearer invalid-key')
-        .expect(401);
+      await request(app).get('/v1/fei?date_from=2025-01-01&date_to=2025-01-31').set('Authorization', 'Bearer invalid-key').expect(401);
     });
   });
 
   describe('Parameter Validation', () => {
     test('should validate date format in FEI endpoint', async () => {
       await new Promise((resolve) => setTimeout(resolve, 150));
-      await request(app)
-        .get('/v1/fei?date_from=invalid-date&date_to=2025-01-31')
-        .set('Authorization', 'Bearer test-api-key')
-        .expect(400);
+      await request(app).get('/v1/fei?date_from=invalid-date&date_to=2025-01-31').set('Authorization', 'Bearer test-api-key').expect(400);
     });
 
     test('should validate email format in carcasse user endpoint', async () => {
       await new Promise((resolve) => setTimeout(resolve, 150));
-      await request(app)
-        .get('/v1/carcasse/user/2025-01-01/BRACELET123?email=invalid-email')
-        .set('Authorization', 'Bearer test-api-key')
-        .expect(400);
+      await request(app).get('/v1/carcasse/user/2025-01-01/BRACELET123?email=invalid-email').set('Authorization', 'Bearer test-api-key').expect(400);
     });
 
     test('should validate request body in approval request endpoints', async () => {
       await new Promise((resolve) => setTimeout(resolve, 150));
       // Test invalid email format
-      await request(app)
-        .post('/v1/approval-request/user')
-        .set('Authorization', 'Bearer test-api-key')
-        .send({ email: 'invalid-email' })
-        .expect(400);
+      await request(app).post('/v1/approval-request/user').set('Authorization', 'Bearer test-api-key').send({ email: 'invalid-email' }).expect(400);
 
       // Test invalid SIRET format
       // await request(app)
@@ -454,16 +430,10 @@ describe('Swagger Documentation Validation', () => {
     test('should validate parameters in FEI user by numero endpoint', async () => {
       await new Promise((resolve) => setTimeout(resolve, 150));
       // Test invalid email format
-      await request(app)
-        .get('/v1/fei/user/2025-01-001?email=invalid-email')
-        .set('Authorization', 'Bearer test-api-key')
-        .expect(400);
+      await request(app).get('/v1/fei/user/2025-01-001?email=invalid-email').set('Authorization', 'Bearer test-api-key').expect(400);
 
       // Test missing email
-      await request(app)
-        .get('/v1/fei/user/2025-01-001')
-        .set('Authorization', 'Bearer test-api-key')
-        .expect(400);
+      await request(app).get('/v1/fei/user/2025-01-001').set('Authorization', 'Bearer test-api-key').expect(400);
     });
   });
 
@@ -487,11 +457,7 @@ describe('Swagger Documentation Validation', () => {
     test('should validate request body in access token endpoint', async () => {
       await new Promise((resolve) => setTimeout(resolve, 150));
       // Test invalid email format
-      await request(app)
-        .post('/v1/access-token/user')
-        .set('Authorization', 'Bearer test-api-key')
-        .send({ email: 'invalid-email' })
-        .expect(400);
+      await request(app).post('/v1/access-token/user').set('Authorization', 'Bearer test-api-key').send({ email: 'invalid-email' }).expect(400);
     });
   });
 
@@ -531,9 +497,7 @@ describe('Swagger Documentation Validation', () => {
       expect(heureMiseAMortParam.required).toBe(false);
       expect(heureMiseAMortParam.schema.pattern).toBe('^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$');
 
-      const heureEviscerationsParam = parameters.find(
-        (p) => p.name === 'heure_evisceration_derniere_carcasse',
-      );
+      const heureEviscerationsParam = parameters.find((p) => p.name === 'heure_evisceration_derniere_carcasse');
       expect(heureEviscerationsParam).toBeDefined();
       expect(heureEviscerationsParam.required).toBe(false);
       expect(heureEviscerationsParam.schema.pattern).toBe('^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$');
@@ -594,9 +558,7 @@ describe('Documentation Completeness', () => {
         const operation = pathItem[method];
         expect(operation.tags).toBeDefined();
         expect(operation.tags.length).toBeGreaterThan(0);
-        expect(['FEI - Accès Direct', 'Carcasses - Accès Direct', 'Webhooks - Accès Direct']).toContain(
-          operation.tags[0],
-        );
+        expect(['FEI - Accès Direct', 'Carcasses - Accès Direct', 'Webhooks - Accès Direct']).toContain(operation.tags[0]);
       });
     });
   });

@@ -15,13 +15,7 @@ import API from '@app/services/api';
 import { usePrefillPremierDétenteurInfos } from '@app/utils/usePrefillPremierDétenteur';
 import { useEntitiesIdsWorkingDirectlyFor, useDetenteursInitiaux } from '@app/utils/get-entity-relations';
 
-export default function SelectNextForExaminateur({
-  disabled = false,
-  onShowErrors,
-}: {
-  disabled?: boolean;
-  onShowErrors?: () => void;
-}) {
+export default function SelectNextForExaminateur({ disabled = false, onShowErrors }: { disabled?: boolean; onShowErrors?: () => void }) {
   const params = useParams();
   const navigate = useNavigate();
   const user = useUser((state) => state.user)!;
@@ -50,9 +44,7 @@ export default function SelectNextForExaminateur({
   const isOnline = useIsOnline();
 
   const nextOwnerSelectLabel = 'Sélectionnez le Premier Détenteur de pour cette fiche *';
-  const [nextOwnerUserOrEntityId, setNextOwnerUserOrEntityId] = useState(
-    fei.premier_detenteur_user_id ?? fei.premier_detenteur_entity_id ?? '',
-  );
+  const [nextOwnerUserOrEntityId, setNextOwnerUserOrEntityId] = useState(fei.premier_detenteur_user_id ?? fei.premier_detenteur_entity_id ?? '');
 
   const [isSearchingUser, setIsSearchingUser] = useState(false);
   const [searchingUserError, setSearchingUserError] = useState<string | null>(null);
@@ -138,15 +130,12 @@ export default function SelectNextForExaminateur({
     syncData('examinateur-select-next');
   }
 
-  const isFirstFei =
-    !prefilledInfos?.premier_detenteur_entity_id && !prefilledInfos?.premier_detenteur_user_id;
+  const isFirstFei = !prefilledInfos?.premier_detenteur_entity_id && !prefilledInfos?.premier_detenteur_user_id;
 
   return (
     <>
       <label className="mb-1 block">Premier détenteur&nbsp;*</label>
-      {isFirstFei &&
-        !Object.values(associationsDeChasse).length &&
-        !Object.values(detenteursInitiaux).length ? (
+      {isFirstFei && !Object.values(associationsDeChasse).length && !Object.values(detenteursInitiaux).length ? (
         <>
           {!showSearchUserByEmail && (
             <div>
@@ -159,12 +148,7 @@ export default function SelectNextForExaminateur({
                 >
                   Ajouter une association / société / domaine de chasse
                 </Button>
-                <Button
-                  priority="secondary"
-                  type="button"
-                  onClick={() => setShowSearchUserByEmail(true)}
-                  className="text-left"
-                >
+                <Button priority="secondary" type="button" onClick={() => setShowSearchUserByEmail(true)} className="text-left">
                   Chercher un Premier Détenteur par email
                 </Button>
                 <Button priority="tertiary" type="button" onClick={() => handleSubmitFromSelect(user.id)}>
@@ -226,9 +210,7 @@ export default function SelectNextForExaminateur({
                 if (event.target.value === 'new-user') {
                   setShowSearchUserByEmail(true);
                 } else if (event.target.value === 'new-entity') {
-                  navigate(
-                    `/app/chasseur/profil/associations-de-chasse?redirect=/app/chasseur/fei/${fei.numero}`,
-                  );
+                  navigate(`/app/chasseur/profil/associations-de-chasse?redirect=/app/chasseur/fei/${fei.numero}`);
                 } else {
                   setNextOwnerUserOrEntityId(event.target.value);
                 }
@@ -237,63 +219,46 @@ export default function SelectNextForExaminateur({
           >
             <option value="">{nextOwnerSelectLabel}</option>
             {Object.values(associationsDeChasse).map((potentielOwner) => {
-              return (
-                <NextOwnerOption
-                  nextOwnerIsEntity
-                  key={potentielOwner.id}
-                  potentielOwner={potentielOwner}
-                  user={user}
-                />
-              );
+              return <NextOwnerOption nextOwnerIsEntity key={potentielOwner.id} potentielOwner={potentielOwner} user={user} />;
             })}
             {Object.values(detenteursInitiaux).map((potentielOwner) => {
-              return (
-                <NextOwnerOption
-                  nextOwnerIsUser
-                  key={potentielOwner.id}
-                  potentielOwner={potentielOwner}
-                  user={user}
-                />
-              );
+              return <NextOwnerOption nextOwnerIsUser key={potentielOwner.id} potentielOwner={potentielOwner} user={user} />;
             })}
             <option value="new-entity">+ Ajouter une association / société / domaine de chasse</option>
-            <option value="new-user">
-              + Chercher par email un autre Premier Détenteur inscrit dans Zacharie
-            </option>
+            <option value="new-user">+ Chercher par email un autre Premier Détenteur inscrit dans Zacharie</option>
           </Select>
           {(!nextOwnerUserOrEntityId ||
-            (nextOwnerUserOrEntityId !== fei.premier_detenteur_user_id &&
-              nextOwnerUserOrEntityId !== fei.premier_detenteur_entity_id)) && (
-              <>
-                <Button
-                  type="button"
-                  disabled={disabled}
-                  onClick={() => {
-                    if (validationErrors.length > 0) {
-                      setShowValidationErrors(true);
-                      onShowErrors?.();
-                      return;
-                    }
-                    setShowValidationErrors(false);
-                    handleSubmitFromSelect(nextOwnerUser?.id);
-                  }}
-                >
-                  Continuer
-                </Button>
-                {showValidationErrors && validationErrors.length > 0 && (
-                  <Alert
-                    severity="error"
-                    title="Champs manquants"
-                    description={validationErrors.map((msg, i) => (
-                      <p key={i} className="fr-mb-0">
-                        {msg}
-                      </p>
-                    ))}
-                    className="mt-4"
-                  />
-                )}
-              </>
-            )}
+            (nextOwnerUserOrEntityId !== fei.premier_detenteur_user_id && nextOwnerUserOrEntityId !== fei.premier_detenteur_entity_id)) && (
+            <>
+              <Button
+                type="button"
+                disabled={disabled}
+                onClick={() => {
+                  if (validationErrors.length > 0) {
+                    setShowValidationErrors(true);
+                    onShowErrors?.();
+                    return;
+                  }
+                  setShowValidationErrors(false);
+                  handleSubmitFromSelect(nextOwnerUser?.id);
+                }}
+              >
+                Continuer
+              </Button>
+              {showValidationErrors && validationErrors.length > 0 && (
+                <Alert
+                  severity="error"
+                  title="Champs manquants"
+                  description={validationErrors.map((msg, i) => (
+                    <p key={i} className="fr-mb-0">
+                      {msg}
+                    </p>
+                  ))}
+                  className="mt-4"
+                />
+              )}
+            </>
+          )}
         </div>
       )}
 
@@ -405,12 +370,7 @@ export default function SelectNextForExaminateur({
           >
             Ajouter une association / société / domaine de chasse
           </Button>
-          <Button
-            priority="tertiary no outline"
-            className="mt-4 block"
-            type="button"
-            onClick={() => setShowSearchUserByEmail(false)}
-          >
+          <Button priority="tertiary no outline" className="mt-4 block" type="button" onClick={() => setShowSearchUserByEmail(false)}>
             Retour
           </Button>
         </>
@@ -426,12 +386,7 @@ type NextOwnerOptionProps = {
   nextOwnerIsUser?: boolean;
 };
 
-const NextOwnerOption = ({
-  potentielOwner,
-  nextOwnerIsEntity,
-  nextOwnerIsUser,
-  user,
-}: NextOwnerOptionProps) => {
+const NextOwnerOption = ({ potentielOwner, nextOwnerIsEntity, nextOwnerIsUser, user }: NextOwnerOptionProps) => {
   let label = '';
   if (nextOwnerIsEntity) {
     potentielOwner = potentielOwner as unknown as Entity;

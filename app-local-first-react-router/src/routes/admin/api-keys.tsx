@@ -51,9 +51,7 @@ export default function AdminApiKeys() {
 
   return (
     <div className="p-2 md:p-4">
-      <title>
-        Clés API | Admin | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire
-      </title>
+      <title>Clés API | Admin | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
       <div className="mb-2 flex items-center justify-between gap-2">
         <span className="text-sm text-gray-600">
           Doc :{' '}
@@ -105,10 +103,10 @@ export default function AdminApiKeys() {
                 })
                 .map((apiKey, index) => {
                   const approvedUsers = apiKey.approvals.filter(
-                    (approval) => approval.status === ApiKeyApprovalStatus.APPROVED && approval.User,
+                    (approval) => approval.status === ApiKeyApprovalStatus.APPROVED && approval.User
                   ).length;
                   const approvedEntities = apiKey.approvals.filter(
-                    (approval) => approval.status === ApiKeyApprovalStatus.APPROVED && approval.Entity,
+                    (approval) => approval.status === ApiKeyApprovalStatus.APPROVED && approval.Entity
                   ).length;
                   return [
                     <div key={apiKey.id} className="flex size-full flex-row items-start">
@@ -144,10 +142,7 @@ export default function AdminApiKeys() {
                       to={`/app/admin/api-key/${apiKey.id}`}
                       className="no-scrollbar inline-flex! size-full items-start justify-start overflow-x-auto! bg-none! no-underline!"
                     >
-                      <ul
-                        key={apiKey.id}
-                        className="size-full list-inside list-disc items-start justify-start bg-none! no-underline!"
-                      >
+                      <ul key={apiKey.id} className="size-full list-inside list-disc items-start justify-start bg-none! no-underline!">
                         <li>{approvedEntities} entités</li>
                         <li>{approvedUsers} utilisateurs</li>
                       </ul>

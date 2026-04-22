@@ -14,10 +14,7 @@ import { useNavigate, useSearchParams, Link } from 'react-router';
 import { loadFeis } from '@app/utils/load-feis';
 import { loadMyRelations } from '@app/utils/load-my-relations';
 import useExportFeis from '@app/utils/export-feis';
-import {
-  filterCarcassesIntermediairesForCarcasse,
-  filterFeiIntermediaires,
-} from '@app/utils/get-carcasses-intermediaires';
+import { filterCarcassesIntermediairesForCarcasse, filterFeiIntermediaires } from '@app/utils/get-carcasses-intermediaires';
 import { useSaveScroll } from '@app/services/useSaveScroll';
 import CardFiche from '@app/components/CardFiche';
 import DropDownMenu from '@app/components/DropDownMenu';
@@ -35,7 +32,17 @@ import { useLocalStorage } from '@uidotdev/usehooks';
 import type { FeiWithIntermediaires } from '@api/src/types/fei';
 import { useEntitiesIdsWorkingDirectlyFor } from '@app/utils/get-entity-relations';
 
-function CollapsibleSection({ title, children, defaultOpen = true, badge }: { title: string; children: React.ReactNode; defaultOpen?: boolean; badge?: React.ReactNode }) {
+function CollapsibleSection({
+  title,
+  children,
+  defaultOpen = true,
+  badge,
+}: {
+  title: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+  badge?: React.ReactNode;
+}) {
   const [open, setOpen] = useState(defaultOpen);
   return (
     <div className="border-b border-gray-200 py-2">
@@ -101,9 +108,7 @@ function OnboardingChasseInfoBanner() {
     <div className="fr-mb-4w flex flex-col gap-4 rounded border border-[var(--border-default-grey)] bg-white p-4 md:flex-row md:items-center md:justify-between">
       <div>
         <p className="m-0 text-lg font-medium">Complétez vos informations de chasse</p>
-        <p className="m-0 mt-1 text-sm text-[var(--text-mention-grey)]">
-          Ces informations seront reportées automatiquement sur vos fiches.
-        </p>
+        <p className="m-0 mt-1 text-sm text-[var(--text-mention-grey)]">Ces informations seront reportées automatiquement sur vos fiches.</p>
       </div>
       <div className="flex shrink-0 flex-col gap-2 md:flex-row">
         <Link to="/app/chasseur/onboarding/mes-informations-de-chasse" className="fr-btn fr-btn--primary">
@@ -363,7 +368,7 @@ export default function ChasseurFiches() {
         (fei) =>
           fei.numero.toLowerCase().includes(q) ||
           (fei.commune_mise_a_mort && fei.commune_mise_a_mort.toLowerCase().includes(q)) ||
-          (fei.premier_detenteur_name_cache && fei.premier_detenteur_name_cache.toLowerCase().includes(q)),
+          (fei.premier_detenteur_name_cache && fei.premier_detenteur_name_cache.toLowerCase().includes(q))
       );
     }
     if (filterStatuses.length > 0) {
@@ -384,7 +389,7 @@ export default function ChasseurFiches() {
       feis = feis.filter(
         (fei) =>
           filterPremierDetenteurs.includes(fei.premier_detenteur_user_id ?? '') ||
-          filterPremierDetenteurs.includes(fei.premier_detenteur_entity_id ?? ''),
+          filterPremierDetenteurs.includes(fei.premier_detenteur_entity_id ?? '')
       );
     }
     if (filterCCGs.length > 0) {
@@ -393,8 +398,7 @@ export default function ChasseurFiches() {
     if (filterCollecteurs.length > 0) {
       feis = feis.filter(
         (fei) =>
-          filterCollecteurs.includes(fei.latest_intermediaire_user_id ?? '') ||
-          filterCollecteurs.includes(fei.latest_intermediaire_entity_id ?? ''),
+          filterCollecteurs.includes(fei.latest_intermediaire_user_id ?? '') || filterCollecteurs.includes(fei.latest_intermediaire_entity_id ?? '')
       );
     }
     return feis;
@@ -418,7 +422,12 @@ export default function ChasseurFiches() {
     return filteredFeis.slice(start, start + perPage);
   }, [filteredFeis, page, itemsPerPage]);
 
-  const hasActiveFilters = filterStatuses.length > 0 || filterPremierDetenteurs.length > 0 || filterCCGs.length > 0 || filterCollecteurs.length > 0 || searchQuery.trim().length > 0;
+  const hasActiveFilters =
+    filterStatuses.length > 0 ||
+    filterPremierDetenteurs.length > 0 ||
+    filterCCGs.length > 0 ||
+    filterCollecteurs.length > 0 ||
+    searchQuery.trim().length > 0;
 
   const clearAllFilters = () => {
     setFilterStatuses([]);
@@ -448,19 +457,19 @@ export default function ChasseurFiches() {
       {/* Recherche */}
       <div className="mt-2">
         <div className="relative">
-          <span className="fr-icon--sm fr-icon-search-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden="true" />
+          <span className="fr-icon--sm fr-icon-search-line absolute top-1/2 left-3 -translate-y-1/2 text-gray-400" aria-hidden="true" />
           <input
             type="search"
             placeholder="Rechercher une fiche..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded border border-gray-300 py-2 pl-10 pr-3 text-sm outline-none transition-colors focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="w-full rounded border border-gray-300 py-2 pr-3 pl-10 text-sm transition-colors outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
           />
         </div>
       </div>
 
       {/* Compteur */}
-      <div className="flex items-center justify-between border-b border-gray-200 pb-3 mt-2">
+      <div className="mt-2 flex items-center justify-between border-b border-gray-200 pb-3">
         <span className="text-sm font-medium text-gray-600">
           {filteredFeis.length} fiche{filteredFeis.length > 1 ? 's' : ''}
         </span>
@@ -474,14 +483,15 @@ export default function ChasseurFiches() {
       {/* Filtre Statut */}
       <CollapsibleSection
         title="Statut"
-        badge={filterStatuses.length > 0 ? <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">{filterStatuses.length}</span> : undefined}
+        badge={
+          filterStatuses.length > 0 ? (
+            <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">{filterStatuses.length}</span>
+          ) : undefined
+        }
       >
         <div className="flex flex-col gap-1.5">
           {(['À compléter', 'En cours', 'Clôturée'] as FeiStepSimpleStatus[]).map((status) => (
-            <label
-              key={status}
-              className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-gray-50"
-            >
+            <label key={status} className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-gray-50">
               <input
                 type="checkbox"
                 checked={filterStatuses.includes(status)}
@@ -494,9 +504,7 @@ export default function ChasseurFiches() {
                   }
                 }}
               />
-              <span
-                className={`inline-block rounded px-2 py-0.5 text-xs font-semibold ${statusColors[status].bg} ${statusColors[status].text}`}
-              >
+              <span className={`inline-block rounded px-2 py-0.5 text-xs font-semibold ${statusColors[status].bg} ${statusColors[status].text}`}>
                 {status}
               </span>
             </label>
@@ -508,14 +516,15 @@ export default function ChasseurFiches() {
       {premierDetenteurOptions.length > 1 && (
         <CollapsibleSection
           title="Premier détenteur"
-          badge={filterPremierDetenteurs.length > 0 ? <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">{filterPremierDetenteurs.length}</span> : undefined}
+          badge={
+            filterPremierDetenteurs.length > 0 ? (
+              <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">{filterPremierDetenteurs.length}</span>
+            ) : undefined
+          }
         >
           <div className="flex max-h-40 flex-col gap-1 overflow-y-auto">
             {premierDetenteurOptions.map((option) => (
-              <label
-                key={option.id}
-                className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-gray-50"
-              >
+              <label key={option.id} className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-gray-50">
                 <input
                   type="checkbox"
                   checked={filterPremierDetenteurs.includes(option.id)}
@@ -539,14 +548,15 @@ export default function ChasseurFiches() {
       {ccgOptions.length > 1 && (
         <CollapsibleSection
           title="Centre de collecte (CCG)"
-          badge={filterCCGs.length > 0 ? <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">{filterCCGs.length}</span> : undefined}
+          badge={
+            filterCCGs.length > 0 ? (
+              <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">{filterCCGs.length}</span>
+            ) : undefined
+          }
         >
           <div className="flex max-h-40 flex-col gap-1 overflow-y-auto">
             {ccgOptions.map((option) => (
-              <label
-                key={option.id}
-                className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-gray-50"
-              >
+              <label key={option.id} className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-gray-50">
                 <input
                   type="checkbox"
                   checked={filterCCGs.includes(option.id)}
@@ -570,14 +580,15 @@ export default function ChasseurFiches() {
       {collecteurOptions.length > 1 && (
         <CollapsibleSection
           title="Collecteur"
-          badge={filterCollecteurs.length > 0 ? <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">{filterCollecteurs.length}</span> : undefined}
+          badge={
+            filterCollecteurs.length > 0 ? (
+              <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">{filterCollecteurs.length}</span>
+            ) : undefined
+          }
         >
           <div className="flex max-h-40 flex-col gap-1 overflow-y-auto">
             {collecteurOptions.map((option) => (
-              <label
-                key={option.id}
-                className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-gray-50"
-              >
+              <label key={option.id} className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-gray-50">
                 <input
                   type="checkbox"
                   checked={filterCollecteurs.includes(option.id)}
@@ -635,9 +646,7 @@ export default function ChasseurFiches() {
               key={option}
               className={[
                 'rounded px-3 py-1 text-sm transition-colors',
-                (itemsPerPage ?? 20) === option
-                  ? 'bg-action-high-blue-france text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200',
+                (itemsPerPage ?? 20) === option ? 'bg-action-high-blue-france text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200',
               ].join(' ')}
               onClick={() => {
                 const firstItemIndex = (page - 1) * (itemsPerPage ?? 20);
@@ -654,28 +663,44 @@ export default function ChasseurFiches() {
 
       {/* Actions export */}
       <CollapsibleSection title="Actions" defaultOpen={false}>
-        <Button size='small' disabled={selectedFeis.length === 0} priority="secondary" className="w-full" iconId="ri-download-line" onClick={(e) => {
-          e.preventDefault();
-          if (selectedFeis.length === 0) return;
-          if (isExporting) return;
-          onExportToXlsx(selectedFeis);
-        }}>
+        <Button
+          size="small"
+          disabled={selectedFeis.length === 0}
+          priority="secondary"
+          className="w-full"
+          iconId="ri-download-line"
+          onClick={(e) => {
+            e.preventDefault();
+            if (selectedFeis.length === 0) return;
+            if (isExporting) return;
+            onExportToXlsx(selectedFeis);
+          }}
+        >
           Exporter (complet)
         </Button>
 
-        <Button size='small' disabled={selectedFeis.length === 0} priority="secondary" className="w-full mt-2" iconId="ri-download-line" onClick={(e) => {
-          e.preventDefault();
-          if (selectedFeis.length === 0) return;
-          if (isExporting) return;
-          onExportSimplifiedToXlsx(selectedFeis);
-        }}>Exporter (simplifié)</Button>
+        <Button
+          size="small"
+          disabled={selectedFeis.length === 0}
+          priority="secondary"
+          className="mt-2 w-full"
+          iconId="ri-download-line"
+          onClick={(e) => {
+            e.preventDefault();
+            if (selectedFeis.length === 0) return;
+            if (isExporting) return;
+            onExportSimplifiedToXlsx(selectedFeis);
+          }}
+        >
+          Exporter (simplifié)
+        </Button>
       </CollapsibleSection>
 
       {/* Mettre à jour */}
       <Button
         priority="tertiary"
         size="small"
-        className="w-full mt-2"
+        className="mt-2 w-full"
         iconId="ri-refresh-line"
         disabled={!isOnline || loading}
         onClick={async () => {
@@ -712,13 +737,9 @@ export default function ChasseurFiches() {
               Nouvelle fiche
             </Button>
           )}
-          <Button
-            iconId="ri-filter-3-line"
-            priority="secondary"
-            size="small"
-            onClick={() => setShowMobileFilters(!showMobileFilters)}
-          >
-            Filtres{hasActiveFilters ? ` (${filterStatuses.length + filterPremierDetenteurs.length + filterCCGs.length + filterCollecteurs.length})` : ''}
+          <Button iconId="ri-filter-3-line" priority="secondary" size="small" onClick={() => setShowMobileFilters(!showMobileFilters)}>
+            Filtres
+            {hasActiveFilters ? ` (${filterStatuses.length + filterPremierDetenteurs.length + filterCCGs.length + filterCollecteurs.length})` : ''}
           </Button>
         </div>
       </div>
@@ -727,13 +748,10 @@ export default function ChasseurFiches() {
       {showMobileFilters && (
         <div className="fixed inset-0 z-[800] md:hidden">
           <div className="absolute inset-0 bg-black/30" onClick={() => setShowMobileFilters(false)} />
-          <div className="absolute bottom-0 right-0 top-0 w-80 overflow-y-auto bg-white p-4 shadow-xl">
+          <div className="absolute top-0 right-0 bottom-0 w-80 overflow-y-auto bg-white p-4 shadow-xl">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-bold">Filtres</h2>
-              <button
-                className="text-action-high-blue-france text-sm underline"
-                onClick={() => setShowMobileFilters(false)}
-              >
+              <button className="text-action-high-blue-france text-sm underline" onClick={() => setShowMobileFilters(false)}>
                 Fermer
               </button>
             </div>
@@ -750,14 +768,9 @@ export default function ChasseurFiches() {
         </aside>
 
         {/* Contenu principal */}
-        <div className="min-w-0 max-w-5xl mx-auto flex-1 px-4 pt-4 md:px-6">
+        <div className="mx-auto max-w-5xl min-w-0 flex-1 px-4 pt-4 md:px-6">
           <OnboardingChasseInfoBanner />
-          <FeisWrapper
-            viewType={viewType}
-            handleSelectAll={handleSelectAll}
-            selectedFeis={selectedFeis}
-            filter={'Toutes les fiches'}
-          >
+          <FeisWrapper viewType={viewType} handleSelectAll={handleSelectAll} selectedFeis={selectedFeis} filter={'Toutes les fiches'}>
             {paginatedFeis.map((fei) => {
               if (!fei) return null;
               return (
@@ -835,9 +848,7 @@ function FeisWrapper({
                   </Button>
                 </>
               ) : (
-                <p className="fr-text--regular mb-6 max-w-md">
-                  Vos fiches apparaîtront ici dès qu'une fiche vous sera attribuée.
-                </p>
+                <p className="fr-text--regular mb-6 max-w-md">Vos fiches apparaîtront ici dès qu'une fiche vous sera attribuée.</p>
               )}
             </div>
           </div>
@@ -848,21 +859,13 @@ function FeisWrapper({
 
   if (viewType === 'table') {
     return (
-      <FeisTable
-        handleSelectAll={handleSelectAll}
-        selectedFeis={selectedFeis}
-        filter={filter as FeiStepSimpleStatus | 'Toutes les fiches'}
-      >
+      <FeisTable handleSelectAll={handleSelectAll} selectedFeis={selectedFeis} filter={filter as FeiStepSimpleStatus | 'Toutes les fiches'}>
         {children}
       </FeisTable>
     );
   }
 
-  return (
-    <div className="grid w-full grid-cols-1 gap-4 justify-self-end sm:grid-cols-2 lg:grid-cols-3">
-      {children}
-    </div>
-  );
+  return <div className="grid w-full grid-cols-1 gap-4 justify-self-end sm:grid-cols-2 lg:grid-cols-3">{children}</div>;
 }
 
 function FeisTableRow({
@@ -904,15 +907,10 @@ function FeisTableRow({
         let enrichedLine = line;
         for (const [espece, abbreviation] of Object.entries(abbreviations)) {
           if (line.toLowerCase().includes(abbreviation.toLowerCase())) {
-            const carcasse = feiCarcasses.find(
-              (c) => c?.type === CarcasseType.PETIT_GIBIER && c.espece === espece,
-            );
+            const carcasse = feiCarcasses.find((c) => c?.type === CarcasseType.PETIT_GIBIER && c.espece === espece);
             if (carcasse) {
               const nombreDAnimaux = carcasse.nombre_d_animaux ?? 0;
-              const intermediaires = filterCarcassesIntermediairesForCarcasse(
-                carcassesIntermediaireById,
-                carcasse.zacharie_carcasse_id!,
-              );
+              const intermediaires = filterCarcassesIntermediairesForCarcasse(carcassesIntermediaireById, carcasse.zacharie_carcasse_id!);
               const latestIntermediaire = intermediaires[0];
               const nombreDAnimauxAcceptes = latestIntermediaire?.nombre_d_animaux_acceptes ?? 0;
               if (nombreDAnimaux > 1 && nombreDAnimauxAcceptes > 0) {
@@ -999,9 +997,7 @@ function FeisTableRow({
           ) : (
             <span className="text-gray-400">À renseigner</span>
           )}
-          {_carcassesOuLotsRefusés && (
-            <span className="text-warning-main-525 font-semibold">{_carcassesOuLotsRefusés}</span>
-          )}
+          {_carcassesOuLotsRefusés && <span className="text-warning-main-525 font-semibold">{_carcassesOuLotsRefusés}</span>}
         </div>
       </td>
     </tr>
@@ -1024,17 +1020,14 @@ function FeisTable({
 
   // Extract CardFiche components from children to get fei data
   const feis = React.Children.toArray(children).filter(
-    (child): child is React.ReactElement => React.isValidElement(child) && child.type === CardFiche,
+    (child): child is React.ReactElement => React.isValidElement(child) && child.type === CardFiche
   );
 
   if (feis.length === 0) {
     return null;
   }
 
-  const allSelected =
-    visibleFeisNumbers.length > 0
-      ? visibleFeisNumbers.every((numero) => selectedFeis?.includes(numero))
-      : false;
+  const allSelected = visibleFeisNumbers.length > 0 ? visibleFeisNumbers.every((numero) => selectedFeis?.includes(numero)) : false;
 
   const handleSelectAllInTable = () => {
     if (handleSelectAll) {

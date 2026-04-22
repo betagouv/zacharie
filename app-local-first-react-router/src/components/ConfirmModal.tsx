@@ -31,7 +31,7 @@ export default function ConfirmModal({
     createModal({
       id: `delete-modal-${textToConfirm}`,
       isOpenedByDefault: false,
-    }),
+    })
   ).current;
 
   const isModalOpen = useIsModalOpen(modal);

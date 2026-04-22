@@ -53,16 +53,14 @@ export function getCountCarcassesByEspece(carcasses: Array<Carcasse>): CountCarc
       ) {
         if (carcasse.type === CarcasseType.PETIT_GIBIER) {
           acc.refus_lots.lots++;
-          acc.refus_lots.nombre_d_animaux +=
-            carcasse.svi_ipm2_nombre_animaux || carcasse.nombre_d_animaux || 0;
+          acc.refus_lots.nombre_d_animaux += carcasse.svi_ipm2_nombre_animaux || carcasse.nombre_d_animaux || 0;
         } else {
           acc.refus_carcasses.carcasses++;
         }
         return acc;
       }
       acc[carcasse.espece!] = {
-        carcasses:
-          carcasse.type === CarcasseType.PETIT_GIBIER ? 0 : (acc[carcasse.espece!]?.carcasses || 0) + 1,
+        carcasses: carcasse.type === CarcasseType.PETIT_GIBIER ? 0 : (acc[carcasse.espece!]?.carcasses || 0) + 1,
         nombre_d_animaux: (acc[carcasse.espece!]?.nombre_d_animaux || 0) + (carcasse?.nombre_d_animaux || 1),
         lots: carcasse.type === CarcasseType.PETIT_GIBIER ? (acc[carcasse.espece!]?.lots || 0) + 1 : 0,
       };
@@ -79,7 +77,7 @@ export function getCountCarcassesByEspece(carcasses: Array<Carcasse>): CountCarc
         lots: 0,
         nombre_d_animaux: 0,
       },
-    } as CountCarcassesByEspece,
+    } as CountCarcassesByEspece
   );
 }
 

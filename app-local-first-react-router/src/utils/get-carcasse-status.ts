@@ -2,9 +2,7 @@ import { Carcasse, CarcasseStatus, CarcasseType, IPM1Decision, IPM2Decision } fr
 import { CarcasseForResponseForRegistry } from '@api/src/types/carcasse';
 import dayjs from 'dayjs';
 
-export default function updateCarcasseStatus<T extends Carcasse | CarcasseForResponseForRegistry>(
-  carcasse: T,
-) {
+export default function updateCarcasseStatus<T extends Carcasse | CarcasseForResponseForRegistry>(carcasse: T) {
   if (carcasse.intermediaire_carcasse_manquante) {
     return CarcasseStatus.MANQUANTE_ETG_COLLECTEUR;
   }

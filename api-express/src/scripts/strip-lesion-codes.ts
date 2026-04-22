@@ -14,10 +14,7 @@ const applyMode = process.argv.includes('--apply');
   const carcasses = await prisma.carcasse.findMany({
     where: {
       deleted_at: null,
-      OR: [
-        { svi_ipm1_lesions_ou_motifs: { isEmpty: false } },
-        { svi_ipm2_lesions_ou_motifs: { isEmpty: false } },
-      ],
+      OR: [{ svi_ipm1_lesions_ou_motifs: { isEmpty: false } }, { svi_ipm2_lesions_ou_motifs: { isEmpty: false } }],
     },
     select: {
       zacharie_carcasse_id: true,

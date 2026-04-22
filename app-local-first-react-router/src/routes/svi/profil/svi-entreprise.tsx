@@ -49,7 +49,7 @@ export default function SviProfilEntreprise() {
         useUser.setState({ user: response.data.user });
       }
     },
-    [user.id],
+    [user.id]
   );
 
   return (

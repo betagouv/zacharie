@@ -110,9 +110,7 @@ export default function RootDisplay({
     },
   ];
 
-  const quickAccessItems: Array<HeaderProps.QuickAccessItem> | undefined = user
-    ? quickAccessItemsConnected
-    : quickAccessItemsDisconnected;
+  const quickAccessItems: Array<HeaderProps.QuickAccessItem> | undefined = user ? quickAccessItemsConnected : quickAccessItemsDisconnected;
 
   return (
     <>
@@ -187,9 +185,7 @@ export default function RootDisplay({
                     },
                     {
                       linkProps: {
-                        to: user?.roles.includes(UserRoles.CHASSEUR)
-                          ? '/app/chasseur'
-                          : '/app/tableau-de-bord',
+                        to: user?.roles.includes(UserRoles.CHASSEUR) ? '/app/chasseur' : '/app/tableau-de-bord',
                         href: '#',
                       },
                       text: 'Accéder à mon compte',

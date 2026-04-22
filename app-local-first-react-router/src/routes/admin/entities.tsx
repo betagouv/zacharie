@@ -191,9 +191,7 @@ export default function AdminEntites() {
                           {entity.nom_d_usage}
                         </Link>
                       </span>
-                      {entity.raison_sociale && (
-                        <span className="text-xs text-gray-500">{entity.raison_sociale}</span>
-                      )}
+                      {entity.raison_sociale && <span className="text-xs text-gray-500">{entity.raison_sociale}</span>}
                     </span>
                   </td>
                   <td className="px-2 py-1">

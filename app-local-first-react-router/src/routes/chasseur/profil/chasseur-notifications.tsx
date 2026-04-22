@@ -11,13 +11,7 @@ import { toast } from 'react-toastify';
 export default function MesNotifications() {
   const user = useUser((state) => state.user)!;
 
-  const {
-    subscribeToPush,
-    canSendPush,
-    isSubscribed,
-    pushSubscription,
-    pushAvailable: pushAvailableOnWeb,
-  } = usePush();
+  const { subscribeToPush, canSendPush, isSubscribed, pushSubscription, pushAvailable: pushAvailableOnWeb } = usePush();
 
   const [nativePushTokenRegistered, setNativePushTokenRegistered] = useState(false);
   useEffect(() => {
@@ -73,9 +67,7 @@ export default function MesNotifications() {
         }
       }}
     >
-      <title>
-        Mes notifications | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire
-      </title>
+      <title>Mes notifications | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
       <div className="fr-container fr-container--fluid fr-my-md-14v">
         <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
           <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
@@ -119,7 +111,7 @@ export default function MesNotifications() {
                             },
                             (error) => {
                               console.error('Error subscribing user to push notifications!', error);
-                            },
+                            }
                           );
                         },
                       },

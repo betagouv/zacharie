@@ -12,7 +12,6 @@ import API from '@app/services/api';
 import RelationEntityUser from '@app/components/RelationEntityUser';
 import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
 
-
 const empytEntitiesByTypeAndId: EntitiesByTypeAndId = {
   [EntityTypes.PREMIER_DETENTEUR]: {},
   // UNUSED - just for typing purposes with the API
@@ -29,10 +28,8 @@ const empytEntitiesByTypeAndId: EntitiesByTypeAndId = {
 
 export default function MesAssociationsDeChasse() {
   const user = useUser((state) => state.user)!;
-  const [allEntitiesByTypeAndId, setAllEntitiesByTypeAndId] =
-    useState<EntitiesByTypeAndId>(empytEntitiesByTypeAndId);
-  const [userEntitiesByTypeAndId, setUserEntitiesByTypeAndId] =
-    useState<EntitiesByTypeAndId>(empytEntitiesByTypeAndId);
+  const [allEntitiesByTypeAndId, setAllEntitiesByTypeAndId] = useState<EntitiesByTypeAndId>(empytEntitiesByTypeAndId);
+  const [userEntitiesByTypeAndId, setUserEntitiesByTypeAndId] = useState<EntitiesByTypeAndId>(empytEntitiesByTypeAndId);
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
@@ -48,8 +45,7 @@ export default function MesAssociationsDeChasse() {
   const handleUserSubmit = useCallback(
     async (checked_has_asso_de_chasse: boolean) => {
       const body: Record<string, string | null> = {};
-      body.checked_has_asso_de_chasse =
-        checked_has_asso_de_chasse == null ? null : checked_has_asso_de_chasse ? 'true' : 'false';
+      body.checked_has_asso_de_chasse = checked_has_asso_de_chasse == null ? null : checked_has_asso_de_chasse ? 'true' : 'false';
       const response = await API.post({
         path: `/user/${user.id}`,
         body,
@@ -58,16 +54,15 @@ export default function MesAssociationsDeChasse() {
         useUser.setState({ user: response.data.user });
       }
     },
-    [user.id],
+    [user.id]
   );
 
   const userEntities = Object.values(userEntitiesByTypeAndId[EntityTypes.PREMIER_DETENTEUR]);
   const remainingEntities = Object.values(allEntitiesByTypeAndId[EntityTypes.PREMIER_DETENTEUR]).filter(
-    (entity) => !userEntitiesByTypeAndId[EntityTypes.PREMIER_DETENTEUR][entity.id],
+    (entity) => !userEntitiesByTypeAndId[EntityTypes.PREMIER_DETENTEUR][entity.id]
   );
 
-  const userHasAssociationsChasses =
-    Object.values(userEntitiesByTypeAndId[EntityTypes.PREMIER_DETENTEUR]).length > 0;
+  const userHasAssociationsChasses = Object.values(userEntitiesByTypeAndId[EntityTypes.PREMIER_DETENTEUR]).length > 0;
 
   const [showForm, setShowForm] = useState(!userHasAssociationsChasses);
   useEffect(() => {
@@ -81,9 +76,9 @@ export default function MesAssociationsDeChasse() {
 
   const newEntity = newEntityNomDUsage
     ? ({
-      nom_d_usage: newEntityNomDUsage,
-      id: 'nouvelle',
-    } as (typeof remainingEntities)[number])
+        nom_d_usage: newEntityNomDUsage,
+        id: 'nouvelle',
+      } as (typeof remainingEntities)[number])
     : undefined;
   const selectOptions = newEntity ? [newEntity, ...remainingEntities] : remainingEntities;
   const selectValue = newEntityNomDUsage
@@ -107,17 +102,14 @@ export default function MesAssociationsDeChasse() {
           setCurrentEntityId(null);
           setAssoPostalCode('');
           setShowForm(false);
-          document
-            .getElementById('onboarding-etape-2-associations-data-title')
-            ?.scrollIntoView({ behavior: 'smooth' });
+          document.getElementById('onboarding-etape-2-associations-data-title')?.scrollIntoView({ behavior: 'smooth' });
         }
       } else {
         API.post({
           path: '/user-entity',
           body: {
             [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
-            [Prisma.EntityAndUserRelationsScalarFieldEnum.relation]:
-              EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+            [Prisma.EntityAndUserRelationsScalarFieldEnum.relation]: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
             [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: currentEntityId,
           },
         }).then((res) => {
@@ -125,14 +117,12 @@ export default function MesAssociationsDeChasse() {
             setRefreshKey((k) => k + 1);
             setCurrentEntityId(null);
             setShowForm(false);
-            document
-              .getElementById('onboarding-etape-2-associations-data-title')
-              ?.scrollIntoView({ behavior: 'smooth' });
+            document.getElementById('onboarding-etape-2-associations-data-title')?.scrollIntoView({ behavior: 'smooth' });
           }
         });
       }
     },
-    [isUnregisteredEntity, setRefreshKey, user.id, currentEntityId, newEntityNomDUsage],
+    [isUnregisteredEntity, setRefreshKey, user.id, currentEntityId, newEntityNomDUsage]
   );
 
   return (
@@ -171,9 +161,7 @@ export default function MesAssociationsDeChasse() {
         .filter((entity) => entity.type === EntityTypes.PREMIER_DETENTEUR)
         .map((entity) => {
           const relation = entity.EntityRelationsWithUsers.find(
-            (relation) =>
-              relation.owner_id === user.id &&
-              relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+            (relation) => relation.owner_id === user.id && relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
           );
           if (!relation) return null;
           return (
@@ -216,9 +204,7 @@ export default function MesAssociationsDeChasse() {
                     <SelectCustom
                       key={'Raison Sociale *' + currentEntityId}
                       options={selectOptions}
-                      getOptionLabel={(entity) =>
-                        `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`
-                      }
+                      getOptionLabel={(entity) => `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`}
                       getOptionValue={(entity) => entity.id}
                       formatOptionLabel={(entity, options) => {
                         if (options.context === 'menu') {
@@ -268,34 +254,31 @@ export default function MesAssociationsDeChasse() {
                       inputId={Prisma.EntityScalarFieldEnum.raison_sociale}
                       classNamePrefix={Prisma.EntityScalarFieldEnum.raison_sociale}
                     />
-                    <div className="flex items-center gap-2 my-4">
-                      <div className="border-b border-gray-200 w-full" />
+                    <div className="my-4 flex items-center gap-2">
+                      <div className="w-full border-b border-gray-200" />
                       <span className="text-sm text-gray-500">ou</span>
-                      <div className="border-b border-gray-200 w-full" />
+                      <div className="w-full border-b border-gray-200" />
                     </div>
-                    <Button type="submit" nativeButtonProps={{
-                      onClick: () => {
-                        setNewEntityNomDUsage('');
-                        setIsUnregisteredEntity(true);
-                      }
-                    }}>
+                    <Button
+                      type="submit"
+                      nativeButtonProps={{
+                        onClick: () => {
+                          setNewEntityNomDUsage('');
+                          setIsUnregisteredEntity(true);
+                        },
+                      }}
+                    >
                       Créer une nouvelle association, société ou domaine de chasse
                     </Button>
                   </>
                 )}
                 {currentEntityId && currentEntity && !isUnregisteredEntity && (
                   <form id="association_data_form" method="POST" onSubmit={handleEntitySubmit}>
-                    <div className="rounded-lg bg-contrast-grey p-4">
+                    <div className="bg-contrast-grey rounded-lg p-4">
                       <p className="mb-1 text-lg font-bold">{currentEntity.nom_d_usage}</p>
-                      {currentEntity.siret && (
-                        <p className="mb-1 text-sm">SIRET : {currentEntity.siret}</p>
-                      )}
-                      {currentEntity.address_ligne_1 && (
-                        <p className="mb-1 text-sm">{currentEntity.address_ligne_1}</p>
-                      )}
-                      {currentEntity.address_ligne_2 && (
-                        <p className="mb-1 text-sm">{currentEntity.address_ligne_2}</p>
-                      )}
+                      {currentEntity.siret && <p className="mb-1 text-sm">SIRET : {currentEntity.siret}</p>}
+                      {currentEntity.address_ligne_1 && <p className="mb-1 text-sm">{currentEntity.address_ligne_1}</p>}
+                      {currentEntity.address_ligne_2 && <p className="mb-1 text-sm">{currentEntity.address_ligne_2}</p>}
                       {(currentEntity.code_postal || currentEntity.ville) && (
                         <p className="text-sm">
                           {currentEntity.code_postal} {currentEntity.ville}
@@ -321,9 +304,7 @@ export default function MesAssociationsDeChasse() {
                 )}
                 {isUnregisteredEntity && (
                   <>
-                    <p className="mb-5 text-sm text-gray-500">
-                      * Les champs marqués d'un astérisque (*) sont obligatoires.
-                    </p>
+                    <p className="mb-5 text-sm text-gray-500">* Les champs marqués d'un astérisque (*) sont obligatoires.</p>
                     <form id="association_data_form" method="POST" onSubmit={handleEntitySubmit}>
                       <Input
                         label="Raison Sociale *"

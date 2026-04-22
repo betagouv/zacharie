@@ -37,11 +37,7 @@ interface PerformanceTags {
   has_slow_resources: 'yes' | 'no';
 }
 
-function getConnectionQuality(
-  ttfb: number | null,
-  effectiveType?: string,
-  rtt?: number,
-): PerformanceTags['connection_quality'] {
+function getConnectionQuality(ttfb: number | null, effectiveType?: string, rtt?: number): PerformanceTags['connection_quality'] {
   // Priority 1: Use TTFB if available (most reliable)
   if (ttfb !== null) {
     if (ttfb < 100) return 'excellent'; // < 100ms
@@ -71,10 +67,7 @@ function getConnectionQuality(
   return 'unknown';
 }
 
-function getPageLoadSpeed(
-  domContentLoaded: number | null,
-  loadComplete: number | null,
-): PerformanceTags['page_load_speed'] {
+function getPageLoadSpeed(domContentLoaded: number | null, loadComplete: number | null): PerformanceTags['page_load_speed'] {
   const metric = loadComplete || domContentLoaded;
 
   if (metric === null) return 'unknown';
@@ -132,9 +125,7 @@ export function getPerformanceContext(): {
 
   const timing = {
     ttfb: navTiming ? Math.round(navTiming.responseStart - navTiming.requestStart) : null,
-    domContentLoaded: navTiming
-      ? Math.round(navTiming.domContentLoadedEventEnd - navTiming.fetchStart)
-      : null,
+    domContentLoaded: navTiming ? Math.round(navTiming.domContentLoadedEventEnd - navTiming.fetchStart) : null,
     loadComplete: navTiming ? Math.round(navTiming.loadEventEnd - navTiming.fetchStart) : null,
   };
 
@@ -152,10 +143,7 @@ export function getPerformanceContext(): {
     ? {
         used: Math.round(performanceWithMemory.memory.usedJSHeapSize / 1024 / 1024), // MB
         limit: Math.round(performanceWithMemory.memory.jsHeapSizeLimit / 1024 / 1024), // MB
-        percentage: (
-          (performanceWithMemory.memory.usedJSHeapSize / performanceWithMemory.memory.jsHeapSizeLimit) *
-          100
-        ).toFixed(1),
+        percentage: ((performanceWithMemory.memory.usedJSHeapSize / performanceWithMemory.memory.jsHeapSizeLimit) * 100).toFixed(1),
       }
     : null;
 
@@ -197,10 +185,7 @@ export function capture(err: ErrorType, context: Context | string = {}): void {
     return console.log('capture', err, JSON.stringify(context, null, 2));
   }
   if (import.meta.env.VITE_ENV !== 'prod' && import.meta.env.VITE_ENV !== 'test') {
-    console.log(
-      'capture import.meta.env.VITE_ENV !== prod && import.meta.env.VITE_ENV !== test',
-      import.meta.env.VITE_ENV,
-    );
+    console.log('capture import.meta.env.VITE_ENV !== prod && import.meta.env.VITE_ENV !== test', import.meta.env.VITE_ENV);
     return console.log('capture', err, context);
   }
   if (typeof context === 'string') {

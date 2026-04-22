@@ -96,9 +96,7 @@ export default function AdminUsers() {
     return true;
   });
 
-  const chasseursToActivate = filteredUsers.filter(
-    (user) => !user.activated && user.roles?.includes(UserRoles.CHASSEUR),
-  );
+  const chasseursToActivate = filteredUsers.filter((user) => !user.activated && user.roles?.includes(UserRoles.CHASSEUR));
 
   const tabs: TabsProps['tabs'] = [
     { tabId: 'all', label: `Tous (${filteredUsers.length})` },
@@ -124,9 +122,7 @@ export default function AdminUsers() {
 
   return (
     <div className="py-2">
-      <title>
-        Utilisateurs | Admin | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire
-      </title>
+      <title>Utilisateurs | Admin | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
       <div className="mb-2 flex items-center justify-end"></div>
       <div className="flex flex-wrap items-end gap-2 pb-2 [&_.fr-input-group]:mb-0 [&_.fr-label]:text-xs [&_.fr-select-group]:mb-0">
         <Input
@@ -217,8 +213,7 @@ export default function AdminUsers() {
             <tbody>
               {filteredUsers
                 .filter((user) => {
-                  if (selectedTabId === 'chasseurs-a-activer')
-                    return !user.activated && user.roles?.includes(UserRoles.CHASSEUR);
+                  if (selectedTabId === 'chasseurs-a-activer') return !user.activated && user.roles?.includes(UserRoles.CHASSEUR);
                   if (selectedTabId === 'activated') return user.activated;
                   if (selectedTabId === 'deactivated') return !user.activated;
                   return true;
@@ -241,9 +236,7 @@ export default function AdminUsers() {
                           <span className="text-xs">{user.email}</span>
                           {(user.telephone || user.code_postal || user.ville) && (
                             <span className="text-xs text-gray-500">
-                              {[user.telephone, [user.code_postal, user.ville].filter(Boolean).join(' ')]
-                                .filter(Boolean)
-                                .join(' · ')}
+                              {[user.telephone, [user.code_postal, user.ville].filter(Boolean).join(' ')].filter(Boolean).join(' · ')}
                             </span>
                           )}
                         </span>
@@ -297,10 +290,7 @@ export default function AdminUsers() {
                               {user.onboarded_at ? 'Onboardé' : 'Onb. incomplet'}
                             </Badge>
                             {isChasseur && (
-                              <Badge
-                                severity={user.est_forme_a_l_examen_initial ? 'success' : 'warning'}
-                                small
-                              >
+                              <Badge severity={user.est_forme_a_l_examen_initial ? 'success' : 'warning'} small>
                                 {user.est_forme_a_l_examen_initial ? 'Formé EI' : 'Non formé EI'}
                               </Badge>
                             )}
@@ -323,9 +313,7 @@ export default function AdminUsers() {
                                   body: { activated: 'true' },
                                 }).then((res) => {
                                   if (res.ok) {
-                                    setUsers((prev) =>
-                                      prev.map((u) => (u.id === user.id ? { ...u, activated: true } : u)),
-                                    );
+                                    setUsers((prev) => prev.map((u) => (u.id === user.id ? { ...u, activated: true } : u)));
                                   }
                                 });
                               }}
@@ -352,10 +340,7 @@ export default function AdminUsers() {
                               await refreshUser('admin/user/connect-as');
                             }}
                           >
-                            <button
-                              type="submit"
-                              className="text-action-high-blue-france text-center text-xs"
-                            >
+                            <button type="submit" className="text-action-high-blue-france text-center text-xs">
                               Connexion
                             </button>
                           </form>

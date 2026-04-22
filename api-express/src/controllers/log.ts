@@ -70,7 +70,7 @@ router.post(
       data: { log },
       error: '',
     } satisfies LogResponse);
-  }),
+  })
 );
 
 export default router;

@@ -3,11 +3,18 @@
   "main": "index.js",
   "author": "Arnaud Ambroselli <arnaud@ambroselli.io>",
   "license": "MIT",
-  "prettier": {
-    "semi": true,
-    "printWidth": 120
-  },
   "engines": {
     "node": ">=20.0.0"
+  },
+  "prettier": {
+    "singleQuote": true,
+    "trailingComma": "es5",
+    "semi": true,
+    "printWidth": 150,
+    "tabWidth": 2
+  },
+  "dependencies": {
+    "prettier": "^3.8.3",
+    "prettier-plugin-tailwindcss": "^0.7.2"
   }
 }

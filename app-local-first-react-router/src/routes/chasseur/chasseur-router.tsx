@@ -30,14 +30,7 @@ export default function RouterChasseur() {
         <Route path="coordonnees" element={<ChasseurCoordonnees />} />
         <Route
           path="informations-de-chasse"
-          element={
-            <MesInformationsDeChasse
-              withExaminateurInitial
-              withAssociationsDeChasse
-              withCCGs
-              withPartenaires
-            />
-          }
+          element={<MesInformationsDeChasse withExaminateurInitial withAssociationsDeChasse withCCGs withPartenaires />}
         />
         <Route path="associations-de-chasse" element={<MesInformationsDeChasse withAssociationsDeChasse />} />
         <Route path="partenaires" element={<MesInformationsDeChasse withPartenaires />} />
@@ -51,10 +44,7 @@ export default function RouterChasseur() {
       <Route path="fei/:fei_numero/envoyée" element={<ChasseurFeiEnvoyée />} />
       <Route path="carcasse/:fei_numero/:zacharie_carcasse_id" element={<ExaminateurCarcasseDetail />} />
       <Route path="tableau-de-bord" element={<MesChasses />} />
-      <Route
-        path="carcasse-svi/:fei_numero/:zacharie_carcasse_id"
-        element={<ChasseurSviInspectionCarcasseLoader />}
-      />
+      <Route path="carcasse-svi/:fei_numero/:zacharie_carcasse_id" element={<ChasseurSviInspectionCarcasseLoader />} />
     </Route>
   );
 }

@@ -87,8 +87,7 @@ export default function MesChasses() {
             <div className="flex flex-col bg-white">
               <h2 className="fr-h4 mb-3 font-bold text-gray-800">Pas encore de carcasses cette saison</h2>
               <p className="fr-text--regular mb-6 max-w-md">
-                Vos statistiques apparaîtront ici dès que vous aurez enregistré votre première fiche d'examen
-                initial.
+                Vos statistiques apparaîtront ici dès que vous aurez enregistré votre première fiche d'examen initial.
               </p>
               <Button
                 priority="primary"
@@ -124,34 +123,20 @@ export default function MesChasses() {
               </div>
             ) : dashboardData.hygieneScore === null && dashboardData.personalSeizureRate === null ? (
               <div className="col-span-2 rounded-3xl bg-white p-6 text-center shadow-sm md:p-8">
-                <span
-                  className="fr-icon-mail-close-line text-action-high-blue-france-light mb-4 inline-block text-lg"
-                  aria-hidden="true"
-                />
-                <h3 className="fr-h6 text-action-high-blue-france-light mb-2">
-                  Absence de retour sur vos carcasses
-                </h3>
+                <span className="fr-icon-mail-close-line text-action-high-blue-france-light mb-4 inline-block text-lg" aria-hidden="true" />
+                <h3 className="fr-h6 text-action-high-blue-france-light mb-2">Absence de retour sur vos carcasses</h3>
                 <p className="fr-text--sm text-action-high-blue-france-light mb-2">
-                  Il semble que vous valorisez vos carcasses directement auprès des consommateurs et des
-                  commerces de bouche.
+                  Il semble que vous valorisez vos carcasses directement auprès des consommateurs et des commerces de bouche.
                 </p>
               </div>
             ) : (
               <>
-                {dashboardData.hygieneScore !== null && (
-                  <HygieneScoreCard score={dashboardData.hygieneScore} />
-                )}
+                {dashboardData.hygieneScore !== null && <HygieneScoreCard score={dashboardData.hygieneScore} />}
                 <RefusalCausesCard causes={dashboardData.refusalCauses} />
                 {dashboardData.personalSeizureRate !== null && (
-                  <SeizureRateCardPersonal
-                    rate={dashboardData.personalSeizureRate}
-                    label="taux de saisie personnel grand gibier"
-                  />
+                  <SeizureRateCardPersonal rate={dashboardData.personalSeizureRate} label="taux de saisie personnel grand gibier" />
                 )}
-                <SeizureRateCard
-                  rate={dashboardData.nationalSeizureRate}
-                  label="taux de saisie national en 2024"
-                />
+                <SeizureRateCard rate={dashboardData.nationalSeizureRate} label="taux de saisie national en 2024" />
                 <div className="col-span-2">
                   <Alert
                     className="w-full bg-white"

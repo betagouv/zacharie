@@ -1,14 +1,4 @@
-import {
-  Carcasse,
-  Entity,
-  EntityRelationStatus,
-  EntityRelationType,
-  EntityTypes,
-  Fei,
-  FeiOwnerRole,
-  User,
-  UserRoles,
-} from '@prisma/client';
+import { Carcasse, Entity, EntityRelationStatus, EntityRelationType, EntityTypes, Fei, FeiOwnerRole, User, UserRoles } from '@prisma/client';
 
 import { Document, Font, Image, Page, renderToStream, StyleSheet, Text, View } from '@react-pdf/renderer';
 import dayjs from 'dayjs';
@@ -253,15 +243,9 @@ export async function getFichePdf(fei: Fei) {
       id: fei.premier_detenteur_user_id,
     },
   });
-  const address_ligne_1 = premierDetenteurEntity
-    ? premierDetenteurEntity!.address_ligne_1
-    : premierDetenteurUser!.addresse_ligne_1;
-  const address_ligne_2 = premierDetenteurEntity
-    ? premierDetenteurEntity!.address_ligne_2
-    : premierDetenteurUser!.addresse_ligne_1;
-  const code_postal = premierDetenteurEntity
-    ? premierDetenteurEntity!.code_postal
-    : premierDetenteurUser!.code_postal;
+  const address_ligne_1 = premierDetenteurEntity ? premierDetenteurEntity!.address_ligne_1 : premierDetenteurUser!.addresse_ligne_1;
+  const address_ligne_2 = premierDetenteurEntity ? premierDetenteurEntity!.address_ligne_2 : premierDetenteurUser!.addresse_ligne_1;
+  const code_postal = premierDetenteurEntity ? premierDetenteurEntity!.code_postal : premierDetenteurUser!.code_postal;
   const ville = premierDetenteurEntity ? premierDetenteurEntity!.ville : premierDetenteurUser!.ville;
   const examinateurInitialUser = await prisma.user.findUnique({
     where: {
@@ -331,9 +315,7 @@ export async function getFichePdf(fei: Fei) {
           <View style={styles.column}>
             <Text style={[styles.columnTitle, styles.borderLess]}>Premier détenteur</Text>
 
-            {premierDetenteurEntity?.nom_d_usage && (
-              <Text style={styles.fieldValue}>{premierDetenteurEntity.nom_d_usage}</Text>
-            )}
+            {premierDetenteurEntity?.nom_d_usage && <Text style={styles.fieldValue}>{premierDetenteurEntity.nom_d_usage}</Text>}
 
             <Text style={styles.fieldValue}>
               {premierDetenteurUser!.prenom} {premierDetenteurUser!.nom_de_famille}
@@ -341,14 +323,8 @@ export async function getFichePdf(fei: Fei) {
 
             <View style={[styles.fieldValue]}>
               <Text style={[styles.fieldValue, styles.borderLess, styles.paddingLess]}>Adresse :</Text>
-              <Text style={[styles.fieldValue, styles.borderLess, styles.paddingLess]}>
-                {address_ligne_1}
-              </Text>
-              {!!address_ligne_2 && (
-                <Text style={[styles.fieldValue, styles.borderLess, styles.paddingLess]}>
-                  {address_ligne_2}
-                </Text>
-              )}
+              <Text style={[styles.fieldValue, styles.borderLess, styles.paddingLess]}>{address_ligne_1}</Text>
+              {!!address_ligne_2 && <Text style={[styles.fieldValue, styles.borderLess, styles.paddingLess]}>{address_ligne_2}</Text>}
               <Text style={[styles.fieldValue, styles.borderLess, styles.paddingLess]}>
                 {code_postal} {ville}
               </Text>
@@ -372,13 +348,9 @@ export async function getFichePdf(fei: Fei) {
 
             <View style={[styles.fieldValue]}>
               <Text style={[styles.fieldValue, styles.borderLess, styles.paddingLess]}>Adresse :</Text>
-              <Text style={[styles.fieldValue, styles.borderLess, styles.paddingLess]}>
-                {destinataireFinalEntity!.address_ligne_1}
-              </Text>
+              <Text style={[styles.fieldValue, styles.borderLess, styles.paddingLess]}>{destinataireFinalEntity!.address_ligne_1}</Text>
               {!!destinataireFinalEntity!.address_ligne_2 && (
-                <Text style={[styles.fieldValue, styles.borderLess, styles.paddingLess]}>
-                  {destinataireFinalEntity!.address_ligne_2}
-                </Text>
+                <Text style={[styles.fieldValue, styles.borderLess, styles.paddingLess]}>{destinataireFinalEntity!.address_ligne_2}</Text>
               )}
               <Text style={[styles.fieldValue, styles.borderLess, styles.paddingLess]}>
                 {destinataireFinalEntity!.code_postal} {destinataireFinalEntity!.ville}
@@ -393,18 +365,10 @@ export async function getFichePdf(fei: Fei) {
           return (
             <View style={styles.row} key={carcasse.zacharie_carcasse_id} wrap={false}>
               <View style={styles.rowWithMultipleText}>
-                <Text
-                  style={[styles.rowContent, styles.fieldValue, styles.borderLess, styles.leftFieldValue]}
-                >
-                  Espèce : {carcasse.espece}
-                </Text>
-                <Text style={[styles.rowContent, styles.fieldValue, styles.borderLess]}>
-                  Nombre d'animaux : {carcasse.nombre_d_animaux}
-                </Text>
+                <Text style={[styles.rowContent, styles.fieldValue, styles.borderLess, styles.leftFieldValue]}>Espèce : {carcasse.espece}</Text>
+                <Text style={[styles.rowContent, styles.fieldValue, styles.borderLess]}>Nombre d'animaux : {carcasse.nombre_d_animaux}</Text>
               </View>
-              <Text style={[styles.rowContent, styles.fieldValue]}>
-                N° d'identification : {carcasse.numero_bracelet}
-              </Text>
+              <Text style={[styles.rowContent, styles.fieldValue]}>N° d'identification : {carcasse.numero_bracelet}</Text>
               {!!carcasse.examinateur_anomalies_abats?.length && (
                 <Text style={[styles.rowContent, styles.fieldValue]}>
                   Anomalies abats :{'\n'}
@@ -426,9 +390,7 @@ export async function getFichePdf(fei: Fei) {
             </View>
           );
         })}
-        <Text style={styles.sectionHeader}>
-          Informations concernant la traçabilité de ces carcasses ou lots d’animaux :
-        </Text>
+        <Text style={styles.sectionHeader}>Informations concernant la traçabilité de ces carcasses ou lots d’animaux :</Text>
         <View style={styles.row} wrap={false}>
           <Text style={[styles.rowContent, styles.fieldValue, styles.borderLess, styles.rowHeader]}>
             Date de la chasse : {dayjs(fei.date_mise_a_mort).format('dddd D MMMM YYYY')}
@@ -437,39 +399,25 @@ export async function getFichePdf(fei: Fei) {
             <Text style={[styles.rowContent, styles.fieldValue, styles.leftFieldValue]}>
               Commune de la chasse : {fei.commune_mise_a_mort.split(' ').slice(1).join(' ')}
             </Text>
-            <Text style={[styles.rowContent, styles.fieldValue]}>
-              Code postal: {fei.commune_mise_a_mort.split(' ')[0]}
-            </Text>
+            <Text style={[styles.rowContent, styles.fieldValue]}>Code postal: {fei.commune_mise_a_mort.split(' ')[0]}</Text>
           </View>
           <View style={styles.rowWithMultipleText}>
-            <Text
-              style={[
-                styles.rowContent,
-                styles.fieldValue,
-                fei.heure_evisceration_derniere_carcasse ? styles.leftFieldValue : {},
-              ]}
-            >
+            <Text style={[styles.rowContent, styles.fieldValue, fei.heure_evisceration_derniere_carcasse ? styles.leftFieldValue : {}]}>
               Heure de première mise à mort : {fei.heure_mise_a_mort_premiere_carcasse}
             </Text>
             {fei.heure_evisceration_derniere_carcasse && (
-              <Text style={[styles.rowContent, styles.fieldValue]}>
-                Heure de dernière éviscération : {fei.heure_evisceration_derniere_carcasse}
-              </Text>
+              <Text style={[styles.rowContent, styles.fieldValue]}>Heure de dernière éviscération : {fei.heure_evisceration_derniere_carcasse}</Text>
             )}
           </View>
         </View>
         {fei.premier_detenteur_depot_entity_id && (
           <View style={styles.row} wrap={false}>
-            <Text style={[styles.rowContent, styles.fieldValue, styles.borderLess, styles.rowHeader]}>
-              Centre de collecte
-            </Text>
+            <Text style={[styles.rowContent, styles.fieldValue, styles.borderLess, styles.rowHeader]}>Centre de collecte</Text>
             <View style={styles.rowWithMultipleText}>
               <Text style={[styles.rowContent, styles.fieldValue, styles.leftFieldValue]}>
                 Nom usuel : {fei.premier_detenteur_depot_entity_name_cache}
               </Text>
-              <Text style={[styles.rowContent, styles.fieldValue]}>
-                N° identification: {centreDeCollecteEntity.numero_ddecpp}
-              </Text>
+              <Text style={[styles.rowContent, styles.fieldValue]}>N° identification: {centreDeCollecteEntity.numero_ddecpp}</Text>
             </View>
             <View style={[styles.fieldValue]}>
               <Text style={[styles.fieldValue, styles.borderLess, styles.paddingLess]}>Adresse :</Text>
@@ -478,34 +426,23 @@ export async function getFichePdf(fei: Fei) {
           </View>
         )}
         <View style={styles.row} wrap={false}>
-          <Text style={[styles.rowContent, styles.fieldValue, styles.borderLess, styles.rowHeader]}>
-            Examinateur initial
-          </Text>
+          <Text style={[styles.rowContent, styles.fieldValue, styles.borderLess, styles.rowHeader]}>Examinateur initial</Text>
           <Text style={[styles.rowContent, styles.fieldValue, styles.leftFieldValue]}>
             Prénom et nom : {examinateurInitialUser!.prenom} {examinateurInitialUser!.nom_de_famille}
           </Text>
-          <Text style={[styles.rowContent, styles.fieldValue]}>
-            N° d'examinateur: {examinateurInitialUser!.numero_cfei}
-          </Text>
+          <Text style={[styles.rowContent, styles.fieldValue]}>N° d'examinateur: {examinateurInitialUser!.numero_cfei}</Text>
           <View style={styles.rowWithMultipleText}>
-            <Text style={[styles.rowContent, styles.fieldValue, styles.leftFieldValue]}>
-              Tel : {examinateurInitialUser!.telephone}
-            </Text>
-            <Text style={[styles.rowContent, styles.fieldValue]}>
-              Email : {examinateurInitialUser!.email}
-            </Text>
+            <Text style={[styles.rowContent, styles.fieldValue, styles.leftFieldValue]}>Tel : {examinateurInitialUser!.telephone}</Text>
+            <Text style={[styles.rowContent, styles.fieldValue]}>Email : {examinateurInitialUser!.email}</Text>
           </View>
         </View>
         <Text style={styles.footer}>
-          L’examinateur initial susnommé a certifié le{' '}
-          {dayjs(fei.examinateur_initial_date_approbation_mise_sur_le_marche).format('DD MMMM YYYY')} que les
-          carcasses en peau examinées peuvent être mises sur le marché (sous réserve de résultats trichine
-          négatifs).
+          L’examinateur initial susnommé a certifié le {dayjs(fei.examinateur_initial_date_approbation_mise_sur_le_marche).format('DD MMMM YYYY')} que
+          les carcasses en peau examinées peuvent être mises sur le marché (sous réserve de résultats trichine négatifs).
         </Text>
         <Text style={styles.footer}>
-          Validée le{' '}
-          {dayjs(fei.examinateur_initial_date_approbation_mise_sur_le_marche).format('DD/MM/YYYY à HH:mm')},
-          via le service public Zacharie.beta.gouv.fr
+          Validée le {dayjs(fei.examinateur_initial_date_approbation_mise_sur_le_marche).format('DD/MM/YYYY à HH:mm')}, via le service public
+          Zacharie.beta.gouv.fr
         </Text>
       </Page>
     </Document>

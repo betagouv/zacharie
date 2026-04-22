@@ -18,7 +18,6 @@ export default function SviOnboardingEntreprise() {
 
   const svisDone = Object.keys(userEntitiesById).length > 0;
 
-
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -48,7 +47,7 @@ export default function SviOnboardingEntreprise() {
         useUser.setState({ user: response.data.user });
       }
     },
-    [user.id],
+    [user.id]
   );
 
   return (

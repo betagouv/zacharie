@@ -8,11 +8,7 @@ import { getIntermediaireRoleLabel } from '@app/utils/get-user-roles-label';
 import { useFeiIntermediaires } from '@app/utils/get-carcasses-intermediaires';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 
-export default function FEIDonneesDeChasse({
-  carcasseId,
-}: {
-  carcasseId?: Carcasse['zacharie_carcasse_id'];
-}) {
+export default function FEIDonneesDeChasse({ carcasseId }: { carcasseId?: Carcasse['zacharie_carcasse_id'] }) {
   const params = useParams();
   const feis = useZustandStore((state) => state.feis);
   const carcassesState = useZustandStore((state) => state.carcasses);
@@ -22,16 +18,10 @@ export default function FEIDonneesDeChasse({
   const intermediaires = useFeiIntermediaires(fei.numero);
   const latestIntermediaire = intermediaires[0];
   const feiCarcasses = useCarcassesForFei(params.fei_numero);
-  const carcasses = carcasseId
-    ? [carcassesState[carcasseId]].filter(Boolean).filter((c) => !c.deleted_at)
-    : feiCarcasses;
-  const examinateurInitialUser = fei.examinateur_initial_user_id
-    ? users[fei.examinateur_initial_user_id!]
-    : null;
+  const carcasses = carcasseId ? [carcassesState[carcasseId]].filter(Boolean).filter((c) => !c.deleted_at) : feiCarcasses;
+  const examinateurInitialUser = fei.examinateur_initial_user_id ? users[fei.examinateur_initial_user_id!] : null;
   const premierDetenteurUser = fei.premier_detenteur_user_id ? users[fei.premier_detenteur_user_id!] : null;
-  const premierDetenteurEntity = fei.premier_detenteur_entity_id
-    ? entities[fei.premier_detenteur_entity_id!]
-    : null;
+  const premierDetenteurEntity = fei.premier_detenteur_entity_id ? entities[fei.premier_detenteur_entity_id!] : null;
 
   const onlyPetitGibier = useMemo(() => {
     for (const carcasse of carcasses) {
@@ -81,9 +71,7 @@ export default function FEIDonneesDeChasse({
       intermediaireLines.push(entity?.siret);
       intermediaireLines.push(`${entity?.code_postal} ${entity?.ville}`);
       if (intermediaire.prise_en_charge_at) {
-        intermediaireLines.push(
-          `Prise en charge\u00A0: ${dayjs(intermediaire.prise_en_charge_at).format('dddd D MMMM à HH:mm')}`,
-        );
+        intermediaireLines.push(`Prise en charge\u00A0: ${dayjs(intermediaire.prise_en_charge_at).format('dddd D MMMM à HH:mm')}`);
       }
       lines.push({ label: entity?.nom_d_usage, value: intermediaireLines });
     }
@@ -98,32 +86,20 @@ export default function FEIDonneesDeChasse({
       lines.push(`${sviEntity?.code_postal} ${sviEntity?.ville}`);
     }
     if (fei.svi_assigned_at) {
-      lines.push(
-        `Date et heure d'assignation au SVI\u00A0: ${dayjs(fei.svi_assigned_at).format('dddd D MMMM YYYY à HH:mm')}`,
-      );
+      lines.push(`Date et heure d'assignation au SVI\u00A0: ${dayjs(fei.svi_assigned_at).format('dddd D MMMM YYYY à HH:mm')}`);
     }
     if (fei.svi_closed_at) {
-      lines.push(
-        `Date et heure de clôture manuelle du SVI\u00A0: ${dayjs(fei.svi_closed_at).format('dddd D MMMM YYYY à HH:mm')}`,
-      );
+      lines.push(`Date et heure de clôture manuelle du SVI\u00A0: ${dayjs(fei.svi_closed_at).format('dddd D MMMM YYYY à HH:mm')}`);
     }
     if (fei.automatic_closed_at) {
-      lines.push(
-        `Date et heure de clôture automatique du SVI\u00A0: ${dayjs(fei.automatic_closed_at).format('dddd D MMMM YYYY à HH:mm')}`,
-      );
+      lines.push(`Date et heure de clôture automatique du SVI\u00A0: ${dayjs(fei.automatic_closed_at).format('dddd D MMMM YYYY à HH:mm')}`);
     }
     return lines;
   }, [fei.svi_entity_id, entities, fei.svi_assigned_at, fei.svi_closed_at, fei.automatic_closed_at]);
 
-  const ccgDate = fei.premier_detenteur_depot_ccg_at
-    ? dayjs(fei.premier_detenteur_depot_ccg_at).format('dddd D MMMM YYYY à HH:mm')
-    : null;
-  const etgDate = latestIntermediaire?.prise_en_charge_at
-    ? dayjs(latestIntermediaire.prise_en_charge_at).format('dddd D MMMM YYYY à HH:mm')
-    : null;
-  const sviAssignedToFeiAt = fei.svi_assigned_at
-    ? dayjs(fei.svi_assigned_at).format('dddd D MMMM YYYY à HH:mm')
-    : null;
+  const ccgDate = fei.premier_detenteur_depot_ccg_at ? dayjs(fei.premier_detenteur_depot_ccg_at).format('dddd D MMMM YYYY à HH:mm') : null;
+  const etgDate = latestIntermediaire?.prise_en_charge_at ? dayjs(latestIntermediaire.prise_en_charge_at).format('dddd D MMMM YYYY à HH:mm') : null;
+  const sviAssignedToFeiAt = fei.svi_assigned_at ? dayjs(fei.svi_assigned_at).format('dddd D MMMM YYYY à HH:mm') : null;
 
   const milestones = useMemo(() => {
     const _milestones = [
@@ -131,24 +107,17 @@ export default function FEIDonneesDeChasse({
       `Date de mise à mort\u00A0: ${dayjs(fei.date_mise_a_mort).format('dddd D MMMM YYYY')}`,
     ];
     if (carcasses[0]?.heure_mise_a_mort_premiere_carcasse_fei) {
-      _milestones.push(
-        `Heure de mise à mort de la première carcasse de la fiche\u00A0: ${carcasses[0].heure_mise_a_mort_premiere_carcasse_fei}`,
-      );
+      _milestones.push(`Heure de mise à mort de la première carcasse de la fiche\u00A0: ${carcasses[0].heure_mise_a_mort_premiere_carcasse_fei}`);
     }
     if (!onlyPetitGibier && carcasses[0]?.heure_evisceration_derniere_carcasse_fei) {
-      _milestones.push(
-        `Heure d'éviscération de la dernière carcasse de la fiche\u00A0: ${carcasses[0].heure_evisceration_derniere_carcasse_fei}`,
-      );
+      _milestones.push(`Heure d'éviscération de la dernière carcasse de la fiche\u00A0: ${carcasses[0].heure_evisceration_derniere_carcasse_fei}`);
     }
     if (ccgDate) {
-      _milestones.push(
-        `Nom du Centre de Collecte (CCG)\u00A0: ${fei.premier_detenteur_depot_entity_name_cache}`,
-      );
+      _milestones.push(`Nom du Centre de Collecte (CCG)\u00A0: ${fei.premier_detenteur_depot_entity_name_cache}`);
       _milestones.push(`Date et heure de dépôt dans le CCG\u00A0: ${ccgDate}`);
     }
     if (etgDate) _milestones.push(`Date et heure de prise en charge par l'ETG\u00A0: ${etgDate}`);
-    if (sviAssignedToFeiAt)
-      _milestones.push(`Date et heure d'assignation au SVI\u00A0: ${sviAssignedToFeiAt}`);
+    if (sviAssignedToFeiAt) _milestones.push(`Date et heure d'assignation au SVI\u00A0: ${sviAssignedToFeiAt}`);
     return _milestones;
   }, [
     fei.commune_mise_a_mort,
@@ -164,23 +133,16 @@ export default function FEIDonneesDeChasse({
   return (
     <>
       <ItemNotEditable label="Fiche d'Examen Initial n°" value={fei.numero} />
-      <ItemNotEditable
-        label={carcasses.length > 1 ? 'Espèces' : 'Espèce'}
-        value={[...new Set(carcasses.map((c) => c.espece))].join(', ')}
-      />
+      <ItemNotEditable label={carcasses.length > 1 ? 'Espèces' : 'Espèce'} value={[...new Set(carcasses.map((c) => c.espece))].join(', ')} />
       <ItemNotEditable label="Informations clés" value={milestones} />
       <p className="mb-2 font-bold">Acteurs</p>
       <div className="flex flex-col px-2">
         <ItemNotEditable label="Examinateur Initial" value={examinateurInitialInput} />
         <ItemNotEditable label="Premier Détenteur" value={premierDetenteurInput} />
         {intermediairesInputs.map((intermediaireInput, index) => {
-          return (
-            <ItemNotEditable key={index} label={intermediaireInput.label!} value={intermediaireInput.value} />
-          );
+          return <ItemNotEditable key={index} label={intermediaireInput.label!} value={intermediaireInput.value} />;
         })}
-        {sviInput.length > 0 && (
-          <ItemNotEditable label="Service d'Inspection Vétérinaire (SVI)" value={sviInput} />
-        )}
+        {sviInput.length > 0 && <ItemNotEditable label="Service d'Inspection Vétérinaire (SVI)" value={sviInput} />}
       </div>
     </>
   );

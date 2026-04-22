@@ -45,7 +45,7 @@ export default function PartenaireNouveau({ newEntityNomDUsageProps, onFinish }:
   const [currentEntityId, setCurrentEntityId] = useState<string | null>(null);
   const currentEntity = remainingEntities.find((entity) => entity.id === currentEntityId);
   const currentEntityUser = currentEntity?.EntityRelationsWithUsers.find(
-    (relation) => relation.status === EntityRelationStatus.ADMIN,
+    (relation) => relation.status === EntityRelationStatus.ADMIN
   )?.UserRelatedWithEntity;
   const [newEntityNomDUsage, setNewEntityNomDUsage] = useState(newEntityNomDUsageProps);
   const [isUnregisteredEntity, setIsUnregisteredEntity] = useState(false);
@@ -67,9 +67,7 @@ export default function PartenaireNouveau({ newEntityNomDUsageProps, onFinish }:
     userEntities
       .find((entity) => entity.id === currentEntityId)
       ?.EntityRelationsWithUsers.find(
-        (relation) =>
-          relation.owner_id === user.id &&
-          relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        (relation) => relation.owner_id === user.id && relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
       )?.status === EntityRelationStatus.ADMIN;
 
   const ComponentToDisplay = isAdminOfEntity ? Input : InputNotEditable;
@@ -119,8 +117,7 @@ export default function PartenaireNouveau({ newEntityNomDUsageProps, onFinish }:
           path: '/user-entity',
           body: {
             [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
-            [Prisma.EntityAndUserRelationsScalarFieldEnum.relation]:
-              EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+            [Prisma.EntityAndUserRelationsScalarFieldEnum.relation]: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
             [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: currentEntityId,
           },
         })
@@ -147,7 +144,7 @@ export default function PartenaireNouveau({ newEntityNomDUsageProps, onFinish }:
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [isUnregisteredEntity, currentEntityId, newEntityNomDUsage, entityType, user.id],
+    [isUnregisteredEntity, currentEntityId, newEntityNomDUsage, entityType, user.id]
   );
 
   return (

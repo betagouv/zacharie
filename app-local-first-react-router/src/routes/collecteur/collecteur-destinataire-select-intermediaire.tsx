@@ -1,13 +1,6 @@
 import { useParams } from 'react-router';
 import { useMemo, useState } from 'react';
-import {
-  Prisma,
-  EntityTypes,
-  DepotType,
-  CarcasseIntermediaire,
-  EntityRelationType,
-  FeiOwnerRole,
-} from '@prisma/client';
+import { Prisma, EntityTypes, DepotType, CarcasseIntermediaire, EntityRelationType, FeiOwnerRole } from '@prisma/client';
 import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import useUser from '@app/zustand/user';
@@ -78,7 +71,7 @@ export default function CollecteurDestinataireIntermediaire({
           return true;
         })
         .map((ci) => ci.zacharie_carcasse_id),
-    [carcassesIntermediaires, carcassesStore, intermediaire?.intermediaire_entity_id],
+    [carcassesIntermediaires, carcassesStore, intermediaire?.intermediaire_entity_id]
   );
 
   const ccgs = ccgsIds.map((id) => entities[id]);
@@ -93,9 +86,7 @@ export default function CollecteurDestinataireIntermediaire({
   }, [etgs, collecteursPros]);
 
   const canTransmitCarcassesToEntities = useMemo(() => {
-    return prochainsDetenteurs.filter(
-      (entity) => entity.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-    );
+    return prochainsDetenteurs.filter((entity) => entity.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY);
   }, [prochainsDetenteurs]);
 
   const ccgsOptions = useMemo(() => {
@@ -221,12 +212,7 @@ export default function CollecteurDestinataireIntermediaire({
   return (
     <>
       <div
-        className={[
-          className,
-          disabled ? 'cursor-not-allowed opacity-50' : '',
-          canEdit ? '' : 'cursor-not-allowed',
-          'space-y-6',
-        ].join(' ')}
+        className={[className, disabled ? 'cursor-not-allowed opacity-50' : '', canEdit ? '' : 'cursor-not-allowed', 'space-y-6'].join(' ')}
         key={prochainDetenteurEntityId}
       >
         <SelectCustom
@@ -234,10 +220,7 @@ export default function CollecteurDestinataireIntermediaire({
           isDisabled={disabled}
           hint={
             <>
-              <span>
-                Indiquez ici la personne ou la structure avec qui vous êtes en contact pour prendre en charge
-                le gibier.
-              </span>
+              <span>Indiquez ici la personne ou la structure avec qui vous êtes en contact pour prendre en charge le gibier.</span>
               {!prochainDetenteurEntityId && !disabled && (
                 <div>
                   {canTransmitCarcassesToEntities.map((entity) => {
@@ -260,9 +243,7 @@ export default function CollecteurDestinataireIntermediaire({
           }
           options={prochainsDetenteursOptions}
           placeholder="Sélectionnez le prochain détenteur des carcasses"
-          value={
-            prochainsDetenteursOptions.find((option) => option.value === prochainDetenteurEntityId) ?? null
-          }
+          value={prochainsDetenteursOptions.find((option) => option.value === prochainDetenteurEntityId) ?? null}
           getOptionLabel={(f) => f.label!}
           getOptionValue={(f) => f.value}
           onChange={(f) => (f ? setProchainDetenteurEntityId(f.value) : setProchainDetenteurEntityId(null))}
@@ -394,9 +375,7 @@ export default function CollecteurDestinataireIntermediaire({
             Transmettre la fiche
           </Button>
         )}
-        {!disabled && !!jobIsMissing?.length && (
-          <Alert title="Attention" className="mt-4" severity="error" description={jobIsMissing} />
-        )}
+        {!disabled && !!jobIsMissing?.length && <Alert title="Attention" className="mt-4" severity="error" description={jobIsMissing} />}
         {canEdit && !needToSubmit && fei.fei_next_owner_entity_id && (
           <>
             <Alert

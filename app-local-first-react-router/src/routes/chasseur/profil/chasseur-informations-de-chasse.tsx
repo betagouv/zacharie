@@ -87,7 +87,7 @@ export default function MesInformationsDeChasse({
         useUser.setState({ user: response.data.user });
       }
     },
-    [user.id],
+    [user.id]
   );
 
   const showEntrpriseVisibilityCheckbox = !!user.checked_has_asso_de_chasse;
@@ -156,10 +156,7 @@ export default function MesInformationsDeChasse({
                             checked: isExaminateurInitial === false,
                             name: 'pas_forme_a_l_examen_initial',
                             onChange: () => {
-                              if (
-                                !user.numero_cfei ||
-                                window.confirm("N'êtes vous vraiment pas formé à l'examen initial ?")
-                              ) {
+                              if (!user.numero_cfei || window.confirm("N'êtes vous vraiment pas formé à l'examen initial ?")) {
                                 setIsExaminateurInitial(false);
                                 handleUserSubmit({
                                   isExaminateurInitial: false,
@@ -181,8 +178,7 @@ export default function MesInformationsDeChasse({
                         nativeInputProps={{
                           id: Prisma.UserScalarFieldEnum.numero_cfei,
                           name: Prisma.UserScalarFieldEnum.numero_cfei,
-                          onBlur: () =>
-                            handleUserSubmit({ isExaminateurInitial, numeroCfei, visibilityChecked }),
+                          onBlur: () => handleUserSubmit({ isExaminateurInitial, numeroCfei, visibilityChecked }),
                           autoComplete: 'off',
                           required: true,
                           value: numeroCfei,
@@ -201,10 +197,7 @@ export default function MesInformationsDeChasse({
           {withAssociationsDeChasse && (
             <div className="mb-6 bg-white md:shadow-sm">
               <div className="p-4 md:p-8">
-                <h3
-                  className="mb-8 text-lg font-semibold text-gray-900"
-                  id={`onboarding-etape-2-associations-data-title`}
-                >
+                <h3 className="mb-8 text-lg font-semibold text-gray-900" id={`onboarding-etape-2-associations-data-title`}>
                   Association, société et domaine de chasse
                 </h3>
                 <MesAssociationsDeChasse />
@@ -217,10 +210,7 @@ export default function MesInformationsDeChasse({
           {withPartenaires && (
             <div className="mb-6 bg-white md:shadow-sm">
               <div className="p-4 md:p-8">
-                <h3
-                  className="mb-8 text-lg font-semibold text-gray-900"
-                  id={`onboarding-etape-2-associations-data-title`}
-                >
+                <h3 className="mb-8 text-lg font-semibold text-gray-900" id={`onboarding-etape-2-associations-data-title`}>
                   Partenaires
                 </h3>
                 <MesPartenaires />

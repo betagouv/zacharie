@@ -1,25 +1,11 @@
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router';
 import { Input } from '@codegouvfr/react-dsfr/Input';
-import {
-  Prisma,
-  CarcasseType,
-  UserRoles,
-  IPM1Protocole,
-  IPM2Decision,
-  IPM2Traitement,
-  Carcasse,
-  Fei,
-  IPM1Decision,
-  PoidsType,
-} from '@prisma/client';
+import { Prisma, CarcasseType, UserRoles, IPM1Protocole, IPM2Decision, IPM2Traitement, Carcasse, Fei, IPM1Decision, PoidsType } from '@prisma/client';
 import { lesionsList, lesionsTree } from '@app/utils/lesions';
 import piecesTree from '@app/data/svi/pieces-tree.json';
 import piecesList from '@app/data/svi/pieces-list.json';
-import {
-  etablissementsTree,
-  retrieveEtablissementAgremenet,
-} from '@app/utils/etablissementsTraitementSaintaire';
+import { etablissementsTree, retrieveEtablissementAgremenet } from '@app/utils/etablissementsTraitementSaintaire';
 import dayjs from 'dayjs';
 import InputNotEditable from '@app/components/InputNotEditable';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
@@ -62,58 +48,45 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
   const feiCarcasses = useCarcassesForFei(params.fei_numero);
   const carcasseIds = feiCarcasses.map((c) => c.zacharie_carcasse_id);
 
-  const [sviIpm2PresenteeInspection, setSviIpm2PresenteeInspection] = useState(
-    carcasse.svi_ipm2_presentee_inspection ?? true,
-  );
+  const [sviIpm2PresenteeInspection, setSviIpm2PresenteeInspection] = useState(carcasse.svi_ipm2_presentee_inspection ?? true);
   const [sviIpm2Date, setSviIpm2Date] = useState(carcasse.svi_ipm2_date);
-  const [sviIpm2Protocole, setSviIpm2Protocole] = useState(
-    carcasse.svi_ipm2_protocole ?? IPM1Protocole.STANDARD,
-  );
-  const [sviIpm2Pieces, setSviIpm2Pieces] = useState(
-    carcasse.svi_ipm2_date ? carcasse.svi_ipm2_pieces : carcasse.svi_ipm1_pieces,
-  );
+  const [sviIpm2Protocole, setSviIpm2Protocole] = useState(carcasse.svi_ipm2_protocole ?? IPM1Protocole.STANDARD);
+  const [sviIpm2Pieces, setSviIpm2Pieces] = useState(carcasse.svi_ipm2_date ? carcasse.svi_ipm2_pieces : carcasse.svi_ipm1_pieces);
   const [sviIpm2LesionsOuMotifs, setSviIpm2LesionsOuMotifs] = useState(
-    carcasse.svi_ipm2_date ? carcasse.svi_ipm2_lesions_ou_motifs : carcasse.svi_ipm1_lesions_ou_motifs,
+    carcasse.svi_ipm2_date ? carcasse.svi_ipm2_lesions_ou_motifs : carcasse.svi_ipm1_lesions_ou_motifs
   );
   const [sviIpm2NombreAnimaux, setSviIpm2NombreAnimaux] = useState(
-    carcasse.svi_ipm2_date ? carcasse.svi_ipm2_nombre_animaux : carcasse.svi_ipm1_nombre_animaux,
+    carcasse.svi_ipm2_date ? carcasse.svi_ipm2_nombre_animaux : carcasse.svi_ipm1_nombre_animaux
   );
   const [sviIpm2Commentaire, setSviIpm2Commentaire] = useState(carcasse.svi_ipm2_commentaire);
   const [sviIpm2Decision, setSviIpm2Decision] = useState(carcasse.svi_ipm2_decision);
   const [sviIpm2PoidsSaisie, setSviIpm2PoidsSaisie] = useState(
-    carcasse.svi_ipm2_date ? carcasse.svi_ipm2_poids_saisie : carcasse.svi_ipm1_poids_consigne,
+    carcasse.svi_ipm2_date ? carcasse.svi_ipm2_poids_saisie : carcasse.svi_ipm1_poids_consigne
   );
-  const [sviIpm2PoidsType, setSviIpm2PoidsType] = useState(
-    carcasse.svi_ipm2_date ? carcasse.svi_ipm2_poids_type : carcasse.svi_ipm1_poids_type,
-  );
-  const [sviIpm2TraitementAssainissant, setSviIpm2TraitementAssainissant] = useState(
-    carcasse.svi_ipm2_traitement_assainissant || [],
-  );
+  const [sviIpm2PoidsType, setSviIpm2PoidsType] = useState(carcasse.svi_ipm2_date ? carcasse.svi_ipm2_poids_type : carcasse.svi_ipm1_poids_type);
+  const [sviIpm2TraitementAssainissant, setSviIpm2TraitementAssainissant] = useState(carcasse.svi_ipm2_traitement_assainissant || []);
   const [sviIpm2TraitementAssainissantCuissonTemps, setSviIpm2TraitementAssainissantCuissonTemps] = useState(
-    carcasse.svi_ipm2_traitement_assainissant_cuisson_temps,
+    carcasse.svi_ipm2_traitement_assainissant_cuisson_temps
   );
   const [sviIpm2TraitementAssainissantCuissonTemp, setSviIpm2TraitementAssainissantCuissonTemp] = useState(
-    carcasse.svi_ipm2_traitement_assainissant_cuisson_temp,
+    carcasse.svi_ipm2_traitement_assainissant_cuisson_temp
   );
-  const [sviIpm2TraitementAssainissantCongelationTemps, setSviIpm2TraitementAssainissantCongelationTemps] =
-    useState(carcasse.svi_ipm2_traitement_assainissant_congelation_temps);
-  const [sviIpm2TraitementAssainissantCongelationTemp, setSviIpm2TraitementAssainissantCongelationTemp] =
-    useState(carcasse.svi_ipm2_traitement_assainissant_congelation_temp);
-  const [sviIpm2TraitementAssainissantType, setSviIpm2TraitementAssainissantType] = useState(
-    carcasse.svi_ipm2_traitement_assainissant_type,
+  const [sviIpm2TraitementAssainissantCongelationTemps, setSviIpm2TraitementAssainissantCongelationTemps] = useState(
+    carcasse.svi_ipm2_traitement_assainissant_congelation_temps
   );
+  const [sviIpm2TraitementAssainissantCongelationTemp, setSviIpm2TraitementAssainissantCongelationTemp] = useState(
+    carcasse.svi_ipm2_traitement_assainissant_congelation_temp
+  );
+  const [sviIpm2TraitementAssainissantType, setSviIpm2TraitementAssainissantType] = useState(carcasse.svi_ipm2_traitement_assainissant_type);
   const [sviIpm2TraitementAssainissantParamètres, setSviIpm2TraitementAssainissantParamètres] = useState(
-    carcasse.svi_ipm2_traitement_assainissant_paramètres,
+    carcasse.svi_ipm2_traitement_assainissant_paramètres
   );
-  const [sviIpm2TraitementAssainissantEtablissement, setSviIpm2TraitementAssainissantEtablissement] =
-    useState(carcasse.svi_ipm2_traitement_assainissant_etablissement);
-  const [sviIpm2TraitementAssainissantPoids, setSviIpm2TraitementAssainissantPoids] = useState(
-    carcasse.svi_ipm2_traitement_assainissant_poids,
+  const [sviIpm2TraitementAssainissantEtablissement, setSviIpm2TraitementAssainissantEtablissement] = useState(
+    carcasse.svi_ipm2_traitement_assainissant_etablissement
   );
+  const [sviIpm2TraitementAssainissantPoids, setSviIpm2TraitementAssainissantPoids] = useState(carcasse.svi_ipm2_traitement_assainissant_poids);
 
-  const [sviIpm2UserName, setSviIpm2UserName] = useState(
-    carcasse.svi_ipm2_user_name_cache ?? `${user.prenom} ${user.nom_de_famille}`,
-  );
+  const [sviIpm2UserName, setSviIpm2UserName] = useState(carcasse.svi_ipm2_user_name_cache ?? `${user.prenom} ${user.nom_de_famille}`);
   const [triedToSave, setTriedToSave] = useState(false);
 
   const missingFields = useMemo(() => {
@@ -239,8 +212,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
         current_owner_entity_id: fei.fei_next_owner_entity_id ?? null,
         current_owner_entity_name_cache: fei.fei_next_owner_entity_name_cache ?? null,
         current_owner_user_id: user.id,
-        current_owner_user_name_cache:
-          fei.fei_next_owner_user_name_cache || `${user.prenom} ${user.nom_de_famille}`,
+        current_owner_user_name_cache: fei.fei_next_owner_user_name_cache || `${user.prenom} ${user.nom_de_famille}`,
         next_owner_role: null,
         next_owner_user_id: null,
         next_owner_user_name_cache: null,
@@ -255,8 +227,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
         fei_current_owner_entity_id: fei.fei_next_owner_entity_id,
         fei_current_owner_entity_name_cache: fei.fei_next_owner_entity_name_cache,
         fei_current_owner_user_id: user.id,
-        fei_current_owner_user_name_cache:
-          fei.fei_next_owner_user_name_cache || `${user.prenom} ${user.nom_de_famille}`,
+        fei_current_owner_user_name_cache: fei.fei_next_owner_user_name_cache || `${user.prenom} ${user.nom_de_famille}`,
         fei_next_owner_role: null,
         fei_next_owner_user_id: null,
         fei_next_owner_user_name_cache: null,
@@ -312,11 +283,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
         />
       )}
       <RadioButtons
-        legend={
-          carcasse.type === CarcasseType.PETIT_GIBIER
-            ? "Lot présenté à l'inspection *"
-            : "Carcasse présentée à l'inspection *"
-        }
+        legend={carcasse.type === CarcasseType.PETIT_GIBIER ? "Lot présenté à l'inspection *" : "Carcasse présentée à l'inspection *"}
         orientation="horizontal"
         disabled={!canDoIPM2}
         options={[
@@ -465,11 +432,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
             <ModalTreeDisplay
               data={piecesTree[carcasse.type ?? CarcasseType.GROS_GIBIER]}
               modal={piecesGibier}
-              title={
-                carcasse.type === CarcasseType.PETIT_GIBIER
-                  ? 'Pièces de petits gibiers'
-                  : 'Pièces de grands gibiers'
-              }
+              title={carcasse.type === CarcasseType.PETIT_GIBIER ? 'Pièces de petits gibiers' : 'Pièces de grands gibiers'}
               onItemClick={(newPiece) => {
                 const nextPieces = [...sviIpm2Pieces.filter((p) => p !== newPiece), newPiece];
                 setSviIpm2Pieces(nextPieces);
@@ -599,14 +562,9 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
                   checked: sviIpm2TraitementAssainissant.includes(IPM2Traitement.CUISSON),
                   onChange: () => {
                     if (sviIpm2TraitementAssainissant.includes(IPM2Traitement.CUISSON)) {
-                      setSviIpm2TraitementAssainissant(
-                        sviIpm2TraitementAssainissant.filter((t) => t !== IPM2Traitement.CUISSON),
-                      );
+                      setSviIpm2TraitementAssainissant(sviIpm2TraitementAssainissant.filter((t) => t !== IPM2Traitement.CUISSON));
                     } else {
-                      setSviIpm2TraitementAssainissant([
-                        ...sviIpm2TraitementAssainissant,
-                        IPM2Traitement.CUISSON,
-                      ]);
+                      setSviIpm2TraitementAssainissant([...sviIpm2TraitementAssainissant, IPM2Traitement.CUISSON]);
                     }
                   },
                 },
@@ -618,14 +576,9 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
                   checked: sviIpm2TraitementAssainissant.includes(IPM2Traitement.CONGELATION),
                   onChange: () => {
                     if (sviIpm2TraitementAssainissant.includes(IPM2Traitement.CONGELATION)) {
-                      setSviIpm2TraitementAssainissant(
-                        sviIpm2TraitementAssainissant.filter((t) => t !== IPM2Traitement.CONGELATION),
-                      );
+                      setSviIpm2TraitementAssainissant(sviIpm2TraitementAssainissant.filter((t) => t !== IPM2Traitement.CONGELATION));
                     } else {
-                      setSviIpm2TraitementAssainissant([
-                        ...sviIpm2TraitementAssainissant,
-                        IPM2Traitement.CONGELATION,
-                      ]);
+                      setSviIpm2TraitementAssainissant([...sviIpm2TraitementAssainissant, IPM2Traitement.CONGELATION]);
                     }
                   },
                 },
@@ -637,14 +590,9 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
                   checked: sviIpm2TraitementAssainissant.includes(IPM2Traitement.AUTRE),
                   onChange: () => {
                     if (sviIpm2TraitementAssainissant.includes(IPM2Traitement.AUTRE)) {
-                      setSviIpm2TraitementAssainissant(
-                        sviIpm2TraitementAssainissant.filter((t) => t !== IPM2Traitement.AUTRE),
-                      );
+                      setSviIpm2TraitementAssainissant(sviIpm2TraitementAssainissant.filter((t) => t !== IPM2Traitement.AUTRE));
                     } else {
-                      setSviIpm2TraitementAssainissant([
-                        ...sviIpm2TraitementAssainissant,
-                        IPM2Traitement.AUTRE,
-                      ]);
+                      setSviIpm2TraitementAssainissant([...sviIpm2TraitementAssainissant, IPM2Traitement.AUTRE]);
                     }
                   },
                 },
@@ -760,9 +708,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
             modal={etablissementsTraitementSanitaireModal}
             title="Etablissements de traitement sanitaire"
             onItemClick={(etablissementDisplay) => {
-              setSviIpm2TraitementAssainissantEtablissement(
-                retrieveEtablissementAgremenet(etablissementDisplay),
-              );
+              setSviIpm2TraitementAssainissantEtablissement(retrieveEtablissementAgremenet(etablissementDisplay));
             }}
           />
           <Input
@@ -780,8 +726,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
           />
         </>
       )}
-      {(sviIpm2Decision === IPM2Decision.SAISIE_TOTALE ||
-        sviIpm2Decision === IPM2Decision.SAISIE_PARTIELLE) && (
+      {(sviIpm2Decision === IPM2Decision.SAISIE_TOTALE || sviIpm2Decision === IPM2Decision.SAISIE_PARTIELLE) && (
         <>
           <Input
             label="Poids de la saisie"
@@ -833,9 +778,7 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
           Enregistrer
         </Button>
       </div>
-      {triedToSave && missingFields && (
-        <Alert title="Attention" className="mt-4" severity="error" description={missingFields} />
-      )}
+      {triedToSave && missingFields && <Alert title="Attention" className="mt-4" severity="error" description={missingFields} />}
     </form>
   );
 }

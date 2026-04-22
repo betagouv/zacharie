@@ -37,7 +37,7 @@ export default function OnboardingMesInformationsDeChasse() {
         useUser.setState({ user: response.data.user });
       }
     },
-    [user.id],
+    [user.id]
   );
 
   const nextPage = '/app/chasseur';
@@ -85,12 +85,7 @@ export default function OnboardingMesInformationsDeChasse() {
             <div className="mb-6 bg-white md:shadow-sm">
               <div className="p-4 md:p-8">
                 <>
-                  <form
-                    id="user_data_form"
-                    method="POST"
-                    onSubmit={(e) => e.preventDefault()}
-                    className="px-8"
-                  >
+                  <form id="user_data_form" method="POST" onSubmit={(e) => e.preventDefault()} className="px-8">
                     <Checkbox
                       options={[
                         {

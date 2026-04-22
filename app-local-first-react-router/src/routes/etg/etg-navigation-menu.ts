@@ -19,9 +19,7 @@ export default function useEtgNavigationMenu(): MainNavigationProps.Item[] {
     },
     {
       text: 'Paramètres',
-      isActive:
-        location.pathname.startsWith('/app/etg/profil') ||
-        location.pathname.startsWith('/app/etg/entreprise'),
+      isActive: location.pathname.startsWith('/app/etg/profil') || location.pathname.startsWith('/app/etg/entreprise'),
       menuLinks: [
         {
           text: 'Coordonnées',

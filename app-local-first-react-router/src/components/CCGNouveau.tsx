@@ -45,9 +45,7 @@ export default function CCGNouveau({ onFinish }: CCGNouveauProps) {
         body: {
           [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
           relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-          [Prisma.EntityScalarFieldEnum.numero_ddecpp]: formData.get(
-            Prisma.EntityScalarFieldEnum.numero_ddecpp,
-          ),
+          [Prisma.EntityScalarFieldEnum.numero_ddecpp]: formData.get(Prisma.EntityScalarFieldEnum.numero_ddecpp),
           [Prisma.EntityScalarFieldEnum.type]: EntityTypes.CCG,
         },
       }).then((res) => res as UserEntityResponse);
@@ -70,7 +68,7 @@ export default function CCGNouveau({ onFinish }: CCGNouveauProps) {
         setError(response.error);
       }
     },
-    [user.id, entities, onFinish],
+    [user.id, entities, onFinish]
   );
 
   // Full pre-registration form
@@ -106,14 +104,12 @@ export default function CCGNouveau({ onFinish }: CCGNouveauProps) {
         setError(response.error || 'Erreur lors de la création du CCG');
       }
     },
-    [entities, onFinish],
+    [entities, onFinish]
   );
 
   return (
     <>
-      <p className="mb-5 text-sm text-gray-500">
-        * Les champs marqués d'un astérisque (*) sont obligatoires.
-      </p>
+      <p className="mb-5 text-sm text-gray-500">* Les champs marqués d'un astérisque (*) sont obligatoires.</p>
 
       {mode === 'select' && (
         <RadioButtons
@@ -252,8 +248,8 @@ export default function CCGNouveau({ onFinish }: CCGNouveauProps) {
           </div>
           {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
           <p className="my-4 text-sm">
-            Ceci ne remplace pas la déclaration officielle du CCG. Cela permet simplement de pouvoir en faire
-            référence dans Zacharie, en attendant son enregistrement.
+            Ceci ne remplace pas la déclaration officielle du CCG. Cela permet simplement de pouvoir en faire référence dans Zacharie, en attendant
+            son enregistrement.
           </p>
           <div className="flex gap-2">
             <Button type="submit" disabled={isSubmitting}>

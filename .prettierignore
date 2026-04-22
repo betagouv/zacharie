@@ -1,0 +1,8 @@
+**/build
+**/dist
+**/.next
+**/coverage
+**/node_modules
+**/ios
+**/android
+**/.expo

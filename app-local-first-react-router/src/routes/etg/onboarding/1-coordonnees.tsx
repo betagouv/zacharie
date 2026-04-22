@@ -28,7 +28,7 @@ export default function EtgOnboardingCoordonnees() {
         useUser.setState({ user: response.data.user });
       }
     },
-    [user.id],
+    [user.id]
   );
 
   const nextPage = '/app/etg/onboarding/entreprise';
@@ -45,12 +45,7 @@ export default function EtgOnboardingCoordonnees() {
           <Stepper currentStep={1} stepCount={3} title="Coordonnées" nextTitle="Entreprise" />
           <div className="mb-6 bg-white md:shadow-sm">
             <div className="p-4 md:p-8">
-              <form
-                id="user_data_form"
-                method="POST"
-                onBlur={handleUserFormBlur}
-                onSubmit={(e) => e.preventDefault()}
-              >
+              <form id="user_data_form" method="POST" onBlur={handleUserFormBlur} onSubmit={(e) => e.preventDefault()}>
                 <Input
                   label={
                     <span>

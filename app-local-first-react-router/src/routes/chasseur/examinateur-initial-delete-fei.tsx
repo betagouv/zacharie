@@ -12,9 +12,7 @@ export default function ExaminateurInitialDeleteFei() {
   const updateFei = state.updateFei;
   const addLog = state.addLog;
   const fei = state.feis[params.fei_numero!];
-  const currentOwnerEntity = fei.fei_current_owner_entity_id
-    ? state.entities[fei.fei_current_owner_entity_id]
-    : null;
+  const currentOwnerEntity = fei.fei_current_owner_entity_id ? state.entities[fei.fei_current_owner_entity_id] : null;
 
   const navigate = useNavigate();
 
@@ -27,7 +25,7 @@ export default function ExaminateurInitialDeleteFei() {
       title="Voulez-vous vraiment supprimer la fiche ?"
       buttonText="Supprimer"
       textToConfirm="SUPPRIMER LA FICHE"
-      className="border-0.5 border-gray-200 text-red-500! hover:bg-red-100! bg-white"
+      className="border-0.5 border-gray-200 bg-white text-red-500! hover:bg-red-100!"
       onConfirm={() => {
         const nextFei = { deleted_at: dayjs().toDate() };
         updateFei(fei.numero, nextFei);

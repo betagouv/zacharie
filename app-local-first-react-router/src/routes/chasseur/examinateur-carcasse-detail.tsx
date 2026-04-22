@@ -83,7 +83,7 @@ function ExaminateurCarcasseDetailLoaded() {
   const addLog = useZustandStore((state) => state.addLog);
   const updateCarcasse = (
     zacharie_carcasse_id: Parameters<typeof updateStateCarcasse>[0],
-    partialCarcasse: Parameters<typeof updateStateCarcasse>[1],
+    partialCarcasse: Parameters<typeof updateStateCarcasse>[1]
   ) => {
     updateStateCarcasse(zacharie_carcasse_id, partialCarcasse, true);
     addLog({
@@ -121,28 +121,20 @@ function ExaminateurCarcasseDetailLoaded() {
 
   const [espece, setEspece] = useState(carcasse.espece || '');
 
-  const [anomaliesAbats, setAnomaliesAbats] = useState<Array<string>>(
-    carcasse.examinateur_anomalies_abats?.filter(Boolean) || [],
-  );
-  const [anomaliesCarcasse, setAnomaliesCarcasse] = useState<Array<string>>(
-    carcasse.examinateur_anomalies_carcasse?.filter(Boolean) || [],
-  );
+  const [anomaliesAbats, setAnomaliesAbats] = useState<Array<string>>(carcasse.examinateur_anomalies_abats?.filter(Boolean) || []);
+  const [anomaliesCarcasse, setAnomaliesCarcasse] = useState<Array<string>>(carcasse.examinateur_anomalies_carcasse?.filter(Boolean) || []);
   // const [addAnomalieAbats, setAddAnomalieAbats] = useState(true);
   // const [addAnomalieCarcasse, setAddAnomalieCarcasse] = useState(true);
   const addAnomalieAbats = true;
   const addAnomalieCarcasse = true;
-  const [showScroll, setShowScroll] = useState(
-    canEdit && espece && !anomaliesAbats.length && !anomaliesCarcasse.length,
-  );
+  const [showScroll, setShowScroll] = useState(canEdit && espece && !anomaliesAbats.length && !anomaliesCarcasse.length);
 
   const numeroFormRef = useRef<HTMLFormElement>(null);
   const submitRef = useRef<HTMLFormElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
-  const referentielAnomaliesCarcasseList =
-    carcasse.type === CarcasseType.PETIT_GIBIER ? petitGibierCarcasseList : grandGibierCarcasseList;
-  const referentielAnomaliesCarcasseTree =
-    carcasse.type === CarcasseType.PETIT_GIBIER ? petitGibierCarcasseTree : grandGibierCarcasseTree;
+  const referentielAnomaliesCarcasseList = carcasse.type === CarcasseType.PETIT_GIBIER ? petitGibierCarcasseList : grandGibierCarcasseList;
+  const referentielAnomaliesCarcasseTree = carcasse.type === CarcasseType.PETIT_GIBIER ? petitGibierCarcasseTree : grandGibierCarcasseTree;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -159,9 +151,7 @@ function ExaminateurCarcasseDetailLoaded() {
 
   return (
     <>
-      <title>
-        {`Carcasse ${carcasse.numero_bracelet} | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}
-      </title>
+      <title>{`Carcasse ${carcasse.numero_bracelet} | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}</title>
       <div className="fr-container fr-container--fluid fr-my-md-14v">
         <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
           <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
@@ -196,9 +186,7 @@ function ExaminateurCarcasseDetailLoaded() {
                 onSubmit={(e) => {
                   e.preventDefault();
                   const formData = new FormData(numeroFormRef.current!);
-                  const nextNumeroBracelet = formData.get(
-                    Prisma.CarcasseScalarFieldEnum.numero_bracelet,
-                  ) as string;
+                  const nextNumeroBracelet = formData.get(Prisma.CarcasseScalarFieldEnum.numero_bracelet) as string;
                   if (existingsNumeroBracelet.includes(nextNumeroBracelet)) {
                     setNumeroError('Le numéro de marquage est déjà utilisé pour cette fiche');
                     return;
@@ -213,11 +201,7 @@ function ExaminateurCarcasseDetailLoaded() {
               >
                 <div className="p-4 pb-8 md:p-8 md:pb-4">
                   <Input
-                    label={
-                      carcasse.type === CarcasseType.PETIT_GIBIER
-                        ? "Numéro d'identification"
-                        : 'Numéro de bracelet'
-                    }
+                    label={carcasse.type === CarcasseType.PETIT_GIBIER ? "Numéro d'identification" : 'Numéro de bracelet'}
                     state={numeroError ? 'error' : 'default'}
                     stateRelatedMessage={numeroError ?? ''}
                     nativeInputProps={{
@@ -232,20 +216,11 @@ function ExaminateurCarcasseDetailLoaded() {
                 </div>
               </form>
             )}
-            <form
-              id="carcasse-metadata-form"
-              method="POST"
-              ref={formRef}
-              className="mb-6 bg-white py-2 md:shadow-sm"
-            >
+            <form id="carcasse-metadata-form" method="POST" ref={formRef} className="mb-6 bg-white py-2 md:shadow-sm">
               <div className="p-4 pb-8 md:p-8 md:pb-4">
                 {!canEdit && (
                   <InputNotEditable
-                    label={
-                      carcasse.type === CarcasseType.PETIT_GIBIER
-                        ? "Numéro d'identification"
-                        : 'Numéro de bracelet'
-                    }
+                    label={carcasse.type === CarcasseType.PETIT_GIBIER ? "Numéro d'identification" : 'Numéro de bracelet'}
                     nativeInputProps={{
                       type: 'text',
                       name: Prisma.CarcasseScalarFieldEnum.numero_bracelet,
@@ -266,9 +241,7 @@ function ExaminateurCarcasseDetailLoaded() {
                         setEspece(newEspece);
                         updateCarcasse(carcasse.zacharie_carcasse_id, {
                           espece: newEspece,
-                          type: petitGibier.especes.includes(espece)
-                            ? CarcasseType.PETIT_GIBIER
-                            : CarcasseType.GROS_GIBIER,
+                          type: petitGibier.especes.includes(espece) ? CarcasseType.PETIT_GIBIER : CarcasseType.GROS_GIBIER,
                           examinateur_signed_at: dayjs().toDate(),
                         });
                       },
@@ -302,16 +275,13 @@ function ExaminateurCarcasseDetailLoaded() {
                 )}
                 <Component
                   label="Nombre de carcasses"
-                  className={['mb-0! grow', carcasse.type === CarcasseType.GROS_GIBIER ? 'hidden' : ''].join(
-                    ' ',
-                  )}
+                  className={['mb-0! grow', carcasse.type === CarcasseType.GROS_GIBIER ? 'hidden' : ''].join(' ')}
                   hintText="Optionel"
                   nativeInputProps={{
                     type: 'number',
                     min: 0,
                     name: Prisma.CarcasseScalarFieldEnum.nombre_d_animaux,
-                    defaultValue:
-                      carcasse.type === CarcasseType.GROS_GIBIER ? '1' : (carcasse.nombre_d_animaux ?? ''),
+                    defaultValue: carcasse.type === CarcasseType.GROS_GIBIER ? '1' : (carcasse.nombre_d_animaux ?? ''),
                     disabled: carcasse.type === CarcasseType.GROS_GIBIER,
                     onChange: (e) => {
                       updateCarcasse(carcasse.zacharie_carcasse_id, {
@@ -355,11 +325,7 @@ function ExaminateurCarcasseDetailLoaded() {
                               }}
                               values={anomaliesCarcasse}
                             />
-                            <Button
-                              priority="secondary"
-                              type="button"
-                              onClick={() => anomaliesCarcasseModal.open()}
-                            >
+                            <Button priority="secondary" type="button" onClick={() => anomaliesCarcasseModal.open()}>
                               Ajouter depuis le référentiel des anomalies carcasse
                             </Button>
                             <ModalTreeDisplay
@@ -414,11 +380,7 @@ function ExaminateurCarcasseDetailLoaded() {
                                 }}
                                 values={anomaliesAbats}
                               />
-                              <Button
-                                priority="secondary"
-                                type="button"
-                                onClick={() => anomaliesAbatsModal.open()}
-                              >
+                              <Button priority="secondary" type="button" onClick={() => anomaliesAbatsModal.open()}>
                                 Ajouter depuis le référentiel des anomalies abats
                               </Button>
                               <ModalTreeDisplay
@@ -469,8 +431,7 @@ function ExaminateurCarcasseDetailLoaded() {
                   e.preventDefault();
                   updateCarcasse(carcasse.zacharie_carcasse_id, {
                     examinateur_signed_at: dayjs().toDate(),
-                    examinateur_carcasse_sans_anomalie:
-                      anomaliesAbats.length === 0 && anomaliesCarcasse.length === 0,
+                    examinateur_carcasse_sans_anomalie: anomaliesAbats.length === 0 && anomaliesCarcasse.length === 0,
                   });
                 }}
               >

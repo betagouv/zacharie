@@ -39,14 +39,7 @@ const statusColors: Record<FeiStepSimpleStatus, { bg: string; text: string }> = 
 };
 
 const maxDetailedLines = 2;
-export default function CardFiche({
-  fei,
-  onPrintSelect,
-  isPrintSelected = false,
-  disabledBecauseOffline = false,
-  filter,
-  linkTo,
-}: CardProps) {
+export default function CardFiche({ fei, onPrintSelect, isPrintSelected = false, disabledBecauseOffline = false, filter, linkTo }: CardProps) {
   const { simpleStatus, currentStepLabelShort } = useFeiSteps(fei);
   const isCircuitCourt = useIsCircuitCourt();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -102,9 +95,7 @@ export default function CardFiche({
       visibleLines.push('fin de liste');
     }
 
-    visibleLines.push(
-      hiddenCount > 0 ? `+ ${hiddenCount} espèce${hiddenCount > 1 ? 's' : ''}` : 'fin de liste',
-    );
+    visibleLines.push(hiddenCount > 0 ? `+ ${hiddenCount} espèce${hiddenCount > 1 ? 's' : ''}` : 'fin de liste');
 
     return visibleLines;
   }, [carcassesAcceptées]);
@@ -119,15 +110,10 @@ export default function CardFiche({
       const abbreviation = abbreviations[carcasse.espece as keyof typeof abbreviations];
       if (!abbreviation) continue;
 
-      const intermediaires = filterCarcassesIntermediairesForCarcasse(
-        carcassesIntermediaireById,
-        carcasse.zacharie_carcasse_id!,
-      );
+      const intermediaires = filterCarcassesIntermediairesForCarcasse(carcassesIntermediaireById, carcasse.zacharie_carcasse_id!);
       const dernierAccepte = intermediaires
         .filter((ci) => !!ci.prise_en_charge_at)
-        .sort(
-          (a, b) => new Date(b.prise_en_charge_at!).getTime() - new Date(a.prise_en_charge_at!).getTime(),
-        )[0];
+        .sort((a, b) => new Date(b.prise_en_charge_at!).getTime() - new Date(a.prise_en_charge_at!).getTime())[0];
 
       if (dernierAccepte?.nombre_d_animaux_acceptes == null) continue;
 
@@ -199,11 +185,9 @@ export default function CardFiche({
           <div className="flex flex-row gap-x-2">
             <Tag
               small
-              className={[
-                'items-center rounded-[4px] font-semibold uppercase',
-                statusColors[simpleStatus].bg,
-                statusColors[simpleStatus].text,
-              ].join(' ')}
+              className={['items-center rounded-[4px] font-semibold uppercase', statusColors[simpleStatus].bg, statusColors[simpleStatus].text].join(
+                ' '
+              )}
             >
               {simpleStatus}
             </Tag>
@@ -221,20 +205,13 @@ export default function CardFiche({
             )}
           </div>
         )}
-        <div className="text-xl font-bold">
-          {dayjs(fei.date_mise_a_mort || fei.created_at).format('DD/MM/YYYY')}
-        </div>
+        <div className="text-xl font-bold">{dayjs(fei.date_mise_a_mort || fei.created_at).format('DD/MM/YYYY')}</div>
 
         <div className="flex flex-col">
           <div className="flex flex-row gap-x-2">
             <div className="flex shrink basis-1/2 flex-col gap-y-1">
               <CommuneIcon />
-              <p
-                className={[
-                  'line-clamp-2 text-sm',
-                  fei.commune_mise_a_mort ? 'text-black' : 'text-neutral-400',
-                ].join(' ')}
-              >
+              <p className={['line-clamp-2 text-sm', fei.commune_mise_a_mort ? 'text-black' : 'text-neutral-400'].join(' ')}>
                 {fei.commune_mise_a_mort
                   ?.split(' ')
                   .slice(1)
@@ -244,12 +221,7 @@ export default function CardFiche({
             </div>
             <div className="flex shrink basis-1/2 flex-col gap-y-1">
               <ChasseIcon />
-              <p
-                className={[
-                  'line-clamp-2 text-sm',
-                  fei.premier_detenteur_name_cache ? 'text-black' : 'text-neutral-400',
-                ].join(' ')}
-              >
+              <p className={['line-clamp-2 text-sm', fei.premier_detenteur_name_cache ? 'text-black' : 'text-neutral-400'].join(' ')}>
                 {/* {user?.roles.includes(UserRoles.SVI) ? (
                   <>{fei.latest_intermediaire_name_cache || 'À renseigner'}</>
                 ) : (
@@ -279,11 +251,7 @@ export default function CardFiche({
                       className={[
                         'm-0 line-clamp-1',
                         index >= maxDetailedLines ? 'text-sm' : 'text-xl',
-                        line === 'À renseigner'
-                          ? 'text-neutral-400'
-                          : line === 'fin de liste'
-                            ? 'text-transparent'
-                            : 'text-neutral-700',
+                        line === 'À renseigner' ? 'text-neutral-400' : line === 'fin de liste' ? 'text-transparent' : 'text-neutral-700',
                       ].join(' ')}
                       key={line + index}
                     >
@@ -317,9 +285,7 @@ export default function CardFiche({
                 <>
                   <RefusIcon />
                   <div>
-                    {!!_carcassesOuLotsRefusés && (
-                      <p className="text-warning-main-525 m-0 text-xl">{_carcassesOuLotsRefusés}</p>
-                    )}
+                    {!!_carcassesOuLotsRefusés && <p className="text-warning-main-525 m-0 text-xl">{_carcassesOuLotsRefusés}</p>}
                     {partialRefusals.map((refusal, index) => (
                       <p key={index} className="text-warning-main-525 m-0 text-xl">
                         {refusal} refusé{parseInt(refusal, 10) > 1 ? 's' : ''}
@@ -340,9 +306,7 @@ export default function CardFiche({
       </Link>
       {disabledBecauseOffline && (
         <div className="bg-action-high-blue-france absolute bottom-0 left-0 flex grow flex-row items-end gap-x-2 px-2 py-1">
-          <p className="text-sm text-white italic">
-            Vous ne pouvez pas accéder au détail de vos fiches clôturées sans connexion internet.
-          </p>
+          <p className="text-sm text-white italic">Vous ne pouvez pas accéder au détail de vos fiches clôturées sans connexion internet.</p>
         </div>
       )}
     </div>

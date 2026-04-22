@@ -38,13 +38,5 @@
       "~/*": ["../api-express/*"]
     }
   },
-  "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    "src/**/*",
-    "__tests__/**/*",
-    "**/*.test.ts",
-    "../api-express/src/types/**/*",
-    "jest.setup.js"
-  ]
+  "include": ["**/*.ts", "**/*.tsx", "src/**/*", "__tests__/**/*", "**/*.test.ts", "../api-express/src/types/**/*", "jest.setup.js"]
 }

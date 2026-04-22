@@ -48,7 +48,7 @@ app.use(
   // logger('tiny', {
   logger(':method :url :status :res[content-length] - :response-time ms - :date[iso]', {
     skip: (req) => req.method === 'OPTIONS',
-  }),
+  })
 );
 
 const sentryEnabled = !!SENTRY_KEY;
@@ -81,17 +81,13 @@ app.use(Sentry.Handlers.tracingHandler());
 
 if (process.env.NODE_ENV === 'production') {
   // regex .zacharie.beta.gouv.fr
-  app.use(
-    cors({ credentials: true, origin: ['https://zacharie.beta.gouv.fr', /\.zacharie\.beta\.gouv\.fr$/] }),
-  );
+  app.use(cors({ credentials: true, origin: ['https://zacharie.beta.gouv.fr', /\.zacharie\.beta\.gouv\.fr$/] }));
 } else {
   app.use(
     cors({
       credentials: true,
-      origin: ['http://localhost:3234', 'http://localhost:3290', process.env.VITE_APP_URL ?? ''].filter(
-        Boolean,
-      ),
-    }),
+      origin: ['http://localhost:3234', 'http://localhost:3290', process.env.VITE_APP_URL ?? ''].filter(Boolean),
+    })
   );
 }
 
@@ -105,7 +101,7 @@ app.get('/.well-known/security.txt', (_req, res) => {
   res.type('text/plain').send(
     `Contact: mailto:contact@zacharie.beta.gouv.fr
 Preferred-Languages: fr, en
-Expires: 2027-12-31T00:00:00.000Z`,
+Expires: 2027-12-31T00:00:00.000Z`
   );
 });
 
@@ -162,7 +158,7 @@ app.use(
         upgradeInsecureRequests: [],
       },
     },
-  }),
+  })
 );
 // Permissions-Policy header — restrict browser features not used by the app
 app.use((_req, res, next) => {

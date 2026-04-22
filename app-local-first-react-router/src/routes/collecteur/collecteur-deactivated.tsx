@@ -14,21 +14,9 @@ export default function CollecteurDeactivated() {
   }, []);
 
   return (
-    <RootDisplay
-      hideMinistereName
-      navigation={navigation}
-      id="collecteur-layout-not-activated"
-      mainLink="/app/collecteur"
-    >
-      <main
-        role="main"
-        id="content"
-        className="fr-background-alt--blue-france relative min-h-full overflow-auto"
-      >
-        <title>
-          Compte en attente d’activation | Zacharie | Ministère de l’Agriculture et de la Souveraineté
-          Alimentaire
-        </title>
+    <RootDisplay hideMinistereName navigation={navigation} id="collecteur-layout-not-activated" mainLink="/app/collecteur">
+      <main role="main" id="content" className="fr-background-alt--blue-france relative min-h-full overflow-auto">
+        <title>Compte en attente d’activation | Zacharie | Ministère de l’Agriculture et de la Souveraineté Alimentaire</title>
         <div className="fr-container fr-container--fluid fr-my-md-14v">
           <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
             <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
@@ -41,14 +29,11 @@ export default function CollecteurDeactivated() {
                     <p className="fr-text--sm fr-mb-3w">
                       Nous vérifions les informations que vous avez renseignées.
                       <br />
-                      Nous vous enverrons un mail pour confirmer l’activation de votre compte ou vous demander
-                      des informations complémentaires.
+                      Nous vous enverrons un mail pour confirmer l’activation de votre compte ou vous demander des informations complémentaires.
                     </p>
                   ) : (
                     <>
-                      <p className="fr-text--sm fr-mb-3w">
-                        Il semble que certaines informations soient manquantes sur votre profil.
-                      </p>
+                      <p className="fr-text--sm fr-mb-3w">Il semble que certaines informations soient manquantes sur votre profil.</p>
                       <ul className="fr-btns-group fr-btns-group--inline-md fr-mb-3w">
                         <li>
                           <Link className="fr-btn" to="/app/collecteur/profil/coordonnees">
@@ -61,8 +46,7 @@ export default function CollecteurDeactivated() {
                   <p className="fr-text--sm fr-mb-2w">Des questions ? Contactez-nous :</p>
                   <ul className="fr-text--sm mb-0 list-inside list-disc">
                     <li>
-                      par mail :{' '}
-                      <a href="mailto:contact@zacharie.beta.gouv.fr">contact@zacharie.beta.gouv.fr</a>
+                      par mail : <a href="mailto:contact@zacharie.beta.gouv.fr">contact@zacharie.beta.gouv.fr</a>
                     </li>
                     <li>
                       par téléphone : <a href="tel:+33189316640">01 89 31 66 40</a>

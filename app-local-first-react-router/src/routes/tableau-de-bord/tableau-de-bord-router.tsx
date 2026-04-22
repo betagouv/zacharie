@@ -104,12 +104,7 @@ export default function RouterTableauDeBord({ navigation }: { navigation: MainNa
         path="mon-profil/mes-informations-de-chasse"
         element={
           <RestrictedRoute id="mes-informations-de-chasse">
-            <MesInformationsDeChasse
-              withExaminateurInitial
-              withAssociationsDeChasse
-              withCCGs
-              withPartenaires
-            />
+            <MesInformationsDeChasse withExaminateurInitial withAssociationsDeChasse withCCGs withPartenaires />
           </RestrictedRoute>
         }
       />

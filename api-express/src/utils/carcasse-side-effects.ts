@@ -1,18 +1,10 @@
 import { Carcasse, IPM2Decision } from '@prisma/client';
 import prisma from '~/prisma';
 import sendNotificationToUser from '~/service/notifications';
-import {
-  formatCarcasseManquanteOrRefusChasseurEmail,
-  formatSaisieChasseurEmail,
-} from '~/utils/formatCarcasseEmail';
+import { formatCarcasseManquanteOrRefusChasseurEmail, formatSaisieChasseurEmail } from '~/utils/formatCarcasseEmail';
 import { checkGenerateCertificat } from '~/utils/generate-certificats';
 
-async function notifyExaminateurAndPremierDetenteur(
-  fei_numero: string,
-  title: string,
-  email: string,
-  notificationLogAction: string,
-) {
+async function notifyExaminateurAndPremierDetenteur(fei_numero: string, title: string, email: string, notificationLogAction: string) {
   const [examinateurInitial, premierDetenteur] = await prisma.fei
     .findUnique({
       where: { numero: fei_numero },
@@ -47,30 +39,21 @@ async function notifyExaminateurAndPremierDetenteur(
 export async function notifySaisieChasseur(existingCarcasse: Carcasse, updatedCarcasse: Carcasse) {
   if (
     existingCarcasse.svi_ipm2_decision !== updatedCarcasse.svi_ipm2_decision &&
-    (updatedCarcasse.svi_ipm2_decision === IPM2Decision.SAISIE_PARTIELLE ||
-      updatedCarcasse.svi_ipm2_decision === IPM2Decision.SAISIE_TOTALE)
+    (updatedCarcasse.svi_ipm2_decision === IPM2Decision.SAISIE_PARTIELLE || updatedCarcasse.svi_ipm2_decision === IPM2Decision.SAISIE_TOTALE)
   ) {
     const [object, email] = formatSaisieChasseurEmail(updatedCarcasse);
-    await notifyExaminateurAndPremierDetenteur(
-      existingCarcasse.fei_numero,
-      object,
-      email,
-      `CARCASSE_SAISIE_${updatedCarcasse.zacharie_carcasse_id}`,
-    );
+    await notifyExaminateurAndPremierDetenteur(existingCarcasse.fei_numero, object, email, `CARCASSE_SAISIE_${updatedCarcasse.zacharie_carcasse_id}`);
   }
 }
 
 export async function notifyManquanteChasseur(existingCarcasse: Carcasse, updatedCarcasse: Carcasse) {
-  if (
-    !existingCarcasse.intermediaire_carcasse_manquante &&
-    updatedCarcasse.intermediaire_carcasse_manquante
-  ) {
+  if (!existingCarcasse.intermediaire_carcasse_manquante && updatedCarcasse.intermediaire_carcasse_manquante) {
     const [object, email] = await formatCarcasseManquanteOrRefusChasseurEmail(updatedCarcasse);
     await notifyExaminateurAndPremierDetenteur(
       existingCarcasse.fei_numero,
       object,
       email,
-      `CARCASSE_MANQUANTE_${updatedCarcasse.zacharie_carcasse_id}`,
+      `CARCASSE_MANQUANTE_${updatedCarcasse.zacharie_carcasse_id}`
     );
   }
 }
@@ -82,12 +65,7 @@ export async function notifyRefusChasseur(existingCarcasse: Carcasse, updatedCar
     updatedCarcasse.intermediaire_carcasse_refus_motif
   ) {
     const [object, email] = await formatCarcasseManquanteOrRefusChasseurEmail(updatedCarcasse);
-    await notifyExaminateurAndPremierDetenteur(
-      existingCarcasse.fei_numero,
-      object,
-      email,
-      `CARCASSE_REFUS_${updatedCarcasse.zacharie_carcasse_id}`,
-    );
+    await notifyExaminateurAndPremierDetenteur(existingCarcasse.fei_numero, object, email, `CARCASSE_REFUS_${updatedCarcasse.zacharie_carcasse_id}`);
   }
 }
 

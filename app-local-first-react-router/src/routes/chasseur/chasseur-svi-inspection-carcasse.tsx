@@ -57,9 +57,7 @@ export function ChasseurSviInspectionCarcasse() {
     for (const carcassesIntermediaire of carcassesIntermediaires) {
       if (carcassesIntermediaire?.commentaire) {
         const intermediaireEntity = entities[carcassesIntermediaire.intermediaire_entity_id];
-        commentaires.push(
-          `${intermediaireEntity?.nom_d_usage}\u00A0: ${carcassesIntermediaire?.commentaire}`,
-        );
+        commentaires.push(`${intermediaireEntity?.nom_d_usage}\u00A0: ${carcassesIntermediaire?.commentaire}`);
       }
     }
     return commentaires;
@@ -102,23 +100,13 @@ export function ChasseurSviInspectionCarcasse() {
             <>
               <FEIDonneesDeChasse carcasseId={carcasse.zacharie_carcasse_id} />
               {carcasse.type === CarcasseType.PETIT_GIBIER && (
-                <ItemNotEditable
-                  label="Nombre d'animaux initialement prélevés"
-                  value={carcasse.nombre_d_animaux!.toString()}
-                />
+                <ItemNotEditable label="Nombre d'animaux initialement prélevés" value={carcasse.nombre_d_animaux!.toString()} />
               )}
-              <ItemNotEditable
-                label="Commentaires des destinataires"
-                value={commentairesIntermediaires.join('\n') || 'N/A'}
-              />
+              <ItemNotEditable label="Commentaires des destinataires" value={commentairesIntermediaires.join('\n') || 'N/A'} />
             </>
           </Section>
           <Section title="Résumé de la décision">
-            <CardCarcasseSvi
-              carcasse={carcasse}
-              canClick={false}
-              key={dayjs(carcasse.updated_at).toISOString()}
-            />
+            <CardCarcasseSvi carcasse={carcasse} canClick={false} key={dayjs(carcasse.updated_at).toISOString()} />
           </Section>
 
           <div className="mt-4">

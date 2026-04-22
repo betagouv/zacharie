@@ -5,15 +5,7 @@ import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Stepper } from '@codegouvfr/react-dsfr/Stepper';
 import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
-import {
-  EntityTypes,
-  EntityRelationType,
-  UserRoles,
-  Prisma,
-  User,
-  UserEtgRoles,
-  EntityRelationStatus,
-} from '@prisma/client';
+import { EntityTypes, EntityRelationType, UserRoles, Prisma, User, UserEtgRoles, EntityRelationStatus } from '@prisma/client';
 import type { EntitiesWorkingForResponse, UserConnexionResponse } from '@api/src/types/responses';
 import type { EntitiesByTypeAndId } from '@api/src/types/entity';
 import useUser from '@app/zustand/user';
@@ -38,27 +30,17 @@ const empytEntitiesByTypeAndId: EntitiesByTypeAndId = {
 
 export default function MonEntreprise() {
   const user = useUser((state) => state.user)!;
-  const [allEntitiesByTypeAndId, setAllEntitiesByTypeAndId] =
-    useState<EntitiesByTypeAndId>(empytEntitiesByTypeAndId);
-  const [userEntitiesByTypeAndId, setUserEntitiesByTypeAndId] =
-    useState<EntitiesByTypeAndId>(empytEntitiesByTypeAndId);
+  const [allEntitiesByTypeAndId, setAllEntitiesByTypeAndId] = useState<EntitiesByTypeAndId>(empytEntitiesByTypeAndId);
+  const [userEntitiesByTypeAndId, setUserEntitiesByTypeAndId] = useState<EntitiesByTypeAndId>(empytEntitiesByTypeAndId);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const userCollecteursPro = user.roles.includes(UserRoles.COLLECTEUR_PRO)
-    ? Object.values(userEntitiesByTypeAndId[EntityTypes.COLLECTEUR_PRO])
-    : [];
-  const userEtgs = user.roles.includes(UserRoles.ETG)
-    ? Object.values(userEntitiesByTypeAndId[EntityTypes.ETG])
-    : [];
-  const userSvis = user.roles.includes(UserRoles.SVI)
-    ? Object.values(userEntitiesByTypeAndId[EntityTypes.SVI])
-    : [];
+  const userCollecteursPro = user.roles.includes(UserRoles.COLLECTEUR_PRO) ? Object.values(userEntitiesByTypeAndId[EntityTypes.COLLECTEUR_PRO]) : [];
+  const userEtgs = user.roles.includes(UserRoles.ETG) ? Object.values(userEntitiesByTypeAndId[EntityTypes.ETG]) : [];
+  const userSvis = user.roles.includes(UserRoles.SVI) ? Object.values(userEntitiesByTypeAndId[EntityTypes.SVI]) : [];
   const userCommerceDeDetail = user.roles.includes(UserRoles.COMMERCE_DE_DETAIL)
     ? Object.values(userEntitiesByTypeAndId[EntityTypes.COMMERCE_DE_DETAIL])
     : [];
-  const userCantineOuRestaurationCollective = user.roles.includes(
-    UserRoles.CANTINE_OU_RESTAURATION_COLLECTIVE,
-  )
+  const userCantineOuRestaurationCollective = user.roles.includes(UserRoles.CANTINE_OU_RESTAURATION_COLLECTIVE)
     ? Object.values(userEntitiesByTypeAndId[EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE])
     : [];
   const userAssociationCaritative = user.roles.includes(UserRoles.ASSOCIATION_CARITATIVE)
@@ -67,20 +49,12 @@ export default function MonEntreprise() {
   const userRepasDeChasseOuAssociatif = user.roles.includes(UserRoles.REPAS_DE_CHASSE_OU_ASSOCIATIF)
     ? Object.values(userEntitiesByTypeAndId[EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF])
     : [];
-  const collecteursProDone = user.roles.includes(UserRoles.COLLECTEUR_PRO)
-    ? userCollecteursPro.length > 0
-    : true;
-  const commerceDeDetailDone = user.roles.includes(UserRoles.COMMERCE_DE_DETAIL)
-    ? userCommerceDeDetail.length > 0
-    : true;
-  const cantineOuRestaurationCollectiveDone = user.roles.includes(
-    UserRoles.CANTINE_OU_RESTAURATION_COLLECTIVE,
-  )
+  const collecteursProDone = user.roles.includes(UserRoles.COLLECTEUR_PRO) ? userCollecteursPro.length > 0 : true;
+  const commerceDeDetailDone = user.roles.includes(UserRoles.COMMERCE_DE_DETAIL) ? userCommerceDeDetail.length > 0 : true;
+  const cantineOuRestaurationCollectiveDone = user.roles.includes(UserRoles.CANTINE_OU_RESTAURATION_COLLECTIVE)
     ? userCantineOuRestaurationCollective.length > 0
     : true;
-  const associationCaritativeDone = user.roles.includes(UserRoles.ASSOCIATION_CARITATIVE)
-    ? userAssociationCaritative.length > 0
-    : true;
+  const associationCaritativeDone = user.roles.includes(UserRoles.ASSOCIATION_CARITATIVE) ? userAssociationCaritative.length > 0 : true;
   const repasDeChasseOuAssociatifDone = user.roles.includes(UserRoles.REPAS_DE_CHASSE_OU_ASSOCIATIF)
     ? userRepasDeChasseOuAssociatif.length > 0
     : true;
@@ -119,15 +93,14 @@ export default function MonEntreprise() {
         useUser.setState({ user: response.data.user });
       }
     },
-    [user.id],
+    [user.id]
   );
 
   const nextTitle = 'Mes notifications';
   const nextPage = '/app/tableau-de-bord/profil/mes-notifications';
   const isFromProfil = location.pathname.includes('/app/tableau-de-bord/profil');
 
-  const showEntrpriseVisibilityCheckbox =
-    user.roles.includes(UserRoles.COLLECTEUR_PRO) || user.roles.includes(UserRoles.ETG);
+  const showEntrpriseVisibilityCheckbox = user.roles.includes(UserRoles.COLLECTEUR_PRO) || user.roles.includes(UserRoles.ETG);
 
   const title = user.roles.includes(UserRoles.SVI) ? 'Mon service' : 'Mon entreprise';
 
@@ -139,18 +112,11 @@ export default function MonEntreprise() {
           <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
             {isFromProfil && <Stepper currentStep={3} nextTitle={nextTitle} stepCount={4} title={title} />}
             <h1 className="fr-h2 fr-mb-2w">
-              {isFromProfil
-                ? 'Renseignez ' + (user.roles.includes(UserRoles.SVI) ? 'votre service' : 'votre entreprise')
-                : title}
+              {isFromProfil ? 'Renseignez ' + (user.roles.includes(UserRoles.SVI) ? 'votre service' : 'votre entreprise') : title}
             </h1>
             {isFromProfil && (
-              <CallOut
-                title="✍️ Pour pouvoir remplir les fiches qui lui sont attribuées"
-                className="bg-white"
-              >
-                {user.roles.includes(UserRoles.SVI)
-                  ? "Quel est votre service vétérinaire d'inspection (SVI) ?"
-                  : 'Quelle est votre entreprise ?'}
+              <CallOut title="✍️ Pour pouvoir remplir les fiches qui lui sont attribuées" className="bg-white">
+                {user.roles.includes(UserRoles.SVI) ? "Quel est votre service vétérinaire d'inspection (SVI) ?" : 'Quelle est votre entreprise ?'}
                 <br />
                 Lorsqu'une fiche lui sera attribuée, vous pourrez la prendre en charge.
               </CallOut>
@@ -191,11 +157,7 @@ export default function MonEntreprise() {
                 setRefreshKey={setRefreshKey}
                 refreshKey={refreshKey}
                 sectionLabel="Mon Cantine ou Restauration Collective"
-                addLabel={
-                  !cantineOuRestaurationCollectiveDone
-                    ? 'Ajouter un Cantine ou Restauration Collective'
-                    : 'Mon entreprise'
-                }
+                addLabel={!cantineOuRestaurationCollectiveDone ? 'Ajouter un Cantine ou Restauration Collective' : 'Mon entreprise'}
                 selectLabel="Cherchez une autre Cantine ou Restauration Collective"
                 done={cantineOuRestaurationCollectiveDone}
                 canChange
@@ -210,9 +172,7 @@ export default function MonEntreprise() {
                 setRefreshKey={setRefreshKey}
                 refreshKey={refreshKey}
                 sectionLabel="Mon Association Caritative"
-                addLabel={
-                  !associationCaritativeDone ? 'Ajouter une Association Caritative' : 'Mon entreprise'
-                }
+                addLabel={!associationCaritativeDone ? 'Ajouter une Association Caritative' : 'Mon entreprise'}
                 selectLabel="Cherchez une autre Association Caritative"
                 done={associationCaritativeDone}
                 canChange
@@ -227,11 +187,7 @@ export default function MonEntreprise() {
                 setRefreshKey={setRefreshKey}
                 refreshKey={refreshKey}
                 sectionLabel="Mon Repas de Chasse ou Associatif"
-                addLabel={
-                  !repasDeChasseOuAssociatifDone
-                    ? 'Ajouter un Repas de Chasse ou Associatif'
-                    : 'Mon entreprise'
-                }
+                addLabel={!repasDeChasseOuAssociatifDone ? 'Ajouter un Repas de Chasse ou Associatif' : 'Mon entreprise'}
                 selectLabel="Cherchez un autre Repas de Chasse ou Associatif"
                 done={repasDeChasseOuAssociatifDone}
                 canChange
@@ -428,9 +384,7 @@ function ListAndSelectEntities({
 }: ListAndSelectEntitiesProps) {
   const user = useUser((state) => state.user)!;
   const userEntities = Object.values(userEntitiesByTypeAndId[entityType]);
-  const remainingEntities = Object.values(allEntitiesByTypeAndId[entityType]).filter(
-    (entity) => !userEntitiesByTypeAndId[entityType][entity.id],
-  );
+  const remainingEntities = Object.values(allEntitiesByTypeAndId[entityType]).filter((entity) => !userEntitiesByTypeAndId[entityType][entity.id]);
 
   const [entityId, setEntityId] = useState<string | null>(null);
 
@@ -445,9 +399,7 @@ function ListAndSelectEntities({
           .filter((entity) => entity.type === entityType)
           .map((entity) => {
             const relation = entity.EntityRelationsWithUsers.find(
-              (relation) =>
-                relation.owner_id === user.id &&
-                relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+              (relation) => relation.owner_id === user.id && relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
             );
             if (!relation) return null;
             return (
@@ -472,8 +424,7 @@ function ListAndSelectEntities({
             <p className="py-5 pr-5">
               Vous pouvez en ajouter d'autre via la liste ci-dessous.
               <br />
-              Si vous ne trouvez pas votre entreprise, veuillez nous contacter via{' '}
-              <Link to="/app/contact">le formulaire de contact</Link>.
+              Si vous ne trouvez pas votre entreprise, veuillez nous contacter via <Link to="/app/contact">le formulaire de contact</Link>.
             </p>
             <div className="flex w-full flex-col gap-4 md:flex-row [&_.fr-select-group]:mb-0">
               <SelectCustom
@@ -487,9 +438,7 @@ function ListAndSelectEntities({
                     ? {
                         label: remainingEntities
                           .filter((entity) => entity.id === entityId)
-                          .map(
-                            (entity) => `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`,
-                          )?.[0],
+                          .map((entity) => `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`)?.[0],
                         value: entityId,
                       }
                     : null
@@ -513,8 +462,7 @@ function ListAndSelectEntities({
                     body: {
                       [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
                       _action: 'create',
-                      [Prisma.EntityAndUserRelationsScalarFieldEnum.relation]:
-                        EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+                      [Prisma.EntityAndUserRelationsScalarFieldEnum.relation]: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
                       [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entityId,
                       [Prisma.EntityAndUserRelationsScalarFieldEnum.status]: EntityRelationStatus.REQUESTED,
                     },

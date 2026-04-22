@@ -61,13 +61,7 @@ export default function CarcassesExaminateur({
 
       {canEdit && hasCarcasses && !allCarcassesConfirmed && !showForm && (
         <div className="mt-4">
-          <Button
-            type="button"
-            id="add-more-carcasses-button"
-            priority="secondary"
-            iconId="fr-icon-add-line"
-            onClick={() => setShowForm(true)}
-          >
+          <Button type="button" id="add-more-carcasses-button" priority="secondary" iconId="fr-icon-add-line" onClick={() => setShowForm(true)}>
             Ajouter une autre carcasse
           </Button>
         </div>

@@ -17,12 +17,9 @@ import { CarcasseCertificat, User } from '@prisma/client';
 import etablissements from '../assets/etablissements-traitement-sanitaire.json';
 import dayjs from 'dayjs';
 
-export async function generateLaissezPasserSanitaireDocx(
-  data: CarcasseCertificat,
-  user: User,
-): Promise<Buffer> {
+export async function generateLaissezPasserSanitaireDocx(data: CarcasseCertificat, user: User): Promise<Buffer> {
   const etablissementDeTraitementAssainissant = etablissements.data.find(
-    (e) => e['Numéro agrément/Approval number'] === data.traitement_assainissant_etablissement,
+    (e) => e['Numéro agrément/Approval number'] === data.traitement_assainissant_etablissement
   );
   const doc = new Document({
     styles: {
@@ -596,11 +593,7 @@ export async function generateLaissezPasserSanitaireDocx(
                       new Paragraph({
                         children: [
                           new TextRun({
-                            text: `Raison sociale : ${
-                              etablissementDeTraitementAssainissant?.[
-                                'Raison SOCIALE - Enseigne commerciale/Name'
-                              ] || ''
-                            }`,
+                            text: `Raison sociale : ${etablissementDeTraitementAssainissant?.['Raison SOCIALE - Enseigne commerciale/Name'] || ''}`,
                             font: 'Marianne',
                           }),
                         ],
@@ -616,9 +609,7 @@ export async function generateLaissezPasserSanitaireDocx(
                       new Paragraph({
                         children: [
                           new TextRun({
-                            text: `Adresse de l'établissement : ${
-                              etablissementDeTraitementAssainissant?.['Adresse/Adress'] || ''
-                            }`,
+                            text: `Adresse de l'établissement : ${etablissementDeTraitementAssainissant?.['Adresse/Adress'] || ''}`,
                             font: 'Marianne',
                           }),
                         ],
@@ -650,9 +641,7 @@ export async function generateLaissezPasserSanitaireDocx(
                       new Paragraph({
                         children: [
                           new TextRun({
-                            text: `Numéro agrément : ${
-                              etablissementDeTraitementAssainissant?.['Numéro agrément/Approval number'] || ''
-                            }`,
+                            text: `Numéro agrément : ${etablissementDeTraitementAssainissant?.['Numéro agrément/Approval number'] || ''}`,
                             font: 'Marianne',
                           }),
                         ],

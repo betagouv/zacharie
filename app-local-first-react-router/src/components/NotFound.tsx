@@ -11,15 +11,12 @@ export default function NotFound() {
           <div className="fr-py-0 fr-col-12 fr-col-md-6">
             <h1 className="fr-h1">Page non trouvée</h1>
             <p className="fr-h2 fr-text--sm fr-mb-3w">Erreur 404</p>
-            <p className="fr-text--lead fr-mb-3w">
-              La page que vous cherchez est introuvable. Excusez-nous pour la gène occasionnée.
-            </p>
+            <p className="fr-text--lead fr-mb-3w">La page que vous cherchez est introuvable. Excusez-nous pour la gène occasionnée.</p>
             <p className="fr-text--sm fr-mb-5w">
-              Si vous avez tapé l'adresse web dans le navigateur, vérifiez qu'elle est correcte. La page n’est
-              peut-être plus disponible.
+              Si vous avez tapé l'adresse web dans le navigateur, vérifiez qu'elle est correcte. La page n’est peut-être plus disponible.
               <br />
-              Dans ce cas, pour continuer votre visite vous pouvez consulter notre page d’accueil, ou
-              effectuer une recherche avec notre moteur de recherche en haut de page.
+              Dans ce cas, pour continuer votre visite vous pouvez consulter notre page d’accueil, ou effectuer une recherche avec notre moteur de
+              recherche en haut de page.
               <br />
               Sinon contactez-nous pour que l’on puisse vous rediriger vers la bonne information.
             </p>

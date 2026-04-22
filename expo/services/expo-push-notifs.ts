@@ -1,5 +1,5 @@
-import { Platform, Alert, Linking } from "react-native";
-import * as Notifications from "expo-notifications";
+import { Platform, Alert, Linking } from 'react-native';
+import * as Notifications from 'expo-notifications';
 // import { capture } from "./sentry";
 
 Notifications.setNotificationHandler({
@@ -25,7 +25,7 @@ export async function registerForPushNotificationsAsync({ force = false, expo = 
   try {
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;
-    if (existingStatus !== "granted") {
+    if (existingStatus !== 'granted') {
       if (!force) {
         return null;
       }
@@ -38,35 +38,31 @@ export async function registerForPushNotificationsAsync({ force = false, expo = 
       });
       finalStatus = status;
     }
-    console.log("finalStatus", finalStatus);
-    if (finalStatus !== "granted" && force) {
-      Alert.alert(
-        "Les notifications sont désactivées",
-        "Vous pouvez activer les notifications dans les paramètres de votre téléphone.",
-        [
-          {
-            text: "Open Settings",
-            onPress: async () => {
-              await Linking.openSettings();
-            },
+    console.log('finalStatus', finalStatus);
+    if (finalStatus !== 'granted' && force) {
+      Alert.alert('Les notifications sont désactivées', 'Vous pouvez activer les notifications dans les paramètres de votre téléphone.', [
+        {
+          text: 'Open Settings',
+          onPress: async () => {
+            await Linking.openSettings();
           },
-          { text: "OK", style: "cancel", onPress: () => {} },
-        ]
-      );
+        },
+        { text: 'OK', style: 'cancel', onPress: () => {} },
+      ]);
       return;
     }
     const token = expo
       ? await Notifications.getExpoPushTokenAsync({
-          projectId: "5c6b710c-a198-48f8-8f82-5597a1bcd0b7",
+          projectId: '5c6b710c-a198-48f8-8f82-5597a1bcd0b7',
         })
       : await Notifications.getDevicePushTokenAsync();
 
-    if (Platform.OS === "android") {
-      Notifications.setNotificationChannelAsync("default", {
-        name: "default",
+    if (Platform.OS === 'android') {
+      Notifications.setNotificationChannelAsync('default', {
+        name: 'default',
         importance: Notifications.AndroidImportance.MAX,
         vibrationPattern: [0, 250, 250, 250],
-        lightColor: "#FF231F7C",
+        lightColor: '#FF231F7C',
       });
     }
     return token;

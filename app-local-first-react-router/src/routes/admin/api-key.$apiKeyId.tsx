@@ -119,15 +119,11 @@ export default function AdminApiKey() {
     },
     {
       tabId: 'Entités',
-      label: apiKey.dedicated_to_entity_id
-        ? 'Entité (1) 🔒'
-        : `Entités (${apiKey.approvals.filter((rel) => rel.entity_id).length})`,
+      label: apiKey.dedicated_to_entity_id ? 'Entité (1) 🔒' : `Entités (${apiKey.approvals.filter((rel) => rel.entity_id).length})`,
     },
     {
       tabId: 'Utilisateurs',
-      label: apiKey.dedicated_to_entity_id
-        ? 'Utilisateurs (0) 🔒'
-        : `Utilisateurs (${apiKey.approvals.filter((rel) => rel.user_id).length})`,
+      label: apiKey.dedicated_to_entity_id ? 'Utilisateurs (0) 🔒' : `Utilisateurs (${apiKey.approvals.filter((rel) => rel.user_id).length})`,
     },
   ];
 
@@ -137,9 +133,7 @@ export default function AdminApiKey() {
 
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
-      <title>
-        {`${apiKey.name} - ${apiKey.description} | Admin | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}
-      </title>
+      <title>{`${apiKey.name} - ${apiKey.description} | Admin | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}</title>
       {isSaving && (
         <div className="bg-action-high-blue-france fixed top-0 right-0">
           <span className="p-4 text-white">Enregistrement en cours</span>
@@ -149,11 +143,7 @@ export default function AdminApiKey() {
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
           <div className="p-4 pb-32 md:p-8 md:pb-0">
             <Tag
-              iconId={
-                apiKey.dedicated_to_entity_id
-                  ? 'fr-icon-checkbox-circle-line'
-                  : 'fr-icon-checkbox-circle-line'
-              }
+              iconId={apiKey.dedicated_to_entity_id ? 'fr-icon-checkbox-circle-line' : 'fr-icon-checkbox-circle-line'}
               nativeButtonProps={{
                 onClick: function noRefCheck() {},
                 className: '-mt-24 mb-6',
@@ -273,7 +263,7 @@ export default function AdminApiKey() {
                           const link = `${import.meta.env.VITE_API_URL}/v1/api-key/access-token/${res.data.apiKey.access_token}`;
                           window.open(
                             `mailto:?subject=Votre lien pour accéder à la clé privée de l'API Zacharie&body=Bonjour%0A%0AVoici votre lien pour accéder à la clé privée de l'API Zacharie: ${link}%0AUne fois ouvert, ce lien ne sera plus valide. Si vous avez perdu votre clé et que vous avez besoin d'un nouveau lien, veuillez nous contacter.%0A%0AN'hésitez pas à nous contacter si vous avez des questions.%0A%0ACordialement,%0AL'équipe Zacharie.`,
-                            '_blank',
+                            '_blank'
                           );
                         });
                       }}
@@ -381,11 +371,7 @@ interface EntitiesRelatedToProps {
   setIsSaving: (isSaving: boolean) => void;
 }
 
-function EntitiesRelatedTo({
-  apiKeyReponseData,
-  setApiKeyResponseData,
-  setIsSaving,
-}: EntitiesRelatedToProps) {
+function EntitiesRelatedTo({ apiKeyReponseData, setApiKeyResponseData, setIsSaving }: EntitiesRelatedToProps) {
   const { apiKey, allEntities } = apiKeyReponseData;
 
   return (
@@ -414,10 +400,7 @@ function EntitiesRelatedTo({
             }}
           >
             <div className="flex flex-1 flex-col border-none p-4 text-left font-bold">
-              <Link
-                to={`/app/admin/entity/${entity.id}`}
-                className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
-              >
+              <Link to={`/app/admin/entity/${entity.id}`} className="inline-flex! size-full items-center justify-start bg-none! no-underline!">
                 {entity.nom_d_usage}
                 <br />
                 Raison sociale: {entity.raison_sociale}
@@ -497,10 +480,7 @@ function EntitiesRelatedTo({
                     });
                 }}
               >
-                <Link
-                  to={`/app/admin/entity/${entity.id}`}
-                  className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
-                >
+                <Link to={`/app/admin/entity/${entity.id}`} className="inline-flex! size-full items-center justify-start bg-none! no-underline!">
                   {entity.type}
                   <br />
                   {entity.nom_d_usage}
@@ -570,18 +550,12 @@ function UsersRelatedTo({ apiKeyReponseData, setApiKeyResponseData, setIsSaving 
         const user = approval.User;
         return (
           <div
-            className={[
-              'flex basis-full flex-row items-center justify-between border-solid text-left',
-              'bg-contrast-grey mb-2 border-0',
-            ]
+            className={['flex basis-full flex-row items-center justify-between border-solid text-left', 'bg-contrast-grey mb-2 border-0']
               .filter(Boolean)
               .join(' ')}
           >
             <div className="flex flex-1 flex-col border-none p-4 text-left font-bold">
-              <Link
-                to={`/app/admin/user/${user.id}`}
-                className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
-              >
+              <Link to={`/app/admin/user/${user.id}`} className="inline-flex! size-full items-center justify-start bg-none! no-underline!">
                 {user.email}
                 <br />
                 {user.roles.join(', ')}
@@ -660,10 +634,7 @@ function UsersRelatedTo({ apiKeyReponseData, setApiKeyResponseData, setIsSaving 
                     });
                 }}
               >
-                <Link
-                  to={`/app/admin/user/${user.id}`}
-                  className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
-                >
+                <Link to={`/app/admin/user/${user.id}`} className="inline-flex! size-full items-center justify-start bg-none! no-underline!">
                   {user.prenom} {user.nom_de_famille}
                   <br />＠ {user.email}
                   <br />
@@ -673,10 +644,7 @@ function UsersRelatedTo({ apiKeyReponseData, setApiKeyResponseData, setIsSaving 
                   Ajouter
                 </Button>
               </form>,
-              <p
-                key={user.id}
-                className="inline-flex! size-full items-center justify-start bg-none! no-underline!"
-              >
+              <p key={user.id} className="inline-flex! size-full items-center justify-start bg-none! no-underline!">
                 {user.roles.map((role) => (
                   <Fragment key={role}>
                     {role}
@@ -713,15 +681,7 @@ const approvalStatusOptions: Array<{
 
 type Approval = State['apiKey']['approvals'][number];
 
-function ApprovalStatusSelector({
-  approval,
-  entity,
-  user,
-}: {
-  approval: Approval;
-  entity?: Entity;
-  user?: User;
-}) {
+function ApprovalStatusSelector({ approval, entity, user }: { approval: Approval; entity?: Entity; user?: User }) {
   const [status, setStatus] = useState<Approval['status']>(approval?.status);
   return (
     <SelectCustom

@@ -6,15 +6,7 @@ import { hasAllRequiredFields } from '@app/utils/user';
 import Chargement from './Chargement';
 import DeactivatedAccount from '@app/routes/deactivated';
 
-export default function RestrictedRoute({
-  children,
-  id,
-  zacharieAdmin = false,
-}: {
-  children: ReactElement;
-  id: string;
-  zacharieAdmin?: boolean;
-}) {
+export default function RestrictedRoute({ children, id, zacharieAdmin = false }: { children: ReactElement; id: string; zacharieAdmin?: boolean }) {
   const user = useMostFreshUser('RestrictedRoute ' + id);
   const navigate = useNavigate();
   const location = useLocation();
@@ -36,14 +28,10 @@ export default function RestrictedRoute({
     return <Chargement />;
   }
 
-  const isRestrictedPage =
-    !location.pathname.includes('profil') &&
-    !location.pathname.includes('onboarding') &&
-    !location.pathname.includes('admin');
+  const isRestrictedPage = !location.pathname.includes('profil') && !location.pathname.includes('onboarding') && !location.pathname.includes('admin');
 
   if (isRestrictedPage) {
-    const needToCompleteExaminateurInitial =
-      user?.roles.includes(UserRoles.CHASSEUR) && user?.est_forme_a_l_examen_initial == null;
+    const needToCompleteExaminateurInitial = user?.roles.includes(UserRoles.CHASSEUR) && user?.est_forme_a_l_examen_initial == null;
     const isProfileCompleted = hasAllRequiredFields(user!) && !needToCompleteExaminateurInitial;
 
     if (!isProfileCompleted) {
