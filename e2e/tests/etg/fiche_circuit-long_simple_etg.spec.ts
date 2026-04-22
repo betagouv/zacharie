@@ -32,7 +32,8 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
       `);
   await page.getByRole('link', { name: feiId }).click();
   await page.locator('summary').filter({ hasText: 'Données de traçabilité' }).click();
-  await expect(page.locator('#content')).toMatchAriaSnapshot(`
+  const tracabilite = page.locator('details').filter({ hasText: 'Données de traçabilité' });
+  await expect(tracabilite).toMatchAriaSnapshot(`
       - group:
         - heading "Données de traçabilité" [level=3]
         - paragraph: Espèces
@@ -188,7 +189,8 @@ test('Pas de stockage - Je transfère à un autre collecteur', async ({ page }) 
       `);
   await page.getByRole('link', { name: feiId }).click();
   await page.locator('summary').filter({ hasText: 'Données de traçabilité' }).click();
-  await expect(page.locator('#content')).toMatchAriaSnapshot(`
+  const tracabilite = page.locator('details').filter({ hasText: 'Données de traçabilité' });
+  await expect(tracabilite).toMatchAriaSnapshot(`
       - group:
         - heading "Données de traçabilité" [level=3]
         - paragraph: Espèces
@@ -319,7 +321,8 @@ test('Pas de stockage - Je transfère à un autre ETG', async ({ page, context }
       `);
   await page.getByRole('link', { name: feiId }).click();
   await page.locator('summary').filter({ hasText: 'Données de traçabilité' }).click();
-  await expect(page.locator('#content')).toMatchAriaSnapshot(`
+  const tracabilite = page.locator('details').filter({ hasText: 'Données de traçabilité' });
+  await expect(tracabilite).toMatchAriaSnapshot(`
       - group:
         - heading "Données de traçabilité" [level=3]
         - paragraph: Espèces

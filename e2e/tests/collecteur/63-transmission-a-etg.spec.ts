@@ -19,8 +19,10 @@ test("Collecteur transmet à ETG 1 qui la reçoit", async ({ page }) => {
 
   await page.getByRole("button", { name: /Cliquez ici pour définir/ }).click();
 
-  // Select ETG first, then storage becomes active
-  await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").click();
+  // Select ETG first, then storage becomes active — need to scroll down to the select
+  const selectContainer = page.locator("[class*='select-prochain-detenteur'][class*='input-container']");
+  await selectContainer.scrollIntoViewIfNeeded();
+  await selectContainer.click();
   await page.getByRole("option", { name: /ETG 1/ }).click();
 
   const pasDeStockage = page.getByText("Pas de stockage").first();

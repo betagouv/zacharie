@@ -54,7 +54,9 @@ test("Edition carcasse depuis /chasseur/carcasse/:fei/:id", async ({ page }) => 
   await retourBtn.scrollIntoViewIfNeeded();
   await retourBtn.click();
 
-  // Verify anomaly text on the carcasse button
+  // Verify anomaly persisted — click into detail to check
   const carcasseBtn = page.getByRole("button", { name: /Daim N°/ }).first();
-  await expect(carcasseBtn).toContainText(/anomalie/i, { timeout: 10000 });
+  await expect(carcasseBtn).toBeVisible({ timeout: 10000 });
+  await carcasseBtn.click();
+  await expect(page.getByText(/Abcès ou nodules/i)).toBeVisible({ timeout: 10000 });
 });

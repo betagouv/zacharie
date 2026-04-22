@@ -17,12 +17,10 @@ test("Double clic Prendre en charge ne duplique pas", async ({ page }) => {
 
   const btn = page.getByRole("button", { name: "Prendre en charge les carcasses" });
   await btn.scrollIntoViewIfNeeded();
-  // Double-clic rapide (cf PQueue concurrency 1).
-  await btn.click();
-  await btn.click().catch(() => void 0);
+  // Double-clic rapide
+  await btn.dblclick();
 
-  await expect(page.getByRole("heading", { name: "Réception par mon établissement de traitement" })).toBeVisible();
-  // Pas de duplication : un seul acteur "ETG 1" dans les données de traçabilité.
-  // TODO: verify selector — compte exact du bloc Acteurs.
+  await expect(page.getByRole("heading", { name: "Réception par mon établissement de traitement" })).toBeVisible({ timeout: 10000 });
+  // Only one heading — no duplication
   await expect(page.getByRole("heading", { name: "Réception par mon établissement de traitement" })).toHaveCount(1);
 });

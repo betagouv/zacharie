@@ -16,7 +16,11 @@ test("Collecteur : le dropdown prochain détenteur n'inclut pas de SVI", async (
   await page.getByRole("link", { name: new RegExp(feiId) }).click();
   await page.getByRole("button", { name: /Je contrôle et transporte les carcasses|Prendre en charge/ }).click();
 
-  await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").click();
+  await page.getByRole("button", { name: /Cliquez ici pour définir/ }).click();
+
+  const selectContainer = page.locator("[class*='select-prochain-detenteur'][class*='input-container']");
+  await selectContainer.scrollIntoViewIfNeeded();
+  await selectContainer.click();
 
   // Aucune option SVI.
   await expect(page.getByRole("option", { name: /^SVI / })).toHaveCount(0);

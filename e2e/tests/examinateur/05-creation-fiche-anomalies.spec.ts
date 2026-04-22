@@ -75,9 +75,11 @@ test("Fiche avec anomalies abats & carcasse — visible au rouvrir", async ({ pa
   await expect(page.getByText(/Votre fiche a été transmise/i).first()).toBeVisible({ timeout: 10000 });
   const feiId = RegExp(/ZACH-\d+-\w+-\d+/).exec(page.url())?.[0];
 
-  // Step 5: Reopen and verify anomalies persisted
+  // Step 5: Reopen and verify anomalies persisted — click into carcasse detail
   await page.goto(`http://localhost:3290/app/chasseur/fei/${feiId}`);
-  // The carcasse button in the fiche list should mention the anomaly
   const carcasseBtn = page.getByRole("button", { name: /Daim N°/ }).first();
-  await expect(carcasseBtn).toContainText(/anomalie/i, { timeout: 10000 });
+  await expect(carcasseBtn).toBeVisible({ timeout: 10000 });
+  await carcasseBtn.click();
+  // On the detail page, the anomaly section should show the selected anomaly
+  await expect(page.getByText(/Abcès ou nodules/i)).toBeVisible({ timeout: 10000 });
 });

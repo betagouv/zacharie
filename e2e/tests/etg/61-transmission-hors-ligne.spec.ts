@@ -20,9 +20,13 @@ test("ETG transmet hors-ligne puis synchronise au retour online", async ({ page,
   await context.setOffline(true);
 
   await page.getByRole("button", { name: "Cliquez ici pour définir" }).click();
-  await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").click();
+  const selectContainer = page.locator("[class*='select-prochain-detenteur'][class*='input-container']");
+  await selectContainer.scrollIntoViewIfNeeded();
+  await selectContainer.click();
   await page.getByRole("option", { name: "SVI 1 - 75000 Paris (Service" }).click();
-  await page.getByRole("button", { name: "Transmettre la fiche" }).click();
+  const transmettre = page.getByRole("button", { name: "Transmettre la fiche" });
+  await transmettre.scrollIntoViewIfNeeded();
+  await transmettre.click();
 
   // Repasser en ligne → sync auto PQueue.
   await context.setOffline(false);
