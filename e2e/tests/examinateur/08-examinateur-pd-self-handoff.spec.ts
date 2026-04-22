@@ -18,7 +18,7 @@ test.beforeAll(async () => {
   await resetDb("EXAMINATEUR_INITIAL");
 });
 
-test.skip("Examinateur == PD via CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY — self-handoff", async ({ page }) => {
+test("Examinateur == PD via CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY — self-handoff", async ({ page }) => {
   // SKIP: entity PD selector needs live verification
   await connectWith(page, "examinateur-premier-detenteur@example.fr");
   await expect(page).toHaveURL("http://localhost:3290/app/chasseur");
@@ -50,7 +50,10 @@ test.skip("Examinateur == PD via CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY — self-
 
   // Validation
   await page.getByRole("button", { name: "Définir comme étant la date du jour et maintenant" }).click();
-  await page.getByText(/Je, .* certifie qu/i).first().click();
+  await page
+    .getByText(/Je, .* certifie qu/i)
+    .first()
+    .click();
   await page.getByRole("button", { name: "Transmettre", exact: true }).click();
   await expect(page.getByText(/Votre fiche a été transmise/i).first()).toBeVisible({ timeout: 10000 });
 
