@@ -42,12 +42,23 @@ import DestinataireSelectIntermediaire from './etg-destinataire-select-intermedi
 import FeiSousTraite from './etg-current-owner-sous-traite';
 import CarcasseIntermediaireComp from './etg-carcasse';
 import CurrentOwnerConfirm from './etg-current-owner-confirm';
+import NotFound from '@app/components/NotFound';
 
 interface Props {
   readOnly?: boolean;
 }
 
 export default function EtgFei(props: Props) {
+  const params = useParams();
+  const feis = useZustandStore((state) => state.feis);
+  const fei = feis[params.fei_numero!];
+  if (!fei) {
+    return <NotFound />;
+  }
+  return <EtgFeiLoader {...props} />;
+}
+
+function EtgFeiLoader(props: Props) {
   const params = useParams();
   const user = useUser((state) => state.user)!;
   const feis = useZustandStore((state) => state.feis);
@@ -739,7 +750,7 @@ function EtgFeiContent({
                     <Button onClick={handleCloseFei} priority="primary">
                       Clôturer la fiche (
                       {carcassesSorted.carcassesManquantes.length > 0 &&
-                        carcassesSorted.carcassesRejetees.length > 0
+                      carcassesSorted.carcassesRejetees.length > 0
                         ? 'toutes les carcasses sont manquantes ou refusées'
                         : carcassesSorted.carcassesManquantes.length > 0
                           ? 'toutes les carcasses sont manquantes'
@@ -809,7 +820,7 @@ function EtgFeiContent({
                       }
                       label={
                         carcassesSorted.carcassesApproved.length > 0 ||
-                          carcassesSorted.carcassesEcarteesPourInspection.length > 0
+                        carcassesSorted.carcassesEcarteesPourInspection.length > 0
                           ? 'Date de prise en charge'
                           : 'Date de décision'
                       }

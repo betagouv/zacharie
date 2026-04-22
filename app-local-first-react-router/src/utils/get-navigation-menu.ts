@@ -21,12 +21,12 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
     profileMenu.push({
       text: 'Mes informations de chasse',
       isActive:
-        location.pathname === '/app/tableau-de-bord/mon-profil/mes-informations-de-chasse' ||
-        location.pathname === '/app/tableau-de-bord/mon-profil/mes-associations-de-chasse' ||
-        location.pathname === '/app/tableau-de-bord/mon-profil/mes-ccgs',
+        location.pathname === '/app/tableau-de-bord/profil/mes-informations-de-chasse' ||
+        location.pathname === '/app/tableau-de-bord/profil/mes-associations-de-chasse' ||
+        location.pathname === '/app/tableau-de-bord/profil/mes-ccgs',
       linkProps: {
         href: '#',
-        to: '/app/tableau-de-bord/mon-profil/mes-informations-de-chasse',
+        to: '/app/tableau-de-bord/profil/mes-informations-de-chasse',
       },
     });
   }
@@ -34,17 +34,17 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
   profileMenu.push(
     {
       text: 'Mes coordonnées',
-      isActive: location.pathname === '/app/tableau-de-bord/mon-profil/mes-coordonnees',
+      isActive: location.pathname === '/app/tableau-de-bord/profil/mes-coordonnees',
       linkProps: {
         href: '#',
-        to: '/app/tableau-de-bord/mon-profil/mes-coordonnees',
+        to: '/app/tableau-de-bord/profil/mes-coordonnees',
       },
     },
     {
       text: 'Mon activité',
-      isActive: location.pathname === '/app/tableau-de-bord/mon-profil/mon-activite',
+      isActive: location.pathname === '/app/tableau-de-bord/profil/mon-activite',
       linkProps: {
-        to: '/app/tableau-de-bord/mon-profil/mon-activite',
+        to: '/app/tableau-de-bord/profil/mon-activite',
         href: '#',
       },
     },
@@ -52,28 +52,28 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
   if (user?.roles.includes(UserRoles.COLLECTEUR_PRO)) {
     profileMenu.push({
       text: 'Mes centres de collecte',
-      isActive: location.pathname === '/app/tableau-de-bord/mon-profil/mes-ccgs',
+      isActive: location.pathname === '/app/tableau-de-bord/profil/mes-ccgs',
       linkProps: {
         href: '#',
-        to: '/app/tableau-de-bord/mon-profil/mes-ccgs',
+        to: '/app/tableau-de-bord/profil/mes-ccgs',
       },
     });
   }
   profileMenu.push({
     text: 'Mes notifications',
-    isActive: location.pathname === '/app/tableau-de-bord/mon-profil/mes-notifications',
+    isActive: location.pathname === '/app/tableau-de-bord/profil/mes-notifications',
     linkProps: {
       href: '#',
-      to: '/app/tableau-de-bord/mon-profil/mes-notifications',
+      to: '/app/tableau-de-bord/profil/mes-notifications',
     },
   });
   if (apiKeyApprovals && apiKeyApprovals.length > 0) {
     profileMenu.push({
       text: 'Partage de mes données',
-      isActive: location.pathname === '/app/tableau-de-bord/mon-profil/partage-de-mes-donnees',
+      isActive: location.pathname === '/app/tableau-de-bord/profil/partage-de-mes-donnees',
       linkProps: {
         href: '#',
-        to: '/app/tableau-de-bord/mon-profil/partage-de-mes-donnees',
+        to: '/app/tableau-de-bord/profil/partage-de-mes-donnees',
       },
     });
   }
@@ -109,7 +109,7 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
     ...mainMenu,
     {
       text: 'Mon profil',
-      isActive: location.pathname.startsWith('/app/tableau-de-bord/mon-profil'),
+      isActive: location.pathname.startsWith('/app/tableau-de-bord-profil'),
       // @ts-expect-error problem with MainNavigationProps.Item[]
       menuLinks: profileMenu,
     },

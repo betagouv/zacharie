@@ -24,7 +24,7 @@ export default function ChasseurLayout() {
 
   const showDeactivatedAccount = useMemo(() => {
     const isRestrictedPage =
-      !location.pathname.includes('mon-profil') &&
+      !location.pathname.includes('profil') &&
       !location.pathname.includes('onboarding') &&
       !location.pathname.includes('admin');
     if (!isRestrictedPage) return false;

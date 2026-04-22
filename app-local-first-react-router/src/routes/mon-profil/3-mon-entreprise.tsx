@@ -123,8 +123,8 @@ export default function MonEntreprise() {
   );
 
   const nextTitle = 'Mes notifications';
-  const nextPage = '/app/tableau-de-bord/mon-profil/mes-notifications';
-  const isFromProfil = location.pathname.includes('/app/tableau-de-bord/mon-profil');
+  const nextPage = '/app/tableau-de-bord/profil/mes-notifications';
+  const isFromProfil = location.pathname.includes('/app/tableau-de-bord/profil');
 
   const showEntrpriseVisibilityCheckbox =
     user.roles.includes(UserRoles.COLLECTEUR_PRO) || user.roles.includes(UserRoles.ETG);
@@ -379,7 +379,7 @@ export default function MonEntreprise() {
                           {
                             children: 'Modifier mes coordonnées',
                             linkProps: {
-                              to: '/app/tableau-de-bord/mon-profil/mes-coordonnees',
+                              to: '/app/tableau-de-bord/profil/mes-coordonnees',
                               href: '#',
                             },
                             priority: 'secondary',

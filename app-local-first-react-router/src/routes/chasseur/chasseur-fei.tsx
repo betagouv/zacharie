@@ -28,7 +28,6 @@ import ExaminateurInitialDeleteFei from './examinateur-initial-delete-fei';
 import DateHeureValidationAlerts from '../fei/date-heure-validation-alerts';
 import HeaderFiche from '../fei/Headerfiche';
 import CurrentOwnerConfirm from './chasseur-current-owner-confirm';
-import { toast } from 'react-toastify';
 
 export default function ChasseurFei() {
   const params = useParams();
@@ -377,9 +376,7 @@ function FEIChasseurLoaded() {
                   hintText={
                     canEdit && !fei.date_mise_a_mort ? (
                       <>
-                        {[
-                          dayjs.utc().startOf('day').toDate(),
-                        ].map((date) => (
+                        {[dayjs.utc().startOf('day').toDate()].map((date) => (
                           <button
                             key={dayjs(date).format('dddd DD MMMM')}
                             className="mr-2 rounded-full bg-[#E8EDFF] px-3 py-1 text-sm text-[#000091]"
@@ -635,8 +632,8 @@ function FEIChasseurLoaded() {
                       },
                       defaultValue: fei?.examinateur_initial_date_approbation_mise_sur_le_marche
                         ? dayjs(fei?.examinateur_initial_date_approbation_mise_sur_le_marche).format(
-                          'YYYY-MM-DDTHH:mm',
-                        )
+                            'YYYY-MM-DDTHH:mm',
+                          )
                         : undefined,
                     }}
                   />
@@ -681,12 +678,12 @@ function FEIChasseurLoaded() {
                   )}
                 </div>
               )}
-              <div className="flex flex-col items-center justify-between px-4 md:px-0 py-3 md:flex-row">
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 w-full grid-rows-2">
+              <div className="flex flex-col items-center justify-between px-4 py-3 md:flex-row md:px-0">
+                <div className="grid w-full grid-cols-2 grid-rows-2 gap-2 md:grid-cols-3">
                   <Button
                     priority="tertiary"
                     iconId="fr-icon-arrow-left-line"
-                    className="bg-white col-span-2 md:col-span-1"
+                    className="col-span-2 bg-white md:col-span-1"
                     linkProps={{
                       to: `/app/chasseur/`,
                     }}
@@ -695,7 +692,7 @@ function FEIChasseurLoaded() {
                   </Button>
                   <div className="text-left md:text-center">{canEdit && <ExaminateurInitialDeleteFei />}</div>
                   {canEdit && (
-                    <div className="w-full flex justify-end">
+                    <div className="flex w-full justify-end">
                       <Button
                         iconId="fr-icon-send-plane-line"
                         disabled={submitIsDisabled}

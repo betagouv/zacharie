@@ -184,7 +184,7 @@ export default function MesCCGs() {
                           iconId="fr-icon-pencil-line"
                           title="Éditer"
                           nativeButtonProps={{
-                            onClick: () => navigate(`/app/tableau-de-bord/mon-profil/mes-ccgs/${entity.id}`),
+                            onClick: () => navigate(`/app/tableau-de-bord/profil/mes-ccgs/${entity.id}`),
                           }}
                         />
                       )}

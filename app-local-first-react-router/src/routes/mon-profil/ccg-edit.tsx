@@ -48,7 +48,7 @@ export default function CCGEdit() {
         body,
       }).then((res) => res as CCGResponse);
       if (response.ok) {
-        navigate('/app/tableau-de-bord/mon-profil/mes-ccgs');
+        navigate('/app/tableau-de-bord/profil/mes-ccgs');
       } else {
         setError(response.error || 'Erreur lors de la mise à jour');
       }
@@ -74,7 +74,7 @@ export default function CCGEdit() {
             priority="tertiary"
             className="mt-4"
             nativeButtonProps={{
-              onClick: () => navigate('/app/tableau-de-bord/mon-profil/mes-ccgs'),
+              onClick: () => navigate('/app/tableau-de-bord/profil/mes-ccgs'),
             }}
           >
             Retour
@@ -94,7 +94,7 @@ export default function CCGEdit() {
           iconId="fr-icon-arrow-left-line"
           className="mb-4"
           nativeButtonProps={{
-            onClick: () => navigate('/app/tableau-de-bord/mon-profil/mes-ccgs'),
+            onClick: () => navigate('/app/tableau-de-bord/profil/mes-ccgs'),
           }}
         >
           Retour aux chambres froides
