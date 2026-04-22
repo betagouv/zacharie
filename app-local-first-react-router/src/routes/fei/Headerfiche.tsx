@@ -19,17 +19,30 @@ const statusColors: Record<FeiStepSimpleStatus, { bg: string; text: string }> = 
   },
 };
 
-export default function HeaderFiche({ fei }: { fei: FeiWithIntermediaires }) {
-  const { simpleStatus, currentStepLabel } = useFeiSteps(fei);
+type HeaderFicheProps = {
+  fei: FeiWithIntermediaires;
+  variant?: 'default' | 'etg';
+};
+
+export default function HeaderFiche({ fei, variant = 'default' }: HeaderFicheProps) {
+  const { simpleStatus, currentStepLabel, currentStepLabelForEtg } = useFeiSteps(fei);
 
   const isNewFiche = !fei.date_mise_a_mort && !fei.commune_mise_a_mort;
-  const title = isNewFiche
+  const chasseTitle = isNewFiche
     ? 'Nouvelle fiche'
     : fei.date_mise_a_mort
       ? `Chasse du ${dayjs(fei.date_mise_a_mort).format('DD/MM/YYYY')}`
       : 'Chasse';
+  const title =
+    variant === 'etg' && fei.premier_detenteur_name_cache
+      ? `${chasseTitle} | ${fei.premier_detenteur_name_cache}`
+      : chasseTitle;
 
-  const stepIcon = currentStepLabel === 'Clôturée' ? '🔒' : '⏳';
+  const stepLabel = variant === 'etg' ? currentStepLabelForEtg : currentStepLabel;
+  const isClosed = simpleStatus === 'Clôturée';
+  const displayedStatus: FeiStepSimpleStatus =
+    variant === 'etg' ? (isClosed ? 'Clôturée' : 'En cours') : simpleStatus;
+  const stepIcon = isClosed ? '🔒' : '⏳';
 
   return (
     <div className="fr-mb-2w rounded bg-white p-4">
@@ -40,16 +53,14 @@ export default function HeaderFiche({ fei }: { fei: FeiWithIntermediaires }) {
             small
             className={[
               'items-center rounded-[4px] font-semibold uppercase',
-              statusColors[simpleStatus].bg,
-              statusColors[simpleStatus].text,
+              statusColors[displayedStatus].bg,
+              statusColors[displayedStatus].text,
             ].join(' ')}
           >
-            {simpleStatus}
+            {displayedStatus}
           </Tag>
           <span className="text-sm">{stepIcon}</span>
-          <span className="text-sm">
-            {currentStepLabel}
-          </span>
+          <span className="text-sm">{stepLabel}</span>
         </div>
       )}
     </div>

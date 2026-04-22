@@ -1,5 +1,5 @@
 import type { FeiWithIntermediaires } from '@api/src/types/fei';
-import type { FeiStep, FeiStepSimpleStatus } from '@app/types/fei-steps';
+import type { FeiStep, FeiStepForEtg, FeiStepSimpleStatus } from '@app/types/fei-steps';
 import useUser from '@app/zustand/user';
 import { Carcasse, Entity, EntityTypes, FeiOwnerRole, User, UserRoles } from '@prisma/client';
 import { useEntitiesIdsWorkingDirectlyFor } from '@app/utils/get-entity-relations';
@@ -17,6 +17,7 @@ type IntermediaireStep = {
 type UseFeiStepsReturn = {
   currentStep: number;
   currentStepLabel: FeiStep;
+  currentStepLabelForEtg: FeiStepForEtg;
   nextStepLabel: FeiStep;
   currentStepLabelShort: string;
   simpleStatus: FeiStepSimpleStatus;
@@ -266,6 +267,40 @@ export function computeFeiSteps({
     }
   })();
 
+  const currentStepLabelForEtg: FeiStepForEtg = (() => {
+    if (fei.intermediaire_closed_at || fei.svi_closed_at || fei.automatic_closed_at) {
+      return 'Carcasses traitées';
+    }
+    if (fei.svi_assigned_at) {
+      return 'Inspection par le service vétérinaire';
+    }
+    const myCarcasses = carcasses?.filter(
+      (c) =>
+        (c.next_owner_entity_id && entitiesIdsWorkingDirectlyFor.includes(c.next_owner_entity_id)) ||
+        c.next_owner_user_id === user?.id ||
+        (c.current_owner_entity_id && entitiesIdsWorkingDirectlyFor.includes(c.current_owner_entity_id)) ||
+        c.current_owner_user_id === user?.id,
+    );
+    const isCurrentOwnerOfMyCarcasses = myCarcasses?.some(
+      (c) =>
+        c.current_owner_user_id === user?.id ||
+        (c.current_owner_entity_id && entitiesIdsWorkingDirectlyFor.includes(c.current_owner_entity_id)),
+    );
+    if (fei.fei_current_owner_role === FeiOwnerRole.ETG) {
+      const currentOwnerIsMe =
+        fei.fei_current_owner_user_id === user?.id ||
+        (!!fei.fei_current_owner_entity_id &&
+          entitiesIdsWorkingDirectlyFor.includes(fei.fei_current_owner_entity_id));
+      if (currentOwnerIsMe || isCurrentOwnerOfMyCarcasses) {
+        return 'Réception par votre établissement de traitement';
+      }
+    }
+    if (isCurrentOwnerOfMyCarcasses) {
+      return 'Réception par votre établissement de traitement';
+    }
+    return 'Fiche attribuée à votre établissement';
+  })();
+
   const currentStepLabelShort = (() => {
     if (fei.fei_next_owner_sous_traite_by_entity_id) {
       if (entitiesIdsWorkingDirectlyFor.includes(fei.fei_next_owner_sous_traite_by_entity_id)) {
@@ -289,6 +324,7 @@ export function computeFeiSteps({
   return {
     currentStep: currentStepIndex + 1,
     currentStepLabel,
+    currentStepLabelForEtg,
     currentStepLabelShort,
     nextStepLabel,
     simpleStatus,
