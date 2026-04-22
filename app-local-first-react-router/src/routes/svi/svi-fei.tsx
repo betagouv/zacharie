@@ -9,6 +9,7 @@ import Chargement from '@app/components/Chargement';
 import NotFound from '@app/components/NotFound';
 import FeiSousTraite from '@app/routes/fei/current-owner-sous-traite';
 import { Button } from '@codegouvfr/react-dsfr/Button';
+import SviHeaderFiche from './svi-header-fiche';
 
 export default function SviFeiLoader() {
   const params = useParams();
@@ -56,7 +57,7 @@ function SviFei() {
             className="fr-col-12 fr-col-md-10 bg-alt-blue-france [&_.fr-tabs\\_\\_list]:bg-alt-blue-france m-4 md:m-0 md:p-0"
             key={fei.fei_current_owner_entity_id! + fei.fei_current_owner_user_id!}
           >
-            <h1 className="fr-h3 fr-mb-2w">Fiche {fei?.numero}</h1>
+            <SviHeaderFiche fei={fei} />
             <FeiSousTraite />
             <FEI_SVI />
             <div className="m-8 flex flex-col justify-start gap-4">
