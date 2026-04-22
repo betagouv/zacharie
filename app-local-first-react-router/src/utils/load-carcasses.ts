@@ -16,7 +16,7 @@ export async function loadCarcasses(role: UserRoles) {
   const serverDate = await API.get({ path: 'now' }).then((res) => (res.ok ? res.data : null));
 
   const carcassesData = await API.get({
-    path: `fei-carcasse/${role.toLocaleLowerCase()}`,
+    path: `carcasse/${role.toLocaleLowerCase()}`,
     query: {
       after: String(useZustandStore.getState().lastUpdateCarcassesRegistry),
       withDeleted: 'true',
