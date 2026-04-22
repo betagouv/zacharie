@@ -76,7 +76,7 @@ export function setFeiInStore(fei: FeiForRefresh) {
 
   for (const carcasseIntermediaire of fei.CarcasseIntermediaire || []) {
     const feiAndCarcasseAndIntermediaireId = getFeiAndCarcasseAndIntermediaireIds(
-      carcasseIntermediaire,
+      carcasseIntermediaire
     ) as FeiAndCarcasseAndIntermediaireIds;
 
     const localCarcasseIntermediaire = prevState.carcassesIntermediaireById[feiAndCarcasseAndIntermediaireId];

@@ -195,10 +195,16 @@ export default function BottomNavigation({
       id="bottom-navigation"
     >
       {visibleItems.map((item, i) => (
-        <NavButton key={getTextString(item) || i} item={item} />
+        <NavButton
+          key={getTextString(item) || i}
+          item={item}
+        />
       ))}
       {needsOverflow && (
-        <div ref={moreRef} className="relative flex min-w-0 flex-1">
+        <div
+          ref={moreRef}
+          className="relative flex min-w-0 flex-1"
+        >
           <button
             type="button"
             onClick={() => setMoreOpen((prev) => !prev)}
@@ -214,8 +220,14 @@ export default function BottomNavigation({
           {moreOpen && (
             <div className="absolute right-0 bottom-full mb-1 min-w-48 rounded-t-lg border border-gray-200 bg-white shadow-lg">
               {overflowItems.map((item, i) => (
-                <div key={getTextString(item) || i} onClick={() => setMoreOpen(false)}>
-                  <NavButton item={item} isOverflow />
+                <div
+                  key={getTextString(item) || i}
+                  onClick={() => setMoreOpen(false)}
+                >
+                  <NavButton
+                    item={item}
+                    isOverflow
+                  />
                 </div>
               ))}
             </div>

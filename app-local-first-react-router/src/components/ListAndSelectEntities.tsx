@@ -42,7 +42,10 @@ export default function ListAndSelectEntities({
   return (
     <div className="mb-6 bg-white md:shadow-sm">
       <div className="p-4 md:p-8">
-        <h3 className="mb-8 text-lg font-semibold text-gray-900" id={`${formId}-title`}>
+        <h3
+          className="mb-8 text-lg font-semibold text-gray-900"
+          id={`${formId}-title`}
+        >
           {sectionLabel}
         </h3>
         {description}
@@ -50,7 +53,7 @@ export default function ListAndSelectEntities({
           const relation = entity.EntityRelationsWithUsers.find(
             (relation) =>
               relation.owner_id === user.id &&
-              relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+              relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
           );
           if (!relation) return null;
           console.log(entity);
@@ -72,7 +75,11 @@ export default function ListAndSelectEntities({
           );
         })}
         {canChange && (
-          <form id={formId} className="flex w-full flex-col gap-4" method="POST">
+          <form
+            id={formId}
+            className="flex w-full flex-col gap-4"
+            method="POST"
+          >
             <p className="py-5 pr-5">
               Vous pouvez en ajouter d'autre via la liste ci-dessous.
               <br />
@@ -92,7 +99,7 @@ export default function ListAndSelectEntities({
                         label: remainingEntities
                           .filter((entity) => entity.id === entityId)
                           .map(
-                            (entity) => `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`,
+                            (entity) => `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`
                           )?.[0],
                         value: entityId,
                       }

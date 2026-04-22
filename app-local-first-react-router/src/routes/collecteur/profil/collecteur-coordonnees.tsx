@@ -25,7 +25,7 @@ export default function CollecteurProfilCoordonnees() {
         useUser.setState({ user: response.data.user });
       }
     },
-    [user.id],
+    [user.id]
   );
 
   const handleSubmit = () => {

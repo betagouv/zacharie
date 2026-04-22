@@ -47,7 +47,7 @@ export default function RelationEntityUser({
     createModal({
       id: `entity-users-modal-${entity.id}`,
       isOpenedByDefault: false,
-    }),
+    })
   ).current;
   const isOpen = useIsModalOpen(entityUsersModal);
 
@@ -59,12 +59,12 @@ export default function RelationEntityUser({
   const canHandleCarcassesForEntity = entity.EntityRelationsWithUsers?.find(
     (relation) =>
       relation.owner_id === user.id &&
-      relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+      relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
   );
   const relationsToApprove = entity.EntityRelationsWithUsers?.filter(
     (relation) =>
       relation.status === EntityRelationStatus.REQUESTED &&
-      relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+      relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
   );
 
   const isAdminOfEntity = !canHandleCarcassesForEntity
@@ -103,7 +103,10 @@ export default function RelationEntityUser({
         {displayEntity && (
           <>
             {entityLink ? (
-              <Link to={entityLink} className="block bg-none px-3 py-4 no-underline!">
+              <Link
+                to={entityLink}
+                className="block bg-none px-3 py-4 no-underline!"
+              >
                 {entity.nom_d_usage}
                 <br />
                 {getUserRoleLabel(entity.type)}
@@ -130,7 +133,10 @@ export default function RelationEntityUser({
         {displayUser && (
           <>
             {userLink ? (
-              <Link to={userLink} className="block bg-none px-3 py-4 no-underline!">
+              <Link
+                to={userLink}
+                className="block bg-none px-3 py-4 no-underline!"
+              >
                 <span className="font-bold">
                   {user.prenom} {user.nom_de_famille} {user.id === me.id ? ' (Vous)' : ''}
                 </span>

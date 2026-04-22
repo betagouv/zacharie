@@ -5,7 +5,10 @@ import artworkDarkSvgUrl from '@codegouvfr/react-dsfr/dsfr/artwork/background/ov
 export default function NotFound() {
   const location = useLocation();
   return (
-    <main role="main" id="content">
+    <main
+      role="main"
+      id="content"
+    >
       <div className="fr-container">
         <div className="fr-my-7w fr-mt-md-12w fr-mb-md-10w fr-grid-row fr-grid-row--gutters fr-grid-row--middle fr-grid-row--center">
           <div className="fr-py-0 fr-col-12 fr-col-md-6">
@@ -25,7 +28,10 @@ export default function NotFound() {
             </p>
             <ul className="fr-btns-group fr-btns-group--inline-md">
               <li>
-                <a className="fr-btn" href="/">
+                <a
+                  className="fr-btn"
+                  href="/"
+                >
                   Page d'accueil
                 </a>
               </li>
@@ -48,12 +54,27 @@ export default function NotFound() {
               height="200"
               viewBox="0 0 160 200"
             >
-              <use className="fr-artwork-motif" href={`${artworkDarkSvgUrl}#artwork-motif`}></use>
-              <use className="fr-artwork-background" href={`${artworkDarkSvgUrl}#artwork-background`}></use>
+              <use
+                className="fr-artwork-motif"
+                href={`${artworkDarkSvgUrl}#artwork-motif`}
+              ></use>
+              <use
+                className="fr-artwork-background"
+                href={`${artworkDarkSvgUrl}#artwork-background`}
+              ></use>
               <g transform="translate(40, 60)">
-                <use className="fr-artwork-decorative" href={`${technicalError}#artwork-decorative`}></use>
-                <use className="fr-artwork-minor" href={`${technicalError}#artwork-minor`}></use>
-                <use className="fr-artwork-major" href={`${technicalError}#artwork-major`}></use>
+                <use
+                  className="fr-artwork-decorative"
+                  href={`${technicalError}#artwork-decorative`}
+                ></use>
+                <use
+                  className="fr-artwork-minor"
+                  href={`${technicalError}#artwork-minor`}
+                ></use>
+                <use
+                  className="fr-artwork-major"
+                  href={`${technicalError}#artwork-major`}
+                ></use>
               </g>
             </svg>
           </div>

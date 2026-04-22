@@ -10,7 +10,7 @@ import {
 import type { EntitiesById, EntitiesByTypeAndId, EntityWithUserRelations } from '~/types/entity';
 
 export function sortEntitiesByTypeAndId(
-  entities: Array<EntityWithUserRelations>,
+  entities: Array<EntityWithUserRelations>
 ): [EntitiesById, EntitiesByTypeAndId] {
   const allEntitiesIds: EntitiesById = {};
   const allEntitiesByTypeAndId: EntitiesByTypeAndId = Object.values(EntityTypes).reduce((acc, type) => {
@@ -28,7 +28,7 @@ export function sortEntitiesByTypeAndId(
 
 export function sortEntitiesRelationsByTypeAndId(
   entities: Array<EntityWithUserRelations>,
-  entitiesById: EntitiesById,
+  entitiesById: EntitiesById
 ): EntitiesByTypeAndId {
   const entitiesByTypeAndId: EntitiesByTypeAndId = Object.values(EntityTypes).reduce((acc, type) => {
     acc[type] = {};

@@ -37,7 +37,7 @@ export default function EtgCarcasses() {
 
   const [sortBy, setSortBy] = useLocalStorage<keyof (typeof carcassesRegistry)[number]>(
     'etg-carcasses-sort-by',
-    'numero_bracelet',
+    'numero_bracelet'
   );
   const [sortOrder, setSortOrder] = useLocalStorage<'ASC' | 'DESC'>('etg-carcasses-sort-order', 'ASC');
 
@@ -153,7 +153,7 @@ export default function EtgCarcasses() {
                     setSelectedCarcassesIds([...selectedCarcassesIds, carcasse.zacharie_carcasse_id]);
                   } else {
                     setSelectedCarcassesIds(
-                      selectedCarcassesIds.filter((id) => id !== carcasse.zacharie_carcasse_id),
+                      selectedCarcassesIds.filter((id) => id !== carcasse.zacharie_carcasse_id)
                     );
                   }
                 }}
@@ -213,7 +213,10 @@ export default function EtgCarcasses() {
               </div>
               <div>
                 <span className="font-semibold">Fiche: </span>
-                <Link to={`/app/etg/fei/${carcasse.fei_numero}`} className="text-blue-600 hover:underline">
+                <Link
+                  to={`/app/etg/fei/${carcasse.fei_numero}`}
+                  className="text-blue-600 hover:underline"
+                >
                   {carcasse.fei_numero}
                 </Link>
               </div>
@@ -286,7 +289,7 @@ export default function EtgCarcasses() {
                     selectedCarcassesObject[carcasseId] = true;
                   }
                   onExportToXlsx(
-                    filteredData.filter((carcasse) => selectedCarcassesObject[carcasse.zacharie_carcasse_id]),
+                    filteredData.filter((carcasse) => selectedCarcassesObject[carcasse.zacharie_carcasse_id])
                   );
                 }}
                 disabled={selectedCarcassesIds.length === 0 || isExporting}

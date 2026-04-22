@@ -46,7 +46,7 @@ export default function CCGNouveau({ onFinish }: CCGNouveauProps) {
           [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
           relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
           [Prisma.EntityScalarFieldEnum.numero_ddecpp]: formData.get(
-            Prisma.EntityScalarFieldEnum.numero_ddecpp,
+            Prisma.EntityScalarFieldEnum.numero_ddecpp
           ),
           [Prisma.EntityScalarFieldEnum.type]: EntityTypes.CCG,
         },
@@ -70,7 +70,7 @@ export default function CCGNouveau({ onFinish }: CCGNouveauProps) {
         setError(response.error);
       }
     },
-    [user.id, entities, onFinish],
+    [user.id, entities, onFinish]
   );
 
   // Full pre-registration form
@@ -106,7 +106,7 @@ export default function CCGNouveau({ onFinish }: CCGNouveauProps) {
         setError(response.error || 'Erreur lors de la création du CCG');
       }
     },
-    [entities, onFinish],
+    [entities, onFinish]
   );
 
   return (
@@ -140,7 +140,11 @@ export default function CCGNouveau({ onFinish }: CCGNouveauProps) {
       )}
 
       {mode === 'quick' && (
-        <form method="POST" className="w-full gap-4" onSubmit={handleQuickAdd}>
+        <form
+          method="POST"
+          className="w-full gap-4"
+          onSubmit={handleQuickAdd}
+        >
           <Input
             label="Numéro d'identification *"
             state={error ? 'error' : 'default'}
@@ -155,7 +159,10 @@ export default function CCGNouveau({ onFinish }: CCGNouveauProps) {
             }}
           />
           <div className="mt-4 flex gap-2">
-            <Button type="submit" disabled={isSubmitting}>
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+            >
               {!isSubmitting ? 'Ajouter cette chambre froide' : 'Recherche en cours...'}
             </Button>
             <Button
@@ -173,7 +180,11 @@ export default function CCGNouveau({ onFinish }: CCGNouveauProps) {
       )}
 
       {mode === 'full' && (
-        <form id="ccg_data_form" method="POST" onSubmit={handleFullSubmit}>
+        <form
+          id="ccg_data_form"
+          method="POST"
+          onSubmit={handleFullSubmit}
+        >
           <p className="mb-4 font-semibold">Pré-enregistrer une nouvelle chambre froide (CCG)</p>
           <Input
             label="Nom usuel *"
@@ -256,7 +267,10 @@ export default function CCGNouveau({ onFinish }: CCGNouveauProps) {
             référence dans Zacharie, en attendant son enregistrement.
           </p>
           <div className="flex gap-2">
-            <Button type="submit" disabled={isSubmitting}>
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+            >
               {!isSubmitting ? 'Enregistrer ma chambre froide' : 'Enregistrement en cours...'}
             </Button>
             <Button

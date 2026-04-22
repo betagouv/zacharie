@@ -12,7 +12,7 @@ router.get(
   catchErrors(async (req: RequestWithUser, res: express.Response, next: express.NextFunction) => {
     const data = Date.now();
     res.status(200).send({ ok: true, data });
-  }),
+  })
 );
 
 router.post(
@@ -33,9 +33,7 @@ router.post(
     });
     await sendEmail({
       emails: ['contact@zacharie.beta.gouv.fr', email],
-      subject: `Contact\u00A0: ${sanitize(prenom)} ${sanitize(nom_de_famille)} - ${sanitize(
-        email,
-      )} - ${sanitize(object)}`,
+      subject: `Contact\u00A0: ${sanitize(prenom)} ${sanitize(nom_de_famille)} - ${sanitize(email)} - ${sanitize(object)}`,
       html: `<p>Nous avons bien reçu votre message. Nous vous répondrons dans les plus brefs délais.</p>
       <p>Voici les informations que vous avez fournies\u00A0:</p>
       <p>Nom\u00A0: ${sanitize(nom_de_famille)}</p>
@@ -46,7 +44,7 @@ router.post(
       <p>Message\u00A0: ${sanitize(message)}</p>`,
     });
     res.status(200).send({ ok: true });
-  }),
+  })
 );
 
 export default router;

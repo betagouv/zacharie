@@ -64,6 +64,6 @@ router.post(
     }
 
     res.status(200).send({ ok: true, data: { apiKeyApproval: updatedApproval }, error: null });
-  }),
+  })
 );
 export default router;

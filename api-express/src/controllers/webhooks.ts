@@ -27,7 +27,7 @@ router.post(
       ok: true,
       error: '',
     });
-  }),
+  })
 );
 
 /* 
@@ -87,7 +87,7 @@ router.post(
       ok: true,
       message: 'Webhook received and validated', // More descriptive success message
     });
-  }),
+  })
 );
 
 export default router;

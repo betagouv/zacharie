@@ -43,7 +43,7 @@ export default function CircuitCourtProfilEntrepriseUtilisateurs() {
               const relation = entity.EntityRelationsWithUsers.find(
                 (relation) =>
                   relation.owner_id === user.id &&
-                  relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+                  relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
               );
               if (!relation) return null;
               if (
@@ -86,7 +86,7 @@ export default function CircuitCourtProfilEntrepriseUtilisateurs() {
                         }).then((res) => {
                           if (res.ok) {
                             alert(
-                              'Utilisateur invité avec succès. Il recevra un email pour se connecter à Zacharie.',
+                              'Utilisateur invité avec succès. Il recevra un email pour se connecter à Zacharie.'
                             );
                             setNewUserEmail('');
                             setRefreshKey((k) => k + 1);

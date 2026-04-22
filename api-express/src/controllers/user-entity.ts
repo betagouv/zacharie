@@ -97,7 +97,7 @@ async function checkIfUserIsAdmin(body: z.infer<typeof userEntitySchema>, user: 
 async function checkIfUserCanCrudEntityRelation(
   body: z.infer<typeof userEntitySchema>,
   user: User,
-  isAdmin: boolean,
+  isAdmin: boolean
 ) {
   if (body.owner_id !== user.id) {
     if (!isAdmin) {
@@ -225,8 +225,8 @@ router.post(
 
       res.status(200).send({ ok: true, data: { relation, entity }, error: '' });
       return;
-    },
-  ),
+    }
+  )
 );
 
 router.put(
@@ -323,8 +323,8 @@ router.put(
 
       res.status(200).send({ ok: true, data: { relation, entity }, error: '' });
       return;
-    },
-  ),
+    }
+  )
 );
 
 router.delete(
@@ -411,8 +411,8 @@ router.delete(
 
       res.status(200).send({ ok: true, data: { relation: null, entity: null }, error: '' });
       return;
-    },
-  ),
+    }
+  )
 );
 
 export default router;

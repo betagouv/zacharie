@@ -40,7 +40,7 @@ interface PerformanceTags {
 function getConnectionQuality(
   ttfb: number | null,
   effectiveType?: string,
-  rtt?: number,
+  rtt?: number
 ): PerformanceTags['connection_quality'] {
   // Priority 1: Use TTFB if available (most reliable)
   if (ttfb !== null) {
@@ -73,7 +73,7 @@ function getConnectionQuality(
 
 function getPageLoadSpeed(
   domContentLoaded: number | null,
-  loadComplete: number | null,
+  loadComplete: number | null
 ): PerformanceTags['page_load_speed'] {
   const metric = loadComplete || domContentLoaded;
 
@@ -199,7 +199,7 @@ export function capture(err: ErrorType, context: Context | string = {}): void {
   if (import.meta.env.VITE_ENV !== 'prod' && import.meta.env.VITE_ENV !== 'test') {
     console.log(
       'capture import.meta.env.VITE_ENV !== prod && import.meta.env.VITE_ENV !== test',
-      import.meta.env.VITE_ENV,
+      import.meta.env.VITE_ENV
     );
     return console.log('capture', err, context);
   }

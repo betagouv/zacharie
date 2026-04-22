@@ -11,7 +11,7 @@ export async function saveCarcasseIntermediaire(
   fei_numero: string,
   intermediaire_id: string,
   zacharie_carcasse_id: string,
-  body: Prisma.CarcasseIntermediaireUncheckedCreateInput,
+  body: Prisma.CarcasseIntermediaireUncheckedCreateInput
 ): Promise<CarcasseIntermediaire> {
   if (!fei_numero) {
     throw new Error('Le numéro de fiche est obligatoire');
@@ -84,7 +84,7 @@ export async function saveCarcasseIntermediaire(
   }
   if (
     body.hasOwnProperty(
-      Prisma.CarcasseIntermediaireScalarFieldEnum.intermediaire_prochain_detenteur_role_cache,
+      Prisma.CarcasseIntermediaireScalarFieldEnum.intermediaire_prochain_detenteur_role_cache
     )
   ) {
     data.intermediaire_prochain_detenteur_role_cache =
@@ -125,7 +125,7 @@ router.post(
     async (
       req: express.Request,
       res: express.Response<CarcasseIntermediaireResponse>,
-      next: express.NextFunction,
+      next: express.NextFunction
     ) => {
       const user = req.user;
       if (!user.activated) {
@@ -143,7 +143,7 @@ router.post(
           fei_numero,
           intermediaire_id,
           zacharie_carcasse_id,
-          req.body,
+          req.body
         );
 
         res.status(200).send({
@@ -158,8 +158,8 @@ router.post(
           error: (error as Error).message,
         });
       }
-    },
-  ),
+    }
+  )
 );
 
 router.get(
@@ -169,7 +169,7 @@ router.get(
     async (
       req: express.Request,
       res: express.Response<CarcasseIntermediaireResponse>,
-      next: express.NextFunction,
+      next: express.NextFunction
     ) => {
       if (!req.user.activated) {
         res.status(400).send({
@@ -223,8 +223,8 @@ router.get(
         data: { carcasseIntermediaire },
         error: '',
       });
-    },
-  ),
+    }
+  )
 );
 
 export default router;

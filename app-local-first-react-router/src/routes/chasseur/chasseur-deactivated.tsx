@@ -55,7 +55,10 @@ export default function ChasseurDeactivated() {
                       </p>
                       <ul className="fr-btns-group fr-btns-group--inline-md fr-mb-3w">
                         <li>
-                          <Link className="fr-btn" to="/app/chasseur/onboarding/mes-coordonnees">
+                          <Link
+                            className="fr-btn"
+                            to="/app/chasseur/onboarding/mes-coordonnees"
+                          >
                             Compléter votre profil
                           </Link>
                         </li>

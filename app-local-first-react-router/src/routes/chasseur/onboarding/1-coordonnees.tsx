@@ -28,7 +28,7 @@ export default function ChasseurOnboardingMesCoordonnees() {
         useUser.setState({ user: response.data.user });
       }
     },
-    [user.id],
+    [user.id]
   );
 
   useEffect(() => {
@@ -40,7 +40,12 @@ export default function ChasseurOnboardingMesCoordonnees() {
       <title>Coordonnées | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
-          <Stepper currentStep={1} stepCount={3} title="Coordonnées" nextTitle="Formation examen initial" />
+          <Stepper
+            currentStep={1}
+            stepCount={3}
+            title="Coordonnées"
+            nextTitle="Formation examen initial"
+          />
           <div className="mb-6 bg-white md:shadow-sm">
             <div className="p-4 md:p-8">
               <form

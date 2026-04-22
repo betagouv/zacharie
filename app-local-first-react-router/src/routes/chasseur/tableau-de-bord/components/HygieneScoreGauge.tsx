@@ -68,12 +68,32 @@ export default function HygieneScoreGauge({ score, maxScore = 100 }: HygieneScor
   return (
     <div className="flex flex-col items-center">
       <div className="relative w-full max-w-[150px]">
-        <svg width="150" height="80" viewBox="0 0 150 80" className="overflow-visible">
+        <svg
+          width="150"
+          height="80"
+          viewBox="0 0 150 80"
+          className="overflow-visible"
+        >
           <defs className="">
-            <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#f87171" />
-              <stop offset="50%" stopColor="#fbbf24" />
-              <stop offset="100%" stopColor="#16a34a" />
+            <linearGradient
+              id="gaugeGradient"
+              x1="0%"
+              y1="0%"
+              x2="100%"
+              y2="0%"
+            >
+              <stop
+                offset="0%"
+                stopColor="#f87171"
+              />
+              <stop
+                offset="50%"
+                stopColor="#fbbf24"
+              />
+              <stop
+                offset="100%"
+                stopColor="#16a34a"
+              />
             </linearGradient>
           </defs>
           {/* Background arc (full semicircle) */}
@@ -97,7 +117,12 @@ export default function HygieneScoreGauge({ score, maxScore = 100 }: HygieneScor
             className="transition-all duration-500"
           /> */}
           {/* Score indicator dot */}
-          <circle cx={scoreEndX} cy={scoreEndY} r="6" fill={getScoreIconColor()} />
+          <circle
+            cx={scoreEndX}
+            cy={scoreEndY}
+            r="6"
+            fill={getScoreIconColor()}
+          />
         </svg>
         {/* Score text */}
         <div className="absolute right-0 bottom-0 left-0 -mb-2 flex items-center justify-center">

@@ -19,7 +19,7 @@ export default function useGetCommunesDeChasseFavorites(compute: boolean = true)
             return dayjs(a.date_mise_a_mort).diff(dayjs(b.date_mise_a_mort));
           })
           .map((fei) => fei.commune_mise_a_mort)
-          .filter(Boolean),
+          .filter(Boolean)
       ),
     ].slice(0, 5);
     return villesFavorites;

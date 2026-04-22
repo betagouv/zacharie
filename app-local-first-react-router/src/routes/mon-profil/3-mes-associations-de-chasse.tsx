@@ -12,7 +12,6 @@ import API from '@app/services/api';
 import RelationEntityUser from '@app/components/RelationEntityUser';
 import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
 
-
 const empytEntitiesByTypeAndId: EntitiesByTypeAndId = {
   [EntityTypes.PREMIER_DETENTEUR]: {},
   // UNUSED - just for typing purposes with the API
@@ -58,12 +57,12 @@ export default function MesAssociationsDeChasse() {
         useUser.setState({ user: response.data.user });
       }
     },
-    [user.id],
+    [user.id]
   );
 
   const userEntities = Object.values(userEntitiesByTypeAndId[EntityTypes.PREMIER_DETENTEUR]);
   const remainingEntities = Object.values(allEntitiesByTypeAndId[EntityTypes.PREMIER_DETENTEUR]).filter(
-    (entity) => !userEntitiesByTypeAndId[EntityTypes.PREMIER_DETENTEUR][entity.id],
+    (entity) => !userEntitiesByTypeAndId[EntityTypes.PREMIER_DETENTEUR][entity.id]
   );
 
   const userHasAssociationsChasses =
@@ -81,9 +80,9 @@ export default function MesAssociationsDeChasse() {
 
   const newEntity = newEntityNomDUsage
     ? ({
-      nom_d_usage: newEntityNomDUsage,
-      id: 'nouvelle',
-    } as (typeof remainingEntities)[number])
+        nom_d_usage: newEntityNomDUsage,
+        id: 'nouvelle',
+      } as (typeof remainingEntities)[number])
     : undefined;
   const selectOptions = newEntity ? [newEntity, ...remainingEntities] : remainingEntities;
   const selectValue = newEntityNomDUsage
@@ -132,7 +131,7 @@ export default function MesAssociationsDeChasse() {
         });
       }
     },
-    [isUnregisteredEntity, setRefreshKey, user.id, currentEntityId, newEntityNomDUsage],
+    [isUnregisteredEntity, setRefreshKey, user.id, currentEntityId, newEntityNomDUsage]
   );
 
   return (
@@ -173,7 +172,7 @@ export default function MesAssociationsDeChasse() {
           const relation = entity.EntityRelationsWithUsers.find(
             (relation) =>
               relation.owner_id === user.id &&
-              relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+              relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
           );
           if (!relation) return null;
           return (
@@ -268,28 +267,33 @@ export default function MesAssociationsDeChasse() {
                       inputId={Prisma.EntityScalarFieldEnum.raison_sociale}
                       classNamePrefix={Prisma.EntityScalarFieldEnum.raison_sociale}
                     />
-                    <div className="flex items-center gap-2 my-4">
-                      <div className="border-b border-gray-200 w-full" />
+                    <div className="my-4 flex items-center gap-2">
+                      <div className="w-full border-b border-gray-200" />
                       <span className="text-sm text-gray-500">ou</span>
-                      <div className="border-b border-gray-200 w-full" />
+                      <div className="w-full border-b border-gray-200" />
                     </div>
-                    <Button type="submit" nativeButtonProps={{
-                      onClick: () => {
-                        setNewEntityNomDUsage('');
-                        setIsUnregisteredEntity(true);
-                      }
-                    }}>
+                    <Button
+                      type="submit"
+                      nativeButtonProps={{
+                        onClick: () => {
+                          setNewEntityNomDUsage('');
+                          setIsUnregisteredEntity(true);
+                        },
+                      }}
+                    >
                       Créer une nouvelle association, société ou domaine de chasse
                     </Button>
                   </>
                 )}
                 {currentEntityId && currentEntity && !isUnregisteredEntity && (
-                  <form id="association_data_form" method="POST" onSubmit={handleEntitySubmit}>
-                    <div className="rounded-lg bg-contrast-grey p-4">
+                  <form
+                    id="association_data_form"
+                    method="POST"
+                    onSubmit={handleEntitySubmit}
+                  >
+                    <div className="bg-contrast-grey rounded-lg p-4">
                       <p className="mb-1 text-lg font-bold">{currentEntity.nom_d_usage}</p>
-                      {currentEntity.siret && (
-                        <p className="mb-1 text-sm">SIRET : {currentEntity.siret}</p>
-                      )}
+                      {currentEntity.siret && <p className="mb-1 text-sm">SIRET : {currentEntity.siret}</p>}
                       {currentEntity.address_ligne_1 && (
                         <p className="mb-1 text-sm">{currentEntity.address_ligne_1}</p>
                       )}
@@ -303,7 +307,10 @@ export default function MesAssociationsDeChasse() {
                       )}
                     </div>
                     <div className="mt-4 flex items-center gap-4">
-                      <Button type="submit" nativeButtonProps={{ form: 'association_data_form' }}>
+                      <Button
+                        type="submit"
+                        nativeButtonProps={{ form: 'association_data_form' }}
+                      >
                         Me rattacher à cette entité
                       </Button>
                       <button
@@ -324,7 +331,11 @@ export default function MesAssociationsDeChasse() {
                     <p className="mb-5 text-sm text-gray-500">
                       * Les champs marqués d'un astérisque (*) sont obligatoires.
                     </p>
-                    <form id="association_data_form" method="POST" onSubmit={handleEntitySubmit}>
+                    <form
+                      id="association_data_form"
+                      method="POST"
+                      onSubmit={handleEntitySubmit}
+                    >
                       <Input
                         label="Raison Sociale *"
                         className="mb-6"
@@ -399,7 +410,10 @@ export default function MesAssociationsDeChasse() {
                         </div>
                       </div>
                       <div className="mt-4 flex items-center gap-4">
-                        <Button type="submit" nativeButtonProps={{ form: 'association_data_form' }}>
+                        <Button
+                          type="submit"
+                          nativeButtonProps={{ form: 'association_data_form' }}
+                        >
                           Créer et me rattacher à cette entité
                         </Button>
                         <button

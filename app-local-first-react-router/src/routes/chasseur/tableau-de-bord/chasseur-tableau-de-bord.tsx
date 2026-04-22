@@ -112,8 +112,14 @@ export default function MesChasses() {
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center pt-4">
         <div className="fr-col-12 p-2 md:p-0">
           <div className="mb-6 grid grid-cols-2 gap-3 md:gap-8">
-            <TotalCarcassesCard total={dashboardData.totalCarcasses} season={dashboardData.season} />
-            <CarcassBreakdownCard bigGame={dashboardData.bigGame} smallGame={dashboardData.smallGame} />
+            <TotalCarcassesCard
+              total={dashboardData.totalCarcasses}
+              season={dashboardData.season}
+            />
+            <CarcassBreakdownCard
+              bigGame={dashboardData.bigGame}
+              smallGame={dashboardData.smallGame}
+            />
             {isSmallGameOnly ? (
               <div className="col-span-2">
                 <Alert

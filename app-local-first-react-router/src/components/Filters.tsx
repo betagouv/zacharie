@@ -27,14 +27,14 @@ export default function Filters<T extends Filter = Filter>({
   function getFilterOptionsByField(
     fieldName: FilterableField['name'],
     base: Array<FilterableField>,
-    index: number,
+    index: number
   ): Array<string> {
     if (!fieldName) return [];
     const current = base.find((filter) => filter.name === fieldName);
     if (!current) {
       onChange(
         filters.filter((_f, i) => i !== index),
-        saveInURLParams,
+        saveInURLParams
       );
       return [];
     }
@@ -80,7 +80,10 @@ export default function Filters<T extends Filter = Filter>({
             const filterValue = getFilterValue(filter.value);
             if (!filterValue) return null;
             return (
-              <li key={index} className="list-disc">
+              <li
+                key={index}
+                className="list-disc"
+              >
                 {current.label}: {filterValue}
               </li>
             );
@@ -102,31 +105,31 @@ export default function Filters<T extends Filter = Filter>({
                   filters.map((_filter, i) =>
                     i === index
                       ? ({ field: newField?.field, value: null, type: newField?.type } as T)
-                      : _filter,
+                      : _filter
                   ),
-                  saveInURLParams,
+                  saveInURLParams
                 );
               } else {
                 onChange(
                   filters.map((_filter, i) =>
-                    i === index ? ({ field: '', value: null, type: '' } as unknown as T) : _filter,
+                    i === index ? ({ field: '', value: null, type: '' } as unknown as T) : _filter
                   ),
-                  saveInURLParams,
+                  saveInURLParams
                 );
               }
             };
             const onChangeValue = (newValue: T['value']) => {
               onChange(
                 filters.map((f: T, i: number) =>
-                  i === index ? ({ field: filter.field, value: newValue, type: filter.type } as T) : f,
+                  i === index ? ({ field: filter.field, value: newValue, type: filter.type } as T) : f
                 ),
-                saveInURLParams,
+                saveInURLParams
               );
             };
             const onRemoveFilter = () => {
               onChange(
                 filters.filter((_f: T, i: number) => i !== index),
-                saveInURLParams,
+                saveInURLParams
               );
             };
 
@@ -304,7 +307,10 @@ function ValueSelector({ index, field, filterValues, value, onChangeValue, base 
               onChangeValue(unfilledChecked ? '' : 'Non renseigné');
             }}
           />
-          <label htmlFor="unfilled" className="text-xs">
+          <label
+            htmlFor="unfilled"
+            className="text-xs"
+          >
             Non renseigné
           </label>
         </div>

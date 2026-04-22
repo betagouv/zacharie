@@ -23,7 +23,7 @@ router.get(
   swaggerUi.setup(swaggerCleDediee, {
     customSiteTitle: 'API Zacharie - Accès Direct Entité',
     customfavIcon: 'https://zacharie.beta.gouv.fr/favicon.png',
-  }),
+  })
 );
 
 // Third-party API Documentation (user delegation)
@@ -33,7 +33,7 @@ router.get(
   swaggerUi.setup(swaggerTiercePartie, {
     customSiteTitle: 'API Zacharie - Accès Tiers',
     customfavIcon: 'https://zacharie.beta.gouv.fr/favicon.png',
-  }),
+  })
 );
 
 export default router;

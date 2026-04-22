@@ -36,7 +36,7 @@ import updateCarcasseStatus from '~/utils/get-carcasse-status';
             carcasse.zacharie_carcasse_id,
             carcasse.Fei.automatic_closed_at,
             carcasse.Fei.svi_closed_at,
-            carcasse.Fei.svi_assigned_at,
+            carcasse.Fei.svi_assigned_at
           );
         }
       }
@@ -48,7 +48,7 @@ import updateCarcasseStatus from '~/utils/get-carcasse-status';
             carcasse.svi_carcasse_status,
             newStatus,
             carcasse.zacharie_carcasse_id,
-            carcasse.Fei.automatic_closed_at,
+            carcasse.Fei.automatic_closed_at
           );
           // await prisma.carcasse.update({
           //   where: { zacharie_carcasse_id: carcasse.zacharie_carcasse_id },
@@ -66,7 +66,7 @@ import updateCarcasseStatus from '~/utils/get-carcasse-status';
             carcasse.zacharie_carcasse_id,
             carcasse.Fei.automatic_closed_at,
             carcasse.Fei.svi_closed_at,
-            carcasse.Fei.svi_assigned_at,
+            carcasse.Fei.svi_assigned_at
           );
           await prisma.carcasse.update({
             where: { zacharie_carcasse_id: carcasse.zacharie_carcasse_id },

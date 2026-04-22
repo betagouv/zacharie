@@ -11,7 +11,7 @@ async function notifyExaminateurAndPremierDetenteur(
   fei_numero: string,
   title: string,
   email: string,
-  notificationLogAction: string,
+  notificationLogAction: string
 ) {
   const [examinateurInitial, premierDetenteur] = await prisma.fei
     .findUnique({
@@ -55,7 +55,7 @@ export async function notifySaisieChasseur(existingCarcasse: Carcasse, updatedCa
       existingCarcasse.fei_numero,
       object,
       email,
-      `CARCASSE_SAISIE_${updatedCarcasse.zacharie_carcasse_id}`,
+      `CARCASSE_SAISIE_${updatedCarcasse.zacharie_carcasse_id}`
     );
   }
 }
@@ -70,7 +70,7 @@ export async function notifyManquanteChasseur(existingCarcasse: Carcasse, update
       existingCarcasse.fei_numero,
       object,
       email,
-      `CARCASSE_MANQUANTE_${updatedCarcasse.zacharie_carcasse_id}`,
+      `CARCASSE_MANQUANTE_${updatedCarcasse.zacharie_carcasse_id}`
     );
   }
 }
@@ -86,7 +86,7 @@ export async function notifyRefusChasseur(existingCarcasse: Carcasse, updatedCar
       existingCarcasse.fei_numero,
       object,
       email,
-      `CARCASSE_REFUS_${updatedCarcasse.zacharie_carcasse_id}`,
+      `CARCASSE_REFUS_${updatedCarcasse.zacharie_carcasse_id}`
     );
   }
 }

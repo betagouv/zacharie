@@ -77,7 +77,7 @@ function Fei() {
     return feiCarcasses.filter(
       (c) =>
         (c.next_owner_entity_id && userEntityIds.includes(c.next_owner_entity_id)) ||
-        c.next_owner_user_id === user.id,
+        c.next_owner_user_id === user.id
     );
   }, [feiCarcasses, userEntityIds, user.id]);
 
@@ -129,7 +129,7 @@ function Fei() {
     }
     if (intermediaires.length > 0) {
       const userWasIntermediaire = intermediaires.find(
-        (intermediaire) => intermediaire.intermediaire_user_id === user.id,
+        (intermediaire) => intermediaire.intermediaire_user_id === user.id
       );
       if (userWasIntermediaire) {
         return userWasIntermediaire.intermediaire_role;
@@ -149,9 +149,7 @@ function Fei() {
 
   return (
     <>
-      <title>
-        {`${params.fei_numero} | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}
-      </title>
+      <title>{`${params.fei_numero} | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}</title>
       {fei.deleted_at && (
         <div className="bg-error-main-525 mb-2 py-2 text-center text-white">
           <p>Fiche supprimée</p>

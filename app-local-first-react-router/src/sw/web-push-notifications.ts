@@ -26,7 +26,7 @@ export type PushObject = {
     publicKey: string,
     callback?: (subscription: PushSubscription) => void,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    errorCallback?: (error: any) => void,
+    errorCallback?: (error: any) => void
   ) => void;
   /**
    * Utility to unsubscribe from push notifications
@@ -73,7 +73,7 @@ export const usePush = (): PushObject => {
     publicKey: string,
     callback?: (subscription: PushSubscription) => void,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    errorCallback?: (error: any) => void,
+    errorCallback?: (error: any) => void
   ) => {
     if (swRegistration === null) {
       return;
@@ -92,7 +92,7 @@ export const usePush = (): PushObject => {
         },
         (error) => {
           errorCallback && errorCallback(error);
-        },
+        }
       );
   };
 
@@ -114,7 +114,7 @@ export const usePush = (): PushObject => {
             },
             (error) => {
               errorCallback && errorCallback(error);
-            },
+            }
           );
         }
       })

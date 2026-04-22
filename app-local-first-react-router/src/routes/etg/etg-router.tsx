@@ -15,25 +15,73 @@ import { SviInspectionCarcasse } from './etg-carcasse-after-svi-inspection';
 
 export default function RouterEtg() {
   return (
-    <Route path="etg" element={<EtgLayout />}>
-      <Route index element={<EtgFiches />} />
-      <Route path="contact" element={<Contact />} />
-      <Route path="carcasses" element={<EtgCarcasses />} />
-      <Route path="onboarding" element={<Outlet />}>
-        <Route path="coordonnees" element={<EtgOnboardingCoordonnees />} />
-        <Route path="entreprise" element={<EtgOnboardingEntreprise />} />
+    <Route
+      path="etg"
+      element={<EtgLayout />}
+    >
+      <Route
+        index
+        element={<EtgFiches />}
+      />
+      <Route
+        path="contact"
+        element={<Contact />}
+      />
+      <Route
+        path="carcasses"
+        element={<EtgCarcasses />}
+      />
+      <Route
+        path="onboarding"
+        element={<Outlet />}
+      >
+        <Route
+          path="coordonnees"
+          element={<EtgOnboardingCoordonnees />}
+        />
+        <Route
+          path="entreprise"
+          element={<EtgOnboardingEntreprise />}
+        />
       </Route>
-      <Route path="profil" element={<Outlet />}>
-        <Route path="coordonnees" element={<EtgProfilCoordonnees />} />
-        <Route path="notifications" element={<EtgProfilNotifications />} />
-        <Route path="partage-de-mes-donnees" element={<EtgProfilPartageDeMesDonnees />} />
+      <Route
+        path="profil"
+        element={<Outlet />}
+      >
+        <Route
+          path="coordonnees"
+          element={<EtgProfilCoordonnees />}
+        />
+        <Route
+          path="notifications"
+          element={<EtgProfilNotifications />}
+        />
+        <Route
+          path="partage-de-mes-donnees"
+          element={<EtgProfilPartageDeMesDonnees />}
+        />
       </Route>
-      <Route path="entreprise" element={<Outlet />}>
-        <Route path="informations" element={<EtgProfilEntreprise />} />
-        <Route path="utilisateurs" element={<EtgProfilEntrepriseUtilisateurs />} />
+      <Route
+        path="entreprise"
+        element={<Outlet />}
+      >
+        <Route
+          path="informations"
+          element={<EtgProfilEntreprise />}
+        />
+        <Route
+          path="utilisateurs"
+          element={<EtgProfilEntrepriseUtilisateurs />}
+        />
       </Route>
-      <Route path="fei/:fei_numero" element={<EtgFei />} />
-      <Route path="carcasse-svi/:fei_numero/:zacharie_carcasse_id" element={<SviInspectionCarcasse />} />
+      <Route
+        path="fei/:fei_numero"
+        element={<EtgFei />}
+      />
+      <Route
+        path="carcasse-svi/:fei_numero/:zacharie_carcasse_id"
+        element={<SviInspectionCarcasse />}
+      />
     </Route>
   );
 }

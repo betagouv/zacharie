@@ -11,7 +11,7 @@ import dayjs from 'dayjs';
 
 export function filterCarcassesIntermediairesForCarcasse(
   byId: Record<FeiAndCarcasseAndIntermediaireIds, CarcasseIntermediaire>,
-  zacharie_carcasse_id: string,
+  zacharie_carcasse_id: string
 ): Array<CarcasseIntermediaire> {
   return Object.values(byId)
     .filter((ci) => ci.zacharie_carcasse_id === zacharie_carcasse_id && !ci.deleted_at)
@@ -20,7 +20,7 @@ export function filterCarcassesIntermediairesForCarcasse(
 
 export function filterCarcassesIntermediairesForIntermediaire(
   byId: Record<FeiAndCarcasseAndIntermediaireIds, CarcasseIntermediaire>,
-  feiAndIntermediaireIds: FeiAndIntermediaireIds,
+  feiAndIntermediaireIds: FeiAndIntermediaireIds
 ): Array<CarcasseIntermediaire> {
   return Object.values(byId)
     .filter((ci) => getFeiAndIntermediaireIds(ci) === feiAndIntermediaireIds && !ci.deleted_at)
@@ -28,7 +28,7 @@ export function filterCarcassesIntermediairesForIntermediaire(
 }
 
 export function useCarcassesIntermediairesForCarcasse(
-  zacharie_carcasse_id: string | undefined,
+  zacharie_carcasse_id: string | undefined
 ): Array<CarcasseIntermediaire> {
   const byId = useZustandStore((state) => state.carcassesIntermediaireById);
   return useMemo(() => {
@@ -38,7 +38,7 @@ export function useCarcassesIntermediairesForCarcasse(
 }
 
 export function useCarcassesIntermediairesForIntermediaire(
-  feiAndIntermediaireIds: FeiAndIntermediaireIds | undefined,
+  feiAndIntermediaireIds: FeiAndIntermediaireIds | undefined
 ): Array<CarcasseIntermediaire> {
   const byId = useZustandStore((state) => state.carcassesIntermediaireById);
   return useMemo(() => {
@@ -49,7 +49,7 @@ export function useCarcassesIntermediairesForIntermediaire(
 
 export function filterFeiIntermediaires(
   byId: Record<FeiAndCarcasseAndIntermediaireIds, CarcasseIntermediaire>,
-  fei_numero: string,
+  fei_numero: string
 ): Array<FeiIntermediaire> {
   const seen: Record<string, FeiIntermediaire> = {};
   for (const ci of Object.values(byId)) {

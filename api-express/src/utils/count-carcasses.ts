@@ -46,7 +46,7 @@ export function getCountCarcassesByEspece(carcasses: Array<Carcasse>): CountCarc
         lots: 0,
         nombre_d_animaux: 0,
       },
-    } as CountCarcassesByEspece,
+    } as CountCarcassesByEspece
   );
 }
 

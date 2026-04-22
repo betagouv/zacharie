@@ -198,7 +198,7 @@ export default function TableauDeBordIndex() {
 
   const [filterPremierDetenteur, setFilterPremierDetenteur] = useLocalStorage<string>(
     'circuit-court-fiches-filter-premier-detenteur',
-    '',
+    ''
   );
   const [filterCCG, setFilterCCG] = useLocalStorage<string>('circuit-court-fiches-filter-ccg', '');
 
@@ -272,7 +272,7 @@ export default function TableauDeBordIndex() {
       feis = feis.filter(
         (fei) =>
           fei.premier_detenteur_user_id === filterPremierDetenteur ||
-          fei.premier_detenteur_entity_id === filterPremierDetenteur,
+          fei.premier_detenteur_entity_id === filterPremierDetenteur
       );
     }
     if (filterCCG) {
@@ -601,7 +601,10 @@ export default function TableauDeBordIndex() {
               </div>
             )}
             <div className="my-4 flex flex-col items-start justify-between gap-4 px-8">
-              <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left mb-4" href="#top">
+              <a
+                className="fr-link fr-icon-arrow-up-fill fr-link--icon-left mb-4"
+                href="#top"
+              >
                 Haut de page
               </a>
             </div>
@@ -723,13 +726,13 @@ function FeisTableRow({
         for (const [espece, abbreviation] of Object.entries(abbreviations)) {
           if (line.toLowerCase().includes(abbreviation.toLowerCase())) {
             const carcasse = feiCarcasses.find(
-              (c) => c?.type === CarcasseType.PETIT_GIBIER && c.espece === espece,
+              (c) => c?.type === CarcasseType.PETIT_GIBIER && c.espece === espece
             );
             if (carcasse) {
               const nombreDAnimaux = carcasse.nombre_d_animaux ?? 0;
               const intermediaires = filterCarcassesIntermediairesForCarcasse(
                 carcassesIntermediaireById,
-                carcasse.zacharie_carcasse_id!,
+                carcasse.zacharie_carcasse_id!
               );
               const latestIntermediaire = intermediaires[0];
               const nombreDAnimauxAcceptes = latestIntermediaire?.nombre_d_animaux_acceptes ?? 0;
@@ -757,7 +760,10 @@ function FeisTableRow({
       className={`cursor-pointer border-b border-gray-200 hover:bg-gray-50 ${isSelected ? 'bg-blue-50' : ''}`}
       onClick={() => navigate(`/app/circuit-court/fei/${fei.numero}`)}
     >
-      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+      <td
+        className="px-4 py-3"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex h-full items-center justify-center">
           <input
             type="checkbox"
@@ -786,7 +792,10 @@ function FeisTableRow({
             </Tag>
           )}
           {currentStepLabelShort && (
-            <Tag small className="items-center rounded-[4px] font-semibold uppercase">
+            <Tag
+              small
+              className="items-center rounded-[4px] font-semibold uppercase"
+            >
               {currentStepLabelShort}
             </Tag>
           )}
@@ -809,7 +818,10 @@ function FeisTableRow({
           {formattedCarcassesAcceptées.length > 0 ? (
             <div>
               {formattedCarcassesAcceptées.map((carcasse, index) => (
-                <p className="m-0 text-sm" key={carcasse + index}>
+                <p
+                  className="m-0 text-sm"
+                  key={carcasse + index}
+                >
                   {carcasse}
                 </p>
               ))}
@@ -842,7 +854,7 @@ function FeisTable({
 
   // Extract CardFiche components from children to get fei data
   const feis = React.Children.toArray(children).filter(
-    (child): child is React.ReactElement => React.isValidElement(child) && child.type === CardFiche,
+    (child): child is React.ReactElement => React.isValidElement(child) && child.type === CardFiche
   );
 
   if (feis.length === 0) {

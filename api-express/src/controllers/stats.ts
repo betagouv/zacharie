@@ -19,7 +19,7 @@ router.get(
         saisiesUrl: getIframeUrl(37),
       },
     });
-  }),
+  })
 );
 
 router.get(
@@ -100,7 +100,7 @@ router.get(
       FeiOwnerRole.CONSOMMATEUR_FINAL,
     ];
     const sviEligibleCarcasses = bigGameCarcasses.filter(
-      (c) => !c.next_owner_role || !circuitCourtRoles.includes(c.next_owner_role),
+      (c) => !c.next_owner_role || !circuitCourtRoles.includes(c.next_owner_role)
     );
     const hasAnySviReturn = sviEligibleCarcasses.some((c) => c.svi_carcasse_status !== null);
 
@@ -130,14 +130,14 @@ router.get(
     const seizedBigGame = sviEligibleCarcasses.filter(
       (c) =>
         c.svi_carcasse_status === CarcasseStatus.SAISIE_TOTALE ||
-        c.svi_carcasse_status === CarcasseStatus.SAISIE_PARTIELLE,
+        c.svi_carcasse_status === CarcasseStatus.SAISIE_PARTIELLE
     );
     const personalSeizureRate =
       sviEligibleCarcasses.length > 0 && hasAnySviReturn
         ? (seizedBigGame.length / sviEligibleCarcasses.length) * 100
         : sviEligibleCarcasses.length > 0
-        ? null
-        : null;
+          ? null
+          : null;
 
     // Calculate national seizure rate (all big game carcasses in 2024)
     const nationalBigGame2024 = await prisma.carcasse.count({
@@ -228,7 +228,7 @@ router.get(
         },
       },
     });
-  }),
+  })
 );
 
 export default router;

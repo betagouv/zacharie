@@ -83,7 +83,7 @@ function ExaminateurCarcasseDetailLoaded() {
   const addLog = useZustandStore((state) => state.addLog);
   const updateCarcasse = (
     zacharie_carcasse_id: Parameters<typeof updateStateCarcasse>[0],
-    partialCarcasse: Parameters<typeof updateStateCarcasse>[1],
+    partialCarcasse: Parameters<typeof updateStateCarcasse>[1]
   ) => {
     updateStateCarcasse(zacharie_carcasse_id, partialCarcasse, true);
     addLog({
@@ -122,17 +122,17 @@ function ExaminateurCarcasseDetailLoaded() {
   const [espece, setEspece] = useState(carcasse.espece || '');
 
   const [anomaliesAbats, setAnomaliesAbats] = useState<Array<string>>(
-    carcasse.examinateur_anomalies_abats?.filter(Boolean) || [],
+    carcasse.examinateur_anomalies_abats?.filter(Boolean) || []
   );
   const [anomaliesCarcasse, setAnomaliesCarcasse] = useState<Array<string>>(
-    carcasse.examinateur_anomalies_carcasse?.filter(Boolean) || [],
+    carcasse.examinateur_anomalies_carcasse?.filter(Boolean) || []
   );
   // const [addAnomalieAbats, setAddAnomalieAbats] = useState(true);
   // const [addAnomalieCarcasse, setAddAnomalieCarcasse] = useState(true);
   const addAnomalieAbats = true;
   const addAnomalieCarcasse = true;
   const [showScroll, setShowScroll] = useState(
-    canEdit && espece && !anomaliesAbats.length && !anomaliesCarcasse.length,
+    canEdit && espece && !anomaliesAbats.length && !anomaliesCarcasse.length
   );
 
   const numeroFormRef = useRef<HTMLFormElement>(null);
@@ -159,9 +159,7 @@ function ExaminateurCarcasseDetailLoaded() {
 
   return (
     <>
-      <title>
-        {`Carcasse ${carcasse.numero_bracelet} | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}
-      </title>
+      <title>{`Carcasse ${carcasse.numero_bracelet} | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}</title>
       <div className="fr-container fr-container--fluid fr-my-md-14v">
         <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
           <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
@@ -197,7 +195,7 @@ function ExaminateurCarcasseDetailLoaded() {
                   e.preventDefault();
                   const formData = new FormData(numeroFormRef.current!);
                   const nextNumeroBracelet = formData.get(
-                    Prisma.CarcasseScalarFieldEnum.numero_bracelet,
+                    Prisma.CarcasseScalarFieldEnum.numero_bracelet
                   ) as string;
                   if (existingsNumeroBracelet.includes(nextNumeroBracelet)) {
                     setNumeroError('Le numéro de marquage est déjà utilisé pour cette fiche');
@@ -278,10 +276,16 @@ function ExaminateurCarcasseDetailLoaded() {
                     <hr />
                     {Object.entries(gibierSelect).map(([typeGibier, _especes]) => {
                       return (
-                        <optgroup label={typeGibier} key={typeGibier}>
+                        <optgroup
+                          label={typeGibier}
+                          key={typeGibier}
+                        >
                           {_especes.map((_espece: string) => {
                             return (
-                              <option value={_espece} key={_espece}>
+                              <option
+                                value={_espece}
+                                key={_espece}
+                              >
                                 {_espece}
                               </option>
                             );
@@ -303,7 +307,7 @@ function ExaminateurCarcasseDetailLoaded() {
                 <Component
                   label="Nombre de carcasses"
                   className={['mb-0! grow', carcasse.type === CarcasseType.GROS_GIBIER ? 'hidden' : ''].join(
-                    ' ',
+                    ' '
                   )}
                   hintText="Optionel"
                   nativeInputProps={{

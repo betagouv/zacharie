@@ -57,7 +57,7 @@ export default function MonEntreprise() {
     ? Object.values(userEntitiesByTypeAndId[EntityTypes.COMMERCE_DE_DETAIL])
     : [];
   const userCantineOuRestaurationCollective = user.roles.includes(
-    UserRoles.CANTINE_OU_RESTAURATION_COLLECTIVE,
+    UserRoles.CANTINE_OU_RESTAURATION_COLLECTIVE
   )
     ? Object.values(userEntitiesByTypeAndId[EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE])
     : [];
@@ -74,7 +74,7 @@ export default function MonEntreprise() {
     ? userCommerceDeDetail.length > 0
     : true;
   const cantineOuRestaurationCollectiveDone = user.roles.includes(
-    UserRoles.CANTINE_OU_RESTAURATION_COLLECTIVE,
+    UserRoles.CANTINE_OU_RESTAURATION_COLLECTIVE
   )
     ? userCantineOuRestaurationCollective.length > 0
     : true;
@@ -119,7 +119,7 @@ export default function MonEntreprise() {
         useUser.setState({ user: response.data.user });
       }
     },
-    [user.id],
+    [user.id]
   );
 
   const nextTitle = 'Mes notifications';
@@ -136,11 +136,19 @@ export default function MonEntreprise() {
       <div className="fr-container fr-container--fluid fr-my-md-14v">
         <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
           <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
-            <Stepper currentStep={3} nextTitle={nextTitle} stepCount={4} title={title} />
+            <Stepper
+              currentStep={3}
+              nextTitle={nextTitle}
+              stepCount={4}
+              title={title}
+            />
             <h1 className="fr-h2 fr-mb-2w">
               {'Renseignez ' + (user.roles.includes(UserRoles.SVI) ? 'votre service' : 'votre entreprise')}
             </h1>
-            <CallOut title="✍️ Pour pouvoir remplir les fiches qui lui sont attribuées" className="bg-white">
+            <CallOut
+              title="✍️ Pour pouvoir remplir les fiches qui lui sont attribuées"
+              className="bg-white"
+            >
               {user.roles.includes(UserRoles.SVI)
                 ? "Quel est votre service vétérinaire d'inspection (SVI) ?"
                 : 'Quelle est votre entreprise ?'}
@@ -345,7 +353,10 @@ export default function MonEntreprise() {
                   </>
                 )}
                 <div className="mt-6 ml-6">
-                  <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
+                  <a
+                    className="fr-link fr-icon-arrow-up-fill fr-link--icon-left"
+                    href="#top"
+                  >
                     Haut de page
                   </a>
                 </div>
@@ -414,7 +425,7 @@ function ListAndSelectEntities({
   const user = useUser((state) => state.user)!;
   const userEntities = Object.values(userEntitiesByTypeAndId[entityType]);
   const remainingEntities = Object.values(allEntitiesByTypeAndId[entityType]).filter(
-    (entity) => !userEntitiesByTypeAndId[entityType][entity.id],
+    (entity) => !userEntitiesByTypeAndId[entityType][entity.id]
   );
 
   const [entityId, setEntityId] = useState<string | null>(null);
@@ -422,7 +433,10 @@ function ListAndSelectEntities({
   return (
     <div className="mb-6 bg-white md:shadow-sm">
       <div className="p-4 md:p-8">
-        <h3 className="mb-8 text-lg font-semibold text-gray-900" id={`${formId}-title`}>
+        <h3
+          className="mb-8 text-lg font-semibold text-gray-900"
+          id={`${formId}-title`}
+        >
           {sectionLabel}
         </h3>
         {description}
@@ -432,7 +446,7 @@ function ListAndSelectEntities({
             const relation = entity.EntityRelationsWithUsers.find(
               (relation) =>
                 relation.owner_id === user.id &&
-                relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+                relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
             );
             if (!relation) return null;
             return (
@@ -453,7 +467,11 @@ function ListAndSelectEntities({
             );
           })}
         {canChange && (
-          <form id={formId} className="flex w-full flex-col gap-4" method="POST">
+          <form
+            id={formId}
+            className="flex w-full flex-col gap-4"
+            method="POST"
+          >
             <p className="py-5 pr-5">
               Vous pouvez en ajouter d'autre via la liste ci-dessous.
               <br />
@@ -473,7 +491,7 @@ function ListAndSelectEntities({
                         label: remainingEntities
                           .filter((entity) => entity.id === entityId)
                           .map(
-                            (entity) => `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`,
+                            (entity) => `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`
                           )?.[0],
                         value: entityId,
                       }

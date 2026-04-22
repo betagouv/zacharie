@@ -76,7 +76,10 @@ export default function CarcassesExaminateur({
         <p className="my-4 ml-4 text-sm text-gray-500">
           Carcasses enregistrées sur cette fiche&nbsp;:
           {countCarcassesByEspece.map((line) => (
-            <span className="ml-4 block" key={line}>
+            <span
+              className="ml-4 block"
+              key={line}
+            >
               {line}
             </span>
           ))}

@@ -46,7 +46,10 @@ export default function AdminLayout() {
   }
 
   return (
-    <RootDisplay id="admin-layout" mainLink={mainLink}>
+    <RootDisplay
+      id="admin-layout"
+      mainLink={mainLink}
+    >
       <div className="relative flex">
         {/* Backdrop mobile */}
         {sidebarOpen && (
@@ -57,10 +60,11 @@ export default function AdminLayout() {
         )}
         {/* Sidebar */}
         <nav
-          className={`fixed top-0 z-[800] max-h-screen min-h-screen shrink-0 overflow-y-auto border-r border-gray-200 bg-white py-2 transition-transform duration-200 md:sticky md:z-auto ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-            }`}
+          className={`fixed top-0 z-[800] max-h-screen min-h-screen shrink-0 overflow-y-auto border-r border-gray-200 bg-white py-2 transition-transform duration-200 md:sticky md:z-auto ${
+            sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
         >
-          <div className="flex md:hidden justify-end px-2">
+          <div className="flex justify-end px-2 md:hidden">
             <button
               type="button"
               onClick={() => setSidebarOpen(false)}
@@ -76,12 +80,16 @@ export default function AdminLayout() {
                   <Link
                     style={{ backgroundImage: 'none' }}
                     to={link.to}
-                    className={`flex items-center gap-2 border-l-2 px-3 py-1.5 text-sm no-underline hover:bg-gray-100 ${isActive
-                      ? 'bg-open-blue-975 text-action-high-blue-france border-action-high-blue-france font-medium'
-                      : 'text-title-grey border-transparent'
-                      }`}
+                    className={`flex items-center gap-2 border-l-2 px-3 py-1.5 text-sm no-underline hover:bg-gray-100 ${
+                      isActive
+                        ? 'bg-open-blue-975 text-action-high-blue-france border-action-high-blue-france font-medium'
+                        : 'text-title-grey border-transparent'
+                    }`}
                   >
-                    <span className={`${link.icon} fr-icon--sm mr-1 shrink-0`} aria-hidden="true" />
+                    <span
+                      className={`${link.icon} fr-icon--sm mr-1 shrink-0`}
+                      aria-hidden="true"
+                    />
                     {link.label}
                   </Link>
                 </li>
@@ -95,7 +103,10 @@ export default function AdminLayout() {
                 rel="noopener noreferrer"
                 className="text-title-grey hover:bg-open-blue-975 flex items-center gap-2 rounded-md border-l-2 border-transparent px-3 py-1.5 text-sm no-underline hover:bg-gray-100"
               >
-                <span className="fr-icon-line-chart-line fr-icon--sm mr-1 shrink-0" aria-hidden="true" />
+                <span
+                  className="fr-icon-line-chart-line fr-icon--sm mr-1 shrink-0"
+                  aria-hidden="true"
+                />
                 Fiches
               </a>
             </li>

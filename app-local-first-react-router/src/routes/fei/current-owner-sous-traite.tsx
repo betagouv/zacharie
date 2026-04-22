@@ -35,7 +35,10 @@ export default function FeiSousTraite() {
 
   return (
     <div className="bg-alt-blue-france pb-4">
-      <CallOut title="Vous souhaitez sous-traiter le transport des carcasses" className="bg-white">
+      <CallOut
+        title="Vous souhaitez sous-traiter le transport des carcasses"
+        className="bg-white"
+      >
         <div className="flex w-full flex-col bg-white md:items-start md:[&_ul]:min-w-96">
           <DestinataireSelectSousTraite
             feiAndIntermediaireIds={feiAndIntermediaireIds}

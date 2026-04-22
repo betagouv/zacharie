@@ -82,7 +82,7 @@ export default function DestinataireSousTraite({
 
   const canTransmitCarcassesToEntities = useMemo(() => {
     return prochainsDetenteurs.filter(
-      (entity) => entity.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+      (entity) => entity.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY
     );
   }, [prochainsDetenteurs]);
 
@@ -199,7 +199,10 @@ export default function DestinataireSousTraite({
 
   return (
     <>
-      <div className={[className, 'space-y-6'].join(' ')} key={prochainDetenteurEntityId}>
+      <div
+        className={[className, 'space-y-6'].join(' ')}
+        key={prochainDetenteurEntityId}
+      >
         <SelectCustom
           label="Prochain détenteur des carcasses *"
           hint={
@@ -277,7 +280,12 @@ export default function DestinataireSousTraite({
           Transmettre la fiche
         </Button>
         {!!jobIsMissing?.length && (
-          <Alert title="Attention" className="mt-4" severity="error" description={jobIsMissing} />
+          <Alert
+            title="Attention"
+            className="mt-4"
+            severity="error"
+            description={jobIsMissing}
+          />
         )}
         {!needToSubmit && fei.fei_next_owner_entity_id && (
           <>

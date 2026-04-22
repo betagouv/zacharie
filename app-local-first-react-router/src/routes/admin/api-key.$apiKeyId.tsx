@@ -137,9 +137,7 @@ export default function AdminApiKey() {
 
   return (
     <div className="fr-container fr-container--fluid fr-my-md-14v">
-      <title>
-        {`${apiKey.name} - ${apiKey.description} | Admin | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}
-      </title>
+      <title>{`${apiKey.name} - ${apiKey.description} | Admin | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}</title>
       {isSaving && (
         <div className="bg-action-high-blue-france fixed top-0 right-0">
           <span className="p-4 text-white">Enregistrement en cours</span>
@@ -176,7 +174,11 @@ export default function AdminApiKey() {
                 onBlur={handleApiKeyFormBlur(activeFormRef)}
                 onSubmit={(event) => event.preventDefault()}
               >
-                <input type="hidden" name="route" value={`/api/action/api-key/${apiKey.id}`} />
+                <input
+                  type="hidden"
+                  name="route"
+                  value={`/api/action/api-key/${apiKey.id}`}
+                />
 
                 <RadioButtons
                   key={apiKey.active ? 'true' : 'false'}
@@ -205,11 +207,17 @@ export default function AdminApiKey() {
             </div>
             <CallOut>
               {apiKey.dedicated_to_entity_id ? (
-                <a href={`${import.meta.env.VITE_API_URL}/v1/docs/cle-dediee`} target="_blank">
+                <a
+                  href={`${import.meta.env.VITE_API_URL}/v1/docs/cle-dediee`}
+                  target="_blank"
+                >
                   Cliquez ici pour la documentation API pour les clés dédiées à une entité
                 </a>
               ) : (
-                <a href={`${import.meta.env.VITE_API_URL}/v1/docs/tierces-parties`} target="_blank">
+                <a
+                  href={`${import.meta.env.VITE_API_URL}/v1/docs/tierces-parties`}
+                  target="_blank"
+                >
                   Cliquez ici pour la documentation API pour les clés pour les tierces parties
                 </a>
               )}
@@ -273,7 +281,7 @@ export default function AdminApiKey() {
                           const link = `${import.meta.env.VITE_API_URL}/v1/api-key/access-token/${res.data.apiKey.access_token}`;
                           window.open(
                             `mailto:?subject=Votre lien pour accéder à la clé privée de l'API Zacharie&body=Bonjour%0A%0AVoici votre lien pour accéder à la clé privée de l'API Zacharie: ${link}%0AUne fois ouvert, ce lien ne sera plus valide. Si vous avez perdu votre clé et que vous avez besoin d'un nouveau lien, veuillez nous contacter.%0A%0AN'hésitez pas à nous contacter si vous avez des questions.%0A%0ACordialement,%0AL'équipe Zacharie.`,
-                            '_blank',
+                            '_blank'
                           );
                         });
                       }}
@@ -362,7 +370,10 @@ export default function AdminApiKey() {
                 />
               )}
               <div className="mt-6 mb-16 ml-6">
-                <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left" href="#top">
+                <a
+                  className="fr-link fr-icon-arrow-up-fill fr-link--icon-left"
+                  href="#top"
+                >
                   Haut de page
                 </a>
               </div>
@@ -436,7 +447,10 @@ function EntitiesRelatedTo({
             </div>
             <div className="flex flex-row gap-2 pr-4">
               <div className="flex basis-3xs flex-col justify-center gap-2 py-4">
-                <ApprovalStatusSelector entity={entity} approval={approval} />
+                <ApprovalStatusSelector
+                  entity={entity}
+                  approval={approval}
+                />
               </div>
               <div className="flex flex-col justify-center gap-2 py-4">
                 <Button
@@ -599,7 +613,10 @@ function UsersRelatedTo({ apiKeyReponseData, setApiKeyResponseData, setIsSaving 
             </div>
             <div className="flex flex-row gap-2 pr-4">
               <div className="flex basis-3xs flex-col justify-center gap-2 py-4">
-                <ApprovalStatusSelector user={user} approval={approval} />
+                <ApprovalStatusSelector
+                  user={user}
+                  approval={approval}
+                />
               </div>
               <div className="flex flex-col justify-center gap-2 py-4">
                 <Button
@@ -669,7 +686,10 @@ function UsersRelatedTo({ apiKeyReponseData, setApiKeyResponseData, setIsSaving 
                   <br />
                   🏡 {user.code_postal} {user.ville}
                 </Link>
-                <Button type="submit" className="m-2">
+                <Button
+                  type="submit"
+                  className="m-2"
+                >
                   Ajouter
                 </Button>
               </form>,

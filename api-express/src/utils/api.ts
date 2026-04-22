@@ -130,7 +130,7 @@ export function mapFeiForApi(fei: FeiGetForApi, carcasses: CarcasseGetForApi[]) 
   }
   if (fei.intermediaire_closed_at) {
     intermediaireClosedByName = carcasseIntermediaires.find(
-      (entity) => entity.id === fei.intermediaire_closed_by_entity_id,
+      (entity) => entity.id === fei.intermediaire_closed_by_entity_id
     )?.raison_sociale;
   }
   if (fei.CarcasseIntermediaire.length > 0) {
@@ -201,7 +201,7 @@ export async function getDedicatedEntityLinkedToApiKey(apiKey: ApiKey): Promise<
 
 export async function getRequestedUser(
   apiKey: ApiKey,
-  email: string,
+  email: string
 ): Promise<{ error?: string; user?: User }> {
   if (!email) {
     return {
@@ -263,14 +263,14 @@ export const checkApiKeyIsValidMiddleware =
     const apiKey = req.apiKey;
     if (!apiKey.active || (apiKey.expires_at && apiKey.expires_at < new Date())) {
       const error = new Error(
-        "Votre clé n'est pas active. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.",
+        "Votre clé n'est pas active. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact."
       );
       res.status(401);
       return next(error);
     }
     if (!scopes.some((scope) => apiKey.scopes.includes(scope))) {
       const error = new Error(
-        "Votre clé n'est pas autorisée à accéder à cette ressource. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.",
+        "Votre clé n'est pas autorisée à accéder à cette ressource. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact."
       );
       res.status(401);
       return next(error);
@@ -298,7 +298,7 @@ export async function sendWebhook(
     feiNumero?: string;
     carcasseZacharieId?: string;
     userApprovals?: Array<ApiKeyApprovalByUserOrEntity & { ApiKey: ApiKey }>;
-  },
+  }
 ) {
   if (!userApprovals) {
     userApprovals = await prisma.apiKeyApprovalByUserOrEntity.findMany({

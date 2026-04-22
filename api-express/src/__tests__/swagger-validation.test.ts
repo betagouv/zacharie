@@ -123,7 +123,7 @@ describe('Swagger Documentation Validation', () => {
       expect(heureMiseAMortParam.schema.pattern).toBe('^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$');
 
       const heureEviscerationsParam = parameters.find(
-        (p) => p.name === 'heure_evisceration_derniere_carcasse',
+        (p) => p.name === 'heure_evisceration_derniere_carcasse'
       );
       expect(heureEviscerationsParam).toBeDefined();
       expect(heureEviscerationsParam.required).toBe(false);
@@ -153,7 +153,7 @@ describe('Swagger Documentation Validation', () => {
       expect(approvalRequestResponseSchema.properties.data).toBeDefined();
       expect(approvalRequestResponseSchema.properties.data.properties.approvalStatus).toBeDefined();
       expect(
-        approvalRequestResponseSchema.properties.data.properties.habilitePourExamenInitial,
+        approvalRequestResponseSchema.properties.data.properties.habilitePourExamenInitial
       ).toBeDefined();
       expect(approvalRequestResponseSchema.properties.message).toBeDefined();
 
@@ -532,7 +532,7 @@ describe('Swagger Documentation Validation', () => {
       expect(heureMiseAMortParam.schema.pattern).toBe('^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$');
 
       const heureEviscerationsParam = parameters.find(
-        (p) => p.name === 'heure_evisceration_derniere_carcasse',
+        (p) => p.name === 'heure_evisceration_derniere_carcasse'
       );
       expect(heureEviscerationsParam).toBeDefined();
       expect(heureEviscerationsParam.required).toBe(false);
@@ -595,7 +595,7 @@ describe('Documentation Completeness', () => {
         expect(operation.tags).toBeDefined();
         expect(operation.tags.length).toBeGreaterThan(0);
         expect(['FEI - Accès Direct', 'Carcasses - Accès Direct', 'Webhooks - Accès Direct']).toContain(
-          operation.tags[0],
+          operation.tags[0]
         );
       });
     });

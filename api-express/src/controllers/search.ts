@@ -562,7 +562,7 @@ router.get(
     }
 
     res.status(200).send(result);
-  }),
+  })
 );
 
 export default router;

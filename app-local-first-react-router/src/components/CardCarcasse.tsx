@@ -49,7 +49,7 @@ export default function CardCarcasse({
     createModal({
       id: `carcasse-modal-${carcasse.zacharie_carcasse_id}`,
       isOpenedByDefault: false,
-    }),
+    })
   ).current;
 
   const isCarcasseModalOpen = useIsModalOpen(cacasseModal);
@@ -73,7 +73,7 @@ export default function CardCarcasse({
       if (_carcasseIntermediaire?.commentaire) {
         const _intermediaireEntity = entities[_carcasseIntermediaire.intermediaire_entity_id];
         commentaires.push(
-          `Commentaire de ${_intermediaireEntity?.nom_d_usage}\u00A0: ${_carcasseIntermediaire?.commentaire}`,
+          `Commentaire de ${_intermediaireEntity?.nom_d_usage}\u00A0: ${_carcasseIntermediaire?.commentaire}`
         );
       }
     }
@@ -170,7 +170,7 @@ export default function CardCarcasse({
     <>
       <div
         className={[
-          'flex basis-full flex-row items-center justify-between border-solid border-1 border-transparent hover:border-gray-300! text-left',
+          'flex basis-full flex-row items-center justify-between border-1 border-solid border-transparent text-left hover:border-gray-300!',
           'bg-contrast-grey border-0',
           accentBorderClass,
           className || '',
@@ -185,9 +185,7 @@ export default function CardCarcasse({
         >
           {statusIconId && (
             <span
-              className={[statusIconId, 'shrink-0 text-2xl', accentTextClass]
-                .filter(Boolean)
-                .join(' ')}
+              className={[statusIconId, 'shrink-0 text-2xl', accentTextClass].filter(Boolean).join(' ')}
               aria-hidden="true"
             />
           )}
@@ -199,10 +197,7 @@ export default function CardCarcasse({
             {miseAMort && <p className="text-sm/4">{miseAMort}</p>}
             {showStatusLine && statusLabel && (
               <p
-                className={[
-                  'text-sm/4 font-bold first-letter:uppercase',
-                  accentTextClass,
-                ]
+                className={['text-sm/4 font-bold first-letter:uppercase', accentTextClass]
                   .filter(Boolean)
                   .join(' ')}
               >
@@ -210,11 +205,7 @@ export default function CardCarcasse({
               </p>
             )}
             {descriptionLine && (
-              <p
-                className={['text-sm/4', accentTextClass].filter(Boolean).join(' ')}
-              >
-                {descriptionLine}
-              </p>
+              <p className={['text-sm/4', accentTextClass].filter(Boolean).join(' ')}>{descriptionLine}</p>
             )}
           </div>
         </button>
@@ -362,8 +353,8 @@ function CarcasseDetails({
       : null;
   const etgDate = latestIntermediaire
     ? dayjs(latestIntermediaire.prise_en_charge_at || latestIntermediaire.decision_at).format(
-      'dddd D MMMM YYYY à HH:mm',
-    )
+        'dddd D MMMM YYYY à HH:mm'
+      )
     : null;
 
   const sviAssignedToFeiAt = carcasse.svi_assigned_to_fei_at
@@ -377,12 +368,12 @@ function CarcasseDetails({
     ];
     if (carcasse.heure_mise_a_mort_premiere_carcasse_fei) {
       _milestones.push(
-        `Heure de mise à mort de la première carcasse de la fiche\u00A0: ${carcasse.heure_mise_a_mort_premiere_carcasse_fei}`,
+        `Heure de mise à mort de la première carcasse de la fiche\u00A0: ${carcasse.heure_mise_a_mort_premiere_carcasse_fei}`
       );
     }
     if (onlyPetitGibier && carcasse.heure_evisceration_derniere_carcasse_fei) {
       _milestones.push(
-        `Heure d'éviscération de la dernière carcasse de la fiche\u00A0: ${carcasse.heure_evisceration_derniere_carcasse_fei}`,
+        `Heure d'éviscération de la dernière carcasse de la fiche\u00A0: ${carcasse.heure_evisceration_derniere_carcasse_fei}`
       );
     }
     if (ccgDate) _milestones.push(`Date et heure de dépôt dans le CCG\u00A0: ${ccgDate}`);
@@ -395,7 +386,7 @@ function CarcasseDetails({
     // if (carcasse.svi_ipm1_date) _milestones.push(`Date de l'inspection\u00A0: ${dayjs(carcasse.svi_ipm1_date).format('dddd D MMMM YYYY')}`);
     if (carcasse.svi_ipm2_date)
       _milestones.push(
-        `Date de l'inspection du service vétérinaire\u00A0: ${dayjs(carcasse.svi_ipm2_date).format('dddd D MMMM YYYY')}`,
+        `Date de l'inspection du service vétérinaire\u00A0: ${dayjs(carcasse.svi_ipm2_date).format('dddd D MMMM YYYY')}`
       );
     return _milestones;
   }, [
@@ -435,7 +426,7 @@ function CarcasseDetails({
               return <li key={index}>{piece}</li>;
             })}
           </ul>
-        </>,
+        </>
       );
     }
     if (carcasse.svi_ipm1_lesions_ou_motifs.length) {
@@ -447,7 +438,7 @@ function CarcasseDetails({
               return <li key={index}>{type}</li>;
             })}
           </ul>
-        </>,
+        </>
       );
     }
     switch (carcasse.svi_ipm1_decision) {
@@ -497,7 +488,7 @@ function CarcasseDetails({
               return <li key={index}>{piece}</li>;
             })}
           </ul>
-        </>,
+        </>
       );
     }
     if (carcasse.svi_ipm2_lesions_ou_motifs.length) {
@@ -509,7 +500,7 @@ function CarcasseDetails({
               return <li key={index}>{type}</li>;
             })}
           </ul>
-        </>,
+        </>
       );
     }
     switch (carcasse.svi_ipm2_decision) {
@@ -534,17 +525,17 @@ function CarcasseDetails({
     }
     if (carcasse.svi_ipm2_traitement_assainissant_cuisson_temp) {
       imp2Lines.push(
-        `Température de cuisson\u00A0: ${carcasse.svi_ipm2_traitement_assainissant_cuisson_temp}`,
+        `Température de cuisson\u00A0: ${carcasse.svi_ipm2_traitement_assainissant_cuisson_temp}`
       );
     }
     if (carcasse.svi_ipm2_traitement_assainissant_congelation_temps) {
       imp2Lines.push(
-        `Temps de congélation\u00A0: ${carcasse.svi_ipm2_traitement_assainissant_congelation_temps}`,
+        `Temps de congélation\u00A0: ${carcasse.svi_ipm2_traitement_assainissant_congelation_temps}`
       );
     }
     if (carcasse.svi_ipm2_traitement_assainissant_congelation_temp) {
       imp2Lines.push(
-        `Température de congélation\u00A0: ${carcasse.svi_ipm2_traitement_assainissant_congelation_temp}`,
+        `Température de congélation\u00A0: ${carcasse.svi_ipm2_traitement_assainissant_congelation_temp}`
       );
     }
     if (carcasse.svi_ipm2_traitement_assainissant_type) {
@@ -555,7 +546,7 @@ function CarcasseDetails({
     }
     if (carcasse.svi_ipm2_traitement_assainissant_etablissement) {
       imp2Lines.push(
-        `Établissement désigné pour réaliser le traitement assainissant\u00A0: ${carcasse.svi_ipm2_traitement_assainissant_etablissement}`,
+        `Établissement désigné pour réaliser le traitement assainissant\u00A0: ${carcasse.svi_ipm2_traitement_assainissant_etablissement}`
       );
     }
     if (carcasse.svi_ipm2_traitement_assainissant_poids) {
@@ -573,9 +564,17 @@ function CarcasseDetails({
   return (
     <>
       <hr className="mt-4 bg-none" />
-      <ItemNotEditable label="Informations clés" value={milestones} withDiscs />
+      <ItemNotEditable
+        label="Informations clés"
+        value={milestones}
+        withDiscs
+      />
       {carcasse.examinateur_anomalies_abats?.length > 0 && (
-        <ItemNotEditable label="Anomalies abats" value={carcasse.examinateur_anomalies_abats} withDiscs />
+        <ItemNotEditable
+          label="Anomalies abats"
+          value={carcasse.examinateur_anomalies_abats}
+          withDiscs
+        />
       )}
       {carcasse.examinateur_anomalies_carcasse?.length > 0 && (
         <ItemNotEditable
@@ -622,11 +621,21 @@ function CarcasseDetails({
       )}
       <hr className="my-4" />
       <h2 className="mb-4 ml-2 text-lg font-semibold text-gray-900">Acteurs de la chasse</h2>
-      <ItemNotEditable label="Examinateur Initial" value={examinateurInitialInput} />
-      <ItemNotEditable label="Premier Détenteur" value={premierDetenteurInput} />
+      <ItemNotEditable
+        label="Examinateur Initial"
+        value={examinateurInitialInput}
+      />
+      <ItemNotEditable
+        label="Premier Détenteur"
+        value={premierDetenteurInput}
+      />
       {intermediairesInputs.map((intermediaireInput, index) => {
         return (
-          <ItemNotEditable key={index} label={intermediaireInput.label} value={intermediaireInput.value} />
+          <ItemNotEditable
+            key={index}
+            label={intermediaireInput.label}
+            value={intermediaireInput.value}
+          />
         );
       })}
     </>
@@ -670,7 +679,7 @@ function deriveCarcasseUiState(
   carcasse: Carcasse,
   fei: CardDisplayParams['fei'],
   latestIntermediaire: CardDisplayParams['latestIntermediaire'],
-  overrides: { forceRefus?: boolean; forceManquante?: boolean; forceAccept?: boolean },
+  overrides: { forceRefus?: boolean; forceManquante?: boolean; forceAccept?: boolean }
 ): CardUiState {
   if (!carcasse.svi_ipm1_date && !carcasse.svi_ipm2_date) {
     if (overrides.forceRefus) return 'refusee-etg';
@@ -703,10 +712,7 @@ function deriveCarcasseUiState(
           fei?.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR) &&
         !fei?.fei_next_owner_role;
       if (isCreation) return 'creation';
-      if (
-        latestIntermediaire?.decision_at &&
-        latestIntermediaire?.intermediaire_role === FeiOwnerRole.ETG
-      ) {
+      if (latestIntermediaire?.decision_at && latestIntermediaire?.intermediaire_role === FeiOwnerRole.ETG) {
         return 'acceptee-etg';
       }
       return 'transmise';
@@ -722,16 +728,8 @@ function deriveCarcasseUiState(
 }
 
 function getCarcasseCardDisplay(params: CardDisplayParams): CardDisplay {
-  const {
-    carcasse,
-    fei,
-    latestIntermediaire,
-    entities,
-    viewRole,
-    forceRefus,
-    forceManquante,
-    forceAccept,
-  } = params;
+  const { carcasse, fei, latestIntermediaire, entities, viewRole, forceRefus, forceManquante, forceAccept } =
+    params;
 
   const uiState = deriveCarcasseUiState(carcasse, fei, latestIntermediaire, {
     forceRefus,
@@ -795,9 +793,7 @@ function getCarcasseCardDisplay(params: CardDisplayParams): CardDisplay {
         uiState,
         iconId: 'fr-icon-alert-line',
         accentColor: 'red',
-        statusLabel: intermediaireName
-          ? `${manquantWord} pour ${intermediaireName}`
-          : `${manquantWord}`,
+        statusLabel: intermediaireName ? `${manquantWord} pour ${intermediaireName}` : `${manquantWord}`,
         showStatusLine: true,
       };
     case 'refusee-etg':

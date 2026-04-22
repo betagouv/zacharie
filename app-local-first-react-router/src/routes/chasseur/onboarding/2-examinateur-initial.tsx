@@ -97,13 +97,17 @@ function ExaminateurInitial() {
         useUser.setState({ user: response.data.user });
       }
     },
-    [user.id],
+    [user.id]
   );
 
   return (
     <div className="mb-6 bg-white md:shadow-sm">
       <div className="p-4 md:p-8">
-        <form id="examinateur_initial_form" method="POST" onSubmit={(e) => e.preventDefault()}>
+        <form
+          id="examinateur_initial_form"
+          method="POST"
+          onSubmit={(e) => e.preventDefault()}
+        >
           <RadioButtons
             legend={
               <div>

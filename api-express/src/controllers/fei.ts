@@ -107,8 +107,8 @@ router.post(
         },
         error: '',
       });
-    },
-  ),
+    }
+  )
 );
 
 export interface SaveFeiResult {
@@ -175,7 +175,7 @@ const feiBodyZodSchema = z.object({
 export async function saveFei(
   numero: string,
   body: Prisma.FeiUncheckedCreateInput,
-  user: User,
+  user: User
 ): Promise<SaveFeiResult> {
   let result = feiBodyZodSchema.safeParse(body);
   if (!result.success) {
@@ -601,8 +601,8 @@ router.post(
           error: message,
         });
       }
-    },
-  ),
+    }
+  )
 );
 
 router.get(
@@ -749,8 +749,8 @@ router.get(
       });
 
       return;
-    },
-  ),
+    }
+  )
 );
 
 router.get(
@@ -826,8 +826,8 @@ router.get(
         },
         error: '',
       });
-    },
-  ),
+    }
+  )
 );
 
 router.get(
@@ -1162,8 +1162,8 @@ router.get(
         },
         error: '',
       });
-    },
-  ),
+    }
+  )
 );
 
 export default router;

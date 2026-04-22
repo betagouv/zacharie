@@ -36,7 +36,10 @@ export default function VideoOverlay() {
           allowFullScreen
         />
       </div>
-      <button className="absolute top-4 right-4 text-2xl text-white hover:bg-transparent" onClick={onClose}>
+      <button
+        className="absolute top-4 right-4 text-2xl text-white hover:bg-transparent"
+        onClick={onClose}
+      >
         &#xd7;
       </button>
     </div>

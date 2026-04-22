@@ -125,5 +125,5 @@ createRoot(document.getElementById('root')!).render(
         <ToastContainer />
       </ErrorBoundary>
     </BrowserRouter>
-  </StrictMode>,
+  </StrictMode>
 );

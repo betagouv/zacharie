@@ -4,7 +4,7 @@ import useZustandStore from '@app/zustand/store';
 
 export function filterCarcassesForFei(
   carcasses: Record<string, Carcasse>,
-  fei_numero: Fei['numero'],
+  fei_numero: Fei['numero']
 ): Array<Carcasse> {
   return Object.values(carcasses).filter((c) => c.fei_numero === fei_numero && !c.deleted_at);
 }

@@ -42,7 +42,7 @@ export default function SviProfilEntrepriseUtilisateurs() {
               const relation = entity.EntityRelationsWithUsers.find(
                 (relation) =>
                   relation.owner_id === user.id &&
-                  relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+                  relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
               );
               if (!relation) return null;
               if (
@@ -51,7 +51,10 @@ export default function SviProfilEntrepriseUtilisateurs() {
               )
                 return null;
               return (
-                <div className="mb-6 bg-white md:shadow-sm" key={entity.id}>
+                <div
+                  className="mb-6 bg-white md:shadow-sm"
+                  key={entity.id}
+                >
                   <div className="p-4 md:p-8">
                     <Input
                       label="Inviter par email un nouvel utilisateur *"
@@ -85,7 +88,7 @@ export default function SviProfilEntrepriseUtilisateurs() {
                         }).then((res) => {
                           if (res.ok) {
                             alert(
-                              'Utilisateur invité avec succès. Il recevra un email pour se connecter à Zacharie.',
+                              'Utilisateur invité avec succès. Il recevra un email pour se connecter à Zacharie.'
                             );
                             setNewUserEmail('');
                             setRefreshKey((k) => k + 1);

@@ -55,7 +55,7 @@ router.get(
       if (!queryResult.success) {
         const errors = queryResult.error.issues.map((i) => i.message).join('. ');
         const error = new Error(
-          `${errors}. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`,
+          `${errors}. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`
         );
         res.status(400);
         return next(error);
@@ -122,15 +122,15 @@ router.get(
           feis: feis.map((fei) =>
             mapFeiForApi(
               fei,
-              carcasses.filter((carcasse) => carcasse.fei_numero === fei.numero),
-            ),
+              carcasses.filter((carcasse) => carcasse.fei_numero === fei.numero)
+            )
           ),
         },
         message:
           'Pour toute question ou remarque, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.',
       });
-    },
-  ),
+    }
+  )
 );
 
 router.get(
@@ -142,7 +142,7 @@ router.get(
     async (
       req: RequestWithApiKey,
       res: express.Response<FeiGetByNumeroForApi>,
-      next: express.NextFunction,
+      next: express.NextFunction
     ) => {
       const querySchema = z.object({
         email: z.string().email("Format d'email invalide"),
@@ -153,7 +153,7 @@ router.get(
       if (!queryResult.success) {
         const errors = queryResult.error.issues.map((i) => i.message).join('. ');
         const error = new Error(
-          `${errors}. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`,
+          `${errors}. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`
         );
         res.status(400);
         return next(error);
@@ -168,7 +168,7 @@ router.get(
       if (!paramsResult.success) {
         const errors = paramsResult.error.issues.map((i) => i.message).join('. ');
         const error = new Error(
-          `${errors}. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`,
+          `${errors}. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`
         );
         res.status(400);
         return next(error);
@@ -236,14 +236,14 @@ router.get(
         data: {
           fei: mapFeiForApi(
             fei,
-            carcasses.filter((carcasse) => carcasse.fei_numero === fei.numero),
+            carcasses.filter((carcasse) => carcasse.fei_numero === fei.numero)
           ),
         },
         message:
           'Pour toute question ou remarque, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.',
       });
-    },
-  ),
+    }
+  )
 );
 
 router.get(
@@ -263,7 +263,7 @@ router.get(
       if (!queryResult.success) {
         const errors = queryResult.error.issues.map((i) => i.message).join('. ');
         const error = new Error(
-          `${errors}. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`,
+          `${errors}. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`
         );
         res.status(400);
         return next(error);
@@ -276,7 +276,7 @@ router.get(
       const entity = await getDedicatedEntityLinkedToApiKey(apiKey);
       if (!entity) {
         const error = new Error(
-          `Votre clé n'est pas autorisée à accéder à des fiches d'examen initial par cette requête. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`,
+          `Votre clé n'est pas autorisée à accéder à des fiches d'examen initial par cette requête. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`
         );
         res.status(403);
         return next(error);
@@ -324,15 +324,15 @@ router.get(
           feis: feis.map((fei) =>
             mapFeiForApi(
               fei,
-              carcasses.filter((carcasse) => carcasse.fei_numero === fei.numero),
-            ),
+              carcasses.filter((carcasse) => carcasse.fei_numero === fei.numero)
+            )
           ),
         },
         message:
           'Pour toute question ou remarque, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.',
       });
-    },
-  ),
+    }
+  )
 );
 
 export default router;

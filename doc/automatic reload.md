@@ -25,7 +25,7 @@ You must add registerType: 'autoUpdate' to vite-plugin-pwa plugin options in you
 
 ts
 VitePWA({
-  registerType: 'autoUpdate'
+registerType: 'autoUpdate'
 })
 Cleanup Outdated Caches
 The service worker will store all your application assets in a browser cache (or set of caches). Every time you make changes to your application and rebuild it, the service worker will also be rebuilt, including in its precache manifest all new modified assets, which will have their revision changed (all assets that have been modified will have a new version). Assets that have not been modified will also be included in the service worker precache manifest, but their revision will not change from the previous one.
@@ -43,13 +43,13 @@ ts
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
-  plugins: [
-    VitePWA({
-      workbox: {
-        cleanupOutdatedCaches: false
-      }
-    })
-  ]
+plugins: [
+VitePWA({
+workbox: {
+cleanupOutdatedCaches: false
+}
+})
+]
 })
 Inject Manifest Source Map new options from v0.18.0+
 INFO
@@ -70,13 +70,13 @@ ts
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
-  plugins: [
-    VitePWA({
-      workbox: {
-        sourcemap: true
-      }
-    })
-  ]
+plugins: [
+VitePWA({
+workbox: {
+sourcemap: true
+}
+})
+]
 })
 Importing Virtual Modules
 
@@ -91,7 +91,7 @@ ts
 import { registerSW } from 'virtual:pwa-register'
 
 const updateSW = registerSW({
-  onOfflineReady() {},
+onOfflineReady() {},
 })
 You will need to show a ready to work offline dialog to the user with an OK button inside onOfflineReady callback.
 
@@ -105,10 +105,10 @@ You can register the service worker on src/pwa.ts module:
 ts
 import { registerSW } from 'virtual:pwa-register'
 
-registerSW({ /* ... */ })
+registerSW({ /_ ... _/ })
 and then import it from your main.ts:
 
 ts
 if (typeof window !== 'undefined')
-  import('./pwa')
+import('./pwa')
 You can see the FAQ entry for more info.

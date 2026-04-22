@@ -35,8 +35,17 @@ export default function LandingPage() {
                       fill="none"
                       xmlns="http://www.w3.org/2000/svg"
                     >
-                      <path d="M68 42L30.5 63.6506L30.5 20.3494L68 42Z" fill="white" />
-                      <circle cx="42.5" cy="42.5" r="40" stroke="white" strokeWidth="5" />
+                      <path
+                        d="M68 42L30.5 63.6506L30.5 20.3494L68 42Z"
+                        fill="white"
+                      />
+                      <circle
+                        cx="42.5"
+                        cy="42.5"
+                        r="40"
+                        stroke="white"
+                        strokeWidth="5"
+                      />
                     </svg>
                   </button>
                 </div>
@@ -75,8 +84,17 @@ export default function LandingPage() {
                     fill="none"
                     xmlns="http://www.w3.org/2000/svg"
                   >
-                    <path d="M68 42L30.5 63.6506L30.5 20.3494L68 42Z" fill="white" />
-                    <circle cx="42.5" cy="42.5" r="40" stroke="white" strokeWidth="5" />
+                    <path
+                      d="M68 42L30.5 63.6506L30.5 20.3494L68 42Z"
+                      fill="white"
+                    />
+                    <circle
+                      cx="42.5"
+                      cy="42.5"
+                      r="40"
+                      stroke="white"
+                      strokeWidth="5"
+                    />
                   </svg>
                 </button>
               </div>
@@ -174,7 +192,10 @@ export default function LandingPage() {
                   "J'ai rempli une fiche d'examen initial en 15 minutes alors que ça m'aurait pris 1 heure avec le carnet à souches.",
                 ].map((quote) => {
                   return (
-                    <blockquote className="relative p-6" key={quote}>
+                    <blockquote
+                      className="relative p-6"
+                      key={quote}
+                    >
                       <p className="text-action-high-blue-france mb-4 text-2xl 2xl:text-4xl">
                         <span className="text-action-high-blue-france/30 absolute -top-4 -left-4 text-[128px] font-normal italic 2xl:-top-8 2xl:-left-8 2xl:text-[180px]">
                           "

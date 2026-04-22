@@ -105,7 +105,10 @@ export default function AdminEntites() {
         >
           <option value="">Tous</option>
           {Object.values(EntityTypes).map((t) => (
-            <option key={t} value={t}>
+            <option
+              key={t}
+              value={t}
+            >
               {entityTypeLabels[t]}
             </option>
           ))}
@@ -182,12 +185,18 @@ export default function AdminEntites() {
             </thead>
             <tbody>
               {filteredEntities.map((entity, index) => (
-                <tr key={entity.id} className="border-b border-gray-200 align-top hover:bg-gray-50">
+                <tr
+                  key={entity.id}
+                  className="border-b border-gray-200 align-top hover:bg-gray-50"
+                >
                   <td className="px-2 py-1">
                     <span className="flex flex-col">
                       <span className="font-medium">
                         <span className="text-xs text-gray-400">{index + 1}. </span>
-                        <Link to={`/app/admin/entity/${entity.id}`} className="no-underline">
+                        <Link
+                          to={`/app/admin/entity/${entity.id}`}
+                          className="no-underline"
+                        >
                           {entity.nom_d_usage}
                         </Link>
                       </span>
@@ -211,17 +220,26 @@ export default function AdminEntites() {
                     </span>
                   </td>
                   <td className="px-2 py-1">
-                    <Badge severity="info" small>
+                    <Badge
+                      severity="info"
+                      small
+                    >
                       {entityTypeLabels[entity.type] ?? entity.type}
                     </Badge>
                   </td>
                   <td className="px-2 py-1">
-                    <Badge severity={entity.zacharie_compatible ? 'success' : 'warning'} small>
+                    <Badge
+                      severity={entity.zacharie_compatible ? 'success' : 'warning'}
+                      small
+                    >
                       {entity.zacharie_compatible ? 'Oui' : 'Non'}
                     </Badge>
                   </td>
                   <td className="px-2 py-1">
-                    <span className="text-xs text-gray-500" suppressHydrationWarning>
+                    <span
+                      className="text-xs text-gray-500"
+                      suppressHydrationWarning
+                    >
                       {dayjs(entity.created_at).format('DD/MM/YY')}
                     </span>
                   </td>
@@ -232,7 +250,10 @@ export default function AdminEntites() {
         </div>
       )}
       <div className="flex items-start bg-white px-4 py-2">
-        <a className="fr-link fr-icon-arrow-up-fill fr-link--icon-left text-sm" href="#top">
+        <a
+          className="fr-link fr-icon-arrow-up-fill fr-link--icon-left text-sm"
+          href="#top"
+        >
           Haut de page
         </a>
       </div>

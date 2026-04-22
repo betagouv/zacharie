@@ -579,7 +579,7 @@ type BrevoPipeline = BrevoChasseurPipeline | BrevoSviPipeline | BrevoETGPipeline
 
 function getChasseurPipelineStep(
   chasseur: User,
-  pipelineStages: BrevoChasseurPipeline['stages'],
+  pipelineStages: BrevoChasseurPipeline['stages']
 ): BrevoChasseurPipeline['stages'][number]['id'] {
   let allFieldUpFields = true;
   if (!chasseur.telephone) allFieldUpFields = false;
@@ -622,13 +622,13 @@ async function updateBrevoChasseurDeal(chasseur: User) {
     const getDealsResult = await apiInstance.crmDealsGet(
       undefined, // filtersAttributesDealName?: string,
       undefined, // filtersLinkedCompaniesIds?: string,
-      chasseur.brevo_contact_id.toString(), // filtersLinkedContactsIds?: string
+      chasseur.brevo_contact_id.toString() // filtersLinkedContactsIds?: string
     );
     let deals = getDealsResult?.body?.items as Array<BrevoDeal>;
     const allPipelines = await apiInstance.crmPipelineDetailsAllGet();
     const pipelines = allPipelines.body as Array<BrevoPipeline>;
     const chasseurPipeline = pipelines.find(
-      (pipeline) => pipeline.pipelineName === 'Chasseurs',
+      (pipeline) => pipeline.pipelineName === 'Chasseurs'
     ) as BrevoChasseurPipeline;
 
     const dealToUpdate = deals?.find((deal) => deal.attributes.pipeline === chasseurPipeline.pipeline);
@@ -679,7 +679,7 @@ async function updateBrevoETGDealPremiereFiche(etg: Entity) {
     const getDealsResult = await apiInstance.crmDealsGet(
       undefined, // filtersAttributesDealName?: string,
       etg.brevo_id, // filtersLinkedCompaniesIds?: string,
-      undefined, // filtersLinkedContactsIds?: string
+      undefined // filtersLinkedContactsIds?: string
     );
     let deals = getDealsResult?.body?.items as Array<BrevoDeal>;
     const allPipelines = await apiInstance.crmPipelineDetailsAllGet();
@@ -725,7 +725,7 @@ async function updateBrevoSVIDealPremiereFiche(svi: Entity) {
     const getDealsResult = await apiInstance.crmDealsGet(
       undefined, // filtersAttributesDealName?: string,
       svi.brevo_id, // filtersLinkedCompaniesIds?: string,
-      undefined, // filtersLinkedContactsIds?: string
+      undefined // filtersLinkedContactsIds?: string
     );
     let deals = getDealsResult?.body?.items as Array<BrevoDeal>;
     const allPipelines = await apiInstance.crmPipelineDetailsAllGet();

@@ -119,7 +119,7 @@ export default function MesNotifications() {
                             },
                             (error) => {
                               console.error('Error subscribing user to push notifications!', error);
-                            },
+                            }
                           );
                         },
                       },

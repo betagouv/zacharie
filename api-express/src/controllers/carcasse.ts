@@ -44,7 +44,7 @@ export async function saveCarcasse(
   fei_numero: string,
   zacharie_carcasse_id: string,
   body: Prisma.CarcasseUncheckedCreateInput,
-  user: User,
+  user: User
 ): Promise<SaveCarcasseResult> {
   if (!fei_numero) {
     throw new Error('Le numéro de fiche est obligatoire');
@@ -169,7 +169,7 @@ export async function saveCarcasse(
   }
   if (
     body.hasOwnProperty(
-      Prisma.CarcasseScalarFieldEnum.examinateur_initial_date_approbation_mise_sur_le_marche,
+      Prisma.CarcasseScalarFieldEnum.examinateur_initial_date_approbation_mise_sur_le_marche
     )
   ) {
     nextCarcasse.examinateur_initial_date_approbation_mise_sur_le_marche =
@@ -546,8 +546,8 @@ router.post(
         data: { carcasse: result.savedCarcasse },
         error: '',
       });
-    },
-  ),
+    }
+  )
 );
 
 router.get(
@@ -630,7 +630,7 @@ router.get(
       },
       error: '',
     });
-  }),
+  })
 );
 
 router.get(
@@ -714,7 +714,7 @@ router.get(
       },
       error: '',
     });
-  }),
+  })
 );
 
 router.get(
@@ -799,7 +799,7 @@ router.get(
       },
       error: '',
     });
-  }),
+  })
 );
 
 router.get(
@@ -844,7 +844,7 @@ router.get(
       data: { carcasse },
       error: '',
     });
-  }),
+  })
 );
 
 router.get(
@@ -879,8 +879,8 @@ router.get(
         data: { carcasse },
         error: '',
       });
-    },
-  ),
+    }
+  )
 );
 
 export default router;

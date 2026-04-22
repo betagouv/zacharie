@@ -139,7 +139,8 @@ export default function AdminDashboard() {
                   {data.funnel.compte_valide.toLocaleString('fr-FR')}
                 </p>
                 <p className="mt-1 text-xs text-gray-400">
-                  {maxFunnel > 0 ? ((data.funnel.compte_valide / maxFunnel) * 100).toFixed(1) : 0}% des inscrits
+                  {maxFunnel > 0 ? ((data.funnel.compte_valide / maxFunnel) * 100).toFixed(1) : 0}% des
+                  inscrits
                 </p>
               </div>
               <div className="rounded-lg border border-gray-100 bg-white p-5 shadow-sm">
@@ -164,7 +165,10 @@ export default function AdminDashboard() {
                   const count = data.funnel[key];
                   const pct = maxFunnel > 0 ? (count / maxFunnel) * 100 : 0;
                   return (
-                    <div key={key} className="flex items-center gap-4">
+                    <div
+                      key={key}
+                      className="flex items-center gap-4"
+                    >
                       <div className="w-56 shrink-0 text-right text-sm text-gray-600">{label}</div>
                       <div className="relative h-9 flex-1 rounded bg-gray-50">
                         <div
@@ -219,7 +223,10 @@ export default function AdminDashboard() {
                     );
                   })}
                   <div>
-                    <label className="fr-label mb-1 text-xs" htmlFor="date-from">
+                    <label
+                      className="fr-label mb-1 text-xs"
+                      htmlFor="date-from"
+                    >
                       Début
                     </label>
                     <input
@@ -231,7 +238,10 @@ export default function AdminDashboard() {
                     />
                   </div>
                   <div>
-                    <label className="fr-label mb-1 text-xs" htmlFor="date-to">
+                    <label
+                      className="fr-label mb-1 text-xs"
+                      htmlFor="date-to"
+                    >
                       Fin
                     </label>
                     <input
@@ -247,15 +257,24 @@ export default function AdminDashboard() {
               {data.inscriptions_par_semaine.length === 0 ? (
                 <p className="text-sm text-gray-500">Aucune inscription sur cette période.</p>
               ) : (
-                <ResponsiveContainer width="100%" height={300}>
+                <ResponsiveContainer
+                  width="100%"
+                  height={300}
+                >
                   <BarChart data={data.inscriptions_par_semaine}>
-                    <XAxis dataKey="date" tickFormatter={(d: string) => dayjs(d).format('DD/MM')} />
+                    <XAxis
+                      dataKey="date"
+                      tickFormatter={(d: string) => dayjs(d).format('DD/MM')}
+                    />
                     <YAxis allowDecimals={false} />
                     <Tooltip
                       labelFormatter={(d) => `Semaine du ${dayjs(String(d)).format('DD/MM/YYYY')}`}
                       formatter={(value) => [value, 'Inscriptions']}
                     />
-                    <Bar dataKey="count" fill="var(--background-action-high-blue-france)" />
+                    <Bar
+                      dataKey="count"
+                      fill="var(--background-action-high-blue-france)"
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               )}
@@ -266,14 +285,28 @@ export default function AdminDashboard() {
               <div className="rounded-lg border border-gray-100 bg-white p-6 shadow-sm">
                 <h3 className="mb-1 text-lg font-semibold">Parts de marché par circuit</h3>
                 <p className="mb-5 text-sm text-gray-500">
-                  Part de marché absolue, potentielle et réelle sur l&apos;ensemble du circuit long, par saison de
-                  chasse
+                  Part de marché absolue, potentielle et réelle sur l&apos;ensemble du circuit long, par
+                  saison de chasse
                 </p>
-                <ResponsiveContainer width="100%" height={350}>
+                <ResponsiveContainer
+                  width="100%"
+                  height={350}
+                >
                   <BarChart data={partsDeMarche.circuit_long}>
-                    <XAxis dataKey="saison" xAxisId="absolu" />
-                    <XAxis dataKey="saison" xAxisId="potentiel" hide />
-                    <XAxis dataKey="saison" xAxisId="reel" hide />
+                    <XAxis
+                      dataKey="saison"
+                      xAxisId="absolu"
+                    />
+                    <XAxis
+                      dataKey="saison"
+                      xAxisId="potentiel"
+                      hide
+                    />
+                    <XAxis
+                      dataKey="saison"
+                      xAxisId="reel"
+                      hide
+                    />
                     <YAxis
                       label={{
                         value: 'Tonnes de viande de gibier',
@@ -298,62 +331,81 @@ export default function AdminDashboard() {
                       fill="#6a6af4"
                       barSize={40}
                     />
-                    <Bar dataKey="volume_reel" name="Volume réel" xAxisId="reel" fill="#000091" barSize={24} />
+                    <Bar
+                      dataKey="volume_reel"
+                      name="Volume réel"
+                      xAxisId="reel"
+                      fill="#000091"
+                      barSize={24}
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
             )}
 
             {/* Delta BPH distribution */}
-            {deltaBph && deltaBph.deltas.length > 0 && (() => {
-              const bucketSize = 5;
-              const buckets: Record<number, number> = {};
-              for (let b = -100; b <= 100; b += bucketSize) {
-                buckets[b] = 0;
-              }
-              for (const d of deltaBph.deltas) {
-                const b = Math.max(-100, Math.min(100, Math.floor(d / bucketSize) * bucketSize));
-                buckets[b] = (buckets[b] ?? 0) + 1;
-              }
-              const chartData = Object.entries(buckets)
-                .map(([key, count]) => ({ delta: Number(key), count }))
-                .sort((a, b) => a.delta - b.delta);
+            {deltaBph &&
+              deltaBph.deltas.length > 0 &&
+              (() => {
+                const bucketSize = 5;
+                const buckets: Record<number, number> = {};
+                for (let b = -100; b <= 100; b += bucketSize) {
+                  buckets[b] = 0;
+                }
+                for (const d of deltaBph.deltas) {
+                  const b = Math.max(-100, Math.min(100, Math.floor(d / bucketSize) * bucketSize));
+                  buckets[b] = (buckets[b] ?? 0) + 1;
+                }
+                const chartData = Object.entries(buckets)
+                  .map(([key, count]) => ({ delta: Number(key), count }))
+                  .sort((a, b) => a.delta - b.delta);
 
-              return (
-                <div className="rounded-lg border border-gray-100 bg-white p-6 shadow-sm">
-                  <h3 className="mb-1 text-lg font-semibold">
-                    Répartition des examinateurs initiaux par delta de score BPH
-                  </h3>
-                  <p className="mb-5 text-sm text-gray-500">
-                    Différence entre la moyenne des 5 fiches les plus récentes et les 5 premières fiches (score BPH
-                    absolu). Examinateurs avec au moins 10 fiches.
-                  </p>
-                  <ResponsiveContainer width="100%" height={350}>
-                    <AreaChart data={chartData}>
-                      <XAxis
-                        dataKey="delta"
-                        type="number"
-                        domain={[-100, 100]}
-                        ticks={[-100, -75, -50, -25, 0, 25, 50, 75, 100]}
-                      />
-                      <YAxis allowDecimals={false} label={{ value: "Nombre d'examinateurs initiaux", angle: -90, position: 'insideLeft', offset: 10 }} />
-                      <Tooltip
-                        labelFormatter={(d) => `Delta : ${d} à ${Number(d) + bucketSize}`}
-                        formatter={(value) => [value, 'Examinateurs']}
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="count"
-                        stroke="#e3a902"
-                        fill="#e3a902"
-                        fillOpacity={0.1}
-                        strokeWidth={2.5}
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              );
-            })()}
+                return (
+                  <div className="rounded-lg border border-gray-100 bg-white p-6 shadow-sm">
+                    <h3 className="mb-1 text-lg font-semibold">
+                      Répartition des examinateurs initiaux par delta de score BPH
+                    </h3>
+                    <p className="mb-5 text-sm text-gray-500">
+                      Différence entre la moyenne des 5 fiches les plus récentes et les 5 premières fiches
+                      (score BPH absolu). Examinateurs avec au moins 10 fiches.
+                    </p>
+                    <ResponsiveContainer
+                      width="100%"
+                      height={350}
+                    >
+                      <AreaChart data={chartData}>
+                        <XAxis
+                          dataKey="delta"
+                          type="number"
+                          domain={[-100, 100]}
+                          ticks={[-100, -75, -50, -25, 0, 25, 50, 75, 100]}
+                        />
+                        <YAxis
+                          allowDecimals={false}
+                          label={{
+                            value: "Nombre d'examinateurs initiaux",
+                            angle: -90,
+                            position: 'insideLeft',
+                            offset: 10,
+                          }}
+                        />
+                        <Tooltip
+                          labelFormatter={(d) => `Delta : ${d} à ${Number(d) + bucketSize}`}
+                          formatter={(value) => [value, 'Examinateurs']}
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="count"
+                          stroke="#e3a902"
+                          fill="#e3a902"
+                          fillOpacity={0.1}
+                          strokeWidth={2.5}
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                );
+              })()}
           </div>
         )}
 
@@ -392,7 +444,8 @@ export default function AdminDashboard() {
                     {saisiesSvi.taux_mauvaises_pratiques}%
                   </p>
                   <p className="mt-1 text-xs text-gray-400">
-                    {saisiesSvi.total_mauvaises_pratiques.toLocaleString('fr-FR')} carcasses (mauvaises pratiques)
+                    {saisiesSvi.total_mauvaises_pratiques.toLocaleString('fr-FR')} carcasses (mauvaises
+                    pratiques)
                   </p>
                 </div>
               </div>
@@ -410,8 +463,14 @@ export default function AdminDashboard() {
                     const maxCount = saisiesSvi.motifs[0].count;
                     const pct = maxCount > 0 ? (count / maxCount) * 100 : 0;
                     return (
-                      <div key={motif} className="flex items-center gap-3">
-                        <div className="w-80 shrink-0 text-right text-sm text-gray-600 truncate" title={motif}>
+                      <div
+                        key={motif}
+                        className="flex items-center gap-3"
+                      >
+                        <div
+                          className="w-80 shrink-0 truncate text-right text-sm text-gray-600"
+                          title={motif}
+                        >
                           {motif}
                         </div>
                         <div className="relative h-7 flex-1 rounded bg-gray-50">
@@ -419,7 +478,11 @@ export default function AdminDashboard() {
                             className="flex h-full items-center rounded px-2 text-xs font-semibold text-white"
                             style={{
                               width: `${Math.max(pct, 3)}%`,
-                              backgroundColor: is_mauvaise_pratique ? '#e1000f' : i === 0 ? '#000091' : '#6a6af4',
+                              backgroundColor: is_mauvaise_pratique
+                                ? '#e1000f'
+                                : i === 0
+                                  ? '#000091'
+                                  : '#6a6af4',
                               minWidth: '40px',
                             }}
                           >
@@ -434,42 +497,50 @@ export default function AdminDashboard() {
             )}
 
             {/* Saisies SVI — motifs mauvaises pratiques uniquement */}
-            {saisiesSvi && saisiesSvi.motifs.filter((m) => m.is_mauvaise_pratique).length > 0 && (() => {
-              const mauvaises = saisiesSvi.motifs.filter((m) => m.is_mauvaise_pratique);
-              return (
-                <div className="rounded-lg border border-gray-100 bg-white p-6 shadow-sm">
-                  <h3 className="mb-1 text-lg font-semibold">Motifs mauvaises pratiques (saisie totale)</h3>
-                  <p className="mb-5 text-sm text-gray-500">
-                    Sous-ensemble des motifs liés aux mauvaises pratiques d&apos;hygiène
-                  </p>
-                  <div className="space-y-2">
-                    {mauvaises.map(({ motif, count }, i) => {
-                      const maxCount = mauvaises[0].count;
-                      const pct = maxCount > 0 ? (count / maxCount) * 100 : 0;
-                      return (
-                        <div key={motif} className="flex items-center gap-3">
-                          <div className="w-80 shrink-0 text-right text-sm text-gray-600 truncate" title={motif}>
-                            {motif}
-                          </div>
-                          <div className="relative h-7 flex-1 rounded bg-gray-50">
+            {saisiesSvi &&
+              saisiesSvi.motifs.filter((m) => m.is_mauvaise_pratique).length > 0 &&
+              (() => {
+                const mauvaises = saisiesSvi.motifs.filter((m) => m.is_mauvaise_pratique);
+                return (
+                  <div className="rounded-lg border border-gray-100 bg-white p-6 shadow-sm">
+                    <h3 className="mb-1 text-lg font-semibold">Motifs mauvaises pratiques (saisie totale)</h3>
+                    <p className="mb-5 text-sm text-gray-500">
+                      Sous-ensemble des motifs liés aux mauvaises pratiques d&apos;hygiène
+                    </p>
+                    <div className="space-y-2">
+                      {mauvaises.map(({ motif, count }, i) => {
+                        const maxCount = mauvaises[0].count;
+                        const pct = maxCount > 0 ? (count / maxCount) * 100 : 0;
+                        return (
+                          <div
+                            key={motif}
+                            className="flex items-center gap-3"
+                          >
                             <div
-                              className="flex h-full items-center rounded px-2 text-xs font-semibold text-white"
-                              style={{
-                                width: `${Math.max(pct, 3)}%`,
-                                backgroundColor: i === 0 ? '#e1000f' : '#f28f8f',
-                                minWidth: '40px',
-                              }}
+                              className="w-80 shrink-0 truncate text-right text-sm text-gray-600"
+                              title={motif}
                             >
-                              {count}
+                              {motif}
+                            </div>
+                            <div className="relative h-7 flex-1 rounded bg-gray-50">
+                              <div
+                                className="flex h-full items-center rounded px-2 text-xs font-semibold text-white"
+                                style={{
+                                  width: `${Math.max(pct, 3)}%`,
+                                  backgroundColor: i === 0 ? '#e1000f' : '#f28f8f',
+                                  minWidth: '40px',
+                                }}
+                              >
+                                {count}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              );
-            })()}
+                );
+              })()}
           </div>
         )}
       </Tabs>

@@ -75,7 +75,7 @@ router.get(
       },
       error: '',
     });
-  }),
+  })
 );
 
 router.get(
@@ -85,7 +85,7 @@ router.get(
     async (
       req: RequestWithUser,
       res: express.Response<EntitiesWorkingForResponse>,
-      next: express.NextFunction,
+      next: express.NextFunction
     ) => {
       const user = req.user!;
 
@@ -136,7 +136,7 @@ router.get(
       const [allEntitiesIds, allEntitiesByTypeAndId] = sortEntitiesByTypeAndId(allEntities);
       const userEntitiesByTypeAndId = sortEntitiesRelationsByTypeAndId(
         entitiesUserCanHandleOnBehalf,
-        allEntitiesIds,
+        allEntitiesIds
       );
 
       res.status(200).send({
@@ -147,8 +147,8 @@ router.get(
         },
         error: '',
       });
-    },
-  ),
+    }
+  )
 );
 
 router.get(
@@ -235,8 +235,8 @@ router.get(
         },
         error: '',
       });
-    },
-  ),
+    }
+  )
 );
 
 router.get(
@@ -267,7 +267,7 @@ router.get(
       },
       error: '',
     });
-  }),
+  })
 );
 
 const associationDeChasseSchema = z.object({
@@ -330,7 +330,7 @@ router.post(
     await linkBrevoCompanyToContact(createdEntity, user);
 
     res.status(200).send({ ok: true, error: '', data: { createdEntity, createdEntityRelation } });
-  }),
+  })
 );
 
 const partenaireSchema = z.object({
@@ -405,7 +405,7 @@ router.post(
 
       if (existingUser && existingUser.roles.length > 0) {
         const error = new Error(
-          "Cette adresse email est déjà associée à un compte Zacharie existant. Veuillez utiliser une autre adresse email ou contacter l'utilisateur pour qu'il ajoute lui-même cette entité à son compte.",
+          "Cette adresse email est déjà associée à un compte Zacharie existant. Veuillez utiliser une autre adresse email ou contacter l'utilisateur pour qu'il ajoute lui-même cette entité à son compte."
         );
         res.status(409);
         return next(error);
@@ -470,8 +470,8 @@ router.post(
       res
         .status(200)
         .send({ ok: true, error: '', data: { entity: createdEntity, relation: createdEntityRelation } });
-    },
-  ),
+    }
+  )
 );
 
 const ccgSchema = z.object({
@@ -533,7 +533,7 @@ router.post(
     });
 
     res.status(200).send({ ok: true, error: '', data: { createdEntity, createdEntityRelation } });
-  }),
+  })
 );
 
 router.get(
@@ -568,7 +568,7 @@ router.get(
       data: { entity: relation.EntityRelatedWithUser },
       error: '',
     });
-  }),
+  })
 );
 
 router.put(
@@ -622,7 +622,7 @@ router.put(
     });
 
     res.status(200).send({ ok: true, error: '', data: { entity: updatedEntity } });
-  }),
+  })
 );
 
 export default router;

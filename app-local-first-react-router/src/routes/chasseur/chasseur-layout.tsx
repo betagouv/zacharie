@@ -72,7 +72,10 @@ export default function ChasseurLayout() {
         </main>
       </RootDisplay>
       <FloatingNewFicheButton />
-      <BottomNavigation items={navigation} onNewFiche={onNewFiche} />
+      <BottomNavigation
+        items={navigation}
+        onNewFiche={onNewFiche}
+      />
       {import.meta.env.VITE_TEST_PLAYWRIGHT === 'true' && (
         <p className="text-action-high-blue-france text-opacity-25 fixed right-0 bottom-16 left-0 z-50 bg-white px-4 py-1 text-sm md:bottom-0">
           {!dataIsSynced ? 'Synchronisation en cours' : isOnline ? 'En ligne' : 'Hors ligne'}

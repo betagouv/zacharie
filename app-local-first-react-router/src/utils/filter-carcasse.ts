@@ -68,7 +68,7 @@ type CarcasseFilterableField = FilterableField & {
 export function carcasseFilterableFields(
   motifs: Array<string>,
   etgNames: Array<string>,
-  ccgNames: Array<string>,
+  ccgNames: Array<string>
 ): Array<CarcasseFilterableField> {
   const filters: Array<CarcasseFilterableField> = [
     { name: 'numero_bracelet', label: "Numéro de bracelet ou d'identification", type: 'text' },

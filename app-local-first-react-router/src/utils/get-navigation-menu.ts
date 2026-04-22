@@ -47,7 +47,7 @@ export default function useLoggedInNavigationMenu(): MainNavigationProps.Item[] 
         to: '/app/tableau-de-bord/profil/mon-activite',
         href: '#',
       },
-    },
+    }
   );
   if (user?.roles.includes(UserRoles.COLLECTEUR_PRO)) {
     profileMenu.push({

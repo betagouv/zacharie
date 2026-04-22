@@ -117,7 +117,7 @@ export default function CollecteurProfilNotifications() {
                             },
                             (error) => {
                               console.error('Error subscribing user to push notifications!', error);
-                            },
+                            }
                           );
                         },
                       },

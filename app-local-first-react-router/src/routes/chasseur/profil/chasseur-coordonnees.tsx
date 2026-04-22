@@ -25,7 +25,7 @@ export default function ChasseurCoordonnees() {
         useUser.setState({ user: response.data.user });
       }
     },
-    [user.id],
+    [user.id]
   );
 
   const handleSubmit = () => {

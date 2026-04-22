@@ -30,7 +30,7 @@ export interface SlicedStorage<S> {
 }
 
 export function createSlicedIDBStorage<S extends Record<string, unknown>>(
-  persistedKeys: string[],
+  persistedKeys: string[]
 ): SlicedStorage<S> {
   // Track previous value references so we only write changed slices
   const prevRefs = new Map<string, unknown>();

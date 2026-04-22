@@ -12,22 +12,61 @@ import CircuitCourtFiches from './circuit-court-fiches';
 
 export default function RouterCircuitCourt() {
   return (
-    <Route path="circuit-court" element={<CollecteurLayout />}>
-      <Route index element={<CircuitCourtFiches />} />
-      <Route path="contact" element={<Contact />} />
-      <Route path="onboarding" element={<Outlet />}>
-        <Route path="coordonnees" element={<CircuitCourtOnboardingCoordonnees />} />
-        <Route path="entreprise" element={<CircuitCourtOnboardingEntreprise />} />
+    <Route
+      path="circuit-court"
+      element={<CollecteurLayout />}
+    >
+      <Route
+        index
+        element={<CircuitCourtFiches />}
+      />
+      <Route
+        path="contact"
+        element={<Contact />}
+      />
+      <Route
+        path="onboarding"
+        element={<Outlet />}
+      >
+        <Route
+          path="coordonnees"
+          element={<CircuitCourtOnboardingCoordonnees />}
+        />
+        <Route
+          path="entreprise"
+          element={<CircuitCourtOnboardingEntreprise />}
+        />
       </Route>
-      <Route path="profil" element={<Outlet />}>
-        <Route path="coordonnees" element={<CircuitCourtProfilCoordonnees />} />
-        <Route path="notifications" element={<CircuitCourtProfilNotifications />} />
+      <Route
+        path="profil"
+        element={<Outlet />}
+      >
+        <Route
+          path="coordonnees"
+          element={<CircuitCourtProfilCoordonnees />}
+        />
+        <Route
+          path="notifications"
+          element={<CircuitCourtProfilNotifications />}
+        />
       </Route>
-      <Route path="entreprise" element={<Outlet />}>
-        <Route path="informations" element={<CircuitCourtProfilEntreprise />} />
-        <Route path="utilisateurs" element={<CircuitCourtProfilEntrepriseUtilisateurs />} />
+      <Route
+        path="entreprise"
+        element={<Outlet />}
+      >
+        <Route
+          path="informations"
+          element={<CircuitCourtProfilEntreprise />}
+        />
+        <Route
+          path="utilisateurs"
+          element={<CircuitCourtProfilEntrepriseUtilisateurs />}
+        />
       </Route>
-      <Route path="fei/:fei_numero" element={<CircuitCourtFei />} />
+      <Route
+        path="fei/:fei_numero"
+        element={<CircuitCourtFei />}
+      />
     </Route>
   );
 }

@@ -33,7 +33,7 @@ export default function CurrentOwnerConfirm() {
     return feiCarcasses.filter(
       (c) =>
         (c.next_owner_entity_id && userEntityIds.includes(c.next_owner_entity_id)) ||
-        c.next_owner_user_id === user.id,
+        c.next_owner_user_id === user.id
     );
   }, [feiCarcasses, userEntityIds, user.id]);
 
@@ -63,7 +63,7 @@ export default function CurrentOwnerConfirm() {
       (c) =>
         c.current_owner_user_id === user.id &&
         c.current_owner_entity_id != null &&
-        userEntityIds.includes(c.current_owner_entity_id),
+        userEntityIds.includes(c.current_owner_entity_id)
     );
   }, [feiCarcasses, userEntityIds, user.id]);
 
@@ -74,7 +74,7 @@ export default function CurrentOwnerConfirm() {
   // Check if there are remaining carcasses not yet taken in charge by anyone
   const hasRemainingUntakenCarcasses = useMemo(() => {
     return feiCarcasses.some(
-      (c) => c.next_owner_entity_id != null && !myCarcasseIds.includes(c.zacharie_carcasse_id),
+      (c) => c.next_owner_entity_id != null && !myCarcasseIds.includes(c.zacharie_carcasse_id)
     );
   }, [feiCarcasses, myCarcasseIds]);
 
@@ -213,7 +213,11 @@ export default function CurrentOwnerConfirm() {
         }
         className="m-0 bg-white"
       >
-        <Button type="submit" className="my-4 block" onClick={handlePriseEnCharge}>
+        <Button
+          type="submit"
+          className="my-4 block"
+          onClick={handlePriseEnCharge}
+        >
           Prendre en charge cette fiche et les carcasses associées
         </Button>
         <>
@@ -236,7 +240,7 @@ export default function CurrentOwnerConfirm() {
                 });
                 // Only clear FEI-level next_owner if no other carcasses have a different next_owner
                 const otherCarcassesWithNextOwner = feiCarcasses.filter(
-                  (c) => c.next_owner_entity_id != null && !carcasseIds.includes(c.zacharie_carcasse_id),
+                  (c) => c.next_owner_entity_id != null && !carcasseIds.includes(c.zacharie_carcasse_id)
                 );
                 const nextFei =
                   otherCarcassesWithNextOwner.length > 0

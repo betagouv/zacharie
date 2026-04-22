@@ -20,9 +20,7 @@ export async function inviteUser(newUser: User, me: User) {
         reset_password_last_email_sent_at: new Date(),
       },
     });
-    url = `https://zacharie.beta.gouv.fr/app/connexion/invitation?invitation-token=${token}&email=${encodeURIComponent(
-      newUser.email,
-    )}`;
+    url = `https://zacharie.beta.gouv.fr/app/connexion/invitation?invitation-token=${token}&email=${encodeURIComponent(newUser.email)}`;
   }
 
   const invitationEmail = [

@@ -58,12 +58,12 @@ export default function MesAssociationsDeChasse() {
         useUser.setState({ user: response.data.user });
       }
     },
-    [user.id],
+    [user.id]
   );
 
   const userEntities = Object.values(userEntitiesByTypeAndId[EntityTypes.PREMIER_DETENTEUR]);
   const remainingEntities = Object.values(allEntitiesByTypeAndId[EntityTypes.PREMIER_DETENTEUR]).filter(
-    (entity) => !userEntitiesByTypeAndId[EntityTypes.PREMIER_DETENTEUR][entity.id],
+    (entity) => !userEntitiesByTypeAndId[EntityTypes.PREMIER_DETENTEUR][entity.id]
   );
 
   const userHasAssociationsChasses =
@@ -98,7 +98,7 @@ export default function MesAssociationsDeChasse() {
       ?.EntityRelationsWithUsers.find(
         (relation) =>
           relation.owner_id === user.id &&
-          relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+          relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
       )?.status === EntityRelationStatus.ADMIN;
 
   const ComponentToDisplay = isAdminOfEntity ? Input : InputNotEditable;
@@ -145,7 +145,7 @@ export default function MesAssociationsDeChasse() {
         });
       }
     },
-    [isUnregisteredEntity, setRefreshKey, user.id, currentEntityId, newEntityNomDUsage],
+    [isUnregisteredEntity, setRefreshKey, user.id, currentEntityId, newEntityNomDUsage]
   );
 
   return (
@@ -194,7 +194,7 @@ export default function MesAssociationsDeChasse() {
               const relation = entity.EntityRelationsWithUsers.find(
                 (relation) =>
                   relation.owner_id === user.id &&
-                  relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+                  relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
               );
               if (!relation) return null;
               return (
@@ -235,7 +235,11 @@ export default function MesAssociationsDeChasse() {
                     <p className="mb-5 text-sm text-gray-500">
                       * Les champs marqués d'un astérisque (*) sont obligatoires.
                     </p>
-                    <form id="association_data_form" method="POST" onSubmit={handleEntitySubmit}>
+                    <form
+                      id="association_data_form"
+                      method="POST"
+                      onSubmit={handleEntitySubmit}
+                    >
                       {isUnregisteredEntity ? (
                         <div className="mb-6">
                           <Input
@@ -434,7 +438,10 @@ export default function MesAssociationsDeChasse() {
                           )}
                         </div>
                       </div>
-                      <Button type="submit" nativeButtonProps={{ form: 'association_data_form' }}>
+                      <Button
+                        type="submit"
+                        nativeButtonProps={{ form: 'association_data_form' }}
+                      >
                         Me rattacher à cette entité
                       </Button>
                     </form>

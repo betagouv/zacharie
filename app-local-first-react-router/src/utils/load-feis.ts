@@ -71,7 +71,7 @@ export async function loadFeis() {
         }).then((res) => res as FeiRefreshResponse);
         if (!feisRefreshed.ok) {
           alert(
-            `Un problème est survenu lors du chargement de l'application: ${feisRefreshed.error}. Veuillez recharger la page. Si le problème persiste, veuillez contacter l'équipe technique.`,
+            `Un problème est survenu lors du chargement de l'application: ${feisRefreshed.error}. Veuillez recharger la page. Si le problème persiste, veuillez contacter l'équipe technique.`
           );
           return;
         }

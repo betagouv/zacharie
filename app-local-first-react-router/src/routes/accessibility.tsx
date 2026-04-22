@@ -56,7 +56,10 @@ export default function Accessibility() {
 
         <p className="text-gray-700">
           Cette déclaration d'accessibilité s'applique à{' '}
-          <a href="http://www.zacharie.beta.gouv.fr" className="text-blue-600 hover:underline">
+          <a
+            href="http://www.zacharie.beta.gouv.fr"
+            className="text-blue-600 hover:underline"
+          >
             www.zacharie.beta.gouv.fr
           </a>
           .
@@ -67,7 +70,10 @@ export default function Accessibility() {
         <h2 className="text-2xl font-semibold text-gray-900">État de conformité</h2>
         <p className="text-gray-700">
           Zacharie (
-          <a href="http://www.zacharie.beta.gouv.fr" className="text-blue-600 hover:underline">
+          <a
+            href="http://www.zacharie.beta.gouv.fr"
+            className="text-blue-600 hover:underline"
+          >
             www.zacharie.beta.gouv.fr
           </a>
           ) est partiellement conforme avec le référentiel général d'amélioration de l'accessibilité (RGAA),
@@ -141,7 +147,10 @@ export default function Accessibility() {
           <ul className="list-disc pl-5 text-gray-700">
             <li>
               page d'accueil{' '}
-              <a href="http://zacharie.beta.gouv.fr" className="text-blue-600 hover:underline">
+              <a
+                href="http://zacharie.beta.gouv.fr"
+                className="text-blue-600 hover:underline"
+              >
                 zacharie.beta.gouv.fr
               </a>
             </li>
@@ -153,7 +162,10 @@ export default function Accessibility() {
             </li> */}
             <li>
               page connexion{' '}
-              <a href="http://zacharie.beta.gouv.fr/app/connexion" className="text-blue-600 hover:underline">
+              <a
+                href="http://zacharie.beta.gouv.fr/app/connexion"
+                className="text-blue-600 hover:underline"
+              >
                 zacharie.beta.gouv.fr/app/connexion
               </a>
             </li>
@@ -171,7 +183,10 @@ export default function Accessibility() {
         <ul className="space-y-4 text-gray-700">
           <li>
             Envoyer un message à{' '}
-            <a href="mailto:contact@zacharie.beta.gouv.fr" className="text-blue-600 hover:underline">
+            <a
+              href="mailto:contact@zacharie.beta.gouv.fr"
+              className="text-blue-600 hover:underline"
+            >
               contact@zacharie.beta.gouv.fr
             </a>
           </li>

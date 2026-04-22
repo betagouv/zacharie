@@ -70,7 +70,7 @@ function sortCarcassesApprovedForExcel(carcasseA: CarcasseExcelData, carcasseB: 
 }
 
 function createSheet<T extends keyof CarcasseExcelData | keyof FeiExcelData>(
-  data: Array<Record<T, unknown>>,
+  data: Array<Record<T, unknown>>
 ) {
   /*
   [
@@ -117,7 +117,7 @@ function createSheet<T extends keyof CarcasseExcelData | keyof FeiExcelData>(
       });
       return [...xlsxData, row];
     },
-    [header],
+    [header]
   );
   const worksheet = utils.aoa_to_sheet(sheet);
   worksheet['!rows'] = rowHeights;
@@ -235,7 +235,7 @@ export default function useExportCarcasses() {
           if (intermediaireCarcasse?.commentaire) {
             const intermediaireEntity = entities[intermediaire.intermediaire_entity_id];
             commentaires.push(
-              `${intermediaireEntity?.nom_d_usage}\u00A0: ${intermediaireCarcasse?.commentaire}`,
+              `${intermediaireEntity?.nom_d_usage}\u00A0: ${intermediaireCarcasse?.commentaire}`
             );
           }
           if (intermediaireCarcasse?.intermediaire_poids) {
@@ -297,7 +297,7 @@ export default function useExportCarcasses() {
         carcassesWorkbook,
         createSheet(allCarcasses.sort(sortCarcassesApprovedForExcel)),
         'Carcasses',
-        true,
+        true
       );
 
       writeFile(carcassesWorkbook, `export-carcasses-zacharie-${dayjs().format('YYYY-MM-DD-HH-mm')}.xlsx`, {
@@ -310,7 +310,7 @@ export default function useExportCarcasses() {
     } catch (e: unknown) {
       capture(e as Error);
       alert(
-        "Une erreur est survenue lors de l'exportation des fiches. L'équipe technique a été notifiée. Veuillez nous excuser pour la gêne occasionnée, et réessayer plus tard",
+        "Une erreur est survenue lors de l'exportation des fiches. L'équipe technique a été notifiée. Veuillez nous excuser pour la gêne occasionnée, et réessayer plus tard"
       );
     }
     setIsExporting(false);

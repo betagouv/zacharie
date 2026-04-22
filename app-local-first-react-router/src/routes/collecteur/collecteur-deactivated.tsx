@@ -51,7 +51,10 @@ export default function CollecteurDeactivated() {
                       </p>
                       <ul className="fr-btns-group fr-btns-group--inline-md fr-mb-3w">
                         <li>
-                          <Link className="fr-btn" to="/app/collecteur/profil/coordonnees">
+                          <Link
+                            className="fr-btn"
+                            to="/app/collecteur/profil/coordonnees"
+                          >
                             Compléter votre profil
                           </Link>
                         </li>
