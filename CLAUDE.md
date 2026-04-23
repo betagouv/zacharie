@@ -13,6 +13,7 @@ Key domains:
 - **User roles**: CHASSEUR, COLLECTEUR_PRO, ETG, SVI, COMMERCE_DE_DETAIL, etc.
   - **Rule**: A user shall not have multiple roles. Frontend forbids it; backend should validate and reject.
 - **Entities**: Organizations (slaughterhouses, retail, veterinary services)
+- **Circuit court**: Commerce de détail / boucher receives carcasses directly from PD. No CTA in Zacharie — passive view only (fiches + carcasses). No SVI inspection needed.
 
 ## Plan Mode
 
@@ -151,3 +152,24 @@ Key helpers in `@app/utils/get-carcasse-intermediaire-id.ts` for composite IDs (
 - `api-express/prisma/schema.prisma` — Database models
 - `app-local-first-react-router/src/zustand/store.ts` — State & sync logic
 - `app-local-first-react-router/src/utils/load-feis.ts` — Data loading with local/remote merge
+
+## Playwright E2E Conventions
+
+Rules for writing Playwright tests in `e2e/`. The current suite is flake-free; follow these or you break that.
+
+- **Seed, don't setup.** `resetDb(role)` in `beforeAll`/`beforeEach`. Hardcode `feiId` from seed. Never build state via UI if a seed exists.
+- **Wait on outcomes, not wall-clock time.** `await expect(locator).toBeVisible({ timeout })`. No `waitForTimeout`.
+- **Assert explicit sync beacons** after handoffs: "Votre fiche a été transmise" (chasseur side) or "a été notifié" (intermediaires). Use `timeout: 10000` minimum.
+- **Handoff UX is role-specific.** Chasseur sees a dedicated confirmation page; ETG/collecteur/CC see a toast/alert. Assert the right beacon per role — do NOT factor this into a generic helper.
+- **`scrollIntoViewIfNeeded()` before every click** on long DSFR forms. Prevents click-loss from DSFR re-renders.
+- **`.blur()` after `.fill()` on time/date inputs.** Forces the form state commit before the next action.
+- **`slowMo: 100`** via `test.use({ launchOptions })` on DSFR-heavy specs. Paces the store → PQueue → backend chain.
+- **Surgical `setTimeout` only with a `// why` comment** (e.g. DSFR modal re-render storm). Never as a generic fix.
+- **Re-login after logout = `page.goto('/app/connexion')`**, never nav clicks. Resets local-first store cleanly. Use the `logout-and-connect` helper for multi-actor specs.
+- **Multi-actor flows in one test** when verifying sync round-trip through the real backend.
+- **`toMatchAriaSnapshot` for lists/summaries** with dynamic dates/numbers (regex-tolerant).
+- **Mobile viewport for CHASSEUR specs** (`350x667`, `isMobile`, `hasTouch`). Desktop default for ETG/SVI/collecteur/circuit-court.
+- **Role/accessible selectors first** (`getByRole`, `getByLabel`). CSS fallback only for DSFR widgets, e.g. `[class*='select-prochain-detenteur']`.
+- **Role-based route access**: each role layout redirects to `/app/connexion` via `<Navigate>` if user doesn't have the matching role (see `chasseur-layout.tsx`). Assert redirection, not 404.
+- **Seed starting states** (from `FeiOwnerRole` enum): `EXAMINATEUR_INITIAL`, `PREMIER_DETENTEUR`, `ETG`, `COLLECTEUR_PRO`, `SVI`, `COMMERCE_DE_DETAIL`. Extend `populate-test-db.ts` to add more.
+- **Test DB is ephemeral**: `resetDb(role)` wipes and re-seeds; tests in the same file share state only via `beforeAll`. Use `beforeEach` when tests must be independent.

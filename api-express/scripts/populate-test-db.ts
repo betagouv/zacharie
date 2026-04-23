@@ -1,4 +1,5 @@
 import {
+  ApiKeyScope,
   CarcasseStatus,
   CarcasseType,
   DepotType,
@@ -30,15 +31,19 @@ export async function populateDb(role?: FeiOwnerRole) {
     return;
   }
 
-  await prisma.user.deleteMany();
-  await prisma.password.deleteMany();
-  await prisma.entity.deleteMany();
+  // Delete in FK-safe order: children before parents
+  await prisma.log.deleteMany();
+  await prisma.carcasseIntermediaire.deleteMany();
+  await prisma.carcasse.deleteMany();
+  await prisma.fei.deleteMany();
   await prisma.entityAndUserRelations.deleteMany();
   await prisma.userRelations.deleteMany();
-  await prisma.fei.deleteMany();
-  await prisma.carcasse.deleteMany();
-  await prisma.carcasseIntermediaire.deleteMany();
-  await prisma.log.deleteMany();
+  await prisma.apiKeyLog.deleteMany();
+  await prisma.apiKeyApprovalByUserOrEntity.deleteMany();
+  await prisma.apiKey.deleteMany();
+  await prisma.password.deleteMany();
+  await prisma.entity.deleteMany();
+  await prisma.user.deleteMany();
 
   /* 
   Martin
@@ -119,6 +124,8 @@ Christine
         prenom: 'Pierre',
         nom_de_famille: 'Petit',
         addresse_ligne_1: '3 rue de la paix',
+        est_forme_a_l_examen_initial: true,
+        numero_cfei: 'CFEI-075-25-002',
         code_postal: '75000',
         ville: 'Paris',
         telephone: '0606060603',
@@ -217,6 +224,74 @@ Christine
         roles: [UserRoles.SVI],
         activated: true,
         activated_at: dayjs().toDate(),
+      },
+      {
+        id: await createUserId(),
+        email: 'commerce-de-detail@example.fr',
+        roles: [UserRoles.COMMERCE_DE_DETAIL],
+        activated: true,
+        activated_at: dayjs().toDate(),
+        prenom: 'Julie',
+        nom_de_famille: 'Leroy',
+        addresse_ligne_1: '10 rue de la paix',
+        code_postal: '75000',
+        ville: 'Paris',
+        telephone: '0606060608',
+        onboarded_at: dayjs().toDate(),
+      },
+      {
+        id: await createUserId(),
+        email: 'commerce-de-detail-nouveau@example.fr',
+        roles: [UserRoles.COMMERCE_DE_DETAIL],
+        activated: true,
+        activated_at: dayjs().toDate(),
+      },
+      {
+        id: await createUserId(),
+        email: 'examinateur-onboarding@example.fr',
+        roles: [UserRoles.CHASSEUR],
+        activated: true,
+        activated_at: dayjs().toDate(),
+        // Intentionally no prenom, nom, address, telephone, est_forme_a_l_examen_initial
+        // Used by specs 9/10 to test onboarding-incomplete gate
+      },
+      {
+        id: await createUserId(),
+        email: 'examinateur-sans-formation@example.fr',
+        roles: [UserRoles.CHASSEUR],
+        activated: true,
+        activated_at: dayjs().toDate(),
+        prenom: 'Anne',
+        nom_de_famille: 'Lefebvre',
+        addresse_ligne_1: '11 rue de la paix',
+        code_postal: '75000',
+        ville: 'Paris',
+        telephone: '0606060609',
+        // est_forme_a_l_examen_initial is null (default)
+        // Used by spec 11: profile complete but formation missing
+      },
+      {
+        id: await createUserId(),
+        email: 'premier-detenteur-onboarding@example.fr',
+        roles: [UserRoles.CHASSEUR],
+        activated: true,
+        activated_at: dayjs().toDate(),
+        est_forme_a_l_examen_initial: false,
+        // No prenom, nom, address — used by spec 31
+      },
+      {
+        id: await createUserId(),
+        email: 'svi-2@example.fr',
+        roles: [UserRoles.SVI],
+        activated: true,
+        activated_at: dayjs().toDate(),
+        prenom: 'François',
+        nom_de_famille: 'Garcia',
+        addresse_ligne_1: '12 rue de la paix',
+        code_postal: '75000',
+        ville: 'Paris',
+        telephone: '0606060610',
+        onboarded_at: dayjs().toDate(),
       },
     ],
   });
@@ -343,6 +418,17 @@ Christine
         ville: 'Paris',
         etg_linked_to_svi_id: '04881d2b-9b27-42a1-8092-7080c67e90fe',
       },
+      {
+        id: 'b5d31c7f-5e5a-4c2c-9e37-1e6b2d8c4f10',
+        raison_sociale: 'Commerce de Détail 1',
+        nom_d_usage: 'Commerce de Détail 1',
+        siret: '12345678901234',
+        type: EntityTypes.COMMERCE_DE_DETAIL,
+        zacharie_compatible: true,
+        address_ligne_1: '8 avenue du général de gaulle',
+        code_postal: '75000',
+        ville: 'Paris',
+      },
     ],
   });
 
@@ -379,6 +465,11 @@ Christine
         entity_id: entities.find((entity) => entity.raison_sociale === 'Association de chasseurs')?.id,
         relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
         status: EntityRelationStatus.ADMIN,
+      },
+      {
+        owner_id: users.find((user) => user.email === 'examinateur-premier-detenteur@example.fr')?.id,
+        entity_id: entities.find((entity) => entity.raison_sociale === 'ETG 1')?.id,
+        relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
       },
       {
         owner_id: users.find((user) => user.email === 'collecteur-pro@example.fr')?.id,
@@ -422,9 +513,70 @@ Christine
         relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
         status: EntityRelationStatus.MEMBER,
       },
+      {
+        owner_id: users.find((user) => user.email === 'commerce-de-detail@example.fr')?.id,
+        entity_id: entities.find((entity) => entity.raison_sociale === 'Commerce de Détail 1')?.id,
+        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        status: EntityRelationStatus.ADMIN,
+      },
+      {
+        owner_id: users.find((user) => user.email === 'commerce-de-detail-nouveau@example.fr')?.id,
+        entity_id: entities.find((entity) => entity.raison_sociale === 'Commerce de Détail 1')?.id,
+        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        status: EntityRelationStatus.MEMBER,
+      },
+      {
+        owner_id: users.find((user) => user.email === 'svi-2@example.fr')?.id,
+        entity_id: entities.find((entity) => entity.raison_sociale === 'SVI 2')?.id,
+        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        status: EntityRelationStatus.ADMIN,
+      },
     ],
   });
   console.log('Entity and user relations created for test', entityAndUserRelations.count);
+
+  // API key for partage-de-mes-donnees test
+  const apiKeyDedicated = await prisma.apiKey.create({
+    data: {
+      name: 'Test API Key Dedicated',
+      description: 'Clé dédiée pour tests E2E',
+      private_key: 'test-private-key-dedicated',
+      public_key: 'test-public-key-dedicated',
+      active: true,
+      dedicated_to_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb', // ETG 1
+      scopes: [ApiKeyScope.FEI_READ_FOR_ENTITY, ApiKeyScope.CARCASSE_READ_FOR_ENTITY],
+    },
+  });
+  await prisma.apiKeyApprovalByUserOrEntity.create({
+    data: {
+      api_key_id: apiKeyDedicated.id,
+      entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb', // ETG 1
+      status: 'PENDING',
+    },
+  });
+
+  const apiKeyUser = await prisma.apiKey.create({
+    data: {
+      name: 'Test API Key User',
+      description: 'Clé utilisateur pour tests E2E',
+      private_key: 'test-private-key-user',
+      public_key: 'test-public-key-user',
+      active: true,
+      scopes: [ApiKeyScope.FEI_READ_FOR_USER, ApiKeyScope.CARCASSE_READ_FOR_USER],
+    },
+  });
+  const etg1User = users.find((u) => u.email === 'etg-1@example.fr');
+  if (etg1User) {
+    await prisma.apiKeyApprovalByUserOrEntity.create({
+      data: {
+        api_key_id: apiKeyUser.id,
+        user_id: etg1User.id,
+        status: 'PENDING',
+      },
+    });
+  }
+
+  console.log('API keys created for test');
 
   if (role) {
     if (role === FeiOwnerRole.PREMIER_DETENTEUR) {
@@ -435,7 +587,122 @@ Christine
     if (role === FeiOwnerRole.ETG) {
       const fei = await prisma.fei.create({ data: feiValidatedByPremierDetenteur });
       const carcasses = await prisma.carcasse.createMany({ data: getCarcasses(fei) });
+      // await prisma.carcasseIntermediaire.createMany({
+      //   data: getCarcasses(fei).map((c) => ({
+      //     fei_numero: fei.numero,
+      //     numero_bracelet: c.numero_bracelet,
+      //     zacharie_carcasse_id: c.zacharie_carcasse_id!,
+      //     intermediaire_id: `${fei.numero}_${'2a8bc866-a709-47d9-aebe-2768fceb2ecb'}_${users.find((u) => u.email === 'etg-1@example.fr')?.id}`,
+      //     intermediaire_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
+      //     intermediaire_user_id: users.find((u) => u.email === 'etg-1@example.fr')?.id ?? '',
+      //     intermediaire_role: FeiOwnerRole.ETG,
+      //     prise_en_charge_at: dayjs().subtract(2, 'day').toDate(),
+      //   })),
+      // });
       console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (for etg)`);
+    }
+    if (role === FeiOwnerRole.COLLECTEUR_PRO) {
+      const fei = await prisma.fei.create({ data: feiValidatedByPremierDetenteurToCollecteur });
+      const carcasses = await prisma.carcasse.createMany({ data: getCarcasses(fei) });
+      // await prisma.carcasseIntermediaire.createMany({
+      //   data: getCarcasses(fei).map((c) => ({
+      //     fei_numero: fei.numero,
+      //     numero_bracelet: c.numero_bracelet,
+      //     zacharie_carcasse_id: c.zacharie_carcasse_id!,
+      //     intermediaire_id: `${fei.numero}_${'a447bab1-8796-48a4-b955-3a5466116bca'}_${users.find((u) => u.email === 'collecteur-pro@example.fr')?.id}`,
+      //     intermediaire_entity_id: 'a447bab1-8796-48a4-b955-3a5466116bca',
+      //     intermediaire_user_id: users.find((u) => u.email === 'collecteur-pro@example.fr')?.id ?? '',
+      //     intermediaire_role: FeiOwnerRole.COLLECTEUR_PRO,
+      //     prise_en_charge_at: dayjs().subtract(2, 'day').toDate(),
+      //   })),
+      // });
+      console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (for collecteur pro)`);
+    }
+    if (role === FeiOwnerRole.SVI) {
+      const fei = await prisma.fei.create({ data: feiTransmittedByEtgToSvi });
+      const carcasses = await prisma.carcasse.createMany({ data: getCarcasses(fei) });
+      // Create CarcasseIntermediaire for ETG 1 so the traçabilité chain is coherent
+      await prisma.carcasseIntermediaire.createMany({
+        data: getCarcasses(fei).map((c) => ({
+          fei_numero: fei.numero,
+          numero_bracelet: c.numero_bracelet,
+          zacharie_carcasse_id: c.zacharie_carcasse_id!,
+          intermediaire_id: `${fei.numero}_${'2a8bc866-a709-47d9-aebe-2768fceb2ecb'}_${users.find((u) => u.email === 'etg-1@example.fr')?.id}`,
+          intermediaire_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
+          intermediaire_user_id: users.find((u) => u.email === 'etg-1@example.fr')?.id ?? '',
+          intermediaire_role: FeiOwnerRole.ETG,
+          prise_en_charge_at: dayjs().subtract(2, 'day').toDate(),
+        })),
+      });
+      console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (for svi)`);
+    }
+    if (role === FeiOwnerRole.COMMERCE_DE_DETAIL) {
+      const fei = await prisma.fei.create({ data: feiTransmittedByPremierDetenteurToCommerceDeDetail });
+      const carcasses = await prisma.carcasse.createMany({ data: getCarcasses(fei) });
+      console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (for commerce de détail)`);
+    }
+    // Not a FeiOwnerRole value — special "SVI already closed" seed for testing read-only downstream views.
+    if ((role as string) === 'SVI_CLOSED') {
+      const fei = await prisma.fei.create({ data: feiClosedBySvi });
+      const carcasses = await prisma.carcasse.createMany({ data: getCarcasses(fei) });
+      // Create CarcasseIntermediaire for ETG 1 so the traçabilité chain is coherent
+      await prisma.carcasseIntermediaire.createMany({
+        data: getCarcasses(fei).map((c) => ({
+          fei_numero: fei.numero,
+          numero_bracelet: c.numero_bracelet,
+          zacharie_carcasse_id: c.zacharie_carcasse_id!,
+          intermediaire_id: `${fei.numero}_${'2a8bc866-a709-47d9-aebe-2768fceb2ecb'}_${users.find((u) => u.email === 'etg-1@example.fr')?.id}`,
+          intermediaire_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
+          intermediaire_user_id: users.find((u) => u.email === 'etg-1@example.fr')?.id ?? '',
+          intermediaire_role: FeiOwnerRole.ETG,
+          prise_en_charge_at: dayjs().subtract(2, 'day').toDate(),
+        })),
+      });
+      // Set per-carcasse SVI decisions so downstream views show real decisions
+      await prisma.carcasse.updateMany({
+        where: { fei_numero: fei.numero },
+        data: {
+          svi_carcasse_status: CarcasseStatus.ACCEPTE,
+          svi_carcasse_status_set_at: dayjs().subtract(2, 'day').toDate(),
+        },
+      });
+      console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (SVI closed)`);
+    }
+    if ((role as string) === 'ETG_REFUSED') {
+      const fei = await prisma.fei.create({ data: feiRefusedByEtg });
+      const carcasses = await prisma.carcasse.createMany({
+        data: getCarcasses(fei).map((c) => ({
+          ...c,
+          intermediaire_carcasse_refus_intermediaire_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
+          intermediaire_carcasse_refus_motif: ['Présence de souillures'],
+          intermediaire_carcasse_signed_at: dayjs().subtract(1, 'day').toDate(),
+        })),
+      });
+      console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (ETG refused)`);
+    }
+    if ((role as string) === 'ETG_ALL_REFUSED_TO_SVI') {
+      const fei = await prisma.fei.create({ data: feiAllRefusedByEtgToSvi });
+      const carcasses = await prisma.carcasse.createMany({ data: getCarcasses(fei) });
+      await prisma.carcasseIntermediaire.createMany({
+        data: getCarcasses(fei).map((c) => ({
+          fei_numero: fei.numero,
+          numero_bracelet: c.numero_bracelet,
+          zacharie_carcasse_id: c.zacharie_carcasse_id!,
+          intermediaire_id: `${fei.numero}_${'2a8bc866-a709-47d9-aebe-2768fceb2ecb'}_${users.find((u) => u.email === 'etg-1@example.fr')?.id}`,
+          intermediaire_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
+          intermediaire_user_id: users.find((u) => u.email === 'etg-1@example.fr')?.id ?? '',
+          intermediaire_role: FeiOwnerRole.ETG,
+          prise_en_charge_at: dayjs().subtract(2, 'day').toDate(),
+        })),
+      });
+      await prisma.carcasse.updateMany({
+        where: { fei_numero: fei.numero },
+        data: {
+          intermediaire_carcasse_refus_intermediaire_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
+          intermediaire_carcasse_refus_motif: 'Présence de souillures',
+        },
+      });
+      console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (ETG all refused to SVI)`);
     }
   }
 
@@ -444,8 +711,9 @@ Christine
 
 const withRole = process.argv.find((arg) => arg.includes('--role'));
 if (withRole) {
-  console.log('Populate db with role', withRole?.split('=')[1]);
-  populateDb(withRole?.split('=')[1] as FeiOwnerRole);
+  const roleArg = withRole?.split('=')[1];
+  console.log('Populate db with role', roleArg);
+  populateDb(roleArg as FeiOwnerRole);
 } else {
   populateDb();
 }
@@ -488,6 +756,69 @@ const feiValidatedByPremierDetenteur: Prisma.FeiUncheckedCreateInput = {
   premier_detenteur_depot_type: DepotType.CCG,
   premier_detenteur_transport_type: TransportType.COLLECTEUR_PRO,
   premier_detenteur_depot_ccg_at: '2025-07-07T15:47:00.000Z',
+};
+
+const feiValidatedByPremierDetenteurToCollecteur: Prisma.FeiUncheckedCreateInput = {
+  ...feiValidatedByPremierDetenteur,
+  numero: 'ZACH-20250707-QZ6E0-175242',
+  fei_next_owner_entity_id: 'a447bab1-8796-48a4-b955-3a5466116bca',
+  fei_next_owner_role: FeiOwnerRole.COLLECTEUR_PRO,
+  premier_detenteur_prochain_detenteur_id_cache: 'a447bab1-8796-48a4-b955-3a5466116bca',
+  premier_detenteur_prochain_detenteur_role_cache: FeiOwnerRole.COLLECTEUR_PRO,
+};
+
+const feiTransmittedByEtgToSvi: Prisma.FeiUncheckedCreateInput = {
+  ...feiValidatedByPremierDetenteur,
+  numero: 'ZACH-20250707-QZ6E0-185242',
+  fei_current_owner_entity_id: '37a59a18-7f29-4177-a019-aafad6c73ee0',
+  fei_current_owner_entity_name_cache: 'SVI 1',
+  fei_current_owner_role: FeiOwnerRole.SVI,
+  fei_current_owner_user_id: null,
+  fei_current_owner_user_name_cache: null,
+  fei_prev_owner_user_id: null,
+  fei_prev_owner_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
+  fei_prev_owner_role: FeiOwnerRole.ETG,
+  fei_next_owner_entity_id: null,
+  fei_next_owner_role: null,
+  svi_assigned_at: dayjs().subtract(1, 'day').toDate(),
+  svi_entity_id: '37a59a18-7f29-4177-a019-aafad6c73ee0',
+  latest_intermediaire_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
+  latest_intermediaire_name_cache: 'ETG 1',
+};
+
+const feiTransmittedByPremierDetenteurToCommerceDeDetail: Prisma.FeiUncheckedCreateInput = {
+  ...feiValidatedByPremierDetenteur,
+  numero: 'ZACH-20250707-QZ6E0-195242',
+  fei_next_owner_entity_id: 'b5d31c7f-5e5a-4c2c-9e37-1e6b2d8c4f10',
+  fei_next_owner_role: FeiOwnerRole.COMMERCE_DE_DETAIL,
+  premier_detenteur_prochain_detenteur_id_cache: 'b5d31c7f-5e5a-4c2c-9e37-1e6b2d8c4f10',
+  premier_detenteur_prochain_detenteur_role_cache: FeiOwnerRole.COMMERCE_DE_DETAIL,
+};
+
+const feiClosedBySvi: Prisma.FeiUncheckedCreateInput = {
+  ...feiTransmittedByEtgToSvi,
+  numero: 'ZACH-20250707-QZ6E0-205242',
+  svi_assigned_at: dayjs().subtract(12, 'day').toDate(),
+  svi_closed_at: dayjs().subtract(2, 'day').toDate(),
+  // SVI users created via createUserId are dynamic; real closure would set svi_closed_by_user_id.
+  // For fixture simplicity we leave it null; assert on svi_closed_at in tests.
+};
+
+const feiAllRefusedByEtgToSvi: Prisma.FeiUncheckedCreateInput = {
+  ...feiTransmittedByEtgToSvi,
+  numero: 'ZACH-20250707-QZ6E0-225242',
+};
+
+const feiRefusedByEtg: Prisma.FeiUncheckedCreateInput = {
+  ...feiValidatedByPremierDetenteur,
+  numero: 'ZACH-20250707-QZ6E0-215242',
+  fei_current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+  fei_current_owner_user_id: '0Y545',
+  fei_current_owner_user_name_cache: 'Pierre Petit',
+  fei_prev_owner_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
+  fei_prev_owner_role: FeiOwnerRole.ETG,
+  fei_next_owner_entity_id: null,
+  fei_next_owner_role: null,
 };
 
 function getCarcasses(fei: Fei): Array<Prisma.CarcasseUncheckedCreateInput> {

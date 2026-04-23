@@ -58,7 +58,7 @@ export default function useSviNavigationMenu(): MainNavigationProps.Item[] {
           linkProps: { to: '/app/svi/entreprise/utilisateurs', href: '#' },
         },
       ].filter((link) => {
-        if (link.text !== 'Partage de mes données') return true;
+        if (link.text !== 'Partage de données') return true;
         return !!apiKeyApprovals?.length;
       }),
     },

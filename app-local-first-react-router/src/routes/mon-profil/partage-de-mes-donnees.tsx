@@ -279,7 +279,7 @@ const approvalStatusOptions: Array<{
   value: Approval['status'];
 }> = [
   {
-    label: 'Donner mon accord',
+    label: "J'ai donné mon accord",
     value: ApiKeyApprovalStatus.APPROVED,
   },
   {
@@ -287,7 +287,7 @@ const approvalStatusOptions: Array<{
     value: ApiKeyApprovalStatus.PENDING,
   },
   {
-    label: "Refuser l'accord",
+    label: "J'ai refusé l'accord",
     value: ApiKeyApprovalStatus.REJECTED,
   },
 ];
