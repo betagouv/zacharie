@@ -20,11 +20,7 @@ test('Double clic Prendre en charge ne duplique pas', async ({ page }) => {
   // Double-clic rapide
   await btn.dblclick();
 
-  await expect(
-    page.getByRole('heading', { name: 'Réception par mon établissement de traitement' })
-  ).toBeVisible({ timeout: 10000 });
+  await expect(page.getByText("Prise en charge par l'atelier")).toBeVisible();
   // Only one heading — no duplication
-  await expect(
-    page.getByRole('heading', { name: 'Réception par mon établissement de traitement' })
-  ).toHaveCount(1);
+  await expect(page.getByText("Prise en charge par l'atelier")).toHaveCount(1);
 });

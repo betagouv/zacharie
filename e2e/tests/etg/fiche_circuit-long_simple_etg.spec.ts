@@ -1,7 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
-import { NETWORK_PRESETS } from '../../utils/network-throttling';
 
 test.beforeEach(async () => {
   await resetDb('ETG');
@@ -31,12 +30,8 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
         - paragraph: fin de liste
       `);
   await page.getByRole('link', { name: feiId }).click();
-  const tracabiliteSummary = page.locator('summary').filter({ hasText: 'Données de traçabilité' });
-  await tracabiliteSummary.scrollIntoViewIfNeeded();
-  // Wait for the expanded content to render
-  await expect(page.getByText('Espèces')).toBeVisible({ timeout: 5000 });
-  const tracabilite = page.locator('details').filter({ hasText: 'Données de traçabilité' });
-  await expect(tracabilite).toMatchAriaSnapshot(`
+  await page.locator('summary').filter({ hasText: 'Données de traçabilité' }).click();
+  await expect(page.locator('#content')).toMatchAriaSnapshot(`
       - group:
         - heading "Données de traçabilité" [level=3]
         - paragraph: Espèces
@@ -191,12 +186,8 @@ test('Pas de stockage - Je transfère à un autre collecteur', async ({ page }) 
         - paragraph: fin de liste
       `);
   await page.getByRole('link', { name: feiId }).click();
-  const tracabiliteSummary = page.locator('summary').filter({ hasText: 'Données de traçabilité' });
-  await tracabiliteSummary.scrollIntoViewIfNeeded();
-  // Wait for the expanded content to render
-  await expect(page.getByText('Espèces')).toBeVisible({ timeout: 5000 });
-  const tracabilite = page.locator('details').filter({ hasText: 'Données de traçabilité' });
-  await expect(tracabilite).toMatchAriaSnapshot(`
+  await page.locator('summary').filter({ hasText: 'Données de traçabilité' }).click();
+  await expect(page.locator('#content')).toMatchAriaSnapshot(`
       - group:
         - heading "Données de traçabilité" [level=3]
         - paragraph: Espèces
@@ -326,12 +317,8 @@ test('Pas de stockage - Je transfère à un autre ETG', async ({ page, context }
         - paragraph: fin de liste
       `);
   await page.getByRole('link', { name: feiId }).click();
-  const tracabiliteSummary = page.locator('summary').filter({ hasText: 'Données de traçabilité' });
-  await tracabiliteSummary.scrollIntoViewIfNeeded();
-  // Wait for the expanded content to render
-  await expect(page.getByText('Espèces')).toBeVisible({ timeout: 5000 });
-  const tracabilite = page.locator('details').filter({ hasText: 'Données de traçabilité' });
-  await expect(tracabilite).toMatchAriaSnapshot(`
+  await page.locator('summary').filter({ hasText: 'Données de traçabilité' }).click();
+  await expect(page.locator('#content')).toMatchAriaSnapshot(`
       - group:
         - heading "Données de traçabilité" [level=3]
         - paragraph: Espèces

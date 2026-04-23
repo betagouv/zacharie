@@ -14,9 +14,7 @@ test('ETG transmet hors-ligne puis synchronise au retour online', async ({ page,
   await connectWith(page, 'etg-1@example.fr');
   await page.getByRole('link', { name: feiId }).click();
   await page.getByRole('button', { name: 'Prendre en charge les carcasses' }).click();
-  await expect(
-    page.getByRole('heading', { name: 'Réception par mon établissement de traitement' })
-  ).toBeVisible();
+  await expect(page.getByText("Prise en charge par l'atelier")).toBeVisible();
 
   // Passer hors-ligne.
   await context.setOffline(true);

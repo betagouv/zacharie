@@ -15,9 +15,7 @@ test("Erreur 'Il manque le prochain détenteur' si aucun choisi", async ({ page 
   await page.getByRole('link', { name: feiId }).click();
 
   await page.getByRole('button', { name: 'Prendre en charge les carcasses' }).click();
-  await expect(
-    page.getByRole('heading', { name: 'Réception par mon établissement de traitement' })
-  ).toBeVisible();
+  await expect(page.getByText("Prise en charge par l'atelier")).toBeVisible();
 
   // Définir la date de prise en charge puis tenter de transmettre sans choisir un destinataire.
   await page.getByRole('button', { name: 'Cliquez ici pour définir' }).click();

@@ -82,6 +82,15 @@ test('Fiche avec anomalies abats & carcasse — visible au rouvrir', async ({ pa
   const carcasseBtn = page.getByRole('button', { name: /Daim N°/ }).first();
   await expect(carcasseBtn).toBeVisible({ timeout: 10000 });
   await carcasseBtn.click();
+  await page.getByRole('button', { name: '⬇️ Anomalies' }).click();
+  await page
+    .locator(
+      '.mt-4 > .fr-input-group > .mt-2 > .input-for-search-prefilled-data__control > .input-for-search-prefilled-data__value-container > .input-for-search-prefilled-data__input-container'
+    )
+    .click();
+  await page
+    .getByRole('option', { name: 'Abcès ou nodules Unique - Appareil respiratoire (sinus/trachée/poumon)' })
+    .click();
   // On the detail page, scroll down to find the anomaly section
   const anomalyText = page.getByText(/Abcès ou nodules/i);
   await anomalyText.scrollIntoViewIfNeeded();

@@ -14,9 +14,7 @@ test("Refus sans motif ne s'enregistre pas", async ({ page }) => {
   await connectWith(page, 'etg-1@example.fr');
   await page.getByRole('link', { name: feiId }).click();
   await page.getByRole('button', { name: 'Prendre en charge les carcasses' }).click();
-  await expect(
-    page.getByRole('heading', { name: 'Réception par mon établissement de traitement' })
-  ).toBeVisible();
+  await expect(page.getByText("Prise en charge par l'atelier")).toBeVisible();
 
   await new Promise((r) => setTimeout(r, 500)); // react-dsfr modal re-render settle
   await page.getByRole('button', { name: 'Daim N° MM-001-001 Mise à' }).click();

@@ -18,10 +18,7 @@ test('Réception ETG avec stockage puis transmission SVI', async ({ page }) => {
   await expect(page).toHaveURL(new RegExp(`/app/etg/fei/${feiId}`));
 
   await page.getByRole('button', { name: 'Prendre en charge les carcasses' }).click();
-  await expect(
-    page.getByRole('heading', { name: 'Réception par mon établissement de traitement' })
-  ).toBeVisible();
-
+  await expect(page.getByText("Prise en charge par l'atelier")).toBeVisible();
   // Accepter toutes les carcasses rapidement — le lieu d'entrée est implicitement renseigné via la prise en charge.
   for (const carcassLabel of [
     'Daim N° MM-001-001 Mise à',
