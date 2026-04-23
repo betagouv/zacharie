@@ -19,7 +19,7 @@ export default function Section({
 
   return (
     <details
-      open={open}
+      open={import.meta.env.VITE_TEST_PLAYWRIGHT === 'true' || open}
       className={['bg-white p-4 md:p-8 [&_+details]:mt-8', className].join(' ')}
     >
       <summary>

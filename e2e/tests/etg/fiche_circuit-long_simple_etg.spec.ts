@@ -33,7 +33,6 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
   await page.getByRole('link', { name: feiId }).click();
   const tracabiliteSummary = page.locator('summary').filter({ hasText: 'Données de traçabilité' });
   await tracabiliteSummary.scrollIntoViewIfNeeded();
-  await tracabiliteSummary.click();
   // Wait for the expanded content to render
   await expect(page.getByText('Espèces')).toBeVisible({ timeout: 5000 });
   const tracabilite = page.locator('details').filter({ hasText: 'Données de traçabilité' });
@@ -194,7 +193,6 @@ test('Pas de stockage - Je transfère à un autre collecteur', async ({ page }) 
   await page.getByRole('link', { name: feiId }).click();
   const tracabiliteSummary = page.locator('summary').filter({ hasText: 'Données de traçabilité' });
   await tracabiliteSummary.scrollIntoViewIfNeeded();
-  await tracabiliteSummary.click();
   // Wait for the expanded content to render
   await expect(page.getByText('Espèces')).toBeVisible({ timeout: 5000 });
   const tracabilite = page.locator('details').filter({ hasText: 'Données de traçabilité' });
@@ -330,7 +328,6 @@ test('Pas de stockage - Je transfère à un autre ETG', async ({ page, context }
   await page.getByRole('link', { name: feiId }).click();
   const tracabiliteSummary = page.locator('summary').filter({ hasText: 'Données de traçabilité' });
   await tracabiliteSummary.scrollIntoViewIfNeeded();
-  await tracabiliteSummary.click();
   // Wait for the expanded content to render
   await expect(page.getByText('Espèces')).toBeVisible({ timeout: 5000 });
   const tracabilite = page.locator('details').filter({ hasText: 'Données de traçabilité' });
