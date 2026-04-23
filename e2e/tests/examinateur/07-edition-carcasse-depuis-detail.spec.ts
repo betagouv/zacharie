@@ -58,5 +58,8 @@ test("Edition carcasse depuis /chasseur/carcasse/:fei/:id", async ({ page }) => 
   const carcasseBtn = page.getByRole("button", { name: /Daim N°/ }).first();
   await expect(carcasseBtn).toBeVisible({ timeout: 10000 });
   await carcasseBtn.click();
-  await expect(page.getByText(/Abcès ou nodules/i)).toBeVisible({ timeout: 10000 });
+  // On the detail page, scroll down to find the anomaly section
+  const anomalyText = page.getByText(/Abcès ou nodules/i);
+  await anomalyText.scrollIntoViewIfNeeded();
+  await expect(anomalyText).toBeVisible({ timeout: 10000 });
 });

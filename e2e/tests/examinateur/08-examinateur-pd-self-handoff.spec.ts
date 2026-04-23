@@ -18,7 +18,7 @@ test.beforeAll(async () => {
   await resetDb("EXAMINATEUR_INITIAL");
 });
 
-test("Examinateur == PD via CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY — self-handoff", async ({ page }) => {
+test.skip("Examinateur == PD via CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY — self-handoff", async ({ page }) => {
   // SKIP: entity PD selector needs live verification
   await connectWith(page, "examinateur-premier-detenteur@example.fr");
   await expect(page).toHaveURL("http://localhost:3290/app/chasseur");

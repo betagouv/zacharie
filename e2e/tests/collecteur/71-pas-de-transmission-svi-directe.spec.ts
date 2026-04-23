@@ -18,6 +18,12 @@ test("Collecteur : le dropdown prochain détenteur n'inclut pas de SVI", async (
 
   await page.getByRole("button", { name: /Cliquez ici pour définir/ }).click();
 
+  // Expand the "Sélection du prochain destinataire" details section if collapsed
+  const selectionDetails = page.locator('summary').filter({ hasText: 'Sélection du prochain destinataire' });
+  if (await selectionDetails.isVisible({ timeout: 2000 }).catch(() => false)) {
+    await selectionDetails.click();
+  }
+
   const selectContainer = page.locator("[class*='select-prochain-detenteur'][class*='input-container']");
   await selectContainer.scrollIntoViewIfNeeded();
   await selectContainer.click();
