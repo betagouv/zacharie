@@ -19,7 +19,7 @@ router.get(
         saisiesUrl: getIframeUrl(37),
       },
     });
-  })
+  }),
 );
 
 router.get(
@@ -60,6 +60,10 @@ router.get(
 
     const feiNumeros = feis.map((fei) => fei.numero);
 
+    console.log('[mes-chasses] user:', user.id, 'email:', user.email);
+    console.log('[mes-chasses] season:', season, 'from', seasonStart.format(), 'to', seasonEnd.format());
+    console.log('[mes-chasses] feis count:', feis.length, 'numeros:', feiNumeros);
+
     if (feiNumeros.length === 0) {
       res.status(200).send({
         ok: true,
@@ -92,6 +96,15 @@ router.get(
     const bigGameCarcasses = carcasses.filter((c) => c.type === CarcasseType.GROS_GIBIER);
     const bigGame = bigGameCarcasses.length;
     const smallGame = carcasses.filter((c) => c.type === CarcasseType.PETIT_GIBIER).length;
+
+    console.log(
+      '[mes-chasses] carcasses total:',
+      totalCarcasses,
+      'bigGame:',
+      bigGame,
+      'smallGame:',
+      smallGame,
+    );
     const circuitCourtRoles: FeiOwnerRole[] = [
       FeiOwnerRole.COMMERCE_DE_DETAIL,
       FeiOwnerRole.REPAS_DE_CHASSE_OU_ASSOCIATIF,
@@ -100,9 +113,26 @@ router.get(
       FeiOwnerRole.CONSOMMATEUR_FINAL,
     ];
     const sviEligibleCarcasses = bigGameCarcasses.filter(
-      (c) => !c.next_owner_role || !circuitCourtRoles.includes(c.next_owner_role)
+      (c) => !c.next_owner_role || !circuitCourtRoles.includes(c.next_owner_role),
     );
     const hasAnySviReturn = sviEligibleCarcasses.some((c) => c.svi_carcasse_status !== null);
+
+    console.log(
+      '[mes-chasses] sviEligibleCarcasses:',
+      sviEligibleCarcasses.length,
+      'hasAnySviReturn:',
+      hasAnySviReturn,
+    );
+    // console.log(
+    //   '[mes-chasses] sviEligible details:',
+    //   sviEligibleCarcasses.map((c) => ({
+    //     numero_bracelet: c.numero_bracelet,
+    //     next_owner_role: c.next_owner_role,
+    //     svi_carcasse_status: c.svi_carcasse_status,
+    //     svi_ipm1_motifs: c.svi_ipm1_lesions_ou_motifs,
+    //     svi_ipm2_motifs: c.svi_ipm2_lesions_ou_motifs,
+    //   }))
+    // );
 
     // Get refusal causes from intermediaire refusals and SVI lesions/motifs
     const refusalCausesMap = new Map<string, number>();
@@ -126,11 +156,14 @@ router.get(
       .sort((a, b) => b.count - a.count)
       .slice(0, 5); // Top 5 causes
 
+    console.log('[mes-chasses] refusalCausesMap (full):', Object.fromEntries(refusalCausesMap));
+    console.log('[mes-chasses] refusalCauses top5:', refusalCauses);
+
     // Calculate personal seizure rate for SVI-eligible big game carcasses
     const seizedBigGame = sviEligibleCarcasses.filter(
       (c) =>
         c.svi_carcasse_status === CarcasseStatus.SAISIE_TOTALE ||
-        c.svi_carcasse_status === CarcasseStatus.SAISIE_PARTIELLE
+        c.svi_carcasse_status === CarcasseStatus.SAISIE_PARTIELLE,
     );
     const personalSeizureRate =
       sviEligibleCarcasses.length > 0 && hasAnySviReturn
@@ -138,6 +171,22 @@ router.get(
         : sviEligibleCarcasses.length > 0
           ? null
           : null;
+
+    console.log(
+      '[mes-chasses] seizedBigGame:',
+      seizedBigGame.length,
+      '/ sviEligible:',
+      sviEligibleCarcasses.length,
+      '=> personalSeizureRate:',
+      personalSeizureRate,
+    );
+    // console.log(
+    //   '[mes-chasses] seized details:',
+    //   seizedBigGame.map((c) => ({
+    //     numero_bracelet: c.numero_bracelet,
+    //     svi_carcasse_status: c.svi_carcasse_status,
+    //   })),
+    // );
 
     // Calculate national seizure rate (all big game carcasses in 2024)
     const nationalBigGame2024 = await prisma.carcasse.count({
@@ -169,9 +218,19 @@ router.get(
     const nationalSeizureRate =
       nationalBigGame2024 > 0 ? (nationalSeizedBigGame2024 / nationalBigGame2024) * 100 : 10.44;
 
+    console.log(
+      '[mes-chasses] national 2024 seized:',
+      nationalSeizedBigGame2024,
+      '/ total:',
+      nationalBigGame2024,
+      '=> nationalSeizureRate:',
+      nationalSeizureRate,
+    );
+
     // Hygiene score (BPH — Bonnes Pratiques d'Hygiène)
-    // score = 100 - (carcasses with ≥1 BPH motif / SVI-eligible big game) × 100
-    // Only motifs linked to hygiene practices count (aligned with admin /delta-bph).
+    // score = 100 × (1 − (personalBphRate / (2 × nationalBphRate)))
+    // personalBphRate = (SVI-eligible + SAISIE + motif BPH) / SVI-eligible (aligned with admin /delta-bph).
+    // nationalBphRate = nationalSeizureRate (same value).
     const BPH_PATTERNS = [
       "souillures d'origine digestive",
       'souillures telluriques',
@@ -188,14 +247,40 @@ router.get(
         const s = m.toLowerCase();
         return BPH_PATTERNS.some((p) => s.includes(p));
       });
-    const bphCarcasses = sviEligibleCarcasses.filter((c) => hasBphMotif(c.svi_ipm2_lesions_ou_motifs));
+    const bphCarcasses = sviEligibleCarcasses.filter(
+      (c) =>
+        (c.svi_carcasse_status === CarcasseStatus.SAISIE_TOTALE ||
+          c.svi_carcasse_status === CarcasseStatus.SAISIE_PARTIELLE) &&
+        hasBphMotif(c.svi_ipm2_lesions_ou_motifs),
+    );
+
+    const personalBphRate =
+      sviEligibleCarcasses.length > 0 ? bphCarcasses.length / sviEligibleCarcasses.length : 0;
+    const nationalBphRateFraction = nationalSeizureRate / 100;
+
+    let hygieneScoreRaw: number | null;
     let hygieneScore: number | null;
-    if (sviEligibleCarcasses.length === 0 || !hasAnySviReturn) {
+    if (sviEligibleCarcasses.length === 0 || !hasAnySviReturn || nationalBphRateFraction === 0) {
+      hygieneScoreRaw = null;
       hygieneScore = null;
     } else {
-      const bphRate = (bphCarcasses.length / sviEligibleCarcasses.length) * 100;
-      hygieneScore = Math.max(0, Math.min(100, Math.round(100 - bphRate)));
+      hygieneScoreRaw = 100 * (1 - personalBphRate / (2 * nationalBphRateFraction));
+      hygieneScore = Math.max(0, Math.min(100, Math.round(hygieneScoreRaw)));
     }
+
+    console.log(
+      '[mes-chasses] personalBphRate:',
+      bphCarcasses.length,
+      '/',
+      sviEligibleCarcasses.length,
+      '=',
+      personalBphRate,
+    );
+    console.log(
+      '[mes-chasses] nationalBphRate (= nationalSeizureRate/100):',
+      nationalBphRateFraction,
+    );
+    console.log('[mes-chasses] hygieneScore raw:', hygieneScoreRaw, 'clamped:', hygieneScore);
 
     res.status(200).send({
       ok: true,
@@ -210,8 +295,24 @@ router.get(
         nationalSeizureRate: Math.round(nationalSeizureRate * 100) / 100, // Round to 2 decimals
         // Calculation details for debugging
         calculationDetails: {
+          // User & season
+          userId: user.id,
+          userEmail: user.email,
+          season,
           seasonStart,
           seasonEnd,
+          // FEIs
+          feisCount: feis.length,
+          feiNumeros,
+          // Carcasses
+          totalCarcassesCount: totalCarcasses,
+          bigGameCount: bigGame,
+          smallGameCount: smallGame,
+          // SVI eligibility
+          sviEligibleCount: sviEligibleCarcasses.length,
+          hasAnySviReturn,
+          // Refusal causes
+          refusalCausesFull: Object.fromEntries(refusalCausesMap),
           // Personal seizure rate calculation
           bigGameCarcassesCount: bigGameCarcasses.length,
           seizedBigGameCount: seizedBigGame.length,
@@ -221,13 +322,15 @@ router.get(
           nationalSeizedBigGame2024Count: nationalSeizedBigGame2024,
           nationalSeizureRateRaw: nationalSeizureRate,
           // Hygiene score calculation (BPH)
-          formula: '100 - (bphCarcasses / sviEligibleCarcasses) × 100',
-          sviEligibleCount: sviEligibleCarcasses.length,
+          formula: '100 × (1 − (personalBphRate / (2 × nationalBphRate)))',
           bphCount: bphCarcasses.length,
+          personalBphRate,
+          nationalBphRateFraction,
+          hygieneScoreRaw,
         },
       },
     });
-  })
+  }),
 );
 
 export default router;
