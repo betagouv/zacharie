@@ -1,5 +1,5 @@
 import type { FeiWithIntermediaires } from '@api/src/types/fei';
-import type { FeiStep, FeiStepForEtg, FeiStepSimpleStatus } from '@app/types/fei-steps';
+import type { FeiStep, FeiStepForChasseur, FeiStepForEtg, FeiStepSimpleStatus } from '@app/types/fei-steps';
 import useUser from '@app/zustand/user';
 import { Carcasse, Entity, EntityTypes, FeiOwnerRole, User, UserRoles } from '@prisma/client';
 import { useEntitiesIdsWorkingDirectlyFor } from '@app/utils/get-entity-relations';
@@ -18,6 +18,7 @@ type UseFeiStepsReturn = {
   currentStep: number;
   currentStepLabel: FeiStep;
   currentStepLabelForEtg: FeiStepForEtg;
+  currentStepLabelForChasseur: FeiStepForChasseur;
   nextStepLabel: FeiStep;
   currentStepLabelShort: string;
   simpleStatus: FeiStepSimpleStatus;
@@ -287,6 +288,40 @@ export function computeFeiSteps({
     return 'Fiche reçue, pas encore prise en charge';
   })();
 
+  const currentStepLabelForChasseur: FeiStepForChasseur = (() => {
+    if (currentStepLabel === 'Clôturée') {
+      return "Prise en charge par le service vétérinaire d'inspection";
+    }
+    if (currentStepLabel === 'Examen initial') {
+      return 'Fiche incomplète';
+    }
+    if (currentStepLabel === 'Validation par le premier détenteur') {
+      return 'Fiche complète, pas encore envoyée';
+    }
+    if (currentStepLabel === 'Fiche envoyée, pas encore traitée') {
+      return 'Fiche envoyée, pas encore prise en charge';
+    }
+    if (
+      currentStepLabel === 'Transport' ||
+      currentStepLabel === 'Transport vers un établissement de traitement' ||
+      currentStepLabel === 'Transport vers un autre établissement de traitement'
+    ) {
+      const destinataire = fei.fei_next_owner_entity_name_cache;
+      return destinataire
+        ? `Prise en charge par le transporteur ${destinataire}`
+        : 'Prise en charge par le transporteur';
+    }
+    if (currentStepLabel === 'Réception par un établissement de traitement') {
+      const destinataire = fei.fei_current_owner_entity_name_cache;
+      return destinataire ? `Prise en charge par l'atelier ${destinataire}` : "Prise en charge par l'atelier";
+    }
+    if (currentStepLabel === 'Inspection par le SVI') {
+      const destinataire = fei.latest_intermediaire_name_cache;
+      return destinataire ? `Prise en charge par l'atelier ${destinataire}` : "Prise en charge par l'atelier";
+    }
+    return currentStepLabel;
+  })();
+
   const currentStepLabelShort = (() => {
     if (fei.fei_next_owner_sous_traite_by_entity_id) {
       if (entitiesIdsWorkingDirectlyFor.includes(fei.fei_next_owner_sous_traite_by_entity_id)) {
@@ -311,6 +346,7 @@ export function computeFeiSteps({
     currentStep: currentStepIndex + 1,
     currentStepLabel,
     currentStepLabelForEtg,
+    currentStepLabelForChasseur,
     currentStepLabelShort,
     nextStepLabel,
     simpleStatus,

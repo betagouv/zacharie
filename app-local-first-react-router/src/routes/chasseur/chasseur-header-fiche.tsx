@@ -5,22 +5,13 @@ import type { FeiWithIntermediaires } from '@api/src/types/fei';
 import type { FeiStepSimpleStatus } from '@app/types/fei-steps';
 
 const statusColors: Record<FeiStepSimpleStatus, { bg: string; text: string }> = {
-  'À compléter': {
-    bg: 'bg-[#FEE7FC]',
-    text: 'text-[#6E445A]',
-  },
-  'En cours': {
-    bg: 'bg-[#FFECBD]',
-    text: 'text-[#73603F]',
-  },
-  Clôturée: {
-    bg: 'bg-[#E8EDFF]',
-    text: 'text-[#01008B]',
-  },
+  'À compléter': { bg: 'bg-[#FEE7FC]', text: 'text-[#6E445A]' },
+  'En cours': { bg: 'bg-[#FFECBD]', text: 'text-[#73603F]' },
+  Clôturée: { bg: 'bg-[#E8EDFF]', text: 'text-[#01008B]' },
 };
 
-export default function HeaderFiche({ fei }: { fei: FeiWithIntermediaires }) {
-  const { simpleStatus, currentStepLabel } = useFeiSteps(fei);
+export default function ChasseurHeaderFiche({ fei }: { fei: FeiWithIntermediaires }) {
+  const { simpleStatus, currentStepLabelForChasseur } = useFeiSteps(fei);
 
   const isNewFiche = !fei.date_mise_a_mort && !fei.commune_mise_a_mort;
   const title = isNewFiche
@@ -29,7 +20,8 @@ export default function HeaderFiche({ fei }: { fei: FeiWithIntermediaires }) {
       ? `Chasse du ${dayjs(fei.date_mise_a_mort).format('DD/MM/YYYY')}`
       : 'Chasse';
 
-  const stepIcon = currentStepLabel === 'Clôturée' ? '🔒' : '⏳';
+  const isClosed = simpleStatus === 'Clôturée';
+  const stepIcon = isClosed ? '🔒' : '⏳';
 
   return (
     <div className="fr-mb-2w rounded bg-white p-4 md:p-8">
@@ -47,7 +39,7 @@ export default function HeaderFiche({ fei }: { fei: FeiWithIntermediaires }) {
             {simpleStatus}
           </Tag>
           <span className="text-sm">{stepIcon}</span>
-          <span className="text-sm">{currentStepLabel}</span>
+          <span className="text-sm">{currentStepLabelForChasseur}</span>
         </div>
       )}
     </div>

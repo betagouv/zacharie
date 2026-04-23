@@ -19,3 +19,5 @@ export type FeiStepForEtg =
   | "Prise en charge par l'atelier"
   | 'Fiche envoyée, pas encore prise en charge'
   | "Prise en charge par le service vétérinaire d'inspection";
+
+export type FeiStepForChasseur = string;
