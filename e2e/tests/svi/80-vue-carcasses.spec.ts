@@ -1,18 +1,18 @@
-import { test, expect } from "@playwright/test";
-import { resetDb } from "../../scripts/reset-db";
-import { connectWith } from "../../utils/connect-with";
+import { test, expect } from '@playwright/test';
+import { resetDb } from '../../scripts/reset-db';
+import { connectWith } from '../../utils/connect-with';
 
 test.use({ launchOptions: { slowMo: 100 } });
 
 test.beforeEach(async () => {
-  await resetDb("SVI");
+  await resetDb('SVI');
 });
 
-test("80 - Vue /app/svi/carcasses agrégée", async ({ page }) => {
-  await connectWith(page, "svi@example.fr");
+test('80 - Vue /app/svi/carcasses agrégée', async ({ page }) => {
+  await connectWith(page, 'svi@example.fr');
   await expect(page).toHaveURL(/\/app\/svi/);
 
-  await page.goto("http://localhost:3290/app/svi/carcasses");
+  await page.goto('http://localhost:3290/app/svi/carcasses');
   await expect(page).toHaveURL(/\/app\/svi\/carcasses/);
 
   // Les 4 carcasses de la seed doivent figurer

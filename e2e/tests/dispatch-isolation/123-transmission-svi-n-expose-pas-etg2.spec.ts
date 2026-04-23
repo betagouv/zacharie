@@ -1,4 +1,4 @@
-import { test } from "@playwright/test";
+import { test } from '@playwright/test';
 
 // Scenario 123 — Transmission ETG 1 → SVI n'expose pas les carcasses ETG 2.
 // SKIPPED: The full ETG→SVI transmission workflow requires accepting all carcasses

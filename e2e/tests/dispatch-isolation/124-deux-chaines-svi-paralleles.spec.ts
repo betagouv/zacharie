@@ -1,4 +1,4 @@
-import { test } from "@playwright/test";
+import { test } from '@playwright/test';
 
 // Scenario 124 — Deux chaînes SVI parallèles.
 // ETG 1 → SVI 1, ETG 2 → SVI 2 ; each SVI only sees its own branch.
@@ -9,6 +9,6 @@ import { test } from "@playwright/test";
 // Single-branch SVI isolation is covered by spec 123.
 // Recommend converting to an API-level integration test instead.
 
-test.skip("SVI 1 et SVI 2 voient chacun leur branche seulement", async () => {
+test.skip('SVI 1 et SVI 2 voient chacun leur branche seulement', async () => {
   // TODO: rewrite as API-level test or stabilize modal interactions
 });

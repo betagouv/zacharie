@@ -1,6 +1,6 @@
-import { test, expect } from "@playwright/test";
-import { resetDb } from "../../scripts/reset-db";
-import { connectWith } from "../../utils/connect-with";
+import { test, expect } from '@playwright/test';
+import { resetDb } from '../../scripts/reset-db';
+import { connectWith } from '../../utils/connect-with';
 
 test.use({
   viewport: { width: 350, height: 667 },
@@ -10,15 +10,17 @@ test.use({
 });
 
 test.beforeAll(async () => {
-  await resetDb("ETG_REFUSED");
+  await resetDb('ETG_REFUSED');
 });
 
-test.skip("Fiche refusée intégralement par ETG — chasseur voit le statut de refus pour chaque carcasse", async ({ page }) => {
+test.skip('Fiche refusée intégralement par ETG — chasseur voit le statut de refus pour chaque carcasse', async ({
+  page,
+}) => {
   // SKIP: ETG_REFUSED seed needs carcasse-level intermediaire_carcasse fields verified — seed may be incomplete
-  const feiId = "ZACH-20250707-QZ6E0-215242";
-  await connectWith(page, "examinateur@example.fr");
+  const feiId = 'ZACH-20250707-QZ6E0-215242';
+  await connectWith(page, 'examinateur@example.fr');
 
-  const link = page.getByRole("link", { name: feiId });
+  const link = page.getByRole('link', { name: feiId });
   await expect(link).toBeVisible({ timeout: 10000 });
   await link.click();
 

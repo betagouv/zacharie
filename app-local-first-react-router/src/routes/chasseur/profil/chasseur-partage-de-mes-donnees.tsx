@@ -279,7 +279,7 @@ const approvalStatusOptions: Array<{
   value: Approval['status'];
 }> = [
   {
-    label: 'J\'ai donné mon accord',
+    label: "J'ai donné mon accord",
     value: ApiKeyApprovalStatus.APPROVED,
   },
   {

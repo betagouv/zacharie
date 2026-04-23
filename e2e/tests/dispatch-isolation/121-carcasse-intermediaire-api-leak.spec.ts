@@ -1,7 +1,7 @@
-import { test, expect } from "@playwright/test";
-import { resetDb } from "../../scripts/reset-db";
-import { connectWith } from "../../utils/connect-with";
-import { logoutAndConnect } from "../../utils/logout-and-connect";
+import { test, expect } from '@playwright/test';
+import { resetDb } from '../../scripts/reset-db';
+import { connectWith } from '../../utils/connect-with';
+import { logoutAndConnect } from '../../utils/logout-and-connect';
 
 // Scenario 121 — CarcasseIntermediaire API leak test.
 // Dispatch 2+2 carcasses to ETG 1 + ETG 2, then login as ETG 1 and attempt to
@@ -14,74 +14,78 @@ test.setTimeout(180_000);
 test.use({ launchOptions: { slowMo: 100 } });
 
 test.beforeAll(async () => {
-  await resetDb("PREMIER_DETENTEUR");
+  await resetDb('PREMIER_DETENTEUR');
 });
 
-test("API : accès cross-intermédiaire interdit (403/404)", async ({ page }) => {
-  const feiId = "ZACH-20250707-QZ6E0-155242";
-  const API_BASE = "http://localhost:3291";
+test('API : accès cross-intermédiaire interdit (403/404)', async ({ page }) => {
+  const feiId = 'ZACH-20250707-QZ6E0-155242';
+  const API_BASE = 'http://localhost:3291';
 
   // 1. PD dispatches 2+2 to ETG 1 + ETG 2 (mobile viewport)
   await page.setViewportSize({ width: 350, height: 667 });
-  await connectWith(page, "premier-detenteur@example.fr");
-  await page.getByRole("link", { name: feiId }).click();
-  await page.getByRole("button", { name: "Prendre en charge cette" }).click();
+  await connectWith(page, 'premier-detenteur@example.fr');
+  await page.getByRole('link', { name: feiId }).click();
+  await page.getByRole('button', { name: 'Prendre en charge cette' }).click();
 
   // Select ETG 1 for group 1
   await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").first().click();
-  await page.getByRole("option", { name: "ETG 1 - 75000 Paris (" }).click();
-  const pasDeStockage = page.getByText("Pas de stockage").first();
+  await page.getByRole('option', { name: 'ETG 1 - 75000 Paris (' }).click();
+  const pasDeStockage = page.getByText('Pas de stockage').first();
   await pasDeStockage.scrollIntoViewIfNeeded();
   await pasDeStockage.click();
-  const jeTransporte = page.getByText("Je transporte les carcasses moi").first();
+  const jeTransporte = page.getByText('Je transporte les carcasses moi').first();
   await jeTransporte.scrollIntoViewIfNeeded();
   await jeTransporte.click();
 
   // Add second group
-  const ajouterBtn = page.getByRole("button", { name: "Ajouter un autre destinataire" });
+  const ajouterBtn = page.getByRole('button', { name: 'Ajouter un autre destinataire' });
   await ajouterBtn.scrollIntoViewIfNeeded();
   await ajouterBtn.click();
 
   // Move 2 carcasses to group 2
-  const group2 = page.locator("div.rounded.border").nth(1);
+  const group2 = page.locator('div.rounded.border').nth(1);
   await group2.scrollIntoViewIfNeeded();
-  const g2Btns = group2.locator("button[type='button']").filter({ hasText: "N°" });
+  const g2Btns = group2.locator("button[type='button']").filter({ hasText: 'N°' });
   await g2Btns.nth(0).click();
   await g2Btns.nth(1).click();
 
   // Select ETG 2 for group 2
   await group2.locator("[class*='select-prochain-detenteur'][class*='input-container']").click();
-  await page.getByRole("option", { name: "ETG 2 - 75000 Paris (" }).click();
-  const g2Stockage = group2.getByText("Pas de stockage").first();
+  await page.getByRole('option', { name: 'ETG 2 - 75000 Paris (' }).click();
+  const g2Stockage = group2.getByText('Pas de stockage').first();
   await g2Stockage.scrollIntoViewIfNeeded();
   await g2Stockage.click();
-  const g2Transport = group2.getByText("Je transporte les carcasses moi").first();
+  const g2Transport = group2.getByText('Je transporte les carcasses moi').first();
   await g2Transport.scrollIntoViewIfNeeded();
   await g2Transport.click();
 
   // Transmettre
-  const transmettreBtn = page.getByRole("button", { name: /Transmettre/ });
+  const transmettreBtn = page.getByRole('button', { name: /Transmettre/ });
   await transmettreBtn.scrollIntoViewIfNeeded();
   await transmettreBtn.click();
   await expect(page.getByText(/Votre fiche a été transmise/i).first()).toBeVisible({ timeout: 15000 });
 
   // 2. ETG 1 takes charge (desktop viewport)
   await page.setViewportSize({ width: 1280, height: 900 });
-  await logoutAndConnect(page, "etg-1@example.fr");
-  await page.getByRole("link", { name: feiId }).click();
-  await page.getByRole("button", { name: "Prendre en charge les carcasses" }).click();
-  await expect(page.getByRole("button", { name: "Prendre en charge les carcasses" })).not.toBeVisible({ timeout: 10000 });
+  await logoutAndConnect(page, 'etg-1@example.fr');
+  await page.getByRole('link', { name: feiId }).click();
+  await page.getByRole('button', { name: 'Prendre en charge les carcasses' }).click();
+  await expect(page.getByRole('button', { name: 'Prendre en charge les carcasses' })).not.toBeVisible({
+    timeout: 10000,
+  });
 
   // 3. ETG 2 takes charge
-  await logoutAndConnect(page, "etg-2@example.fr");
-  await page.getByRole("link", { name: feiId }).click();
-  await page.getByRole("button", { name: "Prendre en charge les carcasses" }).click();
-  await expect(page.getByRole("button", { name: "Prendre en charge les carcasses" })).not.toBeVisible({ timeout: 10000 });
+  await logoutAndConnect(page, 'etg-2@example.fr');
+  await page.getByRole('link', { name: feiId }).click();
+  await page.getByRole('button', { name: 'Prendre en charge les carcasses' }).click();
+  await expect(page.getByRole('button', { name: 'Prendre en charge les carcasses' })).not.toBeVisible({
+    timeout: 10000,
+  });
 
   // 4. Login as ETG 1 and get auth cookies
-  await logoutAndConnect(page, "etg-1@example.fr");
+  await logoutAndConnect(page, 'etg-1@example.fr');
   const cookies = await page.context().cookies();
-  const jwtCookie = cookies.find((c) => c.name === "zacharie_express_jwt");
+  const jwtCookie = cookies.find((c) => c.name === 'zacharie_express_jwt');
   expect(jwtCookie).toBeTruthy();
 
   // 5. Build the URL to access ETG 2's carcasse-intermediaire data
@@ -113,19 +117,23 @@ test("API : accès cross-intermédiaire interdit (403/404)", async ({ page }) =>
   const intermediaires = feiData.data?.feiIntermediaires || feiData.data?.intermediaires || [];
 
   if (intermediaires.length < 2) {
-    test.skip(true, "SKIP: Could not find 2 intermediaire records — seed data may not create FeiIntermediaire entries during dispatch");
+    test.skip(
+      true,
+      'SKIP: Could not find 2 intermediaire records — seed data may not create FeiIntermediaire entries during dispatch'
+    );
     return;
   }
 
   // Find the intermediaire that is NOT etg-1
   // ETG 1 entity is the one associated with etg-1@example.fr
-  const etg1Intermediaire = intermediaires.find((i: any) =>
-    i.entity_id === "2a8bc866-a709-47d9-aebe-2768fceb2ecb" || i.entity_name_cache?.includes("ETG 1")
+  const etg1Intermediaire = intermediaires.find(
+    (i: any) =>
+      i.entity_id === '2a8bc866-a709-47d9-aebe-2768fceb2ecb' || i.entity_name_cache?.includes('ETG 1')
   );
   const etg2Intermediaire = intermediaires.find((i: any) => i !== etg1Intermediaire);
 
   if (!etg2Intermediaire) {
-    test.skip(true, "SKIP: Could not identify ETG 2 intermediaire from fiche data");
+    test.skip(true, 'SKIP: Could not identify ETG 2 intermediaire from fiche data');
     return;
   }
 
@@ -140,6 +148,6 @@ test("API : accès cross-intermédiaire interdit (403/404)", async ({ page }) =>
   // The API should return 403 or 404, NOT 200
   expect(
     [403, 404].includes(leakResponse.status()),
-    `Expected 403 or 404 but got ${leakResponse.status()} — API may lack ownership check on carcasse-intermediaire GET`,
+    `Expected 403 or 404 but got ${leakResponse.status()} — API may lack ownership check on carcasse-intermediaire GET`
   ).toBeTruthy();
 });
