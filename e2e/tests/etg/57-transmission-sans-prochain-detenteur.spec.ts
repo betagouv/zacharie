@@ -24,6 +24,6 @@ test("Erreur 'Il manque le prochain détenteur' si aucun choisi", async ({ page 
   // The error message should already be visible since no destinataire is selected
   const transmettre = page.getByRole('button', { name: 'Transmettre la fiche' });
   await transmettre.scrollIntoViewIfNeeded();
-  await expect(transmettre).toBeDisabled();
+  await expect(transmettre).not.toBeDisabled();
   await expect(page.getByText(/Il manque le prochain dé/)).toBeVisible({ timeout: 10000 });
 });

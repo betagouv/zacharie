@@ -30,7 +30,7 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
         - paragraph: fin de liste
       `);
   await page.getByRole('link', { name: feiId }).click();
-  await page.locator('summary').filter({ hasText: 'Données de traçabilité' }).click();
+
   await expect(page.locator('#content')).toMatchAriaSnapshot(`
       - group:
         - heading "Données de traçabilité" [level=3]
@@ -186,7 +186,7 @@ test('Pas de stockage - Je transfère à un autre collecteur', async ({ page }) 
         - paragraph: fin de liste
       `);
   await page.getByRole('link', { name: feiId }).click();
-  await page.locator('summary').filter({ hasText: 'Données de traçabilité' }).click();
+
   await expect(page.locator('#content')).toMatchAriaSnapshot(`
       - group:
         - heading "Données de traçabilité" [level=3]
@@ -317,7 +317,7 @@ test('Pas de stockage - Je transfère à un autre ETG', async ({ page, context }
         - paragraph: fin de liste
       `);
   await page.getByRole('link', { name: feiId }).click();
-  await page.locator('summary').filter({ hasText: 'Données de traçabilité' }).click();
+
   await expect(page.locator('#content')).toMatchAriaSnapshot(`
       - group:
         - heading "Données de traçabilité" [level=3]

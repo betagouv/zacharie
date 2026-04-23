@@ -587,18 +587,18 @@ Christine
     if (role === FeiOwnerRole.ETG) {
       const fei = await prisma.fei.create({ data: feiValidatedByPremierDetenteur });
       const carcasses = await prisma.carcasse.createMany({ data: getCarcasses(fei) });
-      await prisma.carcasseIntermediaire.createMany({
-        data: getCarcasses(fei).map((c) => ({
-          fei_numero: fei.numero,
-          numero_bracelet: c.numero_bracelet,
-          zacharie_carcasse_id: c.zacharie_carcasse_id!,
-          intermediaire_id: `${fei.numero}_${'2a8bc866-a709-47d9-aebe-2768fceb2ecb'}_${users.find((u) => u.email === 'etg-1@example.fr')?.id}`,
-          intermediaire_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
-          intermediaire_user_id: users.find((u) => u.email === 'etg-1@example.fr')?.id ?? '',
-          intermediaire_role: FeiOwnerRole.ETG,
-          prise_en_charge_at: dayjs().subtract(2, 'day').toDate(),
-        })),
-      });
+      // await prisma.carcasseIntermediaire.createMany({
+      //   data: getCarcasses(fei).map((c) => ({
+      //     fei_numero: fei.numero,
+      //     numero_bracelet: c.numero_bracelet,
+      //     zacharie_carcasse_id: c.zacharie_carcasse_id!,
+      //     intermediaire_id: `${fei.numero}_${'2a8bc866-a709-47d9-aebe-2768fceb2ecb'}_${users.find((u) => u.email === 'etg-1@example.fr')?.id}`,
+      //     intermediaire_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
+      //     intermediaire_user_id: users.find((u) => u.email === 'etg-1@example.fr')?.id ?? '',
+      //     intermediaire_role: FeiOwnerRole.ETG,
+      //     prise_en_charge_at: dayjs().subtract(2, 'day').toDate(),
+      //   })),
+      // });
       console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (for etg)`);
     }
     if (role === FeiOwnerRole.COLLECTEUR_PRO) {
