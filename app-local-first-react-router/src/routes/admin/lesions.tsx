@@ -229,7 +229,7 @@ export default function AdminLesions() {
                     </span>
                   ),
                   hintText:
-                    "Bonnes Pratiques d'Hygiène — sous-ensemble des motifs IPM2 utilisé dans le calcul du score d'hygiène (cf. api-express/src/controllers/stats.ts).",
+                    "Bonnes Pratiques d'Hygiène — sous-ensemble des motifs IPM2 utilisé dans le calcul du score d'hygiène.",
                   nativeInputProps: {
                     checked: onlyBph,
                     onChange: (e) => setOnlyBph(e.target.checked),
