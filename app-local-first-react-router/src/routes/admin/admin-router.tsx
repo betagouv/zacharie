@@ -13,6 +13,7 @@ import AdminCarcasses from './carcasses';
 import AdminCarcasseDetail from './carcasse-detail';
 import CcgImport from './ccg-import';
 import AdminDashboard from './dashboard';
+import AdminLesions from './lesions';
 
 export default function RouterAdmin() {
   return (
@@ -71,6 +72,10 @@ export default function RouterAdmin() {
       <Route
         path="carcasse/:zacharie_carcasse_id"
         element={<AdminCarcasseDetail />}
+      />
+      <Route
+        path="lesions"
+        element={<AdminLesions />}
       />
     </Route>
   );

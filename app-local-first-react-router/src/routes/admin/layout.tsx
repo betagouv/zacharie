@@ -15,6 +15,11 @@ const adminLinks = [
     label: 'Carcasses',
     icon: 'fr-icon-file-text-line',
   },
+  {
+    to: '/app/admin/lesions',
+    label: 'Motifs de saisies',
+    icon: 'fr-icon-file-warning-line',
+  },
 ];
 
 export default function AdminLayout() {
