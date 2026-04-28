@@ -386,20 +386,6 @@ export default function TableauDeBordIndex() {
     return filteredFeis.slice(start, start + perPage);
   }, [filteredFeis, page, itemsPerPage]);
 
-  console.log('allFeis', allFeis);
-  console.log('feisAssigned', feisAssigned);
-  console.log('feisOngoing', feisOngoing);
-  console.log('feisDone', feisDone);
-  console.log(
-    'ZACH-20260216-IKO5X-063936',
-    `allFeis: ${allFeis.findIndex((fei) => fei.numero === 'ZACH-20260216-IKO5X-063936')}`,
-    `paginatedFeis: ${paginatedFeis.findIndex((fei) => fei.numero === 'ZACH-20260216-IKO5X-063936')}`,
-    `feisAssigned: ${feisAssigned.findIndex((fei) => fei.numero === 'ZACH-20260216-IKO5X-063936')}`,
-    `feisOngoing: ${feisOngoing.findIndex((fei) => fei.numero === 'ZACH-20260216-IKO5X-063936')}`,
-    `feisDone: ${feisDone.findIndex((fei) => fei.numero === 'ZACH-20260216-IKO5X-063936')}`,
-    `feisToTake: ${feisToTake.findIndex((fei) => fei.numero === 'ZACH-20260216-IKO5X-063936')}`,
-    `feisUnderMyResponsability: ${feisUnderMyResponsability.findIndex((fei) => fei.numero === 'ZACH-20260216-IKO5X-063936')}`
-  );
 
   function Actions() {
     return (
