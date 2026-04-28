@@ -41,6 +41,7 @@ const PERSISTED_KEYS: (keyof State)[] = [
   'carcassesIntermediaireById',
   'apiKeyApprovals',
   'lastUpdateCarcassesRegistry',
+  'carcassesRegistrySyncVersion',
   'carcassesRegistry',
   'logs',
 ];
@@ -57,6 +58,7 @@ export interface State {
   carcassesIntermediaireById: Record<FeiAndCarcasseAndIntermediaireIds, CarcasseIntermediaire>;
   apiKeyApprovals: NonNullable<UserConnexionResponse['data']['apiKeyApprovals']>;
   lastUpdateCarcassesRegistry: number;
+  carcassesRegistrySyncVersion: number;
   carcassesRegistry: Array<CarcasseForResponseForRegistry>;
   logs: Array<Log>;
   _hasHydrated: boolean;
@@ -133,6 +135,7 @@ const initialState: State = {
   dataIsSynced: true,
   carcassesRegistry: [],
   lastUpdateCarcassesRegistry: 0,
+  carcassesRegistrySyncVersion: 0,
   logs: [],
   feis: {},
   users: {},
