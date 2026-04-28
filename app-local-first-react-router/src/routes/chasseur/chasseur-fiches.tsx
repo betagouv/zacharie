@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@codegouvfr/react-dsfr/Button';
-import { SegmentedControl } from '@codegouvfr/react-dsfr/SegmentedControl';
 import { FeiStepSimpleStatus } from '@app/types/fei-steps';
 import { CarcasseType, DepotType } from '@prisma/client';
 import { abbreviations } from '@app/utils/count-carcasses';
@@ -20,7 +19,6 @@ import {
 } from '@app/utils/get-carcasses-intermediaires';
 import { useSaveScroll } from '@app/services/useSaveScroll';
 import CardFiche from '@app/components/CardFiche';
-import DropDownMenu from '@app/components/DropDownMenu';
 import { filterCarcassesForFei, useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { useMyCarcassesForFei } from '@app/utils/filter-my-carcasses';
 import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
@@ -534,7 +532,7 @@ export default function ChasseurFiches() {
                 }}
               />
               <span
-                className={`inline-block rounded px-2 py-0.5 text-xs font-semibold ${statusColors[status].bg} ${statusColors[status].text}`}
+                className={`inline-block rounded px-2 py-0.5 text-xs uppercase font-semibold ${statusColors[status].bg} ${statusColors[status].text}`}
               >
                 {status}
               </span>
@@ -654,67 +652,6 @@ export default function ChasseurFiches() {
         </CollapsibleSection>
       )}
 
-      {/* Vue */}
-      <CollapsibleSection
-        title="Affichage"
-        defaultOpen={false}
-      >
-        <SegmentedControl
-          hideLegend
-          small
-          segments={[
-            {
-              label: 'Grille',
-              iconId: 'ri-grid-line',
-              nativeInputProps: {
-                checked: viewType === 'grid',
-                onChange: () => setViewType('grid'),
-                name: 'view-type-sidebar',
-                value: 'grid',
-              },
-            },
-            {
-              label: 'Table',
-              iconId: 'ri-table-line',
-              nativeInputProps: {
-                checked: viewType === 'table',
-                onChange: () => setViewType('table'),
-                name: 'view-type-sidebar',
-                value: 'table',
-              },
-            },
-          ]}
-        />
-      </CollapsibleSection>
-
-      {/* Fiches par page */}
-      <CollapsibleSection
-        title="Fiches par page"
-        defaultOpen={false}
-      >
-        <div className="flex gap-1">
-          {[20, 50, 100].map((option) => (
-            <button
-              key={option}
-              className={[
-                'rounded px-3 py-1 text-sm transition-colors',
-                (itemsPerPage ?? 20) === option
-                  ? 'bg-action-high-blue-france text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200',
-              ].join(' ')}
-              onClick={() => {
-                const firstItemIndex = (page - 1) * (itemsPerPage ?? 20);
-                const newPage = Math.floor(firstItemIndex / option) + 1;
-                setItemsPerPage(option);
-                setSearchParams(newPage > 1 ? { page: String(newPage) } : {});
-              }}
-            >
-              {option}
-            </button>
-          ))}
-        </div>
-      </CollapsibleSection>
-
       {/* Actions export */}
       <CollapsibleSection
         title="Actions"
@@ -794,17 +731,38 @@ export default function ChasseurFiches() {
               Nouvelle fiche
             </Button>
           )}
-          <Button
-            iconId="ri-filter-3-line"
-            priority="secondary"
-            size="small"
+          <button
+            type="button"
+            aria-label={viewType === 'grid' ? 'Afficher en table' : 'Afficher en grille'}
+            title={viewType === 'grid' ? 'Afficher en table' : 'Afficher en grille'}
+            className="flex h-8 w-9 items-center justify-center rounded border border-gray-300 bg-white text-gray-700 transition-colors hover:bg-gray-50"
+            onClick={() => setViewType(viewType === 'grid' ? 'table' : 'grid')}
+          >
+            <span
+              className={`fr-icon--sm ${viewType === 'grid' ? 'ri-table-line' : 'ri-grid-line'}`}
+              aria-hidden="true"
+            />
+          </button>
+          <button
+            type="button"
+            aria-label="Filtres"
+            className="relative flex h-8 items-center gap-1 rounded border border-gray-300 bg-white px-2 text-sm text-gray-700 transition-colors hover:bg-gray-50"
             onClick={() => setShowMobileFilters(!showMobileFilters)}
           >
-            Filtres
-            {hasActiveFilters
-              ? ` (${filterStatuses.length + filterPremierDetenteurs.length + filterCCGs.length + filterCollecteurs.length})`
-              : ''}
-          </Button>
+            <span
+              className="fr-icon--sm ri-filter-3-line"
+              aria-hidden="true"
+            />
+            <span>Filtres</span>
+            {hasActiveFilters && (
+              <span className="bg-action-high-blue-france ml-0.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold text-white">
+                {filterStatuses.length +
+                  filterPremierDetenteurs.length +
+                  filterCCGs.length +
+                  filterCollecteurs.length}
+              </span>
+            )}
+          </button>
         </div>
       </div>
 
@@ -860,15 +818,82 @@ export default function ChasseurFiches() {
               );
             })}
           </FeisWrapper>
-          {totalPages > 1 && (
-            <div className="flex justify-center py-6">
-              <Pagination
-                count={totalPages}
-                defaultPage={page}
-                getPageLinkProps={(pageNumber) => ({
-                  to: `/app/chasseur?page=${pageNumber}`,
-                })}
-              />
+          {filteredFeis.length > 0 && (
+            <div className="flex flex-wrap items-center justify-start gap-3 py-4">
+              <div className="hidden overflow-hidden rounded-md border border-gray-300 md:inline-flex mb-4">
+                <button
+                  type="button"
+                  aria-label="Vue grille"
+                  aria-pressed={viewType === 'grid'}
+                  title="Vue grille"
+                  className={[
+                    'flex h-8 w-9 items-center justify-center transition-colors',
+                    viewType === 'grid'
+                      ? 'bg-action-high-blue-france text-white'
+                      : 'bg-white text-gray-600 hover:bg-gray-50',
+                  ].join(' ')}
+                  onClick={() => setViewType('grid')}
+                >
+                  <span
+                    className="fr-icon--sm ri-grid-line"
+                    aria-hidden="true"
+                  />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Vue table"
+                  aria-pressed={viewType === 'table'}
+                  title="Vue table"
+                  className={[
+                    'flex h-8 w-9 items-center justify-center border-l border-gray-300 transition-colors',
+                    viewType === 'table'
+                      ? 'bg-action-high-blue-france text-white'
+                      : 'bg-white text-gray-600 hover:bg-gray-50',
+                  ].join(' ')}
+                  onClick={() => setViewType('table')}
+                >
+                  <span
+                    className="fr-icon--sm ri-table-line"
+                    aria-hidden="true"
+                  />
+                </button>
+              </div>
+              <div className="inline-flex overflow-hidden rounded-md border border-gray-300 mb-4">
+                {[20, 50, 100].map((option, i) => (
+                  <button
+                    type="button"
+                    key={option}
+                    aria-pressed={(itemsPerPage ?? 20) === option}
+                    className={[
+                      'h-8 w-10 text-xs font-medium transition-colors',
+                      i > 0 ? 'border-l border-gray-300' : '',
+                      (itemsPerPage ?? 20) === option
+                        ? 'bg-action-high-blue-france text-white'
+                        : 'bg-white text-gray-600 hover:bg-gray-50',
+                    ].join(' ')}
+                    onClick={() => {
+                      const firstItemIndex = (page - 1) * (itemsPerPage ?? 20);
+                      const newPage = Math.floor(firstItemIndex / option) + 1;
+                      setItemsPerPage(option);
+                      setSearchParams(newPage > 1 ? { page: String(newPage) } : {});
+                    }}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+              {totalPages > 1 ? (
+                <Pagination
+                  count={totalPages}
+                  defaultPage={page}
+                  getPageLinkProps={(pageNumber) => ({
+                    to: `/app/chasseur?page=${pageNumber}`,
+                  })}
+                />
+              ) : (
+                <span className="hidden md:inline" />
+              )}
+
             </div>
           )}
           <div className="my-4">
