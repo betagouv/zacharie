@@ -674,7 +674,7 @@ Christine
         data: getCarcasses(fei).map((c) => ({
           ...c,
           intermediaire_carcasse_refus_intermediaire_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
-          intermediaire_carcasse_refus_motif: ['Présence de souillures'],
+          intermediaire_carcasse_refus_motif: 'Présence de souillures',
           intermediaire_carcasse_signed_at: dayjs().subtract(1, 'day').toDate(),
         })),
       });
