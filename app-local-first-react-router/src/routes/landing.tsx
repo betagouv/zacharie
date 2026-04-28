@@ -149,7 +149,7 @@ export default function LandingPage() {
                   className="inline-block border-none transition-opacity after:content-none hover:opacity-80"
                 >
                   <img
-                    src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg"
+                    src="/landing/download-on-the-app-store.svg"
                     alt="Télécharger sur l'App Store"
                     className="h-10 w-auto"
                   />
@@ -162,7 +162,7 @@ export default function LandingPage() {
                   className="inline-block transition-opacity after:content-none hover:opacity-80"
                 >
                   <img
-                    src="https://play.google.com/intl/en_us/badges/static/images/badges/fr_badge_web_generic.png"
+                    src="/landing/badge-google-play.png"
                     alt="Disponible sur Google Play"
                     className="h-12 w-auto"
                   />
