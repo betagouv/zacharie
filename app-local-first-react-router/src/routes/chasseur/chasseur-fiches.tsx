@@ -819,8 +819,8 @@ export default function ChasseurFiches() {
             })}
           </FeisWrapper>
           {filteredFeis.length > 0 && (
-            <div className="flex flex-wrap items-center justify-between gap-3 py-4">
-              <div className="hidden overflow-hidden rounded-md border border-gray-300 md:inline-flex">
+            <div className="flex flex-wrap items-center justify-start gap-3 py-4">
+              <div className="hidden overflow-hidden rounded-md border border-gray-300 md:inline-flex mb-4">
                 <button
                   type="button"
                   aria-label="Vue grille"
@@ -858,18 +858,7 @@ export default function ChasseurFiches() {
                   />
                 </button>
               </div>
-              {totalPages > 1 ? (
-                <Pagination
-                  count={totalPages}
-                  defaultPage={page}
-                  getPageLinkProps={(pageNumber) => ({
-                    to: `/app/chasseur?page=${pageNumber}`,
-                  })}
-                />
-              ) : (
-                <span className="hidden md:inline" />
-              )}
-              <div className="inline-flex overflow-hidden rounded-md border border-gray-300">
+              <div className="inline-flex overflow-hidden rounded-md border border-gray-300 mb-4">
                 {[20, 50, 100].map((option, i) => (
                   <button
                     type="button"
@@ -893,6 +882,18 @@ export default function ChasseurFiches() {
                   </button>
                 ))}
               </div>
+              {totalPages > 1 ? (
+                <Pagination
+                  count={totalPages}
+                  defaultPage={page}
+                  getPageLinkProps={(pageNumber) => ({
+                    to: `/app/chasseur?page=${pageNumber}`,
+                  })}
+                />
+              ) : (
+                <span className="hidden md:inline" />
+              )}
+
             </div>
           )}
           <div className="my-4">
