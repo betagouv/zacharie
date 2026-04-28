@@ -181,6 +181,15 @@
       "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Non respect des règles d'hygiène par le chasseur"
     },
     {
+      "CODE ZACHARIE": "G20.1",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Lors du transport de l'entreposage et de la manipulation du gibier, les collecteurs professionnels doivent respecter les bonnes pratiques d'hygiène afférentes à leur activité. Ces mesures comprennent notamment : \n- le respect de la chaîne du froid ;\n- l'absence d'amoncellement du gibier éviscéré.",
+      "DESTINATION AUTORISEE": "C3",
+      "FAMILLES DE LESIONS": "Anomalies liées à la préparation des viandes",
+      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa t)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles peuvent, selon l'avis du vétérinaire officiel, après examen de toutes les informations pertinentes, constituer un risque pour la santé humaine ou la santé animale ou sont, pour tout autre motif, impropres à la consommation humaine",
+      "MOTIVATION EN FAIT (CERTIFICAT)": "Conditions de transport des viandes non conformes aux dispositions réglementaires en matières d’hygiène",
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Non respect des règles d'hygiène par le collecteur professionnel"
+    },
+    {
       "CODE ZACHARIE": "G21",
       "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "",
       "DESTINATION AUTORISEE": "C3",
@@ -901,6 +910,15 @@
       "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa t)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles peuvent, selon l'avis du vétérinaire officiel, après examen de toutes les informations pertinentes, constituer un risque pour la santé humaine ou la santé animale ou sont, pour tout autre motif, impropres à la consommation humaine",
       "MOTIVATION EN FAIT (CERTIFICAT)": "Conditions de préparation des viandes par le producteur primaire non conformes aux dispositions réglementaires en matières d’hygiène",
       "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Non respect des règles d'hygiène par le chasseur"
+    },
+    {
+      "CODE ZACHARIE": "P15.1",
+      "COMPLEMENTS D'INFORMATION POUR 1ER DETENTEUR ET EXAMINATEUR INITIAL": "Lors du transport de l'entreposage et de la manipulation du gibier, les collecteurs professionnels doivent respecter les bonnes pratiques d'hygiène afférentes à leur activité. Ces mesures comprennent notamment le respect de la chaîne du froid.",
+      "DESTINATION AUTORISEE": "C3",
+      "FAMILLES DE LESIONS": "Anomalies liées à la préparation des viandes",
+      "MOTIVATION EN DROIT (CERTIFICAT)": "Règlement d'exécution (UE) 2019/627 de la commission du 15 mars 2019 – Article 45 alinéa t)\nLe vétérinaire officiel déclare des viandes fraîches impropres à la consommation humaine si elles peuvent, selon l'avis du vétérinaire officiel, après examen de toutes les informations pertinentes, constituer un risque pour la santé humaine ou la santé animale ou sont, pour tout autre motif, impropres à la consommation humaine",
+      "MOTIVATION EN FAIT (CERTIFICAT)": "Conditions de transport des viandes non conformes aux dispositions réglementaires en matières d’hygiène",
+      "VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL": "Non respect des règles d'hygiène par les collecteurs professionnels"
     },
     {
       "CODE ZACHARIE": "P16",
