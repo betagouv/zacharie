@@ -5,13 +5,10 @@ import { mergeItems } from './merge-fetched-items';
 import API from '@app/services/api';
 
 const PAGE_SIZE = 1000;
-// Bump this constant to force a one-shot full re-sync on all existing clients
-// (e.g. after fixing a bug that left local stores incomplete).
-const CARCASSES_REGISTRY_SYNC_VERSION = 1;
 
 export async function loadCarcasses(role: UserRoles) {
-  const state = useZustandStore.getState();
-  if (!state.isOnline) {
+  const isOnline = useZustandStore.getState().isOnline;
+  if (!isOnline) {
     console.log('not loading fei because not online');
     return;
   }
@@ -20,9 +17,7 @@ export async function loadCarcasses(role: UserRoles) {
   // is picked up on the next delta sync.
   const serverDate = await API.get({ path: 'now' }).then((res) => (res.ok ? res.data : null));
 
-  const needsFullSync = state.carcassesRegistrySyncVersion < CARCASSES_REGISTRY_SYNC_VERSION;
-  const after = needsFullSync ? '0' : String(state.lastUpdateCarcassesRegistry);
-
+  const after = String(useZustandStore.getState().lastUpdateCarcassesRegistry);
   const fetched: CarcassesGetForRegistryResponse['data']['carcasses'] = [];
   let page = 0;
   let hasMore = true;
@@ -44,18 +39,15 @@ export async function loadCarcasses(role: UserRoles) {
     page += 1;
   }
 
-  const newRegistry = needsFullSync
-    ? fetched.filter((c) => !c.deleted_at)
-    : mergeItems({
-        oldItems: useZustandStore.getState().carcassesRegistry || [],
-        newItems: fetched,
-        idKey: 'zacharie_carcasse_id',
-      });
+  const newRegistry = mergeItems({
+    oldItems: useZustandStore.getState().carcassesRegistry || [],
+    newItems: fetched,
+    idKey: 'zacharie_carcasse_id',
+  });
 
   useZustandStore.setState(() => ({
     carcassesRegistry: newRegistry,
     lastUpdateCarcassesRegistry: serverDate,
-    carcassesRegistrySyncVersion: CARCASSES_REGISTRY_SYNC_VERSION,
   }));
 
   return fetched;

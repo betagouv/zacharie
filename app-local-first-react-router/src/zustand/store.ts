@@ -41,7 +41,6 @@ const PERSISTED_KEYS: (keyof State)[] = [
   'carcassesIntermediaireById',
   'apiKeyApprovals',
   'lastUpdateCarcassesRegistry',
-  'carcassesRegistrySyncVersion',
   'carcassesRegistry',
   'logs',
 ];
@@ -58,7 +57,6 @@ export interface State {
   carcassesIntermediaireById: Record<FeiAndCarcasseAndIntermediaireIds, CarcasseIntermediaire>;
   apiKeyApprovals: NonNullable<UserConnexionResponse['data']['apiKeyApprovals']>;
   lastUpdateCarcassesRegistry: number;
-  carcassesRegistrySyncVersion: number;
   carcassesRegistry: Array<CarcasseForResponseForRegistry>;
   logs: Array<Log>;
   _hasHydrated: boolean;
@@ -135,7 +133,6 @@ const initialState: State = {
   dataIsSynced: true,
   carcassesRegistry: [],
   lastUpdateCarcassesRegistry: 0,
-  carcassesRegistrySyncVersion: 0,
   logs: [],
   feis: {},
   users: {},
@@ -423,13 +420,23 @@ const useZustandStore = create<State & Actions>()(
       }),
       {
         name: 'zacharie-zustand-store',
-        version: 5,
+        version: 6,
         storage: createSlicedIDBStorage<Partial<State>>(PERSISTED_KEYS),
         onRehydrateStorage: (state) => {
           return () => state.setHasHydrated(true);
         },
         partialize: (state) =>
           Object.fromEntries(PERSISTED_KEYS.map((key) => [key, state[key]])) as Partial<State>,
+        // v6: pagination fix for carcassesRegistry. Old clients had at most ~100
+        // rows persisted; reset the registry + delta-cursor so the next load
+        // refetches everything from scratch.
+        migrate: (persistedState, version) => {
+          const state = persistedState as Partial<State>;
+          if (version < 6) {
+            return { ...state, lastUpdateCarcassesRegistry: 0, carcassesRegistry: [] };
+          }
+          return state;
+        },
       }
     )
   )
