@@ -5,8 +5,17 @@ const router: express.Router = express.Router();
 import { RequestWithUser } from '~/types/request';
 import { getIframeUrl } from '~/service/metabase-embed';
 import prisma from '~/prisma';
-import { CarcasseType, CarcasseStatus, FeiOwnerRole } from '@prisma/client';
+import {
+  CarcasseType,
+  CarcasseStatus,
+  DepotType,
+  EntityTypes,
+  FeiOwnerRole,
+  UserRoles,
+} from '@prisma/client';
 import dayjs from 'dayjs';
+import validateUser from '~/middlewares/validateUser';
+import departementsRegions from '~/data/departements-regions.json';
 
 router.get(
   '/nombre-de-carcasses-cumule',
@@ -19,7 +28,7 @@ router.get(
         saisiesUrl: getIframeUrl(37),
       },
     });
-  }),
+  })
 );
 
 router.get(
@@ -101,7 +110,7 @@ router.get(
       FeiOwnerRole.CONSOMMATEUR_FINAL,
     ];
     const sviEligibleCarcasses = bigGameCarcasses.filter(
-      (c) => !c.next_owner_role || !circuitCourtRoles.includes(c.next_owner_role),
+      (c) => !c.next_owner_role || !circuitCourtRoles.includes(c.next_owner_role)
     );
     const hasAnySviReturn = sviEligibleCarcasses.some((c) => c.svi_carcasse_status !== null);
 
@@ -131,7 +140,7 @@ router.get(
     const seizedBigGame = sviEligibleCarcasses.filter(
       (c) =>
         c.svi_carcasse_status === CarcasseStatus.SAISIE_TOTALE ||
-        c.svi_carcasse_status === CarcasseStatus.SAISIE_PARTIELLE,
+        c.svi_carcasse_status === CarcasseStatus.SAISIE_PARTIELLE
     );
     const personalSeizureRate =
       sviEligibleCarcasses.length > 0 && hasAnySviReturn
@@ -197,7 +206,7 @@ router.get(
       (c) =>
         (c.svi_carcasse_status === CarcasseStatus.SAISIE_TOTALE ||
           c.svi_carcasse_status === CarcasseStatus.SAISIE_PARTIELLE) &&
-        hasBphMotif(c.svi_ipm2_lesions_ou_motifs),
+        hasBphMotif(c.svi_ipm2_lesions_ou_motifs)
     );
 
     const personalBphRate =
@@ -262,7 +271,198 @@ router.get(
         },
       },
     });
-  }),
+  })
+);
+
+/**
+ * Extrait le code département depuis le champ `Fei.commune_mise_a_mort`
+ * (format attendu : "<code_postal> <COMMUNE>").
+ *  - DOM/COM : 3 premiers chiffres (97x, 98x)
+ *  - Corse : 2A si CP ≤ 20190, 2B sinon
+ *  - Métropole : 2 premiers chiffres
+ */
+function extractDepartementFromCommune(commune: string | null | undefined): string | null {
+  if (!commune) return null;
+  const cp = commune.trim().split(/\s+/)[0];
+  if (!cp || cp.length < 2 || !/^\d/.test(cp)) return null;
+  if (cp.startsWith('97') || cp.startsWith('98')) return cp.slice(0, 3);
+  if (cp.startsWith('20')) {
+    const num = parseInt(cp, 10);
+    if (!Number.isFinite(num)) return null;
+    return num <= 20190 ? '2A' : '2B';
+  }
+  return cp.slice(0, 2);
+}
+
+router.get(
+  '/federation/valorisation',
+  passport.authenticate('user', { session: false }),
+  validateUser([UserRoles.FDC, UserRoles.FRC, UserRoles.FNC]),
+  catchErrors(async (req: RequestWithUser, res: express.Response, next: express.NextFunction) => {
+    const user = req.user;
+    if (!user) {
+      res.status(401);
+      next(new Error('Utilisateur non authentifié'));
+      return;
+    }
+
+    // Scope géographique : depts couverts par les entités fédérations de l'utilisateur.
+    // FNC → tous les depts (scopeDepts = null).
+    const userEntities = await prisma.entityAndUserRelations.findMany({
+      where: {
+        owner_id: user.id,
+        deleted_at: null,
+        EntityRelatedWithUser: {
+          type: { in: [EntityTypes.FDC, EntityTypes.FRC, EntityTypes.FNC] },
+          deleted_at: null,
+        },
+      },
+      include: {
+        EntityRelatedWithUser: {
+          select: { type: true, scope_departements_codes: true },
+        },
+      },
+    });
+
+    const isNational = userEntities.some((rel) => rel.EntityRelatedWithUser.type === EntityTypes.FNC);
+    const scopeDepts: string[] | null = isNational
+      ? null
+      : Array.from(
+          new Set(userEntities.flatMap((rel) => rel.EntityRelatedWithUser.scope_departements_codes))
+        );
+
+    if (!isNational && (!scopeDepts || scopeDepts.length === 0)) {
+      res.status(200).send({
+        ok: true,
+        data: { season: null, scope: 'departemental', scopeDepts: [], departements: [] },
+      });
+      return;
+    }
+
+    // Saison de chasse en cours (1er juillet → 30 juin), comme le dashboard chasseur.
+    const now = dayjs();
+    const seasonStartYear = now.month() >= 6 ? now.year() : now.year() - 1;
+    const seasonEndYear = seasonStartYear + 1;
+    const season = `${String(seasonStartYear).slice(-2)}-${String(seasonEndYear).slice(-2)}`;
+    const seasonStart = dayjs(`${seasonStartYear}-07-01`).startOf('day');
+    const seasonEnd = dayjs(`${seasonEndYear}-06-30`).endOf('day');
+
+    const carcasses = await prisma.carcasse.findMany({
+      where: {
+        deleted_at: null,
+        date_mise_a_mort: { gte: seasonStart.toDate(), lte: seasonEnd.toDate() },
+      },
+      include: {
+        Fei: { select: { commune_mise_a_mort: true } },
+        CarcasseIntermediaire: { select: { intermediaire_role: true } },
+      },
+    });
+
+    // Carcasses transmises en circuit court : exclues du dénominateur du taux de saisie sanitaire,
+    // identique au dashboard chasseur (cf. /stats/mes-chasses).
+    const circuitCourtRoles: FeiOwnerRole[] = [
+      FeiOwnerRole.COMMERCE_DE_DETAIL,
+      FeiOwnerRole.REPAS_DE_CHASSE_OU_ASSOCIATIF,
+      FeiOwnerRole.CANTINE_OU_RESTAURATION_COLLECTIVE,
+      FeiOwnerRole.ASSOCIATION_CARITATIVE,
+      FeiOwnerRole.CONSOMMATEUR_FINAL,
+    ];
+
+    type Bucket = {
+      agree: number;
+      nonAgree: number;
+      domestique: number;
+      sviEligible: number;
+      seized: number;
+      hasSviReturn: boolean;
+    };
+    const emptyBucket = (): Bucket => ({
+      agree: 0,
+      nonAgree: 0,
+      domestique: 0,
+      sviEligible: 0,
+      seized: 0,
+      hasSviReturn: false,
+    });
+
+    const stats = new Map<string, { gg: Bucket; pg: Bucket }>();
+
+    for (const c of carcasses) {
+      const dept = extractDepartementFromCommune(c.Fei?.commune_mise_a_mort);
+      if (!dept) continue;
+      if (scopeDepts && !scopeDepts.includes(dept)) continue;
+      if (!c.type) continue;
+
+      if (!stats.has(dept)) stats.set(dept, { gg: emptyBucket(), pg: emptyBucket() });
+      const deptStats = stats.get(dept)!;
+      const bucket = c.type === CarcasseType.GROS_GIBIER ? deptStats.gg : deptStats.pg;
+
+      // Circuit de valorisation
+      const wasInEtg =
+        c.premier_detenteur_depot_type === DepotType.ETG ||
+        c.current_owner_role === FeiOwnerRole.ETG ||
+        c.current_owner_role === FeiOwnerRole.SVI ||
+        c.prev_owner_role === FeiOwnerRole.ETG ||
+        c.prev_owner_role === FeiOwnerRole.SVI ||
+        c.CarcasseIntermediaire.some((ci) => ci.intermediaire_role === FeiOwnerRole.ETG);
+
+      if (c.consommateur_final_usage_domestique != null) {
+        bucket.domestique++;
+      } else if (wasInEtg) {
+        bucket.agree++;
+      } else if (c.current_owner_role && circuitCourtRoles.includes(c.current_owner_role)) {
+        bucket.nonAgree++;
+      }
+
+      // Taux de saisie sanitaire : exclure circuit court (cohérent avec dashboard chasseur)
+      const isSviEligible = !c.next_owner_role || !circuitCourtRoles.includes(c.next_owner_role);
+      if (isSviEligible) {
+        bucket.sviEligible++;
+        if (
+          c.svi_carcasse_status === CarcasseStatus.SAISIE_TOTALE ||
+          c.svi_carcasse_status === CarcasseStatus.SAISIE_PARTIELLE
+        ) {
+          bucket.seized++;
+        }
+        if (c.svi_carcasse_status !== null) bucket.hasSviReturn = true;
+      }
+    }
+
+    const departementsLabels = (departementsRegions as { departements: Record<string, string> }).departements;
+
+    const formatBucket = (b: Bucket) => ({
+      agree: b.agree,
+      nonAgree: b.nonAgree,
+      domestique: b.domestique,
+      tauxSaisie:
+        b.sviEligible > 0 && b.hasSviReturn ? Math.round((b.seized / b.sviEligible) * 1000) / 10 : null,
+    });
+
+    const departements = Array.from(stats.entries())
+      .map(([code, s]) => ({
+        code,
+        nom: departementsLabels[code] ?? code,
+        gg: formatBucket(s.gg),
+        pg: formatBucket(s.pg),
+      }))
+      .sort((a, b) => a.code.localeCompare(b.code));
+
+    const scope = isNational
+      ? 'national'
+      : (scopeDepts as string[]).length === 1
+        ? 'departemental'
+        : 'regional';
+
+    res.status(200).send({
+      ok: true,
+      data: {
+        season,
+        scope,
+        scopeDepts: scopeDepts ?? [],
+        departements,
+      },
+    });
+  })
 );
 
 export default router;

@@ -7,18 +7,33 @@ import {
   type User,
   UserRelationType,
 } from '@prisma/client';
-import type { EntitiesById, EntitiesByTypeAndId, EntityWithUserRelations } from '~/types/entity';
+import type {
+  EntitiesById,
+  EntitiesByTypeAndId,
+  EntityWithUserRelations,
+  OperationalEntityType,
+} from '~/types/entity';
+import { NON_OPERATIONAL_ENTITY_TYPES } from '~/types/entity';
+
+const isOperational = (type: EntityTypes): type is OperationalEntityType =>
+  !(NON_OPERATIONAL_ENTITY_TYPES as readonly EntityTypes[]).includes(type);
+
+const emptyEntitiesByTypeAndId = (): EntitiesByTypeAndId =>
+  Object.values(EntityTypes)
+    .filter(isOperational)
+    .reduce((acc, type) => {
+      acc[type] = {};
+      return acc;
+    }, {} as EntitiesByTypeAndId);
 
 export function sortEntitiesByTypeAndId(
   entities: Array<EntityWithUserRelations>
 ): [EntitiesById, EntitiesByTypeAndId] {
   const allEntitiesIds: EntitiesById = {};
-  const allEntitiesByTypeAndId: EntitiesByTypeAndId = Object.values(EntityTypes).reduce((acc, type) => {
-    acc[type] = {};
-    return acc;
-  }, {} as EntitiesByTypeAndId);
+  const allEntitiesByTypeAndId = emptyEntitiesByTypeAndId();
 
   for (const entity of entities) {
+    if (!isOperational(entity.type)) continue;
     allEntitiesIds[entity.id] = entity;
     allEntitiesByTypeAndId[entity.type][entity.id] = entity;
   }
@@ -30,16 +45,12 @@ export function sortEntitiesRelationsByTypeAndId(
   entities: Array<EntityWithUserRelations>,
   entitiesById: EntitiesById
 ): EntitiesByTypeAndId {
-  const entitiesByTypeAndId: EntitiesByTypeAndId = Object.values(EntityTypes).reduce((acc, type) => {
-    acc[type] = {};
-    return acc;
-  }, {} as EntitiesByTypeAndId);
+  const entitiesByTypeAndId = emptyEntitiesByTypeAndId();
   for (const entityWithUserRelations of entities) {
-    if (entityWithUserRelations) {
-      if (!entitiesByTypeAndId[entityWithUserRelations.type][entityWithUserRelations.id]) {
-        entitiesByTypeAndId[entityWithUserRelations.type][entityWithUserRelations.id] =
-          entityWithUserRelations;
-      }
+    if (!entityWithUserRelations) continue;
+    if (!isOperational(entityWithUserRelations.type)) continue;
+    if (!entitiesByTypeAndId[entityWithUserRelations.type][entityWithUserRelations.id]) {
+      entitiesByTypeAndId[entityWithUserRelations.type][entityWithUserRelations.id] = entityWithUserRelations;
     }
   }
   return entitiesByTypeAndId;

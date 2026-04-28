@@ -386,7 +386,6 @@ export default function TableauDeBordIndex() {
     return filteredFeis.slice(start, start + perPage);
   }, [filteredFeis, page, itemsPerPage]);
 
-
   function Actions() {
     return (
       <div className="flex flex-col gap-2 py-2 md:gap-3 md:py-3">

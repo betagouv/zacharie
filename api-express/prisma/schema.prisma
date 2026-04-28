@@ -18,7 +18,10 @@ enum UserRoles {
   CANTINE_OU_RESTAURATION_COLLECTIVE // Repas de chasse ou associatif
   ASSOCIATION_CARITATIVE // Repas de chasse ou associatif
   REPAS_DE_CHASSE_OU_ASSOCIATIF // Repas de chasse ou associatif
-  CONSOMMATEUR_FINAL // Je suis consommateur final 
+  CONSOMMATEUR_FINAL // Je suis consommateur final
+  FDC // Fédération Départementale des Chasseurs
+  FRC // Fédération Régionale des Chasseurs
+  FNC // Fédération Nationale des Chasseurs
 }
 
 enum UserEtgRoles {
@@ -107,6 +110,9 @@ enum EntityTypes {
   ASSOCIATION_CARITATIVE
   REPAS_DE_CHASSE_OU_ASSOCIATIF
   CONSOMMATEUR_FINAL
+  FDC // Fédération Départementale des Chasseurs
+  FRC // Fédération Régionale des Chasseurs
+  FNC // Fédération Nationale des Chasseurs
 }
 
 model Entity {
@@ -139,6 +145,8 @@ model Entity {
   // for brevo
   brevo_id                   String?
   at_least_one_fei_treated   DateTime?
+  // scope géographique des fédérations (FDC = 1 dept, FRC = depts de la région, FNC = vide = national)
+  scope_departements_codes   String[]
   // relations
   EntityRelationsWithUsers   EntityAndUserRelations[]       @relation("EntityRelatedWithUser")
   FeisCurrentEntity          Fei[]                          @relation("FeiCurrentEntity")

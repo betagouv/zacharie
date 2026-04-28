@@ -15,7 +15,7 @@ import {
   EntityRelationStatus,
 } from '@prisma/client';
 import type { EntitiesWorkingForResponse, UserConnexionResponse } from '@api/src/types/responses';
-import type { EntitiesByTypeAndId } from '@api/src/types/entity';
+import type { EntitiesByTypeAndId, OperationalEntityType } from '@api/src/types/entity';
 import useUser from '@app/zustand/user';
 import { Link, useNavigate } from 'react-router';
 import SelectCustom from '@app/components/SelectCustom';
@@ -398,7 +398,7 @@ interface ListAndSelectEntitiesProps {
   refreshKey: number;
   canChange: boolean;
   done: boolean;
-  entityType: EntityTypes;
+  entityType: OperationalEntityType;
   addLabel: string;
   selectLabel: string;
   sectionLabel: string;

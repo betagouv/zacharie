@@ -50,6 +50,7 @@ const initialData: State = {
     inc_certificat: 0,
     inc_decision: 0,
     code_etbt_certificat: null,
+    scope_departements_codes: [],
   },
   dedicatedApiKey: null,
   canTakeFichesForEntity: [],
