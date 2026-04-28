@@ -21,11 +21,14 @@ const BPH_PATTERNS = [
   'œufs ou larves de mouche',
   'morsure de chien',
   'viande à évolution anormale',
+  'conditions de préparation des viandes par le producteur primaire',
+  'souillures d’origine digestive liées à une balle d\'abdomen',
+  'souillures d’origine digestive'
 ];
 
 function isBphMotif(item: { 'MOTIVATION EN FAIT (CERTIFICAT)': string }) {
   const motif = item['MOTIVATION EN FAIT (CERTIFICAT)'].toLowerCase();
-  return BPH_PATTERNS.some((p) => motif.includes(p));
+  return BPH_PATTERNS.some((p) => motif.includes(p.toLowerCase()));
 }
 
 type LesionItem = {
