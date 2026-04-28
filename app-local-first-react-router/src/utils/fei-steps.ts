@@ -290,10 +290,10 @@ export function computeFeiSteps({
 
   const currentStepLabelForChasseur: FeiStepForChasseur = (() => {
     if (currentStepLabel === 'Clôturée') {
-      return "Prise en charge par le service vétérinaire d'inspection";
+      return 'Inspection terminée';
     }
     if (currentStepLabel === 'Examen initial') {
-      return 'Fiche incomplète';
+      return 'Information manquante';
     }
     if (currentStepLabel === 'Validation par le premier détenteur') {
       return 'Fiche complète, pas encore envoyée';
@@ -316,8 +316,7 @@ export function computeFeiSteps({
       return destinataire ? `Prise en charge par l'atelier ${destinataire}` : "Prise en charge par l'atelier";
     }
     if (currentStepLabel === 'Inspection par le SVI') {
-      const destinataire = fei.latest_intermediaire_name_cache;
-      return destinataire ? `Prise en charge par l'atelier ${destinataire}` : "Prise en charge par l'atelier";
+      return 'En cours de traitement';
     }
     return currentStepLabel;
   })();
