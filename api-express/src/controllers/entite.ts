@@ -24,7 +24,7 @@ import {
   updateBrevoContact,
   updateOrCreateBrevoCompany,
 } from '~/third-parties/brevo';
-import { EntitiesById, entityAdminInclude } from '~/types/entity';
+import { EntitiesById, NON_OPERATIONAL_ENTITY_TYPES, entityAdminInclude } from '~/types/entity';
 import { sanitize } from '~/utils/sanitize';
 import { z } from 'zod';
 import createUserId from '~/utils/createUserId';
@@ -107,7 +107,9 @@ router.get(
       const allEntities = await prisma.entity.findMany({
         where: {
           deleted_at: null,
-          type: { not: EntityTypes.CCG },
+          // Exclure CCG (vu via une route dédiée) + fédérations (FDC/FRC/FNC : non opérationnelles, ne doivent pas
+          // apparaître dans les sélecteurs de partenaires/associations).
+          type: { notIn: [EntityTypes.CCG, ...NON_OPERATIONAL_ENTITY_TYPES] },
           ...(user.isZacharieAdmin ? {} : { for_testing: false }),
         },
         include,

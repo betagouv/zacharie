@@ -532,7 +532,7 @@ export default function ChasseurFiches() {
                 }}
               />
               <span
-                className={`inline-block rounded px-2 py-0.5 text-xs uppercase font-semibold ${statusColors[status].bg} ${statusColors[status].text}`}
+                className={`inline-block rounded px-2 py-0.5 text-xs font-semibold uppercase ${statusColors[status].bg} ${statusColors[status].text}`}
               >
                 {status}
               </span>
@@ -820,7 +820,7 @@ export default function ChasseurFiches() {
           </FeisWrapper>
           {filteredFeis.length > 0 && (
             <div className="flex flex-wrap items-center justify-start gap-3 py-4">
-              <div className="hidden overflow-hidden rounded-md border border-gray-300 md:inline-flex mb-4">
+              <div className="mb-4 hidden overflow-hidden rounded-md border border-gray-300 md:inline-flex">
                 <button
                   type="button"
                   aria-label="Vue grille"
@@ -858,7 +858,7 @@ export default function ChasseurFiches() {
                   />
                 </button>
               </div>
-              <div className="inline-flex overflow-hidden rounded-md border border-gray-300 mb-4">
+              <div className="mb-4 inline-flex overflow-hidden rounded-md border border-gray-300">
                 {[20, 50, 100].map((option, i) => (
                   <button
                     type="button"
@@ -893,7 +893,6 @@ export default function ChasseurFiches() {
               ) : (
                 <span className="hidden md:inline" />
               )}
-
             </div>
           )}
           <div className="my-4">

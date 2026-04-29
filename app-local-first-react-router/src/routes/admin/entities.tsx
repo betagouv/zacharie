@@ -21,6 +21,9 @@ const entityTypeLabels: Record<EntityTypes, string> = {
   [EntityTypes.ASSOCIATION_CARITATIVE]: 'Association caritative',
   [EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF]: 'Repas de chasse / Associatif',
   [EntityTypes.CONSOMMATEUR_FINAL]: 'Consommateur final',
+  [EntityTypes.FDC]: 'FDC (Fédération Départementale)',
+  [EntityTypes.FRC]: 'FRC (Fédération Régionale)',
+  [EntityTypes.FNC]: 'FNC (Fédération Nationale)',
 };
 
 export default function AdminEntites() {

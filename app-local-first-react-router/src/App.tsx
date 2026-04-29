@@ -31,6 +31,9 @@ import RouterTableauDeBord from './routes/tableau-de-bord/tableau-de-bord-router
 import RouterAdmin from './routes/admin/admin-router';
 import NouvelleFiche from './routes/nouvelle-fiche';
 import RouterCircuitCourt from './routes/circuit-court/circuit-court-router';
+import RouterFdc from './routes/fdc/fdc-router';
+import RouterFrc from './routes/frc/frc-router';
+import RouterFnc from './routes/fnc/fnc-router';
 
 const SentryRoutes = Sentry.withSentryReactRouterV6Routing(Routes);
 
@@ -126,6 +129,9 @@ function App() {
           {RouterTableauDeBord({ navigation: generalNavigation })}
           {RouterCircuitCourt()}
           {RouterSvi()}
+          {RouterFdc()}
+          {RouterFrc()}
+          {RouterFnc()}
           {RouterAdmin()}
           <Route
             path="contact"
