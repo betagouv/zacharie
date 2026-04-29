@@ -1406,8 +1406,7 @@ router.get(
                       '%orsure de chien%',
                       '%Viande à évolution anormale%',
                       '%Conditions de préparation des viandes par le producteur primaire%',
-                      '%Souillures d’origine digestive liées à une balle d''abdomen%',
-                      '%Souillures d''origine digestive%',
+                      '%Souillures d’origine digestive liées à une balle d''abdomen%'
                     ])
                   )
               )::float / NULLIF(COUNT(*)::float, 0) * 100

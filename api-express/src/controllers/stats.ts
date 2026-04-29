@@ -185,8 +185,7 @@ router.get(
       'morsure de chien',
       'viande à évolution anormale',
       'conditions de préparation des viandes par le producteur primaire',
-      "souillures d’origine digestive liées à une balle d'abdomen",
-      'souillures d’origine digestive',
+      "souillures d\'origine digestive liées à une balle d'abdomen",
     ];
     const hasBphMotif = (motifs: string[] | null) =>
       (motifs ?? []).some((m) => {
