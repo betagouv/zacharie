@@ -1,17 +1,13 @@
 import { StyleSheet, Platform, BackHandler, Modal, View, TouchableOpacity, Text } from 'react-native';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import { registerForPushNotificationsAsync } from './services/expo-push-notifs';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 import { checkAndDownloadSpa, getLocalBaseUrl, getOfflineHtml } from './utils/offline-spa';
-
-// const APP_URL = __DEV__ ? process.env.EXPO_PUBLIC_APP_URL : "https://zacharie.beta.gouv.fr/";
-const APP_URL = 'https://zacharie.beta.gouv.fr/';
-// EXPO_PUBLIC_APP_URL should be set in .env and should be like http://x.x.x.x:3234/ - get the IP with `ipconfig getifaddr en0` on macos for example
 
 SplashScreen.preventAutoHideAsync();
 
@@ -20,11 +16,13 @@ function App() {
   const ref = useRef<WebView>(null);
   const [externalLink, setExternalLink] = useState<string | null>(null);
   const [offlineHtml, setOfflineHtml] = useState<string | null>(null);
+  const [spaReady, setSpaReady] = useState(false);
 
   useEffect(() => {
     checkAndDownloadSpa().then(() => {
       getOfflineHtml().then((html) => {
         if (html) setOfflineHtml(html);
+        setSpaReady(true);
       });
     });
   }, []);
@@ -64,13 +62,6 @@ function App() {
       ref.current?.injectJavaScript(`window.onNativePushToken('${JSON.stringify(token)}');true`);
     });
   };
-
-  const source = useMemo(
-    () => ({
-      uri: `${APP_URL}app/tableau-de-bord`,
-    }),
-    [APP_URL]
-  );
 
   const onAndroidBackPress = () => {
     if (ref.current) {
@@ -144,50 +135,29 @@ function App() {
 
   return (
     <SafeAreaView style={styles.safeContainer} edges={['left', 'right', 'top', 'bottom']}>
-      <WebView
-        ref={ref}
-        style={styles.container}
-        startInLoadingState
-        onLoadEnd={onLoadEnd}
-        renderError={(errorName) => {
-          console.log('WebView error:', errorName);
-          if (offlineHtml) {
-            return (
-              <WebView
-                style={styles.containerOffline}
-                source={{ html: offlineHtml, baseUrl: getLocalBaseUrl() }}
-                originWhitelist={['*']}
-                pullToRefreshEnabled
-                allowsBackForwardNavigationGestures
-                onContentProcessDidTerminate={() => ref.current?.reload()}
-                // onNavigationStateChange={onNavigationStateChange}
-                onMessage={onMessage}
-                sharedCookiesEnabled={true}
-                thirdPartyCookiesEnabled={true}
-                domStorageEnabled
-                javaScriptEnabled
-                injectedJavaScript={initScript}
-              />
-            );
-          }
-          return (
-            <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-              <Text>Pas de connexion internet et pas de cache disponible.</Text>
-            </View>
-          );
-        }}
-        source={source}
-        pullToRefreshEnabled
-        allowsBackForwardNavigationGestures
-        onContentProcessDidTerminate={() => ref.current?.reload()}
-        // onNavigationStateChange={onNavigationStateChange}
-        onMessage={onMessage}
-        sharedCookiesEnabled={true}
-        thirdPartyCookiesEnabled={true}
-        domStorageEnabled
-        javaScriptEnabled
-        injectedJavaScript={initScript}
-      />
+      {spaReady && offlineHtml ? (
+        <WebView
+          ref={ref}
+          style={styles.container}
+          startInLoadingState
+          onLoadEnd={onLoadEnd}
+          source={{ html: offlineHtml, baseUrl: getLocalBaseUrl() }}
+          originWhitelist={['*']}
+          pullToRefreshEnabled
+          allowsBackForwardNavigationGestures
+          onContentProcessDidTerminate={() => ref.current?.reload()}
+          onMessage={onMessage}
+          sharedCookiesEnabled={true}
+          thirdPartyCookiesEnabled={true}
+          domStorageEnabled
+          javaScriptEnabled
+          injectedJavaScript={initScript}
+        />
+      ) : spaReady ? (
+        <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+          <Text>Pas de cache disponible. Connectez-vous à internet pour télécharger l'application.</Text>
+        </View>
+      ) : null}
       <Modal
         visible={!!externalLink}
         onRequestClose={() => setExternalLink(null)}

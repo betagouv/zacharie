@@ -2,7 +2,6 @@ import { File, Directory, Paths } from 'expo-file-system';
 import { fetch } from 'expo/fetch';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// const APP_URL = __DEV__ ? process.env.EXPO_PUBLIC_APP_URL : "https://zacharie.beta.gouv.fr/";
 const APP_URL = 'https://zacharie.beta.gouv.fr/';
 const SPA_DIR = new Directory(Paths.document, 'spa');
 const MANIFEST_URL = `${APP_URL}spa-manifest.json`;
