@@ -61,7 +61,10 @@ export default function Connexion() {
     }
     if (response.ok && response.data?.user?.id) {
       window.ReactNativeWebView?.postMessage(
-        JSON.stringify({ event: 'save-initial-url', initialUrl: getUserOnboardingRoute(response.data.user) })
+        JSON.stringify({
+          event: 'save-initial-path',
+          initialPath: getUserOnboardingRoute(response.data.user),
+        })
       );
       const user = response.data.user as User;
       useUser.setState({ user });

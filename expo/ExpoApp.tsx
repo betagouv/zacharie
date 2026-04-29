@@ -29,8 +29,9 @@ function App() {
   const [spaReady, setSpaReady] = useState(false);
 
   useEffect(() => {
-    AsyncStorage.getItem('initial-url').then((initialUrl) => {
-      checkAndDownloadSpa(initialUrl ?? APP_URL).then(() => {
+    AsyncStorage.getItem('initial-path').then((initialPath = '/') => {
+      console.log('initialPath: ', initialPath);
+      checkAndDownloadSpa(`${APP_URL}${initialPath}`).then(() => {
         startSpaServer().then((url) => {
           if (url) setSpaUrl(url);
           setSpaReady(true);
@@ -108,9 +109,9 @@ function App() {
         setExternalLink(url);
         return;
       }
-      if (event.nativeEvent.data.includes('save-initial-url')) {
-        const { initialUrl } = JSON.parse(event.nativeEvent.data);
-        AsyncStorage.setItem('initial-url', initialUrl);
+      if (event.nativeEvent.data.includes('save-initial-path')) {
+        const { initialPath } = JSON.parse(event.nativeEvent.data);
+        AsyncStorage.setItem('initial-path', initialPath);
         return;
       }
       switch (event.nativeEvent.data) {
