@@ -71,6 +71,7 @@ const initialState: State = {
     prefilled: false,
     is_synced: true,
     onboarding_chasse_info_done_at: null,
+    scope_departements_codes: [],
   },
   identityDone: false,
   examinateurDone: false,

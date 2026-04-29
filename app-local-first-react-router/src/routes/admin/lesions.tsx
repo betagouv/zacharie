@@ -22,8 +22,8 @@ const BPH_PATTERNS = [
   'morsure de chien',
   'viande à évolution anormale',
   'conditions de préparation des viandes par le producteur primaire',
-  'souillures d’origine digestive liées à une balle d\'abdomen',
-  'souillures d’origine digestive'
+  "souillures d’origine digestive liées à une balle d'abdomen",
+  'souillures d’origine digestive',
 ];
 
 function isBphMotif(item: { 'MOTIVATION EN FAIT (CERTIFICAT)': string }) {
@@ -288,7 +288,9 @@ export default function AdminLesions() {
               })}
             />
             {filtered.length === 0 && (
-              <p className="py-8 text-center text-sm text-gray-500">Aucun motif ne correspond à la recherche.</p>
+              <p className="py-8 text-center text-sm text-gray-500">
+                Aucun motif ne correspond à la recherche.
+              </p>
             )}
           </div>
         </Tabs>

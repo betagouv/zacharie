@@ -5,14 +5,7 @@ const router: express.Router = express.Router();
 import { RequestWithUser } from '~/types/request';
 import { getIframeUrl } from '~/service/metabase-embed';
 import prisma from '~/prisma';
-import {
-  CarcasseType,
-  CarcasseStatus,
-  DepotType,
-  EntityTypes,
-  FeiOwnerRole,
-  UserRoles,
-} from '@prisma/client';
+import { CarcasseType, CarcasseStatus, DepotType, FeiOwnerRole, UserRoles } from '@prisma/client';
 import dayjs from 'dayjs';
 import validateUser from '~/middlewares/validateUser';
 import departementsRegions from '~/data/departements-regions.json';
@@ -306,30 +299,11 @@ router.get(
       return;
     }
 
-    // Scope géographique : depts couverts par les entités fédérations de l'utilisateur.
-    // FNC → tous les depts (scopeDepts = null).
-    const userEntities = await prisma.entityAndUserRelations.findMany({
-      where: {
-        owner_id: user.id,
-        deleted_at: null,
-        EntityRelatedWithUser: {
-          type: { in: [EntityTypes.FDC, EntityTypes.FRC, EntityTypes.FNC] },
-          deleted_at: null,
-        },
-      },
-      include: {
-        EntityRelatedWithUser: {
-          select: { type: true, scope_departements_codes: true },
-        },
-      },
-    });
-
-    const isNational = userEntities.some((rel) => rel.EntityRelatedWithUser.type === EntityTypes.FNC);
-    const scopeDepts: string[] | null = isNational
-      ? null
-      : Array.from(
-          new Set(userEntities.flatMap((rel) => rel.EntityRelatedWithUser.scope_departements_codes))
-        );
+    // Scope géographique lu directement sur le user.
+    // FNC → scope national (toutes les depts), peu importe le contenu de scope_departements_codes.
+    // FRC/FDC → liste explicite des depts à afficher.
+    const isNational = user.roles.includes(UserRoles.FNC);
+    const scopeDepts: string[] | null = isNational ? null : (user.scope_departements_codes ?? []);
 
     if (!isNational && (!scopeDepts || scopeDepts.length === 0)) {
       res.status(200).send({
