@@ -174,7 +174,7 @@ router.post(
       res.cookie(
         'zacharie_express_jwt',
         token,
-        cookieOptions(req.headers.host.includes('localhost') ? true : false)
+        cookieOptions(req)
       );
       res.status(200).send({ ok: true, data: { user }, message: '', error: '' });
     }
@@ -269,7 +269,7 @@ router.post(
       res.cookie(
         'zacharie_express_jwt',
         token,
-        cookieOptions(req.headers.host.includes('localhost') ? true : false)
+        cookieOptions(req)
       );
       res.status(200).send({ ok: true, data: { user }, message: '', error: '' });
     }
@@ -403,7 +403,7 @@ router.post(
       res.cookie(
         'zacharie_express_jwt',
         token,
-        cookieOptions(req.headers.host.includes('localhost') ? true : false)
+        cookieOptions(req)
       );
       res.status(200).send({ ok: true, data: { user }, message: '', error: '' });
     }
@@ -591,7 +591,7 @@ router.post(
       res.cookie(
         'zacharie_express_jwt',
         token,
-        cookieOptions(req.headers.host.includes('localhost') ? true : false)
+        cookieOptions(req)
       );
       res.status(200).send({ ok: true, data: { user: updatedUser }, message: '', error: '' });
     }
@@ -697,7 +697,7 @@ router.post(
       res.cookie(
         'zacharie_express_jwt',
         token,
-        cookieOptions(req.headers.host.includes('localhost') ? true : false)
+        cookieOptions(req)
       );
       await prisma.apiKeyApprovalByUserOrEntity.update({
         where: { access_token: accessToken },
@@ -719,7 +719,7 @@ router.post(
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     res.clearCookie(
       'zacharie_express_jwt',
-      logoutCookieOptions(req.headers.host.includes('localhost') ? true : false)
+      logoutCookieOptions(req)
     );
     res.status(200).send({ ok: true });
   })

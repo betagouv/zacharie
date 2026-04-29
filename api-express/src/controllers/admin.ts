@@ -84,11 +84,7 @@ router.post(
       const token = jwt.sign({ userId: user.id }, SECRET, {
         expiresIn: JWT_MAX_AGE,
       });
-      res.cookie(
-        'zacharie_express_jwt',
-        token,
-        cookieOptions(req.headers.platform === 'native' ? false : true),
-      );
+      res.cookie('zacharie_express_jwt', token, cookieOptions(req));
       res.status(200).send({
         ok: true,
         data: { user },
