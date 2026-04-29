@@ -1,6 +1,8 @@
 import { File, Directory, Paths } from 'expo-file-system';
 import { fetch } from 'expo/fetch';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
+import Server, { STATES } from '@dr.pogodin/react-native-static-server';
 
 const APP_URL = 'https://zacharie.beta.gouv.fr/';
 const SPA_DIR = new Directory(Paths.document, 'spa');
@@ -31,6 +33,7 @@ export const checkAndDownloadSpa = async (): Promise<void> => {
 
     // 3. Download manifest
     const manifestResponse = await fetch(MANIFEST_URL);
+    console.log('manifestResponse: ', manifestResponse);
     if (!manifestResponse.ok) {
       console.warn('Failed to fetch spa-manifest.json, using fallback or online only');
       return;
@@ -79,26 +82,73 @@ export const checkAndDownloadSpa = async (): Promise<void> => {
   }
 };
 
-export const getOfflineHtml = async (): Promise<string | null> => {
+// Pinned host/port so the API CORS allowlist can include this exact origin.
+export const SPA_SERVER_HOSTNAME = '127.0.0.1';
+export const SPA_SERVER_PORT = 3000;
+export const SPA_SERVER_ORIGIN = `http://${SPA_SERVER_HOSTNAME}:${SPA_SERVER_PORT}`;
+
+let serverInstance: Server | null = null;
+let serverOrigin: string | null = null;
+
+export const startSpaServer = async (): Promise<string | null> => {
   try {
     const indexFile = new File(SPA_DIR, 'index.html');
+    if (!indexFile.exists) {
+      console.log('No SPA index.html, cannot start server');
+      return null;
+    }
 
-    if (!indexFile.exists) return null;
+    if (serverInstance && serverOrigin) {
+      return serverOrigin;
+    }
 
-    let html = await indexFile.text();
+    // Static-server expects a plain absolute path, not a file:// URI
+    const fileDir = SPA_DIR.uri.replace(/^file:\/\//, '');
 
-    // Convert absolute asset paths to relative paths
-    // This ensures assets load correctly with baseUrl in WebView
-    html = html.replaceAll(/href="\//g, 'href="./');
-    html = html.replaceAll(/src="\//g, 'src="./');
+    serverInstance = new Server({
+      fileDir,
+      hostname: SPA_SERVER_HOSTNAME,
+      port: SPA_SERVER_PORT,
+      stopInBackground: Platform.select({
+        android: undefined,
+        ios: 1000,
+        macos: 1000,
+      }),
+      errorLog: {
+        conditionHandling: true,
+        fileNotFound: true,
+        requestHandling: true,
+        requestHeader: true,
+        requestHeaderOnError: true,
+        responseHeader: true,
+        timeouts: true,
+      },
+    });
 
-    return html;
+    serverInstance.addStateListener((newState, details, error) => {
+      console.log(`SPA server state: ${STATES[newState]}`, { details, origin: serverInstance?.origin });
+      if (error) console.error('SPA server error:', error);
+    });
+
+    const url = await serverInstance.start();
+    serverOrigin = url ?? null;
+    console.log('SPA static server started at', serverOrigin);
+    return serverOrigin;
   } catch (error) {
-    console.error('Error reading offline HTML:', error);
+    console.error('Error starting SPA server:', error);
     return null;
   }
 };
 
-export const getLocalBaseUrl = () => {
-  return SPA_DIR.uri;
+export const stopSpaServer = async (): Promise<void> => {
+  try {
+    if (serverInstance) {
+      await serverInstance.stop();
+    }
+  } catch (error) {
+    console.error('Error stopping SPA server:', error);
+  } finally {
+    serverInstance = null;
+    serverOrigin = null;
+  }
 };

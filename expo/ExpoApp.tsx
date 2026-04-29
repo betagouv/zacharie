@@ -1,5 +1,5 @@
-import { StyleSheet, Platform, BackHandler, Modal, View, TouchableOpacity, Text } from 'react-native';
-import { WebView, type WebViewMessageEvent } from 'react-native-webview';
+import { StyleSheet, Platform, BackHandler, Linking, Modal, View, TouchableOpacity, Text } from 'react-native';
+import { WebView, type WebViewMessageEvent } from '@dr.pogodin/react-native-webview';
 import { registerForPushNotificationsAsync } from './services/expo-push-notifs';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -7,7 +7,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
-import { checkAndDownloadSpa, getLocalBaseUrl, getOfflineHtml } from './utils/offline-spa';
+import { checkAndDownloadSpa, startSpaServer, stopSpaServer } from './utils/offline-spa';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -15,16 +15,19 @@ const initScript = `window.ENV = {};window.ENV.APP_PLATFORM = "native";true`;
 function App() {
   const ref = useRef<WebView>(null);
   const [externalLink, setExternalLink] = useState<string | null>(null);
-  const [offlineHtml, setOfflineHtml] = useState<string | null>(null);
+  const [spaUrl, setSpaUrl] = useState<string | null>(null);
   const [spaReady, setSpaReady] = useState(false);
 
   useEffect(() => {
     checkAndDownloadSpa().then(() => {
-      getOfflineHtml().then((html) => {
-        if (html) setOfflineHtml(html);
+      startSpaServer().then((url) => {
+        if (url) setSpaUrl(url);
         setSpaReady(true);
       });
     });
+    return () => {
+      stopSpaServer();
+    };
   }, []);
 
   const onLoadEnd = () => {
@@ -135,22 +138,31 @@ function App() {
 
   return (
     <SafeAreaView style={styles.safeContainer} edges={['left', 'right', 'top', 'bottom']}>
-      {spaReady && offlineHtml ? (
+      {spaReady && spaUrl ? (
         <WebView
           ref={ref}
           style={styles.container}
           startInLoadingState
           onLoadEnd={onLoadEnd}
-          source={{ html: offlineHtml, baseUrl: getLocalBaseUrl() }}
+          onError={(error) => console.log('onError', error)}
+          source={{ uri: spaUrl }}
           originWhitelist={['*']}
           pullToRefreshEnabled
           allowsBackForwardNavigationGestures
           onContentProcessDidTerminate={() => ref.current?.reload()}
           onMessage={onMessage}
+          onShouldStartLoadWithRequest={(request) => {
+            const stayInWebView = request.url.startsWith(spaUrl);
+            if (!stayInWebView) {
+              Linking.openURL(request.url);
+            }
+            return stayInWebView;
+          }}
           sharedCookiesEnabled={true}
           thirdPartyCookiesEnabled={true}
           domStorageEnabled
           javaScriptEnabled
+          webviewDebuggingEnabled={__DEV__}
           injectedJavaScript={initScript}
         />
       ) : spaReady ? (
@@ -192,6 +204,8 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
+    borderWidth: 5,
+    borderColor: 'red',
   },
   containerOffline: {
     flex: 1,

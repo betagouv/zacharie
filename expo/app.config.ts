@@ -9,7 +9,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   version,
   orientation: 'portrait',
   icon: './assets/icon.png',
-  userInterfaceStyle: 'light',
+  // userInterfaceStyle: 'light', // userInterfaceStyle: Install expo-system-ui in your project to enable this feature.
   newArchEnabled: true,
   splash: {
     image: './assets/splash-icon.png',
@@ -69,6 +69,14 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     ],
     'react-native-edge-to-edge',
     'expo-notifications',
+    [
+      'expo-build-properties',
+      {
+        android: {
+          minSdkVersion: 28,
+        },
+      },
+    ],
   ],
   extra: {
     eas: {
