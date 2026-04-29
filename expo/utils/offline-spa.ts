@@ -123,6 +123,13 @@ export const startSpaServer = async (): Promise<string | null> => {
         responseHeader: true,
         timeouts: true,
       },
+      // SPA fallback: any URL that doesn't resolve to an existing file
+      // (e.g. /app/chasseur/tableau-de-bord) is served from /index.html so
+      // React Router can handle the route on the client.
+      extraConfig: `
+        server.modules += ("mod_rewrite")
+        url.rewrite-if-not-file = ( "^/(.*)$" => "/index.html" )
+      `,
     });
 
     serverInstance.addStateListener((newState, details, error) => {

@@ -39,13 +39,11 @@ import {
   ApiKeyApprovalStatus,
 } from '@prisma/client';
 import { cookieOptions, JWT_MAX_AGE, logoutCookieOptions } from '~/utils/cookie';
-import sendNotificationToUser from '~/service/notifications';
 import { SECRET } from '~/config';
 import { autoActivatePremierDetenteur, hasAllRequiredFields } from '~/utils/user';
 // import { refreshMaterializedViews } from '~/utils/refreshMaterializedViews';
 import { z } from 'zod';
 import { sanitize } from '~/utils/sanitize';
-import { captureException } from '@sentry/node';
 import { inviteUser } from '~/utils/invite-user';
 // import { refreshMaterializedViews } from '~/utils/refreshMaterializedViews';
 
@@ -93,7 +91,7 @@ router.post(
       if (!result.success) {
         res.status(406).send({
           ok: false,
-          data: { user: null },
+          data: { user: null, token: null },
           message: '',
           error: result.error.errors[0].message,
         });
@@ -113,7 +111,7 @@ router.post(
       if (!email) {
         res.status(400).send({
           ok: false,
-          data: { user: null },
+          data: { user: null, token: null },
           message: '',
           error: 'Veuillez renseigner votre email',
         });
@@ -122,7 +120,7 @@ router.post(
       if (!passwordUser) {
         res.status(400).send({
           ok: false,
-          data: { user: null },
+          data: { user: null, token: null },
           message: '',
           error: 'Veuillez renseigner votre mot de passe',
         });
@@ -133,7 +131,7 @@ router.post(
       if (!user) {
         res.status(400).send({
           ok: false,
-          data: { user: null },
+          data: { user: null, token: null },
           message: '',
           error: 'Email ou mot de passe incorrect',
         });
@@ -146,7 +144,7 @@ router.post(
       if (!existingPassword) {
         res.status(400).send({
           ok: false,
-          data: { user: null },
+          data: { user: null, token: null },
           message: '',
           error: 'Email ou mot de passe incorrect',
         });
@@ -157,7 +155,7 @@ router.post(
       if (!isOk) {
         res.status(400).send({
           ok: false,
-          data: { user: null },
+          data: { user: null, token: null },
           message: '',
           error: 'Email ou mot de passe incorrect',
         });
@@ -171,12 +169,8 @@ router.post(
         where: { id: user.id },
         data: { last_login_at: new Date() },
       });
-      res.cookie(
-        'zacharie_express_jwt',
-        token,
-        cookieOptions(req)
-      );
-      res.status(200).send({ ok: true, data: { user }, message: '', error: '' });
+      res.cookie('zacharie_express_jwt', token, cookieOptions(req));
+      res.status(200).send({ ok: true, data: { user, token }, message: '', error: '' });
     }
   )
 );
@@ -194,7 +188,7 @@ router.post(
       if (!result.success) {
         res.status(406).send({
           ok: false,
-          data: { user: null },
+          data: { user: null, token: null },
           message: '',
           error: result.error.errors[0].message,
         });
@@ -214,7 +208,7 @@ router.post(
       if (!email) {
         res.status(400).send({
           ok: false,
-          data: { user: null },
+          data: { user: null, token: null },
           message: '',
           error: 'Veuillez renseigner votre email',
         });
@@ -223,7 +217,7 @@ router.post(
       if (!passwordUser) {
         res.status(400).send({
           ok: false,
-          data: { user: null },
+          data: { user: null, token: null },
           message: '',
           error: 'Veuillez renseigner votre mot de passe',
         });
@@ -235,7 +229,7 @@ router.post(
       if (user) {
         res.status(400).send({
           ok: false,
-          data: { user: null },
+          data: { user: null, token: null },
           message: '',
           error: 'Un compte existe déjà avec cet email',
         });
@@ -266,12 +260,8 @@ router.post(
       const token = jwt.sign({ userId: user.id }, SECRET, {
         expiresIn: JWT_MAX_AGE,
       });
-      res.cookie(
-        'zacharie_express_jwt',
-        token,
-        cookieOptions(req)
-      );
-      res.status(200).send({ ok: true, data: { user }, message: '', error: '' });
+      res.cookie('zacharie_express_jwt', token, cookieOptions(req));
+      res.status(200).send({ ok: true, data: { user, token }, message: '', error: '' });
     }
   )
 );
@@ -289,7 +279,7 @@ router.post(
       if (!result.success) {
         res.status(406).send({
           ok: false,
-          data: { user: null },
+          data: { user: null, token: null },
           message: '',
           error: result.error.errors[0].message,
         });
@@ -309,7 +299,7 @@ router.post(
       if (!email) {
         res.status(400).send({
           ok: false,
-          data: { user: null },
+          data: { user: null, token: null },
           message: '',
           error: 'Veuillez renseigner votre email',
         });
@@ -318,7 +308,7 @@ router.post(
       if (!passwordUser) {
         res.status(400).send({
           ok: false,
-          data: { user: null },
+          data: { user: null, token: null },
           message: '',
           error: 'Veuillez renseigner votre mot de passe',
         });
@@ -327,7 +317,7 @@ router.post(
       if (!invitationToken) {
         res.status(400).send({
           ok: false,
-          data: { user: null },
+          data: { user: null, token: null },
           message: '',
           error: "Le token d'invitation est requis",
         });
@@ -339,7 +329,7 @@ router.post(
       if (!user) {
         res.status(400).send({
           ok: false,
-          data: { user: null },
+          data: { user: null, token: null },
           message: '',
           error: "L'invitation liée à cet email n'est pas valide",
         });
@@ -352,7 +342,7 @@ router.post(
       if (!existingPassword) {
         res.status(400).send({
           ok: false,
-          data: { user: null },
+          data: { user: null, token: null },
           message: '',
           error: "L'invitation liée à cet email n'est pas valide",
         });
@@ -362,7 +352,7 @@ router.post(
       if (!isOk) {
         res.status(400).send({
           ok: false,
-          data: { user: null },
+          data: { user: null, token: null },
           message: '',
           error: "L'invitation liée à cet email n'est pas valide",
         });
@@ -381,7 +371,7 @@ router.post(
         });
         res.status(400).send({
           ok: false,
-          data: { user: null },
+          data: { user: null, token: null },
           message: '',
           error:
             "L'invitation liée à cet email n'est plus valide, veuillez en demander une nouvelle à votre entreprise",
@@ -400,12 +390,8 @@ router.post(
       const token = jwt.sign({ userId: user.id }, SECRET, {
         expiresIn: JWT_MAX_AGE,
       });
-      res.cookie(
-        'zacharie_express_jwt',
-        token,
-        cookieOptions(req)
-      );
-      res.status(200).send({ ok: true, data: { user }, message: '', error: '' });
+      res.cookie('zacharie_express_jwt', token, cookieOptions(req));
+      res.status(200).send({ ok: true, data: { user, token }, message: '', error: '' });
     }
   )
 );
@@ -423,7 +409,7 @@ router.post(
       if (!result.success) {
         res.status(406).send({
           ok: false,
-          data: { user: null },
+          data: { user: null, token: null },
           message: '',
           error: result.error.errors[0].message,
         });
@@ -443,7 +429,7 @@ router.post(
       if (!email) {
         res.status(400).send({
           ok: false,
-          data: { user: null },
+          data: { user: null, token: null },
           message: '',
           error: 'Veuillez renseigner votre email',
         });
@@ -454,7 +440,7 @@ router.post(
       if (!user) {
         res.status(200).send({
           ok: true,
-          data: { user: null },
+          data: { user: null, token: null },
           error: '',
           message:
             'Si cet email existe, un email de réinitialisation de mot de passe a été envoyé\nCliquez sur le lien dans cet email pour réinitialiser votre mot de passe',
@@ -486,7 +472,7 @@ router.post(
       // Pour des raisons de sécurité, on ne révèle pas si l'email existe ou non
       res.status(200).send({
         ok: true,
-        data: { user: null },
+        data: { user: null, token: null },
         error: '',
         message:
           'Si cet email existe, un email de réinitialisation de mot de passe a été envoyé\nCliquez sur le lien dans cet email pour réinitialiser votre mot de passe',
@@ -508,7 +494,7 @@ router.post(
       if (!result.success) {
         res.status(406).send({
           ok: false,
-          data: { user: null },
+          data: { user: null, token: null },
           message: '',
           error: result.error.errors[0].message,
         });
@@ -527,7 +513,7 @@ router.post(
       if (!passwordUser) {
         res.status(400).send({
           ok: false,
-          data: { user: null },
+          data: { user: null, token: null },
           message: '',
           error: 'Veuillez renseigner votre mot de passe',
         });
@@ -536,7 +522,7 @@ router.post(
       if (!resetPasswordToken) {
         res.status(400).send({
           ok: false,
-          data: { user: null },
+          data: { user: null, token: null },
           message: '',
           error: 'Le token de réinitialisation est requis',
         });
@@ -550,7 +536,7 @@ router.post(
       if (!password) {
         res.status(400).send({
           ok: false,
-          data: { user: null },
+          data: { user: null, token: null },
           error: '',
           message: 'Le lien de réinitialisation de mot de passe est invalide. Veuillez réessayer.',
         });
@@ -563,7 +549,7 @@ router.post(
         });
         res.status(400).send({
           ok: false,
-          data: { user: null },
+          data: { user: null, token: null },
           error: '',
           message: 'Le lien de réinitialisation de mot de passe a expiré. Veuillez réessayer.',
         });
@@ -588,12 +574,13 @@ router.post(
         where: { id: user.id },
         data: { last_login_at: new Date() },
       });
-      res.cookie(
-        'zacharie_express_jwt',
-        token,
-        cookieOptions(req)
-      );
-      res.status(200).send({ ok: true, data: { user: updatedUser }, message: '', error: '' });
+      res.cookie('zacharie_express_jwt', token, cookieOptions(req));
+      res.status(200).send({
+        ok: true,
+        data: { user: updatedUser, token },
+        message: '',
+        error: '',
+      });
     }
   )
 );
@@ -619,7 +606,7 @@ router.post(
       if (!accessToken) {
         res.status(400).send({
           ok: false,
-          data: { user: null },
+          data: { user: null, token: null },
           message: '',
           error: 'Veuillez renseigner votre access token',
         });
@@ -637,7 +624,7 @@ router.post(
       if (!approval) {
         res.status(400).send({
           ok: false,
-          data: { user: null },
+          data: { user: null, token: null },
           message: '',
           error: 'Le lien de connexion est invalide. Veuillez réessayer.',
         });
@@ -650,7 +637,7 @@ router.post(
         });
         res.status(400).send({
           ok: false,
-          data: { user: null },
+          data: { user: null, token: null },
           message: '',
           error: 'Le lien de connexion a expiré. Veuillez réessayer.',
         });
@@ -663,7 +650,7 @@ router.post(
         });
         res.status(400).send({
           ok: false,
-          data: { user: null },
+          data: { user: null, token: null },
           message: '',
           error: "Le lien de connexion n'a pas été approuvé. Veuillez réessayer.",
         });
@@ -679,7 +666,7 @@ router.post(
         });
         res.status(400).send({
           ok: false,
-          data: { user: null },
+          data: { user: null, token: null },
           message: '',
           error: 'Une erreur est survenue. Veuillez réessayer.',
         });
@@ -694,18 +681,14 @@ router.post(
         data: { last_login_at: new Date() },
       });
       // refreshMaterializedViews();
-      res.cookie(
-        'zacharie_express_jwt',
-        token,
-        cookieOptions(req)
-      );
+      res.cookie('zacharie_express_jwt', token, cookieOptions(req));
       await prisma.apiKeyApprovalByUserOrEntity.update({
         where: { access_token: accessToken },
         data: { access_token: null, access_token_created_at: null },
       });
       res.status(200).send({
         ok: true,
-        data: { user, contexte: approval.ApiKey.slug_for_context },
+        data: { user, contexte: approval.ApiKey.slug_for_context, token },
         message: '',
         error: '',
       });
@@ -717,10 +700,7 @@ router.post(
   '/logout',
   passport.authenticate('user', { session: false, failWithError: true }),
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    res.clearCookie(
-      'zacharie_express_jwt',
-      logoutCookieOptions(req)
-    );
+    res.clearCookie('zacharie_express_jwt', logoutCookieOptions(req));
     res.status(200).send({ ok: true });
   })
 );
@@ -1005,7 +985,7 @@ router.post(
       if (!user) {
         res.status(400).send({
           ok: false,
-          data: { user: null },
+          data: { user: null, token: null },
           error: 'User not found',
           message: '',
         });
@@ -1016,7 +996,7 @@ router.post(
         if (user.id !== req.user.id) {
           res.status(400).send({
             ok: false,
-            data: { user: null },
+            data: { user: null, token: null },
             error: 'User not authorized',
             message: '',
           });
@@ -1155,6 +1135,7 @@ router.post(
           ok: false,
           data: {
             user: null,
+            token: null,
           },
           error: 'Missing user_id',
           message: '',
@@ -1222,7 +1203,7 @@ ${savedUser.roles.includes(UserRoles.CHASSEUR) && savedUser.est_forme_a_l_examen
         });
       }
 
-      res.status(200).send({ ok: true, data: { user: savedUser }, error: '', message: '' });
+      res.status(200).send({ ok: true, data: { user: savedUser, token: null }, error: '', message: '' });
     }
   )
 );
@@ -1254,7 +1235,7 @@ router.get(
         );
         if (!approvedRelations?.length) {
           req.user.activated = false;
-          res.status(200).send({ ok: true, data: { user: req.user }, error: null, message: '' });
+          res.status(200).send({ ok: true, data: { user: req.user, token: null }, error: null, message: '' });
           return;
         }
       }
@@ -1291,7 +1272,9 @@ router.get(
           },
         },
       });
-      res.status(200).send({ ok: true, data: { user: req.user, apiKeyApprovals }, error: null, message: '' });
+      res
+        .status(200)
+        .send({ ok: true, data: { user: req.user, apiKeyApprovals, token: null }, error: null, message: '' });
     }
   )
 );

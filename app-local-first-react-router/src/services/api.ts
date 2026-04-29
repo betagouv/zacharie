@@ -29,6 +29,28 @@ interface ApiServiceArgs {
   signal?: AbortSignal;
 }
 
+// Native WebView clients can't rely on cross-site cookies (WebKit ITP),
+// so the API returns the JWT in the response body and we send it back
+// as `Authorization: Bearer <token>`. Web clients keep using cookies.
+const NATIVE_TOKEN_KEY = 'zacharie_native_jwt';
+const isNativeClient = () => typeof window !== 'undefined' && !!window.ReactNativeWebView;
+export const getNativeAuthToken = (): string | null => {
+  if (!isNativeClient()) return null;
+  try {
+    return window.localStorage.getItem(NATIVE_TOKEN_KEY);
+  } catch {
+    return null;
+  }
+};
+export const setNativeAuthToken = (token: string | null): void => {
+  if (!isNativeClient()) return;
+  try {
+    if (token) window.localStorage.setItem(NATIVE_TOKEN_KEY, token);
+    else window.localStorage.removeItem(NATIVE_TOKEN_KEY);
+    // eslint-disable-next-line no-empty
+  } catch {}
+};
+
 class ApiService {
   origin = import.meta.env.VITE_API_URL;
   getUrl = (path: string, query = {}) => {
@@ -46,6 +68,7 @@ class ApiService {
     signal,
   }: ApiServiceArgs) => {
     try {
+      const nativeToken = getNativeAuthToken();
       const config = {
         method,
         credentials: 'include' as RequestCredentials,
@@ -54,6 +77,7 @@ class ApiService {
           Accept: 'application/json',
           appversion: __VITE_BUILD_ID__,
           platform: window.ReactNativeWebView ? 'native' : 'web',
+          ...(nativeToken ? { Authorization: `Bearer ${nativeToken}` } : {}),
           ...headers,
         },
         body: body ? JSON.stringify(body) : null,
@@ -74,6 +98,7 @@ class ApiService {
 
       const response = await fetch(url, config);
       if (response.status === 401) {
+        setNativeAuthToken(null);
         await clearCache();
         if (!window.location.href.includes('/app/connexion')) {
           const URLParams = new URLSearchParams(window.location.search);
@@ -91,6 +116,9 @@ class ApiService {
       if (config.headers.Accept === 'application/json' && response.json) {
         try {
           const readableRes = await response.json();
+          if (readableRes && typeof readableRes === 'object' && typeof readableRes.data.token === 'string') {
+            setNativeAuthToken(readableRes.data.token);
+          }
           return readableRes;
         } catch (e) {
           console.log('ERROR IN RESPONSE JSON', response);

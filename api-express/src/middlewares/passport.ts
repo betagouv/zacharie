@@ -2,7 +2,7 @@ import passport from 'passport';
 import { Strategy as JwtStrategy, ExtractJwt, StrategyOptions } from 'passport-jwt';
 import { HeaderAPIKeyStrategy } from 'passport-headerapikey';
 import prisma from '~/prisma';
-import { ApiKey, ApiKeyLog, User } from '@prisma/client';
+import { ApiKey, User } from '@prisma/client';
 import type { Request } from 'express';
 import { SECRET } from '~/config';
 
@@ -18,8 +18,20 @@ const cookieExtractor = (req: Request): string | null => {
   return token;
 };
 
+// Native WebView clients can't rely on cross-site cookies (WebKit ITP),
+// so they send the JWT as `Authorization: Bearer <token>` instead.
+// Only applied to the user/admin strategies — the apiKey strategy reads
+// its own key from the same header but is mounted on /v1/ routes only.
+const bearerExtractor = (req: Request): string | null => {
+  const auth = req.headers.authorization;
+  if (auth?.startsWith('Bearer ')) {
+    return auth.substring('Bearer '.length);
+  }
+  return null;
+};
+
 const jwtOptions: StrategyOptions = {
-  jwtFromRequest: ExtractJwt.fromExtractors([cookieExtractor]),
+  jwtFromRequest: ExtractJwt.fromExtractors([cookieExtractor, bearerExtractor]),
   secretOrKey: SECRET,
 };
 
