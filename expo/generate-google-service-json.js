@@ -2,6 +2,7 @@ const fs = require('fs');
 
 // we can't use `dotenv` in here because, as says Claude.ai:
 // When running a local EAS build, the build process creates a temporary directory and copies your project files there. It seems the .env file is not being included in this process.
+
 const googleServicesBase64 = process.env.GOOGLE_SERVICES_BASE64;
 
 if (!googleServicesBase64) {
