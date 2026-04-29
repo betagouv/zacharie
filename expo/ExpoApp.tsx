@@ -1,4 +1,13 @@
-import { StyleSheet, Platform, BackHandler, Linking, Modal, View, TouchableOpacity, Text } from 'react-native';
+import {
+  StyleSheet,
+  Platform,
+  BackHandler,
+  Linking,
+  Modal,
+  View,
+  TouchableOpacity,
+  Text,
+} from 'react-native';
 import { WebView, type WebViewMessageEvent } from '@dr.pogodin/react-native-webview';
 import { registerForPushNotificationsAsync } from './services/expo-push-notifs';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -136,6 +145,9 @@ function App() {
     }, 3000);
   }, []);
 
+  console.log('spaUrl: ', spaUrl);
+  console.log('spaReady: ', spaReady);
+
   return (
     <SafeAreaView style={styles.safeContainer} edges={['left', 'right', 'top', 'bottom']}>
       {spaReady && spaUrl ? (
@@ -144,14 +156,14 @@ function App() {
           style={styles.container}
           startInLoadingState
           onLoadEnd={onLoadEnd}
-          onError={(error) => console.log('onError', error)}
+          onError={(error: any) => console.log('onError', error)}
           source={{ uri: spaUrl }}
           originWhitelist={['*']}
           pullToRefreshEnabled
           allowsBackForwardNavigationGestures
           onContentProcessDidTerminate={() => ref.current?.reload()}
           onMessage={onMessage}
-          onShouldStartLoadWithRequest={(request) => {
+          onShouldStartLoadWithRequest={(request: any) => {
             const stayInWebView = request.url.startsWith(spaUrl);
             if (!stayInWebView) {
               Linking.openURL(request.url);
@@ -204,8 +216,6 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    borderWidth: 5,
-    borderColor: 'red',
   },
   containerOffline: {
     flex: 1,

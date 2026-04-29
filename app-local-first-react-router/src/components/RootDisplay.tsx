@@ -6,7 +6,7 @@ import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import SearchInput from '@app/components/SearchInput';
 import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { useRef } from 'react';
-import API from '@app/services/api';
+import API, { setNativeAuthToken } from '@app/services/api';
 import { useSearchParams } from 'react-router';
 import { UserRoles } from '@prisma/client';
 
@@ -62,6 +62,7 @@ export default function RootDisplay({
       buttonProps: {
         onClick: async () => {
           API.post({ path: '/user/logout' }).then(async () => {
+            setNativeAuthToken(null);
             await clearCache().then(() => {
               window.location.href = '/app/connexion';
             });
