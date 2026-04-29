@@ -19,7 +19,7 @@ router.get(
         saisiesUrl: getIframeUrl(37),
       },
     });
-  }),
+  })
 );
 
 router.get(
@@ -101,7 +101,7 @@ router.get(
       FeiOwnerRole.CONSOMMATEUR_FINAL,
     ];
     const sviEligibleCarcasses = bigGameCarcasses.filter(
-      (c) => !c.next_owner_role || !circuitCourtRoles.includes(c.next_owner_role),
+      (c) => !c.next_owner_role || !circuitCourtRoles.includes(c.next_owner_role)
     );
     const hasAnySviReturn = sviEligibleCarcasses.some((c) => c.svi_carcasse_status !== null);
 
@@ -131,7 +131,7 @@ router.get(
     const seizedBigGame = sviEligibleCarcasses.filter(
       (c) =>
         c.svi_carcasse_status === CarcasseStatus.SAISIE_TOTALE ||
-        c.svi_carcasse_status === CarcasseStatus.SAISIE_PARTIELLE,
+        c.svi_carcasse_status === CarcasseStatus.SAISIE_PARTIELLE
     );
     const personalSeizureRate =
       sviEligibleCarcasses.length > 0 && hasAnySviReturn
@@ -196,7 +196,7 @@ router.get(
       (c) =>
         (c.svi_carcasse_status === CarcasseStatus.SAISIE_TOTALE ||
           c.svi_carcasse_status === CarcasseStatus.SAISIE_PARTIELLE) &&
-        hasBphMotif(c.svi_ipm2_lesions_ou_motifs),
+        hasBphMotif(c.svi_ipm2_lesions_ou_motifs)
     );
 
     const personalBphRate =
@@ -261,7 +261,7 @@ router.get(
         },
       },
     });
-  }),
+  })
 );
 
 export default router;

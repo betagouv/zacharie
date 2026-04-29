@@ -4,34 +4,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import Server, { STATES } from '@dr.pogodin/react-native-static-server';
 
-const APP_URL = 'https://zacharie.beta.gouv.fr/';
 const SPA_DIR = new Directory(Paths.document, 'spa');
-const MANIFEST_URL = `${APP_URL}spa-manifest.json`;
-const VERSION_URL = `${APP_URL}`; // GET / returns version string
 
-export const checkAndDownloadSpa = async (): Promise<void> => {
+export const checkAndDownloadSpa = async (initialUrl: string): Promise<void> => {
+  const MANIFEST_URL = `${initialUrl}spa-manifest.json`;
   try {
     // 1. Get remote version
     console.log('Checking for SPA update...');
-    const response = await fetch(VERSION_URL);
-    if (!response.ok) throw new Error('Failed to fetch version');
-
-    // The endpoint returns something like "Hello World at 2026-01-01... version 1.2.3"
-    // We can just use the whole string as a signature, or extract version
-    const remoteVersionText = await response.text();
-
-    // 2. Get local version
-    const localVersionText = await AsyncStorage.getItem('spa-version');
-
-    if (remoteVersionText === localVersionText) {
-      console.log('SPA is up to date');
-      // Check if we actually have files, if not, force download
-      if (SPA_DIR.exists) return;
-    }
-
-    console.log('New version detected or missing files. Downloading SPA...');
-
-    // 3. Download manifest
     const manifestResponse = await fetch(MANIFEST_URL);
     console.log('manifestResponse: ', manifestResponse);
     if (!manifestResponse.ok) {
@@ -39,7 +18,22 @@ export const checkAndDownloadSpa = async (): Promise<void> => {
       return;
     }
     const manifest = (await manifestResponse.json()) as { assets: { url: string }[] };
+    const manifestVersioning = JSON.stringify(manifest);
     const assets = manifest.assets;
+
+    // The endpoint returns something like "Hello World at 2026-01-01... version 1.2.3"
+    // We can just use the whole string as a signature, or extract version
+
+    // 2. Get local version
+    const localVersioning = await AsyncStorage.getItem('spa-versioning');
+
+    if (manifestVersioning === localVersioning) {
+      console.log('SPA is up to date');
+      // Check if we actually have files, if not, force download
+      if (SPA_DIR.exists) return;
+    }
+
+    console.log('New version detected or missing files. Downloading SPA...');
 
     // 4. Create directory
     if (!SPA_DIR.exists) {
@@ -51,7 +45,7 @@ export const checkAndDownloadSpa = async (): Promise<void> => {
 
     for (const asset of assets) {
       const url = asset.url.startsWith('/') ? asset.url.substring(1) : asset.url; // Remove leading slash
-      const remoteUrl = `${APP_URL}${url}`;
+      const remoteUrl = `${initialUrl}${url}`;
 
       const file = new File(SPA_DIR, url);
       // Ensure parent directory exists
@@ -76,7 +70,7 @@ export const checkAndDownloadSpa = async (): Promise<void> => {
     console.log(`Downloaded ${downloadedCount} assets`);
 
     // 6. Update version
-    await AsyncStorage.setItem('spa-version', remoteVersionText);
+    await AsyncStorage.setItem('spa-versioning', manifestVersioning);
   } catch (error) {
     console.error('Error in checkAndDownloadSpa:', error);
   }

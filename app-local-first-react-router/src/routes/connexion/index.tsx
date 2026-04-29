@@ -50,7 +50,7 @@ export default function Connexion() {
         capture(error, { extra: { formData: Object.fromEntries(formData) } });
         return {
           ok: false,
-          data: { user: null },
+          data: { user: null, token: null },
           message: 'Service momentanément indisponible, veuillez réessayer ultérieurement',
           error: 'Erreur inconnue',
         };
@@ -60,6 +60,9 @@ export default function Connexion() {
       window.scrollTo(0, 0);
     }
     if (response.ok && response.data?.user?.id) {
+      window.ReactNativeWebView?.postMessage(
+        JSON.stringify({ event: 'save-initial-url', initialUrl: getUserOnboardingRoute(response.data.user) })
+      );
       const user = response.data.user as User;
       useUser.setState({ user });
       useZustandStore.setState((state) => ({
