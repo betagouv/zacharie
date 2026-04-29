@@ -19,7 +19,6 @@ import Constants from 'expo-constants';
 import { checkAndDownloadSpa, startSpaServer, stopSpaServer } from './utils/offline-spa';
 
 SplashScreen.preventAutoHideAsync();
-const APP_URL = 'https://zacharie.beta.gouv.fr/';
 
 const initScript = `window.ENV = {};window.ENV.APP_PLATFORM = "native";true`;
 function App() {
@@ -30,10 +29,13 @@ function App() {
 
   useEffect(() => {
     AsyncStorage.getItem('initial-path').then((initialPath = '/') => {
-      console.log('initialPath: ', initialPath);
-      checkAndDownloadSpa(`${APP_URL}${initialPath}`).then(() => {
+      checkAndDownloadSpa().then(() => {
         startSpaServer().then((url) => {
-          if (url) setSpaUrl(url);
+          if (url) {
+            if (initialPath) url += initialPath;
+            console.log('url: ', url);
+            setSpaUrl(url);
+          }
           setSpaReady(true);
         });
       });

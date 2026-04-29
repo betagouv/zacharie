@@ -4,10 +4,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import Server, { STATES } from '@dr.pogodin/react-native-static-server';
 
+const APP_URL = 'https://zacharie.beta.gouv.fr/';
 const SPA_DIR = new Directory(Paths.document, 'spa');
 
-export const checkAndDownloadSpa = async (initialUrl: string): Promise<void> => {
-  const MANIFEST_URL = `${initialUrl}spa-manifest.json`;
+let forceRefreshKey = '1';
+
+export const checkAndDownloadSpa = async (): Promise<void> => {
+  const MANIFEST_URL = `${APP_URL}spa-manifest.json`;
   try {
     // 1. Get remote version
     console.log('Checking for SPA update...');
@@ -26,8 +29,9 @@ export const checkAndDownloadSpa = async (initialUrl: string): Promise<void> => 
 
     // 2. Get local version
     const localVersioning = await AsyncStorage.getItem('spa-versioning');
+    const localForceRefreshKey = await AsyncStorage.getItem('spa-force-refresh-key');
 
-    if (manifestVersioning === localVersioning) {
+    if (manifestVersioning === localVersioning && localForceRefreshKey === forceRefreshKey) {
       console.log('SPA is up to date');
       // Check if we actually have files, if not, force download
       if (SPA_DIR.exists) return;
@@ -45,7 +49,7 @@ export const checkAndDownloadSpa = async (initialUrl: string): Promise<void> => 
 
     for (const asset of assets) {
       const url = asset.url.startsWith('/') ? asset.url.substring(1) : asset.url; // Remove leading slash
-      const remoteUrl = `${initialUrl}${url}`;
+      const remoteUrl = `${APP_URL}${url}`;
 
       const file = new File(SPA_DIR, url);
       // Ensure parent directory exists
@@ -71,6 +75,7 @@ export const checkAndDownloadSpa = async (initialUrl: string): Promise<void> => 
 
     // 6. Update version
     await AsyncStorage.setItem('spa-versioning', manifestVersioning);
+    await AsyncStorage.setItem('spa-force-refresh-key', forceRefreshKey);
   } catch (error) {
     console.error('Error in checkAndDownloadSpa:', error);
   }
