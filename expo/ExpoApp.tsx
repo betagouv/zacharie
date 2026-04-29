@@ -1,24 +1,13 @@
-import {
-  StyleSheet,
-  Platform,
-  BackHandler,
-  Linking,
-  Modal,
-  View,
-  TouchableOpacity,
-  Text,
-} from 'react-native';
+import { StyleSheet, Platform, BackHandler, Modal, View, TouchableOpacity, Text } from 'react-native';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import { registerForPushNotificationsAsync } from './services/expo-push-notifs';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
-const APP_URL = __DEV__ ? process.env.EXPO_PUBLIC_APP_URL : 'https://zacharie.beta.gouv.fr/';
-// const APP_URL = "https://zacharie.beta.gouv.fr/";
-// EXPO_PUBLIC_APP_URL should be set in .env and should be like http://x.x.x.x:3234/ - get the IP with `ipconfig getifaddr en0` on macos for example
+import { checkAndDownloadSpa, getLocalBaseUrl, getOfflineHtml } from './utils/offline-spa';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -26,6 +15,17 @@ const initScript = `window.ENV = {};window.ENV.APP_PLATFORM = "native";true`;
 function App() {
   const ref = useRef<WebView>(null);
   const [externalLink, setExternalLink] = useState<string | null>(null);
+  const [offlineHtml, setOfflineHtml] = useState<string | null>(null);
+  const [spaReady, setSpaReady] = useState(false);
+
+  useEffect(() => {
+    checkAndDownloadSpa().then(() => {
+      getOfflineHtml().then((html) => {
+        if (html) setOfflineHtml(html);
+        setSpaReady(true);
+      });
+    });
+  }, []);
 
   const onLoadEnd = () => {
     ref.current?.injectJavaScript(`if (window.ENV) { window.ENV.PLATFORM_OS = "${Platform.OS}"; }true`);
@@ -35,9 +35,7 @@ function App() {
         .then((response) => {
           console.log('getLastNotificationResponseAsync', response);
           if (response) {
-            ref.current?.injectJavaScript(
-              `window.onNotificationResponseReceived('${JSON.stringify(response)}');`
-            );
+            // ref.current?.injectJavaScript(`window.onNotificationResponseReceived('${JSON.stringify(response)}');`);
             Notifications.clearLastNotificationResponseAsync();
           }
         })
@@ -61,16 +59,9 @@ function App() {
       if (!token) {
         return;
       }
-      ref.current?.injectJavaScript(`window.onNativePushToken('${JSON.stringify(token)}');`);
+      ref.current?.injectJavaScript(`window.onNativePushToken('${JSON.stringify(token)}');true`);
     });
   };
-
-  const source = useMemo(
-    () => ({
-      uri: `${APP_URL}app/tableau-de-bord`,
-    }),
-    [APP_URL]
-  );
 
   const onAndroidBackPress = () => {
     if (ref.current) {
@@ -104,7 +95,7 @@ function App() {
       }
       switch (event.nativeEvent.data) {
         case 'request-native-get-inset-bottom-height':
-          ref.current?.injectJavaScript(`window.onGetInsetBottomHeight('${insets.bottom}');`);
+          // ref.current?.injectJavaScript(`window.onGetInsetBottomHeight('${insets.bottom}');`);
           break;
         case 'request-native-push-permission':
         case 'request-native-expo-push-permission':
@@ -124,9 +115,7 @@ function App() {
     responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
       console.log('responseListener', response);
       setTimeout(() => {
-        ref.current?.injectJavaScript(
-          `window.onNotificationResponseReceived('${JSON.stringify(response)}');`
-        );
+        // ref.current?.injectJavaScript(`window.onNotificationResponseReceived('${JSON.stringify(response)}');`);
       }, 1500);
     });
 
@@ -140,25 +129,23 @@ function App() {
   useEffect(() => {
     setTimeout(() => {
       console.log('Constants.expoConfig?.version', Constants.expoConfig?.version);
-      ref.current?.injectJavaScript(
-        `window.onAppVersion('${JSON.stringify(Constants.expoConfig?.version)}');`
-      );
+      // ref.current?.injectJavaScript(`window.onAppVersion('${JSON.stringify(Constants.expoConfig?.version)}');`);
     }, 3000);
   }, []);
 
   return (
-    <SafeAreaProvider>
-      <SafeAreaView style={styles.safeContainer} edges={['left', 'right', 'top', 'bottom']}>
+    <SafeAreaView style={styles.safeContainer} edges={['left', 'right', 'top', 'bottom']}>
+      {spaReady && offlineHtml ? (
         <WebView
           ref={ref}
           style={styles.container}
           startInLoadingState
           onLoadEnd={onLoadEnd}
-          source={source}
+          source={{ html: offlineHtml, baseUrl: getLocalBaseUrl() }}
+          originWhitelist={['*']}
           pullToRefreshEnabled
           allowsBackForwardNavigationGestures
           onContentProcessDidTerminate={() => ref.current?.reload()}
-          // onNavigationStateChange={onNavigationStateChange}
           onMessage={onMessage}
           sharedCookiesEnabled={true}
           thirdPartyCookiesEnabled={true}
@@ -166,27 +153,31 @@ function App() {
           javaScriptEnabled
           injectedJavaScript={initScript}
         />
-        <Modal
-          visible={!!externalLink}
-          onRequestClose={() => setExternalLink(null)}
-          animationType="slide"
-          presentationStyle="formSheet"
-        >
-          <SafeAreaView style={styles.safeContainer}>
-            <View style={styles.modalContainer}>
-              <TouchableOpacity onPress={() => setExternalLink(null)} style={styles.closeButton}>
-                <Text style={styles.closeButtonText}>Fermer</Text>
-              </TouchableOpacity>
-            </View>
-            <WebView source={{ uri: externalLink ?? '' }} style={styles.safeContainer} />
-          </SafeAreaView>
-        </Modal>
-      </SafeAreaView>
-    </SafeAreaProvider>
+      ) : spaReady ? (
+        <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+          <Text>Pas de cache disponible. Connectez-vous à internet pour télécharger l'application.</Text>
+        </View>
+      ) : null}
+      <Modal
+        visible={!!externalLink}
+        onRequestClose={() => setExternalLink(null)}
+        animationType="slide"
+        presentationStyle="formSheet"
+      >
+        <SafeAreaView style={styles.safeContainer}>
+          <View style={styles.modalContainer}>
+            <TouchableOpacity onPress={() => setExternalLink(null)} style={styles.closeButton}>
+              <Text style={styles.closeButtonText}>Fermer</Text>
+            </TouchableOpacity>
+          </View>
+          <WebView source={{ uri: externalLink ?? '' }} style={styles.container} />
+        </SafeAreaView>
+      </Modal>
+    </SafeAreaView>
   );
 }
 
-export default function () {
+export default function AppWrapped() {
   return (
     <SafeAreaProvider>
       <App />
@@ -201,6 +192,11 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
+  },
+  containerOffline: {
+    flex: 1,
+    borderWidth: 5,
+    borderColor: '#000091',
   },
   closeButton: {
     padding: 8,
