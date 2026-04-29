@@ -19,6 +19,7 @@ import Constants from 'expo-constants';
 import { checkAndDownloadSpa, startSpaServer, stopSpaServer } from './utils/offline-spa';
 
 SplashScreen.preventAutoHideAsync();
+const APP_URL = 'https://zacharie.beta.gouv.fr/';
 
 const initScript = `window.ENV = {};window.ENV.APP_PLATFORM = "native";true`;
 function App() {
@@ -28,15 +29,17 @@ function App() {
   const [spaReady, setSpaReady] = useState(false);
 
   useEffect(() => {
-    checkAndDownloadSpa().then(() => {
-      startSpaServer().then((url) => {
-        if (url) setSpaUrl(url);
-        setSpaReady(true);
+    AsyncStorage.getItem('initial-url').then((initialUrl) => {
+      checkAndDownloadSpa(initialUrl ?? APP_URL).then(() => {
+        startSpaServer().then((url) => {
+          if (url) setSpaUrl(url);
+          setSpaReady(true);
+        });
       });
+      return () => {
+        stopSpaServer();
+      };
     });
-    return () => {
-      stopSpaServer();
-    };
   }, []);
 
   const onLoadEnd = () => {
@@ -105,10 +108,12 @@ function App() {
         setExternalLink(url);
         return;
       }
+      if (event.nativeEvent.data.includes('save-initial-url')) {
+        const { initialUrl } = JSON.parse(event.nativeEvent.data);
+        AsyncStorage.setItem('initial-url', initialUrl);
+        return;
+      }
       switch (event.nativeEvent.data) {
-        case 'request-native-get-inset-bottom-height':
-          // ref.current?.injectJavaScript(`window.onGetInsetBottomHeight('${insets.bottom}');`);
-          break;
         case 'request-native-push-permission':
         case 'request-native-expo-push-permission':
         case 'request-native-get-token-if-exists':
@@ -137,16 +142,6 @@ function App() {
       }
     };
   }, []);
-
-  useEffect(() => {
-    setTimeout(() => {
-      console.log('Constants.expoConfig?.version', Constants.expoConfig?.version);
-      // ref.current?.injectJavaScript(`window.onAppVersion('${JSON.stringify(Constants.expoConfig?.version)}');`);
-    }, 3000);
-  }, []);
-
-  console.log('spaUrl: ', spaUrl);
-  console.log('spaReady: ', spaReady);
 
   return (
     <SafeAreaView style={styles.safeContainer} edges={['left', 'right', 'top', 'bottom']}>
