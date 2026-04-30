@@ -4,11 +4,12 @@ import { type MainNavigationProps } from '@codegouvfr/react-dsfr/MainNavigation'
 import { clearCache } from '@app/services/indexed-db';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import SearchInput from '@app/components/SearchInput';
-import { refreshUser, useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
+import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { useRef } from 'react';
 import API, { setNativeAuthToken } from '@app/services/api';
-import { useSearchParams } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 import { UserRoles } from '@prisma/client';
+import useUser from '@app/zustand/user';
 
 const environment = import.meta.env.VITE_ENV || 'development';
 
@@ -31,6 +32,7 @@ export default function RootDisplay({
   const embedded = searchParams.get('embedded') === 'true';
   const user = useMostFreshUser('RootDisplay ' + id);
   const isOnline = useIsOnline();
+  const navigate = useNavigate();
 
   const RenderedSearchInput = useRef(SearchInput).current;
 
@@ -63,7 +65,10 @@ export default function RootDisplay({
         onClick: async () => {
           API.post({ path: '/user/logout' }).then(async () => {
             setNativeAuthToken(null);
-            await clearCache().then(() => refreshUser('RootDisplay logout'));
+            useUser.setState({ user: null });
+            await clearCache().then(() => {
+              navigate('/app/connexion');
+            });
           });
         },
       },

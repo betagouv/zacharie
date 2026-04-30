@@ -99,7 +99,7 @@ class ApiService {
       const response = await fetch(url, config);
       if (response.status === 401) {
         setNativeAuthToken(null);
-        await clearCache();
+        await clearCache('api');
         if (!window.location.href.includes('/app/connexion')) {
           const URLParams = new URLSearchParams(window.location.search);
           URLParams.set('communication', 'Votre session a expiré, veuillez vous reconnecter.');
