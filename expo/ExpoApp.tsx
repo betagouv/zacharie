@@ -203,7 +203,10 @@ function App() {
           />
         ) : spaReady ? (
           <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-            <Text>Pas de cache disponible. Connectez-vous à internet pour télécharger l'application.</Text>
+            <Text>
+              L'application n'est pas encore téléchargée et ne peut pas encore fontionner sans réseau.
+              Connectez-vous à internet pour la télécharger d'abord.
+            </Text>
           </View>
         ) : null}
         <Modal
