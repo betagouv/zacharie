@@ -1397,6 +1397,7 @@ router.get(
                     SELECT 1 FROM unnest(c.svi_ipm2_lesions_ou_motifs) m
                     WHERE m ILIKE ANY(ARRAY[
                       '%Souillures d''origine digestive%',
+                      '%Souillures d''origine digestive liées à une balle d''abdomen%'
                       '%souillures telluriques%',
                       '%Odeur anormale%',
                       '%Putréfaction superficielle%',
@@ -1404,9 +1405,7 @@ router.get(
                       '%Moisissures%',
                       '%Œufs ou larves de mouche%',
                       '%orsure de chien%',
-                      '%Viande à évolution anormale%',
                       '%Conditions de préparation des viandes par le producteur primaire%',
-                      '%Souillures d’origine digestive liées à une balle d''abdomen%'
                     ])
                   )
               )::float / NULLIF(COUNT(*)::float, 0) * 100

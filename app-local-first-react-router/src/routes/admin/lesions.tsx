@@ -13,6 +13,7 @@ import lesions from '@app/data/svi/lesions.json';
 // la valeur `MOTIVATION EN FAIT (CERTIFICAT)` (cf. utils/lesions.ts → lesionsList).
 const BPH_PATTERNS = [
   "souillures d'origine digestive",
+  "souillures d'origine digestive liées à une balle d'abdomen",
   'souillures telluriques',
   'odeur anormale',
   'putréfaction superficielle',
@@ -20,9 +21,7 @@ const BPH_PATTERNS = [
   'moisissures',
   'œufs ou larves de mouche',
   'morsure de chien',
-  'viande à évolution anormale',
   'conditions de préparation des viandes par le producteur primaire',
-  'souillures d\'origine digestive liées à une balle d\'abdomen',
 ];
 
 function isBphMotif(item: { 'MOTIVATION EN FAIT (CERTIFICAT)': string }) {
