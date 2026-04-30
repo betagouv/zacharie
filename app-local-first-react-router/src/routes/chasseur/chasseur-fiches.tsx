@@ -624,7 +624,7 @@ export default function ChasseurFiches() {
           setLoading(false);
         }}
       >
-        Appliquer
+        Mettre à jour
       </Button>
     </>
   );
