@@ -296,7 +296,7 @@ export function computeFeiSteps({
       return 'Information manquante';
     }
     if (currentStepLabel === 'Validation par le premier détenteur') {
-      return 'Fiche complète, pas encore envoyée';
+      return 'Validation par le premier détenteur';
     }
     if (currentStepLabel === 'Fiche envoyée, pas encore traitée') {
       return 'Fiche envoyée, pas encore prise en charge';
