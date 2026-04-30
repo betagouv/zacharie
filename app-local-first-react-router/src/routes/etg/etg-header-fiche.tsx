@@ -22,7 +22,7 @@ const statusColors: Record<FeiStepSimpleStatus, { bg: string; text: string }> = 
 export default function EtgHeaderFiche({ fei }: { fei: FeiWithIntermediaires }) {
   const { simpleStatus, currentStepLabelForEtg } = useFeiSteps(fei);
 
-  const chasseTitle = `Chasse du ${dayjs(fei.date_mise_a_mort).format('DD/MM/YYYY')}`
+  const chasseTitle = `Fiche du ${dayjs(fei.date_mise_a_mort).format('DD/MM/YYYY')}`
   const title = fei.premier_detenteur_name_cache
     ? `${chasseTitle} | ${fei.premier_detenteur_name_cache}`
     : chasseTitle;
@@ -32,7 +32,7 @@ export default function EtgHeaderFiche({ fei }: { fei: FeiWithIntermediaires }) 
 
   return (
     <div className="fr-mb-2w rounded bg-white p-4 md:p-8">
-      <h1 className="fr-h3 fr-mb-1w">{title}</h1>
+      <h1 className="fr-h5 fr-mb-1w">{title}</h1>
       <div className="flex items-center gap-2">
         <Tag
           small

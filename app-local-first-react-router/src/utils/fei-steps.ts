@@ -290,7 +290,7 @@ export function computeFeiSteps({
 
   const currentStepLabelForChasseur: FeiStepForChasseur = (() => {
     if (currentStepLabel === 'Clôturée') {
-      return 'Inspection terminée';
+      return 'Carcasses traitées';
     }
     if (currentStepLabel === 'Examen initial') {
       return 'Information manquante';
@@ -311,12 +311,12 @@ export function computeFeiSteps({
         ? `Prise en charge par le transporteur ${destinataire}`
         : 'Prise en charge par le transporteur';
     }
-    if (currentStepLabel === 'Réception par un établissement de traitement') {
-      const destinataire = fei.fei_current_owner_entity_name_cache;
-      return destinataire ? `Prise en charge par l'atelier ${destinataire}` : "Prise en charge par l'atelier";
-    }
-    if (currentStepLabel === 'Inspection par le SVI') {
-      return 'En cours de traitement';
+    if (
+      currentStepLabel === 'Inspection par le SVI' ||
+      currentStepLabel === 'Réception par un établissement de traitement' ||
+      currentStepLabel === 'En cours'
+    ) {
+      return 'Traitement des carcasses';
     }
     return currentStepLabel;
   })();

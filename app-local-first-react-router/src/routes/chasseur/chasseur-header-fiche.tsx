@@ -17,15 +17,15 @@ export default function ChasseurHeaderFiche({ fei }: { fei: FeiWithIntermediaire
   const title = isNewFiche
     ? 'Nouvelle fiche'
     : fei.date_mise_a_mort
-      ? `Chasse du ${dayjs(fei.date_mise_a_mort).format('DD/MM/YYYY')}`
-      : 'Chasse';
+      ? `Fiche du ${dayjs(fei.date_mise_a_mort).format('DD/MM/YYYY')}`
+      : 'Fiche';
 
   const isClosed = simpleStatus === 'Clôturée';
   const stepIcon = isClosed ? '🔒' : '⏳';
 
   return (
     <div className="fr-mb-2w rounded bg-white p-4 md:p-8">
-      <h1 className="fr-h3 fr-mb-1w">{title}</h1>
+      <h1 className="fr-h5 fr-mb-1w">{title}</h1>
       {!isNewFiche && (
         <div className="flex items-center gap-2">
           <Tag
