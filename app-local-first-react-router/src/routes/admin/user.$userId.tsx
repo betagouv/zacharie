@@ -205,8 +205,11 @@ export default function AdminUser() {
                       body: { email: user.email! },
                     });
                     await clearCache().then(() => {
-                      navigate(getUserOnboardingRoute(user), { replace: true });
-                      refreshUser('admin/user/connect-as');
+                      refreshUser('admin/user/connect-as').then((user) => {
+                        if (user) {
+                          navigate(getUserOnboardingRoute(user), { replace: true });
+                        }
+                      });
                     });
                   }}
                 >

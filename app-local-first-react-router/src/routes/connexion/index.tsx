@@ -90,7 +90,6 @@ export default function Connexion() {
   };
 
   useEffect(() => {
-    console.log('user', user);
     if (user) {
       handleRedirect(user);
     } else {
