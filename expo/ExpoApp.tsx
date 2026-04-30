@@ -16,7 +16,9 @@ import * as SplashScreen from 'expo-splash-screen';
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
+import { useFonts } from 'expo-font';
 import { checkAndDownloadSpa, startSpaServer, stopSpaServer } from './utils/offline-spa';
+import Chargement from './components/Chargement';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -26,6 +28,22 @@ function App() {
   const [externalLink, setExternalLink] = useState<string | null>(null);
   const [spaUrl, setSpaUrl] = useState<string | null>(null);
   const [spaReady, setSpaReady] = useState(false);
+  const [fontsLoaded] = useFonts({
+    'Marianne-Regular': require('./assets/marianne/Marianne-Regular.ttf'),
+    'Marianne-Medium': require('./assets/marianne/Marianne-Medium.ttf'),
+    'Marianne-Bold': require('./assets/marianne/Marianne-Bold.ttf'),
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Hand off the native splash to <Chargement /> only once Marianne is
+    // available, otherwise the loader briefly renders with the system font.
+    if (fontsLoaded) {
+      setTimeout(() => {
+        SplashScreen.hideAsync();
+      }, 500);
+    }
+  }, [fontsLoaded]);
 
   useEffect(() => {
     AsyncStorage.getItem('initial-path').then((initialPath = '/') => {
@@ -37,6 +55,9 @@ function App() {
             setSpaUrl(url);
           }
           setSpaReady(true);
+          setTimeout(() => {
+            setLoading(false);
+          }, 1500);
         });
       });
       return () => {
@@ -146,56 +167,67 @@ function App() {
     };
   }, []);
 
+  if (!fontsLoaded) {
+    return null;
+  }
+
   return (
-    <SafeAreaView style={styles.safeContainer} edges={['left', 'right', 'top', 'bottom']}>
-      {spaReady && spaUrl ? (
-        <WebView
-          ref={ref}
-          style={styles.container}
-          startInLoadingState
-          onLoadEnd={onLoadEnd}
-          onError={(error: any) => console.log('onError', error)}
-          source={{ uri: spaUrl }}
-          originWhitelist={['*']}
-          pullToRefreshEnabled
-          allowsBackForwardNavigationGestures
-          onContentProcessDidTerminate={() => ref.current?.reload()}
-          onMessage={onMessage}
-          onShouldStartLoadWithRequest={(request: any) => {
-            const stayInWebView = request.url.startsWith(spaUrl);
-            if (!stayInWebView) {
-              Linking.openURL(request.url);
-            }
-            return stayInWebView;
-          }}
-          sharedCookiesEnabled={true}
-          thirdPartyCookiesEnabled={true}
-          domStorageEnabled
-          javaScriptEnabled
-          webviewDebuggingEnabled={__DEV__}
-          injectedJavaScript={initScript}
-        />
-      ) : spaReady ? (
-        <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-          <Text>Pas de cache disponible. Connectez-vous à internet pour télécharger l'application.</Text>
-        </View>
-      ) : null}
-      <Modal
-        visible={!!externalLink}
-        onRequestClose={() => setExternalLink(null)}
-        animationType="slide"
-        presentationStyle="formSheet"
-      >
-        <SafeAreaView style={styles.safeContainer}>
-          <View style={styles.modalContainer}>
-            <TouchableOpacity onPress={() => setExternalLink(null)} style={styles.closeButton}>
-              <Text style={styles.closeButtonText}>Fermer</Text>
-            </TouchableOpacity>
+    <>
+      <SafeAreaView style={styles.safeContainer} edges={['left', 'right', 'top', 'bottom']}>
+        {spaReady && spaUrl ? (
+          <WebView
+            ref={ref}
+            style={styles.container}
+            startInLoadingState
+            onLoadEnd={onLoadEnd}
+            onError={(error: any) => console.log('onError', error)}
+            source={{ uri: spaUrl }}
+            originWhitelist={['*']}
+            pullToRefreshEnabled
+            allowsBackForwardNavigationGestures
+            onContentProcessDidTerminate={() => ref.current?.reload()}
+            onMessage={onMessage}
+            onShouldStartLoadWithRequest={(request: any) => {
+              const stayInWebView = request.url.startsWith(spaUrl);
+              if (!stayInWebView) {
+                Linking.openURL(request.url);
+              }
+              return stayInWebView;
+            }}
+            sharedCookiesEnabled={true}
+            thirdPartyCookiesEnabled={true}
+            domStorageEnabled
+            javaScriptEnabled
+            webviewDebuggingEnabled={__DEV__}
+            injectedJavaScript={initScript}
+          />
+        ) : spaReady ? (
+          <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+            <Text>Pas de cache disponible. Connectez-vous à internet pour télécharger l'application.</Text>
           </View>
-          <WebView source={{ uri: externalLink ?? '' }} style={styles.container} />
+        ) : null}
+        <Modal
+          visible={!!externalLink}
+          onRequestClose={() => setExternalLink(null)}
+          animationType="slide"
+          presentationStyle="formSheet"
+        >
+          <SafeAreaView style={styles.safeContainer}>
+            <View style={styles.modalContainer}>
+              <TouchableOpacity onPress={() => setExternalLink(null)} style={styles.closeButton}>
+                <Text style={styles.closeButtonText}>Fermer</Text>
+              </TouchableOpacity>
+            </View>
+            <WebView source={{ uri: externalLink ?? '' }} style={styles.container} />
+          </SafeAreaView>
+        </Modal>
+      </SafeAreaView>
+      {loading && (
+        <SafeAreaView style={styles.safeContainerAbsolute} edges={['left', 'right', 'top', 'bottom']}>
+          <Chargement />
         </SafeAreaView>
-      </Modal>
-    </SafeAreaView>
+      )}
+    </>
   );
 }
 
@@ -211,6 +243,15 @@ const styles = StyleSheet.create({
   safeContainer: {
     flex: 1,
     backgroundColor: '#fff',
+  },
+  safeContainerAbsolute: {
+    flex: 1,
+    backgroundColor: '#fff',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   container: {
     flex: 1,
