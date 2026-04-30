@@ -65,7 +65,7 @@ export default function RootDisplay({
         onClick: async () => {
           API.post({ path: '/user/logout' }).then(async () => {
             setNativeAuthToken(null);
-            useUser.setState({ user: null });
+            useUser.setState({ user: null }); // this line is important : if useUser is not null then /app/connexion will redirect to /app/[role] even if /user/me returns a 401 (because of offline mode)
             await clearCache().then(() => {
               navigate('/app/connexion');
             });

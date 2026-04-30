@@ -1,3 +1,4 @@
+import useUser from '@app/zustand/user';
 import { clearCache } from './indexed-db';
 
 let API_URL = new URL(import.meta.env.VITE_API_URL);
@@ -105,7 +106,9 @@ class ApiService {
           URLParams.set('communication', 'Votre session a expiré, veuillez vous reconnecter.');
           URLParams.set('redirect', window.location.pathname + window.location.search);
           console.log('URLParams: ', URLParams.toString());
-          window.location.href = '/app/connexion?' + URLParams.toString();
+          useUser.setState({ user: null });
+          window.history.pushState(null, '', '/app/connexion?' + URLParams.toString());
+          window.dispatchEvent(new PopStateEvent('popstate'));
         }
         return {
           ok: false,

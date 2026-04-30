@@ -12,6 +12,7 @@ import { Tabs, type TabsProps } from '@codegouvfr/react-dsfr/Tabs';
 import API from '@app/services/api';
 import { clearCache } from '@app/services/indexed-db';
 import { refreshUser } from '@app/utils-offline/get-most-fresh-user';
+import { getUserOnboardingRoute } from '@app/utils/user-onboarded.client';
 
 type CfeiValidationStatus = 'valid' | 'invalid' | 'missing';
 
@@ -379,15 +380,7 @@ export default function AdminUsers() {
                                 body: { email: user.email! },
                               });
                               await clearCache().then(() => {
-                                if (user.roles.includes(UserRoles.CHASSEUR)) {
-                                  navigate('/app/chasseur', { replace: true });
-                                } else if (user.roles.includes(UserRoles.ETG)) {
-                                  navigate('/app/etg', { replace: true });
-                                } else if (user.roles.includes(UserRoles.SVI)) {
-                                  navigate('/app/svi', { replace: true });
-                                } else if (user.roles.includes(UserRoles.COLLECTEUR_PRO)) {
-                                  navigate('/app/collecteur', { replace: true });
-                                }
+                                navigate(getUserOnboardingRoute(user), { replace: true });
                                 refreshUser('admin/user/connect-as');
                               });
                             }}
