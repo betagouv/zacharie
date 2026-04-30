@@ -669,13 +669,46 @@ Christine
       console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (SVI closed)`);
     }
     if ((role as string) === 'ETG_REFUSED') {
-      const fei = await prisma.fei.create({ data: feiRefusedByEtg });
+      const etg1User = users.find((u) => u.email === 'etg-1@example.fr');
+      const etg1UserId = etg1User?.id ?? '';
+      // Set latest_intermediaire_user_id + intermediaire_closed_by_user_id on the fei now that
+      // we have the dynamic ETG user id. (FeiUncheckedCreateInput doesn't allow async lookups.)
+      const fei = await prisma.fei.create({
+        data: {
+          ...feiRefusedByEtg,
+          latest_intermediaire_user_id: etg1UserId,
+          intermediaire_closed_by_user_id: etg1UserId,
+          fei_current_owner_user_id: null, // owned by entity, no specific user
+        },
+      });
+      // The carcasse refus_intermediaire_id must match the CarcasseIntermediaire.intermediaire_id
+      // we create below. Format mirrors prod: "{user_id}_{fei_numero}_reception".
+      const intermediaireId = `${etg1UserId}_${fei.numero}_reception`;
+      const refusedAt = dayjs().subtract(1, 'day').toDate();
       const carcasses = await prisma.carcasse.createMany({
         data: getCarcasses(fei).map((c) => ({
           ...c,
           svi_carcasse_status: CarcasseStatus.REFUS_ETG_COLLECTEUR,
-          intermediaire_carcasse_refus_intermediaire_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
+          svi_carcasse_status_set_at: refusedAt,
+          intermediaire_carcasse_refus_intermediaire_id: intermediaireId,
           intermediaire_carcasse_refus_motif: 'Présence de souillures',
+          latest_intermediaire_signed_at: refusedAt,
+        })),
+      });
+      // Create the matching CarcasseIntermediaire record (one per carcasse) for the ETG reception.
+      await prisma.carcasseIntermediaire.createMany({
+        data: getCarcasses(fei).map((c) => ({
+          fei_numero: fei.numero,
+          numero_bracelet: c.numero_bracelet,
+          zacharie_carcasse_id: c.zacharie_carcasse_id!,
+          intermediaire_id: intermediaireId,
+          intermediaire_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
+          intermediaire_user_id: etg1UserId,
+          intermediaire_role: FeiOwnerRole.ETG,
+          prise_en_charge: false,
+          refus: 'Présence de souillures',
+          decision_at: refusedAt,
+          prise_en_charge_at: dayjs().subtract(1, 'day').toDate(),
         })),
       });
       console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (ETG refused)`);
@@ -925,15 +958,24 @@ const feiAllRefusedByEtgToSvi: Prisma.FeiUncheckedCreateInput = {
 const feiRefusedByEtg: Prisma.FeiUncheckedCreateInput = {
   ...feiValidatedByPremierDetenteur,
   numero: 'ZACH-20250707-QZ6E0-215242',
-  fei_current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
-  fei_current_owner_user_id: '0Y545',
-  fei_current_owner_user_name_cache: 'Pierre Petit',
-  fei_prev_owner_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
-  fei_prev_owner_role: FeiOwnerRole.ETG,
+  // When ETG refuses all carcasses, the fiche STAYS at the ETG (terminal state with
+  // intermediaire_closed_at set) — it does NOT get sent back to the PD.
+  fei_current_owner_role: FeiOwnerRole.ETG,
+  fei_current_owner_user_id: null,
+  fei_current_owner_user_name_cache: null,
+  fei_current_owner_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
+  fei_current_owner_entity_name_cache: 'ETG 1',
+  fei_prev_owner_user_id: '0Y545',
+  fei_prev_owner_entity_id: null,
+  fei_prev_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
   fei_next_owner_user_id: null,
   fei_next_owner_user_name_cache: null,
   fei_next_owner_entity_id: null,
   fei_next_owner_role: null,
+  intermediaire_closed_at: dayjs().subtract(1, 'day').toDate(),
+  intermediaire_closed_by_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
+  latest_intermediaire_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
+  latest_intermediaire_name_cache: 'ETG 1',
 };
 
 function getCarcasses(fei: Fei): Array<Prisma.CarcasseUncheckedCreateInput> {

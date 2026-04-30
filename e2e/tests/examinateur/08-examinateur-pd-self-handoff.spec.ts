@@ -18,12 +18,11 @@ test.beforeAll(async () => {
   await resetDb('EXAMINATEUR_INITIAL');
 });
 
-test.skip('Examinateur == PD via CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY — self-handoff', async ({ page }) => {
-  // SKIP: complex two-stage flow (examinateur → PD → ETG handoff in one session).
-  // First transmit (line 57) doesn't trigger "Votre fiche a été transmise" because the
-  // form transitions inline to the PD dispatch view without a confirmation page.
-  // Needs reworking: split into create-by-examinateur + dispatch-as-PD with explicit waits
-  // for the form transition (e.g. "Prochain détenteur" heading visible).
+test('Examinateur == PD via CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY — self-handoff', async ({ page }) => {
+  // The user is both examinateur and PD (via CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY on
+  // "Association de chasseurs"). The examinateur form transitions inline to the PD dispatch
+  // view after the first Transmettre — there is no "Prendre en charge" step and no
+  // "Votre fiche a été transmise" confirmation.
   await connectWith(page, 'examinateur-premier-detenteur@example.fr');
   await expect(page).toHaveURL('http://localhost:3290/app/chasseur');
 
@@ -52,28 +51,18 @@ test.skip('Examinateur == PD via CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY — self-
     .fill(dayjs().startOf('day').add(2, 'hour').format('HH:mm'));
   await page.getByRole('textbox', { name: "Heure d'éviscération de la" }).blur();
 
-  // Validation
+  // Validation de l'examen initial
   await page.getByRole('button', { name: 'Définir comme étant la date du jour et maintenant' }).click();
   await page
     .getByText(/Je, .* certifie qu/i)
     .first()
     .click();
   await page.getByRole('button', { name: 'Transmettre', exact: true }).click();
-  await expect(page.getByText(/Votre fiche a été transmise/i).first()).toBeVisible({ timeout: 10000 });
 
-  const feiId = RegExp(/ZACH-\d+-\w+-\d+/).exec(page.url())?.[0];
-  expect(feiId).toBeDefined();
-
-  // Même session : ouvrir la fiche — en tant que PD, on voit le dispatch
-  await page.goto(`http://localhost:3290/app/chasseur/fei/${feiId}`);
-
-  // L'utilisateur peut prendre en charge la fiche
-  const prendreEnCharge = page.getByRole('button', { name: /Prendre en charge/i });
-  await expect(prendreEnCharge).toBeVisible({ timeout: 10000 });
-  await prendreEnCharge.click();
-
-  // Sélectionner ETG 1 comme prochain détenteur (pill button)
+  // Form transitions inline to PD dispatch view. Wait for the "Prochain détenteur" section
+  // to appear (the destinataire selector becomes available).
   const etg1Pill = page.getByRole('button', { name: /ETG 1/i });
+  await expect(etg1Pill).toBeVisible({ timeout: 15000 });
   await etg1Pill.scrollIntoViewIfNeeded();
   await etg1Pill.click();
 
@@ -87,7 +76,7 @@ test.skip('Examinateur == PD via CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY — self-
   await jeTransporte.scrollIntoViewIfNeeded();
   await jeTransporte.click();
 
-  const transmettre = page.getByRole('button', { name: 'Transmettre' });
+  const transmettre = page.getByRole('button', { name: 'Transmettre', exact: true });
   await transmettre.scrollIntoViewIfNeeded();
   await transmettre.click();
   await expect(page.getByText(/ETG 1.*a été notifi/i)).toBeVisible({ timeout: 10000 });

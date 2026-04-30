@@ -11,7 +11,7 @@ test.beforeAll(async () => {
   await resetDb('PREMIER_DETENTEUR');
 });
 
-test.skip('SVI rend des décisions divergentes → chasseur voit chaque décision', async ({ page }) => {
+test('SVI rend des décisions divergentes → chasseur voit chaque décision', async ({ page }) => {
   // SKIP: 5-step chain (PD → ETG → SVI x3 with divergent decisions). Test reaches the final
   // assertion but the "Consignée" label for MM-001-002 doesn't appear on the fiche listing
   // page after SVI saves. Suspected: store sync of the consigne status takes longer than the
@@ -126,6 +126,13 @@ test.skip('SVI rend des décisions divergentes → chasseur voit chaque décisio
   const ipm1Fieldset2 = page.locator('fieldset').filter({ hasText: 'Décision IPM1' }).first();
   await ipm1Fieldset2.scrollIntoViewIfNeeded();
   await ipm1Fieldset2.getByLabel(/Mise en consigne/).check({ force: true });
+
+  // MISE_EN_CONSIGNE requires pièces inspectées + lésions (per missingFields validation in
+  // SVI carcasse-svi route). Without these, save silently fails — see test 76 for proof.
+  await page.locator('.input-for-search-prefilled-data__input-container').first().click();
+  await page.getByRole('option').first().click();
+  await page.locator('.input-for-search-prefilled-data__input-container').nth(1).click();
+  await page.getByRole('option').first().click();
 
   // Fill durée
   await page.getByLabel(/Durée de la consigne/).fill('24');
