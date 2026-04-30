@@ -29,9 +29,10 @@ import { Pagination } from '@codegouvfr/react-dsfr/Pagination';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
 import { useFeiSteps, computeFeiSteps } from '@app/utils/fei-steps';
 import { useIsCircuitCourt } from '@app/utils/circuit-court';
-import { useLocalStorage } from '@uidotdev/usehooks';
 import type { FeiWithIntermediaires } from '@api/src/types/fei';
 import { useEntitiesIdsWorkingDirectlyFor } from '@app/utils/get-entity-relations';
+import { SegmentedControl } from '@codegouvfr/react-dsfr/SegmentedControl';
+import DropDownMenu from '@app/components/DropDownMenu';
 
 function CollapsibleSection({
   title,
@@ -134,6 +135,8 @@ function OnboardingChasseInfoBanner() {
   );
 }
 
+const ITEMS_PER_PAGE = 100;
+
 export default function ChasseurFiches() {
   const navigate = useNavigate();
   const user = useMostFreshUser('chasseur fiches')!;
@@ -148,9 +151,8 @@ export default function ChasseurFiches() {
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
   const carcasses = useZustandStore((state) => state.carcasses);
 
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const page = parseInt(searchParams.get('page') || '1');
-  const [itemsPerPage, setItemsPerPage] = useLocalStorage<number>('chasseur-fiches-items-per-page', 20);
 
   useEffect(() => {
     window.onNativePushToken = async function handleNativePushToken(token) {
@@ -251,16 +253,6 @@ export default function ChasseurFiches() {
     localStorage.setItem('chasseur-fiches-view-type', viewType);
   }, [viewType]);
 
-  const dropDownMenuFilterText = useMemo(() => {
-    if (filterStatuses.length === 0) return 'Filtrer par statut';
-    const names: Record<FeiStepSimpleStatus, string> = {
-      'À compléter': 'Fiches à compléter',
-      'En cours': 'Fiches en cours',
-      Clôturée: 'Fiches clôturées',
-    };
-    if (filterStatuses.length === 1) return names[filterStatuses[0]];
-    return `${filterStatuses.length} statuts`;
-  }, [filterStatuses]);
   const [filterPremierDetenteurs, setFilterPremierDetenteurs] = useState<string[]>(() => {
     try {
       const saved = localStorage.getItem('chasseur-fiches-filter-premier-detenteurs');
@@ -357,23 +349,7 @@ export default function ChasseurFiches() {
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [allFeis]);
 
-  const dropDownMenuFilterTextPremierDetenteur = useMemo(() => {
-    if (filterPremierDetenteurs.length === 0) return 'Filtrer par premier détenteur';
-    if (filterPremierDetenteurs.length === 1) {
-      const option = premierDetenteurOptions.find((o) => o.id === filterPremierDetenteurs[0]);
-      if (option) return option.name;
-    }
-    return `${filterPremierDetenteurs.length} premiers détenteurs`;
-  }, [filterPremierDetenteurs, premierDetenteurOptions]);
 
-  const dropDownMenuFilterTextCCG = useMemo(() => {
-    if (filterCCGs.length === 0) return 'Filtrer par CCG';
-    if (filterCCGs.length === 1) {
-      const option = ccgOptions.find((o) => o.id === filterCCGs[0]);
-      if (option) return option.name;
-    }
-    return `${filterCCGs.length} CCG`;
-  }, [filterCCGs, ccgOptions]);
 
   const filteredFeis = useMemo(() => {
     let feis = allFeis;
@@ -431,12 +407,12 @@ export default function ChasseurFiches() {
     user,
   ]);
 
-  const totalPages = Math.ceil(filteredFeis.length / (itemsPerPage ?? 20));
+  const totalPages = Math.ceil(filteredFeis.length / (ITEMS_PER_PAGE));
   const paginatedFeis = useMemo(() => {
-    const perPage = itemsPerPage ?? 20;
+    const perPage = ITEMS_PER_PAGE;
     const start = (page - 1) * perPage;
     return filteredFeis.slice(start, start + perPage);
-  }, [filteredFeis, page, itemsPerPage]);
+  }, [filteredFeis, page]);
 
   const hasActiveFilters =
     filterStatuses.length > 0 ||
@@ -455,36 +431,19 @@ export default function ChasseurFiches() {
 
   const sidebarContent = (
     <>
-      {/* Nouvelle fiche */}
-      {user.numero_cfei && (
-        <Button
-          iconId="fr-icon-add-circle-line"
-          priority="primary"
-          className="w-full"
-          onClick={async () => {
-            const newFei = await createNewFei();
-            navigate(`/app/chasseur/fei/${newFei.numero}`);
-          }}
-        >
-          Nouvelle fiche
-        </Button>
-      )}
-
       {/* Recherche */}
-      <div className="mt-2">
-        <div className="relative">
-          <span
-            className="fr-icon--sm fr-icon-search-line absolute top-1/2 left-3 -translate-y-1/2 text-gray-400"
-            aria-hidden="true"
-          />
-          <input
-            type="search"
-            placeholder="Rechercher une fiche..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded border border-gray-300 py-2 pr-3 pl-10 text-sm transition-colors outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-          />
-        </div>
+      <div className="relative">
+        <span
+          className="fr-icon--sm fr-icon-search-line absolute top-1/2 left-3 -translate-y-1/2 text-gray-400"
+          aria-hidden="true"
+        />
+        <input
+          type="search"
+          placeholder="Rechercher une fiche..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full rounded border border-gray-300 py-2 pr-3 pl-10 text-sm transition-colors outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+        />
       </div>
 
       {/* Compteur */}
@@ -652,49 +611,11 @@ export default function ChasseurFiches() {
         </CollapsibleSection>
       )}
 
-      {/* Actions export */}
-      <CollapsibleSection
-        title="Actions"
-        defaultOpen={false}
-      >
-        <Button
-          size="small"
-          disabled={selectedFeis.length === 0}
-          priority="secondary"
-          className="w-full"
-          iconId="ri-download-line"
-          onClick={(e) => {
-            e.preventDefault();
-            if (selectedFeis.length === 0) return;
-            if (isExporting) return;
-            onExportToXlsx(selectedFeis);
-          }}
-        >
-          Exporter (complet)
-        </Button>
-
-        <Button
-          size="small"
-          disabled={selectedFeis.length === 0}
-          priority="secondary"
-          className="mt-2 w-full"
-          iconId="ri-download-line"
-          onClick={(e) => {
-            e.preventDefault();
-            if (selectedFeis.length === 0) return;
-            if (isExporting) return;
-            onExportSimplifiedToXlsx(selectedFeis);
-          }}
-        >
-          Exporter (simplifié)
-        </Button>
-      </CollapsibleSection>
-
       {/* Mettre à jour */}
       <Button
         priority="tertiary"
         size="small"
-        className="mt-2 w-full"
+        className="mt-2"
         iconId="ri-refresh-line"
         disabled={!isOnline || loading}
         onClick={async () => {
@@ -703,7 +624,7 @@ export default function ChasseurFiches() {
           setLoading(false);
         }}
       >
-        Mettre à jour
+        Appliquer
       </Button>
     </>
   );
@@ -718,24 +639,11 @@ export default function ChasseurFiches() {
           {filteredFeis.length} fiche{filteredFeis.length > 1 ? 's' : ''}
         </span>
         <div className="flex gap-2">
-          {user.numero_cfei && (
-            <Button
-              iconId="fr-icon-add-circle-line"
-              priority="primary"
-              size="small"
-              onClick={async () => {
-                const newFei = await createNewFei();
-                navigate(`/app/chasseur/fei/${newFei.numero}`);
-              }}
-            >
-              Nouvelle fiche
-            </Button>
-          )}
           <button
             type="button"
             aria-label={viewType === 'grid' ? 'Afficher en table' : 'Afficher en grille'}
             title={viewType === 'grid' ? 'Afficher en table' : 'Afficher en grille'}
-            className="flex h-8 w-9 items-center justify-center rounded border border-gray-300 bg-white text-gray-700 transition-colors hover:bg-gray-50"
+            className="flex h- w-10 items-center justify-center rounded border border-gray-300 bg-white text-gray-700 transition-colors hover:bg-gray-50"
             onClick={() => setViewType(viewType === 'grid' ? 'table' : 'grid')}
           >
             <span
@@ -746,7 +654,7 @@ export default function ChasseurFiches() {
           <button
             type="button"
             aria-label="Filtres"
-            className="relative flex h-8 items-center gap-1 rounded border border-gray-300 bg-white px-2 text-sm text-gray-700 transition-colors hover:bg-gray-50"
+            className="relative flex h-10 items-center gap-1 rounded border border-gray-300 bg-white px-2 text-sm text-gray-700 transition-colors hover:bg-gray-50"
             onClick={() => setShowMobileFilters(!showMobileFilters)}
           >
             <span
@@ -763,6 +671,18 @@ export default function ChasseurFiches() {
               </span>
             )}
           </button>
+          {user.numero_cfei && (
+            <Button
+              iconId="fr-icon-add-circle-line"
+              priority="primary"
+              onClick={async () => {
+                const newFei = await createNewFei();
+                navigate(`/app/chasseur/fei/${newFei.numero}`);
+              }}
+            >
+              Nouvelle
+            </Button>
+          )}
         </div>
       </div>
 
@@ -798,6 +718,91 @@ export default function ChasseurFiches() {
         {/* Contenu principal */}
         <div className="mx-auto max-w-5xl min-w-0 flex-1 px-4 pt-4 md:px-6">
           <OnboardingChasseInfoBanner />
+          {filteredFeis.length > 0 && (
+            <div className="hidden md:flex w-full flex-wrap items-center justify-end gap-3 py-4">
+              <SegmentedControl
+                hideLegend
+                className="hidden md:block bg-white"
+                segments={[
+                  {
+                    label: 'Grille',
+                    iconId: 'ri-grid-line',
+                    nativeInputProps: {
+                      checked: viewType === 'grid',
+                      onChange: () => setViewType('grid'),
+                      name: 'view-type',
+                      value: 'grid',
+                    },
+                  },
+                  {
+                    label: 'Table',
+                    iconId: 'ri-table-line',
+                    nativeInputProps: {
+                      checked: viewType === 'table',
+                      onChange: () => setViewType('table'),
+                      name: 'view-type',
+                      value: 'table',
+                    },
+                  },
+                ]}
+              />
+              <DropDownMenu
+                text="Actions"
+                className="hidden md:block max-w-[321px]"
+                isActive={selectedFeis.length > 0}
+                menuLinks={[
+                  {
+                    linkProps: {
+                      href: '#',
+                      'aria-disabled': selectedFeis.length === 0,
+                      className: isExporting || !selectedFeis.length ? 'cursor-not-allowed opacity-50' : '',
+                      title:
+                        selectedFeis.length === 0
+                          ? 'Sélectionnez des fiches avec la case à cocher en haut à droite de chaque carte'
+                          : '',
+                      onClick: (e) => {
+                        e.preventDefault();
+                        if (selectedFeis.length === 0) return;
+                        if (isExporting) return;
+                        onExportToXlsx(selectedFeis);
+                      },
+                    },
+                    text: 'Export (toutes les colonnes)',
+                  },
+                  {
+                    linkProps: {
+                      href: '#',
+                      'aria-disabled': selectedFeis.length === 0,
+                      className: isExporting || !selectedFeis.length ? 'cursor-not-allowed opacity-50' : '',
+                      title:
+                        selectedFeis.length === 0
+                          ? 'Sélectionnez des fiches avec la case à cocher en haut à droite de chaque carte'
+                          : '',
+                      onClick: (e) => {
+                        e.preventDefault();
+                        if (selectedFeis.length === 0) return;
+                        if (isExporting) return;
+                        onExportSimplifiedToXlsx(selectedFeis);
+                      },
+                    },
+                    text: 'Export (seules les colonnes essentielles)',
+                  },
+                ]}
+              />
+              {user.numero_cfei && (
+                <Button
+                  iconId="fr-icon-add-circle-line"
+                  priority="primary"
+                  onClick={async () => {
+                    const newFei = await createNewFei();
+                    navigate(`/app/chasseur/fei/${newFei.numero}`);
+                  }}
+                >
+                  Nouvelle fiche
+                </Button>
+              )}
+            </div>
+          )}
           <FeisWrapper
             viewType={viewType}
             handleSelectAll={handleSelectAll}
@@ -818,82 +823,15 @@ export default function ChasseurFiches() {
               );
             })}
           </FeisWrapper>
-          {filteredFeis.length > 0 && (
-            <div className="flex flex-wrap items-center justify-start gap-3 py-4">
-              <div className="hidden overflow-hidden rounded-md border border-gray-300 md:inline-flex mb-4">
-                <button
-                  type="button"
-                  aria-label="Vue grille"
-                  aria-pressed={viewType === 'grid'}
-                  title="Vue grille"
-                  className={[
-                    'flex h-8 w-9 items-center justify-center transition-colors',
-                    viewType === 'grid'
-                      ? 'bg-action-high-blue-france text-white'
-                      : 'bg-white text-gray-600 hover:bg-gray-50',
-                  ].join(' ')}
-                  onClick={() => setViewType('grid')}
-                >
-                  <span
-                    className="fr-icon--sm ri-grid-line"
-                    aria-hidden="true"
-                  />
-                </button>
-                <button
-                  type="button"
-                  aria-label="Vue table"
-                  aria-pressed={viewType === 'table'}
-                  title="Vue table"
-                  className={[
-                    'flex h-8 w-9 items-center justify-center border-l border-gray-300 transition-colors',
-                    viewType === 'table'
-                      ? 'bg-action-high-blue-france text-white'
-                      : 'bg-white text-gray-600 hover:bg-gray-50',
-                  ].join(' ')}
-                  onClick={() => setViewType('table')}
-                >
-                  <span
-                    className="fr-icon--sm ri-table-line"
-                    aria-hidden="true"
-                  />
-                </button>
-              </div>
-              <div className="inline-flex overflow-hidden rounded-md border border-gray-300 mb-4">
-                {[20, 50, 100].map((option, i) => (
-                  <button
-                    type="button"
-                    key={option}
-                    aria-pressed={(itemsPerPage ?? 20) === option}
-                    className={[
-                      'h-8 w-10 text-xs font-medium transition-colors',
-                      i > 0 ? 'border-l border-gray-300' : '',
-                      (itemsPerPage ?? 20) === option
-                        ? 'bg-action-high-blue-france text-white'
-                        : 'bg-white text-gray-600 hover:bg-gray-50',
-                    ].join(' ')}
-                    onClick={() => {
-                      const firstItemIndex = (page - 1) * (itemsPerPage ?? 20);
-                      const newPage = Math.floor(firstItemIndex / option) + 1;
-                      setItemsPerPage(option);
-                      setSearchParams(newPage > 1 ? { page: String(newPage) } : {});
-                    }}
-                  >
-                    {option}
-                  </button>
-                ))}
-              </div>
-              {totalPages > 1 ? (
-                <Pagination
-                  count={totalPages}
-                  defaultPage={page}
-                  getPageLinkProps={(pageNumber) => ({
-                    to: `/app/chasseur?page=${pageNumber}`,
-                  })}
-                />
-              ) : (
-                <span className="hidden md:inline" />
-              )}
-
+          {filteredFeis.length > 0 && totalPages > 1 && (
+            <div className="mt-4 flex justify-center">
+              <Pagination
+                count={totalPages}
+                defaultPage={page}
+                getPageLinkProps={(pageNumber) => ({
+                  to: `/app/chasseur?page=${pageNumber}`,
+                })}
+              />
             </div>
           )}
           <div className="my-4">
