@@ -279,7 +279,7 @@ export async function notifyNextOwnerUser(existingFei: FeiPopulated, savedFei: F
     else if (role === UserRoles.ETG) url += 'etg/';
     else if (role === UserRoles.COLLECTEUR_PRO) url += 'collecteur-pro/';
     else {
-      throw new Error('Unknown role in notifying next owner user', { cause: role });
+      throw new Error(`Unknown role in notifying next owner user: ${role}`);
     }
     url += `fei/${savedFei.numero}`;
     const email = [
@@ -364,7 +364,7 @@ export async function notifyNextOwnerEntity(existingFei: FeiPopulated, savedFei:
       else if (role === UserRoles.ETG) url += 'etg/';
       else if (role === UserRoles.COLLECTEUR_PRO) url += 'collecteur-pro/';
       else {
-        throw new Error('Unknown role in notifying next owner entity', { cause: role });
+        throw new Error(`Unknown role in notifying next owner entity: ${role}`);
       }
       url += `fei/${savedFei.numero}`;
       const email = [

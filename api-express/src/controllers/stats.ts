@@ -92,6 +92,7 @@ router.get(
     const bigGameCarcasses = carcasses.filter((c) => c.type === CarcasseType.GROS_GIBIER);
     const bigGame = bigGameCarcasses.length;
     const smallGame = carcasses.filter((c) => c.type === CarcasseType.PETIT_GIBIER).length;
+
     const circuitCourtRoles: FeiOwnerRole[] = [
       FeiOwnerRole.COMMERCE_DE_DETAIL,
       FeiOwnerRole.REPAS_DE_CHASSE_OU_ASSOCIATIF,
@@ -170,8 +171,9 @@ router.get(
       nationalBigGame2024 > 0 ? (nationalSeizedBigGame2024 / nationalBigGame2024) * 100 : 10.44;
 
     // Hygiene score (BPH — Bonnes Pratiques d'Hygiène)
-    // score = 100 - (carcasses with ≥1 BPH motif / SVI-eligible big game) × 100
-    // Only motifs linked to hygiene practices count (aligned with admin /delta-bph).
+    // score = 100 × (1 − (personalBphRate / (2 × nationalBphRate)))
+    // personalBphRate = (SVI-eligible + SAISIE + motif BPH) / SVI-eligible (aligned with admin /delta-bph).
+    // nationalBphRate = nationalSeizureRate (same value).
     const BPH_PATTERNS = [
       "souillures d'origine digestive",
       'souillures telluriques',
@@ -180,21 +182,35 @@ router.get(
       'putréfaction profonde',
       'moisissures',
       'œufs ou larves de mouche',
-      'orsure de chien',
+      'morsure de chien',
       'viande à évolution anormale',
+      'conditions de préparation des viandes par le producteur primaire',
+      "souillures d\'origine digestive liées à une balle d'abdomen",
     ];
     const hasBphMotif = (motifs: string[] | null) =>
       (motifs ?? []).some((m) => {
         const s = m.toLowerCase();
         return BPH_PATTERNS.some((p) => s.includes(p));
       });
-    const bphCarcasses = sviEligibleCarcasses.filter((c) => hasBphMotif(c.svi_ipm2_lesions_ou_motifs));
+    const bphCarcasses = sviEligibleCarcasses.filter(
+      (c) =>
+        (c.svi_carcasse_status === CarcasseStatus.SAISIE_TOTALE ||
+          c.svi_carcasse_status === CarcasseStatus.SAISIE_PARTIELLE) &&
+        hasBphMotif(c.svi_ipm2_lesions_ou_motifs)
+    );
+
+    const personalBphRate =
+      sviEligibleCarcasses.length > 0 ? bphCarcasses.length / sviEligibleCarcasses.length : 0;
+    const nationalBphRateFraction = nationalSeizureRate / 100;
+
+    let hygieneScoreRaw: number | null;
     let hygieneScore: number | null;
-    if (sviEligibleCarcasses.length === 0 || !hasAnySviReturn) {
+    if (sviEligibleCarcasses.length === 0 || !hasAnySviReturn || nationalBphRateFraction === 0) {
+      hygieneScoreRaw = null;
       hygieneScore = null;
     } else {
-      const bphRate = (bphCarcasses.length / sviEligibleCarcasses.length) * 100;
-      hygieneScore = Math.max(0, Math.min(100, Math.round(100 - bphRate)));
+      hygieneScoreRaw = 100 * (1 - personalBphRate / (2 * nationalBphRateFraction));
+      hygieneScore = Math.max(0, Math.min(100, Math.round(hygieneScoreRaw)));
     }
 
     res.status(200).send({
@@ -210,8 +226,24 @@ router.get(
         nationalSeizureRate: Math.round(nationalSeizureRate * 100) / 100, // Round to 2 decimals
         // Calculation details for debugging
         calculationDetails: {
+          // User & season
+          userId: user.id,
+          userEmail: user.email,
+          season,
           seasonStart,
           seasonEnd,
+          // FEIs
+          feisCount: feis.length,
+          feiNumeros,
+          // Carcasses
+          totalCarcassesCount: totalCarcasses,
+          bigGameCount: bigGame,
+          smallGameCount: smallGame,
+          // SVI eligibility
+          sviEligibleCount: sviEligibleCarcasses.length,
+          hasAnySviReturn,
+          // Refusal causes
+          refusalCausesFull: Object.fromEntries(refusalCausesMap),
           // Personal seizure rate calculation
           bigGameCarcassesCount: bigGameCarcasses.length,
           seizedBigGameCount: seizedBigGame.length,
@@ -221,9 +253,11 @@ router.get(
           nationalSeizedBigGame2024Count: nationalSeizedBigGame2024,
           nationalSeizureRateRaw: nationalSeizureRate,
           // Hygiene score calculation (BPH)
-          formula: '100 - (bphCarcasses / sviEligibleCarcasses) × 100',
-          sviEligibleCount: sviEligibleCarcasses.length,
+          formula: '100 × (1 − (personalBphRate / (2 × nationalBphRate)))',
           bphCount: bphCarcasses.length,
+          personalBphRate,
+          nationalBphRateFraction,
+          hygieneScoreRaw,
         },
       },
     });

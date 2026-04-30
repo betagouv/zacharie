@@ -84,14 +84,10 @@ router.post(
       const token = jwt.sign({ userId: user.id }, SECRET, {
         expiresIn: JWT_MAX_AGE,
       });
-      res.cookie(
-        'zacharie_express_jwt',
-        token,
-        cookieOptions(req.headers.platform === 'native' ? false : true)
-      );
+      res.cookie('zacharie_express_jwt', token, cookieOptions(req));
       res.status(200).send({
         ok: true,
-        data: { user },
+        data: { user, token },
         error: null,
         message: '',
       });
@@ -1408,7 +1404,9 @@ router.get(
                       '%Moisissures%',
                       '%Œufs ou larves de mouche%',
                       '%orsure de chien%',
-                      '%Viande à évolution anormale%'
+                      '%Viande à évolution anormale%',
+                      '%Conditions de préparation des viandes par le producteur primaire%',
+                      '%Souillures d’origine digestive liées à une balle d''abdomen%'
                     ])
                   )
               )::float / NULLIF(COUNT(*)::float, 0) * 100

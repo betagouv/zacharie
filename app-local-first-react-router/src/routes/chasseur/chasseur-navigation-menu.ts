@@ -57,7 +57,7 @@ export default function useChasseurNavigationMenu(): MainNavigationProps.Item[] 
           },
         },
       ].filter((link) => {
-        if (link.text !== 'Partage de mes données') return true;
+        if (link.text !== 'Partage de données') return true;
         return !!apiKeyApprovals?.length;
       }),
     },

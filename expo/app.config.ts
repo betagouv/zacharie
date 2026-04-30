@@ -1,7 +1,7 @@
 import { ExpoConfig, ConfigContext } from 'expo/config';
 
-const version = '1.0.1';
-const buildNumber = '5';
+const version = '1.1.0';
+const buildNumber = '7';
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: 'Zacharie',
@@ -9,7 +9,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   version,
   orientation: 'portrait',
   icon: './assets/icon.png',
-  userInterfaceStyle: 'light',
+  // userInterfaceStyle: 'light', // userInterfaceStyle: Install expo-system-ui in your project to enable this feature.
   newArchEnabled: true,
   splash: {
     image: './assets/splash-icon.png',
@@ -33,6 +33,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       foregroundImage: './assets/adaptive-icon.png',
       backgroundColor: '#FFFFFF',
     },
+
     package: 'fr.gouv.zacharie.v1',
     googleServicesFile: './google-services.json',
     versionCode: Number(buildNumber),
@@ -69,6 +70,15 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     ],
     'react-native-edge-to-edge',
     'expo-notifications',
+    [
+      'expo-build-properties',
+      {
+        android: {
+          minSdkVersion: 28,
+          usesCleartextTraffic: true,
+        },
+      },
+    ],
   ],
   extra: {
     eas: {

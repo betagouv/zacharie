@@ -15,6 +15,11 @@ const adminLinks = [
     label: 'Carcasses',
     icon: 'fr-icon-file-text-line',
   },
+  {
+    to: '/app/admin/lesions',
+    label: 'Motifs de saisies',
+    icon: 'fr-icon-error-warning-line',
+  },
 ];
 
 export default function AdminLayout() {
@@ -60,9 +65,8 @@ export default function AdminLayout() {
         )}
         {/* Sidebar */}
         <nav
-          className={`fixed top-0 z-[800] max-h-screen min-h-screen shrink-0 overflow-y-auto border-r border-gray-200 bg-white py-2 transition-transform duration-200 md:sticky md:z-auto ${
-            sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-          }`}
+          className={`fixed top-0 z-[800] max-h-screen min-h-screen shrink-0 overflow-y-auto border-r border-gray-200 bg-white py-2 transition-transform duration-200 md:sticky md:z-auto ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+            }`}
         >
           <div className="flex justify-end px-2 md:hidden">
             <button
@@ -80,11 +84,10 @@ export default function AdminLayout() {
                   <Link
                     style={{ backgroundImage: 'none' }}
                     to={link.to}
-                    className={`flex items-center gap-2 border-l-2 px-3 py-1.5 text-sm no-underline hover:bg-gray-100 ${
-                      isActive
+                    className={`flex items-center gap-2 border-l-2 px-3 py-1.5 text-sm no-underline hover:bg-gray-100 ${isActive
                         ? 'bg-open-blue-975 text-action-high-blue-france border-action-high-blue-france font-medium'
                         : 'text-title-grey border-transparent'
-                    }`}
+                      }`}
                   >
                     <span
                       className={`${link.icon} fr-icon--sm mr-1 shrink-0`}

@@ -6,6 +6,8 @@ export default function useEtgNavigationMenu(): MainNavigationProps.Item[] {
   const location = useLocation();
   const apiKeyApprovals = useZustandStore((state) => state.apiKeyApprovals);
 
+  console.log('apiKeyApprovals', apiKeyApprovals);
+
   const navigationBase: MainNavigationProps.Item[] = [
     {
       text: 'Fiches',
@@ -58,7 +60,7 @@ export default function useEtgNavigationMenu(): MainNavigationProps.Item[] {
           linkProps: { to: '/app/etg/entreprise/utilisateurs', href: '#' },
         },
       ].filter((link) => {
-        if (link.text !== 'Partage de mes données') return true;
+        if (link.text !== 'Partage de données') return true;
         return !!apiKeyApprovals?.length;
       }),
     },
