@@ -19,7 +19,11 @@ test.beforeAll(async () => {
 });
 
 test.skip('Examinateur == PD via CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY — self-handoff', async ({ page }) => {
-  // SKIP: entity PD selector needs live verification
+  // SKIP: complex two-stage flow (examinateur → PD → ETG handoff in one session).
+  // First transmit (line 57) doesn't trigger "Votre fiche a été transmise" because the
+  // form transitions inline to the PD dispatch view without a confirmation page.
+  // Needs reworking: split into create-by-examinateur + dispatch-as-PD with explicit waits
+  // for the form transition (e.g. "Prochain détenteur" heading visible).
   await connectWith(page, 'examinateur-premier-detenteur@example.fr');
   await expect(page).toHaveURL('http://localhost:3290/app/chasseur');
 

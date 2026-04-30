@@ -15,8 +15,12 @@ test.beforeAll(async () => {
   await resetDb('PREMIER_DETENTEUR');
 });
 
+// ⚠️ SECURITY FINDING: this test executes the full dispatch flow successfully and confirms that
+// `POST /carcasse/:feiNumero/:zacharieCarcasseId` returns **200** when called by an ETG that does
+// NOT own the carcasse's branch (ETG 1 modifying an ETG 2 carcasse). Expected: 403 or 404.
+// The backend lacks an ownership check on this endpoint. UN-SKIP this test once the backend is
+// fixed — it will then be a regression guard. Tracked for the upcoming backend refactor.
 test.skip("API POST /carcasse/:id d'une autre branche → 403", async ({ page }) => {
-  // SKIP: API-level test needs endpoint verification
   const feiId = 'ZACH-20250707-QZ6E0-155242';
   const API_BASE = 'http://localhost:3291';
 

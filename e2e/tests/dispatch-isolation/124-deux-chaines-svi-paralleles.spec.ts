@@ -2,13 +2,13 @@ import { test } from '@playwright/test';
 
 // Scenario 124 — Deux chaînes SVI parallèles.
 // ETG 1 → SVI 1, ETG 2 → SVI 2 ; each SVI only sees its own branch.
-// SKIPPED: This is a 5-login chain test (PD → ETG 1 → ETG 2 → SVI 1 → SVI 2) requiring
-// carcasse acceptance modals (gros gibier + petit gibier lot) for each ETG, followed by
-// SVI transmission. The DSFR modal timing for carcasse acceptance is flaky in E2E
-// (auto-close after radio click vs. manual Enregistrer varies between gros/petit gibier).
+// SKIPPED (deferred): 5-login chain test (PD → ETG 1 → ETG 2 → SVI 1 → SVI 2). The DSFR
+// modal timing for carcasse acceptance is flaky (auto-close after radio click vs. manual
+// Enregistrer varies between gros gibier and petit gibier). User keeps as a UI test (no API
+// conversion) as a regression guard for an upcoming backend refactor — to be implemented
+// post-refactor when modal timings are more stable.
 // Single-branch SVI isolation is covered by spec 123.
-// Recommend converting to an API-level integration test instead.
 
 test.skip('SVI 1 et SVI 2 voient chacun leur branche seulement', async () => {
-  // TODO: rewrite as API-level test or stabilize modal interactions
+  // TODO: implement post-backend-refactor with stable carcasse-acceptance modal flow
 });

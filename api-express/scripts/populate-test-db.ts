@@ -673,12 +673,78 @@ Christine
       const carcasses = await prisma.carcasse.createMany({
         data: getCarcasses(fei).map((c) => ({
           ...c,
+          svi_carcasse_status: CarcasseStatus.REFUS_ETG_COLLECTEUR,
           intermediaire_carcasse_refus_intermediaire_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
           intermediaire_carcasse_refus_motif: 'Présence de souillures',
-          intermediaire_carcasse_signed_at: dayjs().subtract(1, 'day').toDate(),
         })),
       });
       console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (ETG refused)`);
+    }
+    if ((role as string) === 'COMMERCE_DE_DETAIL_DELIVERED') {
+      const fei = await prisma.fei.create({ data: feiDeliveredToCommerceDeDetail });
+      const carcasses = await prisma.carcasse.createMany({ data: getCarcasses(fei) });
+      console.log(
+        `Fei ${fei.numero} created with ${carcasses.count} carcasses (delivered to commerce de détail)`
+      );
+    }
+    if ((role as string) === 'ETG_TAKEN_CHARGE') {
+      const fei = await prisma.fei.create({ data: feiTakenChargeByEtg });
+      const carcasses = await prisma.carcasse.createMany({ data: getCarcasses(fei) });
+      await prisma.carcasseIntermediaire.createMany({
+        data: getCarcasses(fei).map((c) => ({
+          fei_numero: fei.numero,
+          numero_bracelet: c.numero_bracelet,
+          zacharie_carcasse_id: c.zacharie_carcasse_id!,
+          intermediaire_id: `${fei.numero}_${'2a8bc866-a709-47d9-aebe-2768fceb2ecb'}_${users.find((u) => u.email === 'etg-1@example.fr')?.id}`,
+          intermediaire_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
+          intermediaire_user_id: users.find((u) => u.email === 'etg-1@example.fr')?.id ?? '',
+          intermediaire_role: FeiOwnerRole.ETG,
+          prise_en_charge_at: dayjs().subtract(1, 'day').toDate(),
+        })),
+      });
+      console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (ETG taken charge)`);
+    }
+    if ((role as string) === 'COLLECTEUR_TAKEN_CHARGE') {
+      const fei = await prisma.fei.create({ data: feiTakenChargeByCollecteur });
+      const carcasses = await prisma.carcasse.createMany({ data: getCarcasses(fei) });
+      await prisma.carcasseIntermediaire.createMany({
+        data: getCarcasses(fei).map((c) => ({
+          fei_numero: fei.numero,
+          numero_bracelet: c.numero_bracelet,
+          zacharie_carcasse_id: c.zacharie_carcasse_id!,
+          intermediaire_id: `${fei.numero}_${'a447bab1-8796-48a4-b955-3a5466116bca'}_${users.find((u) => u.email === 'collecteur-pro@example.fr')?.id}`,
+          intermediaire_entity_id: 'a447bab1-8796-48a4-b955-3a5466116bca',
+          intermediaire_user_id: users.find((u) => u.email === 'collecteur-pro@example.fr')?.id ?? '',
+          intermediaire_role: FeiOwnerRole.COLLECTEUR_PRO,
+          prise_en_charge_at: dayjs().subtract(1, 'day').toDate(),
+        })),
+      });
+      console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (Collecteur taken charge)`);
+    }
+    if ((role as string) === 'PREMIER_DETENTEUR_WITH_PARTAGE') {
+      const fei = await prisma.fei.create({ data: feiValidatedByExaminateur });
+      const carcasses = await prisma.carcasse.createMany({ data: getCarcasses(fei) });
+      const pdUser = users.find((u) => u.email === 'premier-detenteur@example.fr');
+      if (pdUser) {
+        const apiKeyPd = await prisma.apiKey.create({
+          data: {
+            name: 'Test API Key Partage PD',
+            description: 'Clé pour test partage-de-mes-donnees PD',
+            private_key: 'test-private-key-partage-pd',
+            public_key: 'test-public-key-partage-pd',
+            active: true,
+            scopes: [ApiKeyScope.FEI_READ_FOR_USER, ApiKeyScope.CARCASSE_READ_FOR_USER],
+          },
+        });
+        await prisma.apiKeyApprovalByUserOrEntity.create({
+          data: {
+            api_key_id: apiKeyPd.id,
+            user_id: pdUser.id,
+            status: 'PENDING',
+          },
+        });
+      }
+      console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (PD with partage approval)`);
     }
     if ((role as string) === 'ETG_ALL_REFUSED_TO_SVI') {
       const fei = await prisma.fei.create({ data: feiAllRefusedByEtgToSvi });
@@ -795,6 +861,53 @@ const feiTransmittedByPremierDetenteurToCommerceDeDetail: Prisma.FeiUncheckedCre
   premier_detenteur_prochain_detenteur_role_cache: FeiOwnerRole.COMMERCE_DE_DETAIL,
 };
 
+const feiDeliveredToCommerceDeDetail: Prisma.FeiUncheckedCreateInput = {
+  ...feiTransmittedByPremierDetenteurToCommerceDeDetail,
+  numero: 'ZACH-20250707-QZ6E0-255242',
+  consommateur_final_usage_domestique: dayjs().subtract(1, 'day').toDate(),
+  fei_current_owner_user_id: null,
+  fei_current_owner_user_name_cache: null,
+  fei_current_owner_entity_id: 'b5d31c7f-5e5a-4c2c-9e37-1e6b2d8c4f10',
+  fei_current_owner_entity_name_cache: 'Commerce de Détail 1',
+  fei_current_owner_role: FeiOwnerRole.COMMERCE_DE_DETAIL,
+  fei_prev_owner_user_id: '0Y545',
+  fei_prev_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+  fei_next_owner_entity_id: null,
+  fei_next_owner_role: null,
+};
+
+const feiTakenChargeByEtg: Prisma.FeiUncheckedCreateInput = {
+  ...feiValidatedByPremierDetenteur,
+  numero: 'ZACH-20250707-QZ6E0-235242',
+  fei_current_owner_user_id: null,
+  fei_current_owner_user_name_cache: null,
+  fei_current_owner_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
+  fei_current_owner_entity_name_cache: 'ETG 1',
+  fei_current_owner_role: FeiOwnerRole.ETG,
+  fei_prev_owner_user_id: '0Y545',
+  fei_prev_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+  fei_next_owner_entity_id: null,
+  fei_next_owner_role: null,
+  latest_intermediaire_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
+  latest_intermediaire_name_cache: 'ETG 1',
+};
+
+const feiTakenChargeByCollecteur: Prisma.FeiUncheckedCreateInput = {
+  ...feiValidatedByPremierDetenteurToCollecteur,
+  numero: 'ZACH-20250707-QZ6E0-245242',
+  fei_current_owner_user_id: null,
+  fei_current_owner_user_name_cache: null,
+  fei_current_owner_entity_id: 'a447bab1-8796-48a4-b955-3a5466116bca',
+  fei_current_owner_entity_name_cache: 'Collecteur Pro 1',
+  fei_current_owner_role: FeiOwnerRole.COLLECTEUR_PRO,
+  fei_prev_owner_user_id: '0Y545',
+  fei_prev_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+  fei_next_owner_entity_id: null,
+  fei_next_owner_role: null,
+  latest_intermediaire_entity_id: 'a447bab1-8796-48a4-b955-3a5466116bca',
+  latest_intermediaire_name_cache: 'Collecteur Pro 1',
+};
+
 const feiClosedBySvi: Prisma.FeiUncheckedCreateInput = {
   ...feiTransmittedByEtgToSvi,
   numero: 'ZACH-20250707-QZ6E0-205242',
@@ -817,6 +930,8 @@ const feiRefusedByEtg: Prisma.FeiUncheckedCreateInput = {
   fei_current_owner_user_name_cache: 'Pierre Petit',
   fei_prev_owner_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
   fei_prev_owner_role: FeiOwnerRole.ETG,
+  fei_next_owner_user_id: null,
+  fei_next_owner_user_name_cache: null,
   fei_next_owner_entity_id: null,
   fei_next_owner_role: null,
 };

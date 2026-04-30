@@ -1,13 +1,14 @@
 import { test } from '@playwright/test';
 
 // Scenario 123 — Transmission ETG 1 → SVI n'expose pas les carcasses ETG 2.
-// SKIPPED: The full ETG→SVI transmission workflow requires accepting all carcasses
-// individually (clicking each one, selecting "Carcasse acceptée", closing modals),
-// then setting a date and selecting the SVI. This multi-step flow with multiple
-// carcasses is fragile in E2E and is already covered by spec 111 (single-branch).
-// The per-branch isolation at the FEI level is verified by specs 117, 118, 122.
+// SKIPPED (deferred): UI flow involves accepting each carcasse individually (click → modal →
+// "Carcasse acceptée" → close), then setting a date and selecting the SVI. Fragile under
+// load, especially with the gros/petit gibier modal-timing differences in DSFR.
+// User keeps as a UI test (no API conversion) as a regression guard for an upcoming backend
+// refactor — to be implemented post-refactor when modal timings are more stable.
+// Per-branch isolation at FEI level is already covered by 117, 118, 122. Single-branch
+// ETG→SVI flow is covered by 111.
 
 test.skip("SVI destinataire d'ETG 1 ne voit que les 2 carcasses d'ETG 1", async () => {
-  // TODO: implement when individual carcasse acceptance selectors are stabilized
-  // for multi-carcasse ETG→SVI flow
+  // TODO: implement post-backend-refactor with stable carcasse-acceptance modal flow
 });
