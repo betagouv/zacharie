@@ -89,8 +89,8 @@ export default function CreationDeCompte() {
   };
 
   useEffect(() => {
-    clearCache('connexion').then(() =>
-      refreshUser('connexion').then((user) => {
+    clearCache('invitation').then(() =>
+      refreshUser('invitation').then((user) => {
         console.log('init user', user);
         if (!user) {
           setInitialLoading(false);

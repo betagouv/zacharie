@@ -1,3 +1,4 @@
+import useUser from '@app/zustand/user';
 import { clearCache } from './indexed-db';
 
 let API_URL = new URL(import.meta.env.VITE_API_URL);
@@ -99,13 +100,15 @@ class ApiService {
       const response = await fetch(url, config);
       if (response.status === 401) {
         setNativeAuthToken(null);
-        await clearCache();
+        await clearCache('api');
         if (!window.location.href.includes('/app/connexion')) {
           const URLParams = new URLSearchParams(window.location.search);
           URLParams.set('communication', 'Votre session a expiré, veuillez vous reconnecter.');
           URLParams.set('redirect', window.location.pathname + window.location.search);
           console.log('URLParams: ', URLParams.toString());
-          window.location.href = '/app/connexion?' + URLParams.toString();
+          useUser.setState({ user: null });
+          window.history.pushState(null, '', '/app/connexion?' + URLParams.toString());
+          window.dispatchEvent(new PopStateEvent('popstate'));
         }
         return {
           ok: false,
@@ -116,7 +119,7 @@ class ApiService {
       if (config.headers.Accept === 'application/json' && response.json) {
         try {
           const readableRes = await response.json();
-          if (readableRes && typeof readableRes === 'object' && typeof readableRes.data.token === 'string') {
+          if (readableRes && typeof readableRes === 'object' && readableRes.data?.token) {
             setNativeAuthToken(readableRes.data.token);
           }
           return readableRes;

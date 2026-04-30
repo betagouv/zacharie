@@ -27,6 +27,7 @@ import { EntityWithUserRelations } from '@api/src/types/entity';
 import { toast } from 'react-toastify';
 import { clearCache } from '@app/services/indexed-db';
 import { refreshUser } from '@app/utils-offline/get-most-fresh-user';
+import { getUserOnboardingRoute } from '@app/utils/user-onboarded.client';
 
 const loadData = (userId: string): Promise<AdminUserDataResponse> =>
   API.get({ path: `admin/user/${userId}` }).then((res) => res as AdminUserDataResponse);
@@ -203,15 +204,13 @@ export default function AdminUser() {
                       path: 'admin/user/connect-as',
                       body: { email: user.email! },
                     });
-                    if (user.roles.includes(UserRoles.CHASSEUR)) {
-                      navigate('/app/chasseur', { replace: true });
-                    } else if (user.roles.includes(UserRoles.ETG)) {
-                      navigate('/app/etg', { replace: true });
-                    } else {
-                      navigate('/app/tableau-de-bord', { replace: true });
-                    }
-                    await clearCache();
-                    await refreshUser('admin/user/connect-as');
+                    await clearCache().then(() => {
+                      refreshUser('admin/user/connect-as').then((user) => {
+                        if (user) {
+                          navigate(getUserOnboardingRoute(user), { replace: true });
+                        }
+                      });
+                    });
                   }}
                 >
                   <Button
