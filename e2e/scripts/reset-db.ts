@@ -38,10 +38,14 @@ function waitForExecOutput(command: string, expectedOutput: string, timeout: num
 export type SeedRole =
   | 'EXAMINATEUR_INITIAL'
   | 'PREMIER_DETENTEUR'
+  | 'PREMIER_DETENTEUR_WITH_PARTAGE'
   | 'ETG'
+  | 'ETG_TAKEN_CHARGE'
   | 'COLLECTEUR_PRO'
+  | 'COLLECTEUR_TAKEN_CHARGE'
   | 'SVI'
   | 'COMMERCE_DE_DETAIL'
+  | 'COMMERCE_DE_DETAIL_DELIVERED'
   | 'SVI_CLOSED'
   | 'ETG_REFUSED'
   | 'ETG_ALL_REFUSED_TO_SVI';

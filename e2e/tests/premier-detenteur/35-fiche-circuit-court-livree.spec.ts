@@ -10,12 +10,11 @@ test.use({
 });
 
 test.beforeAll(async () => {
-  await resetDb('COMMERCE_DE_DETAIL');
+  await resetDb('COMMERCE_DE_DETAIL_DELIVERED');
 });
 
-test.skip('Fiche circuit court livrée — côté PD : statut Clôturée', async ({ page }) => {
-  // SKIP: COMMERCE_DE_DETAIL seed produces fiche in transit, not delivered — same as examinateur/16
-  const feiId = 'ZACH-20250707-QZ6E0-155242'; // TODO: verify seed feiId
+test('Fiche circuit court livrée — côté PD : statut Clôturée', async ({ page }) => {
+  const feiId = 'ZACH-20250707-QZ6E0-255242';
   await connectWith(page, 'premier-detenteur@example.fr');
 
   const link = page.getByRole('link', { name: feiId });

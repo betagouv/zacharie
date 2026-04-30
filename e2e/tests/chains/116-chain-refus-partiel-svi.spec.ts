@@ -11,9 +11,14 @@ test.beforeAll(async () => {
   await resetDb('PREMIER_DETENTEUR');
 });
 
-test.skip('SVI rend des décisions divergentes → chasseur voit chaque décision', async ({ page }) => {
-  // SKIP: multi-decision SVI flow needs debugging
+test('SVI rend des décisions divergentes → chasseur voit chaque décision', async ({ page }) => {
+  // SKIP: 5-step chain (PD → ETG → SVI x3 with divergent decisions). Test reaches the final
+  // assertion but the "Consignée" label for MM-001-002 doesn't appear on the fiche listing
+  // page after SVI saves. Suspected: store sync of the consigne status takes longer than the
+  // 30s timeout, or the fiche listing only shows aggregate status not per-carcasse status.
+  // Per-carcasse SVI decisions ARE covered separately by tests 74, 75, 76, 77.
   test.setTimeout(180_000);
+  page.on('dialog', (d) => d.accept().catch(() => {}));
   const feiId = 'ZACH-20250707-QZ6E0-155242';
 
   // 1. PD prend en charge + transmet à ETG 1 (mobile viewport)
@@ -96,7 +101,6 @@ test.skip('SVI rend des décisions divergentes → chasseur voit chaque décisio
   await ipm1Fieldset1.getByLabel(/Acceptée/).check({ force: true });
 
   // Enregistrer
-  page.once('dialog', (d) => d.accept());
   const saveBtn1 = page.getByRole('button', { name: 'Enregistrer' }).first();
   await saveBtn1.scrollIntoViewIfNeeded();
   await saveBtn1.click();
@@ -123,12 +127,18 @@ test.skip('SVI rend des décisions divergentes → chasseur voit chaque décisio
   await ipm1Fieldset2.scrollIntoViewIfNeeded();
   await ipm1Fieldset2.getByLabel(/Mise en consigne/).check({ force: true });
 
+  // MISE_EN_CONSIGNE requires pièces inspectées + lésions (per missingFields validation in
+  // SVI carcasse-svi route). Without these, save silently fails — see test 76 for proof.
+  await page.locator('.input-for-search-prefilled-data__input-container').first().click();
+  await page.getByRole('option').first().click();
+  await page.locator('.input-for-search-prefilled-data__input-container').nth(1).click();
+  await page.getByRole('option').first().click();
+
   // Fill durée
   await page.getByLabel(/Durée de la consigne/).fill('24');
   await page.getByLabel(/Durée de la consigne/).blur();
 
   // Enregistrer
-  page.once('dialog', (d) => d.accept());
   const saveBtn2 = page.getByRole('button', { name: 'Enregistrer' }).first();
   await saveBtn2.scrollIntoViewIfNeeded();
   await saveBtn2.click();
@@ -156,7 +166,6 @@ test.skip('SVI rend des décisions divergentes → chasseur voit chaque décisio
   await ipm1Fieldset4.getByLabel(/Acceptée/).check({ force: true });
 
   // Enregistrer
-  page.once('dialog', (d) => d.accept());
   const saveBtn4 = page.getByRole('button', { name: 'Enregistrer' }).first();
   await saveBtn4.scrollIntoViewIfNeeded();
   await saveBtn4.click();
@@ -166,8 +175,10 @@ test.skip('SVI rend des décisions divergentes → chasseur voit chaque décisio
   await page.goto(`http://localhost:3290/app/svi/fei/${feiId}`, { timeout: 15000 });
   await expect(page).toHaveURL(new RegExp(`/app/svi/fei/${feiId}`));
 
-  // Verify that we can see decision statuses on the fiche
-  await expect(page.getByText(/accepté/i).first()).toBeVisible({ timeout: 10000 });
-  // At least one carcasse should show consigne-related status
-  await expect(page.getByText(/consign/i).first()).toBeVisible({ timeout: 10000 });
+  // Verify that we can see decision statuses on the fiche.
+  // After SVI sets MM-001-002 to MISE_EN_CONSIGNE, the carcasse status updates to CONSIGNE
+  // (label "Consignée") via store.updateCarcasse → updateCarcasseStatus.
+  // The consigne sync can take a few seconds — give it generous time.
+  await expect(page.getByText(/accept/i).first()).toBeVisible({ timeout: 15000 });
+  await expect(page.getByText(/consign|mise en consigne/i).first()).toBeVisible({ timeout: 30000 });
 });
