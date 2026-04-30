@@ -116,7 +116,7 @@ class ApiService {
       if (config.headers.Accept === 'application/json' && response.json) {
         try {
           const readableRes = await response.json();
-          if (readableRes && typeof readableRes === 'object' && typeof readableRes.data.token === 'string') {
+          if (readableRes && typeof readableRes === 'object' && readableRes.data?.token) {
             setNativeAuthToken(readableRes.data.token);
           }
           return readableRes;

@@ -4,7 +4,7 @@ import { type MainNavigationProps } from '@codegouvfr/react-dsfr/MainNavigation'
 import { clearCache } from '@app/services/indexed-db';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import SearchInput from '@app/components/SearchInput';
-import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
+import { refreshUser, useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { useRef } from 'react';
 import API, { setNativeAuthToken } from '@app/services/api';
 import { useSearchParams } from 'react-router';
@@ -63,9 +63,7 @@ export default function RootDisplay({
         onClick: async () => {
           API.post({ path: '/user/logout' }).then(async () => {
             setNativeAuthToken(null);
-            await clearCache().then(() => {
-              window.location.href = '/app/connexion';
-            });
+            await clearCache().then(() => refreshUser('RootDisplay logout'));
           });
         },
       },

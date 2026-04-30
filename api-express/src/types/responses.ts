@@ -43,7 +43,7 @@ export interface UserConnexionResponse {
         >;
       }
     >;
-    token: string | null;
+    token?: string | null;
     contexte?: string;
   };
   error: string;

@@ -91,7 +91,7 @@ router.post(
       if (!result.success) {
         res.status(406).send({
           ok: false,
-          data: { user: null, token: null },
+          data: { user: null },
           message: '',
           error: result.error.errors[0].message,
         });
@@ -111,7 +111,7 @@ router.post(
       if (!email) {
         res.status(400).send({
           ok: false,
-          data: { user: null, token: null },
+          data: { user: null },
           message: '',
           error: 'Veuillez renseigner votre email',
         });
@@ -120,7 +120,7 @@ router.post(
       if (!passwordUser) {
         res.status(400).send({
           ok: false,
-          data: { user: null, token: null },
+          data: { user: null },
           message: '',
           error: 'Veuillez renseigner votre mot de passe',
         });
@@ -131,7 +131,7 @@ router.post(
       if (!user) {
         res.status(400).send({
           ok: false,
-          data: { user: null, token: null },
+          data: { user: null },
           message: '',
           error: 'Email ou mot de passe incorrect',
         });
@@ -144,7 +144,7 @@ router.post(
       if (!existingPassword) {
         res.status(400).send({
           ok: false,
-          data: { user: null, token: null },
+          data: { user: null },
           message: '',
           error: 'Email ou mot de passe incorrect',
         });
@@ -155,7 +155,7 @@ router.post(
       if (!isOk) {
         res.status(400).send({
           ok: false,
-          data: { user: null, token: null },
+          data: { user: null },
           message: '',
           error: 'Email ou mot de passe incorrect',
         });
@@ -188,7 +188,7 @@ router.post(
       if (!result.success) {
         res.status(406).send({
           ok: false,
-          data: { user: null, token: null },
+          data: { user: null },
           message: '',
           error: result.error.errors[0].message,
         });
@@ -208,7 +208,7 @@ router.post(
       if (!email) {
         res.status(400).send({
           ok: false,
-          data: { user: null, token: null },
+          data: { user: null },
           message: '',
           error: 'Veuillez renseigner votre email',
         });
@@ -217,7 +217,7 @@ router.post(
       if (!passwordUser) {
         res.status(400).send({
           ok: false,
-          data: { user: null, token: null },
+          data: { user: null },
           message: '',
           error: 'Veuillez renseigner votre mot de passe',
         });
@@ -229,7 +229,7 @@ router.post(
       if (user) {
         res.status(400).send({
           ok: false,
-          data: { user: null, token: null },
+          data: { user: null },
           message: '',
           error: 'Un compte existe déjà avec cet email',
         });
@@ -279,7 +279,7 @@ router.post(
       if (!result.success) {
         res.status(406).send({
           ok: false,
-          data: { user: null, token: null },
+          data: { user: null },
           message: '',
           error: result.error.errors[0].message,
         });
@@ -299,7 +299,7 @@ router.post(
       if (!email) {
         res.status(400).send({
           ok: false,
-          data: { user: null, token: null },
+          data: { user: null },
           message: '',
           error: 'Veuillez renseigner votre email',
         });
@@ -308,7 +308,7 @@ router.post(
       if (!passwordUser) {
         res.status(400).send({
           ok: false,
-          data: { user: null, token: null },
+          data: { user: null },
           message: '',
           error: 'Veuillez renseigner votre mot de passe',
         });
@@ -317,7 +317,7 @@ router.post(
       if (!invitationToken) {
         res.status(400).send({
           ok: false,
-          data: { user: null, token: null },
+          data: { user: null },
           message: '',
           error: "Le token d'invitation est requis",
         });
@@ -329,7 +329,7 @@ router.post(
       if (!user) {
         res.status(400).send({
           ok: false,
-          data: { user: null, token: null },
+          data: { user: null },
           message: '',
           error: "L'invitation liée à cet email n'est pas valide",
         });
@@ -342,7 +342,7 @@ router.post(
       if (!existingPassword) {
         res.status(400).send({
           ok: false,
-          data: { user: null, token: null },
+          data: { user: null },
           message: '',
           error: "L'invitation liée à cet email n'est pas valide",
         });
@@ -352,7 +352,7 @@ router.post(
       if (!isOk) {
         res.status(400).send({
           ok: false,
-          data: { user: null, token: null },
+          data: { user: null },
           message: '',
           error: "L'invitation liée à cet email n'est pas valide",
         });
@@ -371,7 +371,7 @@ router.post(
         });
         res.status(400).send({
           ok: false,
-          data: { user: null, token: null },
+          data: { user: null },
           message: '',
           error:
             "L'invitation liée à cet email n'est plus valide, veuillez en demander une nouvelle à votre entreprise",
@@ -409,7 +409,7 @@ router.post(
       if (!result.success) {
         res.status(406).send({
           ok: false,
-          data: { user: null, token: null },
+          data: { user: null },
           message: '',
           error: result.error.errors[0].message,
         });
@@ -429,7 +429,7 @@ router.post(
       if (!email) {
         res.status(400).send({
           ok: false,
-          data: { user: null, token: null },
+          data: { user: null },
           message: '',
           error: 'Veuillez renseigner votre email',
         });
@@ -440,7 +440,7 @@ router.post(
       if (!user) {
         res.status(200).send({
           ok: true,
-          data: { user: null, token: null },
+          data: { user: null },
           error: '',
           message:
             'Si cet email existe, un email de réinitialisation de mot de passe a été envoyé\nCliquez sur le lien dans cet email pour réinitialiser votre mot de passe',
@@ -472,7 +472,7 @@ router.post(
       // Pour des raisons de sécurité, on ne révèle pas si l'email existe ou non
       res.status(200).send({
         ok: true,
-        data: { user: null, token: null },
+        data: { user: null },
         error: '',
         message:
           'Si cet email existe, un email de réinitialisation de mot de passe a été envoyé\nCliquez sur le lien dans cet email pour réinitialiser votre mot de passe',
@@ -494,7 +494,7 @@ router.post(
       if (!result.success) {
         res.status(406).send({
           ok: false,
-          data: { user: null, token: null },
+          data: { user: null },
           message: '',
           error: result.error.errors[0].message,
         });
@@ -513,7 +513,7 @@ router.post(
       if (!passwordUser) {
         res.status(400).send({
           ok: false,
-          data: { user: null, token: null },
+          data: { user: null },
           message: '',
           error: 'Veuillez renseigner votre mot de passe',
         });
@@ -522,7 +522,7 @@ router.post(
       if (!resetPasswordToken) {
         res.status(400).send({
           ok: false,
-          data: { user: null, token: null },
+          data: { user: null },
           message: '',
           error: 'Le token de réinitialisation est requis',
         });
@@ -536,7 +536,7 @@ router.post(
       if (!password) {
         res.status(400).send({
           ok: false,
-          data: { user: null, token: null },
+          data: { user: null },
           error: '',
           message: 'Le lien de réinitialisation de mot de passe est invalide. Veuillez réessayer.',
         });
@@ -549,7 +549,7 @@ router.post(
         });
         res.status(400).send({
           ok: false,
-          data: { user: null, token: null },
+          data: { user: null },
           error: '',
           message: 'Le lien de réinitialisation de mot de passe a expiré. Veuillez réessayer.',
         });
@@ -606,7 +606,7 @@ router.post(
       if (!accessToken) {
         res.status(400).send({
           ok: false,
-          data: { user: null, token: null },
+          data: { user: null },
           message: '',
           error: 'Veuillez renseigner votre access token',
         });
@@ -624,7 +624,7 @@ router.post(
       if (!approval) {
         res.status(400).send({
           ok: false,
-          data: { user: null, token: null },
+          data: { user: null },
           message: '',
           error: 'Le lien de connexion est invalide. Veuillez réessayer.',
         });
@@ -637,7 +637,7 @@ router.post(
         });
         res.status(400).send({
           ok: false,
-          data: { user: null, token: null },
+          data: { user: null },
           message: '',
           error: 'Le lien de connexion a expiré. Veuillez réessayer.',
         });
@@ -650,7 +650,7 @@ router.post(
         });
         res.status(400).send({
           ok: false,
-          data: { user: null, token: null },
+          data: { user: null },
           message: '',
           error: "Le lien de connexion n'a pas été approuvé. Veuillez réessayer.",
         });
@@ -666,7 +666,7 @@ router.post(
         });
         res.status(400).send({
           ok: false,
-          data: { user: null, token: null },
+          data: { user: null },
           message: '',
           error: 'Une erreur est survenue. Veuillez réessayer.',
         });
@@ -701,7 +701,7 @@ router.post(
   passport.authenticate('user', { session: false, failWithError: true }),
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     res.clearCookie('zacharie_express_jwt', logoutCookieOptions(req));
-    res.status(200).send({ ok: true });
+    res.status(200).send({ ok: true, data: { user: null, token: null } });
   })
 );
 
@@ -985,7 +985,7 @@ router.post(
       if (!user) {
         res.status(400).send({
           ok: false,
-          data: { user: null, token: null },
+          data: { user: null },
           error: 'User not found',
           message: '',
         });
@@ -996,7 +996,7 @@ router.post(
         if (user.id !== req.user.id) {
           res.status(400).send({
             ok: false,
-            data: { user: null, token: null },
+            data: { user: null },
             error: 'User not authorized',
             message: '',
           });
@@ -1135,7 +1135,6 @@ router.post(
           ok: false,
           data: {
             user: null,
-            token: null,
           },
           error: 'Missing user_id',
           message: '',
@@ -1203,7 +1202,7 @@ ${savedUser.roles.includes(UserRoles.CHASSEUR) && savedUser.est_forme_a_l_examen
         });
       }
 
-      res.status(200).send({ ok: true, data: { user: savedUser, token: null }, error: '', message: '' });
+      res.status(200).send({ ok: true, data: { user: savedUser }, error: '', message: '' });
     }
   )
 );
@@ -1235,7 +1234,7 @@ router.get(
         );
         if (!approvedRelations?.length) {
           req.user.activated = false;
-          res.status(200).send({ ok: true, data: { user: req.user, token: null }, error: null, message: '' });
+          res.status(200).send({ ok: true, data: { user: req.user }, error: null, message: '' });
           return;
         }
       }
@@ -1272,9 +1271,7 @@ router.get(
           },
         },
       });
-      res
-        .status(200)
-        .send({ ok: true, data: { user: req.user, apiKeyApprovals, token: null }, error: null, message: '' });
+      res.status(200).send({ ok: true, data: { user: req.user, apiKeyApprovals }, error: null, message: '' });
     }
   )
 );

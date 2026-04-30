@@ -50,7 +50,7 @@ export default function Connexion() {
         capture(error, { extra: { formData: Object.fromEntries(formData) } });
         return {
           ok: false,
-          data: { user: null, token: null },
+          data: { user: null },
           message: 'Service momentanément indisponible, veuillez réessayer ultérieurement',
           error: 'Erreur inconnue',
         };
@@ -90,6 +90,7 @@ export default function Connexion() {
   };
 
   useEffect(() => {
+    console.log('user', user);
     if (user) {
       handleRedirect(user);
     } else {

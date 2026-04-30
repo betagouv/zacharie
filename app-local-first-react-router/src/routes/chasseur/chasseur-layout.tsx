@@ -44,6 +44,7 @@ export default function ChasseurLayout() {
     refreshUser('ChasseurLayout');
   }, []);
 
+  console.log('user in chasseur layout', user);
   if (!user) {
     const currentPath = location.pathname + location.search;
     console.log('NO CHASSEUR USER');

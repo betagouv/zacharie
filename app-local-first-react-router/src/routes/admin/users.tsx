@@ -378,15 +378,18 @@ export default function AdminUsers() {
                                 path: 'admin/user/connect-as',
                                 body: { email: user.email! },
                               });
-                              if (user.roles.includes(UserRoles.CHASSEUR)) {
-                                navigate('/app/chasseur', { replace: true });
-                              } else if (user.roles.includes(UserRoles.ETG)) {
-                                navigate('/app/etg', { replace: true });
-                              } else {
-                                navigate('/app/tableau-de-bord', { replace: true });
-                              }
-                              await clearCache();
-                              await refreshUser('admin/user/connect-as');
+                              await clearCache().then(() => {
+                                if (user.roles.includes(UserRoles.CHASSEUR)) {
+                                  navigate('/app/chasseur', { replace: true });
+                                } else if (user.roles.includes(UserRoles.ETG)) {
+                                  navigate('/app/etg', { replace: true });
+                                } else if (user.roles.includes(UserRoles.SVI)) {
+                                  navigate('/app/svi', { replace: true });
+                                } else if (user.roles.includes(UserRoles.COLLECTEUR_PRO)) {
+                                  navigate('/app/collecteur', { replace: true });
+                                }
+                                refreshUser('admin/user/connect-as');
+                              });
                             }}
                           >
                             <button
