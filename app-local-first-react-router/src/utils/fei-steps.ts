@@ -3,10 +3,18 @@ import type { FeiStep, FeiStepForChasseur, FeiStepForEtg, FeiStepSimpleStatus } 
 import useUser from '@app/zustand/user';
 import { Carcasse, Entity, EntityTypes, FeiOwnerRole, User, UserRoles } from '@prisma/client';
 import { useEntitiesIdsWorkingDirectlyFor } from '@app/utils/get-entity-relations';
-import { useMemo } from 'react';
+import { createElement, useMemo } from 'react';
 import type { FeiIntermediaire } from '@app/types/fei-intermediaire';
 import { useFeiIntermediaires } from '@app/utils/get-carcasses-intermediaires';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
+import {
+  RiCheckboxCircleLine,
+  RiEdit2Line,
+  RiTruckLine,
+  RiDoorOpenLine,
+  RiHourglassFill,
+} from 'react-icons/ri';
+import { ReactElement } from 'react';
 
 type IntermediaireStep = {
   id: string | null;
@@ -351,4 +359,18 @@ export function computeFeiSteps({
     simpleStatus,
     steps,
   };
+}
+
+export function IconStep({
+  displayLabel,
+  simpleStatus,
+}: {
+  displayLabel: string;
+  simpleStatus: FeiStepSimpleStatus;
+}): ReactElement {
+  if (simpleStatus === 'Clôturée') return createElement(RiCheckboxCircleLine);
+  if (displayLabel === 'Information manquante') return createElement(RiEdit2Line);
+  if (/transport/i.test(displayLabel)) return createElement(RiTruckLine);
+  if (/atelier/i.test(displayLabel)) return createElement(RiDoorOpenLine);
+  return createElement(RiHourglassFill);
 }

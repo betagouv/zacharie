@@ -1,6 +1,6 @@
 import dayjs from 'dayjs';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
-import { useFeiSteps } from '@app/utils/fei-steps';
+import { useFeiSteps, IconStep } from '@app/utils/fei-steps';
 import type { FeiWithIntermediaires } from '@api/src/types/fei';
 import type { FeiStepSimpleStatus } from '@app/types/fei-steps';
 
@@ -22,13 +22,10 @@ const statusColors: Record<FeiStepSimpleStatus, { bg: string; text: string }> = 
 export default function EtgHeaderFiche({ fei }: { fei: FeiWithIntermediaires }) {
   const { simpleStatus, currentStepLabelForEtg } = useFeiSteps(fei);
 
-  const chasseTitle = `Fiche du ${dayjs(fei.date_mise_a_mort).format('DD/MM/YYYY')}`
+  const chasseTitle = `Fiche du ${dayjs(fei.date_mise_a_mort).format('DD/MM/YYYY')}`;
   const title = fei.premier_detenteur_name_cache
     ? `${chasseTitle} | ${fei.premier_detenteur_name_cache}`
     : chasseTitle;
-
-  const isClosed = simpleStatus === 'Clôturée';
-  const stepIcon = isClosed ? '🔒' : '⏳';
 
   return (
     <div className="fr-mb-2w rounded bg-white p-4 md:p-8">
@@ -44,7 +41,7 @@ export default function EtgHeaderFiche({ fei }: { fei: FeiWithIntermediaires }) 
         >
           {simpleStatus}
         </Tag>
-        <span className="text-sm">{stepIcon}</span>
+        <IconStep displayLabel={currentStepLabelForEtg} simpleStatus={simpleStatus} />
         <span className="text-sm">{currentStepLabelForEtg}</span>
       </div>
     </div>
