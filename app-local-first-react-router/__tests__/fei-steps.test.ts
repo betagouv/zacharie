@@ -50,6 +50,7 @@ const createMockUser = (roles: UserRoles[], numero_cfei: string | null = null): 
   brevo_contact_id: null,
   at_least_one_fei_treated: null,
   onboarding_chasse_info_done_at: null,
+  scope_departements_codes: [],
 });
 
 const createMockFei = (overrides: Partial<FeiWithIntermediaires> = {}): FeiWithIntermediaires => ({

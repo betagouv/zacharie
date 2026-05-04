@@ -274,10 +274,10 @@ export default function TableauDeBordIndex() {
     const _sviWorkingForEtgIds = !isSvi
       ? []
       : allEtgIds.filter((id) => {
-          const etgLinkedToSviId = entities[id]?.etg_linked_to_svi_id;
-          if (!etgLinkedToSviId) return false;
-          return entitiesIdsWorkingDirectlyFor.includes(etgLinkedToSviId);
-        });
+        const etgLinkedToSviId = entities[id]?.etg_linked_to_svi_id;
+        if (!etgLinkedToSviId) return false;
+        return entitiesIdsWorkingDirectlyFor.includes(etgLinkedToSviId);
+      });
     if (_sviWorkingForEtgIds.includes(filterETG)) {
       return [_sviWorkingForEtgIds, `Fiches de ${entities[filterETG]?.nom_d_usage}`];
     }

@@ -18,7 +18,10 @@ enum UserRoles {
   CANTINE_OU_RESTAURATION_COLLECTIVE // Repas de chasse ou associatif
   ASSOCIATION_CARITATIVE // Repas de chasse ou associatif
   REPAS_DE_CHASSE_OU_ASSOCIATIF // Repas de chasse ou associatif
-  CONSOMMATEUR_FINAL // Je suis consommateur final 
+  CONSOMMATEUR_FINAL // Je suis consommateur final
+  FDC // Fédération Départementale des Chasseurs
+  FRC // Fédération Régionale des Chasseurs
+  FNC // Fédération Nationale des Chasseurs
 }
 
 enum UserEtgRoles {
@@ -69,6 +72,9 @@ model User {
   checked_has_ccg                DateTime?
   checked_has_partenaires        DateTime?
   onboarding_chasse_info_done_at DateTime?
+  // Scope géographique pour les rôles FDC/FRC/FNC (dashboard de pilotage des fédérations).
+  // FDC = 1 code dept ; FRC = depts de la région ; FNC = [] (= national, tous les depts).
+  scope_departements_codes       String[]
   Password                       Password?
   UserRelationsAsOwner           UserRelations[]                @relation("UserOwnerOfUserRelation")
   UserRelationsAsRelated         UserRelations[]                @relation("UserRelatedOfUserRelation")

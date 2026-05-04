@@ -33,6 +33,21 @@ export default function TableauDeBordLayout({ navigation }: { navigation: MainNa
     return <Navigate to={newPathName} />;
   }
 
+  if (user.roles.includes(UserRoles.FDC)) {
+    const newPathName = location.pathname.replace('/app/tableau-de-bord', '/app/fdc');
+    return <Navigate to={newPathName} />;
+  }
+
+  if (user.roles.includes(UserRoles.FRC)) {
+    const newPathName = location.pathname.replace('/app/tableau-de-bord', '/app/frc');
+    return <Navigate to={newPathName} />;
+  }
+
+  if (user.roles.includes(UserRoles.FNC)) {
+    const newPathName = location.pathname.replace('/app/tableau-de-bord', '/app/fnc');
+    return <Navigate to={newPathName} />;
+  }
+
   return (
     <>
       <RootDisplay
