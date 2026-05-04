@@ -610,22 +610,6 @@ export default function ChasseurFiches() {
           </div>
         </CollapsibleSection>
       )}
-
-      {/* Mettre à jour */}
-      <Button
-        priority="tertiary"
-        size="small"
-        className="mt-2"
-        iconId="ri-refresh-line"
-        disabled={!isOnline || loading}
-        onClick={async () => {
-          setLoading(true);
-          await loadData();
-          setLoading(false);
-        }}
-      >
-        Mettre à jour
-      </Button>
     </>
   );
 

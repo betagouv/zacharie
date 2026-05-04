@@ -171,7 +171,7 @@ export default function SviFiches() {
       try {
         const parsed = JSON.parse(savedFilter);
         if (Array.isArray(parsed)) return parsed;
-      } catch {}
+      } catch { }
     }
     return [];
   });
@@ -486,21 +486,6 @@ export default function SviFiches() {
                 ]}
               />
             )}
-
-            <Button
-              priority="tertiary"
-              className="w-full shrink-0 bg-white md:w-auto"
-              iconId="ri-refresh-line"
-              disabled={!isOnline || loading}
-              onClick={async () => {
-                setLoading(true);
-                await loadData();
-                setLoading(false);
-              }}
-              title="Mettre à jour"
-            >
-              <span>Mettre à jour</span>
-            </Button>
           </div>
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
             <SegmentedControl
