@@ -286,9 +286,7 @@ export default function AdminLesions() {
               })}
             />
             {filtered.length === 0 && (
-              <p className="py-8 text-center text-sm text-gray-500">
-                Aucun motif ne correspond à la recherche.
-              </p>
+              <p className="py-8 text-center text-sm text-gray-500">Aucun motif ne correspond à la recherche.</p>
             )}
           </div>
         </Tabs>
