@@ -491,7 +491,7 @@ export default function ChasseurFiches() {
                 }}
               />
               <span
-                className={`inline-block rounded px-2 py-0.5 text-xs font-semibold uppercase ${statusColors[status].bg} ${statusColors[status].text}`}
+                className={`inline-block rounded px-2 py-0.5 text-xs uppercase font-semibold ${statusColors[status].bg} ${statusColors[status].text}`}
               >
                 {status}
               </span>
