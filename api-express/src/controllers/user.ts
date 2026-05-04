@@ -39,13 +39,11 @@ import {
   ApiKeyApprovalStatus,
 } from '@prisma/client';
 import { cookieOptions, JWT_MAX_AGE, logoutCookieOptions } from '~/utils/cookie';
-import sendNotificationToUser from '~/service/notifications';
 import { SECRET } from '~/config';
 import { autoActivatePremierDetenteur, hasAllRequiredFields } from '~/utils/user';
 // import { refreshMaterializedViews } from '~/utils/refreshMaterializedViews';
 import { z } from 'zod';
 import { sanitize } from '~/utils/sanitize';
-import { captureException } from '@sentry/node';
 import { inviteUser } from '~/utils/invite-user';
 // import { refreshMaterializedViews } from '~/utils/refreshMaterializedViews';
 
@@ -171,12 +169,8 @@ router.post(
         where: { id: user.id },
         data: { last_login_at: new Date() },
       });
-      res.cookie(
-        'zacharie_express_jwt',
-        token,
-        cookieOptions(req.headers.host.includes('localhost') ? true : false)
-      );
-      res.status(200).send({ ok: true, data: { user }, message: '', error: '' });
+      res.cookie('zacharie_express_jwt', token, cookieOptions(req));
+      res.status(200).send({ ok: true, data: { user, token }, message: '', error: '' });
     }
   )
 );
@@ -266,12 +260,8 @@ router.post(
       const token = jwt.sign({ userId: user.id }, SECRET, {
         expiresIn: JWT_MAX_AGE,
       });
-      res.cookie(
-        'zacharie_express_jwt',
-        token,
-        cookieOptions(req.headers.host.includes('localhost') ? true : false)
-      );
-      res.status(200).send({ ok: true, data: { user }, message: '', error: '' });
+      res.cookie('zacharie_express_jwt', token, cookieOptions(req));
+      res.status(200).send({ ok: true, data: { user, token }, message: '', error: '' });
     }
   )
 );
@@ -400,12 +390,8 @@ router.post(
       const token = jwt.sign({ userId: user.id }, SECRET, {
         expiresIn: JWT_MAX_AGE,
       });
-      res.cookie(
-        'zacharie_express_jwt',
-        token,
-        cookieOptions(req.headers.host.includes('localhost') ? true : false)
-      );
-      res.status(200).send({ ok: true, data: { user }, message: '', error: '' });
+      res.cookie('zacharie_express_jwt', token, cookieOptions(req));
+      res.status(200).send({ ok: true, data: { user, token }, message: '', error: '' });
     }
   )
 );
@@ -588,12 +574,13 @@ router.post(
         where: { id: user.id },
         data: { last_login_at: new Date() },
       });
-      res.cookie(
-        'zacharie_express_jwt',
-        token,
-        cookieOptions(req.headers.host.includes('localhost') ? true : false)
-      );
-      res.status(200).send({ ok: true, data: { user: updatedUser }, message: '', error: '' });
+      res.cookie('zacharie_express_jwt', token, cookieOptions(req));
+      res.status(200).send({
+        ok: true,
+        data: { user: updatedUser, token },
+        message: '',
+        error: '',
+      });
     }
   )
 );
@@ -694,18 +681,14 @@ router.post(
         data: { last_login_at: new Date() },
       });
       // refreshMaterializedViews();
-      res.cookie(
-        'zacharie_express_jwt',
-        token,
-        cookieOptions(req.headers.host.includes('localhost') ? true : false)
-      );
+      res.cookie('zacharie_express_jwt', token, cookieOptions(req));
       await prisma.apiKeyApprovalByUserOrEntity.update({
         where: { access_token: accessToken },
         data: { access_token: null, access_token_created_at: null },
       });
       res.status(200).send({
         ok: true,
-        data: { user, contexte: approval.ApiKey.slug_for_context },
+        data: { user, contexte: approval.ApiKey.slug_for_context, token },
         message: '',
         error: '',
       });
@@ -717,11 +700,8 @@ router.post(
   '/logout',
   passport.authenticate('user', { session: false, failWithError: true }),
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    res.clearCookie(
-      'zacharie_express_jwt',
-      logoutCookieOptions(req.headers.host.includes('localhost') ? true : false)
-    );
-    res.status(200).send({ ok: true });
+    res.clearCookie('zacharie_express_jwt', logoutCookieOptions(req));
+    res.status(200).send({ ok: true, data: { user: null, token: null } });
   })
 );
 

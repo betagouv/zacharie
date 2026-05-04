@@ -6,9 +6,10 @@ import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import SearchInput from '@app/components/SearchInput';
 import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { useRef } from 'react';
-import API from '@app/services/api';
-import { useSearchParams } from 'react-router';
+import API, { setNativeAuthToken } from '@app/services/api';
+import { useNavigate, useSearchParams } from 'react-router';
 import { UserRoles } from '@prisma/client';
+import useUser from '@app/zustand/user';
 
 const environment = import.meta.env.VITE_ENV || 'development';
 
@@ -31,6 +32,7 @@ export default function RootDisplay({
   const embedded = searchParams.get('embedded') === 'true';
   const user = useMostFreshUser('RootDisplay ' + id);
   const isOnline = useIsOnline();
+  const navigate = useNavigate();
 
   const RenderedSearchInput = useRef(SearchInput).current;
 
@@ -62,8 +64,10 @@ export default function RootDisplay({
       buttonProps: {
         onClick: async () => {
           API.post({ path: '/user/logout' }).then(async () => {
+            setNativeAuthToken(null);
+            useUser.setState({ user: null }); // this line is important : if useUser is not null then /app/connexion will redirect to /app/[role] even if /user/me returns a 401 (because of offline mode)
             await clearCache().then(() => {
-              window.location.href = '/app/connexion';
+              navigate('/app/connexion');
             });
           });
         },

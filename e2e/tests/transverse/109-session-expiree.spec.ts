@@ -22,4 +22,12 @@ test('Token expiré/invalide redirige vers /app/connexion', async ({ page, conte
   // Navigate to a protected page; server should reject and frontend should redirect.
   await page.goto('http://localhost:3290/app/chasseur');
   await expect(page).toHaveURL(/\/app\/connexion/, { timeout: 15000 });
+
+  // Prove the route actually rerendered (URL alone could change without a route swap
+  // if pushState fired without a popstate dispatch — the regression we are guarding).
+  await expect(page.getByRole('textbox', { name: 'Mon email Renseignez votre' })).toBeVisible();
+
+  // useUser must be cleared so /app/connexion doesn't bounce back to /app/[role] in offline mode.
+  const stored = await page.evaluate(() => localStorage.getItem('zacharie-zustand-user-store'));
+  expect(stored).toBeNull();
 });

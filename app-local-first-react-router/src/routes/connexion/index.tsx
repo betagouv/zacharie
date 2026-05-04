@@ -60,6 +60,12 @@ export default function Connexion() {
       window.scrollTo(0, 0);
     }
     if (response.ok && response.data?.user?.id) {
+      window.ReactNativeWebView?.postMessage(
+        JSON.stringify({
+          event: 'save-initial-path',
+          initialPath: getUserOnboardingRoute(response.data.user),
+        })
+      );
       const user = response.data.user as User;
       useUser.setState({ user });
       useZustandStore.setState((state) => ({

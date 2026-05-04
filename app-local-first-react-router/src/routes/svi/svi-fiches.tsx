@@ -239,7 +239,7 @@ export default function SviFiches() {
   const premierDetenteurOptions = useMemo(() => {
     const map = new Map<string, string>();
     for (const fei of allFeis) {
-      const id = fei.premier_detenteur_user_id || fei.premier_detenteur_entity_id;
+      const id = fei.premier_detenteur_entity_id || fei.premier_detenteur_user_id;
       const name = fei.premier_detenteur_name_cache;
       if (id && name && !map.has(id)) {
         map.set(id, name);

@@ -13,8 +13,7 @@ test.beforeEach(async () => {
   await resetDb('EXAMINATEUR_INITIAL');
 });
 
-test.skip('Onboarding complet : coordonnées → formation → infos de chasse → /chasseur', async ({ page }) => {
-  // SKIP: unique constraint error in seed + onboarding flow needs debugging
+test('Onboarding complet : coordonnées → formation → infos de chasse → /chasseur', async ({ page }) => {
   await connectWith(page, 'examinateur-onboarding@example.fr');
 
   // Étape 1 : mes coordonnées
@@ -38,8 +37,11 @@ test.skip('Onboarding complet : coordonnées → formation → infos de chasse �
 
   // Étape 2 : formation examen initial
   await expect(page).toHaveURL(/\/app\/chasseur\/onboarding\/formation-examen-initial/);
-  // Click "Oui" radio for est_forme_a_l_examen_initial
-  await page.getByLabel('Oui').click();
+  // DSFR radio: label intercepts pointer events; click the label directly
+  await page.locator('label.fr-label:has-text("Oui")').first().click();
+  // Selecting Oui reveals a required CFEI number input
+  await page.locator('#numero_cfei').fill('CFEI-075-25-999');
+  await page.locator('#numero_cfei').blur();
   await page.getByRole('button', { name: /Enregistrer et continuer/i }).click();
 
   // Étape 3 : mes informations de chasse

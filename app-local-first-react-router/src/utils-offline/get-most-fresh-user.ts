@@ -68,6 +68,11 @@ export async function refreshUser(_calledFrom: string) {
           return user;
         }
 
+        if (userResponse?.error === 'Unauthorized') {
+          useUser.setState({ user: null });
+          return null;
+        }
+
         return null;
       });
 

@@ -14,8 +14,7 @@ test.beforeEach(async () => {
  * Verify the "Traitement assainissant" radio is available and that
  * selecting it reveals treatment checkboxes (Cuisson, Congélation, Autre).
  */
-test.skip('77 - SVI inspection : traitement assainissant (IPM2)', async ({ page }) => {
-  // SKIP: IPM2 treatment requires completing IPM1 consigne first
+test('77 - SVI inspection : traitement assainissant (IPM2)', async ({ page }) => {
   const feiId = 'ZACH-20250707-QZ6E0-185242';
   await connectWith(page, 'svi@example.fr');
   await expect(page).toHaveURL(/\/app\/svi/);
@@ -59,8 +58,8 @@ test.skip('77 - SVI inspection : traitement assainissant (IPM2)', async ({ page 
   const traitementRadio = page.getByLabel('Traitement assainissant', { exact: true });
   await expect(traitementRadio).toBeVisible();
 
-  // Select it and verify treatment checkboxes appear
-  await traitementRadio.check();
+  // DSFR radio: label intercepts pointer events; click the label directly
+  await page.locator('label.fr-label:has-text("Traitement assainissant")').first().click();
   await expect(page.getByLabel('Cuisson')).toBeVisible();
   await expect(page.getByLabel('Congélation')).toBeVisible();
   await expect(page.getByLabel('Autre')).toBeVisible();

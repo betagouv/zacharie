@@ -6,9 +6,6 @@ import BottomNavigation from '@app/components/BottomNavigation';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { UserRoles } from '@prisma/client';
-import { hasAllRequiredFields } from '@app/utils/user';
-import { useMemo } from 'react';
-import SviDeactivated from './svi-deactivated';
 import Chargement from '@app/components/Chargement';
 
 export default function SviLayout() {
@@ -19,16 +16,6 @@ export default function SviLayout() {
   const location = useLocation();
   const _hasHydrated = useZustandStore((state) => state._hasHydrated);
 
-  const showDeactivatedAccount = useMemo(() => {
-    const isRestrictedPage =
-      !location.pathname.includes('profil') &&
-      !location.pathname.includes('onboarding') &&
-      !location.pathname.includes('admin');
-    if (!isRestrictedPage) return false;
-    if (!user) return false;
-    const isProfileCompleted = hasAllRequiredFields(user!);
-    return !isProfileCompleted;
-  }, [user, location.pathname]);
 
   if (!user) {
     const currentPath = location.pathname + location.search;
@@ -53,7 +40,7 @@ export default function SviLayout() {
           id="content"
           className="fr-background-alt--blue-france relative flex min-h-full flex-col overflow-visible pb-16 md:pb-0"
         >
-          {!_hasHydrated ? <Chargement /> : showDeactivatedAccount ? <SviDeactivated /> : <Outlet />}
+          {!_hasHydrated ? <Chargement /> : <Outlet />}
         </main>
       </RootDisplay>
       <BottomNavigation items={sviNavigation} />

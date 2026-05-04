@@ -115,8 +115,11 @@ createRoot(document.getElementById('root')!).render(
           capture(error, { extra: { componentStack } });
         }}
         onReset={() => {
-          clearCache().then(() => {
-            window.location.href = '/app/tableau-de-bord';
+          clearCache('main').then(() => {
+            // no useNavigate available here, so we use window.history.pushState
+            // no window.location.href because it would eject the user from ExpoApp, idk why
+            window.history.pushState(null, '', '/app/connexion');
+            window.dispatchEvent(new PopStateEvent('popstate'));
           });
           // Reset the state of your app so the error doesn't happen again
         }}

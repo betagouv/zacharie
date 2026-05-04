@@ -19,7 +19,7 @@ import CircuitCourt from './circuirt-court';
 import { useIsCircuitCourt } from '@app/utils/circuit-court';
 import { useFeiIntermediaires } from '@app/utils/get-carcasses-intermediaires';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
-import HeaderFiche from './Headerfiche';
+import ChasseurHeaderFiche from '../chasseur/chasseur-header-fiche';
 
 export default function FeiLoader() {
   const params = useParams();
@@ -173,7 +173,7 @@ function Fei() {
               !fei.consommateur_final_usage_domestique && <FeiStepper />}
             {showInterface === FeiOwnerRole.COLLECTEUR_PRO && <FEICurrentIntermediaire />}
             {(showInterface === FeiOwnerRole.EXAMINATEUR_INITIAL ||
-              showInterface === FeiOwnerRole.PREMIER_DETENTEUR) && <HeaderFiche fei={fei} />}
+              showInterface === FeiOwnerRole.PREMIER_DETENTEUR) && <ChasseurHeaderFiche fei={fei} />}
             {showInterface === FeiOwnerRole.EXAMINATEUR_INITIAL && <FEIExaminateurInitial />}
             {showInterface === FeiOwnerRole.PREMIER_DETENTEUR && <FEIExaminateurInitial />}
             {showInterface === FeiOwnerRole.ETG && <FEICurrentIntermediaire />}

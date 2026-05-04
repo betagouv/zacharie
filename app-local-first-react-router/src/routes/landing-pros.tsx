@@ -21,7 +21,7 @@ export default function LandingProsPage() {
           <section className="mt-8 flex flex-col gap-4 md:grid md:grid-cols-2 md:grid-rows-2 md:gap-16">
             <div className="mx-auto h-full w-full overflow-hidden md:col-span-1 md:row-span-2">
               <img
-                src="/landing/inspection-svi.png"
+                src="/landing/inspection-svi.webp"
                 alt="Un vétérinaire en train de faire une inspection de carcasse"
                 className="h-full max-h-[50vh] w-full overflow-hidden object-cover md:max-h-full"
               />
@@ -61,7 +61,7 @@ export default function LandingProsPage() {
             <div className="mt-8 flex flex-col gap-4 md:grid md:grid-cols-2 md:grid-rows-1 md:gap-16">
               <div className="mx-auto h-full w-full overflow-hidden md:col-span-1 md:col-start-2 md:row-span-1">
                 <img
-                  src="/landing/morceaux-de-viande.png"
+                  src="/landing/morceaux-de-viande.webp"
                   alt="Des morceaux de viande de gibier sauvage"
                   className="mx-auto max-h-[50vh] w-full object-cover md:max-h-[600px]"
                 />

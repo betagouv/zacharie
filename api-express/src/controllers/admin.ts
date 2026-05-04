@@ -56,7 +56,7 @@ router.post(
     async (
       req: express.Request,
       res: express.Response<UserConnexionResponse>,
-      next: express.NextFunction,
+      next: express.NextFunction
     ) => {
       const body = req.body;
       const email = body.email;
@@ -84,19 +84,15 @@ router.post(
       const token = jwt.sign({ userId: user.id }, SECRET, {
         expiresIn: JWT_MAX_AGE,
       });
-      res.cookie(
-        'zacharie_express_jwt',
-        token,
-        cookieOptions(req.headers.platform === 'native' ? false : true),
-      );
+      res.cookie('zacharie_express_jwt', token, cookieOptions(req));
       res.status(200).send({
         ok: true,
-        data: { user },
+        data: { user, token },
         error: null,
         message: '',
       });
-    },
-  ),
+    }
+  )
 );
 
 router.post(
@@ -106,7 +102,7 @@ router.post(
     async (
       req: express.Request,
       res: express.Response<AdminNewUserDataResponse>,
-      next: express.NextFunction,
+      next: express.NextFunction
     ) => {
       const body = req.body;
 
@@ -122,8 +118,8 @@ router.post(
       await createBrevoContact(createdUser, 'ADMIN');
 
       res.status(200).send({ ok: true, data: { user: createdUser }, error: '' });
-    },
-  ),
+    }
+  )
 );
 
 router.get(
@@ -133,7 +129,7 @@ router.get(
     async (
       req: express.Request,
       res: express.Response<AdminUserDataResponse>,
-      next: express.NextFunction,
+      next: express.NextFunction
     ) => {
       const userId = req.params.user_id;
       const user = await prisma.user.findUnique({
@@ -202,8 +198,8 @@ router.get(
         },
         error: '',
       });
-    },
-  ),
+    }
+  )
 );
 
 router.get(
@@ -221,8 +217,8 @@ router.get(
         data: { users },
         error: '',
       });
-    },
-  ),
+    }
+  )
 );
 
 router.get(
@@ -232,7 +228,7 @@ router.get(
     async (
       req: express.Request,
       res: express.Response<AdminEntitiesResponse>,
-      next: express.NextFunction,
+      next: express.NextFunction
     ) => {
       const { search, type, zacharie_compatible } = req.query as Record<string, string | undefined>;
       const where: Prisma.EntityWhereInput = { deleted_at: null };
@@ -275,8 +271,8 @@ router.get(
         data: { entities, counts },
         error: '',
       });
-    },
-  ),
+    }
+  )
 );
 
 router.get(
@@ -286,7 +282,7 @@ router.get(
     async (
       req: express.Request,
       res: express.Response<AdminGetEntityResponse>,
-      next: express.NextFunction,
+      next: express.NextFunction
     ) => {
       const entity = await prisma.entity.findUnique({
         where: {
@@ -324,7 +320,7 @@ router.get(
                 id: {
                   notIn: entity.EntityRelationsWithUsers.filter(
                     (entityRelation) =>
-                      entityRelation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+                      entityRelation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
                   ).map((entityRelation) => entityRelation.UserRelatedWithEntity.id),
                 },
               },
@@ -342,7 +338,7 @@ router.get(
                 id: {
                   notIn: entity.EntityRelationsWithUsers.filter(
                     (entityRelation) =>
-                      entityRelation.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+                      entityRelation.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY
                   ).map((entityRelation) => entityRelation.UserRelatedWithEntity.id),
                 },
                 roles: {
@@ -435,8 +431,8 @@ router.get(
         },
         error: '',
       });
-    },
-  ),
+    }
+  )
 );
 
 router.post(
@@ -484,8 +480,8 @@ router.post(
       });
 
       res.status(200).send({ ok: true, data: { apiKey: createdApiKey }, error: '' });
-    },
-  ),
+    }
+  )
 );
 
 router.post(
@@ -495,7 +491,7 @@ router.post(
     async (
       req: express.Request,
       res: express.Response<AdminNewEntityResponse>,
-      next: express.NextFunction,
+      next: express.NextFunction
     ) => {
       const body = req.body;
 
@@ -531,8 +527,8 @@ router.post(
       await updateOrCreateBrevoCompany(createdEntity);
 
       res.status(200).send({ ok: true, data: { entity: createdEntity }, error: '' });
-    },
-  ),
+    }
+  )
 );
 
 router.post(
@@ -542,7 +538,7 @@ router.post(
     async (
       req: express.Request,
       res: express.Response<AdminActionEntityResponse>,
-      next: express.NextFunction,
+      next: express.NextFunction
     ) => {
       const body = req.body;
 
@@ -599,8 +595,8 @@ router.post(
         data: { entity: updatedEntity },
         error: '',
       });
-    },
-  ),
+    }
+  )
 );
 
 router.get(
@@ -676,8 +672,8 @@ router.get(
                     },
                   };
                 },
-                {} as Record<string, { type: string; email: string; nom_d_usage: string }>,
-              ),
+                {} as Record<string, { type: string; email: string; nom_d_usage: string }>
+              )
             ),
             {
               type: 'SVI',
@@ -689,7 +685,7 @@ router.get(
       },
       error: '',
     });
-  }),
+  })
 );
 
 router.get(
@@ -712,8 +708,8 @@ router.get(
       });
 
       res.status(200).send({ ok: true, data: { apiKeys }, error: '' });
-    },
-  ),
+    }
+  )
 );
 
 router.post(
@@ -742,8 +738,8 @@ router.post(
       });
 
       res.status(200).send({ ok: true, data: { apiKey: createdApiKey }, error: '' });
-    },
-  ),
+    }
+  )
 );
 
 router.post(
@@ -767,8 +763,8 @@ router.post(
         },
       });
       res.status(200).send({ ok: true, data: { apiKey: updatedApiKey }, error: '' });
-    },
-  ),
+    }
+  )
 );
 
 router.get(
@@ -778,7 +774,7 @@ router.get(
     async (
       req: express.Request,
       res: express.Response<AdminApiKeyAndApprovalsResponse>,
-      next: express.NextFunction,
+      next: express.NextFunction
     ) => {
       const apiKey = await prisma.apiKey.findUnique({
         where: { id: req.params.api_key_id },
@@ -827,8 +823,8 @@ router.get(
           return allEntitiesRecord;
         });
       res.status(200).send({ ok: true, data: { apiKey: apiKey, allUsers, allEntities }, error: '' });
-    },
-  ),
+    }
+  )
 );
 
 router.get(
@@ -838,7 +834,7 @@ router.get(
     async (
       req: express.Request,
       res: express.Response<AdminOfficialCfeisResponse>,
-      next: express.NextFunction,
+      next: express.NextFunction
     ) => {
       const officialCfeis = await prisma.officialCfei.findMany({
         select: {
@@ -849,8 +845,8 @@ router.get(
         },
       });
       res.status(200).send({ ok: true, data: { officialCfeis }, error: '' });
-    },
-  ),
+    }
+  )
 );
 
 router.post(
@@ -860,7 +856,7 @@ router.post(
     async (
       req: express.Request,
       res: express.Response<AdminApiKeyAndApprovalsResponse>,
-      next: express.NextFunction,
+      next: express.NextFunction
     ) => {
       const action = req.body.action as 'create' | 'delete' | 'update';
       const body: Prisma.ApiKeyApprovalByUserOrEntityUncheckedCreateInput = {
@@ -940,8 +936,8 @@ router.post(
         return allEntitiesRecord;
       });
       res.status(200).send({ ok: true, data: { apiKey: apiKey, allUsers, allEntities }, error: '' });
-    },
-  ),
+    }
+  )
 );
 
 router.get(
@@ -951,7 +947,7 @@ router.get(
     async (
       req: express.Request,
       res: express.Response<AdminCarcassesResponse>,
-      next: express.NextFunction,
+      next: express.NextFunction
     ) => {
       const limit = parseInt(req.query.limit as string) || 100;
       const offset = parseInt(req.query.offset as string) || 0;
@@ -981,8 +977,8 @@ router.get(
       ]);
 
       res.status(200).send({ ok: true, data: { carcasses, total }, error: '' });
-    },
-  ),
+    }
+  )
 );
 
 router.get(
@@ -992,7 +988,7 @@ router.get(
     async (
       req: express.Request,
       res: express.Response<AdminCarcassesIntermediairesResponse>,
-      next: express.NextFunction,
+      next: express.NextFunction
     ) => {
       const limit = parseInt(req.query.limit as string) || 100;
       const offset = parseInt(req.query.offset as string) || 0;
@@ -1012,8 +1008,8 @@ router.get(
       ]);
 
       res.status(200).send({ ok: true, data: { carcassesIntermediaires, total }, error: '' });
-    },
-  ),
+    }
+  )
 );
 
 router.get(
@@ -1023,7 +1019,7 @@ router.get(
     async (
       req: express.Request,
       res: express.Response<AdminCarcasseDetailResponse>,
-      next: express.NextFunction,
+      next: express.NextFunction
     ) => {
       const carcasse = await prisma.carcasse.findUnique({
         where: { zacharie_carcasse_id: req.params.zacharie_carcasse_id },
@@ -1068,8 +1064,8 @@ router.get(
       }
 
       res.status(200).send({ ok: true, data: { carcasse, depotEntity }, error: '' });
-    },
-  ),
+    }
+  )
 );
 
 router.get(
@@ -1079,7 +1075,7 @@ router.get(
     async (
       req: express.Request,
       res: express.Response<AdminDashboardResponse>,
-      next: express.NextFunction,
+      next: express.NextFunction
     ) => {
       const dateFrom = (req.query.date_from as string) || null;
       const dateTo = (req.query.date_to as string) || null;
@@ -1164,8 +1160,8 @@ router.get(
         },
         error: '',
       });
-    },
-  ),
+    }
+  )
 );
 
 router.get(
@@ -1175,7 +1171,7 @@ router.get(
     async (
       req: express.Request,
       res: express.Response<AdminSaisiesSviResponse>,
-      next: express.NextFunction,
+      next: express.NextFunction
     ) => {
       const [rows, tauxRows] = await Promise.all([
         prisma.$queryRaw<Array<{ motif: string; count: bigint }>>`
@@ -1258,8 +1254,8 @@ router.get(
         },
         error: '',
       });
-    },
-  ),
+    }
+  )
 );
 
 const POIDS_MOYEN_KG: Record<string, number> = {
@@ -1281,7 +1277,7 @@ router.get(
     async (
       req: express.Request,
       res: express.Response<AdminPartsDeMarcheResponse>,
-      next: express.NextFunction,
+      next: express.NextFunction
     ) => {
       const now = dayjs();
       const currentYear = now.year();
@@ -1376,8 +1372,8 @@ router.get(
         data: { circuit_long },
         error: '',
       });
-    },
-  ),
+    }
+  )
 );
 
 router.get(
@@ -1387,7 +1383,7 @@ router.get(
     async (
       req: express.Request,
       res: express.Response<AdminDeltaBphResponse>,
-      next: express.NextFunction,
+      next: express.NextFunction
     ) => {
       const rows = await prisma.$queryRaw<Array<{ delta: number }>>`
         WITH fei_scores AS (
@@ -1401,6 +1397,7 @@ router.get(
                     SELECT 1 FROM unnest(c.svi_ipm2_lesions_ou_motifs) m
                     WHERE m ILIKE ANY(ARRAY[
                       '%Souillures d''origine digestive%',
+                      '%Souillures d''origine digestive liées à une balle d''abdomen%'
                       '%souillures telluriques%',
                       '%Odeur anormale%',
                       '%Putréfaction superficielle%',
@@ -1408,10 +1405,7 @@ router.get(
                       '%Moisissures%',
                       '%Œufs ou larves de mouche%',
                       '%orsure de chien%',
-                      '%Viande à évolution anormale%',
                       '%Conditions de préparation des viandes par le producteur primaire%',
-                      '%Souillures d’origine digestive liées à une balle d''abdomen%',
-                      '%Souillures d''origine digestive%',
                     ])
                   )
               )::float / NULLIF(COUNT(*)::float, 0) * 100
@@ -1460,8 +1454,8 @@ router.get(
         data: { deltas: rows.map((r) => r.delta) },
         error: '',
       });
-    },
-  ),
+    }
+  )
 );
 
 router.post(
@@ -1471,7 +1465,7 @@ router.post(
     async (
       req: express.Request,
       res: express.Response<AdminCcgPreviewResponse>,
-      next: express.NextFunction,
+      next: express.NextFunction
     ) => {
       const { ccgs } = req.body as { ccgs: CcgPreviewRow[] };
       if (!Array.isArray(ccgs) || ccgs.length === 0) {
@@ -1536,8 +1530,8 @@ router.post(
       }
 
       res.status(200).send({ ok: true, data: { nouveaux, modifies, unchanged_count }, error: '' });
-    },
-  ),
+    }
+  )
 );
 
 router.post(
@@ -1547,7 +1541,7 @@ router.post(
     async (
       req: express.Request,
       res: express.Response<AdminCcgImportResponse>,
-      next: express.NextFunction,
+      next: express.NextFunction
     ) => {
       const { ccgs } = req.body as {
         ccgs: Array<{
@@ -1610,8 +1604,8 @@ router.post(
       }
 
       res.status(200).send({ ok: true, data: { created, updated, skipped }, error: '' });
-    },
-  ),
+    }
+  )
 );
 
 export default router;

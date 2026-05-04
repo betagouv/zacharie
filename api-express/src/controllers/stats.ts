@@ -178,6 +178,7 @@ router.get(
     // nationalBphRate = nationalSeizureRate (same value).
     const BPH_PATTERNS = [
       "souillures d'origine digestive",
+      "souillures d'origine digestive liées à une balle d'abdomen",
       'souillures telluriques',
       'odeur anormale',
       'putréfaction superficielle',
@@ -185,10 +186,7 @@ router.get(
       'moisissures',
       'œufs ou larves de mouche',
       'morsure de chien',
-      'viande à évolution anormale',
       'conditions de préparation des viandes par le producteur primaire',
-      "souillures d’origine digestive liées à une balle d'abdomen",
-      'souillures d’origine digestive',
     ];
     const hasBphMotif = (motifs: string[] | null) =>
       (motifs ?? []).some((m) => {

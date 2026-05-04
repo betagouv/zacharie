@@ -3,15 +3,15 @@ import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 
 test.beforeEach(async () => {
-  await resetDb('COLLECTEUR_PRO');
+  await resetDb('COLLECTEUR_TAKEN_CHARGE');
 });
 
 test.use({ launchOptions: { slowMo: 100 } });
 
 // Scenario 64 — Vue /collecteur/carcasses : toutes carcasses passées listées.
-test.skip('Collecteur voit ses carcasses dans la vue agrégée', async ({ page }) => {
-  // SKIP: COLLECTEUR_PRO seed has no CarcasseIntermediaire — carcasses view shows 0. Need seed with taken-charge carcasses.
+test('Collecteur voit ses carcasses dans la vue agrégée', async ({ page }) => {
   await connectWith(page, 'collecteur-pro@example.fr');
+  await expect(page).toHaveURL('http://localhost:3290/app/collecteur');
   await page.goto('http://localhost:3290/app/collecteur/carcasses');
   await expect(page).toHaveURL(/\/app\/collecteur\/carcasses/);
 

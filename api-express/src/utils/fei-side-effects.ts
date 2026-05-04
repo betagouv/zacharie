@@ -254,10 +254,24 @@ export async function notifyCircuitCourt(
     });
   }
 
-  await prisma.fei.update({
-    where: { numero: savedFei.numero },
-    data: { automatic_closed_at: new Date() },
+  // Multi-recipient: only auto-close the fiche if every carcasse goes to a circuit-court role.
+  // Otherwise (e.g. some carcasses dispatched to ETG/COLLECTEUR_PRO), keep it open.
+  const carcasses = await prisma.carcasse.findMany({
+    where: { fei_numero: savedFei.numero, deleted_at: null },
+    select: { next_owner_role: true, current_owner_role: true },
   });
+  const allInCircuitCourt =
+    carcasses.length > 0 &&
+    carcasses.every((c) => {
+      const role = c.next_owner_role ?? c.current_owner_role;
+      return role != null && circuitCourtRoles.includes(role);
+    });
+  if (allInCircuitCourt) {
+    await prisma.fei.update({
+      where: { numero: savedFei.numero },
+      data: { automatic_closed_at: new Date() },
+    });
+  }
 
   return true;
 }

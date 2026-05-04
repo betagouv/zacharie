@@ -8,17 +8,17 @@ import {
   TouchableOpacity,
   Text,
 } from 'react-native';
-import { WebView, type WebViewMessageEvent } from 'react-native-webview';
+import { WebView, type WebViewMessageEvent } from '@dr.pogodin/react-native-webview';
 import { registerForPushNotificationsAsync } from './services/expo-push-notifs';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
-const APP_URL = __DEV__ ? process.env.EXPO_PUBLIC_APP_URL : 'https://zacharie.beta.gouv.fr/';
-// const APP_URL = "https://zacharie.beta.gouv.fr/";
-// EXPO_PUBLIC_APP_URL should be set in .env and should be like http://x.x.x.x:3234/ - get the IP with `ipconfig getifaddr en0` on macos for example
+import { useFonts } from 'expo-font';
+import { checkAndDownloadSpa, startSpaServer, stopSpaServer } from './utils/offline-spa';
+import Chargement from './components/Chargement';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -26,6 +26,45 @@ const initScript = `window.ENV = {};window.ENV.APP_PLATFORM = "native";true`;
 function App() {
   const ref = useRef<WebView>(null);
   const [externalLink, setExternalLink] = useState<string | null>(null);
+  const [spaUrl, setSpaUrl] = useState<string | null>(null);
+  const [spaReady, setSpaReady] = useState(false);
+  const [fontsLoaded] = useFonts({
+    'Marianne-Regular': require('./assets/marianne/Marianne-Regular.ttf'),
+    'Marianne-Medium': require('./assets/marianne/Marianne-Medium.ttf'),
+    'Marianne-Bold': require('./assets/marianne/Marianne-Bold.ttf'),
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Hand off the native splash to <Chargement /> only once Marianne is
+    // available, otherwise the loader briefly renders with the system font.
+    if (fontsLoaded) {
+      setTimeout(() => {
+        SplashScreen.hideAsync();
+      }, 500);
+    }
+  }, [fontsLoaded]);
+
+  useEffect(() => {
+    AsyncStorage.getItem('initial-path').then((initialPath = '/') => {
+      checkAndDownloadSpa().then(() => {
+        startSpaServer().then((url) => {
+          if (url) {
+            if (initialPath) url += initialPath;
+            console.log('url: ', url);
+            setSpaUrl(url);
+          }
+          setSpaReady(true);
+          setTimeout(() => {
+            setLoading(false);
+          }, 1500);
+        });
+      });
+      return () => {
+        stopSpaServer();
+      };
+    });
+  }, []);
 
   const onLoadEnd = () => {
     ref.current?.injectJavaScript(`if (window.ENV) { window.ENV.PLATFORM_OS = "${Platform.OS}"; }true`);
@@ -35,9 +74,7 @@ function App() {
         .then((response) => {
           console.log('getLastNotificationResponseAsync', response);
           if (response) {
-            ref.current?.injectJavaScript(
-              `window.onNotificationResponseReceived('${JSON.stringify(response)}');`
-            );
+            // ref.current?.injectJavaScript(`window.onNotificationResponseReceived('${JSON.stringify(response)}');`);
             Notifications.clearLastNotificationResponseAsync();
           }
         })
@@ -61,16 +98,9 @@ function App() {
       if (!token) {
         return;
       }
-      ref.current?.injectJavaScript(`window.onNativePushToken('${JSON.stringify(token)}');`);
+      ref.current?.injectJavaScript(`window.onNativePushToken('${JSON.stringify(token)}');true`);
     });
   };
-
-  const source = useMemo(
-    () => ({
-      uri: `${APP_URL}app/tableau-de-bord`,
-    }),
-    [APP_URL]
-  );
 
   const onAndroidBackPress = () => {
     if (ref.current) {
@@ -102,10 +132,12 @@ function App() {
         setExternalLink(url);
         return;
       }
+      if (event.nativeEvent.data.includes('save-initial-path')) {
+        const { initialPath } = JSON.parse(event.nativeEvent.data);
+        AsyncStorage.setItem('initial-path', initialPath);
+        return;
+      }
       switch (event.nativeEvent.data) {
-        case 'request-native-get-inset-bottom-height':
-          ref.current?.injectJavaScript(`window.onGetInsetBottomHeight('${insets.bottom}');`);
-          break;
         case 'request-native-push-permission':
         case 'request-native-expo-push-permission':
         case 'request-native-get-token-if-exists':
@@ -124,9 +156,7 @@ function App() {
     responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
       console.log('responseListener', response);
       setTimeout(() => {
-        ref.current?.injectJavaScript(
-          `window.onNotificationResponseReceived('${JSON.stringify(response)}');`
-        );
+        // ref.current?.injectJavaScript(`window.onNotificationResponseReceived('${JSON.stringify(response)}');`);
       }, 1500);
     });
 
@@ -137,35 +167,48 @@ function App() {
     };
   }, []);
 
-  useEffect(() => {
-    setTimeout(() => {
-      console.log('Constants.expoConfig?.version', Constants.expoConfig?.version);
-      ref.current?.injectJavaScript(
-        `window.onAppVersion('${JSON.stringify(Constants.expoConfig?.version)}');`
-      );
-    }, 3000);
-  }, []);
+  if (!fontsLoaded) {
+    return null;
+  }
 
   return (
-    <SafeAreaProvider>
+    <>
       <SafeAreaView style={styles.safeContainer} edges={['left', 'right', 'top', 'bottom']}>
-        <WebView
-          ref={ref}
-          style={styles.container}
-          startInLoadingState
-          onLoadEnd={onLoadEnd}
-          source={source}
-          pullToRefreshEnabled
-          allowsBackForwardNavigationGestures
-          onContentProcessDidTerminate={() => ref.current?.reload()}
-          // onNavigationStateChange={onNavigationStateChange}
-          onMessage={onMessage}
-          sharedCookiesEnabled={true}
-          thirdPartyCookiesEnabled={true}
-          domStorageEnabled
-          javaScriptEnabled
-          injectedJavaScript={initScript}
-        />
+        {spaReady && spaUrl ? (
+          <WebView
+            ref={ref}
+            style={styles.container}
+            startInLoadingState
+            onLoadEnd={onLoadEnd}
+            onError={(error: any) => console.log('onError', error)}
+            source={{ uri: spaUrl }}
+            originWhitelist={['*']}
+            pullToRefreshEnabled
+            allowsBackForwardNavigationGestures
+            onContentProcessDidTerminate={() => ref.current?.reload()}
+            onMessage={onMessage}
+            onShouldStartLoadWithRequest={(request: any) => {
+              const stayInWebView = request.url.startsWith(spaUrl);
+              if (!stayInWebView) {
+                Linking.openURL(request.url);
+              }
+              return stayInWebView;
+            }}
+            sharedCookiesEnabled={true}
+            thirdPartyCookiesEnabled={true}
+            domStorageEnabled
+            javaScriptEnabled
+            webviewDebuggingEnabled={__DEV__}
+            injectedJavaScript={initScript}
+          />
+        ) : spaReady ? (
+          <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+            <Text>
+              L'application n'est pas encore téléchargée et ne peut pas encore fontionner sans réseau.
+              Connectez-vous à internet pour la télécharger d'abord.
+            </Text>
+          </View>
+        ) : null}
         <Modal
           visible={!!externalLink}
           onRequestClose={() => setExternalLink(null)}
@@ -178,15 +221,20 @@ function App() {
                 <Text style={styles.closeButtonText}>Fermer</Text>
               </TouchableOpacity>
             </View>
-            <WebView source={{ uri: externalLink ?? '' }} style={styles.safeContainer} />
+            <WebView source={{ uri: externalLink ?? '' }} style={styles.container} />
           </SafeAreaView>
         </Modal>
       </SafeAreaView>
-    </SafeAreaProvider>
+      {loading && (
+        <SafeAreaView style={styles.safeContainerAbsolute} edges={['left', 'right', 'top', 'bottom']}>
+          <Chargement />
+        </SafeAreaView>
+      )}
+    </>
   );
 }
 
-export default function () {
+export default function AppWrapped() {
   return (
     <SafeAreaProvider>
       <App />
@@ -199,8 +247,22 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
+  safeContainerAbsolute: {
+    flex: 1,
+    backgroundColor: '#fff',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
   container: {
     flex: 1,
+  },
+  containerOffline: {
+    flex: 1,
+    borderWidth: 5,
+    borderColor: '#000091',
   },
   closeButton: {
     padding: 8,
