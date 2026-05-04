@@ -1,12 +1,10 @@
 import { Link } from 'react-router';
 import RootDisplay from '@app/components/RootDisplay';
-import useLoggedInNavigationMenu from '@app/utils/get-navigation-menu';
 import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { useEffect } from 'react';
 import { hasAllRequiredFields } from '@app/utils/user';
 
 export default function ChasseurDeactivated() {
-  const navigation = useLoggedInNavigationMenu();
   const user = useMostFreshUser('ChasseurDeactivated');
   const isProfileCompleted = hasAllRequiredFields(user!);
   useEffect(() => {
@@ -16,7 +14,6 @@ export default function ChasseurDeactivated() {
   return (
     <RootDisplay
       hideMinistereName
-      navigation={navigation}
       id="chasseur-layout-not-activated"
       mainLink="/app/chasseur"
     >

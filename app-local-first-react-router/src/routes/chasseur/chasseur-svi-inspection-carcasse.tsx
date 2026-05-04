@@ -82,14 +82,14 @@ export function ChasseurSviInspectionCarcasse() {
               {
                 label: 'Fiches',
                 linkProps: {
-                  to: '/app/tableau-de-bord',
+                  to: '/app/chasseur',
                   href: '#',
                 },
               },
               {
                 label: fei.numero,
                 linkProps: {
-                  to: `/app/tableau-de-bord/fei/${fei.numero}`,
+                  to: `/app/chasseur/fei/${fei.numero}`,
                   href: '#',
                 },
               },

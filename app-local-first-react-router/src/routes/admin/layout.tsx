@@ -1,6 +1,6 @@
 import RootDisplay from '@app/components/RootDisplay';
 import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
-import { UserRoles } from '@prisma/client';
+import { getUserOnboardingRoute } from '@app/utils/user-onboarded.client';
 import { useEffect, useState } from 'react';
 import { Link, Navigate, Outlet, useLocation } from 'react-router';
 
@@ -36,19 +36,7 @@ export default function AdminLayout() {
   if (!user?.isZacharieAdmin) {
     return <Navigate to="/app/connexion" />;
   }
-  let mainLink = '/app/tableau-de-bord';
-  if (user.roles.includes(UserRoles.CHASSEUR)) {
-    mainLink = '/app/chasseur';
-  }
-  if (user.roles.includes(UserRoles.SVI)) {
-    mainLink = '/app/svi';
-  }
-  if (user.roles.includes(UserRoles.ETG)) {
-    mainLink = '/app/etg';
-  }
-  if (user.roles.includes(UserRoles.COLLECTEUR_PRO)) {
-    mainLink = '/app/collecteur';
-  }
+  const mainLink = getUserOnboardingRoute(user);
 
   return (
     <RootDisplay

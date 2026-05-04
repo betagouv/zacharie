@@ -83,7 +83,7 @@ function CircuitCourtFei() {
               <Button
                 priority="secondary"
                 linkProps={{
-                  to: `/app/tableau-de-bord/`,
+                  to: `/app/circuit-court`,
                 }}
               >
                 Voir toutes mes fiches

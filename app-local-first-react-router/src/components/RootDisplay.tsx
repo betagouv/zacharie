@@ -8,8 +8,8 @@ import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { useRef } from 'react';
 import API, { setNativeAuthToken } from '@app/services/api';
 import { useNavigate, useSearchParams } from 'react-router';
-import { UserRoles } from '@prisma/client';
 import useUser from '@app/zustand/user';
+import { getUserOnboardingRoute } from '@app/utils/user-onboarded.client';
 
 const environment = import.meta.env.VITE_ENV || 'development';
 
@@ -191,9 +191,7 @@ export default function RootDisplay({
                     },
                     {
                       linkProps: {
-                        to: user?.roles.includes(UserRoles.CHASSEUR)
-                          ? '/app/chasseur'
-                          : '/app/tableau-de-bord',
+                        to: user ? getUserOnboardingRoute(user) : '/app/connexion',
                         href: '#',
                       },
                       text: 'Accéder à mon compte',

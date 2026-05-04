@@ -7,7 +7,7 @@ import Chargement from './components/Chargement';
 import OfflineMode from './components/OfflineMode';
 import { MatomoTracker } from './components/MatomoTracker';
 import ImpactMatrix from './components/ImpactMatrix';
-import useLoggedInNavigationMenu, { useLandingPageNavigationMenu } from './utils/get-navigation-menu';
+import { useLandingPageNavigationMenu } from './utils/get-navigation-menu';
 import useZustandStore from './zustand/store';
 
 // landing pages
@@ -27,10 +27,11 @@ import RouterSvi from './routes/svi/svi-router';
 import RouterChasseur from './routes/chasseur/chasseur-router';
 import RouterCollecteur from './routes/collecteur/collecteur-router';
 import RouterEtg from './routes/etg/etg-router';
-import RouterTableauDeBord from './routes/tableau-de-bord/tableau-de-bord-router';
+import RouterTableauDeBordRedirect from './routes/tableau-de-bord-redirect';
 import RouterAdmin from './routes/admin/admin-router';
 import NouvelleFiche from './routes/nouvelle-fiche';
 import RouterCircuitCourt from './routes/circuit-court/circuit-court-router';
+import NotFoundRoute from './routes/not-found';
 
 const SentryRoutes = Sentry.withSentryReactRouterV6Routing(Routes);
 
@@ -50,7 +51,6 @@ declare global {
 
 function App() {
   const landingPageNavigationMenu = useLandingPageNavigationMenu();
-  const generalNavigation = useLoggedInNavigationMenu();
   return (
     <>
       <SentryRoutes>
@@ -60,7 +60,7 @@ function App() {
             <RootDisplay
               id="landing"
               navigation={landingPageNavigationMenu}
-              mainLink="/app/tableau-de-bord"
+              mainLink="/app/connexion"
             >
               <Outlet />
             </RootDisplay>
@@ -123,7 +123,7 @@ function App() {
           {RouterChasseur()}
           {RouterEtg()}
           {RouterCollecteur()}
-          {RouterTableauDeBord({ navigation: generalNavigation })}
+          {RouterTableauDeBordRedirect()}
           {RouterCircuitCourt()}
           {RouterSvi()}
           {RouterAdmin()}
@@ -132,8 +132,8 @@ function App() {
             element={
               <RootDisplay
                 id="contact"
-                navigation={generalNavigation}
-                mainLink="/app/tableau-de-bord"
+                navigation={landingPageNavigationMenu}
+                mainLink="/app/connexion"
               >
                 <Contact />
               </RootDisplay>
@@ -143,7 +143,19 @@ function App() {
             path="nouvelle-fiche"
             element={<NouvelleFiche />}
           />
+          <Route
+            path="404"
+            element={<NotFoundRoute />}
+          />
+          <Route
+            path="*"
+            element={<NotFoundRoute />}
+          />
         </Route>
+        <Route
+          path="*"
+          element={<NotFoundRoute />}
+        />
       </SentryRoutes>
       <MatomoTracker />
       <OfflineMode />
@@ -153,14 +165,12 @@ function App() {
 
 // TODO: delete this and use each role's layout component instead
 function AppLayout() {
-  const generalNavigation = useLoggedInNavigationMenu();
   const _hasHydrated = useZustandStore((state) => state._hasHydrated);
   if (!_hasHydrated) {
     return (
       <RootDisplay
         id="app-layout"
-        navigation={generalNavigation}
-        mainLink="/app/tableau-de-bord"
+        mainLink="/app/connexion"
       >
         <Chargement />
       </RootDisplay>

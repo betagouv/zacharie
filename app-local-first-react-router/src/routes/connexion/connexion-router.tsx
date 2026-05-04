@@ -16,7 +16,7 @@ export default function RouterConnexion() {
         <RootDisplay
           id="connexion"
           navigation={landingPageNavigationMenu}
-          mainLink="/app/tableau-de-bord"
+          mainLink="/app/connexion"
         >
           <Outlet />
         </RootDisplay>

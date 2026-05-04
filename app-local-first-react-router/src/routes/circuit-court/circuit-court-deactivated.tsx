@@ -1,12 +1,10 @@
 import { Link } from 'react-router';
 import RootDisplay from '@app/components/RootDisplay';
-import useLoggedInNavigationMenu from '@app/utils/get-navigation-menu';
 import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { useEffect } from 'react';
 import { hasAllRequiredFields } from '@app/utils/user';
 
 export default function CircuitCourtDeactivated() {
-  const navigation = useLoggedInNavigationMenu();
   const user = useMostFreshUser('CircuitCourtDeactivated');
   const isProfileCompleted = hasAllRequiredFields(user!);
   useEffect(() => {
@@ -16,7 +14,6 @@ export default function CircuitCourtDeactivated() {
   return (
     <RootDisplay
       hideMinistereName
-      navigation={navigation}
       id="circuit-court-layout-not-activated"
       mainLink="/app/circuit-court"
     >
