@@ -1,6 +1,6 @@
 import dayjs from 'dayjs';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
-import { useFeiSteps } from '@app/utils/fei-steps';
+import { IconStep, useFeiSteps } from '@app/utils/fei-steps';
 import type { FeiWithIntermediaires } from '@api/src/types/fei';
 import type { FeiStepSimpleStatus } from '@app/types/fei-steps';
 
@@ -20,9 +20,6 @@ export default function ChasseurHeaderFiche({ fei }: { fei: FeiWithIntermediaire
       ? `Fiche du ${dayjs(fei.date_mise_a_mort).format('DD/MM/YYYY')}`
       : 'Fiche';
 
-  const isClosed = simpleStatus === 'Clôturée';
-  const stepIcon = isClosed ? '🔒' : '⏳';
-
   return (
     <div className="fr-mb-2w rounded bg-white p-4 md:p-8">
       <h1 className="fr-h5 fr-mb-1w">{title}</h1>
@@ -38,7 +35,7 @@ export default function ChasseurHeaderFiche({ fei }: { fei: FeiWithIntermediaire
           >
             {simpleStatus}
           </Tag>
-          <span className="text-sm">{stepIcon}</span>
+          <IconStep displayLabel={currentStepLabelForChasseur} simpleStatus={simpleStatus} />
           <span className="text-sm">{currentStepLabelForChasseur}</span>
         </div>
       )}
