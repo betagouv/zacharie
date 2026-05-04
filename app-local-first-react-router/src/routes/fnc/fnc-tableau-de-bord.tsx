@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import API from '@app/services/api';
 import Chargement from '@app/components/Chargement';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
-import DepartementValorisationCard from './components/DepartementValorisationCard';
-import ValorisationTable, { type DepartementRow } from './components/ValorisationTable';
+import DepartementValorisationCard from '@app/components/DepartementValorisationCard';
+import ValorisationTable, { type DepartementRow } from '@app/components/ValorisationTable';
 
 interface ValorisationData {
   season: string | null;
@@ -24,7 +24,7 @@ const SCOPE_LABEL: Record<ValorisationData['scope'], string> = {
   national: 'Tableau de bord national',
 };
 
-export default function FederationTableauDeBord() {
+export default function FncTableauDeBord() {
   const [data, setData] = useState<ValorisationData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

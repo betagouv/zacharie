@@ -1,7 +1,7 @@
 import { Navigate, Route } from 'react-router';
 import Contact from '@app/routes/contact';
 import FdcLayout from './fdc-layout';
-import FederationTableauDeBord from '../federation/federation-tableau-de-bord';
+import FdcTableauDeBord from './fdc-tableau-de-bord';
 
 export default function RouterFdc() {
   return (
@@ -20,7 +20,7 @@ export default function RouterFdc() {
       />
       <Route
         path="tableau-de-bord"
-        element={<FederationTableauDeBord />}
+        element={<FdcTableauDeBord />}
       />
       <Route
         path="contact"
