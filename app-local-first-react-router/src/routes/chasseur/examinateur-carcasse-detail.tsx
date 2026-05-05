@@ -1,4 +1,3 @@
-import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { Carcasse, CarcasseStatus, CarcasseType, Fei, Prisma, UserRoles } from '@prisma/client';
 import type { CarcasseIntermediaire } from '@prisma/client';
 import grandGibier from '@app/data/grand-gibier.json';
@@ -263,34 +262,32 @@ function CarcasseHeaderCard({ fei, carcasse }: { fei: Fei; carcasse: Carcasse })
       <h1 className="fr-h5 fr-mb-2w">
         {carcasse.espece || 'Espèce —'} N°{carcasse.numero_bracelet}
       </h1>
-      {(isClosed || hasSviStatus) && (
-        <div className="flex flex-wrap items-center gap-2">
-          {isClosed && (
-            <Tag
-              small
-              className="items-center rounded-[4px] bg-[#E8EDFF] font-semibold uppercase text-[#01008B]"
-            >
-              Clôturée
-            </Tag>
-          )}
+      <div className="flex flex-wrap items-center gap-2">
+        {isClosed && (
+          <Tag
+            small
+            className="items-center rounded-[4px] bg-[#E8EDFF] font-semibold uppercase text-[#01008B]"
+          >
+            Clôturée
+          </Tag>
+        )}
+        <Tag
+          small
+          className={[
+            'items-center rounded-[4px] font-semibold',
+            decisionColors.badgeBg,
+            decisionColors.badgeText,
+          ].join(' ')}
+        >
           {hasSviStatus && (
-            <Tag
-              small
-              className={[
-                'items-center rounded-[4px] font-semibold',
-                decisionColors.badgeBg,
-                decisionColors.badgeText,
-              ].join(' ')}
-            >
-              <span
-                className="fr-icon-check-line fr-icon--sm mr-1"
-                aria-hidden="true"
-              />
-              {getCarcasseStatusLabelLocal(carcasse)}
-            </Tag>
+            <span
+              className="fr-icon-check-line fr-icon--sm mr-1"
+              aria-hidden="true"
+            />
           )}
-        </div>
-      )}
+          {getCarcasseStatusLabelLocal(carcasse)}
+        </Tag>
+      </div>
     </div>
   );
 }
@@ -438,7 +435,6 @@ function ExaminateurCarcasseDetailLoaded() {
   const addAnomalieCarcasse = true;
 
   const numeroFormRef = useRef<HTMLFormElement>(null);
-  const submitRef = useRef<HTMLFormElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
   const referentielAnomaliesCarcasseList =
@@ -705,36 +701,18 @@ function ExaminateurCarcasseDetailLoaded() {
 
             <TraceabiliteTimeline events={timelineEvents} />
 
-            <div className="fixed bottom-16 left-0 z-50 flex w-full flex-col shadow-2xl md:relative md:bottom-0 md:w-auto md:items-center md:shadow-none md:[&_ul]:min-w-96">
-              <form
-                className="w-full bg-white p-6 pb-2"
-                method="POST"
-                id="carcasse-submit-form"
-                ref={submitRef}
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  updateCarcasse(carcasse.zacharie_carcasse_id, {
-                    examinateur_signed_at: dayjs().toDate(),
-                    examinateur_carcasse_sans_anomalie:
-                      anomaliesAbats.length === 0 && anomaliesCarcasse.length === 0,
-                  });
-                }}
-              >
-                <ButtonsGroup
-                  buttons={[
-                    {
-                      children: canEdit ? 'Enregistrer et retourner à la fiche' : 'Retourner à la fiche',
-                      type: canEdit ? 'submit' : 'button',
-                      nativeButtonProps: {
-                        form: 'carcasse-submit-form',
-                        onClick: () => {
-                          navigate(-1);
-                        },
-                      },
-                    },
-                  ]}
-                />
-              </form>
+            <div className="z-50 flex w-full flex-col md:flex-row justify-between gap-2">
+              <Button priority="secondary" type="button" onClick={() => navigate(-1)}>Retour</Button>
+              {canEdit && <Button priority="primary" type="button" onClick={(e) => {
+                e.preventDefault();
+                updateCarcasse(carcasse.zacharie_carcasse_id, {
+                  examinateur_signed_at: dayjs().toDate(),
+                  examinateur_carcasse_sans_anomalie: anomaliesAbats.length === 0 && anomaliesCarcasse.length === 0,
+                });
+                navigate(-1);
+              }}>
+                Enregistrer
+              </Button>}
             </div>
           </div>
         </div>
