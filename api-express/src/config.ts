@@ -1,9 +1,6 @@
 import dayjs from 'dayjs';
-import packageJson from '../package.json';
-const version = packageJson.version;
 
 const PORT = process.env.PORT ?? 3000;
-const POSTGRESQL_ADDON_URI = process.env.POSTGRESQL_ADDON_URI;
 const ENVIRONMENT = process.env.ENVIRONMENT ?? process.env.NODE_ENV ?? 'development';
 
 const SENTRY_KEY = process.env.SENTRY_KEY ?? '';
@@ -25,6 +22,8 @@ const SECRET = process.env.VITE_SECRET ?? 'not-so-secret-lalalala';
 const METABASE_SECRET_KEY = process.env.METABASE_SECRET_KEY;
 
 const IS_DEV = process.env.NODE_ENV === 'development'; // local dev
+const IS_STAGING = process.env.NODE_ENV === 'production' && ENVIRONMENT === 'test'; // staging
+const IS_PRODUCTION = process.env.NODE_ENV === 'production' && ENVIRONMENT === 'production';
 const IS_TEST = process.env.NODE_ENV === 'test'; // when e2e testing
 const IS_DEV_OR_TEST = IS_DEV || IS_TEST;
 
@@ -45,4 +44,6 @@ export {
   IS_DEV_OR_TEST,
   IS_DEV,
   IS_TEST,
+  IS_STAGING,
+  IS_PRODUCTION,
 };

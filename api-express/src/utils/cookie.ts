@@ -1,5 +1,5 @@
 import type { Request } from 'express';
-import { IS_DEV_OR_TEST } from '~/config';
+import { IS_DEV_OR_TEST, IS_STAGING } from '~/config';
 
 export const JWT_MAX_AGE = 60 * 60 * 24 * 90; // 90 days in seconds
 export const COOKIE_MAX_AGE = JWT_MAX_AGE * 1000;
@@ -28,6 +28,16 @@ export function cookieOptions(req: Request) {
     };
   }
 
+  if (IS_STAGING) {
+    return {
+      maxAge: COOKIE_MAX_AGE,
+      httpOnly: true,
+      secure: true,
+      domain: '.zacharie.incubateur.net',
+      sameSite: isNative ? ('none' as const) : ('lax' as const),
+    };
+  }
+  // now IS_PRODUCTION
   return {
     maxAge: COOKIE_MAX_AGE,
     httpOnly: true,
@@ -49,6 +59,15 @@ export function logoutCookieOptions(req: Request) {
     };
   }
 
+  if (IS_STAGING) {
+    return {
+      httpOnly: true,
+      secure: true,
+      domain: '.zacharie.incubateur.net',
+      sameSite: isNative ? ('none' as const) : ('lax' as const),
+    };
+  }
+  // now IS_PRODUCTION
   return {
     httpOnly: true,
     secure: true,
