@@ -1,5 +1,7 @@
 import { config } from 'dotenv';
+
 if (process.env.NODE_ENV === 'test') {
+  // can't import IS_TEST from config.ts because it's not defined yet
   config({ path: '.env.test' });
 } else {
   config();
@@ -16,7 +18,7 @@ import logger from 'morgan';
 import passport from 'passport';
 import './middlewares/passport';
 
-import { ENVIRONMENT, PORT, SENTRY_KEY, VERSION } from './config.ts';
+import { ENVIRONMENT, IS_PRODUCTION, IS_STAGING, PORT, SENTRY_KEY, VERSION } from './config.ts';
 import { sendError } from './middlewares/errors.ts';
 import { capture } from './third-parties/sentry.ts';
 
@@ -79,8 +81,18 @@ if (sentryEnabled) {
 app.use(Sentry.Handlers.requestHandler());
 app.use(Sentry.Handlers.tracingHandler());
 
-if (process.env.NODE_ENV === 'production') {
-  // regex .zacharie.beta.gouv.fr
+if (IS_STAGING) {
+  app.use(
+    cors({
+      credentials: true,
+      origin: [
+        'https://zacharie.incubateur.net',
+        /\.zacharie\.incubateur\.net$/,
+        // 'http://127.0.0.1:3000', // Expo WebView local SPA server
+      ],
+    })
+  );
+} else if (IS_PRODUCTION) {
   app.use(
     cors({
       credentials: true,
