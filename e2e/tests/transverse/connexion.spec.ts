@@ -14,7 +14,7 @@ test('Connexion avec succès', async ({ page }) => {
 });
 
 test('Connexion avec mot de passe incorrect', async ({ page }) => {
-  await connectWith(page, 'examinateur@example.fr', 'secret-mauvais-secretasdfdsaf');
+  await connectWith(page, 'examinateur@example.fr', 'secret-mauvais-secretasdfdsaf', false);
   await expect(page.getByText('Email ou mot de passe incorrect')).toBeVisible();
 });
 
@@ -46,7 +46,7 @@ test.describe('Connexion avec email incorrect', () => {
   });
 
   test('Connexion avec email incorrect', async ({ page }) => {
-    await connectWith(page, 'examinateur-pas-encore-existe@example.fr', 'secret-mauvais-secret');
+    await connectWith(page, 'examinateur-pas-encore-existe@example.fr', 'secret-mauvais-secret', false);
     await page.getByText('Email ou mot de passe incorrect').click();
     await page.getByRole('link', { name: 'Cliquez ici pour en créer un' }).click();
     await expect(page).toHaveURL('http://localhost:3290/app/connexion/creation-de-compte');

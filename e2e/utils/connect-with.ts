@@ -1,6 +1,11 @@
 import { expect, type Page } from '@playwright/test';
 
-export async function connectWith(page: Page, email: string, password: string = 'secret-secret') {
+export async function connectWith(
+  page: Page,
+  email: string,
+  password: string = 'secret-secret',
+  awaitForSuccess: boolean = true
+) {
   await page.goto('http://localhost:3290/');
   await page.getByRole('link', { name: 'Se connecter' }).first().click();
   await expect(page).toHaveURL('http://localhost:3290/app/connexion');
@@ -11,5 +16,7 @@ export async function connectWith(page: Page, email: string, password: string = 
   );
   await page.getByRole('button', { name: 'Me connecter' }).click();
   await loginResponse;
-  await page.waitForURL((url) => !url.pathname.endsWith('/app/connexion'), { timeout: 10000 });
+  if (awaitForSuccess) {
+    await page.waitForURL((url) => !url.pathname.endsWith('/app/connexion'), { timeout: 10000 });
+  }
 }
