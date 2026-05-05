@@ -68,9 +68,23 @@ const config: PlaywrightTestConfig = {
   outputDir: 'test-results/',
   webServer: [
     {
+      command: 'PORT=3291 NODE_ENV=test PGDATABASE=zacharietest npm run dev-test --prefix ../api-express',
+      url: 'http://localhost:3291/healthz',
+      timeout: 120 * 1000,
+      reuseExistingServer: true, // FALSE FOR DEBUG
+      // server logs are too verbose, only display when current browser logs are not enough
+      stdout: 'pipe', // PIPE FOR DEBUG
+      stderr: 'pipe', // PIPE FOR DEBUG
+      env: {
+        PORT: '3291',
+        NODE_ENV: 'test',
+        PGDATABASE: 'zacharietest',
+      },
+    },
+    {
       command:
         'VITE_HOST=127.0.0.1:3290 VITE_SCHEME=http VITE_TEST=true VITE_TEST_PLAYWRIGHT=true VITE_API_URL=http://localhost:3291 PORT=3290 npm run dev-test --prefix ../app-local-first-react-router',
-      port: 3290,
+      url: 'http://localhost:3290',
       timeout: 120 * 1000,
       reuseExistingServer: true, // FALSE FOR DEBUG
       // server logs are too verbose, only display when current browser logs are not enough
@@ -82,20 +96,6 @@ const config: PlaywrightTestConfig = {
         VITE_SCHEME: 'http',
         VITE_TEST: 'true',
         VITE_TEST_PLAYWRIGHT: 'true',
-      },
-    },
-    {
-      command: 'PORT=3291 NODE_ENV=test PGDATABASE=zacharietest npm run dev-test --prefix ../api-express',
-      port: 3291,
-      timeout: 120 * 1000,
-      reuseExistingServer: true, // FALSE FOR DEBUG
-      // server logs are too verbose, only display when current browser logs are not enough
-      stdout: 'ignore', // PIPE FOR DEBUG
-      stderr: 'ignore', // PIPE FOR DEBUG
-      env: {
-        PORT: '3291',
-        NODE_ENV: 'test',
-        PGDATABASE: 'zacharietest',
       },
     },
   ],
