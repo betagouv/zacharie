@@ -49,7 +49,7 @@
     "isbot": "^4.1.0",
     "jsonwebtoken": "^9.0.2",
     "libphonenumber-js": "^1.12.8",
-    "matrix-js-sdk": "^34.11.1",
+    "matrix-js-sdk": "^41.5.0-rc.0",
     "morgan": "^1.10.0",
     "p-queue": "^8.1.0",
     "passport": "^0.7.0",
