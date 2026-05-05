@@ -55,7 +55,7 @@ test('Edition carcasse depuis /chasseur/carcasse/:fei/:id', async ({ page }) => 
   await page.getByRole('button', { name: 'Fermer' }).last().click();
 
   // Go back to fiche
-  const retourBtn = page.getByRole('button', { name: 'Enregistrer et retourner à la fiche' });
+  const retourBtn = page.getByRole('button', { name: 'Enregistrer' });
   await retourBtn.scrollIntoViewIfNeeded();
   await retourBtn.click();
 
@@ -63,17 +63,15 @@ test('Edition carcasse depuis /chasseur/carcasse/:fei/:id', async ({ page }) => 
   const carcasseBtn = page.getByRole('button', { name: /Daim N°/ }).first();
   await expect(carcasseBtn).toBeVisible({ timeout: 10000 });
   await carcasseBtn.click();
-  await page.getByRole('button', { name: '⬇️ Anomalies' }).click();
-  await page
-    .locator(
-      '.mt-4 > .fr-input-group > .mt-2 > .input-for-search-prefilled-data__control > .input-for-search-prefilled-data__value-container > .input-for-search-prefilled-data__input-container'
-    )
-    .click();
+
+  const anomalieAbatsInput = page.locator('#anomalie-abats');
+  await anomalieAbatsInput.scrollIntoViewIfNeeded();
+  await anomalieAbatsInput.click();
   await page
     .getByRole('option', { name: 'Abcès ou nodules Unique - Appareil respiratoire (sinus/trachée/poumon)' })
     .click();
-  // On the detail page, scroll down to find the anomaly section
-  const anomalyText = page.getByText(/Abcès ou nodules/i);
+
+  const anomalyText = page.getByText(/Abcès ou nodules/i).first();
   await anomalyText.scrollIntoViewIfNeeded();
   await expect(anomalyText).toBeVisible({ timeout: 10000 });
 });

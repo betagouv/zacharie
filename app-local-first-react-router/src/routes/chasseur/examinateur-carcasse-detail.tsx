@@ -615,6 +615,7 @@ function ExaminateurCarcasseDetailLoaded() {
                           <InputMultiSelect
                             data={referentielAnomaliesCarcasseList}
                             label="Ajouter une nouvelle anomalie"
+                            name="anomalie-carcasse"
                             canEdit
                             creatable
                             placeholder="Tapez une anomalie carcasse"
@@ -661,6 +662,7 @@ function ExaminateurCarcasseDetailLoaded() {
                             <InputMultiSelect
                               data={grandGibierAbatsList}
                               label="Ajouter une nouvelle anomalie"
+                              name="anomalie-abats"
                               canEdit
                               creatable
                               placeholder="Tapez une anomalie abats"
