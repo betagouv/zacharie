@@ -1,4 +1,4 @@
-import { Carcasse, CarcasseStatus, CarcasseType, Fei, Prisma, UserRoles } from '@prisma/client';
+import { Carcasse, CarcasseType, Fei, Prisma, UserRoles } from '@prisma/client';
 import type { CarcasseIntermediaire } from '@prisma/client';
 import grandGibier from '@app/data/grand-gibier.json';
 import petitGibier from '@app/data/petit-gibier.json';
@@ -29,6 +29,11 @@ import dayjs from 'dayjs';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import InputMultiSelect from '@app/components/InputMultiSelect';
 import { useCarcassesIntermediairesForCarcasse } from '@app/utils/get-carcasses-intermediaires';
+import {
+  getCarcasseCardDisplay,
+  type CardAccent,
+  type CardViewRole,
+} from '@app/utils/get-carcasse-card-display';
 import type { UserForFei } from '@api/src/types/user';
 import type { EntityWithUserRelation } from '@api/src/types/entity';
 
@@ -54,38 +59,33 @@ type DecisionColor = {
   badgeText: string;
 };
 
-function getDecisionColorClasses(status: CarcasseStatus | null | undefined): DecisionColor {
-  switch (status) {
-    case CarcasseStatus.SAISIE_TOTALE:
-    case CarcasseStatus.SAISIE_PARTIELLE:
-    case CarcasseStatus.MANQUANTE_ETG_COLLECTEUR:
-    case CarcasseStatus.MANQUANTE_SVI:
-    case CarcasseStatus.REFUS_ETG_COLLECTEUR:
+function getAccentColorClasses(accent: CardAccent): DecisionColor {
+  switch (accent) {
+    case 'red':
       return {
         cardText: 'text-red-700',
         cardBg: 'bg-red-50',
         badgeBg: 'bg-red-100',
         badgeText: 'text-red-800',
       };
-    case CarcasseStatus.ACCEPTE:
-    case CarcasseStatus.LEVEE_DE_CONSIGNE:
-    case CarcasseStatus.TRAITEMENT_ASSAINISSANT:
+    case 'blue':
       return {
-        cardText: 'text-green-700',
-        cardBg: 'bg-green-50',
-        badgeBg: 'bg-green-100',
-        badgeText: 'text-green-800',
+        cardText: 'text-blue-700',
+        cardBg: 'bg-blue-50',
+        badgeBg: 'bg-blue-100',
+        badgeText: 'text-blue-800',
       };
-    case CarcasseStatus.CONSIGNE:
+    case 'orange':
       return {
         cardText: 'text-orange-700',
         cardBg: 'bg-orange-50',
         badgeBg: 'bg-orange-100',
         badgeText: 'text-orange-800',
       };
+    case 'gray':
     default:
       return {
-        cardText: 'text-gray-800',
+        cardText: 'text-gray-700',
         cardBg: 'bg-gray-50',
         badgeBg: 'bg-gray-100',
         badgeText: 'text-gray-800',
@@ -96,34 +96,6 @@ function getDecisionColorClasses(status: CarcasseStatus | null | undefined): Dec
 function formatDate(d: Date | string | null | undefined): string {
   if (!d) return '—';
   return dayjs(d).format('DD/MM/YY');
-}
-
-function getCarcasseStatusLabelLocal(carcasse: Carcasse): string {
-  const isPetit = carcasse.type === CarcasseType.PETIT_GIBIER;
-  switch (carcasse.svi_carcasse_status) {
-    case CarcasseStatus.MANQUANTE_ETG_COLLECTEUR:
-    case CarcasseStatus.MANQUANTE_SVI:
-      return isPetit ? 'Manquant' : 'Manquante';
-    case CarcasseStatus.TRAITEMENT_ASSAINISSANT:
-      return 'En traitement assainissant';
-    case CarcasseStatus.SAISIE_TOTALE:
-      return 'Saisie totale';
-    case CarcasseStatus.SAISIE_PARTIELLE:
-      return 'Saisie partielle';
-    case CarcasseStatus.LEVEE_DE_CONSIGNE:
-      return 'Levée de consigne';
-    case CarcasseStatus.CONSIGNE:
-      return isPetit ? 'Consigné' : 'Consignée';
-    case CarcasseStatus.REFUS_ETG_COLLECTEUR:
-      return 'Refusée';
-    case CarcasseStatus.ACCEPTE:
-      return isPetit ? 'Accepté' : 'Acceptée';
-    default:
-      if (carcasse.svi_carcasse_status_set_at) {
-        return isPetit ? 'Accepté' : 'Acceptée';
-      }
-      return 'Sans décision';
-  }
 }
 
 function getUserDisplayName(
@@ -252,10 +224,21 @@ export default function ExaminateurCarcasseDetail() {
   return <ExaminateurCarcasseDetailLoaded />;
 }
 
-function CarcasseHeaderCard({ fei, carcasse }: { fei: Fei; carcasse: Carcasse }) {
+function CarcasseHeaderCard({
+  fei,
+  carcasse,
+  statusLabel,
+  statusIconId,
+  accentColor,
+}: {
+  fei: Fei;
+  carcasse: Carcasse;
+  statusLabel: string;
+  statusIconId: string | null;
+  accentColor: CardAccent;
+}) {
   const isClosed = !!fei.svi_closed_at;
-  const hasSviStatus = !!carcasse.svi_carcasse_status_set_at;
-  const decisionColors = getDecisionColorClasses(carcasse.svi_carcasse_status);
+  const colors = getAccentColorClasses(accentColor);
 
   return (
     <div className="fr-mb-2w rounded bg-white p-4 md:shadow-sm md:p-8">
@@ -273,19 +256,17 @@ function CarcasseHeaderCard({ fei, carcasse }: { fei: Fei; carcasse: Carcasse })
         )}
         <Tag
           small
-          className={[
-            'items-center rounded-[4px] font-semibold',
-            decisionColors.badgeBg,
-            decisionColors.badgeText,
-          ].join(' ')}
+          className={['items-center rounded-[4px] font-semibold', colors.badgeBg, colors.badgeText].join(
+            ' '
+          )}
         >
-          {hasSviStatus && (
+          {statusIconId && (
             <span
-              className="fr-icon-check-line fr-icon--sm mr-1"
+              className={[statusIconId, 'fr-icon--sm mr-1'].join(' ')}
               aria-hidden="true"
             />
           )}
-          {getCarcasseStatusLabelLocal(carcasse)}
+          {statusLabel}
         </Tag>
       </div>
     </div>
@@ -322,12 +303,19 @@ function InfosChasseCard({
   );
 }
 
-function InfosSanitairesCard({ carcasse }: { carcasse: Carcasse }) {
+function InfosSanitairesCard({
+  carcasse,
+  decisionLabel,
+  accentColor,
+}: {
+  carcasse: Carcasse;
+  decisionLabel: string;
+  accentColor: CardAccent;
+}) {
   if (!carcasse.svi_carcasse_status_set_at) return null;
-  const colors = getDecisionColorClasses(carcasse.svi_carcasse_status);
+  const colors = getAccentColorClasses(accentColor);
   const motifs = (carcasse.svi_ipm2_lesions_ou_motifs ?? []).filter(Boolean);
   const commentaire = carcasse.svi_ipm2_commentaire || carcasse.svi_carcasse_commentaire || '';
-  const decisionLabel = getCarcasseStatusLabelLocal(carcasse);
 
   return (
     <div className={['fr-mb-2w rounded p-4 md:shadow-sm md:p-8', colors.cardBg].join(' ')}>
@@ -423,6 +411,22 @@ function ExaminateurCarcasseDetailLoaded() {
     [fei, carcasse, intermediaires, users, entities]
   );
 
+  const viewRole: CardViewRole = 'chasseur';
+  const cardDisplay = useMemo(
+    () =>
+      getCarcasseCardDisplay({
+        carcasse,
+        fei,
+        latestIntermediaire: intermediaires[0],
+        entities,
+        viewRole,
+      }),
+    [carcasse, fei, intermediaires, entities]
+  );
+  const headerStatusLabel = cardDisplay.statusLabel ?? 'En cours de création';
+  const headerAccentColor: CardAccent = cardDisplay.accentColor ?? 'gray';
+  const headerStatusIconId = cardDisplay.iconId ?? null;
+
   const [espece, setEspece] = useState(carcasse.espece || '');
 
   const [anomaliesAbats, setAnomaliesAbats] = useState<Array<string>>(
@@ -472,6 +476,9 @@ function ExaminateurCarcasseDetailLoaded() {
             <CarcasseHeaderCard
               fei={fei}
               carcasse={carcasse}
+              statusLabel={headerStatusLabel}
+              statusIconId={headerStatusIconId}
+              accentColor={headerAccentColor}
             />
 
             <InfosChasseCard
@@ -697,7 +704,11 @@ function ExaminateurCarcasseDetailLoaded() {
               </div>
             )}
 
-            <InfosSanitairesCard carcasse={carcasse} />
+            <InfosSanitairesCard
+              carcasse={carcasse}
+              decisionLabel={cardDisplay.statusLabel ?? 'Décision rendue'}
+              accentColor={cardDisplay.accentColor}
+            />
 
             <TraceabiliteTimeline events={timelineEvents} />
 
