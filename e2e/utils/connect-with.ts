@@ -6,5 +6,10 @@ export async function connectWith(page: Page, email: string, password: string = 
   await expect(page).toHaveURL('http://localhost:3290/app/connexion');
   await page.getByRole('textbox', { name: 'Mon email Renseignez votre' }).fill(email);
   await page.getByRole('textbox', { name: 'Mon mot de passe Veuillez' }).fill(password);
+  const loginResponse = page.waitForResponse(
+    (res) => res.url().includes('/user/login') && res.request().method() === 'POST'
+  );
   await page.getByRole('button', { name: 'Me connecter' }).click();
+  await loginResponse;
+  await page.waitForURL((url) => !url.pathname.endsWith('/app/connexion'), { timeout: 10000 });
 }

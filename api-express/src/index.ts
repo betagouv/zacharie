@@ -7,7 +7,7 @@ if (process.env.NODE_ENV === 'test') {
   config();
 }
 
-import prisma from '~/prisma';
+import '~/prisma';
 
 import * as Sentry from '@sentry/node';
 import express from 'express';
@@ -235,17 +235,7 @@ app.use('/', passport.initialize(), utilsRouter);
 app.use(Sentry.Handlers.errorHandler());
 app.use(sendError);
 
-// Warm the Prisma connection before serving requests.
-// Without this, the first DB-touching request after a cold boot can hang
-// (notably POST /user/login during e2e startup) because Prisma connects lazily.
-prisma
-  .$connect()
-  .then(() => {
-    app.listen(PORT, () => {
-      console.log(`RUN ON PORT ${PORT}`);
-    });
-  })
-  .catch((err) => {
-    console.error('Prisma failed to connect, server not started:', err);
-    process.exit(1);
-  });
+// Start the server
+app.listen(PORT, () => {
+  console.log(`RUN ON PORT ${PORT}`);
+});
