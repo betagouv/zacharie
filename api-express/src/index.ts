@@ -80,17 +80,30 @@ app.use(Sentry.Handlers.requestHandler());
 app.use(Sentry.Handlers.tracingHandler());
 
 if (process.env.NODE_ENV === 'production') {
+  if (ENVIRONMENT === 'test') {
+    app.use(
+      cors({
+        credentials: true,
+        origin: [
+          'https://zacharie.incubateur.net',
+          /\.zacharie\.incubateur\.net$/,
+          // 'http://127.0.0.1:3000', // Expo WebView local SPA server
+        ],
+      })
+    );
+  } else {
+    app.use(
+      cors({
+        credentials: true,
+        origin: [
+          'https://zacharie.beta.gouv.fr',
+          /\.zacharie\.beta\.gouv\.fr$/,
+          'http://127.0.0.1:3000', // Expo WebView local SPA server
+        ],
+      })
+    );
+  }
   // regex .zacharie.beta.gouv.fr
-  app.use(
-    cors({
-      credentials: true,
-      origin: [
-        'https://zacharie.beta.gouv.fr',
-        /\.zacharie\.beta\.gouv\.fr$/,
-        'http://127.0.0.1:3000', // Expo WebView local SPA server
-      ],
-    })
-  );
 } else {
   app.use(
     cors({
