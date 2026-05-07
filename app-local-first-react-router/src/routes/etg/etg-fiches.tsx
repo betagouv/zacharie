@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import dayjs from 'dayjs';
-import { CarcasseType, DepotType } from '@prisma/client';
+import { CarcasseType, DepotType, FeiOwnerRole } from '@prisma/client';
 import { SegmentedControl } from '@codegouvfr/react-dsfr/SegmentedControl';
 import { Pagination } from '@codegouvfr/react-dsfr/Pagination';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
@@ -100,6 +100,8 @@ export default function EtgFiches() {
   });
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
   const carcasses = useZustandStore((state) => state.carcasses);
+  const entities = useZustandStore((state) => state.entities);
+  const usersById = useZustandStore((state) => state.users);
 
   const [searchParams] = useSearchParams();
   const page = parseInt(searchParams.get('page') || '1');
@@ -285,19 +287,40 @@ export default function EtgFiches() {
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [allFeis]);
 
+  const feiCollecteurIdsByNumero = useMemo(() => {
+    const result: Record<string, string[]> = {};
+    for (const fei of allFeis) {
+      const intermediaires = filterFeiIntermediaires(carcassesIntermediaireById, fei.numero);
+      const ids: string[] = [];
+      for (const inter of intermediaires) {
+        if (inter.intermediaire_role !== FeiOwnerRole.COLLECTEUR_PRO) continue;
+        const id = inter.intermediaire_entity_id || inter.intermediaire_user_id;
+        if (id && !ids.includes(id)) ids.push(id);
+      }
+      result[fei.numero] = ids;
+    }
+    return result;
+  }, [allFeis, carcassesIntermediaireById]);
+
   const collecteurOptions = useMemo(() => {
     const map = new Map<string, string>();
-    for (const fei of allFeis) {
-      const id = fei.latest_intermediaire_entity_id || fei.latest_intermediaire_user_id;
-      const name = fei.latest_intermediaire_name_cache;
-      if (id && name && !map.has(id)) {
+    for (const ids of Object.values(feiCollecteurIdsByNumero)) {
+      for (const id of ids) {
+        if (map.has(id)) continue;
+        const entity = entities[id];
+        const userOnly = usersById[id];
+        const name =
+          entity?.nom_d_usage ||
+          entity?.raison_sociale ||
+          (userOnly ? `${userOnly.prenom ?? ''} ${userOnly.nom_de_famille ?? ''}`.trim() : '') ||
+          id;
         map.set(id, name);
       }
     }
     return Array.from(map.entries())
       .map(([id, name]) => ({ id, name }))
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [allFeis]);
+  }, [feiCollecteurIdsByNumero, entities, usersById]);
 
   const filteredFeis = useMemo(() => {
     let feis = allFeis;
@@ -335,11 +358,10 @@ export default function EtgFiches() {
       feis = feis.filter((fei) => filterCCGs.includes(fei.premier_detenteur_depot_entity_id ?? ''));
     }
     if (filterCollecteurs.length > 0) {
-      feis = feis.filter(
-        (fei) =>
-          filterCollecteurs.includes(fei.latest_intermediaire_user_id ?? '') ||
-          filterCollecteurs.includes(fei.latest_intermediaire_entity_id ?? '')
-      );
+      feis = feis.filter((fei) => {
+        const ids = feiCollecteurIdsByNumero[fei.numero] ?? [];
+        return ids.some((id) => filterCollecteurs.includes(id));
+      });
     }
     return feis;
   }, [
@@ -349,6 +371,7 @@ export default function EtgFiches() {
     filterPremierDetenteurs,
     filterCCGs,
     filterCollecteurs,
+    feiCollecteurIdsByNumero,
     carcassesIntermediaireById,
     carcasses,
     entitiesIdsWorkingDirectlyFor,
