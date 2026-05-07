@@ -102,6 +102,7 @@ export default function EtgFiches() {
   const carcasses = useZustandStore((state) => state.carcasses);
   const entities = useZustandStore((state) => state.entities);
   const usersById = useZustandStore((state) => state.users);
+  const dataIsSynced = useZustandStore((state) => state.dataIsSynced);
 
   const [searchParams] = useSearchParams();
   const page = parseInt(searchParams.get('page') || '1');
@@ -460,6 +461,15 @@ export default function EtgFiches() {
           </button>
         )}
       </div>
+      {!dataIsSynced && (
+        <div className="text-action-high-blue-france mt-2 flex items-center gap-1.5 text-xs">
+          <span
+            className="fr-icon--sm ri-loader-4-line animate-spin"
+            aria-hidden="true"
+          />
+          <span>Mise à jour des fiches…</span>
+        </div>
+      )}
 
       {/* Filtre Statut */}
       <CollapsibleSection
@@ -652,9 +662,20 @@ export default function EtgFiches() {
 
       {/* Mobile : bouton filtres sticky */}
       <div className="fr-background-alt--blue-france sticky top-0 z-30 flex items-center justify-between px-4 py-2 md:hidden">
-        <span className="text-sm font-medium">
-          {filteredFeis.length} fiche{filteredFeis.length > 1 ? 's' : ''}
-        </span>
+        <div className="flex flex-col">
+          <span className="text-sm font-medium">
+            {filteredFeis.length} fiche{filteredFeis.length > 1 ? 's' : ''}
+          </span>
+          {!dataIsSynced && (
+            <span className="text-action-high-blue-france flex items-center gap-1 text-xs">
+              <span
+                className="fr-icon--sm ri-loader-4-line animate-spin"
+                aria-hidden="true"
+              />
+              Mise à jour…
+            </span>
+          )}
+        </div>
         <div className="flex gap-2">
           <button
             type="button"

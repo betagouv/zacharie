@@ -62,47 +62,66 @@ export async function loadFeis() {
     useZustandStore.setState({ feis: allFeis });
 
     if (feisNumerosToLoadAgain.length > 0) {
-      const BATCH_SIZE = 100;
+      const BATCH_SIZE = 300;
+      const batches: Array<Array<FeiWithIntermediaires['numero']>> = [];
       for (let i = 0; i < feisNumerosToLoadAgain.length; i += BATCH_SIZE) {
-        const batch = feisNumerosToLoadAgain.slice(i, i + BATCH_SIZE);
-        const feisRefreshed = await API.post({
-          path: 'fei/refresh',
-          body: { numeros: batch },
-        }).then((res) => res as FeiRefreshResponse);
-        if (!feisRefreshed.ok) {
-          alert(
-            `Un problème est survenu lors du chargement de l'application: ${feisRefreshed.error}. Veuillez recharger la page. Si le problème persiste, veuillez contacter l'équipe technique.`
-          );
-          return;
-        }
-
-        // Store users and entities from flat arrays
-        const prevState = useZustandStore.getState();
-        for (const user of feisRefreshed.data.users) {
-          if (!prevState.users[user.id]) {
-            prevState.users[user.id] = user;
-          }
-        }
-        for (const entity of feisRefreshed.data.entities) {
-          const existing = prevState.entities[entity.id];
-          prevState.entities[entity.id] = {
-            ...existing,
-            ...entity,
-            relation: existing?.relation ?? 'NONE',
-            relationStatus: existing?.relationStatus ?? undefined,
-          } satisfies EntityWithUserRelation;
-        }
-        useZustandStore.setState(prevState, true);
-
-        // Process FEIs, carcasses, and intermediaires
-        for (const fei of feisRefreshed.data.feis) {
-          setFeiInStore(fei);
-          if (import.meta.env.VITE_TEST_PLAYWRIGHT === 'true') {
-            // if it goes too fast, we have a race condition with the sync with the backend and PG doesn't like it
-            await new Promise((resolve) => setTimeout(resolve, 100));
-          }
-        }
+        batches.push(feisNumerosToLoadAgain.slice(i, i + BATCH_SIZE));
       }
+
+      let alertedError = false;
+      await Promise.all(
+        batches.map(async (batch) => {
+          const feisRefreshed = await API.post({
+            path: 'fei/refresh',
+            body: { numeros: batch },
+          }).then((res) => res as FeiRefreshResponse);
+          if (!feisRefreshed.ok) {
+            if (!alertedError) {
+              alertedError = true;
+              alert(
+                `Un problème est survenu lors du chargement de l'application: ${feisRefreshed.error}. Veuillez recharger la page. Si le problème persiste, veuillez contacter l'équipe technique.`
+              );
+            }
+            return;
+          }
+
+          // Store users and entities from flat arrays
+          const prevState = useZustandStore.getState();
+          for (const user of feisRefreshed.data.users) {
+            if (!prevState.users[user.id]) {
+              prevState.users[user.id] = user;
+            }
+          }
+          for (const entity of feisRefreshed.data.entities) {
+            const existing = prevState.entities[entity.id];
+            prevState.entities[entity.id] = {
+              ...existing,
+              ...entity,
+              relation: existing?.relation ?? 'NONE',
+              relationStatus: existing?.relationStatus ?? undefined,
+            } satisfies EntityWithUserRelation;
+          }
+
+          // Process FEIs, carcasses, and intermediaires (mutates prevState in place via setFeiInStore)
+          for (const fei of feisRefreshed.data.feis) {
+            setFeiInStore(fei);
+            if (import.meta.env.VITE_TEST_PLAYWRIGHT === 'true') {
+              // if it goes too fast, we have a race condition with the sync with the backend and PG doesn't like it
+              await new Promise((resolve) => setTimeout(resolve, 100));
+            }
+          }
+
+          // Trigger re-render with new top-level refs so cards refresh progressively per batch
+          const newState = useZustandStore.getState();
+          useZustandStore.setState({
+            feis: { ...newState.feis },
+            users: { ...newState.users },
+            entities: { ...newState.entities },
+            carcasses: { ...newState.carcasses },
+            carcassesIntermediaireById: { ...newState.carcassesIntermediaireById },
+          });
+        })
+      );
     }
 
     const state = useZustandStore.getState();
@@ -113,11 +132,6 @@ export async function loadFeis() {
       state.logs.some((l) => !l.is_synced);
 
     useZustandStore.setState({
-      feis: { ...state.feis },
-      users: { ...state.users },
-      entities: { ...state.entities },
-      carcasses: { ...state.carcasses },
-      carcassesIntermediaireById: { ...state.carcassesIntermediaireById },
       dataIsSynced: !hasUnsyncedData,
     });
 

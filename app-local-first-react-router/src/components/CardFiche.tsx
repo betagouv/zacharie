@@ -55,6 +55,7 @@ export default function CardFiche({
   const myCarcasses = useMyCarcassesForFei(fei.numero);
   const feiCarcasses = useCarcassesForFei(fei.numero);
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
+  const isCarcassesLoading = feiCarcasses.length === 0 && !dataIsSynced;
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -273,24 +274,32 @@ export default function CardFiche({
             <div className="flex shrink basis-1/2 flex-col gap-y-1">
               <CarcassesIcon />
               <div>
-                {formattedCarcassesAcceptées.map((line, index) => {
-                  return (
-                    <p
-                      className={[
-                        'm-0 line-clamp-1',
-                        index >= maxDetailedLines ? 'text-sm' : 'text-xl',
-                        line === 'À renseigner'
-                          ? 'text-neutral-400'
-                          : line === 'fin de liste'
-                            ? 'text-transparent'
-                            : 'text-neutral-700',
-                      ].join(' ')}
-                      key={line + index}
-                    >
-                      {line}
-                    </p>
-                  );
-                })}
+                {isCarcassesLoading ? (
+                  <div className="flex flex-col gap-y-2 py-1">
+                    <div className="h-5 w-3/4 animate-pulse rounded bg-gray-200" />
+                    <div className="h-5 w-2/3 animate-pulse rounded bg-gray-200" />
+                    <div className="h-3 w-1/2 animate-pulse rounded bg-gray-200" />
+                  </div>
+                ) : (
+                  formattedCarcassesAcceptées.map((line, index) => {
+                    return (
+                      <p
+                        className={[
+                          'm-0 line-clamp-1',
+                          index >= maxDetailedLines ? 'text-sm' : 'text-xl',
+                          line === 'À renseigner'
+                            ? 'text-neutral-400'
+                            : line === 'fin de liste'
+                              ? 'text-transparent'
+                              : 'text-neutral-700',
+                        ].join(' ')}
+                        key={line + index}
+                      >
+                        {line}
+                      </p>
+                    );
+                  })
+                )}
               </div>
             </div>
             {/* {simpleStatus === 'Clôturée' && !carcassesRefusées.length && (
