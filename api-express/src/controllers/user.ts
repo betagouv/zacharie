@@ -958,6 +958,7 @@ const userUpdateSchema = z.object({
   native_push_token: z.string().optional(),
   [Prisma.UserScalarFieldEnum.numero_cfei]: z.string().optional().nullable(),
   [Prisma.UserScalarFieldEnum.est_forme_a_l_examen_initial]: z.enum(['true', 'false']).optional(),
+  [Prisma.UserScalarFieldEnum.scope_departements_codes]: z.array(z.string()).optional(),
   onboarding_finished: z.boolean().optional(),
 });
 
@@ -1111,6 +1112,16 @@ router.post(
             nextUser.activated = false;
             if (nextUser.activated_at) nextUser.activated_at = new Date();
           }
+        }
+      }
+
+      if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.scope_departements_codes)) {
+        if (req.user.isZacharieAdmin) {
+          nextUser.scope_departements_codes = [
+            ...new Set(body[Prisma.UserScalarFieldEnum.scope_departements_codes] as string[]),
+          ].sort();
+        } else {
+          throw new Error('User tried to update scope_departements_codes without being admin');
         }
       }
 
