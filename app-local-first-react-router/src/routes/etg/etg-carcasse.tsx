@@ -43,18 +43,18 @@ export default function CarcasseIntermediaireComp({
   const carcassesIntermediaires = useCarcassesIntermediairesForCarcasse(carcasse.zacharie_carcasse_id);
 
   const commentairesIntermediaires = useMemo(() => {
-    const commentaires = [];
+    const commentaires: { nom: string; commentaire: string }[] = [];
     for (const _carcasseIntermediaire of carcassesIntermediaires) {
-      if (_carcasseIntermediaire.intermediaire_id === carcasseIntermediaire.intermediaire_id) continue;
       if (_carcasseIntermediaire?.commentaire) {
         const intermediaireEntity = entities[_carcasseIntermediaire.intermediaire_entity_id];
-        commentaires.push(
-          `${intermediaireEntity?.nom_d_usage}\u00A0: ${_carcasseIntermediaire?.commentaire}`
-        );
+        commentaires.push({
+          nom: intermediaireEntity?.nom_d_usage ?? '',
+          commentaire: _carcasseIntermediaire.commentaire,
+        });
       }
     }
     return commentaires;
-  }, [carcassesIntermediaires, entities, carcasseIntermediaire]);
+  }, [carcassesIntermediaires, entities]);
 
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -402,9 +402,9 @@ export default function CarcasseIntermediaireComp({
   }
   if (commentairesIntermediaires.length) {
     commentaireHint.push(``);
-    commentaireHint.push(`Commentaires des autres intermédiaires :`);
-    commentairesIntermediaires.forEach((commentaire) => {
-      commentaireHint.push(`- ${commentaire}`);
+    commentaireHint.push(`Commentaires des intermédiaires :`);
+    commentairesIntermediaires.forEach((c) => {
+      commentaireHint.push(`- ${c.nom} : ${c.commentaire}`);
     });
   }
 
@@ -424,16 +424,6 @@ export default function CarcasseIntermediaireComp({
             <>
               {carcasse.espece} - N° {carcasse.numero_bracelet}
               <br />
-              {commentairesIntermediaires.map((commentaire, index) => {
-                return (
-                  <p
-                    key={commentaire + index}
-                    className="mt-2 block text-sm font-normal opacity-70"
-                  >
-                    {commentaire}
-                  </p>
-                );
-              })}
               {!!carcasse.examinateur_anomalies_abats?.length && (
                 <p className="mt-2 text-sm">
                   Anomalies abats:
@@ -476,6 +466,17 @@ export default function CarcasseIntermediaireComp({
               onSubmit={(e) => e.preventDefault()}
               id={`intermediaire-carcasse-${carcasse.numero_bracelet}`}
             >
+              {commentairesIntermediaires.length > 0 && (
+                <div className="mb-4 rounded-sm border border-gray-300 bg-gray-50 px-3 py-2 text-sm">
+                  <p className="mb-2 font-semibold">Commentaires des intermédiaires</p>
+                  {commentairesIntermediaires.map((c, i) => (
+                    <div key={`${c.nom}-${i}`} className="mb-2 last:mb-0">
+                      <p className="font-medium">{c.nom}</p>
+                      <p>{c.commentaire}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
               <div className="mt-4">
                 {/* cutsom radio buttons en reprenant le code de @codegouvfr/react-dsfr/RadioButtons pour y insérer un input pour le nombre d'animaux acceptés */}
                 <fieldset className="fr-fieldset">
