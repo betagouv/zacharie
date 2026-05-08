@@ -10,7 +10,6 @@ import dayjs from 'dayjs';
 import validateUser from '~/middlewares/validateUser';
 import departementsRegions from '~/data/departements-regions.json';
 import {
-  BPH_PATTERNS,
   circuitCourtRoles,
   extractDepartementFromCommune,
   getCurrentSeason,
@@ -51,8 +50,11 @@ router.get(
       return;
     }
 
+    // Calculate current season (hunting season typically runs from July to June)
+    // Format: "25-26" means 2025-2026 season
     const { season, seasonStart, seasonEnd } = getCurrentSeason();
 
+    // Get user's FEIs for the current season
     const feis = await prisma.fei.findMany({
       where: {
         OR: [{ examinateur_initial_user_id: user.id }, { premier_detenteur_user_id: user.id }],
@@ -80,12 +82,13 @@ router.get(
           hygieneScore: null,
           refusalCauses: [],
           personalSeizureRate: null,
-          nationalSeizureRate: 10.44,
+          nationalSeizureRate: 10.44, // Default national average
         },
       });
       return;
     }
 
+    // Get all carcasses for these FEIs
     const carcasses = await prisma.carcasse.findMany({
       where: {
         fei_numero: { in: feiNumeros },
@@ -93,7 +96,10 @@ router.get(
       },
     });
 
+    // Calculate total carcasses
     const totalCarcasses = carcasses.length;
+
+    // Calculate big game vs small game
     const bigGameCarcasses = carcasses.filter((c) => c.type === CarcasseType.GROS_GIBIER);
     const bigGame = bigGameCarcasses.length;
     const smallGame = carcasses.filter((c) => c.type === CarcasseType.PETIT_GIBIER).length;
@@ -103,12 +109,15 @@ router.get(
     );
     const hasAnySviReturn = sviEligibleCarcasses.some((c) => c.svi_carcasse_status !== null);
 
+    // Get refusal causes from intermediaire refusals and SVI lesions/motifs
     const refusalCausesMap = new Map<string, number>();
     for (const carcasse of bigGameCarcasses) {
+      // Intermediaire refusal motif
       if (carcasse.intermediaire_carcasse_refus_motif) {
         const motif = carcasse.intermediaire_carcasse_refus_motif;
         refusalCausesMap.set(motif, (refusalCausesMap.get(motif) || 0) + 1);
       }
+      // SVI IPM1 and IPM2 lesions/motifs (deduplicated to avoid counting same motif twice)
       const sviMotifs = new Set([
         ...(carcasse.svi_ipm1_lesions_ou_motifs ?? []),
         ...(carcasse.svi_ipm2_lesions_ou_motifs ?? []),
@@ -120,8 +129,9 @@ router.get(
     const refusalCauses = Array.from(refusalCausesMap.entries())
       .map(([label, count]) => ({ label, count }))
       .sort((a, b) => b.count - a.count)
-      .slice(0, 5);
+      .slice(0, 5); // Top 5 causes
 
+    // Calculate personal seizure rate for SVI-eligible big game carcasses
     const seizedBigGame = sviEligibleCarcasses.filter(
       (c) =>
         c.svi_carcasse_status === CarcasseStatus.SAISIE_TOTALE ||
@@ -134,6 +144,7 @@ router.get(
           ? null
           : null;
 
+    // Calculate national seizure rate (all big game carcasses in 2024)
     const nationalBigGame2024 = await prisma.carcasse.count({
       where: {
         type: CarcasseType.GROS_GIBIER,
@@ -163,6 +174,10 @@ router.get(
     const nationalSeizureRate =
       nationalBigGame2024 > 0 ? (nationalSeizedBigGame2024 / nationalBigGame2024) * 100 : 10.44;
 
+    // Hygiene score (BPH — Bonnes Pratiques d'Hygiène)
+    // score = 100 × (1 − (personalBphRate / (2 × nationalBphRate)))
+    // personalBphRate = (SVI-eligible + SAISIE + motif BPH) / SVI-eligible (aligned with admin /delta-bph).
+    // nationalBphRate = nationalSeizureRate (same value).
     const bphCarcasses = sviEligibleCarcasses.filter(
       (c) =>
         (c.svi_carcasse_status === CarcasseStatus.SAISIE_TOTALE ||
@@ -193,31 +208,39 @@ router.get(
         smallGame,
         hygieneScore,
         refusalCauses,
-        personalSeizureRate: personalSeizureRate !== null ? Math.round(personalSeizureRate * 10) / 10 : null,
-        nationalSeizureRate: Math.round(nationalSeizureRate * 100) / 100,
+        personalSeizureRate: personalSeizureRate !== null ? Math.round(personalSeizureRate * 10) / 10 : null, // Round to 1 decimal
+        nationalSeizureRate: Math.round(nationalSeizureRate * 100) / 100, // Round to 2 decimals
+        // Calculation details for debugging
         calculationDetails: {
+          // User & season
           userId: user.id,
           userEmail: user.email,
           season,
           seasonStart,
           seasonEnd,
+          // FEIs
           feisCount: feis.length,
           feiNumeros,
+          // Carcasses
           totalCarcassesCount: totalCarcasses,
           bigGameCount: bigGame,
           smallGameCount: smallGame,
+          // SVI eligibility
           sviEligibleCount: sviEligibleCarcasses.length,
           hasAnySviReturn,
+          // Refusal causes
           refusalCausesFull: Object.fromEntries(refusalCausesMap),
+          // Personal seizure rate calculation
           bigGameCarcassesCount: bigGameCarcasses.length,
           seizedBigGameCount: seizedBigGame.length,
           personalSeizureRateRaw: personalSeizureRate,
+          // National seizure rate calculation
           nationalBigGame2024Count: nationalBigGame2024,
           nationalSeizedBigGame2024Count: nationalSeizedBigGame2024,
           nationalSeizureRateRaw: nationalSeizureRate,
+          // Hygiene score calculation (BPH)
           formula: '100 × (1 − (personalBphRate / (2 × nationalBphRate)))',
           bphCount: bphCarcasses.length,
-          bphPatterns: BPH_PATTERNS,
           personalBphRate,
           nationalBphRateFraction,
           hygieneScoreRaw,
