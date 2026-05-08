@@ -851,3 +851,20 @@ model OfficialCfei {
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 }
+
+model QuizResult {
+  id               String    @id @default(uuid())
+  display_name     String? // pseudo optionnel saisi par le joueur (max 30 chars, filtré)
+  score            Int
+  total_questions  Int
+  answers          Json // [{ questionId: "q1", givenAnswer: true, correct: true }]
+  duration_seconds Int?
+  source           String? // "tv" | "menu" | "direct"
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @default(now()) @updatedAt
+  deleted_at       DateTime?
+
+  @@index([created_at])
+  @@index([source])
+  @@index([score(sort: Desc), created_at])
+}

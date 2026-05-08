@@ -1,0 +1,479 @@
+[
+  {
+    "id": "q1",
+    "theme": "donnees-filiere",
+    "subTheme": null,
+    "question": "La viande de gibier sauvage consommée en France provient majoritairement d'importation.",
+    "answer": false,
+    "why": "On pense souvent que la grande majorité du gibier consommé vient de l'étranger… Mais c'est une idée reçue ! En réalité, seule une petite part est importée : environ 8,2 % du gibier consommé en France (données DGAL, 2023).",
+    "takeaway": "La très grande majorité du gibier consommé en France provient de gibier chassé sur notre territoire."
+  },
+  {
+    "id": "q2",
+    "theme": "donnees-filiere",
+    "subTheme": null,
+    "question": "La consommation de viande de gibier reste une part marginale de la consommation totale de viande : moins de 1 % de la viande consommée.",
+    "answer": true,
+    "why": "Le gibier représente aujourd'hui moins de 1 % de la viande consommée en France. Il est souvent associé à une consommation saisonnière, et reste en grande partie consommé par les chasseurs eux-mêmes et leur entourage, ce qui limite sa diffusion plus large.",
+    "takeaway": "Même si son image est encore très liée à une consommation saisonnière, le gibier peut être consommé bien au-delà de la saison de chasse, sous différentes formes et toute l'année."
+  },
+  {
+    "id": "q3",
+    "theme": "donnees-filiere",
+    "subTheme": null,
+    "question": "La majorité de la viande de gibier sauvage consommée en dehors du cercle familial du chasseur n'est pas contrôlée.",
+    "answer": true,
+    "why": "Aujourd'hui, une faible part du grand gibier sauvage (moins de 6 % du grand gibier sauvage consommé) part dans un établissement de traitement du gibier sauvage agréé avec un contrôle officiel des services vétérinaires (données DGAL, 2023). Une part importante du gibier est consommée en usage domestique privé (environ 30 %) ou circule en dehors de ces circuits encadrés.",
+    "takeaway": "Le passage par un établissement de traitement du gibier sauvage agréé permet de garantir davantage la sécurité sanitaire pour la viande de gibier."
+  },
+  {
+    "id": "q4",
+    "theme": "donnees-filiere",
+    "subTheme": null,
+    "question": "Les services vétérinaires d'inspection constatent peu d'anomalies sur les viandes de gibier sauvage par rapport aux animaux domestiques.",
+    "answer": false,
+    "why": "En réalité, les viandes de gibier sauvage font l'objet de 2,4 fois plus de saisies sanitaires (retrait des viandes de la consommation humaine car jugées dangereuses) que les viandes issues des abattoirs. Plus de 60 % de ces saisies sont liées à un manque de respect des bonnes pratiques d'hygiène lors de la manipulation du gibier par le chasseur (données DGAL, saison 2023-2024).",
+    "takeaway": "Il existe une vraie marge de progression : en appliquant les bonnes pratiques, il est possible d'améliorer significativement la qualité sanitaire du gibier."
+  },
+  {
+    "id": "q5",
+    "theme": "donnees-filiere",
+    "subTheme": null,
+    "question": "La grande majorité des anomalies observées par les services vétérinaires d'inspection sur les viandes de gibier sauvage pourraient facilement être évitées si les bonnes pratiques d'hygiène étaient respectées par tous les acteurs.",
+    "answer": true,
+    "why": "Plus de 60 % des saisies sanitaires (retrait des viandes de la consommation humaine car jugées dangereuses) sont liées à des manquements lors des étapes clés de la manipulation du gibier, notamment l'éviscération et le refroidissement des carcasses. Quand ces étapes sont mal réalisées ou trop tardives, cela peut entraîner des souillures de la viande ou, dans certains cas, une altération avancée (jusqu'à la putréfaction).",
+    "takeaway": "Ces anomalies ne relèvent pas du gibier en lui-même, mais des conditions de traitement après la chasse. Elles sont largement évitables grâce au respect de bonnes pratiques simples."
+  },
+  {
+    "id": "q6",
+    "theme": "donnees-filiere",
+    "subTheme": null,
+    "question": "Il n'y a jamais d'intoxication alimentaire suite à la consommation de viande de gibier sauvage.",
+    "answer": false,
+    "why": "Comme toute viande, la viande de gibier sauvage peut, dans certains cas, être à l'origine d'intoxications alimentaires lorsqu'elle est contaminée ou insuffisamment maîtrisée sur le plan sanitaire. Des cas ont notamment été rapportés en France liés à des bactéries comme Salmonella enteritidis, Bacillus cereus ou Staphylococcus aureus. Plus récemment environ 30 cas de trichinellose humaine ont été signalés après la consommation de viande de sanglier non cuite et non contrôlée. Chez certains pays voisins, des cas d'entérite hémorragique ont également été observés provoqués par Escherichia coli O157.",
+    "takeaway": "Le gibier peut être une viande sûre, mais il nécessite des précautions adaptées. Lorsque la viande n'a pas fait l'objet d'un contrôle en établissement de traitement du gibier sauvage agréé, il est fortement recommandé d'appliquer des mesures de sécurité comme la congélation et surtout une cuisson complète à cœur pour limiter les risques sanitaires."
+  },
+  {
+    "id": "q7",
+    "theme": "hygiene-tirs",
+    "subTheme": "tirs",
+    "question": "Un bon tir contribue à la qualité sanitaire de la viande.",
+    "answer": true,
+    "why": "Un bon tir est un tir qui limite les risques de contamination de la viande. Si le projectile de chasse touche les organes digestifs, leur contenu peut se répandre et contaminer la viande par des bactéries pathogènes, ce qui peut la rendre impropre à la consommation humaine. De plus, un tir précis permet une mort rapide de l'animal, ce qui limite le stress et améliore la qualité de la viande.",
+    "takeaway": "Un bon tir permet une mort rapide et doit éviter l'abdomen pour limiter les risques de contamination."
+  },
+  {
+    "id": "q8",
+    "theme": "hygiene-tirs",
+    "subTheme": "tirs",
+    "question": "Un animal tiré dans l'abdomen présente un risque élevé de contamination.",
+    "answer": true,
+    "why": "L'abdomen contient les organes digestifs. Aussi, un tir dans l'abdomen peut perforer le système digestif (intestins, estomac). Le contenu digestif et notamment les bactéries pathogènes peut alors se répandre dans la cavité abdominale et contaminer la viande. Quand l'animal est encore vivant après le tir, ces bactéries peuvent diffuser plus rapidement dans les tissus, ce qui augmente le risque pour l'ensemble de la carcasse. Même si la viande paraît propre visuellement, elle peut être impropre à la consommation humaine.",
+    "takeaway": "Tout tir abdominal avec traces de souillures d'origine digestive impose le retrait de la carcasse de la consommation humaine, pour protéger le consommateur."
+  },
+  {
+    "id": "q9",
+    "theme": "hygiene-tirs",
+    "subTheme": "tirs",
+    "question": "Le stress de l'animal avant la mort suite à la course ou à un mauvais tir peut dégrader la qualité de la viande.",
+    "answer": true,
+    "why": "Un animal fortement stressé avant sa mort consomme rapidement ses réserves d'énergie dans les muscles. Cela provoque des changements dans le muscle après sa mort, ce qui peut rendre la viande moins tendre, plus sèche et moins apte à bien se conserver. Une longue poursuite ou un animal blessé qui s'épuise augmente donc le stress et peut dégrader la qualité finale de la viande.",
+    "takeaway": "Limiter le stress de l'animal avant la mort permet de préserver la qualité de la viande."
+  },
+  {
+    "id": "q10",
+    "theme": "hygiene-evisceration",
+    "subTheme": "evisceration",
+    "question": "L'éviscération rapide limite les risques de contamination bactérienne.",
+    "answer": true,
+    "why": "Après la mort, les bactéries présentes dans les viscères peuvent commencer à se diffuser vers les autres tissus. Plus on attend pour retirer les viscères, plus ce risque augmente, surtout si la température extérieure est élevée augmentant le risque de contamination de la viande. Une éviscération rapide permet donc de limiter la propagation des bactéries et de mieux préserver la qualité sanitaire de la carcasse.",
+    "takeaway": "Éviscérer rapidement, c'est limiter la contamination et sécuriser la viande. Une éviscération réalisée dans un délai inférieur à 2 heures après la mort est recommandée pour limiter les contaminations et protéger la santé du consommateur."
+  },
+  {
+    "id": "q11",
+    "theme": "hygiene-evisceration",
+    "subTheme": "evisceration",
+    "question": "On peut attendre plusieurs heures avant d'éviscérer le grand gibier sauvage sans conséquence.",
+    "answer": false,
+    "why": "Après la mort de l'animal, la paroi intestinale perd progressivement son rôle de barrière protectrice. Les bactéries présentes dans les intestins peuvent alors migrer vers les tissus de la carcasse contaminant la viande. Ce phénomène est d'autant plus rapide que la température extérieure est élevée. Avec le réchauffement climatique et des températures de plus en plus élevées y compris en période hivernale, le risque de contamination augmente donc plus rapidement qu'auparavant.",
+    "takeaway": "Plus il fait chaud, plus la barrière intestinale devient rapidement perméable : l'éviscération doit être réalisée sans attendre pour limiter les risques pour la santé du consommateur."
+  },
+  {
+    "id": "q12",
+    "theme": "hygiene-evisceration",
+    "subTheme": "evisceration",
+    "question": "L'éviscération doit être réalisée avec précaution pour éviter les contaminations.",
+    "answer": true,
+    "why": "L'éviscération est une étape à risque pour la santé des consommateurs : si le système digestif est perforé, des bactéries pathogènes peuvent se répandre sur la viande et la contaminer. Un manque d'hygiène, de maîtrise du geste ou un environnement inadapté augmente le risque pour la qualité sanitaire de la carcasse et donc pour la santé du consommateur. C'est pourquoi cette étape doit être réalisée avec méthode, dans des conditions propres et maîtrisées, à l'abri de toute source de contamination extérieure.",
+    "takeaway": "La réalisation d'une éviscération dans de bonnes conditions d'hygiène est un prérequis indispensable pour valoriser la viande de gibier : amener rapidement la carcasse vers un local de chasse propre, privilégier la suspension, gants et mains propres, matériel adapté, manipulation soigneuse, nettoyage entre chaque carcasse."
+  },
+  {
+    "id": "q13",
+    "theme": "hygiene-evisceration",
+    "subTheme": "evisceration",
+    "question": "On peut rincer une carcasse à grande eau pour la nettoyer après une éviscération.",
+    "answer": false,
+    "why": "Rincer une carcasse à grande eau peut diffuser les bactéries présentes en cas de souillures, au lieu de les éliminer. Même si la carcasse paraît propre après rinçage, des bactéries peuvent rester présentes et se propager sur l'ensemble de la viande. De plus, la qualité de l'eau utilisée n'est pas toujours maîtrisée ce qui peut ajouter un risque de contamination supplémentaire. L'humidité excessive favorise aussi des évolutions défavorables de la carcasse, comme le développement bactérien et des phénomènes de putréfaction, notamment si l'eau stagne dans le coffre ou les cavités.",
+    "takeaway": "On ne rince pas une carcasse à grande eau après éviscération. Pour nettoyer, on privilégie un parage des souillures (retirer proprement les parties contaminées avec un couteau propre) ou un essuyage avec un essuie-main propre à usage unique, sans étaler les contaminations."
+  },
+  {
+    "id": "q14",
+    "theme": "hygiene-evisceration",
+    "subTheme": "evisceration",
+    "question": "Une carcasse souillée par du contenu digestif peut être facilement valorisée après nettoyage.",
+    "answer": false,
+    "why": "Lorsqu'une carcasse est souillée par du contenu digestif, le risque de contamination bactérienne est très élevé. Les intestins contiennent naturellement de nombreuses bactéries, dont certaines peuvent être pathogènes comme Escherichia coli, Salmonella ou encore Clostridium perfringens. Même après un nettoyage, ces microorganismes ne sont pas totalement éliminés. Ils peuvent rester présents sur la surface de la viande, voire s'être dispersés lors des manipulations ou du lavage.",
+    "takeaway": "Une souillure digestive liée à un problème lors de l'éviscération est un risque sanitaire avéré. Pour permettre une valorisation, la carcasse doit être acheminée vers un établissement de traitement du gibier sauvage agréé, après signalement de l'anomalie sur la fiche d'examen initial."
+  },
+  {
+    "id": "q15",
+    "theme": "hygiene-evisceration",
+    "subTheme": "evisceration",
+    "question": "Les souillures digestives représentent un risque sanitaire majeur.",
+    "answer": true,
+    "why": "Les souillures digestives sont considérées comme un risque sanitaire majeur car le contenu intestinal contient naturellement de nombreuses bactéries. Certaines peuvent être pathogènes pour l'homme, comme Escherichia coli, Salmonella ou Clostridium perfringens. En cas d'ingestion de viande contaminée insuffisamment maîtrisée, ces bactéries peuvent provoquer des troubles digestifs plus ou moins sévères : diarrhées, douleurs abdominales, vomissements, fièvre, et dans certains cas des complications plus importantes chez les personnes fragiles.",
+    "takeaway": "Une souillure digestive représente un risque sanitaire important pour le consommateur. Un traitement de la carcasse par un établissement de traitement du gibier sauvage agréé sous contrôle vétérinaire permet de valoriser la viande en toute sécurité."
+  },
+  {
+    "id": "q16",
+    "theme": "hygiene-evisceration",
+    "subTheme": "evisceration",
+    "question": "On peut consommer une carcasse souillée si on retire uniquement la partie visible.",
+    "answer": false,
+    "why": "Une carcasse souillée par du contenu digestif ne peut pas être consommée en se limitant à retirer uniquement la partie visible. La souillure peut entraîner une contamination de la viande au-delà de la zone apparente. Cette contamination n'est pas forcément visible à l'œil nu et ne peut pas être considérée comme supprimée totalement par parage. Certaines préparations comme la viande hachée ou les produits de salaison sont particulièrement à risque.",
+    "takeaway": "Retirer la partie visible ne suffit pas : la contamination peut être diffuse et certains produits transformés sont particulièrement à risque, nécessitant un traitement par des professionnels de la filière."
+  },
+  {
+    "id": "q17",
+    "theme": "hygiene-refroidissement",
+    "subTheme": "refroidissement",
+    "question": "Un refroidissement rapide de la carcasse après la chasse améliore significativement la sécurité sanitaire du gibier.",
+    "answer": true,
+    "why": "Après la chasse, la température de la carcasse est un facteur déterminant pour la sécurité sanitaire. Un refroidissement rapide limite la multiplication des micro-organismes naturellement présents sur la viande et réduit le risque d'altération. Plus la chaleur persiste longtemps dans la carcasse, plus les conditions sont favorables au développement microbien.",
+    "takeaway": "Refroidir rapidement une carcasse après la chasse est essentiel : cela limite le développement microbien et améliore la sécurité sanitaire du gibier."
+  },
+  {
+    "id": "q18",
+    "theme": "hygiene-refroidissement",
+    "subTheme": "refroidissement",
+    "question": "La chambre froide de stockage du gibier commercialisé doit être déclarée auprès de la préfecture pour assurer la traçabilité du gibier.",
+    "answer": true,
+    "why": "Une chambre froide utilisée pour le stockage du gibier destiné à la commercialisation s'inscrit dans un cadre sanitaire encadré. Elle doit être déclarée en tant que centre de collecte du gibier sauvage auprès de la direction départementale en charge de la protection des populations afin de garantir la traçabilité des denrées. Cette démarche permet de suivre les produits depuis la chasse jusqu'à la distribution des viandes au consommateur final.",
+    "takeaway": "La déclaration d'une chambre froide est une démarche obligatoire, simple et rapide. Elle garantit une traçabilité optimale du gibier et améliore la réactivité en cas d'alerte sanitaire."
+  },
+  {
+    "id": "q19",
+    "theme": "hygiene-refroidissement",
+    "subTheme": "refroidissement",
+    "question": "L'absence de chaîne du froid maîtrisée augmente fortement les risques sanitaires.",
+    "answer": true,
+    "why": "La chaîne du froid est un élément fondamental de la sécurité sanitaire des viandes de gibier. Lorsque la chaîne du froid n'est pas respectée, la température de la viande peut augmenter et créer des conditions favorables au développement bactérien. Même si la viande paraît « normale » visuellement, une rupture de la chaîne du froid augmente fortement le risque sanitaire.",
+    "takeaway": "Sans chaîne du froid maîtrisée, le risque sanitaire augmente fortement, même si la viande semble intacte."
+  },
+  {
+    "id": "q20",
+    "theme": "hygiene-refroidissement",
+    "subTheme": "refroidissement",
+    "question": "Une chambre froide de stockage n'est pas nécessaire lorsque la température extérieure est basse.",
+    "answer": false,
+    "why": "La température extérieure basse ne garantit pas à elle seule un refroidissement suffisant et homogène de la carcasse. Les conditions naturelles (variations de température, vent, exposition au soleil, humidité) ne permettent pas de maîtriser correctement le refroidissement aux températures de 7 °C pour le grand gibier et 4 °C pour le petit gibier. Le stockage extérieur engendre aussi des risques de contamination via insectes ou animaux nuisibles.",
+    "takeaway": "Le froid extérieur ne remplace pas une chambre froide : seule une température maîtrisée et constante garantit une sécurité sanitaire fiable."
+  },
+  {
+    "id": "q21",
+    "theme": "hygiene-transport",
+    "subTheme": "transport",
+    "question": "Le transport du gibier en peau peut se faire sans précaution particulière.",
+    "answer": false,
+    "why": "Le transport du gibier ne peut pas se faire sans précaution. Une carcasse reste une denrée alimentaire sensible. Pendant le transport, elle peut être exposée à des contaminations et à des hausses de température. Le grand gibier éviscéré est particulièrement sensible : il faut éviter les contacts entre carcasses et que des pattes ne pénètrent dans les cavités d'une autre. L'amoncellement des carcasses en peau de grand gibier est interdit.",
+    "takeaway": "Le transport du gibier en peau exige des précautions strictes : hygiène, séparation des carcasses, maîtrise des températures et absence d'amoncellement pour le grand gibier."
+  },
+  {
+    "id": "q22",
+    "theme": "hygiene-transport",
+    "subTheme": "transport",
+    "question": "L'entassement des carcasses de gibier éviscérées est toléré pendant le transport.",
+    "answer": false,
+    "why": "L'entassement des carcasses de gibier éviscérées n'est pas toléré, car il compromet à la fois le refroidissement et l'hygiène. La circulation de l'air est insuffisante, ce qui ralentit la descente en température et favorise le développement microbien. L'entassement augmente aussi les risques de contaminations croisées, notamment via les poils porteurs de germes.",
+    "takeaway": "L'entassement des carcasses est à proscrire : il favorise les contaminations (notamment via les poils). Un transport adapté, avec carcasses suspendues et espacées, est recommandé."
+  },
+  {
+    "id": "q23",
+    "theme": "hygiene-transport",
+    "subTheme": "transport",
+    "question": "Le maintien au frais du gibier pendant le transport est essentiel.",
+    "answer": true,
+    "why": "Pour un gibier déjà refroidi, il est indispensable de maintenir la chaîne du froid pendant le transport. Une élévation de la température, même brève, favorise la multiplication des micro-organismes. L'utilisation d'un véhicule réfrigéré est nécessaire selon la durée et la distance. Pour un gibier transporté juste après la chasse, l'objectif est d'acheminer la carcasse rapidement vers un lieu de refroidissement.",
+    "takeaway": "Qu'il soit déjà refroidi ou non, le gibier doit toujours être transporté dans des conditions adaptées : maintenir la chaîne du froid ou assurer un refroidissement rapide après la chasse."
+  },
+  {
+    "id": "q24",
+    "theme": "hygiene-manipulations",
+    "subTheme": "manipulations",
+    "question": "Hors trophée de chasse, il est autorisé de couper la tête d'un sanglier commercialisé pour faciliter la manipulation.",
+    "answer": false,
+    "why": "Pour le sanglier destiné à la mise sur le marché, la tête ne doit pas être retirée. Elle est nécessaire pour réaliser certains examens obligatoires, notamment le dépistage de la trichine, un parasite transmissible à l'homme. Les prélèvements sont effectués sur des zones spécifiques comme la langue. Retirer la tête empêcherait donc la réalisation correcte de ces contrôles.",
+    "takeaway": "La tête du sanglier doit être conservée sur la carcasse : elle est indispensable pour le dépistage de la trichine et la protection du consommateur."
+  },
+  {
+    "id": "q25",
+    "theme": "hygiene-manipulations",
+    "subTheme": "manipulations",
+    "question": "Les pattes du grand gibier doivent être retirées systématiquement pour faciliter le transport en vue de sa consommation.",
+    "answer": false,
+    "why": "Les pattes du grand gibier ne doivent pas être retirées avant la présentation de la carcasse pour la commercialisation. Elles peuvent présenter des anomalies, des lésions ou des signes de maladie qui participent à l'évaluation sanitaire. Toutefois, dans le cadre de l'acheminement vers un établissement de traitement du gibier sauvage agréé, une découpe partielle des pattes arrières des cervidés est autorisée à condition qu'elles restent attachées au corps.",
+    "takeaway": "Les pattes du grand gibier doivent être conservées pour garantir l'intégrité de la carcasse. Toute découpe est à éviter, sauf cas encadré, et les pattes doivent alors rester attachées au corps."
+  },
+  {
+    "id": "q26",
+    "theme": "hygiene-manipulations",
+    "subTheme": "manipulations",
+    "question": "Toute manipulation doit éviter de masquer des lésions ou anomalies.",
+    "answer": true,
+    "why": "Lors de la manipulation d'une carcasse, il est essentiel de préserver sa lisibilité sanitaire. Toute intervention (découpe, nettoyage, parage) peut masquer des signes de maladie ou de contamination. Les altérer ou les dissimuler peut conduire à une mauvaise appréciation de la qualité de la viande et à la mise en circulation d'une viande potentiellement dangereuse.",
+    "takeaway": "Masquer une anomalie, c'est prendre un risque sanitaire : préserver l'intégrité de la carcasse est une responsabilité essentielle."
+  },
+  {
+    "id": "q27",
+    "theme": "hygiene-manipulations",
+    "subTheme": "manipulations",
+    "question": "La découpe du grand gibier en montagne est autorisée lorsque ce dernier ne peut pas être déplacé.",
+    "answer": true,
+    "why": "En montagne, lorsque le grand gibier ne peut pas être déplacé en entier en raison du terrain, une découpe de la carcasse non dépouillée peut être autorisée pour faciliter son transport. Cette découpe doit rester limitée et strictement fonctionnelle. Tous les morceaux doivent être regroupés et destinés au même destinataire pour garantir la traçabilité. La dépouille demeure interdite.",
+    "takeaway": "En montagne, une découpe est possible pour transporter le gibier, mais elle doit rester limitée et tous les morceaux doivent suivre le même circuit pour garantir la traçabilité."
+  },
+  {
+    "id": "q28",
+    "theme": "examen-initial",
+    "subTheme": null,
+    "question": "L'examen initial permet de détecter certaines anomalies importantes qui pourraient ne pas être détectables par les professionnels de la viande et par les services vétérinaires d'inspection.",
+    "answer": true,
+    "why": null,
+    "takeaway": null
+  },
+  {
+    "id": "q29",
+    "theme": "examen-initial",
+    "subTheme": null,
+    "question": "L'examen initial permet de détecter tous les risques sanitaires.",
+    "answer": false,
+    "why": null,
+    "takeaway": null
+  },
+  {
+    "id": "q30",
+    "theme": "examen-initial",
+    "subTheme": null,
+    "question": "L'examen initial sert uniquement à vérifier la conformité administrative du gibier.",
+    "answer": false,
+    "why": null,
+    "takeaway": null
+  },
+  {
+    "id": "q31",
+    "theme": "examen-initial",
+    "subTheme": null,
+    "question": "L'examen initial est une étape incontournable permettant de contribuer à la sécurité sanitaire des viandes.",
+    "answer": true,
+    "why": null,
+    "takeaway": null
+  },
+  {
+    "id": "q32",
+    "theme": "examen-initial",
+    "subTheme": null,
+    "question": "N'importe quel chasseur peut réaliser un examen initial du gibier sauvage.",
+    "answer": false,
+    "why": null,
+    "takeaway": null
+  },
+  {
+    "id": "q33",
+    "theme": "examen-initial",
+    "subTheme": null,
+    "question": "La formation à l'examen initial est obligatoire pour réaliser un examen initial reconnu.",
+    "answer": true,
+    "why": null,
+    "takeaway": null
+  },
+  {
+    "id": "q34",
+    "theme": "examen-initial",
+    "subTheme": null,
+    "question": "L'examen initial peut être réalisé plusieurs jours après le prélèvement.",
+    "answer": false,
+    "why": null,
+    "takeaway": null
+  },
+  {
+    "id": "q35",
+    "theme": "examen-initial",
+    "subTheme": null,
+    "question": "La présence des abats n'est pas obligatoire pour réaliser un examen initial du grand gibier sauvage.",
+    "answer": false,
+    "why": null,
+    "takeaway": null
+  },
+  {
+    "id": "q36",
+    "theme": "examen-initial",
+    "subTheme": null,
+    "question": "L'examen initial est obligatoire dans tous les cas de chasse.",
+    "answer": false,
+    "why": null,
+    "takeaway": null
+  },
+  {
+    "id": "q37",
+    "theme": "examen-initial",
+    "subTheme": null,
+    "question": "L'examen initial n'est pas obligatoire si je souhaite céder gratuitement du gibier à un tiers.",
+    "answer": false,
+    "why": null,
+    "takeaway": null
+  },
+  {
+    "id": "q38",
+    "theme": "examen-initial",
+    "subTheme": null,
+    "question": "L'examen initial peut être remplacé par le contrôle des services vétérinaires d'inspection dans les établissements de traitement du gibier sauvage.",
+    "answer": false,
+    "why": null,
+    "takeaway": null
+  },
+  {
+    "id": "q39",
+    "theme": "examen-initial",
+    "subTheme": null,
+    "question": "Un examen initial favorable garantit automatiquement la valorisation de la carcasse.",
+    "answer": false,
+    "why": null,
+    "takeaway": null
+  },
+  {
+    "id": "q40",
+    "theme": "trichine",
+    "subTheme": null,
+    "question": "Le sanglier chassé en France ne présente plus de risque de trichine aujourd'hui.",
+    "answer": false,
+    "why": null,
+    "takeaway": null
+  },
+  {
+    "id": "q41",
+    "theme": "trichine",
+    "subTheme": null,
+    "question": "La trichine est un parasite invisible à l'œil nu.",
+    "answer": true,
+    "why": null,
+    "takeaway": null
+  },
+  {
+    "id": "q42",
+    "theme": "trichine",
+    "subTheme": null,
+    "question": "La congélation suffit toujours à éliminer le risque trichine.",
+    "answer": false,
+    "why": null,
+    "takeaway": null
+  },
+  {
+    "id": "q43",
+    "theme": "trichine",
+    "subTheme": null,
+    "question": "Le contrôle sanitaire est indispensable pour sécuriser la consommation de viandes de gibier.",
+    "answer": true,
+    "why": null,
+    "takeaway": null
+  },
+  {
+    "id": "q44",
+    "theme": "trichine",
+    "subTheme": null,
+    "question": "La trichine ne représente pas de danger pour l'homme.",
+    "answer": false,
+    "why": null,
+    "takeaway": null
+  },
+  {
+    "id": "q45",
+    "theme": "valorisation",
+    "subTheme": null,
+    "question": "Un don transforme automatiquement le gibier en produit libre de circulation sans obligation sanitaire.",
+    "answer": false,
+    "why": null,
+    "takeaway": null
+  },
+  {
+    "id": "q46",
+    "theme": "valorisation",
+    "subTheme": null,
+    "question": "Un chasseur peut vendre directement des morceaux d'une carcasse de gibier dépouillée à un professionnel.",
+    "answer": false,
+    "why": null,
+    "takeaway": null
+  },
+  {
+    "id": "q47",
+    "theme": "valorisation",
+    "subTheme": null,
+    "question": "Un chasseur peut demander à un boucher une mise en conserve de son gibier afin de le commercialiser.",
+    "answer": false,
+    "why": null,
+    "takeaway": null
+  },
+  {
+    "id": "q48",
+    "theme": "valorisation",
+    "subTheme": null,
+    "question": "Hors contexte de crise sanitaire, le partage du gibier entre chasseurs ayant participé à la chasse est totalement libre et sans cadre sanitaire.",
+    "answer": true,
+    "why": null,
+    "takeaway": null
+  },
+  {
+    "id": "q49",
+    "theme": "valorisation",
+    "subTheme": null,
+    "question": "La responsabilité du chasseur s'arrête une fois le gibier donné ou partagé.",
+    "answer": false,
+    "why": null,
+    "takeaway": null
+  },
+  {
+    "id": "q50",
+    "theme": "valorisation",
+    "subTheme": null,
+    "question": "Le sous-vide garantit la sécurité sanitaire d'un produit.",
+    "answer": false,
+    "why": null,
+    "takeaway": null
+  },
+  {
+    "id": "q51",
+    "theme": "valorisation",
+    "subTheme": null,
+    "question": "Une conserve permet de rattraper une mauvaise qualité initiale de viande.",
+    "answer": false,
+    "why": null,
+    "takeaway": null
+  },
+  {
+    "id": "q52",
+    "theme": "valorisation",
+    "subTheme": null,
+    "question": "Une cuisson sécurise un produit initialement contaminé.",
+    "answer": false,
+    "why": null,
+    "takeaway": null
+  },
+  {
+    "id": "q53",
+    "theme": "valorisation",
+    "subTheme": null,
+    "question": "La salaison empêche le développement bactérien.",
+    "answer": false,
+    "why": null,
+    "takeaway": null
+  }
+]
