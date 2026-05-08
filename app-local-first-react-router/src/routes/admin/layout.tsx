@@ -20,6 +20,11 @@ const adminLinks = [
     label: 'Motifs de saisies',
     icon: 'fr-icon-error-warning-line',
   },
+  {
+    to: '/app/admin/quiz',
+    label: 'Quiz',
+    icon: 'fr-icon-questionnaire-line',
+  },
 ];
 
 export default function AdminLayout() {

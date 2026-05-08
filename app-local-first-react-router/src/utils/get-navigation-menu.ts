@@ -185,13 +185,14 @@ export function useLandingPageNavigationMenu(): MainNavigationProps.Item[] {
         href: '#',
       },
     },
-    {
-      text: 'Quiz',
-      isActive: location.pathname === '/quiz',
-      linkProps: {
-        to: '/quiz?from=menu',
-        href: '#',
-      },
-    },
+    // TODO: add quiz back when ready
+    // {
+    //   text: 'Quiz',
+    //   isActive: location.pathname === '/quiz',
+    //   linkProps: {
+    //     to: '/quiz?from=menu',
+    //     href: '#',
+    //   },
+    // },
   ];
 }

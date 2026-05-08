@@ -14,6 +14,7 @@ import AdminCarcasseDetail from './carcasse-detail';
 import CcgImport from './ccg-import';
 import AdminDashboard from './dashboard';
 import AdminLesions from './lesions';
+import AdminQuiz from './quiz';
 
 export default function RouterAdmin() {
   return (
@@ -76,6 +77,10 @@ export default function RouterAdmin() {
       <Route
         path="lesions"
         element={<AdminLesions />}
+      />
+      <Route
+        path="quiz"
+        element={<AdminQuiz />}
       />
     </Route>
   );
