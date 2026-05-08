@@ -20,15 +20,20 @@ export default function QuizTvPage() {
             alt="Zacharie"
             className="h-[25vh] w-auto self-start"
           />
-          <p className="fr-h4 m-0 text-gray-700">
+          {/* <p className="fr-h4 m-0 text-gray-700">
             Du prélèvement à l’assiette,
             êtes-vous sûrs de vos pratiques ?
-          </p>
+          </p> */}
           <h1 className="fr-display--xs m-0 md:fr-display--sm">
-            Testons vos connaissances !
+            Vous auriez pu éviter votre dernière saisie sanitaire,
+            <br />
+            Découvrez comment !
           </h1>
+          <h3 className="">
+            Testez vos connaissances !
+          </h3>
           <p className="m-0 mt-auto md:fr-h2 text-right">
-            Scannez le QR code <span aria-hidden="true">→</span>
+            Testons vos connaissances, scannez le QR code <span aria-hidden="true">→</span>
           </p>
         </section>
 
