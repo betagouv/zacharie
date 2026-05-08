@@ -15,6 +15,7 @@ import {
 } from '~/third-parties/brevo';
 import { capture } from '~/third-parties/sentry';
 import createUserId from '~/utils/createUserId';
+import { ensureScopeForRoles } from '~/utils/federation-stats';
 import { comparePassword, hashPassword } from '~/service/crypto';
 import { userFeiSelect, type UserForFei } from '~/types/user';
 import type {
@@ -1123,6 +1124,15 @@ router.post(
         } else {
           throw new Error('User tried to update scope_departements_codes without being admin');
         }
+      }
+
+      // Si l'admin attribue FNC sans toucher au scope (et que celui-ci est vide),
+      // on remplit automatiquement avec les 101 départements pour rester déclaratif.
+      if (Array.isArray(nextUser.roles) && req.user.isZacharieAdmin) {
+        const nextScope =
+          (nextUser.scope_departements_codes as string[] | undefined) ?? user.scope_departements_codes;
+        const filled = ensureScopeForRoles(nextScope, nextUser.roles as UserRoles[]);
+        if (filled) nextUser.scope_departements_codes = filled;
       }
 
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.est_forme_a_l_examen_initial)) {

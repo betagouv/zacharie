@@ -46,6 +46,7 @@ import type {
 import passport from 'passport';
 import { entityAdminInclude } from '~/types/entity';
 import { createBrevoContact, updateOrCreateBrevoCompany } from '~/third-parties/brevo';
+import { getDefaultScopeDepartementsForRoles } from '~/utils/federation-stats';
 import slugify from 'slugify';
 import dayjs from 'dayjs';
 
@@ -106,12 +107,14 @@ router.post(
     ) => {
       const body = req.body;
 
+      const roles = body[Prisma.UserScalarFieldEnum.roles] as UserRoles[];
       const createdUser = await prisma.user.create({
         data: {
           id: await createUserId(),
           email: body[Prisma.UserScalarFieldEnum.email],
-          roles: body[Prisma.UserScalarFieldEnum.roles] as UserRoles[],
+          roles,
           isZacharieAdmin: body[Prisma.UserScalarFieldEnum.isZacharieAdmin] ? true : false,
+          scope_departements_codes: getDefaultScopeDepartementsForRoles(roles),
         },
       });
 

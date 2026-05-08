@@ -107,9 +107,9 @@ export default function AdminUser() {
     let body =
       formRef.current!.id === 'user_roles_form'
         ? {
-            roles: formData.getAll('roles'),
-            isZacharieAdmin: formData.get(Prisma.UserScalarFieldEnum.isZacharieAdmin) === 'true',
-          }
+          roles: formData.getAll('roles'),
+          isZacharieAdmin: formData.get(Prisma.UserScalarFieldEnum.isZacharieAdmin) === 'true',
+        }
         : Object.fromEntries(formData);
 
     API.post({
@@ -685,9 +685,9 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
         user.roles.includes(UserRoles.COLLECTEUR_PRO) && (
           <Highlight
             className="m-0 mt-8"
-            // classes={{
-            //   root: 'fr-highlight--green-emeraude',
-            // }}
+          // classes={{
+          //   root: 'fr-highlight--green-emeraude',
+          // }}
           >
             Un collecteur indépendant ne peut pas gérer de fiches pour un ETG. <br />
             Si un ETG a un besoin de transport, c'est dans le profil de l'utilisateur que ça se gère : cet
@@ -853,11 +853,17 @@ function DepartementsScope({ userId, initialCodes, onSaved }: DepartementsScopeP
     []
   );
 
+  const totalDeps = ALL_DEPARTEMENT_CODES.length;
+  const isNational = selected.size === totalDeps;
+  const isEmpty = selected.size === 0;
+
   return (
     <div className="flex flex-col gap-4">
       <p className="m-0 text-sm">
         Sélectionnez les départements sur lesquels cet utilisateur a un périmètre. Cliquez sur le nom d'une
-        région pour cocher ou décocher tous ses départements en une fois.
+        région pour cocher ou décocher tous ses départements en une fois. Pour donner un accès national,
+        sélectionnez explicitement les {totalDeps} départements&nbsp;: la valeur est toujours déclarative,
+        zéro département ne signifie jamais «&nbsp;tout&nbsp;».
       </p>
       <div className="flex flex-wrap items-end gap-4">
         <div className="grow">
@@ -872,22 +878,21 @@ function DepartementsScope({ userId, initialCodes, onSaved }: DepartementsScopeP
           />
         </div>
         <div className="flex flex-wrap items-center gap-2 pb-1">
-          <span className="text-sm font-medium">
-            {selected.size} / {ALL_DEPARTEMENT_CODES.length} sélectionné{selected.size > 1 ? 's' : ''}
-          </span>
           <Button
             type="button"
             priority="secondary"
             size="small"
             onClick={selectAll}
+            disabled={isNational}
           >
-            Tout sélectionner
+            Sélectionner tous les départements (national)
           </Button>
           <Button
             type="button"
             priority="secondary"
             size="small"
             onClick={unselectAll}
+            disabled={isEmpty}
           >
             Tout désélectionner
           </Button>
