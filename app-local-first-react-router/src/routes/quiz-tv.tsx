@@ -29,9 +29,6 @@ export default function QuizTvPage() {
             <br />
             Découvrez comment !
           </h1>
-          <h3 className="">
-            Testez vos connaissances !
-          </h3>
           <p className="m-0 mt-auto md:fr-h2 text-right">
             Testons vos connaissances, scannez le QR code <span aria-hidden="true">→</span>
           </p>
