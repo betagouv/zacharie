@@ -15,6 +15,7 @@ import {
 } from '~/third-parties/brevo';
 import { capture } from '~/third-parties/sentry';
 import createUserId from '~/utils/createUserId';
+import { ensureScopeForRoles } from '~/utils/federation-stats';
 import { comparePassword, hashPassword } from '~/service/crypto';
 import { userFeiSelect, type UserForFei } from '~/types/user';
 import type {
@@ -958,6 +959,7 @@ const userUpdateSchema = z.object({
   native_push_token: z.string().optional(),
   [Prisma.UserScalarFieldEnum.numero_cfei]: z.string().optional().nullable(),
   [Prisma.UserScalarFieldEnum.est_forme_a_l_examen_initial]: z.enum(['true', 'false']).optional(),
+  [Prisma.UserScalarFieldEnum.scope_departements_codes]: z.array(z.string()).optional(),
   onboarding_finished: z.boolean().optional(),
 });
 
@@ -1112,6 +1114,25 @@ router.post(
             if (nextUser.activated_at) nextUser.activated_at = new Date();
           }
         }
+      }
+
+      if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.scope_departements_codes)) {
+        if (req.user.isZacharieAdmin) {
+          nextUser.scope_departements_codes = [
+            ...new Set(body[Prisma.UserScalarFieldEnum.scope_departements_codes] as string[]),
+          ].sort();
+        } else {
+          throw new Error('User tried to update scope_departements_codes without being admin');
+        }
+      }
+
+      // Si l'admin attribue FNC sans toucher au scope (et que celui-ci est vide),
+      // on remplit automatiquement avec les 101 départements pour rester déclaratif.
+      if (Array.isArray(nextUser.roles) && req.user.isZacharieAdmin) {
+        const nextScope =
+          (nextUser.scope_departements_codes as string[] | undefined) ?? user.scope_departements_codes;
+        const filled = ensureScopeForRoles(nextScope, nextUser.roles as UserRoles[]);
+        if (filled) nextUser.scope_departements_codes = filled;
       }
 
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.est_forme_a_l_examen_initial)) {

@@ -9,6 +9,21 @@ import { CarcasseType, CarcasseStatus, DepotType, FeiOwnerRole, UserRoles } from
 import dayjs from 'dayjs';
 import validateUser from '~/middlewares/validateUser';
 import departementsRegions from '~/data/departements-regions.json';
+import {
+  circuitCourtRoles,
+  extractDepartementFromCommune,
+  getCurrentSeason,
+  hasBphMotif,
+  resolveScope,
+} from '~/utils/federation-stats';
+import {
+  matchBrucellose,
+  matchPestePorcine,
+  matchTuberculose,
+  matchTularemie,
+} from '~/utils/disease-suspicions';
+
+const departementsLabels = (departementsRegions as { departements: Record<string, string> }).departements;
 
 router.get(
   '/nombre-de-carcasses-cumule',
@@ -37,13 +52,7 @@ router.get(
 
     // Calculate current season (hunting season typically runs from July to June)
     // Format: "25-26" means 2025-2026 season
-    const now = dayjs();
-    const currentYear = now.year();
-    const seasonStartYear = now.month() >= 6 ? currentYear : currentYear - 1; // July (month 6) onwards
-    const seasonEndYear = seasonStartYear + 1;
-    const season = `${String(seasonStartYear).slice(-2)}-${String(seasonEndYear).slice(-2)}`;
-    const seasonStart = dayjs(`${seasonStartYear}-07-01`).startOf('day');
-    const seasonEnd = dayjs(`${seasonEndYear}-06-30`).endOf('day');
+    const { season, seasonStart, seasonEnd } = getCurrentSeason();
 
     // Get user's FEIs for the current season
     const feis = await prisma.fei.findMany({
@@ -95,13 +104,6 @@ router.get(
     const bigGame = bigGameCarcasses.length;
     const smallGame = carcasses.filter((c) => c.type === CarcasseType.PETIT_GIBIER).length;
 
-    const circuitCourtRoles: FeiOwnerRole[] = [
-      FeiOwnerRole.COMMERCE_DE_DETAIL,
-      FeiOwnerRole.REPAS_DE_CHASSE_OU_ASSOCIATIF,
-      FeiOwnerRole.CANTINE_OU_RESTAURATION_COLLECTIVE,
-      FeiOwnerRole.ASSOCIATION_CARITATIVE,
-      FeiOwnerRole.CONSOMMATEUR_FINAL,
-    ];
     const sviEligibleCarcasses = bigGameCarcasses.filter(
       (c) => !c.next_owner_role || !circuitCourtRoles.includes(c.next_owner_role)
     );
@@ -176,23 +178,6 @@ router.get(
     // score = 100 × (1 − (personalBphRate / (2 × nationalBphRate)))
     // personalBphRate = (SVI-eligible + SAISIE + motif BPH) / SVI-eligible (aligned with admin /delta-bph).
     // nationalBphRate = nationalSeizureRate (same value).
-    const BPH_PATTERNS = [
-      "souillures d'origine digestive",
-      "souillures d'origine digestive liées à une balle d'abdomen",
-      'souillures telluriques',
-      'odeur anormale',
-      'putréfaction superficielle',
-      'putréfaction profonde',
-      'moisissures',
-      'œufs ou larves de mouche',
-      'morsure de chien',
-      'conditions de préparation des viandes par le producteur primaire',
-    ];
-    const hasBphMotif = (motifs: string[] | null) =>
-      (motifs ?? []).some((m) => {
-        const s = m.toLowerCase();
-        return BPH_PATTERNS.some((p) => s.includes(p));
-      });
     const bphCarcasses = sviEligibleCarcasses.filter(
       (c) =>
         (c.svi_carcasse_status === CarcasseStatus.SAISIE_TOTALE ||
@@ -265,26 +250,6 @@ router.get(
   })
 );
 
-/**
- * Extrait le code département depuis le champ `Fei.commune_mise_a_mort`
- * (format attendu : "<code_postal> <COMMUNE>").
- *  - DOM/COM : 3 premiers chiffres (97x, 98x)
- *  - Corse : 2A si CP ≤ 20190, 2B sinon
- *  - Métropole : 2 premiers chiffres
- */
-function extractDepartementFromCommune(commune: string | null | undefined): string | null {
-  if (!commune) return null;
-  const cp = commune.trim().split(/\s+/)[0];
-  if (!cp || cp.length < 2 || !/^\d/.test(cp)) return null;
-  if (cp.startsWith('97') || cp.startsWith('98')) return cp.slice(0, 3);
-  if (cp.startsWith('20')) {
-    const num = parseInt(cp, 10);
-    if (!Number.isFinite(num)) return null;
-    return num <= 20190 ? '2A' : '2B';
-  }
-  return cp.slice(0, 2);
-}
-
 router.get(
   '/federation/valorisation',
   passport.authenticate('user', { session: false }),
@@ -297,27 +262,23 @@ router.get(
       return;
     }
 
-    // Scope géographique lu directement sur le user.
-    // FNC → scope national (toutes les depts), peu importe le contenu de scope_departements_codes.
-    // FRC/FDC → liste explicite des depts à afficher.
-    const isNational = user.roles.includes(UserRoles.FNC);
-    const scopeDepts: string[] | null = isNational ? null : (user.scope_departements_codes ?? []);
+    const { isNational, scopeDepts, scope } = resolveScope(user);
 
     if (!isNational && (!scopeDepts || scopeDepts.length === 0)) {
       res.status(200).send({
         ok: true,
-        data: { season: null, scope: 'departemental', scopeDepts: [], departements: [] },
+        data: {
+          season: null,
+          scope: 'departemental',
+          scopeDepts: [],
+          departements: [],
+          totals: emptyValorisationTotals(),
+        },
       });
       return;
     }
 
-    // Saison de chasse en cours (1er juillet → 30 juin), comme le dashboard chasseur.
-    const now = dayjs();
-    const seasonStartYear = now.month() >= 6 ? now.year() : now.year() - 1;
-    const seasonEndYear = seasonStartYear + 1;
-    const season = `${String(seasonStartYear).slice(-2)}-${String(seasonEndYear).slice(-2)}`;
-    const seasonStart = dayjs(`${seasonStartYear}-07-01`).startOf('day');
-    const seasonEnd = dayjs(`${seasonEndYear}-06-30`).endOf('day');
+    const { season, seasonStart, seasonEnd } = getCurrentSeason();
 
     const carcasses = await prisma.carcasse.findMany({
       where: {
@@ -329,16 +290,6 @@ router.get(
         CarcasseIntermediaire: { select: { intermediaire_role: true } },
       },
     });
-
-    // Carcasses transmises en circuit court : exclues du dénominateur du taux de saisie sanitaire,
-    // identique au dashboard chasseur (cf. /stats/mes-chasses).
-    const circuitCourtRoles: FeiOwnerRole[] = [
-      FeiOwnerRole.COMMERCE_DE_DETAIL,
-      FeiOwnerRole.REPAS_DE_CHASSE_OU_ASSOCIATIF,
-      FeiOwnerRole.CANTINE_OU_RESTAURATION_COLLECTIVE,
-      FeiOwnerRole.ASSOCIATION_CARITATIVE,
-      FeiOwnerRole.CONSOMMATEUR_FINAL,
-    ];
 
     type Bucket = {
       agree: number;
@@ -358,6 +309,7 @@ router.get(
     });
 
     const stats = new Map<string, { gg: Bucket; pg: Bucket }>();
+    const totals = { gg: emptyBucket(), pg: emptyBucket() };
 
     for (const c of carcasses) {
       const dept = extractDepartementFromCommune(c.Fei?.commune_mise_a_mort);
@@ -368,8 +320,8 @@ router.get(
       if (!stats.has(dept)) stats.set(dept, { gg: emptyBucket(), pg: emptyBucket() });
       const deptStats = stats.get(dept)!;
       const bucket = c.type === CarcasseType.GROS_GIBIER ? deptStats.gg : deptStats.pg;
+      const totalBucket = c.type === CarcasseType.GROS_GIBIER ? totals.gg : totals.pg;
 
-      // Circuit de valorisation
       const wasInEtg =
         c.premier_detenteur_depot_type === DepotType.ETG ||
         c.current_owner_role === FeiOwnerRole.ETG ||
@@ -380,27 +332,32 @@ router.get(
 
       if (c.consommateur_final_usage_domestique != null) {
         bucket.domestique++;
+        totalBucket.domestique++;
       } else if (wasInEtg) {
         bucket.agree++;
+        totalBucket.agree++;
       } else if (c.current_owner_role && circuitCourtRoles.includes(c.current_owner_role)) {
         bucket.nonAgree++;
+        totalBucket.nonAgree++;
       }
 
-      // Taux de saisie sanitaire : exclure circuit court (cohérent avec dashboard chasseur)
       const isSviEligible = !c.next_owner_role || !circuitCourtRoles.includes(c.next_owner_role);
       if (isSviEligible) {
         bucket.sviEligible++;
+        totalBucket.sviEligible++;
         if (
           c.svi_carcasse_status === CarcasseStatus.SAISIE_TOTALE ||
           c.svi_carcasse_status === CarcasseStatus.SAISIE_PARTIELLE
         ) {
           bucket.seized++;
+          totalBucket.seized++;
         }
-        if (c.svi_carcasse_status !== null) bucket.hasSviReturn = true;
+        if (c.svi_carcasse_status !== null) {
+          bucket.hasSviReturn = true;
+          totalBucket.hasSviReturn = true;
+        }
       }
     }
-
-    const departementsLabels = (departementsRegions as { departements: Record<string, string> }).departements;
 
     const formatBucket = (b: Bucket) => ({
       agree: b.agree,
@@ -419,11 +376,8 @@ router.get(
       }))
       .sort((a, b) => a.code.localeCompare(b.code));
 
-    const scope = isNational
-      ? 'national'
-      : (scopeDepts as string[]).length === 1
-        ? 'departemental'
-        : 'regional';
+    const totalGg = totals.gg.agree + totals.gg.nonAgree + totals.gg.domestique;
+    const totalPg = totals.pg.agree + totals.pg.nonAgree + totals.pg.domestique;
 
     res.status(200).send({
       ok: true,
@@ -432,6 +386,298 @@ router.get(
         scope,
         scopeDepts: scopeDepts ?? [],
         departements,
+        totals: {
+          ggAgree: totals.gg.agree,
+          ggNonAgree: totals.gg.nonAgree,
+          ggDomestique: totals.gg.domestique,
+          ggTotal: totalGg,
+          ggSeized: totals.gg.seized,
+          ggSviEligible: totals.gg.sviEligible,
+          ggTauxSaisie:
+            totals.gg.sviEligible > 0 && totals.gg.hasSviReturn
+              ? Math.round((totals.gg.seized / totals.gg.sviEligible) * 1000) / 10
+              : null,
+          pgAgree: totals.pg.agree,
+          pgNonAgree: totals.pg.nonAgree,
+          pgDomestique: totals.pg.domestique,
+          pgTotal: totalPg,
+          pgSeized: totals.pg.seized,
+          pgSviEligible: totals.pg.sviEligible,
+          pgTauxSaisie:
+            totals.pg.sviEligible > 0 && totals.pg.hasSviReturn
+              ? Math.round((totals.pg.seized / totals.pg.sviEligible) * 1000) / 10
+              : null,
+        },
+      },
+    });
+  })
+);
+
+function emptyValorisationTotals() {
+  return {
+    ggAgree: 0,
+    ggNonAgree: 0,
+    ggDomestique: 0,
+    ggTotal: 0,
+    ggSeized: 0,
+    ggSviEligible: 0,
+    ggTauxSaisie: null as number | null,
+    pgAgree: 0,
+    pgNonAgree: 0,
+    pgDomestique: 0,
+    pgTotal: 0,
+    pgSeized: 0,
+    pgSviEligible: 0,
+    pgTauxSaisie: null as number | null,
+  };
+}
+
+router.get(
+  '/federation/sanitaire',
+  passport.authenticate('user', { session: false }),
+  validateUser([UserRoles.FDC, UserRoles.FRC, UserRoles.FNC]),
+  catchErrors(async (req: RequestWithUser, res: express.Response, next: express.NextFunction) => {
+    const user = req.user;
+    if (!user) {
+      res.status(401);
+      next(new Error('Utilisateur non authentifié'));
+      return;
+    }
+
+    const { isNational, scopeDepts, scope } = resolveScope(user);
+
+    if (!isNational && (!scopeDepts || scopeDepts.length === 0)) {
+      res.status(200).send({
+        ok: true,
+        data: {
+          season: null,
+          scope: 'departemental',
+          scopeDepts: [],
+          departements: [],
+          totals: { tuberculose: 0, pestePorcine: 0, brucellose: 0, tularemie: 0 },
+        },
+      });
+      return;
+    }
+
+    const { season, seasonStart, seasonEnd } = getCurrentSeason();
+
+    const carcasses = await prisma.carcasse.findMany({
+      where: {
+        deleted_at: null,
+        date_mise_a_mort: { gte: seasonStart.toDate(), lte: seasonEnd.toDate() },
+      },
+      select: {
+        type: true,
+        espece: true,
+        examinateur_anomalies_carcasse: true,
+        examinateur_anomalies_abats: true,
+        Fei: { select: { commune_mise_a_mort: true } },
+      },
+    });
+
+    type Bucket = { tuberculose: number; pestePorcine: number; brucellose: number; tularemie: number };
+    const emptyBucket = (): Bucket => ({ tuberculose: 0, pestePorcine: 0, brucellose: 0, tularemie: 0 });
+
+    const stats = new Map<string, Bucket>();
+    const totals = emptyBucket();
+
+    for (const c of carcasses) {
+      const dept = extractDepartementFromCommune(c.Fei?.commune_mise_a_mort);
+      if (!dept) continue;
+      if (scopeDepts && !scopeDepts.includes(dept)) continue;
+
+      if (!stats.has(dept)) stats.set(dept, emptyBucket());
+      const deptStats = stats.get(dept)!;
+
+      if (matchTuberculose(c)) {
+        deptStats.tuberculose++;
+        totals.tuberculose++;
+      }
+      if (matchPestePorcine(c)) {
+        deptStats.pestePorcine++;
+        totals.pestePorcine++;
+      }
+      if (matchBrucellose(c)) {
+        deptStats.brucellose++;
+        totals.brucellose++;
+      }
+      if (matchTularemie(c)) {
+        deptStats.tularemie++;
+        totals.tularemie++;
+      }
+    }
+
+    const departements = Array.from(stats.entries())
+      .map(([code, b]) => ({
+        code,
+        nom: departementsLabels[code] ?? code,
+        tuberculose: b.tuberculose,
+        pestePorcine: b.pestePorcine,
+        brucellose: b.brucellose,
+        tularemie: b.tularemie,
+        total: b.tuberculose + b.pestePorcine + b.brucellose + b.tularemie,
+      }))
+      .sort((a, b) => a.code.localeCompare(b.code));
+
+    res.status(200).send({
+      ok: true,
+      data: {
+        season,
+        scope,
+        scopeDepts: scopeDepts ?? [],
+        departements,
+        totals,
+      },
+    });
+  })
+);
+
+router.get(
+  '/federation/formation',
+  passport.authenticate('user', { session: false }),
+  validateUser([UserRoles.FDC, UserRoles.FRC, UserRoles.FNC]),
+  catchErrors(async (req: RequestWithUser, res: express.Response, next: express.NextFunction) => {
+    const user = req.user;
+    if (!user) {
+      res.status(401);
+      next(new Error('Utilisateur non authentifié'));
+      return;
+    }
+
+    const { isNational, scopeDepts, scope } = resolveScope(user);
+
+    if (!isNational && (!scopeDepts || scopeDepts.length === 0)) {
+      res.status(200).send({
+        ok: true,
+        data: {
+          season: null,
+          scope: 'departemental',
+          scopeDepts: [],
+          departements: [],
+          national: { bphRate: 0, scoreBph: null, sviEligible: 0, bphCount: 0 },
+          totals: { examinateursActifs: 0 },
+        },
+      });
+      return;
+    }
+
+    const { season, seasonStart, seasonEnd } = getCurrentSeason();
+
+    // Q1 — examinateurs actifs (≥1 FEI transmise sur la saison) par dept de prélèvement.
+    const feis = await prisma.fei.findMany({
+      where: {
+        deleted_at: null,
+        date_mise_a_mort: { gte: seasonStart.toDate(), lte: seasonEnd.toDate() },
+        examinateur_initial_user_id: { not: null },
+        examinateur_initial_date_approbation_mise_sur_le_marche: { not: null },
+      },
+      select: {
+        examinateur_initial_user_id: true,
+        commune_mise_a_mort: true,
+      },
+    });
+
+    const examinateursByDept = new Map<string, Set<string>>();
+    for (const f of feis) {
+      const dept = extractDepartementFromCommune(f.commune_mise_a_mort);
+      if (!dept) continue;
+      if (scopeDepts && !scopeDepts.includes(dept)) continue;
+      if (!f.examinateur_initial_user_id) continue;
+      if (!examinateursByDept.has(dept)) examinateursByDept.set(dept, new Set());
+      examinateursByDept.get(dept)!.add(f.examinateur_initial_user_id);
+    }
+
+    // Q2 — carcasses saison (national, non scopé) pour calculer le national BPH rate
+    // utilisé en dénominateur du score, puis filtrer par scope pour les depts.
+    const carcasses = await prisma.carcasse.findMany({
+      where: {
+        deleted_at: null,
+        date_mise_a_mort: { gte: seasonStart.toDate(), lte: seasonEnd.toDate() },
+        type: CarcasseType.GROS_GIBIER,
+      },
+      select: {
+        type: true,
+        next_owner_role: true,
+        svi_carcasse_status: true,
+        svi_ipm2_lesions_ou_motifs: true,
+        Fei: { select: { commune_mise_a_mort: true } },
+      },
+    });
+
+    type DeptBph = { sviEligible: number; bphCount: number };
+    const empty = (): DeptBph => ({ sviEligible: 0, bphCount: 0 });
+
+    const byDept = new Map<string, DeptBph>();
+    const national: DeptBph = empty();
+
+    for (const c of carcasses) {
+      const dept = extractDepartementFromCommune(c.Fei?.commune_mise_a_mort);
+      if (!dept) continue;
+
+      const isSviEligible = !c.next_owner_role || !circuitCourtRoles.includes(c.next_owner_role);
+      if (!isSviEligible) continue;
+
+      // National toujours : dénominateur scoreBph non scopé.
+      national.sviEligible++;
+      const isSeized =
+        c.svi_carcasse_status === CarcasseStatus.SAISIE_TOTALE ||
+        c.svi_carcasse_status === CarcasseStatus.SAISIE_PARTIELLE;
+      const isBph = isSeized && hasBphMotif(c.svi_ipm2_lesions_ou_motifs);
+      if (isBph) national.bphCount++;
+
+      if (scopeDepts && !scopeDepts.includes(dept)) continue;
+      if (!byDept.has(dept)) byDept.set(dept, empty());
+      const d = byDept.get(dept)!;
+      d.sviEligible++;
+      if (isBph) d.bphCount++;
+    }
+
+    const nationalBphRate = national.sviEligible > 0 ? national.bphCount / national.sviEligible : 0;
+    const computeScore = (deptRate: number): number | null => {
+      if (nationalBphRate === 0) return null;
+      const raw = 100 * (1 - deptRate / (2 * nationalBphRate));
+      return Math.max(0, Math.min(100, Math.round(raw)));
+    };
+
+    // Toutes les depts vues (examinateurs OU carcasses).
+    const allDepts = new Set<string>([...examinateursByDept.keys(), ...byDept.keys()]);
+    const departements = Array.from(allDepts)
+      .map((code) => {
+        const bph = byDept.get(code) ?? empty();
+        const deptRate = bph.sviEligible > 0 ? bph.bphCount / bph.sviEligible : 0;
+        return {
+          code,
+          nom: departementsLabels[code] ?? code,
+          examinateursActifs: examinateursByDept.get(code)?.size ?? 0,
+          tauxSaisieBph:
+            bph.sviEligible > 0 ? Math.round(deptRate * 1000) / 10 : null, // % avec 1 décimale
+          scoreBph: bph.sviEligible > 0 ? computeScore(deptRate) : null,
+          sviEligible: bph.sviEligible,
+          bphCount: bph.bphCount,
+        };
+      })
+      .sort((a, b) => a.code.localeCompare(b.code));
+
+    const totalExaminateurs = Array.from(examinateursByDept.values()).reduce((s, set) => s + set.size, 0);
+    const nationalScoreBph = computeScore(nationalBphRate);
+
+    res.status(200).send({
+      ok: true,
+      data: {
+        season,
+        scope,
+        scopeDepts: scopeDepts ?? [],
+        departements,
+        national: {
+          bphRate: Math.round(nationalBphRate * 1000) / 10,
+          scoreBph: nationalScoreBph,
+          sviEligible: national.sviEligible,
+          bphCount: national.bphCount,
+        },
+        totals: {
+          examinateursActifs: totalExaminateurs,
+        },
       },
     });
   })

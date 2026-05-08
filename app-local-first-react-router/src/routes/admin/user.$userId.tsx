@@ -2,6 +2,7 @@ import { useState, type RefObject, useRef, useMemo, useEffect } from 'react';
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Input } from '@codegouvfr/react-dsfr/Input';
+import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import {
   Entity,
   EntityRelationType,
@@ -16,6 +17,7 @@ import RolesCheckBoxes from '@app/components/RolesCheckboxes';
 import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
 import { Tabs, type TabsProps } from '@codegouvfr/react-dsfr/Tabs';
 import { Table } from '@codegouvfr/react-dsfr/Table';
+import departementsRegions from '@app/data/departements-regions.json';
 import type { AdminUserDataResponse } from '@api/src/types/responses';
 import { Link, useNavigate, useParams } from 'react-router';
 import Chargement from '@app/components/Chargement';
@@ -105,9 +107,9 @@ export default function AdminUser() {
     let body =
       formRef.current!.id === 'user_roles_form'
         ? {
-            roles: formData.getAll('roles'),
-            isZacharieAdmin: formData.get(Prisma.UserScalarFieldEnum.isZacharieAdmin) === 'true',
-          }
+          roles: formData.getAll('roles'),
+          isZacharieAdmin: formData.get(Prisma.UserScalarFieldEnum.isZacharieAdmin) === 'true',
+        }
         : Object.fromEntries(formData);
 
     API.post({
@@ -139,6 +141,10 @@ export default function AdminUser() {
     {
       tabId: 'Identité',
       label: (identityDone && examinateurDone ? '✅ ' : '') + 'Identité',
+    },
+    {
+      tabId: 'Périmètre départements',
+      label: `Périmètre départements (${user.scope_departements_codes?.length ?? 0})`,
     },
     {
       tabId: 'Peut traiter des fiches au nom de',
@@ -450,6 +456,17 @@ export default function AdminUser() {
                   </div>
                 </form>
               )}
+              {selectedTabId === 'Périmètre départements' && (
+                <DepartementsScope
+                  userId={user.id}
+                  initialCodes={user.scope_departements_codes ?? []}
+                  onSaved={() => {
+                    loadData(user.id).then((res) => {
+                      if (res.ok && res.data) setUserResponseData(res.data as State);
+                    });
+                  }}
+                />
+              )}
               {selectedTabId === 'Peut traiter des fiches au nom de' && (
                 <PeutEnvoyerDesFichesAOuTraiterAuNomDe
                   relationType={EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY}
@@ -668,9 +685,9 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
         user.roles.includes(UserRoles.COLLECTEUR_PRO) && (
           <Highlight
             className="m-0 mt-8"
-            // classes={{
-            //   root: 'fr-highlight--green-emeraude',
-            // }}
+          // classes={{
+          //   root: 'fr-highlight--green-emeraude',
+          // }}
           >
             Un collecteur indépendant ne peut pas gérer de fiches pour un ETG. <br />
             Si un ETG a un besoin de transport, c'est dans le profil de l'utilisateur que ça se gère : cet
@@ -735,5 +752,226 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
         </div>
       )}
     </>
+  );
+}
+
+const REGIONS_LABELS = (departementsRegions as { regions: Record<string, string> }).regions;
+const DEPARTEMENTS_LABELS = (departementsRegions as { departements: Record<string, string> }).departements;
+const DEPARTEMENT_TO_REGION = (departementsRegions as { departementToRegion: Record<string, string> })
+  .departementToRegion;
+
+const REGION_TO_DEPARTEMENTS: Record<string, string[]> = (() => {
+  const map: Record<string, string[]> = {};
+  for (const [dep, region] of Object.entries(DEPARTEMENT_TO_REGION)) {
+    if (!map[region]) map[region] = [];
+    map[region].push(dep);
+  }
+  for (const region of Object.keys(map)) {
+    map[region].sort((a, b) => a.localeCompare(b, 'fr', { numeric: true }));
+  }
+  return map;
+})();
+
+const ALL_DEPARTEMENT_CODES = Object.keys(DEPARTEMENTS_LABELS);
+
+interface DepartementsScopeProps {
+  userId: string;
+  initialCodes: string[];
+  onSaved: () => void;
+}
+
+function DepartementsScope({ userId, initialCodes, onSaved }: DepartementsScopeProps) {
+  const [selected, setSelected] = useState<Set<string>>(() => new Set(initialCodes));
+  const [search, setSearch] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setSelected(new Set(initialCodes));
+  }, [initialCodes]);
+
+  const initialSet = useMemo(() => new Set(initialCodes), [initialCodes]);
+  const isDirty = useMemo(() => {
+    if (selected.size !== initialSet.size) return true;
+    for (const code of selected) if (!initialSet.has(code)) return true;
+    return false;
+  }, [selected, initialSet]);
+
+  const toggleDept = (code: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(code)) next.delete(code);
+      else next.add(code);
+      return next;
+    });
+  };
+
+  const setRegion = (regionCode: string, checked: boolean) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      for (const dep of REGION_TO_DEPARTEMENTS[regionCode] ?? []) {
+        if (checked) next.add(dep);
+        else next.delete(dep);
+      }
+      return next;
+    });
+  };
+
+  const selectAll = () => setSelected(new Set(ALL_DEPARTEMENT_CODES));
+  const unselectAll = () => setSelected(new Set());
+
+  const save = () => {
+    setSaving(true);
+    API.post({
+      path: `/user/${userId}`,
+      body: {
+        [Prisma.UserScalarFieldEnum.scope_departements_codes]: Array.from(selected),
+      },
+    })
+      .then((res) => {
+        if (!res.ok) {
+          toast.error("Une erreur est survenue lors de la mise à jour du périmètre");
+          return;
+        }
+        toast.success('Périmètre mis à jour');
+        onSaved();
+      })
+      .finally(() => setSaving(false));
+  };
+
+  const matchesSearch = (depCode: string) => {
+    if (!search.trim()) return true;
+    const q = search.trim().toLowerCase();
+    const name = (DEPARTEMENTS_LABELS[depCode] ?? '').toLowerCase();
+    return depCode.toLowerCase().includes(q) || name.includes(q);
+  };
+
+  const orderedRegionCodes = useMemo(
+    () =>
+      Object.keys(REGION_TO_DEPARTEMENTS).sort((a, b) =>
+        (REGIONS_LABELS[a] ?? a).localeCompare(REGIONS_LABELS[b] ?? b, 'fr')
+      ),
+    []
+  );
+
+  const totalDeps = ALL_DEPARTEMENT_CODES.length;
+  const isNational = selected.size === totalDeps;
+  const isEmpty = selected.size === 0;
+
+  return (
+    <div className="flex flex-col gap-4">
+      <p className="m-0 text-sm">
+        Sélectionnez les départements sur lesquels cet utilisateur a un périmètre. Cliquez sur le nom d'une
+        région pour cocher ou décocher tous ses départements en une fois. Pour donner un accès national,
+        sélectionnez explicitement les {totalDeps} départements&nbsp;: la valeur est toujours déclarative,
+        zéro département ne signifie jamais «&nbsp;tout&nbsp;».
+      </p>
+      <div className="flex flex-wrap items-end gap-4">
+        <div className="grow">
+          <Input
+            label="Rechercher un département"
+            hintText="Par numéro ou par nom"
+            nativeInputProps={{
+              value: search,
+              onChange: (e) => setSearch(e.target.value),
+              placeholder: 'ex: 75, Hérault, Rhône…',
+            }}
+          />
+        </div>
+        <div className="flex flex-wrap items-center gap-2 pb-1">
+          <Button
+            type="button"
+            priority="secondary"
+            size="small"
+            onClick={selectAll}
+            disabled={isNational}
+          >
+            Sélectionner tous les départements (national)
+          </Button>
+          <Button
+            type="button"
+            priority="secondary"
+            size="small"
+            onClick={unselectAll}
+            disabled={isEmpty}
+          >
+            Tout désélectionner
+          </Button>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-4">
+        {orderedRegionCodes.map((regionCode) => {
+          const deps = REGION_TO_DEPARTEMENTS[regionCode] ?? [];
+          const visibleDeps = deps.filter(matchesSearch);
+          if (search.trim() && visibleDeps.length === 0) return null;
+          const checkedCount = deps.filter((d) => selected.has(d)).length;
+          const allChecked = checkedCount === deps.length;
+          const someChecked = checkedCount > 0 && !allChecked;
+          return (
+            <fieldset
+              key={regionCode}
+              className="border border-gray-300 bg-white p-4"
+            >
+              <legend className="px-2 text-base font-semibold">
+                <label className="flex cursor-pointer items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={allChecked}
+                    ref={(el) => {
+                      if (el) el.indeterminate = someChecked;
+                    }}
+                    onChange={(e) => setRegion(regionCode, e.target.checked)}
+                  />
+                  <span>
+                    {REGIONS_LABELS[regionCode] ?? regionCode}{' '}
+                    <span className="font-normal text-gray-600">
+                      ({checkedCount}/{deps.length})
+                    </span>
+                  </span>
+                </label>
+              </legend>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1 md:grid-cols-3 lg:grid-cols-4">
+                {visibleDeps.map((depCode) => (
+                  <Checkbox
+                    key={depCode}
+                    className="m-0!"
+                    options={[
+                      {
+                        label: `${depCode} — ${DEPARTEMENTS_LABELS[depCode] ?? ''}`,
+                        nativeInputProps: {
+                          checked: selected.has(depCode),
+                          onChange: () => toggleDept(depCode),
+                        },
+                      },
+                    ]}
+                  />
+                ))}
+              </div>
+            </fieldset>
+          );
+        })}
+      </div>
+
+      <div className="sticky bottom-0 z-50 flex w-full flex-col bg-white p-4 shadow-2xl md:relative md:items-start md:p-0 md:shadow-none">
+        <ButtonsGroup
+          inlineLayoutWhen="md and up"
+          buttons={[
+            {
+              children: saving ? 'Enregistrement…' : 'Enregistrer',
+              type: 'button',
+              disabled: saving || !isDirty,
+              onClick: save,
+            },
+            {
+              children: 'Annuler les modifications',
+              type: 'button',
+              priority: 'secondary',
+              disabled: saving || !isDirty,
+              onClick: () => setSelected(new Set(initialCodes)),
+            },
+          ]}
+        />
+      </div>
+    </div>
   );
 }
