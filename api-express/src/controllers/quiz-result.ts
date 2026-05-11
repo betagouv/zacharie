@@ -45,7 +45,7 @@ router.post(
       if (result.ok === false) {
         res.status(400).send({
           ok: false,
-          error: result.reason === 'forbidden' ? 'Pseudo non autorisé' : 'Pseudo invalide',
+          error: 'Pseudo invalide',
           data: null,
         });
         return;
@@ -89,7 +89,7 @@ router.patch(
     if (cleaned.ok === false) {
       res.status(400).send({
         ok: false,
-        error: cleaned.reason === 'forbidden' ? 'Pseudo non autorisé' : 'Pseudo invalide',
+        error: 'Pseudo invalide',
         data: null,
       });
       return;
