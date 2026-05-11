@@ -38,6 +38,7 @@ import utilsRouter from './controllers/utils.ts';
 import statsRouter from './controllers/stats.ts';
 import v1Router from './controllers/v1/index.ts';
 import apiKeyApprovalRouter from './controllers/api-key-approval.ts';
+import quizResultRouter from './controllers/quiz-result.ts';
 import './cronjobs/index.ts';
 import './scripts/migrations.ts';
 
@@ -204,6 +205,9 @@ app.post('/sentry-check', async (req, res) => {
   capture('sentry-check', { extra: { test: 'test' } });
   res.status(200).send({ ok: true, data: 'Sentry checked!' });
 });
+
+// Public quiz endpoint (anonymous, no auth)
+app.use('/quiz-result', quizResultRouter);
 
 // v1 - REST API used with external clients and api keys
 app.use('/v1', v1Router);

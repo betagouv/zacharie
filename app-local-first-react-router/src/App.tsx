@@ -21,6 +21,8 @@ import Accessibility from './routes/accessibility';
 import Stats from './routes/stats';
 import Contact from './routes/contact';
 import Faq from './routes/faq';
+import Quiz from './routes/quiz';
+import QuizTv from './routes/quiz-tv';
 
 import RouterConnexion from './routes/connexion/connexion-router';
 import RouterSvi from './routes/svi/svi-router';
@@ -117,7 +119,15 @@ function App() {
             path="faq"
             element={<Faq />}
           />
+          <Route
+            path="quiz"
+            element={<Quiz />}
+          />
         </Route>
+        <Route
+          path="/quiz/tv"
+          element={<QuizTv />}
+        />
         <Route
           path="app"
           element={<AppLayout />}
