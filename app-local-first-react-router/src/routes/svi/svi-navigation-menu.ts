@@ -8,6 +8,11 @@ export default function useSviNavigationMenu(): MainNavigationProps.Item[] {
 
   const navigationBase: MainNavigationProps.Item[] = [
     {
+      text: 'Tableau de bord',
+      isActive: location.pathname === '/app/svi/tableau-de-bord',
+      linkProps: { to: '/app/svi/tableau-de-bord', href: '#' },
+    },
+    {
       text: 'Fiches',
       isActive: location.pathname.startsWith('/app/svi/fei') || location.pathname === '/app/svi',
       linkProps: { to: '/app/svi', href: '#' },

@@ -5,7 +5,17 @@ const router: express.Router = express.Router();
 import { RequestWithUser } from '~/types/request';
 import { getIframeUrl } from '~/service/metabase-embed';
 import prisma from '~/prisma';
-import { CarcasseType, CarcasseStatus, DepotType, FeiOwnerRole, UserRoles } from '@prisma/client';
+import {
+  CarcasseType,
+  CarcasseStatus,
+  DepotType,
+  FeiOwnerRole,
+  UserRoles,
+  EntityTypes,
+  EntityRelationType,
+  EntityRelationStatus,
+  Prisma,
+} from '@prisma/client';
 import dayjs from 'dayjs';
 import validateUser from '~/middlewares/validateUser';
 import departementsRegions from '~/data/departements-regions.json';
@@ -678,6 +688,266 @@ router.get(
         totals: {
           examinateursActifs: totalExaminateurs,
         },
+      },
+    });
+  })
+);
+
+async function getUserEntityIdsByType(userId: string, entityType: EntityTypes): Promise<string[]> {
+  const relations = await prisma.entityAndUserRelations.findMany({
+    where: {
+      owner_id: userId,
+      relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+      status: { in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER] },
+      EntityRelatedWithUser: { type: entityType },
+    },
+    select: { entity_id: true },
+  });
+  return relations.map((r) => r.entity_id);
+}
+
+router.get(
+  '/svi',
+  passport.authenticate('user', { session: false }),
+  validateUser([UserRoles.SVI]),
+  catchErrors(async (req: RequestWithUser, res: express.Response, next: express.NextFunction) => {
+    const user = req.user;
+    if (!user) {
+      res.status(401);
+      next(new Error('Utilisateur non authentifié'));
+      return;
+    }
+
+    const userSviEntityIds = await getUserEntityIdsByType(user.id, EntityTypes.SVI);
+
+    if (userSviEntityIds.length === 0) {
+      res.status(200).send({
+        ok: true,
+        data: {
+          upcoming: 0,
+          toInspect: 0,
+          volume7d: 0,
+          volume30d: 0,
+          carcassesByEspece: { gros: 0, petit: 0 },
+        },
+      });
+      return;
+    }
+
+    const linkedEtgs = await prisma.entity.findMany({
+      where: { type: EntityTypes.ETG, etg_linked_to_svi_id: { in: userSviEntityIds } },
+      select: { id: true },
+    });
+    const linkedEtgIds = linkedEtgs.map((e) => e.id);
+
+    const sevenDaysAgo = dayjs().subtract(7, 'day').toDate();
+    const thirtyDaysAgo = dayjs().subtract(30, 'day').toDate();
+
+    const upcomingWhere: Prisma.FeiWhereInput = {
+      deleted_at: null,
+      svi_assigned_at: null,
+      svi_closed_at: null,
+      automatic_closed_at: null,
+      intermediaire_closed_at: null,
+      CarcasseIntermediaire: {
+        some: {
+          prise_en_charge_at: { not: null },
+          intermediaire_entity_id: { in: linkedEtgIds },
+        },
+      },
+    };
+
+    const toInspectWhere: Prisma.FeiWhereInput = {
+      deleted_at: null,
+      svi_assigned_at: { not: null },
+      svi_closed_at: null,
+      automatic_closed_at: null,
+      svi_entity_id: { in: userSviEntityIds },
+    };
+
+    const [upcoming, toInspect, volume7d, volume30d, activeFeis] = await Promise.all([
+      linkedEtgIds.length > 0 ? prisma.fei.count({ where: upcomingWhere }) : 0,
+      prisma.fei.count({ where: toInspectWhere }),
+      prisma.fei.count({
+        where: {
+          deleted_at: null,
+          svi_entity_id: { in: userSviEntityIds },
+          svi_assigned_at: { gte: sevenDaysAgo },
+        },
+      }),
+      prisma.fei.count({
+        where: {
+          deleted_at: null,
+          svi_entity_id: { in: userSviEntityIds },
+          svi_assigned_at: { gte: thirtyDaysAgo },
+        },
+      }),
+      prisma.fei.findMany({
+        where: {
+          deleted_at: null,
+          svi_closed_at: null,
+          automatic_closed_at: null,
+          OR: [...(linkedEtgIds.length > 0 ? [upcomingWhere] : []), toInspectWhere],
+        },
+        select: { numero: true },
+      }),
+    ]);
+
+    const activeFeiNumeros = activeFeis.map((f) => f.numero);
+    const [gros, petit] =
+      activeFeiNumeros.length > 0
+        ? await Promise.all([
+            prisma.carcasse.count({
+              where: {
+                fei_numero: { in: activeFeiNumeros },
+                type: CarcasseType.GROS_GIBIER,
+                deleted_at: null,
+              },
+            }),
+            prisma.carcasse.count({
+              where: {
+                fei_numero: { in: activeFeiNumeros },
+                type: CarcasseType.PETIT_GIBIER,
+                deleted_at: null,
+              },
+            }),
+          ])
+        : [0, 0];
+
+    res.status(200).send({
+      ok: true,
+      data: {
+        upcoming,
+        toInspect,
+        volume7d,
+        volume30d,
+        carcassesByEspece: { gros, petit },
+      },
+    });
+  })
+);
+
+router.get(
+  '/etg',
+  passport.authenticate('user', { session: false }),
+  validateUser([UserRoles.ETG]),
+  catchErrors(async (req: RequestWithUser, res: express.Response, next: express.NextFunction) => {
+    const user = req.user;
+    if (!user) {
+      res.status(401);
+      next(new Error('Utilisateur non authentifié'));
+      return;
+    }
+
+    const userEtgEntityIds = await getUserEntityIdsByType(user.id, EntityTypes.ETG);
+
+    if (userEtgEntityIds.length === 0) {
+      res.status(200).send({
+        ok: true,
+        data: {
+          toAccept: 0,
+          ongoing: 0,
+          volume7d: 0,
+          volume30d: 0,
+          carcassesByEspece: { gros: 0, petit: 0 },
+        },
+      });
+      return;
+    }
+
+    const sevenDaysAgo = dayjs().subtract(7, 'day').toDate();
+    const thirtyDaysAgo = dayjs().subtract(30, 'day').toDate();
+
+    const toAcceptWhere: Prisma.FeiWhereInput = {
+      deleted_at: null,
+      automatic_closed_at: null,
+      svi_assigned_at: null,
+      intermediaire_closed_at: null,
+      OR: [
+        { fei_next_owner_entity_id: { in: userEtgEntityIds } },
+        { Carcasses: { some: { next_owner_entity_id: { in: userEtgEntityIds } } } },
+      ],
+    };
+
+    const ongoingWhere: Prisma.FeiWhereInput = {
+      deleted_at: null,
+      svi_assigned_at: null,
+      svi_closed_at: null,
+      automatic_closed_at: null,
+      intermediaire_closed_at: null,
+      CarcasseIntermediaire: {
+        some: {
+          prise_en_charge_at: { not: null },
+          intermediaire_entity_id: { in: userEtgEntityIds },
+        },
+      },
+    };
+
+    const [toAccept, ongoing, volume7d, volume30d, activeFeis] = await Promise.all([
+      prisma.fei.count({ where: toAcceptWhere }),
+      prisma.fei.count({ where: ongoingWhere }),
+      prisma.fei.count({
+        where: {
+          deleted_at: null,
+          CarcasseIntermediaire: {
+            some: {
+              prise_en_charge_at: { gte: sevenDaysAgo },
+              intermediaire_entity_id: { in: userEtgEntityIds },
+            },
+          },
+        },
+      }),
+      prisma.fei.count({
+        where: {
+          deleted_at: null,
+          CarcasseIntermediaire: {
+            some: {
+              prise_en_charge_at: { gte: thirtyDaysAgo },
+              intermediaire_entity_id: { in: userEtgEntityIds },
+            },
+          },
+        },
+      }),
+      prisma.fei.findMany({
+        where: {
+          deleted_at: null,
+          svi_closed_at: null,
+          automatic_closed_at: null,
+          OR: [toAcceptWhere, ongoingWhere],
+        },
+        select: { numero: true },
+      }),
+    ]);
+
+    const activeFeiNumeros = activeFeis.map((f) => f.numero);
+    const [gros, petit] =
+      activeFeiNumeros.length > 0
+        ? await Promise.all([
+            prisma.carcasse.count({
+              where: {
+                fei_numero: { in: activeFeiNumeros },
+                type: CarcasseType.GROS_GIBIER,
+                deleted_at: null,
+              },
+            }),
+            prisma.carcasse.count({
+              where: {
+                fei_numero: { in: activeFeiNumeros },
+                type: CarcasseType.PETIT_GIBIER,
+                deleted_at: null,
+              },
+            }),
+          ])
+        : [0, 0];
+
+    res.status(200).send({
+      ok: true,
+      data: {
+        toAccept,
+        ongoing,
+        volume7d,
+        volume30d,
+        carcassesByEspece: { gros, petit },
       },
     });
   })

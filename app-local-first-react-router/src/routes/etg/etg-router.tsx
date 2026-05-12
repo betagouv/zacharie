@@ -12,6 +12,7 @@ import EtgProfilPartageDeMesDonnees from './profil/etg-partage-de-mes-donnees';
 import EtgProfilEntrepriseUtilisateurs from './profil/etg-entreprise-utilisateurs';
 import EtgFei from './etg-fei';
 import { SviInspectionCarcasse } from './etg-carcasse-after-svi-inspection';
+import EtgTableauDeBord from './tableau-de-bord/etg-tableau-de-bord';
 
 export default function RouterEtg() {
   return (
@@ -22,6 +23,10 @@ export default function RouterEtg() {
       <Route
         index
         element={<EtgFiches />}
+      />
+      <Route
+        path="tableau-de-bord"
+        element={<EtgTableauDeBord />}
       />
       <Route
         path="contact"

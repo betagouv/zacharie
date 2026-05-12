@@ -10,6 +10,11 @@ export default function useEtgNavigationMenu(): MainNavigationProps.Item[] {
 
   const navigationBase: MainNavigationProps.Item[] = [
     {
+      text: 'Tableau de bord',
+      isActive: location.pathname === '/app/etg/tableau-de-bord',
+      linkProps: { to: '/app/etg/tableau-de-bord', href: '#' },
+    },
+    {
       text: 'Fiches',
       isActive: location.pathname.startsWith('/app/etg/fei') || location.pathname === '/app/etg',
       linkProps: { to: '/app/etg', href: '#' },
