@@ -32,8 +32,8 @@ test('Pas de stockage - Transporter les carcasses soi-même', async ({ page }) =
   await page.getByRole('button', { name: 'Daim N° MM-001-001 Mise à' }).click();
   await expect(page.getByLabel('Daim - N° MM-001-001').getByText('Anomalies abats')).toBeVisible();
   await expect(page.getByText('Abcès ou nodules Unique -')).toBeVisible();
-  await expect(page.getByLabel('Daim - N° MM-001-001').getByText('Commune de mise à mort :')).toBeVisible();
-  await expect(page.getByRole('listitem').filter({ hasText: 'Date de mise à mort : lundi 7' })).toBeVisible();
+  await expect(page.getByLabel('Daim - N° MM-001-001').getByText('Prélevé à')).toBeVisible();
+  await expect(page.getByRole('listitem').filter({ hasText: 'Chasse du 07/07/25' })).toBeVisible();
   await expect(page.getByLabel('Daim - N° MM-001-001').getByText('Heure de mise à mort de la')).toBeVisible();
   await page.getByRole('listitem').filter({ hasText: 'Fermer' }).getByRole('button').click();
   await page.getByRole('button', { name: 'Daim N° MM-001-002 Mise à' }).click();
