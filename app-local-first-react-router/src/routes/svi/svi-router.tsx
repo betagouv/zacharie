@@ -11,6 +11,7 @@ import SviProfilNotifications from './profil/svi-notifications';
 import SviProfilEntrepriseUtilisateurs from './profil/svi-entreprise-utilisateurs';
 import SviFei from './svi-fei';
 import SviInspectionCarcasseLoader from './svi-carcasse-svi-inspection';
+import SviTableauDeBord from './tableau-de-bord/svi-tableau-de-bord';
 
 export default function RouterSvi() {
   return (
@@ -21,6 +22,10 @@ export default function RouterSvi() {
       <Route
         index
         element={<SviFiches />}
+      />
+      <Route
+        path="tableau-de-bord"
+        element={<SviTableauDeBord />}
       />
       <Route
         path="contact"

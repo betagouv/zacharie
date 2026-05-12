@@ -13,6 +13,7 @@ import EtgProfilEntrepriseUtilisateurs from './profil/etg-entreprise-utilisateur
 import EtgFei from './etg-fei';
 import EtgUtilisateurs from './etg-utilisateurs';
 import EtgSviInspectionCarcasse from './etg-carcasse-after-svi-inspection';
+import EtgTableauDeBord from './tableau-de-bord/etg-tableau-de-bord';
 
 export default function RouterEtg() {
   return (
@@ -23,6 +24,10 @@ export default function RouterEtg() {
       <Route
         index
         element={<EtgFiches />}
+      />
+      <Route
+        path="tableau-de-bord"
+        element={<EtgTableauDeBord />}
       />
       <Route
         path="contact"
