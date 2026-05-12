@@ -69,7 +69,7 @@ export default function SviTableauDeBord() {
   return (
     <div className="fr-container fr-container--fluid">
       <title>Tableau de bord | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
-      <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center pt-4">
+      <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center py-4">
         <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
           <h1 className="fr-h3 text-action-high-blue-france-light mb-6">Tableau de bord</h1>
 
