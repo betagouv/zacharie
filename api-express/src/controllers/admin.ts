@@ -691,6 +691,37 @@ router.get(
   })
 );
 
+router.delete(
+  '/fei/:fei_numero',
+  passport.authenticate('admin', { session: false }),
+  catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const { fei_numero } = req.params;
+    const existingFei = await prisma.fei.findUnique({ where: { numero: fei_numero } });
+    if (!existingFei) {
+      res.status(404).send({ ok: false, data: null, error: 'Fei not found' });
+      return;
+    }
+    if (existingFei.deleted_at) {
+      res.status(200).send({ ok: true, data: { numero: fei_numero }, error: '' });
+      return;
+    }
+    const deletedAt = new Date();
+    await prisma.fei.update({
+      where: { numero: fei_numero },
+      data: { deleted_at: deletedAt },
+    });
+    await prisma.carcasse.updateMany({
+      where: { fei_numero },
+      data: { deleted_at: deletedAt },
+    });
+    await prisma.carcasseIntermediaire.updateMany({
+      where: { fei_numero },
+      data: { deleted_at: deletedAt },
+    });
+    res.status(200).send({ ok: true, data: { numero: fei_numero }, error: '' });
+  })
+);
+
 router.get(
   '/api-keys',
   passport.authenticate('admin', { session: false }),
