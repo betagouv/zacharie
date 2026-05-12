@@ -270,6 +270,21 @@ export default function ChasseurFiches() {
     );
   }, [filterPremierDetenteurs]);
 
+  const [filterDateFrom, setFilterDateFrom] = useState<string>(
+    () => localStorage.getItem('chasseur-fiches-filter-date-from') || ''
+  );
+  const [filterDateTo, setFilterDateTo] = useState<string>(
+    () => localStorage.getItem('chasseur-fiches-filter-date-to') || ''
+  );
+
+  useEffect(() => {
+    localStorage.setItem('chasseur-fiches-filter-date-from', filterDateFrom);
+  }, [filterDateFrom]);
+
+  useEffect(() => {
+    localStorage.setItem('chasseur-fiches-filter-date-to', filterDateTo);
+  }, [filterDateTo]);
+
   const [filterCCGs, setFilterCCGs] = useState<string[]>(() => {
     try {
       const saved = localStorage.getItem('chasseur-fiches-filter-ccgs');
@@ -393,6 +408,15 @@ export default function ChasseurFiches() {
           filterCollecteurs.includes(fei.latest_intermediaire_entity_id ?? '')
       );
     }
+    if (filterDateFrom || filterDateTo) {
+      feis = feis.filter((fei) => {
+        if (!fei.date_mise_a_mort) return false;
+        const d = dayjs(fei.date_mise_a_mort).format('YYYY-MM-DD');
+        if (filterDateFrom && d < filterDateFrom) return false;
+        if (filterDateTo && d > filterDateTo) return false;
+        return true;
+      });
+    }
     return feis;
   }, [
     allFeis,
@@ -401,6 +425,8 @@ export default function ChasseurFiches() {
     filterPremierDetenteurs,
     filterCCGs,
     filterCollecteurs,
+    filterDateFrom,
+    filterDateTo,
     carcassesIntermediaireById,
     carcasses,
     entitiesIdsWorkingDirectlyFor,
@@ -419,6 +445,8 @@ export default function ChasseurFiches() {
     filterPremierDetenteurs.length > 0 ||
     filterCCGs.length > 0 ||
     filterCollecteurs.length > 0 ||
+    filterDateFrom.length > 0 ||
+    filterDateTo.length > 0 ||
     searchQuery.trim().length > 0;
 
   const clearAllFilters = () => {
@@ -426,6 +454,8 @@ export default function ChasseurFiches() {
     setFilterPremierDetenteurs([]);
     setFilterCCGs([]);
     setFilterCollecteurs([]);
+    setFilterDateFrom('');
+    setFilterDateTo('');
     setSearchQuery('');
   };
 
@@ -497,6 +527,39 @@ export default function ChasseurFiches() {
               </span>
             </label>
           ))}
+        </div>
+      </CollapsibleSection>
+
+      {/* Filtre Date de tir */}
+      <CollapsibleSection
+        title="Date de tir"
+        badge={
+          filterDateFrom || filterDateTo ? (
+            <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">1</span>
+          ) : undefined
+        }
+      >
+        <div className="flex flex-col gap-2">
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="text-gray-700">Du</span>
+            <input
+              type="date"
+              value={filterDateFrom}
+              max={filterDateTo || undefined}
+              onChange={(e) => setFilterDateFrom(e.target.value)}
+              className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm transition-colors outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="text-gray-700">Au</span>
+            <input
+              type="date"
+              value={filterDateTo}
+              min={filterDateFrom || undefined}
+              onChange={(e) => setFilterDateTo(e.target.value)}
+              className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm transition-colors outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            />
+          </label>
         </div>
       </CollapsibleSection>
 
@@ -651,7 +714,8 @@ export default function ChasseurFiches() {
                 {filterStatuses.length +
                   filterPremierDetenteurs.length +
                   filterCCGs.length +
-                  filterCollecteurs.length}
+                  filterCollecteurs.length +
+                  (filterDateFrom || filterDateTo ? 1 : 0)}
               </span>
             )}
           </button>
