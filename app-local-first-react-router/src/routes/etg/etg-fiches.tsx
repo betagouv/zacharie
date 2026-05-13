@@ -452,25 +452,26 @@ export default function EtgFiches() {
         <span className="text-sm font-medium text-gray-600">
           {filteredFeis.length} fiche{filteredFeis.length > 1 ? 's' : ''}
         </span>
-        {hasActiveFilters && (
-          <button
-            className="text-action-high-blue-france text-xs underline"
-            onClick={clearAllFilters}
-          >
-            Réinitialiser
-          </button>
-        )}
-      </div>
-      {!dataIsSynced && (
-        <div className="text-action-high-blue-france mt-2 flex items-center gap-1.5 text-xs">
-          <span
-            className="fr-icon--sm ri-loader-4-line animate-spin"
-            aria-hidden="true"
-          />
-          <span>Mise à jour des fiches…</span>
+        <div>
+          {!dataIsSynced && (
+            <span className="text-action-high-blue-france flex items-center gap-1 text-xs">
+              <span
+                className="fr-icon--sm ri-loader-4-line animate-spin"
+                aria-hidden="true"
+              />
+              Chargement...
+            </span>
+          )}
+          {hasActiveFilters && (
+            <button
+              className="text-action-high-blue-france text-xs underline"
+              onClick={clearAllFilters}
+            >
+              Réinitialiser
+            </button>
+          )}
         </div>
-      )}
-
+      </div>
       {/* Filtre Statut */}
       <CollapsibleSection
         title="Statut"
@@ -662,7 +663,7 @@ export default function EtgFiches() {
 
       {/* Mobile : bouton filtres sticky */}
       <div className="fr-background-alt--blue-france sticky top-0 z-30 flex items-center justify-between px-4 py-2 md:hidden">
-        <div className="flex flex-col">
+        <div className="flex flex-row items-center gap-2">
           <span className="text-sm font-medium">
             {filteredFeis.length} fiche{filteredFeis.length > 1 ? 's' : ''}
           </span>
@@ -672,7 +673,7 @@ export default function EtgFiches() {
                 className="fr-icon--sm ri-loader-4-line animate-spin"
                 aria-hidden="true"
               />
-              Mise à jour…
+              Chargement...
             </span>
           )}
         </div>
