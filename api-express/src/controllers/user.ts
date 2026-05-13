@@ -927,7 +927,6 @@ router.post(
 );
 
 const userUpdateSchema = z.object({
-  [Prisma.UserScalarFieldEnum.activated]: z.enum(['true', 'false']).optional(),
   [Prisma.UserScalarFieldEnum.user_entities_vivible_checkbox]: z.enum(['true', 'false']).optional(),
   [Prisma.UserScalarFieldEnum.prefilled]: z.enum(['true', 'false']).optional(),
   [Prisma.UserScalarFieldEnum.checked_has_asso_de_chasse]: z.enum(['true', 'false']).optional(),
@@ -947,7 +946,6 @@ const userUpdateSchema = z.object({
       z.enum(Object.values(UserRoles).filter((r) => r !== UserRoles.ADMIN) as [UserRoles, ...UserRoles[]])
     )
     .optional(),
-  [Prisma.UserScalarFieldEnum.isZacharieAdmin]: z.boolean().optional(),
   [Prisma.UserScalarFieldEnum.ville]: z.string().optional(),
   [Prisma.UserScalarFieldEnum.etg_role]: z
     .enum(Object.values(UserEtgRoles) as [UserEtgRoles, ...UserEtgRoles[]])
@@ -972,6 +970,15 @@ router.post(
       res: express.Response<UserConnexionResponse>,
       next: express.NextFunction
     ) => {
+      if (req.params.user_id !== req.user.id) {
+        res.status(403).send({
+          ok: false,
+          data: { user: null },
+          error: 'User not authorized',
+          message: '',
+        });
+        return;
+      }
       let result = userUpdateSchema.safeParse(req.body);
       if (!result.success) {
         const error = new Error(result.error.message);
@@ -979,43 +986,10 @@ router.post(
         return next(error);
       }
       let body = result.data;
-      const user = await prisma.user.findUnique({
-        where: {
-          id: req.params.user_id,
-        },
-      });
-      if (!user) {
-        res.status(400).send({
-          ok: false,
-          data: { user: null },
-          error: 'User not found',
-          message: '',
-        });
-        return;
-      }
-
-      if (!req.user.isZacharieAdmin) {
-        if (user.id !== req.user.id) {
-          res.status(400).send({
-            ok: false,
-            data: { user: null },
-            error: 'User not authorized',
-            message: '',
-          });
-          return;
-        }
-      }
+      const user = req.user;
 
       const nextUser: Prisma.UserUpdateInput = {};
 
-      if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.activated)) {
-        if (req.user.isZacharieAdmin) {
-          nextUser.activated = body[Prisma.UserScalarFieldEnum.activated] === 'true' ? true : false;
-          if (nextUser.activated && !user.activated) {
-            nextUser.activated_at = new Date();
-          }
-        }
-      }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.user_entities_vivible_checkbox)) {
         nextUser.user_entities_vivible_checkbox =
           body[Prisma.UserScalarFieldEnum.user_entities_vivible_checkbox] === 'true' ? true : false;
@@ -1070,20 +1044,9 @@ router.post(
         nextUser.ville = sanitize(body[Prisma.UserScalarFieldEnum.ville] as string);
       }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.roles)) {
-        if (req.user.isZacharieAdmin) {
-          nextUser.roles = ([...new Set(body[Prisma.UserScalarFieldEnum.roles])] as UserRoles[]).sort(
-            (a, b) => b.localeCompare(a)
-          );
-        } else {
-          throw new Error('User tried to update roles without being admin');
-        }
-      }
-      if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.isZacharieAdmin)) {
-        if (req.user.isZacharieAdmin) {
-          nextUser.isZacharieAdmin = body[Prisma.UserScalarFieldEnum.isZacharieAdmin] ? true : false;
-        } else {
-          throw new Error('User tried to update roles without being admin');
-        }
+        nextUser.roles = ([...new Set(body[Prisma.UserScalarFieldEnum.roles])] as UserRoles[]).sort(
+          (a, b) => b.localeCompare(a)
+        );
       }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.etg_role)) {
         nextUser.etg_role = body[Prisma.UserScalarFieldEnum.etg_role] as UserEtgRoles;
@@ -1109,10 +1072,8 @@ router.post(
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.numero_cfei)) {
         nextUser.numero_cfei = sanitize(body[Prisma.UserScalarFieldEnum.numero_cfei] as string);
         if (nextUser.numero_cfei !== user.numero_cfei) {
-          if (!req.user.isZacharieAdmin) {
-            nextUser.activated = false;
-            if (nextUser.activated_at) nextUser.activated_at = new Date();
-          }
+          nextUser.activated = false;
+          if (nextUser.activated_at) nextUser.activated_at = new Date();
         }
       }
 
@@ -1138,7 +1099,7 @@ router.post(
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.est_forme_a_l_examen_initial)) {
         nextUser.est_forme_a_l_examen_initial =
           body[Prisma.UserScalarFieldEnum.est_forme_a_l_examen_initial] === 'true' ? true : false;
-        if (!req.user.isZacharieAdmin && !nextUser.est_forme_a_l_examen_initial && user.numero_cfei) {
+        if (!nextUser.est_forme_a_l_examen_initial && user.numero_cfei) {
           nextUser.activated = false;
           nextUser.numero_cfei = null;
           if (nextUser.activated_at) nextUser.activated_at = new Date();
@@ -1149,23 +1110,8 @@ router.post(
         nextUser.onboarded_at = new Date();
       }
 
-      let savedUser: User | null = null;
-      const userId = req.params.user_id;
-      if (!userId) {
-        res.status(400).send({
-          ok: false,
-          data: {
-            user: null,
-          },
-          error: 'Missing user_id',
-          message: '',
-        });
-        return;
-      }
-
-      // user update / self-update
-      savedUser = await prisma.user.update({
-        where: { id: userId },
+      let savedUser: User = await prisma.user.update({
+        where: { id: user.id },
         data: nextUser,
       });
       await updateBrevoContact(savedUser);
@@ -1201,7 +1147,7 @@ ${savedUser.roles.includes(UserRoles.CHASSEUR) && savedUser.est_forme_a_l_examen
         nextUser.activated = true;
         nextUser.activated_at = new Date();
         savedUser = await prisma.user.update({
-          where: { id: userId },
+          where: { id: user.id },
           data: nextUser,
         });
       }

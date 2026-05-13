@@ -113,7 +113,7 @@ export default function AdminUser() {
         : Object.fromEntries(formData);
 
     API.post({
-      path: `/user/${params.userId}`,
+      path: `admin/user/${params.userId}`,
       body,
     }).then((res) => {
       if (!res.ok) {
