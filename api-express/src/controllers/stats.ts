@@ -650,8 +650,7 @@ router.get(
           code,
           nom: departementsLabels[code] ?? code,
           examinateursActifs: examinateursByDept.get(code)?.size ?? 0,
-          tauxSaisieBph:
-            bph.sviEligible > 0 ? Math.round(deptRate * 1000) / 10 : null, // % avec 1 décimale
+          tauxSaisieBph: bph.sviEligible > 0 ? Math.round(deptRate * 1000) / 10 : null, // % avec 1 décimale
           scoreBph: bph.sviEligible > 0 ? computeScore(deptRate) : null,
           sviEligible: bph.sviEligible,
           bphCount: bph.bphCount,

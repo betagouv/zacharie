@@ -113,7 +113,8 @@ export function resolveScope(user: User): {
 } {
   const explicit = user.scope_departements_codes ?? [];
   const isNational =
-    explicit.length === ALL_DEPARTEMENT_CODES.length && explicit.every((c) => ALL_DEPARTEMENT_CODES_SET.has(c));
+    explicit.length === ALL_DEPARTEMENT_CODES.length &&
+    explicit.every((c) => ALL_DEPARTEMENT_CODES_SET.has(c));
   // Le filtre côté stats traite `null` comme "pas de filtre" (= toutes les depts).
   // On renvoie `null` uniquement quand la liste explicite couvre tous les départements.
   const scopeDepts: string[] | null = isNational ? null : explicit;

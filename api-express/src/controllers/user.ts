@@ -1044,8 +1044,8 @@ router.post(
         nextUser.ville = sanitize(body[Prisma.UserScalarFieldEnum.ville] as string);
       }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.roles)) {
-        nextUser.roles = ([...new Set(body[Prisma.UserScalarFieldEnum.roles])] as UserRoles[]).sort(
-          (a, b) => b.localeCompare(a)
+        nextUser.roles = ([...new Set(body[Prisma.UserScalarFieldEnum.roles])] as UserRoles[]).sort((a, b) =>
+          b.localeCompare(a)
         );
       }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.etg_role)) {
