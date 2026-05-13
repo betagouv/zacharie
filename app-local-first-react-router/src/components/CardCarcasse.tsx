@@ -4,23 +4,25 @@ import { useCarcassesIntermediairesForCarcasse } from '@app/utils/get-carcasses-
 import useUser from '@app/zustand/user';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
+import { Tag } from '@codegouvfr/react-dsfr/Tag';
 import {
   Carcasse,
-  CarcasseStatus,
   CarcasseType,
-  DepotType,
-  FeiOwnerRole,
   IPM1Decision,
   IPM2Decision,
   PoidsType,
   UserRoles,
 } from '@prisma/client';
 import dayjs from 'dayjs';
-import { useMemo, useRef } from 'react';
+import { type ReactNode, useMemo, useRef } from 'react';
 import { useParams } from 'react-router';
-import ItemNotEditable from './ItemNotEditable';
 import { useIsCircuitCourt } from '@app/utils/circuit-court';
 import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
+import {
+  getCarcasseCardDisplay,
+  type CardAccent,
+  type CardViewRole,
+} from '@app/utils/get-carcasse-card-display';
 
 interface CardCarcasseProps {
   carcasse: Carcasse;
@@ -248,6 +250,8 @@ export default function CardCarcasse({
             carcasseId={carcasse.zacharie_carcasse_id}
             statusNewCard={statusNewCard}
             motifRefus={motifRefus}
+            cardDisplay={cardDisplay}
+            isEcarteePourInspection={isEcarteePourInspection}
           />
         )}
       </cacasseModal.Component>
@@ -255,14 +259,238 @@ export default function CardCarcasse({
   );
 }
 
+// === Helpers et sous-composants pour le contenu de la modale ===
+// Style repris de routes/chasseur/examinateur-carcasse-detail.tsx.
+// A factoriser dans un second temps.
+
+type DecisionColor = {
+  cardText: string;
+  cardBg: string;
+  badgeBg: string;
+  badgeText: string;
+};
+
+function getAccentColorClasses(accent: CardAccent | undefined): DecisionColor {
+  switch (accent) {
+    case 'red':
+      return {
+        cardText: 'text-red-700',
+        cardBg: 'bg-red-50',
+        badgeBg: 'bg-red-100',
+        badgeText: 'text-red-800',
+      };
+    case 'blue':
+      return {
+        cardText: 'text-blue-700',
+        cardBg: 'bg-blue-50',
+        badgeBg: 'bg-blue-100',
+        badgeText: 'text-blue-800',
+      };
+    case 'orange':
+      return {
+        cardText: 'text-orange-700',
+        cardBg: 'bg-orange-50',
+        badgeBg: 'bg-orange-100',
+        badgeText: 'text-orange-800',
+      };
+    case 'gray':
+    default:
+      return {
+        cardText: 'text-gray-700',
+        cardBg: 'bg-gray-50',
+        badgeBg: 'bg-gray-100',
+        badgeText: 'text-gray-800',
+      };
+  }
+}
+
+function formatModalDate(d: Date | string | null | undefined): string {
+  if (!d) return '—';
+  return dayjs(d).format('DD/MM/YY');
+}
+
+function formatModalTimelineDate(date: Date, withTime?: boolean): string {
+  return dayjs(date).format(withTime ? 'dddd D MMMM YYYY à HH:mm' : 'dddd D MMMM YYYY');
+}
+
+type ModalTimelineEvent = { date: Date; label: string; withTime?: boolean };
+
+function buildModalTimeline(args: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  fei: any;
+  carcasse: Carcasse;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  intermediaires: Array<any>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  entities: Record<string, any>;
+}): Array<ModalTimelineEvent> {
+  const { fei, carcasse, intermediaires, entities } = args;
+  const events: Array<ModalTimelineEvent> = [];
+
+  if (fei?.date_mise_a_mort) {
+    events.push({ date: new Date(fei.date_mise_a_mort), label: 'Mise à mort' });
+  }
+  if (fei?.examinateur_initial_date_approbation_mise_sur_le_marche) {
+    events.push({
+      date: new Date(fei.examinateur_initial_date_approbation_mise_sur_le_marche),
+      label: 'Fiche transmise au premier détenteur',
+      withTime: true,
+    });
+  }
+  if (fei?.premier_detenteur_depot_ccg_at) {
+    const ccgName =
+      entities[fei.premier_detenteur_depot_entity_id]?.nom_d_usage ||
+      fei.premier_detenteur_depot_entity_name_cache ||
+      '';
+    events.push({
+      date: new Date(fei.premier_detenteur_depot_ccg_at),
+      label: ccgName ? `Dépôt des carcasses ${ccgName}` : 'Dépôt des carcasses',
+      withTime: true,
+    });
+  }
+  for (const ci of intermediaires) {
+    if (!ci.prise_en_charge_at) continue;
+    const entityName = entities[ci.intermediaire_entity_id]?.nom_d_usage ?? '';
+    const isEtg = ci.intermediaire_role === UserRoles.ETG;
+    events.push({
+      date: new Date(ci.prise_en_charge_at),
+      label: isEtg
+        ? `Prise en charge par ETG ${entityName}`
+        : `Carcasses prise en charge par ${entityName}`,
+      withTime: true,
+    });
+  }
+  if (carcasse.svi_assigned_to_fei_at) {
+    events.push({
+      date: new Date(carcasse.svi_assigned_to_fei_at),
+      label: 'Assignation au service vétérinaire',
+      withTime: true,
+    });
+  }
+  if (carcasse.svi_ipm2_date) {
+    events.push({
+      date: new Date(carcasse.svi_ipm2_date),
+      label: 'Inspection du service vétérinaire',
+    });
+  }
+  if (carcasse.svi_carcasse_status_set_at) {
+    events.push({
+      date: new Date(carcasse.svi_carcasse_status_set_at),
+      label: 'Contrôle par service vétérinaire',
+      withTime: true,
+    });
+  }
+  return events.sort((a, b) => a.date.getTime() - b.date.getTime());
+}
+
+function ModalStatusBadge({
+  statusLabel,
+  statusIconId,
+  accentColor,
+}: {
+  statusLabel: string;
+  statusIconId: string | null;
+  accentColor: CardAccent;
+}) {
+  const colors = getAccentColorClasses(accentColor);
+  return (
+    <div className="fr-mb-2w flex flex-wrap items-center gap-2">
+      <Tag
+        small
+        className={['items-center rounded-[4px] font-semibold', colors.badgeBg, colors.badgeText].join(' ')}
+      >
+        {statusIconId && (
+          <span
+            className={[statusIconId, 'fr-icon--sm mr-1'].join(' ')}
+            aria-hidden="true"
+          />
+        )}
+        {statusLabel}
+      </Tag>
+    </div>
+  );
+}
+
+function ModalCard({
+  title,
+  accentColor,
+  children,
+}: {
+  title?: string;
+  accentColor?: CardAccent;
+  children: ReactNode;
+}) {
+  const isAccented = !!accentColor && accentColor !== 'gray';
+  const colors = isAccented ? getAccentColorClasses(accentColor) : null;
+  return (
+    <div className={['fr-mb-2w rounded p-4 md:p-6', colors ? colors.cardBg : 'bg-gray-50'].join(' ')}>
+      {title && (
+        <h3 className={['fr-h6 fr-mb-1w', colors ? colors.cardText : ''].filter(Boolean).join(' ')}>
+          {title}
+        </h3>
+      )}
+      <div className={colors ? colors.cardText : ''}>{children}</div>
+    </div>
+  );
+}
+
+function ModalActeurBlock({
+  label,
+  lines,
+}: {
+  label: string;
+  lines: Array<string | null | undefined>;
+}) {
+  const cleaned = lines.map((l) => (l ?? '').toString().trim()).filter(Boolean);
+  if (cleaned.length === 0) return null;
+  return (
+    <div>
+      <p className="font-semibold">{label}</p>
+      <ul className="space-y-0.5 text-sm">
+        {cleaned.map((line, idx) => (
+          <li key={idx}>{line}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function ModalTimeline({ events }: { events: Array<ModalTimelineEvent> }) {
+  if (events.length === 0) return null;
+  return (
+    <ModalCard title="Traçabilité">
+      <div className="relative border-l-2 border-gray-300 pl-4">
+        {events.map((event, i) => (
+          <div
+            key={`${event.date.toISOString()}-${i}`}
+            className="relative mb-4 last:mb-0"
+          >
+            <div className="absolute top-1 -left-[21px] h-2.5 w-2.5 rounded-full border-2 border-blue-600 bg-white" />
+            <div className="text-sm">
+              <span className="text-gray-500">
+                {formatModalTimelineDate(event.date, event.withTime)}
+              </span>{' '}
+              <span className="font-semibold">{event.label}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </ModalCard>
+  );
+}
+
 function CarcasseDetails({
   carcasseId,
   statusNewCard,
   motifRefus,
+  cardDisplay,
+  isEcarteePourInspection,
 }: {
   carcasseId?: Carcasse['zacharie_carcasse_id'];
   statusNewCard: string;
   motifRefus: string;
+  cardDisplay: ReturnType<typeof getCarcasseCardDisplay>;
+  isEcarteePourInspection: boolean;
 }) {
   const user = useUser((state) => state.user)!;
   const isCircuitCourt = useIsCircuitCourt();
@@ -273,7 +501,6 @@ function CarcasseDetails({
   const carcasses = useZustandStore((state) => state.carcasses);
   const fei = feis[params.fei_numero!];
   const carcassesIntermediaires = useCarcassesIntermediairesForCarcasse(carcasseId);
-  const latestIntermediaire = carcassesIntermediaires[0];
 
   const carcasse = carcasses[carcasseId!];
 
@@ -296,12 +523,15 @@ function CarcasseDetails({
     ? entities[fei.premier_detenteur_entity_id!]
     : null;
 
-  const onlyPetitGibier = useMemo(() => {
-    if (carcasse?.type !== CarcasseType.PETIT_GIBIER) {
-      return false;
-    }
-    return true;
-  }, [carcasse]);
+  const examinateurName = useMemo(() => {
+    if (!examinateurInitialUser) return '—';
+    return (
+      [examinateurInitialUser.prenom, examinateurInitialUser.nom_de_famille]
+        .filter(Boolean)
+        .join(' ')
+        .trim() || '—'
+    );
+  }, [examinateurInitialUser]);
 
   const examinateurInitialInput = useMemo(() => {
     const lines = [];
@@ -347,61 +577,10 @@ function CarcasseDetails({
     return lines;
   }, [carcassesIntermediaires, entities]);
 
-  const ccgDate =
-    fei.premier_detenteur_depot_type === DepotType.CCG
-      ? dayjs(fei.premier_detenteur_depot_ccg_at).format('dddd D MMMM YYYY à HH:mm')
-      : null;
-  const etgDate = latestIntermediaire
-    ? dayjs(latestIntermediaire.prise_en_charge_at || latestIntermediaire.decision_at).format(
-        'dddd D MMMM YYYY à HH:mm'
-      )
-    : null;
-
-  const sviAssignedToFeiAt = carcasse.svi_assigned_to_fei_at
-    ? dayjs(carcasse.svi_assigned_to_fei_at).format('dddd D MMMM YYYY à HH:mm')
-    : null;
-
-  const milestones = useMemo(() => {
-    const _milestones = [
-      `Commune de mise à mort\u00A0: ${fei?.commune_mise_a_mort ?? ''}`,
-      `Date de mise à mort\u00A0: ${dayjs(fei.date_mise_a_mort).format('dddd D MMMM YYYY')}`,
-    ];
-    if (carcasse.heure_mise_a_mort_premiere_carcasse_fei) {
-      _milestones.push(
-        `Heure de mise à mort de la première carcasse de la fiche\u00A0: ${carcasse.heure_mise_a_mort_premiere_carcasse_fei}`
-      );
-    }
-    if (onlyPetitGibier && carcasse.heure_evisceration_derniere_carcasse_fei) {
-      _milestones.push(
-        `Heure d'éviscération de la dernière carcasse de la fiche\u00A0: ${carcasse.heure_evisceration_derniere_carcasse_fei}`
-      );
-    }
-    if (ccgDate) _milestones.push(`Date et heure de dépôt dans le CCG\u00A0: ${ccgDate}`);
-    if (etgDate) _milestones.push(`Date et heure de prise en charge par l'ETG\u00A0: ${etgDate}`);
-    if (sviAssignedToFeiAt)
-      _milestones.push(`Date et heure d'assignation au SVI\u00A0: ${sviAssignedToFeiAt}`);
-    if (statusNewCard.includes('manquant')) {
-      _milestones.push(motifRefus);
-    }
-    // if (carcasse.svi_ipm1_date) _milestones.push(`Date de l'inspection\u00A0: ${dayjs(carcasse.svi_ipm1_date).format('dddd D MMMM YYYY')}`);
-    if (carcasse.svi_ipm2_date)
-      _milestones.push(
-        `Date de l'inspection du service vétérinaire\u00A0: ${dayjs(carcasse.svi_ipm2_date).format('dddd D MMMM YYYY')}`
-      );
-    return _milestones;
-  }, [
-    fei?.commune_mise_a_mort,
-    fei.date_mise_a_mort,
-    carcasse.heure_mise_a_mort_premiere_carcasse_fei,
-    carcasse.heure_evisceration_derniere_carcasse_fei,
-    onlyPetitGibier,
-    ccgDate,
-    etgDate,
-    statusNewCard,
-    carcasse.svi_ipm2_date,
-    motifRefus,
-    sviAssignedToFeiAt,
-  ]);
+  const timelineEvents = useMemo(
+    () => buildModalTimeline({ fei, carcasse, intermediaires: carcassesIntermediaires, entities }),
+    [fei, carcasse, carcassesIntermediaires, entities]
+  );
 
   const ipm1 = useMemo(() => {
     if (!carcasse.svi_ipm1_date) return [];
@@ -561,296 +740,156 @@ function CarcasseDetails({
     return imp2Lines;
   }, [carcasse]);
 
+  const headerAccent: CardAccent = isEcarteePourInspection
+    ? 'red'
+    : (cardDisplay.accentColor ?? 'gray');
+  const headerStatusLabel = isEcarteePourInspection
+    ? 'Écarté pour inspection'
+    : (cardDisplay.statusLabel ?? 'En cours');
+  const headerStatusIconId = isEcarteePourInspection
+    ? 'fr-icon-alert-line'
+    : (cardDisplay.iconId ?? null);
+  const sviAccent: CardAccent = cardDisplay.accentColor ?? 'gray';
+
   return (
     <>
-      <hr className="mt-4 bg-none" />
-      <ItemNotEditable
-        label="Informations clés"
-        value={milestones}
-        withDiscs
+      <ModalStatusBadge
+        statusLabel={headerStatusLabel}
+        statusIconId={headerStatusIconId}
+        accentColor={headerAccent}
       />
-      {carcasse.examinateur_anomalies_abats?.length > 0 && (
-        <ItemNotEditable
-          label="Anomalies abats"
-          value={carcasse.examinateur_anomalies_abats}
-          withDiscs
-        />
-      )}
+
+      <ModalCard title="Informations de chasse">
+        <ul className="space-y-1">
+          <li>Chasse du {formatModalDate(fei.date_mise_a_mort)}</li>
+          <li>{carcasse.espece || '—'}</li>
+          <li>Prélevé à {fei.commune_mise_a_mort || '—'}</li>
+          <li>Examiné par {examinateurName}</li>
+          {carcasse.heure_mise_a_mort_premiere_carcasse_fei && (
+            <li>
+              Heure de mise à mort de la première carcasse&nbsp;:{' '}
+              {carcasse.heure_mise_a_mort_premiere_carcasse_fei}
+            </li>
+          )}
+          {carcasse.type === CarcasseType.PETIT_GIBIER &&
+            carcasse.heure_evisceration_derniere_carcasse_fei && (
+              <li>
+                Heure d'éviscération de la dernière carcasse&nbsp;:{' '}
+                {carcasse.heure_evisceration_derniere_carcasse_fei}
+              </li>
+            )}
+        </ul>
+      </ModalCard>
+
       {carcasse.examinateur_anomalies_carcasse?.length > 0 && (
-        <ItemNotEditable
-          label="Anomalies carcasse"
-          value={carcasse.examinateur_anomalies_carcasse}
-          withDiscs
-        />
+        <ModalCard title="Anomalies carcasse">
+          <ul className="ml-4 list-inside list-disc space-y-0.5 text-sm">
+            {carcasse.examinateur_anomalies_carcasse.map((a, i) => (
+              <li key={i}>{a}</li>
+            ))}
+          </ul>
+        </ModalCard>
       )}
-      {statusNewCard.includes('refus') && motifRefus && (
-        <ItemNotEditable
-          label={motifRefus.split(':')[0]}
-          value={motifRefus.split(':')[1] || "Aucun motif de refus n'a été renseigné"}
-          withDiscs
-        />
+
+      {carcasse.examinateur_anomalies_abats?.length > 0 && (
+        <ModalCard title="Anomalies abats">
+          <ul className="ml-4 list-inside list-disc space-y-0.5 text-sm">
+            {carcasse.examinateur_anomalies_abats.map((a, i) => (
+              <li key={i}>{a}</li>
+            ))}
+          </ul>
+        </ModalCard>
       )}
+
+      {(statusNewCard.includes('refus') || statusNewCard.includes('manquant')) && motifRefus && (
+        <ModalCard
+          title={motifRefus.split(':')[0]}
+          accentColor="red"
+        >
+          <p>{motifRefus.split(':')[1] || "Aucun motif de refus n'a été renseigné"}</p>
+        </ModalCard>
+      )}
+
       {commentairesIntermediaires.length > 0 && (
-        <ItemNotEditable
-          label="Commentaires des intermédiaires"
-          value={commentairesIntermediaires}
-          withDiscs
-        />
+        <ModalCard title="Commentaires des intermédiaires">
+          <ul className="space-y-1 text-sm">
+            {commentairesIntermediaires.map((c, i) => (
+              <li key={i}>{c}</li>
+            ))}
+          </ul>
+        </ModalCard>
       )}
+
       {showIpm1AndIpm2 ? (
         <>
-          <ItemNotEditable
-            label="Inspection Post-Mortem 1"
-            value={carcasse.svi_ipm1_date ? ipm1 : 'N/A'}
-            withDiscs
-          />
-          <ItemNotEditable
-            label="Inspection Post-Mortem 2"
-            value={carcasse.svi_ipm2_date ? ipm2 : 'N/A'}
-            withDiscs
-          />
+          <ModalCard
+            title="Inspection Post-Mortem 1"
+            accentColor={sviAccent}
+          >
+            {carcasse.svi_ipm1_date ? (
+              <div className="space-y-1 text-sm">
+                {ipm1.map((line, i) => (
+                  <div key={i}>{line}</div>
+                ))}
+              </div>
+            ) : (
+              <p>N/A</p>
+            )}
+          </ModalCard>
+          <ModalCard
+            title="Inspection Post-Mortem 2"
+            accentColor={sviAccent}
+          >
+            {carcasse.svi_ipm2_date ? (
+              <div className="space-y-1 text-sm">
+                {ipm2.map((line, i) => (
+                  <div key={i}>{line}</div>
+                ))}
+              </div>
+            ) : (
+              <p>N/A</p>
+            )}
+          </ModalCard>
         </>
       ) : isCircuitCourt ? null : (
-        <>
-          <ItemNotEditable
-            label="Inspection du Service Vétérinaire"
-            value={carcasse.svi_ipm2_date ? ipm2 : 'N/A'}
-            withDiscs
-          />
-        </>
+        <ModalCard
+          title="Inspection du Service Vétérinaire"
+          accentColor={sviAccent}
+        >
+          {carcasse.svi_ipm2_date ? (
+            <div className="space-y-1 text-sm">
+              {ipm2.map((line, i) => (
+                <div key={i}>{line}</div>
+              ))}
+            </div>
+          ) : (
+            <p>N/A</p>
+          )}
+        </ModalCard>
       )}
-      <hr className="my-4" />
-      <h2 className="mb-4 ml-2 text-lg font-semibold text-gray-900">Acteurs de la chasse</h2>
-      <ItemNotEditable
-        label="Examinateur Initial"
-        value={examinateurInitialInput}
-      />
-      <ItemNotEditable
-        label="Premier Détenteur"
-        value={premierDetenteurInput}
-      />
-      {intermediairesInputs.map((intermediaireInput, index) => {
-        return (
-          <ItemNotEditable
-            key={index}
-            label={intermediaireInput.label}
-            value={intermediaireInput.value}
+
+      <ModalTimeline events={timelineEvents} />
+
+      <ModalCard title="Acteurs de la chasse">
+        <div className="space-y-3">
+          <ModalActeurBlock
+            label="Examinateur Initial"
+            lines={examinateurInitialInput}
           />
-        );
-      })}
+          <ModalActeurBlock
+            label="Premier Détenteur"
+            lines={premierDetenteurInput}
+          />
+          {intermediairesInputs.map((intermediaireInput, index) => (
+            <ModalActeurBlock
+              key={index}
+              label={intermediaireInput.label}
+              lines={intermediaireInput.value}
+            />
+          ))}
+        </div>
+      </ModalCard>
     </>
   );
 }
 
-type CardViewRole = 'chasseur' | 'etg-coll' | 'svi';
-type CardUiState =
-  | 'creation'
-  | 'transmise'
-  | 'manquante-etg'
-  | 'refusee-etg'
-  | 'acceptee-etg'
-  | 'manquante-svi'
-  | 'mise-en-consigne'
-  | 'saisie-partielle'
-  | 'saisie-totale'
-  | 'accepte-svi';
-type CardAccent = 'red' | 'blue' | 'orange' | 'gray' | null;
-
-interface CardDisplay {
-  uiState: CardUiState;
-  iconId: string | null;
-  accentColor: CardAccent;
-  statusLabel: string | null;
-  showStatusLine: boolean;
-}
-
-interface CardDisplayParams {
-  carcasse: Carcasse;
-  fei: ReturnType<typeof useZustandStore.getState>['feis'][string];
-  latestIntermediaire: ReturnType<typeof useCarcassesIntermediairesForCarcasse>[number] | undefined;
-  entities: ReturnType<typeof useZustandStore.getState>['entities'];
-  viewRole: CardViewRole;
-  forceRefus?: boolean;
-  forceManquante?: boolean;
-  forceAccept?: boolean;
-}
-
-function deriveCarcasseUiState(
-  carcasse: Carcasse,
-  fei: CardDisplayParams['fei'],
-  latestIntermediaire: CardDisplayParams['latestIntermediaire'],
-  overrides: { forceRefus?: boolean; forceManquante?: boolean; forceAccept?: boolean }
-): CardUiState {
-  if (!carcasse.svi_ipm1_date && !carcasse.svi_ipm2_date) {
-    if (overrides.forceRefus) return 'refusee-etg';
-    if (overrides.forceManquante) return 'manquante-etg';
-    if (overrides.forceAccept) return 'acceptee-etg';
-  }
-
-  const status = carcasse.svi_carcasse_status ?? CarcasseStatus.SANS_DECISION;
-
-  switch (status) {
-    case CarcasseStatus.MANQUANTE_ETG_COLLECTEUR:
-      return 'manquante-etg';
-    case CarcasseStatus.REFUS_ETG_COLLECTEUR:
-      return 'refusee-etg';
-    case CarcasseStatus.MANQUANTE_SVI:
-      return 'manquante-svi';
-    case CarcasseStatus.SAISIE_TOTALE:
-      return 'saisie-totale';
-    case CarcasseStatus.SAISIE_PARTIELLE:
-      return 'saisie-partielle';
-    case CarcasseStatus.CONSIGNE:
-      return 'mise-en-consigne';
-    case CarcasseStatus.ACCEPTE:
-    case CarcasseStatus.LEVEE_DE_CONSIGNE:
-    case CarcasseStatus.TRAITEMENT_ASSAINISSANT:
-      return 'accepte-svi';
-    case CarcasseStatus.SANS_DECISION: {
-      const isCreation =
-        (fei?.fei_current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL ||
-          fei?.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR) &&
-        !fei?.fei_next_owner_role;
-      if (isCreation) return 'creation';
-      if (latestIntermediaire?.decision_at && latestIntermediaire?.intermediaire_role === FeiOwnerRole.ETG) {
-        return 'acceptee-etg';
-      }
-      return 'transmise';
-    }
-    default: {
-      // Exhaustiveness check — adding a new CarcasseStatus enum value breaks the build
-      // here until the case is wired. Runtime fallback = transmise (carte nue).
-      const _exhaustive: never = status;
-      void _exhaustive;
-      return 'transmise';
-    }
-  }
-}
-
-function getCarcasseCardDisplay(params: CardDisplayParams): CardDisplay {
-  const { carcasse, fei, latestIntermediaire, entities, viewRole, forceRefus, forceManquante, forceAccept } =
-    params;
-
-  const uiState = deriveCarcasseUiState(carcasse, fei, latestIntermediaire, {
-    forceRefus,
-    forceManquante,
-    forceAccept,
-  });
-
-  const isPetitGibier = carcasse.type === CarcasseType.PETIT_GIBIER;
-  const manquantWord = isPetitGibier ? 'Manquant' : 'Manquante';
-  const refuseWord = isPetitGibier ? 'Refusé' : 'Refusée';
-  const accepteWord = isPetitGibier ? 'Accepté' : 'Acceptée';
-
-  const intermediaireEntity = latestIntermediaire?.intermediaire_entity_id
-    ? entities[latestIntermediaire.intermediaire_entity_id]
-    : null;
-  const intermediaireName = intermediaireEntity?.nom_d_usage ?? '';
-
-  if (viewRole === 'chasseur') {
-    if (uiState === 'creation') {
-      return { uiState, iconId: null, accentColor: null, statusLabel: null, showStatusLine: false };
-    }
-    if (uiState === 'transmise' || uiState === 'acceptee-etg' || uiState === 'mise-en-consigne') {
-      return {
-        uiState,
-        iconId: 'fr-icon-refresh-line',
-        accentColor: 'gray',
-        statusLabel: 'En cours de traitement',
-        showStatusLine: true,
-      };
-    }
-    if (uiState === 'saisie-partielle') {
-      return {
-        uiState,
-        iconId: 'fr-icon-checkbox-circle-line',
-        accentColor: 'blue',
-        statusLabel: `${accepteWord} partiellement par le service vétérinaire`,
-        showStatusLine: true,
-      };
-    }
-    if (uiState === 'saisie-totale') {
-      return {
-        uiState,
-        iconId: 'fr-icon-close-circle-line',
-        accentColor: 'red',
-        statusLabel: `${refuseWord} par le service vétérinaire`,
-        showStatusLine: true,
-      };
-    }
-  }
-
-  if (viewRole === 'svi' && (uiState === 'acceptee-etg' || uiState === 'transmise')) {
-    return { uiState, iconId: null, accentColor: null, statusLabel: null, showStatusLine: false };
-  }
-
-  switch (uiState) {
-    case 'creation':
-    case 'transmise':
-      return { uiState, iconId: null, accentColor: null, statusLabel: null, showStatusLine: false };
-    case 'manquante-etg':
-      return {
-        uiState,
-        iconId: 'fr-icon-alert-line',
-        accentColor: 'red',
-        statusLabel: intermediaireName ? `${manquantWord} pour ${intermediaireName}` : `${manquantWord}`,
-        showStatusLine: true,
-      };
-    case 'refusee-etg':
-      return {
-        uiState,
-        iconId: 'fr-icon-close-circle-line',
-        accentColor: 'red',
-        statusLabel: intermediaireName ? `${refuseWord} par ${intermediaireName}` : `${refuseWord}`,
-        showStatusLine: true,
-      };
-    case 'acceptee-etg':
-      return {
-        uiState,
-        iconId: 'fr-icon-checkbox-circle-line',
-        accentColor: 'blue',
-        statusLabel: intermediaireName ? `${accepteWord} par ${intermediaireName}` : `${accepteWord}`,
-        showStatusLine: true,
-      };
-    case 'manquante-svi':
-      return {
-        uiState,
-        iconId: 'fr-icon-alert-line',
-        accentColor: 'red',
-        statusLabel: `${manquantWord} pour le service vétérinaire`,
-        showStatusLine: true,
-      };
-    case 'mise-en-consigne':
-      return {
-        uiState,
-        iconId: 'fr-icon-time-line',
-        accentColor: 'orange',
-        statusLabel: 'Mise en consigne par le service vétérinaire',
-        showStatusLine: true,
-      };
-    case 'saisie-partielle':
-      return {
-        uiState,
-        iconId: 'fr-icon-error-warning-line',
-        accentColor: 'red',
-        statusLabel: `${refuseWord} partiellement par le service vétérinaire`,
-        showStatusLine: true,
-      };
-    case 'saisie-totale':
-      return {
-        uiState,
-        iconId: 'fr-icon-close-circle-line',
-        accentColor: 'red',
-        statusLabel: `${refuseWord} par le service vétérinaire`,
-        showStatusLine: true,
-      };
-    case 'accepte-svi':
-      return {
-        uiState,
-        iconId: 'fr-icon-checkbox-circle-line',
-        accentColor: 'blue',
-        statusLabel: `${accepteWord} par le service vétérinaire`,
-        showStatusLine: true,
-      };
-  }
-}
