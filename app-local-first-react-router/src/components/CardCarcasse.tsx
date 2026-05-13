@@ -309,7 +309,11 @@ function formatModalDate(d: Date | string | null | undefined): string {
   return dayjs(d).format('DD/MM/YY');
 }
 
-type ModalTimelineEvent = { date: Date; label: string };
+function formatModalTimelineDate(date: Date, withTime?: boolean): string {
+  return dayjs(date).format(withTime ? 'dddd D MMMM YYYY à HH:mm' : 'dddd D MMMM YYYY');
+}
+
+type ModalTimelineEvent = { date: Date; label: string; withTime?: boolean };
 
 function buildModalTimeline(args: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -330,6 +334,7 @@ function buildModalTimeline(args: {
     events.push({
       date: new Date(fei.examinateur_initial_date_approbation_mise_sur_le_marche),
       label: 'Fiche transmise au premier détenteur',
+      withTime: true,
     });
   }
   if (fei?.premier_detenteur_depot_ccg_at) {
@@ -340,6 +345,7 @@ function buildModalTimeline(args: {
     events.push({
       date: new Date(fei.premier_detenteur_depot_ccg_at),
       label: ccgName ? `Dépôt des carcasses ${ccgName}` : 'Dépôt des carcasses',
+      withTime: true,
     });
   }
   for (const ci of intermediaires) {
@@ -351,12 +357,27 @@ function buildModalTimeline(args: {
       label: isEtg
         ? `Prise en charge par ETG ${entityName}`
         : `Carcasses prise en charge par ${entityName}`,
+      withTime: true,
+    });
+  }
+  if (carcasse.svi_assigned_to_fei_at) {
+    events.push({
+      date: new Date(carcasse.svi_assigned_to_fei_at),
+      label: 'Assignation au service vétérinaire',
+      withTime: true,
+    });
+  }
+  if (carcasse.svi_ipm2_date) {
+    events.push({
+      date: new Date(carcasse.svi_ipm2_date),
+      label: 'Inspection du service vétérinaire',
     });
   }
   if (carcasse.svi_carcasse_status_set_at) {
     events.push({
       date: new Date(carcasse.svi_carcasse_status_set_at),
       label: 'Contrôle par service vétérinaire',
+      withTime: true,
     });
   }
   return events.sort((a, b) => a.date.getTime() - b.date.getTime());
@@ -446,7 +467,9 @@ function ModalTimeline({ events }: { events: Array<ModalTimelineEvent> }) {
           >
             <div className="absolute top-1 -left-[21px] h-2.5 w-2.5 rounded-full border-2 border-blue-600 bg-white" />
             <div className="text-sm">
-              <span className="text-gray-500">{formatModalDate(event.date)}</span>{' '}
+              <span className="text-gray-500">
+                {formatModalTimelineDate(event.date, event.withTime)}
+              </span>{' '}
               <span className="font-semibold">{event.label}</span>
             </div>
           </div>
@@ -778,7 +801,7 @@ function CarcasseDetails({
         </ModalCard>
       )}
 
-      {statusNewCard.includes('refus') && motifRefus && (
+      {(statusNewCard.includes('refus') || statusNewCard.includes('manquant')) && motifRefus && (
         <ModalCard
           title={motifRefus.split(':')[0]}
           accentColor="red"
