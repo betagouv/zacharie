@@ -24,7 +24,7 @@ import { capture } from './third-parties/sentry.ts';
 
 import userRouter from './controllers/user.ts';
 import userEntityRouter from './controllers/user-entity.ts';
-import adminRouter from './controllers/admin.ts';
+import adminRouter from './controllers/admin/index.ts';
 import entiteRouter from './controllers/entite.ts';
 import feiRouter from './controllers/fei.ts';
 import feiCarcasseRouter from './controllers/carcasse.ts';
