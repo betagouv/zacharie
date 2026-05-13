@@ -260,7 +260,8 @@ export default function CardCarcasse({
 }
 
 // === Helpers et sous-composants pour le contenu de la modale ===
-// Style repris de routes/chasseur/examinateur-carcasse-detail.tsx. A factoriser dans un second temps.
+// Style repris de routes/chasseur/examinateur-carcasse-detail.tsx.
+// A factoriser dans un second temps.
 
 type DecisionColor = {
   cardText: string;
