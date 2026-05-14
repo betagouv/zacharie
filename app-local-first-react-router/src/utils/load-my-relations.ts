@@ -2,8 +2,9 @@ import type { UserMyRelationsResponse } from '@api/src/types/responses';
 import type { EntityWithUserRelation } from '@api/src/types/entity';
 import useZustandStore from '@app/zustand/store';
 import API from '@app/services/api';
+import { UserRoles } from '@prisma/client';
 
-export async function loadMyRelations() {
+export async function loadMyRelations(role?: UserRoles) {
   const isOnline = useZustandStore.getState().isOnline;
   console.log('chargement relations ?', isOnline);
   if (!isOnline) {
@@ -11,9 +12,11 @@ export async function loadMyRelations() {
     return;
   }
   try {
-    const myRelationsData = await API.get({ path: 'user/my-relations' }).then(
-      (res) => res as UserMyRelationsResponse
-    );
+    let path = 'user/my-relations';
+    if (role === UserRoles.ETG) {
+      path = `etg/entite/my-relations`;
+    }
+    const myRelationsData = await API.get({ path }).then((res) => res as UserMyRelationsResponse);
 
     const entities: Record<EntityWithUserRelation['id'], EntityWithUserRelation> = {};
     for (const entity of [

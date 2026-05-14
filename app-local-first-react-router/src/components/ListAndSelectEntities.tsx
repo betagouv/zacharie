@@ -12,11 +12,11 @@ interface ListAndSelectEntitiesProps {
   setRefreshKey: React.Dispatch<React.SetStateAction<number>>;
   refreshKey: number;
   canChange: boolean;
-  selectLabel: string;
+  selectLabel?: string;
   sectionLabel: string;
   formId: string;
   description?: React.ReactNode;
-  allEntitiesById: EntitiesById;
+  allEntitiesById?: EntitiesById | undefined;
   userEntitiesById: EntitiesById;
   children?: React.ReactNode;
 }
@@ -35,7 +35,9 @@ export default function ListAndSelectEntities({
 }: ListAndSelectEntitiesProps) {
   const user = useUser((state) => state.user)!;
   const userEntities = Object.values(userEntitiesById);
-  const remainingEntities = Object.values(allEntitiesById).filter((entity) => !userEntitiesById[entity.id]);
+  const remainingEntities = allEntitiesById
+    ? Object.values(allEntitiesById).filter((entity) => !userEntitiesById[entity.id])
+    : [];
 
   const [entityId, setEntityId] = useState<string | null>(null);
 
@@ -56,7 +58,6 @@ export default function ListAndSelectEntities({
               relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
           );
           if (!relation) return null;
-          console.log(entity);
           return (
             <RelationEntityUser
               key={relation.id}

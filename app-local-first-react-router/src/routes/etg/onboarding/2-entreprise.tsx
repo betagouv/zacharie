@@ -14,11 +14,10 @@ import ListAndSelectEntities from '@app/components/ListAndSelectEntities';
 
 export default function EtgOnboardingEntreprise() {
   const user = useUser((state) => state.user)!;
-  const [allEntitiesById, setAllEntitiesById] = useState<EntitiesById>({});
   const [userEntitiesById, setUserEntitiesById] = useState<EntitiesById>({});
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const etgsDone = Object.keys(userEntitiesById).length > 0;
+  const etgsDone = true;
 
   const [visibilityChecked, setVisibilityChecked] = useState(user.user_entities_vivible_checkbox === true);
 
@@ -29,7 +28,6 @@ export default function EtgOnboardingEntreprise() {
       .then((res) => res as EntitiesWorkingForResponse)
       .then((res) => {
         if (res.ok) {
-          setAllEntitiesById(res.data.allEntitiesByTypeAndId[EntityTypes.ETG]);
           setUserEntitiesById(res.data.userEntitiesByTypeAndId[EntityTypes.ETG]);
         }
       });
@@ -79,9 +77,7 @@ export default function EtgOnboardingEntreprise() {
               setRefreshKey={setRefreshKey}
               refreshKey={refreshKey}
               sectionLabel="Mon Établissement de Traitement du Gibier sauvage (ETG)"
-              selectLabel={!etgsDone ? 'Sélectionnez un ETG' : ''}
-              canChange={!etgsDone}
-              allEntitiesById={allEntitiesById}
+              canChange={false}
               userEntitiesById={userEntitiesById}
             >
               {etgsDone && (

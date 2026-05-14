@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import type { SearchResponse } from '@api/src/types/responses';
-import { CarcasseType } from '@prisma/client';
+import { CarcasseType, UserRoles } from '@prisma/client';
 import API from '@app/services/api';
+import useUser from '@app/zustand/user';
 
 interface SearchInputProps {
   className?: string;
@@ -16,6 +17,7 @@ export default function SearchInput({ className, id, type }: SearchInputProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [successData, setSuccessData] = useState<SearchResponse['data']>([]);
+  const me = useUser((state) => state.user)!;
 
   const searchDebounce = useRef<ReturnType<typeof setTimeout>>();
 
@@ -46,8 +48,12 @@ export default function SearchInput({ className, id, type }: SearchInputProps) {
       setSuccessData([]);
       setValue(cachedValue);
       setIsLoading(true);
+      let path = 'search';
+      if (me.roles.includes(UserRoles.ETG)) {
+        path = 'etg/search';
+      }
       API.get({
-        path: 'search',
+        path,
         query: { q: cachedValue },
       }).then((data: SearchResponse) => {
         setIsLoading(false);

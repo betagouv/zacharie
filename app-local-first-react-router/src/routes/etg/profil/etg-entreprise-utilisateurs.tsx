@@ -18,7 +18,7 @@ export default function EtgProfilEntrepriseUtilisateurs() {
   const userEntities = Object.values(userEntitiesById);
 
   useEffect(() => {
-    API.get({ path: 'entite/working-for' })
+    API.get({ path: 'etg/entite/working-for' })
       .then((res) => res as EntitiesWorkingForResponse)
       .then((res) => {
         if (res.ok) {
