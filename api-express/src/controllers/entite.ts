@@ -133,11 +133,8 @@ router.get(
         },
       });
 
-      const [allEntitiesIds, allEntitiesByTypeAndId] = sortEntitiesByTypeAndId(allEntities);
-      const userEntitiesByTypeAndId = sortEntitiesRelationsByTypeAndId(
-        entitiesUserCanHandleOnBehalf,
-        allEntitiesIds
-      );
+      const allEntitiesByTypeAndId = sortEntitiesByTypeAndId(allEntities);
+      const userEntitiesByTypeAndId = sortEntitiesRelationsByTypeAndId(entitiesUserCanHandleOnBehalf);
 
       res.status(200).send({
         ok: true,

@@ -1,9 +1,9 @@
 import { describe, test, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
 import express from 'express';
-import swaggerEntityDocument from '../controllers/v1/swagger-cle-dediee.json';
-import swaggerThirdPartyDocument from '../controllers/v1/swagger-tierce-partie.json';
-import v1Router from '../controllers/v1/index';
+import swaggerEntityDocument from '../controllers/api-external-v1/swagger-cle-dediee.json';
+import swaggerThirdPartyDocument from '../controllers/api-external-v1/swagger-tierce-partie.json';
+import v1Router from '../controllers/api-external-v1/index';
 
 // Mock app setup for testing
 const app = express();

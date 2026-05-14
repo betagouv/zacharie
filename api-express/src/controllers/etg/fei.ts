@@ -1,0 +1,1169 @@
+import express from 'express';
+import passport from 'passport';
+import { catchErrors } from '~/middlewares/errors';
+import type { FeiResponse, FeisResponse, FeisDoneResponse, FeiRefreshResponse } from '~/types/responses';
+const router: express.Router = express.Router();
+import prisma from '~/prisma';
+import { sanitize } from '~/utils/sanitize';
+import { EntityRelationStatus, EntityRelationType, Prisma, User, UserRoles } from '@prisma/client';
+import { feiPopulatedInclude } from '~/types/fei';
+import type { FeiPopulated } from '~/types/fei';
+import { capture } from '~/third-parties/sentry';
+import { runFeiUpdateSideEffects } from '~/utils/fei-side-effects';
+import { userFeiSelect } from '~/types/user';
+import { RequestWithUser } from '~/types/request';
+import { z } from 'zod';
+
+const refreshFeiSchema = z.object({
+  numeros: z.array(z.string()),
+});
+
+router.post(
+  '/refresh',
+  passport.authenticate('user', { session: false }),
+  catchErrors(
+    async (req: express.Request, res: express.Response<FeiRefreshResponse>, next: express.NextFunction) => {
+      let result = refreshFeiSchema.safeParse(req.body);
+      if (!result.success) {
+        const error = new Error(result.error.message);
+        res.status(406);
+        return next(error);
+      }
+      let body = result.data;
+      if (!req.user.activated) {
+        res.status(400).send({
+          ok: false,
+          data: { feis: [], users: [], entities: [] },
+          error: "Le compte n'est pas activé",
+        });
+        return;
+      }
+      let numeros = body.numeros;
+      if (!numeros.length) {
+        res.status(400).send({
+          ok: false,
+          data: { feis: [], users: [], entities: [] },
+          error: 'Le paramètre numeros est obligatoire',
+        });
+        return;
+      }
+      // 1. Fetch FEIs with Carcasses and CarcasseIntermediaire (no nested User/Entity)
+      const feis = await prisma.fei.findMany({
+        where: {
+          numero: { in: numeros },
+        },
+        include: {
+          Carcasses: {
+            include: {
+              CarcasseIntermediaire: true,
+            },
+          },
+          CarcasseIntermediaire: {
+            orderBy: [{ prise_en_charge_at: Prisma.SortOrder.desc }, { created_at: Prisma.SortOrder.desc }],
+          },
+        },
+      });
+
+      // 2. Collect all unique user/entity IDs from FEIs + CarcasseIntermediaire
+      const userIds = new Set<string>();
+      const entityIds = new Set<string>();
+
+      for (const fei of feis) {
+        if (fei.examinateur_initial_user_id) userIds.add(fei.examinateur_initial_user_id);
+        if (fei.premier_detenteur_user_id) userIds.add(fei.premier_detenteur_user_id);
+        if (fei.fei_current_owner_user_id) userIds.add(fei.fei_current_owner_user_id);
+        if (fei.fei_next_owner_user_id) userIds.add(fei.fei_next_owner_user_id);
+        if (fei.fei_next_owner_sous_traite_by_user_id) userIds.add(fei.fei_next_owner_sous_traite_by_user_id);
+        if (fei.svi_user_id) userIds.add(fei.svi_user_id);
+
+        if (fei.premier_detenteur_entity_id) entityIds.add(fei.premier_detenteur_entity_id);
+        if (fei.premier_detenteur_depot_entity_id) entityIds.add(fei.premier_detenteur_depot_entity_id);
+        if (fei.fei_current_owner_entity_id) entityIds.add(fei.fei_current_owner_entity_id);
+        if (fei.fei_next_owner_entity_id) entityIds.add(fei.fei_next_owner_entity_id);
+        if (fei.fei_next_owner_sous_traite_by_entity_id)
+          entityIds.add(fei.fei_next_owner_sous_traite_by_entity_id);
+        if (fei.svi_entity_id) entityIds.add(fei.svi_entity_id);
+
+        for (const ci of fei.CarcasseIntermediaire) {
+          if (ci.intermediaire_user_id) userIds.add(ci.intermediaire_user_id);
+          if (ci.intermediaire_entity_id) entityIds.add(ci.intermediaire_entity_id);
+        }
+      }
+
+      // 3. Batch-fetch all referenced users and entities
+      const [users, entities] = await Promise.all([
+        userIds.size > 0
+          ? prisma.user.findMany({ where: { id: { in: [...userIds] } }, select: userFeiSelect })
+          : [],
+        entityIds.size > 0 ? prisma.entity.findMany({ where: { id: { in: [...entityIds] } } }) : [],
+      ]);
+
+      res.status(200).send({
+        ok: true,
+        data: {
+          feis,
+          users,
+          entities,
+        },
+        error: '',
+      });
+    }
+  )
+);
+
+export interface SaveFeiResult {
+  savedFei: FeiPopulated;
+  existingFei: FeiPopulated | null;
+  isDeleted: boolean;
+}
+
+const feiBodyZodSchema = z.object({
+  date_mise_a_mort: z.string().optional().nullable(),
+  commune_mise_a_mort: z.string().optional().nullable(),
+  heure_mise_a_mort_premiere_carcasse: z.string().optional().nullable(),
+  heure_evisceration_derniere_carcasse: z.string().optional().nullable(),
+  created_by_user_id: z.string().optional().nullable(),
+  creation_context: z.string().optional().nullable(),
+  resume_nombre_de_carcasses: z.string().optional().nullable(),
+  automatic_closed_at: z.string().optional().nullable(),
+  examinateur_initial_offline: z.boolean().optional().nullable(),
+  examinateur_initial_user_id: z.string().optional().nullable(),
+  examinateur_initial_approbation_mise_sur_le_marche: z.boolean().optional().nullable(),
+  examinateur_initial_date_approbation_mise_sur_le_marche: z.string().optional().nullable(),
+  consommateur_final_usage_domestique: z.string().optional().nullable(),
+  premier_detenteur_offline: z.boolean().optional().nullable(),
+  premier_detenteur_user_id: z.string().optional().nullable(),
+  premier_detenteur_entity_id: z.string().optional().nullable(),
+  premier_detenteur_name_cache: z.string().optional().nullable(),
+  premier_detenteur_depot_type: z.string().optional().nullable(),
+  premier_detenteur_depot_entity_id: z.string().optional().nullable(),
+  premier_detenteur_depot_entity_name_cache: z.string().optional().nullable(),
+  premier_detenteur_depot_ccg_at: z.string().optional().nullable(),
+  premier_detenteur_transport_type: z.string().optional().nullable(),
+  premier_detenteur_transport_date: z.string().optional().nullable(),
+  premier_detenteur_prochain_detenteur_role_cache: z.string().optional().nullable(),
+  premier_detenteur_prochain_detenteur_id_cache: z.string().optional().nullable(),
+  intermediaire_closed_at: z.string().optional().nullable(),
+  intermediaire_closed_by_user_id: z.string().optional().nullable(),
+  intermediaire_closed_by_entity_id: z.string().optional().nullable(),
+  latest_intermediaire_user_id: z.string().optional().nullable(),
+  latest_intermediaire_entity_id: z.string().optional().nullable(),
+  latest_intermediaire_name_cache: z.string().optional().nullable(),
+  svi_assigned_at: z.string().optional().nullable(),
+  svi_entity_id: z.string().optional().nullable(),
+  svi_user_id: z.string().optional().nullable(),
+  svi_closed_at: z.string().optional().nullable(),
+  svi_closed_by_user_id: z.string().optional().nullable(),
+  fei_current_owner_user_id: z.string().optional().nullable(),
+  fei_current_owner_user_name_cache: z.string().optional().nullable(),
+  fei_current_owner_entity_id: z.string().optional().nullable(),
+  fei_current_owner_entity_name_cache: z.string().optional().nullable(),
+  fei_current_owner_role: z.string().optional().nullable(),
+  fei_next_owner_wants_to_sous_traite: z.boolean().optional().nullable(),
+  fei_next_owner_sous_traite_at: z.string().optional().nullable(),
+  fei_next_owner_sous_traite_by_user_id: z.string().optional().nullable(),
+  fei_next_owner_sous_traite_by_entity_id: z.string().optional().nullable(),
+  fei_next_owner_user_id: z.string().optional().nullable(),
+  fei_next_owner_user_name_cache: z.string().optional().nullable(),
+  fei_next_owner_entity_id: z.string().optional().nullable(),
+  fei_next_owner_entity_name_cache: z.string().optional().nullable(),
+  fei_next_owner_role: z.string().optional().nullable(),
+  fei_prev_owner_user_id: z.string().optional().nullable(),
+  fei_prev_owner_entity_id: z.string().optional().nullable(),
+  fei_prev_owner_role: z.string().optional().nullable(),
+});
+export async function saveFei(
+  numero: string,
+  body: Prisma.FeiUncheckedCreateInput,
+  user: User
+): Promise<SaveFeiResult> {
+  let result = feiBodyZodSchema.safeParse(body);
+  if (!result.success) {
+    throw new Error(result.error.message);
+  }
+  let existingFei = await prisma.fei.findUnique({
+    where: { numero },
+    include: feiPopulatedInclude,
+  });
+
+  if (!existingFei) {
+    const isExaminateurInitial =
+      user.roles.includes(UserRoles.CHASSEUR) && !!user.numero_cfei && !!user.activated;
+    if (!isExaminateurInitial) {
+      capture(new Error('Tentative de hack: seul un examinateur initial peut créer une fiche'), {
+        extra: {
+          body: body,
+          feiNumero: numero,
+        },
+        user,
+      });
+      throw new Error('Seul un examinateur initial peut créer une fiche');
+    }
+  }
+
+  if (existingFei?.deleted_at) {
+    return { savedFei: existingFei, existingFei, isDeleted: true };
+  }
+
+  if (body.deleted_at) {
+    if (!existingFei) {
+      throw new Error('Fei not found');
+    }
+    const canDelete =
+      user.isZacharieAdmin ||
+      (user.roles.includes(UserRoles.CHASSEUR) && existingFei.examinateur_initial_user_id === user.id) ||
+      (user.roles.includes(UserRoles.CHASSEUR) && existingFei.fei_current_owner_user_id === user.id);
+    if (!canDelete) {
+      throw new Error('Unauthorized');
+    }
+    const deletedFei = await prisma.fei.update({
+      where: { numero },
+      data: { deleted_at: body.deleted_at },
+      include: feiPopulatedInclude,
+    });
+    await prisma.carcasse.updateMany({
+      where: { fei_numero: numero },
+      data: { deleted_at: body.deleted_at },
+    });
+    await prisma.carcasseIntermediaire.updateMany({
+      where: { fei_numero: numero },
+      data: { deleted_at: body.deleted_at },
+    });
+    return { savedFei: deletedFei, existingFei, isDeleted: true };
+  }
+
+  const nextFei: Prisma.FeiUncheckedUpdateInput = {
+    is_synced: true,
+  };
+
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.date_mise_a_mort)) {
+    nextFei.date_mise_a_mort = body.date_mise_a_mort || null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.consommateur_final_usage_domestique)) {
+    nextFei.consommateur_final_usage_domestique = body.consommateur_final_usage_domestique
+      ? sanitize(body.consommateur_final_usage_domestique as string)
+      : null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.creation_context)) {
+    const contextSlug = body.creation_context;
+    if (contextSlug) {
+      if (contextSlug !== 'zacharie') {
+        const apiKey = await prisma.apiKey.findFirst({
+          where: { slug_for_context: contextSlug },
+        });
+        if (!apiKey) {
+          throw new Error('Invalid context slug');
+        }
+      }
+      nextFei.creation_context = sanitize(contextSlug as string);
+    }
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.commune_mise_a_mort)) {
+    nextFei.commune_mise_a_mort = body.commune_mise_a_mort
+      ? sanitize(body.commune_mise_a_mort as string)
+      : null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse)) {
+    nextFei.heure_mise_a_mort_premiere_carcasse = body.heure_mise_a_mort_premiere_carcasse
+      ? sanitize(body.heure_mise_a_mort_premiere_carcasse as string)
+      : null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse)) {
+    nextFei.heure_evisceration_derniere_carcasse = body.heure_evisceration_derniere_carcasse
+      ? sanitize(body.heure_evisceration_derniere_carcasse as string)
+      : null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.created_by_user_id)) {
+    nextFei.created_by_user_id = body.created_by_user_id ? sanitize(body.created_by_user_id as string) : null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.resume_nombre_de_carcasses)) {
+    nextFei.resume_nombre_de_carcasses = body.resume_nombre_de_carcasses || null;
+  }
+
+  /*
+  *
+  *
+  * *
+
+  Examinateur initial
+
+  */
+
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.examinateur_initial_user_id)) {
+    nextFei.examinateur_initial_user_id = body.examinateur_initial_user_id
+      ? sanitize(body.examinateur_initial_user_id as string)
+      : null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.examinateur_initial_offline)) {
+    nextFei.examinateur_initial_offline = body.examinateur_initial_offline || null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.examinateur_initial_approbation_mise_sur_le_marche)) {
+    nextFei.examinateur_initial_approbation_mise_sur_le_marche =
+      body.examinateur_initial_approbation_mise_sur_le_marche || null;
+  }
+  if (
+    body.hasOwnProperty(Prisma.FeiScalarFieldEnum.examinateur_initial_date_approbation_mise_sur_le_marche)
+  ) {
+    nextFei.examinateur_initial_date_approbation_mise_sur_le_marche =
+      body.examinateur_initial_date_approbation_mise_sur_le_marche || null;
+  }
+
+  /*
+  *
+  *
+  * *
+
+  Premier détenteur
+
+  */
+
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id)) {
+    nextFei.premier_detenteur_user_id = body.premier_detenteur_user_id
+      ? sanitize(body.premier_detenteur_user_id as string)
+      : null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_offline)) {
+    nextFei.premier_detenteur_offline = body.premier_detenteur_offline || null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_entity_id)) {
+    nextFei.premier_detenteur_entity_id = body.premier_detenteur_entity_id
+      ? sanitize(body.premier_detenteur_entity_id as string)
+      : null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_name_cache)) {
+    nextFei.premier_detenteur_name_cache = body.premier_detenteur_name_cache
+      ? sanitize(body.premier_detenteur_name_cache as string)
+      : null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id)) {
+    nextFei.premier_detenteur_depot_entity_id = body.premier_detenteur_depot_entity_id
+      ? sanitize(body.premier_detenteur_depot_entity_id as string)
+      : null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_name_cache)) {
+    nextFei.premier_detenteur_depot_entity_name_cache = body.premier_detenteur_depot_entity_name_cache
+      ? sanitize(body.premier_detenteur_depot_entity_name_cache as string)
+      : null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_depot_type)) {
+    nextFei.premier_detenteur_depot_type = body.premier_detenteur_depot_type || null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_depot_ccg_at)) {
+    nextFei.premier_detenteur_depot_ccg_at = body.premier_detenteur_depot_ccg_at || null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_transport_type)) {
+    nextFei.premier_detenteur_transport_type = body.premier_detenteur_transport_type || null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_transport_date)) {
+    nextFei.premier_detenteur_transport_date = body.premier_detenteur_transport_date || null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_prochain_detenteur_role_cache)) {
+    nextFei.premier_detenteur_prochain_detenteur_role_cache =
+      body.premier_detenteur_prochain_detenteur_role_cache || null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache)) {
+    nextFei.premier_detenteur_prochain_detenteur_id_cache = body.premier_detenteur_prochain_detenteur_id_cache
+      ? sanitize(body.premier_detenteur_prochain_detenteur_id_cache as string)
+      : null;
+  }
+
+  /*
+*
+*
+* *
+
+Responsabilités
+
+*/
+  /*  Current Owner */
+
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_current_owner_user_id)) {
+    nextFei.fei_current_owner_user_id = body.fei_current_owner_user_id
+      ? sanitize(body.fei_current_owner_user_id as string)
+      : null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_current_owner_user_name_cache)) {
+    nextFei.fei_current_owner_user_name_cache = body.fei_current_owner_user_name_cache
+      ? sanitize(body.fei_current_owner_user_name_cache as string)
+      : null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_current_owner_entity_id)) {
+    nextFei.fei_current_owner_entity_id = body.fei_current_owner_entity_id
+      ? sanitize(body.fei_current_owner_entity_id as string)
+      : null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_current_owner_entity_name_cache)) {
+    nextFei.fei_current_owner_entity_name_cache = body.fei_current_owner_entity_name_cache
+      ? sanitize(body.fei_current_owner_entity_name_cache as string)
+      : null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_current_owner_role)) {
+    nextFei.fei_current_owner_role = body.fei_current_owner_role || null;
+  }
+  /* Sous-traitance */
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_next_owner_wants_to_sous_traite)) {
+    nextFei.fei_next_owner_wants_to_sous_traite = body.fei_next_owner_wants_to_sous_traite || null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_next_owner_sous_traite_at)) {
+    nextFei.fei_next_owner_sous_traite_at = body.fei_next_owner_sous_traite_at || null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_next_owner_sous_traite_by_user_id)) {
+    nextFei.fei_next_owner_sous_traite_by_user_id = body.fei_next_owner_sous_traite_by_user_id
+      ? sanitize(body.fei_next_owner_sous_traite_by_user_id as string)
+      : null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_next_owner_sous_traite_by_entity_id)) {
+    nextFei.fei_next_owner_sous_traite_by_entity_id = body.fei_next_owner_sous_traite_by_entity_id
+      ? sanitize(body.fei_next_owner_sous_traite_by_entity_id as string)
+      : null;
+  }
+  /*  Next Owner */
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_next_owner_user_id)) {
+    nextFei.fei_next_owner_user_id = body.fei_next_owner_user_id
+      ? sanitize(body.fei_next_owner_user_id as string)
+      : null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_next_owner_user_name_cache)) {
+    nextFei.fei_next_owner_user_name_cache = body.fei_next_owner_user_name_cache
+      ? sanitize(body.fei_next_owner_user_name_cache as string)
+      : null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_id)) {
+    nextFei.fei_next_owner_entity_id = body.fei_next_owner_entity_id
+      ? sanitize(body.fei_next_owner_entity_id as string)
+      : null;
+    if (body.fei_next_owner_entity_id) {
+      const nextRelation: Prisma.EntityAndUserRelationsUncheckedCreateInput = {
+        entity_id: body.fei_next_owner_entity_id,
+        owner_id: user.id,
+        relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+        deleted_at: null,
+      };
+      const existingRelation = await prisma.entityAndUserRelations.findFirst({
+        where: nextRelation,
+      });
+      if (!existingRelation) {
+        await prisma.entityAndUserRelations.create({ data: nextRelation });
+      }
+    }
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_next_owner_entity_name_cache)) {
+    nextFei.fei_next_owner_entity_name_cache = body.fei_next_owner_entity_name_cache
+      ? sanitize(body.fei_next_owner_entity_name_cache as string)
+      : null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_next_owner_role)) {
+    nextFei.fei_next_owner_role = body.fei_next_owner_role || null;
+  }
+  /*  Prev Owner */
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_prev_owner_user_id)) {
+    nextFei.fei_prev_owner_user_id = body.fei_prev_owner_user_id
+      ? sanitize(body.fei_prev_owner_user_id as string)
+      : null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_prev_owner_entity_id)) {
+    nextFei.fei_prev_owner_entity_id = body.fei_prev_owner_entity_id
+      ? sanitize(body.fei_prev_owner_entity_id as string)
+      : null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_prev_owner_role)) {
+    nextFei.fei_prev_owner_role = body.fei_prev_owner_role || null;
+  }
+
+  /*
+*
+*
+* *
+
+Intermédiaire
+
+*/
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.intermediaire_closed_at)) {
+    nextFei.intermediaire_closed_at = body.intermediaire_closed_at || null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.intermediaire_closed_by_user_id)) {
+    nextFei.intermediaire_closed_by_user_id = body.intermediaire_closed_by_user_id
+      ? sanitize(body.intermediaire_closed_by_user_id as string)
+      : null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.intermediaire_closed_by_entity_id)) {
+    nextFei.intermediaire_closed_by_entity_id = body.intermediaire_closed_by_entity_id
+      ? sanitize(body.intermediaire_closed_by_entity_id as string)
+      : null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.latest_intermediaire_user_id)) {
+    nextFei.latest_intermediaire_user_id = body.latest_intermediaire_user_id
+      ? sanitize(body.latest_intermediaire_user_id as string)
+      : null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.latest_intermediaire_entity_id)) {
+    nextFei.latest_intermediaire_entity_id = body.latest_intermediaire_entity_id
+      ? sanitize(body.latest_intermediaire_entity_id as string)
+      : null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.latest_intermediaire_name_cache)) {
+    nextFei.latest_intermediaire_name_cache = body.latest_intermediaire_name_cache
+      ? sanitize(body.latest_intermediaire_name_cache as string)
+      : null;
+  }
+
+  /*
+*
+*
+* *
+
+SVI
+
+*/
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.svi_closed_at)) {
+    nextFei.svi_closed_at = body.svi_closed_at || null;
+    if (body.svi_closed_at) nextFei.svi_closed_by_user_id = user.id;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.svi_assigned_at)) {
+    nextFei.svi_assigned_at = body.svi_assigned_at || null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.svi_entity_id)) {
+    nextFei.svi_entity_id = body.svi_entity_id ? sanitize(body.svi_entity_id as string) : null;
+  }
+  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.svi_user_id)) {
+    nextFei.svi_user_id = body.svi_user_id ? sanitize(body.svi_user_id as string) : null;
+  }
+
+  const savedFei = existingFei
+    ? await prisma.fei.update({
+        where: { numero },
+        data: nextFei,
+        include: feiPopulatedInclude,
+      })
+    : await prisma.fei.create({
+        data: {
+          ...(nextFei as Prisma.FeiUncheckedCreateInput),
+          numero,
+          created_by_user_id: user.id,
+        },
+        include: feiPopulatedInclude,
+      });
+
+  if (!existingFei) {
+    existingFei = savedFei;
+  }
+
+  return { savedFei, existingFei, isDeleted: false };
+}
+
+router.post(
+  '/:fei_numero',
+  passport.authenticate('user', { session: false, failWithError: true }),
+  catchErrors(
+    async (req: RequestWithUser, res: express.Response<FeiResponse>, next: express.NextFunction) => {
+      const body: Prisma.FeiUncheckedCreateInput = req.body;
+      const user = req.user;
+      const feiNumero = req.params.fei_numero;
+      if (!user.activated) {
+        res.status(400).send({
+          ok: false,
+          data: { fei: null, users: [], entities: [] },
+          error: "Le compte n'est pas activé",
+        });
+        return;
+      }
+      if (!feiNumero) {
+        res.status(400).send({
+          ok: false,
+          data: { fei: null, users: [], entities: [] },
+          error: 'Le numéro de fiche est obligatoire',
+        });
+        return;
+      }
+
+      try {
+        const { savedFei, existingFei, isDeleted } = await saveFei(feiNumero, body, user);
+
+        if (!isDeleted) {
+          await runFeiUpdateSideEffects(existingFei, savedFei, user);
+        }
+
+        res.status(200).send({
+          ok: true,
+          data: {
+            fei: savedFei,
+            users: [],
+            entities: [],
+          },
+          error: '',
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        const status = message === 'Fei not found' ? 404 : 400;
+        res.status(status).send({
+          ok: false,
+          data: { fei: null, users: [], entities: [] },
+          error: message,
+        });
+      }
+    }
+  )
+);
+
+router.get(
+  '/done',
+  passport.authenticate('user', { session: false }),
+  catchErrors(
+    async (req: express.Request, res: express.Response<FeisDoneResponse>, next: express.NextFunction) => {
+      const user = req.user!;
+      if (!user.activated) {
+        res.status(400).send({
+          ok: false,
+          data: { user: null, feisDone: [] },
+          error: "Le compte n'est pas activé",
+        });
+        return;
+      }
+      // if (!user.onboarded_at) {
+      //   res.status(200).send({
+      //     ok: true,
+      //     data: {
+      //       user: null,
+      //       feisDone: [],
+      //     },
+      //     error: '',
+      //   });
+      //   return;
+      // }
+
+      const feisDone = await prisma.fei.findMany({
+        where: {
+          deleted_at: null,
+          AND: [
+            {
+              OR: [{ svi_assigned_at: { not: null } }, { intermediaire_closed_at: { not: null } }],
+              // OR: [{ automatic_closed_at: { not: null } }, { svi_closed_at: { not: null } }],
+            },
+            {
+              OR: [
+                { examinateur_initial_user_id: user.id },
+                {
+                  premier_detenteur_user_id: user.id,
+                },
+                {
+                  FeiPremierDetenteurEntity: {
+                    EntityRelationsWithUsers: {
+                      some: {
+                        owner_id: user.id,
+                        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+                        status: {
+                          in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
+                        },
+                      },
+                    },
+                  },
+                },
+                {
+                  FeiSoustraiteByEntity: {
+                    EntityRelationsWithUsers: {
+                      some: {
+                        owner_id: user.id,
+                        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+                        status: {
+                          in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
+                        },
+                      },
+                    },
+                  },
+                },
+                { svi_user_id: user.id },
+                {
+                  CarcasseIntermediaire: {
+                    some: {
+                      intermediaire_user_id: user.id,
+                    },
+                  },
+                },
+                {
+                  CarcasseIntermediaire: {
+                    some: {
+                      CarcasseIntermediaireEntity: {
+                        EntityRelationsWithUsers: {
+                          some: {
+                            owner_id: user.id,
+                            relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+                            status: {
+                              in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+                {
+                  FeiSviEntity: {
+                    EntityRelationsWithUsers: {
+                      some: {
+                        owner_id: user.id,
+                        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+                        status: {
+                          in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
+                        },
+                      },
+                    },
+                  },
+                },
+              ],
+            },
+          ],
+        },
+        // select: feiDoneSelect,
+        include: {
+          CarcasseIntermediaire: true,
+        },
+        orderBy: {
+          updated_at: 'desc',
+        },
+      });
+
+      res.status(200).send({
+        ok: true,
+        data: {
+          user,
+          feisDone: feisDone.sort((a, b) => {
+            const aDate =
+              a.automatic_closed_at ||
+              a.intermediaire_closed_at ||
+              a.svi_closed_at ||
+              a.examinateur_initial_date_approbation_mise_sur_le_marche;
+            const bDate =
+              b.automatic_closed_at ||
+              b.intermediaire_closed_at ||
+              b.svi_closed_at ||
+              b.examinateur_initial_date_approbation_mise_sur_le_marche;
+            return bDate < aDate ? -1 : 1;
+          }),
+        },
+        error: '',
+      });
+
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { last_seen_at: new Date() },
+      });
+
+      return;
+    }
+  )
+);
+
+router.get(
+  '/:fei_numero',
+  passport.authenticate('user', { session: false }),
+  catchErrors(
+    async (req: express.Request, res: express.Response<FeiResponse>, next: express.NextFunction) => {
+      if (!req.user.activated) {
+        res.status(400).send({
+          ok: false,
+          data: { fei: null, users: [], entities: [] },
+          error: "Le compte n'est pas activé",
+        });
+        return;
+      }
+      const fei = await prisma.fei.findUnique({
+        where: {
+          numero: req.params.fei_numero,
+        },
+        include: {
+          Carcasses: {
+            include: {
+              CarcasseIntermediaire: true,
+            },
+          },
+          CarcasseIntermediaire: {
+            orderBy: [{ prise_en_charge_at: Prisma.SortOrder.desc }, { created_at: Prisma.SortOrder.desc }],
+          },
+        },
+      });
+
+      if (!fei) {
+        res
+          .status(404)
+          .send({ ok: false, data: { fei: null, users: [], entities: [] }, error: 'Unauthorized' });
+        return;
+      }
+
+      const userIds = new Set<string>();
+      const entityIds = new Set<string>();
+
+      if (fei.examinateur_initial_user_id) userIds.add(fei.examinateur_initial_user_id);
+      if (fei.premier_detenteur_user_id) userIds.add(fei.premier_detenteur_user_id);
+      if (fei.fei_current_owner_user_id) userIds.add(fei.fei_current_owner_user_id);
+      if (fei.fei_next_owner_user_id) userIds.add(fei.fei_next_owner_user_id);
+      if (fei.fei_next_owner_sous_traite_by_user_id) userIds.add(fei.fei_next_owner_sous_traite_by_user_id);
+      if (fei.svi_user_id) userIds.add(fei.svi_user_id);
+
+      if (fei.premier_detenteur_entity_id) entityIds.add(fei.premier_detenteur_entity_id);
+      if (fei.premier_detenteur_depot_entity_id) entityIds.add(fei.premier_detenteur_depot_entity_id);
+      if (fei.fei_current_owner_entity_id) entityIds.add(fei.fei_current_owner_entity_id);
+      if (fei.fei_next_owner_entity_id) entityIds.add(fei.fei_next_owner_entity_id);
+      if (fei.fei_next_owner_sous_traite_by_entity_id)
+        entityIds.add(fei.fei_next_owner_sous_traite_by_entity_id);
+      if (fei.svi_entity_id) entityIds.add(fei.svi_entity_id);
+
+      for (const ci of fei.CarcasseIntermediaire) {
+        if (ci.intermediaire_user_id) userIds.add(ci.intermediaire_user_id);
+        if (ci.intermediaire_entity_id) entityIds.add(ci.intermediaire_entity_id);
+      }
+
+      const [users, entities] = await Promise.all([
+        userIds.size > 0 ? prisma.user.findMany({ where: { id: { in: [...userIds] } } }) : [],
+        entityIds.size > 0 ? prisma.entity.findMany({ where: { id: { in: [...entityIds] } } }) : [],
+      ]);
+
+      res.status(200).send({
+        ok: true,
+        data: {
+          fei,
+          users,
+          entities,
+        },
+        error: '',
+      });
+    }
+  )
+);
+
+router.get(
+  '/',
+  passport.authenticate('user', { session: false }),
+  catchErrors(
+    async (req: express.Request, res: express.Response<FeisResponse>, next: express.NextFunction) => {
+      const user = req.user!;
+      if (!req.user.activated) {
+        res.status(400).send({
+          ok: false,
+          data: {
+            user: req.user,
+            feisUnderMyResponsability: [],
+            feisToTake: [],
+            feisOngoing: [],
+            feisDone: [],
+          },
+          error: "Le compte n'est pas activé",
+        });
+        return;
+      }
+      // if (!user?.onboarded_at) {
+      //   res.status(200).send({
+      //     ok: true,
+      //     data: {
+      //       user: null,
+      //       feisUnderMyResponsability: [],
+      //       feisToTake: [],
+      //       feisOngoing: [],
+      //       feisDone: [],
+      //     },
+      //     error: 'Not onboarded',
+      //   });
+      //   return;
+      // }
+      // Pre-fetch entity IDs the user works for (used in carcasse-level queries)
+      const userEntityRelations = await prisma.entityAndUserRelations.findMany({
+        where: {
+          owner_id: user.id,
+          relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+          status: { in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER] },
+        },
+        select: { entity_id: true },
+      });
+      const userEntityIds = userEntityRelations.map((r) => r.entity_id);
+
+      const feisUnderMyResponsability = await prisma.fei.findMany({
+        where: {
+          // deleted_at: null,
+          automatic_closed_at: null,
+          svi_closed_at: null,
+          svi_assigned_at: null,
+          intermediaire_closed_at: null,
+          OR: [
+            // Case 1: A carcasse where current owner is me and no next owner
+            {
+              Carcasses: {
+                some: {
+                  current_owner_user_id: user.id,
+                  next_owner_user_id: null,
+                  next_owner_entity_id: null,
+                },
+              },
+            },
+            // Case 2: A carcasse where current owner entity is one I work for and no next owner
+            ...(userEntityIds.length > 0
+              ? [
+                  {
+                    Carcasses: {
+                      some: {
+                        current_owner_entity_id: { in: userEntityIds },
+                        next_owner_user_id: null,
+                        next_owner_entity_id: null,
+                      },
+                    },
+                  },
+                ]
+              : []),
+            // Case 3: Fallback to FEI-level for FEIs with no carcasses yet (e.g. just created)
+            {
+              Carcasses: { none: {} },
+              fei_current_owner_user_id: user.id,
+              fei_next_owner_user_id: null,
+              fei_next_owner_entity_id: null,
+            },
+            ...(userEntityIds.length > 0
+              ? [
+                  {
+                    Carcasses: { none: {} },
+                    fei_current_owner_entity_id: { in: userEntityIds },
+                    fei_next_owner_user_id: null,
+                    fei_next_owner_entity_id: null,
+                  },
+                ]
+              : []),
+          ],
+        },
+        include: {
+          CarcasseIntermediaire: true,
+        },
+        orderBy: {
+          updated_at: 'desc',
+        },
+      });
+
+      const feisToTake = await prisma.fei.findMany({
+        where: {
+          // deleted_at: null,
+          numero: { notIn: feisUnderMyResponsability.map((fei) => fei.numero) },
+          svi_assigned_at: null,
+          intermediaire_closed_at: null,
+          OR: [
+            // Case 1: A carcasse where next owner is me
+            {
+              Carcasses: {
+                some: {
+                  next_owner_user_id: user.id,
+                },
+              },
+            },
+            // Case 2: A carcasse where next owner entity is one I work for
+            ...(userEntityIds.length > 0
+              ? [
+                  {
+                    Carcasses: {
+                      some: {
+                        next_owner_entity_id: { in: userEntityIds },
+                      },
+                    },
+                  },
+                ]
+              : []),
+          ],
+        },
+        include: {
+          CarcasseIntermediaire: true,
+        },
+        orderBy: {
+          updated_at: 'desc',
+        },
+      });
+
+      const feisOngoing = await prisma.fei.findMany({
+        where: {
+          // deleted_at: null,
+          svi_assigned_at: null,
+          intermediaire_closed_at: null,
+          numero: {
+            notIn: [
+              ...feisUnderMyResponsability.map((fei) => fei.numero),
+              ...feisToTake.map((fei) => fei.numero),
+            ],
+          },
+          OR: [
+            {
+              examinateur_initial_user_id: user.id,
+            },
+            {
+              premier_detenteur_user_id: user.id,
+              examinateur_initial_date_approbation_mise_sur_le_marche: { not: null },
+            },
+            {
+              examinateur_initial_date_approbation_mise_sur_le_marche: { not: null },
+              FeiPremierDetenteurEntity: {
+                EntityRelationsWithUsers: {
+                  some: {
+                    owner_id: user.id,
+                    relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+                    status: {
+                      in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
+                    },
+                  },
+                },
+              },
+            },
+            // Sous-traite at carcasse level
+            ...(userEntityIds.length > 0
+              ? [
+                  {
+                    Carcasses: {
+                      some: {
+                        next_owner_sous_traite_by_entity_id: { in: userEntityIds },
+                      },
+                    },
+                  },
+                ]
+              : []),
+            {
+              CarcasseIntermediaire: {
+                some: {
+                  intermediaire_user_id: user.id,
+                },
+              },
+            },
+            {
+              CarcasseIntermediaire: {
+                some: {
+                  CarcasseIntermediaireEntity: {
+                    EntityRelationsWithUsers: {
+                      some: {
+                        owner_id: user.id,
+                        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+                        status: {
+                          in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          ],
+        },
+        include: {
+          CarcasseIntermediaire: true,
+        },
+        orderBy: {
+          updated_at: 'desc',
+        },
+      });
+
+      const feisDone = await prisma.fei.findMany({
+        where: {
+          deleted_at: null,
+          AND: [
+            {
+              OR: [{ svi_assigned_at: { not: null } }, { intermediaire_closed_at: { not: null } }],
+            },
+            {
+              OR: [
+                { examinateur_initial_user_id: user.id },
+                {
+                  premier_detenteur_user_id: user.id,
+                },
+                {
+                  FeiPremierDetenteurEntity: {
+                    EntityRelationsWithUsers: {
+                      some: {
+                        owner_id: user.id,
+                        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+                        status: {
+                          in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
+                        },
+                      },
+                    },
+                  },
+                },
+                {
+                  FeiSoustraiteByEntity: {
+                    EntityRelationsWithUsers: {
+                      some: {
+                        owner_id: user.id,
+                        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+                        status: {
+                          in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
+                        },
+                      },
+                    },
+                  },
+                },
+                { svi_user_id: user.id },
+                {
+                  CarcasseIntermediaire: {
+                    some: {
+                      intermediaire_user_id: user.id,
+                    },
+                  },
+                },
+                {
+                  CarcasseIntermediaire: {
+                    some: {
+                      CarcasseIntermediaireEntity: {
+                        EntityRelationsWithUsers: {
+                          some: {
+                            owner_id: user.id,
+                            relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+                            status: {
+                              in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+                {
+                  FeiSviEntity: {
+                    EntityRelationsWithUsers: {
+                      some: {
+                        owner_id: user.id,
+                        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+                        status: {
+                          in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
+                        },
+                      },
+                    },
+                  },
+                },
+              ],
+            },
+          ],
+        },
+        include: {
+          CarcasseIntermediaire: true,
+        },
+        orderBy: {
+          updated_at: 'desc',
+        },
+      });
+
+      res.status(200).send({
+        ok: true,
+        data: {
+          user,
+          feisUnderMyResponsability,
+          feisToTake,
+          feisOngoing,
+          feisDone: feisDone.sort((a, b) => {
+            const aDate =
+              a.automatic_closed_at ||
+              a.intermediaire_closed_at ||
+              a.svi_closed_at ||
+              a.examinateur_initial_date_approbation_mise_sur_le_marche;
+            const bDate =
+              b.automatic_closed_at ||
+              b.intermediaire_closed_at ||
+              b.svi_closed_at ||
+              b.examinateur_initial_date_approbation_mise_sur_le_marche;
+            return bDate < aDate ? -1 : 1;
+          }),
+        },
+        error: '',
+      });
+    }
+  )
+);
+
+export default router;

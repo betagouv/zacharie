@@ -136,7 +136,7 @@ export interface FeisDoneResponse {
 export interface EntitiesWorkingForResponse {
   ok: true;
   data: {
-    allEntitiesByTypeAndId: EntitiesByTypeAndId;
+    allEntitiesByTypeAndId?: EntitiesByTypeAndId;
     userEntitiesByTypeAndId: EntitiesByTypeAndId;
   };
   error: '';
