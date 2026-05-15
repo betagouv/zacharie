@@ -25,6 +25,7 @@ import useExportCarcasses from '@app/utils/export-carcasses';
 import { getFeiAndCarcasseAndIntermediaireIdsFromCarcasse } from '@app/utils/get-carcasse-intermediaire-id';
 import { filterFeiIntermediaires } from '@app/utils/get-carcasses-intermediaires';
 import { computeFeiSteps } from '@app/utils/fei-steps';
+import type { FeiStepSimpleStatus } from '@app/types/fei-steps';
 import { useEntitiesIdsWorkingDirectlyFor } from '@app/utils/get-entity-relations';
 import { filterCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 
@@ -37,6 +38,14 @@ const columnsModal = createModal({
   id: 'etg-carcasses-columns',
   isOpenedByDefault: false,
 });
+
+const FEI_STATUS_OPTIONS: Array<FeiStepSimpleStatus> = ['À compléter', 'En cours', 'Clôturée'];
+
+const feiStatusColors: Record<FeiStepSimpleStatus, { bg: string; text: string }> = {
+  'À compléter': { bg: 'bg-[#FEE7FC]', text: 'text-[#6E445A]' },
+  'En cours': { bg: 'bg-[#FFECBD]', text: 'text-[#73603F]' },
+  Clôturée: { bg: 'bg-[#E8EDFF]', text: 'text-[#01008B]' },
+};
 
 const DEFAULT_VISIBLE_COLUMN_KEYS = [
   'numero_bracelet',
@@ -76,12 +85,24 @@ export default function EtgCarcasses() {
   const [itemsPerPage, setItemsPerPage] = useLocalStorage<number>('etg-carcasses-items-per-page', 50);
   const [filters, setFilters] = useLocalStorage<Array<CarcasseFilter>>('etg-carcasses-filters-preset', []);
 
-  const [quickFilterAComplete, setQuickFilterAComplete] = useLocalStorage<boolean>(
-    'etg-carcasses-quick-filter-a-completer',
-    false
+  const [quickFilterFeiStatuses, setQuickFilterFeiStatuses] = useLocalStorage<Array<FeiStepSimpleStatus>>(
+    'etg-carcasses-quick-filter-fei-statuses',
+    []
   );
   const [quickFilterCollecteurIds, setQuickFilterCollecteurIds] = useLocalStorage<Array<string>>(
     'etg-carcasses-quick-filter-collecteurs',
+    []
+  );
+  const [quickFilterEspeces, setQuickFilterEspeces] = useLocalStorage<Array<string>>(
+    'etg-carcasses-quick-filter-especes',
+    []
+  );
+  const [quickFilterStatuses, setQuickFilterStatuses] = useLocalStorage<Array<string>>(
+    'etg-carcasses-quick-filter-statuses',
+    []
+  );
+  const [quickFilterPremierDetenteurs, setQuickFilterPremierDetenteurs] = useLocalStorage<Array<string>>(
+    'etg-carcasses-quick-filter-premier-detenteurs',
     []
   );
   const [quickFilterBracelet, setQuickFilterBracelet] = useState('');
@@ -148,8 +169,39 @@ export default function EtgCarcasses() {
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [carcasseCollecteurIds, entities, usersById]);
 
+  const especeOptions = useMemo(() => {
+    const set = new Set<string>();
+    for (const carcasse of carcassesRegistry) {
+      if (carcasse.espece) set.add(carcasse.espece);
+    }
+    return Array.from(set).sort();
+  }, [carcassesRegistry]);
+
+  const statusOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const carcasse of carcassesRegistry) {
+      const key = carcasse.svi_carcasse_status ?? '__none__';
+      if (!map.has(key)) {
+        map.set(key, getCarcasseStatusLabel(carcasse));
+      }
+    }
+    return Array.from(map.entries())
+      .map(([id, label]) => ({ id, label }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [carcassesRegistry]);
+
+  const premierDetenteurOptions = useMemo(() => {
+    const set = new Set<string>();
+    for (const carcasse of carcassesRegistry) {
+      if (carcasse.fei_premier_detenteur_name_cache) {
+        set.add(carcasse.fei_premier_detenteur_name_cache);
+      }
+    }
+    return Array.from(set).sort();
+  }, [carcassesRegistry]);
+
   const feiSimpleStatusByNumero = useMemo(() => {
-    if (!quickFilterAComplete) return {};
+    if (quickFilterFeiStatuses.length === 0) return {};
     const result: Record<string, ReturnType<typeof computeFeiSteps>['simpleStatus']> = {};
     const uniqueFeiNumeros = new Set<string>();
     for (const carcasse of carcassesRegistry) {
@@ -171,7 +223,7 @@ export default function EtgCarcasses() {
     }
     return result;
   }, [
-    quickFilterAComplete,
+    quickFilterFeiStatuses,
     carcassesRegistry,
     feis,
     carcassesIntermediaireById,
@@ -192,8 +244,23 @@ export default function EtgCarcasses() {
           const ids = carcasseCollecteurIds[carcasse.zacharie_carcasse_id] ?? [];
           if (!ids.some((id) => quickFilterCollecteurIds.includes(id))) return false;
         }
-        if (quickFilterAComplete) {
-          if (feiSimpleStatusByNumero[carcasse.fei_numero] !== 'À compléter') return false;
+        if (quickFilterEspeces.length > 0) {
+          if (!carcasse.espece || !quickFilterEspeces.includes(carcasse.espece)) return false;
+        }
+        if (quickFilterStatuses.length > 0) {
+          const statusKey = carcasse.svi_carcasse_status ?? '__none__';
+          if (!quickFilterStatuses.includes(statusKey)) return false;
+        }
+        if (quickFilterPremierDetenteurs.length > 0) {
+          if (
+            !carcasse.fei_premier_detenteur_name_cache ||
+            !quickFilterPremierDetenteurs.includes(carcasse.fei_premier_detenteur_name_cache)
+          )
+            return false;
+        }
+        if (quickFilterFeiStatuses.length > 0) {
+          const feiStatus = feiSimpleStatusByNumero[carcasse.fei_numero];
+          if (!feiStatus || !quickFilterFeiStatuses.includes(feiStatus)) return false;
         }
         return true;
       })
@@ -220,7 +287,10 @@ export default function EtgCarcasses() {
     sortOrder,
     quickFilterBracelet,
     quickFilterCollecteurIds,
-    quickFilterAComplete,
+    quickFilterEspeces,
+    quickFilterStatuses,
+    quickFilterPremierDetenteurs,
+    quickFilterFeiStatuses,
     carcasseCollecteurIds,
     feiSimpleStatusByNumero,
   ]);
@@ -536,15 +606,21 @@ export default function EtgCarcasses() {
 
   const activeFilterCount =
     (quickFilterBracelet.trim() ? 1 : 0) +
-    (quickFilterAComplete ? 1 : 0) +
+    quickFilterFeiStatuses.length +
     quickFilterCollecteurIds.length +
+    quickFilterEspeces.length +
+    quickFilterStatuses.length +
+    quickFilterPremierDetenteurs.length +
     filters.length;
   const hasActiveFilters = activeFilterCount > 0;
 
   const clearAllFilters = () => {
     setQuickFilterBracelet('');
-    setQuickFilterAComplete(false);
+    setQuickFilterFeiStatuses([]);
     setQuickFilterCollecteurIds([]);
+    setQuickFilterEspeces([]);
+    setQuickFilterStatuses([]);
+    setQuickFilterPremierDetenteurs([]);
     setFilters([]);
   };
 
@@ -580,28 +656,47 @@ export default function EtgCarcasses() {
 
       <CollapsibleSection
         title="Statut fiche"
+        defaultOpen={false}
         badge={
-          quickFilterAComplete ? (
-            <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">1</span>
+          quickFilterFeiStatuses.length > 0 ? (
+            <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">
+              {quickFilterFeiStatuses.length}
+            </span>
           ) : undefined
         }
       >
-        <label className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-gray-50">
-          <input
-            type="checkbox"
-            checked={quickFilterAComplete}
-            className="checked:accent-action-high-blue-france h-4 w-4"
-            onChange={(e) => setQuickFilterAComplete(e.target.checked)}
-          />
-          <span className="inline-block rounded bg-[#FEE7FC] px-2 py-0.5 text-xs font-semibold text-[#6E445A] uppercase">
-            À compléter
-          </span>
-        </label>
+        <div className="flex flex-col gap-1.5">
+          {FEI_STATUS_OPTIONS.map((status) => (
+            <label
+              key={status}
+              className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-gray-50"
+            >
+              <input
+                type="checkbox"
+                checked={quickFilterFeiStatuses.includes(status)}
+                className="checked:accent-action-high-blue-france h-4 w-4"
+                onChange={() => {
+                  if (quickFilterFeiStatuses.includes(status)) {
+                    setQuickFilterFeiStatuses(quickFilterFeiStatuses.filter((s) => s !== status));
+                  } else {
+                    setQuickFilterFeiStatuses([...quickFilterFeiStatuses, status]);
+                  }
+                }}
+              />
+              <span
+                className={`inline-block rounded px-2 py-0.5 text-xs font-semibold uppercase ${feiStatusColors[status].bg} ${feiStatusColors[status].text}`}
+              >
+                {status}
+              </span>
+            </label>
+          ))}
+        </div>
       </CollapsibleSection>
 
       {collecteurOptions.length > 1 && (
         <CollapsibleSection
           title="Collecteur"
+          defaultOpen={false}
           badge={
             quickFilterCollecteurIds.length > 0 ? (
               <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">
@@ -631,6 +726,119 @@ export default function EtgCarcasses() {
                   }}
                 />
                 <span className="truncate text-sm">{option.name}</span>
+              </label>
+            ))}
+          </div>
+        </CollapsibleSection>
+      )}
+
+      {especeOptions.length > 1 && (
+        <CollapsibleSection
+          title="Espèce"
+          defaultOpen={false}
+          badge={
+            quickFilterEspeces.length > 0 ? (
+              <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">
+                {quickFilterEspeces.length}
+              </span>
+            ) : undefined
+          }
+        >
+          <div className="flex max-h-60 flex-col gap-1 overflow-y-auto">
+            {especeOptions.map((espece) => (
+              <label
+                key={espece}
+                className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-gray-50"
+              >
+                <input
+                  type="checkbox"
+                  checked={quickFilterEspeces.includes(espece)}
+                  className="checked:accent-action-high-blue-france h-4 w-4 shrink-0"
+                  onChange={() => {
+                    if (quickFilterEspeces.includes(espece)) {
+                      setQuickFilterEspeces(quickFilterEspeces.filter((v) => v !== espece));
+                    } else {
+                      setQuickFilterEspeces([...quickFilterEspeces, espece]);
+                    }
+                  }}
+                />
+                <span className="truncate text-sm">{espece}</span>
+              </label>
+            ))}
+          </div>
+        </CollapsibleSection>
+      )}
+
+      {statusOptions.length > 1 && (
+        <CollapsibleSection
+          title="Statut carcasse"
+          defaultOpen={false}
+          badge={
+            quickFilterStatuses.length > 0 ? (
+              <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">
+                {quickFilterStatuses.length}
+              </span>
+            ) : undefined
+          }
+        >
+          <div className="flex max-h-60 flex-col gap-1 overflow-y-auto">
+            {statusOptions.map((option) => (
+              <label
+                key={option.id}
+                className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-gray-50"
+              >
+                <input
+                  type="checkbox"
+                  checked={quickFilterStatuses.includes(option.id)}
+                  className="checked:accent-action-high-blue-france h-4 w-4 shrink-0"
+                  onChange={() => {
+                    if (quickFilterStatuses.includes(option.id)) {
+                      setQuickFilterStatuses(quickFilterStatuses.filter((v) => v !== option.id));
+                    } else {
+                      setQuickFilterStatuses([...quickFilterStatuses, option.id]);
+                    }
+                  }}
+                />
+                <span className="truncate text-sm">{option.label}</span>
+              </label>
+            ))}
+          </div>
+        </CollapsibleSection>
+      )}
+
+      {premierDetenteurOptions.length > 1 && (
+        <CollapsibleSection
+          title="Premier détenteur"
+          defaultOpen={false}
+          badge={
+            quickFilterPremierDetenteurs.length > 0 ? (
+              <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">
+                {quickFilterPremierDetenteurs.length}
+              </span>
+            ) : undefined
+          }
+        >
+          <div className="flex max-h-60 flex-col gap-1 overflow-y-auto">
+            {premierDetenteurOptions.map((name) => (
+              <label
+                key={name}
+                className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-gray-50"
+              >
+                <input
+                  type="checkbox"
+                  checked={quickFilterPremierDetenteurs.includes(name)}
+                  className="checked:accent-action-high-blue-france h-4 w-4 shrink-0"
+                  onChange={() => {
+                    if (quickFilterPremierDetenteurs.includes(name)) {
+                      setQuickFilterPremierDetenteurs(
+                        quickFilterPremierDetenteurs.filter((v) => v !== name)
+                      );
+                    } else {
+                      setQuickFilterPremierDetenteurs([...quickFilterPremierDetenteurs, name]);
+                    }
+                  }}
+                />
+                <span className="truncate text-sm">{name}</span>
               </label>
             ))}
           </div>
@@ -792,7 +1000,7 @@ export default function EtgCarcasses() {
   }
 
   return (
-    <div className="relative">
+    <div className="relative min-h-screen fr-background-alt--green-tilleul-verveine">
       <title>Carcasses | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
 
       <div className="fr-background-alt--blue-france sticky top-0 z-30 flex items-center justify-between px-4 py-2 md:hidden">
