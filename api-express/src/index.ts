@@ -206,6 +206,12 @@ app.post('/sentry-check', async (req, res) => {
   res.status(200).send({ ok: true, data: 'Sentry checked!' });
 });
 
+// Test-only DB reset endpoint, mounted only when NODE_ENV=test.
+if (process.env.NODE_ENV === 'test') {
+  const { default: testRouter } = await import('./controllers/test.ts');
+  app.use('/__test', testRouter);
+}
+
 // Public quiz endpoint (anonymous, no auth)
 app.use('/quiz-result', quizResultRouter);
 

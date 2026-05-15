@@ -407,7 +407,6 @@ describe('POST /user-entity/', () => {
     });
 
     test('CAN_HANDLE relation triggers Brevo integration', async () => {
-      // @ts-expect-error
       const { linkBrevoCompanyToContact } = await import('~/third-parties/brevo');
       vi.mocked(prisma.entity.findUnique).mockResolvedValue(testEntity as any);
       vi.mocked(prisma.entity.findFirst).mockResolvedValue(testEntity as any);
@@ -447,8 +446,6 @@ describe('POST /user-entity/', () => {
     });
 
     test('non-CAN_HANDLE relations do not trigger Brevo', async () => {
-      //
-      // @ts-expect-error
       const { linkBrevoCompanyToContact } = await import('~/third-parties/brevo');
       vi.mocked(prisma.entity.findFirst).mockResolvedValue(testEntity as any);
       // @ts-expect-error
@@ -486,7 +483,6 @@ describe('POST /user-entity/', () => {
     });
 
     test('REQUESTED relation sends notification to entity admins', async () => {
-      // @ts-expect-error
       const { default: sendNotification } = await import('~/service/notifications');
       vi.mocked(prisma.entity.findUnique).mockResolvedValue(testEntity as any);
       vi.mocked(prisma.entity.findFirst).mockResolvedValue(testEntity as any);
@@ -900,8 +896,6 @@ describe('DELETE /user-entity/', () => {
     });
 
     test('CAN_HANDLE deletion triggers Brevo unlink', async () => {
-      //
-      // @ts-expect-error
       const { unlinkBrevoCompanyToContact } = await import('~/third-parties/brevo');
       const existingRelation: Partial<EntityAndUserRelations> = {
         id: 'rel-1',
@@ -940,8 +934,6 @@ describe('DELETE /user-entity/', () => {
     });
 
     test('non-CAN_HANDLE deletion does not trigger Brevo', async () => {
-      //
-      // @ts-expect-error
       const { unlinkBrevoCompanyToContact } = await import('~/third-parties/brevo');
       const existingRelation: Partial<EntityAndUserRelations> = {
         id: 'rel-transmit',

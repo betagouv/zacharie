@@ -20,13 +20,16 @@ import prisma from '~/prisma';
 import { hashPassword } from '~/service/crypto';
 import createUserId from '~/utils/createUserId';
 
+// Accept zacharietest and per-worker variants like zacharietest_w1, zacharietest_w2…
+const TEST_DB_URI_PREFIX = 'postgres://postgres:postgres@localhost:5432/zacharietest';
+
 export async function populateDb(role?: FeiOwnerRole) {
   console.log('Populate db', process.env.NODE_ENV, process.env.POSTGRESQL_ADDON_URI);
   if (process.env.NODE_ENV !== 'test') {
     console.log('Not in test environment');
     return;
   }
-  if (process.env.POSTGRESQL_ADDON_URI !== 'postgres://postgres:postgres@localhost:5432/zacharietest') {
+  if (!process.env.POSTGRESQL_ADDON_URI?.startsWith(TEST_DB_URI_PREFIX)) {
     console.log('Not the test db 🤪');
     return;
   }
@@ -808,13 +811,20 @@ Christine
   console.log('Database populated successfully');
 }
 
-const withRole = process.argv.find((arg) => arg.includes('--role'));
-if (withRole) {
-  const roleArg = withRole?.split('=')[1];
-  console.log('Populate db with role', roleArg);
-  populateDb(roleArg as FeiOwnerRole);
-} else {
-  populateDb();
+// Only run as a script when invoked directly (tsx ./scripts/populate-test-db.ts),
+// not when imported by the API server.
+import { fileURLToPath } from 'url';
+const invokedAsScript = process.argv[1] && process.argv[1] === fileURLToPath(import.meta.url);
+
+if (invokedAsScript) {
+  const withRole = process.argv.find((arg) => arg.includes('--role'));
+  if (withRole) {
+    const roleArg = withRole?.split('=')[1];
+    console.log('Populate db with role', roleArg);
+    populateDb(roleArg as FeiOwnerRole);
+  } else {
+    populateDb();
+  }
 }
 
 const feiValidatedByExaminateur: Prisma.FeiUncheckedCreateInput = {
