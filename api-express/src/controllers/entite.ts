@@ -285,6 +285,11 @@ router.post(
   passport.authenticate('user', { session: false, failWithError: true }),
   catchErrors(async (req: RequestWithUser, res: express.Response, next: express.NextFunction) => {
     const user = req.user!;
+    if (!user.roles.includes(UserRoles.CHASSEUR)) {
+      const error = new Error('Seulement un chasseur peut créer une association de chasse');
+      res.status(400);
+      return next(error);
+    }
 
     const result = associationDeChasseSchema.safeParse(req.body);
     if (!result.success) {
@@ -490,6 +495,11 @@ router.post(
   passport.authenticate('user', { session: false, failWithError: true }),
   catchErrors(async (req: RequestWithUser, res: express.Response, next: express.NextFunction) => {
     const user = req.user!;
+    if (!user.roles.includes(UserRoles.CHASSEUR)) {
+      const error = new Error('Seulement un chasseur peut créer un CCG');
+      res.status(400);
+      return next(error);
+    }
 
     const result = ccgSchema.safeParse(req.body);
     if (!result.success) {
