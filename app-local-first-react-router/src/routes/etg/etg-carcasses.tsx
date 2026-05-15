@@ -4,6 +4,7 @@ import { UserRoles, FeiOwnerRole } from '@prisma/client';
 import useZustandStore from '@app/zustand/store';
 import { Pagination } from '@codegouvfr/react-dsfr/Pagination';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
+import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
 import { useMostFreshUser, refreshUser } from '@app/utils-offline/get-most-fresh-user';
 import TableFilterable from '@app/components/TableFilterable';
 import CollapsibleSection from '@app/components/CollapsibleSection';
@@ -513,6 +514,8 @@ export default function EtgCarcasses() {
   };
 
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const isAdvancedFiltersModalOpen = useIsModalOpen(advancedFiltersModal);
+  const isColumnsModalOpen = useIsModalOpen(columnsModal);
 
   const activeFilterCount =
     (quickFilterBracelet.trim() ? 1 : 0) +
@@ -922,12 +925,14 @@ export default function EtgCarcasses() {
           },
         ]}
       >
-        <Filters
-          onChange={setFilters}
-          base={filterableFields}
-          filters={filters}
-          saveInURLParams={false}
-        />
+        {isAdvancedFiltersModalOpen && (
+          <Filters
+            onChange={setFilters}
+            base={filterableFields}
+            filters={filters}
+            saveInURLParams={false}
+          />
+        )}
       </advancedFiltersModal.Component>
 
       <columnsModal.Component
@@ -940,6 +945,8 @@ export default function EtgCarcasses() {
           },
         ]}
       >
+        {isColumnsModalOpen && (
+          <>
         <div className="mb-3 flex flex-wrap gap-3 text-sm">
           <button
             type="button"
@@ -1060,6 +1067,8 @@ export default function EtgCarcasses() {
             )}
           </div>
         </div>
+          </>
+        )}
       </columnsModal.Component>
     </div>
   );
