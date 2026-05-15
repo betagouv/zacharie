@@ -846,6 +846,11 @@ router.post(
   passport.authenticate('user', { session: false, failWithError: true }),
   catchErrors(async (req: RequestWithUser, res: express.Response, next: express.NextFunction) => {
     const user = req.user!;
+    if (user.roles.includes(UserRoles.CHASSEUR)) {
+      const error = new Error('Un chasseur ne peut pas inviter un utilisateur à une entité');
+      res.status(400);
+      return next(error);
+    }
     let result = inviteUserBodySchema.safeParse(req.body);
     if (!result.success) {
       const error = new Error(result.error.message);
