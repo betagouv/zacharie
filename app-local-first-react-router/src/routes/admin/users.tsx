@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { Link } from 'react-router';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Select } from '@codegouvfr/react-dsfr/Select';
 import { Button } from '@codegouvfr/react-dsfr/Button';
@@ -10,9 +10,8 @@ import type { AdminUsersResponse, AdminOfficialCfeisResponse, OfficialCfei } fro
 import Chargement from '@app/components/Chargement';
 import { Tabs, type TabsProps } from '@codegouvfr/react-dsfr/Tabs';
 import API from '@app/services/api';
-import { clearCache } from '@app/services/indexed-db';
-import { refreshUser } from '@app/utils-offline/get-most-fresh-user';
-import { getUserOnboardingRoute } from '@app/utils/user-onboarded.client';
+
+import ConnexionButton from '@app/components/ConnexionButton';
 
 type CfeiValidationStatus = 'valid' | 'invalid' | 'missing';
 
@@ -24,7 +23,6 @@ export default function AdminUsers() {
   const [selectedCfeiStatus, setSelectedCfeiStatus] = useState<string>('');
   const [selectedCfeiValidation, setSelectedCfeiValidation] = useState<string>('');
   const [selectedOnboardingStatus, setSelectedOnboardingStatus] = useState<string>('');
-  const navigate = useNavigate();
 
   const officialCfeiMap = useMemo(() => {
     const map = new Map<string, OfficialCfei>();
@@ -273,6 +271,14 @@ export default function AdminUsers() {
                                 {role}
                               </Badge>
                             ))}
+                            {user.isZacharieAdmin && (
+                              <Badge
+                                severity="info"
+                                small
+                              >
+                                Admin
+                              </Badge>
+                            )}
                           </span>
                           {isChasseur && (
                             <span className="flex flex-col gap-0.5 text-xs">
@@ -371,30 +377,10 @@ export default function AdminUsers() {
                               Activer
                             </Button>
                           )}
-                          <form
-                            method="POST"
-                            onSubmit={async (event) => {
-                              event.preventDefault();
-                              await API.post({
-                                path: 'admin/user/connect-as',
-                                body: { email: user.email! },
-                              });
-                              await clearCache().then(() => {
-                                refreshUser('admin/user/connect-as').then((user) => {
-                                  if (user) {
-                                    navigate(getUserOnboardingRoute(user), { replace: true });
-                                  }
-                                });
-                              });
-                            }}
-                          >
-                            <button
-                              type="submit"
-                              className="text-action-high-blue-france text-center text-xs"
-                            >
-                              Connexion
-                            </button>
-                          </form>
+                          <ConnexionButton
+                            user={user}
+                            type="tertiary no outline"
+                          />
                         </span>
                       </td>
                     </tr>
