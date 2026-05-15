@@ -25,44 +25,12 @@ import { useMyCarcassesForFei } from '@app/utils/filter-my-carcasses';
 import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
 import { useSaveScroll } from '@app/services/useSaveScroll';
 import CardFiche from '@app/components/CardFiche';
+import CollapsibleSection from '@app/components/CollapsibleSection';
 import DropDownMenu from '@app/components/DropDownMenu';
 
 import { useFeiSteps, computeFeiSteps } from '@app/utils/fei-steps';
 import type { FeiWithIntermediaires } from '@api/src/types/fei';
 import { useEntitiesIdsWorkingDirectlyFor } from '@app/utils/get-entity-relations';
-
-function CollapsibleSection({
-  title,
-  children,
-  defaultOpen = true,
-  badge,
-}: {
-  title: string;
-  children: React.ReactNode;
-  defaultOpen?: boolean;
-  badge?: React.ReactNode;
-}) {
-  const [open, setOpen] = useState(defaultOpen);
-  return (
-    <div className="border-b border-gray-200 py-2">
-      <button
-        type="button"
-        className="flex w-full items-center justify-between py-1 text-left text-sm font-bold text-gray-800"
-        onClick={() => setOpen(!open)}
-      >
-        <span className="flex items-center gap-2">
-          {title}
-          {badge}
-        </span>
-        <span
-          className={`fr-icon--sm transition-transform ${open ? 'fr-icon-arrow-up-s-line' : 'fr-icon-arrow-down-s-line'}`}
-          aria-hidden="true"
-        />
-      </button>
-      {open && <div className="pt-2">{children}</div>}
-    </div>
-  );
-}
 
 async function loadData() {
   // FIXME: await syncData is useless, as syncData queues stuff - so there will be bugs
