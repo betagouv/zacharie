@@ -16,8 +16,6 @@ export default function CircuitCourtProfilEntreprise() {
   const [userEntitiesById, setUserEntitiesById] = useState<EntitiesById>({});
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const circuitCourtDone = Object.keys(userEntitiesById).length > 0;
-
   const [visibilityChecked, setVisibilityChecked] = useState(user.user_entities_vivible_checkbox === true);
 
   const navigate = useNavigate();
@@ -74,8 +72,6 @@ export default function CircuitCourtProfilEntreprise() {
               setRefreshKey={setRefreshKey}
               refreshKey={refreshKey}
               sectionLabel="Mon Entreprise"
-              selectLabel={!circuitCourtDone ? 'Sélectionnez une entreprise' : ''}
-              canChange={!circuitCourtDone}
               allEntitiesById={allEntitiesById}
               userEntitiesById={userEntitiesById}
             />

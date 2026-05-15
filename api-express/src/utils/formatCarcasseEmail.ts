@@ -162,7 +162,7 @@ export async function formatCarcasseManquanteOrRefusChasseurEmail(
   return [object, email.filter(Boolean).join('\n\n')];
 }
 
-export async function formatAutomaticClosingEmail(
+export async function formatAutomaticClosingEmailForChasseur(
   fei: Fei,
   carcasses: Carcasse[]
 ): Promise<[string, string]> {
@@ -195,7 +195,7 @@ export async function formatAutomaticClosingEmail(
     `Bilan de cette fiche:`,
     `- ${numberOfValidatedCarcasses} carcasses ont été acceptées`,
     `- ${numberOfRefusedCarcasses} carcasses ont été refusées`,
-    `Pour consulter le détail de la fiche, rendez-vous sur Zacharie : https://zacharie.beta.gouv.fr/app/tableau-de-bord/fei/${fei.numero}`,
+    `Pour consulter le détail de la fiche, rendez-vous sur Zacharie : https://zacharie.beta.gouv.fr/app/chasseur/fei/${fei.numero}`,
     `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur des saisies ou refus, merci de contacter l’établissement qui a traité votre fiche.`,
   ];
 

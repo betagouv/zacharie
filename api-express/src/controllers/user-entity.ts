@@ -191,6 +191,9 @@ router.post(
       if (relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
         await linkBrevoCompanyToContact(entity, req.user);
         if (relation.status === EntityRelationStatus.REQUESTED) {
+          if (req.user.roles[0] !== UserRoles.CHASSEUR) {
+            throw new Error('Forbidden role in notifying entity admin: ' + req.user.roles[0]);
+          }
           const isZacharieAdminSettingRolesToOtherUser = req.user.isZacharieAdmin;
           if (!isZacharieAdminSettingRolesToOtherUser) {
             const entityAdmins = await prisma.entityAndUserRelations.findMany({
@@ -208,7 +211,7 @@ router.post(
               const email = [
                 'Bonjour,',
                 `${req.user.prenom} ${req.user.nom_de_famille} (${req.user.email}) vient de s'inscrire sur Zacharie au sein de ${entity.nom_d_usage}.`,
-                `Pour l'autoriser à traiter des fiches au nom de ${entity.nom_d_usage}, veuillez cliquer sur le lien suivant : https://zacharie.beta.gouv.fr/app/tableau-de-bord/profil/mes-coordonnees?open-entity=${entity.id}`,
+                `Pour l'autoriser à traiter des fiches au nom de ${entity.nom_d_usage}, veuillez cliquer sur le lien suivant : https://zacharie.beta.gouv.fr/app/chasseur/profil/coordonnees?open-entity=${entity.id}`,
                 `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur l'attribution de cette fiche, n'hésitez pas à contacter la personne qui vous l'a envoyée.`,
               ].join('\n\n');
               await sendNotificationToUser({

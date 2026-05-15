@@ -79,8 +79,6 @@ export default function EtgOnboardingEntreprise() {
               setRefreshKey={setRefreshKey}
               refreshKey={refreshKey}
               sectionLabel="Mon Établissement de Traitement du Gibier sauvage (ETG)"
-              selectLabel={!etgsDone ? 'Sélectionnez un ETG' : ''}
-              canChange={!etgsDone}
               allEntitiesById={allEntitiesById}
               userEntitiesById={userEntitiesById}
             >

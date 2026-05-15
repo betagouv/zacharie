@@ -73,8 +73,6 @@ export default function EtgProfilEntreprise() {
               setRefreshKey={setRefreshKey}
               refreshKey={refreshKey}
               sectionLabel="Mon entreprise"
-              selectLabel={!etgsDone ? 'Sélectionnez une entreprise' : ''}
-              canChange={!etgsDone}
               allEntitiesById={allEntitiesById}
               userEntitiesById={userEntitiesById}
             >

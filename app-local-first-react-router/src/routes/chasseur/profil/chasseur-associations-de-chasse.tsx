@@ -117,6 +117,7 @@ export default function MesAssociationsDeChasse() {
             [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
             [Prisma.EntityAndUserRelationsScalarFieldEnum.relation]:
               EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+            [Prisma.EntityAndUserRelationsScalarFieldEnum.status]: EntityRelationStatus.REQUESTED,
             [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: currentEntityId,
           },
         }).then((res) => {

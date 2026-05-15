@@ -12,7 +12,10 @@ import { setupCronJob } from './utils';
 import prisma from '~/prisma';
 import dayjs from 'dayjs';
 import sendNotificationToUser from '~/service/notifications';
-import { formatAutomaticClosingEmail, formatCarcasseChasseurEmail } from '~/utils/formatCarcasseEmail';
+import {
+  formatAutomaticClosingEmailForChasseur,
+  formatCarcasseChasseurEmail,
+} from '~/utils/formatCarcasseEmail';
 import updateCarcasseStatus from '~/utils/get-carcasse-status';
 import { sendWebhook } from '~/utils/api';
 import { FeiOwnerRole } from '@prisma/client';
@@ -113,7 +116,7 @@ async function automaticClosingOfFeis() {
       }
       carcasses.push(carcasse);
     }
-    const [object, email] = await formatAutomaticClosingEmail(fei, carcasses);
+    const [object, email] = await formatAutomaticClosingEmailForChasseur(fei, carcasses);
     // auto close and notify examinateur and premier detenteut
     const notification = {
       title: object,

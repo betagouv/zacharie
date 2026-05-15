@@ -151,7 +151,7 @@ async function handleSviSearch(searchQuery: string, userId: string): Promise<Sea
       ok: true,
       data: feis.map((fei) => ({
         searchQuery,
-        redirectUrl: `/app/tableau-de-bord/fei/${fei.numero}`,
+        redirectUrl: `/app/svi/fei/${fei.numero}`,
         carcasse_numero_bracelet: '',
         carcasse_espece: '',
         carcasse_type: '',
@@ -230,7 +230,7 @@ async function handleEtgSearch(searchQuery: string, userId: string): Promise<Sea
       ok: true,
       data: carcasses.map((carcasse) => ({
         searchQuery,
-        redirectUrl: `/app/tableau-de-bord/fei/${carcasse.fei_numero}`,
+        redirectUrl: `/app/etg/fei/${carcasse.fei_numero}`,
         carcasse_numero_bracelet: carcasse.numero_bracelet,
         carcasse_espece: carcasse.espece || '',
         carcasse_type: carcasse.type,
@@ -325,7 +325,7 @@ async function handleEtgSearch(searchQuery: string, userId: string): Promise<Sea
         ok: true,
         data: foundCarcasses.map((carcasse) => ({
           searchQuery,
-          redirectUrl: `/app/tableau-de-bord/fei/${carcasse.fei_numero}`,
+          redirectUrl: `/app/etg/fei/${carcasse.fei_numero}`,
           carcasse_numero_bracelet: carcasse.numero_bracelet,
           carcasse_espece: carcasse.espece || '',
           carcasse_type: carcasse.type,
@@ -356,7 +356,7 @@ async function handleEtgSearch(searchQuery: string, userId: string): Promise<Sea
       ok: true,
       data: feis.map((fei) => ({
         searchQuery,
-        redirectUrl: `/app/tableau-de-bord/fei/${fei.numero}`,
+        redirectUrl: `/app/etg/fei/${fei.numero}`,
         carcasse_numero_bracelet: '',
         carcasse_espece: '',
         carcasse_type: '',

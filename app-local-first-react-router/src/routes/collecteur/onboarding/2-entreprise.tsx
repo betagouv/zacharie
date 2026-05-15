@@ -79,7 +79,6 @@ export default function CollecteurOnboardingEntreprise() {
               refreshKey={refreshKey}
               sectionLabel="Mon Collecteur Professionnel Indépendant"
               selectLabel={!collecteursDone ? 'Sélectionnez un Collecteur Professionnel' : ''}
-              canChange={!collecteursDone}
               allEntitiesById={allEntitiesById}
               userEntitiesById={userEntitiesById}
             />
