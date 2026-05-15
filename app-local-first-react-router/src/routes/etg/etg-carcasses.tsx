@@ -514,8 +514,25 @@ export default function EtgCarcasses() {
   };
 
   const [showMobileFilters, setShowMobileFilters] = useState(false);
-  const isAdvancedFiltersModalOpen = useIsModalOpen(advancedFiltersModal);
-  const isColumnsModalOpen = useIsModalOpen(columnsModal);
+  const [isAdvancedFiltersModalOpen, setIsAdvancedFiltersModalOpen] = useState(false);
+  const [isColumnsModalOpen, setIsColumnsModalOpen] = useState(false);
+  useIsModalOpen(advancedFiltersModal, {
+    onDisclose: () => setIsAdvancedFiltersModalOpen(true),
+    onConceal: () => setIsAdvancedFiltersModalOpen(false),
+  });
+  useIsModalOpen(columnsModal, {
+    onDisclose: () => setIsColumnsModalOpen(true),
+    onConceal: () => setIsColumnsModalOpen(false),
+  });
+
+  const openAdvancedFiltersModal = () => {
+    setIsAdvancedFiltersModalOpen(true);
+    advancedFiltersModal.open();
+  };
+  const openColumnsModal = () => {
+    setIsColumnsModalOpen(true);
+    columnsModal.open();
+  };
 
   const activeFilterCount =
     (quickFilterBracelet.trim() ? 1 : 0) +
@@ -658,7 +675,7 @@ export default function EtgCarcasses() {
         <button
           type="button"
           className="mt-2 inline-flex items-center gap-1 rounded border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-700 transition-colors hover:bg-gray-50"
-          onClick={() => advancedFiltersModal.open()}
+          onClick={openAdvancedFiltersModal}
         >
           <span
             className="fr-icon--sm fr-icon-add-line"
@@ -848,7 +865,7 @@ export default function EtgCarcasses() {
               <button
                 type="button"
                 className="inline-flex items-center justify-center gap-1 rounded border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 transition-colors hover:bg-gray-50"
-                onClick={() => columnsModal.open()}
+                onClick={openColumnsModal}
               >
                 <span
                   className="fr-icon--sm ri-layout-column-line"
@@ -947,126 +964,126 @@ export default function EtgCarcasses() {
       >
         {isColumnsModalOpen && (
           <>
-        <div className="mb-3 flex flex-wrap gap-3 text-sm">
-          <button
-            type="button"
-            className="text-action-high-blue-france underline"
-            onClick={() => setVisibleColumnKeys(toggleableColumns.map((c) => c.key))}
-          >
-            Tout afficher
-          </button>
-          <button
-            type="button"
-            className="text-action-high-blue-france underline"
-            onClick={() => setVisibleColumnKeys([])}
-          >
-            Tout masquer
-          </button>
-          <button
-            type="button"
-            className="text-action-high-blue-france underline"
-            onClick={() => setVisibleColumnKeys(DEFAULT_VISIBLE_COLUMN_KEYS)}
-          >
-            Réinitialiser (vue par défaut)
-          </button>
-        </div>
+            <div className="mb-3 flex flex-wrap gap-3 text-sm">
+              <button
+                type="button"
+                className="text-action-high-blue-france underline"
+                onClick={() => setVisibleColumnKeys(toggleableColumns.map((c) => c.key))}
+              >
+                Tout afficher
+              </button>
+              <button
+                type="button"
+                className="text-action-high-blue-france underline"
+                onClick={() => setVisibleColumnKeys([])}
+              >
+                Tout masquer
+              </button>
+              <button
+                type="button"
+                className="text-action-high-blue-france underline"
+                onClick={() => setVisibleColumnKeys(DEFAULT_VISIBLE_COLUMN_KEYS)}
+              >
+                Réinitialiser (vue par défaut)
+              </button>
+            </div>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div>
-            <h3 className="mb-2 text-sm font-bold text-gray-800">
-              Affichées ({orderedVisibleToggleableColumns.length})
-            </h3>
-            {orderedVisibleToggleableColumns.length === 0 ? (
-              <p className="text-xs text-gray-500 italic">Aucune colonne affichée.</p>
-            ) : (
-              <ul className="flex flex-col gap-1">
-                {orderedVisibleToggleableColumns.map((c, idx) => {
-                  const isFirst = idx === 0;
-                  const isLast = idx === orderedVisibleToggleableColumns.length - 1;
-                  return (
-                    <li
-                      key={c.key}
-                      className="flex items-center gap-2 rounded border border-gray-200 bg-white px-2 py-1.5"
-                    >
-                      <span className="flex-1 truncate text-sm">{c.label}</span>
-                      <button
-                        type="button"
-                        aria-label={`Monter ${c.label}`}
-                        title="Monter"
-                        disabled={isFirst}
-                        className="rounded px-1 text-gray-600 hover:bg-gray-100 disabled:opacity-30"
-                        onClick={() => moveVisibleColumn(c.key, -1)}
-                      >
-                        <span
-                          className="fr-icon--sm fr-icon-arrow-up-line"
-                          aria-hidden="true"
-                        />
-                      </button>
-                      <button
-                        type="button"
-                        aria-label={`Descendre ${c.label}`}
-                        title="Descendre"
-                        disabled={isLast}
-                        className="rounded px-1 text-gray-600 hover:bg-gray-100 disabled:opacity-30"
-                        onClick={() => moveVisibleColumn(c.key, 1)}
-                      >
-                        <span
-                          className="fr-icon--sm fr-icon-arrow-down-line"
-                          aria-hidden="true"
-                        />
-                      </button>
-                      <button
-                        type="button"
-                        aria-label={`Masquer ${c.label}`}
-                        title="Masquer"
-                        className="rounded px-1 text-gray-600 hover:bg-gray-100"
-                        onClick={() => setVisibleColumnKeys(visibleColumnKeys.filter((k) => k !== c.key))}
-                      >
-                        <span
-                          className="fr-icon--sm fr-icon-close-line"
-                          aria-hidden="true"
-                        />
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </div>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div>
+                <h3 className="mb-2 text-sm font-bold text-gray-800">
+                  Affichées ({orderedVisibleToggleableColumns.length})
+                </h3>
+                {orderedVisibleToggleableColumns.length === 0 ? (
+                  <p className="text-xs text-gray-500 italic">Aucune colonne affichée.</p>
+                ) : (
+                  <ul className="flex flex-col gap-1">
+                    {orderedVisibleToggleableColumns.map((c, idx) => {
+                      const isFirst = idx === 0;
+                      const isLast = idx === orderedVisibleToggleableColumns.length - 1;
+                      return (
+                        <li
+                          key={c.key}
+                          className="flex items-center gap-2 rounded border border-gray-200 bg-white px-2 py-1.5"
+                        >
+                          <span className="flex-1 truncate text-sm">{c.label}</span>
+                          <button
+                            type="button"
+                            aria-label={`Monter ${c.label}`}
+                            title="Monter"
+                            disabled={isFirst}
+                            className="rounded px-1 text-gray-600 hover:bg-gray-100 disabled:opacity-30"
+                            onClick={() => moveVisibleColumn(c.key, -1)}
+                          >
+                            <span
+                              className="fr-icon--sm fr-icon-arrow-up-line"
+                              aria-hidden="true"
+                            />
+                          </button>
+                          <button
+                            type="button"
+                            aria-label={`Descendre ${c.label}`}
+                            title="Descendre"
+                            disabled={isLast}
+                            className="rounded px-1 text-gray-600 hover:bg-gray-100 disabled:opacity-30"
+                            onClick={() => moveVisibleColumn(c.key, 1)}
+                          >
+                            <span
+                              className="fr-icon--sm fr-icon-arrow-down-line"
+                              aria-hidden="true"
+                            />
+                          </button>
+                          <button
+                            type="button"
+                            aria-label={`Masquer ${c.label}`}
+                            title="Masquer"
+                            className="rounded px-1 text-gray-600 hover:bg-gray-100"
+                            onClick={() => setVisibleColumnKeys(visibleColumnKeys.filter((k) => k !== c.key))}
+                          >
+                            <span
+                              className="fr-icon--sm fr-icon-close-line"
+                              aria-hidden="true"
+                            />
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
 
-          <div>
-            <h3 className="mb-2 text-sm font-bold text-gray-800">
-              Masquées ({hiddenColumns.length})
-            </h3>
-            {hiddenColumns.length === 0 ? (
-              <p className="text-xs text-gray-500 italic">Toutes les colonnes sont affichées.</p>
-            ) : (
-              <ul className="flex flex-col gap-1">
-                {hiddenColumns.map((c) => (
-                  <li
-                    key={c.key}
-                    className="flex items-center gap-2 rounded border border-dashed border-gray-300 bg-gray-50 px-2 py-1.5"
-                  >
-                    <span className="flex-1 truncate text-sm text-gray-700">{c.label}</span>
-                    <button
-                      type="button"
-                      aria-label={`Afficher ${c.label}`}
-                      title="Afficher"
-                      className="text-action-high-blue-france inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs underline"
-                      onClick={() => setVisibleColumnKeys([...visibleColumnKeys, c.key])}
-                    >
-                      <span
-                        className="fr-icon--sm fr-icon-add-line"
-                        aria-hidden="true"
-                      />
-                      Afficher
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </div>
+              <div>
+                <h3 className="mb-2 text-sm font-bold text-gray-800">
+                  Masquées ({hiddenColumns.length})
+                </h3>
+                {hiddenColumns.length === 0 ? (
+                  <p className="text-xs text-gray-500 italic">Toutes les colonnes sont affichées.</p>
+                ) : (
+                  <ul className="flex flex-col gap-1">
+                    {hiddenColumns.map((c) => (
+                      <li
+                        key={c.key}
+                        className="flex items-center gap-2 rounded border border-dashed border-gray-300 bg-gray-50 px-2 py-1.5"
+                      >
+                        <span className="flex-1 truncate text-sm text-gray-700">{c.label}</span>
+                        <button
+                          type="button"
+                          aria-label={`Afficher ${c.label}`}
+                          title="Afficher"
+                          className="text-action-high-blue-france inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs underline"
+                          onClick={() => setVisibleColumnKeys([...visibleColumnKeys, c.key])}
+                        >
+                          <span
+                            className="fr-icon--sm fr-icon-add-line"
+                            aria-hidden="true"
+                          />
+                          Afficher
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
           </>
         )}
       </columnsModal.Component>
