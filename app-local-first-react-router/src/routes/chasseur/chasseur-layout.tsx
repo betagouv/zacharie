@@ -35,6 +35,8 @@ export default function ChasseurLayout() {
     return !isProfileCompleted;
   }, [user, location.pathname]);
 
+  const isExaminateurInitial = !!user?.roles.includes(UserRoles.CHASSEUR) && !!user?.numero_cfei;
+
   const onNewFiche = useCallback(async () => {
     const newFei = await createNewFei();
     navigate(`/app/chasseur/fei/${newFei.numero}`);
@@ -74,7 +76,7 @@ export default function ChasseurLayout() {
       <FloatingNewFicheButton />
       <BottomNavigation
         items={navigation}
-        onNewFiche={onNewFiche}
+        onNewFiche={isExaminateurInitial ? onNewFiche : undefined}
       />
       {import.meta.env.VITE_TEST_PLAYWRIGHT === 'true' && (
         <p className="text-action-high-blue-france text-opacity-25 fixed right-0 bottom-16 left-0 z-50 bg-white px-4 py-1 text-sm md:bottom-0">

@@ -11,6 +11,7 @@ import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import { createNewFei } from '@app/utils/create-new-fei';
 import { useNavigate } from 'react-router';
+import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 
 interface DashboardData {
   totalCarcasses: number;
@@ -30,6 +31,7 @@ interface DashboardResponse {
 }
 
 export default function MesChasses() {
+  const me = useMostFreshUser('MesChasses')!;
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -86,20 +88,28 @@ export default function MesChasses() {
           <div className="fr-py-0 fr-col-12 fr-col-md-6">
             <div className="flex flex-col bg-white">
               <h2 className="fr-h4 mb-3 font-bold text-gray-800">Pas encore de carcasses cette saison</h2>
-              <p className="fr-text--regular mb-6 max-w-md">
-                Vos statistiques apparaîtront ici dès que vous aurez enregistré votre première fiche d'examen
-                initial.
-              </p>
-              <Button
-                priority="primary"
-                iconId="fr-icon-add-circle-line"
-                onClick={async () => {
-                  const newFei = await createNewFei();
-                  navigate(`/app/chasseur/fei/${newFei.numero}`);
-                }}
-              >
-                Créer une fiche
-              </Button>
+              {!!me.numero_cfei ? (
+                <>
+                  <p className="fr-text--regular mb-6 max-w-md">
+                    Vos statistiques apparaîtront ici dès que vous aurez enregistré votre première fiche
+                    d'examen initial.
+                  </p>
+                  <Button
+                    priority="primary"
+                    iconId="fr-icon-add-circle-line"
+                    onClick={async () => {
+                      const newFei = await createNewFei();
+                      navigate(`/app/chasseur/fei/${newFei.numero}`);
+                    }}
+                  >
+                    Créer une fiche
+                  </Button>
+                </>
+              ) : (
+                <p className="fr-text--regular mb-6 max-w-md">
+                  Vos statistiques apparaîtront ici dès que vos premières carcasses seront enregistrées.
+                </p>
+              )}
             </div>
           </div>
         </div>

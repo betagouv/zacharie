@@ -125,17 +125,19 @@ export default function ChasseurFeiEnvoyée() {
                 >
                   Voir toutes les fiches
                 </Button>
-                <Button
-                  type="button"
-                  // className="bg-white"
-                  onClick={async () => {
-                    const newFei = await createNewFei();
-                    navigate(`/app/chasseur/fei/${newFei.numero}`);
-                  }}
-                  iconId="fr-icon-add-circle-line"
-                >
-                  Nouvelle fiche
-                </Button>
+                {!!user.numero_cfei && (
+                  <Button
+                    type="button"
+                    // className="bg-white"
+                    onClick={async () => {
+                      const newFei = await createNewFei();
+                      navigate(`/app/chasseur/fei/${newFei.numero}`);
+                    }}
+                    iconId="fr-icon-add-circle-line"
+                  >
+                    Nouvelle fiche
+                  </Button>
+                )}
               </div>
             </div>
           </div>
