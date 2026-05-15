@@ -44,7 +44,10 @@ test.describe('Search dropdown redirectUrl', () => {
   });
 
   test('CHASSEUR search lands on /app/chasseur/fei/:numero', async ({ page }) => {
-    await resetDb('EXAMINATEUR_INITIAL');
+    // PREMIER_DETENTEUR seed creates fei 155242 owned by the examinateur (QZ6E0),
+    // which is what the chasseur search filter looks for. EXAMINATEUR_INITIAL has
+    // no seed branch and would leave the DB empty.
+    await resetDb('PREMIER_DETENTEUR');
     const feiId = 'ZACH-20250707-QZ6E0-155242';
     await connectWith(page, 'examinateur@example.fr');
     await expect(page).toHaveURL(/\/app\/chasseur/);
