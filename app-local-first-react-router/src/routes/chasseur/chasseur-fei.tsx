@@ -170,7 +170,14 @@ function FEIChasseurLoaded() {
     return false;
   }, [fei, user, premierDetenteurEntity]);
 
-  const examinateurIsPremierDetenteur = fei.premier_detenteur_user_id === user.id;
+  const isPremierDetenteur = useMemo(() => {
+    if (fei.premier_detenteur_user_id === user.id) return true;
+    const premierDetenteurEntity = entities[fei.premier_detenteur_entity_id!];
+    if (premierDetenteurEntity?.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
+      return true;
+    }
+    return false;
+  }, [fei.premier_detenteur_user_id, fei.premier_detenteur_entity_id, user.id, entities]);
 
   const updateCarcassesTransmission = useZustandStore((state) => state.updateCarcassesTransmission);
   const carcasseIds = useMemo(() => carcasses.map((c) => c.zacharie_carcasse_id), [carcasses]);
@@ -289,7 +296,7 @@ function FEIChasseurLoaded() {
       return;
     }
     setShowErrors(false);
-    if (examinateurIsPremierDetenteur) {
+    if (isPremierDetenteur) {
       const destinataireError = destinataireRef.current?.validate();
       if (destinataireError) {
         alert(destinataireError);
@@ -579,7 +586,7 @@ function FEIChasseurLoaded() {
               )}
 
               {/* Bloc 3 — Destinataire */}
-              {showBloc3 && examinateurIsPremierDetenteur && (
+              {showBloc3 && isPremierDetenteur && (
                 <div className="bg-white p-4 md:p-8">
                   <h4 className="fr-h5">Destinataire</h4>
                   <DestinataireSelectPremierDetenteur
