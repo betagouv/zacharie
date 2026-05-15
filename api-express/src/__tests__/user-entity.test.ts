@@ -535,6 +535,51 @@ describe('POST /user-entity/', () => {
         })
       );
     });
+
+    test('REQUESTED relation by non-CHASSEUR is blocked from notifying admins', async () => {
+      // Guard rail: only CHASSEUR users may legitimately reach the REQUESTED notification path.
+      // Frontend already prevents it; the backend throws to trip Sentry if anything bypasses.
+      // The relation row IS still persisted (guard is after create, by design).
+      // @ts-expect-error
+      const { default: sendNotification } = await import('~/service/notifications');
+      const etgUser = { ...regularUser, id: 'etg-user', roles: [UserRoles.ETG] };
+      vi.mocked(prisma.entity.findUnique).mockResolvedValue(testEntity as any);
+      vi.mocked(prisma.entity.findFirst).mockResolvedValue(testEntity as any);
+      // @ts-expect-error
+      vi.mocked(prisma.entityAndUserRelations.findFirst).mockImplementation((args: any) => {
+        if (args.where?.status === EntityRelationStatus.ADMIN) {
+          return Promise.resolve(null);
+        }
+        return Promise.resolve(null);
+      });
+      const createdRelation: EntityAndUserRelations = {
+        id: 'rel-1',
+        owner_id: etgUser.id,
+        entity_id: 'entity-1',
+        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        status: EntityRelationStatus.REQUESTED,
+        deleted_at: null,
+        created_at: new Date().toISOString() as unknown as Date,
+        updated_at: new Date().toISOString() as unknown as Date,
+        is_synced: true,
+        brevo_id: null,
+      };
+      vi.mocked(prisma.entityAndUserRelations.create).mockResolvedValue(createdRelation);
+
+      const res = await authed(
+        request(app).post(BASE).send({
+          owner_id: etgUser.id,
+          entity_id: 'entity-1',
+          relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        }),
+        etgUser
+      );
+
+      expect(res.status).toBeGreaterThanOrEqual(500);
+      expect(sendNotification).not.toHaveBeenCalled();
+      expect(prisma.entityAndUserRelations.findMany).not.toHaveBeenCalled();
+      expect(prisma.entityAndUserRelations.create).toHaveBeenCalledOnce();
+    });
   });
 
   describe('IDOR / cross-boundary', () => {

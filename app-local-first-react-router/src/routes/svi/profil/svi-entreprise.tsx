@@ -1,24 +1,17 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
-import { EntityTypes, Prisma, User } from '@prisma/client';
+import { EntityTypes } from '@prisma/client';
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
-import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
-import type { EntitiesWorkingForResponse, UserConnexionResponse } from '@api/src/types/responses';
+import type { EntitiesWorkingForResponse } from '@api/src/types/responses';
 import type { EntitiesById } from '@api/src/types/entity';
-import useUser from '@app/zustand/user';
 import API from '@app/services/api';
 import ListAndSelectEntities from '@app/components/ListAndSelectEntities';
 
 export default function SviProfilEntreprise() {
-  const user = useUser((state) => state.user)!;
   const [allEntitiesById, setAllEntitiesById] = useState<EntitiesById>({});
   const [userEntitiesById, setUserEntitiesById] = useState<EntitiesById>({});
   const [refreshKey, setRefreshKey] = useState(0);
-
-  const svisDone = Object.keys(userEntitiesById).length > 0;
-
-  const [visibilityChecked, setVisibilityChecked] = useState(user.user_entities_vivible_checkbox === true);
 
   const navigate = useNavigate();
 
@@ -36,21 +29,6 @@ export default function SviProfilEntreprise() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
-
-  const handleUserFormBlur = useCallback(
-    async (event: React.FocusEvent<HTMLFormElement>) => {
-      const formData = new FormData(event.currentTarget);
-      const body: Partial<User> = Object.fromEntries(formData.entries());
-      const response = await API.post({
-        path: `/user/${user.id}`,
-        body,
-      }).then((data) => data as UserConnexionResponse);
-      if (response.ok && response.data?.user?.id) {
-        useUser.setState({ user: response.data.user });
-      }
-    },
-    [user.id]
-  );
 
   return (
     <>
@@ -72,11 +50,6 @@ export default function SviProfilEntreprise() {
               setRefreshKey={setRefreshKey}
               refreshKey={refreshKey}
               sectionLabel="Mon Service Vétérinaire d'Inspection (SVI)"
-              addLabel={!svisDone ? 'Ajouter un SVI' : 'Mon service'}
-              selectLabel={!svisDone ? 'Sélectionnez un SVI' : ''}
-              done={svisDone}
-              canChange={!svisDone}
-              entityType={EntityTypes.SVI}
               allEntitiesById={allEntitiesById}
               userEntitiesById={userEntitiesById}
             />
@@ -96,7 +69,6 @@ export default function SviProfilEntreprise() {
                   buttons={[
                     {
                       children: 'Enregistrer et continuer',
-                      disabled: !visibilityChecked,
                       type: 'button',
                       nativeButtonProps: {
                         onClick: () => {

@@ -73,7 +73,6 @@ export default function CollecteurProfilEntreprise() {
               refreshKey={refreshKey}
               sectionLabel="Mon Entreprise"
               selectLabel={!collecteursDone ? 'Sélectionnez une entreprise' : ''}
-              canChange={!collecteursDone}
               allEntitiesById={allEntitiesById}
               userEntitiesById={userEntitiesById}
             />

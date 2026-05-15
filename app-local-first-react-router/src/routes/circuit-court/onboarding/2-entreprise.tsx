@@ -75,7 +75,6 @@ export default function CircuitCourtOnboardingEntreprise() {
                 refreshKey={refreshKey}
                 sectionLabel="Mon Commerce de Détail"
                 selectLabel="Cherchez un autre Commerce de Détail"
-                canChange={false}
                 allEntitiesById={allEntitiesByTypeAndId[EntityTypes.COMMERCE_DE_DETAIL]}
                 userEntitiesById={userEntitiesByTypeAndId[EntityTypes.COMMERCE_DE_DETAIL]}
               />
@@ -87,7 +86,6 @@ export default function CircuitCourtOnboardingEntreprise() {
                 refreshKey={refreshKey}
                 sectionLabel="Ma Cantine ou Restauration Collective"
                 selectLabel="Cherchez une autre Cantine ou Restauration Collective"
-                canChange={false}
                 allEntitiesById={allEntitiesByTypeAndId[EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE]}
                 userEntitiesById={userEntitiesByTypeAndId[EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE]}
               />
@@ -99,7 +97,6 @@ export default function CircuitCourtOnboardingEntreprise() {
                 refreshKey={refreshKey}
                 sectionLabel="Mon Association Caritative"
                 selectLabel="Cherchez une autre Association Caritative"
-                canChange={false}
                 allEntitiesById={allEntitiesByTypeAndId[EntityTypes.ASSOCIATION_CARITATIVE]}
                 userEntitiesById={userEntitiesByTypeAndId[EntityTypes.ASSOCIATION_CARITATIVE]}
               />
@@ -111,7 +108,6 @@ export default function CircuitCourtOnboardingEntreprise() {
                 refreshKey={refreshKey}
                 sectionLabel="Mon Repas de Chasse ou Associatif"
                 selectLabel="Cherchez un autre Repas de Chasse ou Associatif"
-                canChange={false}
                 allEntitiesById={allEntitiesByTypeAndId[EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF]}
                 userEntitiesById={userEntitiesByTypeAndId[EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF]}
               />
