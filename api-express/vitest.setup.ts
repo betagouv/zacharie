@@ -6,10 +6,23 @@ vi.mock('./src/prisma', () => ({
     fei: {
       findMany: vi.fn().mockResolvedValue([]),
       findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
     },
     carcasse: {
       findMany: vi.fn().mockResolvedValue([]),
       findFirst: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+    },
+    carcasseIntermediaire: {
+      findFirst: vi.fn(),
+      upsert: vi.fn(),
+      updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+    },
+    log: {
+      upsert: vi.fn(),
     },
     apiKey: {
       findFirst: vi.fn(),
