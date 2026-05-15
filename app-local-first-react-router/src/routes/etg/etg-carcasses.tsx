@@ -1000,7 +1000,7 @@ export default function EtgCarcasses() {
   }
 
   return (
-    <div className="relative min-h-screen fr-background-alt--green-tilleul-verveine">
+    <div className="relative">
       <title>Carcasses | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
 
       <div className="fr-background-alt--blue-france sticky top-0 z-30 flex items-center justify-between px-4 py-2 md:hidden">
@@ -1047,7 +1047,7 @@ export default function EtgCarcasses() {
         </div>
       )}
 
-      <div className="flex">
+      <div className="flex min-h-screen">
         <aside className="sticky top-0 hidden h-screen w-64 shrink-0 overflow-y-auto border-r border-gray-200 bg-white p-4 md:block">
           {sidebarContent}
         </aside>
