@@ -4,9 +4,9 @@ import { catchErrors } from '~/middlewares/errors';
 import type { SyncRequest, SyncResponse } from '~/types/responses';
 import prisma from '~/prisma';
 import { Prisma, User } from '@prisma/client';
-import { saveFei, type SaveFeiResult } from './fei';
-import { saveCarcasse, type SaveCarcasseResult } from './carcasse';
-import { saveCarcasseIntermediaire } from './carcasse-intermediaire';
+import { syncFei, type SaveFeiResult } from '~/utils/sync-fei';
+import { syncCarcasse, type SaveCarcasseResult } from '~/utils/sync-carcasse';
+import { syncCarcasseIntermediaire } from '~/utils/sync-carcasse-intermediaire';
 import { runFeiUpdateSideEffects } from '~/utils/fei-side-effects';
 import { runCarcasseUpdateSideEffects } from '~/utils/carcasse-side-effects';
 import { capture } from '~/third-parties/sentry';
@@ -44,7 +44,7 @@ router.post(
     // 1. Process FEIs first (carcasses depend on them)
     for (const feiData of feis || []) {
       try {
-        const result = await saveFei(feiData.numero, feiData as Prisma.FeiUncheckedCreateInput, user);
+        const result = await syncFei(feiData.numero, feiData as Prisma.FeiUncheckedCreateInput, user);
         feiResults.push(result);
       } catch (error) {
         capture(error as Error, {
@@ -57,7 +57,7 @@ router.post(
     // 2. Process Carcasses (intermediaires depend on them)
     for (const carcasseData of carcasses || []) {
       try {
-        const result = await saveCarcasse(
+        const result = await syncCarcasse(
           carcasseData.fei_numero,
           carcasseData.zacharie_carcasse_id,
           carcasseData as Prisma.CarcasseUncheckedCreateInput,
@@ -79,7 +79,7 @@ router.post(
     // 3. Process CarcassesIntermediaires
     for (const ciData of carcassesIntermediaires || []) {
       try {
-        const saved = await saveCarcasseIntermediaire(
+        const saved = await syncCarcasseIntermediaire(
           ciData.fei_numero,
           ciData.intermediaire_id,
           ciData.zacharie_carcasse_id,
