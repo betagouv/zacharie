@@ -19,7 +19,7 @@ import { Tabs, type TabsProps } from '@codegouvfr/react-dsfr/Tabs';
 import { Table } from '@codegouvfr/react-dsfr/Table';
 import departementsRegions from '@app/data/departements-regions.json';
 import type { AdminUserDataResponse } from '@api/src/types/responses';
-import { Link, useNavigate, useParams } from 'react-router';
+import { Link, useParams } from 'react-router';
 import Chargement from '@app/components/Chargement';
 import { Highlight } from '@codegouvfr/react-dsfr/Highlight';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
@@ -27,9 +27,7 @@ import API from '@app/services/api';
 import RelationEntityUser from '@app/components/RelationEntityUser';
 import { EntityWithUserRelations } from '@api/src/types/entity';
 import { toast } from 'react-toastify';
-import { clearCache } from '@app/services/indexed-db';
-import { refreshUser } from '@app/utils-offline/get-most-fresh-user';
-import { getUserOnboardingRoute } from '@app/utils/user-onboarded.client';
+import ConnexionButton from '@app/components/ConnexionButton';
 
 const loadData = (userId: string): Promise<AdminUserDataResponse> =>
   API.get({ path: `admin/user/${userId}` }).then((res) => res as AdminUserDataResponse);
@@ -85,7 +83,6 @@ const initialState: State = {
 
 export default function AdminUser() {
   const params = useParams();
-  const navigate = useNavigate();
   const [userResponseData, setUserResponseData] = useState<State>(initialState);
   const { user, identityDone, examinateurDone, userEntitiesRelations, officialCfei } = userResponseData;
 
@@ -203,31 +200,7 @@ export default function AdminUser() {
                 ) : (
                   <small>✅ Utilisateur activé</small>
                 )}
-                <form
-                  method="POST"
-                  onSubmit={async (event) => {
-                    event.preventDefault();
-                    await API.post({
-                      path: 'admin/user/connect-as',
-                      body: { email: user.email! },
-                    });
-                    await clearCache().then(() => {
-                      refreshUser('admin/user/connect-as').then((user) => {
-                        if (user) {
-                          navigate(getUserOnboardingRoute(user), { replace: true });
-                        }
-                      });
-                    });
-                  }}
-                >
-                  <Button
-                    type="submit"
-                    priority="primary"
-                    size="small"
-                  >
-                    Connexion
-                  </Button>
-                </form>
+                <ConnexionButton user={user} />
               </div>
               <div className="flex flex-col items-end gap-2">
                 <form

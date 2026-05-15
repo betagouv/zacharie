@@ -5,7 +5,7 @@ import { clearCache } from '@app/services/indexed-db';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import SearchInput from '@app/components/SearchInput';
 import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import API, { setNativeAuthToken } from '@app/services/api';
 import { useNavigate, useSearchParams } from 'react-router';
 import { UserRoles } from '@prisma/client';
@@ -33,6 +33,7 @@ export default function RootDisplay({
   const user = useMostFreshUser('RootDisplay ' + id);
   const isOnline = useIsOnline();
   const navigate = useNavigate();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const RenderedSearchInput = useRef(SearchInput).current;
 
@@ -63,16 +64,20 @@ export default function RootDisplay({
       iconId: 'ri-logout-box-line',
       buttonProps: {
         onClick: async () => {
+          setIsLoggingOut(true);
           API.post({ path: '/user/logout' }).then(async () => {
             setNativeAuthToken(null);
             useUser.setState({ user: null }); // this line is important : if useUser is not null then /app/connexion will redirect to /app/[role] even if /user/me returns a 401 (because of offline mode)
-            await clearCache().then(() => {
-              navigate('/app/connexion');
-            });
+            await clearCache()
+              .then(() => new Promise((resolve) => setTimeout(resolve, 1500)))
+              .then(() => {
+                navigate('/app/connexion');
+                setIsLoggingOut(false);
+              });
           });
         },
       },
-      text: 'Déconnexion',
+      text: isLoggingOut ? 'Déconnexion en cours...' : 'Déconnexion',
     },
   ];
 
