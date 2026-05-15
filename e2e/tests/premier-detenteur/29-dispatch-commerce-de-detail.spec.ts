@@ -31,4 +31,8 @@ test('Dispatch vers commerce de détail — circuit court direct sans ETG', asyn
   await transmettre.scrollIntoViewIfNeeded();
   await transmettre.click();
   await expect(page.getByText(/Votre fiche a été transmise/i).first()).toBeVisible({ timeout: 10000 });
+
+  // Page /envoyée — le PD seedé n'a pas de numero_cfei : le raccourci « Nouvelle fiche »
+  // doit être caché (sinon le clic appellerait createNewFei() qui jette « Forbidden »).
+  await expect(page.getByRole('button', { name: 'Nouvelle fiche' })).toHaveCount(0);
 });

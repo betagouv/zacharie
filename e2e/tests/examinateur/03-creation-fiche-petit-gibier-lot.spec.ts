@@ -51,6 +51,9 @@ test('Création fiche petit gibier en lot — 10 pigeons', async ({ page }) => {
   await page.getByRole('button', { name: 'Transmettre', exact: true }).click();
   await expect(page.getByText(/Votre fiche a été transmise/i).first()).toBeVisible({ timeout: 10000 });
 
+  // Page /envoyée — l'examinateur a un numero_cfei, le raccourci « Nouvelle fiche » est visible.
+  await expect(page.getByRole('button', { name: 'Nouvelle fiche' }).first()).toBeVisible();
+
   const feiId = RegExp(/ZACH-\d+-\w+-\d+/).exec(page.url())?.[0];
   await page.getByRole('link', { name: 'Voir toutes les fiches' }).click();
   await expect(page.getByRole('link', { name: feiId })).toContainText('10 pigeons');
