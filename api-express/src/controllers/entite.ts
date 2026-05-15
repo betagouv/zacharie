@@ -31,54 +31,6 @@ import createUserId from '~/utils/createUserId';
 import { inviteUser } from '~/utils/invite-user';
 
 router.get(
-  '/fei/:entity_id/:fei_numero',
-  passport.authenticate('user', { session: false }),
-  catchErrors(async (req: RequestWithUser, res: express.Response, next: express.NextFunction) => {
-    const user = req.user!;
-    if (!user.activated) {
-      res.status(400).send({ ok: false, data: null, error: 'Unauthorized' });
-      return;
-    }
-    if (!req.params.fei_numero) {
-      res.status(400).send({ ok: false, data: null, error: 'Missing fei_numero' });
-      return;
-    }
-    if (!req.params.entity_id) {
-      res.status(400).send({ ok: false, data: null, error: 'Missing entity_id' });
-      return;
-    }
-    const fei = await prisma.fei.findUnique({
-      where: {
-        numero: req.params.fei_numero as string,
-      },
-    });
-    if (!fei) {
-      res.status(400).send({ ok: false, data: null, error: 'Unauthorized' });
-      return;
-    }
-    const entity = await prisma.entity.findUnique({
-      where: {
-        id: req.params.entity_id,
-        deleted_at: null,
-      },
-    });
-
-    if (!entity) {
-      res.status(400).send({ ok: false, data: null, error: 'Unauthorized' });
-      return;
-    }
-
-    res.status(200).send({
-      ok: true,
-      data: {
-        entity,
-      },
-      error: '',
-    });
-  })
-);
-
-router.get(
   '/working-for',
   passport.authenticate('user', { session: false }),
   catchErrors(
@@ -237,37 +189,6 @@ router.get(
       });
     }
   )
-);
-
-router.get(
-  '/my-ccgs',
-  passport.authenticate('user', { session: false, failWithError: true }),
-  catchErrors(async (req: RequestWithUser, res: express.Response, next: express.NextFunction) => {
-    const user = req.user!;
-    const userCCGs = (
-      await prisma.entityAndUserRelations.findMany({
-        where: {
-          owner_id: user.id,
-          relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-          EntityRelatedWithUser: {
-            type: EntityTypes.CCG,
-          },
-          deleted_at: null,
-        },
-        include: {
-          EntityRelatedWithUser: true,
-        },
-      })
-    ).map((relation) => relation.EntityRelatedWithUser);
-
-    res.status(200).send({
-      ok: true,
-      data: {
-        userCCGs,
-      },
-      error: '',
-    });
-  })
 );
 
 const associationDeChasseSchema = z.object({
