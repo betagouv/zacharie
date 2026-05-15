@@ -107,9 +107,9 @@ export default function AdminUser() {
     let body =
       formRef.current!.id === 'user_roles_form'
         ? {
-          roles: formData.getAll('roles'),
-          isZacharieAdmin: formData.get(Prisma.UserScalarFieldEnum.isZacharieAdmin) === 'true',
-        }
+            roles: formData.getAll('roles'),
+            isZacharieAdmin: formData.get(Prisma.UserScalarFieldEnum.isZacharieAdmin) === 'on',
+          }
         : Object.fromEntries(formData);
 
     API.post({
@@ -685,9 +685,9 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
         user.roles.includes(UserRoles.COLLECTEUR_PRO) && (
           <Highlight
             className="m-0 mt-8"
-          // classes={{
-          //   root: 'fr-highlight--green-emeraude',
-          // }}
+            // classes={{
+            //   root: 'fr-highlight--green-emeraude',
+            // }}
           >
             Un collecteur indépendant ne peut pas gérer de fiches pour un ETG. <br />
             Si un ETG a un besoin de transport, c'est dans le profil de l'utilisateur que ça se gère : cet
@@ -829,7 +829,7 @@ function DepartementsScope({ userId, initialCodes, onSaved }: DepartementsScopeP
     })
       .then((res) => {
         if (!res.ok) {
-          toast.error("Une erreur est survenue lors de la mise à jour du périmètre");
+          toast.error('Une erreur est survenue lors de la mise à jour du périmètre');
           return;
         }
         toast.success('Périmètre mis à jour');
