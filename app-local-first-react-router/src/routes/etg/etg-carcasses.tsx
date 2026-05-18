@@ -20,7 +20,7 @@ import {
 } from '@app/utils/filter-carcasse';
 import { useLocalStorage } from '@uidotdev/usehooks';
 import Chargement from '@app/components/Chargement';
-import Button from '@codegouvfr/react-dsfr/Button';
+import DropDownMenu from '@app/components/DropDownMenu';
 import useExportCarcasses from '@app/utils/export-carcasses';
 import { getFeiAndCarcasseAndIntermediaireIdsFromCarcasse } from '@app/utils/get-carcasse-intermediaire-id';
 import { filterFeiIntermediaires } from '@app/utils/get-carcasses-intermediaires';
@@ -1081,24 +1081,36 @@ export default function EtgCarcasses() {
                 />
                 Colonnes ({visibleColumns.length}/{allColumns.length})
               </button>
-              <Button
-                onClick={() => {
-                  const selectedCarcassesObject: Record<string, boolean> = {};
-                  for (const carcasseId of selectedCarcassesIds) {
-                    selectedCarcassesObject[carcasseId] = true;
-                  }
-                  onExportToXlsx(
-                    filteredData.filter((carcasse) => selectedCarcassesObject[carcasse.zacharie_carcasse_id])
-                  );
-                }}
-                disabled={selectedCarcassesIds.length === 0 || isExporting}
-                className="w-full sm:w-auto"
-              >
-                <span className="hidden sm:inline">
-                  Télécharger un fichier Excel avec les carcasses sélectionnées ({selectedCarcassesIds.length})
-                </span>
-                <span className="sm:hidden">Exporter ({selectedCarcassesIds.length})</span>
-              </Button>
+              <DropDownMenu
+                text="Actions"
+                isActive={selectedCarcassesIds.length > 0}
+                menuLinks={[
+                  {
+                    linkProps: {
+                      href: '#',
+                      'aria-disabled': selectedCarcassesIds.length === 0,
+                      className:
+                        isExporting || !selectedCarcassesIds.length
+                          ? 'cursor-not-allowed opacity-50'
+                          : '',
+                      title:
+                        selectedCarcassesIds.length === 0
+                          ? 'Sélectionnez des carcasses avec la case à cocher'
+                          : '',
+                      onClick: (e) => {
+                        e.preventDefault();
+                        if (selectedCarcassesIds.length === 0) return;
+                        if (isExporting) return;
+                        const selectedSet = new Set(selectedCarcassesIds);
+                        onExportToXlsx(
+                          filteredData.filter((c) => selectedSet.has(c.zacharie_carcasse_id))
+                        );
+                      },
+                    },
+                    text: `Export Excel (${selectedCarcassesIds.length})`,
+                  },
+                ]}
+              />
             </div>
           </section>
 
