@@ -19,6 +19,14 @@ import CarcasseSVICertificats from '@app/routes/svi/svi-inspection-carcasse/cert
 import FEIDonneesDeChasse from '@app/components/DonneesDeChasse';
 import Section from '@app/components/Section';
 import ItemNotEditable from '@app/components/ItemNotEditable';
+import {
+  PendingModificationBanner,
+  HistoriqueDesModifications,
+} from '@app/components/CarcasseModificationRequest';
+import {
+  usePendingRequestForCarcasse,
+  useRequestsForCarcasse,
+} from '@app/utils/carcasse-modification-request';
 
 export default function SviInspectionCarcasseLoader() {
   const params = useParams();
@@ -83,7 +91,15 @@ function SviInspectionCarcasse() {
     return false;
   }, [fei, user, state]);
 
+  const pendingModifRequest = usePendingRequestForCarcasse(carcasse.zacharie_carcasse_id);
+  const allModifRequests = useRequestsForCarcasse(carcasse.zacharie_carcasse_id);
+
   const canEdit = useMemo(() => {
+    // SVI ne peut pas inspecter une carcasse dont l'identité (numéro de bracelet) ou la signature de
+    // l'examen initial sont en attente d'approbation par l'examinateur initial. Blocage dur.
+    if (pendingModifRequest) {
+      return false;
+    }
     if (isSviWorkingFor) {
       return true;
     }
@@ -94,7 +110,7 @@ function SviInspectionCarcasse() {
       return false;
     }
     return true;
-  }, [fei, user, isSviWorkingFor]);
+  }, [fei, user, isSviWorkingFor, pendingModifRequest]);
 
   const initIMP1Open = useRef(!carcasse.svi_ipm1_decision);
   const initIMP2Open = useRef(
@@ -111,6 +127,7 @@ function SviInspectionCarcasse() {
           <h1 className="fr-h3 fr-mb-2w">
             {carcasse.numero_bracelet} - {carcasse.espece}
           </h1>
+          <PendingModificationBanner carcasse={carcasse} />
           <Breadcrumb
             className="[&_a]:text-base!"
             currentPageLabel={`Carcasse ${carcasse.numero_bracelet}`}
@@ -149,6 +166,14 @@ function SviInspectionCarcasse() {
               />
             </>
           </Section>
+          {allModifRequests.length > 0 && (
+            <Section
+              title="Historique des modifications"
+              open={false}
+            >
+              <HistoriqueDesModifications carcasse={carcasse} />
+            </Section>
+          )}
           <Section title="Résumé de la décision">
             <CardCarcasseSvi
               carcasse={carcasse}

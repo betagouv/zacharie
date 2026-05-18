@@ -16,6 +16,7 @@ import {
 } from '@prisma/client';
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
+import type { FeiIntermediaire } from '@app/types/fei-intermediaire';
 
 const gibierSelect = {
   grand: grandGibier.especes,
@@ -25,22 +26,25 @@ const gibierSelect = {
 // ----------------------------------------------------------------------------
 // RequestNewCarcasseButton
 // Ouvre une modal pour pré-remplir une carcasse manquante. L'intermédiaire crée
-// localement (1) une Carcasse sans signature examinateur et (2) une demande de
-// type NEW_CARCASSE. Tout part par le pipeline /sync ; le backend notifie
-// l'examinateur initial et lui présentera l'examen à signer.
+// localement (1) une Carcasse sans signature examinateur, (2) une CI row pour
+// son passage (pour qu'elle apparaisse dans sa liste plutôt que dans
+// "déjà refusées") et (3) une demande de type NEW_CARCASSE. Tout part par le
+// pipeline /sync ; le backend notifie l'examinateur initial et lui présentera
+// l'examen à signer.
 // ----------------------------------------------------------------------------
 export default function RequestNewCarcasseButton({
   feiNumero,
-  requestedByEntityId,
+  intermediaire,
   className,
 }: {
   feiNumero: string;
-  requestedByEntityId: string;
+  intermediaire: FeiIntermediaire;
   className?: string;
 }) {
   const user = useUser((state) => state.user);
   const fei = useZustandStore((state) => state.feis[feiNumero]);
   const createCarcasse = useZustandStore((state) => state.createCarcasse);
+  const createFeiIntermediaires = useZustandStore((state) => state.createFeiIntermediaires);
   const createCarcasseModifRequest = useZustandStore((state) => state.createCarcasseModifRequest);
 
   const modal = useRef(
@@ -54,8 +58,6 @@ export default function RequestNewCarcasseButton({
   const [numeroBracelet, setNumeroBracelet] = useState('');
   const [espece, setEspece] = useState('');
   const [nombreAnimaux, setNombreAnimaux] = useState('1');
-  const [heureMort, setHeureMort] = useState('');
-  const [heureEvisc, setHeureEvisc] = useState('');
   const [comment, setComment] = useState('');
   const [error, setError] = useState<string | null>(null);
 
@@ -95,8 +97,8 @@ export default function RequestNewCarcasseButton({
       espece,
       type: carcasseType,
       nombre_d_animaux: nombreAnimaux ? Number(nombreAnimaux) : 1,
-      heure_mise_a_mort: heureMort || null,
-      heure_evisceration: heureEvisc || null,
+      heure_mise_a_mort: null,
+      heure_evisceration: null,
       heure_mise_a_mort_premiere_carcasse_fei: null,
       heure_evisceration_derniere_carcasse_fei: null,
       consommateur_final_usage_domestique: null,
@@ -208,7 +210,11 @@ export default function RequestNewCarcasseButton({
 
     createCarcasse(newCarcasse);
 
-    // 2) Create the modif request — the backend's side effects will notify the examinateur.
+    // 2) Create the CarcasseIntermediaire row for the current intermediaire so the new carcasse
+    // appears in their main list (and not in "Carcasses déjà refusées").
+    createFeiIntermediaires([intermediaire], [zacharieCarcasseId]);
+
+    // 3) Create the modif request — the backend's side effects will notify the examinateur.
     createCarcasseModifRequest({
       id: uuidv4(),
       type: CarcasseModificationRequestType.NEW_CARCASSE,
@@ -216,7 +222,7 @@ export default function RequestNewCarcasseButton({
       zacharie_carcasse_id: zacharieCarcasseId,
       fei_numero: feiNumero,
       requested_by_user_id: user.id,
-      requested_by_entity_id: requestedByEntityId,
+      requested_by_entity_id: intermediaire.intermediaire_entity_id,
       requested_at: dayjs().toDate(),
       comment_intermediaire: comment.trim() || null,
       numero_bracelet_before: null,
@@ -233,8 +239,6 @@ export default function RequestNewCarcasseButton({
     setNumeroBracelet('');
     setEspece('');
     setNombreAnimaux('1');
-    setHeureMort('');
-    setHeureEvisc('');
     setComment('');
     modal.close();
   };
@@ -255,8 +259,8 @@ export default function RequestNewCarcasseButton({
           <div>
             <p className="text-sm">
               Vous avez physiquement une carcasse qui ne figure pas dans cette fiche d'examen initial.
-              Pré-remplissez ses informations : l'examinateur initial recevra une demande à signer pour valider
-              son examen et la mettre sur le marché.
+              Pré-remplissez ses informations : l'examinateur initial recevra une demande à signer pour
+              valider son examen et la mettre sur le marché.
             </p>
             <Input
               label="Numéro de bracelet *"
@@ -300,22 +304,6 @@ export default function RequestNewCarcasseButton({
                 }}
               />
             )}
-            <Input
-              label="Heure de mise à mort (optionnel)"
-              nativeInputProps={{
-                type: 'time',
-                value: heureMort,
-                onChange: (e) => setHeureMort(e.currentTarget.value),
-              }}
-            />
-            <Input
-              label="Heure d'éviscération (optionnel)"
-              nativeInputProps={{
-                type: 'time',
-                value: heureEvisc,
-                onChange: (e) => setHeureEvisc(e.currentTarget.value),
-              }}
-            />
             <Input
               label="Commentaire pour l'examinateur (optionnel)"
               textArea

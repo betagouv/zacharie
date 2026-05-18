@@ -8,7 +8,7 @@ export default function useChasseurNavigationMenu(): MainNavigationProps.Item[] 
   const location = useLocation();
   const apiKeyApprovals = useZustandStore((state) => state.apiKeyApprovals);
   const user = useUser((state) => state.user);
-  const modifRequests = useZustandStore((state) => state.carcasseModifRequestsById);
+  const modifRequests = useZustandStore((state) => state.carcasseModifPendingRequestsIds);
   const carcasses = useZustandStore((state) => state.carcasses);
 
   const pendingForMeCount = Object.values(modifRequests).filter((r) => {
@@ -29,7 +29,10 @@ export default function useChasseurNavigationMenu(): MainNavigationProps.Item[] 
       linkProps: { to: '/app/chasseur', href: '#' },
     },
     {
-      text: pendingForMeCount > 0 ? `Demandes de modification (${pendingForMeCount})` : 'Demandes de modification',
+      text:
+        pendingForMeCount > 0
+          ? `Demandes de modification (${pendingForMeCount})`
+          : 'Demandes de modification',
       isActive: location.pathname.startsWith('/app/chasseur/demandes-de-modification'),
       linkProps: { to: '/app/chasseur/demandes-de-modification', href: '#' },
     },

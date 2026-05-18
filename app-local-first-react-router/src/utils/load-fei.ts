@@ -86,14 +86,14 @@ export function setFeiInStore(fei: FeiForRefresh) {
         }
       ).CarcasseModificationRequests ?? [];
     for (const incomingReq of reqs) {
-      const existing = prevState.carcasseModifRequestsById[incomingReq.id];
-      const incoming = incomingReq as unknown as (typeof prevState.carcasseModifRequestsById)[string];
+      const existing = prevState.carcasseModifPendingRequestsIds[incomingReq.id];
+      const incoming = incomingReq as unknown as (typeof prevState.carcasseModifPendingRequestsIds)[string];
       if (!existing) {
-        prevState.carcasseModifRequestsById[incomingReq.id] = incoming;
+        prevState.carcasseModifPendingRequestsIds[incomingReq.id] = incoming;
       } else if (!existing.is_synced) {
         continue;
       } else if (dayjs(incoming.updated_at).diff(existing.updated_at) > 0) {
-        prevState.carcasseModifRequestsById[incomingReq.id] = incoming;
+        prevState.carcasseModifPendingRequestsIds[incomingReq.id] = incoming;
       }
     }
   }

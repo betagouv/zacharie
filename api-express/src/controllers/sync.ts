@@ -211,7 +211,7 @@ router.post(
     // Refetch the carcasses touched by modif-request side effects (numero_bracelet or examinateur_signed_at changed).
     const touchedCarcasseIds = new Set<string>();
     for (const r of modifResults) {
-      if (r.transitionedTo) touchedCarcasseIds.add(r.saved.zacharie_carcasse_id);
+      if (r.transitionedTo || r.justCancelled) touchedCarcasseIds.add(r.saved.zacharie_carcasse_id);
     }
     const refreshedCarcasses =
       touchedCarcasseIds.size > 0

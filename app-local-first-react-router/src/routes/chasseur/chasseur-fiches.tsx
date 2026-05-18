@@ -33,6 +33,7 @@ import type { FeiWithIntermediaires } from '@api/src/types/fei';
 import { useEntitiesIdsWorkingDirectlyFor } from '@app/utils/get-entity-relations';
 import { SegmentedControl } from '@codegouvfr/react-dsfr/SegmentedControl';
 import DropDownMenu from '@app/components/DropDownMenu';
+import PendingModifRequestsAlertModal from '@app/components/PendingModifRequestsAlertModal';
 
 function CollapsibleSection({
   title,
@@ -677,6 +678,8 @@ export default function ChasseurFiches() {
   return (
     <div className="relative">
       <title>Mes fiches | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
+
+      <PendingModifRequestsAlertModal />
 
       {/* Mobile : bouton filtres sticky */}
       <div className="fr-background-alt--blue-france sticky top-0 z-30 flex items-center justify-between px-4 py-2 md:hidden">

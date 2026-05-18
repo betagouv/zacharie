@@ -739,7 +739,7 @@ function EtgFeiContent({
                   <div className="my-4 flex justify-center">
                     <RequestNewCarcasseButton
                       feiNumero={fei.numero}
-                      requestedByEntityId={intermediaire.intermediaire_entity_id}
+                      intermediaire={intermediaire}
                     />
                   </div>
                 )}

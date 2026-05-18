@@ -45,7 +45,7 @@ const PERSISTED_KEYS: (keyof State)[] = [
   'detenteursInitiauxIds',
   'carcasses',
   'carcassesIntermediaireById',
-  'carcasseModifRequestsById',
+  'carcasseModifPendingRequestsIds',
   'apiKeyApprovals',
   'lastUpdateCarcassesRegistry',
   'carcassesRegistry',
@@ -62,7 +62,7 @@ export interface State {
   carcasses: Record<Carcasse['zacharie_carcasse_id'], Carcasse>;
   // single intermediaire for a single carcasse
   carcassesIntermediaireById: Record<FeiAndCarcasseAndIntermediaireIds, CarcasseIntermediaire>;
-  carcasseModifRequestsById: Record<CarcasseModificationRequest['id'], CarcasseModificationRequest>;
+  carcasseModifPendingRequestsIds: Record<CarcasseModificationRequest['id'], CarcasseModificationRequest>;
   apiKeyApprovals: NonNullable<UserConnexionResponse['data']['apiKeyApprovals']>;
   lastUpdateCarcassesRegistry: number;
   carcassesRegistry: Array<CarcasseForResponseForRegistry>;
@@ -162,10 +162,11 @@ function initialState(): State {
     apiKeyApprovals: [],
     carcasses: {},
     carcassesIntermediaireById: {},
-    carcasseModifRequestsById: {},
+    carcasseModifPendingRequestsIds: {},
     _hasHydrated: false,
   };
 }
+
 
 let resolveHydration: () => void;
 export const hydrationPromise = new Promise<void>((resolve) => {
@@ -412,15 +413,15 @@ const useZustandStore = create<State & Actions>()(
           };
           useZustandStore.setState((state) => ({
             ...state,
-            carcasseModifRequestsById: {
-              ...state.carcasseModifRequestsById,
+            carcasseModifPendingRequestsIds: {
+              ...state.carcasseModifPendingRequestsIds,
               [next.id]: next,
             },
             dataIsSynced: false,
           }));
         },
         updateCarcasseModifRequest: (id, partial, approvalPayload) => {
-          const existing = useZustandStore.getState().carcasseModifRequestsById[id];
+          const existing = useZustandStore.getState().carcasseModifPendingRequestsIds[id];
           if (!existing) return;
           const next: CarcasseModificationRequest & { _approvalPayload?: typeof approvalPayload } = {
             ...existing,
@@ -434,8 +435,8 @@ const useZustandStore = create<State & Actions>()(
           if (approvalPayload) next._approvalPayload = approvalPayload;
           useZustandStore.setState((state) => ({
             ...state,
-            carcasseModifRequestsById: {
-              ...state.carcasseModifRequestsById,
+            carcasseModifPendingRequestsIds: {
+              ...state.carcasseModifPendingRequestsIds,
               [id]: next,
             },
             dataIsSynced: false,
@@ -487,17 +488,17 @@ const useZustandStore = create<State & Actions>()(
         },
         partialize: (state) =>
           Object.fromEntries(PERSISTED_KEYS.map((key) => [key, state[key]])) as Partial<State>,
-        // v8: rename carcasseModificationRequestsById → carcasseModifRequestsById on existing clients.
+        // v8: rename carcasseModificationRequestsById → carcasseModifPendingRequestsIds on existing clients.
         migrate: (persistedState, version) => {
           const s = persistedState as Partial<State> & {
             carcasseModificationRequestsById?: Record<string, CarcasseModificationRequest>;
           };
           if (version < 8) {
             const fromOld = s.carcasseModificationRequestsById ?? {};
-            const fromNew = s.carcasseModifRequestsById ?? {};
+            const fromNew = s.carcasseModifPendingRequestsIds ?? {};
             return {
               ...s,
-              carcasseModifRequestsById: { ...fromOld, ...fromNew },
+              carcasseModifPendingRequestsIds: { ...fromOld, ...fromNew },
               carcasseModificationRequestsById: undefined,
             };
           }
@@ -543,7 +544,13 @@ export async function syncData(calledFrom: string) {
   const unsyncedIntermediaires = Object.values(state.carcassesIntermediaireById).filter(
     (ci) => !ci.is_synced
   );
+<<<<<<< HEAD
   const unsyncedModifRequests = Object.values(state.carcasseModifRequestsById).filter((r) => !r.is_synced);
+=======
+  const unsyncedModifRequests = Object.values(state.carcasseModifPendingRequestsIds).filter(
+    (r) => !r.is_synced
+  );
+>>>>>>> f6da16e8 (recette done)
   const unsyncedLogs = state.logs.filter((l) => !l.is_synced);
 
   // Nothing to sync
@@ -603,7 +610,7 @@ export async function syncData(calledFrom: string) {
     }
 
     // Modif-requests: direct field from sync response + also picked up from populated feis.
-    const nextModifRequests = { ...useZustandStore.getState().carcasseModifRequestsById };
+    const nextModifRequests = { ...useZustandStore.getState().carcasseModifPendingRequestsIds };
     for (const r of res.data.carcasseModifRequests ?? []) {
       nextModifRequests[r.id] = r;
     }
@@ -626,7 +633,7 @@ export async function syncData(calledFrom: string) {
       feis: nextFeis,
       carcasses: nextCarcasses,
       carcassesIntermediaireById: nextIntermediaires,
-      carcasseModifRequestsById: nextModifRequests,
+      carcasseModifPendingRequestsIds: nextModifRequests,
       logs: nextLogs,
       dataIsSynced: true,
     });

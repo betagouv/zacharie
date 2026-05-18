@@ -1,11 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Link } from 'react-router';
 import dayjs from 'dayjs';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import {
-  fetchModifRequestsForExaminateur,
   CarcasseModificationRequestStatus,
   CarcasseModificationRequestType,
 } from '@app/utils/carcasse-modification-request';
@@ -14,23 +13,9 @@ import {
 // Le lien des notifications email/SMS/push pointe vers /app/chasseur/demandes-de-modification.
 export default function ChasseurDemandesDeModification() {
   const user = useUser((state) => state.user);
-  const requestsById = useZustandStore((state) => state.carcasseModifRequestsById);
+  const requestsById = useZustandStore((state) => state.carcasseModifPendingRequestsIds);
   const carcasses = useZustandStore((state) => state.carcasses);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    let active = true;
-    setLoading(true);
-    fetchModifRequestsForExaminateur().then((res) => {
-      if (!active) return;
-      setLoading(false);
-      if (!res.ok) setError(res.error);
-    });
-    return () => {
-      active = false;
-    };
-  }, []);
+  const feis = useZustandStore((state) => state.feis);
 
   const pendingForMe = useMemo(() => {
     if (!user) return [];
@@ -55,32 +40,32 @@ export default function ChasseurDemandesDeModification() {
 
   return (
     <div className="fr-container fr-py-4w">
+      <title>Demandes de modification | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
       <h1>Demandes de modification</h1>
       <p className="opacity-80">
-        Les intermédiaires peuvent vous demander de corriger un numéro de bracelet, ou de signer une carcasse qu'ils ont
-        ajoutée à une fiche. Toute modification doit être approuvée par vous, l'examinateur initial.
+      Les destinataires de vos carcasses peuvent vous demander de corriger un numéro de bracelet, ou de valider la mise sur le marché d'une carcasse
+      qu'ils ont ajoutée à une fiche. En tant qu'examinateur initial, vous devez approuver ou refuser ces modifications.
       </p>
-      {error && (
-        <Alert
-          severity="error"
-          title="Erreur de chargement"
-          description={error}
-        />
-      )}
-      {loading && pendingForMe.length === 0 && <p>Chargement…</p>}
-      {!loading && pendingForMe.length === 0 && (
+      {pendingForMe.length === 0 && (
         <Alert
           severity="info"
           title="Aucune demande en attente"
           description="Aucun intermédiaire ne vous demande de modification actuellement."
         />
       )}
-      {Object.entries(groupedByFei).map(([feiNumero, requests]) => (
+      {Object.entries(groupedByFei).map(([feiNumero, requests]) => {
+        const fei = feis[feiNumero];
+        const datePart = fei?.date_mise_a_mort ? dayjs(fei.date_mise_a_mort).format('DD/MM') : null;
+        const commune = fei?.commune_mise_a_mort?.trim();
+        const heading = datePart
+          ? `Fiche du ${datePart}${commune ? ` - ${commune}` : ''}`
+          : `Fiche ${feiNumero}`;
+        return (
         <section
           key={feiNumero}
           className="fr-mt-4w"
         >
-          <h2 className="fr-h4">Fiche {feiNumero}</h2>
+          <h2 className="fr-h4">{heading}</h2>
           <ul className="space-y-2">
             {requests.map((r) => {
               const isRename = r.type === CarcasseModificationRequestType.BRACELET_RENAME;
@@ -102,9 +87,7 @@ export default function ChasseurDemandesDeModification() {
                     Demandée le {dayjs(r.requested_at).format('DD/MM/YYYY HH:mm')}
                   </p>
                   {r.comment_intermediaire && (
-                    <p className="m-0 text-sm opacity-80">
-                      Commentaire : {r.comment_intermediaire}
-                    </p>
+                    <p className="m-0 text-sm opacity-80">Commentaire : {r.comment_intermediaire}</p>
                   )}
                   <div className="mt-2">
                     <Link
@@ -119,7 +102,8 @@ export default function ChasseurDemandesDeModification() {
             })}
           </ul>
         </section>
-      ))}
+        );
+      })}
     </div>
   );
 }

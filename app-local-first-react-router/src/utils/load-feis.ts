@@ -75,9 +75,15 @@ export async function loadFeis() {
           );
           return;
         }
-
-        // Store users and entities from flat arrays
+        // Store users and entities and pending modification requests from flat arrays
         const prevState = useZustandStore.getState();
+
+        for (const carcasseModifPendingRequest of feisRefreshed.data.carcasseModifPendingRequestsIds) {
+          if (!prevState.carcasseModifPendingRequestsIds[carcasseModifPendingRequest.id]) {
+            prevState.carcasseModifPendingRequestsIds[carcasseModifPendingRequest.id] = carcasseModifPendingRequest;
+          }
+        }
+
         for (const user of feisRefreshed.data.users) {
           if (!prevState.users[user.id]) {
             prevState.users[user.id] = user;
@@ -92,9 +98,8 @@ export async function loadFeis() {
             relationStatus: existing?.relationStatus ?? undefined,
           } satisfies EntityWithUserRelation;
         }
-        useZustandStore.setState(prevState, true);
 
-        // Process FEIs, carcasses, and intermediaires
+        // Process FEIs, carcasses, intermediaires
         for (const fei of feisRefreshed.data.feis) {
           setFeiInStore(fei);
           if (import.meta.env.VITE_TEST_PLAYWRIGHT === 'true') {
@@ -102,6 +107,8 @@ export async function loadFeis() {
             await new Promise((resolve) => setTimeout(resolve, 100));
           }
         }
+
+        useZustandStore.setState(prevState, true);
       }
     }
 

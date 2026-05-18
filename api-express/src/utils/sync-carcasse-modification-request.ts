@@ -16,6 +16,7 @@ export type SyncModifRequestResult = {
   saved: CarcasseModificationRequest;
   isNew: boolean;
   transitionedTo: CarcasseModificationRequestStatus | null; // set when status flipped
+  justCancelled: boolean; // set when deleted_at flipped from null to non-null while still PENDING
 };
 
 /**
@@ -24,7 +25,9 @@ export type SyncModifRequestResult = {
  *  - on create (status=PENDING)            → notify examinateur
  *  - on approve (PENDING → APPROVED)       → mutate the underlying Carcasse, notify requester
  *  - on reject  (PENDING → REJECTED)       → for NEW soft-delete the Carcasse, notify requester
- * Validates that approval/rejection comes from the actual examinateur initial of the carcasse.
+ *  - on cancel  (deleted_at set, was null) → for NEW soft-delete the Carcasse
+ * Validates that approval/rejection comes from the actual examinateur initial.
+ * Cancellation only allowed by the requester while still PENDING.
  */
 export async function syncCarcasseModifRequest(
   body: Prisma.CarcasseModificationRequestUncheckedCreateInput,
@@ -45,7 +48,7 @@ export async function syncCarcasseModifRequest(
         is_synced: true,
       },
     });
-    return { saved: created, isNew: true, transitionedTo: null };
+    return { saved: created, isNew: true, transitionedTo: null, justCancelled: false };
   }
 
   // -- UPDATE -------------------------------------------------------------
@@ -54,6 +57,12 @@ export async function syncCarcasseModifRequest(
     !!incomingStatus &&
     existing.status === CarcasseModificationRequestStatus.PENDING &&
     incomingStatus !== CarcasseModificationRequestStatus.PENDING;
+
+  const incomingDeletedAt = body.deleted_at as Date | string | null | undefined;
+  const justCancelled =
+    !existing.deleted_at &&
+    !!incomingDeletedAt &&
+    existing.status === CarcasseModificationRequestStatus.PENDING;
 
   if (willTransition) {
     // Only the examinateur initial of the underlying carcasse may approve/reject.
@@ -64,6 +73,10 @@ export async function syncCarcasseModifRequest(
     if (carcasse.examinateur_initial_user_id !== user.id) {
       throw new Error("Seul l'examinateur initial peut approuver ou refuser une demande");
     }
+  }
+
+  if (justCancelled && existing.requested_by_user_id !== user.id) {
+    throw new Error("Seul l'auteur de la demande peut l'annuler");
   }
 
   const saved = await prisma.carcasseModificationRequest.update({
@@ -78,6 +91,7 @@ export async function syncCarcasseModifRequest(
     saved,
     isNew: false,
     transitionedTo: willTransition ? (incomingStatus as CarcasseModificationRequestStatus) : null,
+    justCancelled,
   };
 }
 
@@ -98,10 +112,22 @@ export async function runCarcasseModifRequestSideEffects(
     examinateur_approbation_mise_sur_le_marche?: boolean;
   }
 ) {
-  const { saved, isNew, transitionedTo } = result;
+  const { saved, isNew, transitionedTo, justCancelled } = result;
 
   if (isNew) {
     await notifyExaminateur(saved);
+    return;
+  }
+
+  if (justCancelled) {
+    // The requester cancelled their own request. For NEW_CARCASSE, also remove the carcasse they had
+    // pre-filled — it only existed because of this request. RENAME: nothing else to do.
+    if (saved.type === CarcasseModificationRequestType.NEW_CARCASSE) {
+      await prisma.carcasse.update({
+        where: { zacharie_carcasse_id: saved.zacharie_carcasse_id },
+        data: { deleted_at: new Date() },
+      });
+    }
     return;
   }
 
@@ -152,7 +178,7 @@ async function notifyExaminateur(modif: CarcasseModificationRequest) {
   const requesterEntity = await prisma.entity.findUnique({
     where: { id: modif.requested_by_entity_id },
   });
-  const entityName = requesterEntity?.nom_d_usage ?? 'Un intermédiaire';
+  const entityName = requesterEntity?.nom_d_usage ?? 'Un destinataire de vos carcasses';
   const chasseDate = carcasse?.Fei?.date_mise_a_mort
     ? dayjs(carcasse.Fei.date_mise_a_mort).format('DD/MM')
     : '';

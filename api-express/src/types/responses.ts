@@ -109,6 +109,7 @@ export interface FeiRefreshResponse {
     feis: Array<FeiForRefresh>;
     users: Array<UserForFei>;
     entities: Array<Entity>;
+    carcasseModifPendingRequestsIds: Array<CarcasseModificationRequest>;
   };
   error: string;
 }
