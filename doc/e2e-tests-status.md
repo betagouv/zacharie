@@ -5,7 +5,7 @@ Updated 2026-04-30. ~131 specs across 9 folders (after split of 32 → 3 + 33 �
 ## Results: ~127 pass, 4 skip, 0 fail
 
 4 hard skips remain (down from 25 then 7). All four are skipped for documented reasons that
-require a code change *outside the test* — not test-quality issues:
+require a code change _outside the test_ — not test-quality issues:
 
 - **106** — infrastructure limitation (Vite dev mode breaks SW caching)
 - **121** — 🔒 backend security finding (missing ownership check on GET /carcasse-intermediaire)
@@ -28,8 +28,8 @@ require a code change *outside the test* — not test-quality issues:
 - **Seeds extended** (`api-express/scripts/populate-test-db.ts`): 4 new seed roles
   `COMMERCE_DE_DETAIL_DELIVERED`, `ETG_TAKEN_CHARGE`, `COLLECTEUR_TAKEN_CHARGE`,
   `PREMIER_DETENTEUR_WITH_PARTAGE`. Pre-existing typo
-  `intermediaire_carcasse_signed_at` removed (field doesn't exist on Carcasse). ETG_REFUSED seed
-  now sets `svi_carcasse_status: REFUS_ETG_COLLECTEUR` + clears `fei_next_owner_*` (was leaving
+  `intermediaire_carcasse_signed_at` removed (field doesn't exist on Carcasse). ETG*REFUSED seed
+  now sets `svi_carcasse_status: REFUS_ETG_COLLECTEUR` + clears `fei_next_owner*\*` (was leaving
   PD's own id as next owner, which broke the chasseur "feisUnderMyResponsability" filter).
 - **🔒 SECURITY FINDING (test 128)**: `POST /carcasse/:feiNumero/:zacharieCarcasseId` returns
   **200** when an ETG modifies a carcasse from another ETG's branch (expected: 403/404).
@@ -42,31 +42,31 @@ require a code change *outside the test* — not test-quality issues:
 
 ### A. Examinateur (`tests/examinateur/`) — 23 pass, 0 skip, 1 deleted
 
-| #   | Test                                   | Status  | Notes                                                                |
-| --- | -------------------------------------- | ------- | -------------------------------------------------------------------- |
-| 01  | creation-fiche-grand-gibier-mono       | pass    | 1 daim, full flow, transmet                                          |
-| 02  | fiche_circuit-long_simple_examinateur  | pass    | (existing) 4 daims, transmet                                         |
-| 03  | creation-fiche-petit-gibier-lot        | pass    | Pigeons x10                                                          |
-| 04  | creation-fiche-mixte                   | pass    | 3 daims + 10 pigeons                                                 |
-| 05  | creation-fiche-anomalies               | pass    | Anomalies via referentiel tree modal                                 |
-| 06  | brouillon-persistance                  | pass    | Draft fiche appears in list                                          |
-| 07  | edition-carcasse-depuis-detail         | pass    | Edit anomalies on carcasse detail page                               |
-| 08  | examinateur-pd-self-handoff            | pass    | (was skip) Self-handoff flow transitions inline; no extra wait needed |
-| 09  | onboarding-complet                     | pass    | (was skip) DSFR radio: click label not input + fill required CFEI    |
-| 10  | onboarding-incomplet-acces-restreint   | pass    | ChasseurDeactivated for incomplete profile                           |
-| 11  | onboarding-partiel-formation-manquante | pass    | est_forme_a_l_examen_initial null → deactivated                      |
-| 12  | profil-examinateur                     | pass    | Coordonnees persist after reload                                     |
-| 13  | ccg-creation-profil                    | pass    | Uses pre-seeded CCG-01                                               |
-| 14  | ccg-edition                            | DELETED | Edit pencil only on pre-registered CCGs (none seeded); body was stub |
-| 15  | fiche-svi-cloturee-vue-chasseur        | pass    | SVI_CLOSED seed                                                      |
-| 16  | fiche-circuit-court-livree             | pass    | (was skip) New seed `COMMERCE_DE_DETAIL_DELIVERED`                   |
+| #   | Test                                   | Status  | Notes                                                                    |
+| --- | -------------------------------------- | ------- | ------------------------------------------------------------------------ |
+| 01  | creation-fiche-grand-gibier-mono       | pass    | 1 daim, full flow, transmet                                              |
+| 02  | fiche_circuit-long_simple_examinateur  | pass    | (existing) 4 daims, transmet                                             |
+| 03  | creation-fiche-petit-gibier-lot        | pass    | Pigeons x10                                                              |
+| 04  | creation-fiche-mixte                   | pass    | 3 daims + 10 pigeons                                                     |
+| 05  | creation-fiche-anomalies               | pass    | Anomalies via referentiel tree modal                                     |
+| 06  | brouillon-persistance                  | pass    | Draft fiche appears in list                                              |
+| 07  | edition-carcasse-depuis-detail         | pass    | Edit anomalies on carcasse detail page                                   |
+| 08  | examinateur-pd-self-handoff            | pass    | (was skip) Self-handoff flow transitions inline; no extra wait needed    |
+| 09  | onboarding-complet                     | pass    | (was skip) DSFR radio: click label not input + fill required CFEI        |
+| 10  | onboarding-incomplet-acces-restreint   | pass    | ChasseurDeactivated for incomplete profile                               |
+| 11  | onboarding-partiel-formation-manquante | pass    | est_forme_a_l_examen_initial null → deactivated                          |
+| 12  | profil-examinateur                     | pass    | Coordonnees persist after reload                                         |
+| 13  | ccg-creation-profil                    | pass    | Uses pre-seeded CCG-01                                                   |
+| 14  | ccg-edition                            | DELETED | Edit pencil only on pre-registered CCGs (none seeded); body was stub     |
+| 15  | fiche-svi-cloturee-vue-chasseur        | pass    | SVI_CLOSED seed                                                          |
+| 16  | fiche-circuit-court-livree             | pass    | (was skip) New seed `COMMERCE_DE_DETAIL_DELIVERED`                       |
 | 17  | fiche-refusee-par-etg                  | pass    | (was skip) Seed fixed: ETG_REFUSED is terminal-at-ETG, not bounced-to-PD |
-| 18  | date-future-refusee                    | pass    | Edge case                                                            |
-| 19  | heure-evisceration-invalide            | pass    | Edge case                                                            |
-| 20  | retirer-carcasse                       | pass    | Trash icon + window.confirm                                          |
-| 21  | zero-carcasse-transmettre-disabled     | pass    | Transmettre disabled                                                 |
-| 22  | double-clic-transmettre                | pass    | dblclick → 1 fiche                                                   |
-| 23  | deconnexion-pendant-formulaire         | pass    | Store cleaned                                                        |
+| 18  | date-future-refusee                    | pass    | Edge case                                                                |
+| 19  | heure-evisceration-invalide            | pass    | Edge case                                                                |
+| 20  | retirer-carcasse                       | pass    | Trash icon + window.confirm                                              |
+| 21  | zero-carcasse-transmettre-disabled     | pass    | Transmettre disabled                                                     |
+| 22  | double-clic-transmettre                | pass    | dblclick → 1 fiche                                                       |
+| 23  | deconnexion-pendant-formulaire         | pass    | Store cleaned                                                            |
 
 ### B. Premier detenteur (`tests/premier-detenteur/`) — 19 pass, 0 skip
 
@@ -98,24 +98,24 @@ require a code change *outside the test* — not test-quality issues:
 
 ### C. ETG (`tests/etg/`) — 18 pass, 0 skip
 
-| #     | Test                                 | Status   | Notes                                                       |
-| ----- | ------------------------------------ | -------- | ----------------------------------------------------------- |
-| 44-47 | fiche_circuit-long_simple_etg        | pass     | (existing) reception, refus, manquante, SVI                 |
-| 45    | reception-avec-stockage-ccg          | pass     | CCG storage entry                                           |
-| 48    | vue-carcasses-agregee                | **pass** | (was skip) New seed `ETG_TAKEN_CHARGE` adds CarcasseInterm. |
-| 49    | onboarding-incomplet                 | pass     | "Coordonnees" heading                                       |
-| 50    | profil-entreprise                    | pass     | Entity info                                                 |
-| 51    | utilisateurs-entreprise              | pass     | Modal opens                                                 |
-| 52    | roles-internes-transport-reception   | pass     | RECEPTION radio for etg-1                                   |
+| #     | Test                                 | Status   | Notes                                                                                   |
+| ----- | ------------------------------------ | -------- | --------------------------------------------------------------------------------------- |
+| 44-47 | fiche_circuit-long_simple_etg        | pass     | (existing) reception, refus, manquante, SVI                                             |
+| 45    | reception-avec-stockage-ccg          | pass     | CCG storage entry                                                                       |
+| 48    | vue-carcasses-agregee                | **pass** | (was skip) New seed `ETG_TAKEN_CHARGE` adds CarcasseInterm.                             |
+| 49    | onboarding-incomplet                 | pass     | "Coordonnees" heading                                                                   |
+| 50    | profil-entreprise                    | pass     | Entity info                                                                             |
+| 51    | utilisateurs-entreprise              | pass     | Modal opens                                                                             |
+| 52    | roles-internes-transport-reception   | pass     | RECEPTION radio for etg-1                                                               |
 | 53    | notifications                        | pass     | EMAIL checkbox toggle (defensive soft-skip removed; now hard-fails on missing checkbox) |
-| 54    | partage-de-mes-donnees               | pass     | API key sections                                            |
-| 55    | post-inspection-svi                  | **pass** | (was skip) SVI_CLOSED seed already populates ETG 1 interm.  |
-| 56    | fiche-cloturee-lecture-seule         | pass     | No actions after cloture                                    |
-| 57    | transmission-sans-prochain-detenteur | pass     | Error message                                               |
-| 58    | acces-cross-etg-refuse               | pass     | 404                                                         |
-| 59    | double-prise-en-charge               | pass     | Single effect                                               |
-| 60    | refus-sans-motif                     | pass     | Enregistrement blocked                                      |
-| 61    | transmission-hors-ligne              | pass     | Offline sync                                                |
+| 54    | partage-de-mes-donnees               | pass     | API key sections                                                                        |
+| 55    | post-inspection-svi                  | **pass** | (was skip) SVI_CLOSED seed already populates ETG 1 interm.                              |
+| 56    | fiche-cloturee-lecture-seule         | pass     | No actions after cloture                                                                |
+| 57    | transmission-sans-prochain-detenteur | pass     | Error message                                                                           |
+| 58    | acces-cross-etg-refuse               | pass     | 404                                                                                     |
+| 59    | double-prise-en-charge               | pass     | Single effect                                                                           |
+| 60    | refus-sans-motif                     | pass     | Enregistrement blocked                                                                  |
+| 61    | transmission-hors-ligne              | pass     | Offline sync                                                                            |
 
 ### D. Collecteur (`tests/collecteur/`) — 12 pass, 0 skip
 
@@ -136,100 +136,95 @@ require a code change *outside the test* — not test-quality issues:
 
 ### E. SVI (`tests/svi/`) — 14 pass, 0 skip
 
-| #   | Test                            | Status   | Notes                                                          |
-| --- | ------------------------------- | -------- | -------------------------------------------------------------- |
-| 74  | inspection-acceptee             | pass     | IPM1 "Acceptee" + Enregistrer                                  |
-| 75  | inspection-refusee              | **pass** | (was skip) IPM1 → IPM2 sequential flow works                   |
-| 76  | inspection-consignee            | pass     | "Mise en consigne" + duree                                     |
-| 77  | traitement-assainissant         | **pass** | (was skip) DSFR radio: click label directly for "Traitement…"  |
-| 78  | cloture-automatique-j10         | pass     | SVI_CLOSED                                                     |
-| 79  | vue-fiches                      | pass     | Fiche list                                                     |
-| 80  | vue-carcasses                   | pass     | Carcasses list                                                 |
-| 81  | onboarding-incomplet            | pass     | Coordonnees form                                               |
-| 82  | profil                          | pass     | Entity info                                                    |
-| 83  | fiche-cloturee-consultation     | pass     | Read-only "accepte"                                            |
-| 84  | revision-decision               | pass     | Already-closed fiche                                           |
-| 85  | refus-sans-motif                | pass     | Validation errors                                              |
-| 86  | carcasse-manquante              | pass     | "Non, carcasse manquante"                                      |
-| 87  | fiche-sans-carcasse-a-inspecter | pass     | ETG_ALL_REFUSED_TO_SVI                                         |
-| 88  | svi-autre-departement           | pass     | SVI 2 cannot access SVI 1's fiche                              |
+| #   | Test                            | Status   | Notes                                                         |
+| --- | ------------------------------- | -------- | ------------------------------------------------------------- |
+| 74  | inspection-acceptee             | pass     | IPM1 "Acceptee" + Enregistrer                                 |
+| 75  | inspection-refusee              | **pass** | (was skip) IPM1 → IPM2 sequential flow works                  |
+| 76  | inspection-consignee            | pass     | "Mise en consigne" + duree                                    |
+| 77  | traitement-assainissant         | **pass** | (was skip) DSFR radio: click label directly for "Traitement…" |
+| 78  | cloture-automatique-j10         | pass     | SVI_CLOSED                                                    |
+| 79  | vue-fiches                      | pass     | Fiche list                                                    |
+| 80  | vue-carcasses                   | pass     | Carcasses list                                                |
+| 81  | onboarding-incomplet            | pass     | Coordonnees form                                              |
+| 82  | profil                          | pass     | Entity info                                                   |
+| 83  | fiche-cloturee-consultation     | pass     | Read-only "accepte"                                           |
+| 84  | revision-decision               | pass     | Already-closed fiche                                          |
+| 85  | refus-sans-motif                | pass     | Validation errors                                             |
+| 86  | carcasse-manquante              | pass     | "Non, carcasse manquante"                                     |
+| 87  | fiche-sans-carcasse-a-inspecter | pass     | ETG_ALL_REFUSED_TO_SVI                                        |
+| 88  | svi-autre-departement           | pass     | SVI 2 cannot access SVI 1's fiche                             |
 
 ### F. Circuit court (`tests/circuit-court/`) — 8 pass, 0 skip, 1 deleted
 
-| #   | Test                          | Status  | Notes                                                |
-| --- | ----------------------------- | ------- | ---------------------------------------------------- |
-| 89  | reception-directe-pd          | pass    | Fiche visible in list                                |
+| #   | Test                          | Status  | Notes                                                  |
+| --- | ----------------------------- | ------- | ------------------------------------------------------ |
+| 89  | reception-directe-pd          | pass    | Fiche visible in list                                  |
 | 90  | prise-en-charge               | DELETED | No CTA in Zacharie — passive view only (per CLAUDE.md) |
-| 91  | liste-triable                 | pass    | Status filter                                        |
-| 92  | onboarding-incomplet          | pass    | Profile completion                                   |
-| 93  | onboarding-complet            | pass    | Full onboarding                                      |
-| 94  | profil                        | pass    | All pages load                                       |
-| 95  | fiche-recuperee-fin-de-chaine | pass    | No Transmettre button                                |
-| 96  | refus-carcasse                | pass    | No refus button                                      |
-| 97  | retransmission-interdite      | pass    | No prochain detenteur selector                       |
+| 91  | liste-triable                 | pass    | Status filter                                          |
+| 92  | onboarding-incomplet          | pass    | Profile completion                                     |
+| 93  | onboarding-complet            | pass    | Full onboarding                                        |
+| 94  | profil                        | pass    | All pages load                                         |
+| 95  | fiche-recuperee-fin-de-chaine | pass    | No Transmettre button                                  |
+| 96  | refus-carcasse                | pass    | No refus button                                        |
+| 97  | retransmission-interdite      | pass    | No prochain detenteur selector                         |
 
 ### G. Transverse (`tests/transverse/`) — 10 pass, 1 skip
 
-| #       | Test                                       | Status   | Notes                                                            |
-| ------- | ------------------------------------------ | -------- | ---------------------------------------------------------------- |
-| 100-102 | connexion, creation-comptes, comptes-vides | pass     | (existing)                                                       |
-| 103     | dead-routes-old-tableau-de-bord            | pass     | Redirects to /chasseur                                           |
-| 104     | offline-create-online-sync                 | pass     | Fiche created offline syncs                                      |
-| 105     | role-based-route-access-matrix             | pass     | 5 roles × forbidden paths                                        |
-| 106     | service-worker-cache                       | **skip** | Body fully implemented; Vite dev mode breaks SW caching          |
-| 107     | logout-cleans-local-store                  | pass     | No data leak                                                     |
-| 108     | changement-de-role-interdit                | pass     | Backend rejects dual roles                                       |
-| 109     | session-expiree                            | pass     | Redirect to connexion                                            |
-| 110     | deep-link-fiche-inconnue                   | pass     | No crash                                                         |
+| #       | Test                                       | Status   | Notes                                                   |
+| ------- | ------------------------------------------ | -------- | ------------------------------------------------------- |
+| 100-102 | connexion, creation-comptes, comptes-vides | pass     | (existing)                                              |
+| 103     | dead-routes-old-tableau-de-bord            | pass     | Redirects to /chasseur                                  |
+| 104     | offline-create-online-sync                 | pass     | Fiche created offline syncs                             |
+| 105     | role-based-route-access-matrix             | pass     | 5 roles × forbidden paths                               |
+| 106     | service-worker-cache                       | **skip** | Body fully implemented; Vite dev mode breaks SW caching |
+| 107     | logout-cleans-local-store                  | pass     | No data leak                                            |
+| 108     | changement-de-role-interdit                | pass     | Backend rejects dual roles                              |
+| 109     | session-expiree                            | pass     | Redirect to connexion                                   |
+| 110     | deep-link-fiche-inconnue                   | pass     | No crash                                                |
 
 ### H. Chains (`tests/chains/`) — 6 pass, 0 skip
 
-| #   | Test                       | Status | Notes                                                         |
-| --- | -------------------------- | ------ | ------------------------------------------------------------- |
-| 111 | chain-circuit-long         | pass   | PD → ETG → SVI                                                |
-| 112 | chain-circuit-court-direct | pass   | PD → Commerce de détail                                       |
-| 113 | chain-avec-collecteur      | pass   | PD → Collecteur → ETG                                         |
-| 114 | chain-dispatch-hybride     | pass   | PD → ETG + Collecteur                                         |
-| 115 | chain-refus-total-etg      | pass   | ETG refuses all                                               |
-| 116 | chain-refus-partiel-svi    | pass   | (was skip) MISE_EN_CONSIGNE save needs pieces+lésions filled  |
+| #   | Test                       | Status | Notes                                                        |
+| --- | -------------------------- | ------ | ------------------------------------------------------------ |
+| 111 | chain-circuit-long         | pass   | PD → ETG → SVI                                               |
+| 112 | chain-circuit-court-direct | pass   | PD → Commerce de détail                                      |
+| 113 | chain-avec-collecteur      | pass   | PD → Collecteur → ETG                                        |
+| 114 | chain-dispatch-hybride     | pass   | PD → ETG + Collecteur                                        |
+| 115 | chain-refus-total-etg      | pass   | ETG refuses all                                              |
+| 116 | chain-refus-partiel-svi    | pass   | (was skip) MISE_EN_CONSIGNE save needs pieces+lésions filled |
 
 ### I. Dispatch isolation (`tests/dispatch-isolation/`) — 10 pass, 3 skip
 
-| #   | Test                               | Status   | Notes                                                       |
-| --- | ---------------------------------- | -------- | ----------------------------------------------------------- |
-| —   | fiche_dispatch_multi_destinataires | pass     | (existing) 2 ETG dispatch                                   |
-| 117 | dispatch-2-etg-isolation-negative  | pass     | ETG 1 cannot see ETG 2                                      |
-| 118 | dispatch-etg-plus-collecteur       | pass     | Cross-type isolation                                        |
-| 119 | dispatch-3-destinataires           | pass     | 3-way split                                                 |
-| 120 | vue-agregee-etg-carcasses          | pass     | Aggregate filters by branch                                 |
+| #   | Test                               | Status   | Notes                                                                     |
+| --- | ---------------------------------- | -------- | ------------------------------------------------------------------------- |
+| —   | fiche_dispatch_multi_destinataires | pass     | (existing) 2 ETG dispatch                                                 |
+| 117 | dispatch-2-etg-isolation-negative  | pass     | ETG 1 cannot see ETG 2                                                    |
+| 118 | dispatch-etg-plus-collecteur       | pass     | Cross-type isolation                                                      |
+| 119 | dispatch-3-destinataires           | pass     | 3-way split                                                               |
+| 120 | vue-agregee-etg-carcasses          | pass     | Aggregate filters by branch                                               |
 | 121 | carcasse-intermediaire-api-leak    | **skip** | 🔒 SECURITY FINDING — GET /carcasse-intermediaire missing ownership check |
-| 122 | refus-etg1-ne-propage-pas          | pass     | ETG 1 refus invisible to ETG 2                              |
-| 123 | transmission-svi-n-expose-pas-etg2 | pass     | (was skip) ETG 1 → SVI 1, SVI 1 only sees ETG 1's branch   |
-| 124 | deux-chaines-svi-paralleles        | **skip** | ⚠️ BACKEND LIMITATION — multi-branch SVI not in data model |
-| 125 | fiche-pd-2-groupes                 | pass     | PD sees 2 groups                                            |
-| 126 | decisions-svi-divergentes          | pass     | Different decisions per branch                              |
-| 127 | url-directe-carcasse-autre-branche | pass     | No data leak via URL                                        |
-| 128 | modification-api-cross-branche     | **skip** | 🔒 SECURITY FINDING — POST /carcasse missing ownership check |
+| 122 | refus-etg1-ne-propage-pas          | pass     | ETG 1 refus invisible to ETG 2                                            |
+| 123 | transmission-svi-n-expose-pas-etg2 | pass     | (was skip) ETG 1 → SVI 1, SVI 1 only sees ETG 1's branch                  |
+| 124 | deux-chaines-svi-paralleles        | **skip** | ⚠️ BACKEND LIMITATION — multi-branch SVI not in data model                |
+| 125 | fiche-pd-2-groupes                 | pass     | PD sees 2 groups                                                          |
+| 126 | decisions-svi-divergentes          | pass     | Different decisions per branch                                            |
+| 127 | url-directe-carcasse-autre-branche | pass     | No data leak via URL                                                      |
+| 128 | modification-api-cross-branche     | **skip** | 🔒 SECURITY FINDING — POST /carcasse missing ownership check              |
 
 ---
 
 ## Skipped tests — categorized (4 total)
 
-All four skips are blocked on a code change *outside the test itself* (backend ownership checks,
+All four skips are blocked on a code change _outside the test itself_ (backend ownership checks,
 backend data-model rework, or the e2e infrastructure). The test bodies are written and ready —
 once the upstream change lands, removing `test.skip` turns each into a regression guard.
 
-### 🔒 Backend security findings — missing ownership checks (2)
+### 🔒 Backend security findings — missing ownership checks (1)
 
 Both endpoints only call `passport.authenticate('user', ...)` (JWT validity) and then operate on
 the requested resource without checking that the user has any relationship to it. Any
 authenticated user can read/modify any carcasse on any fiche by knowing the IDs.
 
-- **121 (carcasse-intermediaire-api-leak)** — `GET /carcasse-intermediaire/:fei_numero/:intermediaire_id/:zacharie_carcasse_id`
-  (`api-express/src/controllers/carcasse-intermediaire.ts:165-228`) returns **200** with another
-  ETG's CarcasseIntermediaire data. Expected: 403/404. Test reaches the leak check (uses
-  POST /fei/refresh to discover ETG 2's intermediaire_id, then GETs as ETG 1) and asserts the
-  expected status — currently fails with 200.
 - **128 (modification-api-cross-branche)** — `POST /carcasse/:fei_numero/:zacharie_carcasse_id`
   (`api-express/src/controllers/carcasse.ts:509-551`, calling `saveCarcasse` line 43+) returns
   **200** when an ETG modifies another ETG's carcasse. Expected: 403/404. Test executes the full
@@ -458,6 +453,7 @@ error referencing "aucune carcasse acceptée".
 #### ETG-Gap 4 — `check_manuel` UI dual-branch
 
 **Spec'd behavior** (per `etg-carcasse.tsx:75,113,279`):
+
 - Default fast path: ETG clicks "Prendre en charge" → all carcasses default to "Acceptée"
   but **the "Acceptée" badge is NOT shown** (implicit acceptance).
 - Manual-check path (`check_manuel = true`): each carcasse explicitly shows "Acceptée par
@@ -522,7 +518,7 @@ Deferred to a later pass.
 - **Bug 4 (FIXED this pass)**: ETG_REFUSED seed had typo `intermediaire_carcasse_signed_at`
   (field doesn't exist on Carcasse) — caused Prisma createMany to throw.
 - **Bug 5 (FIXED this pass)**: ETG_REFUSED seed had wrong owner state (`fei_current_owner_role =
-  PREMIER_DETENTEUR` while carcasses had `svi_carcasse_status = REFUS_ETG_COLLECTEUR`). Real
+PREMIER_DETENTEUR` while carcasses had `svi_carcasse_status = REFUS_ETG_COLLECTEUR`). Real
   semantics: when ETG refuses ALL carcasses, the fiche **stays at the ETG** with
   `intermediaire_closed_at` set — it does NOT bounce back to the PD. This inconsistent state was
   causing Erreur 500 on `/app/chasseur/fei/{id}`.
