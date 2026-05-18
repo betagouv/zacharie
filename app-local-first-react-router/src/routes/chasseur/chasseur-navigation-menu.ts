@@ -1,10 +1,21 @@
 import { useLocation } from 'react-router';
 import { type MainNavigationProps } from '@codegouvfr/react-dsfr/MainNavigation';
+import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
+import { CarcasseModificationRequestStatus } from '@prisma/client';
 
 export default function useChasseurNavigationMenu(): MainNavigationProps.Item[] {
   const location = useLocation();
   const apiKeyApprovals = useZustandStore((state) => state.apiKeyApprovals);
+  const user = useUser((state) => state.user);
+  const modRequests = useZustandStore((state) => state.carcasseModificationRequestsById);
+  const carcasses = useZustandStore((state) => state.carcasses);
+
+  const pendingForMeCount = Object.values(modRequests).filter((r) => {
+    if (r.status !== CarcasseModificationRequestStatus.PENDING || r.deleted_at) return false;
+    const c = carcasses[r.zacharie_carcasse_id];
+    return c?.examinateur_initial_user_id === user?.id;
+  }).length;
 
   const navigationBase: MainNavigationProps.Item[] = [
     {
@@ -16,6 +27,11 @@ export default function useChasseurNavigationMenu(): MainNavigationProps.Item[] 
       text: 'Fiches',
       isActive: location.pathname.startsWith('/app/chasseur/fei') || location.pathname === '/app/chasseur',
       linkProps: { to: '/app/chasseur', href: '#' },
+    },
+    {
+      text: pendingForMeCount > 0 ? `Demandes de modification (${pendingForMeCount})` : 'Demandes de modification',
+      isActive: location.pathname.startsWith('/app/chasseur/demandes-de-modification'),
+      linkProps: { to: '/app/chasseur/demandes-de-modification', href: '#' },
     },
     {
       text: 'Paramètres',

@@ -15,6 +15,11 @@ import { getFeiAndCarcasseAndIntermediaireIdsFromCarcasse } from '@app/utils/get
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import CardCarcasse from '@app/components/CardCarcasse';
 import InputMultiSelect from '@app/components/InputMultiSelect';
+import {
+  PendingModificationBanner,
+  RequestBraceletRenameButton,
+  HistoriqueDesModifications,
+} from '@app/components/CarcasseModificationRequest';
 
 interface CarcasseIntermediaireProps {
   carcasse: Carcasse;
@@ -410,6 +415,7 @@ export default function CarcasseIntermediaireComp({
 
   return (
     <>
+      <PendingModificationBanner carcasse={carcasse} />
       <CardCarcasse
         carcasse={carcasse}
         forceRefus={!!refus}
@@ -418,6 +424,14 @@ export default function CarcasseIntermediaireComp({
         onClick={canEdit ? () => refusIntermediaireModal.open() : undefined}
         className="[zoom:1.3] [&_.text-manquante]:text-gray-500! [&.border-manquante]:border-gray-500!"
       />
+      {canEdit && (
+        <RequestBraceletRenameButton
+          carcasse={carcasse}
+          requestedByEntityId={intermediaire.intermediaire_entity_id}
+          className="my-2"
+        />
+      )}
+      <HistoriqueDesModifications carcasse={carcasse} />
       {canEdit && (
         <refusIntermediaireModal.Component
           title={

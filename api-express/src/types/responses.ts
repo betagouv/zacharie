@@ -5,6 +5,7 @@ import type {
   Fei,
   Carcasse,
   CarcasseIntermediaire,
+  CarcasseModificationRequest,
   Log,
   CarcasseCertificat,
   ApiKey,
@@ -472,5 +473,29 @@ export interface AdminCarcasseDetailResponse {
       ville: string | null;
     } | null;
   };
+  error: string;
+}
+
+export type CarcasseModificationRequestPopulated = CarcasseModificationRequest & {
+  Carcasse: Carcasse;
+  RequestedByUser: User;
+  RequestedByEntity: Entity;
+  ReviewedByUser: User | null;
+};
+
+export interface CarcasseModificationRequestResponse {
+  ok: boolean;
+  data: {
+    request: CarcasseModificationRequestPopulated;
+    carcasse?: Carcasse;
+  } | null;
+  error: string;
+}
+
+export interface CarcasseModificationRequestsForExaminateurResponse {
+  ok: boolean;
+  data: {
+    requests: Array<CarcasseModificationRequestPopulated>;
+  } | null;
   error: string;
 }

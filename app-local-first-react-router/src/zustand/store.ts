@@ -1,4 +1,10 @@
-import { type Fei, type Carcasse, type CarcasseIntermediaire, type Log } from '@prisma/client';
+import {
+  type Fei,
+  type Carcasse,
+  type CarcasseIntermediaire,
+  type CarcasseModificationRequest,
+  type Log,
+} from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 import type { UserForFei } from '~/src/types/user';
 import type { EntityWithUserRelation } from '~/src/types/entity';
@@ -39,6 +45,7 @@ const PERSISTED_KEYS: (keyof State)[] = [
   'detenteursInitiauxIds',
   'carcasses',
   'carcassesIntermediaireById',
+  'carcasseModificationRequestsById',
   'apiKeyApprovals',
   'lastUpdateCarcassesRegistry',
   'carcassesRegistry',
@@ -55,6 +62,7 @@ export interface State {
   carcasses: Record<Carcasse['zacharie_carcasse_id'], Carcasse>;
   // single intermediaire for a single carcasse
   carcassesIntermediaireById: Record<FeiAndCarcasseAndIntermediaireIds, CarcasseIntermediaire>;
+  carcasseModificationRequestsById: Record<CarcasseModificationRequest['id'], CarcasseModificationRequest>;
   apiKeyApprovals: NonNullable<UserConnexionResponse['data']['apiKeyApprovals']>;
   lastUpdateCarcassesRegistry: number;
   carcassesRegistry: Array<CarcasseForResponseForRegistry>;
@@ -123,6 +131,7 @@ interface Actions {
     partialCarcasseIntermediaire: Partial<CarcasseIntermediaire>
   ) => void;
   setApiKeyApprovals: (apiKeyApprovals: UserConnexionResponse['data']['apiKeyApprovals']) => void;
+  upsertCarcasseModificationRequest: (request: CarcasseModificationRequest) => void;
   setHasHydrated: (state: boolean) => void;
   addLog: (log: Omit<CreateLog, 'fei_intermediaire_id'>) => Log;
   reset: () => void;
@@ -142,6 +151,7 @@ function initialState(): State {
     apiKeyApprovals: [],
     carcasses: {},
     carcassesIntermediaireById: {},
+    carcasseModificationRequestsById: {},
     _hasHydrated: false,
   };
 }
@@ -383,6 +393,15 @@ const useZustandStore = create<State & Actions>()(
         setApiKeyApprovals: (apiKeyApprovals: UserConnexionResponse['data']['apiKeyApprovals']) => {
           set({ apiKeyApprovals });
         },
+        upsertCarcasseModificationRequest: (request: CarcasseModificationRequest) => {
+          useZustandStore.setState((state) => ({
+            ...state,
+            carcasseModificationRequestsById: {
+              ...state.carcasseModificationRequestsById,
+              [request.id]: request,
+            },
+          }));
+        },
         addLog: (newLog: Omit<CreateLog, 'fei_intermediaire_id'>) => {
           const log = {
             id: uuidv4(),
@@ -422,23 +441,13 @@ const useZustandStore = create<State & Actions>()(
       }),
       {
         name: 'zacharie-zustand-store',
-        version: 6,
+        version: 7,
         storage: createSlicedIDBStorage<Partial<State>>(PERSISTED_KEYS),
         onRehydrateStorage: (state) => {
           return () => state.setHasHydrated(true);
         },
         partialize: (state) =>
           Object.fromEntries(PERSISTED_KEYS.map((key) => [key, state[key]])) as Partial<State>,
-        // v6: pagination fix for carcassesRegistry. Old clients had at most ~100
-        // rows persisted; reset the registry + delta-cursor so the next load
-        // refetches everything from scratch.
-        migrate: (persistedState, version) => {
-          const state = persistedState as Partial<State>;
-          if (version < 6) {
-            return { ...state, lastUpdateCarcassesRegistry: 0, carcassesRegistry: [] };
-          }
-          return state;
-        },
       }
     )
   )
@@ -535,6 +544,20 @@ export async function syncData(calledFrom: string) {
       nextIntermediaires[id] = ci;
     }
 
+    // Extract CarcasseModificationRequests from populated feis (server attaches them via include)
+    const nextModRequests = { ...useZustandStore.getState().carcasseModificationRequestsById };
+    for (const fei of res.data.feis) {
+      const carcasses = (fei as typeof fei & { Carcasses?: Array<unknown> }).Carcasses ?? [];
+      for (const carcasse of carcasses) {
+        const reqs =
+          (carcasse as { CarcasseModificationRequests?: Array<CarcasseModificationRequest> })
+            .CarcasseModificationRequests ?? [];
+        for (const r of reqs) {
+          nextModRequests[r.id] = r;
+        }
+      }
+    }
+
     const syncedLogIdsSet = new Set(res.data.syncedLogIds);
     const nextLogs = useZustandStore.getState().logs.filter((log) => !syncedLogIdsSet.has(log.id));
 
@@ -542,6 +565,7 @@ export async function syncData(calledFrom: string) {
       feis: nextFeis,
       carcasses: nextCarcasses,
       carcassesIntermediaireById: nextIntermediaires,
+      carcasseModificationRequestsById: nextModRequests,
       logs: nextLogs,
       dataIsSynced: true,
     });

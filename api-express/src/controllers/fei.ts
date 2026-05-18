@@ -50,6 +50,10 @@ router.post(
           Carcasses: {
             include: {
               CarcasseIntermediaire: true,
+              CarcasseModificationRequests: {
+                where: { deleted_at: null },
+                orderBy: { requested_at: Prisma.SortOrder.desc },
+              },
             },
           },
           CarcasseIntermediaire: {
@@ -126,6 +130,10 @@ router.get(
           Carcasses: {
             include: {
               CarcasseIntermediaire: true,
+              CarcasseModificationRequests: {
+                where: { deleted_at: null },
+                orderBy: { requested_at: Prisma.SortOrder.desc },
+              },
             },
           },
           CarcasseIntermediaire: {

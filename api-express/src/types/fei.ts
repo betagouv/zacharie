@@ -10,6 +10,10 @@ export const feiPopulatedInclude = {
   Carcasses: {
     include: {
       CarcasseIntermediaire: true,
+      CarcasseModificationRequests: {
+        where: { deleted_at: null as Date | null },
+        orderBy: { requested_at: Prisma.SortOrder.desc },
+      },
     },
   },
   FeiExaminateurInitialUser: true,
@@ -31,7 +35,7 @@ export const feiPopulatedInclude = {
     },
     orderBy: [{ prise_en_charge_at: Prisma.SortOrder.desc }, { created_at: Prisma.SortOrder.desc }],
   },
-};
+} satisfies Prisma.FeiInclude;
 
 export type FeiPopulated = Prisma.FeiGetPayload<{
   include: typeof feiPopulatedInclude;
@@ -41,12 +45,16 @@ export const feiRefreshInclude = {
   Carcasses: {
     include: {
       CarcasseIntermediaire: true,
+      CarcasseModificationRequests: {
+        where: { deleted_at: null as Date | null },
+        orderBy: { requested_at: Prisma.SortOrder.desc },
+      },
     },
   },
   CarcasseIntermediaire: {
     orderBy: [{ prise_en_charge_at: Prisma.SortOrder.desc }, { created_at: Prisma.SortOrder.desc }],
   },
-};
+} satisfies Prisma.FeiInclude;
 
 export type FeiForRefresh = Prisma.FeiGetPayload<{
   include: typeof feiRefreshInclude;
