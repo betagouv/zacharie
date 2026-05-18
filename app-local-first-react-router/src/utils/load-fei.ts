@@ -57,23 +57,16 @@ export function setFeiInStore(fei: FeiForRefresh) {
   }
 
   for (const carcasse of fei.Carcasses) {
+    // Keep the populated payload (including the nested CarcasseModificationRequests) on the Carcasse
+    // in the store so they're immediately available wherever the carcasse is used.
     const localCarcasse = prevState.carcasses[carcasse.zacharie_carcasse_id];
-    // Strip the nested CarcasseModificationRequests before storing — they have their own map.
-    // (typed loose: the populated payload carries the array, the bare Carcasse type does not)
-    const carcasseBare = (() => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { CarcasseModificationRequests: _ignored, ...rest } = carcasse as typeof carcasse & {
-        CarcasseModificationRequests?: unknown;
-      };
-      return rest as typeof carcasse;
-    })();
     if (!localCarcasse) {
-      prevState.carcasses[carcasse.zacharie_carcasse_id] = carcasseBare;
+      prevState.carcasses[carcasse.zacharie_carcasse_id] = carcasse;
     } else {
       const newestCarcasse =
-        dayjs(localCarcasse.updated_at).diff(carcasseBare.updated_at) > 0 ? localCarcasse : carcasseBare;
+        dayjs(localCarcasse.updated_at).diff(carcasse.updated_at) > 0 ? localCarcasse : carcasse;
       const oldestCarcasse =
-        dayjs(localCarcasse.updated_at).diff(carcasseBare.updated_at) > 0 ? carcasseBare : localCarcasse;
+        dayjs(localCarcasse.updated_at).diff(carcasse.updated_at) > 0 ? carcasse : localCarcasse;
 
       prevState.carcasses[carcasse.zacharie_carcasse_id] = {
         ...oldestCarcasse,
@@ -82,22 +75,25 @@ export function setFeiInStore(fei: FeiForRefresh) {
       };
     }
 
-    // Extract modification requests into their own map.
-    const carcasseWithModRequests = carcasse as typeof carcasse & {
-      CarcasseModificationRequests?: Array<{
-        id: string;
-        updated_at: Date | string;
-      } & Record<string, unknown>>;
-    };
-    const modRequests = carcasseWithModRequests.CarcasseModificationRequests ?? [];
-    for (const modRequest of modRequests) {
-      const existing = prevState.carcasseModificationRequestsById[modRequest.id];
-      const incoming = modRequest as unknown as (typeof prevState.carcasseModificationRequestsById)[string];
+    // Also index modification requests in the flat by-id map (used by the examinateur dashboard +
+    // sync pipeline). Local unsynced edits take precedence until the next sync writes them back.
+    const reqs =
+      (
+        carcasse as typeof carcasse & {
+          CarcasseModificationRequests?: Array<
+            { id: string; updated_at: Date | string; is_synced?: boolean } & Record<string, unknown>
+          >;
+        }
+      ).CarcasseModificationRequests ?? [];
+    for (const incomingReq of reqs) {
+      const existing = prevState.carcasseModifRequestsById[incomingReq.id];
+      const incoming = incomingReq as unknown as (typeof prevState.carcasseModifRequestsById)[string];
       if (!existing) {
-        prevState.carcasseModificationRequestsById[modRequest.id] = incoming;
-      } else {
-        const incomingNewer = dayjs(incoming.updated_at).diff(existing.updated_at) > 0;
-        prevState.carcasseModificationRequestsById[modRequest.id] = incomingNewer ? incoming : existing;
+        prevState.carcasseModifRequestsById[incomingReq.id] = incoming;
+      } else if (!existing.is_synced) {
+        continue;
+      } else if (dayjs(incoming.updated_at).diff(existing.updated_at) > 0) {
+        prevState.carcasseModifRequestsById[incomingReq.id] = incoming;
       }
     }
   }

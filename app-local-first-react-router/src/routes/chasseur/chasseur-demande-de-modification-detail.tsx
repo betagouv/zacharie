@@ -8,9 +8,7 @@ import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import {
-  approveModificationRequest,
-  rejectModificationRequest,
-  fetchModificationRequestsForExaminateur,
+  fetchModifRequestsForExaminateur,
   CarcasseModificationRequestStatus,
   CarcasseModificationRequestType,
 } from '@app/utils/carcasse-modification-request';
@@ -22,8 +20,9 @@ export default function ChasseurDemandeDeModificationDetail() {
   const { request_id } = useParams<{ request_id: string }>();
   const navigate = useNavigate();
   const user = useUser((state) => state.user);
-  const requestsById = useZustandStore((state) => state.carcasseModificationRequestsById);
+  const requestsById = useZustandStore((state) => state.carcasseModifRequestsById);
   const carcasses = useZustandStore((state) => state.carcasses);
+  const updateCarcasseModifRequest = useZustandStore((state) => state.updateCarcasseModifRequest);
 
   const request = request_id ? requestsById[request_id] : null;
   const carcasse = request ? carcasses[request.zacharie_carcasse_id] : null;
@@ -35,12 +34,11 @@ export default function ChasseurDemandeDeModificationDetail() {
   const [sansAnomalie, setSansAnomalie] = useState(false);
   const [approbationMiseSurLeMarche, setApprobationMiseSurLeMarche] = useState(true);
   const [rejectionReason, setRejectionReason] = useState('');
-  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!request) {
-      fetchModificationRequestsForExaminateur();
+      fetchModifRequestsForExaminateur();
     }
   }, [request]);
 
@@ -85,37 +83,38 @@ export default function ChasseurDemandeDeModificationDetail() {
 
   const alreadyTreated = request.status !== CarcasseModificationRequestStatus.PENDING;
 
-  const onApprove = async () => {
+  const onApprove = () => {
     setError(null);
-    setSubmitting(true);
-    const examinateurFields =
+    const approvalPayload =
       request.type === CarcasseModificationRequestType.NEW_CARCASSE
         ? {
             examinateur_anomalies_carcasse: sansAnomalie ? [] : splitAnomalies(examinateurAnomaliesCarcasseRaw),
             examinateur_anomalies_abats: sansAnomalie ? [] : splitAnomalies(examinateurAnomaliesAbatsRaw),
-            examinateur_commentaire: examinateurCommentaire || undefined,
+            examinateur_commentaire: examinateurCommentaire || null,
             examinateur_carcasse_sans_anomalie: sansAnomalie,
             examinateur_approbation_mise_sur_le_marche: approbationMiseSurLeMarche,
           }
         : undefined;
-    const res = await approveModificationRequest(request.id, examinateurFields);
-    setSubmitting(false);
-    if (!res.ok) {
-      setError(res.error);
-      return;
-    }
+    updateCarcasseModifRequest(
+      request.id,
+      {
+        status: CarcasseModificationRequestStatus.APPROVED,
+        reviewed_by_user_id: user!.id,
+        reviewed_at: dayjs().toDate(),
+      },
+      approvalPayload
+    );
     navigate('/app/chasseur/demandes-de-modification');
   };
 
-  const onReject = async () => {
+  const onReject = () => {
     setError(null);
-    setSubmitting(true);
-    const res = await rejectModificationRequest(request.id, rejectionReason || undefined);
-    setSubmitting(false);
-    if (!res.ok) {
-      setError(res.error);
-      return;
-    }
+    updateCarcasseModifRequest(request.id, {
+      status: CarcasseModificationRequestStatus.REJECTED,
+      reviewed_by_user_id: user!.id,
+      reviewed_at: dayjs().toDate(),
+      rejection_reason: rejectionReason || null,
+    });
     navigate('/app/chasseur/demandes-de-modification');
   };
 
@@ -248,7 +247,6 @@ export default function ChasseurDemandeDeModificationDetail() {
             <Button
               priority="primary"
               onClick={onApprove}
-              disabled={submitting}
             >
               {request.type === CarcasseModificationRequestType.NEW_CARCASSE
                 ? "Signer et approuver l'examen"
@@ -269,7 +267,6 @@ export default function ChasseurDemandeDeModificationDetail() {
             <Button
               priority="tertiary"
               onClick={onReject}
-              disabled={submitting}
               className="mt-2"
             >
               Refuser

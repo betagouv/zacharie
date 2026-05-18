@@ -8,10 +8,10 @@ export default function useChasseurNavigationMenu(): MainNavigationProps.Item[] 
   const location = useLocation();
   const apiKeyApprovals = useZustandStore((state) => state.apiKeyApprovals);
   const user = useUser((state) => state.user);
-  const modRequests = useZustandStore((state) => state.carcasseModificationRequestsById);
+  const modifRequests = useZustandStore((state) => state.carcasseModifRequestsById);
   const carcasses = useZustandStore((state) => state.carcasses);
 
-  const pendingForMeCount = Object.values(modRequests).filter((r) => {
+  const pendingForMeCount = Object.values(modifRequests).filter((r) => {
     if (r.status !== CarcasseModificationRequestStatus.PENDING || r.deleted_at) return false;
     const c = carcasses[r.zacharie_carcasse_id];
     return c?.examinateur_initial_user_id === user?.id;

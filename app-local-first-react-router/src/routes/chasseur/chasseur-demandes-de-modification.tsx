@@ -5,7 +5,7 @@ import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import {
-  fetchModificationRequestsForExaminateur,
+  fetchModifRequestsForExaminateur,
   CarcasseModificationRequestStatus,
   CarcasseModificationRequestType,
 } from '@app/utils/carcasse-modification-request';
@@ -14,7 +14,7 @@ import {
 // Le lien des notifications email/SMS/push pointe vers /app/chasseur/demandes-de-modification.
 export default function ChasseurDemandesDeModification() {
   const user = useUser((state) => state.user);
-  const requestsById = useZustandStore((state) => state.carcasseModificationRequestsById);
+  const requestsById = useZustandStore((state) => state.carcasseModifRequestsById);
   const carcasses = useZustandStore((state) => state.carcasses);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -22,7 +22,7 @@ export default function ChasseurDemandesDeModification() {
   useEffect(() => {
     let active = true;
     setLoading(true);
-    fetchModificationRequestsForExaminateur().then((res) => {
+    fetchModifRequestsForExaminateur().then((res) => {
       if (!active) return;
       setLoading(false);
       if (!res.ok) setError(res.error);

@@ -45,7 +45,7 @@ const PERSISTED_KEYS: (keyof State)[] = [
   'detenteursInitiauxIds',
   'carcasses',
   'carcassesIntermediaireById',
-  'carcasseModificationRequestsById',
+  'carcasseModifRequestsById',
   'apiKeyApprovals',
   'lastUpdateCarcassesRegistry',
   'carcassesRegistry',
@@ -62,7 +62,7 @@ export interface State {
   carcasses: Record<Carcasse['zacharie_carcasse_id'], Carcasse>;
   // single intermediaire for a single carcasse
   carcassesIntermediaireById: Record<FeiAndCarcasseAndIntermediaireIds, CarcasseIntermediaire>;
-  carcasseModificationRequestsById: Record<CarcasseModificationRequest['id'], CarcasseModificationRequest>;
+  carcasseModifRequestsById: Record<CarcasseModificationRequest['id'], CarcasseModificationRequest>;
   apiKeyApprovals: NonNullable<UserConnexionResponse['data']['apiKeyApprovals']>;
   lastUpdateCarcassesRegistry: number;
   carcassesRegistry: Array<CarcasseForResponseForRegistry>;
@@ -131,7 +131,18 @@ interface Actions {
     partialCarcasseIntermediaire: Partial<CarcasseIntermediaire>
   ) => void;
   setApiKeyApprovals: (apiKeyApprovals: UserConnexionResponse['data']['apiKeyApprovals']) => void;
-  upsertCarcasseModificationRequest: (request: CarcasseModificationRequest) => void;
+  createCarcasseModifRequest: (request: CarcasseModificationRequest) => void;
+  updateCarcasseModifRequest: (
+    id: CarcasseModificationRequest['id'],
+    partial: Partial<CarcasseModificationRequest>,
+    approvalPayload?: {
+      examinateur_anomalies_carcasse?: string[];
+      examinateur_anomalies_abats?: string[];
+      examinateur_commentaire?: string | null;
+      examinateur_carcasse_sans_anomalie?: boolean;
+      examinateur_approbation_mise_sur_le_marche?: boolean;
+    }
+  ) => void;
   setHasHydrated: (state: boolean) => void;
   addLog: (log: Omit<CreateLog, 'fei_intermediaire_id'>) => Log;
   reset: () => void;
@@ -151,7 +162,7 @@ function initialState(): State {
     apiKeyApprovals: [],
     carcasses: {},
     carcassesIntermediaireById: {},
-    carcasseModificationRequestsById: {},
+    carcasseModifRequestsById: {},
     _hasHydrated: false,
   };
 }
@@ -393,13 +404,41 @@ const useZustandStore = create<State & Actions>()(
         setApiKeyApprovals: (apiKeyApprovals: UserConnexionResponse['data']['apiKeyApprovals']) => {
           set({ apiKeyApprovals });
         },
-        upsertCarcasseModificationRequest: (request: CarcasseModificationRequest) => {
+        createCarcasseModifRequest: (request: CarcasseModificationRequest) => {
+          const next: CarcasseModificationRequest = {
+            ...request,
+            is_synced: false,
+            updated_at: dayjs().toDate(),
+          };
           useZustandStore.setState((state) => ({
             ...state,
-            carcasseModificationRequestsById: {
-              ...state.carcasseModificationRequestsById,
-              [request.id]: request,
+            carcasseModifRequestsById: {
+              ...state.carcasseModifRequestsById,
+              [next.id]: next,
             },
+            dataIsSynced: false,
+          }));
+        },
+        updateCarcasseModifRequest: (id, partial, approvalPayload) => {
+          const existing = useZustandStore.getState().carcasseModifRequestsById[id];
+          if (!existing) return;
+          const next: CarcasseModificationRequest & { _approvalPayload?: typeof approvalPayload } = {
+            ...existing,
+            ...partial,
+            updated_at: dayjs().toDate(),
+            is_synced: false,
+          };
+          // approvalPayload is transient: it rides along on this row only to be sent in the next /sync
+          // POST so the backend can apply the examinateur sanitary fields to the underlying Carcasse on
+          // NEW_CARCASSE approval. It's not part of the persisted CarcasseModificationRequest schema.
+          if (approvalPayload) next._approvalPayload = approvalPayload;
+          useZustandStore.setState((state) => ({
+            ...state,
+            carcasseModifRequestsById: {
+              ...state.carcasseModifRequestsById,
+              [id]: next,
+            },
+            dataIsSynced: false,
           }));
         },
         addLog: (newLog: Omit<CreateLog, 'fei_intermediaire_id'>) => {
@@ -441,13 +480,29 @@ const useZustandStore = create<State & Actions>()(
       }),
       {
         name: 'zacharie-zustand-store',
-        version: 7,
+        version: 8,
         storage: createSlicedIDBStorage<Partial<State>>(PERSISTED_KEYS),
         onRehydrateStorage: (state) => {
           return () => state.setHasHydrated(true);
         },
         partialize: (state) =>
           Object.fromEntries(PERSISTED_KEYS.map((key) => [key, state[key]])) as Partial<State>,
+        // v8: rename carcasseModificationRequestsById → carcasseModifRequestsById on existing clients.
+        migrate: (persistedState, version) => {
+          const s = persistedState as Partial<State> & {
+            carcasseModificationRequestsById?: Record<string, CarcasseModificationRequest>;
+          };
+          if (version < 8) {
+            const fromOld = s.carcasseModificationRequestsById ?? {};
+            const fromNew = s.carcasseModifRequestsById ?? {};
+            return {
+              ...s,
+              carcasseModifRequestsById: { ...fromOld, ...fromNew },
+              carcasseModificationRequestsById: undefined,
+            };
+          }
+          return s;
+        },
       }
     )
   )
@@ -488,6 +543,7 @@ export async function syncData(calledFrom: string) {
   const unsyncedIntermediaires = Object.values(state.carcassesIntermediaireById).filter(
     (ci) => !ci.is_synced
   );
+  const unsyncedModifRequests = Object.values(state.carcasseModifRequestsById).filter((r) => !r.is_synced);
   const unsyncedLogs = state.logs.filter((l) => !l.is_synced);
 
   // Nothing to sync
@@ -495,6 +551,7 @@ export async function syncData(calledFrom: string) {
     unsyncedFeis.length === 0 &&
     unsyncedCarcasses.length === 0 &&
     unsyncedIntermediaires.length === 0 &&
+    unsyncedModifRequests.length === 0 &&
     unsyncedLogs.length === 0
   ) {
     useZustandStore.setState({ dataIsSynced: true });
@@ -503,7 +560,7 @@ export async function syncData(calledFrom: string) {
 
   if (debug) {
     console.log(
-      `syncing: ${unsyncedFeis.length} feis, ${unsyncedCarcasses.length} carcasses, ${unsyncedIntermediaires.length} intermediaires, ${unsyncedLogs.length} logs`
+      `syncing: ${unsyncedFeis.length} feis, ${unsyncedCarcasses.length} carcasses, ${unsyncedIntermediaires.length} intermediaires, ${unsyncedModifRequests.length} modifRequests, ${unsyncedLogs.length} logs`
     );
   }
 
@@ -514,6 +571,7 @@ export async function syncData(calledFrom: string) {
         feis: unsyncedFeis,
         carcasses: unsyncedCarcasses,
         carcassesIntermediaires: unsyncedIntermediaires,
+        carcasseModifRequests: unsyncedModifRequests,
         logs: unsyncedLogs,
       },
       signal,
@@ -544,8 +602,11 @@ export async function syncData(calledFrom: string) {
       nextIntermediaires[id] = ci;
     }
 
-    // Extract CarcasseModificationRequests from populated feis (server attaches them via include)
-    const nextModRequests = { ...useZustandStore.getState().carcasseModificationRequestsById };
+    // Modif-requests: direct field from sync response + also picked up from populated feis.
+    const nextModifRequests = { ...useZustandStore.getState().carcasseModifRequestsById };
+    for (const r of res.data.carcasseModifRequests ?? []) {
+      nextModifRequests[r.id] = r;
+    }
     for (const fei of res.data.feis) {
       const carcasses = (fei as typeof fei & { Carcasses?: Array<unknown> }).Carcasses ?? [];
       for (const carcasse of carcasses) {
@@ -553,7 +614,7 @@ export async function syncData(calledFrom: string) {
           (carcasse as { CarcasseModificationRequests?: Array<CarcasseModificationRequest> })
             .CarcasseModificationRequests ?? [];
         for (const r of reqs) {
-          nextModRequests[r.id] = r;
+          nextModifRequests[r.id] = r;
         }
       }
     }
@@ -565,7 +626,7 @@ export async function syncData(calledFrom: string) {
       feis: nextFeis,
       carcasses: nextCarcasses,
       carcassesIntermediaireById: nextIntermediaires,
-      carcasseModificationRequestsById: nextModRequests,
+      carcasseModifRequestsById: nextModifRequests,
       logs: nextLogs,
       dataIsSynced: true,
     });

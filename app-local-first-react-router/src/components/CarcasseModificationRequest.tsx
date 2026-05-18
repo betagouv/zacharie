@@ -1,5 +1,10 @@
 import { useMemo, useRef, useState } from 'react';
-import { type Carcasse, CarcasseModificationRequestStatus, CarcasseModificationRequestType } from '@prisma/client';
+import {
+  type Carcasse,
+  CarcasseModificationRequestStatus,
+  CarcasseModificationRequestType,
+} from '@prisma/client';
+import { v4 as uuidv4 } from 'uuid';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
@@ -7,10 +12,10 @@ import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
 import dayjs from 'dayjs';
 import useZustandStore from '@app/zustand/store';
+import useUser from '@app/zustand/user';
 import {
   usePendingRequestForCarcasse,
   useHistoryForCarcasse,
-  requestBraceletRename,
 } from '@app/utils/carcasse-modification-request';
 
 // ----------------------------------------------------------------------------
@@ -82,11 +87,13 @@ export function RequestBraceletRenameButton({
   requestedByEntityId: string;
   className?: string;
 }) {
+  const user = useUser((state) => state.user);
   const pending = usePendingRequestForCarcasse(carcasse.zacharie_carcasse_id);
+  const createCarcasseModifRequest = useZustandStore((s) => s.createCarcasseModifRequest);
   const modal = useRef(
     createModal({
       isOpenedByDefault: false,
-      id: `mod-req-rename-${carcasse.zacharie_carcasse_id}`,
+      id: `modif-rename-${carcasse.zacharie_carcasse_id}`,
     })
   ).current;
   const isOpen = useIsModalOpen(modal);
@@ -94,10 +101,13 @@ export function RequestBraceletRenameButton({
   const [newBracelet, setNewBracelet] = useState('');
   const [comment, setComment] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
 
-  const onSubmit = async () => {
+  const onSubmit = () => {
     setError(null);
+    if (!user) {
+      setError('Utilisateur non connecté.');
+      return;
+    }
     if (!newBracelet.trim()) {
       setError('Veuillez saisir le numéro de bracelet correct.');
       return;
@@ -106,18 +116,26 @@ export function RequestBraceletRenameButton({
       setError("Le nouveau numéro est identique à l'actuel.");
       return;
     }
-    setSubmitting(true);
-    const result = await requestBraceletRename({
+    createCarcasseModifRequest({
+      id: uuidv4(),
+      type: CarcasseModificationRequestType.BRACELET_RENAME,
+      status: CarcasseModificationRequestStatus.PENDING,
       zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
-      numero_bracelet_after: newBracelet.trim(),
-      comment_intermediaire: comment.trim() || undefined,
+      fei_numero: carcasse.fei_numero,
+      requested_by_user_id: user.id,
       requested_by_entity_id: requestedByEntityId,
+      requested_at: dayjs().toDate(),
+      comment_intermediaire: comment.trim() || null,
+      numero_bracelet_before: carcasse.numero_bracelet,
+      numero_bracelet_after: newBracelet.trim(),
+      reviewed_by_user_id: null,
+      reviewed_at: null,
+      rejection_reason: null,
+      created_at: dayjs().toDate(),
+      updated_at: dayjs().toDate(),
+      deleted_at: null,
+      is_synced: false,
     });
-    setSubmitting(false);
-    if (!result.ok) {
-      setError(result.error);
-      return;
-    }
     setNewBracelet('');
     setComment('');
     modal.close();
@@ -170,7 +188,6 @@ export function RequestBraceletRenameButton({
               <Button
                 priority="primary"
                 onClick={onSubmit}
-                disabled={submitting}
                 type="button"
               >
                 Envoyer la demande

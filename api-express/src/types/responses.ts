@@ -301,6 +301,21 @@ export interface SyncRequest {
       zacharie_carcasse_id: string;
     }
   >;
+  // _approvalPayload (optional) carries the examinateur fields when transitioning a NEW_CARCASSE
+  // request to APPROVED. Not persisted on the modifRequest row — used by side-effects to mutate the
+  // underlying Carcasse server-side.
+  carcasseModifRequests: Array<
+    Partial<CarcasseModificationRequest> & {
+      id: string;
+      _approvalPayload?: {
+        examinateur_anomalies_carcasse?: string[];
+        examinateur_anomalies_abats?: string[];
+        examinateur_commentaire?: string | null;
+        examinateur_carcasse_sans_anomalie?: boolean;
+        examinateur_approbation_mise_sur_le_marche?: boolean;
+      };
+    }
+  >;
   logs: Array<Partial<Log> & { id: string }>;
 }
 
@@ -310,6 +325,7 @@ export interface SyncResponse {
     feis: Array<FeiPopulated>;
     carcasses: Array<Carcasse>;
     carcassesIntermediaires: Array<CarcasseIntermediaire>;
+    carcasseModifRequests: Array<CarcasseModificationRequest>;
     syncedLogIds: Array<string>;
   } | null;
   error: string;
@@ -482,15 +498,6 @@ export type CarcasseModificationRequestPopulated = CarcasseModificationRequest &
   RequestedByEntity: Entity;
   ReviewedByUser: User | null;
 };
-
-export interface CarcasseModificationRequestResponse {
-  ok: boolean;
-  data: {
-    request: CarcasseModificationRequestPopulated;
-    carcasse?: Carcasse;
-  } | null;
-  error: string;
-}
 
 export interface CarcasseModificationRequestsForExaminateurResponse {
   ok: boolean;

@@ -7,6 +7,11 @@ import { Prisma, User } from '@prisma/client';
 import { syncFei, type SaveFeiResult } from '~/utils/sync-fei';
 import { syncCarcasse, type SaveCarcasseResult } from '~/utils/sync-carcasse';
 import { syncCarcasseIntermediaire } from '~/utils/sync-carcasse-intermediaire';
+import {
+  syncCarcasseModifRequest,
+  runCarcasseModifRequestSideEffects,
+  type SyncModifRequestResult,
+} from '~/utils/sync-carcasse-modification-request';
 import { runFeiUpdateSideEffects } from '~/utils/fei-side-effects';
 import { runCarcasseUpdateSideEffects } from '~/utils/carcasse-side-effects';
 import { capture } from '~/third-parties/sentry';
@@ -34,11 +39,12 @@ router.post(
       return;
     }
 
-    const { feis, carcasses, carcassesIntermediaires, logs } = req.body as SyncRequest;
+    const { feis, carcasses, carcassesIntermediaires, carcasseModifRequests, logs } = req.body as SyncRequest;
 
     const feiResults: Array<SaveFeiResult> = [];
     const carcasseResults: Array<SaveCarcasseResult> = [];
     const savedIntermediaires: Array<Prisma.CarcasseIntermediaireGetPayload<object>> = [];
+    const modifResults: Array<SyncModifRequestResult & { approvalPayload?: Record<string, unknown> }> = [];
     const syncedLogIds: Array<string> = [];
 
     // 1. Process FEIs first (carcasses depend on them)
@@ -99,7 +105,26 @@ router.post(
       }
     }
 
-    // 4. Process Logs
+    // 4. Process CarcasseModificationRequests
+    for (const modifData of carcasseModifRequests || []) {
+      try {
+        const { _approvalPayload, ...modifBody } = modifData as typeof modifData & {
+          _approvalPayload?: Record<string, unknown>;
+        };
+        const result = await syncCarcasseModifRequest(
+          modifBody as Prisma.CarcasseModificationRequestUncheckedCreateInput,
+          user
+        );
+        modifResults.push({ ...result, approvalPayload: _approvalPayload });
+      } catch (error) {
+        capture(error as Error, {
+          extra: { modifId: modifData.id, userId: user.id },
+          user,
+        });
+      }
+    }
+
+    // 5. Process Logs
     for (const logData of logs || []) {
       try {
         await prisma.log.upsert({
@@ -171,6 +196,35 @@ router.post(
       }
     }
 
+    // Modif-request side effects: apply Carcasse mutations on approve, notify on create/approve/reject.
+    for (const r of modifResults) {
+      try {
+        await runCarcasseModifRequestSideEffects(r, r.approvalPayload);
+      } catch (error) {
+        capture(error as Error, {
+          extra: { modifId: r.saved.id, context: 'modif_request_side_effects' },
+          user,
+        });
+      }
+    }
+
+    // Refetch the carcasses touched by modif-request side effects (numero_bracelet or examinateur_signed_at changed).
+    const touchedCarcasseIds = new Set<string>();
+    for (const r of modifResults) {
+      if (r.transitionedTo) touchedCarcasseIds.add(r.saved.zacharie_carcasse_id);
+    }
+    const refreshedCarcasses =
+      touchedCarcasseIds.size > 0
+        ? await prisma.carcasse.findMany({
+            where: { zacharie_carcasse_id: { in: [...touchedCarcasseIds] } },
+          })
+        : [];
+    // Override: refreshed carcasses replace any earlier carcasseResults output for the same id.
+    const mergedCarcasses = new Map<string, (typeof carcasseResults)[0]['savedCarcasse']>();
+    for (const cr of carcasseResults)
+      mergedCarcasses.set(cr.savedCarcasse.zacharie_carcasse_id, cr.savedCarcasse);
+    for (const rc of refreshedCarcasses) mergedCarcasses.set(rc.zacharie_carcasse_id, rc);
+
     // Fetch populated FEIs for response
     const feiNumeros = feiResults.map((f) => f.savedFei.numero);
     const populatedFeis =
@@ -185,8 +239,9 @@ router.post(
       ok: true,
       data: {
         feis: populatedFeis,
-        carcasses: carcasseResults.map((r) => r.savedCarcasse),
+        carcasses: [...mergedCarcasses.values()],
         carcassesIntermediaires: savedIntermediaires,
+        carcasseModifRequests: modifResults.map((r) => r.saved),
         syncedLogIds,
       },
       error: '',

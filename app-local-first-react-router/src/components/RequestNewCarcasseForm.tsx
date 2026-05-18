@@ -6,8 +6,16 @@ import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
 import grandGibier from '@app/data/grand-gibier.json';
 import petitGibier from '@app/data/petit-gibier.json';
-import { CarcasseType } from '@prisma/client';
-import { requestNewCarcasse } from '@app/utils/carcasse-modification-request';
+import dayjs from 'dayjs';
+import { v4 as uuidv4 } from 'uuid';
+import {
+  type Carcasse,
+  CarcasseType,
+  CarcasseModificationRequestStatus,
+  CarcasseModificationRequestType,
+} from '@prisma/client';
+import useZustandStore from '@app/zustand/store';
+import useUser from '@app/zustand/user';
 
 const gibierSelect = {
   grand: grandGibier.especes,
@@ -16,9 +24,10 @@ const gibierSelect = {
 
 // ----------------------------------------------------------------------------
 // RequestNewCarcasseButton
-// Ouvre une modal pour pré-remplir une carcasse manquante.
-// L'intermédiaire renseigne les champs physiques ; l'examinateur initial
-// signera l'examen une fois la demande approuvée.
+// Ouvre une modal pour pré-remplir une carcasse manquante. L'intermédiaire crée
+// localement (1) une Carcasse sans signature examinateur et (2) une demande de
+// type NEW_CARCASSE. Tout part par le pipeline /sync ; le backend notifie
+// l'examinateur initial et lui présentera l'examen à signer.
 // ----------------------------------------------------------------------------
 export default function RequestNewCarcasseButton({
   feiNumero,
@@ -29,10 +38,15 @@ export default function RequestNewCarcasseButton({
   requestedByEntityId: string;
   className?: string;
 }) {
+  const user = useUser((state) => state.user);
+  const fei = useZustandStore((state) => state.feis[feiNumero]);
+  const createCarcasse = useZustandStore((state) => state.createCarcasse);
+  const createCarcasseModifRequest = useZustandStore((state) => state.createCarcasseModifRequest);
+
   const modal = useRef(
     createModal({
       isOpenedByDefault: false,
-      id: `mod-req-new-carcasse-${feiNumero}`,
+      id: `modif-new-carcasse-${feiNumero}`,
     })
   ).current;
   const isOpen = useIsModalOpen(modal);
@@ -43,15 +57,26 @@ export default function RequestNewCarcasseButton({
   const [heureMort, setHeureMort] = useState('');
   const [heureEvisc, setHeureEvisc] = useState('');
   const [comment, setComment] = useState('');
-  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const isPetitGibier = useMemo(() => petitGibier.especes.includes(espece), [espece]);
   const carcasseType = isPetitGibier ? CarcasseType.PETIT_GIBIER : CarcasseType.GROS_GIBIER;
   const zacharieCarcasseId = `${feiNumero}_${numeroBracelet}`;
 
-  const onSubmit = async () => {
+  const onSubmit = () => {
     setError(null);
+    if (!user) {
+      setError('Utilisateur non connecté.');
+      return;
+    }
+    if (!fei) {
+      setError('Fiche introuvable.');
+      return;
+    }
+    if (!fei.examinateur_initial_user_id) {
+      setError("Pas d'examinateur initial sur cette fiche.");
+      return;
+    }
     if (!numeroBracelet.trim()) {
       setError('Veuillez saisir un numéro de bracelet.');
       return;
@@ -60,27 +85,151 @@ export default function RequestNewCarcasseButton({
       setError("Veuillez sélectionner l'espèce.");
       return;
     }
-    setSubmitting(true);
-    const result = await requestNewCarcasse({
-      fei_numero: feiNumero,
+
+    // 1) Create the Carcasse locally with no examinateur signature — the examinateur will sign on
+    // approval. Fields not set here keep their default/null from the carcasse schema.
+    const newCarcasse: Carcasse = {
       zacharie_carcasse_id: zacharieCarcasseId,
-      carcasse: {
-        numero_bracelet: numeroBracelet.trim(),
-        espece,
-        type: carcasseType,
-        nombre_d_animaux: nombreAnimaux ? Number(nombreAnimaux) : 1,
-        heure_mise_a_mort: heureMort || null,
-        heure_evisceration: heureEvisc || null,
-      },
-      comment_intermediaire: comment.trim() || undefined,
+      fei_numero: feiNumero,
+      numero_bracelet: numeroBracelet.trim(),
+      espece,
+      type: carcasseType,
+      nombre_d_animaux: nombreAnimaux ? Number(nombreAnimaux) : 1,
+      heure_mise_a_mort: heureMort || null,
+      heure_evisceration: heureEvisc || null,
+      heure_mise_a_mort_premiere_carcasse_fei: null,
+      heure_evisceration_derniere_carcasse_fei: null,
+      consommateur_final_usage_domestique: null,
+      date_mise_a_mort: fei.date_mise_a_mort,
+      // EXAMINATEUR fields intentionally left null — filled on approval
+      examinateur_carcasse_sans_anomalie: null,
+      examinateur_anomalies_carcasse: [],
+      examinateur_anomalies_abats: [],
+      examinateur_commentaire: null,
+      examinateur_signed_at: null,
+      // PREMIER DETENTEUR caches (inherit from FEI)
+      premier_detenteur_depot_type: fei.premier_detenteur_depot_type,
+      premier_detenteur_depot_entity_id: fei.premier_detenteur_depot_entity_id,
+      premier_detenteur_depot_entity_name_cache: fei.premier_detenteur_depot_entity_name_cache,
+      premier_detenteur_depot_ccg_at: fei.premier_detenteur_depot_ccg_at,
+      premier_detenteur_transport_type: fei.premier_detenteur_transport_type,
+      premier_detenteur_transport_date: fei.premier_detenteur_transport_date,
+      premier_detenteur_prochain_detenteur_role_cache: fei.premier_detenteur_prochain_detenteur_role_cache,
+      premier_detenteur_prochain_detenteur_id_cache: fei.premier_detenteur_prochain_detenteur_id_cache,
+      // INTERMEDIAIRE
+      intermediaire_carcasse_refus_intermediaire_id: null,
+      intermediaire_carcasse_refus_motif: null,
+      intermediaire_carcasse_manquante: null,
+      latest_intermediaire_signed_at: null,
+      // SVI
+      svi_assigned_to_fei_at: null,
+      svi_carcasse_commentaire: null,
+      svi_carcasse_status: null,
+      svi_carcasse_status_set_at: null,
+      svi_ipm1_date: null,
+      svi_ipm1_presentee_inspection: null,
+      svi_ipm1_user_id: null,
+      svi_ipm1_user_name_cache: null,
+      svi_ipm1_protocole: null,
+      svi_ipm1_pieces: [],
+      svi_ipm1_lesions_ou_motifs: [],
+      svi_ipm1_nombre_animaux: null,
+      svi_ipm1_commentaire: null,
+      svi_ipm1_decision: null,
+      svi_ipm1_duree_consigne: null,
+      svi_ipm1_poids_consigne: null,
+      svi_ipm1_poids_type: null,
+      svi_ipm1_signed_at: null,
+      svi_ipm2_date: null,
+      svi_ipm2_presentee_inspection: null,
+      svi_ipm2_user_id: null,
+      svi_ipm2_user_name_cache: null,
+      svi_ipm2_protocole: null,
+      svi_ipm2_pieces: [],
+      svi_ipm2_lesions_ou_motifs: [],
+      svi_ipm2_nombre_animaux: null,
+      svi_ipm2_commentaire: null,
+      svi_ipm2_decision: null,
+      svi_ipm2_traitement_assainissant: [],
+      svi_ipm2_traitement_assainissant_cuisson_temps: null,
+      svi_ipm2_traitement_assainissant_cuisson_temp: null,
+      svi_ipm2_traitement_assainissant_congelation_temps: null,
+      svi_ipm2_traitement_assainissant_congelation_temp: null,
+      svi_ipm2_traitement_assainissant_type: null,
+      svi_ipm2_traitement_assainissant_paramètres: null,
+      svi_ipm2_traitement_assainissant_etablissement: null,
+      svi_ipm2_traitement_assainissant_poids: null,
+      svi_ipm2_poids_saisie: null,
+      svi_ipm2_poids_type: null,
+      svi_ipm2_signed_at: null,
+      // ownership copies (from FEI)
+      created_by_user_id: user.id,
+      examinateur_initial_offline: null,
+      examinateur_initial_user_id: fei.examinateur_initial_user_id,
+      examinateur_initial_approbation_mise_sur_le_marche: null,
+      examinateur_initial_date_approbation_mise_sur_le_marche: null,
+      premier_detenteur_offline: null,
+      premier_detenteur_user_id: fei.premier_detenteur_user_id,
+      premier_detenteur_entity_id: fei.premier_detenteur_entity_id,
+      premier_detenteur_name_cache: fei.premier_detenteur_name_cache,
+      intermediaire_closed_at: null,
+      intermediaire_closed_by_user_id: null,
+      intermediaire_closed_by_entity_id: null,
+      latest_intermediaire_user_id: null,
+      latest_intermediaire_entity_id: null,
+      latest_intermediaire_name_cache: null,
+      svi_assigned_at: null,
+      svi_entity_id: null,
+      svi_user_id: null,
+      svi_closed_at: null,
+      svi_closed_by_user_id: null,
+      current_owner_user_id: fei.fei_current_owner_user_id,
+      current_owner_user_name_cache: fei.fei_current_owner_user_name_cache,
+      current_owner_entity_id: fei.fei_current_owner_entity_id,
+      current_owner_entity_name_cache: fei.fei_current_owner_entity_name_cache,
+      current_owner_role: fei.fei_current_owner_role,
+      next_owner_wants_to_sous_traite: null,
+      next_owner_sous_traite_at: null,
+      next_owner_sous_traite_by_user_id: null,
+      next_owner_sous_traite_by_entity_id: null,
+      next_owner_user_id: null,
+      next_owner_user_name_cache: null,
+      next_owner_entity_id: null,
+      next_owner_entity_name_cache: null,
+      next_owner_role: null,
+      prev_owner_user_id: null,
+      prev_owner_entity_id: null,
+      prev_owner_role: null,
+      created_at: dayjs().toDate(),
+      updated_at: dayjs().toDate(),
+      deleted_at: null,
+      is_synced: false,
+    };
+
+    createCarcasse(newCarcasse);
+
+    // 2) Create the modif request — the backend's side effects will notify the examinateur.
+    createCarcasseModifRequest({
+      id: uuidv4(),
+      type: CarcasseModificationRequestType.NEW_CARCASSE,
+      status: CarcasseModificationRequestStatus.PENDING,
+      zacharie_carcasse_id: zacharieCarcasseId,
+      fei_numero: feiNumero,
+      requested_by_user_id: user.id,
       requested_by_entity_id: requestedByEntityId,
+      requested_at: dayjs().toDate(),
+      comment_intermediaire: comment.trim() || null,
+      numero_bracelet_before: null,
+      numero_bracelet_after: null,
+      reviewed_by_user_id: null,
+      reviewed_at: null,
+      rejection_reason: null,
+      created_at: dayjs().toDate(),
+      updated_at: dayjs().toDate(),
+      deleted_at: null,
+      is_synced: false,
     });
-    setSubmitting(false);
-    if (!result.ok) {
-      setError(result.error);
-      return;
-    }
-    // reset + close
+
     setNumeroBracelet('');
     setEspece('');
     setNombreAnimaux('1');
@@ -105,9 +254,9 @@ export default function RequestNewCarcasseButton({
         {isOpen && (
           <div>
             <p className="text-sm">
-              Vous avez physiquement une carcasse qui ne figure pas dans cette fiche d'examen initial. Pré-remplissez ses
-              informations : l'examinateur initial recevra une demande à signer pour valider son examen et la mettre sur
-              le marché.
+              Vous avez physiquement une carcasse qui ne figure pas dans cette fiche d'examen initial.
+              Pré-remplissez ses informations : l'examinateur initial recevra une demande à signer pour valider
+              son examen et la mettre sur le marché.
             </p>
             <Input
               label="Numéro de bracelet *"
@@ -181,7 +330,6 @@ export default function RequestNewCarcasseButton({
               <Button
                 priority="primary"
                 onClick={onSubmit}
-                disabled={submitting}
                 type="button"
               >
                 Envoyer la demande
