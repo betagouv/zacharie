@@ -15,7 +15,7 @@ test.describe('33a - empty state', () => {
     await resetDb('PREMIER_DETENTEUR');
   });
 
-  test('Partage de mes données — état vide : page se charge sans bloc d\'autorisation', async ({ page }) => {
+  test("Partage de mes données — état vide : page se charge sans bloc d'autorisation", async ({ page }) => {
     await connectWith(page, 'premier-detenteur@example.fr');
     await expect(page).toHaveURL(/\/app\/chasseur/, { timeout: 10000 });
     await page.goto('http://localhost:3290/app/chasseur/profil/partage-de-mes-donnees');
@@ -37,7 +37,9 @@ test.describe('33b - active state', () => {
     await resetDb('PREMIER_DETENTEUR_WITH_PARTAGE');
   });
 
-  test('Partage de mes données — avec approbation seedée : bloc compte personnel visible', async ({ page }) => {
+  test('Partage de mes données — avec approbation seedée : bloc compte personnel visible', async ({
+    page,
+  }) => {
     await connectWith(page, 'premier-detenteur@example.fr');
     await expect(page).toHaveURL(/\/app\/chasseur/, { timeout: 10000 });
     await page.goto('http://localhost:3290/app/chasseur/profil/partage-de-mes-donnees');

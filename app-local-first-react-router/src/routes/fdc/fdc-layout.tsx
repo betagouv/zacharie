@@ -15,8 +15,7 @@ export default function FdcLayout() {
   const navigation: MainNavigationProps.Item[] = [
     {
       text: 'Tableau de bord',
-      isActive:
-        location.pathname === '/app/fdc/tableau-de-bord' || location.pathname === '/app/fdc',
+      isActive: location.pathname === '/app/fdc/tableau-de-bord' || location.pathname === '/app/fdc',
       linkProps: { to: '/app/fdc/tableau-de-bord', href: '#' },
     },
     {

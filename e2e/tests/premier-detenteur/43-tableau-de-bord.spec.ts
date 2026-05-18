@@ -24,7 +24,7 @@ test('Tableau de bord affiche MesChasses groupées', async ({ page }) => {
   });
 });
 
-test("Empty dashboard — chasseur sans CFEI ne voit pas le bouton « Créer une fiche »", async ({ page }) => {
+test('Empty dashboard — chasseur sans CFEI ne voit pas le bouton « Créer une fiche »', async ({ page }) => {
   // Le premier-détenteur seedé n'a pas de numero_cfei : il ne peut pas créer de fiche
   // (createNewFei() jette « Forbidden »). L'empty-state doit donc cacher le bouton
   // et afficher une copie alternative. La bottom-nav mobile doit aussi le cacher.

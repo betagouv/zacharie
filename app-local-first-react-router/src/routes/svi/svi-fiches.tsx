@@ -171,7 +171,7 @@ export default function SviFiches() {
       try {
         const parsed = JSON.parse(savedFilter);
         if (Array.isArray(parsed)) return parsed;
-      } catch { }
+      } catch {}
     }
     return [];
   });

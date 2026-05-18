@@ -470,7 +470,10 @@ export default function CarcasseIntermediaireComp({
                 <div className="mb-4 rounded-sm border border-gray-300 bg-gray-50 px-3 py-2 text-sm">
                   <p className="mb-2 font-semibold">Commentaires des intermédiaires</p>
                   {commentairesIntermediaires.map((c, i) => (
-                    <div key={`${c.nom}-${i}`} className="mb-2 last:mb-0">
+                    <div
+                      key={`${c.nom}-${i}`}
+                      className="mb-2 last:mb-0"
+                    >
                       <p className="font-medium">{c.nom}</p>
                       <p>{c.commentaire}</p>
                     </div>

@@ -180,9 +180,7 @@ function buildChasseurTimeline(
     const isEtg = ci.intermediaire_role === 'ETG';
     events.push({
       date: new Date(ci.prise_en_charge_at),
-      label: isEtg
-        ? `Prise en charge par ETG ${entityName}`
-        : `Carcasses prise en charge par ${entityName}`,
+      label: isEtg ? `Prise en charge par ETG ${entityName}` : `Carcasses prise en charge par ${entityName}`,
     });
   }
 
@@ -241,7 +239,7 @@ function CarcasseHeaderCard({
   const colors = getAccentColorClasses(accentColor);
 
   return (
-    <div className="fr-mb-2w rounded bg-white p-4 md:shadow-sm md:p-8">
+    <div className="fr-mb-2w rounded bg-white p-4 md:p-8 md:shadow-sm">
       <h1 className="fr-h5 fr-mb-2w">
         {carcasse.espece || 'Espèce —'} N°{carcasse.numero_bracelet}
       </h1>
@@ -249,16 +247,14 @@ function CarcasseHeaderCard({
         {isClosed && (
           <Tag
             small
-            className="items-center rounded-[4px] bg-[#E8EDFF] font-semibold uppercase text-[#01008B]"
+            className="items-center rounded-[4px] bg-[#E8EDFF] font-semibold text-[#01008B] uppercase"
           >
             Clôturée
           </Tag>
         )}
         <Tag
           small
-          className={['items-center rounded-[4px] font-semibold', colors.badgeBg, colors.badgeText].join(
-            ' '
-          )}
+          className={['items-center rounded-[4px] font-semibold', colors.badgeBg, colors.badgeText].join(' ')}
         >
           {statusIconId && (
             <span
@@ -283,7 +279,7 @@ function InfosChasseCard({
   examinateurName: string;
 }) {
   return (
-    <div className="fr-mb-2w rounded bg-white p-4 md:shadow-sm md:p-8">
+    <div className="fr-mb-2w rounded bg-white p-4 md:p-8 md:shadow-sm">
       <h2 className="fr-h4 fr-mb-2w">Informations de chasse</h2>
       <ul className="space-y-1">
         <li>Chasse du {formatDate(fei.date_mise_a_mort)}</li>
@@ -318,7 +314,7 @@ function InfosSanitairesCard({
   const commentaire = carcasse.svi_ipm2_commentaire || carcasse.svi_carcasse_commentaire || '';
 
   return (
-    <div className={['fr-mb-2w rounded p-4 md:shadow-sm md:p-8', colors.cardBg].join(' ')}>
+    <div className={['fr-mb-2w rounded p-4 md:p-8 md:shadow-sm', colors.cardBg].join(' ')}>
       <h2 className={['fr-h4 fr-mb-2w', colors.cardText].join(' ')}>Informations sanitaires</h2>
       <div className={colors.cardText}>
         <p className="font-semibold">Décision du vétérinaire</p>
@@ -341,7 +337,7 @@ function InfosSanitairesCard({
 function TraceabiliteTimeline({ events }: { events: Array<TimelineEvent> }) {
   if (events.length === 0) return null;
   return (
-    <div className="fr-mb-2w rounded bg-white p-4 md:shadow-sm md:p-8">
+    <div className="fr-mb-2w rounded bg-white p-4 md:p-8 md:shadow-sm">
       <h2 className="fr-h4 fr-mb-2w">Traçabilité</h2>
       <div className="relative border-l-2 border-gray-300 pl-4">
         {events.map((event, i) => (
@@ -488,7 +484,7 @@ function ExaminateurCarcasseDetailLoaded() {
             />
 
             {canEdit && (
-              <div className="fr-mb-2w rounded bg-white p-4 md:shadow-sm md:p-8">
+              <div className="fr-mb-2w rounded bg-white p-4 md:p-8 md:shadow-sm">
                 <h2 className="fr-h4 fr-mb-2w">Examen initial</h2>
                 <form
                   id="carcasse-edit-form"
@@ -506,9 +502,7 @@ function ExaminateurCarcasseDetailLoaded() {
                     }
                     setNumeroError(null);
                     updateCarcasse(carcasse.zacharie_carcasse_id, {
-                      numero_bracelet: formData.get(
-                        Prisma.CarcasseScalarFieldEnum.numero_bracelet
-                      ) as string,
+                      numero_bracelet: formData.get(Prisma.CarcasseScalarFieldEnum.numero_bracelet) as string,
                       examinateur_signed_at: dayjs().toDate(),
                     });
                   }}
@@ -592,9 +586,7 @@ function ExaminateurCarcasseDetailLoaded() {
                       min: 0,
                       name: Prisma.CarcasseScalarFieldEnum.nombre_d_animaux,
                       defaultValue:
-                        carcasse.type === CarcasseType.GROS_GIBIER
-                          ? '1'
-                          : (carcasse.nombre_d_animaux ?? ''),
+                        carcasse.type === CarcasseType.GROS_GIBIER ? '1' : (carcasse.nombre_d_animaux ?? ''),
                       disabled: carcasse.type === CarcasseType.GROS_GIBIER,
                       onChange: (e) => {
                         updateCarcasse(carcasse.zacharie_carcasse_id, {
@@ -714,18 +706,31 @@ function ExaminateurCarcasseDetailLoaded() {
 
             <TraceabiliteTimeline events={timelineEvents} />
 
-            <div className="z-50 flex w-full flex-col md:flex-row justify-between gap-2">
-              <Button priority="secondary" type="button" onClick={() => navigate(-1)}>Retour</Button>
-              {canEdit && <Button priority="primary" type="button" onClick={(e) => {
-                e.preventDefault();
-                updateCarcasse(carcasse.zacharie_carcasse_id, {
-                  examinateur_signed_at: dayjs().toDate(),
-                  examinateur_carcasse_sans_anomalie: anomaliesAbats.length === 0 && anomaliesCarcasse.length === 0,
-                });
-                navigate(-1);
-              }}>
-                Enregistrer
-              </Button>}
+            <div className="z-50 flex w-full flex-col justify-between gap-2 md:flex-row">
+              <Button
+                priority="secondary"
+                type="button"
+                onClick={() => navigate(-1)}
+              >
+                Retour
+              </Button>
+              {canEdit && (
+                <Button
+                  priority="primary"
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    updateCarcasse(carcasse.zacharie_carcasse_id, {
+                      examinateur_signed_at: dayjs().toDate(),
+                      examinateur_carcasse_sans_anomalie:
+                        anomaliesAbats.length === 0 && anomaliesCarcasse.length === 0,
+                    });
+                    navigate(-1);
+                  }}
+                >
+                  Enregistrer
+                </Button>
+              )}
             </div>
           </div>
         </div>

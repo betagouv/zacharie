@@ -216,10 +216,7 @@ export default function EtgFiches() {
   });
 
   useEffect(() => {
-    localStorage.setItem(
-      'etg-fiches-filter-premier-detenteurs',
-      JSON.stringify(filterPremierDetenteurs)
-    );
+    localStorage.setItem('etg-fiches-filter-premier-detenteurs', JSON.stringify(filterPremierDetenteurs));
   }, [filterPremierDetenteurs]);
 
   const [filterDateFrom, setFilterDateFrom] = useState<string>(
@@ -491,7 +488,7 @@ export default function EtgFiches() {
                 }}
               />
               <span
-                className={`inline-block rounded px-2 py-0.5 text-xs uppercase font-semibold ${statusColors[status].bg} ${statusColors[status].text}`}
+                className={`inline-block rounded px-2 py-0.5 text-xs font-semibold uppercase ${statusColors[status].bg} ${statusColors[status].text}`}
               >
                 {status}
               </span>
@@ -660,7 +657,7 @@ export default function EtgFiches() {
             type="button"
             aria-label={viewType === 'grid' ? 'Afficher en table' : 'Afficher en grille'}
             title={viewType === 'grid' ? 'Afficher en table' : 'Afficher en grille'}
-            className="flex h- w-10 items-center justify-center rounded border border-gray-300 bg-white text-gray-700 transition-colors hover:bg-gray-50"
+            className="h- flex w-10 items-center justify-center rounded border border-gray-300 bg-white text-gray-700 transition-colors hover:bg-gray-50"
             onClick={() => setViewType(viewType === 'grid' ? 'table' : 'grid')}
           >
             <span
@@ -724,10 +721,10 @@ export default function EtgFiches() {
         {/* Contenu principal */}
         <div className="mx-auto max-w-5xl min-w-0 flex-1 px-4 pt-4 md:px-6">
           {filteredFeis.length > 0 && (
-            <div className="hidden md:flex w-full flex-wrap items-center justify-end gap-3 py-4">
+            <div className="hidden w-full flex-wrap items-center justify-end gap-3 py-4 md:flex">
               <SegmentedControl
                 hideLegend
-                className="hidden md:block bg-white"
+                className="hidden bg-white md:block"
                 segments={[
                   {
                     label: 'Grille',
@@ -753,7 +750,7 @@ export default function EtgFiches() {
               />
               <DropDownMenu
                 text="Actions"
-                className="hidden md:block max-w-[321px]"
+                className="hidden max-w-[321px] md:block"
                 isActive={selectedFeis.length > 0}
                 menuLinks={[
                   {

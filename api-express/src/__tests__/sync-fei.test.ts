@@ -80,9 +80,9 @@ describe('syncFei — create', () => {
   test('non-examinateur-initial → throws and captures to Sentry', async () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(null);
 
-    await expect(
-      syncFei('FEI-NEW', { numero: 'FEI-NEW' } as any, chasseurNotCfei)
-    ).rejects.toThrow('Seul un examinateur initial peut créer une fiche');
+    await expect(syncFei('FEI-NEW', { numero: 'FEI-NEW' } as any, chasseurNotCfei)).rejects.toThrow(
+      'Seul un examinateur initial peut créer une fiche'
+    );
 
     expect(capture).toHaveBeenCalledOnce();
     expect(prisma.fei.create).not.toHaveBeenCalled();
@@ -91,9 +91,9 @@ describe('syncFei — create', () => {
   test('non-CHASSEUR user → throws even with platform admin (admin can only delete)', async () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(null);
 
-    await expect(
-      syncFei('FEI-NEW', { numero: 'FEI-NEW' } as any, platformAdmin)
-    ).rejects.toThrow('Seul un examinateur initial peut créer une fiche');
+    await expect(syncFei('FEI-NEW', { numero: 'FEI-NEW' } as any, platformAdmin)).rejects.toThrow(
+      'Seul un examinateur initial peut créer une fiche'
+    );
   });
 });
 
@@ -102,11 +102,7 @@ describe('syncFei — update', () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
     vi.mocked(prisma.fei.update).mockResolvedValue(baseFei as any);
 
-    await syncFei(
-      'FEI-1',
-      { numero: 'FEI-1', commune_mise_a_mort: 'Lyon' } as any,
-      examinateurInitial
-    );
+    await syncFei('FEI-1', { numero: 'FEI-1', commune_mise_a_mort: 'Lyon' } as any, examinateurInitial);
 
     const updateCall = vi.mocked(prisma.fei.update).mock.calls[0][0];
     expect(updateCall.data).toHaveProperty('commune_mise_a_mort', 'Lyon');
@@ -149,11 +145,7 @@ describe('syncFei — creation_context', () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
     vi.mocked(prisma.fei.update).mockResolvedValue(baseFei as any);
 
-    await syncFei(
-      'FEI-1',
-      { numero: 'FEI-1', creation_context: 'zacharie' } as any,
-      examinateurInitial
-    );
+    await syncFei('FEI-1', { numero: 'FEI-1', creation_context: 'zacharie' } as any, examinateurInitial);
 
     expect(prisma.apiKey.findFirst).not.toHaveBeenCalled();
   });
@@ -163,11 +155,7 @@ describe('syncFei — creation_context', () => {
     vi.mocked(prisma.apiKey.findFirst).mockResolvedValueOnce(null);
 
     await expect(
-      syncFei(
-        'FEI-1',
-        { numero: 'FEI-1', creation_context: 'partner-x' } as any,
-        examinateurInitial
-      )
+      syncFei('FEI-1', { numero: 'FEI-1', creation_context: 'partner-x' } as any, examinateurInitial)
     ).rejects.toThrow('Invalid context slug');
   });
 
@@ -176,11 +164,7 @@ describe('syncFei — creation_context', () => {
     vi.mocked(prisma.apiKey.findFirst).mockResolvedValueOnce({ id: 'k-1' } as any);
     vi.mocked(prisma.fei.update).mockResolvedValue(baseFei as any);
 
-    await syncFei(
-      'FEI-1',
-      { numero: 'FEI-1', creation_context: 'partner-x' } as any,
-      examinateurInitial
-    );
+    await syncFei('FEI-1', { numero: 'FEI-1', creation_context: 'partner-x' } as any, examinateurInitial);
 
     expect(prisma.apiKey.findFirst).toHaveBeenCalledWith({
       where: { slug_for_context: 'partner-x' },
@@ -218,11 +202,7 @@ describe('syncFei — deletion', () => {
     vi.mocked(prisma.fei.update).mockResolvedValue(baseFei as any);
 
     await expect(
-      syncFei(
-        'FEI-1',
-        { numero: 'FEI-1', deleted_at: '2026-03-01T00:00:00Z' } as any,
-        platformAdmin
-      )
+      syncFei('FEI-1', { numero: 'FEI-1', deleted_at: '2026-03-01T00:00:00Z' } as any, platformAdmin)
     ).resolves.toBeDefined();
     expect(prisma.fei.update).toHaveBeenCalledOnce();
   });
@@ -231,11 +211,7 @@ describe('syncFei — deletion', () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
 
     await expect(
-      syncFei(
-        'FEI-1',
-        { numero: 'FEI-1', deleted_at: '2026-03-01T00:00:00Z' } as any,
-        otherChasseur
-      )
+      syncFei('FEI-1', { numero: 'FEI-1', deleted_at: '2026-03-01T00:00:00Z' } as any, otherChasseur)
     ).rejects.toThrow('Unauthorized');
 
     expect(prisma.fei.update).not.toHaveBeenCalled();

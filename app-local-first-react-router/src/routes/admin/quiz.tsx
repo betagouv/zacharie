@@ -60,8 +60,8 @@ export default function AdminQuiz() {
       <h1 className="fr-h3 fr-mb-1w">Quiz — Banque de questions</h1>
       <p className="fr-text--sm fr-mb-3w text-gray-600">
         {allQuestions.length} questions au total. Source :{' '}
-        <code>src/data/quiz-prelevement-assiette.json</code>. Lecture seule — modifiez ce fichier pour mettre à jour
-        la banque.
+        <code>src/data/quiz-prelevement-assiette.json</code>. Lecture seule — modifiez ce fichier pour mettre
+        à jour la banque.
       </p>
 
       <Input
@@ -78,21 +78,33 @@ export default function AdminQuiz() {
       </p>
 
       {grouped.map(([theme, items]) => (
-        <section key={theme} className="fr-mb-5w">
+        <section
+          key={theme}
+          className="fr-mb-5w"
+        >
           <h2 className="fr-h5 fr-mb-2w">
             {THEME_LABELS[theme] ?? theme}
             <span className="fr-text--sm fr-ml-1w font-normal text-gray-600">({items.length})</span>
           </h2>
           <ul className="m-0 list-none space-y-3 p-0">
             {items.map((q) => (
-              <li key={q.id} className="rounded-md border border-gray-200 bg-white p-4">
+              <li
+                key={q.id}
+                className="rounded-md border border-gray-200 bg-white p-4"
+              >
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="fr-text--sm font-mono text-gray-600">{q.id.toUpperCase()}</span>
-                  <Badge severity={q.answer ? 'success' : 'error'} small>
+                  <Badge
+                    severity={q.answer ? 'success' : 'error'}
+                    small
+                  >
                     {q.answer ? 'Vrai' : 'Faux'}
                   </Badge>
                   {!q.why && !q.takeaway && (
-                    <Badge severity="info" small>
+                    <Badge
+                      severity="info"
+                      small
+                    >
                       Énoncé seul
                     </Badge>
                   )}
