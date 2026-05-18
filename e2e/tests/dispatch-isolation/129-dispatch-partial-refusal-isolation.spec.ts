@@ -82,11 +82,11 @@ test("Le refus d'une carcasse par ETG 1 reste invisible pour ETG 2", async ({ pa
   // why: react-dsfr modal storms when first carcasse panel opens
   await new Promise((r) => setTimeout(r, 500));
 
-  await page.getByRole('button', { name: /Daim N° MM-001-003 Mise à/ }).click();
-  await page.getByLabel('Daim - N° MM-001-003').getByText('Carcasse refusée').click();
+  await page.getByRole('button', { name: /Daim N° MM-001-004 Mise à/ }).click();
+  await page.getByLabel('Daim - N° MM-001-004').getByText('Carcasse refusée').click();
   await page.locator('.input-for-search-prefilled-data__input-container').click();
   await page.getByRole('option', { name: 'Présence de souillures' }).click();
-  await page.getByLabel('Daim - N° MM-001-003').getByRole('button', { name: 'Enregistrer' }).click();
+  await page.getByLabel('Daim - N° MM-001-004').getByRole('button', { name: 'Enregistrer' }).click();
 
   // Confirm refusal status now shows on ETG 1's own view (sanity)
   await expect(page.getByText(/Refusée par ETG 1|Refus de 1 carcasse/i).first()).toBeVisible({
