@@ -432,6 +432,7 @@ export default function EtgFiches() {
       {/* Filtre Statut */}
       <CollapsibleSection
         title="Statut"
+        defaultOpen={false}
         badge={
           filterStatuses.length > 0 ? (
             <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">
@@ -471,6 +472,7 @@ export default function EtgFiches() {
       {/* Filtre Date de tir */}
       <CollapsibleSection
         title="Date de tir"
+        defaultOpen={false}
         badge={
           filterDateFrom || filterDateTo ? (
             <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">1</span>
@@ -505,6 +507,7 @@ export default function EtgFiches() {
       {premierDetenteurOptions.length > 1 && (
         <CollapsibleSection
           title="Premier détenteur"
+          defaultOpen={false}
           badge={
             filterPremierDetenteurs.length > 0 ? (
               <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">
@@ -542,6 +545,7 @@ export default function EtgFiches() {
       {ccgOptions.length > 1 && (
         <CollapsibleSection
           title="Centre de collecte (CCG)"
+          defaultOpen={false}
           badge={
             filterCCGs.length > 0 ? (
               <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">
@@ -579,6 +583,7 @@ export default function EtgFiches() {
       {collecteurOptions.length > 1 && (
         <CollapsibleSection
           title="Collecteur"
+          defaultOpen={false}
           badge={
             filterCollecteurs.length > 0 ? (
               <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">
