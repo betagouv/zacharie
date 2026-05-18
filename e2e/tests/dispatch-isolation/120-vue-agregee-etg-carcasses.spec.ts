@@ -90,5 +90,5 @@ test('/etg/carcasses ne montre que les carcasses dispatchées à cet ETG', async
   await expect(page).toHaveURL(/\/app\/etg\/carcasses/, { timeout: 10000 });
 
   // Wait for carcasses to load and verify count shows 2
-  await expect(page.getByText('Total: 2')).toBeVisible({ timeout: 15000 });
+  await expect(page.getByText('2 carcasses').nth(0)).toBeVisible({ timeout: 15000 });
 });
