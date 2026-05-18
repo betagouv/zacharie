@@ -12,6 +12,7 @@ vi.mock('./src/prisma', () => ({
     carcasse: {
       findMany: vi.fn().mockResolvedValue([]),
       findFirst: vi.fn(),
+      findUnique: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
       updateMany: vi.fn().mockResolvedValue({ count: 0 }),
@@ -52,6 +53,16 @@ vi.mock('./src/prisma', () => ({
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
+    },
+    carcasseModificationRequest: {
+      findMany: vi.fn().mockResolvedValue([]),
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+    },
+    notificationLog: {
+      findFirst: vi.fn(),
+      create: vi.fn(),
     },
   },
 }));
