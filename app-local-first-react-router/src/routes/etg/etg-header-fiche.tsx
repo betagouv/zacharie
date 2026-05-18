@@ -41,7 +41,10 @@ export default function EtgHeaderFiche({ fei }: { fei: FeiWithIntermediaires }) 
         >
           {simpleStatus}
         </Tag>
-        <IconStep displayLabel={currentStepLabelForEtg} simpleStatus={simpleStatus} />
+        <IconStep
+          displayLabel={currentStepLabelForEtg}
+          simpleStatus={simpleStatus}
+        />
         <span className="text-sm">{currentStepLabelForEtg}</span>
       </div>
     </div>

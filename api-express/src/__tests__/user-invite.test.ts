@@ -67,10 +67,7 @@ describe('POST /user/invite-user — CHASSEUR guard', () => {
   });
 
   test('unauthenticated → 401', async () => {
-    await request(app)
-      .post(BASE)
-      .send({ email: 'newbie@example.com', entity_id: 'entity-1' })
-      .expect(401);
+    await request(app).post(BASE).send({ email: 'newbie@example.com', entity_id: 'entity-1' }).expect(401);
   });
 
   test('CHASSEUR is blocked with 400 and French error message', async () => {

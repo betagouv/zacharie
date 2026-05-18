@@ -25,43 +25,43 @@ beforeEach(() => {
 
 describe('syncCarcasseIntermediaire — validation', () => {
   test('missing fei_numero → throws', async () => {
-    await expect(
-      syncCarcasseIntermediaire('', 'INT-1', 'ZC-1', baseCi as any)
-    ).rejects.toThrow('Le numéro de fiche est obligatoire');
+    await expect(syncCarcasseIntermediaire('', 'INT-1', 'ZC-1', baseCi as any)).rejects.toThrow(
+      'Le numéro de fiche est obligatoire'
+    );
   });
 
   test('parent FEI not found → throws "Fiche non trouvée"', async () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(null);
 
-    await expect(
-      syncCarcasseIntermediaire('FEI-MISSING', 'INT-1', 'ZC-1', baseCi as any)
-    ).rejects.toThrow('Fiche non trouvée');
+    await expect(syncCarcasseIntermediaire('FEI-MISSING', 'INT-1', 'ZC-1', baseCi as any)).rejects.toThrow(
+      'Fiche non trouvée'
+    );
   });
 
   test('missing zacharie_carcasse_id → throws', async () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
 
-    await expect(
-      syncCarcasseIntermediaire('FEI-1', 'INT-1', '', baseCi as any)
-    ).rejects.toThrow('Le numéro de la carcasse est obligatoire');
+    await expect(syncCarcasseIntermediaire('FEI-1', 'INT-1', '', baseCi as any)).rejects.toThrow(
+      'Le numéro de la carcasse est obligatoire'
+    );
   });
 
   test('carcasse not found → throws "Carcasse not found"', async () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
     vi.mocked(prisma.carcasse.findFirst).mockResolvedValueOnce(null);
 
-    await expect(
-      syncCarcasseIntermediaire('FEI-1', 'INT-1', 'ZC-1', baseCi as any)
-    ).rejects.toThrow('Carcasse not found');
+    await expect(syncCarcasseIntermediaire('FEI-1', 'INT-1', 'ZC-1', baseCi as any)).rejects.toThrow(
+      'Carcasse not found'
+    );
   });
 
   test('missing intermediaire_id → throws', async () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
     vi.mocked(prisma.carcasse.findFirst).mockResolvedValueOnce(baseCarcasse);
 
-    await expect(
-      syncCarcasseIntermediaire('FEI-1', '', 'ZC-1', baseCi as any)
-    ).rejects.toThrow("L'identifiant du destinataire est obligatoire");
+    await expect(syncCarcasseIntermediaire('FEI-1', '', 'ZC-1', baseCi as any)).rejects.toThrow(
+      "L'identifiant du destinataire est obligatoire"
+    );
   });
 });
 

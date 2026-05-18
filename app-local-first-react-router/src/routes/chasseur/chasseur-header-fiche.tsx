@@ -35,7 +35,10 @@ export default function ChasseurHeaderFiche({ fei }: { fei: FeiWithIntermediaire
           >
             {simpleStatus}
           </Tag>
-          <IconStep displayLabel={currentStepLabelForChasseur} simpleStatus={simpleStatus} />
+          <IconStep
+            displayLabel={currentStepLabelForChasseur}
+            simpleStatus={simpleStatus}
+          />
           <span className="text-sm">{currentStepLabelForChasseur}</span>
         </div>
       )}

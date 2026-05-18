@@ -95,9 +95,7 @@ export default function SectionValorisation({ scope, departements, totals }: Pro
   const pieGg = totals ? buildPie(totals, 'gg') : [];
   const pieGgTotal = pieGg.reduce((s, d) => s + d.value, 0);
   const pieGgEmpty = pieGgTotal === 0;
-  const pieGgData = pieGgEmpty
-    ? [{ name: 'Aucune donnée', value: 1, color: '#e5e7eb' }]
-    : pieGg;
+  const pieGgData = pieGgEmpty ? [{ name: 'Aucune donnée', value: 1, color: '#e5e7eb' }] : pieGg;
   const pieGgPercents = (() => {
     if (pieGgTotal === 0) return new Map<string, number>();
     return new Map(pieGg.map((d) => [d.name, Math.round((d.value / pieGgTotal) * 100)]));
@@ -106,9 +104,7 @@ export default function SectionValorisation({ scope, departements, totals }: Pro
   const piePg = totals ? buildPie(totals, 'pg') : [];
   const piePgTotal = piePg.reduce((s, d) => s + d.value, 0);
   const piePgEmpty = piePgTotal === 0;
-  const piePgData = piePgEmpty
-    ? [{ name: 'Aucune donnée', value: 1, color: '#e5e7eb' }]
-    : piePg;
+  const piePgData = piePgEmpty ? [{ name: 'Aucune donnée', value: 1, color: '#e5e7eb' }] : piePg;
   const piePgPercents = (() => {
     if (piePgTotal === 0) return new Map<string, number>();
     return new Map(piePg.map((d) => [d.name, Math.round((d.value / piePgTotal) * 100)]));
@@ -145,9 +141,7 @@ export default function SectionValorisation({ scope, departements, totals }: Pro
                     />
                   ))}
                 </Pie>
-                <Tooltip
-                  formatter={(v, n) => [Number(v).toLocaleString('fr-FR'), String(n)]}
-                />
+                <Tooltip formatter={(v, n) => [Number(v).toLocaleString('fr-FR'), String(n)]} />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>
@@ -191,7 +185,8 @@ export default function SectionValorisation({ scope, departements, totals }: Pro
 
       <div className="rounded-lg bg-white p-4 shadow-sm">
         <h3 className="fr-h6 mb-3">
-          Circuits par département{topForChart.length < departements.length ? ` (top ${topForChart.length})` : ''}
+          Circuits par département
+          {topForChart.length < departements.length ? ` (top ${topForChart.length})` : ''}
         </h3>
         <ResponsiveContainer
           width="100%"

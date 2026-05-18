@@ -15,8 +15,7 @@ export default function FncLayout() {
   const navigation: MainNavigationProps.Item[] = [
     {
       text: 'Tableau de bord',
-      isActive:
-        location.pathname === '/app/fnc/tableau-de-bord' || location.pathname === '/app/fnc',
+      isActive: location.pathname === '/app/fnc/tableau-de-bord' || location.pathname === '/app/fnc',
       linkProps: { to: '/app/fnc/tableau-de-bord', href: '#' },
     },
     {

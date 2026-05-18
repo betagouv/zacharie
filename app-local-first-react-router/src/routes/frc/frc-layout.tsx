@@ -15,8 +15,7 @@ export default function FrcLayout() {
   const navigation: MainNavigationProps.Item[] = [
     {
       text: 'Tableau de bord',
-      isActive:
-        location.pathname === '/app/frc/tableau-de-bord' || location.pathname === '/app/frc',
+      isActive: location.pathname === '/app/frc/tableau-de-bord' || location.pathname === '/app/frc',
       linkProps: { to: '/app/frc/tableau-de-bord', href: '#' },
     },
     {

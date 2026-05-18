@@ -55,7 +55,13 @@ vi.mock('~/third-parties/sentry', () => ({
 }));
 
 // Test users
-const regularUser = {
+const regularUser: {
+  id: string;
+  email: string;
+  prenom: string;
+  nom_de_famille: string;
+  roles: UserRoles[];
+} = {
   id: 'user-1',
   email: 'user1@example.com',
   prenom: 'Jean',

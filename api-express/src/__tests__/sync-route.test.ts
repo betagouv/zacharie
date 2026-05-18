@@ -102,27 +102,21 @@ describe('POST /sync — ordering', () => {
     );
 
     const res = await authed(
-      request(app).post('/sync').send({
-        feis: [{ numero: 'F1' }, { numero: 'F2' }],
-        carcasses: [
-          { fei_numero: 'F1', zacharie_carcasse_id: 'C1' },
-          { fei_numero: 'F2', zacharie_carcasse_id: 'C2' },
-        ],
-        carcassesIntermediaires: [
-          { fei_numero: 'F1', intermediaire_id: 'I1', zacharie_carcasse_id: 'C1' },
-        ],
-        logs: [],
-      })
+      request(app)
+        .post('/sync')
+        .send({
+          feis: [{ numero: 'F1' }, { numero: 'F2' }],
+          carcasses: [
+            { fei_numero: 'F1', zacharie_carcasse_id: 'C1' },
+            { fei_numero: 'F2', zacharie_carcasse_id: 'C2' },
+          ],
+          carcassesIntermediaires: [{ fei_numero: 'F1', intermediaire_id: 'I1', zacharie_carcasse_id: 'C1' }],
+          logs: [],
+        })
     );
 
     expect(res.status).toBe(200);
-    expect(callOrder).toEqual([
-      'fei:F1',
-      'fei:F2',
-      'carcasse:C1',
-      'carcasse:C2',
-      'ci:C1:I1',
-    ]);
+    expect(callOrder).toEqual(['fei:F1', 'fei:F2', 'carcasse:C1', 'carcasse:C2', 'ci:C1:I1']);
   });
 });
 
@@ -144,14 +138,16 @@ describe('POST /sync — error isolation', () => {
     vi.mocked(syncCarcasseIntermediaire).mockResolvedValue({ id: 'ci-1' } as any);
 
     const res = await authed(
-      request(app).post('/sync').send({
-        feis: [{ numero: 'F-BAD' }, { numero: 'F-OK' }],
-        carcasses: [{ fei_numero: 'F-OK', zacharie_carcasse_id: 'C1' }],
-        carcassesIntermediaires: [
-          { fei_numero: 'F-OK', intermediaire_id: 'I1', zacharie_carcasse_id: 'C1' },
-        ],
-        logs: [],
-      })
+      request(app)
+        .post('/sync')
+        .send({
+          feis: [{ numero: 'F-BAD' }, { numero: 'F-OK' }],
+          carcasses: [{ fei_numero: 'F-OK', zacharie_carcasse_id: 'C1' }],
+          carcassesIntermediaires: [
+            { fei_numero: 'F-OK', intermediaire_id: 'I1', zacharie_carcasse_id: 'C1' },
+          ],
+          logs: [],
+        })
     );
 
     expect(res.status).toBe(200);
@@ -166,14 +162,14 @@ describe('POST /sync — error isolation', () => {
     vi.mocked(syncCarcasseIntermediaire).mockResolvedValue({ id: 'ci-1' } as any);
 
     const res = await authed(
-      request(app).post('/sync').send({
-        feis: [],
-        carcasses: [{ fei_numero: 'F1', zacharie_carcasse_id: 'C-BAD' }],
-        carcassesIntermediaires: [
-          { fei_numero: 'F1', intermediaire_id: 'I1', zacharie_carcasse_id: 'C1' },
-        ],
-        logs: [],
-      })
+      request(app)
+        .post('/sync')
+        .send({
+          feis: [],
+          carcasses: [{ fei_numero: 'F1', zacharie_carcasse_id: 'C-BAD' }],
+          carcassesIntermediaires: [{ fei_numero: 'F1', intermediaire_id: 'I1', zacharie_carcasse_id: 'C1' }],
+          logs: [],
+        })
     );
 
     expect(res.status).toBe(200);
@@ -202,12 +198,14 @@ describe('POST /sync — side effects', () => {
       });
 
     const res = await authed(
-      request(app).post('/sync').send({
-        feis: [{ numero: 'F1' }, { numero: 'F2' }, { numero: 'F3' }],
-        carcasses: [],
-        carcassesIntermediaires: [],
-        logs: [],
-      })
+      request(app)
+        .post('/sync')
+        .send({
+          feis: [{ numero: 'F1' }, { numero: 'F2' }, { numero: 'F3' }],
+          carcasses: [],
+          carcassesIntermediaires: [],
+          logs: [],
+        })
     );
 
     expect(res.status).toBe(200);
@@ -229,15 +227,17 @@ describe('POST /sync — side effects', () => {
       });
 
     const res = await authed(
-      request(app).post('/sync').send({
-        feis: [],
-        carcasses: [
-          { fei_numero: 'F1', zacharie_carcasse_id: 'C1' },
-          { fei_numero: 'F1', zacharie_carcasse_id: 'C2' },
-        ],
-        carcassesIntermediaires: [],
-        logs: [],
-      })
+      request(app)
+        .post('/sync')
+        .send({
+          feis: [],
+          carcasses: [
+            { fei_numero: 'F1', zacharie_carcasse_id: 'C1' },
+            { fei_numero: 'F1', zacharie_carcasse_id: 'C2' },
+          ],
+          carcassesIntermediaires: [],
+          logs: [],
+        })
     );
 
     expect(res.status).toBe(200);
@@ -247,20 +247,22 @@ describe('POST /sync — side effects', () => {
 
 describe('POST /sync — logs', () => {
   test('upserts each log and returns synced ids', async () => {
-    vi.mocked(prisma.log.upsert).mockImplementation((args: any) =>
-      Promise.resolve({ id: args.where.id }) as any
+    vi.mocked(prisma.log.upsert).mockImplementation(
+      (args: any) => Promise.resolve({ id: args.where.id }) as any
     );
 
     const res = await authed(
-      request(app).post('/sync').send({
-        feis: [],
-        carcasses: [],
-        carcassesIntermediaires: [],
-        logs: [
-          { id: 'L1', user_id: 'u1', user_role: UserRoles.CHASSEUR, action: 'CREATE' },
-          { id: 'L2', user_id: 'u1', user_role: UserRoles.CHASSEUR, action: 'UPDATE' },
-        ],
-      })
+      request(app)
+        .post('/sync')
+        .send({
+          feis: [],
+          carcasses: [],
+          carcassesIntermediaires: [],
+          logs: [
+            { id: 'L1', user_id: 'u1', user_role: UserRoles.CHASSEUR, action: 'CREATE' },
+            { id: 'L2', user_id: 'u1', user_role: UserRoles.CHASSEUR, action: 'UPDATE' },
+          ],
+        })
     );
 
     expect(res.status).toBe(200);
@@ -274,15 +276,17 @@ describe('POST /sync — logs', () => {
       .mockRejectedValueOnce(new Error('log-failed'));
 
     const res = await authed(
-      request(app).post('/sync').send({
-        feis: [],
-        carcasses: [],
-        carcassesIntermediaires: [],
-        logs: [
-          { id: 'L1', user_id: 'u1', user_role: UserRoles.CHASSEUR, action: 'CREATE' },
-          { id: 'L-BAD', user_id: 'u1', user_role: UserRoles.CHASSEUR, action: 'CREATE' },
-        ],
-      })
+      request(app)
+        .post('/sync')
+        .send({
+          feis: [],
+          carcasses: [],
+          carcassesIntermediaires: [],
+          logs: [
+            { id: 'L1', user_id: 'u1', user_role: UserRoles.CHASSEUR, action: 'CREATE' },
+            { id: 'L-BAD', user_id: 'u1', user_role: UserRoles.CHASSEUR, action: 'CREATE' },
+          ],
+        })
     );
 
     expect(res.status).toBe(200);
@@ -322,12 +326,14 @@ describe('POST /sync — response shape', () => {
     ]);
 
     const res = await authed(
-      request(app).post('/sync').send({
-        feis: [{ numero: 'F1' }],
-        carcasses: [],
-        carcassesIntermediaires: [],
-        logs: [],
-      })
+      request(app)
+        .post('/sync')
+        .send({
+          feis: [{ numero: 'F1' }],
+          carcasses: [],
+          carcassesIntermediaires: [],
+          logs: [],
+        })
     );
 
     expect(res.status).toBe(200);

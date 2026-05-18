@@ -5,14 +5,7 @@ import useUser from '@app/zustand/user';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
-import {
-  Carcasse,
-  CarcasseType,
-  IPM1Decision,
-  IPM2Decision,
-  PoidsType,
-  UserRoles,
-} from '@prisma/client';
+import { Carcasse, CarcasseType, IPM1Decision, IPM2Decision, PoidsType, UserRoles } from '@prisma/client';
 import dayjs from 'dayjs';
 import { type ReactNode, useMemo, useRef } from 'react';
 import { useParams } from 'react-router';
@@ -354,9 +347,7 @@ function buildModalTimeline(args: {
     const isEtg = ci.intermediaire_role === UserRoles.ETG;
     events.push({
       date: new Date(ci.prise_en_charge_at),
-      label: isEtg
-        ? `Prise en charge par ETG ${entityName}`
-        : `Carcasses prise en charge par ${entityName}`,
+      label: isEtg ? `Prise en charge par ETG ${entityName}` : `Carcasses prise en charge par ${entityName}`,
       withTime: true,
     });
   }
@@ -434,13 +425,7 @@ function ModalCard({
   );
 }
 
-function ModalActeurBlock({
-  label,
-  lines,
-}: {
-  label: string;
-  lines: Array<string | null | undefined>;
-}) {
+function ModalActeurBlock({ label, lines }: { label: string; lines: Array<string | null | undefined> }) {
   const cleaned = lines.map((l) => (l ?? '').toString().trim()).filter(Boolean);
   if (cleaned.length === 0) return null;
   return (
@@ -467,9 +452,7 @@ function ModalTimeline({ events }: { events: Array<ModalTimelineEvent> }) {
           >
             <div className="absolute top-1 -left-[21px] h-2.5 w-2.5 rounded-full border-2 border-blue-600 bg-white" />
             <div className="text-sm">
-              <span className="text-gray-500">
-                {formatModalTimelineDate(event.date, event.withTime)}
-              </span>{' '}
+              <span className="text-gray-500">{formatModalTimelineDate(event.date, event.withTime)}</span>{' '}
               <span className="font-semibold">{event.label}</span>
             </div>
           </div>
@@ -740,15 +723,11 @@ function CarcasseDetails({
     return imp2Lines;
   }, [carcasse]);
 
-  const headerAccent: CardAccent = isEcarteePourInspection
-    ? 'red'
-    : (cardDisplay.accentColor ?? 'gray');
+  const headerAccent: CardAccent = isEcarteePourInspection ? 'red' : (cardDisplay.accentColor ?? 'gray');
   const headerStatusLabel = isEcarteePourInspection
     ? 'Écarté pour inspection'
     : (cardDisplay.statusLabel ?? 'En cours');
-  const headerStatusIconId = isEcarteePourInspection
-    ? 'fr-icon-alert-line'
-    : (cardDisplay.iconId ?? null);
+  const headerStatusIconId = isEcarteePourInspection ? 'fr-icon-alert-line' : (cardDisplay.iconId ?? null);
   const sviAccent: CardAccent = cardDisplay.accentColor ?? 'gray';
 
   return (
@@ -892,4 +871,3 @@ function CarcasseDetails({
     </>
   );
 }
-

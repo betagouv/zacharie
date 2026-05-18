@@ -14,7 +14,9 @@ test.beforeEach(async () => {
 });
 
 // Scenario 32a — Profil → Associations de chasse : page loads and PD's seeded relation is visible.
-test('32a - Profil associations de chasse : page se charge et association seedée visible', async ({ page }) => {
+test('32a - Profil associations de chasse : page se charge et association seedée visible', async ({
+  page,
+}) => {
   await connectWith(page, 'premier-detenteur@example.fr');
   await expect(page).toHaveURL(/\/app\/chasseur/, { timeout: 10000 });
 

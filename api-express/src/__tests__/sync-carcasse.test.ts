@@ -59,9 +59,9 @@ describe('syncCarcasse — create', () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
     vi.mocked(prisma.carcasse.findFirst).mockResolvedValueOnce(null);
 
-    await expect(
-      syncCarcasse('FEI-1', 'ZC-NEW', { fei_numero: 'FEI-1' } as any, chasseur)
-    ).rejects.toThrow('Le numéro de marquage est obligatoire');
+    await expect(syncCarcasse('FEI-1', 'ZC-NEW', { fei_numero: 'FEI-1' } as any, chasseur)).rejects.toThrow(
+      'Le numéro de marquage est obligatoire'
+    );
 
     expect(prisma.carcasse.create).not.toHaveBeenCalled();
   });
@@ -72,12 +72,7 @@ describe('syncCarcasse — create', () => {
     vi.mocked(prisma.carcasse.create).mockResolvedValueOnce(baseCarcasse);
     vi.mocked(prisma.carcasse.update).mockResolvedValueOnce(baseCarcasse);
 
-    await syncCarcasse(
-      'FEI-1',
-      'ZC-1',
-      { fei_numero: 'FEI-1', numero_bracelet: 'BR-1' } as any,
-      chasseur
-    );
+    await syncCarcasse('FEI-1', 'ZC-1', { fei_numero: 'FEI-1', numero_bracelet: 'BR-1' } as any, chasseur);
 
     const createCall = vi.mocked(prisma.carcasse.create).mock.calls[0][0];
     expect(createCall.data).toMatchObject({
@@ -171,12 +166,7 @@ describe('syncCarcasse — update', () => {
     vi.mocked(prisma.carcasse.findFirst).mockResolvedValueOnce(baseCarcasse);
     vi.mocked(prisma.carcasse.update).mockResolvedValueOnce(baseCarcasse);
 
-    await syncCarcasse(
-      'FEI-1',
-      'ZC-1',
-      { fei_numero: 'FEI-1', nombre_d_animaux: '3' } as any,
-      chasseur
-    );
+    await syncCarcasse('FEI-1', 'ZC-1', { fei_numero: 'FEI-1', nombre_d_animaux: '3' } as any, chasseur);
 
     const updateCall = vi.mocked(prisma.carcasse.update).mock.calls[0][0];
     expect(updateCall.data.nombre_d_animaux).toBe(3);

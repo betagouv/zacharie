@@ -16,7 +16,6 @@ export default function EtgLayout() {
   const location = useLocation();
   const _hasHydrated = useZustandStore((state) => state._hasHydrated);
 
-
   if (!user) {
     const currentPath = location.pathname + location.search;
     return <Navigate to={`/app/connexion?redirect=${encodeURIComponent(currentPath)}`} />;

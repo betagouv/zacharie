@@ -178,7 +178,11 @@ export default function QuizPage() {
   }
 
   return (
-    <main role="main" id="content" className="fr-background-alt--blue-france min-h-full overflow-auto">
+    <main
+      role="main"
+      id="content"
+      className="fr-background-alt--blue-france min-h-full overflow-auto"
+    >
       <div className="fr-container fr-container--fluid fr-my-md-14v">
         <title>Quiz : du prélèvement à l'assiette | Zacharie</title>
         <div className="fr-grid-row fr-grid-row--center">
@@ -225,8 +229,8 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
     <div className="bg-white p-6 md:p-10 md:shadow-sm">
       <h1 className="fr-h2 fr-mb-2w">Du prélèvement à l'assiette : êtes-vous sûrs de vos pratiques ?</h1>
       <p className="fr-mb-3w">
-        Testez vos connaissances sur les bonnes pratiques sanitaires du gibier sauvage.
-        7 questions tirées au hasard. Comptez 2 à 3 minutes.
+        Testez vos connaissances sur les bonnes pratiques sanitaires du gibier sauvage. 7 questions tirées au
+        hasard. Comptez 2 à 3 minutes.
       </p>
       <ul className="fr-mb-4w">
         <li>Données filière</li>
@@ -235,7 +239,10 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
         <li>Trichine</li>
         <li>Valorisation</li>
       </ul>
-      <Button onClick={onStart} size="large">
+      <Button
+        onClick={onStart}
+        size="large"
+      >
         Commencer le quiz
       </Button>
     </div>
@@ -252,7 +259,15 @@ interface PlayingScreenProps {
   onNext: () => void;
 }
 
-function PlayingScreen({ question, index, total, revealed, lastCorrect, onAnswer, onNext }: PlayingScreenProps) {
+function PlayingScreen({
+  question,
+  index,
+  total,
+  revealed,
+  lastCorrect,
+  onAnswer,
+  onNext,
+}: PlayingScreenProps) {
   const isLast = index + 1 === total;
   return (
     <div className="bg-white p-6 md:p-10 md:shadow-sm">
@@ -263,10 +278,19 @@ function PlayingScreen({ question, index, total, revealed, lastCorrect, onAnswer
 
       {!revealed && (
         <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
-          <Button onClick={() => onAnswer(true)} size="large" className="flex-1 justify-center">
+          <Button
+            onClick={() => onAnswer(true)}
+            size="large"
+            className="flex-1 justify-center"
+          >
             Vrai
           </Button>
-          <Button onClick={() => onAnswer(false)} size="large" priority="secondary" className="flex-1 justify-center">
+          <Button
+            onClick={() => onAnswer(false)}
+            size="large"
+            priority="secondary"
+            className="flex-1 justify-center"
+          >
             Faux
           </Button>
         </div>
@@ -287,7 +311,10 @@ function PlayingScreen({ question, index, total, revealed, lastCorrect, onAnswer
             </div>
           )}
           {question.takeaway && (
-            <CallOut title="À retenir" iconId="fr-icon-lightbulb-line">
+            <CallOut
+              title="À retenir"
+              iconId="fr-icon-lightbulb-line"
+            >
               {question.takeaway}
             </CallOut>
           )}
@@ -297,7 +324,10 @@ function PlayingScreen({ question, index, total, revealed, lastCorrect, onAnswer
             </p>
           )}
           <div>
-            <Button onClick={onNext} size="large">
+            <Button
+              onClick={onNext}
+              size="large"
+            >
               {isLast ? 'Voir mon score' : 'Question suivante'}
             </Button>
           </div>
@@ -339,7 +369,8 @@ function ResultScreen({
   if (ratio < 0.5) {
     mood = {
       title: `Vous avez ${score}/${total} bonnes réponses`,
-      description: 'Il y a matière à progresser. Les bonnes pratiques sanitaires se construisent avec un peu d’entraînement.',
+      description:
+        'Il y a matière à progresser. Les bonnes pratiques sanitaires se construisent avec un peu d’entraînement.',
     };
   } else if (ratio < 0.8) {
     mood = {
@@ -382,18 +413,29 @@ function ResultScreen({
                 maxLength: 30,
               }}
             />
-            <Button onClick={onSubmitName} disabled={!displayName.trim() || !resultId}>
+            <Button
+              onClick={onSubmitName}
+              disabled={!displayName.trim() || !resultId}
+            >
               {resultId ? 'Enregistrer mon score' : 'Enregistrement en cours…'}
             </Button>
           </div>
         )}
 
         {nameSubmitted && (
-          <Alert severity="success" small title="Pseudo enregistré" description="Bonne chance pour le top 5 !" />
+          <Alert
+            severity="success"
+            small
+            title="Pseudo enregistré"
+            description="Bonne chance pour le top 5 !"
+          />
         )}
 
         <div className="fr-mt-3w flex flex-col gap-3 sm:flex-row sm:gap-4">
-          <Button onClick={onReplay} size="large">
+          <Button
+            onClick={onReplay}
+            size="large"
+          >
             Rejouer
           </Button>
           <Button
@@ -405,7 +447,10 @@ function ResultScreen({
           </Button>
         </div>
         <p className="fr-mt-3w">
-          <a href="/demarches" onClick={() => trackEvent('Quiz', 'cta_demarches')}>
+          <a
+            href="/demarches"
+            onClick={() => trackEvent('Quiz', 'cta_demarches')}
+          >
             Pour aller plus loin sur les bonnes pratiques
           </a>
         </p>
@@ -418,7 +463,10 @@ function ResultScreen({
         ) : (
           <ol className="space-y-2">
             {leaderboard.map((entry, idx) => (
-              <li key={`${entry.display_name}-${entry.created_at}`} className="flex justify-between border-b border-gray-100 py-2">
+              <li
+                key={`${entry.display_name}-${entry.created_at}`}
+                className="flex justify-between border-b border-gray-100 py-2"
+              >
                 <span>
                   <span className="fr-mr-1w font-bold">{idx + 1}.</span>
                   {entry.display_name}

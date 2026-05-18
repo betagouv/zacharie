@@ -10,7 +10,13 @@ export interface QuizQuestion {
 
 const MAJOR_THEMES = [
   ['donnees-filiere'],
-  ['hygiene-tirs', 'hygiene-evisceration', 'hygiene-refroidissement', 'hygiene-transport', 'hygiene-manipulations'],
+  [
+    'hygiene-tirs',
+    'hygiene-evisceration',
+    'hygiene-refroidissement',
+    'hygiene-transport',
+    'hygiene-manipulations',
+  ],
   ['examen-initial'],
   ['trichine'],
   ['valorisation'],

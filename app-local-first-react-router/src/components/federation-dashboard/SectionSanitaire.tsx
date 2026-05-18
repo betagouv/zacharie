@@ -130,7 +130,8 @@ export default function SectionSanitaire({ scope, departements, totals }: Props)
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="rounded-lg bg-white p-4 shadow-sm lg:col-span-2">
           <h3 className="fr-h6 mb-3">
-            Suspicions par département{topDepts.length < departements.length ? ` (top ${topDepts.length})` : ''}
+            Suspicions par département
+            {topDepts.length < departements.length ? ` (top ${topDepts.length})` : ''}
           </h3>
           {topDepts.length === 0 ? (
             <p className="py-12 text-center text-sm text-gray-500">Aucune anomalie sanitaire signalée.</p>

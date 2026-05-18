@@ -135,9 +135,7 @@ export default function SectionFormation({ scope, departements, national }: Prop
 
         <div className="rounded-lg bg-white p-4 shadow-sm">
           <h3 className="fr-h6 mb-2">Taux saisie SVI pour non-respect des BPH</h3>
-          <p className="mb-3 text-xs text-gray-500">
-            Référence nationale&nbsp;: {national.bphRate}%
-          </p>
+          <p className="mb-3 text-xs text-gray-500">Référence nationale&nbsp;: {national.bphRate}%</p>
           {bphChartData.length === 0 ? (
             <p className="py-12 text-center text-sm text-gray-500">
               Pas encore de retour SVI sur les carcasses de la saison.
@@ -244,8 +242,7 @@ export default function SectionFormation({ scope, departements, national }: Prop
                   className="cursor-pointer px-2 py-2 text-right font-semibold"
                   onClick={() => handleSort('examinateursActifs')}
                 >
-                  Examinateurs actifs{' '}
-                  {sortKey === 'examinateursActifs' ? (sortDesc ? '▼' : '▲') : ''}
+                  Examinateurs actifs {sortKey === 'examinateursActifs' ? (sortDesc ? '▼' : '▲') : ''}
                 </th>
                 <th
                   scope="col"
