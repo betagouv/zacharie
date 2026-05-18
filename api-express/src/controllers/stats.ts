@@ -835,6 +835,19 @@ router.get(
           volume7d: 0,
           volume30d: 0,
           carcassesByEspece: { gros: 0, petit: 0 },
+          transmisSvi30d: 0,
+          delaiAcceptationMsAvg: null,
+          carcasses30d: 0,
+          topEspeces: [],
+          carcassesRefusees30d: 0,
+          carcassesManquantes30d: 0,
+          carcassesAnomalies30d: 0,
+          premierDetenteursActifs30d: 0,
+          topPremierDetenteurs: [],
+          topEntitesChasse: [],
+          delaiDecisionMsMedian: null,
+          tauxAcceptation30d: 0,
+          trendMensuel: [],
         },
       });
       return;
@@ -842,6 +855,7 @@ router.get(
 
     const sevenDaysAgo = dayjs().subtract(7, 'day').toDate();
     const thirtyDaysAgo = dayjs().subtract(30, 'day').toDate();
+    const sixMonthsAgo = dayjs().subtract(5, 'month').startOf('month').toDate();
 
     const toAcceptWhere: Prisma.FeiWhereInput = {
       deleted_at: null,
@@ -868,7 +882,7 @@ router.get(
       },
     };
 
-    const [toAccept, ongoing, volume7d, volume30d, activeFeis] = await Promise.all([
+    const [toAccept, ongoing, volume7d, volume30d, activeFeis, inter6m] = await Promise.all([
       prisma.fei.count({ where: toAcceptWhere }),
       prisma.fei.count({ where: ongoingWhere }),
       prisma.fei.count({
@@ -902,6 +916,38 @@ router.get(
         },
         select: { numero: true },
       }),
+      prisma.carcasseIntermediaire.findMany({
+        where: {
+          intermediaire_entity_id: { in: userEtgEntityIds },
+          prise_en_charge_at: { gte: sixMonthsAgo },
+          deleted_at: null,
+        },
+        select: {
+          zacharie_carcasse_id: true,
+          fei_numero: true,
+          prise_en_charge_at: true,
+          decision_at: true,
+          refus: true,
+          manquante: true,
+          CarcasseCarcasseIntermediaire: {
+            select: {
+              espece: true,
+              examinateur_anomalies_carcasse: true,
+              deleted_at: true,
+            },
+          },
+          CarcasseIntermediaireFei: {
+            select: {
+              numero: true,
+              examinateur_initial_date_approbation_mise_sur_le_marche: true,
+              svi_assigned_at: true,
+              premier_detenteur_user_id: true,
+              premier_detenteur_entity_id: true,
+              deleted_at: true,
+            },
+          },
+        },
+      }),
     ]);
 
     const activeFeiNumeros = activeFeis.map((f) => f.numero);
@@ -925,6 +971,177 @@ router.get(
           ])
         : [0, 0];
 
+    const validInter = inter6m.filter(
+      (i) =>
+        i.CarcasseCarcasseIntermediaire?.deleted_at == null &&
+        i.CarcasseIntermediaireFei?.deleted_at == null &&
+        i.prise_en_charge_at != null
+    );
+    const inter30d = validInter.filter((i) => i.prise_en_charge_at! >= thirtyDaysAgo);
+
+    const uniqueCarcassesById = new Map<string, (typeof inter30d)[number]>();
+    for (const i of inter30d) {
+      if (!uniqueCarcassesById.has(i.zacharie_carcasse_id)) {
+        uniqueCarcassesById.set(i.zacharie_carcasse_id, i);
+      }
+    }
+    const carcasses30d = uniqueCarcassesById.size;
+
+    const especeCount = new Map<string, number>();
+    for (const i of uniqueCarcassesById.values()) {
+      const espece = i.CarcasseCarcasseIntermediaire?.espece || 'Non renseignée';
+      especeCount.set(espece, (especeCount.get(espece) || 0) + 1);
+    }
+    const topEspeces = Array.from(especeCount.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([espece, count]) => ({ espece, count }));
+
+    const refused = new Set<string>();
+    const missing = new Set<string>();
+    const accepted = new Set<string>();
+    const anomalies = new Set<string>();
+    for (const i of inter30d) {
+      if (i.refus) refused.add(i.zacharie_carcasse_id);
+      if (i.manquante) missing.add(i.zacharie_carcasse_id);
+      if (i.decision_at && !i.refus && !i.manquante) accepted.add(i.zacharie_carcasse_id);
+      if ((i.CarcasseCarcasseIntermediaire?.examinateur_anomalies_carcasse?.length ?? 0) > 0) {
+        anomalies.add(i.zacharie_carcasse_id);
+      }
+    }
+    const carcassesRefusees30d = refused.size;
+    const carcassesManquantes30d = missing.size;
+    const carcassesAnomalies30d = anomalies.size;
+    const carcassesAvecDecision = accepted.size + refused.size + missing.size;
+    const tauxAcceptation30d =
+      carcassesAvecDecision > 0 ? Math.round((accepted.size / carcassesAvecDecision) * 100) : 0;
+
+    const uniqueFeis30d = new Map<
+      string,
+      { premier_detenteur_user_id: string | null; premier_detenteur_entity_id: string | null }
+    >();
+    for (const i of inter30d) {
+      const fei = i.CarcasseIntermediaireFei;
+      if (!fei) continue;
+      if (!uniqueFeis30d.has(fei.numero)) {
+        uniqueFeis30d.set(fei.numero, {
+          premier_detenteur_user_id: fei.premier_detenteur_user_id,
+          premier_detenteur_entity_id: fei.premier_detenteur_entity_id,
+        });
+      }
+    }
+    const pdUserCount = new Map<string, number>();
+    const pdEntityCount = new Map<string, number>();
+    for (const fei of uniqueFeis30d.values()) {
+      if (fei.premier_detenteur_user_id) {
+        pdUserCount.set(
+          fei.premier_detenteur_user_id,
+          (pdUserCount.get(fei.premier_detenteur_user_id) || 0) + 1
+        );
+      }
+      if (fei.premier_detenteur_entity_id) {
+        pdEntityCount.set(
+          fei.premier_detenteur_entity_id,
+          (pdEntityCount.get(fei.premier_detenteur_entity_id) || 0) + 1
+        );
+      }
+    }
+    const premierDetenteursActifs30d = pdUserCount.size;
+
+    const topPdUserEntries = Array.from(pdUserCount.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5);
+    const topPdEntityEntries = Array.from(pdEntityCount.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5);
+
+    const [topUsers, topEntities] = await Promise.all([
+      topPdUserEntries.length > 0
+        ? prisma.user.findMany({
+            where: { id: { in: topPdUserEntries.map(([id]) => id) } },
+            select: { id: true, prenom: true, nom_de_famille: true },
+          })
+        : Promise.resolve([]),
+      topPdEntityEntries.length > 0
+        ? prisma.entity.findMany({
+            where: { id: { in: topPdEntityEntries.map(([id]) => id) } },
+            select: { id: true, nom_d_usage: true, raison_sociale: true },
+          })
+        : Promise.resolve([]),
+    ]);
+    const userById = new Map(topUsers.map((u) => [u.id, u]));
+    const entityById = new Map(topEntities.map((e) => [e.id, e]));
+
+    const topPremierDetenteurs = topPdUserEntries.map(([userId, count]) => {
+      const u = userById.get(userId);
+      const nom = u
+        ? `${u.prenom || ''} ${u.nom_de_famille || ''}`.trim() || 'Chasseur inconnu'
+        : 'Chasseur inconnu';
+      return { userId, nom, count };
+    });
+    const topEntitesChasse = topPdEntityEntries.map(([entityId, count]) => {
+      const e = entityById.get(entityId);
+      const nom = e ? e.nom_d_usage || e.raison_sociale || 'Entité inconnue' : 'Entité inconnue';
+      return { entityId, nom, count };
+    });
+
+    const delaisAcceptation: number[] = [];
+    const delaisDecision: number[] = [];
+    const feiAcceptationSeen = new Set<string>();
+    for (const i of inter30d) {
+      const fei = i.CarcasseIntermediaireFei;
+      const pec = i.prise_en_charge_at!;
+      if (
+        fei?.examinateur_initial_date_approbation_mise_sur_le_marche &&
+        !feiAcceptationSeen.has(fei.numero)
+      ) {
+        const delta = pec.getTime() - fei.examinateur_initial_date_approbation_mise_sur_le_marche.getTime();
+        if (delta > 0) {
+          delaisAcceptation.push(delta);
+          feiAcceptationSeen.add(fei.numero);
+        }
+      }
+      if (i.decision_at) {
+        const delta = i.decision_at.getTime() - pec.getTime();
+        if (delta >= 0) delaisDecision.push(delta);
+      }
+    }
+    const delaiAcceptationMsAvg =
+      delaisAcceptation.length > 0
+        ? Math.round(delaisAcceptation.reduce((a, b) => a + b, 0) / delaisAcceptation.length)
+        : null;
+    const delaiDecisionMsMedian = (() => {
+      if (delaisDecision.length === 0) return null;
+      const sorted = [...delaisDecision].sort((a, b) => a - b);
+      const mid = Math.floor(sorted.length / 2);
+      return sorted.length % 2 === 0 ? Math.round((sorted[mid - 1] + sorted[mid]) / 2) : sorted[mid];
+    })();
+
+    const transmisSvi30dFeis = new Set<string>();
+    for (const i of validInter) {
+      const fei = i.CarcasseIntermediaireFei;
+      if (fei?.svi_assigned_at && fei.svi_assigned_at >= thirtyDaysAgo) {
+        transmisSvi30dFeis.add(fei.numero);
+      }
+    }
+    const transmisSvi30d = transmisSvi30dFeis.size;
+
+    const trendBuckets = new Map<string, Set<string>>();
+    for (let m = 5; m >= 0; m--) {
+      const key = dayjs().subtract(m, 'month').format('YYYY-MM');
+      trendBuckets.set(key, new Set());
+    }
+    for (const i of validInter) {
+      const key = dayjs(i.prise_en_charge_at!).format('YYYY-MM');
+      if (trendBuckets.has(key)) {
+        trendBuckets.get(key)!.add(i.fei_numero);
+      }
+    }
+    const trendMensuel = Array.from(trendBuckets.entries()).map(([mois, set]) => ({
+      mois,
+      count: set.size,
+    }));
+
     res.status(200).send({
       ok: true,
       data: {
@@ -933,6 +1150,19 @@ router.get(
         volume7d,
         volume30d,
         carcassesByEspece: { gros, petit },
+        transmisSvi30d,
+        delaiAcceptationMsAvg,
+        carcasses30d,
+        topEspeces,
+        carcassesRefusees30d,
+        carcassesManquantes30d,
+        carcassesAnomalies30d,
+        premierDetenteursActifs30d,
+        topPremierDetenteurs,
+        topEntitesChasse,
+        delaiDecisionMsMedian,
+        tauxAcceptation30d,
+        trendMensuel,
       },
     });
   })
