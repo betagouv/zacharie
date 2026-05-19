@@ -415,7 +415,7 @@ const useZustandStore = create<State & Actions>()(
           if (state) resolveHydration();
         },
         reset: () => {
-          set(initialState);
+          set({ ...initialState, _hasHydrated: true });
         },
       }),
       {
