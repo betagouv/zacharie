@@ -6,6 +6,7 @@ import { Button, ButtonProps } from '@codegouvfr/react-dsfr/Button';
 import { User } from '@prisma/client';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
+import useZustandStore from '@app/zustand/store';
 
 export default function ConnexionButton({
   user,
@@ -27,6 +28,7 @@ export default function ConnexionButton({
           path: 'admin/user/connect-as',
           body: { email: user.email! },
         });
+        useZustandStore.getState().reset();
         await clearCache()
           .then(() => new Promise((resolve) => setTimeout(resolve, 1500)))
           .then(() => refreshUser('admin/user/connect-as'))

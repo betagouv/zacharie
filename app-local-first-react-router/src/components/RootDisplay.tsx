@@ -10,6 +10,7 @@ import API, { setNativeAuthToken } from '@app/services/api';
 import { useNavigate, useSearchParams } from 'react-router';
 import { UserRoles } from '@prisma/client';
 import useUser from '@app/zustand/user';
+import useZustandStore from '@app/zustand/store';
 
 const environment = import.meta.env.VITE_ENV || 'development';
 
@@ -68,6 +69,7 @@ export default function RootDisplay({
           API.post({ path: '/user/logout' }).then(async () => {
             setNativeAuthToken(null);
             useUser.setState({ user: null }); // this line is important : if useUser is not null then /app/connexion will redirect to /app/[role] even if /user/me returns a 401 (because of offline mode)
+            useZustandStore.getState().reset();
             await clearCache()
               .then(() => new Promise((resolve) => setTimeout(resolve, 1500)))
               .then(() => {
