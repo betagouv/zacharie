@@ -276,7 +276,7 @@ export default function CardFiche({
 
         <div className="flex flex-col">
           <div className="flex flex-row gap-x-2">
-            <div className="flex shrink basis-0 grow flex-col gap-y-1">
+            <div className="flex shrink basis-1/2 flex-col gap-y-1">
               <CommuneIcon />
               <p
                 className={[
@@ -291,7 +291,7 @@ export default function CardFiche({
                   .join(' ') || 'À renseigner'}
               </p>
             </div>
-            <div className="flex shrink basis-0 grow flex-col gap-y-1">
+            <div className="flex shrink basis-1/2 flex-col gap-y-1">
               <ChasseIcon />
               <p
                 className={[
@@ -302,14 +302,14 @@ export default function CardFiche({
                 {fei.premier_detenteur_name_cache || 'À renseigner'}
               </p>
             </div>
-            {latestIntermediaireName && (
-              <div className="flex shrink basis-0 grow flex-col gap-y-1">
-                <TransportIcon />
-                <p className="line-clamp-2 text-sm text-black">{latestIntermediaireName}</p>
-              </div>
-            )}
           </div>
         </div>
+        {latestIntermediaireName && (
+          <div className="flex flex-row items-center gap-x-2">
+            <TransportIcon />
+            <p className="m-0 line-clamp-1 text-sm text-black">{latestIntermediaireName}</p>
+          </div>
+        )}
         <div className="flex flex-col">
           <div className="flex flex-row gap-x-2">
             <div className="flex shrink basis-1/2 flex-col gap-y-1">
