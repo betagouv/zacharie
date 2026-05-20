@@ -88,6 +88,13 @@ export default function RequestNewCarcasseButton({
       return;
     }
 
+    // If the FEI has already been transmitted to the next owner (SVI typically) before the carcasse
+    // is added, inherit the transmission state on the new carcasse so it joins the same flow rather
+    // than getting stranded at the requester. Without this, the SVI never sees the carcasse and the
+    // ETG is asked to re-transmit endlessly after approval.
+    const feiAlreadyTransmitted = !!fei.fei_next_owner_entity_id;
+    const feiAlreadyAssignedToSvi = !!fei.svi_assigned_at && !!fei.svi_entity_id;
+
     // 1) Create the Carcasse locally with no examinateur signature — the examinateur will sign on
     // approval. Fields not set here keep their default/null from the carcasse schema.
     const newCarcasse: Carcasse = {
@@ -123,8 +130,9 @@ export default function RequestNewCarcasseButton({
       intermediaire_carcasse_refus_motif: null,
       intermediaire_carcasse_manquante: null,
       latest_intermediaire_signed_at: null,
-      // SVI
-      svi_assigned_to_fei_at: null,
+      // SVI — inherit assignment if the FEI was already transmitted to SVI before this carcasse
+      // was added, otherwise leave null and let the next ETG transmission set it.
+      svi_assigned_to_fei_at: feiAlreadyAssignedToSvi ? fei.svi_assigned_at : null,
       svi_carcasse_commentaire: null,
       svi_carcasse_status: null,
       svi_carcasse_status_set_at: null,
@@ -180,8 +188,8 @@ export default function RequestNewCarcasseButton({
       latest_intermediaire_user_id: null,
       latest_intermediaire_entity_id: null,
       latest_intermediaire_name_cache: null,
-      svi_assigned_at: null,
-      svi_entity_id: null,
+      svi_assigned_at: feiAlreadyAssignedToSvi ? fei.svi_assigned_at : null,
+      svi_entity_id: feiAlreadyAssignedToSvi ? fei.svi_entity_id : null,
       svi_user_id: null,
       svi_closed_at: null,
       svi_closed_by_user_id: null,
@@ -194,11 +202,11 @@ export default function RequestNewCarcasseButton({
       next_owner_sous_traite_at: null,
       next_owner_sous_traite_by_user_id: null,
       next_owner_sous_traite_by_entity_id: null,
-      next_owner_user_id: null,
-      next_owner_user_name_cache: null,
-      next_owner_entity_id: null,
-      next_owner_entity_name_cache: null,
-      next_owner_role: null,
+      next_owner_user_id: feiAlreadyTransmitted ? fei.fei_next_owner_user_id : null,
+      next_owner_user_name_cache: feiAlreadyTransmitted ? fei.fei_next_owner_user_name_cache : null,
+      next_owner_entity_id: feiAlreadyTransmitted ? fei.fei_next_owner_entity_id : null,
+      next_owner_entity_name_cache: feiAlreadyTransmitted ? fei.fei_next_owner_entity_name_cache : null,
+      next_owner_role: feiAlreadyTransmitted ? fei.fei_next_owner_role : null,
       prev_owner_user_id: null,
       prev_owner_entity_id: null,
       prev_owner_role: null,

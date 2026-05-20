@@ -50,8 +50,12 @@ test('Ajout carcasse manquante : ETG ajoute → examinateur signe → carcasse r
   await page.getByRole('link', { name: 'Voir et traiter' }).first().click();
 
   await expect(page.getByRole('heading', { name: "Examen initial d'une carcasse ajoutée" })).toBeVisible();
-  // Approve mise sur le marché is pre-checked. Approve "sans anomalie" then sign.
-  await page.getByLabel('Aucune anomalie constatée').check();
+  // Approve mise sur le marché is pre-checked. Approve "sans anomalie" then sign. The DSFR "En ligne"
+  // status indicator sits at the bottom of the viewport with z-50 and can intercept clicks on form
+  // fields, so we scroll the checkbox into view first.
+  const sansAnomalieCheckbox = page.getByLabel('Aucune anomalie constatée');
+  await sansAnomalieCheckbox.scrollIntoViewIfNeeded();
+  await sansAnomalieCheckbox.check();
   await page.getByRole('button', { name: 'Enregistrer' }).click();
   await expect(page).toHaveURL(/\/app\/chasseur\/demandes-de-modification$/);
 

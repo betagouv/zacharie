@@ -181,13 +181,20 @@ function SviInspectionCarcasse() {
               key={dayjs(carcasse.updated_at).toISOString()}
             />
           </Section>
-          {canEdit && (
+          {(canEdit || pendingModifRequest) && (
             <>
               <Section
                 open={initIMP1Open.current}
                 title={`Inspection Post-Mortem 1 (IPM1)${carcasse.svi_ipm1_date ? ` - ${dayjs(carcasse.svi_ipm1_date).format('DD-MM-YYYY')}` : ''}`}
               >
-                <CarcasseIPM1 canEdit={canEdit} />
+                {pendingModifRequest ? (
+                  <p className="m-0">
+                    Tant que l'examinateur initial n'a pas fait approuvé la mise sur le marché, il est
+                    impossible de réaliser les inspections post-mortem.
+                  </p>
+                ) : (
+                  <CarcasseIPM1 canEdit={canEdit} />
+                )}
               </Section>
               <Section
                 open={initIMP2Open.current}
@@ -198,7 +205,16 @@ function SviInspectionCarcasse() {
                 }
               >
                 <div>
-                  <CarcasseIPM2 canEdit={canEdit && carcasse.svi_ipm1_decision !== IPM1Decision.ACCEPTE} />
+                  {pendingModifRequest ? (
+                    <p className="m-0">
+                      Tant que l'examinateur initial n'a pas fait approuvé la mise sur le marché, il est
+                      impossible de réaliser les inspections post-mortem.
+                    </p>
+                  ) : (
+                    <CarcasseIPM2
+                      canEdit={canEdit && carcasse.svi_ipm1_decision !== IPM1Decision.ACCEPTE}
+                    />
+                  )}
                 </div>
               </Section>
             </>
