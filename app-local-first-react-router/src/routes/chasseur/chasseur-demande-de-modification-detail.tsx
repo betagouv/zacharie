@@ -7,7 +7,7 @@ import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import { CarcasseType } from '@prisma/client';
-import useZustandStore from '@app/zustand/store';
+import useZustandStore, { syncData } from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import InputMultiSelect from '@app/components/InputMultiSelect';
 import ModalTreeDisplay from '@app/components/ModalTreeDisplay';
@@ -119,6 +119,7 @@ export default function ChasseurDemandeDeModificationDetail() {
       },
       approvalPayload
     );
+    syncData('ChasseurDemandeDeModificationDetail onApprove');
     navigate('/app/chasseur/demandes-de-modification');
   };
 
@@ -196,7 +197,9 @@ export default function ChasseurDemandeDeModificationDetail() {
               {carcasse.heure_mise_a_mort && <li>Heure de mise à mort : {carcasse.heure_mise_a_mort}</li>}
               {carcasse.heure_evisceration && <li>Heure d'éviscération : {carcasse.heure_evisceration}</li>}
               {request.comment_intermediaire && (
-                <li>Commentaire de {entityLabel} : {request.comment_intermediaire}</li>
+                <li>
+                  Commentaire de {entityLabel} : {request.comment_intermediaire}
+                </li>
               )}
             </ul>
           </section>

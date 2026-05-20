@@ -4,7 +4,7 @@ import { FeiStepSimpleStatus } from '@app/types/fei-steps';
 import { CarcasseType, DepotType } from '@prisma/client';
 import { abbreviations } from '@app/utils/count-carcasses';
 import dayjs from 'dayjs';
-import { useIsOnline } from '@app/utils-offline/use-is-offline';
+// import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import useZustandStore, { syncData } from '@app/zustand/store';
 import { useMostFreshUser, refreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { getFeisSorted } from '@app/utils/get-fei-sorted';
@@ -147,8 +147,8 @@ export default function ChasseurFiches() {
   const feisAssigned = [...feisUnderMyResponsability, ...feisToTake].sort((a, b) => {
     return b.updated_at < a.updated_at ? -1 : 1;
   });
-  const [loading, setLoading] = useState(false);
-  const isOnline = useIsOnline();
+  // const [loading, setLoading] = useState(false);
+  // const isOnline = useIsOnline();
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
   const carcasses = useZustandStore((state) => state.carcasses);
 
