@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router';
 import { sortCarcassesApproved } from '@app/utils/sort';
-import FEIDonneesDeChasse from '@app/routes/fei/donnees-de-chasse';
+import FEIDonneesDeChasse from '@app/components/DonneesDeChasse';
 import Section from '@app/components/Section';
 import CardCarcasse from '@app/components/CardCarcasse';
 import { useMyCarcassesForFei } from '@app/utils/filter-my-carcasses';
@@ -83,7 +83,7 @@ function CircuitCourtFei() {
               <Button
                 priority="secondary"
                 linkProps={{
-                  to: `/app/tableau-de-bord/`,
+                  to: `/app/circuit-court/`,
                 }}
               >
                 Voir toutes mes fiches

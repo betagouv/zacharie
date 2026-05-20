@@ -12,7 +12,7 @@ import { loadFei } from '@app/utils/load-fei';
 import { loadMyRelations } from '@app/utils/load-my-relations';
 import NotFound from '@app/components/NotFound';
 import Chargement from '@app/components/Chargement';
-import FEIDonneesDeChasse from '../fei/donnees-de-chasse';
+import FEIDonneesDeChasse from '@app/components/DonneesDeChasse';
 import Section from '@app/components/Section';
 import ItemNotEditable from '@app/components/ItemNotEditable';
 
@@ -82,14 +82,14 @@ export function ChasseurSviInspectionCarcasse() {
               {
                 label: 'Fiches',
                 linkProps: {
-                  to: '/app/tableau-de-bord',
+                  to: '/app/chasseur',
                   href: '#',
                 },
               },
               {
                 label: fei.numero,
                 linkProps: {
-                  to: `/app/tableau-de-bord/fei/${fei.numero}`,
+                  to: `/app/chasseur/fei/${fei.numero}`,
                   href: '#',
                 },
               },

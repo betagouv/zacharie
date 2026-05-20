@@ -41,7 +41,7 @@ export default function AdminLayout() {
   if (!user?.isZacharieAdmin) {
     return <Navigate to="/app/connexion" />;
   }
-  let mainLink = '/app/tableau-de-bord';
+  let mainLink = '/app/admin';
   if (user.roles.includes(UserRoles.CHASSEUR)) {
     mainLink = '/app/chasseur';
   }

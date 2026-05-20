@@ -1,12 +1,12 @@
 import { Link } from 'react-router';
 import RootDisplay from '@app/components/RootDisplay';
-import useLoggedInNavigationMenu from '@app/utils/get-navigation-menu';
 import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { useEffect } from 'react';
 import { hasAllRequiredFields } from '@app/utils/user';
+import useCollecteurNavigationMenu from './collecteur-navigation-menu';
 
 export default function CollecteurDeactivated() {
-  const navigation = useLoggedInNavigationMenu();
+  const navigation = useCollecteurNavigationMenu();
   const user = useMostFreshUser('CollecteurDeactivated');
   const isProfileCompleted = hasAllRequiredFields(user!);
   useEffect(() => {
