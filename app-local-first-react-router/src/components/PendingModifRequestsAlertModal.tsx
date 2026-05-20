@@ -44,15 +44,24 @@ export default function PendingModifRequestsAlertModal() {
   ).current;
   const isOpen = useIsModalOpen(modal);
 
-  // Open whenever the user lands on /app/chasseur and has pending demandes. Re-opens on every visit
-  // (per request) — even after dismissal, navigating away and back re-triggers because the effect
-  // depends on location.pathname.
+  // Open whenever the user lands on /app/chasseur and has pending demandes. We track an
+  // "already opened for this visit" ref so:
+  //   - the modal opens as soon as data finishes loading (count may be 0 at mount time, become > 0
+  //     once loadFeis() resolves — depending on `count` here is what makes the modal show up)
+  //   - dismissing it via "Plus tard" doesn't re-open it on every store change
+  //   - leaving /app/chasseur resets the ref so the next visit re-opens
+  const hasOpenedRef = useRef(false);
   useEffect(() => {
-    if (isChasseurIndex && count > 0) {
+    if (!isChasseurIndex) {
+      hasOpenedRef.current = false;
+      return;
+    }
+    if (count > 0 && !hasOpenedRef.current) {
+      hasOpenedRef.current = true;
       modal.open();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isChasseurIndex, location.pathname]);
+  }, [isChasseurIndex, count]);
 
   if (count === 0 || !isChasseurIndex) return null;
 
