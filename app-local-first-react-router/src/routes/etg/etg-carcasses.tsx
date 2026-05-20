@@ -578,8 +578,7 @@ export default function EtgCarcasses() {
       label: 'Lésions / motifs IPM1',
       dataKey: 'svi_ipm1_lesions_ou_motifs',
       title: 'Motifs IPM1',
-      render: (carcasse) =>
-        (carcasse.svi_ipm1_lesions_ou_motifs ?? []).filter(Boolean).join(', ') || '-',
+      render: (carcasse) => (carcasse.svi_ipm1_lesions_ou_motifs ?? []).filter(Boolean).join(', ') || '-',
     },
     {
       key: 'svi_ipm2_decision',
@@ -592,8 +591,7 @@ export default function EtgCarcasses() {
       label: 'Lésions / motifs IPM2',
       dataKey: 'svi_ipm2_lesions_ou_motifs',
       title: 'Motifs IPM2',
-      render: (carcasse) =>
-        (carcasse.svi_ipm2_lesions_ou_motifs ?? []).filter(Boolean).join(', ') || '-',
+      render: (carcasse) => (carcasse.svi_ipm2_lesions_ou_motifs ?? []).filter(Boolean).join(', ') || '-',
     },
     {
       key: 'fei_svi_closed_at',
@@ -609,9 +607,7 @@ export default function EtgCarcasses() {
       dataKey: 'fei_numero',
       title: 'Numéro de fiche',
       sortable: true,
-      render: (carcasse) => (
-        <Link to={`/app/etg/fei/${carcasse.fei_numero}`}>{carcasse.fei_numero}</Link>
-      ),
+      render: (carcasse) => <Link to={`/app/etg/fei/${carcasse.fei_numero}`}>{carcasse.fei_numero}</Link>,
     },
   ];
 
@@ -775,9 +771,7 @@ export default function EtgCarcasses() {
                   className="checked:accent-action-high-blue-france h-4 w-4 shrink-0"
                   onChange={() => {
                     if (quickFilterCollecteurIds.includes(option.id)) {
-                      setQuickFilterCollecteurIds(
-                        quickFilterCollecteurIds.filter((v) => v !== option.id)
-                      );
+                      setQuickFilterCollecteurIds(quickFilterCollecteurIds.filter((v) => v !== option.id));
                     } else {
                       setQuickFilterCollecteurIds([...quickFilterCollecteurIds, option.id]);
                     }
@@ -888,9 +882,7 @@ export default function EtgCarcasses() {
                   className="checked:accent-action-high-blue-france h-4 w-4 shrink-0"
                   onChange={() => {
                     if (quickFilterPremierDetenteurs.includes(name)) {
-                      setQuickFilterPremierDetenteurs(
-                        quickFilterPremierDetenteurs.filter((v) => v !== name)
-                      );
+                      setQuickFilterPremierDetenteurs(quickFilterPremierDetenteurs.filter((v) => v !== name));
                     } else {
                       setQuickFilterPremierDetenteurs([...quickFilterPremierDetenteurs, name]);
                     }
@@ -950,7 +942,6 @@ export default function EtgCarcasses() {
           {filters.length === 0 ? 'Ajouter un filtre avancé' : 'Modifier les filtres avancés'}
         </button>
       </div>
-
     </>
   );
 
@@ -1004,12 +995,12 @@ export default function EtgCarcasses() {
                 <span>
                   {carcasse.fei_svi_assigned_at
                     ? new Date(carcasse.fei_svi_assigned_at).toLocaleDateString('fr-FR', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })
                     : '-'}
                 </span>
               </div>
@@ -1018,12 +1009,12 @@ export default function EtgCarcasses() {
                 <span>
                   {carcasse.svi_carcasse_status_set_at
                     ? new Date(carcasse.svi_carcasse_status_set_at).toLocaleDateString('fr-FR', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })
                     : '-'}
                 </span>
               </div>
@@ -1148,9 +1139,7 @@ export default function EtgCarcasses() {
                       href: '#',
                       'aria-disabled': selectedCarcassesIds.length === 0,
                       className:
-                        isExporting || !selectedCarcassesIds.length
-                          ? 'cursor-not-allowed opacity-50'
-                          : '',
+                        isExporting || !selectedCarcassesIds.length ? 'cursor-not-allowed opacity-50' : '',
                       title:
                         selectedCarcassesIds.length === 0
                           ? 'Sélectionnez des carcasses avec la case à cocher'
@@ -1160,9 +1149,7 @@ export default function EtgCarcasses() {
                         if (selectedCarcassesIds.length === 0) return;
                         if (isExporting) return;
                         const selectedSet = new Set(selectedCarcassesIds);
-                        onExportToXlsx(
-                          filteredData.filter((c) => selectedSet.has(c.zacharie_carcasse_id))
-                        );
+                        onExportToXlsx(filteredData.filter((c) => selectedSet.has(c.zacharie_carcasse_id)));
                       },
                     },
                     text: `Export Excel (${selectedCarcassesIds.length})`,
@@ -1188,11 +1175,11 @@ export default function EtgCarcasses() {
                 render: c.render,
                 ...(c.sortable
                   ? {
-                    onSortBy: setSortBy,
-                    onSortOrder: setSortOrder,
-                    sortBy,
-                    sortOrder,
-                  }
+                      onSortBy: setSortBy,
+                      onSortOrder: setSortOrder,
+                      sortBy,
+                      sortOrder,
+                    }
                   : {}),
               }))}
             />
@@ -1330,9 +1317,7 @@ export default function EtgCarcasses() {
               </div>
 
               <div>
-                <h3 className="mb-2 text-sm font-bold text-gray-800">
-                  Masquées ({hiddenColumns.length})
-                </h3>
+                <h3 className="mb-2 text-sm font-bold text-gray-800">Masquées ({hiddenColumns.length})</h3>
                 {hiddenColumns.length === 0 ? (
                   <p className="text-xs text-gray-500 italic">Toutes les colonnes sont affichées.</p>
                 ) : (
