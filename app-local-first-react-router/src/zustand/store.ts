@@ -128,21 +128,23 @@ interface Actions {
   reset: () => void;
 }
 
-const initialState: State = {
-  isOnline: true,
-  dataIsSynced: true,
-  carcassesRegistry: [],
-  lastUpdateCarcassesRegistry: 0,
-  logs: [],
-  feis: {},
-  users: {},
-  entities: {},
-  detenteursInitiauxIds: [],
-  apiKeyApprovals: [],
-  carcasses: {},
-  carcassesIntermediaireById: {},
-  _hasHydrated: false,
-};
+function initialState(): State {
+  return {
+    isOnline: true,
+    dataIsSynced: true,
+    carcassesRegistry: [],
+    lastUpdateCarcassesRegistry: 0,
+    logs: [],
+    feis: {},
+    users: {},
+    entities: {},
+    detenteursInitiauxIds: [],
+    apiKeyApprovals: [],
+    carcasses: {},
+    carcassesIntermediaireById: {},
+    _hasHydrated: false,
+  };
+}
 
 let resolveHydration: () => void;
 export const hydrationPromise = new Promise<void>((resolve) => {
@@ -153,7 +155,7 @@ const useZustandStore = create<State & Actions>()(
   devtools(
     persist(
       (set, get): State & Actions => ({
-        ...initialState,
+        ...initialState(),
         createFei: (newFei: FeiWithIntermediaires) => {
           newFei.is_synced = false;
           newFei.updated_at = dayjs().toDate();
@@ -415,7 +417,7 @@ const useZustandStore = create<State & Actions>()(
           if (state) resolveHydration();
         },
         reset: () => {
-          set({ ...initialState, _hasHydrated: true });
+          set({ ...initialState(), _hasHydrated: true });
         },
       }),
       {
