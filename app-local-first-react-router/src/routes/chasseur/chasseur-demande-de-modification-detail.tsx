@@ -147,6 +147,7 @@ export default function ChasseurDemandeDeModificationDetail() {
       reviewed_at: dayjs().toDate(),
       rejection_reason: rejectionReason || null,
     });
+    syncData('ChasseurDemandeDeModificationDetail onReject');
     navigate('/app/chasseur/demandes-de-modification');
   };
 
