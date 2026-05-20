@@ -30,7 +30,7 @@ test('Ajout carcasse manquante : ETG ajoute → examinateur signe → carcasse r
 
   await page.getByLabel('Numéro de bracelet *').fill(newBracelet);
   await page.getByLabel('Espèce *').selectOption({ label: 'Cerf élaphe' });
-  await page.getByLabel('Commentaire pour l\'examinateur (optionnel)').fill('Trouvée à part du lot');
+  await page.getByLabel("Commentaire pour l'examinateur (optionnel)").fill('Trouvée à part du lot');
   await page.getByRole('button', { name: 'Envoyer la demande' }).click();
 
   // The carcasse appears in the main list immediately, with the pending banner attached.
@@ -38,21 +38,21 @@ test('Ajout carcasse manquante : ETG ajoute → examinateur signe → carcasse r
     timeout: 10000,
   });
   await expect(
-    page.getByText("Cette carcasse attend la signature de l'examinateur initial").first()
+    page.getByText('Carcasse ajoutée, approbation de mise sur le marché en attente').first()
   ).toBeVisible();
 
   // Examinateur signs.
   await logoutAndConnect(page, 'examinateur@example.fr');
-  await expect(
-    page.getByRole('heading', { name: 'Demandes de modification en attente' })
-  ).toBeVisible({ timeout: 10000 });
+  await expect(page.getByRole('heading', { name: 'Demandes de modification en attente' })).toBeVisible({
+    timeout: 10000,
+  });
   await page.getByRole('button', { name: 'Voir les demandes' }).click();
   await page.getByRole('link', { name: 'Voir et traiter' }).first().click();
 
-  await expect(page.getByRole('heading', { name: "Signature d'une carcasse ajoutée" })).toBeVisible();
+  await expect(page.getByRole('heading', { name: "Examen initial d'une carcasse ajoutée" })).toBeVisible();
   // Approve mise sur le marché is pre-checked. Approve "sans anomalie" then sign.
   await page.getByLabel('Aucune anomalie constatée').check();
-  await page.getByRole('button', { name: "Signer et approuver l'examen" }).click();
+  await page.getByRole('button', { name: 'Enregistrer' }).click();
   await expect(page).toHaveURL(/\/app\/chasseur\/demandes-de-modification$/);
 
   // ETG side: banner gone, the carcasse is now a signed regular member of the FEI.
@@ -61,7 +61,7 @@ test('Ajout carcasse manquante : ETG ajoute → examinateur signe → carcasse r
   await expect(page.getByRole('button', { name: `Cerf élaphe N° ${newBracelet}` })).toBeVisible({
     timeout: 10000,
   });
-  await expect(
-    page.getByText("Cette carcasse attend la signature de l'examinateur initial")
-  ).toHaveCount(0);
+  await expect(page.getByText('Carcasse ajoutée, approbation de mise sur le marché en attente')).toHaveCount(
+    0
+  );
 });

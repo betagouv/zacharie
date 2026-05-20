@@ -38,12 +38,12 @@ export function PendingModificationBanner({ carcasse }: { carcasse: Carcasse }) 
   const title =
     pending.type === CarcasseModificationRequestType.BRACELET_RENAME
       ? `Demande de modification du numéro de bracelet en cours`
-      : `Cette carcasse attend la signature de l'examinateur initial`;
+      : `Carcasse ajoutée, approbation de mise sur le marché en attente`;
 
   const detail =
     pending.type === CarcasseModificationRequestType.BRACELET_RENAME
       ? `Le numéro physique semble être « ${pending.numero_bracelet_after} » au lieu de « ${pending.numero_bracelet_before} ». L'examinateur initial doit approuver ou refuser ce changement.`
-      : `Cette carcasse a été ajoutée par un intermédiaire. Elle n'est pas encore validée par l'examinateur initial et ne sera pas inspectée par le SVI tant que la signature n'est pas faite.`;
+      : `Cette carcasse n'est pas encore validée par l'examinateur initial et ne sera pas inspectée par le SVI tant que l'approbation de mise sur le marché n'est pas faite.`;
 
   const requester = [requestedByUser?.prenom, requestedByUser?.nom_de_famille].filter(Boolean).join(' ');
   const entityName = requestedByEntity?.nom_d_usage ?? '';

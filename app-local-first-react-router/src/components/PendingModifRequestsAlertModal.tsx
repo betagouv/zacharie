@@ -1,11 +1,15 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
-import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { CarcasseModificationRequestStatus } from '@prisma/client';
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
+
+const modal = createModal({
+  isOpenedByDefault: false,
+  id: 'pending-modif-requests-alert',
+});
 
 // ----------------------------------------------------------------------------
 // PendingModifRequestsAlertModal
@@ -20,6 +24,11 @@ export default function PendingModifRequestsAlertModal() {
   const user = useUser((state) => state.user);
   const requestsById = useZustandStore((state) => state.carcasseModifPendingRequestsIds);
   const carcasses = useZustandStore((state) => state.carcasses);
+
+  const [hasMounted, setHasMounted] = useState(false);
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
   // Strictly match /app/chasseur — the user wanted the modal to appear only on that root URL.
   // The trailing slash is tolerated to handle browser-normalised paths.
@@ -36,14 +45,6 @@ export default function PendingModifRequestsAlertModal() {
 
   const count = pendingForMe.length;
 
-  const modal = useRef(
-    createModal({
-      isOpenedByDefault: false,
-      id: 'pending-modif-requests-alert',
-    })
-  ).current;
-  const isOpen = useIsModalOpen(modal);
-
   // Open whenever the user lands on /app/chasseur and has pending demandes. We track an
   // "already opened for this visit" ref so:
   //   - the modal opens as soon as data finishes loading (count may be 0 at mount time, become > 0
@@ -52,6 +53,7 @@ export default function PendingModifRequestsAlertModal() {
   //   - leaving /app/chasseur resets the ref so the next visit re-opens
   const hasOpenedRef = useRef(false);
   useEffect(() => {
+    if (!hasMounted) return;
     if (!isChasseurIndex) {
       hasOpenedRef.current = false;
       return;
@@ -60,42 +62,37 @@ export default function PendingModifRequestsAlertModal() {
       hasOpenedRef.current = true;
       modal.open();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isChasseurIndex, count]);
-
-  if (count === 0 || !isChasseurIndex) return null;
+  }, [isChasseurIndex, count, hasMounted]);
 
   return (
     <modal.Component title="Demandes de modification en attente">
-      {isOpen && (
-        <div>
-          <p className="mb-3">
-            Vous avez <strong>{count}</strong>{' '}
-            {count > 1 ? 'demandes de modification en attente' : 'demande de modification en attente'} sur{' '}
-            {count > 1 ? 'des carcasses' : 'une carcasse'} dont vous êtes l'examinateur initial, il vous faut
-            donc approuver ou refuser {count > 1 ? 'ces modifications' : 'cette modification'}.
-          </p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Button
-              priority="primary"
-              onClick={() => {
-                modal.close();
-                navigate('/app/chasseur/demandes-de-modification');
-              }}
-              type="button"
-            >
-              Voir les demandes
-            </Button>
-            <Button
-              priority="secondary"
-              onClick={() => modal.close()}
-              type="button"
-            >
-              Plus tard
-            </Button>
-          </div>
+      <div>
+        <p className="mb-3">
+          Vous avez <strong>{count}</strong>{' '}
+          {count > 1 ? 'demandes de modification en attente' : 'demande de modification en attente'} sur{' '}
+          {count > 1 ? 'des carcasses' : 'une carcasse'} dont vous êtes l'examinateur initial, il vous faut
+          donc approuver ou refuser {count > 1 ? 'ces modifications' : 'cette modification'}.
+        </p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Button
+            priority="primary"
+            onClick={() => {
+              modal.close();
+              navigate('/app/chasseur/demandes-de-modification');
+            }}
+            type="button"
+          >
+            Voir les demandes
+          </Button>
+          <Button
+            priority="secondary"
+            onClick={() => modal.close()}
+            type="button"
+          >
+            Plus tard
+          </Button>
         </div>
-      )}
+      </div>
     </modal.Component>
   );
 }

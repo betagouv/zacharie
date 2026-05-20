@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import dayjs from 'dayjs';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
@@ -62,6 +62,22 @@ export default function ChasseurDemandeDeModificationDetail() {
   const isPetitGibier = carcasse?.type === CarcasseType.PETIT_GIBIER;
   const referentielAnomaliesCarcasseList = isPetitGibier ? petitGibierCarcasseList : grandGibierCarcasseList;
   const referentielAnomaliesCarcasseTree = isPetitGibier ? petitGibierCarcasseTree : grandGibierCarcasseTree;
+
+  const atLeastOneCarcasseWithAnomalie = anomaliesCarcasse.length > 0 || anomaliesAbats.length > 0;
+
+  const checkboxLabel = useMemo(() => {
+    let label = '';
+
+    label = `Je, ${user?.nom_de_famille} ${user?.prenom}, certifie`;
+    if (!atLeastOneCarcasseWithAnomalie) {
+      label +=
+        " qu'aucune anomalie n'a été observée lors de l'examen initial et que les carcasses en peau examinées ce jour peuvent être mises sur le marché.";
+    } else {
+      label +=
+        ' que les carcasses en peau examinées ce jour présentent au moins une anomalie. Toutefois, elles peuvent être mises sur le marché.';
+    }
+    return label;
+  }, [atLeastOneCarcasseWithAnomalie, user]);
 
   if (!request) {
     return (
@@ -137,7 +153,7 @@ export default function ChasseurDemandeDeModificationDetail() {
   const pageTitle =
     request.type === CarcasseModificationRequestType.BRACELET_RENAME
       ? 'Changement de numéro de bracelet'
-      : "Signature d'une carcasse ajoutée";
+      : "Examen initial d'une carcasse ajoutée";
 
   return (
     <div className="fr-container fr-py-4w">
@@ -192,7 +208,6 @@ export default function ChasseurDemandeDeModificationDetail() {
             <ul className="m-0 list-none p-0 text-sm">
               <li>Numéro de bracelet : {carcasse.numero_bracelet}</li>
               <li>Espèce : {carcasse.espece}</li>
-              <li>Type : {carcasse.type}</li>
               {carcasse.nombre_d_animaux && <li>Nombre d'animaux : {carcasse.nombre_d_animaux}</li>}
               {carcasse.heure_mise_a_mort && <li>Heure de mise à mort : {carcasse.heure_mise_a_mort}</li>}
               {carcasse.heure_evisceration && <li>Heure d'éviscération : {carcasse.heure_evisceration}</li>}
@@ -292,11 +307,12 @@ export default function ChasseurDemandeDeModificationDetail() {
                   onChange: (e) => setExaminateurCommentaire(e.currentTarget.value),
                   rows: 3,
                 }}
+                className="fr-mt-3w"
               />
               <Checkbox
                 options={[
                   {
-                    label: "J'approuve la mise sur le marché de cette carcasse",
+                    label: checkboxLabel,
                     nativeInputProps: {
                       checked: approbationMiseSurLeMarche,
                       onChange: (e) => setApprobationMiseSurLeMarche(e.currentTarget.checked),
@@ -325,7 +341,7 @@ export default function ChasseurDemandeDeModificationDetail() {
               onClick={onApprove}
             >
               {request.type === CarcasseModificationRequestType.NEW_CARCASSE
-                ? "Signer et approuver l'examen"
+                ? 'Enregistrer'
                 : 'Approuver le changement'}
             </Button>
           </div>
