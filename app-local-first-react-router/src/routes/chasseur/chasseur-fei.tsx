@@ -25,7 +25,7 @@ import DestinataireSelectPremierDetenteur, {
   type DestinatairePremierDetenteurHandle,
 } from './premier-detenteur-select-next';
 import ExaminateurInitialDeleteFei from './examinateur-initial-delete-fei';
-import DateHeureValidationAlerts from '../fei/date-heure-validation-alerts';
+import DateHeureValidationAlerts from '@app/components/DateHeureValidationAlerts';
 import ChasseurHeaderFiche from './chasseur-header-fiche';
 import CurrentOwnerConfirm from './chasseur-current-owner-confirm';
 
