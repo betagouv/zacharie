@@ -101,9 +101,9 @@ describe('syncCarcasseModifRequest — validation', () => {
   });
 
   test('missing zacharie_carcasse_id → throws', async () => {
-    await expect(
-      syncCarcasseModifRequest({ id: 'mod-x' } as any, examinateur)
-    ).rejects.toThrow('zacharie_carcasse_id manquant');
+    await expect(syncCarcasseModifRequest({ id: 'mod-x' } as any, examinateur)).rejects.toThrow(
+      'zacharie_carcasse_id manquant'
+    );
   });
 });
 
@@ -112,10 +112,7 @@ describe('syncCarcasseModifRequest — create', () => {
     vi.mocked(prisma.carcasseModificationRequest.findUnique).mockResolvedValueOnce(null);
     vi.mocked(prisma.carcasseModificationRequest.create).mockResolvedValueOnce(renamePending);
 
-    const result = await syncCarcasseModifRequest(
-      { ...renamePending } as any,
-      requester
-    );
+    const result = await syncCarcasseModifRequest({ ...renamePending } as any, requester);
 
     expect(prisma.carcasseModificationRequest.create).toHaveBeenCalledOnce();
     const createArgs = vi.mocked(prisma.carcasseModificationRequest.create).mock.calls[0][0];
@@ -239,10 +236,7 @@ describe('syncCarcasseModifRequest — cancellation', () => {
     vi.mocked(prisma.carcasseModificationRequest.findUnique).mockResolvedValueOnce(renamePending);
 
     await expect(
-      syncCarcasseModifRequest(
-        { ...renamePending, deleted_at: new Date() } as any,
-        stranger
-      )
+      syncCarcasseModifRequest({ ...renamePending, deleted_at: new Date() } as any, stranger)
     ).rejects.toThrow(/auteur de la demande/i);
 
     expect(prisma.carcasseModificationRequest.update).not.toHaveBeenCalled();
@@ -507,9 +501,7 @@ describe('notification content', () => {
       justCancelled: false,
     });
 
-    const call = vi.mocked(sendNotificationToUser).mock.calls.find(
-      (c) => c[0].user.id === requester.id
-    )?.[0];
+    const call = vi.mocked(sendNotificationToUser).mock.calls.find((c) => c[0].user.id === requester.id)?.[0];
     expect(call).toBeDefined();
     expect(call!.title).toMatch(/^Carcasse numéro /);
     expect(call!.body).toContain('Jean Dupont');
@@ -528,9 +520,7 @@ describe('notification content', () => {
       justCancelled: false,
     });
 
-    const call = vi.mocked(sendNotificationToUser).mock.calls.find(
-      (c) => c[0].user.id === requester.id
-    )?.[0];
+    const call = vi.mocked(sendNotificationToUser).mock.calls.find((c) => c[0].user.id === requester.id)?.[0];
     expect(call!.body).toMatch(/refusé/);
   });
 });

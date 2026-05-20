@@ -373,10 +373,12 @@ describe('POST /sync — carcasse modification requests', () => {
         isDeleted: false,
       };
     });
-    vi.mocked(syncCarcasseIntermediaire).mockImplementation(async (_fei, intermediaireId: string, zid: string) => {
-      callOrder.push(`ci:${zid}:${intermediaireId}`);
-      return { id: `${zid}:${intermediaireId}` } as any;
-    });
+    vi.mocked(syncCarcasseIntermediaire).mockImplementation(
+      async (_fei, intermediaireId: string, zid: string) => {
+        callOrder.push(`ci:${zid}:${intermediaireId}`);
+        return { id: `${zid}:${intermediaireId}` } as any;
+      }
+    );
     vi.mocked(syncCarcasseModifRequest).mockImplementation(async (body: any) => {
       callOrder.push(`modif:${body.id}`);
       return { saved: body, isNew: true, transitionedTo: null, justCancelled: false };
@@ -509,9 +511,7 @@ describe('POST /sync — carcasse modification requests', () => {
 
     expect(res.status).toBe(200);
     // The refreshed (post-side-effect) carcasse overrides the earlier saved one.
-    expect(res.body.data.carcasses).toEqual([
-      { zacharie_carcasse_id: 'C1', numero_bracelet: 'NEW' },
-    ]);
+    expect(res.body.data.carcasses).toEqual([{ zacharie_carcasse_id: 'C1', numero_bracelet: 'NEW' }]);
   });
 
   test('justCancelled modif also triggers a carcasse refresh', async () => {

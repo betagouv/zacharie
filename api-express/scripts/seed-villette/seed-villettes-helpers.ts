@@ -453,11 +453,7 @@ export function getCollecteurIntermediaireId(
   return `${collecteurUserId}_${feiNumero}_${dayjs(at).format('HHmmss')}`;
 }
 
-export function getEtgIntermediaireId(
-  etgUserId: string,
-  feiNumero: string,
-  arrivageDate: Date
-): string {
+export function getEtgIntermediaireId(etgUserId: string, feiNumero: string, arrivageDate: Date): string {
   return `${etgUserId}_${feiNumero}_${dayjs(arrivageDate).format('HHmmss')}`;
 }
 
@@ -631,11 +627,7 @@ export function buildIntermediairesForFei(args: {
   }
 
   const collecteurPriseAt = getCollecteurPriseEnChargeAt(arrivageDate);
-  const collecteurIntermediaireId = getCollecteurIntermediaireId(
-    collecteurUser.id,
-    fei.numero,
-    arrivageDate
-  );
+  const collecteurIntermediaireId = getCollecteurIntermediaireId(collecteurUser.id, fei.numero, arrivageDate);
 
   const collecteurRows: Prisma.CarcasseIntermediaireUncheckedCreateInput[] = carcasses.map((c) => ({
     fei_numero: fei.numero,
