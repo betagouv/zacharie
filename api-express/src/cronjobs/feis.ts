@@ -18,7 +18,7 @@ import {
 } from '~/utils/formatCarcasseEmail';
 import updateCarcasseStatus from '~/utils/get-carcasse-status';
 import { sendWebhook } from '~/utils/api';
-import { FeiOwnerRole } from '@prisma/client';
+import { CarcasseModificationRequestStatus, FeiOwnerRole } from '@prisma/client';
 
 // /*
 // *
@@ -54,7 +54,7 @@ export async function initFeisCron() {
     .catch(capture);
 }
 
-async function automaticClosingOfFeis() {
+export async function automaticClosingOfFeis() {
   console.log('Automatic closing of feis');
   const feisUnderSvi = await prisma.fei.findMany({
     where: {
@@ -64,6 +64,18 @@ async function automaticClosingOfFeis() {
       },
       svi_closed_at: null,
       automatic_closed_at: null,
+      // Skip FEIs that still have a carcasse with a pending modif request — the examinateur initial
+      // has not yet approved/rejected, so we cannot consider the inspection cycle complete.
+      Carcasses: {
+        none: {
+          CarcasseModificationRequests: {
+            some: {
+              status: CarcasseModificationRequestStatus.PENDING,
+              deleted_at: null,
+            },
+          },
+        },
+      },
     },
     include: {
       FeiExaminateurInitialUser: true,

@@ -57,6 +57,8 @@ export function setFeiInStore(fei: FeiForRefresh) {
   }
 
   for (const carcasse of fei.Carcasses) {
+    // Keep the populated payload (including the nested CarcasseModificationRequests) on the Carcasse
+    // in the store so they're immediately available wherever the carcasse is used.
     const localCarcasse = prevState.carcasses[carcasse.zacharie_carcasse_id];
     if (!localCarcasse) {
       prevState.carcasses[carcasse.zacharie_carcasse_id] = carcasse;
@@ -71,6 +73,28 @@ export function setFeiInStore(fei: FeiForRefresh) {
         ...newestCarcasse,
         is_synced: newestCarcasse.is_synced,
       };
+    }
+
+    // Also index modification requests in the flat by-id map (used by the examinateur dashboard +
+    // sync pipeline). Local unsynced edits take precedence until the next sync writes them back.
+    const reqs =
+      (
+        carcasse as typeof carcasse & {
+          CarcasseModificationRequests?: Array<
+            { id: string; updated_at: Date | string; is_synced?: boolean } & Record<string, unknown>
+          >;
+        }
+      ).CarcasseModificationRequests ?? [];
+    for (const incomingReq of reqs) {
+      const existing = prevState.carcasseModifPendingRequestsIds[incomingReq.id];
+      const incoming = incomingReq as unknown as (typeof prevState.carcasseModifPendingRequestsIds)[string];
+      if (!existing) {
+        prevState.carcasseModifPendingRequestsIds[incomingReq.id] = incoming;
+      } else if (!existing.is_synced) {
+        continue;
+      } else if (dayjs(incoming.updated_at).diff(existing.updated_at) > 0) {
+        prevState.carcasseModifPendingRequestsIds[incomingReq.id] = incoming;
+      }
     }
   }
 

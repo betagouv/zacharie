@@ -16,6 +16,10 @@ import {
   type CardAccent,
   type CardViewRole,
 } from '@app/utils/get-carcasse-card-display';
+import {
+  useHistoryForCarcasse,
+  CarcasseModificationRequestStatus,
+} from '@app/utils/carcasse-modification-request';
 
 interface CardCarcasseProps {
   carcasse: Carcasse;
@@ -85,6 +89,15 @@ export default function CardCarcasse({
     }
   }
 
+  // Modifications passées (approuvées / refusées) sur cette carcasse — utilisé pour afficher un
+  // compteur dans le descriptionLine + une icône d'alerte en cas de refus (signal visuel fort).
+  // Les demandes PENDING ne sont pas comptées ici (déjà visualisées via le PendingModificationBanner).
+  const modifsHistory = useHistoryForCarcasse(carcasse.zacharie_carcasse_id);
+  const modifsCount = modifsHistory.length;
+  const hasRejectedModif = modifsHistory.some(
+    (r) => r.status === CarcasseModificationRequestStatus.REJECTED
+  );
+
   let anomaliesExaminateurs =
     carcasse.examinateur_anomalies_abats?.length + carcasse.examinateur_anomalies_carcasse?.length;
   let descriptionLine = '';
@@ -96,6 +109,11 @@ export default function CardCarcasse({
     if (descriptionLine.length > 0) descriptionLine += `, `;
     descriptionLine += `${commentairesIntermediaires.length} commentaire`;
     if (commentairesIntermediaires.length > 1) descriptionLine += 's';
+  }
+  if (modifsCount > 0) {
+    if (descriptionLine.length > 0) descriptionLine += `, `;
+    descriptionLine += `${modifsCount} modification`;
+    if (modifsCount > 1) descriptionLine += 's';
   }
 
   const cardDisplay = getCarcasseCardDisplay({
@@ -200,7 +218,22 @@ export default function CardCarcasse({
               </p>
             )}
             {descriptionLine && (
-              <p className={['text-sm/4', accentTextClass].filter(Boolean).join(' ')}>{descriptionLine}</p>
+              <p
+                className={[
+                  'text-sm/4 inline-flex items-center gap-1',
+                  hasRejectedModif ? 'text-error-main-525 font-semibold' : accentTextClass,
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+              >
+                {hasRejectedModif && (
+                  <span
+                    className="fr-icon-warning-line fr-icon--sm"
+                    aria-hidden="true"
+                  />
+                )}
+                {descriptionLine}
+              </p>
             )}
           </div>
         </button>

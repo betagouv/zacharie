@@ -15,6 +15,8 @@ import ChasseurCoordonnees from './profil/chasseur-coordonnees';
 import ChasseurOnboardingMesInformationsDeChasse from './onboarding/3-informations-de-chasse';
 import ChasseurCCGEdit from './profil/chasseur-ccg-edit';
 import ChasseurSviInspectionCarcasseLoader from './chasseur-svi-inspection-carcasse';
+import ChasseurDemandesDeModification from './chasseur-demandes-de-modification';
+import ChasseurDemandeDeModificationDetail from './chasseur-demande-de-modification-detail';
 
 export default function RouterChasseur() {
   return (
@@ -114,6 +116,14 @@ export default function RouterChasseur() {
       <Route
         path="carcasse-svi/:fei_numero/:zacharie_carcasse_id"
         element={<ChasseurSviInspectionCarcasseLoader />}
+      />
+      <Route
+        path="demandes-de-modification"
+        element={<ChasseurDemandesDeModification />}
+      />
+      <Route
+        path="demandes-de-modification/:request_id"
+        element={<ChasseurDemandeDeModificationDetail />}
       />
     </Route>
   );

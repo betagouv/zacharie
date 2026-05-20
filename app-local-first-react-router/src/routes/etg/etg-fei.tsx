@@ -41,6 +41,7 @@ import { useEtgIds } from '@app/utils/get-entity-relations';
 import DestinataireSelectIntermediaire from './etg-destinataire-select-intermediaire';
 import FeiSousTraite from './etg-current-owner-sous-traite';
 import CarcasseIntermediaireComp from './etg-carcasse';
+import RequestNewCarcasseButton from '@app/components/RequestNewCarcasseForm';
 import CurrentOwnerConfirm from './etg-current-owner-confirm';
 import NotFound from '@app/components/NotFound';
 
@@ -734,6 +735,14 @@ function EtgFeiContent({
                     );
                   })}
                 </div>
+                {effectiveCanEdit && (
+                  <div className="my-4 flex justify-center">
+                    <RequestNewCarcasseButton
+                      feiNumero={fei.numero}
+                      intermediaire={intermediaire}
+                    />
+                  </div>
+                )}
                 {carcassesDejaRefusees.length > 0 && (
                   <div className="my-8 flex justify-center">
                     <Button

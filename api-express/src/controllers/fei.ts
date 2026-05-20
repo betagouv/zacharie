@@ -4,7 +4,13 @@ import { catchErrors } from '~/middlewares/errors';
 import type { FeiResponse, FeisResponse, FeiRefreshResponse } from '~/types/responses';
 const router: express.Router = express.Router();
 import prisma from '~/prisma';
-import { EntityRelationStatus, EntityRelationType, Prisma } from '@prisma/client';
+import {
+  CarcasseModificationRequest,
+  CarcasseModificationRequestStatus,
+  EntityRelationStatus,
+  EntityRelationType,
+  Prisma,
+} from '@prisma/client';
 import { userFeiSelect } from '~/types/user';
 import { z } from 'zod';
 
@@ -27,7 +33,7 @@ router.post(
       if (!req.user.activated) {
         res.status(400).send({
           ok: false,
-          data: { feis: [], users: [], entities: [] },
+          data: { feis: [], users: [], entities: [], carcasseModifPendingRequestsIds: [] },
           error: "Le compte n'est pas activé",
         });
         return;
@@ -36,7 +42,7 @@ router.post(
       if (!numeros.length) {
         res.status(400).send({
           ok: false,
-          data: { feis: [], users: [], entities: [] },
+          data: { feis: [], users: [], entities: [], carcasseModifPendingRequestsIds: [] },
           error: 'Le paramètre numeros est obligatoire',
         });
         return;
@@ -50,6 +56,10 @@ router.post(
           Carcasses: {
             include: {
               CarcasseIntermediaire: true,
+              CarcasseModificationRequests: {
+                where: { deleted_at: null },
+                orderBy: { requested_at: Prisma.SortOrder.desc },
+              },
             },
           },
           CarcasseIntermediaire: {
@@ -61,6 +71,7 @@ router.post(
       // 2. Collect all unique user/entity IDs from FEIs + CarcasseIntermediaire
       const userIds = new Set<string>();
       const entityIds = new Set<string>();
+      const carcasseModifPendingRequestsIds: CarcasseModificationRequest[] = [];
 
       for (const fei of feis) {
         if (fei.examinateur_initial_user_id) userIds.add(fei.examinateur_initial_user_id);
@@ -82,6 +93,11 @@ router.post(
           if (ci.intermediaire_user_id) userIds.add(ci.intermediaire_user_id);
           if (ci.intermediaire_entity_id) entityIds.add(ci.intermediaire_entity_id);
         }
+        for (const cr of fei.Carcasses.flatMap((c) => c.CarcasseModificationRequests)) {
+          if (cr.status === CarcasseModificationRequestStatus.PENDING) {
+            carcasseModifPendingRequestsIds.push(cr);
+          }
+        }
       }
 
       // 3. Batch-fetch all referenced users and entities
@@ -98,6 +114,7 @@ router.post(
           feis,
           users,
           entities,
+          carcasseModifPendingRequestsIds,
         },
         error: '',
       });
@@ -126,6 +143,10 @@ router.get(
           Carcasses: {
             include: {
               CarcasseIntermediaire: true,
+              CarcasseModificationRequests: {
+                where: { deleted_at: null },
+                orderBy: { requested_at: Prisma.SortOrder.desc },
+              },
             },
           },
           CarcasseIntermediaire: {

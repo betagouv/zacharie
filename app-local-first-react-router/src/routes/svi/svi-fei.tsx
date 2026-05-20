@@ -24,6 +24,7 @@ import { sortCarcassesApproved } from '@app/utils/sort';
 import FEIDonneesDeChasse from '@app/components/DonneesDeChasse';
 import Section from '@app/components/Section';
 import CardCarcasse from '@app/components/CardCarcasse';
+import { PendingModificationBanner } from '@app/components/CarcasseModificationRequest';
 
 export default function SviFeiLoader() {
   const params = useParams();
@@ -193,11 +194,16 @@ function FEI_SVI() {
         <div className="flex flex-col gap-4">
           {carcassesAAfficher.map((carcasse) => {
             return (
-              <CardCarcasseSvi
-                canClick
+              <div
+                className="flex flex-col"
                 key={carcasse.numero_bracelet}
-                carcasse={carcasse}
-              />
+              >
+                <CardCarcasseSvi
+                  canClick
+                  carcasse={carcasse}
+                />
+                <PendingModificationBanner carcasse={carcasse} />
+              </div>
             );
           })}
         </div>

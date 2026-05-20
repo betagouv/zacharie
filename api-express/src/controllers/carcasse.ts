@@ -2,7 +2,7 @@ import express from 'express';
 const router: express.Router = express.Router();
 import passport from 'passport';
 import { catchErrors } from '~/middlewares/errors';
-import type { CarcasseResponse, CarcassesGetForRegistryResponse } from '~/types/responses';
+import type { CarcassesGetForRegistryResponse } from '~/types/responses';
 import prisma from '~/prisma';
 import { EntityRelationStatus, EntityRelationType, FeiOwnerRole, Prisma, UserRoles } from '@prisma/client';
 import { RequestWithUser } from '~/types/request';

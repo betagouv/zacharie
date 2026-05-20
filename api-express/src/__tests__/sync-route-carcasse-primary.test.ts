@@ -245,7 +245,13 @@ describe('Response shape preserved for partial payloads', () => {
     expect(res.body).toEqual({
       ok: true,
       error: '',
-      data: { feis: [], carcasses: [], carcassesIntermediaires: [], syncedLogIds: [] },
+      data: {
+        feis: [],
+        carcasses: [],
+        carcassesIntermediaires: [],
+        carcasseModifRequests: [],
+        syncedLogIds: [],
+      },
     });
   });
 

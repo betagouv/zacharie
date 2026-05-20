@@ -92,6 +92,8 @@ model User {
   CarcassesIpm1                  Carcasse[]                     @relation("SviIpm1User")
   ApiKeyApprovalByUser           ApiKeyApprovalByUserOrEntity[]
   ApiKeyLog                      ApiKeyLog[]
+  CarcasseModificationRequestsRequested CarcasseModificationRequest[] @relation("ModifRequestedByUser")
+  CarcasseModificationRequestsReviewed  CarcasseModificationRequest[] @relation("ModifReviewedByUser")
 
   @@index([id])
   @@index([email])
@@ -160,6 +162,7 @@ model Entity {
   ApiKeys                    ApiKey[]                       @relation("EntityRelatedWithApiKey")
   SviOfETG                   Entity?                        @relation("etg_linked_to_svi_id", fields: [etg_linked_to_svi_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   EtgsLinkedToMySVI          Entity[]                       @relation("etg_linked_to_svi_id")
+  CarcasseModificationRequestsRequested CarcasseModificationRequest[] @relation("ModifRequestedByEntity")
 
   @@index([updated_at]) // Time-based ordering
   @@index([nom_d_usage]) // Name-based ordering
@@ -618,6 +621,7 @@ model Carcasse {
   SviIpm1User                                             User?                   @relation("SviIpm1User", fields: [svi_ipm1_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   CarcasseCertificats                                     CarcasseCertificat[]
   CarcasseSviEntity                                       Entity?                 @relation("CarcasseSviEntity", fields: [svi_entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  CarcasseModificationRequests                            CarcasseModificationRequest[] @relation("CarcasseModificationRequestCarcasse")
 
   @@index([fei_numero, numero_bracelet])
   @@index([deleted_at, date_mise_a_mort, numero_bracelet(sort: Desc)])
@@ -867,4 +871,56 @@ model QuizResult {
   @@index([created_at])
   @@index([source])
   @@index([score(sort: Desc), created_at])
+}
+
+// Modification d'une carcasse demandée par un intermédiaire, approuvée ou refusée par l'examinateur initial.
+// Deux types :
+//   - BRACELET_RENAME : le numéro de bracelet sur la fiche ne correspond pas au numéro physique
+//   - NEW_CARCASSE    : une carcasse physique manque dans la fiche ; l'intermédiaire pré-remplit, l'examinateur signe l'examen
+enum CarcasseModificationRequestType {
+  BRACELET_RENAME
+  NEW_CARCASSE
+}
+
+enum CarcasseModificationRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model CarcasseModificationRequest {
+  id                     String                            @id @default(uuid())
+  type                   CarcasseModificationRequestType
+  status                 CarcasseModificationRequestStatus @default(PENDING)
+  zacharie_carcasse_id   String
+  fei_numero             String
+  requested_by_user_id   String
+  requested_by_entity_id String
+  requested_at           DateTime                          @default(now())
+  comment_intermediaire  String?
+  // RENAME-specific
+  numero_bracelet_before String?
+  numero_bracelet_after  String?
+  // review
+  reviewed_by_user_id    String?
+  reviewed_at            DateTime?
+  rejection_reason       String?
+  // tech
+  created_at             DateTime                          @default(now())
+  updated_at             DateTime                          @default(now()) @updatedAt
+  deleted_at             DateTime?
+  is_synced              Boolean                           @default(true)
+
+  Carcasse          Carcasse @relation("CarcasseModificationRequestCarcasse", fields: [zacharie_carcasse_id], references: [zacharie_carcasse_id], onDelete: Cascade, onUpdate: Cascade)
+  RequestedByUser   User     @relation("ModifRequestedByUser", fields: [requested_by_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  RequestedByEntity Entity   @relation("ModifRequestedByEntity", fields: [requested_by_entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  ReviewedByUser    User?    @relation("ModifReviewedByUser", fields: [reviewed_by_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([zacharie_carcasse_id])
+  @@index([reviewed_by_user_id, status])
+  // Unicité "un seul PENDING par carcasse" : à ajouter manuellement dans la migration via SQL
+  // (Prisma ne supporte pas les index uniques partiels) :
+  //   CREATE UNIQUE INDEX "carcasse_one_pending_request"
+  //   ON "CarcasseModificationRequest" (zacharie_carcasse_id)
+  //   WHERE status = 'PENDING' AND deleted_at IS NULL;
 }
