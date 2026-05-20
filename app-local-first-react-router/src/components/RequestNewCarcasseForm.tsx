@@ -14,7 +14,7 @@ import {
   CarcasseModificationRequestStatus,
   CarcasseModificationRequestType,
 } from '@prisma/client';
-import useZustandStore from '@app/zustand/store';
+import useZustandStore, { syncData } from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import type { FeiIntermediaire } from '@app/types/fei-intermediaire';
 
@@ -235,6 +235,7 @@ export default function RequestNewCarcasseButton({
       deleted_at: null,
       is_synced: false,
     });
+    syncData('RequestNewCarcasseForm.onSubmit');
 
     setNumeroBracelet('');
     setEspece('');

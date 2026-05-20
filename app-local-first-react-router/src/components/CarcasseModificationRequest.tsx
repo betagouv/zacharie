@@ -9,7 +9,7 @@ import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import dayjs from 'dayjs';
-import useZustandStore from '@app/zustand/store';
+import useZustandStore, { syncData } from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import {
   usePendingRequestForCarcasse,
@@ -160,6 +160,7 @@ export function RequestBraceletRenameButton({
       deleted_at: null,
       is_synced: false,
     });
+    syncData('RequestBraceletRenameButton.onSubmit');
     setNewBracelet('');
     setComment('');
     setExpanded(false);
@@ -324,9 +325,7 @@ export function HistoriqueDesModifications({ carcasse }: { carcasse: Carcasse })
             style={{ borderColor: event.dotColor }}
           />
           <div className="text-sm">
-            <span className="text-gray-500">
-              {dayjs(event.date).format('dddd D MMMM YYYY [à] HH:mm')}
-            </span>{' '}
+            <span className="text-gray-500">{dayjs(event.date).format('dddd D MMMM YYYY [à] HH:mm')}</span>{' '}
             <span className="font-semibold">{event.label}</span>
           </div>
           <div className="text-sm opacity-70">{event.actorLine}</div>
