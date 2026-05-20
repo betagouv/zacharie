@@ -70,6 +70,7 @@ export async function refreshUser(_calledFrom: string) {
 
         if (userResponse?.error === 'Unauthorized') {
           useUser.setState({ user: null });
+          useUser.persist.clearStorage();
           return null;
         }
 
