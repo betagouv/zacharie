@@ -5,6 +5,8 @@ import Chargement from '@app/components/Chargement';
 import type { AdminCarcasseDetailResponse } from '@api/src/types/responses';
 import type { Carcasse, CarcasseIntermediaire, Fei } from '@prisma/client';
 import dayjs from 'dayjs';
+import { getUserOnboardingRoute } from '@app/utils/user-onboarded.client';
+import useUser from '@app/zustand/user';
 
 type DepotEntityInfo = {
   nom_d_usage: string | null;
@@ -295,6 +297,7 @@ function TimelineEventData({ data }: { data: Record<string, unknown> }) {
 
 export default function AdminCarcasseDetail() {
   const params = useParams<{ zacharie_carcasse_id: string }>();
+  const user = useUser((state) => state.user)!;
   const [carcasse, setCarcasse] = useState<CarcasseDetail | null>(null);
   const [depotEntity, setDepotEntity] = useState<DepotEntityInfo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -342,7 +345,7 @@ export default function AdminCarcasseDetail() {
             <Field label="Nombre d'animaux">{carcasse.nombre_d_animaux ?? '—'}</Field>
             <Field label="FEI numéro">
               <Link
-                to={`/app/tableau-de-bord/fei/${encodeURIComponent(carcasse.fei_numero)}`}
+                to={`${getUserOnboardingRoute(user)}/fei/${encodeURIComponent(carcasse.fei_numero)}`}
                 className="text-blue-600 underline"
               >
                 {carcasse.fei_numero}

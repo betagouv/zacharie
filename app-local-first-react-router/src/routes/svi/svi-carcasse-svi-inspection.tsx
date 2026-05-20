@@ -13,10 +13,10 @@ import { loadFei } from '@app/utils/load-fei';
 import { loadMyRelations } from '@app/utils/load-my-relations';
 import NotFound from '@app/components/NotFound';
 import Chargement from '@app/components/Chargement';
-import { CarcasseIPM1 } from '@app/routes/svi-inspection-carcasse/ipm1';
-import { CarcasseIPM2 } from '@app/routes/svi-inspection-carcasse/ipm2';
-import CarcasseSVICertificats from '@app/routes/svi-inspection-carcasse/certificats';
-import FEIDonneesDeChasse from '@app/routes/fei/donnees-de-chasse';
+import { CarcasseIPM1 } from '@app/routes/svi/svi-inspection-carcasse/ipm1';
+import { CarcasseIPM2 } from '@app/routes/svi/svi-inspection-carcasse/ipm2';
+import CarcasseSVICertificats from '@app/routes/svi/svi-inspection-carcasse/certificats';
+import FEIDonneesDeChasse from '@app/components/DonneesDeChasse';
 import Section from '@app/components/Section';
 import ItemNotEditable from '@app/components/ItemNotEditable';
 

@@ -108,6 +108,10 @@ class ApiService {
           URLParams.set('redirect', window.location.pathname + window.location.search);
           console.log('URLParams: ', URLParams.toString());
           useUser.setState({ user: null });
+          // setState re-persists the (null) state through the persist middleware;
+          // remove the entry entirely so /app/connexion can't bounce back to
+          // /app/[role] in offline mode (and so test 109 holds).
+          useUser.persist.clearStorage();
           window.history.pushState(null, '', '/app/connexion?' + URLParams.toString());
           window.dispatchEvent(new PopStateEvent('popstate'));
         }

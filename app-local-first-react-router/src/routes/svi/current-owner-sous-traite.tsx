@@ -6,9 +6,9 @@ import useUser from '@app/zustand/user';
 import useZustandStore, { syncData } from '@app/zustand/store';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
-import DestinataireSelectSousTraite from './destinataire-select-sous-traite';
 import { getFeiAndIntermediaireIdsFromFeiIntermediaire } from '@app/utils/get-carcasse-intermediaire-id';
 import { useFeiIntermediaires } from '@app/utils/get-carcasses-intermediaires';
+import DestinataireSelectSousTraite from './destinataire-select-sous-traite';
 
 export default function FeiSousTraite() {
   const params = useParams();

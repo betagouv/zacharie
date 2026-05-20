@@ -33,7 +33,7 @@ import { useMyCarcassesForFei } from '@app/utils/filter-my-carcasses';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { getIntermediaireRoleLabel } from '@app/utils/get-user-roles-label';
 import { addAnSToWord, formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
-import FEIDonneesDeChasse from '@app/routes/fei/donnees-de-chasse';
+import FEIDonneesDeChasse from '@app/components/DonneesDeChasse';
 import Section from '@app/components/Section';
 import CardCarcasse from '@app/components/CardCarcasse';
 import FeiStepper from '@app/components/FeiStepper';

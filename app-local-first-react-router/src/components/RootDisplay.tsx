@@ -8,9 +8,9 @@ import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { useRef, useState } from 'react';
 import API, { setNativeAuthToken } from '@app/services/api';
 import { useNavigate, useSearchParams } from 'react-router';
-import { UserRoles } from '@prisma/client';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
+import { getUserOnboardingRoute } from '@app/utils/user-onboarded.client';
 
 const environment = import.meta.env.VITE_ENV || 'development';
 
@@ -39,20 +39,6 @@ export default function RootDisplay({
   const RenderedSearchInput = useRef(SearchInput).current;
 
   const quickAccessItemsConnected: Array<HeaderProps.QuickAccessItem> = [
-    // TODO : change when team is ok
-    // <HeaderQuickAccessItem
-    //   id={`new-fei-button`}
-    //   quickAccessItem={{
-    //     iconId: 'fr-icon-add-circle-line',
-    //     buttonProps: {
-    //       onClick: async () => {
-    //         const newFei = await createNewFei();
-    //         navigate(`/app/tableau-de-bord/fei/${newFei.numero}`);
-    //       },
-    //     },
-    //     text: 'Nouvelle fiche',
-    //   }}
-    // />,
     {
       linkProps: {
         to: mainLink,
@@ -198,9 +184,7 @@ export default function RootDisplay({
                     },
                     {
                       linkProps: {
-                        to: user?.roles.includes(UserRoles.CHASSEUR)
-                          ? '/app/chasseur'
-                          : '/app/tableau-de-bord',
+                        to: user ? getUserOnboardingRoute(user) : '/app/connexion',
                         href: '#',
                       },
                       text: 'Accéder à mon compte',

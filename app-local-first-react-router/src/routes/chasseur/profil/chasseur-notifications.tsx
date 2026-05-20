@@ -99,7 +99,7 @@ export default function MesNotifications() {
                         onClick: async () => {
                           if (window.ReactNativeWebView) {
                             window.ReactNativeWebView.postMessage('request-native-expo-push-permission');
-                            // token reading is handled in tableau-de-bord.tsx
+                            // token reading is handled in fei.tsx
                             // window.onNativePushToken = async function handleNativePushToken(token) { ... }
                             return;
                           }

@@ -1,6 +1,6 @@
 import { Route, Outlet } from 'react-router';
 import RootDisplay from '@app/components/RootDisplay';
-import { useLandingPageNavigationMenu } from '@app/utils/get-navigation-menu';
+import useLandingPageNavigationMenu from '@app/utils/get-landing-page-navigation-menu';
 import Connexion from '.';
 import CreationDeCompte from './creation-de-compte';
 import MotDePasseOublie from './mot-de-passe-oublie';
@@ -16,7 +16,7 @@ export default function RouterConnexion() {
         <RootDisplay
           id="connexion"
           navigation={landingPageNavigationMenu}
-          mainLink="/app/tableau-de-bord"
+          mainLink="/app/connexion"
         >
           <Outlet />
         </RootDisplay>

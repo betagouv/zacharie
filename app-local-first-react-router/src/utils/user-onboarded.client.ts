@@ -41,11 +41,5 @@ export function getUserOnboardingRoute(user: User): string {
     }
     return '/app/circuit-court/onboarding/coordonnees';
   }
-  if (user.onboarded_at) {
-    return '/app/tableau-de-bord';
-  }
-  if (user.roles.length > 0) {
-    return '/app/tableau-de-bord/onboarding/mes-coordonnees';
-  }
-  return '/app/tableau-de-bord/onboarding/mon-activite';
+  throw new Error('User has no onboarding route');
 }

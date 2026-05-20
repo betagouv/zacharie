@@ -12,7 +12,7 @@ import { loadFei } from '@app/utils/load-fei';
 import { loadMyRelations } from '@app/utils/load-my-relations';
 import NotFound from '@app/components/NotFound';
 import Chargement from '@app/components/Chargement';
-import FEIDonneesDeChasse from '@app/routes/fei/donnees-de-chasse';
+import FEIDonneesDeChasse from '@app/components/DonneesDeChasse';
 import Section from '@app/components/Section';
 import ItemNotEditable from '@app/components/ItemNotEditable';
 
