@@ -167,7 +167,6 @@ function initialState(): State {
   };
 }
 
-
 let resolveHydration: () => void;
 export const hydrationPromise = new Promise<void>((resolve) => {
   resolveHydration = resolve;
@@ -544,13 +543,9 @@ export async function syncData(calledFrom: string) {
   const unsyncedIntermediaires = Object.values(state.carcassesIntermediaireById).filter(
     (ci) => !ci.is_synced
   );
-<<<<<<< HEAD
-  const unsyncedModifRequests = Object.values(state.carcasseModifRequestsById).filter((r) => !r.is_synced);
-=======
   const unsyncedModifRequests = Object.values(state.carcasseModifPendingRequestsIds).filter(
     (r) => !r.is_synced
   );
->>>>>>> f6da16e8 (recette done)
   const unsyncedLogs = state.logs.filter((l) => !l.is_synced);
 
   // Nothing to sync
