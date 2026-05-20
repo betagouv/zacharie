@@ -1,6 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { createModal } from '@codegouvfr/react-dsfr/Modal';
-import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
 import { Tabs } from '@codegouvfr/react-dsfr/Tabs';
 import { UserRoles } from '@prisma/client';
 import useZustandStore from '@app/zustand/store';
@@ -9,16 +7,13 @@ import useCarcasseModal, { type CarcasseTab } from '@app/zustand/ui-modals';
 import { useCarcassesIntermediairesForCarcasse } from '@app/utils/get-carcasses-intermediaires';
 import { getCarcasseCardDisplay, type CardViewRole } from '@app/utils/get-carcasse-card-display';
 import { getCarcasseCapabilities } from '@app/utils/carcasse-permissions';
+import { loadFei } from '@app/utils/load-fei';
 import CarcasseModalHeader from './CarcasseModalHeader';
+import FullScreenOverlay from './FullScreenOverlay';
 import TabIdentite from './tabs/TabIdentite';
 import TabTracabilite from './tabs/TabTracabilite';
 import TabIntermediaire from './tabs/TabIntermediaire';
 import TabInspectionSVI from './tabs/TabInspectionSVI';
-
-const carcasseModal = createModal({
-  id: 'carcasse-modal-root',
-  isOpenedByDefault: false,
-});
 
 export default function CarcasseModalRoot() {
   const carcasseId = useCarcasseModal((s) => s.carcasseId);
@@ -26,40 +21,23 @@ export default function CarcasseModalRoot() {
   const initialTab = useCarcasseModal((s) => s.initialTab);
   const close = useCarcasseModal((s) => s.close);
 
-  const isOpen = useIsModalOpen(carcasseModal);
-
-  useEffect(() => {
-    if (carcasseId && feiNumero && !isOpen) {
-      carcasseModal.open();
-    }
-  }, [carcasseId, feiNumero, isOpen]);
-
-  useEffect(() => {
-    if (!isOpen && (carcasseId || feiNumero)) {
-      close();
-    }
-  }, [isOpen, carcasseId, feiNumero, close]);
-
-  const handleNavigateAway = () => {
-    carcasseModal.close();
-    close();
-  };
+  const isOpen = !!carcasseId && !!feiNumero;
 
   return (
-    <carcasseModal.Component
-      size="large"
-      title=""
-      concealingBackdrop
+    <FullScreenOverlay
+      isOpen={isOpen}
+      onClose={close}
+      ariaLabel="Détails de la carcasse"
     >
-      {isOpen && carcasseId && feiNumero && (
+      {isOpen && (
         <CarcasseModalContent
           carcasseId={carcasseId}
           feiNumero={feiNumero}
           initialTab={initialTab}
-          onAfterNavigate={handleNavigateAway}
+          onAfterNavigate={close}
         />
       )}
-    </carcasseModal.Component>
+    </FullScreenOverlay>
   );
 }
 
@@ -79,6 +57,23 @@ function CarcasseModalContent({
   const entities = useZustandStore((s) => s.entities);
   const user = useUser((s) => s.user)!;
   const carcassesIntermediaires = useCarcassesIntermediairesForCarcasse(carcasseId);
+  const [isFetching, setIsFetching] = useState(false);
+  const [fetchTried, setFetchTried] = useState(false);
+
+  useEffect(() => {
+    if (carcasse && fei) return;
+    let cancelled = false;
+    setIsFetching(true);
+    setFetchTried(false);
+    loadFei(feiNumero).finally(() => {
+      if (cancelled) return;
+      setIsFetching(false);
+      setFetchTried(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [carcasseId, feiNumero, carcasse, fei]);
 
   const capabilities = useMemo(
     () => getCarcasseCapabilities(carcasse, fei, user),
@@ -115,6 +110,9 @@ function CarcasseModalContent({
   }, [initialTab, capabilities.defaultTab, carcasseId]);
 
   if (!carcasse || !fei || !cardDisplay) {
+    if (isFetching || !fetchTried) {
+      return <p className="p-4 text-sm text-gray-500">Chargement de la carcasse…</p>;
+    }
     return <p className="p-4 text-sm text-gray-500">Carcasse introuvable.</p>;
   }
 
@@ -138,7 +136,7 @@ function CarcasseModalContent({
         isEcarteePourInspection={isEcarteePourInspection}
       />
 
-      <div className="mt-4 flex-1 overflow-y-auto">
+      <div className="mt-4 flex-1">
         <Tabs
           selectedTabId={selectedTab}
           tabs={tabs}
