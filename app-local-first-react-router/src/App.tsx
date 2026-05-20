@@ -35,6 +35,7 @@ import RouterFrc from './routes/frc/frc-router';
 import RouterFnc from './routes/fnc/fnc-router';
 import useUser from './zustand/user';
 import { getUserOnboardingRoute } from './utils/user-onboarded.client';
+import CarcasseModalRoot from './components/carcasse-modal/CarcasseModalRoot';
 
 const SentryRoutes = Sentry.withSentryReactRouterV6Routing(Routes);
 
@@ -159,6 +160,7 @@ function App() {
       </SentryRoutes>
       <MatomoTracker />
       <OfflineMode />
+      <CarcasseModalRoot />
     </>
   );
 }

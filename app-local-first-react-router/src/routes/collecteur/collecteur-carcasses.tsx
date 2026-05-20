@@ -18,6 +18,7 @@ import { useLocalStorage } from '@uidotdev/usehooks';
 import Chargement from '@app/components/Chargement';
 import Button from '@codegouvfr/react-dsfr/Button';
 import useExportCarcasses from '@app/utils/export-carcasses';
+import useCarcasseModal from '@app/zustand/ui-modals';
 const itemsPerPageOptions = [20, 50, 100, 200, 1000];
 
 export default function CollecteurCarcasses() {
@@ -25,6 +26,7 @@ export default function CollecteurCarcasses() {
   const carcassesRegistry = useZustandStore((state) => state.carcassesRegistry);
   const [selectedCarcassesIds, setSelectedCarcassesIds] = useState<Array<string>>([]);
   const [loading, setLoading] = useState(true);
+  const openCarcasseModal = useCarcasseModal((s) => s.open);
 
   const { onExportToXlsx, isExporting } = useExportCarcasses();
 
@@ -142,12 +144,18 @@ export default function CollecteurCarcasses() {
               />
               <div className="min-w-0 flex-1">
                 <div className="flex flex-col gap-1">
-                  <Link
-                    to={`/app/collecteur/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`}
-                    className="font-semibold break-words text-blue-600 hover:underline"
+                  <button
+                    type="button"
+                    onClick={() =>
+                      openCarcasseModal({
+                        carcasseId: carcasse.zacharie_carcasse_id,
+                        feiNumero: carcasse.fei_numero,
+                      })
+                    }
+                    className="text-left font-semibold break-words text-blue-600 hover:underline"
                   >
                     {carcasse.numero_bracelet}
-                  </Link>
+                  </button>
                   <span className="text-xs text-gray-500">{carcasse.espece}</span>
                 </div>
               </div>
@@ -306,12 +314,18 @@ export default function CollecteurCarcasses() {
                   render: (carcasse) => {
                     return (
                       <div className="flex flex-col items-start">
-                        <Link
-                          to={`/app/collecteur/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`}
-                          className="mr-auto block"
+                        <button
+                          type="button"
+                          onClick={() =>
+                            openCarcasseModal({
+                              carcasseId: carcasse.zacharie_carcasse_id,
+                              feiNumero: carcasse.fei_numero,
+                            })
+                          }
+                          className="mr-auto block text-left text-blue-600 hover:underline"
                         >
                           {carcasse.numero_bracelet}
-                        </Link>
+                        </button>
                         <small className="text-xs text-gray-400">{carcasse.espece}</small>
                         {/* <span className="opacity-30 no-underline! text-xs italic">
                           ID Zacharie: {carcasse.zacharie_carcasse_id}

@@ -20,6 +20,7 @@ import Button from '@codegouvfr/react-dsfr/Button';
 import useExportCarcasses from '@app/utils/export-carcasses';
 import { getFeiAndCarcasseAndIntermediaireIdsFromCarcasse } from '@app/utils/get-carcasse-intermediaire-id';
 import { filterFeiIntermediaires } from '@app/utils/get-carcasses-intermediaires';
+import useCarcasseModal from '@app/zustand/ui-modals';
 const itemsPerPageOptions = [20, 50, 100, 200, 1000];
 
 export default function SviCarcasses() {
@@ -28,6 +29,7 @@ export default function SviCarcasses() {
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
   const entities = useZustandStore((state) => state.entities);
   const [selectedCarcassesIds, setSelectedCarcassesIds] = useState<Array<string>>([]);
+  const openCarcasseModal = useCarcasseModal((s) => s.open);
   const [loading, setLoading] = useState(true);
 
   const { onExportToXlsx, isExporting } = useExportCarcasses();
@@ -162,12 +164,19 @@ export default function SviCarcasses() {
               />
               <div className="min-w-0 flex-1">
                 <div className="flex flex-col gap-1">
-                  <Link
-                    to={`/app/svi/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`}
-                    className="font-semibold break-words text-blue-600 hover:underline"
+                  <button
+                    type="button"
+                    onClick={() =>
+                      openCarcasseModal({
+                        carcasseId: carcasse.zacharie_carcasse_id,
+                        feiNumero: carcasse.fei_numero,
+                        initialTab: 'svi',
+                      })
+                    }
+                    className="text-left font-semibold break-words text-blue-600 hover:underline"
                   >
                     {carcasse.numero_bracelet}
-                  </Link>
+                  </button>
                   <span className="text-xs text-gray-500">{carcasse.espece}</span>
                 </div>
               </div>
@@ -332,12 +341,19 @@ export default function SviCarcasses() {
                   render: (carcasse) => {
                     return (
                       <div className="flex flex-col items-start">
-                        <Link
-                          to={`/app/svi/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`}
-                          className="mr-auto block"
+                        <button
+                          type="button"
+                          onClick={() =>
+                            openCarcasseModal({
+                              carcasseId: carcasse.zacharie_carcasse_id,
+                              feiNumero: carcasse.fei_numero,
+                              initialTab: 'svi',
+                            })
+                          }
+                          className="mr-auto block text-left text-blue-600 hover:underline"
                         >
                           {carcasse.numero_bracelet}
-                        </Link>
+                        </button>
                         <small className="text-xs text-gray-400">{carcasse.espece}</small>
                       </div>
                     );
