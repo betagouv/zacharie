@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { UserRoles, FeiOwnerRole } from '@prisma/client';
+import type { FeiIntermediaire } from '@app/types/fei-intermediaire';
+import dayjs from 'dayjs';
 import useZustandStore from '@app/zustand/store';
 import { Pagination } from '@codegouvfr/react-dsfr/Pagination';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
@@ -23,11 +25,9 @@ import Chargement from '@app/components/Chargement';
 import DropDownMenu from '@app/components/DropDownMenu';
 import useExportCarcasses from '@app/utils/export-carcasses';
 import { getFeiAndCarcasseAndIntermediaireIdsFromCarcasse } from '@app/utils/get-carcasse-intermediaire-id';
-import { filterFeiIntermediaires } from '@app/utils/get-carcasses-intermediaires';
 import { computeFeiSteps } from '@app/utils/fei-steps';
 import type { FeiStepSimpleStatus } from '@app/types/fei-steps';
 import { useEntitiesIdsWorkingDirectlyFor } from '@app/utils/get-entity-relations';
-import { filterCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 
 const advancedFiltersModal = createModal({
   id: 'etg-carcasses-advanced-filters',
@@ -73,7 +73,7 @@ export default function EtgCarcasses() {
 
   const { onExportToXlsx, isExporting } = useExportCarcasses();
 
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const page = parseInt(searchParams.get('page') || '1');
 
   const [sortBy, setSortBy] = useLocalStorage<keyof (typeof carcassesRegistry)[number]>(
@@ -112,6 +112,62 @@ export default function EtgCarcasses() {
     DEFAULT_VISIBLE_COLUMN_KEYS
   );
 
+  const filtersKey = `${quickFilterBracelet}|${quickFilterFeiStatuses.join(',')}|${quickFilterCollecteurIds.join(',')}|${quickFilterEspeces.join(',')}|${quickFilterStatuses.join(',')}|${quickFilterPremierDetenteurs.join(',')}|${JSON.stringify(filters)}|${itemsPerPage}`;
+  const isFirstFiltersRender = useRef(true);
+  useEffect(() => {
+    if (isFirstFiltersRender.current) {
+      isFirstFiltersRender.current = false;
+      return;
+    }
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete('page');
+        return next;
+      },
+      { replace: true }
+    );
+  }, [filtersKey, setSearchParams]);
+
+  const intermediairesByFei = useMemo(() => {
+    const seen: Record<string, Record<string, FeiIntermediaire>> = {};
+    for (const ci of Object.values(carcassesIntermediaireById)) {
+      if (ci.deleted_at) continue;
+      if (!seen[ci.fei_numero]) seen[ci.fei_numero] = {};
+      if (seen[ci.fei_numero][ci.intermediaire_id]) continue;
+      seen[ci.fei_numero][ci.intermediaire_id] = {
+        id: ci.intermediaire_id,
+        fei_numero: ci.fei_numero,
+        intermediaire_user_id: ci.intermediaire_user_id,
+        intermediaire_entity_id: ci.intermediaire_entity_id,
+        intermediaire_role: ci.intermediaire_role,
+        created_at: ci.created_at,
+        prise_en_charge_at: ci.prise_en_charge_at,
+        intermediaire_depot_type: ci.intermediaire_depot_type,
+        intermediaire_depot_entity_id: ci.intermediaire_depot_entity_id,
+        intermediaire_prochain_detenteur_role_cache: ci.intermediaire_prochain_detenteur_role_cache,
+        intermediaire_prochain_detenteur_id_cache: ci.intermediaire_prochain_detenteur_id_cache,
+      };
+    }
+    const result: Record<string, FeiIntermediaire[]> = {};
+    for (const fei_numero of Object.keys(seen)) {
+      result[fei_numero] = Object.values(seen[fei_numero]).sort((a, b) =>
+        dayjs(a.created_at).diff(b.created_at) < 0 ? 1 : -1
+      );
+    }
+    return result;
+  }, [carcassesIntermediaireById]);
+
+  const carcassesByFei = useMemo(() => {
+    const result: Record<string, Array<(typeof carcasses)[string]>> = {};
+    for (const c of Object.values(carcasses)) {
+      if (c.deleted_at) continue;
+      if (!result[c.fei_numero]) result[c.fei_numero] = [];
+      result[c.fei_numero].push(c);
+    }
+    return result;
+  }, [carcasses]);
+
   const filterableFields = useMemo(() => {
     const motifs = new Set<string>();
     const etgNames = new Set<string>();
@@ -135,7 +191,7 @@ export default function EtgCarcasses() {
   const carcasseCollecteurIds = useMemo(() => {
     const result: Record<string, Array<string>> = {};
     for (const carcasse of carcassesRegistry) {
-      const intermediaires = filterFeiIntermediaires(carcassesIntermediaireById, carcasse.fei_numero);
+      const intermediaires = intermediairesByFei[carcasse.fei_numero] ?? [];
       const ids: Array<string> = [];
       for (const intermediaire of intermediaires) {
         if (intermediaire.intermediaire_role !== FeiOwnerRole.COLLECTEUR_PRO) continue;
@@ -147,7 +203,7 @@ export default function EtgCarcasses() {
       result[carcasse.zacharie_carcasse_id] = ids;
     }
     return result;
-  }, [carcassesRegistry, carcassesIntermediaireById]);
+  }, [carcassesRegistry, intermediairesByFei, carcassesIntermediaireById]);
 
   const collecteurOptions = useMemo(() => {
     const map = new Map<string, string>();
@@ -210,8 +266,8 @@ export default function EtgCarcasses() {
     for (const feiNumero of uniqueFeiNumeros) {
       const fei = feis[feiNumero];
       if (!fei) continue;
-      const intermediaires = filterFeiIntermediaires(carcassesIntermediaireById, feiNumero);
-      const feiCarcasses = filterCarcassesForFei(carcasses, feiNumero);
+      const intermediaires = intermediairesByFei[feiNumero] ?? [];
+      const feiCarcasses = carcassesByFei[feiNumero] ?? [];
       const { simpleStatus } = computeFeiSteps({
         fei,
         intermediaires,
@@ -226,8 +282,8 @@ export default function EtgCarcasses() {
     quickFilterFeiStatuses,
     carcassesRegistry,
     feis,
-    carcassesIntermediaireById,
-    carcasses,
+    intermediairesByFei,
+    carcassesByFei,
     entitiesIdsWorkingDirectlyFor,
     user,
   ]);
@@ -322,25 +378,27 @@ export default function EtgCarcasses() {
 
   useSaveScroll('etg-carcasses-scrollY');
 
-  const getCollecteurName = (carcasse: (typeof carcassesRegistry)[number]): string | null => {
-    const intermediaires = filterFeiIntermediaires(carcassesIntermediaireById, carcasse.fei_numero);
-    const collecteursPro: string[] = [];
-
-    for (const intermediaire of intermediaires) {
-      if (intermediaire.intermediaire_role === FeiOwnerRole.COLLECTEUR_PRO) {
+  const collecteurNameByCarcasseId = useMemo(() => {
+    const result: Record<string, string | null> = {};
+    for (const carcasse of carcassesRegistry) {
+      const intermediaires = intermediairesByFei[carcasse.fei_numero] ?? [];
+      const collecteursPro: string[] = [];
+      for (const intermediaire of intermediaires) {
+        if (intermediaire.intermediaire_role !== FeiOwnerRole.COLLECTEUR_PRO) continue;
         const id = getFeiAndCarcasseAndIntermediaireIdsFromCarcasse(carcasse, intermediaire.id);
-        const carcasseIntermediaire = carcassesIntermediaireById[id];
-        if (carcasseIntermediaire) {
-          const collecteurEntity = entities[intermediaire.intermediaire_entity_id];
-          if (collecteurEntity?.nom_d_usage) {
-            collecteursPro.push(collecteurEntity.nom_d_usage);
-          }
+        if (!carcassesIntermediaireById[id]) continue;
+        const collecteurEntity = entities[intermediaire.intermediaire_entity_id];
+        if (collecteurEntity?.nom_d_usage) {
+          collecteursPro.push(collecteurEntity.nom_d_usage);
         }
       }
+      result[carcasse.zacharie_carcasse_id] = collecteursPro.length === 0 ? null : collecteursPro.join(', ');
     }
+    return result;
+  }, [carcassesRegistry, intermediairesByFei, carcassesIntermediaireById, entities]);
 
-    if (collecteursPro.length === 0) return null;
-    return collecteursPro.join(', ');
+  const getCollecteurName = (carcasse: (typeof carcassesRegistry)[number]): string | null => {
+    return collecteurNameByCarcasseId[carcasse.zacharie_carcasse_id] ?? null;
   };
 
   type Carcasse = (typeof carcassesRegistry)[number];

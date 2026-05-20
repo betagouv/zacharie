@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import dayjs from 'dayjs';
 import { CarcasseType, DepotType, FeiOwnerRole } from '@prisma/client';
+import type { Carcasse } from '@prisma/client';
+import type { FeiIntermediaire } from '@app/types/fei-intermediaire';
 import { SegmentedControl } from '@codegouvfr/react-dsfr/SegmentedControl';
 import { Pagination } from '@codegouvfr/react-dsfr/Pagination';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
@@ -16,11 +18,8 @@ import { getFeisSorted } from '@app/utils/get-fei-sorted';
 import { loadFeis } from '@app/utils/load-feis';
 import { loadMyRelations } from '@app/utils/load-my-relations';
 import useExportFeis from '@app/utils/export-feis';
-import {
-  filterCarcassesIntermediairesForCarcasse,
-  filterFeiIntermediaires,
-} from '@app/utils/get-carcasses-intermediaires';
-import { filterCarcassesForFei, useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
+import { filterCarcassesIntermediairesForCarcasse } from '@app/utils/get-carcasses-intermediaires';
+import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { useMyCarcassesForFei } from '@app/utils/filter-my-carcasses';
 import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
 import { useSaveScroll } from '@app/services/useSaveScroll';
@@ -71,7 +70,7 @@ export default function EtgFiches() {
   const entities = useZustandStore((state) => state.entities);
   const usersById = useZustandStore((state) => state.users);
 
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const page = parseInt(searchParams.get('page') || '1');
 
   useEffect(() => {
@@ -233,6 +232,23 @@ export default function EtgFiches() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
+  const filtersKey = `${filterStatuses.join(',')}|${filterPremierDetenteurs.join(',')}|${filterCCGs.join(',')}|${filterCollecteurs.join(',')}|${filterDateFrom}|${filterDateTo}|${searchQuery}`;
+  const isFirstFiltersRender = useRef(true);
+  useEffect(() => {
+    if (isFirstFiltersRender.current) {
+      isFirstFiltersRender.current = false;
+      return;
+    }
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete('page');
+        return next;
+      },
+      { replace: true }
+    );
+  }, [filtersKey, setSearchParams]);
+
   const allFeis = useMemo(() => {
     return [...feisAssigned, ...feisOngoing, ...feisDone];
   }, [feisAssigned, feisOngoing, feisDone]);
@@ -267,10 +283,49 @@ export default function EtgFiches() {
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [allFeis]);
 
+  const intermediairesByFei = useMemo(() => {
+    const seen: Record<string, Record<string, FeiIntermediaire>> = {};
+    for (const ci of Object.values(carcassesIntermediaireById)) {
+      if (ci.deleted_at) continue;
+      if (!seen[ci.fei_numero]) seen[ci.fei_numero] = {};
+      if (seen[ci.fei_numero][ci.intermediaire_id]) continue;
+      seen[ci.fei_numero][ci.intermediaire_id] = {
+        id: ci.intermediaire_id,
+        fei_numero: ci.fei_numero,
+        intermediaire_user_id: ci.intermediaire_user_id,
+        intermediaire_entity_id: ci.intermediaire_entity_id,
+        intermediaire_role: ci.intermediaire_role,
+        created_at: ci.created_at,
+        prise_en_charge_at: ci.prise_en_charge_at,
+        intermediaire_depot_type: ci.intermediaire_depot_type,
+        intermediaire_depot_entity_id: ci.intermediaire_depot_entity_id,
+        intermediaire_prochain_detenteur_role_cache: ci.intermediaire_prochain_detenteur_role_cache,
+        intermediaire_prochain_detenteur_id_cache: ci.intermediaire_prochain_detenteur_id_cache,
+      };
+    }
+    const result: Record<string, FeiIntermediaire[]> = {};
+    for (const fei_numero of Object.keys(seen)) {
+      result[fei_numero] = Object.values(seen[fei_numero]).sort((a, b) =>
+        dayjs(a.created_at).diff(b.created_at) < 0 ? 1 : -1
+      );
+    }
+    return result;
+  }, [carcassesIntermediaireById]);
+
+  const carcassesByFei = useMemo(() => {
+    const result: Record<string, Carcasse[]> = {};
+    for (const c of Object.values(carcasses)) {
+      if (c.deleted_at) continue;
+      if (!result[c.fei_numero]) result[c.fei_numero] = [];
+      result[c.fei_numero].push(c);
+    }
+    return result;
+  }, [carcasses]);
+
   const feiCollecteurIdsByNumero = useMemo(() => {
     const result: Record<string, string[]> = {};
     for (const fei of allFeis) {
-      const intermediaires = filterFeiIntermediaires(carcassesIntermediaireById, fei.numero);
+      const intermediaires = intermediairesByFei[fei.numero] ?? [];
       const ids: string[] = [];
       for (const inter of intermediaires) {
         if (inter.intermediaire_role !== FeiOwnerRole.COLLECTEUR_PRO) continue;
@@ -280,7 +335,7 @@ export default function EtgFiches() {
       result[fei.numero] = ids;
     }
     return result;
-  }, [allFeis, carcassesIntermediaireById]);
+  }, [allFeis, intermediairesByFei]);
 
   const collecteurOptions = useMemo(() => {
     const map = new Map<string, string>();
@@ -315,8 +370,8 @@ export default function EtgFiches() {
     }
     if (filterStatuses.length > 0) {
       feis = feis.filter((fei) => {
-        const intermediaires = filterFeiIntermediaires(carcassesIntermediaireById, fei.numero);
-        const feiCarcasses = filterCarcassesForFei(carcasses, fei.numero);
+        const intermediaires = intermediairesByFei[fei.numero] ?? [];
+        const feiCarcasses = carcassesByFei[fei.numero] ?? [];
         const { simpleStatus } = computeFeiSteps({
           fei,
           intermediaires,
@@ -363,8 +418,8 @@ export default function EtgFiches() {
     filterDateFrom,
     filterDateTo,
     feiCollecteurIdsByNumero,
-    carcassesIntermediaireById,
-    carcasses,
+    intermediairesByFei,
+    carcassesByFei,
     entitiesIdsWorkingDirectlyFor,
     user,
   ]);
@@ -792,7 +847,7 @@ export default function EtgFiches() {
                 count={totalPages}
                 defaultPage={page}
                 getPageLinkProps={(pageNumber) => ({
-                  to: `/app/etg/fei?page=${pageNumber}`,
+                  to: `/app/etg?page=${pageNumber}`,
                 })}
               />
             </div>
