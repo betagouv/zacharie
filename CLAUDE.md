@@ -123,7 +123,7 @@ Two API types:
 - TypeScript throughout
 - Prettier config in each package.json: { "singleQuote": true, "trailingComma": "es5", "semi": true, "printWidth": 110, "tabWidth": 2 }
 - Language: French for user-facing content, English for code
-- Pre-commit hooks run `format` and `typecheck`
+- Pre-commit hook runs `prettier --write` on staged files via lint-staged (husky). Typecheck is not enforced at commit time — run `npm run typecheck` manually or rely on CI.
 
 ## Environment Variables
 
