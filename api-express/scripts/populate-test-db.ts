@@ -737,6 +737,23 @@ Christine
       });
       console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (ETG taken charge)`);
     }
+    if ((role as string) === 'ETG_TAKEN_CHARGE_AND_ASSIGNED_TO_SVI') {
+      const fei = await prisma.fei.create({ data: feiTakenChargeByEtgAndAssignedToSvi });
+      const carcasses = await prisma.carcasse.createMany({ data: getCarcasses(fei) });
+      await prisma.carcasseIntermediaire.createMany({
+        data: getCarcasses(fei).map((c) => ({
+          fei_numero: fei.numero,
+          numero_bracelet: c.numero_bracelet,
+          zacharie_carcasse_id: c.zacharie_carcasse_id!,
+          intermediaire_id: `${fei.numero}_${'2a8bc866-a709-47d9-aebe-2768fceb2ecb'}_${users.find((u) => u.email === 'etg-1@example.fr')?.id}`,
+          intermediaire_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
+          intermediaire_user_id: users.find((u) => u.email === 'etg-1@example.fr')?.id ?? '',
+          intermediaire_role: FeiOwnerRole.ETG,
+          prise_en_charge_at: dayjs().subtract(1, 'day').toDate(),
+        })),
+      });
+      console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (ETG taken charge)`);
+    }
     if ((role as string) === 'COLLECTEUR_TAKEN_CHARGE') {
       const fei = await prisma.fei.create({ data: feiTakenChargeByCollecteur });
       const carcasses = await prisma.carcasse.createMany({ data: getCarcasses(fei) });
@@ -923,6 +940,17 @@ const feiTakenChargeByEtg: Prisma.FeiUncheckedCreateInput = {
   fei_next_owner_role: null,
   latest_intermediaire_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
   latest_intermediaire_name_cache: 'ETG 1',
+};
+
+const feiTakenChargeByEtgAndAssignedToSvi: Prisma.FeiUncheckedCreateInput = {
+  ...feiTakenChargeByEtg,
+  numero: 'ZACH-20250707-QZ6E0-235243',
+  svi_assigned_at: dayjs().subtract(1, 'day').toDate(),
+  svi_entity_id: '37a59a18-7f29-4177-a019-aafad6c73ee0',
+  fei_next_owner_entity_id: '37a59a18-7f29-4177-a019-aafad6c73ee0',
+  fei_next_owner_role: FeiOwnerRole.SVI,
+  latest_intermediaire_entity_id: '37a59a18-7f29-4177-a019-aafad6c73ee0',
+  latest_intermediaire_name_cache: 'SVI 1',
 };
 
 const feiTakenChargeByCollecteur: Prisma.FeiUncheckedCreateInput = {

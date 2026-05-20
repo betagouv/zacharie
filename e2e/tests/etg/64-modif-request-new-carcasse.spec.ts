@@ -53,7 +53,7 @@ test('Ajout carcasse manquante : ETG ajoute → examinateur signe → carcasse r
   // Approve mise sur le marché is pre-checked. Approve "sans anomalie" then sign. The DSFR "En ligne"
   // status indicator sits at the bottom of the viewport with z-50 and can intercept clicks on form
   // fields, so we scroll the checkbox into view first.
-  const sansAnomalieCheckbox = page.getByLabel('Aucune anomalie constatée');
+  const sansAnomalieCheckbox = page.getByText('Aucune anomalie constatée');
   await sansAnomalieCheckbox.scrollIntoViewIfNeeded();
   await sansAnomalieCheckbox.check();
   await page.getByRole('button', { name: 'Enregistrer' }).click();

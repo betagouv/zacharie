@@ -487,22 +487,6 @@ const useZustandStore = create<State & Actions>()(
         },
         partialize: (state) =>
           Object.fromEntries(PERSISTED_KEYS.map((key) => [key, state[key]])) as Partial<State>,
-        // v8: rename carcasseModificationRequestsById → carcasseModifPendingRequestsIds on existing clients.
-        migrate: (persistedState, version) => {
-          const s = persistedState as Partial<State> & {
-            carcasseModificationRequestsById?: Record<string, CarcasseModificationRequest>;
-          };
-          if (version < 8) {
-            const fromOld = s.carcasseModificationRequestsById ?? {};
-            const fromNew = s.carcasseModifPendingRequestsIds ?? {};
-            return {
-              ...s,
-              carcasseModifPendingRequestsIds: { ...fromOld, ...fromNew },
-              carcasseModificationRequestsById: undefined,
-            };
-          }
-          return s;
-        },
       }
     )
   )

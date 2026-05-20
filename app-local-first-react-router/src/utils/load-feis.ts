@@ -80,7 +80,8 @@ export async function loadFeis() {
 
         for (const carcasseModifPendingRequest of feisRefreshed.data.carcasseModifPendingRequestsIds) {
           if (!prevState.carcasseModifPendingRequestsIds[carcasseModifPendingRequest.id]) {
-            prevState.carcasseModifPendingRequestsIds[carcasseModifPendingRequest.id] = carcasseModifPendingRequest;
+            prevState.carcasseModifPendingRequestsIds[carcasseModifPendingRequest.id] =
+              carcasseModifPendingRequest;
           }
         }
 
@@ -108,6 +109,7 @@ export async function loadFeis() {
           }
         }
 
+        console.log('prevState.carcasseModifPendingRequestsIds', prevState.carcasseModifPendingRequestsIds);
         useZustandStore.setState(prevState, true);
       }
     }
@@ -119,12 +121,14 @@ export async function loadFeis() {
       Object.values(state.carcassesIntermediaireById).some((ci) => !ci.is_synced) ||
       state.logs.some((l) => !l.is_synced);
 
+    console.log('state.carcasseModifPendingRequestsIds', state.carcasseModifPendingRequestsIds);
     useZustandStore.setState({
       feis: { ...state.feis },
       users: { ...state.users },
       entities: { ...state.entities },
       carcasses: { ...state.carcasses },
       carcassesIntermediaireById: { ...state.carcassesIntermediaireById },
+      carcasseModifPendingRequestsIds: { ...state.carcasseModifPendingRequestsIds },
       dataIsSynced: !hasUnsyncedData,
     });
 

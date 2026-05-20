@@ -4,7 +4,7 @@ import { connectWith } from '../../utils/connect-with';
 import { logoutAndConnect } from '../../utils/logout-and-connect';
 
 test.beforeEach(async () => {
-  await resetDb('SVI');
+  await resetDb('ETG_TAKEN_CHARGE_AND_ASSIGNED_TO_SVI');
 });
 
 test.use({ launchOptions: { slowMo: 100 } });
@@ -15,10 +15,10 @@ test.use({ launchOptions: { slowMo: 100 } });
 //     SVI sees it immediately (with the pending banner)
 //   - not trigger an endless re-transmission prompt on the ETG side after approval
 // Once the examinateur approves, the SVI can finally run IPM on the new carcasse.
-test('Ajout carcasse manquante post-transmission SVI : visible par SVI, pas de boucle ETG', async ({
+test('Ajout carcasse manquante pré-transmission SVI : visible par SVI, pas de boucle ETG', async ({
   page,
 }) => {
-  const feiId = 'ZACH-20250707-QZ6E0-185242';
+  const feiId = 'ZACH-20250707-QZ6E0-235243';
   const newBracelet = 'MM-LATE-99';
 
   // Step 1: ETG-1 (still has a CarcasseIntermediaire row from the SVI seed) opens the FEI and adds
@@ -53,7 +53,10 @@ test('Ajout carcasse manquante post-transmission SVI : visible par SVI, pas de b
 
   // Step 3: Opening the carcasse inspection page shows the IPM section with the explanatory
   // message — not the IPM form — because the examinateur has not signed yet.
-  await page.getByRole('button', { name: new RegExp(`Cerf élaphe.*${newBracelet}`) }).first().click();
+  await page
+    .getByRole('button', { name: new RegExp(`Cerf élaphe.*${newBracelet}`) })
+    .first()
+    .click();
   await expect(page).toHaveURL(/\/app\/svi\/carcasse-svi\//);
   await expect(
     page
@@ -71,9 +74,10 @@ test('Ajout carcasse manquante post-transmission SVI : visible par SVI, pas de b
   await page.getByRole('button', { name: 'Voir les demandes' }).click();
   await page.getByRole('link', { name: 'Voir et traiter' }).first().click();
   await expect(page.getByRole('heading', { name: "Examen initial d'une carcasse ajoutée" })).toBeVisible();
-  const sansAnomalieCheckbox = page.getByLabel('Aucune anomalie constatée');
+  const sansAnomalieCheckbox = page.getByText('Aucune anomalie constatée');
   await sansAnomalieCheckbox.scrollIntoViewIfNeeded();
   await sansAnomalieCheckbox.check();
+
   await page.getByRole('button', { name: 'Enregistrer' }).click();
   await expect(page).toHaveURL(/\/app\/chasseur\/demandes-de-modification$/);
 
@@ -92,7 +96,10 @@ test('Ajout carcasse manquante post-transmission SVI : visible par SVI, pas de b
   // gone).
   await logoutAndConnect(page, 'svi@example.fr');
   await page.getByRole('link', { name: feiId }).click();
-  await page.getByRole('button', { name: new RegExp(`Cerf élaphe.*${newBracelet}`) }).first().click();
+  await page
+    .getByRole('button', { name: new RegExp(`Cerf élaphe.*${newBracelet}`) })
+    .first()
+    .click();
   await expect(page).toHaveURL(/\/app\/svi\/carcasse-svi\//);
   await expect(
     page.getByText(
