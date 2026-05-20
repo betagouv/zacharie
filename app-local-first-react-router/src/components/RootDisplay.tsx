@@ -7,7 +7,7 @@ import SearchInput from '@app/components/SearchInput';
 import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { useRef, useState } from 'react';
 import API, { setNativeAuthToken } from '@app/services/api';
-import { useNavigate, useSearchParams } from 'react-router';
+import { useSearchParams } from 'react-router';
 import { UserRoles } from '@prisma/client';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
@@ -33,7 +33,6 @@ export default function RootDisplay({
   const embedded = searchParams.get('embedded') === 'true';
   const user = useMostFreshUser('RootDisplay ' + id);
   const isOnline = useIsOnline();
-  const navigate = useNavigate();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const RenderedSearchInput = useRef(SearchInput).current;
@@ -68,12 +67,14 @@ export default function RootDisplay({
           setIsLoggingOut(true);
           API.post({ path: '/user/logout' }).then(async () => {
             setNativeAuthToken(null);
-            useUser.setState({ user: null }); // this line is important : if useUser is not null then /app/connexion will redirect to /app/[role] even if /user/me returns a 401 (because of offline mode)
             useZustandStore.getState().reset();
             await clearCache()
               .then(() => new Promise((resolve) => setTimeout(resolve, 1500)))
               .then(() => {
-                navigate('/app/connexion');
+                useUser.setState({ user: null }); // this line is important : if useUser is not null then /app/connexion will redirect to /app/[role] even if /user/me returns a 401 (because of offline mode)
+                window.location.href = '/app/connexion';
+                // we need to reload to make sure JavaScript memory is cleared - if not, there will still be objects in memory that can create bugs
+                window.location.reload();
                 setIsLoggingOut(false);
               });
           });
