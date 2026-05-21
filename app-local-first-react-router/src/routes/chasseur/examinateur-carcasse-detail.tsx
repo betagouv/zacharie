@@ -1,4 +1,4 @@
-import { Carcasse, CarcasseType, Fei, Prisma, UserRoles } from '@prisma/client';
+import { Carcasse, CarcasseType, Fei, FeiOwnerRole, Prisma, UserRoles } from '@prisma/client';
 import type { CarcasseIntermediaire } from '@prisma/client';
 import grandGibier from '@app/data/grand-gibier.json';
 import petitGibier from '@app/data/petit-gibier.json';
@@ -152,7 +152,10 @@ function buildChasseurTimeline(
     events.push({ date: new Date(fei.date_mise_a_mort), label: 'Mise à mort' });
   }
 
-  if (fei.examinateur_initial_date_approbation_mise_sur_le_marche) {
+  if (
+    fei.examinateur_initial_date_approbation_mise_sur_le_marche &&
+    fei.fei_current_owner_role !== FeiOwnerRole.EXAMINATEUR_INITIAL
+  ) {
     const premierDetenteur = getPremierDetenteurDisplayName(fei, users, entities);
     events.push({
       date: new Date(fei.examinateur_initial_date_approbation_mise_sur_le_marche),
