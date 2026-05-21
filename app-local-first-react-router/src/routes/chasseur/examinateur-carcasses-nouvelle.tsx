@@ -6,7 +6,8 @@ import { Select } from '@codegouvfr/react-dsfr/Select';
 import grandGibier from '@app/data/grand-gibier.json';
 import petitGibier from '@app/data/petit-gibier.json';
 import { useParams } from 'react-router';
-import useZustandStore, { syncData } from '@app/zustand/store';
+import useZustandStore from '@app/zustand/store';
+import { syncData } from '@app/utils/sync-data';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import useUser from '@app/zustand/user';
 import { createNewCarcasse } from '@app/utils/create-new-carcasse';
@@ -23,7 +24,7 @@ function getNewDefaultNumeroBracelet(user: User) {
   const nom = user.nom_de_famille?.slice(0, 1).toUpperCase();
   // 4 derniers chiffres du numero cfei
   const numeroCfei = user.numero_cfei?.slice(-4);
-  // denier bracelet utilise + pad start 0 sur 3 chiffres
+  // denier marquage utilise + pad start 0 sur 3 chiffres
   const prochain_bracelet_a_utiliser = (user.prochain_bracelet_a_utiliser || 1).toString().padStart(3, '0');
   return `${prenom}${nom}${numeroCfei}-${prochain_bracelet_a_utiliser}`;
 }

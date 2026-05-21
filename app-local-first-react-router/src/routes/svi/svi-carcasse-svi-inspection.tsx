@@ -1,6 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { CarcasseType, EntityRelationType, IPM1Decision, UserRoles } from '@prisma/client';
+import {
+  CarcasseModificationRequestStatus,
+  CarcasseType,
+  EntityRelationType,
+  IPM1Decision,
+  UserRoles,
+} from '@prisma/client';
 import dayjs from 'dayjs';
 import CardCarcasseSvi from '@app/components/CardCarcasseSvi';
 import { Breadcrumb } from '@codegouvfr/react-dsfr/Breadcrumb';
@@ -8,9 +14,6 @@ import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import { useCarcassesIntermediairesForCarcasse } from '@app/utils/get-carcasses-intermediaires';
 import { Button } from '@codegouvfr/react-dsfr/Button';
-import { refreshUser } from '@app/utils-offline/get-most-fresh-user';
-import { loadFei } from '@app/utils/load-fei';
-import { loadMyRelations } from '@app/utils/load-my-relations';
 import NotFound from '@app/components/NotFound';
 import Chargement from '@app/components/Chargement';
 import { CarcasseIPM1 } from '@app/routes/svi/svi-inspection-carcasse/ipm1';
@@ -23,10 +26,7 @@ import {
   PendingModificationBanner,
   HistoriqueDesModifications,
 } from '@app/components/CarcasseModificationRequest';
-import {
-  usePendingRequestForCarcasse,
-  useRequestsForCarcasse,
-} from '@app/utils/carcasse-modification-request';
+import { loadData, useLoaderEffect } from '@app/utils/load-data';
 
 export default function SviInspectionCarcasseLoader() {
   const params = useParams();
@@ -34,11 +34,9 @@ export default function SviInspectionCarcasseLoader() {
   const fei = state.feis[params.fei_numero!];
   const [hasTriedLoading, setHasTriedLoading] = useState(false);
 
-  useEffect(() => {
+  useLoaderEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
-    refreshUser('connexion')
-      .then(loadMyRelations)
-      .then(() => loadFei(params.fei_numero!))
+    loadData('svi-carcasse-svi-inspection')
       .then(() => {
         setHasTriedLoading(true);
       })
@@ -91,11 +89,13 @@ function SviInspectionCarcasse() {
     return false;
   }, [fei, user, state]);
 
-  const pendingModifRequest = usePendingRequestForCarcasse(carcasse.zacharie_carcasse_id);
-  const allModifRequests = useRequestsForCarcasse(carcasse.zacharie_carcasse_id);
+  const allModifRequests = carcasse.CarcasseModificationRequests;
+  const pendingModifRequest = allModifRequests.find(
+    (r) => r.status === CarcasseModificationRequestStatus.PENDING
+  );
 
   const canEdit = useMemo(() => {
-    // SVI ne peut pas inspecter une carcasse dont l'identité (numéro de bracelet) ou la signature de
+    // SVI ne peut pas inspecter une carcasse dont l'identité (numéro de marquage) ou la signature de
     // l'examen initial sont en attente d'approbation par l'examinateur initial. Blocage dur.
     if (pendingModifRequest) {
       return false;

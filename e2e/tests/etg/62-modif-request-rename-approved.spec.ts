@@ -10,12 +10,12 @@ test.beforeEach(async () => {
 test.use({ launchOptions: { slowMo: 100 } });
 
 // Scenario 62 — Modification request RENAME, full multi-actor round-trip.
-// ETG signals a wrong bracelet → examinateur approves → ETG sees the updated bracelet on the card,
+// ETG signals a wrong marquage → examinateur approves → ETG sees the updated marquage on the card,
 // the pending banner is gone, and the history timeline shows the request + approval dots.
-test('Rename bracelet : ETG signale → examinateur approuve → maj visible côté ETG', async ({ page }) => {
+test('Rename marquage : ETG signale → examinateur approuve → maj visible côté ETG', async ({ page }) => {
   const feiId = 'ZACH-20250707-QZ6E0-235242';
 
-  // ----- Step 1: ETG opens the carcasse modal and signals an incorrect bracelet ------------------
+  // ----- Step 1: ETG opens the carcasse modal and signals an incorrect marquage ------------------
   await connectWith(page, 'etg-1@example.fr');
   await page.getByRole('link', { name: feiId }).click();
   await expect(page).toHaveURL(new RegExp(`/app/etg/fei/${feiId}`));
@@ -25,18 +25,18 @@ test('Rename bracelet : ETG signale → examinateur approuve → maj visible cô
   await carcasseBtn.scrollIntoViewIfNeeded();
   await carcasseBtn.click();
 
-  // Inline-expand the rename form via the "Signaler un numéro de bracelet incorrect" button.
-  const signalBtn = page.getByRole('button', { name: 'Signaler un numéro de bracelet incorrect' });
+  // Inline-expand the rename form via the "Signaler un numéro de marquage incorrect" button.
+  const signalBtn = page.getByRole('button', { name: 'Signaler un numéro de marquage incorrect' });
   await signalBtn.scrollIntoViewIfNeeded();
   await signalBtn.click();
 
-  await page.getByLabel('Numéro de bracelet correct').fill('MM-001-FIX');
+  await page.getByLabel('Numéro de marquage correct').fill('MM-001-FIX');
   await page.getByLabel('Commentaire (optionnel)').fill('Le 1 et le F ont été confondus');
   await page.getByRole('button', { name: 'Envoyer la demande' }).click();
 
   // The outer refus modal closes after submission. The PendingModificationBanner shows up under the
   // card to confirm sync round-trip.
-  await expect(page.getByText('Demande de modification du numéro de bracelet en cours').first()).toBeVisible({
+  await expect(page.getByText('Demande de modification du numéro de marquage en cours').first()).toBeVisible({
     timeout: 10000,
   });
 
@@ -50,7 +50,7 @@ test('Rename bracelet : ETG signale → examinateur approuve → maj visible cô
   await expect(page).toHaveURL(/\/app\/chasseur\/demandes-de-modification$/);
 
   await page.getByRole('link', { name: 'Voir et traiter' }).first().click();
-  await expect(page.getByRole('heading', { name: 'Changement de numéro de bracelet' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Changement de numéro de marquage' })).toBeVisible();
   await expect(page.getByText('MM-001-001')).toBeVisible();
   await expect(page.getByText('MM-001-FIX')).toBeVisible();
 
@@ -59,15 +59,15 @@ test('Rename bracelet : ETG signale → examinateur approuve → maj visible cô
   // The list is now empty for this user.
   await expect(page.getByText(/Aucune demande en attente/)).toBeVisible({ timeout: 10000 });
 
-  // ----- Step 3: Back to ETG — verify the bracelet has been updated ------------------------------
+  // ----- Step 3: Back to ETG — verify the marquage has been updated ------------------------------
   await logoutAndConnect(page, 'etg-1@example.fr');
   await page.getByRole('link', { name: feiId }).click();
-  // New bracelet shows on the card. Old bracelet button is gone.
+  // New marquage shows on the card. Old marquage button is gone.
   await expect(page.getByRole('button', { name: 'Daim N° MM-001-FIX Mise à' })).toBeVisible({
     timeout: 10000,
   });
   await expect(page.getByRole('button', { name: 'Daim N° MM-001-001 Mise à' })).toHaveCount(0);
   // The pending banner is gone, the card description gained a "1 modification" line.
-  await expect(page.getByText('Demande de modification du numéro de bracelet en cours')).toHaveCount(0);
+  await expect(page.getByText('Demande de modification du numéro de marquage en cours')).toHaveCount(0);
   await expect(page.getByText('1 modification').first()).toBeVisible();
 });

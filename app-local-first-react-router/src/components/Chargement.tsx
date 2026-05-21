@@ -2,7 +2,7 @@ export default function Chargement() {
   return (
     <main
       role="main"
-      id="content"
+      id="chargement"
     >
       <div className="fr-container">
         <div className="fr-my-7w fr-mt-md-12w fr-mb-md-10w fr-grid-row fr-grid-row--gutters fr-grid-row--middle fr-grid-row--center">

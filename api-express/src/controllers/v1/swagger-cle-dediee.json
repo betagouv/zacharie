@@ -285,7 +285,7 @@
         "properties": {
           "numero_bracelet": {
             "type": "string",
-            "description": "Numéro de bracelet de la carcasse"
+            "description": "Numéro de marquage de la carcasse"
           },
           "fei_numero": {
             "type": "string",
@@ -843,7 +843,7 @@
     "/carcasse/{date_mise_a_mort}/{numero_bracelet}": {
       "get": {
         "summary": "Récupérer une carcasse spécifique de votre entité",
-        "description": "Récupère une carcasse spécifique qui appartient à votre entité en utilisant la date de mise à mort et le numéro de bracelet. Votre clé API détermine automatiquement quelle entité vous représentez.",
+        "description": "Récupère une carcasse spécifique qui appartient à votre entité en utilisant la date de mise à mort et le numéro de marquage. Votre clé API détermine automatiquement quelle entité vous représentez.",
         "parameters": [
           {
             "name": "date_mise_a_mort",
@@ -864,7 +864,7 @@
               "type": "string",
               "example": "FR123456789"
             },
-            "description": "Numéro de bracelet de la carcasse"
+            "description": "Numéro de marquage de la carcasse"
           }
         ],
         "responses": {

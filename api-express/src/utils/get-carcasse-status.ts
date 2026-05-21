@@ -1,8 +1,7 @@
 import { Carcasse, CarcasseStatus, CarcasseType, IPM1Decision, IPM2Decision } from '@prisma/client';
 import dayjs from 'dayjs';
-import { CarcasseForResponseForRegistry, CarcasseGetForRegistry } from '~/types/carcasse';
 
-export default function updateCarcasseStatus<T extends Carcasse | CarcasseGetForRegistry>(carcasse: T) {
+export default function updateCarcasseStatus<T extends Carcasse>(carcasse: T) {
   if (carcasse.intermediaire_carcasse_manquante) {
     return CarcasseStatus.MANQUANTE_ETG_COLLECTEUR;
   }

@@ -48,7 +48,7 @@ Les données ci-dessous sont stockées en base de données (PostgreSQL).
 
 **Carcasses & Venaison (`Carcasse`)**
 
-- **Identification** : Numéro de bracelet, Espèce (Cerf, Sanglier...), Poids.
+- **Identification** : Numéro de marquage, Espèce (Cerf, Sanglier...), Poids.
 - **Sanitaire** : Résultats d'examen (Anomalies carcasse/action), Décisions vétérinaires (Saisie, Consigne, Levée).
 - **Traçabilité** : Certificats associés (Saisie, Consigne).
 

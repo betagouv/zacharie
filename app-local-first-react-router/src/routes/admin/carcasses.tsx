@@ -76,7 +76,7 @@ export default function AdminCarcassesIntermediaires() {
         <input
           type="search"
           className="fr-input"
-          placeholder="Rechercher par numéro de bracelet, numéro de FEI ou espèce…"
+          placeholder="Rechercher par numéro de marquage, numéro de FEI ou espèce…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -84,7 +84,7 @@ export default function AdminCarcassesIntermediaires() {
       <table className="w-full border-collapse text-xs">
         <thead>
           <tr className="border-b bg-gray-100 text-left">
-            <th className="p-1">bracelet</th>
+            <th className="p-1">marquage</th>
             <th className="p-1">espèce</th>
             <th className="p-1">type</th>
             <th className="p-1">fei_numero</th>

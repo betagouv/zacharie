@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, useEffect } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import dayjs from 'dayjs';
 import { CarcasseType, EntityRelationType, FeiOwnerRole, Prisma, UserRoles } from '@prisma/client';
@@ -9,14 +9,13 @@ import Alert from '@codegouvfr/react-dsfr/Alert';
 import InputNotEditable from '@app/components/InputNotEditable';
 import InputVille from '@app/components/InputVille';
 import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
-import useZustandStore, { syncData } from '@app/zustand/store';
+import useZustandStore from '@app/zustand/store';
+import { syncData } from '@app/utils/sync-data';
 import useUser from '@app/zustand/user';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import useGetCommunesDeChasseFavorites from '@app/utils/useGetCommunesDeChasseFavorites';
-import { loadFei } from '@app/utils/load-fei';
-import { refreshUser } from '@app/utils-offline/get-most-fresh-user';
-import { loadMyRelations } from '@app/utils/load-my-relations';
+import { loadData, useLoaderEffect } from '@app/utils/load-data';
 import Chargement from '@app/components/Chargement';
 import NotFound from '@app/components/NotFound';
 import CarcassesExaminateur from './chasseur-fei-carcasses';
@@ -35,11 +34,9 @@ export default function ChasseurFei() {
   const fei = feis[params.fei_numero!];
   const [hasTriedLoading, setHasTriedLoading] = useState(false);
 
-  useEffect(() => {
+  useLoaderEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
-    refreshUser('connexion')
-      .then(loadMyRelations)
-      .then(() => loadFei(params.fei_numero!))
+    loadData('connexion')
       .then(() => {
         setHasTriedLoading(true);
       })
@@ -47,8 +44,7 @@ export default function ChasseurFei() {
         setHasTriedLoading(true);
         console.error(error);
       });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  });
 
   if (!fei) {
     return hasTriedLoading ? <NotFound /> : <Chargement />;

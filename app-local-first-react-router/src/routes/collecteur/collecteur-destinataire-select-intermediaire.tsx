@@ -11,7 +11,8 @@ import {
 import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import useUser from '@app/zustand/user';
-import useZustandStore, { syncData } from '@app/zustand/store';
+import useZustandStore from '@app/zustand/store';
+import { syncData } from '@app/utils/sync-data';
 import { useCarcassesIntermediairesForIntermediaire } from '@app/utils/get-carcasses-intermediaires';
 import { useCcgIds, useEtgIds, useCollecteursProIds } from '@app/utils/get-entity-relations';
 import SelectCustom from '@app/components/SelectCustom';

@@ -12,6 +12,8 @@ export const userFeiSelect = {
   ville: true,
   est_forme_a_l_examen_initial: true,
   numero_cfei: true,
+  created_at: true,
+  updated_at: true,
 } as const;
 
 export type UserForFei = Prisma.UserGetPayload<{

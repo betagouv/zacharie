@@ -11,7 +11,7 @@ import EtgProfilNotifications from './profil/etg-notifications';
 import EtgProfilPartageDeMesDonnees from './profil/etg-partage-de-mes-donnees';
 import EtgProfilEntrepriseUtilisateurs from './profil/etg-entreprise-utilisateurs';
 import EtgFei from './etg-fei';
-import { SviInspectionCarcasse } from './etg-carcasse-after-svi-inspection';
+import EtgSviInspectionCarcasse from './etg-carcasse-after-svi-inspection';
 
 export default function RouterEtg() {
   return (
@@ -80,7 +80,7 @@ export default function RouterEtg() {
       />
       <Route
         path="carcasse-svi/:fei_numero/:zacharie_carcasse_id"
-        element={<SviInspectionCarcasse />}
+        element={<EtgSviInspectionCarcasse />}
       />
     </Route>
   );

@@ -48,6 +48,5 @@ test('Double-clic Transmettre — pas de double soumission', async ({ page }) =>
 
   // Vérifier qu'une seule fiche a été créée
   await page.getByRole('link', { name: 'Voir toutes les fiches' }).click();
-  const fiches = await page.getByRole('link', { name: /ZACH-\d+-\w+-\d+/ }).count();
-  expect(fiches).toBe(1);
+  await expect(page.getByRole('link', { name: /ZACH-\d+-\w+-\d+/ })).toHaveCount(1, { timeout: 10000 });
 });

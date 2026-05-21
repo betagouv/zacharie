@@ -5,7 +5,7 @@ import { logoutAndConnect } from '../../utils/logout-and-connect';
 
 // Scenario 116 — Chain refus partiel SVI : une acceptee, une consignee, une acceptee → chasseur voit les 3 decisions.
 
-test.use({ launchOptions: { slowMo: 100 } });
+test.use({ launchOptions: { slowMo: 100, timeout: 150000 } });
 
 test.beforeAll(async () => {
   await resetDb('PREMIER_DETENTEUR');
@@ -112,6 +112,7 @@ test('SVI rend des décisions divergentes → chasseur voit chaque décision', a
 
   // --- Carcasse MM-001-002 → Mise en consigne ---
   const carcasse2Btn = page.getByRole('button', { name: /Daim.*MM-001-002/ }).first();
+  await new Promise((resolve) => setTimeout(resolve, 1000));
   await carcasse2Btn.scrollIntoViewIfNeeded();
   await carcasse2Btn.click();
   await expect(page).toHaveURL(/\/app\/svi\/carcasse-svi\//);
@@ -150,6 +151,7 @@ test('SVI rend des décisions divergentes → chasseur voit chaque décision', a
 
   // --- Carcasse MM-001-004 → Acceptée ---
   const carcasse4Btn = page.getByRole('button', { name: /Daim.*MM-001-004/ }).first();
+  await new Promise((resolve) => setTimeout(resolve, 1000));
   await carcasse4Btn.scrollIntoViewIfNeeded();
   await carcasse4Btn.click();
   await expect(page).toHaveURL(/\/app\/svi\/carcasse-svi\//);

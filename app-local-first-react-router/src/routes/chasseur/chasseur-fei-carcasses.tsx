@@ -1,5 +1,5 @@
 import NouvelleCarcasse from './examinateur-carcasses-nouvelle';
-import { Carcasse, UserRoles } from '@prisma/client';
+import { UserRoles } from '@prisma/client';
 import { useMemo, useState } from 'react';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
@@ -10,6 +10,7 @@ import { useMyCarcassesForFei } from '@app/utils/filter-my-carcasses';
 import dayjs from 'dayjs';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import CardCarcasse from '@app/components/CardCarcasse';
+import { CarcasseWithModificationRequests } from '@api/src/types/carcasse';
 
 export default function CarcassesExaminateur({
   canEdit,
@@ -122,7 +123,7 @@ export function CarcasseExaminateur({
   canEditAsPremierDetenteur,
   canEditAsExaminateurInitial,
 }: {
-  carcasse: Carcasse;
+  carcasse: CarcasseWithModificationRequests;
   canEditAsPremierDetenteur?: boolean;
   canEditAsExaminateurInitial?: boolean;
 }) {
@@ -160,7 +161,7 @@ export function CarcasseExaminateur({
           ? undefined
           : () => {
               if (window.confirm('Voulez-vous supprimer cette carcasse ? Cette opération est irréversible')) {
-                const nextPartialCarcasse: Partial<Carcasse> = {
+                const nextPartialCarcasse: Partial<CarcasseWithModificationRequests> = {
                   deleted_at: dayjs().toDate(),
                 };
                 updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse, true);

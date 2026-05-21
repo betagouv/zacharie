@@ -16,7 +16,8 @@ import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import useUser from '@app/zustand/user';
-import useZustandStore, { syncData } from '@app/zustand/store';
+import useZustandStore from '@app/zustand/store';
+import { syncData } from '@app/utils/sync-data';
 import { capture } from '@app/services/sentry';
 import {
   getFeiAndIntermediaireIdsFromFeiIntermediaire,

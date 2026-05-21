@@ -2,7 +2,7 @@ import { Fragment, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router';
 import dayjs from 'dayjs';
 import { Input } from '@codegouvfr/react-dsfr/Input';
-import { CarcasseType, Prisma, type Carcasse } from '@prisma/client';
+import { CarcasseType, Prisma } from '@prisma/client';
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
@@ -15,9 +15,10 @@ import { getFeiAndCarcasseAndIntermediaireIdsFromCarcasse } from '@app/utils/get
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import CardCarcasse from '@app/components/CardCarcasse';
 import InputMultiSelect from '@app/components/InputMultiSelect';
+import { CarcasseWithModificationRequests } from '@api/src/types/carcasse';
 
 interface CarcasseIntermediaireProps {
-  carcasse: Carcasse;
+  carcasse: CarcasseWithModificationRequests;
   canEdit: boolean;
   intermediaire: FeiIntermediaire;
 }
@@ -123,7 +124,7 @@ export default function CarcasseIntermediaireComp({
       intermediaire_id: intermediaire.id,
       carcasse_intermediaire_id: carcasseIntermediaireId,
     });
-    const nextPartialCarcasse: Partial<Carcasse> = {
+    const nextPartialCarcasse: Partial<CarcasseWithModificationRequests> = {
       intermediaire_carcasse_manquante: true,
       intermediaire_carcasse_refus_motif: null,
       intermediaire_carcasse_refus_intermediaire_id: intermediaire.id,
@@ -187,7 +188,7 @@ export default function CarcasseIntermediaireComp({
       intermediaire_id: intermediaire.id,
       carcasse_intermediaire_id: carcasseIntermediaireId,
     });
-    const nextPartialCarcasse: Partial<Carcasse> = {
+    const nextPartialCarcasse: Partial<CarcasseWithModificationRequests> = {
       intermediaire_carcasse_manquante: false,
       intermediaire_carcasse_refus_motif: refusToRemember,
       intermediaire_carcasse_refus_intermediaire_id: intermediaire.id,
@@ -237,7 +238,7 @@ export default function CarcasseIntermediaireComp({
       intermediaire_id: intermediaire.id,
       carcasse_intermediaire_id: carcasseIntermediaireId,
     });
-    const nextPartialCarcasse: Partial<Carcasse> = {
+    const nextPartialCarcasse: Partial<CarcasseWithModificationRequests> = {
       intermediaire_carcasse_manquante: false,
       intermediaire_carcasse_refus_motif: null,
       intermediaire_carcasse_refus_intermediaire_id: null,
@@ -287,7 +288,7 @@ export default function CarcasseIntermediaireComp({
       intermediaire_id: intermediaire.id,
       carcasse_intermediaire_id: carcasseIntermediaireId,
     });
-    const nextPartialCarcasse: Partial<Carcasse> = {
+    const nextPartialCarcasse: Partial<CarcasseWithModificationRequests> = {
       intermediaire_carcasse_manquante: false,
       intermediaire_carcasse_refus_motif: null,
       intermediaire_carcasse_refus_intermediaire_id: null,

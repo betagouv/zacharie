@@ -1,19 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
-import { UserRoles, FeiOwnerRole } from '@prisma/client';
+import { FeiOwnerRole } from '@prisma/client';
 import type { FeiIntermediaire } from '@app/types/fei-intermediaire';
 import dayjs from 'dayjs';
 import useZustandStore from '@app/zustand/store';
 import { Pagination } from '@codegouvfr/react-dsfr/Pagination';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
-import { useMostFreshUser, refreshUser } from '@app/utils-offline/get-most-fresh-user';
+import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import TableFilterable from '@app/components/TableFilterable';
 import CollapsibleSection from '@app/components/CollapsibleSection';
 import { useSaveScroll } from '@app/services/useSaveScroll';
 import { getCarcasseStatusLabel } from '@app/utils/get-carcasse-status';
-import { loadCarcasses } from '@app/utils/load-carcasses';
-import { loadFeis } from '@app/utils/load-feis';
 import Filters from '@app/components/Filters';
 import {
   CarcasseFilter,
@@ -28,6 +26,8 @@ import { getFeiAndCarcasseAndIntermediaireIdsFromCarcasse } from '@app/utils/get
 import { computeFeiSteps } from '@app/utils/fei-steps';
 import type { FeiStepSimpleStatus } from '@app/types/fei-steps';
 import { useEntitiesIdsWorkingDirectlyFor } from '@app/utils/get-entity-relations';
+import { isCarcasseSviArchived } from '@app/utils/carcasse-svi-archived';
+import { loadData, useLoaderEffect } from '@app/utils/load-data';
 
 const advancedFiltersModal = createModal({
   id: 'etg-carcasses-advanced-filters',
@@ -62,10 +62,10 @@ const itemsPerPageOptions = [20, 50, 100, 200, 1000];
 export default function EtgCarcasses() {
   const user = useMostFreshUser('etg-carcasses')!;
   const carcassesRegistry = useZustandStore((state) => state.carcassesRegistry);
+  const feis = useZustandStore((state) => state.feis);
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
   const entities = useZustandStore((state) => state.entities);
   const usersById = useZustandStore((state) => state.users);
-  const feis = useZustandStore((state) => state.feis);
   const carcasses = useZustandStore((state) => state.carcasses);
   const entitiesIdsWorkingDirectlyFor = useEntitiesIdsWorkingDirectlyFor();
   const [selectedCarcassesIds, setSelectedCarcassesIds] = useState<Array<string>>([]);
@@ -249,12 +249,12 @@ export default function EtgCarcasses() {
   const premierDetenteurOptions = useMemo(() => {
     const set = new Set<string>();
     for (const carcasse of carcassesRegistry) {
-      if (carcasse.fei_premier_detenteur_name_cache) {
-        set.add(carcasse.fei_premier_detenteur_name_cache);
+      if (feis[carcasse.fei_numero]?.premier_detenteur_name_cache) {
+        set.add(feis[carcasse.fei_numero]!.premier_detenteur_name_cache!);
       }
     }
     return Array.from(set).sort();
-  }, [carcassesRegistry]);
+  }, [carcassesRegistry, feis]);
 
   const feiSimpleStatusByNumero = useMemo(() => {
     if (quickFilterFeiStatuses.length === 0) return {};
@@ -291,7 +291,7 @@ export default function EtgCarcasses() {
   const filteredData = useMemo(() => {
     const braceletQuery = quickFilterBracelet.trim().toLowerCase();
     return carcassesRegistry
-      .filter((carcasse) => filterCarcassesInRegistre(filters)(carcasse))
+      .filter((carcasse) => filterCarcassesInRegistre(filters)(carcasse, feis[carcasse.fei_numero]!))
       .filter((carcasse) => {
         if (braceletQuery && !carcasse.numero_bracelet?.toLowerCase().includes(braceletQuery)) {
           return false;
@@ -309,8 +309,8 @@ export default function EtgCarcasses() {
         }
         if (quickFilterPremierDetenteurs.length > 0) {
           if (
-            !carcasse.fei_premier_detenteur_name_cache ||
-            !quickFilterPremierDetenteurs.includes(carcasse.fei_premier_detenteur_name_cache)
+            !feis[carcasse.fei_numero]?.premier_detenteur_name_cache ||
+            !quickFilterPremierDetenteurs.includes(feis[carcasse.fei_numero]!.premier_detenteur_name_cache!)
           )
             return false;
         }
@@ -321,8 +321,18 @@ export default function EtgCarcasses() {
         return true;
       })
       .sort((a, b) => {
-        const aValue = a[sortBy];
-        const bValue = b[sortBy];
+        const aValue =
+          // @ts-expect-error: svi_carcasse_archived is isCarcasseSviArchived
+          sortBy === 'svi_carcasse_archived'
+            ? isCarcasseSviArchived(a)
+            : // @ts-expect-error: we know that the field is in the carcasse or the fei
+              a[sortBy] || feis[a.fei_numero]![sortBy];
+        const bValue =
+          // @ts-expect-error: svi_carcasse_archived is isCarcasseSviArchived
+          sortBy === 'svi_carcasse_archived'
+            ? isCarcasseSviArchived(b)
+            : // @ts-expect-error: svi_carcasse_archived is isCarcasseSviArchived
+              b[sortBy] || feis[b.fei_numero]![sortBy];
         if (!aValue) {
           if (bValue) return sortOrder === 'ASC' ? 1 : -1;
           return 0;
@@ -339,6 +349,7 @@ export default function EtgCarcasses() {
   }, [
     carcassesRegistry,
     filters,
+    feis,
     sortBy,
     sortOrder,
     quickFilterBracelet,
@@ -363,17 +374,9 @@ export default function EtgCarcasses() {
     }
   }, [user]);
 
-  const hackForCounterDoubleEffectInDevMode = useRef(false);
-  useEffect(() => {
-    if (hackForCounterDoubleEffectInDevMode.current) {
-      return;
-    }
-    hackForCounterDoubleEffectInDevMode.current = true;
-
-    refreshUser('etg-carcasses')
-      .then(() => setLoading(true))
-      .then(() => Promise.all([loadCarcasses(UserRoles.ETG), loadFeis()]))
-      .then(() => setLoading(false));
+  useLoaderEffect(() => {
+    setLoading(true);
+    loadData('etg-carcasses').then(() => setLoading(false));
   }, []);
 
   useSaveScroll('etg-carcasses-scrollY');
@@ -426,7 +429,7 @@ export default function EtgCarcasses() {
     },
     {
       key: 'numero_bracelet',
-      label: 'Identification (bracelet + espèce)',
+      label: 'Identification (marquage + espèce)',
       alwaysVisible: true,
       dataKey: 'numero_bracelet',
       title: 'Identification',
@@ -460,17 +463,17 @@ export default function EtgCarcasses() {
       sortable: true,
     },
     {
-      key: 'fei_date_mise_a_mort',
+      key: 'date_mise_a_mort',
       label: 'Date de mise à mort',
-      dataKey: 'fei_date_mise_a_mort',
+      dataKey: 'date_mise_a_mort',
       title: 'Date mise à mort',
       type: 'date',
       sortable: true,
     },
     {
-      key: 'fei_commune_mise_a_mort',
+      key: 'commune_mise_a_mort',
       label: 'Commune de mise à mort',
-      dataKey: 'fei_commune_mise_a_mort',
+      dataKey: 'commune_mise_a_mort',
       title: 'Commune',
       sortable: true,
     },
@@ -487,9 +490,9 @@ export default function EtgCarcasses() {
       title: 'Heure éviscération',
     },
     {
-      key: 'fei_premier_detenteur_name_cache',
+      key: 'premier_detenteur_name_cache',
       label: 'Premier détenteur',
-      dataKey: 'fei_premier_detenteur_name_cache',
+      dataKey: 'premier_detenteur_name_cache',
       title: 'Premier détenteur',
       sortable: true,
     },
@@ -508,17 +511,17 @@ export default function EtgCarcasses() {
       render: (carcasse) => getCollecteurName(carcasse) || '-',
     },
     {
-      key: 'fei_examinateur_initial_date_approbation_mise_sur_le_marche',
+      key: 'examinateur_initial_date_approbation_mise_sur_le_marche',
       label: 'Date d’approbation de la mise sur le marché',
-      dataKey: 'fei_examinateur_initial_date_approbation_mise_sur_le_marche',
+      dataKey: 'examinateur_initial_date_approbation_mise_sur_le_marche',
       title: 'Date approbation marché',
       type: 'datetime',
       sortable: true,
     },
     {
-      key: 'fei_svi_assigned_at',
+      key: 'svi_assigned_at',
       label: 'Date de transmission au SVI',
-      dataKey: 'fei_svi_assigned_at',
+      dataKey: 'svi_assigned_at',
       title: 'Date transmission SVI',
       type: 'datetime',
       sortable: true,
@@ -559,7 +562,7 @@ export default function EtgCarcasses() {
       dataKey: 'svi_carcasse_archived',
       title: 'Archivé(e)',
       sortable: true,
-      render: (carcasse) => (carcasse.svi_carcasse_archived ? 'Oui' : 'Non'),
+      render: (carcasse) => (isCarcasseSviArchived(carcasse) ? 'Oui' : 'Non'),
     },
     {
       key: 'svi_carcasse_commentaire',
@@ -594,9 +597,9 @@ export default function EtgCarcasses() {
       render: (carcasse) => (carcasse.svi_ipm2_lesions_ou_motifs ?? []).filter(Boolean).join(', ') || '-',
     },
     {
-      key: 'fei_svi_closed_at',
+      key: 'svi_closed_at',
       label: 'Date de clôture de la fiche',
-      dataKey: 'fei_svi_closed_at',
+      dataKey: 'svi_closed_at',
       title: 'Date clôture fiche',
       type: 'datetime',
       sortable: true,
@@ -687,7 +690,7 @@ export default function EtgCarcasses() {
         />
         <input
           type="search"
-          placeholder="Rechercher un bracelet..."
+          placeholder="Rechercher un marquage..."
           value={quickFilterBracelet}
           onChange={(e) => setQuickFilterBracelet(e.target.value)}
           className="w-full rounded border border-gray-300 py-2 pr-3 pl-10 text-sm transition-colors outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
@@ -984,7 +987,7 @@ export default function EtgCarcasses() {
             <div className="flex flex-col gap-1 pl-7 text-sm">
               <div>
                 <span className="font-semibold">Premier détenteur: </span>
-                <span>{carcasse.fei_premier_detenteur_name_cache || '-'}</span>
+                <span>{feis[carcasse.fei_numero]?.premier_detenteur_name_cache || '-'}</span>
               </div>
               <div>
                 <span className="font-semibold">Statut: </span>
@@ -993,8 +996,8 @@ export default function EtgCarcasses() {
               <div>
                 <span className="font-semibold">Date transmission SVI: </span>
                 <span>
-                  {carcasse.fei_svi_assigned_at
-                    ? new Date(carcasse.fei_svi_assigned_at).toLocaleDateString('fr-FR', {
+                  {carcasse.svi_assigned_at
+                    ? new Date(carcasse.svi_assigned_at).toLocaleDateString('fr-FR', {
                         day: '2-digit',
                         month: '2-digit',
                         year: 'numeric',
@@ -1020,7 +1023,7 @@ export default function EtgCarcasses() {
               </div>
               <div>
                 <span className="font-semibold">Archivé: </span>
-                <span>{carcasse.svi_carcasse_archived ? 'Oui' : 'Non'}</span>
+                <span>{isCarcasseSviArchived(carcasse) ? 'Oui' : 'Non'}</span>
               </div>
               <div>
                 <span className="font-semibold">Fiche: </span>

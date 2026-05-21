@@ -36,64 +36,64 @@ enum UserNotifications {
 }
 
 model User {
-  id                             String                         @id // new ShortUniqueId({ length: 5, dictionary: "alphanum_upper" }).randomUUID() so that we can use it in FEI numbers (36^5 = 60M possibilities)
-  email                          String?                        @unique // email is optional, we can have users without email like the Collecteur Pro
-  telephone                      String?
-  prenom                         String?
-  nom_de_famille                 String?
-  numero_cfei                    String? // Chasseur Formé à l'Examen Initial (de la forme CFEI-DEP-YY-001)
-  est_forme_a_l_examen_initial   Boolean?
-  prochain_bracelet_a_utiliser   Int?                           @default(1)
-  addresse_ligne_1               String?
-  addresse_ligne_2               String?
-  code_postal                    String?
-  ville                          String?
-  user_entities_vivible_checkbox Boolean?
-  roles                          UserRoles[]
-  role                           UserRoles? // TODO: migrate from roles, in another PR
-  isZacharieAdmin                Boolean                        @default(false)
-  etg_role                       UserEtgRoles                   @default(RECEPTION)
-  created_at                     DateTime                       @default(now())
-  updated_at                     DateTime                       @default(now()) @updatedAt
-  last_login_at                  DateTime?
-  last_seen_at                   DateTime?
-  deleted_at                     DateTime?
-  onboarded_at                   DateTime?
-  notifications                  UserNotifications[]            @default([EMAIL, PUSH])
-  web_push_tokens                String[]
-  native_push_tokens             String[]
-  prefilled                      Boolean                        @default(false)
-  activated                      Boolean                        @default(false)
-  activated_at                   DateTime?
-  is_synced                      Boolean                        @default(true) // just for typing purppose with zustand frontend
-  brevo_contact_id               Int?
-  at_least_one_fei_treated       DateTime?
-  checked_has_asso_de_chasse     DateTime?
-  checked_has_ccg                DateTime?
-  checked_has_partenaires        DateTime?
-  onboarding_chasse_info_done_at DateTime?
+  id                                    String                         @id // new ShortUniqueId({ length: 5, dictionary: "alphanum_upper" }).randomUUID() so that we can use it in FEI numbers (36^5 = 60M possibilities)
+  email                                 String?                        @unique // email is optional, we can have users without email like the Collecteur Pro
+  telephone                             String?
+  prenom                                String?
+  nom_de_famille                        String?
+  numero_cfei                           String? // Chasseur Formé à l'Examen Initial (de la forme CFEI-DEP-YY-001)
+  est_forme_a_l_examen_initial          Boolean?
+  prochain_bracelet_a_utiliser          Int?                           @default(1)
+  addresse_ligne_1                      String?
+  addresse_ligne_2                      String?
+  code_postal                           String?
+  ville                                 String?
+  user_entities_vivible_checkbox        Boolean?
+  roles                                 UserRoles[]
+  role                                  UserRoles? // TODO: migrate from roles, in another PR
+  isZacharieAdmin                       Boolean                        @default(false)
+  etg_role                              UserEtgRoles                   @default(RECEPTION)
+  created_at                            DateTime                       @default(now())
+  updated_at                            DateTime                       @default(now()) @updatedAt
+  last_login_at                         DateTime?
+  last_seen_at                          DateTime?
+  deleted_at                            DateTime?
+  onboarded_at                          DateTime?
+  notifications                         UserNotifications[]            @default([EMAIL, PUSH])
+  web_push_tokens                       String[]
+  native_push_tokens                    String[]
+  prefilled                             Boolean                        @default(false)
+  activated                             Boolean                        @default(false)
+  activated_at                          DateTime?
+  is_synced                             Boolean                        @default(true) // just for typing purppose with zustand frontend
+  brevo_contact_id                      Int?
+  at_least_one_fei_treated              DateTime?
+  checked_has_asso_de_chasse            DateTime?
+  checked_has_ccg                       DateTime?
+  checked_has_partenaires               DateTime?
+  onboarding_chasse_info_done_at        DateTime?
   // Scope géographique pour les rôles FDC/FRC/FNC (dashboard de pilotage des fédérations).
   // FDC = 1 code dept ; FRC = depts de la région ; FNC = [] (= national, tous les depts).
-  scope_departements_codes       String[]
-  Password                       Password?
-  UserRelationsAsOwner           UserRelations[]                @relation("UserOwnerOfUserRelation")
-  UserRelationsAsRelated         UserRelations[]                @relation("UserRelatedOfUserRelation")
-  EntityAndUserRelations         EntityAndUserRelations[]       @relation("UserRelatedWithEntity")
-  FeiCreatedByUser               Fei[]                          @relation("FeiCreatedByUser")
-  FeiCurrentUser                 Fei[]                          @relation("FeiCurrentUser")
-  FeiPremierDetenteurUser        Fei[]                          @relation("FeiPremierDetenteurUser")
-  FeiExaminateurInitialUser      Fei[]                          @relation("FeiExaminateurInitialUser")
-  FeiSviUser                     Fei[]                          @relation("FeiSviUser")
-  FeiSviUserClosedBy             Fei[]                          @relation("FeiSviUserClosedBy")
-  NotificationLog                NotificationLog[]
-  CarcasseIntermediaire          CarcasseIntermediaire[]        @relation("CarcasseIntermediaireUser")
-  FeiNextUser                    Fei[]                          @relation("FeiNextUser")
-  FeiSoustraiteByUser            Fei[]                          @relation("FeiSoustraiteByUser")
-  CarcassesIpm1                  Carcasse[]                     @relation("SviIpm1User")
-  ApiKeyApprovalByUser           ApiKeyApprovalByUserOrEntity[]
-  ApiKeyLog                      ApiKeyLog[]
-  CarcasseModificationRequestsRequested CarcasseModificationRequest[] @relation("ModifRequestedByUser")
-  CarcasseModificationRequestsReviewed  CarcasseModificationRequest[] @relation("ModifReviewedByUser")
+  scope_departements_codes              String[]
+  Password                              Password?
+  UserRelationsAsOwner                  UserRelations[]                @relation("UserOwnerOfUserRelation")
+  UserRelationsAsRelated                UserRelations[]                @relation("UserRelatedOfUserRelation")
+  EntityAndUserRelations                EntityAndUserRelations[]       @relation("UserRelatedWithEntity")
+  FeiCreatedByUser                      Fei[]                          @relation("FeiCreatedByUser")
+  FeiCurrentUser                        Fei[]                          @relation("FeiCurrentUser")
+  FeiPremierDetenteurUser               Fei[]                          @relation("FeiPremierDetenteurUser")
+  FeiExaminateurInitialUser             Fei[]                          @relation("FeiExaminateurInitialUser")
+  FeiSviUser                            Fei[]                          @relation("FeiSviUser")
+  FeiSviUserClosedBy                    Fei[]                          @relation("FeiSviUserClosedBy")
+  NotificationLog                       NotificationLog[]
+  CarcasseIntermediaire                 CarcasseIntermediaire[]        @relation("CarcasseIntermediaireUser")
+  FeiNextUser                           Fei[]                          @relation("FeiNextUser")
+  FeiSoustraiteByUser                   Fei[]                          @relation("FeiSoustraiteByUser")
+  CarcassesIpm1                         Carcasse[]                     @relation("SviIpm1User")
+  ApiKeyApprovalByUser                  ApiKeyApprovalByUserOrEntity[]
+  ApiKeyLog                             ApiKeyLog[]
+  CarcasseModificationRequestsRequested CarcasseModificationRequest[]  @relation("ModifRequestedByUser")
+  CarcasseModificationRequestsReviewed  CarcasseModificationRequest[]  @relation("ModifReviewedByUser")
 
   @@index([id])
   @@index([email])
@@ -118,51 +118,51 @@ enum EntityTypes {
 }
 
 model Entity {
-  id                         String                         @id @default(uuid())
+  id                                    String                         @id @default(uuid())
   // NO EMAIL: an entity needs AT LEAST one user
-  raison_sociale             String?
-  nom_d_usage                String?
-  address_ligne_1            String?
-  address_ligne_2            String?
-  code_postal                String?
-  ville                      String?
-  siret                      String?
-  nom_prenom_responsable     String?
-  prefecture_svi             String?
-  ccg_status                 String?
-  etg_linked_to_svi_id       String? // the SVI id that is linked to this entity
-  zacharie_compatible        Boolean                        @default(false)
-  numero_ddecpp              String?                        @unique
-  inc_certificat             Int?                           @default(0)
-  inc_decision               Int?                           @default(0)
-  code_etbt_certificat       String?                        @unique // Il pourrait s'agir d'un code court unique qui identifie l’établissement (exemple : 01 pour Villette viandes, 02 pour Nemrod et 03 pour Guellier).
-  type                       EntityTypes
-  created_at                 DateTime                       @default(now())
-  updated_at                 DateTime                       @default(now()) @updatedAt
-  deleted_at                 DateTime?
-  onboarded_at               DateTime?
-  prefilled                  Boolean                        @default(false)
-  is_synced                  Boolean                        @default(true) // just for typing purppose with zustand frontend
-  for_testing                Boolean                        @default(false)
+  raison_sociale                        String?
+  nom_d_usage                           String?
+  address_ligne_1                       String?
+  address_ligne_2                       String?
+  code_postal                           String?
+  ville                                 String?
+  siret                                 String?
+  nom_prenom_responsable                String?
+  prefecture_svi                        String?
+  ccg_status                            String?
+  etg_linked_to_svi_id                  String? // the SVI id that is linked to this entity
+  zacharie_compatible                   Boolean                        @default(false)
+  numero_ddecpp                         String?                        @unique
+  inc_certificat                        Int?                           @default(0)
+  inc_decision                          Int?                           @default(0)
+  code_etbt_certificat                  String?                        @unique // Il pourrait s'agir d'un code court unique qui identifie l’établissement (exemple : 01 pour Villette viandes, 02 pour Nemrod et 03 pour Guellier).
+  type                                  EntityTypes
+  created_at                            DateTime                       @default(now())
+  updated_at                            DateTime                       @default(now()) @updatedAt
+  deleted_at                            DateTime?
+  onboarded_at                          DateTime?
+  prefilled                             Boolean                        @default(false)
+  is_synced                             Boolean                        @default(true) // just for typing purppose with zustand frontend
+  for_testing                           Boolean                        @default(false)
   // for brevo
-  brevo_id                   String?
-  at_least_one_fei_treated   DateTime?
+  brevo_id                              String?
+  at_least_one_fei_treated              DateTime?
   // relations
-  EntityRelationsWithUsers   EntityAndUserRelations[]       @relation("EntityRelatedWithUser")
-  FeisCurrentEntity          Fei[]                          @relation("FeiCurrentEntity")
-  FeisNextEntity             Fei[]                          @relation("FeiNextEntity")
-  FeisSoustraiteByEntity     Fei[]                          @relation("FeiSoustraiteByEntity")
-  FeisDepotEntity            Fei[]                          @relation("FeiDepotEntity")
-  FeisPremierDetenteurEntity Fei[]                          @relation("FeiPremierDetenteurEntity")
-  FeisSviEntity              Fei[]                          @relation("FeiSviEntity")
-  CarcassesSviEntity         Carcasse[]                     @relation("CarcasseSviEntity")
-  CarcasseIntermediaires     CarcasseIntermediaire[]        @relation("CarcasseIntermediaireEntity")
-  ApiKeyApprovals            ApiKeyApprovalByUserOrEntity[]
-  ApiKeyLogs                 ApiKeyLog[]
-  ApiKeys                    ApiKey[]                       @relation("EntityRelatedWithApiKey")
-  SviOfETG                   Entity?                        @relation("etg_linked_to_svi_id", fields: [etg_linked_to_svi_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  EtgsLinkedToMySVI          Entity[]                       @relation("etg_linked_to_svi_id")
-  CarcasseModificationRequestsRequested CarcasseModificationRequest[] @relation("ModifRequestedByEntity")
+  EntityRelationsWithUsers              EntityAndUserRelations[]       @relation("EntityRelatedWithUser")
+  FeisCurrentEntity                     Fei[]                          @relation("FeiCurrentEntity")
+  FeisNextEntity                        Fei[]                          @relation("FeiNextEntity")
+  FeisSoustraiteByEntity                Fei[]                          @relation("FeiSoustraiteByEntity")
+  FeisDepotEntity                       Fei[]                          @relation("FeiDepotEntity")
+  FeisPremierDetenteurEntity            Fei[]                          @relation("FeiPremierDetenteurEntity")
+  FeisSviEntity                         Fei[]                          @relation("FeiSviEntity")
+  CarcassesSviEntity                    Carcasse[]                     @relation("CarcasseSviEntity")
+  CarcasseIntermediaires                CarcasseIntermediaire[]        @relation("CarcasseIntermediaireEntity")
+  ApiKeyApprovals                       ApiKeyApprovalByUserOrEntity[]
+  ApiKeyLogs                            ApiKeyLog[]
+  ApiKeys                               ApiKey[]                       @relation("EntityRelatedWithApiKey")
+  SviOfETG                              Entity?                        @relation("etg_linked_to_svi_id", fields: [etg_linked_to_svi_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  EtgsLinkedToMySVI                     Entity[]                       @relation("etg_linked_to_svi_id")
+  CarcasseModificationRequestsRequested CarcasseModificationRequest[]  @relation("ModifRequestedByEntity")
 
   @@index([updated_at]) // Time-based ordering
   @@index([nom_d_usage]) // Name-based ordering
@@ -293,8 +293,8 @@ enum FeiOwnerRole {
 model Fei {
   id                                                      Int                     @id @default(autoincrement())
   /**
-  * metadata
-  */
+   * metadata
+   */
   numero                                                  String                  @unique
   date_mise_a_mort                                        DateTime?               @db.Date // et éviscération
   commune_mise_a_mort                                     String?
@@ -303,58 +303,84 @@ model Fei {
   created_by_user_id                                      String
   creation_context                                        String?                 @default("zacharie") // zacharie, api 
   resume_nombre_de_carcasses                              String?
+  /// @deprecated — automatic closed at now lives on Carcasse
   automatic_closed_at                                     DateTime?
   /**
-  * examinateur initial
-  */
+   * examinateur initial
+   */
   examinateur_initial_offline                             Boolean? // was the examinateur initial offline when the fei was created
   examinateur_initial_user_id                             String?
   examinateur_initial_approbation_mise_sur_le_marche      Boolean?
   examinateur_initial_date_approbation_mise_sur_le_marche DateTime?
+  /// @deprecated — consommateur final usage now lives on Carcasse
   consommateur_final_usage_domestique                     DateTime?
   /**
-  * premier detenteur
-  */
+   * premier detenteur
+   */
   premier_detenteur_offline                               Boolean? // was the premier detenteur offline when the fei was completed
   premier_detenteur_user_id                               String?
   premier_detenteur_entity_id                             String?
   premier_detenteur_name_cache                            String?
+  /// @deprecated — premier detenteur depot type now lives on Carcasse
   premier_detenteur_depot_type                            DepotType? // CCG, ETG, AUCUN
+  /// @deprecated — premier detenteur depot entity id now lives on Carcasse
   premier_detenteur_depot_entity_id                       String?
+  /// @deprecated — premier detenteur depot entity name cache now lives on Carcasse
   premier_detenteur_depot_entity_name_cache               String?
+  /// @deprecated — premier detenteur depot cg at now lives on Carcasse
   premier_detenteur_depot_ccg_at                          DateTime?
+  /// @deprecated — premier detenteur transport type now lives on Carcasse
   premier_detenteur_transport_type                        TransportType?
+  /// @deprecated — premier detenteur transport date now lives on Carcasse
   premier_detenteur_transport_date                        DateTime?
+  /// @deprecated — premier detenteur prochain detenteur role now lives on Carcasse
   premier_detenteur_prochain_detenteur_role_cache         FeiOwnerRole?
+  /// @deprecated — premier detenteur prochain detenteur id now lives on Carcasse
   premier_detenteur_prochain_detenteur_id_cache           String? // Entity id
   /**
-  * intermediaire
-  */
+   * intermediaire
+   */
+  /// @deprecated — intermediaire now lives on Carcasse
   intermediaire_closed_at                                 DateTime? // si toutes les carcasses sont rejetées/manquantes
+  /// @deprecated — intermediaire now lives on Carcasse
   intermediaire_closed_by_user_id                         String?
+  /// @deprecated — intermediaire now lives on Carcasse
   intermediaire_closed_by_entity_id                       String?
   /**
-  * latest-intermediaire
-  */
+   * latest-intermediaire
+   */
+  /// @deprecated — latest-intermediaire now lives on Carcasse
   latest_intermediaire_user_id                            String?
+  /// @deprecated — latest-intermediaire now lives on Carcasse
   latest_intermediaire_entity_id                          String?
+  /// @deprecated — latest-intermediaire now lives on Carcasse
   latest_intermediaire_name_cache                         String?
   /**
-  * svi
-  */
+   * svi
+   */
+  /// @deprecated — svi now lives on Carcasse
   svi_assigned_at                                         DateTime?
+  /// @deprecated — svi now lives on Carcasse
   svi_entity_id                                           String?
+  /// @deprecated — svi now lives on Carcasse
   svi_user_id                                             String?
+  /// @deprecated — svi now lives on Carcasse
   svi_closed_at                                           DateTime?
+  /// @deprecated — svi now lives on Carcasse
   svi_closed_by_user_id                                   String?
   /**
-  * owners
-  * @deprecated — transmission now lives on Carcasse. These fields are dual-written for retrocompat.
-  */
+   * owners
+   * @deprecated — transmission now lives on Carcasse. These fields are dual-written for retrocompat.
+   */
+  /// @deprecated — transmission now lives on Carcasse
   fei_current_owner_user_id                               String?
+  /// @deprecated — transmission now lives on Carcasse
   fei_current_owner_user_name_cache                       String?
+  /// @deprecated — transmission now lives on Carcasse
   fei_current_owner_entity_id                             String?
+  /// @deprecated — transmission now lives on Carcasse
   fei_current_owner_entity_name_cache                     String?
+  /// @deprecated — transmission now lives on Carcasse
   fei_current_owner_role                                  FeiOwnerRole?
   /// @deprecated — transmission now lives on Carcasse
   fei_next_owner_wants_to_sous_traite                     Boolean?
@@ -381,15 +407,15 @@ model Fei {
   /// @deprecated — transmission now lives on Carcasse
   fei_prev_owner_role                                     FeiOwnerRole?
   /**
-  * timestamps
-  */
+   * timestamps
+   */
   created_at                                              DateTime                @default(now())
   updated_at                                              DateTime                @default(now()) @updatedAt
   deleted_at                                              DateTime?
   is_synced                                               Boolean                 @default(true)
   /**
-  * relations
-  */
+   * relations
+   */
   Carcasses                                               Carcasse[]
   FeiCreatedByUser                                        User                    @relation("FeiCreatedByUser", fields: [created_by_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   FeiPremierDetenteurUser                                 User?                   @relation("FeiPremierDetenteurUser", fields: [premier_detenteur_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
@@ -473,10 +499,10 @@ enum PoidsType {
 }
 
 model Carcasse {
-  zacharie_carcasse_id                                    String                  @id // {fei_numero}_{numero_bracelet}
-  numero_bracelet                                         String // bracelet is not unique in all France, that's why we need the zacharie_carcasse_id
+  zacharie_carcasse_id                                    String                        @id // {fei_numero}_{numero_bracelet}
+  numero_bracelet                                         String // marquage is not unique in all France, that's why we need the zacharie_carcasse_id
   fei_numero                                              String
-  date_mise_a_mort                                        DateTime?               @db.Date // et éviscération
+  date_mise_a_mort                                        DateTime?                     @db.Date // et éviscération
   espece                                                  String? // Sanglier, Cerf, etc.
   type                                                    CarcasseType?
   nombre_d_animaux                                        Int?
@@ -486,18 +512,18 @@ model Carcasse {
   heure_evisceration_derniere_carcasse_fei                String?
   consommateur_final_usage_domestique                     DateTime?
   /**
-  * EXAMINATEUR
-  */
+   * EXAMINATEUR
+   */
   examinateur_carcasse_sans_anomalie                      Boolean?
   examinateur_anomalies_carcasse                          String[]
   examinateur_anomalies_abats                             String[]
   examinateur_commentaire                                 String?
   examinateur_signed_at                                   DateTime?
   /**
-  * PREMIER DETENTEUR
-  * duplicatas des champs de Fei
-  * anticipation des circuits courts où on pourra envoyer des carcasses éparpillées, d'un même examen initial,
-  */
+   * PREMIER DETENTEUR
+   * duplicatas des champs de Fei
+   * anticipation des circuits courts où on pourra envoyer des carcasses éparpillées, d'un même examen initial,
+   */
   premier_detenteur_depot_type                            DepotType? // CCG, ETG, AUCUN
   premier_detenteur_depot_entity_id                       String?
   premier_detenteur_depot_entity_name_cache               String?
@@ -507,22 +533,22 @@ model Carcasse {
   premier_detenteur_prochain_detenteur_role_cache         FeiOwnerRole?
   premier_detenteur_prochain_detenteur_id_cache           String? // Entity id
   /**
-  * INTERMEDIAIRE
-  */
+   * INTERMEDIAIRE
+   */
   intermediaire_carcasse_refus_intermediaire_id           String?
   intermediaire_carcasse_refus_motif                      String?
   intermediaire_carcasse_manquante                        Boolean?
   latest_intermediaire_signed_at                          DateTime?
   /**
-  * SVI
-  */
+   * SVI
+   */
   svi_assigned_to_fei_at                                  DateTime? // same as svi_assigned_at in fei
   svi_carcasse_commentaire                                String? // cache of ipm1 and ipm2 comments
   svi_carcasse_status                                     CarcasseStatus?
   svi_carcasse_status_set_at                              DateTime?
   /**
-  * SVI IPM1
-  */
+   * SVI IPM1
+   */
   svi_ipm1_date                                           DateTime?
   svi_ipm1_presentee_inspection                           Boolean?
   svi_ipm1_user_id                                        String?
@@ -538,8 +564,8 @@ model Carcasse {
   svi_ipm1_poids_type                                     PoidsType?
   svi_ipm1_signed_at                                      DateTime?
   /**
-  * SVI IPM2
-  */
+   * SVI IPM2
+   */
   svi_ipm2_date                                           DateTime?
   svi_ipm2_presentee_inspection                           Boolean?
   svi_ipm2_user_id                                        String?
@@ -563,8 +589,8 @@ model Carcasse {
   svi_ipm2_poids_type                                     PoidsType?
   svi_ipm2_signed_at                                      DateTime?
   /**
-  * OWNERSHIP FIELDS (copied from FEI for carcasse-level ownership tracking)
-  */
+   * OWNERSHIP FIELDS (copied from FEI for carcasse-level ownership tracking)
+   */
   // Created By
   created_by_user_id                                      String?
   // Examinateur Initial
@@ -612,15 +638,15 @@ model Carcasse {
   prev_owner_entity_id                                    String?
   prev_owner_role                                         FeiOwnerRole?
   // technical fields
-  created_at                                              DateTime                @default(now())
-  updated_at                                              DateTime                @default(now()) @updatedAt
+  created_at                                              DateTime                      @default(now())
+  updated_at                                              DateTime                      @default(now()) @updatedAt
   deleted_at                                              DateTime?
-  is_synced                                               Boolean                 @default(true)
-  Fei                                                     Fei                     @relation(fields: [fei_numero], references: [numero], onDelete: Cascade, onUpdate: Cascade)
+  is_synced                                               Boolean                       @default(true)
+  Fei                                                     Fei                           @relation(fields: [fei_numero], references: [numero], onDelete: Cascade, onUpdate: Cascade)
   CarcasseIntermediaire                                   CarcasseIntermediaire[]
-  SviIpm1User                                             User?                   @relation("SviIpm1User", fields: [svi_ipm1_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  SviIpm1User                                             User?                         @relation("SviIpm1User", fields: [svi_ipm1_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   CarcasseCertificats                                     CarcasseCertificat[]
-  CarcasseSviEntity                                       Entity?                 @relation("CarcasseSviEntity", fields: [svi_entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  CarcasseSviEntity                                       Entity?                       @relation("CarcasseSviEntity", fields: [svi_entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   CarcasseModificationRequests                            CarcasseModificationRequest[] @relation("CarcasseModificationRequestCarcasse")
 
   @@index([fei_numero, numero_bracelet])
@@ -694,8 +720,8 @@ model CarcasseIntermediaire {
   intermediaire_poids                         Float?
   nombre_d_animaux_acceptes                   Int?
   /**
-  * new fields
-  */
+   * new fields
+   */
   decision_at                                 DateTime? // replace carcasse_check_finished_at
   prise_en_charge_at                          DateTime? // FeiIntermediaire.check_finished_at
   intermediaire_id                            String // {user_id}_{fei_numero}_{HHMMSS} // because a user could be multiple times intermediaire for a same fei
@@ -875,7 +901,7 @@ model QuizResult {
 
 // Modification d'une carcasse demandée par un intermédiaire, approuvée ou refusée par l'examinateur initial.
 // Deux types :
-//   - BRACELET_RENAME : le numéro de bracelet sur la fiche ne correspond pas au numéro physique
+//   - BRACELET_RENAME : le numéro de marquage sur la fiche ne correspond pas au numéro physique
 //   - NEW_CARCASSE    : une carcasse physique manque dans la fiche ; l'intermédiaire pré-remplit, l'examinateur signe l'examen
 enum CarcasseModificationRequestType {
   BRACELET_RENAME
@@ -915,12 +941,12 @@ model CarcasseModificationRequest {
   RequestedByUser   User     @relation("ModifRequestedByUser", fields: [requested_by_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   RequestedByEntity Entity   @relation("ModifRequestedByEntity", fields: [requested_by_entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   ReviewedByUser    User?    @relation("ModifReviewedByUser", fields: [reviewed_by_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-
-  @@index([zacharie_carcasse_id])
-  @@index([reviewed_by_user_id, status])
   // Unicité "un seul PENDING par carcasse" : à ajouter manuellement dans la migration via SQL
   // (Prisma ne supporte pas les index uniques partiels) :
   //   CREATE UNIQUE INDEX "carcasse_one_pending_request"
   //   ON "CarcasseModificationRequest" (zacharie_carcasse_id)
   //   WHERE status = 'PENDING' AND deleted_at IS NULL;
+
+  @@index([zacharie_carcasse_id])
+  @@index([reviewed_by_user_id, status])
 }

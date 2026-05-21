@@ -4,7 +4,7 @@ import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
 import { computeFeiSteps } from '../src/utils/fei-steps';
 import { FeiWithIntermediaires } from '../../api-express/src/types/fei';
 import { FeiIntermediaire } from '../src/types/fei-intermediaire';
-import { User, UserRoles, FeiOwnerRole, UserEtgRoles } from '@prisma/client';
+import { Carcasse, User, UserRoles, FeiOwnerRole, UserEtgRoles } from '@prisma/client';
 
 // Mock the Sentry capture function using vi.hoisted()
 const mockCapture = vi.hoisted(() => vi.fn());
@@ -117,6 +117,40 @@ const createMockFei = (overrides: Partial<FeiWithIntermediaires> = {}): FeiWithI
   ...overrides,
 });
 
+const createMockCarcasse = (overrides: Partial<Carcasse> = {}): Carcasse =>
+  ({
+    zacharie_carcasse_id: 'FEI-2024-001_BR001',
+    numero_bracelet: 'BR001',
+    fei_numero: 'FEI-2024-001',
+    examinateur_anomalies_carcasse: [],
+    examinateur_anomalies_abats: [],
+    svi_ipm1_pieces: [],
+    svi_ipm1_lesions_ou_motifs: [],
+    svi_ipm2_pieces: [],
+    svi_ipm2_lesions_ou_motifs: [],
+    svi_ipm2_traitement_assainissant: [],
+    consommateur_final_usage_domestique: null,
+    automatic_closed_at: null,
+    intermediaire_closed_at: null,
+    svi_assigned_at: null,
+    svi_closed_at: null,
+    current_owner_role: null,
+    current_owner_user_id: null,
+    current_owner_entity_id: null,
+    next_owner_role: null,
+    next_owner_user_id: null,
+    next_owner_entity_id: null,
+    next_owner_entity_name_cache: null,
+    next_owner_sous_traite_by_entity_id: null,
+    prev_owner_entity_id: null,
+    premier_detenteur_prochain_detenteur_role_cache: null,
+    created_at: new Date(),
+    updated_at: new Date(),
+    deleted_at: null,
+    is_synced: true,
+    ...overrides,
+  }) as unknown as Carcasse;
+
 const createMockIntermediaire = (overrides: Partial<FeiIntermediaire> = {}): FeiIntermediaire => ({
   id: 'user-1_123456',
   created_at: new Date(),
@@ -135,6 +169,7 @@ const createMockIntermediaire = (overrides: Partial<FeiIntermediaire> = {}): Fei
 describe('computeFeiSteps', () => {
   const defaultParams = {
     entitiesIdsWorkingDirectlyFor: [],
+    carcasses: [createMockCarcasse()],
   };
 
   beforeEach(() => {
@@ -183,15 +218,14 @@ describe('computeFeiSteps', () => {
     });
 
     test('should not add ETG/SVI steps when intermediaire is closed', () => {
-      const fei = createMockFei({
-        intermediaire_closed_at: new Date(),
-      });
+      const fei = createMockFei();
 
       const result = computeFeiSteps({
         fei,
         intermediaires: [],
         user: null,
         ...defaultParams,
+        carcasses: [createMockCarcasse({ intermediaire_closed_at: new Date() })],
       });
 
       expect(result.steps).toHaveLength(2); // only examinateur, premier_detenteur
@@ -221,64 +255,66 @@ describe('computeFeiSteps', () => {
 
   describe('Current step calculation', () => {
     test('should return step 1 for examinateur initial', () => {
-      const fei = createMockFei({
-        fei_current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
-      });
+      const fei = createMockFei();
 
       const result = computeFeiSteps({
         fei,
         intermediaires: [],
         user: null,
         ...defaultParams,
+        carcasses: [createMockCarcasse({ current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL })],
       });
 
       expect(result.currentStep).toBe(1);
     });
 
     test('should return step 2 for premier detenteur', () => {
-      const fei = createMockFei({
-        fei_current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
-      });
+      const fei = createMockFei();
 
       const result = computeFeiSteps({
         fei,
         intermediaires: [],
         user: null,
         ...defaultParams,
+        carcasses: [createMockCarcasse({ current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR })],
       });
 
       expect(result.currentStep).toBe(2);
     });
 
     test('should return last step when SVI is assigned', () => {
-      const fei = createMockFei({
-        svi_assigned_at: new Date(),
-        fei_current_owner_role: FeiOwnerRole.SVI,
-      });
+      const fei = createMockFei();
 
       const result = computeFeiSteps({
         fei,
         intermediaires: [],
         user: null,
         ...defaultParams,
+        carcasses: [
+          createMockCarcasse({
+            svi_assigned_at: new Date(),
+            current_owner_role: FeiOwnerRole.SVI,
+          }),
+        ],
       });
 
       expect(result.currentStep).toBe(result.steps.length);
     });
 
     test('should return last step when intermediaire is closed', () => {
-      const fei = createMockFei({
-        intermediaire_closed_at: new Date(),
-        // When intermediaire is closed, the current owner role should be set appropriately
-        // This depends on the business logic - could be ETG or another role after intermediaires
-        fei_current_owner_role: FeiOwnerRole.ETG, // or whatever role comes after intermediaires are closed
-      });
+      const fei = createMockFei();
 
       const result = computeFeiSteps({
         fei,
         intermediaires: [],
         user: null,
         ...defaultParams,
+        carcasses: [
+          createMockCarcasse({
+            intermediaire_closed_at: new Date(),
+            current_owner_role: FeiOwnerRole.ETG,
+          }),
+        ],
       });
 
       expect(result.currentStep).toBe(result.steps.length);
@@ -287,88 +323,92 @@ describe('computeFeiSteps', () => {
 
   describe('Current step labels', () => {
     test('should return "Clôturée" when fei is closed', () => {
-      const fei = createMockFei({
-        automatic_closed_at: new Date(),
-      });
+      const fei = createMockFei();
 
       const result = computeFeiSteps({
         fei,
         intermediaires: [],
         user: null,
         ...defaultParams,
+        carcasses: [createMockCarcasse({ automatic_closed_at: new Date() } as Partial<Carcasse>)],
       });
 
       expect(result.currentStepLabel).toBe('Clôturée');
     });
 
     test('should return "Examen initial" for examinateur initial', () => {
-      const fei = createMockFei({
-        fei_current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
-      });
+      const fei = createMockFei();
 
       const result = computeFeiSteps({
         fei,
         intermediaires: [],
         user: null,
         ...defaultParams,
+        carcasses: [createMockCarcasse({ current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL })],
       });
 
       expect(result.currentStepLabel).toBe('Examen initial');
     });
 
     test('should return "Validation par le premier détenteur" when no next owner', () => {
-      const fei = createMockFei({
-        fei_current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
-        fei_next_owner_role: null,
-      });
+      const fei = createMockFei();
 
       const result = computeFeiSteps({
         fei,
         intermediaires: [],
         user: null,
         ...defaultParams,
+        carcasses: [
+          createMockCarcasse({
+            current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+            next_owner_role: null,
+          }),
+        ],
       });
 
       expect(result.currentStepLabel).toBe('Validation par le premier détenteur');
     });
 
     test('should return "Fiche envoyée, pas encore traitée" when next owner exists', () => {
-      const fei = createMockFei({
-        fei_current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
-        fei_next_owner_role: FeiOwnerRole.COLLECTEUR_PRO,
-      });
+      const fei = createMockFei();
 
       const result = computeFeiSteps({
         fei,
         intermediaires: [],
         user: null,
         ...defaultParams,
+        carcasses: [
+          createMockCarcasse({
+            current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+            next_owner_role: FeiOwnerRole.COLLECTEUR_PRO,
+          }),
+        ],
       });
 
       expect(result.currentStepLabel).toBe('Fiche envoyée, pas encore traitée');
     });
 
     test('should return "Inspection par le SVI" when SVI is assigned', () => {
-      const fei = createMockFei({
-        svi_assigned_at: new Date(),
-        fei_current_owner_role: FeiOwnerRole.SVI,
-      });
+      const fei = createMockFei();
 
       const result = computeFeiSteps({
         fei,
         intermediaires: [],
         user: null,
         ...defaultParams,
+        carcasses: [
+          createMockCarcasse({
+            svi_assigned_at: new Date(),
+            current_owner_role: FeiOwnerRole.SVI,
+          }),
+        ],
       });
 
       expect(result.currentStepLabel).toBe('Inspection par le SVI');
     });
 
     test('should return "Transport" for collecteur pro', () => {
-      const fei = createMockFei({
-        fei_current_owner_role: FeiOwnerRole.COLLECTEUR_PRO,
-        fei_current_owner_entity_id: 'collecteur-entity',
-      });
+      const fei = createMockFei();
       const intermediaires = [
         createMockIntermediaire({
           intermediaire_role: FeiOwnerRole.COLLECTEUR_PRO,
@@ -381,16 +421,19 @@ describe('computeFeiSteps', () => {
         intermediaires,
         user: null,
         ...defaultParams,
+        carcasses: [
+          createMockCarcasse({
+            current_owner_role: FeiOwnerRole.COLLECTEUR_PRO,
+            current_owner_entity_id: 'collecteur-entity',
+          }),
+        ],
       });
 
       expect(result.currentStepLabel).toBe('Transport');
     });
 
     test('should return "Réception par un établissement de traitement" for ETG', () => {
-      const fei = createMockFei({
-        fei_current_owner_role: FeiOwnerRole.ETG,
-        fei_current_owner_entity_id: 'etg-entity',
-      });
+      const fei = createMockFei();
       const intermediaires = [
         createMockIntermediaire({
           id: 'etg-user_123456',
@@ -404,6 +447,12 @@ describe('computeFeiSteps', () => {
         intermediaires,
         user: null,
         ...defaultParams,
+        carcasses: [
+          createMockCarcasse({
+            current_owner_role: FeiOwnerRole.ETG,
+            current_owner_entity_id: 'etg-entity',
+          }),
+        ],
       });
 
       expect(result.currentStepLabel).toBe('Réception par un établissement de traitement');
@@ -412,47 +461,52 @@ describe('computeFeiSteps', () => {
 
   describe('Next step labels', () => {
     test('should return correct next step for examen initial', () => {
-      const fei = createMockFei({
-        fei_current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
-      });
+      const fei = createMockFei();
 
       const result = computeFeiSteps({
         fei,
         intermediaires: [],
         user: null,
         ...defaultParams,
+        carcasses: [createMockCarcasse({ current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL })],
       });
 
       expect(result.nextStepLabel).toBe('Validation par le premier détenteur');
     });
 
     test('should return correct next step for premier detenteur', () => {
-      const fei = createMockFei({
-        fei_current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
-        fei_next_owner_role: null,
-      });
+      const fei = createMockFei();
 
       const result = computeFeiSteps({
         fei,
         intermediaires: [],
         user: null,
         ...defaultParams,
+        carcasses: [
+          createMockCarcasse({
+            current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+            next_owner_role: null,
+          }),
+        ],
       });
 
       expect(result.nextStepLabel).toBe('Transport vers un établissement de traitement');
     });
 
     test('should return "Clôturée" for SVI inspection', () => {
-      const fei = createMockFei({
-        svi_assigned_at: new Date(),
-        fei_current_owner_role: FeiOwnerRole.SVI,
-      });
+      const fei = createMockFei();
 
       const result = computeFeiSteps({
         fei,
         intermediaires: [],
         user: null,
         ...defaultParams,
+        carcasses: [
+          createMockCarcasse({
+            svi_assigned_at: new Date(),
+            current_owner_role: FeiOwnerRole.SVI,
+          }),
+        ],
       });
 
       expect(result.nextStepLabel).toBe('Clôturée');
@@ -464,31 +518,33 @@ describe('computeFeiSteps', () => {
       const examinateurInitialUser = createMockUser([UserRoles.CHASSEUR], '123456');
 
       test('should return "À compléter" for examen initial', () => {
-        const fei = createMockFei({
-          fei_current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
-        });
+        const fei = createMockFei();
 
         const result = computeFeiSteps({
           fei,
           intermediaires: [],
           user: examinateurInitialUser,
           ...defaultParams,
+          carcasses: [createMockCarcasse({ current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL })],
         });
 
         expect(result.simpleStatus).toBe('À compléter');
       });
 
       test('should return "En cours" for other steps', () => {
-        const fei = createMockFei({
-          svi_assigned_at: new Date(),
-          fei_current_owner_role: FeiOwnerRole.SVI,
-        });
+        const fei = createMockFei();
 
         const result = computeFeiSteps({
           fei,
           intermediaires: [],
           user: examinateurInitialUser,
           ...defaultParams,
+          carcasses: [
+            createMockCarcasse({
+              svi_assigned_at: new Date(),
+              current_owner_role: FeiOwnerRole.SVI,
+            }),
+          ],
         });
 
         expect(result.simpleStatus).toBe('En cours');
@@ -499,16 +555,19 @@ describe('computeFeiSteps', () => {
       const premierDetenteurUser = createMockUser([UserRoles.CHASSEUR]);
 
       test('should return "À compléter" for premier detenteur validation', () => {
-        const fei = createMockFei({
-          fei_current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
-          fei_next_owner_role: null,
-        });
+        const fei = createMockFei();
 
         const result = computeFeiSteps({
           fei,
           intermediaires: [],
           user: premierDetenteurUser,
           ...defaultParams,
+          carcasses: [
+            createMockCarcasse({
+              current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+              next_owner_role: null,
+            }),
+          ],
         });
 
         expect(result.simpleStatus).toBe('À compléter');
@@ -519,31 +578,33 @@ describe('computeFeiSteps', () => {
       const sviUser = createMockUser([UserRoles.SVI]);
 
       test('should return "À compléter" for SVI inspection', () => {
-        const fei = createMockFei({
-          svi_assigned_at: new Date(),
-          fei_current_owner_role: FeiOwnerRole.SVI,
-        });
+        const fei = createMockFei();
 
         const result = computeFeiSteps({
           fei,
           intermediaires: [],
           user: sviUser,
           ...defaultParams,
+          carcasses: [
+            createMockCarcasse({
+              svi_assigned_at: new Date(),
+              current_owner_role: FeiOwnerRole.SVI,
+            }),
+          ],
         });
 
         expect(result.simpleStatus).toBe('À compléter');
       });
 
       test('should return "En cours" for other steps', () => {
-        const fei = createMockFei({
-          fei_current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
-        });
+        const fei = createMockFei();
 
         const result = computeFeiSteps({
           fei,
           intermediaires: [],
           user: sviUser,
           ...defaultParams,
+          carcasses: [createMockCarcasse({ current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR })],
         });
 
         expect(result.simpleStatus).toBe('En cours');
@@ -558,65 +619,77 @@ describe('computeFeiSteps', () => {
       });
 
       test('should return "À compléter" when user works directly for next owner entity', () => {
-        const fei = createMockFei({
-          fei_current_owner_role: FeiOwnerRole.COLLECTEUR_PRO,
-          fei_next_owner_entity_id: 'entity-1',
-        });
+        const fei = createMockFei();
 
         const result = computeFeiSteps({
           fei,
           intermediaires: [collecteurProIntermediaire],
           user: collecteurProUser,
           entitiesIdsWorkingDirectlyFor: ['entity-1'],
+          carcasses: [
+            createMockCarcasse({
+              current_owner_role: FeiOwnerRole.COLLECTEUR_PRO,
+              next_owner_entity_id: 'entity-1',
+            }),
+          ],
         });
 
         expect(result.simpleStatus).toBe('À compléter');
       });
 
       test('should return "En cours" when user is COLLECTEUR_PRO works indirectly for next owner entity', () => {
-        const fei = createMockFei({
-          fei_current_owner_role: FeiOwnerRole.COLLECTEUR_PRO,
-          fei_next_owner_entity_id: 'entity-1',
-        });
+        const fei = createMockFei();
 
         const result = computeFeiSteps({
           fei,
           intermediaires: [collecteurProIntermediaire],
           user: collecteurProUser,
           entitiesIdsWorkingDirectlyFor: [],
+          carcasses: [
+            createMockCarcasse({
+              current_owner_role: FeiOwnerRole.COLLECTEUR_PRO,
+              next_owner_entity_id: 'entity-1',
+            }),
+          ],
         });
 
         expect(result.simpleStatus).toBe('En cours');
       });
 
       test('should return "En cours" when user does not work for next owner entity', () => {
-        const fei = createMockFei({
-          fei_current_owner_role: FeiOwnerRole.COLLECTEUR_PRO,
-          fei_next_owner_entity_id: 'entity-1',
-        });
+        const fei = createMockFei();
 
         const result = computeFeiSteps({
           fei,
           intermediaires: [collecteurProIntermediaire],
           user: collecteurProUser,
           entitiesIdsWorkingDirectlyFor: ['entity-2'],
+          carcasses: [
+            createMockCarcasse({
+              current_owner_role: FeiOwnerRole.COLLECTEUR_PRO,
+              next_owner_entity_id: 'entity-1',
+            }),
+          ],
         });
 
         expect(result.simpleStatus).toBe('En cours');
       });
 
       test('should return "À compléter" when user works for current owner entity', () => {
-        const fei = createMockFei({
-          fei_current_owner_role: FeiOwnerRole.COLLECTEUR_PRO,
-          fei_current_owner_entity_id: 'entity-1',
-          fei_next_owner_entity_id: null,
-        });
+        const fei = createMockFei();
 
         const result = computeFeiSteps({
           fei,
           intermediaires: [collecteurProIntermediaire],
           user: collecteurProUser,
           entitiesIdsWorkingDirectlyFor: ['entity-1'],
+          carcasses: [
+            createMockCarcasse({
+              current_owner_role: FeiOwnerRole.COLLECTEUR_PRO,
+              current_owner_entity_id: 'entity-1',
+              next_owner_entity_id: null,
+            }),
+          ],
         });
 
         expect(result.simpleStatus).toBe('À compléter');
@@ -630,18 +703,20 @@ describe('computeFeiSteps', () => {
           intermediaire_prochain_detenteur_role_cache: FeiOwnerRole.SVI,
         });
 
-        const fei = createMockFei({
-          fei_current_owner_role: FeiOwnerRole.ETG,
-          fei_current_owner_entity_id: 'etg-entity',
-          fei_next_owner_entity_id: 'svi-entity',
-          // This will result in currentStepLabel being "Réception par un établissement de traitement"
-        });
+        const fei = createMockFei();
 
         const result = computeFeiSteps({
           fei,
           intermediaires: [etgIntermediaire],
           user: collecteurProOnlyUser,
           entitiesIdsWorkingDirectlyFor: ['etg-entity'],
+          carcasses: [
+            createMockCarcasse({
+              current_owner_role: FeiOwnerRole.ETG,
+              current_owner_entity_id: 'etg-entity',
+              next_owner_entity_id: 'svi-entity',
+            }),
+          ],
         });
 
         expect(result.currentStepLabel).toBe('Réception par un établissement de traitement');
@@ -656,17 +731,20 @@ describe('computeFeiSteps', () => {
           intermediaire_prochain_detenteur_role_cache: FeiOwnerRole.SVI,
         });
 
-        const fei = createMockFei({
-          fei_current_owner_role: FeiOwnerRole.ETG,
-          fei_current_owner_entity_id: 'etg-entity',
-          fei_next_owner_entity_id: 'svi-entity',
-        });
+        const fei = createMockFei();
 
         const result = computeFeiSteps({
           fei,
           intermediaires: [etgIntermediaire],
           user: collecteurProEtgUser,
           entitiesIdsWorkingDirectlyFor: ['etg-entity'],
+          carcasses: [
+            createMockCarcasse({
+              current_owner_role: FeiOwnerRole.ETG,
+              current_owner_entity_id: 'etg-entity',
+              next_owner_entity_id: 'svi-entity',
+            }),
+          ],
         });
 
         expect(result.currentStepLabel).toBe('Réception par un établissement de traitement');
@@ -681,17 +759,19 @@ describe('computeFeiSteps', () => {
           intermediaire_prochain_detenteur_role_cache: FeiOwnerRole.ETG,
         });
 
-        const fei = createMockFei({
-          fei_current_owner_role: FeiOwnerRole.COLLECTEUR_PRO,
-          fei_current_owner_entity_id: 'collecteur-entity',
-          // This will result in currentStepLabel being "Transport vers un établissement de traitement"
-        });
+        const fei = createMockFei();
 
         const result = computeFeiSteps({
           fei,
           intermediaires: [collecteurProIntermediaire],
           user: collecteurProOnlyUser,
           entitiesIdsWorkingDirectlyFor: ['collecteur-entity'],
+          carcasses: [
+            createMockCarcasse({
+              current_owner_role: FeiOwnerRole.COLLECTEUR_PRO,
+              current_owner_entity_id: 'collecteur-entity',
+            }),
+          ],
         });
 
         expect(result.currentStepLabel).toBe('Transport vers un établissement de traitement');
@@ -702,9 +782,7 @@ describe('computeFeiSteps', () => {
 
     describe('Closed status', () => {
       test('should return "Clôturée" when fei is closed', () => {
-        const fei = createMockFei({
-          automatic_closed_at: new Date(),
-        });
+        const fei = createMockFei();
         const examinateurInitialUser = createMockUser([UserRoles.CHASSEUR]);
 
         const result = computeFeiSteps({
@@ -712,36 +790,35 @@ describe('computeFeiSteps', () => {
           intermediaires: [],
           user: examinateurInitialUser,
           ...defaultParams,
+          carcasses: [createMockCarcasse({ automatic_closed_at: new Date() } as Partial<Carcasse>)],
         });
 
         expect(result.simpleStatus).toBe('Clôturée');
       });
 
       test('should return "Clôturée" when SVI is closed', () => {
-        const fei = createMockFei({
-          svi_closed_at: new Date(),
-        });
+        const fei = createMockFei();
         const sviUser = createMockUser([UserRoles.SVI]);
         const result = computeFeiSteps({
           fei,
           intermediaires: [],
           user: sviUser,
           ...defaultParams,
+          carcasses: [createMockCarcasse({ svi_closed_at: new Date() })],
         });
 
         expect(result.simpleStatus).toBe('Clôturée');
       });
 
       test('should return "Clôturée" when intermediaire is closed', () => {
-        const fei = createMockFei({
-          intermediaire_closed_at: new Date(),
-        });
+        const fei = createMockFei();
         const collecteurProUser = createMockUser([UserRoles.COLLECTEUR_PRO]);
         const result = computeFeiSteps({
           fei,
           intermediaires: [],
           user: collecteurProUser,
           ...defaultParams,
+          carcasses: [createMockCarcasse({ intermediaire_closed_at: new Date() })],
         });
 
         expect(result.simpleStatus).toBe('Clôturée');
@@ -800,9 +877,7 @@ describe('computeFeiSteps', () => {
     });
 
     test('should handle user with multiple roles', () => {
-      const fei = createMockFei({
-        fei_current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
-      });
+      const fei = createMockFei();
       const user = createMockUser([UserRoles.CHASSEUR]);
 
       const result = computeFeiSteps({
@@ -810,6 +885,7 @@ describe('computeFeiSteps', () => {
         intermediaires: [],
         user,
         ...defaultParams,
+        carcasses: [createMockCarcasse({ current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL })],
       });
 
       expect(result.simpleStatus).toBe('À compléter');

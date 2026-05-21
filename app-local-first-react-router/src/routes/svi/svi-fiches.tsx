@@ -1,22 +1,18 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import dayjs from 'dayjs';
 import { CarcasseType, DepotType } from '@prisma/client';
-import { Button } from '@codegouvfr/react-dsfr/Button';
 import { SegmentedControl } from '@codegouvfr/react-dsfr/SegmentedControl';
 import { Pagination } from '@codegouvfr/react-dsfr/Pagination';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
 import { UserConnexionResponse } from '@api/src/types/responses';
 import { FeiStepSimpleStatus } from '@app/types/fei-steps';
-import useZustandStore, { syncData } from '@app/zustand/store';
+import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import API from '@app/services/api';
 import { abbreviations } from '@app/utils/count-carcasses';
-import { useIsOnline } from '@app/utils-offline/use-is-offline';
-import { useMostFreshUser, refreshUser } from '@app/utils-offline/get-most-fresh-user';
+import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { getFeisSorted } from '@app/utils/get-fei-sorted';
-import { loadFeis } from '@app/utils/load-feis';
-import { loadMyRelations } from '@app/utils/load-my-relations';
 import useExportFeis from '@app/utils/export-feis';
 import {
   filterCarcassesIntermediairesForCarcasse,
@@ -34,12 +30,8 @@ import { useLocalStorage } from '@uidotdev/usehooks';
 import type { FeiWithIntermediaires } from '@api/src/types/fei';
 import { useEtgIds, useEntitiesIdsWorkingDirectlyFor } from '@app/utils/get-entity-relations';
 import { useNavigate } from 'react-router';
-
-async function loadData() {
-  await syncData('svi-fiches');
-  await loadMyRelations();
-  await loadFeis();
-}
+import { useLoaderEffect, loadData } from '@app/utils/load-data';
+import Chargement from '@app/components/Chargement';
 
 type ViewType = 'grid' | 'table';
 
@@ -68,10 +60,9 @@ export default function SviFiches() {
   const feisAssigned = [...feisUnderMyResponsability, ...feisToTake].sort((a, b) => {
     return b.updated_at < a.updated_at ? -1 : 1;
   });
-  const [loading, setLoading] = useState(false);
-  const isOnline = useIsOnline();
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
   const carcasses = useZustandStore((state) => state.carcasses);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [searchParams, setSearchParams] = useSearchParams();
   const page = parseInt(searchParams.get('page') || '1');
@@ -126,14 +117,9 @@ export default function SviFiches() {
     }
   );
 
-  const hackForCounterDoubleEffectInDevMode = useRef(false);
-  useEffect(() => {
-    if (hackForCounterDoubleEffectInDevMode.current) {
-      return;
-    }
-    hackForCounterDoubleEffectInDevMode.current = true;
-    refreshUser('svi-fiches').then(loadData);
-  }, []);
+  useLoaderEffect(() => {
+    loadData('svi-fiches').then(() => setIsLoading(false));
+  });
 
   useSaveScroll('svi-fiches-scrollY');
 
@@ -171,7 +157,9 @@ export default function SviFiches() {
       try {
         const parsed = JSON.parse(savedFilter);
         if (Array.isArray(parsed)) return parsed;
-      } catch {}
+      } catch {
+        console.error('error parsing svi-fiches-filter', savedFilter);
+      }
     }
     return [];
   });
@@ -326,6 +314,10 @@ export default function SviFiches() {
     const start = (page - 1) * perPage;
     return filteredFeis.slice(start, start + perPage);
   }, [filteredFeis, page, itemsPerPage]);
+
+  if (isLoading) {
+    return <Chargement />;
+  }
 
   function Actions() {
     return (

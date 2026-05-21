@@ -339,7 +339,7 @@ export default function AdminCarcasseDetail() {
         {/* 1. En-tête / Identité */}
         <Section title="Identité">
           <FieldGrid>
-            <Field label="Numéro bracelet">{carcasse.numero_bracelet}</Field>
+            <Field label="Numéro marquage">{carcasse.numero_bracelet}</Field>
             <Field label="Espèce">{carcasse.espece ?? '—'}</Field>
             <Field label="Type">{carcasse.type ?? '—'}</Field>
             <Field label="Nombre d'animaux">{carcasse.nombre_d_animaux ?? '—'}</Field>

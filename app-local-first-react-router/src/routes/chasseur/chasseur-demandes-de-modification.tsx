@@ -4,22 +4,19 @@ import dayjs from 'dayjs';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
-import {
-  CarcasseModificationRequestStatus,
-  CarcasseModificationRequestType,
-} from '@app/utils/carcasse-modification-request';
+import { CarcasseModificationRequestStatus, CarcasseModificationRequestType } from '@prisma/client';
 
 // Page dashboard listant les demandes en attente où l'utilisateur est l'examinateur initial.
 // Le lien des notifications email/SMS/push pointe vers /app/chasseur/demandes-de-modification.
 export default function ChasseurDemandesDeModification() {
   const user = useUser((state) => state.user);
-  const requestsById = useZustandStore((state) => state.carcasseModifPendingRequestsIds);
+  const requestsByCarcasseId = useZustandStore((state) => state.carcasseModifActiveByCarcasseId);
   const carcasses = useZustandStore((state) => state.carcasses);
   const feis = useZustandStore((state) => state.feis);
 
   const pendingForMe = useMemo(() => {
     if (!user) return [];
-    return Object.values(requestsById)
+    return Object.values(requestsByCarcasseId)
       .filter((r) => r.status === CarcasseModificationRequestStatus.PENDING && !r.deleted_at)
       .filter((r) => {
         // Filter to those where the underlying carcasse is examined by this user.
@@ -27,7 +24,7 @@ export default function ChasseurDemandesDeModification() {
         return carcasse?.examinateur_initial_user_id === user.id;
       })
       .sort((a, b) => new Date(b.requested_at).getTime() - new Date(a.requested_at).getTime());
-  }, [requestsById, carcasses, user]);
+  }, [requestsByCarcasseId, carcasses, user]);
 
   const groupedByFei = useMemo(() => {
     const groups: Record<string, typeof pendingForMe> = {};
@@ -45,7 +42,7 @@ export default function ChasseurDemandesDeModification() {
       </title>
       <h1>Demandes de modification</h1>
       <p className="opacity-80">
-        Les destinataires de vos carcasses peuvent vous demander de corriger un numéro de bracelet, ou de
+        Les destinataires de vos carcasses peuvent vous demander de corriger un numéro de marquage, ou de
         valider la mise sur le marché d'une carcasse qu'ils ont ajoutée à une fiche. En tant qu'examinateur
         initial, vous devez approuver ou refuser ces modifications.
       </p>
@@ -78,7 +75,7 @@ export default function ChasseurDemandesDeModification() {
                     className="rounded-sm border border-orange-300 bg-orange-50 p-3"
                   >
                     <p className="m-0 font-semibold">
-                      {isRename ? 'Changement de numéro de bracelet' : 'Nouvelle carcasse à signer'}
+                      {isRename ? 'Changement de numéro de marquage' : 'Nouvelle carcasse à signer'}
                     </p>
                     {isRename && (
                       <p className="m-0 text-sm">

@@ -2,258 +2,206 @@ import express from 'express';
 const router: express.Router = express.Router();
 import passport from 'passport';
 import { catchErrors } from '~/middlewares/errors';
-import type { CarcassesGetForRegistryResponse } from '~/types/responses';
+import type { CarcassesGetResponse } from '~/types/responses';
 import prisma from '~/prisma';
-import { EntityRelationStatus, EntityRelationType, FeiOwnerRole, Prisma, UserRoles } from '@prisma/client';
+import {
+  CarcasseModificationRequest,
+  EntityRelationStatus,
+  EntityRelationType,
+  Prisma,
+  UserRoles,
+} from '@prisma/client';
 import { RequestWithUser } from '~/types/request';
-import { carcasseForRegistrySelect } from '~/types/carcasse';
-import { mapCarcasseForRegistry } from '~/utils/carcasse-for-registry';
+import z from 'zod';
+import { capture } from '~/third-parties/sentry';
+import { userFeiSelect } from '~/types/user';
+
+const zodQuerySchema = z.object({
+  page: z.string(),
+  after: z.string(),
+  limit: z.string(),
+  withDeleted: z.string(),
+});
 
 router.get(
-  '/svi',
+  '/',
   passport.authenticate('user', { session: false }),
-  catchErrors(async (req: RequestWithUser, res: express.Response<CarcassesGetForRegistryResponse>) => {
+  catchErrors(async (req: RequestWithUser, res: express.Response<CarcassesGetResponse>) => {
     if (!req.user.activated) {
       res.status(400).send({
         ok: false,
         data: null,
         error: "Le compte n'est pas activé",
       });
-      return;
-    }
-    const userIsSvi = req.user?.roles.includes(UserRoles.SVI);
-    if (!userIsSvi) {
-      res.status(403).send({ ok: false, data: null, error: 'Unauthorized' });
       return;
     }
 
     // Parse and validate query parameters
-    const { page = '0', after, limit = '100', withDeleted = 'false' } = req.query as Record<string, string>;
+    const queryResult = zodQuerySchema.safeParse(req.query);
+    if (!queryResult.success) {
+      res.status(400).send({ ok: false, data: null, error: 'Invalid query parameters' });
+      return;
+    }
+    const { page, after, limit, withDeleted } = queryResult.data;
 
-    const parsedPage = Math.max(0, parseInt(page, 10) || 0);
-    const parsedLimit = parseInt(limit, 10) || 10000;
+    const parsedPage = parseInt(page, 10);
+    const parsedLimit = parseInt(limit, 10);
     const includeDeleted = withDeleted === 'true';
-    const afterDate = after && !isNaN(Number(after)) ? new Date(Number(after)) : null;
+    const afterDate = Number(after) ? new Date(Number(after)) : undefined;
 
     // Base query conditions
-    const where: Prisma.CarcasseWhereInput = {
-      svi_assigned_at: { not: null },
-      deleted_at: null,
-      CarcasseSviEntity: {
-        EntityRelationsWithUsers: {
-          some: {
-            owner_id: req.user!.id,
-            relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-            status: {
-              in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
-            },
-          },
-        },
+    let where: Prisma.CarcasseWhereInput = {};
+
+    // Pre-fetch entity IDs the user works for (used in carcasse-level queries)
+    const userEntityRelations = await prisma.entityAndUserRelations.findMany({
+      where: {
+        owner_id: req.user.id,
+        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        status: { in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER] },
       },
-    };
-    if (!includeDeleted) {
-      where.deleted_at = null;
-    }
-
-    if (afterDate) {
-      if (includeDeleted) {
-        where.OR = [
-          // If we include deleted, we want to get all the carcasses updated after the date
-          { updated_at: { gte: afterDate } },
-          // And all the carcasses deleted after the date
-          { deleted_at: { gte: afterDate } },
-        ];
-      } else {
-        where.updated_at = { gte: afterDate };
-      }
-    }
-
-    // Execute count and findMany in parallel
-    const [total, data] = await Promise.all([
-      prisma.carcasse.count({ where }),
-      prisma.carcasse.findMany({
-        where,
-        select: carcasseForRegistrySelect,
-        orderBy: { created_at: 'desc' },
-        skip: parsedPage * parsedLimit,
-        take: parsedLimit,
-      }),
-    ]);
-
-    res.status(200).json({
-      ok: true,
-      data: {
-        carcasses: data.map(mapCarcasseForRegistry),
-        hasMore: data.length === parsedLimit,
-        total,
-      },
-      error: '',
+      select: { entity_id: true },
     });
-  })
-);
+    const userEntityIds = userEntityRelations.map((r) => r.entity_id);
 
-router.get(
-  '/etg',
-  passport.authenticate('user', { session: false }),
-  catchErrors(async (req: RequestWithUser, res: express.Response<CarcassesGetForRegistryResponse>) => {
-    if (!req.user.activated) {
-      res.status(400).send({
-        ok: false,
-        data: null,
-        error: "Le compte n'est pas activé",
-      });
-      return;
-    }
-    const userIsEtg = req.user?.roles.includes(UserRoles.ETG);
-    if (!userIsEtg) {
-      res.status(403).send({ ok: false, data: null, error: 'Unauthorized' });
-      return;
-    }
-
-    const { page = '0', after, limit = '100', withDeleted = 'false' } = req.query as Record<string, string>;
-
-    const parsedPage = Math.max(0, parseInt(page, 10) || 0);
-    const parsedLimit = parseInt(limit, 10) || 10000;
-    const includeDeleted = withDeleted === 'true';
-    const afterDate = after && !isNaN(Number(after)) ? new Date(Number(after)) : null;
-
-    // Base query conditions
-    const where: Prisma.CarcasseWhereInput = {
-      CarcasseIntermediaire: {
-        some: {
-          CarcasseIntermediaireEntity: {
-            EntityRelationsWithUsers: {
+    if (req.user.roles.includes(UserRoles.SVI)) {
+      where = {
+        svi_assigned_at: { not: null },
+        OR: [
+          {
+            svi_entity_id: { in: userEntityIds },
+          },
+          {
+            next_owner_entity_id: { in: userEntityIds },
+          },
+        ],
+      };
+    } else if (req.user.roles.includes(UserRoles.CHASSEUR)) {
+      where = {
+        OR: [
+          {
+            premier_detenteur_user_id: req.user.id,
+          },
+          {
+            examinateur_initial_user_id: req.user.id,
+          },
+          {
+            premier_detenteur_entity_id: { in: userEntityIds },
+          },
+          {
+            next_owner_entity_id: { in: userEntityIds },
+          },
+          {
+            prev_owner_entity_id: { in: userEntityIds },
+          },
+          {
+            current_owner_entity_id: { in: userEntityIds },
+          },
+          {
+            next_owner_user_id: req.user.id,
+          },
+          {
+            prev_owner_user_id: req.user.id,
+          },
+          {
+            current_owner_user_id: req.user.id,
+          },
+        ],
+      };
+    } else if (
+      req.user.roles.includes(UserRoles.ETG) ||
+      req.user.roles.includes(UserRoles.COLLECTEUR_PRO) ||
+      req.user.roles.includes(UserRoles.COMMERCE_DE_DETAIL) ||
+      req.user.roles.includes(UserRoles.CANTINE_OU_RESTAURATION_COLLECTIVE) ||
+      req.user.roles.includes(UserRoles.ASSOCIATION_CARITATIVE) ||
+      req.user.roles.includes(UserRoles.REPAS_DE_CHASSE_OU_ASSOCIATIF) ||
+      req.user.roles.includes(UserRoles.CONSOMMATEUR_FINAL)
+    ) {
+      where = {
+        OR: [
+          {
+            CarcasseIntermediaire: {
               some: {
-                owner_id: req.user.id,
-                relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-                status: {
-                  in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
-                },
+                intermediaire_entity_id: { in: userEntityIds },
               },
             },
           },
-        },
-      },
-    };
-    if (!includeDeleted) {
-      where.deleted_at = null;
-    }
-
-    if (afterDate) {
-      if (includeDeleted) {
-        where.OR = [
-          // If we include deleted, we want to get all the carcasses updated after the date
-          { updated_at: { gte: afterDate } },
-          // And all the carcasses deleted after the date
-          { deleted_at: { gte: afterDate } },
-        ];
-      } else {
-        where.updated_at = { gte: afterDate };
-      }
-    }
-
-    // Execute count and findMany in parallel
-    const [total, data] = await Promise.all([
-      prisma.carcasse.count({ where }),
-      prisma.carcasse.findMany({
-        where,
-        select: carcasseForRegistrySelect,
-        orderBy: { created_at: 'desc' },
-        skip: parsedPage * parsedLimit,
-        take: parsedLimit,
-      }),
-    ]);
-
-    res.status(200).json({
-      ok: true,
-      data: {
-        carcasses: data.map(mapCarcasseForRegistry),
-        hasMore: data.length === parsedLimit,
-        total,
-      },
-      error: '',
-    });
-  })
-);
-
-router.get(
-  '/collecteur_pro',
-  passport.authenticate('user', { session: false }),
-  catchErrors(async (req: RequestWithUser, res: express.Response<CarcassesGetForRegistryResponse>) => {
-    if (!req.user.activated) {
-      res.status(400).send({
+          {
+            next_owner_entity_id: { in: userEntityIds },
+          },
+          {
+            current_owner_entity_id: { in: userEntityIds },
+          },
+        ],
+      };
+    } else {
+      capture(`User role not supported: ${req.user.roles.join(', ')}`, { user: req.user });
+      res.status(403).send({
         ok: false,
         data: null,
-        error: "Le compte n'est pas activé",
+        error: "Vous n'avez pas les permissions.",
       });
       return;
     }
-    const userIsCollecteurPro = req.user?.roles.includes(UserRoles.COLLECTEUR_PRO);
-    if (!userIsCollecteurPro) {
-      res.status(403).send({ ok: false, data: null, error: 'Unauthorized' });
-      return;
-    }
 
-    const { page = '0', after, limit = '100', withDeleted = 'false' } = req.query as Record<string, string>;
-
-    const parsedPage = Math.max(0, parseInt(page, 10) || 0);
-    const parsedLimit = parseInt(limit, 10) || 10000;
-    const includeDeleted = withDeleted === 'true';
-    const afterDate = after && !isNaN(Number(after)) ? new Date(Number(after)) : null;
-
-    // Base query conditions
-    const where: Prisma.CarcasseWhereInput = {
-      CarcasseIntermediaire: {
-        some: {
-          intermediaire_role: FeiOwnerRole.COLLECTEUR_PRO,
-          CarcasseIntermediaireEntity: {
-            EntityRelationsWithUsers: {
-              some: {
-                owner_id: req.user.id,
-                relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-                status: {
-                  in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER],
-                },
-              },
-            },
-          },
-        },
-      },
-    };
     if (!includeDeleted) {
       where.deleted_at = null;
     }
 
     if (afterDate) {
-      if (includeDeleted) {
-        where.OR = [
-          // If we include deleted, we want to get all the carcasses updated after the date
-          { updated_at: { gte: afterDate } },
-          // And all the carcasses deleted after the date
-          { deleted_at: { gte: afterDate } },
-        ];
-      } else {
-        where.updated_at = { gte: afterDate };
-      }
+      where.updated_at = { gte: afterDate };
     }
 
     // Execute count and findMany in parallel
-    const [total, data] = await Promise.all([
+    const [total, carcasses] = await Promise.all([
       prisma.carcasse.count({ where }),
       prisma.carcasse.findMany({
         where,
-        select: carcasseForRegistrySelect,
-        orderBy: { created_at: 'desc' },
+        orderBy: { updated_at: 'desc' },
+        include: {
+          CarcasseModificationRequests: true,
+        },
         skip: parsedPage * parsedLimit,
         take: parsedLimit,
+      }),
+    ]);
+
+    const feiNumeros = new Set<string>();
+    const carcassesIds = new Set<string>();
+    const userIds = new Set<string>();
+    const carcasseModifRequests: Array<CarcasseModificationRequest> = [];
+
+    for (const carcasse of carcasses) {
+      userIds.add(carcasse.examinateur_initial_user_id);
+      userIds.add(carcasse.premier_detenteur_user_id);
+      userIds.add(carcasse.current_owner_user_id);
+      userIds.add(carcasse.next_owner_user_id);
+      userIds.add(carcasse.prev_owner_user_id);
+      userIds.add(carcasse.svi_user_id);
+      userIds.add(carcasse.created_by_user_id);
+      carcassesIds.add(carcasse.zacharie_carcasse_id);
+      feiNumeros.add(carcasse.fei_numero);
+      for (const modifRequest of carcasse.CarcasseModificationRequests) {
+        carcasseModifRequests.push(modifRequest);
+      }
+    }
+
+    const [users, feis, carcassesIntermediaires] = await Promise.all([
+      prisma.user.findMany({ where: { id: { in: [...userIds].filter(Boolean) } }, select: userFeiSelect }),
+      prisma.fei.findMany({ where: { numero: { in: [...feiNumeros].filter(Boolean) } } }),
+      prisma.carcasseIntermediaire.findMany({
+        where: { zacharie_carcasse_id: { in: [...carcassesIds].filter(Boolean) } },
       }),
     ]);
 
     res.status(200).json({
       ok: true,
       data: {
-        carcasses: data.map(mapCarcasseForRegistry),
-        hasMore: data.length === parsedLimit,
+        carcasses,
+        feis,
+        users,
+        carcassesIntermediaires,
+        carcasseModifRequests,
+        hasMore: carcasses.length === parsedLimit,
         total,
       },
       error: '',

@@ -16,6 +16,7 @@ import { runFeiUpdateSideEffects } from '~/utils/fei-side-effects';
 import { runCarcasseUpdateSideEffects } from '~/utils/carcasse-side-effects';
 import { capture } from '~/third-parties/sentry';
 import { feiPopulatedInclude } from '~/types/fei';
+import { CarcasseWithModificationRequests } from '~/types/carcasse';
 
 const router: express.Router = express.Router();
 
@@ -217,10 +218,11 @@ router.post(
       touchedCarcasseIds.size > 0
         ? await prisma.carcasse.findMany({
             where: { zacharie_carcasse_id: { in: [...touchedCarcasseIds] } },
+            include: { CarcasseModificationRequests: true },
           })
         : [];
     // Override: refreshed carcasses replace any earlier carcasseResults output for the same id.
-    const mergedCarcasses = new Map<string, (typeof carcasseResults)[0]['savedCarcasse']>();
+    const mergedCarcasses = new Map<string, CarcasseWithModificationRequests>();
     for (const cr of carcasseResults)
       mergedCarcasses.set(cr.savedCarcasse.zacharie_carcasse_id, cr.savedCarcasse);
     for (const rc of refreshedCarcasses) mergedCarcasses.set(rc.zacharie_carcasse_id, rc);

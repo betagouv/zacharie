@@ -1,7 +1,8 @@
 import ConfirmModal from '@app/components/ConfirmModal';
 import { useNavigate, useParams } from 'react-router';
 import useUser from '@app/zustand/user';
-import useZustandStore, { syncData } from '@app/zustand/store';
+import useZustandStore from '@app/zustand/store';
+import { syncData } from '@app/utils/sync-data';
 import dayjs from 'dayjs';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 

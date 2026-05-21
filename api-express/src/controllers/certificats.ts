@@ -1,7 +1,7 @@
 import express from 'express';
 import passport from 'passport';
 import { catchErrors } from '~/middlewares/errors';
-import type { CertificatResponse, CarcassesGetForRegistryResponse } from '~/types/responses';
+import type { CertificatResponse, CarcassesGetResponse } from '~/types/responses';
 const router: express.Router = express.Router();
 import prisma from '~/prisma';
 import dayjs from 'dayjs';

@@ -1,4 +1,3 @@
-import { CarcasseForResponseForRegistry } from '@api/src/types/carcasse';
 import { Carcasse, type CarcasseIntermediaire } from '@prisma/client';
 import dayjs from 'dayjs';
 import type {
@@ -27,7 +26,7 @@ export function getFeiAndCarcasseAndIntermediaireIds(
 }
 
 export function getFeiAndCarcasseAndIntermediaireIdsFromCarcasse(
-  carcasse: CarcasseForResponseForRegistry | Carcasse,
+  carcasse: Carcasse,
   intermediaireId: FeiIntermediaire['id']
 ): FeiAndCarcasseAndIntermediaireIds {
   return `${carcasse.fei_numero}_${carcasse.zacharie_carcasse_id}_${intermediaireId}`;

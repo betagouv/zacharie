@@ -1,13 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import useZustandStore from '@app/zustand/store';
 import { Pagination } from '@codegouvfr/react-dsfr/Pagination';
-import { useMostFreshUser, refreshUser } from '@app/utils-offline/get-most-fresh-user';
+import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import TableFilterable from '@app/components/TableFilterable';
 import { useSaveScroll } from '@app/services/useSaveScroll';
 import { getCarcasseStatusLabel } from '@app/utils/get-carcasse-status';
 import { Link, useSearchParams } from 'react-router';
-import { loadCarcasses } from '@app/utils/load-carcasses';
-import { UserRoles } from '@prisma/client';
 import Filters from '@app/components/Filters';
 import {
   CarcasseFilter,
@@ -18,11 +16,14 @@ import { useLocalStorage } from '@uidotdev/usehooks';
 import Chargement from '@app/components/Chargement';
 import Button from '@codegouvfr/react-dsfr/Button';
 import useExportCarcasses from '@app/utils/export-carcasses';
+import { isCarcasseSviArchived } from '@app/utils/carcasse-svi-archived';
+import { loadData, useLoaderEffect } from '@app/utils/load-data';
 const itemsPerPageOptions = [20, 50, 100, 200, 1000];
 
 export default function CollecteurCarcasses() {
   const user = useMostFreshUser('collecteur-carcasses')!;
   const carcassesRegistry = useZustandStore((state) => state.carcassesRegistry);
+  const feis = useZustandStore((state) => state.feis);
   const [selectedCarcassesIds, setSelectedCarcassesIds] = useState<Array<string>>([]);
   const [loading, setLoading] = useState(true);
 
@@ -65,10 +66,12 @@ export default function CollecteurCarcasses() {
 
   const filteredData = useMemo(() => {
     return carcassesRegistry
-      .filter((carcasse) => filterCarcassesInRegistre(filters)(carcasse))
+      .filter((carcasse) => filterCarcassesInRegistre(filters)(carcasse, feis[carcasse.fei_numero]))
       .sort((a, b) => {
-        const aValue = a[sortBy];
-        const bValue = b[sortBy];
+        // @ts-expect-error: svi_carcasse_archived is isCarcasseSviArchived
+        const aValue = sortBy === 'svi_carcasse_archived' ? isCarcasseSviArchived(a) : a[sortBy];
+        // @ts-expect-error: svi_carcasse_archived is isCarcasseSviArchived
+        const bValue = sortBy === 'svi_carcasse_archived' ? isCarcasseSviArchived(b) : b[sortBy];
         if (!aValue) {
           if (bValue) return sortOrder === 'ASC' ? 1 : -1;
           return 0;
@@ -82,7 +85,7 @@ export default function CollecteurCarcasses() {
         if (aValue > bValue) return sortOrder === 'ASC' ? 1 : -1;
         return 0;
       });
-  }, [carcassesRegistry, filters, sortBy, sortOrder]);
+  }, [carcassesRegistry, filters, sortBy, sortOrder, feis]);
 
   const paginatedData = useMemo(() => {
     const start = (page - 1) * itemsPerPage;
@@ -96,22 +99,10 @@ export default function CollecteurCarcasses() {
     }
   }, [user]);
 
-  const hackForCounterDoubleEffectInDevMode = useRef(false);
-  useEffect(() => {
-    if (hackForCounterDoubleEffectInDevMode.current) {
-      return;
-    }
-    hackForCounterDoubleEffectInDevMode.current = true;
-    let role = UserRoles.COLLECTEUR_PRO;
-
-    if (!role) {
-      throw new Error('User has no role');
-    }
-    refreshUser('collecteur-carcasses')
-      .then(() => setLoading(true))
-      // FIXME: role to be set in server
-      .then(() => loadCarcasses(role))
-      .then(() => setLoading(false));
+  useLoaderEffect(() => {
+    loadData('collecteur-carcasses').then(() => {
+      setLoading(false);
+    });
   }, []);
 
   useSaveScroll('collecteur-carcasses-scrollY');
@@ -155,7 +146,7 @@ export default function CollecteurCarcasses() {
             <div className="flex flex-col gap-1 pl-7 text-sm">
               <div>
                 <span className="font-semibold">Premier détenteur: </span>
-                <span>{carcasse.fei_premier_detenteur_name_cache || '-'}</span>
+                <span>{feis[carcasse.fei_numero]?.premier_detenteur_name_cache || '-'}</span>
               </div>
               <div>
                 <span className="font-semibold">Statut: </span>
@@ -164,8 +155,8 @@ export default function CollecteurCarcasses() {
               <div>
                 <span className="font-semibold">Date transmission SVI: </span>
                 <span>
-                  {carcasse.fei_svi_assigned_at
-                    ? new Date(carcasse.fei_svi_assigned_at).toLocaleDateString('fr-FR', {
+                  {carcasse.svi_assigned_at
+                    ? new Date(carcasse.svi_assigned_at).toLocaleDateString('fr-FR', {
                         day: '2-digit',
                         month: '2-digit',
                         year: 'numeric',
@@ -191,7 +182,7 @@ export default function CollecteurCarcasses() {
               </div>
               <div>
                 <span className="font-semibold">Archivé: </span>
-                <span>{carcasse.svi_carcasse_archived ? 'Oui' : 'Non'}</span>
+                <span>{isCarcasseSviArchived(carcasse) ? 'Oui' : 'Non'}</span>
               </div>
               <div>
                 <span className="font-semibold">Fiche: </span>
@@ -321,7 +312,7 @@ export default function CollecteurCarcasses() {
                   },
                 },
                 {
-                  dataKey: 'fei_premier_detenteur_name_cache',
+                  dataKey: 'premier_detenteur_name_cache',
                   title: 'Premier détenteur',
                   onSortOrder: setSortOrder,
                   onSortBy: setSortBy,
@@ -329,7 +320,7 @@ export default function CollecteurCarcasses() {
                   sortOrder: sortOrder,
                 },
                 {
-                  dataKey: 'fei_svi_assigned_at',
+                  dataKey: 'svi_assigned_at',
                   title: 'Date de transmission au SVI',
                   type: 'datetime',
                   onSortOrder: setSortOrder,
@@ -347,13 +338,14 @@ export default function CollecteurCarcasses() {
                   render: (carcasse) => getCarcasseStatusLabel(carcasse),
                 },
                 {
+                  // @ts-expect-error: svi_carcasse_archived is isCarcasseSviArchived
                   dataKey: 'svi_carcasse_archived',
                   title: 'Archivé(e)',
                   onSortOrder: setSortOrder,
                   onSortBy: setSortBy,
                   sortBy: sortBy,
                   sortOrder: sortOrder,
-                  render: (carcasse) => (carcasse.svi_carcasse_archived ? 'Oui' : 'Non'),
+                  render: (carcasse) => (isCarcasseSviArchived(carcasse) ? 'Oui' : 'Non'),
                 },
                 {
                   dataKey: 'svi_carcasse_status_set_at',

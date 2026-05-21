@@ -14,7 +14,7 @@ test.beforeEach(async () => {
 });
 
 // FIXME backend should restrict access to carcasses of other branches via URL
-test.skip("ETG 1 ne peut pas accéder à la carcasse d'ETG 2 via URL directe", async ({ page }) => {
+test("ETG 1 ne peut pas accéder à la carcasse d'ETG 2 via URL directe", async ({ page }) => {
   const feiId = 'ZACH-20250707-QZ6E0-155242';
 
   // Dispatch 2/2

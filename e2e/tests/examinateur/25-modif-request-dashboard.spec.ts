@@ -24,10 +24,10 @@ test('Examinateur dashboard alert modal + nav badge + grouping', async ({ page }
   await connectWith(page, 'etg-1@example.fr');
   await page.getByRole('link', { name: feiId }).click();
   await page.getByRole('button', { name: 'Daim N° MM-001-001 Mise à' }).click();
-  await page.getByRole('button', { name: 'Signaler un numéro de bracelet incorrect' }).click();
-  await page.getByLabel('Numéro de bracelet correct').fill('MM-001-FIX');
+  await page.getByRole('button', { name: 'Signaler un numéro de marquage incorrect' }).click();
+  await page.getByLabel('Numéro de marquage correct').fill('MM-001-FIX');
   await page.getByRole('button', { name: 'Envoyer la demande' }).click();
-  await expect(page.getByText('Demande de modification du numéro de bracelet en cours').first()).toBeVisible({
+  await expect(page.getByText('Demande de modification du numéro de marquage en cours').first()).toBeVisible({
     timeout: 10000,
   });
 

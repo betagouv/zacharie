@@ -443,7 +443,7 @@ describe('runCarcasseModifRequestSideEffects — cancellation', () => {
 // ---------------------------------------------------------------------------
 
 describe('notification content', () => {
-  test('notifyExaminateur uses "Chasse du DD/MM" title + entity name + bracelet swap', async () => {
+  test('notifyExaminateur uses "Chasse du DD/MM" title + entity name + marquage swap', async () => {
     vi.mocked(prisma.carcasse.findUnique).mockResolvedValueOnce(baseCarcasse);
     vi.mocked(prisma.entity.findUnique).mockResolvedValueOnce({
       id: 'entity-etg',
@@ -466,7 +466,7 @@ describe('notification content', () => {
     expect(call.notificationLogAction).toBe(`MODIF_CREATED_${renamePending.id}`);
   });
 
-  test('notifyExaminateur for NEW mentions espèce + bracelet', async () => {
+  test('notifyExaminateur for NEW mentions espèce + marquage', async () => {
     vi.mocked(prisma.carcasse.findUnique).mockResolvedValueOnce({
       ...baseCarcasse,
       espece: 'Sanglier',

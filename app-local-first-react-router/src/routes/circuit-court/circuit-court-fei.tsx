@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useParams } from 'react-router';
 import { sortCarcassesApproved } from '@app/utils/sort';
 import FEIDonneesDeChasse from '@app/components/DonneesDeChasse';
@@ -6,23 +6,19 @@ import Section from '@app/components/Section';
 import CardCarcasse from '@app/components/CardCarcasse';
 import { useMyCarcassesForFei } from '@app/utils/filter-my-carcasses';
 import useZustandStore from '@app/zustand/store';
-import { loadFei } from '@app/utils/load-fei';
-import { refreshUser } from '@app/utils-offline/get-most-fresh-user';
-import { loadMyRelations } from '@app/utils/load-my-relations';
 import Chargement from '@app/components/Chargement';
 import NotFound from '@app/components/NotFound';
 import { Button } from '@codegouvfr/react-dsfr/Button';
+import { loadData, useLoaderEffect } from '@app/utils/load-data';
 
 export default function CircuitCourtFeiLoader() {
   const params = useParams();
   const feis = useZustandStore((state) => state.feis);
   const fei = feis[params.fei_numero!];
   const [hasTriedLoading, setHasTriedLoading] = useState(false);
-  useEffect(() => {
+  useLoaderEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
-    refreshUser('connexion')
-      .then(loadMyRelations)
-      .then(() => loadFei(params.fei_numero!))
+    loadData('circuit-court-fei')
       .then(() => {
         setHasTriedLoading(true);
       })
@@ -30,7 +26,6 @@ export default function CircuitCourtFeiLoader() {
         setHasTriedLoading(true);
         console.error(error);
       });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (!fei) {

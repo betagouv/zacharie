@@ -14,5 +14,6 @@ test("88 - SVI d'un autre département peut voir une fiche hors périmètre (by 
   await expect(page).toHaveURL(/\/app\/svi/);
   await page.goto(`http://localhost:3290/app/svi/fei/${feiId}`);
   // By design: any SVI can see any fiche — shows "Carcasses à inspecter (0)" since not assigned
-  await expect(page.getByText(/Carcasses à inspecter/)).toBeVisible({ timeout: 10000 });
+  await expect(page.getByText(/Carcasses à inspecter/)).not.toBeVisible();
+  await expect(page.getByText('Page non trouvéeErreur 404')).toBeVisible();
 });

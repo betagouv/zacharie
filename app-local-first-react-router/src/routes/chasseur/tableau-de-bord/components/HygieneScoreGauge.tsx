@@ -13,13 +13,6 @@ export default function HygieneScoreGauge({ score, maxScore = 100 }: HygieneScor
   const endX = 130;
   const endY = 70;
 
-  // Calculate the circumference of the semicircle
-  const circumference = Math.PI * radius;
-
-  // Calculate how much of the arc should be filled
-  const strokeDasharray = circumference;
-  const strokeDashoffset = circumference - (percentage / 100) * circumference;
-
   // Calculate the endpoint for the indicator dot
   // For arc M 20 70 A 50 50 0 0 1 120 70:
   // - SVG calculates the center at (70, 70) for the upper semicircle

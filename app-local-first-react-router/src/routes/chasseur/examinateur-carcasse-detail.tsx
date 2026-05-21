@@ -8,21 +8,18 @@ import petitGibierCarcasseList from '@app/data/petit-gibier-carcasse/list.json';
 import petitGibierCarcasseTree from '@app/data/petit-gibier-carcasse/tree.json';
 import grandGibierAbatstree from '@app/data/grand-gibier-abats/tree.json';
 import grandGibierAbatsList from '@app/data/grand-gibier-abats/list.json';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Select } from '@codegouvfr/react-dsfr/Select';
 import { Breadcrumb } from '@codegouvfr/react-dsfr/Breadcrumb';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
-import { refreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import ModalTreeDisplay from '@app/components/ModalTreeDisplay';
 import NotFound from '@app/components/NotFound';
 import Chargement from '@app/components/Chargement';
 import { Link, useNavigate, useParams } from 'react-router';
 import useZustandStore from '@app/zustand/store';
-import { loadMyRelations } from '@app/utils/load-my-relations';
-import { loadFei } from '@app/utils/load-fei';
 import useUser from '@app/zustand/user';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import dayjs from 'dayjs';
@@ -36,6 +33,7 @@ import {
 } from '@app/utils/get-carcasse-card-display';
 import type { UserForFei } from '@api/src/types/user';
 import type { EntityWithUserRelation } from '@api/src/types/entity';
+import { loadData, useLoaderEffect } from '@app/utils/load-data';
 
 const gibierSelect = {
   grand: grandGibier.especes,
@@ -201,11 +199,9 @@ export default function ExaminateurCarcasseDetail() {
   const carcasse = state.carcasses[params.zacharie_carcasse_id!];
   const [hasTriedLoading, setHasTriedLoading] = useState(false);
 
-  useEffect(() => {
+  useLoaderEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
-    refreshUser('carcasse')
-      .then(loadMyRelations)
-      .then(() => loadFei(params.fei_numero!))
+    loadData('carcasse')
       .then(() => {
         setHasTriedLoading(true);
       })
@@ -213,7 +209,6 @@ export default function ExaminateurCarcasseDetail() {
         setHasTriedLoading(true);
         console.error(error);
       });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (!fei || !carcasse) {
@@ -511,7 +506,7 @@ function ExaminateurCarcasseDetailLoaded() {
                     label={
                       carcasse.type === CarcasseType.PETIT_GIBIER
                         ? "Numéro d'identification"
-                        : 'Numéro de bracelet'
+                        : 'Numéro de marquage'
                     }
                     state={numeroError ? 'error' : 'default'}
                     stateRelatedMessage={numeroError ?? ''}

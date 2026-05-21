@@ -100,7 +100,7 @@ export default function ModalitesDutilisation() {
           </p>
           <p>
             L’Examinateur initial peut apporter des modifications sur les informations qualifiant chaque
-            carcasse, à l’exception du numéro de bracelet. Celui-ci, une fois validé, ne pourra être modifié.
+            carcasse, à l’exception du numéro de marquage. Celui-ci, une fois validé, ne pourra être modifié.
             Ces modifications sont envisageables uniquement avant l’intervention d’un autre Utilisateur.
           </p>
           <p>

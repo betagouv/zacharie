@@ -28,7 +28,7 @@ test('Ajout carcasse manquante : ETG ajoute → examinateur signe → carcasse r
   await addBtn.scrollIntoViewIfNeeded();
   await addBtn.click();
 
-  await page.getByLabel('Numéro de bracelet *').fill(newBracelet);
+  await page.getByLabel('Numéro de marquage *').fill(newBracelet);
   await page.getByLabel('Espèce *').selectOption({ label: 'Cerf élaphe' });
   await page.getByLabel("Commentaire pour l'examinateur (optionnel)").fill('Trouvée à part du lot');
   await page.getByRole('button', { name: 'Envoyer la demande' }).click();

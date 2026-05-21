@@ -1,4 +1,5 @@
-import useZustandStore, { syncData } from '@app/zustand/store';
+import useZustandStore from '@app/zustand/store';
+import { syncData } from '@app/utils/sync-data';
 import { useEffect, useRef, useState } from 'react';
 
 export function useIsOnline() {
