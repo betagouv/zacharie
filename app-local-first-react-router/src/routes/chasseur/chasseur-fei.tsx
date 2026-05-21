@@ -61,7 +61,6 @@ function FEIChasseurLoaded() {
   const fei = feis[params.fei_numero!];
 
   const carcasses = useCarcassesForFei(params.fei_numero);
-  console.log({ carcasses });
   const currentTransmission = carcasses?.[0];
 
   const users = useZustandStore((state) => state.users);

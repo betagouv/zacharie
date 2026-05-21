@@ -67,20 +67,19 @@ export function computeFeiSteps({
   user,
   carcasses,
 }: ComputeFeiStepsParams): UseFeiStepsReturn {
-  console.log({ carcasses });
-  if (!carcasses?.length) {
-    return {
-      currentStep: 0,
-      currentStepLabel: 'Examen initial',
-      currentStepLabelForEtg: 'Fiche reçue, pas encore prise en charge',
-      currentStepLabelForChasseur: 'Examen initial',
-      nextStepLabel: 'Validation par le premier détenteur',
-      currentStepLabelShort: '',
-      simpleStatus: 'En cours',
-      steps: [],
-    };
-  }
-  const currentTransmission = carcasses[0];
+  const currentTransmission = carcasses?.length
+    ? carcasses[0]
+    : {
+        current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
+        current_owner_user_id: fei.examinateur_initial_user_id,
+        current_owner_user_name_cache: `${user?.prenom} ${user?.nom_de_famille}`,
+        current_owner_entity_id: null,
+        current_owner_entity_name_cache: null,
+        consommateur_final_usage_domestique: null,
+        svi_assigned_at: null,
+        svi_closed_at: null,
+        intermediaire_closed_at: null,
+      };
   const steps: Array<IntermediaireStep> = (() => {
     if (currentTransmission.consommateur_final_usage_domestique) {
       return [
@@ -136,9 +135,7 @@ export function computeFeiSteps({
     return _steps;
   })();
 
-  console.log({ steps });
   const currentStepIndex: number = (() => {
-    console.log({ currentTransmission });
     // find role equal to currentTransmission.current_owner_role but in reverse order
     if (currentTransmission.consommateur_final_usage_domestique) return 1;
     if (currentTransmission.svi_assigned_at) return steps.length - 1; // step is SVI
@@ -150,7 +147,6 @@ export function computeFeiSteps({
     return steps.length - 3; // etg is not selected
   })();
 
-  console.log({ currentStepIndex });
   const currentStepLabel: FeiStep = (() => {
     if (
       // @ts-expect-error automatic_closed_at is not yet implemented
