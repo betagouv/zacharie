@@ -46,7 +46,7 @@ test('Création fiche grand gibier mono-carcasse — 1 daim', async ({ page }) =
   await page.getByRole('textbox', { name: "Heure d'éviscération de la" }).blur();
 
   // Bloc 4 — Validation
-  await page.getByRole('button', { name: 'Définir comme étant la date du jour et maintenant' }).click();
+  await page.getByRole('button', { name: 'Date du jour et maintenant' }).click();
   await page.getByText('Je, Martin Marie, certifie qu').click();
 
   const transmettre = page.getByRole('button', { name: 'Transmettre', exact: true });

@@ -45,7 +45,7 @@ test('Création fiche petit gibier en lot — 10 pigeons', async ({ page }) => {
     .fill(dayjs().startOf('day').add(1, 'hour').format('HH:mm'));
   await page.getByRole('textbox', { name: 'Heure de mise à mort de la' }).blur();
 
-  await page.getByRole('button', { name: 'Définir comme étant la date du jour et maintenant' }).click();
+  await page.getByRole('button', { name: 'Date du jour et maintenant' }).click();
   await page.getByText('Je, Martin Marie, certifie qu').click();
 
   await page.getByRole('button', { name: 'Transmettre', exact: true }).click();

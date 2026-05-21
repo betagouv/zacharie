@@ -36,9 +36,7 @@ test('Création CCG inline depuis le formulaire de transmission', async ({ page 
   await expect(page.getByText(/CCG Chasseurs.*CCG-01|CCG-01/).first()).toBeVisible({ timeout: 10000 });
 
   // Complete the transmission
-  const cliquezIci = page
-    .getByRole('button', { name: /Définir comme étant la date du jour et maintenant/ })
-    .first();
+  const cliquezIci = page.getByRole('button', { name: /Date du jour et maintenant/ }).first();
   await cliquezIci.scrollIntoViewIfNeeded();
   await cliquezIci.click();
 
@@ -46,9 +44,7 @@ test('Création CCG inline depuis le formulaire de transmission', async ({ page 
   await jeTransporte.scrollIntoViewIfNeeded();
   await jeTransporte.click();
 
-  const cliquezIci2 = page
-    .getByRole('button', { name: /Définir comme étant la date du jour et maintenant/ })
-    .last();
+  const cliquezIci2 = page.getByRole('button', { name: /Date du jour et maintenant/ }).last();
   await cliquezIci2.scrollIntoViewIfNeeded();
   await cliquezIci2.click();
 
