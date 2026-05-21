@@ -301,7 +301,9 @@ export default function ChasseurOnboardingMesAssociationsDeChasse() {
                       >
                         <div className="bg-contrast-grey rounded-lg p-4">
                           <p className="mb-1 text-lg font-bold">{currentEntity.nom_d_usage}</p>
-                          {currentEntity.siret && <p className="mb-1 text-sm">SIRET : {currentEntity.siret}</p>}
+                          {currentEntity.siret && (
+                            <p className="mb-1 text-sm">SIRET : {currentEntity.siret}</p>
+                          )}
                           {currentEntity.address_ligne_1 && (
                             <p className="mb-1 text-sm">{currentEntity.address_ligne_1}</p>
                           )}

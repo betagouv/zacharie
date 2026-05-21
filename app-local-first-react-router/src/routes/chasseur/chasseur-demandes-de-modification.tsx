@@ -40,11 +40,14 @@ export default function ChasseurDemandesDeModification() {
 
   return (
     <div className="fr-container fr-py-4w">
-      <title>Demandes de modification | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
+      <title>
+        Demandes de modification | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire
+      </title>
       <h1>Demandes de modification</h1>
       <p className="opacity-80">
-      Les destinataires de vos carcasses peuvent vous demander de corriger un numéro de bracelet, ou de valider la mise sur le marché d'une carcasse
-      qu'ils ont ajoutée à une fiche. En tant qu'examinateur initial, vous devez approuver ou refuser ces modifications.
+        Les destinataires de vos carcasses peuvent vous demander de corriger un numéro de bracelet, ou de
+        valider la mise sur le marché d'une carcasse qu'ils ont ajoutée à une fiche. En tant qu'examinateur
+        initial, vous devez approuver ou refuser ces modifications.
       </p>
       {pendingForMe.length === 0 && (
         <Alert
@@ -61,47 +64,47 @@ export default function ChasseurDemandesDeModification() {
           ? `Fiche du ${datePart}${commune ? ` - ${commune}` : ''}`
           : `Fiche ${feiNumero}`;
         return (
-        <section
-          key={feiNumero}
-          className="fr-mt-4w"
-        >
-          <h2 className="fr-h4">{heading}</h2>
-          <ul className="space-y-2">
-            {requests.map((r) => {
-              const isRename = r.type === CarcasseModificationRequestType.BRACELET_RENAME;
-              return (
-                <li
-                  key={r.id}
-                  className="rounded-sm border border-orange-300 bg-orange-50 p-3"
-                >
-                  <p className="m-0 font-semibold">
-                    {isRename ? 'Changement de numéro de bracelet' : 'Nouvelle carcasse à signer'}
-                  </p>
-                  {isRename && (
-                    <p className="m-0 text-sm">
-                      <span className="font-medium">{r.numero_bracelet_before}</span> →{' '}
-                      <span className="font-medium">{r.numero_bracelet_after}</span>
+          <section
+            key={feiNumero}
+            className="fr-mt-4w"
+          >
+            <h2 className="fr-h4">{heading}</h2>
+            <ul className="space-y-2">
+              {requests.map((r) => {
+                const isRename = r.type === CarcasseModificationRequestType.BRACELET_RENAME;
+                return (
+                  <li
+                    key={r.id}
+                    className="rounded-sm border border-orange-300 bg-orange-50 p-3"
+                  >
+                    <p className="m-0 font-semibold">
+                      {isRename ? 'Changement de numéro de bracelet' : 'Nouvelle carcasse à signer'}
                     </p>
-                  )}
-                  <p className="m-0 text-sm opacity-70">
-                    Demandée le {dayjs(r.requested_at).format('DD/MM/YYYY HH:mm')}
-                  </p>
-                  {r.comment_intermediaire && (
-                    <p className="m-0 text-sm opacity-80">Commentaire : {r.comment_intermediaire}</p>
-                  )}
-                  <div className="mt-2">
-                    <Link
-                      to={`/app/chasseur/demandes-de-modification/${r.id}`}
-                      className="fr-btn fr-btn--secondary fr-btn--sm"
-                    >
-                      Voir et traiter
-                    </Link>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        </section>
+                    {isRename && (
+                      <p className="m-0 text-sm">
+                        <span className="font-medium">{r.numero_bracelet_before}</span> →{' '}
+                        <span className="font-medium">{r.numero_bracelet_after}</span>
+                      </p>
+                    )}
+                    <p className="m-0 text-sm opacity-70">
+                      Demandée le {dayjs(r.requested_at).format('DD/MM/YYYY HH:mm')}
+                    </p>
+                    {r.comment_intermediaire && (
+                      <p className="m-0 text-sm opacity-80">Commentaire : {r.comment_intermediaire}</p>
+                    )}
+                    <div className="mt-2">
+                      <Link
+                        to={`/app/chasseur/demandes-de-modification/${r.id}`}
+                        className="fr-btn fr-btn--secondary fr-btn--sm"
+                      >
+                        Voir et traiter
+                      </Link>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
         );
       })}
     </div>

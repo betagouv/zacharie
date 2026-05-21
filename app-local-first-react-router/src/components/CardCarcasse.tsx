@@ -94,9 +94,7 @@ export default function CardCarcasse({
   // Les demandes PENDING ne sont pas comptées ici (déjà visualisées via le PendingModificationBanner).
   const modifsHistory = useHistoryForCarcasse(carcasse.zacharie_carcasse_id);
   const modifsCount = modifsHistory.length;
-  const hasRejectedModif = modifsHistory.some(
-    (r) => r.status === CarcasseModificationRequestStatus.REJECTED
-  );
+  const hasRejectedModif = modifsHistory.some((r) => r.status === CarcasseModificationRequestStatus.REJECTED);
 
   let anomaliesExaminateurs =
     carcasse.examinateur_anomalies_abats?.length + carcasse.examinateur_anomalies_carcasse?.length;
@@ -220,7 +218,7 @@ export default function CardCarcasse({
             {descriptionLine && (
               <p
                 className={[
-                  'text-sm/4 inline-flex items-center gap-1',
+                  'inline-flex items-center gap-1 text-sm/4',
                   hasRejectedModif ? 'text-error-main-525 font-semibold' : accentTextClass,
                 ]
                   .filter(Boolean)

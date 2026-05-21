@@ -36,16 +36,16 @@ test('Rename bracelet : ETG signale → examinateur approuve → maj visible cô
 
   // The outer refus modal closes after submission. The PendingModificationBanner shows up under the
   // card to confirm sync round-trip.
-  await expect(
-    page.getByText('Demande de modification du numéro de bracelet en cours').first()
-  ).toBeVisible({ timeout: 10000 });
+  await expect(page.getByText('Demande de modification du numéro de bracelet en cours').first()).toBeVisible({
+    timeout: 10000,
+  });
 
   // ----- Step 2: Switch to examinateur and approve -----------------------------------------------
   await logoutAndConnect(page, 'examinateur@example.fr');
   // The dashboard alert modal pops automatically on /app/chasseur.
-  await expect(
-    page.getByRole('heading', { name: 'Demandes de modification en attente' })
-  ).toBeVisible({ timeout: 10000 });
+  await expect(page.getByRole('heading', { name: 'Demandes de modification en attente' })).toBeVisible({
+    timeout: 10000,
+  });
   await page.getByRole('button', { name: 'Voir les demandes' }).click();
   await expect(page).toHaveURL(/\/app\/chasseur\/demandes-de-modification$/);
 

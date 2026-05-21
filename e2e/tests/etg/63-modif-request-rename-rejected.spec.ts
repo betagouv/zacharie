@@ -25,19 +25,19 @@ test('Rename rejected : examinateur refuse → ETG voit warning sur la carcasse'
   await page.getByRole('button', { name: 'Signaler un numéro de bracelet incorrect' }).click();
   await page.getByLabel('Numéro de bracelet correct').fill('MM-001-Z99');
   await page.getByRole('button', { name: 'Envoyer la demande' }).click();
-  await expect(
-    page.getByText('Demande de modification du numéro de bracelet en cours').first()
-  ).toBeVisible({ timeout: 10000 });
+  await expect(page.getByText('Demande de modification du numéro de bracelet en cours').first()).toBeVisible({
+    timeout: 10000,
+  });
 
   // Examinateur rejects.
   await logoutAndConnect(page, 'examinateur@example.fr');
-  await expect(
-    page.getByRole('heading', { name: 'Demandes de modification en attente' })
-  ).toBeVisible({ timeout: 10000 });
+  await expect(page.getByRole('heading', { name: 'Demandes de modification en attente' })).toBeVisible({
+    timeout: 10000,
+  });
   await page.getByRole('button', { name: 'Voir les demandes' }).click();
   await page.getByRole('link', { name: 'Voir et traiter' }).first().click();
 
-  await page.getByLabel('Motif du refus').fill('Non, c\'est bien 002');
+  await page.getByLabel('Motif du refus').fill("Non, c'est bien 002");
   await page.getByRole('button', { name: 'Refuser' }).click();
   await expect(page).toHaveURL(/\/app\/chasseur\/demandes-de-modification$/);
 
