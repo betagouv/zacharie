@@ -58,7 +58,7 @@ test("Autre membre de l'Association voit le bloc Destinataire sur la fiche", asy
   await page.getByRole('textbox', { name: "Heure d'éviscération de la" }).blur();
 
   // Validation de l'examen initial.
-  await page.getByRole('button', { name: 'Définir comme étant la date du jour et maintenant' }).click();
+  await page.getByRole('button', { name: 'Date du jour et maintenant' }).click();
   await page
     .getByText(/Je, .* certifie qu/i)
     .first()

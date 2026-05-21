@@ -37,7 +37,7 @@ test('Double-clic Transmettre — pas de double soumission', async ({ page }) =>
   await page.getByRole('textbox', { name: "Heure d'éviscération de la" }).fill('02:00');
   await page.getByRole('textbox', { name: "Heure d'éviscération de la" }).blur();
 
-  await page.getByRole('button', { name: 'Définir comme étant la date du jour et maintenant' }).click();
+  await page.getByRole('button', { name: 'Date du jour et maintenant' }).click();
   await page.getByText('Je, Martin Marie, certifie qu').click();
 
   const transmettre = page.getByRole('button', { name: 'Transmettre', exact: true });

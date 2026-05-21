@@ -623,7 +623,7 @@ function FEIChasseurLoaded() {
                             });
                           }}
                         >
-                          Définir comme étant la date du jour et maintenant
+                          Date du jour et maintenant
                         </button>
                       ) : (
                         "Cette date vaut date d'approbation de mise sur le marché"

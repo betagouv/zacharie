@@ -362,7 +362,7 @@ function DispatchGroupForm({
                       });
                     }}
                   >
-                    Définir comme étant la date du jour et maintenant
+                    Date du jour et maintenant
                   </button>
                 ) : null
               }
@@ -464,7 +464,7 @@ function DispatchGroupForm({
                         });
                       }}
                     >
-                      Définir comme étant la date du jour et maintenant.
+                      Date du jour et maintenant.
                     </button>
                     À ne remplir que si vous êtes le transporteur et que vous stockez les carcasses dans un
                     CCG. Indiquer une date permettra au prochain détenteur de s'organiser.

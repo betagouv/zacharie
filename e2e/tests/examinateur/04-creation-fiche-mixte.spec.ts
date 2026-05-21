@@ -60,7 +60,7 @@ test('Création fiche mixte — 3 daims + 10 pigeons', async ({ page }) => {
     .fill(dayjs().startOf('day').add(2, 'hour').format('HH:mm'));
   await page.getByRole('textbox', { name: "Heure d'éviscération de la" }).blur();
 
-  await page.getByRole('button', { name: 'Définir comme étant la date du jour et maintenant' }).click();
+  await page.getByRole('button', { name: 'Date du jour et maintenant' }).click();
   await page.getByText('Je, Martin Marie, certifie qu').click();
   await page.getByRole('button', { name: 'Transmettre', exact: true }).click();
 
