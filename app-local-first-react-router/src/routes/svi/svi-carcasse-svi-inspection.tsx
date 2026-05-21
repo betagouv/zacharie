@@ -211,9 +211,7 @@ function SviInspectionCarcasse() {
                       impossible de réaliser les inspections post-mortem.
                     </p>
                   ) : (
-                    <CarcasseIPM2
-                      canEdit={canEdit && carcasse.svi_ipm1_decision !== IPM1Decision.ACCEPTE}
-                    />
+                    <CarcasseIPM2 canEdit={canEdit && carcasse.svi_ipm1_decision !== IPM1Decision.ACCEPTE} />
                   )}
                 </div>
               </Section>

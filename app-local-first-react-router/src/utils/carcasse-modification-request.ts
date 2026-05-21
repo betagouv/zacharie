@@ -64,7 +64,9 @@ export function hasPendingModifRequest(
   carcasseModifPendingRequestsIds: Record<string, CarcasseModificationRequest>,
   carcasse: Pick<Carcasse, 'zacharie_carcasse_id'>
 ): boolean {
-  return getPendingRequestForCarcasse(carcasseModifPendingRequestsIds, carcasse.zacharie_carcasse_id) !== null;
+  return (
+    getPendingRequestForCarcasse(carcasseModifPendingRequestsIds, carcasse.zacharie_carcasse_id) !== null
+  );
 }
 
 export { CarcasseModificationRequestStatus, CarcasseModificationRequestType };

@@ -1,0 +1,24 @@
+name: Format check
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  prettier:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        pkg: [api-express, app-local-first-react-router, e2e]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install ${{ matrix.pkg }}
+        run: cd ${{ matrix.pkg }} && npm ci --ignore-scripts
+      - name: Prettier check ${{ matrix.pkg }}
+        run: cd ${{ matrix.pkg }} && npx prettier --check .

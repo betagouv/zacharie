@@ -48,9 +48,9 @@ test("44a - Onboarding asso : recherche et sélection d'une entité existante", 
 
   // "Êtes-vous rattaché à une association / société / domaine de chasse ?" — clicking Oui reveals the search form
   await page.locator('label.fr-label:has-text("Oui")').first().click();
-  await expect(
-    page.getByText(/Rechercher une association, société ou domaine de chasse/i)
-  ).toBeVisible({ timeout: 5000 });
+  await expect(page.getByText(/Rechercher une association, société ou domaine de chasse/i)).toBeVisible({
+    timeout: 5000,
+  });
 
   // Open SelectCustom for raison_sociale and pick the seeded entity
   await page.locator("[class*='raison_sociale'][class*='input-container']").first().click();
@@ -75,9 +75,9 @@ test("44b - Onboarding asso : création d'une nouvelle association via le formul
   await gotoStep3MesInformationsDeChasse(page);
 
   await page.locator('label.fr-label:has-text("Oui")').first().click();
-  await expect(
-    page.getByText(/Rechercher une association, société ou domaine de chasse/i)
-  ).toBeVisible({ timeout: 5000 });
+  await expect(page.getByText(/Rechercher une association, société ou domaine de chasse/i)).toBeVisible({
+    timeout: 5000,
+  });
 
   // Click dedicated "Créer une nouvelle ..." button under the "ou" divider
   const createBtn = page.getByRole('button', {
@@ -112,26 +112,26 @@ test("44b - Onboarding asso : création d'une nouvelle association via le formul
 });
 
 // Scenario 44c — "Chercher une entité existante" link toggles the create form back to the search
-test("44c - Onboarding asso : depuis le formulaire de création on peut revenir à la recherche", async ({
+test('44c - Onboarding asso : depuis le formulaire de création on peut revenir à la recherche', async ({
   page,
 }) => {
   await connectWith(page, 'examinateur-onboarding@example.fr');
   await gotoStep3MesInformationsDeChasse(page);
 
   await page.locator('label.fr-label:has-text("Oui")').first().click();
-  await expect(
-    page.getByText(/Rechercher une association, société ou domaine de chasse/i)
-  ).toBeVisible({ timeout: 5000 });
+  await expect(page.getByText(/Rechercher une association, société ou domaine de chasse/i)).toBeVisible({
+    timeout: 5000,
+  });
 
   await page
     .getByRole('button', { name: /Créer une nouvelle association, société ou domaine de chasse/i })
     .click();
-  await expect(
-    page.getByRole('button', { name: /Créer et me rattacher à cette entité/i })
-  ).toBeVisible({ timeout: 5000 });
+  await expect(page.getByRole('button', { name: /Créer et me rattacher à cette entité/i })).toBeVisible({
+    timeout: 5000,
+  });
 
   await page.getByRole('button', { name: /Chercher une entité existante/i }).click();
-  await expect(
-    page.getByText(/Rechercher une association, société ou domaine de chasse/i)
-  ).toBeVisible({ timeout: 5000 });
+  await expect(page.getByText(/Rechercher une association, société ou domaine de chasse/i)).toBeVisible({
+    timeout: 5000,
+  });
 });

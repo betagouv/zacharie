@@ -10,7 +10,7 @@ export default function PageNotFound() {
       id="content"
       className="flex min-h-[80vh] items-center justify-center"
     >
-      <div className="fr-container flex flex-col items-center text-center fr-py-7w">
+      <div className="fr-container fr-py-7w flex flex-col items-center text-center">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           className="fr-artwork mb-8 w-48 md:w-64"
@@ -40,7 +40,7 @@ export default function PageNotFound() {
             ></use>
           </g>
         </svg>
-        <p className="fr-text--sm fr-mb-1w uppercase tracking-widest text-gray-500">Erreur 404</p>
+        <p className="fr-text--sm fr-mb-1w tracking-widest text-gray-500 uppercase">Erreur 404</p>
         <h1 className="fr-display--xs fr-mb-2w">Mince, Zach'a pas trouvé</h1>
         <p className="fr-text--lead fr-mb-6w max-w-xl text-gray-600">
           La page que vous cherchez n'existe pas ou a été déplacée.
