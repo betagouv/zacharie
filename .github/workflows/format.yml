@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        pkg: [api-express, app-local-first-react-router, e2e, expo]
+        pkg: [api-express, app-local-first-react-router, e2e]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
