@@ -48,6 +48,7 @@ export function useFeiSteps(fei: FeiWithIntermediaires): UseFeiStepsReturn {
       carcasses,
     });
   }, [fei, intermediaires, entitiesIdsWorkingDirectlyFor, user, carcasses]);
+  console.log('memoizedComputeFeiSteps', memoizedComputeFeiSteps);
   return memoizedComputeFeiSteps;
 }
 
@@ -66,6 +67,7 @@ export function computeFeiSteps({
   user,
   carcasses,
 }: ComputeFeiStepsParams): UseFeiStepsReturn {
+  console.log({ carcasses });
   if (!carcasses?.length) {
     return {
       currentStep: 0,
@@ -134,7 +136,9 @@ export function computeFeiSteps({
     return _steps;
   })();
 
+  console.log({ steps });
   const currentStepIndex: number = (() => {
+    console.log({ currentTransmission });
     // find role equal to currentTransmission.current_owner_role but in reverse order
     if (currentTransmission.consommateur_final_usage_domestique) return 1;
     if (currentTransmission.svi_assigned_at) return steps.length - 1; // step is SVI
@@ -146,6 +150,7 @@ export function computeFeiSteps({
     return steps.length - 3; // etg is not selected
   })();
 
+  console.log({ currentStepIndex });
   const currentStepLabel: FeiStep = (() => {
     if (
       // @ts-expect-error automatic_closed_at is not yet implemented

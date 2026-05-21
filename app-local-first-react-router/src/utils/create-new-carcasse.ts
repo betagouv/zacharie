@@ -1,7 +1,7 @@
 import type { FeiWithIntermediaires } from '@api/src/types/fei';
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
-import { Carcasse, CarcasseStatus, CarcasseType, UserRoles } from '@prisma/client';
+import { Carcasse, CarcasseStatus, CarcasseType, FeiOwnerRole, UserRoles } from '@prisma/client';
 import dayjs from 'dayjs';
 import petitGibier from '@app/data/petit-gibier.json';
 import { CarcasseWithModificationRequests } from '@api/src/types/carcasse';
@@ -49,7 +49,7 @@ export async function createNewCarcasse({
     nombre_d_animaux: isPetitGibier ? Number(nombreDAnimaux) : 1,
     heure_mise_a_mort_premiere_carcasse_fei: fei.heure_mise_a_mort_premiere_carcasse,
     heure_evisceration_derniere_carcasse_fei: fei.heure_evisceration_derniere_carcasse,
-    consommateur_final_usage_domestique: fei.consommateur_final_usage_domestique,
+    consommateur_final_usage_domestique: null,
     heure_mise_a_mort: null,
     heure_evisceration: null,
     espece: espece,
@@ -132,11 +132,11 @@ export async function createNewCarcasse({
     svi_user_id: null,
     svi_closed_at: null,
     svi_closed_by_user_id: null,
-    current_owner_user_id: fei.fei_current_owner_user_id,
-    current_owner_user_name_cache: fei.fei_current_owner_user_name_cache,
-    current_owner_entity_id: fei.fei_current_owner_entity_id,
-    current_owner_entity_name_cache: fei.fei_current_owner_entity_name_cache,
-    current_owner_role: fei.fei_current_owner_role,
+    current_owner_user_id: user.id,
+    current_owner_user_name_cache: `${user.prenom} ${user.nom_de_famille}`,
+    current_owner_entity_id: null,
+    current_owner_entity_name_cache: null,
+    current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
     next_owner_wants_to_sous_traite: null,
     next_owner_sous_traite_at: null,
     next_owner_sous_traite_by_user_id: null,
@@ -146,9 +146,9 @@ export async function createNewCarcasse({
     next_owner_entity_id: null,
     next_owner_entity_name_cache: null,
     next_owner_role: null,
-    prev_owner_user_id: fei.fei_prev_owner_user_id,
-    prev_owner_entity_id: fei.fei_prev_owner_entity_id,
-    prev_owner_role: fei.fei_prev_owner_role,
+    prev_owner_user_id: null,
+    prev_owner_entity_id: null,
+    prev_owner_role: null,
     created_at: dayjs().toDate(),
     updated_at: dayjs().toDate(),
     deleted_at: null,

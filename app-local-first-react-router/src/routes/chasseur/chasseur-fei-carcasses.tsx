@@ -25,6 +25,7 @@ export default function CarcassesExaminateur({
   onAllCarcassesConfirmed: () => void;
   onAddMoreCarcasses: () => void;
 }) {
+  console.log({ canEdit });
   const params = useParams();
   const feis = useZustandStore((state) => state.feis);
   const fei = feis[params.fei_numero!];

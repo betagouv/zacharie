@@ -861,7 +861,7 @@ export default function DestinatairePremierDetenteur({
     //   return `${unassignedCarcasses.length} carcasse(s) ne sont attribuees a aucun destinataire`;
     // }
     return null;
-  }, [dispatchGroups, entities, unassignedCarcasses]);
+  }, [dispatchGroups, entities]);
 
   const totalCarcassesToSend = useMemo(() => {
     return dispatchGroups.reduce((acc, g) => acc + g.carcasseIds.length, 0);
