@@ -128,7 +128,7 @@ export default function SelectNextForExaminateur({
         premier_detenteur_name_cache: nextOwnerEntity?.nom_d_usage ?? null,
       };
       nextCarcassesTransmission = {
-        current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+        current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
         current_owner_user_id: user.id,
         current_owner_user_name_cache: `${user.prenom} ${user.nom_de_famille}`,
         current_owner_entity_id: nextOwnerEntity.id,

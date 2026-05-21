@@ -48,7 +48,6 @@ export function useFeiSteps(fei: FeiWithIntermediaires): UseFeiStepsReturn {
       carcasses,
     });
   }, [fei, intermediaires, entitiesIdsWorkingDirectlyFor, user, carcasses]);
-  console.log('memoizedComputeFeiSteps', memoizedComputeFeiSteps);
   return memoizedComputeFeiSteps;
 }
 
@@ -73,8 +72,19 @@ export function computeFeiSteps({
         current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
         current_owner_user_id: fei.examinateur_initial_user_id,
         current_owner_user_name_cache: `${user?.prenom} ${user?.nom_de_famille}`,
+        premier_detenteur_prochain_detenteur_role_cache: null,
+        premier_detenteur_prochain_detenteur_id_cache: null,
         current_owner_entity_id: null,
         current_owner_entity_name_cache: null,
+        next_owner_user_id: null,
+        next_owner_user_name_cache: null,
+        next_owner_entity_id: null,
+        next_owner_entity_name_cache: null,
+        next_owner_role: null,
+        next_owner_sous_traite_by_entity_id: null,
+        prev_owner_user_id: null,
+        prev_owner_entity_id: null,
+        prev_owner_role: null,
         consommateur_final_usage_domestique: null,
         svi_assigned_at: null,
         svi_closed_at: null,

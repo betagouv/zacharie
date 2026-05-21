@@ -61,6 +61,7 @@ function FEIChasseurLoaded() {
   const fei = feis[params.fei_numero!];
 
   const carcasses = useCarcassesForFei(params.fei_numero);
+  // FIXME: on fait quoi en cas de dispatch
   const currentTransmission = carcasses?.[0];
 
   const users = useZustandStore((state) => state.users);
@@ -150,6 +151,7 @@ function FEIChasseurLoaded() {
   }, [currentTransmission, fei, user]);
 
   const canEditAsPremierDetenteur = useMemo(() => {
+    if (!currentTransmission) return false;
     if (
       currentTransmission?.current_owner_role !== FeiOwnerRole.PREMIER_DETENTEUR &&
       currentTransmission?.current_owner_role !== FeiOwnerRole.EXAMINATEUR_INITIAL
@@ -314,6 +316,12 @@ function FEIChasseurLoaded() {
       }
       updateFei(fei.numero, {
         examinateur_initial_approbation_mise_sur_le_marche: approbation,
+        // FIXME: remove the next fields
+        fei_current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+        fei_current_owner_user_id: user.id,
+        fei_current_owner_user_name_cache: `${user.prenom} ${user.nom_de_famille}`,
+        fei_current_owner_entity_id: fei.premier_detenteur_entity_id,
+        fei_current_owner_entity_name_cache: premierDetenteurEntity?.nom_d_usage ?? null,
       });
       updateCarcassesTransmission(carcasseIds, {
         current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
@@ -326,6 +334,12 @@ function FEIChasseurLoaded() {
     } else {
       updateFei(fei.numero, {
         examinateur_initial_approbation_mise_sur_le_marche: approbation,
+        // FIXME: remove the next fields
+        fei_current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+        fei_current_owner_user_id: user.id,
+        fei_current_owner_user_name_cache: `${user.prenom} ${user.nom_de_famille}`,
+        fei_current_owner_entity_id: fei.premier_detenteur_entity_id,
+        fei_current_owner_entity_name_cache: premierDetenteurEntity?.nom_d_usage ?? null,
       });
       updateCarcassesTransmission(carcasseIds, {
         current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
