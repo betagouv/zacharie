@@ -8,6 +8,7 @@ import {
   TransportType,
   EntityRelationType,
   FeiOwnerRole,
+  CarcasseType,
   type Carcasse,
 } from '@prisma/client';
 import dayjs from 'dayjs';
@@ -19,6 +20,7 @@ import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import { syncData } from '@app/utils/sync-data';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
+import { formatCarcasseLotCount } from '@app/utils/count-carcasses';
 import {
   useCcgIds,
   useEtgIds,
@@ -110,6 +112,11 @@ function DispatchGroupForm({
   const prochainDetenteur = group.recipientEntityId ? entities[group.recipientEntityId] : null;
   const prochainDetenteurType = prochainDetenteur?.type;
 
+  const groupCarcasses = useMemo(() => {
+    const idSet = new Set(group.carcasseIds);
+    return allCarcassesRestantes.filter((c) => idSet.has(c.zacharie_carcasse_id));
+  }, [group.carcasseIds, allCarcassesRestantes]);
+
   const needTransport = useMemo(() => {
     if (
       prochainDetenteurType === EntityTypes.CONSOMMATEUR_FINAL ||
@@ -130,13 +137,13 @@ function DispatchGroupForm({
           {totalGroups > 1 && <>Destinataire {groupIndex + 1} </>}
           {allCarcassesRestantes.length > 1 && (
             <Badge
-              severity={group.carcasseIds.length > 0 ? 'info' : 'warning'}
+              severity={groupCarcasses.length > 0 ? 'info' : 'warning'}
               small
               noIcon
               as="span"
               className="ml-2"
             >
-              {group.carcasseIds.length} carcasse{group.carcasseIds.length !== 1 ? 's' : ''}
+              {groupCarcasses.length > 0 ? formatCarcasseLotCount(groupCarcasses) : 'Aucune carcasse'}
             </Badge>
           )}
         </h4>
@@ -867,12 +874,17 @@ export default function DestinatairePremierDetenteur({
     return dispatchGroups.reduce((acc, g) => acc + g.carcasseIds.length, 0);
   }, [dispatchGroups]);
 
+  const carcassesToSend = useMemo(() => {
+    const idSet = new Set(dispatchGroups.flatMap((g) => g.carcasseIds));
+    return allCarcasses.filter((c) => idSet.has(c.zacharie_carcasse_id));
+  }, [dispatchGroups, allCarcasses]);
+
   const submitLabel = useMemo(() => {
     if (carcassesDejaEnvoyees.length === 0 && totalCarcassesToSend === allCarcasses.length) {
       return 'Transmettre la fiche';
     }
-    return `Transmettre ${totalCarcassesToSend} carcasse${totalCarcassesToSend > 1 ? 's' : ''} sur ${allCarcasses.length}`;
-  }, [carcassesDejaEnvoyees.length, totalCarcassesToSend, allCarcasses.length]);
+    return `Transmettre ${formatCarcasseLotCount(carcassesToSend)} sur ${formatCarcasseLotCount(allCarcasses)}`;
+  }, [carcassesDejaEnvoyees.length, totalCarcassesToSend, allCarcasses, carcassesToSend]);
 
   const handleSubmit = () => {
     // Process each dispatch group
@@ -1065,7 +1077,7 @@ export default function DestinatairePremierDetenteur({
                           as="span"
                           className="ml-2"
                         >
-                          {carcasses.length} carcasse{carcasses.length > 1 ? 's' : ''}
+                          {formatCarcasseLotCount(carcasses)}
                         </Badge>
                       </p>
                       <div className="flex flex-wrap gap-1">
@@ -1143,24 +1155,32 @@ export default function DestinatairePremierDetenteur({
             })}
 
             {/* Unassigned carcasses warning */}
-            {unassignedCarcasses.length > 0 && (
-              <Alert
-                severity="warning"
-                title={`${unassignedCarcasses.length} carcasse${unassignedCarcasses.length > 1 ? 's' : ''} non attribuée${unassignedCarcasses.length > 1 ? 's' : ''}`}
-                description={
-                  <div className="mt-1 flex flex-wrap gap-1">
-                    {unassignedCarcasses.map((c) => (
-                      <Tag
-                        key={c.zacharie_carcasse_id}
-                        small
-                      >
-                        {c.numero_bracelet} - {c.espece}
-                      </Tag>
-                    ))}
-                  </div>
-                }
-              />
-            )}
+            {unassignedCarcasses.length > 0 &&
+              (() => {
+                const hasLot = unassignedCarcasses.some((c) => c.type === CarcasseType.PETIT_GIBIER);
+                const hasCarcasse = unassignedCarcasses.some((c) => c.type !== CarcasseType.PETIT_GIBIER);
+                const isPlural = unassignedCarcasses.length > 1;
+                const isFeminine = hasCarcasse && !hasLot;
+                const suffix = `${isFeminine ? 'e' : ''}${isPlural ? 's' : ''}`;
+                return (
+                  <Alert
+                    severity="warning"
+                    title={`${formatCarcasseLotCount(unassignedCarcasses)} non attribué${suffix}`}
+                    description={
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {unassignedCarcasses.map((c) => (
+                          <Tag
+                            key={c.zacharie_carcasse_id}
+                            small
+                          >
+                            {c.numero_bracelet} - {c.espece}
+                          </Tag>
+                        ))}
+                      </div>
+                    }
+                  />
+                );
+              })()}
 
             <div className="mt-4 flex flex-col items-start justify-between gap-2 md:flex-row md:items-center">
               {/* Submit button */}
