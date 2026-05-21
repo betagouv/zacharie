@@ -6,7 +6,6 @@ import { EntityWithUserRelation } from '@api/src/types/entity';
 import { getIntermediaireRoleLabel } from './get-user-roles-label';
 import dayjs from 'dayjs';
 import { getFeiAndCarcasseAndIntermediaireIdsFromCarcasse } from './get-carcasse-intermediaire-id';
-import { loadFei } from './load-fei';
 import { filterFeiIntermediaires } from './get-carcasses-intermediaires';
 import { capture } from '@app/services/sentry';
 import { filterCarcassesForFei } from './get-carcasses-for-fei';
@@ -18,7 +17,7 @@ type FeiExcelData = {
 };
 
 type CarcasseExcelData = {
-  'Numéro de bracelet': string;
+  'Numéro de marquage': string;
   Éspèce: string | null;
   Poids: string | null;
   "Nombre d'animaux": number | null | undefined;
@@ -65,7 +64,7 @@ type CarcasseExcelData = {
 type SimplifiedCarcasseExcelData = {
   'Premier détenteur': string;
   'Date de chasse': string;
-  'Numéro de bracelet': string;
+  'Numéro de marquage': string;
   Éspèce: string | null;
 };
 
@@ -155,7 +154,7 @@ function createSheet<
       case 'Commune de la chasse':
       case 'Numéro de fiche':
         return { wch: 40 }; // wider columns for comments
-      // case 'Numéro de bracelet':
+      // case 'Numéro de marquage':
       case 'Poids':
       case 'SVI - Saisie totale':
       case 'SVI - Certificat de saisie OK':
@@ -168,7 +167,7 @@ function createSheet<
         return { wch: 15 };
       // case 'Refusée par un destinataire':
       case 'Numéro suivi trichine':
-      case 'Numéro de bracelet':
+      case 'Numéro de marquage':
       case 'Éspèce':
       case 'SVI - Saisie partielle':
       case 'SVI - Pièces Consigne':
@@ -216,7 +215,7 @@ function sortCarcassesApprovedForExcel(carcasseA: CarcasseExcelData, carcasseB: 
     return carcasseA.Réceptionnée.localeCompare(carcasseB.Réceptionnée);
   }
   if (carcasseA.Éspèce === carcasseB.Éspèce) {
-    return carcasseA['Numéro de bracelet'].localeCompare(carcasseB['Numéro de bracelet']);
+    return carcasseA['Numéro de marquage'].localeCompare(carcasseB['Numéro de marquage']);
   }
   return carcasseA.Éspèce!.localeCompare(carcasseB.Éspèce!);
 }
@@ -226,7 +225,7 @@ function sortSimplifiedCarcasses(
   carcasseB: SimplifiedCarcasseExcelData
 ) {
   if (carcasseA.Éspèce === carcasseB.Éspèce) {
-    return carcasseA['Numéro de bracelet'].localeCompare(carcasseB['Numéro de bracelet']);
+    return carcasseA['Numéro de marquage'].localeCompare(carcasseB['Numéro de marquage']);
   }
   if (!carcasseA.Éspèce) return 1;
   if (!carcasseB.Éspèce) return -1;
@@ -251,14 +250,9 @@ export default function useExportFeis() {
 
     try {
       for (const feiId of feiNumbers) {
-        let fei = null;
-        fei = feis[feiId!];
+        let fei = feis[feiId!]!;
         if (!fei) {
-          fei = await loadFei(feiId);
-          if (!fei) {
-            console.error('fei not found', feiId);
-            continue;
-          }
+          continue;
         }
 
         const feiSheetData = [
@@ -368,7 +362,7 @@ export default function useExportFeis() {
                 ? `${premierDetenteur?.prenom} ${premierDetenteur?.nom_de_famille}`
                 : ''),
             'Date de la chasse': dayjs(fei.date_mise_a_mort).format('DD/MM/YYYY'),
-            'Numéro de bracelet': carcasse.numero_bracelet,
+            'Numéro de marquage': carcasse.numero_bracelet,
             'Commentaires ETG / Transporteurs': commentaires.join('\n'),
             'Nom du collecteur': collecteursPro.length > 0 ? collecteursPro.join(', ') : null,
             Éspèce: carcasse.espece,
@@ -457,14 +451,9 @@ export default function useExportFeis() {
 
     try {
       for (const feiId of feiNumbers) {
-        let fei = null;
-        fei = feis[feiId!];
+        const fei = feis[feiId!]!;
         if (!fei) {
-          fei = await loadFei(feiId);
-          if (!fei) {
-            console.error('fei not found', feiId);
-            continue;
-          }
+          continue;
         }
 
         const premierDetenteur = users[fei.premier_detenteur_user_id!];
@@ -495,7 +484,7 @@ export default function useExportFeis() {
           simplifiedCarcasses.push({
             'Premier détenteur': fournisseur,
             'Date de chasse': dayjs(fei.date_mise_a_mort).format('DD/MM/YYYY'),
-            'Numéro de bracelet': carcasse.numero_bracelet,
+            'Numéro de marquage': carcasse.numero_bracelet,
             Éspèce: carcasse.espece,
           });
         }

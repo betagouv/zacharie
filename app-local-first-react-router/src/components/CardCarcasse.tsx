@@ -5,7 +5,16 @@ import useUser from '@app/zustand/user';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
-import { Carcasse, CarcasseType, IPM1Decision, IPM2Decision, PoidsType, UserRoles } from '@prisma/client';
+import {
+  CarcasseModificationRequestStatus,
+  Carcasse,
+  CarcasseType,
+  IPM1Decision,
+  IPM2Decision,
+  PoidsType,
+  UserRoles,
+} from '@prisma/client';
+import { CarcasseWithModificationRequests } from '@api/src/types/carcasse';
 import dayjs from 'dayjs';
 import { type ReactNode, useMemo, useRef } from 'react';
 import { useParams } from 'react-router';
@@ -16,13 +25,9 @@ import {
   type CardAccent,
   type CardViewRole,
 } from '@app/utils/get-carcasse-card-display';
-import {
-  useHistoryForCarcasse,
-  CarcasseModificationRequestStatus,
-} from '@app/utils/carcasse-modification-request';
 
 interface CardCarcasseProps {
-  carcasse: Carcasse;
+  carcasse: CarcasseWithModificationRequests;
   className?: string;
   hideDateMiseAMort?: boolean;
   onEdit?: () => void;
@@ -92,7 +97,13 @@ export default function CardCarcasse({
   // Modifications passées (approuvées / refusées) sur cette carcasse — utilisé pour afficher un
   // compteur dans le descriptionLine + une icône d'alerte en cas de refus (signal visuel fort).
   // Les demandes PENDING ne sont pas comptées ici (déjà visualisées via le PendingModificationBanner).
-  const modifsHistory = useHistoryForCarcasse(carcasse.zacharie_carcasse_id);
+  const modifsHistory = useMemo(
+    () =>
+      carcasse.CarcasseModificationRequests.filter(
+        (r) => r.status !== CarcasseModificationRequestStatus.PENDING
+      ),
+    [carcasse.CarcasseModificationRequests]
+  );
   const modifsCount = modifsHistory.length;
   const hasRejectedModif = modifsHistory.some((r) => r.status === CarcasseModificationRequestStatus.REJECTED);
 
@@ -108,6 +119,7 @@ export default function CardCarcasse({
     descriptionLine += `${commentairesIntermediaires.length} commentaire`;
     if (commentairesIntermediaires.length > 1) descriptionLine += 's';
   }
+  console.log('modifsCount', modifsCount);
   if (modifsCount > 0) {
     if (descriptionLine.length > 0) descriptionLine += `, `;
     descriptionLine += `${modifsCount} modification`;

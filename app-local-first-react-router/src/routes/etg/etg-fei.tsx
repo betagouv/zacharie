@@ -16,7 +16,8 @@ import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import useUser from '@app/zustand/user';
-import useZustandStore, { syncData } from '@app/zustand/store';
+import useZustandStore from '@app/zustand/store';
+import { syncData } from '@app/utils/sync-data';
 import { capture } from '@app/services/sentry';
 import {
   getFeiAndIntermediaireIdsFromFeiIntermediaire,
@@ -66,7 +67,7 @@ function EtgFeiLoader(props: Props) {
   const entities = useZustandStore((state) => state.entities);
   const fei = feis[params.fei_numero!];
   const intermediaires = useFeiIntermediaires(fei.numero);
-  const feiCarcasses = useCarcassesForFei(params.fei_numero);
+  const myCarcasses = useCarcassesForFei(params.fei_numero);
 
   const [selectedIntermediaireId, setSelectedIntermediaireId] = useState<string | null>(
     () => intermediaires.find((i) => i.intermediaire_user_id === user.id)?.id ?? null
@@ -84,45 +85,44 @@ function EtgFeiLoader(props: Props) {
 
   const intermediaire = intermediaires.find((i) => i.id === selectedIntermediaireId);
 
-  // For multi-recipient dispatch: derive next_owner_role from per-carcasse data
-  const userEntityIds = useMemo(() => {
-    return Object.values(entities)
-      .filter((e) => e.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY)
-      .map((e) => e.id);
-  }, [entities]);
-
-  const myCarcasses = useMemo(() => {
-    return feiCarcasses.filter(
-      (c) =>
-        (c.next_owner_entity_id && userEntityIds.includes(c.next_owner_entity_id)) ||
-        c.next_owner_user_id === user.id
-    );
-  }, [feiCarcasses, userEntityIds, user.id]);
-
-  const myCarcassesNextOwnerRole = useMemo(() => {
-    if (myCarcasses.length > 0) {
-      return myCarcasses[0].next_owner_role;
-    }
-    return fei.fei_next_owner_role;
-  }, [myCarcasses, fei.fei_next_owner_role]);
-
   const showInterface: FeiOwnerRole | null = useMemo(() => {
-    if (fei.fei_current_owner_role === FeiOwnerRole.SVI || myCarcassesNextOwnerRole === FeiOwnerRole.SVI) {
+    if (myCarcasses.length === 0) {
+      return null;
+    }
+    console.log(
+      'myCarcasses',
+      myCarcasses,
+      'fei',
+      fei,
+      'me',
+      user,
+      'my-entities',
+      Object.values(entities)
+        .filter((e) => e.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY)
+        .map((e) => e.id)
+    );
+    if (
+      myCarcasses[0].current_owner_role === FeiOwnerRole.SVI ||
+      myCarcasses[0].next_owner_role === FeiOwnerRole.SVI
+    ) {
       return FeiOwnerRole.ETG;
     }
     if (
-      fei.fei_current_owner_role === FeiOwnerRole.COLLECTEUR_PRO &&
-      fei.fei_current_owner_user_id === user.id
+      myCarcasses[0].current_owner_role === FeiOwnerRole.COLLECTEUR_PRO &&
+      myCarcasses[0].current_owner_user_id === user.id
     ) {
       return FeiOwnerRole.COLLECTEUR_PRO;
     }
     if (
-      fei.fei_current_owner_role === FeiOwnerRole.COLLECTEUR_PRO &&
-      myCarcassesNextOwnerRole === FeiOwnerRole.ETG
+      myCarcasses[0].current_owner_role === FeiOwnerRole.COLLECTEUR_PRO &&
+      myCarcasses[0].next_owner_role === FeiOwnerRole.ETG
     ) {
       return FeiOwnerRole.COLLECTEUR_PRO;
     }
-    if (fei.fei_current_owner_role === FeiOwnerRole.ETG || myCarcassesNextOwnerRole === FeiOwnerRole.ETG) {
+    if (
+      myCarcasses[0].current_owner_role === FeiOwnerRole.ETG ||
+      myCarcasses[0].next_owner_role === FeiOwnerRole.ETG
+    ) {
       return FeiOwnerRole.ETG;
     }
     if (intermediaires.length > 0) {
@@ -134,14 +134,9 @@ function EtgFeiLoader(props: Props) {
       }
     }
     return null;
-  }, [
-    user.id,
-    fei.fei_current_owner_role,
-    fei.fei_current_owner_user_id,
-    intermediaires,
-    myCarcassesNextOwnerRole,
-  ]);
+  }, [myCarcasses, user.id, intermediaires]);
 
+  console.log({ showInterface });
   if (!showInterface) {
     return null;
   }
@@ -264,6 +259,7 @@ function EtgFeiContent({
   }, [intermediaire, priseEnChargeAt]);
 
   const allIntermediaireCarcasses = useCarcassesIntermediairesForIntermediaire(feiAndIntermediaireIds);
+  console.log('allIntermediaireCarcasses', allIntermediaireCarcasses);
   const intermediaireCarcasses = useMemo(() => {
     return allIntermediaireCarcasses
       .sort((carcasseIntermediaireA, carcasseIntermediaireB) => {

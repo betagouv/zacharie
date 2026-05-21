@@ -64,6 +64,10 @@ app.use('/sync', syncRouter);
 app.use('/carcasse', carcasseRouter);
 
 (prisma.carcasse as any).count = vi.fn().mockResolvedValue(0);
+(prisma.carcasseIntermediaire as any).findMany = vi.fn().mockResolvedValue([]);
+
+// Default required query params for GET /carcasse/ (zod-validated)
+const CARCASSE_QS = 'page=0&after=0&limit=100&withDeleted=false';
 
 function authed(req: request.Test, user: object = examinateurInitial) {
   return req.set('x-test-user', JSON.stringify(user));
@@ -73,9 +77,11 @@ beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(prisma.fei.findMany).mockResolvedValue([]);
   vi.mocked(prisma.carcasse.findMany).mockResolvedValue([]);
+  (prisma.carcasseIntermediaire as any).findMany.mockResolvedValue([]);
   (prisma.carcasse as any).count.mockResolvedValue(0);
   vi.mocked(prisma.carcasse.updateMany).mockResolvedValue({ count: 0 } as any);
   vi.mocked(prisma.carcasseIntermediaire.updateMany).mockResolvedValue({ count: 0 } as any);
+  vi.mocked(prisma.entityAndUserRelations.findMany).mockResolvedValue([{ entity_id: 'svi-entity-1' } as any]);
 });
 
 describe('FEI soft-delete via POST /sync', () => {
@@ -200,21 +206,24 @@ describe('Carcasse soft-delete via POST /sync', () => {
   });
 });
 
-describe('GET /carcasse/* after soft-delete', () => {
+describe('GET /carcasse/ after soft-delete', () => {
   // Pin the fetch-side filter: the refactor MUST keep deleted_at-out-of-default
   // for carcasse-first queries, otherwise soft-deletes leak to clients.
-  test('GET /carcasse/svi default → excludes deleted_at != null rows', async () => {
-    await authed(request(app).get('/carcasse/svi'), sviUser);
+  test('GET /carcasse/ default (withDeleted=false) → excludes deleted_at != null rows', async () => {
+    await authed(request(app).get(`/carcasse?${CARCASSE_QS}`), sviUser);
 
     const where: any = vi.mocked(prisma.carcasse.findMany).mock.calls[0][0]!.where;
     expect(where.deleted_at).toBeNull();
   });
 
-  test('GET /carcasse/svi?withDeleted=true&after=... → includes recently-deleted rows in the OR clause', async () => {
+  test('GET /carcasse/?withDeleted=true&after=... → updated_at gates the delta; deleted_at is not forced null', async () => {
     const cutoff = new Date(DELETED_AT).getTime();
-    await authed(request(app).get(`/carcasse/svi?withDeleted=true&after=${cutoff}`), sviUser);
+    await authed(request(app).get(`/carcasse?page=0&after=${cutoff}&limit=100&withDeleted=true`), sviUser);
 
     const where: any = vi.mocked(prisma.carcasse.findMany).mock.calls[0][0]!.where;
-    expect(where.OR).toContainEqual({ deleted_at: { gte: new Date(cutoff) } });
+    expect(where.updated_at).toEqual({ gte: new Date(cutoff) });
+    // withDeleted=true ⇒ controller does NOT filter on deleted_at, so soft-deleted
+    // rows whose updated_at >= cutoff (deleted_at write also bumps updated_at) are visible.
+    expect(where.deleted_at).toBeUndefined();
   });
 });

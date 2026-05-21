@@ -1,18 +1,15 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { SegmentedControl } from '@codegouvfr/react-dsfr/SegmentedControl';
 import { FeiStepSimpleStatus } from '@app/types/fei-steps';
 import { CarcasseType, DepotType, UserRoles } from '@prisma/client';
 import { abbreviations } from '@app/utils/count-carcasses';
 import dayjs from 'dayjs';
-import { useIsOnline } from '@app/utils-offline/use-is-offline';
-import useZustandStore, { syncData } from '@app/zustand/store';
-import { useMostFreshUser, refreshUser } from '@app/utils-offline/get-most-fresh-user';
+import useZustandStore from '@app/zustand/store';
+import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { getFeisSorted } from '@app/utils/get-fei-sorted';
 import { createNewFei } from '@app/utils/create-new-fei';
 import { useNavigate, useSearchParams } from 'react-router';
-import { loadFeis } from '@app/utils/load-feis';
-import { loadMyRelations } from '@app/utils/load-my-relations';
 import useExportFeis from '@app/utils/export-feis';
 import {
   filterCarcassesIntermediairesForCarcasse,
@@ -34,13 +31,8 @@ import { useIsCircuitCourt } from '@app/utils/circuit-court';
 import { useLocalStorage } from '@uidotdev/usehooks';
 import type { FeiWithIntermediaires } from '@api/src/types/fei';
 import { useEntitiesIdsWorkingDirectlyFor } from '@app/utils/get-entity-relations';
-
-async function loadData() {
-  // FIXME: await syncData is useless, as syncData queues stuff - so there will be bugs
-  await syncData('circuit-court-fiches');
-  await loadMyRelations();
-  await loadFeis();
-}
+import { useLoaderEffect, loadData } from '@app/utils/load-data';
+import Chargement from '@app/components/Chargement';
 
 type ViewType = 'grid' | 'table';
 
@@ -68,10 +60,9 @@ export default function TableauDeBordIndex() {
   const feisAssigned = [...feisUnderMyResponsability, ...feisToTake].sort((a, b) => {
     return b.updated_at < a.updated_at ? -1 : 1;
   });
-  const [loading, setLoading] = useState(false);
-  const isOnline = useIsOnline();
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
   const carcasses = useZustandStore((state) => state.carcasses);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [searchParams, setSearchParams] = useSearchParams();
   const page = parseInt(searchParams.get('page') || '1');
@@ -109,14 +100,9 @@ export default function TableauDeBordIndex() {
     }
   }, [user]);
 
-  const hackForCounterDoubleEffectInDevMode = useRef(false);
-  useEffect(() => {
-    if (hackForCounterDoubleEffectInDevMode.current) {
-      return;
-    }
-    hackForCounterDoubleEffectInDevMode.current = true;
-    refreshUser('circuit-court-fiches').then(loadData);
-  }, []);
+  useLoaderEffect(() => {
+    loadData('circuit-court-fiches').then(() => setIsLoading(false));
+  });
 
   useSaveScroll('circuit-court-fiches-scrollY');
 
@@ -296,6 +282,10 @@ export default function TableauDeBordIndex() {
     const start = (page - 1) * perPage;
     return filteredFeis.slice(start, start + perPage);
   }, [filteredFeis, page, itemsPerPage]);
+
+  if (isLoading) {
+    return <Chargement />;
+  }
 
   function Actions() {
     return (

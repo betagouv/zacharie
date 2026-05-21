@@ -6,13 +6,21 @@ import updateCarcasseStatus, {
   getSimplifiedCarcasseStatus,
 } from '../src/utils/get-carcasse-status';
 import { Carcasse, CarcasseStatus, CarcasseType, IPM1Decision, IPM2Decision } from '@prisma/client';
-import { CarcasseForResponseForRegistry } from '../../api-express/src/types/carcasse';
 
 // @ts-expect-error cannot guess Carcasse fields
-const createBaseCarcasse = (overrides: Partial<Carcasse> = {}): CarcasseForResponseForRegistry => ({
+const createBaseCarcasse = (overrides: Partial<Carcasse> = {}): Carcasse => ({
   zacharie_carcasse_id: 'test-carcasse-id',
   numero_bracelet: '123',
   fei_numero: 'fei-123',
+  date_mise_a_mort: null,
+  heure_mise_a_mort_premiere_carcasse_fei: null,
+  heure_evisceration_derniere_carcasse_fei: null,
+  consommateur_final_usage_domestique: null,
+  examinateur_carcasse_sans_anomalie: false,
+  examinateur_anomalies_carcasse: [],
+  examinateur_anomalies_abats: [],
+  examinateur_commentaire: null,
+  examinateur_signed_at: null,
   espece: null,
   type: null,
   nombre_d_animaux: null,
@@ -26,7 +34,6 @@ const createBaseCarcasse = (overrides: Partial<Carcasse> = {}): CarcasseForRespo
   svi_carcasse_commentaire: null,
   svi_carcasse_status: CarcasseStatus.SANS_DECISION,
   svi_carcasse_status_set_at: null,
-  svi_carcasse_archived: null,
   svi_ipm1_date: null,
   svi_ipm1_presentee_inspection: false,
   svi_ipm1_user_id: null,
@@ -62,22 +69,6 @@ const createBaseCarcasse = (overrides: Partial<Carcasse> = {}): CarcasseForRespo
   svi_ipm2_poids_saisie: null,
   svi_ipm2_signed_at: null,
   // FEI flattened fields
-  fei_date_mise_a_mort: null,
-  fei_commune_mise_a_mort: null,
-  fei_heure_mise_a_mort_premiere_carcasse: null,
-  fei_heure_evisceration_derniere_carcasse: null,
-  fei_examinateur_initial_date_approbation_mise_sur_le_marche: null,
-  fei_premier_detenteur_name_cache: null,
-  fei_premier_detenteur_depot_entity_name_cache: null,
-  fei_svi_assigned_at: null,
-  fei_svi_entity_id: null,
-  fei_svi_user_id: null,
-  fei_svi_closed_at: null,
-  latest_intermediaire_name_cache: null,
-  fei_created_at: dayjs().toDate(),
-  fei_updated_at: dayjs().toDate(),
-  fei_deleted_at: null,
-  fei_automatic_closed_at: null,
   created_at: dayjs().toDate(),
   updated_at: dayjs().toDate(),
   deleted_at: null,

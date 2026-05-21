@@ -1,5 +1,6 @@
 import type { FeiWithIntermediaires } from '@api/src/types/fei';
-import useZustandStore, { syncData } from '@app/zustand/store';
+import useZustandStore from '@app/zustand/store';
+import { syncData } from '@app/utils/sync-data';
 import useUser from '@app/zustand/user';
 import { FeiOwnerRole, UserRoles } from '@prisma/client';
 import dayjs from 'dayjs';

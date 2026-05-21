@@ -11,7 +11,7 @@ import CollecteurProfilNotifications from './profil/collecteur-notifications';
 import CollecteurProfilPartageDeMesDonnees from './profil/collecteur-partage-de-mes-donnees';
 import CollecteurProfilEntrepriseUtilisateurs from './profil/collecteur-entreprise-utilisateurs';
 import CollecteurFei from './collecteur-fei';
-import { SviInspectionCarcasse } from './collecteur-carcasse-after-svi-inspection';
+import CollecteurSviInspectionCarcasse from './collecteur-carcasse-after-svi-inspection';
 
 export default function RouterCollecteur() {
   return (
@@ -80,7 +80,7 @@ export default function RouterCollecteur() {
       />
       <Route
         path="carcasse-svi/:fei_numero/:zacharie_carcasse_id"
-        element={<SviInspectionCarcasse />}
+        element={<CollecteurSviInspectionCarcasse />}
       />
     </Route>
   );

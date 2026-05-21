@@ -1,10 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useParams } from 'react-router';
 import dayjs from 'dayjs';
-import useZustandStore, { syncData } from '@app/zustand/store';
-import { loadFei } from '@app/utils/load-fei';
-import { refreshUser } from '@app/utils-offline/get-most-fresh-user';
-import { loadMyRelations } from '@app/utils/load-my-relations';
+import useZustandStore from '@app/zustand/store';
+import { syncData } from '@app/utils/sync-data';
 import Chargement from '@app/components/Chargement';
 import NotFound from '@app/components/NotFound';
 import FeiSousTraite from './current-owner-sous-traite';
@@ -25,6 +23,7 @@ import FEIDonneesDeChasse from '@app/components/DonneesDeChasse';
 import Section from '@app/components/Section';
 import CardCarcasse from '@app/components/CardCarcasse';
 import { PendingModificationBanner } from '@app/components/CarcasseModificationRequest';
+import { loadData, useLoaderEffect } from '@app/utils/load-data';
 
 export default function SviFeiLoader() {
   const params = useParams();
@@ -32,19 +31,9 @@ export default function SviFeiLoader() {
   const fei = feis[params.fei_numero!];
   const [hasTriedLoading, setHasTriedLoading] = useState(false);
 
-  useEffect(() => {
+  useLoaderEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
-    refreshUser('connexion')
-      .then(loadMyRelations)
-      .then(() => loadFei(params.fei_numero!))
-      .then(() => {
-        setHasTriedLoading(true);
-      })
-      .catch((error) => {
-        setHasTriedLoading(true);
-        console.error(error);
-      });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    loadData('svi-fei').then(() => setHasTriedLoading(true));
   }, []);
 
   if (!fei) {

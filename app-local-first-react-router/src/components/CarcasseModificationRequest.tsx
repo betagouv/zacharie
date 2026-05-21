@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
-  type Carcasse,
+  CarcasseModificationRequest,
   CarcasseModificationRequestStatus,
   CarcasseModificationRequestType,
 } from '@prisma/client';
@@ -9,21 +9,21 @@ import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import dayjs from 'dayjs';
-import useZustandStore, { syncData } from '@app/zustand/store';
+import useZustandStore from '@app/zustand/store';
+import { syncData } from '@app/utils/sync-data';
 import useUser from '@app/zustand/user';
-import {
-  usePendingRequestForCarcasse,
-  useRequestsForCarcasse,
-} from '@app/utils/carcasse-modification-request';
+import { CarcasseWithModificationRequests } from '@api/src/types/carcasse';
 
 // ----------------------------------------------------------------------------
 // PendingModificationBanner
 // Affiché sur la carcasse, côté intermédiaire/ETG/SVI, quand une demande de
 // modification est en cours. Informe sans bloquer la transmission.
 // ----------------------------------------------------------------------------
-export function PendingModificationBanner({ carcasse }: { carcasse: Carcasse }) {
+export function PendingModificationBanner({ carcasse }: { carcasse: CarcasseWithModificationRequests }) {
   const user = useUser((state) => state.user);
-  const pending = usePendingRequestForCarcasse(carcasse.zacharie_carcasse_id);
+  const pending = useZustandStore(
+    (state) => state.carcasseModifActiveByCarcasseId[carcasse.zacharie_carcasse_id]
+  );
   const requestedByUser = useZustandStore((state) =>
     pending ? state.users[pending.requested_by_user_id] : null
   );
@@ -37,7 +37,7 @@ export function PendingModificationBanner({ carcasse }: { carcasse: Carcasse }) 
 
   const title =
     pending.type === CarcasseModificationRequestType.BRACELET_RENAME
-      ? `Demande de modification du numéro de bracelet en cours`
+      ? `Demande de modification du numéro de marquage en cours`
       : `Carcasse ajoutée, approbation de mise sur le marché en attente`;
 
   const detail =
@@ -57,13 +57,14 @@ export function PendingModificationBanner({ carcasse }: { carcasse: Carcasse }) 
   const isRequester = user?.id === pending.requested_by_user_id;
 
   const onCancel = () => {
-    if (!window.confirm('Annuler cette demande ? Cette action est irréversible.')) return;
+    // if (!window.confirm('Annuler cette demande ? Cette action est irréversible.')) return;
     // Soft-delete the modif request. For NEW_CARCASSE we also soft-delete the carcasse since it only
     // existed because of this request.
-    updateCarcasseModifRequest(pending.id, { deleted_at: dayjs().toDate() });
+    updateCarcasseModifRequest(pending.zacharie_carcasse_id, { deleted_at: dayjs().toDate() });
     if (pending.type === CarcasseModificationRequestType.NEW_CARCASSE) {
       updateCarcasse(carcasse.zacharie_carcasse_id, { deleted_at: dayjs().toDate() }, true);
     }
+    syncData('PendingModificationBanner.onCancel');
   };
 
   return (
@@ -101,7 +102,7 @@ export function PendingModificationBanner({ carcasse }: { carcasse: Carcasse }) 
 // ----------------------------------------------------------------------------
 // RequestBraceletRenameButton
 // Bouton + formulaire en accordéon côté intermédiaire pour signaler un numéro
-// de bracelet incorrect. Pas de modal imbriquée : DSFR ne supporte pas modal
+// de marquage incorrect. Pas de modal imbriquée : DSFR ne supporte pas modal
 // dans modal (le contenu du parent disparaît à la fermeture du modal enfant) ;
 // on étale donc le formulaire dans le même conteneur que le bouton.
 // Désactivé si une demande est déjà en cours sur la carcasse.
@@ -112,14 +113,17 @@ export function RequestBraceletRenameButton({
   className,
   onSubmitted,
 }: {
-  carcasse: Carcasse;
+  carcasse: CarcasseWithModificationRequests;
   requestedByEntityId: string;
   className?: string;
   onSubmitted?: () => void;
 }) {
   const user = useUser((state) => state.user);
-  const pending = usePendingRequestForCarcasse(carcasse.zacharie_carcasse_id);
+  const pending = carcasse.CarcasseModificationRequests.find(
+    (r) => r.status === CarcasseModificationRequestStatus.PENDING && !r.deleted_at
+  );
   const createCarcasseModifRequest = useZustandStore((s) => s.createCarcasseModifRequest);
+  const updateCarcasse = useZustandStore((s) => s.updateCarcasse);
 
   const [expanded, setExpanded] = useState(false);
   const [newBracelet, setNewBracelet] = useState('');
@@ -133,14 +137,14 @@ export function RequestBraceletRenameButton({
       return;
     }
     if (!newBracelet.trim()) {
-      setError('Veuillez saisir le numéro de bracelet correct.');
+      setError('Veuillez saisir le numéro de marquage correct.');
       return;
     }
     if (newBracelet.trim() === carcasse.numero_bracelet) {
       setError("Le nouveau numéro est identique à l'actuel.");
       return;
     }
-    createCarcasseModifRequest({
+    const modifRequest: CarcasseModificationRequest = {
       id: uuidv4(),
       type: CarcasseModificationRequestType.BRACELET_RENAME,
       status: CarcasseModificationRequestStatus.PENDING,
@@ -159,7 +163,13 @@ export function RequestBraceletRenameButton({
       updated_at: dayjs().toDate(),
       deleted_at: null,
       is_synced: false,
-    });
+    };
+    createCarcasseModifRequest(modifRequest);
+    updateCarcasse(
+      carcasse.zacharie_carcasse_id,
+      { CarcasseModificationRequests: [...carcasse.CarcasseModificationRequests, modifRequest] },
+      false
+    );
     syncData('RequestBraceletRenameButton.onSubmit');
     setNewBracelet('');
     setComment('');
@@ -179,7 +189,7 @@ export function RequestBraceletRenameButton({
         onClick={() => setExpanded((v) => !v)}
         type="button"
       >
-        {expanded ? 'Annuler le signalement' : 'Signaler un numéro de bracelet incorrect'}
+        {expanded ? 'Annuler le signalement' : 'Signaler un numéro de marquage incorrect'}
       </Button>
       {expanded && (
         <div className="fr-mt-2w rounded-sm border border-gray-300 p-3">
@@ -188,7 +198,7 @@ export function RequestBraceletRenameButton({
             <span className="font-semibold">{carcasse.numero_bracelet}</span>
           </p>
           <Input
-            label="Numéro de bracelet correct (lu sur la carcasse) *"
+            label="Numéro de marquage correct (lu sur la carcasse) *"
             nativeInputProps={{
               value: newBracelet,
               onChange: (e) => setNewBracelet(e.currentTarget.value),
@@ -206,8 +216,8 @@ export function RequestBraceletRenameButton({
           />
           {error && <p className="text-action-high-red-marianne mt-1 text-sm">{error}</p>}
           <p className="mt-3 text-sm opacity-80">
-            La demande sera envoyée à l'examinateur initial. La carcasse peut continuer son trajet en
-            attendant. Le SVI ne pourra pas l'inspecter tant qu'elle est en attente.
+            La demande sera envoyée à l'examinateur initial pour approbation. En attendant sa validation, la
+            carcasse peut être transmise au SVI mais celui-ci ne pourra pas la contrôler.
           </p>
           <div className="mt-4 flex gap-2">
             <Button
@@ -228,8 +238,8 @@ export function RequestBraceletRenameButton({
 // HistoriqueDesModifications
 // Liste les demandes approuvées/refusées sur une carcasse.
 // ----------------------------------------------------------------------------
-export function HistoriqueDesModifications({ carcasse }: { carcasse: Carcasse }) {
-  const requests = useRequestsForCarcasse(carcasse.zacharie_carcasse_id);
+export function HistoriqueDesModifications({ carcasse }: { carcasse: CarcasseWithModificationRequests }) {
+  const requests = carcasse.CarcasseModificationRequests;
   const users = useZustandStore((state) => state.users);
   const entities = useZustandStore((state) => state.entities);
 
@@ -248,6 +258,7 @@ export function HistoriqueDesModifications({ carcasse }: { carcasse: Carcasse })
   const events = useMemo<Array<TimelineEvent>>(() => {
     const out: Array<TimelineEvent> = [];
     for (const r of requests) {
+      if (r.deleted_at) continue;
       const requester = users[r.requested_by_user_id];
       const reviewer = r.reviewed_by_user_id ? users[r.reviewed_by_user_id] : null;
       const entity = entities[r.requested_by_entity_id];
@@ -267,7 +278,7 @@ export function HistoriqueDesModifications({ carcasse }: { carcasse: Carcasse })
         key: `${r.id}:req`,
         date: new Date(r.requested_at),
         label: isRename
-          ? `Demande de changement de bracelet : ${r.numero_bracelet_before} → ${r.numero_bracelet_after}`
+          ? `Demande de changement de numéro de marquage : ${r.numero_bracelet_before} → ${r.numero_bracelet_after}`
           : "Demande d'ajout d'une carcasse",
         actorLine: `Demandée par ${requesterName}${entityName ? ` (${entityName})` : ''}`,
         extraLine: r.comment_intermediaire ? `Commentaire : ${r.comment_intermediaire}` : null,
@@ -290,10 +301,10 @@ export function HistoriqueDesModifications({ carcasse }: { carcasse: Carcasse })
           date: new Date(r.reviewed_at),
           label: approved
             ? isRename
-              ? `Numéro de bracelet modifié : ${r.numero_bracelet_before} → ${r.numero_bracelet_after}`
+              ? `Numéro de marquage modifié : ${r.numero_bracelet_before} → ${r.numero_bracelet_after}`
               : "Ajout d'une carcasse validé"
             : isRename
-              ? `Refus du changement de numéro : ${r.numero_bracelet_before} → ${r.numero_bracelet_after}`
+              ? `Refus du changement de numéro de marquage : ${r.numero_bracelet_before} → ${r.numero_bracelet_after}`
               : "Refus d'ajout d'une carcasse",
           actorLine: reviewerName
             ? `${approved ? 'Approuvée' : 'Refusée'} par ${reviewerName}`

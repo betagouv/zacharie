@@ -66,8 +66,21 @@ export function computeFeiSteps({
   user,
   carcasses,
 }: ComputeFeiStepsParams): UseFeiStepsReturn {
+  if (!carcasses?.length) {
+    return {
+      currentStep: 0,
+      currentStepLabel: 'Examen initial',
+      currentStepLabelForEtg: 'Fiche reçue, pas encore prise en charge',
+      currentStepLabelForChasseur: 'Examen initial',
+      nextStepLabel: 'Validation par le premier détenteur',
+      currentStepLabelShort: '',
+      simpleStatus: 'En cours',
+      steps: [],
+    };
+  }
+  const currentTransmission = carcasses[0];
   const steps: Array<IntermediaireStep> = (() => {
-    if (fei.consommateur_final_usage_domestique) {
+    if (currentTransmission.consommateur_final_usage_domestique) {
       return [
         {
           id: fei.examinateur_initial_user_id,
@@ -90,7 +103,7 @@ export function computeFeiSteps({
       {
         id: fei.premier_detenteur_entity_id || fei.premier_detenteur_user_id,
         role: FeiOwnerRole.PREMIER_DETENTEUR,
-        nextRole: fei.premier_detenteur_prochain_detenteur_role_cache,
+        nextRole: currentTransmission.premier_detenteur_prochain_detenteur_role_cache,
       },
     ];
     for (let i = intermediaires.length - 1; i >= 0; i--) {
@@ -100,7 +113,7 @@ export function computeFeiSteps({
         nextRole: intermediaires[i].intermediaire_prochain_detenteur_role_cache,
       });
     }
-    if (fei.intermediaire_closed_at) return _steps;
+    if (currentTransmission.intermediaire_closed_at) return _steps;
     const lastStepIsEtgToSvi =
       _steps[_steps.length - 1]?.role === FeiOwnerRole.ETG &&
       (!_steps[_steps.length - 1]?.nextRole || _steps[_steps.length - 1]?.nextRole === FeiOwnerRole.SVI);
@@ -122,26 +135,33 @@ export function computeFeiSteps({
   })();
 
   const currentStepIndex: number = (() => {
-    // find role equal to fei.fei_current_owner_role but in reverse order
-    if (fei.consommateur_final_usage_domestique) return 1;
-    if (fei.svi_assigned_at) return steps.length - 1; // step is SVI
-    if (fei.fei_current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL) return 0;
-    if (fei.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR) return 1;
-    if (fei.intermediaire_closed_at) return steps.length - 1; // fei is closed
+    // find role equal to currentTransmission.current_owner_role but in reverse order
+    if (currentTransmission.consommateur_final_usage_domestique) return 1;
+    if (currentTransmission.svi_assigned_at) return steps.length - 1; // step is SVI
+    if (currentTransmission.current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL) return 0;
+    if (currentTransmission.current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR) return 1;
+    if (currentTransmission.intermediaire_closed_at) return steps.length - 1; // fei is closed
     const etgStep = steps[steps.length - 2];
     if (etgStep.id) return steps.length - 2; // etg is selected
     return steps.length - 3; // etg is not selected
   })();
 
   const currentStepLabel: FeiStep = (() => {
-    if (fei.automatic_closed_at || fei.svi_closed_at || fei.intermediaire_closed_at) {
+    if (
+      // @ts-expect-error automatic_closed_at is not yet implemented
+      currentTransmission.automatic_closed_at ||
+      currentTransmission.svi_closed_at ||
+      currentTransmission.intermediaire_closed_at
+    ) {
       return 'Clôturée';
     }
-    if (fei.consommateur_final_usage_domestique && fei.premier_detenteur_user_id) return 'Clôturée';
-    if (fei.svi_assigned_at) return 'Inspection par le SVI';
-    if (fei.fei_current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL) return 'Examen initial';
-    if (fei.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR) {
-      if (!fei.fei_next_owner_role) {
+    if (currentTransmission.consommateur_final_usage_domestique && fei.premier_detenteur_user_id) {
+      return 'Clôturée';
+    }
+    if (currentTransmission.svi_assigned_at) return 'Inspection par le SVI';
+    if (currentTransmission.current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL) return 'Examen initial';
+    if (currentTransmission.current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR) {
+      if (!currentTransmission.next_owner_role) {
         return 'Validation par le premier détenteur';
       } else {
         return 'Fiche envoyée, pas encore traitée';
@@ -197,15 +217,18 @@ export function computeFeiSteps({
     if (user?.roles.includes(UserRoles.CHASSEUR)) {
       switch (currentStepLabel) {
         case 'Examen initial':
-          if (fei.fei_next_owner_user_id) {
-            if (fei.fei_next_owner_user_id === user.id) {
+          if (currentTransmission.next_owner_user_id) {
+            if (currentTransmission.next_owner_user_id === user.id) {
               return 'À compléter';
             }
             return 'En cours';
           }
           return 'À compléter';
         case 'Validation par le premier détenteur':
-          if (fei.premier_detenteur_user_id === user.id || fei.fei_current_owner_user_id === user.id) {
+          if (
+            fei.premier_detenteur_user_id === user.id ||
+            currentTransmission.current_owner_user_id === user.id
+          ) {
             return 'À compléter';
           }
           return 'En cours';
@@ -259,8 +282,8 @@ export function computeFeiSteps({
           }
           return 'En cours';
         }
-        if (fei.fei_current_owner_entity_id) {
-          if (entitiesIdsWorkingDirectlyFor.includes(fei.fei_current_owner_entity_id)) {
+        if (currentTransmission.current_owner_entity_id) {
+          if (entitiesIdsWorkingDirectlyFor.includes(currentTransmission.current_owner_entity_id)) {
             return 'À compléter';
           }
         }
@@ -314,7 +337,7 @@ export function computeFeiSteps({
       currentStepLabel === 'Transport vers un établissement de traitement' ||
       currentStepLabel === 'Transport vers un autre établissement de traitement'
     ) {
-      const destinataire = fei.fei_next_owner_entity_name_cache;
+      const destinataire = currentTransmission.next_owner_entity_name_cache;
       return destinataire
         ? `Prise en charge par le transporteur ${destinataire}`
         : 'Prise en charge par le transporteur';
@@ -330,11 +353,13 @@ export function computeFeiSteps({
   })();
 
   const currentStepLabelShort = (() => {
-    if (fei.fei_next_owner_sous_traite_by_entity_id) {
-      if (entitiesIdsWorkingDirectlyFor.includes(fei.fei_next_owner_sous_traite_by_entity_id)) {
+    if (currentTransmission.next_owner_sous_traite_by_entity_id) {
+      if (entitiesIdsWorkingDirectlyFor.includes(currentTransmission.next_owner_sous_traite_by_entity_id)) {
         const wasSoustraitant =
-          fei.fei_prev_owner_entity_id === fei.fei_next_owner_sous_traite_by_entity_id ||
-          fei.fei_current_owner_entity_id === fei.fei_next_owner_sous_traite_by_entity_id;
+          currentTransmission.prev_owner_entity_id ===
+            currentTransmission.next_owner_sous_traite_by_entity_id ||
+          currentTransmission.current_owner_entity_id ===
+            currentTransmission.next_owner_sous_traite_by_entity_id;
         const feiIsStillSoutraitée = !wasSoustraitant;
         if (feiIsStillSoutraitée) {
           return 'Sous-traitée';

@@ -6,8 +6,13 @@ import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
-import { CarcasseType } from '@prisma/client';
-import useZustandStore, { syncData } from '@app/zustand/store';
+import {
+  CarcasseType,
+  CarcasseModificationRequestStatus,
+  CarcasseModificationRequestType,
+} from '@prisma/client';
+import useZustandStore from '@app/zustand/store';
+import { syncData } from '@app/utils/sync-data';
 import useUser from '@app/zustand/user';
 import InputMultiSelect from '@app/components/InputMultiSelect';
 import ModalTreeDisplay from '@app/components/ModalTreeDisplay';
@@ -17,10 +22,6 @@ import petitGibierCarcasseList from '@app/data/petit-gibier-carcasse/list.json';
 import petitGibierCarcasseTree from '@app/data/petit-gibier-carcasse/tree.json';
 import grandGibierAbatsList from '@app/data/grand-gibier-abats/list.json';
 import grandGibierAbatstree from '@app/data/grand-gibier-abats/tree.json';
-import {
-  CarcasseModificationRequestStatus,
-  CarcasseModificationRequestType,
-} from '@app/utils/carcasse-modification-request';
 
 const anomaliesCarcasseModal = createModal({
   isOpenedByDefault: false,
@@ -38,13 +39,16 @@ export default function ChasseurDemandeDeModificationDetail() {
   const { request_id } = useParams<{ request_id: string }>();
   const navigate = useNavigate();
   const user = useUser((state) => state.user);
-  const requestsById = useZustandStore((state) => state.carcasseModifPendingRequestsIds);
+  const requestsByCarcasseId = useZustandStore((state) => state.carcasseModifActiveByCarcasseId);
   const carcasses = useZustandStore((state) => state.carcasses);
   const feis = useZustandStore((state) => state.feis);
   const entities = useZustandStore((state) => state.entities);
   const updateCarcasseModifRequest = useZustandStore((state) => state.updateCarcasseModifRequest);
 
-  const request = request_id ? requestsById[request_id] : null;
+  const request = useMemo(() => {
+    const request = Object.values(requestsByCarcasseId).find((r) => r.id === request_id);
+    return request || null;
+  }, [requestsByCarcasseId, request_id]);
   const carcasse = request ? carcasses[request.zacharie_carcasse_id] : null;
   const fei = request ? feis[request.fei_numero] : null;
   const requestEntity = request ? entities[request.requested_by_entity_id] : null;
@@ -114,7 +118,7 @@ export default function ChasseurDemandeDeModificationDetail() {
 
   const alreadyTreated = request.status !== CarcasseModificationRequestStatus.PENDING;
 
-  const onApprove = () => {
+  const onApprove = async () => {
     setError(null);
     const approvalPayload =
       request.type === CarcasseModificationRequestType.NEW_CARCASSE
@@ -127,7 +131,7 @@ export default function ChasseurDemandeDeModificationDetail() {
           }
         : undefined;
     updateCarcasseModifRequest(
-      request.id,
+      request.zacharie_carcasse_id,
       {
         status: CarcasseModificationRequestStatus.APPROVED,
         reviewed_by_user_id: user!.id,
@@ -135,13 +139,13 @@ export default function ChasseurDemandeDeModificationDetail() {
       },
       approvalPayload
     );
-    syncData('ChasseurDemandeDeModificationDetail onApprove');
+    await syncData('ChasseurDemandeDeModificationDetail onApprove');
     navigate('/app/chasseur/demandes-de-modification');
   };
 
   const onReject = () => {
     setError(null);
-    updateCarcasseModifRequest(request.id, {
+    updateCarcasseModifRequest(request.zacharie_carcasse_id, {
       status: CarcasseModificationRequestStatus.REJECTED,
       reviewed_by_user_id: user!.id,
       reviewed_at: dayjs().toDate(),
@@ -153,7 +157,7 @@ export default function ChasseurDemandeDeModificationDetail() {
 
   const pageTitle =
     request.type === CarcasseModificationRequestType.BRACELET_RENAME
-      ? 'Changement de numéro de bracelet'
+      ? 'Changement de numéro de marquage'
       : "Examen initial d'une carcasse ajoutée";
 
   return (
@@ -207,7 +211,7 @@ export default function ChasseurDemandeDeModificationDetail() {
           <section className="rounded-sm border border-gray-300 p-4">
             <h2 className="fr-h5">Pré-remplissage par {entityLabel}</h2>
             <ul className="m-0 list-none p-0 text-sm">
-              <li>Numéro de bracelet : {carcasse.numero_bracelet}</li>
+              <li>Numéro de marquage : {carcasse.numero_bracelet}</li>
               <li>Espèce : {carcasse.espece}</li>
               {carcasse.nombre_d_animaux && <li>Nombre d'animaux : {carcasse.nombre_d_animaux}</li>}
               {carcasse.heure_mise_a_mort && <li>Heure de mise à mort : {carcasse.heure_mise_a_mort}</li>}

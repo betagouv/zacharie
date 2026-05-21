@@ -1,9 +1,10 @@
 import prisma from '~/prisma';
-import { Carcasse, EntityRelationType, Prisma, User, UserRoles } from '@prisma/client';
+import { EntityRelationType, Prisma, User, UserRoles } from '@prisma/client';
+import { CarcasseWithModificationRequests } from '~/types/carcasse';
 
 export interface SaveCarcasseResult {
-  savedCarcasse: Carcasse;
-  existingCarcasse: Carcasse;
+  savedCarcasse: CarcasseWithModificationRequests;
+  existingCarcasse: CarcasseWithModificationRequests;
   isDeleted: boolean;
 }
 
@@ -30,6 +31,7 @@ export async function syncCarcasse(
       zacharie_carcasse_id: zacharie_carcasse_id,
       fei_numero: fei_numero,
     },
+    include: { CarcasseModificationRequests: true },
   });
   if (!existingCarcasse) {
     const numeroBracelet = body.numero_bracelet;
@@ -43,6 +45,7 @@ export async function syncCarcasse(
         numero_bracelet: body.numero_bracelet,
         is_synced: true,
       },
+      include: { CarcasseModificationRequests: true },
     });
   }
 
@@ -52,6 +55,7 @@ export async function syncCarcasse(
         zacharie_carcasse_id,
         fei_numero: fei_numero,
       },
+      include: { CarcasseModificationRequests: true },
     });
     if (!existinCarcasse) {
       return { savedCarcasse: existingCarcasse, existingCarcasse, isDeleted: true };
@@ -64,6 +68,7 @@ export async function syncCarcasse(
         deleted_at: body.deleted_at,
         is_synced: true,
       },
+      include: { CarcasseModificationRequests: true },
     });
     await prisma.carcasseIntermediaire.updateMany({
       where: { zacharie_carcasse_id: existinCarcasse.zacharie_carcasse_id },
@@ -467,6 +472,7 @@ export async function syncCarcasse(
     where: {
       zacharie_carcasse_id: existingCarcasse.zacharie_carcasse_id,
     },
+    include: { CarcasseModificationRequests: true },
     data: nextCarcasse,
   });
 

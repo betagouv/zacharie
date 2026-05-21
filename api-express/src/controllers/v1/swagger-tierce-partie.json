@@ -334,7 +334,7 @@
         "properties": {
           "numero_bracelet": {
             "type": "string",
-            "description": "Numéro de bracelet de la carcasse"
+            "description": "Numéro de marquage de la carcasse"
           },
           "fei_numero": {
             "type": "string",
@@ -1259,7 +1259,7 @@
               "type": "string",
               "example": "FR123456789"
             },
-            "description": "Numéro de bracelet de la carcasse"
+            "description": "Numéro de marquage de la carcasse"
           },
           {
             "name": "email",

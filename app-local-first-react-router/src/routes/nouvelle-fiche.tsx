@@ -4,7 +4,8 @@ import API from '@app/services/api';
 import { capture } from '@app/services/sentry';
 import { createNewFei } from '@app/utils/create-new-fei';
 import { createNewCarcasse } from '@app/utils/create-new-carcasse';
-import useZustandStore, { syncData } from '@app/zustand/store';
+import useZustandStore from '@app/zustand/store';
+import { syncData } from '@app/utils/sync-data';
 import useUser from '@app/zustand/user';
 import Button from '@codegouvfr/react-dsfr/Button';
 import dayjs from 'dayjs';
@@ -19,7 +20,7 @@ const allSpecies: string[] = [...grandGibier.especes, ...petitGibier.especes];
 
 // Zod schema for individual carcasse
 const carcasseSchema = z.object({
-  numero_bracelet: z.string().min(1, 'Numéro de bracelet requis'),
+  numero_bracelet: z.string().min(1, 'Numéro de marquage requis'),
   espece: z.enum(allSpecies as [string, ...string[]], {
     message: 'Espèce invalide',
   }),

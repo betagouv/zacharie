@@ -9,14 +9,16 @@ import petitGibier from '@app/data/petit-gibier.json';
 import dayjs from 'dayjs';
 import { v4 as uuidv4 } from 'uuid';
 import {
-  type Carcasse,
   CarcasseType,
   CarcasseModificationRequestStatus,
   CarcasseModificationRequestType,
+  CarcasseModificationRequest,
 } from '@prisma/client';
-import useZustandStore, { syncData } from '@app/zustand/store';
+import useZustandStore from '@app/zustand/store';
+import { syncData } from '@app/utils/sync-data';
 import useUser from '@app/zustand/user';
 import type { FeiIntermediaire } from '@app/types/fei-intermediaire';
+import { CarcasseWithModificationRequests } from '@api/src/types/carcasse';
 
 const gibierSelect = {
   grand: grandGibier.especes,
@@ -80,7 +82,7 @@ export default function RequestNewCarcasseButton({
       return;
     }
     if (!numeroBracelet.trim()) {
-      setError('Veuillez saisir un numéro de bracelet.');
+      setError('Veuillez saisir un numéro de marquage.');
       return;
     }
     if (!espece) {
@@ -97,7 +99,7 @@ export default function RequestNewCarcasseButton({
 
     // 1) Create the Carcasse locally with no examinateur signature — the examinateur will sign on
     // approval. Fields not set here keep their default/null from the carcasse schema.
-    const newCarcasse: Carcasse = {
+    const newCarcasse: CarcasseWithModificationRequests = {
       zacharie_carcasse_id: zacharieCarcasseId,
       fei_numero: feiNumero,
       numero_bracelet: numeroBracelet.trim(),
@@ -214,16 +216,10 @@ export default function RequestNewCarcasseButton({
       updated_at: dayjs().toDate(),
       deleted_at: null,
       is_synced: false,
+      CarcasseModificationRequests: [],
     };
 
-    createCarcasse(newCarcasse);
-
-    // 2) Create the CarcasseIntermediaire row for the current intermediaire so the new carcasse
-    // appears in their main list (and not in "Carcasses déjà refusées").
-    createFeiIntermediaires([intermediaire], [zacharieCarcasseId]);
-
-    // 3) Create the modif request — the backend's side effects will notify the examinateur.
-    createCarcasseModifRequest({
+    const modifRequest: CarcasseModificationRequest = {
       id: uuidv4(),
       type: CarcasseModificationRequestType.NEW_CARCASSE,
       status: CarcasseModificationRequestStatus.PENDING,
@@ -242,7 +238,16 @@ export default function RequestNewCarcasseButton({
       updated_at: dayjs().toDate(),
       deleted_at: null,
       is_synced: false,
-    });
+    };
+    newCarcasse.CarcasseModificationRequests.push(modifRequest);
+    createCarcasse(newCarcasse);
+
+    // 2) Create the CarcasseIntermediaire row for the current intermediaire so the new carcasse
+    // appears in their main list (and not in "Carcasses déjà refusées").
+    createFeiIntermediaires([intermediaire], [zacharieCarcasseId]);
+
+    // 3) Create the modif request — the backend's side effects will notify the examinateur.
+    createCarcasseModifRequest(modifRequest);
     syncData('RequestNewCarcasseForm.onSubmit');
 
     setNumeroBracelet('');
@@ -263,16 +268,16 @@ export default function RequestNewCarcasseButton({
       >
         Ajouter une carcasse manquante
       </Button>
-      <modal.Component title="Ajouter une carcasse manquante de la fiche">
+      <modal.Component title="Ajouter une carcasse manquante">
         {isOpen && (
           <div>
-            <p className="text-sm">
-              Vous avez physiquement une carcasse qui ne figure pas dans cette fiche d'examen initial.
+            <p className="mb-4 text-sm">
+              Vous avez physiquement une carcasse qui semble être oubliée sur cette fiche d'examen initial.
               Pré-remplissez ses informations : l'examinateur initial recevra une demande à signer pour
               valider son examen et la mettre sur le marché.
             </p>
             <Input
-              label="Numéro de bracelet *"
+              label="Numéro de marquage *"
               nativeInputProps={{
                 value: numeroBracelet,
                 onChange: (e) => setNumeroBracelet(e.currentTarget.value),

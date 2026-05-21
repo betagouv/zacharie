@@ -1,17 +1,14 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { FeiStepSimpleStatus } from '@app/types/fei-steps';
 import { CarcasseType, DepotType } from '@prisma/client';
 import { abbreviations } from '@app/utils/count-carcasses';
 import dayjs from 'dayjs';
-// import { useIsOnline } from '@app/utils-offline/use-is-offline';
-import useZustandStore, { syncData } from '@app/zustand/store';
-import { useMostFreshUser, refreshUser } from '@app/utils-offline/get-most-fresh-user';
+import useZustandStore from '@app/zustand/store';
+import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { getFeisSorted } from '@app/utils/get-fei-sorted';
 import { createNewFei } from '@app/utils/create-new-fei';
 import { useNavigate, useSearchParams, Link } from 'react-router';
-import { loadFeis } from '@app/utils/load-feis';
-import { loadMyRelations } from '@app/utils/load-my-relations';
 import useExportFeis from '@app/utils/export-feis';
 import {
   filterCarcassesIntermediairesForCarcasse,
@@ -34,6 +31,8 @@ import { useEntitiesIdsWorkingDirectlyFor } from '@app/utils/get-entity-relation
 import { SegmentedControl } from '@codegouvfr/react-dsfr/SegmentedControl';
 import DropDownMenu from '@app/components/DropDownMenu';
 import PendingModifRequestsAlertModal from '@app/components/PendingModifRequestsAlertModal';
+import { loadData, useLoaderEffect } from '@app/utils/load-data';
+import Chargement from '@app/components/Chargement';
 
 function CollapsibleSection({
   title,
@@ -66,13 +65,6 @@ function CollapsibleSection({
       {open && <div className="pt-2">{children}</div>}
     </div>
   );
-}
-
-async function loadData() {
-  // FIXME: await syncData is useless, as syncData queues stuff - so there will be bugs
-  await syncData('chasseur-fiches');
-  await loadMyRelations();
-  await loadFeis();
 }
 
 type ViewType = 'grid' | 'table';
@@ -147,10 +139,9 @@ export default function ChasseurFiches() {
   const feisAssigned = [...feisUnderMyResponsability, ...feisToTake].sort((a, b) => {
     return b.updated_at < a.updated_at ? -1 : 1;
   });
-  // const [loading, setLoading] = useState(false);
-  // const isOnline = useIsOnline();
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
   const carcasses = useZustandStore((state) => state.carcasses);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [searchParams] = useSearchParams();
   const page = parseInt(searchParams.get('page') || '1');
@@ -187,14 +178,9 @@ export default function ChasseurFiches() {
     }
   }, [user]);
 
-  const hackForCounterDoubleEffectInDevMode = useRef(false);
-  useEffect(() => {
-    if (hackForCounterDoubleEffectInDevMode.current) {
-      return;
-    }
-    hackForCounterDoubleEffectInDevMode.current = true;
-    refreshUser('chasseur-fiches').then(loadData);
-  }, []);
+  useLoaderEffect(() => {
+    loadData('chasseur-fiches').then(() => setIsLoading(false));
+  });
 
   useSaveScroll('chasseur-fiches-scrollY');
 
@@ -674,6 +660,10 @@ export default function ChasseurFiches() {
       )}
     </>
   );
+
+  if (isLoading) {
+    return <Chargement />;
+  }
 
   return (
     <div className="relative">

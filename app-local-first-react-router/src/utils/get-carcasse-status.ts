@@ -1,10 +1,8 @@
 import { Carcasse, CarcasseStatus, CarcasseType, IPM1Decision, IPM2Decision } from '@prisma/client';
-import { CarcasseForResponseForRegistry } from '@api/src/types/carcasse';
 import dayjs from 'dayjs';
+import { isCarcasseSviArchived } from './carcasse-svi-archived';
 
-export default function updateCarcasseStatus<T extends Carcasse | CarcasseForResponseForRegistry>(
-  carcasse: T
-) {
+export default function updateCarcasseStatus<T extends Carcasse>(carcasse: T) {
   if (carcasse.intermediaire_carcasse_manquante) {
     return CarcasseStatus.MANQUANTE_ETG_COLLECTEUR;
   }
@@ -50,7 +48,7 @@ export default function updateCarcasseStatus<T extends Carcasse | CarcasseForRes
   return CarcasseStatus.SANS_DECISION;
 }
 
-export function getCarcasseStatusLabel<T extends CarcasseForResponseForRegistry>(carcasse: T) {
+export function getCarcasseStatusLabel(carcasse: Carcasse) {
   switch (carcasse.svi_carcasse_status) {
     case CarcasseStatus.MANQUANTE_ETG_COLLECTEUR:
     case CarcasseStatus.MANQUANTE_SVI:
@@ -73,7 +71,7 @@ export function getCarcasseStatusLabel<T extends CarcasseForResponseForRegistry>
       return 'Consignée';
     default:
     case CarcasseStatus.SANS_DECISION:
-      if (carcasse.svi_carcasse_status_set_at || carcasse.svi_carcasse_archived) {
+      if (carcasse.svi_carcasse_status_set_at || isCarcasseSviArchived(carcasse)) {
         if (carcasse.type === CarcasseType.PETIT_GIBIER) {
           return 'Accepté';
         }
@@ -83,7 +81,7 @@ export function getCarcasseStatusLabel<T extends CarcasseForResponseForRegistry>
   }
 }
 
-export function getSimplifiedCarcasseStatus(carcasse: Carcasse | CarcasseForResponseForRegistry) {
+export function getSimplifiedCarcasseStatus(carcasse: Carcasse) {
   switch (carcasse.svi_carcasse_status) {
     case CarcasseStatus.SANS_DECISION:
     case CarcasseStatus.CONSIGNE:

@@ -12,9 +12,9 @@ import type {
   ApiKeyApprovalByUserOrEntity,
 } from '@prisma/client';
 import type { UserForFei, UserForAdmin } from './user';
-import type { FeiDone, FeiWithIntermediaires, FeiPopulated, FeiForRefresh } from './fei';
+import type { FeiPopulated } from './fei';
 import type { EntityForAdmin, EntityWithUserRelation, EntitiesByTypeAndId, EntitiesById } from './entity';
-import { CarcasseForResponseForRegistry } from './carcasse';
+import { CarcasseWithModificationRequests } from './carcasse';
 
 export interface SearchResponse {
   ok: boolean;
@@ -91,48 +91,6 @@ export interface UserMyRelationsResponse {
     circuitCourt: Array<EntityWithUserRelation>;
   };
   error: '';
-}
-
-export interface FeiResponse {
-  ok: boolean;
-  data: {
-    fei: FeiForRefresh | null;
-    users: Array<User>;
-    entities: Array<Entity>;
-  };
-  error: string;
-}
-
-export interface FeiRefreshResponse {
-  ok: boolean;
-  data: {
-    feis: Array<FeiForRefresh>;
-    users: Array<UserForFei>;
-    entities: Array<Entity>;
-    carcasseModifPendingRequestsIds: Array<CarcasseModificationRequest>;
-  };
-  error: string;
-}
-
-export interface FeisResponse {
-  ok: boolean;
-  data: {
-    user: User;
-    feisUnderMyResponsability: Array<FeiWithIntermediaires>;
-    feisToTake: Array<FeiWithIntermediaires>;
-    feisOngoing: Array<FeiWithIntermediaires>;
-    feisDone: Array<FeiWithIntermediaires>;
-  };
-  error: string;
-}
-
-export interface FeisDoneResponse {
-  ok: boolean;
-  data: {
-    user: User;
-    feisDone: Array<FeiDone>;
-  };
-  error: string;
 }
 
 export interface EntitiesWorkingForResponse {
@@ -246,10 +204,14 @@ export interface CarcasseResponse {
   error: string;
 }
 
-export interface CarcassesGetForRegistryResponse {
+export interface CarcassesGetResponse {
   ok: boolean;
   data: {
-    carcasses: Array<CarcasseForResponseForRegistry>;
+    carcasses: Array<CarcasseWithModificationRequests>;
+    feis: Array<Fei>;
+    users: Array<UserForFei>;
+    carcassesIntermediaires: Array<CarcasseIntermediaire>;
+    carcasseModifRequests: Array<CarcasseModificationRequest>;
     hasMore: boolean;
     total: number;
   };
@@ -324,7 +286,7 @@ export interface SyncResponse {
   ok: boolean;
   data: {
     feis: Array<FeiPopulated>;
-    carcasses: Array<Carcasse>;
+    carcasses: Array<CarcasseWithModificationRequests>;
     carcassesIntermediaires: Array<CarcasseIntermediaire>;
     carcasseModifRequests: Array<CarcasseModificationRequest>;
     syncedLogIds: Array<string>;

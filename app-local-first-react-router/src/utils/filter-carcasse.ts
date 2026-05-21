@@ -1,9 +1,9 @@
-import { CarcasseStatus, CarcasseType } from '@prisma/client';
+import { Carcasse, CarcasseStatus, CarcasseType, Fei } from '@prisma/client';
 import grandGibier from '@app/data/grand-gibier.json';
 import petitGibier from '@app/data/petit-gibier.json';
 import { Filter, FilterableField } from '@app/types/filter';
-import { CarcasseForResponseForRegistry } from '@api/src/types/carcasse';
 import dayjs from 'dayjs';
+import { isCarcasseSviArchived } from './carcasse-svi-archived';
 
 const carcasseStatusOptions = [
   'Manquant(e)',
@@ -62,7 +62,7 @@ export function mapCarcasseTypeLabelToValue(label: (typeof carcasseTypeOptions)[
 }
 
 type CarcasseFilterableField = FilterableField & {
-  name: keyof CarcasseForResponseForRegistry;
+  name: keyof Carcasse | keyof Fei;
 };
 
 export function carcasseFilterableFields(
@@ -71,7 +71,7 @@ export function carcasseFilterableFields(
   ccgNames: Array<string>
 ): Array<CarcasseFilterableField> {
   const filters: Array<CarcasseFilterableField> = [
-    { name: 'numero_bracelet', label: "Numéro de bracelet ou d'identification", type: 'text' },
+    { name: 'numero_bracelet', label: "Numéro de marquage ou d'identification", type: 'text' },
     { name: 'fei_numero', label: 'Numéro FEI', type: 'text' },
     {
       name: 'svi_assigned_to_fei_at',
@@ -91,6 +91,7 @@ export function carcasseFilterableFields(
       type: 'multi-choice',
       options: motifs,
     },
+    // @ts-expect-error: isCarcasseSviArchived
     { name: 'svi_carcasse_archived', label: 'Carcasse(s) archivée(s)', type: 'boolean' },
     { name: 'svi_carcasse_commentaire', label: 'Commentaire SVI', type: 'text' },
     { name: 'type', label: 'Catégorie de gibier', type: 'enum', options: carcasseTypeOptions },
@@ -100,11 +101,11 @@ export function carcasseFilterableFields(
       type: 'enum',
       options: [...grandGibier.especes, ...petitGibier.especes],
     },
-    { name: 'fei_date_mise_a_mort', label: 'Date de mise à mort', type: 'date-with-time' },
-    { name: 'fei_commune_mise_a_mort', label: 'Commune de mise à mort', type: 'text' },
-    { name: 'fei_premier_detenteur_name_cache', label: 'Nom du premier détenteur', type: 'text' },
+    { name: 'date_mise_a_mort', label: 'Date de mise à mort', type: 'date-with-time' },
+    { name: 'commune_mise_a_mort', label: 'Commune de mise à mort', type: 'text' },
+    { name: 'premier_detenteur_name_cache', label: 'Nom du premier détenteur', type: 'text' },
     {
-      name: 'fei_examinateur_initial_date_approbation_mise_sur_le_marche',
+      name: 'examinateur_initial_date_approbation_mise_sur_le_marche',
       label: "Date d'approbation de la mise sur le marché",
       type: 'date-with-time',
     },
@@ -117,9 +118,10 @@ export function carcasseFilterableFields(
     },
     // TODO: Décision destinataire
     { name: 'intermediaire_carcasse_refus_motif', label: 'Motif de refus d’un destinataire', type: 'text' },
-    { name: 'fei_svi_closed_at', label: 'Date de clôture manuelle de la fiche', type: 'date-with-time' },
+    { name: 'svi_closed_at', label: 'Date de clôture manuelle de la fiche', type: 'date-with-time' },
     {
-      name: 'fei_automatic_closed_at',
+      // @ts-expect-error: TODO: ajouter le champe svi_automatic_closed_at dans le type Carcasse
+      name: 'svi_automatic_closed_at',
       label: 'Date de clôture automatique de la fiche',
       type: 'date-with-time',
     },
@@ -149,13 +151,18 @@ export type CarcasseFilter = Filter & {
 
 export const filterCarcassesInRegistre =
   (filters: Array<CarcasseFilter>, debug = false) =>
-  (item: CarcasseForResponseForRegistry) => {
-    // for now an item needs to fulfill ALL items to be displayed
-    if (!filters?.filter((f) => Boolean(f?.value)).length) return item;
+  (carcasse: Carcasse, fei: Fei) => {
+    // for now an carcasse needs to fulfill ALL items to be displayed
+    if (!filters?.filter((f) => Boolean(f?.value)).length) return carcasse;
     for (const filter of filters) {
       if (debug) console.log('filter', filter);
       if (!filter.field || !filter.value) continue;
-      let itemValue = item[filter.field];
+      // @ts-expect-error: we know that the field is in the carcasse or the fei
+      let itemValue = carcasse[filter.field] || fei[filter.field];
+      // @ts-expect-error: svi_carcasse_archived is isCarcasseSviArchived
+      if (!itemValue && filter.field === 'svi_carcasse_archived') {
+        itemValue = isCarcasseSviArchived(carcasse);
+      }
 
       if (['number'].includes(filter.type)) {
         const itemNumber = Number(itemValue);
@@ -236,7 +243,7 @@ export const filterCarcassesInRegistre =
 
       const arrayFilterValue = Array.isArray(filter.value) ? filter.value : [filter.value];
       if (!arrayFilterValue.length) continue;
-      // here the item needs to fulfill at least one filter value
+      // here the carcasse needs to fulfill at least one filter value
       let isSelected = false;
       for (let filterValue of arrayFilterValue) {
         if (filter.field === 'svi_carcasse_status') {
@@ -271,5 +278,5 @@ export const filterCarcassesInRegistre =
       }
       if (!isSelected) return false;
     }
-    return item;
+    return carcasse;
   };

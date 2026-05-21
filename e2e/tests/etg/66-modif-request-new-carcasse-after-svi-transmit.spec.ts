@@ -28,7 +28,7 @@ test('Ajout carcasse manquante pré-transmission SVI : visible par SVI, pas de b
   const addBtn = page.getByRole('button', { name: 'Ajouter une carcasse manquante' });
   await addBtn.scrollIntoViewIfNeeded();
   await addBtn.click();
-  await page.getByLabel('Numéro de bracelet *').fill(newBracelet);
+  await page.getByLabel('Numéro de marquage *').fill(newBracelet);
   await page.getByLabel('Espèce *').selectOption({ label: 'Cerf élaphe' });
   await page.getByLabel("Commentaire pour l'examinateur (optionnel)").fill('Trouvée après transmission SVI');
   await page.getByRole('button', { name: 'Envoyer la demande' }).click();

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { CarcasseType } from '@prisma/client';
 import dayjs from 'dayjs';
@@ -7,14 +7,12 @@ import { Breadcrumb } from '@codegouvfr/react-dsfr/Breadcrumb';
 import useZustandStore from '@app/zustand/store';
 import { useCarcassesIntermediairesForCarcasse } from '@app/utils/get-carcasses-intermediaires';
 import { Button } from '@codegouvfr/react-dsfr/Button';
-import { refreshUser } from '@app/utils-offline/get-most-fresh-user';
-import { loadFei } from '@app/utils/load-fei';
-import { loadMyRelations } from '@app/utils/load-my-relations';
 import NotFound from '@app/components/NotFound';
 import Chargement from '@app/components/Chargement';
 import FEIDonneesDeChasse from '@app/components/DonneesDeChasse';
 import Section from '@app/components/Section';
 import ItemNotEditable from '@app/components/ItemNotEditable';
+import { loadData, useLoaderEffect } from '@app/utils/load-data';
 
 export default function ChasseurSviInspectionCarcasseLoader() {
   const params = useParams();
@@ -22,11 +20,9 @@ export default function ChasseurSviInspectionCarcasseLoader() {
   const fei = state.feis[params.fei_numero!];
   const [hasTriedLoading, setHasTriedLoading] = useState(false);
 
-  useEffect(() => {
+  useLoaderEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
-    refreshUser('connexion')
-      .then(loadMyRelations)
-      .then(() => loadFei(params.fei_numero!))
+    loadData('chasseur-svi-inspection-carcasse')
       .then(() => {
         setHasTriedLoading(true);
       })

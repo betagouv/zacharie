@@ -9,14 +9,12 @@ import { Pagination } from '@codegouvfr/react-dsfr/Pagination';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
 import { UserConnexionResponse } from '@api/src/types/responses';
 import { FeiStepSimpleStatus } from '@app/types/fei-steps';
-import useZustandStore, { syncData } from '@app/zustand/store';
+import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import API from '@app/services/api';
 import { abbreviations } from '@app/utils/count-carcasses';
-import { useMostFreshUser, refreshUser } from '@app/utils-offline/get-most-fresh-user';
+import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { getFeisSorted } from '@app/utils/get-fei-sorted';
-import { loadFeis } from '@app/utils/load-feis';
-import { loadMyRelations } from '@app/utils/load-my-relations';
 import useExportFeis from '@app/utils/export-feis';
 import { filterCarcassesIntermediairesForCarcasse } from '@app/utils/get-carcasses-intermediaires';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
@@ -30,13 +28,8 @@ import DropDownMenu from '@app/components/DropDownMenu';
 import { useFeiSteps, computeFeiSteps } from '@app/utils/fei-steps';
 import type { FeiWithIntermediaires } from '@api/src/types/fei';
 import { useEntitiesIdsWorkingDirectlyFor } from '@app/utils/get-entity-relations';
-
-async function loadData() {
-  // FIXME: await syncData is useless, as syncData queues stuff - so there will be bugs
-  await syncData('etg-fiches');
-  await loadMyRelations();
-  await loadFeis();
-}
+import { useLoaderEffect, loadData } from '@app/utils/load-data';
+import Chargement from '@app/components/Chargement';
 
 type ViewType = 'grid' | 'table';
 
@@ -69,6 +62,7 @@ export default function EtgFiches() {
   const carcasses = useZustandStore((state) => state.carcasses);
   const entities = useZustandStore((state) => state.entities);
   const usersById = useZustandStore((state) => state.users);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [searchParams, setSearchParams] = useSearchParams();
   const page = parseInt(searchParams.get('page') || '1');
@@ -105,14 +99,9 @@ export default function EtgFiches() {
     }
   }, [user]);
 
-  const hackForCounterDoubleEffectInDevMode = useRef(false);
-  useEffect(() => {
-    if (hackForCounterDoubleEffectInDevMode.current) {
-      return;
-    }
-    hackForCounterDoubleEffectInDevMode.current = true;
-    refreshUser('etg-fiches').then(loadData);
-  }, []);
+  useLoaderEffect(() => {
+    loadData('etg-fiches').then(() => setIsLoading(false));
+  });
 
   useSaveScroll('etg-fiches-scrollY');
 
@@ -670,6 +659,10 @@ export default function EtgFiches() {
       )}
     </>
   );
+
+  if (isLoading) {
+    return <Chargement />;
+  }
 
   return (
     <div className="relative">

@@ -2,12 +2,11 @@ import { useState } from 'react';
 import { utils, writeFile } from '@e965/xlsx';
 import dayjs from 'dayjs';
 import { capture } from '@app/services/sentry';
-import { CarcasseForResponseForRegistry } from '@api/src/types/carcasse';
-import { IPM1Decision, IPM2Decision } from '@prisma/client';
+import { Carcasse, IPM1Decision, IPM2Decision } from '@prisma/client';
 import useZustandStore from '@app/zustand/store';
 import { getFeiAndCarcasseAndIntermediaireIdsFromCarcasse } from './get-carcasse-intermediaire-id';
-import { loadFei } from './load-fei';
 import { filterFeiIntermediaires } from './get-carcasses-intermediaires';
+import { isCarcasseSviArchived } from './carcasse-svi-archived';
 
 type FeiExcelData = {
   Donnée: string;
@@ -15,7 +14,7 @@ type FeiExcelData = {
 };
 
 type CarcasseExcelData = {
-  'Numéro de bracelet': string;
+  'Numéro de marquage': string;
   Éspèce: string | null;
   Poids: string | null;
   "Nombre d'animaux": number | null | undefined;
@@ -64,7 +63,7 @@ function sortCarcassesApprovedForExcel(carcasseA: CarcasseExcelData, carcasseB: 
     return carcasseA.Réceptionnée.localeCompare(carcasseB.Réceptionnée);
   }
   if (carcasseA.Éspèce === carcasseB.Éspèce) {
-    return carcasseA['Numéro de bracelet'].localeCompare(carcasseB['Numéro de bracelet']);
+    return carcasseA['Numéro de marquage'].localeCompare(carcasseB['Numéro de marquage']);
   }
   return carcasseA.Éspèce!.localeCompare(carcasseB.Éspèce!);
 }
@@ -154,7 +153,7 @@ function createSheet<T extends keyof CarcasseExcelData | keyof FeiExcelData>(
       case 'Commune de la chasse':
       case 'Numéro de fiche':
         return { wch: 40 }; // wider columns for comments
-      // case 'Numéro de bracelet':
+      // case 'Numéro de marquage':
       // case 'Estampille':
       case 'SVI - Saisie totale':
       case 'SVI - Certificat de saisie OK':
@@ -169,7 +168,7 @@ function createSheet<T extends keyof CarcasseExcelData | keyof FeiExcelData>(
         return { wch: 15 };
       // case 'Refusée par un destinataire':
       case 'Numéro suivi trichine':
-      case 'Numéro de bracelet':
+      case 'Numéro de marquage':
       case 'Éspèce':
       case 'SVI - Saisie partielle':
       case 'SVI - Pièces Consigne':
@@ -203,7 +202,7 @@ export default function useExportCarcasses() {
   const users = useZustandStore((state) => state.users);
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
 
-  async function onExportToXlsx(carcasses: Array<CarcasseForResponseForRegistry>) {
+  async function onExportToXlsx(carcasses: Array<Carcasse>) {
     setIsExporting(true);
     // just to trigger the loading state, sorry Raph :)
     await new Promise((res) => setTimeout(res));
@@ -217,11 +216,8 @@ export default function useExportCarcasses() {
           console.error('carcasse deleted', carcasse.zacharie_carcasse_id);
           continue;
         }
-        const intermediaires = filterFeiIntermediaires(carcassesIntermediaireById, carcasse.fei_numero);
-        let fei = feis[carcasse.fei_numero];
-        if (!fei) {
-          await loadFei(carcasse.fei_numero);
-        }
+        const intermediaires = filterFeiIntermediaires(carcassesIntermediaireById, carcasse.fei_numero!);
+        let fei = feis[carcasse.fei_numero]!;
         fei = feis[carcasse.fei_numero];
 
         const premierDetenteur = fei?.premier_detenteur_user_id ? users[fei.premier_detenteur_user_id] : null;
@@ -244,9 +240,9 @@ export default function useExportCarcasses() {
         }
 
         allCarcasses.push({
-          'Premier détenteur': carcasse.fei_premier_detenteur_name_cache || '',
-          'Date de la chasse': dayjs(carcasse.fei_date_mise_a_mort).format('DD/MM/YYYY'),
-          'Numéro de bracelet': carcasse.numero_bracelet,
+          'Premier détenteur': fei.premier_detenteur_name_cache || '',
+          'Date de la chasse': dayjs(fei.date_mise_a_mort).format('DD/MM/YYYY'),
+          'Numéro de marquage': carcasse.numero_bracelet,
           'Commentaires ETG / Transporteurs': commentaires.join('\n'),
           Éspèce: carcasse.espece,
           Poids: poids ? poids.toString() : null,
@@ -254,7 +250,7 @@ export default function useExportCarcasses() {
           'Numéro suivi trichine': '',
           // Estampille: '',
           // infos de SVI
-          'Archivé(e)': carcasse.svi_carcasse_archived ? 'Oui' : '',
+          'Archivé(e)': isCarcasseSviArchived(carcasse) ? 'Oui' : '',
           'SVI - Consigne': carcasse.svi_ipm1_decision?.includes(IPM1Decision.MISE_EN_CONSIGNE) ? 'Oui' : '',
           'SVI - Motif Consigne': 'BA P S OA CA pap', // colonne pré-remplie pour entourage manuscrit à l'impression
           'SVI - Pièces Consigne': carcasse.svi_ipm1_pieces.join('\n') || null,
@@ -270,7 +266,7 @@ export default function useExportCarcasses() {
           'SVI - Certificat de saisie OK': '',
           "SVI - Date d'examen": carcasse.svi_ipm2_date || carcasse.svi_ipm1_date,
           // infos de chasse
-          'Commune de la chasse': carcasse.fei_commune_mise_a_mort,
+          'Commune de la chasse': fei.commune_mise_a_mort,
           'Numéro de fiche': carcasse.fei_numero,
           'Premier détenteur téléphone': premierDetenteur?.telephone || '',
           'Premier détenteur email': premierDetenteur?.email || '',
@@ -282,8 +278,8 @@ export default function useExportCarcasses() {
             ? dayjs(carcasse.latest_intermediaire_signed_at).format('DD/MM/YYYY HH:mm')
             : null,
           // Plus d'infos
-          'Heure de première mise à mort': carcasse.fei_heure_mise_a_mort_premiere_carcasse,
-          'Heure de dernière éviscération': carcasse.fei_heure_evisceration_derniere_carcasse,
+          'Heure de première mise à mort': fei.heure_mise_a_mort_premiere_carcasse,
+          'Heure de dernière éviscération': fei.heure_evisceration_derniere_carcasse,
           // 'Examen initial - Anomalies carcasse': carcasse.examinateur_anomalies_carcasse.join(', '),
           // 'Examen initial - Anomalies abats': carcasse.examinateur_anomalies_abats.join(', '),
           // 'Examen initial - Commentaire': carcasse.examinateur_commentaire,

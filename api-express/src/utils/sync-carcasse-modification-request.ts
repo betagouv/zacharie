@@ -86,6 +86,12 @@ export async function syncCarcasseModifRequest(
       is_synced: true,
     },
   });
+  await prisma.carcasse.update({
+    where: { zacharie_carcasse_id: existing.zacharie_carcasse_id },
+    data: {
+      updated_at: new Date(),
+    },
+  });
 
   return {
     saved,
@@ -188,9 +194,9 @@ async function notifyExaminateur(modif: CarcasseModificationRequest) {
 
   let body: string;
   if (modif.type === CarcasseModificationRequestType.BRACELET_RENAME) {
-    body = `${entityName}, qui traite actuellement les carcasses de votre chasse du ${chasseDate}, signale un numéro de bracelet incorrect : ${modif.numero_bracelet_after} au lieu de ${modif.numero_bracelet_before}. Approuvez ou refusez : ${link}`;
+    body = `${entityName}, qui traite actuellement les carcasses de votre chasse du ${chasseDate}, signale un numéro de marquage incorrect : ${modif.numero_bracelet_after} au lieu de ${modif.numero_bracelet_before}. Approuvez ou refusez : ${link}`;
   } else {
-    body = `${entityName}, qui traite actuellement les carcasses de votre chasse du ${chasseDate}, signale une carcasse manquante (${carcasse?.espece ?? 'espèce non renseignée'}, bracelet ${carcasse?.numero_bracelet}). Signez l'examen ou refusez : ${link}`;
+    body = `${entityName}, qui traite actuellement les carcasses de votre chasse du ${chasseDate}, signale une carcasse manquante (${carcasse?.espece ?? 'espèce non renseignée'}, marquage ${carcasse?.numero_bracelet}). Signez l'examen ou refusez : ${link}`;
   }
 
   try {
