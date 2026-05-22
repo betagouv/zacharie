@@ -839,7 +839,9 @@ Christine
         })),
       });
 
-      console.log(`CHASSEUR_MULTI_STATUS seeded: ${feiACompleter.numero}, ${feiEnCours.numero}, ${feiCloturee.numero}`);
+      console.log(
+        `CHASSEUR_MULTI_STATUS seeded: ${feiACompleter.numero}, ${feiEnCours.numero}, ${feiCloturee.numero}`
+      );
     }
     if ((role as string) === 'ETG_ALL_REFUSED_TO_SVI') {
       const fei = await prisma.fei.create({ data: feiAllRefusedByEtgToSvi });

@@ -111,12 +111,18 @@ describe('automaticClosingOfFeis — per-carcasse closure fields (PR #399)', () 
   });
 
   test('updates every eligible carcasse with svi_automatic_closed_at, SVI ownership, wiped next_owner_*', async () => {
-    const carcasses = [makeCarcasse({ zacharie_carcasse_id: 'ZACH-TEST-001_BR-A' }), makeCarcasse({ zacharie_carcasse_id: 'ZACH-TEST-001_BR-B' })];
+    const carcasses = [
+      makeCarcasse({ zacharie_carcasse_id: 'ZACH-TEST-001_BR-A' }),
+      makeCarcasse({ zacharie_carcasse_id: 'ZACH-TEST-001_BR-B' }),
+    ];
     vi.mocked(prisma.fei.findMany).mockResolvedValueOnce([makeFei({ Carcasses: carcasses })] as any);
     // updateCarcasseStatus reads carcasse.svi_carcasse_status AFTER the first prisma.carcasse.update;
     // it doesn't matter for the assertions — we just need the function to return an updated carcasse.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-(prisma.carcasse.update as any).mockImplementation(async ({ data }: any) => ({ ...carcasses[0], ...data }));
+    (prisma.carcasse.update as any).mockImplementation(async ({ data }: any) => ({
+      ...carcasses[0],
+      ...data,
+    }));
 
     await automaticClosingOfFeis();
 

@@ -23,7 +23,7 @@ test.beforeAll(async () => {
 // on what #08 doesn't verify: after the dispatch to ETG, the carcasse-level state has rolled
 // from PREMIER_DETENTEUR → next_owner=ETG. Visible proof: the chasseur's step ladder
 // (which is driven by carcasses[0].current_owner_role / next_owner_*) shows simpleStatus="En cours".
-test("Examinateur → Association → ETG : step ladder advances based on per-carcasse fields", async ({
+test('Examinateur → Association → ETG : step ladder advances based on per-carcasse fields', async ({
   page,
 }) => {
   await connectWith(page, 'examinateur-premier-detenteur@example.fr');
