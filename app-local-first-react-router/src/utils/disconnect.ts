@@ -1,3 +1,4 @@
+import { flushSync } from 'react-dom';
 import { clearCache } from '@app/services/indexed-db';
 import { setNativeAuthToken } from '@app/services/api';
 import useUser from '@app/zustand/user';
@@ -19,9 +20,9 @@ interface DisconnectOptions {
 let disconnecting = false;
 
 /**
- * Cancel in-flight loaders, reset the Zustand store, then wipe persisted
- * state (IndexedDB + localStorage) and wait 1500ms. Does NOT touch
- * `useUser` or the auth token — caller controls session state.
+ * Cancel in-flight loaders and wipe persisted state (IndexedDB +
+ * localStorage). Does NOT touch React state (`useUser`,
+ * `useZustandStore`, auth token) — callers handle those themselves.
  *
  * Shared by `disconnect()` (full logout) and the admin "connect-as" flow
  * in ConnexionButton.tsx (session swap that wants clean local state but
@@ -29,18 +30,17 @@ let disconnecting = false;
  * cache cleaning stays consistent — divergent inline cleanups caused
  * subtle bugs in the past.
  *
- * Why `reset()` lives here (and BEFORE `clearCache`): Zustand's persist
- * middleware writes async to IndexedDB on every `setState`. If reset
- * runs AFTER clearCache, the write lands AFTER the wipe and 12 stale
- * slice keys leak into IDB (e2e test 107). Resetting first means
- * clearCache's iteration loop catches both the original session data
- * AND the persist write from reset.
+ * NOTE: callers that follow this with `useZustandStore.reset()` will
+ * trigger the persist middleware to write the reset state (one entry
+ * per persisted slice) back to IndexedDB after clearCache has wiped it.
+ * That's intentional — the entries hold initialState values (empty
+ * objects/arrays), not the previous session's data, so no leak. e2e
+ * test 107 asserts that the VALUES are empty, not that the count is 0.
  */
 export async function clearLocalAppState(reason: string) {
   abortSyncData(reason);
   abortLoadCarcasses(reason);
   abortLoadMyRelations(reason);
-  useZustandStore.getState().reset();
   await clearCache(reason);
 
   // Give pending writes a beat to flush before any caller state mutation.
@@ -88,43 +88,48 @@ export async function disconnect(options: DisconnectOptions) {
     // 1. Wipe the native JWT (no React subscribers, safe to do up-front).
     setNativeAuthToken(null);
 
-    // 2. Atomic state mutations: navigate AND clear user in the same
-    // synchronous block so React 18 batches both into one render.
-    //
-    // Why atomic: setting `user = null` makes role layouts (chasseur,
-    // svi, etg, etc.) re-render and return <Navigate to="/app/connexion
-    // ?redirect=<current-path>"/>. If that runs before our own pushState,
-    // we land on /app/connexion with a stale `redirect` back to the page
-    // we just logged out from. Conversely, navigating to /app/connexion
-    // while `user` is still set would make the Connexion page bounce us
-    // back to /app/[role] via its useEffect.
-    //
-    // By dispatching pushState + popstate AND useUser.setState in the
-    // same tick, React batches the updates: the single resulting render
-    // sees both `location = /app/connexion` (so the role layout has
-    // already unmounted and never observes user=null) AND `user = null`
-    // (so Connexion's useEffect doesn't bounce).
-    //
-    // Why this runs BEFORE clearLocalAppState: setState triggers an
-    // async persist write to IndexedDB. If clearCache ran first, that
-    // write would land after the wipe (e2e test 107). Doing the
-    // mutations first means clearCache (inside clearLocalAppState)
-    // catches the persist writes alongside the original session data.
-    if (!window.location.pathname.startsWith('/app/connexion')) {
-      const params = new URLSearchParams();
-      if (options.communication) params.set('communication', options.communication);
-      if (options.redirectTo) params.set('redirect', options.redirectTo);
-      const search = params.toString();
-      const target = '/app/connexion' + (search ? '?' + search : '');
-      // pushState + popstate, NOT window.location.href — see header comment.
-      window.history.pushState(null, '', target);
-      window.dispatchEvent(new PopStateEvent('popstate'));
-    }
-    useUser.setState({ user: null });
-    useUser.persist.clearStorage();
-
-    // 3. Reset Zustand + wipe persisted state + 1500ms settle.
+    // 2. Async I/O cleanup. `useUser` is still populated in memory, so
+    // role layouts won't yet fire their own <Navigate to="/app/connexion
+    // ?redirect=..."/> — that's important (see atomic block below).
     await clearLocalAppState(options.reason);
+
+    // 3. Atomic final step: navigate AND clear user state in a single
+    // React commit so role layouts never observe `user=null` while
+    // their route still matches, and Connexion never mounts while
+    // `user` is still set.
+    //
+    // Why flushSync (and not plain sync ordering): both Zustand and
+    // React Router subscribe via `useSyncExternalStore`, which bypasses
+    // React 18's auto-batching to prevent tearing. Without flushSync,
+    // the popstate update and the `useUser.setState` produce two
+    // separate sync renders, with Connexion's useEffect firing in
+    // between holding a stale `user` closure — it then calls
+    // `handleRedirect(staleUser)` and navigates back to the role page.
+    // The role layout, now re-mounted with the freshly-null user, fires
+    // its own `<Navigate to="/app/connexion?redirect=<role-path>"/>`,
+    // clobbering our intended URL. flushSync forces React to commit all
+    // updates inside the callback together, so the only render that
+    // happens sees `location=/app/connexion` AND `user=null`.
+    //
+    // The `reset()` below triggers persist middleware to write
+    // initialState slices back to IndexedDB AFTER clearCache has wiped
+    // it — that's fine, those writes contain only initialState (empty
+    // values, no session data). e2e test 107 asserts values, not count.
+    flushSync(() => {
+      if (!window.location.pathname.startsWith('/app/connexion')) {
+        const params = new URLSearchParams();
+        if (options.communication) params.set('communication', options.communication);
+        if (options.redirectTo) params.set('redirect', options.redirectTo);
+        const search = params.toString();
+        const target = '/app/connexion' + (search ? '?' + search : '');
+        // pushState + popstate, NOT window.location.href — see header comment.
+        window.history.pushState(null, '', target);
+        window.dispatchEvent(new PopStateEvent('popstate'));
+      }
+      useUser.setState({ user: null });
+      useZustandStore.getState().reset();
+    });
+    useUser.persist.clearStorage();
   } finally {
     disconnecting = false;
   }
