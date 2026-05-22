@@ -8,8 +8,6 @@ import { logoutAndConnect } from '../../utils/logout-and-connect';
 // Group 1 (ETG 1) keeps MM-001-003, MM-001-004.
 // Group 2 (Collecteur) gets MM-001-001, MM-001-002.
 
-test.use({ launchOptions: { slowMo: 100 } });
-
 test.setTimeout(120_000);
 
 test.beforeEach(async () => {
