@@ -161,7 +161,7 @@ export default function ChasseurCCGEdit() {
             <Input
               label="Code postal *"
               hintText="5 chiffres"
-              className="shrink-0 md:basis-1/5"
+              className="shrink-0 md:basis-2/5"
               nativeInputProps={{
                 id: Prisma.EntityScalarFieldEnum.code_postal,
                 name: Prisma.EntityScalarFieldEnum.code_postal,
@@ -173,7 +173,7 @@ export default function ChasseurCCGEdit() {
                 },
               }}
             />
-            <div className="basis-4/5">
+            <div className="basis-3/5">
               <InputVille
                 postCode={postalCode}
                 trimPostCode
