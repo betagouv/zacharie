@@ -91,6 +91,7 @@ export async function automaticClosingOfFeis() {
   }
   for (const fei of feisUnderSvi) {
     const automaticClosedAt = dayjs().toDate();
+    // FIXME: à supprimer
     await prisma.fei.update({
       where: {
         id: fei.id,
@@ -123,6 +124,30 @@ export async function automaticClosingOfFeis() {
           data: {
             svi_carcasse_status: newStatus,
             svi_carcasse_status_set_at: automaticClosedAt,
+            svi_automatic_closed_at: automaticClosedAt,
+            current_owner_role: FeiOwnerRole.SVI,
+            current_owner_entity_id: carcasse.svi_entity_id,
+            current_owner_user_id: carcasse.svi_user_id || null,
+            // FIXME : je ne sais pas comment récupérer cette valeur
+            current_owner_user_name_cache: null,
+            // FIXME : je ne sais pas comment récupérer cette valeur
+            current_owner_entity_name_cache: null,
+            prev_owner_entity_id:
+              carcasse.current_owner_entity_id === carcasse.svi_entity_id
+                ? carcasse.prev_owner_entity_id
+                : carcasse.current_owner_entity_id,
+            prev_owner_role:
+              carcasse.current_owner_role === FeiOwnerRole.SVI
+                ? carcasse.prev_owner_role
+                : carcasse.current_owner_role,
+            prev_owner_user_id:
+              carcasse.current_owner_user_id === carcasse.svi_user_id
+                ? carcasse.prev_owner_user_id
+                : carcasse.current_owner_user_id,
+            next_owner_role: null,
+            next_owner_user_id: null,
+            next_owner_entity_id: null,
+            next_owner_entity_name_cache: null,
           },
         });
       }
