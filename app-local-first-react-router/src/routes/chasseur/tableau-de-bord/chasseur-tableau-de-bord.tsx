@@ -4,7 +4,6 @@ import CarcassBreakdownCard from './components/CarcassBreakdownCard';
 import HygieneScoreCard from './components/HygieneScoreCard';
 import RefusalCausesCard from './components/RefusalCausesCard';
 import SeizureRateCard from './components/SeizureRateCard';
-import SeizureRateCardPersonal from './components/SeizureRateCardPersonal';
 import API from '@app/services/api';
 import Chargement from '@app/components/Chargement';
 import { Button } from '@codegouvfr/react-dsfr/Button';
@@ -159,7 +158,7 @@ export default function MesChasses() {
                 )}
                 <RefusalCausesCard causes={dashboardData.refusalCauses} />
                 {dashboardData.personalSeizureRate !== null && (
-                  <SeizureRateCardPersonal
+                  <SeizureRateCard
                     rate={dashboardData.personalSeizureRate}
                     label="taux de saisie personnel grand gibier"
                   />
