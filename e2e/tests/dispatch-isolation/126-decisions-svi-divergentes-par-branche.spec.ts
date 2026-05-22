@@ -51,6 +51,6 @@ test('Décisions SVI divergentes bien rattachées à chaque branche côté chass
 
   // Chasseur voit sa fiche avec les 2 destinataires distincts
   // The PD view after dispatch already shows both ETG names
-  await expect(page.getByText(/ETG 1.*2 carcasse/)).toBeVisible({ timeout: 10000 });
+  await expect(page.getByText(/ETG 1.*1 carcasse \+ 1 lot/)).toBeVisible({ timeout: 10000 });
   await expect(page.getByText(/ETG 2.*2 carcasse/)).toBeVisible();
 });

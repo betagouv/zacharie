@@ -55,7 +55,7 @@ test('Dispatch 4 carcasses vers 2 destinataires ETG', async ({ page, context }) 
 
   // 6. Vérifier les compteurs : 2 dans chaque groupe
   const group1 = page.locator('div.rounded.border').first();
-  await expect(group1.getByText('2 carcasse')).toBeVisible();
+  await expect(group1.getByText('1 carcasse + 1 lot')).toBeVisible();
   await expect(group2.getByText('2 carcasse')).toBeVisible();
 
   // 7. Sélectionner ETG 2 pour le groupe 2
@@ -76,7 +76,7 @@ test('Dispatch 4 carcasses vers 2 destinataires ETG', async ({ page, context }) 
   await transmettreBtn.scrollIntoViewIfNeeded();
   await transmettreBtn.click();
   await expect(page.getByText(/Votre fiche a été transmise/i).first()).toBeVisible({ timeout: 10000 });
-  await expect(page.getByText(/ETG 1.*2 carcasse/)).toBeVisible();
+  await expect(page.getByText(/ETG 1.*1 carcasse \+ 1 lot/)).toBeVisible();
   await expect(page.getByText(/ETG 2.*2 carcasse/)).toBeVisible();
 
   // 10. Connecter en tant que ETG 1 et vérifier qu'il ne voit que 2 carcasses
