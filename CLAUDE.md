@@ -104,7 +104,7 @@ npm run android          # Run on Android emulator
 All session teardown lives in `app-local-first-react-router/src/utils/disconnect.ts`, which exports two helpers:
 
 - **`disconnect({ reason, communication?, redirectTo? })`** — full logout. Wipes the auth token, aborts in-flight loaders, calls `clearLocalAppState`, then atomically (same React batch) pushes `/app/connexion` AND clears `useUser` + persist storage + resets Zustand. Used by the manual logout button (RootDisplay) and the 401 auto-disconnect (api.ts).
-- **`clearLocalAppState(reason)`** — async I/O cleanup only: abort loaders + `clearCache()` + 1500ms wait. Does NOT touch `useUser`, the auth token, or Zustand. Used by both `disconnect` and the admin "connect-as" flow (ConnexionButton) — connect-as is a session *swap*, not a logout, so it wants clean local data without clearing the new session.
+- **`clearLocalAppState(reason)`** — async I/O cleanup only: abort loaders + `clearCache()` + 1500ms wait. Does NOT touch `useUser`, the auth token, or Zustand. Used by both `disconnect` and the admin "connect-as" flow (ConnexionButton) — connect-as is a session _swap_, not a logout, so it wants clean local data without clearing the new session.
 
 **Never** roll your own logout sequence. If you find yourself writing `useUser.setState({ user: null })` + `clearCache()` + `navigate('/app/connexion')`, stop and call `disconnect(...)`. For session swaps where you want clean local data but keep an active session, use `clearLocalAppState(reason)`.
 
