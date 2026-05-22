@@ -12,12 +12,5 @@ export async function logoutAndConnect(page: Page, email: string, password: stri
   // Let the in-app redirect fire on its own — no page.goto fallback, so any
   // regression of the logout/redirect path fails loudly here.
   await page.waitForURL(/\/app\/connexion/, { timeout: 15000 });
-  await page.getByRole('textbox', { name: 'Mon email Renseignez votre' }).fill(email);
-  await page.getByRole('textbox', { name: 'Mon mot de passe Veuillez' }).fill(password);
-  const loginResponse = page.waitForResponse(
-    (res) => res.url().includes('/user/login') && res.request().method() === 'POST'
-  );
-  await page.getByRole('button', { name: 'Me connecter' }).click();
-  await loginResponse;
-  await page.waitForURL((url) => !url.pathname.endsWith('/app/connexion'), { timeout: 10000 });
+  await connectWith(page, email, password);
 }
