@@ -15,6 +15,7 @@ import {
   RiHourglassFill,
 } from 'react-icons/ri';
 import { ReactElement } from 'react';
+import { CarcasseTransmission } from '@app/types/carcasse';
 
 type IntermediaireStep = {
   id: string | null;
@@ -66,19 +67,31 @@ export function computeFeiSteps({
   user,
   carcasses,
 }: ComputeFeiStepsParams): UseFeiStepsReturn {
-  if (!carcasses?.length) {
-    return {
-      currentStep: 0,
-      currentStepLabel: 'Examen initial',
-      currentStepLabelForEtg: 'Fiche reçue, pas encore prise en charge',
-      currentStepLabelForChasseur: 'Examen initial',
-      nextStepLabel: 'Validation par le premier détenteur',
-      currentStepLabelShort: '',
-      simpleStatus: 'En cours',
-      steps: [],
-    };
-  }
-  const currentTransmission = carcasses[0];
+  const currentTransmission: CarcasseTransmission = carcasses?.length
+    ? carcasses[0]
+    : {
+        current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
+        current_owner_user_id: fei.examinateur_initial_user_id,
+        current_owner_user_name_cache: `${user?.prenom} ${user?.nom_de_famille}`,
+        premier_detenteur_prochain_detenteur_role_cache: null,
+        premier_detenteur_prochain_detenteur_id_cache: null,
+        current_owner_entity_id: null,
+        current_owner_entity_name_cache: null,
+        next_owner_user_id: null,
+        next_owner_user_name_cache: null,
+        next_owner_entity_id: null,
+        next_owner_entity_name_cache: null,
+        next_owner_role: null,
+        next_owner_sous_traite_by_entity_id: null,
+        prev_owner_user_id: null,
+        prev_owner_entity_id: null,
+        prev_owner_role: null,
+        consommateur_final_usage_domestique: null,
+        svi_assigned_at: null,
+        svi_closed_at: null,
+        svi_automatic_closed_at: null,
+        intermediaire_closed_at: null,
+      };
   const steps: Array<IntermediaireStep> = (() => {
     if (currentTransmission.consommateur_final_usage_domestique) {
       return [
@@ -103,7 +116,7 @@ export function computeFeiSteps({
       {
         id: fei.premier_detenteur_entity_id || fei.premier_detenteur_user_id,
         role: FeiOwnerRole.PREMIER_DETENTEUR,
-        nextRole: currentTransmission.premier_detenteur_prochain_detenteur_role_cache,
+        nextRole: currentTransmission.premier_detenteur_prochain_detenteur_role_cache ?? null,
       },
     ];
     for (let i = intermediaires.length - 1; i >= 0; i--) {
@@ -148,8 +161,7 @@ export function computeFeiSteps({
 
   const currentStepLabel: FeiStep = (() => {
     if (
-      // @ts-expect-error automatic_closed_at is not yet implemented
-      currentTransmission.automatic_closed_at ||
+      currentTransmission.svi_automatic_closed_at ||
       currentTransmission.svi_closed_at ||
       currentTransmission.intermediaire_closed_at
     ) {

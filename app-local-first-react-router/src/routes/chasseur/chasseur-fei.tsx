@@ -61,6 +61,8 @@ function FEIChasseurLoaded() {
   const fei = feis[params.fei_numero!];
 
   const carcasses = useCarcassesForFei(params.fei_numero);
+  // FIXME: on fait quoi en cas de dispatch
+  const currentTransmission = carcasses?.[0];
 
   const users = useZustandStore((state) => state.users);
   const entities = useZustandStore((state) => state.entities);
@@ -126,37 +128,49 @@ function FEIChasseurLoaded() {
   }, [carcasses]);
 
   const canEdit = useMemo(() => {
+    if (!currentTransmission) return true;
     if (
-      fei.fei_current_owner_role !== FeiOwnerRole.PREMIER_DETENTEUR &&
-      fei.fei_current_owner_role !== FeiOwnerRole.EXAMINATEUR_INITIAL
+      currentTransmission?.current_owner_role !== FeiOwnerRole.PREMIER_DETENTEUR &&
+      currentTransmission?.current_owner_role !== FeiOwnerRole.EXAMINATEUR_INITIAL
     ) {
       return false;
     }
-    if (fei.automatic_closed_at || fei.svi_closed_at || fei.svi_assigned_at || fei.intermediaire_closed_at) {
+    if (
+      currentTransmission?.svi_automatic_closed_at ||
+      currentTransmission?.svi_closed_at ||
+      currentTransmission?.svi_assigned_at ||
+      currentTransmission?.intermediaire_closed_at
+    ) {
       return false;
     }
     if (fei.examinateur_initial_user_id !== user.id) {
       return false;
     }
     return true;
-  }, [fei, user]);
+  }, [currentTransmission, fei, user]);
 
   const canEditAsPremierDetenteur = useMemo(() => {
+    if (!currentTransmission) return false;
     if (
-      fei.fei_current_owner_role !== FeiOwnerRole.PREMIER_DETENTEUR &&
-      fei.fei_current_owner_role !== FeiOwnerRole.EXAMINATEUR_INITIAL
+      currentTransmission?.current_owner_role !== FeiOwnerRole.PREMIER_DETENTEUR &&
+      currentTransmission?.current_owner_role !== FeiOwnerRole.EXAMINATEUR_INITIAL
     ) {
       return false;
     }
-    if (fei.svi_closed_at || fei.automatic_closed_at || fei.svi_assigned_at || fei.intermediaire_closed_at) {
+    if (
+      currentTransmission?.svi_automatic_closed_at ||
+      currentTransmission?.svi_closed_at ||
+      currentTransmission?.svi_assigned_at ||
+      currentTransmission?.intermediaire_closed_at
+    ) {
       return false;
     }
     if (fei.examinateur_initial_user_id === user.id) {
       return true;
     }
     if (
-      fei.fei_current_owner_user_id === user.id &&
-      fei.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR
+      currentTransmission?.current_owner_user_id === user.id &&
+      currentTransmission?.current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR
     ) {
       return true;
     }
@@ -164,7 +178,7 @@ function FEIChasseurLoaded() {
       return true;
     }
     return false;
-  }, [fei, user, premierDetenteurEntity]);
+  }, [currentTransmission, fei, user, premierDetenteurEntity]);
 
   const isPremierDetenteur = useMemo(() => {
     if (fei.premier_detenteur_user_id === user.id) return true;
@@ -249,7 +263,7 @@ function FEIChasseurLoaded() {
     }
     if (!atLeastOneCarcasseWithAnomalie) {
       label += " qu'aucune anomalie n'a été observée lors de l'examen initial";
-      if (!fei.consommateur_final_usage_domestique) {
+      if (!currentTransmission?.consommateur_final_usage_domestique) {
         label += ' et que les carcasses en peau examinées ce jour peuvent être mises sur le marché.';
       } else {
         label += '.';
@@ -265,7 +279,7 @@ function FEIChasseurLoaded() {
     examinateurInitialUser?.nom_de_famille,
     examinateurInitialUser?.prenom,
     atLeastOneCarcasseWithAnomalie,
-    fei.consommateur_final_usage_domestique,
+    currentTransmission?.consommateur_final_usage_domestique,
     user.id,
     fei.examinateur_initial_user_id,
   ]);
@@ -300,22 +314,30 @@ function FEIChasseurLoaded() {
       }
       updateFei(fei.numero, {
         examinateur_initial_approbation_mise_sur_le_marche: approbation,
+        // FIXME: remove the next fields
         fei_current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
         fei_current_owner_user_id: user.id,
         fei_current_owner_user_name_cache: `${user.prenom} ${user.nom_de_famille}`,
         fei_current_owner_entity_id: fei.premier_detenteur_entity_id,
         fei_current_owner_entity_name_cache: premierDetenteurEntity?.nom_d_usage ?? null,
       });
+      updateCarcassesTransmission(carcasseIds, {
+        current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+        current_owner_user_id: user.id,
+        current_owner_user_name_cache: `${user.prenom} ${user.nom_de_famille}`,
+        current_owner_entity_id: fei.premier_detenteur_entity_id,
+        current_owner_entity_name_cache: premierDetenteurEntity?.nom_d_usage ?? null,
+      });
       destinataireRef.current?.submit();
     } else {
       updateFei(fei.numero, {
         examinateur_initial_approbation_mise_sur_le_marche: approbation,
-        fei_current_owner_user_id: fei.premier_detenteur_user_id,
-        fei_current_owner_user_name_cache:
-          premierDetenteurUser?.prenom + ' ' + premierDetenteurUser?.nom_de_famille,
+        // FIXME: remove the next fields
+        fei_current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+        fei_current_owner_user_id: user.id,
+        fei_current_owner_user_name_cache: `${user.prenom} ${user.nom_de_famille}`,
         fei_current_owner_entity_id: fei.premier_detenteur_entity_id,
         fei_current_owner_entity_name_cache: premierDetenteurEntity?.nom_d_usage ?? null,
-        fei_current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
       });
       updateCarcassesTransmission(carcasseIds, {
         current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
@@ -349,6 +371,8 @@ function FEIChasseurLoaded() {
     if (carcassesDejaEnvoyees.length === carcasses.length) return true;
     return false;
   }, [showBloc4, carcassesDejaEnvoyees.length, carcasses.length]);
+
+  console.log({ carcasses });
 
   return (
     <>

@@ -615,6 +615,7 @@ model Carcasse {
   svi_entity_id                                           String?
   svi_user_id                                             String?
   svi_closed_at                                           DateTime?
+  svi_automatic_closed_at                                 DateTime?
   svi_closed_by_user_id                                   String?
   // Ownership (copied from FEI for carcasse-level ownership tracking)
   // Current Owner

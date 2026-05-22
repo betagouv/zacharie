@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Input } from '@codegouvfr/react-dsfr/Input';
-import { Prisma, Entity, UserRoles, EntityTypes } from '@prisma/client';
+import { Prisma, Entity, UserRoles, EntityTypes, FeiOwnerRole } from '@prisma/client';
 import type { UserForFeiResponse } from '@api/src/types/responses';
 import type { UserForFei } from '~/src/types/user';
 import { Button } from '@codegouvfr/react-dsfr/Button';
@@ -15,6 +15,8 @@ import { createHistoryInput } from '@app/utils/create-history-entry';
 import API from '@app/services/api';
 import { usePrefillPremierDétenteurInfos } from '@app/utils/usePrefillPremierDétenteur';
 import { useEntitiesIdsWorkingDirectlyFor, useDetenteursInitiaux } from '@app/utils/get-entity-relations';
+import { CarcasseTransmission } from '@app/types/carcasse';
+import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 
 export default function SelectNextForExaminateur({
   disabled = false,
@@ -30,6 +32,7 @@ export default function SelectNextForExaminateur({
   const entities = useZustandStore((state) => state.entities);
   const entitiesIdsWorkingDirectlyFor = useEntitiesIdsWorkingDirectlyFor();
   const fei = feis[params.fei_numero!];
+  const myCarcasses = useCarcassesForFei(params.fei_numero);
   const detenteursInitiaux = useDetenteursInitiaux();
   const [showSearchUserByEmail, setShowSearchUserByEmail] = useState(false);
   const [showValidationErrors, setShowValidationErrors] = useState(false);
@@ -46,6 +49,7 @@ export default function SelectNextForExaminateur({
   }, [entities, entitiesIdsWorkingDirectlyFor]);
 
   const updateFei = useZustandStore((state) => state.updateFei);
+  const updateCarcassesTransmission = useZustandStore((state) => state.updateCarcassesTransmission);
   const addLog = useZustandStore((state) => state.addLog);
 
   const isOnline = useIsOnline();
@@ -102,6 +106,7 @@ export default function SelectNextForExaminateur({
     const nextIsMe = nextOwnerUserId === user.id;
     const nextIsMyAssociation = !!nextOwnerEntity?.id;
     let nextFei: Partial<typeof fei>;
+    let nextCarcassesTransmission: Partial<CarcasseTransmission> = {};
     if (nextIsMe) {
       nextFei = {
         premier_detenteur_user_id: user.id,
@@ -109,12 +114,33 @@ export default function SelectNextForExaminateur({
         premier_detenteur_name_cache: `${user.prenom} ${user.nom_de_famille}`,
         premier_detenteur_entity_id: null,
       };
+      nextCarcassesTransmission = {
+        next_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+        next_owner_user_id: user.id,
+        next_owner_user_name_cache: `${user.prenom} ${user.nom_de_famille}`,
+        next_owner_entity_id: null,
+        premier_detenteur_offline: navigator.onLine ? false : true,
+        premier_detenteur_user_id: user.id,
+        premier_detenteur_name_cache: `${user.prenom} ${user.nom_de_famille}`,
+        premier_detenteur_entity_id: null,
+      };
     } else if (nextIsMyAssociation) {
       nextFei = {
         premier_detenteur_user_id: user.id,
+        premier_detenteur_name_cache: nextOwnerName,
+        premier_detenteur_entity_id: nextOwnerEntity.id,
+        premier_detenteur_offline: navigator.onLine ? false : true,
+      };
+      nextCarcassesTransmission = {
+        next_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+        next_owner_user_id: user.id,
+        next_owner_user_name_cache: nextOwnerName,
+        next_owner_entity_id: nextOwnerEntity.id,
+        next_owner_entity_name_cache: nextOwnerEntity.nom_d_usage,
+        premier_detenteur_user_id: user.id,
         premier_detenteur_offline: navigator.onLine ? false : true,
         premier_detenteur_entity_id: nextOwnerEntity.id,
-        premier_detenteur_name_cache: nextOwnerEntity?.nom_d_usage ?? null,
+        premier_detenteur_name_cache: nextOwnerName,
       };
     } else {
       nextFei = {
@@ -123,14 +149,29 @@ export default function SelectNextForExaminateur({
         premier_detenteur_entity_id: nextOwnerEntity?.id ?? null,
         premier_detenteur_offline: navigator.onLine ? false : true,
       };
+      nextCarcassesTransmission = {
+        next_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+        next_owner_user_id: nextOwnerUser?.id,
+        next_owner_user_name_cache: nextOwnerName,
+        next_owner_entity_id: nextOwnerEntity?.id ?? null,
+        next_owner_entity_name_cache: nextOwnerEntity?.nom_d_usage ?? null,
+        premier_detenteur_user_id: nextOwnerUser?.id,
+        premier_detenteur_offline: navigator.onLine ? false : true,
+        premier_detenteur_entity_id: nextOwnerEntity?.id ?? null,
+        premier_detenteur_name_cache: nextOwnerName,
+      };
     }
+    updateCarcassesTransmission(
+      myCarcasses.map((c) => c.zacharie_carcasse_id),
+      nextCarcassesTransmission
+    );
     updateFei(fei.numero, nextFei);
     addLog({
       user_id: user.id,
       user_role: UserRoles.CHASSEUR,
       fei_numero: fei.numero,
       action: 'examinateur-select-next',
-      history: createHistoryInput(fei, nextFei),
+      history: createHistoryInput({}, nextCarcassesTransmission),
       entity_id: null,
       zacharie_carcasse_id: null,
       intermediaire_id: null,
@@ -287,7 +328,7 @@ export default function SelectNextForExaminateur({
                     return;
                   }
                   setShowValidationErrors(false);
-                  handleSubmitFromSelect(nextOwnerUser?.id);
+                  handleSubmitFromSelect();
                 }}
               >
                 Continuer

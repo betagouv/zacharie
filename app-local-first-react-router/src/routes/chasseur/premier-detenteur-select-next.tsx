@@ -38,6 +38,7 @@ import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import { Badge } from '@codegouvfr/react-dsfr/Badge';
 import type { EntityWithUserRelation } from '~/src/types/entity';
+import { CarcasseTransmission } from '@app/types/carcasse';
 
 export interface DestinatairePremierDetenteurHandle {
   validate: () => string | null;
@@ -556,7 +557,6 @@ export default function DestinatairePremierDetenteur({
   const navigate = useNavigate();
   const user = useUser((state) => state.user)!;
   const updateFei = useZustandStore((state) => state.updateFei);
-  const updateCarcasse = useZustandStore((state) => state.updateCarcasse);
   const updateCarcassesTransmission = useZustandStore((state) => state.updateCarcassesTransmission);
   const addLog = useZustandStore((state) => state.addLog);
   const feis = useZustandStore((state) => state.feis);
@@ -861,7 +861,7 @@ export default function DestinatairePremierDetenteur({
     //   return `${unassignedCarcasses.length} carcasse(s) ne sont attribuees a aucun destinataire`;
     // }
     return null;
-  }, [dispatchGroups, entities, unassignedCarcasses]);
+  }, [dispatchGroups, entities]);
 
   const totalCarcassesToSend = useMemo(() => {
     return dispatchGroups.reduce((acc, g) => acc + g.carcasseIds.length, 0);
@@ -899,33 +899,36 @@ export default function DestinatairePremierDetenteur({
         : null;
 
       // Update transmission (next_owner) for the carcasses in this group
-      updateCarcassesTransmission(group.carcasseIds, {
+      const nextTransmission: CarcasseTransmission = {
         next_owner_entity_id: group.recipientEntityId,
         next_owner_role: entities[group.recipientEntityId]?.type as FeiOwnerRole,
+        premier_detenteur_prochain_detenteur_role_cache: entities[group.recipientEntityId]
+          ?.type as FeiOwnerRole,
+        premier_detenteur_prochain_detenteur_id_cache: group.recipientEntityId,
+        premier_detenteur_depot_type: group.depotType,
+        premier_detenteur_depot_entity_id: nextDepotEntityId,
+        premier_detenteur_depot_entity_name_cache: nextDepotEntityId
+          ? entities[nextDepotEntityId]?.nom_d_usage
+          : null,
+        premier_detenteur_depot_ccg_at: nextDepotDate,
+        premier_detenteur_transport_type: nextTransportType,
+        premier_detenteur_transport_date: nextTransportDate,
+      };
+      updateCarcassesTransmission(group.carcasseIds, nextTransmission);
+      addLog({
+        user_id: user.id,
+        user_role: UserRoles.CHASSEUR,
+        action: 'premier-detenteur-need-select-next-select-destinataire',
+        fei_numero: fei.numero,
+        history: createHistoryInput({}, nextTransmission),
+        entity_id: fei.premier_detenteur_entity_id,
+        zacharie_carcasse_id: null,
+        carcasse_intermediaire_id: null,
+        intermediaire_id: null,
       });
-
-      // Update per-carcasse dispatch details
-      for (const carcasseId of group.carcasseIds) {
-        updateCarcasse(
-          carcasseId,
-          {
-            premier_detenteur_prochain_detenteur_role_cache: entities[group.recipientEntityId]
-              ?.type as FeiOwnerRole,
-            premier_detenteur_prochain_detenteur_id_cache: group.recipientEntityId,
-            premier_detenteur_depot_type: group.depotType,
-            premier_detenteur_depot_entity_id: nextDepotEntityId,
-            premier_detenteur_depot_entity_name_cache: nextDepotEntityId
-              ? entities[nextDepotEntityId]?.nom_d_usage
-              : null,
-            premier_detenteur_depot_ccg_at: nextDepotDate,
-            premier_detenteur_transport_type: nextTransportType,
-            premier_detenteur_transport_date: nextTransportDate,
-          },
-          false
-        );
-      }
     }
 
+    // TO DELETE
     // FEI-level retrocompat: use first group's values
     const firstGroup = dispatchGroups[0];
     if (firstGroup?.recipientEntityId) {

@@ -194,6 +194,7 @@ export default function RequestNewCarcasseButton({
       svi_entity_id: feiAlreadyAssignedToSvi ? fei.svi_entity_id : null,
       svi_user_id: null,
       svi_closed_at: null,
+      svi_automatic_closed_at: null,
       svi_closed_by_user_id: null,
       current_owner_user_id: fei.fei_current_owner_user_id,
       current_owner_user_name_cache: fei.fei_current_owner_user_name_cache,
