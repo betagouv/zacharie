@@ -101,11 +101,16 @@ npm run android          # Run on Android emulator
 
 ### Disconnect / logout flow
 
-All session teardown — manual logout, 401 auto-disconnect, admin "connect-as" — goes through the single helper `app-local-first-react-router/src/utils/disconnect.ts`. It aborts in-flight loaders, clears `useUser` + its persist storage, resets the Zustand store, calls `clearCache()`, waits 1500ms, then navigates to `/app/connexion` (unless `skipNavigate` is passed, or the user is already there).
+All session teardown lives in `app-local-first-react-router/src/utils/disconnect.ts`, which exports two helpers:
 
-**Never** roll your own logout sequence — always call `disconnect(...)`. If you find yourself writing `useUser.setState({ user: null })` + `clearCache()` + `navigate('/app/connexion')`, stop and use the helper.
+- **`disconnect({ reason, communication?, redirectTo? })`** — full logout. Wipes the auth token, aborts in-flight loaders, calls `clearLocalAppState`, then atomically (same React batch) pushes `/app/connexion` AND clears `useUser` + persist storage + resets Zustand. Used by the manual logout button (RootDisplay) and the 401 auto-disconnect (api.ts).
+- **`clearLocalAppState(reason)`** — async I/O cleanup only: abort loaders + `clearCache()` + 1500ms wait. Does NOT touch `useUser`, the auth token, or Zustand. Used by both `disconnect` and the admin "connect-as" flow (ConnexionButton) — connect-as is a session *swap*, not a logout, so it wants clean local data without clearing the new session.
 
-**Why all the explicit teardown?** We navigate via `window.history.pushState` + a manual `popstate`, NOT via `window.location.href = ...`. Inside the Expo WebView (`expo/ExpoApp.tsx`), assigning to `window.location.href` ejects the user from the WebView and opens the URL in Safari (or the OS default browser), which we never want. The downside of `pushState` is that it does NOT reload the page or clear the JS heap, so any in-memory store state survives navigation. The disconnect helper compensates by explicitly resetting Zustand, clearing the user, and aborting loaders. Without those steps, stale state (e.g. `lastUpdateFromServer`) leaks into the next session and breaks delta sync — see e2e test 117.
+**Never** roll your own logout sequence. If you find yourself writing `useUser.setState({ user: null })` + `clearCache()` + `navigate('/app/connexion')`, stop and call `disconnect(...)`. For session swaps where you want clean local data but keep an active session, use `clearLocalAppState(reason)`.
+
+**Why all the explicit teardown?** We navigate via `window.history.pushState` + a manual `popstate`, NOT via `window.location.href = ...`. Inside the Expo WebView (`expo/ExpoApp.tsx`), assigning to `window.location.href` ejects the user from the WebView and opens the URL in Safari (or the OS default browser), which we never want. The downside of `pushState` is that it does NOT reload the page or clear the JS heap, so any in-memory store state survives navigation. `disconnect` compensates by explicitly resetting Zustand, clearing the user, and aborting loaders. Without those steps, stale state (e.g. `lastUpdateFromServer`) leaks into the next session and breaks delta sync — see e2e test 117.
+
+**Why the atomic final block in `disconnect`?** Setting `user = null` makes role layouts (chasseur, svi, etg, ...) reactively render a `<Navigate to="/app/connexion?redirect=<current-path>"/>`. Conversely, navigating to `/app/connexion` while `user` is still set makes the Connexion page bounce back to `/app/[role]`. So the helper dispatches `pushState` + `popstate` AND `useUser.setState({ user: null })` in the same synchronous tick — React 18 batches them, the role layout unmounts before observing `user=null`, and Connexion mounts with `user` already null.
 
 ### Database
 
