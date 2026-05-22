@@ -7,6 +7,7 @@ import { logoutAndConnect } from '../../utils/logout-and-connect';
 // Extends the existing fiche_dispatch_multi_destinataires spec with explicit .not.toBeVisible()
 // assertions on the OTHER branch's carcasse numbers, + check the aggregate /etg/carcasses view
 // does not leak cross-branch carcasses.
+test.use({ launchOptions: { slowMo: 100 } });
 
 test.setTimeout(120_000);
 
