@@ -99,6 +99,14 @@ npm run android          # Run on Android emulator
 - Service worker for offline support (`src/service-worker.ts`)
 - Routes defined in `src/App.tsx`, components in `src/routes/`
 
+### Disconnect / logout flow
+
+All session teardown — manual logout, 401 auto-disconnect, admin "connect-as" — goes through the single helper `app-local-first-react-router/src/utils/disconnect.ts`. It aborts in-flight loaders, clears `useUser` + its persist storage, resets the Zustand store, calls `clearCache()`, waits 1500ms, then navigates to `/app/connexion` (unless `skipNavigate` is passed, or the user is already there).
+
+**Never** roll your own logout sequence — always call `disconnect(...)`. If you find yourself writing `useUser.setState({ user: null })` + `clearCache()` + `navigate('/app/connexion')`, stop and use the helper.
+
+**Why all the explicit teardown?** We navigate via `window.history.pushState` + a manual `popstate`, NOT via `window.location.href = ...`. Inside the Expo WebView (`expo/ExpoApp.tsx`), assigning to `window.location.href` ejects the user from the WebView and opens the URL in Safari (or the OS default browser), which we never want. The downside of `pushState` is that it does NOT reload the page or clear the JS heap, so any in-memory store state survives navigation. The disconnect helper compensates by explicitly resetting Zustand, clearing the user, and aborting loaders. Without those steps, stale state (e.g. `lastUpdateFromServer`) leaks into the next session and breaks delta sync — see e2e test 117.
+
 ### Database
 
 - **Prisma** schema at `api-express/prisma/schema.prisma`

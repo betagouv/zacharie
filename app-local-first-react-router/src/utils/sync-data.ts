@@ -15,6 +15,13 @@ let debug = false;
 // Single AbortController for the current sync request
 let syncAbortController: AbortController | null = null;
 
+export function abortSyncData(reason: string = 'aborted') {
+  if (syncAbortController && !syncAbortController.signal.aborted) {
+    syncAbortController.abort(reason);
+  }
+  syncAbortController = null;
+}
+
 export async function syncData(calledFrom?: string) {
   await hydrationPromise;
 

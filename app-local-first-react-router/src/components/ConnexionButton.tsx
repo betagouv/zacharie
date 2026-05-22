@@ -1,12 +1,11 @@
 import API from '@app/services/api';
-import { clearCache } from '@app/services/indexed-db';
 import { refreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { getUserOnboardingRoute } from '@app/utils/user-onboarded.client';
+import { disconnect } from '@app/utils/disconnect';
 import { Button, ButtonProps } from '@codegouvfr/react-dsfr/Button';
 import { User } from '@prisma/client';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import useZustandStore from '@app/zustand/store';
 
 export default function ConnexionButton({
   user,
@@ -24,19 +23,20 @@ export default function ConnexionButton({
       onSubmit={async (event) => {
         event.preventDefault();
         setIsLoading(true);
+        // The POST sets the impersonated user's session (cookie on web,
+        // native JWT injected by api.ts on the response). We then wipe
+        // local state with the shared disconnect helper — skipNavigate
+        // because we navigate to the impersonated user's home below,
+        // not /app/connexion.
         await API.post({
           path: 'admin/user/connect-as',
           body: { email: user.email! },
         });
-        useZustandStore.getState().reset();
-        await clearCache()
-          .then(() => new Promise((resolve) => setTimeout(resolve, 1500)))
-          .then(() => refreshUser('admin/user/connect-as'))
-          .then((user) => {
-            if (user) {
-              navigate(getUserOnboardingRoute(user), { replace: true });
-            }
-          });
+        await disconnect({ reason: 'connect-as', skipNavigate: true });
+        const newUser = await refreshUser('admin/user/connect-as');
+        if (newUser) {
+          navigate(getUserOnboardingRoute(newUser), { replace: true });
+        }
       }}
     >
       <Button

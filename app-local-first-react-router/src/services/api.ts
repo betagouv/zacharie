@@ -1,5 +1,4 @@
-import useUser from '@app/zustand/user';
-import { clearCache } from './indexed-db';
+import { disconnect } from '@app/utils/disconnect';
 
 let API_URL = new URL(import.meta.env.VITE_API_URL);
 
@@ -99,22 +98,11 @@ class ApiService {
 
       const response = await fetch(url, config);
       if (response.status === 401) {
-        setNativeAuthToken(null);
-        await clearCache('api');
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-        if (!window.location.href.includes('/app/connexion')) {
-          const URLParams = new URLSearchParams(window.location.search);
-          URLParams.set('communication', 'Votre session a expiré, veuillez vous reconnecter.');
-          URLParams.set('redirect', window.location.pathname + window.location.search);
-          console.log('URLParams: ', URLParams.toString());
-          useUser.setState({ user: null });
-          // setState re-persists the (null) state through the persist middleware;
-          // remove the entry entirely so /app/connexion can't bounce back to
-          // /app/[role] in offline mode (and so test 109 holds).
-          useUser.persist.clearStorage();
-          window.history.pushState(null, '', '/app/connexion?' + URLParams.toString());
-          window.dispatchEvent(new PopStateEvent('popstate'));
-        }
+        await disconnect({
+          reason: '401',
+          communication: 'Votre session a expiré, veuillez vous reconnecter.',
+          redirectTo: window.location.pathname + window.location.search,
+        });
         return {
           ok: false,
           error: 'Unauthorized',
