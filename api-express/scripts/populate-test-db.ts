@@ -796,6 +796,53 @@ Christine
       }
       console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (PD with partage approval)`);
     }
+    // Seeds three fei in the three chasseur-visible states (À compléter / En cours / Clôturée)
+    // all involving the same chasseur (Pierre Petit, premier-detenteur@example.fr).
+    // Used by the fiches-list sorting test to assert the implicit order
+    // `feisAssigned ++ feisOngoing ++ feisDone` in chasseur-fiches.tsx.
+    if ((role as string) === 'CHASSEUR_MULTI_STATUS') {
+      // 1. À compléter — fiche validée par l'examinateur, en attente du PD.
+      //    For Pierre, fei.fei_next_owner_user_id === user.id → "feisToTake" → simpleStatus "À compléter".
+      const feiACompleter = await prisma.fei.create({ data: feiValidatedByExaminateur });
+      await prisma.carcasse.createMany({ data: getCarcasses(feiACompleter) });
+
+      // 2. En cours — fiche transmise par PD et déjà reçue par l'ETG.
+      //    For Pierre, carcasse.current_owner_role === ETG (downstream) → simpleStatus default "En cours".
+      const feiEnCours = await prisma.fei.create({ data: feiTakenChargeByEtg });
+      await prisma.carcasse.createMany({ data: getCarcasses(feiEnCours) });
+      await prisma.carcasseIntermediaire.createMany({
+        data: getCarcasses(feiEnCours).map((c) => ({
+          fei_numero: feiEnCours.numero,
+          numero_bracelet: c.numero_bracelet,
+          zacharie_carcasse_id: c.zacharie_carcasse_id!,
+          intermediaire_id: `${feiEnCours.numero}_${'2a8bc866-a709-47d9-aebe-2768fceb2ecb'}_${users.find((u) => u.email === 'etg-1@example.fr')?.id}`,
+          intermediaire_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
+          intermediaire_user_id: users.find((u) => u.email === 'etg-1@example.fr')?.id ?? '',
+          intermediaire_role: FeiOwnerRole.ETG,
+          prise_en_charge_at: dayjs().subtract(1, 'day').toDate(),
+        })),
+      });
+
+      // 3. Clôturée — fiche fermée par SVI.
+      const feiCloturee = await prisma.fei.create({ data: feiClosedBySvi });
+      await prisma.carcasse.createMany({ data: getCarcasses(feiCloturee) });
+      await prisma.carcasseIntermediaire.createMany({
+        data: getCarcasses(feiCloturee).map((c) => ({
+          fei_numero: feiCloturee.numero,
+          numero_bracelet: c.numero_bracelet,
+          zacharie_carcasse_id: c.zacharie_carcasse_id!,
+          intermediaire_id: `${feiCloturee.numero}_${'2a8bc866-a709-47d9-aebe-2768fceb2ecb'}_${users.find((u) => u.email === 'etg-1@example.fr')?.id}`,
+          intermediaire_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
+          intermediaire_user_id: users.find((u) => u.email === 'etg-1@example.fr')?.id ?? '',
+          intermediaire_role: FeiOwnerRole.ETG,
+          prise_en_charge_at: dayjs().subtract(11, 'day').toDate(),
+        })),
+      });
+
+      console.log(
+        `CHASSEUR_MULTI_STATUS seeded: ${feiACompleter.numero}, ${feiEnCours.numero}, ${feiCloturee.numero}`
+      );
+    }
     if ((role as string) === 'ETG_ALL_REFUSED_TO_SVI') {
       const fei = await prisma.fei.create({ data: feiAllRefusedByEtgToSvi });
       const carcasses = await prisma.carcasse.createMany({ data: getCarcasses(fei) });

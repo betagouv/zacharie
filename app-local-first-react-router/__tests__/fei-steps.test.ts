@@ -891,4 +891,93 @@ describe('computeFeiSteps', () => {
       expect(result.simpleStatus).toBe('À compléter');
     });
   });
+
+  // PR #399 — `computeFeiSteps` now reads `carcasses[0]` as the source of truth for ownership.
+  // Before, the function used the FEI-level fei_current_owner_role. These tests prove the FEI
+  // can lag behind (stale role still EXAMINATEUR_INITIAL) but the step ladder advances based
+  // on the carcasse's current_owner_role.
+  describe('PR #399 — step ladder reads from carcasses, not FEI', () => {
+    test('advances to PREMIER_DETENTEUR step when carcasses say so even if FEI is still EXAMINATEUR_INITIAL', () => {
+      // Stale FEI: fei_current_owner_role left at the pre-PR default.
+      // After Transmettre, only the carcasse's current_owner_role gets bumped.
+      const fei = createMockFei({
+        fei_current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
+      });
+
+      const result = computeFeiSteps({
+        fei,
+        intermediaires: [],
+        user: null,
+        ...defaultParams,
+        carcasses: [createMockCarcasse({ current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR })],
+      });
+
+      expect(result.currentStep).toBe(2);
+      expect(result.currentStepLabel).toBe('Validation par le premier détenteur');
+    });
+
+    test('shows "Clôturée" from carcasse svi_automatic_closed_at even when FEI has no automatic_closed_at', () => {
+      // PR migrated the closure marker from FEI to carcasse. Verify the step computation
+      // observes the carcasse-side field and not the FEI-side one.
+      const fei = createMockFei({ automatic_closed_at: null });
+      const result = computeFeiSteps({
+        fei,
+        intermediaires: [],
+        user: null,
+        ...defaultParams,
+        carcasses: [createMockCarcasse({ svi_automatic_closed_at: new Date() })],
+      });
+      expect(result.currentStepLabel).toBe('Clôturée');
+    });
+
+    // Pin-test for the known PR FIXME: `currentTransmission = carcasses[0]`.
+    // If two carcasses have diverging current_owner_role, today's behavior is "first carcasse wins".
+    // This test locks in that behavior so a future refactor can't change it silently — the test
+    // breaks, the reviewer reads this comment, makes the decision deliberately.
+    test('PIN-TEST — when carcasses[0] and carcasses[1] disagree on current_owner_role, carcasses[0] decides', () => {
+      const fei = createMockFei();
+      const carcasses = [
+        createMockCarcasse({
+          zacharie_carcasse_id: 'fei_BR-A',
+          numero_bracelet: 'BR-A',
+          current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+        }),
+        createMockCarcasse({
+          zacharie_carcasse_id: 'fei_BR-B',
+          numero_bracelet: 'BR-B',
+          current_owner_role: FeiOwnerRole.ETG,
+        }),
+      ];
+
+      const result = computeFeiSteps({
+        fei,
+        intermediaires: [],
+        user: null,
+        entitiesIdsWorkingDirectlyFor: [],
+        carcasses,
+      });
+
+      // Reads carcasses[0] → PREMIER_DETENTEUR. The ETG carcasse is ignored for the FEI-level step.
+      expect(result.currentStepLabel).toBe('Validation par le premier détenteur');
+      expect(result.currentStep).toBe(2);
+    });
+
+    // Without any carcasse the function falls back to a synthetic EXAMINATEUR_INITIAL transmission.
+    // This was new in PR #399 (previously the function early-returned 'Examen initial').
+    test('empty carcasses array falls back to a synthetic EXAMINATEUR_INITIAL transmission', () => {
+      const examinateurUser = createMockUser([UserRoles.CHASSEUR], 'CFEI-001');
+      const fei = createMockFei({ examinateur_initial_user_id: examinateurUser.id });
+
+      const result = computeFeiSteps({
+        fei,
+        intermediaires: [],
+        user: examinateurUser,
+        entitiesIdsWorkingDirectlyFor: [],
+        carcasses: [],
+      });
+
+      expect(result.currentStepLabel).toBe('Examen initial');
+      expect(result.currentStep).toBe(1);
+    });
+  });
 });
