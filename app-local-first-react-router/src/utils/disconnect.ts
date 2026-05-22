@@ -19,21 +19,28 @@ interface DisconnectOptions {
 let disconnecting = false;
 
 /**
- * Cancel in-flight loaders and wipe persisted state (IndexedDB +
- * localStorage). Deliberately does NOT touch React state (`useUser`,
- * `useZustandStore`, auth token) — callers handle those themselves,
- * typically inside an atomic block to avoid intermediate renders.
+ * Cancel in-flight loaders, reset the Zustand store, then wipe persisted
+ * state (IndexedDB + localStorage) and wait 1500ms. Does NOT touch
+ * `useUser` or the auth token — caller controls session state.
  *
  * Shared by `disconnect()` (full logout) and the admin "connect-as" flow
  * in ConnexionButton.tsx (session swap that wants clean local state but
  * keeps the freshly-established new session). Single source of truth so
  * cache cleaning stays consistent — divergent inline cleanups caused
  * subtle bugs in the past.
+ *
+ * Why `reset()` lives here (and BEFORE `clearCache`): Zustand's persist
+ * middleware writes async to IndexedDB on every `setState`. If reset
+ * runs AFTER clearCache, the write lands AFTER the wipe and 12 stale
+ * slice keys leak into IDB (e2e test 107). Resetting first means
+ * clearCache's iteration loop catches both the original session data
+ * AND the persist write from reset.
  */
 export async function clearLocalAppState(reason: string) {
   abortSyncData(reason);
   abortLoadCarcasses(reason);
   abortLoadMyRelations(reason);
+  useZustandStore.getState().reset();
   await clearCache(reason);
 
   // Give pending writes a beat to flush before any caller state mutation.
@@ -81,12 +88,7 @@ export async function disconnect(options: DisconnectOptions) {
     // 1. Wipe the native JWT (no React subscribers, safe to do up-front).
     setNativeAuthToken(null);
 
-    // 2. Async I/O cleanup. `useUser` is still populated in memory, so
-    // role layouts won't yet fire their own <Navigate to="/app/connexion
-    // ?redirect=..."/> — that's important (see atomic block below).
-    await clearLocalAppState(options.reason);
-
-    // 3. Atomic final step: navigate AND clear user state in the same
+    // 2. Atomic state mutations: navigate AND clear user in the same
     // synchronous block so React 18 batches both into one render.
     //
     // Why atomic: setting `user = null` makes role layouts (chasseur,
@@ -102,6 +104,12 @@ export async function disconnect(options: DisconnectOptions) {
     // sees both `location = /app/connexion` (so the role layout has
     // already unmounted and never observes user=null) AND `user = null`
     // (so Connexion's useEffect doesn't bounce).
+    //
+    // Why this runs BEFORE clearLocalAppState: setState triggers an
+    // async persist write to IndexedDB. If clearCache ran first, that
+    // write would land after the wipe (e2e test 107). Doing the
+    // mutations first means clearCache (inside clearLocalAppState)
+    // catches the persist writes alongside the original session data.
     if (!window.location.pathname.startsWith('/app/connexion')) {
       const params = new URLSearchParams();
       if (options.communication) params.set('communication', options.communication);
@@ -114,7 +122,9 @@ export async function disconnect(options: DisconnectOptions) {
     }
     useUser.setState({ user: null });
     useUser.persist.clearStorage();
-    useZustandStore.getState().reset();
+
+    // 3. Reset Zustand + wipe persisted state + 1500ms settle.
+    await clearLocalAppState(options.reason);
   } finally {
     disconnecting = false;
   }

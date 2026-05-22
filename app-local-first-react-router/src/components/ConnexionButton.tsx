@@ -6,7 +6,6 @@ import { Button, ButtonProps } from '@codegouvfr/react-dsfr/Button';
 import { User } from '@prisma/client';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import useZustandStore from '@app/zustand/store';
 
 export default function ConnexionButton({
   user,
@@ -36,7 +35,6 @@ export default function ConnexionButton({
           body: { email: user.email! },
         });
         await clearLocalAppState('connect-as');
-        useZustandStore.getState().reset();
         const newUser = await refreshUser('admin/user/connect-as');
         if (newUser) {
           navigate(getUserOnboardingRoute(newUser), { replace: true });
