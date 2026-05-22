@@ -56,6 +56,6 @@ test('PD voit la fiche avec les 2 groupes clairement identifiés après dispatch
   await expect(page.getByText(/Votre fiche a été transmise/i).first()).toBeVisible({ timeout: 15000 });
 
   // Assertions : 2 groupes avec ETG 1 / ETG 2 et leur nombre de carcasses
-  await expect(page.getByText(/ETG 1.*2 carcasse/)).toBeVisible();
-  await expect(page.getByText(/ETG 2.*2 carcasse/)).toBeVisible();
+  await expect(page.getByText(/ETG 1.*1 carcasse \+ 1 lot/)).toBeVisible();
+  await expect(page.getByText(/ETG 2.*2 carcasses/)).toBeVisible();
 });

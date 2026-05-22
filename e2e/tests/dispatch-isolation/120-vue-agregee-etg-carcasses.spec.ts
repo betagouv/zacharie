@@ -51,8 +51,8 @@ test('/etg/carcasses ne montre que les carcasses dispatchées à cet ETG', async
   await group2CarcasseButtons.nth(1).click();
 
   const group1 = page.locator('div.rounded.border').first();
-  await expect(group1.getByText('2 carcasse')).toBeVisible();
-  await expect(group2.getByText('2 carcasse')).toBeVisible();
+  await expect(group1.getByText('1 carcasse + 1 lot')).toBeVisible();
+  await expect(group2.getByText('2 carcasses')).toBeVisible();
 
   // Select ETG 2 for group 2
   await group2.locator("[class*='select-prochain-detenteur'][class*='input-container']").click();

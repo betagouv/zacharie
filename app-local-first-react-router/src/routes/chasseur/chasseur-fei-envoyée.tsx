@@ -6,8 +6,10 @@ import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { createNewFei } from '@app/utils/create-new-fei';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
+import { formatCarcasseLotCount } from '@app/utils/count-carcasses';
 import useUser from '@app/zustand/user';
 import MailCheck from '@app/assets/svg/mail-send.svg';
+import { CarcasseType, type Carcasse } from '@prisma/client';
 
 export default function ChasseurFeiEnvoyée() {
   const params = useParams();
@@ -26,17 +28,17 @@ export default function ChasseurFeiEnvoyée() {
       : 'va être notifié';
 
   const sentByRecipient = useMemo(() => {
-    const grouped: Record<string, { entityName: string; count: number }> = {};
+    const grouped: Record<string, { entityName: string; carcasses: Array<Carcasse> }> = {};
     for (const c of carcasses) {
       if (!c.next_owner_entity_id) continue;
       if (!grouped[c.next_owner_entity_id]) {
         const entity = entities[c.next_owner_entity_id];
         grouped[c.next_owner_entity_id] = {
           entityName: entity?.nom_d_usage ?? c.next_owner_entity_id,
-          count: 0,
+          carcasses: [],
         };
       }
-      grouped[c.next_owner_entity_id].count++;
+      grouped[c.next_owner_entity_id].carcasses.push(c);
     }
     return Object.values(grouped);
   }, [carcasses, entities]);
@@ -78,8 +80,8 @@ export default function ChasseurFeiEnvoyée() {
                         key={recipient.entityName}
                         className="fr-mb-1w text-sm"
                       >
-                        - {recipient.entityName} {notificationStatus} ({recipient.count} carcasse
-                        {recipient.count > 1 ? 's' : ''})
+                        - {recipient.entityName} {notificationStatus} (
+                        {formatCarcasseLotCount(recipient.carcasses)})
                       </li>
                     ))}
                   </ul>
@@ -93,25 +95,34 @@ export default function ChasseurFeiEnvoyée() {
                     {entities[fei.fei_next_owner_entity_id]?.nom_d_usage ?? ''} — {notificationStatus}
                   </p>
                 )}
-                {unsendCarcasses.length > 0 && fei.premier_detenteur_user_id === user.id && (
-                  <Alert
-                    severity="warning"
-                    className="w-full bg-white"
-                    title={`${unsendCarcasses.length} carcasse${unsendCarcasses.length > 1 ? 's' : ''} non attribuée${unsendCarcasses.length > 1 ? 's' : ''}`}
-                    description={
-                      <Button
-                        priority="secondary"
-                        size="small"
-                        className="mt-2"
-                        linkProps={{
-                          to: `/app/chasseur/fei/${params.fei_numero}`,
-                        }}
-                      >
-                        Attribuer les carcasses restantes
-                      </Button>
-                    }
-                  />
-                )}
+                {unsendCarcasses.length > 0 &&
+                  fei.premier_detenteur_user_id === user.id &&
+                  (() => {
+                    const hasLot = unsendCarcasses.some((c) => c.type === CarcasseType.PETIT_GIBIER);
+                    const hasCarcasse = unsendCarcasses.some((c) => c.type !== CarcasseType.PETIT_GIBIER);
+                    const isPlural = unsendCarcasses.length > 1;
+                    const isFeminine = hasCarcasse && !hasLot;
+                    const suffix = `${isFeminine ? 'e' : ''}${isPlural ? 's' : ''}`;
+                    return (
+                      <Alert
+                        severity="warning"
+                        className="w-full bg-white"
+                        title={`${formatCarcasseLotCount(unsendCarcasses)} non attribué${suffix}`}
+                        description={
+                          <Button
+                            priority="secondary"
+                            size="small"
+                            className="mt-2"
+                            linkProps={{
+                              to: `/app/chasseur/fei/${params.fei_numero}`,
+                            }}
+                          >
+                            Attribuer les carcasses restantes
+                          </Button>
+                        }
+                      />
+                    );
+                  })()}
               </div>
             </div>
             <div className="mt-4 bg-white p-4 md:p-8">

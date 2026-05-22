@@ -49,5 +49,7 @@ test('Dispatch avec un groupe vide — validation empêche transmission', async 
     .isVisible()
     .catch(() => false);
   expect(notifVisible).toBe(false);
-  await expect(page.getByText(/groupe.*vide|0 carcasse|sélectionner.*carcasse/i).first()).toBeVisible();
+  await expect(
+    page.getByText(/groupe.*vide|0 carcasse|aucune carcasse|sélectionner.*carcasse/i).first()
+  ).toBeVisible();
 });

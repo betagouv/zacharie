@@ -127,6 +127,26 @@ export function formatCountCarcasseByEspece(carcasses: Array<Carcasse>) {
   return formatted;
 }
 
+export function formatCarcasseLotCount(carcasses: Array<Carcasse>): string {
+  let carcassesCount = 0;
+  let lotsCount = 0;
+  for (const c of carcasses) {
+    if (c.type === CarcasseType.PETIT_GIBIER) {
+      lotsCount++;
+    } else {
+      carcassesCount++;
+    }
+  }
+  const parts: Array<string> = [];
+  if (carcassesCount > 0) {
+    parts.push(`${carcassesCount} carcasse${carcassesCount > 1 ? 's' : ''}`);
+  }
+  if (lotsCount > 0) {
+    parts.push(`${lotsCount} lot${lotsCount > 1 ? 's' : ''}`);
+  }
+  return parts.join(' + ');
+}
+
 export function addAnSToWord(word: string, count: number) {
   if (count <= 1 || word.endsWith('s') || word.endsWith('x') || word.endsWith('z') || word.endsWith('.')) {
     return word;
