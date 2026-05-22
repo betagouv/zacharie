@@ -16,12 +16,14 @@ export default function CarcassesExaminateur({
   canEdit,
   canEditAsPremierDetenteur,
   allCarcassesConfirmed,
+  allCarcassesPastPremierDetenteur,
   onAllCarcassesConfirmed,
   onAddMoreCarcasses,
 }: {
   canEdit: boolean;
   canEditAsPremierDetenteur: boolean;
   allCarcassesConfirmed: boolean;
+  allCarcassesPastPremierDetenteur: boolean;
   onAllCarcassesConfirmed: () => void;
   onAddMoreCarcasses: () => void;
 }) {
@@ -36,6 +38,10 @@ export default function CarcassesExaminateur({
 
   const hasCarcasses = carcasses.length > 0;
   const lastEspece = hasCarcasses ? carcasses[carcasses.length - 1].espece : null;
+  const canAddCarcasse = useMemo(() => {
+    if (!allCarcassesPastPremierDetenteur) return true;
+    return false;
+  }, [allCarcassesPastPremierDetenteur]);
 
   const { restantes, dejaEnvoyeesParDestinataire } = useMemo(() => {
     const restantesList: CarcasseWithModificationRequests[] = [];
@@ -103,14 +109,17 @@ export default function CarcassesExaminateur({
         </div>
       )}
 
-      {canEdit && hasCarcasses && !allCarcassesConfirmed && !showForm && (
+      {canAddCarcasse && canEdit && hasCarcasses && !allCarcassesConfirmed && !showForm && (
         <div className="mt-4">
           <Button
             type="button"
             id="add-more-carcasses-button"
             priority="secondary"
             iconId="fr-icon-add-line"
-            onClick={() => setShowForm(true)}
+            onClick={() => {
+              onAddMoreCarcasses();
+              setShowForm(true);
+            }}
           >
             Ajouter une autre carcasse
           </Button>
@@ -142,7 +151,7 @@ export default function CarcassesExaminateur({
           </Button>
         </div>
       )}
-      {canEdit && hasCarcasses && allCarcassesConfirmed && (
+      {canAddCarcasse && canEdit && hasCarcasses && allCarcassesConfirmed && (
         <Button
           type="button"
           id="add-more-carcasses"

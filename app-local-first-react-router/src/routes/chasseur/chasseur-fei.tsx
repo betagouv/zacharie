@@ -26,7 +26,6 @@ import DestinataireSelectPremierDetenteur, {
 import ExaminateurInitialDeleteFei from './examinateur-initial-delete-fei';
 import DateHeureValidationAlerts from '@app/components/DateHeureValidationAlerts';
 import ChasseurHeaderFiche from './chasseur-header-fiche';
-import PremierDetenteurCurrentOwnerConfirm from './chasseur-current-owner-confirm';
 
 export default function ChasseurFei() {
   const params = useParams();
@@ -62,21 +61,26 @@ function FEIChasseurLoaded() {
 
   const carcasses = useCarcassesForFei(params.fei_numero);
 
-  const currentTransmission = useMemo(() => {
-    if (!carcasses.length) return null;
-    // dispatch ou pas, toutes les carcasses d'une fiche n'ont qu'un seul examinateur initial et un seul premier détenteur
-    const _currentOwnerRole = carcasses[0].current_owner_role;
-    const _currentOwnerUserId = carcasses[0].current_owner_user_id;
-    const _consommateurFinalUsageDomestique = carcasses[0].consommateur_final_usage_domestique;
+  const allCarcassesPastPremierDetenteur = useMemo(() => {
+    if (carcasses.length === 0) return false;
     for (const carcasse of carcasses) {
-      if (carcasse.current_owner_role !== _currentOwnerRole)
-        throw new Error('Multiple entities found for the same FEI');
-      if (carcasse.current_owner_user_id !== _currentOwnerUserId)
-        throw new Error('Multiple roles found for the same FEI');
-      if (carcasse.consommateur_final_usage_domestique !== _consommateurFinalUsageDomestique)
-        throw new Error('Multiple consommateur final usage domestique found for the same FEI');
+      if (
+        carcasse.current_owner_role !== FeiOwnerRole.PREMIER_DETENTEUR &&
+        carcasse.current_owner_role !== FeiOwnerRole.EXAMINATEUR_INITIAL
+      ) {
+        continue;
+      }
+      if (carcasse.next_owner_role) {
+        if (
+          carcasse.next_owner_role !== FeiOwnerRole.PREMIER_DETENTEUR &&
+          carcasse.next_owner_role !== FeiOwnerRole.EXAMINATEUR_INITIAL
+        ) {
+          continue;
+        }
+      }
+      return false;
     }
-    return carcasses[0];
+    return true;
   }, [carcasses]);
 
   const users = useZustandStore((state) => state.users);
@@ -143,41 +147,26 @@ function FEIChasseurLoaded() {
   }, [carcasses]);
 
   const canEdit = useMemo(() => {
-    if (!currentTransmission) return true;
-    if (
-      currentTransmission?.current_owner_role !== FeiOwnerRole.PREMIER_DETENTEUR &&
-      currentTransmission?.current_owner_role !== FeiOwnerRole.EXAMINATEUR_INITIAL
-    ) {
-      return false;
-    }
+    if (allCarcassesPastPremierDetenteur) return false;
     if (fei.examinateur_initial_user_id !== user.id) {
       return false;
     }
     return true;
-  }, [currentTransmission, fei, user]);
+  }, [allCarcassesPastPremierDetenteur, fei, user]);
 
   const canEditAsPremierDetenteur = useMemo(() => {
-    if (!currentTransmission) return false;
-    if (
-      currentTransmission?.current_owner_role !== FeiOwnerRole.PREMIER_DETENTEUR &&
-      currentTransmission?.current_owner_role !== FeiOwnerRole.EXAMINATEUR_INITIAL
-    ) {
-      return false;
-    }
+    if (allCarcassesPastPremierDetenteur) return false;
     if (fei.examinateur_initial_user_id === user.id) {
       return true;
     }
-    if (
-      currentTransmission?.current_owner_user_id === user.id &&
-      currentTransmission?.current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR
-    ) {
+    if (fei.premier_detenteur_user_id === user.id) {
       return true;
     }
     if (premierDetenteurEntity?.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
       return true;
     }
     return false;
-  }, [currentTransmission, fei, user, premierDetenteurEntity]);
+  }, [allCarcassesPastPremierDetenteur, fei, user, premierDetenteurEntity]);
 
   const isPremierDetenteur = useMemo(() => {
     if (fei.premier_detenteur_user_id === user.id) return true;
@@ -262,7 +251,7 @@ function FEIChasseurLoaded() {
     }
     if (!atLeastOneCarcasseWithAnomalie) {
       label += " qu'aucune anomalie n'a été observée lors de l'examen initial";
-      if (!currentTransmission?.consommateur_final_usage_domestique) {
+      if (!fei?.consommateur_final_usage_domestique) {
         label += ' et que les carcasses en peau examinées ce jour peuvent être mises sur le marché.';
       } else {
         label += '.';
@@ -275,10 +264,10 @@ function FEIChasseurLoaded() {
     return label;
   }, [
     fei.examinateur_initial_approbation_mise_sur_le_marche,
+    fei.consommateur_final_usage_domestique,
     examinateurInitialUser?.nom_de_famille,
     examinateurInitialUser?.prenom,
     atLeastOneCarcasseWithAnomalie,
-    currentTransmission?.consommateur_final_usage_domestique,
     user.id,
     fei.examinateur_initial_user_id,
   ]);
@@ -337,6 +326,14 @@ function FEIChasseurLoaded() {
         fei_current_owner_user_name_cache: `${user.prenom} ${user.nom_de_famille}`,
         fei_current_owner_entity_id: fei.premier_detenteur_entity_id,
         fei_current_owner_entity_name_cache: premierDetenteurEntity?.nom_d_usage ?? null,
+        fei_next_owner_role: null,
+        fei_next_owner_user_id: null,
+        fei_next_owner_user_name_cache: null,
+        fei_next_owner_entity_id: null,
+        fei_next_owner_entity_name_cache: null,
+        fei_prev_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
+        fei_prev_owner_user_id: user.id,
+        fei_prev_owner_entity_id: null,
       });
       updateCarcassesTransmission(carcasseIds, {
         current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
@@ -345,6 +342,14 @@ function FEIChasseurLoaded() {
           premierDetenteurUser?.prenom + ' ' + premierDetenteurUser?.nom_de_famille,
         current_owner_entity_id: fei.premier_detenteur_entity_id ?? null,
         current_owner_entity_name_cache: premierDetenteurEntity?.nom_d_usage ?? null,
+        next_owner_role: null,
+        next_owner_user_id: null,
+        next_owner_user_name_cache: null,
+        next_owner_entity_id: null,
+        next_owner_entity_name_cache: null,
+        prev_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
+        prev_owner_user_id: user.id,
+        prev_owner_entity_id: null,
       });
       syncData('examinateur-initial-transfer-to-premier-detenteur');
       navigate(`/app/chasseur/fei/${fei.numero}/envoyée`, {
@@ -381,11 +386,7 @@ function FEIChasseurLoaded() {
       )}
       <div className="fr-container fr-container--fluid fr-my-md-14v">
         <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
-          <div
-            className="fr-col-12 fr-col-md-10 bg-alt-blue-france [&_.fr-tabs\\_\\_list]:bg-alt-blue-france m-4 md:m-0 md:p-0"
-            key={fei.fei_current_owner_entity_id!}
-          >
-            <PremierDetenteurCurrentOwnerConfirm />
+          <div className="fr-col-12 fr-col-md-10 bg-alt-blue-france [&_.fr-tabs\\_\\_list]:bg-alt-blue-france m-4 md:m-0 md:p-0">
             <ChasseurHeaderFiche fei={fei} />
             <div className="flex flex-col gap-6">
               {/* Bloc 1 — Informations de chasse */}
@@ -485,6 +486,7 @@ function FEIChasseurLoaded() {
                     canEdit={canEdit}
                     canEditAsPremierDetenteur={canEditAsPremierDetenteur}
                     allCarcassesConfirmed={allCarcassesConfirmed}
+                    allCarcassesPastPremierDetenteur={allCarcassesPastPremierDetenteur}
                     onAllCarcassesConfirmed={() => setAllCarcassesConfirmed(true)}
                     onAddMoreCarcasses={() => setAllCarcassesConfirmed(false)}
                   />

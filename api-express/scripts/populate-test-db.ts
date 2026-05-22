@@ -281,6 +281,28 @@ Christine
       },
       {
         id: await createUserId(),
+        email: 'examinateur-solo@example.fr',
+        roles: [UserRoles.CHASSEUR],
+        activated: true,
+        activated_at: dayjs().toDate(),
+        prenom: 'Isabelle',
+        nom_de_famille: 'Solo',
+        addresse_ligne_1: '13 rue de la paix',
+        est_forme_a_l_examen_initial: true,
+        numero_cfei: 'CFEI-075-25-003',
+        code_postal: '75000',
+        ville: 'Paris',
+        telephone: '0606060611',
+        onboarded_at: dayjs().toDate(),
+        // No userRelations, no CAN_HANDLE entity relations — used to exercise the
+        // "isFirstFei && no associations && no detenteursInitiaux" branch of
+        // examinateur-select-next.tsx, which renders the "Je suis le Premier
+        // Détenteur" button and the "Chercher un Premier Détenteur par email" button.
+        // CAN_TRANSMIT relation to ETG 1 added below so the self-handoff spec can
+        // complete the dispatch step.
+      },
+      {
+        id: await createUserId(),
         email: 'svi-2@example.fr',
         roles: [UserRoles.SVI],
         activated: true,
@@ -530,6 +552,15 @@ Christine
         entity_id: entities.find((entity) => entity.raison_sociale === 'SVI 2')?.id,
         relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
         status: EntityRelationStatus.ADMIN,
+      },
+      {
+        // examinateur-solo: only a CAN_TRANSMIT relation (no CAN_HANDLE), so that
+        // associationsDeChasse stays empty and the "Je suis le Premier Détenteur" /
+        // email-search buttons render. The CAN_TRANSMIT to ETG 1 lets the self-handoff
+        // spec dispatch to ETG 1 once the user becomes their own PD.
+        owner_id: users.find((user) => user.email === 'examinateur-solo@example.fr')?.id,
+        entity_id: entities.find((entity) => entity.raison_sociale === 'ETG 1')?.id,
+        relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
       },
     ],
   });
