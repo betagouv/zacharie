@@ -35,11 +35,10 @@ export async function clearLocalAppState(reason: string) {
   abortLoadCarcasses(reason);
   abortLoadMyRelations(reason);
   await clearCache(reason);
+  
   // Give pending writes a beat to flush before any caller state mutation.
   if (!import.meta.env.VITE_TEST_PLAYWRIGHT) {
     await new Promise((resolve) => setTimeout(resolve, 1500));
-  } else {
-    await new Promise((resolve) => setTimeout(resolve, 100));
   }
 }
 
