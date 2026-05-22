@@ -6,11 +6,10 @@ on:
     branches: [main]
 permissions:
   contents: read
-
 jobs:
-  vitest:
+  test:
     if: ${{ !startsWith(github.event.head_commit.message, 'chore:') }}
-    timeout-minutes: 15
+    timeout-minutes: 30
     runs-on: ubuntu-latest
 
     services:
@@ -31,83 +30,36 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
-          cache-dependency-path: |
-            app-local-first-react-router/package-lock.json
-            api-express/package-lock.json
+          # cache: yarn
+          # cache-dependency-path: "**/yarn.lock"
 
-      - name: App vitest
+      - name: Install app dependencies
         run: |
           cd app-local-first-react-router
           npm ci
           npx prisma generate
+
+      - name: Run app vitest tests
+        run: |
+          cd app-local-first-react-router
           npm run vitest
 
-      - name: API vitest
+      - name: Install api dependencies
         run: |
           cd api-express
           npm ci
           npx prisma generate
-          npm run test
-        env:
-          POSTGRESQL_ADDON_URI: postgres://postgres:postgres@localhost:5432/zacharietest
 
-  e2e:
-    if: ${{ !startsWith(github.event.head_commit.message, 'chore:') }}
-    timeout-minutes: 20
-    runs-on: ubuntu-latest
-
-    strategy:
-      fail-fast: false
-      matrix:
-        shard: [1, 2, 3, 4]
-
-    services:
-      postgres:
-        image: postgres
-        env:
-          POSTGRES_PASSWORD: postgres
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-          cache-dependency-path: |
-            app-local-first-react-router/package-lock.json
-            api-express/package-lock.json
-            e2e/package-lock.json
-
-      - name: Install app + api deps in parallel
+      - name: Run API vitest tests
         run: |
-          (cd app-local-first-react-router && npm ci && npx prisma generate) &
-          (cd api-express && npm ci && npx prisma generate) &
-          wait
+          cd api-express
+          npm run test
 
-      - name: Cache Playwright browsers
-        id: pw-cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: pw-${{ runner.os }}-${{ hashFiles('e2e/package-lock.json') }}
-
-      - name: Install Playwright
+      - name: Install Playwright Browsers
         run: |
           cd e2e
           npm ci
-          if [ "${{ steps.pw-cache.outputs.cache-hit }}" != "true" ]; then
-            npx playwright install --with-deps
-          else
-            npx playwright install-deps
-          fi
+          npx playwright install --with-deps
 
       - name: Init DB
         run: |
@@ -117,10 +69,10 @@ jobs:
           PGDATABASE: zacharietest
           PGBASEURL: postgres://postgres:postgres@localhost:5432
 
-      - name: Run Playwright shard ${{ matrix.shard }}/4
+      - name: Run Playwright tests
         run: |
           cd e2e
-          npx playwright test --shard=${{ matrix.shard }}/4 --reporter=blob
+          npx playwright test
         env:
           PGBASEURL: postgres://postgres:postgres@localhost:5432
           POSTGRESQL_ADDON_URI: postgres://postgres:postgres@localhost:5432/zacharietest
@@ -128,49 +80,13 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
-          name: blob-report-${{ matrix.shard }}
-          path: e2e/blob-report
-          retention-days: 7
+          name: playwright-report
+          path: e2e/playwright-report/
+          retention-days: 30
 
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
-          name: test-results-${{ matrix.shard }}
+          name: test-results
           path: e2e/test-results/
-          retention-days: 7
-
-  merge-reports:
-    if: ${{ !cancelled() }}
-    needs: [e2e]
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-          cache-dependency-path: e2e/package-lock.json
-
-      - name: Install e2e deps
-        run: |
-          cd e2e
-          npm ci
-
-      - name: Download blob reports
-        uses: actions/download-artifact@v4
-        with:
-          path: e2e/all-blob-reports
-          pattern: blob-report-*
-          merge-multiple: true
-
-      - name: Merge into HTML report
-        run: |
-          cd e2e
-          npx playwright merge-reports --reporter=html ./all-blob-reports
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report
-          path: e2e/playwright-report
           retention-days: 30
