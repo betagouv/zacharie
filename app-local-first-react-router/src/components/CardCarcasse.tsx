@@ -119,7 +119,6 @@ export default function CardCarcasse({
     descriptionLine += `${commentairesIntermediaires.length} commentaire`;
     if (commentairesIntermediaires.length > 1) descriptionLine += 's';
   }
-  console.log('modifsCount', modifsCount);
   if (modifsCount > 0) {
     if (descriptionLine.length > 0) descriptionLine += `, `;
     descriptionLine += `${modifsCount} modification`;

@@ -150,11 +150,11 @@ export default function SelectNextForExaminateur({
         premier_detenteur_offline: navigator.onLine ? false : true,
       };
       nextCarcassesTransmission = {
-        current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
-        current_owner_user_id: nextOwnerUser?.id,
-        current_owner_user_name_cache: nextOwnerName,
-        current_owner_entity_id: nextOwnerEntity?.id ?? null,
-        current_owner_entity_name_cache: nextOwnerEntity?.nom_d_usage ?? null,
+        next_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+        next_owner_user_id: nextOwnerUser?.id,
+        next_owner_user_name_cache: nextOwnerName,
+        next_owner_entity_id: nextOwnerEntity?.id ?? null,
+        next_owner_entity_name_cache: nextOwnerEntity?.nom_d_usage ?? null,
         premier_detenteur_user_id: nextOwnerUser?.id,
         premier_detenteur_offline: navigator.onLine ? false : true,
         premier_detenteur_entity_id: nextOwnerEntity?.id ?? null,

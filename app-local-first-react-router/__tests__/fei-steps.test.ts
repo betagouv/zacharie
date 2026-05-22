@@ -330,7 +330,7 @@ describe('computeFeiSteps', () => {
         intermediaires: [],
         user: null,
         ...defaultParams,
-        carcasses: [createMockCarcasse({ automatic_closed_at: new Date() } as Partial<Carcasse>)],
+        carcasses: [createMockCarcasse({ svi_automatic_closed_at: new Date() })],
       });
 
       expect(result.currentStepLabel).toBe('Clôturée');
@@ -790,7 +790,7 @@ describe('computeFeiSteps', () => {
           intermediaires: [],
           user: examinateurInitialUser,
           ...defaultParams,
-          carcasses: [createMockCarcasse({ automatic_closed_at: new Date() } as Partial<Carcasse>)],
+          carcasses: [createMockCarcasse({ svi_automatic_closed_at: new Date() })],
         });
 
         expect(result.simpleStatus).toBe('Clôturée');
