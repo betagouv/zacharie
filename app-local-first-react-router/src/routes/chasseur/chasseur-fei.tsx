@@ -26,7 +26,7 @@ import DestinataireSelectPremierDetenteur, {
 import ExaminateurInitialDeleteFei from './examinateur-initial-delete-fei';
 import DateHeureValidationAlerts from '@app/components/DateHeureValidationAlerts';
 import ChasseurHeaderFiche from './chasseur-header-fiche';
-import CurrentOwnerConfirm from './chasseur-current-owner-confirm';
+import PremierDetenteurCurrentOwnerConfirm from './chasseur-current-owner-confirm';
 
 export default function ChasseurFei() {
   const params = useParams();
@@ -61,8 +61,23 @@ function FEIChasseurLoaded() {
   const fei = feis[params.fei_numero!];
 
   const carcasses = useCarcassesForFei(params.fei_numero);
-  // FIXME: on fait quoi en cas de dispatch
-  const currentTransmission = carcasses?.[0];
+
+  const currentTransmission = useMemo(() => {
+    if (!carcasses.length) return null;
+    // dispatch ou pas, toutes les carcasses d'une fiche n'ont qu'un seul examinateur initial et un seul premier détenteur
+    const _currentOwnerRole = carcasses[0].current_owner_role;
+    const _currentOwnerUserId = carcasses[0].current_owner_user_id;
+    const _consommateurFinalUsageDomestique = carcasses[0].consommateur_final_usage_domestique;
+    for (const carcasse of carcasses) {
+      if (carcasse.current_owner_role !== _currentOwnerRole)
+        throw new Error('Multiple entities found for the same FEI');
+      if (carcasse.current_owner_user_id !== _currentOwnerUserId)
+        throw new Error('Multiple roles found for the same FEI');
+      if (carcasse.consommateur_final_usage_domestique !== _consommateurFinalUsageDomestique)
+        throw new Error('Multiple consommateur final usage domestique found for the same FEI');
+    }
+    return carcasses[0];
+  }, [carcasses]);
 
   const users = useZustandStore((state) => state.users);
   const entities = useZustandStore((state) => state.entities);
@@ -135,14 +150,6 @@ function FEIChasseurLoaded() {
     ) {
       return false;
     }
-    if (
-      currentTransmission?.svi_automatic_closed_at ||
-      currentTransmission?.svi_closed_at ||
-      currentTransmission?.svi_assigned_at ||
-      currentTransmission?.intermediaire_closed_at
-    ) {
-      return false;
-    }
     if (fei.examinateur_initial_user_id !== user.id) {
       return false;
     }
@@ -154,14 +161,6 @@ function FEIChasseurLoaded() {
     if (
       currentTransmission?.current_owner_role !== FeiOwnerRole.PREMIER_DETENTEUR &&
       currentTransmission?.current_owner_role !== FeiOwnerRole.EXAMINATEUR_INITIAL
-    ) {
-      return false;
-    }
-    if (
-      currentTransmission?.svi_automatic_closed_at ||
-      currentTransmission?.svi_closed_at ||
-      currentTransmission?.svi_assigned_at ||
-      currentTransmission?.intermediaire_closed_at
     ) {
       return false;
     }
@@ -372,8 +371,6 @@ function FEIChasseurLoaded() {
     return false;
   }, [showBloc4, carcassesDejaEnvoyees.length, carcasses.length]);
 
-  console.log({ carcasses });
-
   return (
     <>
       <title>{`${params.fei_numero} | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}</title>
@@ -388,7 +385,7 @@ function FEIChasseurLoaded() {
             className="fr-col-12 fr-col-md-10 bg-alt-blue-france [&_.fr-tabs\\_\\_list]:bg-alt-blue-france m-4 md:m-0 md:p-0"
             key={fei.fei_current_owner_entity_id!}
           >
-            <CurrentOwnerConfirm />
+            <PremierDetenteurCurrentOwnerConfirm />
             <ChasseurHeaderFiche fei={fei} />
             <div className="flex flex-col gap-6">
               {/* Bloc 1 — Informations de chasse */}
