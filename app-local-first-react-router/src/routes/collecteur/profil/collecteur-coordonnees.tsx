@@ -125,7 +125,7 @@ export default function CollecteurProfilCoordonnees() {
                   <Input
                     label={needAddress ? 'Code postal *' : 'Code postal'}
                     hintText="5 chiffres"
-                    className="shrink-0 md:basis-1/5"
+                    className="shrink-0 md:basis-2/5"
                     nativeInputProps={{
                       id: Prisma.UserScalarFieldEnum.code_postal,
                       name: Prisma.UserScalarFieldEnum.code_postal,
@@ -134,7 +134,7 @@ export default function CollecteurProfilCoordonnees() {
                       defaultValue: user.code_postal ?? '',
                     }}
                   />
-                  <div className="basis-4/5">
+                  <div className="basis-3/5">
                     <InputVille
                       postCode={user.code_postal ?? ''}
                       trimPostCode
