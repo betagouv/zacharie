@@ -500,7 +500,7 @@ enum PoidsType {
 
 model Carcasse {
   zacharie_carcasse_id                                    String                        @id // {fei_numero}_{numero_bracelet}
-  numero_bracelet                                         String // marquage is not unique in all France, that's why we need the zacharie_carcasse_id
+  numero_bracelet                                         String // bracelet is not unique in all France, that's why we need the zacharie_carcasse_id
   fei_numero                                              String
   date_mise_a_mort                                        DateTime?                     @db.Date // et éviscération
   espece                                                  String? // Sanglier, Cerf, etc.
@@ -615,6 +615,7 @@ model Carcasse {
   svi_entity_id                                           String?
   svi_user_id                                             String?
   svi_closed_at                                           DateTime?
+  svi_automatic_closed_at                                 DateTime?
   svi_closed_by_user_id                                   String?
   // Ownership (copied from FEI for carcasse-level ownership tracking)
   // Current Owner

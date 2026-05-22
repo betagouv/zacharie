@@ -15,6 +15,7 @@ import {
   RiHourglassFill,
 } from 'react-icons/ri';
 import { ReactElement } from 'react';
+import { CarcasseTransmission } from '@app/types/carcasse';
 
 type IntermediaireStep = {
   id: string | null;
@@ -66,7 +67,7 @@ export function computeFeiSteps({
   user,
   carcasses,
 }: ComputeFeiStepsParams): UseFeiStepsReturn {
-  const currentTransmission = carcasses?.length
+  const currentTransmission: CarcasseTransmission = carcasses?.length
     ? carcasses[0]
     : {
         current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
@@ -88,6 +89,7 @@ export function computeFeiSteps({
         consommateur_final_usage_domestique: null,
         svi_assigned_at: null,
         svi_closed_at: null,
+        svi_automatic_closed_at: null,
         intermediaire_closed_at: null,
       };
   const steps: Array<IntermediaireStep> = (() => {
@@ -114,7 +116,7 @@ export function computeFeiSteps({
       {
         id: fei.premier_detenteur_entity_id || fei.premier_detenteur_user_id,
         role: FeiOwnerRole.PREMIER_DETENTEUR,
-        nextRole: currentTransmission.premier_detenteur_prochain_detenteur_role_cache,
+        nextRole: currentTransmission.premier_detenteur_prochain_detenteur_role_cache ?? null,
       },
     ];
     for (let i = intermediaires.length - 1; i >= 0; i--) {
@@ -159,8 +161,7 @@ export function computeFeiSteps({
 
   const currentStepLabel: FeiStep = (() => {
     if (
-      // @ts-expect-error automatic_closed_at is not yet implemented
-      currentTransmission.automatic_closed_at ||
+      currentTransmission.svi_automatic_closed_at ||
       currentTransmission.svi_closed_at ||
       currentTransmission.intermediaire_closed_at
     ) {

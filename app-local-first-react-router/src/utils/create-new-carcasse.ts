@@ -131,6 +131,7 @@ export async function createNewCarcasse({
     svi_entity_id: null,
     svi_user_id: null,
     svi_closed_at: null,
+    svi_automatic_closed_at: null,
     svi_closed_by_user_id: null,
     current_owner_user_id: user.id,
     current_owner_user_name_cache: `${user.prenom} ${user.nom_de_famille}`,

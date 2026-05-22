@@ -120,7 +120,6 @@ export function carcasseFilterableFields(
     { name: 'intermediaire_carcasse_refus_motif', label: 'Motif de refus d’un destinataire', type: 'text' },
     { name: 'svi_closed_at', label: 'Date de clôture manuelle de la fiche', type: 'date-with-time' },
     {
-      // @ts-expect-error: TODO: ajouter le champe svi_automatic_closed_at dans le type Carcasse
       name: 'svi_automatic_closed_at',
       label: 'Date de clôture automatique de la fiche',
       type: 'date-with-time',

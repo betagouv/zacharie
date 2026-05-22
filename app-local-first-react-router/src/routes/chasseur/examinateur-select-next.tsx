@@ -115,24 +115,32 @@ export default function SelectNextForExaminateur({
         premier_detenteur_entity_id: null,
       };
       nextCarcassesTransmission = {
-        current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
-        current_owner_user_id: user.id,
-        current_owner_user_name_cache: `${user.prenom} ${user.nom_de_famille}`,
-        current_owner_entity_id: null,
+        next_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+        next_owner_user_id: user.id,
+        next_owner_user_name_cache: `${user.prenom} ${user.nom_de_famille}`,
+        next_owner_entity_id: null,
+        premier_detenteur_offline: navigator.onLine ? false : true,
+        premier_detenteur_user_id: user.id,
+        premier_detenteur_name_cache: `${user.prenom} ${user.nom_de_famille}`,
+        premier_detenteur_entity_id: null,
       };
     } else if (nextIsMyAssociation) {
       nextFei = {
         premier_detenteur_user_id: user.id,
-        premier_detenteur_offline: navigator.onLine ? false : true,
+        premier_detenteur_name_cache: nextOwnerName,
         premier_detenteur_entity_id: nextOwnerEntity.id,
-        premier_detenteur_name_cache: nextOwnerEntity?.nom_d_usage ?? null,
+        premier_detenteur_offline: navigator.onLine ? false : true,
       };
       nextCarcassesTransmission = {
-        current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
-        current_owner_user_id: user.id,
-        current_owner_user_name_cache: `${user.prenom} ${user.nom_de_famille}`,
-        current_owner_entity_id: nextOwnerEntity.id,
-        current_owner_entity_name_cache: nextOwnerEntity.nom_d_usage,
+        next_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+        next_owner_user_id: user.id,
+        next_owner_user_name_cache: nextOwnerName,
+        next_owner_entity_id: nextOwnerEntity.id,
+        next_owner_entity_name_cache: nextOwnerEntity.nom_d_usage,
+        premier_detenteur_user_id: user.id,
+        premier_detenteur_offline: navigator.onLine ? false : true,
+        premier_detenteur_entity_id: nextOwnerEntity.id,
+        premier_detenteur_name_cache: nextOwnerName,
       };
     } else {
       nextFei = {
@@ -147,6 +155,10 @@ export default function SelectNextForExaminateur({
         current_owner_user_name_cache: nextOwnerName,
         current_owner_entity_id: nextOwnerEntity?.id ?? null,
         current_owner_entity_name_cache: nextOwnerEntity?.nom_d_usage ?? null,
+        premier_detenteur_user_id: nextOwnerUser?.id,
+        premier_detenteur_offline: navigator.onLine ? false : true,
+        premier_detenteur_entity_id: nextOwnerEntity?.id ?? null,
+        premier_detenteur_name_cache: nextOwnerName,
       };
     }
     updateCarcassesTransmission(
@@ -159,7 +171,7 @@ export default function SelectNextForExaminateur({
       user_role: UserRoles.CHASSEUR,
       fei_numero: fei.numero,
       action: 'examinateur-select-next',
-      history: createHistoryInput(fei, nextFei),
+      history: createHistoryInput({}, nextCarcassesTransmission),
       entity_id: null,
       zacharie_carcasse_id: null,
       intermediaire_id: null,
@@ -316,7 +328,7 @@ export default function SelectNextForExaminateur({
                     return;
                   }
                   setShowValidationErrors(false);
-                  handleSubmitFromSelect(nextOwnerUser?.id);
+                  handleSubmitFromSelect();
                 }}
               >
                 Continuer

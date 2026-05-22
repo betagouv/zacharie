@@ -136,8 +136,7 @@ function FEIChasseurLoaded() {
       return false;
     }
     if (
-      // @ts-expect-error automatic_closed_at is not yet implemented
-      currentTransmission?.automatic_closed_at ||
+      currentTransmission?.svi_automatic_closed_at ||
       currentTransmission?.svi_closed_at ||
       currentTransmission?.svi_assigned_at ||
       currentTransmission?.intermediaire_closed_at
@@ -159,8 +158,7 @@ function FEIChasseurLoaded() {
       return false;
     }
     if (
-      // @ts-expect-error automatic_closed_at is not yet implemented
-      currentTransmission?.automatic_closed_at ||
+      currentTransmission?.svi_automatic_closed_at ||
       currentTransmission?.svi_closed_at ||
       currentTransmission?.svi_assigned_at ||
       currentTransmission?.intermediaire_closed_at
