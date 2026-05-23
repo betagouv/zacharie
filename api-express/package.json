@@ -46,7 +46,7 @@
     "dayjs": "^1.11.13",
     "docx": "^9.2.0",
     "dotenv": "^16.3.1",
-    "express": "^4.22.1",
+    "express": "^4.22.2",
     "express-rate-limit": "^8.5.1",
     "helmet": "^7.1.0",
     "isbot": "^4.1.0",
