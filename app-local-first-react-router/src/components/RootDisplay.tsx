@@ -6,11 +6,10 @@ import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import SearchInput from '@app/components/SearchInput';
 import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { useRef, useState } from 'react';
-import API, { setNativeAuthToken } from '@app/services/api';
-import { useNavigate, useSearchParams } from 'react-router';
-import useUser from '@app/zustand/user';
-import useZustandStore from '@app/zustand/store';
+import API from '@app/services/api';
+import { useSearchParams } from 'react-router';
 import { getUserOnboardingRoute } from '@app/utils/user-onboarded.client';
+import { disconnect } from '@app/utils/disconnect';
 
 const environment = import.meta.env.VITE_ENV || 'development';
 
@@ -33,7 +32,6 @@ export default function RootDisplay({
   const embedded = searchParams.get('embedded') === 'true';
   const user = useMostFreshUser('RootDisplay ' + id);
   const isOnline = useIsOnline();
-  const navigate = useNavigate();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const RenderedSearchInput = useRef(SearchInput).current;
@@ -52,17 +50,9 @@ export default function RootDisplay({
       buttonProps: {
         onClick: async () => {
           setIsLoggingOut(true);
-          API.post({ path: '/user/logout' }).then(async () => {
-            setNativeAuthToken(null);
-            useUser.setState({ user: null }); // this line is important : if useUser is not null then /app/connexion will redirect to /app/[role] even if /user/me returns a 401 (because of offline mode)
-            useZustandStore.getState().reset();
-            await clearCache()
-              .then(() => new Promise((resolve) => setTimeout(resolve, 1500)))
-              .then(() => {
-                navigate('/app/connexion');
-                setIsLoggingOut(false);
-              });
-          });
+          await API.post({ path: '/user/logout' });
+          await disconnect({ reason: 'logout' });
+          setIsLoggingOut(false);
         },
       },
       text: isLoggingOut ? 'Déconnexion en cours...' : 'Déconnexion',

@@ -16,7 +16,6 @@ import {
 import { ErrorBoundary } from 'react-error-boundary';
 import UnexpectedError from './components/UnexpectedError.tsx';
 import { capture, getPerformanceContext } from './services/sentry.ts';
-import { clearCache } from './services/indexed-db.ts';
 import { initMatomo } from './services/matomo.ts';
 import 'dayjs/locale/fr';
 import dayjs from 'dayjs';
@@ -115,15 +114,18 @@ createRoot(document.getElementById('root')!).render(
           capture(error, { extra: { componentStack } });
         }}
         onReset={() => {
-          clearCache('main')
-            .then(() => new Promise((resolve) => setTimeout(resolve, 1500)))
-            .then(() => {
-              // no useNavigate available here, so we use window.history.pushState
-              // no window.location.href because it would eject the user from ExpoApp, idk why
-              window.history.pushState(null, '', '/app/connexion');
-              window.dispatchEvent(new PopStateEvent('popstate'));
-            });
-          // Reset the state of your app so the error doesn't happen again
+          // App-level crash recovery. We deliberately do NOT clear the
+          // cache or disconnect the user — the error wasn't caused by
+          // their session, so wiping their local data would punish them
+          // for a bug. We just send them to /app/connexion (which will
+          // bounce them to their role's home if they're still logged in).
+          //
+          // pushState + popstate, NOT window.location.href: inside the
+          // Expo WebView (see expo/ExpoApp.tsx), assigning to
+          // window.location.href opens the URL in Safari instead of
+          // staying inside the WebView.
+          window.history.pushState(null, '', '/app/connexion');
+          window.dispatchEvent(new PopStateEvent('popstate'));
         }}
       >
         <App />

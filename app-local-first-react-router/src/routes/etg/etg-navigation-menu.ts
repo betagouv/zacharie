@@ -6,8 +6,6 @@ export default function useEtgNavigationMenu(): MainNavigationProps.Item[] {
   const location = useLocation();
   const apiKeyApprovals = useZustandStore((state) => state.apiKeyApprovals);
 
-  console.log('apiKeyApprovals', apiKeyApprovals);
-
   const navigationBase: MainNavigationProps.Item[] = [
     {
       text: 'Fiches',

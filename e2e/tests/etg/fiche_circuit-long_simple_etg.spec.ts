@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
+import { logoutAndConnect } from '../../utils/logout-and-connect';
 
 test.beforeEach(async () => {
   await resetDb('ETG');
@@ -422,9 +423,7 @@ test('Pas de stockage - Je transfère à un autre ETG', async ({ page, context }
         - paragraph: 2 carcasses refusées
       `);
   await page.getByRole('button', { name: 'Paramètres' }).click();
-  await page.getByRole('button', { name: 'Déconnexion' }).click();
-  await expect(page).toHaveURL('http://localhost:3290/app/connexion');
-  await connectWith(page, 'etg-2@example.fr');
+  await logoutAndConnect(page, 'etg-2@example.fr');
   await expect(page.locator('#content')).toMatchAriaSnapshot(`
     - link /ZACH-\\d+-QZ6E0-\\d+ À compléter \\d+\\/\\d+\\/\\d+ chassenard À renseigner \\d+ pigeons 3 daims fin de liste 2 carcasses refusées ZACH-\\d+-QZ6E0-\\d+/:
       - /url: /app/etg/fei/ZACH-20250707-QZ6E0-165242
