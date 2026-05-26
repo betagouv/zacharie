@@ -1010,17 +1010,6 @@ export default function DestinatairePremierDetenteur({
     };
   }
 
-  // Group already-sent carcasses by recipient for display
-  const dejaEnvoyeesParDestinataire = useMemo(() => {
-    const grouped: Record<string, Carcasse[]> = {};
-    for (const c of carcassesDejaEnvoyees) {
-      const key = c.next_owner_entity_id || c.current_owner_entity_id || 'unknown';
-      if (!grouped[key]) grouped[key] = [];
-      grouped[key].push(c);
-    }
-    return grouped;
-  }, [carcassesDejaEnvoyees]);
-
   const onToggleCarcasse = useCallback((groupId: string, carcasseId: string) => {
     setDispatchGroups((prev) => {
       const targetGroup = prev.find((g) => g.id === groupId);
@@ -1060,47 +1049,6 @@ export default function DestinatairePremierDetenteur({
           'space-y-4',
         ].join(' ')}
       >
-        {/* Already-sent carcasses summary */}
-        {carcassesDejaEnvoyees.length > 0 && (
-          <Alert
-            severity="success"
-            title="Carcasses déjà attribuées"
-            description={
-              <div className="mt-2 space-y-3">
-                {Object.entries(dejaEnvoyeesParDestinataire).map(([entityId, carcasses]) => {
-                  const entity = entities[entityId];
-                  return (
-                    <div key={entityId}>
-                      <p className="mb-1 text-sm font-bold">
-                        {entity?.nom_d_usage ?? entityId}
-                        <Badge
-                          severity="success"
-                          small
-                          noIcon
-                          as="span"
-                          className="ml-2"
-                        >
-                          {formatCarcasseLotCount(carcasses)}
-                        </Badge>
-                      </p>
-                      <div className="flex flex-wrap gap-1">
-                        {carcasses.map((c) => (
-                          <Tag
-                            key={c.zacharie_carcasse_id}
-                            small
-                          >
-                            {c.numero_bracelet} - {c.espece}
-                          </Tag>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            }
-          />
-        )}
-
         {carcassesRestantes.length === 0 && carcassesDejaEnvoyees.length > 0 && (
           <Alert
             severity="info"
