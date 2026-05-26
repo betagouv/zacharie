@@ -4,7 +4,8 @@ import type { FeiWithIntermediaires } from '@api/src/types/fei';
 import { filterFeiIntermediaires } from '@app/utils/get-carcasses-intermediaires';
 import { filterEntitiesWorkingDirectlyFor } from '@app/utils/get-entity-relations';
 import { filterCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
-import { UserRoles } from '@prisma/client';
+import { isCarcasseDone } from '@app/utils/is-carcasse-done';
+import { Carcasse, UserRoles } from '@prisma/client';
 
 type FeiSorted = {
   feisUnderMyResponsability: Array<FeiWithIntermediaires>;
@@ -13,13 +14,12 @@ type FeiSorted = {
   feisDone: Array<FeiWithIntermediaires>;
 };
 
-export function isFeiDone(fei: FeiWithIntermediaires): boolean {
-  return !!(
-    fei.svi_closed_at ||
-    fei.automatic_closed_at ||
-    fei.intermediaire_closed_at ||
-    fei.consommateur_final_usage_domestique
-  );
+export function isFeiDone(fei: FeiWithIntermediaires, carcasses: Array<Carcasse>): boolean {
+  if (fei.intermediaire_closed_at || fei.consommateur_final_usage_domestique) return true;
+  if (fei.automatic_closed_at) return true;
+  // Carcasses pas encore chargées : ne pas conclure "done" par vacuité.
+  if (carcasses.length === 0) return false;
+  return carcasses.every(isCarcasseDone);
 }
 
 export function getFeisSorted(): FeiSorted {
@@ -46,7 +46,7 @@ export function getFeisSorted(): FeiSorted {
 
     const carcasses = filterCarcassesForFei(allCarcasses, fei.numero);
 
-    if (isFeiDone(fei)) {
+    if (isFeiDone(fei, carcasses)) {
       feisSorted.feisDone.push(fei);
       continue;
     }
@@ -67,7 +67,6 @@ export function getFeisSorted(): FeiSorted {
       !fei.automatic_closed_at &&
       !fei.intermediaire_closed_at &&
       !fei.svi_assigned_at &&
-      !fei.svi_closed_at &&
       !fei.fei_next_owner_user_id &&
       !fei.fei_next_owner_entity_id &&
       (fei.fei_current_owner_user_id === user.id ||
@@ -93,7 +92,6 @@ export function getFeisSorted(): FeiSorted {
       !fei.automatic_closed_at &&
       !fei.intermediaire_closed_at &&
       !fei.svi_assigned_at &&
-      !fei.svi_closed_at &&
       (fei.fei_next_owner_user_id === user.id ||
         (fei.fei_next_owner_entity_id != null &&
           entitiesIdsWorkingDirectlyFor.includes(fei.fei_next_owner_entity_id)));

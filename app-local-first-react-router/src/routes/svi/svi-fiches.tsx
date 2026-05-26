@@ -98,25 +98,6 @@ export default function SviFiches() {
     }
   }, [user]);
 
-  const { feiActivesForSvi, feisDoneForSvi } = feisDone.reduce(
-    (acc, fei) => {
-      if (fei.automatic_closed_at) {
-        acc.feisDoneForSvi.push(fei);
-      } else if (fei.svi_closed_at) {
-        acc.feisDoneForSvi.push(fei);
-      } else if (dayjs(fei.svi_assigned_at).isBefore(dayjs().subtract(10, 'days'))) {
-        acc.feisDoneForSvi.push(fei);
-      } else {
-        acc.feiActivesForSvi.push(fei);
-      }
-      return acc;
-    },
-    {
-      feiActivesForSvi: [] as Array<FeiWithIntermediaires>,
-      feisDoneForSvi: [] as Array<FeiWithIntermediaires>,
-    }
-  );
-
   useLoaderEffect(() => {
     loadData('svi-fiches').then(() => setIsLoading(false));
   });
@@ -217,12 +198,12 @@ export default function SviFiches() {
   }, [filterETG, entities, entitiesIdsWorkingDirectlyFor, allEtgIds]);
 
   const allFeis = useMemo(() => {
-    let feis = [...feisAssigned, ...feiActivesForSvi, ...feisDoneForSvi];
+    let feis = [...feisAssigned, ...feisDone];
     if (filterETG) {
       feis = feis.filter((fei) => fei.latest_intermediaire_entity_id === filterETG);
     }
     return feis;
-  }, [feisAssigned, feiActivesForSvi, feisDoneForSvi, filterETG]);
+  }, [feisAssigned, feisDone, filterETG]);
 
   const premierDetenteurOptions = useMemo(() => {
     const map = new Map<string, string>();

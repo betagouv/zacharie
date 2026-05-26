@@ -18,6 +18,7 @@ import useZustandStore from '@app/zustand/store';
 import { syncData } from '@app/utils/sync-data';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
+import { isCarcasseDone } from '@app/utils/is-carcasse-done';
 import { getNewCarcasseIntermediaireId } from '@app/utils/get-carcasse-intermediaire-id';
 import type { FeiIntermediaire } from '@app/types/fei-intermediaire';
 import { useFeiIntermediaires } from '@app/utils/get-carcasses-intermediaires';
@@ -148,7 +149,7 @@ export default function CurrentOwnerConfirm() {
   if (
     // currentTransmission.automatic_closed_at || // TODO: FIXME: automatic_closed_at not yet implemented
     fei.automatic_closed_at ||
-    currentTransmission.svi_closed_at ||
+    (myCarcasses.length > 0 && myCarcasses.every(isCarcasseDone)) ||
     currentTransmission.intermediaire_closed_at
   ) {
     return null;

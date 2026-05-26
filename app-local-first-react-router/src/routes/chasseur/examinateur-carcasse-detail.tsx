@@ -22,6 +22,7 @@ import { Link, useNavigate, useParams } from 'react-router';
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
+import { isCarcasseDone } from '@app/utils/is-carcasse-done';
 import dayjs from 'dayjs';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import InputMultiSelect from '@app/components/InputMultiSelect';
@@ -221,19 +222,17 @@ export default function ExaminateurCarcasseDetail() {
 }
 
 function CarcasseHeaderCard({
-  fei,
   carcasse,
   statusLabel,
   statusIconId,
   accentColor,
 }: {
-  fei: Fei;
   carcasse: Carcasse;
   statusLabel: string;
   statusIconId: string | null;
   accentColor: CardAccent;
 }) {
-  const isClosed = !!fei.svi_closed_at;
+  const isClosed = isCarcasseDone(carcasse);
   const colors = getAccentColorClasses(accentColor);
 
   return (
@@ -468,7 +467,6 @@ function ExaminateurCarcasseDetailLoaded() {
             />
 
             <CarcasseHeaderCard
-              fei={fei}
               carcasse={carcasse}
               statusLabel={headerStatusLabel}
               statusIconId={headerStatusIconId}

@@ -159,7 +159,19 @@ export function computeFeiSteps({
     return steps.length - 3; // etg is not selected
   })();
 
+  // Pour un SVI : la fiche est "Clôturée" dès que toutes SES carcasses sont closes,
+  // indépendamment des lots partis chez un autre destinataire.
+  const sviCarcasses =
+    user?.roles.includes(UserRoles.SVI) && carcasses?.length
+      ? carcasses.filter((c) => c.svi_entity_id && entitiesIdsWorkingDirectlyFor.includes(c.svi_entity_id))
+      : [];
+  const allMySviCarcassesClosed =
+    sviCarcasses.length > 0 && sviCarcasses.every((c) => c.svi_closed_at || c.svi_automatic_closed_at);
+
   const currentStepLabel: FeiStep = (() => {
+    if (allMySviCarcassesClosed) {
+      return 'Clôturée';
+    }
     if (
       currentTransmission.svi_automatic_closed_at ||
       currentTransmission.svi_closed_at ||

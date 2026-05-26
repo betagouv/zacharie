@@ -10,6 +10,7 @@ import useZustandStore from '@app/zustand/store';
 import { syncData } from '@app/utils/sync-data';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
+import { isCarcasseDone } from '@app/utils/is-carcasse-done';
 import { getNewCarcasseIntermediaireId } from '@app/utils/get-carcasse-intermediaire-id';
 import type { FeiIntermediaire } from '@app/types/fei-intermediaire';
 import dayjs from 'dayjs';
@@ -116,7 +117,11 @@ export default function CurrentOwnerConfirm() {
   if (!myNextOwnerRole) {
     return null;
   }
-  if (fei.automatic_closed_at || fei.svi_closed_at || fei.intermediaire_closed_at) {
+  if (
+    fei.automatic_closed_at ||
+    (feiCarcasses.length > 0 && feiCarcasses.every(isCarcasseDone)) ||
+    fei.intermediaire_closed_at
+  ) {
     return null;
   }
   // Multi-recipient: user already took charge of their assigned carcasses
