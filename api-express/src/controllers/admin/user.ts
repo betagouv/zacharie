@@ -119,6 +119,7 @@ const adminUserUpdateSchema = z.object({
       z.enum(Object.values(UserRoles).filter((r) => r !== UserRoles.ADMIN) as [UserRoles, ...UserRoles[]])
     )
     .optional(),
+  [Prisma.UserScalarFieldEnum.scope_departements_codes]: z.array(z.string()).optional(),
   [Prisma.UserScalarFieldEnum.isZacharieAdmin]: z.boolean().optional(),
   [Prisma.UserScalarFieldEnum.ville]: z.string().optional(),
   [Prisma.UserScalarFieldEnum.etg_role]: z
@@ -224,6 +225,11 @@ router.post(
         nextUser.roles = ([...new Set(body[Prisma.UserScalarFieldEnum.roles])] as UserRoles[]).sort((a, b) =>
           b.localeCompare(a)
         );
+      }
+      if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.scope_departements_codes)) {
+        nextUser.scope_departements_codes = (
+          [...new Set(body[Prisma.UserScalarFieldEnum.scope_departements_codes])] as string[]
+        ).sort((a, b) => b.localeCompare(a));
       }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.isZacharieAdmin)) {
         nextUser.isZacharieAdmin = body[Prisma.UserScalarFieldEnum.isZacharieAdmin] ? true : false;
