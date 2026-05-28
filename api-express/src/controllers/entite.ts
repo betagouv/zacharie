@@ -56,18 +56,18 @@ router.get(
 
       const include = user.activated ? entityAdminInclude : entityOnboardingInclude;
 
-      const allEntities = await prisma.entity.findMany({
-        where: {
-          deleted_at: null,
-          type: { not: EntityTypes.CCG },
-          ...(user.isZacharieAdmin ? {} : { for_testing: false }),
-        },
-        include,
-        orderBy: {
-          nom_d_usage: 'asc',
-        },
-      });
-
+      const allEntities = await prisma.entity
+        .findMany({
+          where: {
+            deleted_at: null,
+            type: { not: EntityTypes.CCG },
+            ...(user.isZacharieAdmin ? {} : { for_testing: false }),
+          },
+          orderBy: {
+            nom_d_usage: 'asc',
+          },
+        })
+        .then((entities) => entities.map((entity) => ({ ...entity, EntityRelationsWithUsers: [] as any })));
       const entitiesUserCanHandleOnBehalf = await prisma.entity.findMany({
         where: {
           deleted_at: null,
@@ -85,11 +85,8 @@ router.get(
         },
       });
 
-      const [allEntitiesIds, allEntitiesByTypeAndId] = sortEntitiesByTypeAndId(allEntities);
-      const userEntitiesByTypeAndId = sortEntitiesRelationsByTypeAndId(
-        entitiesUserCanHandleOnBehalf,
-        allEntitiesIds
-      );
+      const allEntitiesByTypeAndId = sortEntitiesByTypeAndId(allEntities);
+      const userEntitiesByTypeAndId = sortEntitiesRelationsByTypeAndId(entitiesUserCanHandleOnBehalf);
 
       res.status(200).send({
         ok: true,
