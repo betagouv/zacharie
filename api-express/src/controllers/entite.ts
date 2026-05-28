@@ -21,7 +21,6 @@ import {
   createBrevoContact,
   linkBrevoCompanyToContact,
   sendEmail,
-  updateBrevoContact,
   updateOrCreateBrevoCompany,
 } from '~/third-parties/brevo';
 import { EntitiesById, entityAdminInclude } from '~/types/entity';
