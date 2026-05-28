@@ -795,7 +795,7 @@ function DepartementsScope({ userId, initialCodes, onSaved }: DepartementsScopeP
   const save = () => {
     setSaving(true);
     API.post({
-      path: `/user/${userId}`,
+      path: `/admin/user/${userId}`,
       body: {
         [Prisma.UserScalarFieldEnum.scope_departements_codes]: Array.from(selected),
       },
