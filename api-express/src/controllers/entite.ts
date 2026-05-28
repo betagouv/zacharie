@@ -121,25 +121,31 @@ router.get(
 
       const include = user.activated ? entityAdminInclude : entityOnboardingInclude;
 
-      const allEntities = await prisma.entity.findMany({
-        where: {
-          deleted_at: null,
-          type: {
-            in: [
-              EntityTypes.COMMERCE_DE_DETAIL,
-              EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE,
-              EntityTypes.ASSOCIATION_CARITATIVE,
-              EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF,
-              EntityTypes.CONSOMMATEUR_FINAL,
-            ],
+      const allEntities = await prisma.entity
+        .findMany({
+          where: {
+            deleted_at: null,
+            type: {
+              in: [
+                EntityTypes.COMMERCE_DE_DETAIL,
+                EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE,
+                EntityTypes.ASSOCIATION_CARITATIVE,
+                EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF,
+                EntityTypes.CONSOMMATEUR_FINAL,
+              ],
+            },
+            ...(user.isZacharieAdmin ? {} : { for_testing: false }),
           },
-          ...(user.isZacharieAdmin ? {} : { for_testing: false }),
-        },
-        include,
-        orderBy: {
-          nom_d_usage: 'asc',
-        },
-      });
+          orderBy: {
+            nom_d_usage: 'asc',
+          },
+        })
+        .then((entities) =>
+          entities.map((entity) => ({
+            ...entity,
+            EntityRelationsWithUsers: [] as any,
+          }))
+        );
 
       const entitiesUserCanHandleOnBehalf = await prisma.entity.findMany({
         where: {

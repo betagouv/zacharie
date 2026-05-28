@@ -312,7 +312,6 @@ model Fei {
   examinateur_initial_user_id                             String?
   examinateur_initial_approbation_mise_sur_le_marche      Boolean?
   examinateur_initial_date_approbation_mise_sur_le_marche DateTime?
-  /// @deprecated — consommateur final usage now lives on Carcasse
   consommateur_final_usage_domestique                     DateTime?
   /**
    * premier detenteur
