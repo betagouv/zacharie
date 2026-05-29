@@ -102,6 +102,23 @@ export interface EntitiesWorkingForResponse {
   error: '';
 }
 
+export interface EtgUserInteracted extends UserForFei {
+  roles: User['roles'];
+  interactionRoles: Array<string>;
+  nbFiches: number;
+  nbCarcasses: number;
+  carcassesByEspece: Record<string, number>;
+  lastInteractionAt: string | null;
+}
+
+export interface EtgUsersInteractedResponse {
+  ok: boolean;
+  data: {
+    users: Array<EtgUserInteracted>;
+  } | null;
+  error: string;
+}
+
 export interface PartenairesResponse {
   ok: true;
   data: {
