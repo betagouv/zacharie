@@ -31,7 +31,7 @@ import {
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import { sortCarcassesApproved } from '@app/utils/sort';
 import { useMyCarcassesForFei } from '@app/utils/filter-my-carcasses';
-import { isCarcasseDone } from '@app/utils/is-carcasse-done';
+import { isCarcasseClosedBySvi } from '@app/utils/is-carcasse-done';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { getIntermediaireRoleLabel } from '@app/utils/get-user-roles-label';
 import { addAnSToWord, formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
@@ -367,14 +367,16 @@ function EtgFeiContent({
     return myFeiCarcasses.some((c) => c.current_owner_user_id === user.id);
   }, [myFeiCarcasses, user.id]);
 
-  // Remplace l'ancien flag FEI svi_closed_at : la fiche est "finie pour moi"
-  // quand toutes les carcasses que je gère sont dans un état terminal.
-  const allMyCarcassesDone = useMemo(() => {
-    return myFeiCarcasses.length > 0 && myFeiCarcasses.every(isCarcasseDone);
+  // Remplace l'ancien flag FEI svi_closed_at : la fiche est verrouillée "pour moi"
+  // quand toutes les carcasses que je gère ont été clôturées par le SVI (manuel ou cron).
+  // On EXCLUT les refus/manquantes intermédiaires (décisions propres de l'ETG
+  // qu'il doit pouvoir éditer/annuler).
+  const allMyCarcassesClosedBySvi = useMemo(() => {
+    return myFeiCarcasses.length > 0 && myFeiCarcasses.every(isCarcasseClosedBySvi);
   }, [myFeiCarcasses]);
 
   const canEdit = useMemo(() => {
-    if (fei.intermediaire_closed_at || allMyCarcassesDone || fei.automatic_closed_at) {
+    if (fei.intermediaire_closed_at || allMyCarcassesClosedBySvi || fei.automatic_closed_at) {
       return false;
     }
     if (isEtgWorkingFor) {
@@ -390,7 +392,7 @@ function EtgFeiContent({
       return false;
     }
     return true;
-  }, [fei, user, intermediaire, isEtgWorkingFor, isCurrentOwnerOfMyCarcasses, allMyCarcassesDone]);
+  }, [fei, user, intermediaire, isEtgWorkingFor, isCurrentOwnerOfMyCarcasses, allMyCarcassesClosedBySvi]);
 
   const effectiveCanEdit = canEdit && !props.readOnly;
   const formattedPriseEnChargeAt = priseEnChargeAt
@@ -505,7 +507,7 @@ function EtgFeiContent({
   ]);
 
   const couldSelectNextUser = useMemo(() => {
-    if (fei.intermediaire_closed_at || allMyCarcassesDone || fei.automatic_closed_at) {
+    if (fei.intermediaire_closed_at || allMyCarcassesClosedBySvi || fei.automatic_closed_at) {
       return false;
     }
     if (isEtgWorkingFor) {
@@ -518,7 +520,7 @@ function EtgFeiContent({
       return false;
     }
     return true;
-  }, [fei, user, intermediaire, isEtgWorkingFor, isCurrentOwnerOfMyCarcasses, allMyCarcassesDone]);
+  }, [fei, user, intermediaire, isEtgWorkingFor, isCurrentOwnerOfMyCarcasses, allMyCarcassesClosedBySvi]);
 
   const needSelectNextUser = useMemo(() => {
     if (!couldSelectNextUser) {
@@ -545,7 +547,7 @@ function EtgFeiContent({
     if (!effectiveCanEdit) {
       return false;
     }
-    if (fei.intermediaire_closed_at || allMyCarcassesDone || fei.automatic_closed_at) {
+    if (fei.intermediaire_closed_at || allMyCarcassesClosedBySvi || fei.automatic_closed_at) {
       return false;
     }
     // Il faut au moins une carcasse manquante ou refusée
@@ -563,7 +565,7 @@ function EtgFeiContent({
   }, [
     effectiveCanEdit,
     fei.intermediaire_closed_at,
-    allMyCarcassesDone,
+    allMyCarcassesClosedBySvi,
     fei.automatic_closed_at,
     carcassesSorted.carcassesManquantes.length,
     carcassesSorted.carcassesApproved.length,

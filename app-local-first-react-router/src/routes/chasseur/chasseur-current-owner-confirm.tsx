@@ -9,7 +9,7 @@ import useZustandStore from '@app/zustand/store';
 import { syncData } from '@app/utils/sync-data';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
-import { isCarcasseDone } from '@app/utils/is-carcasse-done';
+import { isCarcasseClosedBySvi } from '@app/utils/is-carcasse-done';
 
 export default function CurrentOwnerConfirm() {
   const params = useParams();
@@ -101,7 +101,7 @@ export default function CurrentOwnerConfirm() {
   }
   if (
     fei.automatic_closed_at ||
-    (feiCarcasses.length > 0 && feiCarcasses.every(isCarcasseDone)) ||
+    (feiCarcasses.length > 0 && feiCarcasses.every(isCarcasseClosedBySvi)) ||
     fei.intermediaire_closed_at
   ) {
     return null;

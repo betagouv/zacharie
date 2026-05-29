@@ -14,6 +14,14 @@ const TERMINAL_STATUSES = new Set<CarcasseStatus>([
   CarcasseStatus.TRAITEMENT_ASSAINISSANT,
 ]);
 
+// Verrouillage "le SVI a explicitement clôturé cette carcasse" (manuel ou cron).
+// Plus étroit que isCarcasseDone : exclut les décisions intermédiaires (refus/manquante)
+// et les statuts SVI sans clôture explicite. Sert aux gates canEdit / current-owner-confirm
+// qui correspondent à l'ancien check `fei.svi_closed_at`.
+export function isCarcasseClosedBySvi(carcasse: Carcasse): boolean {
+  return !!(carcasse.svi_closed_at || carcasse.svi_automatic_closed_at);
+}
+
 export function isCarcasseDone(carcasse: Carcasse): boolean {
   if (carcasse.svi_closed_at || carcasse.svi_automatic_closed_at) return true;
   if (carcasse.intermediaire_carcasse_refus_intermediaire_id) return true;
