@@ -90,5 +90,7 @@ export async function refreshUser(_calledFrom?: string) {
       console.error('Failed to refresh user:', error);
     }
     return null;
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
