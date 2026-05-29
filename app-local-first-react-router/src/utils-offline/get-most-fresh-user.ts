@@ -28,21 +28,23 @@ export async function refreshUser(_calledFrom?: string) {
     // and it makes the prochain_bracelet_a_utiliser stale
     return null;
   }
+  const cachedUser = useUser.getState().user;
+  if (!cachedUser) {
+    return null;
+  }
+
   const controller = new AbortController();
   const { signal } = controller;
 
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
   try {
-    const timeout = new Promise<null>((_, reject) =>
-      setTimeout(() => {
+    const timeout = new Promise<null>((_, reject) => {
+      timeoutId = setTimeout(() => {
         controller.abort(); // Abort the fetch when the timeout occurs
         reject(new Error('Timeout'));
-      }, 5000)
-    );
-
-    const cachedUser = useUser.getState().user;
-    if (!cachedUser) {
-      return null;
-    }
+      }, 5000);
+    });
 
     const fetchPromise = API.get({
       path: '/user/me',
