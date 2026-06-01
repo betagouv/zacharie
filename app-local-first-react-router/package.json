@@ -74,7 +74,7 @@
     "vite-plugin-checker": "^0.8.0",
     "vite-plugin-pwa": "^0.21.0",
     "vite-tsconfig-paths": "^5.0.1",
-    "vitest": "^3.2.4",
+    "vitest": "^4.1.0",
     "workbox-precaching": "^7.3.0",
     "workbox-window": "^7.3.0"
   },
