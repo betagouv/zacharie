@@ -100,11 +100,19 @@ export async function checkCertificat(existingCarcasse: Carcasse, updatedCarcass
   }
 }
 
-// La clôture vit désormais par carcasse. On notifie examinateur + premier détenteur quand
-// une carcasse vient d'être close au SVI ET que TOUTES les carcasses de la FEI sont terminales.
-// Idempotent : dédupliqué via notificationLog (les carcasses sont persistées avant les side-effects,
-// donc plusieurs d'entre elles peuvent voir "toutes terminales" dans le même lot).
-export async function notifyChasseurSviCarcasseClose(existingCarcasse: Carcasse, updatedCarcasse: Carcasse) {
+// La clôture vit désormais par carcasse. Quand une carcasse vient d'être close au SVI ET que
+// TOUTES les carcasses de la FEI sont terminales, on :
+//   1. maintient le cache FEI Fei.svi_closed_at (consommé par les vues matérialisées et l'API
+//      publique v1, qui ne lisent pas la clôture par carcasse) — pendant manuel de la clôture
+//      auto qui écrit Fei.automatic_closed_at dans le cron ;
+//   2. notifie examinateur + premier détenteur.
+// Idempotent : l'écriture FEI est gardée par `!fei.svi_closed_at`, la notif/webhook par
+// notificationLog (les carcasses sont persistées avant les side-effects, donc plusieurs d'entre
+// elles peuvent voir "toutes terminales" dans le même lot).
+export async function closeFeiAndNotifyChasseurOnSviCarcasseClose(
+  existingCarcasse: Carcasse,
+  updatedCarcasse: Carcasse
+) {
   if (existingCarcasse.svi_closed_at || !updatedCarcasse.svi_closed_at) {
     return;
   }
@@ -119,6 +127,22 @@ export async function notifyChasseurSviCarcasseClose(existingCarcasse: Carcasse,
   if (!fei) return;
   const allCarcassesDone = fei.Carcasses.length > 0 && fei.Carcasses.every(isCarcasseDone);
   if (!allCarcassesDone) return;
+
+  // Cache FEI : écrit une seule fois, à la clôture complète de la fiche.
+  // Date de fin d'inspection = clôture de carcasse la plus tardive (cf. DonneesDeChasse.tsx).
+  if (!fei.svi_closed_at) {
+    const latestCarcasseClosedAt = fei.Carcasses.reduce<Date | null>((latest, c) => {
+      if (!c.svi_closed_at) return latest;
+      return !latest || c.svi_closed_at > latest ? c.svi_closed_at : latest;
+    }, null);
+    await prisma.fei.update({
+      where: { id: fei.id },
+      data: {
+        svi_closed_at: latestCarcasseClosedAt ?? updatedCarcasse.svi_closed_at,
+        svi_closed_by_user_id: updatedCarcasse.svi_closed_by_user_id ?? fei.svi_user_id ?? null,
+      },
+    });
+  }
 
   const action = `FEI_MANUAL_CLOSED_${fei.numero}`;
   const examinateur = fei.FeiExaminateurInitialUser;
@@ -148,6 +172,6 @@ export async function runCarcasseUpdateSideEffects(existingCarcasse: Carcasse, u
   await notifySaisieChasseur(existingCarcasse, updatedCarcasse);
   await notifyManquanteChasseur(existingCarcasse, updatedCarcasse);
   await notifyRefusChasseur(existingCarcasse, updatedCarcasse);
-  await notifyChasseurSviCarcasseClose(existingCarcasse, updatedCarcasse);
+  await closeFeiAndNotifyChasseurOnSviCarcasseClose(existingCarcasse, updatedCarcasse);
   await checkCertificat(existingCarcasse, updatedCarcasse);
 }
