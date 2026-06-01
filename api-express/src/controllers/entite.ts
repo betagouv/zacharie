@@ -1,6 +1,7 @@
 import express from 'express';
 import passport from 'passport';
 import { catchErrors } from '~/middlewares/errors';
+import validateUser from '~/middlewares/validateUser';
 import type { RequestWithUser } from '~/types/request';
 import type {
   EntitiesWorkingForResponse,
@@ -568,6 +569,7 @@ router.put(
 router.get(
   '/etg/utilisateurs',
   passport.authenticate('user', { session: false }),
+  validateUser([UserRoles.ETG]),
   catchErrors(async (req: RequestWithUser, res: express.Response<EtgUsersInteractedResponse>) => {
     const user = req.user!;
 
@@ -578,6 +580,7 @@ router.get(
         relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
         status: { in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER] },
         deleted_at: null,
+        EntityRelatedWithUser: { type: EntityTypes.ETG },
       },
       select: { entity_id: true },
     });
