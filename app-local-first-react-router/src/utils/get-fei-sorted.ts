@@ -4,8 +4,8 @@ import type { FeiWithIntermediaires } from '@api/src/types/fei';
 import { filterFeiIntermediaires } from '@app/utils/get-carcasses-intermediaires';
 import { filterEntitiesWorkingDirectlyFor } from '@app/utils/get-entity-relations';
 import { filterCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
-import { isCarcasseDone } from '@app/utils/is-carcasse-done';
-import { Carcasse, UserRoles } from '@prisma/client';
+import { isFeiDone } from '@app/utils/is-carcasse-done';
+import { UserRoles } from '@prisma/client';
 
 type FeiSorted = {
   feisUnderMyResponsability: Array<FeiWithIntermediaires>;
@@ -13,14 +13,6 @@ type FeiSorted = {
   feisOngoing: Array<FeiWithIntermediaires>;
   feisDone: Array<FeiWithIntermediaires>;
 };
-
-export function isFeiDone(fei: FeiWithIntermediaires, carcasses: Array<Carcasse>): boolean {
-  if (fei.intermediaire_closed_at || fei.consommateur_final_usage_domestique) return true;
-  if (fei.automatic_closed_at) return true;
-  // Carcasses pas encore chargées : ne pas conclure "done" par vacuité.
-  if (carcasses.length === 0) return false;
-  return carcasses.every(isCarcasseDone);
-}
 
 export function getFeisSorted(): FeiSorted {
   const state = useZustandStore.getState();
