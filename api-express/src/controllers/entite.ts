@@ -15,7 +15,6 @@ import {
   EntityRelationStatus,
   EntityRelationType,
   EntityTypes,
-  FeiOwnerRole,
   Prisma,
   User,
   UserRoles,
@@ -591,7 +590,7 @@ router.get(
       return;
     }
 
-    // All carcasses that passed through these ETG entities (same filter as carcasse.ts)
+    // User IDs from carcasses that passed through these ETG entities
     const carcasses = await prisma.carcasse.findMany({
       where: {
         deleted_at: null,
@@ -602,10 +601,6 @@ router.get(
         ],
       },
       select: {
-        zacharie_carcasse_id: true,
-        fei_numero: true,
-        espece: true,
-        updated_at: true,
         premier_detenteur_user_id: true,
         examinateur_initial_user_id: true,
         svi_user_id: true,
@@ -614,25 +609,12 @@ router.get(
       },
     });
 
-    // espece lookup by carcasse id (used to attribute species to intermediaire interactions)
-    const especeByCarcasseId = new Map<string, string | null>();
-    for (const c of carcasses) {
-      especeByCarcasseId.set(c.zacharie_carcasse_id, c.espece);
-    }
-
-    // Intermediaires (collecteurs, etc.) that handled carcasses for these ETG entities
     const intermediaires = await prisma.carcasseIntermediaire.findMany({
       where: {
         intermediaire_entity_id: { in: etgEntityIds },
         deleted_at: null,
       },
-      select: {
-        zacharie_carcasse_id: true,
-        intermediaire_user_id: true,
-        intermediaire_role: true,
-        fei_numero: true,
-        updated_at: true,
-      },
+      select: { intermediaire_user_id: true },
     });
 
     // Members of the ETG entities (employees) — excluded from the list
@@ -646,99 +628,31 @@ router.get(
     });
     const memberIds = new Set(members.map((m) => m.owner_id));
 
-    type Aggregate = {
-      feiNumeros: Set<string>;
-      carcasseIds: Set<string>;
-      carcassesByEspece: Map<string, Set<string>>;
-      lastInteractionAt: Date;
-      roles: Set<string>;
+    const userIds = new Set<string>();
+    const addId = (id: string | null) => {
+      if (id && !memberIds.has(id)) userIds.add(id);
     };
-    const byUser = new Map<string, Aggregate>();
-
-    const addInteraction = (
-      userId: string | null,
-      role: string,
-      feiNumero: string,
-      date: Date,
-      carcasseId: string | null,
-      espece: string | null
-    ) => {
-      if (!userId) return;
-      if (memberIds.has(userId)) return;
-      let agg = byUser.get(userId);
-      if (!agg) {
-        agg = {
-          feiNumeros: new Set(),
-          carcasseIds: new Set(),
-          carcassesByEspece: new Map(),
-          lastInteractionAt: date,
-          roles: new Set(),
-        };
-        byUser.set(userId, agg);
-      }
-      agg.feiNumeros.add(feiNumero);
-      agg.roles.add(role);
-      if (date > agg.lastInteractionAt) agg.lastInteractionAt = date;
-      if (carcasseId) {
-        agg.carcasseIds.add(carcasseId);
-        if (espece) {
-          let especeSet = agg.carcassesByEspece.get(espece);
-          if (!especeSet) {
-            especeSet = new Set();
-            agg.carcassesByEspece.set(espece, especeSet);
-          }
-          especeSet.add(carcasseId);
-        }
-      }
-    };
-
     for (const c of carcasses) {
-      const args = [c.fei_numero, c.updated_at, c.zacharie_carcasse_id, c.espece] as const;
-      addInteraction(c.premier_detenteur_user_id, FeiOwnerRole.PREMIER_DETENTEUR, ...args);
-      addInteraction(c.examinateur_initial_user_id, FeiOwnerRole.EXAMINATEUR_INITIAL, ...args);
-      addInteraction(c.svi_user_id, FeiOwnerRole.SVI, ...args);
-      addInteraction(c.svi_ipm1_user_id, FeiOwnerRole.SVI, ...args);
-      addInteraction(c.svi_ipm2_user_id, FeiOwnerRole.SVI, ...args);
+      addId(c.premier_detenteur_user_id);
+      addId(c.examinateur_initial_user_id);
+      addId(c.svi_user_id);
+      addId(c.svi_ipm1_user_id);
+      addId(c.svi_ipm2_user_id);
     }
     for (const i of intermediaires) {
-      addInteraction(
-        i.intermediaire_user_id,
-        i.intermediaire_role ?? FeiOwnerRole.COLLECTEUR_PRO,
-        i.fei_numero,
-        i.updated_at,
-        i.zacharie_carcasse_id,
-        especeByCarcasseId.get(i.zacharie_carcasse_id) ?? null
-      );
+      addId(i.intermediaire_user_id);
     }
 
-    const userIds = [...byUser.keys()];
-    if (!userIds.length) {
+    if (!userIds.size) {
       res.status(200).send({ ok: true, data: { users: [] }, error: '' });
       return;
     }
 
-    const usersDetails = await prisma.user.findMany({
-      where: { id: { in: userIds } },
+    const users = await prisma.user.findMany({
+      where: { id: { in: [...userIds] } },
       select: { ...userFeiSelect, roles: true },
+      orderBy: [{ nom_de_famille: 'asc' }, { prenom: 'asc' }],
     });
-
-    const users = usersDetails
-      .map((u) => {
-        const agg = byUser.get(u.id)!;
-        const carcassesByEspece: Record<string, number> = {};
-        for (const [espece, set] of agg.carcassesByEspece) {
-          carcassesByEspece[espece] = set.size;
-        }
-        return {
-          ...u,
-          interactionRoles: [...agg.roles],
-          nbFiches: agg.feiNumeros.size,
-          nbCarcasses: agg.carcasseIds.size,
-          carcassesByEspece,
-          lastInteractionAt: agg.lastInteractionAt.toISOString(),
-        };
-      })
-      .sort((a, b) => (b.lastInteractionAt ?? '').localeCompare(a.lastInteractionAt ?? ''));
 
     res.status(200).send({ ok: true, data: { users }, error: '' });
   })

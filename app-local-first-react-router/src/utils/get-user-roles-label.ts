@@ -48,35 +48,6 @@ export function getUserRoleLabelPrefixed(role: UserRoles | FeiOwnerRole | Entity
   }
 }
 
-export function getUserRoleLabelShort(role: UserRoles | FeiOwnerRole | EntityTypes | '') {
-  switch (role) {
-    case FeiOwnerRole.PREMIER_DETENTEUR:
-      return 'Premier dét.';
-    case FeiOwnerRole.EXAMINATEUR_INITIAL:
-      return 'Examinateur';
-    case FeiOwnerRole.COMMERCE_DE_DETAIL:
-      return 'Commerce';
-    case FeiOwnerRole.CANTINE_OU_RESTAURATION_COLLECTIVE:
-      return 'Cantine';
-    case FeiOwnerRole.ASSOCIATION_CARITATIVE:
-      return 'Association';
-    case FeiOwnerRole.REPAS_DE_CHASSE_OU_ASSOCIATIF:
-      return 'Repas de chasse';
-    case FeiOwnerRole.CONSOMMATEUR_FINAL:
-      return 'Consommateur';
-    case EntityTypes.CCG:
-      return 'CCG';
-    case EntityTypes.COLLECTEUR_PRO:
-      return 'Collecteur';
-    case EntityTypes.ETG:
-      return 'ETG';
-    case EntityTypes.SVI:
-      return 'SVI';
-    default:
-      return 'Inconnu';
-  }
-}
-
 export function getIntermediaireRoleLabel(role: FeiOwnerRole) {
   switch (role) {
     case EntityTypes.COLLECTEUR_PRO:
