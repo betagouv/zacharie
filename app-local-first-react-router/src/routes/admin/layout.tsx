@@ -16,6 +16,11 @@ const adminLinks = [
     icon: 'fr-icon-file-text-line',
   },
   {
+    to: '/app/admin/feis',
+    label: 'Fiches',
+    icon: 'fr-icon-survey-line',
+  },
+  {
     to: '/app/admin/lesions',
     label: 'Motifs de saisies',
     icon: 'fr-icon-error-warning-line',
@@ -117,7 +122,7 @@ export default function AdminLayout() {
                   className="fr-icon-line-chart-line fr-icon--sm mr-1 shrink-0"
                   aria-hidden="true"
                 />
-                Fiches
+                Fiches (stats)
               </a>
             </li>
           </ul>

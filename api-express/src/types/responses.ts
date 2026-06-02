@@ -467,6 +467,53 @@ export interface AdminCarcasseDetailResponse {
   error: string;
 }
 
+export interface AdminFeisResponse {
+  ok: boolean;
+  data: {
+    feis: Array<
+      Fei & {
+        FeiExaminateurInitialUser: { email: string } | null;
+        FeiPremierDetenteurUser: { email: string } | null;
+        FeiPremierDetenteurEntity: { nom_d_usage: string } | null;
+        FeiSviEntity: { nom_d_usage: string } | null;
+        _count: { Carcasses: number };
+      }
+    >;
+    total: number;
+  };
+  error: string;
+}
+
+export interface AdminFeiDetailResponse {
+  ok: boolean;
+  data: {
+    fei: Fei & {
+      Carcasses: Array<
+        Carcasse & {
+          _count: { CarcasseIntermediaire: number };
+        }
+      >;
+      CarcasseIntermediaire: Array<
+        CarcasseIntermediaire & {
+          CarcasseIntermediaireEntity: {
+            nom_d_usage: string;
+            type: string;
+            numero_ddecpp: string | null;
+          };
+          CarcasseIntermediaireUser: { email: string };
+        }
+      >;
+      FeiCreatedByUser: { email: string } | null;
+      FeiExaminateurInitialUser: { email: string } | null;
+      FeiPremierDetenteurUser: { email: string } | null;
+      FeiPremierDetenteurEntity: { nom_d_usage: string } | null;
+      FeiSviEntity: { nom_d_usage: string } | null;
+      FeiSviUser: { email: string } | null;
+    };
+  };
+  error: string;
+}
+
 export type CarcasseModificationRequestPopulated = CarcasseModificationRequest & {
   Carcasse: Carcasse;
   RequestedByUser: User;

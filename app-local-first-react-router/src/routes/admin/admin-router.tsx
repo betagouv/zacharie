@@ -11,6 +11,8 @@ import AdminApiKey from './api-key.$apiKeyId';
 import AdminLayout from './layout';
 import AdminCarcasses from './carcasses';
 import AdminCarcasseDetail from './carcasse-detail';
+import AdminFeis from './feis';
+import AdminFeiDetail from './fei-detail';
 import CcgImport from './ccg-import';
 import AdminDashboard from './dashboard';
 import AdminLesions from './lesions';
@@ -73,6 +75,14 @@ export default function RouterAdmin() {
       <Route
         path="carcasse/:zacharie_carcasse_id"
         element={<AdminCarcasseDetail />}
+      />
+      <Route
+        path="feis"
+        element={<AdminFeis />}
+      />
+      <Route
+        path="fei/:fei_numero"
+        element={<AdminFeiDetail />}
       />
       <Route
         path="lesions"

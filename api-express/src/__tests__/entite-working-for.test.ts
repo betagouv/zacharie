@@ -57,7 +57,7 @@ function publicEntity(id: string, type: EntityTypes, extras: Record<string, any>
     id,
     type,
     nom_d_usage: `${id}-name`,
-    deleted_at: null,
+    deleted_at: null as Date | null,
     EntityRelationsWithUsers: [
       {
         id: `${id}-rel-admin`,
