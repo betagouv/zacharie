@@ -246,24 +246,30 @@ function UserCard({ user }: { user: EtgUserInteracted }) {
 
       <div className="mt-3 flex flex-col gap-1.5 text-sm">
         {user.email ? (
-          <a
-            className="fr-icon-mail-line fr-link fr-link--icon-left w-fit max-w-full self-start text-sm break-all"
-            href={`mailto:${user.email}`}
-          >
-            {user.email}
-          </a>
+          <div>
+            <span className="fr-icon-mail-line fr-link--icon-left text-black" />
+            <a
+              className="fr-link fr-link--icon-left w-fit max-w-full self-start text-sm break-all"
+              href={`mailto:${user.email}`}
+            >
+              {user.email}
+            </a>
+          </div>
         ) : (
           <span className="fr-icon-mail-line fr-link--icon-left flex w-fit items-center gap-1 self-start text-gray-400">
             Email non renseigné
           </span>
         )}
         {user.telephone ? (
-          <a
-            className="fr-icon-phone-line fr-link fr-link--icon-left w-fit max-w-full self-start text-sm"
-            href={`tel:${user.telephone}`}
-          >
-            {user.telephone}
-          </a>
+          <div>
+            <span className="fr-icon-phone-line fr-link--icon-left text-black" />
+            <a
+              className="fr-link fr-link--icon-left w-fit max-w-full self-start text-sm"
+              href={`tel:${user.telephone}`}
+            >
+              {user.telephone}
+            </a>
+          </div>
         ) : (
           <span className="fr-icon-phone-line fr-link--icon-left flex w-fit items-center gap-1 self-start text-gray-400">
             Téléphone non renseigné
