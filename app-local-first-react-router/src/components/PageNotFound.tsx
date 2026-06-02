@@ -1,9 +1,26 @@
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import compass from '@codegouvfr/react-dsfr/dsfr/artwork/pictograms/map/compass.svg?url';
 import artworkDarkSvgUrl from '@codegouvfr/react-dsfr/dsfr/artwork/background/ovoid.svg?url';
+import { trackEvent } from '@app/services/matomo';
+import { capture } from '@app/services/sentry';
 
 export default function PageNotFound() {
   const navigate = useNavigate();
+
+  // Ce 404 est un rendu silencieux : sans report explicite il est invisible
+  // dans Sentry et noyé dans Matomo. On logge le chemin + la plateforme pour
+  // identifier les URLs fautives (initial-path périmé côté natif vs liens
+  // d'email ouverts dans le navigateur).
+  useEffect(() => {
+    const { pathname, search } = window.location;
+    const platform = window.ReactNativeWebView ? 'native' : 'web';
+    trackEvent('error', '404', pathname + search);
+    capture('PageNotFound 404', {
+      extra: { pathname, search, platform, referrer: document.referrer },
+    });
+  }, []);
+
   return (
     <main
       role="main"
