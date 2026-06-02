@@ -1,7 +1,7 @@
 # Trichine — Spécifications fonctionnelles & techniques
 
 > **Statut** : Premier jet — en cours de validation métier
-> **Dernière maj** : 2026-05-19
+> **Dernière maj** : 2026-06-02
 > **Owner** : Tangi Mendès
 > **Sources** : spec métier V2 (parcours utilisateurs) + schéma de base de données associé
 
@@ -147,6 +147,7 @@ Ajouts modèle :
 - Pas de self-registration : les LVD ne peuvent pas créer leur entité eux-mêmes
 - Seed initial : import de la liste DGAL publique
 - Création / mise à jour : action manuelle de l'admin Zacharie qui invite ensuite l'utilisateur initial du LVD
+- L'accréditation COFRAC (`accreditation_cofrac`) est saisie manuellement par l'admin lors de la création — pas de validation automatique côté Zacharie (ni à la création, ni en cas d'expiration). L'admin reste responsable de la mise à jour.
 
 #### Capacités LNR (en plus des capacités LVD)
 - Reçoit les FTP des pools douteux
@@ -190,12 +191,12 @@ enum EntityTypes {
 ```prisma
 model TrichineEchantillon {
   id                       String   @id @default(cuid())
-  reference_echantillon    String   @unique  // auto Zacharie (format §11)
+  reference_echantillon    String   @unique  // format E-{YY}-{séquence}, ex: E-26-000123
   zacharie_carcasse_id     String
   Carcasse                 Carcasse @relation(fields: [zacharie_carcasse_id], references: [zacharie_carcasse_id])
 
   preleve_par_user_id      String
-  preleve_par_entity_id    String?  // Entity Zacharie (PD ou SVI)
+  preleve_par_entity_id    String?  // Entity SVI (en circuit agréé : SVI, PAS ETG) ou Entity PD (court)
   preleve_par_role         FeiOwnerRole  // PREMIER_DETENTEUR ou SVI
 
   type_echantillon         TypeEchantillon  // INITIAL / COMPLEMENTAIRE / CONFIRMATION
@@ -224,10 +225,10 @@ model TrichineEchantillon {
 ```prisma
 model TrichinePool {
   id                       String   @id @default(cuid())
-  reference_pool           String   @unique
+  reference_pool           String   @unique  // format P-{YY}-{séquence}, ex: P-26-000045
 
   cree_par_user_id         String
-  cree_par_entity_id       String?
+  cree_par_entity_id       String?  // Entity SVI (agréé) ou Entity PD (court)
 
   type_pool                TypePool  // INITIAL / COMPLEMENTAIRE / CONFIRMATION
   type_history             Json[]
@@ -266,7 +267,7 @@ model TrichinePool {
 ```prisma
 model TrichineFTP {
   id                       String   @id @default(cuid())
-  numero_fiche             String   @unique
+  numero_fiche             String   @unique  // format F-{YY}-{séquence}, ex: F-26-000012
   date_creation            DateTime @default(now())
   date_envoi               DateTime?
 
@@ -826,28 +827,45 @@ Intégration dans `api-express/src/utils/carcasse-access.ts` + `fei-access.ts` (
 
 ---
 
-## 11. Questions ouvertes pour validation métier
+## 11. Questions ouvertes restantes
 
 ### Importants
-1. **Format des numéros d'identification** : `reference_echantillon`, `reference_pool`, `numero_fiche` — schéma à valider (préfixe + année + séquence ?).
-2. **Quand SVI prélève en ETG** : `preleve_par_entity_id` = entity SVI ou entity ETG ?
-3. **Génération PDF FTP** : côté backend (rendu serveur) ou frontend (jsPDF) ? Modèle visuel à fournir par DGAL.
-4. **Stockage PDF rapports COFRAC** : S3 / OVH ? Durée de rétention légale (5 ans côté labo, à confirmer côté chasseur) ?
-5. **Cas "carcasse retirée de FEI" en circuit agréé** : équivalent = `decision_ipm = SAISIE_TOTALE` prononcée par SVI. Workflow distinct ou les deux concepts fusionnent ?
-6. **Validation accréditation COFRAC** : Zacharie vérifie-t-elle la validité à la création de l'entité LABORATOIRE ? Bloque-t-elle si expirée ?
-7. **NotificationCarcasse pendant cession multiple** : si un commerce détail reçoit 10 sangliers et qu'1 seul résultat tombe en POSITIF, notif unique groupée ou 10 notifs ?
+1. **NotificationCarcasse pendant cession multiple** : si un commerce détail reçoit 10 sangliers et qu'1 seul résultat tombe en POSITIF, notif unique groupée ou 10 notifs ? (À trancher après premiers retours utilisateurs.)
 
 ### Mineurs
-8. **Délai max envoi échantillon → LVD** : conservation max ? Alerte si > X jours ?
-9. **Multi-chasseurs sur battue** : hors V1 confirmé.
-10. **Notif LVD/LNR urgent** : email seul suffit, ou SMS pour DOUTEUX ?
-11. **Date d'envoi vs date de prélèvement** : écart max autorisé ?
-12. **Cas usage domestique privé** : créer une "fiche fictive" pour tracer l'analyse, ou parcours simplifié hors FEI ?
-13. **Auto-fermeture de FTP** : `statut_logistique` passe-t-il automatiquement à `TRAITEE` quand tous les résultats sont saisis, ou action manuelle LVD ?
+2. **Délai max envoi échantillon → LVD** : conservation max ? Alerte si > X jours ?
+3. **Notif LVD/LNR urgent** : email seul suffit, ou SMS pour DOUTEUX ?
+4. **Date d'envoi vs date de prélèvement** : écart max autorisé ?
+5. **Cas usage domestique privé** : créer une "fiche fictive" pour tracer l'analyse, ou parcours simplifié hors FEI ?
+6. **Auto-fermeture de FTP** : `statut_logistique` passe-t-il automatiquement à `TRAITEE` quand tous les résultats sont saisis, ou action manuelle LVD ?
+7. **Durée de rétention des PDF rapports COFRAC côté chasseur** : à confirmer (5 ans côté labo, indéterminée côté chasseur).
 
 ---
 
-## 12. Roadmap d'implémentation (post-validation spec)
+## 12. Infrastructure technique
+
+### 12.1 Génération PDF FTP
+
+- **Approche** : HTML → PDF via **Puppeteer** côté serveur. Jamais de génération directe en PDF.
+- Pipeline :
+  1. Construction du HTML de la FTP (avec CSS inline) côté backend
+  2. Chromium (via Puppeteer) « imprime » le HTML en PDF
+  3. Upload du PDF vers le bucket Cellar (cf §12.2)
+  4. Référence stockée dans `TrichineDocument` (type `FTP_PDF`) + liaison via `FTPDocument`
+- Avantage : maintenance facile (édition HTML/CSS), rendu fidèle, possibilité de prévisualiser le HTML brut
+- Modèle visuel à fournir par DGAL — template HTML à créer une fois le modèle reçu
+
+### 12.2 Stockage des documents
+
+- **Backend** : Object Storage **Cellar** (Clever Cloud, compatible S3)
+- Utilisé pour :
+  - PDF FTP générées par Zacharie (type `FTP_PDF`)
+  - PDF rapports COFRAC uploadés par les LVD/LNR (type `RAPPORT_COFRAC`)
+  - Photographies de larves uploadées par les LVD (type `PHOTOGRAPHIE_LARVE`)
+- Convention de clé : `trichine/{type}/{annee}/{id-document}.{ext}`
+- URL pré-signée (expiration ~1h) pour téléchargement utilisateur
+
+## 13. Roadmap d'implémentation (post-validation spec)
 
 Découpe en PRs distinctes.
 
@@ -873,6 +891,7 @@ Découpe en PRs distinctes.
 
 ### Décisions tranchées en amont de cette V1
 
+**Structurelles (modèle)** :
 - Périmètre : circuit court + circuit agréé (ETG/SVI)
 - Format des résultats : enum unifié `ResultatAnalyseTrichine` directement sur Pool (cache hérité sur Échantillon), pas de table dédiée
 - Notification + Historique statut : tables polymorphiques génériques (audit réglementaire)
@@ -880,9 +899,31 @@ Découpe en PRs distinctes.
 - Échantillon → Pool : FK directe `pool_id` (1 échantillon = 1 pool en pratique)
 - Documents : table `TrichineDocument` + jointures dédiées `PoolDocument` / `FTPDocument` (typage strict)
 - Modèle utilisateur : pattern Zacharie existant `User + Entity` (rôle `LABORATOIRE`, flag `is_lnr` sur Entity)
-- Annuaire LVD : seed initial DGAL + création par admin Zacharie uniquement (pas de self-registration)
-- Visibilité LVD / LNR : projection stricte (carcasse minimale + émetteur)
-- Renoncement aux analyses 2e intention : workflow explicite "Je renonce" en circuit court
-- Retrait carcasse de FEI : champ dédié `trichine_retire_de_fei_at` + motif (distinct de `decision_ipm`)
 - Recalcul statuts : fonctions utilitaires explicites dans les controllers (pas de Prisma middleware)
-- HORS V1 : arrêtés préfectoraux, FDC, interface DDPP/DDETSPP, surveillance territoriale, API↔labos
+
+**Formats et conventions** :
+- `reference_echantillon` : `E-{YY}-{séquence}` (ex : `E-26-000123`)
+- `reference_pool` : `P-{YY}-{séquence}` (ex : `P-26-000045`)
+- `numero_fiche` : `F-{YY}-{séquence}` (ex : `F-26-000012`)
+- Prélèvement en circuit agréé : `preleve_par_entity_id` = Entity SVI (pas ETG)
+- Retrait carcasse FEI en circuit agréé : pas de champ dédié, on utilise `decision_ipm = SAISIE_TOTALE` (l'info trichine est portée par le résultat lié)
+
+**Annuaire et processus** :
+- Annuaire LVD : seed initial DGAL + création par admin Zacharie uniquement (pas de self-registration)
+- Accréditation COFRAC : saisie manuelle admin, pas de validation auto Zacharie
+- Visibilité LVD / LNR : projection stricte (carcasse minimale + émetteur)
+
+**Workflows** :
+- Renoncement aux analyses 2e intention : workflow explicite "Je renonce" en circuit court
+- Retrait carcasse de FEI en circuit court : champ dédié `trichine_retire_de_fei_at` + motif (distinct de `decision_ipm`)
+
+**Infrastructure** :
+- Génération PDF FTP : HTML → PDF via Puppeteer côté serveur
+- Stockage documents : Object Storage Cellar (Clever Cloud, S3-compatible)
+
+**HORS V1** :
+- Arrêtés préfectoraux
+- FDC (centralisation départementale)
+- Interface DDPP/DDETSPP + notifications autorités
+- Surveillance territoriale, vue admin agrégée
+- API d'interconnexion avec systèmes traçabilité internes des labos
