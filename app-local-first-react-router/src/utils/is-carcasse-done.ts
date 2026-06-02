@@ -25,6 +25,8 @@ export function isCarcasseClosedBySvi(carcasse: Carcasse): boolean {
 
 export function isCarcasseDone(carcasse: Carcasse): boolean {
   if (carcasse.svi_closed_at || carcasse.svi_automatic_closed_at) return true;
+  // Circuit court / commerce de détail : clôturée par l'intermédiaire, sans passage SVI.
+  if (carcasse.intermediaire_closed_at) return true;
   if (carcasse.intermediaire_carcasse_refus_intermediaire_id) return true;
   if (carcasse.intermediaire_carcasse_manquante) return true;
   if (carcasse.consommateur_final_usage_domestique) return true;
