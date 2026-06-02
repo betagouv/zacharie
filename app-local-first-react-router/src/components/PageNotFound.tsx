@@ -4,9 +4,12 @@ import compass from '@codegouvfr/react-dsfr/dsfr/artwork/pictograms/map/compass.
 import artworkDarkSvgUrl from '@codegouvfr/react-dsfr/dsfr/artwork/background/ovoid.svg?url';
 import { trackEvent } from '@app/services/matomo';
 import { capture } from '@app/services/sentry';
+import { getUserOnboardingRoute } from '@app/utils/user-onboarded.client';
+import useUser from '@app/zustand/user';
 
 export default function PageNotFound() {
   const navigate = useNavigate();
+  const user = useUser((state) => state.user);
 
   // Ce 404 est un rendu silencieux : sans report explicite il est invisible
   // dans Sentry et noyé dans Matomo. On logge le chemin + la plateforme pour
@@ -20,6 +23,25 @@ export default function PageNotFound() {
       extra: { pathname, search, platform, referrer: document.referrer },
     });
   }, []);
+
+  // Auto-réparation côté natif : l'app Expo rejoue au démarrage un `initial-path`
+  // figé en AsyncStorage qui peut pointer vers une route supprimée (ex.
+  // `/app/tableau-de-bord`, retiré en #391) -> 404 au cold start. Plutôt que
+  // d'afficher le 404, on renvoie l'utilisateur vers sa vraie destination et on
+  // réécrit le `initial-path` stocké pour que le bug ne se reproduise plus.
+  useEffect(() => {
+    if (!window.ReactNativeWebView) return;
+    let target = '/';
+    try {
+      if (user) target = getUserOnboardingRoute(user);
+    } catch {
+      target = '/';
+    }
+    window.ReactNativeWebView.postMessage(
+      JSON.stringify({ event: 'save-initial-path', initialPath: target })
+    );
+    navigate(target, { replace: true });
+  }, [user, navigate]);
 
   return (
     <main
@@ -65,9 +87,17 @@ export default function PageNotFound() {
         <button
           type="button"
           className="fr-btn fr-btn--lg"
-          onClick={() => navigate(-1)}
+          onClick={() => {
+            let target = '/';
+            try {
+              if (user) target = getUserOnboardingRoute(user);
+            } catch {
+              target = '/';
+            }
+            navigate(target);
+          }}
         >
-          Retour
+          Accueil
         </button>
       </div>
     </main>
