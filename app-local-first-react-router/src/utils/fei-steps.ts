@@ -7,6 +7,7 @@ import { createElement, useMemo } from 'react';
 import type { FeiIntermediaire } from '@app/types/fei-intermediaire';
 import { useFeiIntermediaires } from '@app/utils/get-carcasses-intermediaires';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
+import { isFeiDone } from '@app/utils/is-carcasse-done';
 import {
   RiCheckboxCircleLine,
   RiEdit2Line,
@@ -159,12 +160,22 @@ export function computeFeiSteps({
     return steps.length - 3; // etg is not selected
   })();
 
+  // Pour un SVI : la fiche est "Clôturée" dès que toutes SES carcasses sont closes,
+  // indépendamment des lots partis chez un autre destinataire.
+  const sviCarcasses =
+    user?.roles.includes(UserRoles.SVI) && carcasses?.length
+      ? carcasses.filter((c) => c.svi_entity_id && entitiesIdsWorkingDirectlyFor.includes(c.svi_entity_id))
+      : [];
+  const allMySviCarcassesClosed =
+    sviCarcasses.length > 0 && sviCarcasses.every((c) => c.svi_closed_at || c.svi_automatic_closed_at);
+
   const currentStepLabel: FeiStep = (() => {
-    if (
-      currentTransmission.svi_automatic_closed_at ||
-      currentTransmission.svi_closed_at ||
-      currentTransmission.intermediaire_closed_at
-    ) {
+    if (allMySviCarcassesClosed) {
+      return 'Clôturée';
+    }
+    // Multi-destinataire : la fiche n'est "Clôturée" (vue globale) que si TOUTES ses carcasses
+    // sont terminales — pas seulement la première (currentTransmission = carcasses[0]).
+    if (isFeiDone(fei, carcasses ?? [])) {
       return 'Clôturée';
     }
     if (currentTransmission.consommateur_final_usage_domestique && fei.premier_detenteur_user_id) {

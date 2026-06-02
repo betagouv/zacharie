@@ -17,6 +17,7 @@ import {
   formatCarcasseChasseurEmail,
 } from '~/utils/formatCarcasseEmail';
 import updateCarcasseStatus from '~/utils/get-carcasse-status';
+import { isCarcasseDone } from '~/utils/is-carcasse-done';
 import { sendWebhook } from '~/utils/api';
 import { CarcasseModificationRequestStatus, FeiOwnerRole } from '@prisma/client';
 
@@ -56,46 +57,91 @@ export async function initFeisCron() {
 
 export async function automaticClosingOfFeis() {
   console.log('Automatic closing of feis');
-  const feisUnderSvi = await prisma.fei.findMany({
+  // Auto-clôture PAR CARCASSE : chaque carcasse assignée au SVI depuis plus de 10 jours
+  // est clôturée individuellement. La FEI n'est marquée close que lorsque TOUTES ses
+  // carcasses sont dans un état terminal (multi-destinataire : les lots progressent séparément).
+  const carcassesToAutoClose = await prisma.carcasse.findMany({
     where: {
-      svi_assigned_at: {
-        // start of day of assigned day is older than 10 days of start of day of today with dayjs
+      svi_assigned_to_fei_at: {
+        // start of day of assigned day is older than 10 days of start of day of today
         lte: dayjs().subtract(10, 'days').startOf('day').toDate(),
       },
       svi_closed_at: null,
-      automatic_closed_at: null,
-      // Skip FEIs that still have a carcasse with a pending modif request — the examinateur initial
-      // has not yet approved/rejected, so we cannot consider the inspection cycle complete.
-      Carcasses: {
+      svi_automatic_closed_at: null,
+      deleted_at: null,
+      // Skip carcasses with a pending modif request — the examinateur initial has not yet
+      // approved/rejected, so the inspection cycle is not complete for this carcasse.
+      CarcasseModificationRequests: {
         none: {
-          CarcasseModificationRequests: {
-            some: {
-              status: CarcasseModificationRequestStatus.PENDING,
-              deleted_at: null,
-            },
-          },
+          status: CarcasseModificationRequestStatus.PENDING,
+          deleted_at: null,
         },
       },
     },
-    include: {
-      FeiExaminateurInitialUser: true,
-      FeiPremierDetenteurUser: true,
-      Carcasses: true,
-    },
   });
 
-  console.log(`Found ${feisUnderSvi.length} feis under svi that need to be closed`);
+  console.log(`Found ${carcassesToAutoClose.length} carcasses to auto-close`);
   if (process.env.NODE_ENV === 'development') {
     console.log('Skipping feis closing notif in development mode');
     return;
   }
-  for (const fei of feisUnderSvi) {
-    const automaticClosedAt = dayjs().toDate();
-    // FIXME: à supprimer
-    await prisma.fei.update({
+
+  const automaticClosedAt = dayjs().toDate();
+  for (const carcasse of carcassesToAutoClose) {
+    const newStatus = updateCarcasseStatus(carcasse);
+    await prisma.carcasse.update({
       where: {
-        id: fei.id,
+        zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
       },
+      data: {
+        svi_carcasse_status: newStatus,
+        svi_carcasse_status_set_at: automaticClosedAt,
+        svi_automatic_closed_at: automaticClosedAt,
+        current_owner_role: FeiOwnerRole.SVI,
+        current_owner_entity_id: carcasse.svi_entity_id,
+        current_owner_user_id: carcasse.svi_user_id || null,
+        // FIXME : je ne sais pas comment récupérer cette valeur
+        current_owner_user_name_cache: null,
+        // FIXME : je ne sais pas comment récupérer cette valeur
+        current_owner_entity_name_cache: null,
+        prev_owner_entity_id:
+          carcasse.current_owner_entity_id === carcasse.svi_entity_id
+            ? carcasse.prev_owner_entity_id
+            : carcasse.current_owner_entity_id,
+        prev_owner_role:
+          carcasse.current_owner_role === FeiOwnerRole.SVI
+            ? carcasse.prev_owner_role
+            : carcasse.current_owner_role,
+        prev_owner_user_id:
+          carcasse.current_owner_user_id === carcasse.svi_user_id
+            ? carcasse.prev_owner_user_id
+            : carcasse.current_owner_user_id,
+        next_owner_role: null,
+        next_owner_user_id: null,
+        next_owner_entity_id: null,
+        next_owner_entity_name_cache: null,
+      },
+    });
+  }
+
+  // Pour chaque FEI touchée : clôturer la FEI + notifier uniquement si TOUTES ses carcasses sont terminales.
+  const feiNumeros = [...new Set(carcassesToAutoClose.map((c) => c.fei_numero))];
+  for (const feiNumero of feiNumeros) {
+    const fei = await prisma.fei.findUnique({
+      where: { numero: feiNumero },
+      include: {
+        FeiExaminateurInitialUser: true,
+        FeiPremierDetenteurUser: true,
+        Carcasses: { where: { deleted_at: null } },
+      },
+    });
+    if (!fei) continue;
+    if (fei.automatic_closed_at || fei.svi_closed_at) continue;
+    const allCarcassesDone = fei.Carcasses.length > 0 && fei.Carcasses.every(isCarcasseDone);
+    if (!allCarcassesDone) continue;
+
+    await prisma.fei.update({
+      where: { id: fei.id },
       data: {
         automatic_closed_at: automaticClosedAt,
         fei_current_owner_role: FeiOwnerRole.SVI,
@@ -113,48 +159,8 @@ export async function automaticClosingOfFeis() {
       },
     });
 
-    const carcasses = [];
-    for (let carcasse of fei.Carcasses) {
-      const newStatus = updateCarcasseStatus(carcasse);
-      if (newStatus !== carcasse.svi_carcasse_status) {
-        carcasse = await prisma.carcasse.update({
-          where: {
-            zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
-          },
-          data: {
-            svi_carcasse_status: newStatus,
-            svi_carcasse_status_set_at: automaticClosedAt,
-            svi_automatic_closed_at: automaticClosedAt,
-            current_owner_role: FeiOwnerRole.SVI,
-            current_owner_entity_id: carcasse.svi_entity_id,
-            current_owner_user_id: carcasse.svi_user_id || null,
-            // FIXME : je ne sais pas comment récupérer cette valeur
-            current_owner_user_name_cache: null,
-            // FIXME : je ne sais pas comment récupérer cette valeur
-            current_owner_entity_name_cache: null,
-            prev_owner_entity_id:
-              carcasse.current_owner_entity_id === carcasse.svi_entity_id
-                ? carcasse.prev_owner_entity_id
-                : carcasse.current_owner_entity_id,
-            prev_owner_role:
-              carcasse.current_owner_role === FeiOwnerRole.SVI
-                ? carcasse.prev_owner_role
-                : carcasse.current_owner_role,
-            prev_owner_user_id:
-              carcasse.current_owner_user_id === carcasse.svi_user_id
-                ? carcasse.prev_owner_user_id
-                : carcasse.current_owner_user_id,
-            next_owner_role: null,
-            next_owner_user_id: null,
-            next_owner_entity_id: null,
-            next_owner_entity_name_cache: null,
-          },
-        });
-      }
-      carcasses.push(carcasse);
-    }
-    const [object, email] = await formatAutomaticClosingEmailForChasseur(fei, carcasses);
-    // auto close and notify examinateur and premier detenteut
+    const [object, email] = await formatAutomaticClosingEmailForChasseur(fei, fei.Carcasses);
+    // auto close and notify examinateur and premier detenteur
     const notification = {
       title: object,
       body: email,

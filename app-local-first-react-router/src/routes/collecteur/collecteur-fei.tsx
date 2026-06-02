@@ -31,6 +31,7 @@ import {
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import { sortCarcassesApproved } from '@app/utils/sort';
 import { useMyCarcassesForFei } from '@app/utils/filter-my-carcasses';
+import { isCarcasseClosedBySvi } from '@app/utils/is-carcasse-done';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { getIntermediaireRoleLabel } from '@app/utils/get-user-roles-label';
 import { addAnSToWord, formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
@@ -380,8 +381,16 @@ function CollecteurProFeiContent({
     return myFeiCarcasses.some((c) => c.current_owner_user_id === user.id);
   }, [myFeiCarcasses, user.id]);
 
+  // Remplace l'ancien flag FEI svi_closed_at : la fiche est verrouillée "pour moi"
+  // quand toutes les carcasses que je gère ont été clôturées par le SVI (manuel ou cron).
+  // On EXCLUT les refus/manquantes intermédiaires (décisions propres de l'ETG/collecteur
+  // qu'il doit pouvoir éditer/annuler).
+  const allMyCarcassesClosedBySvi = useMemo(() => {
+    return myFeiCarcasses.length > 0 && myFeiCarcasses.every(isCarcasseClosedBySvi);
+  }, [myFeiCarcasses]);
+
   const canEdit = useMemo(() => {
-    if (fei.intermediaire_closed_at || fei.svi_closed_at || fei.automatic_closed_at) {
+    if (fei.intermediaire_closed_at || allMyCarcassesClosedBySvi || fei.automatic_closed_at) {
       return false;
     }
     if (isCollecteurWorkingFor) {
@@ -397,7 +406,14 @@ function CollecteurProFeiContent({
       return false;
     }
     return true;
-  }, [fei, user, intermediaire, isCollecteurWorkingFor, isCurrentOwnerOfMyCarcasses]);
+  }, [
+    fei,
+    user,
+    intermediaire,
+    isCollecteurWorkingFor,
+    isCurrentOwnerOfMyCarcasses,
+    allMyCarcassesClosedBySvi,
+  ]);
 
   const effectiveCanEdit = canEdit && !props.readOnly;
   const formattedPriseEnChargeAt = priseEnChargeAt
@@ -512,12 +528,7 @@ function CollecteurProFeiContent({
   ]);
 
   const couldSelectNextUser = useMemo(() => {
-    if (
-      fei.intermediaire_closed_at ||
-      fei.svi_closed_at ||
-      fei.automatic_closed_at ||
-      fei.intermediaire_closed_at
-    ) {
+    if (fei.intermediaire_closed_at || allMyCarcassesClosedBySvi || fei.automatic_closed_at) {
       return false;
     }
     if (isCollecteurWorkingFor) {
@@ -530,7 +541,14 @@ function CollecteurProFeiContent({
       return false;
     }
     return true;
-  }, [fei, user, intermediaire, isCollecteurWorkingFor, isCurrentOwnerOfMyCarcasses]);
+  }, [
+    fei,
+    user,
+    intermediaire,
+    isCollecteurWorkingFor,
+    isCurrentOwnerOfMyCarcasses,
+    allMyCarcassesClosedBySvi,
+  ]);
 
   const needSelectNextUser = useMemo(() => {
     if (!couldSelectNextUser) {
@@ -557,7 +575,7 @@ function CollecteurProFeiContent({
     if (!effectiveCanEdit) {
       return false;
     }
-    if (fei.intermediaire_closed_at || fei.svi_closed_at || fei.automatic_closed_at) {
+    if (fei.intermediaire_closed_at || allMyCarcassesClosedBySvi || fei.automatic_closed_at) {
       return false;
     }
     // Il faut au moins une carcasse manquante ou refusée
@@ -575,7 +593,7 @@ function CollecteurProFeiContent({
   }, [
     effectiveCanEdit,
     fei.intermediaire_closed_at,
-    fei.svi_closed_at,
+    allMyCarcassesClosedBySvi,
     fei.automatic_closed_at,
     carcassesSorted.carcassesManquantes.length,
     carcassesSorted.carcassesApproved.length,

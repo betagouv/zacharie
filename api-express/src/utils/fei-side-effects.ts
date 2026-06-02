@@ -8,7 +8,7 @@ import {
 } from '@prisma/client';
 import prisma from '~/prisma';
 import sendNotificationToUser from '~/service/notifications';
-import { formatManualValidationSviChasseurEmail, formatSviAssignedEmail } from '~/utils/formatCarcasseEmail';
+import { formatSviAssignedEmail } from '~/utils/formatCarcasseEmail';
 import { sendWebhook } from '~/utils/api';
 import {
   updateBrevoChasseurDeal,
@@ -411,38 +411,6 @@ export async function notifyNextOwnerEntity(existingFei: FeiPopulated, savedFei:
   }
 }
 
-export async function notifyChasseurSviClose(existingFei: FeiPopulated, savedFei: FeiPopulated) {
-  if (existingFei.svi_closed_by_user_id || !savedFei.svi_closed_by_user_id) {
-    return;
-  }
-
-  const [object, email] = await formatManualValidationSviChasseurEmail(savedFei, savedFei.Carcasses);
-  const notification = {
-    title: object,
-    body: email,
-    email: email,
-    notificationLogAction: `FEI_AUTO_CLOSED_${savedFei.numero}`,
-  };
-
-  const examinateur = savedFei.FeiExaminateurInitialUser;
-  if (examinateur) {
-    await sendNotificationToUser({
-      user: examinateur,
-      ...notification,
-    });
-    await sendWebhook(examinateur.id, 'FEI_CLOTUREE', { feiNumero: savedFei.numero });
-  }
-
-  const premierDetenteur = savedFei.FeiPremierDetenteurUser;
-  if (premierDetenteur && premierDetenteur.id !== examinateur?.id) {
-    await sendNotificationToUser({
-      user: premierDetenteur,
-      ...notification,
-    });
-    await sendWebhook(premierDetenteur.id, 'FEI_CLOTUREE', { feiNumero: savedFei.numero });
-  }
-}
-
 export async function webhookIntermediaireClose(existingFei: FeiPopulated, savedFei: FeiPopulated) {
   if (existingFei.intermediaire_closed_at || !savedFei.intermediaire_closed_at) {
     return;
@@ -479,6 +447,7 @@ export async function runFeiUpdateSideEffects(existingFei: FeiPopulated, savedFe
 
   await notifyNextOwnerUser(existingFei, savedFei, user);
   await notifyNextOwnerEntity(existingFei, savedFei, user);
-  await notifyChasseurSviClose(existingFei, savedFei);
+  // La clôture SVI vit désormais par carcasse : la notification de fiche entièrement close
+  // est déclenchée dans carcasse-side-effects (notifyChasseurSviCarcasseClose).
   await webhookIntermediaireClose(existingFei, savedFei);
 }

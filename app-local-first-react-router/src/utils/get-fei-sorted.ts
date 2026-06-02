@@ -4,6 +4,7 @@ import type { FeiWithIntermediaires } from '@api/src/types/fei';
 import { filterFeiIntermediaires } from '@app/utils/get-carcasses-intermediaires';
 import { filterEntitiesWorkingDirectlyFor } from '@app/utils/get-entity-relations';
 import { filterCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
+import { isFeiDone } from '@app/utils/is-carcasse-done';
 import { UserRoles } from '@prisma/client';
 
 type FeiSorted = {
@@ -12,15 +13,6 @@ type FeiSorted = {
   feisOngoing: Array<FeiWithIntermediaires>;
   feisDone: Array<FeiWithIntermediaires>;
 };
-
-export function isFeiDone(fei: FeiWithIntermediaires): boolean {
-  return !!(
-    fei.svi_closed_at ||
-    fei.automatic_closed_at ||
-    fei.intermediaire_closed_at ||
-    fei.consommateur_final_usage_domestique
-  );
-}
 
 export function getFeisSorted(): FeiSorted {
   const state = useZustandStore.getState();
@@ -46,7 +38,7 @@ export function getFeisSorted(): FeiSorted {
 
     const carcasses = filterCarcassesForFei(allCarcasses, fei.numero);
 
-    if (isFeiDone(fei)) {
+    if (isFeiDone(fei, carcasses)) {
       feisSorted.feisDone.push(fei);
       continue;
     }
@@ -67,7 +59,6 @@ export function getFeisSorted(): FeiSorted {
       !fei.automatic_closed_at &&
       !fei.intermediaire_closed_at &&
       !fei.svi_assigned_at &&
-      !fei.svi_closed_at &&
       !fei.fei_next_owner_user_id &&
       !fei.fei_next_owner_entity_id &&
       (fei.fei_current_owner_user_id === user.id ||
@@ -93,7 +84,6 @@ export function getFeisSorted(): FeiSorted {
       !fei.automatic_closed_at &&
       !fei.intermediaire_closed_at &&
       !fei.svi_assigned_at &&
-      !fei.svi_closed_at &&
       (fei.fei_next_owner_user_id === user.id ||
         (fei.fei_next_owner_entity_id != null &&
           entitiesIdsWorkingDirectlyFor.includes(fei.fei_next_owner_entity_id)));

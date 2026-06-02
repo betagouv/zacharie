@@ -31,8 +31,6 @@ export interface CarcasseFieldsTakenFromFei {
   latest_intermediaire_name_cache: Carcasse['latest_intermediaire_name_cache'];
   svi_assigned_at: Carcasse['svi_assigned_at'];
   svi_user_id: Carcasse['svi_user_id'];
-  svi_closed_at: Carcasse['svi_closed_at'];
-  svi_closed_by_user_id: Carcasse['svi_closed_by_user_id'];
 }
 
 export type CarcasseTransmission = Partial<

@@ -8,7 +8,7 @@ import NotFound from '@app/components/NotFound';
 import FeiSousTraite from './current-owner-sous-traite';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import SviHeaderFiche from './svi-header-fiche';
-import { CarcasseStatus, EntityRelationType, Fei, Prisma, UserRoles } from '@prisma/client';
+import { Carcasse, CarcasseStatus, EntityRelationType, Fei, Prisma, UserRoles } from '@prisma/client';
 import InputNotEditable from '@app/components/InputNotEditable';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
@@ -103,6 +103,16 @@ function FEI_SVI() {
   const carcassesAAfficher = useMemo(
     () => allCarcassesForFei.filter((c) => !c.intermediaire_carcasse_refus_intermediaire_id),
     [allCarcassesForFei]
+  );
+
+  // Clôture par carcasse : la fiche est close "pour ce SVI" quand toutes ses carcasses le sont.
+  const mySviClosed = useMemo(
+    () => carcassesAAfficher.length > 0 && carcassesAAfficher.every((c) => !!c.svi_closed_at),
+    [carcassesAAfficher]
+  );
+  const mySviClosedAt = useMemo(
+    () => carcassesAAfficher.find((c) => c.svi_closed_at)?.svi_closed_at ?? null,
+    [carcassesAAfficher]
   );
 
   const [showRefusedCarcasses, setShowRefusedCarcasses] = useState(false);
@@ -228,9 +238,8 @@ function FEI_SVI() {
           id="svi_check_finished_at"
           onSubmit={(e) => {
             e.preventDefault();
-            const nextFei: Partial<Fei> = {
-              svi_closed_at: dayjs().toDate(),
-            };
+            const sviClosedAt = dayjs().toDate();
+            const nextFei: Partial<Fei> = {};
             if (fei.fei_current_owner_role !== UserRoles.SVI) {
               nextFei.fei_current_owner_role = UserRoles.SVI;
               nextFei.fei_current_owner_entity_id = fei.fei_next_owner_entity_id;
@@ -249,19 +258,18 @@ function FEI_SVI() {
               nextFei.svi_user_id = user.id;
             }
             for (const carcasse of carcassesAAfficher) {
+              const carcasseUpdate: Partial<Carcasse> = {
+                svi_closed_at: sviClosedAt,
+                svi_closed_by_user_id: user.id,
+              };
               if (
                 !carcasse.svi_carcasse_status ||
                 carcasse.svi_carcasse_status === CarcasseStatus.SANS_DECISION
               ) {
-                updateCarcasse(
-                  carcasse.zacharie_carcasse_id,
-                  {
-                    svi_carcasse_status: CarcasseStatus.ACCEPTE,
-                    svi_carcasse_status_set_at: dayjs().toDate(),
-                  },
-                  false
-                );
+                carcasseUpdate.svi_carcasse_status = CarcasseStatus.ACCEPTE;
+                carcasseUpdate.svi_carcasse_status_set_at = sviClosedAt;
               }
+              updateCarcasse(carcasse.zacharie_carcasse_id, carcasseUpdate, false);
             }
             if (fei.fei_current_owner_role !== UserRoles.SVI) {
               updateCarcassesTransmission(carcasseIds, {
@@ -280,8 +288,8 @@ function FEI_SVI() {
                 prev_owner_user_id: fei.fei_current_owner_user_id || null,
                 prev_owner_entity_id: fei.fei_current_owner_entity_id || null,
               });
+              updateFei(fei.numero, nextFei);
             }
-            updateFei(fei.numero, nextFei);
             addLog({
               user_id: user.id,
               action: 'svi-check-finished-at',
@@ -307,8 +315,8 @@ function FEI_SVI() {
                       required: true,
                       name: 'svi_finito',
                       value: 'true',
-                      readOnly: !!fei.svi_closed_at || !!fei.automatic_closed_at,
-                      defaultChecked: fei.svi_closed_at ? true : false,
+                      readOnly: mySviClosed || !!fei.automatic_closed_at,
+                      defaultChecked: mySviClosed ? true : false,
                     },
                   },
                 ]}
@@ -323,18 +331,17 @@ function FEI_SVI() {
             </>
           )}
 
-          {!!fei.svi_closed_at && (
+          {mySviClosed && (
             <DateFinInput
               label="Date de fin d'inspection"
               nativeInputProps={{
-                id: Prisma.FeiScalarFieldEnum.svi_closed_at,
-                name: Prisma.FeiScalarFieldEnum.svi_closed_at,
+                id: Prisma.CarcasseScalarFieldEnum.svi_closed_at,
+                name: Prisma.CarcasseScalarFieldEnum.svi_closed_at,
                 type: 'datetime-local',
                 autoComplete: 'off',
                 onBlur: (e) => {
-                  const nextFei: Partial<Fei> = {
-                    svi_closed_at: dayjs(e.target.value).toDate(),
-                  };
+                  const sviClosedAt = dayjs(e.target.value).toDate();
+                  const nextFei: Partial<Fei> = {};
                   if (fei.fei_current_owner_role !== UserRoles.SVI) {
                     nextFei.fei_current_owner_role = UserRoles.SVI;
                     nextFei.fei_current_owner_entity_id = fei.fei_next_owner_entity_id;
@@ -353,19 +360,18 @@ function FEI_SVI() {
                     nextFei.svi_user_id = user.id;
                   }
                   for (const carcasse of carcassesAAfficher) {
+                    const carcasseUpdate: Partial<Carcasse> = {
+                      svi_closed_at: sviClosedAt,
+                      svi_closed_by_user_id: user.id,
+                    };
                     if (
                       !carcasse.svi_carcasse_status ||
                       carcasse.svi_carcasse_status === CarcasseStatus.SANS_DECISION
                     ) {
-                      updateCarcasse(
-                        carcasse.zacharie_carcasse_id,
-                        {
-                          svi_carcasse_status: CarcasseStatus.ACCEPTE,
-                          svi_carcasse_status_set_at: dayjs(e.target.value).toDate(),
-                        },
-                        false
-                      );
+                      carcasseUpdate.svi_carcasse_status = CarcasseStatus.ACCEPTE;
+                      carcasseUpdate.svi_carcasse_status_set_at = sviClosedAt;
                     }
+                    updateCarcasse(carcasse.zacharie_carcasse_id, carcasseUpdate, false);
                   }
                   if (fei.fei_current_owner_role !== UserRoles.SVI) {
                     updateCarcassesTransmission(carcasseIds, {
@@ -384,8 +390,8 @@ function FEI_SVI() {
                       prev_owner_user_id: fei.fei_current_owner_user_id || null,
                       prev_owner_entity_id: fei.fei_current_owner_entity_id || null,
                     });
+                    updateFei(fei.numero, nextFei);
                   }
-                  updateFei(fei.numero, nextFei);
                   addLog({
                     user_id: user.id,
                     action: 'svi-check-finished-at-update',
@@ -400,7 +406,7 @@ function FEI_SVI() {
                   syncData('svi-check-finished-at-update');
                 },
                 suppressHydrationWarning: true,
-                defaultValue: dayjs(fei.svi_closed_at).format('YYYY-MM-DDTHH:mm'),
+                defaultValue: dayjs(mySviClosedAt).format('YYYY-MM-DDTHH:mm'),
               }}
             />
           )}
@@ -420,7 +426,7 @@ function FEI_SVI() {
           )}
         </form>
       </Section>
-      {(fei.svi_closed_at || fei.automatic_closed_at || fei.intermediaire_closed_at) && (
+      {(mySviClosed || fei.automatic_closed_at || fei.intermediaire_closed_at) && (
         <div className="bg-white px-4 pb-4 md:px-8 md:pb-8">
           <Alert
             severity="success"

@@ -105,9 +105,14 @@ export default function FEIDonneesDeChasse({
         `Date et heure d'assignation au SVI\u00A0: ${dayjs(fei.svi_assigned_at).format('dddd D MMMM YYYY à HH:mm')}`
       );
     }
-    if (fei.svi_closed_at) {
+    const sviClosedAt = feiCarcasses.reduce<Date | null>((latest, c) => {
+      if (!c.svi_closed_at) return latest;
+      const d = dayjs(c.svi_closed_at).toDate();
+      return !latest || d > latest ? d : latest;
+    }, null);
+    if (sviClosedAt) {
       lines.push(
-        `Date et heure de clôture manuelle du SVI\u00A0: ${dayjs(fei.svi_closed_at).format('dddd D MMMM YYYY à HH:mm')}`
+        `Date et heure de clôture manuelle du SVI\u00A0: ${dayjs(sviClosedAt).format('dddd D MMMM YYYY à HH:mm')}`
       );
     }
     if (fei.automatic_closed_at) {
@@ -116,7 +121,7 @@ export default function FEIDonneesDeChasse({
       );
     }
     return lines;
-  }, [fei.svi_entity_id, entities, fei.svi_assigned_at, fei.svi_closed_at, fei.automatic_closed_at]);
+  }, [fei.svi_entity_id, entities, fei.svi_assigned_at, feiCarcasses, fei.automatic_closed_at]);
 
   const ccgDate = fei.premier_detenteur_depot_ccg_at
     ? dayjs(fei.premier_detenteur_depot_ccg_at).format('dddd D MMMM YYYY à HH:mm')
