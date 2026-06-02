@@ -18,6 +18,11 @@ export default function useEtgNavigationMenu(): MainNavigationProps.Item[] {
       linkProps: { to: '/app/etg/carcasses', href: '#' },
     },
     {
+      text: 'Utilisateurs',
+      isActive: location.pathname === '/app/etg/utilisateurs',
+      linkProps: { to: '/app/etg/utilisateurs', href: '#' },
+    },
+    {
       text: 'Paramètres',
       isActive:
         location.pathname.startsWith('/app/etg/profil') ||

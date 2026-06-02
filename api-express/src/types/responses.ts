@@ -102,6 +102,18 @@ export interface EntitiesWorkingForResponse {
   error: '';
 }
 
+export interface EtgUserInteracted extends UserForFei {
+  roles: User['roles'];
+}
+
+export interface EtgUsersInteractedResponse {
+  ok: boolean;
+  data: {
+    users: Array<EtgUserInteracted>;
+  } | null;
+  error: string;
+}
+
 export interface PartenairesResponse {
   ok: true;
   data: {

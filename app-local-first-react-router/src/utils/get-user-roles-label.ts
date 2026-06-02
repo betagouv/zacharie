@@ -2,6 +2,14 @@ import { EntityTypes, FeiOwnerRole, UserRoles } from '@prisma/client';
 
 export function getUserRoleLabel(role: UserRoles | FeiOwnerRole | EntityTypes | '') {
   switch (role) {
+    case UserRoles.CHASSEUR:
+      return 'Chasseur';
+    case UserRoles.FDC:
+      return 'Fédération Départementale des Chasseurs';
+    case UserRoles.FRC:
+      return 'Fédération Régionale des Chasseurs';
+    case UserRoles.FNC:
+      return 'Fédération Nationale des Chasseurs';
     case FeiOwnerRole.PREMIER_DETENTEUR:
       return 'Premier Détenteur';
     case FeiOwnerRole.COMMERCE_DE_DETAIL:

@@ -11,6 +11,7 @@ import EtgProfilNotifications from './profil/etg-notifications';
 import EtgProfilPartageDeMesDonnees from './profil/etg-partage-de-mes-donnees';
 import EtgProfilEntrepriseUtilisateurs from './profil/etg-entreprise-utilisateurs';
 import EtgFei from './etg-fei';
+import EtgUtilisateurs from './etg-utilisateurs';
 import EtgSviInspectionCarcasse from './etg-carcasse-after-svi-inspection';
 
 export default function RouterEtg() {
@@ -30,6 +31,10 @@ export default function RouterEtg() {
       <Route
         path="carcasses"
         element={<EtgCarcasses />}
+      />
+      <Route
+        path="utilisateurs"
+        element={<EtgUtilisateurs />}
       />
       <Route
         path="onboarding"
