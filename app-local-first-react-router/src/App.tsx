@@ -7,6 +7,7 @@ import OfflineMode from './components/OfflineMode';
 import { MatomoTracker } from './components/MatomoTracker';
 import ImpactMatrix from './components/ImpactMatrix';
 import PageNotFound from './components/PageNotFound';
+import ScrollToTop from './components/ScrollToTop';
 import useLandingPageNavigationMenu from './utils/get-landing-page-navigation-menu';
 
 // landing pages
@@ -162,6 +163,7 @@ function App() {
           element={<PageNotFound />}
         />
       </SentryRoutes>
+      <ScrollToTop />
       <MatomoTracker />
       <OfflineMode />
     </>
