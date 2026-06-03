@@ -9,7 +9,7 @@ import { useMemo, useState, useRef, useEffect } from 'react';
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import { useIsCircuitCourt } from '@app/utils/circuit-court';
-import { CarcasseType, UserRoles } from '@prisma/client';
+import { CarcasseType, FeiOwnerRole, UserRoles } from '@prisma/client';
 import { abbreviations, formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
 import {
   filterCarcassesIntermediairesForCarcasse,
@@ -43,6 +43,23 @@ const statusColors: Record<FeiStepSimpleStatus, { bg: string; text: string }> = 
   },
 };
 
+function resolveOwnerName(
+  id: string | null | undefined,
+  entities: Record<string, { nom_d_usage?: string | null; raison_sociale?: string | null }>,
+  usersById: Record<string, { prenom?: string | null; nom_de_famille?: string | null }>
+): string | null {
+  if (!id) return null;
+  const entity = entities[id];
+  if (entity?.nom_d_usage) return entity.nom_d_usage;
+  if (entity?.raison_sociale) return entity.raison_sociale;
+  const u = usersById[id];
+  if (u) {
+    const name = `${u.prenom ?? ''} ${u.nom_de_famille ?? ''}`.trim();
+    if (name) return name;
+  }
+  return null;
+}
+
 const maxDetailedLines = 2;
 export default function CardFiche({
   fei,
@@ -65,45 +82,40 @@ export default function CardFiche({
   const user = useUser((state) => state.user);
   const entitiesIdsWorkingDirectlyFor = useEntitiesIdsWorkingDirectlyFor();
 
-  const rolesWithLatestIntermediaire: UserRoles[] = [
-    UserRoles.ETG,
-    UserRoles.COLLECTEUR_PRO,
-    UserRoles.SVI,
-  ];
-  const showLatestIntermediaire = !!user?.roles?.some((r) =>
-    rolesWithLatestIntermediaire.includes(r)
-  );
+  const isEtg = !!user?.roles?.includes(UserRoles.ETG);
 
+  // Ligne « Transport » (COLLECTEUR_PRO & SVI) : dernier intermédiaire qui n'est pas moi.
   const latestIntermediaireName = useMemo(() => {
-    if (!showLatestIntermediaire) return null;
+    const roles: UserRoles[] = [UserRoles.COLLECTEUR_PRO, UserRoles.SVI];
+    if (!user?.roles?.some((r) => roles.includes(r))) return null;
     const myIds = new Set<string>(entitiesIdsWorkingDirectlyFor);
     if (user?.id) myIds.add(user.id);
-    const intermediaires = filterFeiIntermediaires(carcassesIntermediaireById, fei.numero);
-    const previous = intermediaires.find((i) => {
+    const previous = filterFeiIntermediaires(carcassesIntermediaireById, fei.numero).find((i) => {
       const id = i.intermediaire_entity_id || i.intermediaire_user_id;
       return id && !myIds.has(id);
     });
-    if (!previous) return null;
-    const id = previous.intermediaire_entity_id || previous.intermediaire_user_id;
-    if (!id) return null;
-    const entity = entities[id];
-    if (entity?.nom_d_usage) return entity.nom_d_usage;
-    if (entity?.raison_sociale) return entity.raison_sociale;
-    const u = usersById[id];
-    if (u) {
-      const name = `${u.prenom ?? ''} ${u.nom_de_famille ?? ''}`.trim();
-      if (name) return name;
-    }
-    return null;
+    const id = previous?.intermediaire_entity_id || previous?.intermediaire_user_id;
+    return resolveOwnerName(id, entities, usersById);
   }, [
-    showLatestIntermediaire,
-    entitiesIdsWorkingDirectlyFor,
+    user?.roles,
     user?.id,
+    entitiesIdsWorkingDirectlyFor,
     carcassesIntermediaireById,
     fei.numero,
     entities,
     usersById,
   ]);
+
+  // Ligne « Chasse » : pour un ETG, le dernier owner avant l'ETG (le collecteur s'il y en a eu un,
+  // sinon le premier détenteur) ; pour les autres rôles, le premier détenteur.
+  const chasseName = useMemo(() => {
+    if (!isEtg) return fei.premier_detenteur_name_cache;
+    const collecteur = filterFeiIntermediaires(carcassesIntermediaireById, fei.numero).find(
+      (i) => i.intermediaire_role === FeiOwnerRole.COLLECTEUR_PRO
+    );
+    const id = collecteur?.intermediaire_entity_id || collecteur?.intermediaire_user_id;
+    return resolveOwnerName(id, entities, usersById) || fei.premier_detenteur_name_cache;
+  }, [isEtg, carcassesIntermediaireById, fei.numero, fei.premier_detenteur_name_cache, entities, usersById]);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -294,12 +306,9 @@ export default function CardFiche({
             <div className="flex shrink basis-1/2 flex-col gap-y-1">
               <ChasseIcon />
               <p
-                className={[
-                  'line-clamp-2 text-sm',
-                  fei.premier_detenteur_name_cache ? 'text-black' : 'text-neutral-400',
-                ].join(' ')}
+                className={['line-clamp-2 text-sm', chasseName ? 'text-black' : 'text-neutral-400'].join(' ')}
               >
-                {fei.premier_detenteur_name_cache || 'À renseigner'}
+                {chasseName || 'À renseigner'}
               </p>
             </div>
           </div>
