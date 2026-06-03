@@ -1,5 +1,5 @@
 import NouvelleCarcasse from './examinateur-carcasses-nouvelle';
-import { FeiOwnerRole, UserRoles } from '@prisma/client';
+import { UserRoles } from '@prisma/client';
 import { useMemo, useState } from 'react';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { formatCarcasseLotCount, formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
@@ -41,18 +41,15 @@ export default function CarcassesExaminateur({
     const restantesList: CarcasseWithModificationRequests[] = [];
     const grouped: Record<string, CarcasseWithModificationRequests[]> = {};
     for (const c of carcasses) {
-      const isDispatched =
-        c.next_owner_entity_id != null ||
-        (c.current_owner_role != null &&
-          c.current_owner_role !== FeiOwnerRole.PREMIER_DETENTEUR &&
-          c.current_owner_role !== FeiOwnerRole.EXAMINATEUR_INITIAL);
-      if (!isDispatched) {
+      // Côté chasseur, on ne regroupe que par le destinataire choisi par le premier détenteur.
+      // Le reste de la chaîne aval (ETG suivant, SVI…) ne le concerne pas.
+      const destinataireId = c.premier_detenteur_prochain_detenteur_id_cache;
+      if (!destinataireId) {
         restantesList.push(c);
         continue;
       }
-      const key = c.next_owner_entity_id || c.current_owner_entity_id || 'unknown';
-      if (!grouped[key]) grouped[key] = [];
-      grouped[key].push(c);
+      if (!grouped[destinataireId]) grouped[destinataireId] = [];
+      grouped[destinataireId].push(c);
     }
     return { restantes: restantesList, dejaEnvoyeesParDestinataire: grouped };
   }, [carcasses]);
