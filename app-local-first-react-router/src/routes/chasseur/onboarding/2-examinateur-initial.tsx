@@ -55,7 +55,12 @@ export default function ChasseurOnboardingExaminateurInitial() {
                   iconPosition: 'right',
                   type: 'button',
                   nativeButtonProps: {
-                    onClick: () => navigate(redirect ?? nextPage),
+                    onClick: () => {
+                      const form = document.getElementById('examinateur_initial_form') as HTMLFormElement;
+                      if (form.reportValidity()) {
+                        navigate(redirect ?? nextPage);
+                      }
+                    },
                   },
                 },
               ]}
@@ -135,7 +140,7 @@ function ExaminateurInitial() {
                 nativeInputProps: {
                   required: true,
                   checked: isExaminateurInitial === false,
-                  name: 'pas_forme_a_l_examen_initial',
+                  name: Prisma.UserScalarFieldEnum.est_forme_a_l_examen_initial,
                   onChange: () => {
                     if (
                       !user.numero_cfei ||
