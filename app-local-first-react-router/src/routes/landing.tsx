@@ -10,6 +10,24 @@ export default function LandingPage() {
         la Souveraineté Alimentaire
       </title>
       <main>
+        {/* Game Fair Banner */}
+        <section className="bg-action-high-blue-france px-4 py-4 text-white lg:px-8 xl:px-32 2xl:px-[12%]">
+          <p className="flex flex-col items-center gap-2 text-center text-base font-normal text-white! sm:flex-row sm:justify-center sm:gap-3 lg:text-lg">
+            <span>
+              <span className="font-bold">GAME FAIR 2026</span> : rendez-vous au village chasse,{' '}
+              <b>stand L23</b> pour rencontrer l'équipe Zacharie.{' '}
+              <a
+                href="https://www.gamefair.fr/actus/zacharie-le-numerique-au-service-de-la-securite-sanitaire-et-des-chasseurs/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-bold text-white!"
+              >
+                Plus d'informations
+              </a>
+            </span>
+          </p>
+        </section>
+
         {/* Hero Section */}
         <section className="min-h-96 bg-[#A38A6C] bg-[url('/landing/gradient-cerf.webp')] bg-cover bg-center bg-no-repeat py-16 lg:min-h-auto lg:py-24 2xl:py-36">
           <div className="h-full w-full px-4 lg:px-8 xl:px-32 2xl:px-[12%]">
