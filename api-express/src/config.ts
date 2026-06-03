@@ -13,11 +13,6 @@ const BREVO_API = process.env.BREVO_API;
 const buildId = JSON.stringify(`${dayjs().format('DD-MM-YYYY')} vers ${dayjs().format('HH')}:00`);
 const VERSION = buildId;
 
-const TIPIMAIL_API_USER = process.env.TIPIMAIL_API_USER;
-const TIPIMAIL_API_KEY = process.env.TIPIMAIL_API_KEY;
-const TIPIMAIL_EMAIL_TO = 'contact@zacharie.beta.gouv.fr';
-const TIPIMAIL_EMAIL_FROM = 'contact@zacharie.beta.gouv.fr';
-
 const SECRET = process.env.VITE_SECRET ?? 'not-so-secret-lalalala';
 const METABASE_SECRET_KEY = process.env.METABASE_SECRET_KEY;
 
@@ -34,10 +29,6 @@ export {
   SENTRY_SECRET,
   VERSION,
   SECRET,
-  TIPIMAIL_API_USER,
-  TIPIMAIL_API_KEY,
-  TIPIMAIL_EMAIL_TO,
-  TIPIMAIL_EMAIL_FROM,
   METABASE_SECRET_KEY,
   BREVO_BEARER,
   BREVO_API,
