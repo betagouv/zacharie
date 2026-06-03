@@ -10,6 +10,7 @@ import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
 import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import TableFilterable from '@app/components/TableFilterable';
 import CollapsibleSection from '@app/components/CollapsibleSection';
+import CarcassesEspeceSummary from '@app/components/CarcassesEspeceSummary';
 import { useSaveScroll } from '@app/services/useSaveScroll';
 import { getCarcasseStatusLabel } from '@app/utils/get-carcasse-status';
 import Filters from '@app/components/Filters';
@@ -1161,6 +1162,11 @@ export default function EtgCarcasses() {
               />
             </div>
           </section>
+
+          <CarcassesEspeceSummary
+            carcasses={filteredData}
+            storageKey="etg-carcasses-espece-summary-open"
+          />
 
           <section className="mb-4 overflow-x-auto bg-white sm:mb-6 md:shadow-sm">
             <TableFilterable

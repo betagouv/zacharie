@@ -22,6 +22,7 @@ import { useMyCarcassesForFei } from '@app/utils/filter-my-carcasses';
 import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
 import { useSaveScroll } from '@app/services/useSaveScroll';
 import CardFiche from '@app/components/CardFiche';
+import CarcassesEspeceSummary from '@app/components/CarcassesEspeceSummary';
 import CollapsibleSection from '@app/components/CollapsibleSection';
 import DropDownMenu from '@app/components/DropDownMenu';
 
@@ -412,6 +413,10 @@ export default function EtgFiches() {
     entitiesIdsWorkingDirectlyFor,
     user,
   ]);
+
+  const filteredCarcasses = useMemo(() => {
+    return filteredFeis.flatMap((fei) => filterCarcassesForFei(carcasses, fei.numero));
+  }, [filteredFeis, carcasses]);
 
   const totalPages = Math.ceil(filteredFeis.length / ITEMS_PER_PAGE);
   const paginatedFeis = useMemo(() => {
@@ -813,6 +818,12 @@ export default function EtgFiches() {
                 ]}
               />
             </div>
+          )}
+          {filteredFeis.length > 0 && (
+            <CarcassesEspeceSummary
+              carcasses={filteredCarcasses}
+              storageKey="etg-fiches-espece-summary-open"
+            />
           )}
           <FeisWrapper
             viewType={viewType}
