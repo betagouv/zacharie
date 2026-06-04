@@ -255,10 +255,14 @@ export default function AdminUsers() {
                               to={`/app/admin/user/${user.id}`}
                               className="no-underline"
                             >
-                              {user.nom_de_famille} {user.prenom}
+                              {[user.nom_de_famille, user.prenom].filter(Boolean).join(' ') ||
+                                user.email ||
+                                'Voir le détail'}
                             </Link>
                           </span>
-                          <span className="text-xs">{user.email}</span>
+                          {[user.nom_de_famille, user.prenom].some(Boolean) && (
+                            <span className="text-xs">{user.email}</span>
+                          )}
                           {(user.telephone || user.code_postal || user.ville) && (
                             <span className="text-xs text-gray-500">
                               {[user.telephone, [user.code_postal, user.ville].filter(Boolean).join(' ')]

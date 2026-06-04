@@ -1,6 +1,8 @@
 import { useState, type RefObject, useRef, useMemo, useEffect } from 'react';
+import dayjs from 'dayjs';
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { Button } from '@codegouvfr/react-dsfr/Button';
+import { Badge } from '@codegouvfr/react-dsfr/Badge';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import {
@@ -14,7 +16,6 @@ import {
 } from '@prisma/client';
 import InputVille from '@app/components/InputVille';
 import RolesCheckBoxes from '@app/components/RolesCheckboxes';
-import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
 import { Tabs, type TabsProps } from '@codegouvfr/react-dsfr/Tabs';
 import { Table } from '@codegouvfr/react-dsfr/Table';
 import departementsRegions from '@app/data/departements-regions.json';
@@ -95,7 +96,6 @@ export default function AdminUser() {
     });
   }, [params.userId]);
 
-  const activeFormRef = useRef<HTMLFormElement>(null);
   const idFormRef = useRef<HTMLFormElement>(null);
   const rolesFormRef = useRef<HTMLFormElement>(null);
   const handleUserFormBlur = (formRef: RefObject<HTMLFormElement>) => () => {
@@ -150,15 +150,34 @@ export default function AdminUser() {
     });
   };
 
+  const handleToggleActivated = () => {
+    API.post({
+      path: `admin/user/${params.userId}`,
+      body: { activated: user.activated ? 'false' : 'true' },
+    }).then((res) => {
+      if (!res.ok) {
+        return toast.error("Une erreur est survenue lors de la mise à jour de l'utilisateur");
+      }
+      loadData(params.userId!).then((res) => {
+        if (res.ok && res.data) {
+          setUserResponseData(res.data as State);
+        }
+      });
+      toast.success(user.activated ? 'Utilisateur désactivé' : 'Utilisateur activé');
+    });
+  };
+
+  const fullName = [user.nom_de_famille, user.prenom].filter(Boolean).join(' ');
+
   const [selectedTabId, setSelectedTabId] = useState('Identité');
   const tabs: TabsProps['tabs'] = [
     {
-      tabId: 'Roles',
-      label: (user?.roles?.length ? '✅ ' : '') + 'Roles',
+      tabId: 'Identité',
+      label: 'Identité',
     },
     {
-      tabId: 'Identité',
-      label: (identityDone && examinateurDone ? '✅ ' : '') + 'Identité',
+      tabId: 'Roles',
+      label: 'Roles',
     },
     {
       tabId: 'Périmètre départements',
@@ -198,86 +217,107 @@ export default function AdminUser() {
   }
 
   return (
-    <div className="fr-container fr-container--fluid fr-my-md-14v">
+    <div className="fr-container fr-container--fluid">
       <title>
         {`${user.prenom ? `${user.prenom} ${user.nom_de_famille}` : user.email} | Admin | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}
       </title>
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
-        <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
+        <div className="fr-col-12 p-4 md:p-0">
           <div className="p-4 pb-32 md:p-8 md:pb-0">
-            <div className="flex flex-row items-center justify-between">
-              <div className="fr-h2 fr-mb-2w">
-                {user.prenom ? (
-                  <h1 className="m-0">
-                    {user.nom_de_famille} {user.prenom}
-                    <br />
-                    <small>{user.email}</small>
+            <header
+              className={`rounded-lg border bg-white p-4 md:p-6 ${
+                user.deleted_at ? 'border-red-300 bg-red-50/40' : 'border-gray-200'
+              }`}
+            >
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <h1 className="m-0 text-2xl font-bold break-words">
+                    {fullName || user.email || 'Utilisateur sans nom'}
                   </h1>
-                ) : (
-                  <>{user.email}</>
-                )}
-                {user.deleted_at ? (
-                  <small>🗑️ Utilisateur supprimé</small>
-                ) : !user.activated ? (
-                  <small>❌ Utilisateur inactif</small>
-                ) : (
-                  <small>✅ Utilisateur activé</small>
-                )}
-                <ConnexionButton user={user} />
+                  {fullName && user.email && (
+                    <p className="mt-0.5 mb-0 text-sm break-words text-gray-500">{user.email}</p>
+                  )}
+                  <div className="mt-3 flex flex-wrap items-center gap-1">
+                    {user.roles.map((role) => (
+                      <Badge
+                        key={role}
+                        severity="info"
+                        small
+                      >
+                        {role}
+                      </Badge>
+                    ))}
+                    {user.isZacharieAdmin && (
+                      <Badge
+                        severity="info"
+                        small
+                      >
+                        Admin
+                      </Badge>
+                    )}
+                    {user.deleted_at ? (
+                      <Badge
+                        severity="error"
+                        small
+                      >
+                        Supprimé
+                      </Badge>
+                    ) : (
+                      <Badge
+                        severity={user.activated ? 'success' : 'warning'}
+                        small
+                      >
+                        {user.activated ? 'Activé' : 'Inactif'}
+                      </Badge>
+                    )}
+                    <Badge
+                      severity={user.onboarded_at ? 'success' : 'new'}
+                      small
+                    >
+                      {user.onboarded_at ? 'Onboardé' : 'Onboarding incomplet'}
+                    </Badge>
+                  </div>
+                  <p className="mt-3 mb-0 text-xs text-gray-500">
+                    {user.telephone && <>{user.telephone} · </>}
+                    Créé le {dayjs(user.created_at).format('DD/MM/YYYY')}
+                    {user.last_login_at && (
+                      <> · Dernière connexion {dayjs(user.last_login_at).format('DD/MM/YYYY')}</>
+                    )}
+                  </p>
+                </div>
+                <div className="flex shrink-0 flex-col items-stretch gap-2">
+                  <ConnexionButton user={user} />
+                  {!user.deleted_at && (
+                    <Button
+                      type="button"
+                      priority="secondary"
+                      size="small"
+                      iconId={user.activated ? 'fr-icon-pause-circle-line' : 'fr-icon-play-circle-line'}
+                      onClick={handleToggleActivated}
+                    >
+                      {user.activated ? 'Désactiver' : 'Activer'}
+                    </Button>
+                  )}
+                  <Button
+                    type="button"
+                    priority={user.deleted_at ? 'secondary' : 'tertiary'}
+                    size="small"
+                    iconId={user.deleted_at ? 'fr-icon-arrow-go-back-line' : 'fr-icon-delete-line'}
+                    className={
+                      user.deleted_at ? undefined : 'text-red-600! [&_*]:text-red-600! [&:hover]:bg-red-50!'
+                    }
+                    onClick={handleToggleSoftDelete}
+                  >
+                    {user.deleted_at ? 'Restaurer' : 'Supprimer'}
+                  </Button>
+                </div>
               </div>
-              <div className="flex flex-col items-end gap-2">
-                <Button
-                  type="button"
-                  priority={user.deleted_at ? 'secondary' : 'primary'}
-                  size="small"
-                  iconId={user.deleted_at ? 'fr-icon-arrow-go-back-line' : 'fr-icon-delete-line'}
-                  className={
-                    user.deleted_at
-                      ? undefined
-                      : 'bg-red-600! text-white! [&_*]:text-white! [&:hover]:bg-red-700!'
-                  }
-                  onClick={handleToggleSoftDelete}
-                >
-                  {user.deleted_at ? "Restaurer l'utilisateur" : "Supprimer l'utilisateur"}
-                </Button>
-                <form
-                  id="user_active_form"
-                  method="POST"
-                  ref={activeFormRef}
-                  onBlur={handleUserFormBlur(activeFormRef)}
-                  onSubmit={(event) => event.preventDefault()}
-                >
-                  <RadioButtons
-                    key={user.activated ? 'true' : 'false'}
-                    options={[
-                      {
-                        label: 'Utilisateur activé',
-                        nativeInputProps: {
-                          name: Prisma.UserScalarFieldEnum.activated,
-                          value: 'true',
-                          onChange: !user.activated ? handleUserFormBlur(activeFormRef) : undefined,
-                          defaultChecked: user.activated,
-                        },
-                      },
-                      {
-                        label: 'Utilisateur inactif',
-                        nativeInputProps: {
-                          name: Prisma.UserScalarFieldEnum.activated,
-                          value: 'false',
-                          onChange: user.activated ? handleUserFormBlur(activeFormRef) : undefined,
-                          defaultChecked: !user.activated,
-                        },
-                      },
-                    ]}
-                  />
-                </form>
-              </div>
-            </div>
+            </header>
             <Tabs
               selectedTabId={selectedTabId}
               tabs={tabs}
               onTabChange={setSelectedTabId}
-              className="[&_.fr-tabs\_\_list]:bg-alt-blue-france! mb-6 bg-white md:shadow-sm [&_.fr-tabs\_\_list]:shadow-none!"
+              className="mt-4"
             >
               {selectedTabId === 'Roles' && (
                 <form
