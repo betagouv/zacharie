@@ -1,5 +1,7 @@
 import { useState, useRef, Fragment, useMemo, useEffect } from 'react';
+import dayjs from 'dayjs';
 import Checkbox from '@codegouvfr/react-dsfr/Checkbox';
+import { Badge } from '@codegouvfr/react-dsfr/Badge';
 import { Link, useParams } from 'react-router';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Notice } from '@codegouvfr/react-dsfr/Notice';
@@ -139,7 +141,7 @@ export default function AdminEntity() {
   }
 
   return (
-    <div className="fr-container fr-container--fluid fr-my-md-14v relative">
+    <div className="fr-container fr-container--fluid relative">
       <title>{`${entity.nom_d_usage} (${entity.type}) | Admin | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}</title>
       {isSaving && (
         <div className="bg-action-high-blue-france fixed top-0 right-0">
@@ -150,52 +152,113 @@ export default function AdminEntity() {
         className="fr-grid-row fr-grid-row-gutters fr-grid-row--center"
         key={entity.id}
       >
-        <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
-          <small className="mx-8 italic">{entity.type}</small>
-          <div className="mx-8 flex items-center justify-between gap-12">
-            <h1 className="fr-h2 fr-mb-2w">{entity.nom_d_usage}</h1>
-            {dedicatedApiKey ? (
-              <Button
-                linkProps={{
-                  to: `/app/admin/api-key/${dedicatedApiKey.id}`,
-                }}
-              >
-                Aller vers la clé API dédiée
-              </Button>
-            ) : (
-              <Button
-                type="button"
-                onClick={() => {
-                  API.post({
-                    path: `admin/entity-dedicated-api-key/${params.entityId}`,
-                  })
-                    .then((response) => {
-                      if (!response.ok) {
-                        return toast.error(response.error);
-                      }
-                      toast.success("L'entité a été mise à jour avec succès");
-                    })
-                    .then(() => {
-                      loadData(params.entityId!).then((response) => {
-                        if (response.data) setAdminEntityResponse(response.data!);
-                        if (!response.ok) {
-                          return toast.error(response.error);
-                        }
-                      });
-                    });
-                }}
-                className="shrink-0"
-              >
-                Activer la clé API dédiée
-              </Button>
-            )}
-          </div>
+        <div className="fr-col-12 p-4 md:p-0">
           <div className="p-4 pb-32 md:p-8 md:pb-0">
+            <header
+              className={`rounded-lg border bg-white p-4 md:p-6 ${
+                entity.deleted_at ? 'border-red-300 bg-red-50/40' : 'border-gray-200'
+              }`}
+            >
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <h1 className="m-0 text-2xl font-bold break-words">
+                    {entity.nom_d_usage || entity.raison_sociale || 'Entité sans nom'}
+                  </h1>
+                  {entity.nom_d_usage && entity.raison_sociale && (
+                    <p className="mt-0.5 mb-0 text-sm break-words text-gray-500">{entity.raison_sociale}</p>
+                  )}
+                  <div className="mt-3 flex flex-wrap items-center gap-1">
+                    <Badge
+                      severity="info"
+                      small
+                    >
+                      {entity.type}
+                    </Badge>
+                    <Badge
+                      severity={entity.zacharie_compatible ? 'success' : 'warning'}
+                      small
+                    >
+                      {entity.zacharie_compatible ? 'Prêt pour Zacharie' : 'Pas prêt'}
+                    </Badge>
+                    <Badge
+                      severity={entity.onboarded_at ? 'success' : 'new'}
+                      small
+                    >
+                      {entity.onboarded_at ? 'Onboardé' : 'Onboarding incomplet'}
+                    </Badge>
+                    {entity.for_testing && (
+                      <Badge
+                        severity="warning"
+                        small
+                      >
+                        Test
+                      </Badge>
+                    )}
+                    {entity.deleted_at && (
+                      <Badge
+                        severity="error"
+                        small
+                      >
+                        Supprimée
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="mt-3 mb-0 text-xs text-gray-500">
+                    {entity.siret && <>SIRET {entity.siret} · </>}
+                    {entity.numero_ddecpp && <>N° DD(ec)PP {entity.numero_ddecpp} · </>}
+                    {(entity.code_postal || entity.ville) && (
+                      <>
+                        {entity.code_postal} {entity.ville} ·{' '}
+                      </>
+                    )}
+                    Créée le {dayjs(entity.created_at).format('DD/MM/YYYY')}
+                  </p>
+                </div>
+                <div className="flex shrink-0 flex-col items-stretch gap-2">
+                  {dedicatedApiKey ? (
+                    <Button
+                      size="small"
+                      linkProps={{
+                        to: `/app/admin/api-key/${dedicatedApiKey.id}`,
+                      }}
+                    >
+                      Aller vers la clé API dédiée
+                    </Button>
+                  ) : (
+                    <Button
+                      size="small"
+                      type="button"
+                      onClick={() => {
+                        API.post({
+                          path: `admin/entity-dedicated-api-key/${params.entityId}`,
+                        })
+                          .then((response) => {
+                            if (!response.ok) {
+                              return toast.error(response.error);
+                            }
+                            toast.success("L'entité a été mise à jour avec succès");
+                          })
+                          .then(() => {
+                            loadData(params.entityId!).then((response) => {
+                              if (response.data) setAdminEntityResponse(response.data!);
+                              if (!response.ok) {
+                                return toast.error(response.error);
+                              }
+                            });
+                          });
+                      }}
+                    >
+                      Activer la clé API dédiée
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </header>
             <Tabs
               selectedTabId={selectedTabId}
               tabs={tabs}
               onTabChange={setSelectedTabId}
-              className="[&_.fr-tabs\_\_list]:bg-alt-blue-france! mb-6 bg-white md:shadow-sm [&_.fr-tabs\_\_list]:shadow-none!"
+              className="mt-4"
             >
               {selectedTabId === 'Raison Sociale' && (
                 <form
