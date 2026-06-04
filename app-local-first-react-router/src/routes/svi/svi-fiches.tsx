@@ -13,6 +13,7 @@ import API from '@app/services/api';
 import { abbreviations } from '@app/utils/count-carcasses';
 import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { getFeisSorted } from '@app/utils/get-fei-sorted';
+import { getSaisonStartYear, getSaisonLabel, isDateInSaison } from '@app/utils/get-saison';
 import useExportFeis from '@app/utils/export-feis';
 import {
   filterCarcassesIntermediairesForCarcasse,
@@ -183,6 +184,7 @@ export default function SviFiches() {
     ''
   );
   const [filterCCG, setFilterCCG] = useLocalStorage<string>('svi-fiches-filter-ccg', '');
+  const [filterSaison, setFilterSaison] = useLocalStorage<string>('svi-fiches-filter-saison', '');
 
   const [filterETG, setFilterETG] = useState<string>('');
   const [sviWorkingForEtgIds, dropDownMenuFilterTextSvi] = useMemo(() => {
@@ -235,6 +237,24 @@ export default function SviFiches() {
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [allFeis]);
 
+  const saisonOptions = useMemo(() => {
+    const years = new Set<number>();
+    for (const fei of allFeis) {
+      if (fei.date_mise_a_mort) years.add(getSaisonStartYear(fei.date_mise_a_mort));
+    }
+    return Array.from(years)
+      .sort((a, b) => b - a)
+      .map((year) => ({ year, label: getSaisonLabel(year) }));
+  }, [allFeis]);
+
+  const dropDownMenuFilterTextSaison = useMemo(() => {
+    if (filterSaison) {
+      const option = saisonOptions.find((o) => String(o.year) === filterSaison);
+      if (option) return option.label;
+    }
+    return 'Filtrer par saison';
+  }, [filterSaison, saisonOptions]);
+
   const dropDownMenuFilterTextPremierDetenteur = useMemo(() => {
     if (filterPremierDetenteur) {
       const option = premierDetenteurOptions.find((o) => o.id === filterPremierDetenteur);
@@ -277,12 +297,17 @@ export default function SviFiches() {
     if (filterCCG) {
       feis = feis.filter((fei) => fei.premier_detenteur_depot_entity_id === filterCCG);
     }
+    if (filterSaison) {
+      const year = Number(filterSaison);
+      feis = feis.filter((fei) => !!fei.date_mise_a_mort && isDateInSaison(fei.date_mise_a_mort, year));
+    }
     return feis;
   }, [
     allFeis,
     filter,
     filterPremierDetenteur,
     filterCCG,
+    filterSaison,
     carcassesIntermediaireById,
     carcasses,
     entitiesIdsWorkingDirectlyFor,
@@ -422,6 +447,39 @@ export default function SviFiches() {
                     },
                     text: option.name,
                     isActive: filterCCG === option.id,
+                  })),
+                ]}
+              />
+            )}
+            {saisonOptions.length > 0 && (
+              <DropDownMenu
+                text={dropDownMenuFilterTextSaison}
+                isActive={!!filterSaison}
+                className="w-full md:w-auto"
+                menuLinks={[
+                  {
+                    linkProps: {
+                      href: '#',
+                      title: 'Toutes les saisons',
+                      onClick: (e) => {
+                        e.preventDefault();
+                        setFilterSaison('');
+                      },
+                    },
+                    text: 'Toutes les saisons',
+                    isActive: !filterSaison,
+                  },
+                  ...saisonOptions.map((option) => ({
+                    linkProps: {
+                      href: '#',
+                      title: option.label,
+                      onClick: (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+                        e.preventDefault();
+                        setFilterSaison(String(option.year));
+                      },
+                    },
+                    text: option.label,
+                    isActive: filterSaison === String(option.year),
                   })),
                 ]}
               />
