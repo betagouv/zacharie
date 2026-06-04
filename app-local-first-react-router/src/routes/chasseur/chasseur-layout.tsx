@@ -1,11 +1,11 @@
-import { Navigate, Outlet, useLocation } from 'react-router';
-import { useEffect, useMemo } from 'react';
+import { Navigate, Outlet, useLocation, useNavigate } from 'react-router';
+import { useCallback, useEffect, useMemo } from 'react';
 import useZustandStore from '@app/zustand/store';
 import RootDisplay from '@app/components/RootDisplay';
 import BottomNavigation from '@app/components/BottomNavigation';
 import FloatingNewFicheButton from '@app/components/FloatingNewFicheButton';
-import { CompteEnAttenteValidationModal, useOnNewFiche } from '@app/components/CompteEnAttenteValidation';
 import { useMostFreshUser, refreshUser } from '@app/utils-offline/get-most-fresh-user';
+import { createNewFei } from '@app/utils/create-new-fei';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import useChasseurNavigationMenu from './chasseur-navigation-menu';
 import { UserRoles } from '@prisma/client';
@@ -17,7 +17,7 @@ export default function ChasseurLayout() {
   const user = useMostFreshUser('ChasseurLayout');
   const dataIsSynced = useZustandStore((state) => state.dataIsSynced);
   const isOnline = useIsOnline();
-  const onNewFiche = useOnNewFiche();
+  const navigate = useNavigate();
   const navigation = useChasseurNavigationMenu();
   const location = useLocation();
   const _hasHydrated = useZustandStore((state) => state._hasHydrated);
@@ -36,6 +36,11 @@ export default function ChasseurLayout() {
   }, [user, location.pathname]);
 
   const isExaminateurInitial = !!user?.roles.includes(UserRoles.CHASSEUR) && !!user?.numero_cfei;
+
+  const onNewFiche = useCallback(async () => {
+    const newFei = await createNewFei();
+    navigate(`/app/chasseur/fei/${newFei.numero}`);
+  }, [navigate]);
 
   useEffect(() => {
     refreshUser('ChasseurLayout');
@@ -68,11 +73,10 @@ export default function ChasseurLayout() {
           {!_hasHydrated ? <Chargement /> : showDeactivatedAccount ? <ChasseurDeactivated /> : <Outlet />}
         </main>
       </RootDisplay>
-      <CompteEnAttenteValidationModal />
       <FloatingNewFicheButton />
       <BottomNavigation
         items={navigation}
-        onNewFiche={isExaminateurInitial ? onNewFiche : undefined}
+        onNewFiche={isExaminateurInitial && user.activated ? onNewFiche : undefined}
       />
       {import.meta.env.VITE_TEST_PLAYWRIGHT === 'true' && (
         <p className="text-action-high-blue-france text-opacity-25 pointer-events-none fixed right-0 bottom-16 left-0 z-50 bg-white px-4 py-1 text-sm md:bottom-0">

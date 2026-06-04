@@ -8,7 +8,8 @@ import API from '@app/services/api';
 import Chargement from '@app/components/Chargement';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
-import { useOnNewFiche } from '@app/components/CompteEnAttenteValidation';
+import { createNewFei } from '@app/utils/create-new-fei';
+import { useNavigate } from 'react-router';
 import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 
 interface DashboardData {
@@ -33,7 +34,7 @@ export default function MesChasses() {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const onNewFiche = useOnNewFiche();
+  const navigate = useNavigate();
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
@@ -86,7 +87,7 @@ export default function MesChasses() {
           <div className="fr-py-0 fr-col-12 fr-col-md-6">
             <div className="flex flex-col bg-white">
               <h2 className="fr-h4 mb-3 font-bold text-gray-800">Pas encore de carcasses cette saison</h2>
-              {!!me.numero_cfei ? (
+              {!!me.numero_cfei && me.activated ? (
                 <>
                   <p className="fr-text--regular mb-6 max-w-md">
                     Vos statistiques apparaîtront ici dès que vous aurez enregistré votre première fiche
@@ -95,7 +96,10 @@ export default function MesChasses() {
                   <Button
                     priority="primary"
                     iconId="fr-icon-add-circle-line"
-                    onClick={onNewFiche}
+                    onClick={async () => {
+                      const newFei = await createNewFei();
+                      navigate(`/app/chasseur/fei/${newFei.numero}`);
+                    }}
                   >
                     Créer une fiche
                   </Button>

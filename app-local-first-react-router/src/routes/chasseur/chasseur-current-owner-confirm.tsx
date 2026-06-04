@@ -10,10 +10,7 @@ import { syncData } from '@app/utils/sync-data';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { isCarcasseClosedBySvi } from '@app/utils/is-carcasse-done';
-import {
-  CompteEnAttenteValidationAlert,
-  compteEnAttenteModal,
-} from '@app/components/CompteEnAttenteValidation';
+import { CompteEnAttenteValidationAlert } from '@app/components/CompteEnAttenteValidation';
 
 export default function CurrentOwnerConfirm() {
   const params = useParams();
@@ -119,7 +116,6 @@ export default function CurrentOwnerConfirm() {
 
   async function handlePriseEnCharge() {
     if (notActivated) {
-      compteEnAttenteModal.open();
       return;
     }
     const currentOwnerRole = fei.fei_next_owner_role;
@@ -229,7 +225,7 @@ export default function CurrentOwnerConfirm() {
         }
         className="m-0 bg-white"
       >
-        {notActivated && <CompteEnAttenteValidationAlert />}
+        {notActivated && <CompteEnAttenteValidationAlert className="mb-4" />}
         <Button
           type="submit"
           className="my-4 block"
@@ -250,7 +246,6 @@ export default function CurrentOwnerConfirm() {
               disabled={notActivated}
               onClick={() => {
                 if (notActivated) {
-                  compteEnAttenteModal.open();
                   return;
                 }
                 // Only reset my carcasses' next_owner

@@ -17,10 +17,7 @@ import { usePrefillPremierDétenteurInfos } from '@app/utils/usePrefillPremierD�
 import { useEntitiesIdsWorkingDirectlyFor, useDetenteursInitiaux } from '@app/utils/get-entity-relations';
 import { CarcasseTransmission } from '@app/types/carcasse';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
-import {
-  CompteEnAttenteValidationAlert,
-  compteEnAttenteModal,
-} from '@app/components/CompteEnAttenteValidation';
+import { CompteEnAttenteValidationAlert } from '@app/components/CompteEnAttenteValidation';
 
 export default function SelectNextForExaminateur({
   disabled = false,
@@ -110,7 +107,6 @@ export default function SelectNextForExaminateur({
 
   function handleSubmitFromSelect(nextOwnerUserId?: string) {
     if (notActivated) {
-      compteEnAttenteModal.open();
       return;
     }
     const nextIsMe = nextOwnerUserId === user.id;
@@ -196,7 +192,7 @@ export default function SelectNextForExaminateur({
   return (
     <>
       <label className="mb-1 block">Premier détenteur&nbsp;*</label>
-      {notActivated && <CompteEnAttenteValidationAlert />}
+      {notActivated && <CompteEnAttenteValidationAlert className="mb-4" />}
       {isFirstFei &&
       !Object.values(associationsDeChasse).length &&
       !Object.values(detenteursInitiaux).length ? (

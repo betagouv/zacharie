@@ -7,7 +7,7 @@ import dayjs from 'dayjs';
 import useZustandStore from '@app/zustand/store';
 import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { getFeisSorted } from '@app/utils/get-fei-sorted';
-import { useOnNewFiche } from '@app/components/CompteEnAttenteValidation';
+import { createNewFei } from '@app/utils/create-new-fei';
 import { useNavigate, useSearchParams, Link } from 'react-router';
 import useExportFeis from '@app/utils/export-feis';
 import {
@@ -33,6 +33,7 @@ import DropDownMenu from '@app/components/DropDownMenu';
 import PendingModifRequestsAlertModal from '@app/components/PendingModifRequestsAlertModal';
 import { loadData, useLoaderEffect } from '@app/utils/load-data';
 import Chargement from '@app/components/Chargement';
+import { CompteEnAttenteValidationAlert } from '@app/components/CompteEnAttenteValidation';
 
 function CollapsibleSection({
   title,
@@ -131,7 +132,7 @@ function OnboardingChasseInfoBanner() {
 const ITEMS_PER_PAGE = 100;
 
 export default function ChasseurFiches() {
-  const onNewFiche = useOnNewFiche();
+  const navigate = useNavigate();
   const user = useMostFreshUser('chasseur fiches')!;
   const entitiesIdsWorkingDirectlyFor = useEntitiesIdsWorkingDirectlyFor();
   const { feisOngoing, feisToTake, feisUnderMyResponsability, feisDone } = getFeisSorted();
@@ -710,11 +711,14 @@ export default function ChasseurFiches() {
               </span>
             )}
           </button>
-          {user.numero_cfei && (
+          {user.numero_cfei && user.activated && (
             <Button
               iconId="fr-icon-add-circle-line"
               priority="primary"
-              onClick={onNewFiche}
+              onClick={async () => {
+                const newFei = await createNewFei();
+                navigate(`/app/chasseur/fei/${newFei.numero}`);
+              }}
             >
               Nouvelle
             </Button>
@@ -753,6 +757,7 @@ export default function ChasseurFiches() {
 
         {/* Contenu principal */}
         <div className="mx-auto max-w-5xl min-w-0 flex-1 px-4 pt-4 md:px-6">
+          {!user.activated && <CompteEnAttenteValidationAlert className="fr-mb-4w" />}
           <OnboardingChasseInfoBanner />
           {filteredFeis.length > 0 && (
             <div className="hidden w-full flex-wrap items-center justify-end gap-3 py-4 md:flex">
@@ -825,11 +830,14 @@ export default function ChasseurFiches() {
                   },
                 ]}
               />
-              {user.numero_cfei && (
+              {user.numero_cfei && user.activated && (
                 <Button
                   iconId="fr-icon-add-circle-line"
                   priority="primary"
-                  onClick={onNewFiche}
+                  onClick={async () => {
+                    const newFei = await createNewFei();
+                    navigate(`/app/chasseur/fei/${newFei.numero}`);
+                  }}
                 >
                   Nouvelle fiche
                 </Button>
@@ -895,7 +903,7 @@ function FeisWrapper({
   filter?: FeiStepSimpleStatus | 'Toutes les fiches';
 }) {
   const user = useMostFreshUser('chasseur fiches')!;
-  const onNewFiche = useOnNewFiche();
+  const navigate = useNavigate();
   const nothingToShow = !children || React.Children.toArray(children).length === 0;
 
   if (nothingToShow) {
@@ -905,7 +913,7 @@ function FeisWrapper({
           <div className="fr-py-0 fr-col-12 fr-col-md-6">
             <div className="flex flex-col bg-white">
               <h2 className="fr-h4 mb-3 font-bold text-gray-800">Pas encore de fiches cette saison</h2>
-              {user.numero_cfei ? (
+              {user.numero_cfei && user.activated ? (
                 <>
                   <p className="fr-text--regular mb-6 max-w-md">
                     Vos fiches apparaîtront ici dès que vous aurez créé votre première fiche d'examen initial.
@@ -913,7 +921,10 @@ function FeisWrapper({
                   <Button
                     priority="primary"
                     iconId="fr-icon-add-circle-line"
-                    onClick={onNewFiche}
+                    onClick={async () => {
+                      const newFei = await createNewFei();
+                      navigate(`/app/chasseur/fei/${newFei.numero}`);
+                    }}
                   >
                     Créer une fiche
                   </Button>
