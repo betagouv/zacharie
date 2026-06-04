@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 import { toast } from 'react-toastify';
 import { Prisma } from '@prisma/client';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
@@ -42,16 +42,22 @@ export default function OnboardingMesInformationsDeChasse() {
 
   const nextPage = '/app/chasseur';
 
+  // Dernière étape de l'onboarding : on finalise l'inscription (onboarding_finished → onboarded_at
+  // côté API), ce qui déclenche l'auto-activation du chasseur non-formateur et son mail d'activation.
+  const finishOnboarding = async (extraBody: Record<string, string | null> = {}) => {
+    const response = await API.post({
+      path: `/user/${user.id}`,
+      body: { onboarding_finished: true, ...extraBody },
+    }).then((data) => data as UserConnexionResponse);
+    if (response.ok && response.data?.user?.id) {
+      useUser.setState({ user: response.data.user });
+    }
+    navigate(redirect ?? nextPage);
+  };
+
   const handleSubmit = async () => {
     try {
-      const response = await API.post({
-        path: `/user/${user.id}`,
-        body: { onboarding_chasse_info_done_at: new Date().toISOString() },
-      }).then((data) => data as UserConnexionResponse);
-      if (response.ok && response.data?.user?.id) {
-        useUser.setState({ user: response.data.user });
-        navigate(redirect ?? nextPage);
-      }
+      await finishOnboarding({ onboarding_chasse_info_done_at: new Date().toISOString() });
     } catch (error) {
       console.error(error);
       toast.error("Erreur lors de l'enregistrement des informations de chasse");
@@ -78,12 +84,13 @@ export default function OnboardingMesInformationsDeChasse() {
             description="Ces informations seront reportées automatiquement sur chacune des fiches que vous allez créer."
           />
           <p className="mb-8 text-sm text-gray-500">
-            <Link
-              to={redirect ?? nextPage}
-              className="text-gray-500"
+            <button
+              type="button"
+              onClick={() => finishOnboarding()}
+              className="text-gray-500 underline"
             >
               Passer cette étape
-            </Link>{' '}
+            </button>{' '}
             — vous pourrez compléter ces informations plus tard.
           </p>
           <MesAssociationsDeChasse />

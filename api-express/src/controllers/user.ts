@@ -41,7 +41,9 @@ import {
 } from '@prisma/client';
 import { cookieOptions, JWT_MAX_AGE, logoutCookieOptions } from '~/utils/cookie';
 import { SECRET } from '~/config';
-import { autoActivatePremierDetenteur, hasAllRequiredFields } from '~/utils/user';
+import { hasAllRequiredFields } from '~/utils/user';
+import { sendOnboardingEmailOnce } from '~/utils/send-onboarding-email';
+import { formatInscriptionEnExamenEmail, formatCompteActiveEmail } from '~/utils/format-inscription-email';
 // import { refreshMaterializedViews } from '~/utils/refreshMaterializedViews';
 import { z } from 'zod';
 import { sanitize } from '~/utils/sanitize';
@@ -1143,30 +1145,26 @@ ${savedUser.roles.includes(UserRoles.CHASSEUR) && savedUser.est_forme_a_l_examen
         });
       }
 
-      if (autoActivatePremierDetenteur(savedUser, `check auto activate ${savedUser.id}`)) {
-        nextUser.activated = true;
-        nextUser.activated_at = new Date();
-        savedUser = await prisma.user.update({
-          where: { id: user.id },
-          data: nextUser,
+      // Mail de fin d'onboarding : envoyé à tout utilisateur dès que son inscription est terminée
+      // (onboarded_at vient d'être renseigné). Le compte n'est PAS activé automatiquement : il
+      // attend une validation manuelle, d'où le message « examiné sous 48h ».
+      const userJustFinishedOnboarding = !user.onboarded_at && !!savedUser.onboarded_at;
+      if (userJustFinishedOnboarding) {
+        const { subject, text } = formatInscriptionEnExamenEmail();
+        await sendOnboardingEmailOnce({
+          user: savedUser,
+          subject,
+          text,
+          action: 'INSCRIPTION_EN_EXAMEN',
         });
       }
 
+      // Mail « compte activé » : dédupliqué une seule fois par compte (sendOnboardingEmailOnce),
+      // pour ne pas le renvoyer à chaque transition activated false→true (ex. passage sans CFEI
+      // qui ré-auto-active, ou réactivation admin).
       if (savedUser.activated && !user.activated) {
-        const email = [
-          `Bonjour,`,
-          `Votre compte Zacharie a été activé, vous pouvez désormais accéder à l'application en cliquant sur le lien suivant: https://zacharie.beta.gouv.fr/app/connexion`,
-          "Attention : pour l'instant, seuls certains collecteurs et ateliers de traitement du gibier acceptent des fiches en format numérique. En cas de doute, merci de contacter le destinataire de vos carcasses avant de créer votre première fiche numérique.",
-          // "Des manuels d'utilisation de Zacharie sont disponibles en cliquant ici.",
-          `N’hésitez pas à nous contacter,`,
-          `L’équipe Zacharie`,
-          `Ce message a été généré automatiquement par l’application Zacharie. Si c'est une erreur, veuillez ignorer ce message.`,
-        ].join('\n\n');
-        await sendEmail({
-          emails: [savedUser.email],
-          subject: 'Votre compte Zacharie a été activé',
-          text: email,
-        });
+        const { subject, text } = formatCompteActiveEmail();
+        await sendOnboardingEmailOnce({ user: savedUser, subject, text, action: 'COMPTE_ACTIVE' });
       }
 
       res.status(200).send({ ok: true, data: { user: savedUser }, error: '', message: '' });
