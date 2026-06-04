@@ -17,6 +17,10 @@ import { usePrefillPremierDétenteurInfos } from '@app/utils/usePrefillPremierD�
 import { useEntitiesIdsWorkingDirectlyFor, useDetenteursInitiaux } from '@app/utils/get-entity-relations';
 import { CarcasseTransmission } from '@app/types/carcasse';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
+import {
+  CompteEnAttenteValidationAlert,
+  compteEnAttenteModal,
+} from '@app/components/CompteEnAttenteValidation';
 
 export default function SelectNextForExaminateur({
   disabled = false,
@@ -102,7 +106,13 @@ export default function SelectNextForExaminateur({
     return null;
   }
 
+  const notActivated = !user.activated;
+
   function handleSubmitFromSelect(nextOwnerUserId?: string) {
+    if (notActivated) {
+      compteEnAttenteModal.open();
+      return;
+    }
     const nextIsMe = nextOwnerUserId === user.id;
     const nextIsMyAssociation = !!nextOwnerEntity?.id;
     let nextFei: Partial<typeof fei>;
@@ -186,6 +196,7 @@ export default function SelectNextForExaminateur({
   return (
     <>
       <label className="mb-1 block">Premier détenteur&nbsp;*</label>
+      {notActivated && <CompteEnAttenteValidationAlert />}
       {isFirstFei &&
       !Object.values(associationsDeChasse).length &&
       !Object.values(detenteursInitiaux).length ? (
@@ -212,6 +223,7 @@ export default function SelectNextForExaminateur({
                 <Button
                   priority="tertiary"
                   type="button"
+                  disabled={notActivated}
                   onClick={() => handleSubmitFromSelect(user.id)}
                 >
                   Je suis le Premier Détenteur
@@ -320,7 +332,7 @@ export default function SelectNextForExaminateur({
             <>
               <Button
                 type="button"
-                disabled={disabled}
+                disabled={disabled || notActivated}
                 onClick={() => {
                   if (validationErrors.length > 0) {
                     setShowValidationErrors(true);

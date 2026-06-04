@@ -8,8 +8,7 @@ import API from '@app/services/api';
 import Chargement from '@app/components/Chargement';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
-import { createNewFei } from '@app/utils/create-new-fei';
-import { useNavigate } from 'react-router';
+import { useOnNewFiche } from '@app/components/CompteEnAttenteValidation';
 import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 
 interface DashboardData {
@@ -34,7 +33,7 @@ export default function MesChasses() {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate();
+  const onNewFiche = useOnNewFiche();
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
@@ -96,10 +95,7 @@ export default function MesChasses() {
                   <Button
                     priority="primary"
                     iconId="fr-icon-add-circle-line"
-                    onClick={async () => {
-                      const newFei = await createNewFei();
-                      navigate(`/app/chasseur/fei/${newFei.numero}`);
-                    }}
+                    onClick={onNewFiche}
                   >
                     Créer une fiche
                   </Button>

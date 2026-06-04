@@ -1,10 +1,10 @@
 import { useEffect, useMemo } from 'react';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import useZustandStore from '@app/zustand/store';
-import { useNavigate, useParams } from 'react-router';
+import { useParams } from 'react-router';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import { Button } from '@codegouvfr/react-dsfr/Button';
-import { createNewFei } from '@app/utils/create-new-fei';
+import { useOnNewFiche } from '@app/components/CompteEnAttenteValidation';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { formatCarcasseLotCount } from '@app/utils/count-carcasses';
 import useUser from '@app/zustand/user';
@@ -15,7 +15,7 @@ export default function ChasseurFeiEnvoyée() {
   const params = useParams();
   const user = useUser((state) => state.user)!;
   const feis = useZustandStore((state) => state.feis);
-  const navigate = useNavigate();
+  const onNewFiche = useOnNewFiche();
   const entities = useZustandStore((state) => state.entities);
   const fei = feis[params.fei_numero!];
   const carcasses = useCarcassesForFei(params.fei_numero);
@@ -140,10 +140,7 @@ export default function ChasseurFeiEnvoyée() {
                   <Button
                     type="button"
                     // className="bg-white"
-                    onClick={async () => {
-                      const newFei = await createNewFei();
-                      navigate(`/app/chasseur/fei/${newFei.numero}`);
-                    }}
+                    onClick={onNewFiche}
                     iconId="fr-icon-add-circle-line"
                   >
                     Nouvelle fiche

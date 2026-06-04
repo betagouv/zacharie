@@ -10,6 +10,10 @@ import { syncData } from '@app/utils/sync-data';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { isCarcasseClosedBySvi } from '@app/utils/is-carcasse-done';
+import {
+  CompteEnAttenteValidationAlert,
+  compteEnAttenteModal,
+} from '@app/components/CompteEnAttenteValidation';
 
 export default function CurrentOwnerConfirm() {
   const params = useParams();
@@ -111,7 +115,13 @@ export default function CurrentOwnerConfirm() {
     return null;
   }
 
+  const notActivated = !user.activated;
+
   async function handlePriseEnCharge() {
+    if (notActivated) {
+      compteEnAttenteModal.open();
+      return;
+    }
     const currentOwnerRole = fei.fei_next_owner_role;
     const nextFei: Partial<FeiWithIntermediaires> = {
       fei_current_owner_role: currentOwnerRole,
@@ -219,9 +229,11 @@ export default function CurrentOwnerConfirm() {
         }
         className="m-0 bg-white"
       >
+        {notActivated && <CompteEnAttenteValidationAlert />}
         <Button
           type="submit"
           className="my-4 block"
+          disabled={notActivated}
           onClick={handlePriseEnCharge}
         >
           Prendre en charge cette fiche et les carcasses associées
@@ -235,7 +247,12 @@ export default function CurrentOwnerConfirm() {
               // type="submit"
               priority="tertiary"
               type="button"
+              disabled={notActivated}
               onClick={() => {
+                if (notActivated) {
+                  compteEnAttenteModal.open();
+                  return;
+                }
                 // Only reset my carcasses' next_owner
                 updateCarcassesTransmission(carcasseIds, {
                   next_owner_entity_id: null,

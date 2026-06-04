@@ -7,7 +7,7 @@ import dayjs from 'dayjs';
 import useZustandStore from '@app/zustand/store';
 import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { getFeisSorted } from '@app/utils/get-fei-sorted';
-import { createNewFei } from '@app/utils/create-new-fei';
+import { useOnNewFiche } from '@app/components/CompteEnAttenteValidation';
 import { useNavigate, useSearchParams, Link } from 'react-router';
 import useExportFeis from '@app/utils/export-feis';
 import {
@@ -131,7 +131,7 @@ function OnboardingChasseInfoBanner() {
 const ITEMS_PER_PAGE = 100;
 
 export default function ChasseurFiches() {
-  const navigate = useNavigate();
+  const onNewFiche = useOnNewFiche();
   const user = useMostFreshUser('chasseur fiches')!;
   const entitiesIdsWorkingDirectlyFor = useEntitiesIdsWorkingDirectlyFor();
   const { feisOngoing, feisToTake, feisUnderMyResponsability, feisDone } = getFeisSorted();
@@ -714,10 +714,7 @@ export default function ChasseurFiches() {
             <Button
               iconId="fr-icon-add-circle-line"
               priority="primary"
-              onClick={async () => {
-                const newFei = await createNewFei();
-                navigate(`/app/chasseur/fei/${newFei.numero}`);
-              }}
+              onClick={onNewFiche}
             >
               Nouvelle
             </Button>
@@ -832,10 +829,7 @@ export default function ChasseurFiches() {
                 <Button
                   iconId="fr-icon-add-circle-line"
                   priority="primary"
-                  onClick={async () => {
-                    const newFei = await createNewFei();
-                    navigate(`/app/chasseur/fei/${newFei.numero}`);
-                  }}
+                  onClick={onNewFiche}
                 >
                   Nouvelle fiche
                 </Button>
@@ -901,7 +895,7 @@ function FeisWrapper({
   filter?: FeiStepSimpleStatus | 'Toutes les fiches';
 }) {
   const user = useMostFreshUser('chasseur fiches')!;
-  const navigate = useNavigate();
+  const onNewFiche = useOnNewFiche();
   const nothingToShow = !children || React.Children.toArray(children).length === 0;
 
   if (nothingToShow) {
@@ -919,10 +913,7 @@ function FeisWrapper({
                   <Button
                     priority="primary"
                     iconId="fr-icon-add-circle-line"
-                    onClick={async () => {
-                      const newFei = await createNewFei();
-                      navigate(`/app/chasseur/fei/${newFei.numero}`);
-                    }}
+                    onClick={onNewFiche}
                   >
                     Créer une fiche
                   </Button>
