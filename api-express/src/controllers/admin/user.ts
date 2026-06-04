@@ -9,7 +9,7 @@ import { cookieOptions, JWT_MAX_AGE } from '~/utils/cookie';
 import { SECRET } from '~/config';
 import { z } from 'zod';
 import { sanitize } from '~/utils/sanitize';
-import { autoActivatePremierDetenteur, hasAllRequiredFields } from '~/utils/user';
+import { hasAllRequiredFields } from '~/utils/user';
 import type {
   AdminUsersResponse,
   AdminUserDataResponse,
@@ -24,6 +24,8 @@ import {
   updateBrevoContact,
 } from '~/third-parties/brevo';
 import { getDefaultScopeDepartementsForRoles } from '~/utils/federation-stats';
+import { sendOnboardingEmailOnce } from '~/utils/send-onboarding-email';
+import { formatCompteActiveEmail } from '~/utils/format-inscription-email';
 
 router.post(
   '/user/connect-as',
@@ -284,29 +286,10 @@ ${savedUser.roles.includes(UserRoles.CHASSEUR) && savedUser.est_forme_a_l_examen
         });
       }
 
-      if (autoActivatePremierDetenteur(savedUser, `admin check auto activate ${savedUser.id}`)) {
-        nextUser.activated = true;
-        nextUser.activated_at = new Date();
-        savedUser = await prisma.user.update({
-          where: { id: userId },
-          data: nextUser,
-        });
-      }
-
+      // Mail « compte activé » dédupliqué une seule fois par compte (voir controllers/user.ts).
       if (savedUser.activated && !user.activated) {
-        const email = [
-          `Bonjour,`,
-          `Votre compte Zacharie a été activé, vous pouvez désormais accéder à l'application en cliquant sur le lien suivant: https://zacharie.beta.gouv.fr/app/connexion`,
-          "Attention : pour l'instant, seuls certains collecteurs et ateliers de traitement du gibier acceptent des fiches en format numérique. En cas de doute, merci de contacter le destinataire de vos carcasses avant de créer votre première fiche numérique.",
-          `N’hésitez pas à nous contacter,`,
-          `L’équipe Zacharie`,
-          `Ce message a été généré automatiquement par l’application Zacharie. Si c'est une erreur, veuillez ignorer ce message.`,
-        ].join('\n\n');
-        await sendEmail({
-          emails: [savedUser.email!],
-          subject: 'Votre compte Zacharie a été activé',
-          text: email,
-        });
+        const { subject, text } = formatCompteActiveEmail();
+        await sendOnboardingEmailOnce({ user: savedUser, subject, text, action: 'COMPTE_ACTIVE' });
       }
 
       res.status(200).send({ ok: true, data: { user: savedUser }, error: '', message: '' });
