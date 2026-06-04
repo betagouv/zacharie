@@ -314,6 +314,56 @@ ${savedUser.roles.includes(UserRoles.CHASSEUR) && savedUser.est_forme_a_l_examen
   )
 );
 
+// Soft delete : pose deleted_at. L'utilisateur ne peut plus se connecter ni agir
+// (voir middlewares/passport.ts et controllers/user.ts /login), mais ses données
+// historiques (fiches, carcasses) restent référencées.
+router.post(
+  '/user/:user_id/soft-delete',
+  catchErrors(
+    async (
+      req: express.Request,
+      res: express.Response<UserConnexionResponse>,
+      next: express.NextFunction
+    ) => {
+      const userId = req.params.user_id;
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (!user) {
+        res.status(400).send({ ok: false, data: { user: null }, error: 'User not found', message: '' });
+        return;
+      }
+      const savedUser = await prisma.user.update({
+        where: { id: userId },
+        data: { deleted_at: new Date() },
+      });
+      res.status(200).send({ ok: true, data: { user: savedUser }, error: '', message: '' });
+    }
+  )
+);
+
+// Restaure un utilisateur soft-deleted : remet deleted_at à null.
+router.post(
+  '/user/:user_id/restore',
+  catchErrors(
+    async (
+      req: express.Request,
+      res: express.Response<UserConnexionResponse>,
+      next: express.NextFunction
+    ) => {
+      const userId = req.params.user_id;
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (!user) {
+        res.status(400).send({ ok: false, data: { user: null }, error: 'User not found', message: '' });
+        return;
+      }
+      const savedUser = await prisma.user.update({
+        where: { id: userId },
+        data: { deleted_at: null },
+      });
+      res.status(200).send({ ok: true, data: { user: savedUser }, error: '', message: '' });
+    }
+  )
+);
+
 router.get(
   '/user/:user_id',
   catchErrors(

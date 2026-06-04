@@ -129,6 +129,27 @@ export default function AdminUser() {
     });
   };
 
+  const handleToggleSoftDelete = () => {
+    const isDeleted = !!user.deleted_at;
+    const confirmMessage = isDeleted
+      ? `Restaurer le compte de ${user.email} ?`
+      : `Supprimer le compte de ${user.email} ? L'utilisateur ne pourra plus se connecter. Cette action est réversible (restauration possible).`;
+    if (!window.confirm(confirmMessage)) return;
+    API.post({
+      path: `admin/user/${params.userId}/${isDeleted ? 'restore' : 'soft-delete'}`,
+    }).then((res) => {
+      if (!res.ok) {
+        return toast.error("Une erreur est survenue lors de la suppression de l'utilisateur");
+      }
+      loadData(params.userId!).then((res) => {
+        if (res.ok && res.data) {
+          setUserResponseData(res.data as State);
+        }
+      });
+      toast.success(isDeleted ? "L'utilisateur a été restauré" : "L'utilisateur a été supprimé");
+    });
+  };
+
   const [selectedTabId, setSelectedTabId] = useState('Identité');
   const tabs: TabsProps['tabs'] = [
     {
@@ -195,7 +216,9 @@ export default function AdminUser() {
                 ) : (
                   <>{user.email}</>
                 )}
-                {!user.activated ? (
+                {user.deleted_at ? (
+                  <small>🗑️ Utilisateur supprimé</small>
+                ) : !user.activated ? (
                   <small>❌ Utilisateur inactif</small>
                 ) : (
                   <small>✅ Utilisateur activé</small>
@@ -203,6 +226,20 @@ export default function AdminUser() {
                 <ConnexionButton user={user} />
               </div>
               <div className="flex flex-col items-end gap-2">
+                <Button
+                  type="button"
+                  priority={user.deleted_at ? 'secondary' : 'primary'}
+                  size="small"
+                  iconId={user.deleted_at ? 'fr-icon-arrow-go-back-line' : 'fr-icon-delete-line'}
+                  className={
+                    user.deleted_at
+                      ? undefined
+                      : 'bg-red-600! text-white! [&_*]:text-white! [&:hover]:bg-red-700!'
+                  }
+                  onClick={handleToggleSoftDelete}
+                >
+                  {user.deleted_at ? "Restaurer l'utilisateur" : "Supprimer l'utilisateur"}
+                </Button>
                 <form
                   id="user_active_form"
                   method="POST"

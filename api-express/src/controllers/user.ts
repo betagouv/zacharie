@@ -129,7 +129,7 @@ router.post(
       }
 
       let user = await prisma.user.findUnique({ where: { email } });
-      if (!user) {
+      if (!user || user.deleted_at) {
         res.status(400).send({
           ok: false,
           data: { user: null },
