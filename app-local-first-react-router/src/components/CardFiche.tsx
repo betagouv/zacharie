@@ -8,9 +8,12 @@ import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import { useMemo, useState, useRef, useEffect } from 'react';
 import useZustandStore from '@app/zustand/store';
 import { useIsCircuitCourt } from '@app/utils/circuit-court';
-import { CarcasseType } from '@prisma/client';
+import { CarcasseType, FeiOwnerRole } from '@prisma/client';
 import { abbreviations, formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
-import { filterCarcassesIntermediairesForCarcasse } from '@app/utils/get-carcasses-intermediaires';
+import {
+  filterCarcassesIntermediairesForCarcasse,
+  filterFeiIntermediaires,
+} from '@app/utils/get-carcasses-intermediaires';
 import { useMyCarcassesForFei } from '@app/utils/filter-my-carcasses';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 
@@ -38,6 +41,23 @@ const statusColors: Record<FeiStepSimpleStatus, { bg: string; text: string }> = 
   },
 };
 
+function resolveOwnerName(
+  id: string | null | undefined,
+  entities: Record<string, { nom_d_usage?: string | null; raison_sociale?: string | null }>,
+  usersById: Record<string, { prenom?: string | null; nom_de_famille?: string | null }>
+): string | null {
+  if (!id) return null;
+  const entity = entities[id];
+  if (entity?.nom_d_usage) return entity.nom_d_usage;
+  if (entity?.raison_sociale) return entity.raison_sociale;
+  const u = usersById[id];
+  if (u) {
+    const name = `${u.prenom ?? ''} ${u.nom_de_famille ?? ''}`.trim();
+    if (name) return name;
+  }
+  return null;
+}
+
 const maxDetailedLines = 2;
 export default function CardFiche({
   fei,
@@ -55,6 +75,18 @@ export default function CardFiche({
   const myCarcasses = useMyCarcassesForFei(fei.numero);
   const feiCarcasses = useCarcassesForFei(fei.numero);
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
+  const entities = useZustandStore((state) => state.entities);
+  const usersById = useZustandStore((state) => state.users);
+
+  // Ligne « Chasse » : le dernier owner avant l'arrivée chez le destinataire = le collecteur
+  // s'il y en a eu un, sinon le premier détenteur.
+  const chasseName = useMemo(() => {
+    const collecteur = filterFeiIntermediaires(carcassesIntermediaireById, fei.numero).find(
+      (i) => i.intermediaire_role === FeiOwnerRole.COLLECTEUR_PRO
+    );
+    const id = collecteur?.intermediaire_entity_id || collecteur?.intermediaire_user_id;
+    return resolveOwnerName(id, entities, usersById) || fei.premier_detenteur_name_cache;
+  }, [carcassesIntermediaireById, fei.numero, fei.premier_detenteur_name_cache, entities, usersById]);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -245,17 +277,9 @@ export default function CardFiche({
             <div className="flex shrink basis-1/2 flex-col gap-y-1">
               <ChasseIcon />
               <p
-                className={[
-                  'line-clamp-2 text-sm',
-                  fei.premier_detenteur_name_cache ? 'text-black' : 'text-neutral-400',
-                ].join(' ')}
+                className={['line-clamp-2 text-sm', chasseName ? 'text-black' : 'text-neutral-400'].join(' ')}
               >
-                {/* {user?.roles.includes(UserRoles.SVI) ? (
-                  <>{fei.latest_intermediaire_name_cache || 'À renseigner'}</>
-                ) : (
-                  <>{fei.premier_detenteur_name_cache || 'À renseigner'}</>
-                )} */}
-                <>{fei.premier_detenteur_name_cache || 'À renseigner'}</>
+                {chasseName || 'À renseigner'}
               </p>
             </div>
           </div>
