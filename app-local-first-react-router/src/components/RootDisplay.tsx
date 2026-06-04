@@ -136,7 +136,7 @@ export default function RootDisplay({
         quickAccessItems={embedded ? undefined : quickAccessItems}
         operatorLogo={{
           alt: 'Logo de Zacharie - un bois de cerf bland sur fond bleu avec liseré rouge',
-          imgUrl: '/logo_zacharie_solo_small.svg',
+          imgUrl: '/logo-zacharie.png',
           orientation: 'vertical',
         }}
         serviceTagline="Garantir des viandes de gibier sauvage saines et sûres"
