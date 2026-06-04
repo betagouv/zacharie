@@ -76,7 +76,7 @@ export default function ChasseurLayout() {
       <FloatingNewFicheButton />
       <BottomNavigation
         items={navigation}
-        onNewFiche={isExaminateurInitial ? onNewFiche : undefined}
+        onNewFiche={isExaminateurInitial && user.activated ? onNewFiche : undefined}
       />
       {import.meta.env.VITE_TEST_PLAYWRIGHT === 'true' && (
         <p className="text-action-high-blue-france text-opacity-25 pointer-events-none fixed right-0 bottom-16 left-0 z-50 bg-white px-4 py-1 text-sm md:bottom-0">

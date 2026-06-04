@@ -34,6 +34,7 @@ import DropDownMenu from '@app/components/DropDownMenu';
 import PendingModifRequestsAlertModal from '@app/components/PendingModifRequestsAlertModal';
 import { loadData, useLoaderEffect } from '@app/utils/load-data';
 import Chargement from '@app/components/Chargement';
+import { CompteEnAttenteValidationAlert } from '@app/components/CompteEnAttenteValidation';
 
 function CollapsibleSection({
   title,
@@ -782,7 +783,7 @@ export default function ChasseurFiches() {
               </span>
             )}
           </button>
-          {user.numero_cfei && (
+          {user.numero_cfei && user.activated && (
             <Button
               iconId="fr-icon-add-circle-line"
               priority="primary"
@@ -828,6 +829,7 @@ export default function ChasseurFiches() {
 
         {/* Contenu principal */}
         <div className="mx-auto max-w-5xl min-w-0 flex-1 px-4 pt-4 md:px-6">
+          {!user.activated && <CompteEnAttenteValidationAlert className="fr-mb-4w" />}
           <OnboardingChasseInfoBanner />
           {filteredFeis.length > 0 && (
             <div className="hidden w-full flex-wrap items-center justify-end gap-3 py-4 md:flex">
@@ -900,7 +902,7 @@ export default function ChasseurFiches() {
                   },
                 ]}
               />
-              {user.numero_cfei && (
+              {user.numero_cfei && user.activated && (
                 <Button
                   iconId="fr-icon-add-circle-line"
                   priority="primary"
@@ -983,7 +985,7 @@ function FeisWrapper({
           <div className="fr-py-0 fr-col-12 fr-col-md-6">
             <div className="flex flex-col bg-white">
               <h2 className="fr-h4 mb-3 font-bold text-gray-800">Pas encore de fiches cette saison</h2>
-              {user.numero_cfei ? (
+              {user.numero_cfei && user.activated ? (
                 <>
                   <p className="fr-text--regular mb-6 max-w-md">
                     Vos fiches apparaîtront ici dès que vous aurez créé votre première fiche d'examen initial.
