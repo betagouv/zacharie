@@ -96,14 +96,21 @@ export default function AdminUsers() {
   });
 
   const chasseursToActivate = filteredUsers.filter(
-    (user) => !user.activated && user.roles?.includes(UserRoles.CHASSEUR)
+    (user) => !user.activated && !user.deleted_at && user.roles?.includes(UserRoles.CHASSEUR)
   );
 
   const tabs: TabsProps['tabs'] = [
-    { tabId: 'all', label: `Tous (${filteredUsers.length})` },
+    { tabId: 'all', label: `Tous (${filteredUsers.filter((user) => !user.deleted_at).length})` },
     { tabId: 'chasseurs-a-activer', label: `Chasseurs à activer (${chasseursToActivate.length})` },
-    { tabId: 'activated', label: `Activés (${filteredUsers.filter((user) => user.activated).length})` },
-    { tabId: 'deactivated', label: `Désactivés (${filteredUsers.filter((user) => !user.activated).length})` },
+    {
+      tabId: 'activated',
+      label: `Activés (${filteredUsers.filter((user) => user.activated && !user.deleted_at).length})`,
+    },
+    {
+      tabId: 'deactivated',
+      label: `Désactivés (${filteredUsers.filter((user) => !user.activated && !user.deleted_at).length})`,
+    },
+    { tabId: 'deleted', label: `Supprimés (${filteredUsers.filter((user) => user.deleted_at).length})` },
   ];
   const [selectedTabId, setSelectedTabId] = useState(tabs[0].tabId);
 
@@ -222,6 +229,8 @@ export default function AdminUsers() {
             <tbody>
               {filteredUsers
                 .filter((user) => {
+                  if (selectedTabId === 'deleted') return !!user.deleted_at;
+                  if (user.deleted_at) return false;
                   if (selectedTabId === 'chasseurs-a-activer')
                     return !user.activated && user.roles?.includes(UserRoles.CHASSEUR);
                   if (selectedTabId === 'activated') return user.activated;
@@ -325,6 +334,14 @@ export default function AdminUsers() {
                       <td className="px-2 py-1">
                         <span className="flex flex-col gap-0.5">
                           <span className="flex flex-wrap gap-0.5">
+                            {user.deleted_at && (
+                              <Badge
+                                severity="error"
+                                small
+                              >
+                                Supprimé
+                              </Badge>
+                            )}
                             <Badge
                               severity={user.activated ? 'success' : 'error'}
                               small
