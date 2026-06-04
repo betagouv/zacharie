@@ -28,6 +28,7 @@ import { useFeiSteps, computeFeiSteps } from '@app/utils/fei-steps';
 import { useIsCircuitCourt } from '@app/utils/circuit-court';
 import type { FeiWithIntermediaires } from '@api/src/types/fei';
 import { useEntitiesIdsWorkingDirectlyFor } from '@app/utils/get-entity-relations';
+import { getSaisonStartYear, getSaisonLabel, isDateInSaison } from '@app/utils/get-saison';
 import { SegmentedControl } from '@codegouvfr/react-dsfr/SegmentedControl';
 import DropDownMenu from '@app/components/DropDownMenu';
 import PendingModifRequestsAlertModal from '@app/components/PendingModifRequestsAlertModal';
@@ -257,6 +258,20 @@ export default function ChasseurFiches() {
     );
   }, [filterPremierDetenteurs]);
 
+  const [filterSaisons, setFilterSaisons] = useState<number[]>(() => {
+    try {
+      const saved = localStorage.getItem('chasseur-fiches-filter-saisons');
+      if (saved) return JSON.parse(saved) as number[];
+    } catch {
+      // ignore
+    }
+    return [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('chasseur-fiches-filter-saisons', JSON.stringify(filterSaisons));
+  }, [filterSaisons]);
+
   const [filterDateFrom, setFilterDateFrom] = useState<string>(
     () => localStorage.getItem('chasseur-fiches-filter-date-from') || ''
   );
@@ -351,6 +366,16 @@ export default function ChasseurFiches() {
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [allFeis]);
 
+  const saisonOptions = useMemo(() => {
+    const years = new Set<number>();
+    for (const fei of allFeis) {
+      if (fei.date_mise_a_mort) years.add(getSaisonStartYear(fei.date_mise_a_mort));
+    }
+    return Array.from(years)
+      .sort((a, b) => b - a)
+      .map((year) => ({ year, label: getSaisonLabel(year) }));
+  }, [allFeis]);
+
   const filteredFeis = useMemo(() => {
     let feis = allFeis;
     if (searchQuery.trim()) {
@@ -393,6 +418,12 @@ export default function ChasseurFiches() {
           filterCollecteurs.includes(fei.latest_intermediaire_entity_id ?? '')
       );
     }
+    if (filterSaisons.length > 0) {
+      feis = feis.filter(
+        (fei) =>
+          !!fei.date_mise_a_mort && filterSaisons.some((year) => isDateInSaison(fei.date_mise_a_mort!, year))
+      );
+    }
     if (filterDateFrom || filterDateTo) {
       feis = feis.filter((fei) => {
         if (!fei.date_mise_a_mort) return false;
@@ -410,6 +441,7 @@ export default function ChasseurFiches() {
     filterPremierDetenteurs,
     filterCCGs,
     filterCollecteurs,
+    filterSaisons,
     filterDateFrom,
     filterDateTo,
     carcassesIntermediaireById,
@@ -430,6 +462,7 @@ export default function ChasseurFiches() {
     filterPremierDetenteurs.length > 0 ||
     filterCCGs.length > 0 ||
     filterCollecteurs.length > 0 ||
+    filterSaisons.length > 0 ||
     filterDateFrom.length > 0 ||
     filterDateTo.length > 0 ||
     searchQuery.trim().length > 0;
@@ -439,6 +472,7 @@ export default function ChasseurFiches() {
     setFilterPremierDetenteurs([]);
     setFilterCCGs([]);
     setFilterCollecteurs([]);
+    setFilterSaisons([]);
     setFilterDateFrom('');
     setFilterDateTo('');
     setSearchQuery('');
@@ -514,6 +548,43 @@ export default function ChasseurFiches() {
           ))}
         </div>
       </CollapsibleSection>
+
+      {/* Filtre Saison */}
+      {saisonOptions.length > 0 && (
+        <CollapsibleSection
+          title="Saison"
+          badge={
+            filterSaisons.length > 0 ? (
+              <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">
+                {filterSaisons.length}
+              </span>
+            ) : undefined
+          }
+        >
+          <div className="flex max-h-40 flex-col gap-1 overflow-y-auto">
+            {saisonOptions.map((option) => (
+              <label
+                key={option.year}
+                className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-gray-50"
+              >
+                <input
+                  type="checkbox"
+                  checked={filterSaisons.includes(option.year)}
+                  className="checked:accent-action-high-blue-france h-4 w-4 shrink-0"
+                  onChange={() => {
+                    if (filterSaisons.includes(option.year)) {
+                      setFilterSaisons(filterSaisons.filter((v) => v !== option.year));
+                    } else {
+                      setFilterSaisons([...filterSaisons, option.year]);
+                    }
+                  }}
+                />
+                <span className="truncate text-sm">{option.label}</span>
+              </label>
+            ))}
+          </div>
+        </CollapsibleSection>
+      )}
 
       {/* Filtre Date de tir */}
       <CollapsibleSection
@@ -706,6 +777,7 @@ export default function ChasseurFiches() {
                   filterPremierDetenteurs.length +
                   filterCCGs.length +
                   filterCollecteurs.length +
+                  filterSaisons.length +
                   (filterDateFrom || filterDateTo ? 1 : 0)}
               </span>
             )}
