@@ -181,6 +181,24 @@ export async function getUsersWorkingForEntity(entityId: string): Promise<Trichi
 }
 
 /**
+ * Vérifie que l'utilisateur travaille pour l'entité (membre ou admin).
+ * À appeler systématiquement quand un entity_id arrive du client
+ * (preleve_par_entity_id, cree_par_entity_id, expediteur_entity_id...).
+ */
+export async function userBelongsToEntity(userId: string, entityId: string): Promise<boolean> {
+  const relation = await prisma.entityAndUserRelations.findFirst({
+    where: {
+      owner_id: userId,
+      entity_id: entityId,
+      relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+      status: { in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER] },
+      deleted_at: null,
+    },
+  });
+  return !!relation;
+}
+
+/**
  * Persiste une TrichineNotification par utilisateur + push/email immédiat.
  * `notificationLogAction` doit être unique par évènement (la table notificationLog
  * déduplique par user + action).

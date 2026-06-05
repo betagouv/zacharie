@@ -25,6 +25,7 @@ import {
   TRICHINE_MASSE_DEFAUT_COMPLEMENTAIRE,
   TRICHINE_MASSE_DEFAUT_CONFIRMATION,
   TRICHINE_MASSE_DEFAUT_INITIAL,
+  userBelongsToEntity,
   validatePoolComposition,
   withReferenceRetry,
 } from '~/utils/trichine';
@@ -68,6 +69,15 @@ const masseDefautParType: Record<TrichineType, number> = {
   [TrichineType.CONFIRMATION]: TRICHINE_MASSE_DEFAUT_CONFIRMATION,
 };
 
+// Circuit agréé : un SVI n'agit que sur les carcasses assignées à son service d'inspection
+async function sviHasAccessToCarcasse(
+  userId: string,
+  carcasse: { svi_entity_id: string | null }
+): Promise<boolean> {
+  if (!carcasse.svi_entity_id) return false;
+  return userBelongsToEntity(userId, carcasse.svi_entity_id);
+}
+
 /* -------------------------------------------------------------------------- */
 /* Échantillons                                                                */
 /* -------------------------------------------------------------------------- */
@@ -105,9 +115,16 @@ router.post(
     if (carcasse.trichine_retire_de_fei_at) {
       return sendError(res, 400, 'Cette carcasse a été retirée de la FEI');
     }
-    // Circuit court : seul le 1er détenteur de la carcasse prélève
-    if (!req.user.roles.includes(UserRoles.SVI) && carcasse.premier_detenteur_user_id !== req.user.id) {
+    // Circuit court : seul le 1er détenteur prélève ; circuit agréé : le SVI assigné à la carcasse
+    if (req.user.roles.includes(UserRoles.SVI)) {
+      if (!(await sviHasAccessToCarcasse(req.user.id, carcasse))) {
+        return sendError(res, 403, "Cette carcasse n'est pas assignée à votre service d'inspection");
+      }
+    } else if (carcasse.premier_detenteur_user_id !== req.user.id) {
       return sendError(res, 403, "Vous n'êtes pas le premier détenteur de cette carcasse");
+    }
+    if (body.preleve_par_entity_id && !(await userBelongsToEntity(req.user.id, body.preleve_par_entity_id))) {
+      return sendError(res, 403, "Vous ne faites pas partie de l'entité de prélèvement indiquée");
     }
 
     const type = body.type ?? TrichineType.INITIAL;
@@ -207,6 +224,9 @@ router.post(
       if (echantillons.some((e) => e.Carcasse.premier_detenteur_user_id !== req.user.id)) {
         return sendError(res, 403, 'Toutes les carcasses du pool doivent être à votre nom');
       }
+    }
+    if (body.cree_par_entity_id && !(await userBelongsToEntity(req.user.id, body.cree_par_entity_id))) {
+      return sendError(res, 403, "Vous ne faites pas partie de l'entité indiquée");
     }
 
     let parent: {
@@ -409,6 +429,9 @@ router.post(
     if (!destinataire || destinataire.deleted_at || destinataire.type !== EntityTypes.LABORATOIRE) {
       return sendError(res, 400, "Le destinataire n'est pas un laboratoire");
     }
+    if (body.expediteur_entity_id && !(await userBelongsToEntity(req.user.id, body.expediteur_entity_id))) {
+      return sendError(res, 403, "Vous ne faites pas partie de l'entité expéditrice indiquée");
+    }
 
     const pools = await prisma.trichinePool.findMany({
       where: { id: { in: body.pool_ids } },
@@ -581,6 +604,7 @@ router.get(
         zacharie_carcasse_id: true,
         premier_detenteur_user_id: true,
         examinateur_initial_user_id: true,
+        svi_entity_id: true,
         trichine_action_requise: true,
         trichine_retire_de_fei_at: true,
         trichine_retire_de_fei_motif: true,
@@ -598,10 +622,13 @@ router.get(
     if (!carcasse) {
       return sendError(res, 404, 'Carcasse introuvable');
     }
-    const isOwner =
+    let canView =
       carcasse.premier_detenteur_user_id === req.user.id ||
       carcasse.examinateur_initial_user_id === req.user.id;
-    if (!req.user.roles.includes(UserRoles.SVI) && !isOwner) {
+    if (!canView && req.user.roles.includes(UserRoles.SVI)) {
+      canView = await sviHasAccessToCarcasse(req.user.id, carcasse);
+    }
+    if (!canView) {
       return sendError(res, 403, "Vous n'avez pas accès à cette carcasse");
     }
     const historique = await prisma.trichineHistoriqueStatut.findMany({

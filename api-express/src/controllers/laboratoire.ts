@@ -169,6 +169,19 @@ async function findPoolForLabo(poolId: string, context: LaboContext) {
   return { pool, ftp: link.TrichineFTP };
 }
 
+/**
+ * Recompute le pool + TOUTES les FTP qui le référencent : un pool peut être dans
+ * deux FTP successives (émetteur → LVD puis LVD → LNR), et la FTP d'origine doit
+ * aussi se clôturer quand le LNR rend son résultat.
+ */
+async function recomputePoolAndLinkedFTPs(poolId: string, userId: string) {
+  await recomputePoolTrichine(poolId, userId);
+  const links = await prisma.trichinePoolFTP.findMany({ where: { pool_id: poolId } });
+  for (const link of links) {
+    await recomputeFTPTrichine(link.ftp_id, userId);
+  }
+}
+
 /* -------------------------------------------------------------------------- */
 /* FTP reçues                                                                  */
 /* -------------------------------------------------------------------------- */
@@ -361,8 +374,7 @@ router.post(
       userId: req.user.id,
       commentaire: 'resultat_analyse',
     });
-    await recomputePoolTrichine(pool.id, req.user.id);
-    await recomputeFTPTrichine(ftp.id, req.user.id);
+    await recomputePoolAndLinkedFTPs(pool.id, req.user.id);
 
     const emitterUsers = await getFtpEmitterUsers(ftp);
     const carcasses = pool.TrichineEchantillons.map((echantillon) => echantillon.Carcasse);
@@ -415,6 +427,8 @@ router.post(
           })
         );
         await prisma.trichinePoolFTP.create({ data: { pool_id: pool.id, ftp_id: lnrFtp.id } });
+        // Statut analytique de la FTP de confirmation (EN_COURS_ANALYSES)
+        await recomputeFTPTrichine(lnrFtp.id, req.user.id);
         await logTrichineStatutChange({
           objetType: TrichineObjetType.FTP,
           objetId: lnrFtp.id,
@@ -520,8 +534,7 @@ router.post(
       userId: req.user.id,
       commentaire: `Refus : ${bodyResult.data.raison_refus}`,
     });
-    await recomputePoolTrichine(pool.id, req.user.id);
-    await recomputeFTPTrichine(ftp.id, req.user.id);
+    await recomputePoolAndLinkedFTPs(pool.id, req.user.id);
 
     const emitterUsers = await getFtpEmitterUsers(ftp);
     await notifyTrichineUsers({
