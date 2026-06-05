@@ -37,6 +37,8 @@ import statsRouter from './controllers/stats.ts';
 import v1Router from './controllers/v1/index.ts';
 import apiKeyApprovalRouter from './controllers/api-key-approval.ts';
 import quizResultRouter from './controllers/quiz-result.ts';
+import trichineRouter from './controllers/trichine.ts';
+import laboratoireRouter from './controllers/laboratoire.ts';
 import './cronjobs/index.ts';
 import './scripts/migrations.ts';
 
@@ -223,6 +225,8 @@ app.use('/user-entity', passport.initialize(), userEntityRouter);
 app.use('/admin', passport.initialize(), adminRouter);
 app.use('/entite', passport.initialize(), entiteRouter);
 app.use('/carcasse', passport.initialize(), feiCarcasseRouter);
+app.use('/trichine', passport.initialize(), trichineRouter);
+app.use('/laboratoire', passport.initialize(), laboratoireRouter);
 app.use('/certificat', passport.initialize(), certificatsRouter);
 app.use('/log', passport.initialize(), logRouter);
 app.use('/sync', passport.initialize(), syncRouter);

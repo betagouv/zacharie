@@ -9,8 +9,17 @@ import {
   EntityRelationStatus,
   EntityRelationType,
   Prisma,
+  TrichineResultatAnalyse,
   UserRoles,
 } from '@prisma/client';
+import {
+  getCarcassesStakeholderUsers,
+  logTrichineStatutChange,
+  notifyTrichineUsers,
+  TrichineNotificationType,
+  TrichineObjetType,
+} from '~/utils/trichine';
+import { recomputeCarcasseTrichine } from '~/utils/trichine-status';
 import { RequestWithUser } from '~/types/request';
 import z from 'zod';
 import { capture } from '~/third-parties/sentry';
@@ -206,6 +215,101 @@ router.get(
       },
       error: '',
     });
+  })
+);
+
+const retirerDeFeiSchema = z.object({
+  motif: z.string().min(1),
+});
+
+// Résultats trichine autorisant le retrait d'une carcasse de sa FEI (circuit court, cf doc/trichine.md §10.2)
+const resultatsAutorisantRetrait: Array<TrichineResultatAnalyse | null> = [
+  TrichineResultatAnalyse.POSITIF,
+  TrichineResultatAnalyse.NON_NEGATIF,
+  TrichineResultatAnalyse.PRESENCE_PARASITE_NON_IDENTIFIE,
+];
+
+router.post(
+  '/:zacharie_carcasse_id/retirer-de-fei',
+  passport.authenticate('user', { session: false }),
+  catchErrors(async (req: RequestWithUser, res: express.Response) => {
+    if (!req.user.activated) {
+      res.status(400).send({ ok: false, data: null, error: "Le compte n'est pas activé" });
+      return;
+    }
+    const bodyResult = retirerDeFeiSchema.safeParse(req.body);
+    if (!bodyResult.success) {
+      res.status(400).send({ ok: false, data: null, error: 'Le motif du retrait est obligatoire' });
+      return;
+    }
+    const carcasse = await prisma.carcasse.findUnique({
+      where: { zacharie_carcasse_id: req.params.zacharie_carcasse_id },
+      include: {
+        TrichineEchantillons: { where: { deleted_at: null }, include: { TrichinePool: true } },
+      },
+    });
+    if (!carcasse || carcasse.deleted_at) {
+      res.status(404).send({ ok: false, data: null, error: 'Carcasse introuvable' });
+      return;
+    }
+    // Circuit court : seul le 1er détenteur retire sa carcasse de la FEI
+    if (carcasse.premier_detenteur_user_id !== req.user.id) {
+      res
+        .status(403)
+        .send({ ok: false, data: null, error: "Vous n'êtes pas le premier détenteur de cette carcasse" });
+      return;
+    }
+    if (carcasse.trichine_retire_de_fei_at) {
+      res.status(400).send({ ok: false, data: null, error: 'Cette carcasse a déjà été retirée de la FEI' });
+      return;
+    }
+    const hasUnfavorableResult = carcasse.TrichineEchantillons.some(
+      (echantillon) =>
+        echantillon.TrichinePool &&
+        !echantillon.TrichinePool.deleted_at &&
+        resultatsAutorisantRetrait.includes(echantillon.TrichinePool.resultat_analyse)
+    );
+    if (!hasUnfavorableResult) {
+      res.status(400).send({
+        ok: false,
+        data: null,
+        error: 'Le retrait nécessite un résultat trichine positif, non négatif ou parasite non identifié',
+      });
+      return;
+    }
+
+    const updatedCarcasse = await prisma.carcasse.update({
+      where: { zacharie_carcasse_id: carcasse.zacharie_carcasse_id },
+      data: {
+        trichine_retire_de_fei_at: new Date(),
+        trichine_retire_de_fei_motif: bodyResult.data.motif,
+        trichine_retire_de_fei_user_id: req.user.id,
+      },
+    });
+    await logTrichineStatutChange({
+      objetType: TrichineObjetType.CARCASSE,
+      objetId: carcasse.zacharie_carcasse_id,
+      ancienStatut: carcasse.trichine_action_requise,
+      nouveauStatut: 'RETIREE_DE_FEI',
+      userId: req.user.id,
+      commentaire: bodyResult.data.motif,
+    });
+    await recomputeCarcasseTrichine(carcasse.zacharie_carcasse_id, req.user.id);
+
+    // Notifier les destinataires actuels si la carcasse a déjà été cédée
+    const stakeholders = await getCarcassesStakeholderUsers([carcasse]);
+    await notifyTrichineUsers({
+      users: stakeholders,
+      type: TrichineNotificationType.CHANGEMENT_STATUT,
+      objetType: TrichineObjetType.CARCASSE,
+      objetId: carcasse.zacharie_carcasse_id,
+      title: `Carcasse ${carcasse.numero_bracelet} retirée de sa fiche`,
+      message: `Suite au résultat d'analyse trichine, la carcasse ${carcasse.numero_bracelet} a été retirée de sa fiche par le premier détenteur. Elle est impropre à la consommation et ne peut plus être commercialisée. Motif : ${bodyResult.data.motif}`,
+      notificationLogAction: `TRICHINE_RETRAIT_FEI_${carcasse.zacharie_carcasse_id}`,
+      excludeUserIds: [req.user.id],
+    });
+
+    res.status(200).send({ ok: true, data: { carcasse: updatedCarcasse }, error: '' });
   })
 );
 
