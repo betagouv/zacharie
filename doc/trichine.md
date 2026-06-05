@@ -4,6 +4,7 @@
 > **Dernière maj** : 2026-06-02
 > **Owner** : Tangi Mendès
 > **Sources** : spec métier V2 (parcours utilisateurs) + schéma de base de données associé
+> **Suivi d'implémentation** : [trichine-todo.md](./trichine-todo.md) — état des phases, décisions prises, reste à faire
 
 ---
 
@@ -830,7 +831,7 @@ Intégration dans `api-express/src/utils/carcasse-access.ts` + `fei-access.ts` (
 
 ## 13. Roadmap d'implémentation (post-validation spec)
 
-Découpe en PRs distinctes.
+Découpe en PRs distinctes. **État d'avancement tenu à jour dans [trichine-todo.md](./trichine-todo.md).**
 
 | Phase                                         | Livrable                                                                                                                                                                                                                      | Dépendances                                |
 | --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
