@@ -52,6 +52,7 @@ const initialData: State = {
     inc_certificat: 0,
     inc_decision: 0,
     code_etbt_certificat: null,
+    is_lnr: false,
   },
   dedicatedApiKey: null,
   canTakeFichesForEntity: [],
