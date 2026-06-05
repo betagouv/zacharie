@@ -71,6 +71,7 @@ zacharie/
 
 Scoped instructions (read when working in these areas):
 
+- Backend (email inventory upkeep) → @api-express/CLAUDE.md
 - Frontend (local-first sync, disconnect flow) → @app-local-first-react-router/CLAUDE.md
 - E2E tests (Playwright conventions) → @e2e/CLAUDE.md
 
