@@ -36,6 +36,7 @@ import RouterCircuitCourt from './routes/circuit-court/circuit-court-router';
 import RouterFdc from './routes/fdc/fdc-router';
 import RouterFrc from './routes/frc/frc-router';
 import RouterFnc from './routes/fnc/fnc-router';
+import RouterLaboratoire from './routes/laboratoire/laboratoire-router';
 import useUser from './zustand/user';
 import { getUserOnboardingRoute } from './utils/user-onboarded.client';
 
@@ -151,6 +152,7 @@ function App() {
           {RouterFdc()}
           {RouterFrc()}
           {RouterFnc()}
+          {RouterLaboratoire()}
           {RouterAdmin()}
           <Route
             path="contact"

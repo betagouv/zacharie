@@ -35,6 +35,8 @@ import {
 import type { UserForFei } from '@api/src/types/user';
 import type { EntityWithUserRelation } from '@api/src/types/entity';
 import { loadData, useLoaderEffect } from '@app/utils/load-data';
+import TrichineSection from '@app/components/TrichineSection';
+import { TRICHINE_FEATURE_ENABLED } from '@app/utils/trichine';
 
 const gibierSelect = {
   grand: grandGibier.especes,
@@ -698,6 +700,10 @@ function ExaminateurCarcasseDetailLoaded() {
               decisionLabel={cardDisplay.statusLabel ?? 'Décision rendue'}
               accentColor={cardDisplay.accentColor}
             />
+
+            {TRICHINE_FEATURE_ENABLED && carcasse.espece === 'Sanglier' && (
+              <TrichineSection carcasse={carcasse} />
+            )}
 
             <TraceabiliteTimeline events={timelineEvents} />
 
