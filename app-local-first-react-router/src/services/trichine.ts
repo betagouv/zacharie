@@ -25,6 +25,7 @@ export type TrichineCarcasseProjection = Pick<
 
 export type TrichineEchantillonWithCarcasse = TrichineEchantillon & {
   Carcasse: TrichineCarcasseProjection;
+  TrichinePool: { reference_pool: string } | null;
 };
 
 export type TrichinePoolFTPWithFTP = TrichinePoolFTP & { TrichineFTP: TrichineFTP };

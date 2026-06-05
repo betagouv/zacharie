@@ -14,7 +14,7 @@
 | **P5 — Frontend 1er détenteur**           | ✅ Fait                                 | Sans téléchargement PDF (attend P4) — voir détail ci-dessous                                  |
 | **P6 — Frontend LVD**                     | ✅ Fait                                 | Sans upload PDF/photos (attend infra stockage P4)                                             |
 | **P7 — Frontend LNR**                     | ✅ Fait                                 | Mêmes écrans que LVD, résultats de confirmation + parasite                                    |
-| P8 — Frontend SVI agréé                   | ⬜ À faire                              | Dépend P3                                                                                     |
+| **P8 — Frontend SVI agréé**               | ✅ Fait                                 | Blocage backend acceptation + cronjob auto-clôture : à gater au lancement                     |
 | P9 — Frontend destinataires circuit court | ⬜ À faire                              | Dépend P3                                                                                     |
 | P10 — Email conso final cuisson           | ⬜ À faire                              | Dépend P3                                                                                     |
 | P11 — Workflow analyses 2e intention      | 🔶 Backend P3 + renoncement frontend P5 | Reste le frontend création pool fille / petite-fille                                          |
@@ -92,6 +92,31 @@ laboratoire actif en production). Les endpoints backend restent déployés (auth
 - Saisie des résultats volontairement bloquée tant que la réception n'est pas confirmée (le backend, lui, l'autorise — cf reste à faire P3)
 - Gestion des utilisateurs du laboratoire → P12 (invitation par admin)
 - Refus en masse de tous les pools d'une FTP : non fait (refus pool par pool)
+
+## P8 — Frontend SVI agréé (fait le 2026-06-05)
+
+### Livré (branche `feat--trichine-p5`)
+
+- Pages trichine **partagées** : déplacées vers `src/routes/trichine/` (tableau, nouveau pool, nouvelle FTP, détail FTP), liens basePath-aware (`useTrichineBasePath`), montées sous `/app/chasseur/trichine/*` ET `/app/svi/trichine/*` (feature flag)
+- `TrichineSection` généralisée (`viewRole: 'chasseur' | 'svi'`) : côté SVI, prélèvement autorisé mais pas de retrait de FEI ni de renoncement (décision via IPM) ; insérée dans l'inspection carcasse SVI (flag + sanglier)
+- `useTrichineResultat` : résumé des résultats trichine d'une carcasse pour conditionner l'IPM
+- **IPM1** : décision « Acceptée » désactivée (avec alerte explicative) pour un sanglier sans résultat trichine négatif — flag uniquement
+- **IPM2** : alerte de suggestion selon résultat LNR (POSITIF → saisie totale ; NON_NEGATIF → saisie totale ou traitement assainissant ; parasite non identifié → cas par cas)
+- Item « Trichine » dans la nav SVI (flag)
+
+### Redesign listes (2026-06-05)
+
+Les listes échantillons / pools / FTP (`/trichine`, chasseur + SVI) et la liste FTP labo sont passées
+de cartes-badges à des **tables** (`TableFilterable`, le composant des registres carcasses) : colonnes
+nommées, tri par colonne, recherche (insensible casse/accents), filtre statut. Fallback cartes
+étiquetées sur mobile. Helpers purs `filterTrichineRows` / `sortTrichineRows` testés.
+`GET /trichine/echantillons` renvoie désormais la référence du pool de chaque échantillon.
+
+### Notes P8 / reste à gater au lancement
+
+- ⚠️ **Le blocage d'acceptation est frontend only** : la validation backend (« SVI tente d'accepter un sanglier sans résultat NEGATIF → bloqué », §9) n'existe pas encore — à implémenter derrière un flag serveur au lancement
+- ⚠️ **Auto-clôture 10 jours intacte** (cronjob + `svi-fei.tsx`) : un sanglier sans analyse sera toujours auto-accepté à J+10 — la désactivation pour les sangliers (spec §6.2) est à gater au lancement
+- Le mix de 1ers détenteurs dans un pool SVI est déjà permis côté backend (P3)
 
 ### Reste à faire (suivi revue P3)
 

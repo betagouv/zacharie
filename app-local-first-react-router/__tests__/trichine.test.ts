@@ -1,10 +1,12 @@
 import { describe, test, expect } from 'vitest';
 import { TrichineResultatAnalyse, TrichineStatutAnalyse, TrichineStatutLogistiqueFTP } from '@prisma/client';
 import {
+  filterTrichineRows,
   filtreLaboFTP,
   isResultatDefavorable,
   poolSansFTP,
   resultatBadgeSeverity,
+  sortTrichineRows,
   statutUtilisateurFTP,
   statutUtilisateurPool,
 } from '@app/utils/trichine';
@@ -147,6 +149,67 @@ describe('filtreLaboFTP', () => {
     expect(
       filtreLaboFTP(makeLaboFtp(TrichineStatutLogistiqueFTP.TRAITEE, [TrichineResultatAnalyse.NEGATIF]))
     ).toBe('cloturees');
+  });
+});
+
+describe('filterTrichineRows', () => {
+  const rows = [
+    { id: '1', texte: 'E-26-000001 Bracelet-12' },
+    { id: '2', texte: 'E-26-000002 Préselection' },
+    { id: '3', texte: 'P-26-000045 Labo Eurofins' },
+  ];
+  const getText = (row: (typeof rows)[number]) => row.texte;
+
+  test('requête vide : tout passe', () => {
+    expect(filterTrichineRows(rows, '', getText)).toHaveLength(3);
+    expect(filterTrichineRows(rows, '   ', getText)).toHaveLength(3);
+  });
+  test('insensible à la casse', () => {
+    expect(filterTrichineRows(rows, 'bracelet-12', getText).map((r) => r.id)).toEqual(['1']);
+  });
+  test('insensible aux accents (requête et ligne)', () => {
+    expect(filterTrichineRows(rows, 'preselection', getText).map((r) => r.id)).toEqual(['2']);
+    expect(filterTrichineRows(rows, 'préselection', getText).map((r) => r.id)).toEqual(['2']);
+  });
+  test('cherche sur le texte concaténé multi-champs', () => {
+    expect(filterTrichineRows(rows, 'eurofins', getText).map((r) => r.id)).toEqual(['3']);
+  });
+});
+
+describe('sortTrichineRows', () => {
+  const rows = [
+    { ref: 'P-26-000003', date: '2026-06-03' as string | null, nb: 2 },
+    { ref: 'P-26-000001', date: null as string | null, nb: 10 },
+    { ref: 'P-26-000002', date: '2026-06-01' as string | null, nb: 5 },
+  ];
+
+  test('tri string ASC/DESC', () => {
+    expect(sortTrichineRows(rows, 'ref', 'ASC').map((r) => r.ref)).toEqual([
+      'P-26-000001',
+      'P-26-000002',
+      'P-26-000003',
+    ]);
+    expect(sortTrichineRows(rows, 'ref', 'DESC')[0].ref).toBe('P-26-000003');
+  });
+  test('tri date ISO string, null en dernier quel que soit l’ordre', () => {
+    expect(sortTrichineRows(rows, 'date', 'ASC').map((r) => r.date)).toEqual([
+      '2026-06-01',
+      '2026-06-03',
+      null,
+    ]);
+    expect(sortTrichineRows(rows, 'date', 'DESC').map((r) => r.date)).toEqual([
+      '2026-06-03',
+      '2026-06-01',
+      null,
+    ]);
+  });
+  test('tri numérique', () => {
+    expect(sortTrichineRows(rows, 'nb', 'ASC').map((r) => r.nb)).toEqual([2, 5, 10]);
+  });
+  test('ne mute pas le tableau d’origine', () => {
+    const copy = [...rows];
+    sortTrichineRows(rows, 'ref', 'ASC');
+    expect(rows).toEqual(copy);
   });
 });
 

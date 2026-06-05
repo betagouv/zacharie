@@ -18,10 +18,10 @@ import ChasseurSviInspectionCarcasseLoader from './chasseur-svi-inspection-carca
 import ChasseurDemandesDeModification from './chasseur-demandes-de-modification';
 import ChasseurDemandeDeModificationDetail from './chasseur-demande-de-modification-detail';
 import { TRICHINE_FEATURE_ENABLED } from '@app/utils/trichine';
-import ChasseurTrichine from './trichine/chasseur-trichine';
-import ChasseurTrichineNouveauPool from './trichine/chasseur-trichine-nouveau-pool';
-import ChasseurTrichineNouvelleFTP from './trichine/chasseur-trichine-nouvelle-ftp';
-import ChasseurTrichineFTP from './trichine/chasseur-trichine-ftp';
+import TrichineTableau from '@app/routes/trichine/trichine-tableau';
+import TrichineNouveauPool from '@app/routes/trichine/trichine-nouveau-pool';
+import TrichineNouvelleFTP from '@app/routes/trichine/trichine-nouvelle-ftp';
+import TrichineFTPDetail from '@app/routes/trichine/trichine-ftp-detail';
 
 export default function RouterChasseur() {
   return (
@@ -135,19 +135,19 @@ export default function RouterChasseur() {
         <>
           <Route
             path="trichine"
-            element={<ChasseurTrichine />}
+            element={<TrichineTableau />}
           />
           <Route
             path="trichine/nouveau-pool"
-            element={<ChasseurTrichineNouveauPool />}
+            element={<TrichineNouveauPool />}
           />
           <Route
             path="trichine/nouvelle-ftp"
-            element={<ChasseurTrichineNouvelleFTP />}
+            element={<TrichineNouvelleFTP />}
           />
           <Route
             path="trichine/ftp/:ftp_id"
-            element={<ChasseurTrichineFTP />}
+            element={<TrichineFTPDetail />}
           />
         </>
       )}

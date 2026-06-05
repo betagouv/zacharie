@@ -23,6 +23,8 @@ import {
 import { loadData, useLoaderEffect } from '@app/utils/load-data';
 import { getPendingModifRequest } from '@app/utils/modif-requests';
 import { getTransmissionLinkFromCarcasse } from '@app/utils/get-transmission-id';
+import TrichineSection from '@app/components/TrichineSection';
+import { TRICHINE_FEATURE_ENABLED } from '@app/utils/trichine';
 
 export default function SviInspectionCarcasseLoader() {
   const params = useParams();
@@ -179,6 +181,13 @@ function SviInspectionCarcasse() {
               key={dayjs(carcasse.updated_at).toISOString()}
             />
           </Section>
+          {/* Circuit agréé : prélèvement trichine par le SVI (invisible sans le feature flag) */}
+          {TRICHINE_FEATURE_ENABLED && carcasse.espece === 'Sanglier' && (
+            <TrichineSection
+              carcasse={carcasse}
+              viewRole="svi"
+            />
+          )}
           {(canEdit || pendingModifRequest) && (
             <>
               <Section

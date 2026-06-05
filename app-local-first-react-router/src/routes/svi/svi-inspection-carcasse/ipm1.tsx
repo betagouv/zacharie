@@ -27,6 +27,8 @@ import { createHistoryInput } from '@app/utils/create-history-entry';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import InputMultiSelect from '@app/components/InputMultiSelect';
 import { useGetTransmissionFromCarcasse } from '@app/utils/get-transmissions-sorted';
+import { TRICHINE_FEATURE_ENABLED } from '@app/utils/trichine';
+import { useTrichineResultat } from '@app/utils/trichine-hooks';
 
 const lesionsOuMotifsConsigneModal = createModal({
   isOpenedByDefault: false,
@@ -55,6 +57,11 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
         carcasse.premier_detenteur_prochain_detenteur_id_cache
     )
     .map((c) => c.zacharie_carcasse_id);
+
+  // Circuit agréé : pas d'acceptation d'un sanglier sans résultat trichine négatif (cf doc/trichine.md §6.2)
+  const trichineConcernee = TRICHINE_FEATURE_ENABLED && carcasse.espece === 'Sanglier';
+  const trichine = useTrichineResultat(carcasse.zacharie_carcasse_id, trichineConcernee);
+  const trichineBloqueAcceptation = trichineConcernee && trichine.hasTriedLoading && !trichine.hasNegatif;
 
   const [sviIpm1PresenteeInspection, setSviIpm1PresenteeInspection] = useState(
     carcasse.svi_ipm1_presentee_inspection ?? true
@@ -421,33 +428,46 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
         }}
       />
       {sviIpm1PresenteeInspection && (
-        <RadioButtons
-          legend="Décision IPM1 *"
-          orientation="horizontal"
-          options={[
-            {
-              nativeInputProps: {
-                required: true,
-                checked: sviIpm1Decision === IPM1Decision.MISE_EN_CONSIGNE,
-                onChange: () => {
-                  setSviIpm1Decision(IPM1Decision.MISE_EN_CONSIGNE);
+        <>
+          {trichineBloqueAcceptation && (
+            <Alert
+              severity="warning"
+              small
+              className="fr-mb-2w"
+              description="Recherche trichine obligatoire avant acceptation : aucun résultat négatif n'est associé à cette carcasse de sanglier. Réalisez un prélèvement (section « Recherche de trichine ») ou attendez le résultat du laboratoire."
+            />
+          )}
+          <RadioButtons
+            legend="Décision IPM1 *"
+            orientation="horizontal"
+            options={[
+              {
+                nativeInputProps: {
+                  required: true,
+                  checked: sviIpm1Decision === IPM1Decision.MISE_EN_CONSIGNE,
+                  onChange: () => {
+                    setSviIpm1Decision(IPM1Decision.MISE_EN_CONSIGNE);
+                  },
                 },
+                label: 'Mise en consigne',
               },
-              label: 'Mise en consigne',
-            },
-            {
-              hintText: 'Aucune anomalie constatée',
-              nativeInputProps: {
-                required: true,
-                checked: sviIpm1Decision === IPM1Decision.ACCEPTE,
-                onChange: () => {
-                  setSviIpm1Decision(IPM1Decision.ACCEPTE);
+              {
+                hintText: trichineBloqueAcceptation
+                  ? 'Indisponible : recherche trichine sans résultat négatif'
+                  : 'Aucune anomalie constatée',
+                nativeInputProps: {
+                  required: true,
+                  disabled: trichineBloqueAcceptation,
+                  checked: sviIpm1Decision === IPM1Decision.ACCEPTE,
+                  onChange: () => {
+                    setSviIpm1Decision(IPM1Decision.ACCEPTE);
+                  },
                 },
+                label: 'Acceptée',
               },
-              label: 'Acceptée',
-            },
-          ]}
-        />
+            ]}
+          />
+        </>
       )}
       {sviIpm1Decision === IPM1Decision.MISE_EN_CONSIGNE && (
         <>

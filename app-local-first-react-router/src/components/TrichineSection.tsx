@@ -8,8 +8,9 @@ import { Select } from '@codegouvfr/react-dsfr/Select';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import { toast } from 'react-toastify';
 import dayjs from 'dayjs';
-import { Carcasse, TrichineResultatAnalyse, TrichineSitePrelevement } from '@prisma/client';
+import { Carcasse, TrichineResultatAnalyse, TrichineSitePrelevement, UserRoles } from '@prisma/client';
 import useUser from '@app/zustand/user';
+import { useTrichineBasePath } from '@app/utils/trichine-hooks';
 import {
   createTrichineEchantillon,
   getTrichineCarcasse,
@@ -34,12 +35,22 @@ const retraitModal = createModal({ isOpenedByDefault: false, id: 'trichine-retra
 const renoncerModal = createModal({ isOpenedByDefault: false, id: 'trichine-renoncer-modal' });
 
 /**
- * Section trichine de la carte carcasse (sangliers uniquement, cf doc/trichine.md §6.1).
+ * Section trichine de la carte carcasse (sangliers uniquement, cf doc/trichine.md §6.1 et §6.2).
  * Données chargées directement depuis le serveur (pas de local-first : les
  * résultats viennent des laboratoires, le flux nécessite d'être en ligne).
+ *
+ * viewRole 'svi' (circuit agréé) : prélèvement autorisé, mais pas de retrait de
+ * FEI ni de renoncement — la décision passe par l'IPM (SAISIE_TOTALE).
  */
-export default function TrichineSection({ carcasse }: { carcasse: Carcasse }) {
+export default function TrichineSection({
+  carcasse,
+  viewRole = 'chasseur',
+}: {
+  carcasse: Carcasse;
+  viewRole?: 'chasseur' | 'svi';
+}) {
   const user = useUser((state) => state.user)!;
+  const trichineBasePath = useTrichineBasePath();
   const [view, setView] = useState<TrichineCarcasseView | null>(null);
   const [historique, setHistorique] = useState<Array<TrichineHistoriqueStatut>>([]);
   const [hasTriedLoading, setHasTriedLoading] = useState(false);
@@ -90,6 +101,8 @@ export default function TrichineSection({ carcasse }: { carcasse: Carcasse }) {
   }
 
   const isPremierDetenteur = carcasse.premier_detenteur_user_id === user.id;
+  // SVI : prélève sur les carcasses assignées à son service (vérifié côté backend)
+  const canAct = viewRole === 'svi' ? user.roles.includes(UserRoles.SVI) : isPremierDetenteur;
   const retiree = view?.trichine_retire_de_fei_at ?? carcasse.trichine_retire_de_fei_at;
   const actionRequise = view?.trichine_action_requise ?? carcasse.trichine_action_requise;
 
@@ -111,7 +124,11 @@ export default function TrichineSection({ carcasse }: { carcasse: Carcasse }) {
               severity="error"
               className="fr-mb-2w"
               title="Carcasse impropre à la consommation"
-              description={`Résultat d'analyse : ${resultatAnalyseLabels[resultatDefavorable]}. Cette carcasse ne peut plus être cédée, retirez-la de la fiche.`}
+              description={`Résultat d'analyse : ${resultatAnalyseLabels[resultatDefavorable]}. ${
+                viewRole === 'svi'
+                  ? 'Prononcez la décision IPM correspondante (saisie totale).'
+                  : 'Cette carcasse ne peut plus être cédée, retirez-la de la fiche.'
+              }`}
             />
           )}
           {!resultatDefavorable && actionRequise && actionRequise !== 'AUCUNE' && (
@@ -175,7 +192,7 @@ export default function TrichineSection({ carcasse }: { carcasse: Carcasse }) {
         </ul>
       )}
 
-      {isPremierDetenteur && !retiree && (
+      {canAct && !retiree && (
         <div className="flex flex-wrap gap-2">
           <Button
             type="button"
@@ -183,7 +200,8 @@ export default function TrichineSection({ carcasse }: { carcasse: Carcasse }) {
           >
             Réaliser un échantillon
           </Button>
-          {resultatDefavorable && (
+          {/* Retrait de FEI et renoncement : circuit court uniquement (en agréé, décision via IPM) */}
+          {viewRole === 'chasseur' && resultatDefavorable && (
             <Button
               type="button"
               priority="secondary"
@@ -192,7 +210,7 @@ export default function TrichineSection({ carcasse }: { carcasse: Carcasse }) {
               Retirer cette carcasse de la fiche
             </Button>
           )}
-          {poolDouteux && !resultatDefavorable && (
+          {viewRole === 'chasseur' && poolDouteux && !resultatDefavorable && (
             <Button
               type="button"
               priority="secondary"
@@ -210,7 +228,7 @@ export default function TrichineSection({ carcasse }: { carcasse: Carcasse }) {
       {echantillons.length > 0 && (
         <p className="fr-text--sm fr-mt-2w fr-mb-0">
           <Link
-            to="/app/chasseur/trichine"
+            to={trichineBasePath}
             className="fr-link"
           >
             Gérer mes pools et mes FTP →

@@ -44,5 +44,6 @@ export function getUserOnboardingRoute(user: User): string {
     }
     return '/app/circuit-court/onboarding/coordonnees';
   }
+  return '/';
   throw new Error('User has no onboarding route');
 }

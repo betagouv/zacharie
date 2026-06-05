@@ -137,6 +137,54 @@ export function poolSansFTP(pool: TrichinePoolPopulated): boolean {
   return !pool.TrichinePoolFTPs.some((link) => !link.TrichineFTP.deleted_at);
 }
 
+/* -------------------------------------------------------------------------- */
+/* Helpers des tables trichine (recherche + tri client-side)                   */
+/* -------------------------------------------------------------------------- */
+
+/** Normalisation pour la recherche : minuscules, sans accents. */
+export function normalizeSearchText(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+}
+
+/** Recherche insensible à la casse et aux accents sur le texte concaténé d'une ligne. */
+export function filterTrichineRows<T>(
+  rows: Array<T>,
+  query: string,
+  getSearchableText: (row: T) => string
+): Array<T> {
+  const normalizedQuery = normalizeSearchText(query.trim());
+  if (!normalizedQuery) return rows;
+  return rows.filter((row) => normalizeSearchText(getSearchableText(row)).includes(normalizedQuery));
+}
+
+export type TrichineSortOrder = 'ASC' | 'DESC';
+
+/**
+ * Tri générique null-safe (les valeurs nulles vont en dernier quel que soit l'ordre).
+ * Les dates ISO en string se trient correctement par comparaison lexicale.
+ */
+export function sortTrichineRows<T>(rows: Array<T>, sortBy: keyof T, sortOrder: TrichineSortOrder): Array<T> {
+  return [...rows].sort((a, b) => {
+    const valueA = a[sortBy] as unknown;
+    const valueB = b[sortBy] as unknown;
+    if (valueA == null && valueB == null) return 0;
+    if (valueA == null) return 1;
+    if (valueB == null) return -1;
+    let result: number;
+    if (valueA instanceof Date || valueB instanceof Date) {
+      result = new Date(valueA as Date).getTime() - new Date(valueB as Date).getTime();
+    } else if (typeof valueA === 'number' && typeof valueB === 'number') {
+      result = valueA - valueB;
+    } else {
+      result = String(valueA).localeCompare(String(valueB), 'fr');
+    }
+    return sortOrder === 'ASC' ? result : -result;
+  });
+}
+
 /**
  * Filtres de la liste des FTP côté laboratoire (§6.3) :
  * à traiter (aucun résultat saisi) / en cours (saisie partielle) / clôturées (TRAITEE).

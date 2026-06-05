@@ -6,6 +6,7 @@ import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Select } from '@codegouvfr/react-dsfr/Select';
 import { toast } from 'react-toastify';
 import dayjs from 'dayjs';
+import { useTrichineBasePath } from '@app/utils/trichine-hooks';
 import {
   createTrichineFTP,
   getTrichineLaboratoires,
@@ -19,8 +20,9 @@ import { poolSansFTP } from '@app/utils/trichine';
  * Création d'une FTP : sélection des pools à envoyer + choix du laboratoire (LVD).
  * La FTP est créée en brouillon puis envoyée depuis son détail.
  */
-export default function ChasseurTrichineNouvelleFTP() {
+export default function TrichineNouvelleFTP() {
   const navigate = useNavigate();
+  const basePath = useTrichineBasePath();
   const [pools, setPools] = useState<Array<TrichinePoolPopulated>>([]);
   const [laboratoires, setLaboratoires] = useState<Array<TrichineLaboratoire>>([]);
   const [selectedPoolIds, setSelectedPoolIds] = useState<Array<string>>([]);
@@ -111,7 +113,7 @@ export default function ChasseurTrichineNouvelleFTP() {
                         .then((response) => {
                           if (response.ok && response.data) {
                             toast.success(`FTP ${response.data.ftp.numero_fiche} créée`);
-                            navigate(`/app/chasseur/trichine/ftp/${response.data.ftp.id}`);
+                            navigate(`${basePath}/ftp/${response.data.ftp.id}`);
                           } else {
                             toast.error(response.error || 'Une erreur est survenue');
                           }

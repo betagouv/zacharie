@@ -5,6 +5,7 @@ import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import { toast } from 'react-toastify';
 import dayjs from 'dayjs';
+import { useTrichineBasePath } from '@app/utils/trichine-hooks';
 import {
   createTrichinePool,
   getTrichineEchantillons,
@@ -16,8 +17,9 @@ import { TRICHINE_POOL_MAX_CARCASSES, TRICHINE_POOL_MAX_MASSE_GRAMMES } from '@a
  * Création d'un pool initial : sélection d'échantillons sans pool
  * (max 19 carcasses / 100 g, cf doc/trichine.md §9).
  */
-export default function ChasseurTrichineNouveauPool() {
+export default function TrichineNouveauPool() {
   const navigate = useNavigate();
+  const basePath = useTrichineBasePath();
   const [echantillons, setEchantillons] = useState<Array<TrichineEchantillonWithCarcasse>>([]);
   const [selectedIds, setSelectedIds] = useState<Array<string>>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -101,7 +103,7 @@ export default function ChasseurTrichineNouveauPool() {
                     .then((response) => {
                       if (response.ok && response.data) {
                         toast.success(`Pool ${response.data.pool.reference_pool} créé`);
-                        navigate('/app/chasseur/trichine?tab=pools');
+                        navigate(`${basePath}?tab=pools`);
                       } else {
                         toast.error(response.error || 'Une erreur est survenue');
                       }

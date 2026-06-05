@@ -6,7 +6,12 @@ import { Button } from '@codegouvfr/react-dsfr/Button';
 import { toast } from 'react-toastify';
 import dayjs from 'dayjs';
 import { TrichineStatutLogistiqueFTP } from '@prisma/client';
-import { envoyerTrichineFTP, getTrichineFTP, type TrichineFTPDetail } from '@app/services/trichine';
+import {
+  envoyerTrichineFTP,
+  getTrichineFTP,
+  type TrichineFTPDetail as TrichineFTPDetailType,
+} from '@app/services/trichine';
+import { useTrichineBasePath } from '@app/utils/trichine-hooks';
 import {
   resultatAnalyseLabels,
   resultatBadgeSeverity,
@@ -19,10 +24,11 @@ import {
  * Détail d'une FTP : composition, statuts, envoi au laboratoire.
  * Le téléchargement du PDF arrive avec la P4 (génération PDF FTP).
  */
-export default function ChasseurTrichineFTP() {
+export default function TrichineFTPDetail() {
   const params = useParams();
   const navigate = useNavigate();
-  const [ftp, setFtp] = useState<TrichineFTPDetail | null>(null);
+  const basePath = useTrichineBasePath();
+  const [ftp, setFtp] = useState<TrichineFTPDetailType | null>(null);
   const [hasTriedLoading, setHasTriedLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -154,7 +160,7 @@ export default function ChasseurTrichineFTP() {
           <Button
             priority="secondary"
             type="button"
-            onClick={() => navigate('/app/chasseur/trichine?tab=ftps')}
+            onClick={() => navigate(`${basePath}?tab=ftps`)}
           >
             Retour à mes FTP
           </Button>

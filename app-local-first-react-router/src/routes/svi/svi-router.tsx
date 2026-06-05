@@ -11,6 +11,11 @@ import SviProfilNotifications from './profil/svi-notifications';
 import SviProfilEntrepriseUtilisateurs from './profil/svi-entreprise-utilisateurs';
 import SviFei from './svi-fei';
 import SviInspectionCarcasseLoader from './svi-carcasse-svi-inspection';
+import { TRICHINE_FEATURE_ENABLED } from '@app/utils/trichine';
+import TrichineTableau from '@app/routes/trichine/trichine-tableau';
+import TrichineNouveauPool from '@app/routes/trichine/trichine-nouveau-pool';
+import TrichineNouvelleFTP from '@app/routes/trichine/trichine-nouvelle-ftp';
+import TrichineFTPDetail from '@app/routes/trichine/trichine-ftp-detail';
 
 export default function RouterSvi() {
   return (
@@ -77,6 +82,27 @@ export default function RouterSvi() {
         path="carcasse-svi/:fei_numero/:zacharie_carcasse_id"
         element={<SviInspectionCarcasseLoader />}
       />
+      {/* Espace trichine SVI (circuit agréé) — invisible tant que le feature flag n'est pas activé */}
+      {TRICHINE_FEATURE_ENABLED && (
+        <>
+          <Route
+            path="trichine"
+            element={<TrichineTableau />}
+          />
+          <Route
+            path="trichine/nouveau-pool"
+            element={<TrichineNouveauPool />}
+          />
+          <Route
+            path="trichine/nouvelle-ftp"
+            element={<TrichineNouvelleFTP />}
+          />
+          <Route
+            path="trichine/ftp/:ftp_id"
+            element={<TrichineFTPDetail />}
+          />
+        </>
+      )}
     </Route>
   );
 }

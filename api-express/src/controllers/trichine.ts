@@ -179,6 +179,7 @@ router.get(
             Fei: { select: { commune_mise_a_mort: true } },
           },
         },
+        TrichinePool: { select: { reference_pool: true } },
       },
       orderBy: { created_at: 'desc' },
     });
