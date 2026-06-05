@@ -235,13 +235,28 @@ export async function notifyTrichineUsers({
         message,
       },
     });
-    await queueSendNotificationToUser({
-      user: user as User,
-      title,
-      body: message,
-      email: message,
-      notificationLogAction,
-    });
+    console.log(
+      '*** NOTIFICATION ***\n',
+      JSON.stringify(
+        {
+          user: user as User,
+          title,
+          body: message,
+          email: message,
+          notificationLogAction,
+        },
+        null,
+        2
+      ),
+      '**********************'
+    );
+    // await queueSendNotificationToUser({
+    //   user: user as User,
+    //   title,
+    //   body: message,
+    //   email: message,
+    //   notificationLogAction,
+    // });
   }
 }
 
