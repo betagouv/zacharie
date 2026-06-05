@@ -443,6 +443,7 @@ function TabPools({ pools }: { pools: Array<TrichinePoolPopulated> }) {
             small: true,
             render: (pool) => pool.TrichineEchantillons.length,
           },
+          // dataKey arbitraire (clé de colonne unique) : la cellule est rendue via render()
           {
             dataKey: 'updated_at',
             title: 'FTP',
@@ -475,6 +476,7 @@ function TabPools({ pools }: { pools: Array<TrichinePoolPopulated> }) {
                 '—'
               ),
           },
+          // dataKey arbitraire (clé de colonne unique) : la cellule est rendue via render()
           {
             dataKey: 'cree_par_user_id',
             title: 'Suivi',
@@ -690,6 +692,7 @@ function TabFTPs({ ftps, onChanged }: { ftps: Array<TrichineFTPPopulated>; onCha
               </Badge>
             ),
           },
+          // dataKey arbitraire (clé de colonne unique) : la cellule est rendue via render()
           {
             dataKey: 'expediteur_user_id',
             title: 'Actions',

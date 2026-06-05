@@ -58,10 +58,11 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
     )
     .map((c) => c.zacharie_carcasse_id);
 
-  // Circuit agréé : pas d'acceptation d'un sanglier sans résultat trichine négatif (cf doc/trichine.md §6.2)
+  // Circuit agréé : pas d'acceptation d'un sanglier sans résultat trichine négatif (cf doc/trichine.md §6.2).
+  // Fail-closed : on bloque aussi tant que les analyses ne sont pas chargées.
   const trichineConcernee = TRICHINE_FEATURE_ENABLED && carcasse.espece === 'Sanglier';
   const trichine = useTrichineResultat(carcasse.zacharie_carcasse_id, trichineConcernee);
-  const trichineBloqueAcceptation = trichineConcernee && trichine.hasTriedLoading && !trichine.hasNegatif;
+  const trichineBloqueAcceptation = trichineConcernee && !trichine.hasNegatif;
 
   const [sviIpm1PresenteeInspection, setSviIpm1PresenteeInspection] = useState(
     carcasse.svi_ipm1_presentee_inspection ?? true
@@ -434,7 +435,11 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
               severity="warning"
               small
               className="fr-mb-2w"
-              description="Recherche trichine obligatoire avant acceptation : aucun résultat négatif n'est associé à cette carcasse de sanglier. Réalisez un prélèvement (section « Recherche de trichine ») ou attendez le résultat du laboratoire."
+              description={
+                trichine.hasTriedLoading
+                  ? "Recherche trichine obligatoire avant acceptation : aucun résultat négatif n'est associé à cette carcasse de sanglier. Réalisez un prélèvement (section « Recherche de trichine ») ou attendez le résultat du laboratoire."
+                  : 'Vérification des analyses trichine en cours…'
+              }
             />
           )}
           <RadioButtons
