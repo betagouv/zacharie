@@ -8,7 +8,7 @@ import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import { useMemo, useState, useRef, useEffect } from 'react';
 import useZustandStore from '@app/zustand/store';
 import { useIsCircuitCourt } from '@app/utils/circuit-court';
-import { CarcasseType, FeiOwnerRole } from '@prisma/client';
+import { CarcasseType, EntityTypes, FeiOwnerRole } from '@prisma/client';
 import { abbreviations, formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
 import {
   filterCarcassesIntermediairesForCarcasse,
@@ -80,12 +80,21 @@ export default function CardFiche({
 
   // Ligne « Chasse » : le dernier owner avant l'arrivée chez le destinataire = le collecteur
   // s'il y en a eu un, sinon le premier détenteur.
-  const chasseName = useMemo(() => {
+  // On ne retient que les intermediaires portés par une vraie entité COLLECTEUR_PRO :
+  // l'ETG qui fait son propre transport crée aussi un intermediaire de rôle COLLECTEUR_PRO,
+  // mais porté par l'entité ETG elle-même (voir etg-current-owner-confirm.tsx).
+  const [chasseName, chasseRole] = useMemo<
+    [string | null, typeof FeiOwnerRole.COLLECTEUR_PRO | typeof FeiOwnerRole.PREMIER_DETENTEUR]
+  >(() => {
     const collecteur = filterFeiIntermediaires(carcassesIntermediaireById, fei.numero).find(
-      (i) => i.intermediaire_role === FeiOwnerRole.COLLECTEUR_PRO
+      (i) =>
+        i.intermediaire_role === FeiOwnerRole.COLLECTEUR_PRO &&
+        entities[i.intermediaire_entity_id!]?.type === EntityTypes.COLLECTEUR_PRO
     );
     const id = collecteur?.intermediaire_entity_id || collecteur?.intermediaire_user_id;
-    return resolveOwnerName(id, entities, usersById) || fei.premier_detenteur_name_cache;
+    const collecteurName = resolveOwnerName(id, entities, usersById);
+    if (collecteurName) return [collecteurName, FeiOwnerRole.COLLECTEUR_PRO];
+    return [fei.premier_detenteur_name_cache, FeiOwnerRole.PREMIER_DETENTEUR];
   }, [carcassesIntermediaireById, fei.numero, fei.premier_detenteur_name_cache, entities, usersById]);
 
   // Close menu when clicking outside
@@ -275,7 +284,7 @@ export default function CardFiche({
               </p>
             </div>
             <div className="flex shrink basis-1/2 flex-col gap-y-1">
-              <ChasseIcon />
+              {chasseRole === FeiOwnerRole.COLLECTEUR_PRO ? <TransportIcon /> : <ChasseIcon />}
               <p
                 className={['line-clamp-2 text-sm', chasseName ? 'text-black' : 'text-neutral-400'].join(' ')}
               >
@@ -444,10 +453,16 @@ function RefusIcon() {
   );
 }
 
-// function TransportIcon() {
-//   return (
-//     <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-//       <path d="M8.96456 18C8.72194 19.6961 7.26324 21 5.5 21C3.73676 21 2.27806 19.6961 2.03544 18H1V6C1 5.44772 1.44772 5 2 5H16C16.5523 5 17 5.44772 17 6V8H20L23 12.0557V18H20.9646C20.7219 19.6961 19.2632 21 17.5 21C15.7368 21 14.2781 19.6961 14.0354 18H8.96456ZM15 7H3V15.0505C3.63526 14.4022 4.52066 14 5.5 14C6.8962 14 8.10145 14.8175 8.66318 16H14.3368C14.5045 15.647 14.7296 15.3264 15 15.0505V7ZM17 13H21V12.715L18.9917 10H17V13ZM17.5 19C18.1531 19 18.7087 18.5826 18.9146 18C18.9699 17.8436 19 17.6753 19 17.5C19 16.6716 18.3284 16 17.5 16C16.6716 16 16 16.6716 16 17.5C16 17.6753 16.0301 17.8436 16.0854 18C16.2913 18.5826 16.8469 19 17.5 19ZM7 17.5C7 16.6716 6.32843 16 5.5 16C4.67157 16 4 16.6716 4 17.5C4 17.6753 4.03008 17.8436 4.08535 18C4.29127 18.5826 4.84689 19 5.5 19C6.15311 19 6.70873 18.5826 6.91465 18C6.96992 17.8436 7 17.6753 7 17.5Z"></path>
-//     </svg>
-//   );
-// }
+function TransportIcon() {
+  return (
+    <svg
+      width="15"
+      height="15"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path d="M8.96456 18C8.72194 19.6961 7.26324 21 5.5 21C3.73676 21 2.27806 19.6961 2.03544 18H1V6C1 5.44772 1.44772 5 2 5H16C16.5523 5 17 5.44772 17 6V8H20L23 12.0557V18H20.9646C20.7219 19.6961 19.2632 21 17.5 21C15.7368 21 14.2781 19.6961 14.0354 18H8.96456ZM15 7H3V15.0505C3.63526 14.4022 4.52066 14 5.5 14C6.8962 14 8.10145 14.8175 8.66318 16H14.3368C14.5045 15.647 14.7296 15.3264 15 15.0505V7ZM17 13H21V12.715L18.9917 10H17V13ZM17.5 19C18.1531 19 18.7087 18.5826 18.9146 18C18.9699 17.8436 19 17.6753 19 17.5C19 16.6716 18.3284 16 17.5 16C16.6716 16 16 16.6716 16 17.5C16 17.6753 16.0301 17.8436 16.0854 18C16.2913 18.5826 16.8469 19 17.5 19ZM7 17.5C7 16.6716 6.32843 16 5.5 16C4.67157 16 4 16.6716 4 17.5C4 17.6753 4.03008 17.8436 4.08535 18C4.29127 18.5826 4.84689 19 5.5 19C6.15311 19 6.70873 18.5826 6.91465 18C6.96992 17.8436 7 17.6753 7 17.5Z" />
+    </svg>
+  );
+}
