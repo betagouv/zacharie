@@ -22,6 +22,7 @@ enum UserRoles {
   FDC // Fédération Départementale des Chasseurs
   FRC // Fédération Régionale des Chasseurs
   FNC // Fédération Nationale des Chasseurs
+  LABORATOIRE // Laboratoire d'analyses trichine (LVD agréé ou LNR)
 }
 
 enum UserEtgRoles {
@@ -94,6 +95,15 @@ model User {
   ApiKeyLog                             ApiKeyLog[]
   CarcasseModificationRequestsRequested CarcasseModificationRequest[]  @relation("ModifRequestedByUser")
   CarcasseModificationRequestsReviewed  CarcasseModificationRequest[]  @relation("ModifReviewedByUser")
+  // Trichine
+  TrichineEchantillonsPreleves          TrichineEchantillon[]          @relation("TrichineEchantillonPreleveParUser")
+  TrichinePoolsCrees                    TrichinePool[]                 @relation("TrichinePoolCreeParUser")
+  TrichinePoolsRefuses                  TrichinePool[]                 @relation("TrichinePoolRefusParUser")
+  TrichineFTPsExpediees                 TrichineFTP[]                  @relation("TrichineFTPExpediteurUser")
+  TrichineDocumentsAjoutes              TrichineDocument[]             @relation("TrichineDocumentAjouteParUser")
+  TrichineNotifications                 TrichineNotification[]         @relation("TrichineNotificationUtilisateur")
+  TrichineHistoriqueStatuts             TrichineHistoriqueStatut[]     @relation("TrichineHistoriqueModifieParUser")
+  CarcassesRetireesDeFeiPourTrichine    Carcasse[]                     @relation("CarcasseTrichineRetireDeFeiUser")
 
   @@index([id])
   @@index([email])
@@ -115,6 +125,7 @@ enum EntityTypes {
   ASSOCIATION_CARITATIVE
   REPAS_DE_CHASSE_OU_ASSOCIATIF
   CONSOMMATEUR_FINAL
+  LABORATOIRE // Laboratoire d'analyses trichine (LVD agréé ou LNR)
 }
 
 model Entity {
@@ -137,6 +148,8 @@ model Entity {
   inc_decision                          Int?                           @default(0)
   code_etbt_certificat                  String?                        @unique // Il pourrait s'agir d'un code court unique qui identifie l’établissement (exemple : 01 pour Villette viandes, 02 pour Nemrod et 03 pour Guellier).
   type                                  EntityTypes
+  // Trichine — laboratoires (type = LABORATOIRE)
+  is_lnr                                Boolean                        @default(false) // true pour l'entité ANSES (LNR unique seedé)
   created_at                            DateTime                       @default(now())
   updated_at                            DateTime                       @default(now()) @updatedAt
   deleted_at                            DateTime?
@@ -163,12 +176,18 @@ model Entity {
   SviOfETG                              Entity?                        @relation("etg_linked_to_svi_id", fields: [etg_linked_to_svi_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   EtgsLinkedToMySVI                     Entity[]                       @relation("etg_linked_to_svi_id")
   CarcasseModificationRequestsRequested CarcasseModificationRequest[]  @relation("ModifRequestedByEntity")
+  // Trichine
+  TrichineEchantillonsPreleves          TrichineEchantillon[]          @relation("TrichineEchantillonPreleveParEntity")
+  TrichinePoolsCrees                    TrichinePool[]                 @relation("TrichinePoolCreeParEntity")
+  TrichineFTPsExpediees                 TrichineFTP[]                  @relation("TrichineFTPExpediteurEntity")
+  TrichineFTPsRecues                    TrichineFTP[]                  @relation("TrichineFTPDestinataireEntity")
 
   @@index([updated_at]) // Time-based ordering
   @@index([nom_d_usage]) // Name-based ordering
   @@index([type, zacharie_compatible, nom_d_usage]) // Admin entities sorting (exact pattern)
   @@index([for_testing, updated_at]) // User entities filtering + ordering
   @@index([type, updated_at]) // Type filtering + time ordering
+  @@index([type, is_lnr]) // Trichine: find labs / LNR
 }
 
 model Password {
@@ -588,6 +607,22 @@ model Carcasse {
   svi_ipm2_poids_type                                     PoidsType?
   svi_ipm2_signed_at                                      DateTime?
   /**
+   * TRICHINE
+   * Champs ajoutés pour la traçabilité des analyses trichine (cf doc/trichine.md).
+   * Le statut métier (à compléter / en cours / terminées) est dérivé des échantillons + pools associés.
+   */
+  // Valeurs attendues (non typées strictement, peut évoluer) :
+  // "AUCUNE" | "PRELEVEMENT_COMPLEMENTAIRE" | "ANALYSE_EN_COURS_LVD" | "CONFIRMATION_EN_COURS_LNR"
+  trichine_action_requise                                 String?
+  // Envoi automatique du message cuisson 71°C au consommateur final
+  consommateur_final_email                                String?
+  notifier_consommateur                                   Boolean                       @default(false)
+  consommateur_notifie_at                                 DateTime?
+  // Retrait de la carcasse de la FEI (circuit court uniquement ; en circuit agréé on utilise svi_ipm2_decision = SAISIE_TOTALE)
+  trichine_retire_de_fei_at                               DateTime?
+  trichine_retire_de_fei_motif                            String?
+  trichine_retire_de_fei_user_id                          String?
+  /**
    * OWNERSHIP FIELDS (copied from FEI for carcasse-level ownership tracking)
    */
   // Created By
@@ -648,6 +683,9 @@ model Carcasse {
   CarcasseCertificats                                     CarcasseCertificat[]
   CarcasseSviEntity                                       Entity?                       @relation("CarcasseSviEntity", fields: [svi_entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   CarcasseModificationRequests                            CarcasseModificationRequest[] @relation("CarcasseModificationRequestCarcasse")
+  // Trichine
+  TrichineRetireDeFeiUser                                 User?                         @relation("CarcasseTrichineRetireDeFeiUser", fields: [trichine_retire_de_fei_user_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  TrichineEchantillons                                    TrichineEchantillon[]
 
   @@index([fei_numero, numero_bracelet])
   @@index([deleted_at, date_mise_a_mort, numero_bracelet(sort: Desc)])
@@ -949,4 +987,244 @@ model CarcasseModificationRequest {
 
   @@index([zacharie_carcasse_id])
   @@index([reviewed_by_user_id, status])
+}
+
+// =====================================================================
+// TRICHINE
+// Traçabilité des analyses trichine pour les sangliers (cf doc/trichine.md).
+// Circuit court (1er détenteur) + circuit agréé (SVI en ETG).
+// Note typage : seuls les enums réglementaires stricts sont typés.
+// Les valeurs UX (statuts UI, types document/notif, objet polymorphique)
+// sont des String pour permettre l'itération sans migration.
+// =====================================================================
+
+// Type partagé Échantillon + Pool (mêmes valeurs réglementaires)
+enum TrichineType {
+  INITIAL
+  COMPLEMENTAIRE
+  CONFIRMATION
+}
+
+// Statut analytique partagé Échantillon / Pool / FTP
+enum TrichineStatutAnalyse {
+  A_COMPLETER
+  EN_COURS_ANALYSES
+  ANALYSES_TERMINEES
+}
+
+enum TrichineSitePrelevement {
+  PILIER_DIAPHRAGME
+  LANGUE
+  MEMBRE_ANTERIEUR
+}
+
+enum TrichineStatutLogistiqueFTP {
+  BROUILLON
+  ENVOYEE
+  RECUE
+  TRAITEE
+}
+
+enum TrichineResultatAnalyse {
+  NEGATIF // LVD : pas de larve, carcasses du pool acceptées
+  DOUTEUX // LVD : larve détectée, confirmation LNR obligatoire + 2e intention optionnelle
+  ANALYSE_IMPOSSIBLE // LVD : refus / pool non analysable
+  NON_NEGATIF // LNR : autre parasite identifié (parasite_identifie rempli)
+  PRESENCE_PARASITE_NON_IDENTIFIE // LNR : larve présente mais non identifiée
+  POSITIF // LNR : trichine confirmée
+}
+
+model TrichineEchantillon {
+  id                    String   @id @default(uuid())
+  reference_echantillon String   @unique // format E-{YY}-{séquence}, ex: E-26-000123
+  zacharie_carcasse_id  String
+  Carcasse              Carcasse @relation(fields: [zacharie_carcasse_id], references: [zacharie_carcasse_id], onDelete: Cascade, onUpdate: Cascade)
+
+  preleve_par_user_id   String
+  PreleveParUser        User    @relation("TrichineEchantillonPreleveParUser", fields: [preleve_par_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  // Entity SVI en circuit agréé (PAS l'ETG) ou Entity PD en circuit court
+  preleve_par_entity_id String?
+  PreleveParEntity      Entity? @relation("TrichineEchantillonPreleveParEntity", fields: [preleve_par_entity_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  type             TrichineType
+  site_prelevement TrichineSitePrelevement
+  masse_grammes    Int // 5 (initial), 20 (mini-pool fille) ou 50 (individuel petite-fille)
+  date_prelevement DateTime                @db.Date
+
+  statut           TrichineStatutAnalyse    @default(A_COMPLETER)
+  resultat_analyse TrichineResultatAnalyse? // cache hérité du pool
+
+  pool_id      String?
+  TrichinePool TrichinePool? @relation(fields: [pool_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  commentaire String?
+
+  created_at DateTime  @default(now())
+  updated_at DateTime  @default(now()) @updatedAt
+  deleted_at DateTime?
+  is_synced  Boolean   @default(true)
+
+  @@index([zacharie_carcasse_id])
+  @@index([pool_id])
+  @@index([updated_at])
+}
+
+model TrichinePool {
+  id             String @id @default(uuid())
+  reference_pool String @unique // format P-{YY}-{séquence}, ex: P-26-000045
+
+  cree_par_user_id   String
+  CreeParUser        User    @relation("TrichinePoolCreeParUser", fields: [cree_par_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  cree_par_entity_id String?
+  CreeParEntity      Entity? @relation("TrichinePoolCreeParEntity", fields: [cree_par_entity_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  type TrichineType
+
+  // Hiérarchie mère / fille / petite-fille
+  pool_parent_id String?
+  PoolParent     TrichinePool?  @relation("TrichinePoolHierarchy", fields: [pool_parent_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  PoolsFilles    TrichinePool[] @relation("TrichinePoolHierarchy")
+
+  date_constitution  DateTime  @db.Date
+  date_reception     DateTime? // saisie par LVD/LNR à réception
+  date_debut_analyse DateTime? @db.Date
+  date_fin_analyse   DateTime? @db.Date
+
+  statut             TrichineStatutAnalyse    @default(A_COMPLETER)
+  resultat_analyse   TrichineResultatAnalyse?
+  parasite_identifie String? // rempli si NON_NEGATIF par LNR
+  reference_labo     String? // n° interne attribué par le labo à réception
+
+  refus_par_user_id String?
+  RefusParUser      User?   @relation("TrichinePoolRefusParUser", fields: [refus_par_user_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  raison_refus      String?
+
+  commentaire String?
+
+  TrichineEchantillons TrichineEchantillon[]
+  TrichinePoolFTPs     TrichinePoolFTP[]
+  Documents            TrichineDocument[]
+
+  created_at DateTime  @default(now())
+  updated_at DateTime  @default(now()) @updatedAt
+  deleted_at DateTime?
+  is_synced  Boolean   @default(true)
+
+  @@index([pool_parent_id])
+  @@index([cree_par_user_id])
+  @@index([cree_par_entity_id])
+  @@index([updated_at])
+}
+
+model TrichineFTP {
+  id            String    @id @default(uuid())
+  numero_fiche  String    @unique // format F-{YY}-{séquence}, ex: F-26-000012
+  date_creation DateTime  @default(now())
+  date_envoi    DateTime?
+
+  expediteur_user_id   String
+  ExpediteurUser       User    @relation("TrichineFTPExpediteurUser", fields: [expediteur_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  expediteur_entity_id String?
+  ExpediteurEntity     Entity? @relation("TrichineFTPExpediteurEntity", fields: [expediteur_entity_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  // Entity LABORATOIRE destinataire (LVD ou LNR selon is_lnr)
+  destinataire_entity_id String
+  DestinataireEntity     Entity @relation("TrichineFTPDestinataireEntity", fields: [destinataire_entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  // Hiérarchie : FTP LVD → LNR référence la FTP émettrice initiale
+  ftp_parent_id String?
+  FTPParent     TrichineFTP?  @relation("TrichineFTPHierarchy", fields: [ftp_parent_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  FTPChildren   TrichineFTP[] @relation("TrichineFTPHierarchy")
+
+  statut_logistique TrichineStatutLogistiqueFTP @default(BROUILLON)
+  statut_analytique TrichineStatutAnalyse       @default(A_COMPLETER)
+
+  mode_transport String?
+  commentaire    String?
+
+  TrichinePoolFTPs TrichinePoolFTP[]
+  Documents        TrichineDocument[]
+
+  created_at DateTime  @default(now())
+  updated_at DateTime  @default(now()) @updatedAt
+  deleted_at DateTime?
+  is_synced  Boolean   @default(true)
+
+  @@index([expediteur_user_id])
+  @@index([destinataire_entity_id])
+  @@index([ftp_parent_id])
+  @@index([updated_at])
+}
+
+// Jointure : un pool peut être référencé dans 2 FTP successives (LVD puis LNR)
+model TrichinePoolFTP {
+  id         String   @id @default(uuid())
+  pool_id    String
+  ftp_id     String
+  date_ajout DateTime @default(now())
+
+  TrichinePool TrichinePool @relation(fields: [pool_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  TrichineFTP  TrichineFTP  @relation(fields: [ftp_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([pool_id, ftp_id])
+  @@index([ftp_id])
+}
+
+// Document attaché soit à un pool, soit à une FTP (jamais les deux en même temps).
+// Type non typé strictement (String) : "RAPPORT_COFRAC" / "PHOTOGRAPHIE_LARVE" / "FTP_PDF" / "AUTRE" / ...
+model TrichineDocument {
+  id                 String   @id @default(uuid())
+  type               String
+  fichier_url        String // clé S3/Cellar
+  date_ajout         DateTime @default(now())
+  ajoute_par_user_id String
+  AjouteParUser      User     @relation("TrichineDocumentAjouteParUser", fields: [ajoute_par_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  pool_id      String?
+  TrichinePool TrichinePool? @relation(fields: [pool_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  ftp_id       String?
+  TrichineFTP  TrichineFTP?  @relation(fields: [ftp_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  created_at DateTime  @default(now())
+  updated_at DateTime  @default(now()) @updatedAt
+  deleted_at DateTime?
+  is_synced  Boolean   @default(true)
+
+  @@index([pool_id])
+  @@index([ftp_id])
+}
+
+// Notification polymorphique. type/objet_type sont String pour permettre l'évolution UX.
+// type : "RESULTAT_ANALYSE" | "FTP_RECUE" | "POOL_REFUSE" | "CHANGEMENT_STATUT" | ...
+// objet_type : "CARCASSE" | "ECHANTILLON" | "POOL" | "FTP" | ...
+model TrichineNotification {
+  id             String    @id @default(uuid())
+  utilisateur_id String
+  Utilisateur    User      @relation("TrichineNotificationUtilisateur", fields: [utilisateur_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  type           String
+  objet_type     String
+  objet_id       String
+  message        String
+  date_creation  DateTime  @default(now())
+  lu             Boolean   @default(false)
+  date_lecture   DateTime?
+
+  @@index([utilisateur_id, lu])
+  @@index([objet_type, objet_id])
+}
+
+// Historique d'audit polymorphique des changements de statut.
+model TrichineHistoriqueStatut {
+  id                  String   @id @default(uuid())
+  objet_type          String // CARCASSE / ECHANTILLON / POOL / FTP / ...
+  objet_id            String
+  ancien_statut       String
+  nouveau_statut      String
+  date_changement     DateTime @default(now())
+  modifie_par_user_id String
+  ModifieParUser      User     @relation("TrichineHistoriqueModifieParUser", fields: [modifie_par_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  commentaire         String?
+
+  @@index([objet_type, objet_id])
+  @@index([modifie_par_user_id])
 }

@@ -21,6 +21,7 @@ const empytEntitiesByTypeAndId: EntitiesByTypeAndId = {
   [EntityTypes.CONSOMMATEUR_FINAL]: {},
   [EntityTypes.ETG]: {},
   [EntityTypes.SVI]: {},
+  [EntityTypes.LABORATOIRE]: {},
 };
 
 export default function CircuitCourtOnboardingEntreprise() {

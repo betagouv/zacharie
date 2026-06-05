@@ -21,6 +21,7 @@ const entityTypeLabels: Record<EntityTypes, string> = {
   [EntityTypes.ASSOCIATION_CARITATIVE]: 'Association caritative',
   [EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF]: 'Repas de chasse / Associatif',
   [EntityTypes.CONSOMMATEUR_FINAL]: 'Consommateur final',
+  [EntityTypes.LABORATOIRE]: 'Laboratoire (trichine)',
 };
 
 export default function AdminEntites() {
