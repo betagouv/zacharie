@@ -411,6 +411,11 @@ function RefusModalContent({ pool, onDone }: { pool: LaboPool | null; onDone: ()
   const [raison, setRaison] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Évite qu'une raison saisie pour un pool ne reste pré-remplie pour le suivant
+  useEffect(() => {
+    setRaison('');
+  }, [pool?.id]);
+
   return (
     <refusModal.Component title={`Refuser le pool ${pool?.reference_pool ?? ''}`}>
       <p className="fr-text--sm">

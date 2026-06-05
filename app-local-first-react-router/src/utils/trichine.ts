@@ -103,7 +103,9 @@ export type StatutUtilisateur = 'À faire' | 'En cours' | 'Clôturé';
 export function statutUtilisateurPool(pool: TrichinePoolPopulated): StatutUtilisateur {
   if (pool.statut === TrichineStatutAnalyse.ANALYSES_TERMINEES) return 'Clôturé';
   const dansFtpEnvoyee = pool.TrichinePoolFTPs.some(
-    (link) => link.TrichineFTP.statut_logistique !== TrichineStatutLogistiqueFTP.BROUILLON
+    (link) =>
+      !link.TrichineFTP.deleted_at &&
+      link.TrichineFTP.statut_logistique !== TrichineStatutLogistiqueFTP.BROUILLON
   );
   return dansFtpEnvoyee ? 'En cours' : 'À faire';
 }
@@ -133,4 +135,19 @@ export function statutUtilisateurBadgeSeverity(statut: StatutUtilisateur): Badge
 /** Un pool est rattachable à une FTP s'il n'est lié à aucune FTP non supprimée. */
 export function poolSansFTP(pool: TrichinePoolPopulated): boolean {
   return !pool.TrichinePoolFTPs.some((link) => !link.TrichineFTP.deleted_at);
+}
+
+/**
+ * Filtres de la liste des FTP côté laboratoire (§6.3) :
+ * à traiter (aucun résultat saisi) / en cours (saisie partielle) / clôturées (TRAITEE).
+ */
+export type LaboFiltreTab = 'a-traiter' | 'en-cours' | 'cloturees';
+
+export function filtreLaboFTP(ftp: {
+  statut_logistique: TrichineStatutLogistiqueFTP;
+  TrichinePoolFTPs: Array<{ TrichinePool: { resultat_analyse: TrichineResultatAnalyse | null } }>;
+}): LaboFiltreTab {
+  if (ftp.statut_logistique === TrichineStatutLogistiqueFTP.TRAITEE) return 'cloturees';
+  const hasResult = ftp.TrichinePoolFTPs.some((link) => link.TrichinePool.resultat_analyse !== null);
+  return hasResult ? 'en-cours' : 'a-traiter';
 }

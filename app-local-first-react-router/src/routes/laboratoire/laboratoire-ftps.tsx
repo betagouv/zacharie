@@ -4,23 +4,19 @@ import { Badge } from '@codegouvfr/react-dsfr/Badge';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Tabs, type TabsProps } from '@codegouvfr/react-dsfr/Tabs';
 import dayjs from 'dayjs';
-import { TrichineStatutLogistiqueFTP } from '@prisma/client';
 import { getLaboFTPs, type LaboFTPListItem } from '@app/services/laboratoire';
-import { statutAnalyseBadgeSeverity, statutAnalyseLabels, statutLogistiqueLabels } from '@app/utils/trichine';
-
-type FiltreTab = 'a-traiter' | 'en-cours' | 'cloturees';
-
-// Filtres §6.3 : à traiter (rien saisi) / en cours (saisie partielle) / clôturées (TRAITEE)
-function filtreFTP(ftp: LaboFTPListItem): FiltreTab {
-  if (ftp.statut_logistique === TrichineStatutLogistiqueFTP.TRAITEE) return 'cloturees';
-  const hasResult = ftp.TrichinePoolFTPs.some((link) => link.TrichinePool.resultat_analyse !== null);
-  return hasResult ? 'en-cours' : 'a-traiter';
-}
+import {
+  filtreLaboFTP,
+  statutAnalyseBadgeSeverity,
+  statutAnalyseLabels,
+  statutLogistiqueLabels,
+  type LaboFiltreTab,
+} from '@app/utils/trichine';
 
 export default function LaboratoireFTPs() {
   const navigate = useNavigate();
   const [ftps, setFtps] = useState<Array<LaboFTPListItem>>([]);
-  const [selectedTabId, setSelectedTabId] = useState<FiltreTab>('a-traiter');
+  const [selectedTabId, setSelectedTabId] = useState<LaboFiltreTab>('a-traiter');
   const [hasTriedLoading, setHasTriedLoading] = useState(false);
 
   useEffect(() => {
@@ -34,12 +30,12 @@ export default function LaboratoireFTPs() {
   }, []);
 
   const parFiltre = useMemo(() => {
-    const groups: Record<FiltreTab, Array<LaboFTPListItem>> = {
+    const groups: Record<LaboFiltreTab, Array<LaboFTPListItem>> = {
       'a-traiter': [],
       'en-cours': [],
       cloturees: [],
     };
-    for (const ftp of ftps) groups[filtreFTP(ftp)].push(ftp);
+    for (const ftp of ftps) groups[filtreLaboFTP(ftp)].push(ftp);
     return groups;
   }, [ftps]);
 
@@ -60,7 +56,7 @@ export default function LaboratoireFTPs() {
           <Tabs
             selectedTabId={selectedTabId}
             tabs={tabs}
-            onTabChange={(tabId) => setSelectedTabId(tabId as FiltreTab)}
+            onTabChange={(tabId) => setSelectedTabId(tabId as LaboFiltreTab)}
             className="mb-6"
           >
             {!hasTriedLoading ? (

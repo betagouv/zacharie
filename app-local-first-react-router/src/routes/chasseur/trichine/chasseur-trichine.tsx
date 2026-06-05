@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 import { Badge } from '@codegouvfr/react-dsfr/Badge';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Tabs, type TabsProps } from '@codegouvfr/react-dsfr/Tabs';
@@ -92,6 +92,7 @@ export default function ChasseurTrichine() {
 }
 
 function TabEchantillons({ echantillons }: { echantillons: Array<TrichineEchantillonWithCarcasse> }) {
+  const navigate = useNavigate();
   return (
     <>
       <p className="fr-text--sm">
@@ -141,14 +142,13 @@ function TabEchantillons({ echantillons }: { echantillons: Array<TrichineEchanti
         </ul>
       )}
       <div className="fr-mt-2w">
-        <Link to="/app/chasseur/trichine/nouveau-pool">
-          <Button
-            type="button"
-            disabled={!echantillons.some((echantillon) => !echantillon.pool_id)}
-          >
-            Créer un nouveau pool
-          </Button>
-        </Link>
+        <Button
+          type="button"
+          disabled={!echantillons.some((echantillon) => !echantillon.pool_id)}
+          onClick={() => navigate('/app/chasseur/trichine/nouveau-pool')}
+        >
+          Créer un nouveau pool
+        </Button>
       </div>
     </>
   );
@@ -202,17 +202,13 @@ function TabPools({ pools }: { pools: Array<TrichinePoolPopulated> }) {
         </ul>
       )}
       <div className="fr-mt-2w flex flex-wrap gap-2">
-        <Link to="/app/chasseur/trichine/nouveau-pool">
-          <Button type="button">Créer un nouveau pool</Button>
-        </Link>
-        <Link to="/app/chasseur/trichine/nouvelle-ftp">
-          <Button
-            type="button"
-            priority="secondary"
-          >
-            Créer une FTP
-          </Button>
-        </Link>
+        <Button linkProps={{ to: '/app/chasseur/trichine/nouveau-pool' }}>Créer un nouveau pool</Button>
+        <Button
+          priority="secondary"
+          linkProps={{ to: '/app/chasseur/trichine/nouvelle-ftp' }}
+        >
+          Créer une FTP
+        </Button>
       </div>
     </>
   );
@@ -300,9 +296,7 @@ function TabFTPs({ ftps, onChanged }: { ftps: Array<TrichineFTPPopulated>; onCha
         </ul>
       )}
       <div className="fr-mt-2w">
-        <Link to="/app/chasseur/trichine/nouvelle-ftp">
-          <Button type="button">Créer une FTP</Button>
-        </Link>
+        <Button linkProps={{ to: '/app/chasseur/trichine/nouvelle-ftp' }}>Créer une FTP</Button>
       </div>
     </>
   );
