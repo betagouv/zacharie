@@ -184,7 +184,7 @@ export default function QuizPage() {
       className="fr-background-alt--blue-france min-h-full overflow-auto"
     >
       <div className="fr-container fr-container--fluid fr-my-md-14v">
-        <title>Quiz : du prélèvement à l'assiette | Zacharie</title>
+        <title>Testez vos connaissances sur la valorisation du gibier | Zacharie</title>
         <div className="fr-grid-row fr-grid-row--center">
           <div className="fr-col-12 fr-col-md-8 p-4 md:p-0">
             {stage === 'intro' && <IntroScreen onStart={handleStart} />}
@@ -227,24 +227,19 @@ export default function QuizPage() {
 function IntroScreen({ onStart }: { onStart: () => void }) {
   return (
     <div className="bg-white p-6 md:p-10 md:shadow-sm">
-      <h1 className="fr-h2 fr-mb-2w">Du prélèvement à l'assiette : êtes-vous sûrs de vos pratiques ?</h1>
+      <h1 className="fr-h2 fr-mb-2w">Testez vos connaissances sur la valorisation du gibier</h1>
       <p className="fr-mb-3w">
-        Testez vos connaissances sur les bonnes pratiques sanitaires du gibier sauvage. 7 questions tirées au
-        hasard. Comptez 2 à 3 minutes.
+        Répondez à 7 questions qui mettront au défi vos connaissances sur les bonnes pratiques d'hygiène, la
+        trichine mais aussi les filières de valorisation.
       </p>
-      <ul className="fr-mb-4w">
-        <li>Données filière</li>
-        <li>Bonnes pratiques d’hygiène (tirs, éviscération, refroidissement, transport, manipulations)</li>
-        <li>Examen initial du gibier</li>
-        <li>Trichine</li>
-        <li>Valorisation</li>
-      </ul>
-      <Button
-        onClick={onStart}
-        size="large"
-      >
-        Commencer le quiz
-      </Button>
+      <div className="text-right">
+        <Button
+          onClick={onStart}
+          size="large"
+        >
+          Commencer le quiz
+        </Button>
+      </div>
     </div>
   );
 }
@@ -301,29 +296,31 @@ function PlayingScreen({
           <Alert
             severity={lastCorrect ? 'success' : 'error'}
             title={lastCorrect ? 'Bonne réponse !' : 'Mauvaise réponse'}
-            description={`La bonne réponse est : ${question.answer ? 'Vrai' : 'Faux'}.`}
+            description={''}
             small
           />
+          <div className="text-center">
+            <h2>{question.answer ? 'VRAI' : 'FAUX'}&nbsp;!</h2>
+          </div>
           {question.why && (
             <div>
-              <h3 className="fr-h6 fr-mb-1w">Pourquoi ?</h3>
-              <p>{question.why}</p>
+              <p className="font-bold">{question.why}</p>
             </div>
           )}
           {question.takeaway && (
-            <CallOut
-              title="À retenir"
-              iconId="fr-icon-lightbulb-line"
+            <div>
+              <p>{question.takeaway}</p>
+            </div>
+          )}
+          <p>
+            <a
+              href="/demarches"
+              target="_blank"
             >
-              {question.takeaway}
-            </CallOut>
-          )}
-          {!question.why && !question.takeaway && (
-            <p>
-              <a href="/demarches">En savoir plus sur les bonnes pratiques</a>
-            </p>
-          )}
-          <div>
+              En savoir plus sur les bonnes pratiques
+            </a>
+          </p>
+          <div className="text-right">
             <Button
               onClick={onNext}
               size="large"
@@ -368,18 +365,18 @@ function ResultScreen({
   let mood: { title: string; description: string };
   if (ratio < 0.5) {
     mood = {
-      title: `Vous avez ${score}/${total} bonnes réponses`,
+      title: `Vous avez un score de ${score}/${total}`,
       description:
         'Il y a matière à progresser. Les bonnes pratiques sanitaires se construisent avec un peu d’entraînement.',
     };
   } else if (ratio < 0.8) {
     mood = {
-      title: `Vous avez ${score}/${total} bonnes réponses`,
+      title: `Vous avez un score de ${score}/${total}`,
       description: 'Bon score ! Quelques notions à consolider pour devenir incollable.',
     };
   } else {
     mood = {
-      title: `Vous avez ${score}/${total} bonnes réponses`,
+      title: `Vous avez un score de ${score}/${total}`,
       description: 'Excellent ! Vos pratiques sont solides — partagez-les autour de vous.',
     };
   }
@@ -388,10 +385,19 @@ function ResultScreen({
     <div className="flex flex-col gap-6">
       <div className="bg-white p-6 md:p-10 md:shadow-sm">
         <h1 className="fr-h3 fr-mb-2w">{mood.title}</h1>
-        <p className="fr-mb-3w">{mood.description}</p>
-
+        <p className="fr-mb-3w">
+          {mood.description}&nbsp;
+          <br />
+          <a
+            href="/demarches"
+            target="_blank"
+            onClick={() => trackEvent('Quiz', 'cta_demarches')}
+          >
+            En savoir plus sur les bonnes pratiques
+          </a>
+        </p>
         {!nameSubmitted && (
-          <div className="fr-mb-3w">
+          <div className="fr-mt-6w">
             <h2 className="fr-h6 fr-mb-1w">Apparaître dans le top 5 du jour ?</h2>
             {submitError && (
               <Alert
@@ -417,7 +423,7 @@ function ResultScreen({
               onClick={onSubmitName}
               disabled={!displayName.trim() || !resultId}
             >
-              {resultId ? 'Enregistrer mon score' : 'Enregistrement en cours…'}
+              {resultId ? 'Publier mon score' : 'Enregistrement en cours…'}
             </Button>
           </div>
         )}
@@ -430,30 +436,14 @@ function ResultScreen({
             description="Bonne chance pour le top 5 !"
           />
         )}
-
-        <div className="fr-mt-3w flex flex-col gap-3 sm:flex-row sm:gap-4">
-          <Button
-            onClick={onReplay}
-            size="large"
-          >
-            Rejouer
-          </Button>
-          <Button
-            linkProps={{ to: '/', onClick: () => trackEvent('Quiz', 'cta_zacharie') }}
-            priority="secondary"
-            size="large"
-          >
-            Découvrir Zacharie
-          </Button>
-        </div>
-        <p className="fr-mt-3w">
-          <a
-            href="/demarches"
-            onClick={() => trackEvent('Quiz', 'cta_demarches')}
-          >
-            Pour aller plus loin sur les bonnes pratiques
-          </a>
-        </p>
+      </div>
+      <div className="text-center">
+        <Button
+          onClick={onReplay}
+          size="large"
+        >
+          Rejouer
+        </Button>
       </div>
 
       <div className="bg-white p-6 md:p-10 md:shadow-sm">
