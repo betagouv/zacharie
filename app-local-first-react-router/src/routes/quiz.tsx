@@ -184,7 +184,7 @@ export default function QuizPage() {
       className="fr-background-alt--blue-france min-h-full overflow-auto"
     >
       <div className="fr-container fr-container--fluid fr-my-md-14v">
-        <title>Quiz : du prélèvement à l'assiette | Zacharie</title>
+        <title>Testez vos connaissances sur la valorisation du gibier | Zacharie</title>
         <div className="fr-grid-row fr-grid-row--center">
           <div className="fr-col-12 fr-col-md-8 p-4 md:p-0">
             {stage === 'intro' && <IntroScreen onStart={handleStart} />}
@@ -227,18 +227,11 @@ export default function QuizPage() {
 function IntroScreen({ onStart }: { onStart: () => void }) {
   return (
     <div className="bg-white p-6 md:p-10 md:shadow-sm">
-      <h1 className="fr-h2 fr-mb-2w">Du prélèvement à l'assiette : êtes-vous sûrs de vos pratiques ?</h1>
+      <h1 className="fr-h2 fr-mb-2w">Testez vos connaissances sur la valorisation du gibier</h1>
       <p className="fr-mb-3w">
-        Testez vos connaissances sur les bonnes pratiques sanitaires du gibier sauvage. 7 questions tirées au
-        hasard. Comptez 2 à 3 minutes.
+        Répondez à 7 questions qui mettront au défi vos connaissances sur les bonnes pratiques d'hygiène, la
+        trichine mais aussi les filières de valorisation.
       </p>
-      <ul className="fr-mb-4w">
-        <li>Données filière</li>
-        <li>Bonnes pratiques d’hygiène (tirs, éviscération, refroidissement, transport, manipulations)</li>
-        <li>Examen initial du gibier</li>
-        <li>Trichine</li>
-        <li>Valorisation</li>
-      </ul>
       <Button
         onClick={onStart}
         size="large"
