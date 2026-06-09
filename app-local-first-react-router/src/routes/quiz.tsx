@@ -58,7 +58,7 @@ export default function QuizPage() {
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
-  }, [stage]);
+  }, [stage, currentIndex]);
 
   const score = answers.filter(Boolean).length;
   const total = questions.length || 7;
