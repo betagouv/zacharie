@@ -36,12 +36,19 @@ export default function AdminLayout() {
   const location = useLocation();
   const user = useMostFreshUser('RouterAdmin');
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 768);
+  const [navCollapsed, setNavCollapsed] = useState(
+    () => window.localStorage.getItem('admin-nav-collapsed') === 'true'
+  );
 
   useEffect(() => {
     if (window.innerWidth < 768) {
       setSidebarOpen(false);
     }
   }, [location.pathname]);
+
+  useEffect(() => {
+    window.localStorage.setItem('admin-nav-collapsed', String(navCollapsed));
+  }, [navCollapsed]);
 
   if (!user?.isZacharieAdmin) {
     return <Navigate to="/app/connexion" />;
@@ -77,7 +84,7 @@ export default function AdminLayout() {
         <nav
           className={`fixed top-0 z-[800] max-h-screen min-h-screen shrink-0 overflow-y-auto border-r border-gray-200 bg-white py-2 transition-transform duration-200 md:sticky md:z-auto ${
             sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-          }`}
+          } ${navCollapsed ? 'md:w-14' : 'md:w-auto'}`}
         >
           <div className="flex justify-end px-2 md:hidden">
             <button
@@ -85,6 +92,18 @@ export default function AdminLayout() {
               onClick={() => setSidebarOpen(false)}
               className="fr-btn fr-btn--tertiary-no-outline fr-btn--sm fr-icon-close-line"
               aria-label="Fermer le menu"
+            />
+          </div>
+          {/* Desktop : repli en rail d'icônes */}
+          <div className={`hidden px-2 md:flex ${navCollapsed ? 'justify-center' : 'justify-end'}`}>
+            <button
+              type="button"
+              onClick={() => setNavCollapsed((v) => !v)}
+              className={`fr-btn fr-btn--tertiary-no-outline fr-btn--sm ${
+                navCollapsed ? 'fr-icon-arrow-right-s-line' : 'fr-icon-arrow-left-s-line'
+              }`}
+              aria-label={navCollapsed ? 'Déplier le menu' : 'Replier le menu'}
+              title={navCollapsed ? 'Déplier le menu' : 'Replier le menu'}
             />
           </div>
           <ul className="m-0 list-none px-2">
@@ -95,17 +114,20 @@ export default function AdminLayout() {
                   <Link
                     style={{ backgroundImage: 'none' }}
                     to={link.to}
+                    title={navCollapsed ? link.label : undefined}
                     className={`flex items-center gap-2 border-l-2 px-3 py-1.5 text-sm no-underline hover:bg-gray-100 ${
+                      navCollapsed ? 'md:justify-center md:px-0' : ''
+                    } ${
                       isActive
                         ? 'bg-open-blue-975 text-action-high-blue-france border-action-high-blue-france font-medium'
                         : 'text-title-grey border-transparent'
                     }`}
                   >
                     <span
-                      className={`${link.icon} fr-icon--sm mr-1 shrink-0`}
+                      className={`${link.icon} fr-icon--sm shrink-0 ${navCollapsed ? 'md:mr-0' : 'mr-1'}`}
                       aria-hidden="true"
                     />
-                    {link.label}
+                    <span className={navCollapsed ? 'md:hidden' : ''}>{link.label}</span>
                   </Link>
                 </li>
               );
@@ -116,18 +138,21 @@ export default function AdminLayout() {
                 target="_blank"
                 style={{ backgroundImage: 'none' }}
                 rel="noopener noreferrer"
-                className="text-title-grey hover:bg-open-blue-975 flex items-center gap-2 rounded-md border-l-2 border-transparent px-3 py-1.5 text-sm no-underline hover:bg-gray-100"
+                title={navCollapsed ? 'Fiches (stats)' : undefined}
+                className={`text-title-grey hover:bg-open-blue-975 flex items-center gap-2 rounded-md border-l-2 border-transparent px-3 py-1.5 text-sm no-underline hover:bg-gray-100 ${
+                  navCollapsed ? 'md:justify-center md:px-0' : ''
+                }`}
               >
                 <span
-                  className="fr-icon-line-chart-line fr-icon--sm mr-1 shrink-0"
+                  className={`fr-icon-line-chart-line fr-icon--sm shrink-0 ${navCollapsed ? 'md:mr-0' : 'mr-1'}`}
                   aria-hidden="true"
                 />
-                Fiches (stats)
+                <span className={navCollapsed ? 'md:hidden' : ''}>Fiches (stats)</span>
               </a>
             </li>
           </ul>
         </nav>
-        <main className="fr-container min-w-0 flex-1">
+        <main className="fr-container max-w-none! min-w-0 flex-1">
           {!sidebarOpen && (
             <button
               type="button"

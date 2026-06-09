@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
-import { Input } from '@codegouvfr/react-dsfr/Input';
-import { Select } from '@codegouvfr/react-dsfr/Select';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Badge } from '@codegouvfr/react-dsfr/Badge';
 import { EntityTypes } from '@prisma/client';
 import dayjs from 'dayjs';
 import type { AdminEntitiesResponse } from '@api/src/types/responses';
 import Chargement from '@app/components/Chargement';
+import FiltersSidebar from '@app/components/FiltersSidebar';
+import CheckboxFilterSection from '@app/components/CheckboxFilterSection';
 import API from '@app/services/api';
 
 const entityTypeLabels: Record<EntityTypes, string> = {
@@ -29,17 +29,14 @@ export default function AdminEntites() {
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedType, setSelectedType] = useState('');
-  const [selectedCompatible, setSelectedCompatible] = useState('');
+  const [selectedCompatibles, setSelectedCompatibles] = useState<string[]>([]);
   const [selectedTabId, setSelectedTabId] = useState('all');
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const fetchEntities = (search: string, type: string, zacharie_compatible: string) => {
+  const fetchEntities = (search: string) => {
     setLoading(true);
     const query: Record<string, string> = {};
     if (search) query.search = search;
-    if (type) query.type = type;
-    if (zacharie_compatible) query.zacharie_compatible = zacharie_compatible;
 
     API.get({ path: 'admin/entities', query })
       .then((res) => res as AdminEntitiesResponse)
@@ -53,24 +50,24 @@ export default function AdminEntites() {
   };
 
   useEffect(() => {
-    fetchEntities('', '', '');
+    fetchEntities('');
   }, []);
-
-  useEffect(() => {
-    fetchEntities(searchQuery, selectedType, selectedCompatible);
-  }, [selectedType, selectedCompatible]);
 
   const onSearchChange = (value: string) => {
     setSearchQuery(value);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      fetchEntities(value, selectedType, selectedCompatible);
+      fetchEntities(value);
     }, 300);
   };
 
   const filteredEntities = entities.filter((entity) => {
-    if (selectedTabId === 'all') return true;
-    return entity.type === selectedTabId;
+    if (selectedTabId !== 'all' && entity.type !== selectedTabId) return false;
+    if (selectedCompatibles.length) {
+      const value = entity.zacharie_compatible ? 'true' : 'false';
+      if (!selectedCompatibles.includes(value)) return false;
+    }
+    return true;
   });
 
   const pills = [
@@ -85,178 +82,174 @@ export default function AdminEntites() {
   return (
     <div className="py-2">
       <title>Entités | Admin | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
-      <div className="flex flex-wrap items-end gap-2 pb-2 [&_.fr-input-group]:mb-0 [&_.fr-label]:text-xs [&_.fr-select-group]:mb-0">
-        <Input
-          className="w-64"
-          label="Recherche"
-          nativeInputProps={{
-            type: 'search',
-            value: searchQuery,
-            onChange: (e) => onSearchChange(e.target.value),
-            placeholder: 'Nom, DDECPP, SIRET, adresse...',
-          }}
-        />
-        <Select
-          className="w-48"
-          label="Type"
-          nativeSelectProps={{
-            value: selectedType,
-            onChange: (e) => setSelectedType(e.target.value),
+      <div className="md:flex">
+        <FiltersSidebar
+          storageKey="admin-entities-filters"
+          activeFilterCount={(searchQuery.trim() ? 1 : 0) + selectedCompatibles.length}
+          onReset={() => {
+            setSearchQuery('');
+            setSelectedCompatibles([]);
+            fetchEntities('');
           }}
         >
-          <option value="">Tous</option>
-          {Object.values(EntityTypes).map((t) => (
-            <option
-              key={t}
-              value={t}
+          <div className="relative">
+            <span
+              className="fr-icon--sm fr-icon-search-line absolute top-1/2 left-3 -translate-y-1/2 text-gray-400"
+              aria-hidden="true"
+            />
+            <input
+              type="search"
+              placeholder="Nom, DDECPP, SIRET, adresse..."
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className="w-full rounded border border-gray-300 py-2 pr-3 pl-10 text-sm transition-colors outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            />
+          </div>
+          <CheckboxFilterSection
+            title="Compatible Zacharie"
+            options={[
+              { value: 'true', label: 'Oui' },
+              { value: 'false', label: 'Non' },
+            ]}
+            selected={selectedCompatibles}
+            onChange={setSelectedCompatibles}
+          />
+        </FiltersSidebar>
+        <div className="min-w-0 flex-1 md:px-4">
+          <div className="mb-2 flex flex-wrap items-center justify-end gap-2">
+            <Button
+              size="small"
+              priority="secondary"
+              linkProps={{
+                to: '/app/admin/import-ccg',
+              }}
             >
-              {entityTypeLabels[t]}
-            </option>
-          ))}
-        </Select>
-        <Select
-          className="w-48"
-          label="Compatible Zacharie"
-          nativeSelectProps={{
-            value: selectedCompatible,
-            onChange: (e) => setSelectedCompatible(e.target.value),
-          }}
-        >
-          <option value="">Tous</option>
-          <option value="true">Oui</option>
-          <option value="false">Non</option>
-        </Select>
-        <Button
-          size="small"
-          priority="secondary"
-          linkProps={{
-            to: '/app/admin/import-ccg',
-          }}
-        >
-          Importer des CCG (CSV/XLS)
-        </Button>
-        <Button
-          size="small"
-          linkProps={{
-            to: '/app/admin/add-entity',
-          }}
-        >
-          + Ajouter des entités (SVI, ETG, etc.)
-        </Button>
-      </div>
-      <div className="flex flex-wrap gap-1 py-2">
-        {pills.map((pill) => (
-          <button
-            key={pill.id}
-            type="button"
-            className="rounded-full border px-2 py-0.5 text-xs"
-            style={
-              selectedTabId === pill.id
-                ? {
-                    backgroundColor: 'var(--background-active-blue-france)',
-                    color: 'var(--text-inverted-blue-france)',
-                    borderColor: 'var(--background-active-blue-france)',
-                  }
-                : {
-                    backgroundColor: 'var(--background-contrast-grey)',
-                    color: 'var(--text-default-grey)',
-                    borderColor: 'var(--border-default-grey)',
-                  }
-            }
-            onClick={() => setSelectedTabId(pill.id)}
-          >
-            {pill.label} ({pill.count})
-          </button>
-        ))}
-      </div>
-      {loading ? (
-        <Chargement />
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-gray-300 text-xs text-gray-600 uppercase">
-                <th className="px-2 py-1">Nom</th>
-                <th className="px-2 py-1">N° DDECPP / SIRET</th>
-                <th className="px-2 py-1">Adresse</th>
-                <th className="px-2 py-1">Type</th>
-                <th className="px-2 py-1">Zacharie</th>
-                <th className="px-2 py-1">Création</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredEntities.map((entity, index) => (
-                <tr
-                  key={entity.id}
-                  className="border-b border-gray-200 align-top hover:bg-gray-50"
-                >
-                  <td className="px-2 py-1">
-                    <span className="flex flex-col">
-                      <span className="font-medium">
-                        <span className="text-xs text-gray-400">{index + 1}. </span>
-                        <Link
-                          to={`/app/admin/entity/${entity.id}`}
-                          className="no-underline"
+              Importer des CCG (CSV/XLS)
+            </Button>
+            <Button
+              size="small"
+              linkProps={{
+                to: '/app/admin/add-entity',
+              }}
+            >
+              + Ajouter des entités (SVI, ETG, etc.)
+            </Button>
+          </div>
+          <div className="flex flex-wrap gap-1 py-2">
+            {pills.map((pill) => (
+              <button
+                key={pill.id}
+                type="button"
+                className="rounded-full border px-2 py-0.5 text-xs"
+                style={
+                  selectedTabId === pill.id
+                    ? {
+                        backgroundColor: 'var(--background-active-blue-france)',
+                        color: 'var(--text-inverted-blue-france)',
+                        borderColor: 'var(--background-active-blue-france)',
+                      }
+                    : {
+                        backgroundColor: 'var(--background-contrast-grey)',
+                        color: 'var(--text-default-grey)',
+                        borderColor: 'var(--border-default-grey)',
+                      }
+                }
+                onClick={() => setSelectedTabId(pill.id)}
+              >
+                {pill.label} ({pill.count})
+              </button>
+            ))}
+          </div>
+          {loading ? (
+            <Chargement />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="border-b border-gray-300 text-xs text-gray-600 uppercase">
+                    <th className="px-2 py-1">Nom</th>
+                    <th className="px-2 py-1">N° DDECPP / SIRET</th>
+                    <th className="px-2 py-1">Adresse</th>
+                    <th className="px-2 py-1">Type</th>
+                    <th className="px-2 py-1">Zacharie</th>
+                    <th className="px-2 py-1">Création</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredEntities.map((entity, index) => (
+                    <tr
+                      key={entity.id}
+                      className="border-b border-gray-200 align-top hover:bg-gray-50"
+                    >
+                      <td className="px-2 py-1">
+                        <span className="flex flex-col">
+                          <span className="font-medium">
+                            <span className="text-xs text-gray-400">{index + 1}. </span>
+                            <Link
+                              to={`/app/admin/entity/${entity.id}`}
+                              className="no-underline"
+                            >
+                              {entity.nom_d_usage}
+                            </Link>
+                          </span>
+                          {entity.raison_sociale && (
+                            <span className="text-xs text-gray-500">{entity.raison_sociale}</span>
+                          )}
+                        </span>
+                      </td>
+                      <td className="px-2 py-1">
+                        <span className="flex flex-col text-xs">
+                          {entity.numero_ddecpp && <span>{entity.numero_ddecpp}</span>}
+                          {entity.siret && <span className="text-gray-500">{entity.siret}</span>}
+                        </span>
+                      </td>
+                      <td className="px-2 py-1">
+                        <span className="flex flex-col text-xs">
+                          {entity.address_ligne_1 && <span>{entity.address_ligne_1}</span>}
+                          <span>
+                            {entity.code_postal} {entity.ville}
+                          </span>
+                        </span>
+                      </td>
+                      <td className="px-2 py-1">
+                        <Badge
+                          severity="info"
+                          small
                         >
-                          {entity.nom_d_usage}
-                        </Link>
-                      </span>
-                      {entity.raison_sociale && (
-                        <span className="text-xs text-gray-500">{entity.raison_sociale}</span>
-                      )}
-                    </span>
-                  </td>
-                  <td className="px-2 py-1">
-                    <span className="flex flex-col text-xs">
-                      {entity.numero_ddecpp && <span>{entity.numero_ddecpp}</span>}
-                      {entity.siret && <span className="text-gray-500">{entity.siret}</span>}
-                    </span>
-                  </td>
-                  <td className="px-2 py-1">
-                    <span className="flex flex-col text-xs">
-                      {entity.address_ligne_1 && <span>{entity.address_ligne_1}</span>}
-                      <span>
-                        {entity.code_postal} {entity.ville}
-                      </span>
-                    </span>
-                  </td>
-                  <td className="px-2 py-1">
-                    <Badge
-                      severity="info"
-                      small
-                    >
-                      {entityTypeLabels[entity.type] ?? entity.type}
-                    </Badge>
-                  </td>
-                  <td className="px-2 py-1">
-                    <Badge
-                      severity={entity.zacharie_compatible ? 'success' : 'warning'}
-                      small
-                    >
-                      {entity.zacharie_compatible ? 'Oui' : 'Non'}
-                    </Badge>
-                  </td>
-                  <td className="px-2 py-1">
-                    <span
-                      className="text-xs text-gray-500"
-                      suppressHydrationWarning
-                    >
-                      {dayjs(entity.created_at).format('DD/MM/YY')}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                          {entityTypeLabels[entity.type] ?? entity.type}
+                        </Badge>
+                      </td>
+                      <td className="px-2 py-1">
+                        <Badge
+                          severity={entity.zacharie_compatible ? 'success' : 'warning'}
+                          small
+                        >
+                          {entity.zacharie_compatible ? 'Oui' : 'Non'}
+                        </Badge>
+                      </td>
+                      <td className="px-2 py-1">
+                        <span
+                          className="text-xs text-gray-500"
+                          suppressHydrationWarning
+                        >
+                          {dayjs(entity.created_at).format('DD/MM/YY')}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <div className="flex items-start bg-white px-4 py-2">
+            <a
+              className="fr-link fr-icon-arrow-up-fill fr-link--icon-left text-sm"
+              href="#top"
+            >
+              Haut de page
+            </a>
+          </div>
         </div>
-      )}
-      <div className="flex items-start bg-white px-4 py-2">
-        <a
-          className="fr-link fr-icon-arrow-up-fill fr-link--icon-left text-sm"
-          href="#top"
-        >
-          Haut de page
-        </a>
       </div>
     </div>
   );
