@@ -33,7 +33,11 @@ export async function loadMyRelations() {
     );
     if (signal.aborted) return;
 
-    const entities: Record<EntityWithUserRelation['id'], EntityWithUserRelation> = {};
+    // Seed with entities already in the store (e.g. those referenced by fiches, loaded by
+    // load-carcasses). The user's own relations below overlay them so they keep their relation info.
+    const entities: Record<EntityWithUserRelation['id'], EntityWithUserRelation> = {
+      ...useZustandStore.getState().entities,
+    };
     for (const entity of [
       ...(myRelationsData.data?.associationsDeChasse || []),
       ...(myRelationsData.data?.ccgs || []),
