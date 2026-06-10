@@ -1,9 +1,9 @@
-import { useCallback, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { FeiOwnerRole } from '@prisma/client';
 import type { FeiWithIntermediaires } from '@api/src/types/fei';
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
-import { useEntitiesIdsWorkingDirectlyFor } from '@app/utils/get-entity-relations';
+import { filterEntitiesWorkingDirectlyFor } from '@app/utils/get-entity-relations';
 import { filterFeiIntermediaires } from '@app/utils/get-carcasses-intermediaires';
 import { ChasseIcon } from '@app/assets/svg/ChasseIcon';
 import { TransportIcon } from '@app/assets/svg/TransportIcon';
@@ -37,31 +37,23 @@ function resolveOwnerName(
   return null;
 }
 
-interface GetPreviousDetenteurParams {
-  fei: FeiWithIntermediaires;
-  myEntityIds: Set<string>;
-  myUserId: string | undefined;
-  carcassesIntermediaireById: ReturnType<typeof useZustandStore.getState>['carcassesIntermediaireById'];
-  entities: ReturnType<typeof useZustandStore.getState>['entities'];
-  usersById: ReturnType<typeof useZustandStore.getState>['users'];
-}
-
 /**
- * Détenteur précédent : celui qui m'a donné la fiche.
+ * Détenteur précédent d'une fiche : celui qui m'a donné la fiche.
  * On reconstitue la chaîne de possession ordonnée (premier détenteur en tête,
  * puis les intermédiaires par created_at croissant) et on prend l'élément qui
  * précède ma première entrée. Si je ne suis pas encore dans la chaîne (fiche
  * attribuée mais pas encore prise en charge), c'est le dernier détenteur de la
  * chaîne. Ce détenteur ne change donc jamais une fois la fiche reçue.
+ *
+ * Lecture non réactive du store : la fonction est appelée pendant le rendu d'un
+ * composant qui souscrit déjà au store (la liste des fiches), donc un changement
+ * pertinent re-rend le parent et relance ce calcul.
  */
-function getPreviousDetenteur({
-  fei,
-  myEntityIds,
-  myUserId,
-  carcassesIntermediaireById,
-  entities,
-  usersById,
-}: GetPreviousDetenteurParams): DetenteurDisplay {
+export function getPreviousDetenteur(fei: FeiWithIntermediaires): DetenteurDisplay {
+  const { entities, users: usersById, carcassesIntermediaireById } = useZustandStore.getState();
+  const myUserId = useUser.getState().user?.id;
+  const myEntityIds = new Set(filterEntitiesWorkingDirectlyFor(entities));
+
   const premierDetenteurName =
     resolveOwnerName(fei.premier_detenteur_entity_id || fei.premier_detenteur_user_id, entities, usersById) ||
     fei.premier_detenteur_name_cache;
@@ -110,30 +102,4 @@ function getPreviousDetenteur({
       ) || premierDetenteurName,
     icon: iconForRole(previous.intermediaire_role),
   };
-}
-
-/**
- * Renvoie une fonction qui, pour une fiche donnée, calcule son détenteur précédent.
- * Le store n'est lu (et souscrit) qu'une fois ; chaque carte appelle le résultat
- * avec sa propre fei — pas besoin de précalculer toutes les fiches.
- */
-export function useGetPreviousDetenteur(): (fei: FeiWithIntermediaires) => DetenteurDisplay {
-  const user = useUser((state) => state.user);
-  const myEntityIds = useEntitiesIdsWorkingDirectlyFor();
-  const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
-  const entities = useZustandStore((state) => state.entities);
-  const usersById = useZustandStore((state) => state.users);
-
-  return useCallback(
-    (fei: FeiWithIntermediaires) =>
-      getPreviousDetenteur({
-        fei,
-        myEntityIds: new Set(myEntityIds),
-        myUserId: user?.id,
-        carcassesIntermediaireById,
-        entities,
-        usersById,
-      }),
-    [myEntityIds, user?.id, carcassesIntermediaireById, entities, usersById]
-  );
 }

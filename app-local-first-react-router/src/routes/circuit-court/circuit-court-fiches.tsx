@@ -17,7 +17,7 @@ import {
 } from '@app/utils/get-carcasses-intermediaires';
 import { useSaveScroll } from '@app/services/useSaveScroll';
 import CardFiche from '@app/components/CardFiche';
-import { useGetPreviousDetenteur } from '@app/utils/get-previous-detenteur';
+import { getPreviousDetenteur } from '@app/utils/get-previous-detenteur';
 import DropDownMenu from '@app/components/DropDownMenu';
 import { filterCarcassesForFei, useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { useMyCarcassesForFei } from '@app/utils/filter-my-carcasses';
@@ -283,7 +283,6 @@ export default function TableauDeBordIndex() {
     const start = (page - 1) * perPage;
     return filteredFeis.slice(start, start + perPage);
   }, [filteredFeis, page, itemsPerPage]);
-  const getPreviousDetenteur = useGetPreviousDetenteur();
 
   if (isLoading) {
     return <Chargement />;

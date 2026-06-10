@@ -24,7 +24,7 @@ import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
 import { useSaveScroll } from '@app/services/useSaveScroll';
 import CardFiche from '@app/components/CardFiche';
 import CarcassesEspeceSummary from '@app/components/CarcassesEspeceSummary';
-import { useGetPreviousDetenteur } from '@app/utils/get-previous-detenteur';
+import { getPreviousDetenteur } from '@app/utils/get-previous-detenteur';
 import CollapsibleSection from '@app/components/CollapsibleSection';
 import DropDownMenu from '@app/components/DropDownMenu';
 
@@ -456,7 +456,6 @@ export default function EtgFiches() {
     const start = (page - 1) * ITEMS_PER_PAGE;
     return filteredFeis.slice(start, start + ITEMS_PER_PAGE);
   }, [filteredFeis, page]);
-  const getPreviousDetenteur = useGetPreviousDetenteur();
 
   const hasActiveFilters =
     filterStatuses.length > 0 ||

@@ -23,7 +23,7 @@ import { useMyCarcassesForFei } from '@app/utils/filter-my-carcasses';
 import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
 import { useSaveScroll } from '@app/services/useSaveScroll';
 import CardFiche from '@app/components/CardFiche';
-import { useGetPreviousDetenteur } from '@app/utils/get-previous-detenteur';
+import { getPreviousDetenteur } from '@app/utils/get-previous-detenteur';
 import DropDownMenu from '@app/components/DropDownMenu';
 
 import { useFeiSteps, computeFeiSteps } from '@app/utils/fei-steps';
@@ -279,7 +279,6 @@ export default function CollecteurFiches() {
     const start = (page - 1) * perPage;
     return filteredFeis.slice(start, start + perPage);
   }, [filteredFeis, page, itemsPerPage]);
-  const getPreviousDetenteur = useGetPreviousDetenteur();
 
   function Actions() {
     return (
