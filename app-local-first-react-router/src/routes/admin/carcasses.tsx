@@ -50,7 +50,7 @@ export default function AdminCarcassesIntermediaires() {
   }
 
   return (
-    <div className="md:flex">
+    <div className="md:-ml-4 md:flex">
       <FiltersSidebar
         storageKey="admin-carcasses-filters"
         activeFilterCount={search ? 1 : 0}

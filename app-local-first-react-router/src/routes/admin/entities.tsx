@@ -82,7 +82,7 @@ export default function AdminEntites() {
   return (
     <div className="py-2">
       <title>Entités | Admin | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
-      <div className="md:flex">
+      <div className="md:-ml-4 md:flex">
         <FiltersSidebar
           storageKey="admin-entities-filters"
           activeFilterCount={(searchQuery.trim() ? 1 : 0) + selectedCompatibles.length}

@@ -111,7 +111,7 @@ export default function FiltersSidebar({
 
       {/* Desktop : sidebar ouverte */}
       {open && (
-        <aside className="sticky top-0 hidden h-screen w-64 shrink-0 overflow-y-auto border-r border-gray-200 bg-white p-4 md:block">
+        <aside className="sticky top-0 hidden h-screen w-52 shrink-0 overflow-y-auto border-r border-gray-200 bg-white px-3 py-2 md:block">
           <div className="mb-2 flex items-center justify-between">
             <span className="flex items-center gap-2 text-sm font-bold text-gray-800">
               {title}

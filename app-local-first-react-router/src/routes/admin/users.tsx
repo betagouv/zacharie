@@ -138,7 +138,7 @@ export default function AdminUsers() {
       <title>
         Utilisateurs | Admin | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire
       </title>
-      <div className="md:flex">
+      <div className="md:-ml-4 md:flex">
         <FiltersSidebar
           storageKey="admin-users-filters"
           activeFilterCount={
