@@ -18,13 +18,13 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
   await expect(page).toHaveURL('http://localhost:3290/app/etg');
   await expect(page.getByRole('link', { name: feiId })).toBeVisible();
   await expect(page.locator('#content')).toMatchAriaSnapshot(`
-      - link /ZACH-\\d+-QZ6E0-\\d+ À compléter \\d+\\/\\d+\\/\\d+ chassenard À renseigner \\d+ pigeons 3 daims fin de liste ZACH-\\d+-QZ6E0-\\d+/:
+      - link /ZACH-\\d+-QZ6E0-\\d+ À compléter \\d+\\/\\d+\\/\\d+ chassenard Pierre Petit \\d+ pigeons 3 daims fin de liste ZACH-\\d+-QZ6E0-\\d+/:
         - /url: /app/etg/fei/ZACH-20250707-QZ6E0-165242
         - paragraph: À compléter
         - img
         - paragraph: chassenard
         - img
-        - paragraph: À renseigner
+        - paragraph: Pierre Petit
         - img
         - paragraph: /\\d+ pigeons/
         - paragraph: 3 daims
@@ -152,13 +152,13 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
       `);
   await page.getByRole('link', { name: 'Voir toutes mes fiches' }).click();
   await expect(page.locator('#content')).toMatchAriaSnapshot(`
-      - link /ZACH-\\d+-QZ6E0-\\d+ En cours \\d+\\/\\d+\\/\\d+ chassenard À renseigner \\d+ pigeons 3 daims fin de liste 2 carcasses refusées ZACH-\\d+-QZ6E0-\\d+/:
+      - link /ZACH-\\d+-QZ6E0-\\d+ En cours \\d+\\/\\d+\\/\\d+ chassenard Pierre Petit \\d+ pigeons 3 daims fin de liste 2 carcasses refusées ZACH-\\d+-QZ6E0-\\d+/:
         - /url: /app/etg/fei/ZACH-20250707-QZ6E0-165242
         - paragraph: En cours
         - img
         - paragraph: chassenard
         - img
-        - paragraph: À renseigner
+        - paragraph: Pierre Petit
         - img
         - paragraph: /\\d+ pigeons/
         - paragraph: 3 daims
@@ -174,13 +174,13 @@ test('Pas de stockage - Je transfère à un autre collecteur', async ({ page }) 
   await expect(page).toHaveURL('http://localhost:3290/app/etg');
   await expect(page.getByRole('link', { name: feiId })).toBeVisible();
   await expect(page.locator('#content')).toMatchAriaSnapshot(`
-      - link /ZACH-\\d+-QZ6E0-\\d+ À compléter \\d+\\/\\d+\\/\\d+ chassenard À renseigner \\d+ pigeons 3 daims fin de liste ZACH-\\d+-QZ6E0-\\d+/:
+      - link /ZACH-\\d+-QZ6E0-\\d+ À compléter \\d+\\/\\d+\\/\\d+ chassenard Pierre Petit \\d+ pigeons 3 daims fin de liste ZACH-\\d+-QZ6E0-\\d+/:
         - /url: /app/etg/fei/ZACH-20250707-QZ6E0-165242
         - paragraph: À compléter
         - img
         - paragraph: chassenard
         - img
-        - paragraph: À renseigner
+        - paragraph: Pierre Petit
         - img
         - paragraph: /\\d+ pigeons/
         - paragraph: 3 daims
@@ -279,13 +279,13 @@ test('Pas de stockage - Je transfère à un autre collecteur', async ({ page }) 
     `);
   await page.getByRole('link', { name: 'Voir toutes mes fiches' }).click();
   await expect(page.locator('#content')).toMatchAriaSnapshot(`
-    - link /ZACH-\\d+-QZ6E0-\\d+ En cours \\d+\\/\\d+\\/\\d+ chassenard À renseigner \\d+ pigeons 3 daims fin de liste 2 carcasses refusées ZACH-\\d+-QZ6E0-\\d+/:
+    - link /ZACH-\\d+-QZ6E0-\\d+ En cours \\d+\\/\\d+\\/\\d+ chassenard Pierre Petit \\d+ pigeons 3 daims fin de liste 2 carcasses refusées ZACH-\\d+-QZ6E0-\\d+/:
       - /url: /app/etg/fei/ZACH-20250707-QZ6E0-165242
       - paragraph: En cours
       - img
       - paragraph: chassenard
       - img
-      - paragraph: À renseigner
+      - paragraph: Pierre Petit
       - img
       - paragraph: /\\d+ pigeons/
       - paragraph: 3 daims
@@ -305,13 +305,13 @@ test('Pas de stockage - Je transfère à un autre ETG', async ({ page, context }
   await expect(page).toHaveURL('http://localhost:3290/app/etg');
   await expect(page.getByRole('link', { name: feiId })).toBeVisible();
   await expect(page.locator('#content')).toMatchAriaSnapshot(`
-      - link /ZACH-\\d+-QZ6E0-\\d+ À compléter \\d+\\/\\d+\\/\\d+ chassenard À renseigner \\d+ pigeons 3 daims fin de liste ZACH-\\d+-QZ6E0-\\d+/:
+      - link /ZACH-\\d+-QZ6E0-\\d+ À compléter \\d+\\/\\d+\\/\\d+ chassenard Pierre Petit \\d+ pigeons 3 daims fin de liste ZACH-\\d+-QZ6E0-\\d+/:
         - /url: /app/etg/fei/ZACH-20250707-QZ6E0-165242
         - paragraph: À compléter
         - img
         - paragraph: chassenard
         - img
-        - paragraph: À renseigner
+        - paragraph: Pierre Petit
         - img
         - paragraph: /\\d+ pigeons/
         - paragraph: 3 daims
@@ -408,13 +408,13 @@ test('Pas de stockage - Je transfère à un autre ETG', async ({ page, context }
       `);
   await page.getByRole('link', { name: 'Voir toutes mes fiches' }).click();
   await expect(page.locator('#content')).toMatchAriaSnapshot(`
-      - link /ZACH-\\d+-QZ6E0-\\d+ En cours \\d+\\/\\d+\\/\\d+ chassenard À renseigner \\d+ pigeons 3 daims fin de liste 2 carcasses refusées ZACH-\\d+-QZ6E0-\\d+/:
+      - link /ZACH-\\d+-QZ6E0-\\d+ En cours \\d+\\/\\d+\\/\\d+ chassenard Pierre Petit \\d+ pigeons 3 daims fin de liste 2 carcasses refusées ZACH-\\d+-QZ6E0-\\d+/:
         - /url: /app/etg/fei/ZACH-20250707-QZ6E0-165242
         - paragraph: En cours
         - img
         - paragraph: chassenard
         - img
-        - paragraph: À renseigner
+        - paragraph: Pierre Petit
         - img
         - paragraph: /\\d+ pigeons/
         - paragraph: 3 daims
@@ -425,13 +425,13 @@ test('Pas de stockage - Je transfère à un autre ETG', async ({ page, context }
   await page.getByRole('button', { name: 'Paramètres' }).click();
   await logoutAndConnect(page, 'etg-2@example.fr');
   await expect(page.locator('#content')).toMatchAriaSnapshot(`
-    - link /ZACH-\\d+-QZ6E0-\\d+ À compléter \\d+\\/\\d+\\/\\d+ chassenard À renseigner \\d+ pigeons 3 daims fin de liste 2 carcasses refusées ZACH-\\d+-QZ6E0-\\d+/:
+    - link /ZACH-\\d+-QZ6E0-\\d+ À compléter \\d+\\/\\d+\\/\\d+ chassenard ETG 1 \\d+ pigeons 3 daims fin de liste 2 carcasses refusées ZACH-\\d+-QZ6E0-\\d+/:
       - /url: /app/etg/fei/ZACH-20250707-QZ6E0-165242
       - paragraph: À compléter
       - img
       - paragraph: chassenard
       - img
-      - paragraph: À renseigner
+      - paragraph: ETG 1
       - img
       - paragraph: /\\d+ pigeons/
       - paragraph: 3 daims
@@ -589,13 +589,13 @@ test('Pas de stockage - Je transfère à un autre ETG', async ({ page, context }
 
   await page.getByRole('link', { name: 'Voir toutes mes fiches' }).click();
   await expect(page.locator('#content')).toMatchAriaSnapshot(`
-    - link /ZACH-\\d+-QZ6E0-\\d+ En cours \\d+\\/\\d+\\/\\d+ chassenard À renseigner \\d+ pigeons 3 daims fin de liste 2 carcasses refusées ZACH-\\d+-QZ6E0-\\d+/:
+    - link /ZACH-\\d+-QZ6E0-\\d+ En cours \\d+\\/\\d+\\/\\d+ chassenard ETG 1 \\d+ pigeons 3 daims fin de liste 2 carcasses refusées ZACH-\\d+-QZ6E0-\\d+/:
       - /url: /app/etg/fei/ZACH-20250707-QZ6E0-165242
       - paragraph: En cours
       - img
       - paragraph: chassenard
       - img
-      - paragraph: À renseigner
+      - paragraph: ETG 1
       - img
       - paragraph: /\\d+ pigeons/
       - paragraph: 3 daims

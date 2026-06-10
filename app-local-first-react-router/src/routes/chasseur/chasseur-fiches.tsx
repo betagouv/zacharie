@@ -932,6 +932,7 @@ export default function ChasseurFiches() {
                   onPrintSelect={handleCheckboxClick}
                   isPrintSelected={selectedFeis.includes(fei.numero)}
                   linkTo={`/app/chasseur/fei/${fei.numero}`}
+                  detenteurName={fei.premier_detenteur_name_cache}
                 />
               );
             })}
