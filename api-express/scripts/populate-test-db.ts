@@ -584,6 +584,16 @@ Christine
       const carcasses = await prisma.carcasse.createMany({ data: getCarcasses(fei) });
       console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (for premier détenteur)`);
     }
+    if ((role as string) === 'ETG_PD_EXAMINATEUR') {
+      const fei = await prisma.fei.create({ data: feiPremierDetenteurEstExaminateur });
+      const carcasses = await prisma.carcasse.createMany({ data: getCarcasses(fei) });
+      console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (ETG, PD = examinateur)`);
+    }
+    if ((role as string) === 'ETG_PD_ASSOCIATION') {
+      const fei = await prisma.fei.create({ data: feiPremierDetenteurEstAssociation });
+      const carcasses = await prisma.carcasse.createMany({ data: getCarcasses(fei) });
+      console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (ETG, PD = association)`);
+    }
     if (role === FeiOwnerRole.ETG) {
       const fei = await prisma.fei.create({ data: feiValidatedByPremierDetenteur });
       const carcasses = await prisma.carcasse.createMany({ data: getCarcasses(fei) });
@@ -928,6 +938,27 @@ const feiValidatedByPremierDetenteurToCollecteur: Prisma.FeiUncheckedCreateInput
   fei_next_owner_role: FeiOwnerRole.COLLECTEUR_PRO,
   premier_detenteur_prochain_detenteur_id_cache: 'a447bab1-8796-48a4-b955-3a5466116bca',
   premier_detenteur_prochain_detenteur_role_cache: FeiOwnerRole.COLLECTEUR_PRO,
+};
+
+// Le premier détenteur est l'examinateur initial lui-même (Marie Martin / QZ6E0) :
+// côté ETG, le bloc « Premier Détenteur » doit montrer le nom + contact de l'examinateur.
+const feiPremierDetenteurEstExaminateur: Prisma.FeiUncheckedCreateInput = {
+  ...feiValidatedByPremierDetenteur,
+  numero: 'ZACH-20250707-QZ6E0-165243',
+  fei_current_owner_user_id: 'QZ6E0',
+  fei_current_owner_user_name_cache: 'Marie Martin',
+  premier_detenteur_user_id: 'QZ6E0',
+  premier_detenteur_name_cache: 'Marie Martin',
+};
+
+// Le premier détenteur est une association de chasse (entité) : côté ETG, le bloc
+// « Premier Détenteur » doit montrer les infos de l'association, pas celles d'un individu.
+const feiPremierDetenteurEstAssociation: Prisma.FeiUncheckedCreateInput = {
+  ...feiValidatedByPremierDetenteur,
+  numero: 'ZACH-20250707-QZ6E0-165244',
+  premier_detenteur_entity_id: '5b916331-632e-4c29-be2e-12a834e92688',
+  premier_detenteur_user_id: 'QZ6E0',
+  premier_detenteur_name_cache: 'Association de chasseurs',
 };
 
 const feiTransmittedByEtgToSvi: Prisma.FeiUncheckedCreateInput = {
