@@ -115,8 +115,10 @@ describe('GET /entite/working-for', () => {
     vi.mocked(prisma.entity.findMany)
       // First call: allEntities — caller MUST NOT see relations on these
       .mockResolvedValueOnce([otherEtg, myEtg] as any)
-      // Second call: entitiesUserCanHandleOnBehalf — relations are expected here
-      .mockResolvedValueOnce([myEtg] as any);
+      // Second call: authorizedEntities (validated relation) — relations are expected here
+      .mockResolvedValueOnce([myEtg] as any)
+      // Third call: pendingEntities (REQUESTED) — none here
+      .mockResolvedValueOnce([] as any);
 
     const res = await authed(request(app).get('/entite/working-for'));
 
@@ -132,6 +134,58 @@ describe('GET /entite/working-for', () => {
     expect(userByType[EntityTypes.ETG]['etg-mine'].EntityRelationsWithUsers).toHaveLength(1);
     expect(userByType[EntityTypes.ETG]['etg-mine'].EntityRelationsWithUsers[0].owner_id).toBe(regularUser.id);
     expect(userByType[EntityTypes.ETG]['etg-other']).toBeUndefined();
+  });
+
+  test('pending (REQUESTED) entities are listed but expose NO member PII, regardless of activated', async () => {
+    // A not-yet-activated user who only self-requested a relation to an ETG.
+    const requestingUser = { ...regularUser, activated: false };
+    // What the DB returns for the pending query: only the caller's own relation, no UserRelatedWithEntity.
+    const pendingEtg = publicEntity('etg-pending', EntityTypes.ETG, {
+      EntityRelationsWithUsers: [
+        {
+          id: 'pending-rel',
+          relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+          status: EntityRelationStatus.REQUESTED,
+          owner_id: requestingUser.id,
+          entity_id: 'etg-pending',
+        },
+      ],
+    });
+
+    vi.mocked(prisma.entity.findMany)
+      .mockResolvedValueOnce([pendingEtg] as any) // allEntities
+      .mockResolvedValueOnce([] as any) // authorizedEntities — none, the relation is only REQUESTED
+      .mockResolvedValueOnce([pendingEtg] as any); // pendingEntities
+
+    const res = await authed(request(app).get('/entite/working-for'), requestingUser);
+
+    expect(res.status).toBe(200);
+
+    // The pending query must NOT include member PII — only the caller's own relation.
+    const pendingCallArgs = vi.mocked(prisma.entity.findMany).mock.calls[2][0] as any;
+    expect(pendingCallArgs.where.EntityRelationsWithUsers.some.status).toBe(EntityRelationStatus.REQUESTED);
+    expect(pendingCallArgs.include.EntityRelationsWithUsers.where.owner_id).toBe(requestingUser.id);
+    expect(pendingCallArgs.include.EntityRelationsWithUsers.select.UserRelatedWithEntity).toBeUndefined();
+
+    // The entity is still listed (so the chasseur sees "demande en attente") but with no leaked PII.
+    const userByType = res.body.data.userEntitiesByTypeAndId;
+    const listed = userByType[EntityTypes.ETG]['etg-pending'];
+    expect(listed).toBeDefined();
+    expect(listed.EntityRelationsWithUsers[0].UserRelatedWithEntity).toBeUndefined();
+  });
+
+  test('authorized query gates on validated status and includes member PII (independent of activated)', async () => {
+    const notActivated = { ...regularUser, activated: false };
+    vi.mocked(prisma.entity.findMany).mockResolvedValue([] as any);
+
+    await authed(request(app).get('/entite/working-for'), notActivated).expect(200);
+
+    const authorizedCallArgs = vi.mocked(prisma.entity.findMany).mock.calls[1][0] as any;
+    expect(authorizedCallArgs.where.EntityRelationsWithUsers.some.status).toEqual({
+      in: [EntityRelationStatus.MEMBER, EntityRelationStatus.ADMIN],
+    });
+    // Validated side carries the full admin include (member PII) — gated by status, not by `activated`.
+    expect(authorizedCallArgs.include.EntityRelationsWithUsers.select.UserRelatedWithEntity).toBeDefined();
   });
 
   test('allEntities query excludes CCG and for_testing entities for non-admins', async () => {
