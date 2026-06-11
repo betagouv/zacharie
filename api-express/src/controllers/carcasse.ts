@@ -21,6 +21,7 @@ import {
 } from '~/utils/trichine';
 import { recomputeCarcasseTrichine } from '~/utils/trichine-status';
 import { RequestWithUser } from '~/types/request';
+import type { EntityWithUserRelation } from '~/types/entity';
 import z from 'zod';
 import { capture } from '~/third-parties/sentry';
 import { userFeiSelect } from '~/types/user';
@@ -202,12 +203,44 @@ router.get(
       }),
     ]);
 
+    // Entities referenced by the fiches the user can access (premier détenteur asso, dépôt, SVI,
+    // intermédiaires…). The user is authorized to see them because they have access to the fiche,
+    // even when those entities are not part of their own relations (cf. /user/my-relations, which
+    // hides confidential entities like associations de chasse and CCG).
+    const entityIds = new Set<string>();
+    for (const fei of feis) {
+      entityIds.add(fei.premier_detenteur_entity_id!);
+      entityIds.add(fei.premier_detenteur_depot_entity_id!);
+      entityIds.add(fei.svi_entity_id!);
+      entityIds.add(fei.fei_current_owner_entity_id!);
+      entityIds.add(fei.fei_next_owner_entity_id!);
+      entityIds.add(fei.fei_prev_owner_entity_id!);
+      entityIds.add(fei.fei_next_owner_sous_traite_by_entity_id!);
+      entityIds.add(fei.latest_intermediaire_entity_id!);
+      entityIds.add(fei.intermediaire_closed_by_entity_id!);
+    }
+    for (const intermediaire of carcassesIntermediaires) {
+      entityIds.add(intermediaire.intermediaire_entity_id!);
+    }
+    const entities = await prisma.entity
+      .findMany({ where: { id: { in: [...entityIds].filter(Boolean) } } })
+      .then((entitiesFromFeis) =>
+        entitiesFromFeis.map(
+          (entity): EntityWithUserRelation => ({
+            ...entity,
+            relation: EntityRelationType.NONE,
+            relationStatus: undefined,
+          })
+        )
+      );
+
     res.status(200).json({
       ok: true,
       data: {
         carcasses,
         feis,
         users,
+        entities,
         carcassesIntermediaires,
         carcasseModifRequests,
         hasMore: carcasses.length === parsedLimit,

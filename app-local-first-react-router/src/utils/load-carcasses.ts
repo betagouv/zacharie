@@ -40,6 +40,7 @@ export async function loadCarcasses() {
     const carcassesIntermediairesFetched: CarcassesGetResponse['data']['carcassesIntermediaires'] = [];
     const carcasseModifRequests: CarcassesGetResponse['data']['carcasseModifRequests'] = [];
     const usersFetched: CarcassesGetResponse['data']['users'] = [];
+    const entitiesFetched: CarcassesGetResponse['data']['entities'] = [];
     let page = 0;
     let hasMore = true;
 
@@ -60,6 +61,7 @@ export async function loadCarcasses() {
       carcassesFetched.push(...(res.data.carcasses || []));
       feisFetched.push(...(res.data.feis || []));
       usersFetched.push(...(res.data.users || []));
+      entitiesFetched.push(...(res.data.entities || []));
       carcasseModifRequests.push(...(res.data.carcasseModifRequests || []));
       carcassesIntermediairesFetched.push(...(res.data.carcassesIntermediaires || []));
       hasMore = res.data.hasMore;
@@ -101,6 +103,16 @@ export async function loadCarcasses() {
       idKey: (c) => c.id,
     });
 
+    // Entities referenced by the fiches (premier détenteur asso, dépôt, SVI…). Fill gaps only:
+    // existing store entities (loaded by load-my-relations) keep their relation metadata, since
+    // fiche entities carry relation NONE.
+    const newEntities = { ...useZustandStore.getState().entities };
+    for (const entity of entitiesFetched) {
+      if (!entity.deleted_at && !newEntities[entity.id]) {
+        newEntities[entity.id] = entity;
+      }
+    }
+
     const nextCarcasseModifPendingByCarcasseId = {
       ...useZustandStore.getState().carcasseModifActiveByCarcasseId,
     };
@@ -124,6 +136,7 @@ export async function loadCarcasses() {
       carcassesIntermediaireById: newCarcassesIntermediaires,
       carcasseModifActiveByCarcasseId: nextCarcasseModifPendingByCarcasseId,
       users: newUsers,
+      entities: newEntities,
       lastUpdateFromServer: serverDate,
     }));
   } finally {

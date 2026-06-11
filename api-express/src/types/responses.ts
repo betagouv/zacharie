@@ -222,6 +222,7 @@ export interface CarcassesGetResponse {
     carcasses: Array<CarcasseWithModificationRequests>;
     feis: Array<Fei>;
     users: Array<UserForFei>;
+    entities: Array<EntityWithUserRelation>;
     carcassesIntermediaires: Array<CarcasseIntermediaire>;
     carcasseModifRequests: Array<CarcasseModificationRequest>;
     hasMore: boolean;
