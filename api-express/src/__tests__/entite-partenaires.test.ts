@@ -114,8 +114,10 @@ describe('GET /entite/partenaires', () => {
     vi.mocked(prisma.entity.findMany)
       // First call: allEntities — caller MUST NOT see relations on these
       .mockResolvedValueOnce([otherBoucherie, myAsso] as any)
-      // Second call: entitiesUserCanHandleOnBehalf — relations are expected here
-      .mockResolvedValueOnce([myAsso] as any);
+      // Second call: authorizedEntities (validated relation) — relations are expected here
+      .mockResolvedValueOnce([myAsso] as any)
+      // Third call: pendingEntities (REQUESTED) — none here
+      .mockResolvedValueOnce([] as any);
 
     const res = await authed(request(app).get('/entite/partenaires'));
 
@@ -131,6 +133,44 @@ describe('GET /entite/partenaires', () => {
     expect(userById['asso-mine'].EntityRelationsWithUsers).toHaveLength(1);
     expect(userById['asso-mine'].EntityRelationsWithUsers[0].owner_id).toBe(regularUser.id);
     expect(userById['boucherie-other']).toBeUndefined();
+  });
+
+  test('pending (REQUESTED) partenaires are listed but expose NO contact PII, regardless of activated', async () => {
+    const requestingUser = { ...regularUser, activated: false };
+    const pendingAsso = publicEntity('asso-pending', EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF, {
+      EntityRelationsWithUsers: [
+        {
+          id: 'pending-rel',
+          relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+          status: EntityRelationStatus.REQUESTED,
+          owner_id: requestingUser.id,
+          entity_id: 'asso-pending',
+        },
+      ],
+    });
+
+    vi.mocked(prisma.entity.findMany)
+      .mockResolvedValueOnce([pendingAsso] as any) // allEntities
+      .mockResolvedValueOnce([] as any) // authorizedEntities — none, the relation is only REQUESTED
+      .mockResolvedValueOnce([pendingAsso] as any); // pendingEntities
+
+    const res = await authed(request(app).get('/entite/partenaires'), requestingUser);
+
+    expect(res.status).toBe(200);
+
+    const pendingCallArgs = vi.mocked(prisma.entity.findMany).mock.calls[2][0] as any;
+    expect(pendingCallArgs.where.EntityRelationsWithUsers.some.status).toBe(EntityRelationStatus.REQUESTED);
+    // Pending query keeps the partenaire-type filter and exposes no contact PII.
+    expect(pendingCallArgs.where.EntityRelationsWithUsers.some.EntityRelatedWithUser.type.in).toEqual([
+      EntityTypes.COMMERCE_DE_DETAIL,
+      EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF,
+      EntityTypes.CONSOMMATEUR_FINAL,
+    ]);
+    expect(pendingCallArgs.include.EntityRelationsWithUsers.select.UserRelatedWithEntity).toBeUndefined();
+
+    const userById = res.body.data.userEntitiesById;
+    expect(userById['asso-pending']).toBeDefined();
+    expect(userById['asso-pending'].EntityRelationsWithUsers[0].UserRelatedWithEntity).toBeUndefined();
   });
 
   test('allEntities query restricts to partenaire types and skips for_testing for non-admins', async () => {

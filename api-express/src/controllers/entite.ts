@@ -47,21 +47,6 @@ router.get(
     ) => {
       const user = req.user!;
 
-      const entityOnboardingInclude = {
-        EntityRelationsWithUsers: {
-          where: { owner_id: user.id },
-          select: {
-            id: true,
-            relation: true,
-            status: true,
-            owner_id: true,
-            entity_id: true,
-          },
-        },
-      } as unknown as typeof entityAdminInclude;
-
-      const include = user.activated ? entityAdminInclude : entityOnboardingInclude;
-
       const allEntities = await prisma.entity
         .findMany({
           where: {
@@ -74,22 +59,57 @@ router.get(
           },
         })
         .then((entities) => entities.map((entity) => ({ ...entity, EntityRelationsWithUsers: [] as any })));
-      const entitiesUserCanHandleOnBehalf = await prisma.entity.findMany({
+
+      // Entités dont j'ai le droit (relation validée) → relations complètes, PII des membres autorisée
+      const authorizedEntities = await prisma.entity.findMany({
         where: {
           deleted_at: null,
           EntityRelationsWithUsers: {
             some: {
               owner_id: user.id,
               relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+              status: { in: [EntityRelationStatus.MEMBER, EntityRelationStatus.ADMIN] },
               deleted_at: null,
             },
           },
         },
-        include,
+        include: entityAdminInclude,
         orderBy: {
           nom_d_usage: 'asc',
         },
       });
+
+      // Entités dont je n'ai pas (encore) le droit (demande en attente) → ma seule relation, aucune PII tierce
+      const pendingEntities = await prisma.entity.findMany({
+        where: {
+          deleted_at: null,
+          EntityRelationsWithUsers: {
+            some: {
+              owner_id: user.id,
+              relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+              status: EntityRelationStatus.REQUESTED,
+              deleted_at: null,
+            },
+          },
+        },
+        include: {
+          EntityRelationsWithUsers: {
+            where: { owner_id: user.id },
+            select: {
+              id: true,
+              relation: true,
+              status: true,
+              owner_id: true,
+              entity_id: true,
+            },
+          },
+        } as unknown as typeof entityAdminInclude,
+        orderBy: {
+          nom_d_usage: 'asc',
+        },
+      });
+
+      const entitiesUserCanHandleOnBehalf = [...authorizedEntities, ...pendingEntities];
 
       const allEntitiesByTypeAndId = sortEntitiesByTypeAndId(allEntities);
       const userEntitiesByTypeAndId = sortEntitiesRelationsByTypeAndId(entitiesUserCanHandleOnBehalf);
@@ -112,21 +132,6 @@ router.get(
   catchErrors(
     async (req: RequestWithUser, res: express.Response<PartenairesResponse>, next: express.NextFunction) => {
       const user = req.user!;
-
-      const entityOnboardingInclude = {
-        EntityRelationsWithUsers: {
-          where: { owner_id: user.id },
-          select: {
-            id: true,
-            relation: true,
-            status: true,
-            owner_id: true,
-            entity_id: true,
-          },
-        },
-      } as unknown as typeof entityAdminInclude;
-
-      const include = user.activated ? entityAdminInclude : entityOnboardingInclude;
 
       const allEntities = await prisma.entity
         .findMany({
@@ -154,31 +159,70 @@ router.get(
           }))
         );
 
-      const entitiesUserCanHandleOnBehalf = await prisma.entity.findMany({
+      const partenaireRelatedTypeFilter = {
+        EntityRelatedWithUser: {
+          type: {
+            in: [
+              EntityTypes.COMMERCE_DE_DETAIL,
+              EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF,
+              EntityTypes.CONSOMMATEUR_FINAL,
+            ],
+          },
+        },
+      };
+
+      // Partenaires dont j'ai le droit (relation validée) → relations complètes, PII du contact autorisée
+      const authorizedEntities = await prisma.entity.findMany({
         where: {
           deleted_at: null,
           EntityRelationsWithUsers: {
             some: {
               owner_id: user.id,
               relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+              status: { in: [EntityRelationStatus.MEMBER, EntityRelationStatus.ADMIN] },
               deleted_at: null,
-              EntityRelatedWithUser: {
-                type: {
-                  in: [
-                    EntityTypes.COMMERCE_DE_DETAIL,
-                    EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF,
-                    EntityTypes.CONSOMMATEUR_FINAL,
-                  ],
-                },
-              },
+              ...partenaireRelatedTypeFilter,
             },
           },
         },
-        include,
+        include: entityAdminInclude,
         orderBy: {
           nom_d_usage: 'asc',
         },
       });
+
+      // Partenaires dont je n'ai pas (encore) le droit (demande en attente) → ma seule relation, aucune PII tierce
+      const pendingEntities = await prisma.entity.findMany({
+        where: {
+          deleted_at: null,
+          EntityRelationsWithUsers: {
+            some: {
+              owner_id: user.id,
+              relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+              status: EntityRelationStatus.REQUESTED,
+              deleted_at: null,
+              ...partenaireRelatedTypeFilter,
+            },
+          },
+        },
+        include: {
+          EntityRelationsWithUsers: {
+            where: { owner_id: user.id },
+            select: {
+              id: true,
+              relation: true,
+              status: true,
+              owner_id: true,
+              entity_id: true,
+            },
+          },
+        } as unknown as typeof entityAdminInclude,
+        orderBy: {
+          nom_d_usage: 'asc',
+        },
+      });
+
+      const entitiesUserCanHandleOnBehalf = [...authorizedEntities, ...pendingEntities];
 
       const allEntitiesById: EntitiesById = {};
       for (const entity of allEntities) {
