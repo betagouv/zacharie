@@ -31,7 +31,7 @@ test('Retirer une carcasse déjà ajoutée — compteur MAJ + transmission OK', 
   for (let i = 0; i < 2; i++) {
     if (i > 0) await page.getByRole('button', { name: 'Ajouter une autre carcasse' }).click();
     await page.getByLabel('Espèce (grand et petit gibier)').selectOption('Daim');
-    await page.getByRole('button', { name: 'Utiliser' }).click();
+    await page.getByRole('button', { name: /^MM-\d{3}-\d{3}$/ }).click();
     await page.getByRole('button', { name: 'Ajouter la carcasse' }).click();
   }
 

@@ -30,7 +30,7 @@ test('Fiche avec anomalies abats & carcasse — visible au rouvrir', async ({ pa
   await page.getByRole('button', { name: 'Continuer' }).first().click();
 
   await page.getByLabel('Espèce (grand et petit gibier)').selectOption('Daim');
-  await page.getByRole('button', { name: 'Utiliser' }).click();
+  await page.getByRole('button', { name: /^MM-\d{3}-\d{3}$/ }).click();
   await page.getByRole('button', { name: 'Ajouter la carcasse' }).click();
   await page.getByRole('button', { name: 'Continuer' }).click();
 
