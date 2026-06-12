@@ -61,16 +61,57 @@ type CarcasseExcelData = {
   // Commentaires: string;
 };
 
-type SimplifiedCarcasseExcelData = {
-  'Premier détenteur': string;
-  'Date de chasse': string;
-  'Numéro de marquage': string;
-  Éspèce: string | null;
-};
+// Catalogue des colonnes exportables (1 entrée par champ de CarcasseExcelData).
+// `key` = slug stable mémorisé dans localStorage, `label` = en-tête FR de la feuille.
+// L'ordre du catalogue définit l'ordre de l'export complet (preset par défaut).
+export const EXPORT_COLUMNS_CATALOG: Array<{ key: string; label: keyof CarcasseExcelData }> = [
+  { key: 'premier_detenteur', label: 'Premier détenteur' },
+  { key: 'date_chasse', label: 'Date de la chasse' },
+  { key: 'numero_marquage', label: 'Numéro de marquage' },
+  { key: 'commentaires_etg', label: 'Commentaires ETG / Transporteurs' },
+  { key: 'nom_collecteur', label: 'Nom du collecteur' },
+  { key: 'espece', label: 'Éspèce' },
+  { key: 'poids', label: 'Poids' },
+  { key: 'nombre_animaux', label: "Nombre d'animaux" },
+  { key: 'numero_trichine', label: 'Numéro suivi trichine' },
+  { key: 'svi_consigne', label: 'SVI - Consigne' },
+  { key: 'svi_motif_consigne', label: 'SVI - Motif Consigne' },
+  { key: 'svi_pieces_consigne', label: 'SVI - Pièces Consigne' },
+  { key: 'svi_motifs_consigne', label: 'SVI - Motifs Consigne' },
+  { key: 'svi_commentaire', label: 'SVI - Commentaire' },
+  { key: 'svi_saisie_partielle', label: 'SVI - Saisie partielle' },
+  { key: 'svi_saisie_totale', label: 'SVI - Saisie totale' },
+  { key: 'svi_saisie_motif', label: 'SVI - Saisie motif' },
+  { key: 'svi_certificat', label: 'SVI - Certificat de saisie OK' },
+  { key: 'svi_date_examen', label: "SVI - Date d'examen" },
+  { key: 'commune_chasse', label: 'Commune de la chasse' },
+  { key: 'numero_fiche', label: 'Numéro de fiche' },
+  { key: 'premier_detenteur_telephone', label: 'Premier détenteur téléphone' },
+  { key: 'premier_detenteur_email', label: 'Premier détenteur email' },
+  { key: 'examinateur_initial', label: 'Examinateur initial' },
+  { key: 'examinateur_telephone', label: 'Examinateur initial téléphone' },
+  { key: 'examinateur_email', label: 'Examinateur initial email' },
+  { key: 'receptionnee', label: 'Réceptionnée' },
+  { key: 'heure_premiere_mise_a_mort', label: 'Heure de première mise à mort' },
+  { key: 'heure_derniere_evisceration', label: 'Heure de dernière éviscération' },
+];
 
-function createSheet<
-  T extends keyof CarcasseExcelData | keyof FeiExcelData | keyof SimplifiedCarcasseExcelData,
->(data: Array<Record<T, unknown>>) {
+const catalogByKey: Record<string, (typeof EXPORT_COLUMNS_CATALOG)[number]> = Object.fromEntries(
+  EXPORT_COLUMNS_CATALOG.map((c) => [c.key, c])
+);
+
+// Preset "export complet" = toutes les colonnes dans l'ordre du catalogue.
+export const DEFAULT_EXPORT_COLUMN_KEYS = EXPORT_COLUMNS_CATALOG.map((c) => c.key);
+
+// Preset "export simplifié" = ancien export simplifié (4 colonnes).
+export const SIMPLIFIED_EXPORT_COLUMN_KEYS = [
+  'premier_detenteur',
+  'date_chasse',
+  'numero_marquage',
+  'espece',
+];
+
+function createSheet(data: Array<Record<string, unknown>>) {
   /*
   [
     [the, first, array, is, the, header],
@@ -80,9 +121,9 @@ function createSheet<
 
   const header = [
     //   const wscols = header.map((col: keyof CarcasseExcelData | keyof FeiExcelData) => {
-    ...data.reduce((columns: Array<T>, item: Record<T, unknown>) => {
+    ...data.reduce((columns: Array<string>, item: Record<string, unknown>) => {
       for (let key of Object.keys(item)) {
-        if (!columns.find((col) => col === key)) columns.push(key as T);
+        if (!columns.find((col) => col === key)) columns.push(key);
       }
       return columns;
     }, []),
@@ -220,18 +261,6 @@ function sortCarcassesApprovedForExcel(carcasseA: CarcasseExcelData, carcasseB: 
   return carcasseA.Éspèce!.localeCompare(carcasseB.Éspèce!);
 }
 
-function sortSimplifiedCarcasses(
-  carcasseA: SimplifiedCarcasseExcelData,
-  carcasseB: SimplifiedCarcasseExcelData
-) {
-  if (carcasseA.Éspèce === carcasseB.Éspèce) {
-    return carcasseA['Numéro de marquage'].localeCompare(carcasseB['Numéro de marquage']);
-  }
-  if (!carcasseA.Éspèce) return 1;
-  if (!carcasseB.Éspèce) return -1;
-  return carcasseA.Éspèce.localeCompare(carcasseB.Éspèce);
-}
-
 export default function useExportFeis() {
   let [isExporting, setIsExporting] = useState(false);
   const feis = useZustandStore((state) => state.feis);
@@ -239,7 +268,7 @@ export default function useExportFeis() {
   const users = useZustandStore((state) => state.users);
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
 
-  async function onExportToXlsx(feiNumbers: Array<string>) {
+  async function onExportToXlsx(feiNumbers: Array<string>, columnKeys: Array<string>) {
     setIsExporting(true);
     // just to trigger the loading state, sorry Raph :)
     await new Promise((res) => setTimeout(res));
@@ -414,12 +443,20 @@ export default function useExportFeis() {
         }
       }
 
-      utils.book_append_sheet(
-        carcassesWorkbook,
-        createSheet(allCarcasses.sort(sortCarcassesApprovedForExcel)),
-        'Carcasses',
-        true
-      );
+      // Projection sur les colonnes choisies, dans l'ordre choisi.
+      const keys = columnKeys?.length ? columnKeys : DEFAULT_EXPORT_COLUMN_KEYS;
+      const labelsInOrder = keys
+        .map((k) => catalogByKey[k]?.label)
+        .filter((l): l is keyof CarcasseExcelData => Boolean(l));
+      const projectedCarcasses = allCarcasses.sort(sortCarcassesApprovedForExcel).map((record) => {
+        const row: Record<string, unknown> = {};
+        for (const label of labelsInOrder) {
+          row[label] = record[label];
+        }
+        return row;
+      });
+
+      utils.book_append_sheet(carcassesWorkbook, createSheet(projectedCarcasses), 'Carcasses', true);
 
       for (const [feiNumero, feiSheetData] of Object.entries(feiSheets)) {
         utils.book_append_sheet(carcassesWorkbook, createSheet(feiSheetData), feiNumero, true);
@@ -429,7 +466,8 @@ export default function useExportFeis() {
         cellStyles: true,
         bookSST: true,
       });
-      return setIsExporting(false);
+      setIsExporting(false);
+      return true;
 
       // actions
     } catch (e: unknown) {
@@ -439,86 +477,11 @@ export default function useExportFeis() {
       );
     }
     setIsExporting(false);
-  }
-
-  async function onExportSimplifiedToXlsx(feiNumbers: Array<string>) {
-    setIsExporting(true);
-    // just to trigger the loading state, sorry Raph :)
-    await new Promise((res) => setTimeout(res));
-
-    const workbook = utils.book_new();
-    const simplifiedCarcasses: Array<SimplifiedCarcasseExcelData> = [];
-
-    try {
-      for (const feiId of feiNumbers) {
-        const fei = feis[feiId!]!;
-        if (!fei) {
-          continue;
-        }
-
-        const premierDetenteur = users[fei.premier_detenteur_user_id!];
-        const premierDetenteurEntity = entities[fei.premier_detenteur_entity_id!];
-        const fournisseur =
-          premierDetenteurEntity?.nom_d_usage ||
-          (premierDetenteur?.nom_de_famille
-            ? `${premierDetenteur?.prenom} ${premierDetenteur?.nom_de_famille}`
-            : '');
-
-        for (const carcasse of filterCarcassesForFei(useZustandStore.getState().carcasses, fei.numero)) {
-          if (!carcasse) {
-            continue;
-          }
-          if (carcasse.deleted_at) {
-            console.error('carcasse deleted', carcasse.zacharie_carcasse_id);
-            continue;
-          }
-          if (carcasse.intermediaire_carcasse_manquante) {
-            console.error('carcasse manquante', carcasse.zacharie_carcasse_id);
-            continue;
-          }
-          if (carcasse.intermediaire_carcasse_refus_intermediaire_id) {
-            console.error('carcasse refusée', carcasse.zacharie_carcasse_id);
-            continue;
-          }
-
-          simplifiedCarcasses.push({
-            'Premier détenteur': fournisseur,
-            'Date de chasse': dayjs(fei.date_mise_a_mort).format('DD/MM/YYYY'),
-            'Numéro de marquage': carcasse.numero_bracelet,
-            Éspèce: carcasse.espece,
-          });
-        }
-      }
-
-      const worksheet = createSheet(simplifiedCarcasses.sort(sortSimplifiedCarcasses));
-
-      // Set column widths for simplified export
-      worksheet['!cols'] = [
-        { wch: 40 }, // Fournisseur
-        { wch: 15 }, // Date de chasse
-        { wch: 25 }, // Numéro d'identification
-        { wch: 20 }, // Espèce
-      ];
-
-      utils.book_append_sheet(workbook, worksheet, 'Carcasses', true);
-
-      writeFile(workbook, `export-carcasses-simplifie-zacharie-${dayjs().format('YYYY-MM-DD-HH-mm')}.xlsx`, {
-        cellStyles: true,
-        bookSST: true,
-      });
-      return setIsExporting(false);
-    } catch (e: unknown) {
-      capture(e as Error);
-      alert(
-        "Une erreur est survenue lors de l'exportation simplifiée des fiches. L'équipe technique a été notifiée. Veuillez nous excuser pour la gêne occasionnée, et réessayer plus tard"
-      );
-    }
-    setIsExporting(false);
+    return false;
   }
 
   return {
     isExporting,
     onExportToXlsx,
-    onExportSimplifiedToXlsx,
   };
 }

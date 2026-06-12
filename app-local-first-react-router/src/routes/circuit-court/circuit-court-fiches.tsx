@@ -10,7 +10,7 @@ import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { getFeisSorted } from '@app/utils/get-fei-sorted';
 import { createNewFei } from '@app/utils/create-new-fei';
 import { useNavigate, useSearchParams } from 'react-router';
-import useExportFeis from '@app/utils/export-feis';
+import ExportFeisModal from '@app/components/ExportFeisModal';
 import {
   filterCarcassesIntermediairesForCarcasse,
   filterFeiIntermediaires,
@@ -56,7 +56,6 @@ export default function TableauDeBordIndex() {
   const user = useMostFreshUser('circuit-court-fiches')!;
   const entitiesIdsWorkingDirectlyFor = useEntitiesIdsWorkingDirectlyFor();
   const { feisOngoing, feisToTake, feisUnderMyResponsability, feisDone } = getFeisSorted();
-  const { onExportToXlsx, onExportSimplifiedToXlsx, isExporting } = useExportFeis();
   const feisAssigned = [...feisUnderMyResponsability, ...feisToTake].sort((a, b) => {
     return b.updated_at < a.updated_at ? -1 : 1;
   });
@@ -455,48 +454,9 @@ export default function TableauDeBordIndex() {
                 <span>Nouvelle fiche</span>
               </Button>
             )}
-            <DropDownMenu
-              text="Actions"
-              className="max-w-[321px]"
-              isActive={selectedFeis.length > 0}
-              menuLinks={[
-                {
-                  linkProps: {
-                    href: '#',
-                    'aria-disabled': selectedFeis.length === 0,
-                    className: isExporting || !selectedFeis.length ? 'cursor-not-allowed opacity-50' : '',
-                    title:
-                      selectedFeis.length === 0
-                        ? 'Sélectionnez des fiches avec la case à cocher en haut à droite de chaque carte'
-                        : '',
-                    onClick: (e) => {
-                      e.preventDefault();
-                      if (selectedFeis.length === 0) return;
-                      if (isExporting) return;
-                      onExportToXlsx(selectedFeis);
-                    },
-                  },
-                  text: 'Télécharger un fichier Excel avec les fiches sélectionnées (complètes)',
-                },
-                {
-                  linkProps: {
-                    href: '#',
-                    'aria-disabled': selectedFeis.length === 0,
-                    className: isExporting || !selectedFeis.length ? 'cursor-not-allowed opacity-50' : '',
-                    title:
-                      selectedFeis.length === 0
-                        ? 'Sélectionnez des fiches avec la case à cocher en haut à droite de chaque carte'
-                        : '',
-                    onClick: (e) => {
-                      e.preventDefault();
-                      if (selectedFeis.length === 0) return;
-                      if (isExporting) return;
-                      onExportSimplifiedToXlsx(selectedFeis);
-                    },
-                  },
-                  text: 'Télécharger un fichier Excel avec les fiches sélectionnées (simplifiées)',
-                },
-              ]}
+            <ExportFeisModal
+              feiNumbers={selectedFeis}
+              storageKey="circuit-court-fiches-export-columns"
             />
           </div>
         </div>

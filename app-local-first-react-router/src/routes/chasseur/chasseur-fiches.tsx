@@ -9,7 +9,7 @@ import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { getFeisSorted } from '@app/utils/get-fei-sorted';
 import { createNewFei } from '@app/utils/create-new-fei';
 import { useNavigate, useSearchParams, Link } from 'react-router';
-import useExportFeis from '@app/utils/export-feis';
+import ExportFeisModal from '@app/components/ExportFeisModal';
 import {
   filterCarcassesIntermediairesForCarcasse,
   filterFeiIntermediaires,
@@ -30,7 +30,6 @@ import type { FeiWithIntermediaires } from '@api/src/types/fei';
 import { useEntitiesIdsWorkingDirectlyFor } from '@app/utils/get-entity-relations';
 import { getSaisonStartYear, getSaisonLabel, isDateInSaison } from '@app/utils/get-saison';
 import { SegmentedControl } from '@codegouvfr/react-dsfr/SegmentedControl';
-import DropDownMenu from '@app/components/DropDownMenu';
 import PendingModifRequestsAlertModal from '@app/components/PendingModifRequestsAlertModal';
 import { loadData, useLoaderEffect } from '@app/utils/load-data';
 import Chargement from '@app/components/Chargement';
@@ -137,7 +136,6 @@ export default function ChasseurFiches() {
   const user = useMostFreshUser('chasseur fiches')!;
   const entitiesIdsWorkingDirectlyFor = useEntitiesIdsWorkingDirectlyFor();
   const { feisOngoing, feisToTake, feisUnderMyResponsability, feisDone } = getFeisSorted();
-  const { onExportToXlsx, onExportSimplifiedToXlsx, isExporting } = useExportFeis();
   const feisAssigned = [...feisUnderMyResponsability, ...feisToTake].sort((a, b) => {
     return b.updated_at < a.updated_at ? -1 : 1;
   });
@@ -859,49 +857,12 @@ export default function ChasseurFiches() {
                   },
                 ]}
               />
-              <DropDownMenu
-                text="Actions"
-                className="hidden max-w-[321px] md:block"
-                isActive={selectedFeis.length > 0}
-                menuLinks={[
-                  {
-                    linkProps: {
-                      href: '#',
-                      'aria-disabled': selectedFeis.length === 0,
-                      className: isExporting || !selectedFeis.length ? 'cursor-not-allowed opacity-50' : '',
-                      title:
-                        selectedFeis.length === 0
-                          ? 'Sélectionnez des fiches avec la case à cocher en haut à droite de chaque carte'
-                          : '',
-                      onClick: (e) => {
-                        e.preventDefault();
-                        if (selectedFeis.length === 0) return;
-                        if (isExporting) return;
-                        onExportToXlsx(selectedFeis);
-                      },
-                    },
-                    text: 'Export (toutes les colonnes)',
-                  },
-                  {
-                    linkProps: {
-                      href: '#',
-                      'aria-disabled': selectedFeis.length === 0,
-                      className: isExporting || !selectedFeis.length ? 'cursor-not-allowed opacity-50' : '',
-                      title:
-                        selectedFeis.length === 0
-                          ? 'Sélectionnez des fiches avec la case à cocher en haut à droite de chaque carte'
-                          : '',
-                      onClick: (e) => {
-                        e.preventDefault();
-                        if (selectedFeis.length === 0) return;
-                        if (isExporting) return;
-                        onExportSimplifiedToXlsx(selectedFeis);
-                      },
-                    },
-                    text: 'Export (seules les colonnes essentielles)',
-                  },
-                ]}
-              />
+              <div className="hidden md:block">
+                <ExportFeisModal
+                  feiNumbers={selectedFeis}
+                  storageKey="chasseur-fiches-export-columns"
+                />
+              </div>
               {user.numero_cfei && user.activated && (
                 <Button
                   iconId="fr-icon-add-circle-line"
