@@ -8,7 +8,7 @@ import { createNewFei } from '@app/utils/create-new-fei';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { formatCarcasseLotCount } from '@app/utils/count-carcasses';
 import useUser from '@app/zustand/user';
-import MailCheck from '@app/assets/svg/mail-send.svg';
+import SuccessSvg from '@app/assets/svg/success.svg';
 import { CarcasseType, type Carcasse } from '@prisma/client';
 
 export default function ChasseurFeiEnvoyée() {
@@ -68,23 +68,21 @@ export default function ChasseurFeiEnvoyée() {
             <div className="bg-white p-4 md:p-8">
               <div className="flex flex-col items-center gap-4 p-5 pt-0 text-center">
                 <img
-                  src={MailCheck}
+                  src={SuccessSvg}
                   alt="Fiche envoyée"
                   className="h-44 w-44"
                 />
-                <h1 className="fr-h4 fr-mb-0">Votre fiche a été transmise</h1>
                 {sentByRecipient.length > 0 && (
-                  <ul className="fr-mb-0 ml-10 w-full p-0 text-left">
+                  <>
                     {sentByRecipient.map((recipient) => (
-                      <li
-                        key={recipient.entityName}
-                        className="fr-mb-1w text-sm"
-                      >
-                        - {recipient.entityName} {notificationStatus} (
-                        {formatCarcasseLotCount(recipient.carcasses)})
-                      </li>
+                      <span className="flex items-center gap-2">
+                        <h1 className="fr-h4 fr-mb-0">
+                          Votre fiche a été transmise à {recipient.entityName}
+                        </h1>
+                        <p>({formatCarcasseLotCount(recipient.carcasses)})</p>
+                      </span>
                     ))}
-                  </ul>
+                  </>
                 )}
                 {sentByRecipient.length === 0 && fei?.fei_next_owner_entity_id && (
                   <p className="fr-mb-0">
@@ -125,31 +123,29 @@ export default function ChasseurFeiEnvoyée() {
                   })()}
               </div>
             </div>
-            <div className="mt-4 bg-white p-4 md:p-8">
-              <div className="mt-4 flex w-full flex-col justify-between gap-4 md:flex-row">
+            <div className="mt-4 flex w-full flex-col justify-between gap-4 md:flex-row">
+              <Button
+                priority="secondary"
+                linkProps={{
+                  to: `/app/chasseur/`,
+                }}
+                iconId="fr-icon-arrow-left-line"
+              >
+                Voir toutes les fiches
+              </Button>
+              {!!user.numero_cfei && user.activated && (
                 <Button
-                  priority="secondary"
-                  linkProps={{
-                    to: `/app/chasseur/`,
+                  type="button"
+                  // className="bg-white"
+                  onClick={async () => {
+                    const newFei = await createNewFei();
+                    navigate(`/app/chasseur/fei/${newFei.numero}`);
                   }}
-                  iconId="fr-icon-arrow-left-line"
+                  iconId="fr-icon-add-circle-line"
                 >
-                  Voir toutes les fiches
+                  Nouvelle fiche
                 </Button>
-                {!!user.numero_cfei && user.activated && (
-                  <Button
-                    type="button"
-                    // className="bg-white"
-                    onClick={async () => {
-                      const newFei = await createNewFei();
-                      navigate(`/app/chasseur/fei/${newFei.numero}`);
-                    }}
-                    iconId="fr-icon-add-circle-line"
-                  >
-                    Nouvelle fiche
-                  </Button>
-                )}
-              </div>
+              )}
             </div>
           </div>
         </div>
