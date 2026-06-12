@@ -33,7 +33,7 @@ test('Connexion avec compte collecteur pro', async ({ page }) => {
   await expect(page.locator('#content').getByRole('button', { name: 'Nouvelle fiche' })).not.toBeVisible();
   // await expect(page.getByRole('button', { name: 'Mettre à jour' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Filtrer' }).first()).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Actions' }).first()).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Exporter' }).first()).toBeVisible();
 });
 
 test('Connexion avec compte établissement de traitement', async ({ page }) => {
@@ -53,5 +53,5 @@ test('Connexion avec compte svi', async ({ page }) => {
   await expect(page.locator('#content').getByRole('button', { name: 'Nouvelle fiche' })).not.toBeVisible();
   // await expect(page.getByRole('button', { name: 'Mettre à jour' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Filtrer' }).first()).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Actions' }).first()).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Exporter' }).first()).toBeVisible();
 });
