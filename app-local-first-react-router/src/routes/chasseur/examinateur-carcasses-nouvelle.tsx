@@ -16,6 +16,8 @@ const gibierSelect = {
   petit: petitGibier.especes,
 };
 
+const especesRaccourcis = ['Sanglier', 'Chevreuil', 'Cerf élaphe'];
+
 function getNewDefaultNumeroBracelet(user: User) {
   if (!user.numero_cfei) {
     return '';
@@ -78,6 +80,22 @@ export default function NouvelleCarcasse({
       <Select
         label="Espèce (grand et petit gibier) *"
         className="group grow"
+        hint={
+          !espece && (
+            <div className="flex flex-row flex-wrap items-center gap-2">
+              {especesRaccourcis.map((_espece) => (
+                <button
+                  type="button"
+                  key={_espece}
+                  className="rounded-full bg-[#E8EDFF] px-3 py-1 text-sm text-[#000091]"
+                  onClick={() => setEspece(_espece)}
+                >
+                  {_espece}
+                </button>
+              ))}
+            </div>
+          )
+        }
         nativeSelectProps={{
           name: Prisma.CarcasseScalarFieldEnum.espece,
           value: espece,
@@ -127,31 +145,32 @@ export default function NouvelleCarcasse({
         state={error ? 'error' : 'default'}
         stateRelatedMessage={error ?? ''}
         hintText={
-          <>
-            {defaultNumeroBracelet ? (
-              <div
-                className={[
-                  'flex flex-col items-start md:flex-row md:gap-2',
-                  numeroBracelet ? 'pointer-events-none opacity-60' : '',
-                ].join(' ')}
-              >
-                Pas de dispositif de marquage ?
-                <button
-                  type="button"
+          !numeroBracelet && (
+            <>
+              {defaultNumeroBracelet ? (
+                <div
                   className={[
-                    'rounded-full bg-[#E8EDFF] px-3 py-1 text-sm text-[#000091]',
-                    // numeroBracelet ? 'pointer-events-none opacity-20' : '',
+                    'flex flex-col items-start md:flex-row md:gap-2',
+                    numeroBracelet ? 'pointer-events-none opacity-60' : '',
                   ].join(' ')}
-                  onClick={() => {
-                    incProchainBraceletAUtiliser();
-                    setNumeroBracelet(defaultNumeroBracelet);
-                  }}
                 >
-                  Utiliser {defaultNumeroBracelet}
-                </button>
-              </div>
-            ) : null}
-          </>
+                  <button
+                    type="button"
+                    className={[
+                      'rounded-full bg-[#E8EDFF] px-3 py-1 text-sm text-[#000091]',
+                      // numeroBracelet ? 'pointer-events-none opacity-20' : '',
+                    ].join(' ')}
+                    onClick={() => {
+                      incProchainBraceletAUtiliser();
+                      setNumeroBracelet(defaultNumeroBracelet);
+                    }}
+                  >
+                    {defaultNumeroBracelet}
+                  </button>
+                </div>
+              ) : null}
+            </>
+          )
         }
         disabled={!espece}
         nativeInputProps={{
