@@ -9,7 +9,8 @@ import { UserConnexionResponse } from '@api/src/types/responses';
 export function useMostFreshUser(_calledFrom: string) {
   // console.log('useMostFreshUser called from', calledFrom);
   const cachedUser = useUser((state) => state.user);
-  if (!window.navigator.onLine) {
+  const isOnline = useZustandStore((state) => state.isOnline);
+  if (!isOnline) {
     if (cachedUser) {
       Sentry.setUser({
         email: cachedUser.email!,
@@ -23,7 +24,8 @@ export function useMostFreshUser(_calledFrom: string) {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function refreshUser(_calledFrom?: string) {
-  if (!navigator.onLine) {
+  const isOnline = useZustandStore.getState().isOnline;
+  if (!isOnline) {
     // we need this because if offLine then the service worker return the latest GET /user/me
     // and it makes the prochain_bracelet_a_utiliser stale
     return null;
