@@ -25,8 +25,8 @@ import {
 import type {
   FeiAndCarcasseAndIntermediaireIds,
   FeiAndIntermediaireIds,
-  FeiIntermediaire,
-} from '@app/types/fei-intermediaire';
+  CarcassesIntermediaire,
+} from '@app/types/carcasses-intermediaire';
 import { mapFeiFieldsToCarcasse } from '@app/utils/map-fei-fields-to-carcasse';
 import { createSlicedIDBStorage } from './idb-sliced-storage';
 import { CarcasseTransmission } from '@app/types/carcasse';
@@ -95,8 +95,8 @@ interface Actions {
     zacharie_carcasse_ids: string[],
     transmissionFields: CarcasseTransmission
   ) => void;
-  createFeiIntermediaires: (
-    newFeiIntermediaires: FeiIntermediaire[],
+  createCarcassesIntermediaire: (
+    newFeiIntermediaires: CarcassesIntermediaire[],
     specificCarcasseIds?: string[]
   ) => Promise<void>;
   updateAllCarcasseIntermediaire: (
@@ -257,8 +257,8 @@ const useZustandStore = create<State & Actions>()(
             get().updateCarcasse(id, transmissionFields, false);
           }
         },
-        createFeiIntermediaires: async (
-          newIntermediaires: FeiIntermediaire[],
+        createCarcassesIntermediaire: async (
+          newIntermediaires: CarcassesIntermediaire[],
           specificCarcasseIds?: string[]
         ) => {
           if (newIntermediaires.length === 0) return;

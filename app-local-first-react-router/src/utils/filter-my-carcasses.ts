@@ -3,7 +3,7 @@ import type { CarcasseIntermediaire } from '@prisma/client';
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
-import type { FeiAndCarcasseAndIntermediaireIds } from '@app/types/fei-intermediaire';
+import type { FeiAndCarcasseAndIntermediaireIds } from '@app/types/carcasses-intermediaire';
 import { useEntitiesIdsWorkingDirectlyFor } from '@app/utils/get-entity-relations';
 import { CarcasseWithModificationRequests } from '@api/src/types/carcasse';
 

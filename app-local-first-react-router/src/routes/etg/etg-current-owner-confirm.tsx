@@ -20,7 +20,7 @@ import { createHistoryInput } from '@app/utils/create-history-entry';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { isCarcasseClosedBySvi } from '@app/utils/is-carcasse-done';
 import { getNewCarcasseIntermediaireId } from '@app/utils/get-carcasse-intermediaire-id';
-import type { FeiIntermediaire } from '@app/types/fei-intermediaire';
+import type { CarcassesIntermediaire } from '@app/types/carcasses-intermediaire';
 import { useFeiIntermediaires } from '@app/utils/get-carcasses-intermediaires';
 import { CarcasseTransmission } from '@app/types/carcasse';
 
@@ -28,7 +28,7 @@ export default function CurrentOwnerConfirm() {
   const params = useParams();
   const user = useUser((state) => state.user)!;
   const updateCarcassesTransmission = useZustandStore((state) => state.updateCarcassesTransmission);
-  const createFeiIntermediaires = useZustandStore((state) => state.createFeiIntermediaires);
+  const createCarcassesIntermediaire = useZustandStore((state) => state.createCarcassesIntermediaire);
   const addLog = useZustandStore((state) => state.addLog);
   const feis = useZustandStore((state) => state.feis);
   const fei = feis[params.fei_numero!];
@@ -168,7 +168,7 @@ export default function CurrentOwnerConfirm() {
 
     // 1. Create the transport intermediaire (COLLECTEUR_PRO role)
     const transportIntermediaireId = `${user.id}_${fei.numero}_${dayjs().format('HHmmss')}_transport`;
-    const transportIntermediaire: FeiIntermediaire = {
+    const transportIntermediaire: CarcassesIntermediaire = {
       id: transportIntermediaireId,
       fei_numero: fei.numero,
       intermediaire_user_id: user.id,
@@ -184,7 +184,7 @@ export default function CurrentOwnerConfirm() {
     await new Promise((res) => setTimeout(res, 150)); // so that the create_at differ between the two intermediaires
     // 2. Create the reception intermediaire (ETG role)
     const receptionIntermediaireId = `${user.id}_${fei.numero}_${dayjs().format('HHmmss')}_reception`;
-    const receptionIntermediaire: FeiIntermediaire = {
+    const receptionIntermediaire: CarcassesIntermediaire = {
       id: receptionIntermediaireId,
       fei_numero: fei.numero,
       intermediaire_user_id: user.id,
@@ -199,7 +199,7 @@ export default function CurrentOwnerConfirm() {
     };
 
     // Create both intermediaires in a single store update (only for my carcasses)
-    await createFeiIntermediaires([transportIntermediaire, receptionIntermediaire], myCarcasseIds);
+    await createCarcassesIntermediaire([transportIntermediaire, receptionIntermediaire], myCarcasseIds);
     addLog({
       user_id: user.id,
       user_role: UserRoles.COLLECTEUR_PRO,
@@ -318,7 +318,7 @@ export default function CurrentOwnerConfirm() {
     // nextFei.latest_intermediaire_user_id = user.id;
     // nextFei.latest_intermediaire_entity_id = nextcurrentTransmission.current_owner_entity_id;
     // nextFei.latest_intermediaire_name_cache = nextFei.fei_current_owner_entity_name_cache;
-    const newIntermediaire: FeiIntermediaire = {
+    const newIntermediaire: CarcassesIntermediaire = {
       id: newIntermediaireId,
       fei_numero: fei.numero,
       intermediaire_user_id: user.id,
@@ -337,7 +337,10 @@ export default function CurrentOwnerConfirm() {
       newIntermediaire.intermediaire_depot_type = DepotType.AUCUN;
       newIntermediaire.intermediaire_depot_entity_id = null;
     }
-    await createFeiIntermediaires([newIntermediaire], myCarcasseIds.length > 0 ? myCarcasseIds : undefined);
+    await createCarcassesIntermediaire(
+      [newIntermediaire],
+      myCarcasseIds.length > 0 ? myCarcasseIds : undefined
+    );
     addLog({
       user_id: user.id,
       user_role: newIntermediaire.intermediaire_role! as UserRoles,

@@ -5,8 +5,8 @@ import { getFeiAndIntermediaireIds } from '@app/utils/get-carcasse-intermediaire
 import type {
   FeiAndCarcasseAndIntermediaireIds,
   FeiAndIntermediaireIds,
-  FeiIntermediaire,
-} from '@app/types/fei-intermediaire';
+  CarcassesIntermediaire,
+} from '@app/types/carcasses-intermediaire';
 import dayjs from 'dayjs';
 
 export function filterCarcassesIntermediairesForCarcasse(
@@ -50,8 +50,8 @@ export function useCarcassesIntermediairesForIntermediaire(
 export function filterFeiIntermediaires(
   byId: Record<FeiAndCarcasseAndIntermediaireIds, CarcasseIntermediaire>,
   fei_numero: string
-): Array<FeiIntermediaire> {
-  const seen: Record<string, FeiIntermediaire> = {};
+): Array<CarcassesIntermediaire> {
+  const seen: Record<string, CarcassesIntermediaire> = {};
   for (const ci of Object.values(byId)) {
     if (ci.fei_numero !== fei_numero || ci.deleted_at) continue;
     if (!seen[ci.intermediaire_id]) {
@@ -73,7 +73,7 @@ export function filterFeiIntermediaires(
   return Object.values(seen).sort((a, b) => (dayjs(a.created_at).diff(b.created_at) < 0 ? 1 : -1));
 }
 
-export function useFeiIntermediaires(fei_numero: string | undefined): Array<FeiIntermediaire> {
+export function useFeiIntermediaires(fei_numero: string | undefined): Array<CarcassesIntermediaire> {
   const byId = useZustandStore((state) => state.carcassesIntermediaireById);
   const numberOfIntermediaires = Object.values(byId).length;
   // FIXME: if I dont put the numberOfIntermediaires, the useMemo is not triggered when the intermediaires are updated

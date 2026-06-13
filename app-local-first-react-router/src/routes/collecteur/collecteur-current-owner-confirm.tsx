@@ -12,7 +12,7 @@ import { createHistoryInput } from '@app/utils/create-history-entry';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { isCarcasseClosedBySvi } from '@app/utils/is-carcasse-done';
 import { getNewCarcasseIntermediaireId } from '@app/utils/get-carcasse-intermediaire-id';
-import type { FeiIntermediaire } from '@app/types/fei-intermediaire';
+import type { CarcassesIntermediaire } from '@app/types/carcasses-intermediaire';
 import dayjs from 'dayjs';
 import { useIsCircuitCourt } from '@app/utils/circuit-court';
 // import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
@@ -23,7 +23,7 @@ export default function CurrentOwnerConfirm() {
   const isCircuitCourt = useIsCircuitCourt();
   const updateFei = useZustandStore((state) => state.updateFei);
   const updateCarcassesTransmission = useZustandStore((state) => state.updateCarcassesTransmission);
-  const createFeiIntermediaires = useZustandStore((state) => state.createFeiIntermediaires);
+  const createCarcassesIntermediaire = useZustandStore((state) => state.createCarcassesIntermediaire);
   const addLog = useZustandStore((state) => state.addLog);
   const feis = useZustandStore((state) => state.feis);
   const fei = feis[params.fei_numero!];
@@ -180,7 +180,7 @@ export default function CurrentOwnerConfirm() {
       nextFei.latest_intermediaire_user_id = user.id;
       nextFei.latest_intermediaire_entity_id = nextFei.fei_current_owner_entity_id;
       nextFei.latest_intermediaire_name_cache = nextFei.fei_current_owner_entity_name_cache;
-      const newIntermediaire: FeiIntermediaire = {
+      const newIntermediaire: CarcassesIntermediaire = {
         id: newIntermediaireId,
         fei_numero: fei.numero,
         intermediaire_user_id: user.id,
@@ -193,7 +193,10 @@ export default function CurrentOwnerConfirm() {
         intermediaire_prochain_detenteur_role_cache: null,
         intermediaire_prochain_detenteur_id_cache: null,
       };
-      await createFeiIntermediaires([newIntermediaire], myCarcasseIds.length > 0 ? myCarcasseIds : undefined);
+      await createCarcassesIntermediaire(
+        [newIntermediaire],
+        myCarcasseIds.length > 0 ? myCarcasseIds : undefined
+      );
       addLog({
         user_id: user.id,
         user_role: newIntermediaire.intermediaire_role! as UserRoles,

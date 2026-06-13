@@ -9,7 +9,7 @@ import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
 import refusIntermedaire from '@app/data/refus-intermediaire.json';
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
-import type { FeiIntermediaire } from '@app/types/fei-intermediaire';
+import type { CarcassesIntermediaire } from '@app/types/carcasses-intermediaire';
 import { useCarcassesIntermediairesForCarcasse } from '@app/utils/get-carcasses-intermediaires';
 import { getFeiAndCarcasseAndIntermediaireIdsFromCarcasse } from '@app/utils/get-carcasse-intermediaire-id';
 import { createHistoryInput } from '@app/utils/create-history-entry';
@@ -25,7 +25,7 @@ import { CarcasseWithModificationRequests } from '@api/src/types/carcasse';
 interface CarcasseIntermediaireProps {
   carcasse: CarcasseWithModificationRequests;
   canEdit: boolean;
-  intermediaire: FeiIntermediaire;
+  intermediaire: CarcassesIntermediaire;
 }
 
 export default function CarcasseIntermediaireComp({

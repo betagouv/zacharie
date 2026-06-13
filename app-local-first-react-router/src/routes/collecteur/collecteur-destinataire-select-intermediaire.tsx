@@ -21,7 +21,7 @@ import { getEntityDisplay } from '@app/utils/get-entity-display';
 import Button from '@codegouvfr/react-dsfr/Button';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
-import type { FeiIntermediaire, FeiAndIntermediaireIds } from '@app/types/fei-intermediaire';
+import type { CarcassesIntermediaire, FeiAndIntermediaireIds } from '@app/types/carcasses-intermediaire';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import CCGNouveau from '@app/components/CCGNouveau';
 import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
@@ -42,7 +42,7 @@ export default function CollecteurDestinataireIntermediaire({
   canEdit: boolean;
   disabled?: boolean;
   feiAndIntermediaireIds?: FeiAndIntermediaireIds;
-  intermediaire?: FeiIntermediaire;
+  intermediaire?: CarcassesIntermediaire;
 }) {
   const params = useParams();
   const user = useUser((state) => state.user)!;
