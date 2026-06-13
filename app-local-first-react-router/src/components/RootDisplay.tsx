@@ -59,7 +59,6 @@ export default function RootDisplay({
     },
   ];
 
-  console.log(user);
   if (user?.isZacharieAdmin) {
     quickAccessItemsConnected.push({
       linkProps: {
