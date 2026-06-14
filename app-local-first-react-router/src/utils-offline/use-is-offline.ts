@@ -3,7 +3,8 @@ import { syncData } from '@app/utils/sync-data';
 import { useEffect, useRef, useState } from 'react';
 
 export function useIsOnline() {
-  const [isOnline, setIsOnline] = useState(true);
+  const [_isOnline, setIsOnline] = useState(true);
+  const isOnline = import.meta.env.DEV ? true : _isOnline;
   const veryBadConnection = useRef(false);
   useEffect(() => {
     function handleOnline(event: Event) {
