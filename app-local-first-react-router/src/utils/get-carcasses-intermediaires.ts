@@ -12,10 +12,17 @@ import dayjs from 'dayjs';
 export function filterCarcassesIntermediairesForCarcasse(
   byId: Record<FeiAndCarcasseAndIntermediaireIds, CarcasseIntermediaire>,
   zacharie_carcasse_id: string
-): Array<CarcasseIntermediaire> {
-  return Object.values(byId)
-    .filter((ci) => ci.zacharie_carcasse_id === zacharie_carcasse_id && !ci.deleted_at)
-    .sort((a, b) => (dayjs(a.created_at).diff(b.created_at) < 0 ? 1 : -1));
+): Array<CarcasseIntermediaire & { id: CarcassesIntermediaire['id'] }> {
+  const intermediaires: Array<CarcasseIntermediaire & { id: CarcassesIntermediaire['id'] }> = [];
+  for (const ci of Object.values(byId)) {
+    if (ci.zacharie_carcasse_id !== zacharie_carcasse_id || ci.deleted_at) continue;
+    const intermediaire: CarcasseIntermediaire & { id: CarcassesIntermediaire['id'] } = {
+      id: ci.intermediaire_id,
+      ...ci,
+    };
+    intermediaires.push(intermediaire);
+  }
+  return intermediaires.sort((a, b) => (dayjs(a.created_at).diff(b.created_at) < 0 ? 1 : -1));
 }
 
 export function filterCarcassesIntermediairesForIntermediaire(

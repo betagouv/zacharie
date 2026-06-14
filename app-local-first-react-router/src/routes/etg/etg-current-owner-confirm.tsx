@@ -23,6 +23,7 @@ import { getNewCarcasseIntermediaireId } from '@app/utils/get-carcasse-intermedi
 import type { CarcassesIntermediaire } from '@app/types/carcasses-intermediaire';
 import { useFeiIntermediaires } from '@app/utils/get-carcasses-intermediaires';
 import { CarcasseTransmission } from '@app/types/carcasse';
+import { useCarcassesTransmission } from '@app/utils/get-carcasses-transmission';
 
 export default function CurrentOwnerConfirm() {
   const params = useParams();
@@ -35,7 +36,7 @@ export default function CurrentOwnerConfirm() {
   const entities = useZustandStore((state) => state.entities);
   const users = useZustandStore((state) => state.users);
   const myCarcasses = useCarcassesForFei(params.fei_numero);
-  const currentTransmission = myCarcasses[0];
+  const currentTransmission = useCarcassesTransmission(myCarcasses);
   const intermediaires = useFeiIntermediaires(fei.numero);
   const latestIntermediaire = intermediaires[0];
 
@@ -354,10 +355,6 @@ export default function CurrentOwnerConfirm() {
     });
     // Update carcasses transmission (source of truth) - only my carcasses
     updateCarcassesTransmission(myCarcasseIds, nextTransmission);
-
-    // Update FEI for retrocompat (full transition)
-    // useless in multi-dispatch, so useless tout court
-    // updateFei(fei.numero, nextFei);
     addLog({
       user_id: user.id,
       user_role: nextTransmission.current_owner_role! as UserRoles,

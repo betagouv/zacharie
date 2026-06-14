@@ -1,8 +1,9 @@
 import dayjs from 'dayjs';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
 import { useFeiSteps, IconStep } from '@app/utils/fei-steps';
-import type { FeiWithIntermediaires } from '@api/src/types/fei';
 import type { FeiStepSimpleStatus } from '@app/types/fei-steps';
+import { useParams } from 'react-router';
+import useZustandStore from '@app/zustand/store';
 
 const statusColors: Record<FeiStepSimpleStatus, { bg: string; text: string }> = {
   'À compléter': {
@@ -19,7 +20,10 @@ const statusColors: Record<FeiStepSimpleStatus, { bg: string; text: string }> = 
   },
 };
 
-export default function EtgHeaderFiche({ fei }: { fei: FeiWithIntermediaires }) {
+export default function EtgHeaderFiche() {
+  const params = useParams();
+  const feis = useZustandStore((state) => state.feis);
+  const fei = feis[params.fei_numero!];
   const { simpleStatus, currentStepLabelForEtg } = useFeiSteps(fei);
 
   const chasseTitle = `Fiche du ${dayjs(fei.date_mise_a_mort).format('DD/MM/YYYY')}`;

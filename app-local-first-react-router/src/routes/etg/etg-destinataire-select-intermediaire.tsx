@@ -15,7 +15,6 @@ import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import { syncData } from '@app/utils/sync-data';
-import { useCarcassesIntermediairesForIntermediaire } from '@app/utils/get-carcasses-intermediaires';
 import { useCcgIds, useEtgIds, useSviIds, useCollecteursProIds } from '@app/utils/get-entity-relations';
 import SelectCustom from '@app/components/SelectCustom';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
@@ -28,6 +27,9 @@ import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import PartenaireNouveau from '@app/components/PartenaireNouveau';
 import CCGNouveau from '@app/components/CCGNouveau';
 import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
+import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
+import { useCarcassesTransmission } from '@app/utils/get-carcasses-transmission';
+import { CarcasseTransmission } from '@app/types/carcasse';
 
 const partenaireModal = createModal({
   isOpenedByDefault: false,
@@ -55,12 +57,9 @@ export default function DestinataireIntermediaire({
   const params = useParams();
   const user = useUser((state) => state.user)!;
   const isOnline = useIsOnline();
-  const updateFei = useZustandStore((state) => state.updateFei);
-  const updateCarcasse = useZustandStore((state) => state.updateCarcasse);
   const updateCarcassesTransmission = useZustandStore((state) => state.updateCarcassesTransmission);
   const updateAllCarcasseIntermediaire = useZustandStore((state) => state.updateAllCarcasseIntermediaire);
   const addLog = useZustandStore((state) => state.addLog);
-  const feis = useZustandStore((state) => state.feis);
   const entities = useZustandStore((state) => {
     return state.entities;
   });
@@ -74,27 +73,14 @@ export default function DestinataireIntermediaire({
   const isPartenaireModalOpen = useIsModalOpen(partenaireModal);
   const isCCGModalOpen = useIsModalOpen(ccgModal);
 
-  const fei = feis[params.fei_numero!];
+  const fei_numero = params.fei_numero!;
 
-  const myCurrentRole = intermediaire?.intermediaire_role ?? fei.fei_current_owner_role;
+  const myCarcasses = useCarcassesForFei(fei_numero);
+  const transmission = useCarcassesTransmission(myCarcasses);
 
-  const carcassesStore = useZustandStore((state) => state.carcasses);
-  const carcassesIntermediaires = useCarcassesIntermediairesForIntermediaire(feiAndIntermediaireIds);
-  const carcasseIds = useMemo(
-    () =>
-      carcassesIntermediaires
-        .filter((ci) => {
-          const carcasse = carcassesStore[ci.zacharie_carcasse_id];
-          if (!carcasse || carcasse.deleted_at) return false;
-          // Multi-recipient: only include carcasses actually owned by this intermediaire's entity
-          if (intermediaire?.intermediaire_entity_id && carcasse.current_owner_entity_id) {
-            return carcasse.current_owner_entity_id === intermediaire.intermediaire_entity_id;
-          }
-          return true;
-        })
-        .map((ci) => ci.zacharie_carcasse_id),
-    [carcassesIntermediaires, carcassesStore, intermediaire?.intermediaire_entity_id]
-  );
+  const myCurrentRole = intermediaire?.intermediaire_role ?? transmission.current_owner_role;
+
+  const carcasseIds = useMemo(() => myCarcasses.map((ci) => ci.zacharie_carcasse_id), [myCarcasses]);
 
   const ccgs = ccgsIds.map((id) => entities[id]);
   const etgs = etgsIds.map((id) => entities[id]);
@@ -188,7 +174,7 @@ export default function DestinataireIntermediaire({
     if (!prochainDetenteurEntityId) {
       return true;
     }
-    if (prochainDetenteurEntityId !== fei.fei_next_owner_entity_id) {
+    if (prochainDetenteurEntityId !== transmission.next_owner_entity_id) {
       return true;
     }
     if (prochainDetenteurType === EntityTypes.SVI) {
@@ -209,7 +195,7 @@ export default function DestinataireIntermediaire({
     prochainDetenteurType,
     depotType,
     depotEntityId,
-    fei.fei_next_owner_entity_id,
+    transmission,
     myCurrentRole,
     intermediaire?.intermediaire_depot_type,
     intermediaire?.intermediaire_depot_entity_id,
@@ -220,43 +206,28 @@ export default function DestinataireIntermediaire({
   const handleSubmit = () => {
     if (!prochainDetenteurEntityId) return;
     if (!feiAndIntermediaireIds) return;
-    let nextFei: Partial<typeof fei> = {
-      fei_next_owner_entity_id: prochainDetenteurEntityId,
-      fei_next_owner_role: prochainDetenteurType as FeiOwnerRole,
-      svi_assigned_at: prochainDetenteurType === EntityTypes.SVI ? dayjs().toDate() : null,
-      svi_entity_id: prochainDetenteurType === EntityTypes.SVI ? prochainDetenteurEntityId : null,
-    };
-    updateCarcassesTransmission(carcasseIds, {
+    let nextTransmission: CarcasseTransmission = {
       next_owner_entity_id: prochainDetenteurEntityId,
       next_owner_role: prochainDetenteurType as FeiOwnerRole,
-    });
-    if (prochainDetenteurType === EntityTypes.SVI) {
-      for (const carcasseId of carcasseIds) {
-        updateCarcasse(
-          carcasseId,
-          {
-            svi_assigned_to_fei_at: nextFei.svi_assigned_at,
-            svi_entity_id: prochainDetenteurEntityId,
-          },
-          false
-        );
-      }
-    }
+      svi_assigned_at: prochainDetenteurType === EntityTypes.SVI ? dayjs().toDate() : null,
+      svi_assigned_to_fei_at: prochainDetenteurType === EntityTypes.SVI ? dayjs().toDate() : null,
+      svi_entity_id: prochainDetenteurType === EntityTypes.SVI ? prochainDetenteurEntityId : null,
+    };
+    updateCarcassesTransmission(carcasseIds, nextTransmission);
     let nextCarcasseIntermediaire: Partial<CarcasseIntermediaire> = {
       intermediaire_prochain_detenteur_id_cache: prochainDetenteurEntityId,
       intermediaire_prochain_detenteur_role_cache: entities[prochainDetenteurEntityId]?.type as FeiOwnerRole,
       intermediaire_depot_type: depotType,
       intermediaire_depot_entity_id: depotType === DepotType.AUCUN ? null : depotEntityId,
     };
-    updateAllCarcasseIntermediaire(fei.numero, feiAndIntermediaireIds, nextCarcasseIntermediaire);
-    updateFei(fei.numero, nextFei);
+    updateAllCarcasseIntermediaire(fei_numero, feiAndIntermediaireIds, nextCarcasseIntermediaire);
     addLog({
       user_id: user.id,
       user_role: myCurrentRole === FeiOwnerRole.EXAMINATEUR_INITIAL ? UserRoles.CHASSEUR : myCurrentRole!,
       action: 'intermediaire-next-owner-select-destinataire',
-      fei_numero: fei.numero,
-      history: createHistoryInput(fei, nextFei),
-      entity_id: fei.fei_current_owner_entity_id,
+      fei_numero: fei_numero,
+      history: createHistoryInput(transmission, nextTransmission),
+      entity_id: transmission.current_owner_entity_id,
       zacharie_carcasse_id: null,
       carcasse_intermediaire_id: null,
       intermediaire_id: feiAndIntermediaireIds.split('_')[1],
@@ -471,12 +442,12 @@ export default function DestinataireIntermediaire({
             description={jobIsMissing}
           />
         )}
-        {canEdit && !needToSubmit && fei.fei_next_owner_entity_id && (
+        {canEdit && !needToSubmit && transmission.next_owner_entity_id && (
           <>
             <Alert
               className="mt-6"
               severity="success"
-              description={`${entities[fei.fei_next_owner_entity_id]?.nom_d_usage} ${fei.is_synced ? 'a été notifié' : !isOnline ? 'sera notifié dès que vous aurez retrouvé du réseau' : 'va être notifié'}.`}
+              description={`${entities[transmission.next_owner_entity_id]?.nom_d_usage} ${transmission.is_synced ? 'a été notifié' : !isOnline ? 'sera notifié dès que vous aurez retrouvé du réseau' : 'va être notifié'}.`}
               title="Attribution effectuée"
             />
           </>

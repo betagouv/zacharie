@@ -1,12 +1,5 @@
 import { useMemo, useState } from 'react';
-import { CarcasseType } from '@prisma/client';
-
-interface EspeceCountInput {
-  espece: string | null;
-  type: CarcasseType | null;
-  nombre_d_animaux: number | null;
-  deleted_at?: Date | string | null;
-}
+import { Carcasse, CarcasseType } from '@prisma/client';
 
 /**
  * Bloc compact et masquable affichant le total du nombre de carcasses par espèce.
@@ -16,7 +9,7 @@ export default function CarcassesEspeceSummary({
   carcasses,
   storageKey,
 }: {
-  carcasses: Array<EspeceCountInput>;
+  carcasses: Array<Pick<Carcasse, 'espece' | 'type' | 'nombre_d_animaux'>>;
   storageKey: string;
 }) {
   const [open, setOpen] = useState<boolean>(() => {
@@ -36,7 +29,6 @@ export default function CarcassesEspeceSummary({
     const map = new Map<string, number>();
     let total = 0;
     for (const carcasse of carcasses) {
-      if (carcasse.deleted_at) continue;
       if (!carcasse.espece) continue;
       const count = carcasse.type === CarcasseType.PETIT_GIBIER ? (carcasse.nombre_d_animaux ?? 1) : 1;
       map.set(carcasse.espece, (map.get(carcasse.espece) ?? 0) + count);

@@ -10,27 +10,27 @@ import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import DestinataireSelectSousTraite from './etg-destinataire-select-sous-traite';
 import { getFeiAndIntermediaireIdsFromFeiIntermediaire } from '@app/utils/get-carcasse-intermediaire-id';
 import { useFeiIntermediaires } from '@app/utils/get-carcasses-intermediaires';
+import { useCarcassesTransmission } from '@app/utils/get-carcasses-transmission';
 
 export default function FeiSousTraite() {
   const params = useParams();
   const user = useUser((state) => state.user)!;
-  const updateFei = useZustandStore((state) => state.updateFei);
   const updateCarcassesTransmission = useZustandStore((state) => state.updateCarcassesTransmission);
   const addLog = useZustandStore((state) => state.addLog);
-  const feis = useZustandStore((state) => state.feis);
-  const fei = feis[params.fei_numero!];
-  const feiCarcasses = useCarcassesForFei(fei.numero);
+  const fei_numero = params.fei_numero!;
+  const feiCarcasses = useCarcassesForFei(fei_numero);
+  const transmission = useCarcassesTransmission(feiCarcasses);
   const carcasseIds = feiCarcasses.map((c) => c.zacharie_carcasse_id);
-  const intermediaires = useFeiIntermediaires(fei.numero);
+  const intermediaires = useFeiIntermediaires(fei_numero);
   const latestIntermediaire = intermediaires[0];
   const feiAndIntermediaireIds = latestIntermediaire
     ? getFeiAndIntermediaireIdsFromFeiIntermediaire(latestIntermediaire)
     : undefined;
 
-  if (!fei.fei_next_owner_wants_to_sous_traite) {
+  if (!transmission.next_owner_wants_to_sous_traite) {
     return null;
   }
-  if (fei.fei_next_owner_sous_traite_by_user_id !== user.id) {
+  if (transmission.next_owner_sous_traite_by_user_id !== user.id) {
     return null;
   }
 
@@ -52,25 +52,21 @@ export default function FeiSousTraite() {
           type="submit"
           className="text-sm"
           onClick={() => {
-            const nextFei = {
-              fei_next_owner_wants_to_sous_traite: false,
-              fei_next_owner_sous_traite_by_user_id: null,
-            };
-            updateCarcassesTransmission(carcasseIds, {
+            const nextTransmission = {
               next_owner_wants_to_sous_traite: false,
               next_owner_sous_traite_by_user_id: null,
-            });
-            updateFei(fei.numero, nextFei);
+            };
+            updateCarcassesTransmission(carcasseIds, nextTransmission);
             addLog({
               user_id: user.id,
-              user_role: fei.fei_next_owner_role || (user.roles[0] as UserRoles),
-              fei_numero: fei.numero,
+              user_role: transmission.next_owner_role || (user.roles[0] as UserRoles),
+              fei_numero: fei_numero,
               action: 'current-owner-sous-traite-change-mind',
-              entity_id: fei.fei_next_owner_entity_id,
+              entity_id: transmission.next_owner_entity_id,
               zacharie_carcasse_id: null,
               intermediaire_id: null,
               carcasse_intermediaire_id: null,
-              history: createHistoryInput(fei, nextFei),
+              history: createHistoryInput(transmission, nextTransmission),
             });
             syncData('current-owner-sous-traite-change-mind');
           }}

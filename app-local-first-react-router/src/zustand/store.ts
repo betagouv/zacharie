@@ -74,12 +74,12 @@ type CreateLog = {
   user_role: string;
   action: string;
   history?: HistoryInput;
-  fei_numero: Fei['numero'] | null;
-  entity_id: EntityWithUserRelation['id'] | null;
-  zacharie_carcasse_id: CarcasseModificationRequest['zacharie_carcasse_id'] | null;
-  fei_intermediaire_id: CarcasseIntermediaire['intermediaire_id'] | null;
-  intermediaire_id: CarcasseIntermediaire['intermediaire_id'] | null;
-  carcasse_intermediaire_id: CarcasseIntermediaire['intermediaire_id'] | null;
+  fei_numero: Fei['numero'] | null | undefined;
+  entity_id: EntityWithUserRelation['id'] | null | undefined;
+  zacharie_carcasse_id: CarcasseModificationRequest['zacharie_carcasse_id'] | null | undefined;
+  fei_intermediaire_id: CarcasseIntermediaire['intermediaire_id'] | null | undefined;
+  intermediaire_id: CarcasseIntermediaire['intermediaire_id'] | null | undefined;
+  carcasse_intermediaire_id: CarcasseIntermediaire['intermediaire_id'] | null | undefined;
 };
 
 interface Actions {
