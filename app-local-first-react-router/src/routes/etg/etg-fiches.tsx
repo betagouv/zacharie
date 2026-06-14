@@ -24,6 +24,7 @@ import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
 import { useSaveScroll } from '@app/services/useSaveScroll';
 import CardFiche from '@app/components/CardFiche';
 import CarcassesEspeceSummary from '@app/components/CarcassesEspeceSummary';
+import { getPreviousDetenteur } from '@app/utils/get-previous-detenteur';
 import CollapsibleSection from '@app/components/CollapsibleSection';
 import DropDownMenu from '@app/components/DropDownMenu';
 
@@ -906,6 +907,7 @@ export default function EtgFiches() {
           >
             {paginatedFeis.map((fei) => {
               if (!fei) return null;
+              const detenteurPrecedent = getPreviousDetenteur(fei);
               return (
                 <CardFiche
                   key={fei.numero}
@@ -914,6 +916,8 @@ export default function EtgFiches() {
                   onPrintSelect={handleCheckboxClick}
                   isPrintSelected={selectedFeis.includes(fei.numero)}
                   linkTo={`/app/etg/fei/${fei.numero}`}
+                  detenteurName={detenteurPrecedent.name}
+                  detenteurIcon={detenteurPrecedent.icon}
                 />
               );
             })}

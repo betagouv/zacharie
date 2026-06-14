@@ -23,6 +23,7 @@ import { useMyCarcassesForFei } from '@app/utils/filter-my-carcasses';
 import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
 import { useSaveScroll } from '@app/services/useSaveScroll';
 import CardFiche from '@app/components/CardFiche';
+import { getPreviousDetenteur } from '@app/utils/get-previous-detenteur';
 import DropDownMenu from '@app/components/DropDownMenu';
 
 import { useFeiSteps, computeFeiSteps } from '@app/utils/fei-steps';
@@ -534,6 +535,7 @@ export default function CollecteurFiches() {
             >
               {paginatedFeis.map((fei) => {
                 if (!fei) return null;
+                const detenteurPrecedent = getPreviousDetenteur(fei);
                 return (
                   <CardFiche
                     key={fei.numero}
@@ -542,6 +544,8 @@ export default function CollecteurFiches() {
                     onPrintSelect={handleCheckboxClick}
                     isPrintSelected={selectedFeis.includes(fei.numero)}
                     linkTo={`/app/collecteur/fei/${fei.numero}`}
+                    detenteurName={detenteurPrecedent.name}
+                    detenteurIcon={detenteurPrecedent.icon}
                   />
                 );
               })}

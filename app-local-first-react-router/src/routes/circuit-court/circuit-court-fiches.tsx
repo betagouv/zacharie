@@ -17,6 +17,7 @@ import {
 } from '@app/utils/get-carcasses-intermediaires';
 import { useSaveScroll } from '@app/services/useSaveScroll';
 import CardFiche from '@app/components/CardFiche';
+import { getPreviousDetenteur } from '@app/utils/get-previous-detenteur';
 import DropDownMenu from '@app/components/DropDownMenu';
 import { filterCarcassesForFei, useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { useMyCarcassesForFei } from '@app/utils/filter-my-carcasses';
@@ -552,6 +553,7 @@ export default function TableauDeBordIndex() {
             >
               {paginatedFeis.map((fei) => {
                 if (!fei) return null;
+                const detenteurPrecedent = getPreviousDetenteur(fei);
                 return (
                   <CardFiche
                     key={fei.numero}
@@ -560,6 +562,8 @@ export default function TableauDeBordIndex() {
                     onPrintSelect={handleCheckboxClick}
                     isPrintSelected={selectedFeis.includes(fei.numero)}
                     linkTo={`/app/circuit-court/fei/${fei.numero}`}
+                    detenteurName={detenteurPrecedent.name}
+                    detenteurIcon={detenteurPrecedent.icon}
                   />
                 );
               })}
