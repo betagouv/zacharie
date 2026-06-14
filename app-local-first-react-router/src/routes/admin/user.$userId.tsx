@@ -85,7 +85,7 @@ const initialState: State = {
 export default function AdminUser() {
   const params = useParams();
   const [userResponseData, setUserResponseData] = useState<State>(initialState);
-  const { user, identityDone, examinateurDone, userEntitiesRelations, officialCfei } = userResponseData;
+  const { user, userEntitiesRelations, officialCfei } = userResponseData;
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });

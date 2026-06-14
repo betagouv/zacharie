@@ -403,12 +403,14 @@ router.delete(
           },
         });
         if (user && !user.last_login_at) {
-          // user was wrongly invited, we need to delete him
-          await prisma.user.delete({
-            where: {
-              id: body.owner_id,
-            },
-          });
+          if (!req.user.isZacharieAdmin) {
+            // user was wrongly invited, we need to delete him
+            await prisma.user.delete({
+              where: {
+                id: body.owner_id,
+              },
+            });
+          }
         }
       }
 
