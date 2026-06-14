@@ -77,6 +77,7 @@ export function filterFeiIntermediaires(
       };
     }
   }
+  // ordre chronologique décroissant, du plus récent au plus ancien
   return Object.values(seen).sort((a, b) => (dayjs(a.created_at).diff(b.created_at) < 0 ? 1 : -1));
 }
 

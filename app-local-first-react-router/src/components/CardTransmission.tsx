@@ -1,11 +1,9 @@
-import type { FeiWithIntermediaires } from '@api/src/types/fei';
 import type { FeiStepSimpleStatus } from '@app/types/fei-steps';
-import { useFeiSteps } from '@app/utils/fei-steps';
 import dayjs from 'dayjs';
 import { Link } from 'react-router';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
-import { useMemo, useState, useRef, useEffect } from 'react';
+import { useMemo, useState, useRef, useEffect, type ReactNode } from 'react';
 import useZustandStore from '@app/zustand/store';
 import { useIsCircuitCourt } from '@app/utils/circuit-court';
 import { CarcasseType } from '@prisma/client';
@@ -13,14 +11,17 @@ import { abbreviations, formatCountCarcasseByEspece } from '@app/utils/count-car
 import { filterCarcassesIntermediairesForCarcasse } from '@app/utils/get-carcasses-intermediaires';
 import { useMyCarcassesForFei } from '@app/utils/filter-my-carcasses';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
+import { CarcasseTransmissionWihMetadata } from '@app/types/carcasse';
 
 interface CardProps {
-  fei: FeiWithIntermediaires;
+  transmission: CarcasseTransmissionWihMetadata;
   onPrintSelect?: (feiNumber: string, selected: boolean) => void;
   isPrintSelected?: boolean;
   disabledBecauseOffline?: boolean;
   filter: FeiStepSimpleStatus | 'Toutes les fiches';
   linkTo: string;
+  detenteurName: string | null;
+  detenteurIcon?: ReactNode;
 }
 
 const statusColors: Record<FeiStepSimpleStatus, { bg: string; text: string }> = {
@@ -39,21 +40,24 @@ const statusColors: Record<FeiStepSimpleStatus, { bg: string; text: string }> = 
 };
 
 const maxDetailedLines = 2;
-export default function CardFiche({
-  fei,
+export default function CardTransmission({
+  transmission,
   onPrintSelect,
   isPrintSelected = false,
   disabledBecauseOffline = false,
   filter,
   linkTo,
+  detenteurName,
+  detenteurIcon,
 }: CardProps) {
-  const { simpleStatus, currentStepLabelShort } = useFeiSteps(fei);
+  const simpleStatus = transmission.simpleStatus;
+  const currentStepLabelShort = null;
   const isCircuitCourt = useIsCircuitCourt();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const dataIsSynced = useZustandStore((state) => state.dataIsSynced);
-  const myCarcasses = useMyCarcassesForFei(fei.numero);
-  const feiCarcasses = useCarcassesForFei(fei.numero);
+  const myCarcasses = useMyCarcassesForFei(transmission.fei_numero!);
+  const feiCarcasses = useCarcassesForFei(transmission.fei_numero!);
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
 
   // Close menu when clicking outside
@@ -175,7 +179,7 @@ export default function CardFiche({
               label: '',
               nativeInputProps: {
                 checked: isPrintSelected,
-                onChange: () => onPrintSelect?.(fei.numero, !isPrintSelected),
+                onChange: () => onPrintSelect?.(transmission.fei_numero!, !isPrintSelected),
               },
             },
           ]}
@@ -194,7 +198,9 @@ export default function CardFiche({
           disabledBecauseOffline ? 'pointer-events-none' : '',
         ].join(' ')}
       >
-        <div className="absolute top-0 right-0 text-transparent selection:text-gray-200">{fei.numero}</div>
+        <div className="absolute top-0 right-0 text-transparent selection:text-gray-200">
+          {transmission.fei_numero!}
+        </div>
         {!isCircuitCourt && (
           <div className="flex flex-row gap-x-2">
             <Tag
@@ -222,7 +228,7 @@ export default function CardFiche({
           </div>
         )}
         <div className="text-xl font-bold">
-          {dayjs(fei.date_mise_a_mort || fei.created_at).format('DD/MM/YYYY')}
+          {dayjs(transmission.fei.date_mise_a_mort).format('DD/MM/YYYY')}
         </div>
 
         <div className="flex flex-col">
@@ -232,10 +238,10 @@ export default function CardFiche({
               <p
                 className={[
                   'line-clamp-2 text-sm',
-                  fei.commune_mise_a_mort ? 'text-black' : 'text-neutral-400',
+                  transmission.fei.commune_mise_a_mort ? 'text-black' : 'text-neutral-400',
                 ].join(' ')}
               >
-                {fei.commune_mise_a_mort
+                {transmission.fei.commune_mise_a_mort
                   ?.split(' ')
                   .slice(1)
                   .map((w) => w.toLocaleLowerCase())
@@ -243,19 +249,13 @@ export default function CardFiche({
               </p>
             </div>
             <div className="flex shrink basis-1/2 flex-col gap-y-1">
-              <ChasseIcon />
+              {detenteurIcon}
               <p
-                className={[
-                  'line-clamp-2 text-sm',
-                  fei.premier_detenteur_name_cache ? 'text-black' : 'text-neutral-400',
-                ].join(' ')}
+                className={['line-clamp-2 text-sm', detenteurName ? 'text-black' : 'text-neutral-400'].join(
+                  ' '
+                )}
               >
-                {/* {user?.roles.includes(UserRoles.SVI) ? (
-                  <>{fei.latest_intermediaire_name_cache || 'À renseigner'}</>
-                ) : (
-                  <>{fei.premier_detenteur_name_cache || 'À renseigner'}</>
-                )} */}
-                <>{fei.premier_detenteur_name_cache || 'À renseigner'}</>
+                {detenteurName || 'À renseigner'}
               </p>
             </div>
           </div>
@@ -339,7 +339,9 @@ export default function CardFiche({
           <p className="text-sm text-neutral-700 italic opacity-50">{currentStepLabelShort}</p>
         </div> */}
 
-        <div className="absolute right-0 bottom-0 text-transparent selection:text-gray-200">{fei.numero}</div>
+        <div className="absolute right-0 bottom-0 text-transparent selection:text-gray-200">
+          {transmission.fei_numero!}
+        </div>
       </Link>
       {disabledBecauseOffline && (
         <div className="bg-action-high-blue-france absolute bottom-0 left-0 flex grow flex-row items-end gap-x-2 px-2 py-1">
@@ -363,23 +365,6 @@ function CommuneIcon() {
     >
       <path
         d="M6.49999 15L1.9038 10.6066C-0.634601 8.18017 -0.634601 4.24622 1.9038 1.81981C4.44221 -0.606603 8.55774 -0.606603 11.0962 1.81981C13.6346 4.24622 13.6346 8.18017 11.0962 10.6066L6.49999 15ZM10.0748 9.63027C12.0491 7.74311 12.0491 4.68332 10.0748 2.79612C8.10051 0.90891 4.89949 0.90891 2.92518 2.79612C0.950862 4.68332 0.950862 7.74311 2.92518 9.63027L6.49999 13.0474L10.0748 9.63027ZM6.49999 7.59392C5.70223 7.59392 5.05555 6.97578 5.05555 6.21321C5.05555 5.45066 5.70223 4.8325 6.49999 4.8325C7.29776 4.8325 7.94443 5.45066 7.94443 6.21321C7.94443 6.97578 7.29776 7.59392 6.49999 7.59392Z"
-        fill="black"
-      />
-    </svg>
-  );
-}
-
-function ChasseIcon() {
-  return (
-    <svg
-      width="15"
-      height="15"
-      viewBox="0 0 15 15"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        d="M0 15C0 11.8441 2.55837 9.28571 5.71429 9.28571C8.87021 9.28571 11.4286 11.8441 11.4286 15H10C10 12.6331 8.08121 10.7143 5.71429 10.7143C3.34735 10.7143 1.42857 12.6331 1.42857 15H0ZM5.71429 8.57143C3.34643 8.57143 1.42857 6.65357 1.42857 4.28571C1.42857 1.91786 3.34643 0 5.71429 0C8.08214 0 10 1.91786 10 4.28571C10 6.65357 8.08214 8.57143 5.71429 8.57143ZM5.71429 7.14286C7.29286 7.14286 8.57143 5.86429 8.57143 4.28571C8.57143 2.70714 7.29286 1.42857 5.71429 1.42857C4.13571 1.42857 2.85714 2.70714 2.85714 4.28571C2.85714 5.86429 4.13571 7.14286 5.71429 7.14286ZM11.6312 9.78771C13.6174 10.6829 15 12.68 15 15H13.5714C13.5714 13.26 12.5345 11.7622 11.0449 11.0908L11.6312 9.78771ZM11.1401 1.72372C12.5674 2.31216 13.5714 3.71686 13.5714 5.35714C13.5714 7.40729 12.003 9.08943 10 9.26971V7.83186C11.2119 7.65871 12.1429 6.61714 12.1429 5.35714C12.1429 4.37096 11.5726 3.51859 10.7436 3.11168L11.1401 1.72372Z"
         fill="black"
       />
     </svg>

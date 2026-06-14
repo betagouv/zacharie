@@ -48,14 +48,19 @@ export function useTransmissions(): Record<
     if (carcasse.deleted_at) continue;
     if (transmissions[carcasse.fei_numero]) {
       transmissions[carcasse.fei_numero].carcasses.push({
+        zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
         espece: carcasse.espece,
         type: carcasse.type,
         nombre_d_animaux: carcasse.nombre_d_animaux,
+        deleted_at: carcasse.deleted_at,
+        svi_carcasse_status: carcasse.svi_carcasse_status,
+        svi_ipm2_nombre_animaux: carcasse.svi_ipm2_nombre_animaux,
       });
       if (transmissions[carcasse.fei_numero].simpleStatus !== 'Clôturée') continue;
     } else {
       const transmission = getCarcasseTransmission(carcasse);
       const fei = feis[transmission.fei_numero!];
+      // ordre chronologique décroissant, du plus récent au plus ancien
       const intermediaires = filterFeiIntermediaires(carcassesIntermediaireById, transmission.fei_numero!);
       const transmissionWithIntermediaires: CarcasseTransmissionWihMetadata = {
         ...transmission,
@@ -66,11 +71,17 @@ export function useTransmissions(): Record<
           date_mise_a_mort: fei.date_mise_a_mort,
         },
         simpleStatus: 'Clôturée',
+        currentStepLabel: 'Clôturée',
+        nextStepLabel: 'Clôturée',
         carcasses: [
           {
+            zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
             espece: carcasse.espece,
             type: carcasse.type,
             nombre_d_animaux: carcasse.nombre_d_animaux,
+            deleted_at: carcasse.deleted_at,
+            svi_carcasse_status: carcasse.svi_carcasse_status,
+            svi_ipm2_nombre_animaux: carcasse.svi_ipm2_nombre_animaux,
           },
         ],
       };
@@ -88,7 +99,6 @@ export function useTransmissions(): Record<
     );
 
     if (isUnderMyResponsability) {
-      // feisSorted[carcasse.fei_numero] = 'under-my-resp';
       transmissions[carcasse.fei_numero].simpleStatus = 'À compléter';
       continue;
     }
@@ -99,7 +109,6 @@ export function useTransmissions(): Record<
       const isToTake = isCarcasseToTake(carcasse, user, entitiesWorkingDirectlyFor);
 
       if (isToTake) {
-        // feisSorted[carcasse.fei_numero] = 'to-take';
         transmissions[carcasse.fei_numero].simpleStatus = 'À compléter';
         continue;
       }
@@ -108,18 +117,15 @@ export function useTransmissions(): Record<
     // FEI ONGOING
     if (!carcasse.svi_assigned_at && !carcasse.intermediaire_closed_at) {
       if (carcasse.examinateur_initial_user_id === user.id) {
-        // feisSorted[carcasse.fei_numero] = 'ongoing';
         transmissions[carcasse.fei_numero].simpleStatus = 'En cours';
         continue;
       }
       if (carcasse.premier_detenteur_user_id === user.id) {
-        // feisSorted[carcasse.fei_numero] = 'ongoing';
         transmissions[carcasse.fei_numero].simpleStatus = 'En cours';
         continue;
       }
       if (carcasse.premier_detenteur_entity_id) {
         if (entitiesWorkingDirectlyFor[carcasse.premier_detenteur_entity_id]) {
-          // feisSorted[carcasse.fei_numero] = 'ongoing';
           transmissions[carcasse.fei_numero].simpleStatus = 'En cours';
           continue;
         }
@@ -129,21 +135,18 @@ export function useTransmissions(): Record<
         carcasse.next_owner_sous_traite_by_entity_id &&
         entitiesWorkingDirectlyFor[carcasse.next_owner_sous_traite_by_entity_id];
       if (hasSousTraite) {
-        // feisSorted[carcasse.fei_numero] = 'ongoing';
         transmissions[carcasse.fei_numero].simpleStatus = 'En cours';
         continue;
       }
       let isIntermediaire = false;
       for (const intermediaire of transmissions[carcasse.fei_numero].intermediaires) {
         if (intermediaire.intermediaire_user_id === user.id) {
-          // feisSorted[carcasse.fei_numero] = 'ongoing';
           transmissions[carcasse.fei_numero].simpleStatus = 'En cours';
           isIntermediaire = true;
           break;
         }
         if (intermediaire.intermediaire_entity_id) {
           if (entitiesWorkingDirectlyFor[intermediaire.intermediaire_entity_id]) {
-            // feisSorted[carcasse.fei_numero] = 'ongoing';
             transmissions[carcasse.fei_numero].simpleStatus = 'En cours';
             isIntermediaire = true;
             break;
@@ -156,11 +159,11 @@ export function useTransmissions(): Record<
     }
     if (carcasse.svi_assigned_at) {
       if (meIsSvi) {
-        // feisSorted[carcasse.fei_numero] = 'under-my-resp';
-        transmissions[carcasse.fei_numero].simpleStatus = 'À compléter';
+        if (!carcasse.svi_closed_at && !carcasse.svi_automatic_closed_at) {
+          transmissions[carcasse.fei_numero].simpleStatus = 'À compléter';
+        }
         continue;
       }
-      // feisSorted[carcasse.fei_numero] = 'ongoing';
       transmissions[carcasse.fei_numero].simpleStatus = 'En cours';
       continue;
     }
@@ -179,8 +182,9 @@ export function useTransmissions(): Record<
           date_mise_a_mort: fei.date_mise_a_mort,
         },
         simpleStatus: 'À compléter',
+        currentStepLabel: 'Examen initial',
+        nextStepLabel: 'Fiche envoyée, pas encore traitée',
       };
-      // feisSorted[fei.numero] = 'under-my-resp';
       transmissions[fei.numero] = transmission;
     }
   }

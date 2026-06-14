@@ -81,7 +81,7 @@ export function getCarcasseStatusLabel(carcasse: Carcasse) {
   }
 }
 
-export function getSimplifiedCarcasseStatus(carcasse: Carcasse) {
+export function getSimplifiedCarcasseStatus(carcasse: Pick<Carcasse, 'svi_carcasse_status'>) {
   switch (carcasse.svi_carcasse_status) {
     case CarcasseStatus.SANS_DECISION:
     case CarcasseStatus.CONSIGNE:

@@ -1,6 +1,6 @@
 import type { Carcasse, Fei } from '@prisma/client';
 import { CarcassesIntermediaire } from './carcasses-intermediaire';
-import { FeiStepSimpleStatus } from './fei-steps';
+import { FeiStepSimpleStatus, FeiStep } from './fei-steps';
 import { CarcasseWithModificationRequests } from '@api/src/types/carcasse';
 
 export interface CarcasseFieldsTakenFromFei {
@@ -98,10 +98,23 @@ export type CarcasseTransmission = Partial<
   >
 >;
 
+export type CarcasseForCounting = Pick<
+  CarcasseWithModificationRequests,
+  | 'zacharie_carcasse_id'
+  | 'espece'
+  | 'type'
+  | 'nombre_d_animaux'
+  | 'deleted_at'
+  | 'svi_carcasse_status'
+  | 'svi_ipm2_nombre_animaux'
+>;
+
 export type CarcasseTransmissionWihMetadata = CarcasseTransmission & {
   intermediaires: Array<CarcassesIntermediaire>;
   fei: Pick<Fei, 'numero' | 'commune_mise_a_mort' | 'date_mise_a_mort'>;
   allCarcassesDone?: boolean;
   simpleStatus: FeiStepSimpleStatus;
-  carcasses: Array<Pick<CarcasseWithModificationRequests, 'espece' | 'type' | 'nombre_d_animaux'>>;
+  currentStepLabel: FeiStep;
+  nextStepLabel: FeiStep;
+  carcasses: Array<CarcasseForCounting>;
 };
