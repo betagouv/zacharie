@@ -17,7 +17,7 @@ import {
 import useZustandStore from '@app/zustand/store';
 import { syncData } from '@app/utils/sync-data';
 import useUser from '@app/zustand/user';
-import type { FeiIntermediaire } from '@app/types/fei-intermediaire';
+import type { CarcassesIntermediaire } from '@app/types/carcasses-intermediaire';
 import { CarcasseWithModificationRequests } from '@api/src/types/carcasse';
 
 const gibierSelect = {
@@ -40,13 +40,13 @@ export default function RequestNewCarcasseButton({
   className,
 }: {
   feiNumero: string;
-  intermediaire: FeiIntermediaire;
+  intermediaire: CarcassesIntermediaire;
   className?: string;
 }) {
   const user = useUser((state) => state.user);
   const fei = useZustandStore((state) => state.feis[feiNumero]);
   const createCarcasse = useZustandStore((state) => state.createCarcasse);
-  const createFeiIntermediaires = useZustandStore((state) => state.createFeiIntermediaires);
+  const createCarcassesIntermediaire = useZustandStore((state) => state.createCarcassesIntermediaire);
   const createCarcasseModifRequest = useZustandStore((state) => state.createCarcasseModifRequest);
 
   const modal = useRef(
@@ -253,7 +253,7 @@ export default function RequestNewCarcasseButton({
 
     // 2) Create the CarcasseIntermediaire row for the current intermediaire so the new carcasse
     // appears in their main list (and not in "Carcasses déjà refusées").
-    createFeiIntermediaires([intermediaire], [zacharieCarcasseId]);
+    createCarcassesIntermediaire([intermediaire], [zacharieCarcasseId]);
 
     // 3) Create the modif request — the backend's side effects will notify the examinateur.
     createCarcasseModifRequest(modifRequest);

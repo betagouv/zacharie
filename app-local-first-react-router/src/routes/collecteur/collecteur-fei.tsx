@@ -23,7 +23,10 @@ import {
   getFeiAndIntermediaireIdsFromFeiIntermediaire,
   getFeiAndCarcasseAndIntermediaireIds,
 } from '@app/utils/get-carcasse-intermediaire-id';
-import type { FeiAndCarcasseAndIntermediaireIds, FeiIntermediaire } from '@app/types/fei-intermediaire';
+import type {
+  FeiAndCarcasseAndIntermediaireIds,
+  CarcassesIntermediaire,
+} from '@app/types/carcasses-intermediaire';
 import {
   useCarcassesIntermediairesForIntermediaire,
   useFeiIntermediaires,
@@ -239,7 +242,7 @@ function CollecteurProFeiContent({
   intermediaire,
   children,
   ...props
-}: Props & { intermediaire: FeiIntermediaire; children: React.ReactNode }) {
+}: Props & { intermediaire: CarcassesIntermediaire; children: React.ReactNode }) {
   const params = useParams();
   const user = useUser((state) => state.user)!;
   const updateAllCarcasseIntermediaire = useZustandStore((state) => state.updateAllCarcasseIntermediaire);

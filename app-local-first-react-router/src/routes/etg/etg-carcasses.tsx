@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { FeiOwnerRole } from '@prisma/client';
-import type { FeiIntermediaire } from '@app/types/fei-intermediaire';
+import type { CarcassesIntermediaire } from '@app/types/carcasses-intermediaire';
 import dayjs from 'dayjs';
 import useZustandStore from '@app/zustand/store';
 import { Pagination } from '@codegouvfr/react-dsfr/Pagination';
@@ -131,7 +131,7 @@ export default function EtgCarcasses() {
   }, [filtersKey, setSearchParams]);
 
   const intermediairesByFei = useMemo(() => {
-    const seen: Record<string, Record<string, FeiIntermediaire>> = {};
+    const seen: Record<string, Record<string, CarcassesIntermediaire>> = {};
     for (const ci of Object.values(carcassesIntermediaireById)) {
       if (ci.deleted_at) continue;
       if (!seen[ci.fei_numero]) seen[ci.fei_numero] = {};
@@ -150,7 +150,7 @@ export default function EtgCarcasses() {
         intermediaire_prochain_detenteur_id_cache: ci.intermediaire_prochain_detenteur_id_cache,
       };
     }
-    const result: Record<string, FeiIntermediaire[]> = {};
+    const result: Record<string, CarcassesIntermediaire[]> = {};
     for (const fei_numero of Object.keys(seen)) {
       result[fei_numero] = Object.values(seen[fei_numero]).sort((a, b) =>
         dayjs(a.created_at).diff(b.created_at) < 0 ? 1 : -1

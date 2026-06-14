@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router';
 import dayjs from 'dayjs';
 import { CarcasseType, DepotType, FeiOwnerRole } from '@prisma/client';
 import type { Carcasse } from '@prisma/client';
-import type { FeiIntermediaire } from '@app/types/fei-intermediaire';
+import type { CarcassesIntermediaire } from '@app/types/carcasses-intermediaire';
 import { SegmentedControl } from '@codegouvfr/react-dsfr/SegmentedControl';
 import { Pagination } from '@codegouvfr/react-dsfr/Pagination';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
@@ -289,7 +289,7 @@ export default function EtgFiches() {
   }, [allFeis]);
 
   const intermediairesByFei = useMemo(() => {
-    const seen: Record<string, Record<string, FeiIntermediaire>> = {};
+    const seen: Record<string, Record<string, CarcassesIntermediaire>> = {};
     for (const ci of Object.values(carcassesIntermediaireById)) {
       if (ci.deleted_at) continue;
       if (!seen[ci.fei_numero]) seen[ci.fei_numero] = {};
@@ -308,7 +308,7 @@ export default function EtgFiches() {
         intermediaire_prochain_detenteur_id_cache: ci.intermediaire_prochain_detenteur_id_cache,
       };
     }
-    const result: Record<string, FeiIntermediaire[]> = {};
+    const result: Record<string, CarcassesIntermediaire[]> = {};
     for (const fei_numero of Object.keys(seen)) {
       result[fei_numero] = Object.values(seen[fei_numero]).sort((a, b) =>
         dayjs(a.created_at).diff(b.created_at) < 0 ? 1 : -1

@@ -1,10 +1,10 @@
 import { Carcasse, type CarcasseIntermediaire } from '@prisma/client';
 import dayjs from 'dayjs';
 import type {
-  FeiIntermediaire,
+  CarcassesIntermediaire,
   FeiAndIntermediaireIds,
   FeiAndCarcasseAndIntermediaireIds,
-} from '@app/types/fei-intermediaire';
+} from '@app/types/carcasses-intermediaire';
 
 export function getNewCarcasseIntermediaireId(
   userId: string,
@@ -27,13 +27,13 @@ export function getFeiAndCarcasseAndIntermediaireIds(
 
 export function getFeiAndCarcasseAndIntermediaireIdsFromCarcasse(
   carcasse: Carcasse,
-  intermediaireId: FeiIntermediaire['id']
+  intermediaireId: CarcassesIntermediaire['id']
 ): FeiAndCarcasseAndIntermediaireIds {
   return `${carcasse.fei_numero}_${carcasse.zacharie_carcasse_id}_${intermediaireId}`;
 }
 
 export function getFeiAndIntermediaireIdsFromFeiIntermediaire(
-  intermediaire: FeiIntermediaire
+  intermediaire: CarcassesIntermediaire
 ): FeiAndIntermediaireIds {
   return `${intermediaire.fei_numero}_${intermediaire.id}`;
 }

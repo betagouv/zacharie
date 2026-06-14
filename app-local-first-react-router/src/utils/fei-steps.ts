@@ -4,7 +4,7 @@ import useUser from '@app/zustand/user';
 import { Carcasse, Entity, EntityTypes, FeiOwnerRole, User, UserRoles } from '@prisma/client';
 import { useEntitiesIdsWorkingDirectlyFor } from '@app/utils/get-entity-relations';
 import { createElement, useMemo } from 'react';
-import type { FeiIntermediaire } from '@app/types/fei-intermediaire';
+import type { CarcassesIntermediaire } from '@app/types/carcasses-intermediaire';
 import { useFeiIntermediaires } from '@app/utils/get-carcasses-intermediaires';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { isFeiDone } from '@app/utils/is-carcasse-done';
@@ -55,7 +55,7 @@ export function useFeiSteps(fei: FeiWithIntermediaires): UseFeiStepsReturn {
 
 interface ComputeFeiStepsParams {
   fei: FeiWithIntermediaires;
-  intermediaires: Array<FeiIntermediaire>;
+  intermediaires: Array<CarcassesIntermediaire>;
   entitiesIdsWorkingDirectlyFor: Array<Entity['id']>;
   user: User | null;
   carcasses?: Array<Carcasse>;

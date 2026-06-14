@@ -19,7 +19,7 @@ import { getEntityDisplay } from '@app/utils/get-entity-display';
 import Button from '@codegouvfr/react-dsfr/Button';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
-import type { FeiIntermediaire, FeiAndIntermediaireIds } from '@app/types/fei-intermediaire';
+import type { CarcassesIntermediaire, FeiAndIntermediaireIds } from '@app/types/carcasses-intermediaire';
 import { CarcasseIntermediaire } from '@prisma/client';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import PartenaireNouveau from '@app/components/PartenaireNouveau';
@@ -37,7 +37,7 @@ export default function DestinataireSousTraite({
 }: {
   className?: string;
   feiAndIntermediaireIds?: FeiAndIntermediaireIds;
-  intermediaire?: FeiIntermediaire;
+  intermediaire?: CarcassesIntermediaire;
 }) {
   const params = useParams();
   const user = useUser((state) => state.user)!;

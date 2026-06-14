@@ -3,7 +3,7 @@ import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import { computeFeiSteps } from '../src/utils/fei-steps';
 import { FeiWithIntermediaires } from '../../api-express/src/types/fei';
-import { FeiIntermediaire } from '../src/types/fei-intermediaire';
+import { CarcassesIntermediaire } from '../src/types/carcasses-intermediaire';
 import { Carcasse, User, UserRoles, FeiOwnerRole, UserEtgRoles } from '@prisma/client';
 
 // Mock the Sentry capture function using vi.hoisted()
@@ -151,7 +151,9 @@ const createMockCarcasse = (overrides: Partial<Carcasse> = {}): Carcasse =>
     ...overrides,
   }) as unknown as Carcasse;
 
-const createMockIntermediaire = (overrides: Partial<FeiIntermediaire> = {}): FeiIntermediaire => ({
+const createMockIntermediaire = (
+  overrides: Partial<CarcassesIntermediaire> = {}
+): CarcassesIntermediaire => ({
   id: 'user-1_123456',
   created_at: new Date(),
   fei_numero: 'FEI-2024-001',
