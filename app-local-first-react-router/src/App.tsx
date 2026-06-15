@@ -31,6 +31,7 @@ import RouterCollecteur from './routes/collecteur/collecteur-router';
 import RouterEtg from './routes/etg/etg-router';
 import RouterAdmin from './routes/admin/admin-router';
 import NouvelleFiche from './routes/nouvelle-fiche';
+import TableauDeBordRedirect from './routes/tableau-de-bord-redirect';
 import RouterCircuitCourt from './routes/circuit-court/circuit-court-router';
 import RouterFdc from './routes/fdc/fdc-router';
 import RouterFrc from './routes/frc/frc-router';
@@ -166,6 +167,10 @@ function App() {
           <Route
             path="nouvelle-fiche"
             element={<NouvelleFiche />}
+          />
+          <Route
+            path="tableau-de-bord"
+            element={<TableauDeBordRedirect />}
           />
         </Route>
         <Route
