@@ -58,6 +58,16 @@ function App() {
   const landingPageNavigationMenu = useLandingPageNavigationMenu();
   const user = useUser((state) => state.user);
   // const generalNavigation = useLoggedInNavigationMenu();
+
+  useEffect(() => {
+    if (user) {
+      Sentry.setUser({ id: user.id, email: user.email ?? undefined, role: user.roles?.[0] });
+    } else {
+      Sentry.setUser(null);
+    }
+    Sentry.setTag('platform', window.ReactNativeWebView ? 'native' : 'web');
+  }, [user]);
+
   return (
     <>
       <SentryRoutes>

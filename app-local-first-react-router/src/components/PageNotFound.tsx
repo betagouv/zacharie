@@ -18,11 +18,30 @@ export default function PageNotFound() {
   useEffect(() => {
     const { pathname, search } = window.location;
     const platform = window.ReactNativeWebView ? 'native' : 'web';
+    // navigation.type distingue un cold-start (`navigate`) d'un reload ou d'un
+    // back/forward : un `navigate` + `referrer` vide en natif = signature d'un
+    // `initial-path` périmé rejoué au démarrage (cf. réparation plus bas).
+    const navEntry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
     trackEvent('error', '404', pathname + search);
+    // L'identité (id/email/rôle) est déjà attachée globalement via Sentry.setUser
+    // dans App.tsx. Ici on ajoute le contexte propre à la route : des tags
+    // filtrables/groupables dans l'UI + le userAgent (version app native / OS).
     capture('PageNotFound 404', {
-      extra: { pathname, search, platform, referrer: document.referrer },
+      tags: {
+        error_404: 'true',
+        platform,
+        role: user?.roles?.[0] ?? 'anonymous',
+        navigation_type: navEntry?.type ?? 'unknown',
+      },
+      extra: {
+        pathname,
+        search,
+        platform,
+        referrer: document.referrer,
+        userAgent: navigator.userAgent,
+      },
     });
-  }, []);
+  }, [user]);
 
   // Auto-réparation côté natif : l'app Expo rejoue au démarrage un `initial-path`
   // figé en AsyncStorage qui peut pointer vers une route supprimée (ex.
