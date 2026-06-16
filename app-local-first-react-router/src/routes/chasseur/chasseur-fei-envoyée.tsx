@@ -17,6 +17,7 @@ export default function ChasseurFeiEnvoyée() {
   const feis = useZustandStore((state) => state.feis);
   const navigate = useNavigate();
   const entities = useZustandStore((state) => state.entities);
+  const users = useZustandStore((state) => state.users);
   const fei = feis[params.fei_numero!];
   const carcasses = useCarcassesForFei(params.fei_numero);
   const isOnline = useIsOnline();
@@ -57,6 +58,22 @@ export default function ChasseurFeiEnvoyée() {
           c.current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL)
     );
   }, [carcasses]);
+
+  // Quand l'examinateur transmet la fiche au premier détenteur (une personne, pas une entité),
+  // il n'y a ni next_owner_entity_id ni fei_next_owner_entity_id : le PD devient directement
+  // détenteur courant. On résout son nom pour afficher la confirmation de transmission.
+  const premierDetenteurName = useMemo(() => {
+    if (fei?.premier_detenteur_entity_id) {
+      return entities[fei.premier_detenteur_entity_id]?.nom_d_usage ?? null;
+    }
+    if (fei?.premier_detenteur_user_id) {
+      const pd = users[fei.premier_detenteur_user_id];
+      const name = pd ? `${pd.prenom ?? ''} ${pd.nom_de_famille ?? ''}`.trim() : '';
+      if (name) return name;
+    }
+    // Repli : nom mis en cache sur les carcasses au moment de la transmission au PD.
+    return carcasses.find((c) => c.current_owner_user_name_cache)?.current_owner_user_name_cache ?? null;
+  }, [fei, entities, users, carcasses]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -113,6 +130,12 @@ export default function ChasseurFeiEnvoyée() {
                     />
                     {entities[fei.fei_next_owner_entity_id]?.nom_d_usage ?? ''} — {notificationStatus}
                   </p>
+                )}
+                {sentByRecipient.length === 0 && !fei?.fei_next_owner_entity_id && premierDetenteurName && (
+                  <>
+                    <h1 className="fr-h4 fr-mb-0">Votre fiche a été transmise à {premierDetenteurName}</h1>
+                    <p className="fr-mb-0">({formatCarcasseLotCount(carcasses)})</p>
+                  </>
                 )}
                 {unsendCarcasses.length > 0 &&
                   fei.premier_detenteur_user_id === user.id &&

@@ -79,5 +79,5 @@ test('Examinateur == PD via CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY — self-hando
   const transmettre = page.getByRole('button', { name: 'Transmettre', exact: true });
   await transmettre.scrollIntoViewIfNeeded();
   await transmettre.click();
-  await expect(page.getByText(/ETG 1.*a été notifi/i)).toBeVisible({ timeout: 10000 });
+  await expect(page.getByText(/Votre fiche a été transmise à ETG 1/i)).toBeVisible({ timeout: 10000 });
 });

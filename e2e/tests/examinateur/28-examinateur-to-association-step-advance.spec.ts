@@ -83,7 +83,7 @@ test('Examinateur → Association → ETG : step ladder advances based on per-ca
   await transmettre.click();
 
   // Sync beacon — carcasse.next_owner_entity_id was written and pushed to backend.
-  await expect(page.getByText(/ETG 1.*a été notifi/i)).toBeVisible({ timeout: 10000 });
+  await expect(page.getByText(/Votre fiche a été transmise à ETG 1/i)).toBeVisible({ timeout: 10000 });
 
   // Now navigate back to the fiche page and assert the step state advanced.
   // The header reads `simpleStatus` from `useFeiSteps`, which derives from carcasses[0].
