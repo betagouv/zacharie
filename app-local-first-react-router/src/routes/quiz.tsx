@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { Button } from '@codegouvfr/react-dsfr/Button';
-import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { trackEvent } from '@app/services/matomo';

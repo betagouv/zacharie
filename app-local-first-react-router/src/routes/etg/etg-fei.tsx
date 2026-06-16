@@ -49,6 +49,8 @@ import CarcasseIntermediaireComp from './etg-carcasse';
 import RequestNewCarcasseButton from '@app/components/RequestNewCarcasseForm';
 import CurrentOwnerConfirm from './etg-current-owner-confirm';
 import NotFound from '@app/components/NotFound';
+import Chargement from '@app/components/Chargement';
+import { loadData, useLoaderEffect } from '@app/utils/load-data';
 
 interface Props {
   readOnly?: boolean;
@@ -58,8 +60,20 @@ export default function EtgFei(props: Props) {
   const params = useParams();
   const feis = useZustandStore((state) => state.feis);
   const fei = feis[params.fei_numero!];
+  const [hasTriedLoading, setHasTriedLoading] = useState(false);
+
+  useLoaderEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    loadData('etg-fei')
+      .then(() => setHasTriedLoading(true))
+      .catch((error) => {
+        setHasTriedLoading(true);
+        console.error(error);
+      });
+  }, []);
+
   if (!fei) {
-    return <NotFound />;
+    return hasTriedLoading ? <NotFound /> : <Chargement />;
   }
   return <EtgFeiLoader {...props} />;
 }
