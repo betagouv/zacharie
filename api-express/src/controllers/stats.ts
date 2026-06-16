@@ -130,20 +130,14 @@ router.get(
     const personalSeizureRate =
       sviEligibleCarcasses.length > 0 && hasAnySviReturn
         ? (seizedBigGame.length / sviEligibleCarcasses.length) * 100
-        : sviEligibleCarcasses.length > 0
-          ? null
-          : null;
+        : null;
 
     // Hygiene score (BPH — Bonnes Pratiques d'Hygiène)
     // score = 100 × (1 − (personalBphRate / (2 × nationalBphRate)))
     // personalBphRate = (SVI-eligible + SAISIE + motif BPH) / SVI-eligible (aligned with admin /delta-bph).
     // nationalBphRate = référence officielle fixe NATIONAL_BPH_RATE_BIG_GAME (distincte du taux de saisie).
-    const bphCarcasses = sviEligibleCarcasses.filter(
-      (c) =>
-        (c.svi_carcasse_status === CarcasseStatus.SAISIE_TOTALE ||
-          c.svi_carcasse_status === CarcasseStatus.SAISIE_PARTIELLE) &&
-        hasBphMotif(c.svi_ipm2_lesions_ou_motifs)
-    );
+    // BPH = carcasses saisies dont au moins un motif relève des bonnes pratiques d'hygiène.
+    const bphCarcasses = seizedBigGame.filter((c) => hasBphMotif(c.svi_ipm2_lesions_ou_motifs));
 
     const personalBphRate =
       sviEligibleCarcasses.length > 0 ? bphCarcasses.length / sviEligibleCarcasses.length : 0;
@@ -151,7 +145,7 @@ router.get(
 
     let hygieneScoreRaw: number | null;
     let hygieneScore: number | null;
-    if (sviEligibleCarcasses.length === 0 || !hasAnySviReturn || nationalBphRateFraction === 0) {
+    if (sviEligibleCarcasses.length === 0 || !hasAnySviReturn) {
       hygieneScoreRaw = null;
       hygieneScore = null;
     } else {
