@@ -48,6 +48,8 @@ import FeiSousTraite from './collecteur-current-owner-sous-traite';
 import CarcasseIntermediaireComp from './collecteur-carcasse';
 import CurrentOwnerConfirm from './collecteur-current-owner-confirm';
 import NotFound from '@app/components/NotFound';
+import Chargement from '@app/components/Chargement';
+import { loadData, useLoaderEffect } from '@app/utils/load-data';
 
 interface Props {
   readOnly?: boolean;
@@ -57,8 +59,20 @@ export default function CollecteurFei(props: Props) {
   const params = useParams();
   const feis = useZustandStore((state) => state.feis);
   const fei = feis[params.fei_numero!];
+  const [hasTriedLoading, setHasTriedLoading] = useState(false);
+
+  useLoaderEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    loadData('collecteur-fei')
+      .then(() => setHasTriedLoading(true))
+      .catch((error) => {
+        setHasTriedLoading(true);
+        console.error(error);
+      });
+  }, []);
+
   if (!fei) {
-    return <NotFound />;
+    return hasTriedLoading ? <NotFound /> : <Chargement />;
   }
   return <CollecteurFeiLoader {...props} />;
 }
