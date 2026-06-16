@@ -40,7 +40,7 @@ test('Examinateur → Association → ETG : step ladder advances based on per-ca
 
   // Une carcasse.
   await page.getByLabel('Espèce (grand et petit gibier)').selectOption('Daim');
-  await page.getByRole('button', { name: /^MM-\d{3}-\d{3}$/ }).click();
+  await page.getByRole('button', { name: /^PP-\d{3}-\d{3}$/ }).click();
   await page.getByRole('button', { name: 'Ajouter la carcasse' }).click();
   await page.getByRole('button', { name: 'Continuer' }).click();
 
