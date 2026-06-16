@@ -63,7 +63,7 @@ export default function RootDisplay({
   if (user?.isZacharieAdmin) {
     quickAccessItemsConnected.push({
       linkProps: {
-        to: '/app/admin/dashboard',
+        to: '/app/admin/users',
         href: '#',
       },
       iconId: 'ri-admin-line',
