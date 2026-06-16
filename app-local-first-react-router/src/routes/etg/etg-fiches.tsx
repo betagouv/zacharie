@@ -16,7 +16,7 @@ import { abbreviations } from '@app/utils/count-carcasses';
 import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { getFeisSorted } from '@app/utils/get-fei-sorted';
 import { getSaisonStartYear, getSaisonLabel, isDateInSaison } from '@app/utils/get-saison';
-import useExportFeis from '@app/utils/export-feis';
+import ExportFeisModal from '@app/components/ExportFeisModal';
 import { filterCarcassesIntermediairesForCarcasse } from '@app/utils/get-carcasses-intermediaires';
 import { filterCarcassesForFei, useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { useMyCarcassesForFei } from '@app/utils/filter-my-carcasses';
@@ -26,7 +26,6 @@ import CardFiche from '@app/components/CardFiche';
 import CarcassesEspeceSummary from '@app/components/CarcassesEspeceSummary';
 import { getPreviousDetenteur } from '@app/utils/get-previous-detenteur';
 import CollapsibleSection from '@app/components/CollapsibleSection';
-import DropDownMenu from '@app/components/DropDownMenu';
 
 import { useFeiSteps, computeFeiSteps } from '@app/utils/fei-steps';
 import type { FeiWithIntermediaires } from '@api/src/types/fei';
@@ -57,7 +56,6 @@ export default function EtgFiches() {
   const user = useMostFreshUser('etg-fiches')!;
   const entitiesIdsWorkingDirectlyFor = useEntitiesIdsWorkingDirectlyFor();
   const { feisOngoing, feisToTake, feisUnderMyResponsability, feisDone } = getFeisSorted();
-  const { onExportToXlsx, onExportSimplifiedToXlsx, isExporting } = useExportFeis();
   const feisAssigned = [...feisUnderMyResponsability, ...feisToTake].sort((a, b) => {
     return b.updated_at < a.updated_at ? -1 : 1;
   });
@@ -848,49 +846,12 @@ export default function EtgFiches() {
                   },
                 ]}
               />
-              <DropDownMenu
-                text="Actions"
-                className="hidden max-w-[321px] md:block"
-                isActive={selectedFeis.length > 0}
-                menuLinks={[
-                  {
-                    linkProps: {
-                      href: '#',
-                      'aria-disabled': selectedFeis.length === 0,
-                      className: isExporting || !selectedFeis.length ? 'cursor-not-allowed opacity-50' : '',
-                      title:
-                        selectedFeis.length === 0
-                          ? 'Sélectionnez des fiches avec la case à cocher en haut à droite de chaque carte'
-                          : '',
-                      onClick: (e) => {
-                        e.preventDefault();
-                        if (selectedFeis.length === 0) return;
-                        if (isExporting) return;
-                        onExportToXlsx(selectedFeis);
-                      },
-                    },
-                    text: 'Export (toutes les colonnes)',
-                  },
-                  {
-                    linkProps: {
-                      href: '#',
-                      'aria-disabled': selectedFeis.length === 0,
-                      className: isExporting || !selectedFeis.length ? 'cursor-not-allowed opacity-50' : '',
-                      title:
-                        selectedFeis.length === 0
-                          ? 'Sélectionnez des fiches avec la case à cocher en haut à droite de chaque carte'
-                          : '',
-                      onClick: (e) => {
-                        e.preventDefault();
-                        if (selectedFeis.length === 0) return;
-                        if (isExporting) return;
-                        onExportSimplifiedToXlsx(selectedFeis);
-                      },
-                    },
-                    text: 'Export (seules les colonnes essentielles)',
-                  },
-                ]}
-              />
+              <div className="hidden md:block">
+                <ExportFeisModal
+                  feiNumbers={selectedFeis}
+                  storageKey="etg-fiches-export-columns"
+                />
+              </div>
             </div>
           )}
           {filteredFeis.length > 0 && (

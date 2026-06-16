@@ -14,7 +14,7 @@ import { abbreviations } from '@app/utils/count-carcasses';
 import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { getFeisSorted } from '@app/utils/get-fei-sorted';
 import { getSaisonStartYear, getSaisonLabel, isDateInSaison } from '@app/utils/get-saison';
-import useExportFeis from '@app/utils/export-feis';
+import ExportFeisModal from '@app/components/ExportFeisModal';
 import {
   filterCarcassesIntermediairesForCarcasse,
   filterFeiIntermediaires,
@@ -58,7 +58,6 @@ export default function SviFiches() {
   const allEtgIds = useEtgIds();
   const entitiesIdsWorkingDirectlyFor = useEntitiesIdsWorkingDirectlyFor();
   const { feisToTake, feisUnderMyResponsability, feisDone } = getFeisSorted();
-  const { onExportToXlsx, onExportSimplifiedToXlsx, isExporting } = useExportFeis();
   const feisAssigned = [...feisUnderMyResponsability, ...feisToTake].sort((a, b) => {
     return b.updated_at < a.updated_at ? -1 : 1;
   });
@@ -546,48 +545,9 @@ export default function SviFiches() {
                 },
               ]}
             />
-            <DropDownMenu
-              text="Actions"
-              className="max-w-[321px]"
-              isActive={selectedFeis.length > 0}
-              menuLinks={[
-                {
-                  linkProps: {
-                    href: '#',
-                    'aria-disabled': selectedFeis.length === 0,
-                    className: isExporting || !selectedFeis.length ? 'cursor-not-allowed opacity-50' : '',
-                    title:
-                      selectedFeis.length === 0
-                        ? 'Sélectionnez des fiches avec la case à cocher en haut à droite de chaque carte'
-                        : '',
-                    onClick: (e) => {
-                      e.preventDefault();
-                      if (selectedFeis.length === 0) return;
-                      if (isExporting) return;
-                      onExportToXlsx(selectedFeis);
-                    },
-                  },
-                  text: 'Télécharger un fichier Excel avec les fiches sélectionnées (complètes)',
-                },
-                {
-                  linkProps: {
-                    href: '#',
-                    'aria-disabled': selectedFeis.length === 0,
-                    className: isExporting || !selectedFeis.length ? 'cursor-not-allowed opacity-50' : '',
-                    title:
-                      selectedFeis.length === 0
-                        ? 'Sélectionnez des fiches avec la case à cocher en haut à droite de chaque carte'
-                        : '',
-                    onClick: (e) => {
-                      e.preventDefault();
-                      if (selectedFeis.length === 0) return;
-                      if (isExporting) return;
-                      onExportSimplifiedToXlsx(selectedFeis);
-                    },
-                  },
-                  text: 'Télécharger un fichier Excel avec les fiches sélectionnées (simplifiées)',
-                },
-              ]}
+            <ExportFeisModal
+              feiNumbers={selectedFeis}
+              storageKey="svi-fiches-export-columns"
             />
           </div>
         </div>
