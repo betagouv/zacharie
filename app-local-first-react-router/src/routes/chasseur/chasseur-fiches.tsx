@@ -585,9 +585,9 @@ export default function ChasseurFiches() {
         </CollapsibleSection>
       )}
 
-      {/* Filtre Date de tir */}
+      {/* Filtre Date de mise à mort */}
       <CollapsibleSection
-        title="Date de tir"
+        title="Date de mise à mort"
         badge={
           filterDateFrom || filterDateTo ? (
             <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">1</span>

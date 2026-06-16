@@ -586,9 +586,9 @@ export default function EtgFiches() {
         </CollapsibleSection>
       )}
 
-      {/* Filtre Date de tir */}
+      {/* Filtre Date de mise à mort */}
       <CollapsibleSection
-        title="Date de tir"
+        title="Date de mise à mort"
         defaultOpen={false}
         badge={
           filterDateFrom || filterDateTo ? (
