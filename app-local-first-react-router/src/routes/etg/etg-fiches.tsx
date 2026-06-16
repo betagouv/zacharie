@@ -369,7 +369,7 @@ export default function EtgFiches() {
         if (!isIncluded) continue;
       }
       if (filterStatuses.length > 0) {
-        if (!filterStatuses.includes(transmission.simpleStatus)) continue;
+        if (!filterStatuses.includes(transmission.labels.simpleStatus)) continue;
       }
       if (filterPremierDetenteurs.length > 0) {
         if (
@@ -952,7 +952,7 @@ function FeisTableRow({
   filter?: FeiStepSimpleStatus | 'Toutes les fiches';
   onVisibilityChange?: (feiNumero: string, isVisible: boolean) => void;
 }) {
-  const simpleStatus = transmission.simpleStatus;
+  const simpleStatus = transmission.labels.simpleStatus;
   const currentStepLabelShort = null;
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
 

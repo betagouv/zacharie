@@ -10,6 +10,7 @@ import { UserRoles } from '@prisma/client';
 import { getCarcasseTransmission } from './get-carcasses-transmission';
 import { CarcasseTransmissionWihMetadata } from '@app/types/carcasse';
 import { filterFeiIntermediaires } from './get-carcasses-intermediaires';
+import { getTransmissionLabels, getTransportOrSoustraiteLabel } from './transmission-labels';
 
 type TransmissionSorted = {
   transmissionsEnCours: Array<CarcasseTransmissionWihMetadata>;
@@ -25,6 +26,7 @@ export function useTransmissions(): Record<
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
   const entitiesWorkingDirectlyFor = useEntitiesIdsWorkingDirectlyForObj();
   const user = useUser((state) => state.user)!;
+  const role = user.roles[0]; // only one role anyway
   const meIsSvi = user.roles.includes(UserRoles.SVI);
   const meIsChassseur = user.roles.includes(UserRoles.CHASSEUR);
   const feis = useZustandStore((state) => state.feis);
@@ -56,7 +58,7 @@ export function useTransmissions(): Record<
         svi_carcasse_status: carcasse.svi_carcasse_status,
         svi_ipm2_nombre_animaux: carcasse.svi_ipm2_nombre_animaux,
       });
-      if (transmissions[carcasse.fei_numero].simpleStatus !== 'Clôturée') continue;
+      if (transmissions[carcasse.fei_numero].labels.simpleStatus !== 'Clôturée') continue;
     } else {
       const transmission = getCarcasseTransmission(carcasse);
       const fei = feis[transmission.fei_numero!];
@@ -64,15 +66,22 @@ export function useTransmissions(): Record<
       const intermediaires = filterFeiIntermediaires(carcassesIntermediaireById, transmission.fei_numero!);
       const transmissionWithIntermediaires: CarcasseTransmissionWihMetadata = {
         ...transmission,
-        intermediaires,
+        labels: getTransmissionLabels(
+          'Clôturée',
+          transmissions[carcasse.fei_numero],
+          role,
+          entitiesWorkingDirectlyFor
+        ),
+        transportOrSoustraiteLabel: getTransportOrSoustraiteLabel(
+          transmission,
+          entitiesWorkingDirectlyFor,
+          'Clôturée'
+        ),
         fei: {
           numero: fei.numero,
           commune_mise_a_mort: fei.commune_mise_a_mort,
           date_mise_a_mort: fei.date_mise_a_mort,
         },
-        simpleStatus: 'Clôturée',
-        currentStepLabel: 'Clôturée',
-        nextStepLabel: 'Clôturée',
         carcasses: [
           {
             zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
@@ -84,10 +93,18 @@ export function useTransmissions(): Record<
             svi_ipm2_nombre_animaux: carcasse.svi_ipm2_nombre_animaux,
           },
         ],
+        intermediaires,
       };
       transmissions[carcasse.fei_numero] = transmissionWithIntermediaires;
     }
+    if (
+      transmissions[carcasse.fei_numero].consommateur_final_usage_domestique &&
+      transmissions[carcasse.fei_numero].premier_detenteur_user_id
+    ) {
+      continue;
+    }
 
+    // rejected, svi accepted
     if (isCarcasseDone(carcasse)) continue;
 
     // FEI UNDER MY RESPONSABILITY
@@ -99,7 +116,12 @@ export function useTransmissions(): Record<
     );
 
     if (isUnderMyResponsability) {
-      transmissions[carcasse.fei_numero].simpleStatus = 'À compléter';
+      transmissions[carcasse.fei_numero].labels = getTransmissionLabels(
+        'À compléter',
+        transmissions[carcasse.fei_numero],
+        role,
+        entitiesWorkingDirectlyFor
+      );
       continue;
     }
 
@@ -107,9 +129,13 @@ export function useTransmissions(): Record<
     if (!meIsSvi) {
       // At least one carcasse where next_owner is me/my entity
       const isToTake = isCarcasseToTake(carcasse, user, entitiesWorkingDirectlyFor);
-
       if (isToTake) {
-        transmissions[carcasse.fei_numero].simpleStatus = 'À compléter';
+        transmissions[carcasse.fei_numero].labels = getTransmissionLabels(
+          'À compléter',
+          transmissions[carcasse.fei_numero],
+          role,
+          entitiesWorkingDirectlyFor
+        );
         continue;
       }
     }
@@ -117,16 +143,31 @@ export function useTransmissions(): Record<
     // FEI ONGOING
     if (!carcasse.svi_assigned_at && !carcasse.intermediaire_closed_at) {
       if (carcasse.examinateur_initial_user_id === user.id) {
-        transmissions[carcasse.fei_numero].simpleStatus = 'En cours';
+        transmissions[carcasse.fei_numero].labels = getTransmissionLabels(
+          'En cours',
+          transmissions[carcasse.fei_numero],
+          role,
+          entitiesWorkingDirectlyFor
+        );
         continue;
       }
       if (carcasse.premier_detenteur_user_id === user.id) {
-        transmissions[carcasse.fei_numero].simpleStatus = 'En cours';
+        transmissions[carcasse.fei_numero].labels = getTransmissionLabels(
+          'En cours',
+          transmissions[carcasse.fei_numero],
+          role,
+          entitiesWorkingDirectlyFor
+        );
         continue;
       }
       if (carcasse.premier_detenteur_entity_id) {
         if (entitiesWorkingDirectlyFor[carcasse.premier_detenteur_entity_id]) {
-          transmissions[carcasse.fei_numero].simpleStatus = 'En cours';
+          transmissions[carcasse.fei_numero].labels = getTransmissionLabels(
+            'En cours',
+            transmissions[carcasse.fei_numero],
+            role,
+            entitiesWorkingDirectlyFor
+          );
           continue;
         }
       }
@@ -135,19 +176,34 @@ export function useTransmissions(): Record<
         carcasse.next_owner_sous_traite_by_entity_id &&
         entitiesWorkingDirectlyFor[carcasse.next_owner_sous_traite_by_entity_id];
       if (hasSousTraite) {
-        transmissions[carcasse.fei_numero].simpleStatus = 'En cours';
+        transmissions[carcasse.fei_numero].labels = getTransmissionLabels(
+          'En cours',
+          transmissions[carcasse.fei_numero],
+          role,
+          entitiesWorkingDirectlyFor
+        );
         continue;
       }
       let isIntermediaire = false;
       for (const intermediaire of transmissions[carcasse.fei_numero].intermediaires) {
         if (intermediaire.intermediaire_user_id === user.id) {
-          transmissions[carcasse.fei_numero].simpleStatus = 'En cours';
+          transmissions[carcasse.fei_numero].labels = getTransmissionLabels(
+            'En cours',
+            transmissions[carcasse.fei_numero],
+            role,
+            entitiesWorkingDirectlyFor
+          );
           isIntermediaire = true;
           break;
         }
         if (intermediaire.intermediaire_entity_id) {
           if (entitiesWorkingDirectlyFor[intermediaire.intermediaire_entity_id]) {
-            transmissions[carcasse.fei_numero].simpleStatus = 'En cours';
+            transmissions[carcasse.fei_numero].labels = getTransmissionLabels(
+              'En cours',
+              transmissions[carcasse.fei_numero],
+              role,
+              entitiesWorkingDirectlyFor
+            );
             isIntermediaire = true;
             break;
           }
@@ -160,11 +216,21 @@ export function useTransmissions(): Record<
     if (carcasse.svi_assigned_at) {
       if (meIsSvi) {
         if (!carcasse.svi_closed_at && !carcasse.svi_automatic_closed_at) {
-          transmissions[carcasse.fei_numero].simpleStatus = 'À compléter';
+          transmissions[carcasse.fei_numero].labels = getTransmissionLabels(
+            'À compléter',
+            transmissions[carcasse.fei_numero],
+            role,
+            entitiesWorkingDirectlyFor
+          );
         }
         continue;
       }
-      transmissions[carcasse.fei_numero].simpleStatus = 'En cours';
+      transmissions[carcasse.fei_numero].labels = getTransmissionLabels(
+        'En cours',
+        transmissions[carcasse.fei_numero],
+        role,
+        entitiesWorkingDirectlyFor
+      );
       continue;
     }
   }
@@ -173,17 +239,15 @@ export function useTransmissions(): Record<
       if (transmissions[fei.numero]) continue;
       const transmission: CarcasseTransmissionWihMetadata = {
         ...fei, // fields like examinateur_initial, etc. that will also exists in carcasses (when they will be created)
-        intermediaires: [],
-        carcasses: [],
-        fei_numero: fei.numero!,
+        labels: getTransmissionLabels('À compléter', fei, role, entitiesWorkingDirectlyFor),
+        transportOrSoustraiteLabel: '',
         fei: {
           numero: fei.numero,
           commune_mise_a_mort: fei.commune_mise_a_mort,
           date_mise_a_mort: fei.date_mise_a_mort,
         },
-        simpleStatus: 'À compléter',
-        currentStepLabel: 'Examen initial',
-        nextStepLabel: 'Fiche envoyée, pas encore traitée',
+        carcasses: [],
+        intermediaires: [],
       };
       transmissions[fei.numero] = transmission;
     }
@@ -204,11 +268,15 @@ export function useTransmissionsSorted(): TransmissionSorted {
   if (!user) return transmissionsSorted;
 
   for (const transmission of Object.values(transmissions)) {
-    if (transmission.simpleStatus === 'À compléter')
+    if (transmission.labels.simpleStatus === 'À compléter') {
       transmissionsSorted.transmissionsACompleter.push(transmission);
-    if (transmission.simpleStatus === 'En cours') transmissionsSorted.transmissionsEnCours.push(transmission);
-    if (transmission.simpleStatus === 'Clôturée')
+    }
+    if (transmission.labels.simpleStatus === 'En cours') {
+      transmissionsSorted.transmissionsEnCours.push(transmission);
+    }
+    if (transmission.labels.simpleStatus === 'Clôturée') {
       transmissionsSorted.transmissionsCloturees.push(transmission);
+    }
   }
   return {
     transmissionsACompleter: [...transmissionsSorted.transmissionsACompleter].sort((a, b) =>

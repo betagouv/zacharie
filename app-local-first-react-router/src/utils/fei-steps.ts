@@ -17,7 +17,6 @@ import {
 } from 'react-icons/ri';
 import { ReactElement } from 'react';
 import { CarcasseTransmission } from '@app/types/carcasse';
-import { useCarcassesTransmission } from './get-carcasses-transmission';
 
 type IntermediaireStep = {
   id: string | null;
@@ -25,7 +24,7 @@ type IntermediaireStep = {
   nextRole: FeiOwnerRole | null;
 };
 
-export type UseFeiStepsReturn = {
+type UseFeiStepsReturn = {
   currentStep: number;
   currentStepLabel: FeiStep;
   currentStepLabelForEtg: FeiStepForEtg;
@@ -41,7 +40,6 @@ export function useFeiSteps(fei: FeiWithIntermediaires): UseFeiStepsReturn {
   const user = useUser((state) => state.user);
   const entitiesIdsWorkingDirectlyFor = useEntitiesIdsWorkingDirectlyFor();
   const carcasses = useCarcassesForFei(fei.numero);
-  const transmission = useCarcassesTransmission(carcasses, false);
 
   const memoizedComputeFeiSteps = useMemo(() => {
     return computeFeiSteps({
@@ -50,9 +48,8 @@ export function useFeiSteps(fei: FeiWithIntermediaires): UseFeiStepsReturn {
       entitiesIdsWorkingDirectlyFor,
       user,
       carcasses,
-      transmission,
     });
-  }, [fei, intermediaires, entitiesIdsWorkingDirectlyFor, user, carcasses, transmission]);
+  }, [fei, intermediaires, entitiesIdsWorkingDirectlyFor, user, carcasses]);
   return memoizedComputeFeiSteps;
 }
 
@@ -62,7 +59,6 @@ interface ComputeFeiStepsParams {
   entitiesIdsWorkingDirectlyFor: Array<Entity['id']>;
   user: User | null;
   carcasses?: Array<Carcasse>;
-  transmission: CarcasseTransmission;
 }
 
 export function computeFeiSteps({
@@ -71,10 +67,9 @@ export function computeFeiSteps({
   entitiesIdsWorkingDirectlyFor,
   user,
   carcasses,
-  transmission,
 }: ComputeFeiStepsParams): UseFeiStepsReturn {
   const currentTransmission: CarcasseTransmission = carcasses?.length
-    ? transmission
+    ? carcasses[0]
     : {
         current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
         current_owner_user_id: fei.examinateur_initial_user_id,
@@ -329,7 +324,7 @@ export function computeFeiSteps({
 
   const currentStepLabelForEtg: FeiStepForEtg = (() => {
     if (currentStepLabel === 'Clôturée') {
-      return "Prise en charge par le service vétérinaire d'inspection";
+      return 'Inspection vétérinaire terminée';
     }
     if (currentStepLabel === 'Inspection par le SVI') {
       return 'Fiche envoyée, pas encore prise en charge';
