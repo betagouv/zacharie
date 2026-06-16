@@ -9,7 +9,7 @@ import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { formatCarcasseLotCount } from '@app/utils/count-carcasses';
 import useUser from '@app/zustand/user';
 import SuccessSvg from '@app/assets/svg/success.svg';
-import { CarcasseType, type Carcasse } from '@prisma/client';
+import { CarcasseType, FeiOwnerRole, type Carcasse } from '@prisma/client';
 
 export default function ChasseurFeiEnvoyée() {
   const params = useParams();
@@ -28,12 +28,13 @@ export default function ChasseurFeiEnvoyée() {
       : 'va être notifié';
 
   const sentByRecipient = useMemo(() => {
-    const grouped: Record<string, { entityName: string; carcasses: Array<Carcasse> }> = {};
+    const grouped: Record<string, { entityId: string; entityName: string; carcasses: Array<Carcasse> }> = {};
     for (const c of carcasses) {
       if (!c.next_owner_entity_id) continue;
       if (!grouped[c.next_owner_entity_id]) {
         const entity = entities[c.next_owner_entity_id];
         grouped[c.next_owner_entity_id] = {
+          entityId: c.next_owner_entity_id,
           entityName: entity?.nom_d_usage ?? c.next_owner_entity_id,
           carcasses: [],
         };
@@ -44,7 +45,17 @@ export default function ChasseurFeiEnvoyée() {
   }, [carcasses, entities]);
 
   const unsendCarcasses = useMemo(() => {
-    return carcasses.filter((c) => c.next_owner_entity_id == null);
+    // Une carcasse n'est « non attribuée » que si elle n'a pas de prochain détenteur ET qu'elle
+    // est encore détenue par le PD/examinateur. Si elle a déjà été reçue/avancée (next_owner
+    // remis à null, current_owner_role passé à ETG/collecteur…), elle est bien attribuée.
+    // Même définition que `carcassesRestantes` dans premier-detenteur-select-next.tsx.
+    return carcasses.filter(
+      (c) =>
+        c.next_owner_entity_id == null &&
+        (c.current_owner_role == null ||
+          c.current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR ||
+          c.current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL)
+    );
   }, [carcasses]);
 
   useEffect(() => {
@@ -72,16 +83,26 @@ export default function ChasseurFeiEnvoyée() {
                   alt="Fiche envoyée"
                   className="h-44 w-44"
                 />
-                {sentByRecipient.length > 0 && (
+                {sentByRecipient.length === 1 && (
                   <>
-                    {sentByRecipient.map((recipient) => (
-                      <span className="flex items-center gap-2">
-                        <h1 className="fr-h4 fr-mb-0">
-                          Votre fiche a été transmise à {recipient.entityName}
-                        </h1>
-                        <p>({formatCarcasseLotCount(recipient.carcasses)})</p>
-                      </span>
-                    ))}
+                    <h1 className="fr-h4 fr-mb-0">
+                      Votre fiche a été transmise à {sentByRecipient[0].entityName}
+                    </h1>
+                    <p className="fr-mb-0">({formatCarcasseLotCount(sentByRecipient[0].carcasses)})</p>
+                  </>
+                )}
+                {sentByRecipient.length > 1 && (
+                  <>
+                    <h1 className="fr-h4 fr-mb-0">
+                      Votre fiche a été transmise aux {sentByRecipient.length} destinataires.
+                    </h1>
+                    <ul className="fr-mb-0 list-none p-0">
+                      {sentByRecipient.map((recipient) => (
+                        <li key={recipient.entityId}>
+                          {recipient.entityName} ({formatCarcasseLotCount(recipient.carcasses)})
+                        </li>
+                      ))}
+                    </ul>
                   </>
                 )}
                 {sentByRecipient.length === 0 && fei?.fei_next_owner_entity_id && (
