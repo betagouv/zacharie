@@ -41,6 +41,7 @@ Key domains:
 - Prettier (config in each package.json): `singleQuote: true, trailingComma: "es5", semi: true, printWidth: 110, tabWidth: 2`.
 - Prefer separate API routes for distinct data sections.
 - Default to the simplest option in first iterations; no conditional UX unless explicitly requested.
+- Comments are simple and describe the app's current behavior — only when the code isn't self-explanatory. Never narrate the change or the decision made during a session ("on change d'avis, finalement on fait X au lieu de Y"). Write `// on fait X car ...`, not the story of how we got there.
 
 ## Success Criteria
 
