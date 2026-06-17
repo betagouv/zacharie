@@ -4,7 +4,9 @@ import { useEffect, useRef, useState } from 'react';
 
 export function useIsOnline() {
   const [_isOnline, setIsOnline] = useState(true);
-  const isOnline = import.meta.env.DEV ? true : _isOnline;
+  // Treat local `npm run dev` as always-online for dev ergonomics, but NOT under Playwright,
+  // where e2e specs simulate offline/online via context.setOffline and need the real state.
+  const isOnline = import.meta.env.DEV && import.meta.env.VITE_TEST_PLAYWRIGHT !== 'true' ? true : _isOnline;
   const veryBadConnection = useRef(false);
   useEffect(() => {
     function handleOnline(event: Event) {
