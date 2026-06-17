@@ -50,14 +50,14 @@ export default function CardTransmission({
   detenteurName,
   detenteurIcon,
 }: CardProps) {
-  const simpleStatus = transmission.simpleStatus;
-  const currentStepLabelShort = null;
+  const simpleStatus = transmission.labels.simpleStatus;
+  const transportOrSoustraiteLabel = transmission.labels.transportOrSoustraiteLabel;
   const isCircuitCourt = useIsCircuitCourt();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const dataIsSynced = useZustandStore((state) => state.dataIsSynced);
-  const myCarcasses = useMyCarcassesForFei(transmission.fei_numero!);
-  const feiCarcasses = useCarcassesForFei(transmission.fei_numero!);
+  const myCarcasses = useMyCarcassesForFei(transmission.fei.numero!);
+  const feiCarcasses = useCarcassesForFei(transmission.fei.numero!);
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
 
   // Close menu when clicking outside
@@ -167,7 +167,7 @@ export default function CardTransmission({
         menuOpen ? 'bg-active-tint' : '',
         disabledBecauseOffline ? 'cursor-not-allowed opacity-50' : '',
       ].join(' ')}
-      key={simpleStatus + currentStepLabelShort + dataIsSynced}
+      key={simpleStatus + transportOrSoustraiteLabel + dataIsSynced}
     >
       {/* Print selection checkbox */}
       <div className="absolute top-5 z-20 flex w-full justify-end pr-5">
@@ -179,7 +179,7 @@ export default function CardTransmission({
               label: '',
               nativeInputProps: {
                 checked: isPrintSelected,
-                onChange: () => onPrintSelect?.(transmission.fei_numero!, !isPrintSelected),
+                onChange: () => onPrintSelect?.(transmission.fei.numero!, !isPrintSelected),
               },
             },
           ]}
@@ -199,7 +199,7 @@ export default function CardTransmission({
         ].join(' ')}
       >
         <div className="absolute top-0 right-0 text-transparent selection:text-gray-200">
-          {transmission.fei_numero!}
+          {transmission.fei.numero!}
         </div>
         {!isCircuitCourt && (
           <div className="flex flex-row gap-x-2">
@@ -213,7 +213,7 @@ export default function CardTransmission({
             >
               {simpleStatus}
             </Tag>
-            {currentStepLabelShort && (
+            {transportOrSoustraiteLabel && (
               <Tag
                 small
                 className={[
@@ -222,7 +222,7 @@ export default function CardTransmission({
                   // statusColors[simpleStatus].text,
                 ].join(' ')}
               >
-                {currentStepLabelShort}
+                {transportOrSoustraiteLabel}
               </Tag>
             )}
           </div>
@@ -336,11 +336,11 @@ export default function CardTransmission({
         </div>
 
         {/* <div className="mt-2 -mb-2 flex grow flex-row items-end gap-x-2">
-          <p className="text-sm text-neutral-700 italic opacity-50">{currentStepLabelShort}</p>
+          <p className="text-sm text-neutral-700 italic opacity-50">{transportOrSoustraiteLabel}</p>
         </div> */}
 
         <div className="absolute right-0 bottom-0 text-transparent selection:text-gray-200">
-          {transmission.fei_numero!}
+          {transmission.fei.numero!}
         </div>
       </Link>
       {disabledBecauseOffline && (

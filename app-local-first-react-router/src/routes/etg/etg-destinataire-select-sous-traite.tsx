@@ -6,7 +6,6 @@ import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import { syncData } from '@app/utils/sync-data';
-import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { useEtgIds, useSviIds, useCollecteursProIds } from '@app/utils/get-entity-relations';
 import SelectCustom from '@app/components/SelectCustom';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
@@ -19,8 +18,8 @@ import { CarcasseIntermediaire } from '@prisma/client';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import PartenaireNouveau from '@app/components/PartenaireNouveau';
 import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
-import { useCarcassesTransmission } from '@app/utils/get-carcasses-transmission';
 import { CarcasseTransmission } from '@app/types/carcasse';
+import { useTransmissionWithMetadata } from '@app/utils/get-transmissions-sorted';
 
 const partenaireModal = createModal({
   isOpenedByDefault: false,
@@ -51,8 +50,9 @@ export default function DestinataireSousTraite({
 
   const fei_numero = params.fei_numero!;
 
-  const carcasses = useCarcassesForFei(fei_numero);
-  const transmission = useCarcassesTransmission(carcasses);
+  const transmissionMetadata = useTransmissionWithMetadata(fei_numero);
+  const carcasses = transmissionMetadata.carcasses;
+  const transmission = transmissionMetadata.content;
   const carcasseIds = carcasses.map((c) => c.zacharie_carcasse_id);
 
   const etgs = etgsIds.map((id) => entities[id]);

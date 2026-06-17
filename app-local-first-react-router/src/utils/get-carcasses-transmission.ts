@@ -1,8 +1,6 @@
-import { useMemo } from 'react';
 import { CarcasseTransmission } from '@app/types/carcasse';
 import { capture } from '@app/services/sentry';
 import { CarcasseWithModificationRequests } from '@api/src/types/carcasse';
-import { isCarcasseDone } from './is-carcasse-done';
 
 export function getCarcasseTransmission(carcasseRef: CarcasseWithModificationRequests): CarcasseTransmission {
   return {
@@ -99,34 +97,4 @@ export function checkCarcasseAgainstTransmission(
       },
     });
   }
-}
-
-export function getCarcassesTransmission(
-  carcasses: Array<CarcasseWithModificationRequests>,
-  checkAllCarcasses: boolean = true
-) {
-  const carcasseRef: CarcasseWithModificationRequests = carcasses[0]! ?? {};
-  const transmission = getCarcasseTransmission(carcasseRef);
-  const transmissionKeys = Object.keys(transmission) as Array<keyof CarcasseTransmission>;
-  let allCarcassesDone = undefined;
-  if (checkAllCarcasses) {
-    allCarcassesDone = true;
-    for (const carcasse of carcasses) {
-      checkCarcasseAgainstTransmission(transmissionKeys, transmission, carcasse, carcasseRef);
-      if (!isCarcasseDone(carcasse)) allCarcassesDone = false;
-    }
-  }
-  return { ...transmission, allCarcassesDone };
-}
-
-export function useCarcassesTransmission(
-  carcasses: Array<CarcasseWithModificationRequests>,
-  checkAllCarcasses: boolean = true
-): CarcasseTransmission {
-  // carcasseTransmission regroupe tous les champs communs à un groupe de carcasse, surtout la transmission
-  // rappel : des carcasses peuvent avoir un même fei_numero, un même examinateur_initial, un même premier détenteur, mais un premier_detenteur_prochain_detenteur_id_cache different, dû au dispatch
-  // en revanche, les futurs détenteurs ne peuvent pas faire de dispatch
-  return useMemo(() => {
-    return getCarcassesTransmission(carcasses, checkAllCarcasses);
-  }, [carcasses, checkAllCarcasses]);
 }

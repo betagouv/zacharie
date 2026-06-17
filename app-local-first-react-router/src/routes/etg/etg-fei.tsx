@@ -27,15 +27,10 @@ import type {
   FeiAndCarcasseAndIntermediaireIds,
   CarcassesIntermediaire,
 } from '@app/types/carcasses-intermediaire';
-import {
-  useCarcassesIntermediairesForIntermediaire,
-  useFeiIntermediaires,
-} from '@app/utils/get-carcasses-intermediaires';
+import { useCarcassesIntermediairesForIntermediaire } from '@app/utils/get-carcasses-intermediaires';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import { sortCarcassesApproved } from '@app/utils/sort';
-import { useMyCarcassesForFei } from '@app/utils/filter-my-carcasses';
 import { isCarcasseDone } from '@app/utils/is-carcasse-done';
-import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { getIntermediaireRoleLabel } from '@app/utils/get-user-roles-label';
 import { addAnSToWord, formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
 import FEIDonneesDeChasse from '@app/components/DonneesDeChasse';
@@ -51,8 +46,8 @@ import CurrentOwnerConfirm from './etg-current-owner-confirm';
 import NotFound from '@app/components/NotFound';
 import Chargement from '@app/components/Chargement';
 import { loadData, useLoaderEffect } from '@app/utils/load-data';
-import { useCarcassesTransmission } from '@app/utils/get-carcasses-transmission';
 import { CarcasseTransmission } from '@app/types/carcasse';
+import { useTransmissionWithMetadata } from '@app/utils/get-transmissions-sorted';
 
 interface Props {
   readOnly?: boolean;
@@ -94,9 +89,10 @@ function EtgFeiLoader(props: Props) {
   const user = useUser((state) => state.user)!;
   const entities = useZustandStore((state) => state.entities);
   const fei_numero = params.fei_numero!;
-  const intermediaires = useFeiIntermediaires(fei_numero);
-  const myCarcasses = useCarcassesForFei(fei_numero);
-  const transmission = useCarcassesTransmission(myCarcasses);
+  const transmissionWithMetadata = useTransmissionWithMetadata(fei_numero);
+  const intermediaires = transmissionWithMetadata.intermediaires;
+  const myCarcasses = transmissionWithMetadata.carcasses;
+  const transmission = transmissionWithMetadata.content;
 
   const [selectedIntermediaireId, setSelectedIntermediaireId] = useState<string | null>(
     () => intermediaires.find((i) => i.intermediaire_user_id === user.id)?.id ?? null
@@ -242,12 +238,13 @@ function EtgFeiContent({
   const updateAllCarcasseIntermediaire = useZustandStore((state) => state.updateAllCarcasseIntermediaire);
   const updateCarcassesTransmission = useZustandStore((state) => state.updateCarcassesTransmission);
   const addLog = useZustandStore((state) => state.addLog);
+  const fei_numero = params.fei_numero!;
+  const transmissionWithMetadata = useTransmissionWithMetadata(fei_numero);
   const carcasses = useZustandStore((state) => state.carcasses);
   const entities = useZustandStore((state) => state.entities);
   const etgsIds = useEtgIds();
-  const fei_numero = params.fei_numero!;
-  const myCarcasses = useMyCarcassesForFei(fei_numero);
-  const transmission = useCarcassesTransmission(myCarcasses);
+  const myCarcasses = transmissionWithMetadata.carcasses;
+  const transmission = transmissionWithMetadata.content;
 
   const originalCarcasses = myCarcasses.sort((a, b) => {
     if (a.svi_carcasse_status === CarcasseStatus.SANS_DECISION) {

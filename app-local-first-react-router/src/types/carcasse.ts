@@ -115,7 +115,8 @@ export type CarcasseForCounting = Pick<
   | 'svi_ipm2_nombre_animaux'
 >;
 
-export type CarcasseTransmissionWihMetadata = CarcasseTransmission & {
+export type CarcasseTransmissionWihMetadata = {
+  content: CarcasseTransmission;
   intermediaires: Array<CarcassesIntermediaire>;
   fei: Pick<Fei, 'numero' | 'commune_mise_a_mort' | 'date_mise_a_mort'>;
   allCarcassesDone?: boolean;
@@ -123,7 +124,7 @@ export type CarcasseTransmissionWihMetadata = CarcasseTransmission & {
     simpleStatus: FeiStepSimpleStatus;
     currentStepLabel: FeiStep | FeiStepForChasseur | FeiStepForEtg;
     nextStepLabel: FeiStep;
+    transportOrSoustraiteLabel: FeiStepForTransportOrSoustraite;
   };
-  transportOrSoustraiteLabel: FeiStepForTransportOrSoustraite;
-  carcasses: Array<CarcasseForCounting>;
+  carcasses: Array<CarcasseWithModificationRequests>;
 };

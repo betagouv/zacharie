@@ -1,10 +1,13 @@
 import type {
-  FeiStep,
-  FeiStepForChasseur,
-  FeiStepForEtg,
-  FeiStepForTransportOrSoustraite,
-  FeiStepSimpleStatus,
-} from '@app/types/fei-steps';
+  TransmissionStep,
+  TransmissionStepForChasseur,
+  TransmissionStepForCollecteurPro,
+  TransmissionStepForEtg,
+  TransmissionStepForTransportOrSoustraite,
+  TransmissionStepGeneric,
+  TransmissionSimpleStatus,
+  TransmissionNextStep,
+} from '@app/types/transmission-steps';
 import { FeiOwnerRole, UserRoles } from '@prisma/client';
 import { useEntitiesIdsWorkingDirectlyForObj } from '@app/utils/get-entity-relations';
 import { createElement } from 'react';
@@ -21,7 +24,7 @@ import { isRoleCircuitCourt } from './circuit-court';
 import { capture } from '@app/services/sentry';
 
 export function getTransmissionLabels(
-  simpleStatus: FeiStepSimpleStatus,
+  simpleStatus: TransmissionSimpleStatus,
   transmission: CarcasseTransmission,
   role: UserRoles,
   entitiesIdsWorkingDirectlyFor: ReturnType<typeof useEntitiesIdsWorkingDirectlyForObj>
@@ -33,87 +36,93 @@ export function getTransmissionLabels(
     entitiesIdsWorkingDirectlyFor
   );
   const nextStepLabel = getNextStepLabel(currentStepLabel);
+  const transportOrSoustraiteLabel = getTransportOrSoustraiteLabel(
+    transmission,
+    entitiesIdsWorkingDirectlyFor,
+    currentStepLabel
+  );
   return {
     simpleStatus,
     currentStepLabel,
     nextStepLabel,
+    transportOrSoustraiteLabel,
   };
 }
 
 export function getCurrentStepLabel(
-  simpleStatus: FeiStepSimpleStatus,
+  simpleStatus: TransmissionSimpleStatus,
   transmission: CarcasseTransmission,
   role: UserRoles,
   entitiesIdsWorkingDirectlyFor: ReturnType<typeof useEntitiesIdsWorkingDirectlyForObj>
-): FeiStep | FeiStepForEtg | FeiStepForChasseur {
+): TransmissionStep {
   try {
     if (isRoleCircuitCourt(role)) return 'Clôturée';
     if (simpleStatus === 'Clôturée') {
-      if (role === 'ETG') return 'Inspection vétérinaire terminée' as FeiStepForEtg;
-      if (role === 'CHASSEUR') return 'Carcasses traitées';
-      if (role === 'COLLECTEUR_PRO') return 'Carcasses traitées';
+      if (role === 'ETG') return 'Inspection vétérinaire terminée' satisfies TransmissionStepForEtg;
+      if (role === 'CHASSEUR') return 'Carcasses traitées' satisfies TransmissionStepForChasseur;
+      if (role === 'COLLECTEUR_PRO') return 'Carcasses traitées' satisfies TransmissionStepForCollecteurPro;
       return 'Clôturée';
     }
     if (role === 'CHASSEUR') {
       if (transmission.current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL) {
         if (!transmission.next_owner_role) {
-          return 'Information manquante' satisfies FeiStepForChasseur;
+          return 'Information manquante' satisfies TransmissionStepForChasseur;
         } else {
-          return 'Validation par le premier détenteur' satisfies FeiStepForChasseur;
+          return 'Validation par le premier détenteur' satisfies TransmissionStepForChasseur;
         }
       }
       if (transmission.current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR) {
         if (!transmission.next_owner_role) {
-          return 'Validation par le premier détenteur' satisfies FeiStepForChasseur;
+          return 'Validation par le premier détenteur' satisfies TransmissionStepForChasseur;
         } else {
-          return 'Fiche envoyée, pas encore prise en charge' satisfies FeiStepForChasseur;
+          return 'Fiche envoyée, pas encore prise en charge' satisfies TransmissionStepForChasseur;
         }
       }
       if (transmission.current_owner_role === FeiOwnerRole.COLLECTEUR_PRO) {
-        return 'Prise en charge par le transporteur' satisfies FeiStepForChasseur;
+        return 'Prise en charge par le transporteur' satisfies TransmissionStepForChasseur;
       }
-      return 'Traitement des carcasses' satisfies FeiStepForChasseur;
+      return 'Traitement des carcasses' satisfies TransmissionStepForChasseur;
     }
     if (role === 'ETG') {
-      if (transmission.svi_assigned_at) return 'Inspection par le SVI';
+      if (transmission.svi_assigned_at) return 'Inspection par le SVI' satisfies TransmissionStepForEtg;
       if (transmission.current_owner_role === 'ETG') {
         if (transmission.next_owner_role === 'ETG') {
           if (!entitiesIdsWorkingDirectlyFor[transmission.next_owner_entity_id!]) {
-            return 'Transport vers un autre établissement de traitement' satisfies FeiStepForEtg;
+            return 'Transport vers un autre établissement de traitement' satisfies TransmissionStepForEtg;
           } else {
-            return 'Fiche reçue, pas encore prise en charge' satisfies FeiStepForEtg;
+            return 'Fiche reçue, pas encore prise en charge' satisfies TransmissionStepForEtg;
           }
         }
         if (entitiesIdsWorkingDirectlyFor[transmission.current_owner_entity_id!]) {
-          return "Prise en charge par l'atelier" satisfies FeiStepForEtg;
+          return "Prise en charge par l'atelier" satisfies TransmissionStepForEtg;
         } else {
-          return 'Prise en charge par un autre atelier' satisfies FeiStepForEtg;
+          return 'Prise en charge par un autre atelier' satisfies TransmissionStepForEtg;
         }
       }
       if (transmission.next_owner_role === 'ETG') {
         if (entitiesIdsWorkingDirectlyFor[transmission.next_owner_entity_id!]) {
-          return 'Fiche reçue, pas encore prise en charge' satisfies FeiStepForEtg;
+          return 'Fiche reçue, pas encore prise en charge' satisfies TransmissionStepForEtg;
         }
         // so current is not ETG, next is ETG, but not me ? bug
         throw new Error('No current step label for ETG next/role');
       }
       if (transmission.current_owner_role === 'COLLECTEUR_PRO') {
-        return 'Prise en charge par le transporteur' satisfies FeiStepForEtg;
+        return 'Prise en charge par le transporteur' satisfies TransmissionStepForEtg;
       }
     }
     if (role === 'COLLECTEUR_PRO') {
       if (transmission.current_owner_role === 'COLLECTEUR_PRO') {
         if (transmission.next_owner_role === 'ETG') {
-          return 'Transport vers un établissement de traitement';
+          return 'Transport vers un établissement de traitement' satisfies TransmissionStepForCollecteurPro;
         }
-        return 'Transport';
+        return 'Transport' satisfies TransmissionStepForCollecteurPro;
       }
       if (transmission.next_owner_role === 'COLLECTEUR_PRO') {
-        return 'Fiche envoyée, pas encore prise en charge';
+        return 'Fiche reçue, pas encore prise en charge' satisfies TransmissionStepForCollecteurPro;
       }
-      return 'Traitement des carcasses';
+      return 'Traitement des carcasses' satisfies TransmissionStepForCollecteurPro;
     }
-    return 'En cours';
+    return 'En cours' satisfies TransmissionStepGeneric;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     capture(error, {
@@ -133,48 +142,27 @@ export function getCurrentStepLabel(
   return 'En cours';
 }
 
-export function getNextStepLabel(currentStepLabel: FeiStep | FeiStepForEtg | FeiStepForChasseur): FeiStep {
+export function getNextStepLabel(currentStepLabel: TransmissionStep): TransmissionNextStep {
   switch (currentStepLabel) {
-    case 'En cours':
-      return 'Clôturée';
-    case 'Clôturée':
-      return 'Clôturée';
-    case 'Examen initial':
-      return 'Validation par le premier détenteur';
-    case 'Validation par le premier détenteur':
-      return 'Traitement des carcasses';
     case 'Transport':
-      return 'Réception par un établissement de traitement';
     case 'Transport vers un établissement de traitement':
-      return 'Réception par un établissement de traitement';
     case 'Transport vers un autre établissement de traitement':
       return 'Réception par un établissement de traitement';
-    case 'Transport vers / réception par un établissement de traitement':
-      return 'Réception par un établissement de traitement';
-    case 'Fiche envoyée, pas encore traitée':
-      return 'Traitement des carcasses';
-    case 'Réception par un établissement de traitement':
-      return 'Inspection par le SVI';
-    case 'Inspection par le SVI':
-      return 'Clôturée';
-    case 'Carcasses traitées':
-      return 'Clôturée';
-    case 'Fiche reçue, pas encore prise en charge':
-      return 'Traitement des carcasses';
-    case 'Prise en charge par le transporteur':
-      return 'Traitement des carcasses';
-    case "Prise en charge par l'atelier":
-      return 'Traitement des carcasses';
-    case 'Prise en charge par un autre atelier':
-      return 'Traitement des carcasses';
-    case 'Fiche envoyée, pas encore prise en charge':
-      return 'Traitement des carcasses';
-    case 'Inspection vétérinaire terminée':
-      return 'Clôturée';
     case 'Information manquante':
       return 'Validation par le premier détenteur';
+    case 'Fiche envoyée, pas encore prise en charge':
+    case 'Prise en charge par un autre atelier':
+    case 'Fiche reçue, pas encore prise en charge':
+    case 'Prise en charge par le transporteur':
+    case "Prise en charge par l'atelier":
+    case 'Validation par le premier détenteur':
+      return 'Traitement des carcasses';
+    case 'Inspection vétérinaire terminée':
+    case 'Carcasses traitées':
+    case 'Inspection par le SVI':
     case 'Traitement des carcasses':
-      return 'Clôturée';
+    case 'En cours':
+    case 'Clôturée':
     default:
       return 'Clôturée';
   }
@@ -185,7 +173,7 @@ export function IconStep({
   simpleStatus,
 }: {
   displayLabel: string;
-  simpleStatus: FeiStepSimpleStatus;
+  simpleStatus: TransmissionSimpleStatus;
 }): ReactElement {
   if (simpleStatus === 'Clôturée') return createElement(RiCheckboxCircleLine);
   if (displayLabel === 'Information manquante') return createElement(RiEdit2Line);
@@ -198,7 +186,7 @@ export function getTransportOrSoustraiteLabel(
   currentTransmission: CarcasseTransmission,
   entitiesIdsWorkingDirectlyFor: ReturnType<typeof useEntitiesIdsWorkingDirectlyForObj>,
   currentStepLabel: string
-): FeiStepForTransportOrSoustraite {
+): TransmissionStepForTransportOrSoustraite {
   if (currentTransmission.next_owner_sous_traite_by_entity_id) {
     if (entitiesIdsWorkingDirectlyFor[currentTransmission.next_owner_sous_traite_by_entity_id]) {
       const wasSoustraitant =

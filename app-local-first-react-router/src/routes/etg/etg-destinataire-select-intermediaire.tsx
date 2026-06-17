@@ -27,9 +27,8 @@ import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import PartenaireNouveau from '@app/components/PartenaireNouveau';
 import CCGNouveau from '@app/components/CCGNouveau';
 import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
-import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
-import { useCarcassesTransmission } from '@app/utils/get-carcasses-transmission';
 import { CarcasseTransmission } from '@app/types/carcasse';
+import { useTransmissionWithMetadata } from '@app/utils/get-transmissions-sorted';
 
 const partenaireModal = createModal({
   isOpenedByDefault: false,
@@ -75,8 +74,9 @@ export default function DestinataireIntermediaire({
 
   const fei_numero = params.fei_numero!;
 
-  const myCarcasses = useCarcassesForFei(fei_numero);
-  const transmission = useCarcassesTransmission(myCarcasses);
+  const transmissionMetadata = useTransmissionWithMetadata(fei_numero);
+  const myCarcasses = transmissionMetadata.carcasses;
+  const transmission = transmissionMetadata.content;
 
   const myCurrentRole = intermediaire?.intermediaire_role ?? transmission.current_owner_role;
 

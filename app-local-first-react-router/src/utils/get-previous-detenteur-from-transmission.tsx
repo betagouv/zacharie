@@ -53,7 +53,7 @@ export function getPreviousDetenteur(transmission: CarcasseTransmissionWihMetada
   const myUserId = useUser.getState().user?.id;
   const myEntityIds = new Set(filterEntitiesWorkingDirectlyFor(entities));
 
-  const premierDetenteurName = transmission.premier_detenteur_name_cache;
+  const premierDetenteurName = transmission.content.premier_detenteur_name_cache;
   const premierDetenteur: DetenteurDisplay = {
     name: premierDetenteurName || null,
     icon: iconForRole(FeiOwnerRole.PREMIER_DETENTEUR),

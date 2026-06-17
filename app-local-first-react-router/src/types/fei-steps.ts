@@ -1,7 +1,6 @@
 export type FeiStep =
   | 'En cours'
   | 'Clôturée'
-  | 'Traitement des carcasses'
   | 'Examen initial'
   | 'Validation par le premier détenteur'
   | 'Transport'
@@ -10,27 +9,16 @@ export type FeiStep =
   | 'Transport vers / réception par un établissement de traitement'
   | 'Fiche envoyée, pas encore traitée'
   | 'Réception par un établissement de traitement'
-  | 'Inspection par le SVI'
-  | 'Carcasses traitées';
+  | 'Inspection par le SVI';
 
 export type FeiStepSimpleStatus = 'À compléter' | 'Clôturée' | 'En cours';
 
 export type FeiStepForEtg =
+  | 'Inspection vétérinaire terminée'
   | 'Fiche reçue, pas encore prise en charge'
   | 'Prise en charge par le transporteur'
   | "Prise en charge par l'atelier"
-  | 'Prise en charge par un autre atelier'
   | 'Fiche envoyée, pas encore prise en charge'
-  | 'Transport vers un autre établissement de traitement'
-  | 'Inspection vétérinaire terminée';
+  | "Prise en charge par le service vétérinaire d'inspection";
 
-export type FeiStepForTransportOrSoustraite = 'Sous-traitée' | 'Transporté' | '';
-
-export type FeiStepForChasseur =
-  | 'Carcasses traitées'
-  | 'Prise en charge par le transporteur'
-  | `Prise en charge par le transporteur ${string}`
-  | 'Information manquante'
-  | 'Validation par le premier détenteur'
-  | 'Fiche envoyée, pas encore prise en charge'
-  | 'Traitement des carcasses';
+export type FeiStepForChasseur = string;

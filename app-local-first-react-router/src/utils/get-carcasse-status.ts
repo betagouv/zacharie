@@ -48,7 +48,19 @@ export default function updateCarcasseStatus<T extends Carcasse>(carcasse: T) {
   return CarcasseStatus.SANS_DECISION;
 }
 
-export function getCarcasseStatusLabel(carcasse: Carcasse) {
+export type CarcasseStatusLabel =
+  | 'Manquant'
+  | 'Manquante'
+  | 'En traitement assainissant'
+  | 'Saisie totale'
+  | 'Saisie partielle'
+  | 'Levée de consigne'
+  | 'Consigné'
+  | 'Consignée'
+  | 'Accepté'
+  | 'Acceptée'
+  | 'Sans décision';
+export function getCarcasseStatusLabel(carcasse: Carcasse): CarcasseStatusLabel {
   switch (carcasse.svi_carcasse_status) {
     case CarcasseStatus.MANQUANTE_ETG_COLLECTEUR:
     case CarcasseStatus.MANQUANTE_SVI:

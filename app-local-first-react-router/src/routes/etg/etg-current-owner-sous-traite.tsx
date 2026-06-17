@@ -6,11 +6,9 @@ import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import { syncData } from '@app/utils/sync-data';
 import { createHistoryInput } from '@app/utils/create-history-entry';
-import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import DestinataireSelectSousTraite from './etg-destinataire-select-sous-traite';
 import { getFeiAndIntermediaireIdsFromFeiIntermediaire } from '@app/utils/get-carcasse-intermediaire-id';
-import { useFeiIntermediaires } from '@app/utils/get-carcasses-intermediaires';
-import { useCarcassesTransmission } from '@app/utils/get-carcasses-transmission';
+import { useTransmissionWithMetadata } from '@app/utils/get-transmissions-sorted';
 
 export default function FeiSousTraite() {
   const params = useParams();
@@ -18,10 +16,11 @@ export default function FeiSousTraite() {
   const updateCarcassesTransmission = useZustandStore((state) => state.updateCarcassesTransmission);
   const addLog = useZustandStore((state) => state.addLog);
   const fei_numero = params.fei_numero!;
-  const feiCarcasses = useCarcassesForFei(fei_numero);
-  const transmission = useCarcassesTransmission(feiCarcasses);
+  const transmissionMetadata = useTransmissionWithMetadata(fei_numero);
+  const feiCarcasses = transmissionMetadata.carcasses;
+  const transmission = transmissionMetadata.content;
   const carcasseIds = feiCarcasses.map((c) => c.zacharie_carcasse_id);
-  const intermediaires = useFeiIntermediaires(fei_numero);
+  const intermediaires = transmissionMetadata.intermediaires;
   const latestIntermediaire = intermediaires[0];
   const feiAndIntermediaireIds = latestIntermediaire
     ? getFeiAndIntermediaireIdsFromFeiIntermediaire(latestIntermediaire)

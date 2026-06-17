@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
-import { FeiOwnerRole } from '@prisma/client';
-import type { CarcassesIntermediaire } from '@app/types/carcasses-intermediaire';
-import dayjs from 'dayjs';
+import { Entity, FeiOwnerRole } from '@prisma/client';
 import useZustandStore from '@app/zustand/store';
 import { Pagination } from '@codegouvfr/react-dsfr/Pagination';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
@@ -12,7 +10,7 @@ import TableFilterable from '@app/components/TableFilterable';
 import CollapsibleSection from '@app/components/CollapsibleSection';
 import CarcassesEspeceSummary from '@app/components/CarcassesEspeceSummary';
 import { useSaveScroll } from '@app/services/useSaveScroll';
-import { getCarcasseStatusLabel } from '@app/utils/get-carcasse-status';
+import { CarcasseStatusLabel, getCarcasseStatusLabel } from '@app/utils/get-carcasse-status';
 import Filters from '@app/components/Filters';
 import {
   CarcasseFilter,
@@ -23,12 +21,11 @@ import { useLocalStorage } from '@uidotdev/usehooks';
 import Chargement from '@app/components/Chargement';
 import DropDownMenu from '@app/components/DropDownMenu';
 import useExportCarcasses from '@app/utils/export-carcasses';
-import { getFeiAndCarcasseAndIntermediaireIdsFromCarcasse } from '@app/utils/get-carcasse-intermediaire-id';
-import { computeFeiSteps } from '@app/utils/fei-steps';
-import type { FeiStepSimpleStatus } from '@app/types/fei-steps';
-import { useEntitiesIdsWorkingDirectlyFor } from '@app/utils/get-entity-relations';
 import { isCarcasseSviArchived } from '@app/utils/carcasse-svi-archived';
 import { loadData, useLoaderEffect } from '@app/utils/load-data';
+import { useTransmissions } from '@app/utils/get-transmissions-sorted';
+import { CarcasseWithModificationRequests } from '@api/src/types/carcasse';
+import type { TransmissionSimpleStatus } from '@app/types/transmission-steps';
 
 const advancedFiltersModal = createModal({
   id: 'etg-carcasses-advanced-filters',
@@ -40,9 +37,9 @@ const columnsModal = createModal({
   isOpenedByDefault: false,
 });
 
-const FEI_STATUS_OPTIONS: Array<FeiStepSimpleStatus> = ['À compléter', 'En cours', 'Clôturée'];
+const FEI_STATUS_OPTIONS: Array<TransmissionSimpleStatus> = ['À compléter', 'En cours', 'Clôturée'];
 
-const feiStatusColors: Record<FeiStepSimpleStatus, { bg: string; text: string }> = {
+const feiStatusColors: Record<TransmissionSimpleStatus, { bg: string; text: string }> = {
   'À compléter': { bg: 'bg-[#FEE7FC]', text: 'text-[#6E445A]' },
   'En cours': { bg: 'bg-[#FFECBD]', text: 'text-[#73603F]' },
   Clôturée: { bg: 'bg-[#E8EDFF]', text: 'text-[#01008B]' },
@@ -60,15 +57,24 @@ const DEFAULT_VISIBLE_COLUMN_KEYS = [
 ];
 const itemsPerPageOptions = [20, 50, 100, 200, 1000];
 
+type CatalogColumn = {
+  key: string;
+  label: string;
+  alwaysVisible?: boolean;
+  dataKey: keyof CarcasseWithModificationRequests | string;
+  title: string;
+  type?: 'date' | 'datetime' | 'number' | 'string';
+  sortable?: boolean;
+  small?: boolean;
+  render?: (item: CarcasseWithModificationRequests, index: number) => React.ReactNode;
+};
+
 export default function EtgCarcasses() {
   const user = useMostFreshUser('etg-carcasses')!;
   const carcassesRegistry = useZustandStore((state) => state.carcassesRegistry);
+  const transmissions = useTransmissions();
   const feis = useZustandStore((state) => state.feis);
-  const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
   const entities = useZustandStore((state) => state.entities);
-  const usersById = useZustandStore((state) => state.users);
-  const carcasses = useZustandStore((state) => state.carcasses);
-  const entitiesIdsWorkingDirectlyFor = useEntitiesIdsWorkingDirectlyFor();
   const [selectedCarcassesIds, setSelectedCarcassesIds] = useState<Array<string>>([]);
   const [loading, setLoading] = useState(true);
 
@@ -86,26 +92,25 @@ export default function EtgCarcasses() {
   const [itemsPerPage, setItemsPerPage] = useLocalStorage<number>('etg-carcasses-items-per-page', 50);
   const [filters, setFilters] = useLocalStorage<Array<CarcasseFilter>>('etg-carcasses-filters-preset', []);
 
-  const [quickFilterFeiStatuses, setQuickFilterFeiStatuses] = useLocalStorage<Array<FeiStepSimpleStatus>>(
-    'etg-carcasses-quick-filter-fei-statuses',
-    []
-  );
-  const [quickFilterCollecteurIds, setQuickFilterCollecteurIds] = useLocalStorage<Array<string>>(
-    'etg-carcasses-quick-filter-collecteurs',
-    []
-  );
-  const [quickFilterEspeces, setQuickFilterEspeces] = useLocalStorage<Array<string>>(
-    'etg-carcasses-quick-filter-especes',
-    []
-  );
-  const [quickFilterStatuses, setQuickFilterStatuses] = useLocalStorage<Array<string>>(
-    'etg-carcasses-quick-filter-statuses',
-    []
-  );
-  const [quickFilterPremierDetenteurs, setQuickFilterPremierDetenteurs] = useLocalStorage<Array<string>>(
-    'etg-carcasses-quick-filter-premier-detenteurs',
-    []
-  );
+  const [quickFilterTransmissionStatuses, setQuickFilterFeiStatuses] = useLocalStorage<
+    Record<TransmissionSimpleStatus, boolean | undefined>
+    // @ts-expect-error Type '{}' is missing the following properties
+  >('etg-carcasses-quick-filter-fei-statuses-obj', {});
+  const [quickFilterCollecteurIds, setQuickFilterCollecteurIds] = useLocalStorage<
+    Record<Entity['id'], boolean | undefined>
+  >('etg-carcasses-quick-filter-collecteurs-obj', {});
+  const [quickFilterEspeces, setQuickFilterEspeces] = useLocalStorage<
+    Record<NonNullable<CarcasseWithModificationRequests['espece']>, boolean | undefined>
+  >('etg-carcasses-quick-filter-especes-obj', {});
+  const [quickFilterStatuses, setQuickFilterStatuses] = useLocalStorage<
+    Record<CarcasseStatusLabel, boolean | undefined>
+    // @ts-expect-error Type '{}' is missing the following properties
+  >('etg-carcasses-quick-filter-statuses-object', {});
+  const quickFilterStatusesArray = Object.keys(quickFilterStatuses);
+
+  const [quickFilterPremierDetenteurs, setQuickFilterPremierDetenteurs] = useLocalStorage<
+    Record<NonNullable<CarcasseWithModificationRequests['premier_detenteur_name_cache']>, boolean | undefined>
+  >('etg-carcasses-quick-filter-premier-detenteurs-obj', {});
   const [quickFilterBracelet, setQuickFilterBracelet] = useState('');
 
   const [visibleColumnKeys, setVisibleColumnKeys] = useLocalStorage<Array<string>>(
@@ -113,7 +118,17 @@ export default function EtgCarcasses() {
     DEFAULT_VISIBLE_COLUMN_KEYS
   );
 
-  const filtersKey = `${quickFilterBracelet}|${quickFilterFeiStatuses.join(',')}|${quickFilterCollecteurIds.join(',')}|${quickFilterEspeces.join(',')}|${quickFilterStatuses.join(',')}|${quickFilterPremierDetenteurs.join(',')}|${JSON.stringify(filters)}|${itemsPerPage}`;
+  const filtersKey = [
+    quickFilterBracelet,
+    Object.keys(quickFilterTransmissionStatuses).join(','),
+    Object.keys(quickFilterCollecteurIds).join(','),
+    Object.keys(quickFilterEspeces).join(','),
+    Object.keys(quickFilterStatuses).join(','),
+    Object.keys(quickFilterPremierDetenteurs).join(','),
+    JSON.stringify(filters),
+    itemsPerPage,
+  ].join('|');
+
   const isFirstFiltersRender = useRef(true);
   useEffect(() => {
     if (isFirstFiltersRender.current) {
@@ -130,198 +145,105 @@ export default function EtgCarcasses() {
     );
   }, [filtersKey, setSearchParams]);
 
-  const intermediairesByFei = useMemo(() => {
-    const seen: Record<string, Record<string, CarcassesIntermediaire>> = {};
-    for (const ci of Object.values(carcassesIntermediaireById)) {
-      if (ci.deleted_at) continue;
-      if (!seen[ci.fei_numero]) seen[ci.fei_numero] = {};
-      if (seen[ci.fei_numero][ci.intermediaire_id]) continue;
-      seen[ci.fei_numero][ci.intermediaire_id] = {
-        id: ci.intermediaire_id,
-        fei_numero: ci.fei_numero,
-        intermediaire_user_id: ci.intermediaire_user_id,
-        intermediaire_entity_id: ci.intermediaire_entity_id,
-        intermediaire_role: ci.intermediaire_role,
-        created_at: ci.created_at,
-        prise_en_charge_at: ci.prise_en_charge_at,
-        intermediaire_depot_type: ci.intermediaire_depot_type,
-        intermediaire_depot_entity_id: ci.intermediaire_depot_entity_id,
-        intermediaire_prochain_detenteur_role_cache: ci.intermediaire_prochain_detenteur_role_cache,
-        intermediaire_prochain_detenteur_id_cache: ci.intermediaire_prochain_detenteur_id_cache,
-      };
-    }
-    const result: Record<string, CarcassesIntermediaire[]> = {};
-    for (const fei_numero of Object.keys(seen)) {
-      result[fei_numero] = Object.values(seen[fei_numero]).sort((a, b) =>
-        dayjs(a.created_at).diff(b.created_at) < 0 ? 1 : -1
-      );
-    }
-    return result;
-  }, [carcassesIntermediaireById]);
-
-  const carcassesByFei = useMemo(() => {
-    const result: Record<string, Array<(typeof carcasses)[string]>> = {};
-    for (const c of Object.values(carcasses)) {
-      if (c.deleted_at) continue;
-      if (!result[c.fei_numero]) result[c.fei_numero] = [];
-      result[c.fei_numero].push(c);
-    }
-    return result;
-  }, [carcasses]);
-
-  const filterableFields = useMemo(() => {
-    const motifs = new Set<string>();
-    const etgNames = new Set<string>();
-    const ccgNames = new Set<string>();
-    for (const carcasse of carcassesRegistry) {
-      for (const motif of carcasse.svi_ipm2_lesions_ou_motifs) {
-        if (motif) {
-          motifs.add(motif);
-        }
-      }
-      if (carcasse.premier_detenteur_depot_entity_name_cache) {
-        ccgNames.add(carcasse.premier_detenteur_depot_entity_name_cache);
-      }
-    }
-    const sortedMotifs = Array.from(motifs).sort();
-    const sortedEtgNames = Array.from(etgNames).sort();
-    const sortedCcgNames = Array.from(ccgNames).sort();
-    return carcasseFilterableFields(sortedMotifs, sortedEtgNames, sortedCcgNames);
-  }, [carcassesRegistry]);
-
-  const carcasseCollecteurIds = useMemo(() => {
-    const result: Record<string, Array<string>> = {};
-    for (const carcasse of carcassesRegistry) {
-      const intermediaires = intermediairesByFei[carcasse.fei_numero] ?? [];
-      const ids: Array<string> = [];
-      for (const intermediaire of intermediaires) {
-        if (intermediaire.intermediaire_role !== FeiOwnerRole.COLLECTEUR_PRO) continue;
-        const id = getFeiAndCarcasseAndIntermediaireIdsFromCarcasse(carcasse, intermediaire.id);
-        if (!carcassesIntermediaireById[id]) continue;
-        const collecteurId = intermediaire.intermediaire_entity_id || intermediaire.intermediaire_user_id;
-        if (collecteurId && !ids.includes(collecteurId)) ids.push(collecteurId);
-      }
-      result[carcasse.zacharie_carcasse_id] = ids;
-    }
-    return result;
-  }, [carcassesRegistry, intermediairesByFei, carcassesIntermediaireById]);
-
-  const collecteurOptions = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const ids of Object.values(carcasseCollecteurIds)) {
-      for (const id of ids) {
-        if (map.has(id)) continue;
-        const entity = entities[id];
-        const userOnly = usersById[id];
-        const name =
-          entity?.nom_d_usage ||
-          entity?.raison_sociale ||
-          (userOnly ? `${userOnly.prenom ?? ''} ${userOnly.nom_de_famille ?? ''}`.trim() : '') ||
-          id;
-        map.set(id, name);
-      }
-    }
-    return Array.from(map.entries())
-      .map(([id, name]) => ({ id, name }))
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }, [carcasseCollecteurIds, entities, usersById]);
-
-  const especeOptions = useMemo(() => {
-    const set = new Set<string>();
-    for (const carcasse of carcassesRegistry) {
-      if (carcasse.espece) set.add(carcasse.espece);
-    }
-    return Array.from(set).sort();
-  }, [carcassesRegistry]);
-
-  const statusOptions = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const carcasse of carcassesRegistry) {
-      const key = carcasse.svi_carcasse_status ?? '__none__';
-      if (!map.has(key)) {
-        map.set(key, getCarcasseStatusLabel(carcasse));
-      }
-    }
-    return Array.from(map.entries())
-      .map(([id, label]) => ({ id, label }))
-      .sort((a, b) => a.label.localeCompare(b.label));
-  }, [carcassesRegistry]);
-
-  const premierDetenteurOptions = useMemo(() => {
-    const set = new Set<string>();
-    for (const carcasse of carcassesRegistry) {
-      if (feis[carcasse.fei_numero]?.premier_detenteur_name_cache) {
-        set.add(feis[carcasse.fei_numero]!.premier_detenteur_name_cache!);
-      }
-    }
-    return Array.from(set).sort();
-  }, [carcassesRegistry, feis]);
-
-  const feiSimpleStatusByNumero = useMemo(() => {
-    if (quickFilterFeiStatuses.length === 0) return {};
-    const result: Record<string, ReturnType<typeof computeFeiSteps>['simpleStatus']> = {};
-    const uniqueFeiNumeros = new Set<string>();
-    for (const carcasse of carcassesRegistry) {
-      uniqueFeiNumeros.add(carcasse.fei_numero);
-    }
-    for (const feiNumero of uniqueFeiNumeros) {
-      const fei = feis[feiNumero];
-      if (!fei) continue;
-      const intermediaires = intermediairesByFei[feiNumero] ?? [];
-      const feiCarcasses = carcassesByFei[feiNumero] ?? [];
-      const { simpleStatus } = computeFeiSteps({
-        fei,
-        intermediaires,
-        entitiesIdsWorkingDirectlyFor,
-        user,
-        carcasses: feiCarcasses,
-      });
-      result[feiNumero] = simpleStatus;
-    }
-    return result;
-  }, [
-    quickFilterFeiStatuses,
-    carcassesRegistry,
-    feis,
-    intermediairesByFei,
-    carcassesByFei,
-    entitiesIdsWorkingDirectlyFor,
-    user,
-  ]);
-
-  const filteredData = useMemo(() => {
+  const [
+    filterableFields,
+    collecteursNamesByFeiNumero,
+    collecteurOptions,
+    especeOptions,
+    statusOptions,
+    premierDetenteurOptions,
+    filteredData,
+  ] = useMemo(() => {
+    const _collecteursNamesByFeiNumero: Record<CarcasseWithModificationRequests['fei_numero'], string> = {};
+    const _ccgNames: Record<
+      NonNullable<CarcasseWithModificationRequests['premier_detenteur_depot_entity_name_cache']>,
+      true
+    > = {};
+    const _motifs: Record<
+      string, // one of 'svi_ipm2_lesions_ou_motifs',
+      true
+    > = {};
+    const _collecteurOptions: Record<Entity['id'], Entity['nom_d_usage']> = {};
+    const _especeOptions: Record<NonNullable<CarcasseWithModificationRequests['espece']>, true> = {};
+    // @ts-expect-error Type '{}' is missing the following properties
+    const _statusOptions: Record<CarcasseStatusLabel, boolean> = {};
+    const _premierDetenteurOptions: Record<
+      NonNullable<CarcasseWithModificationRequests['premier_detenteur_name_cache']>,
+      true
+    > = {};
+    const _filteredData: Array<CarcasseWithModificationRequests> = [];
     const braceletQuery = quickFilterBracelet.trim().toLowerCase();
-    return carcassesRegistry
-      .filter((carcasse) => filterCarcassesInRegistre(filters)(carcasse, feis[carcasse.fei_numero]!))
-      .filter((carcasse) => {
-        if (braceletQuery && !carcasse.numero_bracelet?.toLowerCase().includes(braceletQuery)) {
-          return false;
+    // filter helper
+    const excludedFei: Record<CarcasseWithModificationRequests['fei_numero'], true> = {};
+    const withQuickFilterCollecteur = Object.keys(quickFilterCollecteurIds).length > 0;
+    const withQuickFilterEspece = Object.keys(quickFilterEspeces).length > 0;
+    const withQuickFilterTransmissionStatuses = Object.keys(quickFilterTransmissionStatuses).length > 0;
+    const withQuickFilterStatuses = Object.keys(quickFilterStatuses).length > 0;
+    const withQuickFilterPremierDetenteurs = Object.keys(quickFilterPremierDetenteurs).length > 0;
+
+    for (const carcasse of carcassesRegistry) {
+      /* create filters */
+      if (!_collecteursNamesByFeiNumero[carcasse.fei_numero]) {
+        let feiIsExcluded = withQuickFilterPremierDetenteurs || withQuickFilterTransmissionStatuses;
+        const __collecteursIds: Record<Entity['id'], Entity['nom_d_usage']> = {};
+        const intermediaires = transmissions[carcasse.fei_numero].intermediaires ?? [];
+        for (const intermediaire of intermediaires) {
+          const entityId = intermediaire.intermediaire_entity_id;
+          if (intermediaire.intermediaire_role === FeiOwnerRole.COLLECTEUR_PRO) {
+            feiIsExcluded = withQuickFilterCollecteur;
+            const collecteurId = entityId;
+            const collecteurName =
+              entities[collecteurId].nom_d_usage ?? entities[collecteurId].raison_sociale;
+            _collecteurOptions[collecteurId] = collecteurName;
+            __collecteursIds[collecteurId] = collecteurName;
+            if (withQuickFilterCollecteur && quickFilterCollecteurIds[collecteurId]) feiIsExcluded = false;
+          }
         }
-        if (quickFilterCollecteurIds.length > 0) {
-          const ids = carcasseCollecteurIds[carcasse.zacharie_carcasse_id] ?? [];
-          if (!ids.some((id) => quickFilterCollecteurIds.includes(id))) return false;
-        }
-        if (quickFilterEspeces.length > 0) {
-          if (!carcasse.espece || !quickFilterEspeces.includes(carcasse.espece)) return false;
-        }
-        if (quickFilterStatuses.length > 0) {
-          const statusKey = carcasse.svi_carcasse_status ?? '__none__';
-          if (!quickFilterStatuses.includes(statusKey)) return false;
-        }
-        if (quickFilterPremierDetenteurs.length > 0) {
+        const simpleStatus = transmissions[carcasse.fei_numero].labels.simpleStatus;
+        if (withQuickFilterTransmissionStatuses && quickFilterTransmissionStatuses[simpleStatus])
+          feiIsExcluded = false;
+        _collecteursNamesByFeiNumero[carcasse.fei_numero] =
+          Object.values(__collecteursIds).join(', ') || ' - ';
+        if (carcasse.premier_detenteur_name_cache) {
+          _premierDetenteurOptions[carcasse.premier_detenteur_name_cache] = true;
           if (
-            !feis[carcasse.fei_numero]?.premier_detenteur_name_cache ||
-            !quickFilterPremierDetenteurs.includes(feis[carcasse.fei_numero]!.premier_detenteur_name_cache!)
+            withQuickFilterPremierDetenteurs &&
+            quickFilterPremierDetenteurs[carcasse.premier_detenteur_name_cache]
           )
-            return false;
+            feiIsExcluded = false;
         }
-        if (quickFilterFeiStatuses.length > 0) {
-          const feiStatus = feiSimpleStatusByNumero[carcasse.fei_numero];
-          if (!feiStatus || !quickFilterFeiStatuses.includes(feiStatus)) return false;
+        if (carcasse.premier_detenteur_depot_entity_name_cache) {
+          _ccgNames[carcasse.premier_detenteur_depot_entity_name_cache] = true;
         }
-        return true;
-      })
-      .sort((a, b) => {
+        if (feiIsExcluded) excludedFei[carcasse.fei_numero] = true;
+      }
+      if (carcasse.espece) _especeOptions[carcasse.espece] = true;
+      for (const motif of carcasse.svi_ipm2_lesions_ou_motifs) {
+        if (motif && !_motifs[motif]) _motifs[motif] = true;
+      }
+      const statusLabel = getCarcasseStatusLabel(carcasse);
+      _statusOptions[statusLabel] = true;
+      /* filter data */
+      if (excludedFei[carcasse.fei_numero]) continue;
+      if (!filterCarcassesInRegistre(filters)(carcasse, feis[carcasse.fei_numero]!)) continue;
+      if (braceletQuery && !carcasse.numero_bracelet?.toLowerCase().includes(braceletQuery)) {
+        continue;
+      }
+      if (withQuickFilterEspece && carcasse.espece && !quickFilterEspeces[carcasse.espece]) continue;
+      if (withQuickFilterStatuses && !quickFilterStatuses[getCarcasseStatusLabel(carcasse)]) continue;
+      _filteredData.push(carcasse);
+    }
+    const sortedMotifs = Object.keys(_motifs).sort();
+    const sortedCcgNames = Object.keys(_ccgNames).sort();
+    const sortedEtgNames: string[] = [];
+    return [
+      carcasseFilterableFields(sortedMotifs, sortedEtgNames, sortedCcgNames),
+      _collecteursNamesByFeiNumero,
+      _collecteurOptions,
+      Object.keys(_especeOptions).sort(),
+      _statusOptions,
+      _premierDetenteurOptions,
+      _filteredData.sort((a, b) => {
         const aValue =
           // @ts-expect-error: svi_carcasse_archived is isCarcasseSviArchived
           sortBy === 'svi_carcasse_archived'
@@ -346,21 +268,22 @@ export default function EtgCarcasses() {
         if (aValue < bValue) return sortOrder === 'ASC' ? -1 : 1;
         if (aValue > bValue) return sortOrder === 'ASC' ? 1 : -1;
         return 0;
-      });
+      }),
+    ];
   }, [
-    carcassesRegistry,
-    filters,
-    feis,
-    sortBy,
-    sortOrder,
     quickFilterBracelet,
     quickFilterCollecteurIds,
     quickFilterEspeces,
+    quickFilterTransmissionStatuses,
     quickFilterStatuses,
     quickFilterPremierDetenteurs,
-    quickFilterFeiStatuses,
-    carcasseCollecteurIds,
-    feiSimpleStatusByNumero,
+    carcassesRegistry,
+    filters,
+    feis,
+    transmissions,
+    entities,
+    sortBy,
+    sortOrder,
   ]);
 
   const paginatedData = useMemo(() => {
@@ -381,42 +304,6 @@ export default function EtgCarcasses() {
   }, []);
 
   useSaveScroll('etg-carcasses-scrollY');
-
-  const collecteurNameByCarcasseId = useMemo(() => {
-    const result: Record<string, string | null> = {};
-    for (const carcasse of carcassesRegistry) {
-      const intermediaires = intermediairesByFei[carcasse.fei_numero] ?? [];
-      const collecteursPro: string[] = [];
-      for (const intermediaire of intermediaires) {
-        if (intermediaire.intermediaire_role !== FeiOwnerRole.COLLECTEUR_PRO) continue;
-        const id = getFeiAndCarcasseAndIntermediaireIdsFromCarcasse(carcasse, intermediaire.id);
-        if (!carcassesIntermediaireById[id]) continue;
-        const collecteurEntity = entities[intermediaire.intermediaire_entity_id];
-        if (collecteurEntity?.nom_d_usage) {
-          collecteursPro.push(collecteurEntity.nom_d_usage);
-        }
-      }
-      result[carcasse.zacharie_carcasse_id] = collecteursPro.length === 0 ? null : collecteursPro.join(', ');
-    }
-    return result;
-  }, [carcassesRegistry, intermediairesByFei, carcassesIntermediaireById, entities]);
-
-  const getCollecteurName = (carcasse: (typeof carcassesRegistry)[number]): string | null => {
-    return collecteurNameByCarcasseId[carcasse.zacharie_carcasse_id] ?? null;
-  };
-
-  type Carcasse = (typeof carcassesRegistry)[number];
-  type CatalogColumn = {
-    key: string;
-    label: string;
-    alwaysVisible?: boolean;
-    dataKey: keyof Carcasse | string;
-    title: string;
-    type?: 'date' | 'datetime' | 'number' | 'string';
-    sortable?: boolean;
-    small?: boolean;
-    render?: (item: Carcasse, index: number) => React.ReactNode;
-  };
 
   const allColumns: Array<CatalogColumn> = [
     {
@@ -509,7 +396,7 @@ export default function EtgCarcasses() {
       label: 'Collecteur',
       dataKey: 'collecteur',
       title: 'Collecteur',
-      render: (carcasse) => getCollecteurName(carcasse) || '-',
+      render: (carcasse) => collecteursNamesByFeiNumero[carcasse.fei_numero] ?? '-',
     },
     {
       key: 'examinateur_initial_date_approbation_mise_sur_le_marche',
@@ -664,21 +551,23 @@ export default function EtgCarcasses() {
 
   const activeFilterCount =
     (quickFilterBracelet.trim() ? 1 : 0) +
-    quickFilterFeiStatuses.length +
-    quickFilterCollecteurIds.length +
-    quickFilterEspeces.length +
-    quickFilterStatuses.length +
-    quickFilterPremierDetenteurs.length +
+    Object.keys(quickFilterTransmissionStatuses).length +
+    Object.keys(quickFilterCollecteurIds).length +
+    Object.keys(quickFilterEspeces).length +
+    Object.keys(quickFilterStatuses).length +
+    Object.keys(quickFilterPremierDetenteurs).length +
     filters.length;
   const hasActiveFilters = activeFilterCount > 0;
 
   const clearAllFilters = () => {
     setQuickFilterBracelet('');
-    setQuickFilterFeiStatuses([]);
-    setQuickFilterCollecteurIds([]);
-    setQuickFilterEspeces([]);
-    setQuickFilterStatuses([]);
-    setQuickFilterPremierDetenteurs([]);
+    // @ts-expect-error Type '{}' is missing the following properties
+    setQuickFilterFeiStatuses({});
+    setQuickFilterCollecteurIds({});
+    setQuickFilterEspeces({});
+    // @ts-expect-error Type '{}' is missing the following properties
+    setQuickFilterStatuses({});
+    setQuickFilterPremierDetenteurs({});
     setFilters([]);
   };
 
@@ -716,9 +605,9 @@ export default function EtgCarcasses() {
         title="Statut fiche"
         defaultOpen={false}
         badge={
-          quickFilterFeiStatuses.length > 0 ? (
+          Object.keys(quickFilterTransmissionStatuses).length > 0 ? (
             <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">
-              {quickFilterFeiStatuses.length}
+              {Object.keys(quickFilterTransmissionStatuses).length}
             </span>
           ) : undefined
         }
@@ -731,14 +620,13 @@ export default function EtgCarcasses() {
             >
               <input
                 type="checkbox"
-                checked={quickFilterFeiStatuses.includes(status)}
+                checked={quickFilterTransmissionStatuses[status]}
                 className="checked:accent-action-high-blue-france h-4 w-4"
                 onChange={() => {
-                  if (quickFilterFeiStatuses.includes(status)) {
-                    setQuickFilterFeiStatuses(quickFilterFeiStatuses.filter((s) => s !== status));
-                  } else {
-                    setQuickFilterFeiStatuses([...quickFilterFeiStatuses, status]);
-                  }
+                  setQuickFilterFeiStatuses({
+                    ...quickFilterTransmissionStatuses,
+                    [status]: !quickFilterTransmissionStatuses[status] || undefined,
+                  });
                 }}
               />
               <span
@@ -751,39 +639,40 @@ export default function EtgCarcasses() {
         </div>
       </CollapsibleSection>
 
-      {collecteurOptions.length > 1 && (
+      {Object.keys(collecteurOptions).length > 1 && (
         <CollapsibleSection
           title="Collecteur"
           defaultOpen={false}
           badge={
-            quickFilterCollecteurIds.length > 0 ? (
+            Object.keys(quickFilterCollecteurIds).length > 0 ? (
               <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">
-                {quickFilterCollecteurIds.length}
+                {Object.keys(quickFilterCollecteurIds).length}
               </span>
             ) : undefined
           }
         >
           <div className="flex max-h-60 flex-col gap-1 overflow-y-auto">
-            {collecteurOptions.map((option) => (
-              <label
-                key={option.id}
-                className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-gray-50"
-              >
-                <input
-                  type="checkbox"
-                  checked={quickFilterCollecteurIds.includes(option.id)}
-                  className="checked:accent-action-high-blue-france h-4 w-4 shrink-0"
-                  onChange={() => {
-                    if (quickFilterCollecteurIds.includes(option.id)) {
-                      setQuickFilterCollecteurIds(quickFilterCollecteurIds.filter((v) => v !== option.id));
-                    } else {
-                      setQuickFilterCollecteurIds([...quickFilterCollecteurIds, option.id]);
-                    }
-                  }}
-                />
-                <span className="truncate text-sm">{option.name}</span>
-              </label>
-            ))}
+            {Object.entries(collecteurOptions) // [optionId, optionName]
+              .sort((a, b) => (a[1] as string).localeCompare(b[1] as string))
+              .map(([optionId, optionName]) => (
+                <label
+                  key={optionId}
+                  className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-gray-50"
+                >
+                  <input
+                    type="checkbox"
+                    checked={quickFilterCollecteurIds[optionId]}
+                    className="checked:accent-action-high-blue-france h-4 w-4 shrink-0"
+                    onChange={() => {
+                      setQuickFilterCollecteurIds({
+                        ...quickFilterCollecteurIds,
+                        [optionId]: !quickFilterCollecteurIds[optionId] || undefined,
+                      });
+                    }}
+                  />
+                  <span className="truncate text-sm">{optionName}</span>
+                </label>
+              ))}
           </div>
         </CollapsibleSection>
       )}
@@ -793,9 +682,9 @@ export default function EtgCarcasses() {
           title="Espèce"
           defaultOpen={false}
           badge={
-            quickFilterEspeces.length > 0 ? (
+            Object.keys(quickFilterEspeces).length > 0 ? (
               <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">
-                {quickFilterEspeces.length}
+                {Object.keys(quickFilterEspeces).length}
               </span>
             ) : undefined
           }
@@ -808,14 +697,13 @@ export default function EtgCarcasses() {
               >
                 <input
                   type="checkbox"
-                  checked={quickFilterEspeces.includes(espece)}
+                  checked={quickFilterEspeces[espece]}
                   className="checked:accent-action-high-blue-france h-4 w-4 shrink-0"
                   onChange={() => {
-                    if (quickFilterEspeces.includes(espece)) {
-                      setQuickFilterEspeces(quickFilterEspeces.filter((v) => v !== espece));
-                    } else {
-                      setQuickFilterEspeces([...quickFilterEspeces, espece]);
-                    }
+                    setQuickFilterEspeces({
+                      ...quickFilterEspeces,
+                      [espece]: !quickFilterEspeces[espece] || undefined,
+                    });
                   }}
                 />
                 <span className="truncate text-sm">{espece}</span>
@@ -825,71 +713,70 @@ export default function EtgCarcasses() {
         </CollapsibleSection>
       )}
 
-      {statusOptions.length > 1 && (
-        <CollapsibleSection
-          title="Statut carcasse"
-          defaultOpen={false}
-          badge={
-            quickFilterStatuses.length > 0 ? (
-              <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">
-                {quickFilterStatuses.length}
-              </span>
-            ) : undefined
-          }
-        >
-          <div className="flex max-h-60 flex-col gap-1 overflow-y-auto">
-            {statusOptions.map((option) => (
+      <CollapsibleSection
+        title="Statut carcasse"
+        defaultOpen={false}
+        badge={
+          quickFilterStatusesArray.length > 0 ? (
+            <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">
+              {quickFilterStatusesArray}
+            </span>
+          ) : undefined
+        }
+      >
+        <div className="flex max-h-60 flex-col gap-1 overflow-y-auto">
+          {/* @ts-expect-error Type '{}' is missing the following properties */}
+          {Object.keys(statusOptions).map((status: CarcasseStatusLabel) => {
+            return (
               <label
-                key={option.id}
+                key={status}
                 className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-gray-50"
               >
                 <input
                   type="checkbox"
-                  checked={quickFilterStatuses.includes(option.id)}
+                  checked={quickFilterStatuses[status] ?? false}
                   className="checked:accent-action-high-blue-france h-4 w-4 shrink-0"
                   onChange={() => {
-                    if (quickFilterStatuses.includes(option.id)) {
-                      setQuickFilterStatuses(quickFilterStatuses.filter((v) => v !== option.id));
-                    } else {
-                      setQuickFilterStatuses([...quickFilterStatuses, option.id]);
-                    }
+                    setQuickFilterStatuses({
+                      ...quickFilterStatuses,
+                      [status]: !quickFilterStatuses[status] || undefined,
+                    });
                   }}
                 />
-                <span className="truncate text-sm">{option.label}</span>
+                <span className="truncate text-sm">{status}</span>
               </label>
-            ))}
-          </div>
-        </CollapsibleSection>
-      )}
+            );
+          })}
+        </div>
+      </CollapsibleSection>
 
-      {premierDetenteurOptions.length > 1 && (
+      {Object.keys(premierDetenteurOptions).length > 1 && (
         <CollapsibleSection
           title="Premier détenteur"
           defaultOpen={false}
           badge={
-            quickFilterPremierDetenteurs.length > 0 ? (
+            Object.keys(quickFilterPremierDetenteurs).length > 0 ? (
               <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">
-                {quickFilterPremierDetenteurs.length}
+                {Object.keys(quickFilterPremierDetenteurs).length}
               </span>
             ) : undefined
           }
         >
           <div className="flex max-h-60 flex-col gap-1 overflow-y-auto">
-            {premierDetenteurOptions.map((name) => (
+            {Object.keys(premierDetenteurOptions).map((name) => (
               <label
                 key={name}
                 className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-gray-50"
               >
                 <input
                   type="checkbox"
-                  checked={quickFilterPremierDetenteurs.includes(name)}
+                  checked={quickFilterPremierDetenteurs[name]}
                   className="checked:accent-action-high-blue-france h-4 w-4 shrink-0"
                   onChange={() => {
-                    if (quickFilterPremierDetenteurs.includes(name)) {
-                      setQuickFilterPremierDetenteurs(quickFilterPremierDetenteurs.filter((v) => v !== name));
-                    } else {
-                      setQuickFilterPremierDetenteurs([...quickFilterPremierDetenteurs, name]);
-                    }
+                    setQuickFilterPremierDetenteurs({
+                      ...quickFilterPremierDetenteurs,
+                      [name]: !quickFilterPremierDetenteurs[name] || undefined,
+                    });
                   }}
                 />
                 <span className="truncate text-sm">{name}</span>
@@ -1035,10 +922,10 @@ export default function EtgCarcasses() {
                   {carcasse.fei_numero}
                 </Link>
               </div>
-              {getCollecteurName(carcasse) && (
+              {collecteursNamesByFeiNumero[carcasse.fei_numero] && (
                 <div>
                   <span className="font-semibold">Collecteur: </span>
-                  <span>{getCollecteurName(carcasse)}</span>
+                  <span>{collecteursNamesByFeiNumero[carcasse.fei_numero]}</span>
                 </div>
               )}
             </div>
@@ -1177,7 +1064,7 @@ export default function EtgCarcasses() {
               checked={selectedCarcassesIds}
               renderCellSmallDevices={renderMobileCarcasse}
               columns={visibleColumns.map((c) => ({
-                dataKey: c.dataKey as keyof Carcasse,
+                dataKey: c.dataKey as keyof CarcasseWithModificationRequests,
                 title: c.title,
                 type: c.type,
                 small: c.small,
