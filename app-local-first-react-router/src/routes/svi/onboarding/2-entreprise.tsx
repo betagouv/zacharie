@@ -1,15 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router';
 import { EntityTypes } from '@prisma/client';
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { Stepper } from '@codegouvfr/react-dsfr/Stepper';
 import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
-import type { EntitiesWorkingForResponse } from '@api/src/types/responses';
+import type { EntitiesWorkingForResponse, UserConnexionResponse } from '@api/src/types/responses';
 import type { EntitiesById } from '@api/src/types/entity';
 import API from '@app/services/api';
 import ListAndSelectEntities from '@app/components/ListAndSelectEntities';
+import useUser from '@app/zustand/user';
 
 export default function SviOnboardingEntreprise() {
+  const user = useUser((state) => state.user)!;
   const [allEntitiesById, setAllEntitiesById] = useState<EntitiesById>({});
   const [userEntitiesById, setUserEntitiesById] = useState<EntitiesById>({});
   const [refreshKey, setRefreshKey] = useState(0);
@@ -29,6 +31,17 @@ export default function SviOnboardingEntreprise() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  const handleUserOnboardingFinished = useCallback(async () => {
+    const response = await API.post({
+      path: `/user/${user.id}`,
+      body: { onboarding_finished: true },
+    }).then((data) => data as UserConnexionResponse);
+    if (response.ok && response.data?.user?.id) {
+      useUser.setState({ user: response.data.user });
+    }
+    navigate('/app/svi');
+  }, [user.id, navigate]);
 
   return (
     <>
@@ -77,7 +90,7 @@ export default function SviOnboardingEntreprise() {
                       type: 'button',
                       nativeButtonProps: {
                         onClick: () => {
-                          navigate('/app/svi');
+                          handleUserOnboardingFinished();
                         },
                       },
                     },

@@ -54,6 +54,17 @@ export default function EtgOnboardingEntreprise() {
     [user.id]
   );
 
+  const handleUserOnboardingFinished = useCallback(async () => {
+    const response = await API.post({
+      path: `/user/${user.id}`,
+      body: { onboarding_finished: true },
+    }).then((data) => data as UserConnexionResponse);
+    if (response.ok && response.data?.user?.id) {
+      useUser.setState({ user: response.data.user });
+    }
+    navigate('/app/etg');
+  }, [user.id, navigate]);
+
   return (
     <>
       <title>{`Entreprise | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}</title>
@@ -177,7 +188,7 @@ export default function EtgOnboardingEntreprise() {
                       type: 'button',
                       nativeButtonProps: {
                         onClick: () => {
-                          navigate('/app/etg');
+                          handleUserOnboardingFinished();
                         },
                       },
                     },
