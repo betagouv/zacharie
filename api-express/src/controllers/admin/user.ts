@@ -14,6 +14,8 @@ import type {
   AdminUsersResponse,
   AdminUserDataResponse,
   AdminNewUserDataResponse,
+  AdminFeisResponse,
+  AdminCarcassesResponse,
   UserConnexionResponse,
 } from '~/types/responses';
 import { entityAdminInclude } from '~/types/entity';
@@ -422,6 +424,80 @@ router.get(
         },
         error: '',
       });
+    }
+  )
+);
+
+// fiches où l'utilisateur est directement impliqué (créateur, examinateur, premier détenteur ou SVI)
+const feiUserOR = (userId: string): Prisma.FeiWhereInput[] => [
+  { created_by_user_id: userId },
+  { examinateur_initial_user_id: userId },
+  { premier_detenteur_user_id: userId },
+  { svi_user_id: userId },
+];
+
+router.get(
+  '/user/:user_id/feis',
+  catchErrors(
+    async (req: express.Request, res: express.Response<AdminFeisResponse>, next: express.NextFunction) => {
+      const userId = req.params.user_id;
+      const limit = parseInt(req.query.limit as string) || 100;
+      const offset = parseInt(req.query.offset as string) || 0;
+
+      const where: Prisma.FeiWhereInput = { deleted_at: null, OR: feiUserOR(userId) };
+
+      const [feis, total] = await Promise.all([
+        prisma.fei.findMany({
+          where,
+          orderBy: { created_at: 'desc' },
+          take: limit,
+          skip: offset,
+          include: {
+            FeiExaminateurInitialUser: { select: { email: true } },
+            FeiPremierDetenteurUser: { select: { email: true } },
+            FeiPremierDetenteurEntity: { select: { nom_d_usage: true } },
+            FeiSviEntity: { select: { nom_d_usage: true } },
+            _count: { select: { Carcasses: true } },
+          },
+        }),
+        prisma.fei.count({ where }),
+      ]);
+
+      res.status(200).send({ ok: true, data: { feis, total }, error: '' });
+    }
+  )
+);
+
+router.get(
+  '/user/:user_id/carcasses',
+  catchErrors(
+    async (
+      req: express.Request,
+      res: express.Response<AdminCarcassesResponse>,
+      next: express.NextFunction
+    ) => {
+      const userId = req.params.user_id;
+      const limit = parseInt(req.query.limit as string) || 100;
+      const offset = parseInt(req.query.offset as string) || 0;
+
+      const where: Prisma.CarcasseWhereInput = {
+        Fei: { deleted_at: null, OR: feiUserOR(userId) },
+      };
+
+      const [carcasses, total] = await Promise.all([
+        prisma.carcasse.findMany({
+          where,
+          orderBy: { created_at: 'desc' },
+          take: limit,
+          skip: offset,
+          include: {
+            _count: { select: { CarcasseIntermediaire: true } },
+          },
+        }),
+        prisma.carcasse.count({ where }),
+      ]);
+
+      res.status(200).send({ ok: true, data: { carcasses, total }, error: '' });
     }
   )
 );
