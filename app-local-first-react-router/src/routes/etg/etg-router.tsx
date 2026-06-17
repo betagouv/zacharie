@@ -12,7 +12,7 @@ import EtgProfilPartageDeMesDonnees from './profil/etg-partage-de-mes-donnees';
 import EtgProfilEntrepriseUtilisateurs from './profil/etg-entreprise-utilisateurs';
 import EtgFei from './etg-fei';
 import EtgUtilisateurs from './etg-utilisateurs';
-import EtgSviInspectionCarcasse from './etg-carcasse-after-svi-inspection';
+import { SviInspectionCarcasse } from './etg-carcasse-after-svi-inspection';
 import EtgTableauDeBord from './tableau-de-bord/etg-tableau-de-bord';
 
 export default function RouterEtg() {
