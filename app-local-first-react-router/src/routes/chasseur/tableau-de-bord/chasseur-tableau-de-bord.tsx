@@ -165,7 +165,7 @@ export default function MesChasses() {
                 )}
                 <SeizureRateCard
                   rate={dashboardData.nationalSeizureRate}
-                  label="taux de saisie national en 2024"
+                  label="taux de saisie national"
                 />
                 <div className="col-span-2">
                   <Alert

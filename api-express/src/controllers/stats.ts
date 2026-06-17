@@ -6,7 +6,6 @@ import { RequestWithUser } from '~/types/request';
 import { getIframeUrl } from '~/service/metabase-embed';
 import prisma from '~/prisma';
 import { CarcasseType, CarcasseStatus, DepotType, FeiOwnerRole, UserRoles } from '@prisma/client';
-import dayjs from 'dayjs';
 import validateUser from '~/middlewares/validateUser';
 import departementsRegions from '~/data/departements-regions.json';
 import {
@@ -24,6 +23,11 @@ import {
 } from '~/utils/disease-suspicions';
 
 const departementsLabels = (departementsRegions as { departements: Record<string, string> }).departements;
+
+// Références nationales officielles (taux sur animaux présentés à l'inspection), pour comparer
+// les statistiques personnelles du chasseur — mêmes bases que les taux personnels (carcasses SVI-éligibles).
+const NATIONAL_SEIZURE_RATE_BIG_GAME = 13.75; // % taux de saisie national grand gibier sauvage
+const NATIONAL_BPH_RATE_BIG_GAME = 5.49; // % taux BPH national grand gibier
 
 router.get(
   '/mes-chasses',
@@ -68,7 +72,7 @@ router.get(
           hygieneScore: null,
           refusalCauses: [],
           personalSeizureRate: null,
-          nationalSeizureRate: 10.44, // Default national average
+          nationalSeizureRate: NATIONAL_SEIZURE_RATE_BIG_GAME,
         },
       });
       return;
@@ -126,58 +130,22 @@ router.get(
     const personalSeizureRate =
       sviEligibleCarcasses.length > 0 && hasAnySviReturn
         ? (seizedBigGame.length / sviEligibleCarcasses.length) * 100
-        : sviEligibleCarcasses.length > 0
-          ? null
-          : null;
-
-    // Calculate national seizure rate (all big game carcasses in 2024)
-    const nationalBigGame2024 = await prisma.carcasse.count({
-      where: {
-        type: CarcasseType.GROS_GIBIER,
-        date_mise_a_mort: {
-          gte: dayjs('2024-01-01').toDate(),
-          lte: dayjs('2024-12-31').toDate(),
-        },
-        deleted_at: null,
-      },
-    });
-
-    const nationalSeizedBigGame2024 = await prisma.carcasse.count({
-      where: {
-        type: CarcasseType.GROS_GIBIER,
-        date_mise_a_mort: {
-          gte: dayjs('2024-01-01').toDate(),
-          lte: dayjs('2024-12-31').toDate(),
-        },
-        deleted_at: null,
-        OR: [
-          { svi_carcasse_status: CarcasseStatus.SAISIE_TOTALE },
-          { svi_carcasse_status: CarcasseStatus.SAISIE_PARTIELLE },
-        ],
-      },
-    });
-
-    const nationalSeizureRate =
-      nationalBigGame2024 > 0 ? (nationalSeizedBigGame2024 / nationalBigGame2024) * 100 : 10.44;
+        : null;
 
     // Hygiene score (BPH — Bonnes Pratiques d'Hygiène)
     // score = 100 × (1 − (personalBphRate / (2 × nationalBphRate)))
     // personalBphRate = (SVI-eligible + SAISIE + motif BPH) / SVI-eligible (aligned with admin /delta-bph).
-    // nationalBphRate = nationalSeizureRate (same value).
-    const bphCarcasses = sviEligibleCarcasses.filter(
-      (c) =>
-        (c.svi_carcasse_status === CarcasseStatus.SAISIE_TOTALE ||
-          c.svi_carcasse_status === CarcasseStatus.SAISIE_PARTIELLE) &&
-        hasBphMotif(c.svi_ipm2_lesions_ou_motifs)
-    );
+    // nationalBphRate = référence officielle fixe NATIONAL_BPH_RATE_BIG_GAME (distincte du taux de saisie).
+    // BPH = carcasses saisies dont au moins un motif relève des bonnes pratiques d'hygiène.
+    const bphCarcasses = seizedBigGame.filter((c) => hasBphMotif(c.svi_ipm2_lesions_ou_motifs));
 
     const personalBphRate =
       sviEligibleCarcasses.length > 0 ? bphCarcasses.length / sviEligibleCarcasses.length : 0;
-    const nationalBphRateFraction = nationalSeizureRate / 100;
+    const nationalBphRateFraction = NATIONAL_BPH_RATE_BIG_GAME / 100;
 
     let hygieneScoreRaw: number | null;
     let hygieneScore: number | null;
-    if (sviEligibleCarcasses.length === 0 || !hasAnySviReturn || nationalBphRateFraction === 0) {
+    if (sviEligibleCarcasses.length === 0 || !hasAnySviReturn) {
       hygieneScoreRaw = null;
       hygieneScore = null;
     } else {
@@ -195,7 +163,7 @@ router.get(
         hygieneScore,
         refusalCauses,
         personalSeizureRate: personalSeizureRate !== null ? Math.round(personalSeizureRate * 10) / 10 : null, // Round to 1 decimal
-        nationalSeizureRate: Math.round(nationalSeizureRate * 100) / 100, // Round to 2 decimals
+        nationalSeizureRate: NATIONAL_SEIZURE_RATE_BIG_GAME,
         // Calculation details for debugging
         calculationDetails: {
           // User & season
@@ -220,10 +188,6 @@ router.get(
           bigGameCarcassesCount: bigGameCarcasses.length,
           seizedBigGameCount: seizedBigGame.length,
           personalSeizureRateRaw: personalSeizureRate,
-          // National seizure rate calculation
-          nationalBigGame2024Count: nationalBigGame2024,
-          nationalSeizedBigGame2024Count: nationalSeizedBigGame2024,
-          nationalSeizureRateRaw: nationalSeizureRate,
           // Hygiene score calculation (BPH)
           formula: '100 × (1 − (personalBphRate / (2 × nationalBphRate)))',
           bphCount: bphCarcasses.length,
