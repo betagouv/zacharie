@@ -2,20 +2,12 @@ import { Carcasse, CarcasseType, Fei, FeiOwnerRole, Prisma, UserRoles } from '@p
 import type { CarcasseIntermediaire } from '@prisma/client';
 import grandGibier from '@app/data/grand-gibier.json';
 import petitGibier from '@app/data/petit-gibier.json';
-import grandGibierCarcasseList from '@app/data/grand-gibier-carcasse/list.json';
-import grandGibierCarcasseTree from '@app/data/grand-gibier-carcasse/tree.json';
-import petitGibierCarcasseList from '@app/data/petit-gibier-carcasse/list.json';
-import petitGibierCarcasseTree from '@app/data/petit-gibier-carcasse/tree.json';
-import grandGibierAbatstree from '@app/data/grand-gibier-abats/tree.json';
-import grandGibierAbatsList from '@app/data/grand-gibier-abats/list.json';
 import { useMemo, useRef, useState } from 'react';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Select } from '@codegouvfr/react-dsfr/Select';
 import { Breadcrumb } from '@codegouvfr/react-dsfr/Breadcrumb';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
-import { createModal } from '@codegouvfr/react-dsfr/Modal';
-import ModalTreeDisplay from '@app/components/ModalTreeDisplay';
 import NotFound from '@app/components/NotFound';
 import Chargement from '@app/components/Chargement';
 import { Link, useNavigate, useParams } from 'react-router';
@@ -25,7 +17,8 @@ import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { isCarcasseDone } from '@app/utils/is-carcasse-done';
 import dayjs from 'dayjs';
 import { createHistoryInput } from '@app/utils/create-history-entry';
-import InputMultiSelect from '@app/components/InputMultiSelect';
+import AnomaliesTreeNavigator from '@app/components/AnomaliesTreeNavigator';
+import { buildCarcasseNavSections } from '@app/utils/build-carcasse-nav-sections';
 import { useCarcassesIntermediairesForCarcasse } from '@app/utils/get-carcasses-intermediaires';
 import {
   getCarcasseCardDisplay,
@@ -44,16 +37,6 @@ const gibierSelect = {
   grand: grandGibier.especes,
   petit: petitGibier.especes,
 };
-
-const anomaliesAbatsModal = createModal({
-  isOpenedByDefault: false,
-  id: 'anomalie-abats-modal-carcasse',
-});
-
-const anomaliesCarcasseModal = createModal({
-  isOpenedByDefault: false,
-  id: 'anomalie-carcasse-modal-carcasse',
-});
 
 type DecisionColor = {
   cardText: string;
@@ -427,22 +410,8 @@ function ExaminateurCarcasseDetailLoaded() {
 
   const [espece, setEspece] = useState(carcasse.espece || '');
 
-  const [anomaliesAbats, setAnomaliesAbats] = useState<Array<string>>(
-    carcasse.examinateur_anomalies_abats?.filter(Boolean) || []
-  );
-  const [anomaliesCarcasse, setAnomaliesCarcasse] = useState<Array<string>>(
-    carcasse.examinateur_anomalies_carcasse?.filter(Boolean) || []
-  );
-  const addAnomalieAbats = true;
-  const addAnomalieCarcasse = true;
-
   const numeroFormRef = useRef<HTMLFormElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
-
-  const referentielAnomaliesCarcasseList =
-    carcasse.type === CarcasseType.PETIT_GIBIER ? petitGibierCarcasseList : grandGibierCarcasseList;
-  const referentielAnomaliesCarcasseTree =
-    carcasse.type === CarcasseType.PETIT_GIBIER ? petitGibierCarcasseTree : grandGibierCarcasseTree;
 
   return (
     <>
@@ -602,98 +571,12 @@ function ExaminateurCarcasseDetailLoaded() {
                 {espece && (
                   <>
                     <div className="fr-mt-3w">
-                      <h3 className="fr-h5 fr-mb-2w">Anomalies carcasse</h3>
-                      {addAnomalieCarcasse && (
-                        <>
-                          <InputMultiSelect
-                            data={referentielAnomaliesCarcasseList}
-                            label="Ajouter une nouvelle anomalie"
-                            name="anomalie-carcasse"
-                            canEdit
-                            creatable
-                            placeholder="Tapez une anomalie carcasse"
-                            onChange={(newAnomalies) => {
-                              setAnomaliesCarcasse(newAnomalies);
-                              updateCarcasse(carcasse.zacharie_carcasse_id, {
-                                examinateur_anomalies_carcasse: newAnomalies,
-                                examinateur_signed_at: dayjs().toDate(),
-                                examinateur_carcasse_sans_anomalie: false,
-                              });
-                            }}
-                            values={anomaliesCarcasse}
-                          />
-                          <Button
-                            priority="secondary"
-                            type="button"
-                            onClick={() => anomaliesCarcasseModal.open()}
-                          >
-                            Ajouter depuis le référentiel des anomalies carcasse
-                          </Button>
-                          <ModalTreeDisplay
-                            data={referentielAnomaliesCarcasseTree}
-                            modal={anomaliesCarcasseModal}
-                            title="Anomalies carcasse"
-                            onItemClick={(newAnomalie) => {
-                              const nextAnomalies = [...anomaliesCarcasse, newAnomalie].filter(Boolean);
-                              setAnomaliesCarcasse(nextAnomalies);
-                              updateCarcasse(carcasse.zacharie_carcasse_id, {
-                                examinateur_anomalies_carcasse: nextAnomalies,
-                                examinateur_signed_at: dayjs().toDate(),
-                                examinateur_carcasse_sans_anomalie: false,
-                              });
-                            }}
-                          />
-                        </>
-                      )}
+                      <h3 className="fr-h5 fr-mb-2w">Anomalies</h3>
+                      <AnomaliesTreeNavigator
+                        key={carcasse.zacharie_carcasse_id}
+                        sections={buildCarcasseNavSections(carcasse)}
+                      />
                     </div>
-
-                    {carcasse.type === CarcasseType.GROS_GIBIER && (
-                      <div className="fr-mt-3w">
-                        <h3 className="fr-h5 fr-mb-2w">Anomalies abats</h3>
-                        {addAnomalieAbats && (
-                          <>
-                            <InputMultiSelect
-                              data={grandGibierAbatsList}
-                              label="Ajouter une nouvelle anomalie"
-                              name="anomalie-abats"
-                              canEdit
-                              creatable
-                              placeholder="Tapez une anomalie abats"
-                              onChange={(newAnomalies) => {
-                                setAnomaliesAbats(newAnomalies);
-                                updateCarcasse(carcasse.zacharie_carcasse_id, {
-                                  examinateur_anomalies_abats: newAnomalies,
-                                  examinateur_signed_at: dayjs().toDate(),
-                                  examinateur_carcasse_sans_anomalie: false,
-                                });
-                              }}
-                              values={anomaliesAbats}
-                            />
-                            <Button
-                              priority="secondary"
-                              type="button"
-                              onClick={() => anomaliesAbatsModal.open()}
-                            >
-                              Ajouter depuis le référentiel des anomalies abats
-                            </Button>
-                            <ModalTreeDisplay
-                              data={grandGibierAbatstree}
-                              modal={anomaliesAbatsModal}
-                              title="Anomalies abats"
-                              onItemClick={(newAnomalie) => {
-                                const nextAnomalies = [...anomaliesAbats, newAnomalie].filter(Boolean);
-                                setAnomaliesAbats(nextAnomalies);
-                                updateCarcasse(carcasse.zacharie_carcasse_id, {
-                                  examinateur_anomalies_abats: nextAnomalies,
-                                  examinateur_signed_at: dayjs().toDate(),
-                                  examinateur_carcasse_sans_anomalie: false,
-                                });
-                              }}
-                            />
-                          </>
-                        )}
-                      </div>
-                    )}
                   </>
                 )}
               </div>
@@ -728,7 +611,8 @@ function ExaminateurCarcasseDetailLoaded() {
                     updateCarcasse(carcasse.zacharie_carcasse_id, {
                       examinateur_signed_at: dayjs().toDate(),
                       examinateur_carcasse_sans_anomalie:
-                        anomaliesAbats.length === 0 && anomaliesCarcasse.length === 0,
+                        (carcasse.examinateur_anomalies_abats?.length ?? 0) === 0 &&
+                        (carcasse.examinateur_anomalies_carcasse?.length ?? 0) === 0,
                     });
                     navigate(-1);
                   }}

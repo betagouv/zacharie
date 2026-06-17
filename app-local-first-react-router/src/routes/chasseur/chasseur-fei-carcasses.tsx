@@ -1,7 +1,9 @@
 import NouvelleCarcasse from './examinateur-carcasses-nouvelle';
 import { UserRoles } from '@prisma/client';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Button } from '@codegouvfr/react-dsfr/Button';
+import { createModal } from '@codegouvfr/react-dsfr/Modal';
+import CarcasseDetailsModal from '@app/components/CarcasseDetailsModal';
 import { formatCarcasseLotCount, formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
 import { useParams, useNavigate } from 'react-router';
 import useUser from '@app/zustand/user';
@@ -56,6 +58,19 @@ export default function CarcassesExaminateur({
   }, [carcasses]);
 
   const hasGroups = Object.keys(dejaEnvoyeesParDestinataire).length > 0;
+
+  const detailsModal = useRef(
+    createModal({ id: `carcasse-details-${fei.numero}`, isOpenedByDefault: false })
+  ).current;
+
+  const renderCarcasseCard = (carcasse: CarcasseWithModificationRequests) => (
+    <CarcasseExaminateur
+      key={carcasse.numero_bracelet}
+      carcasse={carcasse}
+      canEditAsExaminateurInitial={canEdit}
+      canEditAsPremierDetenteur={canEditAsPremierDetenteur}
+    />
+  );
 
   return (
     <>
@@ -145,17 +160,27 @@ export default function CarcassesExaminateur({
           ))}
         </p>
       )}
-      {canEdit && hasCarcasses && !allCarcassesConfirmed && (
-        <div className="mt-4">
+      {canEdit && hasCarcasses && (
+        <div className="mt-4 flex flex-wrap gap-2">
           <Button
             type="button"
-            priority="primary"
-            onClick={() => {
-              onAllCarcassesConfirmed();
-            }}
+            priority="secondary"
+            iconId="fr-icon-list-unordered"
+            onClick={() => detailsModal.open()}
           >
-            Continuer
+            Ajouter des détails
           </Button>
+          {!allCarcassesConfirmed && (
+            <Button
+              type="button"
+              priority="primary"
+              onClick={() => {
+                onAllCarcassesConfirmed();
+              }}
+            >
+              Continuer
+            </Button>
+          )}
         </div>
       )}
       {canEdit && hasCarcasses && allCarcassesConfirmed && (
@@ -172,6 +197,12 @@ export default function CarcassesExaminateur({
         >
           Ajouter une autre carcasse
         </Button>
+      )}
+      {canEdit && hasCarcasses && (
+        <CarcasseDetailsModal
+          carcasses={carcasses}
+          modal={detailsModal}
+        />
       )}
     </>
   );
@@ -201,38 +232,38 @@ export function CarcasseExaminateur({
         !canEditAsExaminateurInitial
           ? undefined
           : () => {
-              navigate(`/app/chasseur/carcasse/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`);
-            }
+            navigate(`/app/chasseur/carcasse/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`);
+          }
       }
       onClick={
         !canEditAsExaminateurInitial
           ? undefined
           : () => {
-              navigate(`/app/chasseur/carcasse/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`);
-            }
+            navigate(`/app/chasseur/carcasse/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`);
+          }
       }
       onDelete={
         !canEditAsExaminateurInitial && !canEditAsPremierDetenteur
           ? undefined
           : () => {
-              if (window.confirm('Voulez-vous supprimer cette carcasse ? Cette opération est irréversible')) {
-                const nextPartialCarcasse: Partial<Carcasse> = {
-                  deleted_at: dayjs().toDate(),
-                };
-                updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse);
-                addLog({
-                  user_id: user.id,
-                  user_role: UserRoles.CHASSEUR,
-                  fei_numero: carcasse.fei_numero,
-                  action: 'examinateur-carcasse-delete',
-                  history: createHistoryInput(carcasse, nextPartialCarcasse),
-                  entity_id: null,
-                  zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
-                  intermediaire_id: null,
-                  carcasse_intermediaire_id: null,
-                });
-              }
+            if (window.confirm('Voulez-vous supprimer cette carcasse ? Cette opération est irréversible')) {
+              const nextPartialCarcasse: Partial<Carcasse> = {
+                deleted_at: dayjs().toDate(),
+              };
+              updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse);
+              addLog({
+                user_id: user.id,
+                user_role: UserRoles.CHASSEUR,
+                fei_numero: carcasse.fei_numero,
+                action: 'examinateur-carcasse-delete',
+                history: createHistoryInput(carcasse, nextPartialCarcasse),
+                entity_id: null,
+                zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
+                intermediaire_id: null,
+                carcasse_intermediaire_id: null,
+              });
             }
+          }
       }
     />
   );
