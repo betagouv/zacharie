@@ -1,9 +1,10 @@
-import { useState, type RefObject, useRef, useMemo, useEffect } from 'react';
+import { useState, type RefObject, type ReactNode, useRef, useMemo, useEffect } from 'react';
 import dayjs from 'dayjs';
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Badge } from '@codegouvfr/react-dsfr/Badge';
 import { Input } from '@codegouvfr/react-dsfr/Input';
+import { Select } from '@codegouvfr/react-dsfr/Select';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import {
   Entity,
@@ -15,11 +16,14 @@ import {
   UserEtgRoles,
 } from '@prisma/client';
 import InputVille from '@app/components/InputVille';
-import RolesCheckBoxes from '@app/components/RolesCheckboxes';
 import { Tabs, type TabsProps } from '@codegouvfr/react-dsfr/Tabs';
 import { Table } from '@codegouvfr/react-dsfr/Table';
 import departementsRegions from '@app/data/departements-regions.json';
-import type { AdminUserDataResponse } from '@api/src/types/responses';
+import type {
+  AdminUserDataResponse,
+  AdminFeisResponse,
+  AdminCarcassesResponse,
+} from '@api/src/types/responses';
 import { Link, useParams } from 'react-router';
 import Chargement from '@app/components/Chargement';
 import { Highlight } from '@codegouvfr/react-dsfr/Highlight';
@@ -32,6 +36,33 @@ import ConnexionButton from '@app/components/ConnexionButton';
 
 const loadData = (userId: string): Promise<AdminUserDataResponse> =>
   API.get({ path: `admin/user/${userId}` }).then((res) => res as AdminUserDataResponse);
+
+// Rôles assignables par un admin (ADMIN est géré à part via la case Administrateur).
+const ROLE_OPTIONS: Array<{ value: UserRoles; label: string }> = [
+  { value: UserRoles.CHASSEUR, label: 'Chasseur / Examinateur Initial' },
+  { value: UserRoles.COLLECTEUR_PRO, label: 'Collecteur Pro Indépendant' },
+  { value: UserRoles.ETG, label: 'ETG' },
+  { value: UserRoles.SVI, label: 'SVI' },
+  { value: UserRoles.COMMERCE_DE_DETAIL, label: 'Commerce de détail' },
+  { value: UserRoles.CANTINE_OU_RESTAURATION_COLLECTIVE, label: 'Cantine / restauration collective' },
+  { value: UserRoles.ASSOCIATION_CARITATIVE, label: 'Association caritative' },
+  { value: UserRoles.REPAS_DE_CHASSE_OU_ASSOCIATIF, label: 'Repas de chasse ou associatif' },
+  { value: UserRoles.CONSOMMATEUR_FINAL, label: 'Consommateur final' },
+  { value: UserRoles.FDC, label: 'Fédération Départementale (FDC)' },
+  { value: UserRoles.FRC, label: 'Fédération Régionale (FRC)' },
+  { value: UserRoles.FNC, label: 'Fédération Nationale (FNC)' },
+  { value: UserRoles.LABORATOIRE, label: 'Laboratoire' },
+];
+
+// Sous-bloc encadré et titré, pour structurer l'onglet Identité.
+function Section({ title, children, className }: { title: string; children: ReactNode; className?: string }) {
+  return (
+    <section className={`rounded-lg border border-gray-200 bg-white p-4 ${className ?? ''}`}>
+      <h2 className="m-0 mb-3 text-sm font-semibold tracking-wide text-gray-700 uppercase">{title}</h2>
+      {children}
+    </section>
+  );
+}
 
 type State = NonNullable<AdminUserDataResponse['data']>;
 
@@ -97,7 +128,6 @@ export default function AdminUser() {
   }, [params.userId]);
 
   const idFormRef = useRef<HTMLFormElement>(null);
-  const rolesFormRef = useRef<HTMLFormElement>(null);
   const handleUserFormBlur = (formRef: RefObject<HTMLFormElement>) => () => {
     const formData = new FormData(formRef.current!);
 
@@ -150,6 +180,27 @@ export default function AdminUser() {
     });
   };
 
+  const handleToggleFormeExamenInitial = () => {
+    API.post({
+      path: `admin/user/${params.userId}`,
+      body: { est_forme_a_l_examen_initial: user.est_forme_a_l_examen_initial ? 'false' : 'true' },
+    }).then((res) => {
+      if (!res.ok) {
+        return toast.error("Une erreur est survenue lors de la mise à jour de l'utilisateur");
+      }
+      loadData(params.userId!).then((res) => {
+        if (res.ok && res.data) {
+          setUserResponseData(res.data as State);
+        }
+      });
+      toast.success(
+        user.est_forme_a_l_examen_initial
+          ? "Marqué comme non formé à l'examen initial"
+          : "Marqué comme formé à l'examen initial"
+      );
+    });
+  };
+
   const handleToggleActivated = () => {
     API.post({
       path: `admin/user/${params.userId}`,
@@ -167,6 +218,40 @@ export default function AdminUser() {
     });
   };
 
+  const handleChangeRole = (role: UserRoles) => {
+    API.post({
+      path: `admin/user/${params.userId}`,
+      body: { roles: [role] },
+    }).then((res) => {
+      if (!res.ok) {
+        return toast.error("Une erreur est survenue lors de la mise à jour de l'utilisateur");
+      }
+      loadData(params.userId!).then((res) => {
+        if (res.ok && res.data) {
+          setUserResponseData(res.data as State);
+        }
+      });
+      toast.success('Rôle mis à jour');
+    });
+  };
+
+  const handleToggleAdmin = () => {
+    API.post({
+      path: `admin/user/${params.userId}`,
+      body: { isZacharieAdmin: !user.isZacharieAdmin },
+    }).then((res) => {
+      if (!res.ok) {
+        return toast.error("Une erreur est survenue lors de la mise à jour de l'utilisateur");
+      }
+      loadData(params.userId!).then((res) => {
+        if (res.ok && res.data) {
+          setUserResponseData(res.data as State);
+        }
+      });
+      toast.success(user.isZacharieAdmin ? 'Droits admin retirés' : 'Droits admin accordés');
+    });
+  };
+
   const fullName = [user.nom_de_famille, user.prenom].filter(Boolean).join(' ');
 
   const [selectedTabId, setSelectedTabId] = useState('Identité');
@@ -174,14 +259,6 @@ export default function AdminUser() {
     {
       tabId: 'Identité',
       label: 'Identité',
-    },
-    {
-      tabId: 'Roles',
-      label: 'Roles',
-    },
-    {
-      tabId: 'Périmètre départements',
-      label: `Périmètre départements (${user.scope_departements_codes?.length ?? 0})`,
     },
     {
       tabId: 'Peut traiter des fiches au nom de',
@@ -212,6 +289,15 @@ export default function AdminUser() {
     });
   }
 
+  tabs.push({
+    tabId: 'Fiches',
+    label: 'Fiches',
+  });
+  tabs.push({
+    tabId: 'Carcasses',
+    label: 'Carcasses',
+  });
+
   if (!user.id) {
     return <Chargement />;
   }
@@ -225,68 +311,25 @@ export default function AdminUser() {
         <div className="fr-col-12 p-4 md:p-0">
           <div className="p-4 pb-32 md:p-8 md:pb-0">
             <header
-              className={`rounded-lg border bg-white p-4 md:p-6 ${
+              className={`rounded-lg border bg-white p-3 md:p-4 ${
                 user.deleted_at ? 'border-red-300 bg-red-50/40' : 'border-gray-200'
               }`}
             >
-              <div className="flex flex-wrap items-start justify-between gap-4">
+              {/* Ligne 1 : identité + actions */}
+              <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <h1 className="m-0 text-2xl font-bold break-words">
+                  <h1 className="m-0 text-xl font-bold break-words">
                     {fullName || user.email || 'Utilisateur sans nom'}
                   </h1>
                   {fullName && user.email && (
-                    <p className="mt-0.5 mb-0 text-sm break-words text-gray-500">{user.email}</p>
+                    <p className="m-0 text-sm break-words text-gray-500">{user.email}</p>
                   )}
-                  <div className="mt-3 flex flex-wrap items-center gap-1">
-                    {user.roles.map((role) => (
-                      <Badge
-                        key={role}
-                        severity="info"
-                        small
-                      >
-                        {role}
-                      </Badge>
-                    ))}
-                    {user.isZacharieAdmin && (
-                      <Badge
-                        severity="info"
-                        small
-                      >
-                        Admin
-                      </Badge>
-                    )}
-                    {user.deleted_at ? (
-                      <Badge
-                        severity="error"
-                        small
-                      >
-                        Supprimé
-                      </Badge>
-                    ) : (
-                      <Badge
-                        severity={user.activated ? 'success' : 'warning'}
-                        small
-                      >
-                        {user.activated ? 'Activé' : 'Inactif'}
-                      </Badge>
-                    )}
-                    <Badge
-                      severity={user.onboarded_at ? 'success' : 'new'}
-                      small
-                    >
-                      {user.onboarded_at ? 'Onboardé' : 'Onboarding incomplet'}
-                    </Badge>
-                  </div>
-                  <p className="mt-3 mb-0 text-xs text-gray-500">
-                    {user.telephone && <>{user.telephone} · </>}
-                    Créé le {dayjs(user.created_at).format('DD/MM/YYYY')}
-                    {user.last_login_at && (
-                      <> · Dernière connexion {dayjs(user.last_login_at).format('DD/MM/YYYY')}</>
-                    )}
-                  </p>
                 </div>
-                <div className="flex shrink-0 flex-col items-stretch gap-2">
-                  <ConnexionButton user={user} />
+                <div className="flex shrink-0 flex-wrap items-center gap-2">
+                  <ConnexionButton
+                    user={user}
+                    type="tertiary no outline"
+                  />
                   {!user.deleted_at && (
                     <Button
                       type="button"
@@ -312,6 +355,57 @@ export default function AdminUser() {
                   </Button>
                 </div>
               </div>
+
+              {/* Ligne 2 : état en un coup d'œil */}
+              <div className="mt-2 flex flex-wrap items-center gap-1">
+                {user.deleted_at ? (
+                  <Badge
+                    severity="error"
+                    small
+                  >
+                    Supprimé
+                  </Badge>
+                ) : (
+                  <Badge
+                    severity={user.activated ? 'success' : 'warning'}
+                    small
+                  >
+                    {user.activated ? 'Activé' : 'Inactif'}
+                  </Badge>
+                )}
+                <Badge
+                  severity={user.onboarded_at ? 'success' : 'new'}
+                  small
+                >
+                  {user.onboarded_at ? 'Onboardé' : 'Onboarding incomplet'}
+                </Badge>
+                {user.isZacharieAdmin && (
+                  <Badge
+                    severity="info"
+                    small
+                  >
+                    Admin
+                  </Badge>
+                )}
+                {user.roles.includes(UserRoles.CHASSEUR) && (
+                  <Badge
+                    severity={user.est_forme_a_l_examen_initial ? 'success' : 'warning'}
+                    small
+                  >
+                    {user.est_forme_a_l_examen_initial ? 'Formé EI' : 'Non formé EI'}
+                  </Badge>
+                )}
+              </div>
+
+              {/* Ligne 3 : méta */}
+              <p className="mt-2 mb-0 text-xs text-gray-500">
+                {user.telephone && <>{user.telephone} · </>}
+                Créé le {dayjs(user.created_at).format('DD/MM/YYYY')}
+                {user.last_login_at && (
+                  <> · Dernière connexion {dayjs(user.last_login_at).format('DD/MM/YYYY')}</>
+                )}
+                {user.onboarded_at && <> · Onboardé le {dayjs(user.onboarded_at).format('DD/MM/YYYY')}</>}
+              </p>
             </header>
             <Tabs
               selectedTabId={selectedTabId}
@@ -319,203 +413,227 @@ export default function AdminUser() {
               onTabChange={setSelectedTabId}
               className="mt-4"
             >
-              {selectedTabId === 'Roles' && (
-                <form
-                  id="user_roles_form"
-                  method="POST"
-                  ref={rolesFormRef}
-                  onBlur={handleUserFormBlur(rolesFormRef)}
-                  onSubmit={(event) => event.preventDefault()}
-                >
-                  <RolesCheckBoxes
-                    withAdmin
-                    user={user}
-                    legend="Sélectionnez tous les rôles de cet utilisateur"
-                  />
-                  <div className="relative flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:w-auto md:items-center md:shadow-none md:[&_ul]:min-w-96">
-                    <ButtonsGroup
-                      buttons={[
-                        {
-                          children: 'Enregistrer',
-                          type: 'submit',
-                          nativeButtonProps: {
-                            form: 'user_roles_form',
-                          },
-                        },
-                      ]}
-                    />
-                  </div>
-                </form>
-              )}
               {selectedTabId === 'Identité' && (
-                <form
-                  id="user_data_form"
-                  method="POST"
-                  ref={idFormRef}
-                  onBlur={handleUserFormBlur(idFormRef)}
-                  onSubmit={(event) => event.preventDefault()}
-                >
-                  <input
-                    type="hidden"
-                    name={Prisma.UserScalarFieldEnum.prefilled}
-                    value="true"
-                  />
-                  <Input
-                    label="Email"
-                    nativeInputProps={{
-                      id: Prisma.UserScalarFieldEnum.email,
-                      name: Prisma.UserScalarFieldEnum.email,
-                      autoComplete: 'off',
-                      // required: true,
-                      defaultValue: user.email ?? '',
-                    }}
-                  />
-                  <Input
-                    label="Nom"
-                    nativeInputProps={{
-                      id: Prisma.UserScalarFieldEnum.nom_de_famille,
-                      name: Prisma.UserScalarFieldEnum.nom_de_famille,
-                      autoComplete: 'off',
-                      // required: true,
-                      defaultValue: user.nom_de_famille ?? '',
-                    }}
-                  />
-                  <Input
-                    label="Prénom"
-                    nativeInputProps={{
-                      id: Prisma.UserScalarFieldEnum.prenom,
-                      name: Prisma.UserScalarFieldEnum.prenom,
-                      autoComplete: 'off',
-                      // required: true,
-                      defaultValue: user.prenom ?? '',
-                    }}
-                  />
-                  <Input
-                    label="Téléphone"
-                    hintText="Format attendu : 01 22 33 44 55"
-                    nativeInputProps={{
-                      id: Prisma.UserScalarFieldEnum.telephone,
-                      name: Prisma.UserScalarFieldEnum.telephone,
-                      autoComplete: 'off',
-                      defaultValue: user.telephone ?? '',
-                    }}
-                  />
-                  <Input
-                    label="Adresse"
-                    hintText="Indication : numéro et voie"
-                    nativeInputProps={{
-                      id: Prisma.UserScalarFieldEnum.addresse_ligne_1,
-                      name: Prisma.UserScalarFieldEnum.addresse_ligne_1,
-                      autoComplete: 'off',
-                      // required: true,
-                      defaultValue: user.addresse_ligne_1 ?? '',
-                    }}
-                  />
-                  <Input
-                    label="Complément d'adresse (optionnel)"
-                    hintText="Indication : bâtiment, immeuble, escalier et numéro d'appartement"
-                    nativeInputProps={{
-                      id: Prisma.UserScalarFieldEnum.addresse_ligne_2,
-                      name: Prisma.UserScalarFieldEnum.addresse_ligne_2,
-                      autoComplete: 'off',
-                      defaultValue: user.addresse_ligne_2 ?? '',
-                    }}
-                  />
-
-                  <div className="flex w-full flex-col gap-x-4 md:flex-row">
-                    <Input
-                      label="Code postal"
-                      hintText="5 chiffres"
-                      className="shrink-0 md:basis-2/5"
-                      nativeInputProps={{
-                        id: Prisma.UserScalarFieldEnum.code_postal,
-                        name: Prisma.UserScalarFieldEnum.code_postal,
-                        autoComplete: 'off',
-                        // required: true,
-                        defaultValue: user.code_postal ?? '',
-                      }}
-                    />
-                    <div className="basis-3/5">
-                      <InputVille
-                        key={user.ville}
-                        postCode={user.code_postal ?? ''}
-                        trimPostCode
-                        label="Ville ou commune"
-                        hintText="Exemple : Montpellier"
-                        nativeInputProps={{
-                          id: Prisma.UserScalarFieldEnum.ville,
-                          name: Prisma.UserScalarFieldEnum.ville,
-                          autoComplete: 'off',
-                          // required: true,
-                          defaultValue: user.ville ?? '',
+                <div className="flex flex-col gap-4">
+                  {/* Rôle & accès — enregistrement direct au changement */}
+                  <Section title="Rôle & accès">
+                    <div className="flex flex-wrap items-end gap-x-6 gap-y-2">
+                      <Select
+                        label="Rôle"
+                        className="m-0 min-w-72"
+                        nativeSelectProps={{
+                          value: user.roles[0] ?? '',
+                          onChange: (e) => handleChangeRole(e.target.value as UserRoles),
                         }}
+                      >
+                        {ROLE_OPTIONS.map((option) => (
+                          <option
+                            key={option.value}
+                            value={option.value}
+                          >
+                            {option.label}
+                          </option>
+                        ))}
+                      </Select>
+                      <Checkbox
+                        className="m-0"
+                        options={[
+                          {
+                            label: 'Administrateur',
+                            nativeInputProps: {
+                              checked: user.isZacharieAdmin,
+                              onChange: handleToggleAdmin,
+                            },
+                          },
+                        ]}
                       />
                     </div>
-                  </div>
-                  {user.roles.includes(UserRoles.CHASSEUR) && (
-                    <>
-                      <Input
-                        label="Numéro d'attestation de Chasseur Formé à l'Examen Initial"
-                        hintText="De la forme CFEI-DEP-AA-123 ou DEP-FREI-YY-001"
-                        nativeInputProps={{
-                          id: Prisma.UserScalarFieldEnum.numero_cfei,
-                          name: Prisma.UserScalarFieldEnum.numero_cfei,
-                          autoComplete: 'off',
-                          // required: true,
-                          defaultValue: user.numero_cfei ?? '',
-                        }}
-                      />
-                      {user.numero_cfei ? (
-                        officialCfei ? (
-                          <Alert
-                            severity="success"
-                            small
-                            className="mb-4"
-                            description={`CFEI trouvé dans la liste officielle : ${officialCfei.nom ?? ''} ${officialCfei.prenom ?? ''}${officialCfei.departement ? ` — Département ${officialCfei.departement}` : ''}`}
-                          />
+                  </Section>
+
+                  {/* Coordonnées + examen initial — enregistrement par le bouton */}
+                  <form
+                    id="user_data_form"
+                    method="POST"
+                    ref={idFormRef}
+                    onBlur={handleUserFormBlur(idFormRef)}
+                    onSubmit={(event) => event.preventDefault()}
+                    className="flex flex-col gap-4"
+                  >
+                    <input
+                      type="hidden"
+                      name={Prisma.UserScalarFieldEnum.prefilled}
+                      value="true"
+                    />
+                    <Section title="Coordonnées">
+                      <div className="grid grid-cols-1 gap-x-4 md:grid-cols-2">
+                        <Input
+                          label="Nom"
+                          nativeInputProps={{
+                            id: Prisma.UserScalarFieldEnum.nom_de_famille,
+                            name: Prisma.UserScalarFieldEnum.nom_de_famille,
+                            autoComplete: 'off',
+                            defaultValue: user.nom_de_famille ?? '',
+                          }}
+                        />
+                        <Input
+                          label="Prénom"
+                          nativeInputProps={{
+                            id: Prisma.UserScalarFieldEnum.prenom,
+                            name: Prisma.UserScalarFieldEnum.prenom,
+                            autoComplete: 'off',
+                            defaultValue: user.prenom ?? '',
+                          }}
+                        />
+                        <Input
+                          label="Email"
+                          nativeInputProps={{
+                            id: Prisma.UserScalarFieldEnum.email,
+                            name: Prisma.UserScalarFieldEnum.email,
+                            autoComplete: 'off',
+                            defaultValue: user.email ?? '',
+                          }}
+                        />
+                        <Input
+                          label="Téléphone"
+                          hintText="Format attendu : 01 22 33 44 55"
+                          nativeInputProps={{
+                            id: Prisma.UserScalarFieldEnum.telephone,
+                            name: Prisma.UserScalarFieldEnum.telephone,
+                            autoComplete: 'off',
+                            defaultValue: user.telephone ?? '',
+                          }}
+                        />
+                        <Input
+                          label="Adresse"
+                          hintText="Indication : numéro et voie"
+                          nativeInputProps={{
+                            id: Prisma.UserScalarFieldEnum.addresse_ligne_1,
+                            name: Prisma.UserScalarFieldEnum.addresse_ligne_1,
+                            autoComplete: 'off',
+                            defaultValue: user.addresse_ligne_1 ?? '',
+                          }}
+                        />
+                        <Input
+                          label="Complément d'adresse (optionnel)"
+                          hintText="Indication : bâtiment, immeuble, escalier et numéro d'appartement"
+                          nativeInputProps={{
+                            id: Prisma.UserScalarFieldEnum.addresse_ligne_2,
+                            name: Prisma.UserScalarFieldEnum.addresse_ligne_2,
+                            autoComplete: 'off',
+                            defaultValue: user.addresse_ligne_2 ?? '',
+                          }}
+                        />
+                        <Input
+                          label="Code postal"
+                          hintText="5 chiffres"
+                          nativeInputProps={{
+                            id: Prisma.UserScalarFieldEnum.code_postal,
+                            name: Prisma.UserScalarFieldEnum.code_postal,
+                            autoComplete: 'off',
+                            defaultValue: user.code_postal ?? '',
+                          }}
+                        />
+                        <InputVille
+                          key={user.ville}
+                          postCode={user.code_postal ?? ''}
+                          trimPostCode
+                          label="Ville ou commune"
+                          hintText="Exemple : Montpellier"
+                          nativeInputProps={{
+                            id: Prisma.UserScalarFieldEnum.ville,
+                            name: Prisma.UserScalarFieldEnum.ville,
+                            autoComplete: 'off',
+                            defaultValue: user.ville ?? '',
+                          }}
+                        />
+                      </div>
+                    </Section>
+                    {user.roles.includes(UserRoles.CHASSEUR) && (
+                      <Section title="Examen initial">
+                        <Checkbox
+                          className="mb-2!"
+                          options={[
+                            {
+                              label: "Formé à l'examen initial",
+                              nativeInputProps: {
+                                checked: !!user.est_forme_a_l_examen_initial,
+                                onChange: handleToggleFormeExamenInitial,
+                              },
+                            },
+                          ]}
+                        />
+                        <Input
+                          label="Numéro d'attestation de Chasseur Formé à l'Examen Initial"
+                          hintText="De la forme CFEI-DEP-AA-123 ou DEP-FREI-YY-001"
+                          disabled={!user.est_forme_a_l_examen_initial}
+                          nativeInputProps={{
+                            id: Prisma.UserScalarFieldEnum.numero_cfei,
+                            name: Prisma.UserScalarFieldEnum.numero_cfei,
+                            autoComplete: 'off',
+                            defaultValue: user.numero_cfei ?? '',
+                          }}
+                        />
+                        {!user.est_forme_a_l_examen_initial ? null : user.numero_cfei ? (
+                          officialCfei ? (
+                            <Alert
+                              severity="success"
+                              small
+                              className="mb-0"
+                              description={`CFEI trouvé dans la liste officielle : ${officialCfei.nom ?? ''} ${officialCfei.prenom ?? ''}${officialCfei.departement ? ` — Département ${officialCfei.departement}` : ''}`}
+                            />
+                          ) : (
+                            <Alert
+                              severity="error"
+                              small
+                              className="mb-0"
+                              description="CFEI non trouvé dans la liste officielle"
+                            />
+                          )
                         ) : (
                           <Alert
-                            severity="error"
+                            severity="warning"
                             small
-                            className="mb-4"
-                            description="CFEI non trouvé dans la liste officielle"
+                            className="mb-0"
+                            description="Numéro CFEI non renseigné"
                           />
-                        )
-                      ) : (
-                        <Alert
-                          severity="warning"
-                          small
-                          className="mb-4"
-                          description="Numéro CFEI non renseigné"
-                        />
-                      )}
-                    </>
-                  )}
-                  <div className="fixed bottom-16 left-0 z-50 flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:relative md:bottom-0 md:w-auto md:items-center md:shadow-none md:[&_ul]:min-w-96">
-                    <ButtonsGroup
-                      buttons={[
-                        {
-                          children: 'Enregistrer',
-                          type: 'submit',
-                          nativeButtonProps: {
-                            form: 'user_data_form',
+                        )}
+                      </Section>
+                    )}
+                    <div className="fixed bottom-16 left-0 z-50 flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:relative md:bottom-0 md:w-auto md:items-start md:shadow-none">
+                      <ButtonsGroup
+                        buttons={[
+                          {
+                            children: 'Enregistrer',
+                            type: 'submit',
+                            nativeButtonProps: {
+                              form: 'user_data_form',
+                            },
                           },
-                        },
-                      ]}
-                    />
-                  </div>
-                </form>
-              )}
-              {selectedTabId === 'Périmètre départements' && (
-                <DepartementsScope
-                  userId={user.id}
-                  initialCodes={user.scope_departements_codes ?? []}
-                  onSaved={() => {
-                    loadData(user.id).then((res) => {
-                      if (res.ok && res.data) setUserResponseData(res.data as State);
-                    });
-                  }}
-                />
+                        ]}
+                      />
+                    </div>
+                  </form>
+
+                  {/* Périmètre départements — repliable, enregistrement par son propre bouton */}
+                  <Section title="Périmètre départements">
+                    <details>
+                      <summary className="cursor-pointer text-sm font-medium text-gray-700">
+                        {user.scope_departements_codes?.length ?? 0} département(s) — afficher / modifier
+                      </summary>
+                      <div className="mt-4">
+                        <DepartementsScope
+                          userId={user.id}
+                          initialCodes={user.scope_departements_codes ?? []}
+                          onSaved={() => {
+                            loadData(user.id).then((res) => {
+                              if (res.ok && res.data) setUserResponseData(res.data as State);
+                            });
+                          }}
+                        />
+                      </div>
+                    </details>
+                  </Section>
+                </div>
               )}
               {selectedTabId === 'Peut traiter des fiches au nom de' && (
                 <PeutEnvoyerDesFichesAOuTraiterAuNomDe
@@ -542,6 +660,8 @@ export default function AdminUser() {
                   setUserResponseData={setUserResponseData}
                 />
               )}
+              {selectedTabId === 'Fiches' && <UserFeis userId={user.id} />}
+              {selectedTabId === 'Carcasses' && <UserCarcasses userId={user.id} />}
               <div className="mt-6 mb-16 ml-6">
                 <a
                   className="fr-link fr-icon-arrow-up-fill fr-link--icon-left"
@@ -554,6 +674,180 @@ export default function AdminUser() {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function formatDate(d: Date | string | null): string {
+  if (!d) return '—';
+  return dayjs(d).format('DD/MM/YYYY HH:mm');
+}
+
+function formatDateOnly(d: Date | string | null): string {
+  if (!d) return '—';
+  return dayjs(d).format('DD/MM/YYYY');
+}
+
+type UserFeiRow = AdminFeisResponse['data']['feis'][number];
+
+function UserFeis({ userId }: { userId: string }) {
+  const [rows, setRows] = useState<UserFeiRow[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    API.get({ path: `admin/user/${userId}/feis` })
+      .then((res) => res as AdminFeisResponse)
+      .then((res) => {
+        if (res.ok) {
+          setRows(res.data.feis);
+          setTotal(res.data.total);
+        }
+      })
+      .finally(() => setLoading(false));
+  }, [userId]);
+
+  if (loading && rows.length === 0) {
+    return <Chargement />;
+  }
+
+  return (
+    <div className="py-4">
+      <h3 className="mb-4 text-lg font-bold">Fiches ({total})</h3>
+      {rows.length === 0 ? (
+        <p className="text-sm text-gray-500">Aucune fiche pour cet utilisateur.</p>
+      ) : (
+        <table className="w-full border-collapse text-xs">
+          <thead>
+            <tr className="border-b bg-gray-100 text-left">
+              <th className="p-1">numéro</th>
+              <th className="p-1">date mise à mort</th>
+              <th className="p-1">commune</th>
+              <th className="p-1">examinateur</th>
+              <th className="p-1">premier détenteur</th>
+              <th className="p-1">nb carcasses</th>
+              <th className="p-1">SVI</th>
+              <th className="p-1">created_at</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr
+                key={row.numero}
+                className="border-b hover:bg-blue-50"
+              >
+                <td className="p-1">
+                  <Link
+                    to={`/app/admin/fei/${encodeURIComponent(row.numero)}`}
+                    className="text-blue-600 underline"
+                  >
+                    {row.numero}
+                  </Link>
+                </td>
+                <td className="p-1">{formatDateOnly(row.date_mise_a_mort)}</td>
+                <td className="p-1">{row.commune_mise_a_mort ?? '—'}</td>
+                <td
+                  className="max-w-[160px] truncate p-1"
+                  title={row.FeiExaminateurInitialUser?.email ?? ''}
+                >
+                  {row.FeiExaminateurInitialUser?.email ?? '—'}
+                </td>
+                <td
+                  className="max-w-[160px] truncate p-1"
+                  title={
+                    row.FeiPremierDetenteurEntity?.nom_d_usage ?? row.FeiPremierDetenteurUser?.email ?? ''
+                  }
+                >
+                  {row.FeiPremierDetenteurEntity?.nom_d_usage ?? row.FeiPremierDetenteurUser?.email ?? '—'}
+                </td>
+                <td className="p-1">{row._count.Carcasses}</td>
+                <td
+                  className="max-w-[160px] truncate p-1"
+                  title={row.FeiSviEntity?.nom_d_usage ?? ''}
+                >
+                  {row.FeiSviEntity?.nom_d_usage ?? '—'}
+                </td>
+                <td className="p-1">{formatDate(row.created_at)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
+}
+
+type UserCarcasseRow = AdminCarcassesResponse['data']['carcasses'][number];
+
+function UserCarcasses({ userId }: { userId: string }) {
+  const [rows, setRows] = useState<UserCarcasseRow[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    API.get({ path: `admin/user/${userId}/carcasses` })
+      .then((res) => res as AdminCarcassesResponse)
+      .then((res) => {
+        if (res.ok) {
+          setRows(res.data.carcasses);
+          setTotal(res.data.total);
+        }
+      })
+      .finally(() => setLoading(false));
+  }, [userId]);
+
+  if (loading && rows.length === 0) {
+    return <Chargement />;
+  }
+
+  return (
+    <div className="py-4">
+      <h3 className="mb-4 text-lg font-bold">Carcasses ({total})</h3>
+      {rows.length === 0 ? (
+        <p className="text-sm text-gray-500">Aucune carcasse pour cet utilisateur.</p>
+      ) : (
+        <table className="w-full border-collapse text-xs">
+          <thead>
+            <tr className="border-b bg-gray-100 text-left">
+              <th className="p-1">marquage</th>
+              <th className="p-1">espèce</th>
+              <th className="p-1">type</th>
+              <th className="p-1">fei_numero</th>
+              <th className="p-1">nb intermédiaires</th>
+              <th className="p-1">created_at</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr
+                key={row.zacharie_carcasse_id}
+                className="border-b hover:bg-blue-50"
+              >
+                <td className="p-1">
+                  <Link
+                    to={`/app/admin/carcasse/${encodeURIComponent(row.zacharie_carcasse_id)}`}
+                    className="text-blue-600 underline"
+                  >
+                    {row.numero_bracelet}
+                  </Link>
+                </td>
+                <td className="p-1">{row.espece}</td>
+                <td className="p-1">{row.type}</td>
+                <td
+                  className="max-w-[120px] truncate p-1"
+                  title={row.fei_numero}
+                >
+                  {row.fei_numero}
+                </td>
+                <td className="p-1">{row._count.CarcasseIntermediaire}</td>
+                <td className="p-1">{formatDate(row.created_at)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   );
 }
