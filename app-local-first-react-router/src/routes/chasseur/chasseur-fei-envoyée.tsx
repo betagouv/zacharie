@@ -8,8 +8,8 @@ import { createNewFei } from '@app/utils/create-new-fei';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { formatCarcasseLotCount } from '@app/utils/count-carcasses';
 import useUser from '@app/zustand/user';
-import MailCheck from '@app/assets/svg/mail-send.svg';
-import { CarcasseType, type Carcasse } from '@prisma/client';
+import SuccessSvg from '@app/assets/svg/success.svg';
+import { CarcasseType, FeiOwnerRole, type Carcasse } from '@prisma/client';
 
 export default function ChasseurFeiEnvoyée() {
   const params = useParams();
@@ -17,6 +17,7 @@ export default function ChasseurFeiEnvoyée() {
   const feis = useZustandStore((state) => state.feis);
   const navigate = useNavigate();
   const entities = useZustandStore((state) => state.entities);
+  const users = useZustandStore((state) => state.users);
   const fei = feis[params.fei_numero!];
   const carcasses = useCarcassesForFei(params.fei_numero);
   const isOnline = useIsOnline();
@@ -28,12 +29,13 @@ export default function ChasseurFeiEnvoyée() {
       : 'va être notifié';
 
   const sentByRecipient = useMemo(() => {
-    const grouped: Record<string, { entityName: string; carcasses: Array<Carcasse> }> = {};
+    const grouped: Record<string, { entityId: string; entityName: string; carcasses: Array<Carcasse> }> = {};
     for (const c of carcasses) {
       if (!c.next_owner_entity_id) continue;
       if (!grouped[c.next_owner_entity_id]) {
         const entity = entities[c.next_owner_entity_id];
         grouped[c.next_owner_entity_id] = {
+          entityId: c.next_owner_entity_id,
           entityName: entity?.nom_d_usage ?? c.next_owner_entity_id,
           carcasses: [],
         };
@@ -44,8 +46,34 @@ export default function ChasseurFeiEnvoyée() {
   }, [carcasses, entities]);
 
   const unsendCarcasses = useMemo(() => {
-    return carcasses.filter((c) => c.next_owner_entity_id == null);
+    // Une carcasse n'est « non attribuée » que si elle n'a pas de prochain détenteur ET qu'elle
+    // est encore détenue par le PD/examinateur. Si elle a déjà été reçue/avancée (next_owner
+    // remis à null, current_owner_role passé à ETG/collecteur…), elle est bien attribuée.
+    // Même définition que `carcassesRestantes` dans premier-detenteur-select-next.tsx.
+    return carcasses.filter(
+      (c) =>
+        c.next_owner_entity_id == null &&
+        (c.current_owner_role == null ||
+          c.current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR ||
+          c.current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL)
+    );
   }, [carcasses]);
+
+  // Quand l'examinateur transmet la fiche au premier détenteur (une personne, pas une entité),
+  // il n'y a ni next_owner_entity_id ni fei_next_owner_entity_id : le PD devient directement
+  // détenteur courant. On résout son nom pour afficher la confirmation de transmission.
+  const premierDetenteurName = useMemo(() => {
+    if (fei?.premier_detenteur_entity_id) {
+      return entities[fei.premier_detenteur_entity_id]?.nom_d_usage ?? null;
+    }
+    if (fei?.premier_detenteur_user_id) {
+      const pd = users[fei.premier_detenteur_user_id];
+      const name = pd ? `${pd.prenom ?? ''} ${pd.nom_de_famille ?? ''}`.trim() : '';
+      if (name) return name;
+    }
+    // Repli : nom mis en cache sur les carcasses au moment de la transmission au PD.
+    return carcasses.find((c) => c.current_owner_user_name_cache)?.current_owner_user_name_cache ?? null;
+  }, [fei, entities, users, carcasses]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -68,23 +96,31 @@ export default function ChasseurFeiEnvoyée() {
             <div className="bg-white p-4 md:p-8">
               <div className="flex flex-col items-center gap-4 p-5 pt-0 text-center">
                 <img
-                  src={MailCheck}
+                  src={SuccessSvg}
                   alt="Fiche envoyée"
                   className="h-44 w-44"
                 />
-                <h1 className="fr-h4 fr-mb-0">Votre fiche a été transmise</h1>
-                {sentByRecipient.length > 0 && (
-                  <ul className="fr-mb-0 ml-10 w-full p-0 text-left">
-                    {sentByRecipient.map((recipient) => (
-                      <li
-                        key={recipient.entityName}
-                        className="fr-mb-1w text-sm"
-                      >
-                        - {recipient.entityName} {notificationStatus} (
-                        {formatCarcasseLotCount(recipient.carcasses)})
-                      </li>
-                    ))}
-                  </ul>
+                {sentByRecipient.length === 1 && (
+                  <>
+                    <h1 className="fr-h4 fr-mb-0">
+                      Votre fiche a été transmise à {sentByRecipient[0].entityName}
+                    </h1>
+                    <p className="fr-mb-0">({formatCarcasseLotCount(sentByRecipient[0].carcasses)})</p>
+                  </>
+                )}
+                {sentByRecipient.length > 1 && (
+                  <>
+                    <h1 className="fr-h4 fr-mb-0">
+                      Votre fiche a été transmise aux {sentByRecipient.length} destinataires.
+                    </h1>
+                    <ul className="fr-mb-0 list-none p-0">
+                      {sentByRecipient.map((recipient) => (
+                        <li key={recipient.entityId}>
+                          {recipient.entityName} ({formatCarcasseLotCount(recipient.carcasses)})
+                        </li>
+                      ))}
+                    </ul>
+                  </>
                 )}
                 {sentByRecipient.length === 0 && fei?.fei_next_owner_entity_id && (
                   <p className="fr-mb-0">
@@ -94,6 +130,12 @@ export default function ChasseurFeiEnvoyée() {
                     />
                     {entities[fei.fei_next_owner_entity_id]?.nom_d_usage ?? ''} — {notificationStatus}
                   </p>
+                )}
+                {sentByRecipient.length === 0 && !fei?.fei_next_owner_entity_id && premierDetenteurName && (
+                  <>
+                    <h1 className="fr-h4 fr-mb-0">Votre fiche a été transmise à {premierDetenteurName}</h1>
+                    <p className="fr-mb-0">({formatCarcasseLotCount(carcasses)})</p>
+                  </>
                 )}
                 {unsendCarcasses.length > 0 &&
                   fei.premier_detenteur_user_id === user.id &&
@@ -125,31 +167,29 @@ export default function ChasseurFeiEnvoyée() {
                   })()}
               </div>
             </div>
-            <div className="mt-4 bg-white p-4 md:p-8">
-              <div className="mt-4 flex w-full flex-col justify-between gap-4 md:flex-row">
+            <div className="mt-4 flex w-full flex-col justify-between gap-4 md:flex-row">
+              <Button
+                priority="secondary"
+                linkProps={{
+                  to: `/app/chasseur/`,
+                }}
+                iconId="fr-icon-arrow-left-line"
+              >
+                Voir toutes les fiches
+              </Button>
+              {!!user.numero_cfei && user.activated && (
                 <Button
-                  priority="secondary"
-                  linkProps={{
-                    to: `/app/chasseur/`,
+                  type="button"
+                  // className="bg-white"
+                  onClick={async () => {
+                    const newFei = await createNewFei();
+                    navigate(`/app/chasseur/fei/${newFei.numero}`);
                   }}
-                  iconId="fr-icon-arrow-left-line"
+                  iconId="fr-icon-add-circle-line"
                 >
-                  Voir toutes les fiches
+                  Nouvelle fiche
                 </Button>
-                {!!user.numero_cfei && user.activated && (
-                  <Button
-                    type="button"
-                    // className="bg-white"
-                    onClick={async () => {
-                      const newFei = await createNewFei();
-                      navigate(`/app/chasseur/fei/${newFei.numero}`);
-                    }}
-                    iconId="fr-icon-add-circle-line"
-                  >
-                    Nouvelle fiche
-                  </Button>
-                )}
-              </div>
+              )}
             </div>
           </div>
         </div>

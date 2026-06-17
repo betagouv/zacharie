@@ -33,16 +33,16 @@ test("Création d'une fiche", async ({ page }) => {
   await page.getByRole('button', { name: 'Continuer' }).first().click();
   // Bloc 2 — Carcasses
   await page.getByLabel('Espèce (grand et petit gibier)').selectOption('Daim');
-  await page.getByRole('button', { name: 'Utiliser' }).click();
+  await page.getByRole('button', { name: /^MM-\d{3}-\d{3}$/ }).click();
   await page.getByRole('button', { name: 'Ajouter la carcasse' }).click();
   await page.getByRole('button', { name: 'Ajouter une autre carcasse' }).click();
-  await page.getByRole('button', { name: 'Utiliser' }).click();
+  await page.getByRole('button', { name: /^MM-\d{3}-\d{3}$/ }).click();
   await page.getByRole('button', { name: 'Ajouter la carcasse' }).click();
   await page.getByRole('button', { name: 'Ajouter une autre carcasse' }).click();
-  await page.getByRole('button', { name: 'Utiliser' }).click();
+  await page.getByRole('button', { name: /^MM-\d{3}-\d{3}$/ }).click();
   await page.getByRole('button', { name: 'Ajouter la carcasse' }).click();
   await page.getByRole('button', { name: 'Ajouter une autre carcasse' }).click();
-  await page.getByRole('button', { name: 'Utiliser' }).click();
+  await page.getByRole('button', { name: /^MM-\d{3}-\d{3}$/ }).click();
   await page.getByRole('button', { name: 'Ajouter la carcasse' }).click();
   // Confirm all carcasses entered
   await page.getByRole('button', { name: 'Continuer' }).click();

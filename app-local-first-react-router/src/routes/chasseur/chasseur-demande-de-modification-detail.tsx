@@ -350,7 +350,7 @@ export default function ChasseurDemandeDeModificationDetail() {
                 : 'Approuver le changement'}
             </Button>
           </div>
-          <div className="fr-mt-4w rounded-sm border border-gray-200 p-3">
+          <div className="fr-mt-4w rounded-sm border border-gray-200 bg-white p-3">
             <p className="mb-2 font-semibold">Refuser la demande</p>
             <Input
               label="Motif du refus (optionnel)"

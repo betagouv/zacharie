@@ -48,7 +48,7 @@ test.fixme('Examinateur picks themselves as PD — inline transition to dispatch
 
   // Bloc 2 — une carcasse.
   await page.getByLabel('Espèce (grand et petit gibier)').selectOption('Daim');
-  await page.getByRole('button', { name: 'Utiliser' }).click();
+  await page.getByRole('button', { name: /^MM-\d{3}-\d{3}$/ }).click();
   await page.getByRole('button', { name: 'Ajouter la carcasse' }).click();
   await page.getByRole('button', { name: 'Continuer' }).click();
 
@@ -93,5 +93,5 @@ test.fixme('Examinateur picks themselves as PD — inline transition to dispatch
   await transmettre.scrollIntoViewIfNeeded();
   await transmettre.click();
 
-  await expect(page.getByText(/ETG 1.*a été notifi/i)).toBeVisible({ timeout: 10000 });
+  await expect(page.getByText(/Votre fiche a été transmise à ETG 1/i)).toBeVisible({ timeout: 10000 });
 });

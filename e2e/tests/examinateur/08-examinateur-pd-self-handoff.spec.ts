@@ -37,7 +37,7 @@ test('Examinateur == PD via CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY — self-hando
 
   // Bloc 2 — 1 carcasse
   await page.getByLabel('Espèce (grand et petit gibier)').selectOption('Daim');
-  await page.getByRole('button', { name: 'Utiliser' }).click();
+  await page.getByRole('button', { name: /^PP-\d{3}-\d{3}$/ }).click();
   await page.getByRole('button', { name: 'Ajouter la carcasse' }).click();
   await page.getByRole('button', { name: 'Continuer' }).click();
 
@@ -79,5 +79,5 @@ test('Examinateur == PD via CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY — self-hando
   const transmettre = page.getByRole('button', { name: 'Transmettre', exact: true });
   await transmettre.scrollIntoViewIfNeeded();
   await transmettre.click();
-  await expect(page.getByText(/ETG 1.*a été notifi/i)).toBeVisible({ timeout: 10000 });
+  await expect(page.getByText(/Votre fiche a été transmise à ETG 1/i)).toBeVisible({ timeout: 10000 });
 });

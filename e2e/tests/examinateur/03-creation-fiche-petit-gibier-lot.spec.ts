@@ -35,7 +35,7 @@ test('Création fiche petit gibier en lot — 10 pigeons', async ({ page }) => {
   await quantite.scrollIntoViewIfNeeded();
   await quantite.fill('10');
   await quantite.blur();
-  await page.getByRole('button', { name: 'Utiliser' }).click();
+  await page.getByRole('button', { name: /^MM-\d{3}-\d{3}$/ }).click();
   await page.getByRole('button', { name: 'Ajouter le lot de carcasses' }).click();
   await page.getByRole('button', { name: 'Continuer' }).click();
 

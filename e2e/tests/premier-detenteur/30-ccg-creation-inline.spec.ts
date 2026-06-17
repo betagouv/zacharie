@@ -32,8 +32,8 @@ test('Création CCG inline depuis le formulaire de transmission', async ({ page 
   await page.getByRole('textbox', { name: "Numéro d'identification" }).fill('CCG-01');
   await page.getByRole('button', { name: 'Ajouter cette chambre froide' }).click();
 
-  // CCG appears (pre-seeded as "CCG Chasseurs - CCG-01")
-  await expect(page.getByText(/CCG Chasseurs.*CCG-01|CCG-01/).first()).toBeVisible({ timeout: 10000 });
+  // Modal closes and the freshly-created CCG is auto-selected
+  await expect(page.getByText('CCG Chasseurs - CCG-01')).toBeVisible({ timeout: 10000 });
 
   // Complete the transmission
   const cliquezIci = page.getByRole('button', { name: /Date du jour et maintenant/ }).first();
@@ -51,5 +51,6 @@ test('Création CCG inline depuis le formulaire de transmission', async ({ page 
   const transmettre = page.getByRole('button', { name: 'Transmettre' });
   await transmettre.scrollIntoViewIfNeeded();
   await transmettre.click();
-  await expect(page.getByText(/a été notifi/i).first()).toBeVisible({ timeout: 10000 });
+  // Chasseur/PD voit la page de confirmation dédiée, pas un toast « a été notifié »
+  await expect(page.getByText(/Votre fiche a été transmise à ETG 1/i)).toBeVisible({ timeout: 10000 });
 });

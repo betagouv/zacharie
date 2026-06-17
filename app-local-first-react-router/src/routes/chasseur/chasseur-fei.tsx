@@ -307,9 +307,9 @@ function FEIChasseurLoaded() {
     }
     setShowErrors(false);
     if (isPremierDetenteur) {
+      // validate() reveals field-level errors inside the destinataire sub-form.
       const destinataireError = destinataireRef.current?.validate();
       if (destinataireError) {
-        alert(destinataireError);
         return;
       }
       updateFei(fei.numero, {

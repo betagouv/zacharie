@@ -42,9 +42,8 @@ export default function ChasseurDemandesDeModification() {
       </title>
       <h1>Demandes de modification</h1>
       <p className="opacity-80">
-        Les destinataires de vos carcasses peuvent vous demander de corriger un numéro de marquage, ou de
-        valider la mise sur le marché d'une carcasse qu'ils ont ajoutée à une fiche. En tant qu'examinateur
-        initial, vous devez approuver ou refuser ces modifications.
+        Une correction de numéro de marquage ou une validation de mise sur le marché vous est demandée. En
+        tant qu'examinateur initial, approuvez ou refusez la demande.
       </p>
       {pendingForMe.length === 0 && (
         <Alert

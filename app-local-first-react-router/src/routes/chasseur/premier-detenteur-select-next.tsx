@@ -86,6 +86,8 @@ function DispatchGroupForm({
   ccgsWorkingWith,
   allCarcassesRestantes,
   carcasseToGroupLabel,
+  fieldErrors,
+  showErrors,
   onToggleCarcasse,
   onUpdateGroup,
   onRemoveGroup,
@@ -104,6 +106,8 @@ function DispatchGroupForm({
   ccgsWorkingWith: EntityWithUserRelation[];
   allCarcassesRestantes: Carcasse[];
   carcasseToGroupLabel: Record<string, string>;
+  fieldErrors: GroupFieldErrors;
+  showErrors: boolean;
   onToggleCarcasse: (carcasseId: string) => void;
   onUpdateGroup: (groupId: string, updates: Partial<DispatchGroup>) => void;
   onRemoveGroup: (groupId: string) => void;
@@ -131,23 +135,13 @@ function DispatchGroupForm({
 
   const Component = canEdit ? Input : InputNotEditable;
 
+  // Only surface a field's error once the user has attempted to submit.
+  const errorFor = (key: keyof GroupFieldErrors) => (showErrors ? fieldErrors[key] : undefined);
+
   return (
-    <div className="space-y-4 rounded border border-gray-300 bg-white p-4">
+    <div className={totalGroups > 1 ? 'space-y-4 rounded border border-gray-300 bg-white p-4' : 'space-y-4'}>
       <div className="flex items-center justify-between">
-        <h4 className="m-0 text-lg font-bold">
-          {totalGroups > 1 && <>Destinataire {groupIndex + 1} </>}
-          {allCarcassesRestantes.length > 1 && (
-            <Badge
-              severity={groupCarcasses.length > 0 ? 'info' : 'warning'}
-              small
-              noIcon
-              as="span"
-              className="ml-2"
-            >
-              {groupCarcasses.length > 0 ? formatCarcasseLotCount(groupCarcasses) : 'Aucune carcasse'}
-            </Badge>
-          )}
-        </h4>
+        <h4 className="m-0 text-lg font-bold">{totalGroups > 1 && <>Destinataire {groupIndex + 1} </>}</h4>
         {totalGroups > 1 && canEdit && (
           <Button
             priority="tertiary"
@@ -217,54 +211,73 @@ function DispatchGroupForm({
               );
             })}
           </div>
+          {allCarcassesRestantes.length > 1 && (
+            <Badge
+              severity={groupCarcasses.length > 0 ? 'info' : 'warning'}
+              small
+              noIcon
+              as="span"
+              className="mt-2"
+            >
+              {groupCarcasses.length > 0 ? formatCarcasseLotCount(groupCarcasses) : 'Aucune carcasse'}
+            </Badge>
+          )}
+          {errorFor('carcasseIds') && <p className="fr-error-text mt-2">{errorFor('carcasseIds')}</p>}
         </div>
       )}
 
-      <SelectCustom
-        label="Prochain détenteur des carcasses *"
-        isDisabled={disabled}
-        hint={
-          <>
-            <span>
-              Indiquez ici la personne ou la structure avec qui vous êtes en contact pour prendre en charge le
-              gibier.
-            </span>
-            {!group.recipientEntityId && !disabled && (
-              <div>
-                {canTransmitCarcassesToEntities.map((entity) => {
-                  return (
-                    <button
-                      key={entity.id}
-                      type="button"
-                      className="mr-2 rounded-full bg-[#E8EDFF] px-3 py-1 text-sm text-[#000091]"
-                      onClick={() => onUpdateGroup(group.id, { recipientEntityId: entity.id })}
-                    >
-                      {entity.nom_d_usage}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </>
-        }
-        options={prochainsDetenteursOptions}
-        placeholder="Sélectionnez le prochain détenteur des carcasses"
-        value={prochainsDetenteursOptions.find((option) => option.value === group.recipientEntityId) ?? null}
-        getOptionLabel={(f) => f.label!}
-        getOptionValue={(f) => f.value}
-        onChange={(f) => onUpdateGroup(group.id, { recipientEntityId: f ? f.value : null })}
-        isClearable={!!group.recipientEntityId}
-        inputId={`${Prisma.FeiScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache}_${group.id}`}
-        classNamePrefix={`select-prochain-detenteur-${group.id}`}
-        required
-        creatable
-        // @ts-expect-error - onCreateOption is not typed
-        onCreateOption={(newOption: string) => {
-          onOpenPartenaireModal(group.id, newOption);
-        }}
-        isReadOnly={!canEdit}
-        name={`${Prisma.FeiScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache}_${group.id}`}
-      />
+      <div>
+        <SelectCustom
+          label="Prochain détenteur des carcasses *"
+          isDisabled={disabled}
+          hint={
+            <>
+              <span>
+                Indiquez ici la personne ou la structure avec qui vous êtes en contact pour prendre en charge
+                le gibier.
+              </span>
+              {!group.recipientEntityId && !disabled && (
+                <div>
+                  {canTransmitCarcassesToEntities.map((entity) => {
+                    return (
+                      <button
+                        key={entity.id}
+                        type="button"
+                        className="mr-2 rounded-full bg-[#E8EDFF] px-3 py-1 text-sm text-[#000091]"
+                        onClick={() => onUpdateGroup(group.id, { recipientEntityId: entity.id })}
+                      >
+                        {entity.nom_d_usage}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </>
+          }
+          options={prochainsDetenteursOptions}
+          placeholder="Sélectionnez le prochain détenteur des carcasses"
+          value={
+            prochainsDetenteursOptions.find((option) => option.value === group.recipientEntityId) ?? null
+          }
+          getOptionLabel={(f) => f.label!}
+          getOptionValue={(f) => f.value}
+          onChange={(f) => onUpdateGroup(group.id, { recipientEntityId: f ? f.value : null })}
+          isClearable={!!group.recipientEntityId}
+          inputId={`${Prisma.FeiScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache}_${group.id}`}
+          classNamePrefix={`select-prochain-detenteur-${group.id}`}
+          required
+          creatable
+          // @ts-expect-error - onCreateOption is not typed
+          onCreateOption={(newOption: string) => {
+            onOpenPartenaireModal(group.id, newOption);
+          }}
+          isReadOnly={!canEdit}
+          name={`${Prisma.FeiScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache}_${group.id}`}
+        />
+        {errorFor('recipientEntityId') && (
+          <p className="fr-error-text mt-1">{errorFor('recipientEntityId')}</p>
+        )}
+      </div>
       {!!prochainDetenteur && !prochainDetenteur?.zacharie_compatible && (
         <Alert
           severity="warning"
@@ -276,6 +289,8 @@ function DispatchGroupForm({
         legend="Lieu de stockage des carcasses *"
         className={canEdit ? '' : 'radio-black'}
         disabled={!group.recipientEntityId}
+        state={errorFor('depotType') ? 'error' : 'default'}
+        stateRelatedMessage={errorFor('depotType')}
         options={[
           {
             label: <span className="inline-block">Pas de stockage</span>,
@@ -312,53 +327,58 @@ function DispatchGroupForm({
       {group.depotType === DepotType.CCG &&
         (ccgsWorkingWith.length > 0 ? (
           <>
-            <SelectCustom
-              label="Chambre froide (centre de collecte du gibier sauvage) *"
-              isDisabled={group.depotType !== DepotType.CCG}
-              isReadOnly={!canEdit}
-              hint={
-                <>
-                  {!group.depotEntityId && group.depotType === DepotType.CCG ? (
-                    <div>
-                      {ccgsWorkingWith.map((entity) => {
-                        return (
-                          <button
-                            key={entity.id}
-                            type="button"
-                            className="mr-2 rounded-full bg-[#E8EDFF] px-3 py-1 text-sm text-[#000091]"
-                            onClick={() => {
-                              onUpdateGroup(group.id, { depotEntityId: entity.id });
-                            }}
-                          >
-                            {entity.nom_d_usage}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  ) : null}
-                </>
-              }
-              options={ccgsOptions}
-              placeholder="Sélectionnez le Centre de Collecte du Gibier sauvage"
-              value={ccgsOptions.find((option) => option.value === group.depotEntityId) ?? null}
-              getOptionLabel={(f) => f.label!}
-              getOptionValue={(f) => f.value}
-              onChange={(f) => {
-                if (f?.value === 'add_new') {
-                  onOpenCcgModal(group.id);
-                  return;
+            <div>
+              <SelectCustom
+                label="Chambre froide (centre de collecte du gibier sauvage) *"
+                isDisabled={group.depotType !== DepotType.CCG}
+                isReadOnly={!canEdit}
+                hint={
+                  <>
+                    {!group.depotEntityId && group.depotType === DepotType.CCG ? (
+                      <div>
+                        {ccgsWorkingWith.map((entity) => {
+                          return (
+                            <button
+                              key={entity.id}
+                              type="button"
+                              className="mr-2 rounded-full bg-[#E8EDFF] px-3 py-1 text-sm text-[#000091]"
+                              onClick={() => {
+                                onUpdateGroup(group.id, { depotEntityId: entity.id });
+                              }}
+                            >
+                              {entity.nom_d_usage}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : null}
+                  </>
                 }
-                onUpdateGroup(group.id, { depotEntityId: f?.value ?? null });
-              }}
-              isClearable={!!group.depotEntityId}
-              inputId={`${Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id}_${group.id}`}
-              classNamePrefix={`select-ccg-${group.id}`}
-              required
-              name={`${Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id}_${group.id}`}
-            />
+                options={ccgsOptions}
+                placeholder="Sélectionnez le Centre de Collecte du Gibier sauvage"
+                value={ccgsOptions.find((option) => option.value === group.depotEntityId) ?? null}
+                getOptionLabel={(f) => f.label!}
+                getOptionValue={(f) => f.value}
+                onChange={(f) => {
+                  if (f?.value === 'add_new') {
+                    onOpenCcgModal(group.id);
+                    return;
+                  }
+                  onUpdateGroup(group.id, { depotEntityId: f?.value ?? null });
+                }}
+                isClearable={!!group.depotEntityId}
+                inputId={`${Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id}_${group.id}`}
+                classNamePrefix={`select-ccg-${group.id}`}
+                required
+                name={`${Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id}_${group.id}`}
+              />
+              {errorFor('depotEntityId') && <p className="fr-error-text mt-1">{errorFor('depotEntityId')}</p>}
+            </div>
             <Component
               label="Date de dépôt dans le Centre de Collecte du Gibier sauvage *"
               disabled={group.depotType !== DepotType.CCG}
+              state={errorFor('depotDate') ? 'error' : 'default'}
+              stateRelatedMessage={errorFor('depotDate')}
               hintText={
                 canEdit ? (
                   <button
@@ -411,6 +431,8 @@ function DispatchGroupForm({
             legend="Transport des carcasses jusqu'au destinataire *"
             className={canEdit ? '' : 'radio-black'}
             disabled={!group.recipientEntityId}
+            state={errorFor('transportType') ? 'error' : 'default'}
+            stateRelatedMessage={errorFor('transportType')}
             options={[
               {
                 label: <span className="inline-block">Je transporte les carcasses moi-même</span>,
@@ -457,6 +479,8 @@ function DispatchGroupForm({
               disabled={
                 group.transportType !== TransportType.PREMIER_DETENTEUR || group.depotType !== DepotType.CCG
               }
+              state={errorFor('transportDate') ? 'error' : 'default'}
+              stateRelatedMessage={errorFor('transportDate')}
               hintText={
                 canEdit ? (
                   <>
@@ -502,26 +526,37 @@ function DispatchGroupForm({
   );
 }
 
-function getGroupValidationError(
+interface GroupFieldErrors {
+  recipientEntityId?: string;
+  carcasseIds?: string;
+  depotType?: string;
+  depotEntityId?: string;
+  depotDate?: string;
+  transportType?: string;
+  transportDate?: string;
+}
+
+function getGroupFieldErrors(
   group: DispatchGroup,
   entities: Record<string, EntityWithUserRelation>
-): string | null {
+): GroupFieldErrors {
+  const errors: GroupFieldErrors = {};
   if (!group.recipientEntityId) {
-    return 'Il manque le prochain détenteur des carcasses';
+    errors.recipientEntityId = 'Veuillez sélectionner le prochain détenteur des carcasses';
   }
   if (group.carcasseIds.length === 0) {
-    return 'Il faut au moins une carcasse dans ce groupe';
+    errors.carcasseIds = 'Veuillez sélectionner au moins une carcasse pour ce destinataire';
   }
   if (!group.depotType) {
-    return 'Il manque le lieu de stockage des carcasses';
+    errors.depotType = 'Veuillez indiquer le lieu de stockage des carcasses';
   }
   if (group.depotType === DepotType.CCG && !group.depotEntityId) {
-    return 'Il manque le centre de collecte du gibier sauvage';
+    errors.depotEntityId = 'Veuillez sélectionner le centre de collecte du gibier sauvage';
   }
   if (group.depotType === DepotType.CCG && !group.depotDate) {
-    return 'Il manque la date de dépôt dans le centre de collecte du gibier sauvage';
+    errors.depotDate = 'Veuillez indiquer la date de dépôt dans le centre de collecte du gibier sauvage';
   }
-  const prochainDetenteurType = entities[group.recipientEntityId]?.type;
+  const prochainDetenteurType = group.recipientEntityId ? entities[group.recipientEntityId]?.type : null;
   const needTransport = (() => {
     if (
       prochainDetenteurType === EntityTypes.CONSOMMATEUR_FINAL ||
@@ -534,14 +569,38 @@ function getGroupValidationError(
   })();
   if (needTransport) {
     if (!group.transportType) {
-      return 'Il manque le type de transport';
+      errors.transportType = 'Veuillez indiquer le mode de transport des carcasses';
     }
     if (
       group.transportType === TransportType.PREMIER_DETENTEUR &&
       group.depotType === DepotType.CCG &&
       !group.transportDate
     ) {
-      return 'Il manque la date de transport';
+      errors.transportDate = 'Veuillez indiquer la date de transport des carcasses';
+    }
+  }
+  return errors;
+}
+
+// Priority order used to surface a single message for the global validation string.
+const GROUP_FIELD_ERROR_ORDER: Array<keyof GroupFieldErrors> = [
+  'recipientEntityId',
+  'carcasseIds',
+  'depotType',
+  'depotEntityId',
+  'depotDate',
+  'transportType',
+  'transportDate',
+];
+
+function getGroupValidationError(
+  group: DispatchGroup,
+  entities: Record<string, EntityWithUserRelation>
+): string | null {
+  const errors = getGroupFieldErrors(group, entities);
+  for (const key of GROUP_FIELD_ERROR_ORDER) {
+    if (errors[key]) {
+      return errors[key]!;
     }
   }
   return null;
@@ -577,6 +636,8 @@ export default function DestinatairePremierDetenteur({
   const isCCGModalOpen = useIsModalOpen(ccgModal);
   const isTrichineModalOpen = useIsModalOpen(trichineModal);
   const [dontShowTrichineAgain, setDontShowTrichineAgain] = useState(false);
+  // Field-level validation errors are only revealed after a submit attempt.
+  const [showErrors, setShowErrors] = useState(false);
 
   const fei = feis[params.fei_numero!];
   const prefilledInfos = usePrefillPremierDétenteurInfos();
@@ -857,6 +918,20 @@ export default function DestinatairePremierDetenteur({
   }, [dispatchGroups, carcassesRestantes]);
 
   // Validation
+  const groupFieldErrors = useMemo(
+    () => dispatchGroups.map((group) => getGroupFieldErrors(group, entities)),
+    [dispatchGroups, entities]
+  );
+
+  const revealErrorsAndScroll = useCallback(() => {
+    setShowErrors(true);
+    // Wait for the error nodes to render before scrolling to the first one.
+    requestAnimationFrame(() => {
+      const firstError = document.querySelector('.fr-error-text, .fr-input-group--error');
+      firstError?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  }, []);
+
   const globalValidationError = useMemo(() => {
     for (let i = 0; i < dispatchGroups.length; i++) {
       const error = getGroupValidationError(dispatchGroups[i], entities);
@@ -999,7 +1074,12 @@ export default function DestinatairePremierDetenteur({
 
   if (submitRef) {
     submitRef.current = {
-      validate: () => globalValidationError,
+      validate: () => {
+        if (globalValidationError) {
+          revealErrorsAndScroll();
+        }
+        return globalValidationError;
+      },
       submit: () => {
         if (shouldShowTrichineModal) {
           trichineModal.open();
@@ -1089,6 +1169,8 @@ export default function DestinatairePremierDetenteur({
                   ccgsWorkingWith={ccgsWorkingWith}
                   allCarcassesRestantes={carcassesRestantes}
                   carcasseToGroupLabel={carcasseToGroupLabel}
+                  fieldErrors={groupFieldErrors[index] ?? {}}
+                  showErrors={showErrors}
                   onToggleCarcasse={(carcasseId) => onToggleCarcasse(group.id, carcasseId)}
                   onUpdateGroup={onUpdateGroup}
                   onRemoveGroup={onRemoveGroup}
@@ -1145,7 +1227,7 @@ export default function DestinatairePremierDetenteur({
                     onClick: async (event) => {
                       event.preventDefault();
                       if (globalValidationError) {
-                        alert(globalValidationError);
+                        revealErrorsAndScroll();
                         return;
                       }
                       if (shouldShowTrichineModal) {
@@ -1171,14 +1253,6 @@ export default function DestinatairePremierDetenteur({
                 </Button>
               )}
             </div>
-            {!disabled && globalValidationError && (
-              <Alert
-                title="Attention"
-                className="mt-4"
-                severity="error"
-                description={globalValidationError}
-              />
-            )}
           </>
         )}
       </div>

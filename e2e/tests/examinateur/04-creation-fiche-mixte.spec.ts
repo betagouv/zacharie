@@ -34,7 +34,7 @@ test('Création fiche mixte — 3 daims + 10 pigeons', async ({ page }) => {
       await page.getByRole('button', { name: 'Ajouter une autre carcasse' }).click();
     }
     await page.getByLabel('Espèce (grand et petit gibier)').selectOption('Daim');
-    await page.getByRole('button', { name: 'Utiliser' }).click();
+    await page.getByRole('button', { name: /^MM-\d{3}-\d{3}$/ }).click();
     await page.getByRole('button', { name: 'Ajouter la carcasse' }).click();
   }
 
@@ -45,7 +45,7 @@ test('Création fiche mixte — 3 daims + 10 pigeons', async ({ page }) => {
   await quantite.scrollIntoViewIfNeeded();
   await quantite.fill('10');
   await quantite.blur();
-  await page.getByRole('button', { name: 'Utiliser' }).click();
+  await page.getByRole('button', { name: /^MM-\d{3}-\d{3}$/ }).click();
   await page.getByRole('button', { name: 'Ajouter le lot de carcasses' }).click();
 
   await page.getByRole('button', { name: 'Continuer' }).click();
