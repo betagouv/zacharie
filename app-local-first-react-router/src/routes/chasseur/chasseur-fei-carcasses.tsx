@@ -1,7 +1,9 @@
 import NouvelleCarcasse from './examinateur-carcasses-nouvelle';
 import { UserRoles } from '@prisma/client';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Button } from '@codegouvfr/react-dsfr/Button';
+import { createModal } from '@codegouvfr/react-dsfr/Modal';
+import CarcasseDetailsModal from '@app/components/CarcasseDetailsModal';
 import { formatCarcasseLotCount, formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
 import { useParams, useNavigate } from 'react-router';
 import useUser from '@app/zustand/user';
@@ -55,6 +57,10 @@ export default function CarcassesExaminateur({
   }, [carcasses]);
 
   const hasGroups = Object.keys(dejaEnvoyeesParDestinataire).length > 0;
+
+  const detailsModal = useRef(
+    createModal({ id: `carcasse-details-${fei.numero}`, isOpenedByDefault: false })
+  ).current;
 
   const renderCarcasseCard = (carcasse: CarcasseWithModificationRequests) => (
     <CarcasseExaminateur
@@ -126,17 +132,27 @@ export default function CarcassesExaminateur({
           ))}
         </p>
       )}
-      {canEdit && hasCarcasses && !allCarcassesConfirmed && (
-        <div className="mt-4">
+      {canEdit && hasCarcasses && (
+        <div className="mt-4 flex flex-wrap gap-2">
           <Button
             type="button"
-            priority="primary"
-            onClick={() => {
-              onAllCarcassesConfirmed();
-            }}
+            priority="secondary"
+            iconId="fr-icon-list-unordered"
+            onClick={() => detailsModal.open()}
           >
-            Continuer
+            Ajouter des détails
           </Button>
+          {!allCarcassesConfirmed && (
+            <Button
+              type="button"
+              priority="primary"
+              onClick={() => {
+                onAllCarcassesConfirmed();
+              }}
+            >
+              Continuer
+            </Button>
+          )}
         </div>
       )}
       {canEdit && hasCarcasses && allCarcassesConfirmed && (
@@ -153,6 +169,12 @@ export default function CarcassesExaminateur({
         >
           Ajouter une autre carcasse
         </Button>
+      )}
+      {canEdit && hasCarcasses && (
+        <CarcasseDetailsModal
+          carcasses={carcasses}
+          modal={detailsModal}
+        />
       )}
     </>
   );
