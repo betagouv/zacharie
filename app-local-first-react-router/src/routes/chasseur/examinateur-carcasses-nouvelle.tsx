@@ -1,6 +1,7 @@
-import { useLayoutEffect, useMemo, useState } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Input } from '@codegouvfr/react-dsfr/Input';
+import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import { Prisma, type User, UserRoles } from '@prisma/client';
 import { Select } from '@codegouvfr/react-dsfr/Select';
 import grandGibier from '@app/data/grand-gibier.json';
@@ -11,6 +12,11 @@ import { syncData } from '@app/utils/sync-data';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import useUser from '@app/zustand/user';
 import { createNewCarcasse } from '@app/utils/create-new-carcasse';
+import AnomaliesTreeNavigator, { type AnomalieNavSection } from '@app/components/AnomaliesTreeNavigator';
+import { toggleAnomalie } from '@app/utils/anomalies-referentiel';
+import grandGibierCarcasseTree from '@app/data/grand-gibier-carcasse/tree.json';
+import petitGibierCarcasseTree from '@app/data/petit-gibier-carcasse/tree.json';
+import grandGibierAbatstree from '@app/data/grand-gibier-abats/tree.json';
 const gibierSelect = {
   grand: grandGibier.especes,
   petit: petitGibier.especes,
@@ -50,10 +56,41 @@ export default function NouvelleCarcasse({
   const [nombreDAnimaux, setNombreDAnimaux] = useState<string>('1');
   const [espece, setEspece] = useState<string>(defaultEspece ?? '');
   const [error, setError] = useState<string | null>(null);
+  const [anomaliesCarcasse, setAnomaliesCarcasse] = useState<string[]>([]);
+  const [anomaliesAbats, setAnomaliesAbats] = useState<string[]>([]);
 
   const isPetitGibier = useMemo(() => {
     return petitGibier.especes.includes(espece);
   }, [espece]);
+
+  const detailsModal = useRef(
+    createModal({ id: 'nouvelle-carcasse-details', isOpenedByDefault: false })
+  ).current;
+  const detailsCount = anomaliesCarcasse.length + (isPetitGibier ? 0 : anomaliesAbats.length);
+
+  const detailsSections = useMemo<AnomalieNavSection[]>(() => {
+    const sections: AnomalieNavSection[] = [
+      {
+        key: 'carcasse',
+        label: 'Carcasse',
+        tree: isPetitGibier ? petitGibierCarcasseTree : grandGibierCarcasseTree,
+        selected: anomaliesCarcasse,
+        onToggle: (canonical) => setAnomaliesCarcasse((prev) => toggleAnomalie(prev, canonical)),
+        onAddFreeText: (value) => setAnomaliesCarcasse((prev) => [...prev, value]),
+      },
+    ];
+    if (!isPetitGibier) {
+      sections.push({
+        key: 'abats',
+        label: 'Abats',
+        tree: grandGibierAbatstree,
+        selected: anomaliesAbats,
+        onToggle: (canonical) => setAnomaliesAbats((prev) => toggleAnomalie(prev, canonical)),
+        onAddFreeText: (value) => setAnomaliesAbats((prev) => [...prev, value]),
+      });
+    }
+    return sections;
+  }, [isPetitGibier, anomaliesCarcasse, anomaliesAbats]);
 
   const zacharieCarcasseId = `${fei.numero}_${numeroBracelet}`;
 
@@ -79,6 +116,7 @@ export default function NouvelleCarcasse({
     <form
       method="POST"
       className="flex w-full flex-col items-stretch"
+      onSubmit={(e) => e.preventDefault()}
     >
       <Select
         label="Espèce (grand et petit gibier) "
@@ -187,6 +225,25 @@ export default function NouvelleCarcasse({
           onChange: (e) => setNumeroBracelet(e.target.value.replace(/\/|\s/g, '_')),
         }}
       />
+      {espece && (
+        <div className="my-2">
+          <Button
+            type="button"
+            priority="secondary"
+            iconId="fr-icon-list-unordered"
+            onClick={() => detailsModal.open()}
+          >
+            {detailsCount > 0 ? `Détails (${detailsCount}) — modifier` : 'Ajouter des détails (facultatif)'}
+          </Button>
+          <detailsModal.Component
+            title="Ajouter des détails"
+            size="large"
+            buttons={[{ doClosesModal: true, children: 'Terminer' }]}
+          >
+            <AnomaliesTreeNavigator sections={detailsSections} />
+          </detailsModal.Component>
+        </div>
+      )}
       <Button
         type="submit"
         id="add-carcasse-submit-button"
@@ -200,6 +257,8 @@ export default function NouvelleCarcasse({
               espece,
               nombreDAnimaux,
               fei,
+              examinateurAnomaliesCarcasse: anomaliesCarcasse,
+              examinateurAnomaliesAbats: isPetitGibier ? [] : anomaliesAbats,
             });
             addLog({
               user_id: user.id,
@@ -214,6 +273,8 @@ export default function NouvelleCarcasse({
             });
             syncData('examinateur-carcasse-create');
             setNumeroBracelet('');
+            setAnomaliesCarcasse([]);
+            setAnomaliesAbats([]);
             setError(null);
             onCarcasseAdded?.();
           } catch (error) {

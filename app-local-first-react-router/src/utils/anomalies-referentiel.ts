@@ -1,0 +1,114 @@
+import type { TreeNode } from '@app/components/ModalTreeDisplay';
+
+export type FlatAnomalieItem = {
+  // Feuille affichée sur le bouton (ex. "Unique")
+  leaf: string;
+  // Chaîne canonique stockée (leaf-first), ex. "Unique - Abcès ou nodules"
+  canonical: string;
+};
+
+export type FlatAnomalieGroup = {
+  groupLabel: string;
+  items: FlatAnomalieItem[];
+};
+
+// Construit la chaîne canonique leaf-first à partir du chemin racine -> feuille.
+// Ex. ["Abcès ou nodules", "Unique"] -> "Unique - Abcès ou nodules"
+// Ex. ["Parasites", "Parasites externes", "Tiques"] -> "Tiques - Parasites externes - Parasites"
+export function joinCanonical(pathRootToLeaf: string[]): string {
+  return [...pathRootToLeaf].reverse().join(' - ');
+}
+
+// Les nœuds « champ libre » sont couverts par le champ texte libre dédié du picker.
+export function isChampLibre(key: string): boolean {
+  return /champ libre/i.test(key);
+}
+
+// Renvoie le nœud de l'arbre atteint en suivant le chemin de clés.
+export function getNodeAtPath(tree: TreeNode | string[], keys: string[]): TreeNode | string[] {
+  let node: TreeNode | string[] = tree;
+  for (const key of keys) {
+    if (Array.isArray(node)) return node;
+    node = node[key];
+  }
+  return node;
+}
+
+// Un nœud est une feuille sélectionnable directe si c'est un tableau vide
+// (ex. "Autres anomalies": []), sinon c'est un groupe dans lequel on descend.
+export function isLeafGroup(value: TreeNode | string[]): boolean {
+  return Array.isArray(value) && value.length === 0;
+}
+
+// Collecte toutes les chaînes canoniques des feuilles sous un nœud,
+// en préfixant par le chemin d'ancêtres déjà parcouru.
+export function collectCanonicals(node: TreeNode | string[], prefixKeys: string[] = []): string[] {
+  const out: string[] = [];
+  const walk = (n: TreeNode | string[], keys: string[]) => {
+    if (Array.isArray(n)) {
+      const groupKey = keys[keys.length - 1] ?? '';
+      if (isChampLibre(groupKey)) return;
+      if (n.length === 0) {
+        out.push(joinCanonical(keys));
+        return;
+      }
+      for (const leaf of n) out.push(joinCanonical([...keys, leaf]));
+      return;
+    }
+    for (const [key, value] of Object.entries(n)) {
+      if (isChampLibre(key)) continue;
+      walk(value, [...keys, key]);
+    }
+  };
+  walk(node, prefixKeys);
+  return out;
+}
+
+// Aplatit un référentiel d'anomalies (1 ou 2 niveaux) en groupes affichables.
+// Chaque groupe = un en-tête + une liste de feuilles, avec leur chaîne canonique.
+export function flattenReferentielTree(tree: TreeNode | string[]): FlatAnomalieGroup[] {
+  const groups: FlatAnomalieGroup[] = [];
+
+  const pushLeafIntoGroup = (groupLabel: string, item: FlatAnomalieItem) => {
+    const existing = groups.find((g) => g.groupLabel === groupLabel);
+    if (existing) {
+      existing.items.push(item);
+    } else {
+      groups.push({ groupLabel, items: [item] });
+    }
+  };
+
+  const walk = (node: TreeNode | string[], path: string[]) => {
+    if (Array.isArray(node)) {
+      const groupKey = path[path.length - 1] ?? '';
+      if (isChampLibre(groupKey)) return;
+      if (node.length === 0) {
+        const parentLabel = path.slice(0, -1).join(' — ') || groupKey;
+        pushLeafIntoGroup(parentLabel, { leaf: groupKey, canonical: joinCanonical(path) });
+        return;
+      }
+      const groupLabel = path.join(' — ');
+      for (const leaf of node) {
+        pushLeafIntoGroup(groupLabel, { leaf, canonical: joinCanonical([...path, leaf]) });
+      }
+      return;
+    }
+    for (const [key, value] of Object.entries(node)) {
+      if (isChampLibre(key)) continue;
+      walk(value, [...path, key]);
+    }
+  };
+
+  walk(tree, []);
+  return groups;
+}
+
+// Ajoute la valeur si absente, la retire si présente.
+export function toggleAnomalie(list: string[], value: string): string[] {
+  return list.includes(value) ? list.filter((x) => x !== value) : [...list, value];
+}
+
+// Normalise pour une recherche insensible à la casse et aux accents.
+export function normalizeText(value: string): string {
+  return value.normalize('NFD').replace(new RegExp('[\\u0300-\\u036f]', 'g'), '').toLowerCase();
+}
