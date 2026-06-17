@@ -58,7 +58,13 @@ export function getCurrentStepLabel(
   try {
     if (isRoleCircuitCourt(role)) return 'Clôturée';
     if (simpleStatus === 'Clôturée') {
-      if (role === 'ETG') return 'Inspection vétérinaire terminée' satisfies TransmissionStepForEtg;
+      if (role === 'ETG') {
+        if (transmission.svi_assigned_at) {
+          return 'Inspection vétérinaire terminée' satisfies TransmissionStepForEtg;
+        } else {
+          return 'Carcasses refusées' satisfies TransmissionStepForEtg;
+        }
+      }
       if (role === 'CHASSEUR') return 'Carcasses traitées' satisfies TransmissionStepForChasseur;
       if (role === 'COLLECTEUR_PRO') return 'Carcasses traitées' satisfies TransmissionStepForCollecteurPro;
       return 'Clôturée';

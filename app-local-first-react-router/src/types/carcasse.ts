@@ -1,13 +1,12 @@
 import type { Carcasse, Fei } from '@prisma/client';
 import { CarcassesIntermediaire } from './carcasses-intermediaire';
-import {
-  FeiStepSimpleStatus,
-  FeiStep,
-  FeiStepForTransportOrSoustraite,
-  FeiStepForChasseur,
-  FeiStepForEtg,
-} from './fei-steps';
 import { CarcasseWithModificationRequests } from '@api/src/types/carcasse';
+import {
+  TransmissionNextStep,
+  TransmissionSimpleStatus,
+  TransmissionStep,
+  TransmissionStepForTransportOrSoustraite,
+} from './transmission-steps';
 
 export interface CarcasseFieldsTakenFromFei {
   date_mise_a_mort: Carcasse['date_mise_a_mort'];
@@ -121,10 +120,10 @@ export type CarcasseTransmissionWihMetadata = {
   fei: Pick<Fei, 'numero' | 'commune_mise_a_mort' | 'date_mise_a_mort'>;
   allCarcassesDone?: boolean;
   labels: {
-    simpleStatus: FeiStepSimpleStatus;
-    currentStepLabel: FeiStep | FeiStepForChasseur | FeiStepForEtg;
-    nextStepLabel: FeiStep;
-    transportOrSoustraiteLabel: FeiStepForTransportOrSoustraite;
+    simpleStatus: TransmissionSimpleStatus;
+    currentStepLabel: TransmissionStep;
+    nextStepLabel: TransmissionNextStep;
+    transportOrSoustraiteLabel: TransmissionStepForTransportOrSoustraite;
   };
   carcasses: Array<CarcasseWithModificationRequests>;
 };

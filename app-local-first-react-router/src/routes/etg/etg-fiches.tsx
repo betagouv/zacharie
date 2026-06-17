@@ -26,6 +26,7 @@ import Chargement from '@app/components/Chargement';
 import { useTransmissionsSorted } from '@app/utils/get-transmissions-sorted';
 import { CarcasseTransmissionWihMetadata } from '@app/types/carcasse';
 import CardTransmission from '@app/components/CardTransmission';
+import { useEntitiesIdsWorkingDirectlyForObj } from '@app/utils/get-entity-relations';
 
 type ViewType = 'grid' | 'table';
 
@@ -890,6 +891,9 @@ function FeisWrapper({
   filter?: TransmissionSimpleStatus | 'Toutes les fiches';
 }) {
   const nothingToShow = paginatedTransmissions.length === 0;
+  const usersById = useZustandStore((state) => state.users);
+  const entitiesWorkingDirectlyFor = useEntitiesIdsWorkingDirectlyForObj();
+  const myUserId = useUser((state) => state.user?.id);
 
   if (nothingToShow) {
     return (
@@ -924,7 +928,12 @@ function FeisWrapper({
     <div className="grid w-full grid-cols-1 gap-4 justify-self-end sm:grid-cols-2 lg:grid-cols-3">
       {paginatedTransmissions.map((transmission) => {
         if (!transmission) return null;
-        const detenteurPrecedent = getPreviousDetenteur(transmission);
+        const detenteurPrecedent = getPreviousDetenteur(
+          transmission,
+          usersById,
+          entitiesWorkingDirectlyFor,
+          myUserId!
+        );
         return (
           <CardTransmission
             key={transmission.fei.numero}

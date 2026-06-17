@@ -370,8 +370,6 @@ function EtgFeiContent({
     return false;
   }, [transmission, etgsIds, entities]);
 
-  const isCurrentOwnerOfMyCarcasses = transmission.current_owner_user_id === user.id;
-
   // Remplace l'ancien flag FEI svi_closed_at : la fiche est verrouillée "pour moi"
   // quand toutes les carcasses que je gère ont été clôturées par le SVI (manuel ou cron).
   // ou quand l'intermediaire a lui-même clôturé la fiche en refusant toutes les carcasses
@@ -386,7 +384,7 @@ function EtgFeiContent({
     if (isEtgWorkingFor) {
       return true;
     }
-    if (transmission.current_owner_user_id && transmission.current_owner_user_id !== user.id) {
+    if (transmission.current_owner_user_id !== user.id) {
       return false;
     }
     if (!intermediaire) {
@@ -399,6 +397,28 @@ function EtgFeiContent({
   }, [transmission, user, intermediaire, isEtgWorkingFor, allMyCarcassesDone]);
 
   const effectiveCanEdit = canEdit && !props.readOnly;
+
+  // Comme `canEdit`, mais sans le verrou `allMyCarcassesDone` : même quand toutes mes carcasses
+  // sont clôturées (ex. toutes refusées → fiche clôturée par l'intermédiaire), l'ETG doit pouvoir
+  // rouvrir la modale de décision d'une carcasse pour corriger un refus. Le verrou « fiche clôturée »
+  // ne concerne que la prise en charge, la transmission et l'ajout de carcasse (= `effectiveCanEdit`).
+  const canEditCarcasseDecision = useMemo(() => {
+    if (isEtgWorkingFor) {
+      return true;
+    }
+    if (transmission.current_owner_user_id && transmission.current_owner_user_id !== user.id) {
+      return false;
+    }
+    if (!intermediaire) {
+      return false;
+    }
+    if (intermediaire.intermediaire_user_id !== user.id) {
+      return false;
+    }
+    return true;
+  }, [transmission, user, intermediaire, isEtgWorkingFor]);
+  const effectiveCanEditCarcasseDecision = canEditCarcasseDecision && !props.readOnly;
+
   const formattedPriseEnChargeAt = priseEnChargeAt
     ? dayjs(priseEnChargeAt).format('YYYY-MM-DDTHH:mm')
     : undefined;
@@ -517,14 +537,14 @@ function EtgFeiContent({
     if (isEtgWorkingFor) {
       return true;
     }
-    if (transmission.current_owner_user_id !== user.id && !isCurrentOwnerOfMyCarcasses) {
+    if (transmission.current_owner_user_id !== user.id) {
       return false;
     }
     if (intermediaire?.intermediaire_user_id !== user.id) {
       return false;
     }
     return true;
-  }, [transmission, user, intermediaire, isEtgWorkingFor, isCurrentOwnerOfMyCarcasses, allMyCarcassesDone]);
+  }, [transmission, user, intermediaire, isEtgWorkingFor, allMyCarcassesDone]);
 
   const needSelectNextUser = useMemo(() => {
     if (!couldSelectNextUser) {
@@ -735,7 +755,7 @@ function EtgFeiContent({
                       <Fragment key={carcasse.numero_bracelet}>
                         <CarcasseIntermediaireComp
                           intermediaire={intermediaire}
-                          canEdit={effectiveCanEdit}
+                          canEdit={effectiveCanEditCarcasseDecision}
                           carcasse={carcasse}
                         />
                       </Fragment>

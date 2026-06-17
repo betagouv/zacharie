@@ -10,7 +10,8 @@ export type TransmissionStepForEtg =
   | 'Fiche envoyée, pas encore prise en charge'
   | 'Transport vers un autre établissement de traitement'
   | 'Inspection par le SVI'
-  | 'Inspection vétérinaire terminée';
+  | 'Inspection vétérinaire terminée'
+  | 'Carcasses refusées';
 
 export type TransmissionStepForCollecteurPro =
   | 'Carcasses traitées'
