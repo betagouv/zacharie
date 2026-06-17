@@ -16,7 +16,7 @@ export default function useGetCommunesDeChasseFavorites(compute: boolean = true)
             if (!a.date_mise_a_mort || !b.date_mise_a_mort) {
               return 0;
             }
-            return dayjs(a.date_mise_a_mort).diff(dayjs(b.date_mise_a_mort));
+            return dayjs(b.date_mise_a_mort).diff(dayjs(a.date_mise_a_mort));
           })
           .map((fei) => fei.commune_mise_a_mort)
           .filter(Boolean)
