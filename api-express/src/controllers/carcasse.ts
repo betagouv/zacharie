@@ -7,6 +7,7 @@ import prisma from '~/prisma';
 import {
   EntityRelationStatus,
   EntityRelationType,
+  FeiOwnerRole,
   Prisma,
   TrichineResultatAnalyse,
   UserRoles,
@@ -96,11 +97,16 @@ router.get(
           {
             examinateur_initial_user_id: req.user.id,
           },
+          // Désignation du premier détenteur (asso) : on n'expose la fiche aux membres de
+          // l'entité qu'une fois la fiche réellement transmise (sortie de l'examinateur initial),
+          // pas dès la simple désignation en cours de préparation.
           {
             premier_detenteur_entity_id: { in: userEntityIds },
+            Fei: { fei_current_owner_role: { not: FeiOwnerRole.EXAMINATEUR_INITIAL } },
           },
           {
             next_owner_entity_id: { in: userEntityIds },
+            Fei: { fei_current_owner_role: { not: FeiOwnerRole.EXAMINATEUR_INITIAL } },
           },
           {
             prev_owner_entity_id: { in: userEntityIds },
