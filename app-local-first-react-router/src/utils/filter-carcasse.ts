@@ -150,14 +150,14 @@ export type CarcasseFilter = Filter & {
 
 export const filterCarcassesInRegistre =
   (filters: Array<CarcasseFilter>, debug = false) =>
-  (carcasse: Carcasse, fei: Fei) => {
+  (carcasse: Carcasse, fei?: Partial<Fei>) => {
     // for now an carcasse needs to fulfill ALL items to be displayed
     if (!filters?.filter((f) => Boolean(f?.value)).length) return carcasse;
     for (const filter of filters) {
       if (debug) console.log('filter', filter);
       if (!filter.field || !filter.value) continue;
       // @ts-expect-error: we know that the field is in the carcasse or the fei
-      let itemValue = carcasse[filter.field] || fei[filter.field];
+      let itemValue = carcasse[filter.field] || fei?.[filter.field];
       // @ts-expect-error: svi_carcasse_archived is isCarcasseSviArchived
       if (!itemValue && filter.field === 'svi_carcasse_archived') {
         itemValue = isCarcasseSviArchived(carcasse);

@@ -18,12 +18,15 @@ import Button from '@codegouvfr/react-dsfr/Button';
 import useExportCarcasses from '@app/utils/export-carcasses';
 import { isCarcasseSviArchived } from '@app/utils/carcasse-svi-archived';
 import { loadData, useLoaderEffect } from '@app/utils/load-data';
+import { useTransmissions } from '@app/utils/get-transmissions-sorted';
 const itemsPerPageOptions = [20, 50, 100, 200, 1000];
 
 export default function CollecteurCarcasses() {
   const user = useMostFreshUser('collecteur-carcasses')!;
   const carcassesRegistry = useZustandStore((state) => state.carcassesRegistry);
-  const feis = useZustandStore((state) => state.feis);
+  // Le collecteur travaille avec la Transmission (dérivée des carcasses), jamais avec le store `feis`.
+  // commune_mise_a_mort vit sur transmissions[fei_numero].fei (les autres champs filtrables sont sur la carcasse).
+  const transmissions = useTransmissions();
   const [selectedCarcassesIds, setSelectedCarcassesIds] = useState<Array<string>>([]);
   const [loading, setLoading] = useState(true);
 
@@ -66,7 +69,9 @@ export default function CollecteurCarcasses() {
 
   const filteredData = useMemo(() => {
     return carcassesRegistry
-      .filter((carcasse) => filterCarcassesInRegistre(filters)(carcasse, feis[carcasse.fei_numero]))
+      .filter((carcasse) =>
+        filterCarcassesInRegistre(filters)(carcasse, transmissions[carcasse.fei_numero]?.fei)
+      )
       .sort((a, b) => {
         // @ts-expect-error: svi_carcasse_archived is isCarcasseSviArchived
         const aValue = sortBy === 'svi_carcasse_archived' ? isCarcasseSviArchived(a) : a[sortBy];
@@ -85,7 +90,7 @@ export default function CollecteurCarcasses() {
         if (aValue > bValue) return sortOrder === 'ASC' ? 1 : -1;
         return 0;
       });
-  }, [carcassesRegistry, filters, sortBy, sortOrder, feis]);
+  }, [carcassesRegistry, filters, sortBy, sortOrder, transmissions]);
 
   const paginatedData = useMemo(() => {
     const start = (page - 1) * itemsPerPage;
@@ -146,7 +151,7 @@ export default function CollecteurCarcasses() {
             <div className="flex flex-col gap-1 pl-7 text-sm">
               <div>
                 <span className="font-semibold">Premier détenteur: </span>
-                <span>{feis[carcasse.fei_numero]?.premier_detenteur_name_cache || '-'}</span>
+                <span>{carcasse.premier_detenteur_name_cache || '-'}</span>
               </div>
               <div>
                 <span className="font-semibold">Statut: </span>

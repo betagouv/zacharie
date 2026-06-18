@@ -1,105 +1,62 @@
 import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { useMemo } from 'react';
-// import { getCurrentOwnerRoleLabel } from '@app/utils/get-user-roles-label';
 import { EntityRelationType, FeiOwnerRole, UserRoles } from '@prisma/client';
-import type { FeiWithIntermediaires } from '~/src/types/fei';
 import { useParams } from 'react-router';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import { syncData } from '@app/utils/sync-data';
 import { createHistoryInput } from '@app/utils/create-history-entry';
-import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
-import { isCarcasseClosedBySvi } from '@app/utils/is-carcasse-done';
 import { getNewCarcasseIntermediaireId } from '@app/utils/get-carcasse-intermediaire-id';
 import type { CarcassesIntermediaire } from '@app/types/carcasses-intermediaire';
+import { CarcasseTransmission } from '@app/types/carcasse';
+import { useTransmissionWithMetadata } from '@app/utils/get-transmissions-sorted';
 import dayjs from 'dayjs';
 import { useIsCircuitCourt } from '@app/utils/circuit-court';
-// import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 
 export default function CurrentOwnerConfirm() {
   const params = useParams();
   const user = useUser((state) => state.user)!;
   const isCircuitCourt = useIsCircuitCourt();
-  const updateFei = useZustandStore((state) => state.updateFei);
   const updateCarcassesTransmission = useZustandStore((state) => state.updateCarcassesTransmission);
   const createCarcassesIntermediaire = useZustandStore((state) => state.createCarcassesIntermediaire);
   const addLog = useZustandStore((state) => state.addLog);
-  const feis = useZustandStore((state) => state.feis);
-  const fei = feis[params.fei_numero!];
+  const transmissionMetadata = useTransmissionWithMetadata(params.fei_numero!);
+  const fei = transmissionMetadata.fei;
   const entities = useZustandStore((state) => state.entities);
-  const feiCarcasses = useCarcassesForFei(params.fei_numero);
-  const nextOwnerEntity = entities[fei.fei_next_owner_entity_id!];
+  const myCarcasses = transmissionMetadata.carcasses;
+  const currentTransmission = transmissionMetadata.content;
 
-  // For multi-recipient dispatch: filter to only carcasses assigned to this user/entity
+  const nextOwnerEntity = entities[currentTransmission.next_owner_entity_id!];
+
   const userEntityIds = useMemo(() => {
     return Object.values(entities)
       .filter((e) => e.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY)
       .map((e) => e.id);
   }, [entities]);
 
-  const myCarcasses = useMemo(() => {
-    return feiCarcasses.filter(
-      (c) =>
-        (c.next_owner_entity_id && userEntityIds.includes(c.next_owner_entity_id)) ||
-        c.next_owner_user_id === user.id
-    );
-  }, [feiCarcasses, userEntityIds, user.id]);
-
   const myCarcasseIds = useMemo(() => myCarcasses.map((c) => c.zacharie_carcasse_id), [myCarcasses]);
 
-  // For multi-recipient dispatch: derive the actual entity ID from per-carcasse assignment
-  // (fei.fei_next_owner_entity_id is always the FIRST group's entity due to retrocompat)
-  const myEntityId = useMemo(() => {
-    if (myCarcasses.length > 0) {
-      const perCarcasseEntityId = myCarcasses[0].next_owner_entity_id;
-      if (perCarcasseEntityId) return perCarcasseEntityId;
-    }
-    return fei.fei_next_owner_entity_id;
-  }, [myCarcasses, fei.fei_next_owner_entity_id]);
-  const myEntityName = myEntityId ? (entities[myEntityId]?.nom_d_usage ?? '') : '';
-
-  const myNextOwnerRole = useMemo(() => {
-    if (myCarcasses.length > 0) {
-      return myCarcasses[0].next_owner_role;
-    }
-    return fei.fei_next_owner_role;
-  }, [myCarcasses, fei.fei_next_owner_role]);
+  const myEntityName = currentTransmission.next_owner_entity_id
+    ? (entities[currentTransmission.next_owner_entity_id]?.nom_d_usage ?? '')
+    : '';
 
   // Detect if user already took charge of their assigned carcasses
   const myAlreadyHandledCarcasses = useMemo(() => {
-    return feiCarcasses.filter(
+    return myCarcasses.filter(
       (c) =>
         c.current_owner_user_id === user.id &&
         c.current_owner_entity_id != null &&
         userEntityIds.includes(c.current_owner_entity_id)
     );
-  }, [feiCarcasses, userEntityIds, user.id]);
-
-  // Fallback: if no per-carcasse assignment, use all carcasses (retrocompat)
-  const carcasseIds =
-    myCarcasseIds.length > 0 ? myCarcasseIds : feiCarcasses.map((c) => c.zacharie_carcasse_id);
-
-  // Check if there are remaining carcasses not yet taken in charge by anyone
-  const hasRemainingUntakenCarcasses = useMemo(() => {
-    return feiCarcasses.some(
-      (c) => c.next_owner_entity_id != null && !myCarcasseIds.includes(c.zacharie_carcasse_id)
-    );
-  }, [feiCarcasses, myCarcasseIds]);
-
-  const hasUnsendCarcasses = useMemo(() => {
-    return feiCarcasses.some(
-      (c) => c.next_owner_entity_id == null && !myCarcasseIds.includes(c.zacharie_carcasse_id)
-    );
-  }, [feiCarcasses, myCarcasseIds]);
+  }, [myCarcasses, userEntityIds, user.id]);
 
   const canConfirmCurrentOwner = useMemo(() => {
     // Multi-recipient: check if user has carcasses assigned to them per-carcasse
     if (myCarcasses.length > 0) {
       return true;
     }
-
-    if (fei.fei_next_owner_user_id === user.id) {
+    if (currentTransmission.next_owner_user_id === user.id) {
       return true;
     }
     if (!nextOwnerEntity) {
@@ -109,19 +66,15 @@ export default function CurrentOwnerConfirm() {
       return false;
     }
     return true;
-  }, [fei.fei_next_owner_user_id, user.id, nextOwnerEntity, myCarcasses.length]);
+  }, [currentTransmission.next_owner_user_id, user.id, nextOwnerEntity, myCarcasses.length]);
 
   if (isCircuitCourt) {
     return null;
   }
-  if (!myNextOwnerRole) {
+  if (!currentTransmission.next_owner_role) {
     return null;
   }
-  if (
-    fei.automatic_closed_at ||
-    (feiCarcasses.length > 0 && feiCarcasses.every(isCarcasseClosedBySvi)) ||
-    fei.intermediaire_closed_at
-  ) {
+  if (transmissionMetadata.allCarcassesDone) {
     return null;
   }
   // Multi-recipient: user already took charge of their assigned carcasses
@@ -131,23 +84,18 @@ export default function CurrentOwnerConfirm() {
 
   async function handlePriseEnCharge({ sousTraite, action }: { sousTraite: boolean; action?: string }) {
     if (sousTraite) {
-      updateCarcassesTransmission(carcasseIds, {
+      const nextTransmission: CarcasseTransmission = {
         next_owner_wants_to_sous_traite: true,
         next_owner_sous_traite_by_user_id: user.id,
-      });
-      const nextFei: Partial<FeiWithIntermediaires> = {
-        fei_next_owner_wants_to_sous_traite: true,
-        fei_next_owner_sous_traite_by_user_id: user.id,
       };
-
-      updateFei(fei.numero, nextFei);
+      updateCarcassesTransmission(myCarcasseIds, nextTransmission);
       addLog({
         user_id: user.id,
-        user_role: fei.fei_next_owner_role! as UserRoles,
+        user_role: currentTransmission.next_owner_role! as UserRoles,
         fei_numero: fei.numero,
         action: 'current-owner-sous-traite-request',
-        history: createHistoryInput(fei, nextFei),
-        entity_id: fei.fei_current_owner_entity_id,
+        history: createHistoryInput(currentTransmission, nextTransmission),
+        entity_id: currentTransmission.current_owner_entity_id,
         zacharie_carcasse_id: null,
         intermediaire_id: null,
         carcasse_intermediaire_id: null,
@@ -156,121 +104,63 @@ export default function CurrentOwnerConfirm() {
       return;
     }
 
-    const currentOwnerRole = fei.fei_next_owner_role;
-    const nextFei: Partial<FeiWithIntermediaires> = {
-      fei_current_owner_role: currentOwnerRole,
-      fei_current_owner_entity_id: myEntityId,
-      fei_current_owner_entity_name_cache: myEntityName,
-      fei_current_owner_user_id: fei.fei_next_owner_user_id || user.id,
-      fei_current_owner_user_name_cache:
-        fei.fei_next_owner_user_name_cache || `${user.prenom} ${user.nom_de_famille}`,
-      fei_next_owner_wants_to_sous_traite: sousTraite ? true : null,
-      fei_next_owner_role: sousTraite ? fei.fei_next_owner_role : null,
-      fei_next_owner_user_id: sousTraite ? fei.fei_next_owner_user_id : null,
-      fei_next_owner_user_name_cache: sousTraite ? fei.fei_next_owner_user_name_cache : null,
-      fei_next_owner_entity_id: sousTraite ? fei.fei_next_owner_entity_id : null,
-      fei_next_owner_entity_name_cache: sousTraite ? fei.fei_next_owner_entity_name_cache : null,
-      fei_prev_owner_role: fei.fei_current_owner_role || null,
-      fei_prev_owner_user_id: fei.fei_current_owner_user_id || null,
-      fei_prev_owner_entity_id: fei.fei_current_owner_entity_id || null,
+    const currentOwnerRole = FeiOwnerRole.COLLECTEUR_PRO;
+    const nextTransmission: CarcasseTransmission = {
+      current_owner_role: currentOwnerRole,
+      current_owner_entity_id: currentTransmission.next_owner_entity_id,
+      current_owner_entity_name_cache: myEntityName,
+      current_owner_user_id: user.id,
+      current_owner_user_name_cache: `${user.prenom} ${user.nom_de_famille}`,
+      next_owner_wants_to_sous_traite: null,
+      next_owner_role: null,
+      next_owner_user_id: null,
+      next_owner_user_name_cache: null,
+      next_owner_entity_id: null,
+      next_owner_entity_name_cache: null,
+      prev_owner_role: currentTransmission.current_owner_role || null,
+      prev_owner_user_id: currentTransmission.current_owner_user_id || null,
+      prev_owner_entity_id: currentTransmission.current_owner_entity_id || null,
     };
 
-    if (nextFei.fei_current_owner_role! === FeiOwnerRole.COLLECTEUR_PRO) {
-      const newIntermediaireId = getNewCarcasseIntermediaireId(user.id, fei.numero);
-      nextFei.latest_intermediaire_user_id = user.id;
-      nextFei.latest_intermediaire_entity_id = nextFei.fei_current_owner_entity_id;
-      nextFei.latest_intermediaire_name_cache = nextFei.fei_current_owner_entity_name_cache;
-      const newIntermediaire: CarcassesIntermediaire = {
-        id: newIntermediaireId,
-        fei_numero: fei.numero,
-        intermediaire_user_id: user.id,
-        intermediaire_role: currentOwnerRole,
-        intermediaire_entity_id: myEntityId || '',
-        created_at: dayjs().toDate(),
-        prise_en_charge_at: dayjs().toDate(),
-        intermediaire_depot_type: null,
-        intermediaire_depot_entity_id: null,
-        intermediaire_prochain_detenteur_role_cache: null,
-        intermediaire_prochain_detenteur_id_cache: null,
-      };
-      await createCarcassesIntermediaire(
-        [newIntermediaire],
-        myCarcasseIds.length > 0 ? myCarcasseIds : undefined
-      );
-      addLog({
-        user_id: user.id,
-        user_role: newIntermediaire.intermediaire_role! as UserRoles,
-        fei_numero: fei.numero,
-        action: 'intermediaire-create',
-        history: createHistoryInput(null, newIntermediaire),
-        entity_id: fei.fei_current_owner_entity_id,
-        zacharie_carcasse_id: null,
-        intermediaire_id: newIntermediaireId,
-        carcasse_intermediaire_id: null,
-      });
-    }
-
-    // Update carcasses transmission (source of truth) - only my carcasses
-    updateCarcassesTransmission(carcasseIds, {
-      current_owner_role: nextFei.fei_current_owner_role ?? null,
-      current_owner_entity_id: nextFei.fei_current_owner_entity_id ?? null,
-      current_owner_entity_name_cache: nextFei.fei_current_owner_entity_name_cache ?? null,
-      current_owner_user_id: nextFei.fei_current_owner_user_id ?? null,
-      current_owner_user_name_cache: nextFei.fei_current_owner_user_name_cache ?? null,
-      next_owner_wants_to_sous_traite: nextFei.fei_next_owner_wants_to_sous_traite ?? null,
-      next_owner_role: nextFei.fei_next_owner_role ?? null,
-      next_owner_user_id: nextFei.fei_next_owner_user_id ?? null,
-      next_owner_user_name_cache: nextFei.fei_next_owner_user_name_cache ?? null,
-      next_owner_entity_id: nextFei.fei_next_owner_entity_id ?? null,
-      next_owner_entity_name_cache: nextFei.fei_next_owner_entity_name_cache ?? null,
-      prev_owner_role: nextFei.fei_prev_owner_role ?? null,
-      prev_owner_user_id: nextFei.fei_prev_owner_user_id ?? null,
-      prev_owner_entity_id: nextFei.fei_prev_owner_entity_id ?? null,
-    });
-
-    // Partial take-over: if there are remaining carcasses sent to other recipients, keep the FEI open
-    // Don't apply hasUnsendCarcasses for PREMIER_DETENTEUR/EXAMINATEUR_INITIAL take-over
-    // (carcasses haven't been dispatched yet, that's normal)
-    const isIntermediaireTakeOver =
-      nextFei.fei_current_owner_role !== FeiOwnerRole.PREMIER_DETENTEUR &&
-      nextFei.fei_current_owner_role !== FeiOwnerRole.EXAMINATEUR_INITIAL;
-    if (hasRemainingUntakenCarcasses || (isIntermediaireTakeOver && hasUnsendCarcasses)) {
-      // Don't fully transition the FEI — keep current owner so they/others can continue
-      const partialNextFei: Partial<FeiWithIntermediaires> = {
-        fei_prev_owner_role: fei.fei_current_owner_role || null,
-        fei_prev_owner_user_id: fei.fei_current_owner_user_id || null,
-        fei_prev_owner_entity_id: fei.fei_current_owner_entity_id || null,
-      };
-      if (nextFei.latest_intermediaire_user_id) {
-        partialNextFei.latest_intermediaire_user_id = nextFei.latest_intermediaire_user_id;
-        partialNextFei.latest_intermediaire_entity_id = nextFei.latest_intermediaire_entity_id;
-        partialNextFei.latest_intermediaire_name_cache = nextFei.latest_intermediaire_name_cache;
-      }
-      updateFei(fei.numero, partialNextFei);
-      addLog({
-        user_id: user.id,
-        user_role: nextFei.fei_current_owner_role! as UserRoles,
-        fei_numero: fei.numero,
-        action: action || 'current-owner-confirm-partial',
-        history: createHistoryInput(fei, partialNextFei),
-        entity_id: fei.fei_current_owner_entity_id,
-        zacharie_carcasse_id: null,
-        intermediaire_id: null,
-        carcasse_intermediaire_id: null,
-      });
-      syncData(action || 'current-owner-confirm-partial');
-      return;
-    }
-
-    // Update FEI for retrocompat (full transition)
-    updateFei(fei.numero, nextFei);
+    const newIntermediaireId = getNewCarcasseIntermediaireId(user.id, fei.numero);
+    const newIntermediaire: CarcassesIntermediaire = {
+      id: newIntermediaireId,
+      fei_numero: fei.numero,
+      intermediaire_user_id: user.id,
+      intermediaire_role: currentOwnerRole,
+      intermediaire_entity_id: currentTransmission.next_owner_entity_id || '',
+      created_at: dayjs().toDate(),
+      prise_en_charge_at: dayjs().toDate(),
+      intermediaire_depot_type: null,
+      intermediaire_depot_entity_id: null,
+      intermediaire_prochain_detenteur_role_cache: null,
+      intermediaire_prochain_detenteur_id_cache: null,
+    };
+    await createCarcassesIntermediaire(
+      [newIntermediaire],
+      myCarcasseIds.length > 0 ? myCarcasseIds : undefined
+    );
     addLog({
       user_id: user.id,
-      user_role: nextFei.fei_current_owner_role! as UserRoles,
+      user_role: newIntermediaire.intermediaire_role! as UserRoles,
+      fei_numero: fei.numero,
+      action: 'intermediaire-create',
+      history: createHistoryInput(null, newIntermediaire),
+      entity_id: currentTransmission.current_owner_entity_id,
+      zacharie_carcasse_id: null,
+      intermediaire_id: newIntermediaireId,
+      carcasse_intermediaire_id: null,
+    });
+
+    // Update carcasses transmission (source of truth) - only my carcasses
+    updateCarcassesTransmission(myCarcasseIds, nextTransmission);
+    addLog({
+      user_id: user.id,
+      user_role: nextTransmission.current_owner_role! as UserRoles,
       fei_numero: fei.numero,
       action: action || 'current-owner-confirm',
-      history: createHistoryInput(fei, nextFei),
-      entity_id: fei.fei_current_owner_entity_id,
+      history: createHistoryInput(currentTransmission, nextTransmission),
+      entity_id: currentTransmission.next_owner_entity_id,
       zacharie_carcasse_id: null,
       intermediaire_id: null,
       carcasse_intermediaire_id: null,
@@ -286,7 +176,7 @@ export default function CurrentOwnerConfirm() {
     <div className="bg-alt-blue-france pb-8">
       <CallOut
         title={
-          fei.fei_next_owner_user_id
+          currentTransmission.next_owner_user_id
             ? '🫵  Cette fiche vous a été attribuée'
             : '🫵  Cette fiche a été attribuée à votre société'
         }
@@ -305,47 +195,30 @@ export default function CurrentOwnerConfirm() {
           Je contrôle et transporte les carcasses
         </Button>
         <div className="flex items-center gap-2">
-          {/* <p className="m-0 text-sm">Il y a une erreur ?</p> */}
           <Button
-            // priority="tertiary no outline"
             className="mt-0]"
-            // type="submit"
             priority="tertiary"
             type="button"
             onClick={() => {
               // Only reset my carcasses' next_owner
-              updateCarcassesTransmission(carcasseIds, {
+              const nextTransmission: CarcasseTransmission = {
                 next_owner_entity_id: null,
                 next_owner_entity_name_cache: null,
                 next_owner_user_id: null,
                 next_owner_user_name_cache: null,
                 next_owner_role: null,
-              });
-              // Only clear FEI-level next_owner if no other carcasses have a different next_owner
-              const otherCarcassesWithNextOwner = feiCarcasses.filter(
-                (c) => c.next_owner_entity_id != null && !carcasseIds.includes(c.zacharie_carcasse_id)
-              );
-              const nextFei =
-                otherCarcassesWithNextOwner.length > 0
-                  ? {} // Keep FEI-level next_owner for other recipients
-                  : {
-                      fei_next_owner_entity_id: null,
-                      fei_next_owner_entity_name_cache: null,
-                      fei_next_owner_user_id: null,
-                      fei_next_owner_user_name_cache: null,
-                      fei_next_owner_role: null,
-                    };
-              updateFei(fei.numero, nextFei);
+              };
+              updateCarcassesTransmission(myCarcasseIds, nextTransmission);
               addLog({
                 user_id: user.id,
-                user_role: fei.fei_next_owner_role as UserRoles,
+                user_role: currentTransmission.next_owner_role as UserRoles,
                 fei_numero: fei.numero,
                 action: 'current-owner-renvoi',
-                entity_id: fei.fei_next_owner_entity_id,
+                entity_id: currentTransmission.next_owner_entity_id,
                 zacharie_carcasse_id: null,
                 intermediaire_id: null,
                 carcasse_intermediaire_id: null,
-                history: createHistoryInput(fei, nextFei),
+                history: createHistoryInput(currentTransmission, nextTransmission),
               });
               syncData('current-owner-renvoi');
             }}
