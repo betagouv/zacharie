@@ -25,6 +25,15 @@ export async function syncCarcasse(
   if (!zacharie_carcasse_id) {
     throw new Error('Le numéro de la carcasse est obligatoire');
   }
+  // Tant que le compte n'est pas activé (CFEI non validé), l'examinateur initial peut
+  // préparer ses carcasses mais pas les transmettre : on rejette l'assignation d'un prochain détenteur.
+  if (!user.activated) {
+    const assignsNextOwner =
+      !!body.next_owner_role || !!body.next_owner_user_id || !!body.next_owner_entity_id;
+    if (assignsNextOwner) {
+      throw new Error('Votre compte doit être validé avant de pouvoir transmettre une fiche');
+    }
+  }
   let existingCarcasse = await prisma.carcasse.findFirst({
     where: {
       zacharie_carcasse_id: zacharie_carcasse_id,

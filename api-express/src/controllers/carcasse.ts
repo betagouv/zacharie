@@ -36,7 +36,10 @@ router.get(
   '/',
   passport.authenticate('user', { session: false }),
   catchErrors(async (req: RequestWithUser, res: express.Response<CarcassesGetResponse>) => {
-    if (!req.user.activated) {
+    // Un chasseur formé (numéro CFEI) non encore activé peut charger ses fiches en préparation.
+    const isExaminateurInitialNotYetActivated =
+      req.user.roles.includes(UserRoles.CHASSEUR) && !!req.user.numero_cfei;
+    if (!req.user.activated && !isExaminateurInitialNotYetActivated) {
       res.status(400).send({
         ok: false,
         data: null,

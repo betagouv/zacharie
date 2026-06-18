@@ -27,6 +27,7 @@ import ExaminateurInitialDeleteFei from './examinateur-initial-delete-fei';
 import DateHeureValidationAlerts from '@app/components/DateHeureValidationAlerts';
 import ChasseurHeaderFiche from './chasseur-header-fiche';
 import CurrentOwnerConfirm from './chasseur-current-owner-confirm';
+import { CompteEnAttenteValidationAlert } from '@app/components/CompteEnAttenteValidation';
 
 export default function ChasseurFei() {
   const params = useParams();
@@ -300,6 +301,10 @@ function FEIChasseurLoaded() {
   const showBloc4 = showBloc3;
 
   const handleTransmettre = () => {
+    // Compte pas encore activé (CFEI non validé) : la fiche peut être préparée mais pas transmise.
+    if (!user.activated) {
+      return;
+    }
     if (validationErrors.length > 0) {
       setShowErrors(true);
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -367,10 +372,11 @@ function FEIChasseurLoaded() {
   );
 
   const submitIsDisabled = useMemo(() => {
+    if (!user.activated) return true;
     if (!showBloc4) return true;
     if (carcassesDejaEnvoyees.length === carcasses.length) return true;
     return false;
-  }, [showBloc4, carcassesDejaEnvoyees.length, carcasses.length]);
+  }, [user.activated, showBloc4, carcassesDejaEnvoyees.length, carcasses.length]);
 
   return (
     <>
@@ -709,6 +715,7 @@ function FEIChasseurLoaded() {
                   )}
                 </div>
               )}
+              {canEdit && !user.activated && <CompteEnAttenteValidationAlert className="mx-4 mb-4 md:mx-0" />}
               <div className="flex flex-col items-center justify-between px-4 py-3 md:flex-row md:px-0">
                 <div className="grid w-full grid-cols-2 grid-rows-2 gap-2 md:grid-cols-3">
                   <Button

@@ -177,7 +177,7 @@ export default function ChasseurFeiEnvoyée() {
               >
                 Voir toutes les fiches
               </Button>
-              {!!user.numero_cfei && user.activated && (
+              {!!user.numero_cfei && (
                 <Button
                   type="button"
                   // className="bg-white"
