@@ -1,8 +1,8 @@
 import { CarcasseTransmission } from '@app/types/carcasse';
 import { capture } from '@app/services/sentry';
-import { CarcasseWithModificationRequests } from '@api/src/types/carcasse';
+import type { Carcasse } from '@prisma/client';
 
-export function getCarcasseTransmission(carcasseRef: CarcasseWithModificationRequests): CarcasseTransmission {
+export function getCarcasseTransmission(carcasseRef: Carcasse): CarcasseTransmission {
   return {
     fei_numero: carcasseRef.fei_numero,
     date_mise_a_mort: carcasseRef.date_mise_a_mort,
@@ -69,8 +69,8 @@ export function getCarcasseTransmission(carcasseRef: CarcasseWithModificationReq
 export function checkCarcasseAgainstTransmission(
   transmissionKeys: Array<keyof CarcasseTransmission>,
   transmission: CarcasseTransmission,
-  carcasse: CarcasseWithModificationRequests,
-  carcasseRef: CarcasseWithModificationRequests
+  carcasse: Carcasse,
+  carcasseRef: Carcasse
 ) {
   let differ: Record<
     string,

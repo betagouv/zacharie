@@ -5,7 +5,6 @@ import { catchErrors } from '~/middlewares/errors';
 import type { CarcassesGetResponse } from '~/types/responses';
 import prisma from '~/prisma';
 import {
-  CarcasseModificationRequest,
   EntityRelationStatus,
   EntityRelationType,
   Prisma,
@@ -167,9 +166,6 @@ router.get(
       prisma.carcasse.findMany({
         where,
         orderBy: { updated_at: 'desc' },
-        include: {
-          CarcasseModificationRequests: true,
-        },
         skip: parsedPage * parsedLimit,
         take: parsedLimit,
       }),
@@ -178,7 +174,6 @@ router.get(
     const feiNumeros = new Set<string>();
     const carcassesIds = new Set<string>();
     const userIds = new Set<string>();
-    const carcasseModifRequests: Array<CarcasseModificationRequest> = [];
 
     for (const carcasse of carcasses) {
       userIds.add(carcasse.examinateur_initial_user_id);
@@ -190,15 +185,18 @@ router.get(
       userIds.add(carcasse.created_by_user_id);
       carcassesIds.add(carcasse.zacharie_carcasse_id);
       feiNumeros.add(carcasse.fei_numero);
-      for (const modifRequest of carcasse.CarcasseModificationRequests) {
-        carcasseModifRequests.push(modifRequest);
-      }
     }
 
-    const [users, feis, carcassesIntermediaires] = await Promise.all([
+    // Modif requests are loaded BY carcasse (not embedded): the client keys its full-history map by
+    // zacharie_carcasse_id. Every modif mutation bumps its carcasse's updated_at, so the carcasses in
+    // this delta carry the full set of modif requests that changed.
+    const [users, feis, carcassesIntermediaires, carcasseModifRequests] = await Promise.all([
       prisma.user.findMany({ where: { id: { in: [...userIds].filter(Boolean) } }, select: userFeiSelect }),
       prisma.fei.findMany({ where: { numero: { in: [...feiNumeros].filter(Boolean) } } }),
       prisma.carcasseIntermediaire.findMany({
+        where: { zacharie_carcasse_id: { in: [...carcassesIds].filter(Boolean) } },
+      }),
+      prisma.carcasseModificationRequest.findMany({
         where: { zacharie_carcasse_id: { in: [...carcassesIds].filter(Boolean) } },
       }),
     ]);

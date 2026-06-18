@@ -14,7 +14,6 @@ import type {
 import type { UserForFei, UserForAdmin } from './user';
 import type { FeiPopulated } from './fei';
 import type { EntityForAdmin, EntityWithUserRelation, EntitiesByTypeAndId, EntitiesById } from './entity';
-import { CarcasseWithModificationRequests } from './carcasse';
 
 export interface SearchResponse {
   ok: boolean;
@@ -219,7 +218,7 @@ export interface CarcasseResponse {
 export interface CarcassesGetResponse {
   ok: boolean;
   data: {
-    carcasses: Array<CarcasseWithModificationRequests>;
+    carcasses: Array<Carcasse>;
     feis: Array<Fei>;
     users: Array<UserForFei>;
     entities: Array<EntityWithUserRelation>;
@@ -299,7 +298,7 @@ export interface SyncResponse {
   ok: boolean;
   data: {
     feis: Array<FeiPopulated>;
-    carcasses: Array<CarcasseWithModificationRequests>;
+    carcasses: Array<Carcasse>;
     carcassesIntermediaires: Array<CarcasseIntermediaire>;
     carcasseModifRequests: Array<CarcasseModificationRequest>;
     syncedLogIds: Array<string>;

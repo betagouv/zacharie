@@ -10,7 +10,7 @@ import { useMyCarcassesForFei } from '@app/utils/filter-my-carcasses';
 import dayjs from 'dayjs';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import CardCarcasse from '@app/components/CardCarcasse';
-import { CarcasseWithModificationRequests } from '@api/src/types/carcasse';
+import type { Carcasse } from '@prisma/client';
 
 export default function CarcassesExaminateur({
   canEdit,
@@ -38,8 +38,8 @@ export default function CarcassesExaminateur({
   const lastEspece = hasCarcasses ? carcasses[carcasses.length - 1].espece : null;
 
   const { restantes, dejaEnvoyeesParDestinataire } = useMemo(() => {
-    const restantesList: CarcasseWithModificationRequests[] = [];
-    const grouped: Record<string, CarcasseWithModificationRequests[]> = {};
+    const restantesList: Carcasse[] = [];
+    const grouped: Record<string, Carcasse[]> = {};
     for (const c of carcasses) {
       // Côté chasseur, on ne regroupe que par le destinataire choisi par le premier détenteur.
       // Le reste de la chaîne aval (ETG suivant, SVI…) ne le concerne pas.
@@ -56,7 +56,7 @@ export default function CarcassesExaminateur({
 
   const hasGroups = Object.keys(dejaEnvoyeesParDestinataire).length > 0;
 
-  const renderCarcasseCard = (carcasse: CarcasseWithModificationRequests) => (
+  const renderCarcasseCard = (carcasse: Carcasse) => (
     <CarcasseExaminateur
       key={carcasse.numero_bracelet}
       carcasse={carcasse}
@@ -163,7 +163,7 @@ export function CarcasseExaminateur({
   canEditAsPremierDetenteur,
   canEditAsExaminateurInitial,
 }: {
-  carcasse: CarcasseWithModificationRequests;
+  carcasse: Carcasse;
   canEditAsPremierDetenteur?: boolean;
   canEditAsExaminateurInitial?: boolean;
 }) {
@@ -201,7 +201,7 @@ export function CarcasseExaminateur({
           ? undefined
           : () => {
               if (window.confirm('Voulez-vous supprimer cette carcasse ? Cette opération est irréversible')) {
-                const nextPartialCarcasse: Partial<CarcasseWithModificationRequests> = {
+                const nextPartialCarcasse: Partial<Carcasse> = {
                   deleted_at: dayjs().toDate(),
                 };
                 updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse, true);

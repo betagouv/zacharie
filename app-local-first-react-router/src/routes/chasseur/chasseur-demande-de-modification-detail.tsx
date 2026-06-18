@@ -39,16 +39,18 @@ export default function ChasseurDemandeDeModificationDetail() {
   const { request_id } = useParams<{ request_id: string }>();
   const navigate = useNavigate();
   const user = useUser((state) => state.user);
-  const requestsByCarcasseId = useZustandStore((state) => state.carcasseModifActiveByCarcasseId);
+  const modifRequestsByCarcasseId = useZustandStore((state) => state.modifRequestsByCarcasseId);
   const carcasses = useZustandStore((state) => state.carcasses);
   const feis = useZustandStore((state) => state.feis);
   const entities = useZustandStore((state) => state.entities);
   const updateCarcasseModifRequest = useZustandStore((state) => state.updateCarcasseModifRequest);
 
   const request = useMemo(() => {
-    const request = Object.values(requestsByCarcasseId).find((r) => r.id === request_id);
+    const request = Object.values(modifRequestsByCarcasseId)
+      .flat()
+      .find((r) => r.id === request_id);
     return request || null;
-  }, [requestsByCarcasseId, request_id]);
+  }, [modifRequestsByCarcasseId, request_id]);
   const carcasse = request ? carcasses[request.zacharie_carcasse_id] : null;
   const fei = request ? feis[request.fei_numero] : null;
   const requestEntity = request ? entities[request.requested_by_entity_id] : null;

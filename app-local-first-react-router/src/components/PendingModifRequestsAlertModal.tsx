@@ -22,7 +22,7 @@ export default function PendingModifRequestsAlertModal() {
   const navigate = useNavigate();
   const location = useLocation();
   const user = useUser((state) => state.user);
-  const requestsByCarcasseId = useZustandStore((state) => state.carcasseModifActiveByCarcasseId);
+  const modifRequestsByCarcasseId = useZustandStore((state) => state.modifRequestsByCarcasseId);
   const carcasses = useZustandStore((state) => state.carcasses);
 
   const [hasMounted, setHasMounted] = useState(false);
@@ -36,12 +36,14 @@ export default function PendingModifRequestsAlertModal() {
 
   const pendingForMe = useMemo(() => {
     if (!user) return [];
-    return Object.values(requestsByCarcasseId).filter((r) => {
-      if (r.status !== CarcasseModificationRequestStatus.PENDING || r.deleted_at) return false;
-      const c = carcasses[r.zacharie_carcasse_id];
-      return c?.examinateur_initial_user_id === user.id;
-    });
-  }, [requestsByCarcasseId, carcasses, user]);
+    return Object.values(modifRequestsByCarcasseId)
+      .flat()
+      .filter((r) => {
+        if (r.status !== CarcasseModificationRequestStatus.PENDING || r.deleted_at) return false;
+        const c = carcasses[r.zacharie_carcasse_id];
+        return c?.examinateur_initial_user_id === user.id;
+      });
+  }, [modifRequestsByCarcasseId, carcasses, user]);
 
   const count = pendingForMe.length;
 

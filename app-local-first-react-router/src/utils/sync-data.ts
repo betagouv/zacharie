@@ -49,9 +49,9 @@ export async function syncData(calledFrom?: string) {
     const unsyncedIntermediaires = Object.values(state.carcassesIntermediaireById).filter(
       (ci) => !ci.is_synced
     );
-    const unsyncedModifRequests = Object.values(state.carcasseModifActiveByCarcasseId).filter(
-      (r) => !r.is_synced
-    );
+    const unsyncedModifRequests = Object.values(state.modifRequestsByCarcasseId)
+      .flat()
+      .filter((r) => !r.is_synced);
     const unsyncedLogs = state.logs.filter((l) => !l.is_synced);
 
     // Nothing to sync

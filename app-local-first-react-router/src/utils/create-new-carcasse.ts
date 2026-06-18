@@ -4,7 +4,6 @@ import useUser from '@app/zustand/user';
 import { Carcasse, CarcasseStatus, CarcasseType, FeiOwnerRole, UserRoles } from '@prisma/client';
 import dayjs from 'dayjs';
 import petitGibier from '@app/data/petit-gibier.json';
-import { CarcasseWithModificationRequests } from '@api/src/types/carcasse';
 
 type InitialParamsProps = {
   zacharieCarcasseId: string;
@@ -40,7 +39,7 @@ export async function createNewCarcasse({
     throw new Error('Le numéro de marquage est déjà utilisé pour cette fiche');
   }
   const isPetitGibier = petitGibier.especes.includes(espece);
-  const newCarcasse: CarcasseWithModificationRequests = {
+  const newCarcasse: Carcasse = {
     zacharie_carcasse_id: zacharieCarcasseId,
     numero_bracelet: numeroBracelet,
     fei_numero: fei.numero,
@@ -162,7 +161,6 @@ export async function createNewCarcasse({
     updated_at: dayjs().toDate(),
     deleted_at: null,
     is_synced: false,
-    CarcasseModificationRequests: [],
   };
   useZustandStore.getState().createCarcasse(newCarcasse);
   return newCarcasse;
