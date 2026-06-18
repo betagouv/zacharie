@@ -372,8 +372,6 @@ function FEIChasseurLoaded() {
     return false;
   }, [showBloc4, carcassesDejaEnvoyees.length, carcasses.length]);
 
-  console.log({ carcasses });
-
   return (
     <>
       <title>{`${params.fei_numero} | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}</title>
