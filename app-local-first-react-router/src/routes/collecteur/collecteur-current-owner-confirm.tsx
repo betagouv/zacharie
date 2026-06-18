@@ -2,7 +2,6 @@ import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { useMemo } from 'react';
 import { EntityRelationType, FeiOwnerRole, UserRoles } from '@prisma/client';
-import { useParams } from 'react-router';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import { syncData } from '@app/utils/sync-data';
@@ -10,18 +9,17 @@ import { createHistoryInput } from '@app/utils/create-history-entry';
 import { getNewCarcasseIntermediaireId } from '@app/utils/get-carcasse-intermediaire-id';
 import type { CarcassesIntermediaire } from '@app/types/carcasses-intermediaire';
 import { CarcasseTransmission } from '@app/types/carcasse';
-import { useTransmissionWithMetadata } from '@app/utils/get-transmissions-sorted';
+import { useGetTransmissionFromURLParams } from '@app/utils/get-transmissions-sorted';
 import dayjs from 'dayjs';
 import { useIsCircuitCourt } from '@app/utils/circuit-court';
 
 export default function CurrentOwnerConfirm() {
-  const params = useParams();
   const user = useUser((state) => state.user)!;
   const isCircuitCourt = useIsCircuitCourt();
   const updateCarcassesTransmission = useZustandStore((state) => state.updateCarcassesTransmission);
   const createCarcassesIntermediaire = useZustandStore((state) => state.createCarcassesIntermediaire);
   const addLog = useZustandStore((state) => state.addLog);
-  const transmissionMetadata = useTransmissionWithMetadata(params.fei_numero!);
+  const transmissionMetadata = useGetTransmissionFromURLParams();
   const fei = transmissionMetadata.fei;
   const entities = useZustandStore((state) => state.entities);
   const myCarcasses = transmissionMetadata.carcasses;

@@ -21,7 +21,7 @@ import {
   HistoriqueDesModifications,
 } from '@app/components/CarcasseModificationRequest';
 import { loadData, useLoaderEffect } from '@app/utils/load-data';
-import { useTransmissionWithMetadata } from '@app/utils/get-transmissions-sorted';
+import { useGetTransmissionFromURLParams } from '@app/utils/get-transmissions-sorted';
 import { getPendingModifRequest } from '@app/utils/modif-requests';
 
 export default function SviInspectionCarcasseLoader() {
@@ -53,7 +53,7 @@ function SviInspectionCarcasse() {
   const navigate = useNavigate();
   const user = useUser((state) => state.user)!;
   const entities = useZustandStore((state) => state.entities);
-  const transmission = useTransmissionWithMetadata(params.fei_numero!);
+  const transmission = useGetTransmissionFromURLParams();
   const fei = transmission.fei;
   const carcasses = useZustandStore((state) => state.carcasses);
   const carcasse = carcasses[params.zacharie_carcasse_id!];

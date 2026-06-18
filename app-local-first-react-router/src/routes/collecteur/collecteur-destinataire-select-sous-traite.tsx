@@ -1,4 +1,3 @@
-import { useParams } from 'react-router';
 import { useMemo, useState } from 'react';
 import { Prisma, EntityRelationType, FeiOwnerRole } from '@prisma/client';
 import dayjs from 'dayjs';
@@ -16,7 +15,7 @@ import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import type { CarcassesIntermediaire, FeiAndIntermediaireIds } from '@app/types/carcasses-intermediaire';
 import { CarcasseIntermediaire } from '@prisma/client';
 import { CarcasseTransmission } from '@app/types/carcasse';
-import { useTransmissionWithMetadata } from '@app/utils/get-transmissions-sorted';
+import { useGetTransmissionFromURLParams } from '@app/utils/get-transmissions-sorted';
 
 export default function CollecteurDestinataireSousTraite({
   className = '',
@@ -27,7 +26,6 @@ export default function CollecteurDestinataireSousTraite({
   feiAndIntermediaireIds?: FeiAndIntermediaireIds;
   intermediaire?: CarcassesIntermediaire;
 }) {
-  const params = useParams();
   const user = useUser((state) => state.user)!;
   const isOnline = useIsOnline();
   const updateCarcassesTransmission = useZustandStore((state) => state.updateCarcassesTransmission);
@@ -37,9 +35,8 @@ export default function CollecteurDestinataireSousTraite({
   const etgsIds = useEtgIds();
   const collecteursProIds = useCollecteursProIds();
 
-  const fei_numero = params.fei_numero!;
-
-  const transmissionMetadata = useTransmissionWithMetadata(fei_numero);
+  const transmissionMetadata = useGetTransmissionFromURLParams();
+  const fei_numero = transmissionMetadata.fei.numero;
   const carcasses = transmissionMetadata.carcasses;
   const transmission = transmissionMetadata.content;
   const carcasseIds = carcasses.map((c) => c.zacharie_carcasse_id);

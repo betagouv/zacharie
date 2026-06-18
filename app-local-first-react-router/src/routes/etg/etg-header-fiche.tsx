@@ -2,8 +2,7 @@ import dayjs from 'dayjs';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
 import { IconStep } from '@app/utils/transmission-labels';
 import type { TransmissionSimpleStatus } from '@app/types/transmission-steps';
-import { useParams } from 'react-router';
-import { useTransmissionWithMetadata } from '@app/utils/get-transmissions-sorted';
+import { useGetTransmissionFromURLParams } from '@app/utils/get-transmissions-sorted';
 
 const statusColors: Record<TransmissionSimpleStatus, { bg: string; text: string }> = {
   'À compléter': {
@@ -21,8 +20,7 @@ const statusColors: Record<TransmissionSimpleStatus, { bg: string; text: string 
 };
 
 export default function EtgHeaderFiche() {
-  const params = useParams();
-  const transmission = useTransmissionWithMetadata(params.fei_numero!);
+  const transmission = useGetTransmissionFromURLParams();
   const fei = transmission.fei;
   const simpleStatus = transmission.labels.simpleStatus;
   const currentStepLabelForEtg = transmission.labels.currentStepLabel;
