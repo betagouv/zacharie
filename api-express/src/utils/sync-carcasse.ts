@@ -1,5 +1,5 @@
 import prisma from '~/prisma';
-import { Carcasse, EntityRelationType, Prisma, User, UserRoles } from '@prisma/client';
+import { Carcasse, EntityRelationType, FeiOwnerRole, Prisma, User, UserRoles } from '@prisma/client';
 
 export interface SaveCarcasseResult {
   savedCarcasse: Carcasse;
@@ -25,12 +25,15 @@ export async function syncCarcasse(
   if (!zacharie_carcasse_id) {
     throw new Error('Le numéro de la carcasse est obligatoire');
   }
-  // Tant que le compte n'est pas activé (CFEI non validé), l'examinateur initial peut
-  // préparer ses carcasses mais pas les transmettre : on rejette l'assignation d'un prochain détenteur.
+  // Tant que le compte n'est pas activé (CFEI non validé), l'examinateur initial peut préparer
+  // sa fiche et désigner le premier détenteur (next_owner = PREMIER_DETENTEUR), mais pas la
+  // transmettre en aval : on rejette l'assignation d'un prochain détenteur au-delà du 1er détenteur.
   if (!user.activated) {
-    const assignsNextOwner =
-      !!body.next_owner_role || !!body.next_owner_user_id || !!body.next_owner_entity_id;
-    if (assignsNextOwner) {
+    const transmitsToNextDetenteur =
+      !!body.next_owner_role &&
+      body.next_owner_role !== FeiOwnerRole.PREMIER_DETENTEUR &&
+      body.next_owner_role !== FeiOwnerRole.EXAMINATEUR_INITIAL;
+    if (transmitsToNextDetenteur) {
       throw new Error('Votre compte doit être validé avant de pouvoir transmettre une fiche');
     }
   }
