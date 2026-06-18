@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { Stepper } from '@codegouvfr/react-dsfr/Stepper';
 import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
 import { EntityTypes, UserRoles } from '@prisma/client';
-import type { EntitiesWorkingForResponse } from '@api/src/types/responses';
+import type { EntitiesWorkingForResponse, UserConnexionResponse } from '@api/src/types/responses';
 import type { EntitiesByTypeAndId } from '@api/src/types/entity';
 import useUser from '@app/zustand/user';
 import { useNavigate } from 'react-router';
@@ -48,6 +48,17 @@ export default function CircuitCourtOnboardingEntreprise() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  const handleUserOnboardingFinished = useCallback(async () => {
+    const response = await API.post({
+      path: `/user/${user.id}`,
+      body: { onboarding_finished: true },
+    }).then((data) => data as UserConnexionResponse);
+    if (response.ok && response.data?.user?.id) {
+      useUser.setState({ user: response.data.user });
+    }
+    navigate('/app/circuit-court');
+  }, [user.id, navigate]);
 
   return (
     <>
@@ -133,7 +144,7 @@ export default function CircuitCourtOnboardingEntreprise() {
                       type: 'button',
                       nativeButtonProps: {
                         onClick: () => {
-                          navigate('/app/circuit-court');
+                          handleUserOnboardingFinished();
                         },
                       },
                     },
