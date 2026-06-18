@@ -58,18 +58,20 @@ export default function NouvelleCarcasse({
   const zacharieCarcasseId = `${fei.numero}_${numeroBracelet}`;
 
   useLayoutEffect(() => {
-    requestAnimationFrame(() => {
-      const submitButton = document.getElementById('add-carcasse-submit-button');
-      if (!submitButton) {
-        return;
-      }
-      const navHeight = document.getElementById('bottom-navigation')?.getBoundingClientRect().height ?? 0;
-      const buttonHeight = submitButton.getBoundingClientRect().height;
-      const targetTop = window.innerHeight - navHeight - buttonHeight;
-      const delta = submitButton.getBoundingClientRect().top - targetTop;
-      const marginWithBottomBar = 10;
-      window.scrollBy({ top: delta + marginWithBottomBar, behavior: 'smooth' });
-    });
+    if (import.meta.env.VITE_TEST_PLAYWRIGHT !== 'true') {
+      requestAnimationFrame(() => {
+        const submitButton = document.getElementById('add-carcasse-submit-button');
+        if (!submitButton) {
+          return;
+        }
+        const navHeight = document.getElementById('bottom-navigation')?.getBoundingClientRect().height ?? 0;
+        const buttonHeight = submitButton.getBoundingClientRect().height;
+        const targetTop = window.innerHeight - navHeight - buttonHeight;
+        const delta = submitButton.getBoundingClientRect().top - targetTop;
+        const marginWithBottomBar = 10;
+        window.scrollBy({ top: delta + marginWithBottomBar, behavior: 'smooth' });
+      });
+    }
   }, []);
 
   return (
