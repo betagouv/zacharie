@@ -178,16 +178,29 @@ router.get(
     const feiNumeros = new Set<string>();
     const carcassesIds = new Set<string>();
     const userIds = new Set<string>();
+    const entityIds = new Set<string>();
     const carcasseModifRequests: Array<CarcasseModificationRequest> = [];
 
     for (const carcasse of carcasses) {
-      userIds.add(carcasse.examinateur_initial_user_id);
-      userIds.add(carcasse.premier_detenteur_user_id);
-      userIds.add(carcasse.current_owner_user_id);
-      userIds.add(carcasse.next_owner_user_id);
-      userIds.add(carcasse.prev_owner_user_id);
-      userIds.add(carcasse.svi_user_id);
-      userIds.add(carcasse.created_by_user_id);
+      if (carcasse.examinateur_initial_user_id) userIds.add(carcasse.examinateur_initial_user_id);
+      if (carcasse.premier_detenteur_user_id) userIds.add(carcasse.premier_detenteur_user_id);
+      if (carcasse.current_owner_user_id) userIds.add(carcasse.current_owner_user_id);
+      if (carcasse.next_owner_user_id) userIds.add(carcasse.next_owner_user_id);
+      if (carcasse.prev_owner_user_id) userIds.add(carcasse.prev_owner_user_id);
+      if (carcasse.svi_user_id) userIds.add(carcasse.svi_user_id);
+      if (carcasse.created_by_user_id) userIds.add(carcasse.created_by_user_id);
+      if (carcasse.premier_detenteur_entity_id) entityIds.add(carcasse.premier_detenteur_entity_id);
+      if (carcasse.premier_detenteur_depot_entity_id)
+        entityIds.add(carcasse.premier_detenteur_depot_entity_id);
+      if (carcasse.svi_entity_id) entityIds.add(carcasse.svi_entity_id);
+      if (carcasse.current_owner_entity_id) entityIds.add(carcasse.current_owner_entity_id);
+      if (carcasse.next_owner_entity_id) entityIds.add(carcasse.next_owner_entity_id);
+      if (carcasse.prev_owner_entity_id) entityIds.add(carcasse.prev_owner_entity_id);
+      if (carcasse.next_owner_sous_traite_by_entity_id)
+        entityIds.add(carcasse.next_owner_sous_traite_by_entity_id);
+      if (carcasse.latest_intermediaire_entity_id) entityIds.add(carcasse.latest_intermediaire_entity_id);
+      if (carcasse.intermediaire_closed_by_entity_id)
+        entityIds.add(carcasse.intermediaire_closed_by_entity_id);
       carcassesIds.add(carcasse.zacharie_carcasse_id);
       feiNumeros.add(carcasse.fei_numero);
       for (const modifRequest of carcasse.CarcasseModificationRequests) {
@@ -203,22 +216,6 @@ router.get(
       }),
     ]);
 
-    // Entities referenced by the fiches the user can access (premier détenteur asso, dépôt, SVI,
-    // intermédiaires…). The user is authorized to see them because they have access to the fiche,
-    // even when those entities are not part of their own relations (cf. /user/my-relations, which
-    // hides confidential entities like associations de chasse and CCG).
-    const entityIds = new Set<string>();
-    for (const fei of feis) {
-      entityIds.add(fei.premier_detenteur_entity_id!);
-      entityIds.add(fei.premier_detenteur_depot_entity_id!);
-      entityIds.add(fei.svi_entity_id!);
-      entityIds.add(fei.fei_current_owner_entity_id!);
-      entityIds.add(fei.fei_next_owner_entity_id!);
-      entityIds.add(fei.fei_prev_owner_entity_id!);
-      entityIds.add(fei.fei_next_owner_sous_traite_by_entity_id!);
-      entityIds.add(fei.latest_intermediaire_entity_id!);
-      entityIds.add(fei.intermediaire_closed_by_entity_id!);
-    }
     for (const intermediaire of carcassesIntermediaires) {
       entityIds.add(intermediaire.intermediaire_entity_id!);
     }
