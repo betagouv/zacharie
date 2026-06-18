@@ -7,17 +7,10 @@ import { logoutAndConnect } from '../../utils/logout-and-connect';
 // Dispatch 2+2 to ETG 1 + ETG 2. ETG 1 → SVI 1, ETG 2 → SVI 2 in parallel. Each SVI must only
 // see its own branch's carcasses.
 //
-// ⚠️ BACKEND LIMITATION (skip reason): the data model does NOT support multi-branch parallel SVI
-// assignment today. `svi_assigned_at` and `svi_entity_id` are fei-level fields (one per Fei
-// record), not per-branch / per-CarcasseIntermediaire. Once ETG 1 transmits to SVI 1:
-//   • `fei.svi_assigned_at` gets set, which excludes the fei from `feisToTake` / `feisOngoing`
-//     queries (api-express/src/controllers/fei.ts:941,977) — so ETG 2 loses access to the fei.
-//   • Even if ETG 2 took charge before ETG 1's transmission (so the fei appears in their
-//     `feisDone` via their CarcasseIntermediaire records), ETG 2's later transmission to SVI 2
-//     would OVERWRITE `fei.svi_entity_id` (SVI 1 → SVI 2), breaking SVI 1's view of the fei.
-//
-// To unskip: backend needs to track SVI assignment per-branch (per-CarcasseIntermediaire or via
-// per-branch fei-state), not at the fei level. Tracked for the upcoming backend refactor.
+// Now passing: the transmission/SVI-assignment data (`svi_assigned_at`, `svi_entity_id`,
+// `current_owner_*`, `next_owner_*`) lives PER-CARCASSE instead of on the Fei row, so the two
+// branches no longer clobber each other — ETG 1→SVI 1 and ETG 2→SVI 2 stay isolated, and each
+// SVI sees only its own branch's carcasses.
 
 test.use({ launchOptions: { slowMo: 100 } });
 test.setTimeout(240_000);
@@ -26,7 +19,7 @@ test.beforeAll(async () => {
   await resetDb('PREMIER_DETENTEUR');
 });
 
-test.skip('SVI 1 et SVI 2 voient chacun leur branche seulement', async ({ page }) => {
+test('SVI 1 et SVI 2 voient chacun leur branche seulement', async ({ page }) => {
   page.on('dialog', (d) => d.accept().catch(() => {}));
   const feiId = 'ZACH-20250707-QZ6E0-155242';
 

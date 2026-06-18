@@ -21,6 +21,7 @@ import {
   HistoriqueDesModifications,
 } from '@app/components/CarcasseModificationRequest';
 import { CarcasseWithModificationRequests } from '@api/src/types/carcasse';
+import { useTransmissionWithMetadata } from '@app/utils/get-transmissions-sorted';
 
 interface CarcasseIntermediaireProps {
   carcasse: CarcasseWithModificationRequests;
@@ -38,7 +39,8 @@ export default function CarcasseIntermediaireComp({
   const updateCarcasseIntermediaire = useZustandStore((state) => state.updateCarcasseIntermediaire);
   const updateCarcasse = useZustandStore((state) => state.updateCarcasse);
   const addLog = useZustandStore((state) => state.addLog);
-  const fei = useZustandStore((state) => state.feis[params.fei_numero!]);
+  const transmissionMetadata = useTransmissionWithMetadata(params.fei_numero!);
+  const fei = transmissionMetadata.fei;
   const entities = useZustandStore((state) => state.entities);
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
   const carcasseIntermediaireId = getFeiAndCarcasseAndIntermediaireIdsFromCarcasse(

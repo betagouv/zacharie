@@ -1,15 +1,20 @@
 import useUser from '@app/zustand/user';
 import { EntityTypes, Entity, User, UserRoles } from '@prisma/client';
 
+export function isRoleCircuitCourt(role: UserRoles) {
+  if (!role) return false;
+  return (
+    role === UserRoles.COMMERCE_DE_DETAIL ||
+    role === UserRoles.REPAS_DE_CHASSE_OU_ASSOCIATIF ||
+    role === UserRoles.CANTINE_OU_RESTAURATION_COLLECTIVE ||
+    role === UserRoles.ASSOCIATION_CARITATIVE ||
+    role === UserRoles.CONSOMMATEUR_FINAL
+  );
+}
+
 export function isCircuitCourt(user: User) {
   if (!user) return false;
-  return (
-    user.roles.includes(UserRoles.COMMERCE_DE_DETAIL) ||
-    user.roles.includes(UserRoles.REPAS_DE_CHASSE_OU_ASSOCIATIF) ||
-    user.roles.includes(UserRoles.CANTINE_OU_RESTAURATION_COLLECTIVE) ||
-    user.roles.includes(UserRoles.ASSOCIATION_CARITATIVE) ||
-    user.roles.includes(UserRoles.CONSOMMATEUR_FINAL)
-  );
+  return isRoleCircuitCourt(user.roles[0]);
 }
 
 export function isEntityCircuitCourt(entity: Entity) {

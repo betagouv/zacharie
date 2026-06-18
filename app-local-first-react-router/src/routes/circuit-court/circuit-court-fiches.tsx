@@ -17,7 +17,7 @@ import {
 } from '@app/utils/get-carcasses-intermediaires';
 import { useSaveScroll } from '@app/services/useSaveScroll';
 import CardFiche from '@app/components/CardFiche';
-import { getPreviousDetenteur } from '@app/utils/get-previous-detenteur';
+import { getPreviousDetenteur } from '@app/utils/get-previous-detenteur-from-fei';
 import DropDownMenu from '@app/components/DropDownMenu';
 import { filterCarcassesForFei, useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { useMyCarcassesForFei } from '@app/utils/filter-my-carcasses';

@@ -12,11 +12,10 @@ test.beforeAll(async () => {
 });
 
 test('SVI rend des décisions divergentes → chasseur voit chaque décision', async ({ page }) => {
-  // SKIP: 5-step chain (PD → ETG → SVI x3 with divergent decisions). Test reaches the final
-  // assertion but the "Consignée" label for MM-001-002 doesn't appear on the fiche listing
-  // page after SVI saves. Suspected: store sync of the consigne status takes longer than the
-  // 30s timeout, or the fiche listing only shows aggregate status not per-carcasse status.
-  // Per-carcasse SVI decisions ARE covered separately by tests 74, 75, 76, 77.
+  // 5-step chain (PD → ETG → SVI x3 with divergent decisions: acceptée / consignée / acceptée).
+  // Now passing since SVI assignment + ownership live per-carcasse: the SVI inspection page
+  // unlocks via the carcasse-level svi_entity_id / current_owner_role.
+  // Per-carcasse SVI decisions are also covered by tests 74, 75, 76, 77.
   test.setTimeout(180_000);
   page.on('dialog', (d) => d.accept().catch(() => {}));
   const feiId = 'ZACH-20250707-QZ6E0-155242';

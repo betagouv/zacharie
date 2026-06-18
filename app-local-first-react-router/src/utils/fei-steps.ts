@@ -324,7 +324,7 @@ export function computeFeiSteps({
 
   const currentStepLabelForEtg: FeiStepForEtg = (() => {
     if (currentStepLabel === 'Clôturée') {
-      return "Prise en charge par le service vétérinaire d'inspection";
+      return 'Inspection vétérinaire terminée';
     }
     if (currentStepLabel === 'Inspection par le SVI') {
       return 'Fiche envoyée, pas encore prise en charge';

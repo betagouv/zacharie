@@ -1,10 +1,11 @@
 import dayjs from 'dayjs';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
-import { useFeiSteps, IconStep } from '@app/utils/fei-steps';
-import type { FeiWithIntermediaires } from '@api/src/types/fei';
-import type { FeiStepSimpleStatus } from '@app/types/fei-steps';
+import { IconStep } from '@app/utils/transmission-labels';
+import type { TransmissionSimpleStatus } from '@app/types/transmission-steps';
+import { useParams } from 'react-router';
+import { useTransmissionWithMetadata } from '@app/utils/get-transmissions-sorted';
 
-const statusColors: Record<FeiStepSimpleStatus, { bg: string; text: string }> = {
+const statusColors: Record<TransmissionSimpleStatus, { bg: string; text: string }> = {
   'À compléter': {
     bg: 'bg-[#FEE7FC]',
     text: 'text-[#6E445A]',
@@ -19,12 +20,16 @@ const statusColors: Record<FeiStepSimpleStatus, { bg: string; text: string }> = 
   },
 };
 
-export default function EtgHeaderFiche({ fei }: { fei: FeiWithIntermediaires }) {
-  const { simpleStatus, currentStepLabelForEtg } = useFeiSteps(fei);
+export default function EtgHeaderFiche() {
+  const params = useParams();
+  const transmission = useTransmissionWithMetadata(params.fei_numero!);
+  const fei = transmission.fei;
+  const simpleStatus = transmission.labels.simpleStatus;
+  const currentStepLabelForEtg = transmission.labels.currentStepLabel;
 
   const chasseTitle = `Fiche du ${dayjs(fei.date_mise_a_mort).format('DD/MM/YYYY')}`;
-  const title = fei.premier_detenteur_name_cache
-    ? `${chasseTitle} | ${fei.premier_detenteur_name_cache}`
+  const title = transmission.content.premier_detenteur_name_cache
+    ? `${chasseTitle} | ${transmission.content.premier_detenteur_name_cache}`
     : chasseTitle;
 
   return (
