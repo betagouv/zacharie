@@ -232,7 +232,8 @@ function UserCard({ user }: { user: EtgUserInteracted }) {
     <div className="flex flex-col bg-white p-4 shadow-sm">
       <Link
         to={`/app/etg/utilisateurs/${user.id}`}
-        className="font-bold text-gray-900 hover:underline"
+        className="font-bold text-gray-900"
+        target="_blank"
       >
         {getUserName(user)}
       </Link>
