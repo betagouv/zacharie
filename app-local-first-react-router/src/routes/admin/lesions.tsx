@@ -7,26 +7,10 @@ import { Badge } from '@codegouvfr/react-dsfr/Badge';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import { CarcasseType } from '@prisma/client';
 import lesions from '@app/data/svi/lesions.json';
-
-// Doit rester aligné avec api-express/src/controllers/stats.ts (BPH_PATTERNS).
-// Le backend matche en lowercase sur `svi_ipm2_lesions_ou_motifs`, qui contient
-// la valeur `MOTIVATION EN FAIT (CERTIFICAT)` (cf. utils/lesions.ts → lesionsList).
-const BPH_PATTERNS = [
-  "souillures d'origine digestive",
-  "souillures d'origine digestive liées à une balle d'abdomen",
-  'souillures telluriques',
-  'odeur anormale',
-  'putréfaction superficielle',
-  'putréfaction profonde',
-  'moisissures',
-  'œufs ou larves de mouche',
-  'morsure de chien',
-  'conditions de préparation des viandes par le producteur primaire',
-];
+import { isBphMotif as isBphMotifMatch } from '@app/utils/bph-motifs';
 
 function isBphMotif(item: { 'MOTIVATION EN FAIT (CERTIFICAT)': string }) {
-  const motif = item['MOTIVATION EN FAIT (CERTIFICAT)'].toLowerCase();
-  return BPH_PATTERNS.some((p) => motif.includes(p.toLowerCase()));
+  return isBphMotifMatch(item['MOTIVATION EN FAIT (CERTIFICAT)']);
 }
 
 type LesionItem = {

@@ -5,6 +5,7 @@ import validateUser from '~/middlewares/validateUser';
 import type { RequestWithUser } from '~/types/request';
 import type {
   EntitiesWorkingForResponse,
+  EtgUserInteractedResponse,
   EtgUsersInteractedResponse,
   PartenairesResponse,
   UserEntityResponse,
@@ -609,6 +610,83 @@ router.put(
   })
 );
 
+// Ensemble des utilisateurs ayant interagi avec les entités ETG de l'utilisateur connecté
+// (premier détenteur, examinateur, SVI, intermédiaires des carcasses passées par ces ETG),
+// hors membres des ETG. Sert de périmètre d'autorisation pour la liste et le détail.
+async function getEtgInteractedUserIds(userId: User['id']): Promise<Set<string>> {
+  // ETG entities the user can handle carcasses on behalf of
+  const userEntityRelations = await prisma.entityAndUserRelations.findMany({
+    where: {
+      owner_id: userId,
+      relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+      status: { in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER] },
+      deleted_at: null,
+      EntityRelatedWithUser: { type: EntityTypes.ETG },
+    },
+    select: { entity_id: true },
+  });
+  const etgEntityIds = userEntityRelations.map((r) => r.entity_id);
+
+  if (!etgEntityIds.length) {
+    return new Set<string>();
+  }
+
+  // User IDs from carcasses that passed through these ETG entities
+  const carcasses = await prisma.carcasse.findMany({
+    where: {
+      deleted_at: null,
+      OR: [
+        { CarcasseIntermediaire: { some: { intermediaire_entity_id: { in: etgEntityIds } } } },
+        { next_owner_entity_id: { in: etgEntityIds } },
+        { current_owner_entity_id: { in: etgEntityIds } },
+      ],
+    },
+    select: {
+      premier_detenteur_user_id: true,
+      examinateur_initial_user_id: true,
+      svi_user_id: true,
+      svi_ipm1_user_id: true,
+      svi_ipm2_user_id: true,
+    },
+  });
+
+  const intermediaires = await prisma.carcasseIntermediaire.findMany({
+    where: {
+      intermediaire_entity_id: { in: etgEntityIds },
+      deleted_at: null,
+    },
+    select: { intermediaire_user_id: true },
+  });
+
+  // Members of the ETG entities (employees) — excluded from the list
+  const members = await prisma.entityAndUserRelations.findMany({
+    where: {
+      entity_id: { in: etgEntityIds },
+      relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+      deleted_at: null,
+    },
+    select: { owner_id: true },
+  });
+  const memberIds = new Set(members.map((m) => m.owner_id));
+
+  const userIds = new Set<string>();
+  const addId = (id: string | null) => {
+    if (id && !memberIds.has(id)) userIds.add(id);
+  };
+  for (const c of carcasses) {
+    addId(c.premier_detenteur_user_id);
+    addId(c.examinateur_initial_user_id);
+    addId(c.svi_user_id);
+    addId(c.svi_ipm1_user_id);
+    addId(c.svi_ipm2_user_id);
+  }
+  for (const i of intermediaires) {
+    addId(i.intermediaire_user_id);
+  }
+
+  return userIds;
+}
+
 router.get(
   '/etg/utilisateurs',
   passport.authenticate('user', { session: false }),
@@ -616,76 +694,7 @@ router.get(
   catchErrors(async (req: RequestWithUser, res: express.Response<EtgUsersInteractedResponse>) => {
     const user = req.user!;
 
-    // ETG entities the user can handle carcasses on behalf of
-    const userEntityRelations = await prisma.entityAndUserRelations.findMany({
-      where: {
-        owner_id: user.id,
-        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-        status: { in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER] },
-        deleted_at: null,
-        EntityRelatedWithUser: { type: EntityTypes.ETG },
-      },
-      select: { entity_id: true },
-    });
-    const etgEntityIds = userEntityRelations.map((r) => r.entity_id);
-
-    if (!etgEntityIds.length) {
-      res.status(200).send({ ok: true, data: { users: [] }, error: '' });
-      return;
-    }
-
-    // User IDs from carcasses that passed through these ETG entities
-    const carcasses = await prisma.carcasse.findMany({
-      where: {
-        deleted_at: null,
-        OR: [
-          { CarcasseIntermediaire: { some: { intermediaire_entity_id: { in: etgEntityIds } } } },
-          { next_owner_entity_id: { in: etgEntityIds } },
-          { current_owner_entity_id: { in: etgEntityIds } },
-        ],
-      },
-      select: {
-        premier_detenteur_user_id: true,
-        examinateur_initial_user_id: true,
-        svi_user_id: true,
-        svi_ipm1_user_id: true,
-        svi_ipm2_user_id: true,
-      },
-    });
-
-    const intermediaires = await prisma.carcasseIntermediaire.findMany({
-      where: {
-        intermediaire_entity_id: { in: etgEntityIds },
-        deleted_at: null,
-      },
-      select: { intermediaire_user_id: true },
-    });
-
-    // Members of the ETG entities (employees) — excluded from the list
-    const members = await prisma.entityAndUserRelations.findMany({
-      where: {
-        entity_id: { in: etgEntityIds },
-        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-        deleted_at: null,
-      },
-      select: { owner_id: true },
-    });
-    const memberIds = new Set(members.map((m) => m.owner_id));
-
-    const userIds = new Set<string>();
-    const addId = (id: string | null) => {
-      if (id && !memberIds.has(id)) userIds.add(id);
-    };
-    for (const c of carcasses) {
-      addId(c.premier_detenteur_user_id);
-      addId(c.examinateur_initial_user_id);
-      addId(c.svi_user_id);
-      addId(c.svi_ipm1_user_id);
-      addId(c.svi_ipm2_user_id);
-    }
-    for (const i of intermediaires) {
-      addId(i.intermediaire_user_id);
-    }
+    const userIds = await getEtgInteractedUserIds(user.id);
 
     if (!userIds.size) {
       res.status(200).send({ ok: true, data: { users: [] }, error: '' });
@@ -699,6 +708,33 @@ router.get(
     });
 
     res.status(200).send({ ok: true, data: { users }, error: '' });
+  })
+);
+
+router.get(
+  '/etg/utilisateurs/:userId',
+  passport.authenticate('user', { session: false }),
+  validateUser([UserRoles.ETG]),
+  catchErrors(async (req: RequestWithUser, res: express.Response<EtgUserInteractedResponse>) => {
+    const user = req.user!;
+    const userId = req.params.userId;
+
+    const userIds = await getEtgInteractedUserIds(user.id);
+    if (!userIds.has(userId)) {
+      res.status(404).send({ ok: false, data: null, error: 'Utilisateur introuvable' });
+      return;
+    }
+
+    const interactedUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { ...userFeiSelect, roles: true },
+    });
+    if (!interactedUser) {
+      res.status(404).send({ ok: false, data: null, error: 'Utilisateur introuvable' });
+      return;
+    }
+
+    res.status(200).send({ ok: true, data: { user: interactedUser }, error: '' });
   })
 );
 

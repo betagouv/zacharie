@@ -12,6 +12,7 @@ import EtgProfilPartageDeMesDonnees from './profil/etg-partage-de-mes-donnees';
 import EtgProfilEntrepriseUtilisateurs from './profil/etg-entreprise-utilisateurs';
 import EtgFei from './etg-fei';
 import EtgUtilisateurs from './etg-utilisateurs';
+import EtgUtilisateur from './etg-utilisateur';
 import EtgSviInspectionCarcasse from './etg-carcasse-after-svi-inspection';
 
 export default function RouterEtg() {
@@ -35,6 +36,10 @@ export default function RouterEtg() {
       <Route
         path="utilisateurs"
         element={<EtgUtilisateurs />}
+      />
+      <Route
+        path="utilisateurs/:userId"
+        element={<EtgUtilisateur />}
       />
       <Route
         path="onboarding"
