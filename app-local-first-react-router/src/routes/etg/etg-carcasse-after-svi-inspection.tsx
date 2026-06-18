@@ -87,7 +87,7 @@ function SviInspectionCarcasse() {
               {
                 label: fei.numero,
                 linkProps: {
-                  to: `/app/etg/fei/${fei.numero}`,
+                  to: `/app/etg/fei/${fei.numero}/${carcasse.premier_detenteur_prochain_detenteur_id_cache}`,
                   href: '#',
                 },
               },

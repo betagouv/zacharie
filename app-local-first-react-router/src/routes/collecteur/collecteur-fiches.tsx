@@ -25,6 +25,7 @@ import { useLocalStorage } from '@uidotdev/usehooks';
 import { useEntitiesIdsWorkingDirectlyForObj } from '@app/utils/get-entity-relations';
 import { useLoaderEffect, loadData } from '@app/utils/load-data';
 import Chargement from '@app/components/Chargement';
+import { getTransmissionLink } from '@app/utils/get-transmission-id';
 
 type ViewType = 'grid' | 'table';
 type FeiNumberSelection = Array<NonNullable<CarcasseTransmissionWihMetadata['fei']['numero']>>;
@@ -563,7 +564,7 @@ function FeisWrapper({
             filter={'Toutes les fiches'}
             onPrintSelect={handleCheckboxClick}
             isPrintSelected={selectedFeis.includes(transmission.fei.numero!)}
-            linkTo={`/app/collecteur/fei/${transmission.fei.numero}`}
+            linkTo={`/app/collecteur/fei/${getTransmissionLink(transmission)}`}
             detenteurName={detenteurPrecedent.name}
             detenteurIcon={detenteurPrecedent.icon}
           />
@@ -643,7 +644,7 @@ function FeisTableRow({
     <tr
       key={transmission.fei.numero!}
       className={`cursor-pointer border-b border-gray-200 hover:bg-gray-50 ${isSelected ? 'bg-blue-50' : ''}`}
-      onClick={() => navigate(`/app/collecteur/fei/${transmission.fei.numero!}`)}
+      onClick={() => navigate(`/app/collecteur/fei/${getTransmissionLink(transmission)}`)}
     >
       <td
         className="px-4 py-3"

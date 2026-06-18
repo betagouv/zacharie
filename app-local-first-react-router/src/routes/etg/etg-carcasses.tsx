@@ -26,6 +26,7 @@ import { loadData, useLoaderEffect } from '@app/utils/load-data';
 import { useTransmissions } from '@app/utils/get-transmissions-sorted';
 import type { Carcasse } from '@prisma/client';
 import type { TransmissionSimpleStatus } from '@app/types/transmission-steps';
+import { getTransmissionLinkFromCarcasse } from '@app/utils/get-transmission-id';
 
 const advancedFiltersModal = createModal({
   id: 'etg-carcasses-advanced-filters',
@@ -492,7 +493,9 @@ export default function EtgCarcasses() {
       dataKey: 'fei_numero',
       title: 'Numéro de fiche',
       sortable: true,
-      render: (carcasse) => <Link to={`/app/etg/fei/${carcasse.fei_numero}`}>{carcasse.fei_numero}</Link>,
+      render: (carcasse) => (
+        <Link to={`/app/etg/fei/${getTransmissionLinkFromCarcasse(carcasse)}`}>{carcasse.fei_numero}</Link>
+      ),
     },
   ];
 
@@ -910,7 +913,7 @@ export default function EtgCarcasses() {
               <div>
                 <span className="font-semibold">Fiche: </span>
                 <Link
-                  to={`/app/etg/fei/${carcasse.fei_numero}`}
+                  to={`/app/etg/fei/${getTransmissionLinkFromCarcasse(carcasse)}`}
                   className="text-blue-600 hover:underline"
                 >
                   {carcasse.fei_numero}

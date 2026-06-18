@@ -4,6 +4,7 @@ import type { SearchResponse } from '@api/src/types/responses';
 import type { FeiWithIntermediaires } from '@api/src/types/fei';
 import type { FeiAndCarcasseAndIntermediaireIds } from '@app/types/carcasses-intermediaire';
 import { isRoleCircuitCourt } from './circuit-court';
+import { getTransmissionId, getTransmissionLinkFromCarcasse } from './get-transmission-id';
 
 // All the data we need is already downloaded and scoped to the current user
 // (load-carcasses returns only the carcasses/feis this user can read), so search
@@ -23,6 +24,10 @@ function getRolePrefix(user: User): RolePrefix {
 function carcasseRedirectUrl(prefix: RolePrefix, carcasse: Carcasse): string {
   if (prefix === 'svi') {
     return `/app/svi/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`;
+  }
+  // ETG et collecteur naviguent vers une transmission (fiche + prochain détenteur), pas vers la fiche seule
+  if (prefix === 'etg' || prefix === 'collecteur') {
+    return `/app/${prefix}/fei/${getTransmissionLinkFromCarcasse(carcasse)}`;
   }
   return `/app/${prefix}/fei/${carcasse.fei_numero}`;
 }
@@ -113,6 +118,40 @@ export function searchLocally(
   );
 
   if (byNumero.length) {
+    // ETG et collecteur naviguent vers une transmission : une même fiche peut se diviser en
+    // plusieurs transmissions (Premier Détenteur dispatchant à plusieurs Prochains Détenteurs),
+    // on émet donc un résultat par transmission, dérivé des carcasses.
+    if (prefix === 'etg' || prefix === 'collecteur') {
+      const matchedNumeros = new Set(byNumero.map((fei) => fei.numero));
+      const carcasseByTransmissionId: Record<string, Carcasse> = {};
+      for (const carcasse of allCarcasses) {
+        if (!matchedNumeros.has(carcasse.fei_numero)) continue;
+        const transmissionId = getTransmissionId(carcasse);
+        if (!carcasseByTransmissionId[transmissionId]) {
+          carcasseByTransmissionId[transmissionId] = carcasse;
+        }
+      }
+      return {
+        ok: true,
+        data: Object.values(carcasseByTransmissionId).map((carcasse) => {
+          const fei = feis[carcasse.fei_numero];
+          return {
+            searchQuery,
+            redirectUrl: carcasseRedirectUrl(prefix, carcasse),
+            carcasse_numero_bracelet: '',
+            carcasse_espece: '',
+            carcasse_type: '' as const,
+            fei_numero: carcasse.fei_numero,
+            fei_date_mise_a_mort: fei?.date_mise_a_mort
+              ? dayjs(fei.date_mise_a_mort).format('DD/MM/YYYY')
+              : '',
+            fei_svi_assigned_at: fei?.svi_assigned_at ? dayjs(fei.svi_assigned_at).format('DD/MM/YYYY') : '',
+            fei_commune_mise_a_mort: fei?.commune_mise_a_mort || '',
+          };
+        }),
+        error: '',
+      };
+    }
     return {
       ok: true,
       data: byNumero.map((fei) => ({
