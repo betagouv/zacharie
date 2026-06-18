@@ -6,7 +6,6 @@ import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import { syncData } from '@app/utils/sync-data';
-import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { useEtgIds, useCollecteursProIds } from '@app/utils/get-entity-relations';
 import SelectCustom from '@app/components/SelectCustom';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
@@ -16,6 +15,8 @@ import { createHistoryInput } from '@app/utils/create-history-entry';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import type { CarcassesIntermediaire, FeiAndIntermediaireIds } from '@app/types/carcasses-intermediaire';
 import { CarcasseIntermediaire } from '@prisma/client';
+import { CarcasseTransmission } from '@app/types/carcasse';
+import { useTransmissionWithMetadata } from '@app/utils/get-transmissions-sorted';
 
 export default function CollecteurDestinataireSousTraite({
   className = '',
@@ -29,18 +30,18 @@ export default function CollecteurDestinataireSousTraite({
   const params = useParams();
   const user = useUser((state) => state.user)!;
   const isOnline = useIsOnline();
-  const updateFei = useZustandStore((state) => state.updateFei);
   const updateCarcassesTransmission = useZustandStore((state) => state.updateCarcassesTransmission);
   const updateAllCarcasseIntermediaire = useZustandStore((state) => state.updateAllCarcasseIntermediaire);
   const addLog = useZustandStore((state) => state.addLog);
-  const feis = useZustandStore((state) => state.feis);
   const entities = useZustandStore((state) => state.entities);
   const etgsIds = useEtgIds();
   const collecteursProIds = useCollecteursProIds();
 
-  const fei = feis[params.fei_numero!];
+  const fei_numero = params.fei_numero!;
 
-  const carcasses = useCarcassesForFei(params.fei_numero);
+  const transmissionMetadata = useTransmissionWithMetadata(fei_numero);
+  const carcasses = transmissionMetadata.carcasses;
+  const transmission = transmissionMetadata.content;
   const carcasseIds = carcasses.map((c) => c.zacharie_carcasse_id);
 
   const etgs = etgsIds.map((id) => entities[id]);
@@ -80,38 +81,28 @@ export default function CollecteurDestinataireSousTraite({
     if (!prochainDetenteurEntityId) {
       return true;
     }
-    if (prochainDetenteurEntityId !== fei.fei_next_owner_entity_id) {
+    if (prochainDetenteurEntityId !== transmission.next_owner_entity_id) {
       return true;
     }
     return false;
-  }, [prochainDetenteurEntityId, fei.fei_next_owner_entity_id]);
+  }, [prochainDetenteurEntityId, transmission.next_owner_entity_id]);
 
   const [tryToSubmitAtLeastOnce, setTryTOSubmitAtLeastOnce] = useState(false);
 
   const handleSubmit = () => {
     if (!prochainDetenteurEntityId) return;
-    updateCarcassesTransmission(carcasseIds, {
+    const nextTransmission: CarcasseTransmission = {
       next_owner_entity_id: prochainDetenteurEntityId,
       next_owner_role: prochainDetenteurType as FeiOwnerRole,
       next_owner_wants_to_sous_traite: false,
       next_owner_sous_traite_at: dayjs().toDate(),
       next_owner_sous_traite_by_user_id: user.id,
-      next_owner_sous_traite_by_entity_id: fei.fei_next_owner_entity_id ?? null,
-      current_owner_entity_id: fei.fei_prev_owner_entity_id ?? null,
-      current_owner_role: fei.fei_prev_owner_role ?? null,
-      current_owner_user_id: fei.fei_prev_owner_user_id ?? null,
-    });
-    let nextFei: Partial<typeof fei> = {
-      fei_next_owner_entity_id: prochainDetenteurEntityId,
-      fei_next_owner_role: prochainDetenteurType as FeiOwnerRole,
-      fei_next_owner_wants_to_sous_traite: false,
-      fei_next_owner_sous_traite_at: dayjs().toDate(),
-      fei_next_owner_sous_traite_by_user_id: user.id,
-      fei_next_owner_sous_traite_by_entity_id: fei.fei_next_owner_entity_id,
-      fei_current_owner_entity_id: fei.fei_prev_owner_entity_id,
-      fei_current_owner_role: fei.fei_prev_owner_role,
-      fei_current_owner_user_id: fei.fei_prev_owner_user_id,
+      next_owner_sous_traite_by_entity_id: transmission.next_owner_entity_id ?? null,
+      current_owner_entity_id: transmission.prev_owner_entity_id ?? null,
+      current_owner_role: transmission.prev_owner_role ?? null,
+      current_owner_user_id: transmission.prev_owner_user_id ?? null,
     };
+    updateCarcassesTransmission(carcasseIds, nextTransmission);
     if (feiAndIntermediaireIds && intermediaire) {
       let nextCarcasseIntermediaire: Partial<CarcasseIntermediaire> = {
         intermediaire_prochain_detenteur_id_cache: prochainDetenteurEntityId,
@@ -120,16 +111,15 @@ export default function CollecteurDestinataireSousTraite({
         intermediaire_depot_type: null,
         intermediaire_depot_entity_id: null,
       };
-      updateAllCarcasseIntermediaire(fei.numero, feiAndIntermediaireIds!, nextCarcasseIntermediaire);
+      updateAllCarcasseIntermediaire(fei_numero, feiAndIntermediaireIds!, nextCarcasseIntermediaire);
     }
-    updateFei(fei.numero, nextFei);
     addLog({
       user_id: user.id,
-      user_role: fei.fei_current_owner_role!,
+      user_role: transmission.current_owner_role!,
       action: 'current-owner-sous-traite-select-destinataire-sous-traite',
-      fei_numero: fei.numero,
-      history: createHistoryInput(fei, nextFei),
-      entity_id: fei.premier_detenteur_entity_id,
+      fei_numero: fei_numero,
+      history: createHistoryInput(transmission, nextTransmission),
+      entity_id: transmission.current_owner_entity_id,
       zacharie_carcasse_id: null,
       carcasse_intermediaire_id: null,
       intermediaire_id: null,
@@ -144,7 +134,7 @@ export default function CollecteurDestinataireSousTraite({
     return null;
   }, [prochainDetenteurEntityId]);
 
-  if (!fei.premier_detenteur_user_id) {
+  if (!transmission.premier_detenteur_user_id) {
     return "Il n'y a pas encore de premier détenteur pour cette fiche";
   }
 
@@ -233,12 +223,12 @@ export default function CollecteurDestinataireSousTraite({
             description={jobIsMissing}
           />
         )}
-        {!needToSubmit && fei.fei_next_owner_entity_id && (
+        {!needToSubmit && transmission.next_owner_entity_id && (
           <>
             <Alert
               className="mt-6"
               severity="success"
-              description={`${entities[fei.fei_next_owner_entity_id]?.nom_d_usage} ${fei.is_synced ? 'a été notifié' : !isOnline ? 'sera notifié dès que vous aurez retrouvé du réseau' : 'va être notifié'}.`}
+              description={`${entities[transmission.next_owner_entity_id]?.nom_d_usage} ${transmission.is_synced ? 'a été notifié' : !isOnline ? 'sera notifié dès que vous aurez retrouvé du réseau' : 'va être notifié'}.`}
               title="Attribution effectuée"
             />
           </>

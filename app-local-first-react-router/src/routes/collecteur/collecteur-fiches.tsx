@@ -6,36 +6,30 @@ import { SegmentedControl } from '@codegouvfr/react-dsfr/SegmentedControl';
 import { Pagination } from '@codegouvfr/react-dsfr/Pagination';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
 import { UserConnexionResponse } from '@api/src/types/responses';
-import { FeiStepSimpleStatus } from '@app/types/fei-steps';
+import { TransmissionSimpleStatus } from '@app/types/transmission-steps';
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import API from '@app/services/api';
 import { abbreviations } from '@app/utils/count-carcasses';
 import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
-import { getFeisSorted } from '@app/utils/get-fei-sorted';
 import ExportFeisModal from '@app/components/ExportFeisModal';
-import {
-  filterCarcassesIntermediairesForCarcasse,
-  filterFeiIntermediaires,
-} from '@app/utils/get-carcasses-intermediaires';
-import { filterCarcassesForFei, useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
-import { useMyCarcassesForFei } from '@app/utils/filter-my-carcasses';
+import { filterCarcassesIntermediairesForCarcasse } from '@app/utils/get-carcasses-intermediaires';
 import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
 import { useSaveScroll } from '@app/services/useSaveScroll';
-import CardFiche from '@app/components/CardFiche';
-import { getPreviousDetenteur } from '@app/utils/get-previous-detenteur-from-fei';
+import CardTransmission from '@app/components/CardTransmission';
+import { getPreviousDetenteur } from '@app/utils/get-previous-detenteur-from-transmission';
 import DropDownMenu from '@app/components/DropDownMenu';
-
-import { useFeiSteps, computeFeiSteps } from '@app/utils/fei-steps';
+import { useTransmissionsSorted } from '@app/utils/get-transmissions-sorted';
+import type { CarcasseTransmissionWihMetadata } from '@app/types/carcasse';
 import { useLocalStorage } from '@uidotdev/usehooks';
-import type { FeiWithIntermediaires } from '@api/src/types/fei';
-import { useEntitiesIdsWorkingDirectlyFor } from '@app/utils/get-entity-relations';
+import { useEntitiesIdsWorkingDirectlyForObj } from '@app/utils/get-entity-relations';
 import { useLoaderEffect, loadData } from '@app/utils/load-data';
 import Chargement from '@app/components/Chargement';
 
 type ViewType = 'grid' | 'table';
+type FeiNumberSelection = Array<NonNullable<CarcasseTransmissionWihMetadata['fei']['numero']>>;
 
-const statusColors: Record<FeiStepSimpleStatus, { bg: string; text: string }> = {
+const statusColors: Record<TransmissionSimpleStatus, { bg: string; text: string }> = {
   'À compléter': {
     bg: 'bg-[#FEE7FC]',
     text: 'text-[#6E445A]',
@@ -52,13 +46,7 @@ const statusColors: Record<FeiStepSimpleStatus, { bg: string; text: string }> = 
 
 export default function CollecteurFiches() {
   const user = useMostFreshUser('collecteur-fiches')!;
-  const entitiesIdsWorkingDirectlyFor = useEntitiesIdsWorkingDirectlyFor();
-  const { feisOngoing, feisToTake, feisUnderMyResponsability, feisDone } = getFeisSorted();
-  const feisAssigned = [...feisUnderMyResponsability, ...feisToTake].sort((a, b) => {
-    return b.updated_at < a.updated_at ? -1 : 1;
-  });
-  const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
-  const carcasses = useZustandStore((state) => state.carcasses);
+  const { transmissionsEnCours, transmissionsACompleter, transmissionsCloturees } = useTransmissionsSorted();
   const [isLoading, setIsLoading] = useState(true);
   const [searchParams, setSearchParams] = useSearchParams();
   const page = parseInt(searchParams.get('page') || '1');
@@ -102,7 +90,7 @@ export default function CollecteurFiches() {
 
   useSaveScroll('collecteur-fiches-scrollY');
 
-  const [selectedFeis, setSelectedFeis] = useState<string[]>([]);
+  const [selectedFeis, setSelectedFeis] = useState<FeiNumberSelection>([]);
   const handleCheckboxClick = (id: string) => {
     setSelectedFeis((prev) => {
       if (prev.includes(id)) {
@@ -132,7 +120,7 @@ export default function CollecteurFiches() {
     }
   };
 
-  const [filter, setFilter] = useState<FeiStepSimpleStatus[]>(() => {
+  const [filter, setFilter] = useState<TransmissionSimpleStatus[]>(() => {
     const savedFilter = localStorage.getItem('collecteur-fiches-filter');
     if (savedFilter) {
       try {
@@ -145,7 +133,7 @@ export default function CollecteurFiches() {
     return [];
   });
 
-  const toggleFilter = (status: FeiStepSimpleStatus) => {
+  const toggleFilter = (status: TransmissionSimpleStatus) => {
     setFilter((prev) => (prev.includes(status) ? prev.filter((s) => s !== status) : [...prev, status]));
   };
 
@@ -168,7 +156,7 @@ export default function CollecteurFiches() {
   const dropDownMenuFilterText = useMemo(() => {
     if (filter.length === 0) return 'Filtrer par statut';
     if (filter.length === 1) {
-      const labels: Record<FeiStepSimpleStatus, string> = {
+      const labels: Record<TransmissionSimpleStatus, string> = {
         'À compléter': 'Fiches à compléter',
         'En cours': 'Fiches en cours',
         Clôturée: 'Fiches clôturées',
@@ -184,15 +172,16 @@ export default function CollecteurFiches() {
   );
   const [filterCCG, setFilterCCG] = useLocalStorage<string>('collecteur-fiches-filter-ccg', '');
 
-  const allFeis = useMemo(() => {
-    return [...feisAssigned, ...feisOngoing, ...feisDone];
-  }, [feisAssigned, feisOngoing, feisDone]);
+  const allTransmissions = useMemo(() => {
+    return [...transmissionsACompleter, ...transmissionsEnCours, ...transmissionsCloturees];
+  }, [transmissionsACompleter, transmissionsEnCours, transmissionsCloturees]);
 
   const premierDetenteurOptions = useMemo(() => {
     const map = new Map<string, string>();
-    for (const fei of allFeis) {
-      const id = fei.premier_detenteur_entity_id || fei.premier_detenteur_user_id;
-      const name = fei.premier_detenteur_name_cache;
+    for (const transmission of allTransmissions) {
+      const id =
+        transmission.content.premier_detenteur_entity_id || transmission.content.premier_detenteur_user_id;
+      const name = transmission.content.premier_detenteur_name_cache;
       if (id && name && !map.has(id)) {
         map.set(id, name);
       }
@@ -200,14 +189,17 @@ export default function CollecteurFiches() {
     return Array.from(map.entries())
       .map(([id, name]) => ({ id, name }))
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [allFeis]);
+  }, [allTransmissions]);
 
   const ccgOptions = useMemo(() => {
     const map = new Map<string, string>();
-    for (const fei of allFeis) {
-      if (fei.premier_detenteur_depot_type === DepotType.CCG && fei.premier_detenteur_depot_entity_id) {
-        const id = fei.premier_detenteur_depot_entity_id;
-        const name = fei.premier_detenteur_depot_entity_name_cache || id;
+    for (const transmission of allTransmissions) {
+      if (
+        transmission.content.premier_detenteur_depot_type === DepotType.CCG &&
+        transmission.content.premier_detenteur_depot_entity_id
+      ) {
+        const id = transmission.content.premier_detenteur_depot_entity_id;
+        const name = transmission.content.premier_detenteur_depot_entity_name_cache || id;
         if (!map.has(id)) {
           map.set(id, name);
         }
@@ -216,7 +208,7 @@ export default function CollecteurFiches() {
     return Array.from(map.entries())
       .map(([id, name]) => ({ id, name }))
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [allFeis]);
+  }, [allTransmissions]);
 
   const dropDownMenuFilterTextPremierDetenteur = useMemo(() => {
     if (filterPremierDetenteur) {
@@ -234,50 +226,34 @@ export default function CollecteurFiches() {
     return 'Filtrer par CCG';
   }, [filterCCG, ccgOptions]);
 
-  const filteredFeis = useMemo(() => {
-    let feis = allFeis;
-    if (filter.length > 0) {
-      feis = feis.filter((fei) => {
-        const intermediaires = filterFeiIntermediaires(carcassesIntermediaireById, fei.numero);
-        const feiCarcasses = filterCarcassesForFei(carcasses, fei.numero);
-        const { simpleStatus } = computeFeiSteps({
-          fei,
-          intermediaires,
-          entitiesIdsWorkingDirectlyFor,
-          user,
-          carcasses: feiCarcasses,
-        });
-        return filter.includes(simpleStatus);
-      });
+  // un seul loop sur allTransmissions (la donnée peut être énorme) : on applique tous les filtres
+  // actifs avec un `continue` anticipé plutôt que d'enchaîner plusieurs `.filter()`.
+  const filteredTransmissions = useMemo(() => {
+    const result: CarcasseTransmissionWihMetadata[] = [];
+    for (const transmission of allTransmissions) {
+      if (filter.length > 0 && !filter.includes(transmission.labels.simpleStatus)) continue;
+      if (filterPremierDetenteur) {
+        if (
+          transmission.content.premier_detenteur_user_id !== filterPremierDetenteur &&
+          transmission.content.premier_detenteur_entity_id !== filterPremierDetenteur
+        ) {
+          continue;
+        }
+      }
+      if (filterCCG) {
+        if (transmission.content.premier_detenteur_depot_entity_id !== filterCCG) continue;
+      }
+      result.push(transmission);
     }
-    if (filterPremierDetenteur) {
-      feis = feis.filter(
-        (fei) =>
-          fei.premier_detenteur_user_id === filterPremierDetenteur ||
-          fei.premier_detenteur_entity_id === filterPremierDetenteur
-      );
-    }
-    if (filterCCG) {
-      feis = feis.filter((fei) => fei.premier_detenteur_depot_entity_id === filterCCG);
-    }
-    return feis;
-  }, [
-    allFeis,
-    filter,
-    filterPremierDetenteur,
-    filterCCG,
-    carcassesIntermediaireById,
-    carcasses,
-    entitiesIdsWorkingDirectlyFor,
-    user,
-  ]);
+    return result;
+  }, [allTransmissions, filter, filterPremierDetenteur, filterCCG]);
 
-  const totalPages = Math.ceil(filteredFeis.length / (itemsPerPage ?? 20));
-  const paginatedFeis = useMemo(() => {
+  const totalPages = Math.ceil(filteredTransmissions.length / (itemsPerPage ?? 20));
+  const paginatedTransmissions = useMemo(() => {
     const perPage = itemsPerPage ?? 20;
     const start = (page - 1) * perPage;
-    return filteredFeis.slice(start, start + perPage);
-  }, [filteredFeis, page, itemsPerPage]);
+    return filteredTransmissions.slice(start, start + perPage);
+  }, [filteredTransmissions, page, itemsPerPage]);
 
   function Actions() {
     return (
@@ -461,7 +437,7 @@ export default function CollecteurFiches() {
             ))}
           </div>
           <span className="text-sm opacity-50">
-            {filteredFeis.length} fiche{filteredFeis.length > 1 ? 's' : ''}
+            {filteredTransmissions.length} fiche{filteredTransmissions.length > 1 ? 's' : ''}
           </span>
         </div>
       </div>
@@ -488,28 +464,13 @@ export default function CollecteurFiches() {
         <div className="fr-grid-row fr-grid-row--center fr-grid-row-gutters pt-4">
           <div className="fr-col-12 fr-col-md-10 min-h-96 p-4 md:p-0">
             <FeisWrapper
+              paginatedTransmissions={paginatedTransmissions}
               viewType={viewType}
               handleSelectAll={handleSelectAll}
+              handleCheckboxClick={handleCheckboxClick}
               selectedFeis={selectedFeis}
               filter={'Toutes les fiches'}
-            >
-              {paginatedFeis.map((fei) => {
-                if (!fei) return null;
-                const detenteurPrecedent = getPreviousDetenteur(fei);
-                return (
-                  <CardFiche
-                    key={fei.numero}
-                    fei={fei}
-                    filter={'Toutes les fiches'}
-                    onPrintSelect={handleCheckboxClick}
-                    isPrintSelected={selectedFeis.includes(fei.numero)}
-                    linkTo={`/app/collecteur/fei/${fei.numero}`}
-                    detenteurName={detenteurPrecedent.name}
-                    detenteurIcon={detenteurPrecedent.icon}
-                  />
-                );
-              })}
-            </FeisWrapper>
+            />
             {totalPages > 1 && (
               <div className="flex justify-center py-6">
                 <Pagination
@@ -537,19 +498,24 @@ export default function CollecteurFiches() {
 }
 
 function FeisWrapper({
-  children,
+  paginatedTransmissions,
   viewType,
   handleSelectAll,
+  handleCheckboxClick,
   selectedFeis,
   filter,
 }: {
-  children: React.ReactNode;
+  paginatedTransmissions: Array<CarcasseTransmissionWihMetadata>;
   viewType: 'grid' | 'table';
-  handleSelectAll?: (visibleFeis?: string[]) => void;
-  selectedFeis?: string[];
-  filter?: FeiStepSimpleStatus | 'Toutes les fiches';
+  handleSelectAll: (visibleFeis?: string[]) => void;
+  handleCheckboxClick: (feiNumber: string, selected: boolean) => void;
+  selectedFeis: FeiNumberSelection;
+  filter?: TransmissionSimpleStatus | 'Toutes les fiches';
 }) {
-  const nothingToShow = !children || React.Children.toArray(children).length === 0;
+  const nothingToShow = paginatedTransmissions.length === 0;
+  const usersById = useZustandStore((state) => state.users);
+  const entitiesWorkingDirectlyFor = useEntitiesIdsWorkingDirectlyForObj();
+  const myUserId = useUser((state) => state.user?.id);
 
   if (nothingToShow) {
     return (
@@ -571,50 +537,69 @@ function FeisWrapper({
   if (viewType === 'table') {
     return (
       <FeisTable
+        paginatedTransmissions={paginatedTransmissions}
         handleSelectAll={handleSelectAll}
         selectedFeis={selectedFeis}
-        filter={filter as FeiStepSimpleStatus | 'Toutes les fiches'}
-      >
-        {children}
-      </FeisTable>
+        filter={filter as TransmissionSimpleStatus | 'Toutes les fiches'}
+        handleCheckboxClick={handleCheckboxClick}
+      />
     );
   }
 
   return (
     <div className="grid w-full grid-cols-1 gap-4 justify-self-end sm:grid-cols-2 lg:grid-cols-3">
-      {children}
+      {paginatedTransmissions.map((transmission) => {
+        if (!transmission) return null;
+        const detenteurPrecedent = getPreviousDetenteur(
+          transmission,
+          usersById,
+          entitiesWorkingDirectlyFor,
+          myUserId!
+        );
+        return (
+          <CardTransmission
+            key={transmission.fei.numero}
+            transmission={transmission}
+            filter={'Toutes les fiches'}
+            onPrintSelect={handleCheckboxClick}
+            isPrintSelected={selectedFeis.includes(transmission.fei.numero!)}
+            linkTo={`/app/collecteur/fei/${transmission.fei.numero}`}
+            detenteurName={detenteurPrecedent.name}
+            detenteurIcon={detenteurPrecedent.icon}
+          />
+        );
+      })}
     </div>
   );
 }
 
 function FeisTableRow({
-  fei,
+  transmission,
   isSelected,
   onPrintSelect,
   navigate,
   filter,
   onVisibilityChange,
 }: {
-  fei: FeiWithIntermediaires;
+  transmission: CarcasseTransmissionWihMetadata;
   isSelected: boolean;
   onPrintSelect?: (feiNumber: string, selected: boolean) => void;
   navigate: ReturnType<typeof useNavigate>;
-  filter?: FeiStepSimpleStatus | 'Toutes les fiches';
+  filter?: TransmissionSimpleStatus | 'Toutes les fiches';
   onVisibilityChange?: (feiNumero: string, isVisible: boolean) => void;
 }) {
-  const { simpleStatus, currentStepLabelShort } = useFeiSteps(fei);
-  const myCarcasses = useMyCarcassesForFei(fei.numero);
-  const feiCarcasses = useCarcassesForFei(fei.numero);
+  const simpleStatus = transmission.labels.simpleStatus;
+  const currentStepLabelShort = null;
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
 
   // Notifier le parent de la visibilité de cette ligne
   useEffect(() => {
     const isVisible = !filter || filter === 'Toutes les fiches' || filter === simpleStatus;
-    onVisibilityChange?.(fei.numero, isVisible);
-  }, [filter, simpleStatus, fei.numero, onVisibilityChange]);
+    onVisibilityChange?.(transmission.fei.numero!, isVisible);
+  }, [filter, simpleStatus, transmission.fei.numero, onVisibilityChange]);
 
   const [formattedCarcassesAcceptées, _carcassesOuLotsRefusés] = useMemo(() => {
-    const formatted = formatCountCarcasseByEspece(myCarcasses) as string[];
+    const formatted = formatCountCarcasseByEspece(transmission.carcasses) as string[];
     const _carcassesAcceptées: string[] = [];
     let _carcassesOuLotsRefusés = '';
     for (const line of formatted) {
@@ -625,7 +610,7 @@ function FeisTableRow({
         let enrichedLine = line;
         for (const [espece, abbreviation] of Object.entries(abbreviations)) {
           if (line.toLowerCase().includes(abbreviation.toLowerCase())) {
-            const carcasse = feiCarcasses.find(
+            const carcasse = transmission.carcasses.find(
               (c) => c?.type === CarcasseType.PETIT_GIBIER && c.espece === espece
             );
             if (carcasse) {
@@ -647,7 +632,7 @@ function FeisTableRow({
       }
     }
     return [_carcassesAcceptées, _carcassesOuLotsRefusés];
-  }, [myCarcasses, feiCarcasses, carcassesIntermediaireById]);
+  }, [transmission.carcasses, carcassesIntermediaireById]);
 
   // Filtrer selon le statut si un filtre est défini - APRÈS tous les hooks
   if (filter && filter !== 'Toutes les fiches' && filter !== simpleStatus) {
@@ -656,9 +641,9 @@ function FeisTableRow({
 
   return (
     <tr
-      key={fei.numero}
+      key={transmission.fei.numero!}
       className={`cursor-pointer border-b border-gray-200 hover:bg-gray-50 ${isSelected ? 'bg-blue-50' : ''}`}
-      onClick={() => navigate(`/app/collecteur/fei/${fei.numero}`)}
+      onClick={() => navigate(`/app/collecteur/fei/${transmission.fei.numero!}`)}
     >
       <td
         className="px-4 py-3"
@@ -669,16 +654,16 @@ function FeisTableRow({
             type="checkbox"
             checked={isSelected}
             className="checked:accent-action-high-blue-france h-4 w-4 border-2"
-            onChange={() => onPrintSelect?.(fei.numero, !isSelected)}
+            onChange={() => onPrintSelect?.(transmission.fei.numero!, !isSelected)}
           />
         </div>
       </td>
       <td className="px-4 py-3">
         <div className="flex flex-col gap-1">
           <span className="text-action-high-blue-france text-lg font-semibold">
-            {dayjs(fei.date_mise_a_mort || fei.created_at).format('DD/MM/YYYY')}
+            {dayjs(transmission.fei.date_mise_a_mort).format('DD/MM/YYYY')}
           </span>
-          <span className="text-sm">{fei.numero}</span>
+          <span className="text-sm">{transmission.fei.numero!}</span>
         </div>
       </td>
       <td className="px-4 py-3">
@@ -702,13 +687,15 @@ function FeisTableRow({
       <td className="px-4 py-3">
         <div className="flex flex-col gap-1 text-sm">
           <span className="">
-            {fei.commune_mise_a_mort
+            {transmission.fei.commune_mise_a_mort
               ?.split(' ')
               .slice(1)
               .map((w: string) => w.toLocaleLowerCase())
               .join(' ') || 'À renseigner'}
           </span>
-          <span className="text-gray-600">{fei.premier_detenteur_name_cache || 'À renseigner'}</span>
+          <span className="text-gray-600">
+            {transmission.content.premier_detenteur_name_cache || 'À renseigner'}
+          </span>
         </div>
       </td>
       <td className="px-4 py-3">
@@ -737,25 +724,22 @@ function FeisTableRow({
 }
 
 function FeisTable({
-  children,
+  paginatedTransmissions,
   handleSelectAll,
   selectedFeis,
   filter,
+  handleCheckboxClick,
 }: {
-  children: React.ReactNode;
-  handleSelectAll?: (visibleFeis?: string[]) => void;
-  selectedFeis?: string[];
-  filter?: FeiStepSimpleStatus | 'Toutes les fiches';
+  paginatedTransmissions: Array<CarcasseTransmissionWihMetadata>;
+  handleSelectAll: (visibleFeis?: FeiNumberSelection) => void;
+  selectedFeis: FeiNumberSelection;
+  filter?: TransmissionSimpleStatus | 'Toutes les fiches';
+  handleCheckboxClick: (feiNumber: string, selected: boolean) => void;
 }) {
   const navigate = useNavigate();
-  const [visibleFeisNumbers, setVisibleFeisNumbers] = useState<string[]>([]);
+  const [visibleFeisNumbers, setVisibleFeisNumbers] = useState<FeiNumberSelection>([]);
 
-  // Extract CardFiche components from children to get fei data
-  const feis = React.Children.toArray(children).filter(
-    (child): child is React.ReactElement => React.isValidElement(child) && child.type === CardFiche
-  );
-
-  if (feis.length === 0) {
+  if (paginatedTransmissions.length === 0) {
     return null;
   }
 
@@ -764,12 +748,6 @@ function FeisTable({
       ? visibleFeisNumbers.every((numero) => selectedFeis?.includes(numero))
       : false;
 
-  const handleSelectAllInTable = () => {
-    if (handleSelectAll) {
-      handleSelectAll(visibleFeisNumbers);
-    }
-  };
-
   return (
     <div className="overflow-x-auto">
       <table className="w-full border-collapse bg-white">
@@ -777,15 +755,13 @@ function FeisTable({
           <tr className="border-b-2 border-gray-300">
             <th className="text-center text-sm font-semibold">
               <div className="flex h-full items-center justify-center">
-                {handleSelectAll && (
-                  <input
-                    type="checkbox"
-                    checked={allSelected}
-                    className="checked:accent-action-high-blue-france h-4 w-4 border-2"
-                    onChange={handleSelectAllInTable}
-                    aria-label={allSelected ? 'Tout désélectionner' : 'Tout sélectionner'}
-                  />
-                )}
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  className="checked:accent-action-high-blue-france h-4 w-4 border-2"
+                  onChange={() => handleSelectAll(visibleFeisNumbers)}
+                  aria-label={allSelected ? 'Tout désélectionner' : 'Tout sélectionner'}
+                />
               </div>
             </th>
             <th className="px-4 py-3 text-left text-sm font-semibold">Fiche</th>
@@ -795,16 +771,13 @@ function FeisTable({
           </tr>
         </thead>
         <tbody>
-          {feis.map((feiElement) => {
-            const fei = feiElement.props.fei;
-            const isSelected = feiElement.props.isPrintSelected;
-            const onPrintSelect = feiElement.props.onPrintSelect;
+          {paginatedTransmissions.map((transmission) => {
             return (
               <FeisTableRow
-                key={fei.numero}
-                fei={fei}
-                isSelected={isSelected}
-                onPrintSelect={onPrintSelect}
+                key={transmission.fei.numero}
+                transmission={transmission}
+                isSelected={selectedFeis.includes(transmission.fei.numero!)}
+                onPrintSelect={handleCheckboxClick}
                 navigate={navigate}
                 filter={filter}
                 onVisibilityChange={(feiNumero, isVisible) => {
