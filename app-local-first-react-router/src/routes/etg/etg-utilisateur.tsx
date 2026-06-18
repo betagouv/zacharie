@@ -9,18 +9,7 @@ import { Pagination } from '@codegouvfr/react-dsfr/Pagination';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
 import { useLocalStorage } from '@uidotdev/usehooks';
-import {
-  Bar,
-  BarChart,
-  Cell,
-  Legend,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
+import { Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import type { EtgUserInteractedResponse, EtgUserInteracted } from '@api/src/types/responses';
 import API from '@app/services/api';
 import useZustandStore from '@app/zustand/store';
@@ -30,7 +19,7 @@ import CarcassesEspeceSummary from '@app/components/CarcassesEspeceSummary';
 import TableFilterable from '@app/components/TableFilterable';
 import DropDownMenu from '@app/components/DropDownMenu';
 import { getUserRoleLabel } from '@app/utils/get-user-roles-label';
-import { getCarcasseStatusLabel } from '@app/utils/get-carcasse-status';
+import { getCarcasseStatusLabel, type CarcasseStatusLabel } from '@app/utils/get-carcasse-status';
 import { isCarcasseSviArchived } from '@app/utils/carcasse-svi-archived';
 import { getPreviousDetenteur } from '@app/utils/get-previous-detenteur-from-fei';
 import { hasBphMotif, isBphMotif } from '@app/utils/bph-motifs';
@@ -235,30 +224,57 @@ export default function EtgUtilisateur() {
   );
 }
 
-// Palette de couleurs pour le donut des statuts (cyclée par ordre d'apparition).
-const STATUS_PALETTE = [
-  '#e1000f', // rouge — saisies
-  '#f59e0b', // orange — consigne
-  '#3b82f6', // bleu
-  '#10b981', // vert — accepté / levée
-  '#8b5cf6',
-  '#6b7280',
-  '#0ea5e9',
-  '#ec4899',
-];
+// Libellé de statut unifié (masculin/féminin fusionnés pour ne pas dédoubler les parts du donut).
+type StatusDisplayLabel =
+  | 'Saisie totale'
+  | 'Saisie partielle'
+  | 'En traitement assainissant'
+  | 'Consigné(e)'
+  | 'Levée de consigne'
+  | 'Accepté(e)'
+  | 'Manquant(e)'
+  | 'Sans décision';
+
+function normalizeStatusLabel(label: CarcasseStatusLabel): StatusDisplayLabel {
+  switch (label) {
+    case 'Accepté':
+    case 'Acceptée':
+      return 'Accepté(e)';
+    case 'Consigné':
+    case 'Consignée':
+      return 'Consigné(e)';
+    case 'Manquant':
+    case 'Manquante':
+      return 'Manquant(e)';
+    default:
+      return label;
+  }
+}
+
+// Couleur stable par statut SVI (même statut = même couleur d'un utilisateur à l'autre).
+const STATUS_COLORS: Record<StatusDisplayLabel, string> = {
+  'Saisie totale': '#e1000f', // rouge
+  'Saisie partielle': '#fa5252', // rouge clair
+  'En traitement assainissant': '#7048e8', // violet
+  'Consigné(e)': '#f59f00', // ambre
+  'Levée de consigne': '#37b24d', // vert
+  'Accepté(e)': '#1971c2', // bleu
+  'Manquant(e)': '#868e96', // gris
+  'Sans décision': '#ced4da', // gris clair
+};
 const BPH_COLOR = '#e1000f';
 const NON_BPH_COLOR = '#3b82f6';
 
 function SaisieStats({ carcasses }: { carcasses: Array<Carcasse> }) {
   const stats = useMemo(() => {
     const total = carcasses.length;
-    const statusCounts = new Map<string, number>();
+    const statusCounts = new Map<StatusDisplayLabel, number>();
     const motifCounts = new Map<string, number>();
     let poidsSaisie = 0;
     let saisiesCount = 0;
     let saisiesBphCount = 0;
     for (const carcasse of carcasses) {
-      const statusLabel = getCarcasseStatusLabel(carcasse);
+      const statusLabel = normalizeStatusLabel(getCarcasseStatusLabel(carcasse));
       statusCounts.set(statusLabel, (statusCounts.get(statusLabel) ?? 0) + 1);
 
       const motifs = [
@@ -285,7 +301,12 @@ function SaisieStats({ carcasses }: { carcasses: Array<Carcasse> }) {
     }
     const statusData = [...statusCounts.entries()]
       .sort((a, b) => b[1] - a[1])
-      .map(([name, value], index) => ({ name, value, color: STATUS_PALETTE[index % STATUS_PALETTE.length] }));
+      .map(([name, value]) => ({
+        name,
+        value,
+        color: STATUS_COLORS[name],
+        pct: total > 0 ? Math.round((value / total) * 100) : 0,
+      }));
     const motifData = [...motifCounts.entries()]
       .sort((a, b) => b[1] - a[1])
       .slice(0, 12)
@@ -338,7 +359,7 @@ function SaisieStats({ carcasses }: { carcasses: Array<Carcasse> }) {
           <h3 className="fr-h6 mb-3">Répartition par statut SVI</h3>
           <ResponsiveContainer
             width="100%"
-            height={260}
+            height={220}
           >
             <PieChart>
               <Pie
@@ -346,12 +367,7 @@ function SaisieStats({ carcasses }: { carcasses: Array<Carcasse> }) {
                 dataKey="value"
                 nameKey="name"
                 innerRadius={55}
-                outerRadius={95}
-                label={(entry) =>
-                  'value' in entry && stats.total > 0
-                    ? `${Math.round((Number(entry.value) / stats.total) * 100)}%`
-                    : ''
-                }
+                outerRadius={85}
               >
                 {stats.statusData.map((d) => (
                   <Cell
@@ -361,9 +377,24 @@ function SaisieStats({ carcasses }: { carcasses: Array<Carcasse> }) {
                 ))}
               </Pie>
               <Tooltip formatter={(v, n) => [Number(v).toLocaleString('fr-FR'), String(n)]} />
-              <Legend />
             </PieChart>
           </ResponsiveContainer>
+          <ul className="mt-3 flex flex-col gap-1">
+            {stats.statusData.map((d) => (
+              <li
+                key={d.name}
+                className="flex items-center gap-2 text-sm"
+              >
+                <span
+                  className="inline-block h-3 w-3 shrink-0 rounded-sm"
+                  style={{ backgroundColor: d.color }}
+                />
+                <span className="flex-1 truncate">{d.name}</span>
+                <span className="font-semibold text-gray-900">{d.value}</span>
+                <span className="w-10 text-right text-gray-500">{d.pct}%</span>
+              </li>
+            ))}
+          </ul>
         </section>
 
         <section className="rounded-lg border border-gray-200 bg-white p-4">
