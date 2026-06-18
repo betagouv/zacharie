@@ -10,6 +10,7 @@ import { syncData } from '@app/utils/sync-data';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { isCarcasseClosedBySvi } from '@app/utils/is-carcasse-done';
+import { CompteEnAttenteValidationAlert } from '@app/components/CompteEnAttenteValidation';
 
 export default function CurrentOwnerConfirm() {
   const params = useParams();
@@ -224,6 +225,7 @@ export default function CurrentOwnerConfirm() {
         }
         className="m-0 bg-white"
       >
+        {notActivated && <CompteEnAttenteValidationAlert className="mb-4" />}
         <Button
           type="submit"
           className="my-4 block"
