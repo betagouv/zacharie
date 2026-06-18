@@ -56,78 +56,19 @@ export function getCurrentStepLabel(
   entitiesIdsWorkingDirectlyFor: ReturnType<typeof useEntitiesIdsWorkingDirectlyForObj>
 ): TransmissionStep {
   try {
+    // Circuit court (commerce de détail, boucher, ...) is a passive viewer : la fiche est toujours clôturée pour lui.
     if (isRoleCircuitCourt(role)) return 'Clôturée';
-    if (simpleStatus === 'Clôturée') {
-      if (role === 'ETG') {
-        if (transmission.svi_assigned_at) {
-          return 'Inspection vétérinaire terminée' satisfies TransmissionStepForEtg;
-        } else {
-          return 'Carcasses refusées' satisfies TransmissionStepForEtg;
-        }
-      }
-      if (role === 'CHASSEUR') return 'Carcasses traitées' satisfies TransmissionStepForChasseur;
-      if (role === 'COLLECTEUR_PRO') return 'Carcasses traitées' satisfies TransmissionStepForCollecteurPro;
-      return 'Clôturée';
-    }
+    // Le libellé est propre à chaque rôle (chaque fonction gère ses états clôturé et en cours).
     if (role === 'CHASSEUR') {
-      if (transmission.current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL) {
-        if (!transmission.next_owner_role) {
-          return 'Information manquante' satisfies TransmissionStepForChasseur;
-        } else {
-          return 'Validation par le premier détenteur' satisfies TransmissionStepForChasseur;
-        }
-      }
-      if (transmission.current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR) {
-        if (!transmission.next_owner_role) {
-          return 'Validation par le premier détenteur' satisfies TransmissionStepForChasseur;
-        } else {
-          return 'Fiche envoyée, pas encore prise en charge' satisfies TransmissionStepForChasseur;
-        }
-      }
-      if (transmission.current_owner_role === FeiOwnerRole.COLLECTEUR_PRO) {
-        return 'Prise en charge par le transporteur' satisfies TransmissionStepForChasseur;
-      }
-      return 'Traitement des carcasses' satisfies TransmissionStepForChasseur;
+      return getCurrentStepLabelForChasseur(simpleStatus, transmission);
     }
     if (role === 'ETG') {
-      if (transmission.svi_assigned_at) return 'Inspection par le SVI' satisfies TransmissionStepForEtg;
-      if (transmission.current_owner_role === 'ETG') {
-        if (transmission.next_owner_role === 'ETG') {
-          if (!entitiesIdsWorkingDirectlyFor[transmission.next_owner_entity_id!]) {
-            return 'Transport vers un autre établissement de traitement' satisfies TransmissionStepForEtg;
-          } else {
-            return 'Fiche reçue, pas encore prise en charge' satisfies TransmissionStepForEtg;
-          }
-        }
-        if (entitiesIdsWorkingDirectlyFor[transmission.current_owner_entity_id!]) {
-          return "Prise en charge par l'atelier" satisfies TransmissionStepForEtg;
-        } else {
-          return 'Prise en charge par un autre atelier' satisfies TransmissionStepForEtg;
-        }
-      }
-      if (transmission.next_owner_role === 'ETG') {
-        if (entitiesIdsWorkingDirectlyFor[transmission.next_owner_entity_id!]) {
-          return 'Fiche reçue, pas encore prise en charge' satisfies TransmissionStepForEtg;
-        }
-        // so current is not ETG, next is ETG, but not me ? bug
-        throw new Error('No current step label for ETG next/role');
-      }
-      if (transmission.current_owner_role === 'COLLECTEUR_PRO') {
-        return 'Prise en charge par le transporteur' satisfies TransmissionStepForEtg;
-      }
+      return getCurrentStepLabelForEtg(simpleStatus, transmission, entitiesIdsWorkingDirectlyFor);
     }
     if (role === 'COLLECTEUR_PRO') {
-      if (transmission.current_owner_role === 'COLLECTEUR_PRO') {
-        if (transmission.next_owner_role === 'ETG') {
-          return 'Transport vers un établissement de traitement' satisfies TransmissionStepForCollecteurPro;
-        }
-        return 'Transport' satisfies TransmissionStepForCollecteurPro;
-      }
-      if (transmission.next_owner_role === 'COLLECTEUR_PRO') {
-        return 'Fiche reçue, pas encore prise en charge' satisfies TransmissionStepForCollecteurPro;
-      }
-      return 'Traitement des carcasses' satisfies TransmissionStepForCollecteurPro;
+      return getCurrentStepLabelForCollecteurPro(simpleStatus, transmission);
     }
+    if (simpleStatus === 'Clôturée') return 'Clôturée';
     return 'En cours' satisfies TransmissionStepGeneric;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
@@ -146,6 +87,87 @@ export function getCurrentStepLabel(
     });
   }
   return 'En cours';
+}
+
+// Côté chasseur (examinateur initial / premier détenteur) : où en est sa fiche.
+export function getCurrentStepLabelForChasseur(
+  simpleStatus: TransmissionSimpleStatus,
+  transmission: CarcasseTransmission
+): TransmissionStepForChasseur {
+  if (simpleStatus === 'Clôturée') return 'Carcasses traitées';
+  if (transmission.current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL) {
+    if (!transmission.next_owner_role) {
+      return 'Information manquante';
+    }
+    return 'Validation par le premier détenteur';
+  }
+  if (transmission.current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR) {
+    if (!transmission.next_owner_role) {
+      return 'Validation par le premier détenteur';
+    }
+    return 'Fiche envoyée, pas encore prise en charge';
+  }
+  if (transmission.current_owner_role === FeiOwnerRole.COLLECTEUR_PRO) {
+    return 'Prise en charge par le transporteur';
+  }
+  return 'Traitement des carcasses';
+}
+
+// Côté ETG (établissement de traitement) : réception, prise en charge, transport entre ateliers, SVI.
+export function getCurrentStepLabelForEtg(
+  simpleStatus: TransmissionSimpleStatus,
+  transmission: CarcasseTransmission,
+  entitiesIdsWorkingDirectlyFor: ReturnType<typeof useEntitiesIdsWorkingDirectlyForObj>
+): TransmissionStep {
+  // une fiche est clôturée quand aucune des carcasse n'est toujours en cours
+  if (simpleStatus === 'Clôturée') {
+    if (transmission.svi_assigned_at) {
+      return 'Inspection vétérinaire terminée' satisfies TransmissionStepForEtg;
+    }
+    return 'Carcasses refusées' satisfies TransmissionStepForEtg;
+  }
+  if (transmission.svi_assigned_at) return 'Inspection par le SVI' satisfies TransmissionStepForEtg;
+  if (transmission.current_owner_role === 'ETG') {
+    if (transmission.next_owner_role === 'ETG') {
+      if (!entitiesIdsWorkingDirectlyFor[transmission.next_owner_entity_id!]) {
+        return 'Transport vers un autre établissement de traitement' satisfies TransmissionStepForEtg;
+      }
+      return 'Fiche reçue, pas encore prise en charge' satisfies TransmissionStepForEtg;
+    }
+    if (entitiesIdsWorkingDirectlyFor[transmission.current_owner_entity_id!]) {
+      return "Prise en charge par l'atelier" satisfies TransmissionStepForEtg;
+    }
+    return 'Prise en charge par un autre atelier' satisfies TransmissionStepForEtg;
+  }
+  if (transmission.next_owner_role === 'ETG') {
+    if (entitiesIdsWorkingDirectlyFor[transmission.next_owner_entity_id!]) {
+      return 'Fiche reçue, pas encore prise en charge' satisfies TransmissionStepForEtg;
+    }
+    // current n'est pas ETG, next est ETG, mais pas le mien ? bug
+    throw new Error('No current step label for ETG next/role');
+  }
+  if (transmission.current_owner_role === 'COLLECTEUR_PRO') {
+    return 'Prise en charge par le transporteur' satisfies TransmissionStepForEtg;
+  }
+  return 'En cours' satisfies TransmissionStepGeneric;
+}
+
+// Côté collecteur professionnel : transport vers un ETG, réception, traitement.
+export function getCurrentStepLabelForCollecteurPro(
+  simpleStatus: TransmissionSimpleStatus,
+  transmission: CarcasseTransmission
+): TransmissionStepForCollecteurPro {
+  if (simpleStatus === 'Clôturée') return 'Carcasses traitées';
+  if (transmission.current_owner_role === 'COLLECTEUR_PRO') {
+    if (transmission.next_owner_role === 'ETG') {
+      return 'Transport vers un établissement de traitement';
+    }
+    return 'Transport';
+  }
+  if (transmission.next_owner_role === 'COLLECTEUR_PRO') {
+    return 'Fiche reçue, pas encore prise en charge';
+  }
+  return 'Traitement des carcasses';
 }
 
 export function getNextStepLabel(currentStepLabel: TransmissionStep): TransmissionNextStep {
