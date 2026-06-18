@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
+  Carcasse,
   CarcasseModificationRequest,
   CarcasseModificationRequestStatus,
   CarcasseModificationRequestType,
@@ -12,18 +13,19 @@ import dayjs from 'dayjs';
 import useZustandStore from '@app/zustand/store';
 import { syncData } from '@app/utils/sync-data';
 import useUser from '@app/zustand/user';
-import { CarcasseWithModificationRequests } from '@api/src/types/carcasse';
+import { getPendingModifRequest } from '@app/utils/modif-requests';
 
 // ----------------------------------------------------------------------------
 // PendingModificationBanner
 // Affiché sur la carcasse, côté intermédiaire/ETG/SVI, quand une demande de
 // modification est en cours. Informe sans bloquer la transmission.
 // ----------------------------------------------------------------------------
-export function PendingModificationBanner({ carcasse }: { carcasse: CarcasseWithModificationRequests }) {
+export function PendingModificationBanner({ carcasse }: { carcasse: Carcasse }) {
   const user = useUser((state) => state.user);
-  const pending = useZustandStore(
-    (state) => state.carcasseModifActiveByCarcasseId[carcasse.zacharie_carcasse_id]
+  const modifRequests = useZustandStore(
+    (state) => state.modifRequestsByCarcasseId[carcasse.zacharie_carcasse_id]
   );
+  const pending = getPendingModifRequest(modifRequests);
   const requestedByUser = useZustandStore((state) =>
     pending ? state.users[pending.requested_by_user_id] : null
   );
@@ -113,17 +115,15 @@ export function RequestBraceletRenameButton({
   className,
   onSubmitted,
 }: {
-  carcasse: CarcasseWithModificationRequests;
+  carcasse: Carcasse;
   requestedByEntityId: string;
   className?: string;
   onSubmitted?: () => void;
 }) {
   const user = useUser((state) => state.user);
-  const pending = carcasse.CarcasseModificationRequests.find(
-    (r) => r.status === CarcasseModificationRequestStatus.PENDING && !r.deleted_at
-  );
+  const modifRequests = useZustandStore((s) => s.modifRequestsByCarcasseId[carcasse.zacharie_carcasse_id]);
+  const pending = getPendingModifRequest(modifRequests);
   const createCarcasseModifRequest = useZustandStore((s) => s.createCarcasseModifRequest);
-  const updateCarcasse = useZustandStore((s) => s.updateCarcasse);
 
   const [expanded, setExpanded] = useState(false);
   const [newBracelet, setNewBracelet] = useState('');
@@ -165,11 +165,6 @@ export function RequestBraceletRenameButton({
       is_synced: false,
     };
     createCarcasseModifRequest(modifRequest);
-    updateCarcasse(
-      carcasse.zacharie_carcasse_id,
-      { CarcasseModificationRequests: [...carcasse.CarcasseModificationRequests, modifRequest] },
-      false
-    );
     syncData('RequestBraceletRenameButton.onSubmit');
     setNewBracelet('');
     setComment('');
@@ -238,8 +233,8 @@ export function RequestBraceletRenameButton({
 // HistoriqueDesModifications
 // Liste les demandes approuvées/refusées sur une carcasse.
 // ----------------------------------------------------------------------------
-export function HistoriqueDesModifications({ carcasse }: { carcasse: CarcasseWithModificationRequests }) {
-  const requests = carcasse.CarcasseModificationRequests;
+export function HistoriqueDesModifications({ carcasse }: { carcasse: Carcasse }) {
+  const requests = useZustandStore((state) => state.modifRequestsByCarcasseId[carcasse.zacharie_carcasse_id]);
   const users = useZustandStore((state) => state.users);
   const entities = useZustandStore((state) => state.entities);
 
@@ -257,7 +252,7 @@ export function HistoriqueDesModifications({ carcasse }: { carcasse: CarcasseWit
 
   const events = useMemo<Array<TimelineEvent>>(() => {
     const out: Array<TimelineEvent> = [];
-    for (const r of requests) {
+    for (const r of requests ?? []) {
       if (r.deleted_at) continue;
       const requester = users[r.requested_by_user_id];
       const reviewer = r.reviewed_by_user_id ? users[r.reviewed_by_user_id] : null;

@@ -3,7 +3,7 @@ import passport from 'passport';
 import { catchErrors } from '~/middlewares/errors';
 import type { SyncRequest, SyncResponse } from '~/types/responses';
 import prisma from '~/prisma';
-import { Prisma, User } from '@prisma/client';
+import { Carcasse, Prisma, User } from '@prisma/client';
 import { syncFei, type SaveFeiResult } from '~/utils/sync-fei';
 import { syncCarcasse, type SaveCarcasseResult } from '~/utils/sync-carcasse';
 import { syncCarcasseIntermediaire } from '~/utils/sync-carcasse-intermediaire';
@@ -16,7 +16,6 @@ import { runFeiUpdateSideEffects } from '~/utils/fei-side-effects';
 import { runCarcasseUpdateSideEffects } from '~/utils/carcasse-side-effects';
 import { capture } from '~/third-parties/sentry';
 import { feiPopulatedInclude } from '~/types/fei';
-import { CarcasseWithModificationRequests } from '~/types/carcasse';
 
 const router: express.Router = express.Router();
 
@@ -218,11 +217,10 @@ router.post(
       touchedCarcasseIds.size > 0
         ? await prisma.carcasse.findMany({
             where: { zacharie_carcasse_id: { in: [...touchedCarcasseIds] } },
-            include: { CarcasseModificationRequests: true },
           })
         : [];
     // Override: refreshed carcasses replace any earlier carcasseResults output for the same id.
-    const mergedCarcasses = new Map<string, CarcasseWithModificationRequests>();
+    const mergedCarcasses = new Map<string, Carcasse>();
     for (const cr of carcasseResults)
       mergedCarcasses.set(cr.savedCarcasse.zacharie_carcasse_id, cr.savedCarcasse);
     for (const rc of refreshedCarcasses) mergedCarcasses.set(rc.zacharie_carcasse_id, rc);

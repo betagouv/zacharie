@@ -1,6 +1,5 @@
 import type { Carcasse, Fei } from '@prisma/client';
 import { CarcassesIntermediaire } from './carcasses-intermediaire';
-import { CarcasseWithModificationRequests } from '@api/src/types/carcasse';
 import {
   TransmissionNextStep,
   TransmissionSimpleStatus,
@@ -104,7 +103,7 @@ export type CarcasseTransmission = Partial<
 >;
 
 export type CarcasseForCounting = Pick<
-  CarcasseWithModificationRequests,
+  Carcasse,
   | 'zacharie_carcasse_id'
   | 'espece'
   | 'type'
@@ -125,5 +124,5 @@ export type CarcasseTransmissionWihMetadata = {
     nextStepLabel: TransmissionNextStep;
     transportOrSoustraiteLabel: TransmissionStepForTransportOrSoustraite;
   };
-  carcasses: Array<CarcasseWithModificationRequests>;
+  carcasses: Array<Carcasse>;
 };

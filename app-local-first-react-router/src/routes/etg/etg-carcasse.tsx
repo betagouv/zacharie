@@ -20,11 +20,11 @@ import {
   RequestBraceletRenameButton,
   HistoriqueDesModifications,
 } from '@app/components/CarcasseModificationRequest';
-import { CarcasseWithModificationRequests } from '@api/src/types/carcasse';
+import type { Carcasse } from '@prisma/client';
 import { useTransmissionWithMetadata } from '@app/utils/get-transmissions-sorted';
 
 interface CarcasseIntermediaireProps {
-  carcasse: CarcasseWithModificationRequests;
+  carcasse: Carcasse;
   canEdit: boolean;
   intermediaire: CarcassesIntermediaire;
 }
@@ -135,7 +135,7 @@ export default function CarcasseIntermediaireComp({
       intermediaire_id: intermediaire.id,
       carcasse_intermediaire_id: carcasseIntermediaireId,
     });
-    const nextPartialCarcasse: Partial<CarcasseWithModificationRequests> = {
+    const nextPartialCarcasse: Partial<Carcasse> = {
       intermediaire_carcasse_manquante: true,
       intermediaire_carcasse_refus_motif: null,
       intermediaire_carcasse_refus_intermediaire_id: intermediaire.id,
@@ -200,7 +200,7 @@ export default function CarcasseIntermediaireComp({
       intermediaire_id: intermediaire.id,
       carcasse_intermediaire_id: carcasseIntermediaireId,
     });
-    const nextPartialCarcasse: Partial<CarcasseWithModificationRequests> = {
+    const nextPartialCarcasse: Partial<Carcasse> = {
       intermediaire_carcasse_manquante: false,
       intermediaire_carcasse_refus_motif: refusToRemember,
       intermediaire_carcasse_refus_intermediaire_id: intermediaire.id,
@@ -251,7 +251,7 @@ export default function CarcasseIntermediaireComp({
       intermediaire_id: intermediaire.id,
       carcasse_intermediaire_id: carcasseIntermediaireId,
     });
-    const nextPartialCarcasse: Partial<CarcasseWithModificationRequests> = {
+    const nextPartialCarcasse: Partial<Carcasse> = {
       intermediaire_carcasse_manquante: false,
       intermediaire_carcasse_refus_motif: null,
       intermediaire_carcasse_refus_intermediaire_id: null,
@@ -302,7 +302,7 @@ export default function CarcasseIntermediaireComp({
       intermediaire_id: intermediaire.id,
       carcasse_intermediaire_id: carcasseIntermediaireId,
     });
-    const nextPartialCarcasse: Partial<CarcasseWithModificationRequests> = {
+    const nextPartialCarcasse: Partial<Carcasse> = {
       intermediaire_carcasse_manquante: false,
       intermediaire_carcasse_refus_motif: null,
       intermediaire_carcasse_refus_intermediaire_id: null,
@@ -353,7 +353,7 @@ export default function CarcasseIntermediaireComp({
       intermediaire_id: intermediaire.id,
       carcasse_intermediaire_id: carcasseIntermediaireId,
     });
-    const nextPartialCarcasse: Partial<CarcasseWithModificationRequests> = {
+    const nextPartialCarcasse: Partial<Carcasse> = {
       intermediaire_carcasse_manquante: false,
       intermediaire_carcasse_refus_motif: null,
       intermediaire_carcasse_refus_intermediaire_id: null,

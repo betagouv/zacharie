@@ -10,13 +10,14 @@ import { CarcasseModificationRequestStatus, CarcasseModificationRequestType } fr
 // Le lien des notifications email/SMS/push pointe vers /app/chasseur/demandes-de-modification.
 export default function ChasseurDemandesDeModification() {
   const user = useUser((state) => state.user);
-  const requestsByCarcasseId = useZustandStore((state) => state.carcasseModifActiveByCarcasseId);
+  const modifRequestsByCarcasseId = useZustandStore((state) => state.modifRequestsByCarcasseId);
   const carcasses = useZustandStore((state) => state.carcasses);
   const feis = useZustandStore((state) => state.feis);
 
   const pendingForMe = useMemo(() => {
     if (!user) return [];
-    return Object.values(requestsByCarcasseId)
+    return Object.values(modifRequestsByCarcasseId)
+      .flat()
       .filter((r) => r.status === CarcasseModificationRequestStatus.PENDING && !r.deleted_at)
       .filter((r) => {
         // Filter to those where the underlying carcasse is examined by this user.
@@ -24,7 +25,7 @@ export default function ChasseurDemandesDeModification() {
         return carcasse?.examinateur_initial_user_id === user.id;
       })
       .sort((a, b) => new Date(b.requested_at).getTime() - new Date(a.requested_at).getTime());
-  }, [requestsByCarcasseId, carcasses, user]);
+  }, [modifRequestsByCarcasseId, carcasses, user]);
 
   const groupedByFei = useMemo(() => {
     const groups: Record<string, typeof pendingForMe> = {};

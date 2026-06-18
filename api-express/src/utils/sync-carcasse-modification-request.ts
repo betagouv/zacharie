@@ -48,6 +48,12 @@ export async function syncCarcasseModifRequest(
         is_synced: true,
       },
     });
+    // Bump the carcasse so other users pull this new request on their next delta sync — the client
+    // loads modif requests by carcasse, gated on carcasse.updated_at.
+    await prisma.carcasse.update({
+      where: { zacharie_carcasse_id: created.zacharie_carcasse_id },
+      data: { updated_at: new Date() },
+    });
     return { saved: created, isNew: true, transitionedTo: null, justCancelled: false };
   }
 

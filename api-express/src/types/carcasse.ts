@@ -1,4 +1,4 @@
-import { Carcasse, CarcasseModificationRequest, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 
 export const carcasseForApiSelect: Prisma.CarcasseSelect = {
   // zacharie_carcasse_id: false,
@@ -96,7 +96,3 @@ export const carcasseForApiSelect: Prisma.CarcasseSelect = {
 export type CarcasseGetForApi = Prisma.CarcasseGetPayload<{
   select: typeof carcasseForApiSelect;
 }>;
-
-export type CarcasseWithModificationRequests = Carcasse & {
-  CarcasseModificationRequests: Array<CarcasseModificationRequest>;
-};

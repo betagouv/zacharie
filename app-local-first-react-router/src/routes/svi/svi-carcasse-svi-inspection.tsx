@@ -1,12 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import {
-  CarcasseModificationRequestStatus,
-  CarcasseType,
-  EntityRelationType,
-  IPM1Decision,
-  UserRoles,
-} from '@prisma/client';
+import { CarcasseType, EntityRelationType, IPM1Decision, UserRoles } from '@prisma/client';
 import dayjs from 'dayjs';
 import CardCarcasseSvi from '@app/components/CardCarcasseSvi';
 import { Breadcrumb } from '@codegouvfr/react-dsfr/Breadcrumb';
@@ -28,6 +22,7 @@ import {
 } from '@app/components/CarcasseModificationRequest';
 import { loadData, useLoaderEffect } from '@app/utils/load-data';
 import { useTransmissionWithMetadata } from '@app/utils/get-transmissions-sorted';
+import { getPendingModifRequest } from '@app/utils/modif-requests';
 
 export default function SviInspectionCarcasseLoader() {
   const params = useParams();
@@ -89,10 +84,10 @@ function SviInspectionCarcasse() {
     return false;
   }, [transmission, user, entities]);
 
-  const allModifRequests = carcasse.CarcasseModificationRequests;
-  const pendingModifRequest = allModifRequests.find(
-    (r) => r.status === CarcasseModificationRequestStatus.PENDING
+  const allModifRequests = useZustandStore(
+    (state) => state.modifRequestsByCarcasseId[carcasse.zacharie_carcasse_id]
   );
+  const pendingModifRequest = getPendingModifRequest(allModifRequests);
 
   const canEdit = useMemo(() => {
     // SVI ne peut pas inspecter une carcasse dont l'identité (numéro de marquage) ou la signature de
@@ -166,7 +161,7 @@ function SviInspectionCarcasse() {
               />
             </>
           </Section>
-          {allModifRequests.length > 0 && (
+          {(allModifRequests?.length ?? 0) > 0 && (
             <Section
               title="Historique des modifications"
               open={false}

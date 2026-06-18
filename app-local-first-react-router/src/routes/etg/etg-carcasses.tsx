@@ -24,7 +24,7 @@ import useExportCarcasses from '@app/utils/export-carcasses';
 import { isCarcasseSviArchived } from '@app/utils/carcasse-svi-archived';
 import { loadData, useLoaderEffect } from '@app/utils/load-data';
 import { useTransmissions } from '@app/utils/get-transmissions-sorted';
-import { CarcasseWithModificationRequests } from '@api/src/types/carcasse';
+import type { Carcasse } from '@prisma/client';
 import type { TransmissionSimpleStatus } from '@app/types/transmission-steps';
 
 const advancedFiltersModal = createModal({
@@ -61,12 +61,12 @@ type CatalogColumn = {
   key: string;
   label: string;
   alwaysVisible?: boolean;
-  dataKey: keyof CarcasseWithModificationRequests | string;
+  dataKey: keyof Carcasse | string;
   title: string;
   type?: 'date' | 'datetime' | 'number' | 'string';
   sortable?: boolean;
   small?: boolean;
-  render?: (item: CarcasseWithModificationRequests, index: number) => React.ReactNode;
+  render?: (item: Carcasse, index: number) => React.ReactNode;
 };
 
 export default function EtgCarcasses() {
@@ -100,7 +100,7 @@ export default function EtgCarcasses() {
     Record<Entity['id'], boolean | undefined>
   >('etg-carcasses-quick-filter-collecteurs-obj', {});
   const [quickFilterEspeces, setQuickFilterEspeces] = useLocalStorage<
-    Record<NonNullable<CarcasseWithModificationRequests['espece']>, boolean | undefined>
+    Record<NonNullable<Carcasse['espece']>, boolean | undefined>
   >('etg-carcasses-quick-filter-especes-obj', {});
   const [quickFilterStatuses, setQuickFilterStatuses] = useLocalStorage<
     Record<CarcasseStatusLabel, boolean | undefined>
@@ -109,7 +109,7 @@ export default function EtgCarcasses() {
   const quickFilterStatusesArray = Object.keys(quickFilterStatuses);
 
   const [quickFilterPremierDetenteurs, setQuickFilterPremierDetenteurs] = useLocalStorage<
-    Record<NonNullable<CarcasseWithModificationRequests['premier_detenteur_name_cache']>, boolean | undefined>
+    Record<NonNullable<Carcasse['premier_detenteur_name_cache']>, boolean | undefined>
   >('etg-carcasses-quick-filter-premier-detenteurs-obj', {});
   const [quickFilterBracelet, setQuickFilterBracelet] = useState('');
 
@@ -154,27 +154,21 @@ export default function EtgCarcasses() {
     premierDetenteurOptions,
     filteredData,
   ] = useMemo(() => {
-    const _collecteursNamesByFeiNumero: Record<CarcasseWithModificationRequests['fei_numero'], string> = {};
-    const _ccgNames: Record<
-      NonNullable<CarcasseWithModificationRequests['premier_detenteur_depot_entity_name_cache']>,
-      true
-    > = {};
+    const _collecteursNamesByFeiNumero: Record<Carcasse['fei_numero'], string> = {};
+    const _ccgNames: Record<NonNullable<Carcasse['premier_detenteur_depot_entity_name_cache']>, true> = {};
     const _motifs: Record<
       string, // one of 'svi_ipm2_lesions_ou_motifs',
       true
     > = {};
     const _collecteurOptions: Record<Entity['id'], Entity['nom_d_usage']> = {};
-    const _especeOptions: Record<NonNullable<CarcasseWithModificationRequests['espece']>, true> = {};
+    const _especeOptions: Record<NonNullable<Carcasse['espece']>, true> = {};
     // @ts-expect-error Type '{}' is missing the following properties
     const _statusOptions: Record<CarcasseStatusLabel, boolean> = {};
-    const _premierDetenteurOptions: Record<
-      NonNullable<CarcasseWithModificationRequests['premier_detenteur_name_cache']>,
-      true
-    > = {};
-    const _filteredData: Array<CarcasseWithModificationRequests> = [];
+    const _premierDetenteurOptions: Record<NonNullable<Carcasse['premier_detenteur_name_cache']>, true> = {};
+    const _filteredData: Array<Carcasse> = [];
     const braceletQuery = quickFilterBracelet.trim().toLowerCase();
     // filter helper
-    const excludedFei: Record<CarcasseWithModificationRequests['fei_numero'], true> = {};
+    const excludedFei: Record<Carcasse['fei_numero'], true> = {};
     const withQuickFilterCollecteur = Object.keys(quickFilterCollecteurIds).length > 0;
     const withQuickFilterEspece = Object.keys(quickFilterEspeces).length > 0;
     const withQuickFilterTransmissionStatuses = Object.keys(quickFilterTransmissionStatuses).length > 0;
@@ -1064,7 +1058,7 @@ export default function EtgCarcasses() {
               checked={selectedCarcassesIds}
               renderCellSmallDevices={renderMobileCarcasse}
               columns={visibleColumns.map((c) => ({
-                dataKey: c.dataKey as keyof CarcasseWithModificationRequests,
+                dataKey: c.dataKey as keyof Carcasse,
                 title: c.title,
                 type: c.type,
                 small: c.small,
