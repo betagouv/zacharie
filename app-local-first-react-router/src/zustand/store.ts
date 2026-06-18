@@ -1,7 +1,9 @@
 import {
   type Fei,
+  type Carcasse,
   type CarcasseIntermediaire,
   type CarcasseModificationRequest,
+  CarcasseModificationRequestStatus,
   type Log,
 } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
@@ -30,7 +32,6 @@ import type {
 import { mapFeiFieldsToCarcasse } from '@app/utils/map-fei-fields-to-carcasse';
 import { createSlicedIDBStorage } from './idb-sliced-storage';
 import { CarcasseTransmission } from '@app/types/carcasse';
-import { CarcasseWithModificationRequests } from '@api/src/types/carcasse';
 
 // State keys to persist in IndexedDB (each stored as its own entry)
 const PERSISTED_KEYS: (keyof State)[] = [
@@ -41,7 +42,7 @@ const PERSISTED_KEYS: (keyof State)[] = [
   'detenteursInitiauxIds',
   'carcasses',
   'carcassesIntermediaireById',
-  'carcasseModifActiveByCarcasseId',
+  'modifRequestsByCarcasseId',
   'apiKeyApprovals',
   'lastUpdateFromServer',
   'carcassesRegistry',
@@ -89,16 +90,15 @@ export interface State {
   users: Record<UserForFei['id'], UserForFei>;
   entities: Record<EntityWithUserRelation['id'], EntityWithUserRelation>;
   detenteursInitiauxIds: Array<UserForFei['id']>;
-  carcasses: Record<
-    CarcasseWithModificationRequests['zacharie_carcasse_id'],
-    CarcasseWithModificationRequests
-  >;
+  carcasses: Record<Carcasse['zacharie_carcasse_id'], Carcasse>;
   // single intermediaire for a single carcasse
   carcassesIntermediaireById: Record<FeiAndCarcasseAndIntermediaireIds, CarcasseIntermediaire>;
-  carcasseModifActiveByCarcasseId: Record<CarcasseModificationRequest['id'], CarcasseModificationRequest>;
+  // full history of modif requests (PENDING/APPROVED/REJECTED) per carcasse — loaded by carcasse,
+  // and the single source of truth for both sync and the modif-request UI.
+  modifRequestsByCarcasseId: Record<Carcasse['zacharie_carcasse_id'], Array<CarcasseModificationRequest>>;
   apiKeyApprovals: NonNullable<UserConnexionResponse['data']['apiKeyApprovals']>;
   lastUpdateFromServer: number;
-  carcassesRegistry: Array<CarcasseWithModificationRequests>;
+  carcassesRegistry: Array<Carcasse>;
   logs: Array<Log>;
   _hasHydrated: boolean;
 }
@@ -108,21 +108,21 @@ type CreateLog = {
   user_role: string;
   action: string;
   history?: HistoryInput;
-  fei_numero: Fei['numero'] | null;
-  entity_id: EntityWithUserRelation['id'] | null;
-  zacharie_carcasse_id: CarcasseModificationRequest['zacharie_carcasse_id'] | null;
-  fei_intermediaire_id: CarcasseIntermediaire['intermediaire_id'] | null;
-  intermediaire_id: CarcasseIntermediaire['intermediaire_id'] | null;
-  carcasse_intermediaire_id: CarcasseIntermediaire['intermediaire_id'] | null;
+  fei_numero: Fei['numero'] | null | undefined;
+  entity_id: EntityWithUserRelation['id'] | null | undefined;
+  zacharie_carcasse_id: CarcasseModificationRequest['zacharie_carcasse_id'] | null | undefined;
+  fei_intermediaire_id: CarcasseIntermediaire['intermediaire_id'] | null | undefined;
+  intermediaire_id: CarcasseIntermediaire['intermediaire_id'] | null | undefined;
+  carcasse_intermediaire_id: CarcasseIntermediaire['intermediaire_id'] | null | undefined;
 };
 
 interface Actions {
   createFei: (newFei: FeiWithIntermediaires) => void;
   updateFei: (fei_numero: FeiWithIntermediaires['numero'], fei: Partial<FeiWithIntermediaires>) => void;
-  createCarcasse: (newCarcasse: CarcasseWithModificationRequests) => void;
+  createCarcasse: (newCarcasse: Carcasse) => void;
   updateCarcasse: (
-    zacharie_carcasse_id: CarcasseWithModificationRequests['zacharie_carcasse_id'],
-    carcasse: Partial<CarcasseWithModificationRequests>,
+    zacharie_carcasse_id: Carcasse['zacharie_carcasse_id'],
+    carcasse: Partial<Carcasse>,
     updateFei: boolean
   ) => void;
   updateCarcassesTransmission: (
@@ -174,7 +174,7 @@ function initialState(): State {
     apiKeyApprovals: [],
     carcasses: {},
     carcassesIntermediaireById: {},
-    carcasseModifActiveByCarcasseId: {},
+    modifRequestsByCarcasseId: {},
     _hasHydrated: false,
   };
 }
@@ -233,10 +233,7 @@ const useZustandStore = create<State & Actions>()(
             return;
           }
 
-          const nextCarcasses: Record<
-            CarcasseModificationRequest['zacharie_carcasse_id'],
-            CarcasseWithModificationRequests
-          > = {};
+          const nextCarcasses: Record<Carcasse['zacharie_carcasse_id'], Carcasse> = {};
           for (const carcasse of carcassefeiCarcasses) {
             nextCarcasses[carcasse.zacharie_carcasse_id] = {
               ...carcasse,
@@ -258,7 +255,7 @@ const useZustandStore = create<State & Actions>()(
             dataIsSynced: false,
           }));
         },
-        createCarcasse: (newCarcasse: CarcasseWithModificationRequests) => {
+        createCarcasse: (newCarcasse: Carcasse) => {
           newCarcasse.is_synced = false;
           newCarcasse.updated_at = dayjs().toDate();
 
@@ -275,12 +272,12 @@ const useZustandStore = create<State & Actions>()(
           get().updateFei(newCarcasse.fei_numero, { updated_at: dayjs().toDate() });
         },
         updateCarcasse: (
-          zacharie_carcasse_id: CarcasseModificationRequest['zacharie_carcasse_id'],
-          partialCarcasse: Partial<CarcasseWithModificationRequests>,
+          zacharie_carcasse_id: Carcasse['zacharie_carcasse_id'],
+          partialCarcasse: Partial<Carcasse>,
           updateFei: boolean
         ) => {
           const carcasses = useZustandStore.getState().carcasses;
-          const nextCarcasse: CarcasseWithModificationRequests = {
+          const nextCarcasse: Carcasse = {
             ...carcasses[zacharie_carcasse_id],
             ...partialCarcasse,
             updated_at: dayjs().toDate(),
@@ -465,27 +462,35 @@ const useZustandStore = create<State & Actions>()(
           set({ apiKeyApprovals });
         },
         createCarcasseModifRequest: (request: CarcasseModificationRequest) => {
-          // we store modif-request in store for syncing them (PENDING/APPROVED/REJECTED)
-          // we consume them through the `carcasse.CarcasseModificationRequests` array
+          // Modif requests live in a full-history map keyed by carcasse id. We append the new one and
+          // sync it; the UI derives pending/history from this same array.
           const next: CarcasseModificationRequest = {
             ...request,
             is_synced: false,
             updated_at: dayjs().toDate(),
           };
-          useZustandStore.setState((state) => ({
-            ...state,
-            carcasseModifActiveByCarcasseId: {
-              ...state.carcasseModifActiveByCarcasseId,
-              [next.zacharie_carcasse_id]: next,
-            },
-            dataIsSynced: false,
-          }));
+          useZustandStore.setState((state) => {
+            const existing = state.modifRequestsByCarcasseId[next.zacharie_carcasse_id] ?? [];
+            return {
+              ...state,
+              modifRequestsByCarcasseId: {
+                ...state.modifRequestsByCarcasseId,
+                [next.zacharie_carcasse_id]: [...existing, next],
+              },
+              dataIsSynced: false,
+            };
+          });
         },
         updateCarcasseModifRequest: (carcasseId, partial, approvalPayload) => {
-          const existing = useZustandStore.getState().carcasseModifActiveByCarcasseId[carcasseId];
-          if (!existing) return;
+          // Updates target the carcasse's currently-pending request (approve/reject/cancel). At most
+          // one PENDING request exists per carcasse at a time (creation is blocked while one is open).
+          const existing = useZustandStore.getState().modifRequestsByCarcasseId[carcasseId] ?? [];
+          const pendingIdx = existing.findIndex(
+            (r) => r.status === CarcasseModificationRequestStatus.PENDING && !r.deleted_at
+          );
+          if (pendingIdx === -1) return;
           const next: CarcasseModificationRequest & { _approvalPayload?: typeof approvalPayload } = {
-            ...existing,
+            ...existing[pendingIdx],
             ...partial,
             updated_at: dayjs().toDate(),
             is_synced: false,
@@ -494,11 +499,13 @@ const useZustandStore = create<State & Actions>()(
           // POST so the backend can apply the examinateur sanitary fields to the underlying Carcasse on
           // NEW_CARCASSE approval. It's not part of the persisted CarcasseModificationRequest schema.
           if (approvalPayload) next._approvalPayload = approvalPayload;
+          const nextArray = [...existing];
+          nextArray[pendingIdx] = next;
           useZustandStore.setState((state) => ({
             ...state,
-            carcasseModifActiveByCarcasseId: {
-              ...state.carcasseModifActiveByCarcasseId,
-              [next.zacharie_carcasse_id]: next,
+            modifRequestsByCarcasseId: {
+              ...state.modifRequestsByCarcasseId,
+              [carcasseId]: nextArray,
             },
             dataIsSynced: false,
           }));
@@ -542,7 +549,9 @@ const useZustandStore = create<State & Actions>()(
       }),
       {
         name: 'zacharie-zustand-store',
-        version: 9,
+        // v10: modif requests moved from an embedded carcasse array + pending-only map to a single
+        // full-history map keyed by carcasse id. Bump forces a full re-fetch so the map repopulates.
+        version: 10,
         storage: createSlicedIDBStorage<Partial<State>>(PERSISTED_KEYS),
         onRehydrateStorage: (state) => {
           return () => state.setHasHydrated(true);

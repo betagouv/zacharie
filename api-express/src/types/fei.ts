@@ -10,10 +10,6 @@ export const feiPopulatedInclude = {
   Carcasses: {
     include: {
       CarcasseIntermediaire: true,
-      CarcasseModificationRequests: {
-        where: { deleted_at: null as Date | null },
-        orderBy: { requested_at: Prisma.SortOrder.desc },
-      },
     },
   },
   FeiExaminateurInitialUser: true,

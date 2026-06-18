@@ -41,7 +41,6 @@ import { addAnSToWord, formatCountCarcasseByEspece } from '@app/utils/count-carc
 import FEIDonneesDeChasse from '@app/components/DonneesDeChasse';
 import Section from '@app/components/Section';
 import CardCarcasse from '@app/components/CardCarcasse';
-import FeiStepper from '@app/components/FeiStepper';
 import { useCollecteursProIds } from '@app/utils/get-entity-relations';
 import DestinataireSelectIntermediaire from './collecteur-destinataire-select-intermediaire';
 import FeiSousTraite from './collecteur-current-owner-sous-traite';
@@ -710,7 +709,6 @@ function CollecteurProFeiContent({
           >
             <FeiSousTraite />
             <CurrentOwnerConfirm />
-            <FeiStepper />
             {/* <Section title="Transport" key={intermediaire?.id}>
         <form
           method="POST"

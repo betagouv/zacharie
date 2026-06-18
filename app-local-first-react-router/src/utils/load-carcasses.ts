@@ -3,7 +3,7 @@ import useZustandStore from '@app/zustand/store';
 import { mergeItems } from './merge-fetched-items';
 import API from '@app/services/api';
 import { getFeiAndCarcasseAndIntermediaireIds } from './get-carcasse-intermediaire-id';
-import { CarcasseModificationRequestStatus } from '@prisma/client';
+import type { CarcasseModificationRequest } from '@prisma/client';
 import useUser from '@app/zustand/user';
 
 let loadCarcassesAbortController: AbortController | null = null;
@@ -113,18 +113,16 @@ export async function loadCarcasses() {
       }
     }
 
-    const nextCarcasseModifPendingByCarcasseId = {
-      ...useZustandStore.getState().carcasseModifActiveByCarcasseId,
-    };
-    for (const carcasseModifRequest of carcasseModifRequests) {
-      if (carcasseModifRequest.deleted_at) {
-        delete nextCarcasseModifPendingByCarcasseId[carcasseModifRequest.zacharie_carcasse_id];
-      } else if (carcasseModifRequest.status === CarcasseModificationRequestStatus.PENDING) {
-        nextCarcasseModifPendingByCarcasseId[carcasseModifRequest.zacharie_carcasse_id] =
-          carcasseModifRequest;
-      } else {
-        delete nextCarcasseModifPendingByCarcasseId[carcasseModifRequest.zacharie_carcasse_id];
-      }
+    // Merge modif requests by their own id (drops cancelled ones via deleted_at, like other entities),
+    // then regroup into the full-history-by-carcasse map the store and UI consume.
+    const mergedModifRequestsById = mergeItems({
+      oldItems: Object.values(useZustandStore.getState().modifRequestsByCarcasseId).flat(),
+      newItems: carcasseModifRequests,
+      idKey: (r) => r.id,
+    });
+    const nextModifRequestsByCarcasseId: Record<string, Array<CarcasseModificationRequest>> = {};
+    for (const request of Object.values(mergedModifRequestsById) as Array<CarcasseModificationRequest>) {
+      (nextModifRequestsByCarcasseId[request.zacharie_carcasse_id] ??= []).push(request);
     }
 
     if (signal.aborted || !useUser.getState().user) return;
@@ -134,7 +132,7 @@ export async function loadCarcasses() {
       carcassesRegistry: Object.values(newCarcasses),
       feis: newFeis,
       carcassesIntermediaireById: newCarcassesIntermediaires,
-      carcasseModifActiveByCarcasseId: nextCarcasseModifPendingByCarcasseId,
+      modifRequestsByCarcasseId: nextModifRequestsByCarcasseId,
       users: newUsers,
       entities: newEntities,
       lastUpdateFromServer: serverDate,

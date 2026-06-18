@@ -9,6 +9,7 @@ import petitGibier from '@app/data/petit-gibier.json';
 import dayjs from 'dayjs';
 import { v4 as uuidv4 } from 'uuid';
 import {
+  Carcasse,
   CarcasseType,
   CarcasseModificationRequestStatus,
   CarcasseModificationRequestType,
@@ -18,7 +19,6 @@ import useZustandStore from '@app/zustand/store';
 import { syncData } from '@app/utils/sync-data';
 import useUser from '@app/zustand/user';
 import type { CarcassesIntermediaire } from '@app/types/carcasses-intermediaire';
-import { CarcasseWithModificationRequests } from '@api/src/types/carcasse';
 
 const gibierSelect = {
   grand: grandGibier.especes,
@@ -99,7 +99,7 @@ export default function RequestNewCarcasseButton({
 
     // 1) Create the Carcasse locally with no examinateur signature — the examinateur will sign on
     // approval. Fields not set here keep their default/null from the carcasse schema.
-    const newCarcasse: CarcasseWithModificationRequests = {
+    const newCarcasse: Carcasse = {
       zacharie_carcasse_id: zacharieCarcasseId,
       fei_numero: feiNumero,
       numero_bracelet: numeroBracelet.trim(),
@@ -225,7 +225,6 @@ export default function RequestNewCarcasseButton({
       updated_at: dayjs().toDate(),
       deleted_at: null,
       is_synced: false,
-      CarcasseModificationRequests: [],
     };
 
     const modifRequest: CarcasseModificationRequest = {
@@ -248,7 +247,6 @@ export default function RequestNewCarcasseButton({
       deleted_at: null,
       is_synced: false,
     };
-    newCarcasse.CarcasseModificationRequests.push(modifRequest);
     createCarcasse(newCarcasse);
 
     // 2) Create the CarcasseIntermediaire row for the current intermediaire so the new carcasse

@@ -17,12 +17,10 @@ import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import { syncData } from '@app/utils/sync-data';
 import { createHistoryInput } from '@app/utils/create-history-entry';
-import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
-import { isCarcasseClosedBySvi } from '@app/utils/is-carcasse-done';
 import { getNewCarcasseIntermediaireId } from '@app/utils/get-carcasse-intermediaire-id';
 import type { CarcassesIntermediaire } from '@app/types/carcasses-intermediaire';
-import { useFeiIntermediaires } from '@app/utils/get-carcasses-intermediaires';
 import { CarcasseTransmission } from '@app/types/carcasse';
+import { useTransmissionWithMetadata } from '@app/utils/get-transmissions-sorted';
 
 export default function CurrentOwnerConfirm() {
   const params = useParams();
@@ -30,13 +28,13 @@ export default function CurrentOwnerConfirm() {
   const updateCarcassesTransmission = useZustandStore((state) => state.updateCarcassesTransmission);
   const createCarcassesIntermediaire = useZustandStore((state) => state.createCarcassesIntermediaire);
   const addLog = useZustandStore((state) => state.addLog);
-  const feis = useZustandStore((state) => state.feis);
-  const fei = feis[params.fei_numero!];
+  const transmissionMetadata = useTransmissionWithMetadata(params.fei_numero!);
+  const fei = transmissionMetadata.fei;
   const entities = useZustandStore((state) => state.entities);
   const users = useZustandStore((state) => state.users);
-  const myCarcasses = useCarcassesForFei(params.fei_numero);
-  const currentTransmission = myCarcasses[0];
-  const intermediaires = useFeiIntermediaires(fei.numero);
+  const myCarcasses = transmissionMetadata.carcasses;
+  const currentTransmission = transmissionMetadata.content;
+  const intermediaires = transmissionMetadata.intermediaires;
   const latestIntermediaire = intermediaires[0];
 
   const currentOwnerEntity = entities[currentTransmission.current_owner_entity_id!];
@@ -146,12 +144,7 @@ export default function CurrentOwnerConfirm() {
   if (!currentTransmission.next_owner_role) {
     return null;
   }
-  if (
-    // currentTransmission.automatic_closed_at || // TODO: FIXME: automatic_closed_at not yet implemented
-    fei.automatic_closed_at ||
-    (myCarcasses.length > 0 && myCarcasses.every(isCarcasseClosedBySvi)) ||
-    currentTransmission.intermediaire_closed_at
-  ) {
+  if (transmissionMetadata.allCarcassesDone) {
     return null;
   }
   // Multi-recipient: user already took charge of their assigned carcasses
@@ -354,10 +347,6 @@ export default function CurrentOwnerConfirm() {
     });
     // Update carcasses transmission (source of truth) - only my carcasses
     updateCarcassesTransmission(myCarcasseIds, nextTransmission);
-
-    // Update FEI for retrocompat (full transition)
-    // useless in multi-dispatch, so useless tout court
-    // updateFei(fei.numero, nextFei);
     addLog({
       user_id: user.id,
       user_role: nextTransmission.current_owner_role! as UserRoles,

@@ -6,7 +6,7 @@ import { createNewCarcasse } from '../src/utils/create-new-carcasse';
 import useUser from '../src/zustand/user';
 import useZustandStore from '../src/zustand/store';
 import type { FeiWithIntermediaires } from '../../api-express/src/types/fei';
-import type { CarcasseWithModificationRequests } from '../../api-express/src/types/carcasse';
+import type { Carcasse } from '@prisma/client';
 
 vi.mock('@app/services/sentry', () => ({ capture: vi.fn() }));
 
@@ -72,7 +72,7 @@ describe('createNewCarcasse', () => {
     });
 
     expect(createCarcasseSpy).toHaveBeenCalledOnce();
-    const carcasse = createCarcasseSpy.mock.calls[0][0] as CarcasseWithModificationRequests;
+    const carcasse = createCarcasseSpy.mock.calls[0][0] as Carcasse;
 
     expect(carcasse.current_owner_role).toBe(FeiOwnerRole.EXAMINATEUR_INITIAL);
     expect(carcasse.current_owner_user_id).toBe(examinateurUser!.id);
@@ -103,7 +103,7 @@ describe('createNewCarcasse', () => {
       fei,
     });
 
-    const carcasse = createCarcasseSpy.mock.calls[0][0] as CarcasseWithModificationRequests;
+    const carcasse = createCarcasseSpy.mock.calls[0][0] as Carcasse;
     expect(carcasse.type).toBe(CarcasseType.GROS_GIBIER);
     expect(carcasse.nombre_d_animaux).toBe(1);
   });
@@ -128,7 +128,7 @@ describe('createNewCarcasse', () => {
       fei,
     });
 
-    const carcasse = createCarcasseSpy.mock.calls[0][0] as CarcasseWithModificationRequests;
+    const carcasse = createCarcasseSpy.mock.calls[0][0] as Carcasse;
     expect(carcasse.current_owner_role).toBe(FeiOwnerRole.EXAMINATEUR_INITIAL);
     expect(carcasse.current_owner_user_id).toBe(examinateurUser!.id);
     expect(carcasse.prev_owner_role).toBeNull();

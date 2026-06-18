@@ -5,7 +5,7 @@ import useUser from '@app/zustand/user';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import type { FeiAndCarcasseAndIntermediaireIds } from '@app/types/carcasses-intermediaire';
 import { useEntitiesIdsWorkingDirectlyFor } from '@app/utils/get-entity-relations';
-import { CarcasseWithModificationRequests } from '@api/src/types/carcasse';
+import type { Carcasse } from '@prisma/client';
 
 const userFields = [
   'current_owner_user_id',
@@ -28,11 +28,11 @@ const entityFields = [
 ] as const;
 
 export function filterMyCarcasses(
-  carcasses: Array<CarcasseWithModificationRequests>,
+  carcasses: Array<Carcasse>,
   userId: string,
   entityIds: string[],
   carcassesIntermediaireById: Record<FeiAndCarcasseAndIntermediaireIds, CarcasseIntermediaire>
-): Array<CarcasseWithModificationRequests> {
+): Array<Carcasse> {
   const entityIdSet = new Set(entityIds);
 
   return carcasses.filter((carcasse) => {
@@ -56,9 +56,7 @@ export function filterMyCarcasses(
   });
 }
 
-export function useMyCarcassesForFei(
-  fei_numero: string | undefined
-): Array<CarcasseWithModificationRequests> {
+export function useMyCarcassesForFei(fei_numero: string | undefined): Array<Carcasse> {
   const user = useUser((state) => state.user);
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
   const feiCarcasses = useCarcassesForFei(fei_numero);

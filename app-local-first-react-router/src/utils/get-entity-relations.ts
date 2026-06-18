@@ -20,6 +20,18 @@ export function filterEntitiesWorkingDirectlyFor(entities: Record<string, Entity
     .map((e) => e.id);
 }
 
+export function filterEntitiesWorkingDirectlyForObj(
+  entities: Record<EntityWithUserRelation['id'], EntityWithUserRelation>
+): Record<EntityWithUserRelation['id'], EntityWithUserRelation> {
+  const toReturn: Record<EntityWithUserRelation['id'], EntityWithUserRelation> = {};
+  for (const entity of Object.values(entities)) {
+    if (entity.deleted_at) continue;
+    if (entity.relation !== EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) continue;
+    toReturn[entity.id] = entity;
+  }
+  return toReturn;
+}
+
 export function filterCcgs(entities: Record<string, EntityWithUserRelation>): EntityWithUserRelation[] {
   return Object.values(entities).filter((e) => !e.deleted_at && e.type === EntityTypes.CCG);
 }
@@ -46,9 +58,17 @@ export function filterCircuitCourt(
 
 // Hooks (for components)
 
-export function useEntitiesIdsWorkingDirectlyFor(): string[] {
+export function useEntitiesIdsWorkingDirectlyFor(): Array<EntityWithUserRelation['id']> {
   const entities = useZustandStore((state) => state.entities);
   return useMemo(() => filterEntitiesWorkingDirectlyFor(entities), [entities]);
+}
+
+export function useEntitiesIdsWorkingDirectlyForObj(): Record<
+  EntityWithUserRelation['id'],
+  EntityWithUserRelation
+> {
+  const entities = useZustandStore((state) => state.entities);
+  return useMemo(() => filterEntitiesWorkingDirectlyForObj(entities), [entities]);
 }
 
 export function useCcgIds(): string[] {

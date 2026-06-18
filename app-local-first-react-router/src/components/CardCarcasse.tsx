@@ -14,7 +14,6 @@ import {
   PoidsType,
   UserRoles,
 } from '@prisma/client';
-import { CarcasseWithModificationRequests } from '@api/src/types/carcasse';
 import dayjs from 'dayjs';
 import { type ReactNode, useMemo, useRef } from 'react';
 import { useParams } from 'react-router';
@@ -27,7 +26,7 @@ import {
 } from '@app/utils/get-carcasse-card-display';
 
 interface CardCarcasseProps {
-  carcasse: CarcasseWithModificationRequests;
+  carcasse: Carcasse;
   className?: string;
   hideDateMiseAMort?: boolean;
   onEdit?: () => void;
@@ -97,12 +96,12 @@ export default function CardCarcasse({
   // Modifications passées (approuvées / refusées) sur cette carcasse — utilisé pour afficher un
   // compteur dans le descriptionLine + une icône d'alerte en cas de refus (signal visuel fort).
   // Les demandes PENDING ne sont pas comptées ici (déjà visualisées via le PendingModificationBanner).
+  const modifRequests = useZustandStore(
+    (state) => state.modifRequestsByCarcasseId[carcasse.zacharie_carcasse_id]
+  );
   const modifsHistory = useMemo(
-    () =>
-      carcasse.CarcasseModificationRequests.filter(
-        (r) => r.status !== CarcasseModificationRequestStatus.PENDING
-      ),
-    [carcasse.CarcasseModificationRequests]
+    () => (modifRequests ?? []).filter((r) => r.status !== CarcasseModificationRequestStatus.PENDING),
+    [modifRequests]
   );
   const modifsCount = modifsHistory.length;
   const hasRejectedModif = modifsHistory.some((r) => r.status === CarcasseModificationRequestStatus.REJECTED);

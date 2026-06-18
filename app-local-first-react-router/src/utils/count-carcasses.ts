@@ -1,7 +1,8 @@
 import { CarcasseStatus, CarcasseType, type Carcasse } from '@prisma/client';
 import { getSimplifiedCarcasseStatus } from './get-carcasse-status';
+import { CarcasseForCounting } from '@app/types/carcasse';
 
-export function formatSummaryCount(carcasses: Array<Carcasse>) {
+export function formatSummaryCount(carcasses: Array<CarcasseForCounting>) {
   let summary = '';
   let carcassesRefusées = 0;
   let carcassesAcceptées = 0;
@@ -34,7 +35,7 @@ export function formatSummaryCount(carcasses: Array<Carcasse>) {
 
 type CountCarcassesByEspece = Record<string, { carcasses: number; nombre_d_animaux: number; lots: number }>;
 
-export function getCountCarcassesByEspece(carcasses: Array<Carcasse>): CountCarcassesByEspece {
+export function getCountCarcassesByEspece(carcasses: Array<CarcasseForCounting>): CountCarcassesByEspece {
   return carcasses.reduce(
     (acc, carcasse) => {
       if (carcasse.deleted_at) {
@@ -82,7 +83,7 @@ export function getCountCarcassesByEspece(carcasses: Array<Carcasse>): CountCarc
   );
 }
 
-export function formatCountCarcasseByEspece(carcasses: Array<Carcasse>) {
+export function formatCountCarcasseByEspece(carcasses: Array<CarcasseForCounting>) {
   const countCarcassesByEspece = getCountCarcassesByEspece(carcasses);
 
   if (!Object.keys(countCarcassesByEspece).length) {
@@ -127,7 +128,7 @@ export function formatCountCarcasseByEspece(carcasses: Array<Carcasse>) {
   return formatted;
 }
 
-export function formatCarcasseLotCount(carcasses: Array<Carcasse>): string {
+export function formatCarcasseLotCount(carcasses: Array<CarcasseForCounting>): string {
   let carcassesCount = 0;
   let lotsCount = 0;
   for (const c of carcasses) {

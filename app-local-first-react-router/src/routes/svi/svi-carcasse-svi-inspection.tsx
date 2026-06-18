@@ -1,12 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import {
-  CarcasseModificationRequestStatus,
-  CarcasseType,
-  EntityRelationType,
-  IPM1Decision,
-  UserRoles,
-} from '@prisma/client';
+import { CarcasseType, EntityRelationType, IPM1Decision, UserRoles } from '@prisma/client';
 import dayjs from 'dayjs';
 import CardCarcasseSvi from '@app/components/CardCarcasseSvi';
 import { Breadcrumb } from '@codegouvfr/react-dsfr/Breadcrumb';
@@ -27,6 +21,8 @@ import {
   HistoriqueDesModifications,
 } from '@app/components/CarcasseModificationRequest';
 import { loadData, useLoaderEffect } from '@app/utils/load-data';
+import { useTransmissionWithMetadata } from '@app/utils/get-transmissions-sorted';
+import { getPendingModifRequest } from '@app/utils/modif-requests';
 
 export default function SviInspectionCarcasseLoader() {
   const params = useParams();
@@ -56,13 +52,12 @@ function SviInspectionCarcasse() {
   const params = useParams();
   const navigate = useNavigate();
   const user = useUser((state) => state.user)!;
-  const state = useZustandStore((state) => state);
-  const feis = useZustandStore((state) => state.feis);
-  const fei = feis[params.fei_numero!];
+  const entities = useZustandStore((state) => state.entities);
+  const transmission = useTransmissionWithMetadata(params.fei_numero!);
+  const fei = transmission.fei;
   const carcasses = useZustandStore((state) => state.carcasses);
   const carcasse = carcasses[params.zacharie_carcasse_id!];
   const carcassesIntermediaires = useCarcassesIntermediairesForCarcasse(carcasse.zacharie_carcasse_id);
-  const entities = useZustandStore((state) => state.entities);
 
   const commentairesIntermediaires = useMemo(() => {
     const commentaires = [];
@@ -78,21 +73,21 @@ function SviInspectionCarcasse() {
   }, [carcassesIntermediaires, entities]);
 
   const isSviWorkingFor = useMemo(() => {
-    if (fei.svi_entity_id) {
+    if (transmission.content.svi_entity_id) {
       if (user.roles.includes(UserRoles.SVI)) {
-        const svi = state.entities[fei.svi_entity_id];
+        const svi = entities[transmission.content.svi_entity_id];
         if (svi?.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
           return true;
         }
       }
     }
     return false;
-  }, [fei, user, state]);
+  }, [transmission, user, entities]);
 
-  const allModifRequests = carcasse.CarcasseModificationRequests;
-  const pendingModifRequest = allModifRequests.find(
-    (r) => r.status === CarcasseModificationRequestStatus.PENDING
+  const allModifRequests = useZustandStore(
+    (state) => state.modifRequestsByCarcasseId[carcasse.zacharie_carcasse_id]
   );
+  const pendingModifRequest = getPendingModifRequest(allModifRequests);
 
   const canEdit = useMemo(() => {
     // SVI ne peut pas inspecter une carcasse dont l'identité (numéro de marquage) ou la signature de
@@ -103,14 +98,14 @@ function SviInspectionCarcasse() {
     if (isSviWorkingFor) {
       return true;
     }
-    if (fei.fei_current_owner_role !== UserRoles.SVI) {
+    if (transmission.content.current_owner_role !== UserRoles.SVI) {
       return false;
     }
     if (!user.roles.includes(UserRoles.SVI)) {
       return false;
     }
     return true;
-  }, [fei, user, isSviWorkingFor, pendingModifRequest]);
+  }, [transmission, user, isSviWorkingFor, pendingModifRequest]);
 
   const initIMP1Open = useRef(!carcasse.svi_ipm1_decision);
   const initIMP2Open = useRef(
@@ -166,7 +161,7 @@ function SviInspectionCarcasse() {
               />
             </>
           </Section>
-          {allModifRequests.length > 0 && (
+          {(allModifRequests?.length ?? 0) > 0 && (
             <Section
               title="Historique des modifications"
               open={false}

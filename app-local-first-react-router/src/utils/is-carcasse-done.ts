@@ -1,6 +1,7 @@
-import { Carcasse, CarcasseStatus } from '@prisma/client';
+import { Carcasse, CarcasseStatus, User } from '@prisma/client';
 import type { FeiWithIntermediaires } from '@api/src/types/fei';
 import updateCarcasseStatus from './get-carcasse-status';
+import { EntityWithUserRelation } from '@api/src/types/entity';
 
 // États terminaux d'une carcasse : elle ne progressera plus.
 // CONSIGNE (attente IPM2) et SANS_DECISION ne sont pas terminaux.
@@ -43,4 +44,30 @@ export function isFeiDone(fei: FeiWithIntermediaires, carcasses: Array<Carcasse>
   // Carcasses pas encore chargées : ne pas conclure "done" par vacuité.
   if (carcasses.length === 0) return false;
   return carcasses.every(isCarcasseDone);
+}
+
+export function isCarcasseUnderMyResponsability(
+  carcasse: Carcasse,
+  me: User,
+  entitiesWorkingDirectlyFor: Record<EntityWithUserRelation['id'], EntityWithUserRelation>
+) {
+  // At least one carcasse where current_owner is me/my entity AND no next_owner
+  if (carcasse.next_owner_user_id || carcasse.next_owner_entity_id) return false;
+  if (carcasse.current_owner_user_id === me.id) return true;
+  if (carcasse.current_owner_entity_id && entitiesWorkingDirectlyFor[carcasse.current_owner_entity_id]) {
+    return true;
+  }
+  return false;
+}
+
+export function isCarcasseToTake(
+  carcasse: Carcasse,
+  me: User,
+  entitiesWorkingDirectlyFor: Record<EntityWithUserRelation['id'], EntityWithUserRelation>
+) {
+  if (carcasse.next_owner_user_id === me.id) return true;
+  if (carcasse.next_owner_entity_id && entitiesWorkingDirectlyFor[carcasse.next_owner_entity_id]) {
+    return true;
+  }
+  return false;
 }
