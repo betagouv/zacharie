@@ -27,20 +27,16 @@ import type {
   FeiAndCarcasseAndIntermediaireIds,
   CarcassesIntermediaire,
 } from '@app/types/carcasses-intermediaire';
-import {
-  useCarcassesIntermediairesForIntermediaire,
-  useFeiIntermediaires,
-} from '@app/utils/get-carcasses-intermediaires';
+import { useCarcassesIntermediairesForIntermediaire } from '@app/utils/get-carcasses-intermediaires';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import { sortCarcassesApproved } from '@app/utils/sort';
-import { useMyCarcassesForFei } from '@app/utils/filter-my-carcasses';
-import { isCarcasseClosedBySvi } from '@app/utils/is-carcasse-done';
-import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
+import { isCarcasseDone } from '@app/utils/is-carcasse-done';
 import { getIntermediaireRoleLabel } from '@app/utils/get-user-roles-label';
 import { addAnSToWord, formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
 import FEIDonneesDeChasse from '@app/components/DonneesDeChasse';
 import Section from '@app/components/Section';
 import CardCarcasse from '@app/components/CardCarcasse';
+import CollecteurHeaderFiche from './collecteur-header-fiche';
 import { useCollecteursProIds } from '@app/utils/get-entity-relations';
 import DestinataireSelectIntermediaire from './collecteur-destinataire-select-intermediaire';
 import FeiSousTraite from './collecteur-current-owner-sous-traite';
@@ -49,6 +45,8 @@ import CurrentOwnerConfirm from './collecteur-current-owner-confirm';
 import NotFound from '@app/components/NotFound';
 import Chargement from '@app/components/Chargement';
 import { loadData, useLoaderEffect } from '@app/utils/load-data';
+import { CarcasseTransmission } from '@app/types/carcasse';
+import { useTransmissionWithMetadata } from '@app/utils/get-transmissions-sorted';
 
 interface Props {
   readOnly?: boolean;
@@ -73,17 +71,27 @@ export default function CollecteurFei(props: Props) {
   if (!fei) {
     return hasTriedLoading ? <NotFound /> : <Chargement />;
   }
-  return <CollecteurFeiLoader {...props} />;
+  return (
+    <>
+      {fei.deleted_at && (
+        <div className="bg-error-main-525 mb-2 py-2 text-center text-white">
+          <p>Fiche supprimée</p>
+        </div>
+      )}
+      <CollecteurFeiLoader {...props} />
+    </>
+  );
 }
 
 function CollecteurFeiLoader(props: Props) {
   const params = useParams();
   const user = useUser((state) => state.user)!;
-  const feis = useZustandStore((state) => state.feis);
   const entities = useZustandStore((state) => state.entities);
-  const fei = feis[params.fei_numero!];
-  const intermediaires = useFeiIntermediaires(fei.numero);
-  const feiCarcasses = useCarcassesForFei(params.fei_numero);
+  const fei_numero = params.fei_numero!;
+  const transmissionWithMetadata = useTransmissionWithMetadata(fei_numero);
+  const intermediaires = transmissionWithMetadata.intermediaires;
+  const myCarcasses = transmissionWithMetadata.carcasses;
+  const transmission = transmissionWithMetadata.content;
 
   const [selectedIntermediaireId, setSelectedIntermediaireId] = useState<string | null>(
     () => intermediaires.find((i) => i.intermediaire_user_id === user.id)?.id ?? null
@@ -101,59 +109,30 @@ function CollecteurFeiLoader(props: Props) {
 
   const intermediaire = intermediaires.find((i) => i.id === selectedIntermediaireId);
 
-  // For multi-recipient dispatch: derive next_owner_role from per-carcasse data
+  // collecteur s'identifie par les entités pour lesquelles il travaille
   const userEntityIds = useMemo(() => {
     return Object.values(entities)
       .filter((e) => e.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY)
       .map((e) => e.id);
   }, [entities]);
 
-  const myCarcasses = useMemo(() => {
-    return feiCarcasses.filter(
-      (c) =>
-        (c.next_owner_entity_id && userEntityIds.includes(c.next_owner_entity_id)) ||
-        c.next_owner_user_id === user.id
-    );
-  }, [feiCarcasses, userEntityIds, user.id]);
-
-  const myCarcassesNextOwnerRole = useMemo(() => {
-    if (myCarcasses.length > 0) {
-      return myCarcasses[0].next_owner_role;
-    }
-    return fei.fei_next_owner_role;
-  }, [myCarcasses, fei.fei_next_owner_role]);
-
-  const myCarcassesCurrentOwnerRole = useMemo(() => {
-    if (myCarcasses.length > 0) {
-      return myCarcasses[0].current_owner_role;
-    }
-    return fei.fei_current_owner_role;
-  }, [myCarcasses, fei.fei_current_owner_role]);
-
-  const myCarcassesCurrentOwnerEntityId = useMemo(() => {
-    if (myCarcasses.length > 0) {
-      return myCarcasses[0].current_owner_entity_id;
-    }
-    return fei.fei_current_owner_entity_id;
-  }, [myCarcasses, fei.fei_current_owner_entity_id]);
-
-  const myCarcassesNextOwnerEntityId = useMemo(() => {
-    if (myCarcasses.length > 0) {
-      return myCarcasses[0].next_owner_entity_id;
-    }
-    return fei.fei_next_owner_entity_id;
-  }, [myCarcasses, fei.fei_next_owner_entity_id]);
-
   const showInterface: FeiOwnerRole | null = useMemo(() => {
-    if (myCarcassesCurrentOwnerRole === FeiOwnerRole.COLLECTEUR_PRO) {
-      if (myCarcassesCurrentOwnerEntityId && userEntityIds.includes(myCarcassesCurrentOwnerEntityId)) {
-        return FeiOwnerRole.COLLECTEUR_PRO;
-      }
+    if (myCarcasses.length === 0) {
+      return null;
     }
-    if (myCarcassesNextOwnerRole === FeiOwnerRole.COLLECTEUR_PRO) {
-      if (myCarcassesNextOwnerEntityId && userEntityIds.includes(myCarcassesNextOwnerEntityId)) {
-        return FeiOwnerRole.COLLECTEUR_PRO;
-      }
+    if (
+      transmission.current_owner_role === FeiOwnerRole.COLLECTEUR_PRO &&
+      transmission.current_owner_entity_id &&
+      userEntityIds.includes(transmission.current_owner_entity_id)
+    ) {
+      return FeiOwnerRole.COLLECTEUR_PRO;
+    }
+    if (
+      transmission.next_owner_role === FeiOwnerRole.COLLECTEUR_PRO &&
+      transmission.next_owner_entity_id &&
+      userEntityIds.includes(transmission.next_owner_entity_id)
+    ) {
+      return FeiOwnerRole.COLLECTEUR_PRO;
     }
     if (intermediaires.length > 0) {
       const entityWasIntermediaire = intermediaires.find((intermediaire) =>
@@ -164,14 +143,7 @@ function CollecteurFeiLoader(props: Props) {
       }
     }
     return null;
-  }, [
-    myCarcassesCurrentOwnerRole,
-    myCarcassesNextOwnerRole,
-    intermediaires,
-    myCarcassesCurrentOwnerEntityId,
-    userEntityIds,
-    myCarcassesNextOwnerEntityId,
-  ]);
+  }, [transmission, myCarcasses.length, intermediaires, userEntityIds]);
 
   if (!showInterface) {
     return null;
@@ -208,7 +180,7 @@ function CollecteurFeiLoader(props: Props) {
               <ol className="fr-breadcrumb__list">
                 <li>
                   <span className="fr-breadcrumb__link bg-none! no-underline!">
-                    {fei.premier_detenteur_name_cache}
+                    {transmission.premier_detenteur_name_cache}
                   </span>
                 </li>
                 {intermediaires
@@ -259,14 +231,16 @@ function CollecteurProFeiContent({
   const params = useParams();
   const user = useUser((state) => state.user)!;
   const updateAllCarcasseIntermediaire = useZustandStore((state) => state.updateAllCarcasseIntermediaire);
-  const updateFei = useZustandStore((state) => state.updateFei);
+  const updateCarcassesTransmission = useZustandStore((state) => state.updateCarcassesTransmission);
   const addLog = useZustandStore((state) => state.addLog);
-  const feis = useZustandStore((state) => state.feis);
   const carcasses = useZustandStore((state) => state.carcasses);
   const entities = useZustandStore((state) => state.entities);
   const collecteursIds = useCollecteursProIds();
-  const fei = feis[params.fei_numero!];
-  const myFeiCarcasses = useMyCarcassesForFei(fei.numero);
+  const fei_numero = params.fei_numero!;
+  const transmissionWithMetadata = useTransmissionWithMetadata(fei_numero);
+  const fei = transmissionWithMetadata.fei;
+  const myFeiCarcasses = transmissionWithMetadata.carcasses;
+  const transmission = transmissionWithMetadata.content;
 
   const originalCarcasses = myFeiCarcasses.sort((a, b) => {
     if (a.svi_carcasse_status === CarcasseStatus.SANS_DECISION) {
@@ -358,17 +332,20 @@ function CollecteurProFeiContent({
   ]);
 
   const isCollecteurWorkingFor = useMemo(() => {
-    if (fei.fei_current_owner_role === FeiOwnerRole.COLLECTEUR_PRO && !!fei.fei_current_owner_entity_id) {
-      if (collecteursIds.includes(fei.fei_current_owner_entity_id)) {
-        const collecteur = entities[fei.fei_current_owner_entity_id];
+    if (
+      transmission.current_owner_role === FeiOwnerRole.COLLECTEUR_PRO &&
+      !!transmission.current_owner_entity_id
+    ) {
+      if (collecteursIds.includes(transmission.current_owner_entity_id)) {
+        const collecteur = entities[transmission.current_owner_entity_id];
         if (collecteur.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
           return true;
         }
       }
     }
-    if (fei.fei_next_owner_role === FeiOwnerRole.COLLECTEUR_PRO && !!fei.fei_next_owner_entity_id) {
-      if (collecteursIds.includes(fei.fei_next_owner_entity_id)) {
-        const collecteur = entities[fei.fei_next_owner_entity_id];
+    if (transmission.next_owner_role === FeiOwnerRole.COLLECTEUR_PRO && !!transmission.next_owner_entity_id) {
+      if (collecteursIds.includes(transmission.next_owner_entity_id)) {
+        const collecteur = entities[transmission.next_owner_entity_id];
         if (collecteur.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
           return true;
         }
@@ -376,43 +353,31 @@ function CollecteurProFeiContent({
     }
     // Multi-recipient: check if any carcasse has me as next_owner
     if (
-      fei.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR ||
-      fei.fei_current_owner_role === FeiOwnerRole.COLLECTEUR_PRO
+      transmission.current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR ||
+      transmission.current_owner_role === FeiOwnerRole.COLLECTEUR_PRO
     ) {
-      if (
-        myFeiCarcasses.some((c) => {
-          if (!c.next_owner_entity_id || !collecteursIds.includes(c.next_owner_entity_id)) return false;
-          const collecteur = entities[c.next_owner_entity_id];
-          return collecteur?.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY;
-        })
-      ) {
-        return true;
+      if (transmission.next_owner_entity_id && collecteursIds.includes(transmission.next_owner_entity_id)) {
+        const collecteur = entities[transmission.next_owner_entity_id];
+        return collecteur?.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY;
       }
     }
     return false;
-  }, [fei, collecteursIds, entities, myFeiCarcasses]);
-
-  // Multi-recipient: user may be current_owner of their carcasses even if FEI-level says otherwise
-  const isCurrentOwnerOfMyCarcasses = useMemo(() => {
-    return myFeiCarcasses.some((c) => c.current_owner_user_id === user.id);
-  }, [myFeiCarcasses, user.id]);
+  }, [transmission, collecteursIds, entities]);
 
   // Remplace l'ancien flag FEI svi_closed_at : la fiche est verrouillée "pour moi"
-  // quand toutes les carcasses que je gère ont été clôturées par le SVI (manuel ou cron).
-  // On EXCLUT les refus/manquantes intermédiaires (décisions propres de l'ETG/collecteur
-  // qu'il doit pouvoir éditer/annuler).
-  const allMyCarcassesClosedBySvi = useMemo(() => {
-    return myFeiCarcasses.length > 0 && myFeiCarcasses.every(isCarcasseClosedBySvi);
+  // quand toutes les carcasses que je gère ont été clôturées (SVI manuel/cron ou refus total).
+  const allMyCarcassesDone = useMemo(() => {
+    return myFeiCarcasses.length > 0 && myFeiCarcasses.every(isCarcasseDone);
   }, [myFeiCarcasses]);
 
   const canEdit = useMemo(() => {
-    if (fei.intermediaire_closed_at || allMyCarcassesClosedBySvi || fei.automatic_closed_at) {
+    if (allMyCarcassesDone) {
       return false;
     }
     if (isCollecteurWorkingFor) {
       return true;
     }
-    if (fei.fei_current_owner_user_id !== user.id && !isCurrentOwnerOfMyCarcasses) {
+    if (transmission.current_owner_user_id !== user.id) {
       return false;
     }
     if (!intermediaire) {
@@ -422,16 +387,30 @@ function CollecteurProFeiContent({
       return false;
     }
     return true;
-  }, [
-    fei,
-    user,
-    intermediaire,
-    isCollecteurWorkingFor,
-    isCurrentOwnerOfMyCarcasses,
-    allMyCarcassesClosedBySvi,
-  ]);
+  }, [transmission, user, intermediaire, isCollecteurWorkingFor, allMyCarcassesDone]);
 
   const effectiveCanEdit = canEdit && !props.readOnly;
+
+  // Comme `canEdit`, mais sans le verrou `allMyCarcassesDone` : même quand toutes mes carcasses
+  // sont clôturées (ex. toutes refusées → fiche clôturée par l'intermédiaire), le collecteur doit
+  // pouvoir rouvrir la modale de décision d'une carcasse pour corriger un refus. Le verrou
+  // « fiche clôturée » ne concerne que la prise en charge et la transmission (= `effectiveCanEdit`).
+  const canEditCarcasseDecision = useMemo(() => {
+    if (isCollecteurWorkingFor) {
+      return true;
+    }
+    if (transmission.current_owner_user_id && transmission.current_owner_user_id !== user.id) {
+      return false;
+    }
+    if (!intermediaire) {
+      return false;
+    }
+    if (intermediaire.intermediaire_user_id !== user.id) {
+      return false;
+    }
+    return true;
+  }, [transmission, user, intermediaire, isCollecteurWorkingFor]);
+  const effectiveCanEditCarcasseDecision = canEditCarcasseDecision && !props.readOnly;
   const formattedPriseEnChargeAt = priseEnChargeAt
     ? dayjs(priseEnChargeAt).format('YYYY-MM-DDTHH:mm')
     : undefined;
@@ -544,27 +523,20 @@ function CollecteurProFeiContent({
   ]);
 
   const couldSelectNextUser = useMemo(() => {
-    if (fei.intermediaire_closed_at || allMyCarcassesClosedBySvi || fei.automatic_closed_at) {
+    if (allMyCarcassesDone) {
       return false;
     }
     if (isCollecteurWorkingFor) {
       return true;
     }
-    if (fei.fei_current_owner_user_id !== user.id && !isCurrentOwnerOfMyCarcasses) {
+    if (transmission.current_owner_user_id !== user.id) {
       return false;
     }
     if (intermediaire?.intermediaire_user_id !== user.id) {
       return false;
     }
     return true;
-  }, [
-    fei,
-    user,
-    intermediaire,
-    isCollecteurWorkingFor,
-    isCurrentOwnerOfMyCarcasses,
-    allMyCarcassesClosedBySvi,
-  ]);
+  }, [transmission, user, intermediaire, isCollecteurWorkingFor, allMyCarcassesDone]);
 
   const needSelectNextUser = useMemo(() => {
     if (!couldSelectNextUser) {
@@ -591,7 +563,7 @@ function CollecteurProFeiContent({
     if (!effectiveCanEdit) {
       return false;
     }
-    if (fei.intermediaire_closed_at || allMyCarcassesClosedBySvi || fei.automatic_closed_at) {
+    if (allMyCarcassesDone) {
       return false;
     }
     // Il faut au moins une carcasse manquante ou refusée
@@ -608,9 +580,7 @@ function CollecteurProFeiContent({
     return true;
   }, [
     effectiveCanEdit,
-    fei.intermediaire_closed_at,
-    allMyCarcassesClosedBySvi,
-    fei.automatic_closed_at,
+    allMyCarcassesDone,
     carcassesSorted.carcassesManquantes.length,
     carcassesSorted.carcassesApproved.length,
     carcassesSorted.carcassesRejetees.length,
@@ -625,11 +595,15 @@ function CollecteurProFeiContent({
     updateAllCarcasseIntermediaire(fei.numero, feiAndIntermediaireIds, {
       prise_en_charge_at: now,
     });
-    updateFei(fei.numero, {
+    const nextTransmission: CarcasseTransmission = {
       intermediaire_closed_at: now,
       intermediaire_closed_by_entity_id: intermediaire.intermediaire_entity_id,
       intermediaire_closed_by_user_id: intermediaire.intermediaire_user_id,
-    });
+    };
+    updateCarcassesTransmission(
+      myFeiCarcasses.map((c) => c.zacharie_carcasse_id),
+      nextTransmission
+    );
     addLog({
       user_id: user.id,
       action: 'intermediaire-close-fei-manquantes-ou-rejetees',
@@ -673,17 +647,23 @@ function CollecteurProFeiContent({
       !carcassesSorted.carcassesApproved.length &&
       !carcassesSorted.carcassesEcarteesPourInspection.length
     ) {
-      updateFei(fei.numero, {
-        intermediaire_closed_at: _priseEnChargeAt,
-        intermediaire_closed_by_entity_id: intermediaire.intermediaire_entity_id,
-        intermediaire_closed_by_user_id: intermediaire.intermediaire_user_id,
-      });
+      updateCarcassesTransmission(
+        myFeiCarcasses.map((c) => c.zacharie_carcasse_id),
+        {
+          intermediaire_closed_at: _priseEnChargeAt,
+          intermediaire_closed_by_entity_id: intermediaire.intermediaire_entity_id,
+          intermediaire_closed_by_user_id: intermediaire.intermediaire_user_id,
+        }
+      );
     } else {
-      updateFei(fei.numero, {
-        intermediaire_closed_at: null,
-        intermediaire_closed_by_entity_id: null,
-        intermediaire_closed_by_user_id: null,
-      });
+      updateCarcassesTransmission(
+        myFeiCarcasses.map((c) => c.zacharie_carcasse_id),
+        {
+          intermediaire_closed_at: null,
+          intermediaire_closed_by_entity_id: null,
+          intermediaire_closed_by_user_id: null,
+        }
+      );
     }
     syncData('intermediaire-check-finished-at');
   }
@@ -696,17 +676,13 @@ function CollecteurProFeiContent({
   return (
     <Fragment key={intermediaire?.id}>
       <title>{`${params.fei_numero} | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}</title>
-      {fei.deleted_at && (
-        <div className="bg-error-main-525 mb-2 py-2 text-center text-white">
-          <p>Fiche supprimée</p>
-        </div>
-      )}
       <div className="fr-container fr-container--fluid fr-my-md-14v">
         <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
           <div
             className="fr-col-12 fr-col-md-10 bg-alt-blue-france [&_.fr-tabs\\_\\_list]:bg-alt-blue-france m-4 md:m-0 md:p-0"
-            key={fei.fei_current_owner_entity_id! + fei.fei_current_owner_user_id!}
+            key={transmission.current_owner_entity_id! + transmission.current_owner_user_id!}
           >
+            <CollecteurHeaderFiche />
             <FeiSousTraite />
             <CurrentOwnerConfirm />
             {/* <Section title="Transport" key={intermediaire?.id}>
@@ -771,7 +747,7 @@ function CollecteurProFeiContent({
                       <Fragment key={carcasse.numero_bracelet}>
                         <CarcasseIntermediaireComp
                           intermediaire={intermediaire}
-                          canEdit={effectiveCanEdit}
+                          canEdit={effectiveCanEditCarcasseDecision}
                           carcasse={carcasse}
                         />
                       </Fragment>
@@ -911,7 +887,7 @@ function CollecteurProFeiContent({
                     )}
                     {!carcassesApprovedSorted.length &&
                       !carcassesSorted.carcassesEcarteesPourInspection.length &&
-                      fei.intermediaire_closed_at && (
+                      transmission.intermediaire_closed_at && (
                         <>
                           <Alert
                             severity="info"

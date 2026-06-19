@@ -16,8 +16,8 @@ import { loadData, useLoaderEffect } from '@app/utils/load-data';
 
 export default function CollecteurSviInspectionCarcasseLoader() {
   const params = useParams();
-  const state = useZustandStore((state) => state);
-  const fei = state.feis[params.fei_numero!];
+  const feis = useZustandStore((state) => state.feis);
+  const fei = feis[params.fei_numero!];
   const carcasses = useZustandStore((state) => state.carcasses);
   const carcasse = carcasses[params.zacharie_carcasse_id!];
   const [hasTriedLoading, setHasTriedLoading] = useState(false);
