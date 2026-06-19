@@ -2,7 +2,6 @@ import { Carcasse, CarcasseStatus, CarcasseType, Fei, IPM2Decision } from '@pris
 import { getCarcasseStatusLabelForEmail } from './get-carcasse-status';
 import lesions from '../assets/lesions.json';
 import prisma from '~/prisma';
-import { formatCountCarcasseByEspece } from './count-carcasses';
 
 function getMotifForChasseur(motif: string, carcasseType: CarcasseType) {
   const lesion = lesions[carcasseType]

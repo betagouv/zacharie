@@ -116,7 +116,9 @@ export type CarcasseForCounting = Pick<
 export type CarcasseTransmissionWihMetadata = {
   content: CarcasseTransmission;
   intermediaires: Array<CarcassesIntermediaire>;
-  fei: Pick<Fei, 'numero' | 'commune_mise_a_mort' | 'date_mise_a_mort'>;
+  fei: Pick<Fei, 'numero' | 'commune_mise_a_mort' | 'date_mise_a_mort'> & {
+    numberOfPremierDetenteurProchainDetenteur: number;
+  };
   allCarcassesDone?: boolean;
   labels: {
     simpleStatus: TransmissionSimpleStatus;
@@ -125,4 +127,6 @@ export type CarcasseTransmissionWihMetadata = {
     transportOrSoustraiteLabel: TransmissionStepForTransportOrSoustraite;
   };
   carcasses: Array<Carcasse>;
+  // lots de petit gibier dont une partie a été refusée par le dernier détenteur (ex: "3 perdrix")
+  partialRefusals: Array<string>;
 };

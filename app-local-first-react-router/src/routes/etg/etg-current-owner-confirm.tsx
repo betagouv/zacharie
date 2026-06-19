@@ -103,11 +103,6 @@ export default function CurrentOwnerConfirm() {
   }, [user, currentOwnerEntity, currentTransmission]);
 
   const canConfirmCurrentOwner = useMemo(() => {
-    // Multi-recipient: check if user has carcasses assigned to them per-carcasse
-    if (myCarcasses.length > 0) {
-      if (currentTransmission.next_owner_role === FeiOwnerRole.ETG) return true;
-    }
-
     if (currentTransmission.next_owner_user_id === user.id) {
       return true;
     }
@@ -128,7 +123,6 @@ export default function CurrentOwnerConfirm() {
     }
     return true;
   }, [
-    myCarcasses.length,
     currentTransmission.next_owner_user_id,
     currentTransmission.next_owner_role,
     currentTransmission.current_owner_user_id,

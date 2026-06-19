@@ -6,11 +6,7 @@ import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import { useMemo, useState, useRef, useEffect, type ReactNode } from 'react';
 import useZustandStore from '@app/zustand/store';
 import { useIsCircuitCourt } from '@app/utils/circuit-court';
-import { CarcasseType } from '@prisma/client';
-import { abbreviations, formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
-import { filterCarcassesIntermediairesForCarcasse } from '@app/utils/get-carcasses-intermediaires';
-import { useMyCarcassesForFei } from '@app/utils/filter-my-carcasses';
-import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
+import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
 import { CarcasseTransmissionWihMetadata } from '@app/types/carcasse';
 
 interface CardProps {
@@ -52,13 +48,13 @@ export default function CardTransmission({
 }: CardProps) {
   const simpleStatus = transmission.labels.simpleStatus;
   const transportOrSoustraiteLabel = transmission.labels.transportOrSoustraiteLabel;
+  // const dispatch = transmission.fei.numberOfPremierDetenteurProchainDetenteur;
   const isCircuitCourt = useIsCircuitCourt();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const dataIsSynced = useZustandStore((state) => state.dataIsSynced);
-  const myCarcasses = useMyCarcassesForFei(transmission.fei.numero!);
-  const feiCarcasses = useCarcassesForFei(transmission.fei.numero!);
-  const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
+  const carcasses = transmission.carcasses;
+  const partialRefusals = transmission.partialRefusals;
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -72,87 +68,37 @@ export default function CardTransmission({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const [carcassesAcceptées, carcassesRefusées, _carcassesOuLotsRefusés] = useMemo(() => {
-    const formatted = formatCountCarcasseByEspece(myCarcasses) as string[];
-    const _carcassesAcceptées: string[] = [];
-    let _carcassesRefusées = 0;
-    let _carcassesOuLotsRefusés = '';
-    for (const line of formatted) {
+  const { formattedCarcassesAcceptées, refusedLabel, hasRefus } = useMemo(() => {
+    // Acceptées + refus globaux : on lit directement les lignes déjà formatées par espèce
+    const acceptedLines: string[] = [];
+    let refusedLabel = '';
+    let hasRefus = false;
+    for (const line of formatCountCarcasseByEspece(carcasses) as string[]) {
       if (line.includes('refusé')) {
-        const nombreDAnimaux =
-          line
-            .split(' ')
-            .map((w) => parseInt(w, 10))
-            .filter(Boolean)
-            .at(-1) || 0;
-        _carcassesRefusées += nombreDAnimaux;
-        _carcassesOuLotsRefusés = line.split(' (')[0];
+        refusedLabel = line.split(' (')[0];
+        hasRefus = true;
       } else {
-        _carcassesAcceptées.push(line);
+        acceptedLines.push(line);
       }
     }
-    return [_carcassesAcceptées, _carcassesRefusées, _carcassesOuLotsRefusés];
-  }, [myCarcasses]);
 
-  // Formattage simple des lignes pour l'affichage
-  const formattedCarcassesAcceptées = useMemo(() => {
-    if (!carcassesAcceptées.length) return ['À renseigner'];
-
-    const visibleLines = carcassesAcceptées.slice(0, maxDetailedLines);
-    const hiddenCount = carcassesAcceptées.length - maxDetailedLines;
-
-    // Compléter avec des lignes vides si nécessaire
-    while (visibleLines.length < maxDetailedLines) {
-      visibleLines.push('fin de liste');
-    }
-
-    visibleLines.push(
-      hiddenCount > 0 ? `+ ${hiddenCount} espèce${hiddenCount > 1 ? 's' : ''}` : 'fin de liste'
-    );
-
-    return visibleLines;
-  }, [carcassesAcceptées]);
-
-  // Calcul des refus partiels (lots dont une partie a été refusée)
-  const partialRefusals = useMemo(() => {
-    const refusals: string[] = [];
-
-    for (const carcasse of feiCarcasses) {
-      if (carcasse?.type !== CarcasseType.PETIT_GIBIER) continue;
-
-      const abbreviation = abbreviations[carcasse.espece as keyof typeof abbreviations];
-      if (!abbreviation) continue;
-
-      const intermediaires = filterCarcassesIntermediairesForCarcasse(
-        carcassesIntermediaireById,
-        carcasse.zacharie_carcasse_id!
+    // Mise en forme des lignes acceptées : 2 lignes détaillées max + compteur d'espèces restantes
+    let formattedCarcassesAcceptées: string[];
+    if (!acceptedLines.length) {
+      formattedCarcassesAcceptées = ['À renseigner'];
+    } else {
+      formattedCarcassesAcceptées = acceptedLines.slice(0, maxDetailedLines);
+      const hiddenCount = acceptedLines.length - maxDetailedLines;
+      while (formattedCarcassesAcceptées.length < maxDetailedLines) {
+        formattedCarcassesAcceptées.push('fin de liste');
+      }
+      formattedCarcassesAcceptées.push(
+        hiddenCount > 0 ? `+ ${hiddenCount} espèce${hiddenCount > 1 ? 's' : ''}` : 'fin de liste'
       );
-      const dernierAccepte = intermediaires
-        .filter((ci) => !!ci.prise_en_charge_at)
-        .sort(
-          (a, b) => new Date(b.prise_en_charge_at!).getTime() - new Date(a.prise_en_charge_at!).getTime()
-        )[0];
-
-      if (dernierAccepte?.nombre_d_animaux_acceptes == null) continue;
-
-      const total = carcasse.nombre_d_animaux ?? 0;
-      const acceptes = dernierAccepte.nombre_d_animaux_acceptes;
-
-      if (acceptes < total) {
-        refusals.push(`${total - acceptes} ${abbreviation}`);
-      }
     }
 
-    return refusals;
-  }, [feiCarcasses, carcassesIntermediaireById]);
-
-  /* 
-  {!isOnline && (
-                <p className="bg-action-high-blue-france px-4 py-2 text-sm text-white">
-                  Vous ne pouvez pas accéder au détail de vos fiches archivées sans connexion internet.
-                </p>
-              )}
-  */
+    return { formattedCarcassesAcceptées, refusedLabel, hasRefus };
+  }, [carcasses]);
 
   if (filter !== 'Toutes les fiches' && filter !== simpleStatus) {
     return null;
@@ -190,7 +136,7 @@ export default function CardTransmission({
         to={linkTo}
         className={[
           'hover:bg-active-tint! flex size-full shrink-0 flex-col gap-y-2.5 bg-none p-5 no-underline! hover:no-underline!',
-          carcassesRefusées > 0
+          hasRefus
             ? 'border-warning-main-525 border-l-3'
             : simpleStatus === 'Clôturée'
               ? 'border-action-high-blue-france border-l-3'
@@ -202,7 +148,7 @@ export default function CardTransmission({
           {transmission.fei.numero!}
         </div>
         {!isCircuitCourt && (
-          <div className="flex flex-row gap-x-2">
+          <div className="flex flex-row flex-wrap gap-2">
             <Tag
               small
               className={[
@@ -225,10 +171,22 @@ export default function CardTransmission({
                 {transportOrSoustraiteLabel}
               </Tag>
             )}
+            {/* {dispatch > 1 && (
+              <Tag
+                small
+                className={[
+                  'items-center rounded-[4px] font-semibold uppercase',
+                  // statusColors[simpleStatus].bg,
+                  // statusColors[simpleStatus].text,
+                ].join(' ')}
+              >
+                {dispatch} destinataires
+              </Tag>
+            )} */}
           </div>
         )}
         <div className="text-xl font-bold">
-          {dayjs(transmission.fei.date_mise_a_mort).format('DD/MM/YYYY')}
+          {dayjs(transmission.fei.date_mise_a_mort || transmission.content.created_at).format('DD/MM/YYYY')}
         </div>
 
         <div className="flex flex-col">
@@ -312,14 +270,12 @@ export default function CardTransmission({
                 </>
               </div>
             )} */}
-            {(!!_carcassesOuLotsRefusés || partialRefusals.length > 0) && (
+            {(hasRefus || partialRefusals.length > 0) && (
               <div className="flex shrink basis-1/2 flex-col gap-y-1">
                 <>
                   <RefusIcon />
                   <div>
-                    {!!_carcassesOuLotsRefusés && (
-                      <p className="text-warning-main-525 m-0 text-xl">{_carcassesOuLotsRefusés}</p>
-                    )}
+                    {hasRefus && <p className="text-warning-main-525 m-0 text-xl">{refusedLabel}</p>}
                     {partialRefusals.map((refusal, index) => (
                       <p
                         key={index}

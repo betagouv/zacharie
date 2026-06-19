@@ -6,10 +6,11 @@ import {
   isCarcasseToTake,
   isCarcasseUnderMyResponsability,
 } from '@app/utils/is-carcasse-done';
-import { UserRoles } from '@prisma/client';
+import { CarcasseType, Fei, UserRoles, type CarcasseIntermediaire } from '@prisma/client';
 import { checkCarcasseAgainstTransmission, getCarcasseTransmission } from './get-carcasses-transmission';
 import { CarcasseTransmission, CarcasseTransmissionWihMetadata } from '@app/types/carcasse';
 import { filterFeiIntermediaires } from './get-carcasses-intermediaires';
+import { abbreviations } from './count-carcasses';
 import { getTransmissionLabels } from './transmission-labels';
 import { useEffect, useMemo, useState } from 'react';
 import { buildTransmissionId, getTransmissionId } from './get-transmission-id';
@@ -35,11 +36,24 @@ export function useTransmissions(): Record<
   const feis = useZustandStore((state) => state.feis);
 
   return useMemo(() => {
+    const transmissionIdsByFeiNumero: Record<Fei['numero'], Array<string>> = {};
+    const feiDispatches: Record<Fei['numero'], number> = {};
     if (!user) {
       return {};
     }
 
     const transmissions: Record<string, CarcasseTransmissionWihMetadata> = {};
+
+    // Dernière prise en charge de chaque carcasse, en une seule passe sur tous les intermédiaires.
+    // Sert à calculer les refus partiels (lots de petit gibier dont une partie a été refusée).
+    const dernierAccepteParCarcasse = new Map<string, CarcasseIntermediaire>();
+    for (const ci of Object.values(carcassesIntermediaireById)) {
+      if (ci.deleted_at || !ci.prise_en_charge_at) continue;
+      const prev = dernierAccepteParCarcasse.get(ci.zacharie_carcasse_id);
+      if (!prev || new Date(ci.prise_en_charge_at) > new Date(prev.prise_en_charge_at!)) {
+        dernierAccepteParCarcasse.set(ci.zacharie_carcasse_id, ci);
+      }
+    }
 
     // Objectif : UN SEUL LOOP sur toutes les carcasses
     // pourquoi on regarde les "transmissions" et pas les "feis" ?
@@ -51,14 +65,17 @@ export function useTransmissions(): Record<
     // Solution: on va dire que, par défaut, un groupement de carcasse est `done`
 
     for (const carcasse of Object.values(allCarcasses)) {
-      const transmissionId = getTransmissionId(carcasse);
       if (carcasse.deleted_at) continue;
+      const transmissionId = getTransmissionId(carcasse);
       if (transmissions[transmissionId]) {
         transmissions[transmissionId].carcasses.push(carcasse);
-        if (transmissions[transmissionId].labels.simpleStatus !== 'Clôturée') continue;
       } else {
         const transmission = getCarcasseTransmission(carcasse);
         const fei = feis[transmission.fei_numero!];
+        if (!feiDispatches[transmission.fei_numero!]) feiDispatches[transmission.fei_numero!] = 0;
+        feiDispatches[transmission.fei_numero!]++;
+        if (!transmissionIdsByFeiNumero[fei.numero]) transmissionIdsByFeiNumero[fei.numero] = [];
+        transmissionIdsByFeiNumero[fei.numero].push(transmissionId);
         // ordre chronologique décroissant, du plus récent au plus ancien
         const intermediaires = filterFeiIntermediaires(carcassesIntermediaireById, fei.numero!);
         const transmissionWithIntermediaires: CarcasseTransmissionWihMetadata = {
@@ -68,12 +85,18 @@ export function useTransmissions(): Record<
             numero: fei.numero,
             commune_mise_a_mort: fei.commune_mise_a_mort,
             date_mise_a_mort: fei.date_mise_a_mort,
+            numberOfPremierDetenteurProchainDetenteur: feiDispatches[transmission.fei_numero!],
           },
           carcasses: [carcasse],
           intermediaires,
+          partialRefusals: [],
         };
         transmissions[transmissionId] = transmissionWithIntermediaires;
       }
+      const partialRefusal = getCarcassePartialRefusal(carcasse, dernierAccepteParCarcasse);
+      if (partialRefusal) transmissions[transmissionId].partialRefusals.push(partialRefusal);
+      // une fois la transmission marquée non-clôturée, inutile de réévaluer son statut
+      if (transmissions[transmissionId].labels.simpleStatus !== 'Clôturée') continue;
       if (
         transmissions[transmissionId].content.consommateur_final_usage_domestique &&
         transmissions[transmissionId].content.premier_detenteur_user_id
@@ -216,6 +239,7 @@ export function useTransmissions(): Record<
         // la fei vient juste d'être créée, il n'y a pas encore de transmission
         // ni de prochain détenteur
         // on simule la transmissionId par fei.numero : aucun risque de conflit encore
+        if (transmissionIdsByFeiNumero[fei.numero]) continue;
         const tempTransmissionId = buildTransmissionId(fei.numero);
         if (transmissions[tempTransmissionId]) continue;
         const transmission: CarcasseTransmissionWihMetadata = {
@@ -225,11 +249,19 @@ export function useTransmissions(): Record<
             numero: fei.numero,
             commune_mise_a_mort: fei.commune_mise_a_mort,
             date_mise_a_mort: fei.date_mise_a_mort,
+            numberOfPremierDetenteurProchainDetenteur: 1,
           },
           carcasses: [],
           intermediaires: [],
+          partialRefusals: [],
         };
         transmissions[tempTransmissionId] = transmission;
+      }
+    }
+    for (const [feiNumero, numberOfPremierDetenteurProchainDetenteur] of Object.entries(feiDispatches)) {
+      for (const transmissionId of transmissionIdsByFeiNumero[feiNumero]) {
+        transmissions[transmissionId].fei.numberOfPremierDetenteurProchainDetenteur =
+          numberOfPremierDetenteurProchainDetenteur;
       }
     }
     return transmissions;
@@ -243,6 +275,27 @@ export function useTransmissions(): Record<
     role,
     user,
   ]);
+}
+
+// Refus partiel d'un lot de petit gibier : nombre d'animaux refusés par le dernier détenteur (ex: "3 perdrix")
+function getCarcassePartialRefusal(
+  carcasse: {
+    type: string | null;
+    espece: string | null;
+    nombre_d_animaux: number | null;
+    zacharie_carcasse_id: string;
+  },
+  dernierAccepteParCarcasse: Map<string, CarcasseIntermediaire>
+): string | null {
+  if (carcasse.type !== CarcasseType.PETIT_GIBIER) return null;
+  const abbreviation = abbreviations[carcasse.espece as keyof typeof abbreviations];
+  if (!abbreviation) return null;
+  const dernierAccepte = dernierAccepteParCarcasse.get(carcasse.zacharie_carcasse_id);
+  if (dernierAccepte?.nombre_d_animaux_acceptes == null) return null;
+  const total = carcasse.nombre_d_animaux ?? 0;
+  const acceptes = dernierAccepte.nombre_d_animaux_acceptes;
+  if (acceptes < total) return `${total - acceptes} ${abbreviation}`;
+  return null;
 }
 
 export function useTransmissionsSorted(): TransmissionSorted {
