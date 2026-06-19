@@ -28,12 +28,12 @@ import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import { syncData } from '@app/utils/sync-data';
-import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import Checkbox from '@codegouvfr/react-dsfr/Checkbox';
 import InputMultiSelect from '@app/components/InputMultiSelect';
+import { useGetTransmissionFromCarcasse } from '@app/utils/get-transmissions-sorted';
 
 const lesionsOuMotifsConsigneModal = createModal({
   isOpenedByDefault: false,
@@ -55,11 +55,11 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
   const updateCarcasse = useZustandStore((state) => state.updateCarcasse);
   const updateCarcassesTransmission = useZustandStore((state) => state.updateCarcassesTransmission);
   const addLog = useZustandStore((state) => state.addLog);
-  const carcasses = useZustandStore((state) => state.carcasses);
-  const carcasse = carcasses[params.zacharie_carcasse_id!];
-  const feiCarcasses = useCarcassesForFei(params.fei_numero);
+  const allCarcasses = useZustandStore((state) => state.carcasses);
+  const carcasse = allCarcasses[params.zacharie_carcasse_id!];
+  const transmission = useGetTransmissionFromCarcasse(carcasse);
   // on ne met à jour que les carcasses du même groupe de transmission
-  const carcasseIds = feiCarcasses
+  const carcasseIds = transmission.carcasses
     .filter(
       (c) =>
         c.premier_detenteur_prochain_detenteur_id_cache ===

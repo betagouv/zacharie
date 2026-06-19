@@ -20,7 +20,10 @@ test("84 - Révision d'une décision SVI : lecture seule sur fiche clôturée", 
   await expect(page).toHaveURL(/\/app\/svi/);
 
   // on navigue vers la transmission via la liste (l'URL porte l'id du prochain détenteur)
-  await page.getByRole('link', { name: new RegExp(feiId) }).first().click();
+  await page
+    .getByRole('link', { name: new RegExp(feiId) })
+    .first()
+    .click();
   await expect(page).toHaveURL(new RegExp(`/app/svi/fei/${feiId}/`));
 
   // Ouvrir une carcasse

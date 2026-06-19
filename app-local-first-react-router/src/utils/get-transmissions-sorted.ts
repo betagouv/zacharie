@@ -6,7 +6,7 @@ import {
   isCarcasseToTake,
   isCarcasseUnderMyResponsability,
 } from '@app/utils/is-carcasse-done';
-import { CarcasseType, Fei, UserRoles, type CarcasseIntermediaire } from '@prisma/client';
+import type { CarcasseType, Fei, UserRoles, CarcasseIntermediaire } from '@prisma/client';
 import { checkCarcasseAgainstTransmission, getCarcasseTransmission } from './get-carcasses-transmission';
 import { CarcasseTransmission, CarcasseTransmissionWihMetadata } from '@app/types/carcasse';
 import { filterFeiIntermediaires } from './get-carcasses-intermediaires';
@@ -341,6 +341,20 @@ export function useGetTransmissionFromURLParams() {
   const fei_numero = params.fei_numero!;
   const premier_detenteur_prochain_detenteur_id_cache = params.premier_detenteur_prochain_detenteur_id_cache;
   const transmissionId = buildTransmissionId(fei_numero, premier_detenteur_prochain_detenteur_id_cache);
+  const transmission = useGetTransmissionFromTransmissionId(transmissionId);
+  return transmission;
+}
+
+export function useGetTransmissionFromCarcasse(carcasse: Carcasse) {
+  const fei_numero = carcasse.fei_numero!;
+  const premier_detenteur_prochain_detenteur_id_cache =
+    carcasse.premier_detenteur_prochain_detenteur_id_cache!;
+  const transmissionId = buildTransmissionId(fei_numero, premier_detenteur_prochain_detenteur_id_cache);
+  const transmission = useGetTransmissionFromTransmissionId(transmissionId);
+  return transmission;
+}
+
+export function useGetTransmissionFromTransmissionId(transmissionId: string) {
   const transmissions = useTransmissions();
   const [transmission, setTransmission] = useState<CarcasseTransmissionWihMetadata>(
     transmissions[transmissionId]

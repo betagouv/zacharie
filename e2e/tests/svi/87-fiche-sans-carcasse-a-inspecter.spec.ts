@@ -19,7 +19,10 @@ test('87 - Fiche sans carcasse à inspecter (toutes refusées par ETG)', async (
   await expect(page).toHaveURL(/\/app\/svi/, { timeout: 15000 });
 
   // Navigate to the fiche via the list (l'URL porte l'id du prochain détenteur)
-  await page.getByRole('link', { name: new RegExp(feiId) }).first().click();
+  await page
+    .getByRole('link', { name: new RegExp(feiId) })
+    .first()
+    .click();
 
   // Assert "Carcasses à inspecter (0)" since all carcasses were refused upstream by ETG
   await expect(page.getByText(/Carcasses à inspecter \(0\)/).first()).toBeVisible({ timeout: 10000 });

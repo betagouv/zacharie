@@ -107,7 +107,10 @@ test('SVI rend des décisions divergentes → chasseur voit chaque décision', a
 
   // Navigate back to fiche
   // retour à la fiche via le fil d'ariane de la carcasse (l'URL porte l'id du prochain détenteur)
-  await page.getByRole('link', { name: new RegExp(feiId) }).first().click();
+  await page
+    .getByRole('link', { name: new RegExp(feiId) })
+    .first()
+    .click();
   await expect(page).toHaveURL(new RegExp(`/app/svi/fei/${feiId}`));
 
   // --- Carcasse MM-001-002 → Mise en consigne ---
@@ -147,7 +150,10 @@ test('SVI rend des décisions divergentes → chasseur voit chaque décision', a
 
   // Navigate back to fiche
   // retour à la fiche via le fil d'ariane de la carcasse (l'URL porte l'id du prochain détenteur)
-  await page.getByRole('link', { name: new RegExp(feiId) }).first().click();
+  await page
+    .getByRole('link', { name: new RegExp(feiId) })
+    .first()
+    .click();
   await expect(page).toHaveURL(new RegExp(`/app/svi/fei/${feiId}`));
 
   // --- Carcasse MM-001-004 → Acceptée ---
@@ -176,7 +182,10 @@ test('SVI rend des décisions divergentes → chasseur voit chaque décision', a
 
   // 5. Navigate back and verify fiche shows different decision statuses
   // retour à la fiche via le fil d'ariane de la carcasse (l'URL porte l'id du prochain détenteur)
-  await page.getByRole('link', { name: new RegExp(feiId) }).first().click();
+  await page
+    .getByRole('link', { name: new RegExp(feiId) })
+    .first()
+    .click();
   await expect(page).toHaveURL(new RegExp(`/app/svi/fei/${feiId}`));
 
   // Verify that we can see decision statuses on the fiche.

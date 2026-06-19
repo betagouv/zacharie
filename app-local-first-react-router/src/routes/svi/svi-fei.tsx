@@ -5,10 +5,16 @@ import useZustandStore from '@app/zustand/store';
 import { syncData } from '@app/utils/sync-data';
 import Chargement from '@app/components/Chargement';
 import NotFound from '@app/components/NotFound';
-import FeiSousTraite from './current-owner-sous-traite';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import SviHeaderFiche from './svi-header-fiche';
-import { Carcasse, CarcasseStatus, EntityRelationType, FeiOwnerRole, Prisma, UserRoles } from '@prisma/client';
+import {
+  Carcasse,
+  CarcasseStatus,
+  EntityRelationType,
+  FeiOwnerRole,
+  Prisma,
+  UserRoles,
+} from '@prisma/client';
 import InputNotEditable from '@app/components/InputNotEditable';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
@@ -59,7 +65,6 @@ function SviFei() {
         <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
           <div className="fr-col-12 fr-col-md-10 bg-alt-blue-france [&_.fr-tabs\\_\\_list]:bg-alt-blue-france m-4 md:m-0 md:p-0">
             <SviHeaderFiche />
-            <FeiSousTraite />
             <FEI_SVI />
             <div className="m-8 flex flex-col justify-start gap-4">
               <Button
