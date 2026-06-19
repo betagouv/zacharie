@@ -1,12 +1,10 @@
-import { useParams } from 'react-router';
 import { useMemo, useState } from 'react';
-import { UserRoles, Prisma, EntityTypes, EntityRelationType, FeiOwnerRole } from '@prisma/client';
+import { Prisma, EntityTypes, EntityRelationType, FeiOwnerRole } from '@prisma/client';
 import dayjs from 'dayjs';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import { syncData } from '@app/utils/sync-data';
-import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import {
   useEtgIds,
   useSviIds,
@@ -24,6 +22,8 @@ import { CarcasseIntermediaire } from '@prisma/client';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import PartenaireNouveau from '@app/components/PartenaireNouveau';
 import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
+import { CarcasseTransmission } from '@app/types/carcasse';
+import { useGetTransmissionFromURLParams } from '@app/utils/get-transmissions-sorted';
 
 const partenaireModal = createModal({
   isOpenedByDefault: false,
@@ -39,14 +39,11 @@ export default function DestinataireSousTraite({
   feiAndIntermediaireIds?: FeiAndIntermediaireIds;
   intermediaire?: CarcassesIntermediaire;
 }) {
-  const params = useParams();
   const user = useUser((state) => state.user)!;
   const isOnline = useIsOnline();
-  const updateFei = useZustandStore((state) => state.updateFei);
   const updateCarcassesTransmission = useZustandStore((state) => state.updateCarcassesTransmission);
   const updateAllCarcasseIntermediaire = useZustandStore((state) => state.updateAllCarcasseIntermediaire);
   const addLog = useZustandStore((state) => state.addLog);
-  const feis = useZustandStore((state) => state.feis);
   const entities = useZustandStore((state) => state.entities);
   const etgsIds = useEtgIds();
   const svisIds = useSviIds();
@@ -55,9 +52,10 @@ export default function DestinataireSousTraite({
 
   const isPartenaireModalOpen = useIsModalOpen(partenaireModal);
 
-  const fei = feis[params.fei_numero!];
-
-  const carcasses = useCarcassesForFei(params.fei_numero);
+  const transmissionMetadata = useGetTransmissionFromURLParams();
+  const fei_numero = transmissionMetadata.fei.numero;
+  const carcasses = transmissionMetadata.carcasses;
+  const transmission = transmissionMetadata.content;
   const carcasseIds = carcasses.map((c) => c.zacharie_carcasse_id);
 
   const etgs = etgsIds.map((id) => entities[id]);
@@ -66,7 +64,7 @@ export default function DestinataireSousTraite({
   const svis = svisIds.map((id) => entities[id]);
 
   const prochainsDetenteurs = useMemo(() => {
-    if (fei.fei_current_owner_role === FeiOwnerRole.ETG) {
+    if (transmission.current_owner_role === FeiOwnerRole.ETG) {
       return [
         ...svis.sort((a, b) => a.nom_d_usage!.localeCompare(b.nom_d_usage!)),
         ...etgs.sort((a, b) => a.nom_d_usage!.localeCompare(b.nom_d_usage!)),
@@ -79,7 +77,7 @@ export default function DestinataireSousTraite({
       ...etgs.sort((a, b) => a.nom_d_usage!.localeCompare(b.nom_d_usage!)),
       ...collecteursPros.sort((a, b) => a.nom_d_usage!.localeCompare(b.nom_d_usage!)),
     ];
-  }, [etgs, collecteursPros, svis, fei.fei_current_owner_role, circuitCourt]);
+  }, [etgs, collecteursPros, svis, transmission.current_owner_role, circuitCourt]);
 
   const canTransmitCarcassesToEntities = useMemo(() => {
     return prochainsDetenteurs.filter(
@@ -109,43 +107,34 @@ export default function DestinataireSousTraite({
     if (!prochainDetenteurEntityId) {
       return true;
     }
-    if (prochainDetenteurEntityId !== fei.fei_next_owner_entity_id) {
+    if (prochainDetenteurEntityId !== transmission.next_owner_entity_id) {
       return true;
     }
     if (prochainDetenteurType === EntityTypes.SVI) {
       return false;
     }
     return false;
-  }, [prochainDetenteurEntityId, prochainDetenteurType, fei.fei_next_owner_entity_id]);
+  }, [prochainDetenteurEntityId, prochainDetenteurType, transmission.next_owner_entity_id]);
 
   const [tryToSubmitAtLeastOnce, setTryTOSubmitAtLeastOnce] = useState(false);
 
   const handleSubmit = () => {
     if (!prochainDetenteurEntityId) return;
-    updateCarcassesTransmission(carcasseIds, {
+    const nextTransmission: CarcasseTransmission = {
       next_owner_entity_id: prochainDetenteurEntityId,
       next_owner_role: prochainDetenteurType as FeiOwnerRole,
       next_owner_wants_to_sous_traite: false,
       next_owner_sous_traite_at: dayjs().toDate(),
       next_owner_sous_traite_by_user_id: user.id,
-      next_owner_sous_traite_by_entity_id: fei.fei_next_owner_entity_id ?? null,
-      current_owner_entity_id: fei.fei_prev_owner_entity_id ?? null,
-      current_owner_role: fei.fei_prev_owner_role ?? null,
-      current_owner_user_id: fei.fei_prev_owner_user_id ?? null,
-    });
-    let nextFei: Partial<typeof fei> = {
-      fei_next_owner_entity_id: prochainDetenteurEntityId,
-      fei_next_owner_role: prochainDetenteurType as FeiOwnerRole,
-      fei_next_owner_wants_to_sous_traite: false,
-      fei_next_owner_sous_traite_at: dayjs().toDate(),
-      fei_next_owner_sous_traite_by_user_id: user.id,
-      fei_next_owner_sous_traite_by_entity_id: fei.fei_next_owner_entity_id,
-      fei_current_owner_entity_id: fei.fei_prev_owner_entity_id,
-      fei_current_owner_role: fei.fei_prev_owner_role,
-      fei_current_owner_user_id: fei.fei_prev_owner_user_id,
+      next_owner_sous_traite_by_entity_id: transmission.next_owner_entity_id ?? null,
+      current_owner_entity_id: transmission.prev_owner_entity_id ?? null,
+      current_owner_role: transmission.prev_owner_role ?? null,
+      current_owner_user_id: transmission.prev_owner_user_id ?? null,
       svi_assigned_at: prochainDetenteurType === EntityTypes.SVI ? dayjs().toDate() : null,
+      svi_assigned_to_fei_at: prochainDetenteurType === EntityTypes.SVI ? dayjs().toDate() : null,
       svi_entity_id: prochainDetenteurType === EntityTypes.SVI ? prochainDetenteurEntityId : null,
     };
+    updateCarcassesTransmission(carcasseIds, nextTransmission);
     if (feiAndIntermediaireIds && intermediaire) {
       let nextCarcasseIntermediaire: Partial<CarcasseIntermediaire> = {
         intermediaire_prochain_detenteur_id_cache: prochainDetenteurEntityId,
@@ -154,20 +143,15 @@ export default function DestinataireSousTraite({
         intermediaire_depot_type: null,
         intermediaire_depot_entity_id: null,
       };
-      updateAllCarcasseIntermediaire(fei.numero, feiAndIntermediaireIds!, nextCarcasseIntermediaire);
+      updateAllCarcasseIntermediaire(fei_numero, feiAndIntermediaireIds!, nextCarcasseIntermediaire);
     }
-    updateFei(fei.numero, nextFei);
     addLog({
       user_id: user.id,
-      user_role:
-        fei.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR ||
-        fei.fei_current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL
-          ? UserRoles.CHASSEUR
-          : fei.fei_current_owner_role!,
+      user_role: transmission.current_owner_role!,
       action: 'current-owner-sous-traite-select-destinataire-sous-traite',
-      fei_numero: fei.numero,
-      history: createHistoryInput(fei, nextFei),
-      entity_id: fei.premier_detenteur_entity_id,
+      fei_numero: fei_numero,
+      history: createHistoryInput(transmission, nextTransmission),
+      entity_id: transmission.current_owner_entity_id,
       zacharie_carcasse_id: null,
       carcasse_intermediaire_id: null,
       intermediaire_id: null,
@@ -179,7 +163,7 @@ export default function DestinataireSousTraite({
     if (!prochainDetenteurEntityId) {
       return 'Il manque le prochain détenteur des carcasses';
     }
-    if (fei.fei_next_owner_wants_to_sous_traite) {
+    if (transmission.next_owner_wants_to_sous_traite) {
       if (prochainDetenteurType === EntityTypes.SVI) {
         if (intermediaire?.intermediaire_role !== FeiOwnerRole.ETG) {
           return 'Attention, cliquer sur "Prendre en charge cette fiche" avant de transmettre la fiche au Service Vétérinaire';
@@ -189,14 +173,10 @@ export default function DestinataireSousTraite({
     return null;
   }, [
     prochainDetenteurEntityId,
-    fei.fei_next_owner_wants_to_sous_traite,
+    transmission.next_owner_wants_to_sous_traite,
     prochainDetenteurType,
     intermediaire?.intermediaire_role,
   ]);
-
-  if (!fei.premier_detenteur_user_id) {
-    return "Il n'y a pas encore de premier détenteur pour cette fiche";
-  }
 
   return (
     <>
@@ -288,12 +268,12 @@ export default function DestinataireSousTraite({
             description={jobIsMissing}
           />
         )}
-        {!needToSubmit && fei.fei_next_owner_entity_id && (
+        {!needToSubmit && transmission.next_owner_entity_id && (
           <>
             <Alert
               className="mt-6"
               severity="success"
-              description={`${entities[fei.fei_next_owner_entity_id]?.nom_d_usage} ${fei.is_synced ? 'a été notifié' : !isOnline ? 'sera notifié dès que vous aurez retrouvé du réseau' : 'va être notifié'}.`}
+              description={`${entities[transmission.next_owner_entity_id]?.nom_d_usage} ${transmission.is_synced ? 'a été notifié' : !isOnline ? 'sera notifié dès que vous aurez retrouvé du réseau' : 'va être notifié'}.`}
               title="Attribution effectuée"
             />
           </>

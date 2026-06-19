@@ -118,10 +118,10 @@ export function searchLocally(
   );
 
   if (byNumero.length) {
-    // ETG et collecteur naviguent vers une transmission : une même fiche peut se diviser en
+    // ETG, collecteur et SVI naviguent vers une transmission : une même fiche peut se diviser en
     // plusieurs transmissions (Premier Détenteur dispatchant à plusieurs Prochains Détenteurs),
     // on émet donc un résultat par transmission, dérivé des carcasses.
-    if (prefix === 'etg' || prefix === 'collecteur') {
+    if (prefix === 'etg' || prefix === 'collecteur' || prefix === 'svi') {
       const matchedNumeros = new Set(byNumero.map((fei) => fei.numero));
       const carcasseByTransmissionId: Record<string, Carcasse> = {};
       for (const carcasse of allCarcasses) {
@@ -137,7 +137,7 @@ export function searchLocally(
           const fei = feis[carcasse.fei_numero];
           return {
             searchQuery,
-            redirectUrl: carcasseRedirectUrl(prefix, carcasse),
+            redirectUrl: `/app/${prefix}/fei/${getTransmissionLinkFromCarcasse(carcasse)}`,
             carcasse_numero_bracelet: '',
             carcasse_espece: '',
             carcasse_type: '' as const,

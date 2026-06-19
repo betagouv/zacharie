@@ -13,8 +13,9 @@ test('83 - Fiche déjà clôturée : consultation en lecture seule', async ({ pa
   await connectWith(page, 'svi@example.fr');
   await expect(page).toHaveURL(/\/app\/svi/);
 
-  await page.goto(`http://localhost:3290/app/svi/fei/${feiId}`);
-  await expect(page).toHaveURL(new RegExp(`/app/svi/fei/${feiId}`));
+  // on navigue vers la transmission via la liste (l'URL porte l'id du prochain détenteur)
+  await page.getByRole('link', { name: new RegExp(feiId) }).first().click();
+  await expect(page).toHaveURL(new RegExp(`/app/svi/fei/${feiId}/`));
 
   // svi_closed_at is set, so "Date de fin d'inspection" should be visible
   await expect(page.getByText(/Date de fin d'inspection/)).toBeVisible({ timeout: 10000 });

@@ -22,6 +22,7 @@ import {
 } from '@app/components/CarcasseModificationRequest';
 import { loadData, useLoaderEffect } from '@app/utils/load-data';
 import { getPendingModifRequest } from '@app/utils/modif-requests';
+import { getTransmissionLinkFromCarcasse } from '@app/utils/get-transmission-id';
 
 export default function SviInspectionCarcasseLoader() {
   const params = useParams();
@@ -136,7 +137,7 @@ function SviInspectionCarcasse() {
               {
                 label: fei.numero,
                 linkProps: {
-                  to: `/app/svi/fei/${fei.numero}`,
+                  to: `/app/svi/fei/${getTransmissionLinkFromCarcasse(carcasse)}`,
                   href: '#',
                 },
               },

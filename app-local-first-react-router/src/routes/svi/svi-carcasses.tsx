@@ -19,6 +19,7 @@ import Button from '@codegouvfr/react-dsfr/Button';
 import useExportCarcasses from '@app/utils/export-carcasses';
 import { getFeiAndCarcasseAndIntermediaireIdsFromCarcasse } from '@app/utils/get-carcasse-intermediaire-id';
 import { filterFeiIntermediaires } from '@app/utils/get-carcasses-intermediaires';
+import { getTransmissionLinkFromCarcasse } from '@app/utils/get-transmission-id';
 import { isCarcasseSviArchived } from '@app/utils/carcasse-svi-archived';
 import { loadData, useLoaderEffect } from '@app/utils/load-data';
 const itemsPerPageOptions = [20, 50, 100, 200, 1000];
@@ -211,7 +212,7 @@ export default function SviCarcasses() {
               <div>
                 <span className="font-semibold">Fiche: </span>
                 <Link
-                  to={`/app/svi/fei/${carcasse.fei_numero}`}
+                  to={`/app/svi/fei/${getTransmissionLinkFromCarcasse(carcasse)}`}
                   className="text-blue-600 hover:underline"
                 >
                   {carcasse.fei_numero}
@@ -391,7 +392,9 @@ export default function SviCarcasses() {
                   sortBy: sortBy,
                   sortOrder: sortOrder,
                   render: (carcasse) => (
-                    <Link to={`/app/svi/fei/${carcasse.fei_numero}`}>{carcasse.fei_numero}</Link>
+                    <Link to={`/app/svi/fei/${getTransmissionLinkFromCarcasse(carcasse)}`}>
+                      {carcasse.fei_numero}
+                    </Link>
                   ),
                 },
                 {

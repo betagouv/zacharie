@@ -1,43 +1,39 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router';
 import dayjs from 'dayjs';
-import { CarcasseType, DepotType } from '@prisma/client';
+import { CarcasseType, DepotType, FeiOwnerRole } from '@prisma/client';
+import type { CarcassesIntermediaire } from '@app/types/carcasses-intermediaire';
 import { SegmentedControl } from '@codegouvfr/react-dsfr/SegmentedControl';
 import { Pagination } from '@codegouvfr/react-dsfr/Pagination';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
 import { UserConnexionResponse } from '@api/src/types/responses';
-import { FeiStepSimpleStatus } from '@app/types/fei-steps';
+import { TransmissionSimpleStatus } from '@app/types/transmission-steps';
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import API from '@app/services/api';
 import { abbreviations } from '@app/utils/count-carcasses';
 import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
-import { getFeisSorted } from '@app/utils/get-fei-sorted';
 import { getSaisonStartYear, getSaisonLabel, isDateInSaison } from '@app/utils/get-saison';
 import ExportFeisModal from '@app/components/ExportFeisModal';
-import {
-  filterCarcassesIntermediairesForCarcasse,
-  filterFeiIntermediaires,
-} from '@app/utils/get-carcasses-intermediaires';
-import { filterCarcassesForFei, useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
-import { useMyCarcassesForFei } from '@app/utils/filter-my-carcasses';
+import { filterCarcassesIntermediairesForCarcasse } from '@app/utils/get-carcasses-intermediaires';
 import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
 import { useSaveScroll } from '@app/services/useSaveScroll';
-import CardFiche from '@app/components/CardFiche';
-import { getPreviousDetenteur } from '@app/utils/get-previous-detenteur-from-fei';
-import DropDownMenu from '@app/components/DropDownMenu';
-
-import { useFeiSteps, computeFeiSteps } from '@app/utils/fei-steps';
-import { useLocalStorage } from '@uidotdev/usehooks';
-import type { FeiWithIntermediaires } from '@api/src/types/fei';
-import { useEtgIds, useEntitiesIdsWorkingDirectlyFor } from '@app/utils/get-entity-relations';
-import { useNavigate } from 'react-router';
+import CarcassesEspeceSummary from '@app/components/CarcassesEspeceSummary';
+import { getPreviousDetenteur } from '@app/utils/get-previous-detenteur-from-transmission';
+import CollapsibleSection from '@app/components/CollapsibleSection';
 import { useLoaderEffect, loadData } from '@app/utils/load-data';
 import Chargement from '@app/components/Chargement';
+import { useTransmissionsSorted } from '@app/utils/get-transmissions-sorted';
+import { CarcasseTransmissionWihMetadata } from '@app/types/carcasse';
+import CardTransmission from '@app/components/CardTransmission';
+import { useEntitiesIdsWorkingDirectlyForObj } from '@app/utils/get-entity-relations';
+import { getTransmissionLink } from '@app/utils/get-transmission-id';
 
 type ViewType = 'grid' | 'table';
 
-const statusColors: Record<FeiStepSimpleStatus, { bg: string; text: string }> = {
+type FeiNumberSelection = Array<NonNullable<CarcasseTransmissionWihMetadata['fei']['numero']>>;
+
+const statusColors: Record<TransmissionSimpleStatus, { bg: string; text: string }> = {
   'À compléter': {
     bg: 'bg-[#FEE7FC]',
     text: 'text-[#6E445A]',
@@ -52,22 +48,18 @@ const statusColors: Record<FeiStepSimpleStatus, { bg: string; text: string }> = 
   },
 };
 
+const ITEMS_PER_PAGE = 100;
+
 export default function SviFiches() {
   const user = useMostFreshUser('svi-fiches')!;
-  const entities = useZustandStore((state) => state.entities);
-  const allEtgIds = useEtgIds();
-  const entitiesIdsWorkingDirectlyFor = useEntitiesIdsWorkingDirectlyFor();
-  const { feisToTake, feisUnderMyResponsability, feisDone } = getFeisSorted();
-  const feisAssigned = [...feisUnderMyResponsability, ...feisToTake].sort((a, b) => {
-    return b.updated_at < a.updated_at ? -1 : 1;
-  });
+  const { transmissionsEnCours, transmissionsACompleter, transmissionsCloturees } = useTransmissionsSorted();
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
-  const carcasses = useZustandStore((state) => state.carcasses);
+  const entities = useZustandStore((state) => state.entities);
+  const usersById = useZustandStore((state) => state.users);
   const [isLoading, setIsLoading] = useState(true);
 
   const [searchParams, setSearchParams] = useSearchParams();
   const page = parseInt(searchParams.get('page') || '1');
-  const [itemsPerPage, setItemsPerPage] = useLocalStorage<number>('svi-fiches-items-per-page', 20);
 
   useEffect(() => {
     window.onNativePushToken = async function handleNativePushToken(token) {
@@ -80,6 +72,8 @@ export default function SviFiches() {
       }
     };
     let timeoutId = setTimeout(() => {
+      // if user is activated already, either we just take the latest token,
+      // either it's a web user that just installed the app so we need to ask for permission for notifications
       if (user.activated_at) {
         window.ReactNativeWebView?.postMessage('request-native-expo-push-permission');
       }
@@ -105,7 +99,7 @@ export default function SviFiches() {
 
   useSaveScroll('svi-fiches-scrollY');
 
-  const [selectedFeis, setSelectedFeis] = useState<string[]>([]);
+  const [selectedFeis, setSelectedFeis] = useState<FeiNumberSelection>([]);
   const handleCheckboxClick = (id: string) => {
     setSelectedFeis((prev) => {
       if (prev.includes(id)) {
@@ -119,8 +113,10 @@ export default function SviFiches() {
     const feisToToggle = visibleFeis || [];
     const allSelected = feisToToggle.every((numero) => selectedFeis.includes(numero));
     if (allSelected) {
+      // Désélectionner toutes les fiches visibles
       setSelectedFeis((prev) => prev.filter((numero) => !feisToToggle.includes(numero)));
     } else {
+      // Sélectionner toutes les fiches visibles
       setSelectedFeis((prev) => {
         const newSelection = [...prev];
         feisToToggle.forEach((numero) => {
@@ -133,26 +129,19 @@ export default function SviFiches() {
     }
   };
 
-  const [filter, setFilter] = useState<FeiStepSimpleStatus[]>(() => {
-    const savedFilter = localStorage.getItem('svi-fiches-filter');
-    if (savedFilter) {
-      try {
-        const parsed = JSON.parse(savedFilter);
-        if (Array.isArray(parsed)) return parsed;
-      } catch {
-        console.error('error parsing svi-fiches-filter', savedFilter);
-      }
+  const [filterStatuses, setFilterStatuses] = useState<TransmissionSimpleStatus[]>(() => {
+    try {
+      const saved = localStorage.getItem('svi-fiches-filter-statuses');
+      if (saved) return JSON.parse(saved) as TransmissionSimpleStatus[];
+    } catch {
+      // ignore
     }
     return [];
   });
 
-  const toggleFilter = (status: FeiStepSimpleStatus) => {
-    setFilter((prev) => (prev.includes(status) ? prev.filter((s) => s !== status) : [...prev, status]));
-  };
-
   useEffect(() => {
-    localStorage.setItem('svi-fiches-filter', JSON.stringify(filter));
-  }, [filter]);
+    localStorage.setItem('svi-fiches-filter-statuses', JSON.stringify(filterStatuses));
+  }, [filterStatuses]);
 
   const [viewType, setViewType] = useState<ViewType>(() => {
     const savedViewType = localStorage.getItem('svi-fiches-view-type');
@@ -166,52 +155,121 @@ export default function SviFiches() {
     localStorage.setItem('svi-fiches-view-type', viewType);
   }, [viewType]);
 
-  const dropDownMenuFilterText = useMemo(() => {
-    if (filter.length === 0) return 'Filtrer par statut';
-    if (filter.length === 1) {
-      const labels: Record<FeiStepSimpleStatus, string> = {
-        'À compléter': 'Fiches à compléter',
-        'En cours': 'Fiches en cours',
-        Clôturée: 'Fiches clôturées',
-      };
-      return labels[filter[0]];
+  const [filterPremierDetenteurs, setFilterPremierDetenteurs] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('svi-fiches-filter-premier-detenteurs');
+      if (saved) return JSON.parse(saved) as string[];
+    } catch {
+      // ignore
     }
-    return `${filter.length} statuts sélectionnés`;
-  }, [filter]);
+    return [];
+  });
 
-  const [filterPremierDetenteur, setFilterPremierDetenteur] = useLocalStorage<string>(
-    'svi-fiches-filter-premier-detenteur',
-    ''
+  useEffect(() => {
+    localStorage.setItem('svi-fiches-filter-premier-detenteurs', JSON.stringify(filterPremierDetenteurs));
+  }, [filterPremierDetenteurs]);
+
+  const [filterEtgs, setFilterEtgs] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('svi-fiches-filter-etgs');
+      if (saved) return JSON.parse(saved) as string[];
+    } catch {
+      // ignore
+    }
+    return [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('svi-fiches-filter-etgs', JSON.stringify(filterEtgs));
+  }, [filterEtgs]);
+
+  const [filterSaisons, setFilterSaisons] = useState<number[]>(() => {
+    try {
+      const saved = localStorage.getItem('svi-fiches-filter-saisons');
+      if (saved) return JSON.parse(saved) as number[];
+    } catch {
+      // ignore
+    }
+    return [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('svi-fiches-filter-saisons', JSON.stringify(filterSaisons));
+  }, [filterSaisons]);
+
+  const [filterDateFrom, setFilterDateFrom] = useState<string>(
+    () => localStorage.getItem('svi-fiches-filter-date-from') || ''
   );
-  const [filterCCG, setFilterCCG] = useLocalStorage<string>('svi-fiches-filter-ccg', '');
-  const [filterSaison, setFilterSaison] = useLocalStorage<string>('svi-fiches-filter-saison', '');
+  const [filterDateTo, setFilterDateTo] = useState<string>(
+    () => localStorage.getItem('svi-fiches-filter-date-to') || ''
+  );
 
-  const [filterETG, setFilterETG] = useState<string>('');
-  const [sviWorkingForEtgIds, dropDownMenuFilterTextSvi] = useMemo(() => {
-    const _sviWorkingForEtgIds = allEtgIds.filter((id) => {
-      const etgLinkedToSviId = entities[id]?.etg_linked_to_svi_id;
-      if (!etgLinkedToSviId) return false;
-      return entitiesIdsWorkingDirectlyFor.includes(etgLinkedToSviId);
-    });
-    if (_sviWorkingForEtgIds.includes(filterETG)) {
-      return [_sviWorkingForEtgIds, `Fiches de ${entities[filterETG]?.nom_d_usage}`];
-    }
-    return [_sviWorkingForEtgIds, 'Filtrer par ETG'];
-  }, [filterETG, entities, entitiesIdsWorkingDirectlyFor, allEtgIds]);
+  useEffect(() => {
+    localStorage.setItem('svi-fiches-filter-date-from', filterDateFrom);
+  }, [filterDateFrom]);
 
-  const allFeis = useMemo(() => {
-    let feis = [...feisAssigned, ...feisDone];
-    if (filterETG) {
-      feis = feis.filter((fei) => fei.latest_intermediaire_entity_id === filterETG);
+  useEffect(() => {
+    localStorage.setItem('svi-fiches-filter-date-to', filterDateTo);
+  }, [filterDateTo]);
+
+  const [filterCCGs, setFilterCCGs] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('svi-fiches-filter-ccgs');
+      if (saved) return JSON.parse(saved) as string[];
+    } catch {
+      // ignore
     }
-    return feis;
-  }, [feisAssigned, feisDone, filterETG]);
+    return [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('svi-fiches-filter-ccgs', JSON.stringify(filterCCGs));
+  }, [filterCCGs]);
+
+  const [filterCollecteurs, setFilterCollecteurs] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('svi-fiches-filter-collecteurs');
+      if (saved) return JSON.parse(saved) as string[];
+    } catch {
+      // ignore
+    }
+    return [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('svi-fiches-filter-collecteurs', JSON.stringify(filterCollecteurs));
+  }, [filterCollecteurs]);
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
+
+  const filtersKey = `${filterStatuses.join(',')}|${filterPremierDetenteurs.join(',')}|${filterEtgs.join(',')}|${filterCCGs.join(',')}|${filterCollecteurs.join(',')}|${filterSaisons.join(',')}|${filterDateFrom}|${filterDateTo}|${searchQuery}`;
+  const isFirstFiltersRender = useRef(true);
+  useEffect(() => {
+    if (isFirstFiltersRender.current) {
+      isFirstFiltersRender.current = false;
+      return;
+    }
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete('page');
+        return next;
+      },
+      { replace: true }
+    );
+  }, [filtersKey, setSearchParams]);
+
+  const allTransmissions = useMemo(() => {
+    return [...transmissionsACompleter, ...transmissionsEnCours, ...transmissionsCloturees];
+  }, [transmissionsACompleter, transmissionsEnCours, transmissionsCloturees]);
 
   const premierDetenteurOptions = useMemo(() => {
     const map = new Map<string, string>();
-    for (const fei of allFeis) {
-      const id = fei.premier_detenteur_entity_id || fei.premier_detenteur_user_id;
-      const name = fei.premier_detenteur_name_cache;
+    for (const transmission of allTransmissions) {
+      const id =
+        transmission.content.premier_detenteur_entity_id || transmission.content.premier_detenteur_user_id;
+      const name = transmission.content.premier_detenteur_name_cache;
       if (id && name && !map.has(id)) {
         map.set(id, name);
       }
@@ -219,14 +277,32 @@ export default function SviFiches() {
     return Array.from(map.entries())
       .map(([id, name]) => ({ id, name }))
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [allFeis]);
+  }, [allTransmissions]);
+
+  // Les fiches arrivent au SVI via un ETG : on permet de filtrer par ETG d'origine.
+  const etgOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const transmission of allTransmissions) {
+      const id = transmission.content.latest_intermediaire_entity_id;
+      const name = transmission.content.latest_intermediaire_name_cache;
+      if (id && name && !map.has(id)) {
+        map.set(id, name);
+      }
+    }
+    return Array.from(map.entries())
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [allTransmissions]);
 
   const ccgOptions = useMemo(() => {
     const map = new Map<string, string>();
-    for (const fei of allFeis) {
-      if (fei.premier_detenteur_depot_type === DepotType.CCG && fei.premier_detenteur_depot_entity_id) {
-        const id = fei.premier_detenteur_depot_entity_id;
-        const name = fei.premier_detenteur_depot_entity_name_cache || id;
+    for (const transmission of allTransmissions) {
+      if (
+        transmission.content.premier_detenteur_depot_type === DepotType.CCG &&
+        transmission.content.premier_detenteur_depot_entity_id
+      ) {
+        const id = transmission.content.premier_detenteur_depot_entity_id;
+        const name = transmission.content.premier_detenteur_depot_entity_name_cache || id;
         if (!map.has(id)) {
           map.set(id, name);
         }
@@ -235,408 +311,638 @@ export default function SviFiches() {
     return Array.from(map.entries())
       .map(([id, name]) => ({ id, name }))
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [allFeis]);
+  }, [allTransmissions]);
+
+  const intermediairesByFei = useMemo(() => {
+    const seen: Record<string, Record<string, CarcassesIntermediaire>> = {};
+    for (const ci of Object.values(carcassesIntermediaireById)) {
+      if (ci.deleted_at) continue;
+      if (!seen[ci.fei_numero]) seen[ci.fei_numero] = {};
+      if (seen[ci.fei_numero][ci.intermediaire_id]) continue;
+      seen[ci.fei_numero][ci.intermediaire_id] = {
+        id: ci.intermediaire_id,
+        fei_numero: ci.fei_numero,
+        intermediaire_user_id: ci.intermediaire_user_id,
+        intermediaire_entity_id: ci.intermediaire_entity_id,
+        intermediaire_role: ci.intermediaire_role,
+        created_at: ci.created_at,
+        prise_en_charge_at: ci.prise_en_charge_at,
+        intermediaire_depot_type: ci.intermediaire_depot_type,
+        intermediaire_depot_entity_id: ci.intermediaire_depot_entity_id,
+        intermediaire_prochain_detenteur_role_cache: ci.intermediaire_prochain_detenteur_role_cache,
+        intermediaire_prochain_detenteur_id_cache: ci.intermediaire_prochain_detenteur_id_cache,
+      };
+    }
+    const result: Record<string, CarcassesIntermediaire[]> = {};
+    for (const fei_numero of Object.keys(seen)) {
+      result[fei_numero] = Object.values(seen[fei_numero]).sort((a, b) =>
+        dayjs(a.created_at).diff(b.created_at) < 0 ? 1 : -1
+      );
+    }
+    return result;
+  }, [carcassesIntermediaireById]);
+
+  const feiCollecteurIdsByFeiNumero = useMemo(() => {
+    const result: Record<string, string[]> = {};
+    for (const transmission of allTransmissions) {
+      const intermediaires = intermediairesByFei[transmission.fei.numero!] ?? [];
+      const ids: string[] = [];
+      for (const inter of intermediaires) {
+        if (inter.intermediaire_role !== FeiOwnerRole.COLLECTEUR_PRO) continue;
+        const id = inter.intermediaire_entity_id || inter.intermediaire_user_id;
+        if (id && !ids.includes(id)) ids.push(id);
+      }
+      result[transmission.fei.numero!] = ids;
+    }
+    return result;
+  }, [allTransmissions, intermediairesByFei]);
+
+  const collecteurOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const ids of Object.values(feiCollecteurIdsByFeiNumero)) {
+      for (const id of ids) {
+        if (map.has(id)) continue;
+        const entity = entities[id];
+        const userOnly = usersById[id];
+        const name =
+          entity?.nom_d_usage ||
+          entity?.raison_sociale ||
+          (userOnly ? `${userOnly.prenom ?? ''} ${userOnly.nom_de_famille ?? ''}`.trim() : '') ||
+          id;
+        map.set(id, name);
+      }
+    }
+    return Array.from(map.entries())
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [feiCollecteurIdsByFeiNumero, entities, usersById]);
 
   const saisonOptions = useMemo(() => {
     const years = new Set<number>();
-    for (const fei of allFeis) {
-      if (fei.date_mise_a_mort) years.add(getSaisonStartYear(fei.date_mise_a_mort));
+    for (const transmission of allTransmissions) {
+      if (transmission.content.date_mise_a_mort)
+        years.add(getSaisonStartYear(transmission.content.date_mise_a_mort));
     }
     return Array.from(years)
       .sort((a, b) => b - a)
       .map((year) => ({ year, label: getSaisonLabel(year) }));
-  }, [allFeis]);
+  }, [allTransmissions]);
 
-  const dropDownMenuFilterTextSaison = useMemo(() => {
-    if (filterSaison) {
-      const option = saisonOptions.find((o) => String(o.year) === filterSaison);
-      if (option) return option.label;
+  const [filteredTransmissions, filteredCarcasses] = useMemo(() => {
+    let transmissions = [];
+    let carcasses: CarcasseTransmissionWihMetadata['carcasses'] = [];
+    let q = searchQuery.trim() ? searchQuery.trim().toLowerCase() : undefined;
+    for (const transmission of allTransmissions) {
+      if (q) {
+        let isIncluded = false;
+        if (transmission.fei.numero!.toLowerCase().includes(q)) isIncluded = true;
+        if (transmission.fei.commune_mise_a_mort) {
+          if (transmission.fei.commune_mise_a_mort.toLowerCase().includes(q)) isIncluded = true;
+        }
+        if (transmission.content.premier_detenteur_name_cache) {
+          if (transmission.content.premier_detenteur_name_cache.toLowerCase().includes(q)) isIncluded = true;
+        }
+        if (!isIncluded) continue;
+      }
+      if (filterStatuses.length > 0) {
+        if (!filterStatuses.includes(transmission.labels.simpleStatus)) continue;
+      }
+      if (filterPremierDetenteurs.length > 0) {
+        if (
+          !filterPremierDetenteurs.includes(transmission.content.premier_detenteur_user_id ?? '') &&
+          !filterPremierDetenteurs.includes(transmission.content.premier_detenteur_entity_id ?? '')
+        )
+          continue;
+      }
+      if (filterEtgs.length > 0) {
+        if (!filterEtgs.includes(transmission.content.latest_intermediaire_entity_id ?? '')) continue;
+      }
+      if (filterCCGs.length > 0) {
+        if (!filterCCGs.includes(transmission.content.premier_detenteur_depot_entity_id ?? '')) continue;
+      }
+      if (filterCollecteurs.length > 0) {
+        let isIncluded = false;
+        for (const collecteurId of feiCollecteurIdsByFeiNumero[transmission.fei.numero]) {
+          if (filterCollecteurs.includes(collecteurId)) {
+            isIncluded = true;
+            break;
+          }
+        }
+        if (!isIncluded) continue;
+      }
+      if (filterSaisons.length > 0) {
+        if (!transmission.fei.date_mise_a_mort) continue;
+        let isIncluded = false;
+        for (const saison of filterSaisons) {
+          if (isDateInSaison(transmission.content.date_mise_a_mort!, saison)) {
+            isIncluded = true;
+            break;
+          }
+        }
+        if (!isIncluded) continue;
+      }
+      if (filterDateFrom || filterDateTo) {
+        if (!transmission.fei.date_mise_a_mort) continue;
+        const d = dayjs(transmission.fei.date_mise_a_mort).format('YYYY-MM-DD');
+        if (filterDateFrom && d < filterDateFrom) continue;
+        if (filterDateTo && d > filterDateTo) continue;
+      }
+      transmissions.push(transmission);
+      carcasses.push(...transmission.carcasses);
     }
-    return 'Filtrer par saison';
-  }, [filterSaison, saisonOptions]);
-
-  const dropDownMenuFilterTextPremierDetenteur = useMemo(() => {
-    if (filterPremierDetenteur) {
-      const option = premierDetenteurOptions.find((o) => o.id === filterPremierDetenteur);
-      if (option) return option.name;
-    }
-    return 'Filtrer par premier détenteur';
-  }, [filterPremierDetenteur, premierDetenteurOptions]);
-
-  const dropDownMenuFilterTextCCG = useMemo(() => {
-    if (filterCCG) {
-      const option = ccgOptions.find((o) => o.id === filterCCG);
-      if (option) return option.name;
-    }
-    return 'Filtrer par CCG';
-  }, [filterCCG, ccgOptions]);
-
-  const filteredFeis = useMemo(() => {
-    let feis = allFeis;
-    if (filter.length > 0) {
-      feis = feis.filter((fei) => {
-        const intermediaires = filterFeiIntermediaires(carcassesIntermediaireById, fei.numero);
-        const feiCarcasses = filterCarcassesForFei(carcasses, fei.numero);
-        const { simpleStatus } = computeFeiSteps({
-          fei,
-          intermediaires,
-          entitiesIdsWorkingDirectlyFor,
-          user,
-          carcasses: feiCarcasses,
-        });
-        return filter.includes(simpleStatus);
-      });
-    }
-    if (filterPremierDetenteur) {
-      feis = feis.filter(
-        (fei) =>
-          fei.premier_detenteur_user_id === filterPremierDetenteur ||
-          fei.premier_detenteur_entity_id === filterPremierDetenteur
-      );
-    }
-    if (filterCCG) {
-      feis = feis.filter((fei) => fei.premier_detenteur_depot_entity_id === filterCCG);
-    }
-    if (filterSaison) {
-      const year = Number(filterSaison);
-      feis = feis.filter((fei) => !!fei.date_mise_a_mort && isDateInSaison(fei.date_mise_a_mort, year));
-    }
-    return feis;
+    return [transmissions, carcasses];
   }, [
-    allFeis,
-    filter,
-    filterPremierDetenteur,
-    filterCCG,
-    filterSaison,
-    carcassesIntermediaireById,
-    carcasses,
-    entitiesIdsWorkingDirectlyFor,
-    user,
+    allTransmissions,
+    searchQuery,
+    filterStatuses,
+    filterPremierDetenteurs,
+    filterEtgs,
+    filterCCGs,
+    filterCollecteurs,
+    filterSaisons,
+    filterDateFrom,
+    filterDateTo,
+    feiCollecteurIdsByFeiNumero,
   ]);
 
-  const totalPages = Math.ceil(filteredFeis.length / (itemsPerPage ?? 20));
-  const paginatedFeis = useMemo(() => {
-    const perPage = itemsPerPage ?? 20;
-    const start = (page - 1) * perPage;
-    return filteredFeis.slice(start, start + perPage);
-  }, [filteredFeis, page, itemsPerPage]);
+  const totalPages = Math.ceil(filteredTransmissions.length / ITEMS_PER_PAGE);
+  const paginatedTransmissions = useMemo(() => {
+    const start = (page - 1) * ITEMS_PER_PAGE;
+    return filteredTransmissions.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredTransmissions, page]);
+
+  const hasActiveFilters =
+    filterStatuses.length > 0 ||
+    filterPremierDetenteurs.length > 0 ||
+    filterEtgs.length > 0 ||
+    filterCCGs.length > 0 ||
+    filterCollecteurs.length > 0 ||
+    filterSaisons.length > 0 ||
+    filterDateFrom.length > 0 ||
+    filterDateTo.length > 0 ||
+    searchQuery.trim().length > 0;
+
+  const clearAllFilters = () => {
+    setFilterStatuses([]);
+    setFilterPremierDetenteurs([]);
+    setFilterEtgs([]);
+    setFilterCCGs([]);
+    setFilterCollecteurs([]);
+    setFilterSaisons([]);
+    setFilterDateFrom('');
+    setFilterDateTo('');
+    setSearchQuery('');
+  };
+
+  const sidebarContent = (
+    <>
+      {/* Recherche */}
+      <div className="relative">
+        <span
+          className="fr-icon--sm fr-icon-search-line absolute top-1/2 left-3 -translate-y-1/2 text-gray-400"
+          aria-hidden="true"
+        />
+        <input
+          type="search"
+          placeholder="Rechercher une fiche..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full rounded border border-gray-300 py-2 pr-3 pl-10 text-sm transition-colors outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+        />
+      </div>
+
+      {/* Compteur */}
+      <div className="mt-2 flex items-center justify-between border-b border-gray-200 pb-3">
+        <span className="text-sm font-medium text-gray-600">
+          {filteredTransmissions.length} fiche{filteredTransmissions.length > 1 ? 's' : ''}
+        </span>
+        {hasActiveFilters && (
+          <button
+            className="text-action-high-blue-france text-xs underline"
+            onClick={clearAllFilters}
+          >
+            Réinitialiser
+          </button>
+        )}
+      </div>
+
+      {/* Filtre Statut */}
+      <CollapsibleSection
+        title="Statut"
+        defaultOpen={false}
+        badge={
+          filterStatuses.length > 0 ? (
+            <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">
+              {filterStatuses.length}
+            </span>
+          ) : undefined
+        }
+      >
+        <div className="flex flex-col gap-1.5">
+          {(['À compléter', 'En cours', 'Clôturée'] as TransmissionSimpleStatus[]).map((status) => (
+            <label
+              key={status}
+              className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-gray-50"
+            >
+              <input
+                type="checkbox"
+                checked={filterStatuses.includes(status)}
+                className="checked:accent-action-high-blue-france h-4 w-4"
+                onChange={() => {
+                  if (filterStatuses.includes(status)) {
+                    setFilterStatuses(filterStatuses.filter((s) => s !== status));
+                  } else {
+                    setFilterStatuses([...filterStatuses, status]);
+                  }
+                }}
+              />
+              <span
+                className={`inline-block rounded px-2 py-0.5 text-xs font-semibold uppercase ${statusColors[status].bg} ${statusColors[status].text}`}
+              >
+                {status}
+              </span>
+            </label>
+          ))}
+        </div>
+      </CollapsibleSection>
+
+      {/* Filtre Saison */}
+      {saisonOptions.length > 0 && (
+        <CollapsibleSection
+          title="Saison"
+          defaultOpen={false}
+          badge={
+            filterSaisons.length > 0 ? (
+              <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">
+                {filterSaisons.length}
+              </span>
+            ) : undefined
+          }
+        >
+          <div className="flex max-h-40 flex-col gap-1 overflow-y-auto">
+            {saisonOptions.map((option) => (
+              <label
+                key={option.year}
+                className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-gray-50"
+              >
+                <input
+                  type="checkbox"
+                  checked={filterSaisons.includes(option.year)}
+                  className="checked:accent-action-high-blue-france h-4 w-4 shrink-0"
+                  onChange={() => {
+                    if (filterSaisons.includes(option.year)) {
+                      setFilterSaisons(filterSaisons.filter((v) => v !== option.year));
+                    } else {
+                      setFilterSaisons([...filterSaisons, option.year]);
+                    }
+                  }}
+                />
+                <span className="truncate text-sm">{option.label}</span>
+              </label>
+            ))}
+          </div>
+        </CollapsibleSection>
+      )}
+
+      {/* Filtre Date de mise à mort */}
+      <CollapsibleSection
+        title="Date de mise à mort"
+        defaultOpen={false}
+        badge={
+          filterDateFrom || filterDateTo ? (
+            <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">1</span>
+          ) : undefined
+        }
+      >
+        <div className="flex flex-col gap-2">
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="text-gray-700">Du</span>
+            <input
+              type="date"
+              value={filterDateFrom}
+              max={filterDateTo || undefined}
+              onChange={(e) => setFilterDateFrom(e.target.value)}
+              className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm transition-colors outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="text-gray-700">Au</span>
+            <input
+              type="date"
+              value={filterDateTo}
+              min={filterDateFrom || undefined}
+              onChange={(e) => setFilterDateTo(e.target.value)}
+              className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm transition-colors outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            />
+          </label>
+        </div>
+      </CollapsibleSection>
+
+      {/* Filtre Premier détenteur */}
+      {premierDetenteurOptions.length > 1 && (
+        <CollapsibleSection
+          title="Premier détenteur"
+          defaultOpen={false}
+          badge={
+            filterPremierDetenteurs.length > 0 ? (
+              <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">
+                {filterPremierDetenteurs.length}
+              </span>
+            ) : undefined
+          }
+        >
+          <div className="flex max-h-40 flex-col gap-1 overflow-y-auto">
+            {premierDetenteurOptions.map((option) => (
+              <label
+                key={option.id}
+                className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-gray-50"
+              >
+                <input
+                  type="checkbox"
+                  checked={filterPremierDetenteurs.includes(option.id)}
+                  className="checked:accent-action-high-blue-france h-4 w-4 shrink-0"
+                  onChange={() => {
+                    if (filterPremierDetenteurs.includes(option.id)) {
+                      setFilterPremierDetenteurs(filterPremierDetenteurs.filter((v) => v !== option.id));
+                    } else {
+                      setFilterPremierDetenteurs([...filterPremierDetenteurs, option.id]);
+                    }
+                  }}
+                />
+                <span className="truncate text-sm">{option.name}</span>
+              </label>
+            ))}
+          </div>
+        </CollapsibleSection>
+      )}
+
+      {/* Filtre ETG */}
+      {etgOptions.length > 1 && (
+        <CollapsibleSection
+          title="ETG"
+          defaultOpen={false}
+          badge={
+            filterEtgs.length > 0 ? (
+              <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">
+                {filterEtgs.length}
+              </span>
+            ) : undefined
+          }
+        >
+          <div className="flex max-h-40 flex-col gap-1 overflow-y-auto">
+            {etgOptions.map((option) => (
+              <label
+                key={option.id}
+                className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-gray-50"
+              >
+                <input
+                  type="checkbox"
+                  checked={filterEtgs.includes(option.id)}
+                  className="checked:accent-action-high-blue-france h-4 w-4 shrink-0"
+                  onChange={() => {
+                    if (filterEtgs.includes(option.id)) {
+                      setFilterEtgs(filterEtgs.filter((v) => v !== option.id));
+                    } else {
+                      setFilterEtgs([...filterEtgs, option.id]);
+                    }
+                  }}
+                />
+                <span className="truncate text-sm">{option.name}</span>
+              </label>
+            ))}
+          </div>
+        </CollapsibleSection>
+      )}
+
+      {/* Filtre CCG */}
+      {ccgOptions.length > 1 && (
+        <CollapsibleSection
+          title="Centre de collecte (CCG)"
+          defaultOpen={false}
+          badge={
+            filterCCGs.length > 0 ? (
+              <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">
+                {filterCCGs.length}
+              </span>
+            ) : undefined
+          }
+        >
+          <div className="flex max-h-40 flex-col gap-1 overflow-y-auto">
+            {ccgOptions.map((option) => (
+              <label
+                key={option.id}
+                className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-gray-50"
+              >
+                <input
+                  type="checkbox"
+                  checked={filterCCGs.includes(option.id)}
+                  className="checked:accent-action-high-blue-france h-4 w-4 shrink-0"
+                  onChange={() => {
+                    if (filterCCGs.includes(option.id)) {
+                      setFilterCCGs(filterCCGs.filter((v) => v !== option.id));
+                    } else {
+                      setFilterCCGs([...filterCCGs, option.id]);
+                    }
+                  }}
+                />
+                <span className="truncate text-sm">{option.name}</span>
+              </label>
+            ))}
+          </div>
+        </CollapsibleSection>
+      )}
+
+      {/* Filtre Collecteur */}
+      {collecteurOptions.length > 1 && (
+        <CollapsibleSection
+          title="Collecteur"
+          defaultOpen={false}
+          badge={
+            filterCollecteurs.length > 0 ? (
+              <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">
+                {filterCollecteurs.length}
+              </span>
+            ) : undefined
+          }
+        >
+          <div className="flex max-h-40 flex-col gap-1 overflow-y-auto">
+            {collecteurOptions.map((option) => (
+              <label
+                key={option.id}
+                className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-gray-50"
+              >
+                <input
+                  type="checkbox"
+                  checked={filterCollecteurs.includes(option.id)}
+                  className="checked:accent-action-high-blue-france h-4 w-4 shrink-0"
+                  onChange={() => {
+                    if (filterCollecteurs.includes(option.id)) {
+                      setFilterCollecteurs(filterCollecteurs.filter((v) => v !== option.id));
+                    } else {
+                      setFilterCollecteurs([...filterCollecteurs, option.id]);
+                    }
+                  }}
+                />
+                <span className="truncate text-sm">{option.name}</span>
+              </label>
+            ))}
+          </div>
+        </CollapsibleSection>
+      )}
+    </>
+  );
 
   if (isLoading) {
     return <Chargement />;
   }
 
-  function Actions() {
-    return (
-      <div className="flex flex-col gap-2 py-2 md:gap-3 md:py-3">
-        <div className="flex flex-col justify-between gap-1.5 md:flex-row md:gap-2">
-          <div className="flex flex-wrap items-center gap-1.5 md:gap-2">
-            <DropDownMenu
-              text={dropDownMenuFilterText}
-              isActive={filter.length > 0}
-              className="w-full md:w-auto"
-              menuLinks={[
-                {
-                  linkProps: {
-                    href: '#',
-                    title: 'Toutes les fiches',
-                    onClick: (e) => {
-                      e.preventDefault();
-                      setFilter([]);
-                    },
-                  },
-                  text: 'Toutes les fiches',
-                  isActive: filter.length === 0,
-                },
-                {
-                  linkProps: {
-                    href: '#',
-                    title: 'Fiches à compléter',
-                    onClick: (e) => {
-                      e.preventDefault();
-                      toggleFilter('À compléter');
-                    },
-                  },
-                  text: 'Fiches à compléter',
-                  isActive: filter.includes('À compléter'),
-                },
-                {
-                  linkProps: {
-                    href: '#',
-                    title: 'Fiches en cours',
-                    onClick: (e) => {
-                      e.preventDefault();
-                      toggleFilter('En cours');
-                    },
-                  },
-                  text: 'Fiches en cours',
-                  isActive: filter.includes('En cours'),
-                },
-                {
-                  linkProps: {
-                    href: '#',
-                    title: 'Fiches clôturées',
-                    onClick: (e) => {
-                      e.preventDefault();
-                      toggleFilter('Clôturée');
-                    },
-                  },
-                  text: 'Fiches clôturées',
-                  isActive: filter.includes('Clôturée'),
-                },
-              ]}
-            />
-            {premierDetenteurOptions.length > 1 && (
-              <DropDownMenu
-                text={dropDownMenuFilterTextPremierDetenteur}
-                isActive={!!filterPremierDetenteur}
-                className="w-full md:w-auto"
-                menuLinks={[
-                  {
-                    linkProps: {
-                      href: '#',
-                      title: 'Tous les premiers détenteurs',
-                      onClick: (e) => {
-                        e.preventDefault();
-                        setFilterPremierDetenteur('');
-                      },
-                    },
-                    text: 'Tous les premiers détenteurs',
-                    isActive: !filterPremierDetenteur,
-                  },
-                  ...premierDetenteurOptions.map((option) => ({
-                    linkProps: {
-                      href: '#',
-                      title: option.name,
-                      onClick: (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
-                        e.preventDefault();
-                        setFilterPremierDetenteur(option.id);
-                      },
-                    },
-                    text: option.name,
-                    isActive: filterPremierDetenteur === option.id,
-                  })),
-                ]}
-              />
-            )}
-            {ccgOptions.length > 1 && (
-              <DropDownMenu
-                text={dropDownMenuFilterTextCCG}
-                isActive={!!filterCCG}
-                className="w-full md:w-auto"
-                menuLinks={[
-                  {
-                    linkProps: {
-                      href: '#',
-                      title: 'Tous les CCG',
-                      onClick: (e) => {
-                        e.preventDefault();
-                        setFilterCCG('');
-                      },
-                    },
-                    text: 'Tous les CCG',
-                    isActive: !filterCCG,
-                  },
-                  ...ccgOptions.map((option) => ({
-                    linkProps: {
-                      href: '#',
-                      title: option.name,
-                      onClick: (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
-                        e.preventDefault();
-                        setFilterCCG(option.id);
-                      },
-                    },
-                    text: option.name,
-                    isActive: filterCCG === option.id,
-                  })),
-                ]}
-              />
-            )}
-            {saisonOptions.length > 0 && (
-              <DropDownMenu
-                text={dropDownMenuFilterTextSaison}
-                isActive={!!filterSaison}
-                className="w-full md:w-auto"
-                menuLinks={[
-                  {
-                    linkProps: {
-                      href: '#',
-                      title: 'Toutes les saisons',
-                      onClick: (e) => {
-                        e.preventDefault();
-                        setFilterSaison('');
-                      },
-                    },
-                    text: 'Toutes les saisons',
-                    isActive: !filterSaison,
-                  },
-                  ...saisonOptions.map((option) => ({
-                    linkProps: {
-                      href: '#',
-                      title: option.label,
-                      onClick: (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
-                        e.preventDefault();
-                        setFilterSaison(String(option.year));
-                      },
-                    },
-                    text: option.label,
-                    isActive: filterSaison === String(option.year),
-                  })),
-                ]}
-              />
-            )}
-            {sviWorkingForEtgIds.length > 1 && (
-              <DropDownMenu
-                text={dropDownMenuFilterTextSvi}
-                isActive={filterETG !== 'Toutes les fiches'}
-                className="w-full md:w-auto"
-                menuLinks={[
-                  {
-                    linkProps: {
-                      href: '#',
-                      title: 'Toutes les fiches',
-                      onClick: (e) => {
-                        e.preventDefault();
-                        setFilterETG('');
-                      },
-                    },
-                    text: 'Toutes les fiches',
-                    isActive: !filterETG,
-                  },
-                  ...[...sviWorkingForEtgIds].map((etgId) => ({
-                    linkProps: {
-                      href: '#',
-                      title: `Fiches de ${entities[etgId]?.nom_d_usage}`,
-                      onClick: (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
-                        e.preventDefault();
-                        setFilterETG(etgId);
-                      },
-                    },
-                    text: `Fiches de ${entities[etgId]?.nom_d_usage}`,
-                    isActive: filterETG === etgId,
-                  })),
-                ]}
-              />
-            )}
-          </div>
-          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-            <SegmentedControl
-              hideLegend
-              className="hidden md:block"
-              segments={[
-                {
-                  label: 'Grille',
-                  iconId: 'ri-grid-line',
-                  nativeInputProps: {
-                    checked: viewType === 'grid',
-                    onChange: () => setViewType('grid'),
-                    name: 'view-type',
-                    value: 'grid',
-                  },
-                },
-                {
-                  label: 'Table',
-                  iconId: 'ri-table-line',
-                  nativeInputProps: {
-                    checked: viewType === 'table',
-                    onChange: () => setViewType('table'),
-                    name: 'view-type',
-                    value: 'table',
-                  },
-                },
-              ]}
-            />
-            <ExportFeisModal
-              feiNumbers={selectedFeis}
-              storageKey="svi-fiches-export-columns"
-            />
-          </div>
-        </div>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1">
-            <span className="text-sm opacity-50">Fiches par page:</span>
-            {[20, 50, 100].map((option) => (
-              <button
-                key={option}
-                className={[
-                  'px-2 py-1 text-sm',
-                  (itemsPerPage ?? 20) === option ? 'font-semibold underline' : '',
-                ].join(' ')}
-                onClick={() => {
-                  const firstItemIndex = (page - 1) * (itemsPerPage ?? 20);
-                  const newPage = Math.floor(firstItemIndex / option) + 1;
-                  setItemsPerPage(option);
-                  setSearchParams(newPage > 1 ? { page: String(newPage) } : {});
-                }}
-              >
-                {option}
-              </button>
-            ))}
-          </div>
-          <span className="text-sm opacity-50">
-            {filteredFeis.length} fiche{filteredFeis.length > 1 ? 's' : ''}
-          </span>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="relative">
-      <div className="fr-background-alt--blue-france top-0 z-30 block w-full md:sticky">
-        <div className="fr-container">
-          <div className="fr-grid-row fr-grid-row--center fr-grid-row-gutters">
-            <div className="fr-col-12 fr-col-md-10 px-3 py-2 md:p-0">
-              <Actions />
-            </div>
-          </div>
+      <title>Mes fiches | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
+
+      {/* Mobile : bouton filtres sticky */}
+      <div className="fr-background-alt--blue-france sticky top-0 z-30 flex items-center justify-between px-4 py-2 md:hidden">
+        <span className="text-sm font-medium">
+          {filteredTransmissions.length} fiche{filteredTransmissions.length > 1 ? 's' : ''}
+        </span>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            aria-label={viewType === 'grid' ? 'Afficher en table' : 'Afficher en grille'}
+            title={viewType === 'grid' ? 'Afficher en table' : 'Afficher en grille'}
+            className="h- flex w-10 items-center justify-center rounded border border-gray-300 bg-white text-gray-700 transition-colors hover:bg-gray-50"
+            onClick={() => setViewType(viewType === 'grid' ? 'table' : 'grid')}
+          >
+            <span
+              className={`fr-icon--sm ${viewType === 'grid' ? 'ri-table-line' : 'ri-grid-line'}`}
+              aria-hidden="true"
+            />
+          </button>
+          <button
+            type="button"
+            aria-label="Filtres"
+            className="relative flex h-10 items-center gap-1 rounded border border-gray-300 bg-white px-2 text-sm text-gray-700 transition-colors hover:bg-gray-50"
+            onClick={() => setShowMobileFilters(!showMobileFilters)}
+          >
+            <span
+              className="fr-icon--sm ri-filter-3-line"
+              aria-hidden="true"
+            />
+            <span>Filtres</span>
+            {hasActiveFilters && (
+              <span className="bg-action-high-blue-france ml-0.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold text-white">
+                {filterStatuses.length +
+                  filterPremierDetenteurs.length +
+                  filterEtgs.length +
+                  filterCCGs.length +
+                  filterCollecteurs.length +
+                  filterSaisons.length +
+                  (filterDateFrom || filterDateTo ? 1 : 0)}
+              </span>
+            )}
+          </button>
         </div>
       </div>
-      <div className="fr-container fr-container--fluid">
-        <title>Mes fiches | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
-        <div className="fr-grid-row fr-grid-row--center fr-grid-row-gutters pt-4">
-          <div className="fr-col-12 fr-col-md-10 min-h-96 p-4 md:p-0">
-            <FeisWrapper
-              viewType={viewType}
-              handleSelectAll={handleSelectAll}
-              selectedFeis={selectedFeis}
-              filter={'Toutes les fiches'}
-            >
-              {paginatedFeis.map((fei) => {
-                if (!fei) return null;
-                const detenteurPrecedent = getPreviousDetenteur(fei);
-                return (
-                  <CardFiche
-                    key={fei.numero}
-                    fei={fei}
-                    filter={'Toutes les fiches'}
-                    onPrintSelect={handleCheckboxClick}
-                    isPrintSelected={selectedFeis.includes(fei.numero)}
-                    linkTo={`/app/svi/fei/${fei.numero}`}
-                    detenteurName={detenteurPrecedent.name}
-                    detenteurIcon={detenteurPrecedent.icon}
-                  />
-                );
-              })}
-            </FeisWrapper>
-            {totalPages > 1 && (
-              <div className="flex justify-center py-6">
-                <Pagination
-                  count={totalPages}
-                  defaultPage={page}
-                  getPageLinkProps={(pageNumber) => ({
-                    to: `/app/svi/fei?page=${pageNumber}`,
-                  })}
+
+      {/* Mobile : panneau filtres */}
+      {showMobileFilters && (
+        <div className="fixed inset-0 z-[800] md:hidden">
+          <div
+            className="absolute inset-0 bg-black/30"
+            onClick={() => setShowMobileFilters(false)}
+          />
+          <div className="absolute top-0 right-0 bottom-0 w-80 overflow-y-auto bg-white p-4 shadow-xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-bold">Filtres</h2>
+              <button
+                className="text-action-high-blue-france text-sm underline"
+                onClick={() => setShowMobileFilters(false)}
+              >
+                Fermer
+              </button>
+            </div>
+            {sidebarContent}
+          </div>
+        </div>
+      )}
+
+      {/* Layout principal */}
+      <div className="flex">
+        {/* Sidebar gauche - desktop, collée au bord */}
+        <aside className="sticky top-0 hidden h-screen w-64 shrink-0 overflow-y-auto border-r border-gray-200 bg-white p-4 md:block">
+          {sidebarContent}
+        </aside>
+
+        {/* Contenu principal */}
+        <div className="mx-auto max-w-5xl min-w-0 flex-1 px-4 pt-4 md:px-6">
+          {filteredTransmissions.length > 0 && (
+            <div className="hidden w-full flex-wrap items-center justify-end gap-3 py-4 md:flex">
+              <SegmentedControl
+                hideLegend
+                className="hidden bg-white md:block"
+                segments={[
+                  {
+                    label: 'Grille',
+                    iconId: 'ri-grid-line',
+                    nativeInputProps: {
+                      checked: viewType === 'grid',
+                      onChange: () => setViewType('grid'),
+                      name: 'view-type',
+                      value: 'grid',
+                    },
+                  },
+                  {
+                    label: 'Table',
+                    iconId: 'ri-table-line',
+                    nativeInputProps: {
+                      checked: viewType === 'table',
+                      onChange: () => setViewType('table'),
+                      name: 'view-type',
+                      value: 'table',
+                    },
+                  },
+                ]}
+              />
+              <div className="hidden md:block">
+                <ExportFeisModal
+                  feiNumbers={selectedFeis}
+                  storageKey="svi-fiches-export-columns"
                 />
               </div>
-            )}
-            <div className="my-4 flex flex-col items-start justify-between gap-4 px-8">
-              <a
-                className="fr-link fr-icon-arrow-up-fill fr-link--icon-left mb-4"
-                href="#top"
-              >
-                Haut de page
-              </a>
             </div>
+          )}
+          {filteredTransmissions.length > 0 && (
+            <CarcassesEspeceSummary
+              carcasses={filteredCarcasses}
+              storageKey="svi-fiches-espece-summary-open"
+            />
+          )}
+          <FeisWrapper
+            viewType={viewType}
+            handleSelectAll={handleSelectAll}
+            selectedFeis={selectedFeis}
+            filter={'Toutes les fiches'}
+            paginatedTransmissions={paginatedTransmissions}
+            handleCheckboxClick={handleCheckboxClick}
+          />
+          {filteredTransmissions.length > 0 && totalPages > 1 && (
+            <div className="mt-4 flex justify-center">
+              <Pagination
+                count={totalPages}
+                defaultPage={page}
+                getPageLinkProps={(pageNumber) => ({
+                  to: `/app/svi?page=${pageNumber}`,
+                })}
+              />
+            </div>
+          )}
+          <div className="my-4">
+            <a
+              className="fr-link fr-icon-arrow-up-fill fr-link--icon-left"
+              href="#top"
+            >
+              Haut de page
+            </a>
           </div>
         </div>
       </div>
@@ -645,19 +951,24 @@ export default function SviFiches() {
 }
 
 function FeisWrapper({
-  children,
+  paginatedTransmissions,
   viewType,
   handleSelectAll,
+  handleCheckboxClick,
   selectedFeis,
   filter,
 }: {
-  children: React.ReactNode;
+  paginatedTransmissions: Array<CarcasseTransmissionWihMetadata>;
   viewType: 'grid' | 'table';
-  handleSelectAll?: (visibleFeis?: string[]) => void;
-  selectedFeis?: string[];
-  filter?: FeiStepSimpleStatus | 'Toutes les fiches';
+  handleSelectAll: (visibleFeis?: string[]) => void;
+  handleCheckboxClick: (feiNumber: string, selected: boolean) => void;
+  selectedFeis: FeiNumberSelection;
+  filter?: TransmissionSimpleStatus | 'Toutes les fiches';
 }) {
-  const nothingToShow = !children || React.Children.toArray(children).length === 0;
+  const nothingToShow = paginatedTransmissions.length === 0;
+  const usersById = useZustandStore((state) => state.users);
+  const entitiesWorkingDirectlyFor = useEntitiesIdsWorkingDirectlyForObj();
+  const myUserId = useUser((state) => state.user?.id);
 
   if (nothingToShow) {
     return (
@@ -681,57 +992,78 @@ function FeisWrapper({
       <FeisTable
         handleSelectAll={handleSelectAll}
         selectedFeis={selectedFeis}
-        filter={filter as FeiStepSimpleStatus | 'Toutes les fiches'}
-      >
-        {children}
-      </FeisTable>
+        filter={filter as TransmissionSimpleStatus | 'Toutes les fiches'}
+        handleCheckboxClick={handleCheckboxClick}
+        paginatedTransmissions={paginatedTransmissions}
+      />
     );
   }
 
   return (
     <div className="grid w-full grid-cols-1 gap-4 justify-self-end sm:grid-cols-2 lg:grid-cols-3">
-      {children}
+      {paginatedTransmissions.map((transmission) => {
+        if (!transmission) return null;
+        const detenteurPrecedent = getPreviousDetenteur(
+          transmission,
+          usersById,
+          entitiesWorkingDirectlyFor,
+          myUserId!
+        );
+        return (
+          <CardTransmission
+            key={transmission.fei.numero}
+            transmission={transmission}
+            filter={'Toutes les fiches'}
+            onPrintSelect={handleCheckboxClick}
+            isPrintSelected={selectedFeis.includes(transmission.fei.numero!)}
+            linkTo={`/app/svi/fei/${getTransmissionLink(transmission)}`}
+            detenteurName={detenteurPrecedent.name}
+            detenteurIcon={detenteurPrecedent.icon}
+          />
+        );
+      })}
     </div>
   );
 }
 
 function FeisTableRow({
-  fei,
+  transmission,
   isSelected,
   onPrintSelect,
   navigate,
   filter,
   onVisibilityChange,
 }: {
-  fei: FeiWithIntermediaires;
+  transmission: CarcasseTransmissionWihMetadata;
   isSelected: boolean;
   onPrintSelect?: (feiNumber: string, selected: boolean) => void;
   navigate: ReturnType<typeof useNavigate>;
-  filter?: FeiStepSimpleStatus | 'Toutes les fiches';
+  filter?: TransmissionSimpleStatus | 'Toutes les fiches';
   onVisibilityChange?: (feiNumero: string, isVisible: boolean) => void;
 }) {
-  const { simpleStatus, currentStepLabelShort } = useFeiSteps(fei);
-  const myCarcasses = useMyCarcassesForFei(fei.numero);
-  const feiCarcasses = useCarcassesForFei(fei.numero);
+  const simpleStatus = transmission.labels.simpleStatus;
+  const currentStepLabelShort = null;
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
 
+  // Notifier le parent de la visibilité de cette ligne
   useEffect(() => {
     const isVisible = !filter || filter === 'Toutes les fiches' || filter === simpleStatus;
-    onVisibilityChange?.(fei.numero, isVisible);
-  }, [filter, simpleStatus, fei.numero, onVisibilityChange]);
+    onVisibilityChange?.(transmission.fei.numero!, isVisible);
+  }, [filter, simpleStatus, transmission.fei.numero, onVisibilityChange]);
 
   const [formattedCarcassesAcceptées, _carcassesOuLotsRefusés] = useMemo(() => {
-    const formatted = formatCountCarcasseByEspece(myCarcasses) as string[];
+    const formatted = formatCountCarcasseByEspece(transmission.carcasses) as string[];
     const _carcassesAcceptées: string[] = [];
     let _carcassesOuLotsRefusés = '';
     for (const line of formatted) {
       if (line.includes('refusé')) {
         _carcassesOuLotsRefusés = line.split(' (')[0];
       } else {
+        // Enrichir les carcasses acceptées pour afficher le nombre accepté pour le petit gibier
         let enrichedLine = line;
         for (const [espece, abbreviation] of Object.entries(abbreviations)) {
           if (line.toLowerCase().includes(abbreviation.toLowerCase())) {
-            const carcasse = feiCarcasses.find(
+            const carcasse = transmission.carcasses.find(
               (c) => c?.type === CarcasseType.PETIT_GIBIER && c.espece === espece
             );
             if (carcasse) {
@@ -753,17 +1085,18 @@ function FeisTableRow({
       }
     }
     return [_carcassesAcceptées, _carcassesOuLotsRefusés];
-  }, [myCarcasses, feiCarcasses, carcassesIntermediaireById]);
+  }, [transmission.carcasses, carcassesIntermediaireById]);
 
+  // Filtrer selon le statut si un filtre est défini - APRÈS tous les hooks
   if (filter && filter !== 'Toutes les fiches' && filter !== simpleStatus) {
     return null;
   }
 
   return (
     <tr
-      key={fei.numero}
+      key={transmission.fei.numero!}
       className={`cursor-pointer border-b border-gray-200 hover:bg-gray-50 ${isSelected ? 'bg-blue-50' : ''}`}
-      onClick={() => navigate(`/app/svi/fei/${fei.numero}`)}
+      onClick={() => navigate(`/app/svi/fei/${getTransmissionLink(transmission)}`)}
     >
       <td
         className="px-4 py-3"
@@ -774,16 +1107,16 @@ function FeisTableRow({
             type="checkbox"
             checked={isSelected}
             className="checked:accent-action-high-blue-france h-4 w-4 border-2"
-            onChange={() => onPrintSelect?.(fei.numero, !isSelected)}
+            onChange={() => onPrintSelect?.(transmission.fei.numero!, !isSelected)}
           />
         </div>
       </td>
       <td className="px-4 py-3">
         <div className="flex flex-col gap-1">
           <span className="text-action-high-blue-france text-lg font-semibold">
-            {dayjs(fei.date_mise_a_mort || fei.created_at).format('DD/MM/YYYY')}
+            {dayjs(transmission.fei.date_mise_a_mort).format('DD/MM/YYYY')}
           </span>
-          <span className="text-sm">{fei.numero}</span>
+          <span className="text-sm">{transmission.fei.numero!}</span>
         </div>
       </td>
       <td className="px-4 py-3">
@@ -807,13 +1140,15 @@ function FeisTableRow({
       <td className="px-4 py-3">
         <div className="flex flex-col gap-1 text-sm">
           <span className="">
-            {fei.commune_mise_a_mort
+            {transmission.fei.commune_mise_a_mort
               ?.split(' ')
               .slice(1)
               .map((w: string) => w.toLocaleLowerCase())
               .join(' ') || 'À renseigner'}
           </span>
-          <span className="text-gray-600">{fei.premier_detenteur_name_cache || 'À renseigner'}</span>
+          <span className="text-gray-600">
+            {transmission.content.premier_detenteur_name_cache || 'À renseigner'}
+          </span>
         </div>
       </td>
       <td className="px-4 py-3">
@@ -842,24 +1177,22 @@ function FeisTableRow({
 }
 
 function FeisTable({
-  children,
+  paginatedTransmissions,
   handleSelectAll,
   selectedFeis,
   filter,
+  handleCheckboxClick,
 }: {
-  children: React.ReactNode;
-  handleSelectAll?: (visibleFeis?: string[]) => void;
-  selectedFeis?: string[];
-  filter?: FeiStepSimpleStatus | 'Toutes les fiches';
+  paginatedTransmissions: Array<CarcasseTransmissionWihMetadata>;
+  handleSelectAll: (visibleFeis?: FeiNumberSelection) => void;
+  selectedFeis: FeiNumberSelection;
+  filter?: TransmissionSimpleStatus | 'Toutes les fiches';
+  handleCheckboxClick: (feiNumber: string, selected: boolean) => void;
 }) {
   const navigate = useNavigate();
-  const [visibleFeisNumbers, setVisibleFeisNumbers] = useState<string[]>([]);
+  const [visibleFeisNumbers, setVisibleFeisNumbers] = useState<FeiNumberSelection>([]);
 
-  const feis = React.Children.toArray(children).filter(
-    (child): child is React.ReactElement => React.isValidElement(child) && child.type === CardFiche
-  );
-
-  if (feis.length === 0) {
+  if (paginatedTransmissions.length === 0) {
     return null;
   }
 
@@ -868,12 +1201,6 @@ function FeisTable({
       ? visibleFeisNumbers.every((numero) => selectedFeis?.includes(numero))
       : false;
 
-  const handleSelectAllInTable = () => {
-    if (handleSelectAll) {
-      handleSelectAll(visibleFeisNumbers);
-    }
-  };
-
   return (
     <div className="overflow-x-auto">
       <table className="w-full border-collapse bg-white">
@@ -881,15 +1208,13 @@ function FeisTable({
           <tr className="border-b-2 border-gray-300">
             <th className="text-center text-sm font-semibold">
               <div className="flex h-full items-center justify-center">
-                {handleSelectAll && (
-                  <input
-                    type="checkbox"
-                    checked={allSelected}
-                    className="checked:accent-action-high-blue-france h-4 w-4 border-2"
-                    onChange={handleSelectAllInTable}
-                    aria-label={allSelected ? 'Tout désélectionner' : 'Tout sélectionner'}
-                  />
-                )}
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  className="checked:accent-action-high-blue-france h-4 w-4 border-2"
+                  onChange={() => handleSelectAll(visibleFeisNumbers)}
+                  aria-label={allSelected ? 'Tout désélectionner' : 'Tout sélectionner'}
+                />
               </div>
             </th>
             <th className="px-4 py-3 text-left text-sm font-semibold">Fiche</th>
@@ -899,16 +1224,13 @@ function FeisTable({
           </tr>
         </thead>
         <tbody>
-          {feis.map((feiElement) => {
-            const fei = feiElement.props.fei;
-            const isSelected = feiElement.props.isPrintSelected;
-            const onPrintSelect = feiElement.props.onPrintSelect;
+          {paginatedTransmissions.map((transmission) => {
             return (
               <FeisTableRow
-                key={fei.numero}
-                fei={fei}
-                isSelected={isSelected}
-                onPrintSelect={onPrintSelect}
+                key={transmission.fei.numero}
+                transmission={transmission}
+                isSelected={selectedFeis.includes(transmission.fei.numero!)}
+                onPrintSelect={handleCheckboxClick}
                 navigate={navigate}
                 filter={filter}
                 onVisibilityChange={(feiNumero, isVisible) => {
