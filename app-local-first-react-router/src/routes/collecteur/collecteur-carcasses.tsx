@@ -19,7 +19,7 @@ import useExportCarcasses from '@app/utils/export-carcasses';
 import { isCarcasseSviArchived } from '@app/utils/carcasse-svi-archived';
 import { loadData, useLoaderEffect } from '@app/utils/load-data';
 import { useTransmissions } from '@app/utils/get-transmissions-sorted';
-import { getTransmissionLinkFromCarcasse } from '@app/utils/get-transmission-id';
+import { getTransmissionId, getTransmissionLinkFromCarcasse } from '@app/utils/get-transmission-id';
 const itemsPerPageOptions = [20, 50, 100, 200, 1000];
 
 export default function CollecteurCarcasses() {
@@ -71,7 +71,7 @@ export default function CollecteurCarcasses() {
   const filteredData = useMemo(() => {
     return carcassesRegistry
       .filter((carcasse) =>
-        filterCarcassesInRegistre(filters)(carcasse, transmissions[carcasse.fei_numero]?.fei)
+        filterCarcassesInRegistre(filters)(carcasse, transmissions[getTransmissionId(carcasse)]?.fei)
       )
       .sort((a, b) => {
         // @ts-expect-error: svi_carcasse_archived is isCarcasseSviArchived
