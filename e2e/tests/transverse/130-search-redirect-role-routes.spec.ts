@@ -36,11 +36,12 @@ test.describe('Search dropdown redirectUrl', () => {
     const search = page.getByPlaceholder('Rechercher (carcasse ou fiche en cours)').first();
     await search.fill(feiId);
 
-    const result = page.getByRole('link', { name: new RegExp(feiId) });
+    // L'ETG navigue vers une transmission : /app/etg/fei/:numero/:premier_detenteur_prochain_detenteur_id_cache
+    const result = page.getByRole('link', { name: new RegExp(`Fiche ${feiId}`) }).first();
     await expect(result).toBeVisible({ timeout: 10000 });
-    await expect(result).toHaveAttribute('href', `/app/etg/fei/${feiId}`);
+    await expect(result).toHaveAttribute('href', new RegExp(`^/app/etg/fei/${feiId}/`));
     await result.click();
-    await expect(page).toHaveURL(`http://localhost:3290/app/etg/fei/${feiId}`);
+    await expect(page).toHaveURL(new RegExp(`/app/etg/fei/${feiId}/`));
   });
 
   test('COLLECTEUR search lands on /app/collecteur/fei/:numero', async ({ page }) => {
@@ -54,11 +55,12 @@ test.describe('Search dropdown redirectUrl', () => {
     const search = page.getByPlaceholder('Rechercher (carcasse ou fiche en cours)').first();
     await search.fill(feiId);
 
-    const result = page.getByRole('link', { name: new RegExp(feiId) });
+    // Le collecteur navigue vers une transmission : /app/collecteur/fei/:numero/:premier_detenteur_prochain_detenteur_id_cache
+    const result = page.getByRole('link', { name: new RegExp(`Fiche ${feiId}`) }).first();
     await expect(result).toBeVisible({ timeout: 10000 });
-    await expect(result).toHaveAttribute('href', `/app/collecteur/fei/${feiId}`);
+    await expect(result).toHaveAttribute('href', new RegExp(`^/app/collecteur/fei/${feiId}/`));
     await result.click();
-    await expect(page).toHaveURL(`http://localhost:3290/app/collecteur/fei/${feiId}`);
+    await expect(page).toHaveURL(new RegExp(`/app/collecteur/fei/${feiId}/`));
   });
 
   test('CHASSEUR search lands on /app/chasseur/fei/:numero', async ({ page }) => {
