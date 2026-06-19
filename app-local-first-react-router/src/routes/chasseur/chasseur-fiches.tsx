@@ -362,8 +362,7 @@ export default function ChasseurFiches() {
   const saisonOptions = useMemo(() => {
     const years = new Set<number>();
     for (const transmission of allTransmissions) {
-      if (transmission.fei.date_mise_a_mort)
-        years.add(getSaisonStartYear(transmission.fei.date_mise_a_mort));
+      if (transmission.fei.date_mise_a_mort) years.add(getSaisonStartYear(transmission.fei.date_mise_a_mort));
     }
     return Array.from(years)
       .sort((a, b) => b - a)
