@@ -228,7 +228,7 @@ export default function CardTransmission({
           </div>
         )}
         <div className="text-xl font-bold">
-          {dayjs(transmission.fei.date_mise_a_mort).format('DD/MM/YYYY')}
+          {dayjs(transmission.fei.date_mise_a_mort || transmission.content.created_at).format('DD/MM/YYYY')}
         </div>
 
         <div className="flex flex-col">
