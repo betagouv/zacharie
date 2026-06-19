@@ -27,6 +27,7 @@ import { useTransmissionsSorted } from '@app/utils/get-transmissions-sorted';
 import { CarcasseTransmissionWihMetadata } from '@app/types/carcasse';
 import CardTransmission from '@app/components/CardTransmission';
 import { useEntitiesIdsWorkingDirectlyForObj } from '@app/utils/get-entity-relations';
+import { getTransmissionLink } from '@app/utils/get-transmission-id';
 
 type ViewType = 'grid' | 'table';
 
@@ -941,7 +942,7 @@ function FeisWrapper({
             filter={'Toutes les fiches'}
             onPrintSelect={handleCheckboxClick}
             isPrintSelected={selectedFeis.includes(transmission.fei.numero!)}
-            linkTo={`/app/etg/fei/${transmission.fei.numero}`}
+            linkTo={`/app/etg/fei/${getTransmissionLink(transmission)}`}
             detenteurName={detenteurPrecedent.name}
             detenteurIcon={detenteurPrecedent.icon}
           />
@@ -1021,7 +1022,7 @@ function FeisTableRow({
     <tr
       key={transmission.fei.numero!}
       className={`cursor-pointer border-b border-gray-200 hover:bg-gray-50 ${isSelected ? 'bg-blue-50' : ''}`}
-      onClick={() => navigate(`/app/etg/fei/${transmission.fei.numero!}`)}
+      onClick={() => navigate(`/app/etg/fei/${getTransmissionLink(transmission)}`)}
     >
       <td
         className="px-4 py-3"

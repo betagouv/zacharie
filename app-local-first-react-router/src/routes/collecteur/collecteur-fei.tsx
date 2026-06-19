@@ -46,7 +46,7 @@ import NotFound from '@app/components/NotFound';
 import Chargement from '@app/components/Chargement';
 import { loadData, useLoaderEffect } from '@app/utils/load-data';
 import { CarcasseTransmission } from '@app/types/carcasse';
-import { useTransmissionWithMetadata } from '@app/utils/get-transmissions-sorted';
+import { useGetTransmissionFromURLParams } from '@app/utils/get-transmissions-sorted';
 
 interface Props {
   readOnly?: boolean;
@@ -84,11 +84,9 @@ export default function CollecteurFei(props: Props) {
 }
 
 function CollecteurFeiLoader(props: Props) {
-  const params = useParams();
   const user = useUser((state) => state.user)!;
   const entities = useZustandStore((state) => state.entities);
-  const fei_numero = params.fei_numero!;
-  const transmissionWithMetadata = useTransmissionWithMetadata(fei_numero);
+  const transmissionWithMetadata = useGetTransmissionFromURLParams();
   const intermediaires = transmissionWithMetadata.intermediaires;
   const myCarcasses = transmissionWithMetadata.carcasses;
   const transmission = transmissionWithMetadata.content;
@@ -228,7 +226,6 @@ function CollecteurProFeiContent({
   children,
   ...props
 }: Props & { intermediaire: CarcassesIntermediaire; children: React.ReactNode }) {
-  const params = useParams();
   const user = useUser((state) => state.user)!;
   const updateAllCarcasseIntermediaire = useZustandStore((state) => state.updateAllCarcasseIntermediaire);
   const updateCarcassesTransmission = useZustandStore((state) => state.updateCarcassesTransmission);
@@ -236,8 +233,7 @@ function CollecteurProFeiContent({
   const carcasses = useZustandStore((state) => state.carcasses);
   const entities = useZustandStore((state) => state.entities);
   const collecteursIds = useCollecteursProIds();
-  const fei_numero = params.fei_numero!;
-  const transmissionWithMetadata = useTransmissionWithMetadata(fei_numero);
+  const transmissionWithMetadata = useGetTransmissionFromURLParams();
   const fei = transmissionWithMetadata.fei;
   const myFeiCarcasses = transmissionWithMetadata.carcasses;
   const transmission = transmissionWithMetadata.content;
@@ -675,7 +671,7 @@ function CollecteurProFeiContent({
 
   return (
     <Fragment key={intermediaire?.id}>
-      <title>{`${params.fei_numero} | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}</title>
+      <title>{`${fei.numero} | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}</title>
       <div className="fr-container fr-container--fluid fr-my-md-14v">
         <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
           <div

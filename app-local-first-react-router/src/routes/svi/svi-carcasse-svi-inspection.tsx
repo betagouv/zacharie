@@ -21,7 +21,6 @@ import {
   HistoriqueDesModifications,
 } from '@app/components/CarcasseModificationRequest';
 import { loadData, useLoaderEffect } from '@app/utils/load-data';
-import { useTransmissionWithMetadata } from '@app/utils/get-transmissions-sorted';
 import { getPendingModifRequest } from '@app/utils/modif-requests';
 
 export default function SviInspectionCarcasseLoader() {
@@ -53,8 +52,8 @@ function SviInspectionCarcasse() {
   const navigate = useNavigate();
   const user = useUser((state) => state.user)!;
   const entities = useZustandStore((state) => state.entities);
-  const transmission = useTransmissionWithMetadata(params.fei_numero!);
-  const fei = transmission.fei;
+  const feis = useZustandStore((state) => state.feis);
+  const fei = feis[params.fei_numero!];
   const carcasses = useZustandStore((state) => state.carcasses);
   const carcasse = carcasses[params.zacharie_carcasse_id!];
   const carcassesIntermediaires = useCarcassesIntermediairesForCarcasse(carcasse.zacharie_carcasse_id);
@@ -73,16 +72,16 @@ function SviInspectionCarcasse() {
   }, [carcassesIntermediaires, entities]);
 
   const isSviWorkingFor = useMemo(() => {
-    if (transmission.content.svi_entity_id) {
+    if (carcasse.svi_entity_id) {
       if (user.roles.includes(UserRoles.SVI)) {
-        const svi = entities[transmission.content.svi_entity_id];
+        const svi = entities[carcasse.svi_entity_id];
         if (svi?.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
           return true;
         }
       }
     }
     return false;
-  }, [transmission, user, entities]);
+  }, [carcasse, user, entities]);
 
   const allModifRequests = useZustandStore(
     (state) => state.modifRequestsByCarcasseId[carcasse.zacharie_carcasse_id]
@@ -98,14 +97,14 @@ function SviInspectionCarcasse() {
     if (isSviWorkingFor) {
       return true;
     }
-    if (transmission.content.current_owner_role !== UserRoles.SVI) {
+    if (carcasse.current_owner_role !== UserRoles.SVI) {
       return false;
     }
     if (!user.roles.includes(UserRoles.SVI)) {
       return false;
     }
     return true;
-  }, [transmission, user, isSviWorkingFor, pendingModifRequest]);
+  }, [carcasse, user, isSviWorkingFor, pendingModifRequest]);
 
   const initIMP1Open = useRef(!carcasse.svi_ipm1_decision);
   const initIMP2Open = useRef(

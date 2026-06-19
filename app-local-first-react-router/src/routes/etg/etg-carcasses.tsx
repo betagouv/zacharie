@@ -26,6 +26,7 @@ import { loadData, useLoaderEffect } from '@app/utils/load-data';
 import { useTransmissions } from '@app/utils/get-transmissions-sorted';
 import type { Carcasse } from '@prisma/client';
 import type { TransmissionSimpleStatus } from '@app/types/transmission-steps';
+import { getTransmissionId, getTransmissionLinkFromCarcasse } from '@app/utils/get-transmission-id';
 
 const advancedFiltersModal = createModal({
   id: 'etg-carcasses-advanced-filters',
@@ -180,7 +181,7 @@ export default function EtgCarcasses() {
       if (!_collecteursNamesByFeiNumero[carcasse.fei_numero]) {
         let feiIsExcluded = withQuickFilterPremierDetenteurs || withQuickFilterTransmissionStatuses;
         const __collecteursIds: Record<Entity['id'], Entity['nom_d_usage']> = {};
-        const intermediaires = transmissions[carcasse.fei_numero].intermediaires ?? [];
+        const intermediaires = transmissions[getTransmissionId(carcasse)].intermediaires ?? [];
         for (const intermediaire of intermediaires) {
           const entityId = intermediaire.intermediaire_entity_id;
           if (intermediaire.intermediaire_role === FeiOwnerRole.COLLECTEUR_PRO) {
@@ -193,7 +194,7 @@ export default function EtgCarcasses() {
             if (withQuickFilterCollecteur && quickFilterCollecteurIds[collecteurId]) feiIsExcluded = false;
           }
         }
-        const simpleStatus = transmissions[carcasse.fei_numero].labels.simpleStatus;
+        const simpleStatus = transmissions[getTransmissionId(carcasse)].labels.simpleStatus;
         if (withQuickFilterTransmissionStatuses && quickFilterTransmissionStatuses[simpleStatus])
           feiIsExcluded = false;
         _collecteursNamesByFeiNumero[carcasse.fei_numero] =
@@ -492,7 +493,9 @@ export default function EtgCarcasses() {
       dataKey: 'fei_numero',
       title: 'Numéro de fiche',
       sortable: true,
-      render: (carcasse) => <Link to={`/app/etg/fei/${carcasse.fei_numero}`}>{carcasse.fei_numero}</Link>,
+      render: (carcasse) => (
+        <Link to={`/app/etg/fei/${getTransmissionLinkFromCarcasse(carcasse)}`}>{carcasse.fei_numero}</Link>
+      ),
     },
   ];
 
@@ -910,7 +913,7 @@ export default function EtgCarcasses() {
               <div>
                 <span className="font-semibold">Fiche: </span>
                 <Link
-                  to={`/app/etg/fei/${carcasse.fei_numero}`}
+                  to={`/app/etg/fei/${getTransmissionLinkFromCarcasse(carcasse)}`}
                   className="text-blue-600 hover:underline"
                 >
                   {carcasse.fei_numero}

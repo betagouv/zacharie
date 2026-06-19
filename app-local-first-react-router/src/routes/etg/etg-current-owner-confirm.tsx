@@ -3,7 +3,6 @@ import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import { useMemo, useState } from 'react';
 import dayjs from 'dayjs';
-import { useParams } from 'react-router';
 import {
   DepotType,
   EntityRelationType,
@@ -20,15 +19,14 @@ import { createHistoryInput } from '@app/utils/create-history-entry';
 import { getNewCarcasseIntermediaireId } from '@app/utils/get-carcasse-intermediaire-id';
 import type { CarcassesIntermediaire } from '@app/types/carcasses-intermediaire';
 import { CarcasseTransmission } from '@app/types/carcasse';
-import { useTransmissionWithMetadata } from '@app/utils/get-transmissions-sorted';
+import { useGetTransmissionFromURLParams } from '@app/utils/get-transmissions-sorted';
 
 export default function CurrentOwnerConfirm() {
-  const params = useParams();
   const user = useUser((state) => state.user)!;
   const updateCarcassesTransmission = useZustandStore((state) => state.updateCarcassesTransmission);
   const createCarcassesIntermediaire = useZustandStore((state) => state.createCarcassesIntermediaire);
   const addLog = useZustandStore((state) => state.addLog);
-  const transmissionMetadata = useTransmissionWithMetadata(params.fei_numero!);
+  const transmissionMetadata = useGetTransmissionFromURLParams();
   const fei = transmissionMetadata.fei;
   const entities = useZustandStore((state) => state.entities);
   const users = useZustandStore((state) => state.users);

@@ -12,6 +12,8 @@ import { CarcasseTransmission, CarcasseTransmissionWihMetadata } from '@app/type
 import { filterFeiIntermediaires } from './get-carcasses-intermediaires';
 import { getTransmissionLabels } from './transmission-labels';
 import { useEffect, useMemo, useState } from 'react';
+import { buildTransmissionId, getTransmissionId } from './get-transmission-id';
+import { useParams } from 'react-router';
 
 type TransmissionSorted = {
   transmissionsEnCours: Array<CarcasseTransmissionWihMetadata>;
@@ -49,10 +51,11 @@ export function useTransmissions(): Record<
     // Solution: on va dire que, par défaut, un groupement de carcasse est `done`
 
     for (const carcasse of Object.values(allCarcasses)) {
+      const transmissionId = getTransmissionId(carcasse);
       if (carcasse.deleted_at) continue;
-      if (transmissions[carcasse.fei_numero]) {
-        transmissions[carcasse.fei_numero].carcasses.push(carcasse);
-        if (transmissions[carcasse.fei_numero].labels.simpleStatus !== 'Clôturée') continue;
+      if (transmissions[transmissionId]) {
+        transmissions[transmissionId].carcasses.push(carcasse);
+        if (transmissions[transmissionId].labels.simpleStatus !== 'Clôturée') continue;
       } else {
         const transmission = getCarcasseTransmission(carcasse);
         const fei = feis[transmission.fei_numero!];
@@ -69,11 +72,11 @@ export function useTransmissions(): Record<
           carcasses: [carcasse],
           intermediaires,
         };
-        transmissions[carcasse.fei_numero] = transmissionWithIntermediaires;
+        transmissions[transmissionId] = transmissionWithIntermediaires;
       }
       if (
-        transmissions[carcasse.fei_numero].content.consommateur_final_usage_domestique &&
-        transmissions[carcasse.fei_numero].content.premier_detenteur_user_id
+        transmissions[transmissionId].content.consommateur_final_usage_domestique &&
+        transmissions[transmissionId].content.premier_detenteur_user_id
       ) {
         continue;
       }
@@ -90,9 +93,9 @@ export function useTransmissions(): Record<
       );
 
       if (isUnderMyResponsability) {
-        transmissions[carcasse.fei_numero].labels = getTransmissionLabels(
+        transmissions[transmissionId].labels = getTransmissionLabels(
           'À compléter',
-          transmissions[carcasse.fei_numero].content,
+          transmissions[transmissionId].content,
           role,
           entitiesWorkingDirectlyFor
         );
@@ -104,9 +107,9 @@ export function useTransmissions(): Record<
         // At least one carcasse where next_owner is me/my entity
         const isToTake = isCarcasseToTake(carcasse, user, entitiesWorkingDirectlyFor);
         if (isToTake) {
-          transmissions[carcasse.fei_numero].labels = getTransmissionLabels(
+          transmissions[transmissionId].labels = getTransmissionLabels(
             'À compléter',
-            transmissions[carcasse.fei_numero].content,
+            transmissions[transmissionId].content,
             role,
             entitiesWorkingDirectlyFor
           );
@@ -117,18 +120,18 @@ export function useTransmissions(): Record<
       // FEI ONGOING
       if (!carcasse.svi_assigned_at && !carcasse.intermediaire_closed_at) {
         if (carcasse.examinateur_initial_user_id === user.id) {
-          transmissions[carcasse.fei_numero].labels = getTransmissionLabels(
+          transmissions[transmissionId].labels = getTransmissionLabels(
             'En cours',
-            transmissions[carcasse.fei_numero].content,
+            transmissions[transmissionId].content,
             role,
             entitiesWorkingDirectlyFor
           );
           continue;
         }
         if (carcasse.premier_detenteur_user_id === user.id) {
-          transmissions[carcasse.fei_numero].labels = getTransmissionLabels(
+          transmissions[transmissionId].labels = getTransmissionLabels(
             'En cours',
-            transmissions[carcasse.fei_numero].content,
+            transmissions[transmissionId].content,
             role,
             entitiesWorkingDirectlyFor
           );
@@ -136,9 +139,9 @@ export function useTransmissions(): Record<
         }
         if (carcasse.premier_detenteur_entity_id) {
           if (entitiesWorkingDirectlyFor[carcasse.premier_detenteur_entity_id]) {
-            transmissions[carcasse.fei_numero].labels = getTransmissionLabels(
+            transmissions[transmissionId].labels = getTransmissionLabels(
               'En cours',
-              transmissions[carcasse.fei_numero].content,
+              transmissions[transmissionId].content,
               role,
               entitiesWorkingDirectlyFor
             );
@@ -150,20 +153,20 @@ export function useTransmissions(): Record<
           carcasse.next_owner_sous_traite_by_entity_id &&
           entitiesWorkingDirectlyFor[carcasse.next_owner_sous_traite_by_entity_id];
         if (hasSousTraite) {
-          transmissions[carcasse.fei_numero].labels = getTransmissionLabels(
+          transmissions[transmissionId].labels = getTransmissionLabels(
             'En cours',
-            transmissions[carcasse.fei_numero].content,
+            transmissions[transmissionId].content,
             role,
             entitiesWorkingDirectlyFor
           );
           continue;
         }
         let isIntermediaire = false;
-        for (const intermediaire of transmissions[carcasse.fei_numero].intermediaires) {
+        for (const intermediaire of transmissions[transmissionId].intermediaires) {
           if (intermediaire.intermediaire_user_id === user.id) {
-            transmissions[carcasse.fei_numero].labels = getTransmissionLabels(
+            transmissions[transmissionId].labels = getTransmissionLabels(
               'En cours',
-              transmissions[carcasse.fei_numero].content,
+              transmissions[transmissionId].content,
               role,
               entitiesWorkingDirectlyFor
             );
@@ -172,9 +175,9 @@ export function useTransmissions(): Record<
           }
           if (intermediaire.intermediaire_entity_id) {
             if (entitiesWorkingDirectlyFor[intermediaire.intermediaire_entity_id]) {
-              transmissions[carcasse.fei_numero].labels = getTransmissionLabels(
+              transmissions[transmissionId].labels = getTransmissionLabels(
                 'En cours',
-                transmissions[carcasse.fei_numero].content,
+                transmissions[transmissionId].content,
                 role,
                 entitiesWorkingDirectlyFor
               );
@@ -190,18 +193,18 @@ export function useTransmissions(): Record<
       if (carcasse.svi_assigned_at) {
         if (meIsSvi) {
           if (!carcasse.svi_closed_at && !carcasse.svi_automatic_closed_at) {
-            transmissions[carcasse.fei_numero].labels = getTransmissionLabels(
+            transmissions[transmissionId].labels = getTransmissionLabels(
               'À compléter',
-              transmissions[carcasse.fei_numero].content,
+              transmissions[transmissionId].content,
               role,
               entitiesWorkingDirectlyFor
             );
           }
           continue;
         }
-        transmissions[carcasse.fei_numero].labels = getTransmissionLabels(
+        transmissions[transmissionId].labels = getTransmissionLabels(
           'En cours',
-          transmissions[carcasse.fei_numero].content,
+          transmissions[transmissionId].content,
           role,
           entitiesWorkingDirectlyFor
         );
@@ -210,7 +213,11 @@ export function useTransmissions(): Record<
     }
     if (meIsChassseur) {
       for (const fei of Object.values(feis)) {
-        if (transmissions[fei.numero]) continue;
+        // la fei vient juste d'être créée, il n'y a pas encore de transmission
+        // ni de prochain détenteur
+        // on simule la transmissionId par fei.numero : aucun risque de conflit encore
+        const tempTransmissionId = buildTransmissionId(fei.numero);
+        if (transmissions[tempTransmissionId]) continue;
         const transmission: CarcasseTransmissionWihMetadata = {
           content: { ...fei }, // fields like examinateur_initial, etc. that will also exists in carcasses (when they will be created)
           labels: getTransmissionLabels('À compléter', fei, role, entitiesWorkingDirectlyFor),
@@ -222,7 +229,7 @@ export function useTransmissions(): Record<
           carcasses: [],
           intermediaires: [],
         };
-        transmissions[fei.numero] = transmission;
+        transmissions[tempTransmissionId] = transmission;
       }
     }
     return transmissions;
@@ -276,23 +283,27 @@ function sortTransmissions(a: CarcasseTransmissionWihMetadata, b: CarcasseTransm
   return bDate < aDate ? -1 : 1;
 }
 
-export function useTransmissionWithMetadata(fei_numero: string) {
+export function useGetTransmissionFromURLParams() {
+  const params = useParams();
+  const fei_numero = params.fei_numero!;
+  const premier_detenteur_prochain_detenteur_id_cache = params.premier_detenteur_prochain_detenteur_id_cache;
+  const transmissionId = buildTransmissionId(fei_numero, premier_detenteur_prochain_detenteur_id_cache);
   const transmissions = useTransmissions();
   const [transmission, setTransmission] = useState<CarcasseTransmissionWihMetadata>(
-    transmissions[fei_numero]
+    transmissions[transmissionId]
   );
 
   useEffect(() => {
-    const transmission = transmissions[fei_numero].content;
+    const transmission = transmissions[transmissionId].content;
     const transmissionKeys = Object.keys(transmission) as Array<keyof CarcasseTransmission>;
     let allCarcassesDone = true;
-    const carcasseRef = transmissions[fei_numero].carcasses[0]!;
-    for (const carcasse of transmissions[fei_numero].carcasses) {
+    const carcasseRef = transmissions[transmissionId].carcasses[0]!;
+    for (const carcasse of transmissions[transmissionId].carcasses) {
       checkCarcasseAgainstTransmission(transmissionKeys, transmission, carcasse, carcasseRef);
       if (!isCarcasseDone(carcasse)) allCarcassesDone = false;
     }
-    setTransmission({ ...transmissions[fei_numero], allCarcassesDone });
-  }, [transmissions, fei_numero]);
+    setTransmission({ ...transmissions[transmissionId], allCarcassesDone });
+  }, [transmissions, transmissionId]);
 
   return transmission;
 }

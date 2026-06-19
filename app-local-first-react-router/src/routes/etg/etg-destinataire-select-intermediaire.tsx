@@ -1,4 +1,3 @@
-import { useParams } from 'react-router';
 import { useMemo, useState } from 'react';
 import {
   UserRoles,
@@ -28,7 +27,7 @@ import PartenaireNouveau from '@app/components/PartenaireNouveau';
 import CCGNouveau from '@app/components/CCGNouveau';
 import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
 import { CarcasseTransmission } from '@app/types/carcasse';
-import { useTransmissionWithMetadata } from '@app/utils/get-transmissions-sorted';
+import { useGetTransmissionFromURLParams } from '@app/utils/get-transmissions-sorted';
 
 const partenaireModal = createModal({
   isOpenedByDefault: false,
@@ -53,7 +52,6 @@ export default function DestinataireIntermediaire({
   feiAndIntermediaireIds?: FeiAndIntermediaireIds;
   intermediaire?: CarcassesIntermediaire;
 }) {
-  const params = useParams();
   const user = useUser((state) => state.user)!;
   const isOnline = useIsOnline();
   const updateCarcassesTransmission = useZustandStore((state) => state.updateCarcassesTransmission);
@@ -72,9 +70,8 @@ export default function DestinataireIntermediaire({
   const isPartenaireModalOpen = useIsModalOpen(partenaireModal);
   const isCCGModalOpen = useIsModalOpen(ccgModal);
 
-  const fei_numero = params.fei_numero!;
-
-  const transmissionMetadata = useTransmissionWithMetadata(fei_numero);
+  const transmissionMetadata = useGetTransmissionFromURLParams();
+  const fei_numero = transmissionMetadata.fei.numero;
   const myCarcasses = transmissionMetadata.carcasses;
   const transmission = transmissionMetadata.content;
 

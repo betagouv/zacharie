@@ -1,5 +1,4 @@
 import { Fragment, useMemo, useRef, useState } from 'react';
-import { useParams } from 'react-router';
 import dayjs from 'dayjs';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { CarcasseType, Prisma } from '@prisma/client';
@@ -21,7 +20,7 @@ import {
   HistoriqueDesModifications,
 } from '@app/components/CarcasseModificationRequest';
 import type { Carcasse } from '@prisma/client';
-import { useTransmissionWithMetadata } from '@app/utils/get-transmissions-sorted';
+import { useGetTransmissionFromURLParams } from '@app/utils/get-transmissions-sorted';
 
 interface CarcasseIntermediaireProps {
   carcasse: Carcasse;
@@ -34,12 +33,11 @@ export default function CarcasseIntermediaireComp({
   canEdit,
   intermediaire,
 }: CarcasseIntermediaireProps) {
-  const params = useParams();
   const user = useUser((state) => state.user)!;
   const updateCarcasseIntermediaire = useZustandStore((state) => state.updateCarcasseIntermediaire);
   const updateCarcasse = useZustandStore((state) => state.updateCarcasse);
   const addLog = useZustandStore((state) => state.addLog);
-  const transmissionMetadata = useTransmissionWithMetadata(params.fei_numero!);
+  const transmissionMetadata = useGetTransmissionFromURLParams();
   const fei = transmissionMetadata.fei;
   const entities = useZustandStore((state) => state.entities);
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);

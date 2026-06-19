@@ -1,4 +1,3 @@
-import { useParams } from 'react-router';
 import { useMemo, useState } from 'react';
 import { Prisma, EntityTypes, EntityRelationType, FeiOwnerRole } from '@prisma/client';
 import dayjs from 'dayjs';
@@ -19,7 +18,7 @@ import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import PartenaireNouveau from '@app/components/PartenaireNouveau';
 import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
 import { CarcasseTransmission } from '@app/types/carcasse';
-import { useTransmissionWithMetadata } from '@app/utils/get-transmissions-sorted';
+import { useGetTransmissionFromURLParams } from '@app/utils/get-transmissions-sorted';
 
 const partenaireModal = createModal({
   isOpenedByDefault: false,
@@ -35,7 +34,6 @@ export default function DestinataireSousTraite({
   feiAndIntermediaireIds?: FeiAndIntermediaireIds;
   intermediaire?: CarcassesIntermediaire;
 }) {
-  const params = useParams();
   const user = useUser((state) => state.user)!;
   const isOnline = useIsOnline();
   const updateCarcassesTransmission = useZustandStore((state) => state.updateCarcassesTransmission);
@@ -48,9 +46,8 @@ export default function DestinataireSousTraite({
 
   const isPartenaireModalOpen = useIsModalOpen(partenaireModal);
 
-  const fei_numero = params.fei_numero!;
-
-  const transmissionMetadata = useTransmissionWithMetadata(fei_numero);
+  const transmissionMetadata = useGetTransmissionFromURLParams();
+  const fei_numero = transmissionMetadata.fei.numero;
   const carcasses = transmissionMetadata.carcasses;
   const transmission = transmissionMetadata.content;
   const carcasseIds = carcasses.map((c) => c.zacharie_carcasse_id);

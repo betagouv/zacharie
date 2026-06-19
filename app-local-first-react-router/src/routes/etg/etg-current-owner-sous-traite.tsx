@@ -1,22 +1,20 @@
 import { UserRoles } from '@prisma/client';
 import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
 import { Button } from '@codegouvfr/react-dsfr/Button';
-import { useParams } from 'react-router';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import { syncData } from '@app/utils/sync-data';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import DestinataireSelectSousTraite from './etg-destinataire-select-sous-traite';
 import { getFeiAndIntermediaireIdsFromFeiIntermediaire } from '@app/utils/get-carcasse-intermediaire-id';
-import { useTransmissionWithMetadata } from '@app/utils/get-transmissions-sorted';
+import { useGetTransmissionFromURLParams } from '@app/utils/get-transmissions-sorted';
 
 export default function FeiSousTraite() {
-  const params = useParams();
   const user = useUser((state) => state.user)!;
   const updateCarcassesTransmission = useZustandStore((state) => state.updateCarcassesTransmission);
   const addLog = useZustandStore((state) => state.addLog);
-  const fei_numero = params.fei_numero!;
-  const transmissionMetadata = useTransmissionWithMetadata(fei_numero);
+  const transmissionMetadata = useGetTransmissionFromURLParams();
+  const fei_numero = transmissionMetadata.fei.numero;
   const feiCarcasses = transmissionMetadata.carcasses;
   const transmission = transmissionMetadata.content;
   const carcasseIds = feiCarcasses.map((c) => c.zacharie_carcasse_id);

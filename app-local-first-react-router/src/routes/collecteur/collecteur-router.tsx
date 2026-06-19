@@ -75,7 +75,7 @@ export default function RouterCollecteur() {
         />
       </Route>
       <Route
-        path="fei/:fei_numero"
+        path="fei/:fei_numero/:premier_detenteur_prochain_detenteur_id_cache"
         element={<CollecteurFei />}
       />
       <Route
