@@ -49,6 +49,40 @@ const PERSISTED_KEYS: (keyof State)[] = [
   'logs',
 ];
 
+// Champs fei dénormalisés sur chaque carcasse via `mapFeiFieldsToCarcasse`.
+// Quand `updateFei` reçoit l'un d'eux, on doit remapper les carcasses ; sinon non.
+// Source de vérité : @app/utils/map-fei-fields-to-carcasse.ts — garder en phase.
+const FEI_FIELDS_PROPAGATED_TO_CARCASSE = new Set<keyof FeiWithIntermediaires>([
+  'date_mise_a_mort',
+  'heure_mise_a_mort_premiere_carcasse',
+  'heure_evisceration_derniere_carcasse',
+  'premier_detenteur_depot_type',
+  'premier_detenteur_depot_entity_id',
+  'premier_detenteur_depot_entity_name_cache',
+  'premier_detenteur_depot_ccg_at',
+  'premier_detenteur_transport_type',
+  'premier_detenteur_transport_date',
+  'premier_detenteur_prochain_detenteur_role_cache',
+  'premier_detenteur_prochain_detenteur_id_cache',
+  'examinateur_initial_offline',
+  'examinateur_initial_user_id',
+  'examinateur_initial_approbation_mise_sur_le_marche',
+  'examinateur_initial_date_approbation_mise_sur_le_marche',
+  'consommateur_final_usage_domestique',
+  'premier_detenteur_offline',
+  'premier_detenteur_user_id',
+  'premier_detenteur_entity_id',
+  'premier_detenteur_name_cache',
+  'intermediaire_closed_at',
+  'intermediaire_closed_by_user_id',
+  'intermediaire_closed_by_entity_id',
+  'latest_intermediaire_user_id',
+  'latest_intermediaire_entity_id',
+  'latest_intermediaire_name_cache',
+  'svi_assigned_at',
+  'svi_user_id',
+]);
+
 export interface State {
   isOnline: boolean;
   dataIsSynced: boolean;
@@ -168,7 +202,6 @@ const useZustandStore = create<State & Actions>()(
           fei_numero: FeiWithIntermediaires['numero'],
           partialFei: Partial<FeiWithIntermediaires>
         ) => {
-          console.log('updateFei', fei_numero, JSON.stringify(partialFei, null, 2));
           const carcassefeiCarcasses = filterCarcassesForFei(
             useZustandStore.getState().carcasses,
             fei_numero
@@ -181,6 +214,24 @@ const useZustandStore = create<State & Actions>()(
             updated_at: dayjs().toDate(),
             is_synced: false,
           };
+
+          // On ne réécrit les carcasses que si un champ fei propagé aux carcasses change.
+          // Sinon (ex. simple bump `updated_at` à l'ajout d'une carcasse), on évite de
+          // remapper les N carcasses existantes — coût O(n²) sur une grande fiche.
+          const remapsCarcasses = Object.keys(partialFei).some((key) =>
+            FEI_FIELDS_PROPAGATED_TO_CARCASSE.has(key as keyof FeiWithIntermediaires)
+          );
+
+          if (!remapsCarcasses) {
+            useZustandStore.setState((state) => ({
+              feis: {
+                ...state.feis,
+                [fei_numero]: nextFei,
+              },
+              dataIsSynced: false,
+            }));
+            return;
+          }
 
           const nextCarcasses: Record<Carcasse['zacharie_carcasse_id'], Carcasse> = {};
           for (const carcasse of carcassefeiCarcasses) {
@@ -250,9 +301,37 @@ const useZustandStore = create<State & Actions>()(
           }
         },
         updateCarcassesTransmission: (zacharie_carcasse_ids, transmissionFields) => {
+          // Un seul setState pour tout le lot : sur une grande fiche, boucler des
+          // setState individuels coûte O(n²) (spread du Record entier à chaque carcasse).
+          const carcasses = useZustandStore.getState().carcasses;
+          const now = dayjs().toDate();
+          const nextCarcasses: Record<
+            CarcasseModificationRequest['zacharie_carcasse_id'],
+            CarcasseWithModificationRequests
+          > = {};
           for (const id of zacharie_carcasse_ids) {
-            get().updateCarcasse(id, transmissionFields, false);
+            const current = carcasses[id];
+            if (!current) continue;
+            const nextCarcasse: CarcasseWithModificationRequests = {
+              ...current,
+              ...transmissionFields,
+              updated_at: now,
+              is_synced: false,
+            };
+            const nextStatus = updateCarcasseStatus(nextCarcasse);
+            if (nextStatus !== nextCarcasse.svi_carcasse_status) {
+              nextCarcasse.svi_carcasse_status = nextStatus;
+              nextCarcasse.svi_carcasse_status_set_at = now;
+            }
+            nextCarcasses[id] = nextCarcasse;
           }
+          useZustandStore.setState((state) => ({
+            carcasses: {
+              ...state.carcasses,
+              ...nextCarcasses,
+            },
+            dataIsSynced: false,
+          }));
         },
         createCarcassesIntermediaire: async (
           newIntermediaires: CarcassesIntermediaire[],
