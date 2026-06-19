@@ -149,7 +149,6 @@ function EtgFeiLoader(props: Props) {
     return null;
   }, [transmission, myCarcasses.length, user.id, intermediaires]);
 
-  console.log({ showInterface });
   if (!showInterface) {
     return null;
   }
