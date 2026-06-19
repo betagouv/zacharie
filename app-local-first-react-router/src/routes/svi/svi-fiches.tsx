@@ -279,21 +279,6 @@ export default function SviFiches() {
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [allTransmissions]);
 
-  // Les fiches arrivent au SVI via un ETG : on permet de filtrer par ETG d'origine.
-  const etgOptions = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const transmission of allTransmissions) {
-      const id = transmission.content.latest_intermediaire_entity_id;
-      const name = transmission.content.latest_intermediaire_name_cache;
-      if (id && name && !map.has(id)) {
-        map.set(id, name);
-      }
-    }
-    return Array.from(map.entries())
-      .map(([id, name]) => ({ id, name }))
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }, [allTransmissions]);
-
   const ccgOptions = useMemo(() => {
     const map = new Map<string, string>();
     for (const transmission of allTransmissions) {
@@ -377,6 +362,38 @@ export default function SviFiches() {
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [feiCollecteurIdsByFeiNumero, entities, usersById]);
 
+  // Les carcasses arrivent au SVI via un (ou plusieurs) ETG : on dérive les ETG de chaque
+  // transmission à partir de ses intermédiaires de rôle ETG, pour filtrer par ETG.
+  const feiEtgIdsByFeiNumero = useMemo(() => {
+    const result: Record<string, string[]> = {};
+    for (const transmission of allTransmissions) {
+      const intermediaires = intermediairesByFei[transmission.fei.numero!] ?? [];
+      const ids: string[] = [];
+      for (const inter of intermediaires) {
+        if (inter.intermediaire_role !== FeiOwnerRole.ETG) continue;
+        const id = inter.intermediaire_entity_id || inter.intermediaire_user_id;
+        if (id && !ids.includes(id)) ids.push(id);
+      }
+      result[transmission.fei.numero!] = ids;
+    }
+    return result;
+  }, [allTransmissions, intermediairesByFei]);
+
+  const etgOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const ids of Object.values(feiEtgIdsByFeiNumero)) {
+      for (const id of ids) {
+        if (map.has(id)) continue;
+        const entity = entities[id];
+        const name = entity?.nom_d_usage || entity?.raison_sociale || id;
+        map.set(id, name);
+      }
+    }
+    return Array.from(map.entries())
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [feiEtgIdsByFeiNumero, entities]);
+
   const saisonOptions = useMemo(() => {
     const years = new Set<number>();
     for (const transmission of allTransmissions) {
@@ -415,7 +432,14 @@ export default function SviFiches() {
           continue;
       }
       if (filterEtgs.length > 0) {
-        if (!filterEtgs.includes(transmission.content.latest_intermediaire_entity_id ?? '')) continue;
+        let isIncluded = false;
+        for (const etgId of feiEtgIdsByFeiNumero[transmission.fei.numero] ?? []) {
+          if (filterEtgs.includes(etgId)) {
+            isIncluded = true;
+            break;
+          }
+        }
+        if (!isIncluded) continue;
       }
       if (filterCCGs.length > 0) {
         if (!filterCCGs.includes(transmission.content.premier_detenteur_depot_entity_id ?? '')) continue;
@@ -463,6 +487,7 @@ export default function SviFiches() {
     filterDateFrom,
     filterDateTo,
     feiCollecteurIdsByFeiNumero,
+    feiEtgIdsByFeiNumero,
   ]);
 
   const totalPages = Math.ceil(filteredTransmissions.length / ITEMS_PER_PAGE);
