@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import type { SearchResponse } from '@api/src/types/responses';
 import { CarcasseType } from '@prisma/client';
-import API from '@app/services/api';
+import useZustandStore from '@app/zustand/store';
+import useUser from '@app/zustand/user';
+import { searchLocally } from '@app/utils/search-local';
 
 interface SearchInputProps {
   className?: string;
@@ -46,19 +48,22 @@ export default function SearchInput({ className, id, type }: SearchInputProps) {
       setSuccessData([]);
       setValue(cachedValue);
       setIsLoading(true);
-      API.get({
-        path: 'search',
-        query: { q: cachedValue },
-      }).then((data: SearchResponse) => {
+
+      const user = useUser.getState().user;
+      if (!user) {
         setIsLoading(false);
-        if (data.data?.length) {
-          setSuccessData(data.data);
-        }
-        if (data.error) {
-          setError(data.error);
-          setSuccessData([]);
-        }
-      });
+        return;
+      }
+      const { carcasses, feis, carcassesIntermediaireById } = useZustandStore.getState();
+      const data = searchLocally(cachedValue, user, carcasses, feis, carcassesIntermediaireById);
+      setIsLoading(false);
+      if (data.data?.length) {
+        setSuccessData(data.data);
+      }
+      if (data.error) {
+        setError(data.error);
+        setSuccessData([]);
+      }
     }, 500);
   }, [cachedValue, value]);
 

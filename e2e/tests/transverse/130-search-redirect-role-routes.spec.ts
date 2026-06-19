@@ -3,10 +3,10 @@ import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 
 // Scenario 130 — Global search redirects to role-specific routes.
-// The /search API returns redirectUrl per role: /app/svi/fei/…, /app/etg/fei/…, /app/chasseur/fei/…
-// (formerly /app/tableau-de-bord/fei/…). Plus the auto-closing email URL /app/chasseur/fei/…
-// must resolve to a real page. Locking these down so we can later remove /app/tableau-de-bord
-// without breaking notifications or the search dropdown.
+// The search dropdown runs locally (searchLocally, over the downloaded carcasses/feis) and builds
+// redirectUrl per role: /app/svi/fei/…, /app/etg/fei/…, /app/chasseur/fei/…. Plus the auto-closing
+// email URL /app/chasseur/fei/… must resolve to a real page. Locking these down so we can later
+// remove /app/tableau-de-bord without breaking notifications or the search dropdown.
 
 test.use({ launchOptions: { slowMo: 100 } });
 
@@ -41,6 +41,24 @@ test.describe('Search dropdown redirectUrl', () => {
     await expect(result).toHaveAttribute('href', `/app/etg/fei/${feiId}`);
     await result.click();
     await expect(page).toHaveURL(`http://localhost:3290/app/etg/fei/${feiId}`);
+  });
+
+  test('COLLECTEUR search lands on /app/collecteur/fei/:numero', async ({ page }) => {
+    // Regression: the old backend search routed collecteurs to /app/etg/fei/… (shared ETG handler).
+    // The local search must build the collecteur's own route.
+    await resetDb('COLLECTEUR_TAKEN_CHARGE');
+    const feiId = 'ZACH-20250707-QZ6E0-245242';
+    await connectWith(page, 'collecteur-pro@example.fr');
+    await expect(page).toHaveURL(/\/app\/collecteur/);
+
+    const search = page.getByPlaceholder('Rechercher (carcasse ou fiche en cours)').first();
+    await search.fill(feiId);
+
+    const result = page.getByRole('link', { name: new RegExp(feiId) });
+    await expect(result).toBeVisible({ timeout: 10000 });
+    await expect(result).toHaveAttribute('href', `/app/collecteur/fei/${feiId}`);
+    await result.click();
+    await expect(page).toHaveURL(`http://localhost:3290/app/collecteur/fei/${feiId}`);
   });
 
   test('CHASSEUR search lands on /app/chasseur/fei/:numero', async ({ page }) => {
