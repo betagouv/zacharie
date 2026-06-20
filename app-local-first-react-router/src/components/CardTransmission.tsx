@@ -113,7 +113,12 @@ export default function CardTransmission({
         menuOpen ? 'bg-active-tint' : '',
         disabledBecauseOffline ? 'cursor-not-allowed opacity-50' : '',
       ].join(' ')}
-      key={simpleStatus + transportOrSoustraiteLabel + dataIsSynced}
+      key={
+        simpleStatus +
+        transportOrSoustraiteLabel +
+        dataIsSynced +
+        transmission.content.premier_detenteur_prochain_detenteur_id_cache
+      }
     >
       {/* Print selection checkbox */}
       <div className="absolute top-5 z-20 flex w-full justify-end pr-5">

@@ -6,7 +6,7 @@ import {
   isCarcasseToTake,
   isCarcasseUnderMyResponsability,
 } from '@app/utils/is-carcasse-done';
-import type { CarcasseType, Fei, UserRoles, CarcasseIntermediaire } from '@prisma/client';
+import { CarcasseType, Fei, UserRoles, CarcasseIntermediaire } from '@prisma/client';
 import { checkCarcasseAgainstTransmission, getCarcasseTransmission } from './get-carcasses-transmission';
 import { CarcasseTransmission, CarcasseTransmissionWihMetadata } from '@app/types/carcasse';
 import { filterFeiIntermediaires } from './get-carcasses-intermediaires';
