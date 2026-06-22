@@ -37,7 +37,7 @@ export default function FloatingNewFicheButton() {
   }, [shouldAnimate]);
 
   const isExaminateurInitial = user?.roles.includes(UserRoles.CHASSEUR) && !!user.numero_cfei;
-  if (isHiddenPage || !isExaminateurInitial || !user?.activated) return null;
+  if (isHiddenPage || !isExaminateurInitial) return null;
 
   const visible = shouldAnimate ? hasScrolled : true;
 

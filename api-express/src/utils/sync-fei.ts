@@ -1,6 +1,6 @@
 import prisma from '~/prisma';
 import { sanitize } from '~/utils/sanitize';
-import { EntityRelationType, Prisma, User, UserRoles } from '@prisma/client';
+import { EntityRelationType, FeiOwnerRole, Prisma, User, UserRoles } from '@prisma/client';
 import { feiPopulatedInclude } from '~/types/fei';
 import type { FeiPopulated } from '~/types/fei';
 import { capture } from '~/third-parties/sentry';
@@ -83,8 +83,9 @@ export async function syncFei(
   });
 
   if (!existingFei) {
-    const isExaminateurInitial =
-      user.roles.includes(UserRoles.CHASSEUR) && !!user.numero_cfei && !!user.activated;
+    // Un chasseur formé (numéro CFEI) peut créer une fiche même si son compte n'est pas
+    // encore activé : il peut la préparer, mais pas la transmettre (voir gate ci-dessous).
+    const isExaminateurInitial = user.roles.includes(UserRoles.CHASSEUR) && !!user.numero_cfei;
     if (!isExaminateurInitial) {
       capture(new Error('Tentative de hack: seul un examinateur initial peut créer une fiche'), {
         extra: {
@@ -94,6 +95,24 @@ export async function syncFei(
         user,
       });
       throw new Error('Seul un examinateur initial peut créer une fiche');
+    }
+  }
+
+  // Tant que le compte n'est pas activé (CFEI non validé), l'examinateur initial peut
+  // préparer la fiche mais pas la transmettre : on rejette toute avancée de responsabilité.
+  if (!user.activated) {
+    const assignsNextOwner =
+      !!body.fei_next_owner_role || !!body.fei_next_owner_user_id || !!body.fei_next_owner_entity_id;
+    const leavesExaminateur =
+      body.hasOwnProperty(Prisma.FeiScalarFieldEnum.fei_current_owner_role) &&
+      !!body.fei_current_owner_role &&
+      body.fei_current_owner_role !== FeiOwnerRole.EXAMINATEUR_INITIAL;
+    if (assignsNextOwner || leavesExaminateur) {
+      capture(new Error('Tentative de transmission par un compte non activé'), {
+        extra: { feiNumero: numero },
+        user,
+      });
+      throw new Error('Votre compte doit être validé avant de pouvoir transmettre une fiche');
     }
   }
 

@@ -756,7 +756,7 @@ export default function ChasseurFiches() {
               </span>
             )}
           </button>
-          {user.numero_cfei && user.activated && (
+          {user.numero_cfei && (
             <Button
               iconId="fr-icon-add-circle-line"
               priority="primary"
@@ -838,7 +838,7 @@ export default function ChasseurFiches() {
                   storageKey="chasseur-fiches-export-columns"
                 />
               </div>
-              {user.numero_cfei && user.activated && (
+              {user.numero_cfei && (
                 <Button
                   iconId="fr-icon-add-circle-line"
                   priority="primary"
@@ -911,7 +911,7 @@ function FeisWrapper({
           <div className="fr-py-0 fr-col-12 fr-col-md-6">
             <div className="flex flex-col bg-white">
               <h2 className="fr-h4 mb-3 font-bold text-gray-800">Pas encore de fiches cette saison</h2>
-              {user.numero_cfei && user.activated ? (
+              {user.numero_cfei ? (
                 <>
                   <p className="fr-text--regular mb-6 max-w-md">
                     Vos fiches apparaîtront ici dès que vous aurez créé votre première fiche d'examen initial.

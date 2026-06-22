@@ -87,7 +87,7 @@ export default function MesChasses() {
           <div className="fr-py-0 fr-col-12 fr-col-md-6">
             <div className="flex flex-col bg-white">
               <h2 className="fr-h4 mb-3 font-bold text-gray-800">Pas encore de carcasses cette saison</h2>
-              {!!me.numero_cfei && me.activated ? (
+              {!!me.numero_cfei ? (
                 <>
                   <p className="fr-text--regular mb-6 max-w-md">
                     Vos statistiques apparaîtront ici dès que vous aurez enregistré votre première fiche

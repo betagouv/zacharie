@@ -3,7 +3,7 @@ import passport from 'passport';
 import { catchErrors } from '~/middlewares/errors';
 import type { SyncRequest, SyncResponse } from '~/types/responses';
 import prisma from '~/prisma';
-import { Carcasse, Prisma, User } from '@prisma/client';
+import { Prisma, User, UserRoles, Carcasse } from '@prisma/client';
 import { syncFei, type SaveFeiResult } from '~/utils/sync-fei';
 import { syncCarcasse, type SaveCarcasseResult } from '~/utils/sync-carcasse';
 import { syncCarcasseIntermediaire } from '~/utils/sync-carcasse-intermediaire';
@@ -30,7 +30,10 @@ router.post(
   catchErrors(async (req: express.Request, res: express.Response<SyncResponse>) => {
     const user = req.user as User;
 
-    if (!user.activated) {
+    // Un chasseur formé (numéro CFEI) non encore activé peut synchroniser ses fiches en
+    // préparation. La transmission reste bloquée plus bas (syncFei / syncCarcasse).
+    const isExaminateurInitialNotYetActivated = user.roles.includes(UserRoles.CHASSEUR) && !!user.numero_cfei;
+    if (!user.activated && !isExaminateurInitialNotYetActivated) {
       res.status(400).send({
         ok: false,
         data: null,

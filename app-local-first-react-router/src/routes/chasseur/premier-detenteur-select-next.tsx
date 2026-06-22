@@ -20,6 +20,7 @@ import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import { syncData } from '@app/utils/sync-data';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
+import { CompteEnAttenteValidationAlert } from '@app/components/CompteEnAttenteValidation';
 import { formatCarcasseLotCount } from '@app/utils/count-carcasses';
 import {
   useCcgIds,
@@ -134,6 +135,15 @@ function DispatchGroupForm({
   }, [prochainDetenteurType]);
 
   const Component = canEdit ? Input : InputNotEditable;
+
+  // Progressive display: reveal each input only once the previous step is filled.
+  // In read-only mode (!canEdit) everything is shown.
+  const showDepot = !canEdit || !!group.recipientEntityId;
+  const depotComplete =
+    !canEdit ||
+    group.depotType === DepotType.AUCUN ||
+    (group.depotType === DepotType.CCG && !!group.depotEntityId && !!group.depotDate);
+  const showTransport = needTransport && (!canEdit || (showDepot && depotComplete));
 
   // Only surface a field's error once the user has attempted to submit.
   const errorFor = (key: keyof GroupFieldErrors) => (showErrors ? fieldErrors[key] : undefined);
@@ -285,46 +295,48 @@ function DispatchGroupForm({
           description={`${prochainDetenteur?.nom_d_usage} n'est pas prêt pour Zacharie. Vous pouvez contacter un représentant avant de leur envoyer leur première fiche.`}
         />
       )}
-      <RadioButtons
-        legend="Lieu de stockage des carcasses *"
-        className={canEdit ? '' : 'radio-black'}
-        disabled={!group.recipientEntityId}
-        state={errorFor('depotType') ? 'error' : 'default'}
-        stateRelatedMessage={errorFor('depotType')}
-        options={[
-          {
-            label: <span className="inline-block">Pas de stockage</span>,
-            hintText: (
-              <span>
-                Sans stockage en chambre froide, les carcasses doivent être transportées{' '}
-                <b>le jour-même du tir</b>
-              </span>
-            ),
-            nativeInputProps: {
-              checked: group.depotType === DepotType.AUCUN,
-              readOnly: !canEdit,
-              onChange: () => {
-                onUpdateGroup(group.id, {
-                  depotType: DepotType.AUCUN,
-                  depotDate: undefined,
-                  depotEntityId: null,
-                });
+      {showDepot && (
+        <RadioButtons
+          legend="Lieu de stockage des carcasses *"
+          className={canEdit ? '' : 'radio-black'}
+          state={errorFor('depotType') ? 'error' : 'default'}
+          stateRelatedMessage={errorFor('depotType')}
+          options={[
+            {
+              label: <span className="inline-block">Pas de stockage</span>,
+              hintText: (
+                <span>
+                  Sans stockage en chambre froide, les carcasses doivent être transportées{' '}
+                  <b>le jour-même du tir</b>
+                </span>
+              ),
+              nativeInputProps: {
+                checked: group.depotType === DepotType.AUCUN,
+                readOnly: !canEdit,
+                onChange: () => {
+                  onUpdateGroup(group.id, {
+                    depotType: DepotType.AUCUN,
+                    depotDate: undefined,
+                    depotEntityId: null,
+                  });
+                },
               },
             },
-          },
-          {
-            label: 'Carcasses déposées dans un Centre de Collecte du Gibier sauvage (chambre froide)',
-            nativeInputProps: {
-              checked: group.depotType === DepotType.CCG,
-              readOnly: !canEdit,
-              onChange: () => {
-                onUpdateGroup(group.id, { depotType: DepotType.CCG });
+            {
+              label: 'Carcasses déposées dans un Centre de Collecte du Gibier sauvage (chambre froide)',
+              nativeInputProps: {
+                checked: group.depotType === DepotType.CCG,
+                readOnly: !canEdit,
+                onChange: () => {
+                  onUpdateGroup(group.id, { depotType: DepotType.CCG });
+                },
               },
             },
-          },
-        ]}
-      />
-      {group.depotType === DepotType.CCG &&
+          ]}
+        />
+      )}
+      {showDepot &&
+        group.depotType === DepotType.CCG &&
         (ccgsWorkingWith.length > 0 ? (
           <>
             <div>
@@ -425,12 +437,11 @@ function DispatchGroupForm({
             </Button>
           </div>
         ))}
-      {needTransport && (
+      {showTransport && (
         <>
           <RadioButtons
             legend="Transport des carcasses jusqu'au destinataire *"
             className={canEdit ? '' : 'radio-black'}
-            disabled={!group.recipientEntityId}
             state={errorFor('transportType') ? 'error' : 'default'}
             stateRelatedMessage={errorFor('transportType')}
             options={[
@@ -961,7 +972,13 @@ export default function DestinatairePremierDetenteur({
     return `Transmettre ${formatCarcasseLotCount(carcassesToSend)} sur ${formatCarcasseLotCount(allCarcasses)}`;
   }, [carcassesDejaEnvoyees.length, totalCarcassesToSend, allCarcasses, carcassesToSend]);
 
+  const notActivated = !user.activated;
+
   const handleSubmit = () => {
+    // Compte pas encore activé (CFEI non validé) : préparation autorisée, transmission bloquée.
+    if (notActivated) {
+      return;
+    }
     // Process each dispatch group
     for (const group of dispatchGroups) {
       if (!group.recipientEntityId) continue;
@@ -1215,6 +1232,7 @@ export default function DestinatairePremierDetenteur({
                 );
               })()}
 
+            {canEdit && notActivated && <CompteEnAttenteValidationAlert className="mt-4" />}
             <div className="mt-4 flex flex-col items-start justify-between gap-2 md:flex-row md:items-center">
               {/* Submit button */}
               {canEdit && !hideSubmitButton && (
@@ -1222,7 +1240,7 @@ export default function DestinatairePremierDetenteur({
                   className=""
                   type="submit"
                   iconId="fr-icon-send-plane-line"
-                  disabled={disabled || totalCarcassesToSend === 0}
+                  disabled={disabled || totalCarcassesToSend === 0 || notActivated}
                   nativeButtonProps={{
                     onClick: async (event) => {
                       event.preventDefault();
