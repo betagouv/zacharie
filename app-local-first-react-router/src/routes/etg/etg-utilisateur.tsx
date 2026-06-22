@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import dayjs from 'dayjs';
 import type { Carcasse } from '@prisma/client';
-import { CarcasseStatus, FeiOwnerRole } from '@prisma/client';
+import { CarcasseStatus, CarcasseType, FeiOwnerRole } from '@prisma/client';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
+import { Tooltip as DsfrTooltip } from '@codegouvfr/react-dsfr/Tooltip';
 import { Tabs, type TabsProps } from '@codegouvfr/react-dsfr/Tabs';
 import { Pagination } from '@codegouvfr/react-dsfr/Pagination';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
@@ -270,10 +271,17 @@ function SaisieStats({ carcasses }: { carcasses: Array<Carcasse> }) {
     const total = carcasses.length;
     const statusCounts = new Map<StatusDisplayLabel, number>();
     const motifCounts = new Map<string, number>();
-    let poidsSaisie = 0;
+    let totalGG = 0;
+    let totalPG = 0;
     let saisiesCount = 0;
+    let saisiesGG = 0;
+    let saisiesPG = 0;
     let saisiesBphCount = 0;
     for (const carcasse of carcasses) {
+      const isPetitGibier = carcasse.type === CarcasseType.PETIT_GIBIER;
+      if (isPetitGibier) totalPG += 1;
+      else totalGG += 1;
+
       const statusLabel = normalizeStatusLabel(getCarcasseStatusLabel(carcasse));
       statusCounts.set(statusLabel, (statusCounts.get(statusLabel) ?? 0) + 1);
 
@@ -290,13 +298,9 @@ function SaisieStats({ carcasses }: { carcasses: Array<Carcasse> }) {
         carcasse.svi_carcasse_status === CarcasseStatus.SAISIE_PARTIELLE;
       if (isSaisie) {
         saisiesCount += 1;
+        if (isPetitGibier) saisiesPG += 1;
+        else saisiesGG += 1;
         if (hasBphMotif(motifs)) saisiesBphCount += 1;
-      }
-      if (
-        carcasse.svi_carcasse_status === CarcasseStatus.SAISIE_PARTIELLE &&
-        carcasse.svi_ipm2_poids_saisie
-      ) {
-        poidsSaisie += carcasse.svi_ipm2_poids_saisie;
       }
     }
     const statusData = [...statusCounts.entries()]
@@ -313,12 +317,15 @@ function SaisieStats({ carcasses }: { carcasses: Array<Carcasse> }) {
       .map(([motif, count]) => ({ motif, count, bph: isBphMotif(motif) }));
     return {
       total,
+      totalGG,
+      totalPG,
       statusData,
       motifData,
-      poidsSaisie,
       saisiesCount,
       saisiesBphCount,
       tauxSaisie: total > 0 ? Math.round((saisiesCount / total) * 1000) / 10 : 0,
+      tauxSaisieGG: totalGG > 0 ? Math.round((saisiesGG / totalGG) * 1000) / 10 : 0,
+      tauxSaisiePG: totalPG > 0 ? Math.round((saisiesPG / totalPG) * 1000) / 10 : 0,
       tauxBph: saisiesCount > 0 ? Math.round((saisiesBphCount / saisiesCount) * 1000) / 10 : 0,
     };
   }, [carcasses]);
@@ -335,28 +342,29 @@ function SaisieStats({ carcasses }: { carcasses: Array<Carcasse> }) {
     <div className="flex flex-col gap-6 py-4">
       <div className="flex flex-wrap gap-4">
         <StatCard
-          label="Carcasses au total"
-          value={stats.total}
+          label="Grand gibier"
+          value={stats.totalGG}
+        />
+        <StatCard
+          label="Petit gibier"
+          value={stats.totalPG}
         />
         <StatCard
           label="Taux de saisie"
           value={`${stats.tauxSaisie.toLocaleString('fr-FR')} %`}
-          sub={`${stats.saisiesCount} saisie${stats.saisiesCount > 1 ? 's' : ''} (totale + partielle)`}
+          sub={`Grand gibier : ${stats.tauxSaisieGG.toLocaleString('fr-FR')} % · Petit gibier : ${stats.tauxSaisiePG.toLocaleString('fr-FR')} %`}
         />
         <StatCard
           label="Saisies liées au BPH"
           value={`${stats.tauxBph.toLocaleString('fr-FR')} %`}
           sub={`${stats.saisiesBphCount} saisie${stats.saisiesBphCount > 1 ? 's' : ''} sur ${stats.saisiesCount} (hygiène)`}
-        />
-        <StatCard
-          label="Poids total saisi (saisies partielles)"
-          value={`${stats.poidsSaisie.toLocaleString('fr-FR')} kg`}
+          info="BPH = Bonnes Pratiques d'Hygiène. Saisies dont au moins un motif relève d'un défaut d'hygiène (souillures, putréfaction, morsures…), souvent évitable lors de la préparation."
         />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <section className="rounded-lg border border-gray-200 bg-white p-4">
-          <h3 className="fr-h6 mb-3">Répartition par statut SVI</h3>
+          <h3 className="fr-h6 mb-3">Répartition par décision SVI</h3>
           <ResponsiveContainer
             width="100%"
             height={220}
@@ -398,7 +406,7 @@ function SaisieStats({ carcasses }: { carcasses: Array<Carcasse> }) {
         </section>
 
         <section className="rounded-lg border border-gray-200 bg-white p-4">
-          <h3 className="fr-h6 mb-1">Motifs de saisie (IPM1 + IPM2)</h3>
+          <h3 className="fr-h6 mb-1">Motifs de saisie</h3>
           <p className="mb-3 text-xs text-gray-500">
             <span
               className="mr-1 inline-block h-2.5 w-2.5 rounded-full align-middle"
@@ -449,11 +457,29 @@ function SaisieStats({ carcasses }: { carcasses: Array<Carcasse> }) {
   );
 }
 
-function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
+function StatCard({
+  label,
+  value,
+  sub,
+  info,
+}: {
+  label: string;
+  value: string | number;
+  sub?: string;
+  info?: string;
+}) {
   return (
     <div className="flex min-w-48 flex-1 flex-col rounded-lg border border-gray-200 bg-white p-4">
       <span className="text-2xl font-bold text-gray-900">{value}</span>
-      <span className="text-sm text-gray-600">{label}</span>
+      <span className="flex items-center gap-1 text-sm text-gray-600">
+        {label}
+        {info && (
+          <DsfrTooltip
+            kind="hover"
+            title={info}
+          />
+        )}
+      </span>
       {sub && <span className="mt-1 text-xs text-gray-400">{sub}</span>}
     </div>
   );
