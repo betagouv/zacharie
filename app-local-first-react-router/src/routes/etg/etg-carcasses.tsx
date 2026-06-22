@@ -77,7 +77,7 @@ export default function EtgCarcasses() {
 
   const [quickFilterTransmissionStatuses, setQuickFilterFeiStatuses] = useLocalStorage<
     Record<TransmissionSimpleStatus, boolean | undefined>
-  // @ts-expect-error Type '{}' is missing the following properties
+    // @ts-expect-error Type '{}' is missing the following properties
   >('etg-carcasses-quick-filter-fei-statuses-obj', {});
   const [quickFilterCollecteurIds, setQuickFilterCollecteurIds] = useLocalStorage<
     Record<Entity['id'], boolean | undefined>
@@ -87,7 +87,7 @@ export default function EtgCarcasses() {
   >('etg-carcasses-quick-filter-especes-obj', {});
   const [quickFilterStatuses, setQuickFilterStatuses] = useLocalStorage<
     Record<CarcasseStatusLabel, boolean | undefined>
-  // @ts-expect-error Type '{}' is missing the following properties
+    // @ts-expect-error Type '{}' is missing the following properties
   >('etg-carcasses-quick-filter-statuses-object', {});
   const quickFilterStatusesArray = Object.keys(quickFilterStatuses);
 
@@ -227,13 +227,13 @@ export default function EtgCarcasses() {
           sortBy === 'svi_carcasse_archived'
             ? isCarcasseSviArchived(a)
             : // @ts-expect-error: we know that the field is in the carcasse or the fei
-            a[sortBy] || feis[a.fei_numero]![sortBy];
+              a[sortBy] || feis[a.fei_numero]![sortBy];
         const bValue =
           // @ts-expect-error: svi_carcasse_archived is isCarcasseSviArchived
           sortBy === 'svi_carcasse_archived'
             ? isCarcasseSviArchived(b)
             : // @ts-expect-error: svi_carcasse_archived is isCarcasseSviArchived
-            b[sortBy] || feis[b.fei_numero]![sortBy];
+              b[sortBy] || feis[b.fei_numero]![sortBy];
         if (!aValue) {
           if (bValue) return sortOrder === 'ASC' ? 1 : -1;
           return 0;
@@ -673,12 +673,12 @@ export default function EtgCarcasses() {
                 <span>
                   {carcasse.svi_assigned_at
                     ? new Date(carcasse.svi_assigned_at).toLocaleDateString('fr-FR', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })
                     : '-'}
                 </span>
               </div>
@@ -687,12 +687,12 @@ export default function EtgCarcasses() {
                 <span>
                   {carcasse.svi_carcasse_status_set_at
                     ? new Date(carcasse.svi_carcasse_status_set_at).toLocaleDateString('fr-FR', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })
                     : '-'}
                 </span>
               </div>
@@ -858,11 +858,11 @@ export default function EtgCarcasses() {
                 render: c.render,
                 ...(c.sortable
                   ? {
-                    onSortBy: setSortBy,
-                    onSortOrder: setSortOrder,
-                    sortBy,
-                    sortOrder,
-                  }
+                      onSortBy: setSortBy,
+                      onSortOrder: setSortOrder,
+                      sortBy,
+                      sortOrder,
+                    }
                   : {}),
               }))}
             />
