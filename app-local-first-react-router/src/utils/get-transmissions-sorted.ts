@@ -72,6 +72,7 @@ export function useTransmissions(): Record<
       } else {
         const transmission = getCarcasseTransmission(carcasse);
         const fei = feis[transmission.fei_numero!];
+        if (!fei || fei.deleted_at) continue;
         if (!feiDispatches[transmission.fei_numero!]) feiDispatches[transmission.fei_numero!] = 0;
         feiDispatches[transmission.fei_numero!]++;
         if (!transmissionIdsByFeiNumero[fei.numero]) transmissionIdsByFeiNumero[fei.numero] = [];
