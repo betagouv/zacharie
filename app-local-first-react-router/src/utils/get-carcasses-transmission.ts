@@ -66,6 +66,14 @@ export function getCarcasseTransmission(carcasseRef: Carcasse): CarcasseTransmis
   };
 }
 
+// champs techniques propres à chaque carcasse : ils diffèrent légitimement entre carcasses d'une même transmission
+// on ne les compare pas
+const PER_CARCASSE_METADATA_FIELDS: Array<keyof CarcasseTransmission> = [
+  'created_at',
+  'updated_at',
+  'is_synced',
+];
+
 export function checkCarcasseAgainstTransmission(
   transmissionKeys: Array<keyof CarcasseTransmission>,
   transmission: CarcasseTransmission,
@@ -80,6 +88,7 @@ export function checkCarcasseAgainstTransmission(
     }
   > = {};
   for (let field of transmissionKeys) {
+    if (PER_CARCASSE_METADATA_FIELDS.includes(field)) continue;
     if (carcasse[field] !== transmission[field]) {
       differ[field] = {
         carcasse: carcasse[field],
