@@ -88,8 +88,7 @@ interface Actions {
   createCarcasse: (newCarcasse: Carcasse) => void;
   updateCarcasse: (
     zacharie_carcasse_id: Carcasse['zacharie_carcasse_id'],
-    carcasse: Partial<Carcasse>,
-    updateFei: boolean
+    carcasse: Partial<Carcasse>
   ) => void;
   updateCarcassesTransmission: (
     zacharie_carcasse_ids: string[],
@@ -222,8 +221,7 @@ const useZustandStore = create<State & Actions>()(
         },
         updateCarcasse: (
           zacharie_carcasse_id: Carcasse['zacharie_carcasse_id'],
-          partialCarcasse: Partial<Carcasse>,
-          updateFei: boolean
+          partialCarcasse: Partial<Carcasse>
         ) => {
           const carcasses = useZustandStore.getState().carcasses;
           const nextCarcasse: Carcasse = {
@@ -245,13 +243,10 @@ const useZustandStore = create<State & Actions>()(
             },
             dataIsSynced: false,
           });
-          if (updateFei) {
-            get().updateFei(nextCarcasse.fei_numero, { updated_at: dayjs().toDate() });
-          }
         },
         updateCarcassesTransmission: (zacharie_carcasse_ids, transmissionFields) => {
           for (const id of zacharie_carcasse_ids) {
-            get().updateCarcasse(id, transmissionFields, false);
+            get().updateCarcasse(id, transmissionFields);
           }
         },
         createCarcassesIntermediaire: async (

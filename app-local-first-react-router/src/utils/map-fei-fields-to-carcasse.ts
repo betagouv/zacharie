@@ -8,24 +8,6 @@ export function mapFeiFieldsToCarcasse(fei: Fei, carcasse: Carcasse): CarcasseFi
     heure_evisceration: carcasse.heure_evisceration,
     heure_mise_a_mort_premiere_carcasse_fei: fei.heure_mise_a_mort_premiere_carcasse,
     heure_evisceration_derniere_carcasse_fei: fei.heure_evisceration_derniere_carcasse,
-    // For multi-recipient dispatch: prefer per-carcasse values if they exist, fallback to FEI
-    premier_detenteur_depot_type: carcasse.premier_detenteur_depot_type ?? fei.premier_detenteur_depot_type,
-    premier_detenteur_depot_entity_id:
-      carcasse.premier_detenteur_depot_entity_id ?? fei.premier_detenteur_depot_entity_id,
-    premier_detenteur_depot_entity_name_cache:
-      carcasse.premier_detenteur_depot_entity_name_cache ?? fei.premier_detenteur_depot_entity_name_cache,
-    premier_detenteur_depot_ccg_at:
-      carcasse.premier_detenteur_depot_ccg_at ?? fei.premier_detenteur_depot_ccg_at,
-    premier_detenteur_transport_type:
-      carcasse.premier_detenteur_transport_type ?? fei.premier_detenteur_transport_type,
-    premier_detenteur_transport_date:
-      carcasse.premier_detenteur_transport_date ?? fei.premier_detenteur_transport_date,
-    premier_detenteur_prochain_detenteur_role_cache:
-      carcasse.premier_detenteur_prochain_detenteur_role_cache ??
-      fei.premier_detenteur_prochain_detenteur_role_cache,
-    premier_detenteur_prochain_detenteur_id_cache:
-      carcasse.premier_detenteur_prochain_detenteur_id_cache ??
-      fei.premier_detenteur_prochain_detenteur_id_cache,
     examinateur_initial_offline: fei.examinateur_initial_offline,
     examinateur_initial_user_id: fei.examinateur_initial_user_id,
     examinateur_initial_approbation_mise_sur_le_marche:
@@ -37,13 +19,5 @@ export function mapFeiFieldsToCarcasse(fei: Fei, carcasse: Carcasse): CarcasseFi
     premier_detenteur_user_id: fei.premier_detenteur_user_id,
     premier_detenteur_entity_id: fei.premier_detenteur_entity_id,
     premier_detenteur_name_cache: fei.premier_detenteur_name_cache,
-    intermediaire_closed_at: fei.intermediaire_closed_at,
-    intermediaire_closed_by_user_id: fei.intermediaire_closed_by_user_id,
-    intermediaire_closed_by_entity_id: fei.intermediaire_closed_by_entity_id,
-    latest_intermediaire_user_id: fei.latest_intermediaire_user_id,
-    latest_intermediaire_entity_id: fei.latest_intermediaire_entity_id,
-    latest_intermediaire_name_cache: fei.latest_intermediaire_name_cache,
-    svi_assigned_at: fei.svi_assigned_at,
-    svi_user_id: fei.svi_user_id,
   };
 }

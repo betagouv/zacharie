@@ -204,7 +204,7 @@ export function CarcasseExaminateur({
                 const nextPartialCarcasse: Partial<Carcasse> = {
                   deleted_at: dayjs().toDate(),
                 };
-                updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse, true);
+                updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse);
                 addLog({
                   user_id: user.id,
                   user_role: UserRoles.CHASSEUR,

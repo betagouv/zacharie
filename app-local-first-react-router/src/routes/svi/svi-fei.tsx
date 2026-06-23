@@ -168,7 +168,7 @@ function FEI_SVI() {
         carcasseUpdate.svi_carcasse_status = CarcasseStatus.ACCEPTE;
         carcasseUpdate.svi_carcasse_status_set_at = sviClosedAt;
       }
-      updateCarcasse(carcasse.zacharie_carcasse_id, carcasseUpdate, false);
+      updateCarcasse(carcasse.zacharie_carcasse_id, carcasseUpdate);
     }
     const nextTransmission: CarcasseTransmission = {};
     if (transmission.current_owner_role !== FeiOwnerRole.SVI) {

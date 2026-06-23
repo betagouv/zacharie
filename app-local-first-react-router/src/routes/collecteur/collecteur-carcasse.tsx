@@ -130,7 +130,7 @@ export default function CarcasseIntermediaireComp({
       intermediaire_carcasse_refus_intermediaire_id: intermediaire.id,
       latest_intermediaire_signed_at: dayjs().toDate(),
     };
-    updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse, true);
+    updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse);
     addLog({
       user_id: user.id,
       user_role: intermediaire.intermediaire_role!,
@@ -194,7 +194,7 @@ export default function CarcasseIntermediaireComp({
       intermediaire_carcasse_refus_intermediaire_id: intermediaire.id,
       latest_intermediaire_signed_at: dayjs().toDate(),
     };
-    updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse, true);
+    updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse);
     addLog({
       user_id: user.id,
       user_role: intermediaire.intermediaire_role!,
@@ -244,7 +244,7 @@ export default function CarcasseIntermediaireComp({
       intermediaire_carcasse_refus_intermediaire_id: null,
       latest_intermediaire_signed_at: dayjs().toDate(),
     };
-    updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse, true);
+    updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse);
     addLog({
       user_id: user.id,
       user_role: intermediaire.intermediaire_role!,
@@ -294,7 +294,7 @@ export default function CarcasseIntermediaireComp({
       intermediaire_carcasse_refus_intermediaire_id: null,
       latest_intermediaire_signed_at: dayjs().toDate(),
     };
-    updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse, true);
+    updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse);
     addLog({
       user_id: user.id,
       user_role: intermediaire.intermediaire_role!,
