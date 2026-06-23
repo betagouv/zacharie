@@ -4,13 +4,12 @@ import { Button } from '@codegouvfr/react-dsfr/Button';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
 import { useLocalStorage } from '@uidotdev/usehooks';
-import useZustandStore from '@app/zustand/store';
-import { filterCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
-import useExportFeis, {
+import useExportTransmissions, {
   EXPORT_COLUMNS_CATALOG,
   DEFAULT_EXPORT_COLUMN_KEYS,
   SIMPLIFIED_EXPORT_COLUMN_KEYS,
-} from '@app/utils/export-feis';
+} from '@app/utils/export-transmissions';
+import { useTransmissions } from '@app/utils/get-transmissions-sorted';
 
 const exportModal = createModal({
   id: 'export-feis-columns',
@@ -20,21 +19,21 @@ const exportModal = createModal({
 const catalogByKey = Object.fromEntries(EXPORT_COLUMNS_CATALOG.map((c) => [c.key, c]));
 
 type Props = {
-  feiNumbers: Array<string>;
+  transmissionsIds: Array<string>;
   storageKey: string;
 };
 
-export default function ExportFeisModal({ feiNumbers, storageKey }: Props) {
-  const { onExportToXlsx, isExporting } = useExportFeis();
-  const carcasses = useZustandStore((state) => state.carcasses);
+export default function ExportTransmissionsModal({ transmissionsIds, storageKey }: Props) {
+  const { onExportToXlsx, isExporting } = useExportTransmissions();
+  const transmissions = useTransmissions();
 
   // Nombre de carcasses qui seront effectivement exportées (mêmes exclusions que l'export :
   // supprimées / manquantes / refusées), 1 ligne = 1 carcasse.
-  const feiNumbersKey = feiNumbers.join('|');
+  const feiNumbersKey = transmissionsIds.join('|');
   const carcassesCount = useMemo(() => {
     let count = 0;
-    for (const feiNumero of feiNumbers) {
-      for (const carcasse of filterCarcassesForFei(carcasses, feiNumero)) {
+    for (const transmissionId of transmissionsIds) {
+      for (const carcasse of transmissions[transmissionId].carcasses) {
         if (!carcasse) continue;
         if (carcasse.deleted_at) continue;
         if (carcasse.intermediaire_carcasse_manquante) continue;
@@ -44,7 +43,7 @@ export default function ExportFeisModal({ feiNumbers, storageKey }: Props) {
     }
     return count;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [feiNumbersKey, carcasses]);
+  }, [feiNumbersKey]);
   const [isOpen, setIsOpen] = useState(false);
   const [exportSucceeded, setExportSucceeded] = useState(false);
   useIsModalOpen(exportModal, {
@@ -82,7 +81,7 @@ export default function ExportFeisModal({ feiNumbers, storageKey }: Props) {
     setSelectedKeys(newKeys);
   };
 
-  const hasSelection = feiNumbers.length > 0;
+  const hasSelection = transmissionsIds.length > 0;
 
   const openExportModal = () => {
     setIsOpen(true);
@@ -93,7 +92,7 @@ export default function ExportFeisModal({ feiNumbers, storageKey }: Props) {
   const canExport = !isExporting && orderedSelected.length > 0 && hasSelection;
   const doExport = async () => {
     if (!canExport) return;
-    const succeeded = await onExportToXlsx(feiNumbers, selectedKeys);
+    const succeeded = await onExportToXlsx(transmissionsIds, selectedKeys);
     setExportSucceeded(succeeded);
   };
 
@@ -142,7 +141,8 @@ export default function ExportFeisModal({ feiNumbers, storageKey }: Props) {
             />
             <p className="text-3xl font-bold text-gray-900">Export terminé.</p>
             <p className="text-sm text-gray-600">
-              {feiNumbers.length} fiche{feiNumbers.length > 1 ? 's' : ''} · {carcassesCount} carcasse
+              {transmissionsIds.length} fiche{transmissionsIds.length > 1 ? 's' : ''} · {carcassesCount}{' '}
+              carcasse
               {carcassesCount > 1 ? 's' : ''} — le fichier Excel a été téléchargé.
             </p>
           </div>
@@ -160,8 +160,9 @@ export default function ExportFeisModal({ feiNumbers, storageKey }: Props) {
             )}
             {hasSelection && (
               <p className="mb-3 rounded bg-gray-100 px-3 py-2 text-sm text-gray-900">
-                <strong>{feiNumbers.length}</strong> fiche{feiNumbers.length > 1 ? 's' : ''} sélectionnée
-                {feiNumbers.length > 1 ? 's' : ''}
+                <strong>{transmissionsIds.length}</strong> fiche{transmissionsIds.length > 1 ? 's' : ''}{' '}
+                sélectionnée
+                {transmissionsIds.length > 1 ? 's' : ''}
                 {' · '}
                 <strong>{carcassesCount}</strong> carcasse{carcassesCount > 1 ? 's' : ''} à exporter
               </p>

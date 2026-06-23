@@ -58,7 +58,7 @@ function CircuitCourtFei() {
               open={false}
               title="Données de chasse"
             >
-              <FEIDonneesDeChasse />
+              <FEIDonneesDeChasse intermediaires={transmissionWithMetadata.intermediaires} />
             </Section>
             <Section title={`Carcasses (${allCarcassesForFei.length})`}>
               <div className="flex flex-col gap-4">

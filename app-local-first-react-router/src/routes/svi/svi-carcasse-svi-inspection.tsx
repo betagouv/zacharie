@@ -148,7 +148,10 @@ function SviInspectionCarcasse() {
             open={false}
           >
             <>
-              <FEIDonneesDeChasse carcasseId={carcasse.zacharie_carcasse_id} />
+              <FEIDonneesDeChasse
+                carcasseId={carcasse.zacharie_carcasse_id}
+                intermediaires={carcassesIntermediaires}
+              />
               {carcasse.type === CarcasseType.PETIT_GIBIER && (
                 <ItemNotEditable
                   label="Nombre d'animaux initialement prélevés"

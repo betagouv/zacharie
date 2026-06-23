@@ -214,7 +214,7 @@ function CollecteurFeiLoader(props: Props) {
           open={!!intermediaires.length}
           title="Données de traçabilité"
         >
-          <FEIDonneesDeChasse />
+          <FEIDonneesDeChasse intermediaires={intermediaires} />
         </Section>
       </CollecteurProFeiContent>
     </Fragment>

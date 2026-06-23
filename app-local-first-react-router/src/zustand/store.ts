@@ -17,7 +17,6 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 dayjs.extend(utc);
 import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
-import { filterCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import type { HistoryInput } from '@app/utils/create-history-entry';
 import updateCarcasseStatus from '@app/utils/get-carcasse-status';
 import {
@@ -96,7 +95,7 @@ interface Actions {
   ) => void;
   createCarcassesIntermediaire: (
     newFeiIntermediaires: CarcassesIntermediaire[],
-    specificCarcasseIds?: string[]
+    specificCarcasseIds: string[]
   ) => Promise<void>;
   updateAllCarcasseIntermediaire: (
     fei_numero: Fei['numero'],
@@ -167,16 +166,10 @@ const useZustandStore = create<State & Actions>()(
           fei_numero: FeiWithIntermediaires['numero'],
           partialFei: Partial<FeiWithIntermediaires>
         ) => {
-          console.log('updateFei', fei_numero, JSON.stringify(partialFei, null, 2));
-          const carcassefeiCarcasses = filterCarcassesForFei(
-            useZustandStore.getState().carcasses,
-            fei_numero
-          );
-          const countCarcassesByEspece = formatCountCarcasseByEspece(carcassefeiCarcasses);
+          const carcassefeiCarcasses = get().carcassesRegistry.filter((c) => c.fei_numero === fei_numero);
           const nextFei: FeiWithIntermediaires = {
             ...useZustandStore.getState().feis[fei_numero],
             ...partialFei,
-            resume_nombre_de_carcasses: countCarcassesByEspece.join('\n'),
             updated_at: dayjs().toDate(),
             is_synced: false,
           };
@@ -251,15 +244,13 @@ const useZustandStore = create<State & Actions>()(
         },
         createCarcassesIntermediaire: async (
           newIntermediaires: CarcassesIntermediaire[],
-          specificCarcasseIds?: string[]
+          specificCarcasseIds: string[]
         ) => {
           if (newIntermediaires.length === 0) return;
           return new Promise((resolve) => {
-            const feiNumero = newIntermediaires[0].fei_numero;
-            const allCarcasses = filterCarcassesForFei(useZustandStore.getState().carcasses, feiNumero);
-            const carcasses = specificCarcasseIds
-              ? allCarcasses.filter((c) => specificCarcasseIds.includes(c.zacharie_carcasse_id))
-              : allCarcasses;
+            const carcasses = get().carcassesRegistry.filter((c) =>
+              specificCarcasseIds.includes(c.zacharie_carcasse_id)
+            );
             const byId: Record<FeiAndCarcasseAndIntermediaireIds, CarcasseIntermediaire> = {};
             for (const newIntermediaire of newIntermediaires) {
               const carcassesIntermediaires: Array<CarcasseIntermediaire> = carcasses

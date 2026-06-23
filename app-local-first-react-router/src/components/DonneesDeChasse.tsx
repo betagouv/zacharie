@@ -5,13 +5,15 @@ import dayjs from 'dayjs';
 import useZustandStore from '@app/zustand/store';
 import ItemNotEditable from '@app/components/ItemNotEditable';
 import { getIntermediaireRoleLabel } from '@app/utils/get-user-roles-label';
-import { useFeiIntermediaires } from '@app/utils/get-carcasses-intermediaires';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
+import { CarcassesIntermediaire } from '@app/types/carcasses-intermediaire';
 
 export default function FEIDonneesDeChasse({
   carcasseId,
+  intermediaires,
 }: {
   carcasseId?: Carcasse['zacharie_carcasse_id'];
+  intermediaires: Array<CarcassesIntermediaire>;
 }) {
   const params = useParams();
   const feis = useZustandStore((state) => state.feis);
@@ -19,7 +21,6 @@ export default function FEIDonneesDeChasse({
   const users = useZustandStore((state) => state.users);
   const entities = useZustandStore((state) => state.entities);
   const fei = feis[params.fei_numero!];
-  const intermediaires = useFeiIntermediaires(fei.numero);
   const latestIntermediaire = intermediaires[0];
   const feiCarcasses = useCarcassesForFei(params.fei_numero);
   const carcasses = carcasseId

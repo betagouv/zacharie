@@ -14,7 +14,7 @@ import API from '@app/services/api';
 import { abbreviations } from '@app/utils/count-carcasses';
 import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { getSaisonStartYear, getSaisonLabel, isDateInSaison } from '@app/utils/get-saison';
-import ExportFeisModal from '@app/components/ExportFeisModal';
+import ExportTransmissionsModal from '@app/components/ExportTransmissionsModal';
 import { filterCarcassesIntermediairesForCarcasse } from '@app/utils/get-carcasses-intermediaires';
 import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
 import { useSaveScroll } from '@app/services/useSaveScroll';
@@ -31,7 +31,7 @@ import { getTransmissionLink } from '@app/utils/get-transmission-id';
 
 type ViewType = 'grid' | 'table';
 
-type FeiNumberSelection = Array<NonNullable<CarcasseTransmissionWihMetadata['fei']['numero']>>;
+type TransmissionIdSelection = Array<string>;
 
 const statusColors: Record<TransmissionSimpleStatus, { bg: string; text: string }> = {
   'À compléter': {
@@ -99,9 +99,9 @@ export default function CircuitCourtFiches() {
 
   useSaveScroll('circuit-court-fiches-scrollY');
 
-  const [selectedFeis, setSelectedFeis] = useState<FeiNumberSelection>([]);
+  const [selectedTransmissions, setSelectedTransmissions] = useState<TransmissionIdSelection>([]);
   const handleCheckboxClick = (id: string) => {
-    setSelectedFeis((prev) => {
+    setSelectedTransmissions((prev) => {
       if (prev.includes(id)) {
         return prev.filter((fei) => fei !== id);
       }
@@ -111,13 +111,13 @@ export default function CircuitCourtFiches() {
 
   const handleSelectAll = (visibleFeis?: string[]) => {
     const feisToToggle = visibleFeis || [];
-    const allSelected = feisToToggle.every((numero) => selectedFeis.includes(numero));
+    const allSelected = feisToToggle.every((numero) => selectedTransmissions.includes(numero));
     if (allSelected) {
       // Désélectionner toutes les fiches visibles
-      setSelectedFeis((prev) => prev.filter((numero) => !feisToToggle.includes(numero)));
+      setSelectedTransmissions((prev) => prev.filter((numero) => !feisToToggle.includes(numero)));
     } else {
       // Sélectionner toutes les fiches visibles
-      setSelectedFeis((prev) => {
+      setSelectedTransmissions((prev) => {
         const newSelection = [...prev];
         feisToToggle.forEach((numero) => {
           if (!newSelection.includes(numero)) {
@@ -833,8 +833,8 @@ export default function CircuitCourtFiches() {
                 ]}
               />
               <div className="hidden md:block">
-                <ExportFeisModal
-                  feiNumbers={selectedFeis}
+                <ExportTransmissionsModal
+                  transmissionsIds={selectedTransmissions}
                   storageKey="circuit-court-fiches-export-columns"
                 />
               </div>
@@ -849,7 +849,7 @@ export default function CircuitCourtFiches() {
           <FeisWrapper
             viewType={viewType}
             handleSelectAll={handleSelectAll}
-            selectedFeis={selectedFeis}
+            selectedTransmissions={selectedTransmissions}
             filter={'Toutes les fiches'}
             paginatedTransmissions={paginatedTransmissions}
             handleCheckboxClick={handleCheckboxClick}
@@ -884,14 +884,14 @@ function FeisWrapper({
   viewType,
   handleSelectAll,
   handleCheckboxClick,
-  selectedFeis,
+  selectedTransmissions,
   filter,
 }: {
   paginatedTransmissions: Array<CarcasseTransmissionWihMetadata>;
   viewType: 'grid' | 'table';
   handleSelectAll: (visibleFeis?: string[]) => void;
   handleCheckboxClick: (feiNumber: string, selected: boolean) => void;
-  selectedFeis: FeiNumberSelection;
+  selectedTransmissions: TransmissionIdSelection;
   filter?: TransmissionSimpleStatus | 'Toutes les fiches';
 }) {
   const nothingToShow = paginatedTransmissions.length === 0;
@@ -920,7 +920,7 @@ function FeisWrapper({
     return (
       <FeisTable
         handleSelectAll={handleSelectAll}
-        selectedFeis={selectedFeis}
+        selectedTransmissions={selectedTransmissions}
         filter={filter as TransmissionSimpleStatus | 'Toutes les fiches'}
         handleCheckboxClick={handleCheckboxClick}
         paginatedTransmissions={paginatedTransmissions}
@@ -944,7 +944,7 @@ function FeisWrapper({
             transmission={transmission}
             filter={'Toutes les fiches'}
             onPrintSelect={handleCheckboxClick}
-            isPrintSelected={selectedFeis.includes(transmission.fei.numero!)}
+            isPrintSelected={selectedTransmissions.includes(transmission.fei.numero!)}
             linkTo={`/app/circuit-court/fei/${getTransmissionLink(transmission)}`}
             detenteurName={detenteurPrecedent.name}
             detenteurIcon={detenteurPrecedent.icon}
@@ -1108,18 +1108,18 @@ function FeisTableRow({
 function FeisTable({
   paginatedTransmissions,
   handleSelectAll,
-  selectedFeis,
+  selectedTransmissions,
   filter,
   handleCheckboxClick,
 }: {
   paginatedTransmissions: Array<CarcasseTransmissionWihMetadata>;
-  handleSelectAll: (visibleFeis?: FeiNumberSelection) => void;
-  selectedFeis: FeiNumberSelection;
+  handleSelectAll: (visibleFeis?: TransmissionIdSelection) => void;
+  selectedTransmissions: TransmissionIdSelection;
   filter?: TransmissionSimpleStatus | 'Toutes les fiches';
   handleCheckboxClick: (feiNumber: string, selected: boolean) => void;
 }) {
   const navigate = useNavigate();
-  const [visibleFeisNumbers, setVisibleFeisNumbers] = useState<FeiNumberSelection>([]);
+  const [visibleFeisNumbers, setVisibleFeisNumbers] = useState<TransmissionIdSelection>([]);
 
   if (paginatedTransmissions.length === 0) {
     return null;
@@ -1127,7 +1127,7 @@ function FeisTable({
 
   const allSelected =
     visibleFeisNumbers.length > 0
-      ? visibleFeisNumbers.every((numero) => selectedFeis?.includes(numero))
+      ? visibleFeisNumbers.every((numero) => selectedTransmissions?.includes(numero))
       : false;
 
   return (
@@ -1158,7 +1158,7 @@ function FeisTable({
               <FeisTableRow
                 key={transmission.fei.numero}
                 transmission={transmission}
-                isSelected={selectedFeis.includes(transmission.fei.numero!)}
+                isSelected={selectedTransmissions.includes(transmission.fei.numero!)}
                 onPrintSelect={handleCheckboxClick}
                 navigate={navigate}
                 filter={filter}

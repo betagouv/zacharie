@@ -8,8 +8,8 @@ import dayjs from 'dayjs';
 import { getFeiAndCarcasseAndIntermediaireIdsFromCarcasse } from './get-carcasse-intermediaire-id';
 import { filterFeiIntermediaires } from './get-carcasses-intermediaires';
 import { capture } from '@app/services/sentry';
-import { filterCarcassesForFei } from './get-carcasses-for-fei';
 import { IPM1Decision, IPM2Decision, FeiOwnerRole } from '@prisma/client';
+import { useTransmissions } from './get-transmissions-sorted';
 
 type FeiExcelData = {
   Donnée: string;
@@ -261,14 +261,15 @@ function sortCarcassesApprovedForExcel(carcasseA: CarcasseExcelData, carcasseB: 
   return carcasseA.Éspèce!.localeCompare(carcasseB.Éspèce!);
 }
 
-export default function useExportFeis() {
+export default function useExportTransmissions() {
   let [isExporting, setIsExporting] = useState(false);
+  const transmissions = useTransmissions();
   const feis = useZustandStore((state) => state.feis);
   const entities = useZustandStore((state) => state.entities);
   const users = useZustandStore((state) => state.users);
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
 
-  async function onExportToXlsx(feiNumbers: Array<string>, columnKeys: Array<string>) {
+  async function onExportToXlsx(transmissionsIds: Array<string>, columnKeys: Array<string>) {
     setIsExporting(true);
     // just to trigger the loading state, sorry Raph :)
     await new Promise((res) => setTimeout(res));
@@ -278,8 +279,9 @@ export default function useExportFeis() {
     const allCarcasses: Array<CarcasseExcelData> = [];
 
     try {
-      for (const feiId of feiNumbers) {
-        let fei = feis[feiId!]!;
+      for (const transmissionId of transmissionsIds) {
+        let transmission = transmissions[transmissionId!]!;
+        let fei = feis[transmission.fei.numero];
         if (!fei) {
           continue;
         }
@@ -345,7 +347,7 @@ export default function useExportFeis() {
 
         feiSheets[fei.numero] = feiSheetData;
 
-        for (const carcasse of filterCarcassesForFei(useZustandStore.getState().carcasses, fei.numero)) {
+        for (const carcasse of transmission.carcasses) {
           if (!carcasse) {
             continue;
           }

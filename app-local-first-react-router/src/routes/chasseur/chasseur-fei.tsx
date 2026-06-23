@@ -394,7 +394,7 @@ function FEIChasseurLoaded() {
             key={fei.fei_current_owner_entity_id!}
           >
             <CurrentOwnerConfirm />
-            <ChasseurHeaderFiche fei={fei} />
+            <ChasseurHeaderFiche />
             <div className="flex flex-col gap-6">
               {/* Bloc 1 — Informations de chasse */}
               <div className="bg-white p-4 md:p-8">
