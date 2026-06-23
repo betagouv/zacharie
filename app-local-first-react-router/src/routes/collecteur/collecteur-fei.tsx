@@ -239,11 +239,17 @@ function CollecteurProFeiContent({
   const transmission = transmissionWithMetadata.content;
 
   const originalCarcasses = myFeiCarcasses.sort((a, b) => {
-    if (a.svi_carcasse_status === CarcasseStatus.SANS_DECISION) {
-      return -1;
+    // SANS_DECISION en premier, puis tri par type → espèce → n° de bracelet
+    const aSansDecision = a.svi_carcasse_status === CarcasseStatus.SANS_DECISION;
+    const bSansDecision = b.svi_carcasse_status === CarcasseStatus.SANS_DECISION;
+    if (aSansDecision !== bSansDecision) {
+      return aSansDecision ? -1 : 1;
     }
-    if (b.svi_carcasse_status === CarcasseStatus.SANS_DECISION) {
-      return 1;
+    if (a.type !== b.type) {
+      return a.type!.localeCompare(b.type!);
+    }
+    if (a.espece !== b.espece) {
+      return a.espece!.localeCompare(b.espece!);
     }
     return a.numero_bracelet.localeCompare(b.numero_bracelet);
   });
