@@ -180,9 +180,9 @@ describe('isCarcasseUnderMyResponsability', () => {
   });
 
   it('true when the current owner entity is one I work directly for', () => {
-    expect(
-      isCarcasseUnderMyResponsability(c({ current_owner_entity_id: 'mine' }), me, working('mine'))
-    ).toBe(true);
+    expect(isCarcasseUnderMyResponsability(c({ current_owner_entity_id: 'mine' }), me, working('mine'))).toBe(
+      true
+    );
   });
 
   it('false when the current owner entity is not mine', () => {
