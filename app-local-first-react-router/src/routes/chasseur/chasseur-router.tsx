@@ -106,10 +106,6 @@ export default function RouterChasseur() {
         element={<ChasseurFeiEnvoyée />}
       />
       <Route
-        path="fei/:fei_numero/:premier_detenteur_prochain_detenteur_id_cache"
-        element={<ChasseurFei />}
-      />
-      <Route
         path="carcasse/:fei_numero/:zacharie_carcasse_id"
         element={<ExaminateurCarcasseDetail />}
       />

@@ -7,7 +7,7 @@ import dayjs from 'dayjs';
 import useZustandStore from '@app/zustand/store';
 import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { useTransmissionsSorted } from '@app/utils/get-transmissions-sorted';
-import { getTransmissionIdFromMetadata, getTransmissionLink } from '@app/utils/get-transmission-id';
+import { getTransmissionIdFromMetadata } from '@app/utils/get-transmission-id';
 import { createNewFei } from '@app/utils/create-new-fei';
 import { useNavigate, useSearchParams, Link } from 'react-router';
 import ExportTransmissionsModal from '@app/components/ExportTransmissionsModal';
@@ -964,7 +964,7 @@ function FeisWrapper({
             filter={'Toutes les fiches'}
             onPrintSelect={handleCheckboxClick}
             isPrintSelected={selectedTransmissions.includes(getTransmissionIdFromMetadata(transmission))}
-            linkTo={`/app/chasseur/fei/${getTransmissionLink(transmission)}`}
+            linkTo={`/app/chasseur/fei/${transmission.fei.numero}`}
             detenteurName={transmission.content.premier_detenteur_name_cache ?? null}
             detenteurIcon={<ChasseIcon />}
           />
@@ -996,7 +996,7 @@ function FeisTableRow({
   useEffect(() => {
     const isVisible = !filter || filter === 'Toutes les fiches' || filter === simpleStatus;
     onVisibilityChange?.(getTransmissionIdFromMetadata(transmission), isVisible);
-  }, [filter, simpleStatus, transmission.fei.numero, onVisibilityChange, transmission]);
+  }, [filter, simpleStatus, transmission.fei.numero, onVisibilityChange]);
 
   const [formattedCarcassesAcceptées, _carcassesOuLotsRefusés] = useMemo(() => {
     const formatted = formatCountCarcasseByEspece(transmission.carcasses) as string[];
@@ -1043,7 +1043,7 @@ function FeisTableRow({
     <tr
       key={transmission.fei.numero!}
       className={`cursor-pointer border-b border-gray-200 hover:bg-gray-50 ${isSelected ? 'bg-blue-50' : ''}`}
-      onClick={() => navigate(`/app/chasseur/fei/${getTransmissionLink(transmission)}`)}
+      onClick={() => navigate(`/app/chasseur/fei/${transmission.fei.numero!}`)}
     >
       <td
         className="px-4 py-3"

@@ -31,7 +31,6 @@ import { CompteEnAttenteValidationAlert } from '@app/components/CompteEnAttenteV
 
 export default function ChasseurFei() {
   const params = useParams();
-  console.log('ICI');
   const feis = useZustandStore((state) => state.feis);
   const fei = feis[params.fei_numero!];
   const [hasTriedLoading, setHasTriedLoading] = useState(false);
@@ -48,7 +47,6 @@ export default function ChasseurFei() {
       });
   });
 
-  console.log({ fei });
   if (!fei) {
     return hasTriedLoading ? <NotFound /> : <Chargement />;
   }
