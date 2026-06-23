@@ -73,8 +73,17 @@ test('Bloc 4 — toggle « consommateur final » updates cert label & button tex
   });
   await expect(revertBtn).toBeVisible();
 
-  // Toggle OFF again — verify the original state is restored.
+  // Toggle OFF again. Marking the carcasses as consommateur final had set the
+  // premier détenteur to the examinateur themselves; reverting clears it, so
+  // Bloc 4 (and its cert label) collapses until a premier détenteur is re-selected.
   await revertBtn.click();
+  await expect(page.getByText(/peuvent être mises sur le marché/i)).toBeHidden();
+
+  // Re-select the premier détenteur to restore the market state, then verify the
+  // cert label clause and the consommateur-final button are back.
+  const reselectPd = page.locator('#select-next-owner').getByRole('button', { name: 'Continuer' });
+  await reselectPd.scrollIntoViewIfNeeded();
+  await reselectPd.click();
   await expect(page.getByText(/peuvent être mises sur le marché/i).first()).toBeVisible();
   await expect(page.getByRole('button', { name: /si vous êtes le consommateur final/i })).toBeVisible();
 });
