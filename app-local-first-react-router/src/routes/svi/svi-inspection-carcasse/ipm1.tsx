@@ -151,7 +151,7 @@ export function CarcasseIPM1({ canEdit = false }: { canEdit?: boolean }) {
       svi_ipm1_poids_consigne: sviIpm1PoidsConsigne,
       svi_ipm1_poids_type: sviIpm1PoidsType,
       svi_ipm1_signed_at: dayjs.utc().toDate(),
-      svi_assigned_to_fei_at: carcasse.svi_assigned_to_fei_at ?? dayjs.utc().toDate(),
+      svi_assigned_at: carcasse.svi_assigned_at ?? dayjs.utc().toDate(),
     };
     updateCarcasse(carcasse.zacharie_carcasse_id, partialCarcasse);
     if (carcasse.current_owner_role !== FeiOwnerRole.SVI) {

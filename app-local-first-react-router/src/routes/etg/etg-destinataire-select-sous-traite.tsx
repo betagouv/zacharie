@@ -122,7 +122,6 @@ export default function DestinataireSousTraite({
       current_owner_role: transmission.prev_owner_role ?? null,
       current_owner_user_id: transmission.prev_owner_user_id ?? null,
       svi_assigned_at: prochainDetenteurType === EntityTypes.SVI ? dayjs().toDate() : null,
-      svi_assigned_to_fei_at: prochainDetenteurType === EntityTypes.SVI ? dayjs().toDate() : null,
       svi_entity_id: prochainDetenteurType === EntityTypes.SVI ? prochainDetenteurEntityId : null,
     };
     updateCarcassesTransmission(carcasseIds, nextTransmission);

@@ -232,8 +232,8 @@ function buildTimeline(carcasse: CarcasseDetail, depotEntity: DepotEntityInfo | 
     }
   }
 
-  if (carcasse.svi_assigned_to_fei_at) {
-    events.push({ date: new Date(carcasse.svi_assigned_to_fei_at), label: 'Assignation SVI', data: {} });
+  if (carcasse.svi_assigned_at) {
+    events.push({ date: new Date(carcasse.svi_assigned_at), label: 'Assignation SVI', data: {} });
   }
 
   if (carcasse.svi_ipm1_signed_at) {

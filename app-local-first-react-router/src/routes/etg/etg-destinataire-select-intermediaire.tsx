@@ -207,7 +207,6 @@ export default function DestinataireIntermediaire({
       next_owner_entity_id: prochainDetenteurEntityId,
       next_owner_role: prochainDetenteurType as FeiOwnerRole,
       svi_assigned_at: prochainDetenteurType === EntityTypes.SVI ? dayjs().toDate() : null,
-      svi_assigned_to_fei_at: prochainDetenteurType === EntityTypes.SVI ? dayjs().toDate() : null,
       svi_entity_id: prochainDetenteurType === EntityTypes.SVI ? prochainDetenteurEntityId : null,
     };
     updateCarcassesTransmission(carcasseIds, nextTransmission);

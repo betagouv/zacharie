@@ -24,7 +24,7 @@ const makeCarcasse = (overrides: any = {}) => ({
   zacharie_carcasse_id: 'ZACH-TEST-001_BR-A',
   fei_numero: 'ZACH-TEST-001',
   svi_carcasse_status: CarcasseStatus.SANS_DECISION,
-  svi_assigned_to_fei_at: sviAssignedAt,
+  svi_assigned_at: sviAssignedAt,
   svi_closed_at: null,
   svi_automatic_closed_at: null,
   consommateur_final_usage_domestique: null,
@@ -84,8 +84,8 @@ describe('automaticClosingOfFeis — carcasse selection (per-carcasse)', () => {
     expect(args.where.svi_closed_at).toBeNull();
     expect(args.where.svi_automatic_closed_at).toBeNull();
     expect(args.where.deleted_at).toBeNull();
-    expect(args.where.svi_assigned_to_fei_at).toHaveProperty('lte');
-    expect(args.where.svi_assigned_to_fei_at.lte).toBeInstanceOf(Date);
+    expect(args.where.svi_assigned_at).toHaveProperty('lte');
+    expect(args.where.svi_assigned_at.lte).toBeInstanceOf(Date);
     expect(args.where.CarcasseModificationRequests).toEqual({
       none: {
         status: CarcasseModificationRequestStatus.PENDING,

@@ -62,7 +62,7 @@ export async function automaticClosingOfFeis() {
   // carcasses sont dans un état terminal (multi-destinataire : les lots progressent séparément).
   const carcassesToAutoClose = await prisma.carcasse.findMany({
     where: {
-      svi_assigned_to_fei_at: {
+      svi_assigned_at: {
         // start of day of assigned day is older than 10 days of start of day of today
         lte: dayjs().subtract(10, 'days').startOf('day').toDate(),
       },

@@ -560,7 +560,6 @@ model Carcasse {
   /**
    * SVI
    */
-  svi_assigned_to_fei_at                                  DateTime? // same as svi_assigned_at in fei
   svi_carcasse_commentaire                                String? // cache of ipm1 and ipm2 comments
   svi_carcasse_status                                     CarcasseStatus?
   svi_carcasse_status_set_at                              DateTime?
@@ -694,6 +693,19 @@ model Carcasse {
   @@index([deleted_at, updated_at])
   @@index([intermediaire_carcasse_refus_intermediaire_id])
   @@index([intermediaire_carcasse_manquante])
+  // Colonnes de propriété utilisées dans le OR de GET /carcasse (cf carcasse.ts).
+  // Composite avec updated_at desc : sert le filtre d'égalité (bitmap OR du full sync),
+  // la range delta-sync (col = X AND updated_at >= after) et l'orderBy updated_at desc.
+  @@index([svi_entity_id, updated_at(sort: Desc)])
+  @@index([next_owner_entity_id, updated_at(sort: Desc)])
+  @@index([current_owner_entity_id, updated_at(sort: Desc)])
+  @@index([premier_detenteur_entity_id, updated_at(sort: Desc)])
+  @@index([prev_owner_entity_id, updated_at(sort: Desc)])
+  @@index([premier_detenteur_user_id, updated_at(sort: Desc)])
+  @@index([examinateur_initial_user_id, updated_at(sort: Desc)])
+  @@index([current_owner_user_id, updated_at(sort: Desc)])
+  @@index([next_owner_user_id, updated_at(sort: Desc)])
+  @@index([prev_owner_user_id, updated_at(sort: Desc)])
 }
 
 enum CarcasseCertificatType {
@@ -786,6 +798,9 @@ model CarcasseIntermediaire {
   @@index([intermediaire_entity_id])
   @@index([intermediaire_user_id])
   @@index([fei_numero, prise_en_charge_at, created_at])
+  // Chargement des intermédiaires par carcasse dans GET /carcasse (zacharie_carcasse_id IN [...]).
+  // L'unique composite commence par fei_numero, donc inutilisable pour ce filtre.
+  @@index([zacharie_carcasse_id])
 }
 
 model NotificationLog {

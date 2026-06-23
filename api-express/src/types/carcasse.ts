@@ -39,7 +39,7 @@ export const carcasseForApiSelect: Prisma.CarcasseSelect = {
   /**
    * SVI
    */
-  svi_assigned_to_fei_at: true, // same as svi_assigned_at in fei
+  svi_assigned_at: true,
   svi_carcasse_commentaire: true, // cache of ipm1 and ipm2 comments
   svi_carcasse_status: true,
   svi_carcasse_status_set_at: true,

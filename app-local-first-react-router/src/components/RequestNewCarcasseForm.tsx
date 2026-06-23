@@ -132,9 +132,6 @@ export default function RequestNewCarcasseButton({
       intermediaire_carcasse_refus_motif: null,
       intermediaire_carcasse_manquante: null,
       latest_intermediaire_signed_at: null,
-      // SVI — inherit assignment if the FEI was already transmitted to SVI before this carcasse
-      // was added, otherwise leave null and let the next ETG transmission set it.
-      svi_assigned_to_fei_at: feiAlreadyAssignedToSvi ? fei.svi_assigned_at : null,
       svi_carcasse_commentaire: null,
       svi_carcasse_status: null,
       svi_carcasse_status_set_at: null,

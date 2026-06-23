@@ -30,7 +30,7 @@ const createBaseCarcasse = (overrides: Partial<Carcasse> = {}): Carcasse => ({
   intermediaire_carcasse_refus_motif: null,
   intermediaire_carcasse_manquante: false,
   latest_intermediaire_signed_at: null,
-  svi_assigned_to_fei_at: null,
+  svi_assigned_at: null,
   svi_carcasse_commentaire: null,
   svi_carcasse_status: CarcasseStatus.SANS_DECISION,
   svi_carcasse_status_set_at: null,
@@ -124,7 +124,7 @@ describe('updateCarcasseStatus', () => {
         svi_ipm1_decision: null,
         svi_ipm1_date: null,
         svi_ipm2_date: null,
-        svi_assigned_to_fei_at: dayjs().subtract(15, 'day').toDate(),
+        svi_assigned_at: dayjs().subtract(15, 'day').toDate(),
       });
 
       const result = updateCarcasseStatus(carcasse);
@@ -139,7 +139,7 @@ describe('updateCarcasseStatus', () => {
         svi_ipm1_decision: null,
         svi_ipm1_date: null,
         svi_ipm2_date: null,
-        svi_assigned_to_fei_at: dayjs().subtract(5, 'day').toDate(),
+        svi_assigned_at: dayjs().subtract(5, 'day').toDate(),
         svi_carcasse_status: CarcasseStatus.ACCEPTE,
       });
 
@@ -155,7 +155,7 @@ describe('updateCarcasseStatus', () => {
         svi_ipm1_decision: null,
         svi_ipm1_date: null,
         svi_ipm2_date: null,
-        svi_assigned_to_fei_at: dayjs().subtract(5, 'day').toDate(),
+        svi_assigned_at: dayjs().subtract(5, 'day').toDate(),
         svi_carcasse_status: CarcasseStatus.SANS_DECISION,
       });
 
@@ -293,7 +293,7 @@ describe('updateCarcasseStatus', () => {
         svi_ipm1_presentee_inspection: true,
         svi_ipm2_traitement_assainissant: [],
         svi_ipm2_decision: null,
-        svi_assigned_to_fei_at: dayjs().subtract(15, 'day').toDate(),
+        svi_assigned_at: dayjs().subtract(15, 'day').toDate(),
       });
 
       const result = updateCarcasseStatus(carcasse);
@@ -312,7 +312,7 @@ describe('updateCarcasseStatus', () => {
         svi_ipm1_presentee_inspection: true,
         svi_ipm2_traitement_assainissant: [],
         svi_ipm2_decision: null,
-        svi_assigned_to_fei_at: dayjs().subtract(5, 'day').toDate(),
+        svi_assigned_at: dayjs().subtract(5, 'day').toDate(),
       });
 
       const result = updateCarcasseStatus(carcasse);
@@ -364,14 +364,14 @@ describe('updateCarcasseStatus', () => {
   });
 
   describe('Edge cases', () => {
-    test('should handle null svi_assigned_to_fei_at gracefully', () => {
+    test('should handle null svi_assigned_at gracefully', () => {
       const carcasse = createBaseCarcasse({
         intermediaire_carcasse_manquante: false,
         intermediaire_carcasse_refus_intermediaire_id: null,
         svi_ipm1_decision: null,
         svi_ipm1_date: null,
         svi_ipm2_date: null,
-        svi_assigned_to_fei_at: null,
+        svi_assigned_at: null,
       });
 
       const result = updateCarcasseStatus(carcasse);

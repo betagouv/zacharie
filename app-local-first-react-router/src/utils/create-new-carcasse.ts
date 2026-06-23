@@ -69,7 +69,6 @@ export async function createNewCarcasse({
     intermediaire_carcasse_refus_motif: null,
     latest_intermediaire_signed_at: null,
     intermediaire_carcasse_manquante: false,
-    svi_assigned_to_fei_at: null,
     svi_carcasse_commentaire: null, // cache of ipm1 and ipm2 comments
     svi_carcasse_status: CarcasseStatus.SANS_DECISION,
     svi_carcasse_status_set_at: null,
