@@ -272,6 +272,9 @@ test('Pas de stockage - Je transfère à un autre collecteur', async ({ page }) 
   await expect(page.getByText('Il manque le prochain dé')).toBeVisible();
   await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").click();
   await page.getByRole('option', { name: 'Collecteur Pro 2 - 75000' }).click();
+  // on attend que le prochain détenteur soit pris en compte (l'alerte d'erreur disparaît)
+  // avant de transmettre
+  await expect(page.getByText('Il manque le prochain dé')).toBeHidden();
   await page.getByRole('button', { name: 'Transmettre la fiche' }).click();
   await expect(page.locator('#content')).toMatchAriaSnapshot(`
     - heading "Attribution effectuée" [level=3]
