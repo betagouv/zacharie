@@ -4,12 +4,12 @@ import { sortCarcassesApproved } from '@app/utils/sort';
 import FEIDonneesDeChasse from '@app/components/DonneesDeChasse';
 import Section from '@app/components/Section';
 import CardCarcasse from '@app/components/CardCarcasse';
-import { useMyCarcassesForFei } from '@app/utils/filter-my-carcasses';
 import useZustandStore from '@app/zustand/store';
 import Chargement from '@app/components/Chargement';
 import NotFound from '@app/components/NotFound';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { loadData, useLoaderEffect } from '@app/utils/load-data';
+import { useGetTransmissionFromURLParams } from '@app/utils/get-transmissions-sorted';
 
 export default function CircuitCourtFeiLoader() {
   const params = useParams();
@@ -36,10 +36,11 @@ export default function CircuitCourtFeiLoader() {
 
 function CircuitCourtFei() {
   const params = useParams();
-  const myCarcasses = useMyCarcassesForFei(params.fei_numero);
-  const allCarcassesForFei = useMemo(() => myCarcasses.sort(sortCarcassesApproved), [myCarcasses]);
   const feis = useZustandStore((state) => state.feis);
   const fei = feis[params.fei_numero!];
+  const transmissionWithMetadata = useGetTransmissionFromURLParams();
+  const myCarcasses = transmissionWithMetadata.carcasses;
+  const allCarcassesForFei = useMemo(() => [...myCarcasses].sort(sortCarcassesApproved), [myCarcasses]);
 
   return (
     <>
@@ -51,10 +52,7 @@ function CircuitCourtFei() {
       )}
       <div className="fr-container fr-container--fluid fr-my-md-14v">
         <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
-          <div
-            className="fr-col-12 fr-col-md-10 bg-alt-blue-france [&_.fr-tabs\\_\\_list]:bg-alt-blue-france m-4 md:m-0 md:p-0"
-            key={fei.fei_current_owner_entity_id! + fei.fei_current_owner_user_id!}
-          >
+          <div className="fr-col-12 fr-col-md-10 bg-alt-blue-france [&_.fr-tabs\\_\\_list]:bg-alt-blue-france m-4 md:m-0 md:p-0">
             <h1 className="fr-h3 fr-mb-2w">Fiche {fei?.numero}</h1>
             <Section
               open={false}
