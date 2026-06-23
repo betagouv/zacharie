@@ -1,17 +1,20 @@
 import dayjs from 'dayjs';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
-import { IconStep, useFeiSteps } from '@app/utils/fei-steps';
-import type { FeiWithIntermediaires } from '@api/src/types/fei';
-import type { FeiStepSimpleStatus } from '@app/types/fei-steps';
+import { IconStep } from '@app/utils/transmission-labels';
+import { TransmissionSimpleStatus } from '@app/types/transmission-steps';
+import { useGetTransmissionFromURLParams } from '@app/utils/get-transmissions-sorted';
 
-const statusColors: Record<FeiStepSimpleStatus, { bg: string; text: string }> = {
+const statusColors: Record<TransmissionSimpleStatus, { bg: string; text: string }> = {
   'À compléter': { bg: 'bg-[#FEE7FC]', text: 'text-[#6E445A]' },
   'En cours': { bg: 'bg-[#FFECBD]', text: 'text-[#73603F]' },
   Clôturée: { bg: 'bg-[#E8EDFF]', text: 'text-[#01008B]' },
 };
 
-export default function ChasseurHeaderFiche({ fei }: { fei: FeiWithIntermediaires }) {
-  const { simpleStatus, currentStepLabelForChasseur } = useFeiSteps(fei);
+export default function ChasseurHeaderFiche() {
+  const transmission = useGetTransmissionFromURLParams();
+  const fei = transmission.fei;
+  const simpleStatus = transmission.labels.simpleStatus;
+  const currentStepLabelForChasseur = transmission.labels.currentStepLabel;
 
   const isNewFiche = !fei.date_mise_a_mort && !fei.commune_mise_a_mort;
   const title = isNewFiche
