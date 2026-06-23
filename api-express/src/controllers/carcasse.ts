@@ -37,16 +37,6 @@ router.get(
   '/',
   passport.authenticate('user', { session: false }),
   catchErrors(async (req: RequestWithUser, res: express.Response<CarcassesGetResponse>) => {
-    // PERF: timing logs temporaires pour localiser la lenteur du GET /carcasse
-    const __t0 = Date.now();
-    let __tPrev = __t0;
-    const __log = (label: string) => {
-      const now = Date.now();
-      console.log(
-        `[carcasse GET] ${label}: +${now - __tPrev}ms (total ${now - __t0}ms) — user=${req.user?.id} roles=${req.user?.roles?.join(',')} q=${JSON.stringify(req.query)}`
-      );
-      __tPrev = now;
-    };
     // Un chasseur formé (numéro CFEI) non encore activé peut charger ses fiches en préparation.
     const isExaminateurInitialNotYetActivated =
       req.user.roles.includes(UserRoles.CHASSEUR) && !!req.user.numero_cfei;
@@ -85,7 +75,6 @@ router.get(
       select: { entity_id: true },
     });
     const userEntityIds = userEntityRelations.map((r) => r.entity_id);
-    __log('userEntityRelations');
 
     if (req.user.roles.includes(UserRoles.SVI)) {
       where = {
@@ -180,8 +169,6 @@ router.get(
       where.updated_at = { gte: afterDate };
     }
 
-    __log('where built');
-
     // Execute count and findMany in parallel
     const [total, carcasses] = await Promise.all([
       prisma.carcasse.count({ where }),
@@ -192,7 +179,6 @@ router.get(
         take: parsedLimit,
       }),
     ]);
-    __log(`count+findMany (total=${total}, carcasses=${carcasses.length})`);
 
     const feiNumeros = new Set<string>();
     const carcassesIds = new Set<string>();
@@ -222,39 +208,20 @@ router.get(
       carcassesIds.add(carcasse.zacharie_carcasse_id);
       feiNumeros.add(carcasse.fei_numero);
     }
-    __log(
-      `collect ids (users=${userIds.size}, feis=${feiNumeros.size}, carcasses=${carcassesIds.size}, entities=${entityIds.size})`
-    );
 
     // Modif requests are loaded BY carcasse (not embedded): the client keys its full-history map by
     // zacharie_carcasse_id. Every modif mutation bumps its carcasse's updated_at, so the carcasses in
     // this delta carry the full set of modif requests that changed.
-    const __timed = async <T>(label: string, p: Promise<T>): Promise<T> => {
-      const start = Date.now();
-      const r = await p;
-      console.log(`[carcasse GET]   ↳ ${label}: ${Date.now() - start}ms`);
-      return r;
-    };
     const [users, feis, carcassesIntermediaires, carcasseModifRequests] = await Promise.all([
-      __timed(
-        'users',
-        prisma.user.findMany({ where: { id: { in: [...userIds].filter(Boolean) } }, select: userFeiSelect })
-      ),
-      __timed('feis', prisma.fei.findMany({ where: { numero: { in: [...feiNumeros].filter(Boolean) } } })),
-      __timed(
-        'carcasseIntermediaires',
-        prisma.carcasseIntermediaire.findMany({
-          where: { zacharie_carcasse_id: { in: [...carcassesIds].filter(Boolean) } },
-        })
-      ),
-      __timed(
-        'carcasseModifRequests',
-        prisma.carcasseModificationRequest.findMany({
-          where: { zacharie_carcasse_id: { in: [...carcassesIds].filter(Boolean) } },
-        })
-      ),
+      prisma.user.findMany({ where: { id: { in: [...userIds].filter(Boolean) } }, select: userFeiSelect }),
+      prisma.fei.findMany({ where: { numero: { in: [...feiNumeros].filter(Boolean) } } }),
+      prisma.carcasseIntermediaire.findMany({
+        where: { zacharie_carcasse_id: { in: [...carcassesIds].filter(Boolean) } },
+      }),
+      prisma.carcasseModificationRequest.findMany({
+        where: { zacharie_carcasse_id: { in: [...carcassesIds].filter(Boolean) } },
+      }),
     ]);
-    __log('follow-up queries (users/feis/intermediaires/modifRequests)');
 
     for (const intermediaire of carcassesIntermediaires) {
       entityIds.add(intermediaire.intermediaire_entity_id!);
@@ -270,10 +237,9 @@ router.get(
           })
         )
       );
-    __log(`entities query (entities=${entities.length})`);
 
-    const __body = {
-      ok: true as const,
+    res.status(200).json({
+      ok: true,
       data: {
         carcasses,
         feis,
@@ -285,15 +251,7 @@ router.get(
         total,
       },
       error: '',
-    };
-    const __json = JSON.stringify(__body);
-    __log(`JSON.stringify (size=${(__json.length / 1024 / 1024).toFixed(2)}MB)`);
-
-    res
-      .status(200)
-      .type('application/json')
-      .send(__json as unknown as CarcassesGetResponse);
-    __log('res.send returned');
+    });
   })
 );
 
