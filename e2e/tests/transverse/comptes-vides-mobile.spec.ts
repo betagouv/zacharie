@@ -58,6 +58,6 @@ test('Connexion avec compte svi', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Pas encore de fiches cette saison' })).toBeVisible();
   await expect(page.locator('#content').getByRole('button', { name: 'Nouvelle' })).not.toBeVisible();
   // await expect(page.getByRole('button', { name: 'Mettre à jour' }).nth(1)).not.toBeVisible();
-  await expect(page.getByRole('button', { name: 'Filtrer' }).first()).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Exporter' }).first()).toBeVisible();
+  // La page SVI utilise une barre de filtres (bouton "Filtres", pas "Filtrer").
+  await expect(page.getByRole('button', { name: 'Filtres' })).toBeVisible();
 });

@@ -40,6 +40,6 @@ test("84 - Révision d'une décision SVI : lecture seule sur fiche clôturée", 
       // TODO: verify this is the expected read-only state
       // Simplement assert que la section IPM1 existe mais n'autorise pas la saisie.
     }
-    await expect(page.getByText(/Inspection Post-Mortem/)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(/Inspection Post-Mortem/).first()).toBeVisible({ timeout: 10000 });
   }
 });
