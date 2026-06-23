@@ -130,7 +130,6 @@ function FEIChasseurLoaded() {
 
   const canEdit = useMemo(() => {
     for (const currentTransmission of transmissions) {
-      if (!currentTransmission) return true;
       if (
         currentTransmission.content.current_owner_role !== FeiOwnerRole.PREMIER_DETENTEUR &&
         currentTransmission.content.current_owner_role !== FeiOwnerRole.EXAMINATEUR_INITIAL
@@ -154,7 +153,6 @@ function FEIChasseurLoaded() {
 
   const canEditAsPremierDetenteur = useMemo(() => {
     for (const currentTransmission of transmissions) {
-      if (!currentTransmission) return false;
       if (
         currentTransmission.content.current_owner_role !== FeiOwnerRole.PREMIER_DETENTEUR &&
         currentTransmission.content.current_owner_role !== FeiOwnerRole.EXAMINATEUR_INITIAL

@@ -51,6 +51,8 @@ export default function ChasseurFeiEnvoyée() {
     );
   }, [transmissions]);
 
+  console.log({ transmissions });
+
   const unsendCarcasses = useMemo(() => {
     if (!unsendTransmissions.length) return [];
     const _unsendCarcasses = [];

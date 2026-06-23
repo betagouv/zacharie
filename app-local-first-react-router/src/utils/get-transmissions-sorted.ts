@@ -6,7 +6,7 @@ import {
   isCarcasseToTake,
   isCarcasseUnderMyResponsability,
 } from '@app/utils/is-carcasse-done';
-import { CarcasseType, Fei, UserRoles, CarcasseIntermediaire, Carcasse } from '@prisma/client';
+import { CarcasseType, Fei, UserRoles, CarcasseIntermediaire, Carcasse, FeiOwnerRole } from '@prisma/client';
 import { checkCarcasseAgainstTransmission, getCarcasseTransmission } from './get-carcasses-transmission';
 import { CarcasseTransmission, CarcasseTransmissionWihMetadata } from '@app/types/carcasse';
 import { abbreviations } from './count-carcasses';
@@ -16,6 +16,7 @@ import { buildTransmissionId, getTransmissionId } from './get-transmission-id';
 import { useParams } from 'react-router';
 import { CarcassesIntermediaire } from '@app/types/carcasses-intermediaire';
 import { TransmissionSimpleStatus } from '@app/types/transmission-steps';
+import { mapFeiFieldsToCarcasse } from './map-fei-fields-to-carcasse';
 
 type TransmissionSorted = {
   transmissionsEnCours: Array<CarcasseTransmissionWihMetadata>;
@@ -257,6 +258,10 @@ export function useTransmissions(): Record<
         continue;
       }
     }
+    console.log(
+      'ZACH-20260623-Q4MVT-184732 transmissionIdsByFeiNumero[fei.numero]',
+      transmissionIdsByFeiNumero['ZACH-20260623-Q4MVT-184732']
+    );
     if (meIsChassseur) {
       for (const fei of Object.values(feis)) {
         // la fei vient juste d'être créée, il n'y a pas encore de transmission
@@ -266,7 +271,11 @@ export function useTransmissions(): Record<
         const tempTransmissionId = buildTransmissionId(fei.numero);
         if (transmissions[tempTransmissionId]) continue;
         const transmission: CarcasseTransmissionWihMetadata = {
-          content: { ...fei }, // fields like examinateur_initial, etc. that will also exists in carcasses (when they will be created)
+          content: {
+            ...mapFeiFieldsToCarcasse(fei),
+            current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
+            current_owner_user_id: user.id,
+          }, // fields like examinateur_initial, etc. that will also exists in carcasses (when they will be created)
           labels: getTransmissionLabels('À compléter', fei, role, entitiesWorkingDirectlyFor),
           fei: {
             numero: fei.numero,
@@ -405,6 +414,7 @@ export function useGetTransmissionsForFei(fei_numero: string) {
   const currentTransmissions = useMemo(() => {
     const _currentTransmissions = [];
     for (const transmissionId of Object.keys(transmissions)) {
+      console.log(transmissionId, fei_numero);
       if (transmissionId.startsWith(fei_numero)) _currentTransmissions.push(transmissions[transmissionId]);
     }
     return _currentTransmissions;

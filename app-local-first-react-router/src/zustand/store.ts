@@ -177,7 +177,7 @@ const useZustandStore = create<State & Actions>()(
           for (const carcasse of carcassefeiCarcasses) {
             nextCarcasses[carcasse.zacharie_carcasse_id] = {
               ...carcasse,
-              ...mapFeiFieldsToCarcasse(nextFei, carcasse),
+              ...mapFeiFieldsToCarcasse(nextFei),
               updated_at: dayjs().toDate(),
               is_synced: false,
             };
