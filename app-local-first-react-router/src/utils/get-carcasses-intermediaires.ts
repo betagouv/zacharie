@@ -81,35 +81,6 @@ export function filterFeiIntermediaires(
   return Object.values(seen).sort((a, b) => (dayjs(a.created_at).diff(b.created_at) < 0 ? 1 : -1));
 }
 
-export function filterTransmissionIntermediaires(
-  byId: Record<FeiAndCarcasseAndIntermediaireIds, CarcasseIntermediaire>,
-  fei_numero: string,
-  zacharie_carcasse_id: string
-): Array<CarcassesIntermediaire> {
-  const seen: Record<string, CarcassesIntermediaire> = {};
-  for (const ci of Object.values(byId)) {
-    if (ci.fei_numero !== fei_numero || ci.deleted_at) continue;
-    if (ci.zacharie_carcasse_id !== zacharie_carcasse_id || ci.deleted_at) continue;
-    if (!seen[ci.intermediaire_id]) {
-      seen[ci.intermediaire_id] = {
-        id: ci.intermediaire_id,
-        fei_numero: ci.fei_numero,
-        intermediaire_user_id: ci.intermediaire_user_id,
-        intermediaire_entity_id: ci.intermediaire_entity_id,
-        intermediaire_role: ci.intermediaire_role,
-        created_at: ci.created_at,
-        prise_en_charge_at: ci.prise_en_charge_at,
-        intermediaire_depot_type: ci.intermediaire_depot_type,
-        intermediaire_depot_entity_id: ci.intermediaire_depot_entity_id,
-        intermediaire_prochain_detenteur_role_cache: ci.intermediaire_prochain_detenteur_role_cache,
-        intermediaire_prochain_detenteur_id_cache: ci.intermediaire_prochain_detenteur_id_cache,
-      };
-    }
-  }
-  // ordre chronologique décroissant, du plus récent au plus ancien
-  return Object.values(seen).sort((a, b) => (dayjs(a.created_at).diff(b.created_at) < 0 ? 1 : -1));
-}
-
 export function useFeiIntermediaires(fei_numero: string | undefined): Array<CarcassesIntermediaire> {
   const byId = useZustandStore((state) => state.carcassesIntermediaireById);
   const numberOfIntermediaires = Object.values(byId).length;

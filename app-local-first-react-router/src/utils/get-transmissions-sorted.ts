@@ -9,12 +9,12 @@ import {
 import { CarcasseType, Fei, UserRoles, CarcasseIntermediaire, Carcasse } from '@prisma/client';
 import { checkCarcasseAgainstTransmission, getCarcasseTransmission } from './get-carcasses-transmission';
 import { CarcasseTransmission, CarcasseTransmissionWihMetadata } from '@app/types/carcasse';
-import { filterTransmissionIntermediaires } from './get-carcasses-intermediaires';
 import { abbreviations } from './count-carcasses';
 import { getTransmissionLabels } from './transmission-labels';
 import { useEffect, useMemo, useState } from 'react';
 import { buildTransmissionId, getTransmissionId } from './get-transmission-id';
 import { useParams } from 'react-router';
+import { CarcassesIntermediaire } from '@app/types/carcasses-intermediaire';
 
 type TransmissionSorted = {
   transmissionsEnCours: Array<CarcasseTransmissionWihMetadata>;
@@ -47,7 +47,28 @@ export function useTransmissions(): Record<
     // Dernière prise en charge de chaque carcasse, en une seule passe sur tous les intermédiaires.
     // Sert à calculer les refus partiels (lots de petit gibier dont une partie a été refusée).
     const dernierAccepteParCarcasse = new Map<string, CarcasseIntermediaire>();
+    const intermediairesByCarcasseId: Record<string, Array<CarcassesIntermediaire>> = {};
     for (const ci of Object.values(carcassesIntermediaireById)) {
+      const list =
+        intermediairesByCarcasseId[ci.zacharie_carcasse_id] ??
+        (intermediairesByCarcasseId[ci.zacharie_carcasse_id] = []);
+      // insert ci so the list stays in descending created_at order (le plus récent en tête)
+      const t = new Date(ci.created_at).getTime();
+      let i = list.length;
+      while (i > 0 && new Date(list[i - 1].created_at).getTime() < t) i--;
+      list.splice(i, 0, {
+        id: ci.intermediaire_id,
+        fei_numero: ci.fei_numero,
+        intermediaire_user_id: ci.intermediaire_user_id,
+        intermediaire_entity_id: ci.intermediaire_entity_id,
+        intermediaire_role: ci.intermediaire_role,
+        created_at: ci.created_at,
+        prise_en_charge_at: ci.prise_en_charge_at,
+        intermediaire_depot_type: ci.intermediaire_depot_type,
+        intermediaire_depot_entity_id: ci.intermediaire_depot_entity_id,
+        intermediaire_prochain_detenteur_role_cache: ci.intermediaire_prochain_detenteur_role_cache,
+        intermediaire_prochain_detenteur_id_cache: ci.intermediaire_prochain_detenteur_id_cache,
+      });
       if (ci.deleted_at || !ci.prise_en_charge_at) continue;
       const prev = dernierAccepteParCarcasse.get(ci.zacharie_carcasse_id);
       if (!prev || new Date(ci.prise_en_charge_at) > new Date(prev.prise_en_charge_at!)) {
@@ -78,11 +99,7 @@ export function useTransmissions(): Record<
         if (!transmissionIdsByFeiNumero[fei.numero]) transmissionIdsByFeiNumero[fei.numero] = [];
         transmissionIdsByFeiNumero[fei.numero].push(transmissionId);
         // ordre chronologique décroissant, du plus récent au plus ancien
-        const intermediaires = filterTransmissionIntermediaires(
-          carcassesIntermediaireById,
-          fei.numero!,
-          carcasse.zacharie_carcasse_id
-        );
+        const intermediaires = intermediairesByCarcasseId[carcasse.zacharie_carcasse_id] || [];
         const transmissionWithIntermediaires: CarcasseTransmissionWihMetadata = {
           content: transmission,
           labels: getTransmissionLabels('Clôturée', transmission, role, entitiesWorkingDirectlyFor),

@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
-import { FeiOwnerRole } from '@prisma/client';
 import useZustandStore from '@app/zustand/store';
 import { Pagination } from '@codegouvfr/react-dsfr/Pagination';
 import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
@@ -17,8 +16,6 @@ import { useLocalStorage } from '@uidotdev/usehooks';
 import Chargement from '@app/components/Chargement';
 import Button from '@codegouvfr/react-dsfr/Button';
 import useExportCarcasses from '@app/utils/export-carcasses';
-import { getFeiAndCarcasseAndIntermediaireIdsFromCarcasse } from '@app/utils/get-carcasse-intermediaire-id';
-import { filterTransmissionIntermediaires } from '@app/utils/get-carcasses-intermediaires';
 import { getTransmissionLinkFromCarcasse } from '@app/utils/get-transmission-id';
 import { isCarcasseSviArchived } from '@app/utils/carcasse-svi-archived';
 import { loadData, useLoaderEffect } from '@app/utils/load-data';
@@ -28,8 +25,6 @@ export default function SviCarcasses() {
   const user = useMostFreshUser('svi-carcasses')!;
   const carcassesRegistry = useZustandStore((state) => state.carcassesRegistry);
   const feis = useZustandStore((state) => state.feis);
-  const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
-  const entities = useZustandStore((state) => state.entities);
   const [selectedCarcassesIds, setSelectedCarcassesIds] = useState<Array<string>>([]);
   const [loading, setLoading] = useState(false);
 
@@ -110,31 +105,6 @@ export default function SviCarcasses() {
   }, []);
 
   useSaveScroll('svi-carcasses-scrollY');
-
-  const getCollecteurName = (carcasse: (typeof carcassesRegistry)[number]): string | null => {
-    const intermediaires = filterTransmissionIntermediaires(
-      carcassesIntermediaireById,
-      carcasse.fei_numero,
-      carcasse.zacharie_carcasse_id
-    );
-    const collecteursPro: string[] = [];
-
-    for (const intermediaire of intermediaires) {
-      if (intermediaire.intermediaire_role === FeiOwnerRole.COLLECTEUR_PRO) {
-        const id = getFeiAndCarcasseAndIntermediaireIdsFromCarcasse(carcasse, intermediaire.id);
-        const carcasseIntermediaire = carcassesIntermediaireById[id];
-        if (carcasseIntermediaire) {
-          const collecteurEntity = entities[intermediaire.intermediaire_entity_id];
-          if (collecteurEntity?.nom_d_usage) {
-            collecteursPro.push(collecteurEntity.nom_d_usage);
-          }
-        }
-      }
-    }
-
-    if (collecteursPro.length === 0) return null;
-    return collecteursPro.join(', ');
-  };
 
   const renderMobileCarcasse = (carcasse: (typeof carcassesRegistry)[number]) => {
     const isChecked = selectedCarcassesIds.includes(carcasse.zacharie_carcasse_id);
@@ -222,12 +192,6 @@ export default function SviCarcasses() {
                   {carcasse.fei_numero}
                 </Link>
               </div>
-              {getCollecteurName(carcasse) && (
-                <div>
-                  <span className="font-semibold">Collecteur: </span>
-                  <span>{getCollecteurName(carcasse)}</span>
-                </div>
-              )}
             </div>
           </div>
         </td>
@@ -400,11 +364,6 @@ export default function SviCarcasses() {
                       {carcasse.fei_numero}
                     </Link>
                   ),
-                },
-                {
-                  dataKey: 'collecteur' as keyof (typeof carcassesRegistry)[number],
-                  title: 'Collecteur',
-                  render: (carcasse) => getCollecteurName(carcasse) || '-',
                 },
               ]}
             />
