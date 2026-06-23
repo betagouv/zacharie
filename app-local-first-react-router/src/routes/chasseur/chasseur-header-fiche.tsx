@@ -2,7 +2,9 @@ import dayjs from 'dayjs';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
 import { IconStep } from '@app/utils/transmission-labels';
 import { TransmissionSimpleStatus } from '@app/types/transmission-steps';
-import { useGetTransmissionFromURLParams } from '@app/utils/get-transmissions-sorted';
+import { useGetChasseurStatusAndLabel } from '@app/utils/get-transmissions-sorted';
+import { useParams } from 'react-router';
+import useZustandStore from '@app/zustand/store';
 
 const statusColors: Record<TransmissionSimpleStatus, { bg: string; text: string }> = {
   'À compléter': { bg: 'bg-[#FEE7FC]', text: 'text-[#6E445A]' },
@@ -11,10 +13,10 @@ const statusColors: Record<TransmissionSimpleStatus, { bg: string; text: string 
 };
 
 export default function ChasseurHeaderFiche() {
-  const transmission = useGetTransmissionFromURLParams();
-  const fei = transmission.fei;
-  const simpleStatus = transmission.labels.simpleStatus;
-  const currentStepLabelForChasseur = transmission.labels.currentStepLabel;
+  const params = useParams();
+  const feis = useZustandStore((state) => state.feis);
+  const fei = feis[params.fei_numero!];
+  const [simpleStatus, currentStepLabelForChasseur] = useGetChasseurStatusAndLabel(params.fei_numero!);
 
   const isNewFiche = !fei.date_mise_a_mort && !fei.commune_mise_a_mort;
   const title = isNewFiche

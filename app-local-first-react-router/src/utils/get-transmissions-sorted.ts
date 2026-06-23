@@ -15,6 +15,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { buildTransmissionId, getTransmissionId } from './get-transmission-id';
 import { useParams } from 'react-router';
 import { CarcassesIntermediaire } from '@app/types/carcasses-intermediaire';
+import { TransmissionSimpleStatus } from '@app/types/transmission-steps';
 
 type TransmissionSorted = {
   transmissionsEnCours: Array<CarcasseTransmissionWihMetadata>;
@@ -397,4 +398,49 @@ export function useGetTransmissionFromTransmissionId(transmissionId: string) {
   }, [transmissions, transmissionId]);
 
   return transmission;
+}
+
+export function useGetTransmissionsForFei(fei_numero: string) {
+  const transmissions = useTransmissions();
+  const currentTransmissions = useMemo(() => {
+    const _currentTransmissions = [];
+    for (const transmissionId of Object.keys(transmissions)) {
+      if (transmissionId.startsWith(fei_numero)) _currentTransmissions.push(transmissions[transmissionId]);
+    }
+    return _currentTransmissions;
+  }, [transmissions, fei_numero]);
+  return currentTransmissions;
+}
+
+export function useGetChasseurStatusAndLabel(fei_numero: string): [TransmissionSimpleStatus, string] {
+  // peut-être qu'il y a eu dispatch ? si c'est le cas, pour les status, on prend les pires scénarios
+  const transmissions = useGetTransmissionsForFei(fei_numero);
+  const [simpleStatus, currentStepLabelForChasseur] = useMemo(
+    () => getWorseLabelsOfTransmissions(transmissions),
+    [transmissions]
+  );
+  return [simpleStatus, currentStepLabelForChasseur];
+}
+
+export function getWorseLabelsOfTransmissions(
+  transmissions: Array<CarcasseTransmissionWihMetadata>
+): [TransmissionSimpleStatus, string] {
+  let _simpleStatus: TransmissionSimpleStatus = 'Clôturée';
+  let _currentStepLabelForChasseur = '';
+  for (const transmission of transmissions) {
+    if (transmission.labels.simpleStatus === 'À compléter') {
+      _simpleStatus = transmission.labels.simpleStatus;
+      _currentStepLabelForChasseur = transmission.labels.currentStepLabel;
+      break;
+    }
+    if (transmission.labels.simpleStatus === 'En cours') {
+      _simpleStatus = transmission.labels.simpleStatus;
+      _currentStepLabelForChasseur = transmission.labels.currentStepLabel;
+      continue;
+    }
+    if (_simpleStatus === 'En cours') continue;
+    _simpleStatus = transmission.labels.simpleStatus;
+    _currentStepLabelForChasseur = transmission.labels.currentStepLabel;
+  }
+  return [_simpleStatus, _currentStepLabelForChasseur];
 }
