@@ -16,7 +16,6 @@ import { devtools, persist } from 'zustand/middleware';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 dayjs.extend(utc);
-import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
 import type { HistoryInput } from '@app/utils/create-history-entry';
 import updateCarcasseStatus from '@app/utils/get-carcasse-status';
 import {

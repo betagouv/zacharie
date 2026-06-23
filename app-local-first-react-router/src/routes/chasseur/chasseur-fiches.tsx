@@ -7,6 +7,7 @@ import dayjs from 'dayjs';
 import useZustandStore from '@app/zustand/store';
 import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { useTransmissionsSorted } from '@app/utils/get-transmissions-sorted';
+import { getTransmissionIdFromMetadata, getTransmissionLink } from '@app/utils/get-transmission-id';
 import { createNewFei } from '@app/utils/create-new-fei';
 import { useNavigate, useSearchParams, Link } from 'react-router';
 import ExportTransmissionsModal from '@app/components/ExportTransmissionsModal';
@@ -962,8 +963,8 @@ function FeisWrapper({
             transmission={transmission}
             filter={'Toutes les fiches'}
             onPrintSelect={handleCheckboxClick}
-            isPrintSelected={selectedTransmissions.includes(transmission.fei.numero!)}
-            linkTo={`/app/chasseur/fei/${transmission.fei.numero}`}
+            isPrintSelected={selectedTransmissions.includes(getTransmissionIdFromMetadata(transmission))}
+            linkTo={`/app/chasseur/fei/${getTransmissionLink(transmission)}`}
             detenteurName={transmission.content.premier_detenteur_name_cache ?? null}
             detenteurIcon={<ChasseIcon />}
           />
@@ -994,8 +995,8 @@ function FeisTableRow({
   // Notifier le parent de la visibilité de cette ligne
   useEffect(() => {
     const isVisible = !filter || filter === 'Toutes les fiches' || filter === simpleStatus;
-    onVisibilityChange?.(transmission.fei.numero!, isVisible);
-  }, [filter, simpleStatus, transmission.fei.numero, onVisibilityChange]);
+    onVisibilityChange?.(getTransmissionIdFromMetadata(transmission), isVisible);
+  }, [filter, simpleStatus, transmission.fei.numero, onVisibilityChange, transmission]);
 
   const [formattedCarcassesAcceptées, _carcassesOuLotsRefusés] = useMemo(() => {
     const formatted = formatCountCarcasseByEspece(transmission.carcasses) as string[];
@@ -1042,7 +1043,7 @@ function FeisTableRow({
     <tr
       key={transmission.fei.numero!}
       className={`cursor-pointer border-b border-gray-200 hover:bg-gray-50 ${isSelected ? 'bg-blue-50' : ''}`}
-      onClick={() => navigate(`/app/chasseur/fei/${transmission.fei.numero!}`)}
+      onClick={() => navigate(`/app/chasseur/fei/${getTransmissionLink(transmission)}`)}
     >
       <td
         className="px-4 py-3"
@@ -1053,7 +1054,7 @@ function FeisTableRow({
             type="checkbox"
             checked={isSelected}
             className="checked:accent-action-high-blue-france h-4 w-4 border-2"
-            onChange={() => onPrintSelect?.(transmission.fei.numero!, !isSelected)}
+            onChange={() => onPrintSelect?.(getTransmissionIdFromMetadata(transmission), !isSelected)}
           />
         </div>
       </td>
@@ -1167,7 +1168,7 @@ function FeisTable({
               <FeisTableRow
                 key={transmission.fei.numero}
                 transmission={transmission}
-                isSelected={selectedTransmissions.includes(transmission.fei.numero!)}
+                isSelected={selectedTransmissions.includes(getTransmissionIdFromMetadata(transmission))}
                 onPrintSelect={handleCheckboxClick}
                 navigate={navigate}
                 filter={filter}

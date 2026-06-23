@@ -25,7 +25,7 @@ import { useLocalStorage } from '@uidotdev/usehooks';
 import { useEntitiesIdsWorkingDirectlyForObj } from '@app/utils/get-entity-relations';
 import { useLoaderEffect, loadData } from '@app/utils/load-data';
 import Chargement from '@app/components/Chargement';
-import { getTransmissionLink } from '@app/utils/get-transmission-id';
+import { getTransmissionLink, getTransmissionIdFromMetadata } from '@app/utils/get-transmission-id';
 
 type ViewType = 'grid' | 'table';
 type TransmissionIdSelection = Array<string>;
@@ -563,7 +563,7 @@ function FeisWrapper({
             transmission={transmission}
             filter={'Toutes les fiches'}
             onPrintSelect={handleCheckboxClick}
-            isPrintSelected={selectedTransmissions.includes(transmission.fei.numero!)}
+            isPrintSelected={selectedTransmissions.includes(getTransmissionIdFromMetadata(transmission))}
             linkTo={`/app/collecteur/fei/${getTransmissionLink(transmission)}`}
             detenteurName={detenteurPrecedent.name}
             detenteurIcon={detenteurPrecedent.icon}
@@ -596,7 +596,7 @@ function FeisTableRow({
   // Notifier le parent de la visibilité de cette ligne
   useEffect(() => {
     const isVisible = !filter || filter === 'Toutes les fiches' || filter === simpleStatus;
-    onVisibilityChange?.(transmission.fei.numero!, isVisible);
+    onVisibilityChange?.(getTransmissionIdFromMetadata(transmission), isVisible);
   }, [filter, simpleStatus, transmission.fei.numero, onVisibilityChange]);
 
   const [formattedCarcassesAcceptées, _carcassesOuLotsRefusés] = useMemo(() => {
@@ -655,7 +655,7 @@ function FeisTableRow({
             type="checkbox"
             checked={isSelected}
             className="checked:accent-action-high-blue-france h-4 w-4 border-2"
-            onChange={() => onPrintSelect?.(transmission.fei.numero!, !isSelected)}
+            onChange={() => onPrintSelect?.(getTransmissionIdFromMetadata(transmission), !isSelected)}
           />
         </div>
       </td>
@@ -777,7 +777,7 @@ function FeisTable({
               <FeisTableRow
                 key={transmission.fei.numero}
                 transmission={transmission}
-                isSelected={selectedTransmissions.includes(transmission.fei.numero!)}
+                isSelected={selectedTransmissions.includes(getTransmissionIdFromMetadata(transmission))}
                 onPrintSelect={handleCheckboxClick}
                 navigate={navigate}
                 filter={filter}

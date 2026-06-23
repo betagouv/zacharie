@@ -17,7 +17,17 @@ export function getTransmissionId(
 }
 
 export function buildTransmissionId(numero: string, id?: string) {
-  return `${numero}__${id}`;
+  if (id) return `${numero}__${id}`;
+  return `${numero}__`;
+}
+
+// id de transmission à partir de l'objet enrichi (listes/grilles de fiches),
+// identique à la clé sous laquelle `useTransmissions` indexe la transmission.
+// une fiche tout juste créée n'a pas encore de carcasse : son content est la Fei brute
+// (sans fei_numero), on retombe alors sur l'id simulé par le seul numéro de fiche.
+export function getTransmissionIdFromMetadata(transmission: CarcasseTransmissionWihMetadata) {
+  if (!transmission.content.fei_numero) return buildTransmissionId(transmission.fei.numero);
+  return getTransmissionId(transmission.content);
 }
 
 export function getTransmissionLink(transmission: CarcasseTransmissionWihMetadata) {

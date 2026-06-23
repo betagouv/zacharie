@@ -363,6 +363,7 @@ export function useGetTransmissionFromURLParams() {
   const fei_numero = params.fei_numero!;
   const premier_detenteur_prochain_detenteur_id_cache = params.premier_detenteur_prochain_detenteur_id_cache;
   const transmissionId = buildTransmissionId(fei_numero, premier_detenteur_prochain_detenteur_id_cache);
+  console.log({ transmissionId, premier_detenteur_prochain_detenteur_id_cache });
   const transmission = useGetTransmissionFromTransmissionId(transmissionId);
   return transmission;
 }
@@ -378,6 +379,7 @@ export function useGetTransmissionFromCarcasse(carcasse: Carcasse) {
 
 export function useGetTransmissionFromTransmissionId(transmissionId: string) {
   const transmissions = useTransmissions();
+  console.log({ transmissions });
   const [transmission, setTransmission] = useState<CarcasseTransmissionWihMetadata>(
     transmissions[transmissionId]
   );

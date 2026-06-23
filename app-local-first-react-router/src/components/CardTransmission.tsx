@@ -8,6 +8,7 @@ import useZustandStore from '@app/zustand/store';
 import { useIsCircuitCourt } from '@app/utils/circuit-court';
 import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
 import { CarcasseTransmissionWihMetadata } from '@app/types/carcasse';
+import { getTransmissionIdFromMetadata } from '@app/utils/get-transmission-id';
 
 interface CardProps {
   transmission: CarcasseTransmissionWihMetadata;
@@ -130,7 +131,7 @@ export default function CardTransmission({
               label: '',
               nativeInputProps: {
                 checked: isPrintSelected,
-                onChange: () => onPrintSelect?.(transmission.fei.numero!, !isPrintSelected),
+                onChange: () => onPrintSelect?.(getTransmissionIdFromMetadata(transmission), !isPrintSelected),
               },
             },
           ]}
