@@ -64,7 +64,7 @@ export function PendingModificationBanner({ carcasse }: { carcasse: Carcasse }) 
     // existed because of this request.
     updateCarcasseModifRequest(pending.zacharie_carcasse_id, { deleted_at: dayjs().toDate() });
     if (pending.type === CarcasseModificationRequestType.NEW_CARCASSE) {
-      updateCarcasse(carcasse.zacharie_carcasse_id, { deleted_at: dayjs().toDate() }, true);
+      updateCarcasse(carcasse.zacharie_carcasse_id, { deleted_at: dayjs().toDate() });
     }
     syncData('PendingModificationBanner.onCancel');
   };

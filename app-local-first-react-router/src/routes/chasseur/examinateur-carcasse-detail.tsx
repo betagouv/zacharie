@@ -369,7 +369,7 @@ function ExaminateurCarcasseDetailLoaded() {
     zacharie_carcasse_id: Parameters<typeof updateStateCarcasse>[0],
     partialCarcasse: Parameters<typeof updateStateCarcasse>[1]
   ) => {
-    updateStateCarcasse(zacharie_carcasse_id, partialCarcasse, true);
+    updateStateCarcasse(zacharie_carcasse_id, partialCarcasse);
     addLog({
       user_id: user.id,
       user_role: UserRoles.CHASSEUR,

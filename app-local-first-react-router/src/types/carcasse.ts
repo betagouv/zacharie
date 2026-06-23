@@ -13,14 +13,6 @@ export interface CarcasseFieldsTakenFromFei {
   heure_evisceration: Carcasse['heure_evisceration'];
   heure_mise_a_mort_premiere_carcasse_fei: Carcasse['heure_mise_a_mort_premiere_carcasse_fei'];
   heure_evisceration_derniere_carcasse_fei: Carcasse['heure_evisceration_derniere_carcasse_fei'];
-  premier_detenteur_depot_type: Carcasse['premier_detenteur_depot_type'];
-  premier_detenteur_depot_entity_id: Carcasse['premier_detenteur_depot_entity_id'];
-  premier_detenteur_depot_entity_name_cache: Carcasse['premier_detenteur_depot_entity_name_cache'];
-  premier_detenteur_depot_ccg_at: Carcasse['premier_detenteur_depot_ccg_at'];
-  premier_detenteur_transport_type: Carcasse['premier_detenteur_transport_type'];
-  premier_detenteur_transport_date: Carcasse['premier_detenteur_transport_date'];
-  premier_detenteur_prochain_detenteur_role_cache: Carcasse['premier_detenteur_prochain_detenteur_role_cache'];
-  premier_detenteur_prochain_detenteur_id_cache: Carcasse['premier_detenteur_prochain_detenteur_id_cache'];
   examinateur_initial_offline: Carcasse['examinateur_initial_offline'];
   examinateur_initial_user_id: Carcasse['examinateur_initial_user_id'];
   examinateur_initial_approbation_mise_sur_le_marche: Carcasse['examinateur_initial_approbation_mise_sur_le_marche'];
@@ -30,14 +22,6 @@ export interface CarcasseFieldsTakenFromFei {
   premier_detenteur_user_id: Carcasse['premier_detenteur_user_id'];
   premier_detenteur_entity_id: Carcasse['premier_detenteur_entity_id'];
   premier_detenteur_name_cache: Carcasse['premier_detenteur_name_cache'];
-  intermediaire_closed_at: Carcasse['intermediaire_closed_at'];
-  intermediaire_closed_by_user_id: Carcasse['intermediaire_closed_by_user_id'];
-  intermediaire_closed_by_entity_id: Carcasse['intermediaire_closed_by_entity_id'];
-  latest_intermediaire_user_id: Carcasse['latest_intermediaire_user_id'];
-  latest_intermediaire_entity_id: Carcasse['latest_intermediaire_entity_id'];
-  latest_intermediaire_name_cache: Carcasse['latest_intermediaire_name_cache'];
-  svi_assigned_at: Carcasse['svi_assigned_at'];
-  svi_user_id: Carcasse['svi_user_id'];
 }
 
 export type CarcasseTransmission = Partial<
