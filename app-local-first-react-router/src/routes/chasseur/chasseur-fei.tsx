@@ -295,10 +295,11 @@ function FEIChasseurLoaded() {
     !!(
       showBloc2 &&
       carcasses.length >= 1 &&
+      !fei.consommateur_final_usage_domestique &&
       fei.heure_mise_a_mort_premiere_carcasse &&
       (onlyPetitGibier || fei.heure_evisceration_derniere_carcasse)
     );
-  const showBloc4 = showBloc3;
+  const showBloc4 = fei.consommateur_final_usage_domestique || showBloc3;
 
   const handleTransmettre = () => {
     // Compte pas encore activé (CFEI non validé) : la fiche peut être préparée mais pas transmise.
@@ -636,19 +637,49 @@ function FEIChasseurLoaded() {
                       'examinateur_initial_date_approbation_mise_sur_le_marche'
                     )}
                     hintText={
-                      canEdit && !fei.examinateur_initial_date_approbation_mise_sur_le_marche ? (
-                        <button
-                          className="rounded-full bg-[#E8EDFF] px-3 py-1 text-left text-sm text-[#000091]"
-                          type="button"
-                          onClick={() => {
-                            updateFei(fei.numero, {
-                              examinateur_initial_date_approbation_mise_sur_le_marche: dayjs().toDate(),
-                              resume_nombre_de_carcasses: countCarcassesByEspece.join('\n'),
-                            });
-                          }}
-                        >
-                          Date du jour et maintenant
-                        </button>
+                      canEdit ? (
+                        <>
+                          <button
+                            className="mr-2 inline-block text-left"
+                            type="button"
+                            onClick={() => {
+                              updateFei(fei.numero, {
+                                examinateur_initial_date_approbation_mise_sur_le_marche: dayjs().toDate(),
+                                resume_nombre_de_carcasses: countCarcassesByEspece.join('\n'),
+                              });
+                            }}
+                          >
+                            <u className="inline">Cliquez ici</u> pour définir la date du jour et maintenant.
+                          </button>
+                          <button
+                            className="inline-block text-left"
+                            type="button"
+                            onClick={() => {
+                              let nextConsoPrivee = fei.consommateur_final_usage_domestique
+                                ? null
+                                : dayjs().toDate();
+                              updateFei(fei.numero, {
+                                consommateur_final_usage_domestique: nextConsoPrivee,
+                                premier_detenteur_user_id: nextConsoPrivee ? user.id : null,
+                                premier_detenteur_name_cache: nextConsoPrivee
+                                  ? `${user.prenom} ${user.nom_de_famille}`
+                                  : null,
+                              });
+                            }}
+                          >
+                            {fei.consommateur_final_usage_domestique ? (
+                              <>
+                                <u className="inline">Cliquez là</u> si les carcasses sont destinées à une
+                                mise sur le marché.
+                              </>
+                            ) : (
+                              <>
+                                <u className="inline">Cliquez là</u> si vous êtes le consommateur final, ou si
+                                vous en faites un usage domestique privé.
+                              </>
+                            )}
+                          </button>
+                        </>
                       ) : (
                         "Cette date vaut date d'approbation de mise sur le marché"
                       )
