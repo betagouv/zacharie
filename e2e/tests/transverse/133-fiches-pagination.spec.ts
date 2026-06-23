@@ -13,9 +13,7 @@ test.beforeAll(async () => {
 // Régression visée : une `key` React non unique sur les cartes faisait que le contenu ne
 // changeait pas en changeant de page. On vérifie donc que les fiches de la page 2 sont
 // bien DIFFÉRENTES de celles de la page 1.
-test('Pagination des fiches chasseur : la page 2 affiche d’autres fiches que la page 1', async ({
-  page,
-}) => {
+test('Pagination des fiches chasseur : la page 2 affiche d’autres fiches que la page 1', async ({ page }) => {
   await connectWith(page, 'premier-detenteur@example.fr');
   await expect(page).toHaveURL('http://localhost:3290/app/chasseur');
 
