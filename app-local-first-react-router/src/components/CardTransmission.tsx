@@ -131,7 +131,8 @@ export default function CardTransmission({
               label: '',
               nativeInputProps: {
                 checked: isPrintSelected,
-                onChange: () => onPrintSelect?.(getTransmissionIdFromMetadata(transmission), !isPrintSelected),
+                onChange: () =>
+                  onPrintSelect?.(getTransmissionIdFromMetadata(transmission), !isPrintSelected),
               },
             },
           ]}

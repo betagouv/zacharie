@@ -641,6 +641,8 @@ Christine
           intermediaire_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
           intermediaire_user_id: users.find((u) => u.email === 'etg-1@example.fr')?.id ?? '',
           intermediaire_role: FeiOwnerRole.ETG,
+          // commentaire distinctif sur une seule carcasse pour couvrir la recherche locale par commentaire (e2e spec 130)
+          commentaire: c.numero_bracelet === 'MM-001-001' ? 'RECHERCHE-COMMENTAIRE-TEST' : null,
           prise_en_charge_at: dayjs().subtract(2, 'day').toDate(),
         })),
       });
