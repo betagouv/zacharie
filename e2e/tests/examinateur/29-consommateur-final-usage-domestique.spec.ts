@@ -76,7 +76,5 @@ test('Bloc 4 — toggle « consommateur final » updates cert label & button tex
   // Toggle OFF again — verify the original state is restored.
   await revertBtn.click();
   await expect(page.getByText(/peuvent être mises sur le marché/i).first()).toBeVisible();
-  await expect(
-    page.getByRole('button', { name: /si vous êtes le consommateur final/i })
-  ).toBeVisible();
+  await expect(page.getByRole('button', { name: /si vous êtes le consommateur final/i })).toBeVisible();
 });

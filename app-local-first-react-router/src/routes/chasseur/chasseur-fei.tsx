@@ -295,10 +295,11 @@ function FEIChasseurLoaded() {
     !!(
       showBloc2 &&
       carcasses.length >= 1 &&
+      !fei.consommateur_final_usage_domestique &&
       fei.heure_mise_a_mort_premiere_carcasse &&
       (onlyPetitGibier || fei.heure_evisceration_derniere_carcasse)
     );
-  const showBloc4 = showBloc3;
+  const showBloc4 = fei.consommateur_final_usage_domestique || showBloc3;
 
   const handleTransmettre = () => {
     // Compte pas encore activé (CFEI non validé) : la fiche peut être préparée mais pas transmise.
