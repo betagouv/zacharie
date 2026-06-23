@@ -70,7 +70,7 @@ export default function RouterSvi() {
         />
       </Route>
       <Route
-        path="fei/:fei_numero"
+        path="fei/:fei_numero/:premier_detenteur_prochain_detenteur_id_cache"
         element={<SviFei />}
       />
       <Route

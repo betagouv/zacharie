@@ -20,11 +20,12 @@ test.describe('Search dropdown redirectUrl', () => {
     const search = page.getByPlaceholder('Rechercher (carcasse ou fiche en cours)').first();
     await search.fill(feiId);
 
-    const result = page.getByRole('link', { name: new RegExp(feiId) });
+    // Le SVI navigue vers une transmission : /app/svi/fei/:numero/:premier_detenteur_prochain_detenteur_id_cache
+    const result = page.getByRole('link', { name: new RegExp(`Fiche ${feiId}`) }).first();
     await expect(result).toBeVisible({ timeout: 10000 });
-    await expect(result).toHaveAttribute('href', `/app/svi/fei/${feiId}`);
+    await expect(result).toHaveAttribute('href', new RegExp(`^/app/svi/fei/${feiId}/`));
     await result.click();
-    await expect(page).toHaveURL(`http://localhost:3290/app/svi/fei/${feiId}`);
+    await expect(page).toHaveURL(new RegExp(`/app/svi/fei/${feiId}/`));
   });
 
   test('ETG search lands on /app/etg/fei/:numero', async ({ page }) => {

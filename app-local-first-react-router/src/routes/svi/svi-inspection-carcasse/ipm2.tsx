@@ -9,7 +9,7 @@ import {
   IPM2Decision,
   IPM2Traitement,
   Carcasse,
-  Fei,
+  FeiOwnerRole,
   IPM1Decision,
   PoidsType,
 } from '@prisma/client';
@@ -28,12 +28,12 @@ import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import { syncData } from '@app/utils/sync-data';
-import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import Checkbox from '@codegouvfr/react-dsfr/Checkbox';
 import InputMultiSelect from '@app/components/InputMultiSelect';
+import { useGetTransmissionFromCarcasse } from '@app/utils/get-transmissions-sorted';
 
 const lesionsOuMotifsConsigneModal = createModal({
   isOpenedByDefault: false,
@@ -51,17 +51,21 @@ const etablissementsTraitementSanitaireModal = createModal({
 export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
   const params = useParams();
   const user = useUser((state) => state.user)!;
-  const feis = useZustandStore((state) => state.feis);
-  const fei = feis[params.fei_numero!];
 
   const updateCarcasse = useZustandStore((state) => state.updateCarcasse);
   const updateCarcassesTransmission = useZustandStore((state) => state.updateCarcassesTransmission);
-  const updateFei = useZustandStore((state) => state.updateFei);
   const addLog = useZustandStore((state) => state.addLog);
-  const carcasses = useZustandStore((state) => state.carcasses);
-  const carcasse = carcasses[params.zacharie_carcasse_id!];
-  const feiCarcasses = useCarcassesForFei(params.fei_numero);
-  const carcasseIds = feiCarcasses.map((c) => c.zacharie_carcasse_id);
+  const allCarcasses = useZustandStore((state) => state.carcasses);
+  const carcasse = allCarcasses[params.zacharie_carcasse_id!];
+  const transmission = useGetTransmissionFromCarcasse(carcasse);
+  // on ne met à jour que les carcasses du même groupe de transmission
+  const carcasseIds = transmission.carcasses
+    .filter(
+      (c) =>
+        c.premier_detenteur_prochain_detenteur_id_cache ===
+        carcasse.premier_detenteur_prochain_detenteur_id_cache
+    )
+    .map((c) => c.zacharie_carcasse_id);
 
   const [sviIpm2PresenteeInspection, setSviIpm2PresenteeInspection] = useState(
     carcasse.svi_ipm2_presentee_inspection ?? true
@@ -234,46 +238,29 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
       svi_assigned_to_fei_at: carcasse.svi_assigned_to_fei_at ?? dayjs.utc().toDate(),
     };
     updateCarcasse(carcasse.zacharie_carcasse_id, partialCarcasse, true);
-    if (fei.fei_current_owner_role !== UserRoles.SVI) {
+    if (carcasse.current_owner_role !== FeiOwnerRole.SVI) {
       updateCarcassesTransmission(carcasseIds, {
-        current_owner_role: UserRoles.SVI as unknown as Fei['fei_current_owner_role'],
-        current_owner_entity_id: fei.fei_next_owner_entity_id ?? null,
-        current_owner_entity_name_cache: fei.fei_next_owner_entity_name_cache ?? null,
+        current_owner_role: FeiOwnerRole.SVI,
+        current_owner_entity_id: carcasse.next_owner_entity_id ?? null,
+        current_owner_entity_name_cache: carcasse.next_owner_entity_name_cache ?? null,
         current_owner_user_id: user.id,
         current_owner_user_name_cache:
-          fei.fei_next_owner_user_name_cache || `${user.prenom} ${user.nom_de_famille}`,
+          carcasse.next_owner_user_name_cache || `${user.prenom} ${user.nom_de_famille}`,
         next_owner_role: null,
         next_owner_user_id: null,
         next_owner_user_name_cache: null,
         next_owner_entity_id: null,
         next_owner_entity_name_cache: null,
-        prev_owner_role: fei.fei_current_owner_role || null,
-        prev_owner_user_id: fei.fei_current_owner_user_id || null,
-        prev_owner_entity_id: fei.fei_current_owner_entity_id || null,
-      });
-      const nextFei: Partial<Fei> = {
-        fei_current_owner_role: UserRoles.SVI,
-        fei_current_owner_entity_id: fei.fei_next_owner_entity_id,
-        fei_current_owner_entity_name_cache: fei.fei_next_owner_entity_name_cache,
-        fei_current_owner_user_id: user.id,
-        fei_current_owner_user_name_cache:
-          fei.fei_next_owner_user_name_cache || `${user.prenom} ${user.nom_de_famille}`,
-        fei_next_owner_role: null,
-        fei_next_owner_user_id: null,
-        fei_next_owner_user_name_cache: null,
-        fei_next_owner_entity_id: null,
-        fei_next_owner_entity_name_cache: null,
-        fei_prev_owner_role: fei.fei_current_owner_role || null,
-        fei_prev_owner_user_id: fei.fei_current_owner_user_id || null,
-        fei_prev_owner_entity_id: fei.fei_current_owner_entity_id || null,
+        prev_owner_role: carcasse.current_owner_role || null,
+        prev_owner_user_id: carcasse.current_owner_user_id || null,
+        prev_owner_entity_id: carcasse.current_owner_entity_id || null,
         svi_user_id: user.id,
-      };
-      updateFei(fei.numero, nextFei);
+      });
     }
     addLog({
       user_id: user.id,
       user_role: UserRoles.SVI,
-      fei_numero: fei.numero,
+      fei_numero: carcasse.fei_numero,
       action: 'svi-ipm2-edit',
       history: createHistoryInput(carcasse, partialCarcasse),
       entity_id: null,

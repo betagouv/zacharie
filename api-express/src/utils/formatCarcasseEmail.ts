@@ -263,6 +263,12 @@ export async function formatSviAssignedEmail(fei: Fei): Promise<[string, string]
     },
   });
 
+  // le SVI consulte une transmission (fiche + prochain détenteur du premier détenteur), pas la fiche seule
+  const prochainDetenteurIdCache = feiCarcasses[0]?.premier_detenteur_prochain_detenteur_id_cache;
+  const transmissionLink = prochainDetenteurIdCache
+    ? `${fei.numero}/${prochainDetenteurIdCache}`
+    : fei.numero;
+
   const email = [
     `Bonjour,`,
     `L’établissement ${currentEntity?.nom_d_usage} vous a transmis une fiche comprenant ${feiCarcasses.length} carcasses (ou lots) à inspecter:`,
@@ -272,7 +278,7 @@ export async function formatSviAssignedEmail(fei: Fei): Promise<[string, string]
           `-> ${carcasse.type === CarcasseType.PETIT_GIBIER ? `${carcasse.nombre_d_animaux} ` : ''}${carcasse.espece} (${carcasse.numero_bracelet})`
       )
       .join('\n'),
-    `Pour consulter la fiche, rendez-vous sur Zacharie : https://zacharie.beta.gouv.fr/app/svi/fei/${fei.numero}`,
+    `Pour consulter la fiche, rendez-vous sur Zacharie : https://zacharie.beta.gouv.fr/app/svi/fei/${transmissionLink}`,
     `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur l'attribution de cette fiche, merci de contacter l’établissement qui a traité votre fiche.`,
   ];
   const object = `L’établissement ${currentEntity?.nom_d_usage} vous a transmis une fiche comprenant ${feiCarcasses.length} carcasses (ou lots) à inspecter:`;
