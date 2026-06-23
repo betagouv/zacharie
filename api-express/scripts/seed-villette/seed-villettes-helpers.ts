@@ -535,7 +535,7 @@ export function buildCarcasse(input: CarcasseBuildInput): Prisma.CarcasseUncheck
       .toDate();
     return {
       ...base,
-      svi_assigned_to_fei_at: fei.svi_assigned_at as Date,
+      svi_assigned_at: fei.svi_assigned_at as Date,
       svi_ipm1_date: ipm1Date,
       svi_ipm1_user_id: ctx.sviUserId,
       svi_ipm1_protocole: IPM1Protocole.STANDARD,
@@ -558,7 +558,7 @@ export function buildCarcasse(input: CarcasseBuildInput): Prisma.CarcasseUncheck
     // ACCEPTE direct
     return {
       ...base,
-      svi_assigned_to_fei_at: fei.svi_assigned_at as Date,
+      svi_assigned_at: fei.svi_assigned_at as Date,
       svi_ipm1_date: ipm1Date,
       svi_ipm1_user_id: ctx.sviUserId,
       svi_ipm1_protocole: IPM1Protocole.STANDARD,
@@ -591,7 +591,7 @@ export function buildCarcasse(input: CarcasseBuildInput): Prisma.CarcasseUncheck
   }
   return {
     ...base,
-    svi_assigned_to_fei_at: fei.svi_assigned_at as Date,
+    svi_assigned_at: fei.svi_assigned_at as Date,
     svi_ipm1_date: ipm1Date,
     svi_ipm1_user_id: ctx.sviUserId,
     svi_ipm1_protocole: IPM1Protocole.STANDARD,

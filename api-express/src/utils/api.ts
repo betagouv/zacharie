@@ -52,7 +52,7 @@ export function mapCarcasseForApi(carcasse: CarcasseGetForApi, fei: FeiGetForApi
     latest_intermediaire_carcasse_manquante: carcasse.intermediaire_carcasse_manquante,
     latest_intermediaire_decision_at: carcasse.latest_intermediaire_signed_at,
     latest_intermediaire_prise_en_charge_at: carcasse.latest_intermediaire_signed_at,
-    svi_assigned_to_fei_at: carcasse.svi_assigned_to_fei_at,
+    svi_assigned_at: carcasse.svi_assigned_at,
     carcasse_status: carcasse.svi_carcasse_status,
     carcasse_status_set_at: carcasse.svi_carcasse_status_set_at,
     svi_ipm1_date: carcasse.svi_ipm1_date,

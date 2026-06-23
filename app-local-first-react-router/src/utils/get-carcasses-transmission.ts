@@ -20,7 +20,6 @@ export function getCarcasseTransmission(carcasseRef: Carcasse): CarcasseTransmis
     intermediaire_carcasse_refus_motif: carcasseRef.intermediaire_carcasse_refus_motif,
     intermediaire_carcasse_manquante: carcasseRef.intermediaire_carcasse_manquante,
     latest_intermediaire_signed_at: carcasseRef.latest_intermediaire_signed_at,
-    svi_assigned_to_fei_at: carcasseRef.svi_assigned_to_fei_at,
     created_by_user_id: carcasseRef.created_by_user_id,
     examinateur_initial_user_id: carcasseRef.examinateur_initial_user_id,
     examinateur_initial_approbation_mise_sur_le_marche:

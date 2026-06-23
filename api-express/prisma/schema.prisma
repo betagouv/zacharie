@@ -560,7 +560,6 @@ model Carcasse {
   /**
    * SVI
    */
-  svi_assigned_to_fei_at                                  DateTime? // same as svi_assigned_at in fei
   svi_carcasse_commentaire                                String? // cache of ipm1 and ipm2 comments
   svi_carcasse_status                                     CarcasseStatus?
   svi_carcasse_status_set_at                              DateTime?

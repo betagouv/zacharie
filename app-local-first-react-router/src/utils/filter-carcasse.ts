@@ -74,7 +74,7 @@ export function carcasseFilterableFields(
     { name: 'numero_bracelet', label: "Numéro de marquage ou d'identification", type: 'text' },
     { name: 'fei_numero', label: 'Numéro FEI', type: 'text' },
     {
-      name: 'svi_assigned_to_fei_at',
+      name: 'svi_assigned_at',
       label: 'Date de transmission de la FEI au SVI',
       type: 'date-with-time',
     },

@@ -392,9 +392,9 @@ function buildModalTimeline(args: {
       withTime: true,
     });
   }
-  if (carcasse.svi_assigned_to_fei_at) {
+  if (carcasse.svi_assigned_at) {
     events.push({
-      date: new Date(carcasse.svi_assigned_to_fei_at),
+      date: new Date(carcasse.svi_assigned_at),
       label: 'Assignation au service vétérinaire',
       withTime: true,
     });

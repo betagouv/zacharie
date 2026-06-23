@@ -407,7 +407,7 @@
             "nullable": true,
             "description": "Date de prise en charge par le dernier intermédiaire"
           },
-          "svi_assigned_to_fei_at": {
+          "svi_assigned_at": {
             "type": "string",
             "format": "date-time",
             "nullable": true,
