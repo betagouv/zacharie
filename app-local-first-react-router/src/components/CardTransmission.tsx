@@ -1,4 +1,4 @@
-import type { FeiStepSimpleStatus } from '@app/types/fei-steps';
+import type { TransmissionSimpleStatus } from '@app/types/transmission-steps';
 import dayjs from 'dayjs';
 import { Link } from 'react-router';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
@@ -14,13 +14,13 @@ interface CardProps {
   onPrintSelect?: (feiNumber: string, selected: boolean) => void;
   isPrintSelected?: boolean;
   disabledBecauseOffline?: boolean;
-  filter: FeiStepSimpleStatus | 'Toutes les fiches';
+  filter: TransmissionSimpleStatus | 'Toutes les fiches';
   linkTo: string;
   detenteurName: string | null;
   detenteurIcon?: ReactNode;
 }
 
-const statusColors: Record<FeiStepSimpleStatus, { bg: string; text: string }> = {
+const statusColors: Record<TransmissionSimpleStatus, { bg: string; text: string }> = {
   'À compléter': {
     bg: 'bg-[#FEE7FC]',
     text: 'text-[#6E445A]',

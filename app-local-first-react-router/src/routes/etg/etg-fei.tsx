@@ -218,7 +218,7 @@ function EtgFeiLoader(props: Props) {
           open={!!intermediaires.length}
           title="Données de traçabilité"
         >
-          <FEIDonneesDeChasse intermediaires={intermediaires}/>
+          <FEIDonneesDeChasse intermediaires={intermediaires} />
         </Section>
       </EtgFeiContent>
     </Fragment>
