@@ -18,7 +18,7 @@ import Chargement from '@app/components/Chargement';
 import Button from '@codegouvfr/react-dsfr/Button';
 import useExportCarcasses from '@app/utils/export-carcasses';
 import { getFeiAndCarcasseAndIntermediaireIdsFromCarcasse } from '@app/utils/get-carcasse-intermediaire-id';
-import { filterFeiIntermediaires } from '@app/utils/get-carcasses-intermediaires';
+import { filterTransmissionIntermediaires } from '@app/utils/get-carcasses-intermediaires';
 import { getTransmissionLinkFromCarcasse } from '@app/utils/get-transmission-id';
 import { isCarcasseSviArchived } from '@app/utils/carcasse-svi-archived';
 import { loadData, useLoaderEffect } from '@app/utils/load-data';
@@ -112,7 +112,11 @@ export default function SviCarcasses() {
   useSaveScroll('svi-carcasses-scrollY');
 
   const getCollecteurName = (carcasse: (typeof carcassesRegistry)[number]): string | null => {
-    const intermediaires = filterFeiIntermediaires(carcassesIntermediaireById, carcasse.fei_numero);
+    const intermediaires = filterTransmissionIntermediaires(
+      carcassesIntermediaireById,
+      carcasse.fei_numero,
+      carcasse.zacharie_carcasse_id
+    );
     const collecteursPro: string[] = [];
 
     for (const intermediaire of intermediaires) {

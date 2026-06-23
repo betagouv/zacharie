@@ -6,10 +6,10 @@ import {
   isCarcasseToTake,
   isCarcasseUnderMyResponsability,
 } from '@app/utils/is-carcasse-done';
-import { CarcasseType, Fei, UserRoles, CarcasseIntermediaire } from '@prisma/client';
+import { CarcasseType, Fei, UserRoles, CarcasseIntermediaire, Carcasse } from '@prisma/client';
 import { checkCarcasseAgainstTransmission, getCarcasseTransmission } from './get-carcasses-transmission';
 import { CarcasseTransmission, CarcasseTransmissionWihMetadata } from '@app/types/carcasse';
-import { filterFeiIntermediaires } from './get-carcasses-intermediaires';
+import { filterTransmissionIntermediaires } from './get-carcasses-intermediaires';
 import { abbreviations } from './count-carcasses';
 import { getTransmissionLabels } from './transmission-labels';
 import { useEffect, useMemo, useState } from 'react';
@@ -78,7 +78,11 @@ export function useTransmissions(): Record<
         if (!transmissionIdsByFeiNumero[fei.numero]) transmissionIdsByFeiNumero[fei.numero] = [];
         transmissionIdsByFeiNumero[fei.numero].push(transmissionId);
         // ordre chronologique décroissant, du plus récent au plus ancien
-        const intermediaires = filterFeiIntermediaires(carcassesIntermediaireById, fei.numero!);
+        const intermediaires = filterTransmissionIntermediaires(
+          carcassesIntermediaireById,
+          fei.numero!,
+          carcasse.zacharie_carcasse_id
+        );
         const transmissionWithIntermediaires: CarcasseTransmissionWihMetadata = {
           content: transmission,
           labels: getTransmissionLabels('Clôturée', transmission, role, entitiesWorkingDirectlyFor),
