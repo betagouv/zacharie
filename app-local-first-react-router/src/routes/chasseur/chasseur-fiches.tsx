@@ -123,7 +123,8 @@ function OnboardingChasseInfoBanner() {
   );
 }
 
-const ITEMS_PER_PAGE = 100;
+// En mode test (Playwright) on baisse la pagination pour pouvoir la tester avec peu de fiches.
+const ITEMS_PER_PAGE = import.meta.env.VITE_TEST_PLAYWRIGHT === 'true' ? 3 : 100;
 
 export default function ChasseurFiches() {
   const navigate = useNavigate();
@@ -957,7 +958,7 @@ function FeisWrapper({
         if (!transmission) return null;
         return (
           <CardTransmission
-            key={transmission.fei.numero}
+            key={transmission.fei.numero + transmission.content.premier_detenteur_prochain_detenteur_id_cache}
             transmission={transmission}
             filter={'Toutes les fiches'}
             onPrintSelect={handleCheckboxClick}

@@ -853,6 +853,19 @@ Christine
         `CHASSEUR_MULTI_STATUS seeded: ${feiACompleter.numero}, ${feiEnCours.numero}, ${feiCloturee.numero}`
       );
     }
+    // Seeds several fiches in the same "À compléter" state for the same chasseur
+    // (Pierre Petit, premier-detenteur@example.fr) so the chasseur fiches list spans
+    // multiple pages once ITEMS_PER_PAGE is lowered in test mode. Used by the pagination test.
+    if ((role as string) === 'CHASSEUR_MANY_FICHES') {
+      const count = 5;
+      for (let i = 1; i <= count; i++) {
+        const fei = await prisma.fei.create({
+          data: { ...feiValidatedByExaminateur, numero: `ZACH-20250707-QZ6E0-30000${i}` },
+        });
+        await prisma.carcasse.createMany({ data: getCarcasses(fei) });
+      }
+      console.log(`CHASSEUR_MANY_FICHES seeded: ${count} fiches À compléter`);
+    }
     if ((role as string) === 'ETG_ALL_REFUSED_TO_SVI') {
       const fei = await prisma.fei.create({ data: feiAllRefusedByEtgToSvi });
       const carcasses = await prisma.carcasse.createMany({ data: getCarcasses(fei) });

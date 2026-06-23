@@ -52,7 +52,8 @@ export type SeedRole =
   | 'ETG_ALL_REFUSED_TO_SVI'
   | 'ETG_PD_EXAMINATEUR'
   | 'ETG_PD_ASSOCIATION'
-  | 'CHASSEUR_MULTI_STATUS';
+  | 'CHASSEUR_MULTI_STATUS'
+  | 'CHASSEUR_MANY_FICHES';
 
 export async function resetDb(role?: SeedRole) {
   try {
