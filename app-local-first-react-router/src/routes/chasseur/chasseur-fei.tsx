@@ -760,7 +760,7 @@ function FEIChasseurLoaded() {
                     Retour
                   </Button>
                   <div className="text-left md:text-center">{canEdit && <ExaminateurInitialDeleteFei />}</div>
-                  {canEdit && (
+                  {canEdit && !fei.consommateur_final_usage_domestique && (
                     <div className="flex w-full justify-end">
                       <Button
                         iconId="fr-icon-send-plane-line"
