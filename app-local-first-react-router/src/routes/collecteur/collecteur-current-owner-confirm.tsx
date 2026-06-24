@@ -1,5 +1,6 @@
-import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
-import { Button } from '@codegouvfr/react-dsfr/Button';
+import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
+import { type ButtonProps } from '@codegouvfr/react-dsfr/Button';
+import { toast } from 'react-toastify';
 import { useMemo } from 'react';
 import { EntityRelationType, FeiOwnerRole, UserRoles } from '@prisma/client';
 import useUser from '@app/zustand/user';
@@ -170,61 +171,61 @@ export default function CurrentOwnerConfirm() {
     return null;
   }
 
+  function handleRenvoi() {
+    // Only reset my carcasses' next_owner
+    const nextTransmission: CarcasseTransmission = {
+      next_owner_entity_id: null,
+      next_owner_entity_name_cache: null,
+      next_owner_user_id: null,
+      next_owner_user_name_cache: null,
+      next_owner_role: null,
+    };
+    updateCarcassesTransmission(myCarcasseIds, nextTransmission);
+    addLog({
+      user_id: user.id,
+      user_role: currentTransmission.next_owner_role as UserRoles,
+      fei_numero: fei.numero,
+      action: 'current-owner-renvoi',
+      entity_id: currentTransmission.next_owner_entity_id,
+      zacharie_carcasse_id: null,
+      intermediaire_id: null,
+      carcasse_intermediaire_id: null,
+      history: createHistoryInput(currentTransmission, nextTransmission),
+    });
+    syncData('current-owner-renvoi');
+    toast.success("La fiche a été renvoyée à l'expéditeur");
+  }
+
+  const actionButtons: [ButtonProps, ...ButtonProps[]] = [
+    {
+      children: 'Je contrôle et transporte les carcasses',
+      nativeButtonProps: {
+        type: 'submit',
+        onClick: () =>
+          handlePriseEnCharge({
+            sousTraite: false,
+            action: 'current-owner-confirm-collecteur-pro',
+          }),
+      },
+    },
+    {
+      children: "Renvoyer à l'expéditeur",
+      priority: 'secondary',
+      nativeButtonProps: {
+        type: 'button',
+        onClick: handleRenvoi,
+      },
+    },
+  ];
+
   return (
     <div className="bg-alt-blue-france pb-8">
-      <CallOut
-        title={
-          currentTransmission.next_owner_user_id
-            ? '🫵  Cette fiche vous a été attribuée'
-            : '🫵  Cette fiche a été attribuée à votre société'
-        }
-        className="m-0 bg-white"
-      >
-        <Button
-          type="submit"
-          className="my-4 block"
-          onClick={() => {
-            handlePriseEnCharge({
-              sousTraite: false,
-              action: 'current-owner-confirm-collecteur-pro',
-            });
-          }}
-        >
-          Je contrôle et transporte les carcasses
-        </Button>
-        <div className="flex items-center gap-2">
-          <Button
-            className="mt-0]"
-            priority="tertiary"
-            type="button"
-            onClick={() => {
-              // Only reset my carcasses' next_owner
-              const nextTransmission: CarcasseTransmission = {
-                next_owner_entity_id: null,
-                next_owner_entity_name_cache: null,
-                next_owner_user_id: null,
-                next_owner_user_name_cache: null,
-                next_owner_role: null,
-              };
-              updateCarcassesTransmission(myCarcasseIds, nextTransmission);
-              addLog({
-                user_id: user.id,
-                user_role: currentTransmission.next_owner_role as UserRoles,
-                fei_numero: fei.numero,
-                action: 'current-owner-renvoi',
-                entity_id: currentTransmission.next_owner_entity_id,
-                zacharie_carcasse_id: null,
-                intermediaire_id: null,
-                carcasse_intermediaire_id: null,
-                history: createHistoryInput(currentTransmission, nextTransmission),
-              });
-              syncData('current-owner-renvoi');
-            }}
-          >
-            Je renvoie la fiche à l'expéditeur
-          </Button>
-        </div>
-      </CallOut>
+      <div className="rounded bg-white p-4 md:p-8">
+        <ButtonsGroup
+          inlineLayoutWhen="md and up"
+          buttons={actionButtons}
+        />
+      </div>
     </div>
   );
 }
