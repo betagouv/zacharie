@@ -43,6 +43,7 @@ import FeiSousTraite from './collecteur-current-owner-sous-traite';
 import CarcasseIntermediaireComp from './collecteur-carcasse';
 import CurrentOwnerConfirm from './collecteur-current-owner-confirm';
 import NotFound from '@app/components/NotFound';
+import FeiAucuneAction from '@app/components/FeiAucuneAction';
 import Chargement from '@app/components/Chargement';
 import { loadData, useLoaderEffect } from '@app/utils/load-data';
 import { CarcasseTransmission } from '@app/types/carcasse';
@@ -144,7 +145,7 @@ function CollecteurFeiLoader(props: Props) {
   }, [transmission, myCarcasses.length, intermediaires, userEntityIds]);
 
   if (!showInterface) {
-    return null;
+    return <FeiAucuneAction backTo="/app/collecteur/" />;
   }
 
   return (
