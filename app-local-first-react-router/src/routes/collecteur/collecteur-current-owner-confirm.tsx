@@ -134,10 +134,7 @@ export default function CurrentOwnerConfirm() {
       intermediaire_prochain_detenteur_role_cache: null,
       intermediaire_prochain_detenteur_id_cache: null,
     };
-    await createCarcassesIntermediaire(
-      [newIntermediaire],
-      myCarcasseIds.length > 0 ? myCarcasseIds : undefined
-    );
+    await createCarcassesIntermediaire([newIntermediaire], myCarcasseIds);
     addLog({
       user_id: user.id,
       user_role: newIntermediaire.intermediaire_role! as UserRoles,

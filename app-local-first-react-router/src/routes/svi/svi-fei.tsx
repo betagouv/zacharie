@@ -209,7 +209,7 @@ function FEI_SVI() {
         open={false}
         title="Données de chasse"
       >
-        <FEIDonneesDeChasse />
+        <FEIDonneesDeChasse intermediaires={transmissionMetadata.intermediaires} />
       </Section>
       <Section title={`Carcasses à inspecter (${carcassesAAfficher.length})`}>
         <div className="flex flex-col gap-4">

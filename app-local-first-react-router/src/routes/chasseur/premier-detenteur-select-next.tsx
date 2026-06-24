@@ -633,7 +633,6 @@ export default function DestinatairePremierDetenteur({
   const params = useParams();
   const navigate = useNavigate();
   const user = useUser((state) => state.user)!;
-  const updateFei = useZustandStore((state) => state.updateFei);
   const updateCarcassesTransmission = useZustandStore((state) => state.updateCarcassesTransmission);
   const addLog = useZustandStore((state) => state.addLog);
   const feis = useZustandStore((state) => state.feis);
@@ -1025,59 +1024,6 @@ export default function DestinatairePremierDetenteur({
         action: 'premier-detenteur-need-select-next-select-destinataire',
         fei_numero: fei.numero,
         history: createHistoryInput({}, nextTransmission),
-        entity_id: fei.premier_detenteur_entity_id,
-        zacharie_carcasse_id: null,
-        carcasse_intermediaire_id: null,
-        intermediaire_id: null,
-      });
-    }
-
-    // TO DELETE
-    // FEI-level retrocompat: use first group's values
-    const firstGroup = dispatchGroups[0];
-    if (firstGroup?.recipientEntityId) {
-      const prochainDetenteurType = entities[firstGroup.recipientEntityId]?.type;
-      const needTransport = (() => {
-        if (
-          prochainDetenteurType === EntityTypes.CONSOMMATEUR_FINAL ||
-          prochainDetenteurType === EntityTypes.COMMERCE_DE_DETAIL ||
-          prochainDetenteurType === EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF
-        ) {
-          return false;
-        }
-        return prochainDetenteurType !== EntityTypes.COLLECTEUR_PRO;
-      })();
-      const nextDepotEntityId = firstGroup.depotType === DepotType.AUCUN ? null : firstGroup.depotEntityId;
-      const nextDepotDate = firstGroup.depotDate ? dayjs(firstGroup.depotDate).toDate() : null;
-      const nextTransportType = needTransport ? firstGroup.transportType : null;
-      const nextTransportDate = nextTransportType
-        ? firstGroup.transportDate
-          ? dayjs(firstGroup.transportDate).toDate()
-          : null
-        : null;
-
-      const nextFei: Partial<typeof fei> = {
-        fei_next_owner_entity_id: firstGroup.recipientEntityId,
-        fei_next_owner_role: entities[firstGroup.recipientEntityId]?.type as FeiOwnerRole,
-        premier_detenteur_prochain_detenteur_id_cache: firstGroup.recipientEntityId,
-        premier_detenteur_prochain_detenteur_role_cache: entities[firstGroup.recipientEntityId]
-          ?.type as FeiOwnerRole,
-        premier_detenteur_depot_type: firstGroup.depotType,
-        premier_detenteur_depot_entity_id: nextDepotEntityId,
-        premier_detenteur_depot_entity_name_cache: nextDepotEntityId
-          ? entities[nextDepotEntityId]?.nom_d_usage
-          : null,
-        premier_detenteur_depot_ccg_at: nextDepotDate,
-        premier_detenteur_transport_type: nextTransportType,
-        premier_detenteur_transport_date: nextTransportDate,
-      };
-      updateFei(fei.numero, nextFei);
-      addLog({
-        user_id: user.id,
-        user_role: UserRoles.CHASSEUR,
-        action: 'premier-detenteur-need-select-next-select-destinataire',
-        fei_numero: fei.numero,
-        history: createHistoryInput(fei, nextFei),
         entity_id: fei.premier_detenteur_entity_id,
         zacharie_carcasse_id: null,
         carcasse_intermediaire_id: null,

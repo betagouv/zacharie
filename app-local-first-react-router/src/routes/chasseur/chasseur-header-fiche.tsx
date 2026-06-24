@@ -1,17 +1,22 @@
 import dayjs from 'dayjs';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
-import { IconStep, useFeiSteps } from '@app/utils/fei-steps';
-import type { FeiWithIntermediaires } from '@api/src/types/fei';
-import type { FeiStepSimpleStatus } from '@app/types/fei-steps';
+import { IconStep } from '@app/utils/transmission-labels';
+import { TransmissionSimpleStatus } from '@app/types/transmission-steps';
+import { useGetChasseurStatusAndLabel } from '@app/utils/get-transmissions-sorted';
+import { useParams } from 'react-router';
+import useZustandStore from '@app/zustand/store';
 
-const statusColors: Record<FeiStepSimpleStatus, { bg: string; text: string }> = {
+const statusColors: Record<TransmissionSimpleStatus, { bg: string; text: string }> = {
   'À compléter': { bg: 'bg-[#FEE7FC]', text: 'text-[#6E445A]' },
   'En cours': { bg: 'bg-[#FFECBD]', text: 'text-[#73603F]' },
   Clôturée: { bg: 'bg-[#E8EDFF]', text: 'text-[#01008B]' },
 };
 
-export default function ChasseurHeaderFiche({ fei }: { fei: FeiWithIntermediaires }) {
-  const { simpleStatus, currentStepLabelForChasseur } = useFeiSteps(fei);
+export default function ChasseurHeaderFiche() {
+  const params = useParams();
+  const feis = useZustandStore((state) => state.feis);
+  const fei = feis[params.fei_numero!];
+  const [simpleStatus, currentStepLabelForChasseur] = useGetChasseurStatusAndLabel(params.fei_numero!);
 
   const isNewFiche = !fei.date_mise_a_mort && !fei.commune_mise_a_mort;
   const title = isNewFiche

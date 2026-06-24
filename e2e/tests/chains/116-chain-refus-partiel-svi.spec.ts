@@ -37,7 +37,7 @@ test('SVI rend des décisions divergentes → chasseur voit chaque décision', a
   const transmettreBtn = page.getByRole('button', { name: 'Transmettre' });
   await transmettreBtn.scrollIntoViewIfNeeded();
   await transmettreBtn.click();
-  await expect(page.getByText(/Votre fiche a été transmise/i).first()).toBeVisible({ timeout: 15000 });
+  await expect(page.getByText(/ETG 1 a été notifié/i).first()).toBeVisible({ timeout: 15000 });
 
   // 2. ETG 1 prend en charge + accepte toutes les carcasses (desktop viewport)
   await page.setViewportSize({ width: 1280, height: 900 });

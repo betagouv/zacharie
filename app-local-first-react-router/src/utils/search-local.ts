@@ -25,8 +25,8 @@ function carcasseRedirectUrl(prefix: RolePrefix, carcasse: Carcasse): string {
   if (prefix === 'svi') {
     return `/app/svi/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`;
   }
-  // ETG et collecteur naviguent vers une transmission (fiche + prochain détenteur), pas vers la fiche seule
-  if (prefix === 'etg' || prefix === 'collecteur') {
+  // ETG, collecteur et circuit-court naviguent vers une transmission (fiche + prochain détenteur), pas vers la fiche seule
+  if (prefix === 'etg' || prefix === 'collecteur' || prefix === 'circuit-court') {
     return `/app/${prefix}/fei/${getTransmissionLinkFromCarcasse(carcasse)}`;
   }
   return `/app/${prefix}/fei/${carcasse.fei_numero}`;
@@ -118,10 +118,10 @@ export function searchLocally(
   );
 
   if (byNumero.length) {
-    // ETG, collecteur et SVI naviguent vers une transmission : une même fiche peut se diviser en
-    // plusieurs transmissions (Premier Détenteur dispatchant à plusieurs Prochains Détenteurs),
-    // on émet donc un résultat par transmission, dérivé des carcasses.
-    if (prefix === 'etg' || prefix === 'collecteur' || prefix === 'svi') {
+    // ETG, collecteur, SVI et circuit-court naviguent vers une transmission : une même fiche peut se
+    // diviser en plusieurs transmissions (Premier Détenteur dispatchant à plusieurs Prochains
+    // Détenteurs), on émet donc un résultat par transmission, dérivé des carcasses.
+    if (prefix === 'etg' || prefix === 'collecteur' || prefix === 'svi' || prefix === 'circuit-court') {
       const matchedNumeros = new Set(byNumero.map((fei) => fei.numero));
       const carcasseByTransmissionId: Record<string, Carcasse> = {};
       for (const carcasse of allCarcasses) {

@@ -16,8 +16,6 @@ import { devtools, persist } from 'zustand/middleware';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 dayjs.extend(utc);
-import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
-import { filterCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import type { HistoryInput } from '@app/utils/create-history-entry';
 import updateCarcasseStatus from '@app/utils/get-carcasse-status';
 import {
@@ -96,7 +94,7 @@ interface Actions {
   ) => void;
   createCarcassesIntermediaire: (
     newFeiIntermediaires: CarcassesIntermediaire[],
-    specificCarcasseIds?: string[]
+    specificCarcasseIds: string[]
   ) => Promise<void>;
   updateAllCarcasseIntermediaire: (
     fei_numero: Fei['numero'],
@@ -167,16 +165,15 @@ const useZustandStore = create<State & Actions>()(
           fei_numero: FeiWithIntermediaires['numero'],
           partialFei: Partial<FeiWithIntermediaires>
         ) => {
-          console.log('updateFei', fei_numero, JSON.stringify(partialFei, null, 2));
-          const carcassefeiCarcasses = filterCarcassesForFei(
-            useZustandStore.getState().carcasses,
-            fei_numero
+          // Base sur le registre vivant (state.carcasses), pas sur carcassesRegistry qui n'est figé
+          // qu'au chargement : sinon on réécrit les carcasses avec des données périmées et on écrase
+          // les mutations locales récentes (ex : current_owner_role posé juste avant par une prise en charge).
+          const carcassefeiCarcasses = Object.values(get().carcasses).filter(
+            (c) => c.fei_numero === fei_numero
           );
-          const countCarcassesByEspece = formatCountCarcasseByEspece(carcassefeiCarcasses);
           const nextFei: FeiWithIntermediaires = {
             ...useZustandStore.getState().feis[fei_numero],
             ...partialFei,
-            resume_nombre_de_carcasses: countCarcassesByEspece.join('\n'),
             updated_at: dayjs().toDate(),
             is_synced: false,
           };
@@ -185,7 +182,7 @@ const useZustandStore = create<State & Actions>()(
           for (const carcasse of carcassefeiCarcasses) {
             nextCarcasses[carcasse.zacharie_carcasse_id] = {
               ...carcasse,
-              ...mapFeiFieldsToCarcasse(nextFei, carcasse),
+              ...mapFeiFieldsToCarcasse(nextFei),
               updated_at: dayjs().toDate(),
               is_synced: false,
             };
@@ -251,15 +248,17 @@ const useZustandStore = create<State & Actions>()(
         },
         createCarcassesIntermediaire: async (
           newIntermediaires: CarcassesIntermediaire[],
-          specificCarcasseIds?: string[]
+          specificCarcasseIds: string[]
         ) => {
           if (newIntermediaires.length === 0) return;
           return new Promise((resolve) => {
-            const feiNumero = newIntermediaires[0].fei_numero;
-            const allCarcasses = filterCarcassesForFei(useZustandStore.getState().carcasses, feiNumero);
-            const carcasses = specificCarcasseIds
-              ? allCarcasses.filter((c) => specificCarcasseIds.includes(c.zacharie_carcasse_id))
-              : allCarcasses;
+            // Registre vivant (state.carcasses) et non carcassesRegistry figé au chargement : une
+            // carcasse tout juste créée (ex : ajout d'une carcasse manquante par l'intermédiaire)
+            // n'est pas encore dans carcassesRegistry, sinon aucune CarcasseIntermediaire n'est créée
+            // pour elle et elle n'apparaît pas dans la liste de l'intermédiaire.
+            const carcasses = Object.values(get().carcasses).filter((c) =>
+              specificCarcasseIds.includes(c.zacharie_carcasse_id)
+            );
             const byId: Record<FeiAndCarcasseAndIntermediaireIds, CarcasseIntermediaire> = {};
             for (const newIntermediaire of newIntermediaires) {
               const carcassesIntermediaires: Array<CarcasseIntermediaire> = carcasses

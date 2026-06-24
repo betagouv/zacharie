@@ -28,6 +28,7 @@ import DateHeureValidationAlerts from '@app/components/DateHeureValidationAlerts
 import ChasseurHeaderFiche from './chasseur-header-fiche';
 import CurrentOwnerConfirm from './chasseur-current-owner-confirm';
 import { CompteEnAttenteValidationAlert } from '@app/components/CompteEnAttenteValidation';
+import { useGetTransmissionsForFei } from '@app/utils/get-transmissions-sorted';
 
 export default function ChasseurFei() {
   const params = useParams();
@@ -62,8 +63,7 @@ function FEIChasseurLoaded() {
   const fei = feis[params.fei_numero!];
 
   const carcasses = useCarcassesForFei(params.fei_numero);
-  // FIXME: on fait quoi en cas de dispatch
-  const currentTransmission = carcasses?.[0];
+  const transmissions = useGetTransmissionsForFei(params.fei_numero!);
 
   const users = useZustandStore((state) => state.users);
   const entities = useZustandStore((state) => state.entities);
@@ -129,57 +129,59 @@ function FEIChasseurLoaded() {
   }, [carcasses]);
 
   const canEdit = useMemo(() => {
-    if (!currentTransmission) return true;
-    if (
-      currentTransmission?.current_owner_role !== FeiOwnerRole.PREMIER_DETENTEUR &&
-      currentTransmission?.current_owner_role !== FeiOwnerRole.EXAMINATEUR_INITIAL
-    ) {
-      return false;
-    }
-    if (
-      currentTransmission?.svi_automatic_closed_at ||
-      currentTransmission?.svi_closed_at ||
-      currentTransmission?.svi_assigned_at ||
-      currentTransmission?.intermediaire_closed_at
-    ) {
-      return false;
-    }
-    if (fei.examinateur_initial_user_id !== user.id) {
-      return false;
+    for (const currentTransmission of transmissions) {
+      if (
+        currentTransmission.content.current_owner_role !== FeiOwnerRole.PREMIER_DETENTEUR &&
+        currentTransmission.content.current_owner_role !== FeiOwnerRole.EXAMINATEUR_INITIAL
+      ) {
+        return false;
+      }
+      if (
+        currentTransmission.content.svi_automatic_closed_at ||
+        currentTransmission.content.svi_closed_at ||
+        currentTransmission.content.svi_assigned_at ||
+        currentTransmission.content.intermediaire_closed_at
+      ) {
+        return false;
+      }
+      if (fei.examinateur_initial_user_id !== user.id) {
+        return false;
+      }
     }
     return true;
-  }, [currentTransmission, fei, user]);
+  }, [transmissions, fei, user]);
 
   const canEditAsPremierDetenteur = useMemo(() => {
-    if (!currentTransmission) return false;
-    if (
-      currentTransmission?.current_owner_role !== FeiOwnerRole.PREMIER_DETENTEUR &&
-      currentTransmission?.current_owner_role !== FeiOwnerRole.EXAMINATEUR_INITIAL
-    ) {
-      return false;
-    }
-    if (
-      currentTransmission?.svi_automatic_closed_at ||
-      currentTransmission?.svi_closed_at ||
-      currentTransmission?.svi_assigned_at ||
-      currentTransmission?.intermediaire_closed_at
-    ) {
-      return false;
-    }
-    if (fei.examinateur_initial_user_id === user.id) {
-      return true;
-    }
-    if (
-      currentTransmission?.current_owner_user_id === user.id &&
-      currentTransmission?.current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR
-    ) {
-      return true;
-    }
-    if (premierDetenteurEntity?.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
-      return true;
+    for (const currentTransmission of transmissions) {
+      if (
+        currentTransmission.content.current_owner_role !== FeiOwnerRole.PREMIER_DETENTEUR &&
+        currentTransmission.content.current_owner_role !== FeiOwnerRole.EXAMINATEUR_INITIAL
+      ) {
+        return false;
+      }
+      if (
+        currentTransmission.content.svi_automatic_closed_at ||
+        currentTransmission.content.svi_closed_at ||
+        currentTransmission.content.svi_assigned_at ||
+        currentTransmission.content.intermediaire_closed_at
+      ) {
+        return false;
+      }
+      if (fei.examinateur_initial_user_id === user.id) {
+        return true;
+      }
+      if (
+        currentTransmission.content.current_owner_user_id === user.id &&
+        currentTransmission.content.current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR
+      ) {
+        return true;
+      }
+      if (premierDetenteurEntity?.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
+        return true;
+      }
     }
     return false;
-  }, [currentTransmission, fei, user, premierDetenteurEntity]);
+  }, [transmissions, fei, user, premierDetenteurEntity]);
 
   const isPremierDetenteur = useMemo(() => {
     if (fei.premier_detenteur_user_id === user.id) return true;
@@ -264,7 +266,7 @@ function FEIChasseurLoaded() {
     }
     if (!atLeastOneCarcasseWithAnomalie) {
       label += " qu'aucune anomalie n'a été observée lors de l'examen initial";
-      if (!currentTransmission?.consommateur_final_usage_domestique) {
+      if (!fei.consommateur_final_usage_domestique) {
         label += ' et que les carcasses en peau examinées ce jour peuvent être mises sur le marché.';
       } else {
         label += '.';
@@ -280,7 +282,7 @@ function FEIChasseurLoaded() {
     examinateurInitialUser?.nom_de_famille,
     examinateurInitialUser?.prenom,
     atLeastOneCarcasseWithAnomalie,
-    currentTransmission?.consommateur_final_usage_domestique,
+    fei.consommateur_final_usage_domestique,
     user.id,
     fei.examinateur_initial_user_id,
   ]);
@@ -394,7 +396,7 @@ function FEIChasseurLoaded() {
             key={fei.fei_current_owner_entity_id!}
           >
             <CurrentOwnerConfirm />
-            <ChasseurHeaderFiche fei={fei} />
+            <ChasseurHeaderFiche />
             <div className="flex flex-col gap-6">
               {/* Bloc 1 — Informations de chasse */}
               <div className="bg-white p-4 md:p-8">

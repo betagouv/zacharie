@@ -6,7 +6,7 @@ import { formatCarcasseLotCount, formatCountCarcasseByEspece } from '@app/utils/
 import { useParams, useNavigate } from 'react-router';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
-import { useMyCarcassesForFei } from '@app/utils/filter-my-carcasses';
+import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import dayjs from 'dayjs';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import CardCarcasse from '@app/components/CardCarcasse';
@@ -27,9 +27,10 @@ export default function CarcassesExaminateur({
 }) {
   const params = useParams();
   const feis = useZustandStore((state) => state.feis);
-  const fei = feis[params.fei_numero!];
+  const fei_numero = params.fei_numero!;
+  const fei = feis[fei_numero];
   const entities = useZustandStore((state) => state.entities);
-  const carcasses = useMyCarcassesForFei(params.fei_numero);
+  const carcasses = useCarcassesForFei(fei_numero);
   const [showForm, setShowForm] = useState(!allCarcassesConfirmed);
 
   const countCarcassesByEspece = useMemo(() => formatCountCarcasseByEspece(carcasses), [carcasses]);

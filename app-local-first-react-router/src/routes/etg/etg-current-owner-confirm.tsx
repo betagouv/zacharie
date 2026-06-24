@@ -323,10 +323,7 @@ export default function CurrentOwnerConfirm() {
       newIntermediaire.intermediaire_depot_type = DepotType.AUCUN;
       newIntermediaire.intermediaire_depot_entity_id = null;
     }
-    await createCarcassesIntermediaire(
-      [newIntermediaire],
-      myCarcasseIds.length > 0 ? myCarcasseIds : undefined
-    );
+    await createCarcassesIntermediaire([newIntermediaire], myCarcasseIds);
     addLog({
       user_id: user.id,
       user_role: newIntermediaire.intermediaire_role! as UserRoles,

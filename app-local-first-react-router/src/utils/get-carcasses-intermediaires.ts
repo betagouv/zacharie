@@ -36,7 +36,7 @@ export function filterCarcassesIntermediairesForIntermediaire(
 
 export function useCarcassesIntermediairesForCarcasse(
   zacharie_carcasse_id: string | undefined
-): Array<CarcasseIntermediaire> {
+): Array<CarcasseIntermediaire & { id: CarcassesIntermediaire['id'] }> {
   const byId = useZustandStore((state) => state.carcassesIntermediaireById);
   return useMemo(() => {
     if (!zacharie_carcasse_id) return [];
@@ -76,19 +76,20 @@ export function filterFeiIntermediaires(
         intermediaire_prochain_detenteur_id_cache: ci.intermediaire_prochain_detenteur_id_cache,
       };
     }
+    // Les champs de décision de transmission (prochain détenteur, dépôt) ne sont posés que sur les
+    // carcasses prises en charge, jamais sur les refusées/manquantes. Le représentant doit donc
+    // retenir la valeur non-nulle de n'importe quelle carcasse de l'intermédiaire, quel que soit
+    // l'ordre d'itération (sinon une carcasse refusée en tête masque la décision réelle).
+    const rep = seen[ci.intermediaire_id];
+    if (ci.intermediaire_prochain_detenteur_id_cache != null) {
+      rep.intermediaire_prochain_detenteur_id_cache = ci.intermediaire_prochain_detenteur_id_cache;
+      rep.intermediaire_prochain_detenteur_role_cache = ci.intermediaire_prochain_detenteur_role_cache;
+    }
+    if (ci.intermediaire_depot_type != null) {
+      rep.intermediaire_depot_type = ci.intermediaire_depot_type;
+      rep.intermediaire_depot_entity_id = ci.intermediaire_depot_entity_id;
+    }
   }
   // ordre chronologique décroissant, du plus récent au plus ancien
   return Object.values(seen).sort((a, b) => (dayjs(a.created_at).diff(b.created_at) < 0 ? 1 : -1));
-}
-
-export function useFeiIntermediaires(fei_numero: string | undefined): Array<CarcassesIntermediaire> {
-  const byId = useZustandStore((state) => state.carcassesIntermediaireById);
-  const numberOfIntermediaires = Object.values(byId).length;
-  // FIXME: if I dont put the numberOfIntermediaires, the useMemo is not triggered when the intermediaires are updated
-  //  I think it's a matter of objects and references
-  return useMemo(() => {
-    if (!fei_numero) return [];
-    if (numberOfIntermediaires === 0) return [];
-    return filterFeiIntermediaires(byId, fei_numero);
-  }, [byId, fei_numero, numberOfIntermediaires]);
 }

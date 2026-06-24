@@ -7,9 +7,10 @@ import dayjs from 'dayjs';
 import useZustandStore from '@app/zustand/store';
 import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { useTransmissionsSorted } from '@app/utils/get-transmissions-sorted';
+import { getTransmissionIdFromMetadata } from '@app/utils/get-transmission-id';
 import { createNewFei } from '@app/utils/create-new-fei';
 import { useNavigate, useSearchParams, Link } from 'react-router';
-import ExportFeisModal from '@app/components/ExportFeisModal';
+import ExportTransmissionsModal from '@app/components/ExportTransmissionsModal';
 import { filterCarcassesIntermediairesForCarcasse } from '@app/utils/get-carcasses-intermediaires';
 import { useSaveScroll } from '@app/services/useSaveScroll';
 import CardTransmission from '@app/components/CardTransmission';
@@ -62,7 +63,7 @@ function CollapsibleSection({
 }
 
 type ViewType = 'grid' | 'table';
-type FeiNumberSelection = Array<NonNullable<CarcasseTransmissionWihMetadata['fei']['numero']>>;
+type TransmissionIdSelection = Array<string>;
 
 const statusColors: Record<TransmissionSimpleStatus, { bg: string; text: string }> = {
   'À compléter': {
@@ -173,9 +174,9 @@ export default function ChasseurFiches() {
 
   useSaveScroll('chasseur-fiches-scrollY');
 
-  const [selectedFeis, setSelectedFeis] = useState<FeiNumberSelection>([]);
+  const [selectedTransmissions, setSelectedTransmissions] = useState<TransmissionIdSelection>([]);
   const handleCheckboxClick = (id: string) => {
-    setSelectedFeis((prev) => {
+    setSelectedTransmissions((prev) => {
       if (prev.includes(id)) {
         return prev.filter((fei) => fei !== id);
       }
@@ -185,13 +186,13 @@ export default function ChasseurFiches() {
 
   const handleSelectAll = (visibleFeis?: string[]) => {
     const feisToToggle = visibleFeis || [];
-    const allSelected = feisToToggle.every((numero) => selectedFeis.includes(numero));
+    const allSelected = feisToToggle.every((numero) => selectedTransmissions.includes(numero));
     if (allSelected) {
       // Désélectionner toutes les fiches visibles
-      setSelectedFeis((prev) => prev.filter((numero) => !feisToToggle.includes(numero)));
+      setSelectedTransmissions((prev) => prev.filter((numero) => !feisToToggle.includes(numero)));
     } else {
       // Sélectionner toutes les fiches visibles
-      setSelectedFeis((prev) => {
+      setSelectedTransmissions((prev) => {
         const newSelection = [...prev];
         feisToToggle.forEach((numero) => {
           if (!newSelection.includes(numero)) {
@@ -834,8 +835,8 @@ export default function ChasseurFiches() {
                 ]}
               />
               <div className="hidden md:block">
-                <ExportFeisModal
-                  feiNumbers={selectedFeis}
+                <ExportTransmissionsModal
+                  transmissionsIds={selectedTransmissions}
                   storageKey="chasseur-fiches-export-columns"
                 />
               </div>
@@ -857,7 +858,7 @@ export default function ChasseurFiches() {
             viewType={viewType}
             handleSelectAll={handleSelectAll}
             handleCheckboxClick={handleCheckboxClick}
-            selectedFeis={selectedFeis}
+            selectedTransmissions={selectedTransmissions}
             filter={'Toutes les fiches'}
             paginatedTransmissions={paginatedTransmissions}
           />
@@ -891,14 +892,14 @@ function FeisWrapper({
   viewType,
   handleSelectAll,
   handleCheckboxClick,
-  selectedFeis,
+  selectedTransmissions,
   filter,
 }: {
   paginatedTransmissions: Array<CarcasseTransmissionWihMetadata>;
   viewType: 'grid' | 'table';
   handleSelectAll: (visibleFeis?: string[]) => void;
   handleCheckboxClick: (feiNumber: string, selected: boolean) => void;
-  selectedFeis: FeiNumberSelection;
+  selectedTransmissions: TransmissionIdSelection;
   filter?: TransmissionSimpleStatus | 'Toutes les fiches';
 }) {
   const user = useMostFreshUser('chasseur fiches')!;
@@ -944,7 +945,7 @@ function FeisWrapper({
     return (
       <FeisTable
         handleSelectAll={handleSelectAll}
-        selectedFeis={selectedFeis}
+        selectedTransmissions={selectedTransmissions}
         filter={filter as TransmissionSimpleStatus | 'Toutes les fiches'}
         handleCheckboxClick={handleCheckboxClick}
         paginatedTransmissions={paginatedTransmissions}
@@ -962,7 +963,7 @@ function FeisWrapper({
             transmission={transmission}
             filter={'Toutes les fiches'}
             onPrintSelect={handleCheckboxClick}
-            isPrintSelected={selectedFeis.includes(transmission.fei.numero!)}
+            isPrintSelected={selectedTransmissions.includes(getTransmissionIdFromMetadata(transmission))}
             linkTo={`/app/chasseur/fei/${transmission.fei.numero}`}
             detenteurName={transmission.content.premier_detenteur_name_cache ?? null}
             detenteurIcon={<ChasseIcon />}
@@ -994,7 +995,7 @@ function FeisTableRow({
   // Notifier le parent de la visibilité de cette ligne
   useEffect(() => {
     const isVisible = !filter || filter === 'Toutes les fiches' || filter === simpleStatus;
-    onVisibilityChange?.(transmission.fei.numero!, isVisible);
+    onVisibilityChange?.(getTransmissionIdFromMetadata(transmission), isVisible);
   }, [filter, simpleStatus, transmission.fei.numero, onVisibilityChange]);
 
   const [formattedCarcassesAcceptées, _carcassesOuLotsRefusés] = useMemo(() => {
@@ -1053,7 +1054,7 @@ function FeisTableRow({
             type="checkbox"
             checked={isSelected}
             className="checked:accent-action-high-blue-france h-4 w-4 border-2"
-            onChange={() => onPrintSelect?.(transmission.fei.numero!, !isSelected)}
+            onChange={() => onPrintSelect?.(getTransmissionIdFromMetadata(transmission), !isSelected)}
           />
         </div>
       </td>
@@ -1117,18 +1118,18 @@ function FeisTableRow({
 function FeisTable({
   paginatedTransmissions,
   handleSelectAll,
-  selectedFeis,
+  selectedTransmissions,
   filter,
   handleCheckboxClick,
 }: {
   paginatedTransmissions: Array<CarcasseTransmissionWihMetadata>;
-  handleSelectAll: (visibleFeis?: FeiNumberSelection) => void;
-  selectedFeis: FeiNumberSelection;
+  handleSelectAll: (visibleFeis?: TransmissionIdSelection) => void;
+  selectedTransmissions: TransmissionIdSelection;
   filter?: TransmissionSimpleStatus | 'Toutes les fiches';
   handleCheckboxClick: (feiNumber: string, selected: boolean) => void;
 }) {
   const navigate = useNavigate();
-  const [visibleFeisNumbers, setVisibleFeisNumbers] = useState<FeiNumberSelection>([]);
+  const [visibleFeisNumbers, setVisibleFeisNumbers] = useState<TransmissionIdSelection>([]);
 
   if (paginatedTransmissions.length === 0) {
     return null;
@@ -1136,7 +1137,7 @@ function FeisTable({
 
   const allSelected =
     visibleFeisNumbers.length > 0
-      ? visibleFeisNumbers.every((numero) => selectedFeis?.includes(numero))
+      ? visibleFeisNumbers.every((numero) => selectedTransmissions?.includes(numero))
       : false;
 
   return (
@@ -1167,7 +1168,7 @@ function FeisTable({
               <FeisTableRow
                 key={transmission.fei.numero}
                 transmission={transmission}
-                isSelected={selectedFeis.includes(transmission.fei.numero!)}
+                isSelected={selectedTransmissions.includes(getTransmissionIdFromMetadata(transmission))}
                 onPrintSelect={handleCheckboxClick}
                 navigate={navigate}
                 filter={filter}

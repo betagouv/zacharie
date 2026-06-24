@@ -32,7 +32,8 @@ test('Chain circuit long complet : PD → ETG → SVI', async ({ page }) => {
   const transmettreBtn = page.getByRole('button', { name: 'Transmettre' });
   await transmettreBtn.scrollIntoViewIfNeeded();
   await transmettreBtn.click();
-  await expect(page.getByText(/Votre fiche a été transmise/i).first()).toBeVisible({ timeout: 15000 });
+  // Dispatch vers un seul destinataire (ETG 1) : la confirmation chasseur est "X a été notifié"
+  await expect(page.getByText(/ETG 1 a été notifié/).first()).toBeVisible({ timeout: 15000 });
 
   // 2. ETG 1 prend en charge, process carcasses, transmet au SVI
   await page.setViewportSize({ width: 1280, height: 900 });
