@@ -165,7 +165,12 @@ const useZustandStore = create<State & Actions>()(
           fei_numero: FeiWithIntermediaires['numero'],
           partialFei: Partial<FeiWithIntermediaires>
         ) => {
-          const carcassefeiCarcasses = get().carcassesRegistry.filter((c) => c.fei_numero === fei_numero);
+          // Base sur le registre vivant (state.carcasses), pas sur carcassesRegistry qui n'est figé
+          // qu'au chargement : sinon on réécrit les carcasses avec des données périmées et on écrase
+          // les mutations locales récentes (ex : current_owner_role posé juste avant par une prise en charge).
+          const carcassefeiCarcasses = Object.values(get().carcasses).filter(
+            (c) => c.fei_numero === fei_numero
+          );
           const nextFei: FeiWithIntermediaires = {
             ...useZustandStore.getState().feis[fei_numero],
             ...partialFei,

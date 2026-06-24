@@ -87,11 +87,38 @@ export function useTransmissions(): Record<
     // EN NE MAINTENANT QU'UNE SEULE LECTURE
     // Solution: on va dire que, par défaut, un groupement de carcasse est `done`
 
+    // Les champs de décision de transmission (prochain détenteur, dépôt) ne sont posés que sur les
+    // CarcasseIntermediaire des carcasses prises en charge, jamais sur les refusées/manquantes. Comme
+    // une transmission agrège plusieurs carcasses, on retient pour chaque intermédiaire la valeur
+    // non-nulle de n'importe laquelle de ses carcasses (sinon une carcasse refusée en tête masque la
+    // décision réelle et la sélection du prochain détenteur paraît perdue).
+    const mergeIntermediaireDecisionFields = (
+      into: Array<CarcassesIntermediaire>,
+      from: Array<CarcassesIntermediaire>
+    ) => {
+      for (const src of from) {
+        const dst = into.find((i) => i.id === src.id);
+        if (!dst) continue;
+        if (src.intermediaire_prochain_detenteur_id_cache != null) {
+          dst.intermediaire_prochain_detenteur_id_cache = src.intermediaire_prochain_detenteur_id_cache;
+          dst.intermediaire_prochain_detenteur_role_cache = src.intermediaire_prochain_detenteur_role_cache;
+        }
+        if (src.intermediaire_depot_type != null) {
+          dst.intermediaire_depot_type = src.intermediaire_depot_type;
+          dst.intermediaire_depot_entity_id = src.intermediaire_depot_entity_id;
+        }
+      }
+    };
+
     for (const carcasse of Object.values(allCarcasses)) {
       if (carcasse.deleted_at) continue;
       const transmissionId = getTransmissionId(carcasse);
       if (transmissions[transmissionId]) {
         transmissions[transmissionId].carcasses.push(carcasse);
+        mergeIntermediaireDecisionFields(
+          transmissions[transmissionId].intermediaires,
+          intermediairesByCarcasseId[carcasse.zacharie_carcasse_id] || []
+        );
       } else {
         const transmission = getCarcasseTransmission(carcasse);
         const fei = feis[transmission.fei_numero!];
@@ -100,8 +127,12 @@ export function useTransmissions(): Record<
         feiDispatches[transmission.fei_numero!]++;
         if (!transmissionIdsByFeiNumero[fei.numero]) transmissionIdsByFeiNumero[fei.numero] = [];
         transmissionIdsByFeiNumero[fei.numero].push(transmissionId);
-        // ordre chronologique décroissant, du plus récent au plus ancien
-        const intermediaires = intermediairesByCarcasseId[carcasse.zacharie_carcasse_id] || [];
+        // ordre chronologique décroissant, du plus récent au plus ancien.
+        // Clone : la transmission agrège ensuite les décisions des autres carcasses du groupe
+        // (mergeIntermediaireDecisionFields), sans muter les listes par-carcasse partagées.
+        const intermediaires = (intermediairesByCarcasseId[carcasse.zacharie_carcasse_id] || []).map((i) => ({
+          ...i,
+        }));
         const transmissionWithIntermediaires: CarcasseTransmissionWihMetadata = {
           content: transmission,
           labels: getTransmissionLabels('Clôturée', transmission, role, entitiesWorkingDirectlyFor),
@@ -258,10 +289,6 @@ export function useTransmissions(): Record<
         continue;
       }
     }
-    console.log(
-      'ZACH-20260623-Q4MVT-184732 transmissionIdsByFeiNumero[fei.numero]',
-      transmissionIdsByFeiNumero['ZACH-20260623-Q4MVT-184732']
-    );
     if (meIsChassseur) {
       for (const fei of Object.values(feis)) {
         // la fei vient juste d'être créée, il n'y a pas encore de transmission
@@ -373,7 +400,6 @@ export function useGetTransmissionFromURLParams() {
   const fei_numero = params.fei_numero!;
   const premier_detenteur_prochain_detenteur_id_cache = params.premier_detenteur_prochain_detenteur_id_cache;
   const transmissionId = buildTransmissionId(fei_numero, premier_detenteur_prochain_detenteur_id_cache);
-  console.log({ transmissionId, premier_detenteur_prochain_detenteur_id_cache });
   const transmission = useGetTransmissionFromTransmissionId(transmissionId);
   return transmission;
 }
@@ -389,7 +415,6 @@ export function useGetTransmissionFromCarcasse(carcasse: Carcasse) {
 
 export function useGetTransmissionFromTransmissionId(transmissionId: string) {
   const transmissions = useTransmissions();
-  console.log({ transmissions });
   const [transmission, setTransmission] = useState<CarcasseTransmissionWihMetadata>(
     transmissions[transmissionId]
   );
@@ -414,7 +439,6 @@ export function useGetTransmissionsForFei(fei_numero: string) {
   const currentTransmissions = useMemo(() => {
     const _currentTransmissions = [];
     for (const transmissionId of Object.keys(transmissions)) {
-      console.log(transmissionId, fei_numero);
       if (transmissionId.startsWith(fei_numero)) _currentTransmissions.push(transmissions[transmissionId]);
     }
     return _currentTransmissions;
