@@ -26,7 +26,9 @@ export function buildTransmissionId(numero: string, id?: string) {
 // une fiche tout juste créée n'a pas encore de carcasse : son content est la Fei brute
 // (sans fei_numero), on retombe alors sur l'id simulé par le seul numéro de fiche.
 export function getTransmissionIdFromMetadata(transmission: CarcasseTransmissionWihMetadata) {
-  if (!transmission.content.fei_numero) return buildTransmissionId(transmission.fei.numero);
+  if (!transmission.content.premier_detenteur_prochain_detenteur_id_cache) {
+    return buildTransmissionId(transmission.fei.numero);
+  }
   return getTransmissionId(transmission.content);
 }
 
