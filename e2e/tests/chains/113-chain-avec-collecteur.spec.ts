@@ -30,7 +30,9 @@ test('Chain : PD → collecteur → ETG → SVI', async ({ page }) => {
   const transmettreBtn1 = page.getByRole('button', { name: 'Transmettre' });
   await transmettreBtn1.scrollIntoViewIfNeeded();
   await transmettreBtn1.click();
-  await expect(page.getByText(/Votre fiche a été transmise/i).first()).toBeVisible({ timeout: 15000 });
+  await expect(page.getByText(/Collecteur Pro 1 a été notifié/i).first()).toBeVisible({
+    timeout: 15000,
+  });
 
   // 2. Collecteur Pro prend en charge + transmet a ETG 1
   await page.setViewportSize({ width: 1280, height: 900 });

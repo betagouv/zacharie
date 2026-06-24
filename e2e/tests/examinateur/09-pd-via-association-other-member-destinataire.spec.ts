@@ -89,7 +89,7 @@ test("Autre membre de l'Association voit le bloc Destinataire sur la fiche", asy
   await transmettre.scrollIntoViewIfNeeded();
   await transmettre.click();
   // Beacon de sync — la fiche est bien remontée jusqu'au backend.
-  await expect(page.getByText(/Votre fiche a été transmise à ETG 1/i)).toBeVisible({ timeout: 10000 });
+  await expect(page.getByText(/ETG 1 a été notifié/i)).toBeVisible({ timeout: 10000 });
 
   // --- User B : premier-detenteur (autre utilisateur, AUSSI membre de l'Association
   //     via CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY).

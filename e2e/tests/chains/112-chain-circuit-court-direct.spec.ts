@@ -30,7 +30,9 @@ test('Chain circuit court : PD → Commerce de détail (sans ETG)', async ({ pag
   const transmettreBtn = page.getByRole('button', { name: 'Transmettre' });
   await transmettreBtn.scrollIntoViewIfNeeded();
   await transmettreBtn.click();
-  await expect(page.getByText(/Votre fiche a été transmise/i).first()).toBeVisible({ timeout: 15000 });
+  await expect(page.getByText(/Commerce de Détail 1 a été notifié/i).first()).toBeVisible({
+    timeout: 15000,
+  });
 
   // 2. Commerce de detail recoit
   await page.setViewportSize({ width: 1280, height: 900 });

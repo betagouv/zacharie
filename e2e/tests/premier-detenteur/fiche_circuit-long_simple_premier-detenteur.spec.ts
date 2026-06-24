@@ -58,8 +58,7 @@ test('Pas de stockage - Transporter les carcasses soi-même', async ({ page }) =
   await jeTransporte.click();
   await transmettreBtn.scrollIntoViewIfNeeded();
   await transmettreBtn.click();
-  await expect(page.getByText(/Votre fiche a été transmise/i).first()).toBeVisible({ timeout: 10000 });
-  await expect(page.getByText(/Votre fiche a été transmise à ETG 1/i)).toBeVisible();
+  await expect(page.getByText(/ETG 1 a été notifié/i).first()).toBeVisible({ timeout: 10000 });
 });
 
 test('Stockage - Transporter les carcasses soi-même', async ({ page }) => {
@@ -91,7 +90,7 @@ test('Stockage - Transporter les carcasses soi-même', async ({ page }) => {
   const transmettreBtn = page.getByRole('button', { name: 'Transmettre' });
   await transmettreBtn.scrollIntoViewIfNeeded();
   await transmettreBtn.click();
-  await expect(page.getByText(/Votre fiche a été transmise à ETG 1/i)).toBeVisible({ timeout: 10000 });
+  await expect(page.getByText(/ETG 1 a été notifié/i)).toBeVisible({ timeout: 10000 });
 });
 
 test('Stockage - Le transport est réalisé par un collecteur professionnel', async ({ page }) => {
@@ -120,5 +119,5 @@ test('Stockage - Le transport est réalisé par un collecteur professionnel', as
   const transmettreBtn = page.getByRole('button', { name: 'Transmettre' });
   await transmettreBtn.scrollIntoViewIfNeeded();
   await transmettreBtn.click();
-  await expect(page.getByText(/Votre fiche a été transmise à ETG 1/i)).toBeVisible({ timeout: 10000 });
+  await expect(page.getByText(/ETG 1 a été notifié/i)).toBeVisible({ timeout: 10000 });
 });

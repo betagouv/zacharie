@@ -252,7 +252,11 @@ const useZustandStore = create<State & Actions>()(
         ) => {
           if (newIntermediaires.length === 0) return;
           return new Promise((resolve) => {
-            const carcasses = get().carcassesRegistry.filter((c) =>
+            // Registre vivant (state.carcasses) et non carcassesRegistry figé au chargement : une
+            // carcasse tout juste créée (ex : ajout d'une carcasse manquante par l'intermédiaire)
+            // n'est pas encore dans carcassesRegistry, sinon aucune CarcasseIntermediaire n'est créée
+            // pour elle et elle n'apparaît pas dans la liste de l'intermédiaire.
+            const carcasses = Object.values(get().carcasses).filter((c) =>
               specificCarcasseIds.includes(c.zacharie_carcasse_id)
             );
             const byId: Record<FeiAndCarcasseAndIntermediaireIds, CarcasseIntermediaire> = {};
