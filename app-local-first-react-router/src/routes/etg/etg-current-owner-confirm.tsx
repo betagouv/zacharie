@@ -3,6 +3,7 @@ import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import { useMemo, useState } from 'react';
 import dayjs from 'dayjs';
+import { toast } from 'react-toastify';
 import {
   DepotType,
   EntityRelationType,
@@ -474,6 +475,7 @@ export default function CurrentOwnerConfirm() {
                   history: createHistoryInput(currentTransmission, nextTransmission),
                 });
                 syncData('current-owner-renvoi');
+                toast.success("La fiche a été renvoyée à l'expéditeur");
               }}
             >
               Je renvoie la fiche à l'expéditeur

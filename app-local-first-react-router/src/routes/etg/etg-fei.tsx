@@ -44,6 +44,7 @@ import CarcasseIntermediaireComp from './etg-carcasse';
 import RequestNewCarcasseButton from '@app/components/RequestNewCarcasseForm';
 import CurrentOwnerConfirm from './etg-current-owner-confirm';
 import NotFound from '@app/components/NotFound';
+import FeiAucuneAction from '@app/components/FeiAucuneAction';
 import Chargement from '@app/components/Chargement';
 import { loadData, useLoaderEffect } from '@app/utils/load-data';
 import { CarcasseTransmission } from '@app/types/carcasse';
@@ -87,6 +88,7 @@ export default function EtgFei(props: Props) {
 function EtgFeiLoader(props: Props) {
   const user = useUser((state) => state.user)!;
   const entities = useZustandStore((state) => state.entities);
+  const etgsIds = useEtgIds();
   const transmissionWithMetadata = useGetTransmissionFromURLParams();
   const intermediaires = transmissionWithMetadata.intermediaires;
   const myCarcasses = transmissionWithMetadata.carcasses;
@@ -144,11 +146,19 @@ function EtgFeiLoader(props: Props) {
         return userWasIntermediaire.intermediaire_role;
       }
     }
+    // La fiche a été sous-traitée par mon entité : je n'ai plus d'action mais je dois
+    // pouvoir consulter la fiche (elle reste dans ma liste « En cours »).
+    if (
+      transmission.next_owner_sous_traite_by_entity_id &&
+      etgsIds.includes(transmission.next_owner_sous_traite_by_entity_id)
+    ) {
+      return FeiOwnerRole.ETG;
+    }
     return null;
-  }, [transmission, myCarcasses.length, user.id, intermediaires]);
+  }, [transmission, myCarcasses.length, user.id, intermediaires, etgsIds]);
 
   if (!showInterface) {
-    return null;
+    return <FeiAucuneAction backTo="/app/etg/" />;
   }
 
   return (
@@ -420,6 +430,17 @@ function EtgFeiContent({
     return true;
   }, [transmission, user, intermediaire, isEtgWorkingFor]);
   const effectiveCanEditCarcasseDecision = canEditCarcasseDecision && !props.readOnly;
+
+  // La fiche a été sous-traitée par mon entité : affichage lecture seule + rappel du transporteur choisi.
+  const feiSousTraiteeParMoi = useMemo(() => {
+    if (!transmission.next_owner_sous_traite_by_entity_id) {
+      return false;
+    }
+    return etgsIds.includes(transmission.next_owner_sous_traite_by_entity_id);
+  }, [transmission.next_owner_sous_traite_by_entity_id, etgsIds]);
+  const sousTraitantName = transmission.next_owner_entity_id
+    ? (entities[transmission.next_owner_entity_id]?.nom_d_usage ?? '')
+    : '';
 
   const formattedPriseEnChargeAt = priseEnChargeAt
     ? dayjs(priseEnChargeAt).format('YYYY-MM-DDTHH:mm')
@@ -693,6 +714,16 @@ function EtgFeiContent({
             key={transmission.current_owner_entity_id! + transmission.current_owner_user_id!}
           >
             <EtgHeaderFiche />
+            {feiSousTraiteeParMoi && (
+              <div className="bg-alt-blue-france pb-8">
+                <Alert
+                  severity="info"
+                  className="bg-white"
+                  title={`Transport sous-traité${sousTraitantName ? ` : ${sousTraitantName}` : ''}`}
+                  description="Vous avez sous-traité le transport de ces carcasses, vous n'avez plus d'action à effectuer sur cette fiche."
+                />
+              </div>
+            )}
             <FeiSousTraite />
             <CurrentOwnerConfirm />
             {/* <Section title="Transport" key={intermediaire?.id}>

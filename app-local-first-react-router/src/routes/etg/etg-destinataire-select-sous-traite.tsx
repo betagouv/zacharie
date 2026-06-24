@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Prisma, EntityTypes, EntityRelationType, FeiOwnerRole } from '@prisma/client';
 import dayjs from 'dayjs';
+import { toast } from 'react-toastify';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
@@ -147,6 +148,7 @@ export default function DestinataireSousTraite({
       intermediaire_id: null,
     });
     syncData('current-owner-sous-traite-select-destinataire-sous-traite');
+    toast.success(`${entities[prochainDetenteurEntityId]?.nom_d_usage ?? 'Le transporteur'} a été notifié`);
   };
 
   const jobIsMissing = useMemo(() => {
