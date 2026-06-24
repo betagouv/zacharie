@@ -83,7 +83,7 @@ export default function CardCarcasse({
     return commentaires;
   }, [carcassesIntermediaires, entities]);
 
-  const { statusNewCard, motifRefus } = useCarcasseStatusAndRefus(carcasse, fei);
+  const { statusNewCard, motifRefus } = useCarcasseStatusAndRefus(carcasse);
 
   let miseAMort = '';
   if (!hideDateMiseAMort) {
@@ -126,7 +126,6 @@ export default function CardCarcasse({
 
   const cardDisplay = getCarcasseCardDisplay({
     carcasse,
-    fei,
     latestIntermediaire,
     entities,
     viewRole,
