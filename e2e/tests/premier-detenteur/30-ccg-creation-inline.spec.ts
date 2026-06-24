@@ -52,5 +52,5 @@ test('Création CCG inline depuis le formulaire de transmission', async ({ page 
   await transmettre.scrollIntoViewIfNeeded();
   await transmettre.click();
   // Chasseur/PD voit la page de confirmation dédiée, pas un toast « a été notifié »
-  await expect(page.getByText(/Votre fiche a été transmise à ETG 1/i)).toBeVisible({ timeout: 10000 });
+  await expect(page.getByText(/ETG 1 a été notifié/i)).toBeVisible({ timeout: 10000 });
 });

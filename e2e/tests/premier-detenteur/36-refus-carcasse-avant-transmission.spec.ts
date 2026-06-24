@@ -54,7 +54,7 @@ test('PD supprime une carcasse avant transmission — ETG reçoit N-1', async ({
   const transmettreBtn = page.getByRole('button', { name: /Transmettre/ });
   await transmettreBtn.scrollIntoViewIfNeeded();
   await transmettreBtn.click();
-  await expect(page.getByText(/Votre fiche a été transmise/i).first()).toBeVisible({ timeout: 10000 });
+  await expect(page.getByText(/ETG 1 a été notifié/i).first()).toBeVisible({ timeout: 10000 });
 
   // 5. Login as ETG 1 and verify only 3 carcasses (not 4)
   await logoutAndConnect(page, 'etg-1@example.fr');
