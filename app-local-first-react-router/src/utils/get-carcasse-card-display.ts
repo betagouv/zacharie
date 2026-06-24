@@ -26,7 +26,6 @@ export interface CardDisplay {
 
 export interface CardDisplayParams {
   carcasse: Carcasse;
-  fei: ReturnType<typeof useZustandStore.getState>['feis'][string];
   latestIntermediaire: ReturnType<typeof useCarcassesIntermediairesForCarcasse>[number] | undefined;
   entities: ReturnType<typeof useZustandStore.getState>['entities'];
   viewRole: CardViewRole;
@@ -37,7 +36,6 @@ export interface CardDisplayParams {
 
 export function deriveCarcasseUiState(
   carcasse: Carcasse,
-  fei: CardDisplayParams['fei'],
   latestIntermediaire: CardDisplayParams['latestIntermediaire'],
   overrides: { forceRefus?: boolean; forceManquante?: boolean; forceAccept?: boolean }
 ): CardUiState {
@@ -67,10 +65,12 @@ export function deriveCarcasseUiState(
     case CarcasseStatus.TRAITEMENT_ASSAINISSANT:
       return 'accepte-svi';
     case CarcasseStatus.SANS_DECISION: {
+      // On lit l'état de possession de la carcasse elle-même (source de vérité),
+      // pas le snapshot FEI qui peut être périmé après un « Retour à l'envoyeur ».
       const isCreation =
-        (fei?.fei_current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL ||
-          fei?.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR) &&
-        !fei?.fei_next_owner_role;
+        (carcasse.current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL ||
+          carcasse.current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR) &&
+        !carcasse.next_owner_role;
       if (isCreation) return 'creation';
       if (latestIntermediaire?.decision_at && latestIntermediaire?.intermediaire_role === FeiOwnerRole.ETG) {
         return 'acceptee-etg';
@@ -86,10 +86,10 @@ export function deriveCarcasseUiState(
 }
 
 export function getCarcasseCardDisplay(params: CardDisplayParams): CardDisplay {
-  const { carcasse, fei, latestIntermediaire, entities, viewRole, forceRefus, forceManquante, forceAccept } =
+  const { carcasse, latestIntermediaire, entities, viewRole, forceRefus, forceManquante, forceAccept } =
     params;
 
-  const uiState = deriveCarcasseUiState(carcasse, fei, latestIntermediaire, {
+  const uiState = deriveCarcasseUiState(carcasse, latestIntermediaire, {
     forceRefus,
     forceManquante,
     forceAccept,

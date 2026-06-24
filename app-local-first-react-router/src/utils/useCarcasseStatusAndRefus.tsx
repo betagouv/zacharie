@@ -1,11 +1,11 @@
-import { Carcasse, CarcasseStatus, CarcasseType, Fei, FeiOwnerRole } from '@prisma/client';
+import { Carcasse, CarcasseStatus, CarcasseType, FeiOwnerRole } from '@prisma/client';
 import { useMemo } from 'react';
 import useZustandStore from '@app/zustand/store';
 import { getVulgarisationSaisie } from '@app/utils/get-vulgarisation-saisie';
 import { getSimplifiedCarcasseStatus } from '@app/utils/get-carcasse-status';
 import { getFeiAndCarcasseAndIntermediaireIdsFromCarcasse } from './get-carcasse-intermediaire-id';
 
-export function useCarcasseStatusAndRefus(carcasse: Carcasse, fei: Fei) {
+export function useCarcasseStatusAndRefus(carcasse: Carcasse) {
   const entities = useZustandStore((state) => state.entities);
   const carcassesIntermediaires = useZustandStore((state) => state.carcassesIntermediaireById);
 
@@ -15,16 +15,18 @@ export function useCarcasseStatusAndRefus(carcasse: Carcasse, fei: Fei) {
     | 'refusé'
     | 'accepté'
     | 'saisie partielle' = useMemo(() => {
+    // On lit l'état de possession de la carcasse elle-même (source de vérité),
+    // pas le snapshot FEI qui peut être périmé après un « Retour à l'envoyeur ».
     if (
-      fei.fei_current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL ||
-      fei.fei_current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR
+      carcasse.current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL ||
+      carcasse.current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR
     ) {
-      if (!fei.fei_next_owner_role) {
+      if (!carcasse.next_owner_role) {
         return 'en cours de création';
       }
     }
     return getSimplifiedCarcasseStatus(carcasse);
-  }, [carcasse, fei.fei_current_owner_role, fei.fei_next_owner_role]);
+  }, [carcasse]);
 
   const motifRefus: string = useMemo(() => {
     switch (carcasse.svi_carcasse_status) {

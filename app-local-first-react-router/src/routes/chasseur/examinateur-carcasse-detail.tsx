@@ -409,12 +409,11 @@ function ExaminateurCarcasseDetailLoaded() {
     () =>
       getCarcasseCardDisplay({
         carcasse,
-        fei,
         latestIntermediaire: intermediaires[0],
         entities,
         viewRole,
       }),
-    [carcasse, fei, intermediaires, entities]
+    [carcasse, intermediaires, entities]
   );
   const headerStatusLabel = cardDisplay.statusLabel ?? 'En cours de création';
   const headerAccentColor: CardAccent = cardDisplay.accentColor ?? 'gray';
