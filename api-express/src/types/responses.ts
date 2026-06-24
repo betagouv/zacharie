@@ -31,6 +31,24 @@ export interface SearchResponse {
   error: string;
 }
 
+export interface AnnuaireResult {
+  siret: string;
+  siren: string;
+  raison_sociale: string;
+  address_ligne_1: string;
+  code_postal: string;
+  ville: string;
+  naf: string;
+}
+
+export interface AnnuaireSearchResponse {
+  ok: boolean;
+  data: {
+    results: Array<AnnuaireResult>;
+  };
+  error: string;
+}
+
 export interface UserConnexionResponse {
   ok: boolean;
   data: {
