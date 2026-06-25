@@ -90,8 +90,7 @@ test('Dispatch 4 carcasses vers 2 destinataires ETG', async ({ page, context }) 
   await expect(page.getByText('Carcasses (2)')).toBeVisible();
 
   // Le bouton de prise en charge doit être visible
-  await page.getByRole('heading', { name: '🫵 Cette fiche a été attribuée' }).click();
-  const priseEnChargeBtn = page.getByRole('button', { name: 'Prendre en charge les carcasses' });
+  const priseEnChargeBtn = page.getByRole('button', { name: 'Prendre en charge' });
   await expect(priseEnChargeBtn).toBeVisible();
   await priseEnChargeBtn.click();
 
@@ -107,8 +106,7 @@ test('Dispatch 4 carcasses vers 2 destinataires ETG', async ({ page, context }) 
   await connectWith(page, 'etg-2@example.fr');
   await page.getByRole('link', { name: feiId }).click();
   await expect(page.getByText('Carcasses (2)')).toBeVisible();
-  await page.getByRole('heading', { name: '🫵 Cette fiche a été attribuée' }).click();
-  const priseEnChargeBtn2 = page.getByRole('button', { name: 'Prendre en charge les carcasses' });
+  const priseEnChargeBtn2 = page.getByRole('button', { name: 'Prendre en charge' });
   await expect(priseEnChargeBtn2).toBeVisible();
   await priseEnChargeBtn2.click();
   await expect(priseEnChargeBtn2).not.toBeVisible({ timeout: 10000 });

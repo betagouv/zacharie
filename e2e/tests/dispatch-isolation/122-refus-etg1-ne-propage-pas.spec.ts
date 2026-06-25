@@ -55,9 +55,8 @@ test("Refus ETG 1 n'affecte pas la visibilité côté ETG 2", async ({ page }) =
   await logoutAndConnect(page, 'etg-1@example.fr');
   await page.getByRole('link', { name: feiId }).click();
   await expect(page.getByText('Carcasses (2)')).toBeVisible({ timeout: 10000 });
-  await page.getByRole('heading', { name: '🫵 Cette fiche a été attribuée' }).click();
-  await page.getByRole('button', { name: 'Prendre en charge les carcasses' }).click();
-  await expect(page.getByRole('button', { name: 'Prendre en charge les carcasses' })).not.toBeVisible({
+  await page.getByRole('button', { name: 'Prendre en charge' }).click();
+  await expect(page.getByRole('button', { name: 'Prendre en charge' })).not.toBeVisible({
     timeout: 10000,
   });
 
@@ -65,9 +64,8 @@ test("Refus ETG 1 n'affecte pas la visibilité côté ETG 2", async ({ page }) =
   await logoutAndConnect(page, 'etg-2@example.fr');
   await page.getByRole('link', { name: feiId }).click();
   await expect(page.getByText('Carcasses (2)')).toBeVisible({ timeout: 10000 });
-  await page.getByRole('heading', { name: '🫵 Cette fiche a été attribuée' }).click();
-  await page.getByRole('button', { name: 'Prendre en charge les carcasses' }).click();
-  await expect(page.getByRole('button', { name: 'Prendre en charge les carcasses' })).not.toBeVisible({
+  await page.getByRole('button', { name: 'Prendre en charge' }).click();
+  await expect(page.getByRole('button', { name: 'Prendre en charge' })).not.toBeVisible({
     timeout: 10000,
   });
   // ETG 2 sees 001/002, not 003/004

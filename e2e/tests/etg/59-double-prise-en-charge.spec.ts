@@ -15,7 +15,7 @@ test('Double clic Prendre en charge ne duplique pas', async ({ page }) => {
   await connectWith(page, 'etg-1@example.fr');
   await page.getByRole('link', { name: feiId }).click();
 
-  const btn = page.getByRole('button', { name: 'Prendre en charge les carcasses' });
+  const btn = page.getByRole('button', { name: 'Prendre en charge' });
   await btn.scrollIntoViewIfNeeded();
   // Double-clic rapide
   await btn.dblclick();

@@ -79,8 +79,7 @@ test('/etg/carcasses ne montre que les carcasses dispatchées à cet ETG', async
   await expect(page.getByText('Carcasses (2)')).toBeVisible({ timeout: 10000 });
 
   // Take charge
-  await page.getByRole('heading', { name: /Cette fiche.*a été/ }).click();
-  const priseEnChargeBtn = page.getByRole('button', { name: 'Prendre en charge les carcasses' });
+  const priseEnChargeBtn = page.getByRole('button', { name: 'Prendre en charge' });
   await expect(priseEnChargeBtn).toBeVisible();
   await priseEnChargeBtn.click();
   await expect(priseEnChargeBtn).not.toBeVisible({ timeout: 10000 });

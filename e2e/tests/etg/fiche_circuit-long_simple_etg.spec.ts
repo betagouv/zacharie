@@ -69,7 +69,6 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
           - listitem:
             - paragraph: /\\d+ Paris/
       `);
-  await page.getByRole('heading', { name: '🫵 Cette fiche vous a été' }).click();
   await expect(page.getByText('Fiche reçue, pas encore prise en charge')).toBeVisible();
   await page.getByRole('button', { name: 'Daim N° MM-001-004 Mise à' }).click();
   await page.getByRole('listitem').filter({ hasText: 'Fermer' }).getByRole('button').click();
@@ -82,7 +81,7 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
   await page.getByRole('button', { name: 'Daim N° MM-001-001 Mise à' }).click();
   await expect(page.getByText('Abcès ou nodules Unique -')).toBeVisible();
   await page.getByRole('listitem').filter({ hasText: 'Fermer' }).getByRole('button').click();
-  await page.getByRole('button', { name: 'Prendre en charge les carcasses' }).click();
+  await page.getByRole('button', { name: 'Prendre en charge' }).click();
   await expect(page.getByText("Prise en charge par l'atelier")).toBeVisible();
   await expect(
     page.getByText('Sélection du prochain destinataireProchain détenteur des carcasses *Indiquez')
@@ -225,7 +224,6 @@ test('Pas de stockage - Je transfère à un autre collecteur', async ({ page }) 
           - listitem:
             - paragraph: /\\d+ Paris/
       `);
-  await page.getByRole('heading', { name: '🫵 Cette fiche vous a été' }).click();
   await expect(page.getByText('Fiche reçue, pas encore prise en charge')).toBeVisible();
   await page.getByRole('button', { name: 'Daim N° MM-001-004 Mise à' }).click();
   await page.getByRole('listitem').filter({ hasText: 'Fermer' }).getByRole('button').click();
@@ -238,7 +236,7 @@ test('Pas de stockage - Je transfère à un autre collecteur', async ({ page }) 
   await page.getByRole('button', { name: 'Daim N° MM-001-001 Mise à' }).click();
   await expect(page.getByText('Abcès ou nodules Unique -')).toBeVisible();
   await page.getByRole('listitem').filter({ hasText: 'Fermer' }).getByRole('button').click();
-  await page.getByRole('button', { name: 'Prendre en charge les carcasses' }).click();
+  await page.getByRole('button', { name: 'Prendre en charge' }).click();
   await expect(page.getByText("Prise en charge par l'atelier")).toBeVisible();
   await expect(
     page.getByText('Sélection du prochain destinataireProchain détenteur des carcasses *Indiquez')
@@ -359,7 +357,6 @@ test('Pas de stockage - Je transfère à un autre ETG', async ({ page, context }
           - listitem:
             - paragraph: /\\d+ Paris/
       `);
-  await page.getByRole('heading', { name: '🫵 Cette fiche vous a été' }).click();
   await expect(page.getByText('Fiche reçue, pas encore prise en charge')).toBeVisible();
   await page.getByRole('button', { name: 'Daim N° MM-001-004 Mise à' }).click();
   await page.getByRole('listitem').filter({ hasText: 'Fermer' }).getByRole('button').click();
@@ -372,7 +369,7 @@ test('Pas de stockage - Je transfère à un autre ETG', async ({ page, context }
   await page.getByRole('button', { name: 'Daim N° MM-001-001 Mise à' }).click();
   await expect(page.getByText('Abcès ou nodules Unique -')).toBeVisible();
   await page.getByRole('listitem').filter({ hasText: 'Fermer' }).getByRole('button').click();
-  await page.getByRole('button', { name: 'Prendre en charge les carcasses' }).click();
+  await page.getByRole('button', { name: 'Prendre en charge' }).click();
   await expect(page.getByText("Prise en charge par l'atelier")).toBeVisible();
   await expect(
     page.getByText('Sélection du prochain destinataireProchain détenteur des carcasses *Indiquez')
@@ -443,13 +440,9 @@ test('Pas de stockage - Je transfère à un autre ETG', async ({ page, context }
       - paragraph: 2 carcasses refusées
     `);
   await page.getByRole('link', { name: 'ZACH-20250707-QZ6E0-165242 À' }).click();
-  await expect(page.locator('#content')).toMatchAriaSnapshot(`
-      - heading "🫵 Cette fiche a été attribuée à votre société" [level=3]
-      - paragraph:
-        - button "Prendre en charge les carcasses"
-        - button "Je renvoie la fiche à l'expéditeur"
-      `);
-  await page.getByRole('button', { name: 'Prendre en charge les carcasses' }).click();
+  await expect(page.getByRole('button', { name: 'Prendre en charge' })).toBeVisible();
+  await expect(page.getByRole('button', { name: "Renvoyer à l'expéditeur" })).toBeVisible();
+  await page.getByRole('button', { name: 'Prendre en charge' }).click();
   // FIXME: work in local not in ci
   // await expect(page.locator("#content")).toMatchAriaSnapshot(`
   //   - heading "Réception par mon établissement de traitement Étape 4 sur 5" [level=2]

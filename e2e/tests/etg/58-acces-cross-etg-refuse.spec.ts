@@ -24,5 +24,5 @@ test("ETG 2 ne peut pas accéder à la fiche de l'ETG 1", async ({ page }) => {
   const errorPage = page.getByText(/Erreur|introuvable|acc.s refus|non autoris/i).first();
   await expect(errorPage).toBeVisible({ timeout: 10000 });
   // The fiche must NOT be displayed in detail.
-  await expect(page.getByRole('button', { name: 'Prendre en charge les carcasses' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Prendre en charge' })).toHaveCount(0);
 });

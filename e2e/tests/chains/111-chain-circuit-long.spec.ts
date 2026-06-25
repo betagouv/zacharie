@@ -38,7 +38,7 @@ test('Chain circuit long complet : PD → ETG → SVI', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
   await logoutAndConnect(page, 'etg-1@example.fr');
   await page.getByRole('link', { name: feiId }).click();
-  await page.getByRole('button', { name: 'Prendre en charge les carcasses' }).click();
+  await page.getByRole('button', { name: 'Prendre en charge' }).click();
   await new Promise((resolve) => setTimeout(resolve, 500));
 
   // Accept MM-001-001

@@ -73,9 +73,8 @@ test("Le refus d'une carcasse par ETG 1 reste invisible pour ETG 2", async ({ pa
   await logoutAndConnect(page, 'etg-1@example.fr');
   await page.getByRole('link', { name: feiId }).click();
   await expect(page.getByText('Carcasses (2)')).toBeVisible({ timeout: 10000 });
-  await page.getByRole('heading', { name: '🫵 Cette fiche a été attribuée' }).click();
-  await page.getByRole('button', { name: 'Prendre en charge les carcasses' }).click();
-  await expect(page.getByRole('button', { name: 'Prendre en charge les carcasses' })).not.toBeVisible({
+  await page.getByRole('button', { name: 'Prendre en charge' }).click();
+  await expect(page.getByRole('button', { name: 'Prendre en charge' })).not.toBeVisible({
     timeout: 10000,
   });
 
@@ -112,9 +111,8 @@ test("Le refus d'une carcasse par ETG 1 reste invisible pour ETG 2", async ({ pa
 
   // ETG 2 can still independently take charge of their carcasses — refusal in
   // group 1 must not stall the parallel branch.
-  await page.getByRole('heading', { name: '🫵 Cette fiche a été attribuée' }).click();
-  await page.getByRole('button', { name: 'Prendre en charge les carcasses' }).click();
-  await expect(page.getByRole('button', { name: 'Prendre en charge les carcasses' })).not.toBeVisible({
+  await page.getByRole('button', { name: 'Prendre en charge' }).click();
+  await expect(page.getByRole('button', { name: 'Prendre en charge' })).not.toBeVisible({
     timeout: 10000,
   });
 });

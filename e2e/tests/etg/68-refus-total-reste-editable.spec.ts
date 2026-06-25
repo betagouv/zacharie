@@ -26,7 +26,7 @@ test('ETG refuse toutes les carcasses → la fiche reste éditable (pas de verro
   await connectWith(page, 'etg-1@example.fr');
   await expect(page).toHaveURL('http://localhost:3290/app/etg');
   await page.getByRole('link', { name: feiId }).click();
-  await page.getByRole('button', { name: 'Prendre en charge les carcasses' }).click();
+  await page.getByRole('button', { name: 'Prendre en charge' }).click();
   await new Promise((resolve) => setTimeout(resolve, 500));
 
   const refuseGrandGibier = async (bracelet: string) => {

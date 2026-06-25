@@ -8,7 +8,7 @@ test.beforeEach(async () => {
 
 test.use({ launchOptions: { slowMo: 100 } });
 
-// Scenario 65 — Collecteur clicks "Je renvoie la fiche à l'expéditeur"
+// Scenario 65 — Collecteur clicks "Renvoyer à l'expéditeur"
 test("Collecteur renvoie la fiche à l'expéditeur", async ({ page }) => {
   const feiId = 'ZACH-20250707-QZ6E0-175242';
   await connectWith(page, 'collecteur-pro@example.fr');
@@ -22,8 +22,8 @@ test("Collecteur renvoie la fiche à l'expéditeur", async ({ page }) => {
     timeout: 10000,
   });
 
-  // Click "Je renvoie la fiche à l'expéditeur"
-  const returnBtn = page.getByRole('button', { name: /Je renvoie la fiche à l'expéditeur/ });
+  // Click "Renvoyer à l'expéditeur"
+  const returnBtn = page.getByRole('button', { name: /Renvoyer à l'expéditeur/ });
   await expect(returnBtn).toBeVisible();
   await returnBtn.click();
 

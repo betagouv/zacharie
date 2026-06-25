@@ -57,7 +57,7 @@ test('Chain : PD → collecteur → ETG → SVI', async ({ page }) => {
   // 3. ETG 1 prend en charge + transmet au SVI
   await logoutAndConnect(page, 'etg-1@example.fr');
   await page.getByRole('link', { name: feiId }).click();
-  await page.getByRole('button', { name: 'Prendre en charge les carcasses' }).click();
+  await page.getByRole('button', { name: 'Prendre en charge' }).click();
   await new Promise((resolve) => setTimeout(resolve, 500));
   // Accept first carcasse
   await page
