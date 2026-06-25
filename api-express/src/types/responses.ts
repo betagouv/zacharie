@@ -113,6 +113,14 @@ export interface EtgUsersInteractedResponse {
   error: string;
 }
 
+export interface EtgUserInteractedResponse {
+  ok: boolean;
+  data: {
+    user: EtgUserInteracted;
+  } | null;
+  error: string;
+}
+
 export interface PartenairesResponse {
   ok: true;
   data: {

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
 import type { EtgUsersInteractedResponse, EtgUserInteracted } from '@api/src/types/responses';
 import { getUserRoleLabel } from '@app/utils/get-user-roles-label';
@@ -229,7 +230,13 @@ function UserCard({ user }: { user: EtgUserInteracted }) {
   const localisation = [user.code_postal, user.ville].filter(Boolean).join(' ');
   return (
     <div className="flex flex-col bg-white p-4 shadow-sm">
-      <span className="font-bold text-gray-900">{getUserName(user)}</span>
+      <Link
+        to={`/app/etg/utilisateurs/${user.id}`}
+        className="font-bold text-gray-900"
+        target="_blank"
+      >
+        {getUserName(user)}
+      </Link>
 
       {user.roles.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1">
