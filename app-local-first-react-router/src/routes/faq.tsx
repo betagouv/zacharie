@@ -190,7 +190,7 @@ export default function Faq() {
                 >
                   <p>
                     Vous pouvez nous contacter en nous appelant au{' '}
-                    <a href="tel:+33189316644">01 89 31 66 44</a>, en écrivant à{' '}
+                    <a href="tel:+33189316644">01 89 31 66 40</a>, en écrivant à{' '}
                     <a
                       href="mailto:contact@zacharie.beta.gouv.fr"
                       className="fr-link"
@@ -212,7 +212,7 @@ export default function Faq() {
 
             {/* CallOut contact */}
             <CallOut className="bg-white">
-              Besoin d'aide ? Contactez-nous au <a href="tel:+33189316644">01 89 31 66 44</a> ou par e-mail à{' '}
+              Besoin d'aide ? Contactez-nous au <a href="tel:+33189316644">01 89 31 66 40</a> ou par e-mail à{' '}
               <a href="mailto:contact@zacharie.beta.gouv.fr">contact@zacharie.beta.gouv.fr</a>. Vous pouvez
               aussi utiliser notre{' '}
               <a

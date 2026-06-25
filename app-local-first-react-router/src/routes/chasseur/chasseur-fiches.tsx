@@ -14,6 +14,7 @@ import ExportTransmissionsModal from '@app/components/ExportTransmissionsModal';
 import { filterCarcassesIntermediairesForCarcasse } from '@app/utils/get-carcasses-intermediaires';
 import { useSaveScroll } from '@app/services/useSaveScroll';
 import CardTransmission from '@app/components/CardTransmission';
+import FichesEmptyState from '@app/components/FichesEmptyState';
 import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
 import useUser from '@app/zustand/user';
 import { UserConnexionResponse } from '@api/src/types/responses';
@@ -861,6 +862,8 @@ export default function ChasseurFiches() {
             selectedTransmissions={selectedTransmissions}
             filter={'Toutes les fiches'}
             paginatedTransmissions={paginatedTransmissions}
+            hasActiveFilters={hasActiveFilters}
+            clearAllFilters={clearAllFilters}
           />
           {filteredTransmissions.length > 0 && totalPages > 1 && (
             <div className="mt-4 flex justify-center">
@@ -894,6 +897,8 @@ function FeisWrapper({
   handleCheckboxClick,
   selectedTransmissions,
   filter,
+  hasActiveFilters,
+  clearAllFilters,
 }: {
   paginatedTransmissions: Array<CarcasseTransmissionWihMetadata>;
   viewType: 'grid' | 'table';
@@ -901,43 +906,57 @@ function FeisWrapper({
   handleCheckboxClick: (feiNumber: string, selected: boolean) => void;
   selectedTransmissions: TransmissionIdSelection;
   filter?: TransmissionSimpleStatus | 'Toutes les fiches';
+  hasActiveFilters: boolean;
+  clearAllFilters: () => void;
 }) {
   const user = useMostFreshUser('chasseur fiches')!;
   const navigate = useNavigate();
   const nothingToShow = paginatedTransmissions.length === 0;
 
   if (nothingToShow) {
+    if (hasActiveFilters) {
+      return (
+        <FichesEmptyState
+          iconId="fr-icon-search-line"
+          title="Aucune fiche ne correspond à vos filtres"
+          description="Modifiez ou réinitialisez vos filtres pour retrouver vos fiches."
+          action={
+            <Button
+              priority="secondary"
+              iconId="fr-icon-refresh-line"
+              onClick={clearAllFilters}
+            >
+              Réinitialiser les filtres
+            </Button>
+          }
+        />
+      );
+    }
+    if (user.numero_cfei) {
+      return (
+        <FichesEmptyState
+          title="Pas encore de fiches cette saison"
+          description="Vos fiches apparaîtront ici dès que vous aurez créé votre première fiche d'examen initial."
+          action={
+            <Button
+              priority="primary"
+              iconId="fr-icon-add-circle-line"
+              onClick={async () => {
+                const newFei = await createNewFei();
+                navigate(`/app/chasseur/fei/${newFei.numero}`);
+              }}
+            >
+              Créer une fiche
+            </Button>
+          }
+        />
+      );
+    }
     return (
-      <div className="fr-container">
-        <div className="fr-my-7w fr-mt-md-12w fr-mb-md-10w fr-grid-row fr-grid-row--gutters fr-grid-row--middle fr-grid-row--center bg-white p-4 md:p-8">
-          <div className="fr-py-0 fr-col-12 fr-col-md-6">
-            <div className="flex flex-col bg-white">
-              <h2 className="fr-h4 mb-3 font-bold text-gray-800">Pas encore de fiches cette saison</h2>
-              {user.numero_cfei ? (
-                <>
-                  <p className="fr-text--regular mb-6 max-w-md">
-                    Vos fiches apparaîtront ici dès que vous aurez créé votre première fiche d'examen initial.
-                  </p>
-                  <Button
-                    priority="primary"
-                    iconId="fr-icon-add-circle-line"
-                    onClick={async () => {
-                      const newFei = await createNewFei();
-                      navigate(`/app/chasseur/fei/${newFei.numero}`);
-                    }}
-                  >
-                    Créer une fiche
-                  </Button>
-                </>
-              ) : (
-                <p className="fr-text--regular mb-6 max-w-md">
-                  Vos fiches apparaîtront ici dès qu'une fiche vous sera attribuée.
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
+      <FichesEmptyState
+        title="Pas encore de fiches cette saison"
+        description="Vos fiches apparaîtront ici dès qu'une fiche vous sera attribuée."
+      />
     );
   }
 
@@ -1166,7 +1185,7 @@ function FeisTable({
           {paginatedTransmissions.map((transmission) => {
             return (
               <FeisTableRow
-                key={transmission.fei.numero}
+                key={getTransmissionIdFromMetadata(transmission)}
                 transmission={transmission}
                 isSelected={selectedTransmissions.includes(getTransmissionIdFromMetadata(transmission))}
                 onPrintSelect={handleCheckboxClick}

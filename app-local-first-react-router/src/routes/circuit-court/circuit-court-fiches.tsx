@@ -5,7 +5,9 @@ import { CarcasseType, DepotType, FeiOwnerRole } from '@prisma/client';
 import type { CarcassesIntermediaire } from '@app/types/carcasses-intermediaire';
 import { SegmentedControl } from '@codegouvfr/react-dsfr/SegmentedControl';
 import { Pagination } from '@codegouvfr/react-dsfr/Pagination';
+import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
+import FichesEmptyState from '@app/components/FichesEmptyState';
 import { UserConnexionResponse } from '@api/src/types/responses';
 import { TransmissionSimpleStatus } from '@app/types/transmission-steps';
 import useZustandStore from '@app/zustand/store';
@@ -233,12 +235,13 @@ export default function CircuitCourtFiches() {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   const filtersKey = `${filterStatuses.join(',')}|${filterPremierDetenteurs.join(',')}|${filterCCGs.join(',')}|${filterCollecteurs.join(',')}|${filterSaisons.join(',')}|${filterDateFrom}|${filterDateTo}|${searchQuery}`;
-  const isFirstFiltersRender = useRef(true);
+  // on réinitialise la page seulement quand les filtres changent vraiment :
+  // setSearchParams change d'identité à chaque navigation (react-router), donc on
+  // compare la valeur précédente de filtersKey plutôt que de garder le 1er render.
+  const prevFiltersKey = useRef(filtersKey);
   useEffect(() => {
-    if (isFirstFiltersRender.current) {
-      isFirstFiltersRender.current = false;
-      return;
-    }
+    if (prevFiltersKey.current === filtersKey) return;
+    prevFiltersKey.current = filtersKey;
     setSearchParams(
       (prev) => {
         const next = new URLSearchParams(prev);
@@ -853,6 +856,8 @@ export default function CircuitCourtFiches() {
             filter={'Toutes les fiches'}
             paginatedTransmissions={paginatedTransmissions}
             handleCheckboxClick={handleCheckboxClick}
+            hasActiveFilters={hasActiveFilters}
+            clearAllFilters={clearAllFilters}
           />
           {filteredTransmissions.length > 0 && totalPages > 1 && (
             <div className="mt-4 flex justify-center">
@@ -886,6 +891,8 @@ function FeisWrapper({
   handleCheckboxClick,
   selectedTransmissions,
   filter,
+  hasActiveFilters,
+  clearAllFilters,
 }: {
   paginatedTransmissions: Array<CarcasseTransmissionWihMetadata>;
   viewType: 'grid' | 'table';
@@ -893,6 +900,8 @@ function FeisWrapper({
   handleCheckboxClick: (feiNumber: string, selected: boolean) => void;
   selectedTransmissions: TransmissionIdSelection;
   filter?: TransmissionSimpleStatus | 'Toutes les fiches';
+  hasActiveFilters: boolean;
+  clearAllFilters: () => void;
 }) {
   const nothingToShow = paginatedTransmissions.length === 0;
   const usersById = useZustandStore((state) => state.users);
@@ -900,19 +909,29 @@ function FeisWrapper({
   const myUserId = useUser((state) => state.user?.id);
 
   if (nothingToShow) {
+    if (hasActiveFilters) {
+      return (
+        <FichesEmptyState
+          iconId="fr-icon-search-line"
+          title="Aucune fiche ne correspond à vos filtres"
+          description="Modifiez ou réinitialisez vos filtres pour retrouver vos fiches."
+          action={
+            <Button
+              priority="secondary"
+              iconId="fr-icon-refresh-line"
+              onClick={clearAllFilters}
+            >
+              Réinitialiser les filtres
+            </Button>
+          }
+        />
+      );
+    }
     return (
-      <div className="fr-container">
-        <div className="fr-my-7w fr-mt-md-12w fr-mb-md-10w fr-grid-row fr-grid-row--gutters fr-grid-row--middle fr-grid-row--center bg-white p-4 md:p-8">
-          <div className="fr-py-0 fr-col-12 fr-col-md-6">
-            <div className="flex flex-col bg-white">
-              <h2 className="fr-h4 mb-3 font-bold text-gray-800">Pas encore de fiches cette saison</h2>
-              <p className="fr-text--regular mb-6 max-w-md">
-                Vos fiches apparaîtront ici dès qu'une fiche vous sera attribuée.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+      <FichesEmptyState
+        title="Pas encore de fiches cette saison"
+        description="Vos fiches apparaîtront ici dès qu'une fiche vous sera attribuée."
+      />
     );
   }
 
@@ -940,7 +959,7 @@ function FeisWrapper({
         );
         return (
           <CardTransmission
-            key={transmission.fei.numero}
+            key={getTransmissionIdFromMetadata(transmission)}
             transmission={transmission}
             filter={'Toutes les fiches'}
             onPrintSelect={handleCheckboxClick}
@@ -1156,7 +1175,7 @@ function FeisTable({
           {paginatedTransmissions.map((transmission) => {
             return (
               <FeisTableRow
-                key={transmission.fei.numero}
+                key={getTransmissionIdFromMetadata(transmission)}
                 transmission={transmission}
                 isSelected={selectedTransmissions.includes(getTransmissionIdFromMetadata(transmission))}
                 onPrintSelect={handleCheckboxClick}
