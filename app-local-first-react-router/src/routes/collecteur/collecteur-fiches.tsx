@@ -4,7 +4,9 @@ import dayjs from 'dayjs';
 import { CarcasseType, DepotType } from '@prisma/client';
 import { SegmentedControl } from '@codegouvfr/react-dsfr/SegmentedControl';
 import { Pagination } from '@codegouvfr/react-dsfr/Pagination';
+import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
+import FichesEmptyState from '@app/components/FichesEmptyState';
 import { UserConnexionResponse } from '@api/src/types/responses';
 import { TransmissionSimpleStatus } from '@app/types/transmission-steps';
 import useZustandStore from '@app/zustand/store';
@@ -172,6 +174,13 @@ export default function CollecteurFiches() {
     ''
   );
   const [filterCCG, setFilterCCG] = useLocalStorage<string>('collecteur-fiches-filter-ccg', '');
+
+  const hasActiveFilters = filter.length > 0 || !!filterPremierDetenteur || !!filterCCG;
+  const clearAllFilters = () => {
+    setFilter([]);
+    setFilterPremierDetenteur('');
+    setFilterCCG('');
+  };
 
   const allTransmissions = useMemo(() => {
     return [...transmissionsACompleter, ...transmissionsEnCours, ...transmissionsCloturees];
@@ -471,6 +480,8 @@ export default function CollecteurFiches() {
               handleCheckboxClick={handleCheckboxClick}
               selectedTransmissions={selectedTransmissions}
               filter={'Toutes les fiches'}
+              hasActiveFilters={hasActiveFilters}
+              clearAllFilters={clearAllFilters}
             />
             {totalPages > 1 && (
               <div className="flex justify-center py-6">
@@ -505,6 +516,8 @@ function FeisWrapper({
   handleCheckboxClick,
   selectedTransmissions,
   filter,
+  hasActiveFilters,
+  clearAllFilters,
 }: {
   paginatedTransmissions: Array<CarcasseTransmissionWihMetadata>;
   viewType: 'grid' | 'table';
@@ -512,6 +525,8 @@ function FeisWrapper({
   handleCheckboxClick: (feiNumber: string, selected: boolean) => void;
   selectedTransmissions: TransmissionIdSelection;
   filter?: TransmissionSimpleStatus | 'Toutes les fiches';
+  hasActiveFilters: boolean;
+  clearAllFilters: () => void;
 }) {
   const nothingToShow = paginatedTransmissions.length === 0;
   const usersById = useZustandStore((state) => state.users);
@@ -519,19 +534,29 @@ function FeisWrapper({
   const myUserId = useUser((state) => state.user?.id);
 
   if (nothingToShow) {
+    if (hasActiveFilters) {
+      return (
+        <FichesEmptyState
+          iconId="fr-icon-search-line"
+          title="Aucune fiche ne correspond à vos filtres"
+          description="Modifiez ou réinitialisez vos filtres pour retrouver vos fiches."
+          action={
+            <Button
+              priority="secondary"
+              iconId="fr-icon-refresh-line"
+              onClick={clearAllFilters}
+            >
+              Réinitialiser les filtres
+            </Button>
+          }
+        />
+      );
+    }
     return (
-      <div className="fr-container">
-        <div className="fr-my-7w fr-mt-md-12w fr-mb-md-10w fr-grid-row fr-grid-row--gutters fr-grid-row--middle fr-grid-row--center bg-white p-4 md:p-8">
-          <div className="fr-py-0 fr-col-12 fr-col-md-6">
-            <div className="flex flex-col bg-white">
-              <h2 className="fr-h4 mb-3 font-bold text-gray-800">Pas encore de fiches cette saison</h2>
-              <p className="fr-text--regular mb-6 max-w-md">
-                Vos fiches apparaîtront ici dès qu'une fiche vous sera attribuée.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+      <FichesEmptyState
+        title="Pas encore de fiches cette saison"
+        description="Vos fiches apparaîtront ici dès qu'une fiche vous sera attribuée."
+      />
     );
   }
 
