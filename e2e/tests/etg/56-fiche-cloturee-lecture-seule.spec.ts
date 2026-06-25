@@ -16,6 +16,6 @@ test('ETG ne peut plus agir sur une fiche clôturée', async ({ page }) => {
   await expect(page).toHaveURL(new RegExp(`/app/etg/fei/${feiId}`));
 
   // Aucun bouton "Prendre en charge" / "Transmettre la fiche" ne doit être visible.
-  await expect(page.getByRole('button', { name: 'Prendre en charge les carcasses' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Prendre en charge' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Transmettre la fiche' })).toHaveCount(0);
 });

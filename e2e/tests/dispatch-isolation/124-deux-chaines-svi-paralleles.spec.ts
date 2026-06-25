@@ -66,8 +66,8 @@ test('SVI 1 et SVI 2 voient chacun leur branche seulement', async ({ page }) => 
   await page.setViewportSize({ width: 1280, height: 900 });
   await logoutAndConnect(page, 'etg-1@example.fr');
   await page.getByRole('link', { name: feiId }).click();
-  await page.getByRole('button', { name: 'Prendre en charge les carcasses' }).click();
-  await expect(page.getByRole('button', { name: 'Prendre en charge les carcasses' })).not.toBeVisible({
+  await page.getByRole('button', { name: 'Prendre en charge' }).click();
+  await expect(page.getByRole('button', { name: 'Prendre en charge' })).not.toBeVisible({
     timeout: 10000,
   });
 
@@ -93,8 +93,8 @@ test('SVI 1 et SVI 2 voient chacun leur branche seulement', async ({ page }) => 
   // 3. ETG 2: take charge → accept MM-001-001 (Daim) + MM-001-002 (Daim) → transmit to SVI 2
   await logoutAndConnect(page, 'etg-2@example.fr');
   await page.getByRole('link', { name: feiId }).click();
-  await page.getByRole('button', { name: 'Prendre en charge les carcasses' }).click();
-  await expect(page.getByRole('button', { name: 'Prendre en charge les carcasses' })).not.toBeVisible({
+  await page.getByRole('button', { name: 'Prendre en charge' }).click();
+  await expect(page.getByRole('button', { name: 'Prendre en charge' })).not.toBeVisible({
     timeout: 10000,
   });
 

@@ -13,7 +13,7 @@ test('ETG transmet hors-ligne puis synchronise au retour online', async ({ page,
   const feiId = 'ZACH-20250707-QZ6E0-165242';
   await connectWith(page, 'etg-1@example.fr');
   await page.getByRole('link', { name: feiId }).click();
-  await page.getByRole('button', { name: 'Prendre en charge les carcasses' }).click();
+  await page.getByRole('button', { name: 'Prendre en charge' }).click();
   await expect(page.getByText("Prise en charge par l'atelier")).toBeVisible();
 
   // Passer hors-ligne.

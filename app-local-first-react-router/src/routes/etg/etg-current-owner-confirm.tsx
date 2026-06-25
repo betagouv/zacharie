@@ -1,5 +1,5 @@
-import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
-import { Button } from '@codegouvfr/react-dsfr/Button';
+import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
+import { type ButtonProps } from '@codegouvfr/react-dsfr/Button';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import { useMemo, useState } from 'react';
 import dayjs from 'dayjs';
@@ -376,110 +376,98 @@ export default function CurrentOwnerConfirm() {
     return null;
   }
 
+  function handleRenvoi() {
+    // Only reset my carcasses' next_owner
+    const nextTransmission: CarcasseTransmission = {
+      next_owner_entity_id: null,
+      next_owner_entity_name_cache: null,
+      next_owner_user_id: null,
+      next_owner_user_name_cache: null,
+      next_owner_role: null,
+    };
+    updateCarcassesTransmission(myCarcasseIds, nextTransmission);
+    addLog({
+      user_id: user.id,
+      user_role: currentTransmission.next_owner_role as UserRoles,
+      fei_numero: fei.numero,
+      action: 'current-owner-renvoi',
+      entity_id: currentTransmission.next_owner_entity_id,
+      zacharie_carcasse_id: null,
+      intermediaire_id: null,
+      carcasse_intermediaire_id: null,
+      history: createHistoryInput(currentTransmission, nextTransmission),
+    });
+    syncData('current-owner-renvoi');
+    toast.success("La fiche a été renvoyée à l'expéditeur");
+  }
+
+  const actionButtons: ButtonProps[] = [];
+  if (currentTransmission.next_owner_role === FeiOwnerRole.ETG) {
+    if (user.etg_role === UserEtgRoles.RECEPTION) {
+      actionButtons.push({
+        children: 'Prendre en charge',
+        nativeButtonProps: {
+          type: 'submit',
+          onClick: async () => {
+            if (checkedTransportFromETG) {
+              await handleETGReceptionWithTransport();
+            } else {
+              await handlePriseEnCharge({
+                sousTraite: false,
+                action: 'current-owner-confirm-etg-reception',
+              });
+            }
+          },
+        },
+      });
+      // je ne peux pas sous-traiter une fiche si une autre entreprise a déjà décidé de sous-traiter la fiche
+      if (needTransportFromETG && !notMyEntitySoutraite) {
+        actionButtons.push({
+          children: 'Sous-traiter transport',
+          priority: 'secondary',
+          nativeButtonProps: {
+            type: 'button',
+            onClick: () =>
+              handlePriseEnCharge({
+                sousTraite: true,
+                action: 'current-owner-sous-traite-request',
+              }),
+          },
+        });
+      }
+    }
+    if (user.etg_role === UserEtgRoles.TRANSPORT) {
+      actionButtons.push({
+        children: 'Prendre en charge',
+        nativeButtonProps: {
+          type: 'submit',
+          onClick: () =>
+            handlePriseEnCharge({
+              sousTraite: false,
+              action: 'current-owner-confirm-etg-transport-by-me',
+              etgEmployeeTransportingToETG: true,
+            }),
+        },
+      });
+    }
+  }
+  actionButtons.push({
+    children: "Renvoyer à l'expéditeur",
+    priority: 'secondary',
+    nativeButtonProps: {
+      type: 'button',
+      onClick: handleRenvoi,
+    },
+  });
+
   return (
     <div className="bg-alt-blue-france pb-8">
-      <CallOut
-        title={
-          currentTransmission.next_owner_user_id
-            ? '🫵  Cette fiche vous a été attribuée'
-            : '🫵  Cette fiche a été attribuée à votre société'
-        }
-        className="m-0 bg-white"
-      >
-        {currentTransmission.next_owner_role === FeiOwnerRole.ETG && (
-          <>
-            {user.etg_role === UserEtgRoles.RECEPTION && (
-              <>
-                <Button
-                  type="submit"
-                  className="my-4 block"
-                  onClick={async () => {
-                    if (checkedTransportFromETG) {
-                      await handleETGReceptionWithTransport();
-                    } else {
-                      await handlePriseEnCharge({
-                        sousTraite: false,
-                        action: 'current-owner-confirm-etg-reception',
-                      });
-                    }
-                  }}
-                >
-                  Prendre en charge les carcasses
-                </Button>
-                {/* je ne peux pas sous-traiter une fiche si une autre entreprise a déjà décide de sous-traiter la fiche */}
-                {needTransportFromETG && !notMyEntitySoutraite && (
-                  <Button
-                    priority="tertiary"
-                    type="button"
-                    className="mt-0"
-                    onClick={() =>
-                      handlePriseEnCharge({
-                        sousTraite: true,
-                        action: 'current-owner-sous-traite-request',
-                      })
-                    }
-                  >
-                    Sous-traiter le transport
-                  </Button>
-                )}
-              </>
-            )}
-            {user.etg_role === UserEtgRoles.TRANSPORT && (
-              <Button
-                type="submit"
-                className="my-4 block"
-                onClick={() => {
-                  handlePriseEnCharge({
-                    sousTraite: false,
-                    action: 'current-owner-confirm-etg-transport-by-me',
-                    etgEmployeeTransportingToETG: true,
-                  });
-                }}
-              >
-                Prendre en charge les carcasses
-              </Button>
-            )}
-          </>
-        )}
-        <>
-          <div className="flex items-center gap-2">
-            {/* <p className="m-0 text-sm">Il y a une erreur ?</p> */}
-            <Button
-              // priority="tertiary no outline"
-              className="mt-0]"
-              // type="submit"
-              priority="tertiary"
-              type="button"
-              onClick={() => {
-                // Only reset my carcasses' next_owner
-                const nextTransmission: CarcasseTransmission = {
-                  next_owner_entity_id: null,
-                  next_owner_entity_name_cache: null,
-                  next_owner_user_id: null,
-                  next_owner_user_name_cache: null,
-                  next_owner_role: null,
-                };
-                updateCarcassesTransmission(myCarcasseIds, nextTransmission);
-                addLog({
-                  user_id: user.id,
-                  user_role: currentTransmission.next_owner_role as UserRoles,
-                  fei_numero: fei.numero,
-                  action: 'current-owner-renvoi',
-                  entity_id: currentTransmission.next_owner_entity_id,
-                  zacharie_carcasse_id: null,
-                  intermediaire_id: null,
-                  carcasse_intermediaire_id: null,
-                  history: createHistoryInput(currentTransmission, nextTransmission),
-                });
-                syncData('current-owner-renvoi');
-                toast.success("La fiche a été renvoyée à l'expéditeur");
-              }}
-            >
-              Je renvoie la fiche à l'expéditeur
-            </Button>
-          </div>
-        </>
-      </CallOut>
+      <div className="rounded bg-white p-4 md:p-8">
+        <ButtonsGroup
+          inlineLayoutWhen="md and up"
+          buttons={actionButtons as [ButtonProps, ...ButtonProps[]]}
+        />
+      </div>
     </div>
   );
 }

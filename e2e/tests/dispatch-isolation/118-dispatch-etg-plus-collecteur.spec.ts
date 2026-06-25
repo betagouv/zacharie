@@ -62,9 +62,8 @@ test('ETG et collecteur ne voient que leur branche', async ({ page }) => {
   await logoutAndConnect(page, 'etg-1@example.fr');
   await page.getByRole('link', { name: feiId }).click();
   await expect(page.getByText('Carcasses (2)')).toBeVisible({ timeout: 10000 });
-  await page.getByRole('heading', { name: '🫵 Cette fiche a été attribuée' }).click();
-  await page.getByRole('button', { name: 'Prendre en charge les carcasses' }).click();
-  await expect(page.getByRole('button', { name: 'Prendre en charge les carcasses' })).not.toBeVisible({
+  await page.getByRole('button', { name: 'Prendre en charge' }).click();
+  await expect(page.getByRole('button', { name: 'Prendre en charge' })).not.toBeVisible({
     timeout: 10000,
   });
   await expect(page.getByText('MM-001-003').first()).toBeVisible({ timeout: 10000 });

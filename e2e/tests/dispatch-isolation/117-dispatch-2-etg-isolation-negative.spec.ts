@@ -63,9 +63,8 @@ test('Dispatch 2 ETG : isolation négative + vue agrégée', async ({ page }) =>
   await page.getByRole('link', { name: feiId }).click();
   await expect(page.getByText('Carcasses (2)')).toBeVisible({ timeout: 10000 });
   // Prendre en charge pour accéder aux détails des carcasses
-  await page.getByRole('heading', { name: '🫵 Cette fiche a été attribuée' }).click();
-  await page.getByRole('button', { name: 'Prendre en charge les carcasses' }).click();
-  await expect(page.getByRole('button', { name: 'Prendre en charge les carcasses' })).not.toBeVisible({
+  await page.getByRole('button', { name: 'Prendre en charge' }).click();
+  await expect(page.getByRole('button', { name: 'Prendre en charge' })).not.toBeVisible({
     timeout: 10000,
   });
   // Group 1 (ETG 1) kept MM-001-003 and MM-001-004 (the ones NOT clicked into group 2)
@@ -82,9 +81,8 @@ test('Dispatch 2 ETG : isolation négative + vue agrégée', async ({ page }) =>
   await logoutAndConnect(page, 'etg-2@example.fr');
   await page.getByRole('link', { name: feiId }).click();
   await expect(page.getByText('Carcasses (2)')).toBeVisible({ timeout: 10000 });
-  await page.getByRole('heading', { name: '🫵 Cette fiche a été attribuée' }).click();
-  await page.getByRole('button', { name: 'Prendre en charge les carcasses' }).click();
-  await expect(page.getByRole('button', { name: 'Prendre en charge les carcasses' })).not.toBeVisible({
+  await page.getByRole('button', { name: 'Prendre en charge' }).click();
+  await expect(page.getByRole('button', { name: 'Prendre en charge' })).not.toBeVisible({
     timeout: 10000,
   });
   await expect(page.getByText('MM-001-001').first()).toBeVisible({ timeout: 10000 });

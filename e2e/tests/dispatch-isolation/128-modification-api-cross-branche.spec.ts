@@ -72,8 +72,8 @@ test.skip("API POST /carcasse/:id d'une autre branche → 403", async ({ page })
   await page.setViewportSize({ width: 1280, height: 900 });
   await logoutAndConnect(page, 'etg-2@example.fr');
   await page.getByRole('link', { name: feiId }).click();
-  await page.getByRole('button', { name: 'Prendre en charge les carcasses' }).click();
-  await expect(page.getByRole('button', { name: 'Prendre en charge les carcasses' })).not.toBeVisible({
+  await page.getByRole('button', { name: 'Prendre en charge' }).click();
+  await expect(page.getByRole('button', { name: 'Prendre en charge' })).not.toBeVisible({
     timeout: 10000,
   });
 
@@ -81,8 +81,8 @@ test.skip("API POST /carcasse/:id d'une autre branche → 403", async ({ page })
   await logoutAndConnect(page, 'etg-1@example.fr');
   // Also take charge as ETG 1 so their intermediaire exists
   await page.getByRole('link', { name: feiId }).click();
-  await page.getByRole('button', { name: 'Prendre en charge les carcasses' }).click();
-  await expect(page.getByRole('button', { name: 'Prendre en charge les carcasses' })).not.toBeVisible({
+  await page.getByRole('button', { name: 'Prendre en charge' }).click();
+  await expect(page.getByRole('button', { name: 'Prendre en charge' })).not.toBeVisible({
     timeout: 10000,
   });
 

@@ -22,7 +22,7 @@ test('89 - SVI : accepter une carcasse ne la fait pas disparaître après reconn
   // 1. ETG prend en charge + transmet au SVI.
   await connectWith(page, 'etg-1@example.fr');
   await page.getByRole('link', { name: feiId }).click();
-  await page.getByRole('button', { name: 'Prendre en charge les carcasses' }).click();
+  await page.getByRole('button', { name: 'Prendre en charge' }).click();
   // Les carcasses sont acceptées par défaut (cliquer dessus sert à les refuser/annoter).
   await page.getByRole('button', { name: 'Cliquez ici pour définir' }).click();
   await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").click();

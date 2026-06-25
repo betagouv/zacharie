@@ -95,7 +95,7 @@ test('ETG 1 voit 2 transmissions isolées pour le même examen initial', async (
 
   // 4. Branche collecteur : ne contient QUE MM-001-001 / MM-001-002.
   await feiCards.filter({ hasText: 'Collecteur Pro 1' }).click();
-  const priseEnChargeCollecteur = page.getByRole('button', { name: 'Prendre en charge les carcasses' });
+  const priseEnChargeCollecteur = page.getByRole('button', { name: 'Prendre en charge' });
   await priseEnChargeCollecteur.scrollIntoViewIfNeeded();
   await priseEnChargeCollecteur.click();
   await expect(priseEnChargeCollecteur).not.toBeVisible({ timeout: 10000 });
@@ -109,7 +109,7 @@ test('ETG 1 voit 2 transmissions isolées pour le même examen initial', async (
   const feiCardsAgain = page.getByRole('link', { name: feiId });
   await expect(feiCardsAgain).toHaveCount(2, { timeout: 15000 });
   await feiCardsAgain.filter({ hasNotText: 'Collecteur Pro 1' }).click();
-  const priseEnChargeDirecte = page.getByRole('button', { name: 'Prendre en charge les carcasses' });
+  const priseEnChargeDirecte = page.getByRole('button', { name: 'Prendre en charge' });
   await priseEnChargeDirecte.scrollIntoViewIfNeeded();
   await priseEnChargeDirecte.click();
   await expect(priseEnChargeDirecte).not.toBeVisible({ timeout: 10000 });
