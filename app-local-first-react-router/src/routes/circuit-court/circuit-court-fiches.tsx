@@ -233,12 +233,13 @@ export default function CircuitCourtFiches() {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   const filtersKey = `${filterStatuses.join(',')}|${filterPremierDetenteurs.join(',')}|${filterCCGs.join(',')}|${filterCollecteurs.join(',')}|${filterSaisons.join(',')}|${filterDateFrom}|${filterDateTo}|${searchQuery}`;
-  const isFirstFiltersRender = useRef(true);
+  // on réinitialise la page seulement quand les filtres changent vraiment :
+  // setSearchParams change d'identité à chaque navigation (react-router), donc on
+  // compare la valeur précédente de filtersKey plutôt que de garder le 1er render.
+  const prevFiltersKey = useRef(filtersKey);
   useEffect(() => {
-    if (isFirstFiltersRender.current) {
-      isFirstFiltersRender.current = false;
-      return;
-    }
+    if (prevFiltersKey.current === filtersKey) return;
+    prevFiltersKey.current = filtersKey;
     setSearchParams(
       (prev) => {
         const next = new URLSearchParams(prev);
