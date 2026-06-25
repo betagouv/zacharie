@@ -1037,7 +1037,7 @@ function FeisWrapper({
         );
         return (
           <CardTransmission
-            key={transmission.fei.numero}
+            key={getTransmissionIdFromMetadata(transmission)}
             transmission={transmission}
             filter={'Toutes les fiches'}
             onPrintSelect={handleCheckboxClick}
@@ -1253,7 +1253,7 @@ function FeisTable({
           {paginatedTransmissions.map((transmission) => {
             return (
               <FeisTableRow
-                key={transmission.fei.numero}
+                key={getTransmissionIdFromMetadata(transmission)}
                 transmission={transmission}
                 isSelected={selectedTransmissions.includes(getTransmissionIdFromMetadata(transmission))}
                 onPrintSelect={handleCheckboxClick}
