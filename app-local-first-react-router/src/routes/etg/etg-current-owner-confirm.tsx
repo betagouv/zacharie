@@ -25,10 +25,12 @@ import { useGetTransmissionFromURLParams } from '@app/utils/get-transmissions-so
 export default function CurrentOwnerConfirm() {
   const user = useUser((state) => state.user)!;
   const updateCarcassesTransmission = useZustandStore((state) => state.updateCarcassesTransmission);
+  const updateFei = useZustandStore((state) => state.updateFei);
   const createCarcassesIntermediaire = useZustandStore((state) => state.createCarcassesIntermediaire);
   const addLog = useZustandStore((state) => state.addLog);
   const transmissionMetadata = useGetTransmissionFromURLParams();
   const fei = transmissionMetadata.fei;
+  const feis = useZustandStore((state) => state.feis);
   const entities = useZustandStore((state) => state.entities);
   const users = useZustandStore((state) => state.users);
   const myCarcasses = transmissionMetadata.carcasses;
@@ -460,6 +462,18 @@ export default function CurrentOwnerConfirm() {
                   next_owner_role: null,
                 };
                 updateCarcassesTransmission(myCarcasseIds, nextTransmission);
+                // Le snapshot FEI (déprécié) pointait encore sur nous : on le vide en miroir du
+                // next_owner carcasse. Sinon, au ré-envoi du chasseur, `fei_next_owner_entity_id`
+                // resterait inchangé (ETG → ETG) et `notifyNextOwnerEntity` ne nous re-notifierait pas.
+                if (feis[fei.numero]?.fei_next_owner_entity_id === currentTransmission.next_owner_entity_id) {
+                  updateFei(fei.numero, {
+                    fei_next_owner_entity_id: null,
+                    fei_next_owner_entity_name_cache: null,
+                    fei_next_owner_user_id: null,
+                    fei_next_owner_user_name_cache: null,
+                    fei_next_owner_role: null,
+                  });
+                }
                 addLog({
                   user_id: user.id,
                   user_role: currentTransmission.next_owner_role as UserRoles,
