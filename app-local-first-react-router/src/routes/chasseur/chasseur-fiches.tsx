@@ -19,6 +19,7 @@ import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
 import useUser from '@app/zustand/user';
 import { UserConnexionResponse } from '@api/src/types/responses';
 import API from '@app/services/api';
+import { trackFeature, trackSearch } from '@app/services/matomo';
 import { Pagination } from '@codegouvfr/react-dsfr/Pagination';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
 import type { CarcasseTransmissionWihMetadata } from '@app/types/carcasse';
@@ -445,6 +446,7 @@ export default function ChasseurFiches() {
     searchQuery.trim().length > 0;
 
   const clearAllFilters = () => {
+    trackFeature('fiches-chasseur', 'filtre-reset');
     setFilterStatuses([]);
     setFilterPremierDetenteurs([]);
     setFilterCCGs([]);
@@ -467,7 +469,10 @@ export default function ChasseurFiches() {
           type="search"
           placeholder="Rechercher une fiche..."
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            trackSearch('fiches-chasseur');
+          }}
           className="w-full rounded border border-gray-300 py-2 pr-3 pl-10 text-sm transition-colors outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
         />
       </div>
@@ -509,6 +514,7 @@ export default function ChasseurFiches() {
                 checked={filterStatuses.includes(status)}
                 className="checked:accent-action-high-blue-france h-4 w-4"
                 onChange={() => {
+                  trackFeature('fiches-chasseur', 'filtre', 'statut');
                   if (filterStatuses.includes(status)) {
                     setFilterStatuses(filterStatuses.filter((s) => s !== status));
                   } else {
@@ -549,6 +555,7 @@ export default function ChasseurFiches() {
                   checked={filterSaisons.includes(option.year)}
                   className="checked:accent-action-high-blue-france h-4 w-4 shrink-0"
                   onChange={() => {
+                    trackFeature('fiches-chasseur', 'filtre', 'saison');
                     if (filterSaisons.includes(option.year)) {
                       setFilterSaisons(filterSaisons.filter((v) => v !== option.year));
                     } else {
@@ -579,7 +586,10 @@ export default function ChasseurFiches() {
               type="date"
               value={filterDateFrom}
               max={filterDateTo || undefined}
-              onChange={(e) => setFilterDateFrom(e.target.value)}
+              onChange={(e) => {
+                setFilterDateFrom(e.target.value);
+                trackFeature('fiches-chasseur', 'filtre', 'date-mise-a-mort');
+              }}
               className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm transition-colors outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             />
           </label>
@@ -589,7 +599,10 @@ export default function ChasseurFiches() {
               type="date"
               value={filterDateTo}
               min={filterDateFrom || undefined}
-              onChange={(e) => setFilterDateTo(e.target.value)}
+              onChange={(e) => {
+                setFilterDateTo(e.target.value);
+                trackFeature('fiches-chasseur', 'filtre', 'date-mise-a-mort');
+              }}
               className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm transition-colors outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             />
           </label>
@@ -619,6 +632,7 @@ export default function ChasseurFiches() {
                   checked={filterPremierDetenteurs.includes(option.id)}
                   className="checked:accent-action-high-blue-france h-4 w-4 shrink-0"
                   onChange={() => {
+                    trackFeature('fiches-chasseur', 'filtre', 'premier-detenteur');
                     if (filterPremierDetenteurs.includes(option.id)) {
                       setFilterPremierDetenteurs(filterPremierDetenteurs.filter((v) => v !== option.id));
                     } else {
@@ -656,6 +670,7 @@ export default function ChasseurFiches() {
                   checked={filterCCGs.includes(option.id)}
                   className="checked:accent-action-high-blue-france h-4 w-4 shrink-0"
                   onChange={() => {
+                    trackFeature('fiches-chasseur', 'filtre', 'ccg');
                     if (filterCCGs.includes(option.id)) {
                       setFilterCCGs(filterCCGs.filter((v) => v !== option.id));
                     } else {
@@ -693,6 +708,7 @@ export default function ChasseurFiches() {
                   checked={filterCollecteurs.includes(option.id)}
                   className="checked:accent-action-high-blue-france h-4 w-4 shrink-0"
                   onChange={() => {
+                    trackFeature('fiches-chasseur', 'filtre', 'collecteur');
                     if (filterCollecteurs.includes(option.id)) {
                       setFilterCollecteurs(filterCollecteurs.filter((v) => v !== option.id));
                     } else {
@@ -730,7 +746,11 @@ export default function ChasseurFiches() {
             aria-label={viewType === 'grid' ? 'Afficher en table' : 'Afficher en grille'}
             title={viewType === 'grid' ? 'Afficher en table' : 'Afficher en grille'}
             className="h- flex w-10 items-center justify-center rounded border border-gray-300 bg-white text-gray-700 transition-colors hover:bg-gray-50"
-            onClick={() => setViewType(viewType === 'grid' ? 'table' : 'grid')}
+            onClick={() => {
+              const next = viewType === 'grid' ? 'table' : 'grid';
+              trackFeature('fiches-chasseur', 'vue', next);
+              setViewType(next);
+            }}
           >
             <span
               className={`fr-icon--sm ${viewType === 'grid' ? 'ri-table-line' : 'ri-grid-line'}`}
@@ -818,7 +838,10 @@ export default function ChasseurFiches() {
                     iconId: 'ri-grid-line',
                     nativeInputProps: {
                       checked: viewType === 'grid',
-                      onChange: () => setViewType('grid'),
+                      onChange: () => {
+                        trackFeature('fiches-chasseur', 'vue', 'grid');
+                        setViewType('grid');
+                      },
                       name: 'view-type',
                       value: 'grid',
                     },
@@ -828,7 +851,10 @@ export default function ChasseurFiches() {
                     iconId: 'ri-table-line',
                     nativeInputProps: {
                       checked: viewType === 'table',
-                      onChange: () => setViewType('table'),
+                      onChange: () => {
+                        trackFeature('fiches-chasseur', 'vue', 'table');
+                        setViewType('table');
+                      },
                       name: 'view-type',
                       value: 'table',
                     },

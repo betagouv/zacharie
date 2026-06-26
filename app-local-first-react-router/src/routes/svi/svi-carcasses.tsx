@@ -19,6 +19,7 @@ import useExportCarcasses from '@app/utils/export-carcasses';
 import { getTransmissionLinkFromCarcasse } from '@app/utils/get-transmission-id';
 import { isCarcasseSviArchived } from '@app/utils/carcasse-svi-archived';
 import { loadData, useLoaderEffect } from '@app/utils/load-data';
+import { trackFeature } from '@app/services/matomo';
 const itemsPerPageOptions = [20, 50, 100, 200, 1000];
 
 export default function SviCarcasses() {
@@ -41,6 +42,15 @@ export default function SviCarcasses() {
 
   const [itemsPerPage, setItemsPerPage] = useLocalStorage<number>('svi-carcasses-items-per-page', 50);
   const [filters, setFilters] = useLocalStorage<Array<CarcasseFilter>>('svi-carcasses-filters-preset', []);
+
+  const handleSortBy: typeof setSortBy = (value) => {
+    trackFeature('registre-svi-carcasses', 'tri');
+    setSortBy(value);
+  };
+  const handleFiltersChange: typeof setFilters = (value) => {
+    trackFeature('registre-svi-carcasses', 'filtre');
+    setFilters(value);
+  };
 
   const filterableFields = useMemo(() => {
     const motifs = new Set<string>();
@@ -212,7 +222,7 @@ export default function SviCarcasses() {
         <div className="fr-col-12 sm:py-4">
           <section className="fr-container mb-4 overflow-x-auto bg-white">
             <Filters
-              onChange={setFilters}
+              onChange={handleFiltersChange}
               base={filterableFields}
               filters={filters}
               saveInURLParams={false}
@@ -252,6 +262,7 @@ export default function SviCarcasses() {
             <div className="flex items-center justify-start gap-2 sm:justify-end">
               <Button
                 onClick={() => {
+                  trackFeature('registre-svi-carcasses', 'export', 'xlsx', selectedCarcassesIds.length);
                   const selectedCarcassesObject: Record<string, boolean> = {};
                   for (const carcasseId of selectedCarcassesIds) {
                     selectedCarcassesObject[carcasseId] = true;
@@ -290,7 +301,7 @@ export default function SviCarcasses() {
                   dataKey: 'numero_bracelet',
                   title: 'Identification',
                   onSortOrder: setSortOrder,
-                  onSortBy: setSortBy,
+                  onSortBy: handleSortBy,
                   sortBy: sortBy,
                   sortOrder: sortOrder,
                   render: (carcasse) => {
@@ -311,7 +322,7 @@ export default function SviCarcasses() {
                   dataKey: 'premier_detenteur_name_cache',
                   title: 'Premier détenteur',
                   onSortOrder: setSortOrder,
-                  onSortBy: setSortBy,
+                  onSortBy: handleSortBy,
                   sortBy: sortBy,
                   sortOrder: sortOrder,
                 },
@@ -320,7 +331,7 @@ export default function SviCarcasses() {
                   title: 'Date de transmission au SVI',
                   type: 'datetime',
                   onSortOrder: setSortOrder,
-                  onSortBy: setSortBy,
+                  onSortBy: handleSortBy,
                   sortBy: sortBy,
                   sortOrder: sortOrder,
                 },
@@ -328,7 +339,7 @@ export default function SviCarcasses() {
                   dataKey: 'svi_carcasse_status',
                   title: 'Statut',
                   onSortOrder: setSortOrder,
-                  onSortBy: setSortBy,
+                  onSortBy: handleSortBy,
                   sortBy: sortBy,
                   sortOrder: sortOrder,
                   render: (carcasse) => getCarcasseStatusLabel(carcasse),
@@ -338,7 +349,7 @@ export default function SviCarcasses() {
                   dataKey: 'svi_carcasse_archived',
                   title: 'Archivé(e)',
                   onSortOrder: setSortOrder,
-                  onSortBy: setSortBy,
+                  onSortBy: handleSortBy,
                   sortBy: sortBy,
                   sortOrder: sortOrder,
                   render: (carcasse) => (isCarcasseSviArchived(carcasse) ? 'Oui' : 'Non'),
@@ -348,7 +359,7 @@ export default function SviCarcasses() {
                   title: 'Date de décision',
                   type: 'datetime',
                   onSortOrder: setSortOrder,
-                  onSortBy: setSortBy,
+                  onSortBy: handleSortBy,
                   sortBy: sortBy,
                   sortOrder: sortOrder,
                 },
@@ -356,7 +367,7 @@ export default function SviCarcasses() {
                   dataKey: 'fei_numero',
                   title: 'Numéro de fiche',
                   onSortOrder: setSortOrder,
-                  onSortBy: setSortBy,
+                  onSortBy: handleSortBy,
                   sortBy: sortBy,
                   sortOrder: sortOrder,
                   render: (carcasse) => (

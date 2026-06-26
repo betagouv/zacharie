@@ -24,6 +24,7 @@ import useExportCarcasses from '@app/utils/export-carcasses';
 import { isCarcasseSviArchived } from '@app/utils/carcasse-svi-archived';
 import { loadData, useLoaderEffect } from '@app/utils/load-data';
 import { useTransmissions } from '@app/utils/get-transmissions-sorted';
+import { trackFeature, trackSearch } from '@app/services/matomo';
 import type { Carcasse } from '@prisma/client';
 import type { TransmissionSimpleStatus } from '@app/types/transmission-steps';
 import { getTransmissionId, getTransmissionLinkFromCarcasse } from '@app/utils/get-transmission-id';
@@ -92,6 +93,15 @@ export default function EtgCarcasses() {
 
   const [itemsPerPage, setItemsPerPage] = useLocalStorage<number>('etg-carcasses-items-per-page', 50);
   const [filters, setFilters] = useLocalStorage<Array<CarcasseFilter>>('etg-carcasses-filters-preset', []);
+
+  const handleSortBy: typeof setSortBy = (value) => {
+    trackFeature('registre-etg-carcasses', 'tri');
+    setSortBy(value);
+  };
+  const handleFiltersChange: typeof setFilters = (value) => {
+    trackFeature('registre-etg-carcasses', 'filtre', 'avance');
+    setFilters(value);
+  };
 
   const [quickFilterTransmissionStatuses, setQuickFilterFeiStatuses] = useLocalStorage<
     Record<TransmissionSimpleStatus, boolean | undefined>
@@ -558,6 +568,7 @@ export default function EtgCarcasses() {
   const hasActiveFilters = activeFilterCount > 0;
 
   const clearAllFilters = () => {
+    trackFeature('registre-etg-carcasses', 'filtre-reset');
     setQuickFilterBracelet('');
     // @ts-expect-error Type '{}' is missing the following properties
     setQuickFilterFeiStatuses({});
@@ -580,7 +591,10 @@ export default function EtgCarcasses() {
           type="search"
           placeholder="Rechercher un marquage..."
           value={quickFilterBracelet}
-          onChange={(e) => setQuickFilterBracelet(e.target.value)}
+          onChange={(e) => {
+            setQuickFilterBracelet(e.target.value);
+            trackSearch('registre-etg-carcasses');
+          }}
           className="w-full rounded border border-gray-300 py-2 pr-3 pl-10 text-sm transition-colors outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
         />
       </div>
@@ -621,6 +635,7 @@ export default function EtgCarcasses() {
                 checked={quickFilterTransmissionStatuses[status]}
                 className="checked:accent-action-high-blue-france h-4 w-4"
                 onChange={() => {
+                  trackFeature('registre-etg-carcasses', 'filtre', 'statut-transmission');
                   setQuickFilterFeiStatuses({
                     ...quickFilterTransmissionStatuses,
                     [status]: !quickFilterTransmissionStatuses[status] || undefined,
@@ -662,6 +677,7 @@ export default function EtgCarcasses() {
                     checked={quickFilterCollecteurIds[optionId]}
                     className="checked:accent-action-high-blue-france h-4 w-4 shrink-0"
                     onChange={() => {
+                      trackFeature('registre-etg-carcasses', 'filtre', 'collecteur');
                       setQuickFilterCollecteurIds({
                         ...quickFilterCollecteurIds,
                         [optionId]: !quickFilterCollecteurIds[optionId] || undefined,
@@ -698,6 +714,7 @@ export default function EtgCarcasses() {
                   checked={quickFilterEspeces[espece]}
                   className="checked:accent-action-high-blue-france h-4 w-4 shrink-0"
                   onChange={() => {
+                    trackFeature('registre-etg-carcasses', 'filtre', 'espece');
                     setQuickFilterEspeces({
                       ...quickFilterEspeces,
                       [espece]: !quickFilterEspeces[espece] || undefined,
@@ -735,6 +752,7 @@ export default function EtgCarcasses() {
                   checked={quickFilterStatuses[status] ?? false}
                   className="checked:accent-action-high-blue-france h-4 w-4 shrink-0"
                   onChange={() => {
+                    trackFeature('registre-etg-carcasses', 'filtre', 'statut-carcasse');
                     setQuickFilterStatuses({
                       ...quickFilterStatuses,
                       [status]: !quickFilterStatuses[status] || undefined,
@@ -771,6 +789,7 @@ export default function EtgCarcasses() {
                   checked={quickFilterPremierDetenteurs[name]}
                   className="checked:accent-action-high-blue-france h-4 w-4 shrink-0"
                   onChange={() => {
+                    trackFeature('registre-etg-carcasses', 'filtre', 'premier-detenteur');
                     setQuickFilterPremierDetenteurs({
                       ...quickFilterPremierDetenteurs,
                       [name]: !quickFilterPremierDetenteurs[name] || undefined,
@@ -1037,6 +1056,7 @@ export default function EtgCarcasses() {
                         e.preventDefault();
                         if (selectedCarcassesIds.length === 0) return;
                         if (isExporting) return;
+                        trackFeature('registre-etg-carcasses', 'export', 'xlsx', selectedCarcassesIds.length);
                         const selectedSet = new Set(selectedCarcassesIds);
                         onExportToXlsx(filteredData.filter((c) => selectedSet.has(c.zacharie_carcasse_id)));
                       },
@@ -1069,7 +1089,7 @@ export default function EtgCarcasses() {
                 render: c.render,
                 ...(c.sortable
                   ? {
-                      onSortBy: setSortBy,
+                      onSortBy: handleSortBy,
                       onSortOrder: setSortOrder,
                       sortBy,
                       sortOrder,
@@ -1103,7 +1123,7 @@ export default function EtgCarcasses() {
       >
         {isAdvancedFiltersModalOpen && (
           <Filters
-            onChange={setFilters}
+            onChange={handleFiltersChange}
             base={filterableFields}
             filters={filters}
             saveInURLParams={false}
