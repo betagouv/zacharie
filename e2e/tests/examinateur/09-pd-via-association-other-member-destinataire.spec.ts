@@ -53,7 +53,7 @@ test("Autre membre de l'Association voit le bloc Destinataire sur la fiche", asy
   await page.getByRole('button', { name: /^PP-\d{3}-\d{3}$/ }).click();
   await page.getByRole('button', { name: 'Ajouter la carcasse' }).click();
   await page.getByRole('button', { name: 'Ajouter une autre carcasse' }).click();
-  await page.getByLabel('Espèce (grand et petit gibier)').selectOption('Cerf');
+  await page.getByLabel('Espèce (grand et petit gibier)').selectOption('Cerf élaphe');
   await page.getByRole('button', { name: /^PP-\d{3}-\d{3}$/ }).click();
   await page.getByRole('button', { name: 'Ajouter la carcasse' }).click();
   await page.getByRole('button', { name: 'Continuer' }).click();
