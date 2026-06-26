@@ -16,6 +16,7 @@ import {
   EntityRelationStatus,
   EntityRelationType,
   EntityTypes,
+  FeiOwnerRole,
   Prisma,
   User,
   UserRoles,
@@ -642,6 +643,7 @@ async function getEtgInteractedUserIds(userId: User['id']): Promise<Set<string>>
       ],
     },
     select: {
+      zacharie_carcasse_id: true,
       premier_detenteur_user_id: true,
       examinateur_initial_user_id: true,
       svi_user_id: true,
@@ -653,6 +655,16 @@ async function getEtgInteractedUserIds(userId: User['id']): Promise<Set<string>>
   const intermediaires = await prisma.carcasseIntermediaire.findMany({
     where: {
       intermediaire_entity_id: { in: etgEntityIds },
+      deleted_at: null,
+    },
+    select: { intermediaire_user_id: true },
+  });
+
+  // Collecteurs ayant transporté des carcasses passées par l'ETG
+  const collecteurs = await prisma.carcasseIntermediaire.findMany({
+    where: {
+      zacharie_carcasse_id: { in: carcasses.map((c) => c.zacharie_carcasse_id) },
+      intermediaire_role: FeiOwnerRole.COLLECTEUR_PRO,
       deleted_at: null,
     },
     select: { intermediaire_user_id: true },
@@ -682,6 +694,9 @@ async function getEtgInteractedUserIds(userId: User['id']): Promise<Set<string>>
   }
   for (const i of intermediaires) {
     addId(i.intermediaire_user_id);
+  }
+  for (const c of collecteurs) {
+    addId(c.intermediaire_user_id);
   }
 
   return userIds;
