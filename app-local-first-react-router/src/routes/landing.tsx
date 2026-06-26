@@ -11,18 +11,18 @@ export default function LandingPage() {
       </title>
       <main>
         {/* Hero Section */}
-        <section className="min-h-96 bg-[#A38A6C] bg-[url('/landing/gradient-cerf.webp')] bg-cover bg-center bg-no-repeat py-16 lg:min-h-auto lg:py-24 2xl:py-36">
+        <section className="min-h-96 bg-[#A38A6C] bg-[url('/landing/gradient-cerf.webp')] bg-cover bg-center bg-no-repeat py-16 pb-32 lg:min-h-[740px] lg:py-24 2xl:py-36">
           <div className="h-full w-full px-4 lg:px-8 xl:px-32 2xl:px-[12%]">
             <div className="grid h-full items-center gap-12 lg:grid-cols-2">
               <div className="flex h-full max-w-[75vw] flex-col justify-center sm:max-w-[50vw] 2xl:max-w-[35vw]">
                 <h1 className="3xl:text-5xl text-2xl leading-tight font-bold text-white! text-shadow-xs lg:text-3xl 2xl:text-4xl">
                   Vous vendez ou cédez le gibier que vous chassez&nbsp;?
                 </h1>
-                <p className="3xl:text-4xl mt-8 text-xl leading-tight font-bold text-white! text-shadow-xs lg:text-2xl 2xl:text-3xl">
+                <p className="3xl:text-4xl mt-8 text-2xl leading-tight font-bold text-white! text-shadow-xs lg:text-3xl 2xl:text-4xl">
                   Où que vous soyez, réalisez vos fiches d'examen initial du gibier directement depuis votre
                   smartphone ou votre ordinateur,
                 </p>
-                <p className="3xl:text-4xl mt-8 text-xl leading-tight font-bold text-white! text-shadow-xs lg:mt-[6%] lg:text-2xl 2xl:text-3xl">
+                <p className="3xl:text-4xl mt-8 text-2xl leading-tight font-bold text-white! text-shadow-xs lg:mt-[6%] lg:text-3xl 2xl:text-4xl">
                   Simple, rapide et 100% gratuit, Zacharie accélère vos démarches.
                 </p>
                 <div className="mt-16 ml-6 flex items-center justify-start lg:hidden">
@@ -52,27 +52,29 @@ export default function LandingPage() {
                     </svg>
                   </button>
                 </div>
-                <Button
-                  size="large"
-                  className="mt-8 block lg:mt-[10%]"
-                  linkProps={{
-                    to: '/app/connexion/creation-de-compte',
-                    href: '#',
-                  }}
-                >
-                  Créer un compte
-                </Button>
-                <Button
-                  size="large"
-                  priority="secondary"
-                  className="mt-4 block border-white bg-white shadow-none!"
-                  linkProps={{
-                    to: '/app/connexion',
-                    href: '#',
-                  }}
-                >
-                  Se connecter
-                </Button>
+                <div className="mt-10 flex flex-row gap-4">
+                  <Button
+                    size="large"
+                    className="block"
+                    linkProps={{
+                      to: '/app/connexion/creation-de-compte',
+                      href: '#',
+                    }}
+                  >
+                    Créer un compte
+                  </Button>
+                  <Button
+                    size="large"
+                    priority="secondary"
+                    className="block border-white bg-white shadow-none!"
+                    linkProps={{
+                      to: '/app/connexion',
+                      href: '#',
+                    }}
+                  >
+                    Se connecter
+                  </Button>
+                </div>
               </div>
               <div className="hidden items-center justify-center lg:flex lg:max-w-[50vw]">
                 <button
@@ -107,7 +109,7 @@ export default function LandingPage() {
 
         {/* Features Section */}
         <section className="relative grid items-center bg-white lg:flex">
-          <div className="relative z-10 -mt-16 flex justify-start lg:-mt-20 lg:basis-1/2 2xl:basis-1/3">
+          <div className="relative z-10 -mt-8 flex justify-start lg:-mt-16 lg:basis-1/2 2xl:basis-1/3">
             {/* Phone mockup */}
             <img
               src="/landing/MAIN APPLI_TBD.webp"
@@ -116,7 +118,7 @@ export default function LandingPage() {
             />
           </div>
           <div className="bg-action-high-blue-france/5 flex flex-col space-y-6 p-6 lg:basis-1/2 lg:bg-transparent 2xl:basis-2/3 2xl:py-20 2xl:pr-32 2xl:pl-64">
-            <ul className="text-action-high-blue-france list-none space-y-4 text-lg text-balance 2xl:text-3xl">
+            <ul className="text-action-high-blue-france list-none space-y-4 text-lg text-balance lg:text-xl 2xl:text-2xl">
               <li>
                 Une application qui fonctionne <b>même hors réseau</b>.
               </li>
@@ -176,7 +178,7 @@ export default function LandingPage() {
         </section>
 
         {/* Testimonials Section */}
-        <section className="bg-[url('/landing/testimonials-bg.webp')] bg-cover bg-center bg-no-repeat py-16 lg:py-24 2xl:py-32">
+        <section className="bg-[url('/landing/testimonials-bg.webp')] bg-cover bg-center bg-no-repeat py-12">
           <div className="h-full w-full px-4 lg:px-8 xl:px-[12%]">
             <div className="grid gap-8 lg:grid-cols-2 2xl:gap-30">
               {[
@@ -193,18 +195,16 @@ export default function LandingPage() {
               ].map(({ quote, author }) => {
                 return (
                   <blockquote
-                    className="relative p-6"
+                    className="relative p-4"
                     key={quote}
                   >
-                    <p className="text-action-high-blue-france mb-4 text-center text-2xl 2xl:text-4xl">
-                      <span className="text-action-high-blue-france/30 absolute -top-4 -left-4 text-[128px] font-normal italic 2xl:-top-8 2xl:-left-8 2xl:text-[180px]">
+                    <p className="text-action-high-blue-france mb-4 text-center text-lg text-balance lg:text-xl 2xl:text-2xl">
+                      <span className="text-action-high-blue-france/30 absolute -top-4 -left-4 text-[128px] font-normal italic 2xl:-top-8 2xl:-left-8">
                         "
                       </span>
                       {quote}
                     </p>
-                    <footer className="text-action-high-blue-france text-center text-base 2xl:text-xl">
-                      — {author}
-                    </footer>
+                    <footer className="text-action-high-blue-france text-center text-base">— {author}</footer>
                   </blockquote>
                 );
               })}
@@ -213,7 +213,7 @@ export default function LandingPage() {
         </section>
 
         {/* Partenaires de valorisation Section */}
-        <section className="bg-action-high-blue-france/5 py-16 lg:py-24">
+        <section className="bg-action-high-blue-france/5 py-8">
           <div className="w-full px-4 lg:px-8 xl:px-32 2xl:px-[12%]">
             <div className="grid items-center gap-12 lg:grid-cols-2">
               <div className="flex flex-col gap-8">
@@ -221,7 +221,7 @@ export default function LandingPage() {
                   En quelques clics, transmettez vos fiches d'examen initial à tous vos partenaires de
                   valorisation.
                 </h2>
-                <ul className="text-action-high-blue-france list-none space-y-2 text-lg lg:text-right 2xl:text-2xl">
+                <ul className="text-action-high-blue-france list-none space-y-1 text-lg lg:text-right lg:text-xl 2xl:text-2xl">
                   <li>Collecteurs professionnels</li>
                   <li>Établissements de traitement du gibier</li>
                   <li>Restaurateurs</li>
@@ -279,12 +279,12 @@ export default function LandingPage() {
             <h2 className="text-action-high-blue-france text-2xl leading-tight font-bold text-balance lg:text-3xl 2xl:text-4xl">
               Après la chasse, vous répartissez vos carcasses entre différents partenaires&nbsp;?
             </h2>
-            <p className="text-action-high-blue-france text-lg text-pretty 2xl:text-xl">
+            <p className="text-action-high-blue-france text-lg text-pretty lg:text-xl 2xl:text-2xl">
               Avec Zacharie, vous pouvez répartir vos carcasses depuis une seule fiche d'examen initial. En
               quelques clics, vous indiquez à qui vous céder vos carcasses et adaptez la répartition au fil de
               vos ventes.
             </p>
-            <p className="text-action-high-blue-france text-lg text-pretty 2xl:text-xl">
+            <p className="text-action-high-blue-france text-lg text-pretty lg:text-xl 2xl:text-2xl">
               Les destinataires sont immédiatement informés&nbsp;! Tout devient simple, rapide et sécurisé.
             </p>
             <div className="flex justify-center lg:justify-start">
@@ -306,7 +306,7 @@ export default function LandingPage() {
             <h2 className="text-action-high-blue-france text-2xl font-bold lg:text-right lg:text-3xl 2xl:text-4xl">
               Le saviez-vous&nbsp;?
             </h2>
-            <p className="text-action-high-blue-france text-lg text-pretty lg:text-right 2xl:text-xl">
+            <p className="text-action-high-blue-france text-lg text-pretty lg:text-right lg:text-xl 2xl:text-2xl">
               Le rinçage à grande eau peut diffuser les bactéries au lieu de les éliminer, même si la carcasse
               paraît propre.
             </p>
@@ -333,7 +333,7 @@ export default function LandingPage() {
         {/* Contact Section */}
         <section className="bg-[url('/landing/testimonials-bg.webp')] bg-cover bg-center bg-no-repeat py-16 lg:py-24">
           <div className="flex h-full w-full flex-col items-center justify-center px-4 text-center lg:px-8 xl:px-[12%] 2xl:min-h-96">
-            <h3 className="text-action-high-blue-france mb-8 rounded text-xl font-medium text-shadow-2xs lg:text-2xl 2xl:mb-16 2xl:text-4xl">
+            <h3 className="text-action-high-blue-france mb-8 rounded text-2xl font-medium text-shadow-2xs lg:text-3xl 2xl:mb-16 2xl:text-4xl">
               Vous avez des questions ? Vous voulez être accompagné ?
             </h3>
             <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
