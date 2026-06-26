@@ -10,34 +10,19 @@ export default function LandingPage() {
         la Souveraineté Alimentaire
       </title>
       <main>
-        {/* Game Fair Banner */}
-        <section className="bg-action-high-blue-france px-4 py-4 text-white lg:px-8 xl:px-32 2xl:px-[12%]">
-          <p className="flex flex-col items-center gap-2 text-center text-base font-normal text-white! sm:flex-row sm:justify-center sm:gap-3 lg:text-lg">
-            <span>
-              <span className="font-bold">GAME FAIR 2026</span> : rendez-vous au village chasse,{' '}
-              <b>stand L23</b> pour rencontrer l'équipe Zacharie.{' '}
-              <a
-                href="https://www.gamefair.fr/actus/zacharie-le-numerique-au-service-de-la-securite-sanitaire-et-des-chasseurs/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-bold text-white!"
-              >
-                Plus d'informations
-              </a>
-            </span>
-          </p>
-        </section>
-
         {/* Hero Section */}
         <section className="min-h-96 bg-[#A38A6C] bg-[url('/landing/gradient-cerf.webp')] bg-cover bg-center bg-no-repeat py-16 lg:min-h-auto lg:py-24 2xl:py-36">
           <div className="h-full w-full px-4 lg:px-8 xl:px-32 2xl:px-[12%]">
             <div className="grid h-full items-center gap-12 lg:grid-cols-2">
               <div className="flex h-full max-w-[75vw] flex-col justify-center sm:max-w-[50vw] 2xl:max-w-[35vw]">
                 <h1 className="3xl:text-5xl text-2xl leading-tight font-bold text-white! text-shadow-xs lg:text-3xl 2xl:text-4xl">
-                  Réalisez vos fiches d'examen initial du gibier directement depuis votre smartphone ou votre
-                  ordinateur, où que vous soyez.
+                  Vous vendez ou cédez le gibier que vous chassez&nbsp;?
                 </h1>
-                <p className="3xl:text-5xl mt-8 text-2xl leading-tight font-bold text-white! text-shadow-xs lg:mt-[10%] lg:text-3xl 2xl:text-4xl">
+                <p className="3xl:text-4xl mt-8 text-xl leading-tight font-bold text-white! text-shadow-xs lg:text-2xl 2xl:text-3xl">
+                  Où que vous soyez, réalisez vos fiches d'examen initial du gibier directement depuis votre
+                  smartphone ou votre ordinateur,
+                </p>
+                <p className="3xl:text-4xl mt-8 text-xl leading-tight font-bold text-white! text-shadow-xs lg:mt-[6%] lg:text-2xl 2xl:text-3xl">
                   Simple, rapide et 100% gratuit, Zacharie accélère vos démarches.
                 </p>
                 <div className="mt-16 ml-6 flex items-center justify-start lg:hidden">
@@ -192,74 +177,164 @@ export default function LandingPage() {
 
         {/* Testimonials Section */}
         <section className="bg-[url('/landing/testimonials-bg.webp')] bg-cover bg-center bg-no-repeat py-16 lg:py-24 2xl:py-32">
-          <div className="h-full w-full pl-4 lg:pl-8 xl:px-[12%]">
-            <div className="grid items-center gap-12 lg:flex">
-              {/* Left side - 100% text */}
-              <div className="text-center lg:basis-1/2 lg:text-left">
-                <p className="text-action-high-blue-france mb-4 text-6xl font-bold lg:text-8xl">100%</p>
-                <p className="text-action-high-blue-france mb-4 text-xl lg:text-2xl 2xl:max-w-[75%] 2xl:text-4xl">
-                  des chasseurs ayant utilisé Zacharie recommandent l'application.
-                </p>
-                <p className="text-action-high-blue-france">Enquête de février 2025</p>
-              </div>
+          <div className="h-full w-full px-4 lg:px-8 xl:px-[12%]">
+            <div className="grid gap-8 lg:grid-cols-2 2xl:gap-30">
+              {[
+                {
+                  quote:
+                    'En un clic, je transmets ma fiche et je sais rapidement si une carcasse est saisie.',
+                  author: 'Chasseur valorisant son gibier',
+                },
+                {
+                  quote:
+                    "J'ai rempli une fiche d'examen initial en quelques minutes alors que ça m'aurait pris 1 heure avec le carnet à souches.",
+                  author: 'Chasseur examinateur initial',
+                },
+              ].map(({ quote, author }) => {
+                return (
+                  <blockquote
+                    className="relative p-6"
+                    key={quote}
+                  >
+                    <p className="text-action-high-blue-france mb-4 text-center text-2xl 2xl:text-4xl">
+                      <span className="text-action-high-blue-france/30 absolute -top-4 -left-4 text-[128px] font-normal italic 2xl:-top-8 2xl:-left-8 2xl:text-[180px]">
+                        "
+                      </span>
+                      {quote}
+                    </p>
+                    <footer className="text-action-high-blue-france text-center text-base 2xl:text-xl">
+                      — {author}
+                    </footer>
+                  </blockquote>
+                );
+              })}
+            </div>
+          </div>
+        </section>
 
-              {/* Right side - testimonials */}
-              <div className="grid gap-8 lg:basis-1/2 2xl:gap-30">
-                {[
-                  'En un clic, je transmets ma fiche et je sais tout de suite si une carcasse est saisie.',
-                  "J'ai rempli une fiche d'examen initial en 15 minutes alors que ça m'aurait pris 1 heure avec le carnet à souches.",
-                ].map((quote) => {
-                  return (
-                    <blockquote
-                      className="relative p-6"
-                      key={quote}
-                    >
-                      <p className="text-action-high-blue-france mb-4 text-2xl 2xl:text-4xl">
-                        <span className="text-action-high-blue-france/30 absolute -top-4 -left-4 text-[128px] font-normal italic 2xl:-top-8 2xl:-left-8 2xl:text-[180px]">
-                          "
-                        </span>
-                        {quote}
-                        <span className="text-action-high-blue-france/30 absolute inline-block h-0 w-0 -translate-x-10 translate-y-15 text-[128px] leading-0 font-normal italic 2xl:translate-y-20 2xl:text-[180px]">
-                          "
-                        </span>
-                      </p>
-                    </blockquote>
-                  );
-                })}
+        {/* Partenaires de valorisation Section */}
+        <section className="bg-action-high-blue-france/5 py-16 lg:py-24">
+          <div className="w-full px-4 lg:px-8 xl:px-32 2xl:px-[12%]">
+            <div className="grid items-center gap-12 lg:grid-cols-2">
+              <div className="flex flex-col gap-8">
+                <h2 className="text-action-high-blue-france text-2xl leading-tight font-bold text-balance lg:text-right lg:text-3xl 2xl:text-4xl">
+                  En quelques clics, transmettez vos fiches d'examen initial à tous vos partenaires de
+                  valorisation.
+                </h2>
+                <ul className="text-action-high-blue-france list-none space-y-2 text-lg lg:text-right 2xl:text-2xl">
+                  <li>Collecteurs professionnels</li>
+                  <li>Établissements de traitement du gibier</li>
+                  <li>Restaurateurs</li>
+                  <li>Bouchers</li>
+                  <li>Associations</li>
+                  <li>Particuliers</li>
+                </ul>
+                <div className="flex justify-center lg:justify-end">
+                  <Button
+                    size="large"
+                    linkProps={{
+                      to: '/demarches',
+                    }}
+                  >
+                    Comprendre les démarches
+                  </Button>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <img
+                  src="/landing/collecteur-camion.png"
+                  alt="Un collecteur professionnel chargeant du gibier dans son camion"
+                  className="aspect-square w-full rounded object-cover"
+                />
+                <img
+                  src="/landing/carcasses-chambre-froide.png"
+                  alt="Des carcasses de gibier suspendues en chambre froide"
+                  className="aspect-square w-full rounded object-cover"
+                />
+                <img
+                  src="/landing/cuisinier-decoupe.png"
+                  alt="Un cuisinier découpant de la viande de gibier"
+                  className="aspect-square w-full rounded object-cover"
+                />
+                <img
+                  src="/landing/plat-gibier.png"
+                  alt="Un plat de gibier dressé à l'assiette"
+                  className="aspect-square w-full rounded object-cover"
+                />
               </div>
             </div>
           </div>
         </section>
 
-        {/* Desktop Additional Content */}
-        <section className="bg-action-high-blue-france/5 flex h-screen flex-col justify-between bg-[url('/landing/laptop-scene-2.webp')] bg-cover bg-center bg-no-repeat lg:h-auto lg:min-h-0 lg:flex-row lg:bg-none">
-          <div className="flex basis-full flex-col items-center justify-between space-y-12 p-8 lg:justify-center lg:p-16 2xl:space-y-24">
-            <h3 className="lg:text-action-high-blue-france rounded text-center text-xl font-medium text-balance text-white text-shadow-2xs lg:text-2xl 2xl:text-4xl">
-              Votre compte Zacharie est aussi accessible depuis votre ordinateur.
-            </h3>
-            <Button
-              size="large"
-              linkProps={{
-                to: '/app/connexion',
-                href: '#',
-              }}
-            >
-              Créer un compte
-            </Button>
-          </div>
-          <div className="hidden max-w-2xl justify-end lg:block 2xl:max-w-5xl">
+        {/* Répartition des carcasses Section */}
+        <section className="grid items-stretch bg-white bg-[url('/landing/testimonials-bg.webp')] bg-cover bg-center bg-no-repeat lg:grid-cols-2">
+          <div className="min-h-72">
             <img
-              src="/landing/laptop-scene-1.webp"
-              alt="Interface desktop de Zacharie"
-              className="hidden size-full object-fill lg:block"
+              src="/landing/chasseurs-chiens.png"
+              alt="Des chasseurs en gilets orange marchant avec leurs chiens"
+              className="size-full object-cover"
+            />
+          </div>
+          <div className="flex flex-col justify-center gap-6 p-8 lg:p-16 2xl:px-32">
+            <h2 className="text-action-high-blue-france text-2xl leading-tight font-bold text-balance lg:text-3xl 2xl:text-4xl">
+              Après la chasse, vous répartissez vos carcasses entre différents partenaires&nbsp;?
+            </h2>
+            <p className="text-action-high-blue-france text-lg text-pretty 2xl:text-xl">
+              Avec Zacharie, vous pouvez répartir vos carcasses depuis une seule fiche d'examen initial. En
+              quelques clics, vous indiquez à qui vous céder vos carcasses et adaptez la répartition au fil de
+              vos ventes.
+            </p>
+            <p className="text-action-high-blue-france text-lg text-pretty 2xl:text-xl">
+              Les destinataires sont immédiatement informés&nbsp;! Tout devient simple, rapide et sécurisé.
+            </p>
+            <div className="flex justify-center lg:justify-start">
+              <Button
+                size="large"
+                linkProps={{
+                  href: 'https://zcal.co/zacharie/demo',
+                }}
+              >
+                Participer à une démo
+              </Button>
+            </div>
+          </div>
+        </section>
+
+        {/* Le saviez-vous Section */}
+        <section className="grid items-stretch lg:grid-cols-2">
+          <div className="bg-action-high-blue-france/5 flex flex-col justify-center gap-6 p-8 text-center lg:p-16 2xl:px-32">
+            <h2 className="text-action-high-blue-france text-2xl font-bold lg:text-right lg:text-3xl 2xl:text-4xl">
+              Le saviez-vous&nbsp;?
+            </h2>
+            <p className="text-action-high-blue-france text-lg text-pretty lg:text-right 2xl:text-xl">
+              Le rinçage à grande eau peut diffuser les bactéries au lieu de les éliminer, même si la carcasse
+              paraît propre.
+            </p>
+            <div className="flex justify-center lg:justify-end">
+              <Button
+                size="large"
+                linkProps={{
+                  to: '/quiz',
+                }}
+              >
+                Testez vos connaissances
+              </Button>
+            </div>
+          </div>
+          <div className="min-h-72">
+            <img
+              src="/landing/bacteries-microscope.png"
+              alt="Des bactéries observées au microscope"
+              className="size-full object-cover"
             />
           </div>
         </section>
 
-        <section className="py-16 lg:py-16">
+        {/* Contact Section */}
+        <section className="bg-[url('/landing/testimonials-bg.webp')] bg-cover bg-center bg-no-repeat py-16 lg:py-24">
           <div className="flex h-full w-full flex-col items-center justify-center px-4 text-center lg:px-8 xl:px-[12%] 2xl:min-h-96">
             <h3 className="text-action-high-blue-france mb-8 rounded text-xl font-medium text-shadow-2xs lg:text-2xl 2xl:mb-16 2xl:text-4xl">
-              Vous avez des questions ? Des remarques ?
+              Vous avez des questions ? Vous voulez être accompagné ?
             </h3>
             <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Button

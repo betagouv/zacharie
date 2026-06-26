@@ -395,46 +395,6 @@ function ResultScreen({
             En savoir plus sur les bonnes pratiques
           </a>
         </p>
-        {!nameSubmitted && (
-          <div className="fr-mt-6w">
-            <h2 className="fr-h6 fr-mb-1w">Apparaître dans le top 5 du jour ?</h2>
-            {submitError && (
-              <Alert
-                severity="warning"
-                small
-                title="Score non enregistré"
-                description={submitError}
-                className="fr-mb-2w"
-              />
-            )}
-            <Input
-              label="Votre pseudo"
-              hintText="Optionnel — il sera affiché publiquement sur le classement du jour."
-              state={nameError ? 'error' : 'default'}
-              stateRelatedMessage={nameError ?? undefined}
-              nativeInputProps={{
-                value: displayName,
-                onChange: (e) => onDisplayNameChange(e.target.value),
-                maxLength: 30,
-              }}
-            />
-            <Button
-              onClick={onSubmitName}
-              disabled={!displayName.trim() || !resultId}
-            >
-              {resultId ? 'Publier mon score' : 'Enregistrement en cours…'}
-            </Button>
-          </div>
-        )}
-
-        {nameSubmitted && (
-          <Alert
-            severity="success"
-            small
-            title="Pseudo enregistré"
-            description="Bonne chance pour le top 5 !"
-          />
-        )}
       </div>
       <div className="text-center">
         <Button
@@ -443,30 +403,6 @@ function ResultScreen({
         >
           Rejouer
         </Button>
-      </div>
-
-      <div className="bg-white p-6 md:p-10 md:shadow-sm">
-        <h2 className="fr-h5 fr-mb-2w">Top 5 du jour</h2>
-        {leaderboard.length === 0 ? (
-          <p className="text-gray-600">Soyez le premier à enregistrer votre score !</p>
-        ) : (
-          <ol className="space-y-2">
-            {leaderboard.map((entry, idx) => (
-              <li
-                key={`${entry.display_name}-${entry.created_at}`}
-                className="flex justify-between border-b border-gray-100 py-2"
-              >
-                <span>
-                  <span className="fr-mr-1w font-bold">{idx + 1}.</span>
-                  {entry.display_name}
-                </span>
-                <span className="font-mono">
-                  {entry.score}/{entry.total_questions}
-                </span>
-              </li>
-            ))}
-          </ol>
-        )}
       </div>
     </div>
   );
