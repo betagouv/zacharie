@@ -147,6 +147,8 @@ export default function CardCarcasse({
         return 'border-action-high-blue-france border-l-3';
       case 'orange':
         return 'border-warning-main-525 border-l-3';
+      case 'green':
+        return 'border-green-600 border-l-3';
       default:
         return '';
     }
@@ -163,6 +165,8 @@ export default function CardCarcasse({
         return 'text-warning-main-525';
       case 'gray':
         return 'text-gray-600';
+      case 'green':
+        return 'text-green-600';
       default:
         return '';
     }
@@ -325,6 +329,13 @@ function getAccentColorClasses(accent: CardAccent | undefined): DecisionColor {
         cardBg: 'bg-orange-50',
         badgeBg: 'bg-orange-100',
         badgeText: 'text-orange-800',
+      };
+    case 'green':
+      return {
+        cardText: 'text-green-700',
+        cardBg: 'bg-green-50',
+        badgeBg: 'bg-green-100',
+        badgeText: 'text-green-800',
       };
     case 'gray':
     default:

@@ -44,6 +44,16 @@ describe('deriveCarcasseUiState — possession lue au niveau carcasse', () => {
     expect(deriveCarcasseUiState(carcasse, undefined, {})).toBe('transmise');
   });
 
+  // Circuit court (commerce de détail, particulier…) est un destinataire terminal :
+  // la carcasse est « Transmise », pas « en cours de traitement ».
+  it('carcasse transmise à un destinataire de circuit court → "transmise-circuit-court"', () => {
+    const carcasse = c({
+      current_owner_role: FeiOwnerRole.COMMERCE_DE_DETAIL,
+      next_owner_role: null,
+    });
+    expect(deriveCarcasseUiState(carcasse, undefined, {})).toBe('transmise-circuit-court');
+  });
+
   // Régression : après un « Retour à l'envoyeur » d'un ETG, seul next_owner_role de la
   // carcasse repasse à null. La carte doit lire la carcasse (et non le snapshot FEI périmé)
   // → l'état repasse à "creation", actionnable, et non "transmise".
@@ -70,6 +80,22 @@ describe('getCarcasseCardDisplay — vue chasseur', () => {
     });
     expect(display.uiState).toBe('transmise');
     expect(display.statusLabel).toBe('En cours de traitement');
+  });
+
+  it('carcasse transmise en circuit court → libellé "Transmise" (vert)', () => {
+    const carcasse = c({
+      current_owner_role: FeiOwnerRole.COMMERCE_DE_DETAIL,
+      next_owner_role: null,
+    });
+    const display = getCarcasseCardDisplay({
+      carcasse,
+      latestIntermediaire: undefined,
+      entities: noEntities,
+      viewRole: 'chasseur',
+    });
+    expect(display.uiState).toBe('transmise-circuit-court');
+    expect(display.statusLabel).toBe('Transmise');
+    expect(display.accentColor).toBe('green');
   });
 
   it('carcasse renvoyée par l\'ETG → plus de "En cours de traitement"', () => {
