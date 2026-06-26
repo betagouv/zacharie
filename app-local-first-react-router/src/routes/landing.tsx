@@ -52,7 +52,7 @@ export default function LandingPage() {
                     </svg>
                   </button>
                 </div>
-                <div className="mt-10 flex flex-row gap-4">
+                <div className="mt-10 flex flex-col gap-4 md:flex-row">
                   <Button
                     size="large"
                     className="block"
