@@ -26,6 +26,12 @@ test.beforeAll(async () => {
 // stocké dans `premier_detenteur_user_id`. Avant le fix, `isPremierDetenteur` se
 // basait uniquement sur `fei.premier_detenteur_user_id === user.id` et masquait
 // le bloc pour les autres membres de l'association.
+//
+// La fiche porte DEUX carcasses et User A n'en transmet qu'UNE : il reste donc une
+// carcasse à attribuer. C'est indispensable car le bloc « Destinataire » est désormais
+// masqué quand toutes les carcasses ont été assignées (`!allCarcassesAssigned`). Avec
+// une carcasse restante, le bloc reste visible et la régression `isPremierDetenteur`
+// est bien couverte.
 test("Autre membre de l'Association voit le bloc Destinataire sur la fiche", async ({ page }) => {
   // --- User A : examinateur-premier-detenteur (membre Association de chasseurs)
   //     crée et transmet la fiche au nom de l'Association.
@@ -42,8 +48,12 @@ test("Autre membre de l'Association voit le bloc Destinataire sur la fiche", asy
   await page.getByRole('button', { name: /Association de chasseurs/i }).click();
   await page.getByRole('button', { name: 'Continuer' }).first().click();
 
-  // Bloc 2 — une carcasse.
+  // Bloc 2 — deux carcasses (Daim + Cerf), pour pouvoir n'en transmettre qu'une.
   await page.getByLabel('Espèce (grand et petit gibier)').selectOption('Daim');
+  await page.getByRole('button', { name: /^PP-\d{3}-\d{3}$/ }).click();
+  await page.getByRole('button', { name: 'Ajouter la carcasse' }).click();
+  await page.getByRole('button', { name: 'Ajouter une autre carcasse' }).click();
+  await page.getByLabel('Espèce (grand et petit gibier)').selectOption('Cerf élaphe');
   await page.getByRole('button', { name: /^PP-\d{3}-\d{3}$/ }).click();
   await page.getByRole('button', { name: 'Ajouter la carcasse' }).click();
   await page.getByRole('button', { name: 'Continuer' }).click();
@@ -77,6 +87,16 @@ test("Autre membre de l'Association voit le bloc Destinataire sur la fiche", asy
   await etg1Pill.scrollIntoViewIfNeeded();
   await etg1Pill.click();
 
+  // On ne transmet que le Daim : on retire le Cerf du groupe de destinataire.
+  // Il reste ainsi une carcasse non attribuée pour que le bloc « Destinataire »
+  // demeure visible côté User B.
+  const destinataireSection = page
+    .locator('div.bg-white')
+    .filter({ has: page.getByRole('heading', { name: 'Destinataire' }) });
+  const cerfToggle = destinataireSection.getByRole('button', { name: /Cerf/ });
+  await cerfToggle.scrollIntoViewIfNeeded();
+  await cerfToggle.click();
+
   const pasDeStockage = page.getByText('Pas de stockage').first();
   await pasDeStockage.scrollIntoViewIfNeeded();
   await pasDeStockage.click();
@@ -104,7 +124,9 @@ test("Autre membre de l'Association voit le bloc Destinataire sur la fiche", asy
 
   // Cœur du test : sans le fix, `isPremierDetenteur` aurait été `false` et le
   // bloc Destinataire aurait été masqué. Avec le fix, il est visible.
-  // (Le titre « Destinataire » n'est rendu QUE par `{showBloc3 && isPremierDetenteur}`
-  // dans chasseur-fei.tsx — aucun autre composant ne l'émet, donc l'assertion est suffisante.)
+  // (Le titre « Destinataire » n'est rendu QUE par
+  // `{showBloc3 && isPremierDetenteur && !allCarcassesAssigned}` dans chasseur-fei.tsx —
+  // aucun autre composant ne l'émet, donc l'assertion est suffisante. Le Cerf restant
+  // garantit `!allCarcassesAssigned`.)
   await expect(page.getByRole('heading', { name: 'Destinataire' })).toBeVisible({ timeout: 15000 });
 });

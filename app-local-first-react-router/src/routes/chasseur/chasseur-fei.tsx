@@ -374,12 +374,17 @@ function FEIChasseurLoaded() {
     [carcasses]
   );
 
+  const allCarcassesAssigned = useMemo(
+    () => carcasses.length > 0 && carcassesDejaEnvoyees.length === carcasses.length,
+    [carcasses.length, carcassesDejaEnvoyees.length]
+  );
+
   const submitIsDisabled = useMemo(() => {
     if (!user.activated) return true;
     if (!showBloc4) return true;
-    if (carcassesDejaEnvoyees.length === carcasses.length) return true;
+    if (allCarcassesAssigned) return true;
     return false;
-  }, [user.activated, showBloc4, carcassesDejaEnvoyees.length, carcasses.length]);
+  }, [user.activated, showBloc4, allCarcassesAssigned]);
 
   return (
     <>
@@ -613,7 +618,7 @@ function FEIChasseurLoaded() {
               )}
 
               {/* Bloc 3 — Destinataire */}
-              {showBloc3 && isPremierDetenteur && (
+              {showBloc3 && isPremierDetenteur && !allCarcassesAssigned && (
                 <div className="bg-white p-4 md:p-8">
                   <h4 className="fr-h5">Destinataire</h4>
                   <DestinataireSelectPremierDetenteur
