@@ -1,11 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router';
 import dayjs from 'dayjs';
 import type { Carcasse } from '@prisma/client';
 import { CarcasseStatus, CarcasseType } from '@prisma/client';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
 import { Tooltip as DsfrTooltip } from '@codegouvfr/react-dsfr/Tooltip';
-import { Tabs, type TabsProps } from '@codegouvfr/react-dsfr/Tabs';
 import { Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import type { EtgUserInteractedResponse, EtgUserInteracted } from '@api/src/types/responses';
 import API from '@app/services/api';
@@ -14,6 +13,7 @@ import Chargement from '@app/components/Chargement';
 import { getUserRoleLabel } from '@app/utils/get-user-roles-label';
 import { getCarcasseStatusLabel, type CarcasseStatusLabel } from '@app/utils/get-carcasse-status';
 import { hasBphMotif, isBphMotif } from '@app/utils/bph-motifs';
+import { getMotifShortLabel } from '@app/utils/lesions';
 import { loadData, useLoaderEffect } from '@app/utils/load-data';
 
 function getUserName(user: EtgUserInteracted) {
@@ -25,7 +25,6 @@ export default function EtgUtilisateur() {
   const { userId } = useParams();
   const [user, setUser] = useState<EtgUserInteracted | null>(null);
   const [notFound, setNotFound] = useState(false);
-  const [selectedTabId, setSelectedTabId] = useState('Statistiques de saisies');
 
   const carcassesRegistry = useZustandStore((state) => state.carcassesRegistry);
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
@@ -93,8 +92,6 @@ export default function EtgUtilisateur() {
   const fullName = getUserName(user);
   const localisation = [user.code_postal, user.ville].filter(Boolean).join(' ');
 
-  const tabs: TabsProps['tabs'] = [{ tabId: 'Statistiques de saisies', label: 'Statistiques de saisies' }];
-
   return (
     <div className="fr-container fr-container--fluid">
       <title>{`${fullName} | Utilisateurs | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}</title>
@@ -132,14 +129,8 @@ export default function EtgUtilisateur() {
           </p>
         </header>
 
-        <Tabs
-          selectedTabId={selectedTabId}
-          tabs={tabs}
-          onTabChange={setSelectedTabId}
-          className="mt-4"
-        >
-          {selectedTabId === 'Statistiques de saisies' && <SaisieStats carcasses={userCarcasses} />}
-        </Tabs>
+        <h2 className="fr-h4 mt-6 mb-0">Statistiques de saisies</h2>
+        <SaisieStats carcasses={userCarcasses} />
       </div>
     </div>
   );
@@ -183,20 +174,62 @@ const STATUS_COLORS: Record<StatusDisplayLabel, string> = {
   'Manquant(e)': '#868e96', // gris
   'Sans décision': '#ced4da', // gris clair
 };
-const BPH_COLOR = '#e1000f';
-const NON_BPH_COLOR = '#3b82f6';
+const HYGIENE_COLOR = '#e1000f';
+const NON_HYGIENE_COLOR = '#3b82f6';
+
+// Un motif relevant de l'hygiène est mis en évidence (rouge) dans les graphes.
+type MotifDatum = { motif: string; count: number; hygiene: boolean };
+
+// Motifs de la décision finale (saisie totale / partielle).
+const getSaisieMotifs = (c: Carcasse) => c.svi_ipm2_lesions_ou_motifs ?? [];
+// Motifs de la mise en consigne (raisons initiales, conservées même après levée).
+const getConsigneMotifs = (c: Carcasse) => c.svi_ipm1_lesions_ou_motifs ?? [];
+
+function buildMotifData(carcasses: Array<Carcasse>, getMotifs: (c: Carcasse) => Array<string>): MotifDatum[] {
+  const motifCounts = new Map<string, number>();
+  for (const carcasse of carcasses) {
+    for (const motif of getMotifs(carcasse).filter(Boolean)) {
+      motifCounts.set(motif, (motifCounts.get(motif) ?? 0) + 1);
+    }
+  }
+  return [...motifCounts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 12)
+    .map(([motif, count]) => ({ motif, count, hygiene: isBphMotif(motif) }));
+}
+
+// Statistiques d'un périmètre (saisies totales, partielles, consignes levées) :
+// taux par rapport au total, part liée à l'hygiène, et motifs associés.
+function computePerimetre(
+  carcasses: Array<Carcasse>,
+  total: number,
+  getMotifs: (c: Carcasse) => Array<string>
+) {
+  const count = carcasses.length;
+  let hygieneCount = 0;
+  for (const carcasse of carcasses) {
+    if (hasBphMotif(getMotifs(carcasse).filter(Boolean))) hygieneCount += 1;
+  }
+  return {
+    count,
+    taux: total > 0 ? Math.round((count / total) * 1000) / 10 : 0,
+    hygieneCount,
+    tauxHygiene: count > 0 ? Math.round((hygieneCount / count) * 1000) / 10 : 0,
+    motifData: buildMotifData(carcasses, getMotifs),
+  };
+}
 
 function SaisieStats({ carcasses }: { carcasses: Array<Carcasse> }) {
   const stats = useMemo(() => {
     const total = carcasses.length;
     const statusCounts = new Map<StatusDisplayLabel, number>();
-    const motifCounts = new Map<string, number>();
     let totalGG = 0;
     let totalPG = 0;
-    let saisiesCount = 0;
     let saisiesGG = 0;
     let saisiesPG = 0;
-    let saisiesBphCount = 0;
+    const saisiesTotales: Array<Carcasse> = [];
+    const saisiesPartielles: Array<Carcasse> = [];
+    const consignesLevees: Array<Carcasse> = [];
     for (const carcasse of carcasses) {
       const isPetitGibier = carcasse.type === CarcasseType.PETIT_GIBIER;
       if (isPetitGibier) totalPG += 1;
@@ -205,22 +238,20 @@ function SaisieStats({ carcasses }: { carcasses: Array<Carcasse> }) {
       const statusLabel = normalizeStatusLabel(getCarcasseStatusLabel(carcasse));
       statusCounts.set(statusLabel, (statusCounts.get(statusLabel) ?? 0) + 1);
 
-      const motifs = [
-        ...(carcasse.svi_ipm1_lesions_ou_motifs ?? []),
-        ...(carcasse.svi_ipm2_lesions_ou_motifs ?? []),
-      ].filter(Boolean);
-      for (const motif of motifs) {
-        motifCounts.set(motif, (motifCounts.get(motif) ?? 0) + 1);
-      }
-
-      const isSaisie =
-        carcasse.svi_carcasse_status === CarcasseStatus.SAISIE_TOTALE ||
-        carcasse.svi_carcasse_status === CarcasseStatus.SAISIE_PARTIELLE;
-      if (isSaisie) {
-        saisiesCount += 1;
-        if (isPetitGibier) saisiesPG += 1;
-        else saisiesGG += 1;
-        if (hasBphMotif(motifs)) saisiesBphCount += 1;
+      switch (carcasse.svi_carcasse_status) {
+        case CarcasseStatus.SAISIE_TOTALE:
+          saisiesTotales.push(carcasse);
+          if (isPetitGibier) saisiesPG += 1;
+          else saisiesGG += 1;
+          break;
+        case CarcasseStatus.SAISIE_PARTIELLE:
+          saisiesPartielles.push(carcasse);
+          if (isPetitGibier) saisiesPG += 1;
+          else saisiesGG += 1;
+          break;
+        case CarcasseStatus.LEVEE_DE_CONSIGNE:
+          consignesLevees.push(carcasse);
+          break;
       }
     }
     const statusData = [...statusCounts.entries()]
@@ -231,22 +262,22 @@ function SaisieStats({ carcasses }: { carcasses: Array<Carcasse> }) {
         color: STATUS_COLORS[name],
         pct: total > 0 ? Math.round((value / total) * 100) : 0,
       }));
-    const motifData = [...motifCounts.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 12)
-      .map(([motif, count]) => ({ motif, count, bph: isBphMotif(motif) }));
+
+    // Saisies globales = saisies totales + partielles (hors consignes levées).
+    const saisiesGlobales = [...saisiesTotales, ...saisiesPartielles];
+    const saisiesCount = saisiesGlobales.length;
     return {
       total,
       totalGG,
       totalPG,
       statusData,
-      motifData,
-      saisiesCount,
-      saisiesBphCount,
       tauxSaisie: total > 0 ? Math.round((saisiesCount / total) * 1000) / 10 : 0,
       tauxSaisieGG: totalGG > 0 ? Math.round((saisiesGG / totalGG) * 1000) / 10 : 0,
       tauxSaisiePG: totalPG > 0 ? Math.round((saisiesPG / totalPG) * 1000) / 10 : 0,
-      tauxBph: saisiesCount > 0 ? Math.round((saisiesBphCount / saisiesCount) * 1000) / 10 : 0,
+      saisiesGlobalesMotifs: buildMotifData(saisiesGlobales, getSaisieMotifs),
+      totale: computePerimetre(saisiesTotales, total, getSaisieMotifs),
+      partielle: computePerimetre(saisiesPartielles, total, getSaisieMotifs),
+      consigneLevee: computePerimetre(consignesLevees, total, getConsigneMotifs),
     };
   }, [carcasses]);
 
@@ -260,120 +291,223 @@ function SaisieStats({ carcasses }: { carcasses: Array<Carcasse> }) {
 
   return (
     <div className="flex flex-col gap-6 py-4">
-      <div className="flex flex-wrap gap-4">
-        <StatCard
-          label="Grand gibier"
-          value={stats.totalGG}
-        />
-        <StatCard
-          label="Petit gibier"
-          value={stats.totalPG}
-        />
-        <StatCard
-          label="Taux de saisie"
-          value={`${stats.tauxSaisie.toLocaleString('fr-FR')} %`}
-          sub={`Grand gibier : ${stats.tauxSaisieGG.toLocaleString('fr-FR')} % · Petit gibier : ${stats.tauxSaisiePG.toLocaleString('fr-FR')} %`}
-        />
-        <StatCard
-          label="Saisies liées au BPH"
-          value={`${stats.tauxBph.toLocaleString('fr-FR')} %`}
-          sub={`${stats.saisiesBphCount} saisie${stats.saisiesBphCount > 1 ? 's' : ''} sur ${stats.saisiesCount} (hygiène)`}
-          info="BPH = Bonnes Pratiques d'Hygiène. Saisies dont au moins un motif relève d'un défaut d'hygiène (souillures, putréfaction, morsures…), souvent évitable lors de la préparation."
-        />
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <section className="rounded-lg border border-gray-200 bg-white p-4">
-          <h3 className="fr-h6 mb-3">Répartition par décision SVI</h3>
-          <ResponsiveContainer
-            width="100%"
-            height={220}
-          >
-            <PieChart>
-              <Pie
-                data={stats.statusData}
-                dataKey="value"
-                nameKey="name"
-                innerRadius={55}
-                outerRadius={85}
-              >
-                {stats.statusData.map((d) => (
-                  <Cell
-                    key={d.name}
-                    fill={d.color}
-                  />
-                ))}
-              </Pie>
-              <Tooltip formatter={(v, n) => [Number(v).toLocaleString('fr-FR'), String(n)]} />
-            </PieChart>
-          </ResponsiveContainer>
-          <ul className="mt-3 flex flex-col gap-1">
-            {stats.statusData.map((d) => (
-              <li
-                key={d.name}
-                className="flex items-center gap-2 text-sm"
-              >
-                <span
-                  className="inline-block h-3 w-3 shrink-0 rounded-sm"
-                  style={{ backgroundColor: d.color }}
-                />
-                <span className="flex-1 truncate">{d.name}</span>
-                <span className="font-semibold text-gray-900">{d.value}</span>
-                <span className="w-10 text-right text-gray-500">{d.pct}%</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        <section className="rounded-lg border border-gray-200 bg-white p-4">
-          <h3 className="fr-h6 mb-1">Motifs de saisie</h3>
-          <p className="mb-3 text-xs text-gray-500">
-            <span
-              className="mr-1 inline-block h-2.5 w-2.5 rounded-full align-middle"
-              style={{ backgroundColor: BPH_COLOR }}
-            />
-            Motif lié aux Bonnes Pratiques d'Hygiène (BPH)
-          </p>
-          {stats.motifData.length === 0 ? (
-            <p className="py-12 text-center text-sm text-gray-500">Aucun motif de saisie renseigné.</p>
-          ) : (
+      <StatsSection title="Généralités">
+        <div className="flex flex-wrap gap-4">
+          <StatCard
+            label="Grand gibier"
+            value={stats.totalGG}
+          />
+          <StatCard
+            label="Petit gibier"
+            value={stats.totalPG}
+          />
+          <StatCard
+            label="Taux de saisie (totales + partielles)"
+            value={`${stats.tauxSaisie.toLocaleString('fr-FR')} %`}
+            sub={`Grand gibier : ${stats.tauxSaisieGG.toLocaleString('fr-FR')} % · Petit gibier : ${stats.tauxSaisiePG.toLocaleString('fr-FR')} %`}
+          />
+        </div>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <ChartCard title="Répartition par décision SVI">
             <ResponsiveContainer
               width="100%"
-              height={Math.max(220, stats.motifData.length * 28)}
+              height={220}
             >
-              <BarChart
-                data={stats.motifData}
-                layout="vertical"
-                margin={{ left: 8, right: 16 }}
-              >
-                <XAxis
-                  type="number"
-                  allowDecimals={false}
-                />
-                <YAxis
-                  dataKey="motif"
-                  type="category"
-                  width={160}
-                  tick={{ fontSize: 11 }}
-                />
-                <Tooltip formatter={(v) => [Number(v).toLocaleString('fr-FR'), 'Nombre']} />
-                <Bar
-                  dataKey="count"
-                  name="Nombre de carcasses"
+              <PieChart>
+                <Pie
+                  data={stats.statusData}
+                  dataKey="value"
+                  nameKey="name"
+                  innerRadius={55}
+                  outerRadius={85}
                 >
-                  {stats.motifData.map((d) => (
+                  {stats.statusData.map((d) => (
                     <Cell
-                      key={d.motif}
-                      fill={d.bph ? BPH_COLOR : NON_BPH_COLOR}
+                      key={d.name}
+                      fill={d.color}
                     />
                   ))}
-                </Bar>
-              </BarChart>
+                </Pie>
+                <Tooltip formatter={(v, n) => [Number(v).toLocaleString('fr-FR'), String(n)]} />
+              </PieChart>
             </ResponsiveContainer>
-          )}
-        </section>
-      </div>
+            <ul className="mt-3 flex flex-col gap-1">
+              {stats.statusData.map((d) => (
+                <li
+                  key={d.name}
+                  className="flex items-center gap-2 text-sm"
+                >
+                  <span
+                    className="inline-block h-3 w-3 shrink-0 rounded-sm"
+                    style={{ backgroundColor: d.color }}
+                  />
+                  <span className="flex-1 truncate">{d.name}</span>
+                  <span className="font-semibold text-gray-900">{d.value}</span>
+                  <span className="w-10 text-right text-gray-500">{d.pct}%</span>
+                </li>
+              ))}
+            </ul>
+          </ChartCard>
+
+          <ChartCard
+            title="Motifs de saisie (toutes saisies)"
+            legend
+          >
+            <MotifBarChart
+              data={stats.saisiesGlobalesMotifs}
+              emptyLabel="Aucune saisie sur ce périmètre."
+            />
+          </ChartCard>
+        </div>
+      </StatsSection>
+
+      <PerimetreSection
+        title="Saisies totales"
+        tauxLabel="Taux de saisies totales"
+        motifTitle="Motifs de saisie totale"
+        emptyLabel="Aucune saisie totale."
+        perimetre={stats.totale}
+      />
+
+      <PerimetreSection
+        title="Saisies partielles"
+        tauxLabel="Taux de saisies partielles"
+        motifTitle="Motifs de saisie partielle"
+        emptyLabel="Aucune saisie partielle."
+        perimetre={stats.partielle}
+      />
+
+      <PerimetreSection
+        title="Consignes levées"
+        tauxLabel="Taux de consignes levées"
+        motifTitle="Motifs de consigne levée"
+        emptyLabel="Aucune consigne levée."
+        perimetre={stats.consigneLevee}
+      />
     </div>
+  );
+}
+
+// Section saisies/consignes : taux du périmètre, part liée à l'hygiène, motifs associés.
+function PerimetreSection({
+  title,
+  tauxLabel,
+  motifTitle,
+  emptyLabel,
+  perimetre,
+}: {
+  title: string;
+  tauxLabel: string;
+  motifTitle: string;
+  emptyLabel: string;
+  perimetre: ReturnType<typeof computePerimetre>;
+}) {
+  return (
+    <StatsSection title={title}>
+      <div className="flex flex-wrap gap-4">
+        <StatCard
+          label={tauxLabel}
+          value={`${perimetre.taux.toLocaleString('fr-FR')} %`}
+          sub={`${perimetre.count.toLocaleString('fr-FR')} carcasse${perimetre.count > 1 ? 's' : ''}`}
+        />
+        <StatCard
+          label={`${title} pour un défaut d'hygiène évitable`}
+          value={`${perimetre.tauxHygiene.toLocaleString('fr-FR')} %`}
+          sub={`${perimetre.hygieneCount} sur ${perimetre.count}`}
+          info="Part dont au moins un motif relève d'un défaut d'hygiène (souillures, putréfaction, morsures…), souvent évitable lors de la préparation."
+        />
+      </div>
+      <ChartCard
+        title={motifTitle}
+        legend
+      >
+        <MotifBarChart
+          data={perimetre.motifData}
+          emptyLabel={emptyLabel}
+        />
+      </ChartCard>
+    </StatsSection>
+  );
+}
+
+function StatsSection({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className="rounded-xl border border-gray-200 bg-gray-50 p-4 md:p-5">
+      <h2 className="fr-h5 mt-0 mb-4 border-b border-gray-200 pb-3 text-gray-900">{title}</h2>
+      <div className="flex flex-col gap-4">{children}</div>
+    </section>
+  );
+}
+
+function ChartCard({ title, legend, children }: { title: string; legend?: boolean; children: ReactNode }) {
+  return (
+    <div className="rounded-lg border border-gray-200 bg-white p-4">
+      <h3 className="fr-h6 mb-1">{title}</h3>
+      {legend && (
+        <p className="mb-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
+          <span className="inline-flex items-center">
+            <span
+              className="mr-1 inline-block h-2.5 w-2.5 rounded-full align-middle"
+              style={{ backgroundColor: HYGIENE_COLOR }}
+            />
+            Motif lié à un défaut d'hygiène évitable
+          </span>
+          <span className="inline-flex items-center">
+            <span
+              className="mr-1 inline-block h-2.5 w-2.5 rounded-full align-middle"
+              style={{ backgroundColor: NON_HYGIENE_COLOR }}
+            />
+            Autre motif
+          </span>
+        </p>
+      )}
+      {children}
+    </div>
+  );
+}
+
+function MotifBarChart({ data, emptyLabel }: { data: MotifDatum[]; emptyLabel: string }) {
+  if (data.length === 0) {
+    return <p className="py-12 text-center text-sm text-gray-500">{emptyLabel}</p>;
+  }
+  return (
+    <ResponsiveContainer
+      width="100%"
+      height={Math.max(220, data.length * 28)}
+    >
+      <BarChart
+        data={data}
+        layout="vertical"
+        margin={{ left: 8, right: 16 }}
+      >
+        <XAxis
+          type="number"
+          allowDecimals={false}
+        />
+        <YAxis
+          dataKey="motif"
+          type="category"
+          width={140}
+          tick={{ fontSize: 11 }}
+          tickFormatter={getMotifShortLabel}
+        />
+        <Tooltip
+          formatter={(v) => [Number(v).toLocaleString('fr-FR'), 'Nombre']}
+          labelFormatter={(label) => getMotifShortLabel(String(label))}
+        />
+        <Bar
+          dataKey="count"
+          name="Nombre de carcasses"
+        >
+          {data.map((d) => (
+            <Cell
+              key={d.motif}
+              fill={d.hygiene ? HYGIENE_COLOR : NON_HYGIENE_COLOR}
+            />
+          ))}
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
   );
 }
 
