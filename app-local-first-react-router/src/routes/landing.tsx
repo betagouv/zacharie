@@ -314,7 +314,7 @@ export default function LandingPage() {
               <Button
                 size="large"
                 linkProps={{
-                  href: '#',
+                  to: '/quiz',
                 }}
               >
                 Testez vos connaissances
