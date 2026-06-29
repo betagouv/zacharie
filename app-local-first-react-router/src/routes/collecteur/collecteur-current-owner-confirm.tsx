@@ -76,8 +76,9 @@ export default function CurrentOwnerConfirm() {
   if (transmissionMetadata.allCarcassesDone) {
     return null;
   }
-  // Multi-recipient: user already took charge of their assigned carcasses
-  if (myCarcasses.length === 0 && myAlreadyHandledCarcasses.length > 0) {
+  // Le collecteur a déjà pris en charge toutes les carcasses du groupe (il les contrôle/transporte
+  // déjà) : on ne réaffiche pas le bloc de prise en charge, même après transmission au prochain détenteur.
+  if (myCarcasses.length > 0 && myAlreadyHandledCarcasses.length === myCarcasses.length) {
     return null;
   }
 
