@@ -9,6 +9,7 @@ import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import type { UserConnexionResponse } from '@api/src/types/responses';
 import useUser from '@app/zustand/user';
 import API from '@app/services/api';
+import { trackFeature } from '@app/services/matomo';
 import MesCCGs from './3b-mes-ccgs';
 import MesAssociationsDeChasse from './3a-associations-de-chasse';
 import MesPartenaires from './3c-mes-partenaires';
@@ -86,7 +87,10 @@ export default function OnboardingMesInformationsDeChasse() {
           <p className="mb-8 text-sm text-gray-500">
             <button
               type="button"
-              onClick={() => finishOnboarding()}
+              onClick={() => {
+                trackFeature('onboarding', 'skip', 'chasseur-informations-de-chasse');
+                finishOnboarding();
+              }}
               className="text-gray-500 underline"
             >
               Passer cette étape

@@ -10,6 +10,7 @@ import useExportTransmissions, {
   SIMPLIFIED_EXPORT_COLUMN_KEYS,
 } from '@app/utils/export-transmissions';
 import { useTransmissions } from '@app/utils/get-transmissions-sorted';
+import { trackFeature } from '@app/services/matomo';
 
 const exportModal = createModal({
   id: 'export-feis-columns',
@@ -84,6 +85,7 @@ export default function ExportTransmissionsModal({ transmissionsIds, storageKey 
   const hasSelection = transmissionsIds.length > 0;
 
   const openExportModal = () => {
+    trackFeature('export', 'open', storageKey);
     setIsOpen(true);
     setExportSucceeded(false);
     exportModal.open();
@@ -93,6 +95,9 @@ export default function ExportTransmissionsModal({ transmissionsIds, storageKey 
   const doExport = async () => {
     if (!canExport) return;
     const succeeded = await onExportToXlsx(transmissionsIds, selectedKeys);
+    if (succeeded) {
+      trackFeature('export', 'done', storageKey, transmissionsIds.length);
+    }
     setExportSucceeded(succeeded);
   };
 

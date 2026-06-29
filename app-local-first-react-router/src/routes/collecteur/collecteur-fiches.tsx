@@ -12,6 +12,7 @@ import { TransmissionSimpleStatus } from '@app/types/transmission-steps';
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import API from '@app/services/api';
+import { trackFeature } from '@app/services/matomo';
 import { abbreviations } from '@app/utils/count-carcasses';
 import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import ExportTransmissionsModal from '@app/components/ExportTransmissionsModal';
@@ -137,6 +138,7 @@ export default function CollecteurFiches() {
   });
 
   const toggleFilter = (status: TransmissionSimpleStatus) => {
+    trackFeature('registre-collecteur', 'filtre', 'statut');
     setFilter((prev) => (prev.includes(status) ? prev.filter((s) => s !== status) : [...prev, status]));
   };
 
@@ -177,6 +179,7 @@ export default function CollecteurFiches() {
 
   const hasActiveFilters = filter.length > 0 || !!filterPremierDetenteur || !!filterCCG;
   const clearAllFilters = () => {
+    trackFeature('registre-collecteur', 'filtre-reset');
     setFilter([]);
     setFilterPremierDetenteur('');
     setFilterCCG('');
@@ -349,6 +352,7 @@ export default function CollecteurFiches() {
                       title: option.name,
                       onClick: (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
                         e.preventDefault();
+                        trackFeature('registre-collecteur', 'filtre', 'premier-detenteur');
                         setFilterPremierDetenteur(option.id);
                       },
                     },
@@ -382,6 +386,7 @@ export default function CollecteurFiches() {
                       title: option.name,
                       onClick: (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
                         e.preventDefault();
+                        trackFeature('registre-collecteur', 'filtre', 'ccg');
                         setFilterCCG(option.id);
                       },
                     },
@@ -402,7 +407,10 @@ export default function CollecteurFiches() {
                   iconId: 'ri-grid-line',
                   nativeInputProps: {
                     checked: viewType === 'grid',
-                    onChange: () => setViewType('grid'),
+                    onChange: () => {
+                      trackFeature('registre-collecteur', 'vue', 'grid');
+                      setViewType('grid');
+                    },
                     name: 'view-type',
                     value: 'grid',
                   },
@@ -412,7 +420,10 @@ export default function CollecteurFiches() {
                   iconId: 'ri-table-line',
                   nativeInputProps: {
                     checked: viewType === 'table',
-                    onChange: () => setViewType('table'),
+                    onChange: () => {
+                      trackFeature('registre-collecteur', 'vue', 'table');
+                      setViewType('table');
+                    },
                     name: 'view-type',
                     value: 'table',
                   },

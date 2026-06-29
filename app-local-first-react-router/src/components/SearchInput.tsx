@@ -4,6 +4,7 @@ import { CarcasseType } from '@prisma/client';
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import { searchLocally } from '@app/utils/search-local';
+import { trackFeature } from '@app/services/matomo';
 
 interface SearchInputProps {
   className?: string;
@@ -57,6 +58,11 @@ export default function SearchInput({ className, id, type }: SearchInputProps) {
       const { carcasses, feis, carcassesIntermediaireById } = useZustandStore.getState();
       const data = searchLocally(cachedValue, user, carcasses, feis, carcassesIntermediaireById);
       setIsLoading(false);
+      // Une recherche stabilisée (debounce 500ms) : on suit l'usage + si elle aboutit ou non.
+      // RGPD : on n'envoie jamais le contenu tapé, seulement le résultat trouvé/vide.
+      if (cachedValue.trim()) {
+        trackFeature('header-recherche', data.data?.length ? 'resultat-trouve' : 'resultat-vide');
+      }
       if (data.data?.length) {
         setSuccessData(data.data);
       }
@@ -89,6 +95,7 @@ export default function SearchInput({ className, id, type }: SearchInputProps) {
             <a
               key={`${data.fei_numero || data.carcasse_numero_bracelet}`}
               href={data.redirectUrl}
+              onClick={() => trackFeature('header-recherche', 'resultat-clic')}
               className="flex flex-col gap-0.5 border-t border-gray-100 px-3 py-2 first:border-t-0 hover:bg-gray-50"
             >
               {data.carcasse_numero_bracelet && (

@@ -13,6 +13,7 @@ import { TransmissionSimpleStatus } from '@app/types/transmission-steps';
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import API from '@app/services/api';
+import { trackFeature, trackSearch } from '@app/services/matomo';
 import { abbreviations } from '@app/utils/count-carcasses';
 import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { getSaisonStartYear, getSaisonLabel, isDateInSaison } from '@app/utils/get-saison';
@@ -511,6 +512,7 @@ export default function SviFiches() {
     searchQuery.trim().length > 0;
 
   const clearAllFilters = () => {
+    trackFeature('registre-svi', 'filtre-reset');
     setFilterStatuses([]);
     setFilterPremierDetenteurs([]);
     setFilterEtgs([]);
@@ -534,7 +536,10 @@ export default function SviFiches() {
           type="search"
           placeholder="Rechercher une fiche..."
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            trackSearch('registre-svi');
+          }}
           className="w-full rounded border border-gray-300 py-2 pr-3 pl-10 text-sm transition-colors outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
         />
       </div>
@@ -577,6 +582,7 @@ export default function SviFiches() {
                 checked={filterStatuses.includes(status)}
                 className="checked:accent-action-high-blue-france h-4 w-4"
                 onChange={() => {
+                  trackFeature('registre-svi', 'filtre', 'statut');
                   if (filterStatuses.includes(status)) {
                     setFilterStatuses(filterStatuses.filter((s) => s !== status));
                   } else {
@@ -618,6 +624,7 @@ export default function SviFiches() {
                   checked={filterSaisons.includes(option.year)}
                   className="checked:accent-action-high-blue-france h-4 w-4 shrink-0"
                   onChange={() => {
+                    trackFeature('registre-svi', 'filtre', 'saison');
                     if (filterSaisons.includes(option.year)) {
                       setFilterSaisons(filterSaisons.filter((v) => v !== option.year));
                     } else {
@@ -649,7 +656,10 @@ export default function SviFiches() {
               type="date"
               value={filterDateFrom}
               max={filterDateTo || undefined}
-              onChange={(e) => setFilterDateFrom(e.target.value)}
+              onChange={(e) => {
+                setFilterDateFrom(e.target.value);
+                trackFeature('registre-svi', 'filtre', 'date-mise-a-mort');
+              }}
               className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm transition-colors outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             />
           </label>
@@ -659,7 +669,10 @@ export default function SviFiches() {
               type="date"
               value={filterDateTo}
               min={filterDateFrom || undefined}
-              onChange={(e) => setFilterDateTo(e.target.value)}
+              onChange={(e) => {
+                setFilterDateTo(e.target.value);
+                trackFeature('registre-svi', 'filtre', 'date-mise-a-mort');
+              }}
               className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm transition-colors outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             />
           </label>
@@ -690,6 +703,7 @@ export default function SviFiches() {
                   checked={filterPremierDetenteurs.includes(option.id)}
                   className="checked:accent-action-high-blue-france h-4 w-4 shrink-0"
                   onChange={() => {
+                    trackFeature('registre-svi', 'filtre', 'premier-detenteur');
                     if (filterPremierDetenteurs.includes(option.id)) {
                       setFilterPremierDetenteurs(filterPremierDetenteurs.filter((v) => v !== option.id));
                     } else {
@@ -728,6 +742,7 @@ export default function SviFiches() {
                   checked={filterEtgs.includes(option.id)}
                   className="checked:accent-action-high-blue-france h-4 w-4 shrink-0"
                   onChange={() => {
+                    trackFeature('registre-svi', 'filtre', 'etg');
                     if (filterEtgs.includes(option.id)) {
                       setFilterEtgs(filterEtgs.filter((v) => v !== option.id));
                     } else {
@@ -766,6 +781,7 @@ export default function SviFiches() {
                   checked={filterCCGs.includes(option.id)}
                   className="checked:accent-action-high-blue-france h-4 w-4 shrink-0"
                   onChange={() => {
+                    trackFeature('registre-svi', 'filtre', 'ccg');
                     if (filterCCGs.includes(option.id)) {
                       setFilterCCGs(filterCCGs.filter((v) => v !== option.id));
                     } else {
@@ -804,6 +820,7 @@ export default function SviFiches() {
                   checked={filterCollecteurs.includes(option.id)}
                   className="checked:accent-action-high-blue-france h-4 w-4 shrink-0"
                   onChange={() => {
+                    trackFeature('registre-svi', 'filtre', 'collecteur');
                     if (filterCollecteurs.includes(option.id)) {
                       setFilterCollecteurs(filterCollecteurs.filter((v) => v !== option.id));
                     } else {
@@ -839,7 +856,11 @@ export default function SviFiches() {
             aria-label={viewType === 'grid' ? 'Afficher en table' : 'Afficher en grille'}
             title={viewType === 'grid' ? 'Afficher en table' : 'Afficher en grille'}
             className="h- flex w-10 items-center justify-center rounded border border-gray-300 bg-white text-gray-700 transition-colors hover:bg-gray-50"
-            onClick={() => setViewType(viewType === 'grid' ? 'table' : 'grid')}
+            onClick={() => {
+              const next = viewType === 'grid' ? 'table' : 'grid';
+              trackFeature('registre-svi', 'vue', next);
+              setViewType(next);
+            }}
           >
             <span
               className={`fr-icon--sm ${viewType === 'grid' ? 'ri-table-line' : 'ri-grid-line'}`}
@@ -914,7 +935,10 @@ export default function SviFiches() {
                     iconId: 'ri-grid-line',
                     nativeInputProps: {
                       checked: viewType === 'grid',
-                      onChange: () => setViewType('grid'),
+                      onChange: () => {
+                        trackFeature('registre-svi', 'vue', 'grid');
+                        setViewType('grid');
+                      },
                       name: 'view-type',
                       value: 'grid',
                     },
@@ -924,7 +948,10 @@ export default function SviFiches() {
                     iconId: 'ri-table-line',
                     nativeInputProps: {
                       checked: viewType === 'table',
-                      onChange: () => setViewType('table'),
+                      onChange: () => {
+                        trackFeature('registre-svi', 'vue', 'table');
+                        setViewType('table');
+                      },
                       name: 'view-type',
                       value: 'table',
                     },

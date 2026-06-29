@@ -96,3 +96,19 @@ export function trackEvent(category: string, action: string, name?: string, valu
 
   window._paq.push(eventParams);
 }
+
+// Track une feature de l'interface (filtre, tri, vue, export...).
+// RGPD : name = la dimension utilisée (ex: 'statut'), jamais la valeur saisie par l'utilisateur.
+export function trackFeature(category: string, action: string, name?: string, value?: number): void {
+  trackEvent(category, action, name, value);
+}
+
+// Track l'usage d'une recherche sans en envoyer le contenu (qui peut être une donnée personnelle).
+// Debounce : ne fire qu'une fois quand l'utilisateur arrête de taper.
+let searchTimer: ReturnType<typeof setTimeout> | undefined;
+export function trackSearch(category: string): void {
+  if (searchTimer) {
+    clearTimeout(searchTimer);
+  }
+  searchTimer = setTimeout(() => trackEvent(category, 'recherche'), 1500);
+}
