@@ -44,12 +44,13 @@ describe('deriveCarcasseUiState — possession lue au niveau carcasse', () => {
     expect(deriveCarcasseUiState(carcasse, undefined, {})).toBe('transmise');
   });
 
-  // Circuit court (commerce de détail, particulier…) est un destinataire terminal :
-  // la carcasse est « Transmise », pas « en cours de traitement ».
-  it('carcasse transmise à un destinataire de circuit court → "transmise-circuit-court"', () => {
+  // Circuit court (commerce de détail, particulier…) est un destinataire terminal.
+  // Il ne « prend jamais en charge » : current_owner_role reste PREMIER_DETENTEUR et
+  // seul next_owner_role pointe vers le destinataire. La carcasse est « Transmise ».
+  it('carcasse transmise par le PD à un destinataire de circuit court → "transmise-circuit-court"', () => {
     const carcasse = c({
-      current_owner_role: FeiOwnerRole.COMMERCE_DE_DETAIL,
-      next_owner_role: null,
+      current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+      next_owner_role: FeiOwnerRole.COMMERCE_DE_DETAIL,
     });
     expect(deriveCarcasseUiState(carcasse, undefined, {})).toBe('transmise-circuit-court');
   });
@@ -84,8 +85,8 @@ describe('getCarcasseCardDisplay — vue chasseur', () => {
 
   it('carcasse transmise en circuit court → libellé "Transmise" (vert)', () => {
     const carcasse = c({
-      current_owner_role: FeiOwnerRole.COMMERCE_DE_DETAIL,
-      next_owner_role: null,
+      current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+      next_owner_role: FeiOwnerRole.COMMERCE_DE_DETAIL,
     });
     const display = getCarcasseCardDisplay({
       carcasse,

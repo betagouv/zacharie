@@ -75,8 +75,12 @@ export function deriveCarcasseUiState(
         !carcasse.next_owner_role;
       if (isCreation) return 'creation';
       // Circuit court (commerce de détail, particulier…) est un destinataire terminal :
-      // il n'inspecte ni ne retransmet. La carcasse est donc « Transmise » et non « en cours de traitement ».
-      if (isRoleCircuitCourt(carcasse.current_owner_role)) return 'transmise-circuit-court';
+      // il n'inspecte ni ne retransmet, donc il ne « prend jamais en charge » et
+      // current_owner_role reste PREMIER_DETENTEUR. On lit le destinataire (next_owner_role).
+      // La carcasse est « Transmise » et non « en cours de traitement ».
+      if (isRoleCircuitCourt(carcasse.next_owner_role) || isRoleCircuitCourt(carcasse.current_owner_role)) {
+        return 'transmise-circuit-court';
+      }
       if (latestIntermediaire?.decision_at && latestIntermediaire?.intermediaire_role === FeiOwnerRole.ETG) {
         return 'acceptee-etg';
       }
