@@ -20,7 +20,7 @@ export default function LandingPage() {
                 </h1>
                 <p className="3xl:text-4xl mt-8 text-2xl leading-tight font-bold text-white! text-shadow-xs lg:text-3xl 2xl:text-4xl">
                   Où que vous soyez, réalisez vos fiches d'examen initial du gibier directement depuis votre
-                  smartphone ou votre ordinateur,
+                  smartphone ou votre ordinateur.
                 </p>
                 <p className="3xl:text-4xl mt-8 text-2xl leading-tight font-bold text-white! text-shadow-xs lg:mt-[6%] lg:text-3xl 2xl:text-4xl">
                   Simple, rapide et 100% gratuit, Zacharie accélère vos démarches.
