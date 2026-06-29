@@ -176,7 +176,7 @@ export function formatRenvoiExpediteurEmail(
 
   const email = [
     `Bonjour,`,
-    `${renvoyeur} a renvoyé la fiche ${fei.numero} : les carcasses concernées sont de nouveau à votre charge.`,
+    `${renvoyeur} a renvoyé la fiche ${fei.numero} : vous devez choisir un autre destinataire pour cette fiche.`,
     `Pour consulter la fiche, rendez-vous sur Zacharie : ${url}`,
     `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur ce renvoi, merci de contacter l’établissement qui vous a renvoyé la fiche.`,
   ];
