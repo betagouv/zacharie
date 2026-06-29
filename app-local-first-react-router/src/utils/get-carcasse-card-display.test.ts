@@ -83,7 +83,7 @@ describe('getCarcasseCardDisplay — vue chasseur', () => {
     expect(display.statusLabel).toBe('En cours de traitement');
   });
 
-  it('carcasse transmise en circuit court → libellé "Transmise" (vert)', () => {
+  it('carcasse transmise en circuit court → libellé "Transmise" (bleu)', () => {
     const carcasse = c({
       current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
       next_owner_role: FeiOwnerRole.COMMERCE_DE_DETAIL,
@@ -96,7 +96,7 @@ describe('getCarcasseCardDisplay — vue chasseur', () => {
     });
     expect(display.uiState).toBe('transmise-circuit-court');
     expect(display.statusLabel).toBe('Transmise');
-    expect(display.accentColor).toBe('green');
+    expect(display.accentColor).toBe('blue');
   });
 
   it('carcasse renvoyée par l\'ETG → plus de "En cours de traitement"', () => {

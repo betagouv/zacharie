@@ -16,7 +16,7 @@ export type CardUiState =
   | 'saisie-partielle'
   | 'saisie-totale'
   | 'accepte-svi';
-export type CardAccent = 'red' | 'blue' | 'orange' | 'gray' | 'green' | null;
+export type CardAccent = 'red' | 'blue' | 'orange' | 'gray' | null;
 
 export interface CardDisplay {
   uiState: CardUiState;
@@ -118,7 +118,7 @@ export function getCarcasseCardDisplay(params: CardDisplayParams): CardDisplay {
     return {
       uiState,
       iconId: 'fr-icon-checkbox-circle-line',
-      accentColor: 'green',
+      accentColor: 'blue',
       statusLabel: 'Transmise',
       showStatusLine: true,
     };
