@@ -97,6 +97,18 @@ describe('isCarcasseDone', () => {
     expect(isCarcasseDone(c({ consommateur_final_usage_domestique: new Date() }))).toBe(true);
   });
 
+  it('true when transmise à un destinataire de circuit court (next_owner_role)', () => {
+    // current_owner reste PREMIER_DETENTEUR (pas de prise en charge), seul next_owner pointe vers le circuit court.
+    expect(
+      isCarcasseDone(
+        c({
+          current_owner_role: 'PREMIER_DETENTEUR' as Carcasse['current_owner_role'],
+          next_owner_role: 'COMMERCE_DE_DETAIL' as Carcasse['next_owner_role'],
+        })
+      )
+    ).toBe(true);
+  });
+
   it.each(TERMINAL_STATUSES)('true for terminal svi_carcasse_status %s', (status) => {
     expect(isCarcasseDone(c({ svi_carcasse_status: status }))).toBe(true);
   });
