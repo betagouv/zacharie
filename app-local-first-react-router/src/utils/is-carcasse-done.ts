@@ -2,6 +2,7 @@ import { Carcasse, CarcasseStatus, User } from '@prisma/client';
 import type { FeiWithIntermediaires } from '@api/src/types/fei';
 import updateCarcasseStatus from './get-carcasse-status';
 import { EntityWithUserRelation } from '@api/src/types/entity';
+import { isRoleCircuitCourt } from './circuit-court';
 
 // États terminaux d'une carcasse : elle ne progressera plus.
 // CONSIGNE (attente IPM2) et SANS_DECISION ne sont pas terminaux.
@@ -26,11 +27,16 @@ export function isCarcasseClosedBySvi(carcasse: Carcasse): boolean {
 
 export function isCarcasseDone(carcasse: Carcasse): boolean {
   if (carcasse.svi_closed_at || carcasse.svi_automatic_closed_at) return true;
-  // Circuit court / commerce de détail : clôturée par l'intermédiaire, sans passage SVI.
   if (carcasse.intermediaire_closed_at) return true;
   if (carcasse.intermediaire_carcasse_refus_intermediaire_id) return true;
   if (carcasse.intermediaire_carcasse_manquante) return true;
   if (carcasse.consommateur_final_usage_domestique) return true;
+  // Circuit court (commerce de détail, particulier…) : destinataire terminal, sans passage SVI
+  // ni prise en charge. La carcasse ne progressera plus dès qu'elle lui est transmise — c'est
+  // le même critère que celui qui clôture la fiche côté backend (notifyCircuitCourt).
+  if (isRoleCircuitCourt(carcasse.next_owner_role) || isRoleCircuitCourt(carcasse.current_owner_role)) {
+    return true;
+  }
   const status = carcasse.svi_carcasse_status ?? updateCarcasseStatus(carcasse);
   return TERMINAL_STATUSES.has(status);
 }

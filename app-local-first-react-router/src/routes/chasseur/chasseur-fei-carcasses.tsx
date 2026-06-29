@@ -81,7 +81,7 @@ export default function CarcassesExaminateur({
           {Object.entries(dejaEnvoyeesParDestinataire).map(([entityId, group]) => (
             <div key={entityId}>
               <p className="mt-0 mb-2 text-sm text-gray-500">
-                Vers {entities[entityId]?.nom_d_usage ?? 'destinataire inconnu'} (
+                Envoyée à {entities[entityId]?.nom_d_usage ?? 'destinataire inconnu'} (
                 {formatCarcasseLotCount(group)})
               </p>
               <div className="grid grid-cols-1 gap-2 md:grid-cols-2">{group.map(renderCarcasseCard)}</div>

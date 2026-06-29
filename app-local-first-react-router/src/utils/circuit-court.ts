@@ -1,7 +1,7 @@
 import useUser from '@app/zustand/user';
-import { EntityTypes, Entity, User, UserRoles } from '@prisma/client';
+import { EntityTypes, Entity, FeiOwnerRole, User, UserRoles } from '@prisma/client';
 
-export function isRoleCircuitCourt(role: UserRoles) {
+export function isRoleCircuitCourt(role: UserRoles | FeiOwnerRole | null | undefined) {
   if (!role) return false;
   return (
     role === UserRoles.COMMERCE_DE_DETAIL ||
