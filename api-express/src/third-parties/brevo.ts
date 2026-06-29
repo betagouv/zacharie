@@ -66,6 +66,53 @@ async function sendEmail(props: SendEmailProps) {
   }
 }
 
+type SendTemplateEmailProps = {
+  emails: Array<string>;
+  templateId: number;
+  // Variables passées au template Brevo (placeholders {{ params.xxx }}).
+  params?: Record<string, unknown>;
+  // Le template Brevo porte son propre expéditeur ; `from` ne sert qu'à le surcharger.
+  from?: {
+    name: string;
+    email: string;
+  };
+  attachments?: brevo.SendSmtpEmailAttachmentInner[];
+};
+
+// Envoi via un template Brevo (sujet + HTML gérés côté dashboard Brevo, remplis par `params`).
+// À utiliser pour tout email migré ; le contenu n'est plus construit dans le code.
+async function sendTemplateEmail(props: SendTemplateEmailProps) {
+  try {
+    if (IS_DEV_OR_TEST) {
+      console.log('Sending template email in development mode');
+      console.log(props);
+      return;
+    }
+    const apiInstance = new brevo.TransactionalEmailsApi();
+    apiInstance.setApiKey(brevo.TransactionalEmailsApiApiKeys.apiKey, API_KEY);
+
+    const sendSmtpEmail = new brevo.SendSmtpEmail();
+    sendSmtpEmail.templateId = props.templateId;
+    if (props.params) {
+      sendSmtpEmail.params = props.params;
+    }
+    if (props.from) {
+      sendSmtpEmail.sender = props.from;
+    }
+    if (props.attachments) {
+      sendSmtpEmail.attachment = props.attachments;
+    }
+    sendSmtpEmail.to = props.emails.map((email) => ({ email }));
+    await apiInstance.sendTransacEmail(sendSmtpEmail);
+  } catch (error) {
+    capture(error as Error, {
+      extra: {
+        props,
+      },
+    });
+  }
+}
+
 function formatRoles(user: User) {
   const roles = [];
   switch (user.roles[0]) {
@@ -763,6 +810,7 @@ async function updateBrevoSVIDealPremiereFiche(svi: Entity) {
 export {
   // services
   sendEmail,
+  sendTemplateEmail,
   // specific to zacharie
   // contact
   createBrevoContactFromContactForm,
