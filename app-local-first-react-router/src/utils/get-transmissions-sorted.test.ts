@@ -4,6 +4,7 @@ import {
   CarcasseIntermediaire,
   CarcasseStatus,
   CarcasseType,
+  IPM1Decision,
   User,
   UserRoles,
 } from '@prisma/client';
@@ -189,6 +190,51 @@ describe('computeTransmissions — À compléter', () => {
     });
     expect(t[TID].labels.simpleStatus).toBe('À compléter');
     expect(t[TID].labels.currentStepLabel).toBe('En cours');
+  });
+});
+
+describe('computeTransmissions — SVI carcasse en consigne (attente IPM2)', () => {
+  // Carcasse en consigne assignée au SVI, sans clôture : atteint la branche SVI ("À compléter")
+  // puis la post-passe consigne. svi_carcasse_status CONSIGNE → non terminal → non "done".
+  const consigneCarcasse = (id: string, ov: Partial<Carcasse> = {}) =>
+    carcasse({
+      zacharie_carcasse_id: id,
+      svi_assigned_at: new Date(),
+      current_owner_user_id: 'other',
+      next_owner_user_id: 'other2',
+      svi_ipm1_decision: IPM1Decision.MISE_EN_CONSIGNE,
+      svi_carcasse_status: CarcasseStatus.CONSIGNE,
+      ...ov,
+    });
+  const aInspecter = (id: string) =>
+    carcasse({
+      zacharie_carcasse_id: id,
+      svi_assigned_at: new Date(),
+      current_owner_user_id: 'other',
+      next_owner_user_id: 'other2',
+    });
+
+  it('SVI: seule carcasse en consigne → En cours + note consigne', () => {
+    const t = run({ carcasses: [consigneCarcasse('C1')], user: svi });
+    expect(t[TID].labels.simpleStatus).toBe('En cours');
+    expect(t[TID].labels.consigneLabel).toBe('1 carcasse en consigne');
+  });
+
+  it('SVI: plusieurs carcasses en consigne → pluriel dans la note', () => {
+    const t = run({ carcasses: [consigneCarcasse('C1'), consigneCarcasse('C2')], user: svi });
+    expect(t[TID].labels.simpleStatus).toBe('En cours');
+    expect(t[TID].labels.consigneLabel).toBe('2 carcasses en consigne');
+  });
+
+  it('SVI: une à inspecter + une en consigne → reste À compléter mais porte la note', () => {
+    const t = run({ carcasses: [aInspecter('C1'), consigneCarcasse('C2')], user: svi });
+    expect(t[TID].labels.simpleStatus).toBe('À compléter');
+    expect(t[TID].labels.consigneLabel).toBe('1 carcasse en consigne');
+  });
+
+  it('non-SVI : pas de note consigne', () => {
+    const t = run({ carcasses: [consigneCarcasse('C1')], user: admin });
+    expect(t[TID].labels.consigneLabel).toBeUndefined();
   });
 });
 
