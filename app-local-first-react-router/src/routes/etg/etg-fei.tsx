@@ -432,12 +432,33 @@ function EtgFeiContent({
   const effectiveCanEditCarcasseDecision = canEditCarcasseDecision && !props.readOnly;
 
   // La fiche a été sous-traitée par mon entité : affichage lecture seule + rappel du transporteur choisi.
+  // On ne montre le bloc que tant que la fiche est réellement chez le sous-traitant : on le masque
+  // dès qu'elle me revient (je dois la prendre en charge) ou que je l'ai déjà prise en charge.
   const feiSousTraiteeParMoi = useMemo(() => {
     if (!transmission.next_owner_sous_traite_by_entity_id) {
       return false;
     }
-    return etgsIds.includes(transmission.next_owner_sous_traite_by_entity_id);
-  }, [transmission.next_owner_sous_traite_by_entity_id, etgsIds]);
+    if (!etgsIds.includes(transmission.next_owner_sous_traite_by_entity_id)) {
+      return false;
+    }
+    // La fiche m'est renvoyée : je dois la prendre en charge → plus de bloc « sous-traité ».
+    if (
+      transmission.next_owner_role === FeiOwnerRole.ETG &&
+      transmission.next_owner_entity_id &&
+      etgsIds.includes(transmission.next_owner_entity_id)
+    ) {
+      return false;
+    }
+    // J'ai déjà pris en charge la fiche.
+    if (
+      transmission.current_owner_role === FeiOwnerRole.ETG &&
+      transmission.current_owner_entity_id &&
+      etgsIds.includes(transmission.current_owner_entity_id)
+    ) {
+      return false;
+    }
+    return true;
+  }, [transmission, etgsIds]);
   const sousTraitantName = transmission.next_owner_entity_id
     ? (entities[transmission.next_owner_entity_id]?.nom_d_usage ?? '')
     : '';
