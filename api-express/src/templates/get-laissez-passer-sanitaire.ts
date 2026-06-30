@@ -26,6 +26,22 @@ export async function generateLaissezPasserSanitaireDocx(
   );
   const doc = new Document({
     styles: {
+      default: {
+        document: {
+          run: {
+            font: {
+              name: 'Marianne',
+            },
+            size: 18,
+          },
+          paragraph: {
+            spacing: {
+              after: 0,
+              line: 240,
+            },
+          },
+        },
+      },
       paragraphStyles: [
         {
           id: 'footer',
@@ -104,7 +120,7 @@ export async function generateLaissezPasserSanitaireDocx(
               new TextRun({
                 text: `LAISSEZ-PASSER SANITAIRE : ${data.certificat_id}`,
                 bold: true,
-                size: 24,
+                size: 22,
                 underline: {
                   type: UnderlineType.SINGLE,
                 },
@@ -120,7 +136,7 @@ export async function generateLaissezPasserSanitaireDocx(
                   new TextRun({
                     text: `ANNULE ET REMPLACE LE CERTIFICAT N° : ${data.remplace_certificat_id}`,
                     bold: true,
-                    size: 24,
+                    size: 22,
                     underline: {
                       type: UnderlineType.SINGLE,
                     },
@@ -741,7 +757,7 @@ export async function generateLaissezPasserSanitaireDocx(
                           new TextRun({
                             text: `Fait à ${user.ville}, le ${dayjs().format('DD/MM/YYYY')}`,
                             font: 'Marianne',
-                            break: 3,
+                            break: 2,
                           }),
                           new TextRun({
                             break: 1,
@@ -749,7 +765,7 @@ export async function generateLaissezPasserSanitaireDocx(
                             font: 'Marianne',
                           }),
                           new TextRun({
-                            break: 3,
+                            break: 2,
                             text: '(Signature et cachet)',
                             font: 'Marianne',
                             color: '#B3B3B3',
@@ -769,7 +785,7 @@ export async function generateLaissezPasserSanitaireDocx(
               new TextRun({
                 text: "La présente décision peut faire l'objet, dans un délai de deux mois à compter de sa notification, d'un recours contentieux par courrier adressé au tribunal administratif territorialement compétent, ou par l'application Télérecours citoyens accessible à partir du site www.telerecours.fr.",
                 font: 'Marianne',
-                break: 3,
+                break: 1,
               }),
             ],
           }),
