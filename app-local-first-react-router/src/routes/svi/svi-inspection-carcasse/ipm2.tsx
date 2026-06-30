@@ -553,16 +553,16 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
         options={[
           !sviIpm2PresenteeInspection
             ? {
-              nativeInputProps: {
-                className: 'non-renseigne',
-                required: true,
-                checked: sviIpm2Decision === IPM2Decision.NON_RENSEIGNEE,
-                onChange: () => {
-                  setSviIpm2Decision(IPM2Decision.NON_RENSEIGNEE);
+                nativeInputProps: {
+                  className: 'non-renseigne',
+                  required: true,
+                  checked: sviIpm2Decision === IPM2Decision.NON_RENSEIGNEE,
+                  onChange: () => {
+                    setSviIpm2Decision(IPM2Decision.NON_RENSEIGNEE);
+                  },
                 },
-              },
-              label: 'Non renseigné',
-            }
+                label: 'Non renseigné',
+              }
             : null,
           {
             nativeInputProps: {
@@ -804,52 +804,52 @@ export function CarcasseIPM2({ canEdit = false }: { canEdit?: boolean }) {
       )}
       {(sviIpm2Decision === IPM2Decision.SAISIE_TOTALE ||
         sviIpm2Decision === IPM2Decision.SAISIE_PARTIELLE) && (
-          <>
-            <Input
-              label="Poids de la saisie"
-              hintText="En kg, facultatif"
-              nativeInputProps={{
-                type: 'number',
-                min: 0,
-                name: Prisma.CarcasseScalarFieldEnum.svi_ipm2_poids_saisie,
-                value: sviIpm2PoidsSaisie || '',
-                onChange: (e) => {
-                  setSviIpm2PoidsSaisie(Number(e.target.value));
-                  if (!sviIpm2PoidsType) {
-                    setSviIpm2PoidsType(PoidsType.DEPOUILLE);
-                  }
+        <>
+          <Input
+            label="Poids de la saisie"
+            hintText="En kg, facultatif"
+            nativeInputProps={{
+              type: 'number',
+              min: 0,
+              name: Prisma.CarcasseScalarFieldEnum.svi_ipm2_poids_saisie,
+              value: sviIpm2PoidsSaisie || '',
+              onChange: (e) => {
+                setSviIpm2PoidsSaisie(Number(e.target.value));
+                if (!sviIpm2PoidsType) {
+                  setSviIpm2PoidsType(PoidsType.DEPOUILLE);
+                }
+              },
+            }}
+          />
+          {sviIpm2PoidsSaisie && sviIpm2PoidsSaisie > 0 && (
+            <RadioButtons
+              orientation="horizontal"
+              options={[
+                {
+                  nativeInputProps: {
+                    required: true,
+                    checked: sviIpm2PoidsType === PoidsType.DEPOUILLE,
+                    onChange: () => {
+                      setSviIpm2PoidsType(PoidsType.DEPOUILLE);
+                    },
+                  },
+                  label: 'Dépouillée/plumée',
                 },
-              }}
+                {
+                  nativeInputProps: {
+                    required: true,
+                    checked: sviIpm2PoidsType === PoidsType.NON_DEPOUILLE,
+                    onChange: () => {
+                      setSviIpm2PoidsType(PoidsType.NON_DEPOUILLE);
+                    },
+                  },
+                  label: 'Non dépouillée/non plumée',
+                },
+              ]}
             />
-            {sviIpm2PoidsSaisie && sviIpm2PoidsSaisie > 0 && (
-              <RadioButtons
-                orientation="horizontal"
-                options={[
-                  {
-                    nativeInputProps: {
-                      required: true,
-                      checked: sviIpm2PoidsType === PoidsType.DEPOUILLE,
-                      onChange: () => {
-                        setSviIpm2PoidsType(PoidsType.DEPOUILLE);
-                      },
-                    },
-                    label: 'Dépouillée/plumée',
-                  },
-                  {
-                    nativeInputProps: {
-                      required: true,
-                      checked: sviIpm2PoidsType === PoidsType.NON_DEPOUILLE,
-                      onChange: () => {
-                        setSviIpm2PoidsType(PoidsType.NON_DEPOUILLE);
-                      },
-                    },
-                    label: 'Non dépouillée/non plumée',
-                  },
-                ]}
-              />
-            )}
-          </>
-        )}
+          )}
+        </>
+      )}
       <div>
         <Button
           type="button"
