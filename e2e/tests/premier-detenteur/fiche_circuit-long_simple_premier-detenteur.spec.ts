@@ -71,7 +71,7 @@ test('Stockage - Transporter les carcasses soi-même', async ({ page }) => {
   await selectContainer.scrollIntoViewIfNeeded();
   await selectContainer.click();
   await page.getByRole('option', { name: 'ETG 1 - 75000 Paris (' }).click();
-  await page.getByText('Carcasses déposées dans un Centre').click();
+  await page.getByText('Carcasses déposées dans une chambre froide').click();
   await page.getByRole('button', { name: 'Renseigner ma chambre froide' }).click();
   await page.getByText("Oui, ma chambre froide a un numéro d'identification").click();
   await page.getByRole('textbox', { name: "Numéro d'identification" }).fill('CCG-01');
@@ -103,7 +103,7 @@ test('Stockage - Le transport est réalisé par un collecteur professionnel', as
   await selectContainer.scrollIntoViewIfNeeded();
   await selectContainer.click();
   await page.getByRole('option', { name: 'ETG 1 - 75000 Paris (' }).click();
-  await page.getByText('Carcasses déposées dans un Centre').click();
+  await page.getByText('Carcasses déposées dans une chambre froide').click();
   await page.getByRole('button', { name: 'Renseigner ma chambre froide' }).click();
   await page.getByText("Oui, ma chambre froide a un numéro d'identification").click();
   await page.getByRole('textbox', { name: "Numéro d'identification" }).fill('CCG-01');

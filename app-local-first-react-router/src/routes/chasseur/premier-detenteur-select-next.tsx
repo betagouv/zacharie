@@ -323,7 +323,9 @@ function DispatchGroupForm({
               },
             },
             {
-              label: 'Carcasses déposées dans un Centre de Collecte du Gibier sauvage (chambre froide)',
+              label: 'Carcasses déposées dans une chambre froide (Centre de Collecte du Gibier sauvage)',
+              hintText:
+                'Toute chambre froide où vous entreposez le gibier avant de le céder, le vendre ou le transporter est un Centre de Collecte du Gibier sauvage (CCG).',
               nativeInputProps: {
                 checked: group.depotType === DepotType.CCG,
                 readOnly: !canEdit,
@@ -341,7 +343,7 @@ function DispatchGroupForm({
           <>
             <div>
               <SelectCustom
-                label="Chambre froide (centre de collecte du gibier sauvage) *"
+                label="Chambre froide (Centre de Collecte du Gibier sauvage) *"
                 isDisabled={group.depotType !== DepotType.CCG}
                 isReadOnly={!canEdit}
                 hint={
@@ -367,7 +369,7 @@ function DispatchGroupForm({
                   </>
                 }
                 options={ccgsOptions}
-                placeholder="Sélectionnez le Centre de Collecte du Gibier sauvage"
+                placeholder="Sélectionnez la chambre froide"
                 value={ccgsOptions.find((option) => option.value === group.depotEntityId) ?? null}
                 getOptionLabel={(f) => f.label!}
                 getOptionValue={(f) => f.value}
@@ -387,7 +389,7 @@ function DispatchGroupForm({
               {errorFor('depotEntityId') && <p className="fr-error-text mt-1">{errorFor('depotEntityId')}</p>}
             </div>
             <Component
-              label="Date de dépôt dans le Centre de Collecte du Gibier sauvage *"
+              label="Date de dépôt dans la chambre froide *"
               disabled={group.depotType !== DepotType.CCG}
               state={errorFor('depotDate') ? 'error' : 'default'}
               stateRelatedMessage={errorFor('depotDate')}
@@ -426,7 +428,7 @@ function DispatchGroupForm({
           </>
         ) : (
           <div className="flex flex-col items-start gap-2">
-            <label>Chambre froide (centre de collecte du gibier sauvage) *</label>
+            <label>Chambre froide (Centre de Collecte du Gibier sauvage) *</label>
             <Button
               type="button"
               nativeButtonProps={{
@@ -562,10 +564,10 @@ function getGroupFieldErrors(
     errors.depotType = 'Veuillez indiquer le lieu de stockage des carcasses';
   }
   if (group.depotType === DepotType.CCG && !group.depotEntityId) {
-    errors.depotEntityId = 'Veuillez sélectionner le centre de collecte du gibier sauvage';
+    errors.depotEntityId = 'Veuillez sélectionner la chambre froide';
   }
   if (group.depotType === DepotType.CCG && !group.depotDate) {
-    errors.depotDate = 'Veuillez indiquer la date de dépôt dans le centre de collecte du gibier sauvage';
+    errors.depotDate = 'Veuillez indiquer la date de dépôt dans la chambre froide';
   }
   const prochainDetenteurType = group.recipientEntityId ? entities[group.recipientEntityId]?.type : null;
   const needTransport = (() => {
@@ -1205,17 +1207,19 @@ export default function DestinatairePremierDetenteur({
                   {submitLabel}
                 </Button>
               )}
-              {/* Add another recipient button */}
-              {canEdit && carcassesRestantes.length > 1 && (
-                <Button
-                  priority="secondary"
-                  type="button"
-                  iconId="fr-icon-add-line"
-                  nativeButtonProps={{ onClick: addGroup }}
-                >
-                  Ajouter un autre destinataire
-                </Button>
-              )}
+              {/* Add another recipient button — au plus un destinataire par carcasse/lot */}
+              {canEdit &&
+                carcassesRestantes.length > 1 &&
+                dispatchGroups.length < carcassesRestantes.length && (
+                  <Button
+                    priority="secondary"
+                    type="button"
+                    iconId="fr-icon-add-line"
+                    nativeButtonProps={{ onClick: addGroup }}
+                  >
+                    Ajouter un autre destinataire
+                  </Button>
+                )}
             </div>
           </>
         )}
