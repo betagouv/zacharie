@@ -17,6 +17,11 @@ import ChasseurCCGEdit from './profil/chasseur-ccg-edit';
 import ChasseurSviInspectionCarcasseLoader from './chasseur-svi-inspection-carcasse';
 import ChasseurDemandesDeModification from './chasseur-demandes-de-modification';
 import ChasseurDemandeDeModificationDetail from './chasseur-demande-de-modification-detail';
+import { TRICHINE_FEATURE_ENABLED } from '@app/utils/trichine';
+import TrichineTableau from '@app/routes/trichine/trichine-tableau';
+import TrichineNouveauPool from '@app/routes/trichine/trichine-nouveau-pool';
+import TrichineNouvelleFTP from '@app/routes/trichine/trichine-nouvelle-ftp';
+import TrichineFTPDetail from '@app/routes/trichine/trichine-ftp-detail';
 
 export default function RouterChasseur() {
   return (
@@ -125,6 +130,27 @@ export default function RouterChasseur() {
         path="demandes-de-modification/:request_id"
         element={<ChasseurDemandeDeModificationDetail />}
       />
+      {/* Routes invisibles en production tant que le feature flag trichine n'est pas activé */}
+      {TRICHINE_FEATURE_ENABLED && (
+        <>
+          <Route
+            path="trichine"
+            element={<TrichineTableau />}
+          />
+          <Route
+            path="trichine/nouveau-pool"
+            element={<TrichineNouveauPool />}
+          />
+          <Route
+            path="trichine/nouvelle-ftp"
+            element={<TrichineNouvelleFTP />}
+          />
+          <Route
+            path="trichine/ftp/:ftp_id"
+            element={<TrichineFTPDetail />}
+          />
+        </>
+      )}
     </Route>
   );
 }

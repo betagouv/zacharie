@@ -179,6 +179,7 @@ router.get(
             Fei: { select: { commune_mise_a_mort: true } },
           },
         },
+        TrichinePool: { select: { reference_pool: true } },
       },
       orderBy: { created_at: 'desc' },
     });
@@ -636,6 +637,32 @@ router.get(
       orderBy: { date_changement: 'desc' },
     });
     res.status(200).send({ ok: true, data: { carcasse, historique }, error: '' });
+  })
+);
+
+/* -------------------------------------------------------------------------- */
+/* Annuaire des laboratoires (pour la création de FTP)                         */
+/* -------------------------------------------------------------------------- */
+
+router.get(
+  '/laboratoires',
+  passport.authenticate('user', { session: false }),
+  catchErrors(async (req: RequestWithUser, res: express.Response) => {
+    if (!guardEmitter(req, res)) return;
+    // LVD uniquement : le LNR ne reçoit que les FTP générées automatiquement après un résultat douteux
+    const laboratoires = await prisma.entity.findMany({
+      where: { type: EntityTypes.LABORATOIRE, is_lnr: false, deleted_at: null },
+      select: {
+        id: true,
+        nom_d_usage: true,
+        raison_sociale: true,
+        address_ligne_1: true,
+        code_postal: true,
+        ville: true,
+      },
+      orderBy: { nom_d_usage: 'asc' },
+    });
+    res.status(200).send({ ok: true, data: { laboratoires }, error: '' });
   })
 );
 

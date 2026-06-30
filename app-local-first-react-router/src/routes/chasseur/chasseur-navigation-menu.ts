@@ -1,6 +1,7 @@
 import { useLocation } from 'react-router';
 import { type MainNavigationProps } from '@codegouvfr/react-dsfr/MainNavigation';
 import useZustandStore from '@app/zustand/store';
+import { TRICHINE_FEATURE_ENABLED } from '@app/utils/trichine';
 
 export default function useChasseurNavigationMenu(): MainNavigationProps.Item[] {
   const location = useLocation();
@@ -17,6 +18,16 @@ export default function useChasseurNavigationMenu(): MainNavigationProps.Item[] 
       isActive: location.pathname.startsWith('/app/chasseur/fei') || location.pathname === '/app/chasseur',
       linkProps: { to: '/app/chasseur', href: '#' },
     },
+    // Invisible en production tant que le feature flag trichine n'est pas activé
+    ...(TRICHINE_FEATURE_ENABLED
+      ? [
+          {
+            text: 'Trichine',
+            isActive: location.pathname.startsWith('/app/chasseur/trichine'),
+            linkProps: { to: '/app/chasseur/trichine', href: '#' },
+          },
+        ]
+      : []),
     {
       text: 'Paramètres',
       isActive: location.pathname.startsWith('/app/chasseur/profil'),

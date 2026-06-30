@@ -1,6 +1,7 @@
 import { useLocation } from 'react-router';
 import { type MainNavigationProps } from '@codegouvfr/react-dsfr/MainNavigation';
 import useZustandStore from '@app/zustand/store';
+import { TRICHINE_FEATURE_ENABLED } from '@app/utils/trichine';
 
 export default function useSviNavigationMenu(): MainNavigationProps.Item[] {
   const location = useLocation();
@@ -17,6 +18,16 @@ export default function useSviNavigationMenu(): MainNavigationProps.Item[] {
       isActive: location.pathname === '/app/svi/carcasses',
       linkProps: { to: '/app/svi/carcasses', href: '#' },
     },
+    // Invisible en production tant que le feature flag trichine n'est pas activé
+    ...(TRICHINE_FEATURE_ENABLED
+      ? [
+          {
+            text: 'Trichine',
+            isActive: location.pathname.startsWith('/app/svi/trichine'),
+            linkProps: { to: '/app/svi/trichine', href: '#' },
+          },
+        ]
+      : []),
     {
       text: 'Paramètres',
       isActive:

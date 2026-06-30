@@ -183,6 +183,34 @@ async function recomputePoolAndLinkedFTPs(poolId: string, userId: string) {
 }
 
 /* -------------------------------------------------------------------------- */
+/* Mon laboratoire                                                             */
+/* -------------------------------------------------------------------------- */
+
+router.get(
+  '/me',
+  passport.authenticate('user', { session: false }),
+  catchErrors(async (req: RequestWithUser, res: express.Response) => {
+    const context = await guardLabo(req, res);
+    if (!context) return;
+    const laboratoires = await prisma.entity.findMany({
+      where: { id: { in: context.entityIds } },
+      select: {
+        id: true,
+        nom_d_usage: true,
+        raison_sociale: true,
+        siret: true,
+        address_ligne_1: true,
+        address_ligne_2: true,
+        code_postal: true,
+        ville: true,
+        is_lnr: true,
+      },
+    });
+    res.status(200).send({ ok: true, data: { laboratoires, isLnr: context.isLnr }, error: '' });
+  })
+);
+
+/* -------------------------------------------------------------------------- */
 /* FTP reçues                                                                  */
 /* -------------------------------------------------------------------------- */
 
