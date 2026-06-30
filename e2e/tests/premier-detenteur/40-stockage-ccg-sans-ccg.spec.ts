@@ -22,7 +22,7 @@ test('Stockage CCG choisi mais aucune CCG renseignée → erreur', async ({ page
   await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").click();
   await page.getByRole('option', { name: 'ETG 1 - 75000 Paris (' }).click();
 
-  await page.getByText('Carcasses déposées dans un Centre').click();
+  await page.getByText('Carcasses déposées dans une chambre froide').click();
   // Ne PAS renseigner de CCG
 
   // Error message should appear below — may need to scroll

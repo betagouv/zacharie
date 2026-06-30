@@ -24,7 +24,7 @@ test('Création CCG inline depuis le formulaire de transmission', async ({ page 
   await selectContainer.click();
   await page.getByRole('option', { name: 'ETG 1 - 75000 Paris (' }).click();
 
-  await page.getByText('Carcasses déposées dans un Centre').click();
+  await page.getByText('Carcasses déposées dans une chambre froide').click();
   await page.getByRole('button', { name: 'Renseigner ma chambre froide' }).click();
 
   // Use the same pattern as fiche_circuit-long_simple_premier-detenteur.spec.ts test 2
