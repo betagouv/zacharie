@@ -24,6 +24,7 @@ vi.mock('./src/prisma', () => ({
     },
     log: {
       upsert: vi.fn(),
+      createMany: vi.fn().mockResolvedValue({ count: 0 }),
     },
     apiKey: {
       findFirst: vi.fn(),

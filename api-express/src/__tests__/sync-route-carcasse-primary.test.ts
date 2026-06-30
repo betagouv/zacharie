@@ -268,6 +268,9 @@ describe('Response shape preserved for partial payloads', () => {
     );
     expect(res.body.data.feis).toEqual([]);
     expect(res.body.data.carcasses).toHaveLength(2);
-    expect(prisma.fei.findMany).not.toHaveBeenCalled();
+    // fei.findMany ne sert qu'au pré-chargement des fiches des carcasses (dédupliqué),
+    // pas de re-fetch peuplé puisqu'aucune FEI n'est synchronisée.
+    expect(prisma.fei.findMany).toHaveBeenCalledTimes(1);
+    expect(prisma.fei.findMany).toHaveBeenCalledWith({ where: { numero: { in: ['F1'] } } });
   });
 });
