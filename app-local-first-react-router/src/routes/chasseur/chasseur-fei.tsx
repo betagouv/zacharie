@@ -243,13 +243,13 @@ function FEIChasseurLoaded() {
     if (!fei.heure_mise_a_mort_premiere_carcasse) {
       errors.push({
         field: 'heure_mise_a_mort_premiere_carcasse',
-        message: "Il manque l'heure de mise à mort de la première carcasse",
+        message: "Il manque l'heure du début de la chasse",
       });
     }
     if (!onlyPetitGibier && !fei.heure_evisceration_derniere_carcasse) {
       errors.push({
         field: 'heure_evisceration_derniere_carcasse',
-        message: "Il manque l'heure d'éviscération de la dernière carcasse",
+        message: "Il manque l'heure de fin d’examen initial",
       });
     }
     if (carcasses.length === 0) {
@@ -552,7 +552,8 @@ function FEIChasseurLoaded() {
                     <>
                       <Component
                         className="mt-4"
-                        label="Heure de mise à mort de la première carcasse&nbsp;*"
+                        label="Début de la chasse&nbsp;*"
+                        hintText="Heure de la premiere mise a mort"
                         state={
                           fieldHasError('heure_mise_a_mort_premiere_carcasse', showBloc2Errors)
                             ? 'error'
@@ -574,9 +575,7 @@ function FEIChasseurLoaded() {
                             } else if (
                               fei.heure_evisceration_derniere_carcasse <= heure_mise_a_mort_premiere_carcasse
                             ) {
-                              alert(
-                                "L'heure de mise à mort de la première carcasse doit être inférieure à l'heure d'éviscération de la dernière carcasse"
-                              );
+                              alert('Le début de la chasse doit être avant la fin de l’examen initial.');
                               e.target.value = '';
                               updateFei(fei.numero, { heure_mise_a_mort_premiere_carcasse: '' });
                             } else {
@@ -595,7 +594,8 @@ function FEIChasseurLoaded() {
                       {!onlyPetitGibier && (
                         <>
                           <Component
-                            label="Heure d'éviscération de la dernière carcasse&nbsp;*"
+                            label="Fin de l’examen initial&nbsp;*"
+                            hintText="Heure de le dernière éviscération"
                             state={
                               fieldHasError('heure_evisceration_derniere_carcasse', showBloc2Errors)
                                 ? 'error'
@@ -621,9 +621,7 @@ function FEIChasseurLoaded() {
                                   fei.heure_mise_a_mort_premiere_carcasse >=
                                   heure_evisceration_derniere_carcasse
                                 ) {
-                                  alert(
-                                    "L'heure d'éviscération de la dernière carcasse doit être supérieure à l'heure de mise à mort de la première carcasse"
-                                  );
+                                  alert('La fin de l’examen initial doit être après le début de la chasse.');
                                   e.target.value = '';
                                   updateFei(fei.numero, { heure_evisceration_derniere_carcasse: '' });
                                 } else {
