@@ -1,5 +1,6 @@
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import VideoOverlay, { useVideo } from '@app/components/VideoOverlay';
+import { trackEvent } from '@app/services/matomo';
 
 export default function LandingPage() {
   const setVideoUrl = useVideo((state) => state.setVideoUrl);
@@ -27,7 +28,10 @@ export default function LandingPage() {
                 </p>
                 <div className="mt-16 ml-6 flex items-center justify-start lg:hidden">
                   <button
-                    onClick={() => setVideoUrl('https://www.youtube.com/embed/TkTd5P6S6ck')}
+                    onClick={() => {
+                      trackEvent('landing', 'video_play', 'mobile');
+                      setVideoUrl('https://www.youtube.com/embed/TkTd5P6S6ck');
+                    }}
                     className="rounded-full transition-transform hover:scale-110 focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#A38A6C] focus:outline-none"
                     aria-label="Regarder la vidéo de démonstration"
                   >
@@ -59,6 +63,7 @@ export default function LandingPage() {
                     linkProps={{
                       to: '/app/connexion/creation-de-compte',
                       href: '#',
+                      onClick: () => trackEvent('landing', 'cta_creer_compte'),
                     }}
                   >
                     Créer un compte
@@ -70,6 +75,7 @@ export default function LandingPage() {
                     linkProps={{
                       to: '/app/connexion',
                       href: '#',
+                      onClick: () => trackEvent('landing', 'cta_se_connecter'),
                     }}
                   >
                     Se connecter
@@ -78,7 +84,10 @@ export default function LandingPage() {
               </div>
               <div className="hidden items-center justify-center lg:flex lg:max-w-[50vw]">
                 <button
-                  onClick={() => setVideoUrl('https://www.youtube.com/embed/TkTd5P6S6ck')}
+                  onClick={() => {
+                    trackEvent('landing', 'video_play', 'desktop');
+                    setVideoUrl('https://www.youtube.com/embed/TkTd5P6S6ck');
+                  }}
                   className="rounded-full transition-transform hover:scale-110 focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#A38A6C] focus:outline-none"
                   aria-label="Regarder la vidéo de démonstration"
                 >
@@ -141,6 +150,7 @@ export default function LandingPage() {
                 size="large"
                 linkProps={{
                   href: 'https://zcal.co/zacharie/demo',
+                  onClick: () => trackEvent('landing', 'cta_demo', 'features'),
                 }}
               >
                 Participer à une démo
@@ -150,6 +160,7 @@ export default function LandingPage() {
                   href="https://apps.apple.com/fr/app/id6753714911"
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => trackEvent('landing', 'app_store')}
                   style={{ backgroundImage: 'none' }}
                   className="inline-block border-none transition-opacity after:content-none hover:opacity-80"
                 >
@@ -163,6 +174,7 @@ export default function LandingPage() {
                   href="https://play.google.com/store/apps/details?id=fr.gouv.zacharie.v1"
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => trackEvent('landing', 'google_play')}
                   style={{ backgroundImage: 'none' }}
                   className="inline-block transition-opacity after:content-none hover:opacity-80"
                 >
@@ -234,6 +246,7 @@ export default function LandingPage() {
                     size="large"
                     linkProps={{
                       to: '/demarches',
+                      onClick: () => trackEvent('landing', 'cta_demarches'),
                     }}
                   >
                     Comprendre les démarches
@@ -292,6 +305,7 @@ export default function LandingPage() {
                 size="large"
                 linkProps={{
                   href: 'https://zcal.co/zacharie/demo',
+                  onClick: () => trackEvent('landing', 'cta_demo', 'repartition'),
                 }}
               >
                 Participer à une démo
@@ -315,6 +329,7 @@ export default function LandingPage() {
                 size="large"
                 linkProps={{
                   to: '/quiz',
+                  onClick: () => trackEvent('landing', 'cta_quiz'),
                 }}
               >
                 Testez vos connaissances
@@ -341,6 +356,7 @@ export default function LandingPage() {
                 size="large"
                 linkProps={{
                   to: '/contact',
+                  onClick: () => trackEvent('landing', 'cta_contact'),
                 }}
               >
                 Nous contacter
