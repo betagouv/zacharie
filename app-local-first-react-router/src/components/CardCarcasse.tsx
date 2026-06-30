@@ -7,6 +7,7 @@ import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
 import {
   CarcasseModificationRequestStatus,
+  CarcasseModificationRequestType,
   Carcasse,
   CarcasseType,
   IPM1Decision,
@@ -99,12 +100,34 @@ export default function CardCarcasse({
   const modifRequests = useZustandStore(
     (state) => state.modifRequestsByCarcasseId[carcasse.zacharie_carcasse_id]
   );
+  // L'ajout d'une carcasse (NEW_CARCASSE) est porté par une ligne dédiée « Carcasse ajoutée » ;
+  // on l'exclut donc du compteur de modifications pour éviter le double signal.
   const modifsHistory = useMemo(
-    () => (modifRequests ?? []).filter((r) => r.status !== CarcasseModificationRequestStatus.PENDING),
+    () =>
+      (modifRequests ?? []).filter(
+        (r) =>
+          r.status !== CarcasseModificationRequestStatus.PENDING &&
+          r.type !== CarcasseModificationRequestType.NEW_CARCASSE
+      ),
     [modifRequests]
   );
   const modifsCount = modifsHistory.length;
   const hasRejectedModif = modifsHistory.some((r) => r.status === CarcasseModificationRequestStatus.REJECTED);
+
+  // Carcasse rajoutée par un intermédiaire (ETG/collecteur) via une demande NEW_CARCASSE.
+  // Les demandes refusées soft-deletent la carcasse (la carte ne s'affiche alors pas), donc filtrer
+  // sur !deleted_at couvre les cas pending + approuvée.
+  const newCarcasseRequest = useMemo(
+    () =>
+      (modifRequests ?? []).find(
+        (r) => r.type === CarcasseModificationRequestType.NEW_CARCASSE && !r.deleted_at
+      ),
+    [modifRequests]
+  );
+  const ajouteeParEntity = newCarcasseRequest ? entities[newCarcasseRequest.requested_by_entity_id] : null;
+  const ajouteeLabel = newCarcasseRequest
+    ? `Carcasse ajoutée${ajouteeParEntity?.nom_d_usage ? ` par ${ajouteeParEntity.nom_d_usage}` : ''}`
+    : null;
 
   let anomaliesExaminateurs =
     carcasse.examinateur_anomalies_abats?.length + carcasse.examinateur_anomalies_carcasse?.length;
@@ -214,6 +237,15 @@ export default function CardCarcasse({
               {carcasse.espece} {nombreDAnimauxDisplay}
             </p>
             <p className="text-sm/4 font-bold">N° {carcasse.numero_bracelet}</p>
+            {ajouteeLabel && (
+              <p className="text-action-high-blue-france inline-flex items-center gap-1 text-sm/4 font-bold">
+                <span
+                  className="fr-icon-add-circle-line fr-icon--sm"
+                  aria-hidden="true"
+                />
+                {ajouteeLabel}
+              </p>
+            )}
             {miseAMort && <p className="text-sm/4">{miseAMort}</p>}
             {showStatusLine && statusLabel && (
               <p
