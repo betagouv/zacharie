@@ -85,7 +85,7 @@ export default function DateHeureValidationAlerts({
           title="Attention"
           className="my-4"
           severity="warning"
-          description={'"Heure de mise à mort de la première carcasse" doit être avant l’heure actuelle.'}
+          description={'"Début de la chasse" doit être dans le passé.'}
         />
       )}
       {showHeureEviscerationAlert && isHeureEviscerationAfterNow && (
@@ -93,7 +93,7 @@ export default function DateHeureValidationAlerts({
           title="Attention"
           className="mt-4"
           severity="warning"
-          description="L'heure d'éviscération de la dernière carcasse ne peut pas être postérieure à l'heure actuelle."
+          description="La fin de l’examen initial doit être dans le passé."
         />
       )}
     </>

@@ -141,12 +141,12 @@ export default function FEIDonneesDeChasse({
     ];
     if (carcasses[0]?.heure_mise_a_mort_premiere_carcasse_fei) {
       _milestones.push(
-        `Heure de mise à mort de la première carcasse de la fiche\u00A0: ${carcasses[0].heure_mise_a_mort_premiere_carcasse_fei}`
+        `Début de la chasse de la fiche\u00A0: ${carcasses[0].heure_mise_a_mort_premiere_carcasse_fei}`
       );
     }
     if (!onlyPetitGibier && carcasses[0]?.heure_evisceration_derniere_carcasse_fei) {
       _milestones.push(
-        `Heure d'éviscération de la dernière carcasse de la fiche\u00A0: ${carcasses[0].heure_evisceration_derniere_carcasse_fei}`
+        `Fin de l’examen initial de la dernière carcasse de la fiche\u00A0: ${carcasses[0].heure_evisceration_derniere_carcasse_fei}`
       );
     }
     if (ccgDate) {
