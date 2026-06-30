@@ -13,6 +13,7 @@ import {
   CarcasseIntermediaire,
   Carcasse,
   FeiOwnerRole,
+  IPM1Decision,
   User,
 } from '@prisma/client';
 import type { EntityWithUserRelation } from '@api/src/types/entity';
@@ -368,6 +369,24 @@ export function computeTransmissions({
         numberOfPremierDetenteurProchainDetenteur;
     }
   }
+
+  // Carcasses en consigne (décision IPM1 = mise en consigne, en attente d'IPM2) : le SVI n'a rien à
+  // faire tant que le délai de consigne court. Si tout le reste à traiter de la fiche est en consigne,
+  // la fiche passe « En cours » (plus « À compléter »), et on pose une note « N carcasse(s) en consigne ».
+  if (meIsSvi) {
+    for (const t of Object.values(transmissions)) {
+      const pending = t.carcasses.filter((c) => !c.deleted_at && !isCarcasseDone(c));
+      const consigne = pending.filter((c) => c.svi_ipm1_decision === IPM1Decision.MISE_EN_CONSIGNE);
+      if (consigne.length === 0) continue;
+      const needsIpm1 = pending.some((c) => c.svi_ipm1_decision !== IPM1Decision.MISE_EN_CONSIGNE);
+      if (!needsIpm1 && t.labels.simpleStatus === 'À compléter') {
+        t.labels = getTransmissionLabels('En cours', t.content, role, entitiesWorkingDirectlyFor);
+      }
+      const n = consigne.length;
+      t.labels.consigneLabel = `${n} carcasse${n > 1 ? 's' : ''} en consigne`;
+    }
+  }
+
   return transmissions;
 }
 

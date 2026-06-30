@@ -4,6 +4,7 @@ import dayjs from 'dayjs';
 import { useParams, useNavigate } from 'react-router';
 import useZustandStore from '@app/zustand/store';
 import { getSimplifiedCarcasseStatus } from '@app/utils/get-carcasse-status';
+import { getCarcasseCardDisplay } from '@app/utils/get-carcasse-card-display';
 import { useCarcassesIntermediairesForCarcasse } from '@app/utils/get-carcasses-intermediaires';
 
 interface CarcasseAVerifierProps {
@@ -44,6 +45,14 @@ export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifie
     : {};
 
   const status = getSimplifiedCarcasseStatus(carcasse);
+  // Réutilise le rendu soigné de la consigne (pastille orange + sablier) déjà défini pour CardCarcasse.
+  const cardDisplay = getCarcasseCardDisplay({
+    carcasse,
+    latestIntermediaire,
+    entities: state.entities,
+    viewRole: 'svi',
+  });
+  const isConsigne = cardDisplay.uiState === 'mise-en-consigne';
   const isEcarteePourInspection =
     status === 'en cours de traitement' &&
     !!latestIntermediaire?.ecarte_pour_inspection &&
@@ -71,6 +80,7 @@ export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifie
       className={[
         'bg-contrast-grey flex basis-full flex-col items-start justify-between border-0 p-4 text-left',
         status === 'refusé' && 'border-l-3! border-solid border-red-500!',
+        isConsigne && 'border-warning-main-525! border-l-3! border-solid',
         isEcarteePourInspection && 'border-l-3! border-solid border-red-500!',
         status === 'accepté' && 'border-action-high-blue-france! border-l-3! border-solid',
         status === 'saisie partielle' && 'border-action-high-blue-france! border-l-3! border-solid',
@@ -82,22 +92,34 @@ export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifie
       <p className="text-base font-bold">{espece}</p>
       <p className="text-sm/4 font-bold">N° {carcasse.numero_bracelet}</p>
       {miseAMort && <p className="text-sm/4">{miseAMort}</p>}
-      <p
-        className={[
-          'text-sm first-letter:uppercase',
-          status === 'en cours de traitement' && !isEcarteePourInspection && 'text-transparent!',
-          isEcarteePourInspection && 'text-error-main-525 font-bold',
-          status === 'refusé' && 'text-error-main-525 font-bold',
-          status === 'saisie partielle' && 'text-action-high-blue-france font-bold',
-          status === 'accepté' && 'text-action-high-blue-france font-bold',
-        ]
-          .filter(Boolean)
-          .join(' ')}
-      >
-        {isEcarteePourInspection
-          ? "Écarté par l'établissement de traitement pour inspection par le service vétérinaire"
-          : status}
-      </p>
+      {isConsigne ? (
+        <p className="text-warning-main-525 inline-flex items-center gap-1 text-sm font-bold first-letter:uppercase">
+          {cardDisplay.iconId && (
+            <span
+              className={[cardDisplay.iconId, 'fr-icon--sm'].join(' ')}
+              aria-hidden="true"
+            />
+          )}
+          {cardDisplay.statusLabel}
+        </p>
+      ) : (
+        <p
+          className={[
+            'text-sm first-letter:uppercase',
+            status === 'en cours de traitement' && !isEcarteePourInspection && 'text-transparent!',
+            isEcarteePourInspection && 'text-error-main-525 font-bold',
+            status === 'refusé' && 'text-error-main-525 font-bold',
+            status === 'saisie partielle' && 'text-action-high-blue-france font-bold',
+            status === 'accepté' && 'text-action-high-blue-france font-bold',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+        >
+          {isEcarteePourInspection
+            ? "Écarté par l'établissement de traitement pour inspection par le service vétérinaire"
+            : status}
+        </p>
+      )}
       {!!carcasse.examinateur_anomalies_abats?.length && (
         <p className="mt-2 text-sm">
           Anomalies abats:
