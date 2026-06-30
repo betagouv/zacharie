@@ -1,5 +1,6 @@
 import { Outlet, Route } from 'react-router';
 import SviLayout from './svi-layout';
+import SviDashboard from './svi-dashboard';
 import SviFiches from './svi-fiches';
 import Contact from '@app/routes/contact';
 import SviCarcasses from './svi-carcasses';
@@ -21,6 +22,10 @@ export default function RouterSvi() {
       <Route
         index
         element={<SviFiches />}
+      />
+      <Route
+        path="tableau-de-bord"
+        element={<SviDashboard />}
       />
       <Route
         path="contact"

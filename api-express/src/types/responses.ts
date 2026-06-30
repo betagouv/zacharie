@@ -4,6 +4,7 @@ import type {
   EntityAndUserRelations,
   Fei,
   Carcasse,
+  CarcasseType,
   CarcasseIntermediaire,
   CarcasseModificationRequest,
   Log,
@@ -235,6 +236,26 @@ export interface CarcassesGetResponse {
     hasMore: boolean;
     total: number;
   };
+  error: string;
+}
+
+export interface SviCarcasseAVenir {
+  zacharie_carcasse_id: string;
+  fei_numero: string;
+  espece: string | null;
+  type: CarcasseType | null;
+  nombre_d_animaux: number | null;
+  date_mise_a_mort: Date | null;
+  etg_id: string | null;
+  etg_nom: string;
+  arrived_at: Date | null;
+}
+
+export interface SviCarcassesAVenirResponse {
+  ok: boolean;
+  data: {
+    carcasses: Array<SviCarcasseAVenir>;
+  } | null;
   error: string;
 }
 
