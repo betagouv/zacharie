@@ -35,6 +35,22 @@ function getMotivationDroit(motif: string, carcasseType: CarcasseType) {
 export async function generateConsigneDocx(data: CarcasseCertificat, user: User): Promise<Buffer> {
   const doc = new Document({
     styles: {
+      default: {
+        document: {
+          run: {
+            font: {
+              name: 'Marianne',
+            },
+            size: 18,
+          },
+          paragraph: {
+            spacing: {
+              after: 0,
+              line: 240,
+            },
+          },
+        },
+      },
       paragraphStyles: [
         {
           id: 'footer',
@@ -69,7 +85,7 @@ export async function generateConsigneDocx(data: CarcasseCertificat, user: User)
               new TextRun({
                 text: `NOTIFICATION DE CONSIGNE : ${data.certificat_id}`,
                 bold: true,
-                size: 24,
+                size: 22,
                 underline: {
                   type: UnderlineType.SINGLE,
                 },
@@ -85,7 +101,7 @@ export async function generateConsigneDocx(data: CarcasseCertificat, user: User)
                   new TextRun({
                     text: `ANNULE ET REMPLACE LA NOTIFICATION N° : ${data.remplace_certificat_id}`,
                     bold: true,
-                    size: 24,
+                    size: 22,
                     underline: {
                       type: UnderlineType.SINGLE,
                     },
@@ -111,7 +127,7 @@ export async function generateConsigneDocx(data: CarcasseCertificat, user: User)
               new TextRun({
                 text: "L'agent des services vétérinaires soussigné certifie que les denrées désignées ci-dessous sont consignées, en l'attente d'informations complémentaires :",
                 font: 'Marianne',
-                break: 3,
+                break: 1,
               }),
             ],
           }),
@@ -184,7 +200,7 @@ export async function generateConsigneDocx(data: CarcasseCertificat, user: User)
                 text: 'Signalement de la carcasse ou du lot de carcasses :',
                 font: 'Marianne',
                 bold: true,
-                break: 3,
+                break: 1,
               }),
             ],
           }),
@@ -365,7 +381,7 @@ export async function generateConsigneDocx(data: CarcasseCertificat, user: User)
                 text: 'Désignation des denrées consignées :',
                 font: 'Marianne',
                 bold: true,
-                break: 3,
+                break: 1,
               }),
             ],
           }),
@@ -533,7 +549,7 @@ export async function generateConsigneDocx(data: CarcasseCertificat, user: User)
               new TextRun({
                 text: `La présente consigne est susceptible de conduire à une saisie des denrées ci-dessus mentionnées. Il vous est possible de présenter vos observations sur cette possibilité de saisie ${data.duree_consigne} heures après la présente notification. Il vous appartient également de notifier immédiatement cette décision au détenteur initial et de prendre toutes les mesures conservatoires adaptées pendant la durée de la consigne.`,
                 font: 'Marianne',
-                break: 3,
+                break: 1,
               }),
             ],
           }),
@@ -542,7 +558,7 @@ export async function generateConsigneDocx(data: CarcasseCertificat, user: User)
               new TextRun({
                 text: '',
                 font: 'Marianne',
-                break: 3,
+                break: 1,
               }),
             ],
           }),
@@ -578,7 +594,7 @@ Se déclarant détenteur-propriétaire (1) ou son mandataire, responsable de la 
                         alignment: AlignmentType.CENTER,
                         children: [
                           new TextRun({
-                            break: 3,
+                            break: 2,
                             text: '(Signature)',
                             font: 'Marianne',
                             color: '#B3B3B3',
@@ -604,7 +620,7 @@ Se déclarant détenteur-propriétaire (1) ou son mandataire, responsable de la 
                             font: 'Marianne',
                           }),
                           new TextRun({
-                            break: 3,
+                            break: 2,
                             text: '(Signature et cachet)',
                             font: 'Marianne',
                             color: '#B3B3B3',
@@ -634,7 +650,7 @@ Se déclarant détenteur-propriétaire (1) ou son mandataire, responsable de la 
               new TextRun({
                 text: 'La présente décision peut faire l’objet, dans un délai de deux mois à compter de sa notification, d’un recours contentieux par courrier adressé au tribunal administratif territorialement compétent, ou par l’application Télérecours citoyens accessible à partir du site www.telerecours.fr.',
                 font: 'Marianne',
-                break: 3,
+                break: 1,
               }),
             ],
           }),
