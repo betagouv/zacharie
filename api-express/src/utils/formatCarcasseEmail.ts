@@ -1,4 +1,4 @@
-import { Carcasse, CarcasseStatus, CarcasseType, Fei, IPM2Decision } from '@prisma/client';
+import { Carcasse, CarcasseStatus, CarcasseType, Fei, FeiOwnerRole, IPM2Decision } from '@prisma/client';
 import { getCarcasseStatusLabelForEmail } from './get-carcasse-status';
 import lesions from '../assets/lesions.json';
 import prisma from '~/prisma';
@@ -158,6 +158,30 @@ export async function formatCarcasseManquanteOrRefusChasseurEmail(
     `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur ce constat, merci de contacter l’organisme qui a constaté ce manque.`,
   ];
   const object = `${carcasseLabel} de ${carcasse.espece.toLowerCase()} n°${no} est ${refusLabel}.`;
+  return [object, email.filter(Boolean).join('\n\n')];
+}
+
+export function formatRenvoiExpediteurEmail(
+  fei: Fei,
+  expediteurRole: FeiOwnerRole,
+  renvoyeurName: string | null,
+  premierDetenteurProchainDetenteurIdCache: string | null
+): [string, string] {
+  const url =
+    expediteurRole === FeiOwnerRole.COLLECTEUR_PRO
+      ? `https://zacharie.beta.gouv.fr/app/collecteur/fei/${fei.numero}/${premierDetenteurProchainDetenteurIdCache}`
+      : `https://zacharie.beta.gouv.fr/app/chasseur/fei/${fei.numero}`;
+
+  const renvoyeur = renvoyeurName ?? 'Le destinataire';
+
+  const email = [
+    `Bonjour,`,
+    `${renvoyeur} a renvoyé la fiche ${fei.numero} : vous devez choisir un autre destinataire pour cette fiche.`,
+    `Pour consulter la fiche, rendez-vous sur Zacharie : ${url}`,
+    `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur ce renvoi, merci de contacter l’établissement qui vous a renvoyé la fiche.`,
+  ];
+
+  const object = `La fiche ${fei.numero} vous a été renvoyée.`;
   return [object, email.filter(Boolean).join('\n\n')];
 }
 
