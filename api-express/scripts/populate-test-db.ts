@@ -281,6 +281,42 @@ Christine
       },
       {
         id: await createUserId(),
+        email: 'examinateur-en-attente-validation@example.fr',
+        roles: [UserRoles.CHASSEUR],
+        activated: false,
+        activated_at: null,
+        prenom: 'Lucie',
+        nom_de_famille: 'Moreau',
+        addresse_ligne_1: '13 rue de la paix',
+        est_forme_a_l_examen_initial: true,
+        numero_cfei: 'CFEI-075-25-003',
+        code_postal: '75000',
+        ville: 'Paris',
+        telephone: '0606060611',
+        onboarded_at: dayjs().toDate(),
+        // Profile complete + formation (numero_cfei) but pending admin activation:
+        // sees CompteEnAttenteValidationAlert with the "peut créer et préparer" wording.
+      },
+      {
+        id: await createUserId(),
+        email: 'premier-detenteur-en-attente-validation@example.fr',
+        roles: [UserRoles.CHASSEUR],
+        activated: false,
+        activated_at: null,
+        prenom: 'Hugo',
+        nom_de_famille: 'Girard',
+        addresse_ligne_1: '14 rue de la paix',
+        est_forme_a_l_examen_initial: false,
+        numero_cfei: null,
+        code_postal: '75000',
+        ville: 'Paris',
+        telephone: '0606060612',
+        onboarded_at: dayjs().toDate(),
+        // Profile complete but no formation (numero_cfei null) and pending activation:
+        // sees CompteEnAttenteValidationAlert with the "ne pourrez transmettre" wording.
+      },
+      {
+        id: await createUserId(),
         email: 'svi-2@example.fr',
         roles: [UserRoles.SVI],
         activated: true,
