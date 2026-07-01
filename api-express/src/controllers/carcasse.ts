@@ -194,44 +194,6 @@ router.get(
     ]);
     __log(`count+findMany (total=${total}, carcasses=${carcasses.length})`);
 
-    // PERF EXPERIMENT (SVI only) — Prisma hydration vs network transfer.
-    // Même prédicat, mêmes index. On compare :
-    //   A) Prisma findMany ci-dessus (objets hydratés, toutes colonnes)
-    //   B) raw SELECT *           → transfert complet, sans mapping ORM Prisma
-    //   C) raw SELECT 1 colonne   → mêmes lignes, ~0 octet transféré
-    // Si B ≈ A  → ce n'est PAS Prisma, c'est le transfert/latence.
-    // Si C ≪ B  → c'est le volume d'octets sur le réseau (local → prod DB).
-    if (req.user.roles.includes(UserRoles.SVI)) {
-      const offset = parsedPage * parsedLimit;
-      const rawWhere = `"svi_assigned_at" IS NOT NULL AND ("svi_entity_id" = ANY($1::text[]) OR "next_owner_entity_id" = ANY($1::text[]))`;
-
-      let s = Date.now();
-      const rawFull = (await prisma.$queryRawUnsafe(
-        `SELECT * FROM "Carcasse" WHERE ${rawWhere} ORDER BY "updated_at" DESC LIMIT $2 OFFSET $3`,
-        userEntityIds,
-        parsedLimit,
-        offset
-      )) as unknown[];
-      console.log(`[carcasse GET]   ⚗ raw SELECT * (rows=${rawFull.length}): ${Date.now() - s}ms`);
-
-      s = Date.now();
-      const rawIdOnly = (await prisma.$queryRawUnsafe(
-        `SELECT "zacharie_carcasse_id" FROM "Carcasse" WHERE ${rawWhere} ORDER BY "updated_at" DESC LIMIT $2 OFFSET $3`,
-        userEntityIds,
-        parsedLimit,
-        offset
-      )) as unknown[];
-      console.log(`[carcasse GET]   ⚗ raw SELECT 1 col (rows=${rawIdOnly.length}): ${Date.now() - s}ms`);
-
-      s = Date.now();
-      const rawCount = (await prisma.$queryRawUnsafe(
-        `SELECT count(*)::int AS n FROM "Carcasse" WHERE ${rawWhere}`,
-        userEntityIds
-      )) as Array<{ n: number }>;
-      console.log(`[carcasse GET]   ⚗ raw count (n=${rawCount[0]?.n}): ${Date.now() - s}ms`);
-      __tPrev = Date.now();
-    }
-
     const feiNumeros = new Set<string>();
     const carcassesIds = new Set<string>();
     const userIds = new Set<string>();
