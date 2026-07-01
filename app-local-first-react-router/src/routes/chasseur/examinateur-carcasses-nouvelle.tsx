@@ -68,7 +68,10 @@ export default function NouvelleCarcasse({
       const targetTop = window.innerHeight - navHeight - buttonHeight;
       const delta = submitButton.getBoundingClientRect().top - targetTop;
       const marginWithBottomBar = 10;
-      window.scrollBy({ top: delta + marginWithBottomBar, behavior: 'smooth' });
+      window.scrollBy({
+        top: delta + marginWithBottomBar,
+        behavior: import.meta.env.VITE_TEST_PLAYWRIGHT !== 'true' ? 'smooth' : 'instant',
+      });
     });
   }, []);
 

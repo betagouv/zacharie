@@ -43,3 +43,4 @@ The current suite is flake-free; follow these or you break that.
 - **Role-based route access**: each role layout redirects to `/app/connexion` via `<Navigate>` if user doesn't have the matching role (see `chasseur-layout.tsx`). Assert redirection, not 404.
 - **Seed starting states** (from `FeiOwnerRole` enum): `EXAMINATEUR_INITIAL`, `PREMIER_DETENTEUR`, `ETG`, `COLLECTEUR_PRO`, `SVI`, `COMMERCE_DE_DETAIL`. Extend `populate-test-db.ts` to add more.
 - **Test DB is ephemeral**: `resetDb(role)` wipes and re-seeds; tests in the same file share state only via `beforeAll`. Use `beforeEach` when tests must be independent.
+- **Mass-inspect TODO** (`tests/chains/133-chain-300-carcasses-offline.spec.ts`): the ~300-carcasse full-chain spec stops at SVI _reception_ — the SVI only checks the fiche arrived. When SVI mass-inspect ships, extend it to inspect/close all carcasses.
