@@ -184,7 +184,6 @@ describe('GET /entite/partenaires', () => {
       EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE,
       EntityTypes.ASSOCIATION_CARITATIVE,
       EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF,
-      EntityTypes.CONSOMMATEUR_FINAL,
     ]);
     expect(firstCallArgs.where.for_testing).toBe(false);
     expect(firstCallArgs.where.deleted_at).toBeNull();
