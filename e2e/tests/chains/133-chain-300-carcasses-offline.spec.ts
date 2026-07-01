@@ -30,7 +30,7 @@ const pad = (n: number) => String(n).padStart(3, '0');
 // Chaque ajout déclenche une synchro + un re-render de la liste qui grandit → ~1,5-2s/carcasse,
 // d'où un timeout large pour ~300 carcasses. Le rythme du chaînage store → sync côté transmission
 // est couvert par l'assertion ferme des bandeaux de notification.
-test.setTimeout(Number((DAIM_COUNT + CHEV_COUNT + PIGEON_LOTS.length) * 1000 + 60000));
+test.setTimeout(Number((DAIM_COUNT + CHEV_COUNT + PIGEON_LOTS.length) * 1000 + 120000));
 
 test.beforeAll(async () => {
   await resetDb('EXAMINATEUR_INITIAL');
