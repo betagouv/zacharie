@@ -12,6 +12,7 @@ import '~/prisma';
 import * as Sentry from '@sentry/node';
 import express from 'express';
 import cors from 'cors';
+import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import logger from 'morgan';
@@ -45,6 +46,10 @@ import packageJson from '../package.json';
 
 // Put together a schema
 const app = express();
+
+// Gzip/brotli des réponses : les payloads JSON (ex: GET /carcasse ~13MB) sont très
+// compressibles et l'essentiel du coût côté client est le transfert. Doit être monté tôt.
+app.use(compression());
 
 app.use(
   // logger('tiny', {
