@@ -23,7 +23,6 @@ test('Pas de stockage - Transporter les carcasses soi-même', async ({ page }) =
   await expect(page.getByRole('link', { name: feiId })).toContainText('3 daims');
   await expect(page.getByRole('link', { name: feiId })).toContainText('À renseigner');
   await page.getByRole('link', { name: feiId }).click();
-  await page.getByRole('heading', { name: '🫵 Cette fiche vous a été' }).click();
   await expect(page.getByRole('button', { name: 'Prendre en charge cette' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Daim N° MM-001-001 Mise à' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Daim N° MM-001-002 Mise à' })).toBeVisible();

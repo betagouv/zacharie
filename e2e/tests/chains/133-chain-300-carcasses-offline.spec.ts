@@ -30,7 +30,7 @@ const pad = (n: number) => String(n).padStart(3, '0');
 // Chaque ajout déclenche une synchro + un re-render de la liste qui grandit → ~1,5-2s/carcasse,
 // d'où un timeout large pour ~300 carcasses. Le rythme du chaînage store → sync côté transmission
 // est couvert par l'assertion ferme des bandeaux de notification.
-test.setTimeout(Number(process.env.TEST_TIMEOUT_MS ?? 20 * 60_000));
+test.setTimeout(Number((DAIM_COUNT + CHEV_COUNT + PIGEON_LOTS.length) * 500 + 60000));
 
 test.beforeAll(async () => {
   await resetDb('EXAMINATEUR_INITIAL');
@@ -42,6 +42,7 @@ async function addCarcasse(
   page: Page,
   opts: { espece: string; bracelet: string; first?: boolean; lot?: number }
 ) {
+  const now = Date.now();
   if (!opts.first) {
     const addAnother = page.getByRole('button', { name: 'Ajouter une autre carcasse' });
     await addAnother.scrollIntoViewIfNeeded();
@@ -63,6 +64,7 @@ async function addCarcasse(
   });
   await submit.scrollIntoViewIfNeeded();
   await submit.click();
+  console.log(`addCarcasse ${opts.espece} ${opts.bracelet} took ${Date.now() - now}ms`);
 }
 
 // ---------- helpers marquage (collecteur / ETG) ----------
@@ -189,7 +191,7 @@ test('Chaîne 300 carcasses : examinateur → PD → collecteur → ETG → SVI 
   const transmettrePd = page.getByRole('button', { name: 'Transmettre la fiche' });
   await transmettrePd.scrollIntoViewIfNeeded();
   await transmettrePd.click();
-  await expect(page.getByText(/Votre fiche a été transmise/i).first()).toBeVisible({ timeout: 30000 });
+  await expect(page.getByText(/Collecteur Pro 1 a été notifié/).first()).toBeVisible({ timeout: 30000 });
 
   // ===== 3. Collecteur : prise en charge en ligne, puis marquage + transmission HORS-LIGNE =====
   await page.setViewportSize({ width: 1280, height: 900 });
@@ -219,7 +221,7 @@ test('Chaîne 300 carcasses : examinateur → PD → collecteur → ETG → SVI 
   // ===== 4. ETG : prise en charge en ligne, puis marquage + transmission HORS-LIGNE =====
   await logoutAndConnect(page, 'etg-1@example.fr');
   await page.getByRole('link', { name: feiId }).click();
-  await page.getByRole('button', { name: 'Prendre en charge les carcasses' }).click();
+  await page.getByRole('button', { name: 'Prendre en charge' }).click();
 
   await context.setOffline(true);
 
@@ -241,9 +243,5 @@ test('Chaîne 300 carcasses : examinateur → PD → collecteur → ETG → SVI 
   await logoutAndConnect(page, 'svi@example.fr');
   await expect(page.getByRole('link', { name: feiId })).toBeVisible({ timeout: 30000 });
   await page.getByRole('link', { name: feiId }).click();
-  // BUG À CORRIGER (plus tard) : le SVI ne voit QUE les 2 retraits de l'ETG (DAIM-002 manquante +
-  // CHEV-002 refusée). Les 2 retraits du collecteur (DAIM-001 manquante + CHEV-001 refusée) ne remontent
-  // pas jusqu'au SVI, alors qu'ils le devraient → on attendrait « déjà refusées (4) ».
-  // En attendant le correctif, on assert le comportement actuel (2). À repasser à (4) une fois corrigé.
-  await expect(page.getByText(/carcasses déjà refusées \(2\)/i)).toBeVisible({ timeout: 15000 });
+  await expect(page.getByText(/carcasses déjà refusées \(4\)/i)).toBeVisible({ timeout: 15000 });
 });

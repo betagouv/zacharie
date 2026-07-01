@@ -57,15 +57,6 @@ export default function CarcassesExaminateur({
 
   const hasGroups = Object.keys(dejaEnvoyeesParDestinataire).length > 0;
 
-  const renderCarcasseCard = (carcasse: Carcasse) => (
-    <CarcasseExaminateur
-      key={carcasse.numero_bracelet}
-      carcasse={carcasse}
-      canEditAsExaminateurInitial={canEdit}
-      canEditAsPremierDetenteur={canEditAsPremierDetenteur}
-    />
-  );
-
   return (
     <>
       {hasGroups ? (
@@ -75,7 +66,16 @@ export default function CarcassesExaminateur({
               <p className="mt-0 mb-2 text-sm text-gray-500">
                 À attribuer ({formatCarcasseLotCount(restantes)})
               </p>
-              <div className="grid grid-cols-1 gap-2 md:grid-cols-2">{restantes.map(renderCarcasseCard)}</div>
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                {restantes.map((carcasse: Carcasse) => (
+                  <CarcasseExaminateur
+                    key={carcasse.numero_bracelet}
+                    carcasse={carcasse}
+                    canEditAsExaminateurInitial={canEdit}
+                    canEditAsPremierDetenteur={canEditAsPremierDetenteur}
+                  />
+                ))}
+              </div>
             </div>
           )}
           {Object.entries(dejaEnvoyeesParDestinataire).map(([entityId, group]) => (
@@ -84,12 +84,30 @@ export default function CarcassesExaminateur({
                 Envoyée à {entities[entityId]?.nom_d_usage ?? 'destinataire inconnu'} (
                 {formatCarcasseLotCount(group)})
               </p>
-              <div className="grid grid-cols-1 gap-2 md:grid-cols-2">{group.map(renderCarcasseCard)}</div>
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                {group.map((carcasse: Carcasse) => (
+                  <CarcasseExaminateur
+                    key={carcasse.numero_bracelet}
+                    carcasse={carcasse}
+                    canEditAsExaminateurInitial={canEdit}
+                    canEditAsPremierDetenteur={canEditAsPremierDetenteur}
+                  />
+                ))}
+              </div>
             </div>
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-2 md:grid-cols-2">{carcasses.map(renderCarcasseCard)}</div>
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+          {carcasses.map((carcasse: Carcasse) => (
+            <CarcasseExaminateur
+              key={carcasse.numero_bracelet}
+              carcasse={carcasse}
+              canEditAsExaminateurInitial={canEdit}
+              canEditAsPremierDetenteur={canEditAsPremierDetenteur}
+            />
+          ))}
+        </div>
       )}
       {(!hasCarcasses || (showForm && !allCarcassesConfirmed)) && canEdit && (
         <div className="my-2">
@@ -168,11 +186,7 @@ export function CarcasseExaminateur({
   canEditAsPremierDetenteur?: boolean;
   canEditAsExaminateurInitial?: boolean;
 }) {
-  // canEdit = true;
-  const params = useParams();
   const user = useUser((state) => state.user)!;
-  const feis = useZustandStore((state) => state.feis);
-  const fei = feis[params.fei_numero!];
   const updateCarcasse = useZustandStore((state) => state.updateCarcasse);
   const addLog = useZustandStore((state) => state.addLog);
   const navigate = useNavigate();
@@ -187,14 +201,14 @@ export function CarcasseExaminateur({
         !canEditAsExaminateurInitial
           ? undefined
           : () => {
-              navigate(`/app/chasseur/carcasse/${fei.numero}/${carcasse.zacharie_carcasse_id}`);
+              navigate(`/app/chasseur/carcasse/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`);
             }
       }
       onClick={
         !canEditAsExaminateurInitial
           ? undefined
           : () => {
-              navigate(`/app/chasseur/carcasse/${fei.numero}/${carcasse.zacharie_carcasse_id}`);
+              navigate(`/app/chasseur/carcasse/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`);
             }
       }
       onDelete={
@@ -209,7 +223,7 @@ export function CarcasseExaminateur({
                 addLog({
                   user_id: user.id,
                   user_role: UserRoles.CHASSEUR,
-                  fei_numero: fei.numero,
+                  fei_numero: carcasse.fei_numero,
                   action: 'examinateur-carcasse-delete',
                   history: createHistoryInput(carcasse, nextPartialCarcasse),
                   entity_id: null,
