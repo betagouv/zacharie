@@ -16,6 +16,18 @@ export type EntitiesById = Record<Entity['id'], EntityWithUserRelations>;
 export type EntitiesByTypeAndId = Record<EntityTypes, EntitiesById>;
 
 export const entityAdminInclude = {
+  id: true,
+  raison_sociale: true,
+  nom_d_usage: true,
+  address_ligne_1: true,
+  address_ligne_2: true,
+  code_postal: true,
+  ville: true,
+  siret: true,
+  type: true,
+  created_at: true,
+  updated_at: true,
+  is_synced: true,
   EntityRelationsWithUsers: {
     select: {
       id: true,

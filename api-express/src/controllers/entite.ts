@@ -145,7 +145,7 @@ router.get(
                 EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE,
                 EntityTypes.ASSOCIATION_CARITATIVE,
                 EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF,
-                EntityTypes.CONSOMMATEUR_FINAL,
+                // EntityTypes.CONSOMMATEUR_FINAL, // pas besoin du consommateur final, il ne sera pas réutilisé
               ],
             },
             ...(user.isZacharieAdmin ? {} : { for_testing: false }),
@@ -224,7 +224,21 @@ router.get(
         },
       });
 
-      const entitiesUserCanHandleOnBehalf = [...authorizedEntities, ...pendingEntities];
+      const entitiesUserCanHandleOnBehalf = [...authorizedEntities, ...pendingEntities].map((entity) => ({
+        id: entity.id,
+        raison_sociale: entity.raison_sociale,
+        nom_d_usage: entity.nom_d_usage,
+        address_ligne_1: entity.address_ligne_1,
+        address_ligne_2: entity.address_ligne_2,
+        code_postal: entity.code_postal,
+        ville: entity.ville,
+        siret: entity.siret,
+        type: entity.type,
+        created_at: entity.created_at,
+        updated_at: entity.updated_at,
+        is_synced: entity.is_synced,
+        EntityRelationsWithUsers: entity.EntityRelationsWithUsers,
+      }));
 
       const allEntitiesById: EntitiesById = {};
       for (const entity of allEntities) {
@@ -232,6 +246,7 @@ router.get(
       }
       const userEntitiesById: EntitiesById = {};
       for (const entity of entitiesUserCanHandleOnBehalf) {
+        // @ts-expect-error - TODO: fix this
         userEntitiesById[entity.id] = entity;
       }
       res.status(200).send({
