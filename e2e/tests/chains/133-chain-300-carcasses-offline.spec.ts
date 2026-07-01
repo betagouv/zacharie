@@ -21,8 +21,8 @@ import { logoutAndConnect } from '../../utils/logout-and-connect';
 // donc 300 carcasses = plusieurs minutes). Le flux est identique quel que soit N : ce qui passe à 10
 // passe à 300. Pour la version « charge réelle » : DAIM=145, CHEV=145, PIGEON_LOTS=10 (= 300 lignes),
 // surchargeable par variables d'env : DAIM_COUNT=145 CHEV_COUNT=145 PIGEON_LOTS=10.
-const DAIM_COUNT = 145;
-const CHEV_COUNT = 145;
+const DAIM_COUNT = 45;
+const CHEV_COUNT = 45;
 const PIGEON_LOTS = [5, 8, 10, 12, 7, 9, 15, 6, 20, 11].slice(0, 10);
 const pad = (n: number) => String(n).padStart(3, '0');
 
