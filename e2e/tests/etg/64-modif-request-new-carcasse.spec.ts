@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../utils/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 import { logoutAndConnect } from '../../utils/logout-and-connect';
@@ -19,6 +19,11 @@ test('Ajout carcasse manquante : ETG ajoute → examinateur signe → carcasse r
 }) => {
   const feiId = 'ZACH-20250707-QZ6E0-235242';
   const newBracelet = 'MM-ADDED-99';
+
+  // Note: the added carcasse legitimately differs from its siblings only on per-carcasse fields
+  // (created_by_user_id, approbation + approbation date), so it must NOT trip
+  // `capture('Transmssion differs from one of the carcasses')`. That is enforced globally for every
+  // test by the shared `test` fixture (utils/test.ts) — no per-test assertion needed here.
 
   // ETG side: add a missing carcasse.
   await connectWith(page, 'etg-1@example.fr');

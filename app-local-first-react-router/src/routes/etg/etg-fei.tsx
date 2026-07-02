@@ -740,7 +740,7 @@ function EtgFeiContent({
                 <Alert
                   severity="info"
                   className="bg-white"
-                  title={`Transport sous-traité${sousTraitantName ? ` : ${sousTraitantName}` : ''}`}
+                  title={`Transport sous-traité${sousTraitantName ? ` : ${sousTraitantName}` : ''}`}
                   description="Vous avez sous-traité le transport de ces carcasses, vous n'avez plus d'action à effectuer sur cette fiche."
                 />
               </div>
@@ -821,6 +821,7 @@ function EtgFeiContent({
                     <RequestNewCarcasseButton
                       feiNumero={fei_numero}
                       intermediaire={intermediaire}
+                      transmission={transmission}
                     />
                   </div>
                 )}
