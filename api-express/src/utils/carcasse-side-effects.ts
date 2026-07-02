@@ -4,6 +4,7 @@ import sendNotificationToUser from '~/service/notifications';
 import {
   formatCarcasseManquanteOrRefusChasseurEmail,
   formatManualValidationSviChasseurEmail,
+  formatRenvoiExpediteurEmail,
   formatSaisieChasseurEmail,
 } from '~/utils/formatCarcasseEmail';
 import { checkGenerateCertificat } from '~/utils/generate-certificats';
@@ -94,6 +95,47 @@ export async function notifyRefusChasseur(existingCarcasse: Carcasse, updatedCar
   }
 }
 
+// Quand un destinataire (ETG ou collecteur) clique sur « Renvoyer à l'expéditeur », le next_owner
+// de ses carcasses est vidé alors que le current_owner reste inchangé (l'expéditeur). On détecte ce
+// cas — distinct d'une prise en charge, où le current_owner devient le destinataire — et on notifie
+// l'expéditeur. Le renvoi touche un lot de carcasses ; la dédup notificationLog sur une action par
+// (fiche, destinataire qui renvoie) garantit une seule notification.
+export async function notifyRenvoiExpediteur(existingCarcasse: Carcasse, updatedCarcasse: Carcasse) {
+  const isRenvoi =
+    !!existingCarcasse.next_owner_role &&
+    !updatedCarcasse.next_owner_role &&
+    !!updatedCarcasse.current_owner_user_id &&
+    existingCarcasse.current_owner_user_id === updatedCarcasse.current_owner_user_id &&
+    existingCarcasse.current_owner_role === updatedCarcasse.current_owner_role;
+  if (!isRenvoi) return;
+
+  const expediteur = await prisma.user.findUnique({
+    where: { id: updatedCarcasse.current_owner_user_id! },
+  });
+  if (!expediteur) return;
+
+  const fei = await prisma.fei.findUnique({ where: { numero: updatedCarcasse.fei_numero } });
+  if (!fei) return;
+
+  const renvoyeurName =
+    existingCarcasse.next_owner_entity_name_cache || existingCarcasse.next_owner_user_name_cache || null;
+  const action = `FEI_RENVOYEE_${updatedCarcasse.fei_numero}_${existingCarcasse.next_owner_entity_id ?? existingCarcasse.next_owner_user_id}`;
+
+  const [object, email] = formatRenvoiExpediteurEmail(
+    fei,
+    updatedCarcasse.current_owner_role!,
+    renvoyeurName,
+    updatedCarcasse.premier_detenteur_prochain_detenteur_id_cache
+  );
+  await sendNotificationToUser({
+    user: expediteur,
+    title: object,
+    body: email,
+    email,
+    notificationLogAction: action,
+  });
+}
+
 export async function checkCertificat(existingCarcasse: Carcasse, updatedCarcasse: Carcasse) {
   if (updatedCarcasse.svi_ipm1_date || updatedCarcasse.svi_ipm2_date) {
     await checkGenerateCertificat(existingCarcasse, updatedCarcasse);
@@ -172,6 +214,7 @@ export async function runCarcasseUpdateSideEffects(existingCarcasse: Carcasse, u
   await notifySaisieChasseur(existingCarcasse, updatedCarcasse);
   await notifyManquanteChasseur(existingCarcasse, updatedCarcasse);
   await notifyRefusChasseur(existingCarcasse, updatedCarcasse);
+  await notifyRenvoiExpediteur(existingCarcasse, updatedCarcasse);
   await closeFeiAndNotifyChasseurOnSviCarcasseClose(existingCarcasse, updatedCarcasse);
   await checkCertificat(existingCarcasse, updatedCarcasse);
 }
