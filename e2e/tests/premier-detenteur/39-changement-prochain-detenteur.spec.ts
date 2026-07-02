@@ -24,7 +24,7 @@ test('Changement de prochain détenteur après sélection — cohérence du form
   await page.getByRole('option', { name: 'ETG 1 - 75000 Paris (' }).click();
 
   // Choisir stockage
-  await page.getByText('Carcasses déposées dans un Centre').click();
+  await page.getByText('Carcasses déposées dans une chambre froide').click();
 
   // Changer pour ETG 2
   await select.click();
