@@ -325,7 +325,7 @@ function DispatchGroupForm({
             {
               label: 'Carcasses déposées dans une chambre froide (Centre de Collecte du Gibier sauvage)',
               hintText:
-                'Toute chambre froide où vous entreposez le gibier avant de le céder, le vendre ou le transporter est un Centre de Collecte du Gibier sauvage (CCG).',
+                'Toute chambre froide où vous entreposez le gibier avant de le céder ou le vendre est un Centre de Collecte du Gibier sauvage (CCG).',
               nativeInputProps: {
                 checked: group.depotType === DepotType.CCG,
                 readOnly: !canEdit,
