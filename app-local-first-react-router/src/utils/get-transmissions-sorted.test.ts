@@ -361,6 +361,55 @@ describe('computeTransmissions — intermédiaires', () => {
 });
 
 // ---------------------------------------------------------------------------
+// B bis. Carcasse de référence : une carcasse écartée du circuit (refus/manquante amont)
+// ne doit jamais dicter le propriétaire courant ni la liste d'intermédiaires du groupe,
+// même si elle est itérée en premier (ordre de synchro non déterministe).
+// ---------------------------------------------------------------------------
+
+describe('computeTransmissions — reference carcasse ne suit pas une carcasse écartée', () => {
+  it('carcasse manquante en tête : le content reflète le propriétaire de la carcasse vivante (ETG)', () => {
+    // CARC_A (manquante chez le collecteur, itérée en 1er) a un current_owner figé sur le collecteur.
+    // CARC_B (vivante) est chez l'ETG « me », avec son intermédiaire ETG.
+    const t = run({
+      carcasses: [
+        carcasse({
+          zacharie_carcasse_id: 'CARC_A',
+          intermediaire_carcasse_manquante: true,
+          current_owner_user_id: 'collecteur',
+          current_owner_role: UserRoles.COLLECTEUR_PRO,
+        }),
+        carcasse({
+          zacharie_carcasse_id: 'CARC_B',
+          current_owner_user_id: 'me',
+          current_owner_role: UserRoles.ETG,
+        }),
+      ],
+      intermediaires: [
+        intermediaire({ zacharie_carcasse_id: 'CARC_B', intermediaire_id: 'INT_ETG', intermediaire_user_id: 'me' }),
+      ],
+      user: user([UserRoles.ETG], 'me'),
+    });
+    expect(t[TID].content.current_owner_user_id).toBe('me');
+    expect(t[TID].content.current_owner_role).toBe(UserRoles.ETG);
+    // l'intermédiaire ETG (celui qui autorise l'édition côté ETG) est bien présent
+    expect(t[TID].intermediaires.map((i) => i.id)).toContain('INT_ETG');
+    // toutes les carcasses du groupe restent listées
+    expect(t[TID].carcasses.map((c) => c.zacharie_carcasse_id).sort()).toEqual(['CARC_A', 'CARC_B']);
+  });
+
+  it('toutes les carcasses écartées : on garde la première (comportement inchangé)', () => {
+    const t = run({
+      carcasses: [
+        carcasse({ zacharie_carcasse_id: 'CARC_A', intermediaire_carcasse_manquante: true, current_owner_user_id: 'collecteur' }),
+        carcasse({ zacharie_carcasse_id: 'CARC_B', intermediaire_carcasse_refus_intermediaire_id: 'refus', current_owner_user_id: 'collecteur' }),
+      ],
+      user: admin,
+    });
+    expect(t[TID].content.current_owner_user_id).toBe('collecteur');
+  });
+});
+
+// ---------------------------------------------------------------------------
 // C. Many carcasses — all / some / none in a terminal state
 // ---------------------------------------------------------------------------
 

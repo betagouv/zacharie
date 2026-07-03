@@ -3,6 +3,7 @@ import useUser from '@app/zustand/user';
 import { useEntitiesIdsWorkingDirectlyForObj } from '@app/utils/get-entity-relations';
 import {
   isCarcasseDone,
+  isCarcasseSidelinedFromCircuit,
   isCarcasseToTake,
   isCarcasseUnderMyResponsability,
 } from '@app/utils/is-carcasse-done';
@@ -148,6 +149,16 @@ export function computeTransmissions({
     }
   };
 
+  // La carcasse de référence d'un groupe définit son propriétaire courant + sa liste d'intermédiaires
+  // (donc les droits d'édition). On ne peut PAS garder bêtement la première rencontrée : l'ordre
+  // d'itération suit l'ordre d'insertion dans le store (ordre de synchro), et une carcasse écartée du
+  // circuit (refusée/manquante chez un intermédiaire amont) porte un current_owner figé. Si elle
+  // tombait en tête, tout le groupe hériterait d'un propriétaire périmé → canEdit faux pour le
+  // destinataire réel. On reste en une seule passe : la référence démarre sur la carcasse qui crée le
+  // groupe, et on l'« améliore » une seule fois si une carcasse encore dans le circuit apparaît ensuite
+  // (transition écartée → vivante à sens unique, donc au plus un rebuild par groupe).
+  const referenceIsSidelinedByTransmission: Record<string, boolean> = {};
+
   for (const carcasse of Object.values(allCarcasses)) {
     if (carcasse.deleted_at) continue;
     const transmissionId = getTransmissionId(carcasse);
@@ -157,10 +168,34 @@ export function computeTransmissions({
         intermediaireByIdByTransmission[transmissionId],
         intermediairesByCarcasseId[carcasse.zacharie_carcasse_id] || []
       );
+      // La référence courante est écartée mais celle-ci est vivante : elle devient la référence.
+      if (referenceIsSidelinedByTransmission[transmissionId] && !isCarcasseSidelinedFromCircuit(carcasse)) {
+        referenceIsSidelinedByTransmission[transmissionId] = false;
+        const transmission = getCarcasseTransmission(carcasse);
+        const intermediaires = (intermediairesByCarcasseId[carcasse.zacharie_carcasse_id] || []).map((i) => ({
+          ...i,
+        }));
+        const intermediaireById: Record<string, CarcassesIntermediaire> = {};
+        for (const i of intermediaires) intermediaireById[i.id] = i;
+        // On repart des intermédiaires de la nouvelle référence, puis on ré-agrège les décisions des
+        // carcasses déjà vues dans ce groupe (bornes = taille du groupe, une seule fois). Pas de passe
+        // supplémentaire sur toutes les carcasses.
+        for (const already of transmissions[transmissionId].carcasses) {
+          if (already.zacharie_carcasse_id === carcasse.zacharie_carcasse_id) continue;
+          mergeIntermediaireDecisionFields(
+            intermediaireById,
+            intermediairesByCarcasseId[already.zacharie_carcasse_id] || []
+          );
+        }
+        intermediaireByIdByTransmission[transmissionId] = intermediaireById;
+        transmissions[transmissionId].content = transmission;
+        transmissions[transmissionId].intermediaires = intermediaires;
+      }
     } else {
       const transmission = getCarcasseTransmission(carcasse);
       const fei = feis[transmission.fei_numero!];
       if (!fei || fei.deleted_at) continue;
+      referenceIsSidelinedByTransmission[transmissionId] = isCarcasseSidelinedFromCircuit(carcasse);
       if (!feiDispatches[transmission.fei_numero!]) feiDispatches[transmission.fei_numero!] = 0;
       feiDispatches[transmission.fei_numero!]++;
       if (!transmissionIdsByFeiNumero[fei.numero]) transmissionIdsByFeiNumero[fei.numero] = [];

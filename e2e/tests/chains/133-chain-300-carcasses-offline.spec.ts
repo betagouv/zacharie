@@ -78,12 +78,28 @@ function carcasseDialog(page: Page, espece: string, bracelet: string) {
   return page.getByLabel(`${espece} - N° ${bracelet}`);
 }
 
+async function assertReadyToMark(page: Page, who: string) {
+  const editableBeacon = page.getByText('Veuillez cliquer sur une carcasse').first();
+  const cardsCount = await page.getByRole('button', { name: /N° (DAIM|CHEV|PIG)-/ }).count();
+  const editable = await editableBeacon.isVisible().catch(() => false);
+  console.log(
+    `[${who}] prêt-à-marquer : editable=${editable}, cartes visibles=${cardsCount}, url=${page.url()}`
+  );
+  await expect(
+    editableBeacon,
+    `[${who}] l'intermédiaire n'est jamais passé en mode édition (canEdit=false). Cause probable : la carcasse de référence de la transmission est une carcasse écartée du circuit (refusée/manquante en amont) qui porte un propriétaire périmé.`
+  ).toBeVisible({ timeout: 15000 });
+}
+
 async function markManquante(page: Page, espece: string, bracelet: string) {
   const card = carcasseCard(page, espece, bracelet);
   await card.scrollIntoViewIfNeeded();
   await card.click();
+  const dialog = carcasseDialog(page, espece, bracelet);
+  const opened = await dialog.isVisible().catch(() => false);
+  console.log(`markManquante ${espece} ${bracelet} : modale ouverte=${opened}`);
   // Sélectionner « Carcasse manquante » valide + ferme la modale.
-  await carcasseDialog(page, espece, bracelet).getByText('Carcasse manquante').click();
+  await dialog.getByText('Carcasse manquante').click();
   await expect(card).toBeVisible();
 }
 
@@ -199,6 +215,7 @@ test('Chaîne 300 carcasses : examinateur → PD → collecteur → ETG → SVI 
   await expect(page).toHaveURL(/\/app\/collecteur/);
   await page.getByRole('link', { name: feiId }).click();
   await page.getByRole('button', { name: /Je contrôle et transporte les carcasses/ }).click();
+  await assertReadyToMark(page, 'collecteur');
 
   await context.setOffline(true);
 
@@ -222,6 +239,7 @@ test('Chaîne 300 carcasses : examinateur → PD → collecteur → ETG → SVI 
   await logoutAndConnect(page, 'etg-1@example.fr');
   await page.getByRole('link', { name: feiId }).click();
   await page.getByRole('button', { name: 'Prendre en charge' }).click();
+  await assertReadyToMark(page, 'ETG');
 
   await context.setOffline(true);
 

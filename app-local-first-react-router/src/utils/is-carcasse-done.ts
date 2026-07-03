@@ -25,6 +25,19 @@ export function isCarcasseClosedBySvi(carcasse: Carcasse): boolean {
   return !!(carcasse.svi_closed_at || carcasse.svi_automatic_closed_at);
 }
 
+// Une carcasse écartée du circuit à une étape intermédiaire (refusée, manquante, ou clôturée par un
+// intermédiaire) garde un current_owner figé à cette étape : il ne reflète plus l'avancée réelle de
+// la transmission. Elle ne doit donc jamais servir de carcasse de référence pour déterminer le
+// propriétaire courant / les droits d'édition d'un groupe de transmission (voir get-transmissions-sorted).
+// À distinguer d'une carcasse acceptée jusqu'au bout (SVI) : celle-ci a un current_owner légitime.
+export function isCarcasseSidelinedFromCircuit(carcasse: Carcasse): boolean {
+  return !!(
+    carcasse.intermediaire_carcasse_refus_intermediaire_id ||
+    carcasse.intermediaire_carcasse_manquante ||
+    carcasse.intermediaire_closed_at
+  );
+}
+
 export function isCarcasseDone(carcasse: Carcasse): boolean {
   if (carcasse.svi_closed_at || carcasse.svi_automatic_closed_at) return true;
   if (carcasse.intermediaire_closed_at) return true;
