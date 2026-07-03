@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router';
 import dayjs from 'dayjs';
 import type { Carcasse } from '@prisma/client';
-import { CarcasseStatus, CarcasseType } from '@prisma/client';
+import { CarcasseStatus, CarcasseType, UserRoles } from '@prisma/client';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
 import { Tooltip as DsfrTooltip } from '@codegouvfr/react-dsfr/Tooltip';
 import { Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
@@ -129,8 +129,12 @@ export default function EtgUtilisateur() {
           </p>
         </header>
 
-        <h2 className="fr-h4 mt-6 mb-0">Statistiques de saisies</h2>
-        <SaisieStats carcasses={userCarcasses} />
+        {!user.roles.includes(UserRoles.SVI) && (
+          <>
+            <h2 className="fr-h4 mt-6 mb-0">Statistiques de saisies</h2>
+            <SaisieStats carcasses={userCarcasses} />
+          </>
+        )}
       </div>
     </div>
   );
