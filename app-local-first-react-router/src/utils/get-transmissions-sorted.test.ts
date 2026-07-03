@@ -385,7 +385,11 @@ describe('computeTransmissions — reference carcasse ne suit pas une carcasse �
         }),
       ],
       intermediaires: [
-        intermediaire({ zacharie_carcasse_id: 'CARC_B', intermediaire_id: 'INT_ETG', intermediaire_user_id: 'me' }),
+        intermediaire({
+          zacharie_carcasse_id: 'CARC_B',
+          intermediaire_id: 'INT_ETG',
+          intermediaire_user_id: 'me',
+        }),
       ],
       user: user([UserRoles.ETG], 'me'),
     });
@@ -400,8 +404,16 @@ describe('computeTransmissions — reference carcasse ne suit pas une carcasse �
   it('toutes les carcasses écartées : on garde la première (comportement inchangé)', () => {
     const t = run({
       carcasses: [
-        carcasse({ zacharie_carcasse_id: 'CARC_A', intermediaire_carcasse_manquante: true, current_owner_user_id: 'collecteur' }),
-        carcasse({ zacharie_carcasse_id: 'CARC_B', intermediaire_carcasse_refus_intermediaire_id: 'refus', current_owner_user_id: 'collecteur' }),
+        carcasse({
+          zacharie_carcasse_id: 'CARC_A',
+          intermediaire_carcasse_manquante: true,
+          current_owner_user_id: 'collecteur',
+        }),
+        carcasse({
+          zacharie_carcasse_id: 'CARC_B',
+          intermediaire_carcasse_refus_intermediaire_id: 'refus',
+          current_owner_user_id: 'collecteur',
+        }),
       ],
       user: admin,
     });
