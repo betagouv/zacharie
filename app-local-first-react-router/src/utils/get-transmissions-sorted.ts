@@ -435,6 +435,7 @@ export function useGetTransmissionFromURLParams() {
   const premier_detenteur_prochain_detenteur_id_cache = params.premier_detenteur_prochain_detenteur_id_cache;
   const transmissionId = buildTransmissionId(fei_numero, premier_detenteur_prochain_detenteur_id_cache);
   const transmission = useGetTransmissionFromTransmissionId(transmissionId);
+  console.log({ transmissionId, transmission });
   return transmission;
 }
 
@@ -454,7 +455,7 @@ export function useGetTransmissionFromTransmissionId(transmissionId: string) {
   );
 
   useEffect(() => {
-    const transmission = transmissions[transmissionId].content;
+    const transmission = transmissions[transmissionId]?.content;
     const transmissionKeys = Object.keys(transmission) as Array<keyof CarcasseTransmission>;
     let allCarcassesDone = true;
     const carcasseRef = transmissions[transmissionId].carcasses[0]!;

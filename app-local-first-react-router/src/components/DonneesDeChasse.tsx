@@ -6,7 +6,10 @@ import useZustandStore from '@app/zustand/store';
 import ItemNotEditable from '@app/components/ItemNotEditable';
 import { getIntermediaireRoleLabel } from '@app/utils/get-user-roles-label';
 import { CarcassesIntermediaire } from '@app/types/carcasses-intermediaire';
-import { useGetTransmissionFromURLParams } from '@app/utils/get-transmissions-sorted';
+import {
+  useGetTransmissionFromCarcasse,
+  useGetTransmissionFromURLParams,
+} from '@app/utils/get-transmissions-sorted';
 
 export default function FEIDonneesDeChasse({
   carcasseId,
@@ -17,15 +20,19 @@ export default function FEIDonneesDeChasse({
 }) {
   const params = useParams();
   const feis = useZustandStore((state) => state.feis);
-  const transmission = useGetTransmissionFromURLParams();
   const carcassesState = useZustandStore((state) => state.carcasses);
+  const transmission = carcasseId
+    ? // eslint-disable-next-line react-hooks/rules-of-hooks
+      useGetTransmissionFromCarcasse(carcassesState[carcasseId])
+    : // eslint-disable-next-line react-hooks/rules-of-hooks
+      useGetTransmissionFromURLParams();
   const users = useZustandStore((state) => state.users);
   const entities = useZustandStore((state) => state.entities);
   const fei = feis[params.fei_numero!];
   const latestIntermediaire = intermediaires[0];
   const carcasses = carcasseId
     ? [carcassesState[carcasseId]].filter(Boolean).filter((c) => !c.deleted_at)
-    : transmission.carcasses;
+    : transmission?.carcasses;
   const examinateurInitialUser = fei.examinateur_initial_user_id
     ? users[fei.examinateur_initial_user_id!]
     : null;
@@ -95,10 +102,11 @@ export default function FEIDonneesDeChasse({
   }, [intermediaires, entities]);
 
   const sviInput = useMemo(() => {
-    const lines = [];
-    const sviEntity = entities[transmission.content.svi_entity_id!];
+    const lines: Array<string> = [];
+    if (!transmission?.content?.svi_entity_id) return lines;
+    const sviEntity = entities[transmission?.content?.svi_entity_id];
     if (sviEntity) {
-      lines.push(sviEntity?.nom_d_usage);
+      if (sviEntity?.nom_d_usage) lines.push(sviEntity?.nom_d_usage);
       lines.push(`${sviEntity?.code_postal} ${sviEntity?.ville}`);
     }
     const sviAssignedAt = transmission.carcasses.reduce<Date | null>((latest, c) => {
@@ -132,16 +140,16 @@ export default function FEIDonneesDeChasse({
       );
     }
     return lines;
-  }, [transmission.content.svi_entity_id, entities, transmission.carcasses]);
+  }, [transmission?.content?.svi_entity_id, entities, transmission.carcasses]);
 
-  const ccgDate = transmission.content.premier_detenteur_depot_ccg_at
-    ? dayjs(transmission.content.premier_detenteur_depot_ccg_at).format('dddd D MMMM YYYY à HH:mm')
+  const ccgDate = transmission?.content?.premier_detenteur_depot_ccg_at
+    ? dayjs(transmission?.content?.premier_detenteur_depot_ccg_at).format('dddd D MMMM YYYY à HH:mm')
     : null;
   const etgDate = latestIntermediaire?.prise_en_charge_at
     ? dayjs(latestIntermediaire.prise_en_charge_at).format('dddd D MMMM YYYY à HH:mm')
     : null;
-  const sviAssignedToFeiAt = transmission.content.svi_assigned_at
-    ? dayjs(transmission.content.svi_assigned_at).format('dddd D MMMM YYYY à HH:mm')
+  const sviAssignedToFeiAt = transmission?.content?.svi_assigned_at
+    ? dayjs(transmission?.content?.svi_assigned_at).format('dddd D MMMM YYYY à HH:mm')
     : null;
 
   const milestones = useMemo(() => {
@@ -161,7 +169,7 @@ export default function FEIDonneesDeChasse({
     }
     if (ccgDate) {
       _milestones.push(
-        `Nom du Centre de Collecte (CCG)\u00A0: ${transmission.content.premier_detenteur_depot_entity_name_cache}`
+        `Nom du Centre de Collecte (CCG)\u00A0: ${transmission?.content?.premier_detenteur_depot_entity_name_cache}`
       );
       _milestones.push(`Date et heure de dépôt dans le CCG\u00A0: ${ccgDate}`);
     }
@@ -171,7 +179,7 @@ export default function FEIDonneesDeChasse({
     return _milestones;
   }, [
     fei.commune_mise_a_mort,
-    transmission.content.premier_detenteur_depot_entity_name_cache,
+    transmission?.content?.premier_detenteur_depot_entity_name_cache,
     ccgDate,
     etgDate,
     onlyPetitGibier,
