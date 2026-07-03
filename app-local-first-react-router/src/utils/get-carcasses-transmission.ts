@@ -119,6 +119,7 @@ const REFUSAL_FIELDS: Partial<Record<keyof CarcasseTransmission, boolean>> = {
   intermediaire_closed_at: true, // same
   intermediaire_closed_by_user_id: true, // same
   intermediaire_closed_by_entity_id: true, // same
+  latest_intermediaire_signed_at: true, // same
   svi_closed_at: true, // might be automatic closed
   svi_automatic_closed_at: true, // might be manual closed
   svi_closed_by_user_id: true, // might be different from carcasse to carcasse
