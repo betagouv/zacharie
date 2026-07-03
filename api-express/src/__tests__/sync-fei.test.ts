@@ -2,7 +2,7 @@ import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { syncFei } from '~/utils/sync-fei';
 import prisma from '~/prisma';
 import { capture } from '~/third-parties/sentry';
-import { UserRoles, EntityRelationType } from '@prisma/client';
+import { UserRoles } from '@prisma/client';
 import type { User } from '@prisma/client';
 
 vi.mock('~/third-parties/sentry', () => ({
@@ -45,7 +45,6 @@ const otherChasseur = {
 const baseFei = {
   numero: 'FEI-1',
   examinateur_initial_user_id: examinateurInitial.id,
-  fei_current_owner_user_id: examinateurInitial.id,
   deleted_at: null,
   date_mise_a_mort: '2026-01-01',
   commune_mise_a_mort: 'Paris',
@@ -123,20 +122,6 @@ describe('syncFei — update', () => {
 
     const updateCall = vi.mocked(prisma.fei.update).mock.calls[0][0];
     expect(updateCall.data.commune_mise_a_mort).not.toContain('<script>');
-  });
-
-  test('svi_closed_at sets svi_closed_by_user_id to the acting user', async () => {
-    vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
-    vi.mocked(prisma.fei.update).mockResolvedValue(baseFei as any);
-
-    await syncFei(
-      'FEI-1',
-      { numero: 'FEI-1', svi_closed_at: '2026-02-01T10:00:00Z' } as any,
-      examinateurInitial
-    );
-
-    const updateCall = vi.mocked(prisma.fei.update).mock.calls[0][0];
-    expect(updateCall.data.svi_closed_by_user_id).toBe(examinateurInitial.id);
   });
 });
 
@@ -257,42 +242,5 @@ describe('syncFei — body validation', () => {
         examinateurInitial
       )
     ).rejects.toThrow();
-  });
-});
-
-describe('syncFei — fei_next_owner_entity_id side effect', () => {
-  test('creates CAN_TRANSMIT relation if not already present', async () => {
-    vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
-    vi.mocked(prisma.entityAndUserRelations.findFirst).mockResolvedValueOnce(null);
-    vi.mocked(prisma.entityAndUserRelations.create).mockResolvedValue({} as any);
-    vi.mocked(prisma.fei.update).mockResolvedValue(baseFei as any);
-
-    await syncFei(
-      'FEI-1',
-      { numero: 'FEI-1', fei_next_owner_entity_id: 'entity-X' } as any,
-      examinateurInitial
-    );
-
-    expect(prisma.entityAndUserRelations.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({
-        entity_id: 'entity-X',
-        owner_id: examinateurInitial.id,
-        relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-      }),
-    });
-  });
-
-  test('skips relation creation when one already exists', async () => {
-    vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
-    vi.mocked(prisma.entityAndUserRelations.findFirst).mockResolvedValueOnce({ id: 'rel-1' } as any);
-    vi.mocked(prisma.fei.update).mockResolvedValue(baseFei as any);
-
-    await syncFei(
-      'FEI-1',
-      { numero: 'FEI-1', fei_next_owner_entity_id: 'entity-X' } as any,
-      examinateurInitial
-    );
-
-    expect(prisma.entityAndUserRelations.create).not.toHaveBeenCalled();
   });
 });

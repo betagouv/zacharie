@@ -1,5 +1,4 @@
-import { Carcasse, CarcasseStatus, User } from '@prisma/client';
-import type { FeiWithIntermediaires } from '@api/src/types/fei';
+import { Fei, Carcasse, CarcasseStatus, User } from '@prisma/client';
 import updateCarcasseStatus from './get-carcasse-status';
 import { EntityWithUserRelation } from '@api/src/types/entity';
 import { isRoleCircuitCourt } from './circuit-court';
@@ -44,9 +43,8 @@ export function isCarcasseDone(carcasse: Carcasse): boolean {
 // Une fiche est terminée quand TOUTES ses carcasses sont terminales (multi-destinataire :
 // les lots progressent séparément). Source de vérité unique pour le tri des listes
 // (get-fei-sorted) ET le libellé "Clôturée" (fei-steps) — ne pas dériver depuis une seule carcasse.
-export function isFeiDone(fei: FeiWithIntermediaires, carcasses: Array<Carcasse>): boolean {
-  if (fei.intermediaire_closed_at || fei.consommateur_final_usage_domestique) return true;
-  if (fei.automatic_closed_at) return true;
+export function isFeiDone(fei: Fei, carcasses: Array<Carcasse>): boolean {
+  if (fei.consommateur_final_usage_domestique) return true;
   // Carcasses pas encore chargées : ne pas conclure "done" par vacuité.
   if (carcasses.length === 0) return false;
   return carcasses.every(isCarcasseDone);

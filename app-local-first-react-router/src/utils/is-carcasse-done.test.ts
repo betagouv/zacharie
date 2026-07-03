@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import dayjs from 'dayjs';
-import { Carcasse, CarcasseStatus, User } from '@prisma/client';
-import type { FeiWithIntermediaires } from '@api/src/types/fei';
+import { Fei, Carcasse, CarcasseStatus, User } from '@prisma/client';
 import type { EntityWithUserRelation } from '@api/src/types/entity';
 import {
   isCarcasseClosedBySvi,
@@ -33,14 +32,12 @@ function c(overrides: Partial<Carcasse> = {}): Carcasse {
   } as unknown as Carcasse;
 }
 
-function fei(overrides: Partial<FeiWithIntermediaires> = {}): FeiWithIntermediaires {
+function fei(overrides: Partial<Fei> = {}): Fei {
   return {
     numero: 'FEI-TEST',
-    intermediaire_closed_at: null,
     consommateur_final_usage_domestique: null,
-    automatic_closed_at: null,
     ...overrides,
-  } as unknown as FeiWithIntermediaires;
+  } as unknown as Fei;
 }
 
 const me = { id: 'me' } as User;
@@ -145,16 +142,16 @@ describe('isCarcasseDone', () => {
 });
 
 describe('isFeiDone', () => {
-  it('true when the fei was closed by an intermediaire', () => {
-    expect(isFeiDone(fei({ intermediaire_closed_at: new Date() }), [c()])).toBe(true);
+  it('true when every carcasse was closed by an intermediaire', () => {
+    expect(isFeiDone(fei(), [c({ intermediaire_closed_at: new Date() })])).toBe(true);
   });
 
   it('true for domestic final-consumer usage', () => {
     expect(isFeiDone(fei({ consommateur_final_usage_domestique: new Date() }), [c()])).toBe(true);
   });
 
-  it('true when the fei was automatically closed', () => {
-    expect(isFeiDone(fei({ automatic_closed_at: new Date() }), [c()])).toBe(true);
+  it('true when every carcasse was automatically closed by the SVI cron', () => {
+    expect(isFeiDone(fei(), [c({ svi_automatic_closed_at: new Date() })])).toBe(true);
   });
 
   it('false when carcasses are not loaded yet — do not conclude done by vacuity', () => {

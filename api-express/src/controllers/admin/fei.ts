@@ -35,7 +35,6 @@ router.get(
             FeiExaminateurInitialUser: { select: { email: true } },
             FeiPremierDetenteurUser: { select: { email: true } },
             FeiPremierDetenteurEntity: { select: { nom_d_usage: true } },
-            FeiSviEntity: { select: { nom_d_usage: true } },
             _count: { select: { Carcasses: true } },
           },
         }),
@@ -81,8 +80,6 @@ router.get(
           FeiExaminateurInitialUser: { select: { email: true } },
           FeiPremierDetenteurUser: { select: { email: true } },
           FeiPremierDetenteurEntity: { select: { nom_d_usage: true } },
-          FeiSviEntity: { select: { nom_d_usage: true } },
-          FeiSviUser: { select: { email: true } },
         },
       });
 

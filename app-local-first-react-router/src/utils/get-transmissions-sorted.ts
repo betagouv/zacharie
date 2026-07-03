@@ -16,7 +16,6 @@ import {
   User,
 } from '@prisma/client';
 import type { EntityWithUserRelation } from '@api/src/types/entity';
-import type { FeiWithIntermediaires } from '@api/src/types/fei';
 import { checkCarcasseAgainstTransmission, getCarcasseTransmission } from './get-carcasses-transmission';
 import { CarcasseTransmission, CarcasseTransmissionWihMetadata } from '@app/types/carcasse';
 import { abbreviations } from './count-carcasses';
@@ -68,7 +67,7 @@ export function computeTransmissions({
 }: {
   carcasses: Record<Carcasse['zacharie_carcasse_id'], Carcasse>;
   carcassesIntermediaireById: Record<string, CarcasseIntermediaire>;
-  feis: Record<FeiWithIntermediaires['numero'], FeiWithIntermediaires>;
+  feis: Record<Fei['numero'], Fei>;
   user: User;
   entitiesWorkingDirectlyFor: Record<EntityWithUserRelation['id'], EntityWithUserRelation>;
 }): Record<NonNullable<CarcasseTransmissionWihMetadata['fei']['numero']>, CarcasseTransmissionWihMetadata> {

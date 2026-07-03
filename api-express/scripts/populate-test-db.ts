@@ -617,22 +617,30 @@ Christine
   if (role) {
     if (role === FeiOwnerRole.PREMIER_DETENTEUR) {
       const fei = await prisma.fei.create({ data: feiValidatedByExaminateur });
-      const carcasses = await prisma.carcasse.createMany({ data: getCarcasses(fei) });
+      const carcasses = await prisma.carcasse.createMany({
+        data: getCarcasses(fei, ownershipValidatedByExaminateur),
+      });
       console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (for premier détenteur)`);
     }
     if ((role as string) === 'ETG_PD_EXAMINATEUR') {
       const fei = await prisma.fei.create({ data: feiPremierDetenteurEstExaminateur });
-      const carcasses = await prisma.carcasse.createMany({ data: getCarcasses(fei) });
+      const carcasses = await prisma.carcasse.createMany({
+        data: getCarcasses(fei, ownershipPremierDetenteurEstExaminateur),
+      });
       console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (ETG, PD = examinateur)`);
     }
     if ((role as string) === 'ETG_PD_ASSOCIATION') {
       const fei = await prisma.fei.create({ data: feiPremierDetenteurEstAssociation });
-      const carcasses = await prisma.carcasse.createMany({ data: getCarcasses(fei) });
+      const carcasses = await prisma.carcasse.createMany({
+        data: getCarcasses(fei, ownershipPremierDetenteurEstAssociation),
+      });
       console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (ETG, PD = association)`);
     }
     if (role === FeiOwnerRole.ETG) {
       const fei = await prisma.fei.create({ data: feiValidatedByPremierDetenteur });
-      const carcasses = await prisma.carcasse.createMany({ data: getCarcasses(fei) });
+      const carcasses = await prisma.carcasse.createMany({
+        data: getCarcasses(fei, ownershipValidatedByPremierDetenteur),
+      });
       // await prisma.carcasseIntermediaire.createMany({
       //   data: getCarcasses(fei).map((c) => ({
       //     fei_numero: fei.numero,
@@ -649,7 +657,9 @@ Christine
     }
     if (role === FeiOwnerRole.COLLECTEUR_PRO) {
       const fei = await prisma.fei.create({ data: feiValidatedByPremierDetenteurToCollecteur });
-      const carcasses = await prisma.carcasse.createMany({ data: getCarcasses(fei) });
+      const carcasses = await prisma.carcasse.createMany({
+        data: getCarcasses(fei, ownershipValidatedByPremierDetenteurToCollecteur),
+      });
       // await prisma.carcasseIntermediaire.createMany({
       //   data: getCarcasses(fei).map((c) => ({
       //     fei_numero: fei.numero,
@@ -666,7 +676,9 @@ Christine
     }
     if (role === FeiOwnerRole.SVI) {
       const fei = await prisma.fei.create({ data: feiTransmittedByEtgToSvi });
-      const carcasses = await prisma.carcasse.createMany({ data: getCarcasses(fei) });
+      const carcasses = await prisma.carcasse.createMany({
+        data: getCarcasses(fei, ownershipTransmittedByEtgToSvi),
+      });
       // Create CarcasseIntermediaire for ETG 1 so the traçabilité chain is coherent
       await prisma.carcasseIntermediaire.createMany({
         data: getCarcasses(fei).map((c) => ({
@@ -686,13 +698,17 @@ Christine
     }
     if (role === FeiOwnerRole.COMMERCE_DE_DETAIL) {
       const fei = await prisma.fei.create({ data: feiTransmittedByPremierDetenteurToCommerceDeDetail });
-      const carcasses = await prisma.carcasse.createMany({ data: getCarcasses(fei) });
+      const carcasses = await prisma.carcasse.createMany({
+        data: getCarcasses(fei, ownershipTransmittedByPremierDetenteurToCommerceDeDetail),
+      });
       console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (for commerce de détail)`);
     }
     // Not a FeiOwnerRole value — special "SVI already closed" seed for testing read-only downstream views.
     if ((role as string) === 'SVI_CLOSED') {
       const fei = await prisma.fei.create({ data: feiClosedBySvi });
-      const carcasses = await prisma.carcasse.createMany({ data: getCarcasses(fei) });
+      const carcasses = await prisma.carcasse.createMany({
+        data: getCarcasses(fei, ownershipClosedBySvi),
+      });
       // Create CarcasseIntermediaire for ETG 1 so the traçabilité chain is coherent
       await prisma.carcasseIntermediaire.createMany({
         data: getCarcasses(fei).map((c) => ({
@@ -719,22 +735,21 @@ Christine
     if ((role as string) === 'ETG_REFUSED') {
       const etg1User = users.find((u) => u.email === 'etg-1@example.fr');
       const etg1UserId = etg1User?.id ?? '';
-      // Set latest_intermediaire_user_id + intermediaire_closed_by_user_id on the fei now that
-      // we have the dynamic ETG user id. (FeiUncheckedCreateInput doesn't allow async lookups.)
-      const fei = await prisma.fei.create({
-        data: {
-          ...feiRefusedByEtg,
-          latest_intermediaire_user_id: etg1UserId,
-          intermediaire_closed_by_user_id: etg1UserId,
-          fei_current_owner_user_id: null, // owned by entity, no specific user
-        },
-      });
+      const fei = await prisma.fei.create({ data: feiRefusedByEtg });
+      // Set latest_intermediaire_user_id + intermediaire_closed_by_user_id on the carcasses now
+      // that we have the dynamic ETG user id (owned by entity, no specific current owner user).
+      const refusedOwnership: CarcasseOwnership = {
+        ...ownershipRefusedByEtg,
+        latest_intermediaire_user_id: etg1UserId,
+        intermediaire_closed_by_user_id: etg1UserId,
+        current_owner_user_id: null,
+      };
       // The carcasse refus_intermediaire_id must match the CarcasseIntermediaire.intermediaire_id
       // we create below. Format mirrors prod: "{user_id}_{fei_numero}_reception".
       const intermediaireId = `${etg1UserId}_${fei.numero}_reception`;
       const refusedAt = dayjs().subtract(1, 'day').toDate();
       const carcasses = await prisma.carcasse.createMany({
-        data: getCarcasses(fei).map((c) => ({
+        data: getCarcasses(fei, refusedOwnership).map((c) => ({
           ...c,
           svi_carcasse_status: CarcasseStatus.REFUS_ETG_COLLECTEUR,
           svi_carcasse_status_set_at: refusedAt,
@@ -763,14 +778,18 @@ Christine
     }
     if ((role as string) === 'COMMERCE_DE_DETAIL_DELIVERED') {
       const fei = await prisma.fei.create({ data: feiDeliveredToCommerceDeDetail });
-      const carcasses = await prisma.carcasse.createMany({ data: getCarcasses(fei) });
+      const carcasses = await prisma.carcasse.createMany({
+        data: getCarcasses(fei, ownershipDeliveredToCommerceDeDetail),
+      });
       console.log(
         `Fei ${fei.numero} created with ${carcasses.count} carcasses (delivered to commerce de détail)`
       );
     }
     if ((role as string) === 'ETG_TAKEN_CHARGE') {
       const fei = await prisma.fei.create({ data: feiTakenChargeByEtg });
-      const carcasses = await prisma.carcasse.createMany({ data: getCarcasses(fei) });
+      const carcasses = await prisma.carcasse.createMany({
+        data: getCarcasses(fei, ownershipTakenChargeByEtg),
+      });
       await prisma.carcasseIntermediaire.createMany({
         data: getCarcasses(fei).map((c) => ({
           fei_numero: fei.numero,
@@ -787,7 +806,9 @@ Christine
     }
     if ((role as string) === 'ETG_TAKEN_CHARGE_AND_ASSIGNED_TO_SVI') {
       const fei = await prisma.fei.create({ data: feiTakenChargeByEtgAndAssignedToSvi });
-      const carcasses = await prisma.carcasse.createMany({ data: getCarcasses(fei) });
+      const carcasses = await prisma.carcasse.createMany({
+        data: getCarcasses(fei, ownershipTakenChargeByEtgAndAssignedToSvi),
+      });
       await prisma.carcasseIntermediaire.createMany({
         data: getCarcasses(fei).map((c) => ({
           fei_numero: fei.numero,
@@ -804,7 +825,9 @@ Christine
     }
     if ((role as string) === 'COLLECTEUR_TAKEN_CHARGE') {
       const fei = await prisma.fei.create({ data: feiTakenChargeByCollecteur });
-      const carcasses = await prisma.carcasse.createMany({ data: getCarcasses(fei) });
+      const carcasses = await prisma.carcasse.createMany({
+        data: getCarcasses(fei, ownershipTakenChargeByCollecteur),
+      });
       await prisma.carcasseIntermediaire.createMany({
         data: getCarcasses(fei).map((c) => ({
           fei_numero: fei.numero,
@@ -821,7 +844,9 @@ Christine
     }
     if ((role as string) === 'PREMIER_DETENTEUR_WITH_PARTAGE') {
       const fei = await prisma.fei.create({ data: feiValidatedByExaminateur });
-      const carcasses = await prisma.carcasse.createMany({ data: getCarcasses(fei) });
+      const carcasses = await prisma.carcasse.createMany({
+        data: getCarcasses(fei, ownershipValidatedByExaminateur),
+      });
       const pdUser = users.find((u) => u.email === 'premier-detenteur@example.fr');
       if (pdUser) {
         const apiKeyPd = await prisma.apiKey.create({
@@ -852,12 +877,14 @@ Christine
       // 1. À compléter — fiche validée par l'examinateur, en attente du PD.
       //    For Pierre, fei.fei_next_owner_user_id === user.id → "feisToTake" → simpleStatus "À compléter".
       const feiACompleter = await prisma.fei.create({ data: feiValidatedByExaminateur });
-      await prisma.carcasse.createMany({ data: getCarcasses(feiACompleter) });
+      await prisma.carcasse.createMany({
+        data: getCarcasses(feiACompleter, ownershipValidatedByExaminateur),
+      });
 
       // 2. En cours — fiche transmise par PD et déjà reçue par l'ETG.
       //    For Pierre, carcasse.current_owner_role === ETG (downstream) → simpleStatus default "En cours".
       const feiEnCours = await prisma.fei.create({ data: feiTakenChargeByEtg });
-      await prisma.carcasse.createMany({ data: getCarcasses(feiEnCours) });
+      await prisma.carcasse.createMany({ data: getCarcasses(feiEnCours, ownershipTakenChargeByEtg) });
       await prisma.carcasseIntermediaire.createMany({
         data: getCarcasses(feiEnCours).map((c) => ({
           fei_numero: feiEnCours.numero,
@@ -873,7 +900,7 @@ Christine
 
       // 3. Clôturée — fiche fermée par SVI.
       const feiCloturee = await prisma.fei.create({ data: feiClosedBySvi });
-      await prisma.carcasse.createMany({ data: getCarcasses(feiCloturee) });
+      await prisma.carcasse.createMany({ data: getCarcasses(feiCloturee, ownershipClosedBySvi) });
       await prisma.carcasseIntermediaire.createMany({
         data: getCarcasses(feiCloturee).map((c) => ({
           fei_numero: feiCloturee.numero,
@@ -900,13 +927,15 @@ Christine
         const fei = await prisma.fei.create({
           data: { ...feiValidatedByExaminateur, numero: `ZACH-20250707-QZ6E0-30000${i}` },
         });
-        await prisma.carcasse.createMany({ data: getCarcasses(fei) });
+        await prisma.carcasse.createMany({ data: getCarcasses(fei, ownershipValidatedByExaminateur) });
       }
       console.log(`CHASSEUR_MANY_FICHES seeded: ${count} fiches À compléter`);
     }
     if ((role as string) === 'ETG_ALL_REFUSED_TO_SVI') {
       const fei = await prisma.fei.create({ data: feiAllRefusedByEtgToSvi });
-      const carcasses = await prisma.carcasse.createMany({ data: getCarcasses(fei) });
+      const carcasses = await prisma.carcasse.createMany({
+        data: getCarcasses(fei, ownershipAllRefusedByEtgToSvi),
+      });
       await prisma.carcasseIntermediaire.createMany({
         data: getCarcasses(fei).map((c) => ({
           fei_numero: fei.numero,
@@ -942,39 +971,52 @@ if (withRole) {
   populateDb();
 }
 
+// Les champs de propriété / transmission ont été retirés de la Fei : ils vivent désormais
+// sur la Carcasse. Chaque fixture de Fei ne porte donc plus que les champs valides de Fei
+// (métadonnées + examinateur initial + identité du premier détenteur), et les champs de
+// propriété sont définis dans des objets `ownership...` appliqués à chaque carcasse.
+type CarcasseOwnership = Partial<Prisma.CarcasseUncheckedCreateInput>;
+
 const feiValidatedByExaminateur: Prisma.FeiUncheckedCreateInput = {
   numero: 'ZACH-20250707-QZ6E0-155242',
   date_mise_a_mort: '2025-07-07T00:00:00.000Z',
   commune_mise_a_mort: '03510 CHASSENARD',
   created_by_user_id: 'QZ6E0',
-  fei_current_owner_user_id: 'QZ6E0',
-  fei_current_owner_user_name_cache: 'Marie Martin',
-  fei_current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
   examinateur_initial_user_id: 'QZ6E0',
   examinateur_initial_approbation_mise_sur_le_marche: true,
   examinateur_initial_date_approbation_mise_sur_le_marche: '2025-07-07T13:52:52.026Z',
   heure_mise_a_mort_premiere_carcasse: '12:12',
   heure_evisceration_derniere_carcasse: '12:14',
   resume_nombre_de_carcasses: '4 daims',
-  fei_next_owner_user_id: '0Y545',
-  fei_next_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
-  fei_next_owner_user_name_cache: 'Pierre Petit',
+};
+
+const ownershipValidatedByExaminateur: CarcasseOwnership = {
+  current_owner_user_id: 'QZ6E0',
+  current_owner_user_name_cache: 'Marie Martin',
+  current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
+  next_owner_user_id: '0Y545',
+  next_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+  next_owner_user_name_cache: 'Pierre Petit',
 };
 
 const feiValidatedByPremierDetenteur: Prisma.FeiUncheckedCreateInput = {
   ...feiValidatedByExaminateur,
   numero: 'ZACH-20250707-QZ6E0-165242',
-  fei_current_owner_user_id: '0Y545',
-  fei_current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
-  fei_next_owner_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
-  fei_next_owner_role: FeiOwnerRole.ETG,
-  fei_prev_owner_user_id: 'QZ6E0',
-  fei_prev_owner_entity_id: null,
-  fei_prev_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
   premier_detenteur_user_id: '0Y545',
+};
+
+const ownershipValidatedByPremierDetenteur: CarcasseOwnership = {
+  ...ownershipValidatedByExaminateur,
+  current_owner_user_id: '0Y545',
+  current_owner_user_name_cache: 'Pierre Petit',
+  current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+  next_owner_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
+  next_owner_role: FeiOwnerRole.ETG,
+  prev_owner_user_id: 'QZ6E0',
+  prev_owner_entity_id: null,
+  prev_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
   premier_detenteur_depot_entity_id: '4f67364a-8373-49f9-a4f6-31a0d88ba27b',
   premier_detenteur_depot_entity_name_cache: 'CCG Chasseurs',
-  fei_current_owner_user_name_cache: 'Pierre Petit',
   premier_detenteur_prochain_detenteur_id_cache: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
   premier_detenteur_prochain_detenteur_role_cache: FeiOwnerRole.ETG,
   premier_detenteur_depot_type: DepotType.CCG,
@@ -985,8 +1027,12 @@ const feiValidatedByPremierDetenteur: Prisma.FeiUncheckedCreateInput = {
 const feiValidatedByPremierDetenteurToCollecteur: Prisma.FeiUncheckedCreateInput = {
   ...feiValidatedByPremierDetenteur,
   numero: 'ZACH-20250707-QZ6E0-175242',
-  fei_next_owner_entity_id: 'a447bab1-8796-48a4-b955-3a5466116bca',
-  fei_next_owner_role: FeiOwnerRole.COLLECTEUR_PRO,
+};
+
+const ownershipValidatedByPremierDetenteurToCollecteur: CarcasseOwnership = {
+  ...ownershipValidatedByPremierDetenteur,
+  next_owner_entity_id: 'a447bab1-8796-48a4-b955-3a5466116bca',
+  next_owner_role: FeiOwnerRole.COLLECTEUR_PRO,
   premier_detenteur_prochain_detenteur_id_cache: 'a447bab1-8796-48a4-b955-3a5466116bca',
   premier_detenteur_prochain_detenteur_role_cache: FeiOwnerRole.COLLECTEUR_PRO,
 };
@@ -996,10 +1042,14 @@ const feiValidatedByPremierDetenteurToCollecteur: Prisma.FeiUncheckedCreateInput
 const feiPremierDetenteurEstExaminateur: Prisma.FeiUncheckedCreateInput = {
   ...feiValidatedByPremierDetenteur,
   numero: 'ZACH-20250707-QZ6E0-165243',
-  fei_current_owner_user_id: 'QZ6E0',
-  fei_current_owner_user_name_cache: 'Marie Martin',
   premier_detenteur_user_id: 'QZ6E0',
   premier_detenteur_name_cache: 'Marie Martin',
+};
+
+const ownershipPremierDetenteurEstExaminateur: CarcasseOwnership = {
+  ...ownershipValidatedByPremierDetenteur,
+  current_owner_user_id: 'QZ6E0',
+  current_owner_user_name_cache: 'Marie Martin',
 };
 
 // Le premier détenteur est une association de chasse (entité) : côté ETG, le bloc
@@ -1012,19 +1062,27 @@ const feiPremierDetenteurEstAssociation: Prisma.FeiUncheckedCreateInput = {
   premier_detenteur_name_cache: 'Association de chasseurs',
 };
 
+const ownershipPremierDetenteurEstAssociation: CarcasseOwnership = {
+  ...ownershipValidatedByPremierDetenteur,
+};
+
 const feiTransmittedByEtgToSvi: Prisma.FeiUncheckedCreateInput = {
   ...feiValidatedByPremierDetenteur,
   numero: 'ZACH-20250707-QZ6E0-185242',
-  fei_current_owner_entity_id: '37a59a18-7f29-4177-a019-aafad6c73ee0',
-  fei_current_owner_entity_name_cache: 'SVI 1',
-  fei_current_owner_role: FeiOwnerRole.SVI,
-  fei_current_owner_user_id: null,
-  fei_current_owner_user_name_cache: null,
-  fei_prev_owner_user_id: null,
-  fei_prev_owner_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
-  fei_prev_owner_role: FeiOwnerRole.ETG,
-  fei_next_owner_entity_id: null,
-  fei_next_owner_role: null,
+};
+
+const ownershipTransmittedByEtgToSvi: CarcasseOwnership = {
+  ...ownershipValidatedByPremierDetenteur,
+  current_owner_entity_id: '37a59a18-7f29-4177-a019-aafad6c73ee0',
+  current_owner_entity_name_cache: 'SVI 1',
+  current_owner_role: FeiOwnerRole.SVI,
+  current_owner_user_id: null,
+  current_owner_user_name_cache: null,
+  prev_owner_user_id: null,
+  prev_owner_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
+  prev_owner_role: FeiOwnerRole.ETG,
+  next_owner_entity_id: null,
+  next_owner_role: null,
   svi_assigned_at: dayjs().subtract(1, 'day').toDate(),
   svi_entity_id: '37a59a18-7f29-4177-a019-aafad6c73ee0',
   latest_intermediaire_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
@@ -1034,8 +1092,12 @@ const feiTransmittedByEtgToSvi: Prisma.FeiUncheckedCreateInput = {
 const feiTransmittedByPremierDetenteurToCommerceDeDetail: Prisma.FeiUncheckedCreateInput = {
   ...feiValidatedByPremierDetenteur,
   numero: 'ZACH-20250707-QZ6E0-195242',
-  fei_next_owner_entity_id: 'b5d31c7f-5e5a-4c2c-9e37-1e6b2d8c4f10',
-  fei_next_owner_role: FeiOwnerRole.COMMERCE_DE_DETAIL,
+};
+
+const ownershipTransmittedByPremierDetenteurToCommerceDeDetail: CarcasseOwnership = {
+  ...ownershipValidatedByPremierDetenteur,
+  next_owner_entity_id: 'b5d31c7f-5e5a-4c2c-9e37-1e6b2d8c4f10',
+  next_owner_role: FeiOwnerRole.COMMERCE_DE_DETAIL,
   premier_detenteur_prochain_detenteur_id_cache: 'b5d31c7f-5e5a-4c2c-9e37-1e6b2d8c4f10',
   premier_detenteur_prochain_detenteur_role_cache: FeiOwnerRole.COMMERCE_DE_DETAIL,
 };
@@ -1044,29 +1106,38 @@ const feiDeliveredToCommerceDeDetail: Prisma.FeiUncheckedCreateInput = {
   ...feiTransmittedByPremierDetenteurToCommerceDeDetail,
   numero: 'ZACH-20250707-QZ6E0-255242',
   consommateur_final_usage_domestique: dayjs().subtract(1, 'day').toDate(),
-  fei_current_owner_user_id: null,
-  fei_current_owner_user_name_cache: null,
-  fei_current_owner_entity_id: 'b5d31c7f-5e5a-4c2c-9e37-1e6b2d8c4f10',
-  fei_current_owner_entity_name_cache: 'Commerce de Détail 1',
-  fei_current_owner_role: FeiOwnerRole.COMMERCE_DE_DETAIL,
-  fei_prev_owner_user_id: '0Y545',
-  fei_prev_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
-  fei_next_owner_entity_id: null,
-  fei_next_owner_role: null,
+};
+
+const ownershipDeliveredToCommerceDeDetail: CarcasseOwnership = {
+  ...ownershipTransmittedByPremierDetenteurToCommerceDeDetail,
+  consommateur_final_usage_domestique: dayjs().subtract(1, 'day').toDate(),
+  current_owner_user_id: null,
+  current_owner_user_name_cache: null,
+  current_owner_entity_id: 'b5d31c7f-5e5a-4c2c-9e37-1e6b2d8c4f10',
+  current_owner_entity_name_cache: 'Commerce de Détail 1',
+  current_owner_role: FeiOwnerRole.COMMERCE_DE_DETAIL,
+  prev_owner_user_id: '0Y545',
+  prev_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+  next_owner_entity_id: null,
+  next_owner_role: null,
 };
 
 const feiTakenChargeByEtg: Prisma.FeiUncheckedCreateInput = {
   ...feiValidatedByPremierDetenteur,
   numero: 'ZACH-20250707-QZ6E0-235242',
-  fei_current_owner_user_id: null,
-  fei_current_owner_user_name_cache: null,
-  fei_current_owner_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
-  fei_current_owner_entity_name_cache: 'ETG 1',
-  fei_current_owner_role: FeiOwnerRole.ETG,
-  fei_prev_owner_user_id: '0Y545',
-  fei_prev_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
-  fei_next_owner_entity_id: null,
-  fei_next_owner_role: null,
+};
+
+const ownershipTakenChargeByEtg: CarcasseOwnership = {
+  ...ownershipValidatedByPremierDetenteur,
+  current_owner_user_id: null,
+  current_owner_user_name_cache: null,
+  current_owner_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
+  current_owner_entity_name_cache: 'ETG 1',
+  current_owner_role: FeiOwnerRole.ETG,
+  prev_owner_user_id: '0Y545',
+  prev_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+  next_owner_entity_id: null,
+  next_owner_role: null,
   latest_intermediaire_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
   latest_intermediaire_name_cache: 'ETG 1',
 };
@@ -1074,10 +1145,14 @@ const feiTakenChargeByEtg: Prisma.FeiUncheckedCreateInput = {
 const feiTakenChargeByEtgAndAssignedToSvi: Prisma.FeiUncheckedCreateInput = {
   ...feiTakenChargeByEtg,
   numero: 'ZACH-20250707-QZ6E0-235243',
+};
+
+const ownershipTakenChargeByEtgAndAssignedToSvi: CarcasseOwnership = {
+  ...ownershipTakenChargeByEtg,
   svi_assigned_at: dayjs().subtract(1, 'day').toDate(),
   svi_entity_id: '37a59a18-7f29-4177-a019-aafad6c73ee0',
-  fei_next_owner_entity_id: '37a59a18-7f29-4177-a019-aafad6c73ee0',
-  fei_next_owner_role: FeiOwnerRole.SVI,
+  next_owner_entity_id: '37a59a18-7f29-4177-a019-aafad6c73ee0',
+  next_owner_role: FeiOwnerRole.SVI,
   latest_intermediaire_entity_id: '37a59a18-7f29-4177-a019-aafad6c73ee0',
   latest_intermediaire_name_cache: 'SVI 1',
 };
@@ -1085,15 +1160,19 @@ const feiTakenChargeByEtgAndAssignedToSvi: Prisma.FeiUncheckedCreateInput = {
 const feiTakenChargeByCollecteur: Prisma.FeiUncheckedCreateInput = {
   ...feiValidatedByPremierDetenteurToCollecteur,
   numero: 'ZACH-20250707-QZ6E0-245242',
-  fei_current_owner_user_id: null,
-  fei_current_owner_user_name_cache: null,
-  fei_current_owner_entity_id: 'a447bab1-8796-48a4-b955-3a5466116bca',
-  fei_current_owner_entity_name_cache: 'Collecteur Pro 1',
-  fei_current_owner_role: FeiOwnerRole.COLLECTEUR_PRO,
-  fei_prev_owner_user_id: '0Y545',
-  fei_prev_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
-  fei_next_owner_entity_id: null,
-  fei_next_owner_role: null,
+};
+
+const ownershipTakenChargeByCollecteur: CarcasseOwnership = {
+  ...ownershipValidatedByPremierDetenteurToCollecteur,
+  current_owner_user_id: null,
+  current_owner_user_name_cache: null,
+  current_owner_entity_id: 'a447bab1-8796-48a4-b955-3a5466116bca',
+  current_owner_entity_name_cache: 'Collecteur Pro 1',
+  current_owner_role: FeiOwnerRole.COLLECTEUR_PRO,
+  prev_owner_user_id: '0Y545',
+  prev_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+  next_owner_entity_id: null,
+  next_owner_role: null,
   latest_intermediaire_entity_id: 'a447bab1-8796-48a4-b955-3a5466116bca',
   latest_intermediaire_name_cache: 'Collecteur Pro 1',
 };
@@ -1101,6 +1180,10 @@ const feiTakenChargeByCollecteur: Prisma.FeiUncheckedCreateInput = {
 const feiClosedBySvi: Prisma.FeiUncheckedCreateInput = {
   ...feiTransmittedByEtgToSvi,
   numero: 'ZACH-20250707-QZ6E0-205242',
+};
+
+const ownershipClosedBySvi: CarcasseOwnership = {
+  ...ownershipTransmittedByEtgToSvi,
   svi_assigned_at: dayjs().subtract(12, 'day').toDate(),
   svi_closed_at: dayjs().subtract(2, 'day').toDate(),
   // SVI users created via createUserId are dynamic; real closure would set svi_closed_by_user_id.
@@ -1112,30 +1195,41 @@ const feiAllRefusedByEtgToSvi: Prisma.FeiUncheckedCreateInput = {
   numero: 'ZACH-20250707-QZ6E0-225242',
 };
 
+const ownershipAllRefusedByEtgToSvi: CarcasseOwnership = {
+  ...ownershipTransmittedByEtgToSvi,
+};
+
 const feiRefusedByEtg: Prisma.FeiUncheckedCreateInput = {
   ...feiValidatedByPremierDetenteur,
   numero: 'ZACH-20250707-QZ6E0-215242',
-  // When ETG refuses all carcasses, the fiche STAYS at the ETG (terminal state with
-  // intermediaire_closed_at set) — it does NOT get sent back to the PD.
-  fei_current_owner_role: FeiOwnerRole.ETG,
-  fei_current_owner_user_id: null,
-  fei_current_owner_user_name_cache: null,
-  fei_current_owner_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
-  fei_current_owner_entity_name_cache: 'ETG 1',
-  fei_prev_owner_user_id: '0Y545',
-  fei_prev_owner_entity_id: null,
-  fei_prev_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
-  fei_next_owner_user_id: null,
-  fei_next_owner_user_name_cache: null,
-  fei_next_owner_entity_id: null,
-  fei_next_owner_role: null,
+};
+
+// When ETG refuses all carcasses, the fiche STAYS at the ETG (terminal state with
+// intermediaire_closed_at set) — it does NOT get sent back to the PD.
+const ownershipRefusedByEtg: CarcasseOwnership = {
+  ...ownershipValidatedByPremierDetenteur,
+  current_owner_role: FeiOwnerRole.ETG,
+  current_owner_user_id: null,
+  current_owner_user_name_cache: null,
+  current_owner_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
+  current_owner_entity_name_cache: 'ETG 1',
+  prev_owner_user_id: '0Y545',
+  prev_owner_entity_id: null,
+  prev_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+  next_owner_user_id: null,
+  next_owner_user_name_cache: null,
+  next_owner_entity_id: null,
+  next_owner_role: null,
   intermediaire_closed_at: dayjs().subtract(1, 'day').toDate(),
   intermediaire_closed_by_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
   latest_intermediaire_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
   latest_intermediaire_name_cache: 'ETG 1',
 };
 
-function getCarcasses(fei: Fei): Array<Prisma.CarcasseUncheckedCreateInput> {
+function getCarcasses(
+  fei: Fei,
+  ownership: CarcasseOwnership = {}
+): Array<Prisma.CarcasseUncheckedCreateInput> {
   const feiNumero = fei.numero;
   return [
     {
@@ -1192,10 +1286,15 @@ function getCarcasses(fei: Fei): Array<Prisma.CarcasseUncheckedCreateInput> {
     return {
       ...carcasse,
       ...mapFeiFieldsToCarcasse(fei, carcasse as unknown as Carcasse),
+      // Champs de propriété / transmission : désormais portés par la carcasse.
+      ...ownership,
     };
   });
 }
 
+// Recopie sur la carcasse les seuls champs encore présents sur la Fei (métadonnées,
+// examinateur initial, identité du premier détenteur). Les champs de propriété /
+// transmission viennent de l'objet `ownership` (cf getCarcasses).
 function mapFeiFieldsToCarcasse(fei: Fei, carcasse: Prisma.CarcasseUncheckedCreateInput) {
   return {
     date_mise_a_mort: fei.date_mise_a_mort,
@@ -1204,14 +1303,6 @@ function mapFeiFieldsToCarcasse(fei: Fei, carcasse: Prisma.CarcasseUncheckedCrea
     heure_evisceration_derniere_carcasse_fei: fei.heure_evisceration_derniere_carcasse,
     heure_mise_a_mort: carcasse.heure_mise_a_mort,
     heure_evisceration: carcasse.heure_evisceration,
-    premier_detenteur_depot_type: fei.premier_detenteur_depot_type,
-    premier_detenteur_depot_entity_id: fei.premier_detenteur_depot_entity_id,
-    premier_detenteur_depot_entity_name_cache: fei.premier_detenteur_depot_entity_name_cache,
-    premier_detenteur_depot_ccg_at: fei.premier_detenteur_depot_ccg_at,
-    premier_detenteur_transport_type: fei.premier_detenteur_transport_type,
-    premier_detenteur_transport_date: fei.premier_detenteur_transport_date,
-    premier_detenteur_prochain_detenteur_role_cache: fei.premier_detenteur_prochain_detenteur_role_cache,
-    premier_detenteur_prochain_detenteur_id_cache: fei.premier_detenteur_prochain_detenteur_id_cache,
     examinateur_initial_offline: fei.examinateur_initial_offline,
     examinateur_initial_user_id: fei.examinateur_initial_user_id,
     examinateur_initial_approbation_mise_sur_le_marche:
@@ -1222,33 +1313,5 @@ function mapFeiFieldsToCarcasse(fei: Fei, carcasse: Prisma.CarcasseUncheckedCrea
     premier_detenteur_user_id: fei.premier_detenteur_user_id,
     premier_detenteur_entity_id: fei.premier_detenteur_entity_id,
     premier_detenteur_name_cache: fei.premier_detenteur_name_cache,
-    intermediaire_closed_at: fei.intermediaire_closed_at,
-    intermediaire_closed_by_user_id: fei.intermediaire_closed_by_user_id,
-    intermediaire_closed_by_entity_id: fei.intermediaire_closed_by_entity_id,
-    latest_intermediaire_user_id: fei.latest_intermediaire_user_id,
-    latest_intermediaire_entity_id: fei.latest_intermediaire_entity_id,
-    latest_intermediaire_name_cache: fei.latest_intermediaire_name_cache,
-    svi_assigned_at: fei.svi_assigned_at,
-    svi_entity_id: fei.svi_entity_id,
-    svi_user_id: fei.svi_user_id,
-    svi_closed_at: fei.svi_closed_at,
-    svi_closed_by_user_id: fei.svi_closed_by_user_id,
-    current_owner_user_id: fei.fei_current_owner_user_id,
-    current_owner_user_name_cache: fei.fei_current_owner_user_name_cache,
-    current_owner_entity_id: fei.fei_current_owner_entity_id,
-    current_owner_entity_name_cache: fei.fei_current_owner_entity_name_cache,
-    current_owner_role: fei.fei_current_owner_role,
-    next_owner_wants_to_sous_traite: fei.fei_next_owner_wants_to_sous_traite,
-    next_owner_sous_traite_at: fei.fei_next_owner_sous_traite_at,
-    next_owner_sous_traite_by_user_id: fei.fei_next_owner_sous_traite_by_user_id,
-    next_owner_sous_traite_by_entity_id: fei.fei_next_owner_sous_traite_by_entity_id,
-    next_owner_user_id: fei.fei_next_owner_user_id,
-    next_owner_user_name_cache: fei.fei_next_owner_user_name_cache,
-    next_owner_entity_id: fei.fei_next_owner_entity_id,
-    next_owner_entity_name_cache: fei.fei_next_owner_entity_name_cache,
-    next_owner_role: fei.fei_next_owner_role,
-    prev_owner_user_id: fei.fei_prev_owner_user_id,
-    prev_owner_entity_id: fei.fei_prev_owner_entity_id,
-    prev_owner_role: fei.fei_prev_owner_role,
   };
 }

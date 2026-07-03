@@ -10,7 +10,6 @@ import { v4 as uuidv4 } from 'uuid';
 import type { UserForFei } from '~/src/types/user';
 import type { EntityWithUserRelation } from '~/src/types/entity';
 import type { UserConnexionResponse } from '~/src/types/responses';
-import type { FeiWithIntermediaires } from '~/src/types/fei';
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import dayjs from 'dayjs';
@@ -50,7 +49,7 @@ const PERSISTED_KEYS: (keyof State)[] = [
 export interface State {
   isOnline: boolean;
   dataIsSynced: boolean;
-  feis: Record<FeiWithIntermediaires['numero'], FeiWithIntermediaires>;
+  feis: Record<Fei['numero'], Fei>;
   users: Record<UserForFei['id'], UserForFei>;
   entities: Record<EntityWithUserRelation['id'], EntityWithUserRelation>;
   detenteursInitiauxIds: Array<UserForFei['id']>;
@@ -81,8 +80,8 @@ type CreateLog = {
 };
 
 interface Actions {
-  createFei: (newFei: FeiWithIntermediaires) => void;
-  updateFei: (fei_numero: FeiWithIntermediaires['numero'], fei: Partial<FeiWithIntermediaires>) => void;
+  createFei: (newFei: Fei) => void;
+  updateFei: (fei_numero: Fei['numero'], fei: Partial<Fei>) => void;
   createCarcasse: (newCarcasse: Carcasse) => void;
   updateCarcasse: (
     zacharie_carcasse_id: Carcasse['zacharie_carcasse_id'],
@@ -152,7 +151,7 @@ const useZustandStore = create<State & Actions>()(
     persist(
       (set, get): State & Actions => ({
         ...initialState(),
-        createFei: (newFei: FeiWithIntermediaires) => {
+        createFei: (newFei: Fei) => {
           newFei.is_synced = false;
           newFei.updated_at = dayjs().toDate();
           useZustandStore.setState((state) => ({
@@ -161,17 +160,14 @@ const useZustandStore = create<State & Actions>()(
             dataIsSynced: false,
           }));
         },
-        updateFei: (
-          fei_numero: FeiWithIntermediaires['numero'],
-          partialFei: Partial<FeiWithIntermediaires>
-        ) => {
+        updateFei: (fei_numero: Fei['numero'], partialFei: Partial<Fei>) => {
           // Base sur le registre vivant (state.carcasses), pas sur carcassesRegistry qui n'est figé
           // qu'au chargement : sinon on réécrit les carcasses avec des données périmées et on écrase
           // les mutations locales récentes (ex : current_owner_role posé juste avant par une prise en charge).
           const carcassefeiCarcasses = Object.values(get().carcasses).filter(
             (c) => c.fei_numero === fei_numero
           );
-          const nextFei: FeiWithIntermediaires = {
+          const nextFei: Fei = {
             ...useZustandStore.getState().feis[fei_numero],
             ...partialFei,
             updated_at: dayjs().toDate(),

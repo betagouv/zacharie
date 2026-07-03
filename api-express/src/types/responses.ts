@@ -12,7 +12,6 @@ import type {
   ApiKeyApprovalByUserOrEntity,
 } from '@prisma/client';
 import type { UserForFei, UserForAdmin } from './user';
-import type { FeiPopulated } from './fei';
 import type { EntityForAdmin, EntityWithUserRelation, EntitiesByTypeAndId, EntitiesById } from './entity';
 
 export interface SearchResponse {
@@ -20,13 +19,13 @@ export interface SearchResponse {
   data: Array<{
     searchQuery: string;
     redirectUrl: string;
-    carcasse_numero_bracelet: string;
-    carcasse_espece: string;
+    carcasse_numero_bracelet: Carcasse['numero_bracelet'];
+    carcasse_espece: Carcasse['espece'];
     carcasse_type: Carcasse['type'] | '';
-    fei_numero: string;
-    fei_date_mise_a_mort: string;
-    fei_svi_assigned_at: string;
-    fei_commune_mise_a_mort: string;
+    carcasse_svi_assigned_at: Carcasse['svi_assigned_at'];
+    fei_numero: Fei['numero'];
+    fei_date_mise_a_mort: Fei['date_mise_a_mort'];
+    fei_commune_mise_a_mort: Fei['commune_mise_a_mort'];
   }>;
   error: string;
 }
@@ -305,7 +304,7 @@ export interface SyncRequest {
 export interface SyncResponse {
   ok: boolean;
   data: {
-    feis: Array<FeiPopulated>;
+    feis: Array<Fei>;
     carcasses: Array<Carcasse>;
     carcassesIntermediaires: Array<CarcasseIntermediaire>;
     carcasseModifRequests: Array<CarcasseModificationRequest>;
@@ -483,7 +482,6 @@ export interface AdminFeisResponse {
         FeiExaminateurInitialUser: { email: string } | null;
         FeiPremierDetenteurUser: { email: string } | null;
         FeiPremierDetenteurEntity: { nom_d_usage: string } | null;
-        FeiSviEntity: { nom_d_usage: string } | null;
         _count: { Carcasses: number };
       }
     >;
@@ -515,8 +513,6 @@ export interface AdminFeiDetailResponse {
       FeiExaminateurInitialUser: { email: string } | null;
       FeiPremierDetenteurUser: { email: string } | null;
       FeiPremierDetenteurEntity: { nom_d_usage: string } | null;
-      FeiSviEntity: { nom_d_usage: string } | null;
-      FeiSviUser: { email: string } | null;
     };
   };
   error: string;

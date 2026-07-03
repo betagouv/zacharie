@@ -53,7 +53,6 @@ const baseFei: Partial<Fei> = {
   numero: FEI,
   deleted_at: null,
   examinateur_initial_user_id: examinateurInitial.id,
-  fei_current_owner_user_id: examinateurInitial.id,
 };
 
 const baseCarcasse: Partial<Carcasse> = {

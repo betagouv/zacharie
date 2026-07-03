@@ -1,7 +1,6 @@
-import type { FeiWithIntermediaires } from '@api/src/types/fei';
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
-import { Carcasse, CarcasseStatus, CarcasseType, FeiOwnerRole, UserRoles } from '@prisma/client';
+import { Fei, Carcasse, CarcasseStatus, CarcasseType, FeiOwnerRole, UserRoles } from '@prisma/client';
 import dayjs from 'dayjs';
 import petitGibier from '@app/data/petit-gibier.json';
 
@@ -10,7 +9,7 @@ type InitialParamsProps = {
   numeroBracelet: string;
   espece: string;
   nombreDAnimaux: string;
-  fei: FeiWithIntermediaires;
+  fei: Fei;
 };
 
 export async function createNewCarcasse({

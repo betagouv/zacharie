@@ -37,6 +37,8 @@ import type { EntityWithUserRelation } from '@api/src/types/entity';
 import { loadData, useLoaderEffect } from '@app/utils/load-data';
 import TrichineSection from '@app/components/TrichineSection';
 import { TRICHINE_FEATURE_ENABLED } from '@app/utils/trichine';
+import { useGetTransmissionFromCarcasse } from '@app/utils/get-transmissions-sorted';
+import { CarcasseTransmissionWihMetadata } from '@app/types/carcasse';
 
 const gibierSelect = {
   grand: grandGibier.especes,
@@ -144,6 +146,7 @@ type TimelineEvent = { date: Date; label: string };
 
 function buildChasseurTimeline(
   fei: Fei,
+  transmission: CarcasseTransmissionWihMetadata,
   carcasse: Carcasse,
   intermediaires: Array<CarcasseIntermediaire>,
   users: Record<string, UserForFei>,
@@ -157,7 +160,7 @@ function buildChasseurTimeline(
 
   if (
     fei.examinateur_initial_date_approbation_mise_sur_le_marche &&
-    fei.fei_current_owner_role !== FeiOwnerRole.EXAMINATEUR_INITIAL
+    transmission.content.current_owner_role !== FeiOwnerRole.EXAMINATEUR_INITIAL
   ) {
     const premierDetenteur = getPremierDetenteurDisplayName(fei, users, entities);
     events.push({
@@ -166,14 +169,14 @@ function buildChasseurTimeline(
     });
   }
 
-  if (fei.premier_detenteur_depot_ccg_at) {
+  if (transmission.content.premier_detenteur_depot_ccg_at) {
     const ccgName = getEntityDisplayName(
-      fei.premier_detenteur_depot_entity_id,
+      transmission.content.premier_detenteur_depot_entity_id,
       entities,
-      fei.premier_detenteur_depot_entity_name_cache
+      transmission.content.premier_detenteur_depot_entity_name_cache
     );
     events.push({
-      date: new Date(fei.premier_detenteur_depot_ccg_at),
+      date: new Date(transmission.content.premier_detenteur_depot_ccg_at),
       label: `Dépôt des carcasses ${ccgName}`,
     });
   }
@@ -363,6 +366,7 @@ function ExaminateurCarcasseDetailLoaded() {
   const fei = feis[params.fei_numero!];
   const carcasses = useZustandStore((state) => state.carcasses);
   const carcasse = carcasses[params.zacharie_carcasse_id!];
+  const transmission = useGetTransmissionFromCarcasse(carcasse);
   const users = useZustandStore((state) => state.users);
   const entities = useZustandStore((state) => state.entities);
   const updateStateCarcasse = useZustandStore((state) => state.updateCarcasse);
@@ -402,8 +406,8 @@ function ExaminateurCarcasseDetailLoaded() {
   const examinateurName = useMemo(() => getExaminateurDisplayName(fei, users), [fei, users]);
 
   const timelineEvents = useMemo(
-    () => buildChasseurTimeline(fei, carcasse, intermediaires, users, entities),
-    [fei, carcasse, intermediaires, users, entities]
+    () => buildChasseurTimeline(fei, transmission, carcasse, intermediaires, users, entities),
+    [fei, carcasse, intermediaires, users, entities, transmission]
   );
 
   const viewRole: CardViewRole = 'chasseur';
