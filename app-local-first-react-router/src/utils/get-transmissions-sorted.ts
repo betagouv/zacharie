@@ -435,7 +435,6 @@ export function useGetTransmissionFromURLParams() {
   const premier_detenteur_prochain_detenteur_id_cache = params.premier_detenteur_prochain_detenteur_id_cache;
   const transmissionId = buildTransmissionId(fei_numero, premier_detenteur_prochain_detenteur_id_cache);
   const transmission = useGetTransmissionFromTransmissionId(transmissionId);
-  console.log({ transmissionId, transmission });
   return transmission;
 }
 
@@ -455,15 +454,22 @@ export function useGetTransmissionFromTransmissionId(transmissionId: string) {
   );
 
   useEffect(() => {
-    const transmission = transmissions[transmissionId]?.content;
-    const transmissionKeys = Object.keys(transmission) as Array<keyof CarcasseTransmission>;
+    // Aucune transmission ne correspond à cet id (ex: route /fei/:fei_numero sans prochain détenteur
+    // sur une fiche déjà dispatchée) : rien à calculer, l'appelant doit gérer l'absence.
+    const current = transmissions[transmissionId];
+    if (!current) {
+      setTransmission(current);
+      return;
+    }
+    const content = current.content;
+    const transmissionKeys = Object.keys(content) as Array<keyof CarcasseTransmission>;
     let allCarcassesDone = true;
-    const carcasseRef = transmissions[transmissionId].carcasses[0]!;
-    for (const carcasse of transmissions[transmissionId].carcasses) {
-      checkCarcasseAgainstTransmission(transmissionKeys, transmission, carcasse, carcasseRef);
+    const carcasseRef = current.carcasses[0]!;
+    for (const carcasse of current.carcasses) {
+      checkCarcasseAgainstTransmission(transmissionKeys, content, carcasse, carcasseRef);
       if (!isCarcasseDone(carcasse)) allCarcassesDone = false;
     }
-    setTransmission({ ...transmissions[transmissionId], allCarcassesDone });
+    setTransmission({ ...current, allCarcassesDone });
   }, [transmissions, transmissionId]);
 
   return transmission;

@@ -21,10 +21,12 @@ export default function ChasseurCurrentOwnerConfirm() {
   const feis = useZustandStore((state) => state.feis);
   const fei = feis[params.fei_numero!];
   const entities = useZustandStore((state) => state.entities);
-  const carcasses = transmission.carcasses;
+  // Sur la route de base /fei/:fei_numero d'une fiche déjà dispatchée, aucune transmission ne
+  // correspond (l'id se construit sans prochain détenteur) : on garde tout null-safe puis on ne rend rien.
+  const carcasses = transmission?.carcasses ?? [];
 
-  const nextOwnerEntityId = transmission.content.next_owner_entity_id!;
-  const myNextOwnerRole = transmission.content.next_owner_role!;
+  const nextOwnerEntityId = transmission?.content.next_owner_entity_id!;
+  const myNextOwnerRole = transmission?.content.next_owner_role!;
   const nextOwnerEntity = entities[nextOwnerEntityId];
 
   // const userEntityIds = useMemo(() => {
@@ -49,7 +51,7 @@ export default function ChasseurCurrentOwnerConfirm() {
   // const hasRemainingUntakenCarcasses = myAlreadyHandledCarcasses.length < carcasses.length;
 
   const canConfirmCurrentOwner = useMemo(() => {
-    if (transmission.content.next_owner_user_id === user.id) {
+    if (transmission?.content.next_owner_user_id === user.id) {
       return true;
     }
     if (!nextOwnerEntity) {
@@ -59,7 +61,11 @@ export default function ChasseurCurrentOwnerConfirm() {
       return false;
     }
     return true;
-  }, [transmission.content.next_owner_user_id, user.id, nextOwnerEntity]);
+  }, [transmission?.content.next_owner_user_id, user.id, nextOwnerEntity]);
+
+  if (!transmission) {
+    return null;
+  }
 
   if (myNextOwnerRole !== FeiOwnerRole.PREMIER_DETENTEUR) {
     return null;
