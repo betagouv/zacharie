@@ -26,7 +26,7 @@ test('Pas de stockage - Transporter les carcasses soi-même', async ({ page }) =
   // le PD arrive directement sur la fiche éditable.
   await expect(page.getByRole('button', { name: 'Daim N° MM-001-001 Mise à' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Daim N° MM-001-002 Mise à' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Pigeons (10) N° MM-001-003' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Pigeons (10) N° MM-001-003 Mise à' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Daim N° MM-001-004 Mise à' })).toBeVisible();
   await page.getByRole('button', { name: 'Daim N° MM-001-001 Mise à' }).click();
   await expect(page.getByLabel('Daim - N° MM-001-001').getByText('Anomalies abats')).toBeVisible();
@@ -38,7 +38,7 @@ test('Pas de stockage - Transporter les carcasses soi-même', async ({ page }) =
   await page.getByRole('button', { name: 'Daim N° MM-001-002 Mise à' }).click();
   await expect(page.getByText('Unique - Abcès ou nodules')).toBeVisible();
   await page.getByRole('listitem').filter({ hasText: 'Fermer' }).getByRole('button').click();
-  await page.getByRole('button', { name: 'Pigeons (10) N° MM-001-003' }).click();
+  await page.getByRole('button', { name: 'Pigeons (10) N° MM-001-003 Mise à' }).click();
   await page.getByLabel('Pigeons - N° MM-001-').getByTitle('Fermer').click();
 
   await expect(page.getByText('Validation par le premier détenteur')).toBeVisible();
