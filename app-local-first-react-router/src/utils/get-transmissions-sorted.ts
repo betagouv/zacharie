@@ -454,22 +454,15 @@ export function useGetTransmissionFromTransmissionId(transmissionId: string) {
   );
 
   useEffect(() => {
-    // Aucune transmission ne correspond à cet id (ex: route /fei/:fei_numero sans prochain détenteur
-    // sur une fiche déjà dispatchée) : rien à calculer, l'appelant doit gérer l'absence.
-    const current = transmissions[transmissionId];
-    if (!current) {
-      setTransmission(current);
-      return;
-    }
-    const content = current.content;
-    const transmissionKeys = Object.keys(content) as Array<keyof CarcasseTransmission>;
+    const transmission = transmissions[transmissionId]?.content;
+    const transmissionKeys = Object.keys(transmission) as Array<keyof CarcasseTransmission>;
     let allCarcassesDone = true;
-    const carcasseRef = current.carcasses[0]!;
-    for (const carcasse of current.carcasses) {
-      checkCarcasseAgainstTransmission(transmissionKeys, content, carcasse, carcasseRef);
+    const carcasseRef = transmissions[transmissionId].carcasses[0]!;
+    for (const carcasse of transmissions[transmissionId].carcasses) {
+      checkCarcasseAgainstTransmission(transmissionKeys, transmission, carcasse, carcasseRef);
       if (!isCarcasseDone(carcasse)) allCarcassesDone = false;
     }
-    setTransmission({ ...current, allCarcassesDone });
+    setTransmission({ ...transmissions[transmissionId], allCarcassesDone });
   }, [transmissions, transmissionId]);
 
   return transmission;
