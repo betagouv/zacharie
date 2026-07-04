@@ -12,20 +12,6 @@ import { loadCarcasses } from './load-carcasses';
 
 let debug = false;
 
-// Rien en attente de remontée au serveur ? Sert à la bascule finale de `dataIsSynced`, une fois
-// l'aller-retour (POST /sync puis rechargement) terminé — même logique que le court-circuit d'entrée.
-function hasNothingToSync(state: ReturnType<typeof useZustandStore.getState>) {
-  return (
-    Object.values(state.feis).every((f) => f.is_synced) &&
-    Object.values(state.carcasses).every((c) => c.is_synced) &&
-    Object.values(state.carcassesIntermediaireById).every((ci) => ci.is_synced) &&
-    Object.values(state.modifRequestsByCarcasseId)
-      .flat()
-      .every((r) => r.is_synced) &&
-    state.logs.every((l) => l.is_synced)
-  );
-}
-
 // Single AbortController for the current sync request
 let syncAbortController: AbortController | null = null;
 
@@ -112,13 +98,7 @@ export async function syncData(calledFrom?: string) {
   } finally {
     if (!signal.aborted) {
       await loadCarcasses();
-      // Après un aller-retour complet, les items remontés reviennent `is_synced: true` via
-      // loadCarcasses. Si plus rien n'est en attente localement, on bascule le badge sur « En ligne ».
-      // Sans ça, `dataIsSynced` ne repasserait à true qu'au prochain syncData tombant sur une file vide
-      // (court-circuit ligne du dessus) — qui peut ne jamais survenir sur une page sans loader (ex : /envoyée).
-      if (hasNothingToSync(useZustandStore.getState())) {
-        useZustandStore.setState({ dataIsSynced: true });
-      }
+      useZustandStore.setState({ dataIsSynced: true });
     }
   }
 }

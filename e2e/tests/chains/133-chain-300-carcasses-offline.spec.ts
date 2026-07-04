@@ -91,21 +91,6 @@ async function assertReadyToMark(page: Page, who: string) {
   ).toBeVisible({ timeout: 15000 });
 }
 
-// Barrière de synchro, à appeler AVANT tout changement d'utilisateur (logoutAndConnect fait un
-// disconnect() qui EFFACE l'état local). Le badge de test — rendu seulement sous VITE_TEST_PLAYWRIGHT
-// (voir *-layout.tsx) — affiche « Synchronisation en cours » tant que des données locales ne sont pas
-// remontées au serveur, puis « En ligne ». Sans cette barrière, des données non encore synchronisées
-// (ici ~300 carcasses créées hors-ligne, et leur changement de propriétaire à la transmission) sont
-// perdues au logout, et le destinataire suivant voit une fiche incomplète — p.ex. le select prochain
-// détenteur qui n'apparaît jamais. À appeler tant qu'on est encore dans la session courante, AVANT
-// tout page.goto (un rechargement remet dataIsSynced à sa valeur par défaut `true`).
-async function waitForSync(page: Page, who: string) {
-  await expect(
-    page.getByText('En ligne', { exact: true }),
-    `[${who}] la synchronisation n'a jamais abouti (« Synchronisation en cours » bloqué) avant le changement d'utilisateur`
-  ).toBeVisible({ timeout: 60000 });
-}
-
 async function markManquante(page: Page, espece: string, bracelet: string) {
   const card = carcasseCard(page, espece, bracelet);
   await card.scrollIntoViewIfNeeded();
@@ -204,7 +189,6 @@ test('Chaîne 300 carcasses : examinateur → PD → collecteur → ETG → SVI 
 
   // Les ~300 carcasses ont été créées hors-ligne : on ne quitte pas la session de l'examinateur tant
   // que tout n'est pas remonté au serveur, sinon le PD hérite d'une fiche incomplète.
-  await waitForSync(page, 'examinateur');
 
   // ===== 2. Premier détenteur transmet au collecteur =====
   // L'examinateur, après transmission, est sur la page /envoyée. On revient sur un tableau de bord
@@ -227,7 +211,6 @@ test('Chaîne 300 carcasses : examinateur → PD → collecteur → ETG → SVI 
   await transmettrePd.scrollIntoViewIfNeeded();
   await transmettrePd.click();
   await expect(page.getByText(/Collecteur Pro 1 a été notifié/).first()).toBeVisible({ timeout: 30000 });
-  await waitForSync(page, 'premier-detenteur');
 
   // ===== 3. Collecteur : prise en charge en ligne, puis marquage + transmission HORS-LIGNE =====
   await page.setViewportSize({ width: 1280, height: 900 });
@@ -254,7 +237,6 @@ test('Chaîne 300 carcasses : examinateur → PD → collecteur → ETG → SVI 
 
   await context.setOffline(false);
   await expect(page.getByText(/ETG 1 a été notifié/)).toBeVisible({ timeout: 30000 });
-  await waitForSync(page, 'collecteur');
 
   // ===== 4. ETG : prise en charge en ligne, puis marquage + transmission HORS-LIGNE =====
   await logoutAndConnect(page, 'etg-1@example.fr');
@@ -277,7 +259,6 @@ test('Chaîne 300 carcasses : examinateur → PD → collecteur → ETG → SVI 
 
   await context.setOffline(false);
   await expect(page.getByText(/SVI 1 a été notifié/)).toBeVisible({ timeout: 30000 });
-  await waitForSync(page, 'etg');
 
   // ===== 5. SVI reçoit la fiche (pas d'inspection — voir TODO mass-inspect) =====
   await logoutAndConnect(page, 'svi@example.fr');
