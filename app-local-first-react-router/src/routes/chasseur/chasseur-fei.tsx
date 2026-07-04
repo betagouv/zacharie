@@ -152,6 +152,7 @@ function FEIChasseurLoaded() {
 
   const canEditAsPremierDetenteur = useMemo(() => {
     for (const currentTransmission of transmissions) {
+      console.log({ currentTransmission });
       if (
         currentTransmission.content.current_owner_role !== FeiOwnerRole.PREMIER_DETENTEUR &&
         currentTransmission.content.current_owner_role !== FeiOwnerRole.EXAMINATEUR_INITIAL

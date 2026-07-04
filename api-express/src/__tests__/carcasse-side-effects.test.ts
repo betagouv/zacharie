@@ -353,10 +353,12 @@ describe('notifyCircuitCourt', () => {
   });
 
   const mockUsersByIds = () =>
-    vi.mocked(prisma.user.findUnique).mockImplementation((({ where }: any) =>
-      Promise.resolve(
-        where.id === 'exam-1' ? { id: 'exam-1' } : where.id === 'pd-1' ? { id: 'pd-1' } : null
-      )) as any);
+    vi
+      .mocked(prisma.user.findUnique)
+      .mockImplementation((({ where }: any) =>
+        Promise.resolve(
+          where.id === 'exam-1' ? { id: 'exam-1' } : where.id === 'pd-1' ? { id: 'pd-1' } : null
+        )) as any);
 
   test('returns false when next_owner_role is unchanged', async () => {
     const c = makeCircuitCarcasse();

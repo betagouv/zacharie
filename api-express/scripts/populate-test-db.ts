@@ -977,6 +977,10 @@ if (withRole) {
 // propriété sont définis dans des objets `ownership...` appliqués à chaque carcasse.
 type CarcasseOwnership = Partial<Prisma.CarcasseUncheckedCreateInput>;
 
+// L'examinateur désigne directement le premier détenteur (examinateur-select-next) : il n'y a plus
+// d'étape « prendre en charge ». À ce stade la carcasse appartient donc DÉJÀ au premier détenteur
+// (current_owner = PREMIER_DETENTEUR), sans next_owner ni prev_owner — c'est l'état « à compléter »
+// côté PD, qui débloque canEditAsPremierDetenteur.
 const feiValidatedByExaminateur: Prisma.FeiUncheckedCreateInput = {
   numero: 'ZACH-20250707-QZ6E0-155242',
   date_mise_a_mort: '2025-07-07T00:00:00.000Z',
@@ -988,15 +992,14 @@ const feiValidatedByExaminateur: Prisma.FeiUncheckedCreateInput = {
   heure_mise_a_mort_premiere_carcasse: '12:12',
   heure_evisceration_derniere_carcasse: '12:14',
   resume_nombre_de_carcasses: '4 daims',
+  premier_detenteur_user_id: '0Y545',
+  premier_detenteur_name_cache: 'Pierre Petit',
 };
 
 const ownershipValidatedByExaminateur: CarcasseOwnership = {
-  current_owner_user_id: 'QZ6E0',
-  current_owner_user_name_cache: 'Marie Martin',
-  current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
-  next_owner_user_id: '0Y545',
-  next_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
-  next_owner_user_name_cache: 'Pierre Petit',
+  current_owner_user_id: '0Y545',
+  current_owner_user_name_cache: 'Pierre Petit',
+  current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
 };
 
 const feiValidatedByPremierDetenteur: Prisma.FeiUncheckedCreateInput = {

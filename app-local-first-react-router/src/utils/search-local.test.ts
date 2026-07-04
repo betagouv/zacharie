@@ -60,7 +60,11 @@ describe('searchLocally', () => {
   });
 
   it('excludes deleted / refused / manquante carcasses from bracelet search', () => {
-    const deleted = carcasse({ zacharie_carcasse_id: 'x_del', numero_bracelet: 'MM-001-002', deleted_at: new Date() });
+    const deleted = carcasse({
+      zacharie_carcasse_id: 'x_del',
+      numero_bracelet: 'MM-001-002',
+      deleted_at: new Date(),
+    });
     const refused = carcasse({
       zacharie_carcasse_id: 'x_ref',
       numero_bracelet: 'MM-001-003',

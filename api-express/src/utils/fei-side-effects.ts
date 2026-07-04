@@ -1,4 +1,5 @@
 import { Fei } from '@prisma/client';
+import dayjs from 'dayjs';
 import prisma from '~/prisma';
 import { sendWebhook } from '~/utils/api';
 
@@ -14,7 +15,10 @@ export async function webhookApprobation(existingFei: Fei, savedFei: Fei) {
 }
 
 export async function syncCarcasseDates(existingFei: Fei, savedFei: Fei) {
-  if (existingFei.date_mise_a_mort !== savedFei.date_mise_a_mort) {
+  if (
+    dayjs(existingFei.date_mise_a_mort).format('YYYY/MM/DD') !==
+    dayjs(savedFei.date_mise_a_mort).format('YYYY/MM/DD')
+  ) {
     await prisma.carcasse.updateMany({
       where: { fei_numero: savedFei.numero },
       data: { date_mise_a_mort: savedFei.date_mise_a_mort },
