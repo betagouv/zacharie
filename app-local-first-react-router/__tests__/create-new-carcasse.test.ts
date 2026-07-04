@@ -5,8 +5,7 @@ import { FeiOwnerRole, UserRoles, CarcasseType } from '@prisma/client';
 import { createNewCarcasse } from '../src/utils/create-new-carcasse';
 import useUser from '../src/zustand/user';
 import useZustandStore from '../src/zustand/store';
-import type { FeiWithIntermediaires } from '../../api-express/src/types/fei';
-import type { Carcasse } from '@prisma/client';
+import type { Carcasse, Fei } from '@prisma/client';
 
 vi.mock('@app/services/sentry', () => ({ capture: vi.fn() }));
 
@@ -20,7 +19,7 @@ const examinateurUser = {
   est_forme_a_l_examen_initial: true,
 } as unknown as ReturnType<typeof useUser.getState>['user'];
 
-function makeFei(overrides: Partial<FeiWithIntermediaires> = {}): FeiWithIntermediaires {
+function makeFei(overrides: Partial<Fei> = {}): Fei {
   return {
     numero: 'ZACH-TEST-001',
     date_mise_a_mort: new Date('2026-05-22T00:00:00.000Z'),
@@ -42,7 +41,7 @@ function makeFei(overrides: Partial<FeiWithIntermediaires> = {}): FeiWithInterme
     fei_prev_owner_entity_id: 'PREV-ENTITY-1',
     fei_prev_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
     ...overrides,
-  } as unknown as FeiWithIntermediaires;
+  } as unknown as Fei;
 }
 
 describe('createNewCarcasse', () => {
@@ -118,7 +117,7 @@ describe('createNewCarcasse', () => {
       fei_current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
       fei_current_owner_user_id: 'PD-USER-1',
       premier_detenteur_user_id: 'PD-USER-1',
-    } as Partial<FeiWithIntermediaires>);
+    } as Partial<Fei>);
 
     await createNewCarcasse({
       zacharieCarcasseId: `${fei.numero}_LATE-1`,

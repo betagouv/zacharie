@@ -246,12 +246,12 @@ export default function CollecteurDestinataireIntermediaire({
           getOptionValue={(f) => f.value}
           onChange={(f) => (f ? setProchainDetenteurEntityId(f.value) : setProchainDetenteurEntityId(null))}
           isClearable={!!prochainDetenteurEntityId}
-          inputId={Prisma.FeiScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache}
+          inputId={Prisma.CarcasseScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache}
           classNamePrefix={`select-prochain-detenteur`}
           required
           creatable
           isReadOnly={!canEdit}
-          name={Prisma.FeiScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache}
+          name={Prisma.CarcasseScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache}
         />
         {!!prochainDetenteur && !prochainDetenteur?.zacharie_compatible && (
           <Alert
@@ -334,10 +334,10 @@ export default function CollecteurDestinataireIntermediaire({
                 setDepotEntityId(f?.value ?? null);
               }}
               isClearable={!!depotEntityId}
-              inputId={Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id}
+              inputId={Prisma.CarcasseScalarFieldEnum.premier_detenteur_depot_entity_id}
               classNamePrefix={`select-ccg`}
               required
-              name={Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id}
+              name={Prisma.CarcasseScalarFieldEnum.premier_detenteur_depot_entity_id}
             />
           ) : (
             <div className="flex flex-col items-start gap-2">

@@ -31,7 +31,6 @@ test("Le refus d'une carcasse par ETG 1 reste invisible pour ETG 2", async ({ pa
   await page.setViewportSize({ width: 350, height: 667 });
   await connectWith(page, 'premier-detenteur@example.fr');
   await page.getByRole('link', { name: feiId }).click();
-  await page.getByRole('button', { name: 'Prendre en charge cette' }).click();
 
   // Group 1 → ETG 1 (defaults to the first 2 carcasses MM-001-003/004)
   await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").first().click();

@@ -28,7 +28,6 @@ test.skip("API POST /carcasse/:id d'une autre branche → 403", async ({ page })
   await page.setViewportSize({ width: 350, height: 667 });
   await connectWith(page, 'premier-detenteur@example.fr');
   await page.getByRole('link', { name: feiId }).click();
-  await page.getByRole('button', { name: 'Prendre en charge cette' }).click();
 
   // Select ETG 1 for group 1
   await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").first().click();

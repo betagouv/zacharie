@@ -230,27 +230,22 @@ function getEntityDisplay(role: UserRoles | FeiOwnerRole | EntityTypes | '') {
   }
 }
 
-export async function getFichePdf(fei: Fei) {
+export async function getFichePdf(carcasse: Carcasse, carcasses: Array<Carcasse>) {
   const logoMaasaPath = path.join(process.cwd(), 'src/assets/logo_MAASA.png');
   const logoZachariePath = path.join(process.cwd(), 'src/assets/logo_zacharie_solo_small.png');
+  const fei = await prisma.fei.findUnique({ where: { numero: carcasse.fei_numero } });
 
-  const carcasses = await prisma.carcasse.findMany({
-    where: {
-      fei_numero: fei.numero,
-      deleted_at: null,
-    },
-  });
   let premierDetenteurEntity: Entity | null = null;
-  if (fei.premier_detenteur_entity_id) {
+  if (carcasse.premier_detenteur_entity_id) {
     premierDetenteurEntity = await prisma.entity.findUnique({
       where: {
-        id: fei.premier_detenteur_entity_id,
+        id: carcasse.premier_detenteur_entity_id,
       },
     });
   }
   const premierDetenteurUser = await prisma.user.findUnique({
     where: {
-      id: fei.premier_detenteur_user_id,
+      id: carcasse.premier_detenteur_user_id,
     },
   });
   const address_ligne_1 = premierDetenteurEntity
@@ -265,26 +260,26 @@ export async function getFichePdf(fei: Fei) {
   const ville = premierDetenteurEntity ? premierDetenteurEntity!.ville : premierDetenteurUser!.ville;
   const examinateurInitialUser = await prisma.user.findUnique({
     where: {
-      id: fei.examinateur_initial_user_id,
+      id: carcasse.examinateur_initial_user_id,
     },
   });
   const destinataireFinalEntity = await prisma.entity.findUnique({
     where: {
-      id: fei.fei_next_owner_entity_id,
+      id: carcasse.next_owner_entity_id,
     },
   });
   let destinataireFinalUser: User | null = null;
-  if (fei.fei_next_owner_user_id) {
+  if (carcasse.next_owner_user_id) {
     destinataireFinalUser = await prisma.user.findUnique({
       where: {
-        id: fei.fei_next_owner_user_id,
+        id: carcasse.next_owner_user_id,
       },
     });
   } else {
     destinataireFinalUser = await prisma.entityAndUserRelations
       .findFirst({
         where: {
-          entity_id: fei.fei_next_owner_entity_id,
+          entity_id: carcasse.next_owner_entity_id,
           relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
           status: { in: [EntityRelationStatus.MEMBER, EntityRelationStatus.ADMIN] },
         },
@@ -296,10 +291,10 @@ export async function getFichePdf(fei: Fei) {
   }
   let centreDeCollecteEntity: Entity | null = null;
   let centreDeCollecteAdresse = '';
-  if (fei.premier_detenteur_depot_entity_id) {
+  if (carcasse.premier_detenteur_depot_entity_id) {
     centreDeCollecteEntity = await prisma.entity.findUnique({
       where: {
-        id: fei.premier_detenteur_depot_entity_id,
+        id: carcasse.premier_detenteur_depot_entity_id,
       },
     });
     centreDeCollecteAdresse = `${centreDeCollecteEntity!.address_ligne_1}`;
@@ -322,7 +317,7 @@ export async function getFichePdf(fei: Fei) {
           </View>
         </View>
         <View style={styles.titleSection}>
-          <Text style={styles.title}>FICHE D'EXAMEN INITIAL N° {fei.numero}</Text>
+          <Text style={styles.title}>FICHE D'EXAMEN INITIAL N° {carcasse.fei_numero}</Text>
         </View>
         {/* Two-column section: Premier détenteur & Destinataire final */}
         <Text style={styles.sectionHeader}>Circuit des carcasses en peau</Text>
@@ -458,14 +453,14 @@ export async function getFichePdf(fei: Fei) {
             )}
           </View>
         </View>
-        {fei.premier_detenteur_depot_entity_id && (
+        {carcasse.premier_detenteur_depot_entity_id && (
           <View style={styles.row} wrap={false}>
             <Text style={[styles.rowContent, styles.fieldValue, styles.borderLess, styles.rowHeader]}>
               Centre de collecte
             </Text>
             <View style={styles.rowWithMultipleText}>
               <Text style={[styles.rowContent, styles.fieldValue, styles.leftFieldValue]}>
-                Nom usuel : {fei.premier_detenteur_depot_entity_name_cache}
+                Nom usuel : {carcasse.premier_detenteur_depot_entity_name_cache}
               </Text>
               <Text style={[styles.rowContent, styles.fieldValue]}>
                 N° identification: {centreDeCollecteEntity.numero_ddecpp}
@@ -473,7 +468,9 @@ export async function getFichePdf(fei: Fei) {
             </View>
             <View style={[styles.fieldValue]}>
               <Text style={[styles.fieldValue, styles.borderLess, styles.paddingLess]}>Adresse :</Text>
-              {centreDeCollecteAdresse}
+              <Text style={[styles.fieldValue, styles.borderLess, styles.paddingLess]}>
+                {centreDeCollecteAdresse}
+              </Text>
             </View>
           </View>
         )}

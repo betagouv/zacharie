@@ -5,6 +5,7 @@ import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import { searchLocally } from '@app/utils/search-local';
 import { trackFeature } from '@app/services/matomo';
+import dayjs from 'dayjs';
 
 interface SearchInputProps {
   className?: string;
@@ -105,11 +106,16 @@ export default function SearchInput({ className, id, type }: SearchInputProps) {
                 </span>
               )}
               {data.fei_numero && <span className="text-sm">Fiche {data.fei_numero}</span>}
-              {data.fei_svi_assigned_at && (
-                <span className="text-xs text-gray-500 italic">Transmise le {data.fei_svi_assigned_at}</span>
+              {data.carcasse_svi_assigned_at && (
+                <span className="text-xs text-gray-500 italic">
+                  Transmise le
+                  {dayjs(data.carcasse_svi_assigned_at).format('DD/MM/YYYY')}
+                </span>
               )}
               {data.fei_date_mise_a_mort && (
-                <span className="text-xs text-gray-500 italic">Chasse du {data.fei_date_mise_a_mort}</span>
+                <span className="text-xs text-gray-500 italic">
+                  Chasse du {dayjs(data.fei_date_mise_a_mort).format('DD/MM/YYYY')}
+                </span>
               )}
             </a>
           ))}

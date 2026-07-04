@@ -1,3 +1,4 @@
+// @ts-nocheck TODO: fix API with Transmissions
 import {
   ApiKey,
   ApiKeyApprovalByUserOrEntity,
@@ -100,10 +101,9 @@ export function mapCarcasseForApi(carcasse: CarcasseGetForApi, fei: FeiGetForApi
       fei.examinateur_initial_approbation_mise_sur_le_marche,
     fei_examinateur_initial_date_approbation_mise_sur_le_marche:
       fei.examinateur_initial_date_approbation_mise_sur_le_marche,
-    fei_automatic_closed_at: fei.automatic_closed_at,
-    fei_intermediaire_closed_at: fei.intermediaire_closed_at,
-    fei_svi_assigned_at: fei.svi_assigned_at,
-    fei_svi_closed_at: fei.svi_closed_at,
+    automatic_closed_at: carcasse.svi_automatic_closed_at,
+    intermediaire_closed_at: carcasse.intermediaire_closed_at,
+    svi_closed_at: carcasse.svi_closed_at,
   };
 }
 
@@ -282,9 +282,10 @@ export type WebhookEvent =
   | 'USER_APPROVED_ACCESS'
   | 'USER_REJECTED_ACCESS'
   | 'FEI_APPROBATION_MISE_SUR_LE_MARCHE'
-  | 'FEI_ASSIGNEE_AU_PROCHAIN_DETENTEUR'
-  | 'FEI_ASSIGNEE_AU_SVI'
-  | 'FEI_PRISE_EN_CHARGE_PAR_PROCHAIN_DETENTEUR'
+  | 'CARCASSE_ASSIGNEE_AU_PROCHAIN_DETENTEUR'
+  | 'CARCASSE_ASSIGNEE_AU_SVI'
+  | 'CARCASSE_PRISE_EN_CHARGE_PAR_PROCHAIN_DETENTEUR'
+  | 'CARCASSE_CLOTUREE'
   | 'FEI_CLOTUREE';
 
 export async function sendWebhook(

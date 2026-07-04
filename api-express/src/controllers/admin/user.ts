@@ -433,7 +433,6 @@ const feiUserOR = (userId: string): Prisma.FeiWhereInput[] => [
   { created_by_user_id: userId },
   { examinateur_initial_user_id: userId },
   { premier_detenteur_user_id: userId },
-  { svi_user_id: userId },
 ];
 
 router.get(
@@ -456,7 +455,6 @@ router.get(
             FeiExaminateurInitialUser: { select: { email: true } },
             FeiPremierDetenteurUser: { select: { email: true } },
             FeiPremierDetenteurEntity: { select: { nom_d_usage: true } },
-            FeiSviEntity: { select: { nom_d_usage: true } },
             _count: { select: { Carcasses: true } },
           },
         }),

@@ -273,7 +273,7 @@ function DispatchGroupForm({
           getOptionValue={(f) => f.value}
           onChange={(f) => onUpdateGroup(group.id, { recipientEntityId: f ? f.value : null })}
           isClearable={!!group.recipientEntityId}
-          inputId={`${Prisma.FeiScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache}_${group.id}`}
+          inputId={`${Prisma.CarcasseScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache}_${group.id}`}
           classNamePrefix={`select-prochain-detenteur-${group.id}`}
           required
           creatable
@@ -282,7 +282,7 @@ function DispatchGroupForm({
             onOpenPartenaireModal(group.id, newOption);
           }}
           isReadOnly={!canEdit}
-          name={`${Prisma.FeiScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache}_${group.id}`}
+          name={`${Prisma.CarcasseScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache}_${group.id}`}
         />
         {errorFor('recipientEntityId') && (
           <p className="fr-error-text mt-1">{errorFor('recipientEntityId')}</p>
@@ -381,10 +381,10 @@ function DispatchGroupForm({
                   onUpdateGroup(group.id, { depotEntityId: f?.value ?? null });
                 }}
                 isClearable={!!group.depotEntityId}
-                inputId={`${Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id}_${group.id}`}
+                inputId={`${Prisma.CarcasseScalarFieldEnum.premier_detenteur_depot_entity_id}_${group.id}`}
                 classNamePrefix={`select-ccg-${group.id}`}
                 required
-                name={`${Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id}_${group.id}`}
+                name={`${Prisma.CarcasseScalarFieldEnum.premier_detenteur_depot_entity_id}_${group.id}`}
               />
               {errorFor('depotEntityId') && <p className="fr-error-text mt-1">{errorFor('depotEntityId')}</p>}
             </div>
@@ -410,8 +410,8 @@ function DispatchGroupForm({
                 ) : null
               }
               nativeInputProps={{
-                id: `${Prisma.FeiScalarFieldEnum.premier_detenteur_depot_ccg_at}_${group.id}`,
-                name: `${Prisma.FeiScalarFieldEnum.premier_detenteur_depot_ccg_at}_${group.id}`,
+                id: `${Prisma.CarcasseScalarFieldEnum.premier_detenteur_depot_ccg_at}_${group.id}`,
+                name: `${Prisma.CarcasseScalarFieldEnum.premier_detenteur_depot_ccg_at}_${group.id}`,
                 type: 'datetime-local',
                 required: true,
                 autoComplete: 'off',
@@ -518,8 +518,8 @@ function DispatchGroupForm({
                 ) : null
               }
               nativeInputProps={{
-                id: `${Prisma.FeiScalarFieldEnum.premier_detenteur_transport_date}_${group.id}`,
-                name: `${Prisma.FeiScalarFieldEnum.premier_detenteur_transport_date}_${group.id}`,
+                id: `${Prisma.CarcasseScalarFieldEnum.premier_detenteur_transport_date}_${group.id}`,
+                name: `${Prisma.CarcasseScalarFieldEnum.premier_detenteur_transport_date}_${group.id}`,
                 type: 'datetime-local',
                 required: true,
                 autoComplete: 'off',
@@ -619,7 +619,7 @@ function getGroupValidationError(
   return null;
 }
 
-export default function DestinatairePremierDetenteur({
+export default function DestinataireSelectPremierDetenteur({
   className = '',
   canEdit,
   disabled,
@@ -732,54 +732,27 @@ export default function DestinatairePremierDetenteur({
   // Multi-group dispatch state
   const [dispatchGroups, setDispatchGroups] = useState<DispatchGroup[]>(() => {
     const initialRecipient = (() => {
-      if (fei.premier_detenteur_prochain_detenteur_id_cache) {
-        return fei.premier_detenteur_prochain_detenteur_id_cache;
-      }
-      if (fei.fei_current_owner_role === EntityTypes.PREMIER_DETENTEUR) {
-        if (prefilledInfos?.premier_detenteur_prochain_detenteur_id_cache) {
-          return prefilledInfos.premier_detenteur_prochain_detenteur_id_cache;
-        }
+      if (prefilledInfos?.premier_detenteur_prochain_detenteur_id_cache) {
+        return prefilledInfos.premier_detenteur_prochain_detenteur_id_cache;
       }
       return null;
     })();
 
     const initialDepotEntityId = (() => {
-      if (fei.premier_detenteur_depot_entity_id) {
-        return fei.premier_detenteur_depot_entity_id;
-      }
-      if (fei.premier_detenteur_depot_type === DepotType.AUCUN) {
-        return null;
-      }
-      if (fei.fei_current_owner_role === EntityTypes.PREMIER_DETENTEUR) {
-        if (prefilledInfos?.premier_detenteur_depot_entity_id) {
-          return prefilledInfos.premier_detenteur_depot_entity_id;
-        }
+      if (prefilledInfos?.premier_detenteur_depot_entity_id) {
+        return prefilledInfos.premier_detenteur_depot_entity_id;
       }
       return null;
     })();
 
     const initialDepotType = (() => {
-      if (fei.premier_detenteur_depot_type) {
-        return fei.premier_detenteur_depot_type;
-      }
-      if (fei.premier_detenteur_depot_entity_id) {
-        const type = entities[fei.premier_detenteur_depot_entity_id]?.type;
-        if (type === EntityTypes.CCG) return DepotType.CCG;
-        if (type === EntityTypes.ETG) return DepotType.ETG;
-        return null;
-      }
-      if (fei.fei_current_owner_role === EntityTypes.PREMIER_DETENTEUR) {
-        if (prefilledInfos?.premier_detenteur_depot_type) {
-          return prefilledInfos.premier_detenteur_depot_type;
-        }
+      if (prefilledInfos?.premier_detenteur_depot_type) {
+        return prefilledInfos.premier_detenteur_depot_type;
       }
       return DepotType.AUCUN;
     })();
 
     const initialTransportType = (() => {
-      if (fei.premier_detenteur_transport_type) {
-        return fei.premier_detenteur_transport_type;
-      }
       if (prefilledInfos?.premier_detenteur_transport_type) {
         return prefilledInfos.premier_detenteur_transport_type;
       }
@@ -793,13 +766,9 @@ export default function DestinatairePremierDetenteur({
         carcasseIds: carcassesRestantesIds,
         depotType: initialDepotType,
         depotEntityId: initialDepotEntityId,
-        depotDate: fei.premier_detenteur_depot_ccg_at
-          ? dayjs(fei.premier_detenteur_depot_ccg_at).format('YYYY-MM-DDTHH:mm')
-          : undefined,
+        depotDate: undefined,
         transportType: initialTransportType,
-        transportDate: fei.premier_detenteur_transport_date
-          ? dayjs(fei.premier_detenteur_transport_date).format('YYYY-MM-DDTHH:mm')
-          : undefined,
+        transportDate: undefined,
       },
     ];
   });

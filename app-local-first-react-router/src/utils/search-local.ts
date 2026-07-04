@@ -1,7 +1,6 @@
 import dayjs from 'dayjs';
-import { UserRoles, type User, type Carcasse, type CarcasseIntermediaire } from '@prisma/client';
+import { Fei, UserRoles, type User, type Carcasse, type CarcasseIntermediaire } from '@prisma/client';
 import type { SearchResponse } from '@api/src/types/responses';
-import type { FeiWithIntermediaires } from '@api/src/types/fei';
 import type { FeiAndCarcasseAndIntermediaireIds } from '@app/types/carcasses-intermediaire';
 import { isRoleCircuitCourt } from './circuit-court';
 import { getTransmissionId, getTransmissionLinkFromCarcasse } from './get-transmission-id';
@@ -40,7 +39,7 @@ function carcasseToResultItem(
   searchQuery: string,
   prefix: RolePrefix,
   carcasse: Carcasse,
-  feis: Record<string, FeiWithIntermediaires>
+  feis: Record<string, Fei>
 ): SearchResponse['data'][number] {
   const fei = feis[carcasse.fei_numero];
   return {
@@ -48,10 +47,10 @@ function carcasseToResultItem(
     redirectUrl: carcasseRedirectUrl(prefix, carcasse),
     carcasse_numero_bracelet: carcasse.numero_bracelet,
     carcasse_espece: carcasse.espece || '',
+    carcasse_svi_assigned_at: carcasse.svi_assigned_at || null,
     carcasse_type: carcasse.type ?? '',
     fei_numero: carcasse.fei_numero,
-    fei_date_mise_a_mort: fei?.date_mise_a_mort ? dayjs(fei.date_mise_a_mort).format('DD/MM/YYYY') : '',
-    fei_svi_assigned_at: fei?.svi_assigned_at ? dayjs(fei.svi_assigned_at).format('DD/MM/YYYY') : '',
+    fei_date_mise_a_mort: fei?.date_mise_a_mort ? dayjs(fei.date_mise_a_mort).toDate() : null,
     fei_commune_mise_a_mort: fei?.commune_mise_a_mort || '',
   };
 }
@@ -68,7 +67,7 @@ export function searchLocally(
   searchQuery: string,
   user: User,
   carcasses: Record<string, Carcasse>,
-  feis: Record<string, FeiWithIntermediaires>,
+  feis: Record<string, Fei>,
   carcassesIntermediaireById: Record<FeiAndCarcasseAndIntermediaireIds, CarcasseIntermediaire>
 ): SearchResponse {
   const query = searchQuery.trim().toLowerCase();
@@ -140,12 +139,10 @@ export function searchLocally(
             redirectUrl: `/app/${prefix}/fei/${getTransmissionLinkFromCarcasse(carcasse)}`,
             carcasse_numero_bracelet: '',
             carcasse_espece: '',
+            carcasse_svi_assigned_at: null,
             carcasse_type: '' as const,
             fei_numero: carcasse.fei_numero,
-            fei_date_mise_a_mort: fei?.date_mise_a_mort
-              ? dayjs(fei.date_mise_a_mort).format('DD/MM/YYYY')
-              : '',
-            fei_svi_assigned_at: fei?.svi_assigned_at ? dayjs(fei.svi_assigned_at).format('DD/MM/YYYY') : '',
+            fei_date_mise_a_mort: fei?.date_mise_a_mort ? dayjs(fei.date_mise_a_mort).toDate() : null,
             fei_commune_mise_a_mort: fei?.commune_mise_a_mort || '',
           };
         }),
@@ -159,10 +156,10 @@ export function searchLocally(
         redirectUrl: feiRedirectUrl(prefix, fei.numero),
         carcasse_numero_bracelet: '',
         carcasse_espece: '',
+        carcasse_svi_assigned_at: null,
         carcasse_type: '' as const,
         fei_numero: fei.numero,
-        fei_date_mise_a_mort: fei.date_mise_a_mort ? dayjs(fei.date_mise_a_mort).format('DD/MM/YYYY') : '',
-        fei_svi_assigned_at: fei.svi_assigned_at ? dayjs(fei.svi_assigned_at).format('DD/MM/YYYY') : '',
+        fei_date_mise_a_mort: fei.date_mise_a_mort ? dayjs(fei.date_mise_a_mort).toDate() : null,
         fei_commune_mise_a_mort: fei.commune_mise_a_mort || '',
       })),
       error: '',

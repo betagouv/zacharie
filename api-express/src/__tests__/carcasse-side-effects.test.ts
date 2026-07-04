@@ -7,10 +7,15 @@ import { formatRenvoiExpediteurEmail } from '~/utils/formatCarcasseEmail';
 import {
   closeFeiAndNotifyChasseurOnSviCarcasseClose,
   notifyRenvoiExpediteur,
+  notifyCircuitCourt,
+  webhookIntermediaireClose,
 } from '~/utils/carcasse-side-effects';
 
 vi.mock('~/service/notifications', () => ({
   default: vi.fn().mockResolvedValue(undefined),
+}));
+vi.mock('~/templates/get-fiche-pdf', () => ({
+  getFichePdf: vi.fn().mockResolvedValue('base64pdf'),
 }));
 vi.mock('~/utils/formatCarcasseEmail', () => ({
   formatManualValidationSviChasseurEmail: vi.fn().mockResolvedValue(['object', 'body']),
@@ -88,56 +93,60 @@ describe('closeFeiAndNotifyChasseurOnSviCarcasseClose — early returns', () => 
     expect(prisma.fei.update).not.toHaveBeenCalled();
   });
 
-  test('does NOT close the FEI when one carcasse is still not terminal', async () => {
+  test('does not notify when one carcasse of the transmission is still not terminal', async () => {
     const existing = makeClosedCarcasse({ svi_closed_at: null, svi_closed_by_user_id: null });
     const updated = makeClosedCarcasse();
-    vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(
-      makeFei({ Carcasses: [makeClosedCarcasse(), makeOpenCarcasse()] }) as any
-    );
+    // La clôture/notif n'est déclenchée que si TOUTES les carcasses du lot sont terminales.
+    vi.mocked(prisma.carcasse.findMany).mockResolvedValueOnce([
+      makeClosedCarcasse(),
+      makeOpenCarcasse(),
+    ] as any);
 
     await closeFeiAndNotifyChasseurOnSviCarcasseClose(existing as any, updated as any);
 
-    expect(prisma.fei.update).not.toHaveBeenCalled();
     expect(sendNotificationToUser).not.toHaveBeenCalled();
+    expect(sendWebhook).not.toHaveBeenCalled();
   });
 });
 
 describe('closeFeiAndNotifyChasseurOnSviCarcasseClose — full close', () => {
-  test('writes Fei.svi_closed_at (latest carcasse date) + svi_closed_by_user_id, notifies both', async () => {
+  test('notifies examinateur + premier détenteur with a CARCASSE_CLOTUREE webhook', async () => {
     const existing = makeClosedCarcasse({ svi_closed_at: null, svi_closed_by_user_id: null });
-    const updated = makeClosedCarcasse({ svi_closed_at: new Date('2026-05-20T10:00:00Z') });
-    const early = makeClosedCarcasse({
-      zacharie_carcasse_id: `${feiNumero}_BR-EARLY`,
-      svi_closed_at: new Date('2026-05-18T08:00:00Z'),
+    const updated = makeClosedCarcasse({
+      examinateur_initial_user_id: examinateur.id,
+      premier_detenteur_user_id: premierDetenteur.id,
+      premier_detenteur_prochain_detenteur_id_cache: 'etg-entity-1',
     });
-    const late = makeClosedCarcasse({
-      zacharie_carcasse_id: `${feiNumero}_BR-LATE`,
-      svi_closed_at: new Date('2026-05-21T16:00:00Z'),
-    });
-    vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(
-      makeFei({ svi_closed_at: null, Carcasses: [early, late] }) as any
-    );
+    // Toutes les carcasses du lot sont terminales → clôture par carcasse + notif.
+    vi.mocked(prisma.carcasse.findMany).mockResolvedValueOnce([
+      makeClosedCarcasse(),
+      makeClosedCarcasse({ zacharie_carcasse_id: `${feiNumero}_BR-B` }),
+    ] as any);
+    vi.mocked(prisma.user.findUnique)
+      .mockResolvedValueOnce(examinateur as any)
+      .mockResolvedValueOnce(premierDetenteur as any);
 
     await closeFeiAndNotifyChasseurOnSviCarcasseClose(existing as any, updated as any);
 
-    expect(prisma.fei.update).toHaveBeenCalledOnce();
-    const arg = vi.mocked(prisma.fei.update).mock.calls[0][0] as any;
-    expect(arg.where).toEqual({ id: 'fei-1' });
-    // clôture la plus tardive parmi les carcasses de la fiche
-    expect(arg.data.svi_closed_at).toEqual(new Date('2026-05-21T16:00:00Z'));
-    expect(arg.data.svi_closed_by_user_id).toBe(sviUserId);
-
+    // La clôture vit désormais par carcasse : plus de Fei.update ici.
+    expect(prisma.fei.update).not.toHaveBeenCalled();
     expect(sendNotificationToUser).toHaveBeenCalledTimes(2);
-    expect(sendWebhook).toHaveBeenCalledWith('exam-1', 'FEI_CLOTUREE', { feiNumero });
-    expect(sendWebhook).toHaveBeenCalledWith('pd-1', 'FEI_CLOTUREE', { feiNumero });
+    expect(sendWebhook).toHaveBeenCalledWith(examinateur.id, 'CARCASSE_CLOTUREE', {
+      carcasseZacharieId: updated.zacharie_carcasse_id,
+    });
+    expect(sendWebhook).toHaveBeenCalledWith(premierDetenteur.id, 'CARCASSE_CLOTUREE', {
+      carcasseZacharieId: updated.zacharie_carcasse_id,
+    });
   });
 
   test('does not notify the premier détenteur twice when they are the examinateur', async () => {
     const existing = makeClosedCarcasse({ svi_closed_at: null, svi_closed_by_user_id: null });
-    const updated = makeClosedCarcasse();
-    vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(
-      makeFei({ FeiPremierDetenteurUser: examinateur }) as any
-    );
+    const updated = makeClosedCarcasse({
+      examinateur_initial_user_id: examinateur.id,
+      premier_detenteur_user_id: examinateur.id,
+    });
+    vi.mocked(prisma.carcasse.findMany).mockResolvedValueOnce([makeClosedCarcasse()] as any);
+    vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(examinateur as any);
 
     await closeFeiAndNotifyChasseurOnSviCarcasseClose(existing as any, updated as any);
 
@@ -264,5 +273,160 @@ describe('closeFeiAndNotifyChasseurOnSviCarcasseClose — idempotency', () => {
     expect(prisma.fei.update).not.toHaveBeenCalled();
     expect(sendNotificationToUser).not.toHaveBeenCalled();
     expect(sendWebhook).not.toHaveBeenCalled();
+  });
+});
+
+// Clôture par intermédiaire (circuit court agréé) : quand intermediaire_closed_at passe de null à une
+// date, on prévient examinateur + premier détenteur par webhook CARCASSE_CLOTUREE.
+describe('webhookIntermediaireClose', () => {
+  const makeIntermediaireCarcasse = (overrides: any = {}) => ({
+    zacharie_carcasse_id: `${feiNumero}_BR-A`,
+    fei_numero: feiNumero,
+    examinateur_initial_user_id: 'exam-1',
+    premier_detenteur_user_id: 'pd-1',
+    intermediaire_closed_at: null,
+    ...overrides,
+  });
+
+  test('no-op when the carcasse was already closed by an intermediaire', async () => {
+    const existing = makeIntermediaireCarcasse({ intermediaire_closed_at: new Date() });
+    const updated = makeIntermediaireCarcasse({ intermediaire_closed_at: new Date() });
+    await webhookIntermediaireClose(existing as any, updated as any);
+    expect(sendWebhook).not.toHaveBeenCalled();
+  });
+
+  test('no-op when the update does not set intermediaire_closed_at', async () => {
+    const c = makeIntermediaireCarcasse();
+    await webhookIntermediaireClose(c as any, c as any);
+    expect(sendWebhook).not.toHaveBeenCalled();
+  });
+
+  test('on transition → CARCASSE_CLOTUREE webhook to examinateur + premier détenteur', async () => {
+    const existing = makeIntermediaireCarcasse();
+    const updated = makeIntermediaireCarcasse({ intermediaire_closed_at: new Date() });
+    vi.mocked(prisma.user.findUnique).mockImplementation((({ where }: any) =>
+      Promise.resolve(
+        where.id === 'exam-1' ? { id: 'exam-1' } : where.id === 'pd-1' ? { id: 'pd-1' } : null
+      )) as any);
+
+    await webhookIntermediaireClose(existing as any, updated as any);
+
+    expect(sendWebhook).toHaveBeenCalledWith('exam-1', 'CARCASSE_CLOTUREE', {
+      carcasseZacharieId: `${feiNumero}_BR-A`,
+    });
+    expect(sendWebhook).toHaveBeenCalledWith('pd-1', 'CARCASSE_CLOTUREE', {
+      carcasseZacharieId: `${feiNumero}_BR-A`,
+    });
+    expect(sendWebhook).toHaveBeenCalledTimes(2);
+  });
+
+  test('does not double-webhook when premier détenteur is the examinateur', async () => {
+    const existing = makeIntermediaireCarcasse({ premier_detenteur_user_id: 'exam-1' });
+    const updated = makeIntermediaireCarcasse({
+      premier_detenteur_user_id: 'exam-1',
+      intermediaire_closed_at: new Date(),
+    });
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: 'exam-1' } as any);
+
+    await webhookIntermediaireClose(existing as any, updated as any);
+
+    expect(sendWebhook).toHaveBeenCalledOnce();
+    expect(sendWebhook).toHaveBeenCalledWith('exam-1', 'CARCASSE_CLOTUREE', {
+      carcasseZacharieId: `${feiNumero}_BR-A`,
+    });
+  });
+});
+
+describe('notifyCircuitCourt', () => {
+  const actingUser = { id: 'pd-1', prenom: 'Pierre', nom_de_famille: 'Petit' } as any;
+
+  const makeCircuitCarcasse = (overrides: any = {}) => ({
+    zacharie_carcasse_id: `${feiNumero}_BR-A`,
+    fei_numero: feiNumero,
+    examinateur_initial_user_id: 'exam-1',
+    premier_detenteur_user_id: 'pd-1',
+    premier_detenteur_prochain_detenteur_id_cache: 'commerce-1',
+    next_owner_entity_id: 'commerce-1',
+    next_owner_role: FeiOwnerRole.COMMERCE_DE_DETAIL,
+    current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+    ...overrides,
+  });
+
+  const mockUsersByIds = () =>
+    vi
+      .mocked(prisma.user.findUnique)
+      .mockImplementation((({ where }: any) =>
+        Promise.resolve(
+          where.id === 'exam-1' ? { id: 'exam-1' } : where.id === 'pd-1' ? { id: 'pd-1' } : null
+        )) as any);
+
+  test('returns false when next_owner_role is unchanged', async () => {
+    const c = makeCircuitCarcasse();
+    const result = await notifyCircuitCourt(c as any, c as any, actingUser);
+    expect(result).toBe(false);
+    expect(sendNotificationToUser).not.toHaveBeenCalled();
+  });
+
+  test('returns false when the new next_owner_role is not circuit court (e.g. ETG)', async () => {
+    const existing = makeCircuitCarcasse({ next_owner_role: null });
+    const updated = makeCircuitCarcasse({ next_owner_role: FeiOwnerRole.ETG });
+    const result = await notifyCircuitCourt(existing as any, updated as any, actingUser);
+    expect(result).toBe(false);
+    expect(sendNotificationToUser).not.toHaveBeenCalled();
+  });
+
+  test('notifies the destinataire and auto-closes when every carcasse of the lot is circuit court', async () => {
+    const existing = makeCircuitCarcasse({ next_owner_role: null });
+    const updated = makeCircuitCarcasse();
+    vi.mocked(prisma.entityAndUserRelations.findMany).mockResolvedValueOnce([
+      {
+        UserRelatedWithEntity: {
+          id: 'commerce-user',
+          email: 'c@example.fr',
+          prenom: 'Commerce',
+          nom_de_famille: 'User',
+          notifications: [],
+          web_push_tokens: [],
+          native_push_tokens: [],
+        },
+      },
+    ] as any);
+    vi.mocked(prisma.carcasse.findMany).mockResolvedValueOnce([updated] as any);
+    mockUsersByIds();
+
+    const result = await notifyCircuitCourt(existing as any, updated as any, actingUser);
+
+    expect(result).toBe(true);
+    // seul le destinataire (≠ acteur) est notifié
+    expect(sendNotificationToUser).toHaveBeenCalledOnce();
+    // tout le lot est en circuit court → clôture automatique par carcasse
+    expect(prisma.carcasse.updateMany).toHaveBeenCalledWith({
+      where: {
+        fei_numero: feiNumero,
+        premier_detenteur_prochain_detenteur_id_cache: 'commerce-1',
+        deleted_at: null,
+      },
+      data: { svi_automatic_closed_at: expect.any(Date) },
+    });
+  });
+
+  test('does NOT auto-close when a carcasse of the lot is not circuit court', async () => {
+    const existing = makeCircuitCarcasse({ next_owner_role: null });
+    const updated = makeCircuitCarcasse();
+    vi.mocked(prisma.entityAndUserRelations.findMany).mockResolvedValueOnce([] as any);
+    vi.mocked(prisma.carcasse.findMany).mockResolvedValueOnce([
+      updated,
+      makeCircuitCarcasse({
+        zacharie_carcasse_id: `${feiNumero}_BR-B`,
+        next_owner_role: null,
+        current_owner_role: FeiOwnerRole.ETG,
+      }),
+    ] as any);
+    mockUsersByIds();
+
+    const result = await notifyCircuitCourt(existing as any, updated as any, actingUser);
+
+    expect(result).toBe(true);
+    expect(prisma.carcasse.updateMany).not.toHaveBeenCalled();
   });
 });

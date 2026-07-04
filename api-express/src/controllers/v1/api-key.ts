@@ -1,14 +1,9 @@
 import express from 'express';
-import passport from 'passport';
-import { z } from 'zod';
 import { catchErrors } from '~/middlewares/errors.ts';
-import crypto from 'crypto';
 import { apiRateLimit } from '~/middlewares/rate-limit.ts';
 const router: express.Router = express.Router();
 import prisma from '~/prisma';
-import { ApiKeyApprovalStatus, ApiKeyScope } from '@prisma/client';
 import { RequestWithApiKey } from '~/types/request';
-import { checkApiKeyIsValidMiddleware } from '~/utils/api';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 dayjs.extend(utc);

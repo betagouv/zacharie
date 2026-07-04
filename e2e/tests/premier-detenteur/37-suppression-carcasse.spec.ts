@@ -18,9 +18,6 @@ test('Suppression carcasse non transmise — disparue après suppression', async
   await connectWith(page, 'premier-detenteur@example.fr');
   await page.getByRole('link', { name: feiId }).click();
 
-  // PD must take charge first to get canEditAsPremierDetenteur
-  await page.getByRole('button', { name: 'Prendre en charge cette' }).click();
-
   // After taking charge, carcasses in donnees-de-chasse should show trash icons
   const trashIcons = page.getByTitle('Supprimer la carcasse');
   await expect(trashIcons.first()).toBeVisible({ timeout: 10000 });

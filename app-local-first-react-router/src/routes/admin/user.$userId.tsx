@@ -727,7 +727,7 @@ function UserFeis({ userId }: { userId: string }) {
               <th className="p-1">examinateur</th>
               <th className="p-1">premier détenteur</th>
               <th className="p-1">nb carcasses</th>
-              <th className="p-1">SVI</th>
+              {/* <th className="p-1">SVI</th> */}
               <th className="p-1">created_at</th>
             </tr>
           </thead>
@@ -762,12 +762,12 @@ function UserFeis({ userId }: { userId: string }) {
                   {row.FeiPremierDetenteurEntity?.nom_d_usage ?? row.FeiPremierDetenteurUser?.email ?? '—'}
                 </td>
                 <td className="p-1">{row._count.Carcasses}</td>
-                <td
+                {/* <td
                   className="max-w-[160px] truncate p-1"
                   title={row.FeiSviEntity?.nom_d_usage ?? ''}
                 >
                   {row.FeiSviEntity?.nom_d_usage ?? '—'}
-                </td>
+                </td> */}
                 <td className="p-1">{formatDate(row.created_at)}</td>
               </tr>
             ))}

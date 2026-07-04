@@ -207,7 +207,7 @@ export default function NouvelleCarcasse({
               fei_numero: fei.numero,
               action: 'examinateur-carcasse-create',
               history: createHistoryInput(null, newCarcasse),
-              entity_id: fei.fei_current_owner_entity_id,
+              entity_id: null,
               zacharie_carcasse_id: newCarcasse.zacharie_carcasse_id,
               intermediaire_id: null,
               carcasse_intermediaire_id: null,

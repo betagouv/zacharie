@@ -25,7 +25,6 @@ test('Dispatch to two ETGs : each receives a disjoint subset of carcasses', asyn
 
   await connectWith(page, 'premier-detenteur@example.fr');
   await page.getByRole('link', { name: feiId }).click();
-  await page.getByRole('button', { name: 'Prendre en charge cette' }).click();
 
   // Groupe 1 : ETG 1 (premier groupe sélectionne automatiquement les carcasses par défaut)
   await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").first().click();

@@ -17,7 +17,6 @@ test('Création CCG inline depuis le formulaire de transmission', async ({ page 
   const feiId = 'ZACH-20250707-QZ6E0-155242';
   await connectWith(page, 'premier-detenteur@example.fr');
   await page.getByRole('link', { name: feiId }).click();
-  await page.getByRole('button', { name: 'Prendre en charge cette' }).click();
 
   const selectContainer = page.locator("[class*='select-prochain-detenteur'][class*='input-container']");
   await selectContainer.scrollIntoViewIfNeeded();

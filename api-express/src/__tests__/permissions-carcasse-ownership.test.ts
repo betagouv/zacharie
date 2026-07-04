@@ -146,11 +146,11 @@ describe('Role branching — where clause shape', () => {
       // une fois la fiche réellement transmise (sortie de l'examinateur initial).
       {
         premier_detenteur_entity_id: { in: ['entity-1', 'entity-2'] },
-        Fei: { fei_current_owner_role: { not: 'EXAMINATEUR_INITIAL' } },
+        current_owner_role: { not: 'EXAMINATEUR_INITIAL' },
       },
       {
         next_owner_entity_id: { in: ['entity-1', 'entity-2'] },
-        Fei: { fei_current_owner_role: { not: 'EXAMINATEUR_INITIAL' } },
+        current_owner_role: { not: 'EXAMINATEUR_INITIAL' },
       },
       { prev_owner_entity_id: { in: ['entity-1', 'entity-2'] } },
       { current_owner_entity_id: { in: ['entity-1', 'entity-2'] } },

@@ -213,7 +213,7 @@ export default function DestinataireSousTraite({
           getOptionValue={(f) => f.value}
           onChange={(f) => (f ? setProchainDetenteurEntityId(f.value) : setProchainDetenteurEntityId(null))}
           isClearable={!!prochainDetenteurEntityId}
-          inputId={Prisma.FeiScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache}
+          inputId={Prisma.CarcasseScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache}
           classNamePrefix={`select-prochain-detenteur`}
           required
           creatable
@@ -223,7 +223,7 @@ export default function DestinataireSousTraite({
             partenaireModal.open();
           }}
           isReadOnly={false}
-          name={Prisma.FeiScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache}
+          name={Prisma.CarcasseScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache}
         />
         {!!prochainDetenteur && !prochainDetenteur?.zacharie_compatible && (
           <Alert

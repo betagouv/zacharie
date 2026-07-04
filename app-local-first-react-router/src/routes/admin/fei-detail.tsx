@@ -129,9 +129,6 @@ export default function AdminFeiDetail() {
                 <Field label="Créée par (user ID)">{fei.created_by_user_id}</Field>
                 <Field label="Contexte de création">{fei.creation_context ?? '—'}</Field>
                 <Field label="Résumé nombre de carcasses">{fei.resume_nombre_de_carcasses ?? '—'}</Field>
-                {fei.automatic_closed_at && (
-                  <Field label="Clôturée automatiquement le">{formatDate(fei.automatic_closed_at)}</Field>
-                )}
                 <Field label="Créée le">{formatDate(fei.created_at)}</Field>
                 <Field label="Mise à jour le">{formatDate(fei.updated_at)}</Field>
                 {fei.deleted_at && <Field label="Supprimée le">{formatDate(fei.deleted_at)}</Field>}
@@ -172,12 +169,12 @@ export default function AdminFeiDetail() {
             </Section>
 
             {/* 4. SVI */}
-            <Section title="SVI">
+            {/* <Section title="SVI">
               <FieldGrid>
                 <Field label="Entité SVI">{fei.FeiSviEntity?.nom_d_usage ?? '—'}</Field>
                 <Field label="Utilisateur SVI">{fei.FeiSviUser?.email ?? '—'}</Field>
               </FieldGrid>
-            </Section>
+            </Section> */}
           </div>
         )}
 
