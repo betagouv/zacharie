@@ -10,6 +10,7 @@ import {
   useGetTransmissionFromCarcasse,
   useGetTransmissionFromURLParams,
 } from '@app/utils/get-transmissions-sorted';
+import { getLatestSviDates } from '@app/utils/get-latest-svi-dates';
 
 export default function FEIDonneesDeChasse({
   carcasseId,
@@ -109,31 +110,17 @@ export default function FEIDonneesDeChasse({
       if (sviEntity?.nom_d_usage) lines.push(sviEntity?.nom_d_usage);
       lines.push(`${sviEntity?.code_postal} ${sviEntity?.ville}`);
     }
-    const sviAssignedAt = transmission.carcasses.reduce<Date | null>((latest, c) => {
-      if (!c.svi_assigned_at) return latest;
-      const d = dayjs(c.svi_assigned_at).toDate();
-      return !latest || d > latest ? d : latest;
-    }, null);
+    const { sviAssignedAt, sviClosedAt, sviAutomaticClosedAt } = getLatestSviDates(transmission.carcasses);
     if (sviAssignedAt) {
       lines.push(
         `Date et heure d'assignation au SVI\u00A0: ${dayjs(sviAssignedAt).format('dddd D MMMM YYYY à HH:mm')}`
       );
     }
-    const sviClosedAt = transmission.carcasses.reduce<Date | null>((latest, c) => {
-      if (!c.svi_closed_at) return latest;
-      const d = dayjs(c.svi_closed_at).toDate();
-      return !latest || d > latest ? d : latest;
-    }, null);
     if (sviClosedAt) {
       lines.push(
         `Date et heure de clôture manuelle du SVI\u00A0: ${dayjs(sviClosedAt).format('dddd D MMMM YYYY à HH:mm')}`
       );
     }
-    const sviAutomaticClosedAt = transmission.carcasses.reduce<Date | null>((latest, c) => {
-      if (!c.svi_closed_at) return latest;
-      const d = dayjs(c.svi_closed_at).toDate();
-      return !latest || d > latest ? d : latest;
-    }, null);
     if (sviAutomaticClosedAt) {
       lines.push(
         `Date et heure de clôture automatique du SVI\u00A0: ${dayjs(sviAutomaticClosedAt).format('dddd D MMMM YYYY à HH:mm')}`

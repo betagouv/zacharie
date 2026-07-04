@@ -21,7 +21,7 @@ test("ETG 1 ne peut pas accéder à la carcasse d'ETG 2 via URL directe", async 
   await page.setViewportSize({ width: 350, height: 667 });
   await connectWith(page, 'premier-detenteur@example.fr');
   await page.getByRole('link', { name: feiId }).click();
-  await page.getByRole('button', { name: 'Prendre en charge cette' }).click();
+
   await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").first().click();
   await page.getByRole('option', { name: 'ETG 1 - 75000 Paris (' }).click();
   const g1s = page.getByText('Pas de stockage').first();

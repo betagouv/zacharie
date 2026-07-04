@@ -468,7 +468,9 @@ export async function getFichePdf(carcasse: Carcasse, carcasses: Array<Carcasse>
             </View>
             <View style={[styles.fieldValue]}>
               <Text style={[styles.fieldValue, styles.borderLess, styles.paddingLess]}>Adresse :</Text>
-              {centreDeCollecteAdresse}
+              <Text style={[styles.fieldValue, styles.borderLess, styles.paddingLess]}>
+                {centreDeCollecteAdresse}
+              </Text>
             </View>
           </View>
         )}

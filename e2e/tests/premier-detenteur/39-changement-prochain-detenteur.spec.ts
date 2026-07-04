@@ -17,7 +17,6 @@ test('Changement de prochain détenteur après sélection — cohérence du form
   const feiId = 'ZACH-20250707-QZ6E0-155242';
   await connectWith(page, 'premier-detenteur@example.fr');
   await page.getByRole('link', { name: feiId }).click();
-  await page.getByRole('button', { name: 'Prendre en charge cette' }).click();
 
   const select = page.locator("[class*='select-prochain-detenteur'][class*='input-container']");
   await select.click();

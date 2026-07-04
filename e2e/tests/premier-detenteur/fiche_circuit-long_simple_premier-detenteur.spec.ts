@@ -40,7 +40,7 @@ test('Pas de stockage - Transporter les carcasses soi-même', async ({ page }) =
   await page.getByRole('listitem').filter({ hasText: 'Fermer' }).getByRole('button').click();
   await page.getByRole('button', { name: 'Pigeons (10) N° MM-001-003' }).click();
   await page.getByLabel('Pigeons - N° MM-001-').getByTitle('Fermer').click();
-  await page.getByRole('button', { name: 'Prendre en charge cette' }).click();
+
   await expect(page.getByText('Validation par le premier détenteur')).toBeVisible();
   await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").click();
   await page.getByRole('option', { name: 'ETG 1 - 75000 Paris (' }).click();
@@ -65,7 +65,6 @@ test('Stockage - Transporter les carcasses soi-même', async ({ page }) => {
   await connectWith(page, 'premier-detenteur@example.fr');
   await expect(page).toHaveURL('http://localhost:3290/app/chasseur');
   await page.getByRole('link', { name: feiId }).click();
-  await page.getByRole('button', { name: 'Prendre en charge cette' }).click();
   const selectContainer = page.locator("[class*='select-prochain-detenteur'][class*='input-container']");
   await selectContainer.scrollIntoViewIfNeeded();
   await selectContainer.click();
@@ -97,7 +96,6 @@ test('Stockage - Le transport est réalisé par un collecteur professionnel', as
   await connectWith(page, 'premier-detenteur@example.fr');
   await expect(page).toHaveURL('http://localhost:3290/app/chasseur');
   await page.getByRole('link', { name: feiId }).click();
-  await page.getByRole('button', { name: 'Prendre en charge cette' }).click();
   const selectContainer = page.locator("[class*='select-prochain-detenteur'][class*='input-container']");
   await selectContainer.scrollIntoViewIfNeeded();
   await selectContainer.click();
