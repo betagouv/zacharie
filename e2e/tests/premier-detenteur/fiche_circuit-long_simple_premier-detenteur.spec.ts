@@ -21,9 +21,9 @@ test('Pas de stockage - Transporter les carcasses soi-même', async ({ page }) =
   await expect(page.getByRole('link', { name: feiId })).toContainText('chassenard');
   await expect(page.getByRole('link', { name: feiId })).toContainText('10 pigeons');
   await expect(page.getByRole('link', { name: feiId })).toContainText('3 daims');
-  await expect(page.getByRole('link', { name: feiId })).toContainText('À renseigner');
   await page.getByRole('link', { name: feiId }).click();
-  await expect(page.getByRole('button', { name: 'Prendre en charge cette' })).toBeVisible();
+  // L'examinateur désigne directement le premier détenteur : plus d'étape « prendre en charge »,
+  // le PD arrive directement sur la fiche éditable.
   await expect(page.getByRole('button', { name: 'Daim N° MM-001-001 Mise à' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Daim N° MM-001-002 Mise à' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Pigeons (10) N° MM-001-003' })).toBeVisible();
