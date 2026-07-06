@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../utils/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 
@@ -17,9 +17,6 @@ test('Suppression carcasse non transmise — disparue après suppression', async
   const feiId = 'ZACH-20250707-QZ6E0-155242';
   await connectWith(page, 'premier-detenteur@example.fr');
   await page.getByRole('link', { name: feiId }).click();
-
-  // PD must take charge first to get canEditAsPremierDetenteur
-  await page.getByRole('button', { name: 'Prendre en charge cette' }).click();
 
   // After taking charge, carcasses in donnees-de-chasse should show trash icons
   const trashIcons = page.getByTitle('Supprimer la carcasse');

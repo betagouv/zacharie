@@ -5,8 +5,12 @@ import dayjs from 'dayjs';
 import useZustandStore from '@app/zustand/store';
 import ItemNotEditable from '@app/components/ItemNotEditable';
 import { getIntermediaireRoleLabel } from '@app/utils/get-user-roles-label';
-import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { CarcassesIntermediaire } from '@app/types/carcasses-intermediaire';
+import {
+  useGetTransmissionFromCarcasse,
+  useGetTransmissionFromURLParams,
+} from '@app/utils/get-transmissions-sorted';
+import { getLatestSviDates } from '@app/utils/get-latest-svi-dates';
 
 export default function FEIDonneesDeChasse({
   carcasseId,
@@ -18,14 +22,18 @@ export default function FEIDonneesDeChasse({
   const params = useParams();
   const feis = useZustandStore((state) => state.feis);
   const carcassesState = useZustandStore((state) => state.carcasses);
+  const transmission = carcasseId
+    ? // eslint-disable-next-line react-hooks/rules-of-hooks
+      useGetTransmissionFromCarcasse(carcassesState[carcasseId])
+    : // eslint-disable-next-line react-hooks/rules-of-hooks
+      useGetTransmissionFromURLParams();
   const users = useZustandStore((state) => state.users);
   const entities = useZustandStore((state) => state.entities);
   const fei = feis[params.fei_numero!];
   const latestIntermediaire = intermediaires[0];
-  const feiCarcasses = useCarcassesForFei(params.fei_numero);
   const carcasses = carcasseId
     ? [carcassesState[carcasseId]].filter(Boolean).filter((c) => !c.deleted_at)
-    : feiCarcasses;
+    : transmission?.carcasses;
   const examinateurInitialUser = fei.examinateur_initial_user_id
     ? users[fei.examinateur_initial_user_id!]
     : null;
@@ -95,43 +103,40 @@ export default function FEIDonneesDeChasse({
   }, [intermediaires, entities]);
 
   const sviInput = useMemo(() => {
-    const lines = [];
-    const sviEntity = entities[fei.svi_entity_id!];
+    const lines: Array<string> = [];
+    if (!transmission?.content?.svi_entity_id) return lines;
+    const sviEntity = entities[transmission?.content?.svi_entity_id];
     if (sviEntity) {
-      lines.push(sviEntity?.nom_d_usage);
+      if (sviEntity?.nom_d_usage) lines.push(sviEntity?.nom_d_usage);
       lines.push(`${sviEntity?.code_postal} ${sviEntity?.ville}`);
     }
-    if (fei.svi_assigned_at) {
+    const { sviAssignedAt, sviClosedAt, sviAutomaticClosedAt } = getLatestSviDates(transmission.carcasses);
+    if (sviAssignedAt) {
       lines.push(
-        `Date et heure d'assignation au SVI\u00A0: ${dayjs(fei.svi_assigned_at).format('dddd D MMMM YYYY à HH:mm')}`
+        `Date et heure d'assignation au SVI\u00A0: ${dayjs(sviAssignedAt).format('dddd D MMMM YYYY à HH:mm')}`
       );
     }
-    const sviClosedAt = feiCarcasses.reduce<Date | null>((latest, c) => {
-      if (!c.svi_closed_at) return latest;
-      const d = dayjs(c.svi_closed_at).toDate();
-      return !latest || d > latest ? d : latest;
-    }, null);
     if (sviClosedAt) {
       lines.push(
         `Date et heure de clôture manuelle du SVI\u00A0: ${dayjs(sviClosedAt).format('dddd D MMMM YYYY à HH:mm')}`
       );
     }
-    if (fei.automatic_closed_at) {
+    if (sviAutomaticClosedAt) {
       lines.push(
-        `Date et heure de clôture automatique du SVI\u00A0: ${dayjs(fei.automatic_closed_at).format('dddd D MMMM YYYY à HH:mm')}`
+        `Date et heure de clôture automatique du SVI\u00A0: ${dayjs(sviAutomaticClosedAt).format('dddd D MMMM YYYY à HH:mm')}`
       );
     }
     return lines;
-  }, [fei.svi_entity_id, entities, fei.svi_assigned_at, feiCarcasses, fei.automatic_closed_at]);
+  }, [transmission?.content?.svi_entity_id, entities, transmission.carcasses]);
 
-  const ccgDate = fei.premier_detenteur_depot_ccg_at
-    ? dayjs(fei.premier_detenteur_depot_ccg_at).format('dddd D MMMM YYYY à HH:mm')
+  const ccgDate = transmission?.content?.premier_detenteur_depot_ccg_at
+    ? dayjs(transmission?.content?.premier_detenteur_depot_ccg_at).format('dddd D MMMM YYYY à HH:mm')
     : null;
   const etgDate = latestIntermediaire?.prise_en_charge_at
     ? dayjs(latestIntermediaire.prise_en_charge_at).format('dddd D MMMM YYYY à HH:mm')
     : null;
-  const sviAssignedToFeiAt = fei.svi_assigned_at
-    ? dayjs(fei.svi_assigned_at).format('dddd D MMMM YYYY à HH:mm')
+  const sviAssignedToFeiAt = transmission?.content?.svi_assigned_at
+    ? dayjs(transmission?.content?.svi_assigned_at).format('dddd D MMMM YYYY à HH:mm')
     : null;
 
   const milestones = useMemo(() => {
@@ -151,7 +156,7 @@ export default function FEIDonneesDeChasse({
     }
     if (ccgDate) {
       _milestones.push(
-        `Nom du Centre de Collecte (CCG)\u00A0: ${fei.premier_detenteur_depot_entity_name_cache}`
+        `Nom du Centre de Collecte (CCG)\u00A0: ${transmission?.content?.premier_detenteur_depot_entity_name_cache}`
       );
       _milestones.push(`Date et heure de dépôt dans le CCG\u00A0: ${ccgDate}`);
     }
@@ -161,7 +166,7 @@ export default function FEIDonneesDeChasse({
     return _milestones;
   }, [
     fei.commune_mise_a_mort,
-    fei.premier_detenteur_depot_entity_name_cache,
+    transmission?.content?.premier_detenteur_depot_entity_name_cache,
     ccgDate,
     etgDate,
     onlyPetitGibier,

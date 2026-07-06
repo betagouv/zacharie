@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../utils/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 
@@ -19,9 +19,6 @@ test('Dispatch 4 carcasses vers 2 destinataires ETG', async ({ page, context }) 
   await connectWith(page, 'premier-detenteur@example.fr');
   await expect(page).toHaveURL('http://localhost:3290/app/chasseur');
   await page.getByRole('link', { name: feiId }).click();
-  await page.getByRole('heading', { name: '🫵 Cette fiche vous a été' }).click();
-  await expect(page.getByRole('button', { name: 'Prendre en charge cette' })).toBeVisible();
-  await page.getByRole('button', { name: 'Prendre en charge cette' }).click();
 
   // 2. Sélectionner ETG 1 pour le groupe 1
   await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").first().click();

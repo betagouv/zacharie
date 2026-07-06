@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../utils/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 import { logoutAndConnect } from '../../utils/logout-and-connect';
@@ -21,9 +21,6 @@ test('PD supprime une carcasse avant transmission — ETG reçoit N-1', async ({
   // Wait for fiche to appear in the list (local-first sync)
   await expect(page.getByRole('link', { name: feiId })).toBeVisible({ timeout: 15000 });
   await page.getByRole('link', { name: feiId }).click();
-
-  // 1. PD takes charge
-  await page.getByRole('button', { name: 'Prendre en charge cette' }).click();
 
   // 2. Delete a carcasse via trash icon
   const trashIcons = page.getByTitle('Supprimer la carcasse');

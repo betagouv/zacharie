@@ -339,7 +339,7 @@ export default function useExportTransmissions() {
           });
         }
 
-        const sviEntity = entities[fei.svi_entity_id!];
+        const sviEntity = entities[transmission.content.svi_entity_id!];
         feiSheetData.push({
           Donnée: 'SVI',
           Valeur: formatEntity(sviEntity) || 'Pas encore désigné',

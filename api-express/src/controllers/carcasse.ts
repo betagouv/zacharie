@@ -102,11 +102,11 @@ router.get(
           // pas dès la simple désignation en cours de préparation.
           {
             premier_detenteur_entity_id: { in: userEntityIds },
-            Fei: { fei_current_owner_role: { not: FeiOwnerRole.EXAMINATEUR_INITIAL } },
+            current_owner_role: { not: FeiOwnerRole.EXAMINATEUR_INITIAL },
           },
           {
             next_owner_entity_id: { in: userEntityIds },
-            Fei: { fei_current_owner_role: { not: FeiOwnerRole.EXAMINATEUR_INITIAL } },
+            current_owner_role: { not: FeiOwnerRole.EXAMINATEUR_INITIAL },
           },
           {
             prev_owner_entity_id: { in: userEntityIds },

@@ -750,7 +750,6 @@ router.post(
       const fei = await prisma.fei.findUnique({
         where: {
           numero: body[Prisma.FeiScalarFieldEnum.numero],
-          fei_current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
         },
       });
       if (!fei) {

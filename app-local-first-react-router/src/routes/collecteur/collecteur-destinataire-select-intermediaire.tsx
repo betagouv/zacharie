@@ -192,7 +192,7 @@ export default function CollecteurDestinataireIntermediaire({
       return 'Il manque le lieu de stockage des carcasses';
     }
     if (depotType === DepotType.CCG && !depotEntityId) {
-      return 'Il manque le centre de collecte du gibier sauvage';
+      return 'Il manque la chambre froide';
     }
     return null;
   }, [prochainDetenteurEntityId, depotType, depotEntityId]);
@@ -246,12 +246,12 @@ export default function CollecteurDestinataireIntermediaire({
           getOptionValue={(f) => f.value}
           onChange={(f) => (f ? setProchainDetenteurEntityId(f.value) : setProchainDetenteurEntityId(null))}
           isClearable={!!prochainDetenteurEntityId}
-          inputId={Prisma.FeiScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache}
+          inputId={Prisma.CarcasseScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache}
           classNamePrefix={`select-prochain-detenteur`}
           required
           creatable
           isReadOnly={!canEdit}
-          name={Prisma.FeiScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache}
+          name={Prisma.CarcasseScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache}
         />
         {!!prochainDetenteur && !prochainDetenteur?.zacharie_compatible && (
           <Alert
@@ -278,7 +278,9 @@ export default function CollecteurDestinataireIntermediaire({
               },
             },
             {
-              label: 'Carcasses déposées dans un Centre de Collecte du Gibier sauvage (chambre froide)',
+              label: 'Carcasses déposées dans une chambre froide (Centre de Collecte du Gibier sauvage)',
+              hintText:
+                'Toute chambre froide où vous entreposez le gibier avant de le céder ou le vendre est un Centre de Collecte du Gibier sauvage (CCG).',
               nativeInputProps: {
                 checked: depotType === DepotType.CCG,
                 readOnly: !canEdit,
@@ -292,7 +294,7 @@ export default function CollecteurDestinataireIntermediaire({
         {depotType === DepotType.CCG &&
           (ccgsWorkingWith.length > 0 ? (
             <SelectCustom
-              label="Chambre froide (centre de collecte du gibier sauvage) *"
+              label="Chambre froide (Centre de Collecte du Gibier sauvage) *"
               isDisabled={depotType !== DepotType.CCG}
               isReadOnly={!canEdit}
               hint={
@@ -320,7 +322,7 @@ export default function CollecteurDestinataireIntermediaire({
                 </>
               }
               options={ccgsOptions}
-              placeholder="Sélectionnez le Centre de Collecte du Gibier sauvage"
+              placeholder="Sélectionnez la chambre froide"
               value={ccgsOptions.find((option) => option.value === depotEntityId) ?? null}
               getOptionLabel={(f) => f.label!}
               getOptionValue={(f) => f.value}
@@ -332,14 +334,14 @@ export default function CollecteurDestinataireIntermediaire({
                 setDepotEntityId(f?.value ?? null);
               }}
               isClearable={!!depotEntityId}
-              inputId={Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id}
+              inputId={Prisma.CarcasseScalarFieldEnum.premier_detenteur_depot_entity_id}
               classNamePrefix={`select-ccg`}
               required
-              name={Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id}
+              name={Prisma.CarcasseScalarFieldEnum.premier_detenteur_depot_entity_id}
             />
           ) : (
             <div className="flex flex-col items-start gap-2">
-              <label>Chambre froide (centre de collecte du gibier sauvage) *</label>
+              <label>Chambre froide (Centre de Collecte du Gibier sauvage) *</label>
               <Button
                 type="button"
                 nativeButtonProps={{

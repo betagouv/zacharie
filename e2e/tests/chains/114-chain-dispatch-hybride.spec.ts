@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../utils/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 import { logoutAndConnect } from '../../utils/logout-and-connect';
@@ -20,7 +20,6 @@ test('Dispatch PD → ETG 1 + Collecteur Pro 1 puis chacun → SVI', async ({ pa
   await page.setViewportSize({ width: 350, height: 667 });
   await connectWith(page, 'premier-detenteur@example.fr');
   await page.getByRole('link', { name: feiId }).click();
-  await page.getByRole('button', { name: 'Prendre en charge cette' }).click();
 
   // Groupe 1 : ETG 1
   await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").first().click();

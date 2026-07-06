@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
-import { Input } from '@codegouvfr/react-dsfr/Input';
 import { trackEvent } from '@app/services/matomo';
 import { selectStratifiedQuestions, type QuizQuestion } from '@app/utils/quiz-shuffle';
 import questionBank from '@app/data/quiz-prelevement-assiette.json';
@@ -347,19 +346,7 @@ interface ResultScreenProps {
   onReplay: () => void;
 }
 
-function ResultScreen({
-  score,
-  total,
-  resultId,
-  submitError,
-  displayName,
-  onDisplayNameChange,
-  nameSubmitted,
-  nameError,
-  onSubmitName,
-  leaderboard,
-  onReplay,
-}: ResultScreenProps) {
+function ResultScreen({ score, total, onReplay }: ResultScreenProps) {
   const ratio = total === 0 ? 0 : score / total;
   let mood: { title: string; description: string };
   if (ratio < 0.5) {

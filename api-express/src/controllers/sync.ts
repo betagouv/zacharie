@@ -15,7 +15,6 @@ import {
 import { runFeiUpdateSideEffects } from '~/utils/fei-side-effects';
 import { runCarcasseUpdateSideEffects } from '~/utils/carcasse-side-effects';
 import { capture } from '~/third-parties/sentry';
-import { feiPopulatedInclude } from '~/types/fei';
 
 const router: express.Router = express.Router();
 
@@ -169,24 +168,14 @@ router.post(
       }
     }
 
-    // Run side effects AFTER all saves (non-critical)
-    for (const feiResult of feiResults) {
-      try {
-        if (!feiResult.isDeleted && feiResult.existingFei) {
-          await runFeiUpdateSideEffects(feiResult.existingFei, feiResult.savedFei, user);
-        }
-      } catch (error) {
-        capture(error as Error, {
-          extra: { feiNumero: feiResult.savedFei.numero, context: 'fei_side_effects' },
-          user,
-        });
-      }
-    }
-
     for (const carcasseResult of carcasseResults) {
       try {
         if (!carcasseResult.isDeleted) {
-          await runCarcasseUpdateSideEffects(carcasseResult.existingCarcasse, carcasseResult.savedCarcasse);
+          await runCarcasseUpdateSideEffects(
+            carcasseResult.existingCarcasse,
+            carcasseResult.savedCarcasse,
+            user
+          );
         }
       } catch (error) {
         capture(error as Error, {
@@ -194,6 +183,20 @@ router.post(
             zacharieCarcasseId: carcasseResult.savedCarcasse.zacharie_carcasse_id,
             context: 'carcasse_side_effects',
           },
+          user,
+        });
+      }
+    }
+
+    // Run side effects AFTER all saves (non-critical)
+    for (const feiResult of feiResults) {
+      try {
+        if (!feiResult.isDeleted && feiResult.existingFei) {
+          await runFeiUpdateSideEffects(feiResult.existingFei, feiResult.savedFei);
+        }
+      } catch (error) {
+        capture(error as Error, {
+          extra: { feiNumero: feiResult.savedFei.numero, context: 'fei_side_effects' },
           user,
         });
       }
@@ -228,20 +231,19 @@ router.post(
       mergedCarcasses.set(cr.savedCarcasse.zacharie_carcasse_id, cr.savedCarcasse);
     for (const rc of refreshedCarcasses) mergedCarcasses.set(rc.zacharie_carcasse_id, rc);
 
-    // Fetch populated FEIs for response
+    // Fetch FEIs for response
     const feiNumeros = feiResults.map((f) => f.savedFei.numero);
-    const populatedFeis =
+    const feisFetched =
       feiNumeros.length > 0
         ? await prisma.fei.findMany({
             where: { numero: { in: feiNumeros } },
-            include: feiPopulatedInclude,
           })
         : [];
 
     res.status(200).send({
       ok: true,
       data: {
-        feis: populatedFeis,
+        feis: feisFetched,
         carcasses: [...mergedCarcasses.values()],
         carcassesIntermediaires: savedIntermediaires,
         carcasseModifRequests: modifResults.map((r) => r.saved),

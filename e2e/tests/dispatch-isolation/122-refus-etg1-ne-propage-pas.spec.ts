@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../utils/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 import { logoutAndConnect } from '../../utils/logout-and-connect';
@@ -20,7 +20,7 @@ test("Refus ETG 1 n'affecte pas la visibilité côté ETG 2", async ({ page }) =
   await page.setViewportSize({ width: 350, height: 667 });
   await connectWith(page, 'premier-detenteur@example.fr');
   await page.getByRole('link', { name: feiId }).click();
-  await page.getByRole('button', { name: 'Prendre en charge cette' }).click();
+
   await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").first().click();
   await page.getByRole('option', { name: 'ETG 1 - 75000 Paris (' }).click();
   const g1s = page.getByText('Pas de stockage').first();

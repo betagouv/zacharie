@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../utils/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 import { logoutAndConnect } from '../../utils/logout-and-connect';
@@ -23,7 +23,6 @@ test('Split 4 carcasses entre ETG 1 / ETG 2 / Collecteur Pro 1', async ({ page }
   await page.setViewportSize({ width: 350, height: 667 });
   await connectWith(page, 'premier-detenteur@example.fr');
   await page.getByRole('link', { name: feiId }).click();
-  await page.getByRole('button', { name: 'Prendre en charge cette' }).click();
 
   // Group 1 : ETG 1 (starts with all 4 carcasses)
   await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").first().click();

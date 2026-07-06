@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../utils/test';
 import dayjs from 'dayjs';
 import 'dayjs/locale/fr';
 import utc from 'dayjs/plugin/utc';
@@ -19,12 +19,11 @@ test.beforeAll(async () => {
   await resetDb('EXAMINATEUR_INITIAL');
 });
 
-// PR #399 — round-trip the per-carcasse `current_owner_role` through the backend.
+// Round-trip the per-carcasse ownership fields through the backend.
 // The examinateur transmits to a DIFFERENT user (Pierre Petit). When the PD logs in,
-// the fiche must appear in their "à compléter" list with the PD-side step available.
-// This is the cleanest proof that carcasse.current_owner_role syncs end-to-end,
-// because the PD-side UI (`Prendre en charge cette fiche` button + simpleStatus "À compléter")
-// is rendered FROM the carcasse fields via `computeFeiSteps`.
+// the fiche must appear in their list and the detail page must load.
+// This is the cleanest proof that the carcasse ownership fields sync end-to-end,
+// because the PD-side list/detail is rendered FROM the carcasse fields.
 test('Examinateur transmits to external PD — round-trip via backend', async ({ page }) => {
   // --- User A : examinateur (CFEI-formed, with a CHASSEUR relation to Pierre Petit / premier-detenteur).
   await connectWith(page, 'examinateur@example.fr');
@@ -78,12 +77,8 @@ test('Examinateur transmits to external PD — round-trip via backend', async ({
   await page.getByRole('link', { name: feiNumero }).click();
 
   // Detail page loads for the PD without 404 — proves the per-carcasse fields synced.
+  // Il n'y a pas d'étape « prendre en charge » séparée : l'examinateur désigne directement le
+  // premier détenteur (examinateur-select-next.tsx). La visibilité du lien dans la liste + le
+  // chargement de la page détail suffisent comme preuve de round-trip.
   await expect(page).toHaveURL(new RegExp(`/app/chasseur/fei/${feiNumero}`), { timeout: 10000 });
-
-  // FIXME (PR #399 régression connue): on attendrait ici le bouton "Prendre en charge cette
-  // fiche et les carcasses associées". Mais `chasseur-current-owner-confirm.tsx:85` exige
-  // `fei.fei_next_owner_user_id === user.id`, qui n'est plus écrit par le flux examinateur
-  // external (le `nextFei` côté examinateur-select-next.tsx ne set plus ce champ). La
-  // visibilité du lien dans la liste suffit comme preuve de round-trip — on n'assert pas
-  // le bouton tant que le canConfirmCurrentOwner n'est pas mis à jour pour lire depuis carcasses[0].
 });

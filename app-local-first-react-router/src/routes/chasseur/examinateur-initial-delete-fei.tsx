@@ -13,9 +13,6 @@ export default function ExaminateurInitialDeleteFei() {
   const updateFei = state.updateFei;
   const addLog = state.addLog;
   const fei = state.feis[params.fei_numero!];
-  const currentOwnerEntity = fei.fei_current_owner_entity_id
-    ? state.entities[fei.fei_current_owner_entity_id]
-    : null;
 
   const navigate = useNavigate();
 
@@ -34,10 +31,10 @@ export default function ExaminateurInitialDeleteFei() {
         updateFei(fei.numero, nextFei);
         addLog({
           user_id: user.id,
-          user_role: fei.fei_current_owner_role!,
+          user_role: user.roles[0],
           fei_numero: fei.numero,
           action: 'current-owner-delete',
-          entity_id: currentOwnerEntity?.id || null,
+          entity_id: null,
           zacharie_carcasse_id: null,
           intermediaire_id: null,
           carcasse_intermediaire_id: null,

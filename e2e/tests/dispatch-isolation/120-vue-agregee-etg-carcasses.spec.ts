@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../utils/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 import { logoutAndConnect } from '../../utils/logout-and-connect';
@@ -24,7 +24,6 @@ test('/etg/carcasses ne montre que les carcasses dispatchées à cet ETG', async
   await expect(page).toHaveURL(/\/app\/chasseur/, { timeout: 10000 });
   await expect(page.getByRole('link', { name: feiId })).toBeVisible({ timeout: 15000 });
   await page.getByRole('link', { name: feiId }).click();
-  await page.getByRole('button', { name: 'Prendre en charge cette' }).click();
 
   // Select ETG 1 for group 1
   await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").first().click();

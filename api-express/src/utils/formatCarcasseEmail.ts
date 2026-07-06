@@ -1,4 +1,4 @@
-import { Carcasse, CarcasseStatus, CarcasseType, Fei, IPM2Decision } from '@prisma/client';
+import { Carcasse, CarcasseStatus, CarcasseType, Fei, FeiOwnerRole, IPM2Decision } from '@prisma/client';
 import { getCarcasseStatusLabelForEmail } from './get-carcasse-status';
 import lesions from '../assets/lesions.json';
 import prisma from '~/prisma';
@@ -161,8 +161,32 @@ export async function formatCarcasseManquanteOrRefusChasseurEmail(
   return [object, email.filter(Boolean).join('\n\n')];
 }
 
-export async function formatAutomaticClosingEmailForChasseur(
+export function formatRenvoiExpediteurEmail(
   fei: Fei,
+  expediteurRole: FeiOwnerRole,
+  renvoyeurName: string | null,
+  premierDetenteurProchainDetenteurIdCache: string | null
+): [string, string] {
+  const url =
+    expediteurRole === FeiOwnerRole.COLLECTEUR_PRO
+      ? `https://zacharie.beta.gouv.fr/app/collecteur/fei/${fei.numero}/${premierDetenteurProchainDetenteurIdCache}`
+      : `https://zacharie.beta.gouv.fr/app/chasseur/fei/${fei.numero}`;
+
+  const renvoyeur = renvoyeurName ?? 'Le destinataire';
+
+  const email = [
+    `Bonjour,`,
+    `${renvoyeur} a renvoyé la fiche ${fei.numero} : vous devez choisir un autre destinataire pour cette fiche.`,
+    `Pour consulter la fiche, rendez-vous sur Zacharie : ${url}`,
+    `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur ce renvoi, merci de contacter l’établissement qui vous a renvoyé la fiche.`,
+  ];
+
+  const object = `La fiche ${fei.numero} vous a été renvoyée.`;
+  return [object, email.filter(Boolean).join('\n\n')];
+}
+
+export async function formatAutomaticClosingEmailForChasseur(
+  fei_numero: Fei['numero'],
   carcasses: Carcasse[]
 ): Promise<[string, string]> {
   let numberOfValidatedCarcasses = 0;
@@ -190,20 +214,20 @@ export async function formatAutomaticClosingEmailForChasseur(
 
   const email = [
     `Bonjour,`,
-    `La fiche ${fei.numero} a été réceptionnée par le Service Vétérinaire il y a plus de 10 jours, elle est donc automatiquement clôturée.`,
+    `La fiche ${fei_numero} a été réceptionnée par le Service Vétérinaire il y a plus de 10 jours, elle est donc automatiquement clôturée.`,
     `Bilan de cette fiche:`,
     `- ${numberOfValidatedCarcasses} carcasses ont été acceptées`,
     `- ${numberOfRefusedCarcasses} carcasses ont été refusées`,
-    `Pour consulter le détail de la fiche, rendez-vous sur Zacharie : https://zacharie.beta.gouv.fr/app/chasseur/fei/${fei.numero}`,
+    `Pour consulter le détail de la fiche, rendez-vous sur Zacharie : https://zacharie.beta.gouv.fr/app/chasseur/fei/${fei_numero}`,
     `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur des saisies ou refus, merci de contacter l’établissement qui a traité votre fiche.`,
   ];
 
-  const object = `La fiche ${fei.numero} est clôturée.`;
+  const object = `La fiche ${fei_numero} est clôturée.`;
   return [object, email.filter(Boolean).join('\n\n')];
 }
 
 export async function formatManualValidationSviChasseurEmail(
-  fei: Fei,
+  fei_numero: Fei['numero'],
   carcasses: Carcasse[]
 ): Promise<[string, string]> {
   let numberOfValidatedCarcasses = 0;
@@ -231,28 +255,29 @@ export async function formatManualValidationSviChasseurEmail(
 
   const email = [
     `Bonjour,`,
-    `La fiche ${fei.numero} a été prise en charge et traitée par le Service Vétérinaire`,
+    `La fiche ${fei_numero} a été prise en charge et traitée par le Service Vétérinaire`,
     `Bilan de cette fiche:`,
     `- ${numberOfValidatedCarcasses} carcasses ont été acceptées`,
     `- ${numberOfRefusedCarcasses} carcasses ont été refusées`,
-    `Pour consulter le détail de la fiche, rendez-vous sur Zacharie : https://zacharie.beta.gouv.fr/app/chasseur/fei/${fei.numero}`,
+    `Pour consulter le détail de la fiche, rendez-vous sur Zacharie : https://zacharie.beta.gouv.fr/app/chasseur/fei/${fei_numero}`,
     `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur des saisies ou refus, merci de contacter l’établissement qui a traité votre fiche.`,
   ];
 
-  const object = `La fiche ${fei.numero} est clôturée.`;
+  const object = `La fiche ${fei_numero} est clôturée.`;
   return [object, email.filter(Boolean).join('\n\n')];
 }
 
-export async function formatSviAssignedEmail(fei: Fei): Promise<[string, string]> {
+export async function formatSviAssignedEmail(carcasse: Carcasse): Promise<[string, string]> {
   const currentEntity = await prisma.entity.findUnique({
     where: {
-      id: fei.fei_current_owner_entity_id,
+      id: carcasse.current_owner_entity_id,
       deleted_at: null,
     },
   });
   const feiCarcasses = await prisma.carcasse.findMany({
     where: {
-      fei_numero: fei.numero,
+      fei_numero: carcasse.fei_numero,
+      premier_detenteur_prochain_detenteur_id_cache: carcasse.premier_detenteur_prochain_detenteur_id_cache,
       intermediaire_carcasse_manquante: false,
       intermediaire_carcasse_refus_intermediaire_id: null,
       deleted_at: null,
@@ -266,8 +291,8 @@ export async function formatSviAssignedEmail(fei: Fei): Promise<[string, string]
   // le SVI consulte une transmission (fiche + prochain détenteur du premier détenteur), pas la fiche seule
   const prochainDetenteurIdCache = feiCarcasses[0]?.premier_detenteur_prochain_detenteur_id_cache;
   const transmissionLink = prochainDetenteurIdCache
-    ? `${fei.numero}/${prochainDetenteurIdCache}`
-    : fei.numero;
+    ? `${carcasse.fei_numero}/${prochainDetenteurIdCache}`
+    : carcasse.fei_numero;
 
   const email = [
     `Bonjour,`,

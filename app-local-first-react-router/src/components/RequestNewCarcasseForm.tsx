@@ -19,6 +19,7 @@ import useZustandStore from '@app/zustand/store';
 import { syncData } from '@app/utils/sync-data';
 import useUser from '@app/zustand/user';
 import type { CarcassesIntermediaire } from '@app/types/carcasses-intermediaire';
+import { CarcasseTransmission } from '@app/types/carcasse';
 
 const gibierSelect = {
   grand: grandGibier.especes,
@@ -36,12 +37,14 @@ const gibierSelect = {
 // ----------------------------------------------------------------------------
 export default function RequestNewCarcasseButton({
   feiNumero,
+  transmission,
   intermediaire,
   className,
 }: {
   feiNumero: string;
   intermediaire: CarcassesIntermediaire;
   className?: string;
+  transmission: CarcasseTransmission;
 }) {
   const user = useUser((state) => state.user);
   const fei = useZustandStore((state) => state.feis[feiNumero]);
@@ -94,8 +97,8 @@ export default function RequestNewCarcasseButton({
     // is added, inherit the transmission state on the new carcasse so it joins the same flow rather
     // than getting stranded at the requester. Without this, the SVI never sees the carcasse and the
     // ETG is asked to re-transmit endlessly after approval.
-    const feiAlreadyTransmitted = !!fei.fei_next_owner_entity_id;
-    const feiAlreadyAssignedToSvi = !!fei.svi_assigned_at && !!fei.svi_entity_id;
+    const feiAlreadyTransmitted = !!transmission.next_owner_entity_id;
+    const feiAlreadyAssignedToSvi = !!transmission.svi_assigned_at && !!transmission.svi_entity_id;
 
     // 1) Create the Carcasse locally with no examinateur signature — the examinateur will sign on
     // approval. Fields not set here keep their default/null from the carcasse schema.
@@ -119,18 +122,21 @@ export default function RequestNewCarcasseButton({
       examinateur_commentaire: null,
       examinateur_signed_at: null,
       // PREMIER DETENTEUR caches (inherit from FEI)
-      premier_detenteur_depot_type: fei.premier_detenteur_depot_type,
-      premier_detenteur_depot_entity_id: fei.premier_detenteur_depot_entity_id,
-      premier_detenteur_depot_entity_name_cache: fei.premier_detenteur_depot_entity_name_cache,
-      premier_detenteur_depot_ccg_at: fei.premier_detenteur_depot_ccg_at,
-      premier_detenteur_transport_type: fei.premier_detenteur_transport_type,
-      premier_detenteur_transport_date: fei.premier_detenteur_transport_date,
-      premier_detenteur_prochain_detenteur_role_cache: fei.premier_detenteur_prochain_detenteur_role_cache,
-      premier_detenteur_prochain_detenteur_id_cache: fei.premier_detenteur_prochain_detenteur_id_cache,
+      premier_detenteur_depot_type: transmission.premier_detenteur_depot_type ?? null,
+      premier_detenteur_depot_entity_id: transmission.premier_detenteur_depot_entity_id ?? null,
+      premier_detenteur_depot_entity_name_cache:
+        transmission.premier_detenteur_depot_entity_name_cache ?? null,
+      premier_detenteur_depot_ccg_at: transmission.premier_detenteur_depot_ccg_at ?? null,
+      premier_detenteur_transport_type: transmission.premier_detenteur_transport_type ?? null,
+      premier_detenteur_transport_date: transmission.premier_detenteur_transport_date ?? null,
+      premier_detenteur_prochain_detenteur_role_cache:
+        transmission.premier_detenteur_prochain_detenteur_role_cache ?? null,
+      premier_detenteur_prochain_detenteur_id_cache:
+        transmission.premier_detenteur_prochain_detenteur_id_cache ?? null,
       // INTERMEDIAIRE
       intermediaire_carcasse_refus_intermediaire_id: null,
       intermediaire_carcasse_refus_motif: null,
-      intermediaire_carcasse_manquante: null,
+      intermediaire_carcasse_manquante: false,
       latest_intermediaire_signed_at: null,
       svi_carcasse_commentaire: null,
       svi_carcasse_status: null,
@@ -187,26 +193,30 @@ export default function RequestNewCarcasseButton({
       latest_intermediaire_user_id: null,
       latest_intermediaire_entity_id: null,
       latest_intermediaire_name_cache: null,
-      svi_assigned_at: feiAlreadyAssignedToSvi ? fei.svi_assigned_at : null,
-      svi_entity_id: feiAlreadyAssignedToSvi ? fei.svi_entity_id : null,
+      svi_assigned_at: feiAlreadyAssignedToSvi ? (transmission.svi_assigned_at ?? null) : null,
+      svi_entity_id: feiAlreadyAssignedToSvi ? (transmission.svi_entity_id ?? null) : null,
       svi_user_id: null,
       svi_closed_at: null,
       svi_automatic_closed_at: null,
       svi_closed_by_user_id: null,
-      current_owner_user_id: fei.fei_current_owner_user_id,
-      current_owner_user_name_cache: fei.fei_current_owner_user_name_cache,
-      current_owner_entity_id: fei.fei_current_owner_entity_id,
-      current_owner_entity_name_cache: fei.fei_current_owner_entity_name_cache,
-      current_owner_role: fei.fei_current_owner_role,
+      current_owner_user_id: transmission.current_owner_user_id ?? null,
+      current_owner_user_name_cache: transmission.current_owner_user_name_cache ?? null,
+      current_owner_entity_id: transmission.current_owner_entity_id ?? null,
+      current_owner_entity_name_cache: transmission.current_owner_entity_name_cache ?? null,
+      current_owner_role: transmission.current_owner_role ?? null,
       next_owner_wants_to_sous_traite: null,
       next_owner_sous_traite_at: null,
       next_owner_sous_traite_by_user_id: null,
       next_owner_sous_traite_by_entity_id: null,
-      next_owner_user_id: feiAlreadyTransmitted ? fei.fei_next_owner_user_id : null,
-      next_owner_user_name_cache: feiAlreadyTransmitted ? fei.fei_next_owner_user_name_cache : null,
-      next_owner_entity_id: feiAlreadyTransmitted ? fei.fei_next_owner_entity_id : null,
-      next_owner_entity_name_cache: feiAlreadyTransmitted ? fei.fei_next_owner_entity_name_cache : null,
-      next_owner_role: feiAlreadyTransmitted ? fei.fei_next_owner_role : null,
+      next_owner_user_id: feiAlreadyTransmitted ? (transmission.next_owner_user_id ?? null) : null,
+      next_owner_user_name_cache: feiAlreadyTransmitted
+        ? (transmission.next_owner_user_name_cache ?? null)
+        : null,
+      next_owner_entity_id: feiAlreadyTransmitted ? (transmission.next_owner_entity_id ?? null) : null,
+      next_owner_entity_name_cache: feiAlreadyTransmitted
+        ? (transmission.next_owner_entity_name_cache ?? null)
+        : null,
+      next_owner_role: feiAlreadyTransmitted ? (transmission.next_owner_role ?? null) : null,
       prev_owner_user_id: null,
       prev_owner_entity_id: null,
       prev_owner_role: null,

@@ -81,15 +81,10 @@ model User {
   UserRelationsAsRelated                UserRelations[]                @relation("UserRelatedOfUserRelation")
   EntityAndUserRelations                EntityAndUserRelations[]       @relation("UserRelatedWithEntity")
   FeiCreatedByUser                      Fei[]                          @relation("FeiCreatedByUser")
-  FeiCurrentUser                        Fei[]                          @relation("FeiCurrentUser")
   FeiPremierDetenteurUser               Fei[]                          @relation("FeiPremierDetenteurUser")
   FeiExaminateurInitialUser             Fei[]                          @relation("FeiExaminateurInitialUser")
-  FeiSviUser                            Fei[]                          @relation("FeiSviUser")
-  FeiSviUserClosedBy                    Fei[]                          @relation("FeiSviUserClosedBy")
   NotificationLog                       NotificationLog[]
   CarcasseIntermediaire                 CarcasseIntermediaire[]        @relation("CarcasseIntermediaireUser")
-  FeiNextUser                           Fei[]                          @relation("FeiNextUser")
-  FeiSoustraiteByUser                   Fei[]                          @relation("FeiSoustraiteByUser")
   CarcassesIpm1                         Carcasse[]                     @relation("SviIpm1User")
   ApiKeyApprovalByUser                  ApiKeyApprovalByUserOrEntity[]
   ApiKeyLog                             ApiKeyLog[]
@@ -162,12 +157,7 @@ model Entity {
   at_least_one_fei_treated              DateTime?
   // relations
   EntityRelationsWithUsers              EntityAndUserRelations[]       @relation("EntityRelatedWithUser")
-  FeisCurrentEntity                     Fei[]                          @relation("FeiCurrentEntity")
-  FeisNextEntity                        Fei[]                          @relation("FeiNextEntity")
-  FeisSoustraiteByEntity                Fei[]                          @relation("FeiSoustraiteByEntity")
-  FeisDepotEntity                       Fei[]                          @relation("FeiDepotEntity")
   FeisPremierDetenteurEntity            Fei[]                          @relation("FeiPremierDetenteurEntity")
-  FeisSviEntity                         Fei[]                          @relation("FeiSviEntity")
   CarcassesSviEntity                    Carcasse[]                     @relation("CarcasseSviEntity")
   CarcasseIntermediaires                CarcasseIntermediaire[]        @relation("CarcasseIntermediaireEntity")
   ApiKeyApprovals                       ApiKeyApprovalByUserOrEntity[]
@@ -310,20 +300,18 @@ enum FeiOwnerRole {
 
 // Fiche d'Examen Initial
 model Fei {
-  id                                                      Int                     @id @default(autoincrement())
+  id                                                      Int       @id @default(autoincrement())
   /**
    * metadata
    */
-  numero                                                  String                  @unique
-  date_mise_a_mort                                        DateTime?               @db.Date // et éviscération
+  numero                                                  String    @unique
+  date_mise_a_mort                                        DateTime? @db.Date // et éviscération
   commune_mise_a_mort                                     String?
   heure_mise_a_mort_premiere_carcasse                     String?
   heure_evisceration_derniere_carcasse                    String?
   created_by_user_id                                      String
-  creation_context                                        String?                 @default("zacharie") // zacharie, api 
+  creation_context                                        String?   @default("zacharie") // zacharie, api 
   resume_nombre_de_carcasses                              String?
-  /// @deprecated — automatic closed at now lives on Carcasse
-  automatic_closed_at                                     DateTime?
   /**
    * examinateur initial
    */
@@ -339,130 +327,28 @@ model Fei {
   premier_detenteur_user_id                               String?
   premier_detenteur_entity_id                             String?
   premier_detenteur_name_cache                            String?
-  /// @deprecated — premier detenteur depot type now lives on Carcasse
-  premier_detenteur_depot_type                            DepotType? // CCG, ETG, AUCUN
-  /// @deprecated — premier detenteur depot entity id now lives on Carcasse
-  premier_detenteur_depot_entity_id                       String?
-  /// @deprecated — premier detenteur depot entity name cache now lives on Carcasse
-  premier_detenteur_depot_entity_name_cache               String?
-  /// @deprecated — premier detenteur depot cg at now lives on Carcasse
-  premier_detenteur_depot_ccg_at                          DateTime?
-  /// @deprecated — premier detenteur transport type now lives on Carcasse
-  premier_detenteur_transport_type                        TransportType?
-  /// @deprecated — premier detenteur transport date now lives on Carcasse
-  premier_detenteur_transport_date                        DateTime?
-  /// @deprecated — premier detenteur prochain detenteur role now lives on Carcasse
-  premier_detenteur_prochain_detenteur_role_cache         FeiOwnerRole?
-  /// @deprecated — premier detenteur prochain detenteur id now lives on Carcasse
-  premier_detenteur_prochain_detenteur_id_cache           String? // Entity id
-  /**
-   * intermediaire
-   */
-  /// @deprecated — intermediaire now lives on Carcasse
-  intermediaire_closed_at                                 DateTime? // si toutes les carcasses sont rejetées/manquantes
-  /// @deprecated — intermediaire now lives on Carcasse
-  intermediaire_closed_by_user_id                         String?
-  /// @deprecated — intermediaire now lives on Carcasse
-  intermediaire_closed_by_entity_id                       String?
-  /**
-   * latest-intermediaire
-   */
-  /// @deprecated — latest-intermediaire now lives on Carcasse
-  latest_intermediaire_user_id                            String?
-  /// @deprecated — latest-intermediaire now lives on Carcasse
-  latest_intermediaire_entity_id                          String?
-  /// @deprecated — latest-intermediaire now lives on Carcasse
-  latest_intermediaire_name_cache                         String?
-  /**
-   * svi
-   */
-  /// @deprecated — svi now lives on Carcasse
-  svi_assigned_at                                         DateTime?
-  /// @deprecated — svi now lives on Carcasse
-  svi_entity_id                                           String?
-  /// @deprecated — svi now lives on Carcasse
-  svi_user_id                                             String?
-  /// @deprecated — svi now lives on Carcasse
-  svi_closed_at                                           DateTime?
-  /// @deprecated — svi now lives on Carcasse
-  svi_closed_by_user_id                                   String?
-  /**
-   * owners
-   * @deprecated — transmission now lives on Carcasse. These fields are dual-written for retrocompat.
-   */
-  /// @deprecated — transmission now lives on Carcasse
-  fei_current_owner_user_id                               String?
-  /// @deprecated — transmission now lives on Carcasse
-  fei_current_owner_user_name_cache                       String?
-  /// @deprecated — transmission now lives on Carcasse
-  fei_current_owner_entity_id                             String?
-  /// @deprecated — transmission now lives on Carcasse
-  fei_current_owner_entity_name_cache                     String?
-  /// @deprecated — transmission now lives on Carcasse
-  fei_current_owner_role                                  FeiOwnerRole?
-  /// @deprecated — transmission now lives on Carcasse
-  fei_next_owner_wants_to_sous_traite                     Boolean?
-  /// @deprecated — transmission now lives on Carcasse
-  fei_next_owner_sous_traite_at                           DateTime?
-  /// @deprecated — transmission now lives on Carcasse
-  fei_next_owner_sous_traite_by_user_id                   String?
-  /// @deprecated — transmission now lives on Carcasse
-  fei_next_owner_sous_traite_by_entity_id                 String?
-  /// @deprecated — transmission now lives on Carcasse
-  fei_next_owner_user_id                                  String?
-  /// @deprecated — transmission now lives on Carcasse
-  fei_next_owner_user_name_cache                          String?
-  /// @deprecated — transmission now lives on Carcasse
-  fei_next_owner_entity_id                                String?
-  /// @deprecated — transmission now lives on Carcasse
-  fei_next_owner_entity_name_cache                        String?
-  /// @deprecated — transmission now lives on Carcasse
-  fei_next_owner_role                                     FeiOwnerRole?
-  /// @deprecated — transmission now lives on Carcasse
-  fei_prev_owner_user_id                                  String?
-  /// @deprecated — transmission now lives on Carcasse
-  fei_prev_owner_entity_id                                String?
-  /// @deprecated — transmission now lives on Carcasse
-  fei_prev_owner_role                                     FeiOwnerRole?
+
   /**
    * timestamps
    */
-  created_at                                              DateTime                @default(now())
-  updated_at                                              DateTime                @default(now()) @updatedAt
-  deleted_at                                              DateTime?
-  is_synced                                               Boolean                 @default(true)
+  created_at                DateTime                @default(now())
+  updated_at                DateTime                @default(now()) @updatedAt
+  deleted_at                DateTime?
+  is_synced                 Boolean                 @default(true)
   /**
    * relations
    */
-  Carcasses                                               Carcasse[]
-  FeiCreatedByUser                                        User                    @relation("FeiCreatedByUser", fields: [created_by_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  FeiPremierDetenteurUser                                 User?                   @relation("FeiPremierDetenteurUser", fields: [premier_detenteur_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  FeiPremierDetenteurEntity                               Entity?                 @relation("FeiPremierDetenteurEntity", fields: [premier_detenteur_entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  FeiExaminateurInitialUser                               User?                   @relation("FeiExaminateurInitialUser", fields: [examinateur_initial_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  FeiDepotEntity                                          Entity?                 @relation("FeiDepotEntity", fields: [premier_detenteur_depot_entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  FeiSviEntity                                            Entity?                 @relation("FeiSviEntity", fields: [svi_entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  FeiSviUser                                              User?                   @relation("FeiSviUser", fields: [svi_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  FeiSviUserClosedBy                                      User?                   @relation("FeiSviUserClosedBy", fields: [svi_closed_by_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  FeiCurrentUser                                          User?                   @relation("FeiCurrentUser", fields: [fei_current_owner_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  FeiCurrentEntity                                        Entity?                 @relation("FeiCurrentEntity", fields: [fei_current_owner_entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  FeiNextEntity                                           Entity?                 @relation("FeiNextEntity", fields: [fei_next_owner_entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  FeiSoustraiteByEntity                                   Entity?                 @relation("FeiSoustraiteByEntity", fields: [fei_next_owner_sous_traite_by_entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  FeiNextUser                                             User?                   @relation("FeiNextUser", fields: [fei_next_owner_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  FeiSoustraiteByUser                                     User?                   @relation("FeiSoustraiteByUser", fields: [fei_next_owner_sous_traite_by_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  CarcasseIntermediaire                                   CarcasseIntermediaire[]
+  Carcasses                 Carcasse[]
+  FeiCreatedByUser          User                    @relation("FeiCreatedByUser", fields: [created_by_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  FeiPremierDetenteurUser   User?                   @relation("FeiPremierDetenteurUser", fields: [premier_detenteur_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  FeiPremierDetenteurEntity Entity?                 @relation("FeiPremierDetenteurEntity", fields: [premier_detenteur_entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  FeiExaminateurInitialUser User?                   @relation("FeiExaminateurInitialUser", fields: [examinateur_initial_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  CarcasseIntermediaire     CarcasseIntermediaire[]
 
   @@index([created_by_user_id])
   @@index([premier_detenteur_user_id])
   @@index([examinateur_initial_user_id])
-  @@index([svi_closed_at])
-  @@index([fei_next_owner_user_id])
-  @@index([fei_next_owner_entity_id])
-  @@index([fei_current_owner_user_id])
-  @@index([fei_current_owner_entity_id])
   @@index([updated_at])
-  @@index([svi_assigned_at])
-  @@index([svi_entity_id, svi_assigned_at])
-  @@index([automatic_closed_at, svi_closed_at, svi_assigned_at])
   @@index([deleted_at, created_at])
 }
 

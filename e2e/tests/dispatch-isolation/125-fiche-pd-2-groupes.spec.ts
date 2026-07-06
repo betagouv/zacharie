@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../utils/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 
@@ -21,7 +21,6 @@ test('PD voit la fiche avec les 2 groupes clairement identifiés après dispatch
 
   await connectWith(page, 'premier-detenteur@example.fr');
   await page.getByRole('link', { name: feiId }).click();
-  await page.getByRole('button', { name: 'Prendre en charge cette' }).click();
 
   // Groupe 1 : ETG 1
   await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").first().click();

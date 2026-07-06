@@ -273,7 +273,7 @@ function DispatchGroupForm({
           getOptionValue={(f) => f.value}
           onChange={(f) => onUpdateGroup(group.id, { recipientEntityId: f ? f.value : null })}
           isClearable={!!group.recipientEntityId}
-          inputId={`${Prisma.FeiScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache}_${group.id}`}
+          inputId={`${Prisma.CarcasseScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache}_${group.id}`}
           classNamePrefix={`select-prochain-detenteur-${group.id}`}
           required
           creatable
@@ -282,7 +282,7 @@ function DispatchGroupForm({
             onOpenPartenaireModal(group.id, newOption);
           }}
           isReadOnly={!canEdit}
-          name={`${Prisma.FeiScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache}_${group.id}`}
+          name={`${Prisma.CarcasseScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache}_${group.id}`}
         />
         {errorFor('recipientEntityId') && (
           <p className="fr-error-text mt-1">{errorFor('recipientEntityId')}</p>
@@ -323,7 +323,9 @@ function DispatchGroupForm({
               },
             },
             {
-              label: 'Carcasses déposées dans un Centre de Collecte du Gibier sauvage (chambre froide)',
+              label: 'Carcasses déposées dans une chambre froide (Centre de Collecte du Gibier sauvage)',
+              hintText:
+                'Toute chambre froide où vous entreposez le gibier avant de le céder ou le vendre est un Centre de Collecte du Gibier sauvage (CCG).',
               nativeInputProps: {
                 checked: group.depotType === DepotType.CCG,
                 readOnly: !canEdit,
@@ -341,7 +343,7 @@ function DispatchGroupForm({
           <>
             <div>
               <SelectCustom
-                label="Chambre froide (centre de collecte du gibier sauvage) *"
+                label="Chambre froide (Centre de Collecte du Gibier sauvage) *"
                 isDisabled={group.depotType !== DepotType.CCG}
                 isReadOnly={!canEdit}
                 hint={
@@ -367,7 +369,7 @@ function DispatchGroupForm({
                   </>
                 }
                 options={ccgsOptions}
-                placeholder="Sélectionnez le Centre de Collecte du Gibier sauvage"
+                placeholder="Sélectionnez la chambre froide"
                 value={ccgsOptions.find((option) => option.value === group.depotEntityId) ?? null}
                 getOptionLabel={(f) => f.label!}
                 getOptionValue={(f) => f.value}
@@ -379,15 +381,15 @@ function DispatchGroupForm({
                   onUpdateGroup(group.id, { depotEntityId: f?.value ?? null });
                 }}
                 isClearable={!!group.depotEntityId}
-                inputId={`${Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id}_${group.id}`}
+                inputId={`${Prisma.CarcasseScalarFieldEnum.premier_detenteur_depot_entity_id}_${group.id}`}
                 classNamePrefix={`select-ccg-${group.id}`}
                 required
-                name={`${Prisma.FeiScalarFieldEnum.premier_detenteur_depot_entity_id}_${group.id}`}
+                name={`${Prisma.CarcasseScalarFieldEnum.premier_detenteur_depot_entity_id}_${group.id}`}
               />
               {errorFor('depotEntityId') && <p className="fr-error-text mt-1">{errorFor('depotEntityId')}</p>}
             </div>
             <Component
-              label="Date de dépôt dans le Centre de Collecte du Gibier sauvage *"
+              label="Date de dépôt dans la chambre froide *"
               disabled={group.depotType !== DepotType.CCG}
               state={errorFor('depotDate') ? 'error' : 'default'}
               stateRelatedMessage={errorFor('depotDate')}
@@ -408,8 +410,8 @@ function DispatchGroupForm({
                 ) : null
               }
               nativeInputProps={{
-                id: `${Prisma.FeiScalarFieldEnum.premier_detenteur_depot_ccg_at}_${group.id}`,
-                name: `${Prisma.FeiScalarFieldEnum.premier_detenteur_depot_ccg_at}_${group.id}`,
+                id: `${Prisma.CarcasseScalarFieldEnum.premier_detenteur_depot_ccg_at}_${group.id}`,
+                name: `${Prisma.CarcasseScalarFieldEnum.premier_detenteur_depot_ccg_at}_${group.id}`,
                 type: 'datetime-local',
                 required: true,
                 autoComplete: 'off',
@@ -426,7 +428,7 @@ function DispatchGroupForm({
           </>
         ) : (
           <div className="flex flex-col items-start gap-2">
-            <label>Chambre froide (centre de collecte du gibier sauvage) *</label>
+            <label>Chambre froide (Centre de Collecte du Gibier sauvage) *</label>
             <Button
               type="button"
               nativeButtonProps={{
@@ -516,8 +518,8 @@ function DispatchGroupForm({
                 ) : null
               }
               nativeInputProps={{
-                id: `${Prisma.FeiScalarFieldEnum.premier_detenteur_transport_date}_${group.id}`,
-                name: `${Prisma.FeiScalarFieldEnum.premier_detenteur_transport_date}_${group.id}`,
+                id: `${Prisma.CarcasseScalarFieldEnum.premier_detenteur_transport_date}_${group.id}`,
+                name: `${Prisma.CarcasseScalarFieldEnum.premier_detenteur_transport_date}_${group.id}`,
                 type: 'datetime-local',
                 required: true,
                 autoComplete: 'off',
@@ -562,10 +564,10 @@ function getGroupFieldErrors(
     errors.depotType = 'Veuillez indiquer le lieu de stockage des carcasses';
   }
   if (group.depotType === DepotType.CCG && !group.depotEntityId) {
-    errors.depotEntityId = 'Veuillez sélectionner le centre de collecte du gibier sauvage';
+    errors.depotEntityId = 'Veuillez sélectionner la chambre froide';
   }
   if (group.depotType === DepotType.CCG && !group.depotDate) {
-    errors.depotDate = 'Veuillez indiquer la date de dépôt dans le centre de collecte du gibier sauvage';
+    errors.depotDate = 'Veuillez indiquer la date de dépôt dans la chambre froide';
   }
   const prochainDetenteurType = group.recipientEntityId ? entities[group.recipientEntityId]?.type : null;
   const needTransport = (() => {
@@ -617,7 +619,7 @@ function getGroupValidationError(
   return null;
 }
 
-export default function DestinatairePremierDetenteur({
+export default function DestinataireSelectPremierDetenteur({
   className = '',
   canEdit,
   disabled,
@@ -730,54 +732,27 @@ export default function DestinatairePremierDetenteur({
   // Multi-group dispatch state
   const [dispatchGroups, setDispatchGroups] = useState<DispatchGroup[]>(() => {
     const initialRecipient = (() => {
-      if (fei.premier_detenteur_prochain_detenteur_id_cache) {
-        return fei.premier_detenteur_prochain_detenteur_id_cache;
-      }
-      if (fei.fei_current_owner_role === EntityTypes.PREMIER_DETENTEUR) {
-        if (prefilledInfos?.premier_detenteur_prochain_detenteur_id_cache) {
-          return prefilledInfos.premier_detenteur_prochain_detenteur_id_cache;
-        }
+      if (prefilledInfos?.premier_detenteur_prochain_detenteur_id_cache) {
+        return prefilledInfos.premier_detenteur_prochain_detenteur_id_cache;
       }
       return null;
     })();
 
     const initialDepotEntityId = (() => {
-      if (fei.premier_detenteur_depot_entity_id) {
-        return fei.premier_detenteur_depot_entity_id;
-      }
-      if (fei.premier_detenteur_depot_type === DepotType.AUCUN) {
-        return null;
-      }
-      if (fei.fei_current_owner_role === EntityTypes.PREMIER_DETENTEUR) {
-        if (prefilledInfos?.premier_detenteur_depot_entity_id) {
-          return prefilledInfos.premier_detenteur_depot_entity_id;
-        }
+      if (prefilledInfos?.premier_detenteur_depot_entity_id) {
+        return prefilledInfos.premier_detenteur_depot_entity_id;
       }
       return null;
     })();
 
     const initialDepotType = (() => {
-      if (fei.premier_detenteur_depot_type) {
-        return fei.premier_detenteur_depot_type;
-      }
-      if (fei.premier_detenteur_depot_entity_id) {
-        const type = entities[fei.premier_detenteur_depot_entity_id]?.type;
-        if (type === EntityTypes.CCG) return DepotType.CCG;
-        if (type === EntityTypes.ETG) return DepotType.ETG;
-        return null;
-      }
-      if (fei.fei_current_owner_role === EntityTypes.PREMIER_DETENTEUR) {
-        if (prefilledInfos?.premier_detenteur_depot_type) {
-          return prefilledInfos.premier_detenteur_depot_type;
-        }
+      if (prefilledInfos?.premier_detenteur_depot_type) {
+        return prefilledInfos.premier_detenteur_depot_type;
       }
       return DepotType.AUCUN;
     })();
 
     const initialTransportType = (() => {
-      if (fei.premier_detenteur_transport_type) {
-        return fei.premier_detenteur_transport_type;
-      }
       if (prefilledInfos?.premier_detenteur_transport_type) {
         return prefilledInfos.premier_detenteur_transport_type;
       }
@@ -791,13 +766,9 @@ export default function DestinatairePremierDetenteur({
         carcasseIds: carcassesRestantesIds,
         depotType: initialDepotType,
         depotEntityId: initialDepotEntityId,
-        depotDate: fei.premier_detenteur_depot_ccg_at
-          ? dayjs(fei.premier_detenteur_depot_ccg_at).format('YYYY-MM-DDTHH:mm')
-          : undefined,
+        depotDate: undefined,
         transportType: initialTransportType,
-        transportDate: fei.premier_detenteur_transport_date
-          ? dayjs(fei.premier_detenteur_transport_date).format('YYYY-MM-DDTHH:mm')
-          : undefined,
+        transportDate: undefined,
       },
     ];
   });
@@ -1205,17 +1176,19 @@ export default function DestinatairePremierDetenteur({
                   {submitLabel}
                 </Button>
               )}
-              {/* Add another recipient button */}
-              {canEdit && carcassesRestantes.length > 1 && (
-                <Button
-                  priority="secondary"
-                  type="button"
-                  iconId="fr-icon-add-line"
-                  nativeButtonProps={{ onClick: addGroup }}
-                >
-                  Ajouter un autre destinataire
-                </Button>
-              )}
+              {/* Add another recipient button — au plus un destinataire par carcasse/lot */}
+              {canEdit &&
+                carcassesRestantes.length > 1 &&
+                dispatchGroups.length < carcassesRestantes.length && (
+                  <Button
+                    priority="secondary"
+                    type="button"
+                    iconId="fr-icon-add-line"
+                    nativeButtonProps={{ onClick: addGroup }}
+                  >
+                    Ajouter un autre destinataire
+                  </Button>
+                )}
             </div>
           </>
         )}

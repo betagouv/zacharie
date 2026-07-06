@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+  Fei,
   Carcasse,
   CarcasseIntermediaire,
   CarcasseStatus,
@@ -7,7 +8,6 @@ import {
   User,
   UserRoles,
 } from '@prisma/client';
-import type { FeiWithIntermediaires } from '@api/src/types/fei';
 import type { EntityWithUserRelation } from '@api/src/types/entity';
 import {
   computeTransmissions,
@@ -80,14 +80,14 @@ function intermediaire(overrides: Partial<CarcasseIntermediaire> = {}): Carcasse
   } as unknown as CarcasseIntermediaire;
 }
 
-function fei(overrides: Partial<FeiWithIntermediaires> = {}): FeiWithIntermediaires {
+function fei(overrides: Partial<Fei> = {}): Fei {
   return {
     numero: 'FEI-1',
     deleted_at: null,
     commune_mise_a_mort: 'Commune test',
     date_mise_a_mort: new Date('2024-01-01T00:00:00.000Z'),
     ...overrides,
-  } as unknown as FeiWithIntermediaires;
+  } as unknown as Fei;
 }
 
 function user(roles: UserRoles[], id = 'me'): User {
@@ -115,7 +115,7 @@ function run({
 }: {
   carcasses?: Carcasse[];
   intermediaires?: CarcasseIntermediaire[];
-  feis?: FeiWithIntermediaires[];
+  feis?: Fei[];
   user: User;
   entities?: Record<string, EntityWithUserRelation>;
 }) {

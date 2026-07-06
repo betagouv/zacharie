@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../utils/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 import { logoutAndConnect } from '../../utils/logout-and-connect';
@@ -25,7 +25,6 @@ test('SVI rend des décisions divergentes → chasseur voit chaque décision', a
   await connectWith(page, 'premier-detenteur@example.fr');
   await expect(page.getByRole('link', { name: feiId })).toBeVisible({ timeout: 15000 });
   await page.getByRole('link', { name: feiId }).click();
-  await page.getByRole('button', { name: 'Prendre en charge cette' }).click();
   await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").click();
   await page.getByRole('option', { name: 'ETG 1 - 75000 Paris (' }).click();
   const pasDeStockage = page.getByText('Pas de stockage').first();

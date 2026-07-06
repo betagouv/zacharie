@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../utils/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 import { logoutAndConnect } from '../../utils/logout-and-connect';
@@ -27,7 +27,6 @@ test('SVI 1 et SVI 2 voient chacun leur branche seulement', async ({ page }) => 
   await page.setViewportSize({ width: 350, height: 667 });
   await connectWith(page, 'premier-detenteur@example.fr');
   await page.getByRole('link', { name: feiId }).click();
-  await page.getByRole('button', { name: 'Prendre en charge cette' }).click();
 
   // Group 1 → ETG 1 (keeps MM-001-003 + MM-001-004 by default)
   await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").first().click();

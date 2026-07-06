@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../utils/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 import { logoutAndConnect } from '../../utils/logout-and-connect';
@@ -26,7 +26,6 @@ test('ETG 1 voit 2 transmissions isolées pour le même examen initial', async (
   await page.setViewportSize({ width: 350, height: 667 });
   await connectWith(page, 'premier-detenteur@example.fr');
   await page.getByRole('link', { name: feiId }).click();
-  await page.getByRole('button', { name: 'Prendre en charge cette' }).click();
 
   // Groupe 1 (branche directe) → ETG 1, garde MM-001-003 / MM-001-004.
   await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").first().click();

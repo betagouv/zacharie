@@ -7,6 +7,7 @@ import {
   CarcasseStatus,
   CarcasseType,
   EntityRelationType,
+  UserRoles
 } from '@prisma/client';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
 import { Tooltip as DsfrTooltip } from '@codegouvfr/react-dsfr/Tooltip';
@@ -158,7 +159,12 @@ export default function EtgUtilisateur() {
           </p>
         </header>
 
-        {rajoutsEtg.total > 0 && (
+
+        {!user.roles.includes(UserRoles.SVI) && (
+          <>
+            <h2 className="fr-h4 mt-6 mb-0">Statistiques de saisies</h2>
+            <SaisieStats carcasses={userCarcasses} />
+               {rajoutsEtg.total > 0 && (
           <>
             <h2 className="fr-h4 mt-6 mb-0">Rajouts de carcasse par l'ETG</h2>
             <div className="py-4">
@@ -179,9 +185,8 @@ export default function EtgUtilisateur() {
             </div>
           </>
         )}
-
-        <h2 className="fr-h4 mt-6 mb-0">Statistiques de saisies</h2>
-        <SaisieStats carcasses={userCarcasses} />
+          </>
+        )}
       </div>
     </div>
   );

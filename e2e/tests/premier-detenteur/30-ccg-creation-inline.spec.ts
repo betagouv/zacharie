@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../utils/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 
@@ -17,14 +17,13 @@ test('Création CCG inline depuis le formulaire de transmission', async ({ page 
   const feiId = 'ZACH-20250707-QZ6E0-155242';
   await connectWith(page, 'premier-detenteur@example.fr');
   await page.getByRole('link', { name: feiId }).click();
-  await page.getByRole('button', { name: 'Prendre en charge cette' }).click();
 
   const selectContainer = page.locator("[class*='select-prochain-detenteur'][class*='input-container']");
   await selectContainer.scrollIntoViewIfNeeded();
   await selectContainer.click();
   await page.getByRole('option', { name: 'ETG 1 - 75000 Paris (' }).click();
 
-  await page.getByText('Carcasses déposées dans un Centre').click();
+  await page.getByText('Carcasses déposées dans une chambre froide').click();
   await page.getByRole('button', { name: 'Renseigner ma chambre froide' }).click();
 
   // Use the same pattern as fiche_circuit-long_simple_premier-detenteur.spec.ts test 2
