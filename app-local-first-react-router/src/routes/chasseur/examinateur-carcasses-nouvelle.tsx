@@ -233,10 +233,10 @@ export default function NouvelleCarcasse({
             iconId="fr-icon-list-unordered"
             onClick={() => detailsModal.open()}
           >
-            {detailsCount > 0 ? `Détails (${detailsCount}) — modifier` : 'Ajouter des détails (facultatif)'}
+            {detailsCount > 0 ? `Détails (${detailsCount}) — modifier` : 'Ajouter une anomalie (facultatif)'}
           </Button>
           <detailsModal.Component
-            title="Ajouter des détails"
+            title="Ajouter une anomalie"
             size="large"
             buttons={[{ doClosesModal: true, children: 'Terminer' }]}
           >
