@@ -7,7 +7,7 @@ import {
   CarcasseStatus,
   CarcasseType,
   EntityRelationType,
-  UserRoles
+  UserRoles,
 } from '@prisma/client';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
 import { Tooltip as DsfrTooltip } from '@codegouvfr/react-dsfr/Tooltip';
@@ -159,32 +159,28 @@ export default function EtgUtilisateur() {
           </p>
         </header>
 
-
         {!user.roles.includes(UserRoles.SVI) && (
           <>
             <h2 className="fr-h4 mt-6 mb-0">Statistiques de saisies</h2>
             <SaisieStats carcasses={userCarcasses} />
-               {rajoutsEtg.total > 0 && (
-          <>
-            <h2 className="fr-h4 mt-6 mb-0">Rajouts de carcasse par l'ETG</h2>
-            <div className="py-4">
-              <StatsSection title="Carcasses oubliées à l'examen initial">
-                <div className="flex flex-wrap gap-4">
-                  <StatCard
-                    label="Carcasses ajoutées par l'ETG"
-                    value={rajoutsEtg.count}
-                    sub={`sur ${rajoutsEtg.total.toLocaleString('fr-FR')} carcasse${rajoutsEtg.total > 1 ? 's' : ''} examinée${rajoutsEtg.total > 1 ? 's' : ''}`}
-                  />
-                  <StatCard
-                    label="Taux d'oubli à l'examen initial"
-                    value={`${rajoutsEtg.taux.toLocaleString('fr-FR')} %`}
-                    info="Part des carcasses de ce chasseur qui n'avaient pas été déclarées à l'examen initial et que l'ETG a dû ajouter à la réception."
-                  />
-                </div>
-              </StatsSection>
-            </div>
-          </>
-        )}
+            {rajoutsEtg.total > 0 && (
+              <div className="py-4">
+                <StatsSection title="Carcasses oubliées à l'examen initial">
+                  <div className="flex flex-wrap gap-4">
+                    <StatCard
+                      label="Carcasses ajoutées par l'ETG"
+                      value={rajoutsEtg.count}
+                      sub={`sur ${rajoutsEtg.total.toLocaleString('fr-FR')} carcasse${rajoutsEtg.total > 1 ? 's' : ''} examinée${rajoutsEtg.total > 1 ? 's' : ''}`}
+                    />
+                    <StatCard
+                      label="Taux d'oubli à l'examen initial"
+                      value={`${rajoutsEtg.taux.toLocaleString('fr-FR')} %`}
+                      info="Part des carcasses de ce chasseur qui n'avaient pas été déclarées à l'examen initial et que l'ETG a dû ajouter à la réception."
+                    />
+                  </div>
+                </StatsSection>
+              </div>
+            )}
           </>
         )}
       </div>
