@@ -2,7 +2,13 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router';
 import dayjs from 'dayjs';
 import type { Carcasse } from '@prisma/client';
-import { CarcasseStatus, CarcasseType, UserRoles } from '@prisma/client';
+import {
+  CarcasseModificationRequestType,
+  CarcasseStatus,
+  CarcasseType,
+  EntityRelationType,
+  UserRoles,
+} from '@prisma/client';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
 import { Tooltip as DsfrTooltip } from '@codegouvfr/react-dsfr/Tooltip';
 import { Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
@@ -28,6 +34,8 @@ export default function EtgUtilisateur() {
 
   const carcassesRegistry = useZustandStore((state) => state.carcassesRegistry);
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
+  const modifRequestsByCarcasseId = useZustandStore((state) => state.modifRequestsByCarcasseId);
+  const entities = useZustandStore((state) => state.entities);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -67,6 +75,28 @@ export default function EtgUtilisateur() {
         interCarcasseIds.has(c.zacharie_carcasse_id)
     );
   }, [carcassesRegistry, carcassesIntermediaireById, userId]);
+
+  // Rajouts de carcasse par l'ETG : carcasses oubliées par ce chasseur à l'examen initial et
+  // ajoutées par l'ETG à la réception (modif request NEW_CARCASSE émise par une entité ETG).
+  const rajoutsEtg = useMemo(() => {
+    if (!userId) return { count: 0, total: 0, taux: 0 };
+    const etgEntityIds = new Set(
+      Object.values(entities)
+        .filter((e) => e.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY)
+        .map((e) => e.id)
+    );
+    const examinateurCarcasses = carcassesRegistry.filter((c) => c.examinateur_initial_user_id === userId);
+    const count = examinateurCarcasses.filter((c) =>
+      (modifRequestsByCarcasseId[c.zacharie_carcasse_id] ?? []).some(
+        (r) =>
+          r.type === CarcasseModificationRequestType.NEW_CARCASSE &&
+          !r.deleted_at &&
+          etgEntityIds.has(r.requested_by_entity_id)
+      )
+    ).length;
+    const total = examinateurCarcasses.length;
+    return { count, total, taux: total > 0 ? Math.round((count / total) * 1000) / 10 : 0 };
+  }, [carcassesRegistry, modifRequestsByCarcasseId, entities, userId]);
 
   if (notFound) {
     return (
@@ -133,6 +163,24 @@ export default function EtgUtilisateur() {
           <>
             <h2 className="fr-h4 mt-6 mb-0">Statistiques de saisies</h2>
             <SaisieStats carcasses={userCarcasses} />
+            {rajoutsEtg.total > 0 && (
+              <div className="py-4">
+                <StatsSection title="Carcasses oubliées à l'examen initial">
+                  <div className="flex flex-wrap gap-4">
+                    <StatCard
+                      label="Carcasses ajoutées par l'ETG"
+                      value={rajoutsEtg.count}
+                      sub={`sur ${rajoutsEtg.total.toLocaleString('fr-FR')} carcasse${rajoutsEtg.total > 1 ? 's' : ''} examinée${rajoutsEtg.total > 1 ? 's' : ''}`}
+                    />
+                    <StatCard
+                      label="Taux d'oubli à l'examen initial"
+                      value={`${rajoutsEtg.taux.toLocaleString('fr-FR')} %`}
+                      info="Part des carcasses de ce chasseur qui n'avaient pas été déclarées à l'examen initial et que l'ETG a dû ajouter à la réception."
+                    />
+                  </div>
+                </StatsSection>
+              </div>
+            )}
           </>
         )}
       </div>

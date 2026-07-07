@@ -45,6 +45,9 @@ test('Ajout carcasse manquante : ETG ajoute → examinateur signe → carcasse r
   await expect(
     page.getByText('Carcasse ajoutée, approbation de mise sur le marché en attente').first()
   ).toBeVisible();
+  // The card itself carries a permanent "Carcasse ajoutée par {entité}" marker (distinct from the
+  // pending banner above, whose text is "Carcasse ajoutée, approbation…").
+  await expect(page.getByText(/Carcasse ajoutée par/).first()).toBeVisible();
 
   // Examinateur signs.
   await logoutAndConnect(page, 'examinateur@example.fr');
@@ -73,4 +76,6 @@ test('Ajout carcasse manquante : ETG ajoute → examinateur signe → carcasse r
   await expect(page.getByText('Carcasse ajoutée, approbation de mise sur le marché en attente')).toHaveCount(
     0
   );
+  // The "Carcasse ajoutée par {entité}" marker on the card persists after approval.
+  await expect(page.getByText(/Carcasse ajoutée par/).first()).toBeVisible();
 });
