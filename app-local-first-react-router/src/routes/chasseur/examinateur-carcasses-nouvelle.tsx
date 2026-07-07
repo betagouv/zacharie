@@ -12,11 +12,8 @@ import { syncData } from '@app/utils/sync-data';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import useUser from '@app/zustand/user';
 import { createNewCarcasse } from '@app/utils/create-new-carcasse';
-import AnomaliesTreeNavigator, { type AnomalieNavSection } from '@app/components/AnomaliesTreeNavigator';
-import { toggleAnomalie } from '@app/utils/anomalies-referentiel';
-import grandGibierCarcasseTree from '@app/data/grand-gibier-carcasse/tree.json';
-import petitGibierCarcasseTree from '@app/data/petit-gibier-carcasse/tree.json';
-import grandGibierAbatstree from '@app/data/grand-gibier-abats/tree.json';
+import AnomaliePicker from '@app/components/AnomaliePicker';
+import { buildAnomaliePickerSections } from '@app/utils/build-carcasse-nav-sections';
 const gibierSelect = {
   grand: grandGibier.especes,
   petit: petitGibier.especes,
@@ -68,29 +65,17 @@ export default function NouvelleCarcasse({
   ).current;
   const detailsCount = anomaliesCarcasse.length + (isPetitGibier ? 0 : anomaliesAbats.length);
 
-  const detailsSections = useMemo<AnomalieNavSection[]>(() => {
-    const sections: AnomalieNavSection[] = [
-      {
-        key: 'carcasse',
-        label: 'Carcasse',
-        tree: isPetitGibier ? petitGibierCarcasseTree : grandGibierCarcasseTree,
-        selected: anomaliesCarcasse,
-        onToggle: (canonical) => setAnomaliesCarcasse((prev) => toggleAnomalie(prev, canonical)),
-        onAddFreeText: (value) => setAnomaliesCarcasse((prev) => [...prev, value]),
-      },
-    ];
-    if (!isPetitGibier) {
-      sections.push({
-        key: 'abats',
-        label: 'Abats',
-        tree: grandGibierAbatstree,
-        selected: anomaliesAbats,
-        onToggle: (canonical) => setAnomaliesAbats((prev) => toggleAnomalie(prev, canonical)),
-        onAddFreeText: (value) => setAnomaliesAbats((prev) => [...prev, value]),
-      });
-    }
-    return sections;
-  }, [isPetitGibier, anomaliesCarcasse, anomaliesAbats]);
+  const detailsSections = useMemo(
+    () =>
+      buildAnomaliePickerSections({
+        isPetitGibier,
+        anomaliesCarcasse,
+        anomaliesAbats,
+        setAnomaliesCarcasse,
+        setAnomaliesAbats,
+      }),
+    [isPetitGibier, anomaliesCarcasse, anomaliesAbats]
+  );
 
   const zacharieCarcasseId = `${fei.numero}_${numeroBracelet}`;
 
@@ -233,14 +218,14 @@ export default function NouvelleCarcasse({
             iconId="fr-icon-list-unordered"
             onClick={() => detailsModal.open()}
           >
-            {detailsCount > 0 ? `Détails (${detailsCount}) — modifier` : 'Ajouter une anomalie (facultatif)'}
+            {detailsCount > 0 ? `Anomalie (${detailsCount})` : 'Ajouter une anomalie (facultatif)'}
           </Button>
           <detailsModal.Component
             title="Ajouter une anomalie"
             size="large"
             buttons={[{ doClosesModal: true, children: 'Terminer' }]}
           >
-            <AnomaliesTreeNavigator sections={detailsSections} />
+            <AnomaliePicker sections={detailsSections} />
           </detailsModal.Component>
         </div>
       )}
