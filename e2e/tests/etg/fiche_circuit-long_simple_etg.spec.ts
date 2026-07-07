@@ -35,6 +35,8 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
   await expect(page.locator('#content')).toMatchAriaSnapshot(`
       - group:
         - heading "Données de traçabilité" [level=3]
+        - paragraph: Fiche d'Examen Initial n°
+        - paragraph: "/ZACH-\\\\d+-QZ6E0-\\\\d+/"
         - paragraph: Espèces
         - paragraph: Daim, Pigeons
         - paragraph: Informations clés
@@ -45,6 +47,12 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
             - paragraph: "/Date de mise à mort : lundi 7 juillet \\\\d+/"
           - listitem:
             - paragraph: "/Heure de mise à mort de la première carcasse de la fiche : \\\\d+:\\\\d+/"
+          - listitem:
+            - paragraph: "/Heure d'éviscération de la dernière carcasse de la fiche : \\\\d+:\\\\d+/"
+          - listitem:
+            - paragraph: "/Nom du Centre de Collecte.+/"
+          - listitem:
+            - paragraph: "/Date et heure de dépôt dans le CCG.+/"
         - paragraph: Acteurs
         - paragraph: Examinateur Initial
         - list:
@@ -190,6 +198,8 @@ test('Pas de stockage - Je transfère à un autre collecteur', async ({ page }) 
   await expect(page.locator('#content')).toMatchAriaSnapshot(`
       - group:
         - heading "Données de traçabilité" [level=3]
+        - paragraph: Fiche d'Examen Initial n°
+        - paragraph: "/ZACH-\\\\d+-QZ6E0-\\\\d+/"
         - paragraph: Espèces
         - paragraph: Daim, Pigeons
         - paragraph: Informations clés
@@ -200,6 +210,12 @@ test('Pas de stockage - Je transfère à un autre collecteur', async ({ page }) 
             - paragraph: "/Date de mise à mort : lundi 7 juillet \\\\d+/"
           - listitem:
             - paragraph: "/Heure de mise à mort de la première carcasse de la fiche : \\\\d+:\\\\d+/"
+          - listitem:
+            - paragraph: "/Heure d'éviscération de la dernière carcasse de la fiche : \\\\d+:\\\\d+/"
+          - listitem:
+            - paragraph: "/Nom du Centre de Collecte.+/"
+          - listitem:
+            - paragraph: "/Date et heure de dépôt dans le CCG.+/"
         - paragraph: Acteurs
         - paragraph: Examinateur Initial
         - list:
@@ -323,6 +339,8 @@ test('Pas de stockage - Je transfère à un autre ETG', async ({ page, context }
   await expect(page.locator('#content')).toMatchAriaSnapshot(`
       - group:
         - heading "Données de traçabilité" [level=3]
+        - paragraph: Fiche d'Examen Initial n°
+        - paragraph: "/ZACH-\\\\d+-QZ6E0-\\\\d+/"
         - paragraph: Espèces
         - paragraph: Daim, Pigeons
         - paragraph: Informations clés
@@ -333,6 +351,12 @@ test('Pas de stockage - Je transfère à un autre ETG', async ({ page, context }
             - paragraph: "/Date de mise à mort : lundi 7 juillet \\\\d+/"
           - listitem:
             - paragraph: "/Heure de mise à mort de la première carcasse de la fiche : \\\\d+:\\\\d+/"
+          - listitem:
+            - paragraph: "/Heure d'éviscération de la dernière carcasse de la fiche : \\\\d+:\\\\d+/"
+          - listitem:
+            - paragraph: "/Nom du Centre de Collecte.+/"
+          - listitem:
+            - paragraph: "/Date et heure de dépôt dans le CCG.+/"
         - paragraph: Acteurs
         - paragraph: Examinateur Initial
         - list:
