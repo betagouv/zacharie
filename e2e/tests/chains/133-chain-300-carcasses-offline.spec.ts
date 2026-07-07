@@ -168,10 +168,18 @@ test('Chaîne 300 carcasses : examinateur → PD → collecteur → ETG → SVI 
   await context.setOffline(false);
   const transmettre = page.getByRole('button', { name: 'Transmettre', exact: true });
   await expect(transmettre).not.toBeDisabled();
+  // Les ~100 carcasses créées hors-ligne partent en un unique POST /sync au clic « Transmettre ».
+  // On attend la confirmation serveur (200) AVANT de changer d'utilisateur : sinon, sur CI lent, la
+  // déconnexion de l'examinateur avorte l'upload en vol (et clearLocalAppState efface l'IndexedDB) →
+  // le serveur n'a jamais les carcasses, le PD hérite d'une fiche vide et le select « prochain
+  // détenteur » ne devient jamais éditable (timeout historique sur le clic ligne ~189).
+  const carcassesUploaded = page.waitForResponse(
+    (r) => new URL(r.url()).pathname === '/sync' && r.request().method() === 'POST' && r.ok(),
+    { timeout: 120000 }
+  );
   await transmettre.click();
-  // Le beacon « transmise » attend la remontée serveur des ~100 carcasses créées hors-ligne (un seul
-  // POST /sync) : sur CI froid + 2 cœurs c'est le plus lent des handoffs, d'où 60s.
   await expect(page.getByText(/Votre fiche a été transmise/i).first()).toBeVisible({ timeout: 60000 });
+  await carcassesUploaded;
 
   const feiId = RegExp(/ZACH-\d+-\w+-\d+/).exec(page.url())?.[0];
   expect(feiId).toBeDefined();
@@ -241,10 +249,18 @@ test('Chaîne 300 carcasses : examinateur → PD → collecteur → ETG → SVI 
   await transmettreEtg.scrollIntoViewIfNeeded();
   await transmettreEtg.click();
 
+  // La transmission ETG→SVI a été faite hors-ligne : au retour en ligne, on attend la confirmation
+  // serveur (POST /sync 200) plutôt que l'alerte « SVI 1 a été notifié ». Cette alerte est transitoire :
+  // dès que la fiche passe au SVI (svi_assigned_at), la vue éditable de l'ETG se démonte et l'état
+  // « a été notifié » (canEdit && is_synced) est court-circuité → assertion instable. Le POST /sync 200
+  // garantit que le serveur a la transmission avant qu'on déconnecte l'ETG ; la réception réelle est
+  // vérifiée côté SVI juste après.
+  const etgTransmissionSynced = page.waitForResponse(
+    (r) => new URL(r.url()).pathname === '/sync' && r.request().method() === 'POST' && r.ok(),
+    { timeout: 120000 }
+  );
   await context.setOffline(false);
-  // « a été notifié » n'apparaît qu'une fois la transmission remontée (transmission.is_synced === true) ;
-  // sur CI froid la synchro des marquages ETG hors-ligne peut dépasser 30s, d'où 60s.
-  await expect(page.getByText(/SVI 1 a été notifié/)).toBeVisible({ timeout: 60000 });
+  await etgTransmissionSynced;
 
   // ===== 5. SVI reçoit la fiche (pas d'inspection — voir TODO mass-inspect) =====
   await logoutAndConnect(page, 'svi@example.fr');
