@@ -32,7 +32,8 @@ router.get(
       next: express.NextFunction
     ) => {
       const { search, type, zacharie_compatible } = req.query as Record<string, string | undefined>;
-      const where: Prisma.EntityWhereInput = { deleted_at: null };
+      // Admin : on renvoie toutes les entités, supprimées incluses (affichées avec un badge).
+      const where: Prisma.EntityWhereInput = {};
       if (type) where.type = type as EntityTypes;
       if (zacharie_compatible) where.zacharie_compatible = zacharie_compatible === 'true';
       if (search) {
@@ -47,7 +48,7 @@ router.get(
         ];
       }
 
-      const baseWhere: Prisma.EntityWhereInput = { deleted_at: null };
+      const baseWhere: Prisma.EntityWhereInput = {};
       if (search) {
         baseWhere.OR = where.OR;
       }
@@ -84,10 +85,10 @@ router.get(
       res: express.Response<AdminGetEntityResponse>,
       next: express.NextFunction
     ) => {
+      // Admin : on peut ouvrir une entité supprimée pour la restaurer.
       const entity = await prisma.entity.findUnique({
         where: {
           id: req.params.entity_id,
-          deleted_at: null,
         },
         include: entityAdminInclude,
       });
@@ -392,6 +393,46 @@ router.post(
         data: { entity: updatedEntity },
         error: '',
       });
+    }
+  )
+);
+
+// Soft delete : pose deleted_at. L'entité disparaît des listes et pickers user-facing
+// (qui filtrent deleted_at: null), mais ses données historiques (fiches, carcasses) restent
+// référencées. Les FK Fei/Carcasse → Entity sont onDelete: Cascade, donc jamais de hard delete.
+router.post(
+  '/entity/:entity_id/soft-delete',
+  catchErrors(
+    async (
+      req: express.Request,
+      res: express.Response<AdminActionEntityResponse>,
+      next: express.NextFunction
+    ) => {
+      const updatedEntity = await prisma.entity.update({
+        where: { id: req.params.entity_id },
+        data: { deleted_at: new Date() },
+        include: entityAdminInclude,
+      });
+      res.status(200).send({ ok: true, data: { entity: updatedEntity }, error: '' });
+    }
+  )
+);
+
+// Restaure une entité soft-deleted : remet deleted_at à null.
+router.post(
+  '/entity/:entity_id/restore',
+  catchErrors(
+    async (
+      req: express.Request,
+      res: express.Response<AdminActionEntityResponse>,
+      next: express.NextFunction
+    ) => {
+      const updatedEntity = await prisma.entity.update({
+        where: { id: req.params.entity_id },
+        data: { deleted_at: null },
+        include: entityAdminInclude,
+      });
+      res.status(200).send({ ok: true, data: { entity: updatedEntity }, error: '' });
     }
   )
 );

@@ -141,6 +141,36 @@ export default function AdminEntity() {
       });
   }
 
+  function handleToggleSoftDelete() {
+    const isDeleted = !!entity.deleted_at;
+    const confirmMessage = isDeleted
+      ? `Restaurer l'entité ${entity.nom_d_usage} ?`
+      : `Supprimer l'entité ${entity.nom_d_usage} ? Elle n'apparaîtra plus dans les listes et les sélections des utilisateurs. Cette action est réversible (restauration possible).`;
+    if (!window.confirm(confirmMessage)) return;
+    setIsSaving(true);
+    API.post({
+      path: `admin/entity/${params.entityId}/${isDeleted ? 'restore' : 'soft-delete'}`,
+    })
+      .then((res) => res as AdminActionEntityResponse)
+      .then((response) => {
+        if (!response.ok) {
+          return toast.error(response.error);
+        }
+        toast.success(isDeleted ? "L'entité a été restaurée" : "L'entité a été supprimée");
+      })
+      .then(() => {
+        loadData(params.entityId!).then((response) => {
+          if (response.data) setAdminEntityResponse(response.data!);
+          if (!response.ok) {
+            return toast.error(response.error);
+          }
+        });
+      })
+      .finally(() => {
+        setIsSaving(false);
+      });
+  }
+
   return (
     <div className="fr-container fr-container--fluid relative">
       <title>{`${entity.nom_d_usage} (${entity.type}) | Admin | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}</title>
@@ -252,6 +282,18 @@ export default function AdminEntity() {
                       Activer la clé API dédiée
                     </Button>
                   )}
+                  <Button
+                    type="button"
+                    priority={entity.deleted_at ? 'secondary' : 'tertiary'}
+                    size="small"
+                    iconId={entity.deleted_at ? 'fr-icon-arrow-go-back-line' : 'fr-icon-delete-line'}
+                    className={
+                      entity.deleted_at ? undefined : 'text-red-600! [&_*]:text-red-600! [&:hover]:bg-red-50!'
+                    }
+                    onClick={handleToggleSoftDelete}
+                  >
+                    {entity.deleted_at ? 'Restaurer' : 'Supprimer'}
+                  </Button>
                 </div>
               </div>
             </header>

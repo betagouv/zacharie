@@ -1362,6 +1362,7 @@ router.get(
       const allOtherEntities = await prisma.entity
         .findMany({
           where: {
+            deleted_at: null,
             // for_testing: ETG test, CCG test, SVI test, etc.
             ...(user.isZacharieAdmin ? {} : { for_testing: false }),
             type: {
