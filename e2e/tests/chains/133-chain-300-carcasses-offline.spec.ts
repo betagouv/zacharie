@@ -27,10 +27,13 @@ const PIGEON_LOTS = [5, 8, 10, 12, 7, 9, 15, 6, 20, 11].slice(0, 10);
 const pad = (n: number) => String(n).padStart(3, '0');
 
 // Pas de slowMo global : la boucle de création tourne à la vitesse d'auto-wait de Playwright.
-// Chaque ajout déclenche une synchro + un re-render de la liste qui grandit → ~1,5-2s/carcasse,
-// d'où un timeout large pour ~300 carcasses. Le rythme du chaînage store → sync côté transmission
-// est couvert par l'assertion ferme des bandeaux de notification.
-test.setTimeout(Number((DAIM_COUNT + CHEV_COUNT + PIGEON_LOTS.length) * 1000 + 120000));
+// Chaque ajout déclenche une synchro + un re-render de la liste qui grandit → coût croissant par
+// carcasse. Le budget doit tenir dans le pire cas CI : serveur Vite dev « froid » (compilation à la
+// demande des modules pendant la boucle) sur runner 2 cœurs. Mesuré en local : ~0,4s/carcasse à chaud
+// mais ~1,8s/carcasse à froid ; d'où 3s/carcasse + 180s de base (compilation initiale + chaînage
+// multi-acteurs + synchro). Le rythme store → sync côté transmission reste couvert par l'assertion
+// ferme des bandeaux de notification.
+test.setTimeout(Number((DAIM_COUNT + CHEV_COUNT + PIGEON_LOTS.length) * 3000 + 180000));
 
 test.beforeAll(async () => {
   await resetDb('EXAMINATEUR_INITIAL');
@@ -166,7 +169,9 @@ test('Chaîne 300 carcasses : examinateur → PD → collecteur → ETG → SVI 
   const transmettre = page.getByRole('button', { name: 'Transmettre', exact: true });
   await expect(transmettre).not.toBeDisabled();
   await transmettre.click();
-  await expect(page.getByText(/Votre fiche a été transmise/i).first()).toBeVisible({ timeout: 30000 });
+  // Le beacon « transmise » attend la remontée serveur des ~100 carcasses créées hors-ligne (un seul
+  // POST /sync) : sur CI froid + 2 cœurs c'est le plus lent des handoffs, d'où 60s.
+  await expect(page.getByText(/Votre fiche a été transmise/i).first()).toBeVisible({ timeout: 60000 });
 
   const feiId = RegExp(/ZACH-\d+-\w+-\d+/).exec(page.url())?.[0];
   expect(feiId).toBeDefined();
@@ -191,7 +196,7 @@ test('Chaîne 300 carcasses : examinateur → PD → collecteur → ETG → SVI 
   const transmettrePd = page.getByRole('button', { name: 'Transmettre la fiche' });
   await transmettrePd.scrollIntoViewIfNeeded();
   await transmettrePd.click();
-  await expect(page.getByText(/Collecteur Pro 1 a été notifié/).first()).toBeVisible({ timeout: 30000 });
+  await expect(page.getByText(/Collecteur Pro 1 a été notifié/).first()).toBeVisible({ timeout: 60000 });
 
   // ===== 3. Collecteur : prise en charge en ligne, puis marquage + transmission HORS-LIGNE =====
   await page.setViewportSize({ width: 1280, height: 900 });
@@ -216,7 +221,7 @@ test('Chaîne 300 carcasses : examinateur → PD → collecteur → ETG → SVI 
   await transmettreColl.click();
 
   await context.setOffline(false);
-  await expect(page.getByText(/ETG 1 a été notifié/)).toBeVisible({ timeout: 30000 });
+  await expect(page.getByText(/ETG 1 a été notifié/)).toBeVisible({ timeout: 60000 });
 
   // ===== 4. ETG : prise en charge en ligne, puis marquage + transmission HORS-LIGNE =====
   await logoutAndConnect(page, 'etg-1@example.fr');
@@ -237,11 +242,13 @@ test('Chaîne 300 carcasses : examinateur → PD → collecteur → ETG → SVI 
   await transmettreEtg.click();
 
   await context.setOffline(false);
-  await expect(page.getByText(/SVI 1 a été notifié/)).toBeVisible({ timeout: 30000 });
+  // « a été notifié » n'apparaît qu'une fois la transmission remontée (transmission.is_synced === true) ;
+  // sur CI froid la synchro des marquages ETG hors-ligne peut dépasser 30s, d'où 60s.
+  await expect(page.getByText(/SVI 1 a été notifié/)).toBeVisible({ timeout: 60000 });
 
   // ===== 5. SVI reçoit la fiche (pas d'inspection — voir TODO mass-inspect) =====
   await logoutAndConnect(page, 'svi@example.fr');
-  await expect(page.getByRole('link', { name: feiId })).toBeVisible({ timeout: 30000 });
+  await expect(page.getByRole('link', { name: feiId })).toBeVisible({ timeout: 60000 });
   await page.getByRole('link', { name: feiId }).click();
   await expect(page.getByText(/carcasses déjà refusées \(4\)/i)).toBeVisible({ timeout: 15000 });
 });
