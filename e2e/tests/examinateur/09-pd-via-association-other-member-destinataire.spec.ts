@@ -59,9 +59,9 @@ test("Autre membre de l'Association voit le bloc Destinataire sur la fiche", asy
   await page.getByRole('button', { name: 'Continuer' }).click();
 
   await page
-    .getByRole('textbox', { name: 'Heure de mise à mort de la' })
+    .getByRole('textbox', { name: 'Début de la chasse' })
     .fill(dayjs().startOf('day').add(1, 'hour').format('HH:mm'));
-  await page.getByRole('textbox', { name: 'Heure de mise à mort de la' }).blur();
+  await page.getByRole('textbox', { name: 'Début de la chasse' }).blur();
   await page
     .getByRole('textbox', { name: "Heure d'éviscération de la" })
     .fill(dayjs().startOf('day').add(2, 'hour').format('HH:mm'));

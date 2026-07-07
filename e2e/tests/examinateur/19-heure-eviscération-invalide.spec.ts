@@ -33,7 +33,7 @@ test("Heure d'éviscération < heure de mise à mort → erreur ou auto-correcti
   await page.getByRole('button', { name: 'Continuer' }).click();
 
   // Heure mise à mort = 10:00, éviscération = 08:00 (invalide)
-  const miseAMort = page.getByRole('textbox', { name: 'Heure de mise à mort de la' });
+  const miseAMort = page.getByRole('textbox', { name: 'Début de la chasse' });
   await miseAMort.fill('10:00');
   await miseAMort.blur();
 

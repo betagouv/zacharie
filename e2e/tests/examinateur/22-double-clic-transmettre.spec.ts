@@ -32,8 +32,8 @@ test('Double-clic Transmettre — pas de double soumission', async ({ page }) =>
   await page.getByRole('button', { name: 'Ajouter la carcasse' }).click();
   await page.getByRole('button', { name: 'Continuer' }).click();
 
-  await page.getByRole('textbox', { name: 'Heure de mise à mort de la' }).fill('01:00');
-  await page.getByRole('textbox', { name: 'Heure de mise à mort de la' }).blur();
+  await page.getByRole('textbox', { name: 'Début de la chasse' }).fill('01:00');
+  await page.getByRole('textbox', { name: 'Début de la chasse' }).blur();
   await page.getByRole('textbox', { name: "Heure d'éviscération de la" }).fill('02:00');
   await page.getByRole('textbox', { name: "Heure d'éviscération de la" }).blur();
 
