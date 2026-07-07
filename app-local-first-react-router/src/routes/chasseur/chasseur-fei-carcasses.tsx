@@ -2,10 +2,13 @@ import NouvelleCarcasse from './examinateur-carcasses-nouvelle';
 import { UserRoles } from '@prisma/client';
 import { useMemo, useRef, useState } from 'react';
 import { Button } from '@codegouvfr/react-dsfr/Button';
+import Alert from '@codegouvfr/react-dsfr/Alert';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
+import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
 import CarcasseDetailsModal from '@app/components/CarcasseDetailsModal';
+import CarcasseExamenInitialForm from '@app/components/CarcasseExamenInitialForm';
 import { formatCarcasseLotCount, formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
-import { useParams, useNavigate } from 'react-router';
+import { useParams } from 'react-router';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
@@ -13,6 +16,8 @@ import dayjs from 'dayjs';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import CardCarcasse from '@app/components/CardCarcasse';
 import type { Carcasse } from '@prisma/client';
+import { CarcasseWithModificationRequests } from '@api/src/types/carcasse';
+import { lookupAnomalie } from '@app/utils/anomalies-referentiel-data';
 
 export default function CarcassesExaminateur({
   canEdit,
@@ -63,9 +68,38 @@ export default function CarcassesExaminateur({
     createModal({ id: `carcasse-details-${fei.numero}`, isOpenedByDefault: false })
   ).current;
 
+  const confirmModal = useRef(
+    createModal({ id: `carcasse-confirm-${fei.numero}`, isOpenedByDefault: false })
+  ).current;
+
+  // Synthèse des anomalies renseignées sur l'ensemble des carcasses de la fiche,
+  // pour la modale de confirmation. `total` = nombre total renseigné ;
+  // `avecMessage` = anomalies distinctes porteuses d'un avertissement (dédupliquées).
+  const { total: anomaliesTotal, avecMessage: anomaliesAvecMessage } = useMemo(() => {
+    let total = 0;
+    const seen = new Set<string>();
+    const avecMessage: Array<{ intitule: string; message: string }> = [];
+    for (const carcasse of carcasses) {
+      const canonicals = [
+        ...(carcasse.examinateur_anomalies_carcasse ?? []),
+        ...(carcasse.examinateur_anomalies_abats ?? []),
+      ];
+      total += canonicals.length;
+      for (const canonical of canonicals) {
+        if (seen.has(canonical)) continue;
+        seen.add(canonical);
+        const found = lookupAnomalie(canonical);
+        if (found?.item.message) {
+          avecMessage.push({ intitule: found.item.intitule, message: found.item.message });
+        }
+      }
+    }
+    return { total, avecMessage };
+  }, [carcasses]);
+
   const renderCarcasseCard = (carcasse: CarcasseWithModificationRequests) => (
     <CarcasseExaminateur
-      key={carcasse.numero_bracelet}
+      key={carcasse.zacharie_carcasse_id}
       carcasse={carcasse}
       canEditAsExaminateurInitial={canEdit}
       canEditAsPremierDetenteur={canEditAsPremierDetenteur}
@@ -135,30 +169,26 @@ export default function CarcassesExaminateur({
       )}
 
       {canEdit && hasCarcasses && !allCarcassesConfirmed && !showForm && (
-        <div className="mt-4">
-          <Button
-            type="button"
-            id="add-more-carcasses-button"
-            priority="secondary"
-            iconId="fr-icon-add-line"
-            onClick={() => setShowForm(true)}
-          >
-            Ajouter une autre carcasse
-          </Button>
-        </div>
+        <AddCarcasseCard
+          id="add-more-carcasses-button"
+          className="mt-2"
+          onClick={() => setShowForm(true)}
+        />
       )}
       {canEdit && hasCarcasses && (
-        <p className="my-4 ml-4 text-sm text-gray-500">
-          Carcasses enregistrées sur cette fiche&nbsp;:
-          {countCarcassesByEspece.map((line) => (
-            <span
-              className="ml-4 block"
-              key={line}
-            >
-              {line}
-            </span>
-          ))}
-        </p>
+        <div className="bg-contrast-grey my-4 p-4">
+          <p className="mb-2 text-xs font-bold tracking-wide text-gray-500 uppercase">Récapitulatif</p>
+          <ul className="m-0 flex flex-wrap gap-2 p-0">
+            {countCarcassesByEspece.map((line) => (
+              <li
+                key={line}
+                className="list-none rounded-full bg-white px-3 py-1 text-sm font-semibold text-gray-900"
+              >
+                {line}
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
       {canEdit && hasCarcasses && (
         <div className="mt-4 flex flex-wrap gap-2">
@@ -168,15 +198,13 @@ export default function CarcassesExaminateur({
             iconId="fr-icon-list-unordered"
             onClick={() => detailsModal.open()}
           >
-            Ajouter des détails
+            {carcasses.length > 1 ? 'Ajouter des anomalies' : 'Ajouter une anomalie (facultatif)'}
           </Button>
           {!allCarcassesConfirmed && (
             <Button
               type="button"
               priority="primary"
-              onClick={() => {
-                onAllCarcassesConfirmed();
-              }}
+              onClick={() => confirmModal.open()}
             >
               Continuer
             </Button>
@@ -184,25 +212,59 @@ export default function CarcassesExaminateur({
         </div>
       )}
       {canEdit && hasCarcasses && allCarcassesConfirmed && (
-        <Button
-          type="button"
+        <AddCarcasseCard
           id="add-more-carcasses"
-          priority="secondary"
           className="mt-4"
-          iconId="fr-icon-add-line"
           onClick={() => {
             onAddMoreCarcasses();
             setShowForm(true);
           }}
-        >
-          Ajouter une autre carcasse
-        </Button>
+        />
       )}
       {canEdit && hasCarcasses && (
         <CarcasseDetailsModal
           carcasses={carcasses}
           modal={detailsModal}
         />
+      )}
+      {canEdit && hasCarcasses && (
+        <confirmModal.Component
+          title={anomaliesTotal > 0 ? 'Anomalies renseignées' : 'Aucune anomalie renseignée'}
+          buttons={[
+            {
+              children: 'Annuler',
+              priority: 'secondary',
+              doClosesModal: true,
+            },
+            {
+              children: 'Continuer',
+              doClosesModal: true,
+              onClick: () => onAllCarcassesConfirmed(),
+            },
+          ]}
+        >
+          {anomaliesTotal > 0 ? (
+            <div className="flex flex-col gap-4">
+              <p className="mb-0">
+                Vous avez renseigné {anomaliesTotal} anomalie{anomaliesTotal > 1 ? 's' : ''}.
+              </p>
+              {anomaliesAvecMessage.map(({ intitule, message }) => (
+                <Alert
+                  key={intitule}
+                  severity="warning"
+                  title={intitule}
+                  description={message}
+                />
+              ))}
+            </div>
+          ) : (
+            <Alert
+              severity="info"
+              small
+              description="Vous n'avez pas renseigné d'anomalie. Cela implique que l'examen initial des carcasses n'a pas détecté d'anomalies sur les carcasses, les abats ou le comportement de l'animal."
+            />
+          )}
+        </confirmModal.Component>
       )}
     </>
   );
@@ -220,51 +282,86 @@ export function CarcasseExaminateur({
   const user = useUser((state) => state.user)!;
   const updateCarcasse = useZustandStore((state) => state.updateCarcasse);
   const addLog = useZustandStore((state) => state.addLog);
-  const navigate = useNavigate();
+
+  const editModal = useRef(
+    createModal({ id: `carcasse-edit-${carcasse.zacharie_carcasse_id}`, isOpenedByDefault: false })
+  ).current;
+  const isEditModalOpen = useIsModalOpen(editModal);
 
   if (!canEditAsExaminateurInitial && !canEditAsPremierDetenteur) {
     return <CardCarcasse carcasse={carcasse} />;
   }
   return (
-    <CardCarcasse
-      carcasse={carcasse}
-      onEdit={
-        !canEditAsExaminateurInitial
-          ? undefined
-          : () => {
-            navigate(`/app/chasseur/carcasse/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`);
-          }
-      }
-      onClick={
-        !canEditAsExaminateurInitial
-          ? undefined
-          : () => {
-            navigate(`/app/chasseur/carcasse/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`);
-          }
-      }
-      onDelete={
-        !canEditAsExaminateurInitial && !canEditAsPremierDetenteur
-          ? undefined
-          : () => {
-            if (window.confirm('Voulez-vous supprimer cette carcasse ? Cette opération est irréversible')) {
-              const nextPartialCarcasse: Partial<Carcasse> = {
-                deleted_at: dayjs().toDate(),
-              };
-              updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse);
-              addLog({
-                user_id: user.id,
-                user_role: UserRoles.CHASSEUR,
-                fei_numero: carcasse.fei_numero,
-                action: 'examinateur-carcasse-delete',
-                history: createHistoryInput(carcasse, nextPartialCarcasse),
-                entity_id: null,
-                zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
-                intermediaire_id: null,
-                carcasse_intermediaire_id: null,
-              });
+    <>
+      <CardCarcasse
+        carcasse={carcasse}
+        onEdit={!canEditAsExaminateurInitial ? undefined : () => editModal.open()}
+        onClick={!canEditAsExaminateurInitial ? undefined : () => editModal.open()}
+        onDelete={
+          !canEditAsExaminateurInitial && !canEditAsPremierDetenteur
+            ? undefined
+            : () => {
+              if (
+                window.confirm('Voulez-vous supprimer cette carcasse ? Cette opération est irréversible')
+              ) {
+                const nextPartialCarcasse: Partial<CarcasseWithModificationRequests> = {
+                  deleted_at: dayjs().toDate(),
+                };
+                updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse, true);
+                addLog({
+                  user_id: user.id,
+                  user_role: UserRoles.CHASSEUR,
+                  fei_numero: fei.numero,
+                  action: 'examinateur-carcasse-delete',
+                  history: createHistoryInput(carcasse, nextPartialCarcasse),
+                  entity_id: null,
+                  zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
+                  intermediaire_id: null,
+                  carcasse_intermediaire_id: null,
+                });
+              }
             }
-          }
-      }
-    />
+        }
+      />
+      <editModal.Component
+        size="large"
+        title={`${carcasse.espece || 'Carcasse'} — N° ${carcasse.numero_bracelet}`}
+        buttons={[{ children: 'Terminer', doClosesModal: true }]}
+      >
+        {isEditModalOpen && <CarcasseExamenInitialForm carcasse={carcasse} />}
+      </editModal.Component>
+    </>
+  );
+}
+
+// Carte « fantôme » pour ajouter une carcasse : se fond dans la liste des cartes
+// (bordure pointillée) plutôt qu'un bouton concurrent.
+function AddCarcasseCard({
+  id,
+  onClick,
+  className,
+}: {
+  id: string;
+  onClick: () => void;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      id={id}
+      onClick={onClick}
+      className={[
+        'flex w-full items-center justify-center gap-2 rounded border border-dashed border-gray-300 p-4 font-medium text-[#000091] transition-colors hover:border-[#000091] hover:bg-[#f6f6f6]',
+        className || '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
+      <span
+        className="fr-icon-add-line"
+        aria-hidden
+      />
+      Ajouter une carcasse
+    </button>
   );
 }

@@ -1,10 +1,6 @@
-import { Carcasse, CarcasseType, Fei, FeiOwnerRole, Prisma, UserRoles } from '@prisma/client';
+import { Carcasse, Fei, FeiOwnerRole, UserRoles } from '@prisma/client';
 import type { CarcasseIntermediaire } from '@prisma/client';
-import grandGibier from '@app/data/grand-gibier.json';
-import petitGibier from '@app/data/petit-gibier.json';
-import { useMemo, useRef, useState } from 'react';
-import { Input } from '@codegouvfr/react-dsfr/Input';
-import { Select } from '@codegouvfr/react-dsfr/Select';
+import { useMemo, useState } from 'react';
 import { Breadcrumb } from '@codegouvfr/react-dsfr/Breadcrumb';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
@@ -13,12 +9,10 @@ import Chargement from '@app/components/Chargement';
 import { Link, useNavigate, useParams } from 'react-router';
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
-import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { isCarcasseDone } from '@app/utils/is-carcasse-done';
 import dayjs from 'dayjs';
 import { createHistoryInput } from '@app/utils/create-history-entry';
-import AnomaliesTreeNavigator from '@app/components/AnomaliesTreeNavigator';
-import { buildCarcasseNavSections } from '@app/utils/build-carcasse-nav-sections';
+import CarcasseExamenInitialForm from '@app/components/CarcasseExamenInitialForm';
 import { useCarcassesIntermediairesForCarcasse } from '@app/utils/get-carcasses-intermediaires';
 import {
   getCarcasseCardDisplay,
@@ -32,11 +26,6 @@ import TrichineSection from '@app/components/TrichineSection';
 import { TRICHINE_FEATURE_ENABLED } from '@app/utils/trichine';
 import { useGetTransmissionFromCarcasse } from '@app/utils/get-transmissions-sorted';
 import { CarcasseTransmissionWihMetadata } from '@app/types/carcasse';
-
-const gibierSelect = {
-  grand: grandGibier.especes,
-  petit: petitGibier.especes,
-};
 
 type DecisionColor = {
   cardText: string;
@@ -372,10 +361,6 @@ function ExaminateurCarcasseDetailLoaded() {
     });
   };
 
-  const feiCarcasses = useCarcassesForFei(fei.numero);
-  const existingsNumeroBracelet = feiCarcasses.map((c) => c.numero_bracelet);
-  const [numeroError, setNumeroError] = useState<string | null>(null);
-
   const intermediaires = useCarcassesIntermediairesForCarcasse(carcasse.zacharie_carcasse_id);
 
   const navigate = useNavigate();
@@ -407,11 +392,6 @@ function ExaminateurCarcasseDetailLoaded() {
   const headerStatusLabel = cardDisplay.statusLabel ?? 'En cours de création';
   const headerAccentColor: CardAccent = cardDisplay.accentColor ?? 'gray';
   const headerStatusIconId = cardDisplay.iconId ?? null;
-
-  const [espece, setEspece] = useState(carcasse.espece || '');
-
-  const numeroFormRef = useRef<HTMLFormElement>(null);
-  const formRef = useRef<HTMLFormElement>(null);
 
   return (
     <>
@@ -456,129 +436,7 @@ function ExaminateurCarcasseDetailLoaded() {
             {canEdit && (
               <div className="fr-mb-2w rounded bg-white p-4 md:p-8 md:shadow-sm">
                 <h2 className="fr-h4 fr-mb-2w">Examen initial</h2>
-                <form
-                  id="carcasse-edit-form"
-                  method="POST"
-                  ref={numeroFormRef}
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    const formData = new FormData(numeroFormRef.current!);
-                    const nextNumeroBracelet = formData.get(
-                      Prisma.CarcasseScalarFieldEnum.numero_bracelet
-                    ) as string;
-                    if (existingsNumeroBracelet.includes(nextNumeroBracelet)) {
-                      setNumeroError('Le numéro de marquage est déjà utilisé pour cette fiche');
-                      return;
-                    }
-                    setNumeroError(null);
-                    updateCarcasse(carcasse.zacharie_carcasse_id, {
-                      numero_bracelet: formData.get(Prisma.CarcasseScalarFieldEnum.numero_bracelet) as string,
-                      examinateur_signed_at: dayjs().toDate(),
-                    });
-                  }}
-                >
-                  <Input
-                    label={
-                      carcasse.type === CarcasseType.PETIT_GIBIER
-                        ? "Numéro d'identification"
-                        : 'Numéro de marquage'
-                    }
-                    state={numeroError ? 'error' : 'default'}
-                    stateRelatedMessage={numeroError ?? ''}
-                    nativeInputProps={{
-                      type: 'text',
-                      name: Prisma.CarcasseScalarFieldEnum.numero_bracelet,
-                      defaultValue: carcasse.numero_bracelet,
-                    }}
-                  />
-                  <div className="flex justify-end">
-                    <Button type="submit">Modifier</Button>
-                  </div>
-                </form>
-
-                <form
-                  id="carcasse-metadata-form"
-                  method="POST"
-                  ref={formRef}
-                  className="fr-mt-3w"
-                >
-                  <Select
-                    label="Sélectionnez l'espèce du gibier"
-                    className="group mb-0! grow"
-                    nativeSelectProps={{
-                      name: Prisma.CarcasseScalarFieldEnum.espece,
-                      value: espece,
-                      disabled: !canEdit,
-                      onChange: (e) => {
-                        const newEspece = e.currentTarget.value;
-                        setEspece(newEspece);
-                        updateCarcasse(carcasse.zacharie_carcasse_id, {
-                          espece: newEspece,
-                          type: petitGibier.especes.includes(espece)
-                            ? CarcasseType.PETIT_GIBIER
-                            : CarcasseType.GROS_GIBIER,
-                          examinateur_signed_at: dayjs().toDate(),
-                        });
-                      },
-                    }}
-                  >
-                    <option value="">Sélectionnez l'espèce du gibier</option>
-                    <hr />
-                    {Object.entries(gibierSelect).map(([typeGibier, _especes]) => {
-                      return (
-                        <optgroup
-                          label={typeGibier}
-                          key={typeGibier}
-                        >
-                          {_especes.map((_espece: string) => {
-                            return (
-                              <option
-                                value={_espece}
-                                key={_espece}
-                              >
-                                {_espece}
-                              </option>
-                            );
-                          })}
-                        </optgroup>
-                      );
-                    })}
-                  </Select>
-                  <Input
-                    label="Nombre de carcasses"
-                    className={[
-                      'mb-0! grow',
-                      carcasse.type === CarcasseType.GROS_GIBIER ? 'hidden' : '',
-                    ].join(' ')}
-                    hintText="Optionel"
-                    nativeInputProps={{
-                      type: 'number',
-                      min: 0,
-                      name: Prisma.CarcasseScalarFieldEnum.nombre_d_animaux,
-                      defaultValue:
-                        carcasse.type === CarcasseType.GROS_GIBIER ? '1' : (carcasse.nombre_d_animaux ?? ''),
-                      disabled: carcasse.type === CarcasseType.GROS_GIBIER,
-                      onChange: (e) => {
-                        updateCarcasse(carcasse.zacharie_carcasse_id, {
-                          nombre_d_animaux: Number(e.currentTarget.value),
-                          examinateur_signed_at: dayjs().toDate(),
-                        });
-                      },
-                    }}
-                  />
-                </form>
-
-                {espece && (
-                  <>
-                    <div className="fr-mt-3w">
-                      <h3 className="fr-h5 fr-mb-2w">Anomalies</h3>
-                      <AnomaliesTreeNavigator
-                        key={carcasse.zacharie_carcasse_id}
-                        sections={buildCarcasseNavSections(carcasse)}
-                      />
-                    </div>
-                  </>
-                )}
+                <CarcasseExamenInitialForm carcasse={carcasse} />
               </div>
             )}
 

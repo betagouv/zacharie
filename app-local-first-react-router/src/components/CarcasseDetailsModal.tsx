@@ -3,7 +3,7 @@ import { Button } from '@codegouvfr/react-dsfr/Button';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
 import type { CarcasseWithModificationRequests } from '@api/src/types/carcasse';
-import AnomaliesTreeNavigator from '@app/components/AnomaliesTreeNavigator';
+import AnomaliePicker from '@app/components/AnomaliePicker';
 import { buildCarcasseNavSections } from '@app/utils/build-carcasse-nav-sections';
 
 function countDetails(carcasse: CarcasseWithModificationRequests): number {
@@ -34,14 +34,14 @@ export default function CarcasseDetailsModal({
 
   return (
     <modal.Component
-      title="Ajouter des détails"
+      title="Ajouter des anomalies"
       size="large"
       buttons={[{ doClosesModal: true, children: 'Terminer' }]}
     >
       {!selectedCarcasse ? (
         <div className="flex flex-col gap-2 p-1">
           <p className="text-sm text-gray-600">
-            Sélectionnez une carcasse pour ajouter ou modifier ses détails.
+            Sélectionnez une carcasse pour ajouter ou modifier ses anomalies.
           </p>
           {carcasses.map((carcasse) => {
             const count = countDetails(carcasse);
@@ -58,7 +58,7 @@ export default function CarcasseDetailsModal({
                 </span>
                 <span className="flex items-center gap-2">
                   <span className="text-sm text-gray-600">
-                    {count > 0 ? `${count} détail${count > 1 ? 's' : ''}` : 'Aucun détail'}
+                    {count > 0 ? `${count} anomalie${count > 1 ? 's' : ''}` : 'Aucune anomalie'}
                   </span>
                   <span
                     className="fr-icon-arrow-right-s-line"
@@ -84,7 +84,7 @@ export default function CarcasseDetailsModal({
               {selectedCarcasse.numero_bracelet} — {selectedCarcasse.espece}
             </span>
           </div>
-          <AnomaliesTreeNavigator
+          <AnomaliePicker
             key={selectedCarcasse.zacharie_carcasse_id}
             sections={buildCarcasseNavSections(selectedCarcasse)}
           />

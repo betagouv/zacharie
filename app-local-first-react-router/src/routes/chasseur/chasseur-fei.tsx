@@ -742,8 +742,8 @@ function FEIChasseurLoaded() {
                       },
                       defaultValue: fei?.examinateur_initial_date_approbation_mise_sur_le_marche
                         ? dayjs(fei?.examinateur_initial_date_approbation_mise_sur_le_marche).format(
-                            'YYYY-MM-DDTHH:mm'
-                          )
+                          'YYYY-MM-DDTHH:mm'
+                        )
                         : undefined,
                     }}
                   />

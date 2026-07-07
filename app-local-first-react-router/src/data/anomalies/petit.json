@@ -1,0 +1,99 @@
+[
+  {
+    "groupe": "Petit gibier",
+    "site": null,
+    "anomalies": [
+      {
+        "intitule": "Abcès",
+        "infobulle": "Présence d'une boule ou cavité remplie d'un liquide épais jaunâtre, blanchâtre ou verdâtre",
+        "message": "Ne pas consommer, ne pas commercialiser DANGER pour le petit gibier à poils : ne pas commercialiser, ne pas consommer et avertir la DD(ETS)PP (risque tularémie) Précautions lors des manipulations",
+        "photo": "Photographies - lésions tularémie",
+        "documents": "Mesures de biosécurité"
+      },
+      {
+        "intitule": "Lésions cutanées",
+        "infobulle": "Zones de la peau sans poils ou sans plumes",
+        "message": "Consommation personnelle non recommandée, ne pas commercialiser",
+        "photo": null,
+        "documents": null
+      },
+      {
+        "intitule": "Carcasse gonflée",
+        "infobulle": "Gonflement anormal dû à l'accumulation de gaz à l'intérieur du corps, généralement liée au processus de décomposition.",
+        "message": "Ne pas consommer, ne pas commercialiser",
+        "photo": null,
+        "documents": null
+      },
+      {
+        "intitule": "Déformation d'une ou plusieurs articulations",
+        "infobulle": "Articulation gonflée ou anormalement positionnée, pouvant être liée à une blessure, une infection ou une maladie",
+        "message": "Ne pas consommer, ne pas commercialiser DANGER pour le petit gibier à poils : ne pas commercialiser, ne pas consommer, avertir la DD(ETS)PP (risque tularémie) Précautions lors des manipulations",
+        "photo": "Photographies - lésions tularémie",
+        "documents": "Mesures de biosécurité"
+      },
+      {
+        "intitule": "Déformation de la tête",
+        "infobulle": "Aspect anormal de la tête avec gonflement ou asymétrie",
+        "message": "Ne pas consommer, ne pas commercialiser (risque tularémie, myxomatose, pasteurellose) DANGER pour le petit gibier à poils : ne pas commercialiser, ne pas consommer, avertir la DD(ETS)PP Précautions lors des manipulations",
+        "photo": "Photographies - lésions tularémie + myxomatose + pasteurellose",
+        "documents": "Mesures de biosécurité"
+      },
+      {
+        "intitule": "Tête enflée (yeux)",
+        "infobulle": "Tête enflée, avec gonflement marqué au niveau des yeux",
+        "message": "Ne pas consommer, ne pas commercialiser",
+        "photo": null,
+        "documents": null
+      },
+      {
+        "intitule": "Testicules gonflés ou consistance anormale",
+        "infobulle": "Testicules gonflés et de consistance anormalement ferme, dure pouvant évoquer une atteinte inflammatoire de l’appareil reproducteur, compatible notamment avec certaines infections bactériennes telles que la brucellose.",
+        "message": "DANGER : ne pas commercialiser, ne pas consommer et avertir le réseau SAGIR (risque brucellose) Précautions lors des manipulations",
+        "photo": "Photographies - lésions brucellose",
+        "documents": "Mesures de biosécurité"
+      },
+      {
+        "intitule": "Odeur anormale",
+        "infobulle": "Odeur nauséabonde de la carcasse",
+        "message": "Ne pas consommer, ne pas commercialiser",
+        "photo": null,
+        "documents": null
+      },
+      {
+        "intitule": "Mauvais état général",
+        "infobulle": "Maigreur extrême",
+        "message": "Ne pas consommer, ne pas commercialiser",
+        "photo": null,
+        "documents": null
+      },
+      {
+        "intitule": "Poux",
+        "infobulle": "Infestation par des poux (parasites externes visibles sur l’animal)",
+        "message": "Consommation possible après nettoyage complet ou dépouille/plumaison. Ne pas commercialiser. Précautions lors des manipulations.",
+        "photo": null,
+        "documents": null
+      },
+      {
+        "intitule": "Sangsues",
+        "infobulle": "Présence de sangsues (parasites hématophages fixés sur la peau).",
+        "message": "Consommation possible après nettoyage complet. Ne pas commercialiser. Précautions lors des manipulations",
+        "photo": null,
+        "documents": null
+      },
+      {
+        "intitule": "Tiques",
+        "infobulle": "Infestation par des tiques (parasites externes fixés sur la peau).",
+        "message": "Consommation possible après nettoyage complet et retrait. Ne pas commercialiser. Précautions lors des manipulations",
+        "photo": null,
+        "documents": null
+      },
+      {
+        "intitule": "Traumatisme",
+        "infobulle": "Fracture récente, avec hématome",
+        "message": "Consommation possible si pas d'infection. Ne pas commercialiser",
+        "photo": null,
+        "documents": null
+      }
+    ]
+  }
+]
