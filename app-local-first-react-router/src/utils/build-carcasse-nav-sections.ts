@@ -1,54 +1,62 @@
 import { CarcasseType } from '@prisma/client';
 import type { CarcasseWithModificationRequests } from '@api/src/types/carcasse';
-import grandGibierCarcasseTree from '@app/data/grand-gibier-carcasse/tree.json';
-import petitGibierCarcasseTree from '@app/data/petit-gibier-carcasse/tree.json';
-import grandGibierAbatstree from '@app/data/grand-gibier-abats/tree.json';
-import type { AnomalieNavSection } from '@app/components/AnomaliesTreeNavigator';
+import type { AnomaliePickerSection } from '@app/components/AnomaliePicker';
+import { getReferentiel } from '@app/utils/anomalies-referentiel-data';
 import { setCarcasseAnomalie } from '@app/utils/update-carcasse-anomalies';
-import { toggleAnomalie } from '@app/utils/anomalies-referentiel';
+import { canonicalOf, toggleAnomalie } from '@app/utils/anomalies-referentiel';
 
-// Construit les sections du navigateur d'anomalies (carcasse + abats si gros gibier),
-// branchées sur le store via setCarcasseAnomalie.
-export function buildCarcasseNavSections(carcasse: CarcasseWithModificationRequests): AnomalieNavSection[] {
-  const sections: AnomalieNavSection[] = [
-    {
-      key: 'carcasse',
-      label: 'Carcasse',
-      tree: carcasse.type === CarcasseType.PETIT_GIBIER ? petitGibierCarcasseTree : grandGibierCarcasseTree,
-      selected: carcasse.examinateur_anomalies_carcasse ?? [],
-      onToggle: (canonical) =>
-        setCarcasseAnomalie({
-          carcasse,
-          field: 'examinateur_anomalies_carcasse',
-          nextValues: toggleAnomalie(carcasse.examinateur_anomalies_carcasse ?? [], canonical),
-        }),
-      onAddFreeText: (value) =>
-        setCarcasseAnomalie({
-          carcasse,
-          field: 'examinateur_anomalies_carcasse',
-          nextValues: [...(carcasse.examinateur_anomalies_carcasse ?? []), value],
-        }),
-    },
-  ];
-  if (carcasse.type === CarcasseType.GROS_GIBIER) {
-    sections.push({
-      key: 'abats',
-      label: 'Abats',
-      tree: grandGibierAbatstree,
-      selected: carcasse.examinateur_anomalies_abats ?? [],
-      onToggle: (canonical) =>
-        setCarcasseAnomalie({
-          carcasse,
-          field: 'examinateur_anomalies_abats',
-          nextValues: toggleAnomalie(carcasse.examinateur_anomalies_abats ?? [], canonical),
-        }),
-      onAddFreeText: (value) =>
-        setCarcasseAnomalie({
-          carcasse,
-          field: 'examinateur_anomalies_abats',
-          nextValues: [...(carcasse.examinateur_anomalies_abats ?? []), value],
-        }),
-    });
-  }
-  return sections;
+// Le groupe « Abats » est stocké dans examinateur_anomalies_abats,
+// tout le reste (Comportement, Carcasse, Petit gibier) dans examinateur_anomalies_carcasse.
+function isAbatsGroupe(groupe: string): boolean {
+  return groupe === 'Abats';
+}
+
+// Construit les sections du picker depuis le référentiel + les tableaux sélectionnés,
+// en branchant chaque section sur le bon setter (store ou state local).
+export function buildAnomaliePickerSections({
+  isPetitGibier,
+  anomaliesCarcasse,
+  anomaliesAbats,
+  setAnomaliesCarcasse,
+  setAnomaliesAbats,
+}: {
+  isPetitGibier: boolean;
+  anomaliesCarcasse: string[];
+  anomaliesAbats: string[];
+  setAnomaliesCarcasse: (next: string[]) => void;
+  setAnomaliesAbats: (next: string[]) => void;
+}): AnomaliePickerSection[] {
+  const referentiel = getReferentiel(isPetitGibier);
+
+  return referentiel.map((section) => {
+    const abats = isAbatsGroupe(section.groupe);
+    const storedValues = abats ? anomaliesAbats : anomaliesCarcasse;
+    const setValues = abats ? setAnomaliesAbats : setAnomaliesCarcasse;
+
+    const sectionCanonicals = new Set(section.anomalies.map((a) => canonicalOf(a.intitule, section.site)));
+    const selected = storedValues.filter((c) => sectionCanonicals.has(c));
+
+    return {
+      groupe: section.groupe,
+      site: section.site,
+      anomalies: section.anomalies,
+      selected,
+      onToggle: (canonical) => setValues(toggleAnomalie(storedValues, canonical)),
+    };
+  });
+}
+
+// Variante branchée sur le store, pour une carcasse existante (édition / synthèse).
+export function buildCarcasseNavSections(
+  carcasse: CarcasseWithModificationRequests
+): AnomaliePickerSection[] {
+  return buildAnomaliePickerSections({
+    isPetitGibier: carcasse.type === CarcasseType.PETIT_GIBIER,
+    anomaliesCarcasse: carcasse.examinateur_anomalies_carcasse ?? [],
+    anomaliesAbats: carcasse.examinateur_anomalies_abats ?? [],
+    setAnomaliesCarcasse: (next) =>
+      setCarcasseAnomalie({ carcasse, field: 'examinateur_anomalies_carcasse', nextValues: next }),
+    setAnomaliesAbats: (next) =>
+      setCarcasseAnomalie({ carcasse, field: 'examinateur_anomalies_abats', nextValues: next }),
+  });
 }
