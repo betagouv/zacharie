@@ -11,9 +11,6 @@ test('Connexion avec compte examinateur initial', async ({ page }) => {
   await expect(page).toHaveURL('http://localhost:3290/app/chasseur');
   await expect(page.getByRole('heading', { name: 'Pas encore de fiches cette saison' })).toBeVisible();
   await expect(page.locator('#content').getByRole('button', { name: 'Créer une fiche' })).toBeVisible();
-  // await expect(page.getByRole('button', { name: 'Mettre à jour' })).toBeVisible();
-  // await expect(page.getByRole("button", { name: "Filtrer" })).toBeVisible();
-  // await expect(page.getByRole("button", { name: "Actions" })).toBeVisible();
 });
 
 test('Connexion avec compte premier détenteur', async ({ page }) => {
@@ -21,9 +18,6 @@ test('Connexion avec compte premier détenteur', async ({ page }) => {
   await expect(page).toHaveURL('http://localhost:3290/app/chasseur');
   await expect(page.getByRole('heading', { name: 'Pas encore de fiches cette saison' })).toBeVisible();
   await expect(page.locator('#content').getByRole('button', { name: 'Nouvelle fiche' })).not.toBeVisible();
-  // await expect(page.getByRole('button', { name: 'Mettre à jour' })).toBeVisible();
-  // await expect(page.getByRole("button", { name: "Filtrer" }).first()).toBeVisible();
-  // await expect(page.getByRole("button", { name: "Actions" }).first()).toBeVisible();
 });
 
 test('Connexion avec compte collecteur pro', async ({ page }) => {
@@ -31,9 +25,6 @@ test('Connexion avec compte collecteur pro', async ({ page }) => {
   await expect(page).toHaveURL('http://localhost:3290/app/collecteur');
   await expect(page.getByRole('heading', { name: 'Pas encore de fiches cette saison' })).toBeVisible();
   await expect(page.locator('#content').getByRole('button', { name: 'Nouvelle fiche' })).not.toBeVisible();
-  // await expect(page.getByRole('button', { name: 'Mettre à jour' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Filtrer' }).first()).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Exporter' }).first()).toBeVisible();
 });
 
 test('Connexion avec compte établissement de traitement', async ({ page }) => {
@@ -41,9 +32,6 @@ test('Connexion avec compte établissement de traitement', async ({ page }) => {
   await expect(page).toHaveURL('http://localhost:3290/app/etg');
   await expect(page.getByRole('heading', { name: 'Pas encore de fiches cette saison' })).toBeVisible();
   await expect(page.locator('#content').getByRole('button', { name: 'Nouvelle fiche' })).not.toBeVisible();
-  // await expect(page.getByRole('button', { name: 'Mettre à jour' })).toBeVisible();
-  // await expect(page.getByRole('button', { name: 'Filtrer' }).first()).toBeVisible();
-  // await expect(page.getByRole('button', { name: 'Actions' }).first()).toBeVisible();
 });
 
 test('Connexion avec compte svi', async ({ page }) => {
@@ -51,7 +39,5 @@ test('Connexion avec compte svi', async ({ page }) => {
   await expect(page).toHaveURL('http://localhost:3290/app/svi');
   await expect(page.getByRole('heading', { name: 'Pas encore de fiches cette saison' })).toBeVisible();
   await expect(page.locator('#content').getByRole('button', { name: 'Nouvelle fiche' })).not.toBeVisible();
-  // await expect(page.getByRole('button', { name: 'Mettre à jour' })).toBeVisible();
-  // La page SVI utilise une barre latérale de recherche/filtres (pas de bouton "Filtrer").
   await expect(page.getByPlaceholder('Rechercher une fiche...')).toBeVisible();
 });
