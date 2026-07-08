@@ -243,10 +243,19 @@ export default function SviFiches() {
     localStorage.setItem('svi-fiches-filter-collecteurs', JSON.stringify(filterCollecteurs));
   }, [filterCollecteurs]);
 
+  // n'afficher que les fiches avec au moins une carcasse en consigne (attente IPM2)
+  const [filterConsigneOnly, setFilterConsigneOnly] = useState<boolean>(
+    () => localStorage.getItem('svi-fiches-filter-consigne') === 'true'
+  );
+
+  useEffect(() => {
+    localStorage.setItem('svi-fiches-filter-consigne', String(filterConsigneOnly));
+  }, [filterConsigneOnly]);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
-  const filtersKey = `${filterStatuses.join(',')}|${filterPremierDetenteurs.join(',')}|${filterEtgs.join(',')}|${filterCCGs.join(',')}|${filterCollecteurs.join(',')}|${filterSaisons.join(',')}|${filterDateFrom}|${filterDateTo}|${searchQuery}`;
+  const filtersKey = `${filterStatuses.join(',')}|${filterPremierDetenteurs.join(',')}|${filterEtgs.join(',')}|${filterCCGs.join(',')}|${filterCollecteurs.join(',')}|${filterSaisons.join(',')}|${filterDateFrom}|${filterDateTo}|${filterConsigneOnly}|${searchQuery}`;
   // on réinitialise la page seulement quand les filtres changent vraiment :
   // setSearchParams change d'identité à chaque navigation (react-router), donc on
   // compare la valeur précédente de filtersKey plutôt que de garder le 1er render.
@@ -428,6 +437,9 @@ export default function SviFiches() {
       if (filterStatuses.length > 0) {
         if (!filterStatuses.includes(transmission.labels.simpleStatus)) continue;
       }
+      if (filterConsigneOnly) {
+        if (!transmission.labels.consigneLabel) continue;
+      }
       if (filterPremierDetenteurs.length > 0) {
         if (
           !filterPremierDetenteurs.includes(transmission.content.premier_detenteur_user_id ?? '') &&
@@ -490,6 +502,7 @@ export default function SviFiches() {
     filterSaisons,
     filterDateFrom,
     filterDateTo,
+    filterConsigneOnly,
     feiCollecteurIdsByFeiNumero,
     feiEtgIdsByFeiNumero,
   ]);
@@ -509,6 +522,7 @@ export default function SviFiches() {
     filterSaisons.length > 0 ||
     filterDateFrom.length > 0 ||
     filterDateTo.length > 0 ||
+    filterConsigneOnly ||
     searchQuery.trim().length > 0;
 
   const clearAllFilters = () => {
@@ -521,6 +535,7 @@ export default function SviFiches() {
     setFilterSaisons([]);
     setFilterDateFrom('');
     setFilterDateTo('');
+    setFilterConsigneOnly(false);
     setSearchQuery('');
   };
 
@@ -598,6 +613,36 @@ export default function SviFiches() {
             </label>
           ))}
         </div>
+      </CollapsibleSection>
+
+      {/* Filtre Consigne */}
+      <CollapsibleSection
+        title="Consigne"
+        defaultOpen={false}
+        badge={
+          filterConsigneOnly ? (
+            <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">1</span>
+          ) : undefined
+        }
+      >
+        <label className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-gray-50">
+          <input
+            type="checkbox"
+            checked={filterConsigneOnly}
+            className="checked:accent-action-high-blue-france h-4 w-4 shrink-0"
+            onChange={() => {
+              trackFeature('registre-svi', 'filtre', 'consigne');
+              setFilterConsigneOnly((prev) => !prev);
+            }}
+          />
+          <span className="bg-warning-main-525 inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-semibold text-white uppercase">
+            <span
+              className="fr-icon-time-line fr-icon--sm"
+              aria-hidden="true"
+            />
+            Avec carcasse en consigne
+          </span>
+        </label>
       </CollapsibleSection>
 
       {/* Filtre Saison */}
@@ -1114,6 +1159,7 @@ function FeisTableRow({
 }) {
   const simpleStatus = transmission.labels.simpleStatus;
   const currentStepLabelShort = null;
+  const consigneLabel = transmission.labels.consigneLabel;
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
 
   // Notifier le parent de la visibilité de cette ligne
@@ -1204,6 +1250,15 @@ function FeisTableRow({
               className="items-center rounded-[4px] font-semibold uppercase"
             >
               {currentStepLabelShort}
+            </Tag>
+          )}
+          {consigneLabel && (
+            <Tag
+              small
+              iconId="fr-icon-time-line"
+              className="bg-warning-main-525 items-center rounded-[4px] font-semibold text-white uppercase"
+            >
+              {consigneLabel}
             </Tag>
           )}
         </div>

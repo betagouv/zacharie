@@ -49,6 +49,7 @@ export default function CardTransmission({
 }: CardProps) {
   const simpleStatus = transmission.labels.simpleStatus;
   const transportOrSoustraiteLabel = transmission.labels.transportOrSoustraiteLabel;
+  const consigneLabel = transmission.labels.consigneLabel;
   // const dispatch = transmission.fei.numberOfPremierDetenteurProchainDetenteur;
   const isCircuitCourt = useIsCircuitCourt();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -176,6 +177,15 @@ export default function CardTransmission({
                 ].join(' ')}
               >
                 {transportOrSoustraiteLabel}
+              </Tag>
+            )}
+            {consigneLabel && (
+              <Tag
+                small
+                iconId="fr-icon-time-line"
+                className="bg-warning-main-525 items-center rounded-[4px] font-semibold text-white uppercase"
+              >
+                {consigneLabel}
               </Tag>
             )}
             {/* {dispatch > 1 && (

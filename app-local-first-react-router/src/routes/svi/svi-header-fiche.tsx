@@ -24,6 +24,7 @@ export default function SviHeaderFiche() {
   const fei = transmission.fei;
   const simpleStatus = transmission.labels.simpleStatus;
   const currentStepLabel = transmission.labels.currentStepLabel;
+  const consigneLabel = transmission.labels.consigneLabel;
 
   const chasseTitle = `Fiche du ${dayjs(fei.date_mise_a_mort).format('DD/MM/YYYY')}`;
   const title = transmission.content.premier_detenteur_name_cache
@@ -49,6 +50,15 @@ export default function SviHeaderFiche() {
           simpleStatus={simpleStatus}
         />
         <span className="text-sm">{currentStepLabel}</span>
+        {consigneLabel && (
+          <Tag
+            small
+            iconId="fr-icon-time-line"
+            className="bg-warning-main-525 items-center rounded-[4px] font-semibold text-white uppercase"
+          >
+            {consigneLabel}
+          </Tag>
+        )}
       </div>
     </div>
   );

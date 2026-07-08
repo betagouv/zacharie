@@ -119,6 +119,8 @@ export type CarcasseTransmissionWihMetadata = {
     currentStepLabel: TransmissionStep;
     nextStepLabel: TransmissionNextStep;
     transportOrSoustraiteLabel: TransmissionStepForTransportOrSoustraite;
+    // note SVI : au moins une carcasse de la transmission est en consigne (attente IPM2).
+    consigneLabel?: string | null;
   };
   carcasses: Array<Carcasse>;
   // lots de petit gibier dont une partie a été refusée par le dernier détenteur (ex: "3 perdrix")
