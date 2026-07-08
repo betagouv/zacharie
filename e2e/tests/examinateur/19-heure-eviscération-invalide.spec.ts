@@ -37,7 +37,7 @@ test("Heure d'éviscération < heure de mise à mort → erreur ou auto-correcti
   await miseAMort.fill('10:00');
   await miseAMort.blur();
 
-  const evisc = page.getByRole('textbox', { name: "Heure d'éviscération de la" });
+  const evisc = page.getByRole('textbox', { name: 'Fin de l’examen initial' });
   await evisc.fill('08:00');
   await evisc.blur();
 

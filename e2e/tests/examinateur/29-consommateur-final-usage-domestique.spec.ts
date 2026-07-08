@@ -47,9 +47,9 @@ test('Bloc 4 — toggle « consommateur final » updates cert label & button tex
     .fill(dayjs().startOf('day').add(1, 'hour').format('HH:mm'));
   await page.getByRole('textbox', { name: 'Début de la chasse' }).blur();
   await page
-    .getByRole('textbox', { name: "Heure d'éviscération de la" })
+    .getByRole('textbox', { name: 'Fin de l’examen initial' })
     .fill(dayjs().startOf('day').add(2, 'hour').format('HH:mm'));
-  await page.getByRole('textbox', { name: "Heure d'éviscération de la" }).blur();
+  await page.getByRole('textbox', { name: 'Fin de l’examen initial' }).blur();
 
   // Set the approbation date via the first shortcut so the cert label renders fully.
   await page.getByRole('button', { name: 'Date du jour et maintenant' }).click();
