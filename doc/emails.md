@@ -9,8 +9,10 @@ Inventaire de tous les emails qui partent de Zacharie (transactionnels, automati
 
 Tout passe par **Brevo** — pas de SMTP / nodemailer / autre.
 
-- **`sendEmail()`** — `api-express/src/third-parties/brevo.ts:25`. Sender bas niveau (wrapper `TransactionalEmailsApi.sendTransacEmail`). Expéditeur par défaut : `Zacharie <contact@zacharie.beta.gouv.fr>`. ⚠️ **Désactivé en dev/test** (log uniquement, pas d'envoi réel).
-- **`sendNotificationToUser()` / `queueSendNotificationToUser()`** — `api-express/src/service/notifications.ts`. Push web + email. **L'email ne part que si l'user a activé la préférence `EMAIL`** (`UserNotifications.EMAIL`). Dédup via `NotificationLog` sur `(user_id, type, action)`.
+- **`sendEmail()`** — `api-express/src/third-parties/brevo.ts:25`. Sender bas niveau, contenu **inline** (sujet + html/text construits dans le code, wrapper `TransactionalEmailsApi.sendTransacEmail`). Expéditeur par défaut : `Zacharie <contact@zacharie.beta.gouv.fr>`. ⚠️ **Désactivé en dev/test** (log uniquement, pas d'envoi réel).
+- **`sendTemplateEmail()`** — `api-express/src/third-parties/brevo.ts`. Envoi via **template Brevo** (sujet + HTML gérés côté dashboard, remplis par `params`). À utiliser pour tout email **migré**. ⚠️ même désactivation dev/test.
+- **Registre des templates** — `api-express/src/third-parties/brevo-templates.ts`. `BrevoTemplateId` mappe chaque email (clé sémantique) → `templateId` Brevo, ou `null` tant que pas migré. **C'est le tracker de migration** : `null` = encore en texte inline, nombre = migré vers template.
+- **`sendNotificationToUser()` / `queueSendNotificationToUser()`** — `api-express/src/service/notifications.ts`. Orchestrateur qui lance **deux canaux distincts en parallèle** : `sendPushToUser()` (push web+natif, gated préf. `PUSH`) et `sendEmailToUser()` (email, gated préf. `EMAIL`). Chacun déduplique indépendamment via `NotificationLog` sur `(user_id, type, action)`. L'email reste en texte inline (migration template progressive).
 - **`sendOnboardingEmailOnce()`** — `api-express/src/utils/send-onboarding-email.ts`. Onboarding, dédup via `NotificationLog`, **ignore la préférence EMAIL** (envoie toujours).
 - **`inviteUser()`** — `api-express/src/utils/invite-user.ts`. Appelle `sendEmail` directement.
 
