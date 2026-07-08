@@ -14,6 +14,7 @@ import { syncData } from '@app/utils/sync-data';
 import useUser from '@app/zustand/user';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { createHistoryInput } from '@app/utils/create-history-entry';
+import { createNewCarcasse } from '@app/utils/create-new-carcasse';
 import useGetCommunesDeChasseFavorites from '@app/utils/useGetCommunesDeChasseFavorites';
 import { loadData, useLoaderEffect } from '@app/utils/load-data';
 import Chargement from '@app/components/Chargement';
@@ -90,6 +91,37 @@ function FEIChasseurLoaded() {
       carcasse_intermediaire_id: null,
     });
     syncData('examinateur-initial-update-fei');
+  };
+
+  // DEBUG: création en masse de carcasses pour tester la montée en charge (jamais en prod)
+  const isDebugEnv = import.meta.env.VITE_ENV !== 'prod';
+  const [debugCreating, setDebugCreating] = useState(false);
+  const createDebugCarcasses = async (count: number) => {
+    setDebugCreating(true);
+    const base = Date.now();
+    for (let i = 0; i < count; i++) {
+      const numeroBracelet = `DEBUG-${base}-${i}`;
+      const newCarcasse = await createNewCarcasse({
+        zacharieCarcasseId: `${fei.numero}_${numeroBracelet}`,
+        numeroBracelet,
+        espece: 'Sanglier',
+        nombreDAnimaux: '1',
+        fei,
+      });
+      addLog({
+        user_id: user.id,
+        user_role: UserRoles.CHASSEUR,
+        fei_numero: fei.numero,
+        action: 'examinateur-carcasse-create',
+        history: createHistoryInput(null, newCarcasse),
+        entity_id: fei.fei_current_owner_entity_id,
+        zacharie_carcasse_id: newCarcasse.zacharie_carcasse_id,
+        intermediaire_id: null,
+        carcasse_intermediaire_id: null,
+      });
+    }
+    syncData('debug-create-carcasses');
+    setDebugCreating(false);
   };
 
   const [allCarcassesConfirmed, setAllCarcassesConfirmed] = useState(
@@ -482,6 +514,25 @@ function FEIChasseurLoaded() {
               {showBloc2 && (
                 <div className="bg-white p-4 md:p-8">
                   <h4 className="fr-h5">Carcasses</h4>
+                  {isDebugEnv && canEdit && (
+                    <div className="mb-4 flex flex-wrap items-center gap-2 rounded-sm border border-dashed border-orange-400 bg-orange-50 p-3">
+                      <span className="w-full text-sm font-bold text-orange-700">
+                        🛠 DEBUG — créer des carcasses (Sanglier) en masse
+                      </span>
+                      {[10, 50, 100, 400].map((count) => (
+                        <Button
+                          key={count}
+                          type="button"
+                          size="small"
+                          priority="secondary"
+                          disabled={debugCreating}
+                          onClick={() => createDebugCarcasses(count)}
+                        >
+                          {debugCreating ? 'En cours…' : `+${count}`}
+                        </Button>
+                      ))}
+                    </div>
+                  )}
                   <CarcassesExaminateur
                     canEdit={canEdit}
                     canEditAsPremierDetenteur={canEditAsPremierDetenteur}

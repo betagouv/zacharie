@@ -3,7 +3,7 @@ import passport from 'passport';
 import { catchErrors } from '~/middlewares/errors';
 import type { SyncRequest, SyncResponse } from '~/types/responses';
 import prisma from '~/prisma';
-import { Prisma, User, UserRoles, Carcasse } from '@prisma/client';
+import { Prisma, User, UserRoles, Carcasse, Fei } from '@prisma/client';
 import { syncFei, type SaveFeiResult } from '~/utils/sync-fei';
 import { syncCarcasse, type SaveCarcasseResult } from '~/utils/sync-carcasse';
 import { syncCarcasseIntermediaire } from '~/utils/sync-carcasse-intermediaire';
@@ -63,13 +63,27 @@ router.post(
     }
 
     // 2. Process Carcasses (intermediaires depend on them)
+    // Pré-charge les fiches référencées par les carcasses (une seule requête au lieu d'un
+    // findUnique par carcasse) et mémorise les relations entité déjà assurées dans ce batch.
+    const carcasseFeiNumeros = [
+      ...new Set((carcasses || []).map((c) => c.fei_numero).filter(Boolean)),
+    ] as string[];
+    const carcasseFeiMap = new Map<string, Fei>();
+    if (carcasseFeiNumeros.length > 0) {
+      const feisForCarcasses = await prisma.fei.findMany({
+        where: { numero: { in: carcasseFeiNumeros } },
+      });
+      for (const f of feisForCarcasses) carcasseFeiMap.set(f.numero, f);
+    }
+    const ensuredRelationEntityIds = new Set<string>();
     for (const carcasseData of carcasses || []) {
       try {
         const result = await syncCarcasse(
           carcasseData.fei_numero,
           carcasseData.zacharie_carcasse_id,
           carcasseData as Prisma.CarcasseUncheckedCreateInput,
-          user
+          user,
+          { existingFei: carcasseFeiMap.get(carcasseData.fei_numero) ?? null, ensuredRelationEntityIds }
         );
         carcasseResults.push(result);
       } catch (error) {
@@ -127,11 +141,14 @@ router.post(
     }
 
     // 5. Process Logs
-    for (const logData of logs || []) {
+    // Les logs sont des entrées d'historique immuables à id généré côté client : un seul
+    // createMany (skipDuplicates) au lieu d'un upsert par log. Log n'a aucune contrainte FK,
+    // donc le batch ne peut pas échouer sur une carcasse/fiche manquante.
+    const logsToSync = (logs || []).filter((l) => l.id);
+    if (logsToSync.length > 0) {
       try {
-        await prisma.log.upsert({
-          where: { id: logData.id },
-          create: {
+        await prisma.log.createMany({
+          data: logsToSync.map((logData) => ({
             id: logData.id,
             user_id: logData.user_id!,
             user_role: logData.user_role!,
@@ -141,28 +158,16 @@ router.post(
             fei_intermediaire_id: logData.fei_intermediaire_id ?? null,
             carcasse_intermediaire_id: logData.carcasse_intermediaire_id ?? null,
             action: logData.action!,
-            history: logData.history ?? null,
+            history: logData.history ?? Prisma.DbNull,
             date: logData.date ?? new Date(),
             is_synced: true,
-          },
-          update: {
-            user_id: logData.user_id,
-            user_role: logData.user_role,
-            fei_numero: logData.fei_numero,
-            entity_id: logData.entity_id,
-            zacharie_carcasse_id: logData.zacharie_carcasse_id,
-            fei_intermediaire_id: logData.fei_intermediaire_id,
-            carcasse_intermediaire_id: logData.carcasse_intermediaire_id,
-            action: logData.action,
-            history: logData.history,
-            date: logData.date,
-            is_synced: true,
-          },
+          })),
+          skipDuplicates: true,
         });
-        syncedLogIds.push(logData.id);
+        syncedLogIds.push(...logsToSync.map((l) => l.id));
       } catch (error) {
         capture(error as Error, {
-          extra: { logId: logData.id, userId: user.id },
+          extra: { logIds: logsToSync.map((l) => l.id), userId: user.id },
           user,
         });
       }

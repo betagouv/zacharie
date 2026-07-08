@@ -238,9 +238,32 @@ const useZustandStore = create<State & Actions>()(
           });
         },
         updateCarcassesTransmission: (zacharie_carcasse_ids, transmissionFields) => {
+          // Un seul setState pour tout le lot : sur une fiche à plusieurs centaines de carcasses,
+          // appeler updateCarcasse en boucle recopiait la map entière et déclenchait un re-render
+          // par carcasse (O(n²) + n rendus), ce qui figeait l'app à la prise en charge / transmission.
+          const carcasses = useZustandStore.getState().carcasses;
+          const now = dayjs().toDate();
+          const nextCarcasses = { ...carcasses };
           for (const id of zacharie_carcasse_ids) {
-            get().updateCarcasse(id, transmissionFields);
+            const existing = carcasses[id];
+            if (!existing) continue;
+            const nextCarcasse: Carcasse = {
+              ...existing,
+              ...transmissionFields,
+              updated_at: now,
+              is_synced: false,
+            };
+            const nextStatus = updateCarcasseStatus(nextCarcasse);
+            if (nextStatus !== nextCarcasse.svi_carcasse_status) {
+              nextCarcasse.svi_carcasse_status = nextStatus;
+              nextCarcasse.svi_carcasse_status_set_at = now;
+            }
+            nextCarcasses[id] = nextCarcasse;
           }
+          useZustandStore.setState({
+            carcasses: nextCarcasses,
+            dataIsSynced: false,
+          });
         },
         createCarcassesIntermediaire: async (
           newIntermediaires: CarcassesIntermediaire[],

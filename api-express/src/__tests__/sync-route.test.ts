@@ -255,10 +255,8 @@ describe('POST /sync — side effects', () => {
 });
 
 describe('POST /sync — logs', () => {
-  test('upserts each log and returns synced ids', async () => {
-    vi.mocked(prisma.log.upsert).mockImplementation(
-      (args: any) => Promise.resolve({ id: args.where.id }) as any
-    );
+  test('batch-inserts all logs and returns synced ids', async () => {
+    vi.mocked(prisma.log.createMany).mockResolvedValue({ count: 2 } as any);
 
     const res = await authed(
       request(app)
@@ -275,14 +273,12 @@ describe('POST /sync — logs', () => {
     );
 
     expect(res.status).toBe(200);
-    expect(prisma.log.upsert).toHaveBeenCalledTimes(2);
+    expect(prisma.log.createMany).toHaveBeenCalledOnce();
     expect(res.body.data.syncedLogIds).toEqual(['L1', 'L2']);
   });
 
-  test('a failing log does not break the batch', async () => {
-    vi.mocked(prisma.log.upsert)
-      .mockResolvedValueOnce({ id: 'L1' } as any)
-      .mockRejectedValueOnce(new Error('log-failed'));
+  test('a failing log batch is captured and yields no synced ids', async () => {
+    vi.mocked(prisma.log.createMany).mockRejectedValueOnce(new Error('log-batch-failed'));
 
     const res = await authed(
       request(app)
@@ -299,7 +295,7 @@ describe('POST /sync — logs', () => {
     );
 
     expect(res.status).toBe(200);
-    expect(res.body.data.syncedLogIds).toEqual(['L1']);
+    expect(res.body.data.syncedLogIds).toEqual([]);
     expect(capture).toHaveBeenCalled();
   });
 });
@@ -551,7 +547,7 @@ describe('POST /sync — carcasse modification requests', () => {
         justCancelled: false,
       };
     });
-    vi.mocked(prisma.log.upsert).mockResolvedValue({ id: 'L1' } as any);
+    vi.mocked(prisma.log.createMany).mockResolvedValue({ count: 1 } as any);
 
     const res = await authed(
       request(app)
@@ -577,7 +573,7 @@ describe('POST /sync — carcasse modification requests', () => {
     // Both M-BAD attempt and M-OK get tried.
     expect(syncCarcasseModifRequest).toHaveBeenCalledTimes(2);
     // Subsequent log step still runs.
-    expect(prisma.log.upsert).toHaveBeenCalledOnce();
+    expect(prisma.log.createMany).toHaveBeenCalledOnce();
     // Response carries the successful one.
     expect(res.body.data.carcasseModifRequests.map((r: any) => r.id)).toEqual(['M-OK']);
   });

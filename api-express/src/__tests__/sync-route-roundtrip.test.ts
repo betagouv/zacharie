@@ -96,8 +96,8 @@ describe('POST /sync — round-trip (real utils against mocked prisma)', () => {
     };
     vi.mocked(prisma.carcasseIntermediaire.upsert).mockResolvedValueOnce(savedCi as any);
 
-    // Final populated re-fetch.
-    vi.mocked(prisma.fei.findMany).mockResolvedValueOnce([baseFei as any]);
+    // fei.findMany sert deux fois : pré-chargement des fiches des carcasses, puis re-fetch peuplé.
+    vi.mocked(prisma.fei.findMany).mockResolvedValue([baseFei as any]);
 
     const res = await authed(
       request(app)

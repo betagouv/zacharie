@@ -1,5 +1,5 @@
 import prisma from '~/prisma';
-import { Carcasse, EntityRelationType, FeiOwnerRole, Prisma, User, UserRoles } from '@prisma/client';
+import { Carcasse, EntityRelationType, Fei, FeiOwnerRole, Prisma, User, UserRoles } from '@prisma/client';
 
 export interface SaveCarcasseResult {
   savedCarcasse: Carcasse;
@@ -7,18 +7,32 @@ export interface SaveCarcasseResult {
   isDeleted: boolean;
 }
 
+// opts permet au /sync en masse d'éviter les requêtes redondantes quand on synchronise beaucoup
+// de carcasses de la même fiche d'un coup :
+// - existingFei : fiche déjà chargée par l'appelant (évite un findUnique par carcasse)
+// - ensuredRelationEntityIds : entités dont la relation CAN_TRANSMIT a déjà été assurée dans ce
+//   batch (évite un findFirst/create par carcasse pour le même destinataire)
+interface SyncCarcasseOpts {
+  existingFei?: Fei | null;
+  ensuredRelationEntityIds?: Set<string>;
+}
+
 export async function syncCarcasse(
   fei_numero: string,
   zacharie_carcasse_id: string,
   body: Prisma.CarcasseUncheckedCreateInput,
-  user: User
+  user: User,
+  opts: SyncCarcasseOpts = {}
 ): Promise<SaveCarcasseResult> {
   if (!fei_numero) {
     throw new Error('Le numéro de fiche est obligatoire');
   }
-  const existingFei = await prisma.fei.findUnique({
-    where: { numero: fei_numero },
-  });
+  const existingFei =
+    opts.existingFei !== undefined
+      ? opts.existingFei
+      : await prisma.fei.findUnique({
+          where: { numero: fei_numero },
+        });
   if (!existingFei) {
     throw new Error('Fiche non trouvée');
   }
@@ -288,9 +302,12 @@ export async function syncCarcasse(
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.next_owner_entity_id)) {
     nextCarcasse.next_owner_entity_id = body[Prisma.CarcasseScalarFieldEnum.next_owner_entity_id];
     // Create CAN_TRANSMIT_CARCASSES_TO_ENTITY relation (mirrors fei.ts pattern)
-    if (body[Prisma.CarcasseScalarFieldEnum.next_owner_entity_id]) {
+    const nextOwnerEntityId = body[Prisma.CarcasseScalarFieldEnum.next_owner_entity_id] as string | null;
+    // En sync de masse, la relation est la même pour toutes les carcasses transmises au même
+    // destinataire : on ne l'assure qu'une fois par entité.
+    if (nextOwnerEntityId && !opts.ensuredRelationEntityIds?.has(nextOwnerEntityId)) {
       const nextRelation: Prisma.EntityAndUserRelationsUncheckedCreateInput = {
-        entity_id: body[Prisma.CarcasseScalarFieldEnum.next_owner_entity_id] as string,
+        entity_id: nextOwnerEntityId,
         owner_id: user.id,
         relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
         deleted_at: null,
@@ -301,6 +318,7 @@ export async function syncCarcasse(
       if (!existingRelation) {
         await prisma.entityAndUserRelations.create({ data: nextRelation });
       }
+      opts.ensuredRelationEntityIds?.add(nextOwnerEntityId);
     }
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.next_owner_entity_name_cache)) {
