@@ -817,17 +817,11 @@ function CarcasseDetails({
           <li>Prélevé à {fei.commune_mise_a_mort || '—'}</li>
           <li>Examiné par {examinateurName}</li>
           {carcasse.heure_mise_a_mort_premiere_carcasse_fei && (
-            <li>
-              Heure de mise à mort de la première carcasse&nbsp;:{' '}
-              {carcasse.heure_mise_a_mort_premiere_carcasse_fei}
-            </li>
+            <li>Début de la chasse&nbsp;: {carcasse.heure_mise_a_mort_premiere_carcasse_fei}</li>
           )}
           {carcasse.type === CarcasseType.PETIT_GIBIER &&
             carcasse.heure_evisceration_derniere_carcasse_fei && (
-              <li>
-                Heure d'éviscération de la dernière carcasse&nbsp;:{' '}
-                {carcasse.heure_evisceration_derniere_carcasse_fei}
-              </li>
+              <li>Fin de l’examen initial&nbsp;: {carcasse.heure_evisceration_derniere_carcasse_fei}</li>
             )}
         </ul>
       </ModalCard>
