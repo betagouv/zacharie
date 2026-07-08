@@ -195,6 +195,16 @@ export default function AdminEntites() {
                           {entity.raison_sociale && (
                             <span className="text-xs text-gray-500">{entity.raison_sociale}</span>
                           )}
+                          {entity.deleted_at && (
+                            <span className="mt-1">
+                              <Badge
+                                severity="error"
+                                small
+                              >
+                                Supprimée
+                              </Badge>
+                            </span>
+                          )}
                         </span>
                       </td>
                       <td className="px-2 py-1">
