@@ -94,7 +94,7 @@ function FEIChasseurLoaded() {
   };
 
   // DEBUG: création en masse de carcasses pour tester la montée en charge (jamais en prod)
-  const isDebugEnv = import.meta.env.VITE_ENV !== 'prod';
+  const isDebugEnv = import.meta.env.VITE_ENV !== 'prod' && import.meta.env.VITE_ENV !== 'test';
   const [debugCreating, setDebugCreating] = useState(false);
   const createDebugCarcasses = async (count: number) => {
     setDebugCreating(true);
