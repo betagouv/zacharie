@@ -45,13 +45,13 @@ test('Examinateur → Association → ETG : step ladder advances based on per-ca
   await page.getByRole('button', { name: 'Continuer' }).click();
 
   await page
-    .getByRole('textbox', { name: 'Heure de mise à mort de la' })
+    .getByRole('textbox', { name: 'Début de la chasse' })
     .fill(dayjs().startOf('day').add(1, 'hour').format('HH:mm'));
-  await page.getByRole('textbox', { name: 'Heure de mise à mort de la' }).blur();
+  await page.getByRole('textbox', { name: 'Début de la chasse' }).blur();
   await page
-    .getByRole('textbox', { name: "Heure d'éviscération de la" })
+    .getByRole('textbox', { name: 'Fin de l’examen initial' })
     .fill(dayjs().startOf('day').add(2, 'hour').format('HH:mm'));
-  await page.getByRole('textbox', { name: "Heure d'éviscération de la" }).blur();
+  await page.getByRole('textbox', { name: 'Fin de l’examen initial' }).blur();
 
   await page.getByRole('button', { name: 'Date du jour et maintenant' }).click();
   await page

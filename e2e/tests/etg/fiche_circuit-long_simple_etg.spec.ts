@@ -46,9 +46,9 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
           - listitem:
             - paragraph: "/Date de mise à mort : lundi 7 juillet \\\\d+/"
           - listitem:
-            - paragraph: "/Heure de mise à mort de la première carcasse de la fiche : \\\\d+:\\\\d+/"
+            - paragraph: "/Début de la chasse de la fiche : \\\\d+:\\\\d+/"
           - listitem:
-            - paragraph: "/Heure d'éviscération de la dernière carcasse de la fiche : \\\\d+:\\\\d+/"
+            - paragraph: "/Fin de l’examen initial de la dernière carcasse de la fiche : \\\\d+:\\\\d+/"
           - listitem:
             - paragraph: "/Nom du Centre de Collecte.+/"
           - listitem:
@@ -209,9 +209,9 @@ test('Pas de stockage - Je transfère à un autre collecteur', async ({ page }) 
           - listitem:
             - paragraph: "/Date de mise à mort : lundi 7 juillet \\\\d+/"
           - listitem:
-            - paragraph: "/Heure de mise à mort de la première carcasse de la fiche : \\\\d+:\\\\d+/"
+            - paragraph: "/Début de la chasse de la fiche : \\\\d+:\\\\d+/"
           - listitem:
-            - paragraph: "/Heure d'éviscération de la dernière carcasse de la fiche : \\\\d+:\\\\d+/"
+            - paragraph: "/Fin de l’examen initial de la dernière carcasse de la fiche : \\\\d+:\\\\d+/"
           - listitem:
             - paragraph: "/Nom du Centre de Collecte.+/"
           - listitem:
@@ -350,9 +350,9 @@ test('Pas de stockage - Je transfère à un autre ETG', async ({ page, context }
           - listitem:
             - paragraph: "/Date de mise à mort : lundi 7 juillet \\\\d+/"
           - listitem:
-            - paragraph: "/Heure de mise à mort de la première carcasse de la fiche : \\\\d+:\\\\d+/"
+            - paragraph: "/Début de la chasse de la fiche : \\\\d+:\\\\d+/"
           - listitem:
-            - paragraph: "/Heure d'éviscération de la dernière carcasse de la fiche : \\\\d+:\\\\d+/"
+            - paragraph: "/Fin de l’examen initial de la dernière carcasse de la fiche : \\\\d+:\\\\d+/"
           - listitem:
             - paragraph: "/Nom du Centre de Collecte.+/"
           - listitem:
@@ -489,9 +489,9 @@ test('Pas de stockage - Je transfère à un autre ETG', async ({ page, context }
   //       - listitem:
   //         - paragraph: "/Date de mise à mort : lundi 7 juillet \\\\d+/"
   //       - listitem:
-  //         - paragraph: "/Heure de mise à mort de la première carcasse de la fiche : \\\\d+:\\\\d+/"
+  //         - paragraph: "/Début de la chasse de la fiche : \\\\d+:\\\\d+/"
   //       - listitem:
-  //         - paragraph: "/Heure d'éviscération de la dernière carcasse de la fiche : \\\\d+:\\\\d+/"
+  //         - paragraph: "/Fin de l’examen initial derniÃ¨re carcasse de la fiche : \\\\d+:\\\\d+/"
   //       - listitem:
   //         - paragraph: "Nom du Centre de Collecte (CCG) : CCG Chasseurs"
   //       - listitem:
