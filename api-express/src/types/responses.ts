@@ -259,6 +259,25 @@ export interface SviCarcassesAVenirResponse {
   error: string;
 }
 
+// Traçabilité amont : volumes (en nombre d'animaux) entre ce qui entre chez les ETG
+// rattachés au SVI et ce qui est réellement présenté à l'inspection.
+export interface SviTracabiliteAmont {
+  recuesEtg: number;
+  refuseesEtg: number;
+  manquantesEtg: number;
+  enAttenteTransmission: number;
+  presenteesSvi: number;
+  manquantesSvi: number;
+}
+
+export interface SviTracabiliteAmontResponse {
+  ok: boolean;
+  data: {
+    amont: SviTracabiliteAmont;
+  } | null;
+  error: string;
+}
+
 export interface CertificatResponse {
   ok: boolean;
   data: {

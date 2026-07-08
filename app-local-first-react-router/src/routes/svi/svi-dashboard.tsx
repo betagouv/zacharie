@@ -1,6 +1,7 @@
 import { useMemo, type ReactNode } from 'react';
 import dayjs from 'dayjs';
 import { CarcasseType } from '@prisma/client';
+import type { SviTracabiliteAmont } from '@api/src/types/responses';
 import {
   BarChart,
   Bar,
@@ -21,6 +22,7 @@ import {
   useSviCarcassesAVenir,
   sviCarcassesAVenirModal,
 } from '@app/utils/svi-carcasses-a-venir';
+import { useSviTracabiliteAmont } from '@app/utils/svi-tracabilite-amont';
 import SviCarcassesAVenirModal from '@app/components/SviCarcassesAVenirModal';
 
 const COLOR_GRAND = 'var(--background-action-high-blue-france)';
@@ -43,6 +45,7 @@ function bucketForDays(days: number): string {
 
 export default function SviDashboard() {
   const { carcasses, loading } = useSviCarcassesAVenir();
+  const { amont } = useSviTracabiliteAmont();
 
   const stats = useMemo(() => {
     const rows = carcasses ?? [];
@@ -267,9 +270,89 @@ export default function SviDashboard() {
             </section>
           </>
         )}
+
+        {amont && amont.recuesEtg > 0 && <TracabiliteAmontSection amont={amont} />}
       </div>
       <SviCarcassesAVenirModal carcasses={carcasses ?? []} />
     </main>
+  );
+}
+
+// Traçabilité amont : écart entre les carcasses reçues par les ETG du SVI et celles
+// réellement présentées à l'inspection. Refus ETG + manquantes expliquent l'écart.
+function TracabiliteAmontSection({ amont }: { amont: SviTracabiliteAmont }) {
+  const transmisesSvi = amont.presenteesSvi + amont.manquantesSvi;
+  const funnelData = [
+    { name: 'Reçues par vos ETG', value: amont.recuesEtg },
+    { name: 'Transmises au SVI', value: transmisesSvi },
+    { name: 'Présentées à l’inspection', value: amont.presenteesSvi },
+  ];
+
+  return (
+    <section
+      aria-label="Traçabilité amont"
+      className="mt-10"
+    >
+      <header className="mb-6">
+        <h2 className="fr-h4 mb-1">Traçabilité amont</h2>
+        <p className="fr-text--sm m-0 text-gray-600">
+          Écart entre le volume de carcasses reçues par vos ETG et celui réellement présenté à l'inspection,
+          sur tout l'historique. Les refus décidés par l'ETG et les carcasses constatées manquantes expliquent
+          cet écart. Décomptes en nombre d'animaux.
+        </p>
+      </header>
+
+      <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
+        <StatTile
+          value={amont.recuesEtg}
+          label="Reçues par vos ETG"
+        />
+        <StatTile
+          value={amont.refuseesEtg}
+          label="Refusées par l'ETG"
+        />
+        <StatTile
+          value={amont.manquantesEtg}
+          label="Manquantes (ETG)"
+        />
+        <StatTile
+          value={amont.presenteesSvi}
+          label="Présentées au SVI"
+        />
+      </div>
+
+      <ChartCard
+        title="De l'ETG à l'inspection"
+        hint="Volume d'animaux à chaque étape. La baisse « Reçues → Transmises » correspond aux refus, manquantes et carcasses non encore transmises ; la baisse « Transmises → Présentées » aux carcasses manquantes au SVI."
+      >
+        <ResponsiveContainer
+          width="100%"
+          height={240}
+        >
+          <BarChart
+            data={funnelData}
+            margin={{ left: 0, right: 10 }}
+          >
+            <XAxis
+              dataKey="name"
+              tick={{ fontSize: 12 }}
+            />
+            <YAxis allowDecimals={false} />
+            <Tooltip />
+            <Bar
+              dataKey="value"
+              name="Animaux"
+              fill={BAR_COLOR}
+            >
+              <LabelList
+                dataKey="value"
+                position="top"
+              />
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </ChartCard>
+    </section>
   );
 }
 
