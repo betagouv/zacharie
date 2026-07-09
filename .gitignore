@@ -12,6 +12,7 @@ test-local.js
 .secrets
 **/scripts/*.csv
 **/20260121_import-cfei-from-liste-personnes-formees.ts
+**/internal-scripts
 
 # Yarn Berry
 .yarn/*
