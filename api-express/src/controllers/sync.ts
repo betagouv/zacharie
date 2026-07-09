@@ -3,7 +3,7 @@ import passport from 'passport';
 import { catchErrors } from '~/middlewares/errors';
 import type { SyncRequest, SyncResponse } from '~/types/responses';
 import prisma from '~/prisma';
-import { Prisma, User, UserRoles, Carcasse, Fei } from '@prisma/client';
+import { Prisma, User, UserRoles, Carcasse, Fei, EntityRelationType } from '@prisma/client';
 import { syncFei, type SaveFeiResult } from '~/utils/sync-fei';
 import { syncCarcasse, type SaveCarcasseResult } from '~/utils/sync-carcasse';
 import { syncCarcasseIntermediaire } from '~/utils/sync-carcasse-intermediaire';
@@ -63,10 +63,11 @@ router.post(
     }
 
     // 2. Process Carcasses (intermediaires depend on them)
-    // Pré-charge les fiches référencées par les carcasses (une seule requête au lieu d'un
-    // findUnique par carcasse) et mémorise les relations entité déjà assurées dans ce batch.
+    const carcasseList = carcasses || [];
+    // Pré-charge en une requête les fiches ET les carcasses existantes référencées (au lieu d'un
+    // findUnique + findFirst par carcasse), passées ensuite à chaque syncCarcasse.
     const carcasseFeiNumeros = [
-      ...new Set((carcasses || []).map((c) => c.fei_numero).filter(Boolean)),
+      ...new Set(carcasseList.map((c) => c.fei_numero).filter(Boolean)),
     ] as string[];
     const carcasseFeiMap = new Map<string, Fei>();
     if (carcasseFeiNumeros.length > 0) {
@@ -75,26 +76,87 @@ router.post(
       });
       for (const f of feisForCarcasses) carcasseFeiMap.set(f.numero, f);
     }
+    const carcasseIds = [
+      ...new Set(carcasseList.map((c) => c.zacharie_carcasse_id).filter(Boolean)),
+    ] as string[];
+    const existingCarcasseMap = new Map<string, Carcasse>();
+    if (carcasseIds.length > 0) {
+      const existingCarcasses =
+        (await prisma.carcasse.findMany({
+          where: { zacharie_carcasse_id: { in: carcasseIds } },
+        })) ?? [];
+      for (const c of existingCarcasses) existingCarcasseMap.set(c.zacharie_carcasse_id, c);
+    }
+
+    // Les carcasses sont traitées en parallèle (chaque syncCarcasse = un update de ligne
+    // distincte, sans dépendance entre elles). La relation CAN_TRANSMIT vers le destinataire est
+    // en revanche partagée : on l'assure séquentiellement AVANT la boucle parallèle (une fois par
+    // entité) et on pré-remplit ensuredRelationEntityIds pour que syncCarcasse saute ce bloc et
+    // évite toute création concurrente en double.
     const ensuredRelationEntityIds = new Set<string>();
-    for (const carcasseData of carcasses || []) {
+    const nextOwnerEntityIds = [
+      ...new Set(
+        carcasseList
+          .filter(
+            (c) =>
+              c.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.next_owner_entity_id) &&
+              !!c.next_owner_entity_id
+          )
+          .map((c) => c.next_owner_entity_id as string)
+      ),
+    ];
+    for (const entityId of nextOwnerEntityIds) {
       try {
-        const result = await syncCarcasse(
-          carcasseData.fei_numero,
-          carcasseData.zacharie_carcasse_id,
-          carcasseData as Prisma.CarcasseUncheckedCreateInput,
-          user,
-          { existingFei: carcasseFeiMap.get(carcasseData.fei_numero) ?? null, ensuredRelationEntityIds }
-        );
-        carcasseResults.push(result);
+        const relation: Prisma.EntityAndUserRelationsUncheckedCreateInput = {
+          entity_id: entityId,
+          owner_id: user.id,
+          relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+          deleted_at: null,
+        };
+        const existingRelation = await prisma.entityAndUserRelations.findFirst({ where: relation });
+        if (!existingRelation) {
+          await prisma.entityAndUserRelations.create({ data: relation });
+        }
       } catch (error) {
-        capture(error as Error, {
-          extra: {
-            feiNumero: carcasseData.fei_numero,
-            zacharieCarcasseId: carcasseData.zacharie_carcasse_id,
-            userId: user.id,
-          },
-          user,
-        });
+        capture(error as Error, { extra: { entityId, userId: user.id, context: 'ensure_relation' }, user });
+      }
+      ensuredRelationEntityIds.add(entityId);
+    }
+
+    // Concurrence bornée : on ne sature pas le pool de connexions Prisma (au-delà, les requêtes
+    // sont simplement mises en file).
+    const CARCASSE_SYNC_CONCURRENCY = 10;
+    for (let i = 0; i < carcasseList.length; i += CARCASSE_SYNC_CONCURRENCY) {
+      const chunk = carcasseList.slice(i, i + CARCASSE_SYNC_CONCURRENCY);
+      const chunkResults = await Promise.all(
+        chunk.map(async (carcasseData) => {
+          try {
+            return await syncCarcasse(
+              carcasseData.fei_numero,
+              carcasseData.zacharie_carcasse_id,
+              carcasseData as Prisma.CarcasseUncheckedCreateInput,
+              user,
+              {
+                existingFei: carcasseFeiMap.get(carcasseData.fei_numero) ?? null,
+                existingCarcasse: existingCarcasseMap.get(carcasseData.zacharie_carcasse_id) ?? null,
+                ensuredRelationEntityIds,
+              }
+            );
+          } catch (error) {
+            capture(error as Error, {
+              extra: {
+                feiNumero: carcasseData.fei_numero,
+                zacharieCarcasseId: carcasseData.zacharie_carcasse_id,
+                userId: user.id,
+              },
+              user,
+            });
+            return null;
+          }
+        })
+      );
+      for (const result of chunkResults) {
+        if (result) carcasseResults.push(result);
       }
     }
 
