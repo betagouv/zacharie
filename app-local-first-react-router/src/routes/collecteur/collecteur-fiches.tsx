@@ -741,7 +741,7 @@ export default function CollecteurFiches() {
                 count={totalPages}
                 defaultPage={page}
                 getPageLinkProps={(pageNumber) => ({
-                  to: `/app/collecteur/fei?page=${pageNumber}`,
+                  to: `/app/collecteur?page=${pageNumber}`,
                 })}
               />
             </div>
