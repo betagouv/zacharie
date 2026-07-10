@@ -31,6 +31,8 @@ import { CarcasseTransmissionWihMetadata } from '@app/types/carcasse';
 import CardTransmission from '@app/components/CardTransmission';
 import { useEntitiesIdsWorkingDirectlyForObj } from '@app/utils/get-entity-relations';
 import { getTransmissionLink, getTransmissionIdFromMetadata } from '@app/utils/get-transmission-id';
+import { useSviCarcassesAVenir, sviCarcassesAVenirModal } from '@app/utils/svi-carcasses-a-venir';
+import SviCarcassesAVenirModal from '@app/components/SviCarcassesAVenirModal';
 
 type ViewType = 'grid' | 'table';
 
@@ -245,6 +247,12 @@ export default function SviFiches() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+
+  const { carcasses: carcassesAVenir } = useSviCarcassesAVenir();
+  const nbFichesAVenir = useMemo(
+    () => new Set((carcassesAVenir ?? []).map((c) => c.fei_numero)).size,
+    [carcassesAVenir]
+  );
 
   const filtersKey = `${filterStatuses.join(',')}|${filterPremierDetenteurs.join(',')}|${filterEtgs.join(',')}|${filterCCGs.join(',')}|${filterCollecteurs.join(',')}|${filterSaisons.join(',')}|${filterDateFrom}|${filterDateTo}|${searchQuery}`;
   // on réinitialise la page seulement quand les filtres changent vraiment :
@@ -851,6 +859,26 @@ export default function SviFiches() {
           {filteredTransmissions.length} fiche{filteredTransmissions.length > 1 ? 's' : ''}
         </span>
         <div className="flex gap-2">
+          {nbFichesAVenir > 0 && (
+            <button
+              type="button"
+              aria-label={`Carcasses à venir (${nbFichesAVenir})`}
+              title={`Carcasses à venir (${nbFichesAVenir})`}
+              className="relative flex h-10 w-10 items-center justify-center rounded border border-gray-300 bg-white text-gray-700 transition-colors hover:bg-gray-50"
+              onClick={() => {
+                trackFeature('registre-svi', 'carcasses-a-venir');
+                sviCarcassesAVenirModal.open();
+              }}
+            >
+              <span
+                className="fr-icon--sm fr-icon-time-line"
+                aria-hidden="true"
+              />
+              <span className="bg-action-high-blue-france absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold text-white">
+                {nbFichesAVenir}
+              </span>
+            </button>
+          )}
           <button
             type="button"
             aria-label={viewType === 'grid' ? 'Afficher en table' : 'Afficher en grille'}
@@ -926,6 +954,18 @@ export default function SviFiches() {
         <div className="mx-auto max-w-5xl min-w-0 flex-1 px-4 pt-4 md:px-6">
           {filteredTransmissions.length > 0 && (
             <div className="hidden w-full flex-wrap items-center justify-end gap-3 py-4 md:flex">
+              {nbFichesAVenir > 0 && (
+                <Button
+                  priority="tertiary"
+                  iconId="fr-icon-time-line"
+                  onClick={() => {
+                    trackFeature('registre-svi', 'carcasses-a-venir');
+                    sviCarcassesAVenirModal.open();
+                  }}
+                >
+                  Carcasses à venir ({nbFichesAVenir})
+                </Button>
+              )}
               <SegmentedControl
                 hideLegend
                 className="hidden bg-white md:block"
@@ -1003,6 +1043,7 @@ export default function SviFiches() {
           </div>
         </div>
       </div>
+      <SviCarcassesAVenirModal carcasses={carcassesAVenir ?? []} />
     </div>
   );
 }

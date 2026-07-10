@@ -4,6 +4,7 @@ import type {
   EntityAndUserRelations,
   Fei,
   Carcasse,
+  CarcasseType,
   CarcasseIntermediaire,
   CarcasseModificationRequest,
   Log,
@@ -234,6 +235,46 @@ export interface CarcassesGetResponse {
     hasMore: boolean;
     total: number;
   };
+  error: string;
+}
+
+export interface SviCarcasseAVenir {
+  zacharie_carcasse_id: string;
+  fei_numero: string;
+  espece: string | null;
+  type: CarcasseType | null;
+  nombre_d_animaux: number | null;
+  date_mise_a_mort: Date | null;
+  etg_id: string | null;
+  etg_nom: string;
+  arrived_at: Date | null;
+}
+
+export interface SviCarcassesAVenirResponse {
+  ok: boolean;
+  data: {
+    carcasses: Array<SviCarcasseAVenir>;
+  } | null;
+  error: string;
+}
+
+// Traçabilité amont : sur les fiches en cours d'acheminement vers le SVI (celles ayant au
+// moins une carcasse à venir), répartition en nombre d'animaux entre ce qui a été déclaré
+// et ce qui a été refusé / déclaré manquant par l'ETG (l'écart avec ce qui arrivera).
+export interface SviTracabiliteAmont {
+  nbFiches: number;
+  recuesEtg: number; // total déclaré sur ces fiches
+  aVenir: number; // acceptées/prises en charge, à transmettre au SVI (= tuile "Animaux à venir")
+  refuseesEtg: number;
+  manquantesEtg: number;
+  enAttente: number; // déclarées mais pas encore décidées par l'ETG (ni acceptées, ni refusées, ni manquantes)
+}
+
+export interface SviTracabiliteAmontResponse {
+  ok: boolean;
+  data: {
+    amont: SviTracabiliteAmont;
+  } | null;
   error: string;
 }
 
