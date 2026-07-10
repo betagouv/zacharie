@@ -41,11 +41,10 @@ const columnsModal = createModal({
   isOpenedByDefault: false,
 });
 
-const FEI_STATUS_OPTIONS: Array<TransmissionSimpleStatus> = ['À compléter', 'En cours', 'Clôturée'];
+const FEI_STATUS_OPTIONS: Array<TransmissionSimpleStatus> = ['À compléter', 'Clôturée'];
 
 const feiStatusColors: Record<TransmissionSimpleStatus, { bg: string; text: string }> = {
   'À compléter': { bg: 'bg-[#FEE7FC]', text: 'text-[#6E445A]' },
-  'En cours': { bg: 'bg-[#FFECBD]', text: 'text-[#73603F]' },
   Clôturée: { bg: 'bg-[#E8EDFF]', text: 'text-[#01008B]' },
 };
 
@@ -220,7 +219,7 @@ export default function SviCarcasses() {
           ? content?.premier_detenteur_depot_entity_id || ''
           : '';
       const meta: TransmissionMeta = {
-        simpleStatus: transmission?.labels.simpleStatus ?? 'En cours',
+        simpleStatus: transmission?.labels.simpleStatus ?? '',
         premierDetenteurId: content?.premier_detenteur_entity_id || content?.premier_detenteur_user_id || '',
         ccgId,
         ccgName: content?.premier_detenteur_depot_entity_name_cache || ccgId,
@@ -721,6 +720,73 @@ export default function SviCarcasses() {
           </button>
         )}
       </div>
+      {/* Filtre Espèce */}
+      {especeOptions.length > 1 && (
+        <CollapsibleSection
+          title="Espèce"
+          defaultOpen={false}
+          badge={
+            filterEspeces.length > 0 ? (
+              <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">
+                {filterEspeces.length}
+              </span>
+            ) : undefined
+          }
+        >
+          <div className="flex max-h-60 flex-col gap-1 overflow-y-auto">
+            {especeOptions.map((espece) => (
+              <label
+                key={espece}
+                className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-gray-50"
+              >
+                <input
+                  type="checkbox"
+                  checked={filterEspeces.includes(espece)}
+                  className="checked:accent-action-high-blue-france h-4 w-4 shrink-0"
+                  onChange={() => {
+                    trackFeature('registre-svi-carcasses', 'filtre', 'espece');
+                    setFilterEspeces(toggleInArray(filterEspeces, espece));
+                  }}
+                />
+                <span className="truncate text-sm">{espece}</span>
+              </label>
+            ))}
+          </div>
+        </CollapsibleSection>
+      )}
+      {/* Filtre Statut carcasse */}
+      <CollapsibleSection
+        title="Statut carcasse"
+        defaultOpen={false}
+        badge={
+          filterStatutsCarcasse.length > 0 ? (
+            <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">
+              {filterStatutsCarcasse.length}
+            </span>
+          ) : undefined
+        }
+      >
+        <div className="flex max-h-60 flex-col gap-1 overflow-y-auto">
+          {/* @ts-expect-error Type '{}' is missing the following properties */}
+          {Object.keys(statusOptions).map((status: CarcasseStatusLabel) => (
+            <label
+              key={status}
+              className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-gray-50"
+            >
+              <input
+                type="checkbox"
+                checked={filterStatutsCarcasse.includes(status)}
+                className="checked:accent-action-high-blue-france h-4 w-4 shrink-0"
+                onChange={() => {
+                  trackFeature('registre-svi-carcasses', 'filtre', 'statut-carcasse');
+                  setFilterStatutsCarcasse(toggleInArray(filterStatutsCarcasse, status));
+                }}
+              />
+              <span className="truncate text-sm">{status}</span>
+            </label>
+          ))}
+        </div>
+      </CollapsibleSection>
 
       {/* Filtre Statut fiche */}
       <CollapsibleSection
@@ -973,75 +1039,6 @@ export default function SviCarcasses() {
           </div>
         </CollapsibleSection>
       )}
-
-      {/* Filtre Espèce */}
-      {especeOptions.length > 1 && (
-        <CollapsibleSection
-          title="Espèce"
-          defaultOpen={false}
-          badge={
-            filterEspeces.length > 0 ? (
-              <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">
-                {filterEspeces.length}
-              </span>
-            ) : undefined
-          }
-        >
-          <div className="flex max-h-60 flex-col gap-1 overflow-y-auto">
-            {especeOptions.map((espece) => (
-              <label
-                key={espece}
-                className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-gray-50"
-              >
-                <input
-                  type="checkbox"
-                  checked={filterEspeces.includes(espece)}
-                  className="checked:accent-action-high-blue-france h-4 w-4 shrink-0"
-                  onChange={() => {
-                    trackFeature('registre-svi-carcasses', 'filtre', 'espece');
-                    setFilterEspeces(toggleInArray(filterEspeces, espece));
-                  }}
-                />
-                <span className="truncate text-sm">{espece}</span>
-              </label>
-            ))}
-          </div>
-        </CollapsibleSection>
-      )}
-
-      {/* Filtre Statut carcasse */}
-      <CollapsibleSection
-        title="Statut carcasse"
-        defaultOpen={false}
-        badge={
-          filterStatutsCarcasse.length > 0 ? (
-            <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">
-              {filterStatutsCarcasse.length}
-            </span>
-          ) : undefined
-        }
-      >
-        <div className="flex max-h-60 flex-col gap-1 overflow-y-auto">
-          {/* @ts-expect-error Type '{}' is missing the following properties */}
-          {Object.keys(statusOptions).map((status: CarcasseStatusLabel) => (
-            <label
-              key={status}
-              className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-gray-50"
-            >
-              <input
-                type="checkbox"
-                checked={filterStatutsCarcasse.includes(status)}
-                className="checked:accent-action-high-blue-france h-4 w-4 shrink-0"
-                onChange={() => {
-                  trackFeature('registre-svi-carcasses', 'filtre', 'statut-carcasse');
-                  setFilterStatutsCarcasse(toggleInArray(filterStatutsCarcasse, status));
-                }}
-              />
-              <span className="truncate text-sm">{status}</span>
-            </label>
-          ))}
-        </div>
-      </CollapsibleSection>
 
       {/* Filtres avancés */}
       <div className="border-b border-gray-200 py-2">
