@@ -54,7 +54,7 @@ export default function SelectNextForExaminateur({
 
   const isOnline = useIsOnline();
 
-  const nextOwnerSelectLabel = 'Sélectionnez le Premier Détenteur de pour cette fiche *';
+  const nextOwnerSelectLabel = 'Sélectionnez le Premier Détenteur de pour cette fiche';
   const [nextOwnerUserOrEntityId, setNextOwnerUserOrEntityId] = useState(
     fei.premier_detenteur_user_id ?? fei.premier_detenteur_entity_id ?? ''
   );
@@ -185,7 +185,7 @@ export default function SelectNextForExaminateur({
 
   return (
     <>
-      <label className="mb-1 block">Premier détenteur&nbsp;*</label>
+      <label className="mb-1 block">Premier détenteur</label>
       {isFirstFei &&
       !Object.values(associationsDeChasse).length &&
       !Object.values(detenteursInitiaux).length ? (

@@ -425,7 +425,7 @@ function FEIChasseurLoaded() {
               <div className="bg-white p-4 md:p-8">
                 <h4 className="fr-h5">Informations de chasse</h4>
                 <Component
-                  label="Date de mise à mort (et d'éviscération)&nbsp;*"
+                  label="Date de mise à mort (et d'éviscération)"
                   state={fieldHasError('date_mise_a_mort') ? 'error' : 'default'}
                   stateRelatedMessage={fieldErrorMessage('date_mise_a_mort')}
                   hintText={
@@ -453,7 +453,7 @@ function FEIChasseurLoaded() {
                     autoComplete: 'off',
                     required: true,
                     suppressHydrationWarning: true,
-                    placeholder: 'Date de mise à mort *',
+                    placeholder: 'Date de mise à mort',
                     onBlur: (e) => {
                       if (!e.target.value) return;
                       const date = dayjs.utc(e.target.value).startOf('day');
@@ -476,7 +476,7 @@ function FEIChasseurLoaded() {
                   showHeureEviscerationAlert={false}
                 />
                 <VilleComponent
-                  label="Commune de mise à mort&nbsp;*"
+                  label="Commune de mise à mort"
                   state={fieldHasError('commune_mise_a_mort') ? 'error' : 'default'}
                   stateRelatedMessage={fieldErrorMessage('commune_mise_a_mort')}
                   key={fei?.commune_mise_a_mort}
@@ -500,7 +500,7 @@ function FEIChasseurLoaded() {
                   nativeInputProps={{
                     id: Prisma.FeiScalarFieldEnum.commune_mise_a_mort,
                     name: Prisma.FeiScalarFieldEnum.commune_mise_a_mort,
-                    placeholder: 'Commune de mise à mort *',
+                    placeholder: 'Commune de mise à mort',
                     type: 'text',
                     required: true,
                     autoComplete: 'off',
@@ -552,7 +552,7 @@ function FEIChasseurLoaded() {
                     <>
                       <Component
                         className="mt-4"
-                        label="Début de la chasse&nbsp;*"
+                        label="Début de la chasse"
                         hintText="Heure de la premiere mise a mort"
                         state={
                           fieldHasError('heure_mise_a_mort_premiere_carcasse', showBloc2Errors)
@@ -594,7 +594,7 @@ function FEIChasseurLoaded() {
                       {!onlyPetitGibier && (
                         <>
                           <Component
-                            label="Fin de l’examen initial&nbsp;*"
+                            label="Fin de l’examen initial"
                             hintText="Heure de le dernière éviscération"
                             state={
                               fieldHasError('heure_evisceration_derniere_carcasse', showBloc2Errors)
@@ -669,7 +669,7 @@ function FEIChasseurLoaded() {
                 <div className="bg-white p-4 md:p-8">
                   <h4 className="fr-h5">Validation de l'examen initial</h4>
                   <Component
-                    label="Date de validation de l'examen initial et de mise sur le marché *"
+                    label="Date de validation de l'examen initial et de mise sur le marché"
                     state={
                       fieldHasError('examinateur_initial_date_approbation_mise_sur_le_marche')
                         ? 'error'
