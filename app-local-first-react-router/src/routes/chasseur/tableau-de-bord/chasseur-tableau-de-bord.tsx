@@ -11,6 +11,7 @@ import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import { createNewFei } from '@app/utils/create-new-fei';
 import { useNavigate } from 'react-router';
 import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
+import FichesEmptyState from '@app/components/FichesEmptyState';
 
 interface DashboardData {
   totalCarcasses: number;
@@ -81,38 +82,33 @@ export default function MesChasses() {
   const isSmallGameOnly = dashboardData.bigGame === 0 && dashboardData.smallGame > 0;
 
   if (dashboardData.totalCarcasses === 0) {
+    if (!!me.numero_cfei) {
+      return (
+        <FichesEmptyState
+          iconId="fr-icon-line-chart-line"
+          title="Pas encore de carcasses cette saison"
+          description="Vos statistiques apparaîtront ici dès que vous aurez enregistré votre première fiche d'examen initial."
+          action={
+            <Button
+              priority="primary"
+              iconId="fr-icon-add-circle-line"
+              onClick={async () => {
+                const newFei = await createNewFei();
+                navigate(`/app/chasseur/fei/${newFei.numero}`);
+              }}
+            >
+              Créer une fiche
+            </Button>
+          }
+        />
+      );
+    }
     return (
-      <div className="fr-container">
-        <div className="fr-my-7w fr-mt-md-12w fr-mb-md-10w fr-grid-row fr-grid-row--gutters fr-grid-row--middle fr-grid-row--center bg-white p-4 md:p-8">
-          <div className="fr-py-0 fr-col-12 fr-col-md-6">
-            <div className="flex flex-col bg-white">
-              <h2 className="fr-h4 mb-3 font-bold text-gray-800">Pas encore de carcasses cette saison</h2>
-              {!!me.numero_cfei ? (
-                <>
-                  <p className="fr-text--regular mb-6 max-w-md">
-                    Vos statistiques apparaîtront ici dès que vous aurez enregistré votre première fiche
-                    d'examen initial.
-                  </p>
-                  <Button
-                    priority="primary"
-                    iconId="fr-icon-add-circle-line"
-                    onClick={async () => {
-                      const newFei = await createNewFei();
-                      navigate(`/app/chasseur/fei/${newFei.numero}`);
-                    }}
-                  >
-                    Créer une fiche
-                  </Button>
-                </>
-              ) : (
-                <p className="fr-text--regular mb-6 max-w-md">
-                  Vos statistiques apparaîtront ici dès que vos premières carcasses seront enregistrées.
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
+      <FichesEmptyState
+        iconId="fr-icon-line-chart-line"
+        title="Pas encore de carcasses cette saison"
+        description="Vos statistiques apparaîtront ici dès que vos premières carcasses seront enregistrées."
+      />
     );
   }
 
