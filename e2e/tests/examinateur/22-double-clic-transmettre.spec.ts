@@ -22,7 +22,7 @@ test('Double-clic Transmettre — pas de double soumission', async ({ page }) =>
   await connectWith(page, 'examinateur@example.fr');
   await page.getByRole('button', { name: 'Nouvelle fiche' }).first().click();
   await page.getByRole('button', { name: dayjs.utc().format('dddd DD MMMM') }).click();
-  await page.getByRole('textbox', { name: 'Commune de mise à mort *' }).fill('CHASS');
+  await page.getByRole('textbox', { name: 'Commune de mise à mort' }).fill('CHASS');
   await page.getByRole('button', { name: 'CHASSENARD' }).click();
   await page.getByRole('button', { name: 'Pierre Petit' }).click();
   await page.getByRole('button', { name: 'Continuer' }).first().click();

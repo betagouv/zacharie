@@ -36,7 +36,7 @@ test('Création hors-ligne puis sync auto au retour en ligne', async ({ page, co
   await page.getByRole('button', { name: dayjs.utc().format('dddd DD MMMM') }).click();
 
   // Fill commune
-  await page.getByRole('textbox', { name: 'Commune de mise à mort *' }).fill('CHASS');
+  await page.getByRole('textbox', { name: 'Commune de mise à mort' }).fill('CHASS');
   await page.getByRole('button', { name: 'CHASSENARD' }).click();
 
   // The fiche was created locally. The URL already contains the ZACH- fiche number.

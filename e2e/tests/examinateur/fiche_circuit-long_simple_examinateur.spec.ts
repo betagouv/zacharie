@@ -26,7 +26,7 @@ test("Création d'une fiche", async ({ page }) => {
   await page.getByRole('button', { name: 'Nouvelle fiche' }).first().click();
   await expect(page.getByText("Date de mise à mort (et d'éviscération)")).toBeVisible();
   await page.getByRole('button', { name: dayjs.utc().format('dddd DD MMMM') }).click();
-  await page.getByRole('textbox', { name: 'Commune de mise à mort *' }).fill('CHASS');
+  await page.getByRole('textbox', { name: 'Commune de mise à mort' }).fill('CHASS');
   await page.getByRole('button', { name: 'CHASSENARD' }).click();
   // Select premier détenteur
   await page.getByRole('button', { name: 'Pierre Petit' }).click();

@@ -24,7 +24,7 @@ test('Brouillon : quitter puis reprendre — formulaire préservé (local-first)
 
   await page.getByRole('button', { name: 'Nouvelle fiche' }).first().click();
   await page.getByRole('button', { name: dayjs.utc().format('dddd DD MMMM') }).click();
-  await page.getByRole('textbox', { name: 'Commune de mise à mort *' }).fill('CHASS');
+  await page.getByRole('textbox', { name: 'Commune de mise à mort' }).fill('CHASS');
   await page.getByRole('button', { name: 'CHASSENARD' }).click();
   await page.getByRole('button', { name: 'Pierre Petit' }).click();
   await page.getByRole('button', { name: 'Continuer' }).first().click();
@@ -39,7 +39,7 @@ test('Brouillon : quitter puis reprendre — formulaire préservé (local-first)
 
   // Reprendre
   await page.getByRole('link', { name: feiId! }).click();
-  await expect(page.getByRole('textbox', { name: 'Commune de mise à mort *' })).toHaveValue(/CHASSENARD/i);
+  await expect(page.getByRole('textbox', { name: 'Commune de mise à mort' })).toHaveValue(/CHASSENARD/i);
   // Verify Pierre Petit is selected in the PD dropdown
   const pdSelect = page.locator("select[name='next_owner']");
   await expect(pdSelect).toHaveValue(/.+/); // non-empty = something selected
