@@ -209,7 +209,7 @@ export default function CollecteurDestinataireIntermediaire({
         key={prochainDetenteurEntityId}
       >
         <SelectCustom
-          label="Prochain détenteur des carcasses *"
+          label="Prochain détenteur des carcasses"
           isDisabled={disabled}
           hint={
             <>
