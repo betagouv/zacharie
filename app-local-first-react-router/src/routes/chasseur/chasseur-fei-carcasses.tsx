@@ -1,6 +1,6 @@
 import NouvelleCarcasse from './examinateur-carcasses-nouvelle';
 import { UserRoles } from '@prisma/client';
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef } from 'react';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import Alert from '@codegouvfr/react-dsfr/Alert';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
@@ -18,6 +18,7 @@ import CardCarcasse from '@app/components/CardCarcasse';
 import type { Carcasse } from '@prisma/client';
 import { CarcasseWithModificationRequests } from '@api/src/types/carcasse';
 import { lookupAnomalie } from '@app/utils/anomalies-referentiel-data';
+import { useMyCarcassesForFei } from '@app/utils/filter-my-carcasses';
 
 export default function CarcassesExaminateur({
   canEdit,
@@ -37,10 +38,7 @@ export default function CarcassesExaminateur({
   const fei_numero = params.fei_numero!;
   const fei = feis[fei_numero];
   const entities = useZustandStore((state) => state.entities);
-  const carcasses = useCarcassesForFei(fei_numero);
-  const [showForm, setShowForm] = useState(!allCarcassesConfirmed);
-
-  const countCarcassesByEspece = useMemo(() => formatCountCarcasseByEspece(carcasses), [carcasses]);
+  const carcasses = useMyCarcassesForFei(params.fei_numero);
 
   const hasCarcasses = carcasses.length > 0;
   const lastEspece = hasCarcasses ? carcasses[carcasses.length - 1].espece : null;
@@ -64,13 +62,20 @@ export default function CarcassesExaminateur({
 
   const hasGroups = Object.keys(dejaEnvoyeesParDestinataire).length > 0;
 
-  const detailsModal = useRef(
-    createModal({ id: `carcasse-details-${fei.numero}`, isOpenedByDefault: false })
-  ).current;
-
   const confirmModal = useRef(
     createModal({ id: `carcasse-confirm-${fei.numero}`, isOpenedByDefault: false })
   ).current;
+
+  const addModal = useRef(
+    createModal({ id: `carcasse-add-${fei.numero}`, isOpenedByDefault: false })
+  ).current;
+  const isAddModalOpen = useIsModalOpen(addModal);
+
+  // Ajouter une carcasse « invalide » la confirmation (les heures doivent être ressaisies).
+  const openAddModal = () => {
+    if (allCarcassesConfirmed) onAddMoreCarcasses();
+    addModal.open();
+  };
 
   // Synthèse des anomalies renseignées sur l'ensemble des carcasses de la fiche,
   // pour la modale de confirmation. `total` = nombre total renseigné ;
@@ -158,48 +163,15 @@ export default function CarcassesExaminateur({
           ))}
         </div>
       )}
-      {(!hasCarcasses || (showForm && !allCarcassesConfirmed)) && canEdit && (
-        <div className="my-2">
-          <NouvelleCarcasse
-            key={`${fei.commune_mise_a_mort}-${lastEspece}`}
-            defaultEspece={lastEspece ?? undefined}
-            onCarcasseAdded={() => setShowForm(false)}
-          />
-        </div>
-      )}
-
-      {canEdit && hasCarcasses && !allCarcassesConfirmed && !showForm && (
+      {canEdit && (
         <AddCarcasseCard
           id="add-more-carcasses-button"
-          className="mt-2"
-          onClick={() => setShowForm(true)}
+          className={hasCarcasses ? 'mt-2' : ''}
+          onClick={openAddModal}
         />
       )}
       {canEdit && hasCarcasses && (
-        <div className="bg-contrast-grey my-4 p-4">
-          <p className="mb-2 text-xs font-bold tracking-wide text-gray-500 uppercase">Récapitulatif</p>
-          <ul className="m-0 flex flex-wrap gap-2 p-0">
-            {countCarcassesByEspece.map((line) => (
-              <li
-                key={line}
-                className="list-none rounded-full bg-white px-3 py-1 text-sm font-semibold text-gray-900"
-              >
-                {line}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-      {canEdit && hasCarcasses && (
         <div className="mt-4 flex flex-wrap gap-2">
-          <Button
-            type="button"
-            priority="secondary"
-            iconId="fr-icon-list-unordered"
-            onClick={() => detailsModal.open()}
-          >
-            {carcasses.length > 1 ? 'Ajouter des anomalies' : 'Ajouter une anomalie (facultatif)'}
-          </Button>
           {!allCarcassesConfirmed && (
             <Button
               type="button"
@@ -211,21 +183,20 @@ export default function CarcassesExaminateur({
           )}
         </div>
       )}
-      {canEdit && hasCarcasses && allCarcassesConfirmed && (
-        <AddCarcasseCard
-          id="add-more-carcasses"
-          className="mt-4"
-          onClick={() => {
-            onAddMoreCarcasses();
-            setShowForm(true);
-          }}
-        />
-      )}
-      {canEdit && hasCarcasses && (
-        <CarcasseDetailsModal
-          carcasses={carcasses}
-          modal={detailsModal}
-        />
+      {canEdit && (
+        <addModal.Component
+          size="large"
+          title="Ajouter une carcasse"
+          buttons={[{ children: 'Terminer', doClosesModal: true }]}
+        >
+          {isAddModalOpen && (
+            <NouvelleCarcasse
+              key={`${fei.commune_mise_a_mort}-${lastEspece}`}
+              defaultEspece={lastEspece ?? undefined}
+              onCarcasseAdded={() => addModal.close()}
+            />
+          )}
+        </addModal.Component>
       )}
       {canEdit && hasCarcasses && (
         <confirmModal.Component
