@@ -278,15 +278,15 @@ export default function SviDashboard() {
   );
 }
 
-// Traçabilité amont : écart entre les carcasses reçues par les ETG du SVI et celles
-// réellement présentées à l'inspection. Refus ETG + manquantes expliquent l'écart.
+// Traçabilité amont : sur les fiches qui arrivent, part des carcasses refusées / déclarées
+// manquantes par l'ETG par rapport au total déclaré (l'écart avec ce qui arrivera).
 function TracabiliteAmontSection({ amont }: { amont: SviTracabiliteAmont }) {
-  const transmisesSvi = amont.presenteesSvi + amont.manquantesSvi;
-  const funnelData = [
-    { name: 'Reçues par vos ETG', value: amont.recuesEtg },
-    { name: 'Transmises au SVI', value: transmisesSvi },
-    { name: 'Présentées à l’inspection', value: amont.presenteesSvi },
-  ];
+  const repartitionData = [
+    { name: 'À venir', value: amont.aVenir },
+    { name: 'En attente', value: amont.enAttente },
+    { name: "Refusées par l'ETG", value: amont.refuseesEtg },
+    { name: 'Manquantes (ETG)', value: amont.manquantesEtg },
+  ].filter((d) => d.value > 0);
 
   return (
     <section
@@ -296,16 +296,21 @@ function TracabiliteAmontSection({ amont }: { amont: SviTracabiliteAmont }) {
       <header className="mb-6">
         <h2 className="fr-h4 mb-1">Traçabilité amont</h2>
         <p className="fr-text--sm m-0 text-gray-600">
-          Écart entre le volume de carcasses reçues par vos ETG et celui réellement présenté à l'inspection,
-          sur tout l'historique. Les refus décidés par l'ETG et les carcasses constatées manquantes expliquent
-          cet écart. Décomptes en nombre d'animaux.
+          Sur les {amont.nbFiches} fiche{amont.nbFiches > 1 ? 's' : ''} en cours d'acheminement vers vous,
+          part des carcasses refusées ou déclarées manquantes par l'ETG au regard du total déclaré. C'est
+          l'écart entre ce qui a été déclaré et ce qui vous sera réellement présenté. Décomptes en nombre
+          d'animaux.
         </p>
       </header>
 
       <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
         <StatTile
           value={amont.recuesEtg}
-          label="Reçues par vos ETG"
+          label="Déclarées sur ces fiches"
+        />
+        <StatTile
+          value={amont.aVenir}
+          label="À venir"
         />
         <StatTile
           value={amont.refuseesEtg}
@@ -315,22 +320,18 @@ function TracabiliteAmontSection({ amont }: { amont: SviTracabiliteAmont }) {
           value={amont.manquantesEtg}
           label="Manquantes (ETG)"
         />
-        <StatTile
-          value={amont.presenteesSvi}
-          label="Présentées au SVI"
-        />
       </div>
 
       <ChartCard
-        title="De l'ETG à l'inspection"
-        hint="Volume d'animaux à chaque étape. La baisse « Reçues → Transmises » correspond aux refus, manquantes et carcasses non encore transmises ; la baisse « Transmises → Présentées » aux carcasses manquantes au SVI."
+        title="Répartition du déclaré"
+        hint="Sur le total déclaré des fiches qui arrivent : ce qui vous sera présenté (à venir), ce qui reste en attente de décision de l'ETG, et ce qui est perdu en amont (refusé ou déclaré manquant par l'ETG)."
       >
         <ResponsiveContainer
           width="100%"
           height={240}
         >
           <BarChart
-            data={funnelData}
+            data={repartitionData}
             margin={{ left: 0, right: 10 }}
           >
             <XAxis

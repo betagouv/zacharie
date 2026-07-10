@@ -118,9 +118,9 @@ router.get(
   })
 );
 
-// Traçabilité amont : écart entre les carcasses reçues par les ETG rattachés au SVI
-// et celles réellement présentées à l'inspection (refus ETG + manquantes expliquent l'écart).
-// Volumes en nombre d'animaux, tout l'historique.
+// Traçabilité amont : sur les fiches en cours d'acheminement vers le SVI (celles ayant au
+// moins une carcasse à venir), répartition en nombre d'animaux entre le déclaré et ce qui
+// a été refusé / déclaré manquant par l'ETG (l'écart avec ce qui arrivera réellement).
 router.get(
   '/tracabilite-amont',
   passport.authenticate('user', { session: false }),
@@ -131,12 +131,12 @@ router.get(
     }
 
     const amont: SviTracabiliteAmontResponse['data']['amont'] = {
+      nbFiches: 0,
       recuesEtg: 0,
+      aVenir: 0,
       refuseesEtg: 0,
       manquantesEtg: 0,
-      enAttenteTransmission: 0,
-      presenteesSvi: 0,
-      manquantesSvi: 0,
+      enAttente: 0,
     };
 
     const { etgIds } = await getEtgsLinkedToSviUser(req.user.id);
@@ -146,10 +146,42 @@ router.get(
       return;
     }
 
-    // Toutes les carcasses passées par un ETG rattaché au SVI (dénominateur = reçues par vos ETG).
+    // 1. Carcasses à venir : acceptées/prises en charge chez l'ETG, pas encore transmises
+    // au SVI (filtre identique à /carcasses-a-venir → aVenir = tuile "Animaux à venir").
+    const carcassesAVenir = await prisma.carcasse.findMany({
+      where: {
+        deleted_at: null,
+        svi_assigned_at: null,
+        current_owner_role: FeiOwnerRole.ETG,
+        current_owner_entity_id: { in: etgIds },
+        CarcasseIntermediaire: {
+          some: {
+            intermediaire_entity_id: { in: etgIds },
+            prise_en_charge: true,
+            refus: null,
+            manquante: { not: true },
+            deleted_at: null,
+          },
+        },
+      },
+      select: { fei_numero: true, type: true, nombre_d_animaux: true },
+    });
+    for (const carcasse of carcassesAVenir) {
+      amont.aVenir += countAnimaux(carcasse);
+    }
+    const feiNumeros = [...new Set(carcassesAVenir.map((c) => c.fei_numero))];
+    amont.nbFiches = feiNumeros.length;
+
+    if (feiNumeros.length === 0) {
+      res.status(200).send({ ok: true, data: { amont }, error: '' });
+      return;
+    }
+
+    // 2. Toutes les carcasses de ces fiches passées par un ETG rattaché au SVI.
     const carcasses = await prisma.carcasse.findMany({
       where: {
         deleted_at: null,
+        fei_numero: { in: feiNumeros },
         CarcasseIntermediaire: {
           some: { intermediaire_entity_id: { in: etgIds }, deleted_at: null },
         },
@@ -159,9 +191,6 @@ router.get(
         nombre_d_animaux: true,
         intermediaire_carcasse_manquante: true,
         intermediaire_carcasse_refus_intermediaire_id: true,
-        svi_assigned_at: true,
-        svi_ipm1_presentee_inspection: true,
-        svi_ipm2_presentee_inspection: true,
       },
     });
 
@@ -175,14 +204,12 @@ router.get(
         amont.manquantesEtg += animaux;
       } else if (carcasse.intermediaire_carcasse_refus_intermediaire_id) {
         amont.refuseesEtg += animaux;
-      } else if (!carcasse.svi_assigned_at) {
-        amont.enAttenteTransmission += animaux;
-      } else if (carcasse.svi_ipm1_presentee_inspection || carcasse.svi_ipm2_presentee_inspection) {
-        amont.presenteesSvi += animaux;
-      } else {
-        amont.manquantesSvi += animaux;
       }
     }
+
+    // Reliquat : déclarées mais ni acceptées (à venir), ni refusées, ni manquantes
+    // = en attente de décision de l'ETG (+ éventuelles déjà transmises, rares ici).
+    amont.enAttente = Math.max(0, amont.recuesEtg - amont.aVenir - amont.refuseesEtg - amont.manquantesEtg);
 
     res.status(200).send({ ok: true, data: { amont }, error: '' });
   })
