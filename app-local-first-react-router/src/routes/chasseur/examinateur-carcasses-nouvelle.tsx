@@ -1,7 +1,6 @@
-import { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useLayoutEffect, useMemo, useState } from 'react';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Input } from '@codegouvfr/react-dsfr/Input';
-import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import { Prisma, type User, UserRoles } from '@prisma/client';
 import { Select } from '@codegouvfr/react-dsfr/Select';
 import grandGibier from '@app/data/grand-gibier.json';
@@ -55,14 +54,13 @@ export default function NouvelleCarcasse({
   const [error, setError] = useState<string | null>(null);
   const [anomaliesCarcasse, setAnomaliesCarcasse] = useState<string[]>([]);
   const [anomaliesAbats, setAnomaliesAbats] = useState<string[]>([]);
+  // Les anomalies sont une seconde étape : masquées à l'ouverture, accessibles via un bouton.
+  const [showAnomalies, setShowAnomalies] = useState(false);
 
   const isPetitGibier = useMemo(() => {
     return petitGibier.especes.includes(espece);
   }, [espece]);
 
-  const detailsModal = useRef(
-    createModal({ id: 'nouvelle-carcasse-details', isOpenedByDefault: false })
-  ).current;
   const detailsCount = anomaliesCarcasse.length + (isPetitGibier ? 0 : anomaliesAbats.length);
 
   const detailsSections = useMemo(
@@ -96,6 +94,21 @@ export default function NouvelleCarcasse({
       });
     });
   }, []);
+  if (showAnomalies) {
+    return (
+      <div className="flex w-full flex-col gap-4">
+        <Button
+          type="button"
+          priority="tertiary no outline"
+          iconId="fr-icon-arrow-left-line"
+          onClick={() => setShowAnomalies(false)}
+        >
+          Retour
+        </Button>
+        <AnomaliePicker sections={detailsSections} />
+      </div>
+    );
+  }
 
   return (
     <form
@@ -216,17 +229,10 @@ export default function NouvelleCarcasse({
             type="button"
             priority="secondary"
             iconId="fr-icon-list-unordered"
-            onClick={() => detailsModal.open()}
+            onClick={() => setShowAnomalies(true)}
           >
-            {detailsCount > 0 ? `Anomalie (${detailsCount})` : 'Ajouter une anomalie (facultatif)'}
+            {detailsCount > 0 ? `Anomalies (${detailsCount})` : 'Ajouter une anomalie (facultatif)'}
           </Button>
-          <detailsModal.Component
-            title="Ajouter une anomalie"
-            size="large"
-            buttons={[{ doClosesModal: true, children: 'Terminer' }]}
-          >
-            <AnomaliePicker sections={detailsSections} />
-          </detailsModal.Component>
         </div>
       )}
       <Button
