@@ -825,7 +825,12 @@ export default function ChasseurFiches() {
 
         {/* Contenu principal */}
         <div className="mx-auto max-w-5xl min-w-0 flex-1 px-4 pt-4 md:px-6">
-          {!user.activated && <CompteEnAttenteValidationAlert className="fr-mb-4w" />}
+          {!user.activated && (
+            <CompteEnAttenteValidationAlert
+              variant={user.numero_cfei ? 'examinateur' : 'chasseur'}
+              className="fr-mb-4w"
+            />
+          )}
           <OnboardingChasseInfoBanner />
           {filteredTransmissions.length > 0 && (
             <div className="hidden w-full flex-wrap items-center justify-end gap-3 py-4 md:flex">
