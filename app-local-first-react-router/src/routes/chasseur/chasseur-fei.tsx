@@ -507,7 +507,7 @@ function FEIChasseurLoaded() {
                     defaultValue: fei?.commune_mise_a_mort ?? '',
                   }}
                 />
-                <SelectNextForExaminateur onShowErrors={() => setShowErrors(true)} />
+                <SelectNextForExaminateur />
               </div>
 
               {/* Bloc 2 — Carcasses */}

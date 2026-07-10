@@ -30,7 +30,7 @@ test('Création hors-ligne puis sync auto au retour en ligne', async ({ page, co
 
   // Create a new fiche — should work locally even offline
   await page.getByRole('button', { name: 'Nouvelle fiche' }).first().click();
-  await expect(page.getByText("Date de mise à mort (et d'éviscération) *")).toBeVisible();
+  await expect(page.getByText("Date de mise à mort (et d'éviscération)")).toBeVisible();
 
   // Select today's date
   await page.getByRole('button', { name: dayjs.utc().format('dddd DD MMMM') }).click();
