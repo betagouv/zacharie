@@ -103,7 +103,7 @@ test.describe('après transmission ETG → SVI (prise de responsabilité)', () =
   // L'acceptation en un clic avant toute autre action du SVI doit aussi faire passer
   // l'ownership de la transmission au SVI (current_owner_role !== SVI au moment du clic),
   // comme le fait l'enregistrement d'une IPM1 via le formulaire.
-  test("90 - SVI : accepter en un clic prend la responsabilité de la transmission", async ({ page }) => {
+  test('90 - SVI : accepter en un clic prend la responsabilité de la transmission', async ({ page }) => {
     const feiId = 'ZACH-20250707-QZ6E0-165242';
 
     // 1. ETG prend en charge + transmet au SVI (flux réel, pas de seed direct).
