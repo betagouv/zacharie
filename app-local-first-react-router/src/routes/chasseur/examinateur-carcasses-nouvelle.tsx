@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Prisma, type User, UserRoles } from '@prisma/client';
@@ -253,50 +253,6 @@ export default function NouvelleCarcasse({
           onChange: (e) => setNumeroBracelet(e.target.value.replace(/\/|\s/g, '_')),
         }}
       />
-      <Button
-        type="submit"
-        id="add-carcasse-submit-button"
-        disabled={!espece || !numeroBracelet}
-        onClick={async (e) => {
-          try {
-            e.preventDefault();
-            const newCarcasse = await createNewCarcasse({
-              zacharieCarcasseId,
-              numeroBracelet,
-              espece,
-              nombreDAnimaux,
-              fei,
-              examinateurAnomaliesCarcasse: anomaliesCarcasse,
-              examinateurAnomaliesAbats: isPetitGibier ? [] : anomaliesAbats,
-            });
-            addLog({
-              user_id: user.id,
-              user_role: UserRoles.CHASSEUR,
-              fei_numero: fei.numero,
-              action: 'examinateur-carcasse-create',
-              history: createHistoryInput(null, newCarcasse),
-              entity_id: null,
-              zacharie_carcasse_id: newCarcasse.zacharie_carcasse_id,
-              intermediaire_id: null,
-              carcasse_intermediaire_id: null,
-            });
-            syncData('examinateur-carcasse-create');
-            setNumeroBracelet('');
-            setAnomaliesCarcasse([]);
-            setAnomaliesAbats([]);
-            setError(null);
-            onCarcasseAdded?.();
-          } catch (error) {
-            if (error instanceof Error) {
-              setError(error.message);
-            } else {
-              setError('Une erreur inconnue est survenue');
-            }
-          }
-        }}
-      >
-        {isPetitGibier ? 'Ajouter le lot de carcasses' : 'Ajouter la carcasse'}
-      </Button>
       <div className="my-2">
         <Button
           disabled={!espece}
@@ -308,6 +264,6 @@ export default function NouvelleCarcasse({
           {detailsCount > 0 ? `Anomalies (${detailsCount})` : 'Ajouter une anomalie (facultatif)'}
         </Button>
       </div>
-    </form >
+    </form>
   );
 }
