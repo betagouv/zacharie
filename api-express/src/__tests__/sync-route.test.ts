@@ -489,10 +489,11 @@ describe('POST /sync — carcasse modification requests', () => {
       transitionedTo: CarcasseModificationRequestStatus.APPROVED,
       justCancelled: false,
     });
-    // Refresh after side effects returns the renamed carcasse.
-    vi.mocked(prisma.carcasse.findMany).mockResolvedValueOnce([
-      { zacharie_carcasse_id: 'C1', numero_bracelet: 'NEW' } as any,
-    ]);
+    // carcasse.findMany sert deux fois : pré-chargement d'existence (batch), puis refresh
+    // post-side-effects qui renvoie la carcasse renommée.
+    vi.mocked(prisma.carcasse.findMany)
+      .mockResolvedValueOnce([{ zacharie_carcasse_id: 'C1', numero_bracelet: 'OLD' } as any])
+      .mockResolvedValueOnce([{ zacharie_carcasse_id: 'C1', numero_bracelet: 'NEW' } as any]);
 
     const res = await authed(
       request(app)

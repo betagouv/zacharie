@@ -10,10 +10,14 @@ export interface SaveCarcasseResult {
 // opts permet au /sync en masse d'éviter les requêtes redondantes quand on synchronise beaucoup
 // de carcasses de la même fiche d'un coup :
 // - existingFei : fiche déjà chargée par l'appelant (évite un findUnique par carcasse)
+// - existingCarcasse : carcasse déjà chargée par l'appelant (évite un findFirst par carcasse).
+//   `undefined` = pas fournie (on requête), `null` = fournie et absente en base (on crée).
 // - ensuredRelationEntityIds : entités dont la relation CAN_TRANSMIT a déjà été assurée dans ce
-//   batch (évite un findFirst/create par carcasse pour le même destinataire)
+//   batch (évite un findFirst/create par carcasse pour le même destinataire). En sync parallèle,
+//   l'appelant pré-remplit ce Set pour que le bloc relation soit entièrement sauté (pas de race).
 interface SyncCarcasseOpts {
   existingFei?: Fei | null;
+  existingCarcasse?: Carcasse | null;
   ensuredRelationEntityIds?: Set<string>;
 }
 
@@ -51,12 +55,15 @@ export async function syncCarcasse(
       throw new Error('Votre compte doit être validé avant de pouvoir transmettre une fiche');
     }
   }
-  let existingCarcasse = await prisma.carcasse.findFirst({
-    where: {
-      zacharie_carcasse_id: zacharie_carcasse_id,
-      fei_numero: fei_numero,
-    },
-  });
+  let existingCarcasse =
+    opts.existingCarcasse !== undefined
+      ? opts.existingCarcasse
+      : await prisma.carcasse.findFirst({
+          where: {
+            zacharie_carcasse_id: zacharie_carcasse_id,
+            fei_numero: fei_numero,
+          },
+        });
   if (!existingCarcasse) {
     const numeroBracelet = body.numero_bracelet;
     if (!numeroBracelet) {
@@ -73,18 +80,10 @@ export async function syncCarcasse(
   }
 
   if (body.deleted_at) {
-    const existinCarcasse = await prisma.carcasse.findFirst({
-      where: {
-        zacharie_carcasse_id,
-        fei_numero: fei_numero,
-      },
-    });
-    if (!existinCarcasse) {
-      return { savedCarcasse: existingCarcasse, existingCarcasse, isDeleted: true };
-    }
+    // existingCarcasse est garantie non-nulle ici (créée juste au-dessus si absente).
     const deletedCarcasse = await prisma.carcasse.update({
       where: {
-        zacharie_carcasse_id: existinCarcasse.zacharie_carcasse_id,
+        zacharie_carcasse_id: existingCarcasse.zacharie_carcasse_id,
       },
       data: {
         deleted_at: body.deleted_at,
@@ -92,7 +91,7 @@ export async function syncCarcasse(
       },
     });
     await prisma.carcasseIntermediaire.updateMany({
-      where: { zacharie_carcasse_id: existinCarcasse.zacharie_carcasse_id },
+      where: { zacharie_carcasse_id: existingCarcasse.zacharie_carcasse_id },
       data: { deleted_at: body.deleted_at },
     });
     return { savedCarcasse: deletedCarcasse, existingCarcasse, isDeleted: true };
