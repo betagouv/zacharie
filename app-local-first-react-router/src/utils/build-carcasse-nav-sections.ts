@@ -1,5 +1,4 @@
-import { CarcasseType } from '@prisma/client';
-import type { CarcasseWithModificationRequests } from '@api/src/types/carcasse';
+import { type Carcasse, CarcasseType } from '@prisma/client';
 import type { AnomaliePickerSection } from '@app/components/AnomaliePicker';
 import { getReferentiel } from '@app/utils/anomalies-referentiel-data';
 import { setCarcasseAnomalie } from '@app/utils/update-carcasse-anomalies';
@@ -47,9 +46,7 @@ export function buildAnomaliePickerSections({
 }
 
 // Variante branchée sur le store, pour une carcasse existante (édition / synthèse).
-export function buildCarcasseNavSections(
-  carcasse: CarcasseWithModificationRequests
-): AnomaliePickerSection[] {
+export function buildCarcasseNavSections(carcasse: Carcasse): AnomaliePickerSection[] {
   return buildAnomaliePickerSections({
     isPetitGibier: carcasse.type === CarcasseType.PETIT_GIBIER,
     anomaliesCarcasse: carcasse.examinateur_anomalies_carcasse ?? [],

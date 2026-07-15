@@ -15,7 +15,6 @@ import dayjs from 'dayjs';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import CardCarcasse from '@app/components/CardCarcasse';
 import type { Carcasse } from '@prisma/client';
-import { CarcasseWithModificationRequests } from '@api/src/types/carcasse';
 import { lookupAnomalie } from '@app/utils/anomalies-referentiel-data';
 
 export default function CarcassesExaminateur({
@@ -106,7 +105,7 @@ export default function CarcassesExaminateur({
     return { total, avecMessage };
   }, [carcasses]);
 
-  const renderCarcasseCard = (carcasse: CarcasseWithModificationRequests) => (
+  const renderCarcasseCard = (carcasse: Carcasse) => (
     <CarcasseExaminateur
       key={carcasse.zacharie_carcasse_id}
       carcasse={carcasse}
@@ -124,16 +123,7 @@ export default function CarcassesExaminateur({
               <p className="mt-0 mb-2 text-sm text-gray-500">
                 À attribuer ({formatCarcasseLotCount(restantes)})
               </p>
-              <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-                {restantes.map((carcasse: Carcasse) => (
-                  <CarcasseExaminateur
-                    key={carcasse.numero_bracelet}
-                    carcasse={carcasse}
-                    canEditAsExaminateurInitial={canEdit}
-                    canEditAsPremierDetenteur={canEditAsPremierDetenteur}
-                  />
-                ))}
-              </div>
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-2">{restantes.map(renderCarcasseCard)}</div>
             </div>
           )}
           {Object.entries(dejaEnvoyeesParDestinataire).map(([entityId, group]) => (
@@ -142,30 +132,12 @@ export default function CarcassesExaminateur({
                 Envoyée à {entities[entityId]?.nom_d_usage ?? 'destinataire inconnu'} (
                 {formatCarcasseLotCount(group)})
               </p>
-              <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-                {group.map((carcasse: Carcasse) => (
-                  <CarcasseExaminateur
-                    key={carcasse.numero_bracelet}
-                    carcasse={carcasse}
-                    canEditAsExaminateurInitial={canEdit}
-                    canEditAsPremierDetenteur={canEditAsPremierDetenteur}
-                  />
-                ))}
-              </div>
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-2">{group.map(renderCarcasseCard)}</div>
             </div>
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-          {carcasses.map((carcasse: Carcasse) => (
-            <CarcasseExaminateur
-              key={carcasse.numero_bracelet}
-              carcasse={carcasse}
-              canEditAsExaminateurInitial={canEdit}
-              canEditAsPremierDetenteur={canEditAsPremierDetenteur}
-            />
-          ))}
-        </div>
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-2">{carcasses.map(renderCarcasseCard)}</div>
       )}
       {canEdit && (
         <AddCarcasseCard
@@ -279,14 +251,14 @@ export function CarcasseExaminateur({
   const canOpenModal = canEditAsExaminateurInitial || canEditAsPremierDetenteur;
 
   const handleDelete = () => {
-    const nextPartialCarcasse: Partial<CarcasseWithModificationRequests> = {
+    const nextPartialCarcasse: Partial<Carcasse> = {
       deleted_at: dayjs().toDate(),
     };
-    updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse, true);
+    updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse);
     addLog({
       user_id: user.id,
       user_role: UserRoles.CHASSEUR,
-      fei_numero: fei.numero,
+      fei_numero: carcasse.fei_numero,
       action: 'examinateur-carcasse-delete',
       history: createHistoryInput(carcasse, nextPartialCarcasse),
       entity_id: null,
@@ -304,33 +276,8 @@ export function CarcasseExaminateur({
     <>
       <CardCarcasse
         carcasse={carcasse}
-        onEdit={!canEditAsExaminateurInitial ? undefined : () => editModal.open()}
-        onClick={!canEditAsExaminateurInitial ? undefined : () => editModal.open()}
-        onDelete={
-          !canEditAsExaminateurInitial && !canEditAsPremierDetenteur
-            ? undefined
-            : () => {
-                if (
-                  window.confirm('Voulez-vous supprimer cette carcasse ? Cette opération est irréversible')
-                ) {
-                  const nextPartialCarcasse: Partial<CarcasseWithModificationRequests> = {
-                    deleted_at: dayjs().toDate(),
-                  };
-                  updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse, true);
-                  addLog({
-                    user_id: user.id,
-                    user_role: UserRoles.CHASSEUR,
-                    fei_numero: fei.numero,
-                    action: 'examinateur-carcasse-delete',
-                    history: createHistoryInput(carcasse, nextPartialCarcasse),
-                    entity_id: null,
-                    zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
-                    intermediaire_id: null,
-                    carcasse_intermediaire_id: null,
-                  });
-                }
-              }
-        }
+        onEdit={canOpenModal ? () => editModal.open() : undefined}
+        onClick={canOpenModal ? () => editModal.open() : undefined}
       />
       <editModal.Component
         size="large"
