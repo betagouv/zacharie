@@ -1,6 +1,5 @@
-import { UserRoles } from '@prisma/client';
+import { type Carcasse, UserRoles } from '@prisma/client';
 import dayjs from 'dayjs';
-import type { CarcasseWithModificationRequests } from '@api/src/types/carcasse';
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import { createHistoryInput } from '@app/utils/create-history-entry';
@@ -15,7 +14,7 @@ export function setCarcasseAnomalie({
   field,
   nextValues,
 }: {
-  carcasse: CarcasseWithModificationRequests;
+  carcasse: Carcasse;
   field: AnomalieField;
   nextValues: string[];
 }): void {
@@ -27,14 +26,14 @@ export function setCarcasseAnomalie({
   const abatsAnomalies =
     field === 'examinateur_anomalies_abats' ? nextValues : (carcasse.examinateur_anomalies_abats ?? []);
 
-  const partialCarcasse: Partial<CarcasseWithModificationRequests> = {
+  const partialCarcasse: Partial<Carcasse> = {
     [field]: nextValues,
     examinateur_signed_at: dayjs().toDate(),
     examinateur_carcasse_sans_anomalie: carcasseAnomalies.length === 0 && abatsAnomalies.length === 0,
   };
 
   const store = useZustandStore.getState();
-  store.updateCarcasse(carcasse.zacharie_carcasse_id, partialCarcasse, false);
+  store.updateCarcasse(carcasse.zacharie_carcasse_id, partialCarcasse);
   store.addLog({
     user_id: user.id,
     user_role: UserRoles.CHASSEUR,

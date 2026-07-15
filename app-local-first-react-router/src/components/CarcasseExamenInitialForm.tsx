@@ -2,11 +2,10 @@ import { useMemo, useState } from 'react';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Select } from '@codegouvfr/react-dsfr/Select';
-import { CarcasseType, Prisma, UserRoles } from '@prisma/client';
+import { type Carcasse, CarcasseType, Prisma, UserRoles } from '@prisma/client';
 import grandGibier from '@app/data/grand-gibier.json';
 import petitGibier from '@app/data/petit-gibier.json';
 import dayjs from 'dayjs';
-import type { CarcasseWithModificationRequests } from '@api/src/types/carcasse';
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
@@ -22,17 +21,13 @@ const gibierSelect = {
 // Formulaire d'examen initial d'une carcasse (espèce, numéro, nombre, anomalies).
 // Toutes les modifications sont enregistrées en direct via le store (local-first).
 // Utilisé dans la modale d'édition (depuis la liste) et dans la page détail.
-export default function CarcasseExamenInitialForm({
-  carcasse,
-}: {
-  carcasse: CarcasseWithModificationRequests;
-}) {
+export default function CarcasseExamenInitialForm({ carcasse }: { carcasse: Carcasse }) {
   const user = useUser((state) => state.user)!;
   const updateStateCarcasse = useZustandStore((state) => state.updateCarcasse);
   const addLog = useZustandStore((state) => state.addLog);
 
-  const updateCarcasse = (partialCarcasse: Partial<CarcasseWithModificationRequests>) => {
-    updateStateCarcasse(carcasse.zacharie_carcasse_id, partialCarcasse, true);
+  const updateCarcasse = (partialCarcasse: Partial<Carcasse>) => {
+    updateStateCarcasse(carcasse.zacharie_carcasse_id, partialCarcasse);
     addLog({
       user_id: user.id,
       user_role: UserRoles.CHASSEUR,
