@@ -92,7 +92,7 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
   await page.getByRole('button', { name: 'Prendre en charge' }).click();
   await expect(page.getByText("Prise en charge par l'atelier")).toBeVisible();
   await expect(
-    page.getByText('Sélection du prochain destinataireProchain détenteur des carcasses Indiquez')
+    page.getByText('Sélection du prochain destinataireProchain détenteur des carcassesIndiquez')
   ).toBeVisible();
   await new Promise((resolve) => setTimeout(resolve, 500)); // if not, react-dsfr modal is having a bad time cause too many re-renders (I think)
   await page.getByRole('button', { name: 'Daim N° MM-001-001 Mise à' }).click();
@@ -255,7 +255,7 @@ test('Pas de stockage - Je transfère à un autre collecteur', async ({ page }) 
   await page.getByRole('button', { name: 'Prendre en charge' }).click();
   await expect(page.getByText("Prise en charge par l'atelier")).toBeVisible();
   await expect(
-    page.getByText('Sélection du prochain destinataireProchain détenteur des carcasses Indiquez')
+    page.getByText('Sélection du prochain destinataireProchain détenteur des carcassesIndiquez')
   ).toBeVisible();
   await new Promise((resolve) => setTimeout(resolve, 500)); // if not, react-dsfr modal is having a bad time cause too many re-renders (I think)
   await page.getByRole('button', { name: 'Daim N° MM-001-001 Mise à' }).click();
@@ -396,7 +396,7 @@ test('Pas de stockage - Je transfère à un autre ETG', async ({ page, context }
   await page.getByRole('button', { name: 'Prendre en charge' }).click();
   await expect(page.getByText("Prise en charge par l'atelier")).toBeVisible();
   await expect(
-    page.getByText('Sélection du prochain destinataireProchain détenteur des carcasses Indiquez')
+    page.getByText('Sélection du prochain destinataireProchain détenteur des carcassesIndiquez')
   ).toBeVisible();
   await new Promise((resolve) => setTimeout(resolve, 500)); // if not, react-dsfr modal is having a bad time cause too many re-renders (I think)
   await page.getByRole('button', { name: 'Daim N° MM-001-001 Mise à' }).click();
