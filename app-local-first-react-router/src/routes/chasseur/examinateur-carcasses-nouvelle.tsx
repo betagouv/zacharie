@@ -81,7 +81,7 @@ export default function NouvelleCarcasse({
       className="flex w-full flex-col items-stretch"
     >
       <Select
-        label="Espèce (grand et petit gibier) *"
+        label="Espèce (grand et petit gibier) "
         className="group grow"
         hint={
           !espece && (
@@ -108,7 +108,7 @@ export default function NouvelleCarcasse({
           },
         }}
       >
-        <option value="">Sélectionnez l'espèce du gibier *</option>
+        <option value="">Sélectionnez l'espèce du gibier</option>
         {/* <hr /> */}
         {Object.entries(gibierSelect).map(([typeGibier, _especes]) => {
           return (
@@ -132,7 +132,7 @@ export default function NouvelleCarcasse({
       </Select>
       {espece && isPetitGibier && (
         <Input
-          label="Nombre de carcasses dans le lot *"
+          label="Nombre de carcasses dans le lot"
           hintText="Seulement pour le petit gibier"
           nativeInputProps={{
             type: 'number',
@@ -144,7 +144,7 @@ export default function NouvelleCarcasse({
         />
       )}
       <Input
-        label="Numéro de marquage (bracelet, languette) *"
+        label="Numéro de marquage (bracelet, languette)"
         state={error ? 'error' : 'default'}
         stateRelatedMessage={error ?? ''}
         hintText={
@@ -180,7 +180,7 @@ export default function NouvelleCarcasse({
           type: 'text',
           required: true,
           disabled: !espece,
-          placeholder: 'Numéro de marquage *',
+          placeholder: 'Numéro de marquage',
           name: Prisma.CarcasseScalarFieldEnum.numero_bracelet,
           value: numeroBracelet,
           // replce slash and space by underscore

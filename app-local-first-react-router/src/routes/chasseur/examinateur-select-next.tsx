@@ -18,13 +18,7 @@ import { useEntitiesIdsWorkingDirectlyFor, useDetenteursInitiaux } from '@app/ut
 import { CarcasseTransmission } from '@app/types/carcasse';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 
-export default function SelectNextForExaminateur({
-  disabled = false,
-  onShowErrors,
-}: {
-  disabled?: boolean;
-  onShowErrors?: () => void;
-}) {
+export default function SelectNextForExaminateur({ disabled = false }: { disabled?: boolean }) {
   const params = useParams();
   const navigate = useNavigate();
   const user = useUser((state) => state.user)!;
@@ -35,7 +29,6 @@ export default function SelectNextForExaminateur({
   const myCarcasses = useCarcassesForFei(params.fei_numero);
   const detenteursInitiaux = useDetenteursInitiaux();
   const [showSearchUserByEmail, setShowSearchUserByEmail] = useState(false);
-  const [showValidationErrors, setShowValidationErrors] = useState(false);
   const prefilledInfos = usePrefillPremierDétenteurInfos();
   const associationsDeChasse = useMemo(() => {
     const associationsDeChasse: typeof entities = {};
@@ -54,7 +47,7 @@ export default function SelectNextForExaminateur({
 
   const isOnline = useIsOnline();
 
-  const nextOwnerSelectLabel = 'Sélectionnez le Premier Détenteur de pour cette fiche *';
+  const nextOwnerSelectLabel = 'Sélectionnez le Premier Détenteur de pour cette fiche';
   const [nextOwnerUserOrEntityId, setNextOwnerUserOrEntityId] = useState(
     fei.premier_detenteur_user_id ?? fei.premier_detenteur_entity_id ?? ''
   );
@@ -185,7 +178,7 @@ export default function SelectNextForExaminateur({
 
   return (
     <>
-      <label className="mb-1 block">Premier détenteur&nbsp;*</label>
+      <label className="mb-1 block">Premier détenteur</label>
       {isFirstFei &&
       !Object.values(associationsDeChasse).length &&
       !Object.values(detenteursInitiaux).length ? (
@@ -229,12 +222,6 @@ export default function SelectNextForExaminateur({
             label=""
             key={fei.premier_detenteur_user_id ?? fei.premier_detenteur_entity_id ?? 'no-choice-yet'}
             disabled={disabled}
-            state={showValidationErrors && !nextOwnerUserOrEntityId ? 'error' : 'default'}
-            stateRelatedMessage={
-              showValidationErrors && !nextOwnerUserOrEntityId
-                ? 'Veuillez sélectionner le premier détenteur'
-                : undefined
-            }
             hint={
               <>
                 {!nextOwnerUserOrEntityId && !disabled ? (
@@ -320,34 +307,11 @@ export default function SelectNextForExaminateur({
             <>
               <Button
                 type="button"
-                disabled={disabled}
-                onClick={() => {
-                  if (validationErrors.length > 0) {
-                    setShowValidationErrors(true);
-                    onShowErrors?.();
-                    return;
-                  }
-                  setShowValidationErrors(false);
-                  handleSubmitFromSelect();
-                }}
+                disabled={disabled || validationErrors.length > 0}
+                onClick={() => handleSubmitFromSelect()}
               >
                 Continuer
               </Button>
-              {showValidationErrors && validationErrors.length > 0 && (
-                <Alert
-                  severity="error"
-                  title="Champs manquants"
-                  description={validationErrors.map((msg, i) => (
-                    <p
-                      key={i}
-                      className="fr-mb-0"
-                    >
-                      {msg}
-                    </p>
-                  ))}
-                  className="mt-4"
-                />
-              )}
             </>
           )}
         </div>

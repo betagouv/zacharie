@@ -31,7 +31,7 @@ test('Examinateur transmits to external PD — round-trip via backend', async ({
 
   await page.getByRole('button', { name: 'Nouvelle fiche' }).first().click();
   await page.getByRole('button', { name: dayjs.utc().format('dddd DD MMMM') }).click();
-  await page.getByRole('textbox', { name: 'Commune de mise à mort *' }).fill('CHASS');
+  await page.getByRole('textbox', { name: 'Commune de mise à mort' }).fill('CHASS');
   await page.getByRole('button', { name: 'CHASSENARD' }).click();
 
   // External PD = Pierre Petit (premier-detenteur@example.fr). NOT the same user as examinateur.

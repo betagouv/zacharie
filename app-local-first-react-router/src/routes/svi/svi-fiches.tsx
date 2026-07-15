@@ -43,10 +43,6 @@ const statusColors: Record<TransmissionSimpleStatus, { bg: string; text: string 
     bg: 'bg-[#FEE7FC]',
     text: 'text-[#6E445A]',
   },
-  'En cours': {
-    bg: 'bg-[#FFECBD]',
-    text: 'text-[#73603F]',
-  },
   Clôturée: {
     bg: 'bg-[#E8EDFF]',
     text: 'text-[#01008B]',
@@ -580,7 +576,7 @@ export default function SviFiches() {
         }
       >
         <div className="flex flex-col gap-1.5">
-          {(['À compléter', 'En cours', 'Clôturée'] as TransmissionSimpleStatus[]).map((status) => (
+          {(['À compléter', 'Clôturée'] as TransmissionSimpleStatus[]).map((status) => (
             <label
               key={status}
               className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-gray-50"

@@ -30,13 +30,13 @@ test('Création hors-ligne puis sync auto au retour en ligne', async ({ page, co
 
   // Create a new fiche — should work locally even offline
   await page.getByRole('button', { name: 'Nouvelle fiche' }).first().click();
-  await expect(page.getByText("Date de mise à mort (et d'éviscération) *")).toBeVisible();
+  await expect(page.getByText("Date de mise à mort (et d'éviscération)")).toBeVisible();
 
   // Select today's date
   await page.getByRole('button', { name: dayjs.utc().format('dddd DD MMMM') }).click();
 
   // Fill commune
-  await page.getByRole('textbox', { name: 'Commune de mise à mort *' }).fill('CHASS');
+  await page.getByRole('textbox', { name: 'Commune de mise à mort' }).fill('CHASS');
   await page.getByRole('button', { name: 'CHASSENARD' }).click();
 
   // The fiche was created locally. The URL already contains the ZACH- fiche number.

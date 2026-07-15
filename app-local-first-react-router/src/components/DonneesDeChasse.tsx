@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router';
-import { Carcasse, CarcasseType, EntityTypes, FeiOwnerRole } from '@prisma/client';
+import { Carcasse, CarcasseType, DepotType, EntityTypes, FeiOwnerRole } from '@prisma/client';
 import dayjs from 'dayjs';
 import useZustandStore from '@app/zustand/store';
 import ItemNotEditable from '@app/components/ItemNotEditable';
@@ -96,6 +96,20 @@ export default function FEIDonneesDeChasse({
         intermediaireLines.push(
           `Prise en charge\u00A0: ${dayjs(intermediaire.prise_en_charge_at).format('dddd D MMMM à HH:mm')}`
         );
+      }
+      if (
+        intermediaire.intermediaire_depot_type &&
+        intermediaire.intermediaire_depot_type !== DepotType.AUCUN &&
+        intermediaire.intermediaire_depot_entity_id
+      ) {
+        const depotEntity = entities[intermediaire.intermediaire_depot_entity_id];
+        if (depotEntity) {
+          const depotLabel =
+            intermediaire.intermediaire_depot_type === DepotType.CCG ? 'Centre de Collecte (CCG)' : 'ETG';
+          intermediaireLines.push(
+            `${depotLabel} : ${depotEntity.nom_d_usage}${depotEntity.numero_ddecpp ? ` - ${depotEntity.numero_ddecpp}` : ''}`
+          );
+        }
       }
       lines.push({ label: entity?.nom_d_usage, value: intermediaireLines });
     }

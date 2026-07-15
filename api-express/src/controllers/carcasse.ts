@@ -225,6 +225,9 @@ router.get(
 
     for (const intermediaire of carcassesIntermediaires) {
       entityIds.add(intermediaire.intermediaire_entity_id!);
+      if (intermediaire.intermediaire_depot_entity_id) {
+        entityIds.add(intermediaire.intermediaire_depot_entity_id);
+      }
     }
     const entities = await prisma.entity
       .findMany({ where: { id: { in: [...entityIds].filter(Boolean) } } })
