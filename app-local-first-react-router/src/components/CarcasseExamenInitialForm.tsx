@@ -80,20 +80,11 @@ export default function CarcasseExamenInitialForm({
 
   if (showAnomalies) {
     return (
-      <div className="flex flex-col gap-4">
-        <Button
-          type="button"
-          priority="tertiary no outline"
-          iconId="fr-icon-arrow-left-line"
-          onClick={() => setShowAnomalies(false)}
-        >
-          Retour
-        </Button>
-        <AnomaliePicker
-          key={carcasse.zacharie_carcasse_id}
-          sections={buildCarcasseNavSections(carcasse)}
-        />
-      </div>
+      <AnomaliePicker
+        key={carcasse.zacharie_carcasse_id}
+        sections={buildCarcasseNavSections(carcasse)}
+        onBack={() => setShowAnomalies(false)}
+      />
     );
   }
 

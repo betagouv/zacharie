@@ -1,13 +1,12 @@
 import NouvelleCarcasse from './examinateur-carcasses-nouvelle';
 import { UserRoles } from '@prisma/client';
-import { useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import Alert from '@codegouvfr/react-dsfr/Alert';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
-import CarcasseDetailsModal from '@app/components/CarcasseDetailsModal';
 import CarcasseExamenInitialForm from '@app/components/CarcasseExamenInitialForm';
-import { formatCarcasseLotCount, formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
+import { formatCarcasseLotCount } from '@app/utils/count-carcasses';
 import { useParams } from 'react-router';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
@@ -70,6 +69,12 @@ export default function CarcassesExaminateur({
     createModal({ id: `carcasse-add-${fei.numero}`, isOpenedByDefault: false })
   ).current;
   const isAddModalOpen = useIsModalOpen(addModal);
+
+  // CTA « Ajouter la carcasse » rendu dans le footer natif de la modale (épinglé, hors scroll).
+  // NouvelleCarcasse expose sa soumission via addSubmitRef et remonte libellé/état via onAddFooterChange.
+  const addSubmitRef = useRef<(() => void) | null>(null);
+  const [addFooter, setAddFooter] = useState({ label: 'Ajouter la carcasse', disabled: true });
+  const onAddFooterChange = useCallback((f: { label: string; disabled: boolean }) => setAddFooter(f), []);
 
   // Ajouter une carcasse « invalide » la confirmation (les heures doivent être ressaisies).
   const openAddModal = () => {
@@ -187,13 +192,22 @@ export default function CarcassesExaminateur({
         <addModal.Component
           size="large"
           title="Ajouter une carcasse"
-          buttons={[{ children: 'Terminer', doClosesModal: true }]}
+          buttons={[
+            {
+              children: addFooter.label,
+              disabled: addFooter.disabled,
+              doClosesModal: false,
+              onClick: () => addSubmitRef.current?.(),
+            },
+          ]}
         >
           {isAddModalOpen && (
             <NouvelleCarcasse
               key={`${fei.commune_mise_a_mort}-${lastEspece}`}
               defaultEspece={lastEspece ?? undefined}
               onCarcasseAdded={() => addModal.close()}
+              footerRef={addSubmitRef}
+              onFooterChange={onAddFooterChange}
             />
           )}
         </addModal.Component>
@@ -259,6 +273,31 @@ export function CarcasseExaminateur({
   ).current;
   const isEditModalOpen = useIsModalOpen(editModal);
 
+  const confirmDeleteModal = useRef(
+    createModal({ id: `carcasse-delete-${carcasse.zacharie_carcasse_id}`, isOpenedByDefault: false })
+  ).current;
+
+  const canOpenModal = canEditAsExaminateurInitial || canEditAsPremierDetenteur;
+
+  const handleDelete = () => {
+    const nextPartialCarcasse: Partial<CarcasseWithModificationRequests> = {
+      deleted_at: dayjs().toDate(),
+    };
+    updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse, true);
+    addLog({
+      user_id: user.id,
+      user_role: UserRoles.CHASSEUR,
+      fei_numero: fei.numero,
+      action: 'examinateur-carcasse-delete',
+      history: createHistoryInput(carcasse, nextPartialCarcasse),
+      entity_id: null,
+      zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
+      intermediaire_id: null,
+      carcasse_intermediaire_id: null,
+    });
+    confirmDeleteModal.close();
+  };
+
   if (!canEditAsExaminateurInitial && !canEditAsPremierDetenteur) {
     return <CardCarcasse carcasse={carcasse} />;
   }
@@ -297,10 +336,45 @@ export function CarcasseExaminateur({
       <editModal.Component
         size="large"
         title={`${carcasse.espece || 'Carcasse'} — N° ${carcasse.numero_bracelet}`}
-        buttons={[{ children: 'Terminer', doClosesModal: true }]}
+        buttons={[
+          {
+            children: 'Supprimer',
+            priority: 'tertiary no outline',
+            iconId: 'fr-icon-delete-bin-line',
+            className: 'text-error-main-525',
+            doClosesModal: false,
+            // On ferme la modale d'édition avant d'ouvrir la confirmation :
+            // les modales DSFR ne s'empilent pas proprement (verrou de scroll booléen).
+            onClick: () => {
+              editModal.close();
+              confirmDeleteModal.open();
+            },
+          },
+          { children: 'Terminer', doClosesModal: true },
+        ]}
       >
         {isEditModalOpen && <CarcasseExamenInitialForm carcasse={carcasse} />}
       </editModal.Component>
+
+      <confirmDeleteModal.Component
+        title="Supprimer la carcasse"
+        buttons={[
+          { children: 'Annuler', priority: 'secondary', doClosesModal: true },
+          {
+            children: 'Supprimer',
+            priority: 'tertiary',
+            iconId: 'fr-icon-delete-bin-line',
+            className: 'bg-error-main-525 text-white',
+            doClosesModal: false,
+            onClick: handleDelete,
+          },
+        ]}
+      >
+        <p className="mb-0">
+          Voulez-vous supprimer la carcasse <strong>N° {carcasse.numero_bracelet}</strong>
+          {carcasse.espece ? ` (${carcasse.espece})` : ''}&nbsp;? Cette opération est irréversible.
+        </p>
+      </confirmDeleteModal.Component>
     </>
   );
 }

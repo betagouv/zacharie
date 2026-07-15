@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Prisma, type User, UserRoles } from '@prisma/client';
@@ -36,9 +36,15 @@ function getNewDefaultNumeroBracelet(user: User) {
 export default function NouvelleCarcasse({
   onCarcasseAdded,
   defaultEspece,
+  footerRef,
+  onFooterChange,
 }: {
   onCarcasseAdded?: () => void;
   defaultEspece?: string;
+  // Permet au parent d'exposer le CTA « Ajouter » dans le footer natif de la modale :
+  // footerRef.current() déclenche la soumission ; onFooterChange remonte libellé + état désactivé.
+  footerRef?: { current: (() => void) | null };
+  onFooterChange?: (footer: { label: string; disabled: boolean }) => void;
 }) {
   const params = useParams();
   const userState = useUser((state) => state);
@@ -77,36 +83,60 @@ export default function NouvelleCarcasse({
 
   const zacharieCarcasseId = `${fei.numero}_${numeroBracelet}`;
 
-  useLayoutEffect(() => {
-    requestAnimationFrame(() => {
-      const submitButton = document.getElementById('add-carcasse-submit-button');
-      if (!submitButton) {
-        return;
-      }
-      const navHeight = document.getElementById('bottom-navigation')?.getBoundingClientRect().height ?? 0;
-      const buttonHeight = submitButton.getBoundingClientRect().height;
-      const targetTop = window.innerHeight - navHeight - buttonHeight;
-      const delta = submitButton.getBoundingClientRect().top - targetTop;
-      const marginWithBottomBar = 10;
-      window.scrollBy({
-        top: delta + marginWithBottomBar,
-        behavior: import.meta.env.VITE_TEST_PLAYWRIGHT !== 'true' ? 'smooth' : 'instant',
+  const submitDisabled = !espece || !numeroBracelet;
+  const submitLabel = isPetitGibier ? 'Ajouter le lot de carcasses' : 'Ajouter la carcasse';
+
+  const handleAddCarcasse = async () => {
+    try {
+      const newCarcasse = await createNewCarcasse({
+        zacharieCarcasseId,
+        numeroBracelet,
+        espece,
+        nombreDAnimaux,
+        fei,
+        examinateurAnomaliesCarcasse: anomaliesCarcasse,
+        examinateurAnomaliesAbats: isPetitGibier ? [] : anomaliesAbats,
       });
-    });
-  }, []);
+      addLog({
+        user_id: user.id,
+        user_role: UserRoles.CHASSEUR,
+        fei_numero: fei.numero,
+        action: 'examinateur-carcasse-create',
+        history: createHistoryInput(null, newCarcasse),
+        entity_id: fei.fei_current_owner_entity_id,
+        zacharie_carcasse_id: newCarcasse.zacharie_carcasse_id,
+        intermediaire_id: null,
+        carcasse_intermediaire_id: null,
+      });
+      syncData('examinateur-carcasse-create');
+      setNumeroBracelet('');
+      setAnomaliesCarcasse([]);
+      setAnomaliesAbats([]);
+      setShowAnomalies(false);
+      setError(null);
+      onCarcasseAdded?.();
+    } catch (error) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError('Une erreur inconnue est survenue');
+      }
+    }
+  };
+
+  // Le CTA « Ajouter la carcasse » vit dans le footer natif de la modale (épinglé, hors scroll).
+  // On expose l'action au parent via footerRef et on remonte libellé/état désactivé.
+  if (footerRef) footerRef.current = handleAddCarcasse;
+  useEffect(() => {
+    onFooterChange?.({ label: submitLabel, disabled: submitDisabled });
+  }, [submitLabel, submitDisabled, onFooterChange]);
+
   if (showAnomalies) {
     return (
-      <div className="flex w-full flex-col gap-4">
-        <Button
-          type="button"
-          priority="tertiary no outline"
-          iconId="fr-icon-arrow-left-line"
-          onClick={() => setShowAnomalies(false)}
-        >
-          Retour
-        </Button>
-        <AnomaliePicker sections={detailsSections} />
-      </div>
+      <AnomaliePicker
+        sections={detailsSections}
+        onBack={() => setShowAnomalies(false)}
+      />
     );
   }
 
@@ -223,18 +253,6 @@ export default function NouvelleCarcasse({
           onChange: (e) => setNumeroBracelet(e.target.value.replace(/\/|\s/g, '_')),
         }}
       />
-      {espece && (
-        <div className="my-2">
-          <Button
-            type="button"
-            priority="secondary"
-            iconId="fr-icon-list-unordered"
-            onClick={() => setShowAnomalies(true)}
-          >
-            {detailsCount > 0 ? `Anomalies (${detailsCount})` : 'Ajouter une anomalie (facultatif)'}
-          </Button>
-        </div>
-      )}
       <Button
         type="submit"
         id="add-carcasse-submit-button"
@@ -279,6 +297,17 @@ export default function NouvelleCarcasse({
       >
         {isPetitGibier ? 'Ajouter le lot de carcasses' : 'Ajouter la carcasse'}
       </Button>
-    </form>
+      <div className="my-2">
+        <Button
+          disabled={!espece}
+          type="button"
+          priority="secondary"
+          iconId="fr-icon-list-unordered"
+          onClick={() => setShowAnomalies(true)}
+        >
+          {detailsCount > 0 ? `Anomalies (${detailsCount})` : 'Ajouter une anomalie (facultatif)'}
+        </Button>
+      </div>
+    </form >
   );
 }
