@@ -117,8 +117,8 @@ export type AnomalieItem = {
   intitule: string;
   infobulle: string | null;
   message: string | null;
-  photo: string | null;
-  documents: string | null;
+  // Noms de fichiers d'images (servies depuis /anomalies/), vide si aucune photo.
+  photos: string[];
 };
 
 export type AnomalieReferentielSection = {
