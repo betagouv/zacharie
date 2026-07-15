@@ -17,7 +17,6 @@ import CardCarcasse from '@app/components/CardCarcasse';
 import type { Carcasse } from '@prisma/client';
 import { CarcasseWithModificationRequests } from '@api/src/types/carcasse';
 import { lookupAnomalie } from '@app/utils/anomalies-referentiel-data';
-import { useMyCarcassesForFei } from '@app/utils/filter-my-carcasses';
 
 export default function CarcassesExaminateur({
   canEdit,
@@ -37,7 +36,7 @@ export default function CarcassesExaminateur({
   const fei_numero = params.fei_numero!;
   const fei = feis[fei_numero];
   const entities = useZustandStore((state) => state.entities);
-  const carcasses = useMyCarcassesForFei(params.fei_numero);
+  const carcasses = useCarcassesForFei(params.fei_numero);
 
   const hasCarcasses = carcasses.length > 0;
   const lastEspece = hasCarcasses ? carcasses[carcasses.length - 1].espece : null;
@@ -311,26 +310,26 @@ export function CarcasseExaminateur({
           !canEditAsExaminateurInitial && !canEditAsPremierDetenteur
             ? undefined
             : () => {
-              if (
-                window.confirm('Voulez-vous supprimer cette carcasse ? Cette opération est irréversible')
-              ) {
-                const nextPartialCarcasse: Partial<CarcasseWithModificationRequests> = {
-                  deleted_at: dayjs().toDate(),
-                };
-                updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse, true);
-                addLog({
-                  user_id: user.id,
-                  user_role: UserRoles.CHASSEUR,
-                  fei_numero: fei.numero,
-                  action: 'examinateur-carcasse-delete',
-                  history: createHistoryInput(carcasse, nextPartialCarcasse),
-                  entity_id: null,
-                  zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
-                  intermediaire_id: null,
-                  carcasse_intermediaire_id: null,
-                });
+                if (
+                  window.confirm('Voulez-vous supprimer cette carcasse ? Cette opération est irréversible')
+                ) {
+                  const nextPartialCarcasse: Partial<CarcasseWithModificationRequests> = {
+                    deleted_at: dayjs().toDate(),
+                  };
+                  updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse, true);
+                  addLog({
+                    user_id: user.id,
+                    user_role: UserRoles.CHASSEUR,
+                    fei_numero: fei.numero,
+                    action: 'examinateur-carcasse-delete',
+                    history: createHistoryInput(carcasse, nextPartialCarcasse),
+                    entity_id: null,
+                    zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
+                    intermediaire_id: null,
+                    carcasse_intermediaire_id: null,
+                  });
+                }
               }
-            }
         }
       />
       <editModal.Component
