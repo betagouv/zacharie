@@ -16,7 +16,14 @@ export type AnomaliePickerSection = {
 const sectionKey = (s: AnomaliePickerSection) => `${s.groupe}|||${s.site ?? ''}`;
 const siteLabel = (s: AnomaliePickerSection) => s.site ?? s.groupe;
 
-export default function AnomaliePicker({ sections }: { sections: AnomaliePickerSection[] }) {
+export default function AnomaliePicker({
+  sections,
+  onBack,
+}: {
+  sections: AnomaliePickerSection[];
+  // Appelé quand il n'y a plus de niveau interne à remonter (sortie du picker).
+  onBack?: () => void;
+}) {
   // Si une seule section (ex. petit gibier), on va directement à la liste des anomalies.
   const singleSection = sections.length === 1 ? sections[0] : null;
   const [activeKey, setActiveKey] = useState<string | null>(singleSection ? sectionKey(singleSection) : null);
@@ -55,27 +62,53 @@ export default function AnomaliePicker({ sections }: { sections: AnomaliePickerS
     return results;
   }, [normalizedQuery, activeSection, sections]);
 
-  const goBack = () => {
-    setQuery('');
-    setActiveKey(null);
+  // Retour contextuel : remonte d'un niveau à la fois
+  // (recherche → famille → liste des sites → sortie du picker via onBack).
+  const handleBack = () => {
+    if (query) {
+      setQuery('');
+      return;
+    }
+    if (activeSection && !singleSection) {
+      setActiveKey(null);
+      return;
+    }
+    onBack?.();
   };
+  const showBack = !!onBack || !!query || (!!activeSection && !singleSection);
 
   return (
-    <div className="flex flex-col gap-4">
-      <Input
-        label=""
-        className="mb-0!"
-        nativeInputProps={{
-          type: 'search',
-          value: query,
-          placeholder: 'Rechercher une anomalie…',
-          onChange: (e) => setQuery(e.target.value),
-          // Évite la soumission du <form> parent (rendu dans un form de création).
-          onKeyDown: (e) => {
-            if (e.key === 'Enter') e.preventDefault();
-          },
-        }}
-      />
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center gap-2">
+        {showBack && (
+          <Button
+            type="button"
+            priority="tertiary no outline"
+            iconId="fr-icon-arrow-left-line"
+            title="Retour"
+            onClick={handleBack}
+          />
+        )}
+        <Input
+          label=""
+          className="mb-0! grow"
+          nativeInputProps={{
+            type: 'search',
+            value: query,
+            placeholder: 'Rechercher une anomalie…',
+            onChange: (e) => setQuery(e.target.value),
+            // Évite la soumission du <form> parent (rendu dans un form de création).
+            onKeyDown: (e) => {
+              if (e.key === 'Enter') e.preventDefault();
+            },
+          }}
+        />
+      </div>
+      {activeSection && !query && (
+        <span className="text-xs text-gray-500">
+          {[activeSection.groupe, activeSection.site].filter(Boolean).join(' › ')}
+        </span>
+      )}
 
       {normalizedQuery.length > 0 ? (
         /* --- Résultats de recherche --- */
@@ -97,8 +130,7 @@ export default function AnomaliePicker({ sections }: { sections: AnomaliePickerS
         </div>
       ) : !activeSection ? (
         /* --- Vue 1 : choix du site anatomique, groupé --- */
-        <div className="flex flex-col gap-4">
-          <p className="mb-0 text-sm text-gray-600">Sur quelle partie souhaitez-vous renseigner&nbsp;?</p>
+        <div className="flex flex-col gap-3">
           {groups.map(([groupe, groupSections]) => (
             <div
               key={groupe}
@@ -132,22 +164,6 @@ export default function AnomaliePicker({ sections }: { sections: AnomaliePickerS
       ) : (
         /* --- Vue 2 : anomalies du site sélectionné --- */
         <div className="flex flex-col gap-4">
-          {!singleSection && (
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                priority="tertiary no outline"
-                iconId="fr-icon-arrow-left-line"
-                onClick={goBack}
-              >
-                Retour
-              </Button>
-              <span className="text-sm text-gray-600">
-                {[activeSection.groupe, activeSection.site].filter(Boolean).join(' › ')}
-              </span>
-            </div>
-          )}
-
           {activeSection.selected.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {activeSection.selected.map((canonical) => {
@@ -227,16 +243,27 @@ function AnomalieItemRow({
         type="button"
         onClick={onZoom}
         aria-label={`Agrandir la photo de « ${item.intitule} »`}
-        className="relative flex size-14 shrink-0 items-center justify-center bg-gray-100 text-gray-400 transition-colors hover:bg-gray-200"
+        className="relative flex size-14 shrink-0 items-center justify-center overflow-hidden bg-gray-100 text-gray-400 transition-colors hover:bg-gray-200"
       >
-        <span
-          className="fr-icon-image-line"
-          aria-hidden
-        />
-        <span
-          className="fr-icon-zoom-in-line fr-icon--sm absolute right-0.5 bottom-0.5 text-gray-500"
-          aria-hidden
-        />
+        {item.photos.length > 0 ? (
+          <>
+            <img
+              src={`/anomalies/${item.photos[0]}`}
+              alt={item.intitule}
+              loading="lazy"
+              className="size-full object-cover"
+            />
+            <span
+              className="fr-icon-zoom-in-line fr-icon--sm absolute right-0.5 bottom-0.5 rounded-full bg-white/80 text-gray-700"
+              aria-hidden
+            />
+          </>
+        ) : (
+          <span
+            className="fr-icon-image-line"
+            aria-hidden
+          />
+        )}
       </button>
       <button
         type="button"
@@ -285,17 +312,30 @@ function PhotoOverlay({ item, onClose }: { item: AnomalieItem; onClose: () => vo
         className="fr-icon-close-line absolute top-4 right-4 flex size-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
       />
       <figure
-        className="flex max-h-full w-full max-w-lg flex-col items-center gap-4"
+        className="flex max-h-full w-full max-w-lg flex-col items-center gap-4 overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Emplacement photo (assets à venir) */}
-        <div className="flex aspect-video w-full flex-col items-center justify-center gap-2 rounded-lg bg-gray-800 text-gray-400">
-          <span
-            className="fr-icon-image-line fr-icon--lg"
-            aria-hidden
-          />
-          <span className="px-4 text-center text-sm">{item.photo ?? 'Photo à venir'}</span>
-        </div>
+        {item.photos.length > 0 ? (
+          <div className="flex w-full flex-col gap-3">
+            {item.photos.map((photo) => (
+              <img
+                key={photo}
+                src={`/anomalies/${photo}`}
+                alt={item.intitule}
+                loading="lazy"
+                className="max-h-[70vh] w-full rounded-lg object-contain"
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="flex aspect-video w-full flex-col items-center justify-center gap-2 rounded-lg bg-gray-800 text-gray-400">
+            <span
+              className="fr-icon-image-line fr-icon--lg"
+              aria-hidden
+            />
+            <span className="px-4 text-center text-sm">Pas de photo disponible</span>
+          </div>
+        )}
         <figcaption className="text-center text-white">
           <span className="block font-bold">{item.intitule}</span>
           {item.infobulle && <span className="mt-1 block text-sm text-white/80">{item.infobulle}</span>}
