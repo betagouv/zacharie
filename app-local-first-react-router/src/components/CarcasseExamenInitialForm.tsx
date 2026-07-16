@@ -11,7 +11,7 @@ import useUser from '@app/zustand/user';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import AnomaliePicker from '@app/components/AnomaliePicker';
-import { buildCarcasseNavSections } from '@app/utils/build-carcasse-nav-sections';
+import { buildCarcasseNavSections } from '@app/utils/update-carcasse-anomalies';
 
 const gibierSelect = {
   grand: grandGibier.especes,

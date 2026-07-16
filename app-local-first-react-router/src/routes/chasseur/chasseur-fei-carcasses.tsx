@@ -15,7 +15,7 @@ import dayjs from 'dayjs';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import CardCarcasse from '@app/components/CardCarcasse';
 import type { Carcasse } from '@prisma/client';
-import { lookupAnomalie } from '@app/utils/anomalies-referentiel-data';
+import { lookupAnomalie } from '@app/utils/anomalies-referentiel';
 
 export default function CarcassesExaminateur({
   canEdit,
