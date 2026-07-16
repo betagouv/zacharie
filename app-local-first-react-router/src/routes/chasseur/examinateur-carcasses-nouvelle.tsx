@@ -12,7 +12,7 @@ import { createHistoryInput } from '@app/utils/create-history-entry';
 import useUser from '@app/zustand/user';
 import { createNewCarcasse } from '@app/utils/create-new-carcasse';
 import AnomaliePicker from '@app/components/AnomaliePicker';
-import { buildAnomaliePickerSections } from '@app/utils/build-carcasse-nav-sections';
+import { buildAnomaliePickerSections } from '@app/utils/update-carcasse-anomalies';
 const gibierSelect = {
   grand: grandGibier.especes,
   petit: petitGibier.especes,
