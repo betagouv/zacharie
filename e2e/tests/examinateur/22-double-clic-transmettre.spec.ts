@@ -27,10 +27,12 @@ test('Double-clic Transmettre — pas de double soumission', async ({ page }) =>
   await page.getByRole('button', { name: 'Pierre Petit' }).click();
   await page.getByRole('button', { name: 'Continuer' }).first().click();
 
+  await page.getByRole('button', { name: 'Ajouter une carcasse' }).click();
   await page.getByLabel('Espèce (grand et petit gibier)').selectOption('Daim');
   await page.getByRole('button', { name: /^MM-\d{3}-\d{3}$/ }).click();
   await page.getByRole('button', { name: 'Ajouter la carcasse' }).click();
   await page.getByRole('button', { name: 'Continuer' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Continuer' }).click();
 
   await page.getByRole('textbox', { name: 'Début de la chasse' }).fill('01:00');
   await page.getByRole('textbox', { name: 'Début de la chasse' }).blur();
