@@ -65,10 +65,10 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
   await page.getByRole('heading', { name: 'Pigeons - N° MM-001-' }).click();
   await page.getByLabel('Pigeons - N° MM-001-').getByTitle('Fermer').click();
   await page.getByRole('button', { name: 'Daim N° MM-001-002 Mise à' }).click();
-  await expect(page.getByText('Unique - Abcès ou nodules')).toBeVisible();
+  await expect(page.getByText('Abcès unique - Externe')).toBeVisible();
   await page.getByLabel('Daim - N° MM-001-002').getByTitle('Fermer').click();
   await page.getByRole('button', { name: 'Daim N° MM-001-001 Mise à' }).click();
-  await expect(page.getByText('Abcès ou nodules Unique -')).toBeVisible();
+  await expect(page.getByText('Abcès - Système respiratoire (trachée, poumons)')).toBeVisible();
   await page.getByRole('listitem').filter({ hasText: 'Fermer' }).getByRole('button').click();
   await page.getByRole('button', { name: 'Prendre en charge' }).click();
   await expect(page.getByText("Prise en charge par l'atelier")).toBeVisible();
@@ -77,11 +77,11 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
   ).toBeVisible();
   await new Promise((resolve) => setTimeout(resolve, 500)); // if not, react-dsfr modal is having a bad time cause too many re-renders (I think)
   await page.getByRole('button', { name: 'Daim N° MM-001-001 Mise à' }).click();
-  await page.getByText('Anomalies abats:Abcès ou').click();
+  await page.getByText('Anomalies abats:Abcès - Système').click();
   await page.getByLabel('Daim - N° MM-001-001').getByText('Carcasse acceptée').click();
   await expect(page.getByRole('button', { name: 'Daim N° MM-001-001 Mise à' })).toBeVisible();
   await page.getByRole('button', { name: 'Daim N° MM-001-002 Mise à' }).click();
-  await page.getByText('Anomalies carcasse:Unique -').click();
+  await page.getByText('Anomalies carcasse:Abcès unique -').click();
   await page.getByLabel('Daim - N° MM-001-002').getByText('Carcasse refusée').click();
   await page.locator('.input-for-search-prefilled-data__input-container').click();
   await page.getByRole('option', { name: 'Présence de souillures' }).click();
@@ -206,10 +206,10 @@ test('Pas de stockage - Je transfère à un autre collecteur', async ({ page }) 
   await page.getByRole('heading', { name: 'Pigeons - N° MM-001-' }).click();
   await page.getByLabel('Pigeons - N° MM-001-').getByTitle('Fermer').click();
   await page.getByRole('button', { name: 'Daim N° MM-001-002 Mise à' }).click();
-  await expect(page.getByText('Unique - Abcès ou nodules')).toBeVisible();
+  await expect(page.getByText('Abcès unique - Externe')).toBeVisible();
   await page.getByLabel('Daim - N° MM-001-002').getByTitle('Fermer').click();
   await page.getByRole('button', { name: 'Daim N° MM-001-001 Mise à' }).click();
-  await expect(page.getByText('Abcès ou nodules Unique -')).toBeVisible();
+  await expect(page.getByText('Abcès - Système respiratoire (trachée, poumons)')).toBeVisible();
   await page.getByRole('listitem').filter({ hasText: 'Fermer' }).getByRole('button').click();
   await page.getByRole('button', { name: 'Prendre en charge' }).click();
   await expect(page.getByText("Prise en charge par l'atelier")).toBeVisible();
@@ -218,11 +218,11 @@ test('Pas de stockage - Je transfère à un autre collecteur', async ({ page }) 
   ).toBeVisible();
   await new Promise((resolve) => setTimeout(resolve, 500)); // if not, react-dsfr modal is having a bad time cause too many re-renders (I think)
   await page.getByRole('button', { name: 'Daim N° MM-001-001 Mise à' }).click();
-  await page.getByText('Anomalies abats:Abcès ou').click();
+  await page.getByText('Anomalies abats:Abcès - Système').click();
   await page.getByLabel('Daim - N° MM-001-001').getByText('Carcasse acceptée').click();
   await expect(page.getByRole('button', { name: 'Daim N° MM-001-001 Mise à' })).toBeVisible();
   await page.getByRole('button', { name: 'Daim N° MM-001-002 Mise à' }).click();
-  await page.getByText('Anomalies carcasse:Unique -').click();
+  await page.getByText('Anomalies carcasse:Abcès unique -').click();
   await page.getByLabel('Daim - N° MM-001-002').getByText('Carcasse refusée').click();
   await page.locator('.input-for-search-prefilled-data__input-container').click();
   await page.getByRole('option', { name: 'Présence de souillures' }).click();
@@ -325,10 +325,10 @@ test('Pas de stockage - Je transfère à un autre ETG', async ({ page, context }
   await page.getByRole('heading', { name: 'Pigeons - N° MM-001-' }).click();
   await page.getByLabel('Pigeons - N° MM-001-').getByTitle('Fermer').click();
   await page.getByRole('button', { name: 'Daim N° MM-001-002 Mise à' }).click();
-  await expect(page.getByText('Unique - Abcès ou nodules')).toBeVisible();
+  await expect(page.getByText('Abcès unique - Externe')).toBeVisible();
   await page.getByLabel('Daim - N° MM-001-002').getByTitle('Fermer').click();
   await page.getByRole('button', { name: 'Daim N° MM-001-001 Mise à' }).click();
-  await expect(page.getByText('Abcès ou nodules Unique -')).toBeVisible();
+  await expect(page.getByText('Abcès - Système respiratoire (trachée, poumons)')).toBeVisible();
   await page.getByRole('listitem').filter({ hasText: 'Fermer' }).getByRole('button').click();
   await page.getByRole('button', { name: 'Prendre en charge' }).click();
   await expect(page.getByText("Prise en charge par l'atelier")).toBeVisible();
@@ -337,11 +337,11 @@ test('Pas de stockage - Je transfère à un autre ETG', async ({ page, context }
   ).toBeVisible();
   await new Promise((resolve) => setTimeout(resolve, 500)); // if not, react-dsfr modal is having a bad time cause too many re-renders (I think)
   await page.getByRole('button', { name: 'Daim N° MM-001-001 Mise à' }).click();
-  await page.getByText('Anomalies abats:Abcès ou').click();
+  await page.getByText('Anomalies abats:Abcès - Système').click();
   await page.getByLabel('Daim - N° MM-001-001').getByText('Carcasse acceptée').click();
   await expect(page.getByRole('button', { name: 'Daim N° MM-001-001 Mise à' })).toBeVisible();
   await page.getByRole('button', { name: 'Daim N° MM-001-002 Mise à' }).click();
-  await page.getByText('Anomalies carcasse:Unique -').click();
+  await page.getByText('Anomalies carcasse:Abcès unique -').click();
   await page.getByLabel('Daim - N° MM-001-002').getByText('Carcasse refusée').click();
   await page.locator('.input-for-search-prefilled-data__input-container').click();
   await page.getByRole('option', { name: 'Présence de souillures' }).click();

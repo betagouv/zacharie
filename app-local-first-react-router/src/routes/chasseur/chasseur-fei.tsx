@@ -546,7 +546,6 @@ function FEIChasseurLoaded() {
                   )} */}
                   <CarcassesExaminateur
                     canEdit={canEdit}
-                    canEditAsPremierDetenteur={canEditAsPremierDetenteur}
                     allCarcassesConfirmed={allCarcassesConfirmed}
                     onAllCarcassesConfirmed={() => setAllCarcassesConfirmed(true)}
                     onAddMoreCarcasses={() => setAllCarcassesConfirmed(false)}

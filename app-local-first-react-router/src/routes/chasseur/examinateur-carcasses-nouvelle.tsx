@@ -147,7 +147,7 @@ export default function NouvelleCarcasse({
       onSubmit={(e) => e.preventDefault()}
     >
       <Select
-        label="Espèce (grand et petit gibier) "
+        label="Espèce (grand et petit gibier)"
         className="group grow"
         hint={
           !espece && (
