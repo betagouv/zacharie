@@ -46,11 +46,11 @@ async function addCarcasse(
   opts: { espece: string; bracelet: string; first?: boolean; lot?: number }
 ) {
   const now = Date.now();
-  if (!opts.first) {
-    const addAnother = page.getByRole('button', { name: 'Ajouter une autre carcasse' });
-    await addAnother.scrollIntoViewIfNeeded();
-    await addAnother.click();
-  }
+  // L'ajout se fait désormais dans une modale, rouverte à chaque carcasse (elle se referme après
+  // chaque ajout). La carte fantôme « Ajouter une carcasse » ouvre le formulaire.
+  const openModal = page.getByRole('button', { name: 'Ajouter une carcasse' });
+  await openModal.scrollIntoViewIfNeeded();
+  await openModal.click();
   await page.getByLabel('Espèce (grand et petit gibier)').selectOption(opts.espece);
   if (opts.lot) {
     const quantite = page.getByLabel(/Nombre de carcasses dans le lot/);
@@ -150,6 +150,7 @@ test('Chaîne 300 carcasses : examinateur → PD → collecteur → ETG → SVI 
   }
 
   await page.getByRole('button', { name: 'Continuer' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Continuer' }).click();
 
   // Heures (grand + petit gibier → les deux champs sont présents)
   await page

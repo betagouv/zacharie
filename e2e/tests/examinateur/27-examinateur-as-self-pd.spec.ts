@@ -47,10 +47,12 @@ test.fixme('Examinateur picks themselves as PD — inline transition to dispatch
   await page.getByRole('button', { name: 'Continuer' }).first().click();
 
   // Bloc 2 — une carcasse.
+  await page.getByRole('button', { name: 'Ajouter une carcasse' }).click();
   await page.getByLabel('Espèce (grand et petit gibier)').selectOption('Daim');
   await page.getByRole('button', { name: /^MM-\d{3}-\d{3}$/ }).click();
   await page.getByRole('button', { name: 'Ajouter la carcasse' }).click();
   await page.getByRole('button', { name: 'Continuer' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Continuer' }).click();
 
   // Heures.
   await page

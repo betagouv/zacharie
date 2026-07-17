@@ -37,10 +37,12 @@ test('Bloc 4 — toggle « consommateur final » updates cert label & button tex
   await page.getByRole('button', { name: 'Continuer' }).first().click();
 
   // Bloc 2 — 1 daim.
+  await page.getByRole('button', { name: 'Ajouter une carcasse' }).click();
   await page.getByLabel('Espèce (grand et petit gibier)').selectOption('Daim');
   await page.getByRole('button', { name: /^MM-\d{3}-\d{3}$/ }).click();
   await page.getByRole('button', { name: 'Ajouter la carcasse' }).click();
   await page.getByRole('button', { name: 'Continuer' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Continuer' }).click();
 
   await page
     .getByRole('textbox', { name: 'Début de la chasse' })

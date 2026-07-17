@@ -30,16 +30,14 @@ test('Création fiche mixte — 3 daims + 10 pigeons', async ({ page }) => {
 
   // 3 daims
   for (let i = 0; i < 3; i++) {
-    if (i > 0) {
-      await page.getByRole('button', { name: 'Ajouter une autre carcasse' }).click();
-    }
+    await page.getByRole('button', { name: 'Ajouter une carcasse' }).click();
     await page.getByLabel('Espèce (grand et petit gibier)').selectOption('Daim');
     await page.getByRole('button', { name: /^MM-\d{3}-\d{3}$/ }).click();
     await page.getByRole('button', { name: 'Ajouter la carcasse' }).click();
   }
 
   // 10 pigeons (lot)
-  await page.getByRole('button', { name: 'Ajouter une autre carcasse' }).click();
+  await page.getByRole('button', { name: 'Ajouter une carcasse' }).click();
   await page.getByLabel('Espèce (grand et petit gibier)').selectOption('Pigeons');
   const quantite = page.getByLabel(/Nombre de carcasses dans le lot/);
   await quantite.scrollIntoViewIfNeeded();
@@ -49,6 +47,7 @@ test('Création fiche mixte — 3 daims + 10 pigeons', async ({ page }) => {
   await page.getByRole('button', { name: 'Ajouter le lot de carcasses' }).click();
 
   await page.getByRole('button', { name: 'Continuer' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Continuer' }).click();
 
   // Heures
   await page
