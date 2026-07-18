@@ -19,11 +19,13 @@ import { lookupAnomalie } from '@app/utils/anomalies-referentiel';
 
 export default function CarcassesExaminateur({
   canEdit,
+  canEditAsPremierDetenteur,
   allCarcassesConfirmed,
   onAllCarcassesConfirmed,
   onAddMoreCarcasses,
 }: {
   canEdit: boolean;
+  canEditAsPremierDetenteur: boolean;
   allCarcassesConfirmed: boolean;
   onAllCarcassesConfirmed: () => void;
   onAddMoreCarcasses: () => void;
@@ -108,6 +110,7 @@ export default function CarcassesExaminateur({
       key={carcasse.zacharie_carcasse_id}
       carcasse={carcasse}
       canEditAsExaminateurInitial={canEdit}
+      canEditAsPremierDetenteur={canEditAsPremierDetenteur}
     />
   );
 
@@ -225,9 +228,11 @@ export default function CarcassesExaminateur({
 
 export function CarcasseExaminateur({
   carcasse,
+  canEditAsPremierDetenteur,
   canEditAsExaminateurInitial,
 }: {
   carcasse: Carcasse;
+  canEditAsPremierDetenteur?: boolean;
   canEditAsExaminateurInitial?: boolean;
 }) {
   const user = useUser((state) => state.user)!;
@@ -244,9 +249,10 @@ export function CarcasseExaminateur({
   ).current;
 
   // Seul l'examinateur initial édite l'examen (espèce, numéro, anomalies) via la modale.
-  // Le premier détenteur, même propriétaire de la fiche, consulte la carcasse en lecture seule.
+  // Le premier détenteur, propriétaire de la fiche, consulte en lecture seule mais peut
+  // supprimer une carcasse avant transmission (corbeille + confirmation navigateur).
 
-  const handleDelete = () => {
+  const doDelete = () => {
     const nextPartialCarcasse: Partial<Carcasse> = {
       deleted_at: dayjs().toDate(),
     };
@@ -262,11 +268,28 @@ export function CarcasseExaminateur({
       intermediaire_id: null,
       carcasse_intermediaire_id: null,
     });
+  };
+
+  // Examinateur : suppression via la modale de confirmation DSFR.
+  const handleDelete = () => {
+    doDelete();
     confirmDeleteModal.close();
   };
 
+  // Premier détenteur : suppression via la corbeille de la carte + confirmation navigateur.
+  const handleTrashDelete = () => {
+    if (window.confirm('Voulez-vous supprimer cette carcasse ? Cette opération est irréversible')) {
+      doDelete();
+    }
+  };
+
   if (!canEditAsExaminateurInitial) {
-    return <CardCarcasse carcasse={carcasse} />;
+    return (
+      <CardCarcasse
+        carcasse={carcasse}
+        onDelete={canEditAsPremierDetenteur ? handleTrashDelete : undefined}
+      />
+    );
   }
   return (
     <>
