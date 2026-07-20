@@ -18,10 +18,10 @@ test.beforeAll(async () => {
   await resetDb('EXAMINATEUR_INITIAL');
 });
 
-test('Edition carcasse depuis /chasseur/carcasse/:fei/:id', async ({ page }) => {
+test('Edition carcasse — ajout anomalie via le picker, persistée au rouvrir', async ({ page }) => {
   await connectWith(page, 'examinateur@example.fr');
 
-  // Crée une fiche minimale avec 1 carcasse
+  // Crée une fiche minimale avec 1 carcasse (sans anomalie)
   await page.getByRole('button', { name: 'Nouvelle fiche' }).first().click();
   await page.getByRole('button', { name: dayjs.utc().format('dddd DD MMMM') }).click();
   await page.getByRole('textbox', { name: 'Commune de mise à mort' }).fill('CHASS');
@@ -29,49 +29,35 @@ test('Edition carcasse depuis /chasseur/carcasse/:fei/:id', async ({ page }) => 
   await page.getByRole('button', { name: 'Pierre Petit' }).click();
   await page.getByRole('button', { name: 'Continuer' }).first().click();
 
+  await page.getByRole('button', { name: 'Ajouter une carcasse' }).click();
   await page.getByLabel('Espèce (grand et petit gibier)').selectOption('Daim');
   await page.getByRole('button', { name: /^MM-\d{3}-\d{3}$/ }).click();
   await page.getByRole('button', { name: 'Ajouter la carcasse' }).click();
   await page.getByRole('button', { name: 'Continuer' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Continuer' }).click();
 
-  // Ouvrir détail carcasse
+  // Ouvrir la modale d'édition de la carcasse
   await page
     .getByRole('button', { name: /Daim N°/ })
     .first()
     .click();
 
-  // Ajouter une anomalie abats via référentiel
-  const ajouterAbats = page.getByRole('button', {
-    name: 'Ajouter depuis le référentiel des anomalies abats',
-  });
-  await ajouterAbats.scrollIntoViewIfNeeded();
-  await ajouterAbats.click();
+  // Ajouter une anomalie abats via le picker : site anatomique → anomalie
+  await page.getByRole('button', { name: 'Ajouter une anomalie (facultatif)' }).click();
+  await page.getByRole('button', { name: 'Système respiratoire (trachée, poumons)' }).click();
+  await page.getByRole('button', { name: 'Abcès', exact: true }).click();
 
-  // Expand category then select anomaly
-  await page.getByText('Appareil respiratoire (sinus/trachée/poumon)').click();
-  await page.getByText('Abcès ou nodules').first().click();
+  // Sortir du picker : Retour (liste anomalies → sites), Retour (sites → formulaire)
+  await page.getByRole('button', { name: 'Retour' }).click();
+  await page.getByRole('button', { name: 'Retour' }).click();
 
-  // Close the modal
-  await page.getByRole('button', { name: 'Fermer' }).last().click();
+  // Fermer la modale d'édition
+  await page.getByRole('dialog').getByRole('button', { name: 'Terminer' }).click();
 
-  // Go back to fiche
-  const retourBtn = page.getByRole('button', { name: 'Enregistrer' });
-  await retourBtn.scrollIntoViewIfNeeded();
-  await retourBtn.click();
-
-  // Verify anomaly persisted — click into detail to check
-  const carcasseBtn = page.getByRole('button', { name: /Daim N°/ }).first();
-  await expect(carcasseBtn).toBeVisible({ timeout: 10000 });
-  await carcasseBtn.click();
-
-  const anomalieAbatsInput = page.locator('#anomalie-abats');
-  await anomalieAbatsInput.scrollIntoViewIfNeeded();
-  await anomalieAbatsInput.click();
+  // Rouvrir : l'anomalie a persisté (le bouton du picker affiche le compteur)
   await page
-    .getByRole('option', { name: 'Abcès ou nodules Unique - Appareil respiratoire (sinus/trachée/poumon)' })
+    .getByRole('button', { name: /Daim N°/ })
+    .first()
     .click();
-
-  const anomalyText = page.getByText(/Abcès ou nodules/i).first();
-  await anomalyText.scrollIntoViewIfNeeded();
-  await expect(anomalyText).toBeVisible({ timeout: 10000 });
+  await expect(page.getByRole('button', { name: 'Anomalies (1)' })).toBeVisible({ timeout: 10000 });
 });

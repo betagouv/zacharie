@@ -33,8 +33,6 @@ test('0 carcasse → bouton Transmettre désactivé', async ({ page }) => {
     await expect(transmettre).toBeDisabled();
   } else {
     // Transmettre pas encore atteignable tant que bloc 2 non validé — attendu
-    await expect(
-      page.getByRole('button', { name: /Ajouter la carcasse|Ajouter une autre carcasse/i }).first()
-    ).toBeVisible();
+    await expect(page.getByRole('button', { name: /Ajouter une carcasse/i }).first()).toBeVisible();
   }
 });

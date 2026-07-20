@@ -514,7 +514,7 @@ function FEIChasseurLoaded() {
               {showBloc2 && (
                 <div className="bg-white p-4 md:p-8">
                   <h4 className="fr-h5">Carcasses</h4>
-                  {isDebugEnv && canEdit && (
+                  {/* {isDebugEnv && canEdit && (
                     <div className="mb-4 flex flex-wrap items-center gap-2 rounded-sm border border-dashed border-orange-400 bg-orange-50 p-3">
                       <span className="w-full text-sm font-bold text-orange-700">
                         🛠 DEBUG — créer des carcasses (Sanglier) en masse
@@ -532,7 +532,7 @@ function FEIChasseurLoaded() {
                         </Button>
                       ))}
                     </div>
-                  )}
+                  )} */}
                   <CarcassesExaminateur
                     canEdit={canEdit}
                     canEditAsPremierDetenteur={canEditAsPremierDetenteur}

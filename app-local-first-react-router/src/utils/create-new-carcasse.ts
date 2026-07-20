@@ -10,6 +10,8 @@ type InitialParamsProps = {
   espece: string;
   nombreDAnimaux: string;
   fei: Fei;
+  examinateurAnomaliesCarcasse?: string[];
+  examinateurAnomaliesAbats?: string[];
 };
 
 export async function createNewCarcasse({
@@ -18,6 +20,8 @@ export async function createNewCarcasse({
   espece,
   nombreDAnimaux,
   fei,
+  examinateurAnomaliesCarcasse = [],
+  examinateurAnomaliesAbats = [],
 }: InitialParamsProps): Promise<Carcasse> {
   const user = useUser.getState().user;
   if (!user?.id) {
@@ -51,9 +55,10 @@ export async function createNewCarcasse({
     heure_mise_a_mort: null,
     heure_evisceration: null,
     espece: espece,
-    examinateur_carcasse_sans_anomalie: null,
-    examinateur_anomalies_carcasse: [],
-    examinateur_anomalies_abats: [],
+    examinateur_carcasse_sans_anomalie:
+      examinateurAnomaliesCarcasse.length > 0 || examinateurAnomaliesAbats.length > 0 ? false : null,
+    examinateur_anomalies_carcasse: examinateurAnomaliesCarcasse,
+    examinateur_anomalies_abats: examinateurAnomaliesAbats,
     examinateur_commentaire: null,
     examinateur_signed_at: dayjs().toDate(),
     premier_detenteur_depot_type: null,

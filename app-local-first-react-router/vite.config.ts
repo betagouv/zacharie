@@ -129,8 +129,8 @@ export default defineConfig({
         ],
       },
       injectManifest: {
-        // This configuration tells the plugin to include all js, css, html, ico, png, svg, and woff2 files in the precache manifest.
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        // This configuration tells the plugin to include all js, css, html, ico, png, svg, woff2 and webp files in the precache manifest.
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,webp}'],
         maximumFileSizeToCacheInBytes: 100 * 1024 * 1024,
         // injectionPoint: undefined,
         // rollupFormat: "es",

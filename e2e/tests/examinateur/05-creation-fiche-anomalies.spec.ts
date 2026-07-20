@@ -18,7 +18,7 @@ test.beforeAll(async () => {
   await resetDb('EXAMINATEUR_INITIAL');
 });
 
-test('Fiche avec anomalies abats & carcasse — visible au rouvrir', async ({ page }) => {
+test('Fiche avec anomalies abats & carcasse — persistées puis transmises', async ({ page }) => {
   await connectWith(page, 'examinateur@example.fr');
 
   // Step 1: Create fiche with 1 daim
@@ -29,38 +29,39 @@ test('Fiche avec anomalies abats & carcasse — visible au rouvrir', async ({ pa
   await page.getByRole('button', { name: 'Pierre Petit' }).click();
   await page.getByRole('button', { name: 'Continuer' }).first().click();
 
+  // Step 2: Ajouter la carcasse AVEC anomalies (1 abats + 1 carcasse) via le picker, pendant la création
+  await page.getByRole('button', { name: 'Ajouter une carcasse' }).click();
   await page.getByLabel('Espèce (grand et petit gibier)').selectOption('Daim');
   await page.getByRole('button', { name: /^MM-\d{3}-\d{3}$/ }).click();
-  await page.getByRole('button', { name: 'Ajouter la carcasse' }).click();
-  await page.getByRole('button', { name: 'Continuer' }).click();
 
-  // Step 2: Open the carcasse detail to add anomalies
+  await page.getByRole('button', { name: 'Ajouter une anomalie (facultatif)' }).click();
+  // Anomalie abats : site → anomalie
+  await page.getByRole('button', { name: 'Système respiratoire (trachée, poumons)' }).click();
+  await page.getByRole('button', { name: 'Abcès', exact: true }).click();
+  await page.getByRole('button', { name: 'Retour' }).click();
+  // Anomalie carcasse : site → anomalie
+  await page.getByRole('button', { name: 'Externe' }).click();
+  await page.getByRole('button', { name: 'Abcès unique', exact: true }).click();
+  await page.getByRole('button', { name: 'Retour' }).click();
+  // Sortir du picker → formulaire
+  await page.getByRole('button', { name: 'Retour' }).click();
+
+  await page.getByRole('button', { name: 'Ajouter la carcasse' }).click();
+
+  // Step 3: Rouvrir la carcasse — les 2 anomalies ont persisté
   await page
     .getByRole('button', { name: /Daim N°/ })
     .first()
     .click();
+  await expect(page.getByRole('button', { name: 'Anomalies (2)' })).toBeVisible({ timeout: 10000 });
+  await page.getByRole('dialog').getByRole('button', { name: 'Terminer' }).click();
 
-  // Add anomalie abats via referentiel button
-  const ajouterAbats = page.getByRole('button', {
-    name: 'Ajouter depuis le référentiel des anomalies abats',
-  });
-  await ajouterAbats.scrollIntoViewIfNeeded();
-  await ajouterAbats.click();
-  // Expand category then select anomaly
-  await page.getByText('Appareil respiratoire (sinus/trachée/poumon)').click();
-  await page.getByText('Abcès ou nodules').first().click();
-  // Close the modal
-  await page.getByRole('button', { name: 'Fermer' }).last().click();
-
-  // Go back to fiche
-  const retourBtn = page.getByRole('button', { name: 'Enregistrer' });
-  await retourBtn.scrollIntoViewIfNeeded();
-  await retourBtn.click();
-
-  // Step 3: Advance past carcasses bloc
+  // Step 4: Continuer → modale de confirmation (anomalies renseignées) → Continuer
   await page.getByRole('button', { name: 'Continuer' }).click();
+  await expect(page.getByText('Vous avez renseigné 2 anomalies')).toBeVisible();
+  await page.getByRole('dialog').getByRole('button', { name: 'Continuer' }).click();
 
-  // Step 4: Fill hours and transmit
+  // Step 5: Heures + transmission
   await page
     .getByRole('textbox', { name: 'Début de la chasse' })
     .fill(dayjs().startOf('day').add(1, 'hour').format('HH:mm'));
@@ -75,22 +76,4 @@ test('Fiche avec anomalies abats & carcasse — visible au rouvrir', async ({ pa
   await page.getByRole('button', { name: 'Transmettre', exact: true }).click();
 
   await expect(page.getByText(/Votre fiche a été transmise/i).first()).toBeVisible({ timeout: 10000 });
-  const feiId = RegExp(/ZACH-\d+-\w+-\d+/).exec(page.url())?.[0];
-
-  // Step 5: Reopen carcasse detail and add anomalies via the multi-select dropdown
-  await page.goto(`http://localhost:3290/app/chasseur/fei/${feiId}`);
-  const carcasseBtn = page.getByRole('button', { name: /Daim N°/ }).first();
-  await expect(carcasseBtn).toBeVisible({ timeout: 10000 });
-  await carcasseBtn.click();
-
-  const anomalieAbatsInput = page.locator('#anomalie-abats');
-  await anomalieAbatsInput.scrollIntoViewIfNeeded();
-  await anomalieAbatsInput.click();
-  await page
-    .getByRole('option', { name: 'Abcès ou nodules Unique - Appareil respiratoire (sinus/trachée/poumon)' })
-    .click();
-
-  const anomalyText = page.getByText(/Abcès ou nodules/i).first();
-  await anomalyText.scrollIntoViewIfNeeded();
-  await expect(anomalyText).toBeVisible({ timeout: 10000 });
 });

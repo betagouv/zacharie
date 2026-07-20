@@ -1,0 +1,242 @@
+[
+  {
+    "groupe": "Comportement",
+    "site": "Avant le tir",
+    "anomalies": [
+      {
+        "intitule": "Comportement inhabituel",
+        "infobulle": "Animal isolé, stationnement prolongé près d'un point d'eau, animal peu réactif",
+        "message": null,
+        "photos": []
+      },
+      {
+        "intitule": "Difficultés à se déplacer",
+        "infobulle": "Boiterie, perte d'équilibre",
+        "message": null,
+        "photos": []
+      },
+      {
+        "intitule": "Difficultés respiratoires",
+        "infobulle": "Respiration halétante au repos, écoulements nasaux, respiration bruyante",
+        "message": null,
+        "photos": []
+      },
+      {
+        "intitule": "Mouvements anormaux",
+        "infobulle": "Mouvements incohérents, tête penchée, tremblements",
+        "message": null,
+        "photos": []
+      }
+    ]
+  },
+  {
+    "groupe": "Comportement",
+    "site": "Après le tir",
+    "anomalies": [
+      {
+        "intitule": "Stress marqué avant ou après effondrement",
+        "infobulle": "Halètement intense, fuite très longue, agitation au sol prolongé",
+        "message": null,
+        "photos": []
+      },
+      {
+        "intitule": "Animal retrouvé tardivement après la mort",
+        "infobulle": "L’animal n’a pas été retrouvé immédiatement après le tir (recherche au sang)",
+        "message": null,
+        "photos": []
+      }
+    ]
+  },
+  {
+    "groupe": "Carcasse",
+    "site": "Externe",
+    "anomalies": [
+      {
+        "intitule": "Abcès unique",
+        "infobulle": "Présence d'un seul abcès, nodule ou boule",
+        "message": "Ne pas commercialiser ou traitement de la carcasse par un établissement de traitement du gibier sauvage agréé ou par atelier de traitement du gibier sauvage non agréé (ATGNA)",
+        "photos": ["Image16.webp"]
+      },
+      {
+        "intitule": "Abcès multiples",
+        "infobulle": "Abcès ou nodules importants ou multiples boules",
+        "message": "DANGER : ne pas commercialiser, ne pas consommer et avertir la DD(ETS)PP en cas d'abcès sur les abats (risque tuberculose)",
+        "photos": []
+      },
+      {
+        "intitule": "Varron",
+        "infobulle": "Présence de multiples bosses sur le dos de l'animal dus à des larves de mouche",
+        "message": "Ne pas commercialiser ou traitement de la carcasse par un établissement de traitement du gibier sauvage agréé ou par atelier de traitement du gibier sauvage non agréé (ATGNA)",
+        "photos": ["Image5.webp", "Image6.webp", "Image7.webp", "Image8.webp", "Image9.webp"]
+      },
+      {
+        "intitule": "Gale, teigne",
+        "infobulle": "Zones de la peau sans poils (gales, teignes…), avec ou sans croutes",
+        "message": "Pas de danger mais utilisation de gants lors des manipulations",
+        "photos": ["Image11.webp", "Image12.webp"]
+      },
+      {
+        "intitule": "Tiques",
+        "infobulle": "Infestation par des tiques (parasites externes fixés sur la peau).",
+        "message": "Pas de danger mais utilisation de gants lors des manipulations",
+        "photos": ["Image10.webp"]
+      },
+      {
+        "intitule": "Mauvais état général",
+        "infobulle": "Maigreur extrême",
+        "message": "Ne pas consommer, ne pas commercialiser",
+        "photos": ["Image13.webp"]
+      },
+      {
+        "intitule": "Traumatisme",
+        "infobulle": "Fracture récente, avec hématomes",
+        "message": "Pas de danger",
+        "photos": ["Image15.webp"]
+      },
+      {
+        "intitule": "Gangrène",
+        "infobulle": "Nécrose des tissus causée par des infections bactériennes (plaies infectées). La viande affectée par la gangrène présente souvent une décoloration noire ou verdâtre et une très forte odeur nauséabonde",
+        "message": "Ne pas consommer, ne pas commercialiser",
+        "photos": ["Image14.webp"]
+      }
+    ]
+  },
+  {
+    "groupe": "Carcasse",
+    "site": "Interne",
+    "anomalies": [
+      {
+        "intitule": "Eviscération tardive",
+        "infobulle": "Retard dans la réalisation de l'éviscération pouvant entraîner plusieurs risques significatifs tant sur le plan sanitaire que sur la qualité de la viande destinée à la consommation humaine",
+        "message": "Ne pas consommer, ne pas commercialiser",
+        "photos": ["Image17.webp", "Image18.webp"]
+      },
+      {
+        "intitule": "Douchage",
+        "infobulle": "Rinçage de la carcasse interne à grande eau après éviscération. Risque de redistribuer les bactéries vers d'autres parties de la carcasse et d'élargir la surface potentiellement contaminée",
+        "message": "Ne pas consommer, ne pas commercialiser",
+        "photos": []
+      },
+      {
+        "intitule": "Gangrène",
+        "infobulle": "Nécrose des tissus causée par des infections bactériennes (plaies infectées). La viande affectée par la gangrène présente souvent une décoloration noire ou verdâtre et une très forte odeur nauséabonde",
+        "message": "Ne pas consommer, ne pas commercialiser",
+        "photos": []
+      },
+      {
+        "intitule": "Souillures digestives liées à une éviscération incorrecte",
+        "infobulle": "Souillures d'origine digestive générées lors de l'éviscération. Ces souillures sont observées lorsque les bonnes pratiques d'éviscération ne sont pas respectées ou que des adhérences n'ont pas permis un retrait aisé de l'appareil digestif",
+        "message": "En cas de souillures étendues, ne pas consommer et ne pas commercialiser. En cas de souillures circonscrites, traitement de la carcasse dans un établissement de traitement du gibier sauvage agréé ou dans un atelier de traitement du gibier sauvage non agréé (ATGNA)",
+        "photos": ["Image19.webp"]
+      },
+      {
+        "intitule": "Souillures digestives liées à une balle d'abdomen",
+        "infobulle": "Les balles d'abdomen se caractérisent par une perforation de l'appareil digestif liée à l'action de chasse. Lors d'une blessure avec perforation de l'appareil digestif, le contenu stomacal ou intestinal s'écoule dans la cavité abdominale par la perforation engendrée par le projectile",
+        "message": "Ne pas consommer, ne pas commercialiser",
+        "photos": ["Image20.webp"]
+      },
+      {
+        "intitule": "Souillures telluriques",
+        "infobulle": "Présence, dans la carcasse, d'éléments présents dans le milieu naturel tels que de la terre, des feuilles, des branches, du sable",
+        "message": "En cas de souillures étendues, ne pas consommer et ne pas commercialiser. En cas de souillures circonscrites, traitement de la carcasse dans un établissement de traitement du gibier sauvage agréé ou dans un atelier de traitement du gibier sauvage non agréé (ATGNA)",
+        "photos": []
+      }
+    ]
+  },
+  {
+    "groupe": "Abats",
+    "site": "Système respiratoire (trachée, poumons)",
+    "anomalies": [
+      {
+        "intitule": "Abcès",
+        "infobulle": "Présence d'une boule ou cavité remplie d'un liquide épais jaunâtre, blanchâtre ou verdâtre",
+        "message": "DANGER : ne pas commercialiser, ne pas consommer et avertir la DD(ETS)PP (et SYLVATUB) - risque tuberculose",
+        "photos": ["Image20.webp", "Image30.webp"]
+      },
+      {
+        "intitule": "Echinococcose",
+        "infobulle": "Présence à la surface du poumon d’une ou plusieurs « boule(s) d’eau » à demi enchâssées",
+        "message": "L'anomalie n'a pas de conséquences sur la carcasse. Ne pas consommer ni donner les poumons aux carnivores",
+        "photos": ["Image31.webp"]
+      },
+      {
+        "intitule": "Oestrose",
+        "infobulle": "Présence dans les sinus, la gorge et/ou le pharynx de larves blanchâtres ou jaunâtres pouvant mesurer de quelques millimètres à 2 cm.",
+        "message": "L'anomalie n'a pas de conséquences sur la carcasse. Ne pas consommer les poumons",
+        "photos": ["Image33.webp"]
+      },
+      {
+        "intitule": "Strongylose",
+        "infobulle": "Présence à la surface du poumon de lésions en « grains de plomb » et/ou présence à l’ouverture des bronches de filaments ressemblant à des vermicelles et/ou foyers blanchâtres formant des îlots",
+        "message": "L'anomalie n'a pas de conséquences sur la carcasse. Ne pas consommer les poumons",
+        "photos": ["Image32.webp"]
+      },
+      {
+        "intitule": "Lésions hémorragiques",
+        "infobulle": "Foyers de couleur rouge à contours irréguliers au niveau du poumon",
+        "message": "L'anomalie n'a pas de conséquence sur la carcasse (tiquetage pulmonnaire) : Cette anomalie est due à l'inhalation de sang par l'animal lors de la balle thoracique. Point d'attention, si sanglier apporter une attention particulière aux autres abats (rate, foie..) - risque pestes porcines",
+        "photos": ["Image34.webp"]
+      }
+    ]
+  },
+  {
+    "groupe": "Abats",
+    "site": "Système circulatoire (cœur)",
+    "anomalies": [
+      {
+        "intitule": "Cœur anormal",
+        "infobulle": "Anomalies de couleur ou de consistance",
+        "message": "Ne pas consommer, ne pas commercialiser Point d'attention, si sanglier apporter une attention particulière aux autres abats (rate, foie..) - risque pestes porcines",
+        "photos": ["Image21.webp"]
+      }
+    ]
+  },
+  {
+    "groupe": "Abats",
+    "site": "Système digestif (foie, intestins)",
+    "anomalies": [
+      {
+        "intitule": "Abcès",
+        "infobulle": "Abcès ou nodules unique ou multiples",
+        "message": "DANGER : ne pas commercialiser, ne pas consommer et avertir la DD(ETS)PP (et SYLVATUB) - risque tuberculose",
+        "photos": ["Image4.webp", "Image22.webp", "Image23.webp"]
+      },
+      {
+        "intitule": "Echinococcose",
+        "infobulle": "Présence à la surface du foie d’une ou plusieurs « boule(s) d’eau » à demi enchâssées",
+        "message": "L'anomalie n'a pas de conséquences sur la carcasse. Ne pas consommer et ne pas donner les abats aux carnivores",
+        "photos": ["Image24.webp", "Image25.webp", "Image26.webp"]
+      },
+      {
+        "intitule": "Distomatose (douves)",
+        "infobulle": "Présence au niveau du foie de nombreux petits nodules jaunâtres calcifiés, durs au toucher, à l’incision du foie les canaux biliaires sont très épaissis en « tuyaux de pipe » ou en « gros macaronis ». Présence éventuelle de douves à l’incision du foie",
+        "message": "L'anomalie n'a pas de conséquences sur la carcasse. Ne pas consommer le foie",
+        "photos": ["Image27.webp", "Image28.webp"]
+      },
+      {
+        "intitule": "Odeur anormale",
+        "infobulle": "Odeur nauséabonde",
+        "message": "Ne pas consommer, ne pas commercialiser",
+        "photos": []
+      },
+      {
+        "intitule": "Lésions hémorragiques",
+        "infobulle": "Zones de l'intestin avec saignement anormal. Présence de tâches ou de plaques rouges foncées, violettes ou noires sur la paroi intestinale.",
+        "message": "DANGER : ne pas commercialiser, ne pas consommer et avertir la DD(ETS)PP",
+        "photos": ["Image1.webp"]
+      }
+    ]
+  },
+  {
+    "groupe": "Abats",
+    "site": "Système lymphatique (ganglions, rate)",
+    "anomalies": [
+      {
+        "intitule": "Ganglions volumineux",
+        "infobulle": "Ganglions anormaux au niveau du tube digestif",
+        "message": "DANGER : ne pas commercialiser, ne pas consommer et avertir la DD(ETS)PP (et SYLVATUB) - risque tuberculose",
+        "photos": ["Image2.webp", "Image3.webp"]
+      }
+    ]
+  }
+]
