@@ -105,6 +105,11 @@ export default function CarcassesExaminateur({
     return { total, avecMessage };
   }, [carcasses]);
 
+  // On n'affiche la modale de confirmation que s'il y a un message d'anomalie à montrer,
+  // ou si aucune anomalie n'a été renseignée. Des anomalies déclarées sans message
+  // passent directement, sans modale.
+  const shouldConfirmWithModal = anomaliesAvecMessage.length > 0 || anomaliesTotal === 0;
+
   const renderCarcasseCard = (carcasse: Carcasse) => (
     <CarcasseExaminateur
       key={carcasse.zacharie_carcasse_id}
@@ -152,7 +157,7 @@ export default function CarcassesExaminateur({
             <Button
               type="button"
               priority="primary"
-              onClick={() => confirmModal.open()}
+              onClick={() => (shouldConfirmWithModal ? confirmModal.open() : onAllCarcassesConfirmed())}
             >
               Continuer
             </Button>
@@ -184,43 +189,61 @@ export default function CarcassesExaminateur({
         </addModal.Component>
       )}
       {canEdit && hasCarcasses && (
-        <confirmModal.Component
-          title={anomaliesTotal > 0 ? 'Anomalies renseignées' : 'Aucune anomalie renseignée'}
-          buttons={[
-            {
-              children: 'Annuler',
-              priority: 'secondary',
-              doClosesModal: true,
-            },
-            {
-              children: 'Continuer',
-              doClosesModal: true,
-              onClick: () => onAllCarcassesConfirmed(),
-            },
-          ]}
-        >
-          {anomaliesTotal > 0 ? (
-            <div className="flex flex-col gap-4">
-              <p className="mb-0">
-                Vous avez renseigné {anomaliesTotal} anomalie{anomaliesTotal > 1 ? 's' : ''}.
-              </p>
-              {anomaliesAvecMessage.map(({ intitule, message }) => (
-                <Alert
-                  key={intitule}
-                  severity="warning"
-                  title={intitule}
-                  description={message}
-                />
-              ))}
-            </div>
-          ) : (
-            <Alert
-              severity="info"
-              small
-              description="Vous n'avez pas renseigné d'anomalie. Cela implique que l'examen initial des carcasses n'a pas détecté d'anomalies sur les carcasses, les abats ou le comportement de l'animal."
-            />
-          )}
-        </confirmModal.Component>
+        <>
+          {anomaliesAvecMessage.length > 0 ? (
+            <confirmModal.Component
+              title="Anomalies renseignées"
+              buttons={[
+                {
+                  children: 'Annuler',
+                  priority: 'secondary',
+                  doClosesModal: true,
+                },
+                {
+                  children: 'Continuer',
+                  doClosesModal: true,
+                  onClick: () => onAllCarcassesConfirmed(),
+                },
+              ]}
+            >
+              <div className="flex flex-col gap-4">
+                <p className="mb-0">
+                  Vous avez renseigné {anomaliesTotal} anomalie{anomaliesTotal > 1 ? 's' : ''}.
+                </p>
+                {anomaliesAvecMessage.map(({ intitule, message }) => (
+                  <Alert
+                    key={intitule}
+                    severity="warning"
+                    title={intitule}
+                    description={message}
+                  />
+                ))}
+              </div>
+            </confirmModal.Component>
+          ) : anomaliesTotal === 0 ? (
+            <confirmModal.Component
+              title="Aucune anomalie renseignée"
+              buttons={[
+                {
+                  children: 'Annuler',
+                  priority: 'secondary',
+                  doClosesModal: true,
+                },
+                {
+                  children: 'Continuer',
+                  doClosesModal: true,
+                  onClick: () => onAllCarcassesConfirmed(),
+                },
+              ]}
+            >
+              <Alert
+                severity="info"
+                small
+                description="Vous n'avez pas renseigné d'anomalie. Cela implique que l'examen initial des carcasses n'a pas détecté d'anomalies sur les carcasses, les abats ou le comportement de l'animal."
+              />
+            </confirmModal.Component>
+          ) : null}
+        </>
       )}
     </>
   );
