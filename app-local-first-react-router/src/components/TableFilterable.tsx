@@ -130,10 +130,19 @@ export default function TableFilterable<T>({
           )}
           <tr>
             {withCheckbox && (
-              <td className="cursor-default whitespace-nowrap">
+              <td
+                className="cursor-pointer whitespace-nowrap"
+                onClick={() => {
+                  if (checked.length === data.length) {
+                    onCheck?.([]);
+                  } else {
+                    onCheck?.(data.map((i) => i[rowKey] as string));
+                  }
+                }}
+              >
                 <input
                   type="checkbox"
-                  className="checked:accent-action-high-blue-france mx-2 border-2"
+                  className="checked:accent-action-high-blue-france mx-2 cursor-pointer border-2"
                   checked={checked.length === data.length}
                   onChange={() => {
                     if (checked.length === data.length) {
@@ -142,6 +151,7 @@ export default function TableFilterable<T>({
                       onCheck?.(data.map((i) => i[rowKey] as string));
                     }
                   }}
+                  onClick={(e) => e.stopPropagation()}
                 />
               </td>
             )}
@@ -226,16 +236,29 @@ export default function TableFilterable<T>({
                         : onRowClick
                           ? 'cursor-pointer'
                           : 'cursor-auto',
+                    withCheckbox && checked.includes(item[rowKey] as string) ? 'bg-blue-100!' : '',
                   ].join(' ')}
                 >
                   {withCheckbox && (
-                    <td className="cursor-default whitespace-nowrap">
+                    <td
+                      className="cursor-pointer whitespace-nowrap"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const id = item[rowKey] as string;
+                        if (checked.includes(id)) {
+                          onCheck?.(checked.filter((i) => i !== id));
+                        } else {
+                          onCheck?.([...checked, id]);
+                        }
+                      }}
+                    >
                       <input
                         type="checkbox"
-                        className="checked:accent-action-high-blue-france mx-2 border-2"
+                        className="checked:accent-action-high-blue-france mx-2 cursor-pointer border-2"
                         checked={checked.includes(item[rowKey] as string)}
                         id={item[rowKey] as string}
                         onChange={onToggleCheckbox}
+                        onClick={(e) => e.stopPropagation()}
                       />
                     </td>
                   )}

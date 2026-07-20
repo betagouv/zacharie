@@ -33,16 +33,18 @@ async function carcasseHasTrichineNegatif(zacharieCarcasseId: string): Promise<b
   }
 }
 
-// Acceptation en un clic côté SVI : équivaut à enregistrer une IPM1 avec la décision « Acceptée »
+// Cœur de l'acceptation en un clic (gardes + mutation locale), sans déclencher la synchro.
+// Réutilisé par l'acceptation unitaire et l'acceptation en masse (registre SVI).
+// Équivaut à enregistrer une IPM1 avec la décision « Acceptée »
 // (même flux que le handleSave de svi-inspection-carcasse/ipm1.tsx).
-export function useApproveCarcasse() {
+function useApplyApprove() {
   const user = useUser((state) => state.user)!;
   const updateCarcasse = useZustandStore((state) => state.updateCarcasse);
   const updateCarcassesTransmission = useZustandStore((state) => state.updateCarcassesTransmission);
   const addLog = useZustandStore((state) => state.addLog);
   const allCarcasses = useZustandStore((state) => state.carcasses);
 
-  return async function approveCarcasse(carcasse: Carcasse): Promise<ApproveCarcasseResult> {
+  return async function applyApprove(carcasse: Carcasse): Promise<ApproveCarcasseResult> {
     if (carcasse.svi_ipm1_signed_at) {
       return { ok: false, error: 'Une IPM1 a déjà été enregistrée pour cette carcasse' };
     }
@@ -127,7 +129,45 @@ export function useApproveCarcasse() {
       intermediaire_id: null,
       carcasse_intermediaire_id: null,
     });
-    syncData('svi-ipm1-edit');
     return { ok: true };
+  };
+}
+
+// Acceptation en un clic côté SVI (carcasse unique) : applique puis synchronise.
+export function useApproveCarcasse() {
+  const applyApprove = useApplyApprove();
+  return async function approveCarcasse(carcasse: Carcasse): Promise<ApproveCarcasseResult> {
+    const result = await applyApprove(carcasse);
+    if (result.ok) {
+      syncData('svi-ipm1-edit');
+    }
+    return result;
+  };
+}
+
+export type ApproveCarcassesResult = {
+  accepted: number;
+  failed: Array<{ id: string; error: string }>;
+};
+
+// Acceptation en masse depuis le registre SVI : on applique chaque carcasse localement,
+// puis on ne synchronise qu'une seule fois à la fin (évite N synchros).
+export function useApproveCarcasses() {
+  const applyApprove = useApplyApprove();
+  return async function approveCarcasses(carcasses: Array<Carcasse>): Promise<ApproveCarcassesResult> {
+    let accepted = 0;
+    const failed: Array<{ id: string; error: string }> = [];
+    for (const carcasse of carcasses) {
+      const result = await applyApprove(carcasse);
+      if (result.ok) {
+        accepted += 1;
+      } else {
+        failed.push({ id: carcasse.zacharie_carcasse_id, error: result.error });
+      }
+    }
+    if (accepted > 0) {
+      syncData('svi-ipm1-edit');
+    }
+    return { accepted, failed };
   };
 }
