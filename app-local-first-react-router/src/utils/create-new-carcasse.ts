@@ -12,19 +12,29 @@ type InitialParamsProps = {
   fei: Fei;
 };
 
-// Une fiche est « transmise » dès que l'examinateur a validé la mise sur le marché, ou qu'au moins une
-// de ses carcasses est partie au prochain détenteur (next_owner posé) ou a dépassé le stade examinateur.
-// On n'ajoute plus de carcasse à ce stade : une carcasse ajoutée après coup resterait orpheline chez
-// l'examinateur et bloquerait le suivi (fiche « à compléter » chez le détenteur aval).
-export function isFeiTransmise(fei: Fei, feiCarcasses: Array<Carcasse>): boolean {
-  if (fei.examinateur_initial_approbation_mise_sur_le_marche) return true;
-  return feiCarcasses.some(
-    (c) =>
-      !c.deleted_at &&
-      (c.next_owner_entity_id != null ||
-        c.next_owner_user_id != null ||
-        (c.current_owner_role != null && c.current_owner_role !== FeiOwnerRole.EXAMINATEUR_INITIAL))
-  );
+// Une fiche est « transmise en aval » dès qu'une carcasse est partie à un prochain détenteur
+// (next_owner posé), a été reçue au-delà du premier détenteur (collecteur / ETG / SVI…), ou est prise
+// en charge SVI / clôturée. Tant qu'elle est chez l'examinateur ou le premier détenteur (destinataire
+// pas encore transmis), on peut encore ajouter une carcasse — elle rejoindra le destinataire unique.
+// Une fois en aval, l'ajout est bloqué : la carcasse resterait orpheline et bloquerait le suivi.
+export function isFeiTransmise(feiCarcasses: Array<Carcasse>): boolean {
+  return feiCarcasses.some((c) => {
+    if (c.deleted_at) return false;
+    if (c.next_owner_entity_id != null || c.next_owner_user_id != null) return true;
+    if (
+      c.current_owner_role != null &&
+      c.current_owner_role !== FeiOwnerRole.EXAMINATEUR_INITIAL &&
+      c.current_owner_role !== FeiOwnerRole.PREMIER_DETENTEUR
+    ) {
+      return true;
+    }
+    return (
+      c.svi_assigned_at != null ||
+      c.svi_closed_at != null ||
+      c.svi_automatic_closed_at != null ||
+      c.intermediaire_closed_at != null
+    );
+  });
 }
 
 export async function createNewCarcasse({
@@ -44,7 +54,7 @@ export async function createNewCarcasse({
   }
   const carcasses = useZustandStore.getState().carcasses;
   const feiCarcasses = Object.values(carcasses).filter((c) => c.fei_numero === fei.numero);
-  if (isFeiTransmise(fei, feiCarcasses)) {
+  if (isFeiTransmise(feiCarcasses)) {
     throw new Error('Cette fiche a déjà été transmise : vous ne pouvez plus y ajouter de carcasse.');
   }
   if (!numeroBracelet) {

@@ -33,7 +33,7 @@ export default function CarcassesExaminateur({
   const entities = useZustandStore((state) => state.entities);
   const carcasses = useCarcassesForFei(fei_numero);
   // Une fois la fiche transmise, on n'ajoute plus de carcasse (elle resterait orpheline à l'examinateur).
-  const canAddCarcasse = canEdit && !isFeiTransmise(fei, carcasses);
+  const canAddCarcasse = canEdit && !isFeiTransmise(carcasses);
   const [showForm, setShowForm] = useState(!allCarcassesConfirmed);
 
   const countCarcassesByEspece = useMemo(() => formatCountCarcasseByEspece(carcasses), [carcasses]);
