@@ -6,12 +6,16 @@ export async function syncCarcasseIntermediaire(
   fei_numero: string,
   intermediaire_id: string,
   zacharie_carcasse_id: string,
-  body: Prisma.CarcasseIntermediaireUncheckedCreateInput
+  body: Prisma.CarcasseIntermediaireUncheckedCreateInput,
+  // Client transactionnel optionnel : quand /sync couple la carcasse et son intermédiaire dans
+  // une même transaction (prise en charge atomique), un throw ici rollback aussi le changement
+  // d'ownership de la carcasse. Voir sync.ts.
+  tx: Prisma.TransactionClient = prisma
 ): Promise<CarcasseIntermediaire> {
   if (!fei_numero) {
     throw new Error('Le numéro de fiche est obligatoire');
   }
-  const existingFei = await prisma.fei.findUnique({
+  const existingFei = await tx.fei.findUnique({
     where: { numero: fei_numero },
   });
   if (!existingFei) {
@@ -20,7 +24,7 @@ export async function syncCarcasseIntermediaire(
   if (!zacharie_carcasse_id) {
     throw new Error('Le numéro de la carcasse est obligatoire');
   }
-  const existingCarcasse = await prisma.carcasse.findFirst({
+  const existingCarcasse = await tx.carcasse.findFirst({
     where: {
       zacharie_carcasse_id,
       fei_numero,
@@ -31,6 +35,16 @@ export async function syncCarcasseIntermediaire(
   }
   if (!intermediaire_id) {
     throw new Error("L'identifiant du destinataire est obligatoire");
+  }
+  // intermediaire_entity_id et intermediaire_user_id sont des FK NON-nullables : un id vide (le
+  // front envoie `next_owner_entity_id || ''` quand l'entité manque) violerait la FK et ferait
+  // échouer l'upsert silencieusement, laissant la carcasse sans CarcasseIntermediaire (ownership
+  // orphelin). On rejette tôt et explicitement pour déclencher le rollback de la transaction.
+  if (!body.intermediaire_entity_id) {
+    throw new Error("L'établissement du destinataire est obligatoire");
+  }
+  if (!body.intermediaire_user_id) {
+    throw new Error("L'utilisateur du destinataire est obligatoire");
   }
 
   const data: Prisma.CarcasseIntermediaireUncheckedCreateInput = {
@@ -98,7 +112,7 @@ export async function syncCarcasseIntermediaire(
       body[Prisma.CarcasseIntermediaireScalarFieldEnum.nombre_d_animaux_acceptes] ?? null;
   }
 
-  const carcasseIntermediaire = await prisma.carcasseIntermediaire.upsert({
+  const carcasseIntermediaire = await tx.carcasseIntermediaire.upsert({
     where: {
       fei_numero_zacharie_carcasse_id_intermediaire_id: {
         fei_numero: fei_numero,

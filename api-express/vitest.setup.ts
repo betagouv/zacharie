@@ -1,8 +1,8 @@
 import { vi } from 'vitest';
 
 // Mock Prisma for tests
-vi.mock('./src/prisma', () => ({
-  default: {
+vi.mock('./src/prisma', () => {
+  const db: Record<string, any> = {
     fei: {
       findMany: vi.fn().mockResolvedValue([]),
       findUnique: vi.fn(),
@@ -109,8 +109,12 @@ vi.mock('./src/prisma', () => ({
       create: vi.fn(),
       findMany: vi.fn().mockResolvedValue([]),
     },
-  },
-}));
+  };
+  // Transaction interactive : exécute le callback avec le même client mocké (pas de vraie
+  // isolation en test, mais le chemin couplé carcasse+intermédiaire de /sync s'exécute).
+  db.$transaction = vi.fn((arg: any) => (typeof arg === 'function' ? arg(db) : Promise.all(arg)));
+  return { default: db };
+});
 
 // Mock passport authentication for tests
 vi.mock('passport', () => ({
