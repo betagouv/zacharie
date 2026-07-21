@@ -7,6 +7,7 @@ import { useParams, useNavigate } from 'react-router';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
+import { isFeiTransmise } from '@app/utils/create-new-carcasse';
 import dayjs from 'dayjs';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import CardCarcasse from '@app/components/CardCarcasse';
@@ -31,6 +32,8 @@ export default function CarcassesExaminateur({
   const fei = feis[fei_numero];
   const entities = useZustandStore((state) => state.entities);
   const carcasses = useCarcassesForFei(fei_numero);
+  // Une fois la fiche transmise, on n'ajoute plus de carcasse (elle resterait orpheline à l'examinateur).
+  const canAddCarcasse = canEdit && !isFeiTransmise(fei, carcasses);
   const [showForm, setShowForm] = useState(!allCarcassesConfirmed);
 
   const countCarcassesByEspece = useMemo(() => formatCountCarcasseByEspece(carcasses), [carcasses]);
@@ -109,7 +112,7 @@ export default function CarcassesExaminateur({
           ))}
         </div>
       )}
-      {(!hasCarcasses || (showForm && !allCarcassesConfirmed)) && canEdit && (
+      {(!hasCarcasses || (showForm && !allCarcassesConfirmed)) && canAddCarcasse && (
         <div className="my-2">
           <NouvelleCarcasse
             key={`${fei.commune_mise_a_mort}-${lastEspece}`}
@@ -119,7 +122,7 @@ export default function CarcassesExaminateur({
         </div>
       )}
 
-      {canEdit && hasCarcasses && !allCarcassesConfirmed && !showForm && (
+      {canAddCarcasse && hasCarcasses && !allCarcassesConfirmed && !showForm && (
         <div className="mt-4">
           <Button
             type="button"
@@ -158,7 +161,7 @@ export default function CarcassesExaminateur({
           </Button>
         </div>
       )}
-      {canEdit && hasCarcasses && allCarcassesConfirmed && (
+      {canAddCarcasse && hasCarcasses && allCarcassesConfirmed && (
         <Button
           type="button"
           id="add-more-carcasses"
