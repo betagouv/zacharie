@@ -126,8 +126,34 @@ router.post(
     // Concurrence bornée : on ne sature pas le pool de connexions Prisma (au-delà, les requêtes
     // sont simplement mises en file).
     const CARCASSE_SYNC_CONCURRENCY = 10;
-    for (let i = 0; i < carcasseList.length; i += CARCASSE_SYNC_CONCURRENCY) {
-      const chunk = carcasseList.slice(i, i + CARCASSE_SYNC_CONCURRENCY);
+    // Les transactions couplées (2b) tiennent une connexion pour toute leur durée : concurrence
+    // plus basse pour ne pas épuiser le pool.
+    const COUPLED_TRANSACTION_CONCURRENCY = 5;
+
+    // Couplage prise-en-charge : un CarcasseIntermediaire arrive dans le même payload que le
+    // changement d'ownership de sa carcasse. On les persiste dans UNE transaction par carcasse
+    // pour qu'un intermédiaire invalide (ex : intermediaire_entity_id vide) rollback aussi
+    // l'ownership — sinon la carcasse reste `current_owner = ETG` sans CarcasseIntermediaire
+    // (fiche bloquée « à compléter » sans action possible côté ETG).
+    const intermediairesList = carcassesIntermediaires || [];
+    const carcasseListIds = new Set(carcasseList.map((c) => c.zacharie_carcasse_id));
+    const coupledIntermediairesByCarcasseId = new Map<string, typeof intermediairesList>();
+    for (const ciData of intermediairesList) {
+      if (!carcasseListIds.has(ciData.zacharie_carcasse_id)) continue;
+      const list = coupledIntermediairesByCarcasseId.get(ciData.zacharie_carcasse_id) ?? [];
+      list.push(ciData);
+      coupledIntermediairesByCarcasseId.set(ciData.zacharie_carcasse_id, list);
+    }
+    const uncoupledCarcasses = carcasseList.filter(
+      (c) => !coupledIntermediairesByCarcasseId.has(c.zacharie_carcasse_id)
+    );
+    const coupledCarcasses = carcasseList.filter((c) =>
+      coupledIntermediairesByCarcasseId.has(c.zacharie_carcasse_id)
+    );
+
+    // 2a. Carcasses sans intermédiaire couplé : chemin parallèle rapide.
+    for (let i = 0; i < uncoupledCarcasses.length; i += CARCASSE_SYNC_CONCURRENCY) {
+      const chunk = uncoupledCarcasses.slice(i, i + CARCASSE_SYNC_CONCURRENCY);
       const chunkResults = await Promise.all(
         chunk.map(async (carcasseData) => {
           try {
@@ -160,8 +186,69 @@ router.post(
       }
     }
 
-    // 3. Process CarcassesIntermediaires
-    for (const ciData of carcassesIntermediaires || []) {
+    // 2b. Carcasses AVEC intermédiaire(s) couplé(s) : carcasse + intermédiaires dans une même
+    // transaction. Un throw (ex : intermediaire_entity_id vide) rollback le tout → l'ownership ne
+    // bouge pas sans son CarcasseIntermediaire. Catch par transaction : un échec n'affecte pas les
+    // autres carcasses.
+    for (let i = 0; i < coupledCarcasses.length; i += COUPLED_TRANSACTION_CONCURRENCY) {
+      const chunk = coupledCarcasses.slice(i, i + COUPLED_TRANSACTION_CONCURRENCY);
+      const chunkResults = await Promise.all(
+        chunk.map(async (carcasseData) => {
+          const coupled = coupledIntermediairesByCarcasseId.get(carcasseData.zacharie_carcasse_id) ?? [];
+          try {
+            return await prisma.$transaction(async (tx) => {
+              const carcasseResult = await syncCarcasse(
+                carcasseData.fei_numero,
+                carcasseData.zacharie_carcasse_id,
+                carcasseData as Prisma.CarcasseUncheckedCreateInput,
+                user,
+                {
+                  existingFei: carcasseFeiMap.get(carcasseData.fei_numero) ?? null,
+                  existingCarcasse: existingCarcasseMap.get(carcasseData.zacharie_carcasse_id) ?? null,
+                  ensuredRelationEntityIds,
+                  tx,
+                }
+              );
+              const intermediaires: Array<Prisma.CarcasseIntermediaireGetPayload<object>> = [];
+              for (const ciData of coupled) {
+                intermediaires.push(
+                  await syncCarcasseIntermediaire(
+                    ciData.fei_numero,
+                    ciData.intermediaire_id,
+                    ciData.zacharie_carcasse_id,
+                    ciData as Prisma.CarcasseIntermediaireUncheckedCreateInput,
+                    tx
+                  )
+                );
+              }
+              return { carcasseResult, intermediaires };
+            });
+          } catch (error) {
+            capture(error as Error, {
+              extra: {
+                feiNumero: carcasseData.fei_numero,
+                zacharieCarcasseId: carcasseData.zacharie_carcasse_id,
+                intermediaireIds: coupled.map((ci) => ci.intermediaire_id),
+                userId: user.id,
+                context: 'coupled_prise_en_charge',
+              },
+              user,
+            });
+            return null;
+          }
+        })
+      );
+      for (const result of chunkResults) {
+        if (!result) continue;
+        carcasseResults.push(result.carcasseResult);
+        savedIntermediaires.push(...result.intermediaires);
+      }
+    }
+
+    // 3. Process CarcassesIntermediaires NON couplés : leur carcasse n'est pas dans ce payload
+    // (décision/annotation sur une carcasse déjà persistée). Les couplés ont été traités en 2b.
+    for (const ciData of intermediairesList) {
+      if (carcasseListIds.has(ciData.zacharie_carcasse_id)) continue;
       try {
         const saved = await syncCarcasseIntermediaire(
           ciData.fei_numero,
