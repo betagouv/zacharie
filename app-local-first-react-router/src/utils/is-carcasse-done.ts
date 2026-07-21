@@ -1,4 +1,4 @@
-import { Fei, Carcasse, CarcasseStatus, User } from '@prisma/client';
+import { Fei, Carcasse, CarcasseStatus, FeiOwnerRole, User } from '@prisma/client';
 import updateCarcasseStatus from './get-carcasse-status';
 import { EntityWithUserRelation } from '@api/src/types/entity';
 import { isRoleCircuitCourt } from './circuit-court';
@@ -58,6 +58,10 @@ export function isCarcasseUnderMyResponsability(
   // At least one carcasse where current_owner is me/my entity AND no next_owner
   if (carcasse.next_owner_user_id || carcasse.next_owner_entity_id) return false;
   if (carcasse.current_owner_user_id === me.id) return true;
+  // L'examinateur initial est toujours une personne (jamais une entité). Un current_owner_entity_id
+  // porté par une carcasse restée à l'examen (ex. ajoutée après transmission, jamais expédiée) est un
+  // résidu périmé : il ne rend pas la carcasse « à compléter » pour l'entité aval.
+  if (carcasse.current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL) return false;
   if (carcasse.current_owner_entity_id && entitiesWorkingDirectlyFor[carcasse.current_owner_entity_id]) {
     return true;
   }
