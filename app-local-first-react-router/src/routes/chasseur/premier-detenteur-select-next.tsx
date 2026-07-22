@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from 'react-router';
-import { useCallback, useMemo, useState, type MutableRefObject } from 'react';
+import { useCallback, useEffect, useMemo, useState, type MutableRefObject } from 'react';
 import {
   UserRoles,
   Prisma,
@@ -772,6 +772,21 @@ export default function DestinataireSelectPremierDetenteur({
       },
     ];
   });
+
+  // Tant qu'il n'y a qu'un seul destinataire (pas de dispatch manuel), le groupe doit contenir TOUTES
+  // les carcasses restantes — y compris une carcasse ajoutée après avoir choisi le destinataire, sinon
+  // elle serait transmise sans destinataire. En dispatch (plusieurs groupes), l'attribution reste manuelle.
+  useEffect(() => {
+    setDispatchGroups((prev) => {
+      if (prev.length !== 1) return prev;
+      const current = prev[0].carcasseIds;
+      const alreadyInSync =
+        current.length === carcassesRestantesIds.length &&
+        current.every((id) => carcassesRestantesIds.includes(id));
+      if (alreadyInSync) return prev;
+      return [{ ...prev[0], carcasseIds: carcassesRestantesIds }];
+    });
+  }, [carcassesRestantesIds]);
 
   // Track which group opened the partenaire/ccg modal
   const [activeModalGroupId, setActiveModalGroupId] = useState<string | null>(null);

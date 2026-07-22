@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import dayjs from 'dayjs';
-import { Fei, Carcasse, CarcasseStatus, User } from '@prisma/client';
+import { Fei, Carcasse, CarcasseStatus, FeiOwnerRole, User } from '@prisma/client';
 import type { EntityWithUserRelation } from '@api/src/types/entity';
 import {
   isCarcasseClosedBySvi,
@@ -204,6 +204,28 @@ describe('isCarcasseUnderMyResponsability', () => {
     expect(isCarcasseUnderMyResponsability(c({ current_owner_user_id: 'someone' }), me, noEntities)).toBe(
       false
     );
+  });
+
+  it('false via entity when the carcasse is still at the examinateur (stale entity id)', () => {
+    // Carcasse ajoutée après transmission puis restée à l'examen : current_owner_entity_id périmé
+    // (= mon entité) mais current_owner_role toujours EXAMINATEUR_INITIAL → pas ma responsabilité.
+    expect(
+      isCarcasseUnderMyResponsability(
+        c({ current_owner_entity_id: 'mine', current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL }),
+        me,
+        working('mine')
+      )
+    ).toBe(false);
+  });
+
+  it('true for the examinateur himself even while the carcasse is at the examinateur', () => {
+    expect(
+      isCarcasseUnderMyResponsability(
+        c({ current_owner_user_id: 'me', current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL }),
+        me,
+        noEntities
+      )
+    ).toBe(true);
   });
 });
 

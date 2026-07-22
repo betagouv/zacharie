@@ -5,6 +5,7 @@ import {
   CarcasseIntermediaire,
   CarcasseStatus,
   CarcasseType,
+  FeiOwnerRole,
   User,
   UserRoles,
 } from '@prisma/client';
@@ -394,6 +395,51 @@ describe('computeTransmissions — terminal mixes within one transmission', () =
   it('all refused → Clôturée', () => {
     const t = run({ carcasses: [refused('C1'), refused('C2'), refused('C3')], user: admin });
     expect(t[TID].labels.simpleStatus).toBe('Clôturée');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Carcasse ajoutée par l'examinateur après transmission, jamais expédiée : elle reste au stade
+// EXAMINATEUR_INITIAL avec un current_owner_entity_id périmé (= l'entité ETG). Elle ne doit pas
+// mettre la fiche « À compléter » pour l'ETG (les 4 autres sont clôturées SVI), mais rester
+// « À compléter » pour l'examinateur qui doit la transmettre ou la supprimer.
+// ---------------------------------------------------------------------------
+
+describe('computeTransmissions — carcasse orpheline restée à l’examinateur', () => {
+  const done = (id: string) => carcasse({ zacharie_carcasse_id: id, svi_closed_at: new Date() });
+  const orphan = carcasse({
+    zacharie_carcasse_id: 'ORPHAN',
+    current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
+    current_owner_user_id: 'exam',
+    current_owner_entity_id: 'etg-entity', // résidu périmé
+    svi_assigned_at: null,
+  });
+  // L'intermédiaire ETG est porté par la 1re carcasse du groupe (celle qui crée la transmission).
+  const etgIntermediaire = intermediaire({
+    zacharie_carcasse_id: 'C1',
+    intermediaire_entity_id: 'etg-entity',
+    intermediaire_role: UserRoles.ETG,
+  });
+
+  it('ETG : la carcasse orpheline ne rend pas la fiche « À compléter » (→ En cours)', () => {
+    const etg = user([UserRoles.ETG], 'etg');
+    const t = run({
+      carcasses: [done('C1'), done('C2'), done('C3'), done('C4'), orphan],
+      intermediaires: [etgIntermediaire],
+      user: etg,
+      entities: working('etg-entity'),
+    });
+    expect(t[TID].labels.simpleStatus).toBe('En cours');
+  });
+
+  it('Examinateur : la carcasse orpheline reste « À compléter » (il doit la traiter)', () => {
+    const exam = user([UserRoles.CHASSEUR], 'exam');
+    const t = run({
+      carcasses: [done('C1'), done('C2'), done('C3'), done('C4'), orphan],
+      intermediaires: [etgIntermediaire],
+      user: exam,
+    });
+    expect(t[TID].labels.simpleStatus).toBe('À compléter');
   });
 });
 
