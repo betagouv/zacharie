@@ -85,7 +85,12 @@ describe('POST /sync — auth/activation', () => {
 });
 
 describe('POST /sync — ordering', () => {
-  test('processes FEIs, then carcasses, then intermediaires (in that order)', async () => {
+  // FEIs d'abord, puis carcasses, puis intermédiaires. Depuis le couplage prise-en-charge, une
+  // carcasse qui a un CarcasseIntermediaire dans le même payload est traitée avec lui dans une
+  // transaction (étape 2b), APRÈS les carcasses sans intermédiaire couplé (étape 2a). Ici C1 a un
+  // intermédiaire couplé (I1), C2 non → C2 (2a) passe avant C1 (2b), et l'intermédiaire de C1
+  // suit immédiatement sa carcasse dans la transaction.
+  test('processes FEIs, then carcasses (uncoupled first), then coupled intermediaire with its carcasse', async () => {
     const callOrder: string[] = [];
     vi.mocked(syncFei).mockImplementation(async (numero: string) => {
       callOrder.push(`fei:${numero}`);
@@ -125,7 +130,7 @@ describe('POST /sync — ordering', () => {
     );
 
     expect(res.status).toBe(200);
-    expect(callOrder).toEqual(['fei:F1', 'fei:F2', 'carcasse:C1', 'carcasse:C2', 'ci:C1:I1']);
+    expect(callOrder).toEqual(['fei:F1', 'fei:F2', 'carcasse:C2', 'carcasse:C1', 'ci:C1:I1']);
   });
 });
 

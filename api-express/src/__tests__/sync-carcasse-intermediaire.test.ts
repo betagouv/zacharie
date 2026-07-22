@@ -63,6 +63,34 @@ describe('syncCarcasseIntermediaire — validation', () => {
       "L'identifiant du destinataire est obligatoire"
     );
   });
+
+  // FK non-nullable : un intermediaire_entity_id vide (front `next_owner_entity_id || ''`) doit
+  // être rejeté AVANT l'upsert, pour rollback la transaction couplée au lieu d'orphaner la carcasse.
+  test('empty intermediaire_entity_id → throws before upsert', async () => {
+    vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
+    vi.mocked(prisma.carcasse.findFirst).mockResolvedValueOnce(baseCarcasse);
+
+    await expect(
+      syncCarcasseIntermediaire('FEI-1', 'INT-1', 'ZC-1', {
+        ...baseCi,
+        intermediaire_entity_id: '',
+      } as any)
+    ).rejects.toThrow("L'établissement du destinataire est obligatoire");
+    expect(prisma.carcasseIntermediaire.upsert).not.toHaveBeenCalled();
+  });
+
+  test('empty intermediaire_user_id → throws before upsert', async () => {
+    vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
+    vi.mocked(prisma.carcasse.findFirst).mockResolvedValueOnce(baseCarcasse);
+
+    await expect(
+      syncCarcasseIntermediaire('FEI-1', 'INT-1', 'ZC-1', {
+        ...baseCi,
+        intermediaire_user_id: '',
+      } as any)
+    ).rejects.toThrow("L'utilisateur du destinataire est obligatoire");
+    expect(prisma.carcasseIntermediaire.upsert).not.toHaveBeenCalled();
+  });
 });
 
 describe('syncCarcasseIntermediaire — upsert', () => {
