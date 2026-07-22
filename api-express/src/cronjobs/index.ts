@@ -5,6 +5,7 @@ import * as Sentry from '@sentry/node';
 import { ENVIRONMENT, SENTRY_KEY, VERSION } from '~/config';
 import { initFeisCron } from './feis';
 import { initRelanceInscriptionCron } from './relance-inscription';
+import { initDataHealthCron } from './data-health';
 import { capture } from '~/third-parties/sentry';
 const sentryEnabled = !!SENTRY_KEY;
 
@@ -34,6 +35,7 @@ if (!isLocalDevelopment && !isTest) {
     .then(initFeisCron)
     .then(() => console.log('All feis cronjobs are set up'))
     .then(initRelanceInscriptionCron)
+    .then(initDataHealthCron)
     .catch(capture);
   // .then(initMunicipalities) //
   // .then(initRecommandations) //
