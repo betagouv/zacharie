@@ -51,12 +51,19 @@ const sendError = (
 ) => {
   const { body, query, params, route, method, originalUrl, headers } = req;
   const { auth, appversion, appbuild, appdevice } = headers;
+  // Le client a coupé la connexion avant la fin de l'envoi du body (onglet fermé,
+  // perte réseau, sync annulé). Ce n'est pas une erreur serveur : on capture en info
+  // pour garder la trace sans déclencher d'alerte Sentry.
+  const requestAborted =
+    (err as { code?: string }).code === 'ECONNABORTED' ||
+    (err as { type?: string }).type === 'request.aborted';
   if (res.statusCode === 401 || err.status === 401) {
     console.log(res.statusCode, 'Unauthorized');
   } else if (process.env.NODE_ENV === 'test') {
     console.log(err);
   } else {
     capture(err, {
+      level: requestAborted ? 'info' : 'error',
       extra: {
         statusCode: res.statusCode,
         body,
