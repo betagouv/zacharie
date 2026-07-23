@@ -4,6 +4,8 @@ import { catchErrors } from '~/middlewares/errors';
 import validateUser from '~/middlewares/validateUser';
 import type { RequestWithUser } from '~/types/request';
 import type {
+  AnnuaireResult,
+  AnnuaireSearchResponse,
   EntitiesWorkingForResponse,
   EtgUserInteractedResponse,
   EtgUsersInteractedResponse,
@@ -466,6 +468,220 @@ router.post(
       res
         .status(200)
         .send({ ok: true, error: '', data: { entity: createdEntity, relation: createdEntityRelation } });
+    }
+  )
+);
+
+// Codes NAF des commerces de détail susceptibles de recevoir du gibier (boucherie-charcuterie,
+// autres commerces alimentaires, supérettes). À affiner selon les retours terrain.
+const COMMERCE_DETAIL_NAF = ['47.22Z', '47.29Z', '47.11B'];
+
+// Construit address_ligne_1 à partir de l'adresse complète de l'API
+// ("14 RUE SUBLEYRAS 34000 MONTPELLIER") en retirant le suffixe "code_postal ville".
+function extractAddressLigne1(adresse: string, code_postal: string, ville: string): string {
+  const suffix = `${code_postal} ${ville}`;
+  if (adresse.endsWith(suffix)) {
+    return adresse.slice(0, adresse.length - suffix.length).trim();
+  }
+  return adresse.trim();
+}
+
+router.get(
+  '/annuaire/search',
+  passport.authenticate('user', { session: false }),
+  catchErrors(
+    async (
+      req: RequestWithUser,
+      res: express.Response<AnnuaireSearchResponse>,
+      next: express.NextFunction
+    ) => {
+      const q = typeof req.query.q === 'string' ? req.query.q.trim() : '';
+      const codePostal = typeof req.query.code_postal === 'string' ? req.query.code_postal.trim() : '';
+      const page = typeof req.query.page === 'string' ? req.query.page : '1';
+
+      if (q.length < 3) {
+        res.status(200).send({ ok: true, data: { results: [] }, error: '' });
+        return;
+      }
+
+      const params = new URLSearchParams({
+        q,
+        activite_principale: COMMERCE_DETAIL_NAF.join(','),
+        etat_administratif: 'A',
+        per_page: '10',
+        page,
+      });
+      if (codePostal) {
+        params.set('code_postal', codePostal);
+      }
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
+      let gouvResponse: Response;
+      try {
+        gouvResponse = await fetch(`https://recherche-entreprises.api.gouv.fr/search?${params.toString()}`, {
+          signal: controller.signal,
+        });
+      } catch {
+        res
+          .status(503)
+          .send({
+            ok: false,
+            data: { results: [] },
+            error: 'Annuaire momentanément indisponible, réessayez',
+          });
+        return;
+      } finally {
+        clearTimeout(timeout);
+      }
+
+      if (!gouvResponse.ok) {
+        res
+          .status(503)
+          .send({
+            ok: false,
+            data: { results: [] },
+            error: 'Annuaire momentanément indisponible, réessayez',
+          });
+        return;
+      }
+
+      const json = (await gouvResponse.json()) as {
+        results?: Array<{
+          siren?: string;
+          nom_complet?: string;
+          siege?: {
+            siret?: string;
+            adresse?: string;
+            code_postal?: string;
+            libelle_commune?: string;
+            activite_principale?: string;
+            etat_administratif?: string;
+          };
+          matching_etablissements?: Array<{
+            siret?: string;
+            adresse?: string;
+            code_postal?: string;
+            libelle_commune?: string;
+            activite_principale?: string;
+            etat_administratif?: string;
+          }>;
+        }>;
+      };
+
+      const resultsBySiret: Record<string, AnnuaireResult> = {};
+      for (const entreprise of json.results ?? []) {
+        const raison_sociale = entreprise.nom_complet ?? '';
+        const siren = entreprise.siren ?? '';
+        // On privilégie les établissements correspondants au commerce (NAF commerce de détail),
+        // car le siège social peut avoir un autre code NAF (ex. holding).
+        const candidats = (entreprise.matching_etablissements ?? []).filter(
+          (etab) =>
+            etab.etat_administratif === 'A' &&
+            etab.activite_principale != null &&
+            COMMERCE_DETAIL_NAF.includes(etab.activite_principale)
+        );
+        if (candidats.length === 0 && entreprise.siege) {
+          const siege = entreprise.siege;
+          if (
+            siege.etat_administratif === 'A' &&
+            siege.activite_principale != null &&
+            COMMERCE_DETAIL_NAF.includes(siege.activite_principale)
+          ) {
+            candidats.push(siege);
+          }
+        }
+        for (const etab of candidats) {
+          if (!etab.siret) continue;
+          const code_postal = etab.code_postal ?? '';
+          const ville = etab.libelle_commune ?? '';
+          resultsBySiret[etab.siret] = {
+            siret: etab.siret,
+            siren,
+            raison_sociale,
+            address_ligne_1: extractAddressLigne1(etab.adresse ?? '', code_postal, ville),
+            code_postal,
+            ville,
+            naf: etab.activite_principale ?? '',
+          };
+        }
+      }
+
+      res.status(200).send({ ok: true, data: { results: Object.values(resultsBySiret) }, error: '' });
+    }
+  )
+);
+
+const annuaireSelectSchema = z.object({
+  siret: z.string().min(1),
+  siren: z.string().optional(),
+  raison_sociale: z.string(),
+  address_ligne_1: z.string(),
+  address_ligne_2: z.string().optional(),
+  code_postal: z.string(),
+  ville: z.string(),
+});
+
+router.post(
+  '/annuaire/select',
+  passport.authenticate('user', { session: false, failWithError: true }),
+  catchErrors(
+    async (req: RequestWithUser, res: express.Response<UserEntityResponse>, next: express.NextFunction) => {
+      const user = req.user!;
+
+      const result = annuaireSelectSchema.safeParse(req.body);
+      if (!result.success) {
+        const error = new Error(result.error.message);
+        res.status(406);
+        return next(error);
+      }
+      const body = result.data;
+      const siret = sanitize(body.siret);
+
+      // Dédup par SIRET : deux chasseurs choisissant le même commerce pointent sur la même Entity.
+      let entity = await prisma.entity.findFirst({
+        where: { siret, type: EntityTypes.COMMERCE_DE_DETAIL, deleted_at: null },
+      });
+
+      if (!entity) {
+        entity = await prisma.entity.create({
+          data: {
+            raison_sociale: sanitize(body.raison_sociale),
+            nom_d_usage: sanitize(body.raison_sociale),
+            type: EntityTypes.COMMERCE_DE_DETAIL,
+            address_ligne_1: sanitize(body.address_ligne_1),
+            address_ligne_2: sanitize(body.address_ligne_2) || null,
+            code_postal: sanitize(body.code_postal),
+            ville: sanitize(body.ville),
+            siret,
+            zacharie_compatible: false, // entité d'annuaire sans utilisateur (circuit court = vue passive)
+            prefilled: true, // marque une entité issue de l'annuaire public
+          },
+        });
+        entity = await updateOrCreateBrevoCompany(entity);
+      }
+
+      // Relation du chasseur idempotente : on ne recrée pas si elle existe déjà.
+      let relation = await prisma.entityAndUserRelations.findFirst({
+        where: {
+          owner_id: user.id,
+          entity_id: entity.id,
+          relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+          deleted_at: null,
+        },
+      });
+      if (!relation) {
+        relation = await prisma.entityAndUserRelations.create({
+          data: {
+            owner_id: user.id,
+            entity_id: entity.id,
+            relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+            status: EntityRelationStatus.MEMBER,
+          },
+        });
+      }
+
+      res.status(200).send({ ok: true, error: '', data: { entity, relation } });
     }
   )
 );
