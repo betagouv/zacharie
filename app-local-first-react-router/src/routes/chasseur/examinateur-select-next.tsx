@@ -48,8 +48,10 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
   const isOnline = useIsOnline();
 
   const nextOwnerSelectLabel = 'Sélectionnez le Premier Détenteur de pour cette fiche';
+  // quand le premier détenteur est une association, on enregistre aussi l'utilisateur qui agit en son nom :
+  // c'est bien l'entité qui doit être sélectionnée dans la liste
   const [nextOwnerUserOrEntityId, setNextOwnerUserOrEntityId] = useState(
-    fei.premier_detenteur_user_id ?? fei.premier_detenteur_entity_id ?? ''
+    fei.premier_detenteur_entity_id ?? fei.premier_detenteur_user_id ?? ''
   );
 
   const [isSearchingUser, setIsSearchingUser] = useState(false);
@@ -220,7 +222,7 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
         >
           <Select
             label=""
-            key={fei.premier_detenteur_user_id ?? fei.premier_detenteur_entity_id ?? 'no-choice-yet'}
+            key={fei.premier_detenteur_entity_id ?? fei.premier_detenteur_user_id ?? 'no-choice-yet'}
             disabled={disabled}
             hint={
               <>
