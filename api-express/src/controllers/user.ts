@@ -588,6 +588,87 @@ router.post(
   )
 );
 
+const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, 'Veuillez renseigner votre mot de passe actuel'),
+  newPassword: z.string().min(12, 'Le nouveau mot de passe doit contenir au moins 12 caractères'),
+});
+
+// Route: POST /user/change-password - Changement de mot de passe depuis le profil
+router.post(
+  '/change-password',
+  passport.authenticate('user', { session: false, failWithError: true }),
+  catchErrors(
+    async (
+      req: RequestWithUser,
+      res: express.Response<UserConnexionResponse>,
+      next: express.NextFunction
+    ) => {
+      const user = req.user!;
+      const result = changePasswordSchema.safeParse(req.body);
+      if (!result.success) {
+        res.status(400).send({
+          ok: false,
+          data: { user: null },
+          message: '',
+          error: result.error.errors[0].message,
+        });
+        return;
+      }
+      const { currentPassword, newPassword } = result.data;
+
+      const existingPassword = await prisma.password.findFirst({
+        where: { user_id: user.id },
+      });
+      if (!existingPassword?.password) {
+        res.status(400).send({
+          ok: false,
+          data: { user: null },
+          message: '',
+          error: 'Mot de passe actuel incorrect',
+        });
+        return;
+      }
+
+      const isOk = await comparePassword(currentPassword, existingPassword.password);
+      if (!isOk) {
+        res.status(400).send({
+          ok: false,
+          data: { user: null },
+          message: '',
+          error: 'Mot de passe actuel incorrect',
+        });
+        return;
+      }
+
+      if (currentPassword === newPassword) {
+        res.status(400).send({
+          ok: false,
+          data: { user: null },
+          message: '',
+          error: "Le nouveau mot de passe doit être différent de l'ancien",
+        });
+        return;
+      }
+
+      await prisma.password.update({
+        where: { user_id: user.id },
+        data: {
+          password: await hashPassword(newPassword),
+          reset_password_token: null,
+          reset_password_last_email_sent_at: null,
+        },
+      });
+
+      res.status(200).send({
+        ok: true,
+        data: { user },
+        message: 'Votre mot de passe a été modifié',
+        error: '',
+      });
+    }
+  )
+);
+
 const accessTokenSchema = z.object({
   accessToken: z.string(),
 });

@@ -12,6 +12,7 @@ import CollecteurProfilPartageDeMesDonnees from './profil/collecteur-partage-de-
 import CollecteurProfilEntrepriseUtilisateurs from './profil/collecteur-entreprise-utilisateurs';
 import CollecteurFei from './collecteur-fei';
 import CollecteurSviInspectionCarcasse from './collecteur-carcasse-after-svi-inspection';
+import ChangerMonMotDePasse from '@app/routes/profil/changer-mon-mot-de-passe';
 
 export default function RouterCollecteur() {
   return (
@@ -51,6 +52,10 @@ export default function RouterCollecteur() {
         <Route
           path="coordonnees"
           element={<CollecteurProfilCoordonnees />}
+        />
+        <Route
+          path="mot-de-passe"
+          element={<ChangerMonMotDePasse />}
         />
         <Route
           path="notifications"

@@ -9,6 +9,7 @@ import CircuitCourtProfilNotifications from './profil/circuit-court-notification
 import CircuitCourtProfilEntrepriseUtilisateurs from './profil/circuit-court-entreprise-utilisateurs';
 import CircuitCourtFei from './circuit-court-fei';
 import CircuitCourtFiches from './circuit-court-fiches';
+import ChangerMonMotDePasse from '@app/routes/profil/changer-mon-mot-de-passe';
 
 export default function RouterCircuitCourt() {
   return (
@@ -44,6 +45,10 @@ export default function RouterCircuitCourt() {
         <Route
           path="coordonnees"
           element={<CircuitCourtProfilCoordonnees />}
+        />
+        <Route
+          path="mot-de-passe"
+          element={<ChangerMonMotDePasse />}
         />
         <Route
           path="notifications"

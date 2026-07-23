@@ -48,6 +48,14 @@ export default function useSviNavigationMenu(): MainNavigationProps.Item[] {
           },
         },
         {
+          text: 'Changer de mot de passe',
+          isActive: location.pathname === '/app/svi/profil/mot-de-passe',
+          linkProps: {
+            href: '#',
+            to: '/app/svi/profil/mot-de-passe',
+          },
+        },
+        {
           text: 'Notifications',
           isActive: location.pathname === '/app/svi/profil/notifications',
           linkProps: {

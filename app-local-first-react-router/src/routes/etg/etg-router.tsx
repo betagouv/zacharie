@@ -14,6 +14,7 @@ import EtgFei from './etg-fei';
 import EtgUtilisateurs from './etg-utilisateurs';
 import EtgUtilisateur from './etg-utilisateur';
 import EtgSviInspectionCarcasse from './etg-carcasse-after-svi-inspection';
+import ChangerMonMotDePasse from '@app/routes/profil/changer-mon-mot-de-passe';
 
 export default function RouterEtg() {
   return (
@@ -61,6 +62,10 @@ export default function RouterEtg() {
         <Route
           path="coordonnees"
           element={<EtgProfilCoordonnees />}
+        />
+        <Route
+          path="mot-de-passe"
+          element={<ChangerMonMotDePasse />}
         />
         <Route
           path="notifications"
