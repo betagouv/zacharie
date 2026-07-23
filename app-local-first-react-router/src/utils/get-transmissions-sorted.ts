@@ -332,6 +332,7 @@ export function computeTransmissions({
   }
   if (meIsChassseur) {
     for (const fei of Object.values(feis)) {
+      if (fei.deleted_at) continue;
       // la fei vient juste d'être créée, il n'y a pas encore de transmission
       // ni de prochain détenteur
       // on simule la transmissionId par fei.numero : aucun risque de conflit encore
