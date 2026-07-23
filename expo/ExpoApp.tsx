@@ -23,6 +23,26 @@ import Chargement from './components/Chargement';
 SplashScreen.preventAutoHideAsync();
 
 const initScript = `window.ENV = {};window.ENV.APP_PLATFORM = "native";true`;
+
+/**
+ * Chemin (+ query) d'un lien universel `https://zacharie.beta.gouv.fr/...` ou
+ * d'un lien `zacharie://...`. Ces liens (mail de réinitialisation de mot de
+ * passe, invitation, notification) ouvrent l'app : on doit charger ce
+ * chemin-là, et non l'`initial-path` stocké.
+ */
+function getPathFromDeepLink(url: string | null): string | null {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    // en scheme custom (`zacharie://app/connexion`), le premier segment est le host
+    const pathname = parsed.protocol === 'zacharie:' ? `/${parsed.host}${parsed.pathname}` : parsed.pathname;
+    const path = `${pathname}${parsed.search}`.replace(/\/{2,}/g, '/');
+    if (!path || path === '/') return null;
+    return path;
+  } catch {
+    return null;
+  }
+}
 function App() {
   const ref = useRef<WebView>(null);
   const [externalLink, setExternalLink] = useState<string | null>(null);
@@ -46,24 +66,40 @@ function App() {
   }, [fontsLoaded]);
 
   useEffect(() => {
-    AsyncStorage.getItem('initial-path').then((initialPath = '/') => {
-      checkAndDownloadSpa().then(() => {
-        startSpaServer().then((url) => {
-          if (url) {
-            if (initialPath) url += initialPath;
-            console.log('url: ', url);
-            setSpaUrl(url);
-          }
-          setSpaReady(true);
-          setTimeout(() => {
-            setLoading(false);
-          }, 1500);
+    Promise.all([Linking.getInitialURL(), AsyncStorage.getItem('initial-path')]).then(
+      ([initialUrl, storedPath]) => {
+        // un lien ouvert depuis un mail prime sur le dernier chemin mémorisé
+        const initialPath = getPathFromDeepLink(initialUrl) || storedPath;
+        checkAndDownloadSpa().then(() => {
+          startSpaServer().then((url) => {
+            if (url) {
+              if (initialPath) url += initialPath;
+              console.log('url: ', url);
+              setSpaUrl(url);
+            }
+            setSpaReady(true);
+            setTimeout(() => {
+              setLoading(false);
+            }, 1500);
+          });
         });
-      });
-      return () => {
-        stopSpaServer();
-      };
+        return () => {
+          stopSpaServer();
+        };
+      }
+    );
+  }, []);
+
+  // lien ouvert alors que l'app tourne déjà : la SPA navigue via pushState + popstate
+  useEffect(() => {
+    const subscription = Linking.addEventListener('url', ({ url }) => {
+      const path = getPathFromDeepLink(url);
+      if (!path || !ref.current) return;
+      ref.current.injectJavaScript(
+        `window.history.pushState(null, '', ${JSON.stringify(path)});window.dispatchEvent(new PopStateEvent('popstate'));true`
+      );
     });
+    return () => subscription.remove();
   }, []);
 
   const onLoadEnd = () => {
