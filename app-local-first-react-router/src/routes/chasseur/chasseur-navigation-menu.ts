@@ -52,6 +52,14 @@ export default function useChasseurNavigationMenu(): MainNavigationProps.Item[] 
           },
         },
         {
+          text: 'Changer de mot de passe',
+          isActive: location.pathname === '/app/chasseur/profil/mot-de-passe',
+          linkProps: {
+            href: '#',
+            to: '/app/chasseur/profil/mot-de-passe',
+          },
+        },
+        {
           text: 'Notifications',
           isActive: location.pathname === '/app/chasseur/profil/notifications',
           linkProps: {
