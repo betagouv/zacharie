@@ -82,8 +82,8 @@ export default function NouvelleCarcasse({
   );
 
   const detailsAutres = useMemo(
-    () => buildAutresAnomalies({ anomaliesCarcasse, setAnomaliesCarcasse }),
-    [anomaliesCarcasse]
+    () => buildAutresAnomalies({ isPetitGibier, anomaliesCarcasse, setAnomaliesCarcasse }),
+    [isPetitGibier, anomaliesCarcasse]
   );
 
   const zacharieCarcasseId = `${fei.numero}_${numeroBracelet}`;

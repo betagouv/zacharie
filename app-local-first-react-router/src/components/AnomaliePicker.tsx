@@ -12,6 +12,10 @@ export type AnomaliePickerSection = {
   anomalies: AnomalieItem[];
   selected: string[];
   onToggle: (canonical: string) => void;
+  // Libellé de la saisie libre proposée par la famille, null si elle n'en propose pas.
+  champLibre: string | null;
+  // Saisies libres déjà faites dans cette famille.
+  autres: AnomaliePickerAutres;
 };
 
 // Anomalies saisies en texte libre, hors référentiel.
@@ -40,14 +44,11 @@ export default function AnomaliePicker({
   const [query, setQuery] = useState('');
   // Anomalie dont on affiche la photo en grand (avec sa description en légende).
   const [zoomItem, setZoomItem] = useState<AnomalieItem | null>(null);
-  // Saisie en cours d'une anomalie absente du référentiel.
-  const [autreDraft, setAutreDraft] = useState('');
-
-  const addAutre = (value: string) => {
+  // Ajout hors famille, depuis une recherche infructueuse.
+  const addAutreGlobal = (value: string) => {
     const trimmed = value.trim();
     if (!trimmed || autres.values.includes(trimmed)) return;
     autres.onAdd(trimmed);
-    setAutreDraft('');
     // On sort de la recherche : la nouvelle anomalie est visible dans la vue racine.
     setQuery('');
   };
@@ -166,7 +167,7 @@ export default function AnomaliePicker({
                   type="button"
                   priority="secondary"
                   iconId="fr-icon-add-line"
-                  onClick={() => addAutre(query)}
+                  onClick={() => addAutreGlobal(query)}
                 >
                   Ajouter «&nbsp;{query.trim()}&nbsp;» comme anomalie
                 </Button>
@@ -260,62 +261,25 @@ export default function AnomaliePicker({
                 );
               })}
             </div>
+
+            {activeSection.champLibre && (
+              <AutreAnomalieBlock
+                title="Autre anomalie"
+                placeholder={activeSection.champLibre}
+                autres={activeSection.autres}
+              />
+            )}
           </div>
         )}
       </div>
 
       {/* Vue racine : la liste des sites en gros gibier, la seule vue en petit gibier (une section). */}
       {!normalizedQuery && (!activeSection || !!singleSection) && (
-        <div className="flex flex-col gap-2 border-t border-gray-200 pt-3">
-          <p className="mb-0 text-xs font-bold tracking-wide text-gray-500 uppercase">
-            Autre anomalie (non listée)
-          </p>
-          {autres.values.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {autres.values.map((value) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => autres.onRemove(value)}
-                  className="flex items-center gap-1 rounded-full bg-[#000091] px-3 py-1 text-left text-sm text-white"
-                  aria-label={`Retirer ${value}`}
-                >
-                  <span>{value}</span>
-                  <span
-                    className="fr-icon-close-line fr-icon--sm"
-                    aria-hidden
-                  />
-                </button>
-              ))}
-            </div>
-          )}
-          <div className="flex items-center gap-2">
-            <Input
-              label=""
-              className="mb-0! grow"
-              nativeInputProps={{
-                type: 'text',
-                value: autreDraft,
-                placeholder: 'Décrivez l’anomalie',
-                onChange: (e) => setAutreDraft(e.target.value),
-                // Évite la soumission du <form> parent (rendu dans un form de création).
-                onKeyDown: (e) => {
-                  if (e.key !== 'Enter') return;
-                  e.preventDefault();
-                  addAutre(autreDraft);
-                },
-              }}
-            />
-            <Button
-              type="button"
-              priority="secondary"
-              disabled={!autreDraft.trim()}
-              onClick={() => addAutre(autreDraft)}
-            >
-              Ajouter
-            </Button>
-          </div>
-        </div>
+        <AutreAnomalieBlock
+          title="Autre anomalie (non listée)"
+          placeholder="Décrivez l’anomalie"
+          autres={autres}
+        />
       )}
 
       {zoomItem && (
@@ -324,6 +288,79 @@ export default function AnomaliePicker({
           onClose={() => setZoomItem(null)}
         />
       )}
+    </div>
+  );
+}
+
+// Saisie d'une anomalie absente du référentiel, avec les valeurs déjà saisies en pastilles.
+// Utilisé pour la saisie libre d'une famille comme pour celle, hors famille, de la vue racine.
+function AutreAnomalieBlock({
+  title,
+  placeholder,
+  autres,
+}: {
+  title: string;
+  placeholder: string;
+  autres: AnomaliePickerAutres;
+}) {
+  const [draft, setDraft] = useState('');
+
+  const add = () => {
+    const trimmed = draft.trim();
+    if (!trimmed) return;
+    setDraft('');
+    if (autres.values.includes(trimmed)) return;
+    autres.onAdd(trimmed);
+  };
+
+  return (
+    <div className="flex flex-col gap-2 border-t border-gray-200 pt-3">
+      <p className="mb-0 text-xs font-bold tracking-wide text-gray-500 uppercase">{title}</p>
+      {autres.values.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {autres.values.map((value) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => autres.onRemove(value)}
+              className="flex items-center gap-1 rounded-full bg-[#000091] px-3 py-1 text-left text-sm text-white"
+              aria-label={`Retirer ${value}`}
+            >
+              <span>{value}</span>
+              <span
+                className="fr-icon-close-line fr-icon--sm"
+                aria-hidden
+              />
+            </button>
+          ))}
+        </div>
+      )}
+      <div className="flex items-center gap-2">
+        <Input
+          label=""
+          className="mb-0! grow"
+          nativeInputProps={{
+            type: 'text',
+            value: draft,
+            placeholder,
+            onChange: (e) => setDraft(e.target.value),
+            // Évite la soumission du <form> parent (rendu dans un form de création).
+            onKeyDown: (e) => {
+              if (e.key !== 'Enter') return;
+              e.preventDefault();
+              add();
+            },
+          }}
+        />
+        <Button
+          type="button"
+          priority="secondary"
+          disabled={!draft.trim()}
+          onClick={add}
+        >
+          Ajouter
+        </Button>
+      </div>
     </div>
   );
 }
