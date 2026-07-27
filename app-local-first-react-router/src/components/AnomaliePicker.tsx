@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { canonicalOf, normalizeText, type AnomalieItem } from '@app/utils/anomalies-referentiel';
@@ -64,22 +64,44 @@ export default function AnomaliePicker({
 
   // Retour contextuel : remonte d'un niveau à la fois
   // (recherche → famille → liste des sites → sortie du picker via onBack).
-  const handleBack = () => {
+  const handleBack = useCallback(() => {
     if (query) {
       setQuery('');
       return;
     }
-    if (activeSection && !singleSection) {
+    if (activeKey && !singleSection) {
       setActiveKey(null);
       return;
     }
     onBack?.();
-  };
+  }, [query, activeKey, singleSection, onBack]);
   const showBack = !!onBack || !!query || (!!activeSection && !singleSection);
 
+  // Quand le picker est rendu dans une modale DSFR, le « Fermer » de l'en-tête remonte d'un niveau
+  // au lieu de fermer la modale : on perdrait la carcasse en cours de saisie. On intercepte le clic
+  // en phase capture sur le dialog, avant qu'il n'atteigne le bouton et son handler DSFR.
+  // Une fois sorti du picker, le bouton retrouve son comportement normal.
+  const rootRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const dialog = rootRef.current?.closest('dialog.fr-modal');
+    if (!dialog) return;
+    const intercept = (event: Event) => {
+      if (!(event.target as HTMLElement).closest('.fr-btn--close')) return;
+      event.preventDefault();
+      event.stopPropagation();
+      handleBack();
+    };
+    dialog.addEventListener('click', intercept, true);
+    return () => dialog.removeEventListener('click', intercept, true);
+  }, [handleBack]);
+
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-center gap-2">
+    // Hauteur fixe : la modale hôte ne doit pas se redimensionner selon le nombre d'anomalies affichées.
+    <div
+      ref={rootRef}
+      className="flex h-[60vh] flex-col gap-3 overflow-hidden"
+    >
+      <div className="flex shrink-0 items-center gap-2">
         {showBack && (
           <Button
             type="button"
@@ -105,107 +127,109 @@ export default function AnomaliePicker({
         />
       </div>
       {activeSection && !query && (
-        <span className="text-xs text-gray-500">
+        <span className="shrink-0 text-xs text-gray-500">
           {[activeSection.groupe, activeSection.site].filter(Boolean).join(' › ')}
         </span>
       )}
 
-      {normalizedQuery.length > 0 ? (
-        /* --- Résultats de recherche --- */
-        <div className="flex flex-col gap-2">
-          {searchResults.length === 0 ? (
-            <p className="mb-0 text-sm text-gray-600">Aucune anomalie ne correspond à votre recherche.</p>
-          ) : (
-            searchResults.map(({ section, item, canonical }) => (
-              <AnomalieItemRow
-                key={`${sectionKey(section)}-${canonical}`}
-                item={item}
-                context={!activeSection ? siteLabel(section) : undefined}
-                isSelected={section.selected.includes(canonical)}
-                onToggle={() => section.onToggle(canonical)}
-                onZoom={() => setZoomItem(item)}
-              />
-            ))
-          )}
-        </div>
-      ) : !activeSection ? (
-        /* --- Vue 1 : choix du site anatomique, groupé --- */
-        <div className="flex flex-col gap-3">
-          {groups.map(([groupe, groupSections]) => (
-            <div
-              key={groupe}
-              className="flex flex-col gap-2"
-            >
-              <p className="mb-0 text-xs font-bold tracking-wide text-gray-500 uppercase">{groupe}</p>
-              {groupSections.map((section) => (
-                <button
-                  key={sectionKey(section)}
-                  type="button"
-                  onClick={() => setActiveKey(sectionKey(section))}
-                  className="flex w-full items-center justify-between gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3 text-left font-medium text-gray-900 transition-colors hover:border-[#000091] hover:bg-[#f5f5fe]"
-                >
-                  <span>{siteLabel(section)}</span>
-                  <span className="flex items-center gap-2">
-                    {section.selected.length > 0 && (
-                      <span className="rounded-full bg-[#000091] px-2 py-0.5 text-xs font-bold text-white">
-                        {section.selected.length}
-                      </span>
-                    )}
-                    <span
-                      className="fr-icon-arrow-right-s-line text-gray-400"
-                      aria-hidden
-                    />
-                  </span>
-                </button>
-              ))}
-            </div>
-          ))}
-        </div>
-      ) : (
-        /* --- Vue 2 : anomalies du site sélectionné --- */
-        <div className="flex flex-col gap-4">
-          {activeSection.selected.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {activeSection.selected.map((canonical) => {
-                const item = activeSection.anomalies.find(
-                  (a) => canonicalOf(a.intitule, activeSection.site) === canonical
-                );
-                const label = item?.intitule ?? canonical;
-                return (
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        {normalizedQuery.length > 0 ? (
+          /* --- Résultats de recherche --- */
+          <div className="flex flex-col gap-2">
+            {searchResults.length === 0 ? (
+              <p className="mb-0 text-sm text-gray-600">Aucune anomalie ne correspond à votre recherche.</p>
+            ) : (
+              searchResults.map(({ section, item, canonical }) => (
+                <AnomalieItemRow
+                  key={`${sectionKey(section)}-${canonical}`}
+                  item={item}
+                  context={!activeSection ? siteLabel(section) : undefined}
+                  isSelected={section.selected.includes(canonical)}
+                  onToggle={() => section.onToggle(canonical)}
+                  onZoom={() => setZoomItem(item)}
+                />
+              ))
+            )}
+          </div>
+        ) : !activeSection ? (
+          /* --- Vue 1 : choix du site anatomique, groupé --- */
+          <div className="flex flex-col gap-3">
+            {groups.map(([groupe, groupSections]) => (
+              <div
+                key={groupe}
+                className="flex flex-col gap-2"
+              >
+                <p className="mb-0 text-xs font-bold tracking-wide text-gray-500 uppercase">{groupe}</p>
+                {groupSections.map((section) => (
                   <button
-                    key={canonical}
+                    key={sectionKey(section)}
                     type="button"
-                    onClick={() => activeSection.onToggle(canonical)}
-                    className="flex items-center gap-1 rounded-full bg-[#000091] px-3 py-1 text-left text-sm text-white"
-                    aria-label={`Retirer ${label}`}
+                    onClick={() => setActiveKey(sectionKey(section))}
+                    className="flex w-full items-center justify-between gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3 text-left font-medium text-gray-900 transition-colors hover:border-[#000091] hover:bg-[#f5f5fe]"
                   >
-                    <span>{label}</span>
-                    <span
-                      className="fr-icon-close-line fr-icon--sm"
-                      aria-hidden
-                    />
+                    <span>{siteLabel(section)}</span>
+                    <span className="flex items-center gap-2">
+                      {section.selected.length > 0 && (
+                        <span className="rounded-full bg-[#000091] px-2 py-0.5 text-xs font-bold text-white">
+                          {section.selected.length}
+                        </span>
+                      )}
+                      <span
+                        className="fr-icon-arrow-right-s-line text-gray-400"
+                        aria-hidden
+                      />
+                    </span>
                   </button>
+                ))}
+              </div>
+            ))}
+          </div>
+        ) : (
+          /* --- Vue 2 : anomalies du site sélectionné --- */
+          <div className="flex flex-col gap-4">
+            {activeSection.selected.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {activeSection.selected.map((canonical) => {
+                  const item = activeSection.anomalies.find(
+                    (a) => canonicalOf(a.intitule, activeSection.site) === canonical
+                  );
+                  const label = item?.intitule ?? canonical;
+                  return (
+                    <button
+                      key={canonical}
+                      type="button"
+                      onClick={() => activeSection.onToggle(canonical)}
+                      className="flex items-center gap-1 rounded-full bg-[#000091] px-3 py-1 text-left text-sm text-white"
+                      aria-label={`Retirer ${label}`}
+                    >
+                      <span>{label}</span>
+                      <span
+                        className="fr-icon-close-line fr-icon--sm"
+                        aria-hidden
+                      />
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            <div className="flex flex-col gap-2">
+              {activeSection.anomalies.map((item) => {
+                const canonical = canonicalOf(item.intitule, activeSection.site);
+                return (
+                  <AnomalieItemRow
+                    key={canonical}
+                    item={item}
+                    isSelected={activeSection.selected.includes(canonical)}
+                    onToggle={() => activeSection.onToggle(canonical)}
+                    onZoom={() => setZoomItem(item)}
+                  />
                 );
               })}
             </div>
-          )}
-
-          <div className="flex flex-col gap-2">
-            {activeSection.anomalies.map((item) => {
-              const canonical = canonicalOf(item.intitule, activeSection.site);
-              return (
-                <AnomalieItemRow
-                  key={canonical}
-                  item={item}
-                  isSelected={activeSection.selected.includes(canonical)}
-                  onToggle={() => activeSection.onToggle(canonical)}
-                  onZoom={() => setZoomItem(item)}
-                />
-              );
-            })}
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {zoomItem && (
         <PhotoOverlay
@@ -287,15 +311,36 @@ function AnomalieItemRow({
   );
 }
 
-// Superposition plein écran : photo agrandie + description en légende.
+// Superposition plein écran : photo agrandie (carrousel si plusieurs) + description en légende.
+// La hauteur est figée au viewport : seule la légende peut scroller, jamais la page derrière.
 function PhotoOverlay({ item, onClose }: { item: AnomalieItem; onClose: () => void }) {
+  const photos = item.photos;
+  const [index, setIndex] = useState(0);
+  // Position du doigt au début du geste, pour détecter un swipe horizontal.
+  const touchStartX = useRef<number | null>(null);
+
+  useEffect(() => setIndex(0), [item]);
+
+  const go = useCallback(
+    (delta: number) => setIndex((i) => (i + delta + photos.length) % photos.length),
+    [photos.length]
+  );
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
+      if (photos.length > 1 && e.key === 'ArrowLeft') go(-1);
+      if (photos.length > 1 && e.key === 'ArrowRight') go(1);
     };
     document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [onClose]);
+    // Verrouille le scroll de la page tant que l'overlay est ouvert.
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [onClose, go, photos.length]);
 
   return (
     <div
@@ -312,23 +357,50 @@ function PhotoOverlay({ item, onClose }: { item: AnomalieItem; onClose: () => vo
         className="fr-icon-close-line absolute top-4 right-4 flex size-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
       />
       <figure
-        className="flex max-h-full w-full max-w-lg flex-col items-center gap-4 overflow-y-auto"
+        className="flex h-full w-full max-w-lg flex-col items-center gap-3 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        {item.photos.length > 0 ? (
-          <div className="flex w-full flex-col gap-3">
-            {item.photos.map((photo) => (
-              <img
-                key={photo}
-                src={`/anomalies/${photo}`}
-                alt={item.intitule}
-                loading="lazy"
-                className="max-h-[70vh] w-full rounded-lg object-contain"
+        {photos.length > 0 ? (
+          /* Les flèches sont hors de l'image, sur le fond noir : elles restent lisibles
+             quelle que soit la photo affichée. */
+          <div className="flex h-[55vh] w-full shrink-0 items-center gap-2">
+            {photos.length > 1 && (
+              <button
+                type="button"
+                onClick={() => go(-1)}
+                aria-label="Photo précédente"
+                className="fr-icon-arrow-left-s-line flex size-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
               />
-            ))}
+            )}
+            <div
+              className="flex h-full min-w-0 flex-1 items-center justify-center"
+              onTouchStart={(e) => {
+                touchStartX.current = e.touches[0].clientX;
+              }}
+              onTouchEnd={(e) => {
+                if (touchStartX.current === null || photos.length < 2) return;
+                const delta = e.changedTouches[0].clientX - touchStartX.current;
+                touchStartX.current = null;
+                if (Math.abs(delta) > 40) go(delta < 0 ? 1 : -1);
+              }}
+            >
+              <img
+                src={`/anomalies/${photos[index]}`}
+                alt={`${item.intitule}${photos.length > 1 ? ` (photo ${index + 1} sur ${photos.length})` : ''}`}
+                className="max-h-full max-w-full rounded-lg object-contain"
+              />
+            </div>
+            {photos.length > 1 && (
+              <button
+                type="button"
+                onClick={() => go(1)}
+                aria-label="Photo suivante"
+                className="fr-icon-arrow-right-s-line flex size-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
+              />
+            )}
           </div>
         ) : (
-          <div className="flex aspect-video w-full flex-col items-center justify-center gap-2 rounded-lg bg-gray-800 text-gray-400">
+          <div className="flex h-[55vh] w-full shrink-0 flex-col items-center justify-center gap-2 rounded-lg bg-gray-800 text-gray-400">
             <span
               className="fr-icon-image-line fr-icon--lg"
               aria-hidden
@@ -336,18 +408,31 @@ function PhotoOverlay({ item, onClose }: { item: AnomalieItem; onClose: () => vo
             <span className="px-4 text-center text-sm">Pas de photo disponible</span>
           </div>
         )}
-        <figcaption className="text-center text-white">
+
+        {photos.length > 1 && (
+          <div className="flex shrink-0 items-center gap-3 text-white">
+            <span className="text-sm text-white/80">
+              {index + 1} / {photos.length}
+            </span>
+            <span className="flex items-center gap-2">
+              {photos.map((photo, i) => (
+                <button
+                  key={photo}
+                  type="button"
+                  onClick={() => setIndex(i)}
+                  aria-label={`Photo ${i + 1}`}
+                  aria-current={i === index}
+                  className={['size-2.5 rounded-full', i === index ? 'bg-white' : 'bg-white/30'].join(' ')}
+                />
+              ))}
+            </span>
+          </div>
+        )}
+
+        <figcaption className="min-h-0 flex-1 overflow-y-auto text-center text-white">
           <span className="block font-bold">{item.intitule}</span>
           {item.infobulle && <span className="mt-1 block text-sm text-white/80">{item.infobulle}</span>}
         </figcaption>
-        <Button
-          type="button"
-          priority="secondary"
-          className="bg-white!"
-          onClick={onClose}
-        >
-          Fermer
-        </Button>
       </figure>
     </div>
   );
