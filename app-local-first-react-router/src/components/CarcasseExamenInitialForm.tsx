@@ -159,7 +159,7 @@ export default function CarcasseExamenInitialForm({ carcasse }: { carcasse: Carc
         <Button
           type="button"
           priority="secondary"
-          iconId="fr-icon-list-unordered"
+          iconId="fr-icon-add-line"
           onClick={() => setShowAnomalies(true)}
         >
           {anomaliesCount > 0 ? `Anomalies (${anomaliesCount})` : 'Ajouter une anomalie (facultatif)'}
