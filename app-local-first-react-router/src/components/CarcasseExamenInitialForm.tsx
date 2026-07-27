@@ -11,7 +11,7 @@ import useUser from '@app/zustand/user';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import AnomaliePicker from '@app/components/AnomaliePicker';
-import { buildCarcasseNavSections } from '@app/utils/update-carcasse-anomalies';
+import { buildCarcasseAutresAnomalies, buildCarcasseNavSections } from '@app/utils/update-carcasse-anomalies';
 
 const gibierSelect = {
   grand: grandGibier.especes,
@@ -78,6 +78,7 @@ export default function CarcasseExamenInitialForm({ carcasse }: { carcasse: Carc
       <AnomaliePicker
         key={carcasse.zacharie_carcasse_id}
         sections={buildCarcasseNavSections(carcasse)}
+        autres={buildCarcasseAutresAnomalies(carcasse)}
         onBack={() => setShowAnomalies(false)}
       />
     );
