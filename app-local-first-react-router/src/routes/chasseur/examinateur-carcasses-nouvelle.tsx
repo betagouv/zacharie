@@ -258,7 +258,7 @@ export default function NouvelleCarcasse({
           disabled={!espece}
           type="button"
           priority="secondary"
-          iconId="fr-icon-list-unordered"
+          iconId="fr-icon-add-line"
           onClick={() => setShowAnomalies(true)}
         >
           {detailsCount > 0 ? `Anomalies (${detailsCount})` : 'Ajouter une anomalie (facultatif)'}
