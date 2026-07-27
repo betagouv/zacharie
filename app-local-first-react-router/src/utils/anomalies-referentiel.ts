@@ -10,6 +10,8 @@ export type AnomalieItem = {
   intitule: string;
   infobulle: string | null;
   message: string | null;
+  // Gravité de 1 (bénin) à 4 (danger), null quand le référentiel ne la renseigne pas.
+  alert_level: number | null;
   // Noms de fichiers d'images (servies depuis /anomalies/), vide si aucune photo.
   photos: string[];
 };
@@ -18,6 +20,8 @@ export type AnomalieReferentielSection = {
   groupe: string;
   site: string | null;
   anomalies: AnomalieItem[];
+  // Libellé de la saisie libre proposée par la famille, null si elle n'en propose pas.
+  champ_libre: string | null;
 };
 
 export type AnomalieReferentiel = AnomalieReferentielSection[];

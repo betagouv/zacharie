@@ -85,28 +85,56 @@ export function buildAnomaliePickerSections({
     const sectionCanonicals = new Set(section.anomalies.map((a) => canonicalOf(a.intitule, section.site)));
     const selected = storedValues.filter((c) => sectionCanonicals.has(c));
 
+    // Saisie libre de la famille : stockée comme les autres, suffixée par le site
+    // (« mon texte - Externe »), pour que l'aval sache de quel organe on parle. Le suffixe est
+    // retiré à l'affichage, il n'apporte rien quand on est déjà dans la famille.
+    const suffixe = section.site ? ` - ${section.site}` : null;
+    const autres: AnomaliePickerAutres = {
+      // Sans site (petit gibier, une seule famille) le suffixe ne discrimine rien :
+      // ces valeurs relèvent du bloc global.
+      values: suffixe
+        ? storedValues
+            .filter((c) => c.endsWith(suffixe) && !sectionCanonicals.has(c))
+            .map((c) => c.slice(0, -suffixe.length))
+        : [],
+      onAdd: (value) => setValues([...storedValues, canonicalOf(value, section.site)]),
+      onRemove: (value) => setValues(storedValues.filter((c) => c !== canonicalOf(value, section.site))),
+    };
+
     return {
       groupe: section.groupe,
       site: section.site,
       anomalies: section.anomalies,
       selected,
       onToggle: (canonical) => setValues(toggleAnomalie(storedValues, canonical)),
+      champLibre: section.champ_libre,
+      autres,
     };
   });
 }
 
-// Anomalies saisies en texte libre : les valeurs du tableau carcasse absentes du référentiel.
+// Anomalies saisies en texte libre hors famille : les valeurs du tableau carcasse absentes du
+// référentiel et non suffixées par une famille connue — celles-là s'affichent dans leur famille.
 // Pas de préfixe ni de marqueur à maintenir, et une valeur devenue orpheline (référentiel modifié)
 // reste visible et supprimable au lieu de disparaître.
 export function buildAutresAnomalies({
+  isPetitGibier,
   anomaliesCarcasse,
   setAnomaliesCarcasse,
 }: {
+  isPetitGibier: boolean;
   anomaliesCarcasse: string[];
   setAnomaliesCarcasse: (next: string[]) => void;
 }): AnomaliePickerAutres {
+  const suffixes = getReferentiel(isPetitGibier)
+    .map((section) => section.site)
+    .filter(Boolean)
+    .map((site) => ` - ${site}`);
+
   return {
-    values: anomaliesCarcasse.filter((canonical) => !lookupAnomalie(canonical)),
+    values: anomaliesCarcasse.filter(
+      (canonical) => !lookupAnomalie(canonical) && !suffixes.some((s) => canonical.endsWith(s))
+    ),
     onAdd: (value) => setAnomaliesCarcasse([...anomaliesCarcasse, value]),
     onRemove: (value) => setAnomaliesCarcasse(anomaliesCarcasse.filter((c) => c !== value)),
   };
@@ -127,6 +155,7 @@ export function buildCarcasseNavSections(carcasse: Carcasse): AnomaliePickerSect
 
 export function buildCarcasseAutresAnomalies(carcasse: Carcasse): AnomaliePickerAutres {
   return buildAutresAnomalies({
+    isPetitGibier: carcasse.type === CarcasseType.PETIT_GIBIER,
     anomaliesCarcasse: carcasse.examinateur_anomalies_carcasse ?? [],
     setAnomaliesCarcasse: (next) =>
       setCarcasseAnomalie({ carcasse, field: 'examinateur_anomalies_carcasse', nextValues: next }),

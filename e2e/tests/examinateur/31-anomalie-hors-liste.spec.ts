@@ -63,10 +63,33 @@ test('Anomalie hors liste — saisie libre, persistée puis retirable', async ({
   await page.getByRole('button', { name: 'Retour' }).click();
   await expect(page.getByRole('button', { name: 'Anomalies (2)' })).toBeVisible();
 
-  // La pastille retire l'anomalie.
+  // Chemin 3 : le champ libre d'une famille, qui suffixe la valeur par le site.
   await page.getByRole('button', { name: 'Anomalies (2)' }).click();
+  await page.getByRole('button', { name: 'Externe' }).click();
+  await page.getByPlaceholder('Description de l’anomalie').fill('coloration verdâtre');
+  await page.getByRole('button', { name: 'Ajouter', exact: true }).click();
+  // Dans la famille, la pastille montre le texte seul.
+  await expect(page.getByRole('button', { name: 'Retirer coloration verdâtre' })).toBeVisible();
+  await page.getByRole('button', { name: 'Retour' }).click();
+  await page.getByRole('button', { name: 'Retour' }).click();
+  await expect(page.getByRole('button', { name: 'Anomalies (3)' })).toBeVisible();
+  await page.getByRole('dialog').getByRole('button', { name: 'Terminer' }).click();
+
+  // Rouvrir : la valeur suffixée par le site est bien retrouvée dans sa famille, et pas
+  // dans le bloc hors famille de la vue racine.
+  await page
+    .getByRole('button', { name: /Daim N°/ })
+    .first()
+    .click();
+  await page.getByRole('button', { name: 'Anomalies (3)' }).click();
+  await expect(page.getByRole('button', { name: 'Retirer coloration verdâtre' })).toBeHidden();
+  await page.getByRole('button', { name: 'Externe' }).click();
+  await expect(page.getByRole('button', { name: 'Retirer coloration verdâtre' })).toBeVisible();
+  await page.getByRole('button', { name: 'Retour' }).click();
+
+  // La pastille retire l'anomalie.
   await page.getByRole('button', { name: 'Retirer trou dans la panse' }).click();
   await expect(page.getByRole('button', { name: 'Retirer trou dans la panse' })).toBeHidden();
   await page.getByRole('button', { name: 'Retour' }).click();
-  await expect(page.getByRole('button', { name: 'Anomalies (1)' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Anomalies (2)' })).toBeVisible();
 });

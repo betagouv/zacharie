@@ -17,6 +17,14 @@ import CardCarcasse from '@app/components/CardCarcasse';
 import type { Carcasse } from '@prisma/client';
 import { lookupAnomalie } from '@app/utils/anomalies-referentiel';
 
+// Gravité du référentiel (1 bénin → 4 danger) vers la sévérité DSFR.
+// Sans niveau renseigné on reste sur l'avertissement : l'anomalie porte quand même un message.
+function alertSeverity(alertLevel: number | null): 'info' | 'warning' | 'error' {
+  if (alertLevel === 4) return 'error';
+  if (alertLevel === 1) return 'info';
+  return 'warning';
+}
+
 export default function CarcassesExaminateur({
   canEdit,
   canEditAsPremierDetenteur,
@@ -82,7 +90,7 @@ export default function CarcassesExaminateur({
   const { total: anomaliesTotal, avecMessage: anomaliesAvecMessage } = useMemo(() => {
     let total = 0;
     const seen = new Set<string>();
-    const avecMessage: Array<{ intitule: string; message: string }> = [];
+    const avecMessage: Array<{ intitule: string; message: string; alertLevel: number | null }> = [];
     for (const carcasse of carcasses) {
       const canonicals = [
         ...(carcasse.examinateur_anomalies_carcasse ?? []),
@@ -94,10 +102,16 @@ export default function CarcassesExaminateur({
         seen.add(canonical);
         const found = lookupAnomalie(canonical);
         if (found?.item.message) {
-          avecMessage.push({ intitule: found.item.intitule, message: found.item.message });
+          avecMessage.push({
+            intitule: found.item.intitule,
+            message: found.item.message,
+            alertLevel: found.item.alert_level,
+          });
         }
       }
     }
+    // Les plus graves en tête ; celles dont le référentiel ne donne pas le niveau ferment la marche.
+    avecMessage.sort((a, b) => (b.alertLevel ?? 0) - (a.alertLevel ?? 0));
     return { total, avecMessage };
   }, [carcasses]);
 
@@ -206,10 +220,10 @@ export default function CarcassesExaminateur({
                 <p className="mb-0">
                   Vous avez renseigné {anomaliesTotal} anomalie{anomaliesTotal > 1 ? 's' : ''}.
                 </p>
-                {anomaliesAvecMessage.map(({ intitule, message }) => (
+                {anomaliesAvecMessage.map(({ intitule, message, alertLevel }) => (
                   <Alert
                     key={intitule}
-                    severity="warning"
+                    severity={alertSeverity(alertLevel)}
                     title={intitule}
                     description={message}
                   />
