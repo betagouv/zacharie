@@ -3,8 +3,13 @@ import dayjs from 'dayjs';
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import { createHistoryInput } from '@app/utils/create-history-entry';
-import type { AnomaliePickerSection } from '@app/components/AnomaliePicker';
-import { canonicalOf, getReferentiel, toggleAnomalie } from '@app/utils/anomalies-referentiel';
+import type { AnomaliePickerAutres, AnomaliePickerSection } from '@app/components/AnomaliePicker';
+import {
+  canonicalOf,
+  getReferentiel,
+  lookupAnomalie,
+  toggleAnomalie,
+} from '@app/utils/anomalies-referentiel';
 
 type AnomalieField = 'examinateur_anomalies_carcasse' | 'examinateur_anomalies_abats';
 
@@ -90,6 +95,23 @@ export function buildAnomaliePickerSections({
   });
 }
 
+// Anomalies saisies en texte libre : les valeurs du tableau carcasse absentes du référentiel.
+// Pas de préfixe ni de marqueur à maintenir, et une valeur devenue orpheline (référentiel modifié)
+// reste visible et supprimable au lieu de disparaître.
+export function buildAutresAnomalies({
+  anomaliesCarcasse,
+  setAnomaliesCarcasse,
+}: {
+  anomaliesCarcasse: string[];
+  setAnomaliesCarcasse: (next: string[]) => void;
+}): AnomaliePickerAutres {
+  return {
+    values: anomaliesCarcasse.filter((canonical) => !lookupAnomalie(canonical)),
+    onAdd: (value) => setAnomaliesCarcasse([...anomaliesCarcasse, value]),
+    onRemove: (value) => setAnomaliesCarcasse(anomaliesCarcasse.filter((c) => c !== value)),
+  };
+}
+
 // Variante branchée sur le store, pour une carcasse existante (édition / synthèse).
 export function buildCarcasseNavSections(carcasse: Carcasse): AnomaliePickerSection[] {
   return buildAnomaliePickerSections({
@@ -100,5 +122,13 @@ export function buildCarcasseNavSections(carcasse: Carcasse): AnomaliePickerSect
       setCarcasseAnomalie({ carcasse, field: 'examinateur_anomalies_carcasse', nextValues: next }),
     setAnomaliesAbats: (next) =>
       setCarcasseAnomalie({ carcasse, field: 'examinateur_anomalies_abats', nextValues: next }),
+  });
+}
+
+export function buildCarcasseAutresAnomalies(carcasse: Carcasse): AnomaliePickerAutres {
+  return buildAutresAnomalies({
+    anomaliesCarcasse: carcasse.examinateur_anomalies_carcasse ?? [],
+    setAnomaliesCarcasse: (next) =>
+      setCarcasseAnomalie({ carcasse, field: 'examinateur_anomalies_carcasse', nextValues: next }),
   });
 }
