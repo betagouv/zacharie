@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { canonicalOf, normalizeText, type AnomalieItem } from '@app/utils/anomalies-referentiel';
@@ -96,10 +97,12 @@ export default function AnomaliePicker({
   }, [handleBack]);
 
   return (
-    // Hauteur fixe : la modale hôte ne doit pas se redimensionner selon le nombre d'anomalies affichées.
+    // Un plancher de hauteur, pour que la modale hôte ne saute pas d'une vue à l'autre. Pas de plafond :
+    // le corps de la modale DSFR est déjà un conteneur de scroll, en ajouter un ici donnerait deux
+    // barres de défilement imbriquées.
     <div
       ref={rootRef}
-      className="flex h-[60vh] flex-col gap-3 overflow-hidden"
+      className="flex min-h-64 flex-col gap-3"
     >
       <div className="flex shrink-0 items-center gap-2">
         {showBack && (
@@ -132,7 +135,7 @@ export default function AnomaliePicker({
         </span>
       )}
 
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div>
         {normalizedQuery.length > 0 ? (
           /* --- Résultats de recherche --- */
           <div className="flex flex-col gap-2">
@@ -293,16 +296,17 @@ function AnomalieItemRow({
         type="button"
         aria-pressed={isSelected}
         onClick={onToggle}
-        className="flex flex-1 items-center justify-between gap-2 px-3 py-2 text-left text-sm text-gray-900"
+        className="flex flex-1 items-center justify-between gap-3 px-3 py-2 text-left text-sm text-gray-900"
       >
         <span className="flex flex-col">
           <span className="font-medium">{item.intitule}</span>
           {context && <span className="text-xs text-gray-500">{context}</span>}
         </span>
+        {/* Rond vide / rond plein : c'est lui qui signale qu'on peut sélectionner. */}
         <span
           className={[
-            'fr-icon-check-line fr-icon--sm shrink-0',
-            isSelected ? 'text-[#000091]' : 'text-transparent',
+            'shrink-0',
+            isSelected ? 'fr-icon-checkbox-fill text-[#000091]' : 'fr-icon-checkbox-line text-gray-400',
           ].join(' ')}
           aria-hidden
         />
@@ -342,7 +346,11 @@ function PhotoOverlay({ item, onClose }: { item: AnomalieItem; onClose: () => vo
     };
   }, [onClose, go, photos.length]);
 
-  return (
+  // Rendu dans <body> et pas sur place : la modale DSFR pose un `filter: drop-shadow` sur
+  // `.fr-modal__body`, ce qui en fait un bloc conteneur pour `position: fixed`. Sans le portail,
+  // l'overlay se cale sur la modale — taille variable, photo plus ou moins grande, et la liste
+  // d'anomalies continue de scroller derrière.
+  return createPortal(
     <div
       className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/90 p-4"
       onClick={onClose}
@@ -434,6 +442,7 @@ function PhotoOverlay({ item, onClose }: { item: AnomalieItem; onClose: () => vo
           {item.infobulle && <span className="mt-1 block text-sm text-white/80">{item.infobulle}</span>}
         </figcaption>
       </figure>
-    </div>
+    </div>,
+    document.body
   );
 }
