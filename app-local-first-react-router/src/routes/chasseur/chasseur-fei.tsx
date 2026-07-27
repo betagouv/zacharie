@@ -124,9 +124,26 @@ function FEIChasseurLoaded() {
     setDebugCreating(false);
   };
 
-  const [allCarcassesConfirmed, setAllCarcassesConfirmed] = useState(
-    !!fei.heure_mise_a_mort_premiere_carcasse
+  // La confirmation de l'examen ne vaut que pour l'état des carcasses au clic sur « Continuer » :
+  // ajouter, modifier ou retirer une carcasse l'invalide, ce qui replie les blocs suivants et fait
+  // repasser par la modale d'avertissement des anomalies.
+  const carcassesExamenSignature = useMemo(
+    () =>
+      carcasses
+        .map((c) =>
+          [
+            c.zacharie_carcasse_id,
+            (c.examinateur_anomalies_carcasse ?? []).join(','),
+            (c.examinateur_anomalies_abats ?? []).join(','),
+          ].join(':')
+        )
+        .join('|'),
+    [carcasses]
   );
+  const [confirmedSignature, setConfirmedSignature] = useState<string | null>(() =>
+    fei.heure_mise_a_mort_premiere_carcasse ? carcassesExamenSignature : null
+  );
+  const allCarcassesConfirmed = confirmedSignature === carcassesExamenSignature;
   const [approbation, setApprobation] = useState(
     fei.examinateur_initial_approbation_mise_sur_le_marche ? true : false
   );
@@ -327,12 +344,14 @@ function FEIChasseurLoaded() {
     !canEdit ||
     !!(
       showBloc2 &&
+      allCarcassesConfirmed &&
       carcasses.length >= 1 &&
       !fei.consommateur_final_usage_domestique &&
       fei.heure_mise_a_mort_premiere_carcasse &&
       (onlyPetitGibier || fei.heure_evisceration_derniere_carcasse)
     );
-  const showBloc4 = fei.consommateur_final_usage_domestique || showBloc3;
+  const showBloc4 =
+    (!canEdit || allCarcassesConfirmed) && (fei.consommateur_final_usage_domestique || showBloc3);
 
   const handleTransmettre = () => {
     // Compte pas encore activé (CFEI non validé) : la fiche peut être préparée mais pas transmise.
@@ -537,8 +556,7 @@ function FEIChasseurLoaded() {
                     canEdit={canEdit}
                     canEditAsPremierDetenteur={canEditAsPremierDetenteur}
                     allCarcassesConfirmed={allCarcassesConfirmed}
-                    onAllCarcassesConfirmed={() => setAllCarcassesConfirmed(true)}
-                    onAddMoreCarcasses={() => setAllCarcassesConfirmed(false)}
+                    onAllCarcassesConfirmed={() => setConfirmedSignature(carcassesExamenSignature)}
                   />
                   {fieldHasError('carcasses') && (
                     <p className="fr-error-text mt-2">{fieldErrorMessage('carcasses')}</p>

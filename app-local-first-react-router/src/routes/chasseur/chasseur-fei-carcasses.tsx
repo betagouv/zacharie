@@ -22,13 +22,11 @@ export default function CarcassesExaminateur({
   canEditAsPremierDetenteur,
   allCarcassesConfirmed,
   onAllCarcassesConfirmed,
-  onAddMoreCarcasses,
 }: {
   canEdit: boolean;
   canEditAsPremierDetenteur: boolean;
   allCarcassesConfirmed: boolean;
   onAllCarcassesConfirmed: () => void;
-  onAddMoreCarcasses: () => void;
 }) {
   const params = useParams();
   const feis = useZustandStore((state) => state.feis);
@@ -74,11 +72,9 @@ export default function CarcassesExaminateur({
   const [addFooter, setAddFooter] = useState({ label: 'Ajouter la carcasse', disabled: true });
   const onAddFooterChange = useCallback((f: { label: string; disabled: boolean }) => setAddFooter(f), []);
 
-  // Ajouter une carcasse « invalide » la confirmation (les heures doivent être ressaisies).
-  const openAddModal = () => {
-    if (allCarcassesConfirmed) onAddMoreCarcasses();
-    addModal.open();
-  };
+  // La confirmation est invalidée par le parent dès qu'une carcasse est créée ou modifiée :
+  // ouvrir puis refermer cette modale sans rien créer ne change donc rien.
+  const openAddModal = () => addModal.open();
 
   // Synthèse des anomalies renseignées sur l'ensemble des carcasses de la fiche,
   // pour la modale de confirmation. `total` = nombre total renseigné ;

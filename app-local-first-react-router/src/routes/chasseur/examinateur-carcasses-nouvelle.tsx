@@ -255,7 +255,7 @@ export default function NouvelleCarcasse({
       />
       <div className="my-2">
         <Button
-          disabled={!espece}
+          disabled={!espece || !numeroBracelet}
           type="button"
           priority="secondary"
           iconId="fr-icon-add-line"
