@@ -736,9 +736,9 @@ export default function SviCarcasses() {
   };
 
   const handleDownloadCertificats = () => {
-    if (isDownloading || !isOnline || selectedCarcassesIds.length === 0) return;
-    trackFeature('registre-svi-carcasses', 'certificats-zip', undefined, selectedCarcassesIds.length);
-    onDownloadCertificats(selectedCarcassesIds);
+    if (isDownloading || !isOnline || selectedCarcasses.length === 0) return;
+    trackFeature('registre-svi-carcasses', 'certificats-zip', undefined, selectedCarcasses.length);
+    onDownloadCertificats(selectedCarcasses.map((c) => c.zacharie_carcasse_id));
   };
 
   const sidebarContent = (
@@ -1375,14 +1375,14 @@ export default function SviCarcasses() {
                   {
                     linkProps: {
                       href: '#',
-                      'aria-disabled': selectedCarcassesIds.length === 0 || !isOnline || isDownloading,
+                      'aria-disabled': selectedCarcasses.length === 0 || !isOnline || isDownloading,
                       className:
-                        selectedCarcassesIds.length === 0 || !isOnline || isDownloading
+                        selectedCarcasses.length === 0 || !isOnline || isDownloading
                           ? 'cursor-not-allowed opacity-50'
                           : '',
                       title: !isOnline
                         ? 'Le téléchargement des certificats nécessite une connexion internet'
-                        : selectedCarcassesIds.length === 0
+                        : selectedCarcasses.length === 0
                           ? 'Sélectionnez des carcasses avec la case à cocher'
                           : '',
                       onClick: (e) => {
@@ -1390,7 +1390,7 @@ export default function SviCarcasses() {
                         handleDownloadCertificats();
                       },
                     },
-                    text: `Télécharger les certificats (${selectedCarcassesIds.length})`,
+                    text: `Télécharger les certificats (${selectedCarcasses.length})`,
                   },
                   {
                     linkProps: {
