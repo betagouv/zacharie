@@ -38,7 +38,7 @@ export function useCarcasseStatusAndRefus(carcasse: Carcasse) {
           carcasse.intermediaire_carcasse_refus_intermediaire_id!
         );
         const carcasseIntermediaire = carcassesIntermediaires[id];
-        const entity = entities[carcasseIntermediaire.intermediaire_entity_id!];
+        const entity = entities[carcasseIntermediaire?.intermediaire_entity_id!];
         const manquant = carcasse.type === CarcasseType.PETIT_GIBIER ? 'Manquant' : 'Manquante';
         return `${manquant} au moment de la collecte par ${entity?.nom_d_usage}`;
       }
@@ -50,9 +50,9 @@ export function useCarcasseStatusAndRefus(carcasse: Carcasse) {
           carcasse.intermediaire_carcasse_refus_intermediaire_id!
         );
         const carcasseIntermediaire = carcassesIntermediaires[id];
-        const entity = entities[carcasseIntermediaire.intermediaire_entity_id!];
+        const entity = entities[carcasseIntermediaire?.intermediaire_entity_id!];
         const refusé = carcasse.type === CarcasseType.PETIT_GIBIER ? 'Refusé' : 'Refusée';
-        let refus = `${refusé} par ${entity.nom_d_usage}`;
+        let refus = `${refusé} par ${entity?.nom_d_usage}`;
         if (carcasse.intermediaire_carcasse_refus_motif) {
           refus += `\u00A0: ${carcasse.intermediaire_carcasse_refus_motif}`;
         }
@@ -81,7 +81,7 @@ export function useCarcasseStatusAndRefus(carcasse: Carcasse) {
           carcasse.intermediaire_carcasse_refus_intermediaire_id!
         );
         const carcasseIntermediaire = carcassesIntermediaires[id];
-        const entity = entities[carcasseIntermediaire.intermediaire_entity_id!];
+        const entity = entities[carcasseIntermediaire?.intermediaire_entity_id!];
         return `manquant pour ${entity?.nom_d_usage}`;
       }
       case CarcasseStatus.MANQUANTE_SVI:
@@ -92,8 +92,8 @@ export function useCarcasseStatusAndRefus(carcasse: Carcasse) {
           carcasse.intermediaire_carcasse_refus_intermediaire_id!
         );
         const carcasseIntermediaire = carcassesIntermediaires[id];
-        const entity = entities[carcasseIntermediaire.intermediaire_entity_id!];
-        return `refusé par ${entity.nom_d_usage}`;
+        const entity = entities[carcasseIntermediaire?.intermediaire_entity_id!];
+        return `refusé par ${entity?.nom_d_usage}`;
       }
       case CarcasseStatus.SAISIE_TOTALE:
       case CarcasseStatus.SAISIE_PARTIELLE: {

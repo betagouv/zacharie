@@ -2,7 +2,7 @@ import express from 'express';
 const router: express.Router = express.Router();
 import passport from 'passport';
 import { catchErrors } from '~/middlewares/errors';
-import type { CarcassesGetResponse } from '~/types/responses';
+import type { CarcassesGetResponse, CarcassesRefuseesResponse } from '~/types/responses';
 import prisma from '~/prisma';
 import {
   EntityRelationStatus,
@@ -33,6 +33,71 @@ const zodQuerySchema = z.object({
   withDeleted: z.string(),
 });
 
+// Périmètre d'accès aux carcasses selon le rôle. Retourne le WHERE Prisma (ou null si rôle non
+// supporté). Partagé entre le pull delta `/carcasse` et la route `/carcasse/refusees/:fei_numero`
+// pour garantir une autorisation strictement identique entre les deux.
+async function getCarcasseAccessWhere(
+  user: RequestWithUser['user']
+): Promise<Prisma.CarcasseWhereInput | null> {
+  const userEntityRelations = await prisma.entityAndUserRelations.findMany({
+    where: {
+      owner_id: user.id,
+      relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+      status: { in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER] },
+    },
+    select: { entity_id: true },
+  });
+  const userEntityIds = userEntityRelations.map((r) => r.entity_id);
+
+  if (user.roles.includes(UserRoles.SVI)) {
+    return {
+      svi_assigned_at: { not: null },
+      OR: [{ svi_entity_id: { in: userEntityIds } }, { next_owner_entity_id: { in: userEntityIds } }],
+    };
+  }
+  if (user.roles.includes(UserRoles.CHASSEUR)) {
+    return {
+      OR: [
+        { premier_detenteur_user_id: user.id },
+        { examinateur_initial_user_id: user.id },
+        // Désignation du premier détenteur (asso) : on n'expose la fiche aux membres de l'entité
+        // qu'une fois la fiche réellement transmise (sortie de l'examinateur initial).
+        {
+          premier_detenteur_entity_id: { in: userEntityIds },
+          current_owner_role: { not: FeiOwnerRole.EXAMINATEUR_INITIAL },
+        },
+        {
+          next_owner_entity_id: { in: userEntityIds },
+          current_owner_role: { not: FeiOwnerRole.EXAMINATEUR_INITIAL },
+        },
+        { prev_owner_entity_id: { in: userEntityIds } },
+        { current_owner_entity_id: { in: userEntityIds } },
+        { next_owner_user_id: user.id },
+        { prev_owner_user_id: user.id },
+        { current_owner_user_id: user.id },
+      ],
+    };
+  }
+  if (
+    user.roles.includes(UserRoles.ETG) ||
+    user.roles.includes(UserRoles.COLLECTEUR_PRO) ||
+    user.roles.includes(UserRoles.COMMERCE_DE_DETAIL) ||
+    user.roles.includes(UserRoles.CANTINE_OU_RESTAURATION_COLLECTIVE) ||
+    user.roles.includes(UserRoles.ASSOCIATION_CARITATIVE) ||
+    user.roles.includes(UserRoles.REPAS_DE_CHASSE_OU_ASSOCIATIF) ||
+    user.roles.includes(UserRoles.CONSOMMATEUR_FINAL)
+  ) {
+    return {
+      OR: [
+        { CarcasseIntermediaire: { some: { intermediaire_entity_id: { in: userEntityIds } } } },
+        { next_owner_entity_id: { in: userEntityIds } },
+        { current_owner_entity_id: { in: userEntityIds } },
+      ],
+    };
+  }
+  return null;
+}
+
 router.get(
   '/',
   passport.authenticate('user', { session: false }),
@@ -62,96 +127,9 @@ router.get(
     const includeDeleted = withDeleted === 'true';
     const afterDate = Number(after) ? new Date(Number(after)) : undefined;
 
-    // Base query conditions
-    let where: Prisma.CarcasseWhereInput = {};
-
-    // Pre-fetch entity IDs the user works for (used in carcasse-level queries)
-    const userEntityRelations = await prisma.entityAndUserRelations.findMany({
-      where: {
-        owner_id: req.user.id,
-        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-        status: { in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER] },
-      },
-      select: { entity_id: true },
-    });
-    const userEntityIds = userEntityRelations.map((r) => r.entity_id);
-
-    if (req.user.roles.includes(UserRoles.SVI)) {
-      where = {
-        svi_assigned_at: { not: null },
-        OR: [
-          {
-            svi_entity_id: { in: userEntityIds },
-          },
-          {
-            next_owner_entity_id: { in: userEntityIds },
-          },
-        ],
-      };
-    } else if (req.user.roles.includes(UserRoles.CHASSEUR)) {
-      where = {
-        OR: [
-          {
-            premier_detenteur_user_id: req.user.id,
-          },
-          {
-            examinateur_initial_user_id: req.user.id,
-          },
-          // Désignation du premier détenteur (asso) : on n'expose la fiche aux membres de
-          // l'entité qu'une fois la fiche réellement transmise (sortie de l'examinateur initial),
-          // pas dès la simple désignation en cours de préparation.
-          {
-            premier_detenteur_entity_id: { in: userEntityIds },
-            current_owner_role: { not: FeiOwnerRole.EXAMINATEUR_INITIAL },
-          },
-          {
-            next_owner_entity_id: { in: userEntityIds },
-            current_owner_role: { not: FeiOwnerRole.EXAMINATEUR_INITIAL },
-          },
-          {
-            prev_owner_entity_id: { in: userEntityIds },
-          },
-          {
-            current_owner_entity_id: { in: userEntityIds },
-          },
-          {
-            next_owner_user_id: req.user.id,
-          },
-          {
-            prev_owner_user_id: req.user.id,
-          },
-          {
-            current_owner_user_id: req.user.id,
-          },
-        ],
-      };
-    } else if (
-      req.user.roles.includes(UserRoles.ETG) ||
-      req.user.roles.includes(UserRoles.COLLECTEUR_PRO) ||
-      req.user.roles.includes(UserRoles.COMMERCE_DE_DETAIL) ||
-      req.user.roles.includes(UserRoles.CANTINE_OU_RESTAURATION_COLLECTIVE) ||
-      req.user.roles.includes(UserRoles.ASSOCIATION_CARITATIVE) ||
-      req.user.roles.includes(UserRoles.REPAS_DE_CHASSE_OU_ASSOCIATIF) ||
-      req.user.roles.includes(UserRoles.CONSOMMATEUR_FINAL)
-    ) {
-      where = {
-        OR: [
-          {
-            CarcasseIntermediaire: {
-              some: {
-                intermediaire_entity_id: { in: userEntityIds },
-              },
-            },
-          },
-          {
-            next_owner_entity_id: { in: userEntityIds },
-          },
-          {
-            current_owner_entity_id: { in: userEntityIds },
-          },
-        ],
-      };
-    } else {
+    // Base query conditions : périmètre d'accès role-aware (partagé avec /refusees/:fei_numero).
+    const accessWhere = await getCarcasseAccessWhere(req.user);
+    if (!accessWhere) {
       capture(`User role not supported: ${req.user.roles.join(', ')}`, { user: req.user });
       res.status(403).send({
         ok: false,
@@ -160,6 +138,7 @@ router.get(
       });
       return;
     }
+    const where: Prisma.CarcasseWhereInput = { ...accessWhere };
 
     if (!includeDeleted) {
       where.deleted_at = null;
@@ -253,6 +232,86 @@ router.get(
         hasMore: carcasses.length === parsedLimit,
         total,
       },
+      error: '',
+    });
+  })
+);
+
+// Carcasses d'une fiche hors du périmètre de synchro delta de l'utilisateur : refusées, manquantes
+// ou orphelines. Une carcasse refusée « sort du circuit » (ses next/current_owner ne suivent plus la
+// transmission de la fiche) et son updated_at ne rebouge pas ensuite : le pull delta /carcasse ne la
+// renvoie donc jamais aux détenteurs suivants ni au SVI, alors qu'elle fait partie de leur champ de
+// contrôle. Cette route les fournit à la demande (à l'ouverture d'une fiche), pour merge dans le store.
+router.get(
+  '/refusees/:fei_numero',
+  passport.authenticate('user', { session: false }),
+  catchErrors(async (req: RequestWithUser, res: express.Response<CarcassesRefuseesResponse>) => {
+    if (!req.user.activated) {
+      res.status(400).send({ ok: false, data: null, error: "Le compte n'est pas activé" });
+      return;
+    }
+    const feiNumero = req.params.fei_numero;
+    if (!feiNumero) {
+      res.status(400).send({ ok: false, data: null, error: 'Le numéro de fiche est obligatoire' });
+      return;
+    }
+
+    const accessWhere = await getCarcasseAccessWhere(req.user);
+    if (!accessWhere) {
+      capture(`User role not supported: ${req.user.roles.join(', ')}`, { user: req.user });
+      res.status(403).send({ ok: false, data: null, error: "Vous n'avez pas les permissions." });
+      return;
+    }
+
+    // Autorisation : l'utilisateur doit avoir accès à au moins une carcasse de la fiche (via son
+    // périmètre normal) pour consulter les carcasses hors périmètre de cette même fiche.
+    const inScopeCount = await prisma.carcasse.count({
+      where: { fei_numero: feiNumero, ...accessWhere },
+    });
+    if (inScopeCount === 0) {
+      res.status(403).send({ ok: false, data: null, error: "Vous n'avez pas accès à cette fiche." });
+      return;
+    }
+
+    // Les carcasses de la fiche hors périmètre normal (refusées/manquantes/orphelines).
+    const carcasses = await prisma.carcasse.findMany({
+      where: { fei_numero: feiNumero, NOT: accessWhere },
+    });
+
+    const carcasseIds = carcasses.map((c) => c.zacharie_carcasse_id);
+    const carcassesIntermediaires = carcasseIds.length
+      ? await prisma.carcasseIntermediaire.findMany({
+          where: { zacharie_carcasse_id: { in: carcasseIds } },
+        })
+      : [];
+
+    // Entités référencées par ces carcasses et leurs intermédiaires (noms des destinataires, motifs
+    // de refus) — nécessaires à l'affichage côté front.
+    const entityIds = new Set<string>();
+    for (const c of carcasses) {
+      if (c.current_owner_entity_id) entityIds.add(c.current_owner_entity_id);
+      if (c.next_owner_entity_id) entityIds.add(c.next_owner_entity_id);
+      if (c.prev_owner_entity_id) entityIds.add(c.prev_owner_entity_id);
+      if (c.svi_entity_id) entityIds.add(c.svi_entity_id);
+      if (c.latest_intermediaire_entity_id) entityIds.add(c.latest_intermediaire_entity_id);
+    }
+    for (const i of carcassesIntermediaires) {
+      if (i.intermediaire_entity_id) entityIds.add(i.intermediaire_entity_id);
+      if (i.intermediaire_depot_entity_id) entityIds.add(i.intermediaire_depot_entity_id);
+    }
+    const entities = (
+      await prisma.entity.findMany({ where: { id: { in: [...entityIds].filter(Boolean) } } })
+    ).map(
+      (entity): EntityWithUserRelation => ({
+        ...entity,
+        relation: EntityRelationType.NONE,
+        relationStatus: undefined,
+      })
+    );
+
+    res.status(200).json({
+      ok: true,
+      data: { carcasses, carcassesIntermediaires, entities },
       error: '',
     });
   })
