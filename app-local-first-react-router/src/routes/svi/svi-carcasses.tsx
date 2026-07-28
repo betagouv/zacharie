@@ -31,6 +31,7 @@ import { loadData, useLoaderEffect } from '@app/utils/load-data';
 import { useTransmissions } from '@app/utils/get-transmissions-sorted';
 import { getSaisonStartYear, getSaisonLabel, isDateInSaison } from '@app/utils/get-saison';
 import { trackFeature, trackSearch } from '@app/services/matomo';
+import { capture } from '@app/services/sentry';
 import type { Carcasse } from '@prisma/client';
 import type { TransmissionSimpleStatus } from '@app/types/transmission-steps';
 import { getTransmissionId, getTransmissionLinkFromCarcasse } from '@app/utils/get-transmission-id';
@@ -755,6 +756,9 @@ export default function SviCarcasses() {
         toast.info(content);
       }
       setSelectedCarcassesIds([]);
+    } catch (error) {
+      capture(error as Error, { extra: { carcasses: acceptableCarcasses.length } });
+      toast.error("Une erreur est survenue lors de l'acceptation des carcasses");
     } finally {
       setIsAccepting(false);
       setAcceptProgress(null);
