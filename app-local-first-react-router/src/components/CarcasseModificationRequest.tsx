@@ -37,15 +37,19 @@ export function PendingModificationBanner({ carcasse }: { carcasse: Carcasse }) 
 
   if (!pending) return null;
 
-  const title =
-    pending.type === CarcasseModificationRequestType.BRACELET_RENAME
-      ? `Demande de modification du numéro de marquage en cours`
-      : `Carcasse ajoutée, approbation de mise sur le marché en attente`;
+  const isRename = pending.type === CarcasseModificationRequestType.BRACELET_RENAME;
 
-  const detail =
-    pending.type === CarcasseModificationRequestType.BRACELET_RENAME
-      ? `Le numéro physique semble être « ${pending.numero_bracelet_after} » au lieu de « ${pending.numero_bracelet_before} ». L'examinateur initial doit approuver ou refuser ce changement.`
-      : `Cette carcasse n'est pas encore validée par l'examinateur initial et ne sera pas inspectée par le SVI tant que l'approbation de mise sur le marché n'est pas faite.`;
+  // La demande est purement indicative : elle ne bloque ni la transmission ni l'inspection SVI.
+  // On garde donc une sévérité douce (info pour le renommage de marquage).
+  const severity = isRename ? 'info' : 'warning';
+
+  const title = isRename
+    ? `Modification du numéro de marquage`
+    : `Carcasse ajoutée, approbation de mise sur le marché en attente`;
+
+  const detail = isRename
+    ? `Le numéro physique relevé serait « ${pending.numero_bracelet_after} » au lieu de « ${pending.numero_bracelet_before} ». En attente de confirmation par l'examinateur initial.`
+    : `Cette carcasse a été ajoutée par un intermédiaire et n'est pas encore validée par l'examinateur initial.`;
 
   const requester = [requestedByUser?.prenom, requestedByUser?.nom_de_famille].filter(Boolean).join(' ');
   const entityName = requestedByEntity?.nom_d_usage ?? '';
@@ -71,7 +75,7 @@ export function PendingModificationBanner({ carcasse }: { carcasse: Carcasse }) 
 
   return (
     <Alert
-      severity="warning"
+      severity={severity}
       title={title}
       description={
         <>
@@ -211,8 +215,8 @@ export function RequestBraceletRenameButton({
           />
           {error && <p className="text-action-high-red-marianne mt-1 text-sm">{error}</p>}
           <p className="mt-3 text-sm opacity-80">
-            La demande sera envoyée à l'examinateur initial pour approbation. En attendant sa validation, la
-            carcasse peut être transmise au SVI mais celui-ci ne pourra pas la contrôler.
+            La demande sera envoyée à l'examinateur initial pour confirmation. En attendant, la carcasse
+            continue son parcours normalement et peut être inspectée par le SVI.
           </p>
           <div className="mt-4 flex gap-2">
             <Button

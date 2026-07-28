@@ -26,7 +26,7 @@ test('Annulation : le demandeur peut annuler sa propre demande pendante', async 
   await page.getByRole('button', { name: 'Envoyer la demande' }).click();
 
   // Pending banner attached under the card.
-  const pendingBanner = page.getByText('Demande de modification du numéro de marquage en cours').first();
+  const pendingBanner = page.getByText('Modification du numéro de marquage').first();
   await expect(pendingBanner).toBeVisible({ timeout: 10000 });
 
   // Confirm dialog → accept.
@@ -39,7 +39,7 @@ test('Annulation : le demandeur peut annuler sa propre demande pendante', async 
   await page.getByRole('button', { name: 'Annuler ma demande' }).click();
 
   // Banner gone.
-  await expect(page.getByText('Demande de modification du numéro de marquage en cours')).toHaveCount(0, {
+  await expect(page.getByText('Modification du numéro de marquage')).toHaveCount(0, {
     timeout: 10000,
   });
 
