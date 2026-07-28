@@ -90,7 +90,10 @@ export default function CarcassesExaminateur({
   const { total: anomaliesTotal, avecMessage: anomaliesAvecMessage } = useMemo(() => {
     let total = 0;
     const seen = new Set<string>();
-    const avecMessage: Array<{ intitule: string; message: string; alertLevel: number | null }> = [];
+    // On garde le canonical : un même intitulé existe dans plusieurs familles
+    // (« Abcès », « Echinococcose », « Lésions hémorragiques » sont chacun sur deux systèmes)
+    // avec des messages différents. C'est lui qui identifie l'anomalie, pas l'intitulé.
+    const avecMessage: Array<{ canonical: string; message: string; alertLevel: number | null }> = [];
     for (const carcasse of carcasses) {
       const canonicals = [
         ...(carcasse.examinateur_anomalies_carcasse ?? []),
@@ -103,7 +106,7 @@ export default function CarcassesExaminateur({
         const found = lookupAnomalie(canonical);
         if (found?.item.message) {
           avecMessage.push({
-            intitule: found.item.intitule,
+            canonical: found.canonical,
             message: found.item.message,
             alertLevel: found.item.alert_level,
           });
@@ -220,11 +223,11 @@ export default function CarcassesExaminateur({
                 <p className="mb-0">
                   Vous avez renseigné {anomaliesTotal} anomalie{anomaliesTotal > 1 ? 's' : ''}.
                 </p>
-                {anomaliesAvecMessage.map(({ intitule, message, alertLevel }) => (
+                {anomaliesAvecMessage.map(({ canonical, message, alertLevel }) => (
                   <Alert
-                    key={intitule}
+                    key={canonical}
                     severity={alertSeverity(alertLevel)}
-                    title={intitule}
+                    title={canonical}
                     description={message}
                   />
                 ))}

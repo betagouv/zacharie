@@ -39,6 +39,11 @@ test('Fiche avec anomalies abats & carcasse — persistées puis transmises', as
   await page.getByRole('button', { name: 'Système respiratoire (trachée, poumons)' }).click();
   await page.getByRole('button', { name: 'Abcès', exact: true }).click();
   await page.getByRole('button', { name: 'Retour' }).click();
+  // Second abats, homonyme du premier : « Abcès » existe sur deux systèmes, avec des
+  // messages d'avertissement différents. C'est le cas qui distingue les alertes par famille.
+  await page.getByRole('button', { name: 'Système digestif (foie, intestins)' }).click();
+  await page.getByRole('button', { name: 'Abcès', exact: true }).click();
+  await page.getByRole('button', { name: 'Retour' }).click();
   // Anomalie carcasse : site → anomalie
   await page.getByRole('button', { name: 'Externe' }).click();
   await page.getByRole('button', { name: 'Abcès unique', exact: true }).click();
@@ -48,18 +53,23 @@ test('Fiche avec anomalies abats & carcasse — persistées puis transmises', as
 
   await page.getByRole('button', { name: 'Ajouter la carcasse' }).click();
 
-  // Step 3: Rouvrir la carcasse — les 2 anomalies ont persisté
+  // Step 3: Rouvrir la carcasse — les 3 anomalies ont persisté
   await page
     .getByRole('button', { name: /Daim N°/ })
     .first()
     .click();
-  await expect(page.getByRole('button', { name: 'Anomalies (2)' })).toBeVisible({ timeout: 10000 });
+  await expect(page.getByRole('button', { name: 'Anomalies (3)' })).toBeVisible({ timeout: 10000 });
   await page.getByRole('dialog').getByRole('button', { name: 'Terminer' }).click();
 
   // Step 4: Continuer → modale de confirmation (anomalies renseignées) → Continuer
   await page.getByRole('button', { name: 'Continuer' }).click();
-  await expect(page.getByText('Vous avez renseigné 2 anomalies')).toBeVisible();
-  await page.getByRole('dialog').getByRole('button', { name: 'Continuer' }).click();
+  const confirmDialog = page.getByRole('dialog', { name: 'Anomalies renseignées' });
+  await expect(page.getByText('Vous avez renseigné 3 anomalies')).toBeVisible();
+  // Les deux « Abcès » sont distingués par leur famille, chacun avec son propre message.
+  await expect(confirmDialog.getByText('Abcès - Système respiratoire (trachée, poumons)')).toBeVisible();
+  await expect(confirmDialog.getByText('Abcès - Système digestif (foie, intestins)')).toBeVisible();
+  await expect(confirmDialog.getByText('Abcès unique - Externe')).toBeVisible();
+  await confirmDialog.getByRole('button', { name: 'Continuer' }).click();
 
   // Step 5: Heures + transmission
   await page
