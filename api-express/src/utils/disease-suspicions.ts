@@ -6,133 +6,112 @@ import { CarcasseType } from '@prisma/client';
  * vétérinaire — c'est un signal de veille terrain.
  *
  * Référentiel utilisé pour le mapping :
- *  - app-local-first-react-router/src/data/grand-gibier-carcasse/list.json
- *  - app-local-first-react-router/src/data/grand-gibier-abats/list.json
- *  - app-local-first-react-router/src/data/petit-gibier-carcasse/list.json
+ *  - app-local-first-react-router/src/data/anomalies/gros.json
+ *  - app-local-first-react-router/src/data/anomalies/petit.json
+ *
+ * Les anomalies sont stockées sous forme canonique « intitulé - famille » (ou « intitulé »
+ * seul quand la famille n'a pas de site, cas du petit gibier). On compare donc des valeurs
+ * EXACTES du référentiel, pas des fragments de texte : une reformulation du référentiel doit
+ * casser bruyamment (cf. disease-suspicions.test.ts, qui vérifie que chaque constante ci-dessous
+ * existe toujours) et non éteindre la détection en silence.
+ *
+ * Le rattachement anomalie → maladie vient des messages d'avertissement du référentiel
+ * lui-même, qui nomment le risque (« risque tuberculose », « risque pestes porcines »…).
  */
 
 export const PG_POILS_ESPECES = ['Lapins', 'Lièvres', 'Autres petits gibiers à poils'];
 
-interface CarcasseLike {
+// --- Gros gibier -----------------------------------------------------------
+// « risque tuberculose » : abcès sur les abats, ganglions volumineux.
+const GG_ABATS_TUBERCULOSE = [
+  'Abcès - Système respiratoire (trachée, poumons)',
+  'Abcès - Système digestif (foie, intestins)',
+  'Ganglions volumineux (intestins) - Système digestif (foie, intestins)',
+];
+// L'abcès vu à l'examen externe reste un signal tuberculose côté carcasse.
+const GG_CARCASSE_TUBERCULOSE = ['Abcès unique - Externe'];
+
+// « risque pestes porcines » : signes hémorragiques et cœur anormal.
+const GG_ABATS_PESTE_PORCINE = [
+  'Lésions hémorragiques - Système respiratoire (trachée, poumons)',
+  'Lésions hémorragiques - Système digestif (foie, intestins)',
+  'Cœur anormal - Système circulatoire (cœur)',
+];
+
+// --- Petit gibier ----------------------------------------------------------
+// « risque tularémie » (lièvres).
+const PG_CARCASSE_TULAREMIE = [
+  'Abcès',
+  "Déformation d'une ou plusieurs articulations",
+  'Déformation de la tête',
+];
+// « risque brucellose » (petit gibier à poils).
+const PG_CARCASSE_BRUCELLOSE = ['Testicules gonflés ou consistance anormale'];
+
+export const REFERENTIEL_CANONICALS = {
+  gros: [...GG_CARCASSE_TUBERCULOSE, ...GG_ABATS_TUBERCULOSE, ...GG_ABATS_PESTE_PORCINE],
+  petit: [...PG_CARCASSE_TULAREMIE, ...PG_CARCASSE_BRUCELLOSE],
+};
+
+export interface CarcasseLike {
   type: CarcasseType | null;
   espece: string | null;
   examinateur_anomalies_carcasse: string[];
   examinateur_anomalies_abats: string[];
 }
 
-function normalize(s: string): string {
-  return s.toLowerCase();
-}
-
-function anyContains(arr: string[] | null | undefined, ...patterns: string[]): boolean {
+function anyOf(arr: string[] | null | undefined, canonicals: string[]): boolean {
   if (!arr || arr.length === 0) return false;
-  const lows = arr.map(normalize);
-  return patterns.some((p) => {
-    const pn = normalize(p);
-    return lows.some((s) => s.includes(pn));
-  });
-}
-
-function allContains(arr: string[] | null | undefined, ...patterns: string[]): boolean {
-  if (!arr || arr.length === 0) return false;
-  const lows = arr.map(normalize);
-  return lows.some((s) => patterns.every((p) => s.includes(normalize(p))));
+  return arr.some((anomalie) => canonicals.includes(anomalie));
 }
 
 /**
  * Tuberculose bovine — grand gibier uniquement.
- * Carcasse : abcès ou nodules (uniques ou multiples).
- * Abats : abcès dans appareils respiratoire / digestif / génito-urinaire / rate,
- *         + anomalies estomac/intestin (consistance ou couleur).
+ * Carcasse : abcès à l'examen externe.
+ * Abats : abcès sur les systèmes respiratoire / digestif, ganglions volumineux.
  */
 export function matchTuberculose(c: CarcasseLike): boolean {
   if (c.type !== CarcasseType.GROS_GIBIER) return false;
 
-  const carcasseHit = anyContains(c.examinateur_anomalies_carcasse, 'abcès ou nodules');
-
-  const abatsAbces =
-    allContains(c.examinateur_anomalies_abats, 'abcès ou nodules', 'appareil respiratoire') ||
-    allContains(c.examinateur_anomalies_abats, 'abcès ou nodules', 'appareil digestif') ||
-    allContains(c.examinateur_anomalies_abats, 'abcès ou nodules', 'appareil génito-urinaire') ||
-    allContains(c.examinateur_anomalies_abats, 'abcès ou nodules', '(rate)');
-
-  const abatsEstomac =
-    allContains(c.examinateur_anomalies_abats, 'estomac/intestin', 'anomalies de consistance') ||
-    allContains(c.examinateur_anomalies_abats, 'estomac/intestin', 'anomalies de couleur');
-
-  return carcasseHit || abatsAbces || abatsEstomac;
+  return (
+    anyOf(c.examinateur_anomalies_carcasse, GG_CARCASSE_TUBERCULOSE) ||
+    anyOf(c.examinateur_anomalies_abats, GG_ABATS_TUBERCULOSE)
+  );
 }
 
 /**
  * Pestes porcines — sanglier uniquement.
- * Carcasse : hémorragies multiples.
- * Abats : lésions hémorragiques (circulatoire), anomalies estomac/intestin,
- *         micro-hémorragies reins, anomalies rate (consistance / couleur).
+ * Abats : lésions hémorragiques (respiratoire ou digestif), cœur anormal — ce sont les
+ * anomalies dont le référentiel dit « si sanglier […] risque pestes porcines ».
  */
 export function matchPestePorcine(c: CarcasseLike): boolean {
   if (c.type !== CarcasseType.GROS_GIBIER) return false;
   if (c.espece !== 'Sanglier') return false;
 
-  const carcasseHit = anyContains(c.examinateur_anomalies_carcasse, 'hémorragies multiples');
-
-  const abatsHit =
-    allContains(c.examinateur_anomalies_abats, 'appareil circulatoire', 'hémorragique') ||
-    allContains(c.examinateur_anomalies_abats, 'estomac/intestin', 'anomalies de consistance') ||
-    allContains(c.examinateur_anomalies_abats, 'estomac/intestin', 'anomalies de couleur') ||
-    allContains(c.examinateur_anomalies_abats, 'micro hémorragies', 'rein') ||
-    allContains(c.examinateur_anomalies_abats, 'micro-hémorragies', 'rein') ||
-    allContains(c.examinateur_anomalies_abats, '(rate)', 'anomalies de consistance') ||
-    allContains(c.examinateur_anomalies_abats, '(rate)', 'anomalies de couleur');
-
-  return carcasseHit || abatsHit;
+  return anyOf(c.examinateur_anomalies_abats, GG_ABATS_PESTE_PORCINE);
 }
 
 /**
- * Brucellose — grand gibier OU petit gibier à poils.
- * GG carcasse : déformation d'une ou plusieurs articulations.
- * GG abats : consistance anormalement ferme sur appareil génital.
- * PG : testicules gonflés OU consistance ferme des testicules.
+ * Brucellose — petit gibier à poils uniquement : testicules gonflés ou de consistance anormale.
+ *
+ * Le grand gibier n'a plus de déclencheur : le référentiel ne décrit plus d'anomalie des
+ * articulations ni de l'appareil génital (les familles « Système reproducteur (testicules) »
+ * et « Système urinaire (reins) » du CSV sont vides). À rebrancher si elles sont renseignées.
  */
 export function matchBrucellose(c: CarcasseLike): boolean {
-  const isGg = c.type === CarcasseType.GROS_GIBIER;
   const isPgPoils = c.type === CarcasseType.PETIT_GIBIER && !!c.espece && PG_POILS_ESPECES.includes(c.espece);
-  if (!isGg && !isPgPoils) return false;
+  if (!isPgPoils) return false;
 
-  if (isGg) {
-    const carcasseHit = anyContains(
-      c.examinateur_anomalies_carcasse,
-      "déformation d'une ou plusieurs articulations"
-    );
-    const abatsHit = allContains(
-      c.examinateur_anomalies_abats,
-      'appareil génital',
-      'consistance anormalement ferme'
-    );
-    if (carcasseHit || abatsHit) return true;
-  }
-
-  if (isPgPoils) {
-    const pgHit =
-      anyContains(c.examinateur_anomalies_carcasse, 'testicules gonflés') ||
-      allContains(c.examinateur_anomalies_carcasse, 'consistance anormalement ferme', 'testicules');
-    if (pgHit) return true;
-  }
-
-  return false;
+  return anyOf(c.examinateur_anomalies_carcasse, PG_CARCASSE_BRUCELLOSE);
 }
 
 /**
  * Tularémie — petit gibier (lièvres uniquement).
- * Abcès uniques ou multiples, déformation d'articulations, déformation de la tête.
+ * Abcès, déformation d'articulations, déformation de la tête.
  */
 export function matchTularemie(c: CarcasseLike): boolean {
   if (c.type !== CarcasseType.PETIT_GIBIER) return false;
   if (c.espece !== 'Lièvres') return false;
 
-  return anyContains(
-    c.examinateur_anomalies_carcasse,
-    'abcès ou nodules',
-    "déformation d'une ou plusieurs articulations",
-    'déformation de la tête'
-  );
+  return anyOf(c.examinateur_anomalies_carcasse, PG_CARCASSE_TULAREMIE);
 }
