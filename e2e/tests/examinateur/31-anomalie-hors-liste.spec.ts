@@ -93,3 +93,43 @@ test('Anomalie hors liste — saisie libre, persistée puis retirable', async ({
   await page.getByRole('button', { name: 'Retour' }).click();
   await expect(page.getByRole('button', { name: 'Anomalies (2)' })).toBeVisible();
 });
+
+// Le petit gibier n'a qu'une famille : le picker s'ouvre directement sur sa liste d'anomalies,
+// et c'est cette famille unique qui porte le champ libre.
+test('Anomalie hors liste — petit gibier', async ({ page }) => {
+  await connectWith(page, 'examinateur@example.fr');
+
+  await page.getByRole('button', { name: 'Nouvelle fiche' }).first().click();
+  await page.getByRole('button', { name: dayjs.utc().format('dddd DD MMMM') }).click();
+  await page.getByRole('textbox', { name: 'Commune de mise à mort' }).fill('CHASS');
+  await page.getByRole('button', { name: 'CHASSENARD' }).click();
+  await page.getByRole('button', { name: 'Pierre Petit' }).click();
+  await page.getByRole('button', { name: 'Continuer' }).first().click();
+
+  await page.getByRole('button', { name: 'Ajouter une carcasse' }).click();
+  await page.getByLabel('Espèce (grand et petit gibier)').selectOption('Pigeons');
+  await page.getByRole('button', { name: /^MM-\d{3}-\d{3}$/ }).click();
+  await page.getByRole('button', { name: 'Ajouter une anomalie (facultatif)' }).click();
+
+  // Un seul champ libre, celui de la famille (pas de doublon avec un bloc hors famille).
+  const champLibre = page.getByPlaceholder('Description de l’anomalie');
+  await expect(champLibre).toHaveCount(1);
+
+  await champLibre.fill('plumage poisseux');
+  await page.getByRole('button', { name: 'Ajouter', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Retirer plumage poisseux' })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Retour' }).click();
+  await expect(page.getByRole('button', { name: 'Anomalies (1)' })).toBeVisible();
+  await page.getByRole('button', { name: 'Ajouter le lot de carcasses' }).click();
+
+  // Persistée après enregistrement, et retirable.
+  await page
+    .getByRole('button', { name: /Pigeons \(\d+\) N°/ })
+    .first()
+    .click();
+  await page.getByRole('button', { name: 'Anomalies (1)' }).click();
+  await page.getByRole('button', { name: 'Retirer plumage poisseux' }).click();
+  await page.getByRole('button', { name: 'Retour' }).click();
+  await expect(page.getByRole('button', { name: 'Ajouter une anomalie (facultatif)' })).toBeVisible();
+});

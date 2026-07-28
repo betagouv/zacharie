@@ -273,8 +273,9 @@ export default function AnomaliePicker({
         )}
       </div>
 
-      {/* Vue racine : la liste des sites en gros gibier, la seule vue en petit gibier (une section). */}
-      {!normalizedQuery && (!activeSection || !!singleSection) && (
+      {/* Liste des sites : saisie libre pour ce qui ne relève d'aucune famille. En petit gibier,
+          cette vue n'existe pas — la famille unique porte déjà son propre champ libre. */}
+      {!normalizedQuery && !activeSection && (
         <AutreAnomalieBlock
           title="Autre anomalie (non listée)"
           placeholder="Décrivez l’anomalie"
