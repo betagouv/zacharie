@@ -9,12 +9,15 @@ import dayjs from 'dayjs';
 import {
   CarcasseCertificat,
   CarcasseCertificatType,
+  EntityRelationStatus,
+  EntityRelationType,
   EntityTypes,
   IPM1Decision,
   Prisma,
   User,
   UserRoles,
 } from '@prisma/client';
+import { capture } from '~/third-parties/sentry';
 import { generateConsigneDocx } from '~/templates/get-consigne-docx';
 import { generateCertficatId, generateDBCertificat, generateDecisionId } from '~/utils/generate-certificats';
 import { generateSaisieDocx } from '~/templates/get-saisie-docx';
@@ -207,6 +210,9 @@ router.get(
   })
 );
 
+// Au-delà, la génération des .docx et le zip en mémoire bloquent trop longtemps le serveur.
+const MAX_CARCASSES_PAR_ZIP = 200;
+
 // Regroupe dans un seul .zip les certificats actifs des carcasses sélectionnées (registre SVI).
 router.post(
   '/bulk-zip',
@@ -233,29 +239,63 @@ router.post(
       res.status(400).send({ ok: false, data: null, error: 'Aucune carcasse sélectionnée' });
       return;
     }
+    if (zacharie_carcasse_ids.length > MAX_CARCASSES_PAR_ZIP) {
+      res.status(413).send({
+        ok: false,
+        data: null,
+        error: `Trop de carcasses sélectionnées (${zacharie_carcasse_ids.length}). Le téléchargement est limité à ${MAX_CARCASSES_PAR_ZIP} carcasses à la fois.`,
+      });
+      return;
+    }
+
+    // les entités pour lesquelles l'utilisateur travaille : on ne sert que leurs certificats
+    const userEntityRelations = await prisma.entityAndUserRelations.findMany({
+      where: {
+        owner_id: user.id,
+        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        status: { in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER] },
+      },
+      select: { entity_id: true },
+    });
+    const userEntityIds = userEntityRelations.map((relation) => relation.entity_id);
 
     const certificats = await prisma.carcasseCertificat.findMany({
-      where: { zacharie_carcasse_id: { in: zacharie_carcasse_ids } },
+      where: {
+        zacharie_carcasse_id: { in: zacharie_carcasse_ids },
+        Carcasse: {
+          OR: [{ svi_entity_id: { in: userEntityIds } }, { next_owner_entity_id: { in: userEntityIds } }],
+        },
+      },
       orderBy: { created_at: 'desc' },
     });
-    // on ne garde que les certificats actifs (non remplacés par un autre)
+    // on ne garde que les certificats actifs (non remplacés par un autre) et générables
     const replacedIds = new Set(
       certificats.map((certificat) => certificat.remplace_certificat_id).filter(Boolean) as Array<string>
     );
-    const activeCertificats = certificats.filter((certificat) => !replacedIds.has(certificat.certificat_id));
+    const activeCertificats = certificats.filter(
+      (certificat) => !replacedIds.has(certificat.certificat_id) && certificat.type !== null
+    );
 
-    if (activeCertificats.length === 0) {
+    const zip = new JSZip();
+    let filesCount = 0;
+    for (const certificat of activeCertificats) {
+      // un certificat qui ne peut pas être généré ne doit pas faire échouer tout le zip
+      try {
+        const { buffer, filename } = await generateDocxForCertificat(certificat, user);
+        zip.file(filename, buffer);
+        filesCount++;
+      } catch (error) {
+        capture(error as Error, { extra: { certificat_id: certificat.certificat_id } });
+      }
+    }
+
+    if (filesCount === 0) {
       res
         .status(200)
         .send({ ok: false, data: null, error: 'Aucun certificat à télécharger pour cette sélection' });
       return;
     }
 
-    const zip = new JSZip();
-    for (const certificat of activeCertificats) {
-      const { buffer, filename } = await generateDocxForCertificat(certificat, user);
-      zip.file(filename, buffer);
-    }
     const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' });
 
     res.setHeader('Content-Type', 'application/zip');
