@@ -100,6 +100,7 @@ export default function SviCarcasses() {
   const [selectedCarcassesIds, setSelectedCarcassesIds] = useState<Array<string>>([]);
   const [loading, setLoading] = useState(true);
   const [isAccepting, setIsAccepting] = useState(false);
+  const [acceptProgress, setAcceptProgress] = useState<{ done: number; total: number } | null>(null);
 
   const { onExportToXlsx, isExporting } = useExportCarcasses();
   const approveCarcasses = useApproveCarcasses();
@@ -718,7 +719,9 @@ export default function SviCarcasses() {
     setIsAccepting(true);
     trackFeature('registre-svi-carcasses', 'accept', undefined, acceptableCarcasses.length);
     try {
-      const { accepted, failed } = await approveCarcasses(acceptableCarcasses);
+      const { accepted, failed } = await approveCarcasses(acceptableCarcasses, (done, total) =>
+        setAcceptProgress({ done, total })
+      );
       const skipped = selectedCarcasses.length - acceptableCarcasses.length;
       const parts = [`${accepted} carcasse${accepted > 1 ? 's' : ''} acceptée${accepted > 1 ? 's' : ''}`];
       if (skipped > 0) parts.push(`${skipped} ignorée${skipped > 1 ? 's' : ''}`);
@@ -732,6 +735,7 @@ export default function SviCarcasses() {
       setSelectedCarcassesIds([]);
     } finally {
       setIsAccepting(false);
+      setAcceptProgress(null);
     }
   };
 
@@ -1648,6 +1652,26 @@ export default function SviCarcasses() {
           . Cette action est définitive.
         </p>
       </confirmAcceptModal.Component>
+
+      {/* l'acceptation en masse dure plusieurs secondes : on bloque la page le temps du traitement */}
+      {isAccepting && (
+        <div
+          className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/40"
+          role="alert"
+          aria-live="polite"
+          aria-busy="true"
+        >
+          <div className="mx-4 max-w-sm rounded bg-white px-6 py-5 text-center shadow-lg">
+            <p className="mb-2 font-bold">Acceptation en cours…</p>
+            <p className="m-0 text-sm text-gray-700">
+              {acceptProgress
+                ? `${acceptProgress.done} / ${acceptProgress.total} carcasses traitées`
+                : `Préparation de ${acceptableCarcasses.length} carcasses…`}
+            </p>
+            <p className="mt-2 mb-0 text-sm text-gray-700">Merci de ne pas fermer cette page.</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

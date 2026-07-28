@@ -154,7 +154,10 @@ export type ApproveCarcassesResult = {
 // puis on ne synchronise qu'une seule fois à la fin (évite N synchros).
 export function useApproveCarcasses() {
   const applyApprove = useApplyApprove();
-  return async function approveCarcasses(carcasses: Array<Carcasse>): Promise<ApproveCarcassesResult> {
+  return async function approveCarcasses(
+    carcasses: Array<Carcasse>,
+    onProgress?: (done: number, total: number) => void
+  ): Promise<ApproveCarcassesResult> {
     let accepted = 0;
     const failed: Array<{ id: string; error: string }> = [];
     for (const carcasse of carcasses) {
@@ -164,6 +167,7 @@ export function useApproveCarcasses() {
       } else {
         failed.push({ id: carcasse.zacharie_carcasse_id, error: result.error });
       }
+      onProgress?.(accepted + failed.length, carcasses.length);
     }
     if (accepted > 0) {
       syncData('svi-ipm1-edit');
