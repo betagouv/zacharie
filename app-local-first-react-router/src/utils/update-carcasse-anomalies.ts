@@ -90,13 +90,13 @@ export function buildAnomaliePickerSections({
     // retiré à l'affichage, il n'apporte rien quand on est déjà dans la famille.
     const suffixe = section.site ? ` - ${section.site}` : null;
     const autres: AnomaliePickerAutres = {
-      // Sans site (petit gibier, une seule famille) le suffixe ne discrimine rien :
-      // ces valeurs relèvent du bloc global.
+      // Sans site (petit gibier : une seule famille, donc pas de suffixe à porter),
+      // la famille récupère toutes les saisies libres.
       values: suffixe
         ? storedValues
             .filter((c) => c.endsWith(suffixe) && !sectionCanonicals.has(c))
             .map((c) => c.slice(0, -suffixe.length))
-        : [],
+        : storedValues.filter((c) => !lookupAnomalie(c)),
       onAdd: (value) => setValues([...storedValues, canonicalOf(value, section.site)]),
       onRemove: (value) => setValues(storedValues.filter((c) => c !== canonicalOf(value, section.site))),
     };
