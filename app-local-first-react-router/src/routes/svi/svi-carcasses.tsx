@@ -727,10 +727,32 @@ export default function SviCarcasses() {
       if (skipped > 0) parts.push(`${skipped} ignorée${skipped > 1 ? 's' : ''}`);
       if (failed.length > 0) parts.push(`${failed.length} bloquée${failed.length > 1 ? 's' : ''}`);
       const message = parts.join(', ');
-      if (accepted > 0) {
-        toast.success(message);
+      // on regroupe les blocages par motif : un compteur seul ne dit pas au SVI quoi corriger
+      const raisons = failed.reduce<Record<string, number>>((acc, { error }) => {
+        acc[error] = (acc[error] ?? 0) + 1;
+        return acc;
+      }, {});
+      const content =
+        failed.length === 0 ? (
+          message
+        ) : (
+          <div>
+            <p className="m-0">{message}</p>
+            <ul className="mt-2 mb-0 list-disc pl-4 text-sm">
+              {Object.entries(raisons).map(([error, count]) => (
+                <li key={error}>
+                  {count} × {error}
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+      if (failed.length > 0) {
+        toast.warning(content, { autoClose: false });
+      } else if (accepted > 0) {
+        toast.success(content);
       } else {
-        toast.info(message);
+        toast.info(content);
       }
       setSelectedCarcassesIds([]);
     } finally {
