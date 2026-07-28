@@ -27,7 +27,7 @@ test('Examinateur dashboard alert modal + nav badge + grouping', async ({ page }
   await page.getByRole('button', { name: 'Signaler un numéro de marquage incorrect' }).click();
   await page.getByLabel('Numéro de marquage correct').fill('MM-001-FIX');
   await page.getByRole('button', { name: 'Envoyer la demande' }).click();
-  await expect(page.getByText('Demande de modification du numéro de marquage en cours').first()).toBeVisible({
+  await expect(page.getByText('Modification du numéro de marquage').first()).toBeVisible({
     timeout: 10000,
   });
 

@@ -36,7 +36,7 @@ test('Rename marquage : ETG signale → examinateur approuve → maj visible cô
 
   // The outer refus modal closes after submission. The PendingModificationBanner shows up under the
   // card to confirm sync round-trip.
-  await expect(page.getByText('Demande de modification du numéro de marquage en cours').first()).toBeVisible({
+  await expect(page.getByText('Modification du numéro de marquage').first()).toBeVisible({
     timeout: 10000,
   });
 
@@ -68,6 +68,6 @@ test('Rename marquage : ETG signale → examinateur approuve → maj visible cô
   });
   await expect(page.getByRole('button', { name: 'Daim N° MM-001-001 Mise à' })).toHaveCount(0);
   // The pending banner is gone, the card description gained a "1 modification" line.
-  await expect(page.getByText('Demande de modification du numéro de marquage en cours')).toHaveCount(0);
+  await expect(page.getByText('Modification du numéro de marquage')).toHaveCount(0);
   await expect(page.getByText('1 modification').first()).toBeVisible();
 });

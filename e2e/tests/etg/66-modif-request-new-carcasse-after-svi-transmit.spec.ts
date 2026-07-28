@@ -51,20 +51,19 @@ test('Ajout carcasse manquante pré-transmission SVI : visible par SVI, pas de b
     page.getByText('Carcasse ajoutée, approbation de mise sur le marché en attente').first()
   ).toBeVisible();
 
-  // Step 3: Opening the carcasse inspection page shows the IPM section with the explanatory
-  // message — not the IPM form — because the examinateur has not signed yet.
+  // Step 3: Opening the carcasse inspection page shows the IPM form — the pending "carcasse ajoutée"
+  // request is purely informative and no longer blocks the SVI inspection.
   await page
     .getByRole('button', { name: new RegExp(`Cerf élaphe.*${newBracelet}`) })
     .first()
     .click();
   await expect(page).toHaveURL(/\/app\/svi\/carcasse-svi\//);
+  await expect(page.getByText("Carcasse présentée à l'inspection").first()).toBeVisible();
   await expect(
-    page
-      .getByText(
-        "Tant que l'examinateur initial n'a pas fait approuvé la mise sur le marché, il est impossible de réaliser les inspections post-mortem."
-      )
-      .first()
-  ).toBeVisible();
+    page.getByText(
+      "Tant que l'examinateur initial n'a pas fait approuvé la mise sur le marché, il est impossible de réaliser les inspections post-mortem."
+    )
+  ).toHaveCount(0);
 
   // Step 4: Examinateur signs the approval.
   await logoutAndConnect(page, 'examinateur@example.fr');

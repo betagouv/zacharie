@@ -25,7 +25,7 @@ test('Rename rejected : examinateur refuse → ETG voit warning sur la carcasse'
   await page.getByRole('button', { name: 'Signaler un numéro de marquage incorrect' }).click();
   await page.getByLabel('Numéro de marquage correct').fill('MM-001-Z99');
   await page.getByRole('button', { name: 'Envoyer la demande' }).click();
-  await expect(page.getByText('Demande de modification du numéro de marquage en cours').first()).toBeVisible({
+  await expect(page.getByText('Modification du numéro de marquage').first()).toBeVisible({
     timeout: 10000,
   });
 
@@ -49,7 +49,7 @@ test('Rename rejected : examinateur refuse → ETG voit warning sur la carcasse'
   await expect(page.getByRole('button', { name: 'Daim N° MM-001-002 Mise à' })).toBeVisible({
     timeout: 10000,
   });
-  await expect(page.getByText('Demande de modification du numéro de marquage en cours')).toHaveCount(0);
+  await expect(page.getByText('Modification du numéro de marquage')).toHaveCount(0);
   // 1 modification line is visible somewhere on the card.
   await expect(page.getByText('1 modification').first()).toBeVisible();
 
