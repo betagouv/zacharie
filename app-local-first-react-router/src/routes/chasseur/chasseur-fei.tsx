@@ -663,7 +663,19 @@ function FEIChasseurLoaded() {
                 </div>
               )}
 
-              {/* Bloc 3 — Validation de l'examen initial */}
+              {/* Bloc 3 — Acheminement */}
+              {showValidation && isPremierDetenteur && !allCarcassesAssigned && (
+                <div className="bg-white p-4 md:p-8">
+                  <h4 className="fr-h5">Acheminement</h4>
+                  <DestinataireSelectPremierDetenteur
+                    canEdit={canEditAsPremierDetenteur}
+                    submitRef={destinataireRef}
+                    hideSubmitButton={canEdit}
+                  />
+                </div>
+              )}
+
+              {/* Bloc 4 — Validation de l'examen initial */}
               {showValidation && examinateurInitialUser && (
                 <div className="bg-white p-4 md:p-8">
                   <h4 className="fr-h5">Validation de l'examen initial</h4>
@@ -742,8 +754,8 @@ function FEIChasseurLoaded() {
                       },
                       defaultValue: fei?.examinateur_initial_date_approbation_mise_sur_le_marche
                         ? dayjs(fei?.examinateur_initial_date_approbation_mise_sur_le_marche).format(
-                            'YYYY-MM-DDTHH:mm'
-                          )
+                          'YYYY-MM-DDTHH:mm'
+                        )
                         : undefined,
                     }}
                   />
