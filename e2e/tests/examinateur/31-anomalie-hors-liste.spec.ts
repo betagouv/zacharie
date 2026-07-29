@@ -71,6 +71,8 @@ test('Anomalie hors liste — saisie libre, persistée puis retirable', async ({
   // Dans la famille, la pastille montre le texte seul.
   await expect(page.getByRole('button', { name: 'Retirer coloration verdâtre' })).toBeVisible();
   await page.getByRole('button', { name: 'Retour' }).click();
+  // La saisie libre de la famille compte dans la pastille de sa famille.
+  await expect(page.getByRole('button', { name: 'Externe 1' })).toBeVisible();
   await page.getByRole('button', { name: 'Retour' }).click();
   await expect(page.getByRole('button', { name: 'Anomalies (3)' })).toBeVisible();
   await page.getByRole('dialog').getByRole('button', { name: 'Terminer' }).click();

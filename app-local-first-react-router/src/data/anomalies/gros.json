@@ -257,11 +257,5 @@
       }
     ],
     "champ_libre": "Description de l’anomalie"
-  },
-  {
-    "groupe": "Abats",
-    "site": "Autres systèmes",
-    "anomalies": [],
-    "champ_libre": "Description de l’organe concerné et de l’anomalie"
   }
 ]
