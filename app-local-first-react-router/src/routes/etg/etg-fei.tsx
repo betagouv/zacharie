@@ -47,6 +47,7 @@ import NotFound from '@app/components/NotFound';
 import FeiAucuneAction from '@app/components/FeiAucuneAction';
 import Chargement from '@app/components/Chargement';
 import { loadData, useLoaderEffect } from '@app/utils/load-data';
+import { loadCarcassesRefusees } from '@app/utils/load-carcasses-refusees';
 import { CarcasseTransmission } from '@app/types/carcasse';
 import { useGetTransmissionFromURLParams } from '@app/utils/get-transmissions-sorted';
 
@@ -68,7 +69,9 @@ export default function EtgFei(props: Props) {
         setHasTriedLoading(true);
         console.error(error);
       });
-  }, []);
+    // Carcasses refusées/manquantes en amont : hors périmètre du pull delta, on les charge par fiche.
+    loadCarcassesRefusees(params.fei_numero!);
+  }, [params.fei_numero]);
 
   if (!fei) {
     return hasTriedLoading ? <NotFound /> : <Chargement />;

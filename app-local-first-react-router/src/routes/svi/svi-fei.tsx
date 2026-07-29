@@ -28,6 +28,7 @@ import Section from '@app/components/Section';
 import CardCarcasse from '@app/components/CardCarcasse';
 import { PendingModificationBanner } from '@app/components/CarcasseModificationRequest';
 import { loadData, useLoaderEffect } from '@app/utils/load-data';
+import { loadCarcassesRefusees } from '@app/utils/load-carcasses-refusees';
 import { useGetTransmissionFromURLParams } from '@app/utils/get-transmissions-sorted';
 import { CarcasseTransmission } from '@app/types/carcasse';
 
@@ -40,7 +41,9 @@ export default function SviFeiLoader() {
   useLoaderEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
     loadData('svi-fei').then(() => setHasTriedLoading(true));
-  }, []);
+    // Carcasses refusées/manquantes en amont : hors périmètre du pull delta, on les charge par fiche.
+    loadCarcassesRefusees(params.fei_numero!);
+  }, [params.fei_numero]);
 
   if (!fei) {
     return hasTriedLoading ? <NotFound /> : <Chargement />;

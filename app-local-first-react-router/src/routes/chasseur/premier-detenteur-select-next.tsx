@@ -238,7 +238,7 @@ function DispatchGroupForm({
 
       <div>
         <SelectCustom
-          label="Prochain détenteur des carcasses *"
+          label="Prochain détenteur des carcasses"
           isDisabled={disabled}
           hint={
             <>
@@ -297,7 +297,7 @@ function DispatchGroupForm({
       )}
       {showDepot && (
         <RadioButtons
-          legend="Lieu de stockage des carcasses *"
+          legend="Lieu de stockage des carcasses"
           className={canEdit ? '' : 'radio-black'}
           state={errorFor('depotType') ? 'error' : 'default'}
           stateRelatedMessage={errorFor('depotType')}
@@ -343,7 +343,7 @@ function DispatchGroupForm({
           <>
             <div>
               <SelectCustom
-                label="Chambre froide (Centre de Collecte du Gibier sauvage) *"
+                label="Chambre froide (Centre de Collecte du Gibier sauvage)"
                 isDisabled={group.depotType !== DepotType.CCG}
                 isReadOnly={!canEdit}
                 hint={
@@ -389,7 +389,7 @@ function DispatchGroupForm({
               {errorFor('depotEntityId') && <p className="fr-error-text mt-1">{errorFor('depotEntityId')}</p>}
             </div>
             <Component
-              label="Date de dépôt dans la chambre froide *"
+              label="Date de dépôt dans la chambre froide"
               disabled={group.depotType !== DepotType.CCG}
               state={errorFor('depotDate') ? 'error' : 'default'}
               stateRelatedMessage={errorFor('depotDate')}
@@ -428,7 +428,7 @@ function DispatchGroupForm({
           </>
         ) : (
           <div className="flex flex-col items-start gap-2">
-            <label>Chambre froide (Centre de Collecte du Gibier sauvage) *</label>
+            <label>Chambre froide (Centre de Collecte du Gibier sauvage)</label>
             <Button
               type="button"
               nativeButtonProps={{
@@ -442,7 +442,7 @@ function DispatchGroupForm({
       {showTransport && (
         <>
           <RadioButtons
-            legend="Transport des carcasses jusqu'au destinataire *"
+            legend="Transport des carcasses jusqu'au destinataire"
             className={canEdit ? '' : 'radio-black'}
             state={errorFor('transportType') ? 'error' : 'default'}
             stateRelatedMessage={errorFor('transportType')}

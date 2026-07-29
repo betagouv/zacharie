@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { CarcasseType, EntityRelationType, IPM1Decision, UserRoles } from '@prisma/client';
+import { CarcasseStatus, CarcasseType, EntityRelationType, IPM1Decision, UserRoles } from '@prisma/client';
 import dayjs from 'dayjs';
 import CardCarcasseSvi from '@app/components/CardCarcasseSvi';
 import { Breadcrumb } from '@codegouvfr/react-dsfr/Breadcrumb';
@@ -174,13 +174,25 @@ function SviInspectionCarcasse() {
               <HistoriqueDesModifications carcasse={carcasse} />
             </Section>
           )}
-          <Section title="Résumé de la décision">
-            <CardCarcasseSvi
-              carcasse={carcasse}
-              canClick={false}
-              key={dayjs(carcasse.updated_at).toISOString()}
-            />
-          </Section>
+          {canEdit && carcasse.svi_carcasse_status !== CarcasseStatus.SANS_DECISION ? (
+            <Section title="Résumé de la décision">
+              <CardCarcasseSvi
+                carcasse={carcasse}
+                canClick={false}
+                key={dayjs(carcasse.updated_at).toISOString()}
+              />
+            </Section>
+          ) : (
+            <Section title="Accepter la carcasse">
+              <div className="flex w-full">
+                <CardCarcasseSvi
+                  carcasse={carcasse}
+                  canClick
+                  key={dayjs(carcasse.updated_at).toISOString()}
+                />
+              </div>
+            </Section>
+          )}
           {/* Circuit agréé : prélèvement trichine par le SVI (invisible sans le feature flag) */}
           {TRICHINE_FEATURE_ENABLED && carcasse.espece === 'Sanglier' && (
             <TrichineSection

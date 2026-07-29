@@ -177,7 +177,7 @@ export default function DestinataireSousTraite({
         key={prochainDetenteurEntityId}
       >
         <SelectCustom
-          label="Prochain détenteur des carcasses *"
+          label="Prochain détenteur des carcasses"
           hint={
             <>
               <span>

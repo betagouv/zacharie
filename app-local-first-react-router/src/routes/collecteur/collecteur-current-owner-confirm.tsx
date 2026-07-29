@@ -51,9 +51,10 @@ export default function CurrentOwnerConfirm() {
   }, [myCarcasses, userEntityIds, user.id]);
 
   const canConfirmCurrentOwner = useMemo(() => {
-    // Multi-recipient: check if user has carcasses assigned to them per-carcasse
-    if (myCarcasses.length > 0) {
-      return true;
+    // Le bloc de prise en charge ne s'affiche que si la fiche est adressée à ce collecteur comme
+    // prochain détenteur. Sinon il resterait visible après transmission à l'ETG puis au SVI.
+    if (currentTransmission.next_owner_role !== FeiOwnerRole.COLLECTEUR_PRO) {
+      return false;
     }
     if (currentTransmission.next_owner_user_id === user.id) {
       return true;
@@ -65,7 +66,7 @@ export default function CurrentOwnerConfirm() {
       return false;
     }
     return true;
-  }, [currentTransmission.next_owner_user_id, user.id, nextOwnerEntity, myCarcasses.length]);
+  }, [currentTransmission.next_owner_role, currentTransmission.next_owner_user_id, user.id, nextOwnerEntity]);
 
   if (isCircuitCourt) {
     return null;

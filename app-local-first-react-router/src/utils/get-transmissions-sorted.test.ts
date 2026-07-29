@@ -553,6 +553,15 @@ describe('computeTransmissions — skips', () => {
     const t = run({ carcasses: [carcasse()], feis: [fei({ deleted_at: new Date() })], user: admin });
     expect(t).toEqual({});
   });
+
+  it("n'ajoute pas de transmission temporaire pour une fiche sans carcasse supprimée", () => {
+    const t = run({
+      carcasses: [],
+      feis: [fei({ numero: 'FEI-DELETED', deleted_at: new Date() }), fei({ numero: 'FEI-FRESH' })],
+      user: chasseur,
+    });
+    expect(Object.keys(t)).toEqual([buildTransmissionId('FEI-FRESH')]);
+  });
 });
 
 // ---------------------------------------------------------------------------

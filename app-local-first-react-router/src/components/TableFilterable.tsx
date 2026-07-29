@@ -68,12 +68,27 @@ export default function TableFilterable<T>({
     onSort?.(newOrder, data);
   }, [onSort, data, isSortable]);
 
-  const onToggleCheckbox = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const id = event.currentTarget.id;
+  const toggleRow = (id: string) => {
     if (checked.includes(id)) {
       onCheck?.(checked.filter((i) => i !== id));
     } else {
       onCheck?.([...checked, id]);
+    }
+  };
+
+  const onToggleCheckbox = (event: React.ChangeEvent<HTMLInputElement>) => {
+    toggleRow(event.currentTarget.id);
+  };
+
+  // La sélection peut couvrir plusieurs pages alors que `data` n'est que la page affichée :
+  // la case d'en-tête n'ajoute/retire donc que les lignes visibles, sans écraser le reste.
+  const pageKeys = data.map((item) => item[rowKey] as string);
+  const isWholePageChecked = pageKeys.length > 0 && pageKeys.every((key) => checked.includes(key));
+  const toggleWholePage = () => {
+    if (isWholePageChecked) {
+      onCheck?.(checked.filter((key) => !pageKeys.includes(key)));
+    } else {
+      onCheck?.([...checked, ...pageKeys.filter((key) => !checked.includes(key))]);
     }
   };
 
@@ -130,18 +145,16 @@ export default function TableFilterable<T>({
           )}
           <tr>
             {withCheckbox && (
-              <td className="cursor-default whitespace-nowrap">
+              <td
+                className="cursor-pointer whitespace-nowrap"
+                onClick={toggleWholePage}
+              >
                 <input
                   type="checkbox"
-                  className="checked:accent-action-high-blue-france mx-2 border-2"
-                  checked={checked.length === data.length}
-                  onChange={() => {
-                    if (checked.length === data.length) {
-                      onCheck?.([]);
-                    } else {
-                      onCheck?.(data.map((i) => i[rowKey] as string));
-                    }
-                  }}
+                  className="checked:accent-action-high-blue-france mx-2 cursor-pointer border-2"
+                  checked={isWholePageChecked}
+                  onChange={toggleWholePage}
+                  onClick={(e) => e.stopPropagation()}
                 />
               </td>
             )}
@@ -226,16 +239,24 @@ export default function TableFilterable<T>({
                         : onRowClick
                           ? 'cursor-pointer'
                           : 'cursor-auto',
+                    withCheckbox && checked.includes(item[rowKey] as string) ? 'bg-blue-100!' : '',
                   ].join(' ')}
                 >
                   {withCheckbox && (
-                    <td className="cursor-default whitespace-nowrap">
+                    <td
+                      className="cursor-pointer whitespace-nowrap"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleRow(item[rowKey] as string);
+                      }}
+                    >
                       <input
                         type="checkbox"
-                        className="checked:accent-action-high-blue-france mx-2 border-2"
+                        className="checked:accent-action-high-blue-france mx-2 cursor-pointer border-2"
                         checked={checked.includes(item[rowKey] as string)}
                         id={item[rowKey] as string}
                         onChange={onToggleCheckbox}
+                        onClick={(e) => e.stopPropagation()}
                       />
                     </td>
                   )}

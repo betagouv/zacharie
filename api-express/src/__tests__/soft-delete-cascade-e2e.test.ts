@@ -170,9 +170,11 @@ describe('FEI soft-delete via POST /sync', () => {
 
 describe('Carcasse soft-delete via POST /sync', () => {
   test('cascades deleted_at to CarcasseIntermediaire only, FEI untouched', async () => {
-    // Le /sync pré-charge les fiches des carcasses via fei.findMany (et les passe à syncCarcasse).
+    // Le /sync pré-charge les fiches ET les carcasses existantes (fei.findMany + carcasse.findMany),
+    // puis les passe à syncCarcasse.
     vi.mocked(prisma.fei.findMany).mockResolvedValue([baseFei as any]);
     vi.mocked(prisma.fei.findUnique).mockResolvedValue(baseFei as any);
+    vi.mocked(prisma.carcasse.findMany).mockResolvedValue([baseCarcasse as any]);
     vi.mocked(prisma.carcasse.findFirst).mockResolvedValue(baseCarcasse as any);
     vi.mocked(prisma.carcasse.update).mockResolvedValue({
       ...baseCarcasse,

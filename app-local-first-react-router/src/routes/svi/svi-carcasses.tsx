@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import dayjs from 'dayjs';
-import { DepotType, FeiOwnerRole } from '@prisma/client';
+import { toast } from 'react-toastify';
+import { CarcasseStatus, DepotType, FeiOwnerRole } from '@prisma/client';
 import useZustandStore from '@app/zustand/store';
 import { Pagination } from '@codegouvfr/react-dsfr/Pagination';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
@@ -22,11 +23,15 @@ import { useLocalStorage } from '@uidotdev/usehooks';
 import Chargement from '@app/components/Chargement';
 import DropDownMenu from '@app/components/DropDownMenu';
 import useExportCarcasses from '@app/utils/export-carcasses';
+import { useApproveCarcasses } from '@app/utils/svi-approve-carcasse';
+import useDownloadCertificats from '@app/utils/svi-download-certificats';
+import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import { isCarcasseSviArchived } from '@app/utils/carcasse-svi-archived';
 import { loadData, useLoaderEffect } from '@app/utils/load-data';
 import { useTransmissions } from '@app/utils/get-transmissions-sorted';
 import { getSaisonStartYear, getSaisonLabel, isDateInSaison } from '@app/utils/get-saison';
 import { trackFeature, trackSearch } from '@app/services/matomo';
+import { capture } from '@app/services/sentry';
 import type { Carcasse } from '@prisma/client';
 import type { TransmissionSimpleStatus } from '@app/types/transmission-steps';
 import { getTransmissionId, getTransmissionLinkFromCarcasse } from '@app/utils/get-transmission-id';
@@ -41,11 +46,15 @@ const columnsModal = createModal({
   isOpenedByDefault: false,
 });
 
-const FEI_STATUS_OPTIONS: Array<TransmissionSimpleStatus> = ['À compléter', 'En cours', 'Clôturée'];
+const confirmAcceptModal = createModal({
+  id: 'svi-carcasses-confirm-accept',
+  isOpenedByDefault: false,
+});
+
+const FEI_STATUS_OPTIONS: Array<TransmissionSimpleStatus> = ['À compléter', 'Clôturée'];
 
 const feiStatusColors: Record<TransmissionSimpleStatus, { bg: string; text: string }> = {
   'À compléter': { bg: 'bg-[#FEE7FC]', text: 'text-[#6E445A]' },
-  'En cours': { bg: 'bg-[#FFECBD]', text: 'text-[#73603F]' },
   Clôturée: { bg: 'bg-[#E8EDFF]', text: 'text-[#01008B]' },
 };
 
@@ -91,8 +100,13 @@ export default function SviCarcasses() {
   const usersById = useZustandStore((state) => state.users);
   const [selectedCarcassesIds, setSelectedCarcassesIds] = useState<Array<string>>([]);
   const [loading, setLoading] = useState(true);
+  const [isAccepting, setIsAccepting] = useState(false);
+  const [acceptProgress, setAcceptProgress] = useState<{ done: number; total: number } | null>(null);
 
   const { onExportToXlsx, isExporting } = useExportCarcasses();
+  const approveCarcasses = useApproveCarcasses();
+  const { onDownloadCertificats, isDownloading } = useDownloadCertificats();
+  const isOnline = useIsOnline();
 
   const [searchParams, setSearchParams] = useSearchParams();
   const page = parseInt(searchParams.get('page') || '1');
@@ -220,7 +234,7 @@ export default function SviCarcasses() {
           ? content?.premier_detenteur_depot_entity_id || ''
           : '';
       const meta: TransmissionMeta = {
-        simpleStatus: transmission?.labels.simpleStatus ?? 'En cours',
+        simpleStatus: transmission?.labels.simpleStatus ?? '',
         premierDetenteurId: content?.premier_detenteur_entity_id || content?.premier_detenteur_user_id || '',
         ccgId,
         ccgName: content?.premier_detenteur_depot_entity_name_cache || ccgId,
@@ -689,6 +703,74 @@ export default function SviCarcasses() {
   const toggleInArray = <T,>(array: Array<T>, value: T): Array<T> =>
     array.includes(value) ? array.filter((v) => v !== value) : [...array, value];
 
+  // carcasses sélectionnées (sur l'ensemble filtré, toutes pages confondues)
+  const selectedSet = new Set(selectedCarcassesIds);
+  const selectedCarcasses = filteredData.filter((c) => selectedSet.has(c.zacharie_carcasse_id));
+  const acceptableCarcasses = selectedCarcasses.filter(
+    (c) => c.svi_carcasse_status === CarcasseStatus.SANS_DECISION
+  );
+
+  const handleAcceptSelected = () => {
+    if (isAccepting || acceptableCarcasses.length === 0) return;
+    confirmAcceptModal.open();
+  };
+
+  const doAcceptSelected = async () => {
+    if (isAccepting || acceptableCarcasses.length === 0) return;
+    setIsAccepting(true);
+    trackFeature('registre-svi-carcasses', 'accept', undefined, acceptableCarcasses.length);
+    try {
+      const { accepted, failed } = await approveCarcasses(acceptableCarcasses, (done, total) =>
+        setAcceptProgress({ done, total })
+      );
+      const skipped = selectedCarcasses.length - acceptableCarcasses.length;
+      const parts = [`${accepted} carcasse${accepted > 1 ? 's' : ''} acceptée${accepted > 1 ? 's' : ''}`];
+      if (skipped > 0) parts.push(`${skipped} ignorée${skipped > 1 ? 's' : ''}`);
+      if (failed.length > 0) parts.push(`${failed.length} bloquée${failed.length > 1 ? 's' : ''}`);
+      const message = parts.join(', ');
+      // on regroupe les blocages par motif : un compteur seul ne dit pas au SVI quoi corriger
+      const raisons = failed.reduce<Record<string, number>>((acc, { error }) => {
+        acc[error] = (acc[error] ?? 0) + 1;
+        return acc;
+      }, {});
+      const content =
+        failed.length === 0 ? (
+          message
+        ) : (
+          <div>
+            <p className="m-0">{message}</p>
+            <ul className="mt-2 mb-0 list-disc pl-4 text-sm">
+              {Object.entries(raisons).map(([error, count]) => (
+                <li key={error}>
+                  {count} × {error}
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+      if (failed.length > 0) {
+        toast.warning(content, { autoClose: false });
+      } else if (accepted > 0) {
+        toast.success(content);
+      } else {
+        toast.info(content);
+      }
+      setSelectedCarcassesIds([]);
+    } catch (error) {
+      capture(error as Error, { extra: { carcasses: acceptableCarcasses.length } });
+      toast.error("Une erreur est survenue lors de l'acceptation des carcasses");
+    } finally {
+      setIsAccepting(false);
+      setAcceptProgress(null);
+    }
+  };
+
+  const handleDownloadCertificats = () => {
+    if (isDownloading || !isOnline || selectedCarcasses.length === 0) return;
+    trackFeature('registre-svi-carcasses', 'certificats-zip', undefined, selectedCarcasses.length);
+    onDownloadCertificats(selectedCarcasses.map((c) => c.zacharie_carcasse_id));
+  };
+
   const sidebarContent = (
     <>
       <div className="relative">
@@ -721,6 +803,73 @@ export default function SviCarcasses() {
           </button>
         )}
       </div>
+      {/* Filtre Espèce */}
+      {especeOptions.length > 1 && (
+        <CollapsibleSection
+          title="Espèce"
+          defaultOpen={false}
+          badge={
+            filterEspeces.length > 0 ? (
+              <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">
+                {filterEspeces.length}
+              </span>
+            ) : undefined
+          }
+        >
+          <div className="flex max-h-60 flex-col gap-1 overflow-y-auto">
+            {especeOptions.map((espece) => (
+              <label
+                key={espece}
+                className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-gray-50"
+              >
+                <input
+                  type="checkbox"
+                  checked={filterEspeces.includes(espece)}
+                  className="checked:accent-action-high-blue-france h-4 w-4 shrink-0"
+                  onChange={() => {
+                    trackFeature('registre-svi-carcasses', 'filtre', 'espece');
+                    setFilterEspeces(toggleInArray(filterEspeces, espece));
+                  }}
+                />
+                <span className="truncate text-sm">{espece}</span>
+              </label>
+            ))}
+          </div>
+        </CollapsibleSection>
+      )}
+      {/* Filtre Statut carcasse */}
+      <CollapsibleSection
+        title="Statut carcasse"
+        defaultOpen={false}
+        badge={
+          filterStatutsCarcasse.length > 0 ? (
+            <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">
+              {filterStatutsCarcasse.length}
+            </span>
+          ) : undefined
+        }
+      >
+        <div className="flex max-h-60 flex-col gap-1 overflow-y-auto">
+          {/* @ts-expect-error Type '{}' is missing the following properties */}
+          {Object.keys(statusOptions).map((status: CarcasseStatusLabel) => (
+            <label
+              key={status}
+              className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-gray-50"
+            >
+              <input
+                type="checkbox"
+                checked={filterStatutsCarcasse.includes(status)}
+                className="checked:accent-action-high-blue-france h-4 w-4 shrink-0"
+                onChange={() => {
+                  trackFeature('registre-svi-carcasses', 'filtre', 'statut-carcasse');
+                  setFilterStatutsCarcasse(toggleInArray(filterStatutsCarcasse, status));
+                }}
+              />
+              <span className="truncate text-sm">{status}</span>
+            </label>
+          ))}
+        </div>
+      </CollapsibleSection>
 
       {/* Filtre Statut fiche */}
       <CollapsibleSection
@@ -974,75 +1123,6 @@ export default function SviCarcasses() {
         </CollapsibleSection>
       )}
 
-      {/* Filtre Espèce */}
-      {especeOptions.length > 1 && (
-        <CollapsibleSection
-          title="Espèce"
-          defaultOpen={false}
-          badge={
-            filterEspeces.length > 0 ? (
-              <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">
-                {filterEspeces.length}
-              </span>
-            ) : undefined
-          }
-        >
-          <div className="flex max-h-60 flex-col gap-1 overflow-y-auto">
-            {especeOptions.map((espece) => (
-              <label
-                key={espece}
-                className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-gray-50"
-              >
-                <input
-                  type="checkbox"
-                  checked={filterEspeces.includes(espece)}
-                  className="checked:accent-action-high-blue-france h-4 w-4 shrink-0"
-                  onChange={() => {
-                    trackFeature('registre-svi-carcasses', 'filtre', 'espece');
-                    setFilterEspeces(toggleInArray(filterEspeces, espece));
-                  }}
-                />
-                <span className="truncate text-sm">{espece}</span>
-              </label>
-            ))}
-          </div>
-        </CollapsibleSection>
-      )}
-
-      {/* Filtre Statut carcasse */}
-      <CollapsibleSection
-        title="Statut carcasse"
-        defaultOpen={false}
-        badge={
-          filterStatutsCarcasse.length > 0 ? (
-            <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800">
-              {filterStatutsCarcasse.length}
-            </span>
-          ) : undefined
-        }
-      >
-        <div className="flex max-h-60 flex-col gap-1 overflow-y-auto">
-          {/* @ts-expect-error Type '{}' is missing the following properties */}
-          {Object.keys(statusOptions).map((status: CarcasseStatusLabel) => (
-            <label
-              key={status}
-              className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-gray-50"
-            >
-              <input
-                type="checkbox"
-                checked={filterStatutsCarcasse.includes(status)}
-                className="checked:accent-action-high-blue-france h-4 w-4 shrink-0"
-                onChange={() => {
-                  trackFeature('registre-svi-carcasses', 'filtre', 'statut-carcasse');
-                  setFilterStatutsCarcasse(toggleInArray(filterStatutsCarcasse, status));
-                }}
-              />
-              <span className="truncate text-sm">{status}</span>
-            </label>
-          ))}
-        </div>
-      </CollapsibleSection>
-
       {/* Filtres avancés */}
       <div className="border-b border-gray-200 py-2">
         <div className="flex w-full items-center justify-between py-1 text-sm font-bold text-gray-800">
@@ -1099,7 +1179,7 @@ export default function SviCarcasses() {
     return (
       <tr
         key={carcasse.zacharie_carcasse_id}
-        className={`border-b border-gray-200 ${isChecked ? 'bg-blue-50' : ''}`}
+        className={`border-b border-gray-200 ${isChecked ? 'bg-blue-100' : ''}`}
       >
         <td className="p-3">
           <div className="flex flex-col gap-2">
@@ -1270,6 +1350,24 @@ export default function SviCarcasses() {
               ))}
             </div>
             <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
+              {filteredData.length > 0 &&
+                (selectedCarcassesIds.length === filteredData.length ? (
+                  <button
+                    type="button"
+                    className="inline-flex items-center justify-center gap-1 rounded border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 transition-colors hover:bg-gray-50"
+                    onClick={() => setSelectedCarcassesIds([])}
+                  >
+                    Tout désélectionner
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="inline-flex items-center justify-center gap-1 rounded border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 transition-colors hover:bg-gray-50"
+                    onClick={() => setSelectedCarcassesIds(filteredData.map((c) => c.zacharie_carcasse_id))}
+                  >
+                    Tout sélectionner ({filteredData.length})
+                  </button>
+                ))}
               <button
                 type="button"
                 className="inline-flex items-center justify-center gap-1 rounded border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 transition-colors hover:bg-gray-50"
@@ -1288,6 +1386,45 @@ export default function SviCarcasses() {
                   {
                     linkProps: {
                       href: '#',
+                      'aria-disabled': acceptableCarcasses.length === 0 || isAccepting,
+                      className:
+                        acceptableCarcasses.length === 0 || isAccepting
+                          ? 'cursor-not-allowed opacity-50'
+                          : '',
+                      title:
+                        acceptableCarcasses.length === 0
+                          ? 'Sélectionnez des carcasses « Sans décision » à accepter'
+                          : '',
+                      onClick: (e) => {
+                        e.preventDefault();
+                        handleAcceptSelected();
+                      },
+                    },
+                    text: `Accepter (${acceptableCarcasses.length})`,
+                  },
+                  {
+                    linkProps: {
+                      href: '#',
+                      'aria-disabled': selectedCarcasses.length === 0 || !isOnline || isDownloading,
+                      className:
+                        selectedCarcasses.length === 0 || !isOnline || isDownloading
+                          ? 'cursor-not-allowed opacity-50'
+                          : '',
+                      title: !isOnline
+                        ? 'Le téléchargement des certificats nécessite une connexion internet'
+                        : selectedCarcasses.length === 0
+                          ? 'Sélectionnez des carcasses avec la case à cocher'
+                          : '',
+                      onClick: (e) => {
+                        e.preventDefault();
+                        handleDownloadCertificats();
+                      },
+                    },
+                    text: `Télécharger les certificats (${selectedCarcasses.length})`,
+                  },
+                  {
+                    linkProps: {
+                      href: '#',
                       'aria-disabled': selectedCarcassesIds.length === 0,
                       className:
                         isExporting || !selectedCarcassesIds.length ? 'cursor-not-allowed opacity-50' : '',
@@ -1300,8 +1437,7 @@ export default function SviCarcasses() {
                         if (selectedCarcassesIds.length === 0) return;
                         if (isExporting) return;
                         trackFeature('registre-svi-carcasses', 'export', 'xlsx', selectedCarcassesIds.length);
-                        const selectedSet = new Set(selectedCarcassesIds);
-                        onExportToXlsx(filteredData.filter((c) => selectedSet.has(c.zacharie_carcasse_id)));
+                        onExportToXlsx(selectedCarcasses);
                       },
                     },
                     text: `Export Excel (${selectedCarcassesIds.length})`,
@@ -1507,6 +1643,61 @@ export default function SviCarcasses() {
           </>
         )}
       </columnsModal.Component>
+
+      <confirmAcceptModal.Component
+        title="Accepter les carcasses sélectionnées"
+        buttons={[
+          {
+            children: 'Annuler',
+            priority: 'secondary',
+            doClosesModal: true,
+          },
+          {
+            children: 'Accepter',
+            iconId: 'fr-icon-check-line',
+            doClosesModal: true,
+            onClick: () => doAcceptSelected(),
+          },
+        ]}
+      >
+        <p>
+          Vous êtes sur le point d’accepter{' '}
+          <strong>
+            {acceptableCarcasses.length} carcasse{acceptableCarcasses.length > 1 ? 's' : ''}
+          </strong>
+          {selectedCarcasses.length > acceptableCarcasses.length && (
+            <>
+              {' '}
+              (les {selectedCarcasses.length - acceptableCarcasses.length} autre
+              {selectedCarcasses.length - acceptableCarcasses.length > 1 ? 's' : ''} carcasse
+              {selectedCarcasses.length - acceptableCarcasses.length > 1 ? 's' : ''} déjà décidée
+              {selectedCarcasses.length - acceptableCarcasses.length > 1 ? 's' : ''} seront ignorée
+              {selectedCarcasses.length - acceptableCarcasses.length > 1 ? 's' : ''})
+            </>
+          )}
+          . Cette action est définitive.
+        </p>
+      </confirmAcceptModal.Component>
+
+      {/* l'acceptation en masse dure plusieurs secondes : on bloque la page le temps du traitement */}
+      {isAccepting && (
+        <div
+          className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/40"
+          role="alert"
+          aria-live="polite"
+          aria-busy="true"
+        >
+          <div className="mx-4 max-w-sm rounded bg-white px-6 py-5 text-center shadow-lg">
+            <p className="mb-2 font-bold">Acceptation en cours…</p>
+            <p className="m-0 text-sm text-gray-700">
+              {acceptProgress
+                ? `${acceptProgress.done} / ${acceptProgress.total} carcasses traitées`
+                : `Préparation de ${acceptableCarcasses.length} carcasses…`}
+            </p>
+            <p className="mt-2 mb-0 text-sm text-gray-700">Merci de ne pas fermer cette page.</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
