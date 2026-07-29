@@ -27,6 +27,9 @@ export type AnomaliePickerAutres = {
 
 const sectionKey = (s: AnomaliePickerSection) => `${s.groupe}|||${s.site ?? ''}`;
 const siteLabel = (s: AnomaliePickerSection) => s.site ?? s.groupe;
+// La saisie libre de la famille compte comme une anomalie de la famille : c'est ce que comptent
+// les compteurs en aval (carte, bouton « Anomalies (N) », modale de confirmation).
+const sectionCount = (s: AnomaliePickerSection) => s.selected.length + s.autres.values.length;
 
 export default function AnomaliePicker({
   sections,
@@ -203,9 +206,9 @@ export default function AnomaliePicker({
                   >
                     <span>{siteLabel(section)}</span>
                     <span className="flex items-center gap-2">
-                      {section.selected.length > 0 && (
+                      {sectionCount(section) > 0 && (
                         <span className="rounded-full bg-[#000091] px-2 py-0.5 text-xs font-bold text-white">
-                          {section.selected.length}
+                          {sectionCount(section)}
                         </span>
                       )}
                       <span
