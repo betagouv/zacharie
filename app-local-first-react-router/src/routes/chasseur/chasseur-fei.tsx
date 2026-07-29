@@ -323,7 +323,7 @@ function FEIChasseurLoaded() {
   // Progressive display conditions
   const hasPremierDetenteur = !!(premierDetenteurUser || premierDetenteurEntity);
   const showBloc2 = !canEdit || !!(fei.date_mise_a_mort && fei.commune_mise_a_mort && hasPremierDetenteur);
-  const showBloc3 =
+  const showVenteDon =
     !canEdit ||
     !!(
       showBloc2 &&
@@ -332,7 +332,7 @@ function FEIChasseurLoaded() {
       fei.heure_mise_a_mort_premiere_carcasse &&
       (onlyPetitGibier || fei.heure_evisceration_derniere_carcasse)
     );
-  const showBloc4 = fei.consommateur_final_usage_domestique || showBloc3;
+  const showValidation = fei.consommateur_final_usage_domestique || showVenteDon;
 
   const handleTransmettre = () => {
     // Compte pas encore activé (CFEI non validé) : la fiche peut être préparée mais pas transmise.
@@ -400,10 +400,10 @@ function FEIChasseurLoaded() {
 
   const submitIsDisabled = useMemo(() => {
     if (!user.activated) return true;
-    if (!showBloc4) return true;
+    if (!showValidation) return true;
     if (allCarcassesAssigned) return true;
     return false;
-  }, [user.activated, showBloc4, allCarcassesAssigned]);
+  }, [user.activated, showValidation, allCarcassesAssigned]);
 
   return (
     <>
@@ -638,7 +638,7 @@ function FEIChasseurLoaded() {
                           />
                         </>
                       )}
-                      {canEdit && !showBloc3 && (
+                      {canEdit && !showValidation && (
                         <Button
                           className="mt-4"
                           type="button"
@@ -652,20 +652,8 @@ function FEIChasseurLoaded() {
                 </div>
               )}
 
-              {/* Bloc 3 — Acheminement */}
-              {showBloc3 && isPremierDetenteur && !allCarcassesAssigned && (
-                <div className="bg-white p-4 md:p-8">
-                  <h4 className="fr-h5">Acheminement</h4>
-                  <DestinataireSelectPremierDetenteur
-                    canEdit={canEditAsPremierDetenteur}
-                    submitRef={destinataireRef}
-                    hideSubmitButton={canEdit}
-                  />
-                </div>
-              )}
-
-              {/* Bloc 4 — Validation de l'examen initial */}
-              {showBloc4 && examinateurInitialUser && (
+              {/* Bloc 3 — Validation de l'examen initial */}
+              {showValidation && examinateurInitialUser && (
                 <div className="bg-white p-4 md:p-8">
                   <h4 className="fr-h5">Validation de l'examen initial</h4>
                   <Component
@@ -786,6 +774,18 @@ function FEIChasseurLoaded() {
                       }
                     />
                   )}
+                </div>
+              )}
+
+              {/* Bloc 4 — Vente / don */}
+              {showVenteDon && isPremierDetenteur && !allCarcassesAssigned && (
+                <div className="bg-white p-4 md:p-8">
+                  <h4 className="fr-h5">Vente / don</h4>
+                  <DestinataireSelectPremierDetenteur
+                    canEdit={canEditAsPremierDetenteur}
+                    submitRef={destinataireRef}
+                    hideSubmitButton={canEdit}
+                  />
                 </div>
               )}
               {canEdit && !user.activated && <CompteEnAttenteValidationAlert className="mx-4 mb-4 md:mx-0" />}
