@@ -35,47 +35,25 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
   await expect(page.locator('#content')).toMatchAriaSnapshot(`
       - group:
         - heading "Données de traçabilité" [level=3]
-        - paragraph: Fiche d'Examen Initial n°
-        - paragraph: "/ZACH-\\\\d+-QZ6E0-\\\\d+/"
-        - paragraph: Espèces
-        - paragraph: Daim, Pigeons
-        - paragraph: Informations clés
-        - list:
-          - listitem:
-            - paragraph: "/Commune de mise à mort : \\\\d+ CHASSENARD/"
-          - listitem:
-            - paragraph: "/Date de mise à mort : lundi 7 juillet \\\\d+/"
-          - listitem:
-            - paragraph: "/Début de la chasse de la fiche : \\\\d+:\\\\d+/"
-          - listitem:
-            - paragraph: "/Fin de l’examen initial de la dernière carcasse de la fiche : \\\\d+:\\\\d+/"
-          - listitem:
-            - paragraph: "/Nom du Centre de Collecte.+/"
-          - listitem:
-            - paragraph: "/Date et heure de dépôt dans le CCG.+/"
-        - paragraph: Acteurs
-        - paragraph: Examinateur Initial
-        - list:
-          - listitem:
-            - paragraph: Marie Martin
-          - listitem:
-            - paragraph: /\\d+/
-          - listitem:
-            - paragraph: examinateur@example.fr
-          - listitem:
-            - paragraph: /CFEI-\\d+-\\d+-\\d+/
-          - listitem:
-            - paragraph: /\\d+ Paris/
-        - paragraph: Premier Détenteur
-        - list:
-          - listitem:
-            - paragraph: Pierre Petit
-          - listitem:
-            - paragraph: /\\d+/
-          - listitem:
-            - paragraph: premier-detenteur@example.fr
-          - listitem:
-            - paragraph: /\\d+ Paris/
+        - paragraph: "/Fiche n° : ZACH-\\\\d+-QZ6E0-\\\\d+/"
+        - paragraph: "Espèces : Daim, Pigeons"
+        - paragraph: "/Mise à mort : \\\\d+ CHASSENARD, lundi 7 juillet \\\\d+/"
+        - paragraph: "/Horaires : \\\\d+:\\\\d+ → \\\\d+:\\\\d+/"
+        - paragraph: "/Dépôt CCG : CCG Chasseurs, lundi 7 juillet \\\\d+ à \\\\d+:\\\\d+/"
+        - paragraph: Parcours de la fiche
+        - text: Marie Martin
+        - paragraph: Examinateur initial
+        - link /\\d+/:
+          - /url: tel:0606060601
+        - link "examinateur@example.fr":
+          - /url: mailto:examinateur@example.fr
+        - text: /N° CFEI CFEI-\\d+-\\d+-\\d+ \\d+ Paris Pierre Petit/
+        - paragraph: Premier détenteur
+        - link /\\d+/:
+          - /url: tel:0606060602
+        - link "premier-detenteur@example.fr":
+          - /url: mailto:premier-detenteur@example.fr
+        - text: /\\d+ Paris/
       `);
   await expect(page.getByText('Fiche reçue, pas encore prise en charge')).toBeVisible();
   await page.getByRole('button', { name: 'Daim N° MM-001-004 Mise à' }).click();
@@ -198,47 +176,25 @@ test('Pas de stockage - Je transfère à un autre collecteur', async ({ page }) 
   await expect(page.locator('#content')).toMatchAriaSnapshot(`
       - group:
         - heading "Données de traçabilité" [level=3]
-        - paragraph: Fiche d'Examen Initial n°
-        - paragraph: "/ZACH-\\\\d+-QZ6E0-\\\\d+/"
-        - paragraph: Espèces
-        - paragraph: Daim, Pigeons
-        - paragraph: Informations clés
-        - list:
-          - listitem:
-            - paragraph: "/Commune de mise à mort : \\\\d+ CHASSENARD/"
-          - listitem:
-            - paragraph: "/Date de mise à mort : lundi 7 juillet \\\\d+/"
-          - listitem:
-            - paragraph: "/Début de la chasse de la fiche : \\\\d+:\\\\d+/"
-          - listitem:
-            - paragraph: "/Fin de l’examen initial de la dernière carcasse de la fiche : \\\\d+:\\\\d+/"
-          - listitem:
-            - paragraph: "/Nom du Centre de Collecte.+/"
-          - listitem:
-            - paragraph: "/Date et heure de dépôt dans le CCG.+/"
-        - paragraph: Acteurs
-        - paragraph: Examinateur Initial
-        - list:
-          - listitem:
-            - paragraph: Marie Martin
-          - listitem:
-            - paragraph: /\\d+/
-          - listitem:
-            - paragraph: examinateur@example.fr
-          - listitem:
-            - paragraph: /CFEI-\\d+-\\d+-\\d+/
-          - listitem:
-            - paragraph: /\\d+ Paris/
-        - paragraph: Premier Détenteur
-        - list:
-          - listitem:
-            - paragraph: Pierre Petit
-          - listitem:
-            - paragraph: /\\d+/
-          - listitem:
-            - paragraph: premier-detenteur@example.fr
-          - listitem:
-            - paragraph: /\\d+ Paris/
+        - paragraph: "/Fiche n° : ZACH-\\\\d+-QZ6E0-\\\\d+/"
+        - paragraph: "Espèces : Daim, Pigeons"
+        - paragraph: "/Mise à mort : \\\\d+ CHASSENARD, lundi 7 juillet \\\\d+/"
+        - paragraph: "/Horaires : \\\\d+:\\\\d+ → \\\\d+:\\\\d+/"
+        - paragraph: "/Dépôt CCG : CCG Chasseurs, lundi 7 juillet \\\\d+ à \\\\d+:\\\\d+/"
+        - paragraph: Parcours de la fiche
+        - text: Marie Martin
+        - paragraph: Examinateur initial
+        - link /\\d+/:
+          - /url: tel:0606060601
+        - link "examinateur@example.fr":
+          - /url: mailto:examinateur@example.fr
+        - text: /N° CFEI CFEI-\\d+-\\d+-\\d+ \\d+ Paris Pierre Petit/
+        - paragraph: Premier détenteur
+        - link /\\d+/:
+          - /url: tel:0606060602
+        - link "premier-detenteur@example.fr":
+          - /url: mailto:premier-detenteur@example.fr
+        - text: /\\d+ Paris/
       `);
   await expect(page.getByText('Fiche reçue, pas encore prise en charge')).toBeVisible();
   await page.getByRole('button', { name: 'Daim N° MM-001-004 Mise à' }).click();
@@ -339,47 +295,25 @@ test('Pas de stockage - Je transfère à un autre ETG', async ({ page, context }
   await expect(page.locator('#content')).toMatchAriaSnapshot(`
       - group:
         - heading "Données de traçabilité" [level=3]
-        - paragraph: Fiche d'Examen Initial n°
-        - paragraph: "/ZACH-\\\\d+-QZ6E0-\\\\d+/"
-        - paragraph: Espèces
-        - paragraph: Daim, Pigeons
-        - paragraph: Informations clés
-        - list:
-          - listitem:
-            - paragraph: "/Commune de mise à mort : \\\\d+ CHASSENARD/"
-          - listitem:
-            - paragraph: "/Date de mise à mort : lundi 7 juillet \\\\d+/"
-          - listitem:
-            - paragraph: "/Début de la chasse de la fiche : \\\\d+:\\\\d+/"
-          - listitem:
-            - paragraph: "/Fin de l’examen initial de la dernière carcasse de la fiche : \\\\d+:\\\\d+/"
-          - listitem:
-            - paragraph: "/Nom du Centre de Collecte.+/"
-          - listitem:
-            - paragraph: "/Date et heure de dépôt dans le CCG.+/"
-        - paragraph: Acteurs
-        - paragraph: Examinateur Initial
-        - list:
-          - listitem:
-            - paragraph: Marie Martin
-          - listitem:
-            - paragraph: /\\d+/
-          - listitem:
-            - paragraph: examinateur@example.fr
-          - listitem:
-            - paragraph: /CFEI-\\d+-\\d+-\\d+/
-          - listitem:
-            - paragraph: /\\d+ Paris/
-        - paragraph: Premier Détenteur
-        - list:
-          - listitem:
-            - paragraph: Pierre Petit
-          - listitem:
-            - paragraph: /\\d+/
-          - listitem:
-            - paragraph: premier-detenteur@example.fr
-          - listitem:
-            - paragraph: /\\d+ Paris/
+        - paragraph: "/Fiche n° : ZACH-\\\\d+-QZ6E0-\\\\d+/"
+        - paragraph: "Espèces : Daim, Pigeons"
+        - paragraph: "/Mise à mort : \\\\d+ CHASSENARD, lundi 7 juillet \\\\d+/"
+        - paragraph: "/Horaires : \\\\d+:\\\\d+ → \\\\d+:\\\\d+/"
+        - paragraph: "/Dépôt CCG : CCG Chasseurs, lundi 7 juillet \\\\d+ à \\\\d+:\\\\d+/"
+        - paragraph: Parcours de la fiche
+        - text: Marie Martin
+        - paragraph: Examinateur initial
+        - link /\\d+/:
+          - /url: tel:0606060601
+        - link "examinateur@example.fr":
+          - /url: mailto:examinateur@example.fr
+        - text: /N° CFEI CFEI-\\d+-\\d+-\\d+ \\d+ Paris Pierre Petit/
+        - paragraph: Premier détenteur
+        - link /\\d+/:
+          - /url: tel:0606060602
+        - link "premier-detenteur@example.fr":
+          - /url: mailto:premier-detenteur@example.fr
+        - text: /\\d+ Paris/
       `);
   await expect(page.getByText('Fiche reçue, pas encore prise en charge')).toBeVisible();
   await page.getByRole('button', { name: 'Daim N° MM-001-004 Mise à' }).click();

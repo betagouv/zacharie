@@ -18,36 +18,25 @@ test("Premier détenteur = examinateur initial : l'ETG voit le nom et le contact
   await expect(page.getByRole('link', { name: feiId })).toBeVisible();
   await page.getByRole('link', { name: feiId }).click();
 
-  // Le bloc « Premier Détenteur » affiche les mêmes infos que le bloc « Examinateur Initial »
+  // L'étape « Premier détenteur » de la frise affiche les mêmes infos que l'étape « Examinateur initial »
   // (Marie Martin, son email, son numéro CFEI) car l'examinateur est aussi le premier détenteur.
   await expect(page.locator('#content')).toMatchAriaSnapshot(`
       - group:
         - heading "Données de traçabilité" [level=3]
-        - paragraph: Acteurs
-        - paragraph: Examinateur Initial
-        - list:
-          - listitem:
-            - paragraph: Marie Martin
-          - listitem:
-            - paragraph: /\\d+/
-          - listitem:
-            - paragraph: examinateur@example.fr
-          - listitem:
-            - paragraph: /CFEI-\\d+-\\d+-\\d+/
-          - listitem:
-            - paragraph: /\\d+ Paris/
-        - paragraph: Premier Détenteur
-        - list:
-          - listitem:
-            - paragraph: Marie Martin
-          - listitem:
-            - paragraph: /\\d+/
-          - listitem:
-            - paragraph: examinateur@example.fr
-          - listitem:
-            - paragraph: /CFEI-\\d+-\\d+-\\d+/
-          - listitem:
-            - paragraph: /\\d+ Paris/
+        - paragraph: Parcours de la fiche
+        - text: Marie Martin
+        - paragraph: Examinateur initial
+        - link /\\d+/:
+          - /url: tel:0606060601
+        - link "examinateur@example.fr":
+          - /url: mailto:examinateur@example.fr
+        - text: /N° CFEI CFEI-\\d+-\\d+-\\d+ \\d+ Paris Marie Martin/
+        - paragraph: Premier détenteur
+        - link /\\d+/:
+          - /url: tel:0606060601
+        - link "examinateur@example.fr":
+          - /url: mailto:examinateur@example.fr
+        - text: /N° CFEI CFEI-\\d+-\\d+-\\d+ \\d+ Paris/
       `);
 });
 
@@ -61,20 +50,15 @@ test("Premier détenteur = association de chasse : l'ETG voit les infos de l'ass
   await expect(page.getByRole('link', { name: feiId })).toBeVisible();
   await page.getByRole('link', { name: feiId }).click();
 
-  // Le bloc « Premier Détenteur » affiche les infos de l'entité association : raison sociale,
+  // L'étape « Premier détenteur » de la frise affiche les infos de l'entité association : raison sociale,
   // SIRET et ville — pas celles d'un individu.
   await expect(page.locator('#content')).toMatchAriaSnapshot(`
       - group:
         - heading "Données de traçabilité" [level=3]
-        - paragraph: Acteurs
-        - paragraph: Premier Détenteur
-        - list:
-          - listitem:
-            - paragraph: Association de chasseurs
-          - listitem:
-            - paragraph: /\\d+/
-          - listitem:
-            - paragraph: /\\d+ Paris/
+        - paragraph: Parcours de la fiche
+        - text: /Association de chasseurs/
+        - paragraph: Premier détenteur
+        - text: /SIRET \\d+ \\d+ Paris/
       `);
 
   // L'individu premier-détenteur par défaut ne doit pas apparaître.
