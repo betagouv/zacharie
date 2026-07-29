@@ -238,6 +238,18 @@ export interface CarcassesGetResponse {
   error: string;
 }
 
+// Carcasses d'une fiche hors du périmètre de synchro delta (refusées/manquantes/orphelines),
+// récupérées à la demande par fiche puis mergées dans le store. Voir GET /carcasse/refusees/:fei_numero.
+export interface CarcassesRefuseesResponse {
+  ok: boolean;
+  data: {
+    carcasses: Array<Carcasse>;
+    carcassesIntermediaires: Array<CarcasseIntermediaire>;
+    entities: Array<EntityWithUserRelation>;
+  } | null;
+  error: string;
+}
+
 export interface SviCarcasseAVenir {
   zacharie_carcasse_id: string;
   fei_numero: string;
