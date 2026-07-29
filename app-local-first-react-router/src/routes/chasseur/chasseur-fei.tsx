@@ -652,10 +652,10 @@ function FEIChasseurLoaded() {
                 </div>
               )}
 
-              {/* Bloc 3 — Destinataire */}
+              {/* Bloc 3 — Acheminement */}
               {showBloc3 && isPremierDetenteur && !allCarcassesAssigned && (
                 <div className="bg-white p-4 md:p-8">
-                  <h4 className="fr-h5">Destinataire</h4>
+                  <h4 className="fr-h5">Acheminement</h4>
                   <DestinataireSelectPremierDetenteur
                     canEdit={canEditAsPremierDetenteur}
                     submitRef={destinataireRef}
