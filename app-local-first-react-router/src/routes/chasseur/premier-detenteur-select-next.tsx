@@ -50,7 +50,7 @@ export interface DestinatairePremierDetenteurHandle {
   submit: () => void;
 }
 
-// Un acheminement = un prochain détenteur + son stockage + son transport + les carcasses concernées.
+// Une vente / un don = un prochain détenteur + son stockage + son transport + les carcasses concernées.
 interface DispatchGroup {
   id: string;
   recipientEntityId: string | null;
@@ -62,9 +62,9 @@ interface DispatchGroup {
   transportDate: string | undefined;
 }
 
-const acheminementModal = createModal({
+const dispatchModal = createModal({
   isOpenedByDefault: false,
-  id: 'acheminement-modal-pd',
+  id: 'dispatch-modal-pd',
 });
 
 const trichineModal = createModal({
@@ -73,7 +73,7 @@ const trichineModal = createModal({
 });
 
 // Le transport est à renseigner par le premier détenteur sauf quand le prochain détenteur
-// gère lui-même l'acheminement (collecteur) ou est en bout de chaîne (conso final, circuit court).
+// vient chercher les carcasses lui-même (collecteur) ou est en bout de chaîne (conso final, circuit court).
 function needTransportForType(type?: EntityTypes | null): boolean {
   if (
     type === EntityTypes.CONSOMMATEUR_FINAL ||
@@ -100,7 +100,8 @@ function getTransportLabel(
   const type = group.recipientEntityId ? entities[group.recipientEntityId]?.type : null;
   if (!needTransportForType(type)) return null;
   if (group.transportType === TransportType.PREMIER_DETENTEUR) return 'Je transporte moi-même';
-  if (group.transportType === TransportType.COLLECTEUR_PRO) return 'Par un collecteur professionnel';
+  if (group.transportType === TransportType.COLLECTEUR_PRO)
+    return 'Transporté par un collecteur professionnel';
   return '—';
 }
 
@@ -123,7 +124,7 @@ function getGroupFieldErrors(
     errors.recipientEntityId = 'Veuillez sélectionner le prochain détenteur des carcasses';
   }
   if (group.carcasseIds.length === 0) {
-    errors.carcasseIds = 'Veuillez sélectionner au moins une carcasse pour cet acheminement';
+    errors.carcasseIds = 'Veuillez sélectionner au moins une carcasse pour cette vente ou ce don';
   }
   if (!group.depotType) {
     errors.depotType = 'Veuillez indiquer le lieu de stockage des carcasses';
@@ -150,6 +151,14 @@ function getGroupFieldErrors(
   return errors;
 }
 
+// Champs validés à chaque étape de la modale, avant de pouvoir passer à la suivante.
+const STEP_FIELDS: Record<string, Array<keyof GroupFieldErrors>> = {
+  Destinataire: ['recipientEntityId'],
+  Carcasses: ['carcasseIds'],
+  Stockage: ['depotType', 'depotEntityId', 'depotDate'],
+  Transport: ['transportType', 'transportDate'],
+};
+
 // Priority order used to surface a single message for the global validation string.
 const GROUP_FIELD_ERROR_ORDER: Array<keyof GroupFieldErrors> = [
   'recipientEntityId',
@@ -174,8 +183,8 @@ function getGroupValidationError(
   return null;
 }
 
-// === Carte résumé d'un acheminement (formulaire refermé) ===
-function AcheminementCard({
+// === Carte résumé d'une vente / d'un don (formulaire refermé) ===
+function DispatchGroupCard({
   group,
   index,
   totalGroups,
@@ -195,58 +204,49 @@ function AcheminementCard({
   onDelete: () => void;
 }) {
   const recipient = group.recipientEntityId ? entities[group.recipientEntityId] : null;
-  const title = recipient?.nom_d_usage ?? `Acheminement ${index + 1}`;
+  const title = recipient?.nom_d_usage ?? `Vente / don ${index + 1}`;
   const transportLabel = getTransportLabel(group, entities);
   return (
-    <div className="bg-contrast-grey border-action-high-blue-france border-0 border-l-3 border-solid p-4">
-      <div className="flex items-start justify-between gap-2">
+    <div className="bg-contrast-grey flex basis-full flex-row items-center justify-between text-left">
+      <button
+        className="flex flex-1 flex-row items-center gap-3 border-none p-4 text-left hover:bg-transparent"
+        type="button"
+        onClick={onEdit}
+      >
         <div className="flex flex-1 flex-col">
-          {totalGroups > 1 && <span className="text-xs text-gray-500">Acheminement {index + 1}</span>}
+          {totalGroups > 1 && <span className="text-xs text-gray-500">Vente / don {index + 1}</span>}
           <p className="text-base font-bold">{title}</p>
-          <ul className="mt-1 space-y-0.5 text-sm">
-            <li>
-              <span className="text-gray-600">Carcasses&nbsp;: </span>
-              {formatCarcasseLotCount(groupCarcasses)}
-            </li>
-            <li>
-              <span className="text-gray-600">Stockage&nbsp;: </span>
-              {getDepotLabel(group, entities)}
-            </li>
-            {transportLabel && (
-              <li>
-                <span className="text-gray-600">Transport&nbsp;: </span>
-                {transportLabel}
-              </li>
-            )}
-          </ul>
+          <p className="text-sm/4">{formatCarcasseLotCount(groupCarcasses)}</p>
+          <p className="text-sm/4">{getDepotLabel(group, entities)}</p>
+          {transportLabel && <p className="text-sm/4">{transportLabel}</p>}
         </div>
-        {canEdit && (
-          <div className="flex shrink-0 flex-row gap-1">
+      </button>
+      {canEdit && (
+        <div className="flex shrink-0 flex-row gap-2 pr-4">
+          <Button
+            type="button"
+            iconId="fr-icon-pencil-line"
+            onClick={onEdit}
+            title="Modifier"
+            priority="tertiary no outline"
+          />
+          {totalGroups > 1 && (
             <Button
               type="button"
-              iconId="fr-icon-pencil-line"
-              onClick={onEdit}
-              title="Modifier cet acheminement"
+              iconId="fr-icon-delete-bin-line"
+              onClick={onDelete}
+              title="Supprimer"
               priority="tertiary no outline"
             />
-            {totalGroups > 1 && (
-              <Button
-                type="button"
-                iconId="fr-icon-delete-bin-line"
-                onClick={onDelete}
-                title="Supprimer cet acheminement"
-                priority="tertiary no outline"
-              />
-            )}
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
 
-// === Formulaire d'un acheminement (contenu de la modale, en étapes) ===
-function AcheminementForm({
+// === Formulaire d'une vente / d'un don (contenu de la modale, en étapes) ===
+function DispatchGroupForm({
   group,
   canEdit,
   showCarcasseSelector,
@@ -283,7 +283,7 @@ function AcheminementForm({
 }) {
   const prochainDetenteur = group.recipientEntityId ? entities[group.recipientEntityId] : null;
 
-  // Création inline (pas de modale imbriquée dans la modale d'acheminement).
+  // Création inline (pas de modale imbriquée dans la modale de vente / don).
   const [creatingPartenaire, setCreatingPartenaire] = useState<string | null>(null);
   const [creatingCcg, setCreatingCcg] = useState(false);
 
@@ -311,74 +311,9 @@ function AcheminementForm({
         />
       )}
 
-      {/* Étape 1 — Destinataire (+ carcasses concernées) */}
+      {/* Étape 1 — Destinataire */}
       {showStep('Destinataire') && (
         <>
-          {showCarcasseSelector && allCarcassesRestantes.length > 1 && (
-            <div>
-              <p className="mb-2 text-sm font-bold">Sélectionnez les carcasses pour cet acheminement</p>
-              <div className="grid grid-cols-2 gap-1 sm:grid-cols-3">
-                {allCarcassesRestantes.map((carcasse) => {
-                  const isInGroup = group.carcasseIds.includes(carcasse.zacharie_carcasse_id);
-                  const otherGroupLabel = !isInGroup
-                    ? carcasseToGroupLabel[carcasse.zacharie_carcasse_id]
-                    : null;
-                  return (
-                    <button
-                      key={carcasse.zacharie_carcasse_id}
-                      type="button"
-                      disabled={!canEdit}
-                      onClick={() => onToggleCarcasse(carcasse.zacharie_carcasse_id)}
-                      className={[
-                        'flex items-start gap-1.5 border-0 border-l-3 border-solid px-2 py-1.5 text-left transition-all duration-150',
-                        isInGroup
-                          ? 'border-action-high-blue-france cursor-pointer bg-blue-100 opacity-100'
-                          : otherGroupLabel
-                            ? 'bg-contrast-grey border-transparent opacity-80'
-                            : 'bg-contrast-grey cursor-pointer border-transparent opacity-80 hover:bg-blue-50 hover:shadow-sm',
-                      ].join(' ')}
-                    >
-                      <span
-                        className={[
-                          'mt-0.5 shrink-0',
-                          isInGroup
-                            ? 'fr-icon-checkbox-fill text-action-high-blue-france'
-                            : otherGroupLabel
-                              ? 'fr-icon-checkbox-line text-gray-400'
-                              : 'fr-icon-checkbox-line',
-                        ].join(' ')}
-                        aria-hidden="true"
-                        style={{ fontSize: '1rem' }}
-                      />
-                      <span className="flex flex-col">
-                        <span className="text-sm font-bold">
-                          {carcasse.espece}
-                          {carcasse.nombre_d_animaux && carcasse.nombre_d_animaux > 1
-                            ? ` (${carcasse.nombre_d_animaux})`
-                            : ''}
-                        </span>
-                        <span className="text-xs">N° {carcasse.numero_bracelet}</span>
-                        {otherGroupLabel && (
-                          <span className="mt-0.5 text-xs text-gray-500">→ {otherGroupLabel}</span>
-                        )}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-              <Badge
-                severity={groupCarcasses.length > 0 ? 'info' : 'warning'}
-                small
-                noIcon
-                as="span"
-                className="mt-2"
-              >
-                {groupCarcasses.length > 0 ? formatCarcasseLotCount(groupCarcasses) : 'Aucune carcasse'}
-              </Badge>
-              {errorFor('carcasseIds') && <p className="fr-error-text mt-2">{errorFor('carcasseIds')}</p>}
-            </div>
-          )}
-
           {creatingPartenaire !== null ? (
             <div className="rounded border border-gray-300 p-3">
               <p className="mb-2 text-sm font-bold">Ajouter un destinataire</p>
@@ -458,7 +393,71 @@ function AcheminementForm({
         </>
       )}
 
-      {/* Étape 2 — Stockage */}
+      {/* Étape 2 — Carcasses concernées */}
+      {showCarcasseSelector && showStep('Carcasses') && (
+        <div>
+          <p className="mb-2 text-sm font-bold">Sélectionnez les carcasses pour cette vente / ce don</p>
+          <div className="grid grid-cols-2 gap-1 sm:grid-cols-3">
+            {allCarcassesRestantes.map((carcasse) => {
+              const isInGroup = group.carcasseIds.includes(carcasse.zacharie_carcasse_id);
+              const otherGroupLabel = !isInGroup ? carcasseToGroupLabel[carcasse.zacharie_carcasse_id] : null;
+              return (
+                <button
+                  key={carcasse.zacharie_carcasse_id}
+                  type="button"
+                  disabled={!canEdit}
+                  onClick={() => onToggleCarcasse(carcasse.zacharie_carcasse_id)}
+                  className={[
+                    'flex items-start gap-1.5 border-0 border-l-3 border-solid px-2 py-1.5 text-left transition-all duration-150',
+                    isInGroup
+                      ? 'border-action-high-blue-france cursor-pointer bg-blue-100 opacity-100'
+                      : otherGroupLabel
+                        ? 'bg-contrast-grey border-transparent opacity-80'
+                        : 'bg-contrast-grey cursor-pointer border-transparent opacity-80 hover:bg-blue-50 hover:shadow-sm',
+                  ].join(' ')}
+                >
+                  <span
+                    className={[
+                      'mt-0.5 shrink-0',
+                      isInGroup
+                        ? 'fr-icon-checkbox-fill text-action-high-blue-france'
+                        : otherGroupLabel
+                          ? 'fr-icon-checkbox-line text-gray-400'
+                          : 'fr-icon-checkbox-line',
+                    ].join(' ')}
+                    aria-hidden="true"
+                    style={{ fontSize: '1rem' }}
+                  />
+                  <span className="flex flex-col">
+                    <span className="text-sm font-bold">
+                      {carcasse.espece}
+                      {carcasse.nombre_d_animaux && carcasse.nombre_d_animaux > 1
+                        ? ` (${carcasse.nombre_d_animaux})`
+                        : ''}
+                    </span>
+                    <span className="text-xs">N° {carcasse.numero_bracelet}</span>
+                    {otherGroupLabel && (
+                      <span className="mt-0.5 text-xs text-gray-500">→ {otherGroupLabel}</span>
+                    )}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          <Badge
+            severity={groupCarcasses.length > 0 ? 'info' : 'warning'}
+            small
+            noIcon
+            as="span"
+            className="mt-2"
+          >
+            {groupCarcasses.length > 0 ? formatCarcasseLotCount(groupCarcasses) : 'Aucune carcasse'}
+          </Badge>
+          {errorFor('carcasseIds') && <p className="fr-error-text mt-2">{errorFor('carcasseIds')}</p>}
+        </div>
+      )}
+
+      {/* Étape 3 — Stockage */}
       {showStep('Stockage') && (
         <>
           <RadioButtons
@@ -615,7 +614,7 @@ function AcheminementForm({
         </>
       )}
 
-      {/* Étape 3 — Transport */}
+      {/* Étape 4 — Transport */}
       {showStep('Transport') && (
         <>
           <RadioButtons
@@ -734,7 +733,7 @@ export default function DestinataireSelectPremierDetenteur({
   const collecteursProIds = useCollecteursProIds();
   const circuitCourtIds = useCircuitCourtIds();
 
-  const isAcheminementModalOpen = useIsModalOpen(acheminementModal);
+  const isDispatchModalOpen = useIsModalOpen(dispatchModal);
   const isTrichineModalOpen = useIsModalOpen(trichineModal);
   const [dontShowTrichineAgain, setDontShowTrichineAgain] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
@@ -800,7 +799,7 @@ export default function DestinataireSelectPremierDetenteur({
     }));
   }, [prochainsDetenteurs]);
 
-  // Acheminements validés (une carte chacun). Vides au départ : le premier détenteur les crée via la modale.
+  // Ventes / dons validés (une carte chacun). Vides au départ : le premier détenteur les crée via la modale.
   const [dispatchGroups, setDispatchGroups] = useState<DispatchGroup[]>([]);
 
   // Brouillon en cours d'édition dans la modale (add = nouveau, edit = carte existante).
@@ -809,7 +808,7 @@ export default function DestinataireSelectPremierDetenteur({
   const [showModalErrors, setShowModalErrors] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
 
-  // Carcasses attribuées à un acheminement / restant à attribuer.
+  // Carcasses attribuées à une vente / un don, ou restant à attribuer.
   const assignedCarcasseIds = useMemo(() => {
     const set = new Set<string>();
     for (const group of dispatchGroups) {
@@ -823,7 +822,7 @@ export default function DestinataireSelectPremierDetenteur({
     [carcassesRestantes, assignedCarcasseIds]
   );
 
-  const openAddAcheminement = useCallback(() => {
+  const openAddDispatchGroup = useCallback(() => {
     const isFirst = dispatchGroups.length === 0;
     const nextDraft: DispatchGroup = {
       id: `group-${Date.now()}`,
@@ -831,7 +830,7 @@ export default function DestinataireSelectPremierDetenteur({
         isFirst && prefilledInfos?.premier_detenteur_prochain_detenteur_id_cache
           ? prefilledInfos.premier_detenteur_prochain_detenteur_id_cache
           : null,
-      // Premier acheminement : toutes les carcasses restantes par défaut (pas de sélecteur).
+      // Première vente / premier don : toutes les carcasses restantes par défaut.
       // Suivants : l'utilisateur choisit lesquelles déplacer.
       carcasseIds: isFirst ? carcassesRestantesIds : [],
       depotType:
@@ -853,7 +852,7 @@ export default function DestinataireSelectPremierDetenteur({
     setDraftMode('add');
     setShowModalErrors(false);
     setCurrentStep(1);
-    acheminementModal.open();
+    dispatchModal.open();
   }, [dispatchGroups.length, prefilledInfos, carcassesRestantesIds]);
 
   // L'état initial des lots est figé au montage. Une carcasse créée après coup rejoint donc le lot
@@ -911,7 +910,7 @@ export default function DestinataireSelectPremierDetenteur({
     setDraftMode('edit');
     setShowModalErrors(false);
     setCurrentStep(1);
-    acheminementModal.open();
+    dispatchModal.open();
   }, []);
 
   const onChangeDraft = useCallback((updates: Partial<DispatchGroup>) => {
@@ -936,15 +935,15 @@ export default function DestinataireSelectPremierDetenteur({
     [dispatchGroups, draft?.id]
   );
 
-  // Sélecteur de carcasses uniquement quand il y a plusieurs acheminements à départager.
-  const showCarcasseSelector = carcassesRestantes.length > 1 && otherGroups.length >= 1;
+  // Étape de sélection des carcasses uniquement s'il y a plusieurs carcasses à répartir.
+  const showCarcasseSelector = carcassesRestantes.length > 1;
 
   const draftCarcasseToGroupLabel = useMemo(() => {
     const map: Record<string, string> = {};
     otherGroups.forEach((g, i) => {
       const label = g.recipientEntityId
-        ? (entities[g.recipientEntityId]?.nom_d_usage ?? `Acheminement ${i + 1}`)
-        : `Acheminement ${i + 1}`;
+        ? (entities[g.recipientEntityId]?.nom_d_usage ?? `Vente / don ${i + 1}`)
+        : `Vente / don ${i + 1}`;
       for (const cId of g.carcasseIds) {
         map[cId] = label;
       }
@@ -961,19 +960,17 @@ export default function DestinataireSelectPremierDetenteur({
   const draftNeedTransport = draft
     ? needTransportForType(draft.recipientEntityId ? entities[draft.recipientEntityId]?.type : null)
     : false;
-  const steps = useMemo(
-    () => (draftNeedTransport ? ['Destinataire', 'Stockage', 'Transport'] : ['Destinataire', 'Stockage']),
-    [draftNeedTransport]
-  );
+  const steps = useMemo(() => {
+    const nextSteps = ['Destinataire'];
+    if (showCarcasseSelector) nextSteps.push('Carcasses');
+    nextSteps.push('Stockage');
+    if (draftNeedTransport) nextSteps.push('Transport');
+    return nextSteps;
+  }, [showCarcasseSelector, draftNeedTransport]);
   // Le nombre d'étapes peut diminuer (ex : passage ETG → collecteur) ; on borne l'étape courante.
   const boundedStep = Math.min(currentStep, steps.length);
 
-  const stepFields: Record<number, Array<keyof GroupFieldErrors>> = {
-    1: showCarcasseSelector ? ['recipientEntityId', 'carcasseIds'] : ['recipientEntityId'],
-    2: ['depotType', 'depotEntityId', 'depotDate'],
-    3: ['transportType', 'transportDate'],
-  };
-  const currentStepValid = !(stepFields[boundedStep] ?? []).some((f) => draftFieldErrors[f]);
+  const currentStepValid = !(STEP_FIELDS[steps[boundedStep - 1]] ?? []).some((f) => draftFieldErrors[f]);
 
   const goToNextStep = useCallback(() => {
     if (!currentStepValid) {
@@ -991,7 +988,7 @@ export default function DestinataireSelectPremierDetenteur({
 
   const saveDraft = useCallback(() => {
     if (!draft) return;
-    // Premier/seul acheminement sans sélecteur : il embarque toutes les carcasses non attribuées.
+    // Vente / don unique sans étape de sélection : elle embarque toutes les carcasses non attribuées.
     const finalDraft: DispatchGroup = showCarcasseSelector
       ? draft
       : { ...draft, carcasseIds: carcassesRestantesIds };
@@ -1000,24 +997,24 @@ export default function DestinataireSelectPremierDetenteur({
       return;
     }
     setDispatchGroups((prev) => {
-      // Exclusivité : les carcasses de cet acheminement quittent les autres.
+      // Exclusivité : les carcasses de cette vente / ce don quittent les autres.
       const claimed = new Set(finalDraft.carcasseIds);
       const others = prev
         .filter((g) => g.id !== finalDraft.id)
         .map((g) => ({ ...g, carcasseIds: g.carcasseIds.filter((id) => !claimed.has(id)) }))
-        // Un acheminement vidé de toutes ses carcasses disparaît.
+        // Une vente / un don vidé de toutes ses carcasses disparaît.
         .filter((g) => g.carcasseIds.length > 0);
       return [...others, finalDraft];
     });
     setDraft(null);
-    acheminementModal.close();
+    dispatchModal.close();
   }, [draft, showCarcasseSelector, carcassesRestantesIds, entities]);
 
   const removeGroup = useCallback((groupId: string) => {
     setDispatchGroups((prev) => prev.filter((g) => g.id !== groupId));
   }, []);
 
-  // Trichine : au moins un acheminement vers du circuit court avec du sanglier.
+  // Trichine : au moins une vente / un don vers du circuit court avec du sanglier.
   const hasSanglier = useMemo(
     () => carcassesRestantes.some((carcasse) => carcasse.espece === 'Sanglier'),
     [carcassesRestantes]
@@ -1087,15 +1084,15 @@ export default function DestinataireSelectPremierDetenteur({
     });
   }, []);
 
-  // Les acheminements validés sont toujours complets (validés à l'enregistrement).
+  // Les ventes / dons validés sont toujours complets (validés à l'enregistrement).
   // Il reste à vérifier qu'il y en a au moins un et que toutes les carcasses sont attribuées.
   const globalValidationError = useMemo(() => {
     if (dispatchGroups.length === 0) {
-      return 'Veuillez ajouter au moins un acheminement';
+      return 'Veuillez ajouter au moins une vente ou un don';
     }
     if (unassignedCarcasses.length > 0) {
       return `${formatCarcasseLotCount(unassignedCarcasses)} ${unassignedCarcasses.length > 1 ? 'ne sont attribuées' : "n'est attribuée"
-        } à aucun acheminement`;
+        } à aucune vente ni aucun don`;
     }
     return null;
   }, [dispatchGroups.length, unassignedCarcasses]);
@@ -1215,22 +1212,26 @@ export default function DestinataireSelectPremierDetenteur({
 
         {carcassesRestantes.length > 0 && (
           <>
-            {/* Cartes des acheminements déjà renseignés */}
-            {dispatchGroups.map((group, index) => (
-              <AcheminementCard
-                key={group.id}
-                group={group}
-                index={index}
-                totalGroups={dispatchGroups.length}
-                entities={entities}
-                groupCarcasses={allCarcasses.filter((c) =>
-                  group.carcasseIds.includes(c.zacharie_carcasse_id)
-                )}
-                canEdit={canEdit && !disabled}
-                onEdit={() => openEditAcheminement(group)}
-                onDelete={() => removeGroup(group.id)}
-              />
-            ))}
+            {/* Cartes des ventes / dons déjà renseignés */}
+            {dispatchGroups.length > 0 && (
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                {dispatchGroups.map((group, index) => (
+                  <DispatchGroupCard
+                    key={group.id}
+                    group={group}
+                    index={index}
+                    totalGroups={dispatchGroups.length}
+                    entities={entities}
+                    groupCarcasses={allCarcasses.filter((c) =>
+                      group.carcasseIds.includes(c.zacharie_carcasse_id)
+                    )}
+                    canEdit={canEdit && !disabled}
+                    onEdit={() => openEditDispatchGroup(group)}
+                    onDelete={() => removeGroup(group.id)}
+                  />
+                ))}
+              </div>
+            )}
 
             {/* Carcasses non attribuées */}
             {dispatchGroups.length > 0 && unassignedCarcasses.length > 0 && (
@@ -1253,19 +1254,21 @@ export default function DestinataireSelectPremierDetenteur({
               />
             )}
 
-            {/* Ajouter un acheminement — possible tant qu'il reste des carcasses à répartir
-                (le 1er acheminement prend toutes les carcasses ; les suivants en récupèrent une partie). */}
+            {/* Ajouter une vente / un don — possible tant qu'il reste des carcasses à répartir
+                (la 1re prend toutes les carcasses ; les suivantes en récupèrent une partie). */}
             {canEdit &&
               (dispatchGroups.length === 0 ||
                 (carcassesRestantes.length > 1 && dispatchGroups.length < carcassesRestantes.length)) && (
                 <Button
                   type="button"
-                  priority={dispatchGroups.length === 0 ? 'primary' : 'secondary'}
+                  priority="secondary"
                   iconId="fr-icon-add-line"
                   disabled={disabled}
-                  nativeButtonProps={{ onClick: openAddAcheminement }}
+                  nativeButtonProps={{ onClick: openAddDispatchGroup }}
                 >
-                  Ajouter un acheminement
+                  {dispatchGroups.length === 0
+                    ? 'Ajouter une vente ou un don'
+                    : 'Ajouter une autre vente ou un autre don'}
                 </Button>
               )}
 
@@ -1310,9 +1313,9 @@ export default function DestinataireSelectPremierDetenteur({
         )}
       </div>
 
-      <acheminementModal.Component
+      <dispatchModal.Component
         size="large"
-        title={draftMode === 'add' ? 'Ajouter un acheminement' : 'Modifier un acheminement'}
+        title={draftMode === 'add' ? 'Ajouter une vente ou un don' : 'Modifier'}
         buttons={
           !canEdit
             ? [{ children: 'Fermer' }]
@@ -1336,15 +1339,15 @@ export default function DestinataireSelectPremierDetenteur({
                   nativeButtonProps: { onClick: goToNextStep },
                 }
                 : {
-                  children: "Enregistrer l'acheminement",
+                  children: 'Enregistrer',
                   doClosesModal: false,
                   nativeButtonProps: { onClick: () => saveDraft() },
                 },
             ]
         }
       >
-        {isAcheminementModalOpen && draft && (
-          <AcheminementForm
+        {isDispatchModalOpen && draft && (
+          <DispatchGroupForm
             group={draft}
             canEdit={canEdit && !disabled}
             showCarcasseSelector={showCarcasseSelector}
@@ -1363,7 +1366,7 @@ export default function DestinataireSelectPremierDetenteur({
             onChange={onChangeDraft}
           />
         )}
-      </acheminementModal.Component>
+      </dispatchModal.Component>
 
       <trichineModal.Component
         title={trichineMessage?.title || 'Rappel trichine'}
