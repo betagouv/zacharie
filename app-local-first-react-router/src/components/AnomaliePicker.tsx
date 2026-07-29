@@ -348,6 +348,10 @@ function AutreAnomalieBlock({
             value: draft,
             placeholder,
             onChange: (e) => setDraft(e.target.value),
+            // Le CTA de la modale (« Ajouter la carcasse », « Terminer ») vit hors du picker et
+            // reste cliquable : un texte saisi mais non validé serait perdu sans un mot. On le
+            // verse à la perte de focus — la pastille apparaît aussitôt, et se retire d'un clic.
+            onBlur: () => add(),
             // Évite la soumission du <form> parent (rendu dans un form de création).
             onKeyDown: (e) => {
               if (e.key !== 'Enter') return;

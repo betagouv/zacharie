@@ -135,3 +135,35 @@ test('Anomalie hors liste — petit gibier', async ({ page }) => {
   await page.getByRole('button', { name: 'Retour' }).click();
   await expect(page.getByRole('button', { name: 'Ajouter une anomalie (facultatif)' })).toBeVisible();
 });
+
+// Un texte saisi mais jamais validé ne doit pas être perdu : le CTA de la modale vit hors du
+// picker, valider la carcasse doit reprendre le brouillon du champ libre.
+test('Anomalie hors liste — texte saisi non validé, repris à l’ajout de la carcasse', async ({ page }) => {
+  await connectWith(page, 'examinateur@example.fr');
+
+  await page.getByRole('button', { name: 'Nouvelle fiche' }).first().click();
+  await page.getByRole('button', { name: dayjs.utc().format('dddd DD MMMM') }).click();
+  await page.getByRole('textbox', { name: 'Commune de mise à mort' }).fill('CHASS');
+  await page.getByRole('button', { name: 'CHASSENARD' }).click();
+  await page.getByRole('button', { name: 'Pierre Petit' }).click();
+  await page.getByRole('button', { name: 'Continuer' }).first().click();
+
+  await page.getByRole('button', { name: 'Ajouter une carcasse' }).click();
+  await page.getByLabel('Espèce (grand et petit gibier)').selectOption('Daim');
+  await page.getByRole('button', { name: /^MM-\d{3}-\d{3}$/ }).click();
+  await page.getByRole('button', { name: 'Ajouter une anomalie (facultatif)' }).click();
+  await page.getByRole('button', { name: 'Externe' }).click();
+  await page.getByPlaceholder('Description de l’anomalie').fill('plaie suspecte');
+
+  // Directement le CTA de la modale, sans passer par « Ajouter ».
+  await page.getByRole('button', { name: 'Ajouter la carcasse' }).click();
+
+  await page
+    .getByRole('button', { name: /Daim N°/ })
+    .first()
+    .click();
+  await expect(page.getByRole('button', { name: 'Anomalies (1)' })).toBeVisible({ timeout: 10000 });
+  await page.getByRole('button', { name: 'Anomalies (1)' }).click();
+  await page.getByRole('button', { name: 'Externe 1' }).click();
+  await expect(page.getByRole('button', { name: 'Retirer plaie suspecte' })).toBeVisible();
+});
