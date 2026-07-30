@@ -185,6 +185,66 @@ const checks: HealthCheck[] = [
       return { count: Number(count), sampleIds: rows.map((r) => r.id) };
     },
   },
+  {
+    // Prise en charge orpheline : la carcasse est détenue par un ETG/collecteur alors qu'aucune
+    // CarcasseIntermediaire ne rattache cette entité à la carcasse. La fiche devient une impasse
+    // pour le détenteur : pas de bouton « Prendre en charge » (next_owner vide) et pas de section
+    // de transmission (elle est dérivée de l'intermédiaire).
+    // Restreint aux carcasses encore vivantes : refusées / manquantes / clôturées / déjà au SVI ne
+    // bloquent plus personne.
+    name: 'Carcasse chez un ETG/COLLECTEUR_PRO sans CarcasseIntermediaire de l’entité détentrice',
+    run: async () => {
+      const rows = await prisma.$queryRaw<Array<{ id: string }>>`
+        SELECT c.zacharie_carcasse_id AS id
+        FROM "Carcasse" c
+        WHERE c.deleted_at IS NULL
+          AND c.current_owner_role IN (
+            ${FeiOwnerRole.ETG}::"FeiOwnerRole",
+            ${FeiOwnerRole.COLLECTEUR_PRO}::"FeiOwnerRole"
+          )
+          AND c.current_owner_entity_id IS NOT NULL
+          AND c.next_owner_role IS NULL
+          AND c.svi_assigned_at IS NULL
+          AND c.svi_closed_at IS NULL
+          AND c.svi_automatic_closed_at IS NULL
+          AND c.intermediaire_closed_at IS NULL
+          AND c.intermediaire_carcasse_refus_intermediaire_id IS NULL
+          AND c.intermediaire_carcasse_manquante IS NOT TRUE
+          AND NOT EXISTS (
+            SELECT 1 FROM "CarcasseIntermediaire" ci
+            WHERE ci.zacharie_carcasse_id = c.zacharie_carcasse_id
+              AND ci.deleted_at IS NULL
+              AND ci.intermediaire_entity_id = c.current_owner_entity_id
+          )
+        ORDER BY c.created_at ASC
+        LIMIT ${SAMPLE_SIZE};
+      `;
+      const [{ count }] = await prisma.$queryRaw<Array<{ count: bigint }>>`
+        SELECT COUNT(*)::bigint AS count
+        FROM "Carcasse" c
+        WHERE c.deleted_at IS NULL
+          AND c.current_owner_role IN (
+            ${FeiOwnerRole.ETG}::"FeiOwnerRole",
+            ${FeiOwnerRole.COLLECTEUR_PRO}::"FeiOwnerRole"
+          )
+          AND c.current_owner_entity_id IS NOT NULL
+          AND c.next_owner_role IS NULL
+          AND c.svi_assigned_at IS NULL
+          AND c.svi_closed_at IS NULL
+          AND c.svi_automatic_closed_at IS NULL
+          AND c.intermediaire_closed_at IS NULL
+          AND c.intermediaire_carcasse_refus_intermediaire_id IS NULL
+          AND c.intermediaire_carcasse_manquante IS NOT TRUE
+          AND NOT EXISTS (
+            SELECT 1 FROM "CarcasseIntermediaire" ci
+            WHERE ci.zacharie_carcasse_id = c.zacharie_carcasse_id
+              AND ci.deleted_at IS NULL
+              AND ci.intermediaire_entity_id = c.current_owner_entity_id
+          );
+      `;
+      return { count: Number(count), sampleIds: rows.map((r) => r.id) };
+    },
+  },
 ];
 
 export async function dataHealthCheck() {
