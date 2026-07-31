@@ -23,7 +23,7 @@ Key domains:
 
 ## Hard Rules (non-negotiable)
 
-- **One role per user.** A user shall not have multiple roles. Frontend forbids it; backend must validate and reject.
+- **One role per user.** A user shall not have multiple roles. The frontend forbids it. **The backend does not enforce it yet** — the zod `roles` schema (`api-express/src/controllers/user.ts`) is a plain `z.array()` with no length cap. Any route you write or touch that persists `roles` must reject an array longer than 1.
 - **Never write backward-compatibility or data-retroactivity code.** When the data model changes (schema, enums, field names, formats), update the code to work with the new model only. No runtime transformations, fallbacks, or migration logic in app code to handle old formats. Old data is migrated at the DB level (Prisma migrations, SQL scripts), never patched at read-time.
 - **Never roll your own logout sequence.** Call `disconnect(...)` (full logout) or `clearLocalAppState(reason)` (session swap). See @app-local-first-react-router/CLAUDE.md.
 - **Never navigate via `window.location.href`** in the frontend — it ejects the user from the Expo WebView into Safari. Use `pushState` + `popstate`.
@@ -38,7 +38,7 @@ Key domains:
 ## Preferences
 
 - French for user-facing content, English for code.
-- Prettier (config in each package.json): `singleQuote: true, trailingComma: "es5", semi: true, printWidth: 110, tabWidth: 2`.
+- Prettier (config in each package.json): `singleQuote: true, trailingComma: "es5", semi: true, printWidth: 110, tabWidth: 2`. The frontend adds `singleAttributePerLine: true` + the `prettier-plugin-tailwindcss` plugin (class sorting) — don't reformat frontend files with the bare root config.
 - Prefer separate API routes for distinct data sections.
 - Default to the simplest option in first iterations; no conditional UX unless explicitly requested.
 - Comments are simple and describe the app's current behavior — only when the code isn't self-explanatory. Never narrate the change or the decision made during a session ("on change d'avis, finalement on fait X au lieu de Y"). Write `// on fait X car ...`, not the story of how we got there.
@@ -119,7 +119,7 @@ Two API types:
 
 - **Prisma** schema at `api-express/prisma/schema.prisma`
 - Create migrations: `npm run prisma-create-migration <name>` (in api-express/)
-- Schema is copied to frontend via `scripts/copy-schema-to-app-side.js`
+- Schema is copied to frontend via `api-express/scripts/copy-schema-to-app-side.js`
 
 ### Frontend
 

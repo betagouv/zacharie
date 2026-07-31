@@ -16,7 +16,19 @@ npx playwright test               # Run all tests
 npx playwright test <file>.spec.ts  # Run specific test file
 ```
 
-Test accounts: `admin1@example.org` through `admin12@example.org`, password: `secret`
+## Test accounts
+
+Seeded by `api-express/scripts/populate-test-db.ts` — **that file is the source of truth**, the list below drifts.
+
+Emails are semantic, one per role, all on `@example.fr`. Password for every account: `secret-secret`
+(default arg of `connectWith` / `logoutAndConnect` in `e2e/utils/`).
+
+- Chasseur : `examinateur@example.fr`, `premier-detenteur@example.fr`, `examinateur-premier-detenteur@example.fr`
+- Variantes chasseur : `-onboarding`, `-en-attente-validation`, `examinateur-sans-formation@example.fr`
+- ETG : `etg-1@example.fr`, `etg-2@example.fr`, `etg-nouveau@example.fr`
+- Collecteur : `collecteur-pro@example.fr`, `collecteur-pro-1-etg-1@example.fr`, `collecteur-pro-nouveau@example.fr`
+- SVI : `svi@example.fr`, `svi-2@example.fr`, `svi-nouveau@example.fr`
+- Circuit court : `commerce-de-detail@example.fr`, `commerce-de-detail-nouveau@example.fr`
 
 Required env vars:
 
@@ -41,6 +53,6 @@ The current suite is flake-free; follow these or you break that.
 - **Mobile viewport for CHASSEUR specs** (`350x667`, `isMobile`, `hasTouch`). Desktop default for ETG/SVI/collecteur/circuit-court.
 - **Role/accessible selectors first** (`getByRole`, `getByLabel`). CSS fallback only for DSFR widgets, e.g. `[class*='select-prochain-detenteur']`.
 - **Role-based route access**: each role layout redirects to `/app/connexion` via `<Navigate>` if user doesn't have the matching role (see `chasseur-layout.tsx`). Assert redirection, not 404.
-- **Seed starting states** (from `FeiOwnerRole` enum): `EXAMINATEUR_INITIAL`, `PREMIER_DETENTEUR`, `ETG`, `COLLECTEUR_PRO`, `SVI`, `COMMERCE_DE_DETAIL`. Extend `populate-test-db.ts` to add more.
+- **Seed starting states**: the `SeedRole` union in `e2e/scripts/reset-db.ts` (its own type — _not_ the `FeiOwnerRole` enum). Beyond the plain role states it covers mid-chain ones (`ETG_TAKEN_CHARGE`, `ETG_TAKEN_CHARGE_AND_ASSIGNED_TO_SVI`, `COLLECTEUR_TAKEN_CHARGE`, `COMMERCE_DE_DETAIL_DELIVERED`, `SVI_CLOSED`, `ETG_REFUSED`, `CHASSEUR_MANY_FICHES`…). Adding one = extend `SeedRole` **and** `api-express/scripts/populate-test-db.ts`.
 - **Test DB is ephemeral**: `resetDb(role)` wipes and re-seeds; tests in the same file share state only via `beforeAll`. Use `beforeEach` when tests must be independent.
 - **Mass-inspect TODO** (`tests/chains/133-chain-300-carcasses-offline.spec.ts`): the ~300-carcasse full-chain spec stops at SVI _reception_ — the SVI only checks the fiche arrived. When SVI mass-inspect ships, extend it to inspect/close all carcasses.

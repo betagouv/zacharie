@@ -24,7 +24,9 @@ npm run build            # Production build
 Key files:
 
 - `src/zustand/store.ts` — State & sync logic
-- `src/utils/load-feis.ts` — Data loading with local/remote merge
+- `src/utils/load-data.ts` — `loadData()` entry point + `useLoaderEffect` hook
+- `src/utils/sync-data.ts` / `src/utils/load-carcasses.ts` — pull from server, each with its own `abort*(reason)`
+- `src/utils/merge-fetched-items.ts` — `mergeItems()`, the local/remote merge by `updated_at`
 - `src/utils/disconnect.ts` — Session teardown (see below)
 
 ## Hard rule: never roll your own logout
