@@ -3,7 +3,7 @@ import request from 'supertest';
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import carcasseRouter from '~/controllers/carcasse';
 import prisma from '~/prisma';
-import { EntityRelationStatus, EntityRelationType, UserRoles } from '@prisma/client';
+import { EntityRelationStatus, EntityRelationType, Prisma, UserRoles } from '@prisma/client';
 
 // GET /carcasse/refusees/:fei_numero — carcasses d'une fiche HORS du périmètre de synchro delta
 // (refusées/manquantes/orphelines). Une carcasse refusée « sort du circuit » : ses next/current_owner
@@ -179,7 +179,7 @@ describe('ETG — récupération des carcasses refusées de la fiche', () => {
 });
 
 describe('SVI — voit les carcasses refusées en amont (champ de contrôle)', () => {
-  const sviAccessWhere = {
+  const sviAccessWhere: Prisma.CarcasseWhereInput = {
     svi_assigned_at: { not: null },
     OR: [{ svi_entity_id: { in: ENTITY_IDS } }, { next_owner_entity_id: { in: ENTITY_IDS } }],
   };
