@@ -91,6 +91,15 @@ export async function syncData(calledFrom?: string) {
       console.error('sync failed', res.error);
       return;
     }
+
+    // Le serveur confirme les logs qu'il a écrits : on les retire du store, sinon ils
+    // repartent dans chaque payload de sync pour toute la durée de la session.
+    const acknowledgedLogIds = new Set(res.data.syncedLogIds);
+    if (acknowledgedLogIds.size > 0) {
+      useZustandStore.setState((state) => ({
+        logs: state.logs.filter((l) => !acknowledgedLogIds.has(l.id)),
+      }));
+    }
   } catch (error) {
     if (signal.aborted) return;
     console.error('sync error', error);
