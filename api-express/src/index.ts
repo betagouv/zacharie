@@ -223,6 +223,7 @@ app.use('/user/login', authRateLimit);
 app.use('/user/sign-up', authRateLimit);
 app.use('/user/forget-password', authRateLimit);
 app.use('/user/reset-password', authRateLimit);
+app.use('/user/change-password', authRateLimit);
 
 // Routes used by zacharie.beta.gouv.fr
 app.use('/user', passport.initialize(), userRouter);
