@@ -1,6 +1,6 @@
 import { User, UserNotifications } from '@prisma/client';
 import prisma from '~/prisma';
-import { sendEmail, sendTemplateEmail } from '~/third-parties/brevo';
+import { sendTemplateEmail } from '~/third-parties/brevo';
 import { BrevoTemplateId } from '~/third-parties/brevo-templates';
 
 // Envoie un email d'inscription une seule fois par utilisateur (déduplication via NotificationLog
@@ -24,9 +24,7 @@ export async function sendOnboardingEmailOnce({
   });
   if (existing) return false;
 
-  // TODO  changer function pour tester
-  // await sendTemplateEmail({ emails: [user.email], templateId: BrevoTemplateId.ONBOARDING_DONE });
-  await sendEmail({ emails: [user.email], subject, text });
+  await sendTemplateEmail({ emails: [user.email], templateId: BrevoTemplateId.ONBOARDING_DONE });
 
   await prisma.notificationLog.create({
     data: {

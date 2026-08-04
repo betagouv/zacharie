@@ -47,7 +47,7 @@ export const BrevoTemplateId: Record<BrevoTemplateKey, number | null> = {
   CONTACT_FORM: null,
   PASSWORD_RESET: 75,
   USER_INVITATION: null,
-  ONBOARDING_DONE: null,
+  ONBOARDING_DONE: 76,
   ACCOUNT_ACTIVATED: null,
 
   // 2. Notices internes équipe (→ contact@zacharie.beta.gouv.fr)
