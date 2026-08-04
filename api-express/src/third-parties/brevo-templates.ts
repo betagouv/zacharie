@@ -45,9 +45,9 @@ export type BrevoTemplateKey =
 export const BrevoTemplateId: Record<BrevoTemplateKey, number | null> = {
   // 1. Transactionnels (action directe d'un user)
   CONTACT_FORM: null,
-  PASSWORD_RESET: null,
+  PASSWORD_RESET: 75,
   USER_INVITATION: null,
-  ONBOARDING_DONE: 73,
+  ONBOARDING_DONE: null,
   ACCOUNT_ACTIVATED: null,
 
   // 2. Notices internes équipe (→ contact@zacharie.beta.gouv.fr)
