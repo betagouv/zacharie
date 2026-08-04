@@ -26,6 +26,14 @@ export default function useCircuitCourtNavigationMenu(): MainNavigationProps.Ite
           },
         },
         {
+          text: 'Changer de mot de passe',
+          isActive: location.pathname === '/app/circuit-court/profil/mot-de-passe',
+          linkProps: {
+            href: '#',
+            to: '/app/circuit-court/profil/mot-de-passe',
+          },
+        },
+        {
           text: 'Notifications',
           isActive: location.pathname === '/app/circuit-court/profil/notifications',
           linkProps: {
