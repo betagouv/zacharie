@@ -16,6 +16,7 @@ import {
   formatRenvoiExpediteurEmail,
   formatSaisieChasseurEmail,
   formatSviAssignedEmail,
+  formatSviAssignedTemplateEmail,
 } from '~/utils/formatCarcasseEmail';
 import { checkGenerateCertificat } from '~/utils/generate-certificats';
 import { isCarcasseDone } from '~/utils/is-carcasse-done';
@@ -26,6 +27,7 @@ import {
   updateBrevoSVIDealPremiereFiche,
 } from '~/third-parties/brevo';
 import { getFichePdf } from '~/templates/get-fiche-pdf';
+import { BrevoTemplateId } from '~/third-parties/brevo-templates';
 
 async function notifyExaminateurAndPremierDetenteur(
   fei_numero: string,
@@ -297,13 +299,19 @@ export async function notifySviAssignment(
       },
     },
   });
+  // Le side-effect tourne une fois par carcasse, mais la notification couvre toute la fiche :
+  // c'est la dédup sur `notificationLogAction` qui garantit un seul envoi par user SVI.
+  // Le template Brevo ne couvre que l'email ; le push reste en texte (`formatSviAssignedEmail`).
+  const [object, email] = await formatSviAssignedEmail(updatedCarcasse);
+  const templateData = await formatSviAssignedTemplateEmail(updatedCarcasse);
   for (const sviUser of sviUsers) {
-    const [object, email] = await formatSviAssignedEmail(updatedCarcasse);
     await sendNotificationToUser({
       user: sviUser,
       title: object,
       body: email,
       email: email,
+      emailTemplateId: BrevoTemplateId.FEI_TRANSMITTED_TO_SVI,
+      emailTemplateParams: templateData,
       notificationLogAction: `FEI_ASSIGNED_TO_${updatedCarcasse.next_owner_role}_${updatedCarcasse.premier_detenteur_prochain_detenteur_id_cache}_${updatedCarcasse.fei_numero}`,
     });
   }

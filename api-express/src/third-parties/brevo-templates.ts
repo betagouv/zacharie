@@ -59,7 +59,7 @@ export const BrevoTemplateId: Record<BrevoTemplateKey, number | null> = {
   INTERNAL_CCG_PREREGISTERED: null,
 
   // 3. Notifications automatiques (event-driven, email si préf. EMAIL active)
-  FEI_TRANSMITTED_TO_SVI: null,
+  FEI_TRANSMITTED_TO_SVI: 78,
   FEI_ASSIGNED_CIRCUIT_COURT: null,
   FEI_ASSIGNED_USER: null,
   FEI_UNASSIGNED: null,
