@@ -22,12 +22,14 @@ type SendEmailProps = {
   attachments?: brevo.SendSmtpEmailAttachmentInner[];
 };
 
-async function sendEmail(props: SendEmailProps) {
+// Renvoie `true` si l'email est parti (ou a été volontairement court-circuité en dev), `false` en cas
+// d'échec. L'appelant s'en sert pour ne pas enregistrer un envoi raté comme un succès.
+async function sendEmail(props: SendEmailProps): Promise<boolean> {
   try {
     if (IS_DEV_OR_TEST) {
       console.log('Sending email in development mode');
       console.log(props);
-      return;
+      return true;
     }
     if (!props.html && !props.text) {
       throw new Error('html or text is required');
@@ -57,12 +59,14 @@ async function sendEmail(props: SendEmailProps) {
     sendSmtpEmail.to = props.emails.map((email) => ({ email }));
     const result = await apiInstance.sendTransacEmail(sendSmtpEmail);
     // console.log('Email sent successfully:', result);
+    return true;
   } catch (error) {
     capture(error as Error, {
       extra: {
         props,
       },
     });
+    return false;
   }
 }
 
@@ -81,12 +85,24 @@ type SendTemplateEmailProps = {
 
 // Envoi via un template Brevo (sujet + HTML gérés côté dashboard Brevo, remplis par `params`).
 // À utiliser pour tout email migré ; le contenu n'est plus construit dans le code.
-async function sendTemplateEmail(props: SendTemplateEmailProps) {
+// Même contrat de retour que `sendEmail` : `true` si parti, `false` sinon.
+async function sendTemplateEmail(props: SendTemplateEmailProps): Promise<boolean> {
   try {
+    // Les ids du registre valent `null` tant que le template n'existe pas côté Brevo, et
+    // `strictNullChecks` étant désactivé le compilateur laisse passer ce `null` : sans ce garde
+    // l'appel partirait sans template et Brevo répondrait 400.
+    if (!props.templateId) {
+      capture(new Error('sendTemplateEmail appelé sans templateId'), {
+        extra: {
+          props,
+        },
+      });
+      return false;
+    }
     if (IS_DEV_OR_TEST) {
       console.log('Sending template email in development mode');
       console.log(props);
-      return;
+      return true;
     }
     const apiInstance = new brevo.TransactionalEmailsApi();
     apiInstance.setApiKey(brevo.TransactionalEmailsApiApiKeys.apiKey, API_KEY);
@@ -104,12 +120,14 @@ async function sendTemplateEmail(props: SendTemplateEmailProps) {
     }
     sendSmtpEmail.to = props.emails.map((email) => ({ email }));
     await apiInstance.sendTransacEmail(sendSmtpEmail);
+    return true;
   } catch (error) {
     capture(error as Error, {
       extra: {
         props,
       },
     });
+    return false;
   }
 }
 

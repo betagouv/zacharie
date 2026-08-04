@@ -238,46 +238,48 @@ async function sendNotificationToUser({
       return;
     }
     console.log('SENDING EMAIL NOTIFICATION FOR REAL', user.id);
-    // On attend l'envoi avant de rendre la main : c'est le `notificationLog.create` du `.then`
-    // qui porte la dédup, et la notification suivante fait son `findFirst` dès que la tâche
-    // PQueue courante est terminée.
-    await (
-      emailTemplateId
-        ? sendTemplateEmail({
-            emails: [user.email!],
-            templateId: emailTemplateId,
-            params: emailTemplateParams,
-            attachments: attachments,
-          })
-        : sendEmail({
-            emails: [user.email!],
-            subject: title,
-            text: email,
-            attachments: attachments,
-          })
-    )
-      .then(async (response) => {
-        await prisma.notificationLog.create({
-          data: {
-            user_id: user.id,
-            payload: JSON.stringify({
-              title,
-              body,
-              email,
-              response,
-            }),
-            type: 'EMAIL',
-            email: user.email,
-            action: notificationLogAction,
-          },
+    // On attend l'envoi avant de rendre la main : c'est le `notificationLog.create` qui porte la
+    // dédup, et la notification suivante fait son `findFirst` dès que la tâche PQueue courante est
+    // terminée.
+    const sent = emailTemplateId
+      ? await sendTemplateEmail({
+          emails: [user.email!],
+          templateId: emailTemplateId,
+          params: emailTemplateParams,
+          attachments: attachments,
+        })
+      : await sendEmail({
+          emails: [user.email!],
+          subject: title,
+          text: email,
+          attachments: attachments,
         });
-      })
-      .catch((error) => {
-        console.error('error in send email');
-        console.error(error);
-        Sentry.captureException(error, {
-          extra: { user, body, email, title, img },
-        });
+    // Envoi raté : on n'écrit pas le log, sinon la dédup bloquerait définitivement le renvoi.
+    // Les senders remontent déjà l'erreur à Sentry.
+    if (!sent) {
+      console.error('error in send email', user.id);
+      return;
+    }
+    try {
+      await prisma.notificationLog.create({
+        data: {
+          user_id: user.id,
+          payload: JSON.stringify({
+            title,
+            body,
+            email,
+            emailTemplateId,
+            emailTemplateParams,
+          }),
+          type: 'EMAIL',
+          email: user.email,
+          action: notificationLogAction,
+        },
       });
+    } catch (error) {
+      Sentry.captureException(error, {
+        extra: { user, body, email, title, img },
+      });
+    }
   }
 }

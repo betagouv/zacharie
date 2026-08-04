@@ -32,8 +32,11 @@ vi.mock('~/utils/formatCarcasseEmail', () => ({
   formatCarcasseManquanteOrRefusChasseurEmail: vi.fn().mockResolvedValue(['object', 'body']),
   formatSaisieChasseurEmail: vi.fn().mockReturnValue(['object', 'body']),
   formatRenvoiExpediteurEmail: vi.fn().mockReturnValue(['object', 'body']),
-  formatSviAssignedEmail: vi.fn().mockResolvedValue(['object', 'body']),
-  formatSviAssignedTemplateEmail: vi.fn().mockResolvedValue({ entity_name: 'ETG 1', count: 3 }),
+  formatSviAssignedEmail: vi.fn().mockResolvedValue({
+    object: 'object',
+    text: 'body',
+    params: { entity_name: 'ETG 1', count: 3 },
+  }),
 }));
 vi.mock('~/utils/generate-certificats', () => ({ checkGenerateCertificat: vi.fn() }));
 vi.mock('~/utils/api', () => ({ sendWebhook: vi.fn().mockResolvedValue(undefined) }));
