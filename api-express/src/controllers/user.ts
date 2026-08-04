@@ -609,7 +609,7 @@ router.post(
       const user = req.user!;
       const result = changePasswordSchema.safeParse(req.body);
       if (!result.success) {
-        res.status(400).send({
+        res.status(406).send({
           ok: false,
           data: { user: null },
           message: '',
@@ -662,9 +662,20 @@ router.post(
         },
       });
 
+      await sendEmail({
+        emails: process.env.NODE_ENV !== 'production' ? ['arnaud@ambroselli.io'] : [user.email!],
+        subject: '[Zacharie] Votre mot de passe a été modifié',
+        text: `Bonjour, le mot de passe de votre compte Zacharie vient d'être modifié. Si vous n'êtes pas à l'origine de ce changement, réinitialisez votre mot de passe depuis ${process.env.VITE_APP_URL}/app/connexion/mot-de-passe-oublie et contactez-nous à contact@zacharie.beta.gouv.fr`,
+      });
+
+      // on renouvelle le token de la session courante, l'ancien reste valide jusqu'à son expiration
+      const token = jwt.sign({ userId: user.id }, SECRET, {
+        expiresIn: JWT_MAX_AGE,
+      });
+      res.cookie('zacharie_express_jwt', token, cookieOptions(req));
       res.status(200).send({
         ok: true,
-        data: { user },
+        data: { user, token },
         message: 'Votre mot de passe a été modifié',
         error: '',
       });
