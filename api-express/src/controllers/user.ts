@@ -10,9 +10,11 @@ import crypto from 'crypto';
 import {
   createBrevoContact,
   sendEmail,
+  sendTemplateEmail,
   updateBrevoChasseurDeal,
   updateBrevoContact,
 } from '~/third-parties/brevo';
+import { BrevoTemplateId } from '~/third-parties/brevo-templates';
 import { capture } from '~/third-parties/sentry';
 import createUserId from '~/utils/createUserId';
 import { ensureScopeForRoles } from '~/utils/federation-stats';
@@ -465,11 +467,12 @@ router.post(
           reset_password_last_email_sent_at: new Date(),
         },
       });
-      const text = `Bonjour, vous avez demandé à réinitialiser votre mot de passe. Pour ce faire, veuillez cliquer sur le lien suivant : ${process.env.VITE_APP_URL}/app/connexion/reset-mot-de-passe?reset-password-token=${token}`;
-      await sendEmail({
-        emails: process.env.NODE_ENV !== 'production' ? ['arnaud@ambroselli.io'] : [user.email!],
-        subject: '[Zacharie] Réinitialisation de votre mot de passe',
-        text,
+      await sendTemplateEmail({
+        emails: [user.email!],
+        templateId: BrevoTemplateId.PASSWORD_RESET,
+        params: {
+          cta: `${process.env.VITE_APP_URL}/app/connexion/reset-mot-de-passe?reset-password-token=${token}`,
+        },
       });
 
       // Pour des raisons de sécurité, on ne révèle pas si l'email existe ou non
