@@ -660,7 +660,7 @@ router.post(
       });
 
       await sendEmail({
-        emails: process.env.NODE_ENV !== 'production' ? ['arnaud@ambroselli.io'] : [user.email!],
+        emails: [user.email!],
         subject: '[Zacharie] Votre mot de passe a été modifié',
         text: `Bonjour, le mot de passe de votre compte Zacharie vient d'être modifié. Si vous n'êtes pas à l'origine de ce changement, réinitialisez votre mot de passe depuis ${process.env.VITE_APP_URL}/app/connexion/mot-de-passe-oublie et contactez-nous à contact@zacharie.beta.gouv.fr`,
       });
