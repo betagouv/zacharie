@@ -19,6 +19,10 @@ interface SyncCarcasseOpts {
   existingFei?: Fei | null;
   existingCarcasse?: Carcasse | null;
   ensuredRelationEntityIds?: Set<string>;
+  // Client Prisma à utiliser : le client global par défaut, ou un client transactionnel quand
+  // l'appelant couple la carcasse à son CarcasseIntermediaire dans une même transaction (prise en
+  // charge atomique). Voir sync.ts.
+  tx?: Prisma.TransactionClient;
 }
 
 export async function syncCarcasse(
@@ -28,13 +32,14 @@ export async function syncCarcasse(
   user: User,
   opts: SyncCarcasseOpts = {}
 ): Promise<SaveCarcasseResult> {
+  const tx = opts.tx ?? prisma;
   if (!fei_numero) {
     throw new Error('Le numéro de fiche est obligatoire');
   }
   const existingFei =
     opts.existingFei !== undefined
       ? opts.existingFei
-      : await prisma.fei.findUnique({
+      : await tx.fei.findUnique({
           where: { numero: fei_numero },
         });
   if (!existingFei) {
@@ -58,7 +63,7 @@ export async function syncCarcasse(
   let existingCarcasse =
     opts.existingCarcasse !== undefined
       ? opts.existingCarcasse
-      : await prisma.carcasse.findFirst({
+      : await tx.carcasse.findFirst({
           where: {
             zacharie_carcasse_id: zacharie_carcasse_id,
             fei_numero: fei_numero,
@@ -69,7 +74,7 @@ export async function syncCarcasse(
     if (!numeroBracelet) {
       throw new Error('Le numéro de marquage est obligatoire');
     }
-    existingCarcasse = await prisma.carcasse.create({
+    existingCarcasse = await tx.carcasse.create({
       data: {
         zacharie_carcasse_id,
         fei_numero,
@@ -81,7 +86,7 @@ export async function syncCarcasse(
 
   if (body.deleted_at) {
     // existingCarcasse est garantie non-nulle ici (créée juste au-dessus si absente).
-    const deletedCarcasse = await prisma.carcasse.update({
+    const deletedCarcasse = await tx.carcasse.update({
       where: {
         zacharie_carcasse_id: existingCarcasse.zacharie_carcasse_id,
       },
@@ -90,7 +95,7 @@ export async function syncCarcasse(
         is_synced: true,
       },
     });
-    await prisma.carcasseIntermediaire.updateMany({
+    await tx.carcasseIntermediaire.updateMany({
       where: { zacharie_carcasse_id: existingCarcasse.zacharie_carcasse_id },
       data: { deleted_at: body.deleted_at },
     });
@@ -311,11 +316,11 @@ export async function syncCarcasse(
         relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
         deleted_at: null,
       };
-      const existingRelation = await prisma.entityAndUserRelations.findFirst({
+      const existingRelation = await tx.entityAndUserRelations.findFirst({
         where: nextRelation,
       });
       if (!existingRelation) {
-        await prisma.entityAndUserRelations.create({ data: nextRelation });
+        await tx.entityAndUserRelations.create({ data: nextRelation });
       }
       opts.ensuredRelationEntityIds?.add(nextOwnerEntityId);
     }
@@ -489,7 +494,7 @@ export async function syncCarcasse(
     }
   }
 
-  const updatedCarcasse = await prisma.carcasse.update({
+  const updatedCarcasse = await tx.carcasse.update({
     where: {
       zacharie_carcasse_id: existingCarcasse.zacharie_carcasse_id,
     },
