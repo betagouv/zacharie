@@ -77,6 +77,7 @@ export default function EtgCarcasses() {
   const transmissions = useTransmissions();
   const feis = useZustandStore((state) => state.feis);
   const entities = useZustandStore((state) => state.entities);
+  const usersById = useZustandStore((state) => state.users);
   const [selectedCarcassesIds, setSelectedCarcassesIds] = useState<Array<string>>([]);
   const [loading, setLoading] = useState(true);
 
@@ -178,6 +179,18 @@ export default function EtgCarcasses() {
     const _statusOptions: Record<CarcasseStatusLabel, boolean> = {};
     const _premierDetenteurOptions: Record<NonNullable<Carcasse['premier_detenteur_name_cache']>, true> = {};
     const _filteredData: Array<Carcasse> = [];
+    // l'entité peut manquer du store (collecteur supprimé, entité de test) : on retombe sur le nom
+    // du user puis sur l'id plutôt que de casser le registre
+    const collecteurNameById = (id: string): string => {
+      const entity = entities[id];
+      const userOnly = usersById[id];
+      return (
+        entity?.nom_d_usage ||
+        entity?.raison_sociale ||
+        (userOnly ? `${userOnly.prenom ?? ''} ${userOnly.nom_de_famille ?? ''}`.trim() : '') ||
+        id
+      );
+    };
     const braceletQuery = quickFilterBracelet.trim().toLowerCase();
     // filter helper
     const excludedFei: Record<Carcasse['fei_numero'], true> = {};
@@ -192,21 +205,26 @@ export default function EtgCarcasses() {
       if (!_collecteursNamesByFeiNumero[carcasse.fei_numero]) {
         let feiIsExcluded = withQuickFilterPremierDetenteurs || withQuickFilterTransmissionStatuses;
         const __collecteursIds: Record<Entity['id'], Entity['nom_d_usage']> = {};
-        const intermediaires = transmissions[getTransmissionId(carcasse)].intermediaires ?? [];
+        // une carcasse du registre peut n'avoir aucune transmission (fiche absente ou supprimée)
+        const transmission = transmissions[getTransmissionId(carcasse)];
+        const intermediaires = transmission?.intermediaires ?? [];
         for (const intermediaire of intermediaires) {
-          const entityId = intermediaire.intermediaire_entity_id;
+          const collecteurId = intermediaire.intermediaire_entity_id || intermediaire.intermediaire_user_id;
+          if (!collecteurId) continue;
           if (intermediaire.intermediaire_role === FeiOwnerRole.COLLECTEUR_PRO) {
             feiIsExcluded = withQuickFilterCollecteur;
-            const collecteurId = entityId;
-            const collecteurName =
-              entities[collecteurId].nom_d_usage ?? entities[collecteurId].raison_sociale;
+            const collecteurName = collecteurNameById(collecteurId);
             _collecteurOptions[collecteurId] = collecteurName;
             __collecteursIds[collecteurId] = collecteurName;
             if (withQuickFilterCollecteur && quickFilterCollecteurIds[collecteurId]) feiIsExcluded = false;
           }
         }
-        const simpleStatus = transmissions[getTransmissionId(carcasse)].labels.simpleStatus;
-        if (withQuickFilterTransmissionStatuses && quickFilterTransmissionStatuses[simpleStatus])
+        const simpleStatus = transmission?.labels.simpleStatus;
+        if (
+          withQuickFilterTransmissionStatuses &&
+          simpleStatus &&
+          quickFilterTransmissionStatuses[simpleStatus]
+        )
           feiIsExcluded = false;
         _collecteursNamesByFeiNumero[carcasse.fei_numero] =
           Object.values(__collecteursIds).join(', ') || ' - ';
@@ -255,13 +273,13 @@ export default function EtgCarcasses() {
           sortBy === 'svi_carcasse_archived'
             ? isCarcasseSviArchived(a)
             : // @ts-expect-error: we know that the field is in the carcasse or the fei
-              a[sortBy] || feis[a.fei_numero]![sortBy];
+              a[sortBy] || feis[a.fei_numero]?.[sortBy];
         const bValue =
           // @ts-expect-error: svi_carcasse_archived is isCarcasseSviArchived
           sortBy === 'svi_carcasse_archived'
             ? isCarcasseSviArchived(b)
             : // @ts-expect-error: svi_carcasse_archived is isCarcasseSviArchived
-              b[sortBy] || feis[b.fei_numero]![sortBy];
+              b[sortBy] || feis[b.fei_numero]?.[sortBy];
         if (!aValue) {
           if (bValue) return sortOrder === 'ASC' ? 1 : -1;
           return 0;
@@ -288,6 +306,7 @@ export default function EtgCarcasses() {
     feis,
     transmissions,
     entities,
+    usersById,
     sortBy,
     sortOrder,
   ]);
