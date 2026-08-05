@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 const PORT = process.env.PORT ?? 3000;
 const ENVIRONMENT = process.env.ENVIRONMENT ?? process.env.NODE_ENV ?? 'development';
 
-const VITE_APP_URL = process.env.VITE_APP_URL ?? 'https://zacharie.beta.gouv.fr/app';
+const VITE_APP_URL = process.env.VITE_APP_URL ?? 'https://zacharie.beta.gouv.fr';
 
 const SENTRY_KEY = process.env.SENTRY_KEY ?? '';
 

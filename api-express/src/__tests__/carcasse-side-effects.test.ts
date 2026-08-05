@@ -1,6 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
-import { CarcasseStatus, FeiOwnerRole } from '@prisma/client';
+import { CarcasseStatus, FeiOwnerRole, UserRoles } from '@prisma/client';
 import prisma from '~/prisma';
+import { VITE_APP_URL } from '~/config';
 import sendNotificationToUser from '~/service/notifications';
 import { sendWebhook } from '~/utils/api';
 import { formatRenvoiExpediteurEmail } from '~/utils/formatCarcasseEmail';
@@ -10,6 +11,8 @@ import {
   closeFeiAndNotifyChasseurOnSviCarcasseClose,
   notifyRenvoiExpediteur,
   notifyCircuitCourt,
+  notifyNextOwnerEntity,
+  notifyNextOwnerUser,
   notifySviAssignment,
   webhookIntermediaireClose,
 } from '~/utils/carcasse-side-effects';
@@ -27,7 +30,10 @@ vi.mock('~/third-parties/brevo', () => ({
   updateBrevoETGDealPremiereFiche: vi.fn().mockResolvedValue(undefined),
   updateBrevoSVIDealPremiereFiche: vi.fn().mockResolvedValue(undefined),
 }));
-vi.mock('~/utils/formatCarcasseEmail', () => ({
+// Mock partiel : les `format*TemplateEmail` gardent leur vraie implémentation, ce sont les params
+// envoyés à Brevo qu'on veut vérifier.
+vi.mock('~/utils/formatCarcasseEmail', async (importOriginal) => ({
+  ...((await importOriginal()) as object),
   formatManualValidationSviChasseurEmail: vi.fn().mockResolvedValue(['object', 'body']),
   formatCarcasseManquanteOrRefusChasseurEmail: vi.fn().mockResolvedValue(['object', 'body']),
   formatSaisieChasseurEmail: vi.fn().mockReturnValue(['object', 'body']),
@@ -414,6 +420,21 @@ describe('notifyCircuitCourt', () => {
     expect(result).toBe(true);
     // seul le destinataire (≠ acteur) est notifié
     expect(sendNotificationToUser).toHaveBeenCalledOnce();
+    expect(sendNotificationToUser).toHaveBeenCalledWith(
+      expect.objectContaining({
+        emailTemplateId: BrevoTemplateId.FEI_ASSIGNED_CIRCUIT_COURT,
+        emailTemplateParams: {
+          sender_name: 'Pierre Petit',
+          fei_numero: feiNumero,
+          recipient_email: 'c@example.fr',
+          cta: `${VITE_APP_URL}/app/circuit-court/fei/${feiNumero}/commerce-1`,
+        },
+      })
+    );
+    // le PDF de la fiche est joint, rendu une seule fois pour tous les destinataires
+    expect(vi.mocked(sendNotificationToUser).mock.calls[0][0].attachments).toEqual([
+      { content: 'base64pdf', name: `${feiNumero}.pdf` },
+    ]);
     // tout le lot est en circuit court → clôture automatique par carcasse
     expect(prisma.carcasse.updateMany).toHaveBeenCalledWith({
       where: {
@@ -521,5 +542,136 @@ describe('notifySviAssignment', () => {
     expect(sendNotificationToUser).toHaveBeenCalledTimes(6);
     const actions = vi.mocked(sendNotificationToUser).mock.calls.map(([p]) => p.notificationLogAction);
     expect(new Set(actions)).toEqual(new Set([expectedAction]));
+  });
+});
+
+// Le `cta` du template porte le seul lien de l'email : s'il perd le préfixe `/app`, le destinataire
+// tombe sur la page 404 du site vitrine. D'où l'URL assertée en entier.
+describe('notifyNextOwnerUser', () => {
+  const actingUser = { id: 'pd-1', prenom: 'Pierre', nom_de_famille: 'Petit' } as any;
+
+  const makeCarcasse = (overrides: any = {}) => ({
+    zacharie_carcasse_id: `${feiNumero}_BR-A`,
+    fei_numero: feiNumero,
+    premier_detenteur_prochain_detenteur_id_cache: 'etg-1',
+    next_owner_user_id: 'etg-user-1',
+    next_owner_role: FeiOwnerRole.ETG,
+    ...overrides,
+  });
+
+  beforeEach(() => {
+    vi.mocked(prisma.user.findUnique).mockImplementation((({ where }: any) =>
+      Promise.resolve(
+        where.id === 'etg-user-1'
+          ? { id: 'etg-user-1', roles: [UserRoles.ETG], email: 'etg@example.fr' }
+          : where.id === 'ex-owner-1'
+            ? { id: 'ex-owner-1', roles: [UserRoles.COLLECTEUR_PRO], email: 'ex@example.fr' }
+            : null
+      )) as any);
+  });
+
+  test('no-op quand le next owner ne change pas', async () => {
+    const c = makeCarcasse({ next_owner_user_id: 'etg-user-1' });
+    await notifyNextOwnerUser(c as any, c as any, actingUser);
+    expect(sendNotificationToUser).not.toHaveBeenCalled();
+  });
+
+  test('notifie le next owner via le template FEI_ASSIGNED, avec un lien vers son espace', async () => {
+    const existing = makeCarcasse({ next_owner_user_id: null });
+    const updated = makeCarcasse();
+
+    await notifyNextOwnerUser(existing as any, updated as any, actingUser);
+
+    expect(sendNotificationToUser).toHaveBeenCalledOnce();
+    expect(sendNotificationToUser).toHaveBeenCalledWith(
+      expect.objectContaining({
+        user: expect.objectContaining({ id: 'etg-user-1' }),
+        emailTemplateId: BrevoTemplateId.FEI_ASSIGNED,
+        emailTemplateParams: {
+          sender_name: 'Pierre Petit',
+          fei_numero: feiNumero,
+          cta: `${VITE_APP_URL}/app/etg/fei/${feiNumero}/etg-1`,
+        },
+        notificationLogAction: `FEI_ASSIGNED_TO_${FeiOwnerRole.ETG}_${feiNumero}_etg-1`,
+      })
+    );
+  });
+
+  test("prévient l'ancien destinataire du retrait, sans lien vers la fiche", async () => {
+    const existing = makeCarcasse({ next_owner_user_id: 'ex-owner-1' });
+    const updated = makeCarcasse();
+
+    await notifyNextOwnerUser(existing as any, updated as any, actingUser);
+
+    expect(sendNotificationToUser).toHaveBeenCalledTimes(2);
+    expect(sendNotificationToUser).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        user: expect.objectContaining({ id: 'ex-owner-1' }),
+        emailTemplateId: BrevoTemplateId.FEI_UNASSIGNED,
+        emailTemplateParams: { sender_name: 'Pierre Petit', fei_numero: feiNumero },
+        notificationLogAction: `FEI_REMOVED_FROM_${FeiOwnerRole.ETG}_${feiNumero}_etg-1`,
+      })
+    );
+  });
+});
+
+describe('notifyNextOwnerEntity', () => {
+  const actingUser = { id: 'pd-1', prenom: 'Pierre', nom_de_famille: 'Petit' } as any;
+
+  const makeCarcasse = (overrides: any = {}) => ({
+    zacharie_carcasse_id: `${feiNumero}_BR-A`,
+    fei_numero: feiNumero,
+    examinateur_initial_user_id: 'exam-1',
+    premier_detenteur_user_id: 'exam-1',
+    premier_detenteur_prochain_detenteur_id_cache: 'collecteur-1',
+    next_owner_entity_id: 'collecteur-1',
+    next_owner_role: FeiOwnerRole.COLLECTEUR_PRO,
+    ...overrides,
+  });
+
+  beforeEach(() => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: 'exam-1' } as any);
+  });
+
+  test("no-op quand l'entité destinataire ne change pas", async () => {
+    const c = makeCarcasse();
+    await notifyNextOwnerEntity(c as any, c as any, actingUser);
+    expect(sendNotificationToUser).not.toHaveBeenCalled();
+  });
+
+  test('notifie chaque user de l’entité (sauf l’acteur) via FEI_ASSIGNED, lien selon son rôle', async () => {
+    vi.mocked(prisma.entityAndUserRelations.findMany).mockResolvedValueOnce([
+      {
+        UserRelatedWithEntity: {
+          id: 'collecteur-user',
+          email: 'collecteur@example.fr',
+          roles: [UserRoles.COLLECTEUR_PRO],
+          notifications: [],
+          web_push_tokens: [],
+          native_push_tokens: [],
+        },
+      },
+      // l'acteur travaille aussi pour l'entité : il ne se notifie pas lui-même
+      { UserRelatedWithEntity: { id: 'pd-1', email: 'pd@example.fr', roles: [UserRoles.CHASSEUR] } },
+    ] as any);
+
+    const existing = makeCarcasse({ next_owner_entity_id: null });
+    const updated = makeCarcasse();
+
+    await notifyNextOwnerEntity(existing as any, updated as any, actingUser);
+
+    expect(sendNotificationToUser).toHaveBeenCalledOnce();
+    expect(sendNotificationToUser).toHaveBeenCalledWith(
+      expect.objectContaining({
+        user: expect.objectContaining({ id: 'collecteur-user' }),
+        emailTemplateId: BrevoTemplateId.FEI_ASSIGNED,
+        emailTemplateParams: {
+          sender_name: 'Pierre Petit',
+          fei_numero: feiNumero,
+          cta: `${VITE_APP_URL}/app/collecteur-pro/fei/${feiNumero}/collecteur-1`,
+        },
+        notificationLogAction: `FEI_ASSIGNED_TO_${FeiOwnerRole.COLLECTEUR_PRO}_${feiNumero}_collecteur-1`,
+      })
+    );
   });
 });

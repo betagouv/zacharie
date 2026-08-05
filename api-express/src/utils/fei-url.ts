@@ -8,7 +8,7 @@ export function getFeiUrlForRole(
   feiNumero: string,
   prochainDetenteurIdCache: string | null
 ): string {
-  let url = VITE_APP_URL + '/';
+  let url = `${VITE_APP_URL}/app/`;
   if (role === UserRoles.CHASSEUR) url += 'chasseur/';
   else if (role === UserRoles.SVI) url += 'svi/';
   else if (role === UserRoles.ETG) url += 'etg/';
@@ -19,4 +19,9 @@ export function getFeiUrlForRole(
   url += `fei/${feiNumero}`;
   if (role !== UserRoles.CHASSEUR) url += `/${prochainDetenteurIdCache}`;
   return url;
+}
+
+// Le circuit court n'a qu'une vue passive : une seule route, pas de rôle à interpréter.
+export function getCircuitCourtFeiUrl(feiNumero: string, prochainDetenteurIdCache: string | null): string {
+  return `${VITE_APP_URL}/app/circuit-court/fei/${feiNumero}/${prochainDetenteurIdCache}`;
 }

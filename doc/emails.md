@@ -46,7 +46,7 @@ Toutes via `sendNotificationToUser`. Dédup via `NotificationLog`. Déclenchées
 | Déclencheur                          | Destinataire                 | Objet                                                                           | Fichier                                           |
 | ------------------------------------ | ---------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------- |
 | FEI transmise au SVI                 | users SVI de l'entité        | **template Brevo `FEI_TRANSMITTED_TO_SVI` (id 78)** — le push reste en texte    | `carcasse-side-effects.ts:notifySviAssignment`    |
-| FEI attribuée à entité circuit-court | users de l'entité (+ PDF)    | template `FEI_ASSIGNED_CIRCUIT_COURT` (pas encore créé → texte inline)          | `carcasse-side-effects.ts:notifyCircuitCourt`     |
+| FEI attribuée à entité circuit-court | users de l'entité (+ PDF)    | **template `FEI_ASSIGNED_CIRCUIT_COURT` (id 80)** — le push reste en texte      | `carcasse-side-effects.ts:notifyCircuitCourt`     |
 | FEI attribuée à un user              | le next-owner                | **template `FEI_ASSIGNED` (id 79)** — le push reste en texte                    | `carcasse-side-effects.ts:notifyNextOwnerUser`    |
 | FEI désattribuée (correction)        | l'ex-next-owner              | template `FEI_UNASSIGNED` (pas encore créé → texte inline)                      | `carcasse-side-effects.ts:notifyNextOwnerUser`    |
 | FEI attribuée à une entité           | users de l'entité            | **template `FEI_ASSIGNED` (id 79)** — même template que l'attribution à un user | `carcasse-side-effects.ts:notifyNextOwnerEntity`  |
@@ -71,7 +71,6 @@ Toutes via `sendNotificationToUser`. Dédup via `NotificationLog`. Déclenchées
 ## ⚠️ Pas branché / mort
 
 - **Trichine** (`utils/trichine.ts:253`) — `queueSendNotificationToUser` **commenté**. Écrit seulement dans la table `trichineNotification` + `console.log`. **Aucun email.** (feature en cours)
-- `controllers/user.ts:820` — bloc `sendNotificationToUser` commenté.
 - `cronjobs/index.ts:38-41` — `initMunicipalities` / `initRecommandations` / `initAggregators` / `initNotifications` commentés.
 
 ## Pas des emails (canaux liés mais distincts)

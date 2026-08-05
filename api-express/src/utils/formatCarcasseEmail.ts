@@ -11,7 +11,7 @@ import {
 import { getCarcasseStatusLabelForEmail } from './get-carcasse-status';
 import lesions from '../assets/lesions.json';
 import prisma from '~/prisma';
-import { getFeiUrlForRole } from './fei-url';
+import { getCircuitCourtFeiUrl, getFeiUrlForRole } from './fei-url';
 
 function getMotifForChasseur(motif: string, carcasseType: CarcasseType) {
   const lesion = lesions[carcasseType]
@@ -356,7 +356,6 @@ export function formatFeiAssignedTemplateEmail(
   };
 }
 
-// Le circuit court n'a qu'une vue passive : lien direct, pas de rôle à interpréter.
 // `recipient_email` sert à rappeler au destinataire avec quel compte se connecter.
 export function formatCircuitCourtAssignedTemplateEmail(
   carcasse: Carcasse,
@@ -367,7 +366,7 @@ export function formatCircuitCourtAssignedTemplateEmail(
     sender_name: `${sender.prenom} ${sender.nom_de_famille}`,
     fei_numero: carcasse.fei_numero,
     recipient_email: recipientEmail,
-    cta: `https://zacharie.beta.gouv.fr/app/circuit-court/fei/${carcasse.fei_numero}/${carcasse.premier_detenteur_prochain_detenteur_id_cache}`,
+    cta: getCircuitCourtFeiUrl(carcasse.fei_numero, carcasse.premier_detenteur_prochain_detenteur_id_cache),
   };
 }
 

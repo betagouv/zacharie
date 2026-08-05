@@ -20,7 +20,7 @@ import {
   formatSaisieChasseurEmail,
   formatSviAssignedEmail,
 } from '~/utils/formatCarcasseEmail';
-import { getFeiUrlForRole } from '~/utils/fei-url';
+import { getCircuitCourtFeiUrl, getFeiUrlForRole } from '~/utils/fei-url';
 import { checkGenerateCertificat } from '~/utils/generate-certificats';
 import { isCarcasseDone } from '~/utils/is-carcasse-done';
 import { sendWebhook } from '~/utils/api';
@@ -400,12 +400,17 @@ export async function notifyCircuitCourt(
   // Le PDF récapitule toute la fiche : un seul rendu pour tous les destinataires.
   const fichePdf = await getFichePdf(updatedCarcasse, carcasses);
 
+  const circuitCourtUrl = getCircuitCourtFeiUrl(
+    updatedCarcasse.fei_numero,
+    updatedCarcasse.premier_detenteur_prochain_detenteur_id_cache
+  );
+
   for (const nextOwner of usersWorkingForEntity) {
     if (nextOwner.id !== user.id) {
       const email = [
         `Bonjour,`,
         `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche. Vous trouverez un résumé en pièce jointe, à conserver pour votre enregistrement.`,
-        `Pour consulter la fiche, rendez-vous sur Zacharie avec votre email ${nextOwner.email} : https://zacharie.beta.gouv.fr/app/circuit-court/fei/${updatedCarcasse.fei_numero}/${updatedCarcasse.premier_detenteur_prochain_detenteur_id_cache}`,
+        `Pour consulter la fiche, rendez-vous sur Zacharie avec votre email ${nextOwner.email} : ${circuitCourtUrl}`,
         `Ce message a été généré automatiquement par l'application Zacharie. Si vous avez des questions sur l'attribution de cette fiche, n'hésitez pas à contacter la personne qui vous l'a envoyée.`,
       ].join('\n\n');
       await sendNotificationToUser({
