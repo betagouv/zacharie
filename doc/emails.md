@@ -9,9 +9,12 @@ Inventaire de tous les emails qui partent de Zacharie (transactionnels, automati
 
 Tout passe par **Brevo** — pas de SMTP / nodemailer / autre.
 
-- **`sendEmail()`** — `api-express/src/third-parties/brevo.ts:25`. Sender bas niveau (wrapper `TransactionalEmailsApi.sendTransacEmail`). Expéditeur par défaut : `Zacharie <contact@zacharie.beta.gouv.fr>`. ⚠️ **Désactivé en dev/test** (log uniquement, pas d'envoi réel).
-- **`sendNotificationToUser()` / `queueSendNotificationToUser()`** — `api-express/src/service/notifications.ts`. Push web + email. **L'email ne part que si l'user a activé la préférence `EMAIL`** (`UserNotifications.EMAIL`). Dédup via `NotificationLog` sur `(user_id, type, action)`.
-- **`sendOnboardingEmailOnce()`** — `api-express/src/utils/send-onboarding-email.ts`. Onboarding, dédup via `NotificationLog`, **ignore la préférence EMAIL** (envoie toujours).
+- **`sendEmail()`** — `api-express/src/third-parties/brevo.ts:25`. Sender bas niveau, contenu **inline** (sujet + html/text construits dans le code, wrapper `TransactionalEmailsApi.sendTransacEmail`). Expéditeur par défaut : `Zacharie <contact@zacharie.beta.gouv.fr>`. ⚠️ **Désactivé en dev/test** (log uniquement, pas d'envoi réel).
+- **`sendTemplateEmail()`** — `api-express/src/third-parties/brevo.ts`. Envoi via **template Brevo** (sujet + HTML gérés côté dashboard, remplis par `params`). À utiliser pour tout email **migré**. ⚠️ même désactivation dev/test. Refuse un `templateId` absent (Sentry + `false`) : les ids du registre valent `null` tant que le template n'existe pas côté Brevo.
+- Les deux senders **avalent leurs erreurs** (remontée Sentry) et renvoient un **booléen de succès**. Tout appelant qui écrit un `NotificationLog` derrière doit le conditionner à ce booléen : ce log porte la dédup, l'écrire après un envoi raté bloquerait le renvoi définitivement.
+- **Registre des templates** — `api-express/src/third-parties/brevo-templates.ts`. `BrevoTemplateId` mappe chaque email (clé sémantique) → `templateId` Brevo, ou `null` tant que pas migré. **C'est le tracker de migration** : `null` = encore en texte inline, nombre = migré vers template.
+- **`sendNotificationToUser()` / `queueSendNotificationToUser()`** — `api-express/src/service/notifications.ts`. Push web + email. **L'email ne part que si l'user a activé la préférence `EMAIL`** (`UserNotifications.EMAIL`). Dédup via `NotificationLog` sur `(user_id, type, action)`. Le canal email bascule sur `sendTemplateEmail` dès qu'un `emailTemplateId` est fourni (+ `emailTemplateParams`) ; sinon texte inline. **Migrer un email = lui passer son `emailTemplateId` ici, pas appeler `sendTemplateEmail` directement** : contourner le service fait perdre la dédup, le gating de préférence et le push (les side-effects tournent une fois par carcasse).
+- **`sendOnboardingEmailOnce()`** — `api-express/src/utils/send-onboarding-email.ts`. Onboarding, dédup via `NotificationLog` (écrit seulement si l'envoi a réussi), **ignore la préférence EMAIL** (envoie toujours).
 - **`inviteUser()`** — `api-express/src/utils/invite-user.ts`. Appelle `sendEmail` directement.
 
 ---
@@ -40,21 +43,21 @@ Tout passe par **Brevo** — pas de SMTP / nodemailer / autre.
 
 Toutes via `sendNotificationToUser`. Dédup via `NotificationLog`. Déclenchées depuis les side-effects de sync (`controllers/sync.ts`).
 
-| Déclencheur                          | Destinataire                 | Objet                                                                                             | Fichier                                           |
-| ------------------------------------ | ---------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
-| FEI transmise au SVI                 | users SVI de l'entité        | `L'établissement {nom} vous a transmis une fiche comprenant {n} carcasses (ou lots) à inspecter:` | `fei-side-effects.ts:137`                         |
-| FEI attribuée à entité circuit-court | users de l'entité (+ PDF)    | `{prenom} {nom} vous a attribué une fiche d'examen initial du gibier sauvage n° {numero}`         | `fei-side-effects.ts:228`                         |
-| FEI attribuée à un user              | le next-owner                | `{prenom} {nom} vous a attribué la fiche {numero}`                                                | `fei-side-effects.ts:305`                         |
-| FEI désattribuée (correction)        | l'ex-next-owner              | `La fiche n° {numero} ne vous est plus attribuée`                                                 | `fei-side-effects.ts:327`                         |
-| FEI attribuée à une entité           | users de l'entité            | `{prenom} {nom} vous a attribué la fiche {numero}`                                                | `fei-side-effects.ts:390`                         |
-| Saisie SVI (partielle / totale)      | examinateur + 1er détenteur  | `{saisie} {de la carcasse/du lot} de {espèce} n°{bracelet}.`                                      | `carcasse-side-effects.ts:31,40`                  |
-| Carcasse manquante                   | examinateur + 1er détenteur  | `{La carcasse/Le lot} de {espèce} n°{no} est manquante.`                                          | `carcasse-side-effects.ts:31,40`                  |
-| Carcasse refusée                     | examinateur + 1er détenteur  | `{La carcasse/Le lot} de {espèce} n°{no} est refusée.`                                            | `carcasse-side-effects.ts:31,40`                  |
-| FEI clôturée (dernière carcasse)     | examinateur + 1er détenteur  | `La fiche {numero} est clôturée.`                                                                 | `carcasse-side-effects.ts:161,166`                |
-| Fiche renvoyée à l'expéditeur        | l'expéditeur (current-owner) | `La fiche {numero} vous a été renvoyée.`                                                          | `carcasse-side-effects.ts:notifyRenvoiExpediteur` |
-| Nouvel user dans une entité          | admins de l'entité           | `Un nouvel utilisateur s'est inscrit sur Zacharie au sein de votre entité`                        | `user-entity.ts:217`                              |
-| Demande de modif carcasse créée      | examinateur de la FEI        | `Chasse du {date}` / `Demande de modification`                                                    | `sync-carcasse-modification-request.ts:203`       |
-| Demande de modif traitée             | le demandeur                 | `Carcasse numéro {bracelet}` / `Demande traitée`                                                  | `sync-carcasse-modification-request.ts:239`       |
+| Déclencheur                          | Destinataire                 | Objet                                                                                     | Fichier                                           |
+| ------------------------------------ | ---------------------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| FEI transmise au SVI                 | users SVI de l'entité        | **template Brevo `FEI_TRANSMITTED_TO_SVI` (id 78)** — le push reste en texte              | `carcasse-side-effects.ts:notifySviAssignment`    |
+| FEI attribuée à entité circuit-court | users de l'entité (+ PDF)    | `{prenom} {nom} vous a attribué une fiche d'examen initial du gibier sauvage n° {numero}` | `fei-side-effects.ts:228`                         |
+| FEI attribuée à un user              | le next-owner                | `{prenom} {nom} vous a attribué la fiche {numero}`                                        | `fei-side-effects.ts:305`                         |
+| FEI désattribuée (correction)        | l'ex-next-owner              | `La fiche n° {numero} ne vous est plus attribuée`                                         | `fei-side-effects.ts:327`                         |
+| FEI attribuée à une entité           | users de l'entité            | `{prenom} {nom} vous a attribué la fiche {numero}`                                        | `fei-side-effects.ts:390`                         |
+| Saisie SVI (partielle / totale)      | examinateur + 1er détenteur  | `{saisie} {de la carcasse/du lot} de {espèce} n°{bracelet}.`                              | `carcasse-side-effects.ts:31,40`                  |
+| Carcasse manquante                   | examinateur + 1er détenteur  | `{La carcasse/Le lot} de {espèce} n°{no} est manquante.`                                  | `carcasse-side-effects.ts:31,40`                  |
+| Carcasse refusée                     | examinateur + 1er détenteur  | `{La carcasse/Le lot} de {espèce} n°{no} est refusée.`                                    | `carcasse-side-effects.ts:31,40`                  |
+| FEI clôturée (dernière carcasse)     | examinateur + 1er détenteur  | `La fiche {numero} est clôturée.`                                                         | `carcasse-side-effects.ts:161,166`                |
+| Fiche renvoyée à l'expéditeur        | l'expéditeur (current-owner) | `La fiche {numero} vous a été renvoyée.`                                                  | `carcasse-side-effects.ts:notifyRenvoiExpediteur` |
+| Nouvel user dans une entité          | admins de l'entité           | `Un nouvel utilisateur s'est inscrit sur Zacharie au sein de votre entité`                | `user-entity.ts:217`                              |
+| Demande de modif carcasse créée      | examinateur de la FEI        | `Chasse du {date}` / `Demande de modification`                                            | `sync-carcasse-modification-request.ts:203`       |
+| Demande de modif traitée             | le demandeur                 | `Carcasse numéro {bracelet}` / `Demande traitée`                                          | `sync-carcasse-modification-request.ts:239`       |
 
 ## 4. Cron (`npm run start-cronjobs` — prod uniquement, `cronjobs/index.ts`)
 

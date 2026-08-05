@@ -4,10 +4,13 @@ import prisma from '~/prisma';
 import sendNotificationToUser from '~/service/notifications';
 import { sendWebhook } from '~/utils/api';
 import { formatRenvoiExpediteurEmail } from '~/utils/formatCarcasseEmail';
+import { sendTemplateEmail } from '~/third-parties/brevo';
+import { BrevoTemplateId } from '~/third-parties/brevo-templates';
 import {
   closeFeiAndNotifyChasseurOnSviCarcasseClose,
   notifyRenvoiExpediteur,
   notifyCircuitCourt,
+  notifySviAssignment,
   webhookIntermediaireClose,
 } from '~/utils/carcasse-side-effects';
 
@@ -17,11 +20,23 @@ vi.mock('~/service/notifications', () => ({
 vi.mock('~/templates/get-fiche-pdf', () => ({
   getFichePdf: vi.fn().mockResolvedValue('base64pdf'),
 }));
+vi.mock('~/third-parties/brevo', () => ({
+  sendEmail: vi.fn().mockResolvedValue(undefined),
+  sendTemplateEmail: vi.fn().mockResolvedValue(undefined),
+  updateBrevoChasseurDeal: vi.fn().mockResolvedValue(undefined),
+  updateBrevoETGDealPremiereFiche: vi.fn().mockResolvedValue(undefined),
+  updateBrevoSVIDealPremiereFiche: vi.fn().mockResolvedValue(undefined),
+}));
 vi.mock('~/utils/formatCarcasseEmail', () => ({
   formatManualValidationSviChasseurEmail: vi.fn().mockResolvedValue(['object', 'body']),
   formatCarcasseManquanteOrRefusChasseurEmail: vi.fn().mockResolvedValue(['object', 'body']),
   formatSaisieChasseurEmail: vi.fn().mockReturnValue(['object', 'body']),
   formatRenvoiExpediteurEmail: vi.fn().mockReturnValue(['object', 'body']),
+  formatSviAssignedEmail: vi.fn().mockResolvedValue({
+    object: 'object',
+    text: 'body',
+    params: { entity_name: 'ETG 1', count: 3 },
+  }),
 }));
 vi.mock('~/utils/generate-certificats', () => ({ checkGenerateCertificat: vi.fn() }));
 vi.mock('~/utils/api', () => ({ sendWebhook: vi.fn().mockResolvedValue(undefined) }));
@@ -428,5 +443,83 @@ describe('notifyCircuitCourt', () => {
 
     expect(result).toBe(true);
     expect(prisma.carcasse.updateMany).not.toHaveBeenCalled();
+  });
+});
+
+// Le side-effect tourne une fois par carcasse alors que l'email couvre toute la fiche : c'est la
+// dédup de sendNotificationToUser sur `notificationLogAction` qui garantit un seul envoi par user
+// SVI. Contourner le service (envoi Brevo direct) rendrait le nombre d'emails proportionnel au
+// nombre de carcasses.
+describe('notifySviAssignment', () => {
+  const sviEntityId = 'svi-entity-1';
+
+  const makeSviCarcasse = (overrides: any = {}) => ({
+    zacharie_carcasse_id: `${feiNumero}_BR-A`,
+    fei_numero: feiNumero,
+    examinateur_initial_user_id: 'exam-1',
+    premier_detenteur_user_id: 'pd-1',
+    premier_detenteur_prochain_detenteur_id_cache: 'etg-1',
+    svi_entity_id: sviEntityId,
+    current_owner_entity_id: sviEntityId,
+    next_owner_role: FeiOwnerRole.SVI,
+    ...overrides,
+  });
+
+  const expectedAction = `FEI_ASSIGNED_TO_${FeiOwnerRole.SVI}_etg-1_${feiNumero}`;
+
+  beforeEach(() => {
+    vi.mocked(prisma.user.findMany).mockResolvedValue([
+      { id: 'svi-user-1', email: 'svi1@example.fr' },
+      { id: 'svi-user-2', email: 'svi2@example.fr' },
+    ] as any);
+    vi.mocked(prisma.entity.findUnique).mockResolvedValue(null as any);
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: 'exam-1' } as any);
+  });
+
+  test('returns false when the carcasse was already assigned to the SVI', async () => {
+    const c = makeSviCarcasse();
+    expect(await notifySviAssignment(c as any, c as any)).toBe(false);
+    expect(sendNotificationToUser).not.toHaveBeenCalled();
+  });
+
+  test('returns false when the new next_owner_role is not the SVI', async () => {
+    const existing = makeSviCarcasse({ next_owner_role: null });
+    const updated = makeSviCarcasse({ next_owner_role: FeiOwnerRole.ETG });
+    expect(await notifySviAssignment(existing as any, updated as any)).toBe(false);
+    expect(sendNotificationToUser).not.toHaveBeenCalled();
+  });
+
+  test('notifies each SVI user via the Brevo template, never bypassing the notification service', async () => {
+    const existing = makeSviCarcasse({ next_owner_role: null });
+    const updated = makeSviCarcasse();
+
+    expect(await notifySviAssignment(existing as any, updated as any)).toBe(true);
+
+    expect(sendNotificationToUser).toHaveBeenCalledTimes(2);
+    expect(sendNotificationToUser).toHaveBeenCalledWith(
+      expect.objectContaining({
+        user: expect.objectContaining({ id: 'svi-user-1' }),
+        emailTemplateId: BrevoTemplateId.FEI_TRANSMITTED_TO_SVI,
+        emailTemplateParams: { entity_name: 'ETG 1', count: 3 },
+        notificationLogAction: expectedAction,
+      })
+    );
+    // l'envoi doit passer par le service (dédup + préférence EMAIL + push), jamais par Brevo direct
+    expect(sendTemplateEmail).not.toHaveBeenCalled();
+  });
+
+  test('every carcasse of the fiche emits the same notificationLogAction, so the service dedups', async () => {
+    const carcasses = ['BR-A', 'BR-B', 'BR-C'].map((bracelet) =>
+      makeSviCarcasse({ zacharie_carcasse_id: `${feiNumero}_${bracelet}` })
+    );
+
+    for (const updated of carcasses) {
+      await notifySviAssignment({ ...updated, next_owner_role: null } as any, updated as any);
+    }
+
+    // 3 carcasses × 2 users SVI = 6 appels, tous sur la même action → 2 emails après dédup
+    expect(sendNotificationToUser).toHaveBeenCalledTimes(6);
+    const actions = vi.mocked(sendNotificationToUser).mock.calls.map(([p]) => p.notificationLogAction);
+    expect(new Set(actions)).toEqual(new Set([expectedAction]));
   });
 });

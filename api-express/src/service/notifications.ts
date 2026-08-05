@@ -3,7 +3,7 @@ import * as brevo from '@getbrevo/brevo';
 import { type User, UserNotifications } from '@prisma/client';
 import * as Sentry from '@sentry/node';
 import PQueue from 'p-queue';
-import { sendEmail } from '~/third-parties/brevo';
+import { sendEmail, sendTemplateEmail } from '~/third-parties/brevo';
 import prisma from '../prisma';
 import { IS_TEST } from '~/config';
 
@@ -33,6 +33,11 @@ type WebPushNotification = {
   notificationLogAction: string;
   img?: string;
   attachments?: brevo.SendSmtpEmailAttachmentInner[];
+  // Email migré vers un template Brevo : sujet + HTML gérés côté dashboard, remplis par
+  // `emailTemplateParams`. Absent ou `null` = email encore en texte inline (`email`).
+  // Cf. src/third-parties/brevo-templates.ts.
+  emailTemplateId?: number | null;
+  emailTemplateParams?: Record<string, unknown>;
 };
 
 export default async function queueSendNotificationToUser({
@@ -42,10 +47,22 @@ export default async function queueSendNotificationToUser({
   email,
   notificationLogAction,
   attachments,
+  emailTemplateId,
+  emailTemplateParams,
   img = 'https://zacharie.beta.gouv.fr/favicon.svg',
 }: WebPushNotification) {
   await queue.add(async () => {
-    await sendNotificationToUser({ user, body, title, email, notificationLogAction, attachments, img });
+    await sendNotificationToUser({
+      user,
+      body,
+      title,
+      email,
+      notificationLogAction,
+      attachments,
+      emailTemplateId,
+      emailTemplateParams,
+      img,
+    });
   });
 }
 
@@ -56,6 +73,8 @@ async function sendNotificationToUser({
   email,
   notificationLogAction,
   attachments,
+  emailTemplateId,
+  emailTemplateParams,
   img = 'https://zacharie.beta.gouv.fr/favicon.svg',
 }: WebPushNotification) {
   if (user.notifications.includes(UserNotifications.PUSH)) {
@@ -219,34 +238,48 @@ async function sendNotificationToUser({
       return;
     }
     console.log('SENDING EMAIL NOTIFICATION FOR REAL', user.id);
-    sendEmail({
-      emails: [user.email!],
-      subject: title,
-      text: email,
-      attachments: attachments,
-    })
-      .then(async (response) => {
-        await prisma.notificationLog.create({
-          data: {
-            user_id: user.id,
-            payload: JSON.stringify({
-              title,
-              body,
-              email,
-              response,
-            }),
-            type: 'EMAIL',
-            email: user.email,
-            action: notificationLogAction,
-          },
+    // On attend l'envoi avant de rendre la main : c'est le `notificationLog.create` qui porte la
+    // dédup, et la notification suivante fait son `findFirst` dès que la tâche PQueue courante est
+    // terminée.
+    const sent = emailTemplateId
+      ? await sendTemplateEmail({
+          emails: [user.email!],
+          templateId: emailTemplateId,
+          params: emailTemplateParams,
+          attachments: attachments,
+        })
+      : await sendEmail({
+          emails: [user.email!],
+          subject: title,
+          text: email,
+          attachments: attachments,
         });
-      })
-      .catch((error) => {
-        console.error('error in send email');
-        console.error(error);
-        Sentry.captureException(error, {
-          extra: { user, body, email, title, img },
-        });
+    // Envoi raté : on n'écrit pas le log, sinon la dédup bloquerait définitivement le renvoi.
+    // Les senders remontent déjà l'erreur à Sentry.
+    if (!sent) {
+      console.error('error in send email', user.id);
+      return;
+    }
+    try {
+      await prisma.notificationLog.create({
+        data: {
+          user_id: user.id,
+          payload: JSON.stringify({
+            title,
+            body,
+            email,
+            emailTemplateId,
+            emailTemplateParams,
+          }),
+          type: 'EMAIL',
+          email: user.email,
+          action: notificationLogAction,
+        },
       });
+    } catch (error) {
+      Sentry.captureException(error, {
+        extra: { user, body, email, title, img },
+      });
+    }
   }
 }

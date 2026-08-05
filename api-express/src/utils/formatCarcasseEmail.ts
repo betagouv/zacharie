@@ -267,7 +267,20 @@ export async function formatManualValidationSviChasseurEmail(
   return [object, email.filter(Boolean).join('\n\n')];
 }
 
-export async function formatSviAssignedEmail(carcasse: Carcasse): Promise<[string, string]> {
+// Params du template Brevo FEI_TRANSMITTED_TO_SVI (placeholders {{ params.xxx }}).
+export type SviAssignedTemplateParams = {
+  entity_name: string;
+  count: number;
+  carcasses: string[];
+  cta: string;
+};
+
+// L'email SVI part en template Brevo, le push reste en texte : les deux sont dérivés des mêmes
+// `params` pour ne pas diverger, et les requêtes ne sont faites qu'une fois (le side-effect appelant
+// tourne une fois par carcasse de la fiche).
+export async function formatSviAssignedEmail(
+  carcasse: Carcasse
+): Promise<{ object: string; text: string; params: SviAssignedTemplateParams }> {
   const currentEntity = await prisma.entity.findUnique({
     where: {
       id: carcasse.current_owner_entity_id,
@@ -294,18 +307,23 @@ export async function formatSviAssignedEmail(carcasse: Carcasse): Promise<[strin
     ? `${carcasse.fei_numero}/${prochainDetenteurIdCache}`
     : carcasse.fei_numero;
 
-  const email = [
+  const params: SviAssignedTemplateParams = {
+    entity_name: currentEntity?.nom_d_usage,
+    count: feiCarcasses.length,
+    carcasses: feiCarcasses.map(
+      (carcasse) =>
+        `${carcasse.type === CarcasseType.PETIT_GIBIER ? `${carcasse.nombre_d_animaux} ` : ''}${carcasse.espece} (${carcasse.numero_bracelet})`
+    ),
+    cta: `https://zacharie.beta.gouv.fr/app/svi/fei/${transmissionLink}`,
+  };
+
+  const object = `L’établissement ${params.entity_name} vous a transmis une fiche comprenant ${params.count} carcasses (ou lots) à inspecter:`;
+  const text = [
     `Bonjour,`,
-    `L’établissement ${currentEntity?.nom_d_usage} vous a transmis une fiche comprenant ${feiCarcasses.length} carcasses (ou lots) à inspecter:`,
-    feiCarcasses
-      .map(
-        (carcasse) =>
-          `-> ${carcasse.type === CarcasseType.PETIT_GIBIER ? `${carcasse.nombre_d_animaux} ` : ''}${carcasse.espece} (${carcasse.numero_bracelet})`
-      )
-      .join('\n'),
-    `Pour consulter la fiche, rendez-vous sur Zacharie : https://zacharie.beta.gouv.fr/app/svi/fei/${transmissionLink}`,
+    object,
+    params.carcasses.map((carcasse) => `-> ${carcasse}`).join('\n'),
+    `Pour consulter la fiche, rendez-vous sur Zacharie : ${params.cta}`,
     `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur l'attribution de cette fiche, merci de contacter l’établissement qui a traité votre fiche.`,
   ];
-  const object = `L’établissement ${currentEntity?.nom_d_usage} vous a transmis une fiche comprenant ${feiCarcasses.length} carcasses (ou lots) à inspecter:`;
-  return [object, email.filter(Boolean).join('\n\n')];
+  return { object, text: text.filter(Boolean).join('\n\n'), params };
 }

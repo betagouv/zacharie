@@ -23,7 +23,9 @@ export async function sendOnboardingEmailOnce({
   });
   if (existing) return false;
 
-  await sendEmail({ emails: [user.email], subject, text });
+  const sent = await sendEmail({ emails: [user.email], subject, text });
+  // Envoi raté : pas de log, sinon la dédup ci-dessus bloquerait définitivement le renvoi.
+  if (!sent) return false;
 
   await prisma.notificationLog.create({
     data: {
