@@ -34,6 +34,7 @@ import { Tag } from '@codegouvfr/react-dsfr/Tag';
 import { getEntityDisplay } from '@app/utils/get-entity-display';
 import Button from '@codegouvfr/react-dsfr/Button';
 import { createHistoryInput } from '@app/utils/create-history-entry';
+import { getCarcasseTransmission } from '@app/utils/get-carcasses-transmission';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import PartenaireNouveau from '@app/components/PartenaireNouveau';
 import CCGNouveau from '@app/components/CCGNouveau';
@@ -988,13 +989,19 @@ export default function DestinataireSelectPremierDetenteur({
         premier_detenteur_transport_type: nextTransportType,
         premier_detenteur_transport_date: nextTransportDate,
       };
+      // une carcasse du groupe sert de référence pour l'état avant transmission :
+      // toutes les carcasses du groupe partagent les mêmes champs de transmission.
+      const carcasseRef = allCarcasses.find((c) => c.zacharie_carcasse_id === group.carcasseIds[0]);
       updateCarcassesTransmission(group.carcasseIds, nextTransmission);
       addLog({
         user_id: user.id,
         user_role: UserRoles.CHASSEUR,
         action: 'premier-detenteur-need-select-next-select-destinataire',
         fei_numero: fei.numero,
-        history: createHistoryInput({}, nextTransmission),
+        history: createHistoryInput(
+          carcasseRef ? getCarcasseTransmission(carcasseRef) : null,
+          nextTransmission
+        ),
         entity_id: fei.premier_detenteur_entity_id,
         zacharie_carcasse_id: null,
         carcasse_intermediaire_id: null,

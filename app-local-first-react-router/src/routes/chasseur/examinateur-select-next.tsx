@@ -12,6 +12,7 @@ import useUser from '@app/zustand/user';
 import { useNavigate, useParams } from 'react-router';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import { createHistoryInput } from '@app/utils/create-history-entry';
+import { getCarcasseTransmission } from '@app/utils/get-carcasses-transmission';
 import API from '@app/services/api';
 import { usePrefillPremierDétenteurInfos } from '@app/utils/usePrefillPremierDétenteur';
 import { useEntitiesIdsWorkingDirectlyFor, useDetenteursInitiaux } from '@app/utils/get-entity-relations';
@@ -166,7 +167,10 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
       user_role: UserRoles.CHASSEUR,
       fei_numero: fei.numero,
       action: 'examinateur-select-next',
-      history: createHistoryInput({}, nextCarcassesTransmission),
+      history: createHistoryInput(
+        myCarcasses[0] ? getCarcasseTransmission(myCarcasses[0]) : null,
+        nextCarcassesTransmission
+      ),
       entity_id: null,
       zacharie_carcasse_id: null,
       intermediaire_id: null,
