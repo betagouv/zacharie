@@ -29,6 +29,7 @@ test('Création fiche petit gibier en lot — 10 pigeons', async ({ page }) => {
   await page.getByRole('button', { name: 'Continuer' }).first().click();
 
   // Bloc 2 — Lot de pigeons
+  await page.getByRole('button', { name: 'Ajouter une carcasse' }).click();
   await page.getByLabel('Espèce (grand et petit gibier)').selectOption('Pigeons');
   // Quantité du lot
   const quantite = page.getByLabel(/Nombre de carcasses dans le lot/);
@@ -38,6 +39,7 @@ test('Création fiche petit gibier en lot — 10 pigeons', async ({ page }) => {
   await page.getByRole('button', { name: /^MM-\d{3}-\d{3}$/ }).click();
   await page.getByRole('button', { name: 'Ajouter le lot de carcasses' }).click();
   await page.getByRole('button', { name: 'Continuer' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Continuer' }).click();
 
   // Heures — petit gibier only: no éviscération field
   await page

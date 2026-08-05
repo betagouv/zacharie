@@ -49,14 +49,16 @@ test("Autre membre de l'Association voit le bloc Destinataire sur la fiche", asy
   await page.getByRole('button', { name: 'Continuer' }).first().click();
 
   // Bloc 2 — deux carcasses (Daim + Cerf), pour pouvoir n'en transmettre qu'une.
+  await page.getByRole('button', { name: 'Ajouter une carcasse' }).click();
   await page.getByLabel('Espèce (grand et petit gibier)').selectOption('Daim');
   await page.getByRole('button', { name: /^PP-\d{3}-\d{3}$/ }).click();
   await page.getByRole('button', { name: 'Ajouter la carcasse' }).click();
-  await page.getByRole('button', { name: 'Ajouter une autre carcasse' }).click();
+  await page.getByRole('button', { name: 'Ajouter une carcasse' }).click();
   await page.getByLabel('Espèce (grand et petit gibier)').selectOption('Cerf élaphe');
   await page.getByRole('button', { name: /^PP-\d{3}-\d{3}$/ }).click();
   await page.getByRole('button', { name: 'Ajouter la carcasse' }).click();
   await page.getByRole('button', { name: 'Continuer' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Continuer' }).click();
 
   await page
     .getByRole('textbox', { name: 'Début de la chasse' })
