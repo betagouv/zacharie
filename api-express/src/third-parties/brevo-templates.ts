@@ -27,9 +27,9 @@ export type BrevoTemplateKey =
   // 3. Notifications automatiques
   | 'FEI_TRANSMITTED_TO_SVI'
   | 'FEI_ASSIGNED_CIRCUIT_COURT'
-  | 'FEI_ASSIGNED_USER'
+  // Attribution à un user ou aux users d'une entité : même titre, même corps, mêmes params
+  | 'FEI_ASSIGNED'
   | 'FEI_UNASSIGNED'
-  | 'FEI_ASSIGNED_ENTITY'
   | 'CARCASSE_SAISIE'
   | 'CARCASSE_MANQUANTE'
   | 'CARCASSE_REFUS'
@@ -60,10 +60,9 @@ export const BrevoTemplateId: Record<BrevoTemplateKey, number | null> = {
 
   // 3. Notifications automatiques (event-driven, email si préf. EMAIL active)
   FEI_TRANSMITTED_TO_SVI: 78,
-  FEI_ASSIGNED_CIRCUIT_COURT: null,
-  FEI_ASSIGNED_USER: null,
+  FEI_ASSIGNED_CIRCUIT_COURT: 80,
+  FEI_ASSIGNED: 79,
   FEI_UNASSIGNED: null,
-  FEI_ASSIGNED_ENTITY: null,
   CARCASSE_SAISIE: null,
   CARCASSE_MANQUANTE: null,
   CARCASSE_REFUS: null,
