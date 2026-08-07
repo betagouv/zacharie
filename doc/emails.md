@@ -43,21 +43,21 @@ Tout passe par **Brevo** — pas de SMTP / nodemailer / autre.
 
 Toutes via `sendNotificationToUser`. Dédup via `NotificationLog`. Déclenchées depuis les side-effects de sync (`controllers/sync.ts`).
 
-| Déclencheur                          | Destinataire                 | Objet                                                                                     | Fichier                                           |
-| ------------------------------------ | ---------------------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------- |
-| FEI transmise au SVI                 | users SVI de l'entité        | **template Brevo `FEI_TRANSMITTED_TO_SVI` (id 78)** — le push reste en texte              | `carcasse-side-effects.ts:notifySviAssignment`    |
-| FEI attribuée à entité circuit-court | users de l'entité (+ PDF)    | `{prenom} {nom} vous a attribué une fiche d'examen initial du gibier sauvage n° {numero}` | `fei-side-effects.ts:228`                         |
-| FEI attribuée à un user              | le next-owner                | `{prenom} {nom} vous a attribué la fiche {numero}`                                        | `fei-side-effects.ts:305`                         |
-| FEI désattribuée (correction)        | l'ex-next-owner              | `La fiche n° {numero} ne vous est plus attribuée`                                         | `fei-side-effects.ts:327`                         |
-| FEI attribuée à une entité           | users de l'entité            | `{prenom} {nom} vous a attribué la fiche {numero}`                                        | `fei-side-effects.ts:390`                         |
-| Saisie SVI (partielle / totale)      | examinateur + 1er détenteur  | `{saisie} {de la carcasse/du lot} de {espèce} n°{bracelet}.`                              | `carcasse-side-effects.ts:31,40`                  |
-| Carcasse manquante                   | examinateur + 1er détenteur  | `{La carcasse/Le lot} de {espèce} n°{no} est manquante.`                                  | `carcasse-side-effects.ts:31,40`                  |
-| Carcasse refusée                     | examinateur + 1er détenteur  | `{La carcasse/Le lot} de {espèce} n°{no} est refusée.`                                    | `carcasse-side-effects.ts:31,40`                  |
-| FEI clôturée (dernière carcasse)     | examinateur + 1er détenteur  | `La fiche {numero} est clôturée.`                                                         | `carcasse-side-effects.ts:161,166`                |
-| Fiche renvoyée à l'expéditeur        | l'expéditeur (current-owner) | `La fiche {numero} vous a été renvoyée.`                                                  | `carcasse-side-effects.ts:notifyRenvoiExpediteur` |
-| Nouvel user dans une entité          | admins de l'entité           | `Un nouvel utilisateur s'est inscrit sur Zacharie au sein de votre entité`                | `user-entity.ts:217`                              |
-| Demande de modif carcasse créée      | examinateur de la FEI        | `Chasse du {date}` / `Demande de modification`                                            | `sync-carcasse-modification-request.ts:203`       |
-| Demande de modif traitée             | le demandeur                 | `Carcasse numéro {bracelet}` / `Demande traitée`                                          | `sync-carcasse-modification-request.ts:239`       |
+| Déclencheur                          | Destinataire                 | Objet                                                                           | Fichier                                           |
+| ------------------------------------ | ---------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------- |
+| FEI transmise au SVI                 | users SVI de l'entité        | **template Brevo `FEI_TRANSMITTED_TO_SVI` (id 78)** — le push reste en texte    | `carcasse-side-effects.ts:notifySviAssignment`    |
+| FEI attribuée à entité circuit-court | users de l'entité (+ PDF)    | **template `FEI_ASSIGNED_CIRCUIT_COURT` (id 80)** — le push reste en texte      | `carcasse-side-effects.ts:notifyCircuitCourt`     |
+| FEI attribuée à un user              | le next-owner                | **template `FEI_ASSIGNED` (id 79)** — le push reste en texte                    | `carcasse-side-effects.ts:notifyNextOwnerUser`    |
+| FEI désattribuée (correction)        | l'ex-next-owner              | template `FEI_UNASSIGNED` (pas encore créé → texte inline)                      | `carcasse-side-effects.ts:notifyNextOwnerUser`    |
+| FEI attribuée à une entité           | users de l'entité            | **template `FEI_ASSIGNED` (id 79)** — même template que l'attribution à un user | `carcasse-side-effects.ts:notifyNextOwnerEntity`  |
+| Saisie SVI (partielle / totale)      | examinateur + 1er détenteur  | `{saisie} {de la carcasse/du lot} de {espèce} n°{bracelet}.`                    | `carcasse-side-effects.ts:31,40`                  |
+| Carcasse manquante                   | examinateur + 1er détenteur  | `{La carcasse/Le lot} de {espèce} n°{no} est manquante.`                        | `carcasse-side-effects.ts:31,40`                  |
+| Carcasse refusée                     | examinateur + 1er détenteur  | `{La carcasse/Le lot} de {espèce} n°{no} est refusée.`                          | `carcasse-side-effects.ts:31,40`                  |
+| FEI clôturée (dernière carcasse)     | examinateur + 1er détenteur  | `La fiche {numero} est clôturée.`                                               | `carcasse-side-effects.ts:161,166`                |
+| Fiche renvoyée à l'expéditeur        | l'expéditeur (current-owner) | `La fiche {numero} vous a été renvoyée.`                                        | `carcasse-side-effects.ts:notifyRenvoiExpediteur` |
+| Nouvel user dans une entité          | admins de l'entité           | `Un nouvel utilisateur s'est inscrit sur Zacharie au sein de votre entité`      | `user-entity.ts:217`                              |
+| Demande de modif carcasse créée      | examinateur de la FEI        | `Chasse du {date}` / `Demande de modification`                                  | `sync-carcasse-modification-request.ts:203`       |
+| Demande de modif traitée             | le demandeur                 | `Carcasse numéro {bracelet}` / `Demande traitée`                                | `sync-carcasse-modification-request.ts:239`       |
 
 ## 4. Cron (`npm run start-cronjobs` — prod uniquement, `cronjobs/index.ts`)
 
@@ -71,7 +71,6 @@ Toutes via `sendNotificationToUser`. Dédup via `NotificationLog`. Déclenchées
 ## ⚠️ Pas branché / mort
 
 - **Trichine** (`utils/trichine.ts:253`) — `queueSendNotificationToUser` **commenté**. Écrit seulement dans la table `trichineNotification` + `console.log`. **Aucun email.** (feature en cours)
-- `controllers/user.ts:820` — bloc `sendNotificationToUser` commenté.
 - `cronjobs/index.ts:38-41` — `initMunicipalities` / `initRecommandations` / `initAggregators` / `initNotifications` commentés.
 
 ## Pas des emails (canaux liés mais distincts)
