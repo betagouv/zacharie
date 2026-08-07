@@ -245,20 +245,13 @@ export async function syncCarcasse(
     nextCarcasse.latest_intermediaire_name_cache =
       body[Prisma.CarcasseScalarFieldEnum.latest_intermediaire_name_cache];
   }
+  // svi_assigned_at et svi_entity_id sont écrits par l'ETG qui assigne la fiche à un SVI,
+  // pas par le SVI lui-même : ils restent hors du bloc réservé au rôle SVI plus bas.
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_assigned_at)) {
     nextCarcasse.svi_assigned_at = body[Prisma.CarcasseScalarFieldEnum.svi_assigned_at];
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_entity_id)) {
     nextCarcasse.svi_entity_id = body[Prisma.CarcasseScalarFieldEnum.svi_entity_id];
-  }
-  if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_user_id)) {
-    nextCarcasse.svi_user_id = body[Prisma.CarcasseScalarFieldEnum.svi_user_id];
-  }
-  if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_closed_at)) {
-    nextCarcasse.svi_closed_at = body[Prisma.CarcasseScalarFieldEnum.svi_closed_at];
-  }
-  if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_closed_by_user_id)) {
-    nextCarcasse.svi_closed_by_user_id = body[Prisma.CarcasseScalarFieldEnum.svi_closed_by_user_id];
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.current_owner_user_id)) {
     nextCarcasse.current_owner_user_id = body[Prisma.CarcasseScalarFieldEnum.current_owner_user_id];
@@ -351,6 +344,8 @@ export async function syncCarcasse(
     nextCarcasse.intermediaire_carcasse_refus_motif =
       body[Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_motif];
   }
+  // Le statut est recalculé par le client à chaque modification de carcasse, quel que soit le rôle
+  // (un refus ETG passe la carcasse en REFUSE) : il ne peut pas être réservé au rôle SVI.
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_carcasse_status)) {
     nextCarcasse.svi_carcasse_status = body[Prisma.CarcasseScalarFieldEnum.svi_carcasse_status];
   }
@@ -359,6 +354,15 @@ export async function syncCarcasse(
   }
 
   if (user.roles.includes(UserRoles.SVI)) {
+    if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_user_id)) {
+      nextCarcasse.svi_user_id = body[Prisma.CarcasseScalarFieldEnum.svi_user_id];
+    }
+    if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_closed_at)) {
+      nextCarcasse.svi_closed_at = body[Prisma.CarcasseScalarFieldEnum.svi_closed_at];
+    }
+    if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_closed_by_user_id)) {
+      nextCarcasse.svi_closed_by_user_id = body[Prisma.CarcasseScalarFieldEnum.svi_closed_by_user_id];
+    }
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_carcasse_commentaire)) {
       nextCarcasse.svi_carcasse_commentaire = body[Prisma.CarcasseScalarFieldEnum.svi_carcasse_commentaire];
     }

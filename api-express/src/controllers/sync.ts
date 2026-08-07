@@ -7,6 +7,7 @@ import { Prisma, User, UserRoles, Carcasse, Fei, EntityRelationType } from '@pri
 import { syncFei, type SaveFeiResult } from '~/utils/sync-fei';
 import { syncCarcasse, type SaveCarcasseResult } from '~/utils/sync-carcasse';
 import { syncCarcasseIntermediaire } from '~/utils/sync-carcasse-intermediaire';
+import { getUserCarcasseEntityIds } from '~/utils/user-entities';
 import {
   syncCarcasseModifRequest,
   runCarcasseModifRequestSideEffects,
@@ -161,13 +162,18 @@ router.post(
     }
 
     // 3. Process CarcassesIntermediaires
+    const userEntityIds = (carcassesIntermediaires || []).length
+      ? await getUserCarcasseEntityIds(user.id)
+      : [];
     for (const ciData of carcassesIntermediaires || []) {
       try {
         const saved = await syncCarcasseIntermediaire(
           ciData.fei_numero,
           ciData.intermediaire_id,
           ciData.zacharie_carcasse_id,
-          ciData as Prisma.CarcasseIntermediaireUncheckedCreateInput
+          ciData as Prisma.CarcasseIntermediaireUncheckedCreateInput,
+          user,
+          { userEntityIds }
         );
         savedIntermediaires.push(saved);
       } catch (error) {
