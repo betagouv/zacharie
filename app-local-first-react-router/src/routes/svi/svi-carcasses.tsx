@@ -55,6 +55,7 @@ const FEI_STATUS_OPTIONS: Array<TransmissionSimpleStatus> = ['À compléter', 'C
 
 const feiStatusColors: Record<TransmissionSimpleStatus, { bg: string; text: string }> = {
   'À compléter': { bg: 'bg-[#FEE7FC]', text: 'text-[#6E445A]' },
+  'En cours': { bg: 'bg-[#FFECBD]', text: 'text-[#73603F]' },
   Clôturée: { bg: 'bg-[#E8EDFF]', text: 'text-[#01008B]' },
 };
 

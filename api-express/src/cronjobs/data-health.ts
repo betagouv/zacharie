@@ -1,4 +1,4 @@
-import { EntityTypes, FeiOwnerRole } from '@prisma/client';
+import { EntityTypes, FeiOwnerRole, Prisma } from '@prisma/client';
 import prisma from '~/prisma';
 import { capture } from '~/third-parties/sentry';
 import { setupCronJob } from './utils';
@@ -31,33 +31,38 @@ const ROLES_REQUIRING_ENTITY: Array<FeiOwnerRole> = [
   FeiOwnerRole.COLLECTEUR_PRO,
 ];
 
-type HealthCheck = {
+export type HealthCheck = {
   name: string;
   // sampleIds = échantillon d'identifiants concernés (carcasse ou user selon le check)
   run: () => Promise<{ count: number; sampleIds: string[] }>;
 };
 
-const checks: HealthCheck[] = [
+// Compte + échantillon en deux requêtes : on ne rapatrie jamais tout le jeu de lignes pour compter.
+async function countCarcassesWithSample(where: Prisma.CarcasseWhereInput) {
+  const [count, rows] = await Promise.all([
+    prisma.carcasse.count({ where }),
+    prisma.carcasse.findMany({
+      where,
+      select: { zacharie_carcasse_id: true },
+      orderBy: { created_at: 'asc' },
+      take: SAMPLE_SIZE,
+    }),
+  ]);
+  return { count, sampleIds: rows.map((r) => r.zacharie_carcasse_id) };
+}
+
+export const checks: HealthCheck[] = [
   {
-    // Cf. scripts/20260721_fix_carcasse_examinateur_owner_entity.sql
+    // Cf. scripts/20260803_cloture_fiches.sql
     // L'examinateur initial est TOUJOURS une personne : un current_owner_entity_id sur une carcasse
     // restée à ce stade est incohérent et fait basculer la fiche en « à compléter » chez l'aval.
     name: 'Carcasse examinateur avec entité (owner_role=EXAMINATEUR_INITIAL + entity_id non nul)',
-    run: async () => {
-      const rows = await prisma.carcasse.findMany({
-        where: {
-          current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
-          current_owner_entity_id: { not: null },
-          deleted_at: null,
-        },
-        select: { zacharie_carcasse_id: true },
-        orderBy: { created_at: 'asc' },
-      });
-      return {
-        count: rows.length,
-        sampleIds: rows.slice(0, SAMPLE_SIZE).map((r) => r.zacharie_carcasse_id),
-      };
-    },
+    run: () =>
+      countCarcassesWithSample({
+        current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
+        current_owner_entity_id: { not: null },
+        deleted_at: null,
+      }),
   },
   {
     // Hard Rule du repo : un seul rôle par user. Impossible à violer via l'UI, mais un import ou un
@@ -83,42 +88,24 @@ const checks: HealthCheck[] = [
     // Une carcasse « appartient » à un rôle mais à personne (ni user ni entité) → invisible dans les
     // listes des deux côtés de la chaîne.
     name: 'Carcasse avec owner_role mais sans owner (ni user_id ni entity_id)',
-    run: async () => {
-      const rows = await prisma.carcasse.findMany({
-        where: {
-          current_owner_role: { not: null },
-          current_owner_user_id: null,
-          current_owner_entity_id: null,
-          deleted_at: null,
-        },
-        select: { zacharie_carcasse_id: true },
-        orderBy: { created_at: 'asc' },
-      });
-      return {
-        count: rows.length,
-        sampleIds: rows.slice(0, SAMPLE_SIZE).map((r) => r.zacharie_carcasse_id),
-      };
-    },
+    run: () =>
+      countCarcassesWithSample({
+        current_owner_role: { not: null },
+        current_owner_user_id: null,
+        current_owner_entity_id: null,
+        deleted_at: null,
+      }),
   },
   {
     // Rôle qui doit être porté par une entité (ETG/SVI/COLLECTEUR_PRO) mais entity_id manquant.
     // Symétrique du check #1 : attrape l'autre sens du bug de propagation d'ownership.
     name: 'Carcasse rôle-entité sans entity_id (ETG/SVI/COLLECTEUR_PRO)',
-    run: async () => {
-      const rows = await prisma.carcasse.findMany({
-        where: {
-          current_owner_role: { in: ROLES_REQUIRING_ENTITY },
-          current_owner_entity_id: null,
-          deleted_at: null,
-        },
-        select: { zacharie_carcasse_id: true },
-        orderBy: { created_at: 'asc' },
-      });
-      return {
-        count: rows.length,
-        sampleIds: rows.slice(0, SAMPLE_SIZE).map((r) => r.zacharie_carcasse_id),
-      };
-    },
+    run: () =>
+      countCarcassesWithSample({
+        current_owner_role: { in: ROLES_REQUIRING_ENTITY },
+        current_owner_entity_id: null,
+        deleted_at: null,
+      }),
   },
   {
     // owner_role doit matcher le type de l'entité qui le porte.
