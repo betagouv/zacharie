@@ -25,6 +25,7 @@ import type { EntityWithUserRelation } from '~/types/entity';
 import z from 'zod';
 import { capture } from '~/third-parties/sentry';
 import { userFeiSelect } from '~/types/user';
+import { getUserCarcasseEntityIds } from '~/utils/user-entities';
 
 const zodQuerySchema = z.object({
   page: z.string(),
@@ -39,15 +40,7 @@ const zodQuerySchema = z.object({
 async function getCarcasseAccessWhere(
   user: RequestWithUser['user']
 ): Promise<Prisma.CarcasseWhereInput | null> {
-  const userEntityRelations = await prisma.entityAndUserRelations.findMany({
-    where: {
-      owner_id: user.id,
-      relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-      status: { in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER] },
-    },
-    select: { entity_id: true },
-  });
-  const userEntityIds = userEntityRelations.map((r) => r.entity_id);
+  const userEntityIds = await getUserCarcasseEntityIds(user.id);
 
   if (user.roles.includes(UserRoles.SVI)) {
     return {

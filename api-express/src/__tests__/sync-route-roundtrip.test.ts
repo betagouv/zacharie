@@ -66,6 +66,11 @@ const baseCarcasse: Partial<Carcasse> = {
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(prisma.fei.findMany).mockResolvedValue([]);
+  // syncCarcasseIntermediaire n'accepte une entité que si l'utilisateur en est membre.
+  vi.mocked(prisma.entityAndUserRelations.findMany).mockResolvedValue([
+    { entity_id: 'entity-A' },
+    { entity_id: 'entity-B' },
+  ] as any);
 });
 
 describe('POST /sync — round-trip (real utils against mocked prisma)', () => {
