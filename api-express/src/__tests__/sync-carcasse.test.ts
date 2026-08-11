@@ -243,6 +243,81 @@ describe('syncCarcasse — SVI-only fields', () => {
     expect(updateCall.data.svi_carcasse_commentaire).toBe('inspected');
     expect(updateCall.data.svi_ipm1_decision).toBe('MISE_SUR_LE_MARCHE');
   });
+
+  test('la clôture SVI est ignorée pour un non-SVI', async () => {
+    vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
+    vi.mocked(prisma.carcasse.findFirst).mockResolvedValueOnce(baseCarcasse);
+    vi.mocked(prisma.carcasse.update).mockResolvedValueOnce(baseCarcasse);
+
+    await syncCarcasse(
+      'FEI-1',
+      'ZC-1',
+      {
+        fei_numero: 'FEI-1',
+        svi_user_id: 'user-chasseur',
+        svi_closed_at: new Date(),
+        svi_closed_by_user_id: 'user-chasseur',
+      } as any,
+      chasseur
+    );
+
+    const updateCall = vi.mocked(prisma.carcasse.update).mock.calls[0][0];
+    expect(updateCall.data).not.toHaveProperty('svi_user_id');
+    expect(updateCall.data).not.toHaveProperty('svi_closed_at');
+    expect(updateCall.data).not.toHaveProperty('svi_closed_by_user_id');
+  });
+
+  test('la clôture SVI est appliquée pour un SVI', async () => {
+    vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
+    vi.mocked(prisma.carcasse.findFirst).mockResolvedValueOnce(baseCarcasse);
+    vi.mocked(prisma.carcasse.update).mockResolvedValueOnce(baseCarcasse);
+
+    const closedAt = new Date();
+    await syncCarcasse(
+      'FEI-1',
+      'ZC-1',
+      {
+        fei_numero: 'FEI-1',
+        svi_user_id: 'user-svi',
+        svi_closed_at: closedAt,
+        svi_closed_by_user_id: 'user-svi',
+      } as any,
+      sviUser
+    );
+
+    const updateCall = vi.mocked(prisma.carcasse.update).mock.calls[0][0];
+    expect(updateCall.data.svi_user_id).toBe('user-svi');
+    expect(updateCall.data.svi_closed_at).toBe(closedAt);
+    expect(updateCall.data.svi_closed_by_user_id).toBe('user-svi');
+  });
+
+  // L'assignation au SVI est faite par l'ETG, et le statut est recalculé par le client à chaque
+  // modification quel que soit le rôle : ces champs ne doivent pas tomber dans le périmètre SVI.
+  test('assignation SVI et statut restent écrivables par un non-SVI', async () => {
+    vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
+    vi.mocked(prisma.carcasse.findFirst).mockResolvedValueOnce(baseCarcasse);
+    vi.mocked(prisma.carcasse.update).mockResolvedValueOnce(baseCarcasse);
+
+    const assignedAt = new Date();
+    await syncCarcasse(
+      'FEI-1',
+      'ZC-1',
+      {
+        fei_numero: 'FEI-1',
+        svi_assigned_at: assignedAt,
+        svi_entity_id: 'entity-svi',
+        svi_carcasse_status: 'REFUSE',
+        svi_carcasse_status_set_at: assignedAt,
+      } as any,
+      chasseur
+    );
+
+    const updateCall = vi.mocked(prisma.carcasse.update).mock.calls[0][0];
+    expect(updateCall.data.svi_assigned_at).toBe(assignedAt);
+    expect(updateCall.data.svi_entity_id).toBe('entity-svi');
+    expect(updateCall.data.svi_carcasse_status).toBe('REFUSE');
+    expect(updateCall.data.svi_carcasse_status_set_at).toBe(assignedAt);
+  });
 });
 
 describe('syncCarcasse — next_owner_entity_id side effect', () => {

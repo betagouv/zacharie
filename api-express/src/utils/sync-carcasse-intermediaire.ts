@@ -1,12 +1,21 @@
 import prisma from '~/prisma';
 import { Prisma } from '@prisma/client';
-import type { CarcasseIntermediaire } from '@prisma/client';
+import type { CarcasseIntermediaire, User } from '@prisma/client';
+import { getUserCarcasseEntityIds } from '~/utils/user-entities';
+
+type SyncCarcasseIntermediaireOpts = {
+  // En sync de masse, les entités de l'utilisateur sont les mêmes pour tout le lot : le contrôleur
+  // les résout une fois et les passe ici plutôt que de requêter à chaque carcasse.
+  userEntityIds?: Array<string>;
+};
 
 export async function syncCarcasseIntermediaire(
   fei_numero: string,
   intermediaire_id: string,
   zacharie_carcasse_id: string,
-  body: Prisma.CarcasseIntermediaireUncheckedCreateInput
+  body: Prisma.CarcasseIntermediaireUncheckedCreateInput,
+  user: User,
+  opts: SyncCarcasseIntermediaireOpts = {}
 ): Promise<CarcasseIntermediaire> {
   if (!fei_numero) {
     throw new Error('Le numéro de fiche est obligatoire');
@@ -33,14 +42,26 @@ export async function syncCarcasseIntermediaire(
     throw new Error("L'identifiant du destinataire est obligatoire");
   }
 
+  // L'identité de l'intermédiaire est décidée par le serveur : l'utilisateur courant agit toujours
+  // en son nom propre, pour une entité dont il est membre. Le rôle, lui, vient du client : un ETG
+  // enregistre l'étape de transport d'un collecteur, donc un rôle différent du sien est légitime.
+  const userEntityIds = opts.userEntityIds ?? (await getUserCarcasseEntityIds(user.id));
+  if (!body.intermediaire_entity_id || !userEntityIds.includes(body.intermediaire_entity_id)) {
+    throw new Error('Vous ne pouvez pas agir au nom de cette entité');
+  }
+
+  const identity = {
+    intermediaire_entity_id: body.intermediaire_entity_id,
+    intermediaire_role: body.intermediaire_role,
+    intermediaire_user_id: user.id,
+  };
+
   const data: Prisma.CarcasseIntermediaireUncheckedCreateInput = {
     fei_numero: fei_numero,
     numero_bracelet: existingCarcasse.numero_bracelet,
     zacharie_carcasse_id: existingCarcasse.zacharie_carcasse_id,
     intermediaire_id,
-    intermediaire_entity_id: body.intermediaire_entity_id,
-    intermediaire_role: body.intermediaire_role,
-    intermediaire_user_id: body.intermediaire_user_id,
+    ...identity,
     is_synced: true,
   };
 
@@ -98,6 +119,10 @@ export async function syncCarcasseIntermediaire(
       body[Prisma.CarcasseIntermediaireScalarFieldEnum.nombre_d_animaux_acceptes] ?? null;
   }
 
+  // L'identité n'est posée qu'à la création : une prise en charge déjà enregistrée ne doit jamais
+  // voir son entité ou son utilisateur réécrits par un autre appelant.
+  const { intermediaire_entity_id, intermediaire_role, intermediaire_user_id, ...update } = data;
+
   const carcasseIntermediaire = await prisma.carcasseIntermediaire.upsert({
     where: {
       fei_numero_zacharie_carcasse_id_intermediaire_id: {
@@ -107,7 +132,7 @@ export async function syncCarcasseIntermediaire(
       },
     },
     create: data,
-    update: data,
+    update,
   });
 
   return carcasseIntermediaire;
