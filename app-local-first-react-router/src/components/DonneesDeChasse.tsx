@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router';
-import { Carcasse, CarcasseType, DepotType, EntityTypes, FeiOwnerRole } from '@prisma/client';
+import { Carcasse, CarcasseType, EntityTypes, FeiOwnerRole } from '@prisma/client';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
 import dayjs from 'dayjs';
 import useZustandStore from '@app/zustand/store';
