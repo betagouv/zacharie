@@ -110,8 +110,15 @@ export const checks: HealthCheck[] = [
   {
     // owner_role doit matcher le type de l'entité qui le porte.
     // Quand current_owner_entity_id est renseigné, Entity.type doit égaler current_owner_role.
-    // Exceptions : EXAMINATEUR_INITIAL est déjà couvert par le check #1 (on l'exclut ici pour ne pas
-    // double-signaler) ; un COLLECTEUR_PRO peut opérer via une entité de type CCG.
+    // Le rôle décrit l'activité en cours, le type décrit l'établissement : les deux divergent
+    // légitimement dans deux cas, qu'on exclut.
+    // Exceptions :
+    //  - EXAMINATEUR_INITIAL est déjà couvert par le check #1 (on l'exclut ici pour ne pas
+    //    double-signaler) ;
+    //  - un COLLECTEUR_PRO peut opérer via une entité de type CCG ;
+    //  - COLLECTEUR_PRO sur une entité ETG = l'ETG qui assure lui-même son transport amont
+    //    (etg_role TRANSPORT, cf. etg-current-owner-confirm.tsx). État transitoire jusqu'à la
+    //    confirmation par un salarié etg_role RECEPTION, qui repasse la carcasse en (ETG, ETG).
     name: 'Carcasse owner_role incohérent avec le type de l’entité (owner_entity_id)',
     run: async () => {
       const rows = await prisma.$queryRaw<Array<{ id: string }>>`
@@ -124,7 +131,7 @@ export const checks: HealthCheck[] = [
           AND c.current_owner_role::text <> e.type::text
           AND NOT (
             c.current_owner_role = ${FeiOwnerRole.COLLECTEUR_PRO}::"FeiOwnerRole"
-            AND e.type = ${EntityTypes.CCG}::"EntityTypes"
+            AND e.type IN (${EntityTypes.CCG}::"EntityTypes", ${EntityTypes.ETG}::"EntityTypes")
           )
         ORDER BY c.created_at ASC
         LIMIT ${SAMPLE_SIZE};
@@ -139,7 +146,7 @@ export const checks: HealthCheck[] = [
           AND c.current_owner_role::text <> e.type::text
           AND NOT (
             c.current_owner_role = ${FeiOwnerRole.COLLECTEUR_PRO}::"FeiOwnerRole"
-            AND e.type = ${EntityTypes.CCG}::"EntityTypes"
+            AND e.type IN (${EntityTypes.CCG}::"EntityTypes", ${EntityTypes.ETG}::"EntityTypes")
           );
       `;
       return { count: Number(count), sampleIds: rows.map((r) => r.id) };
