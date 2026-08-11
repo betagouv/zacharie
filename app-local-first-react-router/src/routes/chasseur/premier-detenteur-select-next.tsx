@@ -37,6 +37,7 @@ import { createHistoryInput } from '@app/utils/create-history-entry';
 import { getCarcasseTransmission } from '@app/utils/get-carcasses-transmission';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import PartenaireNouveau from '@app/components/PartenaireNouveau';
+import AnnuaireCommerceSearch from '@app/components/AnnuaireCommerceSearch';
 import CCGNouveau from '@app/components/CCGNouveau';
 import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
@@ -52,6 +53,11 @@ export interface DestinatairePremierDetenteurHandle {
 const partenaireModal = createModal({
   isOpenedByDefault: false,
   id: 'partenaire-modal-pd',
+});
+
+const annuaireModal = createModal({
+  isOpenedByDefault: false,
+  id: 'annuaire-modal-pd',
 });
 
 const ccgModal = createModal({
@@ -94,6 +100,7 @@ function DispatchGroupForm({
   onUpdateGroup,
   onRemoveGroup,
   onOpenPartenaireModal,
+  onOpenAnnuaireModal,
   onOpenCcgModal,
 }: {
   group: DispatchGroup;
@@ -114,6 +121,7 @@ function DispatchGroupForm({
   onUpdateGroup: (groupId: string, updates: Partial<DispatchGroup>) => void;
   onRemoveGroup: (groupId: string) => void;
   onOpenPartenaireModal: (groupId: string, nomDUsage?: string) => void;
+  onOpenAnnuaireModal: (groupId: string) => void;
   onOpenCcgModal: (groupId: string) => void;
 }) {
   const prochainDetenteur = group.recipientEntityId ? entities[group.recipientEntityId] : null;
@@ -287,6 +295,18 @@ function DispatchGroupForm({
         />
         {errorFor('recipientEntityId') && (
           <p className="fr-error-text mt-1">{errorFor('recipientEntityId')}</p>
+        )}
+        {!group.recipientEntityId && !disabled && canEdit && (
+          <Button
+            priority="tertiary no outline"
+            type="button"
+            size="small"
+            iconId="fr-icon-search-line"
+            className="mt-1"
+            nativeButtonProps={{ onClick: () => onOpenAnnuaireModal(group.id) }}
+          >
+            Chercher un commerce de détail dans l’annuaire
+          </Button>
         )}
       </div>
       {!!prochainDetenteur && !prochainDetenteur?.zacharie_compatible && (
@@ -646,6 +666,7 @@ export default function DestinataireSelectPremierDetenteur({
   const circuitCourtIds = useCircuitCourtIds();
 
   const isPartenaireModalOpen = useIsModalOpen(partenaireModal);
+  const isAnnuaireModalOpen = useIsModalOpen(annuaireModal);
   const isCCGModalOpen = useIsModalOpen(ccgModal);
   const isTrichineModalOpen = useIsModalOpen(trichineModal);
   const [dontShowTrichineAgain, setDontShowTrichineAgain] = useState(false);
@@ -1120,6 +1141,10 @@ export default function DestinataireSelectPremierDetenteur({
                     setNewEntityNomDUsage(nomDUsage ?? null);
                     partenaireModal.open();
                   }}
+                  onOpenAnnuaireModal={(groupId) => {
+                    setActiveModalGroupId(groupId);
+                    annuaireModal.open();
+                  }}
                   onOpenCcgModal={(groupId) => {
                     setActiveModalGroupId(groupId);
                     ccgModal.open();
@@ -1214,6 +1239,23 @@ export default function DestinataireSelectPremierDetenteur({
           />
         )}
       </partenaireModal.Component>
+      <annuaireModal.Component title="Chercher un commerce de détail">
+        {isAnnuaireModalOpen && (
+          <AnnuaireCommerceSearch
+            onManualEntry={() => {
+              annuaireModal.close();
+              setNewEntityNomDUsage(null);
+              partenaireModal.open();
+            }}
+            onFinish={(newEntity) => {
+              annuaireModal.close();
+              if (newEntity && activeModalGroupId) {
+                onUpdateGroup(activeModalGroupId, { recipientEntityId: newEntity.id });
+              }
+            }}
+          />
+        )}
+      </annuaireModal.Component>
       <ccgModal.Component title="Ajouter une chambre froide (CCG)">
         {isCCGModalOpen && (
           <CCGNouveau
