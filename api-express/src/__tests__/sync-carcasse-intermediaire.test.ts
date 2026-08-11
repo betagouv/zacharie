@@ -4,6 +4,14 @@ import prisma from '~/prisma';
 import { UserRoles } from '@prisma/client';
 import type { User } from '@prisma/client';
 
+// Comme sync-carcasse.test.ts : ici on couvre l'identité et le mapping, l'autorisation d'accès à
+// la carcasse est testée dans permissions-sync-write.test.ts.
+vi.mock('~/utils/carcasse-access', () => ({
+  getAccessibleCarcasseIds: vi.fn(async (_user, ids: Array<string>) => new Set(ids)),
+  isCarcasseAccessible: vi.fn().mockResolvedValue(true),
+  canWriteFei: vi.fn().mockResolvedValue(true),
+}));
+
 const baseFei = { numero: 'FEI-1', deleted_at: null } as any;
 
 const baseCarcasse = {

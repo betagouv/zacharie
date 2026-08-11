@@ -3,6 +3,7 @@ import { sanitize } from '~/utils/sanitize';
 import { Fei, Prisma, User, UserRoles } from '@prisma/client';
 import { capture } from '~/third-parties/sentry';
 import { z } from 'zod';
+import { canWriteFei } from '~/utils/carcasse-access';
 
 export interface SaveFeiResult {
   savedFei: Fei;
@@ -32,7 +33,8 @@ const feiBodyZodSchema = z.object({
 export async function syncFei(
   numero: string,
   body: Prisma.FeiUncheckedCreateInput,
-  user: User
+  user: User,
+  opts: { userEntityIds?: Array<string> } = {}
 ): Promise<SaveFeiResult> {
   let result = feiBodyZodSchema.safeParse(body);
   if (!result.success) {
@@ -85,6 +87,12 @@ export async function syncFei(
       data: { deleted_at: body.deleted_at },
     });
     return { savedFei: deletedFei, existingFei, isDeleted: true };
+  }
+
+  // Deny by default : jusqu'ici seules la création et la suppression étaient gardées, n'importe
+  // quel compte activé pouvait écraser les champs d'une fiche tierce en connaissant son numéro.
+  if (existingFei && !(await canWriteFei(user, existingFei, opts.userEntityIds))) {
+    throw new Error("Vous n'avez pas accès à cette fiche");
   }
 
   const nextFei: Prisma.FeiUncheckedUpdateInput = {

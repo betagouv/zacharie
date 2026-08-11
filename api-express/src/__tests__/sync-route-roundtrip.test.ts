@@ -32,6 +32,14 @@ vi.mock('~/third-parties/sentry', () => ({
   captureException: vi.fn(),
 }));
 
+// Ce fichier pin le contrat de forme de la réponse. L'autorisation d'écriture est couverte par
+// permissions-sync-write.test.ts ; ici on la neutralise pour ne pas perturber les mocks prisma.
+vi.mock('~/utils/carcasse-access', () => ({
+  getAccessibleCarcasseIds: vi.fn(async (_user, ids: Array<string>) => new Set(ids)),
+  isCarcasseAccessible: vi.fn().mockResolvedValue(true),
+  canWriteFei: vi.fn().mockResolvedValue(true),
+}));
+
 const examinateurInitial = {
   id: 'user-cfei',
   roles: [UserRoles.CHASSEUR],

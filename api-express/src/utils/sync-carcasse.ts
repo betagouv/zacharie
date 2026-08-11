@@ -1,5 +1,6 @@
 import prisma from '~/prisma';
 import { Carcasse, EntityRelationType, Fei, FeiOwnerRole, Prisma, User, UserRoles } from '@prisma/client';
+import { canWriteFei, isCarcasseAccessible } from '~/utils/carcasse-access';
 
 export interface SaveCarcasseResult {
   savedCarcasse: Carcasse;
@@ -15,10 +16,14 @@ export interface SaveCarcasseResult {
 // - ensuredRelationEntityIds : entités dont la relation CAN_TRANSMIT a déjà été assurée dans ce
 //   batch (évite un findFirst/create par carcasse pour le même destinataire). En sync parallèle,
 //   l'appelant pré-remplit ce Set pour que le bloc relation soit entièrement sauté (pas de race).
+// - accessibleCarcasseIds / userEntityIds : autorisation d'écriture résolue en une requête pour
+//   tout le lot (voir controllers/sync.ts) plutôt qu'une par carcasse.
 interface SyncCarcasseOpts {
   existingFei?: Fei | null;
   existingCarcasse?: Carcasse | null;
   ensuredRelationEntityIds?: Set<string>;
+  accessibleCarcasseIds?: Set<string>;
+  userEntityIds?: Array<string>;
 }
 
 export async function syncCarcasse(
@@ -64,6 +69,16 @@ export async function syncCarcasse(
             fei_numero: fei_numero,
           },
         });
+  // Deny by default : on ne modifie une carcasse que si elle est dans le périmètre de
+  // l'utilisateur, et on n'en crée une que sur une fiche à laquelle il participe.
+  if (existingCarcasse) {
+    if (!(await isCarcasseAccessible(user, existingCarcasse.zacharie_carcasse_id, opts))) {
+      throw new Error("Vous n'avez pas accès à cette carcasse");
+    }
+  } else if (!(await canWriteFei(user, existingFei, opts.userEntityIds))) {
+    throw new Error("Vous n'avez pas accès à cette fiche");
+  }
+
   if (!existingCarcasse) {
     const numeroBracelet = body.numero_bracelet;
     if (!numeroBracelet) {

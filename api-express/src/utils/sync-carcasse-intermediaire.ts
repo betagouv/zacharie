@@ -2,11 +2,13 @@ import prisma from '~/prisma';
 import { Prisma } from '@prisma/client';
 import type { CarcasseIntermediaire, User } from '@prisma/client';
 import { getUserCarcasseEntityIds } from '~/utils/user-entities';
+import { isCarcasseAccessible } from '~/utils/carcasse-access';
 
 type SyncCarcasseIntermediaireOpts = {
-  // En sync de masse, les entités de l'utilisateur sont les mêmes pour tout le lot : le contrôleur
-  // les résout une fois et les passe ici plutôt que de requêter à chaque carcasse.
+  // En sync de masse, les entités de l'utilisateur et le périmètre d'accès sont les mêmes pour tout
+  // le lot : le contrôleur les résout une fois et les passe ici plutôt que de requêter par carcasse.
   userEntityIds?: Array<string>;
+  accessibleCarcasseIds?: Set<string>;
 };
 
 export async function syncCarcasseIntermediaire(
@@ -17,6 +19,15 @@ export async function syncCarcasseIntermediaire(
   user: User,
   opts: SyncCarcasseIntermediaireOpts = {}
 ): Promise<CarcasseIntermediaire> {
+  console.log(
+    'syncCarcasseIntermediaire',
+    fei_numero,
+    intermediaire_id,
+    zacharie_carcasse_id,
+    body,
+    user,
+    opts
+  );
   if (!fei_numero) {
     throw new Error('Le numéro de fiche est obligatoire');
   }
@@ -40,6 +51,13 @@ export async function syncCarcasseIntermediaire(
   }
   if (!intermediaire_id) {
     throw new Error("L'identifiant du destinataire est obligatoire");
+  }
+
+  // Deny by default : sans ce contrôle, créer une ligne d'intermédiaire sur une carcasse tierce
+  // suffisait à s'en donner l'accès en lecture (voir le périmètre ETG/collecteur, qui matche sur
+  // CarcasseIntermediaire.intermediaire_entity_id).
+  if (!(await isCarcasseAccessible(user, existingCarcasse.zacharie_carcasse_id, opts))) {
+    throw new Error("Vous n'avez pas accès à cette carcasse");
   }
 
   // L'identité de l'intermédiaire est décidée par le serveur : l'utilisateur courant agit toujours

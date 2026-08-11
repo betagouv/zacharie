@@ -33,6 +33,14 @@ vi.mock('~/third-parties/sentry', () => ({
   captureException: vi.fn(),
 }));
 
+// Ce fichier teste le routage et l'isolation des erreurs, pas l'autorisation : on la neutralise
+// pour qu'elle n'ajoute pas de requête carcasse.findMany dans les séquences mockées ici.
+vi.mock('~/utils/carcasse-access', () => ({
+  getAccessibleCarcasseIds: vi.fn(async (_user, ids: Array<string>) => new Set(ids)),
+  isCarcasseAccessible: vi.fn().mockResolvedValue(true),
+  canWriteFei: vi.fn().mockResolvedValue(true),
+}));
+
 import { syncFei } from '~/utils/sync-fei';
 import { syncCarcasse } from '~/utils/sync-carcasse';
 import { syncCarcasseIntermediaire } from '~/utils/sync-carcasse-intermediaire';

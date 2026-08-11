@@ -8,6 +8,7 @@ import { syncFei, type SaveFeiResult } from '~/utils/sync-fei';
 import { syncCarcasse, type SaveCarcasseResult } from '~/utils/sync-carcasse';
 import { syncCarcasseIntermediaire } from '~/utils/sync-carcasse-intermediaire';
 import { getUserCarcasseEntityIds } from '~/utils/user-entities';
+import { getAccessibleCarcasseIds } from '~/utils/carcasse-access';
 import {
   syncCarcasseModifRequest,
   runCarcasseModifRequestSideEffects,
@@ -50,10 +51,16 @@ router.post(
     const modifResults: Array<SyncModifRequestResult & { approvalPayload?: Record<string, unknown> }> = [];
     const syncedLogIds: Array<string> = [];
 
+    // Entités de l'utilisateur : identiques pour tout le lot, résolues une fois et passées aux
+    // contrôles d'autorisation de chaque section.
+    const userEntityIds = await getUserCarcasseEntityIds(user.id);
+
     // 1. Process FEIs first (carcasses depend on them)
     for (const feiData of feis || []) {
       try {
-        const result = await syncFei(feiData.numero, feiData as Prisma.FeiUncheckedCreateInput, user);
+        const result = await syncFei(feiData.numero, feiData as Prisma.FeiUncheckedCreateInput, user, {
+          userEntityIds,
+        });
         feiResults.push(result);
       } catch (error) {
         capture(error as Error, {
@@ -88,6 +95,9 @@ router.post(
         })) ?? [];
       for (const c of existingCarcasses) existingCarcasseMap.set(c.zacharie_carcasse_id, c);
     }
+    // Autorisation d'écriture du lot en une requête : les carcasses hors périmètre sont absentes
+    // du Set et chaque syncCarcasse les rejettera.
+    const accessibleCarcasseIds = await getAccessibleCarcasseIds(user, carcasseIds, userEntityIds);
 
     // Les carcasses sont traitées en parallèle (chaque syncCarcasse = un update de ligne
     // distincte, sans dépendance entre elles). La relation CAN_TRANSMIT vers le destinataire est
@@ -141,6 +151,8 @@ router.post(
                 existingFei: carcasseFeiMap.get(carcasseData.fei_numero) ?? null,
                 existingCarcasse: existingCarcasseMap.get(carcasseData.zacharie_carcasse_id) ?? null,
                 ensuredRelationEntityIds,
+                accessibleCarcasseIds,
+                userEntityIds,
               }
             );
           } catch (error) {
@@ -162,9 +174,16 @@ router.post(
     }
 
     // 3. Process CarcassesIntermediaires
-    const userEntityIds = (carcassesIntermediaires || []).length
-      ? await getUserCarcasseEntityIds(user.id)
-      : [];
+    // Périmètre recalculé après l'étape 2 : une carcasse tout juste créée ou transmise vient d'y
+    // entrer, elle serait absente d'un Set calculé avant.
+    const intermediaireCarcasseIds = [
+      ...new Set((carcassesIntermediaires || []).map((ci) => ci.zacharie_carcasse_id).filter(Boolean)),
+    ] as string[];
+    const accessibleIntermediaireCarcasseIds = await getAccessibleCarcasseIds(
+      user,
+      intermediaireCarcasseIds,
+      userEntityIds
+    );
     for (const ciData of carcassesIntermediaires || []) {
       try {
         const saved = await syncCarcasseIntermediaire(
@@ -173,7 +192,7 @@ router.post(
           ciData.zacharie_carcasse_id,
           ciData as Prisma.CarcasseIntermediaireUncheckedCreateInput,
           user,
-          { userEntityIds }
+          { userEntityIds, accessibleCarcasseIds: accessibleIntermediaireCarcasseIds }
         );
         savedIntermediaires.push(saved);
       } catch (error) {

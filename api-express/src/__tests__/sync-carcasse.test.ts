@@ -1,6 +1,14 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { syncCarcasse } from '~/utils/sync-carcasse';
 import prisma from '~/prisma';
+
+// Ce fichier couvre le mapping des champs. L'autorisation d'écriture a ses propres tests
+// (permissions-sync-write.test.ts), on la neutralise ici pour ne pas la retester partout.
+vi.mock('~/utils/carcasse-access', () => ({
+  getAccessibleCarcasseIds: vi.fn(async (_user, ids: Array<string>) => new Set(ids)),
+  isCarcasseAccessible: vi.fn().mockResolvedValue(true),
+  canWriteFei: vi.fn().mockResolvedValue(true),
+}));
 import { UserRoles, EntityRelationType } from '@prisma/client';
 import type { User } from '@prisma/client';
 
