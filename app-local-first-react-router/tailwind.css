@@ -279,6 +279,39 @@ details {
   overflow-y: auto;
 }
 
+/* écran de chargement (composant Chargement) */
+
+#chargement .chargement-halo {
+  border: 2px solid var(--border-default-grey);
+}
+
+/* arc bleu qui tourne autour du logo : dégradé conique découpé en anneau par le masque */
+#chargement .chargement-ring {
+  position: absolute;
+  inset: -2px;
+  border-radius: 9999px;
+  background: conic-gradient(from 0deg, transparent 210deg, var(--text-action-high-blue-france) 350deg);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1px));
+  animation: chargement-spin 0.9s linear infinite;
+}
+
+#chargement .chargement-label {
+  color: var(--text-mention-grey);
+}
+
+@keyframes chargement-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #chargement .chargement-ring {
+    animation-duration: 2.4s;
+  }
+}
+
 /* Hide scrollbar for Chrome, Safari and Opera */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
