@@ -281,23 +281,23 @@ details {
 
 /* écran de chargement (composant Chargement) */
 
-#chargement .chargement-halo {
-  border: 2px solid var(--border-default-grey);
-}
-
-/* arc bleu qui tourne autour du logo : dégradé conique découpé en anneau par le masque */
-#chargement .chargement-ring {
-  position: absolute;
-  inset: -2px;
-  border-radius: 9999px;
-  background: conic-gradient(from 0deg, transparent 210deg, var(--text-action-high-blue-france) 350deg);
-  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1px));
-  mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1px));
-  animation: chargement-spin 0.9s linear infinite;
+#chargement .chargement-pulse {
+  animation: chargement-pulse 1.6s ease-in-out infinite;
 }
 
 #chargement .chargement-label {
   color: var(--text-mention-grey);
+}
+
+/* petit spinner gris à côté du label */
+#chargement .chargement-spinner {
+  flex-shrink: 0;
+  width: 0.875rem;
+  height: 0.875rem;
+  border: 2px solid var(--border-default-grey);
+  border-top-color: var(--text-mention-grey);
+  border-radius: 9999px;
+  animation: chargement-spin 0.8s linear infinite;
 }
 
 @keyframes chargement-spin {
@@ -306,8 +306,21 @@ details {
   }
 }
 
+@keyframes chargement-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  #chargement .chargement-ring {
+  #chargement .chargement-pulse {
+    animation: none;
+  }
+  #chargement .chargement-spinner {
     animation-duration: 2.4s;
   }
 }

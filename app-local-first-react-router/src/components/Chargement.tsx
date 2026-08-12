@@ -5,22 +5,20 @@ export default function Chargement() {
       role="status"
       aria-live="polite"
       aria-busy="true"
-      className="flex min-h-[50vh] flex-1 flex-col items-center justify-center gap-4 px-6 py-12"
+      className="flex min-h-[50vh] flex-1 flex-col items-center justify-center gap-1 px-6 py-12"
     >
-      <span className="chargement-halo relative flex size-16 items-center justify-center rounded-full">
+      <img
+        src="/logo_zacharie_solo_small.svg"
+        alt=""
+        aria-hidden="true"
+        className="chargement-pulse h-12 w-auto grayscale"
+      />
+      <p className="fr-text--sm chargement-label mb-0 flex items-center gap-2">
         <span
           aria-hidden="true"
-          className="chargement-ring"
+          className="chargement-spinner"
         />
-        <img
-          src="/logo_zacharie_solo_small.svg"
-          alt=""
-          aria-hidden="true"
-          className="h-8 w-auto"
-        />
-      </span>
-      <p className="fr-text--sm chargement-label">
-        <span className="fr-sr-only">Chargement en cours, </span>Zach'arrive&nbsp;!
+        <span className="fr-sr-only text-black">Chargement en cours, </span>Zach'arrive&nbsp;!
       </p>
     </div>
   );
