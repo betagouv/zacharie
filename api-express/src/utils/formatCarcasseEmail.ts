@@ -1,7 +1,17 @@
-import { Carcasse, CarcasseStatus, CarcasseType, Fei, FeiOwnerRole, IPM2Decision } from '@prisma/client';
+import {
+  Carcasse,
+  CarcasseStatus,
+  CarcasseType,
+  Fei,
+  FeiOwnerRole,
+  IPM2Decision,
+  User,
+  UserRoles,
+} from '@prisma/client';
 import { getCarcasseStatusLabelForEmail } from './get-carcasse-status';
 import lesions from '../assets/lesions.json';
 import prisma from '~/prisma';
+import { getCircuitCourtFeiUrl, getFeiUrlForRole } from './fei-url';
 
 function getMotifForChasseur(motif: string, carcasseType: CarcasseType) {
   const lesion = lesions[carcasseType]
@@ -326,4 +336,47 @@ export async function formatSviAssignedEmail(
     `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur l'attribution de cette fiche, merci de contacter l’établissement qui a traité votre fiche.`,
   ];
   return { object, text: text.filter(Boolean).join('\n\n'), params };
+}
+
+// Attribution d'une fiche à un user, ou aux users d'une entité : même template des deux côtés,
+// seul le rôle du destinataire change le lien.
+export function formatFeiAssignedTemplateEmail(
+  carcasse: Carcasse,
+  sender: User,
+  recipientRole: UserRoles | undefined
+): { sender_name: string; fei_numero: string; cta: string } {
+  return {
+    sender_name: `${sender.prenom} ${sender.nom_de_famille}`,
+    fei_numero: carcasse.fei_numero,
+    cta: getFeiUrlForRole(
+      recipientRole,
+      carcasse.fei_numero,
+      carcasse.premier_detenteur_prochain_detenteur_id_cache
+    ),
+  };
+}
+
+// `recipient_email` sert à rappeler au destinataire avec quel compte se connecter.
+export function formatCircuitCourtAssignedTemplateEmail(
+  carcasse: Carcasse,
+  sender: User,
+  recipientEmail: string
+): { sender_name: string; fei_numero: string; recipient_email: string; cta: string } {
+  return {
+    sender_name: `${sender.prenom} ${sender.nom_de_famille}`,
+    fei_numero: carcasse.fei_numero,
+    recipient_email: recipientEmail,
+    cta: getCircuitCourtFeiUrl(carcasse.fei_numero, carcasse.premier_detenteur_prochain_detenteur_id_cache),
+  };
+}
+
+// Fiche attribuée par erreur puis retirée : pas de lien, la fiche n'est plus accessible.
+export function formatFeiUnassignedTemplateEmail(
+  carcasse: Carcasse,
+  sender: User
+): { sender_name: string; fei_numero: string } {
+  return {
+    sender_name: `${sender.prenom} ${sender.nom_de_famille}`,
+    fei_numero: carcasse.fei_numero,
+  };
 }
