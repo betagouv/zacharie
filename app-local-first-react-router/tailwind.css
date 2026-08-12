@@ -279,6 +279,52 @@ details {
   overflow-y: auto;
 }
 
+/* écran de chargement (composant Chargement) */
+
+#chargement .chargement-pulse {
+  animation: chargement-pulse 1.6s ease-in-out infinite;
+}
+
+#chargement .chargement-label {
+  color: var(--text-mention-grey);
+}
+
+/* petit spinner gris à côté du label */
+#chargement .chargement-spinner {
+  flex-shrink: 0;
+  width: 0.875rem;
+  height: 0.875rem;
+  border: 2px solid var(--border-default-grey);
+  border-top-color: var(--text-mention-grey);
+  border-radius: 9999px;
+  animation: chargement-spin 0.8s linear infinite;
+}
+
+@keyframes chargement-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes chargement-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #chargement .chargement-pulse {
+    animation: none;
+  }
+  #chargement .chargement-spinner {
+    animation-duration: 2.4s;
+  }
+}
+
 /* Hide scrollbar for Chrome, Safari and Opera */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
