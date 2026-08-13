@@ -114,6 +114,9 @@ export async function syncCarcasseIntermediaire(
     data.intermediaire_depot_entity_id =
       body[Prisma.CarcasseIntermediaireScalarFieldEnum.intermediaire_depot_entity_id];
   }
+  if (body.hasOwnProperty(Prisma.CarcasseIntermediaireScalarFieldEnum.numero_bon_reception)) {
+    data.numero_bon_reception = body[Prisma.CarcasseIntermediaireScalarFieldEnum.numero_bon_reception];
+  }
   if (body.hasOwnProperty(Prisma.CarcasseIntermediaireScalarFieldEnum.nombre_d_animaux_acceptes)) {
     data.nombre_d_animaux_acceptes =
       body[Prisma.CarcasseIntermediaireScalarFieldEnum.nombre_d_animaux_acceptes] ?? null;

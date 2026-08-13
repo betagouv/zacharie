@@ -616,6 +616,7 @@ model CarcasseCertificat {
   nom_etg_personne_physique             String?
   nom_etg_personne_morale               String?
   siret_etg                             String?
+  numero_bon_reception                  String?
   traitement_assainissant_etablissement String?
   traitement_type                       String?
   traitement_parametre                  String?
@@ -655,6 +656,8 @@ model CarcasseIntermediaire {
   commentaire                                 String?
   intermediaire_poids                         Float?
   nombre_d_animaux_acceptes                   Int?
+  // Saisi par l'ETG au contrôle à réception, pour toute la fiche : reporté sur chaque carcasse prise en charge.
+  numero_bon_reception                        String?
   /**
    * new fields
    */

@@ -14,6 +14,7 @@ export type CarcassesIntermediaire = {
   intermediaire_entity_id: CarcasseIntermediaire['intermediaire_entity_id'];
   intermediaire_role: CarcasseIntermediaire['intermediaire_role'];
   prise_en_charge_at: CarcasseIntermediaire['prise_en_charge_at'];
+  numero_bon_reception: CarcasseIntermediaire['numero_bon_reception'];
   intermediaire_depot_type: CarcasseIntermediaire['intermediaire_depot_type'];
   intermediaire_depot_entity_id: CarcasseIntermediaire['intermediaire_depot_entity_id'];
   intermediaire_prochain_detenteur_role_cache: CarcasseIntermediaire['intermediaire_prochain_detenteur_role_cache'];
