@@ -19,7 +19,7 @@ import {
 import updateCarcasseStatus from '~/utils/get-carcasse-status';
 import { isCarcasseDone } from '~/utils/is-carcasse-done';
 import { sendWebhook } from '~/utils/api';
-import { CarcasseModificationRequestStatus, FeiOwnerRole } from '@prisma/client';
+import { CarcasseModificationRequestStatus, FeiOwnerRole, Prisma } from '@prisma/client';
 
 // /*
 // *
@@ -55,33 +55,42 @@ export async function initFeisCron() {
     .catch(capture);
 }
 
-export async function automaticClosingOfFeis() {
+export function getCarcassesToAutoCloseWhere(): Prisma.CarcasseWhereInput {
+  return {
+    svi_assigned_at: {
+      // start of day of assigned day is older than 10 days of start of day of today
+      lte: dayjs().subtract(10, 'days').startOf('day').toDate(),
+    },
+    svi_closed_at: null,
+    svi_automatic_closed_at: null,
+    deleted_at: null,
+    // Skip carcasses with a pending modif request — the examinateur initial has not yet
+    // approved/rejected, so the inspection cycle is not complete for this carcasse.
+    CarcasseModificationRequests: {
+      none: {
+        status: CarcasseModificationRequestStatus.PENDING,
+        deleted_at: null,
+      },
+    },
+  };
+}
+
+type AutomaticClosingOptions = {
+  // en local le cron ne fait rien ; le script manuel passe `force` pour exécuter quand même
+  force?: boolean;
+};
+
+export async function automaticClosingOfFeis({ force = false }: AutomaticClosingOptions = {}) {
   console.log('Automatic closing of feis');
   // Auto-clôture PAR CARCASSE : chaque carcasse assignée au SVI depuis plus de 10 jours
   // est clôturée individuellement. La FEI n'est marquée close que lorsque TOUTES ses
   // carcasses sont dans un état terminal (multi-destinataire : les lots progressent séparément).
   const carcassesToAutoClose = await prisma.carcasse.findMany({
-    where: {
-      svi_assigned_at: {
-        // start of day of assigned day is older than 10 days of start of day of today
-        lte: dayjs().subtract(10, 'days').startOf('day').toDate(),
-      },
-      svi_closed_at: null,
-      svi_automatic_closed_at: null,
-      deleted_at: null,
-      // Skip carcasses with a pending modif request — the examinateur initial has not yet
-      // approved/rejected, so the inspection cycle is not complete for this carcasse.
-      CarcasseModificationRequests: {
-        none: {
-          status: CarcasseModificationRequestStatus.PENDING,
-          deleted_at: null,
-        },
-      },
-    },
+    where: getCarcassesToAutoCloseWhere(),
   });
 
   console.log(`Found ${carcassesToAutoClose.length} carcasses to auto-close`);
-  if (process.env.NODE_ENV === 'development') {
+  if (process.env.NODE_ENV === 'development' && !force) {
     console.log('Skipping feis closing notif in development mode');
     return;
   }
@@ -89,16 +98,22 @@ export async function automaticClosingOfFeis() {
   const automaticClosedAt = dayjs().toDate();
   for (const carcasse of carcassesToAutoClose) {
     const newStatus = updateCarcasseStatus(carcasse);
-    const user = await prisma.user.findUnique({
-      where: {
-        id: carcasse.svi_user_id,
-      },
-    });
-    const entity = await prisma.entity.findUnique({
-      where: {
-        id: carcasse.svi_entity_id,
-      },
-    });
+
+    const user = carcasse.svi_user_id
+      ? await prisma.user.findUnique({
+          where: {
+            id: carcasse.svi_user_id,
+          },
+        })
+      : null;
+    const entity = carcasse.svi_entity_id
+      ? await prisma.entity.findUnique({
+          where: {
+            id: carcasse.svi_entity_id,
+          },
+        })
+      : null;
+
     await prisma.carcasse.update({
       where: {
         zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
