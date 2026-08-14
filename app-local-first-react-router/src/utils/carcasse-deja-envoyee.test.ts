@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vitest';
 import { FeiOwnerRole } from '@prisma/client';
-import { isCarcasseDejaEnvoyee } from './carcasse-deja-envoyee';
+import { isCarcasseDejaEnvoyee, isCarcassePriseEnChargeEnAval } from './carcasse-deja-envoyee';
 
 describe('isCarcasseDejaEnvoyee', () => {
   test('carcasse tout juste créée : encore chez le chasseur', () => {
@@ -53,5 +53,25 @@ describe('isCarcasseDejaEnvoyee', () => {
 
   test('champs absents (transmission partielle) : encore chez le chasseur', () => {
     expect(isCarcasseDejaEnvoyee({})).toBe(false);
+  });
+});
+
+describe('isCarcassePriseEnChargeEnAval', () => {
+  test('destinataire choisi mais pas encore pris en charge : le chasseur garde la main', () => {
+    expect(isCarcassePriseEnChargeEnAval({ current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR })).toBe(false);
+  });
+
+  test('prise en charge par un ETG : le chasseur est dessaisi', () => {
+    expect(isCarcassePriseEnChargeEnAval({ current_owner_role: FeiOwnerRole.ETG })).toBe(true);
+  });
+
+  test('carcasse tout juste créée : le chasseur garde la main', () => {
+    expect(isCarcassePriseEnChargeEnAval({ current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL })).toBe(
+      false
+    );
+  });
+
+  test('rôle absent : le chasseur garde la main', () => {
+    expect(isCarcassePriseEnChargeEnAval({ current_owner_role: null })).toBe(false);
   });
 });

@@ -10,7 +10,7 @@ import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import dayjs from 'dayjs';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import CardCarcasse from '@app/components/CardCarcasse';
-import { isCarcasseDejaEnvoyee } from '@app/utils/carcasse-deja-envoyee';
+import { isCarcassePriseEnChargeEnAval } from '@app/utils/carcasse-deja-envoyee';
 import type { Carcasse } from '@prisma/client';
 
 export default function CarcassesExaminateur({
@@ -192,9 +192,10 @@ export function CarcasseExaminateur({
   const addLog = useZustandStore((state) => state.addLog);
   const navigate = useNavigate();
 
-  // Une carcasse partie chez un destinataire ne se modifie ni ne se supprime plus, même si d'autres
-  // carcasses de la fiche sont restées et rouvrent les droits d'édition du chasseur.
-  if (isCarcasseDejaEnvoyee(carcasse)) {
+  // Une carcasse prise en charge par l'aval ne se modifie ni ne se supprime plus, même si d'autres
+  // carcasses de la fiche sont restées et rouvrent les droits d'édition du chasseur. Tant que la
+  // prise en charge n'a pas eu lieu, le chasseur reste détenteur et peut encore la corriger.
+  if (isCarcassePriseEnChargeEnAval(carcasse)) {
     return <CardCarcasse carcasse={carcasse} />;
   }
   if (!canEditAsExaminateurInitial && !canEditAsPremierDetenteur) {

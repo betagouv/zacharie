@@ -29,7 +29,7 @@ import DateHeureValidationAlerts from '@app/components/DateHeureValidationAlerts
 import ChasseurHeaderFiche from './chasseur-header-fiche';
 import { CompteEnAttenteValidationAlert } from '@app/components/CompteEnAttenteValidation';
 import { useGetTransmissionsForFei } from '@app/utils/get-transmissions-sorted';
-import { isCarcasseDejaEnvoyee } from '@app/utils/carcasse-deja-envoyee';
+import { isCarcasseDejaEnvoyee, isCarcassePriseEnChargeEnAval } from '@app/utils/carcasse-deja-envoyee';
 
 export default function ChasseurFei() {
   const params = useParams();
@@ -183,10 +183,12 @@ function FEIChasseurLoaded() {
     return true;
   }, [transmissions, fei, user]);
 
-  // Les lots déjà partis chez un destinataire ne doivent pas verrouiller ceux qui sont restés :
+  // Les lots déjà pris en charge par l'aval ne doivent pas verrouiller ceux qui sont restés :
   // sans ce filtre, une carcasse restée en arrière n'est plus ni transmissible ni supprimable.
+  // On filtre sur la prise en charge, pas sur le choix du destinataire : tant que personne n'a pris
+  // en charge, le chasseur est encore détenteur et garde ses droits sur la fiche.
   const transmissionsEncoreChezLeChasseur = useMemo(
-    () => transmissions.filter((transmission) => !isCarcasseDejaEnvoyee(transmission.content)),
+    () => transmissions.filter((transmission) => !isCarcassePriseEnChargeEnAval(transmission.content)),
     [transmissions]
   );
 

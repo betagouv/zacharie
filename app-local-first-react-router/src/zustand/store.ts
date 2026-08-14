@@ -27,6 +27,7 @@ import type {
   CarcassesIntermediaire,
 } from '@app/types/carcasses-intermediaire';
 import { mapFeiFieldsToCarcasse } from '@app/utils/map-fei-fields-to-carcasse';
+import { isCarcassePriseEnChargeEnAval } from '@app/utils/carcasse-deja-envoyee';
 import { createSlicedIDBStorage } from './idb-sliced-storage';
 import { CarcasseTransmission } from '@app/types/carcasse';
 
@@ -164,8 +165,14 @@ const useZustandStore = create<State & Actions>()(
           // Base sur le registre vivant (state.carcasses), pas sur carcassesRegistry qui n'est figé
           // qu'au chargement : sinon on réécrit les carcasses avec des données périmées et on écrase
           // les mutations locales récentes (ex : current_owner_role posé juste avant par une prise en charge).
+          // On exclut les carcasses prises en charge en aval : les repasser en is_synced=false les
+          // repousse entières vers le serveur depuis un snapshot local antérieur à cette prise en
+          // charge — et /sync applique le body sans comparer updated_at. Le serveur propage de toute
+          // façon les dates de la fiche à toutes ses carcasses (syncCarcasseDates).
+          // Une carcasse simplement transmise, pas encore prise en charge, reste ici : le chasseur
+          // en est toujours le détenteur courant et peut encore la modifier.
           const carcassefeiCarcasses = Object.values(get().carcasses).filter(
-            (c) => c.fei_numero === fei_numero
+            (c) => c.fei_numero === fei_numero && !isCarcassePriseEnChargeEnAval(c)
           );
           const nextFei: Fei = {
             ...useZustandStore.getState().feis[fei_numero],

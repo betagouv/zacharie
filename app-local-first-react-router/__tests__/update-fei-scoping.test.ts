@@ -58,18 +58,29 @@ describe('updateFei ne réécrit que les carcasses encore chez le chasseur', () 
   });
 
   // Régression : createCarcasse appelle updateFei, qui repassait TOUTES les carcasses de la fiche
-  // en is_synced=false. Le /sync repoussait alors les carcasses déjà parties, entières, depuis le
-  // snapshot local du chasseur — et syncCarcasse applique le body sans comparer updated_at.
-  test('les carcasses déjà parties ne sont pas remises en file de synchronisation', () => {
+  // en is_synced=false. Le /sync repoussait alors les carcasses prises en charge par l'aval,
+  // entières, depuis le snapshot local du chasseur — et syncCarcasse applique le body sans comparer
+  // updated_at, donc le snapshot périmé écrasait la prise en charge.
+  test('les carcasses prises en charge en aval ne sont pas remises en file de synchronisation', () => {
     useZustandStore.getState().updateFei(FEI_NUMERO, { commune_mise_a_mort: 'CHASSENARD' });
 
     const { carcasses } = useZustandStore.getState();
     expect(carcasses.RESTANTE.is_synced).toBe(false);
-    expect(carcasses.ENVOYEE.is_synced).toBe(true);
     expect(carcasses.CHEZ_ETG.is_synced).toBe(true);
   });
 
-  test("l'ownership d'une carcasse déjà partie est laissé intact", () => {
+  // La frontière est la prise en charge, pas le choix du destinataire : tant que l'ETG n'a pas pris
+  // en charge, le chasseur reste détenteur courant, peut encore corriger la fiche, et ces
+  // corrections doivent bien redescendre sur la carcasse.
+  test('une carcasse transmise mais pas encore prise en charge suit toujours la fiche', () => {
+    useZustandStore.getState().updateFei(FEI_NUMERO, { heure_mise_a_mort_premiere_carcasse: '07:15' });
+
+    const { carcasses } = useZustandStore.getState();
+    expect(carcasses.ENVOYEE.is_synced).toBe(false);
+    expect(carcasses.ENVOYEE.heure_mise_a_mort_premiere_carcasse_fei).toBe('07:15');
+  });
+
+  test("l'ownership d'une carcasse prise en charge est laissé intact", () => {
     useZustandStore.getState().updateFei(FEI_NUMERO, { commune_mise_a_mort: 'CHASSENARD' });
 
     const { carcasses } = useZustandStore.getState();
