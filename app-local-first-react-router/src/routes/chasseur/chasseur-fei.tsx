@@ -344,7 +344,16 @@ function FEIChasseurLoaded() {
     }
     if (validationErrors.length > 0) {
       setShowErrors(true);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      // on scrolle vers le premier champ en erreur, après le rendu des messages d'erreur
+      const firstErrorField = validationErrors[0].field;
+      requestAnimationFrame(() => {
+        const element = document.getElementById(firstErrorField);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      });
       return;
     }
     setShowErrors(false);
@@ -660,7 +669,7 @@ function FEIChasseurLoaded() {
                 <div className="bg-white p-4 md:p-8">
                   <h4 className="fr-h5">Validation de l'examen initial</h4>
                   <Component
-                    label="Date de validation de l'examen initial et de mise sur le marché"
+                    label="Date de validation de l'examen initial"
                     state={
                       fieldHasError('examinateur_initial_date_approbation_mise_sur_le_marche')
                         ? 'error'
@@ -673,7 +682,8 @@ function FEIChasseurLoaded() {
                       canEdit ? (
                         <>
                           <button
-                            className="mr-2 inline-block text-left"
+                            key={dayjs().format('dddd DD MMMM HH mm')}
+                            className="mr-2 rounded-full bg-[#E8EDFF] px-3 py-1 text-sm text-[#000091]"
                             type="button"
                             onClick={() => {
                               updateFei(fei.numero, {
@@ -682,7 +692,7 @@ function FEIChasseurLoaded() {
                               });
                             }}
                           >
-                            <u className="inline">Cliquez ici</u> pour définir la date du jour et maintenant.
+                            {dayjs().format('dddd DD MMMM, HH:mm')}
                           </button>
                           <button
                             className="inline-block text-left"
@@ -738,31 +748,34 @@ function FEIChasseurLoaded() {
                         : undefined,
                     }}
                   />
-                  <Checkbox
-                    className={canEdit ? '' : 'checkbox-black'}
-                    state={
-                      fieldHasError('examinateur_initial_approbation_mise_sur_le_marche')
-                        ? 'error'
-                        : 'default'
-                    }
-                    stateRelatedMessage={fieldErrorMessage(
-                      'examinateur_initial_approbation_mise_sur_le_marche'
-                    )}
-                    options={[
-                      {
-                        label: checkboxLabel,
-                        nativeInputProps: {
-                          required: true,
-                          name: Prisma.FeiScalarFieldEnum.examinateur_initial_approbation_mise_sur_le_marche,
-                          value: 'true',
-                          disabled: !canEdit,
-                          onChange: () => setApprobation(!approbation),
-                          readOnly: !!fei.examinateur_initial_approbation_mise_sur_le_marche,
-                          checked: approbation,
+                  <div id={Prisma.FeiScalarFieldEnum.examinateur_initial_approbation_mise_sur_le_marche}>
+                    <Checkbox
+                      className={canEdit ? '' : 'checkbox-black'}
+                      state={
+                        fieldHasError('examinateur_initial_approbation_mise_sur_le_marche')
+                          ? 'error'
+                          : 'default'
+                      }
+                      stateRelatedMessage={fieldErrorMessage(
+                        'examinateur_initial_approbation_mise_sur_le_marche'
+                      )}
+                      options={[
+                        {
+                          label: checkboxLabel,
+                          nativeInputProps: {
+                            required: true,
+                            name: Prisma.FeiScalarFieldEnum
+                              .examinateur_initial_approbation_mise_sur_le_marche,
+                            value: 'true',
+                            disabled: !canEdit,
+                            onChange: () => setApprobation(!approbation),
+                            readOnly: !!fei.examinateur_initial_approbation_mise_sur_le_marche,
+                            checked: approbation,
+                          },
                         },
-                      },
-                    ]}
-                  />
+                      ]}
+                    />
+                  </div>
                   {showErrors && validationErrors.length > 0 && (
                     <Alert
                       title="Champs manquants pour transmettre"
