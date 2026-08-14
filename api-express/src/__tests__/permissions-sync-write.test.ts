@@ -1,15 +1,15 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
-import { UserRoles } from '@prisma/client';
+import {
+  CarcasseModificationRequestStatus,
+  CarcasseModificationRequestType,
+  UserRoles,
+} from '@prisma/client';
 import type { User } from '@prisma/client';
 import prisma from '~/prisma';
 import { syncFei } from '~/utils/sync-fei';
 import { syncCarcasse } from '~/utils/sync-carcasse';
 import { syncCarcasseIntermediaire } from '~/utils/sync-carcasse-intermediaire';
-
-vi.mock('~/third-parties/sentry', () => ({
-  capture: vi.fn(),
-  captureException: vi.fn(),
-}));
+import { syncCarcasseModifRequest } from '~/utils/sync-carcasse-modification-request';
 
 // Cloisonnement en écriture (lot 3 de l'audit) : avant, tout compte activé pouvait écraser la
 // fiche, la carcasse ou l'intermédiaire d'un tiers en connaissant son identifiant. Ces tests
@@ -243,5 +243,80 @@ describe('syncCarcasseIntermediaire — écriture sur une carcasse tierce', () =
     );
 
     expect(prisma.carcasseIntermediaire.upsert).toHaveBeenCalled();
+  });
+});
+
+describe('syncCarcasseModifRequest — demande de modification sur une carcasse tierce', () => {
+  // Créer une demande sur une carcasse tierce écrivait sur sa ligne (bump d'updated_at) et
+  // notifiait son examinateur initial, sans aucun contrôle de périmètre.
+  test('un utilisateur hors périmètre ne peut pas créer de demande', async () => {
+    vi.mocked(prisma.carcasseModificationRequest.findUnique).mockResolvedValueOnce(null);
+
+    await expect(
+      syncCarcasseModifRequest(
+        {
+          id: 'mod-attaque',
+          type: CarcasseModificationRequestType.BRACELET_RENAME,
+          zacharie_carcasse_id: 'ZC-VICTIME',
+          fei_numero: 'FEI-VICTIME',
+          requested_by_user_id: attaquant.id,
+          requested_by_entity_id: 'entity-etg-2',
+          numero_bracelet_before: 'BR-VICTIME',
+          numero_bracelet_after: 'BR-HACKED',
+        } as any,
+        attaquant
+      )
+    ).rejects.toThrow("Vous n'avez pas accès à cette carcasse");
+
+    expect(prisma.carcasseModificationRequest.create).not.toHaveBeenCalled();
+    expect(prisma.carcasse.update).not.toHaveBeenCalled();
+  });
+
+  test('un utilisateur hors périmètre ne peut pas non plus modifier une demande existante', async () => {
+    vi.mocked(prisma.carcasseModificationRequest.findUnique).mockResolvedValueOnce({
+      id: 'mod-1',
+      type: CarcasseModificationRequestType.BRACELET_RENAME,
+      status: CarcasseModificationRequestStatus.PENDING,
+      zacharie_carcasse_id: 'ZC-VICTIME',
+      requested_by_user_id: proprietaire.id,
+      deleted_at: null,
+    } as any);
+
+    await expect(
+      syncCarcasseModifRequest(
+        { id: 'mod-1', zacharie_carcasse_id: 'ZC-VICTIME', comment_intermediaire: 'hacked' } as any,
+        attaquant
+      )
+    ).rejects.toThrow("Vous n'avez pas accès à cette carcasse");
+
+    expect(prisma.carcasseModificationRequest.update).not.toHaveBeenCalled();
+  });
+
+  test('une carcasse qui lui a été transmise reste éligible à une demande', async () => {
+    vi.mocked(prisma.carcasseModificationRequest.findUnique).mockResolvedValueOnce(null);
+    vi.mocked(prisma.carcasse.findMany).mockResolvedValue([{ zacharie_carcasse_id: 'ZC-VICTIME' }] as any);
+    vi.mocked(prisma.carcasse.findUnique).mockResolvedValueOnce({ fei_numero: 'FEI-VICTIME' } as any);
+    vi.mocked(prisma.carcasseModificationRequest.create).mockResolvedValueOnce({
+      id: 'mod-ok',
+      zacharie_carcasse_id: 'ZC-VICTIME',
+    } as any);
+    vi.mocked(prisma.carcasse.update).mockResolvedValueOnce({} as any);
+
+    const result = await syncCarcasseModifRequest(
+      {
+        id: 'mod-ok',
+        type: CarcasseModificationRequestType.BRACELET_RENAME,
+        zacharie_carcasse_id: 'ZC-VICTIME',
+        fei_numero: 'FEI-VICTIME',
+        requested_by_user_id: attaquant.id,
+        requested_by_entity_id: 'entity-etg-2',
+        numero_bracelet_before: 'BR-VICTIME',
+        numero_bracelet_after: 'BR-CORRIGE',
+      } as any,
+      attaquant
+    );
+
+    expect(result.isNew).toBe(true);
+    expect(prisma.carcasseModificationRequest.create).toHaveBeenCalled();
   });
 });

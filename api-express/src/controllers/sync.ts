@@ -209,6 +209,16 @@ router.post(
     }
 
     // 4. Process CarcasseModificationRequests
+    // Périmètre recalculé après les étapes 2 et 3 : une demande NEW_CARCASSE arrive dans le même
+    // lot que la carcasse et la ligne d'intermédiaire qui la font entrer dans le périmètre.
+    const modifRequestCarcasseIds = [
+      ...new Set((carcasseModifRequests || []).map((m) => m.zacharie_carcasse_id).filter(Boolean)),
+    ] as string[];
+    const accessibleModifRequestCarcasseIds = await getAccessibleCarcasseIds(
+      user,
+      modifRequestCarcasseIds,
+      userEntityIds
+    );
     for (const modifData of carcasseModifRequests || []) {
       try {
         const { _approvalPayload, ...modifBody } = modifData as typeof modifData & {
@@ -216,7 +226,8 @@ router.post(
         };
         const result = await syncCarcasseModifRequest(
           modifBody as Prisma.CarcasseModificationRequestUncheckedCreateInput,
-          user
+          user,
+          { userEntityIds, accessibleCarcasseIds: accessibleModifRequestCarcasseIds }
         );
         modifResults.push({ ...result, approvalPayload: _approvalPayload });
       } catch (error) {
