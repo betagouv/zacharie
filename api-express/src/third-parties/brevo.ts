@@ -4,6 +4,7 @@ import parsePhoneNumber from 'libphonenumber-js';
 import prisma from '~/prisma';
 import { capture } from './sentry';
 import { IS_DEV_OR_TEST, ENVIRONMENT } from '~/config';
+import { escapeBrevoPlaceholders } from '~/utils/sanitize';
 
 const DISABLED = ENVIRONMENT === 'test' || IS_DEV_OR_TEST;
 // const DISABLED = false;
@@ -39,11 +40,11 @@ async function sendEmail(props: SendEmailProps): Promise<boolean> {
     apiInstance.setApiKey(brevo.TransactionalEmailsApiApiKeys.apiKey, API_KEY);
 
     const sendSmtpEmail = new brevo.SendSmtpEmail();
-    sendSmtpEmail.subject = props.subject;
+    sendSmtpEmail.subject = escapeBrevoPlaceholders(props.subject);
     if (props.html) {
-      sendSmtpEmail.htmlContent = props.html;
+      sendSmtpEmail.htmlContent = escapeBrevoPlaceholders(props.html);
     } else if (props.text) {
-      sendSmtpEmail.textContent = props.text;
+      sendSmtpEmail.textContent = escapeBrevoPlaceholders(props.text);
     }
     if (props.from) {
       sendSmtpEmail.sender = props.from;
