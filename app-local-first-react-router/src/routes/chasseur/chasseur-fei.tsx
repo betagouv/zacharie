@@ -235,7 +235,10 @@ function FEIChasseurLoaded() {
       errors.push({ field: 'date_mise_a_mort', message: 'Il manque la date de mise à mort' });
     }
     if (!fei.commune_mise_a_mort) {
-      errors.push({ field: 'commune_mise_a_mort', message: 'Il manque la commune de mise à mort' });
+      errors.push({
+        field: 'commune_mise_a_mort',
+        message: 'Il manque la commune de prélèvement du gibier',
+      });
     }
     if (!fei.premier_detenteur_user_id && !fei.premier_detenteur_entity_id) {
       errors.push({ field: 'premier_detenteur', message: 'Il manque le premier détenteur' });
@@ -476,7 +479,7 @@ function FEIChasseurLoaded() {
                   showHeureEviscerationAlert={false}
                 />
                 <VilleComponent
-                  label="Commune de mise à mort"
+                  label="Commune de prélèvement du gibier"
                   state={fieldHasError('commune_mise_a_mort') ? 'error' : 'default'}
                   stateRelatedMessage={fieldErrorMessage('commune_mise_a_mort')}
                   key={fei?.commune_mise_a_mort}
@@ -500,7 +503,7 @@ function FEIChasseurLoaded() {
                   nativeInputProps={{
                     id: Prisma.FeiScalarFieldEnum.commune_mise_a_mort,
                     name: Prisma.FeiScalarFieldEnum.commune_mise_a_mort,
-                    placeholder: 'Commune de mise à mort',
+                    placeholder: 'Commune de prélèvement du gibier',
                     type: 'text',
                     required: true,
                     autoComplete: 'off',
