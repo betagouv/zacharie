@@ -6,6 +6,7 @@ dayjs.extend(utc);
 dayjs.locale('fr');
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
+import { dateApprobationDuJour } from '../../utils/date-approbation';
 
 test.use({
   viewport: { width: 350, height: 667 },
@@ -37,7 +38,7 @@ test('Double-clic Transmettre — pas de double soumission', async ({ page }) =>
   await page.getByRole('textbox', { name: 'Fin de l’examen initial' }).fill('02:00');
   await page.getByRole('textbox', { name: 'Fin de l’examen initial' }).blur();
 
-  await page.getByRole('button', { name: 'Date du jour et maintenant' }).click();
+  await page.getByRole('button', { name: dateApprobationDuJour() }).click();
   await page.getByText('Je, Martin Marie, certifie qu').click();
 
   const transmettre = page.getByRole('button', { name: 'Transmettre', exact: true });

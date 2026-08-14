@@ -6,6 +6,7 @@ dayjs.extend(utc);
 dayjs.locale('fr');
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
+import { dateApprobationDuJour } from '../../utils/date-approbation';
 import { logoutAndConnect } from '../../utils/logout-and-connect';
 
 test.use({
@@ -53,7 +54,7 @@ test('Examinateur transmits to external PD — round-trip via backend', async ({
     .fill(dayjs().startOf('day').add(2, 'hour').format('HH:mm'));
   await page.getByRole('textbox', { name: 'Fin de l’examen initial' }).blur();
 
-  await page.getByRole('button', { name: 'Date du jour et maintenant' }).click();
+  await page.getByRole('button', { name: dateApprobationDuJour() }).click();
   await page.getByText('Je, Martin Marie, certifie qu').click();
 
   // Capture FEI number BEFORE the post-transmission redirect.

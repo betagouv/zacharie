@@ -6,6 +6,7 @@ dayjs.extend(utc);
 dayjs.locale('fr');
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
+import { dateApprobationDuJour } from '../../utils/date-approbation';
 
 test.use({
   viewport: { width: 350, height: 667 },
@@ -70,7 +71,7 @@ test('Fiche avec anomalies abats & carcasse — visible au rouvrir', async ({ pa
     .fill(dayjs().startOf('day').add(2, 'hour').format('HH:mm'));
   await page.getByRole('textbox', { name: 'Fin de l’examen initial' }).blur();
 
-  await page.getByRole('button', { name: 'Date du jour et maintenant' }).click();
+  await page.getByRole('button', { name: dateApprobationDuJour() }).click();
   await page.getByText('Je, Martin Marie, certifie qu').click();
   await page.getByRole('button', { name: 'Transmettre', exact: true }).click();
 

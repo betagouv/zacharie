@@ -6,6 +6,7 @@ dayjs.extend(utc);
 dayjs.locale('fr');
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
+import { dateApprobationDuJour } from '../../utils/date-approbation';
 
 test.use({
   viewport: { width: 350, height: 667 },
@@ -52,7 +53,7 @@ test('Bloc 4 — toggle « consommateur final » updates cert label & button tex
   await page.getByRole('textbox', { name: 'Fin de l’examen initial' }).blur();
 
   // Set the approbation date via the first shortcut so the cert label renders fully.
-  await page.getByRole('button', { name: 'Date du jour et maintenant' }).click();
+  await page.getByRole('button', { name: dateApprobationDuJour() }).click();
 
   // Initial state (no consommateur_final): cert label contains the marché clause,
   // and the second hintText button proposes to mark the user as consommateur final.

@@ -6,6 +6,7 @@ dayjs.extend(utc);
 dayjs.locale('fr');
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
+import { dateApprobationDuJour } from '../../utils/date-approbation';
 
 test.use({
   viewport: { width: 350, height: 667 },
@@ -24,7 +25,7 @@ test("Création d'une fiche", async ({ page }) => {
   await connectWith(page, 'examinateur@example.fr');
   await expect(page).toHaveURL('http://localhost:3290/app/chasseur');
   await page.getByRole('button', { name: 'Nouvelle fiche' }).first().click();
-  await expect(page.getByText("Date de mise à mort (et d'éviscération)")).toBeVisible();
+  await expect(page.getByText('Date de la chasse')).toBeVisible();
   await page.getByRole('button', { name: dayjs.utc().format('dddd DD MMMM') }).click();
   await page.getByRole('textbox', { name: 'Commune de prélèvement du gibier' }).fill('CHASS');
   await page.getByRole('button', { name: 'CHASSENARD' }).click();
@@ -56,7 +57,7 @@ test("Création d'une fiche", async ({ page }) => {
     .fill(dayjs().startOf('day').add(2, 'hour').format('HH:mm'));
   await page.getByRole('textbox', { name: 'Fin de l’examen initial' }).blur();
   // Bloc 4 — Validation
-  await page.getByRole('button', { name: 'Date du jour et maintenant' }).click();
+  await page.getByRole('button', { name: dateApprobationDuJour() }).click();
   await page.getByText('Je, Martin Marie, certifie qu').click();
   await expect(page.getByRole('button', { name: 'Transmettre', exact: true })).not.toBeDisabled();
   await page.getByRole('button', { name: 'Transmettre', exact: true }).click();

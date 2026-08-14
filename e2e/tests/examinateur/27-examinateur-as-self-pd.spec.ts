@@ -6,6 +6,7 @@ dayjs.extend(utc);
 dayjs.locale('fr');
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
+import { dateApprobationDuJour } from '../../utils/date-approbation';
 
 test.use({
   viewport: { width: 350, height: 667 },
@@ -63,7 +64,7 @@ test.fixme('Examinateur picks themselves as PD — inline transition to dispatch
   await page.getByRole('textbox', { name: 'Fin de l’examen initial' }).blur();
 
   // Validation.
-  await page.getByRole('button', { name: 'Date du jour et maintenant' }).click();
+  await page.getByRole('button', { name: dateApprobationDuJour() }).click();
   await page.getByText('Je, Martin Marie, certifie qu').click();
 
   await page.getByRole('button', { name: 'Transmettre', exact: true }).click();

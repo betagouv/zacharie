@@ -6,6 +6,7 @@ dayjs.extend(utc);
 dayjs.locale('fr');
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
+import { dateApprobationDuJour } from '../../utils/date-approbation';
 import { logoutAndConnect } from '../../utils/logout-and-connect';
 
 test.use({
@@ -68,7 +69,7 @@ test("Autre membre de l'Association voit le bloc Destinataire sur la fiche", asy
   await page.getByRole('textbox', { name: 'Fin de l’examen initial' }).blur();
 
   // Validation de l'examen initial.
-  await page.getByRole('button', { name: 'Date du jour et maintenant' }).click();
+  await page.getByRole('button', { name: dateApprobationDuJour() }).click();
   await page
     .getByText(/Je, .* certifie qu/i)
     .first()

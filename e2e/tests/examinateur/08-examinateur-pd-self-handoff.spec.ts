@@ -6,6 +6,7 @@ dayjs.extend(utc);
 dayjs.locale('fr');
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
+import { dateApprobationDuJour } from '../../utils/date-approbation';
 
 test.use({
   viewport: { width: 350, height: 667 },
@@ -52,7 +53,7 @@ test('Examinateur == PD via CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY — self-hando
   await page.getByRole('textbox', { name: 'Fin de l’examen initial' }).blur();
 
   // Validation de l'examen initial
-  await page.getByRole('button', { name: 'Date du jour et maintenant' }).click();
+  await page.getByRole('button', { name: dateApprobationDuJour() }).click();
   await page
     .getByText(/Je, .* certifie qu/i)
     .first()
