@@ -437,7 +437,7 @@ function FEIChasseurLoaded() {
               <div className="bg-white p-4 md:p-8">
                 <h4 className="fr-h5">Informations de chasse</h4>
                 <Component
-                  label="Date de mise à mort (et d'éviscération)"
+                  label="Date de la chasse"
                   state={fieldHasError('date_mise_a_mort') ? 'error' : 'default'}
                   stateRelatedMessage={fieldErrorMessage('date_mise_a_mort')}
                   hintText={
