@@ -19,15 +19,6 @@ export async function syncCarcasseIntermediaire(
   user: User,
   opts: SyncCarcasseIntermediaireOpts = {}
 ): Promise<CarcasseIntermediaire> {
-  console.log(
-    'syncCarcasseIntermediaire',
-    fei_numero,
-    intermediaire_id,
-    zacharie_carcasse_id,
-    body,
-    user,
-    opts
-  );
   if (!fei_numero) {
     throw new Error('Le numéro de fiche est obligatoire');
   }
