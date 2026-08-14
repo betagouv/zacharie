@@ -102,7 +102,7 @@ export function carcasseFilterableFields(
       options: [...grandGibier.especes, ...petitGibier.especes],
     },
     { name: 'date_mise_a_mort', label: 'Date de mise à mort', type: 'date-with-time' },
-    { name: 'commune_mise_a_mort', label: 'Commune de mise à mort', type: 'text' },
+    { name: 'commune_mise_a_mort', label: 'Commune de prélèvement du gibier', type: 'text' },
     { name: 'premier_detenteur_name_cache', label: 'Nom du premier détenteur', type: 'text' },
     {
       name: 'examinateur_initial_date_approbation_mise_sur_le_marche',

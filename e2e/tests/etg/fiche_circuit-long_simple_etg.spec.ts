@@ -419,7 +419,7 @@ test('Pas de stockage - Je transfère à un autre ETG', async ({ page, context }
   //     - paragraph: Informations clés
   //     - list:
   //       - listitem:
-  //         - paragraph: "/Commune de mise à mort : \\\\d+ CHASSENARD/"
+  //         - paragraph: "/Commune de prélèvement du gibier : \\\\d+ CHASSENARD/"
   //       - listitem:
   //         - paragraph: "/Date de mise à mort : lundi 7 juillet \\\\d+/"
   //       - listitem:

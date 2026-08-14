@@ -385,7 +385,7 @@ export default function EtgCarcasses() {
     },
     {
       key: 'commune_mise_a_mort',
-      label: 'Commune de mise à mort',
+      label: 'Commune de prélèvement du gibier',
       dataKey: 'commune_mise_a_mort',
       title: 'Commune',
       sortable: true,

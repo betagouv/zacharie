@@ -86,7 +86,7 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
       errors.push('Veuillez renseigner la date de mise à mort');
     }
     if (!fei.commune_mise_a_mort) {
-      errors.push('Veuillez renseigner la commune de mise à mort');
+      errors.push('Veuillez renseigner la commune de prélèvement du gibier');
     }
     if (!nextOwnerUserOrEntityId) {
       errors.push('Veuillez sélectionner le propriétaire initial');
