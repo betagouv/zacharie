@@ -48,7 +48,7 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
 
   const isOnline = useIsOnline();
 
-  const nextOwnerSelectLabel = 'Sélectionnez le Premier Détenteur de pour cette fiche';
+  const nextOwnerSelectLabel = 'Sélectionnez le propriétaire initial pour cette fiche';
   // quand le premier détenteur est une association, on enregistre aussi l'utilisateur qui agit en son nom :
   // c'est bien l'entité qui doit être sélectionnée dans la liste
   const [nextOwnerUserOrEntityId, setNextOwnerUserOrEntityId] = useState(
@@ -86,10 +86,10 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
       errors.push('Veuillez renseigner la date de mise à mort');
     }
     if (!fei.commune_mise_a_mort) {
-      errors.push('Veuillez renseigner la commune de mise à mort');
+      errors.push('Veuillez renseigner la commune de prélèvement du gibier');
     }
     if (!nextOwnerUserOrEntityId) {
-      errors.push('Veuillez sélectionner le premier détenteur');
+      errors.push('Veuillez sélectionner le propriétaire initial');
     }
     return errors;
   }, [fei.date_mise_a_mort, fei.commune_mise_a_mort, nextOwnerUserOrEntityId]);
@@ -184,7 +184,7 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
 
   return (
     <>
-      <label className="mb-1 block">Premier détenteur</label>
+      <label className="mb-1 block">Propriétaire initial</label>
       {isFirstFei &&
       !Object.values(associationsDeChasse).length &&
       !Object.values(detenteursInitiaux).length ? (
@@ -206,14 +206,14 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
                   onClick={() => setShowSearchUserByEmail(true)}
                   className="text-left"
                 >
-                  Chercher un Premier Détenteur par email
+                  Chercher un propriétaire initial par email
                 </Button>
                 <Button
                   priority="tertiary"
                   type="button"
                   onClick={() => handleSubmitFromSelect(user.id)}
                 >
-                  Je suis le Premier Détenteur
+                  Je suis le propriétaire initial
                 </Button>
               </div>
             </div>
@@ -304,7 +304,7 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
             })}
             <option value="new-entity">+ Ajouter une association / société / domaine de chasse</option>
             <option value="new-user">
-              + Chercher par email un autre Premier Détenteur inscrit dans Zacharie
+              + Chercher par email un autre propriétaire initial inscrit dans Zacharie
             </option>
           </Select>
           {(!nextOwnerUserOrEntityId ||
@@ -387,7 +387,7 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
             }}
           >
             <Input
-              label="Saisissez l'email du Premier Détenteur"
+              label="Saisissez l'email du propriétaire initial"
               disabled={disabled}
               hintText="Nous l'ajouterons automatiquement à la liste de vos partenaires pour la prochaine fiche"
               nativeInputProps={{
@@ -416,8 +416,8 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
               {searchingUserError === "L'utilisateur n'existe pas" ? (
                 <Alert
                   severity="error"
-                  title="Aucun premier détenteur est inscrit avec cette adresse mail."
-                  description="Merci de vérifier cette adresse auprès du premier détenteur."
+                  title="Aucun propriétaire initial est inscrit avec cette adresse mail."
+                  description="Merci de vérifier cette adresse auprès du propriétaire initial."
                   className="mt-4"
                 />
               ) : (

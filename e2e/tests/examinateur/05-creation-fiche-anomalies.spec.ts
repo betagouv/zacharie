@@ -6,6 +6,7 @@ dayjs.extend(utc);
 dayjs.locale('fr');
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
+import { dateApprobationDuJour } from '../../utils/date-approbation';
 
 test.use({
   viewport: { width: 350, height: 667 },
@@ -24,7 +25,7 @@ test('Fiche avec anomalies abats & carcasse — visible au rouvrir', async ({ pa
   // Step 1: Create fiche with 1 daim
   await page.getByRole('button', { name: 'Nouvelle fiche' }).first().click();
   await page.getByRole('button', { name: dayjs.utc().format('dddd DD MMMM') }).click();
-  await page.getByRole('textbox', { name: 'Commune de mise à mort' }).fill('CHASS');
+  await page.getByRole('textbox', { name: 'Commune de prélèvement du gibier' }).fill('CHASS');
   await page.getByRole('button', { name: 'CHASSENARD' }).click();
   await page.getByRole('button', { name: 'Pierre Petit' }).click();
   await page.getByRole('button', { name: 'Continuer' }).first().click();
@@ -70,7 +71,7 @@ test('Fiche avec anomalies abats & carcasse — visible au rouvrir', async ({ pa
     .fill(dayjs().startOf('day').add(2, 'hour').format('HH:mm'));
   await page.getByRole('textbox', { name: 'Fin de l’examen initial' }).blur();
 
-  await page.getByRole('button', { name: 'Date du jour et maintenant' }).click();
+  await page.getByRole('button', { name: dateApprobationDuJour() }).click();
   await page.getByText('Je, Martin Marie, certifie qu').click();
   await page.getByRole('button', { name: 'Transmettre', exact: true }).click();
 

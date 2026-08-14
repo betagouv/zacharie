@@ -1066,7 +1066,7 @@ export default function DestinataireSelectPremierDetenteur({
   }, []);
 
   if (!fei.premier_detenteur_user_id) {
-    return "Il n'y a pas encore de premier détenteur pour cette fiche";
+    return "Il n'y a pas encore de propriétaire initial pour cette fiche";
   }
 
   return (
