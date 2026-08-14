@@ -90,6 +90,7 @@ describe('syncCarcasseIntermediaire — upsert', () => {
         ...baseCi,
         commentaire: 'OK',
         intermediaire_poids: 42,
+        numero_bon_reception: 'BR-2025-0042',
       } as any,
       etgUser
     );
@@ -109,6 +110,7 @@ describe('syncCarcasseIntermediaire — upsert', () => {
       numero_bracelet: 'BR-1',
       commentaire: 'OK',
       intermediaire_poids: 42,
+      numero_bon_reception: 'BR-2025-0042',
       is_synced: true,
     });
     // l'update reprend le create, moins l'identité de l'intermédiaire
@@ -130,6 +132,7 @@ describe('syncCarcasseIntermediaire — upsert', () => {
     const upsertCall = vi.mocked(prisma.carcasseIntermediaire.upsert).mock.calls[0][0];
     expect(upsertCall.create).not.toHaveProperty('commentaire');
     expect(upsertCall.create).not.toHaveProperty('intermediaire_poids');
+    expect(upsertCall.create).not.toHaveProperty('numero_bon_reception');
     expect(upsertCall.create).not.toHaveProperty('refus');
   });
 

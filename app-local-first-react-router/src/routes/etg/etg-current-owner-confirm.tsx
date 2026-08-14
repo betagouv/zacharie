@@ -21,6 +21,7 @@ import { getNewCarcasseIntermediaireId } from '@app/utils/get-carcasse-intermedi
 import type { CarcassesIntermediaire } from '@app/types/carcasses-intermediaire';
 import { CarcasseTransmission } from '@app/types/carcasse';
 import { useGetTransmissionFromURLParams } from '@app/utils/get-transmissions-sorted';
+import InputNumeroBonReception from '@app/components/InputNumeroBonReception';
 
 export default function CurrentOwnerConfirm() {
   const user = useUser((state) => state.user)!;
@@ -81,6 +82,9 @@ export default function CurrentOwnerConfirm() {
   }, [latestIntermediaire, currentTransmission]);
 
   const [checkedTransportFromETG /* setCheckedTransportFromETG */] = useState(needTransportFromETG);
+  // Le n° de bon de réception est saisi une fois au contrôle à réception : il est reporté
+  // sur chaque carcasse prise en charge (et seulement celles-là).
+  const [numeroBonReception, setNumeroBonReception] = useState('');
   const notMyEntitySoutraite = useMemo(() => {
     const sousTraiteEntityId = currentTransmission.next_owner_sous_traite_by_entity_id;
     if (!sousTraiteEntityId) return false;
@@ -162,6 +166,7 @@ export default function CurrentOwnerConfirm() {
       intermediaire_entity_id: currentTransmission.next_owner_entity_id || '',
       created_at: dayjs().toDate(),
       prise_en_charge_at: dayjs().toDate(),
+      numero_bon_reception: null,
       intermediaire_depot_type: DepotType.AUCUN,
       intermediaire_depot_entity_id: null,
       intermediaire_prochain_detenteur_role_cache: FeiOwnerRole.ETG,
@@ -178,6 +183,7 @@ export default function CurrentOwnerConfirm() {
       intermediaire_entity_id: currentTransmission.next_owner_entity_id || '',
       created_at: dayjs().toDate(),
       prise_en_charge_at: dayjs().toDate(),
+      numero_bon_reception: numeroBonReception || null,
       intermediaire_depot_type: null,
       intermediaire_depot_entity_id: null,
       intermediaire_prochain_detenteur_role_cache: null,
@@ -312,6 +318,8 @@ export default function CurrentOwnerConfirm() {
       intermediaire_entity_id: currentTransmission.next_owner_entity_id || '',
       created_at: dayjs().toDate(),
       prise_en_charge_at: dayjs().toDate(),
+      // le transport ne réceptionne pas : pas de bon de réception à ce moment-là
+      numero_bon_reception: etgEmployeeTransportingToETG ? null : numeroBonReception || null,
       intermediaire_depot_type: null,
       intermediaire_depot_entity_id: null,
       intermediaire_prochain_detenteur_role_cache: null,
@@ -460,9 +468,18 @@ export default function CurrentOwnerConfirm() {
     },
   });
 
+  const canFillNumeroBonReception =
+    currentTransmission.next_owner_role === FeiOwnerRole.ETG && user.etg_role === UserEtgRoles.RECEPTION;
+
   return (
     <div className="bg-alt-blue-france pb-8">
       <div className="rounded bg-white p-4 md:p-8">
+        {canFillNumeroBonReception && (
+          <InputNumeroBonReception
+            value={numeroBonReception}
+            onChange={setNumeroBonReception}
+          />
+        )}
         <ButtonsGroup
           inlineLayoutWhen="md and up"
           buttons={actionButtons as [ButtonProps, ...ButtonProps[]]}
