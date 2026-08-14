@@ -1,90 +1,96 @@
 import { useMemo } from 'react';
+import dayjs from 'dayjs';
 import { Input } from '@codegouvfr/react-dsfr/Input';
-import InputNotEditable from '@app/components/InputNotEditable';
 import useZustandStore from '@app/zustand/store';
 import { useEtgIds } from '@app/utils/get-entity-relations';
 
-// Les bons de réception sont numérotés en série par l'ETG : on propose ceux déjà saisis
+// Les bons de réception sont numérotés en série par l'ETG : on rappelle ceux du jour et de la veille
 // pour éviter de les retaper à la main sur le terrain. La source est le store local
-// (les fiches de mes ETG), donc les suggestions fonctionnent hors-ligne.
-function useNumerosBonReceptionRecents(): string[] {
+// (les fiches de mes ETG), donc les rappels fonctionnent hors-ligne.
+function useNumerosBonReceptionRecents(): { aujourdhui: string[]; hier: string[] } {
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
   const etgsIds = useEtgIds();
 
   return useMemo(() => {
-    const parNumero = new Map<string, Date>();
+    const parNumero = new Map<string, dayjs.Dayjs>();
     for (const carcasseIntermediaire of Object.values(carcassesIntermediaireById)) {
       const numero = carcasseIntermediaire.numero_bon_reception;
       if (!numero) continue;
       if (!etgsIds.includes(carcasseIntermediaire.intermediaire_entity_id)) continue;
-      const updatedAt = new Date(carcasseIntermediaire.updated_at);
+      const priseEnChargeAt = dayjs(
+        carcasseIntermediaire.prise_en_charge_at ?? carcasseIntermediaire.created_at
+      );
       const existant = parNumero.get(numero);
-      if (!existant || updatedAt > existant) {
-        parNumero.set(numero, updatedAt);
+      if (!existant || priseEnChargeAt.isAfter(existant)) {
+        parNumero.set(numero, priseEnChargeAt);
       }
     }
-    return Array.from(parNumero.entries())
-      .sort(([, a], [, b]) => b.getTime() - a.getTime())
-      .slice(0, 10)
-      .map(([numero]) => numero);
+    const aujourdhui: string[] = [];
+    const hier: string[] = [];
+    const numerosTriesParDatePlusRecente = Array.from(parNumero.entries()).sort(
+      ([, a], [, b]) => b.valueOf() - a.valueOf()
+    );
+    for (const [numero, date] of numerosTriesParDatePlusRecente) {
+      if (date.isSame(dayjs(), 'day')) {
+        aujourdhui.push(numero);
+      } else if (date.isSame(dayjs().subtract(1, 'day'), 'day')) {
+        hier.push(numero);
+      }
+    }
+    return { aujourdhui, hier };
   }, [carcassesIntermediaireById, etgsIds]);
 }
 
 interface Props {
   value: string;
   onChange: (numeroBonReception: string) => void;
-  canEdit: boolean;
-  formId: string;
+  className?: string;
 }
 
-export default function InputNumeroBonReception({ value, onChange, canEdit, formId }: Props) {
+export default function InputNumeroBonReception({ value, onChange, className }: Props) {
   const numerosRecents = useNumerosBonReceptionRecents();
-  const datalistId = 'numeros-bon-reception-recents';
-
-  // Champ facultatif : en lecture seule et sans valeur, on n'affiche rien plutôt qu'un « N/A »
-  // dans le parcours des ETG qui ne s'en servent pas.
-  if (!canEdit) {
-    if (!value) {
-      return null;
-    }
-    return (
-      <InputNotEditable
-        label="N° de bon de réception"
-        nativeInputProps={{
-          id: 'numero_bon_reception',
-          name: 'numero_bon_reception',
-          value: value,
-        }}
-      />
-    );
-  }
+  const rappels = [
+    { label: "Aujourd'hui", numeros: numerosRecents.aujourdhui },
+    { label: 'Hier', numeros: numerosRecents.hier },
+  ].filter((rappel) => rappel.numeros.length > 0);
 
   return (
-    <>
-      <Input
-        label="N° de bon de réception"
-        hintText="Facultatif"
-        nativeInputProps={{
-          id: 'numero_bon_reception',
-          name: 'numero_bon_reception',
-          type: 'text',
-          form: formId,
-          autoComplete: 'off',
-          list: numerosRecents.length ? datalistId : undefined,
-          value: value,
-          onChange: (e) => onChange(e.target.value),
-        }}
-      />
-      {numerosRecents.length > 0 && (
-        <datalist id={datalistId}>
-          {numerosRecents.map((numero) => (
-            <option
-              key={numero}
-              value={numero}
-            />
+    <Input
+      // champ secondaire : le CTA de la page reste « Prendre en charge »
+      className={['max-w-xs [&_.fr-input]:text-sm [&_.fr-label]:text-sm', className]
+        .filter(Boolean)
+        .join(' ')}
+      label="N° de bon de réception (optionnel)"
+      hintText={
+        <>
+          {rappels.map((rappel) => (
+            <span
+              className="mt-1 flex flex-wrap items-center gap-y-1"
+              key={rappel.label}
+            >
+              <span className="mr-2">{rappel.label}&nbsp;:</span>
+              {rappel.numeros.map((numero) => (
+                <button
+                  key={numero}
+                  className="mr-2 rounded-full bg-[#E8EDFF] px-3 py-1 text-sm text-[#000091]"
+                  type="button"
+                  onClick={() => onChange(numero)}
+                >
+                  {numero}
+                </button>
+              ))}
+            </span>
           ))}
-        </datalist>
-      )}
-    </>
+        </>
+      }
+      nativeInputProps={{
+        id: 'numero_bon_reception',
+        name: 'numero_bon_reception',
+        type: 'text',
+        autoComplete: 'off',
+        value: value,
+        onChange: (e) => onChange(e.target.value),
+      }}
+    />
   );
 }

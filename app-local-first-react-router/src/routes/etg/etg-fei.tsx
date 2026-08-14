@@ -42,7 +42,6 @@ import DestinataireSelectIntermediaire from './etg-destinataire-select-intermedi
 import FeiSousTraite from './etg-current-owner-sous-traite';
 import CarcasseIntermediaireComp from './etg-carcasse';
 import RequestNewCarcasseButton from '@app/components/RequestNewCarcasseForm';
-import InputNumeroBonReception from '@app/components/InputNumeroBonReception';
 import CurrentOwnerConfirm from './etg-current-owner-confirm';
 import NotFound from '@app/components/NotFound';
 import FeiAucuneAction from '@app/components/FeiAucuneAction';
@@ -281,7 +280,6 @@ function EtgFeiContent({
   const [priseEnChargeAt, setPriseEnChargeAt] = useState<Date | null>(
     intermediaire?.prise_en_charge_at || null
   );
-  const [numeroBonReception, setNumeroBonReception] = useState(intermediaire?.numero_bon_reception ?? '');
 
   useEffect(() => {
     if (!priseEnChargeAt && intermediaire?.prise_en_charge_at) {
@@ -474,13 +472,9 @@ function EtgFeiContent({
   const formattedInitialPriseEnChargeAt = intermediaire?.prise_en_charge_at
     ? dayjs(intermediaire.prise_en_charge_at).format('YYYY-MM-DDTHH:mm')
     : undefined;
-  const numeroBonReceptionChanged =
-    (numeroBonReception || null) !== (intermediaire?.numero_bon_reception || null);
   const submitDisabled =
     !effectiveCanEdit ||
-    (!numeroBonReceptionChanged &&
-      formattedPriseEnChargeAt &&
-      formattedPriseEnChargeAt === formattedInitialPriseEnChargeAt);
+    (formattedPriseEnChargeAt && formattedPriseEnChargeAt === formattedInitialPriseEnChargeAt);
 
   const PriseEnChargeInput = effectiveCanEdit ? Input : InputNotEditable;
 
@@ -688,11 +682,8 @@ function EtgFeiContent({
       return;
     }
     setPriseEnChargeAt(_priseEnChargeAt);
-    // Le n° de bon de réception est saisi une fois pour la fiche : updateAllCarcasseIntermediaire
-    // le reporte sur chaque carcasse prise en charge (et seulement celles-là).
     updateAllCarcasseIntermediaire(fei_numero, feiAndIntermediaireIds, {
       prise_en_charge_at: _priseEnChargeAt,
-      numero_bon_reception: numeroBonReception || null,
     });
     addLog({
       user_id: user.id,
@@ -701,7 +692,6 @@ function EtgFeiContent({
       intermediaire_id: intermediaire?.id,
       history: createHistoryInput(intermediaire, {
         prise_en_charge_at: _priseEnChargeAt,
-        numero_bon_reception: numeroBonReception || null,
       }),
       user_role: intermediaire.intermediaire_role!,
       entity_id: intermediaire.intermediaire_entity_id,
@@ -960,12 +950,6 @@ function EtgFeiContent({
                           setPriseEnChargeAt(dayjs(e.target.value).toDate());
                         },
                       }}
-                    />
-                    <InputNumeroBonReception
-                      value={numeroBonReception}
-                      onChange={setNumeroBonReception}
-                      canEdit={effectiveCanEdit}
-                      formId="form_intermediaire_check_finished_at"
                     />
                     {!!canEdit && (
                       <Button

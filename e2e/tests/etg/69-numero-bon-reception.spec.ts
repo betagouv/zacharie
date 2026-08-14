@@ -10,7 +10,7 @@ test.beforeEach(async () => {
 });
 
 // Scenario 69 — N° de bon de réception
-// L'ETG le saisit une fois au contrôle à réception ; il est reporté sur chaque carcasse
+// L'ETG le saisit au moment de la prise en charge ; il est reporté sur chaque carcasse
 // prise en charge et reste lisible par le SVI après transmission.
 test('69 - ETG saisit le n° de bon de réception, le SVI le voit après transmission', async ({ page }) => {
   const feiId = 'ZACH-20250707-QZ6E0-165242';
@@ -21,13 +21,15 @@ test('69 - ETG saisit le n° de bon de réception, le SVI le voit après transmi
   await page.getByRole('link', { name: feiId }).click();
   await expect(page).toHaveURL(new RegExp(`/app/etg/fei/${feiId}`));
 
-  await page.getByRole('button', { name: 'Prendre en charge' }).click();
-  await expect(page.getByText("Prise en charge par l'atelier")).toBeVisible();
-
   const bonReceptionInput = page.getByLabel('N° de bon de réception');
   await bonReceptionInput.scrollIntoViewIfNeeded();
   await bonReceptionInput.fill(numeroBonReception);
   await bonReceptionInput.blur();
+
+  const priseEnCharge = page.getByRole('button', { name: 'Prendre en charge' });
+  await priseEnCharge.scrollIntoViewIfNeeded();
+  await priseEnCharge.click();
+  await expect(page.getByText("Prise en charge par l'atelier")).toBeVisible();
 
   const dateShortcut = page.getByRole('button', { name: 'Cliquez ici pour définir' });
   await dateShortcut.scrollIntoViewIfNeeded();
