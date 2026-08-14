@@ -29,6 +29,7 @@ import DateHeureValidationAlerts from '@app/components/DateHeureValidationAlerts
 import ChasseurHeaderFiche from './chasseur-header-fiche';
 import { CompteEnAttenteValidationAlert } from '@app/components/CompteEnAttenteValidation';
 import { useGetTransmissionsForFei } from '@app/utils/get-transmissions-sorted';
+import { isCarcasseDejaEnvoyee, isCarcassePriseEnChargeEnAval } from '@app/utils/carcasse-deja-envoyee';
 
 export default function ChasseurFei() {
   const params = useParams();
@@ -182,14 +183,17 @@ function FEIChasseurLoaded() {
     return true;
   }, [transmissions, fei, user]);
 
+  // Les lots déjà pris en charge par l'aval ne doivent pas verrouiller ceux qui sont restés :
+  // sans ce filtre, une carcasse restée en arrière n'est plus ni transmissible ni supprimable.
+  // On filtre sur la prise en charge, pas sur le choix du destinataire : tant que personne n'a pris
+  // en charge, le chasseur est encore détenteur et garde ses droits sur la fiche.
+  const transmissionsEncoreChezLeChasseur = useMemo(
+    () => transmissions.filter((transmission) => !isCarcassePriseEnChargeEnAval(transmission.content)),
+    [transmissions]
+  );
+
   const canEditAsPremierDetenteur = useMemo(() => {
-    for (const currentTransmission of transmissions) {
-      if (
-        currentTransmission.content.current_owner_role !== FeiOwnerRole.PREMIER_DETENTEUR &&
-        currentTransmission.content.current_owner_role !== FeiOwnerRole.EXAMINATEUR_INITIAL
-      ) {
-        return false;
-      }
+    for (const currentTransmission of transmissionsEncoreChezLeChasseur) {
       if (
         currentTransmission.content.svi_automatic_closed_at ||
         currentTransmission.content.svi_closed_at ||
@@ -212,7 +216,7 @@ function FEIChasseurLoaded() {
       }
     }
     return false;
-  }, [transmissions, fei, user, premierDetenteurEntity]);
+  }, [transmissionsEncoreChezLeChasseur, fei, user, premierDetenteurEntity]);
 
   const isPremierDetenteur = useMemo(() => {
     if (fei.premier_detenteur_user_id === user.id) return true;
@@ -224,7 +228,12 @@ function FEIChasseurLoaded() {
   }, [fei.premier_detenteur_user_id, fei.premier_detenteur_entity_id, user.id, entities]);
 
   const updateCarcassesTransmission = useZustandStore((state) => state.updateCarcassesTransmission);
-  const carcasseIds = useMemo(() => carcasses.map((c) => c.zacharie_carcasse_id), [carcasses]);
+  // Transmettre un lot ne doit toucher que les carcasses encore ici : réécrire le detenteur courant
+  // de tout la fiche écraserait la prise en charge d'un lot déjà parti.
+  const carcassesRestantesIds = useMemo(
+    () => carcasses.filter((c) => !isCarcasseDejaEnvoyee(c)).map((c) => c.zacharie_carcasse_id),
+    [carcasses]
+  );
 
   const Component = canEdit ? Input : InputNotEditable;
   const VilleComponent = canEdit ? InputVille : InputNotEditable;
@@ -354,7 +363,7 @@ function FEIChasseurLoaded() {
       updateFei(fei.numero, {
         examinateur_initial_approbation_mise_sur_le_marche: approbation,
       });
-      updateCarcassesTransmission(carcasseIds, {
+      updateCarcassesTransmission(carcassesRestantesIds, {
         current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
         current_owner_user_id: user.id,
         current_owner_user_name_cache: `${user.prenom} ${user.nom_de_famille}`,
@@ -366,7 +375,7 @@ function FEIChasseurLoaded() {
       updateFei(fei.numero, {
         examinateur_initial_approbation_mise_sur_le_marche: approbation,
       });
-      updateCarcassesTransmission(carcasseIds, {
+      updateCarcassesTransmission(carcassesRestantesIds, {
         current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
         current_owner_user_id: fei.premier_detenteur_user_id,
         current_owner_user_name_cache:
@@ -381,17 +390,7 @@ function FEIChasseurLoaded() {
     }
   };
 
-  const carcassesDejaEnvoyees = useMemo(
-    () =>
-      carcasses.filter(
-        (c) =>
-          c.next_owner_entity_id != null ||
-          (c.current_owner_role != null &&
-            c.current_owner_role !== FeiOwnerRole.PREMIER_DETENTEUR &&
-            c.current_owner_role !== FeiOwnerRole.EXAMINATEUR_INITIAL)
-      ),
-    [carcasses]
-  );
+  const carcassesDejaEnvoyees = useMemo(() => carcasses.filter(isCarcasseDejaEnvoyee), [carcasses]);
 
   const allCarcassesAssigned = useMemo(
     () => carcasses.length > 0 && carcassesDejaEnvoyees.length === carcasses.length,
