@@ -2,6 +2,7 @@ import { describe, test, expect, vi, beforeEach } from 'vitest';
 import {
   CarcasseModificationRequestStatus,
   CarcasseModificationRequestType,
+  FeiOwnerRole,
   UserRoles,
 } from '@prisma/client';
 import type { User } from '@prisma/client';
@@ -100,6 +101,83 @@ describe('syncFei — écriture sur une fiche tierce', () => {
     );
 
     expect(prisma.fei.update).toHaveBeenCalled();
+  });
+});
+
+describe("syncFei — asso désignée premier détenteur, fiche encore chez l'examinateur", () => {
+  // Le périmètre de lecture n'ouvre la fiche aux membres de l'asso désignée qu'une fois celle-ci
+  // sortie de l'examinateur initial (`current_owner_role != EXAMINATEUR_INITIAL` dans
+  // `getCarcasseAccessWhere`). L'écriture doit s'aligner : la désignation seule ne suffit pas.
+  const membreAsso = {
+    id: 'user-asso',
+    roles: [UserRoles.CHASSEUR],
+    activated: true,
+    isZacharieAdmin: false,
+  } as unknown as User;
+
+  beforeEach(() => {
+    vi.mocked(prisma.entityAndUserRelations.findMany).mockResolvedValue([
+      { entity_id: 'entity-asso' },
+    ] as any);
+  });
+
+  test('désignée mais pas encore transmise : aucune carcasse dans le périmètre → écriture refusée', async () => {
+    vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(feiTierce);
+    // La fiche est encore chez l'examinateur : le WHERE de lecture ne matche aucune carcasse.
+    vi.mocked(prisma.carcasse.count).mockResolvedValue(0);
+
+    await expect(
+      syncFei(
+        'FEI-VICTIME',
+        { numero: 'FEI-VICTIME', commune_mise_a_mort: 'Hacked' } as any,
+        membreAsso,
+        await createSyncScope(membreAsso)
+      )
+    ).rejects.toThrow("Vous n'avez pas accès à cette fiche");
+
+    expect(prisma.fei.update).not.toHaveBeenCalled();
+  });
+
+  test('une fois la fiche transmise, ses carcasses entrent dans le périmètre → écriture permise', async () => {
+    vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(feiTierce);
+    vi.mocked(prisma.carcasse.count).mockResolvedValue(4);
+    vi.mocked(prisma.fei.update).mockResolvedValueOnce(feiTierce);
+
+    await syncFei(
+      'FEI-VICTIME',
+      { numero: 'FEI-VICTIME', commune_mise_a_mort: 'Villette' } as any,
+      membreAsso,
+      await createSyncScope(membreAsso)
+    );
+
+    expect(prisma.fei.update).toHaveBeenCalled();
+    // Le décompte porte bien la condition de sortie de l'examinateur initial.
+    const countArgs = vi.mocked(prisma.carcasse.count).mock.calls[0][0];
+    expect(countArgs?.where).toMatchObject({
+      fei_numero: 'FEI-VICTIME',
+      OR: expect.arrayContaining([
+        expect.objectContaining({
+          premier_detenteur_entity_id: { in: ['entity-asso'] },
+          current_owner_role: { not: FeiOwnerRole.EXAMINATEUR_INITIAL },
+        }),
+      ]),
+    });
+  });
+
+  test('la désignation ne donne pas non plus la main sur les colonnes de rattachement', async () => {
+    vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(feiTierce);
+    vi.mocked(prisma.carcasse.count).mockResolvedValue(4);
+    vi.mocked(prisma.fei.update).mockResolvedValueOnce(feiTierce);
+
+    await syncFei(
+      'FEI-VICTIME',
+      { numero: 'FEI-VICTIME', premier_detenteur_user_id: membreAsso.id } as any,
+      membreAsso,
+      await createSyncScope(membreAsso)
+    );
+
+    const updateArgs = vi.mocked(prisma.fei.update).mock.calls[0][0];
+    expect(updateArgs.data).not.toHaveProperty('premier_detenteur_user_id');
   });
 });
 

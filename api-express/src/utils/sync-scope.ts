@@ -7,11 +7,7 @@ import { getUserCarcasseEntityIds } from '~/utils/user-entities';
 // lit sur les carcasses.
 type FeiOwnershipFields = Pick<
   Fei,
-  | 'numero'
-  | 'created_by_user_id'
-  | 'examinateur_initial_user_id'
-  | 'premier_detenteur_user_id'
-  | 'premier_detenteur_entity_id'
+  'numero' | 'created_by_user_id' | 'examinateur_initial_user_id' | 'premier_detenteur_user_id'
 >;
 
 // Périmètre d'écriture d'une requête /sync, résolu une fois et passé à chaque fonction de synchro.
@@ -47,11 +43,16 @@ export async function createSyncScope(user: User): Promise<SyncScope> {
     for (const carcasse of accessible) granted.add(carcasse.zacharie_carcasse_id);
   }
 
+  // Le rattachement direct s'arrête aux colonnes de la fiche qui nomment un utilisateur. La
+  // désignation d'une entité comme premier détenteur n'en est pas une : côté lecture elle n'ouvre la
+  // fiche qu'une fois celle-ci sortie de l'examinateur initial (voir `getCarcasseAccessWhere`), une
+  // condition qui se lit sur les carcasses et n'existe pas sur la fiche. On la laisse donc à
+  // `canWriteFei`, qui l'évalue là où elle vit — l'asso désignée obtient l'écriture par le décompte
+  // de ses carcasses, exactement quand elle obtient la lecture.
   function isFeiOwner(fei: FeiOwnershipFields): boolean {
     if (fei.created_by_user_id === user.id) return true;
     if (fei.examinateur_initial_user_id === user.id) return true;
-    if (fei.premier_detenteur_user_id === user.id) return true;
-    return !!fei.premier_detenteur_entity_id && entityIds.includes(fei.premier_detenteur_entity_id);
+    return fei.premier_detenteur_user_id === user.id;
   }
 
   return {
