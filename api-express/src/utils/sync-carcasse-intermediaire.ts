@@ -2,6 +2,7 @@ import prisma from '~/prisma';
 import { Prisma } from '@prisma/client';
 import type { CarcasseIntermediaire, User } from '@prisma/client';
 import type { SyncScope } from '~/utils/sync-scope';
+import { SyncRejectedError } from '~/utils/sync-errors';
 
 export async function syncCarcasseIntermediaire(
   fei_numero: string,
@@ -40,14 +41,14 @@ export async function syncCarcasseIntermediaire(
   // suffisait à s'en donner l'accès en lecture (voir le périmètre ETG/collecteur, qui matche sur
   // CarcasseIntermediaire.intermediaire_entity_id).
   if (!(await scope.canWriteCarcasse(existingCarcasse.zacharie_carcasse_id))) {
-    throw new Error("Vous n'avez pas accès à cette carcasse");
+    throw new SyncRejectedError("Vous n'avez pas accès à cette carcasse");
   }
 
   // L'identité de l'intermédiaire est décidée par le serveur : l'utilisateur courant agit toujours
   // en son nom propre, pour une entité dont il est membre. Le rôle, lui, vient du client : un ETG
   // enregistre l'étape de transport d'un collecteur, donc un rôle différent du sien est légitime.
   if (!body.intermediaire_entity_id || !scope.entityIds.includes(body.intermediaire_entity_id)) {
-    throw new Error('Vous ne pouvez pas agir au nom de cette entité');
+    throw new SyncRejectedError('Vous ne pouvez pas agir au nom de cette entité');
   }
 
   const identity = {

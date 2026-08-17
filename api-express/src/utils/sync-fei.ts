@@ -4,6 +4,7 @@ import { Fei, Prisma, User, UserRoles } from '@prisma/client';
 import { capture } from '~/third-parties/sentry';
 import { z } from 'zod';
 import type { SyncScope } from '~/utils/sync-scope';
+import { SyncRejectedError } from '~/utils/sync-errors';
 
 export interface SaveFeiResult {
   savedFei: Fei;
@@ -56,7 +57,7 @@ export async function syncFei(
         },
         user,
       });
-      throw new Error('Seul un examinateur initial peut créer une fiche');
+      throw new SyncRejectedError('Seul un examinateur initial peut créer une fiche');
     }
   }
 
@@ -72,7 +73,7 @@ export async function syncFei(
       user.isZacharieAdmin ||
       (user.roles.includes(UserRoles.CHASSEUR) && existingFei.examinateur_initial_user_id === user.id);
     if (!canDelete) {
-      throw new Error('Unauthorized');
+      throw new SyncRejectedError('Unauthorized');
     }
     const deletedFei = await prisma.fei.update({
       where: { numero },
@@ -92,7 +93,7 @@ export async function syncFei(
   // Deny by default : jusqu'ici seules la création et la suppression étaient gardées, n'importe
   // quel compte activé pouvait écraser les champs d'une fiche tierce en connaissant son numéro.
   if (existingFei && !(await scope.canWriteFei(existingFei))) {
-    throw new Error("Vous n'avez pas accès à cette fiche");
+    throw new SyncRejectedError("Vous n'avez pas accès à cette fiche");
   }
 
   // Les colonnes de rattachement (créateur, examinateur initial, premier détenteur) sont celles sur

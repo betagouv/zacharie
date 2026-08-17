@@ -1,7 +1,7 @@
 import express from 'express';
 import passport from 'passport';
 import { catchErrors } from '~/middlewares/errors';
-import type { SyncRequest, SyncResponse } from '~/types/responses';
+import type { SyncRejection, SyncRequest, SyncResponse } from '~/types/responses';
 import prisma from '~/prisma';
 import { Prisma, User, UserRoles, Carcasse, Fei, EntityRelationType } from '@prisma/client';
 import { syncFei, type SaveFeiResult } from '~/utils/sync-fei';
@@ -15,6 +15,7 @@ import {
 } from '~/utils/sync-carcasse-modification-request';
 import { runFeiUpdateSideEffects } from '~/utils/fei-side-effects';
 import { runCarcasseUpdateSideEffects } from '~/utils/carcasse-side-effects';
+import { SyncRejectedError } from '~/utils/sync-errors';
 import { capture } from '~/third-parties/sentry';
 
 const router: express.Router = express.Router();
@@ -49,6 +50,18 @@ router.post(
     const savedIntermediaires: Array<Prisma.CarcasseIntermediaireGetPayload<object>> = [];
     const modifResults: Array<SyncModifRequestResult & { approvalPayload?: Record<string, unknown> }> = [];
     const syncedLogIds: Array<string> = [];
+    const rejected: Array<SyncRejection> = [];
+
+    // Un refus d'autorisation est définitif : on le renvoie au client pour qu'il cesse de repousser
+    // l'item, et on le remonte à l'équipe en un seul évènement en fin de requête plutôt qu'un par
+    // item. Toute autre erreur est transitoire — on la capture et le client réessaiera.
+    function handleSyncError(error: unknown, item: Omit<SyncRejection, 'reason'>) {
+      if (error instanceof SyncRejectedError) {
+        rejected.push({ ...item, reason: error.message });
+        return;
+      }
+      capture(error as Error, { extra: { ...item, userId: user.id }, user });
+    }
 
     // Périmètre d'écriture du lot : résolu une fois, passé à chaque section. Il se met à jour tout
     // seul au fil de la requête (une carcasse créée en section 2 entre dans le périmètre pour les
@@ -61,10 +74,7 @@ router.post(
         const result = await syncFei(feiData.numero, feiData as Prisma.FeiUncheckedCreateInput, user, scope);
         feiResults.push(result);
       } catch (error) {
-        capture(error as Error, {
-          extra: { feiNumero: feiData.numero, userId: user.id },
-          user,
-        });
+        handleSyncError(error, { kind: 'fei', id: feiData.numero });
       }
     }
 
@@ -152,14 +162,7 @@ router.post(
               }
             );
           } catch (error) {
-            capture(error as Error, {
-              extra: {
-                feiNumero: carcasseData.fei_numero,
-                zacharieCarcasseId: carcasseData.zacharie_carcasse_id,
-                userId: user.id,
-              },
-              user,
-            });
+            handleSyncError(error, { kind: 'carcasse', id: carcasseData.zacharie_carcasse_id });
             return null;
           }
         })
@@ -185,14 +188,9 @@ router.post(
         );
         savedIntermediaires.push(saved);
       } catch (error) {
-        capture(error as Error, {
-          extra: {
-            feiNumero: ciData.fei_numero,
-            intermediaireId: ciData.intermediaire_id,
-            zacharieCarcasseId: ciData.zacharie_carcasse_id,
-            userId: user.id,
-          },
-          user,
+        handleSyncError(error, {
+          kind: 'carcasseIntermediaire',
+          id: `${ciData.fei_numero}_${ciData.zacharie_carcasse_id}_${ciData.intermediaire_id}`,
         });
       }
     }
@@ -213,10 +211,7 @@ router.post(
         );
         modifResults.push({ ...result, approvalPayload: _approvalPayload });
       } catch (error) {
-        capture(error as Error, {
-          extra: { modifId: modifData.id, userId: user.id },
-          user,
-        });
+        handleSyncError(error, { kind: 'carcasseModifRequest', id: modifData.id as string });
       }
     }
 
@@ -325,6 +320,14 @@ router.post(
           })
         : [];
 
+    if (rejected.length > 0) {
+      // Message fixe pour que Sentry regroupe : le détail est dans extra.
+      capture(new Error('Écritures /sync refusées'), {
+        extra: { count: rejected.length, rejected, userId: user.id },
+        user,
+      });
+    }
+
     res.status(200).send({
       ok: true,
       data: {
@@ -333,6 +336,7 @@ router.post(
         carcassesIntermediaires: savedIntermediaires,
         carcasseModifRequests: modifResults.map((r) => r.saved),
         syncedLogIds,
+        rejected,
       },
       error: '',
     });

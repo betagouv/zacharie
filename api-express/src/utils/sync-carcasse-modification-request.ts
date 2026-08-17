@@ -10,6 +10,7 @@ import sendNotificationToUser from '~/service/notifications';
 import { capture } from '~/third-parties/sentry';
 import type { SyncScope } from '~/utils/sync-scope';
 import dayjs from 'dayjs';
+import { SyncRejectedError } from '~/utils/sync-errors';
 
 const FRONTEND_URL = 'https://zacharie.beta.gouv.fr';
 
@@ -47,7 +48,7 @@ export async function syncCarcasseModifRequest(
   // updated_at) et à notifier son examinateur initial.
   const zacharieCarcasseId = existing?.zacharie_carcasse_id ?? body.zacharie_carcasse_id;
   if (!(await scope.canWriteCarcasse(zacharieCarcasseId))) {
-    throw new Error("Vous n'avez pas accès à cette carcasse");
+    throw new SyncRejectedError("Vous n'avez pas accès à cette carcasse");
   }
 
   // -- CREATE -------------------------------------------------------------
@@ -60,7 +61,7 @@ export async function syncCarcasseModifRequest(
     // L'identité du demandeur est décidée par le serveur : on demande toujours en son nom propre,
     // pour une entité dont on est membre, et une demande naît toujours PENDING.
     if (!body.requested_by_entity_id || !scope.entityIds.includes(body.requested_by_entity_id)) {
-      throw new Error('Vous ne pouvez pas agir au nom de cette entité');
+      throw new SyncRejectedError('Vous ne pouvez pas agir au nom de cette entité');
     }
     const created = await prisma.carcasseModificationRequest.create({
       data: {
@@ -102,12 +103,12 @@ export async function syncCarcasseModifRequest(
     });
     if (!carcasse) throw new Error('Carcasse introuvable');
     if (carcasse.examinateur_initial_user_id !== user.id) {
-      throw new Error("Seul l'examinateur initial peut approuver ou refuser une demande");
+      throw new SyncRejectedError("Seul l'examinateur initial peut approuver ou refuser une demande");
     }
   }
 
   if (justCancelled && existing.requested_by_user_id !== user.id) {
-    throw new Error("Seul l'auteur de la demande peut l'annuler");
+    throw new SyncRejectedError("Seul l'auteur de la demande peut l'annuler");
   }
 
   // L'identité de la demande n'est posée qu'à la création, et l'issue de la revue appartient au

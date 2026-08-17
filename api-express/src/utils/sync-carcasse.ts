@@ -1,6 +1,7 @@
 import prisma from '~/prisma';
 import { Carcasse, EntityRelationType, Fei, FeiOwnerRole, Prisma, User, UserRoles } from '@prisma/client';
 import type { SyncScope } from '~/utils/sync-scope';
+import { SyncRejectedError } from '~/utils/sync-errors';
 
 export interface SaveCarcasseResult {
   savedCarcasse: Carcasse;
@@ -54,7 +55,7 @@ export async function syncCarcasse(
       body.next_owner_role !== FeiOwnerRole.PREMIER_DETENTEUR &&
       body.next_owner_role !== FeiOwnerRole.EXAMINATEUR_INITIAL;
     if (transmitsToNextDetenteur) {
-      throw new Error('Votre compte doit être validé avant de pouvoir transmettre une fiche');
+      throw new SyncRejectedError('Votre compte doit être validé avant de pouvoir transmettre une fiche');
     }
   }
   let existingCarcasse =
@@ -70,10 +71,10 @@ export async function syncCarcasse(
   // l'utilisateur, et on n'en crée une que sur une fiche à laquelle il participe.
   if (existingCarcasse) {
     if (!(await scope.canWriteCarcasse(existingCarcasse.zacharie_carcasse_id))) {
-      throw new Error("Vous n'avez pas accès à cette carcasse");
+      throw new SyncRejectedError("Vous n'avez pas accès à cette carcasse");
     }
   } else if (!(await scope.canWriteFei(existingFei))) {
-    throw new Error("Vous n'avez pas accès à cette fiche");
+    throw new SyncRejectedError("Vous n'avez pas accès à cette fiche");
   }
 
   if (!existingCarcasse) {

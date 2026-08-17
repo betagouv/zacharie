@@ -67,7 +67,6 @@ export async function createSyncScope(user: User): Promise<SyncScope> {
     // Une fiche est modifiable par un rattaché, ou par un détenteur aval tant qu'il en détient au
     // moins une carcasse — même règle que `/carcasse/refusees/:fei_numero`.
     async canWriteFei(fei) {
-      if (user.isZacharieAdmin) return true;
       if (isFeiOwner(fei)) return true;
       if (!accessWhere) return false;
       const carcassesInScope = await prisma.carcasse.count({
