@@ -52,7 +52,7 @@ router.post(
 
     // Périmètre d'écriture du lot : résolu une fois, passé à chaque section. Il se met à jour tout
     // seul au fil de la requête (une carcasse créée en section 2 entre dans le périmètre pour les
-    // sections suivantes), donc l'ordre des sections n'a pas à être rejoué ici.
+    // sections suivantes)
     const scope = await createSyncScope(user);
 
     // 1. Process FEIs first (carcasses depend on them)
