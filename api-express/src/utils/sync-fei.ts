@@ -3,18 +3,7 @@ import { sanitize } from '~/utils/sanitize';
 import { Fei, Prisma, User, UserRoles } from '@prisma/client';
 import { capture } from '~/third-parties/sentry';
 import { z } from 'zod';
-import { canWriteFei, isFeiOwner } from '~/utils/carcasse-access';
-
-// Colonnes de rattachement : ce sont elles qui donnent le droit d'écrire sur la fiche
-// (`canWriteFei`). Un détenteur aval, qui n'y accède que parce qu'il détient des carcasses, ne peut
-// donc pas les réécrire — il s'y inscrirait pour garder l'accès une fois les carcasses parties, et
-// évincerait au passage le premier détenteur désigné.
-const FEI_OWNERSHIP_FIELDS = [
-  Prisma.FeiScalarFieldEnum.created_by_user_id,
-  Prisma.FeiScalarFieldEnum.examinateur_initial_user_id,
-  Prisma.FeiScalarFieldEnum.premier_detenteur_user_id,
-  Prisma.FeiScalarFieldEnum.premier_detenteur_entity_id,
-] as const;
+import type { SyncScope } from '~/utils/sync-scope';
 
 export interface SaveFeiResult {
   savedFei: Fei;
@@ -45,7 +34,7 @@ export async function syncFei(
   numero: string,
   body: Prisma.FeiUncheckedCreateInput,
   user: User,
-  opts: { userEntityIds?: Array<string> } = {}
+  scope: SyncScope
 ): Promise<SaveFeiResult> {
   let result = feiBodyZodSchema.safeParse(body);
   if (!result.success) {
@@ -102,20 +91,16 @@ export async function syncFei(
 
   // Deny by default : jusqu'ici seules la création et la suppression étaient gardées, n'importe
   // quel compte activé pouvait écraser les champs d'une fiche tierce en connaissant son numéro.
-  if (existingFei && !(await canWriteFei(user, existingFei, opts.userEntityIds))) {
+  if (existingFei && !(await scope.canWriteFei(existingFei))) {
     throw new Error("Vous n'avez pas accès à cette fiche");
   }
 
-  // On ne refuse que les valeurs réellement différentes : un client renvoie la fiche entière à
-  // chaque synchro, y compris les colonnes qu'il n'a pas touchées.
-  if (existingFei && !(await isFeiOwner(user, existingFei, opts.userEntityIds))) {
-    for (const field of FEI_OWNERSHIP_FIELDS) {
-      if (!body.hasOwnProperty(field)) continue;
-      if ((body[field] || null) !== existingFei[field]) {
-        throw new Error('Vous ne pouvez pas modifier les détenteurs de cette fiche');
-      }
-    }
-  }
+  // Les colonnes de rattachement (créateur, examinateur initial, premier détenteur) sont celles sur
+  // lesquelles `canWriteFei` accorde l'écriture : un détenteur aval, qui n'accède à la fiche que
+  // parce qu'il en détient des carcasses, ne peut pas s'y inscrire — il garderait l'accès une fois
+  // les carcasses parties et évincerait le premier détenteur désigné. Comme pour les colonnes
+  // réservées au SVI dans `sync-carcasse`, on ignore la valeur au lieu de rejeter la fiche.
+  const canWriteOwnership = !existingFei || scope.isFeiOwner(existingFei);
 
   const nextFei: Prisma.FeiUncheckedUpdateInput = {
     is_synced: true,
@@ -158,7 +143,7 @@ export async function syncFei(
       ? sanitize(body.heure_evisceration_derniere_carcasse as string)
       : null;
   }
-  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.created_by_user_id)) {
+  if (canWriteOwnership && body.hasOwnProperty(Prisma.FeiScalarFieldEnum.created_by_user_id)) {
     nextFei.created_by_user_id = body.created_by_user_id ? sanitize(body.created_by_user_id as string) : null;
   }
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.resume_nombre_de_carcasses)) {
@@ -174,7 +159,7 @@ export async function syncFei(
 
   */
 
-  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.examinateur_initial_user_id)) {
+  if (canWriteOwnership && body.hasOwnProperty(Prisma.FeiScalarFieldEnum.examinateur_initial_user_id)) {
     nextFei.examinateur_initial_user_id = body.examinateur_initial_user_id
       ? sanitize(body.examinateur_initial_user_id as string)
       : null;
@@ -202,7 +187,7 @@ export async function syncFei(
 
   */
 
-  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id)) {
+  if (canWriteOwnership && body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_user_id)) {
     nextFei.premier_detenteur_user_id = body.premier_detenteur_user_id
       ? sanitize(body.premier_detenteur_user_id as string)
       : null;
@@ -210,7 +195,7 @@ export async function syncFei(
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_offline)) {
     nextFei.premier_detenteur_offline = body.premier_detenteur_offline || null;
   }
-  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_entity_id)) {
+  if (canWriteOwnership && body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_entity_id)) {
     nextFei.premier_detenteur_entity_id = body.premier_detenteur_entity_id
       ? sanitize(body.premier_detenteur_entity_id as string)
       : null;

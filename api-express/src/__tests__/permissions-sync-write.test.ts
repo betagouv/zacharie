@@ -10,10 +10,11 @@ import { syncFei } from '~/utils/sync-fei';
 import { syncCarcasse } from '~/utils/sync-carcasse';
 import { syncCarcasseIntermediaire } from '~/utils/sync-carcasse-intermediaire';
 import { syncCarcasseModifRequest } from '~/utils/sync-carcasse-modification-request';
+import { createSyncScope } from '~/utils/sync-scope';
 
 // Cloisonnement en écriture (lot 3 de l'audit) : avant, tout compte activé pouvait écraser la
 // fiche, la carcasse ou l'intermédiaire d'un tiers en connaissant son identifiant. Ces tests
-// exercent le vrai `carcasse-access` (pas de mock) contre un prisma mocké.
+// construisent un vrai `SyncScope` (pas de mock) contre un prisma mocké.
 
 const attaquant = {
   id: 'user-etg-2',
@@ -61,7 +62,12 @@ describe('syncFei — écriture sur une fiche tierce', () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(feiTierce);
 
     await expect(
-      syncFei('FEI-VICTIME', { numero: 'FEI-VICTIME', commune_mise_a_mort: 'Hacked' } as any, attaquant)
+      syncFei(
+        'FEI-VICTIME',
+        { numero: 'FEI-VICTIME', commune_mise_a_mort: 'Hacked' } as any,
+        attaquant,
+        await createSyncScope(attaquant)
+      )
     ).rejects.toThrow("Vous n'avez pas accès à cette fiche");
 
     expect(prisma.fei.update).not.toHaveBeenCalled();
@@ -74,7 +80,8 @@ describe('syncFei — écriture sur une fiche tierce', () => {
     await syncFei(
       'FEI-VICTIME',
       { numero: 'FEI-VICTIME', commune_mise_a_mort: 'Ma commune' } as any,
-      proprietaire
+      proprietaire,
+      await createSyncScope(proprietaire)
     );
 
     expect(prisma.fei.update).toHaveBeenCalled();
@@ -88,7 +95,8 @@ describe('syncFei — écriture sur une fiche tierce', () => {
     await syncFei(
       'FEI-VICTIME',
       { numero: 'FEI-VICTIME', resume_nombre_de_carcasses: '3' } as any,
-      attaquant
+      attaquant,
+      await createSyncScope(attaquant)
     );
 
     expect(prisma.fei.update).toHaveBeenCalled();
@@ -102,16 +110,23 @@ describe('syncFei — auto-attribution des colonnes de rattachement', () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(feiTierce);
     // Il détient une carcasse de la fiche : c'est par là qu'il obtient le droit d'écrire.
     vi.mocked(prisma.carcasse.count).mockResolvedValue(1);
+    vi.mocked(prisma.fei.update).mockResolvedValueOnce(feiTierce);
 
-    await expect(
-      syncFei(
-        'FEI-VICTIME',
-        { numero: 'FEI-VICTIME', premier_detenteur_entity_id: 'entity-etg-2' } as any,
-        attaquant
-      )
-    ).rejects.toThrow(/modifier les détenteurs/i);
+    await syncFei(
+      'FEI-VICTIME',
+      {
+        numero: 'FEI-VICTIME',
+        commune_mise_a_mort: 'Villette',
+        premier_detenteur_entity_id: 'entity-etg-2',
+      } as any,
+      attaquant,
+      await createSyncScope(attaquant)
+    );
 
-    expect(prisma.fei.update).not.toHaveBeenCalled();
+    // Le reste de la fiche est bien écrit, seule la colonne de rattachement est ignorée.
+    const updateArgs = vi.mocked(prisma.fei.update).mock.calls[0][0];
+    expect(updateArgs.data).toMatchObject({ commune_mise_a_mort: 'Villette' });
+    expect(updateArgs.data).not.toHaveProperty('premier_detenteur_entity_id');
   });
 
   test('renvoyer ces colonnes inchangées ne bloque pas la synchro', async () => {
@@ -127,7 +142,8 @@ describe('syncFei — auto-attribution des colonnes de rattachement', () => {
         premier_detenteur_entity_id: 'entity-asso',
         examinateur_initial_user_id: proprietaire.id,
       } as any,
-      attaquant
+      attaquant,
+      await createSyncScope(attaquant)
     );
 
     expect(prisma.fei.update).toHaveBeenCalled();
@@ -140,7 +156,8 @@ describe('syncFei — auto-attribution des colonnes de rattachement', () => {
     await syncFei(
       'FEI-VICTIME',
       { numero: 'FEI-VICTIME', premier_detenteur_user_id: proprietaire.id } as any,
-      proprietaire
+      proprietaire,
+      await createSyncScope(proprietaire)
     );
 
     expect(prisma.fei.update).toHaveBeenCalled();
@@ -154,17 +171,19 @@ describe("syncCarcasse — auto-attribution de l'examen initial", () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(feiTierce);
     vi.mocked(prisma.carcasse.findFirst).mockResolvedValueOnce(carcasseTierce);
     vi.mocked(prisma.carcasse.findMany).mockResolvedValue([{ zacharie_carcasse_id: 'ZC-VICTIME' }] as any);
+    vi.mocked(prisma.carcasse.update).mockResolvedValueOnce(carcasseTierce);
 
-    await expect(
-      syncCarcasse(
-        'FEI-VICTIME',
-        'ZC-VICTIME',
-        { fei_numero: 'FEI-VICTIME', examinateur_initial_user_id: attaquant.id } as any,
-        attaquant
-      )
-    ).rejects.toThrow(/modifier les détenteurs/i);
+    await syncCarcasse(
+      'FEI-VICTIME',
+      'ZC-VICTIME',
+      { fei_numero: 'FEI-VICTIME', examinateur_initial_user_id: attaquant.id } as any,
+      attaquant,
+      await createSyncScope(attaquant)
+    );
 
-    expect(prisma.carcasse.update).not.toHaveBeenCalled();
+    // La colonne suit la fiche, pas le corps de la requête.
+    const updateArgs = vi.mocked(prisma.carcasse.update).mock.calls[0][0];
+    expect(updateArgs.data).toMatchObject({ examinateur_initial_user_id: proprietaire.id });
   });
 
   test('recopier la valeur de la fiche reste possible (carcasse manquante ajoutée à la réception)', async () => {
@@ -185,7 +204,8 @@ describe("syncCarcasse — auto-attribution de l'examen initial", () => {
         numero_bracelet: 'BR-VICTIME',
         examinateur_initial_user_id: proprietaire.id,
       } as any,
-      attaquant
+      attaquant,
+      await createSyncScope(attaquant)
     );
 
     expect(prisma.carcasse.update).toHaveBeenCalled();
@@ -202,7 +222,8 @@ describe('syncCarcasse — écriture sur une carcasse tierce', () => {
         'FEI-VICTIME',
         'ZC-VICTIME',
         { fei_numero: 'FEI-VICTIME', current_owner_entity_id: 'entity-etg-2' } as any,
-        attaquant
+        attaquant,
+        await createSyncScope(attaquant)
       )
     ).rejects.toThrow("Vous n'avez pas accès à cette carcasse");
 
@@ -219,18 +240,25 @@ describe('syncCarcasse — écriture sur une carcasse tierce', () => {
       'FEI-VICTIME',
       'ZC-VICTIME',
       { fei_numero: 'FEI-VICTIME', heure_evisceration: '14:30' } as any,
-      attaquant
+      attaquant,
+      await createSyncScope(attaquant)
     );
 
     expect(prisma.carcasse.update).toHaveBeenCalled();
   });
 
-  // Le lot pré-calculé est un instantané : une carcasse créée entre-temps par une requête de sync
-  // concurrente n'y figure pas. Refuser sur cette seule base rejetterait une écriture légitime.
-  test('un instantané de lot périmé ne suffit pas à refuser : on revérifie en base', async () => {
+  // Le périmètre ne mémorise que les accès accordés : une carcasse créée ou transmise plus tard
+  // dans la même requête doit pouvoir y entrer, un refus mis en cache la bloquerait à tort.
+  test('un refus antérieur dans la même requête ne fige pas le périmètre', async () => {
+    const scope = await createSyncScope(attaquant);
+    // Au moment du pré-chargement, la carcasse n'est pas encore dans le périmètre.
+    await scope.prefetch(['ZC-VICTIME']);
+    expect(await scope.canWriteCarcasse('ZC-VICTIME')).toBe(false);
+
+    // Elle vient de lui être transmise par une écriture antérieure du même lot.
+    vi.mocked(prisma.carcasse.findMany).mockResolvedValue([{ zacharie_carcasse_id: 'ZC-VICTIME' }] as any);
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(feiTierce);
     vi.mocked(prisma.carcasse.findFirst).mockResolvedValueOnce(carcasseTierce);
-    vi.mocked(prisma.carcasse.findMany).mockResolvedValue([{ zacharie_carcasse_id: 'ZC-VICTIME' }] as any);
     vi.mocked(prisma.carcasse.update).mockResolvedValueOnce(carcasseTierce);
 
     await syncCarcasse(
@@ -238,7 +266,7 @@ describe('syncCarcasse — écriture sur une carcasse tierce', () => {
       'ZC-VICTIME',
       { fei_numero: 'FEI-VICTIME', heure_evisceration: '15:00' } as any,
       attaquant,
-      { accessibleCarcasseIds: new Set(), userEntityIds: ['entity-etg-2'] }
+      scope
     );
 
     expect(prisma.carcasse.update).toHaveBeenCalled();
@@ -253,7 +281,8 @@ describe('syncCarcasse — écriture sur une carcasse tierce', () => {
         'FEI-VICTIME',
         'ZC-NOUVELLE',
         { fei_numero: 'FEI-VICTIME', numero_bracelet: 'BR-NOUVEAU' } as any,
-        attaquant
+        attaquant,
+        await createSyncScope(attaquant)
       )
     ).rejects.toThrow("Vous n'avez pas accès à cette fiche");
 
@@ -270,7 +299,8 @@ describe('syncCarcasse — écriture sur une carcasse tierce', () => {
       'FEI-VICTIME',
       'ZC-NOUVELLE',
       { fei_numero: 'FEI-VICTIME', numero_bracelet: 'BR-NOUVEAU' } as any,
-      proprietaire
+      proprietaire,
+      await createSyncScope(proprietaire)
     );
 
     expect(prisma.carcasse.create).toHaveBeenCalled();
@@ -285,7 +315,8 @@ describe('syncCarcasse — écriture sur une carcasse tierce', () => {
         'FEI-VICTIME',
         'ZC-VICTIME',
         { fei_numero: 'FEI-VICTIME', deleted_at: new Date() } as any,
-        attaquant
+        attaquant,
+        await createSyncScope(attaquant)
       )
     ).rejects.toThrow("Vous n'avez pas accès à cette carcasse");
 
@@ -312,7 +343,8 @@ describe('syncCarcasseIntermediaire — écriture sur une carcasse tierce', () =
           intermediaire_entity_id: 'entity-etg-2',
           intermediaire_role: UserRoles.ETG,
         } as any,
-        attaquant
+        attaquant,
+        await createSyncScope(attaquant)
       )
     ).rejects.toThrow("Vous n'avez pas accès à cette carcasse");
 
@@ -336,7 +368,8 @@ describe('syncCarcasseIntermediaire — écriture sur une carcasse tierce', () =
         intermediaire_entity_id: 'entity-etg-2',
         intermediaire_role: UserRoles.ETG,
       } as any,
-      attaquant
+      attaquant,
+      await createSyncScope(attaquant)
     );
 
     expect(prisma.carcasseIntermediaire.upsert).toHaveBeenCalled();
@@ -361,7 +394,8 @@ describe('syncCarcasseModifRequest — demande de modification sur une carcasse 
           numero_bracelet_before: 'BR-VICTIME',
           numero_bracelet_after: 'BR-HACKED',
         } as any,
-        attaquant
+        attaquant,
+        await createSyncScope(attaquant)
       )
     ).rejects.toThrow("Vous n'avez pas accès à cette carcasse");
 
@@ -382,7 +416,8 @@ describe('syncCarcasseModifRequest — demande de modification sur une carcasse 
     await expect(
       syncCarcasseModifRequest(
         { id: 'mod-1', zacharie_carcasse_id: 'ZC-VICTIME', comment_intermediaire: 'hacked' } as any,
-        attaquant
+        attaquant,
+        await createSyncScope(attaquant)
       )
     ).rejects.toThrow("Vous n'avez pas accès à cette carcasse");
 
@@ -410,7 +445,8 @@ describe('syncCarcasseModifRequest — demande de modification sur une carcasse 
         numero_bracelet_before: 'BR-VICTIME',
         numero_bracelet_after: 'BR-CORRIGE',
       } as any,
-      attaquant
+      attaquant,
+      await createSyncScope(attaquant)
     );
 
     expect(result.isNew).toBe(true);

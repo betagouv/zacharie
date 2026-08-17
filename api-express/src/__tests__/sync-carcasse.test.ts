@@ -2,16 +2,13 @@ import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { syncCarcasse } from '~/utils/sync-carcasse';
 import prisma from '~/prisma';
 
-// Ce fichier couvre le mapping des champs. L'autorisation d'écriture a ses propres tests
-// (permissions-sync-write.test.ts), on la neutralise ici pour ne pas la retester partout.
-vi.mock('~/utils/carcasse-access', () => ({
-  getAccessibleCarcasseIds: vi.fn(async (_user, ids: Array<string>) => new Set(ids)),
-  isCarcasseAccessible: vi.fn().mockResolvedValue(true),
-  canWriteFei: vi.fn().mockResolvedValue(true),
-  isFeiOwner: vi.fn().mockResolvedValue(true),
-}));
 import { UserRoles, EntityRelationType } from '@prisma/client';
 import type { User } from '@prisma/client';
+import { fakeSyncScope } from './fake-sync-scope';
+
+// Ce fichier couvre le mapping des champs. L'autorisation d'écriture a ses propres tests
+// (permissions-sync-write.test.ts), on passe ici un périmètre permissif.
+const scope = fakeSyncScope();
 
 const chasseur = {
   id: 'user-chasseur',
@@ -43,21 +40,21 @@ beforeEach(() => {
 
 describe('syncCarcasse — validation', () => {
   test('missing fei_numero → throws', async () => {
-    await expect(syncCarcasse('', 'ZC-1', {} as any, chasseur)).rejects.toThrow(
+    await expect(syncCarcasse('', 'ZC-1', {} as any, chasseur, scope)).rejects.toThrow(
       'Le numéro de fiche est obligatoire'
     );
   });
 
   test('parent FEI not found → throws "Fiche non trouvée"', async () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(null);
-    await expect(syncCarcasse('FEI-MISSING', 'ZC-1', {} as any, chasseur)).rejects.toThrow(
+    await expect(syncCarcasse('FEI-MISSING', 'ZC-1', {} as any, chasseur, scope)).rejects.toThrow(
       'Fiche non trouvée'
     );
   });
 
   test('missing zacharie_carcasse_id → throws', async () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
-    await expect(syncCarcasse('FEI-1', '', {} as any, chasseur)).rejects.toThrow(
+    await expect(syncCarcasse('FEI-1', '', {} as any, chasseur, scope)).rejects.toThrow(
       'Le numéro de la carcasse est obligatoire'
     );
   });
@@ -68,9 +65,9 @@ describe('syncCarcasse — create', () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
     vi.mocked(prisma.carcasse.findFirst).mockResolvedValueOnce(null);
 
-    await expect(syncCarcasse('FEI-1', 'ZC-NEW', { fei_numero: 'FEI-1' } as any, chasseur)).rejects.toThrow(
-      'Le numéro de marquage est obligatoire'
-    );
+    await expect(
+      syncCarcasse('FEI-1', 'ZC-NEW', { fei_numero: 'FEI-1' } as any, chasseur, scope)
+    ).rejects.toThrow('Le numéro de marquage est obligatoire');
 
     expect(prisma.carcasse.create).not.toHaveBeenCalled();
   });
@@ -81,7 +78,13 @@ describe('syncCarcasse — create', () => {
     vi.mocked(prisma.carcasse.create).mockResolvedValueOnce(baseCarcasse);
     vi.mocked(prisma.carcasse.update).mockResolvedValueOnce(baseCarcasse);
 
-    await syncCarcasse('FEI-1', 'ZC-1', { fei_numero: 'FEI-1', numero_bracelet: 'BR-1' } as any, chasseur);
+    await syncCarcasse(
+      'FEI-1',
+      'ZC-1',
+      { fei_numero: 'FEI-1', numero_bracelet: 'BR-1' } as any,
+      chasseur,
+      scope
+    );
 
     const createCall = vi.mocked(prisma.carcasse.create).mock.calls[0][0];
     expect(createCall.data).toMatchObject({
@@ -103,7 +106,8 @@ describe('syncCarcasse — update', () => {
       'FEI-1',
       'ZC-1',
       { fei_numero: 'FEI-1', heure_evisceration: '14:30' } as any,
-      chasseur
+      chasseur,
+      scope
     );
 
     const updateCall = vi.mocked(prisma.carcasse.update).mock.calls[0][0];
@@ -122,7 +126,8 @@ describe('syncCarcasse — update', () => {
       'FEI-1',
       'ZC-1',
       { fei_numero: 'FEI-1', examinateur_carcasse_sans_anomalie: true } as any,
-      chasseur
+      chasseur,
+      scope
     );
 
     const updateCall = vi.mocked(prisma.carcasse.update).mock.calls[0][0];
@@ -140,7 +145,8 @@ describe('syncCarcasse — update', () => {
       'FEI-1',
       'ZC-1',
       { fei_numero: 'FEI-1', examinateur_carcasse_sans_anomalie: false } as any,
-      chasseur
+      chasseur,
+      scope
     );
 
     const updateCall = vi.mocked(prisma.carcasse.update).mock.calls[0][0];
@@ -162,7 +168,8 @@ describe('syncCarcasse — update', () => {
         examinateur_anomalies_carcasse: ['a1', '', null, 'a2'],
         examinateur_anomalies_abats: [null, undefined],
       } as any,
-      chasseur
+      chasseur,
+      scope
     );
 
     const updateCall = vi.mocked(prisma.carcasse.update).mock.calls[0][0];
@@ -175,7 +182,13 @@ describe('syncCarcasse — update', () => {
     vi.mocked(prisma.carcasse.findFirst).mockResolvedValueOnce(baseCarcasse);
     vi.mocked(prisma.carcasse.update).mockResolvedValueOnce(baseCarcasse);
 
-    await syncCarcasse('FEI-1', 'ZC-1', { fei_numero: 'FEI-1', nombre_d_animaux: '3' } as any, chasseur);
+    await syncCarcasse(
+      'FEI-1',
+      'ZC-1',
+      { fei_numero: 'FEI-1', nombre_d_animaux: '3' } as any,
+      chasseur,
+      scope
+    );
 
     const updateCall = vi.mocked(prisma.carcasse.update).mock.calls[0][0];
     expect(updateCall.data.nombre_d_animaux).toBe(3);
@@ -199,7 +212,8 @@ describe('syncCarcasse — deletion', () => {
       'FEI-1',
       'ZC-1',
       { fei_numero: 'FEI-1', deleted_at: '2026-03-01' } as any,
-      chasseur
+      chasseur,
+      scope
     );
 
     expect(result.isDeleted).toBe(true);
@@ -224,7 +238,8 @@ describe('syncCarcasse — SVI-only fields', () => {
         svi_carcasse_commentaire: 'should-be-ignored',
         svi_ipm1_decision: 'should-be-ignored',
       } as any,
-      chasseur
+      chasseur,
+      scope
     );
 
     const updateCall = vi.mocked(prisma.carcasse.update).mock.calls[0][0];
@@ -245,7 +260,8 @@ describe('syncCarcasse — SVI-only fields', () => {
         svi_carcasse_commentaire: 'inspected',
         svi_ipm1_decision: 'MISE_SUR_LE_MARCHE',
       } as any,
-      sviUser
+      sviUser,
+      scope
     );
 
     const updateCall = vi.mocked(prisma.carcasse.update).mock.calls[0][0];
@@ -267,7 +283,8 @@ describe('syncCarcasse — SVI-only fields', () => {
         svi_closed_at: new Date(),
         svi_closed_by_user_id: 'user-chasseur',
       } as any,
-      chasseur
+      chasseur,
+      scope
     );
 
     const updateCall = vi.mocked(prisma.carcasse.update).mock.calls[0][0];
@@ -291,7 +308,8 @@ describe('syncCarcasse — SVI-only fields', () => {
         svi_closed_at: closedAt,
         svi_closed_by_user_id: 'user-svi',
       } as any,
-      sviUser
+      sviUser,
+      scope
     );
 
     const updateCall = vi.mocked(prisma.carcasse.update).mock.calls[0][0];
@@ -318,7 +336,8 @@ describe('syncCarcasse — SVI-only fields', () => {
         svi_carcasse_status: 'REFUSE',
         svi_carcasse_status_set_at: assignedAt,
       } as any,
-      chasseur
+      chasseur,
+      scope
     );
 
     const updateCall = vi.mocked(prisma.carcasse.update).mock.calls[0][0];
@@ -341,7 +360,8 @@ describe('syncCarcasse — next_owner_entity_id side effect', () => {
       'FEI-1',
       'ZC-1',
       { fei_numero: 'FEI-1', next_owner_entity_id: 'entity-Y' } as any,
-      chasseur
+      chasseur,
+      scope
     );
 
     expect(prisma.entityAndUserRelations.create).toHaveBeenCalledWith({

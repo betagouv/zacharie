@@ -8,18 +8,10 @@ import {
 } from '@prisma/client';
 import sendNotificationToUser from '~/service/notifications';
 import { capture } from '~/third-parties/sentry';
-import { isCarcasseAccessible } from '~/utils/carcasse-access';
-import { getUserCarcasseEntityIds } from '~/utils/user-entities';
+import type { SyncScope } from '~/utils/sync-scope';
 import dayjs from 'dayjs';
 
 const FRONTEND_URL = 'https://zacharie.beta.gouv.fr';
-
-// En sync de masse, les entités de l'utilisateur et le périmètre d'accès sont les mêmes pour tout
-// le lot : le contrôleur les résout une fois et les passe ici plutôt que de requêter par demande.
-type SyncModifRequestOpts = {
-  userEntityIds?: Array<string>;
-  accessibleCarcasseIds?: Set<string>;
-};
 
 export type SyncModifRequestResult = {
   saved: CarcasseModificationRequest;
@@ -41,7 +33,7 @@ export type SyncModifRequestResult = {
 export async function syncCarcasseModifRequest(
   body: Prisma.CarcasseModificationRequestUncheckedCreateInput,
   user: User,
-  opts: SyncModifRequestOpts = {}
+  scope: SyncScope
 ): Promise<SyncModifRequestResult> {
   if (!body.id) throw new Error('id manquant');
   if (!body.zacharie_carcasse_id) throw new Error('zacharie_carcasse_id manquant');
@@ -54,7 +46,7 @@ export async function syncCarcasseModifRequest(
   // Sans ce contrôle, un POST /sync suffisait à écrire sur la carcasse d'un tiers (bump de son
   // updated_at) et à notifier son examinateur initial.
   const zacharieCarcasseId = existing?.zacharie_carcasse_id ?? body.zacharie_carcasse_id;
-  if (!(await isCarcasseAccessible(user, zacharieCarcasseId, opts))) {
+  if (!(await scope.canWriteCarcasse(zacharieCarcasseId))) {
     throw new Error("Vous n'avez pas accès à cette carcasse");
   }
 
@@ -67,8 +59,7 @@ export async function syncCarcasseModifRequest(
     if (!carcasse) throw new Error('Carcasse introuvable');
     // L'identité du demandeur est décidée par le serveur : on demande toujours en son nom propre,
     // pour une entité dont on est membre, et une demande naît toujours PENDING.
-    const userEntityIds = opts.userEntityIds ?? (await getUserCarcasseEntityIds(user.id));
-    if (!body.requested_by_entity_id || !userEntityIds.includes(body.requested_by_entity_id)) {
+    if (!body.requested_by_entity_id || !scope.entityIds.includes(body.requested_by_entity_id)) {
       throw new Error('Vous ne pouvez pas agir au nom de cette entité');
     }
     const created = await prisma.carcasseModificationRequest.create({

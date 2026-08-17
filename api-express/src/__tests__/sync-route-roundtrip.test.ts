@@ -33,13 +33,17 @@ vi.mock('~/third-parties/sentry', () => ({
 }));
 
 // Ce fichier pin le contrat de forme de la réponse. L'autorisation d'écriture est couverte par
-// permissions-sync-write.test.ts ; ici on la neutralise pour ne pas perturber les mocks prisma.
-vi.mock('~/utils/carcasse-access', () => ({
-  getAccessibleCarcasseIds: vi.fn(async (_user, ids: Array<string>) => new Set(ids)),
-  isCarcasseAccessible: vi.fn().mockResolvedValue(true),
-  canWriteFei: vi.fn().mockResolvedValue(true),
-  isFeiOwner: vi.fn().mockResolvedValue(true),
+// permissions-sync-write.test.ts ; ici on neutralise le périmètre pour ne pas perturber les mocks.
+const { permissiveScope } = vi.hoisted(() => ({
+  permissiveScope: {
+    entityIds: ['entity-A', 'entity-B'],
+    prefetch: async () => {},
+    canWriteCarcasse: async () => true,
+    isFeiOwner: () => true,
+    canWriteFei: async () => true,
+  },
 }));
+vi.mock('~/utils/sync-scope', () => ({ createSyncScope: vi.fn(async () => permissiveScope) }));
 
 const examinateurInitial = {
   id: 'user-cfei',

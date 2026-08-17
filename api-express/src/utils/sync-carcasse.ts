@@ -1,16 +1,6 @@
 import prisma from '~/prisma';
 import { Carcasse, EntityRelationType, Fei, FeiOwnerRole, Prisma, User, UserRoles } from '@prisma/client';
-import { canWriteFei, isCarcasseAccessible, isFeiOwner } from '~/utils/carcasse-access';
-
-// Copies de la fiche portées par la carcasse. Elles ouvrent le périmètre d'un chasseur sur la
-// carcasse, et `examinateur_initial_user_id` commande en plus l'approbation des demandes de
-// modification : un détenteur aval peut les recopier depuis la fiche (il ajoute une carcasse
-// manquante) mais jamais s'y substituer.
-const CARCASSE_OWNERSHIP_FIELDS = [
-  Prisma.CarcasseScalarFieldEnum.examinateur_initial_user_id,
-  Prisma.CarcasseScalarFieldEnum.premier_detenteur_user_id,
-  Prisma.CarcasseScalarFieldEnum.premier_detenteur_entity_id,
-] as const;
+import type { SyncScope } from '~/utils/sync-scope';
 
 export interface SaveCarcasseResult {
   savedCarcasse: Carcasse;
@@ -26,14 +16,10 @@ export interface SaveCarcasseResult {
 // - ensuredRelationEntityIds : entités dont la relation CAN_TRANSMIT a déjà été assurée dans ce
 //   batch (évite un findFirst/create par carcasse pour le même destinataire). En sync parallèle,
 //   l'appelant pré-remplit ce Set pour que le bloc relation soit entièrement sauté (pas de race).
-// - accessibleCarcasseIds / userEntityIds : autorisation d'écriture résolue en une requête pour
-//   tout le lot (voir controllers/sync.ts) plutôt qu'une par carcasse.
 interface SyncCarcasseOpts {
   existingFei?: Fei | null;
   existingCarcasse?: Carcasse | null;
   ensuredRelationEntityIds?: Set<string>;
-  accessibleCarcasseIds?: Set<string>;
-  userEntityIds?: Array<string>;
 }
 
 export async function syncCarcasse(
@@ -41,6 +27,7 @@ export async function syncCarcasse(
   zacharie_carcasse_id: string,
   body: Prisma.CarcasseUncheckedCreateInput,
   user: User,
+  scope: SyncScope,
   opts: SyncCarcasseOpts = {}
 ): Promise<SaveCarcasseResult> {
   if (!fei_numero) {
@@ -82,10 +69,10 @@ export async function syncCarcasse(
   // Deny by default : on ne modifie une carcasse que si elle est dans le périmètre de
   // l'utilisateur, et on n'en crée une que sur une fiche à laquelle il participe.
   if (existingCarcasse) {
-    if (!(await isCarcasseAccessible(user, existingCarcasse.zacharie_carcasse_id, opts))) {
+    if (!(await scope.canWriteCarcasse(existingCarcasse.zacharie_carcasse_id))) {
       throw new Error("Vous n'avez pas accès à cette carcasse");
     }
-  } else if (!(await canWriteFei(user, existingFei, opts.userEntityIds))) {
+  } else if (!(await scope.canWriteFei(existingFei))) {
     throw new Error("Vous n'avez pas accès à cette fiche");
   }
 
@@ -104,17 +91,12 @@ export async function syncCarcasse(
     });
   }
 
-  // Une valeur qui reflète déjà la fiche, ou que la carcasse porte déjà, passe : le client renvoie
-  // la carcasse entière à chaque synchro, colonnes non touchées comprises.
-  if (!(await isFeiOwner(user, existingFei, opts.userEntityIds))) {
-    for (const field of CARCASSE_OWNERSHIP_FIELDS) {
-      if (!body.hasOwnProperty(field)) continue;
-      const incoming = body[field] || null;
-      if (incoming !== existingFei[field] && incoming !== existingCarcasse[field]) {
-        throw new Error('Vous ne pouvez pas modifier les détenteurs de cette carcasse');
-      }
-    }
-  }
+  // L'examinateur initial et le premier détenteur portés par la carcasse sont des copies de la
+  // fiche. Pour un détenteur aval, on prend la valeur de la fiche plutôt que celle du corps de la
+  // requête : sinon il s'attribue l'examen initial et, avec lui, l'approbation des demandes de
+  // modification qui le désignent. Il peut toujours ajouter une carcasse manquante — elle hérite
+  // simplement de la fiche.
+  const canWriteOwnership = scope.isFeiOwner(existingFei);
 
   if (body.deleted_at) {
     // existingCarcasse est garantie non-nulle ici (créée juste au-dessus si absente).
@@ -187,8 +169,9 @@ export async function syncCarcasse(
       body[Prisma.CarcasseScalarFieldEnum.examinateur_initial_offline];
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.examinateur_initial_user_id)) {
-    nextCarcasse.examinateur_initial_user_id =
-      body[Prisma.CarcasseScalarFieldEnum.examinateur_initial_user_id];
+    nextCarcasse.examinateur_initial_user_id = canWriteOwnership
+      ? body[Prisma.CarcasseScalarFieldEnum.examinateur_initial_user_id]
+      : existingFei.examinateur_initial_user_id;
   }
   if (
     body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.examinateur_initial_approbation_mise_sur_le_marche)
@@ -249,11 +232,14 @@ export async function syncCarcasse(
     nextCarcasse.premier_detenteur_offline = body[Prisma.CarcasseScalarFieldEnum.premier_detenteur_offline];
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_user_id)) {
-    nextCarcasse.premier_detenteur_user_id = body[Prisma.CarcasseScalarFieldEnum.premier_detenteur_user_id];
+    nextCarcasse.premier_detenteur_user_id = canWriteOwnership
+      ? body[Prisma.CarcasseScalarFieldEnum.premier_detenteur_user_id]
+      : existingFei.premier_detenteur_user_id;
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_entity_id)) {
-    nextCarcasse.premier_detenteur_entity_id =
-      body[Prisma.CarcasseScalarFieldEnum.premier_detenteur_entity_id];
+    nextCarcasse.premier_detenteur_entity_id = canWriteOwnership
+      ? body[Prisma.CarcasseScalarFieldEnum.premier_detenteur_entity_id]
+      : existingFei.premier_detenteur_entity_id;
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_name_cache)) {
     nextCarcasse.premier_detenteur_name_cache =

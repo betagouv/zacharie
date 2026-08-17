@@ -7,8 +7,7 @@ import { Prisma, User, UserRoles, Carcasse, Fei, EntityRelationType } from '@pri
 import { syncFei, type SaveFeiResult } from '~/utils/sync-fei';
 import { syncCarcasse, type SaveCarcasseResult } from '~/utils/sync-carcasse';
 import { syncCarcasseIntermediaire } from '~/utils/sync-carcasse-intermediaire';
-import { getUserCarcasseEntityIds } from '~/utils/user-entities';
-import { getAccessibleCarcasseIds } from '~/utils/carcasse-access';
+import { createSyncScope } from '~/utils/sync-scope';
 import {
   syncCarcasseModifRequest,
   runCarcasseModifRequestSideEffects,
@@ -51,16 +50,15 @@ router.post(
     const modifResults: Array<SyncModifRequestResult & { approvalPayload?: Record<string, unknown> }> = [];
     const syncedLogIds: Array<string> = [];
 
-    // Entités de l'utilisateur : identiques pour tout le lot, résolues une fois et passées aux
-    // contrôles d'autorisation de chaque section.
-    const userEntityIds = await getUserCarcasseEntityIds(user.id);
+    // Périmètre d'écriture du lot : résolu une fois, passé à chaque section. Il se met à jour tout
+    // seul au fil de la requête (une carcasse créée en section 2 entre dans le périmètre pour les
+    // sections suivantes), donc l'ordre des sections n'a pas à être rejoué ici.
+    const scope = await createSyncScope(user);
 
     // 1. Process FEIs first (carcasses depend on them)
     for (const feiData of feis || []) {
       try {
-        const result = await syncFei(feiData.numero, feiData as Prisma.FeiUncheckedCreateInput, user, {
-          userEntityIds,
-        });
+        const result = await syncFei(feiData.numero, feiData as Prisma.FeiUncheckedCreateInput, user, scope);
         feiResults.push(result);
       } catch (error) {
         capture(error as Error, {
@@ -95,9 +93,8 @@ router.post(
         })) ?? [];
       for (const c of existingCarcasses) existingCarcasseMap.set(c.zacharie_carcasse_id, c);
     }
-    // Autorisation d'écriture du lot en une requête : les carcasses hors périmètre sont absentes
-    // du Set et chaque syncCarcasse les rejettera.
-    const accessibleCarcasseIds = await getAccessibleCarcasseIds(user, carcasseIds, userEntityIds);
+    // Une requête pour tout le lot, au lieu d'une par carcasse dans la boucle ci-dessous.
+    await scope.prefetch(carcasseIds);
 
     // Les carcasses sont traitées en parallèle (chaque syncCarcasse = un update de ligne
     // distincte, sans dépendance entre elles). La relation CAN_TRANSMIT vers le destinataire est
@@ -147,12 +144,11 @@ router.post(
               carcasseData.zacharie_carcasse_id,
               carcasseData as Prisma.CarcasseUncheckedCreateInput,
               user,
+              scope,
               {
                 existingFei: carcasseFeiMap.get(carcasseData.fei_numero) ?? null,
                 existingCarcasse: existingCarcasseMap.get(carcasseData.zacharie_carcasse_id) ?? null,
                 ensuredRelationEntityIds,
-                accessibleCarcasseIds,
-                userEntityIds,
               }
             );
           } catch (error) {
@@ -174,15 +170,8 @@ router.post(
     }
 
     // 3. Process CarcassesIntermediaires
-    // Périmètre recalculé après l'étape 2 : une carcasse tout juste créée ou transmise vient d'y
-    // entrer, elle serait absente d'un Set calculé avant.
-    const intermediaireCarcasseIds = [
-      ...new Set((carcassesIntermediaires || []).map((ci) => ci.zacharie_carcasse_id).filter(Boolean)),
-    ] as string[];
-    const accessibleIntermediaireCarcasseIds = await getAccessibleCarcasseIds(
-      user,
-      intermediaireCarcasseIds,
-      userEntityIds
+    await scope.prefetch(
+      (carcassesIntermediaires || []).map((ci) => ci.zacharie_carcasse_id).filter(Boolean) as string[]
     );
     for (const ciData of carcassesIntermediaires || []) {
       try {
@@ -192,7 +181,7 @@ router.post(
           ciData.zacharie_carcasse_id,
           ciData as Prisma.CarcasseIntermediaireUncheckedCreateInput,
           user,
-          { userEntityIds, accessibleCarcasseIds: accessibleIntermediaireCarcasseIds }
+          scope
         );
         savedIntermediaires.push(saved);
       } catch (error) {
@@ -209,15 +198,8 @@ router.post(
     }
 
     // 4. Process CarcasseModificationRequests
-    // Périmètre recalculé après les étapes 2 et 3 : une demande NEW_CARCASSE arrive dans le même
-    // lot que la carcasse et la ligne d'intermédiaire qui la font entrer dans le périmètre.
-    const modifRequestCarcasseIds = [
-      ...new Set((carcasseModifRequests || []).map((m) => m.zacharie_carcasse_id).filter(Boolean)),
-    ] as string[];
-    const accessibleModifRequestCarcasseIds = await getAccessibleCarcasseIds(
-      user,
-      modifRequestCarcasseIds,
-      userEntityIds
+    await scope.prefetch(
+      (carcasseModifRequests || []).map((m) => m.zacharie_carcasse_id).filter(Boolean) as string[]
     );
     for (const modifData of carcasseModifRequests || []) {
       try {
@@ -227,7 +209,7 @@ router.post(
         const result = await syncCarcasseModifRequest(
           modifBody as Prisma.CarcasseModificationRequestUncheckedCreateInput,
           user,
-          { userEntityIds, accessibleCarcasseIds: accessibleModifRequestCarcasseIds }
+          scope
         );
         modifResults.push({ ...result, approvalPayload: _approvalPayload });
       } catch (error) {

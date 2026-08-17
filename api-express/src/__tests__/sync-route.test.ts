@@ -33,14 +33,18 @@ vi.mock('~/third-parties/sentry', () => ({
   captureException: vi.fn(),
 }));
 
-// Ce fichier teste le routage et l'isolation des erreurs, pas l'autorisation : on la neutralise
-// pour qu'elle n'ajoute pas de requête carcasse.findMany dans les séquences mockées ici.
-vi.mock('~/utils/carcasse-access', () => ({
-  getAccessibleCarcasseIds: vi.fn(async (_user, ids: Array<string>) => new Set(ids)),
-  isCarcasseAccessible: vi.fn().mockResolvedValue(true),
-  canWriteFei: vi.fn().mockResolvedValue(true),
-  isFeiOwner: vi.fn().mockResolvedValue(true),
+// Ce fichier teste le routage et l'isolation des erreurs, pas l'autorisation : le périmètre est
+// neutralisé pour qu'il n'ajoute pas de requête carcasse.findMany dans les séquences mockées ici.
+const { permissiveScope } = vi.hoisted(() => ({
+  permissiveScope: {
+    entityIds: ['entity-etg', 'entity-collecteur', 'entity-svi'],
+    prefetch: async () => {},
+    canWriteCarcasse: async () => true,
+    isFeiOwner: () => true,
+    canWriteFei: async () => true,
+  },
 }));
+vi.mock('~/utils/sync-scope', () => ({ createSyncScope: vi.fn(async () => permissiveScope) }));
 
 import { syncFei } from '~/utils/sync-fei';
 import { syncCarcasse } from '~/utils/sync-carcasse';

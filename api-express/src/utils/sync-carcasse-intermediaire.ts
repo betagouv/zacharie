@@ -1,15 +1,7 @@
 import prisma from '~/prisma';
 import { Prisma } from '@prisma/client';
 import type { CarcasseIntermediaire, User } from '@prisma/client';
-import { getUserCarcasseEntityIds } from '~/utils/user-entities';
-import { isCarcasseAccessible } from '~/utils/carcasse-access';
-
-type SyncCarcasseIntermediaireOpts = {
-  // En sync de masse, les entités de l'utilisateur et le périmètre d'accès sont les mêmes pour tout
-  // le lot : le contrôleur les résout une fois et les passe ici plutôt que de requêter par carcasse.
-  userEntityIds?: Array<string>;
-  accessibleCarcasseIds?: Set<string>;
-};
+import type { SyncScope } from '~/utils/sync-scope';
 
 export async function syncCarcasseIntermediaire(
   fei_numero: string,
@@ -17,7 +9,7 @@ export async function syncCarcasseIntermediaire(
   zacharie_carcasse_id: string,
   body: Prisma.CarcasseIntermediaireUncheckedCreateInput,
   user: User,
-  opts: SyncCarcasseIntermediaireOpts = {}
+  scope: SyncScope
 ): Promise<CarcasseIntermediaire> {
   if (!fei_numero) {
     throw new Error('Le numéro de fiche est obligatoire');
@@ -47,15 +39,14 @@ export async function syncCarcasseIntermediaire(
   // Deny by default : sans ce contrôle, créer une ligne d'intermédiaire sur une carcasse tierce
   // suffisait à s'en donner l'accès en lecture (voir le périmètre ETG/collecteur, qui matche sur
   // CarcasseIntermediaire.intermediaire_entity_id).
-  if (!(await isCarcasseAccessible(user, existingCarcasse.zacharie_carcasse_id, opts))) {
+  if (!(await scope.canWriteCarcasse(existingCarcasse.zacharie_carcasse_id))) {
     throw new Error("Vous n'avez pas accès à cette carcasse");
   }
 
   // L'identité de l'intermédiaire est décidée par le serveur : l'utilisateur courant agit toujours
   // en son nom propre, pour une entité dont il est membre. Le rôle, lui, vient du client : un ETG
   // enregistre l'étape de transport d'un collecteur, donc un rôle différent du sien est légitime.
-  const userEntityIds = opts.userEntityIds ?? (await getUserCarcasseEntityIds(user.id));
-  if (!body.intermediaire_entity_id || !userEntityIds.includes(body.intermediaire_entity_id)) {
+  if (!body.intermediaire_entity_id || !scope.entityIds.includes(body.intermediaire_entity_id)) {
     throw new Error('Vous ne pouvez pas agir au nom de cette entité');
   }
 

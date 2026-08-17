@@ -11,6 +11,7 @@ import {
   type CarcasseModificationRequest,
   type User,
 } from '@prisma/client';
+import { fakeSyncScope } from './fake-sync-scope';
 
 vi.mock('~/service/notifications', () => ({
   default: vi.fn().mockResolvedValue(undefined),
@@ -79,12 +80,8 @@ const renamePending = {
   updated_at: new Date('2026-04-22T10:00:00Z'),
 } as unknown as CarcasseModificationRequest;
 
-// Périmètre d'accès résolu par le contrôleur : ZC-1 est dans le périmètre, l'utilisateur est
-// membre de entity-etg. Le cloisonnement lui-même est testé dans permissions-sync-write.test.ts.
-const opts = {
-  accessibleCarcasseIds: new Set(['ZC-1']),
-  userEntityIds: ['entity-etg'],
-};
+// Périmètre permissif : le cloisonnement est testé dans permissions-sync-write.test.ts.
+const scope = fakeSyncScope({ entityIds: ['entity-etg'] });
 
 const newPending = {
   ...renamePending,
@@ -104,11 +101,11 @@ beforeEach(() => {
 
 describe('syncCarcasseModifRequest — validation', () => {
   test('missing id → throws', async () => {
-    await expect(syncCarcasseModifRequest({} as any, examinateur)).rejects.toThrow('id manquant');
+    await expect(syncCarcasseModifRequest({} as any, examinateur, scope)).rejects.toThrow('id manquant');
   });
 
   test('missing zacharie_carcasse_id → throws', async () => {
-    await expect(syncCarcasseModifRequest({ id: 'mod-x' } as any, examinateur)).rejects.toThrow(
+    await expect(syncCarcasseModifRequest({ id: 'mod-x' } as any, examinateur, scope)).rejects.toThrow(
       'zacharie_carcasse_id manquant'
     );
   });
@@ -120,7 +117,7 @@ describe('syncCarcasseModifRequest — create', () => {
     vi.mocked(prisma.carcasse.findUnique).mockResolvedValueOnce(baseCarcasse);
     vi.mocked(prisma.carcasseModificationRequest.create).mockResolvedValueOnce(renamePending);
 
-    const result = await syncCarcasseModifRequest({ ...renamePending } as any, requester, opts);
+    const result = await syncCarcasseModifRequest({ ...renamePending } as any, requester, scope);
 
     expect(prisma.carcasseModificationRequest.create).toHaveBeenCalledOnce();
     const createArgs = vi.mocked(prisma.carcasseModificationRequest.create).mock.calls[0][0];
@@ -146,7 +143,7 @@ describe('syncCarcasseModifRequest — create', () => {
         reviewed_at: new Date(),
       } as any,
       requester,
-      opts
+      scope
     );
 
     const createArgs = vi.mocked(prisma.carcasseModificationRequest.create).mock.calls[0][0];
@@ -167,7 +164,7 @@ describe('syncCarcasseModifRequest — create', () => {
       syncCarcasseModifRequest(
         { ...renamePending, requested_by_entity_id: 'entity-tierce' } as any,
         requester,
-        opts
+        scope
       )
     ).rejects.toThrow(/nom de cette entité/i);
 
@@ -192,7 +189,7 @@ describe('syncCarcasseModifRequest — approval', () => {
         reviewed_at: new Date(),
       } as any,
       examinateur,
-      opts
+      scope
     );
 
     expect(result.transitionedTo).toBe(CarcasseModificationRequestStatus.APPROVED);
@@ -212,7 +209,7 @@ describe('syncCarcasseModifRequest — approval', () => {
           reviewed_by_user_id: stranger.id,
         } as any,
         stranger,
-        opts
+        scope
       )
     ).rejects.toThrow(/examinateur initial/i);
 
@@ -227,7 +224,7 @@ describe('syncCarcasseModifRequest — approval', () => {
       syncCarcasseModifRequest(
         { ...renamePending, status: CarcasseModificationRequestStatus.APPROVED } as any,
         examinateur,
-        opts
+        scope
       )
     ).rejects.toThrow('Carcasse introuvable');
   });
@@ -251,7 +248,7 @@ describe('syncCarcasseModifRequest — rejection', () => {
         rejection_reason: 'pas le bon numéro',
       } as any,
       examinateur,
-      opts
+      scope
     );
 
     expect(result.transitionedTo).toBe(CarcasseModificationRequestStatus.REJECTED);
@@ -272,7 +269,7 @@ describe('syncCarcasseModifRequest — rejection', () => {
       syncCarcasseModifRequest(
         { ...renamePending, status: CarcasseModificationRequestStatus.REJECTED } as any,
         stranger,
-        opts
+        scope
       )
     ).rejects.toThrow(/examinateur initial/i);
   });
@@ -289,7 +286,7 @@ describe('syncCarcasseModifRequest — cancellation', () => {
     const result = await syncCarcasseModifRequest(
       { ...renamePending, deleted_at: new Date() } as any,
       requester,
-      opts
+      scope
     );
 
     expect(result.justCancelled).toBe(true);
@@ -300,7 +297,7 @@ describe('syncCarcasseModifRequest — cancellation', () => {
     vi.mocked(prisma.carcasseModificationRequest.findUnique).mockResolvedValueOnce(renamePending);
 
     await expect(
-      syncCarcasseModifRequest({ ...renamePending, deleted_at: new Date() } as any, stranger, opts)
+      syncCarcasseModifRequest({ ...renamePending, deleted_at: new Date() } as any, stranger, scope)
     ).rejects.toThrow(/auteur de la demande/i);
 
     expect(prisma.carcasseModificationRequest.update).not.toHaveBeenCalled();
@@ -320,7 +317,7 @@ describe('syncCarcasseModifRequest — cancellation', () => {
         deleted_at: new Date(),
       } as any,
       requester,
-      opts
+      scope
     );
 
     expect(result.justCancelled).toBe(false);
@@ -338,7 +335,7 @@ describe('syncCarcasseModifRequest — idempotence', () => {
     const result = await syncCarcasseModifRequest(
       { ...renamePending, status: CarcasseModificationRequestStatus.APPROVED } as any,
       examinateur,
-      opts
+      scope
     );
 
     expect(result.transitionedTo).toBeNull();
@@ -356,7 +353,7 @@ describe('syncCarcasseModifRequest — idempotence', () => {
     const result = await syncCarcasseModifRequest(
       { ...renamePending, status: CarcasseModificationRequestStatus.PENDING } as any,
       examinateur,
-      opts
+      scope
     );
 
     // willTransition requires existing.status === PENDING; here existing is APPROVED → not a
