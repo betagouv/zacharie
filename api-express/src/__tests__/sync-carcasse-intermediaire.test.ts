@@ -10,6 +10,7 @@ vi.mock('~/utils/carcasse-access', () => ({
   getAccessibleCarcasseIds: vi.fn(async (_user, ids: Array<string>) => new Set(ids)),
   isCarcasseAccessible: vi.fn().mockResolvedValue(true),
   canWriteFei: vi.fn().mockResolvedValue(true),
+  isFeiOwner: vi.fn().mockResolvedValue(true),
 }));
 
 const baseFei = { numero: 'FEI-1', deleted_at: null } as any;

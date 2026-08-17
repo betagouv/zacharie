@@ -1,6 +1,16 @@
 import prisma from '~/prisma';
 import { Carcasse, EntityRelationType, Fei, FeiOwnerRole, Prisma, User, UserRoles } from '@prisma/client';
-import { canWriteFei, isCarcasseAccessible } from '~/utils/carcasse-access';
+import { canWriteFei, isCarcasseAccessible, isFeiOwner } from '~/utils/carcasse-access';
+
+// Copies de la fiche portées par la carcasse. Elles ouvrent le périmètre d'un chasseur sur la
+// carcasse, et `examinateur_initial_user_id` commande en plus l'approbation des demandes de
+// modification : un détenteur aval peut les recopier depuis la fiche (il ajoute une carcasse
+// manquante) mais jamais s'y substituer.
+const CARCASSE_OWNERSHIP_FIELDS = [
+  Prisma.CarcasseScalarFieldEnum.examinateur_initial_user_id,
+  Prisma.CarcasseScalarFieldEnum.premier_detenteur_user_id,
+  Prisma.CarcasseScalarFieldEnum.premier_detenteur_entity_id,
+] as const;
 
 export interface SaveCarcasseResult {
   savedCarcasse: Carcasse;
@@ -92,6 +102,18 @@ export async function syncCarcasse(
         is_synced: true,
       },
     });
+  }
+
+  // Une valeur qui reflète déjà la fiche, ou que la carcasse porte déjà, passe : le client renvoie
+  // la carcasse entière à chaque synchro, colonnes non touchées comprises.
+  if (!(await isFeiOwner(user, existingFei, opts.userEntityIds))) {
+    for (const field of CARCASSE_OWNERSHIP_FIELDS) {
+      if (!body.hasOwnProperty(field)) continue;
+      const incoming = body[field] || null;
+      if (incoming !== existingFei[field] && incoming !== existingCarcasse[field]) {
+        throw new Error('Vous ne pouvez pas modifier les détenteurs de cette carcasse');
+      }
+    }
   }
 
   if (body.deleted_at) {

@@ -100,6 +100,23 @@ type FeiOwnershipFields = Pick<
   | 'premier_detenteur_entity_id'
 >;
 
+// Rattachement direct à la fiche : créateur, examinateur initial, premier détenteur (utilisateur ou
+// entité désignée). Ce sont les colonnes de la fiche elle-même, celles qui ouvrent l'écriture — d'où
+// la règle : seul un rattaché peut les modifier (voir `sync-fei` / `sync-carcasse`), sans quoi un
+// détenteur aval s'y inscrirait pour se donner un accès permanent.
+export async function isFeiOwner(
+  user: User,
+  fei: FeiOwnershipFields,
+  userEntityIds?: Array<string>
+): Promise<boolean> {
+  if (fei.created_by_user_id === user.id) return true;
+  if (fei.examinateur_initial_user_id === user.id) return true;
+  if (fei.premier_detenteur_user_id === user.id) return true;
+  if (!fei.premier_detenteur_entity_id) return false;
+  const entityIds = userEntityIds ?? (await getUserCarcasseEntityIds(user.id));
+  return entityIds.includes(fei.premier_detenteur_entity_id);
+}
+
 // Droit d'écrire sur une fiche : les colonnes de la fiche ne portent que le début de la chaîne
 // (créateur, examinateur, premier détenteur). Pour les détenteurs suivants, la participation se lit
 // sur les carcasses, comme le fait déjà `/carcasse/refusees/:fei_numero`.
@@ -109,14 +126,9 @@ export async function canWriteFei(
   userEntityIds?: Array<string>
 ): Promise<boolean> {
   if (user.isZacharieAdmin) return true;
-  if (fei.created_by_user_id === user.id) return true;
-  if (fei.examinateur_initial_user_id === user.id) return true;
-  if (fei.premier_detenteur_user_id === user.id) return true;
 
   const entityIds = userEntityIds ?? (await getUserCarcasseEntityIds(user.id));
-  if (fei.premier_detenteur_entity_id && entityIds.includes(fei.premier_detenteur_entity_id)) {
-    return true;
-  }
+  if (await isFeiOwner(user, fei, entityIds)) return true;
 
   const accessWhere = await getCarcasseAccessWhere(user, entityIds);
   if (!accessWhere) return false;

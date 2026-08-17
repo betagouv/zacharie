@@ -95,6 +95,103 @@ describe('syncFei — écriture sur une fiche tierce', () => {
   });
 });
 
+describe('syncFei — auto-attribution des colonnes de rattachement', () => {
+  // `canWriteFei` accorde l'écriture sur ces colonnes-là : un détenteur aval qui les réécrit se
+  // donne un accès à la fiche que la fin du circuit ne lui retirera plus.
+  test("un détenteur aval ne peut pas s'inscrire comme premier détenteur", async () => {
+    vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(feiTierce);
+    // Il détient une carcasse de la fiche : c'est par là qu'il obtient le droit d'écrire.
+    vi.mocked(prisma.carcasse.count).mockResolvedValue(1);
+
+    await expect(
+      syncFei(
+        'FEI-VICTIME',
+        { numero: 'FEI-VICTIME', premier_detenteur_entity_id: 'entity-etg-2' } as any,
+        attaquant
+      )
+    ).rejects.toThrow(/modifier les détenteurs/i);
+
+    expect(prisma.fei.update).not.toHaveBeenCalled();
+  });
+
+  test('renvoyer ces colonnes inchangées ne bloque pas la synchro', async () => {
+    vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(feiTierce);
+    vi.mocked(prisma.carcasse.count).mockResolvedValue(1);
+    vi.mocked(prisma.fei.update).mockResolvedValueOnce(feiTierce);
+
+    await syncFei(
+      'FEI-VICTIME',
+      {
+        numero: 'FEI-VICTIME',
+        resume_nombre_de_carcasses: '1',
+        premier_detenteur_entity_id: 'entity-asso',
+        examinateur_initial_user_id: proprietaire.id,
+      } as any,
+      attaquant
+    );
+
+    expect(prisma.fei.update).toHaveBeenCalled();
+  });
+
+  test('le premier détenteur désigné, lui, peut les modifier', async () => {
+    vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(feiTierce);
+    vi.mocked(prisma.fei.update).mockResolvedValueOnce(feiTierce);
+
+    await syncFei(
+      'FEI-VICTIME',
+      { numero: 'FEI-VICTIME', premier_detenteur_user_id: proprietaire.id } as any,
+      proprietaire
+    );
+
+    expect(prisma.fei.update).toHaveBeenCalled();
+  });
+});
+
+describe("syncCarcasse — auto-attribution de l'examen initial", () => {
+  // `examinateur_initial_user_id` commande l'approbation des demandes de modification : se
+  // l'attribuer revient à approuver ses propres demandes.
+  test("un détenteur aval ne peut pas s'attribuer l'examen initial", async () => {
+    vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(feiTierce);
+    vi.mocked(prisma.carcasse.findFirst).mockResolvedValueOnce(carcasseTierce);
+    vi.mocked(prisma.carcasse.findMany).mockResolvedValue([{ zacharie_carcasse_id: 'ZC-VICTIME' }] as any);
+
+    await expect(
+      syncCarcasse(
+        'FEI-VICTIME',
+        'ZC-VICTIME',
+        { fei_numero: 'FEI-VICTIME', examinateur_initial_user_id: attaquant.id } as any,
+        attaquant
+      )
+    ).rejects.toThrow(/modifier les détenteurs/i);
+
+    expect(prisma.carcasse.update).not.toHaveBeenCalled();
+  });
+
+  test('recopier la valeur de la fiche reste possible (carcasse manquante ajoutée à la réception)', async () => {
+    vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(feiTierce);
+    vi.mocked(prisma.carcasse.findFirst).mockResolvedValueOnce(null);
+    vi.mocked(prisma.carcasse.count).mockResolvedValue(1);
+    vi.mocked(prisma.carcasse.create).mockResolvedValueOnce({
+      ...carcasseTierce,
+      examinateur_initial_user_id: null,
+    } as any);
+    vi.mocked(prisma.carcasse.update).mockResolvedValueOnce(carcasseTierce);
+
+    await syncCarcasse(
+      'FEI-VICTIME',
+      'ZC-VICTIME',
+      {
+        fei_numero: 'FEI-VICTIME',
+        numero_bracelet: 'BR-VICTIME',
+        examinateur_initial_user_id: proprietaire.id,
+      } as any,
+      attaquant
+    );
+
+    expect(prisma.carcasse.update).toHaveBeenCalled();
+  });
+});
+
 describe('syncCarcasse — écriture sur une carcasse tierce', () => {
   test('une carcasse hors périmètre ne peut pas être modifiée', async () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(feiTierce);

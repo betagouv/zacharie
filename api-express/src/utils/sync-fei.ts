@@ -3,7 +3,18 @@ import { sanitize } from '~/utils/sanitize';
 import { Fei, Prisma, User, UserRoles } from '@prisma/client';
 import { capture } from '~/third-parties/sentry';
 import { z } from 'zod';
-import { canWriteFei } from '~/utils/carcasse-access';
+import { canWriteFei, isFeiOwner } from '~/utils/carcasse-access';
+
+// Colonnes de rattachement : ce sont elles qui donnent le droit d'écrire sur la fiche
+// (`canWriteFei`). Un détenteur aval, qui n'y accède que parce qu'il détient des carcasses, ne peut
+// donc pas les réécrire — il s'y inscrirait pour garder l'accès une fois les carcasses parties, et
+// évincerait au passage le premier détenteur désigné.
+const FEI_OWNERSHIP_FIELDS = [
+  Prisma.FeiScalarFieldEnum.created_by_user_id,
+  Prisma.FeiScalarFieldEnum.examinateur_initial_user_id,
+  Prisma.FeiScalarFieldEnum.premier_detenteur_user_id,
+  Prisma.FeiScalarFieldEnum.premier_detenteur_entity_id,
+] as const;
 
 export interface SaveFeiResult {
   savedFei: Fei;
@@ -93,6 +104,17 @@ export async function syncFei(
   // quel compte activé pouvait écraser les champs d'une fiche tierce en connaissant son numéro.
   if (existingFei && !(await canWriteFei(user, existingFei, opts.userEntityIds))) {
     throw new Error("Vous n'avez pas accès à cette fiche");
+  }
+
+  // On ne refuse que les valeurs réellement différentes : un client renvoie la fiche entière à
+  // chaque synchro, y compris les colonnes qu'il n'a pas touchées.
+  if (existingFei && !(await isFeiOwner(user, existingFei, opts.userEntityIds))) {
+    for (const field of FEI_OWNERSHIP_FIELDS) {
+      if (!body.hasOwnProperty(field)) continue;
+      if ((body[field] || null) !== existingFei[field]) {
+        throw new Error('Vous ne pouvez pas modifier les détenteurs de cette fiche');
+      }
+    }
   }
 
   const nextFei: Prisma.FeiUncheckedUpdateInput = {

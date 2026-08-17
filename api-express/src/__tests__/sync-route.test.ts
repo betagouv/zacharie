@@ -39,6 +39,7 @@ vi.mock('~/utils/carcasse-access', () => ({
   getAccessibleCarcasseIds: vi.fn(async (_user, ids: Array<string>) => new Set(ids)),
   isCarcasseAccessible: vi.fn().mockResolvedValue(true),
   canWriteFei: vi.fn().mockResolvedValue(true),
+  isFeiOwner: vi.fn().mockResolvedValue(true),
 }));
 
 import { syncFei } from '~/utils/sync-fei';
