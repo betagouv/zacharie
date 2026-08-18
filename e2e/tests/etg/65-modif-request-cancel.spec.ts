@@ -36,7 +36,7 @@ test('Annulation : le demandeur peut annuler sa propre demande pendante', async 
     (resp) => resp.url().includes('/sync') && resp.request().method() === 'POST' && resp.ok(),
     { timeout: 15000 }
   );
-  await page.getByRole('button', { name: 'Annuler ma demande' }).click();
+  await page.getByRole('button', { name: 'Annuler la correction' }).click();
 
   // Banner gone + numéro d'origine rétabli.
   await expect(page.getByText('Numéro de marquage corrigé')).toHaveCount(0, { timeout: 10000 });
@@ -46,10 +46,6 @@ test('Annulation : le demandeur peut annuler sa propre demande pendante', async 
   await expect(page.getByRole('button', { name: 'Daim N° MM-001-FIX Mise à' })).toHaveCount(0);
   await syncResponse;
 
-  // The rename button is available again (one-pending-per-carcasse rule no longer applies).
-  await page.getByRole('button', { name: 'Daim N° MM-001-001 Mise à' }).click();
-  await expect(page.getByRole('button', { name: 'Corriger le numéro de marquage' })).toBeVisible();
-
   // Reconnexion : le rétablissement a bien été persisté côté serveur.
   await logoutAndConnect(page, 'etg-1@example.fr');
   await page.getByRole('link', { name: feiId }).click();
@@ -57,4 +53,9 @@ test('Annulation : le demandeur peut annuler sa propre demande pendante', async 
     timeout: 10000,
   });
   await expect(page.getByRole('button', { name: 'Daim N° MM-001-FIX Mise à' })).toHaveCount(0);
+
+  // The rename button is available again (one-pending-per-carcasse rule no longer applies).
+  // En dernier : la modale reste ouverte, elle masquerait le menu de déconnexion.
+  await page.getByRole('button', { name: 'Daim N° MM-001-001 Mise à' }).click();
+  await expect(page.getByRole('button', { name: 'Corriger le numéro de marquage' })).toBeVisible();
 });
