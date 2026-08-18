@@ -6,7 +6,8 @@ import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import { CarcasseModificationRequestStatus, CarcasseModificationRequestType } from '@prisma/client';
 
-// Page dashboard listant les demandes en attente où l'utilisateur est l'examinateur initial.
+// Page dashboard listant les demandes en cours où l'utilisateur est l'examinateur initial.
+// Les demandes sont indicatives : elles ne bloquent ni l'intermédiaire ni le SVI.
 // Le lien des notifications email/SMS/push pointe vers /app/chasseur/demandes-de-modification.
 export default function ChasseurDemandesDeModification() {
   const user = useUser((state) => state.user);
@@ -43,14 +44,15 @@ export default function ChasseurDemandesDeModification() {
       </title>
       <h1>Demandes de modification</h1>
       <p className="opacity-80">
-        Une correction de numéro de marquage ou une validation de mise sur le marché vous est demandée. En
-        tant qu'examinateur initial, approuvez ou refusez la demande.
+        Un intermédiaire a corrigé un numéro de marquage ou ajouté une carcasse sur une de vos fiches. C'est
+        déjà pris en compte : les carcasses continuent leur parcours. En tant qu'examinateur initial, vous
+        pouvez confirmer ou contester la modification, et signer l'examen initial des carcasses ajoutées.
       </p>
       {pendingForMe.length === 0 && (
         <Alert
           severity="info"
-          title="Aucune demande en attente"
-          description="Aucun intermédiaire ne vous demande de modification actuellement."
+          title="Aucune demande en cours"
+          description="Aucun intermédiaire n'a signalé de modification actuellement."
         />
       )}
       {Object.entries(groupedByFei).map(([feiNumero, requests]) => {
@@ -72,10 +74,10 @@ export default function ChasseurDemandesDeModification() {
                 return (
                   <li
                     key={r.id}
-                    className="rounded-sm border border-orange-300 bg-orange-50 p-3"
+                    className="rounded-sm border border-blue-300 bg-blue-50 p-3"
                   >
                     <p className="m-0 font-semibold">
-                      {isRename ? 'Changement de numéro de marquage' : 'Nouvelle carcasse à signer'}
+                      {isRename ? 'Numéro de marquage corrigé' : 'Carcasse ajoutée à signer'}
                     </p>
                     {isRename && (
                       <p className="m-0 text-sm">
@@ -94,7 +96,7 @@ export default function ChasseurDemandesDeModification() {
                         to={`/app/chasseur/demandes-de-modification/${r.id}`}
                         className="fr-btn fr-btn--secondary fr-btn--sm"
                       >
-                        Voir et traiter
+                        Voir la demande
                       </Link>
                     </div>
                   </li>

@@ -809,7 +809,9 @@ function EtgFeiContent({
                   {intermediaireCarcasses.map((intermediaireCarcasse) => {
                     const carcasse = carcasses[intermediaireCarcasse.zacharie_carcasse_id];
                     return (
-                      <Fragment key={carcasse.numero_bracelet}>
+                      // Clé sur l'id stable : le numéro de marquage est modifiable (correction par un
+                      // intermédiaire), une clé dessus démonterait la carte en pleine saisie.
+                      <Fragment key={carcasse.zacharie_carcasse_id}>
                         <CarcasseIntermediaireComp
                           intermediaire={intermediaire}
                           canEdit={effectiveCanEditCarcasseDecision}
@@ -847,7 +849,7 @@ function EtgFeiContent({
                       return (
                         <CardCarcasse
                           carcasse={carcasse}
-                          key={carcasse.numero_bracelet}
+                          key={carcasse.zacharie_carcasse_id}
                         />
                       );
                     })}
@@ -880,10 +882,10 @@ function EtgFeiContent({
                     .filter((c) => c.svi_carcasse_status === CarcasseStatus.SANS_DECISION)
                     .map((carcasse) => {
                       return (
-                        <Fragment key={carcasse.numero_bracelet}>
+                        <Fragment key={carcasse.zacharie_carcasse_id}>
                           <CardCarcasse
                             carcasse={carcasse}
-                            key={carcasse.numero_bracelet}
+                            key={carcasse.zacharie_carcasse_id}
                             className="[zoom:1.3] [&_.text-manquante]:text-gray-500! [&.border-manquante]:border-gray-500!"
                           />
                         </Fragment>
