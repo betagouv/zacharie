@@ -156,6 +156,9 @@ function formatRoles(user: User) {
         roles.push('ETG transporteur');
       }
       break;
+    case UserRoles.COMMERCE_DE_DETAIL:
+      roles.push('Commerce de détail');
+      break;
     default:
       roles.push('Partenaire');
       break;
@@ -176,6 +179,59 @@ interface BrevoContact extends brevo.GetExtendedContactDetails {
     ADRESSE: string;
     NUM_EXAMINATEUR: string;
     EXT_ID: string;
+  };
+}
+
+// Attributs de profil du contact Brevo, identiques à la création et à la mise à jour.
+async function formatContactAttributes(
+  user: User
+): Promise<Omit<BrevoContact['attributes'], 'LANDLINE_NUMBER'>> {
+  // let LANDLINE_NUMBER = '';
+  let SMS = '';
+  let WHATSAPP = '';
+  let TELEPHONE_PORTABLE = '';
+  let TELEPHONE_FIXE = '';
+  if (user.telephone) {
+    const phoneNumber = parsePhoneNumber(user.telephone, 'FR');
+    if (phoneNumber?.isPossible()) {
+      if (phoneNumber.number.startsWith('+336') || phoneNumber.number.startsWith('+337')) {
+        // SMS et WHATSAPP sont uniques dans Brevo : on ne les remplit que si un seul compte porte ce numéro
+        const existingUsersWithSamePhoneNumber = await prisma.user.findMany({
+          where: { telephone: user.telephone },
+        });
+        if (existingUsersWithSamePhoneNumber.length === 1) {
+          SMS = phoneNumber.number;
+          WHATSAPP = phoneNumber.number;
+        }
+        TELEPHONE_PORTABLE = phoneNumber.number;
+      } else {
+        // LANDLINE_NUMBER = phoneNumber.number;
+        TELEPHONE_FIXE = phoneNumber.number;
+      }
+    }
+  }
+
+  let ADRESSE = '';
+  if (user.addresse_ligne_1) {
+    ADRESSE += user.addresse_ligne_1;
+    if (user.addresse_ligne_2) {
+      ADRESSE += `\n${user.addresse_ligne_2}`;
+    }
+    ADRESSE += `\n${user.code_postal} ${user.ville}`;
+  }
+
+  return {
+    PRENOM: user.prenom,
+    NOM: user.nom_de_famille,
+    ROLE: formatRoles(user),
+    // LANDLINE_NUMBER: LANDLINE_NUMBER,
+    SMS: SMS,
+    WHATSAPP: WHATSAPP,
+    TELEPHONE_PORTABLE: TELEPHONE_PORTABLE,
+    TELEPHONE_FIXE: TELEPHONE_FIXE,
+    ADRESSE: ADRESSE,
+    NUM_EXAMINATEUR: user.numero_cfei,
+    EXT_ID: user.id,
   };
 }
 
@@ -222,9 +278,9 @@ async function createBrevoContact(props: User, createdBy: 'ADMIN' | 'USER'): Pro
     createContact.email = props.email;
     createContact.extId = props.id;
     createContact.attributes = {
+      ...(await formatContactAttributes(props)),
       CREATED_BY: [createdBy],
       'CREATION DATE': props.created_at.toISOString(),
-      ROLE: formatRoles(props),
     };
 
     const result = await apiInstance.createContact(createContact);
@@ -343,54 +399,8 @@ async function updateBrevoContact(props: User): Promise<User> {
       });
     }
 
-    // let LANDLINE_NUMBER = '';
-    let SMS = '';
-    let WHATSAPP = '';
-    let TELEPHONE_PORTABLE = '';
-    let TELEPHONE_FIXE = '';
-    if (props.telephone) {
-      const phoneNumber = parsePhoneNumber(props.telephone, 'FR');
-      if (phoneNumber?.isPossible()) {
-        if (phoneNumber.number.startsWith('+336') || phoneNumber.number.startsWith('+337')) {
-          const existingUsersWithSamePhoneNumber = await prisma.user.findMany({
-            where: { telephone: props.telephone },
-          });
-          if (existingUsersWithSamePhoneNumber.length === 1) {
-            SMS = phoneNumber.number;
-            WHATSAPP = phoneNumber.number;
-          }
-          TELEPHONE_PORTABLE = phoneNumber.number;
-        } else {
-          // LANDLINE_NUMBER = phoneNumber.number;
-          TELEPHONE_FIXE = phoneNumber.number;
-        }
-      }
-    }
-
-    let ADRESSE = '';
-    if (props.addresse_ligne_1) {
-      ADRESSE += props.addresse_ligne_1;
-      if (props.addresse_ligne_2) {
-        ADRESSE += `\n${props.addresse_ligne_2}`;
-      }
-      ADRESSE += `\n${props.code_postal} ${props.ville}`;
-    }
-
     const updateContact = new brevo.UpdateContact();
-    updateContact.attributes = {
-      PRENOM: props.prenom,
-      NOM: props.nom_de_famille,
-      ROLE: formatRoles(props),
-      // LANDLINE_NUMBER: LANDLINE_NUMBER,
-      SMS: SMS,
-      WHATSAPP: WHATSAPP,
-      TELEPHONE_PORTABLE: TELEPHONE_PORTABLE,
-      TELEPHONE_FIXE: TELEPHONE_FIXE,
-      ADRESSE: ADRESSE ? ADRESSE : '',
-      NUM_EXAMINATEUR: props.numero_cfei,
-      EXT_ID: props.id,
-    };
-    console.log(updateContact.attributes);
+    updateContact.attributes = await formatContactAttributes(props);
     const result = await apiInstance.updateContact(props.brevo_contact_id.toString(), updateContact);
     return props;
   } catch (error) {
