@@ -56,14 +56,14 @@ export function PendingModificationBanner({ carcasse }: { carcasse: Carcasse }) 
   const title = isRename ? `Numéro de marquage corrigé` : `Carcasse ajoutée après l'examen initial`;
 
   const detail = isRename
-    ? `Le numéro relevé sur la carcasse est « ${pending.numero_bracelet_after} », au lieu de « ${pending.numero_bracelet_before} » saisi à l'examen initial. La correction est déjà appliquée ; l'examinateur initial en a été informé.`
+    ? `Le numéro relevé sur la carcasse est « ${pending.numero_bracelet_after} », au lieu de « ${pending.numero_bracelet_before} » saisi à l'examen initial. L'examinateur initial en a été informé.`
     : `Cette carcasse a été ajoutée par un intermédiaire. Elle suit son parcours normalement ; l'examinateur initial doit encore signer son examen initial.`;
 
   const requester = [requestedByUser?.prenom, requestedByUser?.nom_de_famille].filter(Boolean).join(' ');
   const entityName = requestedByEntity?.nom_d_usage ?? '';
   const requesterLine =
     requester || entityName
-      ? `Demande faite par ${requester || 'un intermédiaire'}${entityName ? ` (${entityName})` : ''} le ${dayjs(
+      ? `Correction faite par ${requester || 'un intermédiaire'}${entityName ? ` (${entityName})` : ''} le ${dayjs(
           pending.requested_at
         ).format('DD/MM/YYYY HH:mm')}.`
       : '';
@@ -106,7 +106,7 @@ export function PendingModificationBanner({ carcasse }: { carcasse: Carcasse }) 
                 onClick={onCancel}
                 type="button"
               >
-                Annuler ma demande
+                Annuler la correction
               </Button>
             </div>
           )}

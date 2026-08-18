@@ -37,8 +37,10 @@ test('Rename contesté : le numéro corrigé reste, le désaccord est tracé', a
   await page.getByRole('button', { name: 'Voir les demandes' }).click();
   await page.getByRole('link', { name: 'Voir la demande' }).first().click();
 
+  // Le chemin « désaccord » est replié par défaut : on l'ouvre, on motive, on envoie.
+  await page.getByRole('button', { name: 'Contester le numéro' }).click();
   await page.getByLabel('Motif (optionnel)').fill("Non, c'est bien 002");
-  await page.getByRole('button', { name: 'Contester' }).click();
+  await page.getByRole('button', { name: 'Envoyer ma contestation' }).click();
   await expect(page).toHaveURL(/\/app\/chasseur\/demandes-de-modification$/);
 
   // ETG side: le numéro corrigé est CONSERVÉ (le refus ne rétablit pas l'ancien).
