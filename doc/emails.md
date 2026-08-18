@@ -25,16 +25,17 @@ Tout passe par **Brevo** — pas de SMTP / nodemailer / autre.
 | --------------------------------------------- | ------------------------ | -------------------------------------------------------------------- | ----------------------------------------------------------- |
 | Formulaire de contact (`POST /utils/contact`) | `contact@…` + l'émetteur | `Contact : {prenom} {nom} - {email} - {object}`                      | `controllers/utils.ts:34`                                   |
 | Demande de reset mot de passe                 | l'user (prod)            | `[Zacharie] Réinitialisation de votre mot de passe`                  | `controllers/user.ts:469`                                   |
+| Mot de passe changé depuis le profil          | l'user (prod)            | `[Zacharie] Votre mot de passe a été modifié`                        | `controllers/user.ts:662`                                   |
 | Invitation d'un user (entité / partenaire)    | l'invité                 | `{prenom} {nom} vous a invité à rejoindre Zacharie`                  | `utils/invite-user.ts:33`                                   |
-| Fin d'onboarding                              | l'user                   | `Votre inscription sur Zacharie (fiches d'examen initial du gibier)` | `controllers/user.ts:1154`                                  |
-| Compte activé (user ou admin)                 | l'user                   | `Votre compte Zacharie a été activé`                                 | `controllers/user.ts:1167`, `controllers/admin/user.ts:292` |
+| Fin d'onboarding                              | l'user                   | `Votre inscription sur Zacharie (fiches d'examen initial du gibier)` | `controllers/user.ts:1245`                                  |
+| Compte activé (user ou admin)                 | l'user                   | `Votre compte Zacharie a été activé`                                 | `controllers/user.ts:1258`, `controllers/admin/user.ts:292` |
 
 ## 2. Notices internes équipe (→ `contact@zacharie.beta.gouv.fr`)
 
 | Déclencheur                        | Objet                                                                  | Fichier                             |
 | ---------------------------------- | ---------------------------------------------------------------------- | ----------------------------------- |
 | Nouvelle ouverture de compte       | `Nouvelle ouverture de compte pour {email}`                            | `brevo.ts:143,172`                  |
-| Inscription finie / n° CFEI changé | `Inscription finie pour {email}…` / `Numéro CFEI changé pour {email}…` | `user.ts:1132`, `admin/user.ts:273` |
+| Inscription finie / n° CFEI changé | `Inscription finie pour {email}…` / `Numéro CFEI changé pour {email}…` | `user.ts:1219`, `admin/user.ts:273` |
 | Asso de chasse pré-enregistrée     | `Nouvelle association de chasse pré-enregistrée dans Zacharie`         | `entite.ts:259`                     |
 | Partenaire pré-enregistré          | `Nouveau partenaire pré-enregistré dans Zacharie`                      | `entite.ts:394`                     |
 | CCG pré-enregistré                 | `Nouveau CCG pré-enregistré dans Zacharie`                             | `entite.ts:469`                     |

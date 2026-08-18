@@ -22,6 +22,7 @@ import TrichineTableau from '@app/routes/trichine/trichine-tableau';
 import TrichineNouveauPool from '@app/routes/trichine/trichine-nouveau-pool';
 import TrichineNouvelleFTP from '@app/routes/trichine/trichine-nouvelle-ftp';
 import TrichineFTPDetail from '@app/routes/trichine/trichine-ftp-detail';
+import ChangerMonMotDePasse from '@app/routes/profil/changer-mon-mot-de-passe';
 
 export default function RouterChasseur() {
   return (
@@ -61,6 +62,10 @@ export default function RouterChasseur() {
         <Route
           path="coordonnees"
           element={<ChasseurCoordonnees />}
+        />
+        <Route
+          path="mot-de-passe"
+          element={<ChangerMonMotDePasse />}
         />
         <Route
           path="informations-de-chasse"

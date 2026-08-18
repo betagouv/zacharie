@@ -33,6 +33,14 @@ export default function useCollecteurNavigationMenu(): MainNavigationProps.Item[
           },
         },
         {
+          text: 'Changer de mot de passe',
+          isActive: location.pathname === '/app/collecteur/profil/mot-de-passe',
+          linkProps: {
+            href: '#',
+            to: '/app/collecteur/profil/mot-de-passe',
+          },
+        },
+        {
           text: 'Notifications',
           isActive: location.pathname === '/app/collecteur/profil/notifications',
           linkProps: {
