@@ -70,7 +70,7 @@ export default function CarcassesExaminateur({
               <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                 {restantes.map((carcasse: Carcasse) => (
                   <CarcasseExaminateur
-                    key={carcasse.numero_bracelet}
+                    key={carcasse.zacharie_carcasse_id}
                     carcasse={carcasse}
                     canEditAsExaminateurInitial={canEdit}
                     canEditAsPremierDetenteur={canEditAsPremierDetenteur}
@@ -88,7 +88,7 @@ export default function CarcassesExaminateur({
               <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                 {group.map((carcasse: Carcasse) => (
                   <CarcasseExaminateur
-                    key={carcasse.numero_bracelet}
+                    key={carcasse.zacharie_carcasse_id}
                     carcasse={carcasse}
                     canEditAsExaminateurInitial={canEdit}
                     canEditAsPremierDetenteur={canEditAsPremierDetenteur}
@@ -102,7 +102,7 @@ export default function CarcassesExaminateur({
         <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
           {carcasses.map((carcasse: Carcasse) => (
             <CarcasseExaminateur
-              key={carcasse.numero_bracelet}
+              key={carcasse.zacharie_carcasse_id}
               carcasse={carcasse}
               canEditAsExaminateurInitial={canEdit}
               canEditAsPremierDetenteur={canEditAsPremierDetenteur}
