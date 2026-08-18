@@ -24,29 +24,31 @@ test('Examinateur dashboard alert modal + nav badge + grouping', async ({ page }
   await connectWith(page, 'etg-1@example.fr');
   await page.getByRole('link', { name: feiId }).click();
   await page.getByRole('button', { name: 'Daim N° MM-001-001 Mise à' }).click();
-  await page.getByRole('button', { name: 'Signaler un numéro de marquage incorrect' }).click();
+  await page.getByRole('button', { name: 'Corriger le numéro de marquage' }).click();
   await page.getByLabel('Numéro de marquage correct').fill('MM-001-FIX');
-  await page.getByRole('button', { name: 'Envoyer la demande' }).click();
-  await expect(page.getByText('Modification du numéro de marquage').first()).toBeVisible({
+  await page.getByRole('button', { name: 'Corriger le numéro' }).click();
+  await expect(page.getByText('Numéro de marquage corrigé').first()).toBeVisible({
     timeout: 10000,
   });
 
   // Examinateur lands on /app/chasseur — modal pops automatically.
   await logoutAndConnect(page, 'examinateur@example.fr');
   await expect(page).toHaveURL(/\/app\/chasseur$/);
-  await expect(page.getByRole('heading', { name: 'Demandes de modification en attente' })).toBeVisible({
+  await expect(page.getByRole('heading', { name: 'Modifications signalées sur vos carcasses' })).toBeVisible({
     timeout: 10000,
   });
-  await expect(page.getByText(/1 demande de modification en attente/)).toBeVisible();
+  await expect(page.getByText(/a signalé 1 modification/)).toBeVisible();
 
   // "Plus tard" closes the modal without navigating.
   await page.getByRole('button', { name: 'Plus tard' }).click();
-  await expect(page.getByRole('heading', { name: 'Demandes de modification en attente' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Modifications signalées sur vos carcasses' })).toHaveCount(
+    0
+  );
   await expect(page).toHaveURL(/\/app\/chasseur$/);
 
   // Re-navigating to /app/chasseur re-opens the modal.
   await page.goto('http://localhost:3290/app/chasseur');
-  await expect(page.getByRole('heading', { name: 'Demandes de modification en attente' })).toBeVisible({
+  await expect(page.getByRole('heading', { name: 'Modifications signalées sur vos carcasses' })).toBeVisible({
     timeout: 10000,
   });
 
@@ -63,5 +65,7 @@ test('No pending demandes → no modal pop-up', async ({ page }) => {
   await connectWith(page, 'examinateur@example.fr');
   await expect(page).toHaveURL(/\/app\/chasseur/);
   // Nothing pending in this seed → no alert modal.
-  await expect(page.getByRole('heading', { name: 'Demandes de modification en attente' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Modifications signalées sur vos carcasses' })).toHaveCount(
+    0
+  );
 });

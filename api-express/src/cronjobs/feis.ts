@@ -19,7 +19,7 @@ import {
 import updateCarcasseStatus from '~/utils/get-carcasse-status';
 import { isCarcasseDone } from '~/utils/is-carcasse-done';
 import { sendWebhook } from '~/utils/api';
-import { CarcasseModificationRequestStatus, FeiOwnerRole, Prisma } from '@prisma/client';
+import { FeiOwnerRole, Prisma } from '@prisma/client';
 
 // /*
 // *
@@ -64,14 +64,8 @@ export function getCarcassesToAutoCloseWhere(): Prisma.CarcasseWhereInput {
     svi_closed_at: null,
     svi_automatic_closed_at: null,
     deleted_at: null,
-    // Skip carcasses with a pending modif request — the examinateur initial has not yet
-    // approved/rejected, so the inspection cycle is not complete for this carcasse.
-    CarcasseModificationRequests: {
-      none: {
-        status: CarcasseModificationRequestStatus.PENDING,
-        deleted_at: null,
-      },
-    },
+    // Une demande de modification en cours n'exclut pas la carcasse : elle est indicative, elle ne
+    // bloque ni l'ETG ni le SVI, donc elle ne doit pas non plus retenir l'auto-clôture.
   };
 }
 

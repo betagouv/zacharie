@@ -9,49 +9,64 @@ test.beforeEach(async () => {
 
 test.use({ launchOptions: { slowMo: 100 } });
 
-// Scenario 79 — A pending modif request is purely informative and does NOT block SVI inspection.
-// We inject a pending request from another role first, by simulating ETG signaling an incorrect
-// marquage for one of the carcasses already assigned to SVI in the SVI seed. Then the SVI logs in
-// and sees:
-//   - the (soft, info-level) "Modification du numéro de marquage" banner on the carcasse
-//   - on the inspection page, the IPM1/IPM2 forms ARE rendered (no blocking message)
+// Scenario 79 — Une demande de modification est indicative : la correction du marquage est appliquée
+// tout de suite (sans l'examinateur) et le SVI peut inspecter alors que la demande est encore PENDING.
 test('SVI can still inspect when a pending modif exists on the carcasse', async ({ page }) => {
   const feiId = 'ZACH-20250707-QZ6E0-235243';
 
-  // Step 1: ETG-1 (still has CarcasseIntermediaire row from the SVI seed) signals a wrong marquage.
+  // Step 1: ETG-1 (still has CarcasseIntermediaire row from the SVI seed) corrects a wrong marquage.
+  // Le renommage est immédiat : la carte porte le nouveau numéro sans aucune action de l'examinateur.
   await connectWith(page, 'etg-1@example.fr');
   await page.getByRole('link', { name: feiId }).click();
   const carcasseBtn = page.getByRole('button', { name: 'Daim N° MM-001-001 Mise à' }).first();
   await carcasseBtn.scrollIntoViewIfNeeded();
   await carcasseBtn.click();
-  await page.getByRole('button', { name: 'Signaler un numéro de marquage incorrect' }).click();
+  await page.getByRole('button', { name: 'Corriger le numéro de marquage' }).click();
   await page.getByLabel('Numéro de marquage correct').fill('MM-001-NEW');
-  await page.getByRole('button', { name: 'Envoyer la demande' }).click();
-  await expect(page.getByText('Modification du numéro de marquage').first()).toBeVisible({
+  await page.getByRole('button', { name: 'Corriger le numéro' }).click();
+  await expect(page.getByText('Numéro de marquage corrigé').first()).toBeVisible({ timeout: 10000 });
+  await expect(page.getByRole('button', { name: 'Daim N° MM-001-NEW Mise à' })).toBeVisible({
     timeout: 10000,
   });
+  await expect(page.getByRole('button', { name: 'Daim N° MM-001-001 Mise à' })).toHaveCount(0);
 
-  // Step 2: SVI logs in. The informative banner is attached to the carcasse on the inspection list.
+  // Step 2: SVI logs in. The informative banner is attached to the carcasse on the inspection list,
+  // sous le nouveau numéro.
   await logoutAndConnect(page, 'svi@example.fr');
   await page.getByRole('link', { name: feiId }).click();
-  await expect(page.getByText('Modification du numéro de marquage').first()).toBeVisible({
-    timeout: 10000,
-  });
+  const sviCard = page.getByRole('button', { name: /Daim.*MM-001-NEW/ }).first();
+  await expect(sviCard).toBeVisible({ timeout: 10000 });
+  await expect(page.getByText('Numéro de marquage corrigé').first()).toBeVisible();
 
-  // Step 3: opening the carcasse inspection page — the IPM1/IPM2 forms are rendered and usable.
-  // The old blocking message must NOT appear.
+  // Step 3: la demande est toujours PENDING et le SVI enregistre pourtant une IPM1 complète
+  // (acceptation en un clic depuis la fiche). C'est l'assertion qui casserait si le blocage revenait.
+  const accepterBtn = sviCard.getByRole('button', { name: 'Accepter' });
+  await accepterBtn.scrollIntoViewIfNeeded();
+  const syncResponse = page.waitForResponse(
+    (resp) => resp.url().includes('/sync') && resp.request().method() === 'POST' && resp.ok(),
+    { timeout: 15000 }
+  );
+  await accepterBtn.click();
+  await expect(sviCard.getByText(/Décision IPM1 : Acceptée/)).toBeVisible({ timeout: 10000 });
+  await syncResponse;
+
+  // Step 4: la page d'inspection reste utilisable et la bannière informative y est toujours affichée.
   await page
-    .getByRole('button', { name: /Daim.*MM-001-001/ })
+    .getByRole('button', { name: /Daim.*MM-001-NEW/ })
     .first()
     .click();
   await expect(page).toHaveURL(/\/app\/svi\/carcasse-svi\//);
   await expect(page.getByText('Inspection Post-Mortem 1 (IPM1)').first()).toBeVisible();
   await expect(page.getByText("Carcasse présentée à l'inspection").first()).toBeVisible();
+  await expect(page.getByText('Numéro de marquage corrigé').first()).toBeVisible();
+
+  // Step 5: reconnexion — la décision a bien été persistée côté serveur malgré la demande en cours.
+  await logoutAndConnect(page, 'svi@example.fr');
+  await page.getByRole('link', { name: feiId }).click();
   await expect(
-    page.getByText(
-      "Tant que l'examinateur initial n'a pas fait approuvé la mise sur le marché, il est impossible de réaliser les inspections post-mortem."
-    )
-  ).toHaveCount(0);
-  // The informative banner is still shown on the inspection detail page.
-  await expect(page.getByText('Modification du numéro de marquage').first()).toBeVisible();
+    page
+      .getByRole('button', { name: /Daim.*MM-001-NEW/ })
+      .first()
+      .getByText(/Décision IPM1 : Acceptée/)
+  ).toBeVisible({ timeout: 10000 });
 });

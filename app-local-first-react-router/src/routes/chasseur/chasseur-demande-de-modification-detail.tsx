@@ -32,8 +32,8 @@ const anomaliesAbatsModal = createModal({
   id: 'modif-anomalies-abats-modal',
 });
 
-// Page de détail d'une demande, pour approuver ou refuser.
-// - RENAME : confirmation avant/après + boutons.
+// Page de détail d'une demande. La modification est déjà appliquée : l'examinateur donne son avis.
+// - RENAME : rappel avant/après + confirmer ou contester.
 // - NEW    : formulaire d'examen initial à remplir par l'examinateur + signature.
 export default function ChasseurDemandeDeModificationDetail() {
   const { request_id } = useParams<{ request_id: string }>();
@@ -119,6 +119,7 @@ export default function ChasseurDemandeDeModificationDetail() {
   }
 
   const alreadyTreated = request.status !== CarcasseModificationRequestStatus.PENDING;
+  const isRename = request.type === CarcasseModificationRequestType.BRACELET_RENAME;
 
   const onApprove = async () => {
     setError(null);
@@ -157,10 +158,7 @@ export default function ChasseurDemandeDeModificationDetail() {
     navigate('/app/chasseur/demandes-de-modification');
   };
 
-  const pageTitle =
-    request.type === CarcasseModificationRequestType.BRACELET_RENAME
-      ? 'Changement de numéro de marquage'
-      : "Examen initial d'une carcasse ajoutée";
+  const pageTitle = isRename ? 'Numéro de marquage corrigé' : "Examen initial d'une carcasse ajoutée";
 
   return (
     <div className="fr-container fr-py-4w">
@@ -177,11 +175,22 @@ export default function ChasseurDemandeDeModificationDetail() {
         })()}
       </p>
 
-      {alreadyTreated && (
+      {alreadyTreated ? (
         <Alert
           severity="info"
           title="Cette demande a déjà été traitée"
           description={`Statut : ${request.status}`}
+        />
+      ) : (
+        <Alert
+          severity="info"
+          className="fr-mb-4w"
+          title={isRename ? 'La correction est déjà appliquée' : 'La carcasse suit déjà son parcours'}
+          description={
+            isRename
+              ? `Le numéro de marquage de cette carcasse est déjà « ${request.numero_bracelet_after} ». Votre retour est informatif : il ne bloque ni l'intermédiaire ni le SVI.`
+              : 'La carcasse a rejoint votre fiche et peut être inspectée par le SVI sans attendre. Il vous reste à signer son examen initial.'
+          }
         />
       )}
 
@@ -193,7 +202,7 @@ export default function ChasseurDemandeDeModificationDetail() {
             {request.numero_bracelet_before}
           </p>
           <p className="mb-2">
-            <span className="font-semibold">Numéro proposé par {entityLabel} :</span>{' '}
+            <span className="font-semibold">Numéro relevé par {entityLabel} :</span>{' '}
             <span className="font-bold">{request.numero_bracelet_after}</span>
           </p>
           {request.comment_intermediaire && (
@@ -347,15 +356,15 @@ export default function ChasseurDemandeDeModificationDetail() {
               priority="primary"
               onClick={onApprove}
             >
-              {request.type === CarcasseModificationRequestType.NEW_CARCASSE
-                ? 'Enregistrer'
-                : 'Approuver le changement'}
+              {isRename ? 'Confirmer le numéro' : 'Enregistrer'}
             </Button>
           </div>
           <div className="fr-mt-4w rounded-sm border border-gray-200 bg-white p-3">
-            <p className="mb-2 font-semibold">Refuser la demande</p>
+            <p className="mb-2 font-semibold">
+              {isRename ? 'Contester le numéro' : 'Refuser la carcasse ajoutée'}
+            </p>
             <Input
-              label="Motif du refus (optionnel)"
+              label="Motif (optionnel)"
               textArea
               nativeTextAreaProps={{
                 value: rejectionReason,
@@ -368,16 +377,17 @@ export default function ChasseurDemandeDeModificationDetail() {
               onClick={onReject}
               className="mt-2"
             >
-              Refuser
+              {isRename ? 'Contester' : 'Refuser'}
             </Button>
-            {request.type === CarcasseModificationRequestType.BRACELET_RENAME && (
+            {isRename ? (
               <p className="mt-2 text-sm opacity-70">
-                Si vous refusez, {entityLabel} pourra marquer la carcasse comme manquante depuis sa fiche.
+                Le numéro reste celui relevé par {entityLabel}, qui a la carcasse sous les yeux. Votre
+                désaccord lui est transmis : il pourra le vérifier, ou marquer la carcasse comme manquante
+                depuis sa fiche.
               </p>
-            )}
-            {request.type === CarcasseModificationRequestType.NEW_CARCASSE && (
+            ) : (
               <p className="mt-2 text-sm opacity-70">
-                Si vous refusez, la carcasse pré-remplie sera supprimée.
+                Si vous refusez, la carcasse pré-remplie sera supprimée — sauf si le SVI l'a déjà inspectée.
               </p>
             )}
           </div>
