@@ -351,6 +351,7 @@ function FEIChasseurLoaded() {
     if (!user.activated) {
       return;
     }
+    console.log('✌️ ~ handleTransmettre:');
     if (validationErrors.length > 0) {
       setShowErrors(true);
       // on scrolle vers le premier champ en erreur, après le rendu des messages d'erreur
@@ -365,11 +366,14 @@ function FEIChasseurLoaded() {
       });
       return;
     }
+    console.log('✌️ ~ handleTransmettre: validationErrors.length > 0');
     setShowErrors(false);
     if (isPremierDetenteur) {
+      console.log('✌️ ~ handleTransmettre: isPremierDetenteur');
       // validate() reveals field-level errors inside the destinataire sub-form.
       const destinataireError = destinataireRef.current?.validate();
       if (destinataireError) {
+        console.log('✌️ ~ destinataireError:', destinataireError);
         return;
       }
       updateFei(fei.numero, {
@@ -384,6 +388,7 @@ function FEIChasseurLoaded() {
       });
       destinataireRef.current?.submit();
     } else {
+      console.log('✌️ ~ handleTransmettre: !isPremierDetenteur');
       updateFei(fei.numero, {
         examinateur_initial_approbation_mise_sur_le_marche: approbation,
       });
@@ -415,6 +420,7 @@ function FEIChasseurLoaded() {
     if (allCarcassesAssigned) return true;
     return false;
   }, [user.activated, showValidation, allCarcassesAssigned]);
+  console.log('✌️ ~ submitIsDisabled:', submitIsDisabled);
 
   return (
     <>
@@ -742,8 +748,8 @@ function FEIChasseurLoaded() {
                       },
                       defaultValue: fei?.examinateur_initial_date_approbation_mise_sur_le_marche
                         ? dayjs(fei?.examinateur_initial_date_approbation_mise_sur_le_marche).format(
-                          'YYYY-MM-DDTHH:mm'
-                        )
+                            'YYYY-MM-DDTHH:mm'
+                          )
                         : undefined,
                     }}
                   />
@@ -792,8 +798,9 @@ function FEIChasseurLoaded() {
                 </div>
               )}
 
-              {/* Bloc 4 — Vente / don */}
-              {showVenteDon && isPremierDetenteur && !allCarcassesAssigned && (
+              {/* Bloc 4 — Vente / don. Reste affiché une fois tout transmis : le bloc récapitule
+                  alors les ventes / dons déjà faits. */}
+              {showVenteDon && isPremierDetenteur && (
                 <div className="bg-white p-4 md:p-8">
                   <h4 className="fr-h5">Vente / don</h4>
                   <DestinataireSelectPremierDetenteur

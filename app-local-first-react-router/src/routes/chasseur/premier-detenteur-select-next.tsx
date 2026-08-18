@@ -188,6 +188,7 @@ function DispatchGroupCard({
   group,
   index,
   totalGroups,
+  variant,
   entities,
   groupCarcasses,
   canEdit,
@@ -197,6 +198,8 @@ function DispatchGroupCard({
   group: DispatchGroup;
   index: number;
   totalGroups: number;
+  // 'sent' = déjà transmis, reconstruit depuis les carcasses : consultable mais plus modifiable.
+  variant: 'draft' | 'sent';
   entities: Record<string, EntityWithUserRelation>;
   groupCarcasses: Carcasse[];
   canEdit: boolean;
@@ -206,6 +209,33 @@ function DispatchGroupCard({
   const recipient = group.recipientEntityId ? entities[group.recipientEntityId] : null;
   const title = recipient?.nom_d_usage ?? `Vente / don ${index + 1}`;
   const transportLabel = getTransportLabel(group, entities);
+  const details = (
+    <div className="flex flex-1 flex-col">
+      {variant === 'draft' && totalGroups > 1 && (
+        <span className="text-xs text-gray-500">Vente / don {index + 1}</span>
+      )}
+      <p className="text-base font-bold">{title}</p>
+      <p className="text-sm/4">{formatCarcasseLotCount(groupCarcasses)}</p>
+      <p className="text-sm/4">{getDepotLabel(group, entities)}</p>
+      {transportLabel && <p className="text-sm/4">{transportLabel}</p>}
+      {variant === 'sent' && (
+        <Badge
+          severity="success"
+          small
+          noIcon
+          as="span"
+          className="mt-2 self-start"
+        >
+          Transmis
+        </Badge>
+      )}
+    </div>
+  );
+
+  if (variant === 'sent') {
+    return <div className="bg-contrast-grey flex basis-full flex-row p-4 text-left">{details}</div>;
+  }
+
   return (
     <div className="bg-contrast-grey flex basis-full flex-row items-center justify-between text-left">
       <button
@@ -213,13 +243,7 @@ function DispatchGroupCard({
         type="button"
         onClick={onEdit}
       >
-        <div className="flex flex-1 flex-col">
-          {totalGroups > 1 && <span className="text-xs text-gray-500">Vente / don {index + 1}</span>}
-          <p className="text-base font-bold">{title}</p>
-          <p className="text-sm/4">{formatCarcasseLotCount(groupCarcasses)}</p>
-          <p className="text-sm/4">{getDepotLabel(group, entities)}</p>
-          {transportLabel && <p className="text-sm/4">{transportLabel}</p>}
-        </div>
+        {details}
       </button>
       {canEdit && (
         <div className="flex shrink-0 flex-row gap-2 pr-4">
@@ -242,6 +266,43 @@ function DispatchGroupCard({
         </div>
       )}
     </div>
+  );
+}
+
+// === Carte d'ajout : même gabarit que les cartes remplies, en squelette ===
+function AddDispatchGroupCard({
+  isFirst,
+  disabled,
+  onClick,
+}: {
+  isFirst: boolean;
+  disabled: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+      className="hover:border-action-high-blue-france flex basis-full flex-col items-start gap-3 border-2 border-dashed border-gray-300 bg-white p-4 text-left transition-colors hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
+    >
+      <span className="text-action-high-blue-france flex items-center gap-2 text-base font-bold">
+        <span
+          className="fr-icon-add-line"
+          aria-hidden="true"
+        />
+        {isFirst ? 'Ajouter une vente ou un don' : 'Ajouter une autre vente ou un autre don'}
+      </span>
+      {/* Squelette : rappelle la forme d'une carte remplie (carcasses, stockage, transport). */}
+      <span
+        className="flex w-full flex-col gap-1.5"
+        aria-hidden="true"
+      >
+        <span className="h-2.5 w-2/5 rounded bg-gray-200" />
+        <span className="h-2.5 w-1/3 rounded bg-gray-200" />
+        <span className="h-2.5 w-1/2 rounded bg-gray-200" />
+      </span>
+    </button>
   );
 }
 
@@ -287,10 +348,35 @@ function DispatchGroupForm({
   const [creatingPartenaire, setCreatingPartenaire] = useState<string | null>(null);
   const [creatingCcg, setCreatingCcg] = useState(false);
 
+  // Le raccourci de date affiche l'heure qu'il va renseigner, on la garde à jour tant que la modale est ouverte.
+  const [now, setNow] = useState(() => dayjs().format('YYYY-MM-DDTHH:mm'));
+  useEffect(() => {
+    const interval = setInterval(() => setNow(dayjs().format('YYYY-MM-DDTHH:mm')), 15_000);
+    return () => clearInterval(interval);
+  }, []);
+
   const groupCarcasses = useMemo(() => {
     const idSet = new Set(group.carcasseIds);
     return allCarcassesRestantes.filter((c) => idSet.has(c.zacharie_carcasse_id));
   }, [group.carcasseIds, allCarcassesRestantes]);
+
+  // Étape 2 : le chasseur répartit son gibier par espèce, on regroupe donc la liste ainsi.
+  const carcassesParEspece = useMemo(() => {
+    const parEspece = new Map<string, Carcasse[]>();
+    for (const carcasse of allCarcassesRestantes) {
+      const espece = carcasse.espece ?? 'Espèce non renseignée';
+      const existing = parEspece.get(espece);
+      if (existing) {
+        existing.push(carcasse);
+      } else {
+        parEspece.set(espece, [carcasse]);
+      }
+    }
+    return Array.from(parEspece.entries());
+  }, [allCarcassesRestantes]);
+
+  const allCarcassesSelected =
+    allCarcassesRestantes.length > 0 && group.carcasseIds.length === allCarcassesRestantes.length;
 
   const Component = canEdit ? Input : InputNotEditable;
 
@@ -395,66 +481,128 @@ function DispatchGroupForm({
 
       {/* Étape 2 — Carcasses concernées */}
       {showCarcasseSelector && showStep('Carcasses') && (
-        <div>
-          <p className="mb-2 text-sm font-bold">Sélectionnez les carcasses pour cette vente / ce don</p>
-          <div className="grid grid-cols-2 gap-1 sm:grid-cols-3">
-            {allCarcassesRestantes.map((carcasse) => {
-              const isInGroup = group.carcasseIds.includes(carcasse.zacharie_carcasse_id);
-              const otherGroupLabel = !isInGroup ? carcasseToGroupLabel[carcasse.zacharie_carcasse_id] : null;
-              return (
+        <fieldset className="m-0 min-w-0 border-0 p-0">
+          {/* Récapitulatif + sélection en masse, toujours visible pendant le défilement de la liste. */}
+          <div className="sticky top-0 z-10 -mx-1 border-b border-gray-200 bg-white px-1 pt-1 pb-2">
+            <legend className="mb-2 p-0 text-sm font-bold">
+              Sélectionnez les carcasses pour cette vente / ce don
+            </legend>
+            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+              <Badge
+                severity={groupCarcasses.length > 0 ? 'info' : 'warning'}
+                small
+                noIcon
+                as="span"
+              >
+                {groupCarcasses.length > 0 ? formatCarcasseLotCount(groupCarcasses) : 'Aucune carcasse'}
+                {` sur ${allCarcassesRestantes.length}`}
+              </Badge>
+              {canEdit && (
                 <button
-                  key={carcasse.zacharie_carcasse_id}
                   type="button"
-                  disabled={!canEdit}
-                  onClick={() => onToggleCarcasse(carcasse.zacharie_carcasse_id)}
-                  className={[
-                    'flex items-start gap-1.5 border-0 border-l-3 border-solid px-2 py-1.5 text-left transition-all duration-150',
-                    isInGroup
-                      ? 'border-action-high-blue-france cursor-pointer bg-blue-100 opacity-100'
-                      : otherGroupLabel
-                        ? 'bg-contrast-grey border-transparent opacity-80'
-                        : 'bg-contrast-grey cursor-pointer border-transparent opacity-80 hover:bg-blue-50 hover:shadow-sm',
-                  ].join(' ')}
+                  className="text-action-high-blue-france shrink-0 text-sm underline"
+                  onClick={() =>
+                    onChange({
+                      carcasseIds: allCarcassesSelected
+                        ? []
+                        : allCarcassesRestantes.map((c) => c.zacharie_carcasse_id),
+                    })
+                  }
                 >
-                  <span
-                    className={[
-                      'mt-0.5 shrink-0',
-                      isInGroup
-                        ? 'fr-icon-checkbox-fill text-action-high-blue-france'
-                        : otherGroupLabel
-                          ? 'fr-icon-checkbox-line text-gray-400'
-                          : 'fr-icon-checkbox-line',
-                    ].join(' ')}
-                    aria-hidden="true"
-                    style={{ fontSize: '1rem' }}
-                  />
-                  <span className="flex flex-col">
-                    <span className="text-sm font-bold">
-                      {carcasse.espece}
-                      {carcasse.nombre_d_animaux && carcasse.nombre_d_animaux > 1
-                        ? ` (${carcasse.nombre_d_animaux})`
-                        : ''}
-                    </span>
-                    <span className="text-xs">N° {carcasse.numero_bracelet}</span>
-                    {otherGroupLabel && (
-                      <span className="mt-0.5 text-xs text-gray-500">→ {otherGroupLabel}</span>
-                    )}
-                  </span>
+                  {allCarcassesSelected
+                    ? 'Tout désélectionner'
+                    : `Tout sélectionner (${allCarcassesRestantes.length})`}
                 </button>
+              )}
+            </div>
+            {errorFor('carcasseIds') && <p className="fr-error-text mt-2 mb-0">{errorFor('carcasseIds')}</p>}
+          </div>
+
+          <div className="mt-3 space-y-4">
+            {carcassesParEspece.map(([espece, carcassesDeLEspece]) => {
+              const especeIds = carcassesDeLEspece.map((c) => c.zacharie_carcasse_id);
+              const especeToutSelectionne = especeIds.every((id) => group.carcasseIds.includes(id));
+              return (
+                <div key={espece}>
+                  <div className="flex items-baseline justify-between gap-2 border-0 border-b border-solid border-gray-200 pb-1">
+                    <span className="text-sm font-bold">
+                      {espece} <span className="font-normal text-gray-600">({especeIds.length})</span>
+                    </span>
+                    {canEdit && (
+                      <button
+                        type="button"
+                        className="text-action-high-blue-france shrink-0 text-sm underline"
+                        onClick={() =>
+                          onChange({
+                            carcasseIds: especeToutSelectionne
+                              ? group.carcasseIds.filter((id) => !especeIds.includes(id))
+                              : [...new Set([...group.carcasseIds, ...especeIds])],
+                          })
+                        }
+                      >
+                        {especeToutSelectionne ? 'Tout désélectionner' : 'Tout sélectionner'}
+                      </button>
+                    )}
+                  </div>
+                  <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                    {carcassesDeLEspece.map((carcasse) => {
+                      const isInGroup = group.carcasseIds.includes(carcasse.zacharie_carcasse_id);
+                      const otherGroupLabel = !isInGroup
+                        ? carcasseToGroupLabel[carcasse.zacharie_carcasse_id]
+                        : null;
+                      return (
+                        <button
+                          key={carcasse.zacharie_carcasse_id}
+                          type="button"
+                          role="checkbox"
+                          aria-checked={isInGroup}
+                          disabled={!canEdit}
+                          title={otherGroupLabel ? `Reprendre à ${otherGroupLabel}` : undefined}
+                          onClick={() => onToggleCarcasse(carcasse.zacharie_carcasse_id)}
+                          className={[
+                            'flex min-h-11 w-full items-start gap-2 rounded border border-solid px-3 py-2 text-left transition-colors duration-150',
+                            canEdit ? 'cursor-pointer' : 'cursor-not-allowed',
+                            isInGroup
+                              ? 'border-action-high-blue-france bg-blue-100'
+                              : otherGroupLabel
+                                ? 'bg-contrast-grey hover:border-action-high-blue-france border-gray-300'
+                                : 'hover:border-action-high-blue-france border-gray-300 bg-white hover:bg-blue-50',
+                          ].join(' ')}
+                        >
+                          <span
+                            className={[
+                              'mt-0.5 shrink-0',
+                              isInGroup
+                                ? 'fr-icon-checkbox-fill text-action-high-blue-france'
+                                : 'fr-icon-checkbox-line text-gray-600',
+                            ].join(' ')}
+                            aria-hidden="true"
+                            style={{ fontSize: '1rem' }}
+                          />
+                          <span className="flex min-w-0 flex-col">
+                            <span className="text-sm font-bold">
+                              {carcasse.espece}
+                              {carcasse.nombre_d_animaux && carcasse.nombre_d_animaux > 1
+                                ? ` (${carcasse.nombre_d_animaux})`
+                                : ''}
+                            </span>
+                            <span className="text-xs">N° {carcasse.numero_bracelet}</span>
+                            {otherGroupLabel && (
+                              <span className="mt-0.5 text-xs text-gray-600">
+                                Attribué à {otherGroupLabel} —{' '}
+                                <span className="text-action-high-blue-france underline">reprendre</span>
+                              </span>
+                            )}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               );
             })}
           </div>
-          <Badge
-            severity={groupCarcasses.length > 0 ? 'info' : 'warning'}
-            small
-            noIcon
-            as="span"
-            className="mt-2"
-          >
-            {groupCarcasses.length > 0 ? formatCarcasseLotCount(groupCarcasses) : 'Aucune carcasse'}
-          </Badge>
-          {errorFor('carcasseIds') && <p className="fr-error-text mt-2">{errorFor('carcasseIds')}</p>}
-        </div>
+        </fieldset>
       )}
 
       {/* Étape 3 — Stockage */}
@@ -573,12 +721,10 @@ function DispatchGroupForm({
                         className="rounded-full bg-[#E8EDFF] px-3 py-1 text-sm text-[#000091]"
                         type="button"
                         onClick={() => {
-                          onChange({
-                            depotDate: dayjs().format('YYYY-MM-DDTHH:mm'),
-                          });
+                          onChange({ depotDate: now });
                         }}
                       >
-                        Date du jour et maintenant
+                        {dayjs(now).format('DD/MM/YYYY HH:mm')}
                       </button>
                     ) : null
                   }
@@ -674,15 +820,11 @@ function DispatchGroupForm({
                       className="mr-1 rounded-full bg-[#E8EDFF] px-3 py-1 text-sm text-[#000091]"
                       type="button"
                       onClick={() => {
-                        onChange({
-                          transportDate: dayjs().format('YYYY-MM-DDTHH:mm'),
-                        });
+                        onChange({ transportDate: now });
                       }}
                     >
-                      Date du jour et maintenant.
+                      {dayjs(now).format('DD/MM/YYYY HH:mm')}
                     </button>
-                    À ne remplir que si vous êtes le transporteur et que vous stockez les carcasses dans un
-                    CCG. Indiquer une date permettra au prochain détenteur de s'organiser.
                   </>
                 ) : null
               }
@@ -799,6 +941,45 @@ export default function DestinataireSelectPremierDetenteur({
     }));
   }, [prochainsDetenteurs]);
 
+  // Ventes / dons déjà transmis. La transmission est portée par les carcasses, pas par un lot en base :
+  // on les regroupe par destinataire + stockage + transport pour reconstituer les cartes en revenant
+  // sur la fiche, sinon une transmission partielle laisse la liste vide.
+  const ventesDonsDejaEnvoyes = useMemo(() => {
+    const parSignature = new Map<string, DispatchGroup>();
+    for (const carcasse of carcassesDejaEnvoyees) {
+      const depotDate = carcasse.premier_detenteur_depot_ccg_at
+        ? dayjs(carcasse.premier_detenteur_depot_ccg_at).format('YYYY-MM-DDTHH:mm')
+        : undefined;
+      const transportDate = carcasse.premier_detenteur_transport_date
+        ? dayjs(carcasse.premier_detenteur_transport_date).format('YYYY-MM-DDTHH:mm')
+        : undefined;
+      const signature = [
+        carcasse.premier_detenteur_prochain_detenteur_id_cache,
+        carcasse.premier_detenteur_depot_type,
+        carcasse.premier_detenteur_depot_entity_id,
+        depotDate,
+        carcasse.premier_detenteur_transport_type,
+        transportDate,
+      ].join('|');
+      const existing = parSignature.get(signature);
+      if (existing) {
+        existing.carcasseIds.push(carcasse.zacharie_carcasse_id);
+        continue;
+      }
+      parSignature.set(signature, {
+        id: `sent-${signature}`,
+        recipientEntityId: carcasse.premier_detenteur_prochain_detenteur_id_cache,
+        carcasseIds: [carcasse.zacharie_carcasse_id],
+        depotType: carcasse.premier_detenteur_depot_type,
+        depotEntityId: carcasse.premier_detenteur_depot_entity_id,
+        depotDate,
+        transportType: carcasse.premier_detenteur_transport_type,
+        transportDate,
+      });
+    }
+    return Array.from(parSignature.values());
+  }, [carcassesDejaEnvoyees]);
+
   // Ventes / dons validés (une carte chacun). Vides au départ : le premier détenteur les crée via la modale.
   const [dispatchGroups, setDispatchGroups] = useState<DispatchGroup[]>([]);
 
@@ -905,7 +1086,7 @@ export default function DestinataireSelectPremierDetenteur({
     });
   }, []);
 
-  const openEditAcheminement = useCallback((group: DispatchGroup) => {
+  const openEditDispatchGroup = useCallback((group: DispatchGroup) => {
     setDraft({ ...group });
     setDraftMode('edit');
     setShowModalErrors(false);
@@ -1085,17 +1266,14 @@ export default function DestinataireSelectPremierDetenteur({
   }, []);
 
   // Les ventes / dons validés sont toujours complets (validés à l'enregistrement).
-  // Il reste à vérifier qu'il y en a au moins un et que toutes les carcasses sont attribuées.
+  // Les carcasses non attribuées ne bloquent pas : on peut ne transmettre qu'une partie de la fiche,
+  // le reste est simplement signalé par une alerte.
   const globalValidationError = useMemo(() => {
     if (dispatchGroups.length === 0) {
       return 'Veuillez ajouter au moins une vente ou un don';
     }
-    if (unassignedCarcasses.length > 0) {
-      return `${formatCarcasseLotCount(unassignedCarcasses)} ${unassignedCarcasses.length > 1 ? 'ne sont attribuées' : "n'est attribuée"
-        } à aucune vente ni aucun don`;
-    }
     return null;
-  }, [dispatchGroups.length, unassignedCarcasses]);
+  }, [dispatchGroups.length]);
 
   const totalCarcassesToSend = assignedCarcasseIds.size;
 
@@ -1188,6 +1366,14 @@ export default function DestinataireSelectPremierDetenteur({
     };
   }
 
+  // On peut ajouter une vente / un don tant qu'il reste des carcasses à répartir
+  // (la 1re prend toutes les carcasses ; les suivantes en récupèrent une partie).
+  const canAddDispatchGroup =
+    canEdit &&
+    carcassesRestantes.length > 0 &&
+    (dispatchGroups.length === 0 ||
+      (carcassesRestantes.length > 1 && dispatchGroups.length < carcassesRestantes.length));
+
   if (!fei.premier_detenteur_user_id) {
     return "Il n'y a pas encore de propriétaire initial pour cette fiche";
   }
@@ -1202,6 +1388,52 @@ export default function DestinataireSelectPremierDetenteur({
           'space-y-4',
         ].join(' ')}
       >
+        {/* Grille unique : ventes / dons transmis, puis en préparation, puis la carte d'ajout. */}
+        {(ventesDonsDejaEnvoyes.length > 0 || dispatchGroups.length > 0 || canAddDispatchGroup) && (
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+            {ventesDonsDejaEnvoyes.map((group, index) => (
+              <DispatchGroupCard
+                key={group.id}
+                group={group}
+                index={index}
+                totalGroups={ventesDonsDejaEnvoyes.length}
+                variant="sent"
+                entities={entities}
+                groupCarcasses={allCarcasses.filter((c) =>
+                  group.carcasseIds.includes(c.zacharie_carcasse_id)
+                )}
+                canEdit={false}
+                onEdit={() => {}}
+                onDelete={() => {}}
+              />
+            ))}
+            {carcassesRestantes.length > 0 &&
+              dispatchGroups.map((group, index) => (
+                <DispatchGroupCard
+                  key={group.id}
+                  group={group}
+                  index={index}
+                  totalGroups={dispatchGroups.length}
+                  variant="draft"
+                  entities={entities}
+                  groupCarcasses={allCarcasses.filter((c) =>
+                    group.carcasseIds.includes(c.zacharie_carcasse_id)
+                  )}
+                  canEdit={canEdit && !disabled}
+                  onEdit={() => openEditDispatchGroup(group)}
+                  onDelete={() => removeGroup(group.id)}
+                />
+              ))}
+            {canAddDispatchGroup && (
+              <AddDispatchGroupCard
+                isFirst={dispatchGroups.length === 0}
+                disabled={!!disabled}
+                onClick={openAddDispatchGroup}
+              />
+            )}
+          </div>
+        )}
+
         {carcassesRestantes.length === 0 && carcassesDejaEnvoyees.length > 0 && (
           <Alert
             severity="info"
@@ -1212,33 +1444,13 @@ export default function DestinataireSelectPremierDetenteur({
 
         {carcassesRestantes.length > 0 && (
           <>
-            {/* Cartes des ventes / dons déjà renseignés */}
-            {dispatchGroups.length > 0 && (
-              <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-                {dispatchGroups.map((group, index) => (
-                  <DispatchGroupCard
-                    key={group.id}
-                    group={group}
-                    index={index}
-                    totalGroups={dispatchGroups.length}
-                    entities={entities}
-                    groupCarcasses={allCarcasses.filter((c) =>
-                      group.carcasseIds.includes(c.zacharie_carcasse_id)
-                    )}
-                    canEdit={canEdit && !disabled}
-                    onEdit={() => openEditDispatchGroup(group)}
-                    onDelete={() => removeGroup(group.id)}
-                  />
-                ))}
-              </div>
-            )}
-
             {/* Carcasses non attribuées */}
             {dispatchGroups.length > 0 && unassignedCarcasses.length > 0 && (
               <Alert
                 severity="warning"
-                title={`${formatCarcasseLotCount(unassignedCarcasses)} non attribué${unassignedCarcasses.length > 1 ? 's' : ''
-                  }`}
+                title={`${formatCarcasseLotCount(unassignedCarcasses)} non attribué${
+                  unassignedCarcasses.length > 1 ? 's' : ''
+                }`}
                 description={
                   <div className="mt-1 flex flex-wrap gap-1">
                     {unassignedCarcasses.map((c) => (
@@ -1253,24 +1465,6 @@ export default function DestinataireSelectPremierDetenteur({
                 }
               />
             )}
-
-            {/* Ajouter une vente / un don — possible tant qu'il reste des carcasses à répartir
-                (la 1re prend toutes les carcasses ; les suivantes en récupèrent une partie). */}
-            {canEdit &&
-              (dispatchGroups.length === 0 ||
-                (carcassesRestantes.length > 1 && dispatchGroups.length < carcassesRestantes.length)) && (
-                <Button
-                  type="button"
-                  priority="secondary"
-                  iconId="fr-icon-add-line"
-                  disabled={disabled}
-                  nativeButtonProps={{ onClick: openAddDispatchGroup }}
-                >
-                  {dispatchGroups.length === 0
-                    ? 'Ajouter une vente ou un don'
-                    : 'Ajouter une autre vente ou un autre don'}
-                </Button>
-              )}
 
             {showErrors && globalValidationError && (
               <Alert
@@ -1320,30 +1514,30 @@ export default function DestinataireSelectPremierDetenteur({
           !canEdit
             ? [{ children: 'Fermer' }]
             : [
-              boundedStep > 1
-                ? {
-                  children: 'Précédent',
-                  priority: 'secondary',
-                  doClosesModal: false,
-                  nativeButtonProps: { onClick: goToPrevStep },
-                }
-                : {
-                  children: 'Annuler',
-                  priority: 'secondary',
-                  onClick: () => setDraft(null),
-                },
-              boundedStep < steps.length
-                ? {
-                  children: 'Suivant',
-                  doClosesModal: false,
-                  nativeButtonProps: { onClick: goToNextStep },
-                }
-                : {
-                  children: 'Enregistrer',
-                  doClosesModal: false,
-                  nativeButtonProps: { onClick: () => saveDraft() },
-                },
-            ]
+                boundedStep > 1
+                  ? {
+                      children: 'Précédent',
+                      priority: 'secondary',
+                      doClosesModal: false,
+                      nativeButtonProps: { onClick: goToPrevStep },
+                    }
+                  : {
+                      children: 'Annuler',
+                      priority: 'secondary',
+                      onClick: () => setDraft(null),
+                    },
+                boundedStep < steps.length
+                  ? {
+                      children: 'Suivant',
+                      doClosesModal: false,
+                      nativeButtonProps: { onClick: goToNextStep },
+                    }
+                  : {
+                      children: 'Enregistrer',
+                      doClosesModal: false,
+                      nativeButtonProps: { onClick: () => saveDraft() },
+                    },
+              ]
         }
       >
         {isDispatchModalOpen && draft && (
