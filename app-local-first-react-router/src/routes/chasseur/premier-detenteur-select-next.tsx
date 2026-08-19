@@ -1061,31 +1061,6 @@ export default function DestinataireSelectPremierDetenteur({
     });
   }, [carcassesRestantesIds]);
 
-  // Track which group opened the partenaire/ccg modal
-  const [activeModalGroupId, setActiveModalGroupId] = useState<string | null>(null);
-  const [newEntityNomDUsage, setNewEntityNomDUsage] = useState<string | null>(null);
-
-  const onUpdateGroup = useCallback((groupId: string, updates: Partial<DispatchGroup>) => {
-    setDispatchGroups((prev) => {
-      const next = prev.map((g) => (g.id === groupId ? { ...g, ...updates } : g));
-
-      // If carcasseIds was updated: ensure no carcasse is in two groups
-      if (updates.carcasseIds) {
-        const updatedGroupIndex = next.findIndex((g) => g.id === groupId);
-        const newIds = new Set(updates.carcasseIds);
-        for (let i = 0; i < next.length; i++) {
-          if (i === updatedGroupIndex) continue;
-          next[i] = {
-            ...next[i],
-            carcasseIds: next[i].carcasseIds.filter((id) => !newIds.has(id)),
-          };
-        }
-      }
-
-      return next;
-    });
-  }, []);
-
   const openEditDispatchGroup = useCallback((group: DispatchGroup) => {
     setDraft({ ...group });
     setDraftMode('edit');
