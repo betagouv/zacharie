@@ -247,6 +247,8 @@ router.post(
           email,
           activated: false,
           prefilled: false,
+          // la création de compte vaut connexion : on ouvre une session dans la foulée
+          last_login_at: new Date(),
           // depuis le 14 octobre 2025, on ne peut plus créer de compte ETG/SVI/COLLECTEUR_PRO
           // sans avoir au préalable été invité par un membre de son entreprise/service
           // de sorte que tous les utilisateurs créés depuis le 14 octobre 2025 sont CHASSEURS
@@ -394,6 +396,10 @@ router.post(
 
       const token = jwt.sign({ userId: user.id }, SECRET, {
         expiresIn: JWT_MAX_AGE,
+      });
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: { last_login_at: new Date() },
       });
       res.cookie('zacharie_express_jwt', token, cookieOptions(req));
       res.status(200).send({ ok: true, data: { user, token }, message: '', error: '' });
