@@ -4,7 +4,13 @@ import passport from 'passport';
 import { catchErrors } from '~/middlewares/errors';
 import type { CarcassesGetResponse, CarcassesRefuseesResponse } from '~/types/responses';
 import prisma from '~/prisma';
-import { EntityRelationType, Prisma, TrichineResultatAnalyse, UserRoles } from '@prisma/client';
+import {
+  EntityRelationStatus,
+  EntityRelationType,
+  Prisma,
+  TrichineResultatAnalyse,
+  UserRoles,
+} from '@prisma/client';
 import {
   getCarcassesStakeholderUsers,
   logTrichineStatutChange,
@@ -18,7 +24,7 @@ import type { EntityWithUserRelation } from '~/types/entity';
 import z from 'zod';
 import { capture } from '~/third-parties/sentry';
 import { userFeiSelect } from '~/types/user';
-import { getCarcasseAccessWhere } from '~/utils/carcasse-access';
+import { getCarcasseAccessWhereForUser } from '~/utils/carcasse-access';
 
 const zodQuerySchema = z.object({
   page: z.string(),
@@ -26,6 +32,10 @@ const zodQuerySchema = z.object({
   limit: z.string(),
   withDeleted: z.string(),
 });
+
+// Périmètre d'accès aux carcasses selon le rôle : voir `~/utils/carcasse-access`. Alias local
+// pour préserver les appels existants dans ce contrôleur.
+const getCarcasseAccessWhere = getCarcasseAccessWhereForUser;
 
 router.get(
   '/',
@@ -57,7 +67,7 @@ router.get(
     const afterDate = Number(after) ? new Date(Number(after)) : undefined;
 
     // Base query conditions : périmètre d'accès role-aware (partagé avec /refusees/:fei_numero).
-    const accessWhere = await getCarcasseAccessWhereForUser(req.user);
+    const accessWhere = await getCarcasseAccessWhere(req.user);
     if (!accessWhere) {
       capture(`User role not supported: ${req.user.roles.join(', ')}`, { user: req.user });
       res.status(403).send({
@@ -185,7 +195,7 @@ router.get(
       return;
     }
 
-    const accessWhere = await getCarcasseAccessWhereForUser(req.user);
+    const accessWhere = await getCarcasseAccessWhere(req.user);
     if (!accessWhere) {
       capture(`User role not supported: ${req.user.roles.join(', ')}`, { user: req.user });
       res.status(403).send({ ok: false, data: null, error: "Vous n'avez pas les permissions." });

@@ -1,20 +1,18 @@
-import { FeiOwnerRole, Prisma, UserRoles } from '@prisma/client';
-import type { User } from '@prisma/client';
+import { Entity, FeiOwnerRole, Prisma, User, UserRoles } from '@prisma/client';
 import { getUserCarcasseEntityIds } from '~/utils/user-entities';
 
-// Périmètre d'accès aux carcasses selon le rôle. Retourne le WHERE Prisma (ou null si rôle non
-// supporté). Partagé entre les routes de lecture (`/carcasse`, `/carcasse/refusees/:fei_numero`)
-// et les écritures de `/sync`, pour que lire et écrire reposent sur la même définition d'accès.
-export async function getCarcasseAccessWhere(
-  user: User,
-  userEntityIds?: Array<string>
+// Périmètre d'accès aux carcasses selon le rôle d'un utilisateur. Retourne le WHERE Prisma
+// (ou null si rôle non supporté). Partagé entre le pull delta `/carcasse`, la route
+// `/carcasse/refusees/:fei_numero` et l'API publique v1 : autorisation strictement identique partout.
+export async function getCarcasseAccessWhereForUser(
+  user: Pick<User, 'id' | 'roles'>
 ): Promise<Prisma.CarcasseWhereInput | null> {
-  const entityIds = userEntityIds ?? (await getUserCarcasseEntityIds(user.id));
+  const userEntityIds = await getUserCarcasseEntityIds(user.id);
 
   if (user.roles.includes(UserRoles.SVI)) {
     return {
       svi_assigned_at: { not: null },
-      OR: [{ svi_entity_id: { in: entityIds } }, { next_owner_entity_id: { in: entityIds } }],
+      OR: [{ svi_entity_id: { in: userEntityIds } }, { next_owner_entity_id: { in: userEntityIds } }],
     };
   }
   if (user.roles.includes(UserRoles.CHASSEUR)) {
@@ -25,15 +23,15 @@ export async function getCarcasseAccessWhere(
         // Désignation du premier détenteur (asso) : on n'expose la fiche aux membres de l'entité
         // qu'une fois la fiche réellement transmise (sortie de l'examinateur initial).
         {
-          premier_detenteur_entity_id: { in: entityIds },
+          premier_detenteur_entity_id: { in: userEntityIds },
           current_owner_role: { not: FeiOwnerRole.EXAMINATEUR_INITIAL },
         },
         {
-          next_owner_entity_id: { in: entityIds },
+          next_owner_entity_id: { in: userEntityIds },
           current_owner_role: { not: FeiOwnerRole.EXAMINATEUR_INITIAL },
         },
-        { prev_owner_entity_id: { in: entityIds } },
-        { current_owner_entity_id: { in: entityIds } },
+        { prev_owner_entity_id: { in: userEntityIds } },
+        { current_owner_entity_id: { in: userEntityIds } },
         { next_owner_user_id: user.id },
         { prev_owner_user_id: user.id },
         { current_owner_user_id: user.id },
@@ -51,11 +49,26 @@ export async function getCarcasseAccessWhere(
   ) {
     return {
       OR: [
-        { CarcasseIntermediaire: { some: { intermediaire_entity_id: { in: entityIds } } } },
-        { next_owner_entity_id: { in: entityIds } },
-        { current_owner_entity_id: { in: entityIds } },
+        { CarcasseIntermediaire: { some: { intermediaire_entity_id: { in: userEntityIds } } } },
+        { next_owner_entity_id: { in: userEntityIds } },
+        { current_owner_entity_id: { in: userEntityIds } },
       ],
     };
   }
   return null;
+}
+
+// Périmètre d'accès pour une clé API dédiée à une entité : toutes les carcasses où l'entité
+// apparaît dans une colonne de propriété (premier détenteur, intermédiaire, SVI, owner courant/suivant/précédent).
+export function getCarcasseAccessWhereForEntity(entity: Pick<Entity, 'id'>): Prisma.CarcasseWhereInput {
+  return {
+    OR: [
+      { svi_entity_id: entity.id },
+      { premier_detenteur_entity_id: entity.id },
+      { current_owner_entity_id: entity.id },
+      { next_owner_entity_id: entity.id },
+      { prev_owner_entity_id: entity.id },
+      { CarcasseIntermediaire: { some: { intermediaire_entity_id: entity.id } } },
+    ],
+  };
 }
