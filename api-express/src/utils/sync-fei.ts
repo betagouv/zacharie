@@ -201,7 +201,7 @@ export async function syncFei(
       ? sanitize(body.premier_detenteur_entity_id as string)
       : null;
   }
-  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_name_cache)) {
+  if (canWriteOwnership && body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_name_cache)) {
     nextFei.premier_detenteur_name_cache = body.premier_detenteur_name_cache
       ? sanitize(body.premier_detenteur_name_cache as string)
       : null;

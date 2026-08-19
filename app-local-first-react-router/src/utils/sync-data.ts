@@ -16,8 +16,8 @@ let debug = false;
 // Items que le serveur a définitivement refusé d'écrire (autorisation), en clés `kind:id`. Sans ça
 // ils restent `is_synced = false` — le serveur n'ayant pas touché sa ligne, elle ne revient jamais
 // dans le delta de loadCarcasses qui ferait basculer le flag — et repartent dans chaque payload de
-// synchro. La portée est la session : au prochain chargement on retente une fois, ce qui rattrape le
-// cas où les droits ont changé entre-temps. L'équipe est prévenue par le Sentry émis côté serveur.
+// synchro. La portée est la session : `abortSyncData` vide le Set, donc on retente au prochain
+// chargement comme à la connexion suivante. L'équipe est prévenue par le Sentry émis côté serveur.
 const rejectedBySync = new Set<string>();
 
 // Single AbortController for the current sync request
@@ -28,6 +28,11 @@ export function abortSyncData(reason: string = 'aborted') {
     syncAbortController.abort(reason);
   }
   syncAbortController = null;
+  // Les refus appartiennent au compte qui les a provoqués. `clearLocalAppState` appelle cette
+  // fonction à chaque teardown de session, et c'est le seul moment où le Set doit repartir de zéro :
+  // `disconnect` navigue en pushState, qui ne recharge pas la page, donc sans ce clear le Set
+  // survivrait au changement de compte et bloquerait les écritures légitimes du suivant.
+  rejectedBySync.clear();
 }
 
 export async function syncData(calledFrom?: string) {

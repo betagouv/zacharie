@@ -55,7 +55,9 @@ export async function syncCarcasse(
       body.next_owner_role !== FeiOwnerRole.PREMIER_DETENTEUR &&
       body.next_owner_role !== FeiOwnerRole.EXAMINATEUR_INITIAL;
     if (transmitsToNextDetenteur) {
-      throw new SyncRejectedError('Votre compte doit être validé avant de pouvoir transmettre une fiche');
+      // Erreur transitoire, pas un `SyncRejectedError` : `activated` bascule dès que l'admin valide
+      // le compte, et le client doit repousser la carcasse à ce moment-là sans recharger l'app.
+      throw new Error('Votre compte doit être validé avant de pouvoir transmettre une fiche');
     }
   }
   let existingCarcasse =
@@ -243,8 +245,9 @@ export async function syncCarcasse(
       : existingFei.premier_detenteur_entity_id;
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_name_cache)) {
-    nextCarcasse.premier_detenteur_name_cache =
-      body[Prisma.CarcasseScalarFieldEnum.premier_detenteur_name_cache];
+    nextCarcasse.premier_detenteur_name_cache = canWriteOwnership
+      ? body[Prisma.CarcasseScalarFieldEnum.premier_detenteur_name_cache]
+      : existingFei.premier_detenteur_name_cache;
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.intermediaire_closed_at)) {
     nextCarcasse.intermediaire_closed_at = body[Prisma.CarcasseScalarFieldEnum.intermediaire_closed_at];

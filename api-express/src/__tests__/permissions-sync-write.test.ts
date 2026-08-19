@@ -196,15 +196,18 @@ describe('syncFei — auto-attribution des colonnes de rattachement', () => {
         numero: 'FEI-VICTIME',
         commune_mise_a_mort: 'Villette',
         premier_detenteur_entity_id: 'entity-etg-2',
+        premier_detenteur_name_cache: 'ETG 2',
       } as any,
       attaquant,
       await createSyncScope(attaquant)
     );
 
-    // Le reste de la fiche est bien écrit, seule la colonne de rattachement est ignorée.
+    // Le reste de la fiche est bien écrit, seules les colonnes de rattachement sont ignorées — dont
+    // le name cache, qui est la valeur affichée partout dans l'app.
     const updateArgs = vi.mocked(prisma.fei.update).mock.calls[0][0];
     expect(updateArgs.data).toMatchObject({ commune_mise_a_mort: 'Villette' });
     expect(updateArgs.data).not.toHaveProperty('premier_detenteur_entity_id');
+    expect(updateArgs.data).not.toHaveProperty('premier_detenteur_name_cache');
   });
 
   test('renvoyer ces colonnes inchangées ne bloque pas la synchro', async () => {
