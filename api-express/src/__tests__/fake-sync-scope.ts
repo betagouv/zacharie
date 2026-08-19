@@ -8,6 +8,7 @@ export function fakeSyncScope(overrides: Partial<SyncScope> = {}): SyncScope {
     entityIds: ['entity-etg', 'entity-collecteur', 'entity-svi'],
     prefetch: async () => {},
     canWriteCarcasse: async () => true,
+    grant: () => {},
     isFeiOwner: () => true,
     canWriteFei: async () => true,
     ...overrides,

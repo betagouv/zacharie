@@ -92,6 +92,10 @@ export async function syncCarcasse(
         is_synced: true,
       },
     });
+    // La ligne créée n'a encore aucune colonne de rattachement — celles-ci ne sont écrites que par
+    // l'update en fin de fonction. On accorde l'accès tout de suite : l'appelant vient de passer
+    // `canWriteFei`, et si l'update échoue il doit pouvoir reprendre la carcasse au prochain envoi.
+    scope.grant(zacharie_carcasse_id);
   }
 
   // L'examinateur initial et le premier détenteur portés par la carcasse sont des copies de la

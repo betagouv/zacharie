@@ -39,6 +39,7 @@ const { permissiveScope } = vi.hoisted(() => ({
     entityIds: ['entity-A', 'entity-B'],
     prefetch: async () => {},
     canWriteCarcasse: async () => true,
+    grant: () => {},
     isFeiOwner: () => true,
     canWriteFei: async () => true,
   },

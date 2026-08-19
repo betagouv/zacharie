@@ -19,6 +19,11 @@ export type SyncScope = {
   // c'est juste ce qui évite une requête par carcasse dans les boucles.
   prefetch: (zacharieCarcasseIds: Array<string>) => Promise<void>;
   canWriteCarcasse: (zacharieCarcasseId: string) => Promise<boolean>;
+  // Accorde l'accès à une carcasse que l'appelant vient de créer. Elle naît avec ses colonnes de
+  // rattachement vides, donc elle ne matche encore aucun périmètre : sans ça, l'échec d'une écriture
+  // ultérieure du même appel laisserait une ligne nue que plus personne — pas même son créateur — ne
+  // pourrait reprendre ni même lire.
+  grant: (zacharieCarcasseId: string) => void;
   isFeiOwner: (fei: FeiOwnershipFields) => boolean;
   canWriteFei: (fei: FeiOwnershipFields) => Promise<boolean>;
 };
@@ -58,6 +63,9 @@ export async function createSyncScope(user: User): Promise<SyncScope> {
   return {
     entityIds,
     prefetch: resolve,
+    grant(zacharieCarcasseId) {
+      granted.add(zacharieCarcasseId);
+    },
     async canWriteCarcasse(zacharieCarcasseId) {
       if (granted.has(zacharieCarcasseId)) return true;
       await resolve([zacharieCarcasseId]);

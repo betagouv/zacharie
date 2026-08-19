@@ -387,6 +387,27 @@ describe('syncCarcasse — écriture sur une carcasse tierce', () => {
     expect(prisma.carcasse.create).toHaveBeenCalled();
   });
 
+  test('la carcasse créée entre immédiatement dans le périmètre de son créateur', async () => {
+    vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(feiTierce);
+    vi.mocked(prisma.carcasse.findFirst).mockResolvedValueOnce(null);
+    vi.mocked(prisma.carcasse.create).mockResolvedValueOnce(carcasseTierce);
+    vi.mocked(prisma.carcasse.update).mockResolvedValueOnce(carcasseTierce);
+    // La ligne nue tout juste créée ne matche aucun périmètre : si le scope ne l'accordait pas de
+    // lui-même, un update en échec la rendrait définitivement inaccessible à son propre créateur.
+    vi.mocked(prisma.carcasse.findMany).mockResolvedValue([]);
+
+    const scope = await createSyncScope(proprietaire);
+    await syncCarcasse(
+      'FEI-VICTIME',
+      'ZC-NOUVELLE',
+      { fei_numero: 'FEI-VICTIME', numero_bracelet: 'BR-NOUVEAU' } as any,
+      proprietaire,
+      scope
+    );
+
+    await expect(scope.canWriteCarcasse('ZC-NOUVELLE')).resolves.toBe(true);
+  });
+
   test('la suppression est soumise au même périmètre', async () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(feiTierce);
     vi.mocked(prisma.carcasse.findFirst).mockResolvedValueOnce(carcasseTierce);
