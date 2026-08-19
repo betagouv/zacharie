@@ -4,7 +4,8 @@ import { sendEmail, sendTemplateEmail } from '~/third-parties/brevo';
 import queueSendNotificationToUser from '~/service/notifications';
 
 // IS_TEST court-circuite la branche EMAIL avant l'envoi : on le force à false pour tester le vrai chemin.
-vi.mock('~/config', () => ({ IS_TEST: false }));
+// SENTRY_KEY est lu par third-parties/sentry.ts, importé via third-parties/expo-push.ts.
+vi.mock('~/config', () => ({ IS_TEST: false, SENTRY_KEY: '' }));
 vi.mock('~/third-parties/brevo', () => ({
   sendEmail: vi.fn().mockResolvedValue(true),
   sendTemplateEmail: vi.fn().mockResolvedValue(true),

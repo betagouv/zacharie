@@ -17,6 +17,7 @@ import CardTransmission from '@app/components/CardTransmission';
 import FichesEmptyState from '@app/components/FichesEmptyState';
 import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
 import useUser from '@app/zustand/user';
+import { useNativePushToken } from '@app/utils/useNativePushToken';
 import { UserConnexionResponse } from '@api/src/types/responses';
 import API from '@app/services/api';
 import { trackFeature, trackSearch } from '@app/services/matomo';
@@ -138,31 +139,7 @@ export default function ChasseurFiches() {
   const [searchParams] = useSearchParams();
   const page = parseInt(searchParams.get('page') || '1');
 
-  useEffect(() => {
-    window.onNativePushToken = async function handleNativePushToken(token) {
-      const response = await API.post({
-        path: `/user/${user.id}`,
-        body: { native_push_token: token },
-      }).then((response) => response as UserConnexionResponse);
-      if (response.ok && response.data?.user?.id) {
-        useUser.setState({ user: response.data.user });
-      }
-    };
-    let timeoutId = setTimeout(() => {
-      // if user is activated already, either we just take the latest token,
-      // either it's a web user that just installed the app so we need to ask for permission for notifications
-      if (user.activated_at) {
-        window.ReactNativeWebView?.postMessage('request-native-expo-push-permission');
-      }
-      clearTimeout(timeoutId);
-    }, 1000);
-
-    return () => {
-      clearTimeout(timeoutId);
-    };
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  useNativePushToken('ask-permission');
 
   useEffect(() => {
     if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
