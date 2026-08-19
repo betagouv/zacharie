@@ -1,6 +1,7 @@
 import { test, expect } from '../../utils/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
+import { ajouterVenteDon } from '../../utils/vente-don';
 import { logoutAndConnect } from '../../utils/logout-and-connect';
 
 // Scenario 123 — Transmission ETG 1 → SVI 1 n'expose pas les carcasses de la branche ETG 2.
@@ -25,33 +26,10 @@ test("SVI destinataire d'ETG 1 ne voit que les 2 carcasses d'ETG 1", async ({ pa
   await page.getByRole('link', { name: feiId }).click();
 
   // Group 1 → ETG 1 (keeps MM-001-003 + MM-001-004 by default)
-  await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").first().click();
-  await page.getByRole('option', { name: 'ETG 1 - 75000 Paris (' }).click();
-  const pasDeStockage = page.getByText('Pas de stockage').first();
-  await pasDeStockage.scrollIntoViewIfNeeded();
-  await pasDeStockage.click();
-  const jeTransporte = page.getByText('Je transporte les carcasses moi').first();
-  await jeTransporte.scrollIntoViewIfNeeded();
-  await jeTransporte.click();
+  await ajouterVenteDon(page, { destinataire: 'ETG 1 - 75000 Paris (' });
 
   // Add group 2 → moves the first 2 listed carcasses (MM-001-001 + MM-001-002) to ETG 2
-  const ajouterBtn = page.getByRole('button', { name: 'Ajouter un autre destinataire' });
-  await ajouterBtn.scrollIntoViewIfNeeded();
-  await ajouterBtn.click();
-  const group2 = page.locator('div.rounded.border').nth(1);
-  await group2.scrollIntoViewIfNeeded();
-  const g2Btns = group2.locator("button[type='button']").filter({ hasText: 'N°' });
-  await g2Btns.nth(0).click();
-  await g2Btns.nth(1).click();
-  await group2.locator("[class*='select-prochain-detenteur'][class*='input-container']").click();
-  await page.getByRole('option', { name: 'ETG 2 - 75000 Paris (' }).click();
-  const g2Stockage = group2.getByText('Pas de stockage').first();
-  await g2Stockage.scrollIntoViewIfNeeded();
-  await g2Stockage.click();
-  const g2Transport = group2.getByText('Je transporte les carcasses moi').first();
-  await g2Transport.scrollIntoViewIfNeeded();
-  await g2Transport.click();
-
+  await ajouterVenteDon(page, { destinataire: 'ETG 2 - 75000 Paris (', carcasses: [0, 1] });
   const transmettreBtn = page.getByRole('button', { name: /Transmettre/ });
   await transmettreBtn.scrollIntoViewIfNeeded();
   await transmettreBtn.click();

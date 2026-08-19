@@ -1,6 +1,16 @@
 import { test, expect } from '../../utils/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
+import {
+  openVenteDon,
+  selectDestinataire,
+  allerAEtape,
+  etapePrecedente,
+  choisirStockage,
+  choisirTransport,
+  enregistrerVenteDon,
+  etapeCourante,
+} from '../../utils/vente-don';
 
 test.use({
   viewport: { width: 350, height: 667 },
@@ -18,18 +28,25 @@ test('Changement de prochain détenteur après sélection — cohérence du form
   await connectWith(page, 'premier-detenteur@example.fr');
   await page.getByRole('link', { name: feiId }).click();
 
-  const select = page.locator("[class*='select-prochain-detenteur'][class*='input-container']");
-  await select.click();
-  await page.getByRole('option', { name: 'ETG 1 - 75000 Paris (' }).click();
+  await openVenteDon(page);
+  await selectDestinataire(page, 'ETG 1 - 75000 Paris (');
+  await allerAEtape(page, 'Stockage');
+  await choisirStockage(page, 'aucun');
 
-  // Choisir stockage
-  await page.getByText('Carcasses déposées dans une chambre froide').click();
+  // Retour à l'étape 1 pour changer de destinataire : le stockage déjà choisi est conservé.
+  await etapePrecedente(page);
+  await etapePrecedente(page);
+  await expect(etapeCourante(page)).toContainText('Destinataire');
+  await selectDestinataire(page, 'ETG 2 - 75000 Paris (');
 
-  // Changer pour ETG 2
-  await select.click();
-  await page.getByRole('option', { name: 'ETG 2 - 75000 Paris (' }).click();
+  await allerAEtape(page, 'Stockage');
+  await expect(etapeCourante(page)).toContainText('Stockage');
+  await allerAEtape(page, 'Transport');
+  await choisirTransport(page, 'moi');
+  await enregistrerVenteDon(page);
 
-  // Assertion : stockage toujours présent (ou reset cohérent ?) — on vérifie qu'on n'a pas d'état incohérent
-  // TODO: verify expected behavior (reset ou conservé ?)
-  await expect(page.getByText(/ETG 2/)).toBeVisible();
+  // La carte récapitule le nouveau destinataire et le stockage conservé.
+  const carte = page.getByRole('button', { name: /ETG 2/ }).first();
+  await expect(carte).toBeVisible();
+  await expect(carte).toContainText('Pas de stockage');
 });

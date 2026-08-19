@@ -1,6 +1,7 @@
 import { test, expect } from '../../utils/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
+import { ajouterVenteDon } from '../../utils/vente-don';
 import { logoutAndConnect } from '../../utils/logout-and-connect';
 
 // Scenario 114 — Chain dispatch hybride : PD dispatche ETG + collecteur → chacun continue → SVI recoit les deux.
@@ -22,34 +23,12 @@ test('Dispatch PD → ETG 1 + Collecteur Pro 1 puis chacun → SVI', async ({ pa
   await page.getByRole('link', { name: feiId }).click();
 
   // Groupe 1 : ETG 1
-  await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").first().click();
-  await page.getByRole('option', { name: 'ETG 1 - 75000 Paris (' }).click();
-  const pasDeStockage = page.getByText('Pas de stockage').first();
-  await pasDeStockage.scrollIntoViewIfNeeded();
-  await pasDeStockage.click();
-  const jeTransporte = page.getByText('Je transporte les carcasses moi').first();
-  await jeTransporte.scrollIntoViewIfNeeded();
-  await jeTransporte.click();
+  await ajouterVenteDon(page, { destinataire: 'ETG 1 - 75000 Paris (' });
 
   // Ajouter groupe 2
-  const ajouterBtn = page.getByRole('button', { name: 'Ajouter un autre destinataire' });
-  await ajouterBtn.scrollIntoViewIfNeeded();
-  await ajouterBtn.click();
-
-  const group2 = page.locator('div.rounded.border').nth(1);
-  await group2.scrollIntoViewIfNeeded();
-  const g2Carcasses = group2.locator("button[type='button']").filter({ hasText: 'N°' });
-  await g2Carcasses.nth(0).click();
-  await g2Carcasses.nth(1).click();
-
   // Groupe 2 : Collecteur Pro 1
-  await group2.locator("[class*='select-prochain-detenteur'][class*='input-container']").click();
-  await page.getByRole('option', { name: /Collecteur Pro 1/i }).click();
-  const g2Stockage = group2.getByText('Pas de stockage').first();
-  await g2Stockage.scrollIntoViewIfNeeded();
-  await g2Stockage.click();
   // No transport step when dispatching to a collecteur — they handle transport
-
+  await ajouterVenteDon(page, { destinataire: /Collecteur Pro 1/i, carcasses: [0, 1] });
   const transmettreBtn = page.getByRole('button', { name: /Transmettre/ });
   await transmettreBtn.scrollIntoViewIfNeeded();
   await transmettreBtn.click();

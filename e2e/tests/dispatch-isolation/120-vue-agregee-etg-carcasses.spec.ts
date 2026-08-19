@@ -1,6 +1,7 @@
 import { test, expect } from '../../utils/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
+import { ajouterVenteDon } from '../../utils/vente-don';
 import { logoutAndConnect } from '../../utils/logout-and-connect';
 
 test.use({
@@ -25,45 +26,15 @@ test('/etg/carcasses ne montre que les carcasses dispatchées à cet ETG', async
   await expect(page.getByRole('link', { name: feiId })).toBeVisible({ timeout: 15000 });
   await page.getByRole('link', { name: feiId }).click();
 
-  // Select ETG 1 for group 1
-  await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").first().click();
-  await page.getByRole('option', { name: 'ETG 1 - 75000 Paris (' }).click();
+  // Vente / don 1 : ETG 1 (toutes les carcasses par défaut)
+  await ajouterVenteDon(page, { destinataire: 'ETG 1 - 75000 Paris (' });
 
-  const pasDeStockage = page.getByText('Pas de stockage').first();
-  await pasDeStockage.scrollIntoViewIfNeeded();
-  await pasDeStockage.click();
+  // Vente / don 2 : ETG 2, qui reprend 2 carcasses à l'ETG 1
+  await ajouterVenteDon(page, { destinataire: 'ETG 2 - 75000 Paris (', carcasses: [0, 1] });
 
-  const jeTransporte = page.getByText('Je transporte les carcasses moi').first();
-  await jeTransporte.scrollIntoViewIfNeeded();
-  await jeTransporte.click();
-
-  // Add second recipient
-  const ajouterBtn = page.getByRole('button', { name: 'Ajouter un autre destinataire' });
-  await ajouterBtn.scrollIntoViewIfNeeded();
-  await ajouterBtn.click();
-
-  // Move 2 carcasses to group 2
-  const group2 = page.locator('div.rounded.border').nth(1);
-  await group2.scrollIntoViewIfNeeded();
-  const group2CarcasseButtons = group2.locator("button[type='button']").filter({ hasText: 'N°' });
-  await group2CarcasseButtons.nth(0).click();
-  await group2CarcasseButtons.nth(1).click();
-
-  const group1 = page.locator('div.rounded.border').first();
-  await expect(group1.getByText('1 carcasse + 1 lot')).toBeVisible();
-  await expect(group2.getByText('2 carcasses')).toBeVisible();
-
-  // Select ETG 2 for group 2
-  await group2.locator("[class*='select-prochain-detenteur'][class*='input-container']").click();
-  await page.getByRole('option', { name: 'ETG 2 - 75000 Paris (' }).click();
-
-  const g2PasDeStockage = group2.getByText('Pas de stockage').first();
-  await g2PasDeStockage.scrollIntoViewIfNeeded();
-  await g2PasDeStockage.click();
-
-  const g2Transport = group2.getByText('Je transporte les carcasses moi').first();
-  await g2Transport.scrollIntoViewIfNeeded();
-  await g2Transport.click();
+  // Les cartes récapitulent la répartition
+  await expect(page.getByText('1 carcasse + 1 lot')).toBeVisible();
+  await expect(page.getByText('2 carcasses')).toBeVisible();
 
   // Submit
   const transmettreBtn = page.getByRole('button', { name: /Transmettre/ });

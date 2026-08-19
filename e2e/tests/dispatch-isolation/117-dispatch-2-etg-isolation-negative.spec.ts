@@ -1,6 +1,7 @@
 import { test, expect } from '../../utils/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
+import { ajouterVenteDon } from '../../utils/vente-don';
 import { logoutAndConnect } from '../../utils/logout-and-connect';
 
 // Scenario 117 (extension) — Dispatch 2 ETG : NEGATIVE visibility + vue /etg/carcasses agrégée.
@@ -22,35 +23,10 @@ test('Dispatch 2 ETG : isolation négative + vue agrégée', async ({ page }) =>
   await connectWith(page, 'premier-detenteur@example.fr');
   await page.getByRole('link', { name: feiId }).click();
 
-  await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").first().click();
-  await page.getByRole('option', { name: 'ETG 1 - 75000 Paris (' }).click();
-  const pasDeStockage = page.getByText('Pas de stockage').first();
-  await pasDeStockage.scrollIntoViewIfNeeded();
-  await pasDeStockage.click();
-  const jeTransporte = page.getByText('Je transporte les carcasses moi').first();
-  await jeTransporte.scrollIntoViewIfNeeded();
-  await jeTransporte.click();
+  await ajouterVenteDon(page, { destinataire: 'ETG 1 - 75000 Paris (' });
 
-  const ajouterBtn = page.getByRole('button', { name: 'Ajouter un autre destinataire' });
-  await ajouterBtn.scrollIntoViewIfNeeded();
-  await ajouterBtn.click();
-
-  const group2 = page.locator('div.rounded.border').nth(1);
-  await group2.scrollIntoViewIfNeeded();
-  const g2Btns = group2.locator("button[type='button']").filter({ hasText: 'N°' });
-  // Déplacer MM-001-003 (pigeons) et MM-001-004 dans le groupe 2
-  await g2Btns.nth(0).click();
-  await g2Btns.nth(1).click();
-
-  await group2.locator("[class*='select-prochain-detenteur'][class*='input-container']").click();
-  await page.getByRole('option', { name: 'ETG 2 - 75000 Paris (' }).click();
-  const g2Stockage = group2.getByText('Pas de stockage').first();
-  await g2Stockage.scrollIntoViewIfNeeded();
-  await g2Stockage.click();
-  const g2Transport = group2.getByText('Je transporte les carcasses moi').first();
-  await g2Transport.scrollIntoViewIfNeeded();
-  await g2Transport.click();
-
+  // Déplacer MM-001-001 et MM-001-002 vers l'ETG 2 : l'ETG 1 garde 004 et 003 (pigeons).
+  await ajouterVenteDon(page, { destinataire: 'ETG 2 - 75000 Paris (', carcasses: [0, 1] });
   const transmettreBtn = page.getByRole('button', { name: /Transmettre/ });
   await transmettreBtn.scrollIntoViewIfNeeded();
   await transmettreBtn.click();

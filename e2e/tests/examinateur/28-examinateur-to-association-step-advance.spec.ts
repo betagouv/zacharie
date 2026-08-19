@@ -7,6 +7,14 @@ dayjs.locale('fr');
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 import { dateApprobationDuJour } from '../../utils/date-approbation';
+import {
+  openVenteDon,
+  allerAEtape,
+  choisirStockage,
+  choisirTransport,
+  enregistrerVenteDon,
+  venteDonModal,
+} from '../../utils/vente-don';
 
 test.use({
   viewport: { width: 350, height: 667 },
@@ -65,19 +73,17 @@ test('Examinateur → Association → ETG : step ladder advances based on per-ca
 
   await page.getByRole('button', { name: 'Transmettre', exact: true }).click();
 
-  // Inline transition → dispatch view.
-  const etg1Pill = page.getByRole('button', { name: /ETG 1/i });
+  // Inline transition → vente / don. Une seule carcasse : pas d'étape « Carcasses ».
+  await openVenteDon(page);
+  const etg1Pill = venteDonModal(page).getByRole('button', { name: /^ETG 1$/ });
   await expect(etg1Pill).toBeVisible({ timeout: 15000 });
   await etg1Pill.scrollIntoViewIfNeeded();
   await etg1Pill.click();
-
-  const pasDeStockage = page.getByText('Pas de stockage').first();
-  await pasDeStockage.scrollIntoViewIfNeeded();
-  await pasDeStockage.click();
-
-  const jeTransporte = page.getByText('Je transporte les carcasses moi').first();
-  await jeTransporte.scrollIntoViewIfNeeded();
-  await jeTransporte.click();
+  await allerAEtape(page, 'Stockage');
+  await choisirStockage(page, 'aucun');
+  await allerAEtape(page, 'Transport');
+  await choisirTransport(page, 'moi');
+  await enregistrerVenteDon(page);
 
   const transmettre = page.getByRole('button', { name: 'Transmettre', exact: true });
   await transmettre.scrollIntoViewIfNeeded();

@@ -6,6 +6,7 @@ dayjs.extend(utc);
 dayjs.locale('fr');
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
+import { ajouterVenteDon } from '../../utils/vente-don';
 import { dateApprobationDuJour } from '../../utils/date-approbation';
 import { logoutAndConnect } from '../../utils/logout-and-connect';
 
@@ -195,13 +196,8 @@ test('Chaîne 300 carcasses : examinateur → PD → collecteur → ETG → SVI 
   // Navigation pleine page (goto) : réhydrate proprement la session du PD depuis le token stocké.
   await page.goto(`http://localhost:3290/app/chasseur/fei/${feiId}`);
   // Pas d'étape « prendre en charge » dans ce flux : le PD choisit directement le prochain détenteur.
-  await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").click();
-  await page.getByRole('option', { name: /Collecteur Pro 1/i }).click();
-  // Le stockage n'est activé qu'une fois le destinataire choisi ; « Pas de stockage » est la valeur par défaut.
-  const pasDeStockagePd = page.getByText('Pas de stockage').first();
-  await pasDeStockagePd.scrollIntoViewIfNeeded();
-  await pasDeStockagePd.click();
   // Pas de mode de transport à choisir pour un collecteur professionnel.
+  await ajouterVenteDon(page, { destinataire: /Collecteur Pro 1/i });
   const transmettrePd = page.getByRole('button', { name: 'Transmettre la fiche' });
   await transmettrePd.scrollIntoViewIfNeeded();
   await transmettrePd.click();
