@@ -52,6 +52,8 @@ router.get(
             AND f.deleted_at IS NULL
         `,
         // Stage 4+: Chasseurs avec >= 1 FEI envoyée (+ count pour stages 5, 6)
+        // Le suivi de propriété est au niveau carcasse : une fiche est envoyée
+        // dès qu'au moins une de ses carcasses a quitté le chasseur.
         prisma.$queryRaw<Array<{ user_id: string; fei_count: bigint }>>`
           SELECT u.id as user_id, COUNT(DISTINCT f.numero) as fei_count
           FROM "User" u
@@ -59,7 +61,19 @@ router.get(
           WHERE 'CHASSEUR' = ANY(u.roles)
             AND u.deleted_at IS NULL
             AND f.deleted_at IS NULL
-            AND f.fei_prev_owner_user_id IS NOT NULL
+            AND EXISTS (
+              SELECT 1
+              FROM "Carcasse" c
+              WHERE c.fei_numero = f.numero
+                AND c.deleted_at IS NULL
+                AND (
+                  c.next_owner_entity_id IS NOT NULL
+                  OR c.current_owner_role NOT IN (
+                    'EXAMINATEUR_INITIAL'::"FeiOwnerRole",
+                    'PREMIER_DETENTEUR'::"FeiOwnerRole"
+                  )
+                )
+            )
           GROUP BY u.id
         `,
       ]);
@@ -155,7 +169,7 @@ router.get(
           FROM "Carcasse" c
           JOIN "Fei" f ON c.fei_numero = f.numero
           WHERE c.deleted_at IS NULL
-            AND f.svi_assigned_at IS NOT NULL
+            AND c.svi_assigned_at IS NOT NULL
             AND c.svi_carcasse_status IN ('ACCEPTE', 'LEVEE_DE_CONSIGNE', 'SAISIE_TOTALE', 'SAISIE_PARTIELLE', 'TRAITEMENT_ASSAINISSANT')
             AND NOT (f.created_by_user_id LIKE '%GLOP%')
         `,

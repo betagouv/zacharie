@@ -10,6 +10,7 @@ import dayjs from 'dayjs';
 import { v4 as uuidv4 } from 'uuid';
 import {
   Carcasse,
+  CarcasseStatus,
   CarcasseType,
   CarcasseModificationRequestStatus,
   CarcasseModificationRequestType,
@@ -33,7 +34,7 @@ const gibierSelect = {
 // son passage (pour qu'elle apparaisse dans sa liste plutôt que dans
 // "déjà refusées") et (3) une demande de type NEW_CARCASSE. Tout part par le
 // pipeline /sync ; le backend notifie l'examinateur initial et lui présentera
-// l'examen à signer.
+// l'examen à signer. La carcasse suit son parcours sans attendre cette signature.
 // ----------------------------------------------------------------------------
 export default function RequestNewCarcasseButton({
   feiNumero,
@@ -139,7 +140,9 @@ export default function RequestNewCarcasseButton({
       intermediaire_carcasse_manquante: false,
       latest_intermediaire_signed_at: null,
       svi_carcasse_commentaire: null,
-      svi_carcasse_status: null,
+      // Même statut de départ que les carcasses créées par l'examinateur : sans lui, le SVI perd le
+      // bouton « Accepter la carcasse », qui n'apparaît que sur SANS_DECISION.
+      svi_carcasse_status: CarcasseStatus.SANS_DECISION,
       svi_carcasse_status_set_at: null,
       svi_ipm1_date: null,
       svi_ipm1_presentee_inspection: null,
@@ -287,8 +290,8 @@ export default function RequestNewCarcasseButton({
           <div>
             <p className="mb-4 text-sm">
               Vous avez physiquement une carcasse qui semble être oubliée sur cette fiche d'examen initial.
-              Pré-remplissez ses informations : l'examinateur initial recevra une demande à signer pour
-              valider son examen et la mettre sur le marché.
+              Pré-remplissez ses informations : elle est ajoutée immédiatement et suit son parcours.
+              L'examinateur initial est informé et signera son examen initial de son côté.
             </p>
             <Input
               label="Numéro de marquage *"

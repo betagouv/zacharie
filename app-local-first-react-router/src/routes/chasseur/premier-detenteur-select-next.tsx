@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from 'react-router';
-import { useCallback, useMemo, useState, type MutableRefObject } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react';
 import {
   UserRoles,
   Prisma,
@@ -43,6 +43,7 @@ import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import { Badge } from '@codegouvfr/react-dsfr/Badge';
 import type { EntityWithUserRelation } from '~/src/types/entity';
 import { CarcasseTransmission } from '@app/types/carcasse';
+import { isCarcasseDejaEnvoyee } from '@app/utils/carcasse-deja-envoyee';
 
 export interface DestinatairePremierDetenteurHandle {
   validate: () => string | null;
@@ -657,27 +658,10 @@ export default function DestinataireSelectPremierDetenteur({
 
   const allCarcasses = useCarcassesForFei(params.fei_numero);
 
-  const carcassesDejaEnvoyees = useMemo(
-    () =>
-      allCarcasses.filter(
-        (c) =>
-          c.next_owner_entity_id != null ||
-          (c.current_owner_role != null &&
-            c.current_owner_role !== FeiOwnerRole.PREMIER_DETENTEUR &&
-            c.current_owner_role !== FeiOwnerRole.EXAMINATEUR_INITIAL)
-      ),
-    [allCarcasses]
-  );
+  const carcassesDejaEnvoyees = useMemo(() => allCarcasses.filter(isCarcasseDejaEnvoyee), [allCarcasses]);
 
   const carcassesRestantes = useMemo(
-    () =>
-      allCarcasses.filter(
-        (c) =>
-          c.next_owner_entity_id == null &&
-          (c.current_owner_role == null ||
-            c.current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR ||
-            c.current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL)
-      ),
+    () => allCarcasses.filter((c) => !isCarcasseDejaEnvoyee(c)),
     [allCarcasses]
   );
 
@@ -773,6 +757,31 @@ export default function DestinataireSelectPremierDetenteur({
       },
     ];
   });
+
+  // L'état initial des lots est figé au montage. Une carcasse créée après coup rejoint donc le lot
+  // par défaut, sinon elle reste en arrière : la fiche part sans elle et elle devient orpheline,
+  // impossible à transmettre comme à clôturer. Symétriquement on retire des lots les carcasses qui
+  // ne sont plus à envoyer (supprimées, ou parties dans un autre lot).
+  const knownCarcasseIdsRef = useRef<Set<string>>(new Set(carcassesRestantesIds));
+  useEffect(() => {
+    const restantes = new Set(carcassesRestantesIds);
+    const nouvelles = carcassesRestantesIds.filter((id) => !knownCarcasseIdsRef.current.has(id));
+    knownCarcasseIdsRef.current = restantes;
+    setDispatchGroups((prev) => {
+      const nettoyes = prev.map((group) => ({
+        ...group,
+        carcasseIds: group.carcasseIds.filter((id) => restantes.has(id)),
+      }));
+      const aChange =
+        nouvelles.length > 0 ||
+        nettoyes.some((group, index) => group.carcasseIds.length !== prev[index].carcasseIds.length);
+      if (!aChange) {
+        return prev;
+      }
+      nettoyes[0] = { ...nettoyes[0], carcasseIds: [...nettoyes[0].carcasseIds, ...nouvelles] };
+      return nettoyes;
+    });
+  }, [carcassesRestantesIds]);
 
   // Track which group opened the partenaire/ccg modal
   const [activeModalGroupId, setActiveModalGroupId] = useState<string | null>(null);
@@ -1057,7 +1066,7 @@ export default function DestinataireSelectPremierDetenteur({
   }, []);
 
   if (!fei.premier_detenteur_user_id) {
-    return "Il n'y a pas encore de premier détenteur pour cette fiche";
+    return "Il n'y a pas encore de propriétaire initial pour cette fiche";
   }
 
   return (

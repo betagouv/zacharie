@@ -37,6 +37,14 @@ export default function useEtgNavigationMenu(): MainNavigationProps.Item[] {
           },
         },
         {
+          text: 'Changer de mot de passe',
+          isActive: location.pathname === '/app/etg/profil/mot-de-passe',
+          linkProps: {
+            href: '#',
+            to: '/app/etg/profil/mot-de-passe',
+          },
+        },
+        {
           text: 'Notifications',
           isActive: location.pathname === '/app/etg/profil/notifications',
           linkProps: {

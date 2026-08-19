@@ -8,3 +8,12 @@ export function sanitize(source: string) {
     // to filter out its content
   });
 }
+
+// Brevo fait passer le sujet, le HTML et le texte de ses emails transactionnels dans son propre
+// moteur de template : `{{ ... }}` et `{% ... %}` sont évalués chez Brevo, après notre envoi.
+// Aucun email construit dans le code n'utilise ces placeholders (les templates Brevo, eux, reçoivent
+// leurs valeurs via `params`), donc on casse le délimiteur en insérant une espace : le texte saisi
+// s'affiche tel quel et rien n'est interprété.
+export function escapeBrevoPlaceholders(source: string) {
+  return source.replace(/\{(?=[{%])/g, '{ ');
+}

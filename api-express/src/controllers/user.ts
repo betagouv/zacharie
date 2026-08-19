@@ -591,6 +591,98 @@ router.post(
   )
 );
 
+const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, 'Veuillez renseigner votre mot de passe actuel'),
+  newPassword: z.string().min(12, 'Le nouveau mot de passe doit contenir au moins 12 caractères'),
+});
+
+// Route: POST /user/change-password - Changement de mot de passe depuis le profil
+router.post(
+  '/change-password',
+  passport.authenticate('user', { session: false, failWithError: true }),
+  catchErrors(
+    async (
+      req: RequestWithUser,
+      res: express.Response<UserConnexionResponse>,
+      next: express.NextFunction
+    ) => {
+      const user = req.user!;
+      const result = changePasswordSchema.safeParse(req.body);
+      if (!result.success) {
+        res.status(406).send({
+          ok: false,
+          data: { user: null },
+          message: '',
+          error: result.error.errors[0].message,
+        });
+        return;
+      }
+      const { currentPassword, newPassword } = result.data;
+
+      const existingPassword = await prisma.password.findFirst({
+        where: { user_id: user.id },
+      });
+      if (!existingPassword?.password) {
+        res.status(400).send({
+          ok: false,
+          data: { user: null },
+          message: '',
+          error: 'Mot de passe actuel incorrect',
+        });
+        return;
+      }
+
+      const isOk = await comparePassword(currentPassword, existingPassword.password);
+      if (!isOk) {
+        res.status(400).send({
+          ok: false,
+          data: { user: null },
+          message: '',
+          error: 'Mot de passe actuel incorrect',
+        });
+        return;
+      }
+
+      if (currentPassword === newPassword) {
+        res.status(400).send({
+          ok: false,
+          data: { user: null },
+          message: '',
+          error: "Le nouveau mot de passe doit être différent de l'ancien",
+        });
+        return;
+      }
+
+      await prisma.password.update({
+        where: { user_id: user.id },
+        data: {
+          password: await hashPassword(newPassword),
+          reset_password_token: null,
+          reset_password_last_email_sent_at: null,
+        },
+      });
+
+      await sendEmail({
+        emails: [user.email!],
+        subject: '[Zacharie] Votre mot de passe a été modifié',
+        text: `Bonjour, le mot de passe de votre compte Zacharie vient d'être modifié. Si vous n'êtes pas à l'origine de ce changement, réinitialisez votre mot de passe depuis ${process.env.VITE_APP_URL}/app/connexion/mot-de-passe-oublie et contactez-nous à contact@zacharie.beta.gouv.fr`,
+      });
+
+      // on renouvelle le token de la session courante, l'ancien reste valide jusqu'à son expiration
+      const token = jwt.sign({ userId: user.id }, SECRET, {
+        expiresIn: JWT_MAX_AGE,
+      });
+      res.cookie('zacharie_express_jwt', token, cookieOptions(req));
+      res.status(200).send({
+        ok: true,
+        data: { user, token },
+        message: 'Votre mot de passe a été modifié',
+        error: '',
+      });
+    }
+  )
+);
+
 const accessTokenSchema = z.object({
   accessToken: z.string(),
 });
@@ -802,31 +894,6 @@ router.post(
           },
         });
       }
-
-      // await prisma.fei.update({
-      //   where: {
-      //     numero: fei.numero,
-      //   },
-      //   data: {
-      //     fei_next_owner_user_id: nextPremierDetenteur.id,
-      //   },
-      // });
-
-      // if (nextPremierDetenteur.id !== user.id) {
-      //   const email = [
-      //     `Bonjour,`,
-      //     `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche. Rendez vous sur Zacharie pour la traiter.`,
-      //     `Pour consulter la fiche, rendez-vous sur Zacharie : https://zacharie.beta.gouv.fr/app/chasseur/fei/${fei.numero}`,
-      //     `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur l'attribution de cette fiche, n'hésitez pas à contacter la personne qui vous l'a envoyée.`,
-      //   ].join('\n\n');
-      //   await sendNotificationToUser({
-      //     user: nextPremierDetenteur!,
-      //     title: `${user.prenom} ${user.nom_de_famille} vous a attribué la fiche ${fei?.numero}`,
-      //     body: email,
-      //     email: email,
-      //     notificationLogAction: `FEI_ASSIGNED_TO_${UserRelationType.PREMIER_DETENTEUR}_${fei.numero}`,
-      //   });
-      // }
 
       const nextPremierDetenteurForFei = await prisma.user.findUnique({
         where: {

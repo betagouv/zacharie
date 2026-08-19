@@ -556,6 +556,34 @@ export interface AdminFeisResponse {
   error: string;
 }
 
+// Une option de liste déroulante dans les filtres des listes admin.
+export interface AdminFilterOption {
+  id: string;
+  label: string;
+}
+
+export interface AdminFeisFilterOptionsResponse {
+  ok: boolean;
+  data: {
+    examinateurs: Array<AdminFilterOption>;
+    premiersDetenteurs: Array<AdminFilterOption>;
+  };
+  error: string;
+}
+
+export interface AdminCarcassesFilterOptionsResponse {
+  ok: boolean;
+  data: {
+    especes: Array<AdminFilterOption>;
+    svis: Array<AdminFilterOption>;
+    etgs: Array<AdminFilterOption>;
+    collecteurs: Array<AdminFilterOption>;
+    premiersDetenteurs: Array<AdminFilterOption>;
+    examinateurs: Array<AdminFilterOption>;
+  };
+  error: string;
+}
+
 export interface AdminFeiDetailResponse {
   ok: boolean;
   data: {

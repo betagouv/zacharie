@@ -166,11 +166,11 @@ router.get(
   })
 );
 
-// Carcasses d'une fiche hors du périmètre de synchro delta de l'utilisateur : refusées, manquantes
-// ou orphelines. Une carcasse refusée « sort du circuit » (ses next/current_owner ne suivent plus la
-// transmission de la fiche) et son updated_at ne rebouge pas ensuite : le pull delta /carcasse ne la
-// renvoie donc jamais aux détenteurs suivants ni au SVI, alors qu'elle fait partie de leur champ de
-// contrôle. Cette route les fournit à la demande (à l'ouverture d'une fiche), pour merge dans le store.
+// Carcasses refusées ou manquantes en amont, hors du périmètre de synchro delta de l'utilisateur.
+// Une carcasse refusée « sort du circuit » (ses next/current_owner ne suivent plus la transmission
+// de la fiche) et son updated_at ne rebouge pas ensuite : le pull delta /carcasse ne la renvoie donc
+// jamais aux détenteurs suivants ni au SVI, alors qu'elle fait partie de leur champ de contrôle.
+// Cette route les fournit à la demande (à l'ouverture d'une fiche), pour merge dans le store.
 router.get(
   '/refusees/:fei_numero',
   passport.authenticate('user', { session: false }),
@@ -194,17 +194,44 @@ router.get(
 
     // Autorisation : l'utilisateur doit avoir accès à au moins une carcasse de la fiche (via son
     // périmètre normal) pour consulter les carcasses hors périmètre de cette même fiche.
-    const inScopeCount = await prisma.carcasse.count({
+    // On en profite pour relever ses groupes de dispatch (premier détenteur → prochain détenteur)
+    // sur cette fiche : c'est la seule partie de la fiche qui le concerne.
+    const inScopeCarcasses = await prisma.carcasse.findMany({
       where: { fei_numero: feiNumero, ...accessWhere },
+      select: { premier_detenteur_prochain_detenteur_id_cache: true },
+      distinct: ['premier_detenteur_prochain_detenteur_id_cache'],
     });
-    if (inScopeCount === 0) {
+    if (inScopeCarcasses.length === 0) {
       res.status(403).send({ ok: false, data: null, error: "Vous n'avez pas accès à cette fiche." });
       return;
     }
+    const myDispatchIds = inScopeCarcasses.map((c) => c.premier_detenteur_prochain_detenteur_id_cache);
 
-    // Les carcasses de la fiche hors périmètre normal (refusées/manquantes/orphelines).
+    // Les carcasses refusées ou manquantes de MES groupes de dispatch, sorties de mon périmètre au
+    // moment du refus. Strictement pas les autres carcasses hors périmètre de la fiche : celles
+    // parties chez un autre destinataire ne sont pas dans mon champ de contrôle, et si elles
+    // entraient dans le store elles pollueraient les vues transverses (recherche, transmissions).
     const carcasses = await prisma.carcasse.findMany({
-      where: { fei_numero: feiNumero, NOT: accessWhere },
+      where: {
+        fei_numero: feiNumero,
+        NOT: accessWhere,
+        AND: [
+          {
+            OR: [
+              { premier_detenteur_prochain_detenteur_id_cache: { in: myDispatchIds.filter(Boolean) } },
+              ...(myDispatchIds.includes(null)
+                ? [{ premier_detenteur_prochain_detenteur_id_cache: null }]
+                : []),
+            ],
+          },
+          {
+            OR: [
+              { intermediaire_carcasse_refus_intermediaire_id: { not: null } },
+              { intermediaire_carcasse_manquante: true },
+            ],
+          },
+        ],
+      },
     });
 
     const carcasseIds = carcasses.map((c) => c.zacharie_carcasse_id);

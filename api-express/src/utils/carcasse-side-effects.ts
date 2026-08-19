@@ -12,11 +12,15 @@ import prisma from '~/prisma';
 import sendNotificationToUser from '~/service/notifications';
 import {
   formatCarcasseManquanteOrRefusChasseurEmail,
+  formatCircuitCourtAssignedTemplateEmail,
+  formatFeiAssignedTemplateEmail,
+  formatFeiUnassignedTemplateEmail,
   formatManualValidationSviChasseurEmail,
   formatRenvoiExpediteurEmail,
   formatSaisieChasseurEmail,
   formatSviAssignedEmail,
 } from '~/utils/formatCarcasseEmail';
+import { getCircuitCourtFeiUrl, getFeiUrlForRole } from '~/utils/fei-url';
 import { checkGenerateCertificat } from '~/utils/generate-certificats';
 import { isCarcasseDone } from '~/utils/is-carcasse-done';
 import { sendWebhook } from '~/utils/api';
@@ -393,12 +397,20 @@ export async function notifyCircuitCourt(
     },
   });
 
+  // Le PDF récapitule toute la fiche : un seul rendu pour tous les destinataires.
+  const fichePdf = await getFichePdf(updatedCarcasse, carcasses);
+
+  const circuitCourtUrl = getCircuitCourtFeiUrl(
+    updatedCarcasse.fei_numero,
+    updatedCarcasse.premier_detenteur_prochain_detenteur_id_cache
+  );
+
   for (const nextOwner of usersWorkingForEntity) {
     if (nextOwner.id !== user.id) {
       const email = [
         `Bonjour,`,
         `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche. Vous trouverez un résumé en pièce jointe, à conserver pour votre enregistrement.`,
-        `Pour consulter la fiche, rendez-vous sur Zacharie avec votre email ${nextOwner.email} : https://zacharie.beta.gouv.fr/app/circuit-court/fei/${updatedCarcasse.fei_numero}/${updatedCarcasse.premier_detenteur_prochain_detenteur_id_cache}`,
+        `Pour consulter la fiche, rendez-vous sur Zacharie avec votre email ${nextOwner.email} : ${circuitCourtUrl}`,
         `Ce message a été généré automatiquement par l'application Zacharie. Si vous avez des questions sur l'attribution de cette fiche, n'hésitez pas à contacter la personne qui vous l'a envoyée.`,
       ].join('\n\n');
       await sendNotificationToUser({
@@ -406,10 +418,12 @@ export async function notifyCircuitCourt(
         title: `${user.prenom} ${user.nom_de_famille} vous a attribué une fiche d'examen initial du gibier sauvage n° ${updatedCarcasse?.fei_numero}`,
         body: email,
         email: email,
+        emailTemplateId: BrevoTemplateId.FEI_ASSIGNED_CIRCUIT_COURT,
+        emailTemplateParams: formatCircuitCourtAssignedTemplateEmail(updatedCarcasse, user, nextOwner.email),
         notificationLogAction: `FEI_ASSIGNED_TO_${updatedCarcasse.next_owner_role}_${updatedCarcasse.fei_numero}_${updatedCarcasse.premier_detenteur_prochain_detenteur_id_cache}`,
         attachments: [
           {
-            content: await getFichePdf(updatedCarcasse, carcasses),
+            content: fichePdf,
             name: `${updatedCarcasse.fei_numero}.pdf`,
           },
         ],
@@ -466,17 +480,11 @@ export async function notifyNextOwnerUser(existingCarcasse: Carcasse, updatedCar
       where: { id: nextOwnerId },
     });
     const role = nextOwner?.roles[0];
-    let url = 'https://zacharie.beta.gouv.fr/app/';
-    if (role === UserRoles.CHASSEUR) url += 'chasseur/';
-    else if (role === UserRoles.SVI) url += 'svi/';
-    else if (role === UserRoles.ETG) url += 'etg/';
-    else if (role === UserRoles.COLLECTEUR_PRO) url += 'collecteur-pro/';
-    else {
-      throw new Error(`Unknown role in notifying next owner user: ${role}`);
-    }
-    url += `fei/${updatedCarcasse.fei_numero}`;
-    if (role !== UserRoles.CHASSEUR)
-      url += `/${updatedCarcasse.premier_detenteur_prochain_detenteur_id_cache}`;
+    const url = getFeiUrlForRole(
+      role,
+      updatedCarcasse.fei_numero,
+      updatedCarcasse.premier_detenteur_prochain_detenteur_id_cache
+    );
 
     const email = [
       `Bonjour,`,
@@ -489,6 +497,8 @@ export async function notifyNextOwnerUser(existingCarcasse: Carcasse, updatedCar
       title: `${user.prenom} ${user.nom_de_famille} vous a attribué la fiche ${updatedCarcasse?.fei_numero}`,
       body: email,
       email: email,
+      emailTemplateId: BrevoTemplateId.FEI_ASSIGNED,
+      emailTemplateParams: formatFeiAssignedTemplateEmail(updatedCarcasse, user, role),
       notificationLogAction: `FEI_ASSIGNED_TO_${updatedCarcasse.next_owner_role}_${updatedCarcasse?.fei_numero}_${updatedCarcasse.premier_detenteur_prochain_detenteur_id_cache}`,
     });
   } else {
@@ -511,6 +521,8 @@ export async function notifyNextOwnerUser(existingCarcasse: Carcasse, updatedCar
       title: `La fiche n° ${existingCarcasse?.fei_numero} ne vous est plus attribuée`,
       body: email,
       email: email,
+      emailTemplateId: BrevoTemplateId.FEI_UNASSIGNED,
+      emailTemplateParams: formatFeiUnassignedTemplateEmail(existingCarcasse, user),
       notificationLogAction: `FEI_REMOVED_FROM_${updatedCarcasse.next_owner_role}_${updatedCarcasse?.fei_numero}_${updatedCarcasse.premier_detenteur_prochain_detenteur_id_cache}`,
     });
   }
@@ -558,17 +570,11 @@ export async function notifyNextOwnerEntity(
   for (const nextOwner of usersWorkingForEntity) {
     if (nextOwner.id !== user.id) {
       const role = nextOwner?.roles[0];
-      let url = 'https://zacharie.beta.gouv.fr/app/';
-      if (role === UserRoles.CHASSEUR) url += 'chasseur/';
-      else if (role === UserRoles.SVI) url += 'svi/';
-      else if (role === UserRoles.ETG) url += 'etg/';
-      else if (role === UserRoles.COLLECTEUR_PRO) url += 'collecteur-pro/';
-      else {
-        throw new Error(`Unknown role in notifying next owner entity: ${role}`);
-      }
-      url += `fei/${updatedCarcasse.fei_numero}`;
-      if (role !== UserRoles.CHASSEUR)
-        url += `/${updatedCarcasse.premier_detenteur_prochain_detenteur_id_cache}`;
+      const url = getFeiUrlForRole(
+        role,
+        updatedCarcasse.fei_numero,
+        updatedCarcasse.premier_detenteur_prochain_detenteur_id_cache
+      );
 
       const email = [
         `Bonjour,`,
@@ -581,6 +587,8 @@ export async function notifyNextOwnerEntity(
         title: `${user.prenom} ${user.nom_de_famille} vous a attribué la fiche ${updatedCarcasse?.fei_numero}`,
         body: email,
         email: email,
+        emailTemplateId: BrevoTemplateId.FEI_ASSIGNED,
+        emailTemplateParams: formatFeiAssignedTemplateEmail(updatedCarcasse, user, role),
         notificationLogAction: `FEI_ASSIGNED_TO_${updatedCarcasse.next_owner_role}_${updatedCarcasse.fei_numero}_${updatedCarcasse.premier_detenteur_prochain_detenteur_id_cache}`,
       });
     }

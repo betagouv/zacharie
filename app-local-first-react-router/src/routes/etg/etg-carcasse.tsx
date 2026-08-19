@@ -695,9 +695,9 @@ export default function CarcasseIntermediaireComp({
                       </label>
                     </div>
 
-                    {/* Signaler un numéro de marquage incorrect : ouvre une demande de modification
-                        adressée à l'examinateur initial. Visible uniquement s'il n'y a pas déjà une
-                        demande en cours (le bouton se masque tout seul). */}
+                    {/* Corriger le numéro de marquage : la correction est appliquée tout de suite,
+                        l'examinateur initial en est seulement informé. Visible uniquement s'il n'y a
+                        pas déjà une demande en cours (le bouton se masque tout seul). */}
                     <div className="fr-mt-2w">
                       <RequestBraceletRenameButton
                         carcasse={carcasse}

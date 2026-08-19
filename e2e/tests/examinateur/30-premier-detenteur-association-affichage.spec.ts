@@ -29,7 +29,7 @@ test('Examinateur → Association : le select affiche l’association après « 
 
   await page.getByRole('button', { name: 'Nouvelle fiche' }).first().click();
   await page.getByRole('button', { name: dayjs.utc().format('dddd DD MMMM') }).click();
-  await page.getByRole('textbox', { name: 'Commune de mise à mort' }).fill('CHASS');
+  await page.getByRole('textbox', { name: 'Commune de prélèvement du gibier' }).fill('CHASS');
   await page.getByRole('button', { name: 'CHASSENARD' }).click();
 
   const feiNumero = page.url().match(/ZACH-[A-Z0-9-]+/)?.[0];
@@ -63,7 +63,7 @@ test('Examinateur → lui-même : le select affiche « Vous » après « Continu
 
   await page.getByRole('button', { name: 'Nouvelle fiche' }).first().click();
   await page.getByRole('button', { name: dayjs.utc().format('dddd DD MMMM') }).click();
-  await page.getByRole('textbox', { name: 'Commune de mise à mort' }).fill('CHASS');
+  await page.getByRole('textbox', { name: 'Commune de prélèvement du gibier' }).fill('CHASS');
   await page.getByRole('button', { name: 'CHASSENARD' }).click();
 
   const selectBloc = page.locator('#select-next-owner');

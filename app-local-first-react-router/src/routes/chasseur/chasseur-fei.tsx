@@ -29,6 +29,7 @@ import DateHeureValidationAlerts from '@app/components/DateHeureValidationAlerts
 import ChasseurHeaderFiche from './chasseur-header-fiche';
 import { CompteEnAttenteValidationAlert } from '@app/components/CompteEnAttenteValidation';
 import { useGetTransmissionsForFei } from '@app/utils/get-transmissions-sorted';
+import { isCarcasseDejaEnvoyee, isCarcassePriseEnChargeEnAval } from '@app/utils/carcasse-deja-envoyee';
 
 export default function ChasseurFei() {
   const params = useParams();
@@ -182,14 +183,17 @@ function FEIChasseurLoaded() {
     return true;
   }, [transmissions, fei, user]);
 
+  // Les lots déjà pris en charge par l'aval ne doivent pas verrouiller ceux qui sont restés :
+  // sans ce filtre, une carcasse restée en arrière n'est plus ni transmissible ni supprimable.
+  // On filtre sur la prise en charge, pas sur le choix du destinataire : tant que personne n'a pris
+  // en charge, le chasseur est encore détenteur et garde ses droits sur la fiche.
+  const transmissionsEncoreChezLeChasseur = useMemo(
+    () => transmissions.filter((transmission) => !isCarcassePriseEnChargeEnAval(transmission.content)),
+    [transmissions]
+  );
+
   const canEditAsPremierDetenteur = useMemo(() => {
-    for (const currentTransmission of transmissions) {
-      if (
-        currentTransmission.content.current_owner_role !== FeiOwnerRole.PREMIER_DETENTEUR &&
-        currentTransmission.content.current_owner_role !== FeiOwnerRole.EXAMINATEUR_INITIAL
-      ) {
-        return false;
-      }
+    for (const currentTransmission of transmissionsEncoreChezLeChasseur) {
       if (
         currentTransmission.content.svi_automatic_closed_at ||
         currentTransmission.content.svi_closed_at ||
@@ -212,7 +216,7 @@ function FEIChasseurLoaded() {
       }
     }
     return false;
-  }, [transmissions, fei, user, premierDetenteurEntity]);
+  }, [transmissionsEncoreChezLeChasseur, fei, user, premierDetenteurEntity]);
 
   const isPremierDetenteur = useMemo(() => {
     if (fei.premier_detenteur_user_id === user.id) return true;
@@ -224,7 +228,12 @@ function FEIChasseurLoaded() {
   }, [fei.premier_detenteur_user_id, fei.premier_detenteur_entity_id, user.id, entities]);
 
   const updateCarcassesTransmission = useZustandStore((state) => state.updateCarcassesTransmission);
-  const carcasseIds = useMemo(() => carcasses.map((c) => c.zacharie_carcasse_id), [carcasses]);
+  // Transmettre un lot ne doit toucher que les carcasses encore ici : réécrire le detenteur courant
+  // de tout la fiche écraserait la prise en charge d'un lot déjà parti.
+  const carcassesRestantesIds = useMemo(
+    () => carcasses.filter((c) => !isCarcasseDejaEnvoyee(c)).map((c) => c.zacharie_carcasse_id),
+    [carcasses]
+  );
 
   const Component = canEdit ? Input : InputNotEditable;
   const VilleComponent = canEdit ? InputVille : InputNotEditable;
@@ -235,7 +244,10 @@ function FEIChasseurLoaded() {
       errors.push({ field: 'date_mise_a_mort', message: 'Il manque la date de mise à mort' });
     }
     if (!fei.commune_mise_a_mort) {
-      errors.push({ field: 'commune_mise_a_mort', message: 'Il manque la commune de mise à mort' });
+      errors.push({
+        field: 'commune_mise_a_mort',
+        message: 'Il manque la commune de prélèvement du gibier',
+      });
     }
     if (!fei.premier_detenteur_user_id && !fei.premier_detenteur_entity_id) {
       errors.push({ field: 'premier_detenteur', message: 'Il manque le premier détenteur' });
@@ -341,7 +353,16 @@ function FEIChasseurLoaded() {
     }
     if (validationErrors.length > 0) {
       setShowErrors(true);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      // on scrolle vers le premier champ en erreur, après le rendu des messages d'erreur
+      const firstErrorField = validationErrors[0].field;
+      requestAnimationFrame(() => {
+        const element = document.getElementById(firstErrorField);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      });
       return;
     }
     setShowErrors(false);
@@ -354,7 +375,7 @@ function FEIChasseurLoaded() {
       updateFei(fei.numero, {
         examinateur_initial_approbation_mise_sur_le_marche: approbation,
       });
-      updateCarcassesTransmission(carcasseIds, {
+      updateCarcassesTransmission(carcassesRestantesIds, {
         current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
         current_owner_user_id: user.id,
         current_owner_user_name_cache: `${user.prenom} ${user.nom_de_famille}`,
@@ -366,7 +387,7 @@ function FEIChasseurLoaded() {
       updateFei(fei.numero, {
         examinateur_initial_approbation_mise_sur_le_marche: approbation,
       });
-      updateCarcassesTransmission(carcasseIds, {
+      updateCarcassesTransmission(carcassesRestantesIds, {
         current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
         current_owner_user_id: fei.premier_detenteur_user_id,
         current_owner_user_name_cache:
@@ -381,17 +402,7 @@ function FEIChasseurLoaded() {
     }
   };
 
-  const carcassesDejaEnvoyees = useMemo(
-    () =>
-      carcasses.filter(
-        (c) =>
-          c.next_owner_entity_id != null ||
-          (c.current_owner_role != null &&
-            c.current_owner_role !== FeiOwnerRole.PREMIER_DETENTEUR &&
-            c.current_owner_role !== FeiOwnerRole.EXAMINATEUR_INITIAL)
-      ),
-    [carcasses]
-  );
+  const carcassesDejaEnvoyees = useMemo(() => carcasses.filter(isCarcasseDejaEnvoyee), [carcasses]);
 
   const allCarcassesAssigned = useMemo(
     () => carcasses.length > 0 && carcassesDejaEnvoyees.length === carcasses.length,
@@ -425,7 +436,7 @@ function FEIChasseurLoaded() {
               <div className="bg-white p-4 md:p-8">
                 <h4 className="fr-h5">Informations de chasse</h4>
                 <Component
-                  label="Date de mise à mort (et d'éviscération)"
+                  label="Date de la chasse"
                   state={fieldHasError('date_mise_a_mort') ? 'error' : 'default'}
                   stateRelatedMessage={fieldErrorMessage('date_mise_a_mort')}
                   hintText={
@@ -476,7 +487,7 @@ function FEIChasseurLoaded() {
                   showHeureEviscerationAlert={false}
                 />
                 <VilleComponent
-                  label="Commune de mise à mort"
+                  label="Commune de prélèvement du gibier"
                   state={fieldHasError('commune_mise_a_mort') ? 'error' : 'default'}
                   stateRelatedMessage={fieldErrorMessage('commune_mise_a_mort')}
                   key={fei?.commune_mise_a_mort}
@@ -500,7 +511,7 @@ function FEIChasseurLoaded() {
                   nativeInputProps={{
                     id: Prisma.FeiScalarFieldEnum.commune_mise_a_mort,
                     name: Prisma.FeiScalarFieldEnum.commune_mise_a_mort,
-                    placeholder: 'Commune de mise à mort',
+                    placeholder: 'Commune de prélèvement du gibier',
                     type: 'text',
                     required: true,
                     autoComplete: 'off',
@@ -657,7 +668,7 @@ function FEIChasseurLoaded() {
                 <div className="bg-white p-4 md:p-8">
                   <h4 className="fr-h5">Validation de l'examen initial</h4>
                   <Component
-                    label="Date de validation de l'examen initial et de mise sur le marché"
+                    label="Date de validation de l'examen initial"
                     state={
                       fieldHasError('examinateur_initial_date_approbation_mise_sur_le_marche')
                         ? 'error'
@@ -670,7 +681,8 @@ function FEIChasseurLoaded() {
                       canEdit ? (
                         <>
                           <button
-                            className="mr-2 inline-block text-left"
+                            key={dayjs().format('dddd DD MMMM HH mm')}
+                            className="mr-2 rounded-full bg-[#E8EDFF] px-3 py-1 text-sm text-[#000091]"
                             type="button"
                             onClick={() => {
                               updateFei(fei.numero, {
@@ -679,7 +691,7 @@ function FEIChasseurLoaded() {
                               });
                             }}
                           >
-                            <u className="inline">Cliquez ici</u> pour définir la date du jour et maintenant.
+                            {dayjs().format('dddd DD MMMM, HH:mm')}
                           </button>
                           <button
                             className="inline-block text-left"
@@ -735,31 +747,34 @@ function FEIChasseurLoaded() {
                         : undefined,
                     }}
                   />
-                  <Checkbox
-                    className={canEdit ? '' : 'checkbox-black'}
-                    state={
-                      fieldHasError('examinateur_initial_approbation_mise_sur_le_marche')
-                        ? 'error'
-                        : 'default'
-                    }
-                    stateRelatedMessage={fieldErrorMessage(
-                      'examinateur_initial_approbation_mise_sur_le_marche'
-                    )}
-                    options={[
-                      {
-                        label: checkboxLabel,
-                        nativeInputProps: {
-                          required: true,
-                          name: Prisma.FeiScalarFieldEnum.examinateur_initial_approbation_mise_sur_le_marche,
-                          value: 'true',
-                          disabled: !canEdit,
-                          onChange: () => setApprobation(!approbation),
-                          readOnly: !!fei.examinateur_initial_approbation_mise_sur_le_marche,
-                          checked: approbation,
+                  <div id={Prisma.FeiScalarFieldEnum.examinateur_initial_approbation_mise_sur_le_marche}>
+                    <Checkbox
+                      className={canEdit ? '' : 'checkbox-black'}
+                      state={
+                        fieldHasError('examinateur_initial_approbation_mise_sur_le_marche')
+                          ? 'error'
+                          : 'default'
+                      }
+                      stateRelatedMessage={fieldErrorMessage(
+                        'examinateur_initial_approbation_mise_sur_le_marche'
+                      )}
+                      options={[
+                        {
+                          label: checkboxLabel,
+                          nativeInputProps: {
+                            required: true,
+                            name: Prisma.FeiScalarFieldEnum
+                              .examinateur_initial_approbation_mise_sur_le_marche,
+                            value: 'true',
+                            disabled: !canEdit,
+                            onChange: () => setApprobation(!approbation),
+                            readOnly: !!fei.examinateur_initial_approbation_mise_sur_le_marche,
+                            checked: approbation,
+                          },
                         },
-                      },
-                    ]}
-                  />
+                      ]}
+                    />
+                  </div>
                   {showErrors && validationErrors.length > 0 && (
                     <Alert
                       title="Champs manquants pour transmettre"

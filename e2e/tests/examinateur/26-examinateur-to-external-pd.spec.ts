@@ -6,6 +6,7 @@ dayjs.extend(utc);
 dayjs.locale('fr');
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
+import { dateApprobationDuJour } from '../../utils/date-approbation';
 import { logoutAndConnect } from '../../utils/logout-and-connect';
 
 test.use({
@@ -31,7 +32,7 @@ test('Examinateur transmits to external PD — round-trip via backend', async ({
 
   await page.getByRole('button', { name: 'Nouvelle fiche' }).first().click();
   await page.getByRole('button', { name: dayjs.utc().format('dddd DD MMMM') }).click();
-  await page.getByRole('textbox', { name: 'Commune de mise à mort' }).fill('CHASS');
+  await page.getByRole('textbox', { name: 'Commune de prélèvement du gibier' }).fill('CHASS');
   await page.getByRole('button', { name: 'CHASSENARD' }).click();
 
   // External PD = Pierre Petit (premier-detenteur@example.fr). NOT the same user as examinateur.
@@ -53,7 +54,7 @@ test('Examinateur transmits to external PD — round-trip via backend', async ({
     .fill(dayjs().startOf('day').add(2, 'hour').format('HH:mm'));
   await page.getByRole('textbox', { name: 'Fin de l’examen initial' }).blur();
 
-  await page.getByRole('button', { name: 'Date du jour et maintenant' }).click();
+  await page.getByRole('button', { name: dateApprobationDuJour() }).click();
   await page.getByText('Je, Martin Marie, certifie qu').click();
 
   // Capture FEI number BEFORE the post-transmission redirect.

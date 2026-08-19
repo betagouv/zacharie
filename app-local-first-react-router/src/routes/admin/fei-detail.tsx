@@ -119,7 +119,7 @@ export default function AdminFeiDetail() {
               <FieldGrid>
                 <Field label="Numéro">{fei.numero}</Field>
                 <Field label="Date de mise à mort">{formatDateOnly(fei.date_mise_a_mort)}</Field>
-                <Field label="Commune de mise à mort">{fei.commune_mise_a_mort ?? '—'}</Field>
+                <Field label="Commune de prélèvement du gibier">{fei.commune_mise_a_mort ?? '—'}</Field>
                 <Field label="Heure mise à mort (1ère carcasse)">
                   {fei.heure_mise_a_mort_premiere_carcasse ?? '—'}
                 </Field>

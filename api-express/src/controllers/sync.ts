@@ -294,10 +294,12 @@ router.post(
       }
     }
 
-    // Refetch the carcasses touched by modif-request side effects (numero_bracelet or examinateur_signed_at changed).
+    // Refetch the carcasses touched by a modif-request (numero_bracelet renommé dès la création,
+    // examinateur_signed_at à l'approbation, deleted_at au refus/annulation).
     const touchedCarcasseIds = new Set<string>();
     for (const r of modifResults) {
-      if (r.transitionedTo || r.justCancelled) touchedCarcasseIds.add(r.saved.zacharie_carcasse_id);
+      if (r.isNew || r.transitionedTo || r.justCancelled)
+        touchedCarcasseIds.add(r.saved.zacharie_carcasse_id);
     }
     const refreshedCarcasses =
       touchedCarcasseIds.size > 0

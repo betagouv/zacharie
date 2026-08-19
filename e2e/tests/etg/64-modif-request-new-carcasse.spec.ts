@@ -42,20 +42,18 @@ test('Ajout carcasse manquante : ETG ajoute → examinateur signe → carcasse r
   await expect(page.getByRole('button', { name: `Cerf élaphe N° ${newBracelet}` })).toBeVisible({
     timeout: 10000,
   });
-  await expect(
-    page.getByText('Carcasse ajoutée, approbation de mise sur le marché en attente').first()
-  ).toBeVisible();
+  await expect(page.getByText("Carcasse ajoutée après l'examen initial").first()).toBeVisible();
   // The card itself carries a permanent "Carcasse ajoutée par {entité}" marker (distinct from the
-  // pending banner above, whose text is "Carcasse ajoutée, approbation…").
+  // pending banner above, whose title is "Carcasse ajoutée après l'examen initial").
   await expect(page.getByText(/Carcasse ajoutée par/).first()).toBeVisible();
 
   // Examinateur signs.
   await logoutAndConnect(page, 'examinateur@example.fr');
-  await expect(page.getByRole('heading', { name: 'Demandes de modification en attente' })).toBeVisible({
+  await expect(page.getByRole('heading', { name: 'Modifications signalées sur vos carcasses' })).toBeVisible({
     timeout: 10000,
   });
   await page.getByRole('button', { name: 'Voir les demandes' }).click();
-  await page.getByRole('link', { name: 'Voir et traiter' }).first().click();
+  await page.getByRole('link', { name: 'Voir la demande' }).first().click();
 
   await expect(page.getByRole('heading', { name: "Examen initial d'une carcasse ajoutée" })).toBeVisible();
   // Approve mise sur le marché is pre-checked. Approve "sans anomalie" then sign. The DSFR "En ligne"
@@ -73,9 +71,7 @@ test('Ajout carcasse manquante : ETG ajoute → examinateur signe → carcasse r
   await expect(page.getByRole('button', { name: `Cerf élaphe N° ${newBracelet}` })).toBeVisible({
     timeout: 10000,
   });
-  await expect(page.getByText('Carcasse ajoutée, approbation de mise sur le marché en attente')).toHaveCount(
-    0
-  );
+  await expect(page.getByText("Carcasse ajoutée après l'examen initial")).toHaveCount(0);
   // The "Carcasse ajoutée par {entité}" marker on the card persists after approval.
   await expect(page.getByText(/Carcasse ajoutée par/).first()).toBeVisible();
 });

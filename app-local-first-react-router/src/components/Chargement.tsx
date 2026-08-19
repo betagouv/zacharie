@@ -1,17 +1,25 @@
 export default function Chargement() {
   return (
-    <main
-      role="main"
+    <div
       id="chargement"
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+      className="flex min-h-[50vh] flex-1 flex-col items-center justify-center gap-1 px-6 py-12"
     >
-      <div className="fr-container">
-        <div className="fr-my-7w fr-mt-md-12w fr-mb-md-10w fr-grid-row fr-grid-row--gutters fr-grid-row--middle fr-grid-row--center">
-          <div className="fr-py-0 fr-col-12 fr-col-md-6">
-            <h1 className="fr-h1">Chargement en cours...</h1>
-            <p className="fr-text--lead fr-mb-3w">Veuillez patienter, Zach'arrive&nbsp;!</p>
-          </div>
-        </div>
-      </div>
-    </main>
+      <img
+        src="/logo_zacharie_solo_small.svg"
+        alt=""
+        aria-hidden="true"
+        className="chargement-pulse h-12 w-auto grayscale"
+      />
+      <p className="fr-text--sm chargement-label mb-0 flex items-center gap-2">
+        <span
+          aria-hidden="true"
+          className="chargement-spinner"
+        />
+        <span className="fr-sr-only text-black">Chargement en cours, </span>Zach'arrive&nbsp;!
+      </p>
+    </div>
   );
 }

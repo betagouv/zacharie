@@ -21,7 +21,6 @@ import {
   HistoriqueDesModifications,
 } from '@app/components/CarcasseModificationRequest';
 import { loadData, useLoaderEffect } from '@app/utils/load-data';
-import { getPendingModifRequest } from '@app/utils/modif-requests';
 import { getTransmissionLinkFromCarcasse } from '@app/utils/get-transmission-id';
 import TrichineSection from '@app/components/TrichineSection';
 import { TRICHINE_FEATURE_ENABLED } from '@app/utils/trichine';
@@ -89,14 +88,10 @@ function SviInspectionCarcasse() {
   const allModifRequests = useZustandStore(
     (state) => state.modifRequestsByCarcasseId[carcasse.zacharie_carcasse_id]
   );
-  const pendingModifRequest = getPendingModifRequest(allModifRequests);
 
   const canEdit = useMemo(() => {
-    // SVI ne peut pas inspecter une carcasse dont l'identité (numéro de marquage) ou la signature de
-    // l'examen initial sont en attente d'approbation par l'examinateur initial. Blocage dur.
-    if (pendingModifRequest) {
-      return false;
-    }
+    // Une demande de modification (numéro de marquage, carcasse ajoutée) est purement indicative :
+    // elle ne bloque plus l'inspection du SVI. On l'affiche via PendingModificationBanner.
     if (isSviWorkingFor) {
       return true;
     }
@@ -107,7 +102,7 @@ function SviInspectionCarcasse() {
       return false;
     }
     return true;
-  }, [carcasse, user, isSviWorkingFor, pendingModifRequest]);
+  }, [carcasse, user, isSviWorkingFor]);
 
   const initIMP1Open = useRef(!carcasse.svi_ipm1_decision);
   const initIMP2Open = useRef(
@@ -200,20 +195,13 @@ function SviInspectionCarcasse() {
               viewRole="svi"
             />
           )}
-          {(canEdit || pendingModifRequest) && (
+          {canEdit && (
             <>
               <Section
                 open={initIMP1Open.current}
                 title={`Inspection Post-Mortem 1 (IPM1)${carcasse.svi_ipm1_date ? ` - ${dayjs(carcasse.svi_ipm1_date).format('DD-MM-YYYY')}` : ''}`}
               >
-                {pendingModifRequest ? (
-                  <p className="m-0">
-                    Tant que l'examinateur initial n'a pas fait approuvé la mise sur le marché, il est
-                    impossible de réaliser les inspections post-mortem.
-                  </p>
-                ) : (
-                  <CarcasseIPM1 canEdit={canEdit} />
-                )}
+                <CarcasseIPM1 canEdit={canEdit} />
               </Section>
               <Section
                 open={initIMP2Open.current}
@@ -224,14 +212,7 @@ function SviInspectionCarcasse() {
                 }
               >
                 <div>
-                  {pendingModifRequest ? (
-                    <p className="m-0">
-                      Tant que l'examinateur initial n'a pas fait approuvé la mise sur le marché, il est
-                      impossible de réaliser les inspections post-mortem.
-                    </p>
-                  ) : (
-                    <CarcasseIPM2 canEdit={canEdit && carcasse.svi_ipm1_decision !== IPM1Decision.ACCEPTE} />
-                  )}
+                  <CarcasseIPM2 canEdit={canEdit && carcasse.svi_ipm1_decision !== IPM1Decision.ACCEPTE} />
                 </div>
               </Section>
             </>
