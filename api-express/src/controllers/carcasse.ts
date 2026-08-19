@@ -7,7 +7,6 @@ import prisma from '~/prisma';
 import {
   EntityRelationStatus,
   EntityRelationType,
-  FeiOwnerRole,
   Prisma,
   TrichineResultatAnalyse,
   UserRoles,
@@ -25,7 +24,7 @@ import type { EntityWithUserRelation } from '~/types/entity';
 import z from 'zod';
 import { capture } from '~/third-parties/sentry';
 import { userFeiSelect } from '~/types/user';
-import { getUserCarcasseEntityIds } from '~/utils/user-entities';
+import { getCarcasseAccessWhereForUser } from '~/utils/carcasse-access';
 
 const zodQuerySchema = z.object({
   page: z.string(),
@@ -34,62 +33,9 @@ const zodQuerySchema = z.object({
   withDeleted: z.string(),
 });
 
-// Périmètre d'accès aux carcasses selon le rôle. Retourne le WHERE Prisma (ou null si rôle non
-// supporté). Partagé entre le pull delta `/carcasse` et la route `/carcasse/refusees/:fei_numero`
-// pour garantir une autorisation strictement identique entre les deux.
-async function getCarcasseAccessWhere(
-  user: RequestWithUser['user']
-): Promise<Prisma.CarcasseWhereInput | null> {
-  const userEntityIds = await getUserCarcasseEntityIds(user.id);
-
-  if (user.roles.includes(UserRoles.SVI)) {
-    return {
-      svi_assigned_at: { not: null },
-      OR: [{ svi_entity_id: { in: userEntityIds } }, { next_owner_entity_id: { in: userEntityIds } }],
-    };
-  }
-  if (user.roles.includes(UserRoles.CHASSEUR)) {
-    return {
-      OR: [
-        { premier_detenteur_user_id: user.id },
-        { examinateur_initial_user_id: user.id },
-        // Désignation du premier détenteur (asso) : on n'expose la fiche aux membres de l'entité
-        // qu'une fois la fiche réellement transmise (sortie de l'examinateur initial).
-        {
-          premier_detenteur_entity_id: { in: userEntityIds },
-          current_owner_role: { not: FeiOwnerRole.EXAMINATEUR_INITIAL },
-        },
-        {
-          next_owner_entity_id: { in: userEntityIds },
-          current_owner_role: { not: FeiOwnerRole.EXAMINATEUR_INITIAL },
-        },
-        { prev_owner_entity_id: { in: userEntityIds } },
-        { current_owner_entity_id: { in: userEntityIds } },
-        { next_owner_user_id: user.id },
-        { prev_owner_user_id: user.id },
-        { current_owner_user_id: user.id },
-      ],
-    };
-  }
-  if (
-    user.roles.includes(UserRoles.ETG) ||
-    user.roles.includes(UserRoles.COLLECTEUR_PRO) ||
-    user.roles.includes(UserRoles.COMMERCE_DE_DETAIL) ||
-    user.roles.includes(UserRoles.CANTINE_OU_RESTAURATION_COLLECTIVE) ||
-    user.roles.includes(UserRoles.ASSOCIATION_CARITATIVE) ||
-    user.roles.includes(UserRoles.REPAS_DE_CHASSE_OU_ASSOCIATIF) ||
-    user.roles.includes(UserRoles.CONSOMMATEUR_FINAL)
-  ) {
-    return {
-      OR: [
-        { CarcasseIntermediaire: { some: { intermediaire_entity_id: { in: userEntityIds } } } },
-        { next_owner_entity_id: { in: userEntityIds } },
-        { current_owner_entity_id: { in: userEntityIds } },
-      ],
-    };
-  }
-  return null;
-}
+// Périmètre d'accès aux carcasses selon le rôle : voir `~/utils/carcasse-access`. Alias local
+// pour préserver les appels existants dans ce contrôleur.
+const getCarcasseAccessWhere = getCarcasseAccessWhereForUser;
 
 router.get(
   '/',

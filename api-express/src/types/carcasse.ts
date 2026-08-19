@@ -85,6 +85,12 @@ export const carcasseForApiSelect: Prisma.CarcasseSelect = {
   svi_ipm2_poids_saisie: true,
   svi_ipm2_poids_type: true,
   svi_ipm2_signed_at: true,
+  /**
+   * CLÔTURE (par carcasse)
+   */
+  intermediaire_closed_at: true,
+  svi_closed_at: true,
+  svi_automatic_closed_at: true,
   created_at: true,
   updated_at: true,
   date_mise_a_mort: true,
