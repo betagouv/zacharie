@@ -1,6 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import prisma from '~/prisma';
 import { sendEmail, sendTemplateEmail } from '~/third-parties/brevo';
+import { sendExpoPushNotification } from '~/third-parties/expo-push';
 import queueSendNotificationToUser from '~/service/notifications';
 
 // IS_TEST court-circuite la branche EMAIL avant l'envoi : on le force à false pour tester le vrai chemin.
@@ -11,8 +12,10 @@ vi.mock('~/third-parties/brevo', () => ({
   sendTemplateEmail: vi.fn().mockResolvedValue(true),
 }));
 vi.mock('web-push', () => ({ default: { sendNotification: vi.fn() } }));
+vi.mock('~/third-parties/expo-push', () => ({
+  sendExpoPushNotification: vi.fn().mockResolvedValue({ sent: 1, unregisteredTokens: [] }),
+}));
 
-// notifications: ['EMAIL'] uniquement, sinon la branche PUSH `return` avant l'email.
 const user = {
   id: 'user-1',
   email: 'user@example.fr',
@@ -109,5 +112,61 @@ describe('sendNotificationToUser — canal email', () => {
     expect(sendEmail).not.toHaveBeenCalled();
     expect(sendTemplateEmail).not.toHaveBeenCalled();
     expect(prisma.notificationLog.create).not.toHaveBeenCalled();
+  });
+});
+
+describe('sendNotificationToUser — canaux push et email', () => {
+  const pushAndEmailUser = {
+    ...user,
+    notifications: ['PUSH', 'EMAIL'],
+    native_push_tokens: ['ExponentPushToken[abc]'],
+  } as any;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(prisma.notificationLog.findFirst).mockResolvedValue(null as any);
+    vi.mocked(prisma.notificationLog.create).mockResolvedValue({} as any);
+    vi.mocked(sendEmail).mockResolvedValue(true);
+    vi.mocked(sendExpoPushNotification).mockResolvedValue({ sent: 1, unregisteredTokens: [] });
+  });
+
+  test('envoie le push ET l’email quand les deux canaux sont activés', async () => {
+    await queueSendNotificationToUser({ ...notification, user: pushAndEmailUser });
+
+    expect(sendExpoPushNotification).toHaveBeenCalled();
+    expect(sendEmail).toHaveBeenCalled();
+  });
+
+  // La dédup est par canal : un push déjà envoyé ne doit pas empêcher l'email.
+  test('envoie l’email même quand le push a déjà été envoyé', async () => {
+    vi.mocked(prisma.notificationLog.findFirst).mockImplementation((({ where }: any) =>
+      Promise.resolve(where.type === 'PUSH' ? { id: 'log-1' } : null)) as any);
+
+    await queueSendNotificationToUser({ ...notification, user: pushAndEmailUser });
+
+    expect(sendExpoPushNotification).not.toHaveBeenCalled();
+    expect(sendEmail).toHaveBeenCalled();
+  });
+
+  test('envoie l’email même quand le push jette', async () => {
+    vi.mocked(sendExpoPushNotification).mockRejectedValue(new Error('expo down'));
+
+    await queueSendNotificationToUser({ ...notification, user: pushAndEmailUser });
+
+    expect(sendEmail).toHaveBeenCalled();
+  });
+
+  // On retire les tokens périmés en SQL sur la valeur courante, pour ne pas écraser un token
+  // enregistré depuis le chargement du user.
+  test('retire les tokens périmés sans réécrire le tableau du user en mémoire', async () => {
+    vi.mocked(sendExpoPushNotification).mockResolvedValue({
+      sent: 0,
+      unregisteredTokens: ['ExponentPushToken[abc]'],
+    });
+
+    await queueSendNotificationToUser({ ...notification, user: pushAndEmailUser });
+
+    expect(prisma.$executeRaw).toHaveBeenCalled();
+    expect(prisma.user.update).not.toHaveBeenCalled();
   });
 });

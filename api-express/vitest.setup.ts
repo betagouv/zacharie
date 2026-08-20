@@ -3,6 +3,7 @@ import { vi } from 'vitest';
 // Mock Prisma for tests
 vi.mock('./src/prisma', () => ({
   default: {
+    $executeRaw: vi.fn(),
     fei: {
       findMany: vi.fn().mockResolvedValue([]),
       findUnique: vi.fn(),
