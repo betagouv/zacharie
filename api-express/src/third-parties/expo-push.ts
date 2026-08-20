@@ -1,4 +1,5 @@
 import { capture } from './sentry';
+import { IS_DEV_OR_TEST } from '~/config';
 
 // L'app mobile est une WebView Expo : les tokens sont des `ExponentPushToken[…]`,
 // envoyés via le service de push d'Expo (qui relaie ensuite vers APNs / FCM).
@@ -29,6 +30,14 @@ export async function sendExpoPushNotification({
   body,
 }: SendExpoPushProps): Promise<ExpoPushResult> {
   const result: ExpoPushResult = { sent: 0, unregisteredTokens: [] };
+  // Comme pour Brevo (third-parties/brevo.ts) : en local on ne pousse pas vers de vrais appareils,
+  // la base de dev pouvant contenir des tokens de production.
+  if (IS_DEV_OR_TEST) {
+    console.log('Sending native push in development mode');
+    console.log({ tokens, title, body });
+    result.sent = tokens.length;
+    return result;
+  }
   for (let index = 0; index < tokens.length; index += CHUNK_SIZE) {
     const chunk = tokens.slice(index, index + CHUNK_SIZE);
     try {
