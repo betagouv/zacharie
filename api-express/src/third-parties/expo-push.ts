@@ -43,7 +43,13 @@ export async function sendExpoPushNotification({
       if (!response.ok) {
         throw new Error(`Expo push API ${response.status}: ${await response.text()}`);
       }
-      const { data } = (await response.json()) as { data: Array<ExpoPushTicket> };
+      // Expo peut répondre 200 sans `data` (ex. `{ "errors": [...] }`) : sans ce garde-fou on
+      // perdrait sa réponse au profit d'un TypeError opaque.
+      const payload = (await response.json()) as { data?: Array<ExpoPushTicket> };
+      if (!Array.isArray(payload?.data)) {
+        throw new Error(`Expo push API: réponse inattendue ${JSON.stringify(payload)}`);
+      }
+      const { data } = payload;
       // Expo renvoie un ticket par message, dans l'ordre d'envoi.
       data.forEach((ticket, ticketIndex) => {
         if (ticket.status === 'ok') {
