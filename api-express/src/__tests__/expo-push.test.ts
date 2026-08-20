@@ -1,9 +1,9 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { sendExpoPushNotification } from '~/third-parties/expo-push';
 
-// IS_DEV_OR_TEST court-circuite l'envoi : on le force à false pour tester le vrai chemin.
-// SENTRY_KEY est lu par third-parties/sentry.ts.
-vi.mock('~/config', () => ({ IS_DEV_OR_TEST: false, SENTRY_KEY: '' }));
+// Hors production l'envoi est court-circuité : on force les deux drapeaux à false pour tester le
+// vrai chemin. SENTRY_KEY est lu par third-parties/sentry.ts.
+vi.mock('~/config', () => ({ IS_DEV_OR_TEST: false, IS_STAGING: false, SENTRY_KEY: '' }));
 
 const notification = { title: 'Un titre', body: 'Un corps' };
 

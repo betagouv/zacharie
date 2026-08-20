@@ -1,5 +1,5 @@
 import { capture } from './sentry';
-import { IS_DEV_OR_TEST } from '~/config';
+import { IS_DEV_OR_TEST, IS_STAGING } from '~/config';
 
 // L'app mobile est une WebView Expo : les tokens sont des `ExponentPushToken[…]`,
 // envoyés via le service de push d'Expo (qui relaie ensuite vers APNs / FCM).
@@ -35,10 +35,10 @@ export async function sendExpoPushNotification({
   body,
 }: SendExpoPushProps): Promise<ExpoPushResult> {
   const result: ExpoPushResult = { sent: 0, tokensToRemove: [] };
-  // Comme pour Brevo (third-parties/brevo.ts) : en local on ne pousse pas vers de vrais appareils,
-  // la base de dev pouvant contenir des tokens de production.
-  if (IS_DEV_OR_TEST) {
-    console.log('Sending native push in development mode');
+  // Comme pour Brevo (third-parties/brevo.ts) : seule la production pousse vers de vrais appareils.
+  // La preprod tourne sur une copie des données de prod, ses tokens sont ceux de vrais chasseurs.
+  if (IS_STAGING || IS_DEV_OR_TEST) {
+    console.log('Native push disabled outside production');
     console.log({ tokens, title, body });
     result.sent = tokens.length;
     return result;
