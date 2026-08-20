@@ -13,7 +13,7 @@ vi.mock('~/third-parties/brevo', () => ({
 }));
 vi.mock('web-push', () => ({ default: { sendNotification: vi.fn() } }));
 vi.mock('~/third-parties/expo-push', () => ({
-  sendExpoPushNotification: vi.fn().mockResolvedValue({ sent: 1, unregisteredTokens: [] }),
+  sendExpoPushNotification: vi.fn().mockResolvedValue({ sent: 1, tokensToRemove: [] }),
 }));
 
 const user = {
@@ -127,7 +127,7 @@ describe('sendNotificationToUser — canaux push et email', () => {
     vi.mocked(prisma.notificationLog.findFirst).mockResolvedValue(null as any);
     vi.mocked(prisma.notificationLog.create).mockResolvedValue({} as any);
     vi.mocked(sendEmail).mockResolvedValue(true);
-    vi.mocked(sendExpoPushNotification).mockResolvedValue({ sent: 1, unregisteredTokens: [] });
+    vi.mocked(sendExpoPushNotification).mockResolvedValue({ sent: 1, tokensToRemove: [] });
   });
 
   test('envoie le push ET l’email quand les deux canaux sont activés', async () => {
@@ -161,7 +161,7 @@ describe('sendNotificationToUser — canaux push et email', () => {
   test('retire les tokens périmés sans réécrire le tableau du user en mémoire', async () => {
     vi.mocked(sendExpoPushNotification).mockResolvedValue({
       sent: 0,
-      unregisteredTokens: ['ExponentPushToken[abc]'],
+      tokensToRemove: ['ExponentPushToken[abc]'],
     });
 
     await queueSendNotificationToUser({ ...notification, user: pushAndEmailUser });

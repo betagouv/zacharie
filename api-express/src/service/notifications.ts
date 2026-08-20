@@ -177,29 +177,29 @@ async function sendPushToUser({
   }
   if (nativePushTokens.length) {
     console.log('SENDING NATIVE PUSH NOTIFICATION FOR REAL', user.id);
-    const { sent, unregisteredTokens } = await sendExpoPushNotification({
+    const { sent, tokensToRemove } = await sendExpoPushNotification({
       tokens: nativePushTokens,
       title,
       body,
     });
-    // Expo signale les tokens périmés (app désinstallée) : on les retire pour ne pas les rejouer.
+    // Tokens périmés (app désinstallée) ou au format invalide : on les retire pour ne pas les rejouer.
     // Le retrait se fait en SQL sur la valeur courante de la colonne, et non en réécrivant le
     // tableau du `user` en mémoire : celui-ci date du chargement de la tâche et écraserait un token
     // enregistré entre-temps (installation sur un nouvel appareil).
-    if (unregisteredTokens.length) {
+    if (tokensToRemove.length) {
       try {
         await prisma.$executeRaw`
           UPDATE "User"
           SET native_push_tokens = ARRAY(
             SELECT token
             FROM unnest(native_push_tokens) AS token
-            WHERE token NOT IN (${Prisma.join(unregisteredTokens)})
+            WHERE token NOT IN (${Prisma.join(tokensToRemove)})
           )
           WHERE id = ${user.id}
         `;
       } catch (error) {
-        console.error('error while removing unregistered native push tokens', user.id);
-        Sentry.captureException(error, { extra: { user, unregisteredTokens } });
+        console.error('error while removing native push tokens', user.id);
+        Sentry.captureException(error, { extra: { user, tokensToRemove } });
       }
     }
     // Envoi raté : on n'écrit pas le log, sinon la dédup bloquerait définitivement le renvoi.

@@ -8,7 +8,7 @@
 -- La webapp fait désormais l'extraction avant d'envoyer (useNativePushToken.ts), ce script
 -- rattrape les lignes déjà en base.
 --
--- À exécuter UNE FOIS, manuellement, sur la base (preprod puis prod).
+-- À exécuter UNE FOIS, manuellement, sur la base (preprod puis prod), juste avant le merge.
 
 BEGIN;
 
@@ -18,15 +18,19 @@ FROM (
   SELECT
     id,
     ARRAY(
-      -- entrées au format JSON : on extrait `data`
-      SELECT t::jsonb ->> 'data'
-      FROM unnest(native_push_tokens) AS t
-      WHERE t LIKE '{%' AND (t::jsonb ->> 'data') IS NOT NULL
-      UNION
-      -- entrées déjà normalisées : on les garde telles quelles
-      SELECT t
-      FROM unnest(native_push_tokens) AS t
-      WHERE t NOT LIKE '{%' AND t <> '' AND t <> 'null'
+      SELECT DISTINCT token
+      FROM (
+        -- On extrait `data` par expression régulière plutôt que par un cast ::jsonb : une entrée
+        -- tronquée ou non-JSON ferait échouer le cast, et donc tout le script.
+        SELECT
+          CASE
+            WHEN t LIKE '{%' THEN substring(t from '"data"[[:space:]]*:[[:space:]]*"([^"]*)"')
+            ELSE t
+          END AS token
+        FROM unnest(native_push_tokens) AS t
+        WHERE t <> '' AND t <> 'null'
+      ) AS normalized
+      WHERE token IS NOT NULL AND token <> ''
     ) AS tokens
   FROM "User"
   WHERE EXISTS (

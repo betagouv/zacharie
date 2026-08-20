@@ -8,6 +8,10 @@ const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
 // Expo n'accepte pas plus de 100 messages par requête.
 const CHUNK_SIZE = 100;
 
+// Expo rejette la requête ENTIÈRE (HTTP 400) si un seul `to` n'a pas ce format : un token malformé
+// priverait de notification tous les autres appareils de l'utilisateur.
+const EXPO_PUSH_TOKEN_REGEX = /^Expo(nent)?PushToken\[.+\]$/;
+
 type ExpoPushTicket =
   | { status: 'ok'; id: string }
   | { status: 'error'; message: string; details?: { error?: string } };
@@ -20,8 +24,9 @@ type SendExpoPushProps = {
 
 type ExpoPushResult = {
   sent: number;
-  // Tokens qu'Expo ne connaît plus (app désinstallée, token révoqué) : l'appelant les purge.
-  unregisteredTokens: Array<string>;
+  // Tokens à retirer de la base : format invalide, ou qu'Expo ne connaît plus (app désinstallée,
+  // token révoqué). L'appelant les purge.
+  tokensToRemove: Array<string>;
 };
 
 export async function sendExpoPushNotification({
@@ -29,7 +34,7 @@ export async function sendExpoPushNotification({
   title,
   body,
 }: SendExpoPushProps): Promise<ExpoPushResult> {
-  const result: ExpoPushResult = { sent: 0, unregisteredTokens: [] };
+  const result: ExpoPushResult = { sent: 0, tokensToRemove: [] };
   // Comme pour Brevo (third-parties/brevo.ts) : en local on ne pousse pas vers de vrais appareils,
   // la base de dev pouvant contenir des tokens de production.
   if (IS_DEV_OR_TEST) {
@@ -38,8 +43,16 @@ export async function sendExpoPushNotification({
     result.sent = tokens.length;
     return result;
   }
-  for (let index = 0; index < tokens.length; index += CHUNK_SIZE) {
-    const chunk = tokens.slice(index, index + CHUNK_SIZE);
+  const validTokens = tokens.filter((token) => {
+    if (EXPO_PUSH_TOKEN_REGEX.test(token)) {
+      return true;
+    }
+    console.log('Invalid expo push token', token);
+    result.tokensToRemove.push(token);
+    return false;
+  });
+  for (let index = 0; index < validTokens.length; index += CHUNK_SIZE) {
+    const chunk = validTokens.slice(index, index + CHUNK_SIZE);
     try {
       const response = await fetch(EXPO_PUSH_URL, {
         method: 'POST',
@@ -66,7 +79,7 @@ export async function sendExpoPushNotification({
           return;
         }
         if (ticket.details?.error === 'DeviceNotRegistered') {
-          result.unregisteredTokens.push(chunk[ticketIndex]);
+          result.tokensToRemove.push(chunk[ticketIndex]);
           return;
         }
         capture(new Error(`Expo push ticket error: ${ticket.message}`), {
