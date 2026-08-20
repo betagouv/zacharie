@@ -3,7 +3,12 @@ import { sendExpoPushNotification } from '~/third-parties/expo-push';
 
 // Hors production l'envoi est court-circuité : on force les deux drapeaux à false pour tester le
 // vrai chemin. SENTRY_KEY est lu par third-parties/sentry.ts.
-vi.mock('~/config', () => ({ IS_DEV_OR_TEST: false, IS_STAGING: false, SENTRY_KEY: '' }));
+vi.mock('~/config', () => ({
+  IS_DEV_OR_TEST: false,
+  IS_STAGING: false,
+  NATIVE_PUSH_DRY_RUN: false,
+  SENTRY_KEY: '',
+}));
 
 const notification = { title: 'Un titre', body: 'Un corps' };
 

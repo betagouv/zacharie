@@ -78,5 +78,7 @@ Toutes via `sendNotificationToUser`. Dédup via `NotificationLog`. Déclenchées
 
 - **`sendWebhook()`** (`utils/api.ts`) — webhooks HTTP vers tiers (`FEI_CLOTUREE`, `FEI_ASSIGNEE_*`…). Souvent envoyé en parallèle des notifs ci-dessus.
 - **Web-push / native-push** dans `sendNotificationToUser` — canal séparé, gated sur préf. `PUSH`.
-  Le web-push passe par `web-push` (VAPID), le natif par l'API push d'Expo (`third-parties/expo-push.ts`, tokens `User.native_push_tokens`). Les deux partagent la même dédup `NotificationLog` de type `PUSH`. Expo signale les tokens périmés (`DeviceNotRegistered`), qui sont retirés de l'utilisateur à l'envoi.
+  Le web-push passe par `web-push` (VAPID), le natif par l'API push d'Expo (`third-parties/expo-push.ts`, tokens `User.native_push_tokens`). Les deux partagent la même dédup `NotificationLog` de type `PUSH`.
+  Le natif n'envoie qu'en production (hors dev/test/preprod, comme Brevo), et **est actuellement coupé par l'interrupteur `NATIVE_PUSH_DRY_RUN` (`config.ts`)**, le temps de vérifier le contenu des notifications : le payload est loggé, rien n'est envoyé et aucun `NotificationLog` n'est écrit. Le repasser à `false` réactive l'envoi.
+  Les tokens qui ne sont pas au format `ExponentPushToken[…]` sont écartés avant l'appel (Expo rejette la requête entière si un seul `to` est invalide), et retirés de l'utilisateur — comme ceux qu'Expo signale `DeviceNotRegistered`.
 - **Sync CRM Brevo** (`createBrevoContact`, `updateBrevoContact`, `updateOrCreateBrevoCompany`, `updateBrevoChasseurDeal`…) — appels API CRM, pas des emails transactionnels (mais `createBrevoContact` déclenche la notice interne « Nouvelle ouverture de compte »).

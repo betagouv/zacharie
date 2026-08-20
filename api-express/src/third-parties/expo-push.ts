@@ -1,5 +1,5 @@
 import { capture } from './sentry';
-import { IS_DEV_OR_TEST, IS_STAGING } from '~/config';
+import { IS_DEV_OR_TEST, IS_STAGING, NATIVE_PUSH_DRY_RUN } from '~/config';
 
 // L'app mobile est une WebView Expo : les tokens sont des `ExponentPushToken[…]`,
 // envoyés via le service de push d'Expo (qui relaie ensuite vers APNs / FCM).
@@ -41,6 +41,13 @@ export async function sendExpoPushNotification({
     console.log('Native push disabled outside production');
     console.log({ tokens, title, body });
     result.sent = tokens.length;
+    return result;
+  }
+  // `sent` reste à 0 : l'appelant n'écrit alors aucun NotificationLog, donc rien n'est
+  // définitivement dédupliqué le temps de la vérification (cf. config.ts).
+  if (NATIVE_PUSH_DRY_RUN) {
+    console.log('Native push dry run, nothing sent');
+    console.log({ tokens, title, body });
     return result;
   }
   const validTokens = tokens.filter((token) => {
