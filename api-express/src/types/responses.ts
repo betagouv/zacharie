@@ -354,6 +354,15 @@ export interface SyncRequest {
   logs: Array<Partial<Log> & { id: string }>;
 }
 
+// Item que le serveur a refusé d'écrire, pour que le client cesse de le repousser. `id` est celui
+// que porte le store local : numéro pour une fiche, zacharie_carcasse_id pour une carcasse,
+// fei_numero_zacharie_carcasse_id_intermediaire_id pour un intermédiaire.
+export type SyncRejection = {
+  kind: 'fei' | 'carcasse' | 'carcasseIntermediaire' | 'carcasseModifRequest';
+  id: string;
+  reason: string;
+};
+
 export interface SyncResponse {
   ok: boolean;
   data: {
@@ -362,6 +371,10 @@ export interface SyncResponse {
     carcassesIntermediaires: Array<CarcasseIntermediaire>;
     carcasseModifRequests: Array<CarcasseModificationRequest>;
     syncedLogIds: Array<string>;
+    // Refus définitifs : la version locale ne passera jamais, inutile de la renvoyer. La ligne
+    // serveur faisant foi n'est volontairement PAS jointe — ce serait divulguer la fiche d'un
+    // tiers à quelqu'un à qui on vient d'en refuser l'accès.
+    rejected: Array<SyncRejection>;
   } | null;
   error: string;
 }

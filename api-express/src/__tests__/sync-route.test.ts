@@ -33,6 +33,20 @@ vi.mock('~/third-parties/sentry', () => ({
   captureException: vi.fn(),
 }));
 
+// Ce fichier teste le routage et l'isolation des erreurs, pas l'autorisation : le périmètre est
+// neutralisé pour qu'il n'ajoute pas de requête carcasse.findMany dans les séquences mockées ici.
+const { permissiveScope } = vi.hoisted(() => ({
+  permissiveScope: {
+    entityIds: ['entity-etg', 'entity-collecteur', 'entity-svi'],
+    prefetch: async () => {},
+    canWriteCarcasse: async () => true,
+    grant: () => {},
+    isFeiOwner: () => true,
+    canWriteFei: async () => true,
+  },
+}));
+vi.mock('~/utils/sync-scope', () => ({ createSyncScope: vi.fn(async () => permissiveScope) }));
+
 import { syncFei } from '~/utils/sync-fei';
 import { syncCarcasse } from '~/utils/sync-carcasse';
 import { syncCarcasseIntermediaire } from '~/utils/sync-carcasse-intermediaire';
@@ -44,6 +58,7 @@ import { runFeiUpdateSideEffects } from '~/utils/fei-side-effects';
 import { runCarcasseUpdateSideEffects } from '~/utils/carcasse-side-effects';
 import { capture } from '~/third-parties/sentry';
 import { CarcasseModificationRequestStatus } from '@prisma/client';
+import { SyncRejectedError } from '~/utils/sync-errors';
 
 const examinateurInitial = {
   id: 'user-cfei',
@@ -314,6 +329,7 @@ describe('POST /sync — response shape', () => {
         carcassesIntermediaires: [],
         carcasseModifRequests: [],
         syncedLogIds: [],
+        rejected: [],
       },
     });
     expect(syncFei).not.toHaveBeenCalled();
@@ -347,6 +363,92 @@ describe('POST /sync — response shape', () => {
       expect.objectContaining({ where: { numero: { in: ['F1'] } } })
     );
     expect(res.body.data.feis).toEqual([{ numero: 'F1', date_mise_a_mort: '2026-01-01' }]);
+  });
+});
+
+describe('POST /sync — refus définitifs vs erreurs transitoires', () => {
+  // La distinction est le cœur du mécanisme : sur un refus le client jette sa version locale, donc
+  // une erreur technique classée à tort en refus détruirait le travail de l'utilisateur.
+  test("un refus d'autorisation est renvoyé dans `rejected`, pas capturé comme une erreur", async () => {
+    vi.mocked(syncCarcasse).mockRejectedValueOnce(
+      new SyncRejectedError("Vous n'avez pas accès à cette carcasse")
+    );
+
+    const res = await authed(
+      request(app)
+        .post('/sync')
+        .send({
+          carcasses: [{ fei_numero: 'FEI-1', zacharie_carcasse_id: 'ZC-INTERDITE' }],
+        })
+    );
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.rejected).toEqual([
+      { kind: 'carcasse', id: 'ZC-INTERDITE', reason: "Vous n'avez pas accès à cette carcasse" },
+    ]);
+    expect(res.body.data.carcasses).toEqual([]);
+  });
+
+  test('une erreur transitoire reste capturée et absente de `rejected` — le client réessaiera', async () => {
+    vi.mocked(syncCarcasse).mockRejectedValueOnce(new Error('Fiche non trouvée'));
+
+    const res = await authed(
+      request(app)
+        .post('/sync')
+        .send({
+          carcasses: [{ fei_numero: 'FEI-1', zacharie_carcasse_id: 'ZC-1' }],
+        })
+    );
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.rejected).toEqual([]);
+    expect(capture).toHaveBeenCalled();
+  });
+
+  test("les refus remontent à l'équipe en un seul évènement Sentry groupable", async () => {
+    vi.mocked(syncFei).mockRejectedValueOnce(new SyncRejectedError("Vous n'avez pas accès à cette fiche"));
+    vi.mocked(syncCarcasse).mockRejectedValueOnce(
+      new SyncRejectedError("Vous n'avez pas accès à cette carcasse")
+    );
+
+    const res = await authed(
+      request(app)
+        .post('/sync')
+        .send({
+          feis: [{ numero: 'FEI-INTERDITE' }],
+          carcasses: [{ fei_numero: 'FEI-1', zacharie_carcasse_id: 'ZC-INTERDITE' }],
+        })
+    );
+
+    expect(res.body.data.rejected).toHaveLength(2);
+    const captureCalls = vi.mocked(capture).mock.calls;
+    expect(captureCalls).toHaveLength(1);
+    expect((captureCalls[0][0] as Error).message).toBe('Écritures /sync refusées');
+    expect(captureCalls[0][1]?.extra).toMatchObject({ count: 2 });
+  });
+
+  test('un refus sur une carcasse ne bloque pas les autres items du lot', async () => {
+    vi.mocked(syncCarcasse)
+      .mockRejectedValueOnce(new SyncRejectedError("Vous n'avez pas accès à cette carcasse"))
+      .mockResolvedValueOnce({
+        savedCarcasse: { zacharie_carcasse_id: 'ZC-OK' },
+        existingCarcasse: { zacharie_carcasse_id: 'ZC-OK' },
+        isDeleted: false,
+      } as any);
+
+    const res = await authed(
+      request(app)
+        .post('/sync')
+        .send({
+          carcasses: [
+            { fei_numero: 'FEI-1', zacharie_carcasse_id: 'ZC-INTERDITE' },
+            { fei_numero: 'FEI-1', zacharie_carcasse_id: 'ZC-OK' },
+          ],
+        })
+    );
+
+    expect(res.body.data.rejected).toHaveLength(1);
+    expect(res.body.data.carcasses).toHaveLength(1);
   });
 });
 

@@ -8,7 +8,9 @@ import {
 } from '@prisma/client';
 import sendNotificationToUser from '~/service/notifications';
 import { capture } from '~/third-parties/sentry';
+import type { SyncScope } from '~/utils/sync-scope';
 import dayjs from 'dayjs';
+import { SyncRejectedError } from '~/utils/sync-errors';
 
 const FRONTEND_URL = 'https://zacharie.beta.gouv.fr';
 
@@ -35,7 +37,8 @@ export type SyncModifRequestResult = {
  */
 export async function syncCarcasseModifRequest(
   body: Prisma.CarcasseModificationRequestUncheckedCreateInput,
-  user: User
+  user: User,
+  scope: SyncScope
 ): Promise<SyncModifRequestResult> {
   if (!body.id) throw new Error('id manquant');
   if (!body.zacharie_carcasse_id) throw new Error('zacharie_carcasse_id manquant');
@@ -44,11 +47,34 @@ export async function syncCarcasseModifRequest(
     where: { id: body.id },
   });
 
+  // Deny by default : une demande ne porte que sur une carcasse du périmètre de l'utilisateur.
+  // Sans ce contrôle, un POST /sync suffisait à écrire sur la carcasse d'un tiers (bump de son
+  // updated_at) et à notifier son examinateur initial.
+  const zacharieCarcasseId = existing?.zacharie_carcasse_id ?? body.zacharie_carcasse_id;
+  if (!(await scope.canWriteCarcasse(zacharieCarcasseId))) {
+    throw new SyncRejectedError("Vous n'avez pas accès à cette carcasse");
+  }
+
   // -- CREATE -------------------------------------------------------------
   if (!existing) {
+    const carcasse = await prisma.carcasse.findUnique({
+      where: { zacharie_carcasse_id: zacharieCarcasseId },
+      select: { fei_numero: true },
+    });
+    if (!carcasse) throw new Error('Carcasse introuvable');
+    // L'identité du demandeur est décidée par le serveur : on demande toujours en son nom propre,
+    // pour une entité dont on est membre, et une demande naît toujours PENDING.
+    if (!body.requested_by_entity_id || !scope.entityIds.includes(body.requested_by_entity_id)) {
+      throw new SyncRejectedError('Vous ne pouvez pas agir au nom de cette entité');
+    }
     const created = await prisma.carcasseModificationRequest.create({
       data: {
         ...body,
+        fei_numero: carcasse.fei_numero,
+        requested_by_user_id: user.id,
+        status: CarcasseModificationRequestStatus.PENDING,
+        reviewed_by_user_id: null,
+        reviewed_at: null,
         is_synced: true,
       },
     });
@@ -88,18 +114,46 @@ export async function syncCarcasseModifRequest(
     });
     if (!carcasse) throw new Error('Carcasse introuvable');
     if (carcasse.examinateur_initial_user_id !== user.id) {
-      throw new Error("Seul l'examinateur initial peut approuver ou refuser une demande");
+      throw new SyncRejectedError("Seul l'examinateur initial peut approuver ou refuser une demande");
     }
   }
 
   if (justCancelled && existing.requested_by_user_id !== user.id) {
-    throw new Error("Seul l'auteur de la demande peut l'annuler");
+    throw new SyncRejectedError("Seul l'auteur de la demande peut l'annuler");
   }
+
+  // L'identité de la demande n'est posée qu'à la création, et l'issue de la revue appartient au
+  // serveur : une synchro ultérieure ne peut réécrire ni le demandeur, ni la carcasse, ni le statut.
+  const {
+    zacharie_carcasse_id,
+    fei_numero,
+    type,
+    requested_by_user_id,
+    requested_by_entity_id,
+    status,
+    reviewed_by_user_id,
+    reviewed_at,
+    rejection_reason,
+    ...update
+  } = body;
 
   const saved = await prisma.carcasseModificationRequest.update({
     where: { id: body.id },
     data: {
-      ...body,
+      ...update,
+      // Seule une transition depuis PENDING enregistre une décision : un statut déjà résolu ne peut
+      // pas être réécrit, ni renvoyé à PENDING.
+      ...(willTransition
+        ? {
+            status: incomingStatus,
+            reviewed_by_user_id: user.id,
+            reviewed_at: new Date(),
+            rejection_reason:
+              incomingStatus === CarcasseModificationRequestStatus.REJECTED
+                ? (rejection_reason ?? null)
+                : null,
+          }
+        : {}),
       is_synced: true,
     },
   });

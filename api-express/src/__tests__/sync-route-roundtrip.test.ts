@@ -32,6 +32,20 @@ vi.mock('~/third-parties/sentry', () => ({
   captureException: vi.fn(),
 }));
 
+// Ce fichier pin le contrat de forme de la réponse. L'autorisation d'écriture est couverte par
+// permissions-sync-write.test.ts ; ici on neutralise le périmètre pour ne pas perturber les mocks.
+const { permissiveScope } = vi.hoisted(() => ({
+  permissiveScope: {
+    entityIds: ['entity-A', 'entity-B'],
+    prefetch: async () => {},
+    canWriteCarcasse: async () => true,
+    grant: () => {},
+    isFeiOwner: () => true,
+    canWriteFei: async () => true,
+  },
+}));
+vi.mock('~/utils/sync-scope', () => ({ createSyncScope: vi.fn(async () => permissiveScope) }));
+
 const examinateurInitial = {
   id: 'user-cfei',
   roles: [UserRoles.CHASSEUR],

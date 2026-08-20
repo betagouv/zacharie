@@ -1,13 +1,13 @@
 import express from 'express';
 import passport from 'passport';
 import { catchErrors } from '~/middlewares/errors';
-import type { SyncRequest, SyncResponse } from '~/types/responses';
+import type { SyncRejection, SyncRequest, SyncResponse } from '~/types/responses';
 import prisma from '~/prisma';
 import { Prisma, User, UserRoles, Carcasse, Fei, EntityRelationType } from '@prisma/client';
 import { syncFei, type SaveFeiResult } from '~/utils/sync-fei';
 import { syncCarcasse, type SaveCarcasseResult } from '~/utils/sync-carcasse';
 import { syncCarcasseIntermediaire } from '~/utils/sync-carcasse-intermediaire';
-import { getUserCarcasseEntityIds } from '~/utils/user-entities';
+import { createSyncScope } from '~/utils/sync-scope';
 import {
   syncCarcasseModifRequest,
   runCarcasseModifRequestSideEffects,
@@ -15,6 +15,7 @@ import {
 } from '~/utils/sync-carcasse-modification-request';
 import { runFeiUpdateSideEffects } from '~/utils/fei-side-effects';
 import { runCarcasseUpdateSideEffects } from '~/utils/carcasse-side-effects';
+import { SyncRejectedError } from '~/utils/sync-errors';
 import { capture } from '~/third-parties/sentry';
 
 const router: express.Router = express.Router();
@@ -49,17 +50,31 @@ router.post(
     const savedIntermediaires: Array<Prisma.CarcasseIntermediaireGetPayload<object>> = [];
     const modifResults: Array<SyncModifRequestResult & { approvalPayload?: Record<string, unknown> }> = [];
     const syncedLogIds: Array<string> = [];
+    const rejected: Array<SyncRejection> = [];
+
+    // Un refus d'autorisation est définitif : on le renvoie au client pour qu'il cesse de repousser
+    // l'item, et on le remonte à l'équipe en un seul évènement en fin de requête plutôt qu'un par
+    // item. Toute autre erreur est transitoire — on la capture et le client réessaiera.
+    function handleSyncError(error: unknown, item: Omit<SyncRejection, 'reason'>) {
+      if (error instanceof SyncRejectedError) {
+        rejected.push({ ...item, reason: error.message });
+        return;
+      }
+      capture(error as Error, { extra: { ...item, userId: user.id }, user });
+    }
+
+    // Périmètre d'écriture du lot : résolu une fois, passé à chaque section. Il se met à jour tout
+    // seul au fil de la requête (une carcasse créée en section 2 entre dans le périmètre pour les
+    // sections suivantes)
+    const scope = await createSyncScope(user);
 
     // 1. Process FEIs first (carcasses depend on them)
     for (const feiData of feis || []) {
       try {
-        const result = await syncFei(feiData.numero, feiData as Prisma.FeiUncheckedCreateInput, user);
+        const result = await syncFei(feiData.numero, feiData as Prisma.FeiUncheckedCreateInput, user, scope);
         feiResults.push(result);
       } catch (error) {
-        capture(error as Error, {
-          extra: { feiNumero: feiData.numero, userId: user.id },
-          user,
-        });
+        handleSyncError(error, { kind: 'fei', id: feiData.numero });
       }
     }
 
@@ -88,6 +103,8 @@ router.post(
         })) ?? [];
       for (const c of existingCarcasses) existingCarcasseMap.set(c.zacharie_carcasse_id, c);
     }
+    // Une requête pour tout le lot, au lieu d'une par carcasse dans la boucle ci-dessous.
+    await scope.prefetch(carcasseIds);
 
     // Les carcasses sont traitées en parallèle (chaque syncCarcasse = un update de ligne
     // distincte, sans dépendance entre elles). La relation CAN_TRANSMIT vers le destinataire est
@@ -137,6 +154,7 @@ router.post(
               carcasseData.zacharie_carcasse_id,
               carcasseData as Prisma.CarcasseUncheckedCreateInput,
               user,
+              scope,
               {
                 existingFei: carcasseFeiMap.get(carcasseData.fei_numero) ?? null,
                 existingCarcasse: existingCarcasseMap.get(carcasseData.zacharie_carcasse_id) ?? null,
@@ -144,14 +162,7 @@ router.post(
               }
             );
           } catch (error) {
-            capture(error as Error, {
-              extra: {
-                feiNumero: carcasseData.fei_numero,
-                zacharieCarcasseId: carcasseData.zacharie_carcasse_id,
-                userId: user.id,
-              },
-              user,
-            });
+            handleSyncError(error, { kind: 'carcasse', id: carcasseData.zacharie_carcasse_id });
             return null;
           }
         })
@@ -162,9 +173,9 @@ router.post(
     }
 
     // 3. Process CarcassesIntermediaires
-    const userEntityIds = (carcassesIntermediaires || []).length
-      ? await getUserCarcasseEntityIds(user.id)
-      : [];
+    await scope.prefetch(
+      (carcassesIntermediaires || []).map((ci) => ci.zacharie_carcasse_id).filter(Boolean) as string[]
+    );
     for (const ciData of carcassesIntermediaires || []) {
       try {
         const saved = await syncCarcasseIntermediaire(
@@ -173,23 +184,21 @@ router.post(
           ciData.zacharie_carcasse_id,
           ciData as Prisma.CarcasseIntermediaireUncheckedCreateInput,
           user,
-          { userEntityIds }
+          scope
         );
         savedIntermediaires.push(saved);
       } catch (error) {
-        capture(error as Error, {
-          extra: {
-            feiNumero: ciData.fei_numero,
-            intermediaireId: ciData.intermediaire_id,
-            zacharieCarcasseId: ciData.zacharie_carcasse_id,
-            userId: user.id,
-          },
-          user,
+        handleSyncError(error, {
+          kind: 'carcasseIntermediaire',
+          id: `${ciData.fei_numero}_${ciData.zacharie_carcasse_id}_${ciData.intermediaire_id}`,
         });
       }
     }
 
     // 4. Process CarcasseModificationRequests
+    await scope.prefetch(
+      (carcasseModifRequests || []).map((m) => m.zacharie_carcasse_id).filter(Boolean) as string[]
+    );
     for (const modifData of carcasseModifRequests || []) {
       try {
         const { _approvalPayload, ...modifBody } = modifData as typeof modifData & {
@@ -197,14 +206,12 @@ router.post(
         };
         const result = await syncCarcasseModifRequest(
           modifBody as Prisma.CarcasseModificationRequestUncheckedCreateInput,
-          user
+          user,
+          scope
         );
         modifResults.push({ ...result, approvalPayload: _approvalPayload });
       } catch (error) {
-        capture(error as Error, {
-          extra: { modifId: modifData.id, userId: user.id },
-          user,
-        });
+        handleSyncError(error, { kind: 'carcasseModifRequest', id: modifData.id as string });
       }
     }
 
@@ -315,6 +322,14 @@ router.post(
           })
         : [];
 
+    if (rejected.length > 0) {
+      // Message fixe pour que Sentry regroupe : le détail est dans extra.
+      capture(new Error('Écritures /sync refusées'), {
+        extra: { count: rejected.length, rejected, userId: user.id },
+        user,
+      });
+    }
+
     res.status(200).send({
       ok: true,
       data: {
@@ -323,6 +338,7 @@ router.post(
         carcassesIntermediaires: savedIntermediaires,
         carcasseModifRequests: modifResults.map((r) => r.saved),
         syncedLogIds,
+        rejected,
       },
       error: '',
     });
