@@ -20,7 +20,7 @@ export default function EtgProfilNotifications() {
     pushAvailable: pushAvailableOnWeb,
   } = usePush();
 
-  const { isRegistered: nativePushTokenRegistered, askPermission: askNativePushPermission } =
+  const { isEnabled: nativePushEnabled, askPermission: askNativePushPermission } =
     useNativePushToken('read-existing');
 
   const pushAvailabledOnThisPlatform = useMemo(() => {
@@ -32,7 +32,7 @@ export default function EtgProfilNotifications() {
 
   const checkBoxChecked = useMemo(() => {
     if (window.ReactNativeWebView) {
-      return nativePushTokenRegistered;
+      return nativePushEnabled;
     }
     return (
       canSendPush &&
@@ -40,7 +40,7 @@ export default function EtgProfilNotifications() {
       !!pushSubscription &&
       !!user?.web_push_tokens?.find((token) => JSON.parse(token)?.endpoint === pushSubscription?.endpoint)
     );
-  }, [nativePushTokenRegistered, canSendPush, isSubscribed, pushSubscription, user.web_push_tokens]);
+  }, [nativePushEnabled, canSendPush, isSubscribed, pushSubscription, user.web_push_tokens]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });

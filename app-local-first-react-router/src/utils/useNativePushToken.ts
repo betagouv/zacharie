@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { UserNotifications } from '@prisma/client';
 import { UserConnexionResponse } from '@api/src/types/responses';
 import useUser from '@app/zustand/user';
 import API from '@app/services/api';
@@ -36,13 +37,18 @@ export function useNativePushToken(mode: NativePushMode) {
       }
       const response = await API.post({
         path: `/user/${user.id}`,
-        body: { native_push_token: token },
+        body: {
+          native_push_token: token,
+          // Accepter la permission système vaut activation : sans PUSH dans `notifications`, le
+          // backend n'enverrait rien (service/notifications.ts) alors que la case serait cochée.
+          notifications: [...new Set([...user.notifications, UserNotifications.PUSH])],
+        },
       }).then((response) => response as UserConnexionResponse);
       if (response.ok && response.data?.user?.id) {
         useUser.setState({ user: response.data.user });
       }
     };
-  }, [user.id, user.native_push_tokens]);
+  }, [user.id, user.native_push_tokens, user.notifications]);
 
   const askPermission = useCallback(() => {
     window.ReactNativeWebView?.postMessage('request-native-expo-push-permission');
@@ -66,7 +72,12 @@ export function useNativePushToken(mode: NativePushMode) {
   }, [mode, user.activated_at, askPermission]);
 
   return {
-    isRegistered: !!deviceToken && user.native_push_tokens.includes(deviceToken),
+    // Reflète ce que le backend regarde vraiment pour envoyer : l'appareil est enregistré ET les
+    // notifications PUSH sont activées.
+    isEnabled:
+      !!deviceToken &&
+      user.native_push_tokens.includes(deviceToken) &&
+      user.notifications.includes(UserNotifications.PUSH),
     askPermission,
   };
 }
