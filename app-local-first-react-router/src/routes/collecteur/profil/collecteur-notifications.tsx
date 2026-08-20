@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import { UserNotifications } from '@prisma/client';
 import type { UserConnexionResponse } from '@api/src/types/responses';
 import { usePush } from '@app/sw/web-push-notifications';
 import useUser from '@app/zustand/user';
+import { useNativePushToken } from '@app/utils/useNativePushToken';
 import API from '@app/services/api';
 import { toast } from 'react-toastify';
 
@@ -19,15 +20,8 @@ export default function CollecteurProfilNotifications() {
     pushAvailable: pushAvailableOnWeb,
   } = usePush();
 
-  const [nativePushTokenRegistered, setNativePushTokenRegistered] = useState(false);
-  useEffect(() => {
-    if (window.ReactNativeWebView) {
-      window.onNativePushToken = async function handleNativePushToken(token) {
-        setNativePushTokenRegistered(user.native_push_tokens.includes(token));
-      };
-      window.ReactNativeWebView.postMessage('request-native-get-expo-token');
-    }
-  }, [user.native_push_tokens]);
+  const { isEnabled: nativePushEnabled, askPermission: askNativePushPermission } =
+    useNativePushToken('read-existing');
 
   const pushAvailabledOnThisPlatform = useMemo(() => {
     if (window.ReactNativeWebView) {
@@ -38,7 +32,7 @@ export default function CollecteurProfilNotifications() {
 
   const checkBoxChecked = useMemo(() => {
     if (window.ReactNativeWebView) {
-      return nativePushTokenRegistered;
+      return nativePushEnabled;
     }
     return (
       canSendPush &&
@@ -46,7 +40,7 @@ export default function CollecteurProfilNotifications() {
       !!pushSubscription &&
       !!user?.web_push_tokens?.find((token) => JSON.parse(token)?.endpoint === pushSubscription?.endpoint)
     );
-  }, [nativePushTokenRegistered, canSendPush, isSubscribed, pushSubscription, user.web_push_tokens]);
+  }, [nativePushEnabled, canSendPush, isSubscribed, pushSubscription, user.web_push_tokens]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -96,9 +90,7 @@ export default function CollecteurProfilNotifications() {
                         disabled: !pushAvailabledOnThisPlatform,
                         onClick: async () => {
                           if (window.ReactNativeWebView) {
-                            window.ReactNativeWebView.postMessage('request-native-expo-push-permission');
-                            // token reading is handled in
-                            // window.onNativePushToken = async function handleNativePushToken(token) { ... }
+                            askNativePushPermission();
                             return;
                           }
                           const VITE_VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
