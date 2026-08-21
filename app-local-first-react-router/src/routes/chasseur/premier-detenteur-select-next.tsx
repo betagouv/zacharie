@@ -289,23 +289,14 @@ function AddDispatchGroupCard({
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className="hover:border-action-high-blue-france flex basis-full flex-col items-start gap-3 border-2 border-dashed border-gray-300 bg-white p-4 text-left transition-colors hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
+      className="hover:border-action-high-blue-france flex min-h-24 basis-full flex-col items-center justify-center gap-3 border border-dashed border-gray-300 bg-white p-4 text-left transition-colors hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
     >
-      <span className="text-action-high-blue-france flex items-center gap-2 text-base font-bold">
+      <span className="text-action-high-blue-france flex items-center gap-2 text-base font-medium">
         <span
           className="fr-icon-add-line"
           aria-hidden="true"
         />
-        {isFirst ? 'Ajouter une vente ou un don' : 'Ajouter une autre vente ou un autre don'}
-      </span>
-      {/* Squelette : rappelle la forme d'une carte remplie (carcasses, stockage, transport). */}
-      <span
-        className="flex w-full flex-col gap-1.5"
-        aria-hidden="true"
-      >
-        <span className="h-2.5 w-2/5 rounded bg-gray-200" />
-        <span className="h-2.5 w-1/3 rounded bg-gray-200" />
-        <span className="h-2.5 w-1/2 rounded bg-gray-200" />
+        Ajouter une vente ou un don
       </span>
     </button>
   );
