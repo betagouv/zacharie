@@ -335,7 +335,7 @@ function FEIChasseurLoaded() {
   // Progressive display conditions
   const hasPremierDetenteur = !!(premierDetenteurUser || premierDetenteurEntity);
   const showBloc2 = !canEdit || !!(fei.date_mise_a_mort && fei.commune_mise_a_mort && hasPremierDetenteur);
-  const showDestinataire =
+  const showVenteDon =
     !canEdit ||
     !!(
       showBloc2 &&
@@ -344,7 +344,7 @@ function FEIChasseurLoaded() {
       fei.heure_mise_a_mort_premiere_carcasse &&
       (onlyPetitGibier || fei.heure_evisceration_derniere_carcasse)
     );
-  const showValidation = fei.consommateur_final_usage_domestique || showDestinataire;
+  const showValidation = fei.consommateur_final_usage_domestique || showVenteDon;
 
   const handleTransmettre = () => {
     // Compte pas encore activé (CFEI non validé) : la fiche peut être préparée mais pas transmise.
@@ -649,7 +649,7 @@ function FEIChasseurLoaded() {
                           />
                         </>
                       )}
-                      {canEdit && !showDestinataire && (
+                      {canEdit && !showValidation && (
                         <Button
                           className="mt-4"
                           type="button"
@@ -792,10 +792,11 @@ function FEIChasseurLoaded() {
                 </div>
               )}
 
-              {/* Bloc 4 — Destinataire */}
-              {showDestinataire && isPremierDetenteur && !allCarcassesAssigned && (
+              {/* Bloc 4 — Vente / don. Reste affiché une fois tout transmis : le bloc récapitule
+                  alors les ventes / dons déjà faits. */}
+              {showVenteDon && isPremierDetenteur && (
                 <div className="bg-white p-4 md:p-8">
-                  <h4 className="fr-h5">Destinataire</h4>
+                  <h4 className="fr-h5">Vente / don</h4>
                   <DestinataireSelectPremierDetenteur
                     canEdit={canEditAsPremierDetenteur}
                     submitRef={destinataireRef}

@@ -1,6 +1,7 @@
 import { test, expect } from '../../utils/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
+import { ajouterVenteDon } from '../../utils/vente-don';
 import { logoutAndConnect } from '../../utils/logout-and-connect';
 
 // Scenario 127 — URL directe vers carcasse d'une autre branche → 403/404 ou redirect.
@@ -22,30 +23,9 @@ test("ETG 1 ne peut pas accéder à la carcasse d'ETG 2 via URL directe", async 
   await connectWith(page, 'premier-detenteur@example.fr');
   await page.getByRole('link', { name: feiId }).click();
 
-  await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").first().click();
-  await page.getByRole('option', { name: 'ETG 1 - 75000 Paris (' }).click();
-  const g1s = page.getByText('Pas de stockage').first();
-  await g1s.scrollIntoViewIfNeeded();
-  await g1s.click();
-  const g1t = page.getByText('Je transporte les carcasses moi').first();
-  await g1t.scrollIntoViewIfNeeded();
-  await g1t.click();
-  const add = page.getByRole('button', { name: 'Ajouter un autre destinataire' });
-  await add.scrollIntoViewIfNeeded();
-  await add.click();
-  const group2 = page.locator('div.rounded.border').nth(1);
-  await group2.scrollIntoViewIfNeeded();
-  const g2Btns = group2.locator("button[type='button']").filter({ hasText: 'N°' });
-  await g2Btns.nth(0).click();
-  await g2Btns.nth(1).click();
-  await group2.locator("[class*='select-prochain-detenteur'][class*='input-container']").click();
-  await page.getByRole('option', { name: 'ETG 2 - 75000 Paris (' }).click();
-  const g2s = group2.getByText('Pas de stockage').first();
-  await g2s.scrollIntoViewIfNeeded();
-  await g2s.click();
-  const g2t = group2.getByText('Je transporte les carcasses moi').first();
-  await g2t.scrollIntoViewIfNeeded();
-  await g2t.click();
+  await ajouterVenteDon(page, { destinataire: 'ETG 1 - 75000 Paris (' });
+
+  await ajouterVenteDon(page, { destinataire: 'ETG 2 - 75000 Paris (', carcasses: [0, 1] });
   const transmettre = page.getByRole('button', { name: /Transmettre/ });
   await transmettre.scrollIntoViewIfNeeded();
   await transmettre.click();

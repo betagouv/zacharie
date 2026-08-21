@@ -7,6 +7,14 @@ dayjs.locale('fr');
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 import { dateApprobationDuJour } from '../../utils/date-approbation';
+import {
+  openVenteDon,
+  allerAEtape,
+  choisirStockage,
+  choisirTransport,
+  enregistrerVenteDon,
+  venteDonModal,
+} from '../../utils/vente-don';
 
 test.use({
   viewport: { width: 350, height: 667 },
@@ -60,22 +68,18 @@ test('Examinateur == PD via CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY — self-hando
     .click();
   await page.getByRole('button', { name: 'Transmettre', exact: true }).click();
 
-  // Form transitions inline to PD dispatch view. Wait for the "Prochain détenteur" section
-  // to appear (the destinataire selector becomes available).
-  const etg1Pill = page.getByRole('button', { name: /ETG 1/i });
+  // Form transitions inline to the PD « vente / don » view.
+  await openVenteDon(page);
+  const etg1Pill = venteDonModal(page).getByRole('button', { name: /^ETG 1$/ });
   await expect(etg1Pill).toBeVisible({ timeout: 15000 });
   await etg1Pill.scrollIntoViewIfNeeded();
   await etg1Pill.click();
 
-  // Pas de stockage
-  const pasDeStockage = page.getByText('Pas de stockage').first();
-  await pasDeStockage.scrollIntoViewIfNeeded();
-  await pasDeStockage.click();
-
-  // Je transporte moi-même
-  const jeTransporte = page.getByText('Je transporte les carcasses moi').first();
-  await jeTransporte.scrollIntoViewIfNeeded();
-  await jeTransporte.click();
+  await allerAEtape(page, 'Stockage');
+  await choisirStockage(page, 'aucun');
+  await allerAEtape(page, 'Transport');
+  await choisirTransport(page, 'moi');
+  await enregistrerVenteDon(page);
 
   const transmettre = page.getByRole('button', { name: 'Transmettre', exact: true });
   await transmettre.scrollIntoViewIfNeeded();

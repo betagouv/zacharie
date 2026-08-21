@@ -1,6 +1,7 @@
 import { test, expect } from '../../utils/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
+import { ajouterVenteDon } from '../../utils/vente-don';
 import { logoutAndConnect } from '../../utils/logout-and-connect';
 
 // Scenario 113 — Chain avec collecteur : PD → collecteur → ETG → SVI.
@@ -21,12 +22,8 @@ test('Chain : PD → collecteur → ETG → SVI', async ({ page }) => {
   await connectWith(page, 'premier-detenteur@example.fr');
   await page.getByRole('link', { name: feiId }).click();
 
-  await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").click();
-  await page.getByRole('option', { name: /Collecteur Pro 1/i }).click();
-  const pasDeStockage = page.getByText('Pas de stockage').first();
-  await pasDeStockage.scrollIntoViewIfNeeded();
-  await pasDeStockage.click();
   // No transport step when dispatching to a collecteur — they handle transport
+  await ajouterVenteDon(page, { destinataire: /Collecteur Pro 1/i });
   const transmettreBtn1 = page.getByRole('button', { name: 'Transmettre' });
   await transmettreBtn1.scrollIntoViewIfNeeded();
   await transmettreBtn1.click();

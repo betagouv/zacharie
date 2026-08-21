@@ -7,6 +7,14 @@ dayjs.locale('fr');
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 import { dateApprobationDuJour } from '../../utils/date-approbation';
+import {
+  openVenteDon,
+  allerAEtape,
+  choisirStockage,
+  choisirTransport,
+  enregistrerVenteDon,
+  venteDonModal,
+} from '../../utils/vente-don';
 import { logoutAndConnect } from '../../utils/logout-and-connect';
 
 test.use({
@@ -28,12 +36,9 @@ test.beforeAll(async () => {
 // basait uniquement sur `fei.premier_detenteur_user_id === user.id` et masquait
 // le bloc pour les autres membres de l'association.
 //
-// La fiche porte DEUX carcasses et User A n'en transmet qu'UNE : il reste donc une
-// carcasse à attribuer. C'est indispensable car le bloc « Destinataire » est désormais
-// masqué quand toutes les carcasses ont été assignées (`!allCarcassesAssigned`). Avec
-// une carcasse restante, le bloc reste visible et la régression `isPremierDetenteur`
-// est bien couverte.
-test("Autre membre de l'Association voit le bloc Destinataire sur la fiche", async ({ page }) => {
+// La fiche porte DEUX carcasses et User A n'en transmet qu'UNE : le Cerf restant est
+// encore à vendre / donner, User B doit donc pouvoir le prendre en charge.
+test("Autre membre de l'Association voit le bloc Vente / don sur la fiche", async ({ page }) => {
   // --- User A : examinateur-premier-detenteur (membre Association de chasseurs)
   //     crée et transmet la fiche au nom de l'Association.
   await connectWith(page, 'examinateur-premier-detenteur@example.fr');
@@ -83,28 +88,23 @@ test("Autre membre de l'Association voit le bloc Destinataire sur la fiche", asy
   await page.getByRole('button', { name: 'Transmettre', exact: true }).click();
 
   // Sélection ETG 1 puis dispatch.
-  const etg1Pill = page.getByRole('button', { name: /ETG 1/i });
+  await openVenteDon(page);
+  const etg1Pill = venteDonModal(page).getByRole('button', { name: /^ETG 1$/ });
   await expect(etg1Pill).toBeVisible({ timeout: 15000 });
   await etg1Pill.scrollIntoViewIfNeeded();
   await etg1Pill.click();
 
-  // On ne transmet que le Daim : on retire le Cerf du groupe de destinataire.
-  // Il reste ainsi une carcasse non attribuée pour que le bloc « Destinataire »
-  // demeure visible côté User B.
-  const destinataireSection = page
-    .locator('div.bg-white')
-    .filter({ has: page.getByRole('heading', { name: 'Destinataire' }) });
-  const cerfToggle = destinataireSection.getByRole('button', { name: /Cerf/ });
+  // On ne transmet que le Daim : on retire le Cerf de la vente / du don.
+  await allerAEtape(page, 'Carcasses');
+  const cerfToggle = venteDonModal(page).getByRole('checkbox', { name: /Cerf/ });
   await cerfToggle.scrollIntoViewIfNeeded();
   await cerfToggle.click();
 
-  const pasDeStockage = page.getByText('Pas de stockage').first();
-  await pasDeStockage.scrollIntoViewIfNeeded();
-  await pasDeStockage.click();
-
-  const jeTransporte = page.getByText('Je transporte les carcasses moi').first();
-  await jeTransporte.scrollIntoViewIfNeeded();
-  await jeTransporte.click();
+  await allerAEtape(page, 'Stockage');
+  await choisirStockage(page, 'aucun');
+  await allerAEtape(page, 'Transport');
+  await choisirTransport(page, 'moi');
+  await enregistrerVenteDon(page);
 
   const transmettre = page.getByRole('button', { name: 'Transmettre', exact: true });
   await transmettre.scrollIntoViewIfNeeded();
@@ -124,10 +124,8 @@ test("Autre membre de l'Association voit le bloc Destinataire sur la fiche", asy
   await page.goto(`http://localhost:3290/app/chasseur/fei/${feiNumero}`);
 
   // Cœur du test : sans le fix, `isPremierDetenteur` aurait été `false` et le
-  // bloc Destinataire aurait été masqué. Avec le fix, il est visible.
-  // (Le titre « Destinataire » n'est rendu QUE par
-  // `{showBloc3 && isPremierDetenteur && !allCarcassesAssigned}` dans chasseur-fei.tsx —
-  // aucun autre composant ne l'émet, donc l'assertion est suffisante. Le Cerf restant
-  // garantit `!allCarcassesAssigned`.)
-  await expect(page.getByRole('heading', { name: 'Destinataire' })).toBeVisible({ timeout: 15000 });
+  // bloc Vente / don aurait été masqué. Avec le fix, il est visible.
+  // (Le titre « Vente / don » n'est rendu QUE par `{showVenteDon && isPremierDetenteur}`
+  // dans chasseur-fei.tsx — aucun autre composant ne l'émet.)
+  await expect(page.getByRole('heading', { name: 'Vente / don' })).toBeVisible({ timeout: 15000 });
 });

@@ -1,6 +1,7 @@
 import { test, expect } from '../../utils/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
+import { ajouterVenteDon } from '../../utils/vente-don';
 import { logoutAndConnect } from '../../utils/logout-and-connect';
 
 // Scenario 118 — Dispatch ETG + collecteur : isolation croisée.
@@ -22,35 +23,13 @@ test('ETG et collecteur ne voient que leur branche', async ({ page }) => {
   await page.getByRole('link', { name: feiId }).click();
 
   // Group 1 : ETG 1
-  await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").first().click();
-  await page.getByRole('option', { name: 'ETG 1 - 75000 Paris (' }).click();
-  const g1Stockage = page.getByText('Pas de stockage').first();
-  await g1Stockage.scrollIntoViewIfNeeded();
-  await g1Stockage.click();
-  const g1Transport = page.getByText('Je transporte les carcasses moi').first();
-  await g1Transport.scrollIntoViewIfNeeded();
-  await g1Transport.click();
+  await ajouterVenteDon(page, { destinataire: 'ETG 1 - 75000 Paris (' });
 
   // Ajouter group 2
-  const ajouterBtn = page.getByRole('button', { name: 'Ajouter un autre destinataire' });
-  await ajouterBtn.scrollIntoViewIfNeeded();
-  await ajouterBtn.click();
-
-  const group2 = page.locator('div.rounded.border').nth(1);
-  await group2.scrollIntoViewIfNeeded();
-  const g2Btns = group2.locator("button[type='button']").filter({ hasText: 'N°' });
   // Move MM-001-001 and MM-001-002 to group 2
-  await g2Btns.nth(0).click();
-  await g2Btns.nth(1).click();
-
   // Group 2 : Collecteur Pro 1
-  await group2.locator("[class*='select-prochain-detenteur'][class*='input-container']").click();
-  await page.getByRole('option', { name: /Collecteur Pro 1/i }).click();
   // Collecteur still needs stockage selection
-  const g2Stockage = group2.getByText('Pas de stockage').first();
-  await g2Stockage.scrollIntoViewIfNeeded();
-  await g2Stockage.click();
-
+  await ajouterVenteDon(page, { destinataire: /Collecteur Pro 1/i, carcasses: [0, 1] });
   const transmettreBtn = page.getByRole('button', { name: /Transmettre/ });
   await transmettreBtn.scrollIntoViewIfNeeded();
   await transmettreBtn.click();
