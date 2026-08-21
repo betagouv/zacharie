@@ -34,7 +34,7 @@ import { getEntityDisplay } from '@app/utils/get-entity-display';
 import Button from '@codegouvfr/react-dsfr/Button';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import { getCarcasseTransmission } from '@app/utils/get-carcasses-transmission';
-import { createModal } from '@codegouvfr/react-dsfr/Modal';
+import { createModal, type ModalProps } from '@codegouvfr/react-dsfr/Modal';
 import PartenaireNouveau from '@app/components/PartenaireNouveau';
 import CCGNouveau from '@app/components/CCGNouveau';
 import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
@@ -70,6 +70,11 @@ const dispatchModal = createModal({
 const trichineModal = createModal({
   isOpenedByDefault: false,
   id: 'trichine-modal-pd',
+});
+
+const confirmDeleteDispatchModal = createModal({
+  isOpenedByDefault: false,
+  id: 'confirm-delete-dispatch-modal-pd',
 });
 
 // Le transport est à renseigner par le premier détenteur sauf quand le prochain détenteur
@@ -1112,6 +1117,10 @@ export default function DestinataireSelectPremierDetenteur({
     [draft, entities]
   );
 
+  const draftRecipientName = draft?.recipientEntityId
+    ? (entities[draft.recipientEntityId]?.nom_d_usage ?? null)
+    : null;
+
   // Étapes de la modale : le transport n'existe que si le premier détenteur doit l'organiser.
   const draftNeedTransport = draft
     ? needTransportForType(draft.recipientEntityId ? entities[draft.recipientEntityId]?.type : null)
@@ -1169,6 +1178,14 @@ export default function DestinataireSelectPremierDetenteur({
   const removeGroup = useCallback((groupId: string) => {
     setDispatchGroups((prev) => prev.filter((g) => g.id !== groupId));
   }, []);
+
+  const confirmRemoveDraft = useCallback(() => {
+    if (draft) {
+      removeGroup(draft.id);
+    }
+    setDraft(null);
+    confirmDeleteDispatchModal.close();
+  }, [draft, removeGroup]);
 
   // Trichine : au moins une vente / un don vers du circuit court avec du sanglier.
   const hasSanglier = useMemo(
@@ -1353,6 +1370,44 @@ export default function DestinataireSelectPremierDetenteur({
     return "Il n'y a pas encore de propriétaire initial pour cette fiche";
   }
 
+  const modalMainButton: ModalProps.ActionAreaButtonProps =
+    boundedStep < steps.length
+      ? {
+          children: 'Suivant',
+          doClosesModal: false,
+          nativeButtonProps: { onClick: goToNextStep },
+        }
+      : {
+          children: 'Enregistrer',
+          doClosesModal: false,
+          nativeButtonProps: { onClick: () => saveDraft() },
+        };
+  // Sur la première étape, une vente / un don déjà enregistré (donc pas encore transmis) se supprime
+  // depuis la modale. À la création il n'y a rien à supprimer : on ferme avec la croix.
+  const modalSecondaryButton: ModalProps.ActionAreaButtonProps | null =
+    boundedStep > 1
+      ? {
+          children: 'Précédent',
+          priority: 'secondary',
+          doClosesModal: false,
+          nativeButtonProps: { onClick: goToPrevStep },
+        }
+      : draftMode === 'edit'
+        ? {
+            children: 'Supprimer',
+            priority: 'tertiary no outline',
+            iconId: 'fr-icon-delete-bin-line',
+            className: 'text-error-main-525',
+            doClosesModal: false,
+            // On ferme la modale d'édition avant d'ouvrir la confirmation :
+            // les modales DSFR ne s'empilent pas proprement (verrou de scroll booléen).
+            onClick: () => {
+              dispatchModal.close();
+              confirmDeleteDispatchModal.open();
+            },
+          }
+        : null;
+
   return (
     <>
       <div
@@ -1488,31 +1543,9 @@ export default function DestinataireSelectPremierDetenteur({
         buttons={
           !canEdit
             ? [{ children: 'Fermer' }]
-            : [
-                boundedStep > 1
-                  ? {
-                      children: 'Précédent',
-                      priority: 'secondary',
-                      doClosesModal: false,
-                      nativeButtonProps: { onClick: goToPrevStep },
-                    }
-                  : {
-                      children: 'Annuler',
-                      priority: 'secondary',
-                      onClick: () => setDraft(null),
-                    },
-                boundedStep < steps.length
-                  ? {
-                      children: 'Suivant',
-                      doClosesModal: false,
-                      nativeButtonProps: { onClick: goToNextStep },
-                    }
-                  : {
-                      children: 'Enregistrer',
-                      doClosesModal: false,
-                      nativeButtonProps: { onClick: () => saveDraft() },
-                    },
-              ]
+            : modalSecondaryButton
+              ? [modalSecondaryButton, modalMainButton]
+              : [modalMainButton]
         }
       >
         {isDispatchModalOpen && draft && (
@@ -1536,6 +1569,32 @@ export default function DestinataireSelectPremierDetenteur({
           />
         )}
       </dispatchModal.Component>
+
+      <confirmDeleteDispatchModal.Component
+        title="Supprimer la vente / le don"
+        buttons={[
+          { children: 'Annuler', priority: 'secondary', doClosesModal: true },
+          {
+            children: 'Supprimer',
+            priority: 'tertiary',
+            iconId: 'fr-icon-delete-bin-line',
+            className: 'bg-error-main-525 text-white',
+            doClosesModal: false,
+            onClick: confirmRemoveDraft,
+          },
+        ]}
+      >
+        <p className="mb-0">
+          Voulez-vous supprimer cette vente / ce don
+          {draftRecipientName ? (
+            <>
+              {' '}
+              à destination de <strong>{draftRecipientName}</strong>
+            </>
+          ) : null}
+          &nbsp;? Les carcasses concernées seront de nouveau à attribuer.
+        </p>
+      </confirmDeleteDispatchModal.Component>
 
       <trichineModal.Component
         title={trichineMessage?.title || 'Rappel trichine'}
