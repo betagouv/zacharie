@@ -176,7 +176,9 @@ export default function CarcassesExaminateur({
               Continuer
             </Button>
           )}
-          <span className="text-sm text-gray-500">Total : {carcasses.length} carcasses</span>
+          <span className="text-sm text-gray-500">
+            Total : {carcasses.length} carcasse{carcasses.length > 1 ? 's' : ''}
+          </span>
         </div>
       )}
       {canEdit && (
