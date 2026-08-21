@@ -20,8 +20,8 @@ test('ETG voit la liste des utilisateurs de son entreprise', async ({ page }) =>
   // The entity name "ETG 1" should be visible on the page
   await expect(page.getByText('ETG 1').first()).toBeVisible({ timeout: 10000 });
 
-  // Click "Voir la liste des utilisateurs" to open the modal
-  const voirUtilisateurs = page.getByRole('button', { name: 'Voir la liste des utilisateurs' }).first();
+  // Click "Voir les utilisateurs" to open the modal
+  const voirUtilisateurs = page.getByRole('button', { name: 'Voir les utilisateurs' }).first();
   await expect(voirUtilisateurs).toBeVisible({ timeout: 10000 });
   await voirUtilisateurs.click();
 
