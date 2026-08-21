@@ -275,15 +275,7 @@ function DispatchGroupCard({
 }
 
 // === Carte d'ajout : même gabarit que les cartes remplies, en squelette ===
-function AddDispatchGroupCard({
-  isFirst,
-  disabled,
-  onClick,
-}: {
-  isFirst: boolean;
-  disabled: boolean;
-  onClick: () => void;
-}) {
+function AddDispatchGroupCard({ disabled, onClick }: { disabled: boolean; onClick: () => void }) {
   return (
     <button
       type="button"
@@ -505,9 +497,7 @@ function DispatchGroupForm({
                     })
                   }
                 >
-                  {allCarcassesSelected
-                    ? 'Tout désélectionner'
-                    : `Tout sélectionner (${allCarcassesRestantes.length})`}
+                  {allCarcassesSelected ? 'Tout désélectionner' : 'Tout sélectionner'}
                 </button>
               )}
             </div>
@@ -521,13 +511,17 @@ function DispatchGroupForm({
               return (
                 <div key={espece}>
                   <div className="flex items-baseline justify-between gap-2 border-0 border-b border-solid border-gray-200 pb-1">
-                    <span className="text-sm font-bold">
-                      {espece} <span className="font-normal text-gray-600">({especeIds.length})</span>
-                    </span>
-                    {canEdit && (
+                    {/* Avec une seule espèce le titre ferait doublon avec la sélection globale : on le laisse inerte. */}
+                    {canEdit && carcassesParEspece.length > 1 ? (
                       <button
                         type="button"
-                        className="text-action-high-blue-france shrink-0 text-sm underline"
+                        aria-pressed={especeToutSelectionne}
+                        title={
+                          especeToutSelectionne
+                            ? `Désélectionner les carcasses « ${espece} »`
+                            : `Sélectionner les carcasses « ${espece} »`
+                        }
+                        className="hover:text-action-high-blue-france flex min-h-8 items-center gap-2 text-left text-sm font-bold"
                         onClick={() =>
                           onChange({
                             carcasseIds: especeToutSelectionne
@@ -536,8 +530,24 @@ function DispatchGroupForm({
                           })
                         }
                       >
-                        {especeToutSelectionne ? 'Tout désélectionner' : 'Tout sélectionner'}
+                        <span
+                          className={[
+                            'shrink-0',
+                            especeToutSelectionne
+                              ? 'fr-icon-checkbox-fill text-action-high-blue-france'
+                              : 'fr-icon-checkbox-line text-gray-600',
+                          ].join(' ')}
+                          aria-hidden="true"
+                          style={{ fontSize: '1rem' }}
+                        />
+                        <span>
+                          {espece} <span className="font-normal text-gray-600">({especeIds.length})</span>
+                        </span>
                       </button>
+                    ) : (
+                      <span className="text-sm font-bold">
+                        {espece} <span className="font-normal text-gray-600">({especeIds.length})</span>
+                      </span>
                     )}
                   </div>
                   <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -1046,6 +1056,7 @@ export default function DestinataireSelectPremierDetenteur({
         ...group,
         carcasseIds: group.carcasseIds.filter((id) => restantes.has(id)),
       }));
+      console.log('✌️ ~ nettoyes:', nettoyes);
       const aChange =
         nouvelles.length > 0 ||
         nettoyes.some((group, index) => group.carcasseIds.length !== prev[index].carcasseIds.length);
@@ -1447,7 +1458,6 @@ export default function DestinataireSelectPremierDetenteur({
               ))}
             {canAddDispatchGroup && (
               <AddDispatchGroupCard
-                isFirst={dispatchGroups.length === 0}
                 disabled={!!disabled}
                 onClick={openAddDispatchGroup}
               />
