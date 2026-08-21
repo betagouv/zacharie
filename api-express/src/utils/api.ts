@@ -1,4 +1,3 @@
-// @ts-nocheck TODO: fix API with Transmissions
 import {
   ApiKey,
   ApiKeyApprovalByUserOrEntity,
@@ -15,6 +14,14 @@ import { RequestWithApiKey } from '~/types/request';
 import express from 'express';
 import dayjs from 'dayjs';
 
+function formatUserName(user?: { prenom: string | null; nom_de_famille: string | null } | null): string {
+  if (!user) return '';
+  return `${user.prenom ?? ''} ${user.nom_de_famille ?? ''}`.trim();
+}
+
+// L'ownership (dépôt/transport, intermédiaire, SVI, clôture) est désormais porté PAR CARCASSE.
+// La carcasse est donc la ressource self-contained de l'API : on ne s'appuie sur la FEI que pour
+// les noms d'examinateur / premier détenteur (relations).
 export function mapCarcasseForApi(carcasse: CarcasseGetForApi, fei: FeiGetForApi) {
   if (!carcasse) {
     return null;
@@ -27,28 +34,20 @@ export function mapCarcasseForApi(carcasse: CarcasseGetForApi, fei: FeiGetForApi
     nombre_d_animaux: carcasse.nombre_d_animaux,
     heure_mise_a_mort: carcasse.heure_mise_a_mort,
     heure_evisceration: carcasse.heure_evisceration,
-    examinateur_name:
-      // @ts-ignore
-      fei.FeiExaminateurInitialUser.prenom +
-      ' ' +
-      // @ts-ignore
-      fei.FeiExaminateurInitialUser.nom_de_famille,
+    examinateur_name: formatUserName(fei?.FeiExaminateurInitialUser),
     examinateur_carcasse_sans_anomalie: carcasse.examinateur_carcasse_sans_anomalie,
     examinateur_anomalies_carcasse: carcasse.examinateur_anomalies_carcasse,
     examinateur_anomalies_abats: carcasse.examinateur_anomalies_abats,
     examinateur_commentaire: carcasse.examinateur_commentaire,
     examinateur_signed_at: carcasse.examinateur_signed_at,
-    premier_detenteur_name:
-      // @ts-ignore
-      fei.FeiPremierDetenteurUser.prenom + ' ' + fei.FeiPremierDetenteurUser.nom_de_famille,
+    premier_detenteur_name: fei?.FeiPremierDetenteurEntity
+      ? fei.FeiPremierDetenteurEntity.raison_sociale
+      : formatUserName(fei?.FeiPremierDetenteurUser),
     premier_detenteur_depot_type: carcasse.premier_detenteur_depot_type,
     premier_detenteur_depot_ccg_at: carcasse.premier_detenteur_depot_ccg_at,
     premier_detenteur_transport_type: carcasse.premier_detenteur_transport_type,
     premier_detenteur_transport_date: carcasse.premier_detenteur_transport_date,
     premier_detenteur_prochain_detenteur_role_cache: carcasse.premier_detenteur_prochain_detenteur_role_cache,
-    // premier_detenteur_prochain_detenteur_name: fei.pro
-    // latest_intermediaire_name
-    // latest_intermediaire_poids_carcasse
     latest_intermediaire_carcasse_refus_motif: carcasse.intermediaire_carcasse_refus_motif,
     latest_intermediaire_carcasse_manquante: carcasse.intermediaire_carcasse_manquante,
     latest_intermediaire_decision_at: carcasse.latest_intermediaire_signed_at,
@@ -92,82 +91,44 @@ export function mapCarcasseForApi(carcasse: CarcasseGetForApi, fei: FeiGetForApi
     svi_ipm2_signed_at: carcasse.svi_ipm2_signed_at,
     created_at: carcasse.created_at,
     updated_at: carcasse.updated_at,
-    fei_date_mise_a_mort: dayjs(fei.date_mise_a_mort).format('YYYY-MM-DD'),
-    fei_commune_mise_a_mort: fei.commune_mise_a_mort,
-    fei_heure_mise_a_mort_premiere_carcasse: fei.heure_mise_a_mort_premiere_carcasse,
-    fei_heure_evisceration_derniere_carcasse: fei.heure_evisceration_derniere_carcasse,
-    fei_resume_nombre_de_carcasses: fei.resume_nombre_de_carcasses,
+    fei_date_mise_a_mort: fei?.date_mise_a_mort ? dayjs(fei.date_mise_a_mort).format('YYYY-MM-DD') : null,
+    fei_commune_mise_a_mort: fei?.commune_mise_a_mort ?? null,
+    fei_heure_mise_a_mort_premiere_carcasse: fei?.heure_mise_a_mort_premiere_carcasse ?? null,
+    fei_heure_evisceration_derniere_carcasse: fei?.heure_evisceration_derniere_carcasse ?? null,
+    fei_resume_nombre_de_carcasses: fei?.resume_nombre_de_carcasses ?? null,
     fei_examinateur_initial_approbation_mise_sur_le_marche:
-      fei.examinateur_initial_approbation_mise_sur_le_marche,
+      fei?.examinateur_initial_approbation_mise_sur_le_marche ?? null,
     fei_examinateur_initial_date_approbation_mise_sur_le_marche:
-      fei.examinateur_initial_date_approbation_mise_sur_le_marche,
+      fei?.examinateur_initial_date_approbation_mise_sur_le_marche ?? null,
     automatic_closed_at: carcasse.svi_automatic_closed_at,
     intermediaire_closed_at: carcasse.intermediaire_closed_at,
     svi_closed_at: carcasse.svi_closed_at,
   };
 }
 
+// En-tête de la FEI + ses carcasses. Le détail d'ownership (dépôt/transport, intermédiaire, SVI,
+// clôture) vit sur chaque carcasse (cf mapCarcasseForApi), car il diffère potentiellement d'une
+// carcasse à l'autre depuis le passage à l'ownership par carcasse.
 export function mapFeiForApi(fei: FeiGetForApi, carcasses: CarcasseGetForApi[]) {
   if (!fei) {
     return null;
   }
-  let intermediaireClosedByName = '';
-  let latestIntermediaireByName = '';
-  let premierDetenteurProchainDetenteurName = '';
-  let premierDetenteurProchainDetenteurRole = '';
-  const carcasseIntermediaires: Array<Entity> = [];
-  const carcasseIntermediaireIds = new Set();
-  for (const carcasseIntermediaire of fei?.CarcasseIntermediaire || []) {
-    // sorted by created_at desc, so in order
-    if (carcasseIntermediaire.intermediaire_id) {
-      // @ts-ignore
-      const entity = carcasseIntermediaire.CarcasseIntermediaireEntity as Entity;
-      if (!carcasseIntermediaireIds.has(carcasseIntermediaire.intermediaire_id)) {
-        carcasseIntermediaires.push(entity);
-        carcasseIntermediaireIds.add(carcasseIntermediaire.intermediaire_id);
-      }
-    }
-  }
-  if (fei.intermediaire_closed_at) {
-    intermediaireClosedByName = carcasseIntermediaires.find(
-      (entity) => entity.id === fei.intermediaire_closed_by_entity_id
-    )?.raison_sociale;
-  }
-  if (fei.CarcasseIntermediaire.length > 0) {
-    latestIntermediaireByName = carcasseIntermediaires[0]?.raison_sociale;
-    premierDetenteurProchainDetenteurName = carcasseIntermediaires.at(-1)?.raison_sociale;
-    premierDetenteurProchainDetenteurRole = carcasseIntermediaires.at(-1)?.type;
-  }
   return {
     numero: fei.numero,
-    date_mise_a_mort: dayjs(fei.date_mise_a_mort).format('YYYY-MM-DD'),
+    creation_context: fei.creation_context,
+    date_mise_a_mort: fei.date_mise_a_mort ? dayjs(fei.date_mise_a_mort).format('YYYY-MM-DD') : null,
     commune_mise_a_mort: fei.commune_mise_a_mort,
     heure_mise_a_mort_premiere_carcasse: fei.heure_mise_a_mort_premiere_carcasse,
     heure_evisceration_derniere_carcasse: fei.heure_evisceration_derniere_carcasse,
     resume_nombre_de_carcasses: fei.resume_nombre_de_carcasses,
-    examinateur_initial_name:
-      fei.FeiExaminateurInitialUser?.prenom + ' ' + fei.FeiExaminateurInitialUser?.nom_de_famille,
+    examinateur_initial_name: formatUserName(fei.FeiExaminateurInitialUser),
     examinateur_initial_approbation_mise_sur_le_marche:
       fei.examinateur_initial_approbation_mise_sur_le_marche,
     examinateur_initial_date_approbation_mise_sur_le_marche:
       fei.examinateur_initial_date_approbation_mise_sur_le_marche,
     premier_detenteur_name: fei.FeiPremierDetenteurEntity
-      ? fei.FeiPremierDetenteurEntity?.raison_sociale
-      : fei.FeiPremierDetenteurUser?.prenom + ' ' + fei.FeiPremierDetenteurUser?.nom_de_famille,
-    premier_detenteur_depot_type: fei.premier_detenteur_depot_type,
-    premier_detenteur_depot_name: fei.FeiPremierDetenteurEntity?.raison_sociale,
-    premier_detenteur_depot_ccg_at: fei.premier_detenteur_depot_ccg_at,
-    premier_detenteur_transport_type: fei.premier_detenteur_transport_type,
-    premier_detenteur_transport_date: fei.premier_detenteur_transport_date,
-    premier_detenteur_prochain_detenteur_name: premierDetenteurProchainDetenteurName,
-    premier_detenteur_prochain_detenteur_role: premierDetenteurProchainDetenteurRole,
-    intermediaire_closed_at: fei.intermediaire_closed_at,
-    intermediaire_closed_by_name: intermediaireClosedByName,
-    latest_intermediaire_name: latestIntermediaireByName,
-    svi_assigned_at: fei.svi_assigned_at,
-    svi_entity_name: fei.FeiSviEntity?.raison_sociale,
-    svi_closed_at: fei.svi_closed_at,
-    automatic_closed_at: fei.automatic_closed_at,
+      ? fei.FeiPremierDetenteurEntity.raison_sociale
+      : formatUserName(fei.FeiPremierDetenteurUser),
     created_at: fei.created_at,
     updated_at: fei.updated_at,
     deleted_at: fei.deleted_at,
@@ -278,13 +239,14 @@ export const checkApiKeyIsValidMiddleware =
     next();
   };
 
+// Événements webhook réellement émis (cf sendWebhook + carcasse-side-effects / fei-side-effects).
+// Doit rester aligné avec l'enum documenté dans les deux swagger.
 export type WebhookEvent =
   | 'USER_APPROVED_ACCESS'
   | 'USER_REJECTED_ACCESS'
   | 'FEI_APPROBATION_MISE_SUR_LE_MARCHE'
   | 'CARCASSE_ASSIGNEE_AU_PROCHAIN_DETENTEUR'
   | 'CARCASSE_ASSIGNEE_AU_SVI'
-  | 'CARCASSE_PRISE_EN_CHARGE_PAR_PROCHAIN_DETENTEUR'
   | 'CARCASSE_CLOTUREE'
   | 'FEI_CLOTUREE';
 
