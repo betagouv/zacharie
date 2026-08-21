@@ -1052,11 +1052,14 @@ export default function DestinataireSelectPremierDetenteur({
     const nouvelles = carcassesRestantesIds.filter((id) => !knownCarcasseIdsRef.current.has(id));
     knownCarcasseIdsRef.current = restantes;
     setDispatchGroups((prev) => {
+      // Aucune vente / aucun don créé : rien à recaler, la première carte prendra toutes les restantes.
+      if (prev.length === 0) {
+        return prev;
+      }
       const nettoyes = prev.map((group) => ({
         ...group,
         carcasseIds: group.carcasseIds.filter((id) => restantes.has(id)),
       }));
-      console.log('✌️ ~ nettoyes:', nettoyes);
       const aChange =
         nouvelles.length > 0 ||
         nettoyes.some((group, index) => group.carcasseIds.length !== prev[index].carcasseIds.length);
