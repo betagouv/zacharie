@@ -90,80 +90,78 @@ export default function RelationEntityUser({
     }
   }, [searchParams, entityUsersModal, entity.id, isAdminOfEntity, isOpen]);
 
+  const entityContent = (
+    <span className="flex flex-col gap-0.5">
+      <span className="font-bold">{entity.nom_d_usage}</span>
+      <small className="text-sm">{getUserRoleLabel(entity.type)}</small>
+      {(entity.siret || entity.numero_ddecpp) && (
+        <small className="text-sm">
+          {entity.siret}
+          {entity.numero_ddecpp}
+        </small>
+      )}
+      {(entity.code_postal || entity.ville) && (
+        <small className="text-sm">
+          {entity.code_postal} {entity.ville}
+        </small>
+      )}
+    </span>
+  );
+
+  const userContent = (
+    <span className="flex flex-col gap-0.5">
+      <span className="font-bold">
+        {user.prenom} {user.nom_de_famille} {user.id === me.id ? ' (Vous)' : ''}
+      </span>
+      <small className="text-sm break-all">{user.email}</small>
+    </span>
+  );
+
   return (
     <div
       className={[
-        'flex basis-full flex-row items-center justify-between border-solid text-left',
-        'bg-contrast-grey mb-2 border-0',
+        'flex basis-full flex-col items-stretch gap-3 border-solid text-left',
+        'bg-contrast-grey mb-2 border-0 p-4',
+        'md:flex-row md:items-center md:justify-between md:gap-4',
       ]
         .filter(Boolean)
         .join(' ')}
     >
-      <div className="flex flex-1 flex-col border-none p-4 text-left font-bold">
-        {displayEntity && (
-          <>
-            {entityLink ? (
-              <Link
-                to={entityLink}
-                className="block bg-none px-3 py-4 no-underline!"
-              >
-                {entity.nom_d_usage}
-                <br />
-                {getUserRoleLabel(entity.type)}
-                <br />
-                {entity.siret}
-                {entity.numero_ddecpp}
-                <br />
-                {entity.code_postal} {entity.ville}
-              </Link>
-            ) : (
-              <>
-                {entity.nom_d_usage}
-                <br />
-                {getUserRoleLabel(entity.type)}
-                <br />
-                {entity.siret}
-                {entity.numero_ddecpp}
-                <br />
-                {entity.code_postal} {entity.ville}
-              </>
-            )}
-          </>
-        )}
-        {displayUser && (
-          <>
-            {userLink ? (
-              <Link
-                to={userLink}
-                className="block bg-none px-3 py-4 no-underline!"
-              >
-                <span className="font-bold">
-                  {user.prenom} {user.nom_de_famille} {user.id === me.id ? ' (Vous)' : ''}
-                </span>
-                <small className="text-sm font-normal">{user.email}</small>
-              </Link>
-            ) : (
-              <>
-                <span className="font-bold">
-                  {user.prenom} {user.nom_de_famille} {user.id === me.id ? ' (Vous)' : ''}
-                </span>
-                <small className="text-sm font-normal">{user.email}</small>
-              </>
-            )}
-          </>
-        )}
+      <div className="flex flex-1 flex-col border-none text-left">
+        {displayEntity &&
+          (entityLink ? (
+            <Link
+              to={entityLink}
+              className="block bg-none no-underline!"
+            >
+              {entityContent}
+            </Link>
+          ) : (
+            entityContent
+          ))}
+        {displayUser &&
+          (userLink ? (
+            <Link
+              to={userLink}
+              className="block bg-none no-underline!"
+            >
+              {userContent}
+            </Link>
+          ) : (
+            userContent
+          ))}
       </div>
-      <div className="flex flex-row gap-2 pr-4">
+      <div className="flex flex-row flex-wrap items-center gap-2 md:flex-nowrap md:justify-end">
         {enableUsersView && user.activated && (
-          <div className="flex flex-col gap-2 py-4">
+          <div className="flex flex-1 flex-col items-start gap-2 md:flex-none">
             <Button
               type="button"
               iconId="fr-icon-user-setting-fill"
               onClick={() => entityUsersModal.open()}
-              title="Voir la liste des utilisateurs"
+              title="Voir les utilisateurs"
               priority="tertiary no outline"
             >
-              Voir la liste des utilisateurs
+              Voir les utilisateurs
             </Button>
             {relationsToApprove.length > 0 && (
               <Button
@@ -171,7 +169,7 @@ export default function RelationEntityUser({
                 key={refreshKey}
                 iconId="fr-icon-user-setting-fill"
                 onClick={() => entityUsersModal.open()}
-                title="Voir la liste des utilisateurs"
+                title="Voir les utilisateurs"
                 priority="secondary"
               >
                 {relationsToApprove.length} demande{relationsToApprove.length > 1 ? 's' : ''} en attente
@@ -182,12 +180,10 @@ export default function RelationEntityUser({
         {myRelationIsPending &&
           !canApproveRelation &&
           relationType === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY && (
-            <div className="flex flex-col justify-center gap-2 py-4">
-              <p className="italic">En attente de validation</p>
-            </div>
+            <p className="flex-1 self-center italic md:flex-none">En attente de validation</p>
           )}
         {canApproveRelation && (
-          <div className="flex basis-3xs flex-col justify-center gap-2 py-4">
+          <div className="flex min-w-40 flex-1 flex-col justify-center md:flex-none md:basis-3xs">
             <RelationStatusSelector
               entity={entity}
               relation={canHandleCarcassesForEntity}
@@ -197,7 +193,7 @@ export default function RelationEntityUser({
           </div>
         )}
         {canDelete && (
-          <div className="flex flex-col justify-center gap-2 py-4">
+          <div className="ml-auto flex shrink-0 flex-col justify-center md:ml-0">
             <Button
               type="button"
               iconId="fr-icon-delete-bin-line"
