@@ -166,7 +166,7 @@ export default function CarcassesExaminateur({
         />
       )}
       {canEdit && hasCarcasses && (
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
           {!allCarcassesConfirmed && (
             <Button
               type="button"
@@ -176,6 +176,7 @@ export default function CarcassesExaminateur({
               Continuer
             </Button>
           )}
+          <span className="text-sm text-gray-500">Total : {carcasses.length} carcasses</span>
         </div>
       )}
       {canEdit && (
