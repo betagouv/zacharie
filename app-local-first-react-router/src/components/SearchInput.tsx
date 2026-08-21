@@ -4,6 +4,7 @@ import { CarcasseType } from '@prisma/client';
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import { searchLocally } from '@app/utils/search-local';
+import FichesEmptyState from '@app/components/FichesEmptyState';
 import { trackFeature } from '@app/services/matomo';
 import dayjs from 'dayjs';
 
@@ -43,13 +44,20 @@ export default function SearchInput({ className, id, type }: SearchInputProps) {
 
   useEffect(() => {
     clearTimeout(searchDebounce.current);
+    if (value === cachedValue) return;
+
+    setError('');
+    setSuccessData([]);
+    if (!cachedValue.trim()) {
+      setIsLoading(false);
+      setValue(cachedValue);
+      return;
+    }
+    // La recherche est locale donc synchrone : le loader couvre le debounce, pas la recherche.
+    setIsLoading(true);
 
     searchDebounce.current = setTimeout(() => {
-      if (value === cachedValue) return;
-      setError('');
-      setSuccessData([]);
       setValue(cachedValue);
-      setIsLoading(true);
 
       const user = useUser.getState().user;
       if (!user) {
@@ -61,9 +69,7 @@ export default function SearchInput({ className, id, type }: SearchInputProps) {
       setIsLoading(false);
       // Une recherche stabilisée (debounce 500ms) : on suit l'usage + si elle aboutit ou non.
       // RGPD : on n'envoie jamais le contenu tapé, seulement le résultat trouvé/vide.
-      if (cachedValue.trim()) {
-        trackFeature('header-recherche', data.data?.length ? 'resultat-trouve' : 'resultat-vide');
-      }
+      trackFeature('header-recherche', data.data?.length ? 'resultat-trouve' : 'resultat-vide');
       if (data.data?.length) {
         setSuccessData(data.data);
       }
@@ -90,11 +96,18 @@ export default function SearchInput({ className, id, type }: SearchInputProps) {
       />
       {isDropdownOpen && (
         <div className="absolute top-full right-0 left-0 z-50 mt-1 flex w-full flex-col rounded border border-gray-200 bg-white shadow-lg">
-          {!!error && <p className="px-3 py-2 text-sm text-orange-700">{error}</p>}
+          {!!error && (
+            <FichesEmptyState
+              variant="inline"
+              iconId="fr-icon-search-line"
+              title={error}
+              description="Vérifiez le numéro de bracelet ou le numéro de fiche. Seules vos carcasses et vos fiches en cours sont recherchées."
+            />
+          )}
           {isLoading && <p className="px-3 py-2 text-sm text-gray-500">Recherche en cours...</p>}
           {successData.map((data) => (
             <a
-              key={`${data.fei_numero || data.carcasse_numero_bracelet}`}
+              key={`${data.redirectUrl}-${data.carcasse_numero_bracelet}`}
               href={data.redirectUrl}
               onClick={() => trackFeature('header-recherche', 'resultat-clic')}
               className="flex flex-col gap-0.5 border-t border-gray-100 px-3 py-2 first:border-t-0 hover:bg-gray-50"
