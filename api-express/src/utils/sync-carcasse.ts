@@ -1,5 +1,7 @@
 import prisma from '~/prisma';
 import { Carcasse, EntityRelationType, Fei, FeiOwnerRole, Prisma, User, UserRoles } from '@prisma/client';
+import type { SyncScope } from '~/utils/sync-scope';
+import { SyncRejectedError } from '~/utils/sync-errors';
 
 export interface SaveCarcasseResult {
   savedCarcasse: Carcasse;
@@ -26,6 +28,7 @@ export async function syncCarcasse(
   zacharie_carcasse_id: string,
   body: Prisma.CarcasseUncheckedCreateInput,
   user: User,
+  scope: SyncScope,
   opts: SyncCarcasseOpts = {}
 ): Promise<SaveCarcasseResult> {
   if (!fei_numero) {
@@ -52,6 +55,8 @@ export async function syncCarcasse(
       body.next_owner_role !== FeiOwnerRole.PREMIER_DETENTEUR &&
       body.next_owner_role !== FeiOwnerRole.EXAMINATEUR_INITIAL;
     if (transmitsToNextDetenteur) {
+      // Erreur transitoire, pas un `SyncRejectedError` : `activated` bascule dès que l'admin valide
+      // le compte, et le client doit repousser la carcasse à ce moment-là sans recharger l'app.
       throw new Error('Votre compte doit être validé avant de pouvoir transmettre une fiche');
     }
   }
@@ -64,6 +69,16 @@ export async function syncCarcasse(
             fei_numero: fei_numero,
           },
         });
+  // Deny by default : on ne modifie une carcasse que si elle est dans le périmètre de
+  // l'utilisateur, et on n'en crée une que sur une fiche à laquelle il participe.
+  if (existingCarcasse) {
+    if (!(await scope.canWriteCarcasse(existingCarcasse.zacharie_carcasse_id))) {
+      throw new SyncRejectedError("Vous n'avez pas accès à cette carcasse");
+    }
+  } else if (!(await scope.canWriteFei(existingFei))) {
+    throw new SyncRejectedError("Vous n'avez pas accès à cette fiche");
+  }
+
   if (!existingCarcasse) {
     const numeroBracelet = body.numero_bracelet;
     if (!numeroBracelet) {
@@ -77,7 +92,22 @@ export async function syncCarcasse(
         is_synced: true,
       },
     });
+    // La ligne créée n'a encore aucune colonne de rattachement — celles-ci ne sont écrites que par
+    // l'update en fin de fonction. On accorde l'accès tout de suite, pour les sections suivantes de
+    // la même requête (intermédiaire, demande de modification) qui portent sur cette carcasse.
+    // Attention : la portée s'arrête à la requête. Si l'update en fin de fonction échoue, la ligne
+    // nue survit sans colonne de rattachement, donc hors du périmètre de tout le monde — au prochain
+    // envoi elle passe par `canWriteCarcasse` (elle existe désormais) et se fait refuser
+    // définitivement. Cas connu, non traité.
+    scope.grant(zacharie_carcasse_id);
   }
+
+  // L'examinateur initial et le premier détenteur portés par la carcasse sont des copies de la
+  // fiche. Pour un détenteur aval, on prend la valeur de la fiche plutôt que celle du corps de la
+  // requête : sinon il s'attribue l'examen initial et, avec lui, l'approbation des demandes de
+  // modification qui le désignent. Il peut toujours ajouter une carcasse manquante — elle hérite
+  // simplement de la fiche.
+  const canWriteOwnership = scope.isFeiOwner(existingFei);
 
   if (body.deleted_at) {
     // existingCarcasse est garantie non-nulle ici (créée juste au-dessus si absente).
@@ -150,8 +180,9 @@ export async function syncCarcasse(
       body[Prisma.CarcasseScalarFieldEnum.examinateur_initial_offline];
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.examinateur_initial_user_id)) {
-    nextCarcasse.examinateur_initial_user_id =
-      body[Prisma.CarcasseScalarFieldEnum.examinateur_initial_user_id];
+    nextCarcasse.examinateur_initial_user_id = canWriteOwnership
+      ? body[Prisma.CarcasseScalarFieldEnum.examinateur_initial_user_id]
+      : existingFei.examinateur_initial_user_id;
   }
   if (
     body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.examinateur_initial_approbation_mise_sur_le_marche)
@@ -212,15 +243,19 @@ export async function syncCarcasse(
     nextCarcasse.premier_detenteur_offline = body[Prisma.CarcasseScalarFieldEnum.premier_detenteur_offline];
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_user_id)) {
-    nextCarcasse.premier_detenteur_user_id = body[Prisma.CarcasseScalarFieldEnum.premier_detenteur_user_id];
+    nextCarcasse.premier_detenteur_user_id = canWriteOwnership
+      ? body[Prisma.CarcasseScalarFieldEnum.premier_detenteur_user_id]
+      : existingFei.premier_detenteur_user_id;
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_entity_id)) {
-    nextCarcasse.premier_detenteur_entity_id =
-      body[Prisma.CarcasseScalarFieldEnum.premier_detenteur_entity_id];
+    nextCarcasse.premier_detenteur_entity_id = canWriteOwnership
+      ? body[Prisma.CarcasseScalarFieldEnum.premier_detenteur_entity_id]
+      : existingFei.premier_detenteur_entity_id;
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_name_cache)) {
-    nextCarcasse.premier_detenteur_name_cache =
-      body[Prisma.CarcasseScalarFieldEnum.premier_detenteur_name_cache];
+    nextCarcasse.premier_detenteur_name_cache = canWriteOwnership
+      ? body[Prisma.CarcasseScalarFieldEnum.premier_detenteur_name_cache]
+      : existingFei.premier_detenteur_name_cache;
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.intermediaire_closed_at)) {
     nextCarcasse.intermediaire_closed_at = body[Prisma.CarcasseScalarFieldEnum.intermediaire_closed_at];

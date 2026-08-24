@@ -3,6 +3,12 @@ import { syncCarcasseIntermediaire } from '~/utils/sync-carcasse-intermediaire';
 import prisma from '~/prisma';
 import { UserRoles } from '@prisma/client';
 import type { User } from '@prisma/client';
+import { fakeSyncScope } from './fake-sync-scope';
+
+// Comme sync-carcasse.test.ts : ici on couvre l'identité et le mapping, l'autorisation d'accès à
+// la carcasse est testée dans permissions-sync-write.test.ts.
+// L'utilisateur travaille pour entity-A.
+const scope = fakeSyncScope({ entityIds: ['entity-A'] });
 
 const baseFei = { numero: 'FEI-1', deleted_at: null } as any;
 
@@ -30,49 +36,47 @@ const baseCi = {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  // Par défaut, l'utilisateur travaille pour entity-A.
-  vi.mocked(prisma.entityAndUserRelations.findMany).mockResolvedValue([{ entity_id: 'entity-A' }] as any);
 });
 
 describe('syncCarcasseIntermediaire — validation', () => {
   test('missing fei_numero → throws', async () => {
-    await expect(syncCarcasseIntermediaire('', 'INT-1', 'ZC-1', baseCi as any, etgUser)).rejects.toThrow(
-      'Le numéro de fiche est obligatoire'
-    );
+    await expect(
+      syncCarcasseIntermediaire('', 'INT-1', 'ZC-1', baseCi as any, etgUser, scope)
+    ).rejects.toThrow('Le numéro de fiche est obligatoire');
   });
 
   test('parent FEI not found → throws "Fiche non trouvée"', async () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(null);
 
     await expect(
-      syncCarcasseIntermediaire('FEI-MISSING', 'INT-1', 'ZC-1', baseCi as any, etgUser)
+      syncCarcasseIntermediaire('FEI-MISSING', 'INT-1', 'ZC-1', baseCi as any, etgUser, scope)
     ).rejects.toThrow('Fiche non trouvée');
   });
 
   test('missing zacharie_carcasse_id → throws', async () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
 
-    await expect(syncCarcasseIntermediaire('FEI-1', 'INT-1', '', baseCi as any, etgUser)).rejects.toThrow(
-      'Le numéro de la carcasse est obligatoire'
-    );
+    await expect(
+      syncCarcasseIntermediaire('FEI-1', 'INT-1', '', baseCi as any, etgUser, scope)
+    ).rejects.toThrow('Le numéro de la carcasse est obligatoire');
   });
 
   test('carcasse not found → throws "Carcasse not found"', async () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
     vi.mocked(prisma.carcasse.findFirst).mockResolvedValueOnce(null);
 
-    await expect(syncCarcasseIntermediaire('FEI-1', 'INT-1', 'ZC-1', baseCi as any, etgUser)).rejects.toThrow(
-      'Carcasse not found'
-    );
+    await expect(
+      syncCarcasseIntermediaire('FEI-1', 'INT-1', 'ZC-1', baseCi as any, etgUser, scope)
+    ).rejects.toThrow('Carcasse not found');
   });
 
   test('missing intermediaire_id → throws', async () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
     vi.mocked(prisma.carcasse.findFirst).mockResolvedValueOnce(baseCarcasse);
 
-    await expect(syncCarcasseIntermediaire('FEI-1', '', 'ZC-1', baseCi as any, etgUser)).rejects.toThrow(
-      "L'identifiant du destinataire est obligatoire"
-    );
+    await expect(
+      syncCarcasseIntermediaire('FEI-1', '', 'ZC-1', baseCi as any, etgUser, scope)
+    ).rejects.toThrow("L'identifiant du destinataire est obligatoire");
   });
 });
 
@@ -91,7 +95,8 @@ describe('syncCarcasseIntermediaire — upsert', () => {
         commentaire: 'OK',
         intermediaire_poids: 42,
       } as any,
-      etgUser
+      etgUser,
+      scope
     );
 
     const upsertCall = vi.mocked(prisma.carcasseIntermediaire.upsert).mock.calls[0][0];
@@ -125,7 +130,7 @@ describe('syncCarcasseIntermediaire — upsert', () => {
     vi.mocked(prisma.carcasse.findFirst).mockResolvedValueOnce(baseCarcasse);
     vi.mocked(prisma.carcasseIntermediaire.upsert).mockResolvedValueOnce({} as any);
 
-    await syncCarcasseIntermediaire('FEI-1', 'INT-1', 'ZC-1', baseCi as any, etgUser);
+    await syncCarcasseIntermediaire('FEI-1', 'INT-1', 'ZC-1', baseCi as any, etgUser, scope);
 
     const upsertCall = vi.mocked(prisma.carcasseIntermediaire.upsert).mock.calls[0][0];
     expect(upsertCall.create).not.toHaveProperty('commentaire');
@@ -146,7 +151,8 @@ describe('syncCarcasseIntermediaire — upsert', () => {
         ...baseCi,
         nombre_d_animaux_acceptes: undefined,
       } as any,
-      etgUser
+      etgUser,
+      scope
     );
 
     const upsertCall = vi.mocked(prisma.carcasseIntermediaire.upsert).mock.calls[0][0];
@@ -166,7 +172,8 @@ describe('syncCarcasseIntermediaire — upsert', () => {
         ...baseCi,
         nombre_d_animaux_acceptes: 0,
       } as any,
-      etgUser
+      etgUser,
+      scope
     );
 
     const upsertCall = vi.mocked(prisma.carcasseIntermediaire.upsert).mock.calls[0][0];
@@ -189,7 +196,8 @@ describe('syncCarcasseIntermediaire — upsert', () => {
         ...baseCi,
         numero_bracelet: 'BR-FROM-BODY-IGNORED',
       } as any,
-      etgUser
+      etgUser,
+      scope
     );
 
     const upsertCall = vi.mocked(prisma.carcasseIntermediaire.upsert).mock.calls[0][0];
@@ -208,7 +216,8 @@ describe("syncCarcasseIntermediaire — identité de l'intermédiaire", () => {
       'INT-1',
       'ZC-1',
       { ...baseCi, intermediaire_user_id: 'user-victime' } as any,
-      etgUser
+      etgUser,
+      scope
     );
 
     const upsertCall = vi.mocked(prisma.carcasseIntermediaire.upsert).mock.calls[0][0];
@@ -225,7 +234,8 @@ describe("syncCarcasseIntermediaire — identité de l'intermédiaire", () => {
         'INT-1',
         'ZC-1',
         { ...baseCi, intermediaire_entity_id: 'entity-autrui' } as any,
-        etgUser
+        etgUser,
+        scope
       )
     ).rejects.toThrow('Vous ne pouvez pas agir au nom de cette entité');
     expect(prisma.carcasseIntermediaire.upsert).not.toHaveBeenCalled();
@@ -241,7 +251,8 @@ describe("syncCarcasseIntermediaire — identité de l'intermédiaire", () => {
         'INT-1',
         'ZC-1',
         { ...baseCi, intermediaire_entity_id: '' } as any,
-        etgUser
+        etgUser,
+        scope
       )
     ).rejects.toThrow('Vous ne pouvez pas agir au nom de cette entité');
   });
@@ -258,7 +269,8 @@ describe("syncCarcasseIntermediaire — identité de l'intermédiaire", () => {
       'INT-1',
       'ZC-1',
       { ...baseCi, intermediaire_role: 'COLLECTEUR_PRO' } as any,
-      etgUser
+      etgUser,
+      scope
     );
 
     const upsertCall = vi.mocked(prisma.carcasseIntermediaire.upsert).mock.calls[0][0];

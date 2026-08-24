@@ -4,11 +4,15 @@ import prisma from '~/prisma';
 import { capture } from '~/third-parties/sentry';
 import { UserRoles } from '@prisma/client';
 import type { User } from '@prisma/client';
+import { fakeSyncScope } from './fake-sync-scope';
 
 vi.mock('~/third-parties/sentry', () => ({
   capture: vi.fn(),
   captureException: vi.fn(),
 }));
+
+// Mapping des champs : le cloisonnement a son propre fichier (permissions-sync-write.test.ts).
+const scope = fakeSyncScope();
 
 const examinateurInitial = {
   id: 'user-cfei',
@@ -65,7 +69,8 @@ describe('syncFei — create', () => {
     const result = await syncFei(
       'FEI-NEW',
       { numero: 'FEI-NEW', date_mise_a_mort: '2026-01-01' } as any,
-      examinateurInitial
+      examinateurInitial,
+      scope
     );
 
     expect(result.isDeleted).toBe(false);
@@ -79,7 +84,7 @@ describe('syncFei — create', () => {
   test('non-examinateur-initial → throws and captures to Sentry', async () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(null);
 
-    await expect(syncFei('FEI-NEW', { numero: 'FEI-NEW' } as any, chasseurNotCfei)).rejects.toThrow(
+    await expect(syncFei('FEI-NEW', { numero: 'FEI-NEW' } as any, chasseurNotCfei, scope)).rejects.toThrow(
       'Seul un examinateur initial peut créer une fiche'
     );
 
@@ -90,7 +95,7 @@ describe('syncFei — create', () => {
   test('non-CHASSEUR user → throws even with platform admin (admin can only delete)', async () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(null);
 
-    await expect(syncFei('FEI-NEW', { numero: 'FEI-NEW' } as any, platformAdmin)).rejects.toThrow(
+    await expect(syncFei('FEI-NEW', { numero: 'FEI-NEW' } as any, platformAdmin, scope)).rejects.toThrow(
       'Seul un examinateur initial peut créer une fiche'
     );
   });
@@ -101,7 +106,12 @@ describe('syncFei — update', () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
     vi.mocked(prisma.fei.update).mockResolvedValue(baseFei as any);
 
-    await syncFei('FEI-1', { numero: 'FEI-1', commune_mise_a_mort: 'Lyon' } as any, examinateurInitial);
+    await syncFei(
+      'FEI-1',
+      { numero: 'FEI-1', commune_mise_a_mort: 'Lyon' } as any,
+      examinateurInitial,
+      scope
+    );
 
     const updateCall = vi.mocked(prisma.fei.update).mock.calls[0][0];
     expect(updateCall.data).toHaveProperty('commune_mise_a_mort', 'Lyon');
@@ -117,7 +127,8 @@ describe('syncFei — update', () => {
     await syncFei(
       'FEI-1',
       { numero: 'FEI-1', commune_mise_a_mort: '<script>alert(1)</script>Lyon' } as any,
-      examinateurInitial
+      examinateurInitial,
+      scope
     );
 
     const updateCall = vi.mocked(prisma.fei.update).mock.calls[0][0];
@@ -130,7 +141,12 @@ describe('syncFei — creation_context', () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
     vi.mocked(prisma.fei.update).mockResolvedValue(baseFei as any);
 
-    await syncFei('FEI-1', { numero: 'FEI-1', creation_context: 'zacharie' } as any, examinateurInitial);
+    await syncFei(
+      'FEI-1',
+      { numero: 'FEI-1', creation_context: 'zacharie' } as any,
+      examinateurInitial,
+      scope
+    );
 
     expect(prisma.apiKey.findFirst).not.toHaveBeenCalled();
   });
@@ -140,7 +156,7 @@ describe('syncFei — creation_context', () => {
     vi.mocked(prisma.apiKey.findFirst).mockResolvedValueOnce(null);
 
     await expect(
-      syncFei('FEI-1', { numero: 'FEI-1', creation_context: 'partner-x' } as any, examinateurInitial)
+      syncFei('FEI-1', { numero: 'FEI-1', creation_context: 'partner-x' } as any, examinateurInitial, scope)
     ).rejects.toThrow('Invalid context slug');
   });
 
@@ -149,7 +165,12 @@ describe('syncFei — creation_context', () => {
     vi.mocked(prisma.apiKey.findFirst).mockResolvedValueOnce({ id: 'k-1' } as any);
     vi.mocked(prisma.fei.update).mockResolvedValue(baseFei as any);
 
-    await syncFei('FEI-1', { numero: 'FEI-1', creation_context: 'partner-x' } as any, examinateurInitial);
+    await syncFei(
+      'FEI-1',
+      { numero: 'FEI-1', creation_context: 'partner-x' } as any,
+      examinateurInitial,
+      scope
+    );
 
     expect(prisma.apiKey.findFirst).toHaveBeenCalledWith({
       where: { slug_for_context: 'partner-x' },
@@ -168,7 +189,8 @@ describe('syncFei — deletion', () => {
     const result = await syncFei(
       'FEI-1',
       { numero: 'FEI-1', deleted_at: '2026-03-01T00:00:00Z' } as any,
-      examinateurInitial
+      examinateurInitial,
+      scope
     );
 
     expect(result.isDeleted).toBe(true);
@@ -187,7 +209,7 @@ describe('syncFei — deletion', () => {
     vi.mocked(prisma.fei.update).mockResolvedValue(baseFei as any);
 
     await expect(
-      syncFei('FEI-1', { numero: 'FEI-1', deleted_at: '2026-03-01T00:00:00Z' } as any, platformAdmin)
+      syncFei('FEI-1', { numero: 'FEI-1', deleted_at: '2026-03-01T00:00:00Z' } as any, platformAdmin, scope)
     ).resolves.toBeDefined();
     expect(prisma.fei.update).toHaveBeenCalledOnce();
   });
@@ -196,7 +218,7 @@ describe('syncFei — deletion', () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
 
     await expect(
-      syncFei('FEI-1', { numero: 'FEI-1', deleted_at: '2026-03-01T00:00:00Z' } as any, otherChasseur)
+      syncFei('FEI-1', { numero: 'FEI-1', deleted_at: '2026-03-01T00:00:00Z' } as any, otherChasseur, scope)
     ).rejects.toThrow('Unauthorized');
 
     expect(prisma.fei.update).not.toHaveBeenCalled();
@@ -210,7 +232,8 @@ describe('syncFei — deletion', () => {
     const result = await syncFei(
       'FEI-1',
       { numero: 'FEI-1', commune_mise_a_mort: 'Should-be-ignored' } as any,
-      examinateurInitial
+      examinateurInitial,
+      scope
     );
 
     expect(result.isDeleted).toBe(true);
@@ -226,7 +249,8 @@ describe('syncFei — deletion', () => {
       syncFei(
         'FEI-DOES-NOT-EXIST',
         { numero: 'FEI-DOES-NOT-EXIST', deleted_at: '2026-03-01' } as any,
-        platformAdmin
+        platformAdmin,
+        scope
       )
     ).rejects.toThrow();
   });
@@ -239,7 +263,8 @@ describe('syncFei — body validation', () => {
         'FEI-1',
         // commune_mise_a_mort expects string|null
         { numero: 'FEI-1', commune_mise_a_mort: 42 } as any,
-        examinateurInitial
+        examinateurInitial,
+        scope
       )
     ).rejects.toThrow();
   });
