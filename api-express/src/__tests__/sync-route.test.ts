@@ -427,6 +427,48 @@ describe('POST /sync — refus définitifs vs erreurs transitoires', () => {
     expect(captureCalls[0][1]?.extra).toMatchObject({ count: 2 });
   });
 
+  // Un refus ne laisse rien en base et le client cesse de pousser l'item : sans son payload dans
+  // l'évènement, la saisie de l'utilisateur n'est plus récupérable nulle part.
+  test("l'évènement de refus porte le payload de chaque item refusé", async () => {
+    vi.mocked(syncCarcasse).mockRejectedValueOnce(
+      new SyncRejectedError("Vous n'avez pas accès à cette carcasse")
+    );
+    const carcasseRefusee = {
+      fei_numero: 'FEI-1',
+      zacharie_carcasse_id: 'ZC-INTERDITE',
+      heure_evisceration: '23:59',
+    };
+
+    await authed(
+      request(app)
+        .post('/sync')
+        .send({ carcasses: [carcasseRefusee] })
+    );
+
+    const extra = vi.mocked(capture).mock.calls[0][1]?.extra;
+    expect(extra.rejectedBodies).toEqual([{ kind: 'carcasse', id: 'ZC-INTERDITE', body: carcasseRefusee }]);
+    expect(extra.bodiesTruncated).toBe(false);
+  });
+
+  test('un lot massivement refusé garde les 20 premiers payloads et signale la troncature', async () => {
+    const carcasses = Array.from({ length: 25 }, (_, i) => ({
+      fei_numero: 'FEI-1',
+      zacharie_carcasse_id: `ZC-${i}`,
+    }));
+    vi.mocked(syncCarcasse).mockRejectedValue(
+      new SyncRejectedError("Vous n'avez pas accès à cette carcasse")
+    );
+
+    const res = await authed(request(app).post('/sync').send({ carcasses }));
+
+    expect(res.body.data.rejected).toHaveLength(25);
+    const extra = vi.mocked(capture).mock.calls[0][1]?.extra;
+    expect(extra.rejectedBodies).toHaveLength(20);
+    expect(extra.bodiesTruncated).toBe(true);
+    // Le compte reste exact : c'est lui qui dit combien de payloads manquent.
+    expect(extra.count).toBe(25);
+  });
+
   test('un refus sur une carcasse ne bloque pas les autres items du lot', async () => {
     vi.mocked(syncCarcasse)
       .mockRejectedValueOnce(new SyncRejectedError("Vous n'avez pas accès à cette carcasse"))

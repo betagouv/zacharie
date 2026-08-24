@@ -51,13 +51,25 @@ router.post(
     const modifResults: Array<SyncModifRequestResult & { approvalPayload?: Record<string, unknown> }> = [];
     const syncedLogIds: Array<string> = [];
     const rejected: Array<SyncRejection> = [];
+    // Le payload des items refusés. Un refus ne laisse aucune trace en base — le serveur n'a rien
+    // écrit — et le client cesse de le pousser, sa copie locale disparaissant au prochain
+    // `clearCache`. Cet évènement Sentry est donc le seul endroit où la saisie de l'utilisateur
+    // reste récupérable si le refus s'avère être un faux positif.
+    const rejectedBodies: Array<Omit<SyncRejection, 'reason'> & { body: unknown }> = [];
+    // Sentry tronque un extra au-delà de ~16 Ko : sans plafond, un lot massivement refusé ferait
+    // perdre tous les payloads au lieu des premiers.
+    const MAX_REJECTED_BODIES = 20;
 
     // Un refus d'autorisation est définitif : on le renvoie au client pour qu'il cesse de repousser
     // l'item, et on le remonte à l'équipe en un seul évènement en fin de requête plutôt qu'un par
-    // item. Toute autre erreur est transitoire — on la capture et le client réessaiera.
-    function handleSyncError(error: unknown, item: Omit<SyncRejection, 'reason'>) {
+    // item. Toute autre erreur est transitoire — on la capture et le client réessaiera, donc son
+    // payload reviendra tout seul et n'a pas à être conservé ici.
+    function handleSyncError(error: unknown, item: Omit<SyncRejection, 'reason'>, body: unknown) {
       if (error instanceof SyncRejectedError) {
         rejected.push({ ...item, reason: error.message });
+        if (rejectedBodies.length < MAX_REJECTED_BODIES) {
+          rejectedBodies.push({ ...item, body });
+        }
         return;
       }
       capture(error as Error, { extra: { ...item, userId: user.id }, user });
@@ -74,7 +86,7 @@ router.post(
         const result = await syncFei(feiData.numero, feiData as Prisma.FeiUncheckedCreateInput, user, scope);
         feiResults.push(result);
       } catch (error) {
-        handleSyncError(error, { kind: 'fei', id: feiData.numero });
+        handleSyncError(error, { kind: 'fei', id: feiData.numero }, feiData);
       }
     }
 
@@ -162,7 +174,7 @@ router.post(
               }
             );
           } catch (error) {
-            handleSyncError(error, { kind: 'carcasse', id: carcasseData.zacharie_carcasse_id });
+            handleSyncError(error, { kind: 'carcasse', id: carcasseData.zacharie_carcasse_id }, carcasseData);
             return null;
           }
         })
@@ -188,10 +200,14 @@ router.post(
         );
         savedIntermediaires.push(saved);
       } catch (error) {
-        handleSyncError(error, {
-          kind: 'carcasseIntermediaire',
-          id: `${ciData.fei_numero}_${ciData.zacharie_carcasse_id}_${ciData.intermediaire_id}`,
-        });
+        handleSyncError(
+          error,
+          {
+            kind: 'carcasseIntermediaire',
+            id: `${ciData.fei_numero}_${ciData.zacharie_carcasse_id}_${ciData.intermediaire_id}`,
+          },
+          ciData
+        );
       }
     }
 
@@ -211,7 +227,7 @@ router.post(
         );
         modifResults.push({ ...result, approvalPayload: _approvalPayload });
       } catch (error) {
-        handleSyncError(error, { kind: 'carcasseModifRequest', id: modifData.id as string });
+        handleSyncError(error, { kind: 'carcasseModifRequest', id: modifData.id as string }, modifData);
       }
     }
 
@@ -325,7 +341,13 @@ router.post(
     if (rejected.length > 0) {
       // Message fixe pour que Sentry regroupe : le détail est dans extra.
       capture(new Error('Écritures /sync refusées'), {
-        extra: { count: rejected.length, rejected, userId: user.id },
+        extra: {
+          count: rejected.length,
+          rejected,
+          rejectedBodies,
+          bodiesTruncated: rejected.length > rejectedBodies.length,
+          userId: user.id,
+        },
         user,
       });
     }
