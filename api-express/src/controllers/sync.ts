@@ -17,6 +17,7 @@ import { runFeiUpdateSideEffects } from '~/utils/fei-side-effects';
 import { runCarcasseUpdateSideEffects } from '~/utils/carcasse-side-effects';
 import { SyncRejectedError } from '~/utils/sync-errors';
 import { capture } from '~/third-parties/sentry';
+import { redactPersonalData } from '~/utils/redact-personal-data';
 
 const router: express.Router = express.Router();
 
@@ -51,7 +52,7 @@ router.post(
     const modifResults: Array<SyncModifRequestResult & { approvalPayload?: Record<string, unknown> }> = [];
     const syncedLogIds: Array<string> = [];
     const rejected: Array<SyncRejection> = [];
-    // Le payload des items refusés. Un refus ne laisse aucune trace en base — le serveur n'a rien
+    // Le payload des items refusés, données personnelles masquées. Un refus ne laisse aucune trace en base — le serveur n'a rien
     // écrit — et le client cesse de le pousser, sa copie locale disparaissant au prochain
     // `clearCache`. Cet évènement Sentry est donc le seul endroit où la saisie de l'utilisateur
     // reste récupérable si le refus s'avère être un faux positif.
@@ -68,7 +69,7 @@ router.post(
       if (error instanceof SyncRejectedError) {
         rejected.push({ ...item, reason: error.message });
         if (rejectedBodies.length < MAX_REJECTED_BODIES) {
-          rejectedBodies.push({ ...item, body });
+          rejectedBodies.push({ ...item, body: redactPersonalData(body) });
         }
         return;
       }

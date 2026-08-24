@@ -429,24 +429,44 @@ describe('POST /sync — refus définitifs vs erreurs transitoires', () => {
 
   // Un refus ne laisse rien en base et le client cesse de pousser l'item : sans son payload dans
   // l'évènement, la saisie de l'utilisateur n'est plus récupérable nulle part.
-  test("l'évènement de refus porte le payload de chaque item refusé", async () => {
+  test("l'évènement de refus porte le payload de chaque item refusé, données personnelles masquées", async () => {
     vi.mocked(syncCarcasse).mockRejectedValueOnce(
       new SyncRejectedError("Vous n'avez pas accès à cette carcasse")
     );
-    const carcasseRefusee = {
-      fei_numero: 'FEI-1',
-      zacharie_carcasse_id: 'ZC-INTERDITE',
-      heure_evisceration: '23:59',
-    };
 
     await authed(
       request(app)
         .post('/sync')
-        .send({ carcasses: [carcasseRefusee] })
+        .send({
+          carcasses: [
+            {
+              fei_numero: 'FEI-1',
+              zacharie_carcasse_id: 'ZC-INTERDITE',
+              heure_evisceration: '23:59',
+              examinateur_initial_user_id: 'user-examinateur',
+              next_owner_user_id: 'user-next',
+              premier_detenteur_name_cache: 'Jean Dupont',
+            },
+          ],
+        })
     );
 
     const extra = vi.mocked(capture).mock.calls[0][1]?.extra;
-    expect(extra.rejectedBodies).toEqual([{ kind: 'carcasse', id: 'ZC-INTERDITE', body: carcasseRefusee }]);
+    expect(extra.rejectedBodies).toEqual([
+      {
+        kind: 'carcasse',
+        id: 'ZC-INTERDITE',
+        body: {
+          fei_numero: 'FEI-1',
+          zacharie_carcasse_id: 'ZC-INTERDITE',
+          heure_evisceration: '23:59',
+          // Seul identifiant de personne conservé : celui à qui redemander la saisie.
+          examinateur_initial_user_id: 'user-examinateur',
+          next_owner_user_id: '[masqué]',
+          premier_detenteur_name_cache: '[masqué]',
+        },
+      },
+    ]);
     expect(extra.bodiesTruncated).toBe(false);
   });
 

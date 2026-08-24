@@ -93,8 +93,12 @@ export async function syncCarcasse(
       },
     });
     // La ligne créée n'a encore aucune colonne de rattachement — celles-ci ne sont écrites que par
-    // l'update en fin de fonction. On accorde l'accès tout de suite : l'appelant vient de passer
-    // `canWriteFei`, et si l'update échoue il doit pouvoir reprendre la carcasse au prochain envoi.
+    // l'update en fin de fonction. On accorde l'accès tout de suite, pour les sections suivantes de
+    // la même requête (intermédiaire, demande de modification) qui portent sur cette carcasse.
+    // Attention : la portée s'arrête à la requête. Si l'update en fin de fonction échoue, la ligne
+    // nue survit sans colonne de rattachement, donc hors du périmètre de tout le monde — au prochain
+    // envoi elle passe par `canWriteCarcasse` (elle existe désormais) et se fait refuser
+    // définitivement. Cas connu, non traité.
     scope.grant(zacharie_carcasse_id);
   }
 

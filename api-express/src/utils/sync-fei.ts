@@ -103,6 +103,18 @@ export async function syncFei(
   // réservées au SVI dans `sync-carcasse`, on ignore la valeur au lieu de rejeter la fiche.
   const canWriteOwnership = !existingFei || scope.isFeiOwner(existingFei);
 
+  // L'approbation de mise sur le marché est la signature réglementaire de l'examinateur initial.
+  // Elle est portée par la fiche, donc `canWriteFei` seul l'ouvrirait à tout détenteur aval qui
+  // détient une carcasse — un ETG pourrait la poser ou l'effacer sans que rien ne le signale, cette
+  // écriture-là réussissant silencieusement. `isFeiOwner` seul serait à l'inverse trop strict :
+  // quand une asso est désignée premier détenteur, c'est un de ses membres qui valide, et il n'est
+  // rattaché à la fiche que par son entité (voir `isPremierDetenteur`, chasseur-fei.tsx).
+  const canWriteApprobationExaminateur =
+    !existingFei ||
+    scope.isFeiOwner(existingFei) ||
+    (!!existingFei.premier_detenteur_entity_id &&
+      scope.entityIds.includes(existingFei.premier_detenteur_entity_id));
+
   const nextFei: Prisma.FeiUncheckedUpdateInput = {
     is_synced: true,
   };
@@ -168,11 +180,15 @@ export async function syncFei(
   if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.examinateur_initial_offline)) {
     nextFei.examinateur_initial_offline = body.examinateur_initial_offline || null;
   }
-  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.examinateur_initial_approbation_mise_sur_le_marche)) {
+  if (
+    canWriteApprobationExaminateur &&
+    body.hasOwnProperty(Prisma.FeiScalarFieldEnum.examinateur_initial_approbation_mise_sur_le_marche)
+  ) {
     nextFei.examinateur_initial_approbation_mise_sur_le_marche =
       body.examinateur_initial_approbation_mise_sur_le_marche || null;
   }
   if (
+    canWriteApprobationExaminateur &&
     body.hasOwnProperty(Prisma.FeiScalarFieldEnum.examinateur_initial_date_approbation_mise_sur_le_marche)
   ) {
     nextFei.examinateur_initial_date_approbation_mise_sur_le_marche =

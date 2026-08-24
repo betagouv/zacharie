@@ -230,6 +230,73 @@ describe('syncFei — auto-attribution des colonnes de rattachement', () => {
     expect(prisma.fei.update).toHaveBeenCalled();
   });
 
+  // L'approbation de mise sur le marché est la signature réglementaire de l'examinateur initial.
+  // Contrairement aux refus, cette écriture-là réussit silencieusement : rien ne la signalerait.
+  test("un détenteur aval ne peut pas signer l'approbation de mise sur le marché", async () => {
+    vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(feiTierce);
+    vi.mocked(prisma.carcasse.count).mockResolvedValue(1);
+    vi.mocked(prisma.fei.update).mockResolvedValueOnce(feiTierce);
+
+    await syncFei(
+      'FEI-VICTIME',
+      {
+        numero: 'FEI-VICTIME',
+        commune_mise_a_mort: 'Villette',
+        examinateur_initial_approbation_mise_sur_le_marche: true,
+        examinateur_initial_date_approbation_mise_sur_le_marche: '2026-04-22T10:00:00Z',
+      } as any,
+      attaquant,
+      await createSyncScope(attaquant)
+    );
+
+    const updateArgs = vi.mocked(prisma.fei.update).mock.calls[0][0];
+    expect(updateArgs.data).toMatchObject({ commune_mise_a_mort: 'Villette' });
+    expect(updateArgs.data).not.toHaveProperty('examinateur_initial_approbation_mise_sur_le_marche');
+    expect(updateArgs.data).not.toHaveProperty('examinateur_initial_date_approbation_mise_sur_le_marche');
+  });
+
+  test("l'examinateur initial signe son approbation", async () => {
+    vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(feiTierce);
+    vi.mocked(prisma.fei.update).mockResolvedValueOnce(feiTierce);
+
+    await syncFei(
+      'FEI-VICTIME',
+      { numero: 'FEI-VICTIME', examinateur_initial_approbation_mise_sur_le_marche: true } as any,
+      proprietaire,
+      await createSyncScope(proprietaire)
+    );
+
+    const updateArgs = vi.mocked(prisma.fei.update).mock.calls[0][0];
+    expect(updateArgs.data).toMatchObject({ examinateur_initial_approbation_mise_sur_le_marche: true });
+  });
+
+  // Quand une asso est désignée premier détenteur, c'est un de ses membres qui valide, et il n'est
+  // rattaché à la fiche que par son entité — `isFeiOwner` seul l'aurait bloqué à tort.
+  test("un membre de l'asso désignée premier détenteur signe l'approbation", async () => {
+    const membreAsso = {
+      id: 'user-chasseur-asso',
+      roles: [UserRoles.CHASSEUR],
+      activated: true,
+      isZacharieAdmin: false,
+    } as unknown as User;
+    vi.mocked(prisma.entityAndUserRelations.findMany).mockResolvedValue([
+      { entity_id: 'entity-asso' },
+    ] as any);
+    vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(feiTierce);
+    vi.mocked(prisma.carcasse.count).mockResolvedValue(1);
+    vi.mocked(prisma.fei.update).mockResolvedValueOnce(feiTierce);
+
+    await syncFei(
+      'FEI-VICTIME',
+      { numero: 'FEI-VICTIME', examinateur_initial_approbation_mise_sur_le_marche: true } as any,
+      membreAsso,
+      await createSyncScope(membreAsso)
+    );
+
+    const updateArgs = vi.mocked(prisma.fei.update).mock.calls[0][0];
+    expect(updateArgs.data).toMatchObject({ examinateur_initial_approbation_mise_sur_le_marche: true });
+  });
+
   test('le premier détenteur désigné, lui, peut les modifier', async () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(feiTierce);
     vi.mocked(prisma.fei.update).mockResolvedValueOnce(feiTierce);
