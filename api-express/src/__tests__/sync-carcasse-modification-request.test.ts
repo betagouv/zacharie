@@ -130,9 +130,10 @@ describe('syncCarcasseModifRequest — create', () => {
 
   test('RENAME créé → la carcasse est renommée tout de suite', async () => {
     vi.mocked(prisma.carcasseModificationRequest.findUnique).mockResolvedValueOnce(null);
+    vi.mocked(prisma.carcasse.findUnique).mockResolvedValueOnce(baseCarcasse);
     vi.mocked(prisma.carcasseModificationRequest.create).mockResolvedValueOnce(renamePending);
 
-    await syncCarcasseModifRequest({ ...renamePending } as any, requester);
+    await syncCarcasseModifRequest({ ...renamePending } as any, requester, scope);
 
     const call = vi.mocked(prisma.carcasse.update).mock.calls[0][0] as any;
     expect(call.where).toEqual({ zacharie_carcasse_id: 'ZC-1' });
@@ -141,9 +142,10 @@ describe('syncCarcasseModifRequest — create', () => {
 
   test('NEW_CARCASSE créé → pas de renommage, seulement le bump updated_at', async () => {
     vi.mocked(prisma.carcasseModificationRequest.findUnique).mockResolvedValueOnce(null);
+    vi.mocked(prisma.carcasse.findUnique).mockResolvedValueOnce(baseCarcasse);
     vi.mocked(prisma.carcasseModificationRequest.create).mockResolvedValueOnce(newPending);
 
-    await syncCarcasseModifRequest({ ...newPending } as any, requester);
+    await syncCarcasseModifRequest({ ...newPending } as any, requester, scope);
 
     const call = vi.mocked(prisma.carcasse.update).mock.calls[0][0] as any;
     expect(call.data.numero_bracelet).toBeUndefined();
