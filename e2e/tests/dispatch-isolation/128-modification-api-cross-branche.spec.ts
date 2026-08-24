@@ -36,13 +36,20 @@ async function jwtCookie(page: import('@playwright/test').Page) {
 
 // Les carcasses visibles de la fiche pour l'utilisateur connecté : c'est le périmètre de lecture,
 // que l'écriture doit désormais épouser exactement.
-async function carcassesVisibles(page: import('@playwright/test').Page, cookie: string) {
-  const res = await page.request.get(`${API_BASE}/carcasse`, { headers: { Cookie: cookie } });
+async function getCarcasses(page: import('@playwright/test').Page, cookie: string) {
+  // GET /carcasse est paginé et exige les 4 paramètres, comme le fait le client (load-carcasses.ts).
+  const res = await page.request.get(`${API_BASE}/carcasse`, {
+    headers: { Cookie: cookie },
+    params: { page: '0', after: '0', limit: '5000', withDeleted: 'true' },
+  });
   expect(res.status()).toBe(200);
   const body = await res.json();
-  return (body.data?.carcasses ?? [])
-    .filter((c: { fei_numero: string }) => c.fei_numero === feiId)
-    .map((c: { zacharie_carcasse_id: string }) => c.zacharie_carcasse_id) as string[];
+  return (body.data?.carcasses ?? []) as Array<{ fei_numero: string; zacharie_carcasse_id: string }>;
+}
+
+async function carcassesVisibles(page: import('@playwright/test').Page, cookie: string) {
+  const carcasses = await getCarcasses(page, cookie);
+  return carcasses.filter((c) => c.fei_numero === feiId).map((c) => c.zacharie_carcasse_id);
 }
 
 async function sync(page: import('@playwright/test').Page, cookie: string, body: object) {
@@ -139,12 +146,10 @@ test("Écriture /sync sur une carcasse d'une autre branche → refusée et repor
 
   // 5. L'écriture n'a pas eu lieu : ETG 2 relit et retrouve sa valeur d'origine
   await logoutAndConnect(page, 'etg-2@example.fr');
-  const relecture = await page.request.get(`${API_BASE}/carcasse`, {
-    headers: { Cookie: await jwtCookie(page) },
-  });
-  const carcasseApres = (await relecture.json()).data.carcasses.find(
+  const relecture = await getCarcasses(page, await jwtCookie(page));
+  const carcasseApres = relecture.find(
     (c: { zacharie_carcasse_id: string }) => c.zacharie_carcasse_id === carcasseAutreBranche
-  );
+  ) as { heure_evisceration?: string };
   expect(carcasseApres.heure_evisceration).not.toBe('23:59');
 
   // 6. Contrôle anti-faux-refus : la même écriture, sur sa propre carcasse, passe
