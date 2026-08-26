@@ -2,20 +2,65 @@ import { expect, type Page } from '@playwright/test';
 
 // Le premier détenteur répartit ses carcasses en « ventes / dons » : une carte par destinataire,
 // remplie dans une modale à étapes (Destinataire → Carcasses → Stockage → Transport).
-// L'étape Carcasses n'existe que s'il reste plus d'une carcasse à répartir, l'étape Transport
-// seulement quand le premier détenteur doit l'organiser (ni collecteur, ni circuit court).
+// L'étape Transport n'existe que quand le premier détenteur doit l'organiser (ni collecteur,
+// ni circuit court).
 // Voir app-local-first-react-router/src/routes/chasseur/premier-detenteur-select-next.tsx
 
 export const venteDonModal = (page: Page) => page.locator('#dispatch-modal-pd');
 
-// Cases à cocher de l'étape « Carcasses » (une par carcasse restante).
-export const carcassesAAttribuer = (page: Page) => venteDonModal(page).getByRole('checkbox');
+// Étape « Carcasses » : on part de « toutes », et on retire les carcasses qui ne partent pas.
+// Chaque carcasse est un tag cliquable, dans l'une des deux zones.
+export const carcassesRetenues = (page: Page) =>
+  venteDonModal(page).locator('#vente-don-carcasses-retenues').getByRole('button');
+
+export const carcassesRetirees = (page: Page) =>
+  venteDonModal(page).locator('#vente-don-carcasses-retirees').getByRole('button');
 
 export async function openVenteDon(page: Page) {
   const addCard = page.getByRole('button', { name: /Ajouter une (autre )?vente/i }).first();
   await addCard.scrollIntoViewIfNeeded();
   await addCard.click();
   await expect(venteDonModal(page)).toBeVisible({ timeout: 10000 });
+}
+
+export async function choisirRepartition(page: Page, choix: 'toutes' | 'partie') {
+  const label = choix === 'toutes' ? 'Toutes mes carcasses' : 'Une partie seulement';
+  const radio = venteDonModal(page).getByText(label).first();
+  await radio.scrollIntoViewIfNeeded();
+  await radio.click();
+}
+
+// Ne garde que les carcasses aux indices donnés. L'ordre de référence est celui de la zone
+// « Part chez … » juste après être passé sur « Une partie seulement » : tout y est encore retenu.
+export async function garderCarcasses(page: Page, indices: Array<number>) {
+  // Passage par « toutes » : sur une 2e vente / un 2e don la modale s'ouvre déjà sur « une partie »
+  // avec zéro carcasse retenue, et recliquer un radio déjà coché ne déclenche rien.
+  await choisirRepartition(page, 'toutes');
+  await choisirRepartition(page, 'partie');
+  const tags = carcassesRetenues(page);
+  await expect(tags.first()).toBeVisible({ timeout: 10000 });
+  const labels = await tags.evaluateAll((elements) =>
+    elements.map((element) => element.getAttribute('aria-label') ?? '')
+  );
+  for (const [index, label] of labels.entries()) {
+    if (indices.includes(index)) continue;
+    const tag = venteDonModal(page).getByRole('button', { name: label, exact: true });
+    await tag.scrollIntoViewIfNeeded();
+    await tag.click();
+  }
+}
+
+// `nom` = l'intitulé du tag, ex. « Daim N° MM-001-002 ».
+export async function retirerCarcasse(page: Page, nom: string) {
+  const tag = venteDonModal(page).getByRole('button', { name: `Retirer ${nom}` });
+  await tag.scrollIntoViewIfNeeded();
+  await tag.click();
+}
+
+export async function remettreCarcasse(page: Page, nom: string) {
+  const tag = venteDonModal(page).getByRole('button', { name: `Remettre ${nom}` });
+  await tag.scrollIntoViewIfNeeded();
+  await tag.click();
 }
 
 export async function selectDestinataire(page: Page, optionName: string | RegExp) {
@@ -94,15 +139,15 @@ export async function enregistrerVenteDon(page: Page) {
   await expect(venteDonModal(page)).toBeHidden({ timeout: 10000 });
 }
 
-// Titre de l'étape courante affiché par le Stepper DSFR.
+// Titre de l'étape courante affiché en tête de la modale.
 export function etapeCourante(page: Page) {
-  return venteDonModal(page).locator('.fr-stepper__title');
+  return venteDonModal(page).locator('#vente-don-etape-courante');
 }
 
 interface VenteDon {
   destinataire: string | RegExp;
-  // Indices des carcasses à (dé)cocher dans l'étape « Carcasses ».
-  // Par défaut on garde la sélection proposée : tout pour la 1re vente / le 1er don, rien ensuite.
+  // Indices des carcasses à GARDER pour cette vente / ce don (les autres sont retirées).
+  // Par défaut on garde la proposition « toutes mes carcasses ».
   carcasses?: number[];
   // Stockage en chambre froide. Sans ccg : « pas de stockage ».
   ccg?: string | RegExp;
@@ -116,9 +161,7 @@ export async function ajouterVenteDon(page: Page, venteDon: VenteDon) {
 
   if (venteDon.carcasses) {
     await allerAEtape(page, 'Carcasses');
-    for (const index of venteDon.carcasses) {
-      await carcassesAAttribuer(page).nth(index).click();
-    }
+    await garderCarcasses(page, venteDon.carcasses);
   }
 
   await allerAEtape(page, 'Stockage');

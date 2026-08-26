@@ -20,7 +20,7 @@ import useZustandStore from '@app/zustand/store';
 import { syncData } from '@app/utils/sync-data';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { CompteEnAttenteValidationAlert } from '@app/components/CompteEnAttenteValidation';
-import { formatCarcasseLotCount } from '@app/utils/count-carcasses';
+import { formatCarcasseLotCount, formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
 import {
   useCcgIds,
   useEtgIds,
@@ -39,7 +39,6 @@ import PartenaireNouveau from '@app/components/PartenaireNouveau';
 import CCGNouveau from '@app/components/CCGNouveau';
 import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
-import { Stepper } from '@codegouvfr/react-dsfr/Stepper';
 import { Badge } from '@codegouvfr/react-dsfr/Badge';
 import type { EntityWithUserRelation } from '~/src/types/entity';
 import { CarcasseTransmission } from '@app/types/carcasse';
@@ -60,6 +59,39 @@ interface DispatchGroup {
   depotDate: string | undefined;
   transportType: TransportType | null;
   transportDate: string | undefined;
+}
+
+// Étape « Carcasses » : soit tout part chez le destinataire, soit le chasseur retire ce qui reste.
+type CarcasseMode = 'all' | 'partial';
+
+// Ordre d'affichage des carcasses : groupées par espèce, dans leur ordre d'apparition.
+function orderCarcassesByEspece(carcasses: Carcasse[]): Carcasse[] {
+  const parEspece = new Map<string, Carcasse[]>();
+  for (const carcasse of carcasses) {
+    const espece = carcasse.espece ?? 'Espèce non renseignée';
+    const existing = parEspece.get(espece);
+    if (existing) {
+      existing.push(carcasse);
+    } else {
+      parEspece.set(espece, [carcasse]);
+    }
+  }
+  return Array.from(parEspece.values()).flat();
+}
+
+function getCarcasseMode(carcasseIds: Array<string>, poolSize: number): CarcasseMode {
+  return poolSize > 0 && carcasseIds.length === poolSize ? 'all' : 'partial';
+}
+
+// Options en cartes : sans ces réglages DSFR impose 5,5rem de haut par option, presque vides.
+const richRadioClasses = {
+  content: 'flex flex-col gap-2',
+  inputGroup:
+    'fr-radio-rich my-0 [&>label]:min-h-0 [&>label]:font-medium [&>input:checked+label]:bg-alt-blue-france',
+};
+
+function getCarcasseNombre(carcasse: Carcasse): string {
+  return carcasse.nombre_d_animaux && carcasse.nombre_d_animaux > 1 ? ` (${carcasse.nombre_d_animaux})` : '';
 }
 
 const dispatchModal = createModal({
@@ -294,11 +326,185 @@ function AddDispatchGroupCard({ disabled, onClick }: { disabled: boolean; onClic
   );
 }
 
+// === Étape 2 — Carcasses ===
+// Dans la très grande majorité des cas tout part chez le même destinataire : on propose donc
+// « toutes » par défaut, et le chasseur retire une à une les carcasses qui restent à attribuer.
+function CarcassesStep({
+  canEdit,
+  mode,
+  recipientName,
+  pool,
+  selectedIds,
+  carcasseToGroupLabel,
+  error,
+  onChangeMode,
+  onToggleCarcasse,
+}: {
+  canEdit: boolean;
+  mode: CarcasseMode;
+  recipientName: string;
+  pool: Carcasse[];
+  selectedIds: Array<string>;
+  carcasseToGroupLabel: Record<string, string>;
+  error?: string;
+  onChangeMode: (mode: CarcasseMode) => void;
+  onToggleCarcasse: (carcasseId: string) => void;
+}) {
+  const ordered = useMemo(() => orderCarcassesByEspece(pool), [pool]);
+  const selected = useMemo(() => new Set(selectedIds), [selectedIds]);
+  const retenues = ordered.filter((carcasse) => selected.has(carcasse.zacharie_carcasse_id));
+  const retirees = ordered.filter((carcasse) => !selected.has(carcasse.zacharie_carcasse_id));
+
+  // Une seule carcasse : il n'y a rien à répartir, on se contente de la rappeler.
+  if (ordered.length === 1) {
+    const carcasse = ordered[0];
+    return (
+      <div>
+        <p className="mb-1 text-sm font-bold">Carcasse concernée</p>
+        <p className="mb-0">
+          {carcasse.espece}
+          {getCarcasseNombre(carcasse)} N° {carcasse.numero_bracelet} part chez{' '}
+          <strong>{recipientName}</strong>
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <RadioButtons
+        legend={`Quelles carcasses partent chez ${recipientName}\u00A0?`}
+        classes={richRadioClasses}
+        className={canEdit ? '' : 'radio-black'}
+        state={error ? 'error' : 'default'}
+        stateRelatedMessage={error}
+        options={[
+          {
+            label: `Toutes mes carcasses (${ordered.length})`,
+            hintText: formatCountCarcasseByEspece(ordered).join(', '),
+            nativeInputProps: {
+              checked: mode === 'all',
+              readOnly: !canEdit,
+              onChange: () => onChangeMode('all'),
+            },
+          },
+          {
+            label: 'Une partie seulement',
+            hintText: 'Je retire ce qui ne part pas chez ce destinataire',
+            nativeInputProps: {
+              checked: mode === 'partial',
+              readOnly: !canEdit,
+              onChange: () => onChangeMode('partial'),
+            },
+          },
+        ]}
+      />
+
+      {mode === 'partial' && (
+        <>
+          <div>
+            <p className="mb-2 text-sm font-bold tracking-wide text-gray-600 uppercase">
+              Part chez {recipientName}
+            </p>
+            {retenues.length === 0 && (
+              <p className="mb-2 text-sm text-gray-600">
+                Aucune carcasse pour l'instant — touchez une carcasse ci-dessous pour l'ajouter.
+              </p>
+            )}
+            <div
+              id="vente-don-carcasses-retenues"
+              className="flex flex-col items-stretch gap-2 sm:flex-row sm:flex-wrap sm:items-start"
+            >
+              {retenues.map((carcasse) => (
+                <Tag
+                  key={carcasse.zacharie_carcasse_id}
+                  as="button"
+                  dismissible
+                  className="min-h-11 w-full sm:w-auto"
+                  nativeButtonProps={{
+                    disabled: !canEdit,
+                    'aria-label': `Retirer ${carcasse.espece} N° ${carcasse.numero_bracelet}`,
+                    onClick: () => onToggleCarcasse(carcasse.zacharie_carcasse_id),
+                  }}
+                >
+                  <span className="flex-1 text-left">
+                    <span className="font-bold">
+                      {carcasse.espece}
+                      {getCarcasseNombre(carcasse)}
+                    </span>
+                    <span className="ml-2 font-normal">N° {carcasse.numero_bracelet}</span>
+                  </span>
+                </Tag>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <p className="mb-2 text-sm font-bold tracking-wide text-gray-600 uppercase">
+              Reste à attribuer plus tard
+            </p>
+            {retirees.length === 0 ? (
+              <p className="mb-0 text-sm text-gray-600">
+                Rien pour l'instant — touchez une carcasse ci-dessus pour la retirer.
+              </p>
+            ) : (
+              <div
+                id="vente-don-carcasses-retirees"
+                className="flex flex-col items-stretch gap-2 sm:flex-row sm:flex-wrap sm:items-start"
+              >
+                {retirees.map((carcasse) => {
+                  const autreVenteDon = carcasseToGroupLabel[carcasse.zacharie_carcasse_id];
+                  return (
+                    <Tag
+                      key={carcasse.zacharie_carcasse_id}
+                      as="button"
+                      className="min-h-11 w-full border border-dashed border-gray-400 bg-transparent text-gray-700 sm:w-auto"
+                      nativeButtonProps={{
+                        disabled: !canEdit,
+                        'aria-label': `Remettre ${carcasse.espece} N° ${carcasse.numero_bracelet}`,
+                        onClick: () => onToggleCarcasse(carcasse.zacharie_carcasse_id),
+                      }}
+                    >
+                      <span className="flex-1 text-left">
+                        <span className="font-bold">
+                          {carcasse.espece}
+                          {getCarcasseNombre(carcasse)}
+                        </span>
+                        <span className="ml-2 font-normal">N° {carcasse.numero_bracelet}</span>
+                        {autreVenteDon && (
+                          <span className="ml-2 font-normal text-gray-600">chez {autreVenteDon}</span>
+                        )}
+                      </span>
+                      <span
+                        className="fr-icon-arrow-go-back-line fr-icon--sm ml-2 shrink-0"
+                        aria-hidden="true"
+                      />
+                    </Tag>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
+      <p
+        className="mb-0 text-sm text-gray-600"
+        aria-live="polite"
+      >
+        {retenues.length} carcasse{retenues.length > 1 ? 's' : ''} transmise
+        {retenues.length > 1 ? 's' : ''} · {retirees.length} conservée{retirees.length > 1 ? 's' : ''}
+      </p>
+    </div>
+  );
+}
+
 // === Formulaire d'une vente / d'un don (contenu de la modale, en étapes) ===
 function DispatchGroupForm({
   group,
   canEdit,
   showCarcasseSelector,
+  carcasseMode,
   currentStep,
   steps,
   entities,
@@ -310,12 +516,14 @@ function DispatchGroupForm({
   carcasseToGroupLabel,
   fieldErrors,
   showErrors,
+  onChangeCarcasseMode,
   onToggleCarcasse,
   onChange,
 }: {
   group: DispatchGroup;
   canEdit: boolean;
   showCarcasseSelector: boolean;
+  carcasseMode: CarcasseMode;
   currentStep: number;
   steps: string[];
   entities: Record<string, EntityWithUserRelation>;
@@ -327,6 +535,7 @@ function DispatchGroupForm({
   carcasseToGroupLabel: Record<string, string>;
   fieldErrors: GroupFieldErrors;
   showErrors: boolean;
+  onChangeCarcasseMode: (mode: CarcasseMode) => void;
   onToggleCarcasse: (carcasseId: string) => void;
   onChange: (updates: Partial<DispatchGroup>) => void;
 }) {
@@ -343,29 +552,6 @@ function DispatchGroupForm({
     return () => clearInterval(interval);
   }, []);
 
-  const groupCarcasses = useMemo(() => {
-    const idSet = new Set(group.carcasseIds);
-    return allCarcassesRestantes.filter((c) => idSet.has(c.zacharie_carcasse_id));
-  }, [group.carcasseIds, allCarcassesRestantes]);
-
-  // Étape 2 : le chasseur répartit son gibier par espèce, on regroupe donc la liste ainsi.
-  const carcassesParEspece = useMemo(() => {
-    const parEspece = new Map<string, Carcasse[]>();
-    for (const carcasse of allCarcassesRestantes) {
-      const espece = carcasse.espece ?? 'Espèce non renseignée';
-      const existing = parEspece.get(espece);
-      if (existing) {
-        existing.push(carcasse);
-      } else {
-        parEspece.set(espece, [carcasse]);
-      }
-    }
-    return Array.from(parEspece.entries());
-  }, [allCarcassesRestantes]);
-
-  const allCarcassesSelected =
-    allCarcassesRestantes.length > 0 && group.carcasseIds.length === allCarcassesRestantes.length;
-
   const Component = canEdit ? Input : InputNotEditable;
 
   const errorFor = (key: keyof GroupFieldErrors) => (showErrors ? fieldErrors[key] : undefined);
@@ -376,15 +562,6 @@ function DispatchGroupForm({
 
   return (
     <div className="space-y-4">
-      {canEdit && (
-        <Stepper
-          currentStep={currentStep}
-          stepCount={steps.length}
-          title={currentStepName}
-          nextTitle={steps[currentStep]}
-        />
-      )}
-
       {/* Étape 1 — Destinataire */}
       {showStep('Destinataire') && (
         <>
@@ -469,146 +646,17 @@ function DispatchGroupForm({
 
       {/* Étape 2 — Carcasses concernées */}
       {showCarcasseSelector && showStep('Carcasses') && (
-        <fieldset className="m-0 min-w-0 border-0 p-0">
-          {/* Récapitulatif + sélection en masse, toujours visible pendant le défilement de la liste. */}
-          <div className="sticky top-0 z-10 -mx-1 border-b border-gray-200 bg-white px-1 pt-1 pb-2">
-            <legend className="mb-2 p-0 text-sm font-bold">
-              Sélectionnez les carcasses pour cette vente / ce don
-            </legend>
-            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-              <Badge
-                severity={groupCarcasses.length > 0 ? 'info' : 'warning'}
-                small
-                noIcon
-                as="span"
-              >
-                {groupCarcasses.length > 0 ? formatCarcasseLotCount(groupCarcasses) : 'Aucune carcasse'}
-                {` sur ${allCarcassesRestantes.length}`}
-              </Badge>
-              {canEdit && (
-                <button
-                  type="button"
-                  className="text-action-high-blue-france shrink-0 text-sm underline"
-                  onClick={() =>
-                    onChange({
-                      carcasseIds: allCarcassesSelected
-                        ? []
-                        : allCarcassesRestantes.map((c) => c.zacharie_carcasse_id),
-                    })
-                  }
-                >
-                  {allCarcassesSelected ? 'Tout désélectionner' : 'Tout sélectionner'}
-                </button>
-              )}
-            </div>
-            {errorFor('carcasseIds') && <p className="fr-error-text mt-2 mb-0">{errorFor('carcasseIds')}</p>}
-          </div>
-
-          <div className="mt-3 space-y-4">
-            {carcassesParEspece.map(([espece, carcassesDeLEspece]) => {
-              const especeIds = carcassesDeLEspece.map((c) => c.zacharie_carcasse_id);
-              const especeToutSelectionne = especeIds.every((id) => group.carcasseIds.includes(id));
-              return (
-                <div key={espece}>
-                  <div className="flex items-baseline justify-between gap-2 border-0 border-b border-solid border-gray-200 pb-1">
-                    {/* Avec une seule espèce le titre ferait doublon avec la sélection globale : on le laisse inerte. */}
-                    {canEdit && carcassesParEspece.length > 1 ? (
-                      <button
-                        type="button"
-                        aria-pressed={especeToutSelectionne}
-                        title={
-                          especeToutSelectionne
-                            ? `Désélectionner les carcasses « ${espece} »`
-                            : `Sélectionner les carcasses « ${espece} »`
-                        }
-                        className="hover:text-action-high-blue-france flex min-h-8 items-center gap-2 text-left text-sm font-bold"
-                        onClick={() =>
-                          onChange({
-                            carcasseIds: especeToutSelectionne
-                              ? group.carcasseIds.filter((id) => !especeIds.includes(id))
-                              : [...new Set([...group.carcasseIds, ...especeIds])],
-                          })
-                        }
-                      >
-                        <span
-                          className={[
-                            'shrink-0',
-                            especeToutSelectionne
-                              ? 'fr-icon-checkbox-fill text-action-high-blue-france'
-                              : 'fr-icon-checkbox-line text-gray-600',
-                          ].join(' ')}
-                          aria-hidden="true"
-                          style={{ fontSize: '1rem' }}
-                        />
-                        <span>
-                          {espece} <span className="font-normal text-gray-600">({especeIds.length})</span>
-                        </span>
-                      </button>
-                    ) : (
-                      <span className="text-sm font-bold">
-                        {espece} <span className="font-normal text-gray-600">({especeIds.length})</span>
-                      </span>
-                    )}
-                  </div>
-                  <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                    {carcassesDeLEspece.map((carcasse) => {
-                      const isInGroup = group.carcasseIds.includes(carcasse.zacharie_carcasse_id);
-                      const otherGroupLabel = !isInGroup
-                        ? carcasseToGroupLabel[carcasse.zacharie_carcasse_id]
-                        : null;
-                      return (
-                        <button
-                          key={carcasse.zacharie_carcasse_id}
-                          type="button"
-                          role="checkbox"
-                          aria-checked={isInGroup}
-                          disabled={!canEdit}
-                          title={otherGroupLabel ? `Reprendre à ${otherGroupLabel}` : undefined}
-                          onClick={() => onToggleCarcasse(carcasse.zacharie_carcasse_id)}
-                          className={[
-                            'flex min-h-11 w-full items-start gap-2 rounded border border-solid px-3 py-2 text-left transition-colors duration-150',
-                            canEdit ? 'cursor-pointer' : 'cursor-not-allowed',
-                            isInGroup
-                              ? 'border-action-high-blue-france bg-blue-100'
-                              : otherGroupLabel
-                                ? 'bg-contrast-grey hover:border-action-high-blue-france border-gray-300'
-                                : 'hover:border-action-high-blue-france border-gray-300 bg-white hover:bg-blue-50',
-                          ].join(' ')}
-                        >
-                          <span
-                            className={[
-                              'mt-0.5 shrink-0',
-                              isInGroup
-                                ? 'fr-icon-checkbox-fill text-action-high-blue-france'
-                                : 'fr-icon-checkbox-line text-gray-600',
-                            ].join(' ')}
-                            aria-hidden="true"
-                            style={{ fontSize: '1rem' }}
-                          />
-                          <span className="flex min-w-0 flex-col">
-                            <span className="text-sm font-bold">
-                              {carcasse.espece}
-                              {carcasse.nombre_d_animaux && carcasse.nombre_d_animaux > 1
-                                ? ` (${carcasse.nombre_d_animaux})`
-                                : ''}
-                            </span>
-                            <span className="text-xs">N° {carcasse.numero_bracelet}</span>
-                            {otherGroupLabel && (
-                              <span className="mt-0.5 text-xs text-gray-600">
-                                Attribué à {otherGroupLabel} —{' '}
-                                <span className="text-action-high-blue-france underline">reprendre</span>
-                              </span>
-                            )}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </fieldset>
+        <CarcassesStep
+          canEdit={canEdit}
+          mode={carcasseMode}
+          recipientName={prochainDetenteur?.nom_d_usage ?? 'ce destinataire'}
+          pool={allCarcassesRestantes}
+          selectedIds={group.carcasseIds}
+          carcasseToGroupLabel={carcasseToGroupLabel}
+          error={errorFor('carcasseIds')}
+          onChangeMode={onChangeCarcasseMode}
+          onToggleCarcasse={onToggleCarcasse}
+        />
       )}
 
       {/* Étape 3 — Stockage */}
@@ -616,6 +664,7 @@ function DispatchGroupForm({
         <>
           <RadioButtons
             legend="Lieu de stockage des carcasses"
+            classes={richRadioClasses}
             className={canEdit ? '' : 'radio-black'}
             state={errorFor('depotType') ? 'error' : 'default'}
             stateRelatedMessage={errorFor('depotType')}
@@ -771,6 +820,7 @@ function DispatchGroupForm({
         <>
           <RadioButtons
             legend="Transport des carcasses jusqu'au destinataire"
+            classes={richRadioClasses}
             className={canEdit ? '' : 'radio-black'}
             state={errorFor('transportType') ? 'error' : 'default'}
             stateRelatedMessage={errorFor('transportType')}
@@ -994,6 +1044,10 @@ export default function DestinataireSelectPremierDetenteur({
   const [draftMode, setDraftMode] = useState<'add' | 'edit'>('add');
   const [showModalErrors, setShowModalErrors] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
+  // Étape « Carcasses » : « toutes » ou « une partie ». Le mode ne survit pas à la fermeture de la modale.
+  const [draftCarcasseMode, setDraftCarcasseMode] = useState<CarcasseMode>('all');
+  // État de la répartition à l'ouverture, restauré quand on change de destinataire.
+  const draftInitialCarcasseIds = useRef<Array<string>>([]);
 
   // Carcasses attribuées à une vente / un don, ou restant à attribuer.
   const assignedCarcasseIds = useMemo(() => {
@@ -1037,6 +1091,8 @@ export default function DestinataireSelectPremierDetenteur({
     };
     setDraft(nextDraft);
     setDraftMode('add');
+    draftInitialCarcasseIds.current = nextDraft.carcasseIds;
+    setDraftCarcasseMode(getCarcasseMode(nextDraft.carcasseIds, carcassesRestantesIds.length));
     setShowModalErrors(false);
     setCurrentStep(1);
     dispatchModal.open();
@@ -1071,17 +1127,47 @@ export default function DestinataireSelectPremierDetenteur({
     });
   }, [carcassesRestantesIds]);
 
-  const openEditDispatchGroup = useCallback((group: DispatchGroup) => {
-    setDraft({ ...group });
-    setDraftMode('edit');
-    setShowModalErrors(false);
-    setCurrentStep(1);
-    dispatchModal.open();
-  }, []);
+  const openEditDispatchGroup = useCallback(
+    (group: DispatchGroup) => {
+      setDraft({ ...group });
+      setDraftMode('edit');
+      draftInitialCarcasseIds.current = group.carcasseIds;
+      setDraftCarcasseMode(getCarcasseMode(group.carcasseIds, carcassesRestantesIds.length));
+      setShowModalErrors(false);
+      setCurrentStep(1);
+      dispatchModal.open();
+    },
+    [carcassesRestantesIds.length]
+  );
 
-  const onChangeDraft = useCallback((updates: Partial<DispatchGroup>) => {
-    setDraft((prev) => (prev ? { ...prev, ...updates } : prev));
-  }, []);
+  const onChangeDraft = useCallback(
+    (updates: Partial<DispatchGroup>) => {
+      // Changer de destinataire remet la répartition des carcasses dans l'état où elle était à l'ouverture.
+      const resetCarcasses =
+        updates.recipientEntityId !== undefined &&
+        !!draft &&
+        updates.recipientEntityId !== draft.recipientEntityId;
+      if (resetCarcasses) {
+        setDraftCarcasseMode(getCarcasseMode(draftInitialCarcasseIds.current, carcassesRestantesIds.length));
+      }
+      setDraft((prev) => {
+        if (!prev) return prev;
+        const next = { ...prev, ...updates };
+        return resetCarcasses ? { ...next, carcasseIds: draftInitialCarcasseIds.current } : next;
+      });
+    },
+    [draft, carcassesRestantesIds.length]
+  );
+
+  // « Toutes » comme « une partie » démarrent sur « tout retenu » : la seconde ne fait que
+  // dérouler les carcasses pour en retirer.
+  const onChangeCarcasseMode = useCallback(
+    (mode: CarcasseMode) => {
+      setDraftCarcasseMode(mode);
+      setDraft((prev) => (prev ? { ...prev, carcasseIds: carcassesRestantesIds } : prev));
+    },
+    [carcassesRestantesIds]
+  );
 
   const onToggleDraftCarcasse = useCallback((carcasseId: string) => {
     setDraft((prev) => {
@@ -1101,8 +1187,9 @@ export default function DestinataireSelectPremierDetenteur({
     [dispatchGroups, draft?.id]
   );
 
-  // Étape de sélection des carcasses uniquement s'il y a plusieurs carcasses à répartir.
-  const showCarcasseSelector = carcassesRestantes.length > 1;
+  // Étape « Carcasses » dès qu'il reste quelque chose à envoyer : avec une seule carcasse
+  // elle se réduit à un récapitulatif.
+  const showCarcasseSelector = carcassesRestantes.length > 0;
 
   const draftCarcasseToGroupLabel = useMemo(() => {
     const map: Record<string, string> = {};
@@ -1158,10 +1245,11 @@ export default function DestinataireSelectPremierDetenteur({
 
   const saveDraft = useCallback(() => {
     if (!draft) return;
-    // Vente / don unique sans étape de sélection : elle embarque toutes les carcasses non attribuées.
-    const finalDraft: DispatchGroup = showCarcasseSelector
-      ? draft
-      : { ...draft, carcasseIds: carcassesRestantesIds };
+    // « Toutes mes carcasses » n'est pas un drapeau : on fige la liste des ids au moment de la validation.
+    const finalDraft: DispatchGroup =
+      draftCarcasseMode === 'all' || !showCarcasseSelector
+        ? { ...draft, carcasseIds: carcassesRestantesIds }
+        : draft;
     if (getGroupValidationError(finalDraft, entities)) {
       setShowModalErrors(true);
       return;
@@ -1178,7 +1266,7 @@ export default function DestinataireSelectPremierDetenteur({
     });
     setDraft(null);
     dispatchModal.close();
-  }, [draft, showCarcasseSelector, carcassesRestantesIds, entities]);
+  }, [draft, draftCarcasseMode, showCarcasseSelector, carcassesRestantesIds, entities]);
 
   const removeGroup = useCallback((groupId: string) => {
     setDispatchGroups((prev) => prev.filter((g) => g.id !== groupId));
@@ -1375,11 +1463,31 @@ export default function DestinataireSelectPremierDetenteur({
     return "Il n'y a pas encore de propriétaire initial pour cette fiche";
   }
 
+  // Sans carcasse retenue il n'y a rien à envoyer : on bloque l'étape plutôt que d'afficher une erreur.
+  const noCarcasseSelected = steps[boundedStep - 1] === 'Carcasses' && (draft?.carcasseIds.length ?? 0) === 0;
+  // Le titre de la modale porte le fil d'étapes : « Étape 2 sur 4 · suivant : stockage » / « Carcasses ».
+  const modalTitle =
+    canEdit && !disabled ? (
+      <>
+        <div className="flex w-full items-center justify-between gap-2">
+          <span className="block text-sm font-normal text-gray-600">
+            Étape {boundedStep} sur {steps.length}
+          </span>
+        </div>
+        <span id="vente-don-etape-courante">{steps[boundedStep - 1]}</span>
+      </>
+    ) : draftMode === 'add' ? (
+      'Ajouter une vente ou un don'
+    ) : (
+      'Modifier'
+    );
+
   const modalMainButton: ModalProps.ActionAreaButtonProps =
     boundedStep < steps.length
       ? {
           children: 'Suivant',
           doClosesModal: false,
+          disabled: noCarcasseSelected,
           nativeButtonProps: { onClick: goToNextStep },
         }
       : {
@@ -1482,20 +1590,32 @@ export default function DestinataireSelectPremierDetenteur({
             {dispatchGroups.length > 0 && unassignedCarcasses.length > 0 && (
               <Alert
                 severity="warning"
-                title={`${formatCarcasseLotCount(unassignedCarcasses)} non attribué${
-                  unassignedCarcasses.length > 1 ? 's' : ''
-                }`}
+                title={`Il reste ${formatCarcasseLotCount(unassignedCarcasses)} — créer une autre vente ou un don\u00A0?`}
                 description={
-                  <div className="mt-1 flex flex-wrap gap-1">
-                    {unassignedCarcasses.map((c) => (
-                      <Tag
-                        key={c.zacharie_carcasse_id}
-                        small
+                  <>
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {unassignedCarcasses.map((c) => (
+                        <Tag
+                          key={c.zacharie_carcasse_id}
+                          small
+                        >
+                          {c.numero_bracelet} - {c.espece}
+                        </Tag>
+                      ))}
+                    </div>
+                    {canAddDispatchGroup && (
+                      <Button
+                        type="button"
+                        className="mt-3"
+                        priority="secondary"
+                        iconId="fr-icon-add-line"
+                        disabled={!!disabled}
+                        nativeButtonProps={{ onClick: openAddDispatchGroup }}
                       >
-                        {c.numero_bracelet} - {c.espece}
-                      </Tag>
-                    ))}
-                  </div>
+                        Créer une autre vente ou un don
+                      </Button>
+                    )}
+                  </>
                 }
               />
             )}
@@ -1543,7 +1663,7 @@ export default function DestinataireSelectPremierDetenteur({
 
       <dispatchModal.Component
         size="large"
-        title={draftMode === 'add' ? 'Ajouter une vente ou un don' : 'Modifier'}
+        title={modalTitle}
         buttons={
           !canEdit
             ? [{ children: 'Fermer' }]
@@ -1557,6 +1677,7 @@ export default function DestinataireSelectPremierDetenteur({
             group={draft}
             canEdit={canEdit && !disabled}
             showCarcasseSelector={showCarcasseSelector}
+            carcasseMode={draftCarcasseMode}
             currentStep={boundedStep}
             steps={steps}
             entities={entities}
@@ -1568,6 +1689,7 @@ export default function DestinataireSelectPremierDetenteur({
             carcasseToGroupLabel={draftCarcasseToGroupLabel}
             fieldErrors={draftFieldErrors}
             showErrors={showModalErrors}
+            onChangeCarcasseMode={onChangeCarcasseMode}
             onToggleCarcasse={onToggleDraftCarcasse}
             onChange={onChangeDraft}
           />

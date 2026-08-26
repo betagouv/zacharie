@@ -5,10 +5,10 @@ import {
   ajouterVenteDon,
   openVenteDon,
   selectDestinataire,
-  etapeSuivante,
   allerAEtape,
   etapeCourante,
   venteDonModal,
+  carcassesRetenues,
 } from '../../utils/vente-don';
 
 test.use({
@@ -22,7 +22,7 @@ test.beforeEach(async () => {
   await resetDb('PREMIER_DETENTEUR');
 });
 
-test('Vente / don sans carcasse — validation empêche de l’enregistrer', async ({ page }) => {
+test('Vente / don sans carcasse — « Suivant » reste désactivé', async ({ page }) => {
   const feiId = 'ZACH-20250707-QZ6E0-155242';
   await connectWith(page, 'premier-detenteur@example.fr');
   await page.getByRole('link', { name: feiId }).click();
@@ -34,9 +34,8 @@ test('Vente / don sans carcasse — validation empêche de l’enregistrer', asy
   await openVenteDon(page);
   await selectDestinataire(page, 'ETG 2 - 75000 Paris (');
   await allerAEtape(page, 'Carcasses');
-  await etapeSuivante(page);
 
-  // On reste bloqué sur l'étape Carcasses, avec le message d'erreur.
-  await expect(venteDonModal(page).getByText(/Veuillez sélectionner au moins une carcasse/i)).toBeVisible();
+  await expect(carcassesRetenues(page)).toHaveCount(0);
+  await expect(venteDonModal(page).getByRole('button', { name: 'Suivant', exact: true })).toBeDisabled();
   await expect(etapeCourante(page)).toContainText('Carcasses');
 });
