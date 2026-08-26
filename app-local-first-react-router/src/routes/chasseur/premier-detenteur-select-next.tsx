@@ -252,7 +252,19 @@ function DispatchGroupCard({
         <span className="text-xs text-gray-500">Vente / don {index + 1}</span>
       )}
       <p className="text-base font-bold">{title}</p>
-      <p className="text-sm/4">{formatCarcasseLotCount(groupCarcasses)}</p>
+      {groupCarcasses.length === 0 ? (
+        <Badge
+          severity="warning"
+          small
+          noIcon
+          as="span"
+          className="my-1 self-start"
+        >
+          Aucune carcasse
+        </Badge>
+      ) : (
+        <p className="text-sm/4">{formatCarcasseLotCount(groupCarcasses)}</p>
+      )}
       <p className="text-sm/4">{getDepotLabel(group, entities)}</p>
       {transportLabel && <p className="text-sm/4">{transportLabel}</p>}
       {variant === 'sent' && (
@@ -1259,9 +1271,7 @@ export default function DestinataireSelectPremierDetenteur({
       const claimed = new Set(finalDraft.carcasseIds);
       const others = prev
         .filter((g) => g.id !== finalDraft.id)
-        .map((g) => ({ ...g, carcasseIds: g.carcasseIds.filter((id) => !claimed.has(id)) }))
-        // Une vente / un don vidé de toutes ses carcasses disparaît.
-        .filter((g) => g.carcasseIds.length > 0);
+        .map((g) => ({ ...g, carcasseIds: g.carcasseIds.filter((id) => !claimed.has(id)) }));
       return [...others, finalDraft];
     });
     setDraft(null);
@@ -1350,15 +1360,25 @@ export default function DestinataireSelectPremierDetenteur({
     });
   }, []);
 
-  // Les ventes / dons validés sont toujours complets (validés à l'enregistrement).
-  // Les carcasses non attribuées ne bloquent pas : on peut ne transmettre qu'une partie de la fiche,
-  // le reste est simplement signalé par une alerte.
+  // Une vente / un don peut se retrouver sans carcasse après coup : une autre vente les a reprises,
+  // ou elles ont été supprimées du bloc carcasses. On bloque alors la transmission — sinon la fiche
+  // part avec un destinataire qui ne reçoit rien.
+  const emptyDispatchGroups = useMemo(
+    () => dispatchGroups.filter((group) => group.carcasseIds.length === 0),
+    [dispatchGroups]
+  );
+
+  // Les carcasses non attribuées, elles, ne bloquent pas : on peut ne transmettre qu'une partie de
+  // la fiche, le reste est simplement signalé par une alerte.
   const globalValidationError = useMemo(() => {
     if (dispatchGroups.length === 0) {
       return 'Veuillez ajouter au moins une vente ou un don';
     }
+    if (emptyDispatchGroups.length > 0) {
+      return 'Une vente ou un don n’a plus aucune carcasse : attribuez-lui des carcasses ou supprimez-la';
+    }
     return null;
-  }, [dispatchGroups.length]);
+  }, [dispatchGroups.length, emptyDispatchGroups.length]);
 
   const totalCarcassesToSend = assignedCarcasseIds.size;
 
@@ -1383,6 +1403,8 @@ export default function DestinataireSelectPremierDetenteur({
     }
     for (const group of dispatchGroups) {
       if (!group.recipientEntityId) continue;
+      // Garde-fou : un groupe vidé entre-temps n'a rien à transmettre ni à journaliser.
+      if (group.carcasseIds.length === 0) continue;
       const prochainDetenteurType = entities[group.recipientEntityId]?.type;
       const needTransport = needTransportForType(prochainDetenteurType);
       const nextDepotEntityId = group.depotType === DepotType.AUCUN ? null : group.depotEntityId;
