@@ -39,7 +39,7 @@
     "site": "Après le tir",
     "anomalies": [
       {
-        "intitule": "Stress marqué avant ou après effondrement",
+        "intitule": "Stress prolongé de l’animal",
         "infobulle": "Halètement intense, fuite très longue, agitation au sol prolongé",
         "message": null,
         "alert_level": null,
@@ -144,7 +144,7 @@
         "photos": ["Image20.webp"]
       },
       {
-        "intitule": "Souillures telluriques",
+        "intitule": "Présence de terre ou de feuilles",
         "infobulle": "Présence, dans la carcasse, d'éléments présents dans le milieu naturel tels que de la terre, des feuilles, des branches, du sable",
         "message": "En cas de souillures étendues, ne pas consommer et ne pas commercialiser. En cas de souillures circonscrites, traitement de la carcasse dans un établissement de traitement du gibier sauvage agréé ou dans un atelier de traitement du gibier sauvage non agréé (ATGNA)",
         "alert_level": 3,
