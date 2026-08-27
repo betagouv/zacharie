@@ -8,7 +8,7 @@ import { Prisma, User, UserEtgRoles, UserNotifications, UserRoles } from '@prism
 import { cookieOptions, JWT_MAX_AGE } from '~/utils/cookie';
 import { SECRET } from '~/config';
 import { z } from 'zod';
-import { sanitize } from '~/utils/sanitize';
+import { normalizeNumeroCfei, sanitize } from '~/utils/sanitize';
 import { hasAllRequiredFields } from '~/utils/user';
 import type {
   AdminUsersResponse,
@@ -245,7 +245,7 @@ router.post(
         nextUser.notifications = body[Prisma.UserScalarFieldEnum.notifications];
       }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.numero_cfei)) {
-        nextUser.numero_cfei = sanitize(body[Prisma.UserScalarFieldEnum.numero_cfei] as string);
+        nextUser.numero_cfei = normalizeNumeroCfei(body[Prisma.UserScalarFieldEnum.numero_cfei]);
       }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.est_forme_a_l_examen_initial)) {
         nextUser.est_forme_a_l_examen_initial =
@@ -265,17 +265,14 @@ router.post(
       const userHasNowAllRequiredFields =
         !hasAllRequiredFields(user, `admin user update ${savedUser.id}`) &&
         hasAllRequiredFields(savedUser, `admin saved user update ${savedUser.id}`);
-      const userChangedCFEINumber = user.numero_cfei !== savedUser.numero_cfei;
-
-      if (userHasNowAllRequiredFields || userChangedCFEINumber) {
-        let subject = `Inscription finie pour ${savedUser.email} (${savedUser.prenom} ${savedUser.nom_de_famille})`;
-        if (userChangedCFEINumber) {
-          subject = `Numéro CFEI changé pour ${savedUser.email} (${savedUser.prenom} ${savedUser.nom_de_famille})`;
-        }
+      // Pas de notice « numéro CFEI changé » ici : c'est l'équipe elle-même qui édite la fiche
+      // depuis l'admin, elle n'a pas besoin d'être prévenue de sa propre saisie.
+      if (userHasNowAllRequiredFields) {
+        const subject = `Inscription finie pour ${savedUser.email} (${savedUser.prenom} ${savedUser.nom_de_famille})`;
         await sendEmail({
           emails: ['contact@zacharie.beta.gouv.fr'],
           subject,
-          text: `L'utilisateur ${savedUser.email} a ${userHasNowAllRequiredFields ? 'fini son inscription' : 'changé son numéro CFEI'} :
+          text: `L'utilisateur ${savedUser.email} a fini son inscription :
 - Roles : ${savedUser.roles.join(', ')}
 - Prénom et nom : ${savedUser.prenom} ${savedUser.nom_de_famille}
 - Adresse : ${savedUser.addresse_ligne_1}

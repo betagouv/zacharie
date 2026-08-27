@@ -185,8 +185,11 @@ export default function MesInformationsDeChasse({
                         nativeInputProps={{
                           id: Prisma.UserScalarFieldEnum.numero_cfei,
                           name: Prisma.UserScalarFieldEnum.numero_cfei,
-                          onBlur: () =>
-                            handleUserSubmit({ isExaminateurInitial, numeroCfei, visibilityChecked }),
+                          onBlur: () => {
+                            // rien saisi de nouveau : pas d'enregistrement inutile
+                            if (numeroCfei === (user.numero_cfei ?? '')) return;
+                            handleUserSubmit({ isExaminateurInitial, numeroCfei, visibilityChecked });
+                          },
                           autoComplete: 'off',
                           required: true,
                           value: numeroCfei,

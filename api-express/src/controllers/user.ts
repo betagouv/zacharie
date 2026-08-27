@@ -48,7 +48,7 @@ import { sendOnboardingEmailOnce } from '~/utils/send-onboarding-email';
 import { formatInscriptionEnExamenEmail, formatCompteActiveEmail } from '~/utils/format-inscription-email';
 // import { refreshMaterializedViews } from '~/utils/refreshMaterializedViews';
 import { z } from 'zod';
-import { sanitize } from '~/utils/sanitize';
+import { normalizeNumeroCfei, sanitize } from '~/utils/sanitize';
 import { inviteUser } from '~/utils/invite-user';
 // import { refreshMaterializedViews } from '~/utils/refreshMaterializedViews';
 
@@ -1147,8 +1147,11 @@ router.post(
       }
 
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.numero_cfei)) {
-        nextUser.numero_cfei = sanitize(body[Prisma.UserScalarFieldEnum.numero_cfei] as string);
-        if (nextUser.numero_cfei !== user.numero_cfei) {
+        // un numéro vide vaut « pas de numéro » : on stocke null, sinon un champ laissé vide
+        // serait enregistré comme '' et compterait comme un changement de numéro
+        const numeroCfei = normalizeNumeroCfei(body[Prisma.UserScalarFieldEnum.numero_cfei]);
+        nextUser.numero_cfei = numeroCfei;
+        if (numeroCfei !== user.numero_cfei) {
           nextUser.activated = false;
           if (nextUser.activated_at) nextUser.activated_at = new Date();
         }
@@ -1197,7 +1200,10 @@ router.post(
       const userHasNowAllRequiredFields =
         !hasAllRequiredFields(user, `original user update ${savedUser.id}`) &&
         hasAllRequiredFields(savedUser, `saved user update ${savedUser.id}`);
-      const userChangedCFEINumber = user.numero_cfei !== savedUser.numero_cfei;
+      // On ne notifie l'équipe du numéro CFEI que lorsqu'un chasseur déjà inscrit le renseigne ou
+      // le modifie : le compte doit alors être vérifié puis activé à la main. Pendant l'inscription,
+      // la notice « Nouvelle ouverture de compte » suffit.
+      const userChangedCFEINumber = !!user.onboarded_at && user.numero_cfei !== savedUser.numero_cfei;
 
       if (userHasNowAllRequiredFields || userChangedCFEINumber) {
         let subject = `Inscription finie pour ${savedUser.email} (${savedUser.prenom} ${savedUser.nom_de_famille})`;
