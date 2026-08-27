@@ -1,18 +1,20 @@
-import { Entity, FeiOwnerRole, Prisma, User, UserRoles } from '@prisma/client';
+import { FeiOwnerRole, Prisma, UserRoles } from '@prisma/client';
+import type { Entity, User } from '@prisma/client';
 import { getUserCarcasseEntityIds } from '~/utils/user-entities';
 
-// Périmètre d'accès aux carcasses selon le rôle d'un utilisateur. Retourne le WHERE Prisma
-// (ou null si rôle non supporté). Partagé entre le pull delta `/carcasse`, la route
-// `/carcasse/refusees/:fei_numero` et l'API publique v1 : autorisation strictement identique partout.
-export async function getCarcasseAccessWhereForUser(
-  user: Pick<User, 'id' | 'roles'>
+// Périmètre d'accès aux carcasses selon le rôle. Retourne le WHERE Prisma (ou null si rôle non
+// supporté). Partagé entre les routes de lecture (`/carcasse`, `/carcasse/refusees/:fei_numero`)
+// et les écritures de `/sync`, pour que lire et écrire reposent sur la même définition d'accès.
+export async function getCarcasseAccessWhere(
+  user: User,
+  userEntityIds?: Array<string>
 ): Promise<Prisma.CarcasseWhereInput | null> {
-  const userEntityIds = await getUserCarcasseEntityIds(user.id);
+  const entityIds = userEntityIds ?? (await getUserCarcasseEntityIds(user.id));
 
   if (user.roles.includes(UserRoles.SVI)) {
     return {
       svi_assigned_at: { not: null },
-      OR: [{ svi_entity_id: { in: userEntityIds } }, { next_owner_entity_id: { in: userEntityIds } }],
+      OR: [{ svi_entity_id: { in: entityIds } }, { next_owner_entity_id: { in: entityIds } }],
     };
   }
   if (user.roles.includes(UserRoles.CHASSEUR)) {
@@ -23,15 +25,15 @@ export async function getCarcasseAccessWhereForUser(
         // Désignation du premier détenteur (asso) : on n'expose la fiche aux membres de l'entité
         // qu'une fois la fiche réellement transmise (sortie de l'examinateur initial).
         {
-          premier_detenteur_entity_id: { in: userEntityIds },
+          premier_detenteur_entity_id: { in: entityIds },
           current_owner_role: { not: FeiOwnerRole.EXAMINATEUR_INITIAL },
         },
         {
-          next_owner_entity_id: { in: userEntityIds },
+          next_owner_entity_id: { in: entityIds },
           current_owner_role: { not: FeiOwnerRole.EXAMINATEUR_INITIAL },
         },
-        { prev_owner_entity_id: { in: userEntityIds } },
-        { current_owner_entity_id: { in: userEntityIds } },
+        { prev_owner_entity_id: { in: entityIds } },
+        { current_owner_entity_id: { in: entityIds } },
         { next_owner_user_id: user.id },
         { prev_owner_user_id: user.id },
         { current_owner_user_id: user.id },
@@ -49,9 +51,9 @@ export async function getCarcasseAccessWhereForUser(
   ) {
     return {
       OR: [
-        { CarcasseIntermediaire: { some: { intermediaire_entity_id: { in: userEntityIds } } } },
-        { next_owner_entity_id: { in: userEntityIds } },
-        { current_owner_entity_id: { in: userEntityIds } },
+        { CarcasseIntermediaire: { some: { intermediaire_entity_id: { in: entityIds } } } },
+        { next_owner_entity_id: { in: entityIds } },
+        { current_owner_entity_id: { in: entityIds } },
       ],
     };
   }

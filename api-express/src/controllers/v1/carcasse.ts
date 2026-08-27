@@ -14,7 +14,7 @@ import {
   getRequestedUser,
   mapCarcasseForApi,
 } from '~/utils/api';
-import { getCarcasseAccessWhereForEntity, getCarcasseAccessWhereForUser } from '~/utils/carcasse-access';
+import { getCarcasseAccessWhere, getCarcasseAccessWhereForEntity } from '~/utils/carcasse-access';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import { feiForApiSelect } from '~/types/fei';
@@ -95,7 +95,7 @@ router.get(
         return next(new Error(error));
       }
 
-      const accessWhere = await getCarcasseAccessWhereForUser(user!);
+      const accessWhere = await getCarcasseAccessWhere(user!);
       if (!accessWhere) {
         res.status(403);
         return next(new Error(`Votre rôle ne permet pas d'accéder à des carcasses. ${CONTACT_SUFFIX}`));
@@ -215,7 +215,7 @@ router.get(
         return next(new Error(error));
       }
 
-      const accessWhere = await getCarcasseAccessWhereForUser(user!);
+      const accessWhere = await getCarcasseAccessWhere(user!);
       if (!accessWhere) {
         res.status(403);
         return next(new Error(`Votre rôle ne permet pas d'accéder à des carcasses. ${CONTACT_SUFFIX}`));
