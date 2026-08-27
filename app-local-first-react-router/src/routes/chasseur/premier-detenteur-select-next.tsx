@@ -224,24 +224,20 @@ function getGroupValidationError(
 function DispatchGroupCard({
   group,
   index,
-  totalGroups,
   variant,
   entities,
   groupCarcasses,
   canEdit,
   onEdit,
-  onDelete,
 }: {
   group: DispatchGroup;
   index: number;
-  totalGroups: number;
   // 'sent' = déjà transmis, reconstruit depuis les carcasses : consultable mais plus modifiable.
   variant: 'draft' | 'sent';
   entities: Record<string, EntityWithUserRelation>;
   groupCarcasses: Carcasse[];
   canEdit: boolean;
   onEdit: () => void;
-  onDelete: () => void;
 }) {
   const recipient = group.recipientEntityId ? entities[group.recipientEntityId] : null;
   const title = recipient?.nom_d_usage ?? `Vente / don ${index + 1}`;
@@ -1567,7 +1563,6 @@ export default function DestinataireSelectPremierDetenteur({
                 key={group.id}
                 group={group}
                 index={index}
-                totalGroups={ventesDonsDejaEnvoyes.length}
                 variant="sent"
                 entities={entities}
                 groupCarcasses={allCarcasses.filter((c) =>
@@ -1575,7 +1570,6 @@ export default function DestinataireSelectPremierDetenteur({
                 )}
                 canEdit={false}
                 onEdit={() => {}}
-                onDelete={() => {}}
               />
             ))}
             {carcassesRestantes.length > 0 &&
@@ -1584,7 +1578,6 @@ export default function DestinataireSelectPremierDetenteur({
                   key={group.id}
                   group={group}
                   index={index}
-                  totalGroups={dispatchGroups.length}
                   variant="draft"
                   entities={entities}
                   groupCarcasses={allCarcasses.filter((c) =>
@@ -1592,7 +1585,6 @@ export default function DestinataireSelectPremierDetenteur({
                   )}
                   canEdit={canEdit && !disabled}
                   onEdit={() => openEditDispatchGroup(group)}
-                  onDelete={() => removeGroup(group.id)}
                 />
               ))}
             {canAddDispatchGroup && (
