@@ -32,13 +32,14 @@ Tout passe par **Brevo** — pas de SMTP / nodemailer / autre.
 
 ## 2. Notices internes équipe (→ `contact@zacharie.beta.gouv.fr`)
 
-| Déclencheur                        | Objet                                                                  | Fichier                             |
-| ---------------------------------- | ---------------------------------------------------------------------- | ----------------------------------- |
-| Nouvelle ouverture de compte       | `Nouvelle ouverture de compte pour {email}`                            | `brevo.ts:143,172`                  |
-| Inscription finie / n° CFEI changé | `Inscription finie pour {email}…` / `Numéro CFEI changé pour {email}…` | `user.ts:1219`, `admin/user.ts:273` |
-| Asso de chasse pré-enregistrée     | `Nouvelle association de chasse pré-enregistrée dans Zacharie`         | `entite.ts:259`                     |
-| Partenaire pré-enregistré          | `Nouveau partenaire pré-enregistré dans Zacharie`                      | `entite.ts:394`                     |
-| CCG pré-enregistré                 | `Nouveau CCG pré-enregistré dans Zacharie`                             | `entite.ts:469`                     |
+| Déclencheur                                  | Objet                                                          | Fichier                              |
+| -------------------------------------------- | -------------------------------------------------------------- | ------------------------------------ |
+| Nouvelle ouverture de compte                 | `Nouvelle ouverture de compte pour {email}`                    | `brevo.ts:143,172`                   |
+| Inscription finie                            | `Inscription finie pour {email}…`                              | `user.ts:1213`, `admin/user.ts:272`  |
+| N° CFEI renseigné/changé après l'inscription | `Numéro CFEI changé pour {email}…`                             | `user.ts:1213` (rien depuis l'admin) |
+| Asso de chasse pré-enregistrée               | `Nouvelle association de chasse pré-enregistrée dans Zacharie` | `entite.ts:259`                      |
+| Partenaire pré-enregistré                    | `Nouveau partenaire pré-enregistré dans Zacharie`              | `entite.ts:394`                      |
+| CCG pré-enregistré                           | `Nouveau CCG pré-enregistré dans Zacharie`                     | `entite.ts:469`                      |
 
 ## 3. Notifications automatiques (event-driven, sync FEI/carcasse — email si préf. EMAIL active)
 
