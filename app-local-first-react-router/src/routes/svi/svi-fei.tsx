@@ -220,7 +220,7 @@ function FEI_SVI() {
             return (
               <div
                 className="flex flex-col"
-                key={carcasse.numero_bracelet}
+                key={carcasse.zacharie_carcasse_id}
               >
                 <CardCarcasseSvi
                   canClick
@@ -250,7 +250,7 @@ function FEI_SVI() {
               return (
                 <CardCarcasse
                   carcasse={carcasse}
-                  key={carcasse.numero_bracelet}
+                  key={carcasse.zacharie_carcasse_id}
                 />
               );
             })}

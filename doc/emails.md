@@ -13,7 +13,7 @@ Tout passe par **Brevo** — pas de SMTP / nodemailer / autre.
 - **`sendTemplateEmail()`** — `api-express/src/third-parties/brevo.ts`. Envoi via **template Brevo** (sujet + HTML gérés côté dashboard, remplis par `params`). À utiliser pour tout email **migré**. ⚠️ même désactivation dev/test. Refuse un `templateId` absent (Sentry + `false`) : les ids du registre valent `null` tant que le template n'existe pas côté Brevo.
 - Les deux senders **avalent leurs erreurs** (remontée Sentry) et renvoient un **booléen de succès**. Tout appelant qui écrit un `NotificationLog` derrière doit le conditionner à ce booléen : ce log porte la dédup, l'écrire après un envoi raté bloquerait le renvoi définitivement.
 - **Registre des templates** — `api-express/src/third-parties/brevo-templates.ts`. `BrevoTemplateId` mappe chaque email (clé sémantique) → `templateId` Brevo, ou `null` tant que pas migré. **C'est le tracker de migration** : `null` = encore en texte inline, nombre = migré vers template.
-- **`sendNotificationToUser()` / `queueSendNotificationToUser()`** — `api-express/src/service/notifications.ts`. Push web + email. **L'email ne part que si l'user a activé la préférence `EMAIL`** (`UserNotifications.EMAIL`). Dédup via `NotificationLog` sur `(user_id, type, action)`. Le canal email bascule sur `sendTemplateEmail` dès qu'un `emailTemplateId` est fourni (+ `emailTemplateParams`) ; sinon texte inline. **Migrer un email = lui passer son `emailTemplateId` ici, pas appeler `sendTemplateEmail` directement** : contourner le service fait perdre la dédup, le gating de préférence et le push (les side-effects tournent une fois par carcasse).
+- **`sendNotificationToUser()` / `queueSendNotificationToUser()`** — `api-express/src/service/notifications.ts`. Push web + push natif + email. **L'email ne part que si l'user a activé la préférence `EMAIL`** (`UserNotifications.EMAIL`). Dédup via `NotificationLog` sur `(user_id, type, action)`. Le canal email bascule sur `sendTemplateEmail` dès qu'un `emailTemplateId` est fourni (+ `emailTemplateParams`) ; sinon texte inline. **Migrer un email = lui passer son `emailTemplateId` ici, pas appeler `sendTemplateEmail` directement** : contourner le service fait perdre la dédup, le gating de préférence et le push (les side-effects tournent une fois par carcasse).
 - **`sendOnboardingEmailOnce()`** — `api-express/src/utils/send-onboarding-email.ts`. Onboarding, dédup via `NotificationLog` (écrit seulement si l'envoi a réussi), **ignore la préférence EMAIL** (envoie toujours).
 - **`inviteUser()`** — `api-express/src/utils/invite-user.ts`. Appelle `sendEmail` directement.
 
@@ -25,16 +25,17 @@ Tout passe par **Brevo** — pas de SMTP / nodemailer / autre.
 | --------------------------------------------- | ------------------------ | -------------------------------------------------------------------- | ----------------------------------------------------------- |
 | Formulaire de contact (`POST /utils/contact`) | `contact@…` + l'émetteur | `Contact : {prenom} {nom} - {email} - {object}`                      | `controllers/utils.ts:34`                                   |
 | Demande de reset mot de passe                 | l'user (prod)            | `[Zacharie] Réinitialisation de votre mot de passe`                  | `controllers/user.ts:469`                                   |
+| Mot de passe changé depuis le profil          | l'user (prod)            | `[Zacharie] Votre mot de passe a été modifié`                        | `controllers/user.ts:662`                                   |
 | Invitation d'un user (entité / partenaire)    | l'invité                 | `{prenom} {nom} vous a invité à rejoindre Zacharie`                  | `utils/invite-user.ts:33`                                   |
-| Fin d'onboarding                              | l'user                   | `Votre inscription sur Zacharie (fiches d'examen initial du gibier)` | `controllers/user.ts:1154`                                  |
-| Compte activé (user ou admin)                 | l'user                   | `Votre compte Zacharie a été activé`                                 | `controllers/user.ts:1167`, `controllers/admin/user.ts:292` |
+| Fin d'onboarding                              | l'user                   | `Votre inscription sur Zacharie (fiches d'examen initial du gibier)` | `controllers/user.ts:1245`                                  |
+| Compte activé (user ou admin)                 | l'user                   | `Votre compte Zacharie a été activé`                                 | `controllers/user.ts:1258`, `controllers/admin/user.ts:292` |
 
 ## 2. Notices internes équipe (→ `contact@zacharie.beta.gouv.fr`)
 
 | Déclencheur                        | Objet                                                                  | Fichier                             |
 | ---------------------------------- | ---------------------------------------------------------------------- | ----------------------------------- |
 | Nouvelle ouverture de compte       | `Nouvelle ouverture de compte pour {email}`                            | `brevo.ts:143,172`                  |
-| Inscription finie / n° CFEI changé | `Inscription finie pour {email}…` / `Numéro CFEI changé pour {email}…` | `user.ts:1132`, `admin/user.ts:273` |
+| Inscription finie / n° CFEI changé | `Inscription finie pour {email}…` / `Numéro CFEI changé pour {email}…` | `user.ts:1219`, `admin/user.ts:273` |
 | Asso de chasse pré-enregistrée     | `Nouvelle association de chasse pré-enregistrée dans Zacharie`         | `entite.ts:259`                     |
 | Partenaire pré-enregistré          | `Nouveau partenaire pré-enregistré dans Zacharie`                      | `entite.ts:394`                     |
 | CCG pré-enregistré                 | `Nouveau CCG pré-enregistré dans Zacharie`                             | `entite.ts:469`                     |
@@ -56,8 +57,8 @@ Toutes via `sendNotificationToUser`. Dédup via `NotificationLog`. Déclenchées
 | FEI clôturée (dernière carcasse)     | examinateur + 1er détenteur  | `La fiche {numero} est clôturée.`                                               | `carcasse-side-effects.ts:161,166`                |
 | Fiche renvoyée à l'expéditeur        | l'expéditeur (current-owner) | `La fiche {numero} vous a été renvoyée.`                                        | `carcasse-side-effects.ts:notifyRenvoiExpediteur` |
 | Nouvel user dans une entité          | admins de l'entité           | `Un nouvel utilisateur s'est inscrit sur Zacharie au sein de votre entité`      | `user-entity.ts:217`                              |
-| Demande de modif carcasse créée      | examinateur de la FEI        | `Chasse du {date}` / `Demande de modification`                                  | `sync-carcasse-modification-request.ts:203`       |
-| Demande de modif traitée             | le demandeur                 | `Carcasse numéro {bracelet}` / `Demande traitée`                                | `sync-carcasse-modification-request.ts:239`       |
+| Modif carcasse signalée (indicative) | examinateur de la FEI        | `Chasse du {date}` / `Demande de modification`                                  | `sync-carcasse-modification-request.ts:250`       |
+| Retour de l'examinateur sur la modif | le demandeur                 | `Carcasse numéro {bracelet}` / `Demande traitée`                                | `sync-carcasse-modification-request.ts:297`       |
 
 ## 4. Cron (`npm run start-cronjobs` — prod uniquement, `cronjobs/index.ts`)
 
@@ -77,4 +78,7 @@ Toutes via `sendNotificationToUser`. Dédup via `NotificationLog`. Déclenchées
 
 - **`sendWebhook()`** (`utils/api.ts`) — webhooks HTTP vers tiers (`FEI_CLOTUREE`, `FEI_ASSIGNEE_*`…). Souvent envoyé en parallèle des notifs ci-dessus.
 - **Web-push / native-push** dans `sendNotificationToUser` — canal séparé, gated sur préf. `PUSH`.
+  Le web-push passe par `web-push` (VAPID), le natif par l'API push d'Expo (`third-parties/expo-push.ts`, tokens `User.native_push_tokens`). Les deux partagent la même dédup `NotificationLog` de type `PUSH`.
+  Le natif n'envoie qu'en production (hors dev/test/preprod, comme Brevo), et **est actuellement coupé par l'interrupteur `NATIVE_PUSH_DRY_RUN` (`config.ts`)**, le temps de vérifier le contenu des notifications : le payload est loggé, rien n'est envoyé et aucun `NotificationLog` n'est écrit. Le repasser à `false` réactive l'envoi.
+  Les tokens qui ne sont pas au format `ExponentPushToken[…]` sont écartés avant l'appel (Expo rejette la requête entière si un seul `to` est invalide), et retirés de l'utilisateur — comme ceux qu'Expo signale `DeviceNotRegistered`.
 - **Sync CRM Brevo** (`createBrevoContact`, `updateBrevoContact`, `updateOrCreateBrevoCompany`, `updateBrevoChasseurDeal`…) — appels API CRM, pas des emails transactionnels (mais `createBrevoContact` déclenche la notice interne « Nouvelle ouverture de compte »).

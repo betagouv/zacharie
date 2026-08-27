@@ -1,4 +1,5 @@
-import type { SyncResponse } from '~/src/types/responses';
+import type { SyncRejection, SyncResponse } from '~/src/types/responses';
+import { getFeiAndCarcasseAndIntermediaireIds } from '@app/utils/get-carcasse-intermediaire-id';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 dayjs.extend(utc);
@@ -12,6 +13,13 @@ import { loadCarcasses } from './load-carcasses';
 
 let debug = false;
 
+// Items que le serveur a définitivement refusé d'écrire (autorisation), en clés `kind:id`. Sans ça
+// ils restent `is_synced = false` — le serveur n'ayant pas touché sa ligne, elle ne revient jamais
+// dans le delta de loadCarcasses qui ferait basculer le flag — et repartent dans chaque payload de
+// synchro. La portée est la session : `abortSyncData` vide le Set, donc on retente au prochain
+// chargement comme à la connexion suivante. L'équipe est prévenue par le Sentry émis côté serveur.
+const rejectedBySync = new Set<string>();
+
 // Single AbortController for the current sync request
 let syncAbortController: AbortController | null = null;
 
@@ -20,6 +28,11 @@ export function abortSyncData(reason: string = 'aborted') {
     syncAbortController.abort(reason);
   }
   syncAbortController = null;
+  // Les refus appartiennent au compte qui les a provoqués. `clearLocalAppState` appelle cette
+  // fonction à chaque teardown de session, et c'est le seul moment où le Set doit repartir de zéro :
+  // `disconnect` navigue en pushState, qui ne recharge pas la page, donc sans ce clear le Set
+  // survivrait au changement de compte et bloquerait les écritures légitimes du suivant.
+  rejectedBySync.clear();
 }
 
 export async function syncData(calledFrom?: string) {
@@ -44,14 +57,19 @@ export async function syncData(calledFrom?: string) {
     await syncProchainBraceletAUtiliser();
 
     // Collect all unsynced items
-    const unsyncedFeis = Object.values(state.feis).filter((f) => !f.is_synced);
-    const unsyncedCarcasses = Object.values(state.carcasses).filter((c) => !c.is_synced);
+    const notRejected = (kind: SyncRejection['kind'], id: string) => !rejectedBySync.has(`${kind}:${id}`);
+    const unsyncedFeis = Object.values(state.feis).filter(
+      (f) => !f.is_synced && notRejected('fei', f.numero)
+    );
+    const unsyncedCarcasses = Object.values(state.carcasses).filter(
+      (c) => !c.is_synced && notRejected('carcasse', c.zacharie_carcasse_id)
+    );
     const unsyncedIntermediaires = Object.values(state.carcassesIntermediaireById).filter(
-      (ci) => !ci.is_synced
+      (ci) => !ci.is_synced && notRejected('carcasseIntermediaire', getFeiAndCarcasseAndIntermediaireIds(ci))
     );
     const unsyncedModifRequests = Object.values(state.modifRequestsByCarcasseId)
       .flat()
-      .filter((r) => !r.is_synced);
+      .filter((r) => !r.is_synced && notRejected('carcasseModifRequest', r.id));
     const unsyncedLogs = state.logs.filter((l) => !l.is_synced);
 
     // Nothing to sync
@@ -90,6 +108,14 @@ export async function syncData(calledFrom?: string) {
     if (!res.ok || !res.data) {
       console.error('sync failed', res.error);
       return;
+    }
+
+    // Refus définitifs : on arrête de les repousser. On ne touche pas à la donnée locale — le
+    // serveur ne renvoie pas sa version (ce serait exposer la fiche d'un tiers), donc on n'a rien
+    // pour la corriger ici. Elle le sera dès que la ligne serveur bougera légitimement et reviendra
+    // dans un delta, mergeItems étant server-wins.
+    for (const rejection of res.data.rejected ?? []) {
+      rejectedBySync.add(`${rejection.kind}:${rejection.id}`);
     }
 
     // Le serveur confirme les logs qu'il a écrits : on les retire du store, sinon ils

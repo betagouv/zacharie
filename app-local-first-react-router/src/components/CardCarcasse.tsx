@@ -115,8 +115,8 @@ export default function CardCarcasse({
   const hasRejectedModif = modifsHistory.some((r) => r.status === CarcasseModificationRequestStatus.REJECTED);
 
   // Carcasse rajoutée par un intermédiaire (ETG/collecteur) via une demande NEW_CARCASSE.
-  // Les demandes refusées soft-deletent la carcasse (la carte ne s'affiche alors pas), donc filtrer
-  // sur !deleted_at couvre les cas pending + approuvée.
+  // Un refus soft-delete la carcasse (la carte ne s'affiche alors pas, sauf si le SVI l'a déjà
+  // inspectée), donc filtrer sur !deleted_at couvre les cas pending + approuvée.
   const newCarcasseRequest = useMemo(
     () =>
       (modifRequests ?? []).find(

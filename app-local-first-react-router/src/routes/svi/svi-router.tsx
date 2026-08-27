@@ -17,6 +17,7 @@ import TrichineTableau from '@app/routes/trichine/trichine-tableau';
 import TrichineNouveauPool from '@app/routes/trichine/trichine-nouveau-pool';
 import TrichineNouvelleFTP from '@app/routes/trichine/trichine-nouvelle-ftp';
 import TrichineFTPDetail from '@app/routes/trichine/trichine-ftp-detail';
+import ChangerMonMotDePasse from '@app/routes/profil/changer-mon-mot-de-passe';
 
 export default function RouterSvi() {
   return (
@@ -60,6 +61,10 @@ export default function RouterSvi() {
         <Route
           path="coordonnees"
           element={<SviProfilCoordonnees />}
+        />
+        <Route
+          path="mot-de-passe"
+          element={<ChangerMonMotDePasse />}
         />
         <Route
           path="notifications"

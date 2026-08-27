@@ -8,6 +8,12 @@ test.use({
   },
 });
 
+// 135-changer-mot-de-passe tourne juste avant dans ce dossier et laisse
+// examinateur@example.fr avec un autre mot de passe : on repart d'une base saine.
+test.beforeAll(async () => {
+  await resetDb();
+});
+
 test('Connexion avec succès', async ({ page }) => {
   await connectWith(page, 'examinateur@example.fr');
   await expect(page).toHaveURL('http://localhost:3290/app/chasseur');
@@ -41,10 +47,6 @@ test('Création de compte avec email existant', async ({ page }) => {
 });
 
 test.describe('Connexion avec email incorrect', () => {
-  test.beforeAll(async () => {
-    await resetDb();
-  });
-
   test('Connexion avec email incorrect', async ({ page }) => {
     await connectWith(page, 'examinateur-pas-encore-existe@example.fr', 'secret-mauvais-secret', false);
     await page.getByText('Email ou mot de passe incorrect').click();

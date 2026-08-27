@@ -15,10 +15,22 @@ import { syncData } from '@app/utils/sync-data';
 import useUser from '@app/zustand/user';
 import { getPendingModifRequest } from '@app/utils/modif-requests';
 
+// Une carcasse déjà inspectée par le SVI n'est plus modifiable par une demande : un certificat a pu
+// être émis dessus. Même règle que côté serveur (isCarcasseFrozenBySvi).
+function isFrozenBySvi(carcasse: Carcasse) {
+  return !!(
+    carcasse.svi_ipm1_signed_at ||
+    carcasse.svi_ipm2_signed_at ||
+    carcasse.svi_closed_at ||
+    carcasse.svi_automatic_closed_at
+  );
+}
+
 // ----------------------------------------------------------------------------
 // PendingModificationBanner
 // Affiché sur la carcasse, côté intermédiaire/ETG/SVI, quand une demande de
-// modification est en cours. Informe sans bloquer la transmission.
+// modification est en cours. Purement informatif : la modification est déjà
+// appliquée, elle ne bloque ni la transmission ni l'inspection SVI.
 // ----------------------------------------------------------------------------
 export function PendingModificationBanner({ carcasse }: { carcasse: Carcasse }) {
   const user = useUser((state) => state.user);
@@ -37,41 +49,45 @@ export function PendingModificationBanner({ carcasse }: { carcasse: Carcasse }) 
 
   if (!pending) return null;
 
-  const title =
-    pending.type === CarcasseModificationRequestType.BRACELET_RENAME
-      ? `Demande de modification du numéro de marquage en cours`
-      : `Carcasse ajoutée, approbation de mise sur le marché en attente`;
+  const isRename = pending.type === CarcasseModificationRequestType.BRACELET_RENAME;
 
-  const detail =
-    pending.type === CarcasseModificationRequestType.BRACELET_RENAME
-      ? `Le numéro physique semble être « ${pending.numero_bracelet_after} » au lieu de « ${pending.numero_bracelet_before} ». L'examinateur initial doit approuver ou refuser ce changement.`
-      : `Cette carcasse n'est pas encore validée par l'examinateur initial et ne sera pas inspectée par le SVI tant que l'approbation de mise sur le marché n'est pas faite.`;
+  // La demande est purement indicative : elle ne bloque ni la transmission ni l'inspection SVI.
+  // Sévérité info dans les deux cas — rien n'est en attente de déblocage.
+  const title = isRename ? `Numéro de marquage corrigé` : `Carcasse ajoutée après l'examen initial`;
+
+  const detail = isRename
+    ? `Le numéro relevé sur la carcasse est « ${pending.numero_bracelet_after} », au lieu de « ${pending.numero_bracelet_before} » saisi à l'examen initial. L'examinateur initial en a été informé.`
+    : `Cette carcasse a été ajoutée par un intermédiaire. Elle suit son parcours normalement ; l'examinateur initial doit encore signer son examen initial.`;
 
   const requester = [requestedByUser?.prenom, requestedByUser?.nom_de_famille].filter(Boolean).join(' ');
   const entityName = requestedByEntity?.nom_d_usage ?? '';
   const requesterLine =
     requester || entityName
-      ? `Demande faite par ${requester || 'un intermédiaire'}${entityName ? ` (${entityName})` : ''} le ${dayjs(
+      ? `Correction faite par ${requester || 'un intermédiaire'}${entityName ? ` (${entityName})` : ''} le ${dayjs(
           pending.requested_at
         ).format('DD/MM/YYYY HH:mm')}.`
       : '';
 
-  const isRequester = user?.id === pending.requested_by_user_id;
+  // On ne peut annuler que tant que le SVI n'est pas passé sur la carcasse (mêmes gardes qu'au
+  // serveur), sinon l'annulation supprimerait une carcasse déjà inspectée / certifiée.
+  const canCancel = user?.id === pending.requested_by_user_id && !isFrozenBySvi(carcasse);
 
   const onCancel = () => {
-    // if (!window.confirm('Annuler cette demande ? Cette action est irréversible.')) return;
-    // Soft-delete the modif request. For NEW_CARCASSE we also soft-delete the carcasse since it only
-    // existed because of this request.
+    // Soft-delete the modif request et on défait ce qu'elle avait appliqué : NEW_CARCASSE →
+    // soft-delete de la carcasse (elle n'existait que pour cette demande), RENAME → retour au
+    // numéro de marquage d'origine.
     updateCarcasseModifRequest(pending.zacharie_carcasse_id, { deleted_at: dayjs().toDate() });
     if (pending.type === CarcasseModificationRequestType.NEW_CARCASSE) {
       updateCarcasse(carcasse.zacharie_carcasse_id, { deleted_at: dayjs().toDate() });
+    } else if (pending.numero_bracelet_before) {
+      updateCarcasse(carcasse.zacharie_carcasse_id, { numero_bracelet: pending.numero_bracelet_before });
     }
     syncData('PendingModificationBanner.onCancel');
   };
 
   return (
     <Alert
-      severity="warning"
+      severity="info"
       title={title}
       description={
         <>
@@ -82,7 +98,7 @@ export function PendingModificationBanner({ carcasse }: { carcasse: Carcasse }) 
               <span className="font-semibold">Commentaire :</span> {pending.comment_intermediaire}
             </p>
           )}
-          {isRequester && (
+          {canCancel && (
             <div className="mt-2">
               <Button
                 priority="tertiary"
@@ -90,7 +106,7 @@ export function PendingModificationBanner({ carcasse }: { carcasse: Carcasse }) 
                 onClick={onCancel}
                 type="button"
               >
-                Annuler ma demande
+                Annuler la correction
               </Button>
             </div>
           )}
@@ -103,11 +119,13 @@ export function PendingModificationBanner({ carcasse }: { carcasse: Carcasse }) 
 
 // ----------------------------------------------------------------------------
 // RequestBraceletRenameButton
-// Bouton + formulaire en accordéon côté intermédiaire pour signaler un numéro
-// de marquage incorrect. Pas de modal imbriquée : DSFR ne supporte pas modal
-// dans modal (le contenu du parent disparaît à la fermeture du modal enfant) ;
-// on étale donc le formulaire dans le même conteneur que le bouton.
-// Désactivé si une demande est déjà en cours sur la carcasse.
+// Bouton + formulaire en accordéon côté intermédiaire pour corriger un numéro
+// de marquage. La correction est appliquée immédiatement (l'intermédiaire a la
+// carcasse sous les yeux) ; l'examinateur initial en est seulement informé.
+// Pas de modal imbriquée : DSFR ne supporte pas modal dans modal (le contenu du
+// parent disparaît à la fermeture du modal enfant) ; on étale donc le
+// formulaire dans le même conteneur que le bouton.
+// Masqué si une demande est déjà en cours sur la carcasse.
 // ----------------------------------------------------------------------------
 export function RequestBraceletRenameButton({
   carcasse,
@@ -124,6 +142,7 @@ export function RequestBraceletRenameButton({
   const modifRequests = useZustandStore((s) => s.modifRequestsByCarcasseId[carcasse.zacharie_carcasse_id]);
   const pending = getPendingModifRequest(modifRequests);
   const createCarcasseModifRequest = useZustandStore((s) => s.createCarcasseModifRequest);
+  const updateCarcasse = useZustandStore((s) => s.updateCarcasse);
 
   const [expanded, setExpanded] = useState(false);
   const [newBracelet, setNewBracelet] = useState('');
@@ -165,6 +184,8 @@ export function RequestBraceletRenameButton({
       is_synced: false,
     };
     createCarcasseModifRequest(modifRequest);
+    // Le renommage est appliqué tout de suite, la demande ne sert qu'à informer l'examinateur.
+    updateCarcasse(carcasse.zacharie_carcasse_id, { numero_bracelet: newBracelet.trim() });
     syncData('RequestBraceletRenameButton.onSubmit');
     setNewBracelet('');
     setComment('');
@@ -184,7 +205,7 @@ export function RequestBraceletRenameButton({
         onClick={() => setExpanded((v) => !v)}
         type="button"
       >
-        {expanded ? 'Annuler le signalement' : 'Signaler un numéro de marquage incorrect'}
+        {expanded ? 'Annuler la correction' : 'Corriger le numéro de marquage'}
       </Button>
       {expanded && (
         <div className="fr-mt-2w rounded-sm border border-gray-300 p-3">
@@ -211,8 +232,8 @@ export function RequestBraceletRenameButton({
           />
           {error && <p className="text-action-high-red-marianne mt-1 text-sm">{error}</p>}
           <p className="mt-3 text-sm opacity-80">
-            La demande sera envoyée à l'examinateur initial pour approbation. En attendant sa validation, la
-            carcasse peut être transmise au SVI mais celui-ci ne pourra pas la contrôler.
+            La correction est appliquée immédiatement. L'examinateur initial en est informé et peut la
+            contester, mais la carcasse continue son parcours normalement.
           </p>
           <div className="mt-4 flex gap-2">
             <Button
@@ -220,7 +241,7 @@ export function RequestBraceletRenameButton({
               onClick={onSubmit}
               type="button"
             >
-              Envoyer la demande
+              Corriger le numéro
             </Button>
           </div>
         </div>
@@ -273,9 +294,9 @@ export function HistoriqueDesModifications({ carcasse }: { carcasse: Carcasse })
         key: `${r.id}:req`,
         date: new Date(r.requested_at),
         label: isRename
-          ? `Demande de changement de numéro de marquage : ${r.numero_bracelet_before} → ${r.numero_bracelet_after}`
-          : "Demande d'ajout d'une carcasse",
-        actorLine: `Demandée par ${requesterName}${entityName ? ` (${entityName})` : ''}`,
+          ? `Numéro de marquage corrigé : ${r.numero_bracelet_before} → ${r.numero_bracelet_after}`
+          : "Ajout d'une carcasse",
+        actorLine: `Par ${requesterName}${entityName ? ` (${entityName})` : ''}`,
         extraLine: r.comment_intermediaire ? `Commentaire : ${r.comment_intermediaire}` : null,
         dotColor: '#6a6af4', // DSFR blue
       });
@@ -285,10 +306,10 @@ export function HistoriqueDesModifications({ carcasse }: { carcasse: Carcasse })
         out.push({
           key: `${r.id}:pending`,
           date: new Date(r.updated_at), // approximate; placed near the request marker by sort
-          label: "En attente de décision de l'examinateur initial",
-          actorLine: 'Aucune décision pour le moment',
+          label: "En attente du retour de l'examinateur initial",
+          actorLine: 'La carcasse continue son parcours',
           extraLine: null,
-          dotColor: '#b34000', // DSFR warning orange — same severity hue as the pending banner
+          dotColor: '#0063cb', // DSFR info blue — même sévérité que la bannière, la demande est indicative
         });
       } else if (r.reviewed_at) {
         out.push({
@@ -296,17 +317,22 @@ export function HistoriqueDesModifications({ carcasse }: { carcasse: Carcasse })
           date: new Date(r.reviewed_at),
           label: approved
             ? isRename
-              ? `Numéro de marquage modifié : ${r.numero_bracelet_before} → ${r.numero_bracelet_after}`
+              ? `Numéro de marquage confirmé : ${r.numero_bracelet_after}`
               : "Ajout d'une carcasse validé"
             : isRename
-              ? `Refus du changement de numéro de marquage : ${r.numero_bracelet_before} → ${r.numero_bracelet_after}`
+              ? `Numéro de marquage contesté : l'examinateur initial lit ${r.numero_bracelet_before}`
               : "Refus d'ajout d'une carcasse",
-          actorLine: reviewerName
-            ? `${approved ? 'Approuvée' : 'Refusée'} par ${reviewerName}`
-            : approved
-              ? 'Approuvée'
-              : 'Refusée',
-          extraLine: rejected && r.rejection_reason ? `Motif du refus : ${r.rejection_reason}` : null,
+          actorLine: (() => {
+            const verbe = approved
+              ? isRename
+                ? 'Confirmée'
+                : 'Validée'
+              : isRename
+                ? 'Contestée'
+                : 'Refusée';
+            return reviewerName ? `${verbe} par ${reviewerName}` : verbe;
+          })(),
+          extraLine: rejected && r.rejection_reason ? `Motif : ${r.rejection_reason}` : null,
           dotColor: approved ? '#18753c' : '#ce0500',
         });
       }

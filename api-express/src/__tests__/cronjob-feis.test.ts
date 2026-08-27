@@ -1,5 +1,5 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
-import { CarcasseModificationRequestStatus, CarcasseStatus, FeiOwnerRole } from '@prisma/client';
+import { CarcasseStatus, FeiOwnerRole } from '@prisma/client';
 import prisma from '~/prisma';
 import { automaticClosingOfFeis } from '~/cronjobs/feis';
 import sendNotificationToUser from '~/service/notifications';
@@ -57,7 +57,7 @@ beforeEach(() => {
 });
 
 describe('automaticClosingOfFeis — carcasse selection (per-carcasse)', () => {
-  test('selects carcasses 10+ days under SVI, not yet closed, without pending modif request', async () => {
+  test('selects carcasses 10+ days under SVI, not yet closed', async () => {
     await automaticClosingOfFeis();
 
     expect(prisma.carcasse.findMany).toHaveBeenCalledOnce();
@@ -67,12 +67,13 @@ describe('automaticClosingOfFeis — carcasse selection (per-carcasse)', () => {
     expect(args.where.deleted_at).toBeNull();
     expect(args.where.svi_assigned_at).toHaveProperty('lte');
     expect(args.where.svi_assigned_at.lte).toBeInstanceOf(Date);
-    expect(args.where.CarcasseModificationRequests).toEqual({
-      none: {
-        status: CarcasseModificationRequestStatus.PENDING,
-        deleted_at: null,
-      },
-    });
+  });
+
+  test('une demande de modification en cours ne retient plus la carcasse (demande indicative)', async () => {
+    await automaticClosingOfFeis();
+
+    const args = vi.mocked(prisma.carcasse.findMany).mock.calls[0][0] as any;
+    expect(args.where.CarcasseModificationRequests).toBeUndefined();
   });
 
   test('does nothing when no carcasse matches', async () => {

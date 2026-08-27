@@ -14,7 +14,8 @@ const modal = createModal({
 // ----------------------------------------------------------------------------
 // PendingModifRequestsAlertModal
 // S'ouvre automatiquement au montage si l'utilisateur courant est l'examinateur
-// initial d'au moins une carcasse avec une demande de modification en attente.
+// initial d'au moins une carcasse avec une demande de modification en cours.
+// La demande est indicative : elle ne bloque personne, on informe seulement.
 // Utilisé sur la page d'accueil chasseur (/app/chasseur) — apparaît à chaque
 // visite de cette URL tant qu'il reste des demandes à traiter.
 // ----------------------------------------------------------------------------
@@ -67,13 +68,12 @@ export default function PendingModifRequestsAlertModal() {
   }, [isChasseurIndex, count, hasMounted]);
 
   return (
-    <modal.Component title="Demandes de modification en attente">
+    <modal.Component title="Modifications signalées sur vos carcasses">
       <div>
         <p className="mb-3">
-          Vous avez <strong>{count}</strong>{' '}
-          {count > 1 ? 'demandes de modification en attente' : 'demande de modification en attente'} sur{' '}
-          {count > 1 ? 'des carcasses' : 'une carcasse'} dont vous êtes l'examinateur initial, il vous faut
-          donc approuver ou refuser {count > 1 ? 'ces modifications' : 'cette modification'}.
+          Un intermédiaire a signalé <strong>{count}</strong> {count > 1 ? 'modifications' : 'modification'}{' '}
+          sur {count > 1 ? 'des carcasses' : 'une carcasse'} dont vous êtes l'examinateur initial. C'est déjà
+          pris en compte : les carcasses continuent leur parcours, votre retour est informatif.
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
           <Button

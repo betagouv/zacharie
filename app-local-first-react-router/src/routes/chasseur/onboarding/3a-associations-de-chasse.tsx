@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, Fragment } from 'react';
+import { useState, useCallback, useEffect, useRef, Fragment } from 'react';
 import { EntityTypes, EntityRelationType, Prisma, Entity, EntityRelationStatus } from '@prisma/client';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Input } from '@codegouvfr/react-dsfr/Input';
@@ -90,38 +90,45 @@ export default function ChasseurOnboardingMesAssociationsDeChasse() {
     : (selectOptions.find((option) => option.id === currentEntityId) ?? undefined);
 
   const [assoPostalCode, setAssoPostalCode] = useState('');
+  // un ref et pas un state : il bloque aussi deux submits déclenchés dans le même tick React
+  const isSubmittingRef = useRef(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const handleEntitySubmit = useCallback(
     async (event: React.FocusEvent<HTMLFormElement>) => {
       event.preventDefault();
-      if (isUnregisteredEntity) {
-        const formData = new FormData(event.currentTarget);
-        const body: Partial<Entity> = Object.fromEntries(formData.entries());
-        body.raison_sociale = newEntityNomDUsage;
-        const response = await API.post({
-          path: 'entite/association-de-chasse',
-          body,
-        }).then((data) => data as UserConnexionResponse);
-        if (response.ok) {
-          setRefreshKey((prev) => prev + 1);
-          setCurrentEntityId(null);
-          setAssoPostalCode('');
-          setShowForm(false);
-          document
-            .getElementById('onboarding-etape-2-associations-data-title')
-            ?.scrollIntoView({ behavior: 'smooth' });
-        }
-      } else {
-        API.post({
-          path: '/user-entity',
-          body: {
-            [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
-            [Prisma.EntityAndUserRelationsScalarFieldEnum.relation]:
-              EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-            [Prisma.EntityAndUserRelationsScalarFieldEnum.status]: EntityRelationStatus.REQUESTED,
-            [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: currentEntityId,
-          },
-        }).then((res) => {
-          if (res.ok) {
+      if (isSubmittingRef.current) return;
+      isSubmittingRef.current = true;
+      setIsSubmitting(true);
+      try {
+        if (isUnregisteredEntity) {
+          const formData = new FormData(event.currentTarget);
+          const body: Partial<Entity> = Object.fromEntries(formData.entries());
+          body.raison_sociale = newEntityNomDUsage;
+          const response = await API.post({
+            path: 'entite/association-de-chasse',
+            body,
+          }).then((data) => data as UserConnexionResponse);
+          if (response.ok) {
+            setRefreshKey((prev) => prev + 1);
+            setCurrentEntityId(null);
+            setAssoPostalCode('');
+            setShowForm(false);
+            document
+              .getElementById('onboarding-etape-2-associations-data-title')
+              ?.scrollIntoView({ behavior: 'smooth' });
+          }
+        } else {
+          const response = await API.post({
+            path: '/user-entity',
+            body: {
+              [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
+              [Prisma.EntityAndUserRelationsScalarFieldEnum.relation]:
+                EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+              [Prisma.EntityAndUserRelationsScalarFieldEnum.status]: EntityRelationStatus.REQUESTED,
+              [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: currentEntityId,
+            },
+          });
+          if (response.ok) {
             setRefreshKey((k) => k + 1);
             setCurrentEntityId(null);
             setShowForm(false);
@@ -129,7 +136,10 @@ export default function ChasseurOnboardingMesAssociationsDeChasse() {
               .getElementById('onboarding-etape-2-associations-data-title')
               ?.scrollIntoView({ behavior: 'smooth' });
           }
-        });
+        }
+      } finally {
+        isSubmittingRef.current = false;
+        setIsSubmitting(false);
       }
     },
     [isUnregisteredEntity, setRefreshKey, user.id, currentEntityId, newEntityNomDUsage]
@@ -321,8 +331,9 @@ export default function ChasseurOnboardingMesAssociationsDeChasse() {
                           <Button
                             type="submit"
                             nativeButtonProps={{ form: 'association_data_form' }}
+                            disabled={isSubmitting}
                           >
-                            Me rattacher à cette entité
+                            {isSubmitting ? 'Rattachement en cours...' : 'Me rattacher à cette entité'}
                           </Button>
                           <button
                             type="button"
@@ -424,8 +435,9 @@ export default function ChasseurOnboardingMesAssociationsDeChasse() {
                             <Button
                               type="submit"
                               nativeButtonProps={{ form: 'association_data_form' }}
+                              disabled={isSubmitting}
                             >
-                              Créer et me rattacher à cette entité
+                              {isSubmitting ? 'Création en cours...' : 'Créer et me rattacher à cette entité'}
                             </Button>
                             <button
                               type="button"

@@ -302,6 +302,32 @@ router.post(
       zacharie_compatible: true,
     };
 
+    // filet anti double-submit : si l'utilisateur a déjà cette association, on renvoie l'existante
+    const existingRelation = await prisma.entityAndUserRelations.findFirst({
+      where: {
+        owner_id: user.id,
+        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        deleted_at: null,
+        EntityRelatedWithUser: {
+          type: EntityTypes.PREMIER_DETENTEUR,
+          raison_sociale: data.raison_sociale,
+          code_postal: data.code_postal,
+          ville: data.ville,
+          deleted_at: null,
+        },
+      },
+      include: { EntityRelatedWithUser: true },
+    });
+    if (existingRelation) {
+      const { EntityRelatedWithUser: existingEntity, ...relation } = existingRelation;
+      res.status(200).send({
+        ok: true,
+        error: '',
+        data: { createdEntity: existingEntity, createdEntityRelation: relation },
+      });
+      return;
+    }
+
     let createdEntity = await prisma.entity.create({
       data,
     });

@@ -8,7 +8,9 @@ import {
 } from '@prisma/client';
 import sendNotificationToUser from '~/service/notifications';
 import { capture } from '~/third-parties/sentry';
+import type { SyncScope } from '~/utils/sync-scope';
 import dayjs from 'dayjs';
+import { SyncRejectedError } from '~/utils/sync-errors';
 
 const FRONTEND_URL = 'https://zacharie.beta.gouv.fr';
 
@@ -21,17 +23,22 @@ export type SyncModifRequestResult = {
 
 /**
  * Sync a single CarcasseModificationRequest from the client.
+ *
+ * Une demande est INDICATIVE : elle ne bloque ni l'intermédiaire ni le SVI. La modification est
+ * appliquée dès la création ; l'examinateur initial en est informé et donne son avis a posteriori.
+ *
  * Server-side, applies authoritative state transitions:
- *  - on create (status=PENDING)            → notify examinateur
- *  - on approve (PENDING → APPROVED)       → mutate the underlying Carcasse, notify requester
- *  - on reject  (PENDING → REJECTED)       → for NEW soft-delete the Carcasse, notify requester
- *  - on cancel  (deleted_at set, was null) → for NEW soft-delete the Carcasse
+ *  - on create (status=PENDING)            → RENAME : renomme la carcasse tout de suite ; notifie l'examinateur
+ *  - on approve (PENDING → APPROVED)       → NEW : signe l'examen initial ; notifie le demandeur
+ *  - on reject  (PENDING → REJECTED)       → NEW : soft-delete la Carcasse (sauf si le SVI l'a inspectée)
+ *  - on cancel  (deleted_at set, was null) → RENAME : rétablit l'ancien numéro ; NEW : soft-delete
  * Validates that approval/rejection comes from the actual examinateur initial.
  * Cancellation only allowed by the requester while still PENDING.
  */
 export async function syncCarcasseModifRequest(
   body: Prisma.CarcasseModificationRequestUncheckedCreateInput,
-  user: User
+  user: User,
+  scope: SyncScope
 ): Promise<SyncModifRequestResult> {
   if (!body.id) throw new Error('id manquant');
   if (!body.zacharie_carcasse_id) throw new Error('zacharie_carcasse_id manquant');
@@ -40,19 +47,49 @@ export async function syncCarcasseModifRequest(
     where: { id: body.id },
   });
 
+  // Deny by default : une demande ne porte que sur une carcasse du périmètre de l'utilisateur.
+  // Sans ce contrôle, un POST /sync suffisait à écrire sur la carcasse d'un tiers (bump de son
+  // updated_at) et à notifier son examinateur initial.
+  const zacharieCarcasseId = existing?.zacharie_carcasse_id ?? body.zacharie_carcasse_id;
+  if (!(await scope.canWriteCarcasse(zacharieCarcasseId))) {
+    throw new SyncRejectedError("Vous n'avez pas accès à cette carcasse");
+  }
+
   // -- CREATE -------------------------------------------------------------
   if (!existing) {
+    const carcasse = await prisma.carcasse.findUnique({
+      where: { zacharie_carcasse_id: zacharieCarcasseId },
+      select: { fei_numero: true },
+    });
+    if (!carcasse) throw new Error('Carcasse introuvable');
+    // L'identité du demandeur est décidée par le serveur : on demande toujours en son nom propre,
+    // pour une entité dont on est membre, et une demande naît toujours PENDING.
+    if (!body.requested_by_entity_id || !scope.entityIds.includes(body.requested_by_entity_id)) {
+      throw new SyncRejectedError('Vous ne pouvez pas agir au nom de cette entité');
+    }
     const created = await prisma.carcasseModificationRequest.create({
       data: {
         ...body,
+        fei_numero: carcasse.fei_numero,
+        requested_by_user_id: user.id,
+        status: CarcasseModificationRequestStatus.PENDING,
+        reviewed_by_user_id: null,
+        reviewed_at: null,
         is_synced: true,
       },
     });
     // Bump the carcasse so other users pull this new request on their next delta sync — the client
     // loads modif requests by carcasse, gated on carcasse.updated_at.
+    // Le renommage est appliqué immédiatement : c'est l'intermédiaire qui lit le numéro physique sur
+    // la carcasse, il fait foi. L'examinateur est notifié pour information.
+    const renameNow =
+      created.type === CarcasseModificationRequestType.BRACELET_RENAME && !!created.numero_bracelet_after;
     await prisma.carcasse.update({
       where: { zacharie_carcasse_id: created.zacharie_carcasse_id },
-      data: { updated_at: new Date() },
+      data: {
+        updated_at: new Date(),
+        ...(renameNow ? { numero_bracelet: created.numero_bracelet_after! } : {}),
+      },
     });
     return { saved: created, isNew: true, transitionedTo: null, justCancelled: false };
   }
@@ -77,18 +114,46 @@ export async function syncCarcasseModifRequest(
     });
     if (!carcasse) throw new Error('Carcasse introuvable');
     if (carcasse.examinateur_initial_user_id !== user.id) {
-      throw new Error("Seul l'examinateur initial peut approuver ou refuser une demande");
+      throw new SyncRejectedError("Seul l'examinateur initial peut approuver ou refuser une demande");
     }
   }
 
   if (justCancelled && existing.requested_by_user_id !== user.id) {
-    throw new Error("Seul l'auteur de la demande peut l'annuler");
+    throw new SyncRejectedError("Seul l'auteur de la demande peut l'annuler");
   }
+
+  // L'identité de la demande n'est posée qu'à la création, et l'issue de la revue appartient au
+  // serveur : une synchro ultérieure ne peut réécrire ni le demandeur, ni la carcasse, ni le statut.
+  const {
+    zacharie_carcasse_id,
+    fei_numero,
+    type,
+    requested_by_user_id,
+    requested_by_entity_id,
+    status,
+    reviewed_by_user_id,
+    reviewed_at,
+    rejection_reason,
+    ...update
+  } = body;
 
   const saved = await prisma.carcasseModificationRequest.update({
     where: { id: body.id },
     data: {
-      ...body,
+      ...update,
+      // Seule une transition depuis PENDING enregistre une décision : un statut déjà résolu ne peut
+      // pas être réécrit, ni renvoyé à PENDING.
+      ...(willTransition
+        ? {
+            status: incomingStatus,
+            reviewed_by_user_id: user.id,
+            reviewed_at: new Date(),
+            rejection_reason:
+              incomingStatus === CarcasseModificationRequestStatus.REJECTED
+                ? (rejection_reason ?? null)
+                : null,
+          }
+        : {}),
       is_synced: true,
     },
   });
@@ -107,11 +172,33 @@ export async function syncCarcasseModifRequest(
   };
 }
 
+// Une carcasse déjà inspectée par le SVI n'est plus ni supprimable ni renommable : un certificat a
+// pu être émis dessus, avec le numéro de marquage figé dedans. La demande étant indicative, on se
+// contente alors d'enregistrer la décision de l'examinateur sans toucher à la carcasse.
+async function isCarcasseFrozenBySvi(zacharieCarcasseId: string): Promise<boolean> {
+  const carcasse = await prisma.carcasse.findUnique({
+    where: { zacharie_carcasse_id: zacharieCarcasseId },
+    select: {
+      svi_ipm1_signed_at: true,
+      svi_ipm2_signed_at: true,
+      svi_closed_at: true,
+      svi_automatic_closed_at: true,
+    },
+  });
+  if (!carcasse) return true;
+  return !!(
+    carcasse.svi_ipm1_signed_at ||
+    carcasse.svi_ipm2_signed_at ||
+    carcasse.svi_closed_at ||
+    carcasse.svi_automatic_closed_at
+  );
+}
+
 /**
  * Side-effects of a modifRequest sync. Runs after the row is saved.
- *   - on create: notify examinateur
- *   - on approve: mutate Carcasse; notify requester
- *   - on reject:  for NEW soft-delete Carcasse; notify requester
+ *   - on create: notify examinateur (le renommage, lui, est déjà appliqué par syncCarcasseModifRequest)
+ *   - on approve: NEW → signe l'examen initial ; notify requester
+ *   - on reject:  NEW → soft-delete Carcasse ; notify requester
  * Returns the (possibly updated) Carcasse so the sync response can include it.
  */
 export async function runCarcasseModifRequestSideEffects(
@@ -132,24 +219,27 @@ export async function runCarcasseModifRequestSideEffects(
   }
 
   if (justCancelled) {
-    // The requester cancelled their own request. For NEW_CARCASSE, also remove the carcasse they had
-    // pre-filled — it only existed because of this request. RENAME: nothing else to do.
+    // The requester cancelled their own request. On défait ce que la demande avait appliqué :
+    // NEW_CARCASSE → la carcasse n'existait que pour cette demande, on la supprime ; RENAME → on
+    // rétablit le numéro d'origine. Rien de tout ça si le SVI est déjà passé dessus.
+    if (await isCarcasseFrozenBySvi(saved.zacharie_carcasse_id)) return;
     if (saved.type === CarcasseModificationRequestType.NEW_CARCASSE) {
       await prisma.carcasse.update({
         where: { zacharie_carcasse_id: saved.zacharie_carcasse_id },
         data: { deleted_at: new Date() },
+      });
+    } else if (saved.numero_bracelet_before) {
+      await prisma.carcasse.update({
+        where: { zacharie_carcasse_id: saved.zacharie_carcasse_id },
+        data: { numero_bracelet: saved.numero_bracelet_before },
       });
     }
     return;
   }
 
   if (transitionedTo === CarcasseModificationRequestStatus.APPROVED) {
-    if (saved.type === CarcasseModificationRequestType.BRACELET_RENAME) {
-      await prisma.carcasse.update({
-        where: { zacharie_carcasse_id: saved.zacharie_carcasse_id },
-        data: { numero_bracelet: saved.numero_bracelet_after! },
-      });
-    } else if (saved.type === CarcasseModificationRequestType.NEW_CARCASSE) {
+    // BRACELET_RENAME : rien à faire, le numéro a été corrigé dès la création de la demande.
+    if (saved.type === CarcasseModificationRequestType.NEW_CARCASSE) {
       await prisma.carcasse.update({
         where: { zacharie_carcasse_id: saved.zacharie_carcasse_id },
         data: {
@@ -166,11 +256,15 @@ export async function runCarcasseModifRequestSideEffects(
   }
 
   if (transitionedTo === CarcasseModificationRequestStatus.REJECTED) {
+    // Un refus de renommage ne rétablit pas l'ancien numéro : c'est l'intermédiaire qui a la
+    // carcasse sous les yeux. Le désaccord est enregistré dans l'historique et notifié.
     if (saved.type === CarcasseModificationRequestType.NEW_CARCASSE) {
-      await prisma.carcasse.update({
-        where: { zacharie_carcasse_id: saved.zacharie_carcasse_id },
-        data: { deleted_at: new Date() },
-      });
+      if (!(await isCarcasseFrozenBySvi(saved.zacharie_carcasse_id))) {
+        await prisma.carcasse.update({
+          where: { zacharie_carcasse_id: saved.zacharie_carcasse_id },
+          data: { deleted_at: new Date() },
+        });
+      }
     }
     await notifyRequester(saved);
     return;
@@ -198,11 +292,12 @@ async function notifyExaminateur(modif: CarcasseModificationRequest) {
   const title = chasseDate ? `Chasse du ${chasseDate}` : 'Demande de modification';
   const link = `${FRONTEND_URL}/app/chasseur/demandes-de-modification`;
 
+  // Ton informatif : la modification est déjà appliquée, l'examinateur n'a rien à débloquer.
   let body: string;
   if (modif.type === CarcasseModificationRequestType.BRACELET_RENAME) {
-    body = `${entityName}, qui traite actuellement les carcasses de votre chasse du ${chasseDate}, signale un numéro de marquage incorrect : ${modif.numero_bracelet_after} au lieu de ${modif.numero_bracelet_before}. Approuvez ou refusez : ${link}`;
+    body = `${entityName}, qui traite actuellement les carcasses de votre chasse du ${chasseDate}, a corrigé un numéro de marquage : ${modif.numero_bracelet_after} au lieu de ${modif.numero_bracelet_before}. La correction est déjà prise en compte et la carcasse continue son parcours. Pour la consulter : ${link}`;
   } else {
-    body = `${entityName}, qui traite actuellement les carcasses de votre chasse du ${chasseDate}, signale une carcasse manquante (${carcasse?.espece ?? 'espèce non renseignée'}, marquage ${carcasse?.numero_bracelet}). Signez l'examen ou refusez : ${link}`;
+    body = `${entityName}, qui traite actuellement les carcasses de votre chasse du ${chasseDate}, a ajouté une carcasse manquante (${carcasse?.espece ?? 'espèce non renseignée'}, marquage ${carcasse?.numero_bracelet}). Elle suit déjà son parcours ; il vous reste à signer son examen initial quand vous le pourrez : ${link}`;
   }
 
   try {
@@ -237,9 +332,20 @@ async function notifyRequester(modif: CarcasseModificationRequest) {
   const bracelet = carcasse?.numero_bracelet ?? '';
 
   const approved = modif.status === CarcasseModificationRequestStatus.APPROVED;
+  const isRename = modif.type === CarcasseModificationRequestType.BRACELET_RENAME;
   const title = bracelet ? `Carcasse numéro ${bracelet}` : 'Demande traitée';
-  const action = approved ? 'approuvé' : 'refusé';
-  const body = `${examinateurName} a ${action} votre demande sur la carcasse ${bracelet} de la chasse du ${chasseDate}${commune ? ` à ${commune}` : ''}.`;
+  const chasse = `la chasse du ${chasseDate}${commune ? ` à ${commune}` : ''}`;
+  // Le retour de l'examinateur est un avis : seul le refus d'un ajout de carcasse a un effet.
+  let body: string;
+  if (isRename) {
+    body = approved
+      ? `${examinateurName} a confirmé le numéro de marquage ${bracelet} que vous avez corrigé sur ${chasse}.`
+      : `${examinateurName} conteste le numéro de marquage ${bracelet} que vous avez corrigé sur ${chasse}. Le numéro reste celui que vous avez relevé : vérifiez-le sur la carcasse.${modif.rejection_reason ? ` Motif : ${modif.rejection_reason}` : ''}`;
+  } else {
+    body = approved
+      ? `${examinateurName} a signé l'examen initial de la carcasse ${bracelet} que vous avez ajoutée sur ${chasse}.`
+      : `${examinateurName} a refusé la carcasse ${bracelet} que vous avez ajoutée sur ${chasse}.${modif.rejection_reason ? ` Motif : ${modif.rejection_reason}` : ''}`;
+  }
 
   try {
     await sendNotificationToUser({

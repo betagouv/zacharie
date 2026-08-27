@@ -11,6 +11,7 @@ import {
   type CarcasseModificationRequest,
   type User,
 } from '@prisma/client';
+import { fakeSyncScope } from './fake-sync-scope';
 
 vi.mock('~/service/notifications', () => ({
   default: vi.fn().mockResolvedValue(undefined),
@@ -79,6 +80,9 @@ const renamePending = {
   updated_at: new Date('2026-04-22T10:00:00Z'),
 } as unknown as CarcasseModificationRequest;
 
+// Périmètre permissif : le cloisonnement est testé dans permissions-sync-write.test.ts.
+const scope = fakeSyncScope({ entityIds: ['entity-etg'] });
+
 const newPending = {
   ...renamePending,
   id: 'mod-2',
@@ -97,11 +101,11 @@ beforeEach(() => {
 
 describe('syncCarcasseModifRequest — validation', () => {
   test('missing id → throws', async () => {
-    await expect(syncCarcasseModifRequest({} as any, examinateur)).rejects.toThrow('id manquant');
+    await expect(syncCarcasseModifRequest({} as any, examinateur, scope)).rejects.toThrow('id manquant');
   });
 
   test('missing zacharie_carcasse_id → throws', async () => {
-    await expect(syncCarcasseModifRequest({ id: 'mod-x' } as any, examinateur)).rejects.toThrow(
+    await expect(syncCarcasseModifRequest({ id: 'mod-x' } as any, examinateur, scope)).rejects.toThrow(
       'zacharie_carcasse_id manquant'
     );
   });
@@ -110,9 +114,10 @@ describe('syncCarcasseModifRequest — validation', () => {
 describe('syncCarcasseModifRequest — create', () => {
   test('creates a new modif request with is_synced: true', async () => {
     vi.mocked(prisma.carcasseModificationRequest.findUnique).mockResolvedValueOnce(null);
+    vi.mocked(prisma.carcasse.findUnique).mockResolvedValueOnce(baseCarcasse);
     vi.mocked(prisma.carcasseModificationRequest.create).mockResolvedValueOnce(renamePending);
 
-    const result = await syncCarcasseModifRequest({ ...renamePending } as any, requester);
+    const result = await syncCarcasseModifRequest({ ...renamePending } as any, requester, scope);
 
     expect(prisma.carcasseModificationRequest.create).toHaveBeenCalledOnce();
     const createArgs = vi.mocked(prisma.carcasseModificationRequest.create).mock.calls[0][0];
@@ -121,6 +126,30 @@ describe('syncCarcasseModifRequest — create', () => {
     expect(result.isNew).toBe(true);
     expect(result.transitionedTo).toBeNull();
     expect(result.justCancelled).toBe(false);
+  });
+
+  test('RENAME créé → la carcasse est renommée tout de suite', async () => {
+    vi.mocked(prisma.carcasseModificationRequest.findUnique).mockResolvedValueOnce(null);
+    vi.mocked(prisma.carcasse.findUnique).mockResolvedValueOnce(baseCarcasse);
+    vi.mocked(prisma.carcasseModificationRequest.create).mockResolvedValueOnce(renamePending);
+
+    await syncCarcasseModifRequest({ ...renamePending } as any, requester, scope);
+
+    const call = vi.mocked(prisma.carcasse.update).mock.calls[0][0] as any;
+    expect(call.where).toEqual({ zacharie_carcasse_id: 'ZC-1' });
+    expect(call.data.numero_bracelet).toBe('BR-NEW');
+  });
+
+  test('NEW_CARCASSE créé → pas de renommage, seulement le bump updated_at', async () => {
+    vi.mocked(prisma.carcasseModificationRequest.findUnique).mockResolvedValueOnce(null);
+    vi.mocked(prisma.carcasse.findUnique).mockResolvedValueOnce(baseCarcasse);
+    vi.mocked(prisma.carcasseModificationRequest.create).mockResolvedValueOnce(newPending);
+
+    await syncCarcasseModifRequest({ ...newPending } as any, requester, scope);
+
+    const call = vi.mocked(prisma.carcasse.update).mock.calls[0][0] as any;
+    expect(call.data.numero_bracelet).toBeUndefined();
+    expect(call.data.updated_at).toBeInstanceOf(Date);
   });
 });
 
@@ -140,7 +169,8 @@ describe('syncCarcasseModifRequest — approval', () => {
         reviewed_by_user_id: examinateur.id,
         reviewed_at: new Date(),
       } as any,
-      examinateur
+      examinateur,
+      scope
     );
 
     expect(result.transitionedTo).toBe(CarcasseModificationRequestStatus.APPROVED);
@@ -159,7 +189,8 @@ describe('syncCarcasseModifRequest — approval', () => {
           status: CarcasseModificationRequestStatus.APPROVED,
           reviewed_by_user_id: stranger.id,
         } as any,
-        stranger
+        stranger,
+        scope
       )
     ).rejects.toThrow(/examinateur initial/i);
 
@@ -173,7 +204,8 @@ describe('syncCarcasseModifRequest — approval', () => {
     await expect(
       syncCarcasseModifRequest(
         { ...renamePending, status: CarcasseModificationRequestStatus.APPROVED } as any,
-        examinateur
+        examinateur,
+        scope
       )
     ).rejects.toThrow('Carcasse introuvable');
   });
@@ -196,10 +228,18 @@ describe('syncCarcasseModifRequest — rejection', () => {
         reviewed_at: new Date(),
         rejection_reason: 'pas le bon numéro',
       } as any,
-      examinateur
+      examinateur,
+      scope
     );
 
     expect(result.transitionedTo).toBe(CarcasseModificationRequestStatus.REJECTED);
+    // La décision est signée par le serveur : reviewed_by = l'utilisateur qui refuse.
+    const updateArgs = vi.mocked(prisma.carcasseModificationRequest.update).mock.calls[0][0];
+    expect(updateArgs.data).toMatchObject({
+      status: CarcasseModificationRequestStatus.REJECTED,
+      reviewed_by_user_id: examinateur.id,
+      rejection_reason: 'pas le bon numéro',
+    });
   });
 
   test('non-examinateur rejecting → throws', async () => {
@@ -209,7 +249,8 @@ describe('syncCarcasseModifRequest — rejection', () => {
     await expect(
       syncCarcasseModifRequest(
         { ...renamePending, status: CarcasseModificationRequestStatus.REJECTED } as any,
-        stranger
+        stranger,
+        scope
       )
     ).rejects.toThrow(/examinateur initial/i);
   });
@@ -225,7 +266,8 @@ describe('syncCarcasseModifRequest — cancellation', () => {
 
     const result = await syncCarcasseModifRequest(
       { ...renamePending, deleted_at: new Date() } as any,
-      requester
+      requester,
+      scope
     );
 
     expect(result.justCancelled).toBe(true);
@@ -236,7 +278,7 @@ describe('syncCarcasseModifRequest — cancellation', () => {
     vi.mocked(prisma.carcasseModificationRequest.findUnique).mockResolvedValueOnce(renamePending);
 
     await expect(
-      syncCarcasseModifRequest({ ...renamePending, deleted_at: new Date() } as any, stranger)
+      syncCarcasseModifRequest({ ...renamePending, deleted_at: new Date() } as any, stranger, scope)
     ).rejects.toThrow(/auteur de la demande/i);
 
     expect(prisma.carcasseModificationRequest.update).not.toHaveBeenCalled();
@@ -255,7 +297,8 @@ describe('syncCarcasseModifRequest — cancellation', () => {
         status: CarcasseModificationRequestStatus.APPROVED,
         deleted_at: new Date(),
       } as any,
-      requester
+      requester,
+      scope
     );
 
     expect(result.justCancelled).toBe(false);
@@ -272,7 +315,8 @@ describe('syncCarcasseModifRequest — idempotence', () => {
 
     const result = await syncCarcasseModifRequest(
       { ...renamePending, status: CarcasseModificationRequestStatus.APPROVED } as any,
-      examinateur
+      examinateur,
+      scope
     );
 
     expect(result.transitionedTo).toBeNull();
@@ -289,11 +333,15 @@ describe('syncCarcasseModifRequest — idempotence', () => {
 
     const result = await syncCarcasseModifRequest(
       { ...renamePending, status: CarcasseModificationRequestStatus.PENDING } as any,
-      examinateur
+      examinateur,
+      scope
     );
 
-    // willTransition requires existing.status === PENDING; here existing is APPROVED → not a transition.
+    // willTransition requires existing.status === PENDING; here existing is APPROVED → not a
+    // transition, et le statut du client n'est pas réécrit en base.
     expect(result.transitionedTo).toBeNull();
+    const updateArgs = vi.mocked(prisma.carcasseModificationRequest.update).mock.calls[0][0];
+    expect(updateArgs.data).not.toHaveProperty('status');
   });
 });
 
@@ -322,8 +370,7 @@ describe('runCarcasseModifRequestSideEffects — create', () => {
 });
 
 describe('runCarcasseModifRequestSideEffects — approval', () => {
-  test('RENAME approved → updates numero_bracelet, notifies requester', async () => {
-    vi.mocked(prisma.carcasse.update).mockResolvedValue({} as any);
+  test('RENAME approved → aucune mutation (renommage déjà fait), notifie le demandeur', async () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(requester);
     vi.mocked(prisma.carcasse.findUnique).mockResolvedValueOnce(baseCarcasse);
 
@@ -334,12 +381,7 @@ describe('runCarcasseModifRequestSideEffects — approval', () => {
       justCancelled: false,
     });
 
-    expect(prisma.carcasse.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { zacharie_carcasse_id: 'ZC-1' },
-        data: { numero_bracelet: 'BR-NEW' },
-      })
-    );
+    expect(prisma.carcasse.update).not.toHaveBeenCalled();
     expect(sendNotificationToUser).toHaveBeenCalledOnce();
   });
 
@@ -379,6 +421,8 @@ describe('runCarcasseModifRequestSideEffects — rejection', () => {
   test('NEW rejected → soft-deletes carcasse', async () => {
     vi.mocked(prisma.carcasse.update).mockResolvedValue({} as any);
     vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(requester);
+    // 1er findUnique : contrôle "carcasse gelée par le SVI ?" ; 2e : notifyRequester.
+    vi.mocked(prisma.carcasse.findUnique).mockResolvedValueOnce(baseCarcasse);
     vi.mocked(prisma.carcasse.findUnique).mockResolvedValueOnce(baseCarcasse);
 
     await runCarcasseModifRequestSideEffects({
@@ -391,6 +435,25 @@ describe('runCarcasseModifRequestSideEffects — rejection', () => {
     const call = vi.mocked(prisma.carcasse.update).mock.calls[0][0];
     expect(call.where).toEqual({ zacharie_carcasse_id: 'ZC-1' });
     expect(call.data.deleted_at).toBeInstanceOf(Date);
+  });
+
+  test('NEW rejected après inspection SVI → carcasse conservée, refus seulement notifié', async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(requester);
+    vi.mocked(prisma.carcasse.findUnique).mockResolvedValueOnce({
+      ...baseCarcasse,
+      svi_ipm1_signed_at: new Date('2026-05-02T09:00:00Z'),
+    });
+    vi.mocked(prisma.carcasse.findUnique).mockResolvedValueOnce(baseCarcasse);
+
+    await runCarcasseModifRequestSideEffects({
+      saved: { ...newPending, status: CarcasseModificationRequestStatus.REJECTED } as any,
+      isNew: false,
+      transitionedTo: CarcasseModificationRequestStatus.REJECTED,
+      justCancelled: false,
+    });
+
+    expect(prisma.carcasse.update).not.toHaveBeenCalled();
+    expect(sendNotificationToUser).toHaveBeenCalledOnce();
   });
 
   test('RENAME rejected → no carcasse mutation, just notify', async () => {
@@ -412,6 +475,7 @@ describe('runCarcasseModifRequestSideEffects — rejection', () => {
 describe('runCarcasseModifRequestSideEffects — cancellation', () => {
   test('NEW cancelled → soft-deletes carcasse, no requester notification', async () => {
     vi.mocked(prisma.carcasse.update).mockResolvedValue({} as any);
+    vi.mocked(prisma.carcasse.findUnique).mockResolvedValueOnce(baseCarcasse);
 
     await runCarcasseModifRequestSideEffects({
       saved: newPending,
@@ -425,7 +489,10 @@ describe('runCarcasseModifRequestSideEffects — cancellation', () => {
     expect(sendNotificationToUser).not.toHaveBeenCalled();
   });
 
-  test('RENAME cancelled → no mutation, no notification', async () => {
+  test('RENAME cancelled → rétablit le numéro de marquage précédent', async () => {
+    vi.mocked(prisma.carcasse.update).mockResolvedValue({} as any);
+    vi.mocked(prisma.carcasse.findUnique).mockResolvedValueOnce(baseCarcasse);
+
     await runCarcasseModifRequestSideEffects({
       saved: renamePending,
       isNew: false,
@@ -433,8 +500,25 @@ describe('runCarcasseModifRequestSideEffects — cancellation', () => {
       justCancelled: true,
     });
 
-    expect(prisma.carcasse.update).not.toHaveBeenCalled();
+    const call = vi.mocked(prisma.carcasse.update).mock.calls[0][0];
+    expect(call.data).toEqual({ numero_bracelet: 'BR-OLD' });
     expect(sendNotificationToUser).not.toHaveBeenCalled();
+  });
+
+  test('annulation après inspection SVI → aucune mutation de la carcasse', async () => {
+    vi.mocked(prisma.carcasse.findUnique).mockResolvedValueOnce({
+      ...baseCarcasse,
+      svi_closed_at: new Date('2026-05-02T09:00:00Z'),
+    });
+
+    await runCarcasseModifRequestSideEffects({
+      saved: newPending,
+      isNew: false,
+      transitionedTo: null,
+      justCancelled: true,
+    });
+
+    expect(prisma.carcasse.update).not.toHaveBeenCalled();
   });
 });
 
@@ -506,15 +590,37 @@ describe('notification content', () => {
     expect(call!.title).toMatch(/^Carcasse numéro /);
     expect(call!.body).toContain('Jean Dupont');
     expect(call!.body).toContain('Villette');
-    expect(call!.body).toMatch(/approuvé/);
+    expect(call!.body).toMatch(/confirmé/);
   });
 
-  test('notifyRequester for rejection says "refusé"', async () => {
+  test('notifyRequester pour un refus de renommage dit que le numéro reste inchangé', async () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(requester);
     vi.mocked(prisma.carcasse.findUnique).mockResolvedValueOnce(baseCarcasse);
 
     await runCarcasseModifRequestSideEffects({
-      saved: { ...renamePending, status: CarcasseModificationRequestStatus.REJECTED } as any,
+      saved: {
+        ...renamePending,
+        status: CarcasseModificationRequestStatus.REJECTED,
+        rejection_reason: 'je lis bien BR-OLD',
+      } as any,
+      isNew: false,
+      transitionedTo: CarcasseModificationRequestStatus.REJECTED,
+      justCancelled: false,
+    });
+
+    const call = vi.mocked(sendNotificationToUser).mock.calls.find((c) => c[0].user.id === requester.id)?.[0];
+    expect(call!.body).toMatch(/conteste/);
+    expect(call!.body).toMatch(/reste celui que vous avez relevé/);
+    expect(call!.body).toContain('je lis bien BR-OLD');
+  });
+
+  test('notifyRequester pour un refus de carcasse ajoutée dit "refusé"', async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(requester);
+    vi.mocked(prisma.carcasse.findUnique).mockResolvedValueOnce(baseCarcasse);
+    vi.mocked(prisma.carcasse.findUnique).mockResolvedValueOnce(baseCarcasse);
+
+    await runCarcasseModifRequestSideEffects({
+      saved: { ...newPending, status: CarcasseModificationRequestStatus.REJECTED } as any,
       isNew: false,
       transitionedTo: CarcasseModificationRequestStatus.REJECTED,
       justCancelled: false,

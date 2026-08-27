@@ -118,7 +118,7 @@ export default function MesInformationsDeChasse({
     <div className="fr-container fr-container--fluid fr-my-md-14v">
       <title>{`${title} | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}</title>
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
-        <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
+        <div className="fr-col-12 fr-col-md-10 p-4 pb-32 md:p-0">
           <h1 className="fr-h2 fr-mb-2w">{calloutTitle}</h1>
           <Alert
             className="mb-8 bg-white"
@@ -269,7 +269,7 @@ export default function MesInformationsDeChasse({
             </div>
           )}
 
-          <div className="fixed bottom-16 left-0 z-50 flex w-full flex-col p-6 pb-2 shadow-2xl md:relative md:bottom-0 md:w-auto md:items-center md:shadow-none">
+          <div className="fixed bottom-16 left-0 z-50 flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:relative md:bottom-0 md:w-auto md:items-center md:bg-transparent md:shadow-none">
             <ButtonsGroup
               inlineLayoutWhen="always"
               buttons={[

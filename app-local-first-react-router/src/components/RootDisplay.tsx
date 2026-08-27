@@ -7,7 +7,7 @@ import SearchInput from '@app/components/SearchInput';
 import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { useRef, useState } from 'react';
 import API from '@app/services/api';
-import { useSearchParams } from 'react-router';
+import { useLocation, useSearchParams } from 'react-router';
 import { getUserOnboardingRoute } from '@app/utils/user-onboarded.client';
 import { disconnect } from '@app/utils/disconnect';
 
@@ -29,6 +29,8 @@ export default function RootDisplay({
   contactLink?: string;
 }) {
   const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const isInApp = location.pathname.startsWith('/app');
   const embedded = searchParams.get('embedded') === 'true';
   const user = useMostFreshUser('RootDisplay ' + id);
   const isOnline = useIsOnline();
@@ -43,8 +45,8 @@ export default function RootDisplay({
         href: '#',
       },
       iconId: 'ri-account-box-line',
-      text: user?.email || '',
-    },
+      text: isInApp ? user?.email || 'Mon espace' : 'Mon espace',
+    } satisfies HeaderProps.QuickAccessItem,
     {
       iconId: 'ri-logout-box-line',
       buttonProps: {
