@@ -57,7 +57,7 @@ router.get(
     const afterDate = Number(after) ? new Date(Number(after)) : undefined;
 
     // Base query conditions : périmètre d'accès role-aware (partagé avec /refusees/:fei_numero).
-    const accessWhere = await getCarcasseAccessWhere(req.user);
+    const accessWhere = await getCarcasseAccessWhereForUser(req.user);
     if (!accessWhere) {
       capture(`User role not supported: ${req.user.roles.join(', ')}`, { user: req.user });
       res.status(403).send({
@@ -185,7 +185,7 @@ router.get(
       return;
     }
 
-    const accessWhere = await getCarcasseAccessWhere(req.user);
+    const accessWhere = await getCarcasseAccessWhereForUser(req.user);
     if (!accessWhere) {
       capture(`User role not supported: ${req.user.roles.join(', ')}`, { user: req.user });
       res.status(403).send({ ok: false, data: null, error: "Vous n'avez pas les permissions." });
