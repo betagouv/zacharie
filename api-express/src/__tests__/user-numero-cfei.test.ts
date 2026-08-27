@@ -93,7 +93,7 @@ describe('POST /user/:id — numero_cfei', () => {
 
   test("pendant l'inscription (onboarded_at null) → pas de notice interne", async () => {
     const { sendEmail } = await mocks();
-    const enCoursDInscription = { ...chasseur, onboarded_at: null };
+    const enCoursDInscription = { ...chasseur, onboarded_at: null as Date | null };
     vi.mocked(prisma.user.update).mockResolvedValue({
       ...enCoursDInscription,
       numero_cfei: 'CFEI-056-24-123',
