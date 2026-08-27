@@ -338,6 +338,56 @@ function AddDispatchGroupCard({ disabled, onClick }: { disabled: boolean; onClic
   );
 }
 
+// Une carcasse dans l'étape 2 : même gabarit que les cartes de carcasses du reste de l'app
+// (bordure + fond bleu clair), en version compacte sur une ligne.
+function CarcasseChip({
+  carcasse,
+  variant,
+  canEdit,
+  autreVenteDon,
+  onClick,
+}: {
+  carcasse: Carcasse;
+  variant: 'retenue' | 'retiree';
+  canEdit: boolean;
+  autreVenteDon?: string;
+  onClick: () => void;
+}) {
+  const retenue = variant === 'retenue';
+  return (
+    <button
+      type="button"
+      disabled={!canEdit}
+      aria-label={`${retenue ? 'Retirer' : 'Remettre'} ${carcasse.espece} N° ${carcasse.numero_bracelet}`}
+      onClick={onClick}
+      className={[
+        'flex min-h-11 w-full items-center gap-2 rounded border px-3 py-2 text-left transition-colors duration-150 sm:w-auto',
+        canEdit ? 'cursor-pointer' : 'cursor-not-allowed',
+        retenue
+          ? 'border-action-high-blue-france text-action-high-blue-france border-solid bg-blue-100 hover:bg-blue-50'
+          : 'border-dashed border-gray-400 bg-white text-gray-700 hover:bg-gray-50',
+      ].join(' ')}
+    >
+      <span className="flex-1 text-sm">
+        <span className="font-bold">
+          {carcasse.espece}
+          {getCarcasseNombre(carcasse)}
+        </span>
+        <span className="ml-2">N° {carcasse.numero_bracelet}</span>
+        {autreVenteDon && <span className="ml-2 text-gray-600">chez {autreVenteDon}</span>}
+      </span>
+      <span
+        className={[
+          'shrink-0',
+          retenue ? 'fr-icon-close-line' : 'fr-icon-arrow-go-back-line',
+          'fr-icon--sm',
+        ].join(' ')}
+        aria-hidden="true"
+      />
+    </button>
+  );
+}
+
 // === Étape 2 — Carcasses ===
 // Dans la très grande majorité des cas tout part chez le même destinataire : on propose donc
 // « toutes » par défaut, et le chasseur retire une à une les carcasses qui restent à attribuer.
@@ -428,25 +478,13 @@ function CarcassesStep({
               className="flex flex-col items-stretch gap-2 sm:flex-row sm:flex-wrap sm:items-start"
             >
               {retenues.map((carcasse) => (
-                <Tag
+                <CarcasseChip
                   key={carcasse.zacharie_carcasse_id}
-                  as="button"
-                  dismissible
-                  className="min-h-11 w-full sm:w-auto"
-                  nativeButtonProps={{
-                    disabled: !canEdit,
-                    'aria-label': `Retirer ${carcasse.espece} N° ${carcasse.numero_bracelet}`,
-                    onClick: () => onToggleCarcasse(carcasse.zacharie_carcasse_id),
-                  }}
-                >
-                  <span className="flex-1 text-left">
-                    <span className="font-bold">
-                      {carcasse.espece}
-                      {getCarcasseNombre(carcasse)}
-                    </span>
-                    <span className="ml-2 font-normal">N° {carcasse.numero_bracelet}</span>
-                  </span>
-                </Tag>
+                  carcasse={carcasse}
+                  variant="retenue"
+                  canEdit={canEdit}
+                  onClick={() => onToggleCarcasse(carcasse.zacharie_carcasse_id)}
+                />
               ))}
             </div>
           </div>
@@ -464,36 +502,16 @@ function CarcassesStep({
                 id="vente-don-carcasses-retirees"
                 className="flex flex-col items-stretch gap-2 sm:flex-row sm:flex-wrap sm:items-start"
               >
-                {retirees.map((carcasse) => {
-                  const autreVenteDon = carcasseToGroupLabel[carcasse.zacharie_carcasse_id];
-                  return (
-                    <Tag
-                      key={carcasse.zacharie_carcasse_id}
-                      as="button"
-                      className="min-h-11 w-full border border-dashed border-gray-400 bg-transparent text-gray-700 sm:w-auto"
-                      nativeButtonProps={{
-                        disabled: !canEdit,
-                        'aria-label': `Remettre ${carcasse.espece} N° ${carcasse.numero_bracelet}`,
-                        onClick: () => onToggleCarcasse(carcasse.zacharie_carcasse_id),
-                      }}
-                    >
-                      <span className="flex-1 text-left">
-                        <span className="font-bold">
-                          {carcasse.espece}
-                          {getCarcasseNombre(carcasse)}
-                        </span>
-                        <span className="ml-2 font-normal">N° {carcasse.numero_bracelet}</span>
-                        {autreVenteDon && (
-                          <span className="ml-2 font-normal text-gray-600">chez {autreVenteDon}</span>
-                        )}
-                      </span>
-                      <span
-                        className="fr-icon-arrow-go-back-line fr-icon--sm ml-2 shrink-0"
-                        aria-hidden="true"
-                      />
-                    </Tag>
-                  );
-                })}
+                {retirees.map((carcasse) => (
+                  <CarcasseChip
+                    key={carcasse.zacharie_carcasse_id}
+                    carcasse={carcasse}
+                    variant="retiree"
+                    canEdit={canEdit}
+                    autreVenteDon={carcasseToGroupLabel[carcasse.zacharie_carcasse_id]}
+                    onClick={() => onToggleCarcasse(carcasse.zacharie_carcasse_id)}
+                  />
+                ))}
               </div>
             )}
           </div>
