@@ -84,13 +84,8 @@ export default function NouvelleFiche() {
   const [validationError, setValidationError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Convert URLSearchParams to plain object for Zod validation.
-    // `carcasse` peut être répété (une carcasse par occurrence) : getAll les garde toutes,
-    // là où Object.fromEntries(entries()) n'en garderait que la dernière.
-    const searchParamsObject = {
-      ...Object.fromEntries(searchParams.entries()),
-      carcasse: searchParams.getAll('carcasse'),
-    };
+    // Convert URLSearchParams to plain object for Zod validation
+    const searchParamsObject = Object.fromEntries(searchParams.entries());
 
     // Validate search params with Zod
     const validationResult = searchParamsSchema.safeParse(searchParamsObject);

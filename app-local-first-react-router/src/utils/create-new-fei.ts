@@ -3,7 +3,6 @@ import { syncData } from '@app/utils/sync-data';
 import useUser from '@app/zustand/user';
 import { Fei, UserRoles } from '@prisma/client';
 import dayjs from 'dayjs';
-import { v4 as uuidv4 } from 'uuid';
 import { createHistoryInput } from './create-history-entry';
 
 type InitialParamsProps = {
@@ -23,11 +22,7 @@ export async function createNewFei(props?: InitialParamsProps): Promise<Fei> {
   if (!isExaminateurInitial) {
     throw new Error('Forbidden');
   }
-  // suffixe aléatoire pour garantir l'unicité : HHmmss seul ne discrimine pas deux fiches créées
-  // la même seconde (cas d'une création par lot, notamment via API), et une collision de numéro
-  // écraserait silencieusement la fiche existante côté sync.
-  const randomSuffix = uuidv4().slice(0, 4).toUpperCase();
-  const newFeiNumero = `ZACH-${dayjs().format('YYYYMMDD')}-${user.id}-${dayjs().format('HHmmss')}-${randomSuffix}`;
+  const newFeiNumero = `ZACH-${dayjs().format('YYYYMMDD')}-${user.id}-${dayjs().format('HHmmss')}`;
 
   const newFei: Fei = {
     id: Date.now(),

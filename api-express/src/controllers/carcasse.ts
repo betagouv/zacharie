@@ -33,10 +33,6 @@ const zodQuerySchema = z.object({
   withDeleted: z.string(),
 });
 
-// Périmètre d'accès aux carcasses selon le rôle : voir `~/utils/carcasse-access`. Alias local
-// pour préserver les appels existants dans ce contrôleur.
-const getCarcasseAccessWhere = getCarcasseAccessWhereForUser;
-
 router.get(
   '/',
   passport.authenticate('user', { session: false }),
@@ -67,7 +63,7 @@ router.get(
     const afterDate = Number(after) ? new Date(Number(after)) : undefined;
 
     // Base query conditions : périmètre d'accès role-aware (partagé avec /refusees/:fei_numero).
-    const accessWhere = await getCarcasseAccessWhere(req.user);
+    const accessWhere = await getCarcasseAccessWhereForUser(req.user);
     if (!accessWhere) {
       capture(`User role not supported: ${req.user.roles.join(', ')}`, { user: req.user });
       res.status(403).send({
@@ -195,7 +191,7 @@ router.get(
       return;
     }
 
-    const accessWhere = await getCarcasseAccessWhere(req.user);
+    const accessWhere = await getCarcasseAccessWhereForUser(req.user);
     if (!accessWhere) {
       capture(`User role not supported: ${req.user.roles.join(', ')}`, { user: req.user });
       res.status(403).send({ ok: false, data: null, error: "Vous n'avez pas les permissions." });
