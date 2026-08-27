@@ -10,6 +10,7 @@ import { dateApprobationDuJour } from '../../utils/date-approbation';
 import {
   openVenteDon,
   allerAEtape,
+  choisirRepartition,
   choisirStockage,
   choisirTransport,
   enregistrerVenteDon,
@@ -96,7 +97,8 @@ test("Autre membre de l'Association voit le bloc Vente / don sur la fiche", asyn
 
   // On ne transmet que le Daim : on retire le Cerf de la vente / du don.
   await allerAEtape(page, 'Carcasses');
-  const cerfToggle = venteDonModal(page).getByRole('checkbox', { name: /Cerf/ });
+  await choisirRepartition(page, 'partie');
+  const cerfToggle = venteDonModal(page).getByRole('button', { name: /^Retirer Cerf/ });
   await cerfToggle.scrollIntoViewIfNeeded();
   await cerfToggle.click();
 
@@ -125,7 +127,7 @@ test("Autre membre de l'Association voit le bloc Vente / don sur la fiche", asyn
 
   // Cœur du test : sans le fix, `isPremierDetenteur` aurait été `false` et le
   // bloc Vente / don aurait été masqué. Avec le fix, il est visible.
-  // (Le titre « Vente / don » n'est rendu QUE par `{showVenteDon && isPremierDetenteur}`
+  // (Le titre « Vente ou don » n'est rendu QUE par `{showVenteDon && isPremierDetenteur}`
   // dans chasseur-fei.tsx — aucun autre composant ne l'émet.)
-  await expect(page.getByRole('heading', { name: 'Vente / don' })).toBeVisible({ timeout: 15000 });
+  await expect(page.getByRole('heading', { name: 'Vente ou don' })).toBeVisible({ timeout: 15000 });
 });

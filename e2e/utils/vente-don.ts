@@ -23,9 +23,15 @@ export async function openVenteDon(page: Page) {
   await expect(venteDonModal(page)).toBeVisible({ timeout: 10000 });
 }
 
+// Les radios DSFR « rich » couvrent tout le libellé d'un calque : cliquer un <span> à l'intérieur
+// du <label> est intercepté. On remonte donc toujours au <label>, seul élément vraiment cliquable.
+function radioLabel(page: Page, texte: string) {
+  return venteDonModal(page).getByText(texte).first().locator('xpath=ancestor-or-self::label[1]');
+}
+
 export async function choisirRepartition(page: Page, choix: 'toutes' | 'partie') {
   const label = choix === 'toutes' ? 'Toutes mes carcasses' : 'Une partie seulement';
-  const radio = venteDonModal(page).getByText(label).first();
+  const radio = radioLabel(page, label);
   await radio.scrollIntoViewIfNeeded();
   await radio.click();
 }
@@ -81,7 +87,7 @@ export async function selectCcg(page: Page, optionName: string | RegExp) {
 
 export async function choisirStockage(page: Page, stockage: 'aucun' | 'ccg') {
   const label = stockage === 'aucun' ? 'Pas de stockage' : 'Carcasses déposées dans une chambre froide';
-  const radio = venteDonModal(page).getByText(label).first();
+  const radio = radioLabel(page, label);
   await radio.scrollIntoViewIfNeeded();
   await radio.click();
 }
@@ -91,7 +97,7 @@ export async function choisirTransport(page: Page, transport: 'moi' | 'collecteu
     transport === 'moi'
       ? 'Je transporte les carcasses moi'
       : 'Le transport est réalisé par un collecteur professionnel';
-  const radio = venteDonModal(page).getByText(label).first();
+  const radio = radioLabel(page, label);
   await radio.scrollIntoViewIfNeeded();
   await radio.click();
 }

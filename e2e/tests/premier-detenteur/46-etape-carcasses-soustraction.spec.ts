@@ -122,7 +122,7 @@ test('Les carcasses retirées restent à attribuer après validation', async ({ 
   await choisirTransport(page, 'moi');
   await enregistrerVenteDon(page);
 
-  await expect(page.getByText(/Il reste 1 lot — créer une autre vente ou un don/)).toBeVisible();
-  await expect(page.getByRole('button', { name: /Créer une autre vente ou un don/ })).toBeVisible();
+  await expect(page.getByText(/Il reste 1 lot/)).toBeVisible();
+  await expect(page.getByRole('button', { name: /Ajouter une vente ou un don/ })).toBeVisible();
   await expect(page.getByRole('button', { name: /^Transmettre 3 carcasses sur/ })).toBeVisible();
 });
