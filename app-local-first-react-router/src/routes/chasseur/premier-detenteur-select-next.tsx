@@ -248,9 +248,6 @@ function DispatchGroupCard({
   const transportLabel = getTransportLabel(group, entities);
   const details = (
     <div className="flex flex-1 flex-col">
-      {variant === 'draft' && totalGroups > 1 && (
-        <span className="text-xs text-gray-500">Vente / don {index + 1}</span>
-      )}
       <p className="text-base font-bold">{title}</p>
       {groupCarcasses.length === 0 ? (
         <Badge
@@ -303,15 +300,6 @@ function DispatchGroupCard({
             title="Modifier"
             priority="tertiary no outline"
           />
-          {totalGroups > 1 && (
-            <Button
-              type="button"
-              iconId="fr-icon-delete-bin-line"
-              onClick={onDelete}
-              title="Supprimer"
-              priority="tertiary no outline"
-            />
-          )}
         </div>
       )}
     </div>
@@ -1630,7 +1618,7 @@ export default function DestinataireSelectPremierDetenteur({
             {dispatchGroups.length > 0 && unassignedCarcasses.length > 0 && (
               <Alert
                 severity="warning"
-                title={`Il reste ${formatCarcasseLotCount(unassignedCarcasses)} — créer une autre vente ou un don\u00A0?`}
+                title={`Il reste ${formatCarcasseLotCount(unassignedCarcasses)}`}
                 description={
                   <>
                     <div className="mt-1 flex flex-wrap gap-1">
@@ -1643,18 +1631,6 @@ export default function DestinataireSelectPremierDetenteur({
                         </Tag>
                       ))}
                     </div>
-                    {canAddDispatchGroup && (
-                      <Button
-                        type="button"
-                        className="mt-3"
-                        priority="secondary"
-                        iconId="fr-icon-add-line"
-                        disabled={!!disabled}
-                        nativeButtonProps={{ onClick: openAddDispatchGroup }}
-                      >
-                        Créer une autre vente ou un don
-                      </Button>
-                    )}
                   </>
                 }
               />

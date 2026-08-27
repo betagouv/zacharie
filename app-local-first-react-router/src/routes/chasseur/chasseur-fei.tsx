@@ -709,7 +709,8 @@ function FEIChasseurLoaded() {
                               });
                             }}
                           >
-                            {fei.consommateur_final_usage_domestique ? (
+                            {/* TODO : a réactiver plus tard pour l'intégrer dans "vente ou don" */}
+                            {/* {fei.consommateur_final_usage_domestique ? (
                               <>
                                 <u className="inline">Cliquez là</u> si les carcasses sont destinées à une
                                 mise sur le marché.
@@ -719,7 +720,7 @@ function FEIChasseurLoaded() {
                                 <u className="inline">Cliquez là</u> si vous êtes le consommateur final, ou si
                                 vous en faites un usage domestique privé.
                               </>
-                            )}
+                            )} */}
                           </button>
                         </>
                       ) : (
@@ -796,7 +797,7 @@ function FEIChasseurLoaded() {
                   alors les ventes / dons déjà faits. */}
               {showVenteDon && isPremierDetenteur && (
                 <div className="bg-white p-4 md:p-8">
-                  <h4 className="fr-h5">Vente / don</h4>
+                  <h4 className="fr-h5">Vente ou don</h4>
                   <DestinataireSelectPremierDetenteur
                     canEdit={canEditAsPremierDetenteur}
                     submitRef={destinataireRef}
