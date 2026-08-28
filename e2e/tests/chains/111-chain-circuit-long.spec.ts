@@ -1,6 +1,7 @@
 import { test, expect } from '../../utils/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
+import { ajouterVenteDon } from '../../utils/vente-don';
 import { logoutAndConnect } from '../../utils/logout-and-connect';
 
 // Scenario 111 — Chain circuit long : PD → ETG → SVI (verifies handoff chain).
@@ -21,14 +22,7 @@ test('Chain circuit long complet : PD → ETG → SVI', async ({ page }) => {
   await connectWith(page, 'premier-detenteur@example.fr');
   await page.getByRole('link', { name: feiId }).click();
 
-  await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").click();
-  await page.getByRole('option', { name: 'ETG 1 - 75000 Paris (' }).click();
-  const pasDeStockage = page.getByText('Pas de stockage').first();
-  await pasDeStockage.scrollIntoViewIfNeeded();
-  await pasDeStockage.click();
-  const jeTransporte = page.getByText('Je transporte les carcasses moi').first();
-  await jeTransporte.scrollIntoViewIfNeeded();
-  await jeTransporte.click();
+  await ajouterVenteDon(page, { destinataire: 'ETG 1 - 75000 Paris (' });
   const transmettreBtn = page.getByRole('button', { name: 'Transmettre' });
   await transmettreBtn.scrollIntoViewIfNeeded();
   await transmettreBtn.click();

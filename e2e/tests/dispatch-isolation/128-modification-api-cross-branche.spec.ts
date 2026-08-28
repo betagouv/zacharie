@@ -1,6 +1,7 @@
 import { test, expect } from '../../utils/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
+import { ajouterVenteDon } from '../../utils/vente-don';
 import { logoutAndConnect } from '../../utils/logout-and-connect';
 
 // Scenario 128 — Écriture cross-branche via l'API.
@@ -66,34 +67,14 @@ test("Écriture /sync sur une carcasse d'une autre branche → refusée et repor
   await connectWith(page, 'premier-detenteur@example.fr');
   await page.getByRole('link', { name: feiId }).click();
 
-  await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").first().click();
-  await page.getByRole('option', { name: 'ETG 1 - 75000 Paris (' }).click();
-  const pasDeStockage = page.getByText('Pas de stockage').first();
-  await pasDeStockage.scrollIntoViewIfNeeded();
-  await pasDeStockage.click();
-  const jeTransporte = page.getByText('Je transporte les carcasses moi').first();
-  await jeTransporte.scrollIntoViewIfNeeded();
-  await jeTransporte.click();
+  // Select ETG 1 for group 1
+  await ajouterVenteDon(page, { destinataire: 'ETG 1 - 75000 Paris (' });
 
-  const ajouterBtn = page.getByRole('button', { name: 'Ajouter un autre destinataire' });
-  await ajouterBtn.scrollIntoViewIfNeeded();
-  await ajouterBtn.click();
-
-  const group2 = page.locator('div.rounded.border').nth(1);
-  await group2.scrollIntoViewIfNeeded();
-  const g2Btns = group2.locator("button[type='button']").filter({ hasText: 'N°' });
-  await g2Btns.nth(0).click();
-  await g2Btns.nth(1).click();
-
-  await group2.locator("[class*='select-prochain-detenteur'][class*='input-container']").click();
-  await page.getByRole('option', { name: 'ETG 2 - 75000 Paris (' }).click();
-  const g2Stockage = group2.getByText('Pas de stockage').first();
-  await g2Stockage.scrollIntoViewIfNeeded();
-  await g2Stockage.click();
-  const g2Transport = group2.getByText('Je transporte les carcasses moi').first();
-  await g2Transport.scrollIntoViewIfNeeded();
-  await g2Transport.click();
-
+  // Add second group
+  // Move 2 carcasses to group 2
+  // Select ETG 2 for group 2
+  // Transmettre
+  await ajouterVenteDon(page, { destinataire: 'ETG 2 - 75000 Paris (', carcasses: [0, 1] });
   const transmettreBtn = page.getByRole('button', { name: /Transmettre/ });
   await transmettreBtn.scrollIntoViewIfNeeded();
   await transmettreBtn.click();

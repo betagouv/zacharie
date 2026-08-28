@@ -1,6 +1,7 @@
 import { test, expect } from '../../utils/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
+import { ajouterVenteDon } from '../../utils/vente-don';
 import { logoutAndConnect } from '../../utils/logout-and-connect';
 
 // Scenario 112 — Chain circuit court direct : PD → Commerce de detail (sans ETG, sans transport).
@@ -21,12 +22,8 @@ test('Chain circuit court : PD → Commerce de détail (sans ETG)', async ({ pag
   await connectWith(page, 'premier-detenteur@example.fr');
   await page.getByRole('link', { name: feiId }).click();
 
-  await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").click();
-  await page.getByRole('option', { name: /Commerce de Détail 1/i }).click();
-  const pasDeStockage = page.getByText('Pas de stockage').first();
-  await pasDeStockage.scrollIntoViewIfNeeded();
-  await pasDeStockage.click();
   // Circuit court: NO transport step needed
+  await ajouterVenteDon(page, { destinataire: /Commerce de Détail 1/i });
   const transmettreBtn = page.getByRole('button', { name: 'Transmettre' });
   await transmettreBtn.scrollIntoViewIfNeeded();
   await transmettreBtn.click();

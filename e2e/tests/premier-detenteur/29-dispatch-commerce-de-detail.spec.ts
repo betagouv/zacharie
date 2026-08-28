@@ -1,6 +1,7 @@
 import { test, expect } from '../../utils/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
+import { ajouterVenteDon } from '../../utils/vente-don';
 
 test.use({
   viewport: { width: 350, height: 667 },
@@ -18,15 +19,10 @@ test('Dispatch vers commerce de détail — circuit court direct sans ETG', asyn
   await connectWith(page, 'premier-detenteur@example.fr');
   await page.getByRole('link', { name: feiId }).click();
 
-  await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").click();
-  await page.getByRole('option', { name: /Commerce de Détail 1/i }).click();
+  // Circuit court : pas d'étape Transport, le stockage est la dernière étape.
+  await ajouterVenteDon(page, { destinataire: /Commerce de Détail 1/i });
 
-  const pasDeStockage = page.getByText('Pas de stockage').first();
-  await pasDeStockage.scrollIntoViewIfNeeded();
-  await pasDeStockage.click();
-  // Circuit court: no transport step needed
-
-  const transmettre = page.getByRole('button', { name: 'Transmettre' });
+  const transmettre = page.getByRole('button', { name: /^Transmettre/ });
   await transmettre.scrollIntoViewIfNeeded();
   await transmettre.click();
   await expect(page.getByText(/Commerce de Détail 1 a été notifié/i).first()).toBeVisible({

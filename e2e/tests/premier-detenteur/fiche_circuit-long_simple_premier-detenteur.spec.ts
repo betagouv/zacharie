@@ -1,6 +1,16 @@
 import { test, expect } from '../../utils/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
+import {
+  openVenteDon,
+  selectDestinataire,
+  allerAEtape,
+  choisirStockage,
+  choisirTransport,
+  remplirDateMaintenant,
+  enregistrerVenteDon,
+  venteDonModal,
+} from '../../utils/vente-don';
 
 test.use({
   viewport: { width: 350, height: 667 },
@@ -42,19 +52,18 @@ test('Pas de stockage - Transporter les carcasses soi-même', async ({ page }) =
   await page.getByLabel('Pigeons - N° MM-001-').getByTitle('Fermer').click();
 
   await expect(page.getByText('Validation par le premier détenteur')).toBeVisible();
-  await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").click();
-  await page.getByRole('option', { name: 'ETG 1 - 75000 Paris (' }).click();
-  const pasDeStockage1 = page.getByText('Pas de stockage').first();
-  await pasDeStockage1.scrollIntoViewIfNeeded();
-  await pasDeStockage1.click();
-  // Validation au niveau du champ : les erreurs ne sont révélées qu'au clic sur Transmettre.
-  const transmettreBtn = page.getByRole('button', { name: 'Transmettre' });
-  await transmettreBtn.scrollIntoViewIfNeeded();
-  await transmettreBtn.click();
+  await openVenteDon(page);
+  await selectDestinataire(page, 'ETG 1 - 75000 Paris (');
+  await allerAEtape(page, 'Stockage');
+  await choisirStockage(page, 'aucun');
+  await allerAEtape(page, 'Transport');
+  // Validation au niveau du champ : les erreurs ne sont révélées qu'au clic sur Enregistrer.
+  await venteDonModal(page).getByRole('button', { name: 'Enregistrer', exact: true }).click();
   await expect(page.getByText('Veuillez indiquer le mode de transport des carcasses')).toBeVisible();
-  const jeTransporte = page.getByText('Je transporte les carcasses moi').first();
-  await jeTransporte.scrollIntoViewIfNeeded();
-  await jeTransporte.click();
+  await choisirTransport(page, 'moi');
+  await enregistrerVenteDon(page);
+
+  const transmettreBtn = page.getByRole('button', { name: /^Transmettre/ });
   await transmettreBtn.scrollIntoViewIfNeeded();
   await transmettreBtn.click();
   await expect(page.getByText(/ETG 1 a été notifié/i).first()).toBeVisible({ timeout: 10000 });
@@ -65,27 +74,23 @@ test('Stockage - Transporter les carcasses soi-même', async ({ page }) => {
   await connectWith(page, 'premier-detenteur@example.fr');
   await expect(page).toHaveURL('http://localhost:3290/app/chasseur');
   await page.getByRole('link', { name: feiId }).click();
-  const selectContainer = page.locator("[class*='select-prochain-detenteur'][class*='input-container']");
-  await selectContainer.scrollIntoViewIfNeeded();
-  await selectContainer.click();
-  await page.getByRole('option', { name: 'ETG 1 - 75000 Paris (' }).click();
-  await page.getByText('Carcasses déposées dans une chambre froide').click();
-  await page.getByRole('button', { name: 'Renseigner ma chambre froide' }).click();
+  await openVenteDon(page);
+  await selectDestinataire(page, 'ETG 1 - 75000 Paris (');
+  await allerAEtape(page, 'Stockage');
+  await choisirStockage(page, 'ccg');
+  await venteDonModal(page).getByRole('button', { name: 'Renseigner ma chambre froide' }).click();
   await page.getByText("Oui, ma chambre froide a un numéro d'identification").click();
   await page.getByRole('textbox', { name: "Numéro d'identification" }).fill('CCG-01');
   await page.getByRole('button', { name: 'Ajouter cette chambre froide' }).click();
-  // Modal closes and CCG is auto-selected
+  // La CCG fraîchement créée est sélectionnée automatiquement
   await expect(page.getByText('CCG Chasseurs - CCG-01')).toBeVisible();
-  const cliquezIci = page.getByRole('button', { name: /Date du jour et maintenant/ }).first();
-  await cliquezIci.scrollIntoViewIfNeeded();
-  await cliquezIci.click();
-  const jeTransporte = page.getByText('Je transporte les carcasses moi').first();
-  await jeTransporte.scrollIntoViewIfNeeded();
-  await jeTransporte.click();
-  const cliquezIci2 = page.getByRole('button', { name: /Date du jour et maintenant/ }).last();
-  await cliquezIci2.scrollIntoViewIfNeeded();
-  await cliquezIci2.click();
-  const transmettreBtn = page.getByRole('button', { name: 'Transmettre' });
+  await remplirDateMaintenant(page);
+  await allerAEtape(page, 'Transport');
+  await choisirTransport(page, 'moi');
+  await remplirDateMaintenant(page);
+  await enregistrerVenteDon(page);
+
+  const transmettreBtn = page.getByRole('button', { name: /^Transmettre/ });
   await transmettreBtn.scrollIntoViewIfNeeded();
   await transmettreBtn.click();
   await expect(page.getByText(/ETG 1 a été notifié/i)).toBeVisible({ timeout: 10000 });
@@ -96,24 +101,22 @@ test('Stockage - Le transport est réalisé par un collecteur professionnel', as
   await connectWith(page, 'premier-detenteur@example.fr');
   await expect(page).toHaveURL('http://localhost:3290/app/chasseur');
   await page.getByRole('link', { name: feiId }).click();
-  const selectContainer = page.locator("[class*='select-prochain-detenteur'][class*='input-container']");
-  await selectContainer.scrollIntoViewIfNeeded();
-  await selectContainer.click();
-  await page.getByRole('option', { name: 'ETG 1 - 75000 Paris (' }).click();
-  await page.getByText('Carcasses déposées dans une chambre froide').click();
-  await page.getByRole('button', { name: 'Renseigner ma chambre froide' }).click();
+  await openVenteDon(page);
+  await selectDestinataire(page, 'ETG 1 - 75000 Paris (');
+  await allerAEtape(page, 'Stockage');
+  await choisirStockage(page, 'ccg');
+  await venteDonModal(page).getByRole('button', { name: 'Renseigner ma chambre froide' }).click();
   await page.getByText("Oui, ma chambre froide a un numéro d'identification").click();
   await page.getByRole('textbox', { name: "Numéro d'identification" }).fill('CCG-01');
   await page.getByRole('button', { name: 'Ajouter cette chambre froide' }).click();
-  // Modal closes and CCG is auto-selected
+  // La CCG fraîchement créée est sélectionnée automatiquement
   await expect(page.getByText('CCG Chasseurs - CCG-01')).toBeVisible();
-  const cliquezIci = page.getByRole('button', { name: /Date du jour et maintenant/ }).first();
-  await cliquezIci.scrollIntoViewIfNeeded();
-  await cliquezIci.click();
-  const leTransport = page.getByText('Le transport est réalisé par un collecteur professionnel');
-  await leTransport.scrollIntoViewIfNeeded();
-  await leTransport.click();
-  const transmettreBtn = page.getByRole('button', { name: 'Transmettre' });
+  await remplirDateMaintenant(page);
+  await allerAEtape(page, 'Transport');
+  await choisirTransport(page, 'collecteur');
+  await enregistrerVenteDon(page);
+
+  const transmettreBtn = page.getByRole('button', { name: /^Transmettre/ });
   await transmettreBtn.scrollIntoViewIfNeeded();
   await transmettreBtn.click();
   await expect(page.getByText(/ETG 1 a été notifié/i)).toBeVisible({ timeout: 10000 });

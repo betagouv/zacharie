@@ -26,7 +26,9 @@ test.beforeAll(async () => {
 // the " et que les carcasses en peau examinées ce jour peuvent être mises sur
 // le marché" clause is dropped because the carcasses are not destined for the
 // market. Clicking the button a second time toggles back to the market state.
-test('Bloc 4 — toggle « consommateur final » updates cert label & button text', async ({ page }) => {
+// Désactivé tant que le raccourci « consommateur final » du bloc 3 est commenté dans
+// chasseur-fei.tsx (« TODO : a réactiver plus tard pour l'intégrer dans "vente ou don" »).
+test.skip('Bloc 4 — toggle « consommateur final » updates cert label & button text', async ({ page }) => {
   await connectWith(page, 'examinateur@example.fr');
   await expect(page).toHaveURL('http://localhost:3290/app/chasseur');
 

@@ -1,6 +1,16 @@
 import { test, expect } from '../../utils/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
+import {
+  openVenteDon,
+  selectDestinataire,
+  allerAEtape,
+  choisirStockage,
+  choisirTransport,
+  remplirDateMaintenant,
+  enregistrerVenteDon,
+  venteDonModal,
+} from '../../utils/vente-don';
 
 test.use({
   viewport: { width: 350, height: 667 },
@@ -18,38 +28,29 @@ test('Création CCG inline depuis le formulaire de transmission', async ({ page 
   await connectWith(page, 'premier-detenteur@example.fr');
   await page.getByRole('link', { name: feiId }).click();
 
-  const selectContainer = page.locator("[class*='select-prochain-detenteur'][class*='input-container']");
-  await selectContainer.scrollIntoViewIfNeeded();
-  await selectContainer.click();
-  await page.getByRole('option', { name: 'ETG 1 - 75000 Paris (' }).click();
+  await openVenteDon(page);
+  await selectDestinataire(page, 'ETG 1 - 75000 Paris (');
+  await allerAEtape(page, 'Stockage');
+  await choisirStockage(page, 'ccg');
 
-  await page.getByText('Carcasses déposées dans une chambre froide').click();
-  await page.getByRole('button', { name: 'Renseigner ma chambre froide' }).click();
-
-  // Use the same pattern as fiche_circuit-long_simple_premier-detenteur.spec.ts test 2
+  // Le PD n'a aucune CCG : la création se fait en ligne dans l'étape Stockage.
+  await venteDonModal(page).getByRole('button', { name: 'Renseigner ma chambre froide' }).click();
   await page.getByText("Oui, ma chambre froide a un numéro d'identification").click();
   await page.getByRole('textbox', { name: "Numéro d'identification" }).fill('CCG-01');
   await page.getByRole('button', { name: 'Ajouter cette chambre froide' }).click();
 
-  // Modal closes and the freshly-created CCG is auto-selected
+  // La CCG fraîchement créée est sélectionnée automatiquement
   await expect(page.getByText('CCG Chasseurs - CCG-01')).toBeVisible({ timeout: 10000 });
 
-  // Complete the transmission
-  const cliquezIci = page.getByRole('button', { name: /Date du jour et maintenant/ }).first();
-  await cliquezIci.scrollIntoViewIfNeeded();
-  await cliquezIci.click();
+  // Date de dépôt puis transport
+  await remplirDateMaintenant(page);
+  await allerAEtape(page, 'Transport');
+  await choisirTransport(page, 'moi');
+  await remplirDateMaintenant(page);
+  await enregistrerVenteDon(page);
 
-  const jeTransporte = page.getByText('Je transporte les carcasses moi').first();
-  await jeTransporte.scrollIntoViewIfNeeded();
-  await jeTransporte.click();
-
-  const cliquezIci2 = page.getByRole('button', { name: /Date du jour et maintenant/ }).last();
-  await cliquezIci2.scrollIntoViewIfNeeded();
-  await cliquezIci2.click();
-
-  const transmettre = page.getByRole('button', { name: 'Transmettre' });
+  const transmettre = page.getByRole('button', { name: /^Transmettre/ });
   await transmettre.scrollIntoViewIfNeeded();
   await transmettre.click();
-  // Chasseur/PD voit la page de confirmation dédiée, pas un toast « a été notifié »
   await expect(page.getByText(/ETG 1 a été notifié/i)).toBeVisible({ timeout: 10000 });
 });

@@ -31,6 +31,10 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
         - paragraph: fin de liste
       `);
   await page.getByRole('link', { name: feiId }).click();
+  // La fiche s'hydrate depuis le store local : on attend son rendu avant de la photographier.
+  await expect(page.getByText('Fiche reçue, pas encore prise en charge')).toBeVisible({
+    timeout: 15000,
+  });
 
   await expect(page.locator('#content')).toMatchAriaSnapshot(`
       - group:
@@ -55,7 +59,6 @@ test("Pas de stockage - J'envoie au SVI", async ({ page, context }) => {
           - /url: mailto:premier-detenteur@example.fr
         - text: /\\d+ Paris/
       `);
-  await expect(page.getByText('Fiche reçue, pas encore prise en charge')).toBeVisible();
   await page.getByRole('button', { name: 'Daim N° MM-001-004 Mise à' }).click();
   await page.getByRole('listitem').filter({ hasText: 'Fermer' }).getByRole('button').click();
   await page.getByRole('button', { name: 'Pigeons (10) N° MM-001-003' }).click();

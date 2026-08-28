@@ -2,6 +2,7 @@ import { test, expect } from '../../utils/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 import { logoutAndConnect } from '../../utils/logout-and-connect';
+import { ajouterVenteDon } from '../../utils/vente-don';
 
 test.use({
   viewport: { width: 350, height: 667 },
@@ -34,21 +35,10 @@ test('PD supprime une carcasse avant transmission — ETG reçoit N-1', async ({
   await expect(trashIcons).toHaveCount(3, { timeout: 10000 });
 
   // 3. Dispatch remaining 3 carcasses to ETG 1
-  const selectDest = page.locator("[class*='select-prochain-detenteur'][class*='input-container']").first();
-  await selectDest.scrollIntoViewIfNeeded();
-  await selectDest.click();
-  await page.getByRole('option', { name: 'ETG 1 - 75000 Paris (' }).click();
-
-  const pasDeStockage = page.getByText('Pas de stockage').first();
-  await pasDeStockage.scrollIntoViewIfNeeded();
-  await pasDeStockage.click();
-
-  const jeTransporte = page.getByText('Je transporte les carcasses moi').first();
-  await jeTransporte.scrollIntoViewIfNeeded();
-  await jeTransporte.click();
+  await ajouterVenteDon(page, { destinataire: 'ETG 1 - 75000 Paris (' });
 
   // 4. Transmettre
-  const transmettreBtn = page.getByRole('button', { name: /Transmettre/ });
+  const transmettreBtn = page.getByRole('button', { name: /^Transmettre/ });
   await transmettreBtn.scrollIntoViewIfNeeded();
   await transmettreBtn.click();
   await expect(page.getByText(/ETG 1 a été notifié/i).first()).toBeVisible({ timeout: 10000 });
