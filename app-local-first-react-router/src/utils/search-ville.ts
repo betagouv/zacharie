@@ -55,6 +55,25 @@ export function searchVilles(search: string, maxResults = DEFAULT_MAX_RESULTS): 
   const nameQuery = query.slice(codePostal.length).trim();
   const tokens = nameQuery.split(' ').filter(Boolean);
 
+  const scored = scoreVilles(codePostal, nameQuery, tokens);
+  // Le code postal saisi peut être absent du référentiel (« 75000 ») ou ne pas correspondre à la
+  // commune cherchée : plutôt que de ne rien proposer, on cherche alors sur le seul nom.
+  const results = scored.length || !tokens.length ? scored : scoreVilles('', nameQuery, tokens);
+
+  results.sort((a, b) => {
+    if (a.score !== b.score) return a.score - b.score;
+    if (a.item.ville.length !== b.item.ville.length) return a.item.ville.length - b.item.ville.length;
+    return a.item.code_postal_ville.localeCompare(b.item.code_postal_ville);
+  });
+
+  return results.slice(0, maxResults).map(({ item }) => item.code_postal_ville);
+}
+
+function scoreVilles(
+  codePostal: string,
+  nameQuery: string,
+  tokens: Array<string>
+): Array<{ score: number; item: IndexedVille }> {
   const scored: Array<{ score: number; item: IndexedVille }> = [];
   for (const item of getIndex()) {
     if (codePostal && !item.code_postal.startsWith(codePostal)) {
@@ -80,12 +99,5 @@ export function searchVilles(search: string, maxResults = DEFAULT_MAX_RESULTS): 
     }
     scored.push({ score, item });
   }
-
-  scored.sort((a, b) => {
-    if (a.score !== b.score) return a.score - b.score;
-    if (a.item.ville.length !== b.item.ville.length) return a.item.ville.length - b.item.ville.length;
-    return a.item.code_postal_ville.localeCompare(b.item.code_postal_ville);
-  });
-
-  return scored.slice(0, maxResults).map(({ item }) => item.code_postal_ville);
+  return scored;
 }

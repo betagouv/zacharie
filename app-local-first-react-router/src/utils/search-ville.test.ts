@@ -49,6 +49,14 @@ describe('searchVilles', () => {
     expect(searchVilles('17100 Saintes')).toContain('17100 SAINTES');
     expect(searchVilles('321').every((result) => result.startsWith('321'))).toBe(true);
   });
+  it('cherche sur le seul nom quand le code postal ne donne rien', () => {
+    // « 75000 » n'existe pas dans le référentiel, « 34000 » n'est pas celui de Paris.
+    expect(searchVilles('75000 Paris')).toContain('75001 PARIS 01');
+    expect(searchVilles('34000 Paris')).toContain('75001 PARIS 01');
+  });
+  it('ne propose rien de fantaisiste quand seul le code postal est saisi', () => {
+    expect(searchVilles('75000')).toEqual([]);
+  });
   it('gère les accents et les apostrophes', () => {
     expect(searchVilles("L'Abergement-Clémenciat")).toContain('01400 L ABERGEMENT CLEMENCIAT');
   });
