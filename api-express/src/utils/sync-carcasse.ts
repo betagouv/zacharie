@@ -1,7 +1,19 @@
 import prisma from '~/prisma';
-import { Carcasse, EntityRelationType, Fei, FeiOwnerRole, Prisma, User, UserRoles } from '@prisma/client';
+
+import {
+  Carcasse,
+  EntityRelationType,
+  Fei,
+  FeiOwnerRole,
+  IPM1Decision,
+  Prisma,
+  User,
+  UserRoles,
+} from '@prisma/client';
+import { TRICHINE_FEATURE_ENABLED } from '~/config';
 import type { SyncScope } from '~/utils/sync-scope';
 import { SyncRejectedError } from '~/utils/sync-errors';
+import { carcasseHasResultatTrichineNegatif, TRICHINE_ESPECE_CONCERNEE } from '~/utils/trichine';
 
 export interface SaveCarcasseResult {
   savedCarcasse: Carcasse;
@@ -441,7 +453,22 @@ export async function syncCarcasse(
       nextCarcasse.svi_ipm1_commentaire = body[Prisma.CarcasseScalarFieldEnum.svi_ipm1_commentaire];
     }
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_ipm1_decision)) {
-      nextCarcasse.svi_ipm1_decision = body[Prisma.CarcasseScalarFieldEnum.svi_ipm1_decision];
+      const nextDecision = body[Prisma.CarcasseScalarFieldEnum.svi_ipm1_decision];
+      // Un sanglier n'est accepté qu'avec un résultat de recherche de trichine négatif (cf doc/trichine.md §9)
+      const espece = nextCarcasse.espece ?? existingCarcasse.espece;
+      if (
+        TRICHINE_FEATURE_ENABLED &&
+        nextDecision === IPM1Decision.ACCEPTE &&
+        existingCarcasse.svi_ipm1_decision !== IPM1Decision.ACCEPTE &&
+        espece === TRICHINE_ESPECE_CONCERNEE
+      ) {
+        if (!(await carcasseHasResultatTrichineNegatif(zacharie_carcasse_id))) {
+          throw new Error(
+            "Recherche de trichine obligatoire avant acceptation : aucun résultat négatif n'est associé à cette carcasse de sanglier"
+          );
+        }
+      }
+      nextCarcasse.svi_ipm1_decision = nextDecision;
     }
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_ipm1_duree_consigne)) {
       nextCarcasse.svi_ipm1_duree_consigne = body[Prisma.CarcasseScalarFieldEnum.svi_ipm1_duree_consigne];
