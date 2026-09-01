@@ -449,22 +449,6 @@ export interface AdminCcgImportResponse {
   error: string;
 }
 
-export interface AdminDashboardResponse {
-  ok: boolean;
-  data: {
-    funnel: {
-      chasseurs_inscrits: number;
-      compte_valide: number;
-      fiche_ouverte: number;
-      envoye_1_fiche: number;
-      envoye_2_fiches: number;
-      envoye_3_fiches: number;
-    };
-    inscriptions_par_semaine: Array<{ date: string; count: number }>;
-  };
-  error: string;
-}
-
 export interface AdminSaisiesSviResponse {
   ok: boolean;
   data: {

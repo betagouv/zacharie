@@ -2,123 +2,12 @@ import express from 'express';
 import { catchErrors } from '~/middlewares/errors';
 const router: express.Router = express.Router();
 import prisma from '~/prisma';
-import { UserRoles } from '@prisma/client';
 import type {
-  AdminDashboardResponse,
   AdminSaisiesSviResponse,
   AdminPartsDeMarcheResponse,
   AdminDeltaBphResponse,
 } from '~/types/responses';
 import dayjs from 'dayjs';
-
-router.get(
-  '/dashboard',
-  catchErrors(
-    async (
-      req: express.Request,
-      res: express.Response<AdminDashboardResponse>,
-      next: express.NextFunction
-    ) => {
-      const dateFrom = (req.query.date_from as string) || null;
-      const dateTo = (req.query.date_to as string) || null;
-
-      const now = new Date();
-      const defaultFrom = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-      const defaultTo = now.toISOString().slice(0, 10);
-      const from = dateFrom || defaultFrom;
-      const to = dateTo || defaultTo;
-
-      const [chasseursInscrits, compteValide, ficheOuverteRows, envoye1FicheRows] = await Promise.all([
-        // Stage 1: Chasseurs inscrits
-        prisma.user.count({
-          where: { roles: { has: UserRoles.CHASSEUR }, deleted_at: null },
-        }),
-        // Stage 2: Compte validé (numero_cfei renseigné)
-        prisma.user.count({
-          where: {
-            roles: { has: UserRoles.CHASSEUR },
-            deleted_at: null,
-            numero_cfei: { not: null },
-            activated: true,
-          },
-        }),
-        // Stage 3: Chasseurs avec >= 1 FEI créée (envoyée ou non)
-        prisma.$queryRaw<Array<{ count: bigint }>>`
-          SELECT COUNT(DISTINCT u.id) as count
-          FROM "User" u
-          INNER JOIN "Fei" f ON (f.created_by_user_id = u.id OR f.examinateur_initial_user_id = u.id)
-          WHERE 'CHASSEUR' = ANY(u.roles)
-            AND u.deleted_at IS NULL
-            AND f.deleted_at IS NULL
-        `,
-        // Stage 4+: Chasseurs avec >= 1 FEI envoyée (+ count pour stages 5, 6)
-        // Le suivi de propriété est au niveau carcasse : une fiche est envoyée
-        // dès qu'au moins une de ses carcasses a quitté le chasseur.
-        prisma.$queryRaw<Array<{ user_id: string; fei_count: bigint }>>`
-          SELECT u.id as user_id, COUNT(DISTINCT f.numero) as fei_count
-          FROM "User" u
-          INNER JOIN "Fei" f ON (f.created_by_user_id = u.id OR f.premier_detenteur_user_id = u.id)
-          WHERE 'CHASSEUR' = ANY(u.roles)
-            AND u.deleted_at IS NULL
-            AND f.deleted_at IS NULL
-            AND EXISTS (
-              SELECT 1
-              FROM "Carcasse" c
-              WHERE c.fei_numero = f.numero
-                AND c.deleted_at IS NULL
-                AND (
-                  c.next_owner_entity_id IS NOT NULL
-                  OR c.current_owner_role NOT IN (
-                    'EXAMINATEUR_INITIAL'::"FeiOwnerRole",
-                    'PREMIER_DETENTEUR'::"FeiOwnerRole"
-                  )
-                )
-            )
-          GROUP BY u.id
-        `,
-      ]);
-
-      const envoye1 = envoye1FicheRows.length;
-      const envoye2 = envoye1FicheRows.filter((r) => Number(r.fei_count) >= 2).length;
-      const envoye3 = envoye1FicheRows.filter((r) => Number(r.fei_count) >= 3).length;
-
-      // Cumulative funnel (each stage >= next)
-      const ficheOuverte = Number(ficheOuverteRows[0]?.count ?? 0);
-      const funnel = {
-        chasseurs_inscrits: chasseursInscrits,
-        compte_valide: compteValide,
-        fiche_ouverte: ficheOuverte,
-        envoye_1_fiche: envoye1,
-        envoye_2_fiches: envoye2,
-        envoye_3_fiches: envoye3,
-      };
-
-      // Inscriptions par semaine
-      const inscriptionsParSemaine = await prisma.$queryRaw<Array<{ date: Date; count: bigint }>>`
-        SELECT DATE_TRUNC('week', created_at) as date, COUNT(*) as count
-        FROM "User"
-        WHERE 'CHASSEUR' = ANY(roles)
-          AND deleted_at IS NULL
-          AND created_at >= ${new Date(from)}::date
-          AND created_at < (${new Date(to)}::date + interval '1 day')
-        GROUP BY DATE_TRUNC('week', created_at)
-        ORDER BY date ASC
-      `;
-
-      res.status(200).send({
-        ok: true,
-        data: {
-          funnel,
-          inscriptions_par_semaine: inscriptionsParSemaine.map((r) => ({
-            date: new Date(r.date).toISOString().slice(0, 10),
-            count: Number(r.count),
-          })),
-        },
-        error: '',
-      });
-    }
-  )
-);
 
 router.get(
   '/saisies-svi',
