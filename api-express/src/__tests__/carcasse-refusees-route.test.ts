@@ -3,7 +3,7 @@ import request from 'supertest';
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import carcasseRouter from '~/controllers/carcasse';
 import prisma from '~/prisma';
-import { Prisma, UserRoles } from '@prisma/client';
+import { EntityRelationStatus, EntityRelationType, Prisma, UserRoles } from '@prisma/client';
 
 // GET /carcasse/refusees/:fei_numero — carcasses refusées ou manquantes en amont, HORS du périmètre
 // de synchro delta. Une carcasse refusée « sort du circuit » : ses next/current_owner ne suivent
@@ -257,6 +257,11 @@ describe('ETG — récupération des carcasses refusées de la fiche', () => {
 });
 
 describe('SVI — voit les carcasses refusées en amont (champ de contrôle)', () => {
+  const sviAccessWhere: Prisma.CarcasseWhereInput = {
+    svi_assigned_at: { not: null },
+    OR: [{ svi_entity_id: { in: ENTITY_IDS } }, { next_owner_entity_id: { in: ENTITY_IDS } }],
+  };
+
   test('accès OK → renvoie les refusées (sans svi_assigned_at) via NOT accessWhere', async () => {
     vi.mocked(prisma.carcasse.findMany)
       .mockResolvedValueOnce([{ premier_detenteur_prochain_detenteur_id_cache: 'etg-amont' } as any])

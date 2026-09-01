@@ -11,6 +11,7 @@ import type {
   CarcasseCertificat,
   ApiKey,
   ApiKeyApprovalByUserOrEntity,
+  TrichineResultatAnalyse,
 } from '@prisma/client';
 import type { UserForFei, UserForAdmin } from './user';
 import type { EntityForAdmin, EntityWithUserRelation, EntitiesByTypeAndId, EntitiesById } from './entity';
@@ -252,7 +253,9 @@ export interface CarcassesRefuseesResponse {
 
 export interface SviCarcasseAVenir {
   zacharie_carcasse_id: string;
+  numero_bracelet: string;
   fei_numero: string;
+  premier_detenteur_name_cache: string | null;
   espece: string | null;
   type: CarcasseType | null;
   nombre_d_animaux: number | null;
@@ -445,6 +448,61 @@ export interface AdminCcgImportResponse {
     created: number;
     updated: number;
     skipped: number;
+  };
+  error: string;
+}
+
+// Import de résultats labo depuis un export LIMS (cf doc/trichine-import-lims.md)
+export type LimsResultRowStatus = 'matched' | 'unmatched' | 'invalid' | 'conflict';
+
+export interface LimsResultRow {
+  reference_pool: string;
+  // Résultat mappé (null si le libellé du fichier n'a pas pu être reconnu)
+  resultat_analyse: TrichineResultatAnalyse | null;
+  // Libellé brut du fichier, pour affichage
+  raw_resultat: string;
+  parasite_identifie?: string;
+  date_debut_analyse?: string;
+  date_fin_analyse?: string;
+  reference_labo?: string;
+  commentaire?: string;
+  status: LimsResultRowStatus;
+  // Raison quand status ≠ matched
+  message?: string;
+}
+
+export interface LaboResultsPreviewResponse {
+  ok: boolean;
+  data: {
+    rows: LimsResultRow[];
+    counts: { matched: number; unmatched: number; invalid: number; conflict: number };
+  };
+  error: string;
+}
+
+export interface LaboResultsImportResponse {
+  ok: boolean;
+  data: {
+    applied: number;
+    skipped: number;
+    errors: number;
+    results: Array<{ reference_pool: string; ok: boolean; error?: string }>;
+  };
+  error: string;
+}
+
+export interface AdminDashboardResponse {
+  ok: boolean;
+  data: {
+    funnel: {
+      chasseurs_inscrits: number;
+      compte_valide: number;
+      fiche_ouverte: number;
+      envoye_1_fiche: number;
+      envoye_2_fiches: number;
+      envoye_3_fiches: number;
+    };
+    inscriptions_par_semaine: Array<{ date: string; count: number }>;
   };
   error: string;
 }

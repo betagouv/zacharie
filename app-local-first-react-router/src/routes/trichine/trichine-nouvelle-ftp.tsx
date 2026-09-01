@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import { Input } from '@codegouvfr/react-dsfr/Input';
@@ -25,7 +25,11 @@ export default function TrichineNouvelleFTP() {
   const basePath = useTrichineBasePath();
   const [pools, setPools] = useState<Array<TrichinePoolPopulated>>([]);
   const [laboratoires, setLaboratoires] = useState<Array<TrichineLaboratoire>>([]);
-  const [selectedPoolIds, setSelectedPoolIds] = useState<Array<string>>([]);
+  // Pré-sélection quand on arrive depuis l'assistant de prélèvement, qui vient de créer ces pools
+  const [searchParams] = useSearchParams();
+  const [selectedPoolIds, setSelectedPoolIds] = useState<Array<string>>(() =>
+    (searchParams.get('pools') ?? '').split(',').filter(Boolean)
+  );
   const [laboratoireId, setLaboratoireId] = useState('');
   const [modeTransport, setModeTransport] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -113,7 +117,7 @@ export default function TrichineNouvelleFTP() {
                         .then((response) => {
                           if (response.ok && response.data) {
                             toast.success(`FTP ${response.data.ftp.numero_fiche} créée`);
-                            navigate(`${basePath}/ftp/${response.data.ftp.id}`);
+                            navigate(`${basePath}/ftp/${response.data.ftp.numero_fiche}`);
                           } else {
                             toast.error(response.error || 'Une erreur est survenue');
                           }

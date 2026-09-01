@@ -95,6 +95,7 @@ model User {
   TrichinePoolsCrees                    TrichinePool[]                 @relation("TrichinePoolCreeParUser")
   TrichinePoolsRefuses                  TrichinePool[]                 @relation("TrichinePoolRefusParUser")
   TrichineFTPsExpediees                 TrichineFTP[]                  @relation("TrichineFTPExpediteurUser")
+  TrichineFTPsAnnulees                  TrichineFTP[]                  @relation("TrichineFTPAnnulationParUser")
   TrichineDocumentsAjoutes              TrichineDocument[]             @relation("TrichineDocumentAjouteParUser")
   TrichineNotifications                 TrichineNotification[]         @relation("TrichineNotificationUtilisateur")
   TrichineHistoriqueStatuts             TrichineHistoriqueStatut[]     @relation("TrichineHistoriqueModifieParUser")
@@ -924,6 +925,7 @@ enum TrichineStatutLogistiqueFTP {
   ENVOYEE
   RECUE
   TRAITEE
+  ANNULEE // annulée par l'émetteur avant réception du colis par le laboratoire
 }
 
 enum TrichineResultatAnalyse {
@@ -994,7 +996,6 @@ model TrichinePool {
   statut             TrichineStatutAnalyse    @default(A_COMPLETER)
   resultat_analyse   TrichineResultatAnalyse?
   parasite_identifie String? // rempli si NON_NEGATIF par LNR
-  reference_labo     String? // n° interne attribué par le labo à réception
 
   refus_par_user_id String?
   RefusParUser      User?   @relation("TrichinePoolRefusParUser", fields: [refus_par_user_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
@@ -1040,6 +1041,12 @@ model TrichineFTP {
   statut_logistique TrichineStatutLogistiqueFTP @default(BROUILLON)
   statut_analytique TrichineStatutAnalyse       @default(A_COMPLETER)
 
+  // Annulation par l'émetteur : la fiche reste tracée, ses pools redeviennent rattachables
+  date_annulation        DateTime?
+  annulation_par_user_id String?
+  AnnulationParUser      User?     @relation("TrichineFTPAnnulationParUser", fields: [annulation_par_user_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  raison_annulation      String?
+
   mode_transport String?
   commentaire    String?
 
@@ -1054,6 +1061,7 @@ model TrichineFTP {
   @@index([expediteur_user_id])
   @@index([destinataire_entity_id])
   @@index([ftp_parent_id])
+  @@index([annulation_par_user_id])
   @@index([updated_at])
 }
 
@@ -1063,6 +1071,10 @@ model TrichinePoolFTP {
   pool_id    String
   ftp_id     String
   date_ajout DateTime @default(now())
+
+  // N° interne attribué au pool par le laboratoire destinataire de cette FTP. Il est propre à ce
+  // laboratoire : le LVD et le LNR ont chacun le leur, aucun ne voit celui de l'autre.
+  reference_labo String?
 
   TrichinePool TrichinePool @relation(fields: [pool_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   TrichineFTP  TrichineFTP  @relation(fields: [ftp_id], references: [id], onDelete: Cascade, onUpdate: Cascade)

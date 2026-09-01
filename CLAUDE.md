@@ -136,4 +136,10 @@ API requires:
 
 - `POSTGRESQL_ADDON_URI`: PostgreSQL connection string
 
+Trichine (tous optionnels — non posés = fonctionnalité inactive, cf `doc/trichine-todo.md`) :
+
+- `VITE_FEATURE_TRICHINE`: `true` active la feature (frontend **et** garde-fous sangliers du backend)
+- `TRICHINE_RESULTATS_EMAIL`: adresse de dépôt des rapports COFRAC, imprimée sur la FTP
+- `CELLAR_ADDON_HOST` / `CELLAR_ADDON_KEY_ID` / `CELLAR_ADDON_KEY_SECRET` / `CELLAR_ADDON_BUCKET`: object storage Cellar
+
 E2E env vars: see @e2e/CLAUDE.md.

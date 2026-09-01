@@ -99,7 +99,10 @@ vi.mock('./src/prisma', () => ({
     },
     trichineDocument: {
       create: vi.fn(),
+      findFirst: vi.fn(),
       findMany: vi.fn().mockResolvedValue([]),
+      update: vi.fn(),
+      delete: vi.fn(),
     },
     trichineNotification: {
       create: vi.fn(),

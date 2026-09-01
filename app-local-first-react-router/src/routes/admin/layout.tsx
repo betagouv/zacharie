@@ -74,6 +74,9 @@ export default function AdminLayout() {
   if (user.roles.includes(UserRoles.COLLECTEUR_PRO)) {
     mainLink = '/app/collecteur';
   }
+  if (user.roles.includes(UserRoles.LABORATOIRE)) {
+    mainLink = '/app/laboratoire';
+  }
 
   return (
     <RootDisplay
