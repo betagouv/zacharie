@@ -14,21 +14,21 @@ Tout passe par **Brevo** — pas de SMTP / nodemailer / autre.
 - Les deux senders **avalent leurs erreurs** (remontée Sentry) et renvoient un **booléen de succès**. Tout appelant qui écrit un `NotificationLog` derrière doit le conditionner à ce booléen : ce log porte la dédup, l'écrire après un envoi raté bloquerait le renvoi définitivement.
 - **Registre des templates** — `api-express/src/third-parties/brevo-templates.ts`. `BrevoTemplateId` mappe chaque email (clé sémantique) → `templateId` Brevo, ou `null` tant que pas migré. **C'est le tracker de migration** : `null` = encore en texte inline, nombre = migré vers template.
 - **`sendNotificationToUser()` / `queueSendNotificationToUser()`** — `api-express/src/service/notifications.ts`. Push web + push natif + email. **L'email ne part que si l'user a activé la préférence `EMAIL`** (`UserNotifications.EMAIL`). Dédup via `NotificationLog` sur `(user_id, type, action)`. Le canal email bascule sur `sendTemplateEmail` dès qu'un `emailTemplateId` est fourni (+ `emailTemplateParams`) ; sinon texte inline. **Migrer un email = lui passer son `emailTemplateId` ici, pas appeler `sendTemplateEmail` directement** : contourner le service fait perdre la dédup, le gating de préférence et le push (les side-effects tournent une fois par carcasse).
-- **`sendOnboardingEmailOnce()`** — `api-express/src/utils/send-onboarding-email.ts`. Onboarding, dédup via `NotificationLog` (écrit seulement si l'envoi a réussi), **ignore la préférence EMAIL** (envoie toujours).
+- **`sendOnboardingEmailOnce()`** — `api-express/src/utils/send-onboarding-email.ts`. Onboarding, dédup via `NotificationLog` (écrit seulement si l'envoi a réussi), **ignore la préférence EMAIL** (envoie toujours). Prend soit un `templateId` (+ `params`) pour un email migré, soit `subject`/`text` pour un email encore inline.
 - **`inviteUser()`** — `api-express/src/utils/invite-user.ts`. Appelle `sendEmail` directement.
 
 ---
 
 ## 1. Transactionnels (action directe d'un user)
 
-| Déclencheur                                   | Destinataire             | Objet                                                                | Fichier                                                     |
-| --------------------------------------------- | ------------------------ | -------------------------------------------------------------------- | ----------------------------------------------------------- |
-| Formulaire de contact (`POST /utils/contact`) | `contact@…` + l'émetteur | `Contact : {prenom} {nom} - {email} - {object}`                      | `controllers/utils.ts:34`                                   |
-| Demande de reset mot de passe                 | l'user (prod)            | `[Zacharie] Réinitialisation de votre mot de passe`                  | `controllers/user.ts:469`                                   |
-| Mot de passe changé depuis le profil          | l'user (prod)            | `[Zacharie] Votre mot de passe a été modifié`                        | `controllers/user.ts:662`                                   |
-| Invitation d'un user (entité / partenaire)    | l'invité                 | `{prenom} {nom} vous a invité à rejoindre Zacharie`                  | `utils/invite-user.ts:33`                                   |
-| Fin d'onboarding                              | l'user                   | `Votre inscription sur Zacharie (fiches d'examen initial du gibier)` | `controllers/user.ts:1245`                                  |
-| Compte activé (user ou admin)                 | l'user                   | `Votre compte Zacharie a été activé`                                 | `controllers/user.ts:1258`, `controllers/admin/user.ts:292` |
+| Déclencheur                                   | Destinataire             | Objet                                                        | Fichier                                                     |
+| --------------------------------------------- | ------------------------ | ------------------------------------------------------------ | ----------------------------------------------------------- |
+| Formulaire de contact (`POST /utils/contact`) | `contact@…` + l'émetteur | `Contact : {prenom} {nom} - {email} - {object}`              | `controllers/utils.ts:34`                                   |
+| Demande de reset mot de passe                 | l'user (prod)            | `[Zacharie] Réinitialisation de votre mot de passe`          | `controllers/user.ts:469`                                   |
+| Mot de passe changé depuis le profil          | l'user (prod)            | `[Zacharie] Votre mot de passe a été modifié`                | `controllers/user.ts:662`                                   |
+| Invitation d'un user (entité / partenaire)    | l'invité                 | `{prenom} {nom} vous a invité à rejoindre Zacharie`          | `utils/invite-user.ts:33`                                   |
+| Fin d'onboarding                              | l'user                   | **template Brevo `ONBOARDING_DONE` (id 76)** — sans params   | `controllers/user.ts:1234`                                  |
+| Compte activé (user ou admin)                 | l'user                   | **template Brevo `ACCOUNT_ACTIVATED` (id 77)** — param `cta` | `controllers/user.ts:1243`, `controllers/admin/user.ts:290` |
 
 ## 2. Notices internes équipe (→ `contact@zacharie.beta.gouv.fr`)
 
