@@ -137,12 +137,22 @@ export default function CarcassesExaminateur({
     <>
       {hasGroups ? (
         <div className="flex flex-col gap-4">
-          {restantes.length > 0 && (
+          {(restantes.length > 0 || canEdit) && (
             <div>
-              <p className="mt-0 mb-2 text-sm text-gray-500">
-                À attribuer ({formatCarcasseLotCount(restantes)})
-              </p>
-              <div className="grid grid-cols-1 gap-2 md:grid-cols-2">{restantes.map(renderCarcasseCard)}</div>
+              {restantes.length > 0 && (
+                <p className="mt-0 mb-2 text-sm text-gray-500">
+                  À attribuer ({formatCarcasseLotCount(restantes)})
+                </p>
+              )}
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                {restantes.map(renderCarcasseCard)}
+                {canEdit && (
+                  <AddCarcasseCard
+                    id="add-more-carcasses-button"
+                    onClick={openAddModal}
+                  />
+                )}
+              </div>
             </div>
           )}
           {Object.entries(dejaEnvoyeesParDestinataire).map(([entityId, group]) => (
@@ -156,14 +166,15 @@ export default function CarcassesExaminateur({
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-2 md:grid-cols-2">{carcasses.map(renderCarcasseCard)}</div>
-      )}
-      {canEdit && (
-        <AddCarcasseCard
-          id="add-more-carcasses-button"
-          className={hasCarcasses ? 'mt-2' : ''}
-          onClick={openAddModal}
-        />
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+          {carcasses.map(renderCarcasseCard)}
+          {canEdit && (
+            <AddCarcasseCard
+              id="add-more-carcasses-button"
+              onClick={openAddModal}
+            />
+          )}
+        </div>
       )}
       {canEdit && hasCarcasses && (
         <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
@@ -390,34 +401,22 @@ export function CarcasseExaminateur({
   );
 }
 
-// Carte « fantôme » pour ajouter une carcasse : se fond dans la liste des cartes
-// (bordure pointillée) plutôt qu'un bouton concurrent.
-function AddCarcasseCard({
-  id,
-  onClick,
-  className,
-}: {
-  id: string;
-  onClick: () => void;
-  className?: string;
-}) {
+// === Carte d'ajout : même gabarit que les cartes remplies, en squelette ===
+function AddCarcasseCard({ id, onClick }: { id: string; onClick: () => void }) {
   return (
     <button
       type="button"
       id={id}
       onClick={onClick}
-      className={[
-        'flex w-full items-center justify-center gap-2 rounded border border-dashed border-gray-300 p-4 font-medium text-[#000091] transition-colors hover:border-[#000091] hover:bg-[#f6f6f6]',
-        className || '',
-      ]
-        .filter(Boolean)
-        .join(' ')}
+      className="hover:border-action-high-blue-france flex min-h-24 basis-full flex-col items-center justify-center gap-3 border border-dashed border-gray-300 bg-white p-4 text-left transition-colors hover:bg-blue-50"
     >
-      <span
-        className="fr-icon-add-line"
-        aria-hidden
-      />
-      Ajouter une carcasse
+      <span className="text-action-high-blue-france flex items-center gap-2 text-base font-medium">
+        <span
+          className="fr-icon-add-line"
+          aria-hidden="true"
+        />
+        Ajouter une carcasse
+      </span>
     </button>
   );
 }
