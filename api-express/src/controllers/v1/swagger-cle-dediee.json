@@ -129,11 +129,16 @@
       },
       "Fei": {
         "type": "object",
-        "description": "Fiche d'Examen Initial avec toutes les données associées",
+        "description": "Fiche d'Examen Initial. En-tête de la fiche uniquement : le détail de détention (dépôt/transport, intermédiaires, SVI, clôture) est porté par chaque carcasse.",
         "properties": {
           "numero": {
             "type": "string",
             "description": "Numéro unique de la FEI"
+          },
+          "creation_context": {
+            "type": "string",
+            "nullable": true,
+            "description": "Contexte de création de la fiche (`zacharie` ou `api`)"
           },
           "date_mise_a_mort": {
             "type": "string",
@@ -179,80 +184,6 @@
           "premier_detenteur_name": {
             "type": "string",
             "description": "Nom du premier détenteur"
-          },
-          "premier_detenteur_depot_type": {
-            "type": "string",
-            "enum": ["CCG", "ETG", "AUCUN"],
-            "nullable": true,
-            "description": "Type de dépôt du premier détenteur"
-          },
-          "premier_detenteur_depot_name": {
-            "type": "string",
-            "nullable": true,
-            "description": "Nom de l'entité de dépôt"
-          },
-          "premier_detenteur_depot_ccg_at": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true,
-            "description": "Date de dépôt CCG"
-          },
-          "premier_detenteur_transport_type": {
-            "type": "string",
-            "enum": ["PREMIER_DETENTEUR", "ETG", "COLLECTEUR_PRO", "AUCUN"],
-            "nullable": true,
-            "description": "Type de transport"
-          },
-          "premier_detenteur_transport_date": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true,
-            "description": "Date de transport"
-          },
-          "premier_detenteur_prochain_detenteur_name": {
-            "type": "string",
-            "description": "Nom du prochain détenteur"
-          },
-          "premier_detenteur_prochain_detenteur_role": {
-            "type": "string",
-            "description": "Rôle du prochain détenteur"
-          },
-          "intermediaire_closed_at": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true,
-            "description": "Date de fermeture par l'intermédiaire"
-          },
-          "intermediaire_closed_by_name": {
-            "type": "string",
-            "description": "Nom de l'entité qui a fermé l'intermédiaire"
-          },
-          "latest_intermediaire_name": {
-            "type": "string",
-            "description": "Nom du dernier intermédiaire"
-          },
-          "svi_assigned_at": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true,
-            "description": "Date d'assignation au SVI"
-          },
-          "svi_entity_name": {
-            "type": "string",
-            "nullable": true,
-            "description": "Nom de l'entité SVI"
-          },
-          "svi_closed_at": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true,
-            "description": "Date de fermeture par le SVI"
-          },
-          "automatic_closed_at": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true,
-            "description": "Date de fermeture automatique"
           },
           "created_at": {
             "type": "string",
@@ -671,29 +602,23 @@
             "nullable": true,
             "description": "Date d'approbation de mise sur le marché de la FEI"
           },
-          "fei_automatic_closed_at": {
+          "automatic_closed_at": {
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "Date de fermeture automatique de la FEI"
+            "description": "Date de clôture automatique de la carcasse"
           },
-          "fei_intermediaire_closed_at": {
+          "intermediaire_closed_at": {
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "Date de fermeture par l'intermédiaire de la FEI"
+            "description": "Date de clôture de la carcasse par l'intermédiaire"
           },
-          "fei_svi_assigned_at": {
+          "svi_closed_at": {
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "Date d'assignation au SVI de la FEI"
-          },
-          "fei_svi_closed_at": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true,
-            "description": "Date de fermeture par le SVI de la FEI"
+            "description": "Date de clôture de la carcasse par le SVI"
           }
         }
       },
