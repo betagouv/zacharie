@@ -4,6 +4,9 @@ import express from 'express';
 import swaggerEntityDocument from '../controllers/v1/swagger-cle-dediee.json';
 import swaggerThirdPartyDocument from '../controllers/v1/swagger-tierce-partie.json';
 import v1Router from '../controllers/v1/index';
+import { mapCarcasseForApi, mapFeiForApi } from '../utils/api';
+import type { CarcasseGetForApi } from '../types/carcasse';
+import type { FeiGetForApi } from '../types/fei';
 
 // Mock app setup for testing
 const app = express();
@@ -191,6 +194,31 @@ describe('Swagger Documentation Validation', () => {
         expect(errorResponseSchema.properties.error).toBeDefined();
         expect(errorResponseSchema.properties.message).toBeDefined();
       });
+    });
+
+    // Garde-fou anti-dérive : les swagger sont maintenus à la main, donc on compare champ à champ
+    // ce que renvoient réellement les mappers à ce que les deux documents déclarent. Ajouter,
+    // renommer ou retirer un champ dans mapFeiForApi / mapCarcasseForApi casse ce test tant que
+    // les deux swagger n'ont pas été mis à jour.
+    const carcasseApiFields = Object.keys(
+      mapCarcasseForApi({ fei_numero: '' } as unknown as CarcasseGetForApi, null)!
+    );
+    const feiApiFields = Object.keys(mapFeiForApi({ numero: '' } as unknown as FeiGetForApi, [])!);
+
+    test.each([
+      ['cle-dediee', swaggerEntityDocument],
+      ['tierce-partie', swaggerThirdPartyDocument],
+    ])('swagger %s: le schéma Carcasse documente exactement les champs de mapCarcasseForApi', (_, doc) => {
+      expect(Object.keys(doc.components.schemas.Carcasse.properties).sort()).toEqual(
+        [...carcasseApiFields].sort()
+      );
+    });
+
+    test.each([
+      ['cle-dediee', swaggerEntityDocument],
+      ['tierce-partie', swaggerThirdPartyDocument],
+    ])('swagger %s: le schéma Fei documente exactement les champs de mapFeiForApi', (_, doc) => {
+      expect(Object.keys(doc.components.schemas.Fei.properties).sort()).toEqual([...feiApiFields].sort());
     });
   });
 

@@ -1,4 +1,3 @@
-// @ts-nocheck TODO: fix API with Transmissions
 import express from 'express';
 import passport from 'passport';
 import { z } from 'zod';
@@ -6,7 +5,7 @@ import { catchErrors } from '~/middlewares/errors.ts';
 import { apiRateLimit } from '~/middlewares/rate-limit.ts';
 const router: express.Router = express.Router();
 import prisma from '~/prisma';
-import { ApiKeyScope, EntityTypes, Prisma, UserRoles } from '@prisma/client';
+import { ApiKeyScope, Prisma } from '@prisma/client';
 import { RequestWithApiKey } from '~/types/request';
 import {
   checkApiKeyIsValidMiddleware,
@@ -14,6 +13,7 @@ import {
   getRequestedUser,
   mapFeiForApi,
 } from '~/utils/api';
+import { getCarcasseAccessWhere, getCarcasseAccessWhereForEntity } from '~/utils/carcasse-access';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import { feiForApiSelect } from '~/types/fei';
@@ -38,6 +38,54 @@ export type FeiGetByNumeroForApi = {
   message?: string;
 };
 
+const CONTACT_SUFFIX =
+  "Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.";
+const CONTACT_MESSAGE =
+  'Pour toute question ou remarque, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.';
+
+// À partir d'un périmètre d'accès carcasse (role/entity-aware) et d'une plage de dates, retourne
+// les FEI accessibles (en-tête + carcasses mappées). L'ownership vit sur les carcasses : on part
+// donc des carcasses accessibles, on remonte à leurs FEI, puis on reccharge toutes les carcasses
+// de ces FEI pour un rendu complet.
+async function buildFeisResponse(accessWhere: Prisma.CarcasseWhereInput, dateFrom: string, dateTo: string) {
+  const accessibleCarcasses = await prisma.carcasse.findMany({
+    where: {
+      AND: [
+        accessWhere,
+        {
+          date_mise_a_mort: {
+            gte: dayjs(dateFrom).utc(true).toISOString(),
+            lte: dayjs(dateTo).utc(true).toISOString(),
+          },
+          deleted_at: null,
+        },
+      ],
+    },
+    select: { fei_numero: true },
+  });
+
+  const feiNumeros = [...new Set(accessibleCarcasses.map((c) => c.fei_numero))];
+  if (feiNumeros.length === 0) return [];
+
+  const [feis, carcasses] = await Promise.all([
+    prisma.fei.findMany({
+      where: { numero: { in: feiNumeros }, deleted_at: null },
+      select: feiForApiSelect,
+    }),
+    prisma.carcasse.findMany({
+      where: { fei_numero: { in: feiNumeros }, deleted_at: null },
+      select: carcasseForApiSelect,
+    }),
+  ]);
+
+  return feis.map((fei) =>
+    mapFeiForApi(
+      fei,
+      carcasses.filter((carcasse) => carcasse.fei_numero === fei.numero)
+    )
+  );
+}
+
 router.get(
   '/user',
   apiRateLimit,
@@ -50,86 +98,29 @@ router.get(
         date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format de date attendu: YYYY-MM-DD'),
         email: z.string().email("Format d'email invalide"),
       });
-
       const queryResult = querySchema.safeParse(req.query);
-
       if (!queryResult.success) {
-        const errors = queryResult.error.issues.map((i) => i.message).join('. ');
-        const error = new Error(
-          `${errors}. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`
-        );
         res.status(400);
-        return next(error);
+        return next(
+          new Error(`${queryResult.error.issues.map((i) => i.message).join('. ')}. ${CONTACT_SUFFIX}`)
+        );
       }
 
       const { date_from: dateFrom, date_to: dateTo, email } = queryResult.data;
-      const apiKey = req.apiKey;
-
-      const { user, error } = await getRequestedUser(apiKey, email);
-
+      const { user, error } = await getRequestedUser(req.apiKey, email);
       if (error) {
         res.status(403);
-        return next(error);
+        return next(new Error(error));
       }
 
-      const feiQuery: Prisma.FeiFindManyArgs = {
-        where: {
-          date_mise_a_mort: {
-            gte: dayjs(dateFrom).utc(true).toISOString(),
-            lte: dayjs(dateTo).utc(true).toISOString(),
-          },
-          deleted_at: null,
-        },
-      };
-
-      const role = user.roles[0];
-      if (role === UserRoles.CHASSEUR) {
-        feiQuery.where.OR = [
-          {
-            examinateur_initial_user_id: user.id,
-          },
-          {
-            premier_detenteur_user_id: user.id,
-          },
-        ];
-      } else if (role === UserRoles.ETG || role === UserRoles.COLLECTEUR_PRO) {
-        feiQuery.where.CarcasseIntermediaire = {
-          some: {
-            intermediaire_user_id: user.id,
-          },
-        };
-      } else if (role === UserRoles.SVI) {
-        feiQuery.where.svi_user_id = user.id;
+      const accessWhere = await getCarcasseAccessWhere(user!);
+      if (!accessWhere) {
+        res.status(403);
+        return next(new Error(`Votre rôle ne permet pas d'accéder à des fiches. ${CONTACT_SUFFIX}`));
       }
 
-      const feis = await prisma.fei.findMany({
-        where: feiQuery.where,
-        select: feiForApiSelect,
-      });
-
-      const carcasses = await prisma.carcasse.findMany({
-        where: {
-          fei_numero: {
-            in: feis.map((fei) => fei.numero),
-          },
-          deleted_at: null,
-        },
-        select: carcasseForApiSelect,
-      });
-
-      res.status(200).send({
-        ok: true,
-        data: {
-          feis: feis.map((fei) =>
-            mapFeiForApi(
-              fei,
-              carcasses.filter((carcasse) => carcasse.fei_numero === fei.numero)
-            )
-          ),
-        },
-        message:
-          'Pour toute question ou remarque, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.',
-      });
+      const feis = await buildFeisResponse(accessWhere, dateFrom, dateTo);
+      res.status(200).send({ ok: true, data: { feis }, message: CONTACT_MESSAGE });
     }
   )
 );
@@ -145,103 +136,64 @@ router.get(
       res: express.Response<FeiGetByNumeroForApi>,
       next: express.NextFunction
     ) => {
-      const querySchema = z.object({
-        email: z.string().email("Format d'email invalide"),
-      });
-
+      const querySchema = z.object({ email: z.string().email("Format d'email invalide") });
       const queryResult = querySchema.safeParse(req.query);
-
       if (!queryResult.success) {
-        const errors = queryResult.error.issues.map((i) => i.message).join('. ');
-        const error = new Error(
-          `${errors}. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`
-        );
         res.status(400);
-        return next(error);
+        return next(
+          new Error(`${queryResult.error.issues.map((i) => i.message).join('. ')}. ${CONTACT_SUFFIX}`)
+        );
       }
 
-      const paramsSchema = z.object({
-        fei_numero: z.string(),
-      });
-
+      const paramsSchema = z.object({ fei_numero: z.string() });
       const paramsResult = paramsSchema.safeParse(req.params);
-
       if (!paramsResult.success) {
-        const errors = paramsResult.error.issues.map((i) => i.message).join('. ');
-        const error = new Error(
-          `${errors}. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`
-        );
         res.status(400);
-        return next(error);
+        return next(
+          new Error(`${paramsResult.error.issues.map((i) => i.message).join('. ')}. ${CONTACT_SUFFIX}`)
+        );
       }
 
       const { fei_numero } = paramsResult.data;
-      const { email } = queryResult.data;
-      const apiKey = req.apiKey;
-
-      const { user, error } = await getRequestedUser(apiKey, email);
-
+      const { user, error } = await getRequestedUser(req.apiKey, queryResult.data.email);
       if (error) {
         res.status(403);
-        return next(error);
+        return next(new Error(error));
       }
 
-      const feiQuery: Prisma.FeiFindFirstArgs = {
-        where: {
-          numero: fei_numero,
-          deleted_at: null,
-        },
-      };
-
-      const role = user.roles[0];
-      if (role === UserRoles.CHASSEUR) {
-        feiQuery.where.OR = [
-          {
-            examinateur_initial_user_id: user.id,
-          },
-          {
-            premier_detenteur_user_id: user.id,
-          },
-        ];
-      } else if (role === UserRoles.ETG || role === UserRoles.COLLECTEUR_PRO) {
-        feiQuery.where.CarcasseIntermediaire = {
-          some: {
-            intermediaire_user_id: user.id,
-          },
-        };
-      } else if (role === UserRoles.SVI) {
-        feiQuery.where.svi_user_id = user.id;
+      const accessWhere = await getCarcasseAccessWhere(user!);
+      if (!accessWhere) {
+        res.status(403);
+        return next(new Error(`Votre rôle ne permet pas d'accéder à des fiches. ${CONTACT_SUFFIX}`));
       }
 
-      const fei = await prisma.fei.findFirst({
-        where: feiQuery.where,
-        select: feiForApiSelect,
+      // Accès autorisé si au moins une carcasse de la fiche est dans le périmètre du user.
+      const accessibleCarcasse = await prisma.carcasse.findFirst({
+        where: { AND: [accessWhere, { fei_numero, deleted_at: null }] },
+        select: { zacharie_carcasse_id: true },
       });
+      if (!accessibleCarcasse) {
+        res.status(404);
+        return next(new Error("Fiche d'examen initial non trouvée"));
+      }
+
+      const [fei, carcasses] = await Promise.all([
+        prisma.fei.findFirst({ where: { numero: fei_numero, deleted_at: null }, select: feiForApiSelect }),
+        prisma.carcasse.findMany({
+          where: { fei_numero, deleted_at: null },
+          select: carcasseForApiSelect,
+        }),
+      ]);
 
       if (!fei) {
-        const error = new Error("Fiche d'examen initial non trouvée");
         res.status(404);
-        return next(error);
+        return next(new Error("Fiche d'examen initial non trouvée"));
       }
-
-      const carcasses = await prisma.carcasse.findMany({
-        where: {
-          fei_numero: fei.numero,
-          deleted_at: null,
-        },
-        select: carcasseForApiSelect,
-      });
 
       res.status(200).send({
         ok: true,
-        data: {
-          fei: mapFeiForApi(
-            fei,
-            carcasses.filter((carcasse) => carcasse.fei_numero === fei.numero)
-          ),
-        },
-        message:
-          'Pour toute question ou remarque, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.',
+        data: { fei: mapFeiForApi(fei, carcasses) },
+        message: CONTACT_MESSAGE,
       });
     }
   )
@@ -258,80 +210,27 @@ router.get(
         date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format de date attendu: YYYY-MM-DD'),
         date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format de date attendu: YYYY-MM-DD'),
       });
-
       const queryResult = querySchema.safeParse(req.query);
-
       if (!queryResult.success) {
-        const errors = queryResult.error.issues.map((i) => i.message).join('. ');
-        const error = new Error(
-          `${errors}. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`
-        );
         res.status(400);
-        return next(error);
-      }
-
-      const dateFrom = queryResult.data.date_from; // format: 2025-09-17
-      const dateTo = queryResult.data.date_to; // format: 2025-09-17
-      const apiKey = req.apiKey;
-
-      const entity = await getDedicatedEntityLinkedToApiKey(apiKey);
-      if (!entity) {
-        const error = new Error(
-          `Votre clé n'est pas autorisée à accéder à des fiches d'examen initial par cette requête. Si vous pensez que c'est une erreur, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.`
+        return next(
+          new Error(`${queryResult.error.issues.map((i) => i.message).join('. ')}. ${CONTACT_SUFFIX}`)
         );
+      }
+
+      const { date_from: dateFrom, date_to: dateTo } = queryResult.data;
+      const entity = await getDedicatedEntityLinkedToApiKey(req.apiKey);
+      if (!entity) {
         res.status(403);
-        return next(error);
+        return next(
+          new Error(
+            `Votre clé n'est pas autorisée à accéder à des fiches d'examen initial par cette requête. ${CONTACT_SUFFIX}`
+          )
+        );
       }
 
-      const feiQuery: Prisma.FeiFindManyArgs = {
-        where: {
-          date_mise_a_mort: {
-            gte: dayjs(dateFrom).utc(true).toISOString(),
-            lte: dayjs(dateTo).utc(true).toISOString(),
-          },
-          deleted_at: null,
-        },
-      };
-      if (entity.type === EntityTypes.PREMIER_DETENTEUR) {
-        feiQuery.where.premier_detenteur_entity_id = entity.id;
-      } else if (entity.type === EntityTypes.SVI) {
-        feiQuery.where.svi_entity_id = entity.id;
-      } else {
-        feiQuery.where.CarcasseIntermediaire = {
-          some: {
-            intermediaire_entity_id: entity.id,
-          },
-        };
-      }
-
-      const feis = await prisma.fei.findMany({
-        where: feiQuery.where,
-        select: feiForApiSelect,
-      });
-
-      const carcasses = await prisma.carcasse.findMany({
-        where: {
-          fei_numero: {
-            in: feis.map((fei) => fei.numero),
-          },
-          deleted_at: null,
-        },
-        select: carcasseForApiSelect,
-      });
-
-      res.status(200).send({
-        ok: true,
-        data: {
-          feis: feis.map((fei) =>
-            mapFeiForApi(
-              fei,
-              carcasses.filter((carcasse) => carcasse.fei_numero === fei.numero)
-            )
-          ),
-        },
-        message:
-          'Pour toute question ou remarque, veuillez contacter le support via le formulaire de contact https://zacharie.beta.gouv.fr/contact.',
-      });
+      const feis = await buildFeisResponse(getCarcasseAccessWhereForEntity(entity), dateFrom, dateTo);
+      res.status(200).send({ ok: true, data: { feis }, message: CONTACT_MESSAGE });
     }
   )
 );

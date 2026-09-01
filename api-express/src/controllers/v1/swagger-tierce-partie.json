@@ -178,11 +178,16 @@
       },
       "Fei": {
         "type": "object",
-        "description": "Données complètes d'une fiche d'examen initial accessible avec le consentement de l'utilisateur",
+        "description": "Fiche d'Examen Initial. En-tête de la fiche uniquement : le détail de détention (dépôt/transport, intermédiaires, SVI, clôture) est porté par chaque carcasse.",
         "properties": {
           "numero": {
             "type": "string",
             "description": "Numéro unique de la FEI"
+          },
+          "creation_context": {
+            "type": "string",
+            "nullable": true,
+            "description": "Contexte de création de la fiche (`zacharie` ou `api`)"
           },
           "date_mise_a_mort": {
             "type": "string",
@@ -228,80 +233,6 @@
           "premier_detenteur_name": {
             "type": "string",
             "description": "Nom du premier détenteur"
-          },
-          "premier_detenteur_depot_type": {
-            "type": "string",
-            "enum": ["CCG", "ETG", "AUCUN"],
-            "nullable": true,
-            "description": "Type de dépôt du premier détenteur"
-          },
-          "premier_detenteur_depot_name": {
-            "type": "string",
-            "nullable": true,
-            "description": "Nom de l'entité de dépôt"
-          },
-          "premier_detenteur_depot_ccg_at": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true,
-            "description": "Date de dépôt CCG"
-          },
-          "premier_detenteur_transport_type": {
-            "type": "string",
-            "enum": ["PREMIER_DETENTEUR", "ETG", "COLLECTEUR_PRO", "AUCUN"],
-            "nullable": true,
-            "description": "Type de transport"
-          },
-          "premier_detenteur_transport_date": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true,
-            "description": "Date de transport"
-          },
-          "premier_detenteur_prochain_detenteur_name": {
-            "type": "string",
-            "description": "Nom du prochain détenteur"
-          },
-          "premier_detenteur_prochain_detenteur_role": {
-            "type": "string",
-            "description": "Rôle du prochain détenteur"
-          },
-          "intermediaire_closed_at": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true,
-            "description": "Date de fermeture par l'intermédiaire"
-          },
-          "intermediaire_closed_by_name": {
-            "type": "string",
-            "description": "Nom de l'entité qui a fermé l'intermédiaire"
-          },
-          "latest_intermediaire_name": {
-            "type": "string",
-            "description": "Nom du dernier intermédiaire"
-          },
-          "svi_assigned_at": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true,
-            "description": "Date d'assignation au SVI"
-          },
-          "svi_entity_name": {
-            "type": "string",
-            "nullable": true,
-            "description": "Nom de l'entité SVI"
-          },
-          "svi_closed_at": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true,
-            "description": "Date de fermeture par le SVI"
-          },
-          "automatic_closed_at": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true,
-            "description": "Date de fermeture automatique"
           },
           "created_at": {
             "type": "string",
@@ -720,29 +651,23 @@
             "nullable": true,
             "description": "Date d'approbation de mise sur le marché de la FEI"
           },
-          "fei_automatic_closed_at": {
+          "automatic_closed_at": {
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "Date de fermeture automatique de la FEI"
+            "description": "Date de clôture automatique de la carcasse"
           },
-          "fei_intermediaire_closed_at": {
+          "intermediaire_closed_at": {
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "Date de fermeture par l'intermédiaire de la FEI"
+            "description": "Date de clôture de la carcasse par l'intermédiaire"
           },
-          "fei_svi_assigned_at": {
+          "svi_closed_at": {
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "Date d'assignation au SVI de la FEI"
-          },
-          "fei_svi_closed_at": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true,
-            "description": "Date de fermeture par le SVI de la FEI"
+            "description": "Date de clôture de la carcasse par le SVI"
           }
         }
       },
@@ -756,9 +681,9 @@
               "USER_APPROVED_ACCESS",
               "USER_REJECTED_ACCESS",
               "FEI_APPROBATION_MISE_SUR_LE_MARCHE",
-              "FEI_ASSIGNEE_AU_PROCHAIN_DETENTEUR",
-              "FEI_ASSIGNEE_AU_SVI",
-              "FEI_PRISE_EN_CHARGE_PAR_PROCHAIN_DETENTEUR",
+              "CARCASSE_ASSIGNEE_AU_PROCHAIN_DETENTEUR",
+              "CARCASSE_ASSIGNEE_AU_SVI",
+              "CARCASSE_CLOTUREE",
               "FEI_CLOTUREE"
             ],
             "description": "Type d'événement déclenché"
@@ -1395,7 +1320,7 @@
     "/webhooks/votre-endpoint": {
       "post": {
         "summary": "Endpoint webhook à implémenter côté client",
-        "description": "**Cet endpoint doit être implémenté par votre application** pour recevoir les notifications en temps réel des événements Zacharie concernant les utilisateurs qui vous ont donné leur consentement. L'URL de cet endpoint doit être configurée dans votre clé API via le champ `webhook_url`.\n\n**Important:** Vous ne recevrez que les événements des utilisateurs qui ont approuvé votre accès à leurs données.\n\n**Configuration:** Ajoutez l'URL de votre endpoint dans votre clé API.\n\n**Sécurité:** Zacharie enverra un header `Authorization: Bearer {votre_cle_api}` pour authentifier les requêtes.\n\n**Événements disponibles:**\n- `USER_APPROVED_ACCESS`: L'accès à votre clé API a été approuvé\n- `USER_REJECTED_ACCESS`: L'accès à votre clé API a été refusé\n- `FEI_APPROBATION_MISE_SUR_LE_MARCHE`: L'examinateur initial a approuvé la mise sur le marché\n- `FEI_ASSIGNEE_AU_PROCHAIN_DETENTEUR`: La FEI a été assignée au prochain détenteur\n- `FEI_ASSIGNEE_AU_SVI`: La FEI a été assignée au Service Vétérinaire d'Inspection\n- `FEI_PRISE_EN_CHARGE_PAR_PROCHAIN_DETENTEUR`: Le prochain détenteur a pris en charge la FEI\n- `FEI_CLOTUREE`: La FEI a été clôturée\n\n**Exemple d'implémentation:**\n```javascript\napp.post('/webhooks/zacharie', (req, res) => {\n  // Vérifier l'authentification\n  const authHeader = req.headers.authorization;\n  if (!authHeader?.startsWith('Bearer ')) {\n    return res.status(401).json({ ok: false });\n  }\n  \n  const token = authHeader.split(' ')[1];\n  if (token !== process.env.ZACHARIE_API_KEY) {\n    return res.status(403).json({ ok: false });\n  }\n  \n  // Traiter le webhook\n  const { event, fei, carcasses } = req.body;\n  console.log(`Événement: ${event}`, { fei, carcasses });\n  \n  // Votre logique métier ici\n  \n  res.json({ ok: true });\n});\n```",
+        "description": "**Cet endpoint doit être implémenté par votre application** pour recevoir les notifications en temps réel des événements Zacharie concernant les utilisateurs qui vous ont donné leur consentement. L'URL de cet endpoint doit être configurée dans votre clé API via le champ `webhook_url`.\n\n**Important:** Vous ne recevrez que les événements des utilisateurs qui ont approuvé votre accès à leurs données.\n\n**Configuration:** Ajoutez l'URL de votre endpoint dans votre clé API.\n\n**Sécurité:** Zacharie enverra un header `Authorization: Bearer {votre_cle_api}` pour authentifier les requêtes.\n\n**Événements disponibles:**\n- `USER_APPROVED_ACCESS`: L'accès à votre clé API a été approuvé\n- `USER_REJECTED_ACCESS`: L'accès à votre clé API a été refusé\n- `FEI_APPROBATION_MISE_SUR_LE_MARCHE`: L'examinateur initial a approuvé la mise sur le marché\n- `CARCASSE_ASSIGNEE_AU_PROCHAIN_DETENTEUR`: Une carcasse a été assignée au prochain détenteur\n- `CARCASSE_ASSIGNEE_AU_SVI`: Une carcasse a été assignée au Service Vétérinaire d'Inspection\n- `CARCASSE_CLOTUREE`: Une carcasse a été clôturée\n- `FEI_CLOTUREE`: La FEI a été clôturée\n\n**Exemple d'implémentation:**\n```javascript\napp.post('/webhooks/zacharie', (req, res) => {\n  // Vérifier l'authentification\n  const authHeader = req.headers.authorization;\n  if (!authHeader?.startsWith('Bearer ')) {\n    return res.status(401).json({ ok: false });\n  }\n  \n  const token = authHeader.split(' ')[1];\n  if (token !== process.env.ZACHARIE_API_KEY) {\n    return res.status(403).json({ ok: false });\n  }\n  \n  // Traiter le webhook\n  const { event, fei, carcasses } = req.body;\n  console.log(`Événement: ${event}`, { fei, carcasses });\n  \n  // Votre logique métier ici\n  \n  res.json({ ok: true });\n});\n```",
         "requestBody": {
           "required": true,
           "content": {
