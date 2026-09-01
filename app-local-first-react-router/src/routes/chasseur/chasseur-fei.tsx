@@ -14,7 +14,6 @@ import { syncData } from '@app/utils/sync-data';
 import useUser from '@app/zustand/user';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { createHistoryInput } from '@app/utils/create-history-entry';
-import { createNewCarcasse } from '@app/utils/create-new-carcasse';
 import useGetCommunesDeChasseFavorites from '@app/utils/useGetCommunesDeChasseFavorites';
 import { loadData, useLoaderEffect } from '@app/utils/load-data';
 import Chargement from '@app/components/Chargement';
@@ -94,40 +93,26 @@ function FEIChasseurLoaded() {
     syncData('examinateur-initial-update-fei');
   };
 
-  // DEBUG: création en masse de carcasses pour tester la montée en charge (jamais en prod)
-  const isDebugEnv = import.meta.env.VITE_ENV !== 'prod' && import.meta.env.VITE_ENV !== 'test';
-  const [debugCreating, setDebugCreating] = useState(false);
-  const createDebugCarcasses = async (count: number) => {
-    setDebugCreating(true);
-    const base = Date.now();
-    for (let i = 0; i < count; i++) {
-      const numeroBracelet = `DEBUG-${base}-${i}`;
-      const newCarcasse = await createNewCarcasse({
-        zacharieCarcasseId: `${fei.numero}_${numeroBracelet}`,
-        numeroBracelet,
-        espece: 'Sanglier',
-        nombreDAnimaux: '1',
-        fei,
-      });
-      addLog({
-        user_id: user.id,
-        user_role: UserRoles.CHASSEUR,
-        fei_numero: fei.numero,
-        action: 'examinateur-carcasse-create',
-        history: createHistoryInput(null, newCarcasse),
-        entity_id: null,
-        zacharie_carcasse_id: newCarcasse.zacharie_carcasse_id,
-        intermediaire_id: null,
-        carcasse_intermediaire_id: null,
-      });
-    }
-    syncData('debug-create-carcasses');
-    setDebugCreating(false);
-  };
-
-  const [allCarcassesConfirmed, setAllCarcassesConfirmed] = useState(
-    !!fei.heure_mise_a_mort_premiere_carcasse
+  // La confirmation de l'examen ne vaut que pour l'état des carcasses au clic sur « Continuer » :
+  // ajouter, modifier ou retirer une carcasse l'invalide, ce qui replie les blocs suivants et fait
+  // repasser par la modale d'avertissement des anomalies.
+  const carcassesExamenSignature = useMemo(
+    () =>
+      carcasses
+        .map((c) =>
+          [
+            c.zacharie_carcasse_id,
+            (c.examinateur_anomalies_carcasse ?? []).join(','),
+            (c.examinateur_anomalies_abats ?? []).join(','),
+          ].join(':')
+        )
+        .join('|'),
+    [carcasses]
   );
+  const [confirmedSignature, setConfirmedSignature] = useState<string | null>(() =>
+    fei.heure_mise_a_mort_premiere_carcasse ? carcassesExamenSignature : null
+  );
+  const allCarcassesConfirmed = confirmedSignature === carcassesExamenSignature;
   const [approbation, setApprobation] = useState(
     fei.examinateur_initial_approbation_mise_sur_le_marche ? true : false
   );
@@ -339,6 +324,7 @@ function FEIChasseurLoaded() {
     !canEdit ||
     !!(
       showBloc2 &&
+      allCarcassesConfirmed &&
       carcasses.length >= 1 &&
       !fei.consommateur_final_usage_domestique &&
       fei.heure_mise_a_mort_premiere_carcasse &&
@@ -525,7 +511,7 @@ function FEIChasseurLoaded() {
               {showBloc2 && (
                 <div className="bg-white p-4 md:p-8">
                   <h4 className="fr-h5">Carcasses</h4>
-                  {isDebugEnv && canEdit && (
+                  {/* {isDebugEnv && canEdit && (
                     <div className="mb-4 flex flex-wrap items-center gap-2 rounded-sm border border-dashed border-orange-400 bg-orange-50 p-3">
                       <span className="w-full text-sm font-bold text-orange-700">
                         🛠 DEBUG — créer des carcasses (Sanglier) en masse
@@ -543,13 +529,12 @@ function FEIChasseurLoaded() {
                         </Button>
                       ))}
                     </div>
-                  )}
+                  )} */}
                   <CarcassesExaminateur
                     canEdit={canEdit}
                     canEditAsPremierDetenteur={canEditAsPremierDetenteur}
                     allCarcassesConfirmed={allCarcassesConfirmed}
-                    onAllCarcassesConfirmed={() => setAllCarcassesConfirmed(true)}
-                    onAddMoreCarcasses={() => setAllCarcassesConfirmed(false)}
+                    onAllCarcassesConfirmed={() => setConfirmedSignature(carcassesExamenSignature)}
                   />
                   {fieldHasError('carcasses') && (
                     <p className="fr-error-text mt-2">{fieldErrorMessage('carcasses')}</p>
