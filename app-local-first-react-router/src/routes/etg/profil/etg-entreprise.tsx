@@ -5,9 +5,15 @@ import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
-import type { EntitiesWorkingForResponse, UserConnexionResponse } from '@api/src/types/responses';
+import { toast } from 'react-toastify';
+import type {
+  EntitiesWorkingForResponse,
+  EtgParametresResponse,
+  UserConnexionResponse,
+} from '@api/src/types/responses';
 import type { EntitiesById } from '@api/src/types/entity';
 import useUser from '@app/zustand/user';
+import useZustandStore from '@app/zustand/store';
 import API from '@app/services/api';
 import ListAndSelectEntities from '@app/components/ListAndSelectEntities';
 
@@ -37,6 +43,35 @@ export default function EtgProfilEntreprise() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  // Le n° de bon de réception est un réglage de l'entreprise : il vaut pour tous ses salariés.
+  const handleDemandeNumeroBonReception = useCallback(
+    async (etgId: string, demandeNumeroBonReception: boolean) => {
+      const response = await API.post({
+        path: `/entite/etg/${etgId}/parametres`,
+        body: {
+          [Prisma.EntityScalarFieldEnum.etg_demande_numero_bon_reception]: demandeNumeroBonReception,
+        },
+      }).then((data) => data as EtgParametresResponse);
+      if (!response.ok || !response.data.entity) {
+        toast.error("Le réglage n'a pas pu être enregistré");
+        return;
+      }
+      const updatedEntity = response.data.entity;
+      setUserEntitiesById((entities) => ({
+        ...entities,
+        [etgId]: { ...entities[etgId], ...updatedEntity },
+      }));
+      const storeEntities = useZustandStore.getState().entities;
+      if (storeEntities[etgId]) {
+        useZustandStore.setState({
+          entities: { ...storeEntities, [etgId]: { ...storeEntities[etgId], ...updatedEntity } },
+        });
+      }
+      toast.success('Réglage enregistré');
+    },
+    []
+  );
 
   const handleUserFormBlur = useCallback(
     async (event: React.FocusEvent<HTMLFormElement>) => {
@@ -124,6 +159,32 @@ export default function EtgProfilEntreprise() {
                     ]}
                   />
                 </form>
+              )}
+              {etgsDone && (
+                <div className="mt-8 px-4">
+                  {Object.values(userEntitiesById).map((etg) => (
+                    <Checkbox
+                      key={etg.id}
+                      legend={
+                        Object.keys(userEntitiesById).length > 1
+                          ? etg.nom_d_usage
+                          : 'Prise en charge des carcasses'
+                      }
+                      options={[
+                        {
+                          label: 'Demander le n° de bon de réception lors de la prise en charge',
+                          hintText:
+                            "Le réglage s'applique à toute l'entreprise. Le numéro saisi est reporté sur les carcasses prises en charge et sur leurs certificats.",
+                          nativeInputProps: {
+                            name: `${Prisma.EntityScalarFieldEnum.etg_demande_numero_bon_reception}_${etg.id}`,
+                            checked: etg.etg_demande_numero_bon_reception,
+                            onChange: (e) => handleDemandeNumeroBonReception(etg.id, e.target.checked),
+                          },
+                        },
+                      ]}
+                    />
+                  ))}
+                </div>
               )}
             </ListAndSelectEntities>
             <div className="mb-6 bg-white md:shadow-sm">

@@ -311,6 +311,7 @@ const useZustandStore = create<State & Actions>()(
                   intermediaire_prochain_detenteur_role_cache: null,
                   intermediaire_prochain_detenteur_id_cache: null,
                   intermediaire_poids: null,
+                  numero_bon_reception: newIntermediaire.numero_bon_reception,
                   created_at: newIntermediaire.created_at,
                   updated_at: newIntermediaire.created_at,
                   deleted_at: null,

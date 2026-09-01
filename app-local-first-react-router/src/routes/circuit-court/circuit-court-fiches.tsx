@@ -279,6 +279,7 @@ export default function CircuitCourtFiches() {
         intermediaire_role: ci.intermediaire_role,
         created_at: ci.created_at,
         prise_en_charge_at: ci.prise_en_charge_at,
+        numero_bon_reception: ci.numero_bon_reception,
         intermediaire_depot_type: ci.intermediaire_depot_type,
         intermediaire_depot_entity_id: ci.intermediaire_depot_entity_id,
         intermediaire_prochain_detenteur_role_cache: ci.intermediaire_prochain_detenteur_role_cache,

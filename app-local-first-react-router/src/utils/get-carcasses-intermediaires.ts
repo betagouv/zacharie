@@ -70,13 +70,15 @@ export function filterFeiIntermediaires(
         intermediaire_role: ci.intermediaire_role,
         created_at: ci.created_at,
         prise_en_charge_at: ci.prise_en_charge_at,
+        numero_bon_reception: ci.numero_bon_reception,
         intermediaire_depot_type: ci.intermediaire_depot_type,
         intermediaire_depot_entity_id: ci.intermediaire_depot_entity_id,
         intermediaire_prochain_detenteur_role_cache: ci.intermediaire_prochain_detenteur_role_cache,
         intermediaire_prochain_detenteur_id_cache: ci.intermediaire_prochain_detenteur_id_cache,
       };
     }
-    // Les champs de décision de transmission (prochain détenteur, dépôt) ne sont posés que sur les
+    // Les champs de décision de transmission (prochain détenteur, dépôt, n° de bon de réception) ne
+    // sont posés que sur les
     // carcasses prises en charge, jamais sur les refusées/manquantes. Le représentant doit donc
     // retenir la valeur non-nulle de n'importe quelle carcasse de l'intermédiaire, quel que soit
     // l'ordre d'itération (sinon une carcasse refusée en tête masque la décision réelle).
@@ -88,6 +90,9 @@ export function filterFeiIntermediaires(
     if (ci.intermediaire_depot_type != null) {
       rep.intermediaire_depot_type = ci.intermediaire_depot_type;
       rep.intermediaire_depot_entity_id = ci.intermediaire_depot_entity_id;
+    }
+    if (ci.numero_bon_reception != null) {
+      rep.numero_bon_reception = ci.numero_bon_reception;
     }
   }
   // ordre chronologique décroissant, du plus récent au plus ancien

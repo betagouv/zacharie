@@ -38,6 +38,7 @@ const initialData: State = {
     prefilled: false,
     ccg_status: null,
     etg_linked_to_svi_id: null,
+    etg_demande_numero_bon_reception: false,
     at_least_one_fei_treated: null,
     zacharie_compatible: false,
     for_testing: false,

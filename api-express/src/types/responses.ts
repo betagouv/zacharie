@@ -101,6 +101,14 @@ export interface EntitiesWorkingForResponse {
   error: '';
 }
 
+export interface EtgParametresResponse {
+  ok: boolean;
+  data: {
+    entity: Entity | null;
+  };
+  error: string;
+}
+
 export interface EtgUserInteracted extends UserForFei {
   roles: User['roles'];
 }
