@@ -5,6 +5,7 @@ import userRouter from '~/controllers/user';
 import { sendError } from '~/middlewares/errors';
 import prisma from '~/prisma';
 import { type User, UserRoles } from '@prisma/client';
+import { BrevoTemplateId } from '~/third-parties/brevo-templates';
 
 vi.mock('~/third-parties/brevo', () => ({
   createBrevoContact: vi.fn().mockResolvedValue(undefined),
@@ -110,6 +111,7 @@ describe('POST /user/:id — onboarding_finished', () => {
     expect(sendOnboardingEmailOnce).toHaveBeenCalledOnce();
     expect(vi.mocked(sendOnboardingEmailOnce).mock.calls[0][0]).toMatchObject({
       user: savedUser,
+      templateId: BrevoTemplateId.ONBOARDING_DONE,
       action: 'INSCRIPTION_EN_EXAMEN',
     });
   });

@@ -27,7 +27,7 @@ import {
 } from '~/third-parties/brevo';
 import { getDefaultScopeDepartementsForRoles } from '~/utils/federation-stats';
 import { sendOnboardingEmailOnce } from '~/utils/send-onboarding-email';
-import { formatCompteActiveEmail } from '~/utils/format-inscription-email';
+import { BrevoTemplateId } from '~/third-parties/brevo-templates';
 
 router.post(
   '/user/connect-as',
@@ -287,8 +287,12 @@ ${savedUser.roles.includes(UserRoles.CHASSEUR) && savedUser.est_forme_a_l_examen
 
       // Mail « compte activé » dédupliqué une seule fois par compte (voir controllers/user.ts).
       if (savedUser.activated && !user.activated) {
-        const { subject, text } = formatCompteActiveEmail();
-        await sendOnboardingEmailOnce({ user: savedUser, subject, text, action: 'COMPTE_ACTIVE' });
+        await sendOnboardingEmailOnce({
+          user: savedUser,
+          templateId: BrevoTemplateId.ACCOUNT_ACTIVATED,
+          params: { cta: `${process.env.VITE_APP_URL}/app/connexion` },
+          action: 'COMPTE_ACTIVE',
+        });
       }
 
       res.status(200).send({ ok: true, data: { user: savedUser }, error: '', message: '' });

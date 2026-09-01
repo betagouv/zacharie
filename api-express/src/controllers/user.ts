@@ -45,7 +45,6 @@ import { cookieOptions, JWT_MAX_AGE, logoutCookieOptions } from '~/utils/cookie'
 import { SECRET } from '~/config';
 import { hasAllRequiredFields } from '~/utils/user';
 import { sendOnboardingEmailOnce } from '~/utils/send-onboarding-email';
-import { formatInscriptionEnExamenEmail, formatCompteActiveEmail } from '~/utils/format-inscription-email';
 // import { refreshMaterializedViews } from '~/utils/refreshMaterializedViews';
 import { z } from 'zod';
 import { normalizeNumeroCfei, sanitize } from '~/utils/sanitize';
@@ -1228,14 +1227,12 @@ ${savedUser.roles.includes(UserRoles.CHASSEUR) && savedUser.est_forme_a_l_examen
 
       // Mail de fin d'onboarding : envoyé à tout utilisateur dès que son inscription est terminée
       // (onboarded_at vient d'être renseigné). Le compte n'est PAS activé automatiquement : il
-      // attend une validation manuelle, d'où le message « examiné sous 48h ».
+      // attend une validation manuelle, ce que dit le template Brevo (« examinée sous 48h »).
       const userJustFinishedOnboarding = !user.onboarded_at && !!savedUser.onboarded_at;
       if (userJustFinishedOnboarding) {
-        const { subject, text } = formatInscriptionEnExamenEmail();
         await sendOnboardingEmailOnce({
           user: savedUser,
-          subject,
-          text,
+          templateId: BrevoTemplateId.ONBOARDING_DONE,
           action: 'INSCRIPTION_EN_EXAMEN',
         });
       }
@@ -1244,8 +1241,12 @@ ${savedUser.roles.includes(UserRoles.CHASSEUR) && savedUser.est_forme_a_l_examen
       // pour ne pas le renvoyer à chaque transition activated false→true (ex. passage sans CFEI
       // qui ré-auto-active, ou réactivation admin).
       if (savedUser.activated && !user.activated) {
-        const { subject, text } = formatCompteActiveEmail();
-        await sendOnboardingEmailOnce({ user: savedUser, subject, text, action: 'COMPTE_ACTIVE' });
+        await sendOnboardingEmailOnce({
+          user: savedUser,
+          templateId: BrevoTemplateId.ACCOUNT_ACTIVATED,
+          params: { cta: `${process.env.VITE_APP_URL}/app/connexion` },
+          action: 'COMPTE_ACTIVE',
+        });
       }
 
       res.status(200).send({ ok: true, data: { user: savedUser }, error: '', message: '' });
