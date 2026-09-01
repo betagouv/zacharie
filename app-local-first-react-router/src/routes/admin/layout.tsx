@@ -32,6 +32,14 @@ const adminLinks = [
   },
 ];
 
+const externalLinks = [
+  {
+    href: import.meta.env.VITE_METABASE_DASHBOARD_URL,
+    label: 'Metabase',
+    icon: 'fr-icon-bar-chart-box-line',
+  },
+];
+
 export default function AdminLayout() {
   const location = useLocation();
   const user = useMostFreshUser('RouterAdmin');
@@ -132,24 +140,29 @@ export default function AdminLayout() {
                 </li>
               );
             })}
-            <li>
-              <a
-                href="https://metabase.zacharie.beta.gouv.fr/question/27-fiches-creees"
-                target="_blank"
-                style={{ backgroundImage: 'none' }}
-                rel="noopener noreferrer"
-                title={navCollapsed ? 'Fiches (stats)' : undefined}
-                className={`text-title-grey hover:bg-open-blue-975 flex items-center gap-2 rounded-md border-l-2 border-transparent px-3 py-1.5 text-sm no-underline hover:bg-gray-100 ${
-                  navCollapsed ? 'md:justify-center md:px-0' : ''
-                }`}
-              >
-                <span
-                  className={`fr-icon-line-chart-line fr-icon--sm shrink-0 ${navCollapsed ? 'md:mr-0' : 'mr-1'}`}
-                  aria-hidden="true"
-                />
-                <span className={navCollapsed ? 'md:hidden' : ''}>Fiches (stats)</span>
-              </a>
-            </li>
+
+            <hr className="border-gray-200" />
+
+            {externalLinks.map((link) => (
+              <li key={link.href}>
+                <a
+                  href={link.href}
+                  target="_blank"
+                  style={{ backgroundImage: 'none' }}
+                  rel="noopener noreferrer"
+                  title={navCollapsed ? link.label : undefined}
+                  className={`text-title-grey hover:bg-open-blue-975 flex items-center gap-2 rounded-md border-l-2 border-transparent px-3 py-1.5 text-sm no-underline hover:bg-gray-100 ${
+                    navCollapsed ? 'md:justify-center md:px-0' : ''
+                  }`}
+                >
+                  <span
+                    className={`${link.icon} fr-icon--sm shrink-0 ${navCollapsed ? 'md:mr-0' : 'mr-1'}`}
+                    aria-hidden="true"
+                  />
+                  <span className={navCollapsed ? 'md:hidden' : ''}>{link.label}</span>
+                </a>
+              </li>
+            ))}
           </ul>
         </nav>
         <main className="fr-container max-w-none! min-w-0 flex-1">
