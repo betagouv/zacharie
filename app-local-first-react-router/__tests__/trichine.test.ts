@@ -126,29 +126,22 @@ describe('poolSansFTP', () => {
 });
 
 describe('filtreLaboFTP', () => {
-  const makeLaboFtp = (
-    statutLogistique: TrichineStatutLogistiqueFTP,
-    resultats: Array<TrichineResultatAnalyse | null>
-  ) => ({
+  const makeLaboFtp = (statutLogistique: TrichineStatutLogistiqueFTP) => ({
     statut_logistique: statutLogistique,
-    TrichinePoolFTPs: resultats.map((resultat) => ({ TrichinePool: { resultat_analyse: resultat } })),
   });
 
-  test('à traiter quand aucun résultat saisi', () => {
-    expect(filtreLaboFTP(makeLaboFtp(TrichineStatutLogistiqueFTP.ENVOYEE, [null, null]))).toBe('a-traiter');
-    expect(filtreLaboFTP(makeLaboFtp(TrichineStatutLogistiqueFTP.RECUE, [null]))).toBe('a-traiter');
+  // Le classement suit la réception, pas la présence d'un résultat : une FTP de confirmation
+  // vers le LNR porte déjà le DOUTEUX saisi par le LVD avant même que le LNR l'ait reçue.
+  test('à traiter tant que la FTP n’est pas réceptionnée', () => {
+    expect(filtreLaboFTP(makeLaboFtp(TrichineStatutLogistiqueFTP.ENVOYEE))).toBe('a-traiter');
   });
 
-  test('en cours sur saisie partielle', () => {
-    expect(
-      filtreLaboFTP(makeLaboFtp(TrichineStatutLogistiqueFTP.RECUE, [TrichineResultatAnalyse.NEGATIF, null]))
-    ).toBe('en-cours');
+  test('en cours une fois réceptionnée', () => {
+    expect(filtreLaboFTP(makeLaboFtp(TrichineStatutLogistiqueFTP.RECUE))).toBe('en-cours');
   });
 
   test('clôturée quand TRAITEE', () => {
-    expect(
-      filtreLaboFTP(makeLaboFtp(TrichineStatutLogistiqueFTP.TRAITEE, [TrichineResultatAnalyse.NEGATIF]))
-    ).toBe('cloturees');
+    expect(filtreLaboFTP(makeLaboFtp(TrichineStatutLogistiqueFTP.TRAITEE))).toBe('cloturees');
   });
 });
 
