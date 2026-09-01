@@ -25,7 +25,7 @@ test('Création de compte examinateur initial', async ({ page }) => {
   await page.getByRole('textbox', { name: 'Adresse * Indication : numéro' }).fill('10 rue de la paix');
   await page.getByRole('textbox', { name: 'Code postal * 5 chiffres' }).fill('75000');
   await page.getByRole('textbox', { name: 'Ville ou commune * Exemple :' }).fill('Paris');
-  await page.getByRole('button', { name: 'CORMEILLES EN PARISIS' }).click();
+  await page.getByRole('button', { name: '75001 PARIS 01' }).click();
   await page.getByRole('button', { name: 'Enregistrer et continuer' }).click();
   await page.getByText('Oui').first().click();
   await page.getByRole('textbox', { name: "Numéro d'attestation de" }).fill('CFEI-075-00-111');
@@ -48,7 +48,7 @@ test('Création de compte premier détenteur', async ({ page }) => {
   await page.getByRole('textbox', { name: 'Adresse * Indication : numéro' }).fill('10 rue de la paix');
   await page.getByRole('textbox', { name: 'Code postal * 5 chiffres' }).fill('75000');
   await page.getByRole('textbox', { name: 'Ville ou commune * Exemple :' }).fill('Paris');
-  await page.getByRole('button', { name: 'CORMEILLES EN PARISIS' }).click();
+  await page.getByRole('button', { name: '75001 PARIS 01' }).click();
   await page.getByRole('button', { name: 'Enregistrer et continuer' }).click();
   await page.getByText('Non').click();
   await page.getByRole('button', { name: 'Enregistrer et continuer' }).click();
@@ -78,7 +78,7 @@ test('Création de compte collecteur pro', async ({ page }) => {
   await page.getByRole('textbox', { name: 'Adresse Indication : numéro' }).fill('10 rue de la paix');
   await page.getByRole('textbox', { name: 'Code postal 5 chiffres' }).fill('75000');
   await page.getByRole('textbox', { name: 'Ville ou commune Exemple :' }).fill('Paris');
-  await page.getByRole('button', { name: 'CORMEILLES EN PARISIS' }).click();
+  await page.getByRole('button', { name: '75001 PARIS 01' }).click();
   await page.getByRole('button', { name: 'Enregistrer et continuer' }).click();
   await expect(page.locator('#content')).toMatchAriaSnapshot(`
     - heading "Mon Collecteur Professionnel Indépendant" [level=3]
@@ -112,7 +112,7 @@ test('Création de compte établissement de traitement du gibier', async ({ page
   await page.getByRole('textbox', { name: 'Adresse Indication : numéro' }).fill('10 rue de la paix');
   await page.getByRole('textbox', { name: 'Code postal 5 chiffres' }).fill('75000');
   await page.getByRole('textbox', { name: 'Ville ou commune Exemple :' }).fill('Paris');
-  await page.getByRole('button', { name: 'CORMEILLES EN PARISIS' }).click();
+  await page.getByRole('button', { name: '75001 PARIS 01' }).click();
   await page.getByRole('button', { name: 'Enregistrer et continuer' }).click();
   await expect(page.locator('#content')).toMatchAriaSnapshot(`
     - heading "Mon Établissement de Traitement du Gibier sauvage (ETG)" [level=3]
@@ -151,7 +151,7 @@ test('Création de compte SVI', async ({ page }) => {
   await page.getByRole('textbox', { name: 'Adresse Indication : numéro' }).fill('10 rue de la paix');
   await page.getByRole('textbox', { name: 'Code postal 5 chiffres' }).fill('75000');
   await page.getByRole('textbox', { name: 'Ville ou commune Exemple :' }).fill('Paris');
-  await page.getByRole('button', { name: 'CORMEILLES EN PARISIS' }).click();
+  await page.getByRole('button', { name: '75001 PARIS 01' }).click();
   await page.getByRole('button', { name: 'Enregistrer et continuer' }).click();
   await expect(page.locator('#content')).toMatchAriaSnapshot(`
     - heading "Mon Service Vétérinaire d'Inspection (SVI)" [level=3]
@@ -177,7 +177,7 @@ test('Examinateur initial ajoute une association de chasse depuis son profil', a
   await page.getByRole('textbox', { name: 'Adresse * Indication : numéro' }).fill('15 avenue des chasseurs');
   await page.getByRole('textbox', { name: 'Code postal * 5 chiffres' }).fill('75000');
   await page.getByRole('textbox', { name: 'Ville ou commune * Exemple :' }).fill('Paris');
-  await page.getByRole('button', { name: 'CORMEILLES EN PARISIS' }).click();
+  await page.getByRole('button', { name: '75001 PARIS 01' }).click();
   await page.getByRole('button', { name: 'Enregistrer et continuer' }).click();
   await page.getByText('Oui').first().click();
   await page.getByRole('textbox', { name: "Numéro d'attestation de" }).fill('CFEI-075-00-222');
@@ -229,7 +229,7 @@ test('Examinateur initial ajoute une association de chasse existante depuis son 
   await page.getByRole('textbox', { name: 'Adresse * Indication : numéro' }).fill('20 avenue des chasseurs');
   await page.getByRole('textbox', { name: 'Code postal * 5 chiffres' }).fill('75000');
   await page.getByRole('textbox', { name: 'Ville ou commune * Exemple :' }).fill('Paris');
-  await page.getByRole('button', { name: 'CORMEILLES EN PARISIS' }).click();
+  await page.getByRole('button', { name: '75001 PARIS 01' }).click();
   await page.getByRole('button', { name: 'Enregistrer et continuer' }).click();
   await page.getByText('Oui').first().click();
   await page.getByRole('textbox', { name: "Numéro d'attestation de" }).fill('CFEI-075-00-555');
@@ -266,7 +266,7 @@ test('Examinateur initial ajoute une chambre froide (CCG) depuis son profil', as
   await page.getByRole('textbox', { name: 'Adresse * Indication : numéro' }).fill('25 rue du gibier');
   await page.getByRole('textbox', { name: 'Code postal * 5 chiffres' }).fill('75000');
   await page.getByRole('textbox', { name: 'Ville ou commune * Exemple :' }).fill('Paris');
-  await page.getByRole('button', { name: 'CORMEILLES EN PARISIS' }).click();
+  await page.getByRole('button', { name: '75001 PARIS 01' }).click();
   await page.getByRole('button', { name: 'Enregistrer et continuer' }).click();
   await page.getByText('Oui').first().click();
   await page.getByRole('textbox', { name: "Numéro d'attestation de" }).fill('CFEI-075-00-333');
@@ -305,7 +305,7 @@ test('Premier détenteur devient examinateur initial depuis son profil', async (
   await page.getByRole('textbox', { name: 'Adresse * Indication : numéro' }).fill('5 chemin forestier');
   await page.getByRole('textbox', { name: 'Code postal * 5 chiffres' }).fill('75000');
   await page.getByRole('textbox', { name: 'Ville ou commune * Exemple :' }).fill('Paris');
-  await page.getByRole('button', { name: 'CORMEILLES EN PARISIS' }).click();
+  await page.getByRole('button', { name: '75001 PARIS 01' }).click();
   await page.getByRole('button', { name: 'Enregistrer et continuer' }).click();
   await page.getByText('Non').click(); // Not trained initially
   await page.getByRole('button', { name: 'Enregistrer et continuer' }).click();
@@ -345,7 +345,7 @@ test('Premier détenteur ajoute association et CCG depuis son profil', async ({ 
   await page.getByRole('textbox', { name: 'Adresse * Indication : numéro' }).fill('100 route de la forêt');
   await page.getByRole('textbox', { name: 'Code postal * 5 chiffres' }).fill('75000');
   await page.getByRole('textbox', { name: 'Ville ou commune * Exemple :' }).fill('Paris');
-  await page.getByRole('button', { name: 'CORMEILLES EN PARISIS' }).click();
+  await page.getByRole('button', { name: '75001 PARIS 01' }).click();
   await page.getByRole('button', { name: 'Enregistrer et continuer' }).click();
   await page.getByText('Non').click();
   await page.getByRole('button', { name: 'Enregistrer et continuer' }).click();

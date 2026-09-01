@@ -1,7 +1,7 @@
 import { Input, InputProps } from '@codegouvfr/react-dsfr/Input';
 import { useState, ChangeEvent, useEffect, useRef } from 'react';
 import { useDebounce } from '@uidotdev/usehooks';
-import villes from '@app/data/villes.json';
+import { searchVilles } from '@app/utils/search-ville';
 
 interface InputVilleProps extends InputProps.RegularInput {
   trimPostCode?: boolean;
@@ -14,145 +14,20 @@ export default function InputVille(props: InputVilleProps) {
     const defaultValue = props.nativeInputProps?.defaultValue;
     return typeof defaultValue === 'string' ? defaultValue : '';
   });
-  const debouncedVilleSearched = useDebounce(
-    `${postCode ? postCode + ' ' : ''}${villeSearched.toLocaleUpperCase()}`,
-    300
-  );
+  const debouncedVilleSearched = useDebounce(`${postCode ? postCode + ' ' : ''}${villeSearched}`, 300);
   const [villesResults, setVillesResults] = useState<string[]>([]);
   const canSearch = useRef(false);
-
-  function normalizeSearch(search: string) {
-    const searchUpperCased = search.toLocaleUpperCase();
-    const removeSaint = searchUpperCased.replace('SAINT ', 'ST ');
-    const regexCodePostal = /\d{5}/;
-    const removeCodePostal = removeSaint.replace(regexCodePostal, '');
-    // replace all accents with normal letters
-    const searchNormalized = removeCodePostal.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    return searchNormalized;
-  }
 
   useEffect(() => {
     if (!debouncedVilleSearched || !canSearch.current) {
       return;
     }
-
-    const multipleWords = debouncedVilleSearched
-      .split(' ')
-      .join('-')
-      .split('-')
-      .filter((word) => word.length > 2);
-    const normalizedVille = normalizeSearch(debouncedVilleSearched);
-    const searchCodePostal = normalizedVille.match(/\d{5}/)?.[0] ?? '';
-
-    const search_code_postal_ville = searchCodePostal
-      ? `${searchCodePostal} ${normalizedVille}`
-      : normalizedVille;
-    const multipleNormalizedWords = normalizedVille
-      .split(' ')
-      .join('-')
-      .split('-')
-      .filter((word) => word.length > 2);
-
-    const itemsNameIsWord = [];
-    const itemsNameStartWithWord = [];
-    const itemsNameStartWithWordWithNoAccent = [];
-    const itemsNameStartsWithOneOfTheWords = [];
-    const itemsNameStartsWithOneOfTheWordsWithNoAccent = [];
-    const itemsNameContainsTheWord = [];
-    const itemsNameContainsOneOfTheWords = [];
-    const itemsNameContainsOneOfTheWordsWithNoAccent = [];
-
-    for (const item of villes as Array<{ code_postal: string; ville: string; code_postal_ville: string }>) {
-      const { code_postal, ville, code_postal_ville } = item;
-      if (code_postal_ville === debouncedVilleSearched) {
-        itemsNameIsWord.push(code_postal_ville);
-        continue;
-      }
-      if (ville === debouncedVilleSearched) {
-        itemsNameIsWord.push(code_postal_ville);
-        continue;
-      }
-      if (code_postal_ville.startsWith(debouncedVilleSearched)) {
-        itemsNameStartWithWord.push(code_postal_ville);
-        continue;
-      }
-      if (code_postal_ville.startsWith(search_code_postal_ville)) {
-        itemsNameStartWithWordWithNoAccent.push(code_postal_ville);
-        continue;
-      }
-      if (ville.startsWith(debouncedVilleSearched)) {
-        itemsNameStartWithWord.push(code_postal_ville);
-        continue;
-      }
-      if (ville.startsWith(normalizedVille)) {
-        itemsNameStartWithWordWithNoAccent.push(code_postal_ville);
-        continue;
-      }
-      if (searchCodePostal && code_postal.startsWith(searchCodePostal)) {
-        itemsNameStartWithWord.push(code_postal_ville);
-        continue;
-      }
-      if (ville.includes(normalizedVille)) {
-        itemsNameContainsTheWord.push(code_postal_ville);
-        continue;
-      }
-      for (const word of multipleWords) {
-        if (code_postal_ville.startsWith(word)) {
-          itemsNameStartsWithOneOfTheWords.push(code_postal_ville);
-          break;
-        }
-      }
-      for (const word of multipleNormalizedWords) {
-        if (code_postal_ville.startsWith(word)) {
-          itemsNameStartsWithOneOfTheWordsWithNoAccent.push(code_postal_ville);
-          break;
-        }
-      }
-      for (const word of multipleWords) {
-        if (code_postal_ville.includes(word)) {
-          itemsNameContainsOneOfTheWords.push(code_postal_ville);
-          break;
-        }
-      }
-      for (const word of multipleNormalizedWords) {
-        if (code_postal_ville.includes(word)) {
-          itemsNameContainsOneOfTheWordsWithNoAccent.push(code_postal_ville);
-          break;
-        }
-      }
-    }
-    let slice = 5;
-    if (itemsNameIsWord.length > 5) {
-      slice = itemsNameIsWord.length;
-    }
-    const results = [
-      ...new Set([
-        ...itemsNameIsWord,
-        ...itemsNameStartWithWord,
-        ...itemsNameStartWithWordWithNoAccent,
-        ...itemsNameStartsWithOneOfTheWords,
-        ...itemsNameStartsWithOneOfTheWordsWithNoAccent,
-        ...itemsNameContainsTheWord,
-        ...itemsNameContainsOneOfTheWords,
-        ...itemsNameContainsOneOfTheWordsWithNoAccent,
-      ]),
-    ].slice(0, slice);
-    setVillesResults(results);
-  }, [debouncedVilleSearched, postCode]);
+    setVillesResults(searchVilles(debouncedVilleSearched));
+  }, [debouncedVilleSearched]);
 
   useEffect(() => {
-    if (!villeSearched && postCode && postCode?.length >= 5) {
-      const results = [];
-      for (const item of villes as Array<{ code_postal: string; ville: string; code_postal_ville: string }>) {
-        const { code_postal, code_postal_ville } = item;
-        if (code_postal === postCode) {
-          results.push(code_postal_ville);
-        }
-        if (results.length >= 5) {
-          break;
-        }
-      }
-      setVillesResults(results);
+    if (!villeSearched && postCode && postCode.length >= 5) {
+      setVillesResults(searchVilles(postCode));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [postCode]);
@@ -179,7 +54,7 @@ export default function InputVille(props: InputVilleProps) {
       />
       <div
         className={[
-          'flex w-full flex-col border border-gray-200',
+          'flex max-h-60 w-full flex-col overflow-y-auto border border-gray-200',
           villesResults.length > 0 ? '-mt-6' : 'hidden',
         ].join(' ')}
       >
