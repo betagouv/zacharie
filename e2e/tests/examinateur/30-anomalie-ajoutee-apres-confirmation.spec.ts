@@ -6,6 +6,7 @@ dayjs.extend(utc);
 dayjs.locale('fr');
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
+import { dateApprobationDuJour } from '../../utils/date-approbation';
 
 test.use({
   viewport: { width: 350, height: 667 },
@@ -80,7 +81,7 @@ test('Anomalie ajoutée après confirmation — la fiche se replie et le message
   await expect(page.getByRole('textbox', { name: 'Début de la chasse' })).toHaveValue(
     dayjs().startOf('day').add(1, 'hour').format('HH:mm')
   );
-  await page.getByRole('button', { name: 'Date du jour et maintenant' }).click();
+  await page.getByRole('button', { name: dateApprobationDuJour() }).click();
   await page
     .getByText(/Je, .* certifie qu/i)
     .first()
