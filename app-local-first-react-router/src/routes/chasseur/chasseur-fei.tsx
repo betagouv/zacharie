@@ -94,37 +94,6 @@ function FEIChasseurLoaded() {
     syncData('examinateur-initial-update-fei');
   };
 
-  // DEBUG: création en masse de carcasses pour tester la montée en charge (jamais en prod)
-  const isDebugEnv = import.meta.env.VITE_ENV !== 'prod' && import.meta.env.VITE_ENV !== 'test';
-  const [debugCreating, setDebugCreating] = useState(false);
-  const createDebugCarcasses = async (count: number) => {
-    setDebugCreating(true);
-    const base = Date.now();
-    for (let i = 0; i < count; i++) {
-      const numeroBracelet = `DEBUG-${base}-${i}`;
-      const newCarcasse = await createNewCarcasse({
-        zacharieCarcasseId: `${fei.numero}_${numeroBracelet}`,
-        numeroBracelet,
-        espece: 'Sanglier',
-        nombreDAnimaux: '1',
-        fei,
-      });
-      addLog({
-        user_id: user.id,
-        user_role: UserRoles.CHASSEUR,
-        fei_numero: fei.numero,
-        action: 'examinateur-carcasse-create',
-        history: createHistoryInput(null, newCarcasse),
-        entity_id: null,
-        zacharie_carcasse_id: newCarcasse.zacharie_carcasse_id,
-        intermediaire_id: null,
-        carcasse_intermediaire_id: null,
-      });
-    }
-    syncData('debug-create-carcasses');
-    setDebugCreating(false);
-  };
-
   // La confirmation de l'examen ne vaut que pour l'état des carcasses au clic sur « Continuer » :
   // ajouter, modifier ou retirer une carcasse l'invalide, ce qui replie les blocs suivants et fait
   // repasser par la modale d'avertissement des anomalies.
