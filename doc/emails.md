@@ -14,7 +14,7 @@ Tout passe par **Brevo** — pas de SMTP / nodemailer / autre.
 - Les deux senders **avalent leurs erreurs** (remontée Sentry) et renvoient un **booléen de succès**. Tout appelant qui écrit un `NotificationLog` derrière doit le conditionner à ce booléen : ce log porte la dédup, l'écrire après un envoi raté bloquerait le renvoi définitivement.
 - **Registre des templates** — `api-express/src/third-parties/brevo-templates.ts`. `BrevoTemplateId` mappe chaque email (clé sémantique) → `templateId` Brevo, ou `null` tant que pas migré. **C'est le tracker de migration** : `null` = encore en texte inline, nombre = migré vers template.
 - **`sendNotificationToUser()` / `queueSendNotificationToUser()`** — `api-express/src/service/notifications.ts`. Push web + push natif + email. **L'email ne part que si l'user a activé la préférence `EMAIL`** (`UserNotifications.EMAIL`). Dédup via `NotificationLog` sur `(user_id, type, action)`. Le canal email bascule sur `sendTemplateEmail` dès qu'un `emailTemplateId` est fourni (+ `emailTemplateParams`) ; sinon texte inline. **Migrer un email = lui passer son `emailTemplateId` ici, pas appeler `sendTemplateEmail` directement** : contourner le service fait perdre la dédup, le gating de préférence et le push (les side-effects tournent une fois par carcasse).
-- **`sendOnboardingEmailOnce()`** — `api-express/src/utils/send-onboarding-email.ts`. Onboarding, dédup via `NotificationLog` (écrit seulement si l'envoi a réussi), **ignore la préférence EMAIL** (envoie toujours). Prend soit un `templateId` (+ `params`) pour un email migré, soit `subject`/`text` pour un email encore inline.
+- **`sendOnboardingEmailOnce()`** — `api-express/src/utils/send-onboarding-email.ts`. Onboarding, dédup via `NotificationLog` (écrit seulement si l'envoi a réussi), **ignore la préférence EMAIL** (envoie toujours). Tous ses emails sont migrés : il ne prend qu'un `templateId` (+ `params`) et passe par `sendTemplateEmail`.
 - **`inviteUser()`** — `api-express/src/utils/invite-user.ts`. Appelle `sendEmail` directement.
 
 ---
@@ -63,10 +63,10 @@ Toutes via `sendNotificationToUser`. Dédup via `NotificationLog`. Déclenchées
 
 ## 4. Cron (`npm run start-cronjobs` — prod uniquement, `cronjobs/index.ts`)
 
-| Job                      | Schedule                   | Déclencheur                                         | Objet                                                                | Fichier                              |
-| ------------------------ | -------------------------- | --------------------------------------------------- | -------------------------------------------------------------------- | ------------------------------------ |
-| `automaticClosingOfFeis` | `0 8 * * *` (quotidien 8h) | Carcasses au SVI depuis >10j → clôture auto + notif | `La fiche {numero} est clôturée.`                                    | `cronjobs/feis.ts:173,183`           |
-| `relanceProfilIncomplet` | `0 * * * *` (horaire)      | CHASSEUR inscrit il y a 24h–7j, onboarding non fini | `Votre inscription sur Zacharie (fiches d'examen initial du gibier)` | `cronjobs/relance-inscription.ts:50` |
+| Job                      | Schedule                   | Déclencheur                                         | Objet                                                               | Fichier                              |
+| ------------------------ | -------------------------- | --------------------------------------------------- | ------------------------------------------------------------------- | ------------------------------------ |
+| `automaticClosingOfFeis` | `0 8 * * *` (quotidien 8h) | Carcasses au SVI depuis >10j → clôture auto + notif | `La fiche {numero} est clôturée.`                                   | `cronjobs/feis.ts:173,183`           |
+| `relanceProfilIncomplet` | `0 * * * *` (horaire)      | CHASSEUR inscrit il y a 24h–7j, onboarding non fini | **template Brevo `RELANCE_PROFIL_INCOMPLET` (id 86)** — param `cta` | `cronjobs/relance-inscription.ts:48` |
 
 > `automaticClosingOfFeis` early-return en `NODE_ENV=development` (skip notif).
 

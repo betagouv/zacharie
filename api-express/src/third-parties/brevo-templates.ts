@@ -74,5 +74,5 @@ export const BrevoTemplateId: Record<BrevoTemplateKey, number | null> = {
 
   // 4. Cron
   FEI_AUTOMATIC_CLOSED: null,
-  RELANCE_PROFIL_INCOMPLET: null,
+  RELANCE_PROFIL_INCOMPLET: 86,
 };

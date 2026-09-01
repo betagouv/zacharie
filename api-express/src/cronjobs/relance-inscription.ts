@@ -4,7 +4,8 @@ import prisma from '~/prisma';
 import { capture } from '~/third-parties/sentry';
 import { setupCronJob } from './utils';
 import { sendOnboardingEmailOnce } from '~/utils/send-onboarding-email';
-import { formatRelanceProfilIncompletEmail } from '~/utils/format-inscription-email';
+import { BrevoTemplateId } from '~/third-parties/brevo-templates';
+import { VITE_APP_URL } from '~/config';
 
 export async function initRelanceInscriptionCron() {
   await Promise.resolve()
@@ -45,12 +46,11 @@ export async function relanceProfilIncomplet() {
   });
 
   console.log(`Relance inscription : ${users.length} utilisateur(s) candidat(s)`);
-  const { subject, text } = formatRelanceProfilIncompletEmail();
   for (const user of users) {
     await sendOnboardingEmailOnce({
       user,
-      subject,
-      text,
+      templateId: BrevoTemplateId.RELANCE_PROFIL_INCOMPLET,
+      params: { cta: `${VITE_APP_URL}/app/chasseur/onboarding/mes-coordonnees` },
       action: 'RELANCE_PROFIL_INCOMPLET',
     });
   }
