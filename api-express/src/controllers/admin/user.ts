@@ -6,7 +6,7 @@ import jwt from 'jsonwebtoken';
 import createUserId from '~/utils/createUserId';
 import { Prisma, User, UserEtgRoles, UserNotifications, UserRoles } from '@prisma/client';
 import { cookieOptions, JWT_MAX_AGE } from '~/utils/cookie';
-import { SECRET } from '~/config';
+import { SECRET, VITE_APP_URL } from '~/config';
 import { z } from 'zod';
 import { normalizeNumeroCfei, sanitize } from '~/utils/sanitize';
 import { hasAllRequiredFields } from '~/utils/user';
@@ -290,7 +290,7 @@ ${savedUser.roles.includes(UserRoles.CHASSEUR) && savedUser.est_forme_a_l_examen
         await sendOnboardingEmailOnce({
           user: savedUser,
           templateId: BrevoTemplateId.ACCOUNT_ACTIVATED,
-          params: { cta: `${process.env.VITE_APP_URL}/app/connexion` },
+          params: { cta: `${VITE_APP_URL}/app/connexion` },
           action: 'COMPTE_ACTIVE',
         });
       }

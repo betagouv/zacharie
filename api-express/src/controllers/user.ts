@@ -42,7 +42,7 @@ import {
   ApiKeyApprovalStatus,
 } from '@prisma/client';
 import { cookieOptions, JWT_MAX_AGE, logoutCookieOptions } from '~/utils/cookie';
-import { SECRET } from '~/config';
+import { SECRET, VITE_APP_URL } from '~/config';
 import { hasAllRequiredFields } from '~/utils/user';
 import { sendOnboardingEmailOnce } from '~/utils/send-onboarding-email';
 // import { refreshMaterializedViews } from '~/utils/refreshMaterializedViews';
@@ -476,7 +476,7 @@ router.post(
         emails: [user.email!],
         templateId: BrevoTemplateId.PASSWORD_RESET,
         params: {
-          cta: `${process.env.VITE_APP_URL}/app/connexion/reset-mot-de-passe?reset-password-token=${token}`,
+          cta: `${VITE_APP_URL}/app/connexion/reset-mot-de-passe?reset-password-token=${token}`,
         },
       });
 
@@ -670,7 +670,7 @@ router.post(
       await sendEmail({
         emails: [user.email!],
         subject: '[Zacharie] Votre mot de passe a été modifié',
-        text: `Bonjour, le mot de passe de votre compte Zacharie vient d'être modifié. Si vous n'êtes pas à l'origine de ce changement, réinitialisez votre mot de passe depuis ${process.env.VITE_APP_URL}/app/connexion/mot-de-passe-oublie et contactez-nous à contact@zacharie.beta.gouv.fr`,
+        text: `Bonjour, le mot de passe de votre compte Zacharie vient d'être modifié. Si vous n'êtes pas à l'origine de ce changement, réinitialisez votre mot de passe depuis ${VITE_APP_URL}/app/connexion/mot-de-passe-oublie et contactez-nous à contact@zacharie.beta.gouv.fr`,
       });
 
       // on renouvelle le token de la session courante, l'ancien reste valide jusqu'à son expiration
@@ -1244,7 +1244,7 @@ ${savedUser.roles.includes(UserRoles.CHASSEUR) && savedUser.est_forme_a_l_examen
         await sendOnboardingEmailOnce({
           user: savedUser,
           templateId: BrevoTemplateId.ACCOUNT_ACTIVATED,
-          params: { cta: `${process.env.VITE_APP_URL}/app/connexion` },
+          params: { cta: `${VITE_APP_URL}/app/connexion` },
           action: 'COMPTE_ACTIVE',
         });
       }
