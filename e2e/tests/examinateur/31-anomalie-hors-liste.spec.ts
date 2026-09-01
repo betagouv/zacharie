@@ -25,7 +25,7 @@ test('Anomalie hors liste — saisie libre, persistée puis retirable', async ({
 
   await page.getByRole('button', { name: 'Nouvelle fiche' }).first().click();
   await page.getByRole('button', { name: dayjs.utc().format('dddd DD MMMM') }).click();
-  await page.getByRole('textbox', { name: 'Commune de mise à mort' }).fill('CHASS');
+  await page.getByRole('textbox', { name: 'Commune de prélèvement du gibier' }).fill('CHASS');
   await page.getByRole('button', { name: 'CHASSENARD' }).click();
   await page.getByRole('button', { name: 'Pierre Petit' }).click();
   await page.getByRole('button', { name: 'Continuer' }).first().click();
@@ -103,7 +103,7 @@ test('Anomalie hors liste — petit gibier', async ({ page }) => {
 
   await page.getByRole('button', { name: 'Nouvelle fiche' }).first().click();
   await page.getByRole('button', { name: dayjs.utc().format('dddd DD MMMM') }).click();
-  await page.getByRole('textbox', { name: 'Commune de mise à mort' }).fill('CHASS');
+  await page.getByRole('textbox', { name: 'Commune de prélèvement du gibier' }).fill('CHASS');
   await page.getByRole('button', { name: 'CHASSENARD' }).click();
   await page.getByRole('button', { name: 'Pierre Petit' }).click();
   await page.getByRole('button', { name: 'Continuer' }).first().click();
@@ -143,7 +143,7 @@ test('Anomalie hors liste — texte saisi non validé, repris à l’ajout de la
 
   await page.getByRole('button', { name: 'Nouvelle fiche' }).first().click();
   await page.getByRole('button', { name: dayjs.utc().format('dddd DD MMMM') }).click();
-  await page.getByRole('textbox', { name: 'Commune de mise à mort' }).fill('CHASS');
+  await page.getByRole('textbox', { name: 'Commune de prélèvement du gibier' }).fill('CHASS');
   await page.getByRole('button', { name: 'CHASSENARD' }).click();
   await page.getByRole('button', { name: 'Pierre Petit' }).click();
   await page.getByRole('button', { name: 'Continuer' }).first().click();
