@@ -468,8 +468,11 @@ export default function CurrentOwnerConfirm() {
     },
   });
 
+  // le n° de bon de réception n'est demandé que si l'ETG destinataire l'a activé dans ses paramètres
   const canFillNumeroBonReception =
-    currentTransmission.next_owner_role === FeiOwnerRole.ETG && user.etg_role === UserEtgRoles.RECEPTION;
+    currentTransmission.next_owner_role === FeiOwnerRole.ETG &&
+    user.etg_role === UserEtgRoles.RECEPTION &&
+    !!nextOwnerEntity?.etg_demande_numero_bon_reception;
 
   return (
     <div className="bg-alt-blue-france pb-8">

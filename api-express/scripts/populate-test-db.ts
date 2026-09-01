@@ -440,6 +440,7 @@ Christine
         code_postal: '75000',
         ville: 'Paris',
         etg_linked_to_svi_id: '37a59a18-7f29-4177-a019-aafad6c73ee0',
+        etg_demande_numero_bon_reception: true,
       },
       {
         id: '8cb0e705-6bbe-43b1-af4a-2daa90db92e0',
