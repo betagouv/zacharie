@@ -1,8 +1,32 @@
-import { describe, test, expect, vi } from 'vitest';
+import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { TrichineSitePrelevement, TrichineStatutLogistiqueFTP, TrichineType } from '@prisma/client';
+
+// Cellar est piloté par le test, jamais par l'env de la machine : les deux branches
+// (archivage réel / régénération à la volée) doivent être vérifiables des deux côtés.
+const cellar = vi.hoisted(() => ({
+  configured: false,
+  uploadToCellar: vi.fn().mockResolvedValue(''),
+  getFromCellar: vi.fn().mockResolvedValue(null),
+}));
+vi.mock('~/third-parties/cellar', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('~/third-parties/cellar')>()),
+  get IS_CELLAR_CONFIGURED() {
+    return cellar.configured;
+  },
+  uploadToCellar: cellar.uploadToCellar,
+  getFromCellar: cellar.getFromCellar,
+}));
+
 import prisma from '~/prisma';
 import { barcodeDataUrl, getFtpPdfBuffer, type FtpForPdf } from '~/templates/get-ftp-pdf';
 import { archiveFtpPdf, getArchivedOrFreshFtpPdf } from '~/utils/trichine-ftp-document';
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  cellar.configured = false;
+  cellar.uploadToCellar.mockResolvedValue('');
+  cellar.getFromCellar.mockResolvedValue(null);
+});
 
 export const ftpFixture = {
   id: 'ftp-1',
@@ -111,7 +135,7 @@ describe('getFtpPdfBuffer', () => {
   });
 });
 
-// Cellar n'est pas configuré en test : le PDF est régénéré à la demande, rien n'est archivé
+// Sans Cellar (dev, CI) : le PDF est régénéré à la demande, rien n'est archivé
 describe('archivage du PDF sans Cellar', () => {
   test('archiveFtpPdf rend le PDF sans créer de document', async () => {
     vi.mocked(prisma.trichineFTP.findUnique).mockResolvedValueOnce(ftpFixture as never);
@@ -129,5 +153,68 @@ describe('archivage du PDF sans Cellar', () => {
 
     expect(pdf!.subarray(0, 5).toString()).toBe('%PDF-');
     expect(prisma.trichineDocument.findFirst).not.toHaveBeenCalled();
+  }, 30000);
+});
+
+// Avec Cellar : le PDF est figé à l'envoi, archivé, puis relu depuis le stockage
+describe('archivage du PDF avec Cellar', () => {
+  beforeEach(() => {
+    cellar.configured = true;
+    vi.mocked(prisma.trichineDocument.create).mockResolvedValue({ id: 'doc-1' } as never);
+    vi.mocked(prisma.trichineDocument.update).mockResolvedValue({ id: 'doc-1' } as never);
+  });
+
+  test('archiveFtpPdf archive le PDF et renseigne la clé de stockage', async () => {
+    vi.mocked(prisma.trichineFTP.findUnique).mockResolvedValueOnce(ftpFixture as never);
+
+    const pdf = await archiveFtpPdf('ftp-1', 'user-1');
+
+    expect(pdf!.subarray(0, 5).toString()).toBe('%PDF-');
+    expect(prisma.trichineDocument.create).toHaveBeenCalledOnce();
+    const { key, body, contentType } = cellar.uploadToCellar.mock.calls[0][0];
+    expect(key).toMatch(/^trichine\/FTP_PDF\/\d{4}\/doc-1\.pdf$/);
+    expect(body).toBe(pdf);
+    expect(contentType).toBe('application/pdf');
+    expect(prisma.trichineDocument.update).toHaveBeenCalledWith({
+      where: { id: 'doc-1' },
+      data: { fichier_url: key },
+    });
+  }, 30000);
+
+  test('archivage en échec → le PDF est quand même renvoyé pour la pièce jointe', async () => {
+    vi.mocked(prisma.trichineFTP.findUnique).mockResolvedValueOnce(ftpFixture as never);
+    cellar.uploadToCellar.mockRejectedValueOnce(new Error('cellar down'));
+
+    const pdf = await archiveFtpPdf('ftp-1', 'user-1');
+
+    expect(pdf!.subarray(0, 5).toString()).toBe('%PDF-');
+    expect(prisma.trichineDocument.update).not.toHaveBeenCalled();
+  }, 30000);
+
+  test('getArchivedOrFreshFtpPdf sert la version archivée sans régénérer', async () => {
+    vi.mocked(prisma.trichineDocument.findFirst).mockResolvedValueOnce({
+      id: 'doc-1',
+      fichier_url: 'trichine/FTP_PDF/2026/doc-1.pdf',
+    } as never);
+    cellar.getFromCellar.mockResolvedValueOnce(Buffer.from('%PDF-archived'));
+
+    const pdf = await getArchivedOrFreshFtpPdf('ftp-1');
+
+    expect(pdf!.toString()).toBe('%PDF-archived');
+    expect(cellar.getFromCellar).toHaveBeenCalledWith('trichine/FTP_PDF/2026/doc-1.pdf');
+    expect(prisma.trichineFTP.findUnique).not.toHaveBeenCalled();
+  });
+
+  test('archive absente du stockage → régénération à la volée', async () => {
+    vi.mocked(prisma.trichineDocument.findFirst).mockResolvedValueOnce({
+      id: 'doc-1',
+      fichier_url: 'trichine/FTP_PDF/2026/doc-1.pdf',
+    } as never);
+    vi.mocked(prisma.trichineFTP.findUnique).mockResolvedValueOnce(ftpFixture as never);
+
+    const pdf = await getArchivedOrFreshFtpPdf('ftp-1');
+
+    expect(pdf!.subarray(0, 5).toString()).toBe('%PDF-');
+    expect(prisma.trichineFTP.findUnique).toHaveBeenCalledOnce();
   }, 30000);
 });
