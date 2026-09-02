@@ -59,6 +59,34 @@ if (viteDevServer) {
   app.use('/assets', express.static('build/assets', { immutable: true, maxAge: '1y' }));
 }
 
+// Universal Links (iOS) & App Links (Android)
+app.get('/.well-known/apple-app-site-association', (req, res) => {
+  res.json({
+    applinks: {
+      apps: [],
+      details: [
+        {
+          appID: `${process.env.APPLE_TEAM_ID}.fr.gouv.zacharie.v1`,
+          paths: ['/app/*'],
+        },
+      ],
+    },
+  });
+});
+
+app.get('/.well-known/assetlinks.json', (req, res) => {
+  res.json([
+    {
+      relation: ['delegate_permission/common.handle_all_urls'],
+      target: {
+        namespace: 'android_app',
+        package_name: 'fr.gouv.zacharie.v1',
+        sha256_cert_fingerprints: [process.env.ANDROID_SHA256_CERT_FINGERPRINT],
+      },
+    },
+  ]);
+});
+
 // Serve static files from the build/client directory
 app.use(express.static(path.join(process.cwd(), 'build')));
 
