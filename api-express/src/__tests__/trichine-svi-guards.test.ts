@@ -1,11 +1,5 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
-import {
-  CarcasseModificationRequestStatus,
-  IPM1Decision,
-  Prisma,
-  TrichineResultatAnalyse,
-  UserRoles,
-} from '@prisma/client';
+import { IPM1Decision, Prisma, TrichineResultatAnalyse, UserRoles } from '@prisma/client';
 import type { User } from '@prisma/client';
 
 // Les deux garde-fous ne s'activent qu'avec la feature trichine posée dans l'env
@@ -147,6 +141,7 @@ describe('automaticClosingOfFeis — sanglier auto-clôturé seulement sur résu
     ]);
     // les autres critères restent intacts
     expect(where.svi_closed_at).toBeNull();
-    expect(where.CarcasseModificationRequests.none.status).toBe(CarcasseModificationRequestStatus.PENDING);
+    // la demande de modification est indicative : elle ne retient pas l'auto-clôture
+    expect(where.CarcasseModificationRequests).toBeUndefined();
   });
 });

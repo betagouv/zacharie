@@ -19,7 +19,7 @@ import {
 import updateCarcasseStatus from '~/utils/get-carcasse-status';
 import { isCarcasseDone } from '~/utils/is-carcasse-done';
 import { sendWebhook } from '~/utils/api';
-import { CarcasseModificationRequestStatus, FeiOwnerRole, Prisma } from '@prisma/client';
+import { FeiOwnerRole, Prisma } from '@prisma/client';
 import { TRICHINE_FEATURE_ENABLED } from '~/config';
 import { carcasseAvecTrichineNegatifFilter, TRICHINE_ESPECE_CONCERNEE } from '~/utils/trichine';
 
@@ -83,21 +83,7 @@ export async function automaticClosingOfFeis({ force = false }: AutomaticClosing
   // carcasses sont dans un état terminal (multi-destinataire : les lots progressent séparément).
   const carcassesToAutoClose = await prisma.carcasse.findMany({
     where: {
-      svi_assigned_at: {
-        // start of day of assigned day is older than 10 days of start of day of today
-        lte: dayjs().subtract(10, 'days').startOf('day').toDate(),
-      },
-      svi_closed_at: null,
-      svi_automatic_closed_at: null,
-      deleted_at: null,
-      // Skip carcasses with a pending modif request — the examinateur initial has not yet
-      // approved/rejected, so the inspection cycle is not complete for this carcasse.
-      CarcasseModificationRequests: {
-        none: {
-          status: CarcasseModificationRequestStatus.PENDING,
-          deleted_at: null,
-        },
-      },
+      ...getCarcassesToAutoCloseWhere(),
       // Un sanglier ne s'auto-clôture qu'une fois un résultat de recherche de trichine négatif
       // revenu. Sans résultat, ou avec un résultat défavorable, la décision revient au SVI
       // (cf doc/trichine.md §6.2).
