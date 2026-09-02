@@ -1,7 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 
 const uploadToCellar = vi.fn().mockResolvedValue('');
-// Cellar est simulé « configuré » : en vrai (dev / test) IS_CELLAR_CONFIGURED vaut false
+// Cellar est forcé « configuré » : le test ne doit pas dépendre de l'env de la machine
 vi.mock('~/third-parties/cellar', async (importOriginal) => ({
   ...(await importOriginal<typeof import('~/third-parties/cellar')>()),
   IS_CELLAR_CONFIGURED: true,
