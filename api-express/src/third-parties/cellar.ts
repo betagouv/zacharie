@@ -2,12 +2,6 @@ import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } fro
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import dayjs from 'dayjs';
 import { CELLAR_BUCKET, CELLAR_HOST, CELLAR_KEY_ID, CELLAR_KEY_SECRET } from '~/config';
-console.log(`✌️ ~ { CELLAR_BUCKET, CELLAR_HOST, CELLAR_KEY_ID, CELLAR_KEY_SECRET }:`, {
-  CELLAR_BUCKET,
-  CELLAR_HOST,
-  CELLAR_KEY_ID,
-  CELLAR_KEY_SECRET,
-});
 
 /**
  * Object storage Cellar (Clever Cloud, compatible S3) — cf doc/trichine.md §12.2.
@@ -17,7 +11,6 @@ console.log(`✌️ ~ { CELLAR_BUCKET, CELLAR_HOST, CELLAR_KEY_ID, CELLAR_KEY_SE
  * régénèrent le document à la volée plutôt que de le lire depuis le stockage.
  */
 export const IS_CELLAR_CONFIGURED = !!(CELLAR_HOST && CELLAR_KEY_ID && CELLAR_KEY_SECRET && CELLAR_BUCKET);
-console.log('✌️ ~ IS_CELLAR_CONFIGURED:', IS_CELLAR_CONFIGURED);
 
 let client: S3Client | null = null;
 
