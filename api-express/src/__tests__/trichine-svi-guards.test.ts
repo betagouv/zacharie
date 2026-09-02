@@ -27,7 +27,19 @@ vi.mock('~/third-parties/sentry', () => ({ capture: vi.fn() }));
 
 import prisma from '~/prisma';
 import { syncCarcasse } from '~/utils/sync-carcasse';
+import type { SyncScope } from '~/utils/sync-scope';
 import { automaticClosingOfFeis } from '~/cronjobs/feis';
+
+// Ces tests portent sur les garde-fous trichine, pas sur le périmètre d'écriture : on passe un
+// scope qui autorise tout pour que la carcasse arrive jusqu'aux vérifications testées.
+const allowAllScope: SyncScope = {
+  entityIds: [],
+  prefetch: async () => {},
+  canWriteCarcasse: async () => true,
+  grant: () => {},
+  isFeiOwner: () => true,
+  canWriteFei: async () => true,
+};
 
 const sviUser = {
   id: 'user-svi',
@@ -62,7 +74,7 @@ describe('syncCarcasse — acceptation SVI d’un sanglier (trichine §9)', () =
     vi.mocked(prisma.carcasse.findFirst).mockResolvedValueOnce(makeExistingCarcasse('Sanglier'));
     vi.mocked(prisma.trichineEchantillon.findFirst).mockResolvedValueOnce(null);
 
-    await expect(syncCarcasse('FEI-1', 'ZC-1', acceptBody, sviUser)).rejects.toThrow(
+    await expect(syncCarcasse('FEI-1', 'ZC-1', acceptBody, sviUser, allowAllScope)).rejects.toThrow(
       /Recherche de trichine obligatoire/
     );
     expect(prisma.carcasse.update).not.toHaveBeenCalled();
@@ -73,7 +85,7 @@ describe('syncCarcasse — acceptation SVI d’un sanglier (trichine §9)', () =
     vi.mocked(prisma.trichineEchantillon.findFirst).mockResolvedValueOnce({ id: 'ech-1' } as any);
     vi.mocked(prisma.carcasse.update).mockResolvedValueOnce({} as any);
 
-    await syncCarcasse('FEI-1', 'ZC-1', acceptBody, sviUser);
+    await syncCarcasse('FEI-1', 'ZC-1', acceptBody, sviUser, allowAllScope);
 
     const updateCall = vi.mocked(prisma.carcasse.update).mock.calls[0][0] as any;
     expect(updateCall.data.svi_ipm1_decision).toBe(IPM1Decision.ACCEPTE);
@@ -83,7 +95,7 @@ describe('syncCarcasse — acceptation SVI d’un sanglier (trichine §9)', () =
     vi.mocked(prisma.carcasse.findFirst).mockResolvedValueOnce(makeExistingCarcasse('Chevreuil'));
     vi.mocked(prisma.carcasse.update).mockResolvedValueOnce({} as any);
 
-    await syncCarcasse('FEI-1', 'ZC-1', acceptBody, sviUser);
+    await syncCarcasse('FEI-1', 'ZC-1', acceptBody, sviUser, allowAllScope);
 
     expect(prisma.trichineEchantillon.findFirst).not.toHaveBeenCalled();
   });
@@ -95,7 +107,7 @@ describe('syncCarcasse — acceptation SVI d’un sanglier (trichine §9)', () =
     });
     vi.mocked(prisma.carcasse.update).mockResolvedValueOnce({} as any);
 
-    await syncCarcasse('FEI-1', 'ZC-1', acceptBody, sviUser);
+    await syncCarcasse('FEI-1', 'ZC-1', acceptBody, sviUser, allowAllScope);
 
     expect(prisma.trichineEchantillon.findFirst).not.toHaveBeenCalled();
   });
@@ -108,7 +120,8 @@ describe('syncCarcasse — acceptation SVI d’un sanglier (trichine §9)', () =
       'FEI-1',
       'ZC-1',
       { [Prisma.CarcasseScalarFieldEnum.svi_ipm1_decision]: IPM1Decision.MISE_EN_CONSIGNE } as any,
-      sviUser
+      sviUser,
+      allowAllScope
     );
 
     expect(prisma.trichineEchantillon.findFirst).not.toHaveBeenCalled();
