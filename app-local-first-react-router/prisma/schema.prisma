@@ -1086,12 +1086,22 @@ model TrichinePoolFTP {
 // Document attaché soit à un pool, soit à une FTP (jamais les deux en même temps).
 // Type non typé strictement (String) : "RAPPORT_COFRAC" / "PHOTOGRAPHIE_LARVE" / "FTP_PDF" / "AUTRE" / ...
 model TrichineDocument {
-  id                 String   @id @default(uuid())
-  type               String
-  fichier_url        String // clé S3/Cellar
+  id          String  @id @default(uuid())
+  type        String
+  source      String  @default("UPLOAD") // UPLOAD (dépôt applicatif) ou EMAIL (adresse de dépôt des rapports)
+  fichier_url String // clé S3/Cellar
+  nom_fichier String? // nom d'origine de la pièce jointe, pour l'affichage
+
   date_ajout         DateTime @default(now())
-  ajoute_par_user_id String
-  AjouteParUser      User     @relation("TrichineDocumentAjouteParUser", fields: [ajoute_par_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  // Null quand le document arrive par email : l'expéditeur n'est pas nécessairement un utilisateur Zacharie
+  ajoute_par_user_id String?
+  AjouteParUser      User?    @relation("TrichineDocumentAjouteParUser", fields: [ajoute_par_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  // Provenance du dépôt par email (source = EMAIL)
+  email_message_id String?
+  email_expediteur String?
+  email_sujet      String?
+  email_recu_at    DateTime?
 
   pool_id      String?
   TrichinePool TrichinePool? @relation(fields: [pool_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
@@ -1103,6 +1113,8 @@ model TrichineDocument {
   deleted_at DateTime?
   is_synced  Boolean   @default(true)
 
+  // Idempotence : Brevo peut rejouer un webhook, une pièce jointe n'est stockée qu'une fois
+  @@unique([email_message_id, nom_fichier])
   @@index([pool_id])
   @@index([ftp_id])
 }

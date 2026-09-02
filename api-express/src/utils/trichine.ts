@@ -29,6 +29,14 @@ export const TrichineDocumentType = {
   AUTRE: 'AUTRE',
 } as const;
 
+// Un document est soit déposé dans l'app, soit reçu en pièce jointe sur l'adresse de dépôt
+export const TrichineDocumentSource = {
+  UPLOAD: 'UPLOAD',
+  EMAIL: 'EMAIL',
+} as const;
+export type TrichineDocumentSourceValue =
+  (typeof TrichineDocumentSource)[keyof typeof TrichineDocumentSource];
+
 export const TrichineNotificationType = {
   RESULTAT_ANALYSE: 'RESULTAT_ANALYSE',
   FTP_RECUE: 'FTP_RECUE',
