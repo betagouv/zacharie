@@ -23,46 +23,16 @@ const rejectedBySync = new Set<string>();
 // Single AbortController for the current sync request
 let syncAbortController: AbortController | null = null;
 
-// Une seule synchro en vol à la fois. Un appel pendant une synchro en cours n'en lance pas une
-// deuxième en parallèle (le serveur traiterait deux fois le même lot, la première requête étant
-// seulement abandonnée côté client) : il en planifie une seule, exécutée après la synchro en cours,
-// à laquelle se rattachent tous les appels arrivés entre-temps.
-let currentSync: Promise<void> | null = null;
-let queuedSync: Promise<void> | null = null;
-// Incrémentée par abortSyncData : la synchro planifiée avant l'abandon ne doit pas partir.
-let syncGeneration = 0;
-
 export function abortSyncData(reason: string = 'aborted') {
   if (syncAbortController && !syncAbortController.signal.aborted) {
     syncAbortController.abort(reason);
   }
   syncAbortController = null;
-  syncGeneration += 1;
   // Les refus appartiennent au compte qui les a provoqués. `clearLocalAppState` appelle cette
   // fonction à chaque teardown de session, et c'est le seul moment où le Set doit repartir de zéro :
   // `disconnect` navigue en pushState, qui ne recharge pas la page, donc sans ce clear le Set
   // survivrait au changement de compte et bloquerait les écritures légitimes du suivant.
   rejectedBySync.clear();
-}
-
-export function syncData(calledFrom?: string): Promise<void> {
-  if (!currentSync) {
-    currentSync = runSyncData(calledFrom).finally(() => {
-      currentSync = null;
-    });
-    return currentSync;
-  }
-  if (!queuedSync) {
-    const generation = syncGeneration;
-    queuedSync = currentSync
-      .catch(() => {})
-      .then(() => {
-        queuedSync = null;
-        if (generation !== syncGeneration) return;
-        return syncData(calledFrom);
-      });
-  }
-  return queuedSync;
 }
 
 function collectUnsynced(state: ReturnType<typeof useZustandStore.getState>) {
@@ -86,9 +56,13 @@ function isEverythingSynced(unsynced: ReturnType<typeof collectUnsynced>) {
   return Object.values(unsynced).every((items) => items.length === 0);
 }
 
-async function runSyncData(calledFrom?: string) {
+export async function syncData(calledFrom?: string) {
   await hydrationPromise;
 
+  // Cancel any in-flight sync
+  if (syncAbortController && !syncAbortController.signal.aborted) {
+    syncAbortController.abort('new sync requested');
+  }
   syncAbortController = new AbortController();
   const signal = syncAbortController.signal;
   try {

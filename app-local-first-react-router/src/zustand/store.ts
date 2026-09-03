@@ -206,9 +206,6 @@ const useZustandStore = create<State & Actions>()(
         createCarcasse: (newCarcasse: Carcasse) => {
           newCarcasse.is_synced = false;
           newCarcasse.updated_at = dayjs().toDate();
-
-          // On touche la fiche directement, sans passer par updateFei : celui-ci réécrit toutes les
-          // carcasses de la fiche, ce qui rend chaque ajout de plus en plus coûteux sur un gros lot.
           useZustandStore.setState((state) => {
             const fei = state.feis[newCarcasse.fei_numero];
             return {
