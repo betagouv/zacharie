@@ -35,6 +35,27 @@ export function abortSyncData(reason: string = 'aborted') {
   rejectedBySync.clear();
 }
 
+function collectUnsynced(state: ReturnType<typeof useZustandStore.getState>) {
+  const notRejected = (kind: SyncRejection['kind'], id: string) => !rejectedBySync.has(`${kind}:${id}`);
+  return {
+    feis: Object.values(state.feis).filter((f) => !f.is_synced && notRejected('fei', f.numero)),
+    carcasses: Object.values(state.carcasses).filter(
+      (c) => !c.is_synced && notRejected('carcasse', c.zacharie_carcasse_id)
+    ),
+    carcassesIntermediaires: Object.values(state.carcassesIntermediaireById).filter(
+      (ci) => !ci.is_synced && notRejected('carcasseIntermediaire', getFeiAndCarcasseAndIntermediaireIds(ci))
+    ),
+    carcasseModifRequests: Object.values(state.modifRequestsByCarcasseId)
+      .flat()
+      .filter((r) => !r.is_synced && notRejected('carcasseModifRequest', r.id)),
+    logs: state.logs.filter((l) => !l.is_synced),
+  };
+}
+
+function isEverythingSynced(unsynced: ReturnType<typeof collectUnsynced>) {
+  return Object.values(unsynced).every((items) => items.length === 0);
+}
+
 export async function syncData(calledFrom?: string) {
   await hydrationPromise;
 
@@ -56,49 +77,23 @@ export async function syncData(calledFrom?: string) {
     // Sync marquage first (independent)
     await syncProchainBraceletAUtiliser();
 
-    // Collect all unsynced items
-    const notRejected = (kind: SyncRejection['kind'], id: string) => !rejectedBySync.has(`${kind}:${id}`);
-    const unsyncedFeis = Object.values(state.feis).filter(
-      (f) => !f.is_synced && notRejected('fei', f.numero)
-    );
-    const unsyncedCarcasses = Object.values(state.carcasses).filter(
-      (c) => !c.is_synced && notRejected('carcasse', c.zacharie_carcasse_id)
-    );
-    const unsyncedIntermediaires = Object.values(state.carcassesIntermediaireById).filter(
-      (ci) => !ci.is_synced && notRejected('carcasseIntermediaire', getFeiAndCarcasseAndIntermediaireIds(ci))
-    );
-    const unsyncedModifRequests = Object.values(state.modifRequestsByCarcasseId)
-      .flat()
-      .filter((r) => !r.is_synced && notRejected('carcasseModifRequest', r.id));
-    const unsyncedLogs = state.logs.filter((l) => !l.is_synced);
+    const unsynced = collectUnsynced(state);
 
     // Nothing to sync
-    if (
-      unsyncedFeis.length === 0 &&
-      unsyncedCarcasses.length === 0 &&
-      unsyncedIntermediaires.length === 0 &&
-      unsyncedModifRequests.length === 0 &&
-      unsyncedLogs.length === 0
-    ) {
+    if (isEverythingSynced(unsynced)) {
       useZustandStore.setState({ dataIsSynced: true });
       return;
     }
 
     if (debug) {
       console.log(
-        `syncing: ${unsyncedFeis.length} feis, ${unsyncedCarcasses.length} carcasses, ${unsyncedIntermediaires.length} intermediaires, ${unsyncedModifRequests.length} modifRequests, ${unsyncedLogs.length} logs`
+        `syncing: ${unsynced.feis.length} feis, ${unsynced.carcasses.length} carcasses, ${unsynced.carcassesIntermediaires.length} intermediaires, ${unsynced.carcasseModifRequests.length} modifRequests, ${unsynced.logs.length} logs`
       );
     }
 
     const response = await API.post({
       path: '/sync',
-      body: {
-        feis: unsyncedFeis,
-        carcasses: unsyncedCarcasses,
-        carcassesIntermediaires: unsyncedIntermediaires,
-        carcasseModifRequests: unsyncedModifRequests,
-        logs: unsyncedLogs,
-      },
+      body: unsynced,
       signal,
     });
 
@@ -133,6 +128,13 @@ export async function syncData(calledFrom?: string) {
   } finally {
     if (!signal.aborted) {
       await loadCarcasses();
+      // Le delta vient de fusionner la version serveur (is_synced = true) : l'indicateur
+      // « Synchronisation en cours » se met à jour sans attendre un prochain appel.
+      if (!signal.aborted) {
+        useZustandStore.setState({
+          dataIsSynced: isEverythingSynced(collectUnsynced(useZustandStore.getState())),
+        });
+      }
     }
   }
 }

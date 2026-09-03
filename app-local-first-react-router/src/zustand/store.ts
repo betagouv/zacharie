@@ -206,10 +206,16 @@ const useZustandStore = create<State & Actions>()(
         createCarcasse: (newCarcasse: Carcasse) => {
           newCarcasse.is_synced = false;
           newCarcasse.updated_at = dayjs().toDate();
-
           useZustandStore.setState((state) => {
+            const fei = state.feis[newCarcasse.fei_numero];
             return {
               ...state,
+              feis: fei
+                ? {
+                    ...state.feis,
+                    [fei.numero]: { ...fei, updated_at: dayjs().toDate(), is_synced: false },
+                  }
+                : state.feis,
               carcasses: {
                 ...state.carcasses,
                 [newCarcasse.zacharie_carcasse_id]: newCarcasse,
@@ -217,7 +223,6 @@ const useZustandStore = create<State & Actions>()(
               dataIsSynced: false,
             };
           });
-          get().updateFei(newCarcasse.fei_numero, { updated_at: dayjs().toDate() });
         },
         updateCarcasse: (
           zacharie_carcasse_id: Carcasse['zacharie_carcasse_id'],

@@ -26,7 +26,7 @@ const config: PlaywrightTestConfig = {
     // ["junit", { outputFile: "test-results/junit.xml" }], // For CI integration // ONLY FOR DEBUG
   ],
   use: {
-    actionTimeout: 0,
+    actionTimeout: 15 * 1000, // pour tuer le test si une action (genre clic sur un bouton) prend plus de 15s
     baseURL: 'http://localhost:3290',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',

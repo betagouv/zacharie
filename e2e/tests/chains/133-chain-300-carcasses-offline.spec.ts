@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page, type Response } from '@playwright/test';
 import dayjs from 'dayjs';
 import 'dayjs/locale/fr';
 import utc from 'dayjs/plugin/utc';
@@ -19,8 +19,8 @@ import { logoutAndConnect } from '../../utils/logout-and-connect';
 // TODO mass-inspect : tant que l'inspection de masse SVI n'existe pas, le SVI ne fait que recevoir la fiche.
 // Quand l'inspection de masse arrivera, prolonger ce test pour inspecter/clôturer toutes les carcasses.
 
-// Volumes — un seul endroit à ajuster. Réduits pour le dev (la création UI est ~O(N²) en re-renders,
-// donc 300 carcasses = plusieurs minutes). Le flux est identique quel que soit N : ce qui passe à 10
+// Volumes — un seul endroit à ajuster. Réduits pour le dev (chaque ajout re-rend la liste qui
+// grandit et Playwright en capture un snapshot de trace, donc 300 carcasses = plusieurs minutes). Le flux est identique quel que soit N : ce qui passe à 10
 // passe à 300. Pour la version « charge réelle » : DAIM=145, CHEV=145, PIGEON_LOTS=10 (= 300 lignes),
 // surchargeable par variables d'env : DAIM_COUNT=145 CHEV_COUNT=145 PIGEON_LOTS=10.
 const DAIM_COUNT = 45;
@@ -167,22 +167,29 @@ test('Chaîne 300 carcasses : examinateur → PD → collecteur → ETG → SVI 
   await page.getByRole('button', { name: dateApprobationDuJour() }).click();
   await page.getByText('Je, Martin Marie, certifie qu').click();
 
-  // Retour en ligne : la fiche + les ~300 carcasses se synchronisent, puis on transmet.
+  // Retour en ligne : la fiche + les ~100 carcasses créées hors-ligne partent dans un POST /sync,
+  // suivi du delta GET /carcasse qui fusionne la version serveur dans le store. On attend que cette
+  // synchro soit retombée AVANT de transmettre : sur CI lent, la fusion arrivait pendant le clic.
+  const isSyncPost = (r: Response) =>
+    new URL(r.url()).pathname === '/sync' && r.request().method() === 'POST' && r.ok();
+  const isCarcasseDelta = (r: Response) => new URL(r.url()).pathname === '/carcasse' && r.ok();
+  const reconnectSync = page.waitForResponse(isSyncPost, { timeout: 120000 });
+  const reconnectDelta = page.waitForResponse(isCarcasseDelta, { timeout: 120000 });
   await context.setOffline(false);
+  await reconnectSync;
+  await reconnectDelta;
+
   const transmettre = page.getByRole('button', { name: 'Transmettre', exact: true });
   await expect(transmettre).not.toBeDisabled();
-  // Les ~100 carcasses créées hors-ligne partent en un unique POST /sync au clic « Transmettre ».
-  // On attend la confirmation serveur (200) AVANT de changer d'utilisateur : sinon, sur CI lent, la
-  // déconnexion de l'examinateur avorte l'upload en vol (et clearLocalAppState efface l'IndexedDB) →
-  // le serveur n'a jamais les carcasses, le PD hérite d'une fiche vide et le select « prochain
-  // détenteur » ne devient jamais éditable (timeout historique sur le clic ligne ~189).
-  const carcassesUploaded = page.waitForResponse(
-    (r) => new URL(r.url()).pathname === '/sync' && r.request().method() === 'POST' && r.ok(),
-    { timeout: 120000 }
-  );
+  // La transmission part dans un POST /sync au clic « Transmettre ». On attend la confirmation
+  // serveur (200) AVANT de changer d'utilisateur : sinon la déconnexion de l'examinateur avorte
+  // l'upload en vol (et clearLocalAppState efface l'IndexedDB) → le serveur n'a jamais la
+  // transmission, le PD hérite d'une fiche vide et le select « prochain détenteur » ne devient
+  // jamais éditable.
+  const transmissionUploaded = page.waitForResponse(isSyncPost, { timeout: 120000 });
   await transmettre.click();
   await expect(page.getByText(/Votre fiche a été transmise/i).first()).toBeVisible({ timeout: 60000 });
-  await carcassesUploaded;
+  await transmissionUploaded;
 
   const feiId = RegExp(/ZACH-\d+-\w+-\d+/).exec(page.url())?.[0];
   expect(feiId).toBeDefined();

@@ -106,6 +106,7 @@ function FEIChasseurLoaded() {
             (c.examinateur_anomalies_abats ?? []).join(','),
           ].join(':')
         )
+        .sort()
         .join('|'),
     [carcasses]
   );
