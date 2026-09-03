@@ -96,6 +96,8 @@ function FEIChasseurLoaded() {
   // La confirmation de l'examen ne vaut que pour l'état des carcasses au clic sur « Continuer » :
   // ajouter, modifier ou retirer une carcasse l'invalide, ce qui replie les blocs suivants et fait
   // repasser par la modale d'avertissement des anomalies.
+  // La signature est triée par identifiant : l'ordre d'affichage peut bouger après une synchro
+  // (fusion de la version serveur) sans que l'examen ait changé.
   const carcassesExamenSignature = useMemo(
     () =>
       carcasses
@@ -106,6 +108,7 @@ function FEIChasseurLoaded() {
             (c.examinateur_anomalies_abats ?? []).join(','),
           ].join(':')
         )
+        .sort()
         .join('|'),
     [carcasses]
   );

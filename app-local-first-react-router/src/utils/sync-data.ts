@@ -23,11 +23,21 @@ const rejectedBySync = new Set<string>();
 // Single AbortController for the current sync request
 let syncAbortController: AbortController | null = null;
 
+// Une seule synchro en vol à la fois. Un appel pendant une synchro en cours n'en lance pas une
+// deuxième en parallèle (le serveur traiterait deux fois le même lot, la première requête étant
+// seulement abandonnée côté client) : il en planifie une seule, exécutée après la synchro en cours,
+// à laquelle se rattachent tous les appels arrivés entre-temps.
+let currentSync: Promise<void> | null = null;
+let queuedSync: Promise<void> | null = null;
+// Incrémentée par abortSyncData : la synchro planifiée avant l'abandon ne doit pas partir.
+let syncGeneration = 0;
+
 export function abortSyncData(reason: string = 'aborted') {
   if (syncAbortController && !syncAbortController.signal.aborted) {
     syncAbortController.abort(reason);
   }
   syncAbortController = null;
+  syncGeneration += 1;
   // Les refus appartiennent au compte qui les a provoqués. `clearLocalAppState` appelle cette
   // fonction à chaque teardown de session, et c'est le seul moment où le Set doit repartir de zéro :
   // `disconnect` navigue en pushState, qui ne recharge pas la page, donc sans ce clear le Set
@@ -35,13 +45,50 @@ export function abortSyncData(reason: string = 'aborted') {
   rejectedBySync.clear();
 }
 
-export async function syncData(calledFrom?: string) {
+export function syncData(calledFrom?: string): Promise<void> {
+  if (!currentSync) {
+    currentSync = runSyncData(calledFrom).finally(() => {
+      currentSync = null;
+    });
+    return currentSync;
+  }
+  if (!queuedSync) {
+    const generation = syncGeneration;
+    queuedSync = currentSync
+      .catch(() => {})
+      .then(() => {
+        queuedSync = null;
+        if (generation !== syncGeneration) return;
+        return syncData(calledFrom);
+      });
+  }
+  return queuedSync;
+}
+
+function collectUnsynced(state: ReturnType<typeof useZustandStore.getState>) {
+  const notRejected = (kind: SyncRejection['kind'], id: string) => !rejectedBySync.has(`${kind}:${id}`);
+  return {
+    feis: Object.values(state.feis).filter((f) => !f.is_synced && notRejected('fei', f.numero)),
+    carcasses: Object.values(state.carcasses).filter(
+      (c) => !c.is_synced && notRejected('carcasse', c.zacharie_carcasse_id)
+    ),
+    carcassesIntermediaires: Object.values(state.carcassesIntermediaireById).filter(
+      (ci) => !ci.is_synced && notRejected('carcasseIntermediaire', getFeiAndCarcasseAndIntermediaireIds(ci))
+    ),
+    carcasseModifRequests: Object.values(state.modifRequestsByCarcasseId)
+      .flat()
+      .filter((r) => !r.is_synced && notRejected('carcasseModifRequest', r.id)),
+    logs: state.logs.filter((l) => !l.is_synced),
+  };
+}
+
+function isEverythingSynced(unsynced: ReturnType<typeof collectUnsynced>) {
+  return Object.values(unsynced).every((items) => items.length === 0);
+}
+
+async function runSyncData(calledFrom?: string) {
   await hydrationPromise;
 
-  // Cancel any in-flight sync
-  if (syncAbortController && !syncAbortController.signal.aborted) {
-    syncAbortController.abort('new sync requested');
-  }
   syncAbortController = new AbortController();
   const signal = syncAbortController.signal;
   try {
@@ -56,49 +103,23 @@ export async function syncData(calledFrom?: string) {
     // Sync marquage first (independent)
     await syncProchainBraceletAUtiliser();
 
-    // Collect all unsynced items
-    const notRejected = (kind: SyncRejection['kind'], id: string) => !rejectedBySync.has(`${kind}:${id}`);
-    const unsyncedFeis = Object.values(state.feis).filter(
-      (f) => !f.is_synced && notRejected('fei', f.numero)
-    );
-    const unsyncedCarcasses = Object.values(state.carcasses).filter(
-      (c) => !c.is_synced && notRejected('carcasse', c.zacharie_carcasse_id)
-    );
-    const unsyncedIntermediaires = Object.values(state.carcassesIntermediaireById).filter(
-      (ci) => !ci.is_synced && notRejected('carcasseIntermediaire', getFeiAndCarcasseAndIntermediaireIds(ci))
-    );
-    const unsyncedModifRequests = Object.values(state.modifRequestsByCarcasseId)
-      .flat()
-      .filter((r) => !r.is_synced && notRejected('carcasseModifRequest', r.id));
-    const unsyncedLogs = state.logs.filter((l) => !l.is_synced);
+    const unsynced = collectUnsynced(state);
 
     // Nothing to sync
-    if (
-      unsyncedFeis.length === 0 &&
-      unsyncedCarcasses.length === 0 &&
-      unsyncedIntermediaires.length === 0 &&
-      unsyncedModifRequests.length === 0 &&
-      unsyncedLogs.length === 0
-    ) {
+    if (isEverythingSynced(unsynced)) {
       useZustandStore.setState({ dataIsSynced: true });
       return;
     }
 
     if (debug) {
       console.log(
-        `syncing: ${unsyncedFeis.length} feis, ${unsyncedCarcasses.length} carcasses, ${unsyncedIntermediaires.length} intermediaires, ${unsyncedModifRequests.length} modifRequests, ${unsyncedLogs.length} logs`
+        `syncing: ${unsynced.feis.length} feis, ${unsynced.carcasses.length} carcasses, ${unsynced.carcassesIntermediaires.length} intermediaires, ${unsynced.carcasseModifRequests.length} modifRequests, ${unsynced.logs.length} logs`
       );
     }
 
     const response = await API.post({
       path: '/sync',
-      body: {
-        feis: unsyncedFeis,
-        carcasses: unsyncedCarcasses,
-        carcassesIntermediaires: unsyncedIntermediaires,
-        carcasseModifRequests: unsyncedModifRequests,
-        logs: unsyncedLogs,
-      },
+      body: unsynced,
       signal,
     });
 
@@ -133,6 +154,13 @@ export async function syncData(calledFrom?: string) {
   } finally {
     if (!signal.aborted) {
       await loadCarcasses();
+      // Le delta vient de fusionner la version serveur (is_synced = true) : l'indicateur
+      // « Synchronisation en cours » se met à jour sans attendre un prochain appel.
+      if (!signal.aborted) {
+        useZustandStore.setState({
+          dataIsSynced: isEverythingSynced(collectUnsynced(useZustandStore.getState())),
+        });
+      }
     }
   }
 }

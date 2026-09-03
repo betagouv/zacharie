@@ -84,14 +84,28 @@ export async function syncCarcasse(
     if (!numeroBracelet) {
       throw new Error('Le numéro de marquage est obligatoire');
     }
-    existingCarcasse = await prisma.carcasse.create({
-      data: {
-        zacharie_carcasse_id,
-        fei_numero,
-        numero_bracelet: body.numero_bracelet,
-        is_synced: true,
-      },
-    });
+    // On conserve le created_at du client : c'est la vraie date de création (hors-ligne compris) et
+    // le tri d'affichage repose dessus. Avec la date serveur, un lot créé hors-ligne puis synchronisé
+    // en parallèle se réordonnait au retour en ligne.
+    try {
+      existingCarcasse = await prisma.carcasse.create({
+        data: {
+          zacharie_carcasse_id,
+          fei_numero,
+          numero_bracelet: body.numero_bracelet,
+          created_at: body.created_at ?? undefined,
+          is_synced: true,
+        },
+      });
+    } catch (error) {
+      // P2002 : une requête /sync parallèle vient de créer la même ligne. On la reprend telle quelle,
+      // l'update en fin de fonction applique le corps de cette requête.
+      const isUniqueViolation =
+        error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002';
+      if (!isUniqueViolation) throw error;
+      existingCarcasse = await prisma.carcasse.findUnique({ where: { zacharie_carcasse_id } });
+      if (!existingCarcasse) throw error;
+    }
     // La ligne créée n'a encore aucune colonne de rattachement — celles-ci ne sont écrites que par
     // l'update en fin de fonction. On accorde l'accès tout de suite, pour les sections suivantes de
     // la même requête (intermédiaire, demande de modification) qui portent sur cette carcasse.

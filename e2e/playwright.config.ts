@@ -26,7 +26,9 @@ const config: PlaywrightTestConfig = {
     // ["junit", { outputFile: "test-results/junit.xml" }], // For CI integration // ONLY FOR DEBUG
   ],
   use: {
-    actionTimeout: 0,
+    // Une action qui n'aboutit pas (bouton resté désactivé, élément recouvert) doit faire échouer le
+    // test vite, plutôt que consommer tout le budget du test puis celui du teardown.
+    actionTimeout: 30 * 1000,
     baseURL: 'http://localhost:3290',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
