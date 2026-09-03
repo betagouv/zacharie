@@ -12,6 +12,7 @@ import { getCarcasseStatusLabelForEmail } from './get-carcasse-status';
 import lesions from '../assets/lesions.json';
 import prisma from '~/prisma';
 import { getCircuitCourtFeiUrl, getFeiUrlForRole } from './fei-url';
+import { VITE_APP_URL } from '~/config';
 
 function getMotifForChasseur(motif: string, carcasseType: CarcasseType) {
   const lesion = lesions[carcasseType]
@@ -90,6 +91,7 @@ export async function formatCarcasseChasseurEmail(carcasse: Carcasse) {
 
 export type CarcasseSaisieTemplateParams = {
   saisie_label: string;
+  saisie_label_capitalized: string;
   carcasse_label: string;
   espece: string;
   numero_bracelet: string;
@@ -106,17 +108,19 @@ export function formatSaisieChasseurEmail(carcasse: Carcasse): {
   text: string;
   params: CarcasseSaisieTemplateParams;
 } {
+  const saisieLabel = getCarcasseStatusLabelForEmail(carcasse).toLowerCase();
   const params: CarcasseSaisieTemplateParams = {
-    saisie_label: getCarcasseStatusLabelForEmail(carcasse).toLowerCase(),
+    saisie_label: saisieLabel,
+    saisie_label_capitalized: saisieLabel.charAt(0).toUpperCase() + saisieLabel.slice(1),
     carcasse_label: carcasse.type === CarcasseType.GROS_GIBIER ? 'de la carcasse' : 'du lot de carcasses',
     espece: carcasse.espece.toLowerCase(),
     numero_bracelet: carcasse.numero_bracelet,
     motifs: carcasse.svi_ipm2_lesions_ou_motifs.map((motif) => getMotifForChasseur(motif, carcasse.type)),
     commentaire: carcasse.svi_carcasse_commentaire || null,
-    cta: `https://zacharie.beta.gouv.fr/app/chasseur/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`,
+    cta: `${VITE_APP_URL}/app/chasseur/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`,
   };
 
-  const object = `${params.saisie_label} ${params.carcasse_label} de ${params.espece} n°${params.numero_bracelet}.`;
+  const object = `${params.saisie_label_capitalized} ${params.carcasse_label} de ${params.espece} n°${params.numero_bracelet}.`;
   const text = [
     `Bonjour,`,
     `Le service vétérinaire d’inspection a décidé la ${params.saisie_label} ${params.carcasse_label} de ${params.espece} n°${params.numero_bracelet}.`,
@@ -149,20 +153,24 @@ async function getIntermediaireConstat(carcasse: Carcasse) {
       },
     },
   });
+  const carcasseLabel = carcasse.type === CarcasseType.GROS_GIBIER ? 'La carcasse' : 'Le lot de carcasses';
+  const carcasseLabelCapitalized = carcasseLabel.charAt(0).toUpperCase() + carcasseLabel.slice(1);
 
   return {
     entity_name: carcasseIntermediaire?.CarcasseIntermediaireEntity.nom_d_usage,
     commentaire: carcasseIntermediaire?.commentaire || null,
     espece: carcasse.espece.toLowerCase(),
     numero_bracelet: carcasse.numero_bracelet,
-    carcasse_label: carcasse.type === CarcasseType.GROS_GIBIER ? 'La carcasse' : 'Le lot de carcasses',
-    cta: `https://zacharie.beta.gouv.fr/app/chasseur/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`,
+    carcasse_label: carcasseLabel.toLowerCase(),
+    carcasse_label_capitalized: carcasseLabelCapitalized,
+    cta: `${VITE_APP_URL}/app/chasseur/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`,
   };
 }
 
 export type CarcasseManquanteTemplateParams = {
   entity_name: string;
   carcasse_label: string;
+  carcasse_label_capitalized: string;
   manquante_label: string;
   espece: string;
   numero_bracelet: string;
@@ -181,7 +189,7 @@ export async function formatCarcasseManquanteChasseurEmail(carcasse: Carcasse): 
     manquante_label: carcasse.type === CarcasseType.GROS_GIBIER ? 'manquante' : 'manquant',
   };
 
-  const object = `${params.carcasse_label} de ${params.espece} n°${params.numero_bracelet} est ${params.manquante_label}.`;
+  const object = `${params.carcasse_label_capitalized} de ${params.espece} n°${params.numero_bracelet} est ${params.manquante_label}.`;
   const text = [
     `Bonjour,`,
     `${params.entity_name} a constaté que ${params.carcasse_label.toLowerCase()} de ${params.espece} n°${params.numero_bracelet} était ${params.manquante_label}.`,
