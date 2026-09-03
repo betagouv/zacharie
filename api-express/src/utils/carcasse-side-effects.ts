@@ -248,8 +248,19 @@ export async function closeFeiAndNotifyChasseurOnSviCarcasseClose(
     if (already) return;
   }
 
-  const [object, email] = await formatManualValidationSviChasseurEmail(updatedCarcasse.fei_numero, carcasses);
-  const notification = { title: object, body: email, email, notificationLogAction: action };
+  const { object, text, params } = formatManualValidationSviChasseurEmail(
+    updatedCarcasse.fei_numero,
+    carcasses
+  );
+  // Le template Brevo ne couvre que l'email ; le push reste en texte (`text`).
+  const notification = {
+    title: object,
+    body: text,
+    email: text,
+    notificationLogAction: action,
+    emailTemplateId: BrevoTemplateId.FEI_CLOSED,
+    emailTemplateParams: params,
+  };
 
   if (examinateur) {
     await sendNotificationToUser({ user: examinateur, ...notification });

@@ -195,19 +195,27 @@ export function formatRenvoiExpediteurEmail(
   return [object, email.filter(Boolean).join('\n\n')];
 }
 
-export async function formatAutomaticClosingEmailForChasseur(
-  fei_numero: Fei['numero'],
-  carcasses: Carcasse[]
-): Promise<[string, string]> {
-  let numberOfValidatedCarcasses = 0;
-  let numberOfRefusedCarcasses = 0;
+// Params des templates Brevo FEI_CLOSED et FEI_AUTOMATIC_CLOSED : les deux emails ont le même
+// corps (bilan de la fiche), seule la phrase d'introduction diffère — d'où deux templates.
+export type FeiClosedTemplateParams = {
+  fei_numero: string;
+  nombre_carcasses_acceptees: number;
+  nombre_carcasses_refusees: number;
+  cta: string;
+};
+
+// Bilan de clôture affiché au chasseur : une carcasse est "refusée" si elle n'a pas pu être
+// mise sur le marché (manquante ou refusée en amont du SVI, saisie totale, consignée).
+function countCarcassesForBilan(carcasses: Carcasse[]) {
+  let nombre_carcasses_acceptees = 0;
+  let nombre_carcasses_refusees = 0;
   for (const carcasse of carcasses) {
     switch (carcasse.svi_carcasse_status) {
       case CarcasseStatus.MANQUANTE_ETG_COLLECTEUR:
       case CarcasseStatus.REFUS_ETG_COLLECTEUR:
       case CarcasseStatus.SAISIE_TOTALE:
       case CarcasseStatus.CONSIGNE: {
-        numberOfRefusedCarcasses++;
+        nombre_carcasses_refusees++;
         break;
       }
       default:
@@ -217,64 +225,59 @@ export async function formatAutomaticClosingEmailForChasseur(
       case CarcasseStatus.SAISIE_PARTIELLE:
       case CarcasseStatus.LEVEE_DE_CONSIGNE:
       case CarcasseStatus.TRAITEMENT_ASSAINISSANT:
-        numberOfValidatedCarcasses++;
+        nombre_carcasses_acceptees++;
         break;
     }
   }
-
-  const email = [
-    `Bonjour,`,
-    `La fiche ${fei_numero} a été réceptionnée par le Service Vétérinaire il y a plus de 10 jours, elle est donc automatiquement clôturée.`,
-    `Bilan de cette fiche:`,
-    `- ${numberOfValidatedCarcasses} carcasses ont été acceptées`,
-    `- ${numberOfRefusedCarcasses} carcasses ont été refusées`,
-    `Pour consulter le détail de la fiche, rendez-vous sur Zacharie : https://zacharie.beta.gouv.fr/app/chasseur/fei/${fei_numero}`,
-    `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur des saisies ou refus, merci de contacter l’établissement qui a traité votre fiche.`,
-  ];
-
-  const object = `La fiche ${fei_numero} est clôturée.`;
-  return [object, email.filter(Boolean).join('\n\n')];
+  return { nombre_carcasses_acceptees, nombre_carcasses_refusees };
 }
 
-export async function formatManualValidationSviChasseurEmail(
+// L'email part en template Brevo, le push reste en texte : les deux sont dérivés des mêmes `params`
+// pour ne pas diverger.
+export function formatAutomaticClosingEmailForChasseur(
   fei_numero: Fei['numero'],
   carcasses: Carcasse[]
-): Promise<[string, string]> {
-  let numberOfValidatedCarcasses = 0;
-  let numberOfRefusedCarcasses = 0;
-  for (const carcasse of carcasses) {
-    switch (carcasse.svi_carcasse_status) {
-      case CarcasseStatus.MANQUANTE_ETG_COLLECTEUR:
-      case CarcasseStatus.REFUS_ETG_COLLECTEUR:
-      case CarcasseStatus.SAISIE_TOTALE:
-      case CarcasseStatus.CONSIGNE: {
-        numberOfRefusedCarcasses++;
-        break;
-      }
-      default:
-      case CarcasseStatus.SANS_DECISION:
-      case CarcasseStatus.ACCEPTE:
-      case CarcasseStatus.MANQUANTE_SVI:
-      case CarcasseStatus.SAISIE_PARTIELLE:
-      case CarcasseStatus.LEVEE_DE_CONSIGNE:
-      case CarcasseStatus.TRAITEMENT_ASSAINISSANT:
-        numberOfValidatedCarcasses++;
-        break;
-    }
-  }
+): { object: string; text: string; params: FeiClosedTemplateParams } {
+  const params: FeiClosedTemplateParams = {
+    fei_numero,
+    ...countCarcassesForBilan(carcasses),
+    cta: getFeiUrlForRole(UserRoles.CHASSEUR, fei_numero, null),
+  };
 
-  const email = [
+  const object = `La fiche ${params.fei_numero} est clôturée.`;
+  const text = [
     `Bonjour,`,
-    `La fiche ${fei_numero} a été prise en charge et traitée par le Service Vétérinaire`,
+    `La fiche ${params.fei_numero} a été réceptionnée par le Service Vétérinaire il y a plus de 10 jours, elle est donc automatiquement clôturée.`,
     `Bilan de cette fiche:`,
-    `- ${numberOfValidatedCarcasses} carcasses ont été acceptées`,
-    `- ${numberOfRefusedCarcasses} carcasses ont été refusées`,
-    `Pour consulter le détail de la fiche, rendez-vous sur Zacharie : https://zacharie.beta.gouv.fr/app/chasseur/fei/${fei_numero}`,
+    `- ${params.nombre_carcasses_acceptees} carcasses ont été acceptées`,
+    `- ${params.nombre_carcasses_refusees} carcasses ont été refusées`,
+    `Pour consulter le détail de la fiche, rendez-vous sur Zacharie : ${params.cta}`,
     `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur des saisies ou refus, merci de contacter l’établissement qui a traité votre fiche.`,
   ];
+  return { object, text: text.join('\n\n'), params };
+}
 
-  const object = `La fiche ${fei_numero} est clôturée.`;
-  return [object, email.filter(Boolean).join('\n\n')];
+export function formatManualValidationSviChasseurEmail(
+  fei_numero: Fei['numero'],
+  carcasses: Carcasse[]
+): { object: string; text: string; params: FeiClosedTemplateParams } {
+  const params: FeiClosedTemplateParams = {
+    fei_numero,
+    ...countCarcassesForBilan(carcasses),
+    cta: getFeiUrlForRole(UserRoles.CHASSEUR, fei_numero, null),
+  };
+
+  const object = `La fiche ${params.fei_numero} est clôturée.`;
+  const text = [
+    `Bonjour,`,
+    `La fiche ${params.fei_numero} a été prise en charge et traitée par le Service Vétérinaire`,
+    `Bilan de cette fiche:`,
+    `- ${params.nombre_carcasses_acceptees} carcasses ont été acceptées`,
+    `- ${params.nombre_carcasses_refusees} carcasses ont été refusées`,
+    `Pour consulter le détail de la fiche, rendez-vous sur Zacharie : ${params.cta}`,
+    `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur des saisies ou refus, merci de contacter l’établissement qui a traité votre fiche.`,
+  ];
+  return { object, text: text.join('\n\n'), params };
 }
 
 // Params du template Brevo FEI_TRANSMITTED_TO_SVI (placeholders {{ params.xxx }}).
