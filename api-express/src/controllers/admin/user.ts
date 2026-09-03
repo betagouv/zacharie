@@ -6,6 +6,7 @@ import jwt from 'jsonwebtoken';
 import createUserId from '~/utils/createUserId';
 import { Prisma, User, UserEtgRoles, UserNotifications, UserRoles } from '@prisma/client';
 import { cookieOptions, JWT_MAX_AGE } from '~/utils/cookie';
+import { signSessionToken } from '~/utils/session-token';
 import { SECRET, VITE_APP_URL } from '~/config';
 import { z } from 'zod';
 import { normalizeNumeroCfei, sanitize } from '~/utils/sanitize';
@@ -60,9 +61,9 @@ router.post(
         });
         return;
       }
-      const token = jwt.sign({ userId: user.id }, SECRET, {
-        expiresIn: JWT_MAX_AGE,
-      });
+      // La session usurpée n'emporte pas le ProConnect de l'admin : si la cible est aussi admin,
+      // elle devra refaire ProConnect pour atteindre /admin
+      const token = signSessionToken({ userId: user.id });
       res.cookie('zacharie_express_jwt', token, cookieOptions(req));
       res.status(200).send({
         ok: true,

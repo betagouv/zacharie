@@ -42,6 +42,7 @@ import {
   ApiKeyApprovalStatus,
 } from '@prisma/client';
 import { cookieOptions, JWT_MAX_AGE, logoutCookieOptions } from '~/utils/cookie';
+import { signSessionToken } from '~/utils/session-token';
 import { SECRET, VITE_APP_URL } from '~/config';
 import { hasAllRequiredFields } from '~/utils/user';
 import { sendOnboardingEmailOnce } from '~/utils/send-onboarding-email';
@@ -166,15 +167,19 @@ router.post(
         return;
       }
 
-      const token = jwt.sign({ userId: user.id }, SECRET, {
-        expiresIn: JWT_MAX_AGE,
-      });
+      // Un admin ouvre une session normale ici, mais /admin exige ensuite ProConnect (middlewares/passport.ts)
+      const token = signSessionToken({ userId: user.id });
       user = await prisma.user.update({
         where: { id: user.id },
         data: { last_login_at: new Date() },
       });
       res.cookie('zacharie_express_jwt', token, cookieOptions(req));
-      res.status(200).send({ ok: true, data: { user, token }, message: '', error: '' });
+      res.status(200).send({
+        ok: true,
+        data: { user, token, requiresProConnect: user.isZacharieAdmin },
+        message: '',
+        error: '',
+      });
     }
   )
 );

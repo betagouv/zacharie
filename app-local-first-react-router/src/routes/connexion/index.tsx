@@ -6,7 +6,7 @@ import { getUserOnboardingRoute } from '@app/utils/user-onboarded.client';
 import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
 import { type User } from '@prisma/client';
 import { type UserConnexionResponse } from '@api/src/types/responses';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Chargement from '@app/components/Chargement';
 import { capture } from '@app/services/sentry';
 import useUser from '@app/zustand/user';
@@ -25,9 +25,18 @@ export default function Connexion() {
   const redirect = searchParams.get('redirect');
   const communication = searchParams.get('communication');
 
+  // Posé par le login avant useUser.setState, car l'effet sur `user` redirige aussi
+  const requiresProConnectRef = useRef(false);
+
   const handleRedirect = (u: User) => {
     if (u) {
       const redirectPath = redirect || getUserOnboardingRoute(u);
+      // Un admin passe par ProConnect avant d'entrer dans l'app (sauf dans la WebView native,
+      // où le parcours OIDC n'est pas possible : il garde une session sans droits admin)
+      if (requiresProConnectRef.current && !window.ReactNativeWebView) {
+        navigate(`/app/proconnect?redirect=${encodeURIComponent(redirectPath)}`);
+        return;
+      }
       navigate(redirectPath);
     }
   };
@@ -67,6 +76,7 @@ export default function Connexion() {
         })
       );
       const user = response.data.user as User;
+      requiresProConnectRef.current = !!response.data.requiresProConnect;
       useUser.setState({ user });
       useZustandStore.setState((state) => ({
         users: { ...state.users, [user.id]: user },

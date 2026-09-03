@@ -45,6 +45,9 @@ export interface UserConnexionResponse {
     >;
     token?: string | null;
     contexte?: string;
+    // true pour un admin Zacharie : la session est ouverte mais les routes /admin
+    // restent fermées tant que ProConnect n'a pas été validé
+    requiresProConnect?: boolean;
   };
   error: string;
   message: string;
