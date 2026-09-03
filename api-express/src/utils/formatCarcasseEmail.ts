@@ -204,6 +204,7 @@ export async function formatCarcasseManquanteChasseurEmail(carcasse: Carcasse): 
 export type CarcasseRefusTemplateParams = {
   entity_name: string;
   carcasse_label: string;
+  carcasse_label_capitalized: string;
   refus_label: string;
   espece: string;
   numero_bracelet: string;
@@ -224,7 +225,7 @@ export async function formatCarcasseRefusChasseurEmail(carcasse: Carcasse): Prom
     motif: carcasse.intermediaire_carcasse_refus_motif || null,
   };
 
-  const object = `${params.carcasse_label} de ${params.espece} n°${params.numero_bracelet} est ${params.refus_label}.`;
+  const object = `${params.carcasse_label_capitalized} de ${params.espece} n°${params.numero_bracelet} est ${params.refus_label}.`;
   const text = [
     `Bonjour,`,
     `${params.entity_name} a refusé ${params.carcasse_label.toLowerCase()} de ${params.espece} n°${params.numero_bracelet}.`,
