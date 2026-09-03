@@ -12,6 +12,7 @@ import { getCarcasseStatusLabelForEmail } from './get-carcasse-status';
 import lesions from '../assets/lesions.json';
 import prisma from '~/prisma';
 import { getCircuitCourtFeiUrl, getFeiUrlForRole } from './fei-url';
+import { VITE_APP_URL } from '~/config';
 
 function getMotifForChasseur(motif: string, carcasseType: CarcasseType) {
   const lesion = lesions[carcasseType]
@@ -88,34 +89,53 @@ export async function formatCarcasseChasseurEmail(carcasse: Carcasse) {
   return email.filter(Boolean).join('\n');
 }
 
-export function formatSaisieChasseurEmail(carcasse: Carcasse): [string, string] {
-  const saisieLabel = getCarcasseStatusLabelForEmail(carcasse).toLowerCase();
-  const url = `https://zacharie.beta.gouv.fr/app/chasseur/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`;
-  const motifs = carcasse.svi_ipm2_lesions_ou_motifs
-    .map((motif) => `-> ${getMotifForChasseur(motif, carcasse.type)}`)
-    .join('\n');
+export type CarcasseSaisieTemplateParams = {
+  saisie_label: string;
+  saisie_label_capitalized: string;
+  carcasse_label: string;
+  espece: string;
+  numero_bracelet: string;
+  motifs: string[];
+  commentaire: string | null;
+  cta: string;
+};
 
-  const carcasseLabel = carcasse.type === CarcasseType.GROS_GIBIER ? 'de la carcasse' : 'du lot de carcasses';
-  const email = [
+// L'email part en template Brevo, le push reste en texte : les deux sont dérivés des mêmes `params`
+// pour ne pas diverger. Les accords (carcasse / lot de carcasses) sont résolus ici, pas dans le
+// template : Brevo n'a pas à connaître `CarcasseType`.
+export function formatSaisieChasseurEmail(carcasse: Carcasse): {
+  object: string;
+  text: string;
+  params: CarcasseSaisieTemplateParams;
+} {
+  const saisieLabel = getCarcasseStatusLabelForEmail(carcasse).toLowerCase();
+  const params: CarcasseSaisieTemplateParams = {
+    saisie_label: saisieLabel,
+    saisie_label_capitalized: saisieLabel.charAt(0).toUpperCase() + saisieLabel.slice(1),
+    carcasse_label: carcasse.type === CarcasseType.GROS_GIBIER ? 'de la carcasse' : 'du lot de carcasses',
+    espece: carcasse.espece.toLowerCase(),
+    numero_bracelet: carcasse.numero_bracelet,
+    motifs: carcasse.svi_ipm2_lesions_ou_motifs.map((motif) => getMotifForChasseur(motif, carcasse.type)),
+    commentaire: carcasse.svi_carcasse_commentaire || null,
+    cta: `${VITE_APP_URL}/app/chasseur/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`,
+  };
+
+  const object = `${params.saisie_label_capitalized} ${params.carcasse_label} de ${params.espece} n°${params.numero_bracelet}.`;
+  const text = [
     `Bonjour,`,
-    `Le service vétérinaire d’inspection a décidé la ${saisieLabel} ${carcasseLabel} de ${carcasse.espece.toLowerCase()} n°${
-      carcasse.numero_bracelet
-    }.`,
-    `Motif${motifs ? 's' : ''} de la saisie:\n${motifs}`,
-    carcasse.svi_carcasse_commentaire
-      ? `Commentaire du service vétérinaire:\n${carcasse.svi_carcasse_commentaire}`
-      : null,
-    `Pour consulter les détails de cette carcasse, rendez-vous sur Zacharie : ${url}`,
+    `Le service vétérinaire d’inspection a décidé la ${params.saisie_label} ${params.carcasse_label} de ${params.espece} n°${params.numero_bracelet}.`,
+    `Motif${params.motifs.length > 1 ? 's' : ''} de la saisie:\n${params.motifs.map((motif) => `-> ${motif}`).join('\n')}`,
+    params.commentaire ? `Commentaire du service vétérinaire:\n${params.commentaire}` : null,
+    `Pour consulter les détails de cette carcasse, rendez-vous sur Zacharie : ${params.cta}`,
     `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur cette saisie, merci de contacter l’établissement où a été effectuée l’inspection.`,
   ];
 
-  const object = `${saisieLabel} ${carcasseLabel} de ${carcasse.espece.toLowerCase()} n°${carcasse.numero_bracelet}.`;
-  return [object, email.filter(Boolean).join('\n\n')];
+  return { object, text: text.filter(Boolean).join('\n\n'), params };
 }
 
-export async function formatCarcasseManquanteOrRefusChasseurEmail(
-  carcasse: Carcasse
-): Promise<[string, string]> {
+// Manquante et refus sont constatés par le même intermédiaire : mêmes infos à charger, deux emails
+// distincts derrière (constat de manque vs refus motivé).
+async function getIntermediaireConstat(carcasse: Carcasse) {
   const carcasseIntermediaire = await prisma.carcasseIntermediaire.findUnique({
     where: {
       fei_numero_zacharie_carcasse_id_intermediaire_id: {
@@ -133,42 +153,89 @@ export async function formatCarcasseManquanteOrRefusChasseurEmail(
       },
     },
   });
-
-  const entite = carcasseIntermediaire?.CarcasseIntermediaireEntity.nom_d_usage;
-  const commentaire = carcasseIntermediaire?.commentaire;
-
-  const url = `https://zacharie.beta.gouv.fr/app/chasseur/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`;
-
-  const no = carcasse.numero_bracelet;
   const carcasseLabel = carcasse.type === CarcasseType.GROS_GIBIER ? 'La carcasse' : 'Le lot de carcasses';
-  const manquanteLabel = carcasse.type === CarcasseType.GROS_GIBIER ? 'manquante' : 'manquant';
-  const refusLabel = carcasse.type === CarcasseType.GROS_GIBIER ? 'refusée' : 'refusé';
+  const carcasseLabelCapitalized = carcasseLabel.charAt(0).toUpperCase() + carcasseLabel.slice(1);
 
-  if (carcasse.intermediaire_carcasse_manquante) {
-    const email = [
-      `Bonjour,`,
-      `${entite} a constaté que ${carcasseLabel.toLowerCase()} de ${carcasse.espece.toLowerCase()} n°${no} était ${manquanteLabel}.`,
-      commentaire ? `Commentaire de ${entite} :\n${commentaire}` : null,
-      `Pour consulter les détails de cette carcasse, rendez-vous sur Zacharie : ${url}`,
-      `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur ce constat, merci de contacter l’organisme qui a constaté ce manque.`,
-    ];
+  return {
+    entity_name: carcasseIntermediaire?.CarcasseIntermediaireEntity.nom_d_usage,
+    commentaire: carcasseIntermediaire?.commentaire || null,
+    espece: carcasse.espece.toLowerCase(),
+    numero_bracelet: carcasse.numero_bracelet,
+    carcasse_label: carcasseLabel.toLowerCase(),
+    carcasse_label_capitalized: carcasseLabelCapitalized,
+    cta: `${VITE_APP_URL}/app/chasseur/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`,
+  };
+}
 
-    const object = `${carcasseLabel} de ${carcasse.espece.toLowerCase()} n°${no} est ${manquanteLabel}.`;
-    return [object, email.filter(Boolean).join('\n\n')];
-  }
+export type CarcasseManquanteTemplateParams = {
+  entity_name: string;
+  carcasse_label: string;
+  carcasse_label_capitalized: string;
+  manquante_label: string;
+  espece: string;
+  numero_bracelet: string;
+  commentaire: string | null;
+  cta: string;
+};
 
-  const email = [
+export async function formatCarcasseManquanteChasseurEmail(carcasse: Carcasse): Promise<{
+  object: string;
+  text: string;
+  params: CarcasseManquanteTemplateParams;
+}> {
+  const constat = await getIntermediaireConstat(carcasse);
+  const params: CarcasseManquanteTemplateParams = {
+    ...constat,
+    manquante_label: carcasse.type === CarcasseType.GROS_GIBIER ? 'manquante' : 'manquant',
+  };
+
+  const object = `${params.carcasse_label_capitalized} de ${params.espece} n°${params.numero_bracelet} est ${params.manquante_label}.`;
+  const text = [
     `Bonjour,`,
-    `${entite} a refusé ${carcasseLabel.toLowerCase()} de ${carcasse.espece.toLowerCase()} n°${no}.`,
-    carcasse.intermediaire_carcasse_refus_motif
-      ? `Motif de refus :\n${carcasse.intermediaire_carcasse_refus_motif}`
-      : null,
-    commentaire ? `Commentaire de ${entite} :\n${commentaire}` : null,
-    `Pour consulter les détails de cette carcasse, rendez-vous sur Zacharie : ${url}`,
+    `${params.entity_name} a constaté que ${params.carcasse_label.toLowerCase()} de ${params.espece} n°${params.numero_bracelet} était ${params.manquante_label}.`,
+    params.commentaire ? `Commentaire de ${params.entity_name} :\n${params.commentaire}` : null,
+    `Pour consulter les détails de cette carcasse, rendez-vous sur Zacharie : ${params.cta}`,
     `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur ce constat, merci de contacter l’organisme qui a constaté ce manque.`,
   ];
-  const object = `${carcasseLabel} de ${carcasse.espece.toLowerCase()} n°${no} est ${refusLabel}.`;
-  return [object, email.filter(Boolean).join('\n\n')];
+
+  return { object, text: text.filter(Boolean).join('\n\n'), params };
+}
+
+export type CarcasseRefusTemplateParams = {
+  entity_name: string;
+  carcasse_label: string;
+  carcasse_label_capitalized: string;
+  refus_label: string;
+  espece: string;
+  numero_bracelet: string;
+  motif: string | null;
+  commentaire: string | null;
+  cta: string;
+};
+
+export async function formatCarcasseRefusChasseurEmail(carcasse: Carcasse): Promise<{
+  object: string;
+  text: string;
+  params: CarcasseRefusTemplateParams;
+}> {
+  const constat = await getIntermediaireConstat(carcasse);
+  const params: CarcasseRefusTemplateParams = {
+    ...constat,
+    refus_label: carcasse.type === CarcasseType.GROS_GIBIER ? 'refusée' : 'refusé',
+    motif: carcasse.intermediaire_carcasse_refus_motif || null,
+  };
+
+  const object = `${params.carcasse_label_capitalized} de ${params.espece} n°${params.numero_bracelet} est ${params.refus_label}.`;
+  const text = [
+    `Bonjour,`,
+    `${params.entity_name} a refusé ${params.carcasse_label.toLowerCase()} de ${params.espece} n°${params.numero_bracelet}.`,
+    params.motif ? `Motif de refus :\n${params.motif}` : null,
+    params.commentaire ? `Commentaire de ${params.entity_name} :\n${params.commentaire}` : null,
+    `Pour consulter les détails de cette carcasse, rendez-vous sur Zacharie : ${params.cta}`,
+    `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur ce constat, merci de contacter l’organisme qui a constaté ce manque.`,
+  ];
+
+  return { object, text: text.filter(Boolean).join('\n\n'), params };
 }
 
 export function formatRenvoiExpediteurEmail(
