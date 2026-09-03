@@ -20,6 +20,7 @@ import updateCarcasseStatus from '~/utils/get-carcasse-status';
 import { isCarcasseDone } from '~/utils/is-carcasse-done';
 import { sendWebhook } from '~/utils/api';
 import { FeiOwnerRole, Prisma } from '@prisma/client';
+import { BrevoTemplateId } from '~/third-parties/brevo-templates';
 
 // /*
 // *
@@ -159,13 +160,16 @@ export async function automaticClosingOfFeis({ force = false }: AutomaticClosing
     const allCarcassesDone = carcasses.every(isCarcasseDone);
     if (!allCarcassesDone) continue;
 
-    const [object, email] = await formatAutomaticClosingEmailForChasseur(fei_numero, carcasses);
+    const { object, text, params } = formatAutomaticClosingEmailForChasseur(fei_numero, carcasses);
     // auto close and notify examinateur and premier detenteur
+    // Le template Brevo ne couvre que l'email ; le push reste en texte (`text`).
     const notification = {
       title: object,
-      body: email,
-      email: email,
+      body: text,
+      email: text,
       notificationLogAction: `FEI_AUTO_CLOSED_${fei_numero}_${premier_detenteur_prochain_detenteur_id_cache}`,
+      emailTemplateId: BrevoTemplateId.FEI_AUTOMATIC_CLOSED,
+      emailTemplateParams: params,
     };
     const examinateur = await prisma.user.findUnique({
       where: { id: carcasses[0].examinateur_initial_user_id },

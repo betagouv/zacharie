@@ -34,7 +34,9 @@ vi.mock('~/third-parties/brevo', () => ({
 // envoyés à Brevo qu'on veut vérifier.
 vi.mock('~/utils/formatCarcasseEmail', async (importOriginal) => ({
   ...((await importOriginal()) as object),
-  formatManualValidationSviChasseurEmail: vi.fn().mockResolvedValue(['object', 'body']),
+  formatManualValidationSviChasseurEmail: vi
+    .fn()
+    .mockReturnValue({ object: 'object', text: 'body', params: {} }),
   formatCarcasseManquanteOrRefusChasseurEmail: vi.fn().mockResolvedValue(['object', 'body']),
   formatSaisieChasseurEmail: vi.fn().mockReturnValue(['object', 'body']),
   formatRenvoiExpediteurEmail: vi.fn().mockReturnValue(['object', 'body']),

@@ -10,7 +10,9 @@ vi.mock('~/service/notifications', () => ({
   default: vi.fn().mockResolvedValue(undefined),
 }));
 vi.mock('~/utils/formatCarcasseEmail', () => ({
-  formatAutomaticClosingEmailForChasseur: vi.fn().mockResolvedValue(['object', 'body']),
+  formatAutomaticClosingEmailForChasseur: vi
+    .fn()
+    .mockReturnValue({ object: 'object', text: 'body', params: {} }),
   formatCarcasseChasseurEmail: vi.fn(),
 }));
 vi.mock('~/utils/api', () => ({
