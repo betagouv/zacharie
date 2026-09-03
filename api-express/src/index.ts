@@ -19,7 +19,15 @@ import logger from 'morgan';
 import passport from 'passport';
 import './middlewares/passport';
 
-import { ENVIRONMENT, IS_PRODUCTION, IS_STAGING, PORT, SENTRY_KEY, VERSION } from './config.ts';
+import {
+  ENVIRONMENT,
+  IS_PRODUCTION,
+  IS_STAGING,
+  PORT,
+  PROCONNECT_MOCK_ENABLED,
+  SENTRY_KEY,
+  VERSION,
+} from './config.ts';
 import { sendError } from './middlewares/errors.ts';
 import { capture } from './third-parties/sentry.ts';
 
@@ -40,6 +48,8 @@ import apiKeyApprovalRouter from './controllers/api-key-approval.ts';
 import quizResultRouter from './controllers/quiz-result.ts';
 import trichineRouter from './controllers/trichine.ts';
 import laboratoireRouter from './controllers/laboratoire.ts';
+import proconnectRouter from './controllers/proconnect.ts';
+import mockProConnectRouter from './mock-proconnect.ts';
 import './cronjobs/index.ts';
 import './scripts/migrations.ts';
 
@@ -163,6 +173,10 @@ app.use((_req, res, next) => {
 // Pre middleware
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json({ limit: '5mb' }));
+// ProConnect factice (dev/test) : monté avant helmet pour servir sa page HTML sans CSP
+if (PROCONNECT_MOCK_ENABLED) {
+  app.use('/mock-proconnect', mockProConnectRouter);
+}
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -226,6 +240,7 @@ app.use('/user/reset-password', authRateLimit);
 app.use('/user/change-password', authRateLimit);
 
 // Routes used by zacharie.beta.gouv.fr
+app.use('/user/proconnect', passport.initialize(), proconnectRouter);
 app.use('/user', passport.initialize(), userRouter);
 app.use('/user-entity', passport.initialize(), userEntityRouter);
 app.use('/admin', passport.initialize(), adminRouter);
