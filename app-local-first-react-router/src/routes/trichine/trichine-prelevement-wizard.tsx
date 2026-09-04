@@ -18,6 +18,7 @@ import {
   Bouton,
   Carte,
   Champ,
+  ChampChoix,
   ChampSelect,
   ChampTexte,
   FilEtapes,
@@ -37,6 +38,7 @@ import {
   resultatAnalyseLabels,
   resultatCourtLabels,
   sitePrelevementLabels,
+  sitePrelevementOptions,
   TRICHINE_ESPECE_CONCERNEE,
   TRICHINE_MASSE_DEFAUT_FILLE,
   TRICHINE_MASSE_DEFAUT_INITIAL,
@@ -1144,26 +1146,14 @@ function EtapePrelevement({
       }
     >
       <div className="grid max-w-3xl grid-cols-1 gap-4 md:grid-cols-3">
-        <Champ label="Site de prélèvement">
-          <ChampSelect
+        <div className="md:col-span-3">
+          <ChampChoix
+            label="Site de prélèvement"
             value={reglageCommun.site_prelevement}
-            onChange={(event) =>
-              onReglageCommun({
-                ...reglageCommun,
-                site_prelevement: event.target.value as TrichineSitePrelevement,
-              })
-            }
-          >
-            {Object.values(TrichineSitePrelevement).map((site) => (
-              <option
-                key={site}
-                value={site}
-              >
-                {sitePrelevementLabels[site]}
-              </option>
-            ))}
-          </ChampSelect>
-        </Champ>
+            options={sitePrelevementOptions}
+            onChange={(site) => onReglageCommun({ ...reglageCommun, site_prelevement: site })}
+          />
+        </div>
         <Champ label="Masse par carcasse (g)">
           <ChampTexte
             type="number"
