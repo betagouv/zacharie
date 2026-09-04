@@ -181,3 +181,48 @@ export function FilEtapes({ etapes, courante }: { etapes: Array<string>; courant
     </ul>
   );
 }
+
+/* -------------------------------------------------------------------------- */
+/* Choix exclusif                                                              */
+/* -------------------------------------------------------------------------- */
+
+/** Choix parmi quelques options : des boutons plutôt qu'un menu déroulant, un clic au lieu de deux. */
+export function ChampChoix<T extends string>({
+  label,
+  hint,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  hint?: string;
+  value: T;
+  options: Array<{ value: T; label: string }>;
+  onChange: (value: T) => void;
+}) {
+  return (
+    <fieldset className="m-0 border-0 p-0">
+      <legend className="mb-1 block p-0 text-sm font-medium text-gray-900">{label}</legend>
+      {!!hint && <span className="mb-1 block text-xs text-gray-600">{hint}</span>}
+      <div className="flex flex-wrap gap-2">
+        {options.map((option) => {
+          const actif = option.value === value;
+          return (
+            <button
+              key={option.value}
+              type="button"
+              aria-pressed={actif}
+              onClick={() => onChange(option.value)}
+              style={actif ? { backgroundColor: BLEU, borderColor: BLEU } : undefined}
+              className={`grow rounded border px-3 py-2 text-sm font-medium transition ${
+                actif ? 'text-white' : 'border-gray-300 bg-white text-gray-900 hover:bg-gray-50'
+              }`}
+            >
+              {option.label}
+            </button>
+          );
+        })}
+      </div>
+    </fieldset>
+  );
+}
