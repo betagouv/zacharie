@@ -6,6 +6,14 @@ import { SENTRY_SECRET, BREVO_BEARER } from '~/config';
 import { capture } from '~/third-parties/sentry';
 import { ingestInboundEmails, inboundEmailPayloadSchema } from '~/utils/trichine-inbound-email';
 
+// Comparaison à durée constante : un `!==` sur une chaîne s'arrête au premier caractère différent,
+// ce qui laisse fuiter le secret caractère par caractère à qui mesure les temps de réponse.
+function memeSecret(recu: string, attendu: string): boolean {
+  const a = Buffer.from(recu);
+  const b = Buffer.from(attendu);
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
 /** Auth des webhooks Brevo : Bearer posé à la création du webhook (cf curl ci-dessous). */
 function brevoBearerIsValid(req: express.Request, res: express.Response): boolean {
   const authHeader = req.headers.authorization;
@@ -29,8 +37,11 @@ function brevoBearerIsValid(req: express.Request, res: express.Response): boolea
     return false;
   }
 
-  if (parts[1] !== BREVO_BEARER) {
-    console.log('Brevo webhook: Invalid token');
+  if (!memeSecret(parts[1], BREVO_BEARER)) {
+    // Quelqu'un connaît l'URL du webhook sans en connaître le secret : ça se surveille
+    capture('Brevo webhook: token invalide', {
+      extra: { path: req.path, ip: req.ip ?? '', userAgent: req.get('user-agent') ?? '' },
+    });
     res.status(403).send({ ok: false, error: 'Forbidden' });
     return false;
   }

@@ -17,6 +17,7 @@ import CcgImport from './ccg-import';
 import AdminDashboard from './dashboard';
 import AdminLesions from './lesions';
 import AdminQuiz from './quiz';
+import AdminTrichine from './trichine';
 
 export default function RouterAdmin() {
   return (
@@ -91,6 +92,10 @@ export default function RouterAdmin() {
       <Route
         path="quiz"
         element={<AdminQuiz />}
+      />
+      <Route
+        path="trichine"
+        element={<AdminTrichine />}
       />
     </Route>
   );

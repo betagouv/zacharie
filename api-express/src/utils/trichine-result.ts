@@ -10,7 +10,6 @@ import prisma from '~/prisma';
 import { archiveFtpPdf } from '~/utils/trichine-ftp-document';
 import { capture } from '~/third-parties/sentry';
 import {
-  getCarcassesStakeholderUsers,
   getFtpEmitterUsers,
   getUsersWorkingForEntity,
   logTrichineStatutChange,
@@ -191,13 +190,13 @@ export async function applyPoolResult({
   });
   await recomputePoolAndLinkedFTPs(pool.id, userId);
 
+  // Un résultat n'est notifié qu'à l'émetteur de la FTP. Les détenteurs des carcasses ne le sont
+  // pas : ils voient le résultat sur la carcasse, et le volume d'envois reste à cadrer avec eux.
   const emitterUsers = await getFtpEmitterUsers(ftp);
-  const carcasses = pool.TrichineEchantillons.map((echantillon) => echantillon.Carcasse);
-  const stakeholders = await getCarcassesStakeholderUsers(carcasses);
 
   if (body.resultat_analyse === TrichineResultatAnalyse.NEGATIF) {
     await notifyTrichineUsers({
-      users: [...emitterUsers, ...stakeholders],
+      users: emitterUsers,
       type: TrichineNotificationType.RESULTAT_ANALYSE,
       objetType: TrichineObjetType.POOL,
       objetId: pool.id,
@@ -290,7 +289,6 @@ export async function applyPoolResult({
         for (const user of await getFtpEmitterUsers(parentFtp)) recipients.set(user.id, user);
       }
     }
-    for (const user of stakeholders) recipients.set(user.id, user);
 
     const messages: Partial<Record<TrichineResultatAnalyse, string>> = {
       [TrichineResultatAnalyse.POSITIF]: `ALERTE SANITAIRE — Le LNR a confirmé la présence de trichine dans le pool ${pool.reference_pool}. Les carcasses concernées sont impropres à la consommation et doivent être retirées / saisies.`,

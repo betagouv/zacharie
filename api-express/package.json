@@ -58,6 +58,7 @@
     "libphonenumber-js": "^1.12.8",
     "matrix-js-sdk": "^34.11.1",
     "morgan": "^1.10.0",
+    "mupdf": "^1.28.0",
     "p-queue": "^8.1.0",
     "passport": "^0.7.0",
     "passport-headerapikey": "^1.2.2",
@@ -71,6 +72,7 @@
     "slugify": "^1.6.6",
     "swagger-ui-express": "^5.0.1",
     "tsx": "^4.7.0",
+    "unpdf": "^1.7.0",
     "web-push": "^3.6.7",
     "xss": "^1.0.15",
     "zod": "^3.25.76"

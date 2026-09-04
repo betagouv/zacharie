@@ -37,6 +37,14 @@ const TRICHINE_FEATURE_ENABLED = process.env.VITE_FEATURE_TRICHINE === 'true';
 // Non posée = la consigne n'apparaît pas sur le document.
 const TRICHINE_RESULTATS_EMAIL = process.env.TRICHINE_RESULTATS_EMAIL ?? '';
 
+// Albert API (albert.api.etalab.gouv.fr) — OCR des rapports d'analyses scannés.
+// Non configurée : les rapports sans texte restent non lus, le résultat est saisi à la main.
+const ALBERT_API_KEY = process.env.ALBERT_API_KEY ?? '';
+const ALBERT_API_URL = process.env.ALBERT_API_URL ?? 'https://albert.api.etalab.gouv.fr/v1';
+// Modèle de vision utilisé pour l'OCR (cf GET /v1/models, type `image-text-to-text`).
+// lightonocr est un modèle dédié à l'OCR de documents : rapide et fidèle aux tableaux.
+const ALBERT_OCR_MODEL = process.env.ALBERT_OCR_MODEL ?? 'lightonocr-2-1b';
+
 // Object storage Cellar (Clever Cloud, compatible S3) — cf doc/trichine.md §12.2.
 // Les trois premières variables sont posées par l'add-on, le bucket est choisi par nous.
 // Non configuré (dev / test) : les documents sont régénérés à la volée, rien n'est stocké.
@@ -64,6 +72,9 @@ export {
   VITE_APP_URL,
   TRICHINE_FEATURE_ENABLED,
   TRICHINE_RESULTATS_EMAIL,
+  ALBERT_API_KEY,
+  ALBERT_API_URL,
+  ALBERT_OCR_MODEL,
   CELLAR_HOST,
   CELLAR_KEY_ID,
   CELLAR_KEY_SECRET,

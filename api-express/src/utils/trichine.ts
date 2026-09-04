@@ -37,6 +37,36 @@ export const TrichineDocumentSource = {
 export type TrichineDocumentSourceValue =
   (typeof TrichineDocumentSource)[keyof typeof TrichineDocumentSource];
 
+// D'où vient la référence qui a permis de rattacher un document reçu par email
+export const TrichineRattachementSource = {
+  CONTENU_FICHIER: 'CONTENU_FICHIER',
+  CONTENU_OCR: 'CONTENU_OCR',
+  EMAIL: 'EMAIL',
+} as const;
+
+/**
+ * Ce qui, dans le document, a permis de retrouver le pool. Les rapports réels ne portent ni la
+ * référence de pool ni celle de la FTP : ils identifient les échantillons par leur n° de scellé,
+ * c'est-à-dire le numéro de bracelet que la FTP a imprimé au laboratoire.
+ */
+export const TrichineRattachementIndice = {
+  REFERENCE_POOL: 'REFERENCE_POOL',
+  REFERENCE_ECHANTILLON: 'REFERENCE_ECHANTILLON',
+  NUMEROS_BRACELET: 'NUMEROS_BRACELET',
+  REFERENCE_FTP: 'REFERENCE_FTP',
+} as const;
+export type TrichineRattachementIndiceValue =
+  (typeof TrichineRattachementIndice)[keyof typeof TrichineRattachementIndice];
+
+// D'où vient le texte lu dans un document reçu par email
+export const TrichineTexteSource = {
+  PDF_NATIF: 'PDF_NATIF',
+  OCR_ALBERT: 'OCR_ALBERT',
+} as const;
+export type TrichineTexteSourceValue = (typeof TrichineTexteSource)[keyof typeof TrichineTexteSource];
+export type TrichineRattachementSourceValue =
+  (typeof TrichineRattachementSource)[keyof typeof TrichineRattachementSource];
+
 export const TrichineNotificationType = {
   RESULTAT_ANALYSE: 'RESULTAT_ANALYSE',
   FTP_RECUE: 'FTP_RECUE',
