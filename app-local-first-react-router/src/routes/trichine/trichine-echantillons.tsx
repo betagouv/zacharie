@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router';
 import { Badge } from '@codegouvfr/react-dsfr/Badge';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import dayjs from 'dayjs';
-import { TrichineResultatAnalyse, TrichineStatutAnalyse } from '@prisma/client';
+import { TrichineResultatAnalyse, TrichineStatutAnalyse, TrichineType } from '@prisma/client';
 import TableFilterable from '@app/components/TableFilterable';
 import LienTrichine from '@app/components/trichine/LienTrichine';
 import TrichineListPage, {
@@ -51,6 +51,12 @@ const RESULTATS = [
   })),
 ];
 
+// Seuls des prélèvements initiaux pas encore regroupés peuvent constituer un nouveau pool.
+// Les complémentaires se regroupent depuis le pool douteux (2e intention).
+function estRegroupable(echantillon: TrichineEchantillonWithCarcasse): boolean {
+  return !echantillon.pool_id && echantillon.type === TrichineType.INITIAL;
+}
+
 export default function TrichineEchantillons() {
   const navigate = useNavigate();
   const basePath = useTrichineBasePath();
@@ -65,6 +71,7 @@ export default function TrichineEchantillons() {
   const [au, setAu] = useListParam('au', '');
   const [sortBy, setSortBy] = useState<keyof TrichineEchantillonWithCarcasse>('date_prelevement');
   const [sortOrder, setSortOrder] = useState<TrichineSortOrder>('DESC');
+  const [selectedIds, setSelectedIds] = useState<Array<string>>([]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -138,9 +145,13 @@ export default function TrichineEchantillons() {
             type="button"
             priority="secondary"
             disabled={!stats.sansPool}
-            onClick={() => navigate(`${basePath}/nouveau-pool`)}
+            onClick={() =>
+              navigate(
+                `${basePath}/nouveau-pool${selectedIds.length ? `?echantillons=${selectedIds.join(',')}` : ''}`
+              )
+            }
           >
-            Créer un pool
+            Créer un pool{selectedIds.length ? ` (${selectedIds.length})` : ''}
           </Button>
         </>
       }
@@ -181,6 +192,10 @@ export default function TrichineEchantillons() {
       <TableFilterable
         data={rows}
         rowKey="id"
+        withCheckbox
+        checked={selectedIds}
+        onCheck={setSelectedIds}
+        checkboxDisabled={(echantillon) => !estRegroupable(echantillon)}
         onRowClick={(echantillon) =>
           navigate(`${basePath}/echantillons/${echantillon.reference_echantillon}`)
         }

@@ -34,6 +34,11 @@ const adminLinks = [
     label: 'Quiz',
     icon: 'fr-icon-questionnaire-line',
   },
+  {
+    to: '/app/admin/trichine',
+    label: 'Trichine',
+    icon: 'fr-icon-microscope-line',
+  },
 ];
 
 const externalLinks = [
