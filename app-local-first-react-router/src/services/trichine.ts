@@ -1,5 +1,6 @@
 import type {
   Carcasse,
+  EntityTypes,
   TrichineDocument,
   TrichineEchantillon,
   TrichineFTP,
@@ -56,6 +57,12 @@ export type TrichineEchantillonAvecCarcasse = TrichineEchantillon & {
 
 export type TrichineFTPDetail = TrichineFTP & {
   DestinataireEntity: TrichineLaboratoire & { is_lnr: boolean };
+  ExpediteurEntity: {
+    id: string;
+    type: EntityTypes | null;
+    nom_d_usage: string | null;
+    raison_sociale: string | null;
+  } | null;
   FTPParent: { numero_fiche: string } | null;
   FTPChildren: Array<{ numero_fiche: string; statut_logistique: TrichineStatutLogistiqueFTP }>;
   TrichinePoolFTPs: Array<
@@ -68,6 +75,9 @@ export type TrichineFTPDetail = TrichineFTP & {
   >;
   Documents: Array<TrichineDocument>;
 };
+
+/** ETG où opère le service d'inspection expéditeur d'une FTP. */
+export type TrichinePartieConcernee = { id: string; nom: string };
 
 export type TrichineEchantillonDetail = TrichineEchantillonAvecCarcasse & {
   TrichinePool:
@@ -219,6 +229,7 @@ export function renoncerDeuxiemeIntention(poolId: string) {
 export function createTrichineFTP(body: {
   pool_ids: Array<string>;
   destinataire_entity_id: string;
+  expediteur_entity_id?: string;
   mode_transport?: string;
   commentaire?: string;
 }) {
@@ -265,7 +276,11 @@ export function getTrichineFTPs() {
  */
 export function getTrichineFTP(reference: string) {
   return API.get({ path: `/trichine/ftp/${reference}` }) as Promise<
-    ApiResponse<{ ftp: TrichineFTPDetail; historique: Array<TrichineHistoriqueStatut> }>
+    ApiResponse<{
+      ftp: TrichineFTPDetail;
+      historique: Array<TrichineHistoriqueStatut>;
+      etgs: Array<TrichinePartieConcernee>;
+    }>
   >;
 }
 

@@ -75,6 +75,12 @@ export const sitePrelevementLabels: Record<TrichineSitePrelevement, string> = {
   [TrichineSitePrelevement.MEMBRE_ANTERIEUR]: 'Membre antérieur',
 };
 
+/** Options prêtes à l'emploi pour un choix de site (boutons ou select). */
+export const sitePrelevementOptions = Object.values(TrichineSitePrelevement).map((site) => ({
+  value: site,
+  label: sitePrelevementLabels[site],
+}));
+
 export const trichineTypeLabels: Record<TrichineType, string> = {
   [TrichineType.INITIAL]: 'Initial',
   [TrichineType.COMPLEMENTAIRE]: 'Complémentaire (2e intention)',
@@ -277,6 +283,183 @@ export function statutUtilisateurBadgeSeverity(statut: StatutUtilisateur): Badge
       return 'info';
     case 'Clôturé':
       return 'success';
+  }
+}
+
+/**
+ * Où en est un objet trichine, en une ligne : un libellé et ce qu'il attend de l'utilisateur.
+ * Les enums (suivi, logistique, analyse, résultat, type) décrivent la même progression sous
+ * plusieurs angles — affichés côte à côte en badges ils se répètent sans rien apprendre.
+ */
+export type EtapeTrichine = { label: string; severity: BadgeSeverity; explication: string };
+
+export function etapeFTP(ftp: {
+  statut_logistique: TrichineStatutLogistiqueFTP;
+  statut_analytique: TrichineStatutAnalyse;
+}): EtapeTrichine {
+  const analysesTerminees = ftp.statut_analytique === TrichineStatutAnalyse.ANALYSES_TERMINEES;
+  switch (ftp.statut_logistique) {
+    case TrichineStatutLogistiqueFTP.BROUILLON:
+      return {
+        label: 'À envoyer',
+        severity: 'new',
+        explication: '',
+      };
+    case TrichineStatutLogistiqueFTP.ENVOYEE:
+      return {
+        label: 'Envoyée au laboratoire',
+        severity: 'info',
+        explication: 'En attente de la réception du colis par le laboratoire.',
+      };
+    case TrichineStatutLogistiqueFTP.RECUE:
+      return analysesTerminees
+        ? {
+            label: 'Résultats disponibles',
+            severity: 'success',
+            explication: 'Le laboratoire a rendu ses résultats, pool par pool, ci-dessous.',
+          }
+        : {
+            label: 'Analyses en cours',
+            severity: 'info',
+            explication: 'Le laboratoire a réceptionné le colis. Les résultats apparaîtront ici.',
+          };
+    case TrichineStatutLogistiqueFTP.TRAITEE:
+      return analysesTerminees
+        ? {
+            label: 'Analyses terminées',
+            severity: 'success',
+            explication: 'Le laboratoire a rendu tous ses résultats, pool par pool, ci-dessous.',
+          }
+        : {
+            label: 'Résultats partiels',
+            severity: 'info',
+            explication: 'Le laboratoire a clôturé la fiche, une partie des résultats reste à venir.',
+          };
+    case TrichineStatutLogistiqueFTP.ANNULEE:
+      return {
+        label: 'Annulée',
+        severity: 'warning',
+        explication:
+          "Le colis n'est pas analysé. Les pools sont de nouveau disponibles pour une autre fiche.",
+      };
+  }
+}
+
+/** Étape d'un pool ou d'un échantillon dont le laboratoire a rendu son résultat. */
+function etapeResultat(resultat: TrichineResultatAnalyse): EtapeTrichine {
+  switch (resultat) {
+    case TrichineResultatAnalyse.NEGATIF:
+      return {
+        label: 'Résultat négatif',
+        severity: 'success',
+        explication: 'Aucune trichine détectée : les carcasses de ce pool suivent leur cours.',
+      };
+    case TrichineResultatAnalyse.DOUTEUX:
+      return {
+        label: 'Résultat douteux',
+        severity: 'warning',
+        explication:
+          'Une larve a été détectée. Identifiez la carcasse concernée par des analyses de 2e intention.',
+      };
+    case TrichineResultatAnalyse.ANALYSE_IMPOSSIBLE:
+      return {
+        label: 'Analyse impossible',
+        severity: 'warning',
+        explication: "Le laboratoire n'a pas pu analyser ce pool : un nouveau prélèvement est nécessaire.",
+      };
+    case TrichineResultatAnalyse.POSITIF:
+      return {
+        label: 'Trichine confirmée',
+        severity: 'error',
+        explication: 'Les carcasses de ce pool sont impropres à la consommation.',
+      };
+    case TrichineResultatAnalyse.NON_NEGATIF:
+      return {
+        label: 'Autre parasite détecté',
+        severity: 'error',
+        explication: 'Les carcasses de ce pool sont impropres à la consommation.',
+      };
+    case TrichineResultatAnalyse.PRESENCE_PARASITE_NON_IDENTIFIE:
+      return {
+        label: 'Parasite non identifié',
+        severity: 'error',
+        explication: 'Les carcasses de ce pool sont impropres à la consommation.',
+      };
+  }
+}
+
+type PoolFTPLinks = {
+  TrichinePoolFTPs: Array<{
+    TrichineFTP: { deleted_at: Date | null; statut_logistique: TrichineStatutLogistiqueFTP };
+  }>;
+};
+
+/** Où en est le colis d'un pool : pas encore de fiche, fiche en brouillon, ou fiche partie. */
+function etatFTPDuPool(pool: PoolFTPLinks): 'aucune' | 'brouillon' | 'partie' {
+  const liens = pool.TrichinePoolFTPs.filter((link) => !link.TrichineFTP.deleted_at);
+  if (liens.some((link) => ftpEstPartie(link.TrichineFTP))) return 'partie';
+  return liens.length > 0 ? 'brouillon' : 'aucune';
+}
+
+export function etapePool(
+  pool: PoolFTPLinks & { resultat_analyse: TrichineResultatAnalyse | null }
+): EtapeTrichine {
+  if (pool.resultat_analyse) return etapeResultat(pool.resultat_analyse);
+  switch (etatFTPDuPool(pool)) {
+    case 'partie':
+      return {
+        label: 'Analyses en cours',
+        severity: 'info',
+        explication: "Le pool est parti au laboratoire. Son résultat s'affichera ici.",
+      };
+    case 'brouillon':
+      return {
+        label: 'À envoyer',
+        severity: 'new',
+        explication: 'Sa fiche de transmission est encore en brouillon : envoyez-la au laboratoire.',
+      };
+    case 'aucune':
+      return {
+        label: 'À transmettre',
+        severity: 'new',
+        explication:
+          "Pool constitué. Rattachez-le à une fiche de transmission pour l'envoyer au laboratoire.",
+      };
+  }
+}
+
+export function etapeEchantillon(echantillon: {
+  resultat_analyse: TrichineResultatAnalyse | null;
+  TrichinePool: PoolFTPLinks | null;
+}): EtapeTrichine {
+  if (echantillon.resultat_analyse) return etapeResultat(echantillon.resultat_analyse);
+  if (!echantillon.TrichinePool) {
+    return {
+      label: 'À regrouper',
+      severity: 'new',
+      explication: "Échantillon prélevé. Regroupez-le dans un pool pour l'envoyer au laboratoire.",
+    };
+  }
+  switch (etatFTPDuPool(echantillon.TrichinePool)) {
+    case 'partie':
+      return {
+        label: 'Analyses en cours',
+        severity: 'info',
+        explication: "Parti au laboratoire avec son pool. Le résultat s'affichera ici.",
+      };
+    case 'brouillon':
+      return {
+        label: 'À envoyer',
+        severity: 'new',
+        explication:
+          'La fiche de transmission de son pool est encore en brouillon : envoyez-la au laboratoire.',
+      };
+    case 'aucune':
+      return {
+        label: 'À transmettre',
+        severity: 'new',
+        explication: "Regroupé dans un pool, qui n'est pas encore rattaché à une fiche de transmission.",
+      };
   }
 }
 

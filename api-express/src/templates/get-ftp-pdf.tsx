@@ -1,10 +1,12 @@
 import { Document, Font, Image, Page, renderToStream, StyleSheet, Text, View } from '@react-pdf/renderer';
+import { EntityTypes } from '@prisma/client';
 import bwipjs from 'bwip-js';
 import dayjs from 'dayjs';
 import 'dayjs/locale/fr';
 import path from 'path';
 import prisma from '~/prisma';
 import { TRICHINE_RESULTATS_EMAIL } from '~/config';
+import { getEtgsDuServiceExpediteur, type TrichinePartieConcernee } from '~/utils/trichine-parties';
 
 dayjs.locale('fr');
 
@@ -61,6 +63,15 @@ const styles = StyleSheet.create({
     borderBottomColor: gris,
   },
   cardBody: { padding: 5 },
+  envoi: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: gris,
+    borderRadius: 3,
+    padding: 5,
+  },
   commentaire: { marginTop: 10, borderWidth: 1, borderColor: gris, borderRadius: 3, padding: 5 },
   line: { fontSize: 9, marginBottom: 1 },
   lineStrong: { fontSize: 9, fontWeight: 'bold', marginBottom: 1 },
@@ -138,6 +149,7 @@ async function getFtpForPdf(ftpId: string) {
       },
       ExpediteurEntity: {
         select: {
+          type: true,
           nom_d_usage: true,
           raison_sociale: true,
           address_ligne_1: true,
@@ -206,7 +218,15 @@ function formatAdresse(parts: Array<string | null>) {
   return parts.filter(Boolean).join(', ');
 }
 
-export function TrichineFtpDocument({ ftp, barcodes }: { ftp: FtpForPdf; barcodes: Record<string, string> }) {
+export function TrichineFtpDocument({
+  ftp,
+  barcodes,
+  etgs,
+}: {
+  ftp: FtpForPdf;
+  barcodes: Record<string, string>;
+  etgs: Array<TrichinePartieConcernee>;
+}) {
   const logoMaasa = path.join(process.cwd(), 'src/assets/logo_MAASA.png');
   const logoZacharie = path.join(process.cwd(), 'src/assets/logo_zacharie_solo_small.png');
   const pools = ftp.TrichinePoolFTPs.map((link) => link.TrichinePool);
@@ -245,10 +265,15 @@ export function TrichineFtpDocument({ ftp, barcodes }: { ftp: FtpForPdf; barcode
 
         <View style={styles.twoColumns}>
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>Expéditeur</Text>
+            <Text style={styles.cardTitle}>
+              Expéditeur{ftp.ExpediteurEntity?.type === EntityTypes.SVI ? " (service d'inspection)" : ''}
+            </Text>
             <View style={styles.cardBody}>
               <Text style={styles.lineStrong}>{expediteurNom}</Text>
               {!!expediteurAdresse && <Text style={styles.line}>{expediteurAdresse}</Text>}
+              {etgs.length > 0 && (
+                <Text style={styles.line}>Opère chez : {etgs.map((etg) => etg.nom).join(', ')}</Text>
+              )}
               <Text style={styles.line}>
                 Contact : {ftp.ExpediteurUser.prenom} {ftp.ExpediteurUser.nom_de_famille}
               </Text>
@@ -274,16 +299,19 @@ export function TrichineFtpDocument({ ftp, barcodes }: { ftp: FtpForPdf; barcode
                   ftp.DestinataireEntity.ville,
                 ])}
               </Text>
-              <Text style={styles.line}>
-                Envoi : {ftp.date_envoi ? dayjs(ftp.date_envoi).format('DD/MM/YYYY') : 'non envoyée'}
-              </Text>
-              {!!ftp.mode_transport && <Text style={styles.line}>Transport : {ftp.mode_transport}</Text>}
-              <Text style={styles.line}>
-                {pools.length} pool{pools.length > 1 ? 's' : ''} — {nbEchantillons} échantillon
-                {nbEchantillons > 1 ? 's' : ''}
-              </Text>
             </View>
           </View>
+        </View>
+
+        <View style={styles.envoi} wrap={false}>
+          <Text style={styles.line}>
+            Envoi : {ftp.date_envoi ? dayjs(ftp.date_envoi).format('DD/MM/YYYY') : 'non envoyée'}
+          </Text>
+          {!!ftp.mode_transport && <Text style={styles.line}>Transport : {ftp.mode_transport}</Text>}
+          <Text style={styles.line}>
+            Contenu : {pools.length} pool{pools.length > 1 ? 's' : ''} — {nbEchantillons} échantillon
+            {nbEchantillons > 1 ? 's' : ''}
+          </Text>
         </View>
 
         {!!ftp.commentaire && (
@@ -353,12 +381,6 @@ export function TrichineFtpDocument({ ftp, barcodes }: { ftp: FtpForPdf; barcode
                 </View>
               ))}
             </View>
-
-            <View style={styles.laboZone}>
-              <Text style={styles.laboField}>Réservé au laboratoire — date de réception :</Text>
-              <Text style={styles.laboField}>Référence labo :</Text>
-              <Text style={styles.laboField}>Résultat :</Text>
-            </View>
           </View>
         ))}
 
@@ -388,7 +410,9 @@ export async function getFtpPdfBuffer(ftpId: string): Promise<Buffer | null> {
     barcodes[reference] = await barcodeDataUrl(reference);
   }
 
-  const stream = await renderToStream(<TrichineFtpDocument ftp={ftp} barcodes={barcodes} />);
+  const etgs = await getEtgsDuServiceExpediteur(ftp.expediteur_entity_id);
+
+  const stream = await renderToStream(<TrichineFtpDocument ftp={ftp} barcodes={barcodes} etgs={etgs} />);
   const chunks: Uint8Array[] = [];
   return new Promise<Buffer>((resolve, reject) => {
     stream.on('data', (chunk: Uint8Array) => chunks.push(chunk));
