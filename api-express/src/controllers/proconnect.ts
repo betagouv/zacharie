@@ -3,6 +3,7 @@ import passport from 'passport';
 import jwt from 'jsonwebtoken';
 import prisma from '~/prisma';
 import { catchErrors } from '~/middlewares/errors';
+import { authRateLimit } from '~/middlewares/auth-rate-limit';
 import type { RequestWithUser } from '~/types/request';
 import { API_URL, APP_URL, SECRET } from '~/config';
 import { cookieOptions, logoutCookieOptions } from '~/utils/cookie';
@@ -45,6 +46,7 @@ function redirectToProConnectPage(res: express.Response, error: string, redirect
 // Route: GET /user/proconnect/start - Redirige un admin connecté vers ProConnect
 router.get(
   '/start',
+  authRateLimit,
   passport.authenticate('user', { session: false, failWithError: true }),
   catchErrors(async (req: RequestWithUser, res: express.Response) => {
     const user = req.user!;
@@ -77,6 +79,7 @@ router.get(
 // Route: GET /user/proconnect/callback - Retour de ProConnect, réémet la session avec proconnect_at
 router.get(
   '/callback',
+  authRateLimit,
   catchErrors(async (req: express.Request, res: express.Response) => {
     const stateToken = req.cookies?.[PROCONNECT_STATE_COOKIE];
     res.clearCookie(PROCONNECT_STATE_COOKIE, logoutCookieOptions(req));

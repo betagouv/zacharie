@@ -238,7 +238,7 @@ app.use('/user/sign-up', authRateLimit);
 app.use('/user/forget-password', authRateLimit);
 app.use('/user/reset-password', authRateLimit);
 app.use('/user/change-password', authRateLimit);
-app.use('/user/proconnect', authRateLimit);
+// /user/proconnect : le limiteur est posé sur chaque route dans controllers/proconnect.ts
 app.use('/admin', adminRateLimit);
 
 // Routes used by zacharie.beta.gouv.fr
