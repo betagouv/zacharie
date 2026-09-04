@@ -1098,10 +1098,19 @@ model TrichineDocument {
   AjouteParUser      User?    @relation("TrichineDocumentAjouteParUser", fields: [ajoute_par_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   // Provenance du dépôt par email (source = EMAIL)
-  email_message_id String?
-  email_expediteur String?
-  email_sujet      String?
-  email_recu_at    DateTime?
+  email_message_id    String?
+  email_expediteur    String?
+  email_sujet         String?
+  email_recu_at       DateTime?
+  // CONTENU_FICHIER (référence lue dans le PDF), CONTENU_OCR (lue par OCR sur un scan)
+  // ou EMAIL (lue dans le sujet / le corps du message)
+  rattachement_source String?
+  // Ce qui a été reconnu dans le document : référence de pool / d'échantillon, ou numéros de bracelet
+  rattachement_indice String?
+  // Texte lu dans le document : c'est lui qui a décidé du rattachement et du résultat, on le garde
+  // pour pouvoir expliquer une lecture après coup
+  texte_extrait       String?
+  texte_source        String? // PDF_NATIF / OCR_ALBERT
 
   pool_id      String?
   TrichinePool TrichinePool? @relation(fields: [pool_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
@@ -1122,6 +1131,36 @@ model TrichineDocument {
 // Notification polymorphique. type/objet_type sont String pour permettre l'évolution UX.
 // type : "RESULTAT_ANALYSE" | "FTP_RECUE" | "POOL_REFUSE" | "CHANGEMENT_STATUT" | ...
 // objet_type : "CARCASSE" | "ECHANTILLON" | "POOL" | "FTP" | ...
+// Journal des emails reçus sur les adresses de dépôt (webhook Brevo Inbound Parsing).
+// Tracé pour le debug et la sécurité : tout message reçu laisse une ligne, y compris ceux qu'on
+// écarte (spam, expéditeur inconnu). Le corps du message n'est pas conservé, seulement ce qui
+// permet de comprendre ce qui a été fait — et de retrouver l'événement chez Brevo.
+model EmailEntrant {
+  id            String   @id @default(uuid())
+  message_id    String   @unique
+  brevo_uuid    String? // pour rejouer / consulter GET /v3/inbound/events/{uuid}
+  expediteur    String
+  destinataires String[]
+  sujet         String?
+  recu_at       DateTime
+  spam_score    Float?
+
+  nb_pieces_jointes   Int     @default(0)
+  // A_ANALYSER = pièces jointes stockées, en attente de l'OCR (cronjob) ; puis TRAITE / IGNORE / ERREUR
+  statut              String
+  motif_ignore        String?
+  laboratoire_reconnu Boolean @default(false)
+  // Détail pièce jointe par pièce jointe : rattachement, source du rattachement, résultat appliqué
+  detail              Json?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
+
+  @@index([recu_at])
+  @@index([statut])
+  @@index([expediteur])
+}
+
 model TrichineNotification {
   id             String    @id @default(uuid())
   utilisateur_id String

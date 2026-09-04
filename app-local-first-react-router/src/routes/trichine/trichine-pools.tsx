@@ -68,6 +68,7 @@ export default function TrichinePools() {
   const [au, setAu] = useListParam('au', '');
   const [sortBy, setSortBy] = useState<keyof TrichinePoolPopulated>('date_constitution');
   const [sortOrder, setSortOrder] = useState<TrichineSortOrder>('DESC');
+  const [selectedIds, setSelectedIds] = useState<Array<string>>([]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -149,9 +150,13 @@ export default function TrichinePools() {
           <Button
             type="button"
             disabled={!stats.aEnvoyer}
-            onClick={() => navigate(`${basePath}/nouvelle-ftp`)}
+            onClick={() =>
+              navigate(
+                `${basePath}/nouvelle-ftp${selectedIds.length ? `?pools=${selectedIds.join(',')}` : ''}`
+              )
+            }
           >
-            Envoyer au laboratoire
+            Envoyer au laboratoire{selectedIds.length ? ` (${selectedIds.length})` : ''}
           </Button>
         </>
       }
@@ -198,6 +203,11 @@ export default function TrichinePools() {
       <TableFilterable
         data={rows}
         rowKey="id"
+        withCheckbox
+        checked={selectedIds}
+        onCheck={setSelectedIds}
+        // Un pool déjà rattaché à une FTP ne peut pas être transmis une seconde fois
+        checkboxDisabled={(pool) => !poolSansFTP(pool)}
         onRowClick={(pool) => navigate(`${basePath}/pools/${pool.reference_pool}`)}
         noData={pools.length ? 'Aucun pool ne correspond aux filtres' : 'Aucun pool constitué'}
         renderCellSmallDevices={(pool) => (

@@ -2,7 +2,13 @@ import z from 'zod';
 import prisma from '~/prisma';
 import { capture } from '~/third-parties/sentry';
 import { IS_CELLAR_CONFIGURED, trichineDocumentKey, uploadToCellar } from '~/third-parties/cellar';
-import { TrichineDocumentSource, type TrichineDocumentSourceValue } from '~/utils/trichine';
+import {
+  TrichineDocumentSource,
+  type TrichineDocumentSourceValue,
+  type TrichineRattachementIndiceValue,
+  type TrichineRattachementSourceValue,
+  type TrichineTexteSourceValue,
+} from '~/utils/trichine';
 
 /**
  * Upload d'un document trichine (rapport COFRAC, photographie de larve) vers Cellar.
@@ -62,6 +68,13 @@ type StoreBufferProps = {
   source?: TrichineDocumentSourceValue;
   nomFichier?: string;
   email?: DocumentEmailOrigin;
+  // Ce qui a permis de rattacher le document : le contenu du fichier ou le message qui le portait
+  rattachementSource?: TrichineRattachementSourceValue;
+  // Ce qui a été reconnu dans le document pour le rattacher (référence, numéros de bracelet…)
+  rattachementIndice?: TrichineRattachementIndiceValue;
+  // Texte lu dans le document, conservé pour expliquer après coup rattachement et résultat
+  texteExtrait?: string;
+  texteSource?: TrichineTexteSourceValue;
   maxBytes?: number;
 };
 
@@ -75,6 +88,10 @@ export async function storeTrichineDocumentFromBuffer({
   source = TrichineDocumentSource.UPLOAD,
   nomFichier,
   email,
+  rattachementSource,
+  rattachementIndice,
+  texteExtrait,
+  texteSource,
   maxBytes = MAX_UPLOAD_BYTES,
 }: StoreBufferProps): Promise<StoreResult> {
   if (!IS_CELLAR_CONFIGURED) {
@@ -107,6 +124,10 @@ export async function storeTrichineDocumentFromBuffer({
       email_message_id: email?.message_id,
       email_expediteur: email?.expediteur,
       email_sujet: email?.sujet,
+      rattachement_source: rattachementSource,
+      rattachement_indice: rattachementIndice,
+      texte_extrait: texteExtrait,
+      texte_source: texteSource,
       email_recu_at: email?.recu_at,
     },
   });

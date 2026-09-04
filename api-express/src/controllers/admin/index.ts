@@ -8,6 +8,7 @@ import officialCfeiRouter from './official-cfei.ts';
 import carcasseRouter from './carcasse.ts';
 import analyticsRouter from './analytics.ts';
 import ccgRouter from './ccg.ts';
+import trichineAdminRouter from './trichine.ts';
 
 const router: express.Router = express.Router();
 
@@ -21,5 +22,6 @@ router.use(officialCfeiRouter);
 router.use(carcasseRouter);
 router.use(analyticsRouter);
 router.use(ccgRouter);
+router.use(trichineAdminRouter);
 
 export default router;
