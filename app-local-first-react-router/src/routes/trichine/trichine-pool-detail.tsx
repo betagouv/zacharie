@@ -100,6 +100,12 @@ export default function TrichinePoolDetailPage() {
   const statutUtilisateur = statutUtilisateurPool(pool);
   // Renoncer aux analyses de 2e intention : circuit court, sur un pool douteux non encore tranché
   const peutRenoncer = pool.resultat_analyse === TrichineResultatAnalyse.DOUTEUX;
+  // La décision est prise dès qu'un pool fille existe, ou que les carcasses ont été retirées de
+  // leur fiche (renoncement) : la bannière n'a plus lieu d'être.
+  const decisionAPrendre =
+    peutRenoncer &&
+    pool.PoolsFilles.length === 0 &&
+    pool.TrichineEchantillons.some((echantillon) => !echantillon.Carcasse.trichine_retire_de_fei_at);
   // Une fois le colis parti, la fiche papier fait foi : la composition ne bouge plus
   const fige = poolEstFige(pool);
 
@@ -129,11 +135,61 @@ export default function TrichinePoolDetailPage() {
       : { label: 'Laboratoire', value: 'À désigner', absent: true },
   ];
 
+  function renoncer() {
+    setIsSubmitting(true);
+    renoncerDeuxiemeIntention(pool!.id)
+      .then((response) => {
+        if (response.ok) {
+          toast.success('Carcasses retirées de leur fiche');
+          refresh();
+        } else {
+          toast.error(response.error || 'Une erreur est survenue');
+        }
+      })
+      .catch(() => toast.error('Une erreur est survenue'))
+      .finally(() => setIsSubmitting(false));
+  }
+
   return (
     <TrichineDetailPage
       surtitre="Pool d'analyse"
       titre={pool.reference_pool}
       retour={{ to: `${basePath}/pools`, label: 'Tous les pools' }}
+      banniere={
+        decisionAPrendre ? (
+          <div className="flex flex-wrap items-start gap-x-4 gap-y-3 rounded-lg border-l-4 border-l-orange-600 bg-white p-4 shadow-lg sm:items-center">
+            <span
+              className="flex size-10 shrink-0 items-center justify-center rounded-full bg-orange-600 text-white"
+              aria-hidden="true"
+            >
+              <span className="fr-icon-alert-fill" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="fr-mb-0 font-bold text-gray-900">Résultat douteux : une larve a été détectée</p>
+              <p className="fr-mb-0 fr-text--sm text-gray-700">
+                {circuitAgree
+                  ? 'Identifiez la carcasse concernée par des analyses de 2e intention.'
+                  : 'Identifiez la carcasse concernée, ou renoncez et retirez les carcasses de leur fiche.'}
+              </p>
+            </div>
+            <div className="flex w-full flex-wrap gap-2 sm:w-auto">
+              <Button linkProps={{ to: `${basePath}/pools/${pool.reference_pool}/2e-intention` }}>
+                Analyses de 2e intention
+              </Button>
+              {!circuitAgree && (
+                <Button
+                  type="button"
+                  priority="tertiary"
+                  disabled={isSubmitting}
+                  onClick={renoncer}
+                >
+                  Renoncer
+                </Button>
+              )}
+            </div>
+          </div>
+        ) : null
+      }
       badges={
         <>
           <Badge severity={statutUtilisateurBadgeSeverity(statutUtilisateur)}>{statutUtilisateur}</Badge>
@@ -161,35 +217,14 @@ export default function TrichinePoolDetailPage() {
               </Button>
             </>
           )}
-          {peutRenoncer && (
-            <>
-              <Button linkProps={{ to: `${basePath}/pools/${pool.reference_pool}/2e-intention` }}>
-                Analyses de 2e intention
-              </Button>
-              {!circuitAgree && (
-                <Button
-                  type="button"
-                  priority="secondary"
-                  disabled={isSubmitting}
-                  onClick={() => {
-                    setIsSubmitting(true);
-                    renoncerDeuxiemeIntention(pool.id)
-                      .then((response) => {
-                        if (response.ok) {
-                          toast.success('Carcasses retirées de leur fiche');
-                          refresh();
-                        } else {
-                          toast.error(response.error || 'Une erreur est survenue');
-                        }
-                      })
-                      .catch(() => toast.error('Une erreur est survenue'))
-                      .finally(() => setIsSubmitting(false));
-                  }}
-                >
-                  Renoncer à la 2e intention
-                </Button>
-              )}
-            </>
+          {/* Tant que la décision est à prendre, les actions vivent dans la bannière collante */}
+          {peutRenoncer && !decisionAPrendre && (
+            <Button
+              priority="secondary"
+              linkProps={{ to: `${basePath}/pools/${pool.reference_pool}/2e-intention` }}
+            >
+              Analyses de 2e intention
+            </Button>
           )}
         </>
       }

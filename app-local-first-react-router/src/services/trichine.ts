@@ -23,7 +23,7 @@ type ApiResponse<T> = { ok: boolean; data: T | null; error: string };
 
 export type TrichineCarcasseProjection = Pick<
   Carcasse,
-  'zacharie_carcasse_id' | 'numero_bracelet' | 'espece' | 'date_mise_a_mort'
+  'zacharie_carcasse_id' | 'numero_bracelet' | 'espece' | 'date_mise_a_mort' | 'trichine_retire_de_fei_at'
 > & { fei_numero?: string; Fei?: { commune_mise_a_mort: string | null } };
 
 export type TrichineEchantillonWithCarcasse = TrichineEchantillon & {
