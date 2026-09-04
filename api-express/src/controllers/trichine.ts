@@ -67,6 +67,8 @@ const carcasseProjectionSelect = {
   espece: true,
   date_mise_a_mort: true,
   fei_numero: true,
+  // Une carcasse retirée de sa fiche a vu sa décision prise : les écrans n'ont plus à la réclamer
+  trichine_retire_de_fei_at: true,
   Fei: { select: { commune_mise_a_mort: true } },
 } as const;
 
