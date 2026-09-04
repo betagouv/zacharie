@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useSearchParams } from 'react-router';
+import { Link, useNavigate, useSearchParams } from 'react-router';
 import dayjs from 'dayjs';
 import { toast } from 'react-toastify';
 import { CarcasseStatus, DepotType, FeiOwnerRole } from '@prisma/client';
@@ -28,6 +28,7 @@ import useDownloadCertificats from '@app/utils/svi-download-certificats';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import { isCarcasseSviArchived } from '@app/utils/carcasse-svi-archived';
 import { loadData, useLoaderEffect } from '@app/utils/load-data';
+import { TRICHINE_ESPECE_CONCERNEE, TRICHINE_FEATURE_ENABLED } from '@app/utils/trichine';
 import { useTransmissions } from '@app/utils/get-transmissions-sorted';
 import { getSaisonStartYear, getSaisonLabel, isDateInSaison } from '@app/utils/get-saison';
 import { trackFeature, trackSearch } from '@app/services/matomo';
@@ -94,6 +95,7 @@ type TransmissionMeta = {
 
 export default function SviCarcasses() {
   const user = useMostFreshUser('svi-carcasses')!;
+  const navigate = useNavigate();
   const carcassesRegistry = useZustandStore((state) => state.carcassesRegistry);
   const transmissions = useTransmissions();
   const feis = useZustandStore((state) => state.feis);
@@ -707,6 +709,12 @@ export default function SviCarcasses() {
   // carcasses sélectionnées (sur l'ensemble filtré, toutes pages confondues)
   const selectedSet = new Set(selectedCarcassesIds);
   const selectedCarcasses = filteredData.filter((c) => selectedSet.has(c.zacharie_carcasse_id));
+  // Prélèvement trichine : seuls les sangliers non encore retirés de leur fiche sont concernés
+  const sangliersSelectionnes = selectedCarcasses
+    .filter(
+      (carcasse) => carcasse.espece === TRICHINE_ESPECE_CONCERNEE && !carcasse.trichine_retire_de_fei_at
+    )
+    .map((carcasse) => carcasse.zacharie_carcasse_id);
   const acceptableCarcasses = selectedCarcasses.filter(
     (c) => c.svi_carcasse_status === CarcasseStatus.SANS_DECISION
   );
@@ -1423,6 +1431,30 @@ export default function SviCarcasses() {
                     },
                     text: `Télécharger les certificats (${selectedCarcasses.length})`,
                   },
+                  ...(TRICHINE_FEATURE_ENABLED
+                    ? [
+                        {
+                          linkProps: {
+                            href: '#',
+                            'aria-disabled': sangliersSelectionnes.length === 0,
+                            className:
+                              sangliersSelectionnes.length === 0 ? 'cursor-not-allowed opacity-50' : '',
+                            title:
+                              sangliersSelectionnes.length === 0
+                                ? 'Sélectionnez des carcasses de sanglier avec la case à cocher'
+                                : '',
+                            onClick: (e: React.MouseEvent) => {
+                              e.preventDefault();
+                              if (sangliersSelectionnes.length === 0) return;
+                              navigate(
+                                `/app/svi/trichine/prelever?carcasses=${sangliersSelectionnes.join(',')}`
+                              );
+                            },
+                          },
+                          text: `Prélever pour la trichine (${sangliersSelectionnes.length})`,
+                        },
+                      ]
+                    : []),
                   {
                     linkProps: {
                       href: '#',

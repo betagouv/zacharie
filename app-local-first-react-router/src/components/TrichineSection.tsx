@@ -194,12 +194,24 @@ export default function TrichineSection({
 
       {canAct && !retiree && (
         <div className="flex flex-wrap gap-2">
-          <Button
-            type="button"
-            onClick={() => echantillonModal.open()}
-          >
-            Réaliser un échantillon
-          </Button>
+          {/* Après un résultat douteux, le prélèvement doit être rattaché au pool douteux :
+              il passe par l'assistant de 2e intention, pas par un échantillon isolé. */}
+          {poolDouteux && !resultatDefavorable ? (
+            <Button
+              linkProps={{
+                to: `${trichineBasePath}/pools/${poolDouteux.reference_pool}/2e-intention`,
+              }}
+            >
+              Prélèvements de 2e intention
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              onClick={() => echantillonModal.open()}
+            >
+              Réaliser un échantillon
+            </Button>
+          )}
           {/* Retrait de FEI et renoncement : circuit court uniquement (en agréé, décision via IPM) */}
           {viewRole === 'chasseur' && resultatDefavorable && (
             <Button

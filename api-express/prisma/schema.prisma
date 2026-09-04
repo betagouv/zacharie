@@ -95,6 +95,7 @@ model User {
   TrichinePoolsCrees                    TrichinePool[]                 @relation("TrichinePoolCreeParUser")
   TrichinePoolsRefuses                  TrichinePool[]                 @relation("TrichinePoolRefusParUser")
   TrichineFTPsExpediees                 TrichineFTP[]                  @relation("TrichineFTPExpediteurUser")
+  TrichineFTPsAnnulees                  TrichineFTP[]                  @relation("TrichineFTPAnnulationParUser")
   TrichineDocumentsAjoutes              TrichineDocument[]             @relation("TrichineDocumentAjouteParUser")
   TrichineNotifications                 TrichineNotification[]         @relation("TrichineNotificationUtilisateur")
   TrichineHistoriqueStatuts             TrichineHistoriqueStatut[]     @relation("TrichineHistoriqueModifieParUser")
@@ -924,6 +925,7 @@ enum TrichineStatutLogistiqueFTP {
   ENVOYEE
   RECUE
   TRAITEE
+  ANNULEE // annulée par l'émetteur avant réception du colis par le laboratoire
 }
 
 enum TrichineResultatAnalyse {
@@ -994,7 +996,6 @@ model TrichinePool {
   statut             TrichineStatutAnalyse    @default(A_COMPLETER)
   resultat_analyse   TrichineResultatAnalyse?
   parasite_identifie String? // rempli si NON_NEGATIF par LNR
-  reference_labo     String? // n° interne attribué par le labo à réception
 
   refus_par_user_id String?
   RefusParUser      User?   @relation("TrichinePoolRefusParUser", fields: [refus_par_user_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
@@ -1040,6 +1041,12 @@ model TrichineFTP {
   statut_logistique TrichineStatutLogistiqueFTP @default(BROUILLON)
   statut_analytique TrichineStatutAnalyse       @default(A_COMPLETER)
 
+  // Annulation par l'émetteur : la fiche reste tracée, ses pools redeviennent rattachables
+  date_annulation        DateTime?
+  annulation_par_user_id String?
+  AnnulationParUser      User?     @relation("TrichineFTPAnnulationParUser", fields: [annulation_par_user_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  raison_annulation      String?
+
   mode_transport String?
   commentaire    String?
 
@@ -1054,6 +1061,7 @@ model TrichineFTP {
   @@index([expediteur_user_id])
   @@index([destinataire_entity_id])
   @@index([ftp_parent_id])
+  @@index([annulation_par_user_id])
   @@index([updated_at])
 }
 
@@ -1063,6 +1071,10 @@ model TrichinePoolFTP {
   pool_id    String
   ftp_id     String
   date_ajout DateTime @default(now())
+
+  // N° interne attribué au pool par le laboratoire destinataire de cette FTP. Il est propre à ce
+  // laboratoire : le LVD et le LNR ont chacun le leur, aucun ne voit celui de l'autre.
+  reference_labo String?
 
   TrichinePool TrichinePool @relation(fields: [pool_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   TrichineFTP  TrichineFTP  @relation(fields: [ftp_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
@@ -1074,12 +1086,31 @@ model TrichinePoolFTP {
 // Document attaché soit à un pool, soit à une FTP (jamais les deux en même temps).
 // Type non typé strictement (String) : "RAPPORT_COFRAC" / "PHOTOGRAPHIE_LARVE" / "FTP_PDF" / "AUTRE" / ...
 model TrichineDocument {
-  id                 String   @id @default(uuid())
-  type               String
-  fichier_url        String // clé S3/Cellar
+  id          String  @id @default(uuid())
+  type        String
+  source      String  @default("UPLOAD") // UPLOAD (dépôt applicatif) ou EMAIL (adresse de dépôt des rapports)
+  fichier_url String // clé S3/Cellar
+  nom_fichier String? // nom d'origine de la pièce jointe, pour l'affichage
+
   date_ajout         DateTime @default(now())
-  ajoute_par_user_id String
-  AjouteParUser      User     @relation("TrichineDocumentAjouteParUser", fields: [ajoute_par_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  // Null quand le document arrive par email : l'expéditeur n'est pas nécessairement un utilisateur Zacharie
+  ajoute_par_user_id String?
+  AjouteParUser      User?    @relation("TrichineDocumentAjouteParUser", fields: [ajoute_par_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  // Provenance du dépôt par email (source = EMAIL)
+  email_message_id    String?
+  email_expediteur    String?
+  email_sujet         String?
+  email_recu_at       DateTime?
+  // CONTENU_FICHIER (référence lue dans le PDF), CONTENU_OCR (lue par OCR sur un scan)
+  // ou EMAIL (lue dans le sujet / le corps du message)
+  rattachement_source String?
+  // Ce qui a été reconnu dans le document : référence de pool / d'échantillon, ou numéros de bracelet
+  rattachement_indice String?
+  // Texte lu dans le document : c'est lui qui a décidé du rattachement et du résultat, on le garde
+  // pour pouvoir expliquer une lecture après coup
+  texte_extrait       String?
+  texte_source        String? // PDF_NATIF / OCR_ALBERT
 
   pool_id      String?
   TrichinePool TrichinePool? @relation(fields: [pool_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
@@ -1091,6 +1122,8 @@ model TrichineDocument {
   deleted_at DateTime?
   is_synced  Boolean   @default(true)
 
+  // Idempotence : Brevo peut rejouer un webhook, une pièce jointe n'est stockée qu'une fois
+  @@unique([email_message_id, nom_fichier])
   @@index([pool_id])
   @@index([ftp_id])
 }
@@ -1098,6 +1131,36 @@ model TrichineDocument {
 // Notification polymorphique. type/objet_type sont String pour permettre l'évolution UX.
 // type : "RESULTAT_ANALYSE" | "FTP_RECUE" | "POOL_REFUSE" | "CHANGEMENT_STATUT" | ...
 // objet_type : "CARCASSE" | "ECHANTILLON" | "POOL" | "FTP" | ...
+// Journal des emails reçus sur les adresses de dépôt (webhook Brevo Inbound Parsing).
+// Tracé pour le debug et la sécurité : tout message reçu laisse une ligne, y compris ceux qu'on
+// écarte (spam, expéditeur inconnu). Le corps du message n'est pas conservé, seulement ce qui
+// permet de comprendre ce qui a été fait — et de retrouver l'événement chez Brevo.
+model EmailEntrant {
+  id            String   @id @default(uuid())
+  message_id    String   @unique
+  brevo_uuid    String? // pour rejouer / consulter GET /v3/inbound/events/{uuid}
+  expediteur    String
+  destinataires String[]
+  sujet         String?
+  recu_at       DateTime
+  spam_score    Float?
+
+  nb_pieces_jointes   Int     @default(0)
+  // A_ANALYSER = pièces jointes stockées, en attente de l'OCR (cronjob) ; puis TRAITE / IGNORE / ERREUR
+  statut              String
+  motif_ignore        String?
+  laboratoire_reconnu Boolean @default(false)
+  // Détail pièce jointe par pièce jointe : rattachement, source du rattachement, résultat appliqué
+  detail              Json?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
+
+  @@index([recu_at])
+  @@index([statut])
+  @@index([expediteur])
+}
+
 model TrichineNotification {
   id             String    @id @default(uuid())
   utilisateur_id String

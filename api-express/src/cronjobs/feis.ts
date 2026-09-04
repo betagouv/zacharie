@@ -20,6 +20,8 @@ import updateCarcasseStatus from '~/utils/get-carcasse-status';
 import { isCarcasseDone } from '~/utils/is-carcasse-done';
 import { sendWebhook } from '~/utils/api';
 import { FeiOwnerRole, Prisma } from '@prisma/client';
+import { TRICHINE_FEATURE_ENABLED } from '~/config';
+import { carcasseAvecTrichineNegatifFilter, TRICHINE_ESPECE_CONCERNEE } from '~/utils/trichine';
 
 // /*
 // *
@@ -80,7 +82,21 @@ export async function automaticClosingOfFeis({ force = false }: AutomaticClosing
   // est clôturée individuellement. La FEI n'est marquée close que lorsque TOUTES ses
   // carcasses sont dans un état terminal (multi-destinataire : les lots progressent séparément).
   const carcassesToAutoClose = await prisma.carcasse.findMany({
-    where: getCarcassesToAutoCloseWhere(),
+    where: {
+      ...getCarcassesToAutoCloseWhere(),
+      // Un sanglier ne s'auto-clôture qu'une fois un résultat de recherche de trichine négatif
+      // revenu. Sans résultat, ou avec un résultat défavorable, la décision revient au SVI
+      // (cf doc/trichine.md §6.2).
+      ...(TRICHINE_FEATURE_ENABLED
+        ? {
+            OR: [
+              { espece: null },
+              { espece: { not: TRICHINE_ESPECE_CONCERNEE } },
+              carcasseAvecTrichineNegatifFilter,
+            ],
+          }
+        : {}),
+    },
   });
 
   console.log(`Found ${carcassesToAutoClose.length} carcasses to auto-close`);

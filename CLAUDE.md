@@ -136,4 +136,12 @@ API requires:
 
 - `POSTGRESQL_ADDON_URI`: PostgreSQL connection string
 
+Trichine (tous optionnels — non posés = fonctionnalité inactive, cf `doc/trichine-todo.md`) :
+
+- `VITE_FEATURE_TRICHINE`: `true` active la feature (frontend **et** garde-fous sangliers du backend)
+- `TRICHINE_RESULTATS_EMAIL`: adresse de dépôt des rapports COFRAC, imprimée sur la FTP
+- `CELLAR_ADDON_HOST` / `CELLAR_ADDON_KEY_ID` / `CELLAR_ADDON_KEY_SECRET` / `CELLAR_ADDON_BUCKET`: object storage Cellar
+- `BREVO_BEARER`: secret du Bearer des webhooks Brevo (sortants **et** entrants — même valeur que celle posée à la création du webhook côté Brevo)
+- `ALBERT_API_KEY` / `ALBERT_API_URL` / `ALBERT_OCR_MODEL`: OCR des rapports d'analyses scannés via l'Albert API. Non posée = les scans restent non lus (saisie manuelle)
+
 E2E env vars: see @e2e/CLAUDE.md.

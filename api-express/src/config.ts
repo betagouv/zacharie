@@ -29,6 +29,29 @@ const IS_DEV_OR_TEST = IS_DEV || IS_TEST;
 // Aucun NotificationLog n'est écrit pendant ce temps, la dédup s'appuyant dessus : un log écrit
 // maintenant empêcherait définitivement l'envoi une fois l'interrupteur relevé.
 const NATIVE_PUSH_DRY_RUN = true;
+// Recherche de trichine (cf doc/trichine.md). Même variable que le flag du frontend :
+// tant qu'elle n'est pas posée, les garde-fous sangliers restent inactifs.
+const TRICHINE_FEATURE_ENABLED = process.env.VITE_FEATURE_TRICHINE === 'true';
+
+// Adresse de dépôt des rapports COFRAC par les laboratoires (imprimée sur la FTP).
+// Non posée = la consigne n'apparaît pas sur le document.
+const TRICHINE_RESULTATS_EMAIL = process.env.TRICHINE_RESULTATS_EMAIL ?? '';
+
+// Albert API (albert.api.etalab.gouv.fr) — OCR des rapports d'analyses scannés.
+// Non configurée : les rapports sans texte restent non lus, le résultat est saisi à la main.
+const ALBERT_API_KEY = process.env.ALBERT_API_KEY ?? '';
+const ALBERT_API_URL = process.env.ALBERT_API_URL ?? 'https://albert.api.etalab.gouv.fr/v1';
+// Modèle de vision utilisé pour l'OCR (cf GET /v1/models, type `image-text-to-text`).
+// lightonocr est un modèle dédié à l'OCR de documents : rapide et fidèle aux tableaux.
+const ALBERT_OCR_MODEL = process.env.ALBERT_OCR_MODEL ?? 'lightonocr-2-1b';
+
+// Object storage Cellar (Clever Cloud, compatible S3) — cf doc/trichine.md §12.2.
+// Les trois premières variables sont posées par l'add-on, le bucket est choisi par nous.
+// Non configuré (dev / test) : les documents sont régénérés à la volée, rien n'est stocké.
+const CELLAR_HOST = process.env.CELLAR_ADDON_HOST ?? '';
+const CELLAR_KEY_ID = process.env.CELLAR_ADDON_KEY_ID ?? '';
+const CELLAR_KEY_SECRET = process.env.CELLAR_ADDON_KEY_SECRET ?? '';
+const CELLAR_BUCKET = process.env.CELLAR_ADDON_BUCKET ?? '';
 
 export {
   PORT,
@@ -47,4 +70,13 @@ export {
   IS_PRODUCTION,
   NATIVE_PUSH_DRY_RUN,
   VITE_APP_URL,
+  TRICHINE_FEATURE_ENABLED,
+  TRICHINE_RESULTATS_EMAIL,
+  ALBERT_API_KEY,
+  ALBERT_API_URL,
+  ALBERT_OCR_MODEL,
+  CELLAR_HOST,
+  CELLAR_KEY_ID,
+  CELLAR_KEY_SECRET,
+  CELLAR_BUCKET,
 };

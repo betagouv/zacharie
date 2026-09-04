@@ -11,6 +11,8 @@ import type {
   CarcasseCertificat,
   ApiKey,
   ApiKeyApprovalByUserOrEntity,
+  TrichineResultatAnalyse,
+  EmailEntrant,
 } from '@prisma/client';
 import type { UserForFei, UserForAdmin } from './user';
 import type { EntityForAdmin, EntityWithUserRelation, EntitiesByTypeAndId, EntitiesById } from './entity';
@@ -252,7 +254,9 @@ export interface CarcassesRefuseesResponse {
 
 export interface SviCarcasseAVenir {
   zacharie_carcasse_id: string;
+  numero_bracelet: string;
   fei_numero: string;
+  premier_detenteur_name_cache: string | null;
   espece: string | null;
   type: CarcasseType | null;
   nombre_d_animaux: number | null;
@@ -445,6 +449,181 @@ export interface AdminCcgImportResponse {
     created: number;
     updated: number;
     skipped: number;
+  };
+  error: string;
+}
+
+// Import de résultats labo depuis un export LIMS (cf doc/trichine-import-lims.md)
+export type LimsResultRowStatus = 'matched' | 'unmatched' | 'invalid' | 'conflict';
+
+export interface LimsResultRow {
+  reference_pool: string;
+  // Résultat mappé (null si le libellé du fichier n'a pas pu être reconnu)
+  resultat_analyse: TrichineResultatAnalyse | null;
+  // Libellé brut du fichier, pour affichage
+  raw_resultat: string;
+  parasite_identifie?: string;
+  date_debut_analyse?: string;
+  date_fin_analyse?: string;
+  reference_labo?: string;
+  commentaire?: string;
+  status: LimsResultRowStatus;
+  // Raison quand status ≠ matched
+  message?: string;
+}
+
+export interface LaboResultsPreviewResponse {
+  ok: boolean;
+  data: {
+    rows: LimsResultRow[];
+    counts: { matched: number; unmatched: number; invalid: number; conflict: number };
+  };
+  error: string;
+}
+
+export interface LaboResultsImportResponse {
+  ok: boolean;
+  data: {
+    applied: number;
+    skipped: number;
+    errors: number;
+    results: Array<{ reference_pool: string; ok: boolean; error?: string }>;
+  };
+  error: string;
+}
+
+export interface AdminDashboardResponse {
+  ok: boolean;
+  data: {
+    funnel: {
+      chasseurs_inscrits: number;
+      compte_valide: number;
+      fiche_ouverte: number;
+      envoye_1_fiche: number;
+      envoye_2_fiches: number;
+      envoye_3_fiches: number;
+    };
+    inscriptions_par_semaine: Array<{ date: string; count: number }>;
+  };
+  error: string;
+}
+
+export type AdminTrichineDocumentRow = {
+  id: string;
+  type: string;
+  source: string;
+  nom_fichier: string | null;
+  date_ajout: Date;
+  pool_reference: string | null;
+  ftp_numero: string | null;
+  rattachement_source: string | null;
+  rattachement_indice: string | null;
+  texte_source: string | null;
+  longueur_texte: number;
+  email_expediteur: string | null;
+  email_sujet: string | null;
+  depose_par: string | null;
+};
+
+export interface AdminTrichineDocumentsResponse {
+  ok: boolean;
+  data: { documents: AdminTrichineDocumentRow[] };
+  error: string;
+}
+
+export type AdminTrichinePoolRow = {
+  id: string;
+  reference_pool: string;
+  type: string;
+  statut: string;
+  resultat_analyse: string | null;
+  parasite_identifie: string | null;
+  date_constitution: Date;
+  date_fin_analyse: Date | null;
+  nb_echantillons: number;
+  bracelets: string;
+  especes: string;
+  ftp_numero: string | null;
+  laboratoire: string | null;
+  est_lnr: boolean;
+  reference_labo: string | null;
+};
+
+export interface AdminTrichinePoolsResponse {
+  ok: boolean;
+  data: { pools: AdminTrichinePoolRow[] };
+  error: string;
+}
+
+export type AdminTrichineFtpRow = {
+  id: string;
+  numero_fiche: string;
+  statut_logistique: string;
+  statut_analytique: string;
+  date_creation: Date;
+  date_envoi: Date | null;
+  date_annulation: Date | null;
+  laboratoire: string;
+  est_lnr: boolean;
+  expediteur: string | null;
+  nb_pools: number;
+  pools: string;
+  est_confirmation: boolean;
+};
+
+export interface AdminTrichineFtpsResponse {
+  ok: boolean;
+  data: { ftps: AdminTrichineFtpRow[] };
+  error: string;
+}
+
+export type AdminTrichineEchantillonRow = {
+  id: string;
+  reference_echantillon: string;
+  type: string;
+  statut: string;
+  resultat_analyse: string | null;
+  date_prelevement: Date;
+  masse_grammes: number;
+  site_prelevement: string;
+  numero_bracelet: string | null;
+  espece: string | null;
+  fei_numero: string | null;
+  pool_reference: string | null;
+  preleve_par: string | null;
+};
+
+export interface AdminTrichineEchantillonsResponse {
+  ok: boolean;
+  data: { echantillons: AdminTrichineEchantillonRow[] };
+  error: string;
+}
+
+export interface AdminEmailEntrantResponse {
+  ok: boolean;
+  data: {
+    email: EmailEntrant | null;
+    // Détail de l'analyse quand elle vient d'être relancée
+    ocr: Array<{
+      document_id: string;
+      nom_fichier: string | null;
+      texte_lu: boolean;
+      pool_reference?: string;
+      ftp_numero?: string;
+      resultat_lu?: string;
+      resultat_applique?: boolean;
+      resultat_refus?: string;
+      rapport_ambigu?: boolean;
+    }> | null;
+  } | null;
+  error: string;
+}
+
+export interface AdminEmailsEntrantsResponse {
+  ok: boolean;
+  data: {
+    emails: EmailEntrant[];
+    total: number;
   };
   error: string;
 }
