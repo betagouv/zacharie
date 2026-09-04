@@ -174,12 +174,7 @@ router.post(
         data: { last_login_at: new Date() },
       });
       res.cookie('zacharie_express_jwt', token, cookieOptions(req));
-      res.status(200).send({
-        ok: true,
-        data: { user, token, requiresProConnect: user.isZacharieAdmin },
-        message: '',
-        error: '',
-      });
+      res.status(200).send({ ok: true, data: { user, token }, message: '', error: '' });
     }
   )
 );

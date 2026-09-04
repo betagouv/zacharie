@@ -5,10 +5,11 @@ pour accéder aux routes `/admin` de l'API (et donc à l'interface `/app/admin`)
 
 ## Parcours
 
-1. L'admin se connecte normalement (`POST /user/login`). La session est ouverte comme pour tout
-   utilisateur, mais la réponse contient `requiresProConnect: true`.
-2. Le front l'envoie sur `/app/proconnect`, qui affiche un bouton ProConnect pointant vers
-   `GET /user/proconnect/start?redirect=/app/...`.
+1. L'admin se connecte normalement (`POST /user/login`) et arrive sur son espace habituel
+   (`/app/chasseur`, ...). Rien ne change pour lui tant qu'il n'ouvre pas `/app/admin`.
+2. Sur `/app/admin`, le front appelle `GET /admin/session` ; sur `PROCONNECT_REQUIRED` il l'envoie
+   sur `/app/proconnect`, qui affiche un bouton ProConnect pointant vers
+   `GET /user/proconnect/start?redirect=/app/admin/...`.
 3. L'API pose un cookie `zacharie_proconnect` (state, nonce, PKCE, 10 min) et redirige vers ProConnect.
 4. `GET /user/proconnect/callback` échange le code, appelle `userinfo`, puis vérifie que l'email
    ProConnect est **égal** à l'email du compte Zacharie. ProConnect authentifie, Zacharie autorise.
@@ -16,7 +17,7 @@ pour accéder aux routes `/admin` de l'API (et donc à l'interface `/app/admin`)
    (403 `PROCONNECT_REQUIRED`) tout JWT sans `proconnect_at` de moins de 12 h, durée de la session ProConnect.
 
 Le front admin (`routes/admin/layout.tsx`) appelle `GET /admin/session` avant d'afficher quoi que ce soit
-et renvoie vers `/app/proconnect` sur `PROCONNECT_REQUIRED`.
+et renvoie vers `/app/proconnect` sur `PROCONNECT_REQUIRED`. Le login, lui, ne passe jamais par ProConnect.
 
 `POST /admin/user/connect-as` est derrière la même garde : l'usurpation exige un admin ProConnecté, et la
 session usurpée n'hérite pas de `proconnect_at`.
@@ -37,8 +38,9 @@ session usurpée n'hérite pas de `proconnect_at`.
 | `PROCONNECT_CLIENT_SECRET` | fourni par l'Espace Partenaires                                     |
 | `VITE_API_URL`             | base du `redirect_uri` : `${VITE_API_URL}/user/proconnect/callback` |
 
-Sans `PROCONNECT_ISSUER` en dev ou en test, l'API embarque un ProConnect factice sur
-`/mock-proconnect` (`src/mock-proconnect.ts`). Sa page `/authorize` laisse saisir l'email renvoyé,
+En test (`NODE_ENV=test`, e2e) l'API embarque toujours un ProConnect factice sur `/mock-proconnect`
+(`src/mock-proconnect.ts`) ; en dev, seulement si `PROCONNECT_ISSUER` n'est pas défini. Sa page
+`/authorize` laisse saisir l'email renvoyé,
 ce qui sert aux tests e2e (`e2e/tests/transverse/136-admin-proconnect.spec.ts`, compte `admin@example.fr`).
 
 Vérifier les URLs d'issuer sur <https://partenaires.proconnect.gouv.fr/docs/fournisseur-service/implementation_technique>
