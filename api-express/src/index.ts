@@ -232,12 +232,14 @@ app.use('/quiz-result', quizResultRouter);
 app.use('/v1', v1Router);
 
 // Auth rate limiting
-import { authRateLimit } from './middlewares/auth-rate-limit.ts';
+import { authRateLimit, adminRateLimit } from './middlewares/auth-rate-limit.ts';
 app.use('/user/login', authRateLimit);
 app.use('/user/sign-up', authRateLimit);
 app.use('/user/forget-password', authRateLimit);
 app.use('/user/reset-password', authRateLimit);
 app.use('/user/change-password', authRateLimit);
+app.use('/user/proconnect', authRateLimit);
+app.use('/admin', adminRateLimit);
 
 // Routes used by zacharie.beta.gouv.fr
 app.use('/user/proconnect', passport.initialize(), proconnectRouter);

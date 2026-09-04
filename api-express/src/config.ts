@@ -32,8 +32,10 @@ const API_URL = IS_TEST
 const APP_URL = IS_TEST ? 'http://localhost:3290' : VITE_APP_URL;
 
 // ProConnect : double authentification exigée pour les admins Zacharie (doc/proconnect-admin.md).
-// Sans PROCONNECT_ISSUER en dev/test, l'API embarque un fournisseur OIDC factice (src/mock-proconnect.ts).
-const PROCONNECT_MOCK_ENABLED = IS_DEV_OR_TEST && !process.env.PROCONNECT_ISSUER;
+// En e2e l'API embarque toujours un fournisseur OIDC factice (src/mock-proconnect.ts), même si un
+// PROCONNECT_ISSUER traîne dans l'environnement (le .env local est chargé par cronjobs/index.ts).
+// En dev, le factice ne sert que sans PROCONNECT_ISSUER.
+const PROCONNECT_MOCK_ENABLED = IS_TEST || (IS_DEV && !process.env.PROCONNECT_ISSUER);
 const PROCONNECT_ISSUER = PROCONNECT_MOCK_ENABLED
   ? `${API_URL}/mock-proconnect`
   : (process.env.PROCONNECT_ISSUER ?? '');
