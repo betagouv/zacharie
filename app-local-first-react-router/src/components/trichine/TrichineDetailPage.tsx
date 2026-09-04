@@ -5,11 +5,15 @@ import { Link } from 'react-router';
  * Gabarit commun aux pages de détail trichine (échantillon, pool, FTP).
  * Identité + actions en haut, chaîne de traçabilité juste dessous, puis deux colonnes :
  * le contenu à gauche, ce qui situe l'objet dans le temps à droite.
+ *
+ * `banniere` sert aux décisions qu'on ne peut pas laisser passer : elle colle en haut de l'écran
+ * pendant tout le défilement, là où les actions de l'en-tête disparaissent dès qu'on lit la page.
  */
 export default function TrichineDetailPage({
   surtitre,
   titre,
   retour,
+  banniere,
   badges,
   actions,
   chaine,
@@ -19,6 +23,8 @@ export default function TrichineDetailPage({
   surtitre: string;
   titre: string;
   retour: { to: string; label: string };
+  /** Action à ne pas manquer : reste visible au défilement, au-dessus du reste de la page. */
+  banniere?: ReactNode;
   badges?: ReactNode;
   actions?: ReactNode;
   chaine?: ReactNode;
@@ -28,6 +34,7 @@ export default function TrichineDetailPage({
   return (
     <div className="py-4">
       <title>{`${titre} | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}</title>
+      {!!banniere && <div className="fr-mb-2w sticky top-0 z-30">{banniere}</div>}
       <Link
         to={retour.to}
         className="fr-link fr-icon-arrow-left-line fr-link--icon-left fr-mb-2w inline-block"
