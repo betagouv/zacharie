@@ -58,7 +58,22 @@ describe('POST /webhooks/brevo-inbound', () => {
 
   test('authentifié → 200 et ingestion des messages', async () => {
     vi.mocked(ingestInboundEmails).mockResolvedValue([
-      { message_id: '<rapport-1@lvd.fr>', stored: 1, skipped: 0, failed: 0, pool_reference: 'P-26-000045' },
+      {
+        message_id: '<rapport-1@lvd.fr>',
+        stored: 1,
+        skipped: 0,
+        failed: 0,
+        resultats_appliques: 1,
+        a_ocreriser: 0,
+        attachments: [
+          {
+            nom_fichier: 'rapport.pdf',
+            statut: 'stocke' as const,
+            pool_reference: 'P-26-000045',
+            rattachement_source: 'CONTENU_FICHIER' as const,
+          },
+        ],
+      },
     ]);
 
     const response = await request(app)
@@ -67,7 +82,11 @@ describe('POST /webhooks/brevo-inbound', () => {
       .send(payload);
 
     expect(response.status).toBe(200);
-    expect(response.body.data.results[0]).toMatchObject({ stored: 1, pool_reference: 'P-26-000045' });
+    expect(response.body.data.results[0]).toMatchObject({ stored: 1 });
+    expect(response.body.data.results[0].attachments[0]).toMatchObject({
+      pool_reference: 'P-26-000045',
+      rattachement_source: 'CONTENU_FICHIER',
+    });
     expect(ingestInboundEmails).toHaveBeenCalledWith(payload.items);
   });
 
