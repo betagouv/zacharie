@@ -29,7 +29,8 @@ app.use((req, res, next) => {
       "img-src 'self' data: https://developer.apple.com https://play.google.com",
       "font-src 'self' data:",
       "connect-src 'self' https://api.zacharie.beta.gouv.fr https://*.ingest.sentry.io https://sentry.incubateur.net https://metabase.zacharie.beta.gouv.fr https://stats.beta.gouv.fr https://api.zacharie.incubateur.net",
-      'frame-src https://metabase.zacharie.beta.gouv.fr https://www.youtube.com',
+      // blob: pour l'aperçu des PDF (fiche de transmission) affichés dans une iframe
+      'frame-src blob: https://metabase.zacharie.beta.gouv.fr https://www.youtube.com',
       "object-src 'none'",
       "base-uri 'self'",
       "form-action 'self'",

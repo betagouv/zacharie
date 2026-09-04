@@ -35,6 +35,7 @@ import {
   withReferenceRetry,
 } from '~/utils/trichine';
 import { carcassesAVenirChezEtgWhere, getEtgsLinkedToSviUser } from '~/utils/svi';
+import { getEtgsDuServiceExpediteur } from '~/utils/trichine-parties';
 import {
   recomputeCarcasseTrichine,
   recomputeEchantillonTrichine,
@@ -1313,6 +1314,9 @@ router.get(
             is_lnr: true,
           },
         },
+        ExpediteurEntity: {
+          select: { id: true, type: true, nom_d_usage: true, raison_sociale: true },
+        },
         FTPParent: { select: { numero_fiche: true } },
         FTPChildren: { select: { numero_fiche: true, statut_logistique: true } },
         TrichinePoolFTPs: {
@@ -1339,7 +1343,8 @@ router.get(
       where: { objet_type: TrichineObjetType.FTP, objet_id: ftp.id },
       orderBy: { date_changement: 'desc' },
     });
-    res.status(200).send({ ok: true, data: { ftp, historique }, error: '' });
+    const etgs = await getEtgsDuServiceExpediteur(ftp.expediteur_entity_id);
+    res.status(200).send({ ok: true, data: { ftp, historique, etgs }, error: '' });
   })
 );
 

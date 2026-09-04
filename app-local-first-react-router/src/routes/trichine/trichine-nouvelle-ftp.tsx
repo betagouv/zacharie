@@ -6,6 +6,7 @@ import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Select } from '@codegouvfr/react-dsfr/Select';
 import { toast } from 'react-toastify';
 import dayjs from 'dayjs';
+import { EntityTypes } from '@prisma/client';
 import Chargement from '@app/components/Chargement';
 import { useTrichineBasePath } from '@app/utils/trichine-hooks';
 import {
@@ -17,6 +18,7 @@ import {
   type TrichinePoolPopulated,
 } from '@app/services/trichine';
 import { poolSansFTP } from '@app/utils/trichine';
+import { useEntitiesIdsWorkingDirectlyForObj } from '@app/utils/get-entity-relations';
 
 /** Échantillons vivants d'un pool : ce que le laboratoire recevra réellement. */
 function echantillonsDuPool(pool: TrichinePoolPopulated) {
@@ -36,6 +38,13 @@ function carcassesDuPool(pool: TrichinePoolPopulated): number {
 export default function TrichineNouvelleFTP() {
   const navigate = useNavigate();
   const basePath = useTrichineBasePath();
+  // En circuit agréé la fiche part au nom du service d'inspection, pas de l'agent qui la saisit :
+  // c'est le service qui figure comme expéditeur sur la FTP imprimée et que le laboratoire facture.
+  const entitiesWorkingFor = useEntitiesIdsWorkingDirectlyForObj();
+  const expediteurEntityId = useMemo(
+    () => Object.values(entitiesWorkingFor).find((entity) => entity.type === EntityTypes.SVI)?.id,
+    [entitiesWorkingFor]
+  );
   const [chargement, setChargement] = useState(true);
   const [pools, setPools] = useState<Array<TrichinePoolPopulated>>([]);
   const [laboratoires, setLaboratoires] = useState<Array<TrichineLaboratoire>>([]);
@@ -309,6 +318,7 @@ export default function TrichineNouvelleFTP() {
                     createTrichineFTP({
                       pool_ids: selectedPools.map((pool) => pool.id),
                       destinataire_entity_id: laboratoireId,
+                      expediteur_entity_id: expediteurEntityId,
                       mode_transport: modeTransport.trim() || undefined,
                     })
                       .then((response) => {

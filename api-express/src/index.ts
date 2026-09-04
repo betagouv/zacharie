@@ -179,7 +179,8 @@ app.use(
           'https://metabase.zacharie.beta.gouv.fr',
           'https://stats.beta.gouv.fr',
         ],
-        frameSrc: ['https://metabase.zacharie.beta.gouv.fr', 'https://www.youtube.com'],
+        // blob: pour l'aperçu des PDF (fiche de transmission) affichés dans une iframe
+        frameSrc: ['blob:', 'https://metabase.zacharie.beta.gouv.fr', 'https://www.youtube.com'],
         objectSrc: ["'none'"],
         baseUri: ["'self'"],
         formAction: ["'self'"],

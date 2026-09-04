@@ -7,7 +7,7 @@ import { Select } from '@codegouvfr/react-dsfr/Select';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import { toast } from 'react-toastify';
 import dayjs from 'dayjs';
-import { TrichineSitePrelevement, type TrichineHistoriqueStatut } from '@prisma/client';
+import { TrichineSitePrelevement, TrichineType, type TrichineHistoriqueStatut } from '@prisma/client';
 import Chargement from '@app/components/Chargement';
 import TrichineIntrouvable from '@app/components/trichine/TrichineIntrouvable';
 import TrichineChaine, { type ChaineEtape } from '@app/components/trichine/TrichineChaine';
@@ -25,11 +25,10 @@ import {
   type TrichineEchantillonDetail,
 } from '@app/services/trichine';
 import {
+  etapeEchantillon,
   poolEstFige,
   resultatAnalyseLabels,
-  resultatBadgeSeverity,
   sitePrelevementLabels,
-  statutAnalyseBadgeSeverity,
   statutAnalyseLabels,
   trichineTypeLabels,
 } from '@app/utils/trichine';
@@ -88,6 +87,7 @@ export default function TrichineEchantillonDetailPage() {
   const lienCarcasse = carcasseLink(echantillon.Carcasse);
   // Une fois le colis parti, la fiche papier fait foi : plus rien n'est modifiable
   const fige = !!pool && poolEstFige(pool);
+  const etape = etapeEchantillon(echantillon);
 
   const etapes: Array<ChaineEtape> = [
     {
@@ -109,19 +109,17 @@ export default function TrichineEchantillonDetailPage() {
 
   return (
     <TrichineDetailPage
-      surtitre="Échantillon"
+      surtitre={
+        echantillon.type === TrichineType.INITIAL
+          ? 'Échantillon'
+          : `Échantillon — ${trichineTypeLabels[echantillon.type]}`
+      }
       titre={echantillon.reference_echantillon}
       retour={{ to: `${basePath}/echantillons`, label: 'Tous les échantillons' }}
       badges={
         <>
-          <Badge severity={statutAnalyseBadgeSeverity(echantillon.statut)}>
-            {statutAnalyseLabels[echantillon.statut]}
-          </Badge>
-          {!!echantillon.resultat_analyse && (
-            <Badge severity={resultatBadgeSeverity(echantillon.resultat_analyse)}>
-              {resultatAnalyseLabels[echantillon.resultat_analyse]}
-            </Badge>
-          )}
+          <Badge severity={etape.severity}>{etape.label}</Badge>
+          <p className="fr-text--sm fr-mb-0 max-w-prose basis-full text-gray-600">{etape.explication}</p>
         </>
       }
       actions={
@@ -175,7 +173,6 @@ export default function TrichineEchantillonDetailPage() {
             <TrichineFields
               disposition="lignes"
               fields={[
-                { label: 'Type', value: trichineTypeLabels[echantillon.type] },
                 {
                   label: 'Site de prélèvement',
                   value: sitePrelevementLabels[echantillon.site_prelevement],

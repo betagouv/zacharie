@@ -8,11 +8,12 @@ import { Select } from '@codegouvfr/react-dsfr/Select';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import { toast } from 'react-toastify';
 import dayjs from 'dayjs';
-import { TrichineStatutLogistiqueFTP, type TrichineHistoriqueStatut } from '@prisma/client';
+import { EntityTypes, TrichineStatutLogistiqueFTP, type TrichineHistoriqueStatut } from '@prisma/client';
 import Chargement from '@app/components/Chargement';
 import TrichineIntrouvable from '@app/components/trichine/TrichineIntrouvable';
 import TrichineChaine, { type ChaineEtape } from '@app/components/trichine/TrichineChaine';
 import TrichineChronologie from '@app/components/trichine/TrichineChronologie';
+import TrichineFTPPdfActions from '@app/components/trichine/TrichineFTPPdfActions';
 import TrichineDetailPage, {
   TrichineCard,
   TrichineFields,
@@ -26,17 +27,16 @@ import {
   supprimerTrichineFTP,
   type TrichineFTPDetail as TrichineFTPDetailType,
   type TrichineLaboratoire,
+  type TrichinePartieConcernee,
 } from '@app/services/trichine';
 import { useTrichineBasePath } from '@app/utils/trichine-hooks';
-import useDownloadFtpPdf from '@app/utils/download-ftp-pdf';
 import {
+  etapeFTP,
   resultatAnalyseLabels,
   resultatBadgeSeverity,
   statutAnalyseBadgeSeverity,
   statutAnalyseLabels,
   statutLogistiqueLabels,
-  statutUtilisateurBadgeSeverity,
-  statutUtilisateurFTP,
 } from '@app/utils/trichine';
 
 const modifierModal = createModal({ isOpenedByDefault: false, id: 'trichine-ftp-modifier' });
@@ -47,9 +47,9 @@ const annulerModal = createModal({ isOpenedByDefault: false, id: 'trichine-ftp-a
 export default function TrichineFTPDetail() {
   const { reference } = useParams();
   const basePath = useTrichineBasePath();
-  const { isDownloading, onDownloadFtpPdf } = useDownloadFtpPdf('trichine');
   const [ftp, setFtp] = useState<TrichineFTPDetailType | null>(null);
   const [historique, setHistorique] = useState<Array<TrichineHistoriqueStatut>>([]);
+  const [etgs, setEtgs] = useState<Array<TrichinePartieConcernee>>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
@@ -61,6 +61,7 @@ export default function TrichineFTPDetail() {
         if (response.ok && response.data) {
           setFtp(response.data.ftp);
           setHistorique(response.data.historique);
+          setEtgs(response.data.etgs);
         } else {
           setFtp(null);
         }
@@ -94,7 +95,8 @@ export default function TrichineFTPDetail() {
   const pools = ftp.TrichinePoolFTPs.map((link) => link.TrichinePool);
   const echantillons = pools.flatMap((pool) => pool.TrichineEchantillons);
   const carcasses = new Set(echantillons.map((echantillon) => echantillon.Carcasse.zacharie_carcasse_id));
-  const statutUtilisateur = statutUtilisateurFTP(ftp);
+  const etape = etapeFTP(ftp);
+  const isExpediteurSvi = ftp.ExpediteurEntity?.type === EntityTypes.SVI;
 
   const etapes: Array<ChaineEtape> = [
     { label: carcasses.size > 1 ? 'Carcasses' : 'Carcasse', value: `${carcasses.size}` },
@@ -119,24 +121,17 @@ export default function TrichineFTPDetail() {
       retour={{ to: `${basePath}/ftp`, label: 'Toutes les transmissions' }}
       badges={
         <>
-          <Badge severity={statutUtilisateurBadgeSeverity(statutUtilisateur)}>{statutUtilisateur}</Badge>
-          <Badge severity="info">{statutLogistiqueLabels[ftp.statut_logistique]}</Badge>
-          <Badge severity={statutAnalyseBadgeSeverity(ftp.statut_analytique)}>
-            {statutAnalyseLabels[ftp.statut_analytique]}
-          </Badge>
+          <Badge severity={etape.severity}>{etape.label}</Badge>
+          <p className="fr-text--sm fr-mb-0 max-w-prose basis-full text-gray-600">{etape.explication}</p>
         </>
       }
       actions={
         <>
-          <Button
-            type="button"
-            priority="secondary"
-            iconId="fr-icon-download-line"
-            disabled={isDownloading}
-            onClick={() => onDownloadFtpPdf(ftp.id, ftp.numero_fiche)}
-          >
-            Télécharger la fiche
-          </Button>
+          <TrichineFTPPdfActions
+            space="trichine"
+            ftpId={ftp.id}
+            numeroFiche={ftp.numero_fiche}
+          />
           {isBrouillon && (
             <>
               <Button
@@ -220,21 +215,30 @@ export default function TrichineFTPDetail() {
         </>
       }
     >
-      {isBrouillon && (
-        <Alert
-          severity="info"
-          small
-          description="Cette fiche est en brouillon : envoyez-la au laboratoire pour démarrer les analyses. Imprimez-la et joignez-la au colis."
-        />
-      )}
-
       {isAnnulee && (
         <Alert
           severity="warning"
           small
           title="Fiche annulée"
-          description={`${ftp.date_annulation ? `Annulée le ${dayjs(ftp.date_annulation).format('DD/MM/YYYY')}. ` : ''}${ftp.raison_annulation ?? ''} Le laboratoire a été prévenu. Les pools sont de nouveau disponibles pour une nouvelle fiche.`}
+          description={`${ftp.date_annulation ? `Annulée le ${dayjs(ftp.date_annulation).format('DD/MM/YYYY')}. ` : ''}${ftp.raison_annulation ?? ''} Le laboratoire a été prévenu.`}
         />
+      )}
+
+      {!!ftp.ExpediteurEntity && (
+        <TrichineCard titre="Expéditeur">
+          <TrichineFields
+            fields={[
+              {
+                label: isExpediteurSvi ? "Service d'inspection" : 'Établissement',
+                value: ftp.ExpediteurEntity.nom_d_usage || ftp.ExpediteurEntity.raison_sociale,
+              },
+              etgs.length > 0 && {
+                label: 'Opère chez',
+                value: etgs.map((etg) => etg.nom).join(', '),
+              },
+            ]}
+          />
+        </TrichineCard>
       )}
 
       <TrichineCard titre="Laboratoire destinataire">

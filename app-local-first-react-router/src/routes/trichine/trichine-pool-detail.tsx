@@ -6,7 +6,7 @@ import { Input } from '@codegouvfr/react-dsfr/Input';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import { toast } from 'react-toastify';
 import dayjs from 'dayjs';
-import { TrichineResultatAnalyse, type TrichineHistoriqueStatut } from '@prisma/client';
+import { TrichineResultatAnalyse, TrichineType, type TrichineHistoriqueStatut } from '@prisma/client';
 import Chargement from '@app/components/Chargement';
 import TrichineIntrouvable from '@app/components/trichine/TrichineIntrouvable';
 import TrichineChaine, { type ChaineEtape } from '@app/components/trichine/TrichineChaine';
@@ -30,12 +30,11 @@ import {
   type TrichinePoolDetail,
 } from '@app/services/trichine';
 import {
+  etapePool,
   poolEstFige,
   sitePrelevementLabels,
   statutAnalyseBadgeSeverity,
   statutAnalyseLabels,
-  statutUtilisateurBadgeSeverity,
-  statutUtilisateurPool,
   trichineTypeLabels,
 } from '@app/utils/trichine';
 
@@ -97,7 +96,7 @@ export default function TrichinePoolDetailPage() {
     (total, echantillon) => total + echantillon.masse_grammes,
     0
   );
-  const statutUtilisateur = statutUtilisateurPool(pool);
+  const etape = etapePool(pool);
   // Renoncer aux analyses de 2e intention : circuit court, sur un pool douteux non encore tranché
   const peutRenoncer = pool.resultat_analyse === TrichineResultatAnalyse.DOUTEUX;
   // La décision est prise dès qu'un pool fille existe, ou que les carcasses ont été retirées de
@@ -152,7 +151,11 @@ export default function TrichinePoolDetailPage() {
 
   return (
     <TrichineDetailPage
-      surtitre="Pool d'analyse"
+      surtitre={
+        pool.type === TrichineType.INITIAL
+          ? "Pool d'analyse"
+          : `Pool d'analyse — ${trichineTypeLabels[pool.type]}`
+      }
       titre={pool.reference_pool}
       retour={{ to: `${basePath}/pools`, label: 'Tous les pools' }}
       banniere={
@@ -192,9 +195,11 @@ export default function TrichinePoolDetailPage() {
       }
       badges={
         <>
-          <Badge severity={statutUtilisateurBadgeSeverity(statutUtilisateur)}>{statutUtilisateur}</Badge>
-          <Badge severity={statutAnalyseBadgeSeverity(pool.statut)}>{statutAnalyseLabels[pool.statut]}</Badge>
-          <Badge severity="info">{trichineTypeLabels[pool.type]}</Badge>
+          <Badge severity={etape.severity}>{etape.label}</Badge>
+          {/* La bannière collante porte déjà la consigne, inutile de la répéter juste en dessous */}
+          {!decisionAPrendre && (
+            <p className="fr-text--sm fr-mb-0 max-w-prose basis-full text-gray-600">{etape.explication}</p>
+          )}
         </>
       }
       actions={
@@ -235,7 +240,6 @@ export default function TrichinePoolDetailPage() {
             <TrichineFields
               disposition="lignes"
               fields={[
-                { label: 'Type', value: trichineTypeLabels[pool.type] },
                 {
                   label: 'Constitué le',
                   value: dayjs(pool.date_constitution).format('DD/MM/YYYY'),
