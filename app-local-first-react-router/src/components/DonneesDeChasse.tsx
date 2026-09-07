@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router';
-import { Carcasse, CarcasseType, EntityTypes, FeiOwnerRole } from '@prisma/client';
+import { Carcasse, CarcasseType, DepotType, EntityTypes, FeiOwnerRole } from '@prisma/client';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
 import dayjs from 'dayjs';
 import useZustandStore from '@app/zustand/store';
@@ -130,6 +130,15 @@ export default function FEIDonneesDeChasse({
           icon: 'fr-icon-file-text-line',
           text: `N° de bon de réception : ${intermediaire.numero_bon_reception}`,
         });
+      }
+      if (intermediaire.intermediaire_depot_type === DepotType.CCG) {
+        const depotEntity = entities[intermediaire.intermediaire_depot_entity_id!];
+        if (depotEntity) {
+          details.push({
+            icon: 'fr-icon-inbox-2-line',
+            text: `Dépôt CCG : ${depotEntity.nom_d_usage}`,
+          });
+        }
       }
       _steps.push({
         role: getIntermediaireRoleLabel(intermediaire.intermediaire_role!),
