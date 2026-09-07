@@ -56,8 +56,6 @@ export default function CarcasseExamenInitialForm({ carcasse }: { carcasse: Carc
   const [commentaire, setCommentaire] = useState(carcasse.examinateur_commentaire ?? '');
   // Les anomalies sont une seconde étape : masquées à l'ouverture, accessibles via un bouton.
   const [showAnomalies, setShowAnomalies] = useState(false);
-  // Le commentaire est facultatif : masqué tant qu'il est vide, révélé via un bouton.
-  const [showCommentaire, setShowCommentaire] = useState(!!carcasse.examinateur_commentaire);
 
   const anomaliesCount =
     (carcasse.examinateur_anomalies_carcasse?.length ?? 0) +
@@ -168,44 +166,30 @@ export default function CarcasseExamenInitialForm({ carcasse }: { carcasse: Carc
         />
       )}
 
-      {espece && (
-        <div className="flex flex-row flex-wrap gap-2">
-          <Button
-            type="button"
-            priority="secondary"
-            iconId="fr-icon-add-line"
-            onClick={() => setShowAnomalies(true)}
-          >
-            {anomaliesCount > 0 ? `Anomalies (${anomaliesCount})` : 'Ajouter une anomalie (facultatif)'}
-          </Button>
-          {!showCommentaire && (
-            <Button
-              type="button"
-              priority="secondary"
-              iconId="fr-icon-chat-3-line"
-              onClick={() => setShowCommentaire(true)}
-            >
-              Ajouter un commentaire (facultatif)
-            </Button>
-          )}
-        </div>
-      )}
+      <Input
+        label="Commentaire"
+        hideLabel
+        className="mb-0!"
+        nativeInputProps={{
+          type: 'text',
+          name: Prisma.CarcasseScalarFieldEnum.examinateur_commentaire,
+          placeholder: 'Commentaire',
+          value: commentaire,
+          onChange: (e) => setCommentaire(e.currentTarget.value),
+          onBlur: (e) => commitCommentaire(e.currentTarget.value),
+          maxLength: 500,
+        }}
+      />
 
-      {showCommentaire && (
-        <Input
-          label="Commentaire"
-          hintText="500 caractères maximum"
-          className="mb-0!"
-          textArea
-          nativeTextAreaProps={{
-            name: Prisma.CarcasseScalarFieldEnum.examinateur_commentaire,
-            value: commentaire,
-            onChange: (e) => setCommentaire(e.currentTarget.value),
-            onBlur: (e) => commitCommentaire(e.currentTarget.value),
-            maxLength: 500,
-            rows: 3,
-          }}
-        />
+      {espece && (
+        <Button
+          type="button"
+          priority="secondary"
+          iconId="fr-icon-add-line"
+          onClick={() => setShowAnomalies(true)}
+        >
+          {anomaliesCount > 0 ? `Anomalies (${anomaliesCount})` : 'Ajouter une anomalie (facultatif)'}
+        </Button>
       )}
     </div>
   );
