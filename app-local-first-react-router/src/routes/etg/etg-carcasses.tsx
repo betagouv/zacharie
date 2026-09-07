@@ -24,6 +24,7 @@ import useExportCarcasses from '@app/utils/export-carcasses';
 import { isCarcasseSviArchived } from '@app/utils/carcasse-svi-archived';
 import { loadData, useLoaderEffect } from '@app/utils/load-data';
 import { useTransmissions } from '@app/utils/get-transmissions-sorted';
+import { useEntitiesIdsWorkingDirectlyForObj } from '@app/utils/get-entity-relations';
 import { trackFeature, trackSearch } from '@app/services/matomo';
 import type { Carcasse } from '@prisma/client';
 import type { TransmissionSimpleStatus } from '@app/types/transmission-steps';
@@ -49,6 +50,7 @@ const feiStatusColors: Record<TransmissionSimpleStatus, { bg: string; text: stri
 
 const DEFAULT_VISIBLE_COLUMN_KEYS = [
   'numero_bracelet',
+  'numero_bon_reception',
   'fei_premier_detenteur_name_cache',
   'fei_svi_assigned_at',
   'svi_carcasse_status',
@@ -78,6 +80,8 @@ export default function EtgCarcasses() {
   const feis = useZustandStore((state) => state.feis);
   const entities = useZustandStore((state) => state.entities);
   const usersById = useZustandStore((state) => state.users);
+  const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
+  const etgEntities = useEntitiesIdsWorkingDirectlyForObj();
   const [selectedCarcassesIds, setSelectedCarcassesIds] = useState<Array<string>>([]);
   const [loading, setLoading] = useState(true);
 
@@ -123,7 +127,25 @@ export default function EtgCarcasses() {
   const [quickFilterPremierDetenteurs, setQuickFilterPremierDetenteurs] = useLocalStorage<
     Record<NonNullable<Carcasse['premier_detenteur_name_cache']>, boolean | undefined>
   >('etg-carcasses-quick-filter-premier-detenteurs-obj', {});
-  const [quickFilterBracelet, setQuickFilterBracelet] = useState('');
+  const [quickFilterSearch, setQuickFilterSearch] = useState('');
+
+  // le n° de bon de réception est saisi par l'ETG au contrôle à réception, sur sa propre
+  // CarcasseIntermediaire : on n'affiche que celui de nos établissements, car une carcasse peut
+  // ensuite être réceptionnée par un autre ETG qui saisit le sien.
+  const numeroBonReceptionByCarcasseId = useMemo(() => {
+    const result: Record<Carcasse['zacharie_carcasse_id'], string> = {};
+    const createdAtByCarcasseId: Record<Carcasse['zacharie_carcasse_id'], number> = {};
+    for (const ci of Object.values(carcassesIntermediaireById)) {
+      if (ci.deleted_at) continue;
+      if (!ci.numero_bon_reception) continue;
+      if (!etgEntities[ci.intermediaire_entity_id]) continue;
+      const createdAt = new Date(ci.created_at).getTime();
+      if (createdAtByCarcasseId[ci.zacharie_carcasse_id] > createdAt) continue;
+      createdAtByCarcasseId[ci.zacharie_carcasse_id] = createdAt;
+      result[ci.zacharie_carcasse_id] = ci.numero_bon_reception;
+    }
+    return result;
+  }, [carcassesIntermediaireById, etgEntities]);
 
   const [visibleColumnKeys, setVisibleColumnKeys] = useLocalStorage<Array<string>>(
     'etg-carcasses-visible-columns',
@@ -131,7 +153,7 @@ export default function EtgCarcasses() {
   );
 
   const filtersKey = [
-    quickFilterBracelet,
+    quickFilterSearch,
     Object.keys(quickFilterTransmissionStatuses).join(','),
     Object.keys(quickFilterCollecteurIds).join(','),
     Object.keys(quickFilterEspeces).join(','),
@@ -191,7 +213,7 @@ export default function EtgCarcasses() {
         id
       );
     };
-    const braceletQuery = quickFilterBracelet.trim().toLowerCase();
+    const searchQuery = quickFilterSearch.trim().toLowerCase();
     // filter helper
     const excludedFei: Record<Carcasse['fei_numero'], true> = {};
     const withQuickFilterCollecteur = Object.keys(quickFilterCollecteurIds).length > 0;
@@ -242,6 +264,7 @@ export default function EtgCarcasses() {
         if (feiIsExcluded) excludedFei[carcasse.fei_numero] = true;
       }
       if (carcasse.espece) _especeOptions[carcasse.espece] = true;
+      const numeroBonReception = numeroBonReceptionByCarcasseId[carcasse.zacharie_carcasse_id];
       for (const motif of carcasse.svi_ipm2_lesions_ou_motifs) {
         if (motif && !_motifs[motif]) _motifs[motif] = true;
       }
@@ -250,7 +273,11 @@ export default function EtgCarcasses() {
       /* filter data */
       if (excludedFei[carcasse.fei_numero]) continue;
       if (!filterCarcassesInRegistre(filters)(carcasse, feis[carcasse.fei_numero]!)) continue;
-      if (braceletQuery && !carcasse.numero_bracelet?.toLowerCase().includes(braceletQuery)) {
+      if (
+        searchQuery &&
+        !carcasse.numero_bracelet?.toLowerCase().includes(searchQuery) &&
+        !numeroBonReception?.toLowerCase().includes(searchQuery)
+      ) {
         continue;
       }
       if (withQuickFilterEspece && carcasse.espece && !quickFilterEspeces[carcasse.espece]) continue;
@@ -295,12 +322,13 @@ export default function EtgCarcasses() {
       }),
     ];
   }, [
-    quickFilterBracelet,
+    quickFilterSearch,
     quickFilterCollecteurIds,
     quickFilterEspeces,
     quickFilterTransmissionStatuses,
     quickFilterStatuses,
     quickFilterPremierDetenteurs,
+    numeroBonReceptionByCarcasseId,
     carcassesRegistry,
     filters,
     feis,
@@ -358,6 +386,13 @@ export default function EtgCarcasses() {
           <small className="text-xs text-gray-400">{carcasse.espece}</small>
         </div>
       ),
+    },
+    {
+      key: 'numero_bon_reception',
+      label: 'Numéro de bon de réception',
+      dataKey: 'numero_bon_reception',
+      title: 'N° bon de réception',
+      render: (carcasse) => numeroBonReceptionByCarcasseId[carcasse.zacharie_carcasse_id] ?? '-',
     },
     {
       key: 'type',
@@ -577,7 +612,7 @@ export default function EtgCarcasses() {
   };
 
   const activeFilterCount =
-    (quickFilterBracelet.trim() ? 1 : 0) +
+    (quickFilterSearch.trim() ? 1 : 0) +
     Object.keys(quickFilterTransmissionStatuses).length +
     Object.keys(quickFilterCollecteurIds).length +
     Object.keys(quickFilterEspeces).length +
@@ -588,7 +623,7 @@ export default function EtgCarcasses() {
 
   const clearAllFilters = () => {
     trackFeature('registre-etg-carcasses', 'filtre-reset');
-    setQuickFilterBracelet('');
+    setQuickFilterSearch('');
     // @ts-expect-error Type '{}' is missing the following properties
     setQuickFilterFeiStatuses({});
     setQuickFilterCollecteurIds({});
@@ -608,10 +643,10 @@ export default function EtgCarcasses() {
         />
         <input
           type="search"
-          placeholder="Rechercher un marquage..."
-          value={quickFilterBracelet}
+          placeholder="Rechercher un marquage ou un n° de bon de réception..."
+          value={quickFilterSearch}
           onChange={(e) => {
-            setQuickFilterBracelet(e.target.value);
+            setQuickFilterSearch(e.target.value);
             trackSearch('registre-etg-carcasses');
           }}
           className="w-full rounded border border-gray-300 py-2 pr-3 pl-10 text-sm transition-colors outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
@@ -958,6 +993,12 @@ export default function EtgCarcasses() {
                   {carcasse.fei_numero}
                 </Link>
               </div>
+              {numeroBonReceptionByCarcasseId[carcasse.zacharie_carcasse_id] && (
+                <div>
+                  <span className="font-semibold">N° bon de réception: </span>
+                  <span>{numeroBonReceptionByCarcasseId[carcasse.zacharie_carcasse_id]}</span>
+                </div>
+              )}
               {collecteursNamesByFeiNumero[carcasse.fei_numero] && (
                 <div>
                   <span className="font-semibold">Collecteur: </span>
