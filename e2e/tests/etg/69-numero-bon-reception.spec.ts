@@ -31,12 +31,11 @@ test('69 - ETG saisit le n° de bon de réception, le SVI le voit après transmi
   await priseEnCharge.click();
   await expect(page.getByText("Prise en charge par l'atelier")).toBeVisible();
 
+  // la date de prise en charge est déjà celle de la prise en charge : le bouton Enregistrer
+  // reste désactivé tant qu'elle n'est pas modifiée, on enchaîne directement sur le destinataire
   const dateShortcut = page.getByRole('button', { name: 'Cliquez ici pour définir' });
   await dateShortcut.scrollIntoViewIfNeeded();
   await dateShortcut.click();
-  const enregistrer = page.getByRole('button', { name: 'Enregistrer' });
-  await enregistrer.scrollIntoViewIfNeeded();
-  await enregistrer.click();
 
   await page.locator("[class*='select-prochain-detenteur'][class*='input-container']").click();
   await page.getByRole('option', { name: 'SVI 1 - 75000 Paris (Service' }).click();
