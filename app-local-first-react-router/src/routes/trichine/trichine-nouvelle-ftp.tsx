@@ -56,8 +56,6 @@ export default function TrichineNouvelleFTP() {
   );
   const [selectedPoolIds, setSelectedPoolIds] = useState<Array<string>>(preselection);
   const [laboratoireId, setLaboratoireId] = useState('');
-  // Destinataire de la dernière FTP : on envoie presque toujours au même laboratoire
-  const [dernierLaboratoireId, setDernierLaboratoireId] = useState('');
   const [modeTransport, setModeTransport] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -73,7 +71,6 @@ export default function TrichineNouvelleFTP() {
           .filter((ftp) => !ftp.deleted_at)
           .sort((a, b) => dayjs(b.date_creation).valueOf() - dayjs(a.date_creation).valueOf());
         if (derniere && laboratoiresRecus.some((labo) => labo.id === derniere.destinataire_entity_id)) {
-          setDernierLaboratoireId(derniere.destinataire_entity_id);
           setLaboratoireId(derniere.destinataire_entity_id);
         }
       })
