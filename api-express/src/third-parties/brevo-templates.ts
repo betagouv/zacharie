@@ -73,6 +73,6 @@ export const BrevoTemplateId: Record<BrevoTemplateKey, number | null> = {
   CARCASSE_MODIF_REQUEST_TREATED: null,
 
   // 4. Cron
-  FEI_AUTOMATIC_CLOSED: null,
+  FEI_AUTOMATIC_CLOSED: 92,
   RELANCE_PROFIL_INCOMPLET: 86,
 };

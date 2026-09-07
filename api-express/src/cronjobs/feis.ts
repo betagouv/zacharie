@@ -12,10 +12,7 @@ import { setupCronJob } from './utils';
 import prisma from '~/prisma';
 import dayjs from 'dayjs';
 import sendNotificationToUser from '~/service/notifications';
-import {
-  formatAutomaticClosingEmailForChasseur,
-  formatCarcasseChasseurEmail,
-} from '~/utils/formatCarcasseEmail';
+import { formatFeiClosedEmail, formatCarcasseChasseurEmail } from '~/utils/formatCarcasseEmail';
 import updateCarcasseStatus from '~/utils/get-carcasse-status';
 import { isCarcasseDone } from '~/utils/is-carcasse-done';
 import { sendWebhook } from '~/utils/api';
@@ -160,7 +157,7 @@ export async function automaticClosingOfFeis({ force = false }: AutomaticClosing
     const allCarcassesDone = carcasses.every(isCarcasseDone);
     if (!allCarcassesDone) continue;
 
-    const { object, text, params } = formatAutomaticClosingEmailForChasseur(fei_numero, carcasses);
+    const { object, text, params } = await formatFeiClosedEmail(fei_numero, carcasses);
     // auto close and notify examinateur and premier detenteur
     // Le template Brevo ne couvre que l'email ; le push reste en texte (`text`).
     const notification = {
