@@ -12,6 +12,7 @@ type InitialParamsProps = {
   fei: Fei;
   examinateurAnomaliesCarcasse?: string[];
   examinateurAnomaliesAbats?: string[];
+  examinateurCommentaire?: string;
 };
 
 export async function createNewCarcasse({
@@ -22,6 +23,7 @@ export async function createNewCarcasse({
   fei,
   examinateurAnomaliesCarcasse = [],
   examinateurAnomaliesAbats = [],
+  examinateurCommentaire = '',
 }: InitialParamsProps): Promise<Carcasse> {
   const user = useUser.getState().user;
   if (!user?.id) {
@@ -59,7 +61,7 @@ export async function createNewCarcasse({
       examinateurAnomaliesCarcasse.length > 0 || examinateurAnomaliesAbats.length > 0 ? false : null,
     examinateur_anomalies_carcasse: examinateurAnomaliesCarcasse,
     examinateur_anomalies_abats: examinateurAnomaliesAbats,
-    examinateur_commentaire: null,
+    examinateur_commentaire: examinateurCommentaire.trim() || null,
     examinateur_signed_at: dayjs().toDate(),
     premier_detenteur_depot_type: null,
     premier_detenteur_depot_entity_id: null,

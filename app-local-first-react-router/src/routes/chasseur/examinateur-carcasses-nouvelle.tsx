@@ -60,8 +60,11 @@ export default function NouvelleCarcasse({
   const [error, setError] = useState<string | null>(null);
   const [anomaliesCarcasse, setAnomaliesCarcasse] = useState<string[]>([]);
   const [anomaliesAbats, setAnomaliesAbats] = useState<string[]>([]);
+  const [commentaire, setCommentaire] = useState<string>('');
   // Les anomalies sont une seconde étape : masquées à l'ouverture, accessibles via un bouton.
   const [showAnomalies, setShowAnomalies] = useState(false);
+  // Le commentaire est facultatif : masqué à l'ouverture, révélé via un bouton.
+  const [showCommentaire, setShowCommentaire] = useState(false);
 
   const isPetitGibier = useMemo(() => {
     return petitGibier.especes.includes(espece);
@@ -101,6 +104,7 @@ export default function NouvelleCarcasse({
         fei,
         examinateurAnomaliesCarcasse: anomaliesCarcasse,
         examinateurAnomaliesAbats: isPetitGibier ? [] : anomaliesAbats,
+        examinateurCommentaire: commentaire,
       });
       addLog({
         user_id: user.id,
@@ -117,7 +121,9 @@ export default function NouvelleCarcasse({
       setNumeroBracelet('');
       setAnomaliesCarcasse([]);
       setAnomaliesAbats([]);
+      setCommentaire('');
       setShowAnomalies(false);
+      setShowCommentaire(false);
       setError(null);
       onCarcasseAdded?.();
     } catch (error) {
@@ -259,7 +265,7 @@ export default function NouvelleCarcasse({
           onChange: (e) => setNumeroBracelet(e.target.value.replace(/\/|\s/g, '_')),
         }}
       />
-      <div className="my-2">
+      <div className="my-2 flex flex-row flex-wrap gap-2">
         <Button
           disabled={!espece || !numeroBracelet}
           type="button"
@@ -269,7 +275,33 @@ export default function NouvelleCarcasse({
         >
           {detailsCount > 0 ? `Anomalies (${detailsCount})` : 'Ajouter une anomalie (facultatif)'}
         </Button>
+        {!showCommentaire && (
+          <Button
+            disabled={!espece || !numeroBracelet}
+            type="button"
+            priority="secondary"
+            iconId="fr-icon-chat-3-line"
+            onClick={() => setShowCommentaire(true)}
+          >
+            Ajouter un commentaire (facultatif)
+          </Button>
+        )}
       </div>
+      {showCommentaire && (
+        <Input
+          label="Commentaire"
+          hintText="500 caractères maximum"
+          textArea
+          nativeTextAreaProps={{
+            name: Prisma.CarcasseScalarFieldEnum.examinateur_commentaire,
+            value: commentaire,
+            onChange: (e) => setCommentaire(e.currentTarget.value),
+            maxLength: 500,
+            rows: 3,
+            autoFocus: true,
+          }}
+        />
+      )}
     </form>
   );
 }
