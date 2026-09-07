@@ -60,6 +60,7 @@ export default function NouvelleCarcasse({
   const [error, setError] = useState<string | null>(null);
   const [anomaliesCarcasse, setAnomaliesCarcasse] = useState<string[]>([]);
   const [anomaliesAbats, setAnomaliesAbats] = useState<string[]>([]);
+  const [commentaire, setCommentaire] = useState<string>('');
   // Les anomalies sont une seconde étape : masquées à l'ouverture, accessibles via un bouton.
   const [showAnomalies, setShowAnomalies] = useState(false);
 
@@ -101,6 +102,7 @@ export default function NouvelleCarcasse({
         fei,
         examinateurAnomaliesCarcasse: anomaliesCarcasse,
         examinateurAnomaliesAbats: isPetitGibier ? [] : anomaliesAbats,
+        examinateurCommentaire: commentaire,
       });
       addLog({
         user_id: user.id,
@@ -117,6 +119,7 @@ export default function NouvelleCarcasse({
       setNumeroBracelet('');
       setAnomaliesCarcasse([]);
       setAnomaliesAbats([]);
+      setCommentaire('');
       setShowAnomalies(false);
       setError(null);
       onCarcasseAdded?.();
@@ -257,6 +260,19 @@ export default function NouvelleCarcasse({
           value: numeroBracelet,
           // replce slash and space by underscore
           onChange: (e) => setNumeroBracelet(e.target.value.replace(/\/|\s/g, '_')),
+        }}
+      />
+      <Input
+        label="Commentaire"
+        hideLabel
+        className="mb-0!"
+        nativeInputProps={{
+          type: 'text',
+          name: Prisma.CarcasseScalarFieldEnum.examinateur_commentaire,
+          placeholder: 'Commentaire',
+          value: commentaire,
+          onChange: (e) => setCommentaire(e.currentTarget.value),
+          maxLength: 500,
         }}
       />
       <div className="my-2">

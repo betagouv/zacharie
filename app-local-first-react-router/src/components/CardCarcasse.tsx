@@ -274,6 +274,15 @@ export default function CardCarcasse({
                 {descriptionLine}
               </p>
             )}
+            {carcasse.examinateur_commentaire && (
+              <p className="flex items-center gap-1 text-sm/4">
+                <span
+                  className="fr-icon-chat-3-line fr-icon--sm shrink-0"
+                  aria-hidden="true"
+                />
+                <span className="line-clamp-1 text-left">{carcasse.examinateur_commentaire}</span>
+              </p>
+            )}
           </div>
         </button>
         {(onEdit || onDelete) && (
@@ -843,6 +852,12 @@ function CarcasseDetails({
               <li key={i}>{a}</li>
             ))}
           </ul>
+        </ModalCard>
+      )}
+
+      {carcasse.examinateur_commentaire && (
+        <ModalCard title="Commentaire de l'examinateur">
+          <p className="text-sm whitespace-pre-wrap">{carcasse.examinateur_commentaire}</p>
         </ModalCard>
       )}
 

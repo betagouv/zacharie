@@ -53,6 +53,7 @@ export default function CarcasseExamenInitialForm({ carcasse }: { carcasse: Carc
   const [espece, setEspece] = useState(carcasse.espece || '');
   const [numero, setNumero] = useState(carcasse.numero_bracelet);
   const [numeroError, setNumeroError] = useState<string | null>(null);
+  const [commentaire, setCommentaire] = useState(carcasse.examinateur_commentaire ?? '');
   // Les anomalies sont une seconde étape : masquées à l'ouverture, accessibles via un bouton.
   const [showAnomalies, setShowAnomalies] = useState(false);
 
@@ -71,6 +72,15 @@ export default function CarcasseExamenInitialForm({ carcasse }: { carcasse: Carc
     }
     setNumeroError(null);
     updateCarcasse({ numero_bracelet: value, examinateur_signed_at: dayjs().toDate() });
+  };
+
+  // Enregistré au blur et non à chaque frappe : une seule écriture store + un seul log par saisie.
+  const commitCommentaire = (value: string) => {
+    const nextCommentaire = value.trim() || null;
+    if (nextCommentaire === (carcasse.examinateur_commentaire ?? null)) {
+      return;
+    }
+    updateCarcasse({ examinateur_commentaire: nextCommentaire, examinateur_signed_at: dayjs().toDate() });
   };
 
   if (showAnomalies) {
@@ -155,6 +165,21 @@ export default function CarcasseExamenInitialForm({ carcasse }: { carcasse: Carc
           }}
         />
       )}
+
+      <Input
+        label="Commentaire"
+        hideLabel
+        className="mb-0!"
+        nativeInputProps={{
+          type: 'text',
+          name: Prisma.CarcasseScalarFieldEnum.examinateur_commentaire,
+          placeholder: 'Commentaire',
+          value: commentaire,
+          onChange: (e) => setCommentaire(e.currentTarget.value),
+          onBlur: (e) => commitCommentaire(e.currentTarget.value),
+          maxLength: 500,
+        }}
+      />
 
       {espece && (
         <Button
