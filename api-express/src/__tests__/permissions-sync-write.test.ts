@@ -95,7 +95,7 @@ describe('syncFei — écriture sur une fiche tierce', () => {
 
     await syncFei(
       'FEI-VICTIME',
-      { numero: 'FEI-VICTIME', resume_nombre_de_carcasses: '3' } as any,
+      { numero: 'FEI-VICTIME', commune_mise_a_mort: 'Villette' } as any,
       attaquant,
       await createSyncScope(attaquant)
     );
@@ -219,7 +219,7 @@ describe('syncFei — auto-attribution des colonnes de rattachement', () => {
       'FEI-VICTIME',
       {
         numero: 'FEI-VICTIME',
-        resume_nombre_de_carcasses: '1',
+        commune_mise_a_mort: 'Villette',
         premier_detenteur_entity_id: 'entity-asso',
         examinateur_initial_user_id: proprietaire.id,
       } as any,

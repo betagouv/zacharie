@@ -95,7 +95,6 @@ export function mapCarcasseForApi(carcasse: CarcasseGetForApi, fei: FeiGetForApi
     fei_commune_mise_a_mort: fei?.commune_mise_a_mort ?? null,
     fei_heure_mise_a_mort_premiere_carcasse: fei?.heure_mise_a_mort_premiere_carcasse ?? null,
     fei_heure_evisceration_derniere_carcasse: fei?.heure_evisceration_derniere_carcasse ?? null,
-    fei_resume_nombre_de_carcasses: fei?.resume_nombre_de_carcasses ?? null,
     fei_examinateur_initial_approbation_mise_sur_le_marche:
       fei?.examinateur_initial_approbation_mise_sur_le_marche ?? null,
     fei_examinateur_initial_date_approbation_mise_sur_le_marche:
@@ -120,7 +119,6 @@ export function mapFeiForApi(fei: FeiGetForApi, carcasses: CarcasseGetForApi[]) 
     commune_mise_a_mort: fei.commune_mise_a_mort,
     heure_mise_a_mort_premiere_carcasse: fei.heure_mise_a_mort_premiere_carcasse,
     heure_evisceration_derniere_carcasse: fei.heure_evisceration_derniere_carcasse,
-    resume_nombre_de_carcasses: fei.resume_nombre_de_carcasses,
     examinateur_initial_name: formatUserName(fei.FeiExaminateurInitialUser),
     examinateur_initial_approbation_mise_sur_le_marche:
       fei.examinateur_initial_approbation_mise_sur_le_marche,

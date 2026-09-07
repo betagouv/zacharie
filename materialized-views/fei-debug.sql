@@ -95,7 +95,6 @@ SELECT
   f.commune_mise_a_mort,
   f.heure_mise_a_mort_premiere_carcasse,
   f.heure_evisceration_derniere_carcasse,
-  f.resume_nombre_de_carcasses,
 
   -- ── Timestamps ──
   f.created_at,
