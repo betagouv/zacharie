@@ -416,7 +416,7 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
               {searchingUserError === "L'utilisateur n'existe pas" ? (
                 <Alert
                   severity="error"
-                  title="Aucun propriétaire initial est inscrit avec cette adresse mail."
+                  title="Aucun propriétaire initial n'est inscrit avec cette adresse mail."
                   description="Merci de vérifier cette adresse auprès du propriétaire initial."
                   className="mt-4"
                 />
