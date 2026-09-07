@@ -66,13 +66,13 @@ export const BrevoTemplateId: Record<BrevoTemplateKey, number | null> = {
   CARCASSE_SAISIE: null,
   CARCASSE_MANQUANTE: null,
   CARCASSE_REFUS: null,
-  FEI_CLOSED: null,
+  FEI_CLOSED: 91,
   FEI_RENVOI_EXPEDITEUR: null,
   NEW_USER_IN_ENTITY: null,
   CARCASSE_MODIF_REQUEST_CREATED: null,
   CARCASSE_MODIF_REQUEST_TREATED: null,
 
   // 4. Cron
-  FEI_AUTOMATIC_CLOSED: null,
+  FEI_AUTOMATIC_CLOSED: 92,
   RELANCE_PROFIL_INCOMPLET: 86,
 };
