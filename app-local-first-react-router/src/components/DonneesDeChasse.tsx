@@ -125,6 +125,12 @@ export default function FEIDonneesDeChasse({
           text: `Prise en charge : ${dayjs(intermediaire.prise_en_charge_at).format('dddd D MMMM à HH:mm')}`,
         });
       }
+      if (intermediaire.numero_bon_reception) {
+        details.push({
+          icon: 'fr-icon-file-text-line',
+          text: `N° de bon de réception : ${intermediaire.numero_bon_reception}`,
+        });
+      }
       _steps.push({
         role: getIntermediaireRoleLabel(intermediaire.intermediaire_role!),
         name: entity?.nom_d_usage ?? '',

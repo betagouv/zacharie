@@ -100,6 +100,7 @@ export function computeTransmissions({
       intermediaire_role: ci.intermediaire_role,
       created_at: ci.created_at,
       prise_en_charge_at: ci.prise_en_charge_at,
+      numero_bon_reception: ci.numero_bon_reception,
       intermediaire_depot_type: ci.intermediaire_depot_type,
       intermediaire_depot_entity_id: ci.intermediaire_depot_entity_id,
       intermediaire_prochain_detenteur_role_cache: ci.intermediaire_prochain_detenteur_role_cache,
@@ -121,7 +122,7 @@ export function computeTransmissions({
   // EN NE MAINTENANT QU'UNE SEULE LECTURE
   // Solution: on va dire que, par défaut, un groupement de carcasse est `done`
 
-  // Les champs de décision de transmission (prochain détenteur, dépôt) ne sont posés que sur les
+  // Les champs de décision de transmission (prochain détenteur, dépôt, n° de bon de réception) ne sont posés que sur les
   // CarcasseIntermediaire des carcasses prises en charge, jamais sur les refusées/manquantes. Comme
   // une transmission agrège plusieurs carcasses, on retient pour chaque intermédiaire la valeur
   // non-nulle de n'importe laquelle de ses carcasses (sinon une carcasse refusée en tête masque la
@@ -143,6 +144,9 @@ export function computeTransmissions({
       if (src.intermediaire_depot_type != null) {
         dst.intermediaire_depot_type = src.intermediaire_depot_type;
         dst.intermediaire_depot_entity_id = src.intermediaire_depot_entity_id;
+      }
+      if (src.numero_bon_reception != null) {
+        dst.numero_bon_reception = src.numero_bon_reception;
       }
     }
   };

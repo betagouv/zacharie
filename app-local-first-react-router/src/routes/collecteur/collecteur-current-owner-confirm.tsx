@@ -132,6 +132,7 @@ export default function CurrentOwnerConfirm() {
       intermediaire_entity_id: currentTransmission.next_owner_entity_id || '',
       created_at: dayjs().toDate(),
       prise_en_charge_at: dayjs().toDate(),
+      numero_bon_reception: null,
       intermediaire_depot_type: null,
       intermediaire_depot_entity_id: null,
       intermediaire_prochain_detenteur_role_cache: null,

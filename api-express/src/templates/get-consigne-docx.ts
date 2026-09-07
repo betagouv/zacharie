@@ -228,6 +228,25 @@ export async function generateConsigneDocx(data: CarcasseCertificat, user: User)
                   }),
                 ],
               }),
+              data.numero_bon_reception
+                ? new TableRow({
+                    children: [
+                      new TableCell({
+                        columnSpan: 3,
+                        children: [
+                          new Paragraph({
+                            children: [
+                              new TextRun({
+                                text: `N° de bon de réception : ${data.numero_bon_reception}`,
+                                font: 'Marianne',
+                              }),
+                            ],
+                          }),
+                        ],
+                      }),
+                    ],
+                  })
+                : null,
               new TableRow({
                 children: [
                   new TableCell({

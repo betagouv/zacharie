@@ -5,6 +5,7 @@ import validateUser from '~/middlewares/validateUser';
 import type { RequestWithUser } from '~/types/request';
 import type {
   EntitiesWorkingForResponse,
+  EtgParametresResponse,
   EtgUserInteractedResponse,
   EtgUsersInteractedResponse,
   PartenairesResponse,
@@ -650,6 +651,60 @@ router.put(
 
     res.status(200).send({ ok: true, error: '', data: { entity: updatedEntity } });
   })
+);
+
+const etgParametresSchema = z.object({
+  [Prisma.EntityScalarFieldEnum.etg_demande_numero_bon_reception]: z.boolean(),
+});
+
+// Réglages de prise en charge d'un ETG : ils valent pour toute l'entreprise,
+// n'importe lequel de ses salariés peut les modifier.
+router.post(
+  '/etg/:entityId/parametres',
+  passport.authenticate('user', { session: false, failWithError: true }),
+  catchErrors(
+    async (
+      req: RequestWithUser,
+      res: express.Response<EtgParametresResponse>,
+      next: express.NextFunction
+    ) => {
+      const user = req.user!;
+      const { entityId } = req.params;
+
+      const relation = await prisma.entityAndUserRelations.findFirst({
+        where: {
+          owner_id: user.id,
+          entity_id: entityId,
+          relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+          status: { in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER] },
+          deleted_at: null,
+          EntityRelatedWithUser: { type: EntityTypes.ETG },
+        },
+      });
+      if (!relation) {
+        res.status(403).send({ ok: false, data: { entity: null }, error: 'Accès non autorisé' });
+        return;
+      }
+
+      const result = etgParametresSchema.safeParse(req.body);
+      if (!result.success) {
+        const error = new Error(result.error.message);
+        res.status(406);
+        return next(error);
+      }
+      const body = result.data;
+
+      const updatedEntity = await prisma.entity.update({
+        where: { id: entityId },
+        data: {
+          etg_demande_numero_bon_reception:
+            body[Prisma.EntityScalarFieldEnum.etg_demande_numero_bon_reception],
+        },
+      });
+
+      res.status(200).send({ ok: true, error: '', data: { entity: updatedEntity } });
+    }
+  )
 );
 
 // Ensemble des utilisateurs ayant interagi avec les entités ETG de l'utilisateur connecté

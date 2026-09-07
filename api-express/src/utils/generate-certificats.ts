@@ -3,6 +3,7 @@ import {
   CarcasseCertificatType,
   Entity,
   EntityTypes,
+  FeiOwnerRole,
   IPM1Decision,
   IPM2Decision,
   IPM2Traitement,
@@ -194,6 +195,20 @@ export async function generateDBCertificat(
   ).join(', ');
 
   if (!certificat) {
+    // Le n° de bon de réception est saisi par l'ETG au contrôle à réception, sur ses propres carcasses.
+    // On le lit sur l'intermédiaire de CETTE carcasse : `fei.CarcasseIntermediaire` ci-dessus n'est pas
+    // scopé à la carcasse, donc en dispatch multi-destinataires il ramènerait le BR d'un autre ETG.
+    const intermediaireEtgDeLaCarcasse = await prisma.carcasseIntermediaire.findFirst({
+      where: {
+        zacharie_carcasse_id: existingCarcasse.zacharie_carcasse_id,
+        intermediaire_role: FeiOwnerRole.ETG,
+        numero_bon_reception: { not: null },
+        deleted_at: null,
+      },
+      orderBy: { created_at: 'desc' },
+      select: { numero_bon_reception: true },
+    });
+
     const lastCertificat = await prisma.carcasseCertificat.findFirst({
       where: {
         zacharie_carcasse_id: existingCarcasse.zacharie_carcasse_id,
@@ -225,6 +240,7 @@ export async function generateDBCertificat(
         nom_etg_personne_physique: etg.nom_prenom_responsable,
         nom_etg_personne_morale: etg.raison_sociale,
         siret_etg: etg.siret,
+        numero_bon_reception: intermediaireEtgDeLaCarcasse?.numero_bon_reception,
         traitement_assainissant_etablissement:
           existingCarcasse.svi_ipm2_traitement_assainissant_etablissement,
         fei_numero: existingCarcasse.fei_numero,

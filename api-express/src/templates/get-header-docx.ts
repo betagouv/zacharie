@@ -52,7 +52,7 @@ export async function generateHeaderDocx(data: CarcasseCertificat) {
                     alignment: AlignmentType.LEFT,
                     children: [
                       new TextRun({
-                        text: data.prefecture_svi,
+                        text: data.prefecture_svi ?? '',
                         bold: true,
                         size: 24,
                         // allCaps: true,
