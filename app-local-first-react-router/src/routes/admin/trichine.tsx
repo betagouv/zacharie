@@ -779,7 +779,7 @@ function OngletEchantillons() {
 
 /* -------------------------------------------------------------------------- */
 
-const ONGLETS: TabsProps['tabs'] = [
+const ONGLETS: TabsProps.Controlled['tabs'] = [
   { tabId: 'emails', label: 'Emails entrants' },
   { tabId: 'documents', label: 'Documents' },
   { tabId: 'pools', label: 'Pools' },
