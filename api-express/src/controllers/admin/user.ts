@@ -16,6 +16,7 @@ import type {
   AdminNewUserDataResponse,
   AdminFeisResponse,
   AdminCarcassesResponse,
+  AdminUserNotificationsResponse,
   UserConnexionResponse,
 } from '~/types/responses';
 import { entityAdminInclude } from '~/types/entity';
@@ -497,6 +498,60 @@ router.get(
       ]);
 
       res.status(200).send({ ok: true, data: { carcasses, total }, error: '' });
+    }
+  )
+);
+
+router.get(
+  '/user/:user_id/notifications',
+  catchErrors(
+    async (
+      req: express.Request,
+      res: express.Response<AdminUserNotificationsResponse>,
+      next: express.NextFunction
+    ) => {
+      const userId = req.params.user_id;
+      const limit = parseInt(req.query.limit as string) || 100;
+      const offset = parseInt(req.query.offset as string) || 0;
+
+      const where: Prisma.NotificationLogWhereInput = { user_id: userId };
+
+      const [notificationLogs, total] = await Promise.all([
+        prisma.notificationLog.findMany({
+          where,
+          orderBy: { created_at: 'desc' },
+          take: limit,
+          skip: offset,
+        }),
+        prisma.notificationLog.count({ where }),
+      ]);
+
+      const notifications = notificationLogs.map((log) => {
+        // Le payload est un JSON stringifié écrit par le service de notification ; on n'en garde
+        // que le titre et le corps, le reste (réponse du provider, params de template) n'a pas
+        // d'intérêt dans la liste.
+        let title: string | null = null;
+        let body: string | null = null;
+        try {
+          const payload = JSON.parse(log.payload);
+          title = payload.title ?? null;
+          body = payload.body ?? null;
+        } catch (error) {
+          // payload illisible : on affiche la ligne sans titre ni corps
+        }
+        return {
+          id: log.id,
+          type: log.type,
+          action: log.action,
+          email: log.email,
+          web_push_token: log.web_push_token,
+          title,
+          body,
+          created_at: log.created_at,
+        };
+      });
+
+      res.status(200).send({ ok: true, data: { notifications, total }, error: '' });
     }
   )
 );

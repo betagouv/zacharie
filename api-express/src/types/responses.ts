@@ -11,6 +11,7 @@ import type {
   CarcasseCertificat,
   ApiKey,
   ApiKeyApprovalByUserOrEntity,
+  UserNotifications,
 } from '@prisma/client';
 import type { UserForFei, UserForAdmin } from './user';
 import type { EntityForAdmin, EntityWithUserRelation, EntitiesByTypeAndId, EntitiesById } from './entity';
@@ -528,6 +529,24 @@ export interface AdminCarcasseDetailResponse {
       code_postal: string | null;
       ville: string | null;
     } | null;
+  };
+  error: string;
+}
+
+export interface AdminUserNotificationsResponse {
+  ok: boolean;
+  data: {
+    notifications: Array<{
+      id: string;
+      type: UserNotifications;
+      action: string;
+      email: string | null;
+      web_push_token: string | null;
+      title: string | null;
+      body: string | null;
+      created_at: Date;
+    }>;
+    total: number;
   };
   error: string;
 }
