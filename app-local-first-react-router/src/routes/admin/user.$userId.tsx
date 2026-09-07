@@ -23,6 +23,7 @@ import type {
   AdminUserDataResponse,
   AdminFeisResponse,
   AdminCarcassesResponse,
+  AdminUserNotificationsResponse,
 } from '@api/src/types/responses';
 import { Link, useParams } from 'react-router';
 import Chargement from '@app/components/Chargement';
@@ -296,6 +297,10 @@ export default function AdminUser() {
   tabs.push({
     tabId: 'Carcasses',
     label: 'Carcasses',
+  });
+  tabs.push({
+    tabId: 'Notifications',
+    label: 'Notifications',
   });
 
   if (!user.id) {
@@ -662,6 +667,7 @@ export default function AdminUser() {
               )}
               {selectedTabId === 'Fiches' && <UserFeis userId={user.id} />}
               {selectedTabId === 'Carcasses' && <UserCarcasses userId={user.id} />}
+              {selectedTabId === 'Notifications' && <UserNotificationsLogs userId={user.id} />}
               <div className="mt-6 mb-16 ml-6">
                 <a
                   className="fr-link fr-icon-arrow-up-fill fr-link--icon-left"
@@ -843,6 +849,96 @@ function UserCarcasses({ userId }: { userId: string }) {
                 </td>
                 <td className="p-1">{row._count.CarcasseIntermediaire}</td>
                 <td className="p-1">{formatDate(row.created_at)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
+}
+
+type UserNotificationRow = AdminUserNotificationsResponse['data']['notifications'][number];
+
+function UserNotificationsLogs({ userId }: { userId: string }) {
+  const [rows, setRows] = useState<UserNotificationRow[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    API.get({ path: `admin/user/${userId}/notifications` })
+      .then((res) => res as AdminUserNotificationsResponse)
+      .then((res) => {
+        if (res.ok) {
+          setRows(res.data.notifications);
+          setTotal(res.data.total);
+        }
+      })
+      .finally(() => setLoading(false));
+  }, [userId]);
+
+  if (loading && rows.length === 0) {
+    return <Chargement />;
+  }
+
+  return (
+    <div className="py-4">
+      <h3 className="mb-4 text-lg font-bold">Notifications ({total})</h3>
+      {rows.length === 0 ? (
+        <p className="text-sm text-gray-500">Aucune notification envoyée à cet utilisateur.</p>
+      ) : (
+        <table className="w-full border-collapse text-xs">
+          <thead>
+            <tr className="border-b bg-gray-100 text-left">
+              <th className="p-1">date</th>
+              <th className="p-1">canal</th>
+              <th className="p-1">titre</th>
+              <th className="p-1">message</th>
+              <th className="p-1">destinataire</th>
+              <th className="p-1">action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr
+                key={row.id}
+                className="border-b hover:bg-blue-50"
+              >
+                <td className="p-1 whitespace-nowrap">{formatDate(row.created_at)}</td>
+                <td className="p-1">
+                  <Badge
+                    small
+                    noIcon
+                    severity={row.type === UserNotifications.EMAIL ? 'info' : 'new'}
+                  >
+                    {row.type}
+                  </Badge>
+                </td>
+                <td
+                  className="max-w-[220px] truncate p-1"
+                  title={row.title ?? ''}
+                >
+                  {row.title || '—'}
+                </td>
+                <td
+                  className="max-w-[320px] truncate p-1"
+                  title={row.body ?? ''}
+                >
+                  {row.body || '—'}
+                </td>
+                <td
+                  className="max-w-[180px] truncate p-1"
+                  title={row.email ?? row.web_push_token ?? ''}
+                >
+                  {row.email ?? (row.web_push_token ? 'push token' : '—')}
+                </td>
+                <td
+                  className="max-w-[220px] truncate p-1"
+                  title={row.action}
+                >
+                  {row.action}
+                </td>
               </tr>
             ))}
           </tbody>
