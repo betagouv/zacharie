@@ -531,7 +531,6 @@ export default function TrichinePrelevementWizard() {
           pools={mode === 'PLUS_TARD' ? [] : pools.filter((pool) => pool.length > 0)}
           parId={parId}
           datePrelevement={datePrelevement}
-          mode={mode}
           limites={limites}
           parent={parent}
           reglageCommun={reglageCommun}
@@ -1449,7 +1448,6 @@ function EtapeRecapitulatif({
   pools,
   parId,
   datePrelevement,
-  mode,
   limites,
   parent,
   reglageCommun,
@@ -1461,7 +1459,6 @@ function EtapeRecapitulatif({
   pools: Array<Array<string>>;
   parId: Map<string, CarcasseAPrelever>;
   datePrelevement: string;
-  mode: ModeRegroupement;
   limites: LimitesPool;
   parent: TrichinePoolPopulated | null;
   reglageCommun: Reglage;
@@ -1470,7 +1467,6 @@ function EtapeRecapitulatif({
   premierDetenteurDe: (carcasseId: string) => string;
 }) {
   const fiches = new Set(selection.map((id) => parId.get(id)?.fei_numero).filter(Boolean));
-  const modeLabel = MODES.find((option) => option.value === mode)?.label ?? '';
   // Dernier écran avant enregistrement : un pool hors limites doit sauter aux yeux ici aussi
   const poolsNonConformes = pools.filter((pool) =>
     erreurPool(
@@ -1495,7 +1491,7 @@ function EtapeRecapitulatif({
         />
         <Chiffre
           valeur={pools.length > 0 ? String(pools.length) : '—'}
-          libelle={pools.length > 0 ? modeLabel : 'Pas de regroupement'}
+          libelle={pools.length > 0 ? `Pool${pools.length > 1 ? 's' : ''}` : 'Pas de regroupement'}
         />
         <Chiffre
           valeur={String(fiches.size)}
