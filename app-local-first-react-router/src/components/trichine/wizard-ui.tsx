@@ -226,3 +226,52 @@ export function ChampChoix<T extends string>({
     </fieldset>
   );
 }
+
+/* -------------------------------------------------------------------------- */
+/* Sous-onglets                                                                */
+/* -------------------------------------------------------------------------- */
+
+/** Deux vues d'une même liste : on bascule de l'une à l'autre sans perdre la sélection. */
+export function Onglets<T extends string>({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: T;
+  options: Array<{ value: T; label: string; nombre: number }>;
+  onChange: (value: T) => void;
+}) {
+  return (
+    <div
+      role="tablist"
+      aria-label={label}
+      className="mb-4 flex flex-wrap gap-1 border-b border-gray-200"
+    >
+      {options.map((option) => {
+        const actif = option.value === value;
+        return (
+          <button
+            key={option.value}
+            type="button"
+            role="tab"
+            aria-selected={actif}
+            onClick={() => onChange(option.value)}
+            style={actif ? { color: BLEU, borderBottomColor: BLEU } : undefined}
+            className={`-mb-px border-b-2 px-4 py-2 text-sm font-medium transition ${
+              actif ? '' : 'border-transparent text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            {option.label}
+            <span
+              className={`ml-2 rounded-full px-2 py-0.5 text-xs ${actif ? 'bg-blue-100 text-blue-900' : 'bg-gray-100 text-gray-700'}`}
+            >
+              {option.nombre}
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
