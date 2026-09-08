@@ -98,17 +98,17 @@ describe('validatePoolComposition — pool fille', () => {
     id: 'pool-mere',
     pool_parent_id: null as string | null,
     resultat_analyse: TrichineResultatAnalyse.DOUTEUX,
-    carcasseIds: ['c-1', 'c-2', 'c-3', 'c-4', 'c-5'],
+    carcasseIds: ['c-1', 'c-2', 'c-3', 'c-4', 'c-5', 'c-6'],
     parentHasGrandParent: false,
   };
 
-  test('valide avec 4 carcasses du pool mère', () => {
-    const echantillons = ['c-1', 'c-2', 'c-3', 'c-4'].map((id) => makeComplementaire(id, 20));
+  test('valide avec 5 carcasses du pool mère', () => {
+    const echantillons = ['c-1', 'c-2', 'c-3', 'c-4', 'c-5'].map((id) => makeComplementaire(id, 20));
     expect(validatePoolComposition({ echantillons, parent: parentDouteux })).toBeNull();
   });
-  test('bloqué au-delà de 4 carcasses du pool mère', () => {
-    const echantillons = ['c-1', 'c-2', 'c-3', 'c-4', 'c-5'].map((id) => makeComplementaire(id, 20));
-    expect(validatePoolComposition({ echantillons, parent: parentDouteux })).toMatch(/4 carcasses/);
+  test('bloqué au-delà de 5 carcasses du pool mère', () => {
+    const echantillons = ['c-1', 'c-2', 'c-3', 'c-4', 'c-5', 'c-6'].map((id) => makeComplementaire(id, 20));
+    expect(validatePoolComposition({ echantillons, parent: parentDouteux })).toMatch(/5 carcasses/);
   });
   test('bloqué avec une carcasse hors pool mère', () => {
     const echantillons = [makeComplementaire('c-1', 20), makeComplementaire('c-hors-pool', 20)];

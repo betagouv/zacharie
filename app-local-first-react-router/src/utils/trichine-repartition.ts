@@ -34,7 +34,7 @@ export const LIMITES_POOL_PETITE_FILLE: LimitesPool = {
 
 /**
  * Répartition automatique d'un lot de prélèvements en pools réglementaires
- * (19 carcasses et 100 g maximum par pool initial, 4 carcasses par pool fille).
+ * (19 carcasses et 100 g maximum par pool initial, 5 carcasses par pool fille).
  * L'ordre d'entrée est conservé : la répartition reste prévisible, et l'utilisateur
  * peut ensuite déplacer une carcasse d'un pool à l'autre.
  */
