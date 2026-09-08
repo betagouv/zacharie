@@ -95,9 +95,10 @@ type InboundAttachment = z.infer<typeof attachmentSchema>;
 // Au-delà, SpamAssassin considère le message comme du spam : on ne stocke rien.
 export const SPAM_SCORE_MAX = 5;
 
-const POOL_REFERENCE_REGEX = /\bP-\d{2}-\d{6}\b/g;
-const ECHANTILLON_REFERENCE_REGEX = /\bE-\d{2}-\d{6}\b/g;
-const FTP_REFERENCE_REGEX = /\bF-\d{2}-\d{6}\b/g;
+// {E|P|F}-{YY}-{code établissement}-{séquence} — le texte est mis en majuscules avant recherche
+const POOL_REFERENCE_REGEX = /\bP-\d{2}-[A-Z0-9]{2,8}-\d{4,}\b/g;
+const ECHANTILLON_REFERENCE_REGEX = /\bE-\d{2}-[A-Z0-9]{2,8}-\d{4,}\b/g;
+const FTP_REFERENCE_REGEX = /\bF-\d{2}-[A-Z0-9]{2,8}-\d{4,}\b/g;
 
 // Un numéro trop court se retrouverait par hasard dans n'importe quel rapport (n° de page, quantité…)
 const LONGUEUR_MIN_BRACELET = 3;

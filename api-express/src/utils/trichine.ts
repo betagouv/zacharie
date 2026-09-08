@@ -1,6 +1,7 @@
 import {
   EntityRelationStatus,
   EntityRelationType,
+  EntityTypes,
   Prisma,
   TrichineResultatAnalyse,
   TrichineStatutLogistiqueFTP,
@@ -96,16 +97,85 @@ export const TRICHINE_MASSE_DEFAUT_COMPLEMENTAIRE = 20;
 export const TRICHINE_MASSE_DEFAUT_CONFIRMATION = 50;
 
 /* -------------------------------------------------------------------------- */
-/* Références auto-générées : E-{YY}-{séquence} / P-{YY}-{séquence} / F-{YY}-{séquence} */
+/* Références auto-générées : {E|P|F}-{YY}-{code établissement}-{séquence}      */
 /* -------------------------------------------------------------------------- */
 
-export function nextReferenceFromLatest(prefix: 'E' | 'P' | 'F', yy: string, latestReference: string | null) {
+/** Préfixe du code établissement, par type d'entité. */
+export const TRICHINE_ENTITY_CODE_PREFIX: Record<EntityTypes, string> = {
+  [EntityTypes.PREMIER_DETENTEUR]: 'PD',
+  [EntityTypes.COLLECTEUR_PRO]: 'CO',
+  [EntityTypes.CCG]: 'CG',
+  [EntityTypes.ETG]: 'EG',
+  [EntityTypes.SVI]: 'SVI',
+  [EntityTypes.COMMERCE_DE_DETAIL]: 'CD',
+  [EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE]: 'CR',
+  [EntityTypes.ASSOCIATION_CARITATIVE]: 'AC',
+  [EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF]: 'RC',
+  [EntityTypes.CONSOMMATEUR_FINAL]: 'CF',
+  [EntityTypes.LABORATOIRE]: 'LAB',
+};
+
+/** Un code saisi à la main ou importé est ramené à l'alphabet des références. */
+export function sanitizeEntityTrichineCode(code: string | null | undefined): string | null {
+  const sanitized = (code ?? '')
+    .replace(/[^A-Za-z0-9]/g, '')
+    .toUpperCase()
+    .slice(0, 8);
+  return sanitized || null;
+}
+
+/**
+ * Prochain code libre pour ce type d'entité : `SVI01`, `LAB07`, `PD142`…
+ * Le compteur est lu sur la partie numérique du plus grand code déjà attribué — une
+ * comparaison de chaînes ferait passer `SVI9` devant `SVI10`.
+ */
+export async function nextEntityTrichineCode(type: EntityTypes): Promise<string> {
+  const prefix = TRICHINE_ENTITY_CODE_PREFIX[type];
+  const rows = await prisma.$queryRaw<Array<{ max: number | null }>>`
+    SELECT MAX(CAST(substring(code_trichine FROM '[0-9]+$') AS integer)) AS max
+    FROM "Entity"
+    WHERE code_trichine ~ ${`^${prefix}[0-9]+$`}
+  `;
+  return `${prefix}${String((rows[0]?.max ?? 0) + 1).padStart(2, '0')}`;
+}
+
+/**
+ * Segment établissement d'une référence : le code trichine de l'entité qui fait l'acte.
+ * À défaut — pas d'entité (chasseur en son nom propre) ou entité sans code — l'identifiant
+ * de l'utilisateur, déjà court, lisible et unique (5 caractères, comme dans les numéros de FEI).
+ */
+export function referenceEntityCode(
+  entity: { code_trichine: string | null } | null,
+  fallbackUserId: string
+): string {
+  return sanitizeEntityTrichineCode(entity?.code_trichine) ?? fallbackUserId.toUpperCase();
+}
+
+/** Même code, lu depuis la base à partir de l'entity_id reçu du client (souvent nul). */
+export async function referenceCodeForEntity(
+  entityId: string | null | undefined,
+  fallbackUserId: string
+): Promise<string> {
+  if (!entityId) return referenceEntityCode(null, fallbackUserId);
+  const entity = await prisma.entity.findUnique({
+    where: { id: entityId },
+    select: { code_trichine: true },
+  });
+  return referenceEntityCode(entity, fallbackUserId);
+}
+
+export function nextReferenceFromLatest(
+  prefix: 'E' | 'P' | 'F',
+  yy: string,
+  entityCode: string,
+  latestReference: string | null
+) {
   let next = 1;
   if (latestReference) {
-    const seq = Number(latestReference.split('-')[2]);
+    const seq = Number(latestReference.split('-')[3]);
     if (Number.isFinite(seq)) next = seq + 1;
   }
-  return `${prefix}-${yy}-${String(next).padStart(6, '0')}`;
+  return `${prefix}-${yy}-${entityCode}-${String(next).padStart(4, '0')}`;
 }
 
 function currentYY() {
@@ -117,51 +187,46 @@ function currentYY() {
  * des dizaines d'échantillons, une lecture par échantillon serait inutilement coûteuse.
  * L'unicité reste garantie par la contrainte SQL + `withReferenceRetry`.
  */
-export async function nextEchantillonReferences(count: number): Promise<Array<string>> {
+export async function nextEchantillonReferences(entityCode: string, count: number): Promise<Array<string>> {
   const yy = currentYY();
   const latest = await prisma.trichineEchantillon.findFirst({
-    where: { reference_echantillon: { startsWith: `E-${yy}-` } },
+    where: { reference_echantillon: { startsWith: `E-${yy}-${entityCode}-` } },
     orderBy: { reference_echantillon: 'desc' },
     select: { reference_echantillon: true },
   });
   const references: Array<string> = [];
   let precedente = latest?.reference_echantillon ?? null;
   for (let index = 0; index < count; index++) {
-    const reference = nextReferenceFromLatest('E', yy, precedente);
+    const reference = nextReferenceFromLatest('E', yy, entityCode, precedente);
     references.push(reference);
     precedente = reference;
   }
   return references;
 }
 
-export async function nextEchantillonReference(): Promise<string> {
-  const yy = currentYY();
-  const latest = await prisma.trichineEchantillon.findFirst({
-    where: { reference_echantillon: { startsWith: `E-${yy}-` } },
-    orderBy: { reference_echantillon: 'desc' },
-    select: { reference_echantillon: true },
-  });
-  return nextReferenceFromLatest('E', yy, latest?.reference_echantillon ?? null);
+export async function nextEchantillonReference(entityCode: string): Promise<string> {
+  const [reference] = await nextEchantillonReferences(entityCode, 1);
+  return reference;
 }
 
-export async function nextPoolReference(): Promise<string> {
+export async function nextPoolReference(entityCode: string): Promise<string> {
   const yy = currentYY();
   const latest = await prisma.trichinePool.findFirst({
-    where: { reference_pool: { startsWith: `P-${yy}-` } },
+    where: { reference_pool: { startsWith: `P-${yy}-${entityCode}-` } },
     orderBy: { reference_pool: 'desc' },
     select: { reference_pool: true },
   });
-  return nextReferenceFromLatest('P', yy, latest?.reference_pool ?? null);
+  return nextReferenceFromLatest('P', yy, entityCode, latest?.reference_pool ?? null);
 }
 
-export async function nextFTPReference(): Promise<string> {
+export async function nextFTPReference(entityCode: string): Promise<string> {
   const yy = currentYY();
   const latest = await prisma.trichineFTP.findFirst({
-    where: { numero_fiche: { startsWith: `F-${yy}-` } },
+    where: { numero_fiche: { startsWith: `F-${yy}-${entityCode}-` } },
     orderBy: { numero_fiche: 'desc' },
     select: { numero_fiche: true },
   });
-  return nextReferenceFromLatest('F', yy, latest?.numero_fiche ?? null);
+  return nextReferenceFromLatest('F', yy, entityCode, latest?.numero_fiche ?? null);
 }
 
 /**

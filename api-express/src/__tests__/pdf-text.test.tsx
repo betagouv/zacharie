@@ -10,8 +10,8 @@ vi.mock('~/third-parties/sentry', () => ({ capture: vi.fn() }));
 
 describe('normalizePdfText', () => {
   test('recolle une référence fragmentée par l’extracteur', () => {
-    expect(normalizePdfText('Référence client : P- 26- 000045')).toBe('Référence client : P-26-000045');
-    expect(extractPoolReferences(normalizePdfText('pool P -26 -000045 négatif'))).toEqual(['P-26-000045']);
+    expect(normalizePdfText('Référence client : P- 26- 02- 0045')).toBe('Référence client : P-26-02-0045');
+    expect(extractPoolReferences(normalizePdfText('pool P -26 -02 -0045 négatif'))).toEqual(['P-26-02-0045']);
   });
   test('normalise les espaces', () => {
     expect(normalizePdfText('  Rapport\n\n  COFRAC \t ')).toBe('Rapport COFRAC');
@@ -25,7 +25,7 @@ describe('extractPdfText', () => {
         <Page size="A4">
           <View>
             <Text>Rapport d'analyse — recherche de trichine</Text>
-            <Text>Référence client : P-26-000045</Text>
+            <Text>Référence client : P-26-02-0045</Text>
             <Text>Résultat : NEGATIF</Text>
           </View>
         </Page>
@@ -34,8 +34,8 @@ describe('extractPdfText', () => {
 
     const text = await extractPdfText(buffer);
 
-    expect(text).toContain('P-26-000045');
-    expect(extractPoolReferences(text!)).toEqual(['P-26-000045']);
+    expect(text).toContain('P-26-02-0045');
+    expect(extractPoolReferences(text!)).toEqual(['P-26-02-0045']);
   }, 30000);
 
   test('renvoie null sur un fichier illisible (scan sans texte, PDF corrompu)', async () => {

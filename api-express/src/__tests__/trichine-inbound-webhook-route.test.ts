@@ -27,7 +27,7 @@ const payload = {
     {
       MessageId: '<rapport-1@lvd.fr>',
       From: { Name: 'LVD 44', Address: 'labo@lvd.fr' },
-      Subject: 'Rapport pool P-26-000045',
+      Subject: 'Rapport pool P-26-02-0045',
       Attachments: [{ Name: 'rapport.pdf', ContentType: 'application/pdf', DownloadToken: 'token-1' }],
     },
   ],
@@ -69,7 +69,7 @@ describe('POST /webhooks/brevo-inbound', () => {
           {
             nom_fichier: 'rapport.pdf',
             statut: 'stocke' as const,
-            pool_reference: 'P-26-000045',
+            pool_reference: 'P-26-02-0045',
             rattachement_source: 'CONTENU_FICHIER' as const,
           },
         ],
@@ -84,7 +84,7 @@ describe('POST /webhooks/brevo-inbound', () => {
     expect(response.status).toBe(200);
     expect(response.body.data.results[0]).toMatchObject({ stored: 1 });
     expect(response.body.data.results[0].attachments[0]).toMatchObject({
-      pool_reference: 'P-26-000045',
+      pool_reference: 'P-26-02-0045',
       rattachement_source: 'CONTENU_FICHIER',
     });
     expect(ingestInboundEmails).toHaveBeenCalledWith(payload.items);

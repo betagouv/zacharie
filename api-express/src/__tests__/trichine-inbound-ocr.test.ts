@@ -90,14 +90,14 @@ describe('analyserEmailEntrant', () => {
   test('lit le scan, conserve le texte, rattache et applique le résultat', async () => {
     expediteurEstUnLabo();
     vi.mocked(ocrDocument).mockResolvedValue(
-      'Rapport pool P-26-000045\nCommentaires : analyse libératoire négative.'
+      'Rapport pool P-26-02-0045\nCommentaires : analyse libératoire négative.'
     );
 
     const [resultat] = await analyserEmailEntrant(emailEntrant);
 
     expect(resultat).toMatchObject({
       texte_lu: true,
-      pool_reference: 'P-26-000045',
+      pool_reference: 'P-26-02-0045',
       resultat_lu: 'NEGATIF',
       resultat_applique: true,
     });
@@ -108,7 +108,7 @@ describe('analyserEmailEntrant', () => {
     expect(prisma.trichineDocument.update).toHaveBeenCalledWith({
       where: { id: 'doc-1' },
       data: expect.objectContaining({
-        pool_id: 'pool-P-26-000045',
+        pool_id: 'pool-P-26-02-0045',
         rattachement_source: 'CONTENU_OCR',
       }),
     });
@@ -117,18 +117,18 @@ describe('analyserEmailEntrant', () => {
   test('le contenu océrisé corrige un rattachement fait d’après le sujet', async () => {
     expediteurEstUnLabo();
     // Le document était rattaché au pool du sujet ; le rapport, lui, parle d'un autre pool
-    vi.mocked(ocrDocument).mockResolvedValue('Rapport pool P-26-000099 — résultat : négatif');
+    vi.mocked(ocrDocument).mockResolvedValue('Rapport pool P-26-02-0099 — résultat : négatif');
 
     await analyserEmailEntrant(emailEntrant);
 
     expect(prisma.trichineDocument.update).toHaveBeenCalledWith({
       where: { id: 'doc-1' },
-      data: expect.objectContaining({ pool_id: 'pool-P-26-000099' }),
+      data: expect.objectContaining({ pool_id: 'pool-P-26-02-0099' }),
     });
   });
 
   test('sans laboratoire reconnu, le texte est conservé mais rien n’est rattaché', async () => {
-    vi.mocked(ocrDocument).mockResolvedValue('Rapport pool P-26-000045 — résultat : négatif');
+    vi.mocked(ocrDocument).mockResolvedValue('Rapport pool P-26-02-0045 — résultat : négatif');
 
     const [resultat] = await analyserEmailEntrant(emailEntrant);
 
@@ -153,7 +153,7 @@ describe('analyserEmailEntrant', () => {
 
   test('le journal passe à TRAITE et garde le détail de l’OCR à côté de l’existant', async () => {
     expediteurEstUnLabo();
-    vi.mocked(ocrDocument).mockResolvedValue('Rapport pool P-26-000045 — résultat : négatif');
+    vi.mocked(ocrDocument).mockResolvedValue('Rapport pool P-26-02-0045 — résultat : négatif');
 
     await analyserEmailEntrant(emailEntrant);
 
@@ -166,12 +166,12 @@ describe('analyserEmailEntrant', () => {
   test('un rapport ambigu est lu mais aucun résultat n’est appliqué', async () => {
     expediteurEstUnLabo();
     vi.mocked(ocrDocument).mockResolvedValue(
-      'Rapport pool P-26-000045. Codes : "neg" = négatif "NON_NEG" = non négatif "QI" = quantité insuffisante'
+      'Rapport pool P-26-02-0045. Codes : "neg" = négatif "NON_NEG" = non négatif "QI" = quantité insuffisante'
     );
 
     const [resultat] = await analyserEmailEntrant(emailEntrant);
 
-    expect(resultat.pool_reference).toBe('P-26-000045');
+    expect(resultat.pool_reference).toBe('P-26-02-0045');
     expect(resultat.rapport_ambigu).toBe(true);
     expect(applyPoolResult).not.toHaveBeenCalled();
   });

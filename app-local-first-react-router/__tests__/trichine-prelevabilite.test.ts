@@ -43,9 +43,9 @@ describe('etatsTrichineParCarcasse', () => {
   test('analyse en cours : bloquée', () => {
     const etats = etatsTrichineParCarcasse(
       [echantillon('c-1')],
-      [pool({ id: 'p1', carcasses: ['c-1'], ftp: 'F-26-000001' })]
+      [pool({ id: 'p1', carcasses: ['c-1'], ftp: 'F-26-02-0001' })]
     );
-    expect(etats.get('c-1')).toMatchObject({ etat: 'BLOQUEE', pool: 'P-p1', ftps: ['F-26-000001'] });
+    expect(etats.get('c-1')).toMatchObject({ etat: 'BLOQUEE', pool: 'P-p1', ftps: ['F-26-02-0001'] });
     expect(estPrelevable(etats.get('c-1'), null)).toBe(false);
   });
 

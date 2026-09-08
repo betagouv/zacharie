@@ -30,6 +30,11 @@ Emails are semantic, one per role, all on `@example.fr`. Password for every acco
 - SVI : `svi@example.fr`, `svi-2@example.fr`, `svi-nouveau@example.fr`
 - Circuit court : `commerce-de-detail@example.fr`, `commerce-de-detail-nouveau@example.fr`
 
+Codes établissement trichine (`Entity.code_trichine`, posés en dur par le seed — ils s'intercalent
+dans les références `E/P/F-{YY}-{code}-{séquence}`) : `SVI01`/`SVI02`, `PD01`, `CG01`/`CG02`,
+`CO01`/`CO02`, `EG01`/`EG02`, `CD01`. Un prélèvement fait sans entité (chasseur en son nom propre)
+est codé sur l'`id` de l'utilisateur.
+
 Required env vars:
 
 - `PGBASEURL`: PostgreSQL base URL for test DB setup

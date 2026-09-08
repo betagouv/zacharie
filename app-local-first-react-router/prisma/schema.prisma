@@ -145,6 +145,9 @@ model Entity {
   inc_certificat                        Int?                           @default(0)
   inc_decision                          Int?                           @default(0)
   code_etbt_certificat                  String?                        @unique // Il pourrait s'agir d'un code court unique qui identifie l’établissement (exemple : 01 pour Villette viandes, 02 pour Nemrod et 03 pour Guellier).
+  // Code court de l'établissement dans les références trichine (E/P/F-{YY}-{code}-{séquence}).
+  // Généré à la création (préfixe du type + compteur), modifiable par l'admin.
+  code_trichine                         String?                        @unique
   type                                  EntityTypes
   // Trichine — laboratoires (type = LABORATOIRE)
   is_lnr                                Boolean                        @default(false) // true pour l'entité ANSES (LNR unique seedé)
@@ -943,7 +946,7 @@ enum TrichineResultatAnalyse {
 
 model TrichineEchantillon {
   id                    String   @id @default(uuid())
-  reference_echantillon String   @unique // format E-{YY}-{séquence}, ex: E-26-000123
+  reference_echantillon String   @unique // format E-{YY}-{code établissement}-{séquence}, ex: E-26-02-0123
   zacharie_carcasse_id  String
   Carcasse              Carcasse @relation(fields: [zacharie_carcasse_id], references: [zacharie_carcasse_id], onDelete: Cascade, onUpdate: Cascade)
 
@@ -978,7 +981,7 @@ model TrichineEchantillon {
 
 model TrichinePool {
   id             String @id @default(uuid())
-  reference_pool String @unique // format P-{YY}-{séquence}, ex: P-26-000045
+  reference_pool String @unique // format P-{YY}-{code établissement}-{séquence}, ex: P-26-02-0045
 
   cree_par_user_id   String
   CreeParUser        User    @relation("TrichinePoolCreeParUser", fields: [cree_par_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
@@ -1024,7 +1027,7 @@ model TrichinePool {
 
 model TrichineFTP {
   id            String    @id @default(uuid())
-  numero_fiche  String    @unique // format F-{YY}-{séquence}, ex: F-26-000012
+  numero_fiche  String    @unique // format F-{YY}-{code établissement}-{séquence}, ex: F-26-02-0012
   date_creation DateTime  @default(now())
   date_envoi    DateTime?
 

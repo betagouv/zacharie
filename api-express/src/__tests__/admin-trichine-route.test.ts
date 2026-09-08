@@ -91,7 +91,7 @@ describe('listes de diagnostic', () => {
         texte_extrait: 'texte lu',
         email_expediteur: 'labo@lvd.fr',
         email_sujet: 'Rapport',
-        TrichinePool: { reference_pool: 'P-26-000045' },
+        TrichinePool: { reference_pool: 'P-26-02-0045' },
         TrichineFTP: null,
         AjouteParUser: null,
       },
@@ -101,7 +101,7 @@ describe('listes de diagnostic', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.data.documents[0]).toMatchObject({
-      pool_reference: 'P-26-000045',
+      pool_reference: 'P-26-02-0045',
       rattachement_indice: 'NUMEROS_BRACELET',
       longueur_texte: 8,
       depose_par: null,
@@ -120,7 +120,7 @@ describe('listes de diagnostic', () => {
     vi.mocked(prisma.trichinePool.findMany).mockResolvedValue([
       {
         id: 'pool-1',
-        reference_pool: 'P-26-000045',
+        reference_pool: 'P-26-02-0045',
         type: 'INITIAL',
         statut: 'A_COMPLETER',
         resultat_analyse: null,
@@ -135,7 +135,7 @@ describe('listes de diagnostic', () => {
           {
             reference_labo: 'LVD-1',
             TrichineFTP: {
-              numero_fiche: 'F-26-000012',
+              numero_fiche: 'F-26-02-0012',
               DestinataireEntity: { nom_d_usage: 'LVD 44', raison_sociale: null, is_lnr: false },
             },
           },
@@ -146,12 +146,12 @@ describe('listes de diagnostic', () => {
     const res = await request(app).get('/admin/trichine/pools');
 
     expect(res.body.data.pools[0]).toMatchObject({
-      reference_pool: 'P-26-000045',
+      reference_pool: 'P-26-02-0045',
       nb_echantillons: 2,
       bracelets: '6940, 7542',
       especes: 'Sanglier',
       laboratoire: 'LVD 44',
-      ftp_numero: 'F-26-000012',
+      ftp_numero: 'F-26-02-0012',
     });
   });
 });
@@ -159,13 +159,13 @@ describe('listes de diagnostic', () => {
 describe('POST /admin/trichine/emails-entrants/:id/analyser', () => {
   test('relance l’analyse du message', async () => {
     vi.mocked(analyserEmailEntrant).mockResolvedValue([
-      { document_id: 'doc-1', nom_fichier: 'rapport.pdf', texte_lu: true, pool_reference: 'P-26-000045' },
+      { document_id: 'doc-1', nom_fichier: 'rapport.pdf', texte_lu: true, pool_reference: 'P-26-02-0045' },
     ]);
 
     const res = await request(app).post('/admin/trichine/emails-entrants/log-1/analyser');
 
     expect(res.status).toBe(200);
-    expect(res.body.data.ocr[0].pool_reference).toBe('P-26-000045');
+    expect(res.body.data.ocr[0].pool_reference).toBe('P-26-02-0045');
     expect(analyserEmailEntrant).toHaveBeenCalledWith(expect.objectContaining({ id: 'log-1' }));
   });
 

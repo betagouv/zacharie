@@ -43,24 +43,24 @@ vi.mock('~/third-parties/cellar', () => ({
 
 describe('références dans le message', () => {
   test('trouve les références de pool, dédoublonnées et insensibles à la casse', () => {
-    const text = 'Résultats pour p-26-000045 et P-26-000046 (rappel : P-26-000045)';
-    expect(extractPoolReferences(text)).toEqual(['P-26-000045', 'P-26-000046']);
+    const text = 'Résultats pour p-26-02-0045 et P-26-02-0046 (rappel : P-26-02-0045)';
+    expect(extractPoolReferences(text)).toEqual(['P-26-02-0045', 'P-26-02-0046']);
   });
   test('distingue pools et FTP', () => {
-    const text = 'Fiche F-26-000012 — pool P-26-000045';
-    expect(extractPoolReferences(text)).toEqual(['P-26-000045']);
-    expect(extractFtpReferences(text)).toEqual(['F-26-000012']);
+    const text = 'Fiche F-26-02-0012 — pool P-26-02-0045';
+    expect(extractPoolReferences(text)).toEqual(['P-26-02-0045']);
+    expect(extractFtpReferences(text)).toEqual(['F-26-02-0012']);
   });
   test('ignore une référence mal formée', () => {
-    expect(extractPoolReferences('P-26-45 et P-2026-000045')).toEqual([]);
+    expect(extractPoolReferences('P-26-02-45 et P-2026-02-0045 et P-26-000045')).toEqual([]);
   });
   test('fouille le sujet, le corps HTML et le nom des pièces jointes', () => {
     const text = searchableTextFromItem({
       Subject: 'Rapport',
-      RawHtmlBody: '<p>Pool <b>P-26-000045</b></p>',
-      Attachments: [{ Name: 'P-26-000046.pdf', ContentType: 'application/pdf', DownloadToken: 'tok' }],
+      RawHtmlBody: '<p>Pool <b>P-26-02-0045</b></p>',
+      Attachments: [{ Name: 'P-26-02-0046.pdf', ContentType: 'application/pdf', DownloadToken: 'tok' }],
     } as InboundEmailItem);
-    expect(extractPoolReferences(text)).toEqual(['P-26-000045', 'P-26-000046']);
+    expect(extractPoolReferences(text)).toEqual(['P-26-02-0045', 'P-26-02-0046']);
   });
 });
 
@@ -116,7 +116,7 @@ function mailDuLabo(overrides: Partial<InboundEmailItem> = {}): InboundEmailItem
   return {
     MessageId: '<rapport-1@lvd.fr>',
     From: { Name: 'LVD 44', Address: 'Labo@lvd.fr' },
-    Subject: 'Rapport d’analyse pool P-26-000045',
+    Subject: 'Rapport d’analyse pool P-26-02-0045',
     SentAtDate: 'Tue, 1 Sep 2026 09:53:21 +0200',
     Attachments: [pdf],
     ...overrides,
@@ -169,7 +169,7 @@ function expediteurEstLeLaboDestinataire() {
   vi.mocked(prisma.entityAndUserRelations.findMany).mockResolvedValue([
     { owner_id: 'user-labo', entity_id: 'entity-lvd', EntityRelatedWithUser: { is_lnr: false } },
   ] as never);
-  vi.mocked(prisma.trichinePool.findMany).mockResolvedValue([poolFixture('P-26-000045')] as never);
+  vi.mocked(prisma.trichinePool.findMany).mockResolvedValue([poolFixture('P-26-02-0045')] as never);
 }
 
 // Tous les pools cherchés existent et sont destinés au laboratoire
@@ -191,11 +191,11 @@ describe('ingestInboundEmail', () => {
     expect(result.attachments[0]).toMatchObject({
       nom_fichier: 'rapport.pdf',
       statut: 'stocke',
-      pool_reference: 'P-26-000045',
+      pool_reference: 'P-26-02-0045',
       rattachement_source: 'EMAIL',
     });
     expect(prisma.trichineDocument.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({ pool_id: 'pool-P-26-000045' }),
+      data: expect.objectContaining({ pool_id: 'pool-P-26-02-0045' }),
     });
     expect(uploadToCellar).toHaveBeenCalledOnce();
     expect(prisma.trichineDocument.create).toHaveBeenCalledWith({
@@ -203,7 +203,7 @@ describe('ingestInboundEmail', () => {
         type: 'RAPPORT_COFRAC',
         source: 'EMAIL',
         ajoute_par_user_id: null,
-        pool_id: 'pool-P-26-000045',
+        pool_id: 'pool-P-26-02-0045',
         nom_fichier: 'rapport.pdf',
         email_message_id: '<rapport-1@lvd.fr>',
         email_expediteur: 'labo@lvd.fr',
@@ -216,7 +216,7 @@ describe('ingestInboundEmail', () => {
       { owner_id: 'user-labo', entity_id: 'entity-autre-labo', EntityRelatedWithUser: { is_lnr: false } },
     ] as never);
     // Le pool existe, mais aucune FTP ne le destine à ce laboratoire : pas de lien exploitable
-    vi.mocked(prisma.trichinePool.findMany).mockResolvedValue([poolFixture('P-26-000045')] as never);
+    vi.mocked(prisma.trichinePool.findMany).mockResolvedValue([poolFixture('P-26-02-0045')] as never);
 
     const result = await ingestInboundEmail(mailDuLabo());
 
@@ -294,28 +294,28 @@ describe('ingestInboundEmail', () => {
 describe('le contenu du fichier prime sur le message', () => {
   test('rattache au pool lu dans le PDF, pas à celui du sujet', async () => {
     tousLesPoolsExistent();
-    // Le sujet cite P-26-000045, le PDF P-26-000099 : les deux existent et sont destinés au labo
+    // Le sujet cite P-26-02-0045, le PDF P-26-02-0099 : les deux existent et sont destinés au labo
     vi.mocked(extractPdfText).mockResolvedValue(
-      'Rapport COFRAC — référence client P-26-000099 — résultat : négatif'
+      'Rapport COFRAC — référence client P-26-02-0099 — résultat : négatif'
     );
 
     const result = await ingestInboundEmail(mailDuLabo());
 
     expect(result.attachments[0]).toMatchObject({
-      pool_reference: 'P-26-000099',
+      pool_reference: 'P-26-02-0099',
       rattachement_source: 'CONTENU_FICHIER',
       texte_lu: true,
     });
     expect(prisma.trichineDocument.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({ pool_id: 'pool-P-26-000099' }),
+      data: expect.objectContaining({ pool_id: 'pool-P-26-02-0099' }),
     });
   });
 
   test('chaque pièce jointe est rattachée à son propre pool', async () => {
     tousLesPoolsExistent();
     vi.mocked(extractPdfText)
-      .mockResolvedValueOnce('Rapport pool P-26-000045')
-      .mockResolvedValueOnce('Rapport pool P-26-000046');
+      .mockResolvedValueOnce('Rapport pool P-26-02-0045')
+      .mockResolvedValueOnce('Rapport pool P-26-02-0046');
 
     const result = await ingestInboundEmail(
       mailDuLabo({
@@ -328,8 +328,8 @@ describe('le contenu du fichier prime sur le message', () => {
     );
 
     expect(result.attachments.map((attachment) => attachment.pool_reference)).toEqual([
-      'P-26-000045',
-      'P-26-000046',
+      'P-26-02-0045',
+      'P-26-02-0046',
     ]);
   });
 
@@ -340,7 +340,7 @@ describe('le contenu du fichier prime sur le message', () => {
     const result = await ingestInboundEmail(mailDuLabo());
 
     expect(result.attachments[0]).toMatchObject({
-      pool_reference: 'P-26-000045',
+      pool_reference: 'P-26-02-0045',
       rattachement_source: 'EMAIL',
       texte_lu: false,
     });
@@ -370,7 +370,7 @@ describe('résultat lu dans le rapport', () => {
   test('applique au pool le verdict du rapport, au nom du laboratoire expéditeur', async () => {
     tousLesPoolsExistent();
     vi.mocked(extractPdfText).mockResolvedValue(
-      'Rapport COFRAC pool P-26-000045. Référence dossier : LVD44-2026-0987. Résultat : négatif.'
+      'Rapport COFRAC pool P-26-02-0045. Référence dossier : LVD44-2026-0987. Résultat : négatif.'
     );
 
     const result = await ingestInboundEmail(mailDuLabo());
@@ -392,7 +392,7 @@ describe('résultat lu dans le rapport', () => {
 
   test('trace dans le commentaire du pool que le résultat vient du rapport', async () => {
     tousLesPoolsExistent();
-    vi.mocked(extractPdfText).mockResolvedValue('Pool P-26-000045 — Résultat : négatif');
+    vi.mocked(extractPdfText).mockResolvedValue('Pool P-26-02-0045 — Résultat : négatif');
 
     await ingestInboundEmail(mailDuLabo());
 
@@ -404,7 +404,7 @@ describe('résultat lu dans le rapport', () => {
   test('n’applique rien quand le rapport cite plusieurs verdicts', async () => {
     tousLesPoolsExistent();
     vi.mocked(extractPdfText).mockResolvedValue(
-      'Pool P-26-000045. Résultats possibles : négatif / douteux / positif.'
+      'Pool P-26-02-0045. Résultats possibles : négatif / douteux / positif.'
     );
 
     const result = await ingestInboundEmail(mailDuLabo());
@@ -427,7 +427,7 @@ describe('résultat lu dans le rapport', () => {
 
   test('trace le refus métier sans faire échouer le stockage', async () => {
     tousLesPoolsExistent();
-    vi.mocked(extractPdfText).mockResolvedValue('Pool P-26-000045 — Résultat : négatif');
+    vi.mocked(extractPdfText).mockResolvedValue('Pool P-26-02-0045 — Résultat : négatif');
     vi.mocked(applyPoolResult).mockResolvedValue({
       kind: 'error',
       status: 400,
@@ -449,7 +449,7 @@ describe('résultat lu dans le rapport', () => {
 describe('journal des emails entrants', () => {
   test('journalise un message traité avec le détail de ce qui a été fait', async () => {
     tousLesPoolsExistent();
-    vi.mocked(extractPdfText).mockResolvedValue('Pool P-26-000045 — Résultat : négatif');
+    vi.mocked(extractPdfText).mockResolvedValue('Pool P-26-02-0045 — Résultat : négatif');
 
     await ingestInboundEmail(mailDuLabo());
 
@@ -457,7 +457,7 @@ describe('journal des emails entrants', () => {
     expect(call.where).toEqual({ message_id: '<rapport-1@lvd.fr>' });
     expect(call.create).toMatchObject({
       expediteur: 'labo@lvd.fr',
-      sujet: 'Rapport d’analyse pool P-26-000045',
+      sujet: 'Rapport d’analyse pool P-26-02-0045',
       statut: 'TRAITE',
       laboratoire_reconnu: true,
       nb_pieces_jointes: 1,
@@ -522,8 +522,8 @@ describe('numéros de bracelet dans le texte', () => {
 });
 
 describe('choisirPoolParBracelets', () => {
-  const poolDe5 = { poolId: 'pool-1', reference: 'P-26-000045', bracelets: ['6940', '7542', '7631'] };
-  const autrePool = { poolId: 'pool-2', reference: 'P-26-000046', bracelets: ['1111', '2222'] };
+  const poolDe5 = { poolId: 'pool-1', reference: 'P-26-02-0045', bracelets: ['6940', '7542', '7631'] };
+  const autrePool = { poolId: 'pool-2', reference: 'P-26-02-0046', bracelets: ['1111', '2222'] };
 
   test('retient le pool dont le rapport cite les échantillons, et voit la couverture complète', () => {
     const choix = choisirPoolParBracelets([poolDe5, autrePool], 'échantillons 6940 7542 7631');
@@ -553,7 +553,7 @@ describe('choisirPoolParBracelets', () => {
 
   test('mais suffit sur un pool à échantillon unique', () => {
     const choix = choisirPoolParBracelets(
-      [{ poolId: 'pool-3', reference: 'P-26-000047', bracelets: ['32295'] }],
+      [{ poolId: 'pool-3', reference: 'P-26-02-0047', bracelets: ['32295'] }],
       'échantillon 32295'
     );
 
@@ -566,7 +566,7 @@ describe('choisirPoolParBracelets', () => {
 });
 
 describe('resultatApplicable', () => {
-  const base = { kind: 'pool', id: 'pool-1', reference: 'P-26-000045' } as never;
+  const base = { kind: 'pool', id: 'pool-1', reference: 'P-26-02-0045' } as never;
 
   test('une référence explicite vaut décision', () => {
     expect(resultatApplicable({ ...(base as object), indice: 'REFERENCE_POOL' } as never)).toBe(true);
@@ -586,10 +586,10 @@ describe('ingestion avec un rapport sans référence Zacharie', () => {
     vi.mocked(prisma.entityAndUserRelations.findMany).mockResolvedValue([
       { owner_id: 'user-labo', entity_id: 'entity-lvd', EntityRelatedWithUser: { is_lnr: false } },
     ] as never);
-    const pool = poolFixture('P-26-000045');
+    const pool = poolFixture('P-26-02-0045');
     pool.TrichineEchantillons = [
-      { reference_echantillon: 'E-26-000001', Carcasse: { numero_bracelet: '6940' } },
-      { reference_echantillon: 'E-26-000002', Carcasse: { numero_bracelet: '7542' } },
+      { reference_echantillon: 'E-26-02-0001', Carcasse: { numero_bracelet: '6940' } },
+      { reference_echantillon: 'E-26-02-0002', Carcasse: { numero_bracelet: '7542' } },
     ];
     vi.mocked(prisma.trichinePool.findMany).mockResolvedValue([pool] as never);
     // Le rapport ne cite ni P-… ni F-… : uniquement les n° de scellé, comme les vrais rapports
@@ -600,7 +600,7 @@ describe('ingestion avec un rapport sans référence Zacharie', () => {
     const result = await ingestInboundEmail(mailDuLabo({ Subject: 'Rapport' }));
 
     expect(result.attachments[0]).toMatchObject({
-      pool_reference: 'P-26-000045',
+      pool_reference: 'P-26-02-0045',
       rattachement_indice: 'NUMEROS_BRACELET',
       bracelets: '2/2',
       resultat_lu: 'NEGATIF',
@@ -612,11 +612,11 @@ describe('ingestion avec un rapport sans référence Zacharie', () => {
     vi.mocked(prisma.entityAndUserRelations.findMany).mockResolvedValue([
       { owner_id: 'user-labo', entity_id: 'entity-lvd', EntityRelatedWithUser: { is_lnr: false } },
     ] as never);
-    const pool = poolFixture('P-26-000045');
+    const pool = poolFixture('P-26-02-0045');
     pool.TrichineEchantillons = [
-      { reference_echantillon: 'E-26-000001', Carcasse: { numero_bracelet: '6940' } },
-      { reference_echantillon: 'E-26-000002', Carcasse: { numero_bracelet: '7542' } },
-      { reference_echantillon: 'E-26-000003', Carcasse: { numero_bracelet: '7631' } },
+      { reference_echantillon: 'E-26-02-0001', Carcasse: { numero_bracelet: '6940' } },
+      { reference_echantillon: 'E-26-02-0002', Carcasse: { numero_bracelet: '7542' } },
+      { reference_echantillon: 'E-26-02-0003', Carcasse: { numero_bracelet: '7631' } },
     ];
     vi.mocked(prisma.trichinePool.findMany).mockResolvedValue([pool] as never);
     vi.mocked(extractPdfText).mockResolvedValue('Échantillons 6940 et 7542 — Résultat : négatif.');
@@ -624,7 +624,7 @@ describe('ingestion avec un rapport sans référence Zacharie', () => {
     const result = await ingestInboundEmail(mailDuLabo({ Subject: 'Rapport' }));
 
     expect(result.attachments[0]).toMatchObject({
-      pool_reference: 'P-26-000045',
+      pool_reference: 'P-26-02-0045',
       bracelets: '2/3',
     });
     expect(result.attachments[0].resultat_applique).toBeUndefined();
@@ -637,8 +637,8 @@ describe('vocabulaire du laboratoire', () => {
     vi.mocked(prisma.entityAndUserRelations.findMany).mockResolvedValue([
       { owner_id: 'user-labo', entity_id: 'entity-lvd', EntityRelatedWithUser: { is_lnr: false } },
     ] as never);
-    vi.mocked(prisma.trichinePool.findMany).mockResolvedValue([poolFixture('P-26-000045')] as never);
-    vi.mocked(extractPdfText).mockResolvedValue('Pool P-26-000045 — Recherche de Trichinella : Non négatif');
+    vi.mocked(prisma.trichinePool.findMany).mockResolvedValue([poolFixture('P-26-02-0045')] as never);
+    vi.mocked(extractPdfText).mockResolvedValue('Pool P-26-02-0045 — Recherche de Trichinella : Non négatif');
 
     const result = await ingestInboundEmail(mailDuLabo());
 
@@ -652,11 +652,11 @@ describe('vocabulaire du laboratoire', () => {
     vi.mocked(prisma.entityAndUserRelations.findMany).mockResolvedValue([
       { owner_id: 'user-lnr', entity_id: 'entity-lnr', EntityRelatedWithUser: { is_lnr: true } },
     ] as never);
-    const pool = poolFixture('P-26-000045');
+    const pool = poolFixture('P-26-02-0045');
     pool.TrichinePoolFTPs[0].TrichineFTP.destinataire_entity_id = 'entity-lnr';
     vi.mocked(prisma.trichinePool.findMany).mockResolvedValue([pool] as never);
     vi.mocked(extractPdfText).mockResolvedValue(
-      'Pool P-26-000045 — Résultat : non négatif — parasite identifié : Trichinella britovi'
+      'Pool P-26-02-0045 — Résultat : non négatif — parasite identifié : Trichinella britovi'
     );
 
     const result = await ingestInboundEmail(mailDuLabo());
