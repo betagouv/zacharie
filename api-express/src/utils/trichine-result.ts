@@ -14,6 +14,7 @@ import {
   getUsersWorkingForEntity,
   logTrichineStatutChange,
   nextFTPReference,
+  referenceCodeForEntity,
   notifyTrichineUsers,
   TrichineNotificationType,
   TrichineObjetType,
@@ -226,10 +227,12 @@ export async function applyPoolResult({
         extra: { pool_id: pool.id },
       });
     } else {
+      // La FTP de confirmation part du LVD : c'est lui qui donne son code à la référence
+      const entityCode = await referenceCodeForEntity(ftp.destinataire_entity_id, userId);
       const lnrFtp = await withReferenceRetry(async () =>
         prisma.trichineFTP.create({
           data: {
-            numero_fiche: await nextFTPReference(),
+            numero_fiche: await nextFTPReference(entityCode),
             expediteur_user_id: userId,
             expediteur_entity_id: ftp.destinataire_entity_id,
             destinataire_entity_id: lnrEntity.id,

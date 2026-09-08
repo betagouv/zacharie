@@ -5,7 +5,7 @@
  *  - une entité LVD + une entité LNR (nécessaire à la génération auto de FTP sur DOUTEUX)
  *  - un utilisateur laboratoire  : labo-demo@example.fr / secret-secret
  *  - un utilisateur émetteur (chasseur), une FEI et 3 carcasses sanglier
- *  - 3 pools (P-26-000001/002/003), 1 échantillon par pool (E-26-000001/002/003)
+ *  - 3 pools (P-26-EMTDM-0001/002/003), 1 échantillon par pool (E-26-EMTDM-0001/002/003)
  *  - une FTP ENVOYEE au LVD contenant les 3 pools
  *
  * Idempotent : nettoie son propre run précédent avant de recréer.
@@ -36,27 +36,27 @@ const EMETTEUR_USER_ID = 'EMTDM';
 const LABO_EMAIL = 'labo-demo@example.fr';
 const EMETTEUR_EMAIL = 'emetteur-trichine-demo@example.fr';
 const FEI_NUMERO = 'ZACH-DEMO-TRICHINE-001';
-const FTP_NUMERO = 'F-26-000001';
+const FTP_NUMERO = 'F-26-EMTDM-0001';
 
 // pool ↔ carcasse ↔ échantillon, index par index
 const ROWS = [
   {
-    pool: 'P-26-000001',
+    pool: 'P-26-EMTDM-0001',
     carcasse: 'demo-trichine-carcasse-1',
     bracelet: 'DEMO-001',
-    echantillon: 'E-26-000001',
+    echantillon: 'E-26-EMTDM-0001',
   },
   {
-    pool: 'P-26-000002',
+    pool: 'P-26-EMTDM-0002',
     carcasse: 'demo-trichine-carcasse-2',
     bracelet: 'DEMO-002',
-    echantillon: 'E-26-000002',
+    echantillon: 'E-26-EMTDM-0002',
   },
   {
-    pool: 'P-26-000003',
+    pool: 'P-26-EMTDM-0003',
     carcasse: 'demo-trichine-carcasse-3',
     bracelet: 'DEMO-003',
-    echantillon: 'E-26-000003',
+    echantillon: 'E-26-EMTDM-0003',
   },
 ];
 const POOL_REFS = ROWS.map((r) => r.pool);
@@ -98,6 +98,7 @@ async function main() {
         raison_sociale: 'LVD de démonstration',
         nom_d_usage: 'LVD Démo',
         type: EntityTypes.LABORATOIRE,
+        code_trichine: 'LAB01',
         is_lnr: false,
         zacharie_compatible: true,
         address_ligne_1: '1 rue du Laboratoire',
@@ -109,6 +110,7 @@ async function main() {
         raison_sociale: 'LNR de démonstration (ANSES)',
         nom_d_usage: 'LNR Démo',
         type: EntityTypes.LABORATOIRE,
+        code_trichine: 'LAB02',
         is_lnr: true,
         zacharie_compatible: true,
         address_ligne_1: '1 avenue du LNR',
@@ -232,9 +234,9 @@ async function main() {
   console.info(
     '   reference_pool;resultat_analyse;date_debut_analyse;date_fin_analyse;reference_labo;commentaire'
   );
-  console.info('   P-26-000001;NEGATIF;2026-07-01;2026-07-02;LAB-889;');
-  console.info('   P-26-000002;DOUTEUX;2026-07-01;2026-07-02;LAB-890;larve suspectée');
-  console.info('   P-26-000099;NEGATIF;;;;   (ligne volontairement introuvable)\n');
+  console.info('   P-26-EMTDM-0001;NEGATIF;2026-07-01;2026-07-02;LAB-889;');
+  console.info('   P-26-EMTDM-0002;DOUTEUX;2026-07-01;2026-07-02;LAB-890;larve suspectée');
+  console.info('   P-26-EMTDM-0099;NEGATIF;;;;   (ligne volontairement introuvable)\n');
 }
 
 main()

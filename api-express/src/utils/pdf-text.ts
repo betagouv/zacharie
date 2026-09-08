@@ -11,7 +11,7 @@ import { capture } from '~/third-parties/sentry';
 
 /**
  * Les extracteurs PDF découpent le texte en fragments : une référence peut ressortir
- * « P- 26- 000045 ». On recolle les traits d'union et on normalise les espaces avant
+ * « P- 26- 02- 0045 ». On recolle les traits d'union et on normalise les espaces avant
  * toute recherche de référence.
  */
 export function normalizePdfText(text: string): string {

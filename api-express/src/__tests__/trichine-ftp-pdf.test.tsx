@@ -30,7 +30,7 @@ beforeEach(() => {
 
 export const ftpFixture = {
   id: 'ftp-1',
-  numero_fiche: 'F-26-000012',
+  numero_fiche: 'F-26-02-0012',
   date_creation: new Date('2026-08-10T08:00:00Z'),
   date_envoi: new Date('2026-08-12T08:00:00Z'),
   statut_logistique: TrichineStatutLogistiqueFTP.ENVOYEE,
@@ -68,13 +68,13 @@ export const ftpFixture = {
     {
       TrichinePool: {
         id: 'pool-1',
-        reference_pool: 'P-26-000045',
+        reference_pool: 'P-26-02-0045',
         type: TrichineType.INITIAL,
         date_constitution: new Date('2026-08-11T00:00:00Z'),
         TrichineEchantillons: [
           {
             id: 'ech-1',
-            reference_echantillon: 'E-26-000101',
+            reference_echantillon: 'E-26-02-0101',
             site_prelevement: TrichineSitePrelevement.PILIER_DIAPHRAGME,
             masse_grammes: 5,
             Carcasse: {
@@ -86,7 +86,7 @@ export const ftpFixture = {
           },
           {
             id: 'ech-2',
-            reference_echantillon: 'E-26-000102',
+            reference_echantillon: 'E-26-02-0102',
             site_prelevement: TrichineSitePrelevement.LANGUE,
             masse_grammes: 5,
             Carcasse: {
@@ -122,16 +122,16 @@ describe('getFtpPdfBuffer', () => {
   });
 
   test('la référence du pool est encodée en Code 128', async () => {
-    const dataUrl = await barcodeDataUrl('P-26-000045');
+    const dataUrl = await barcodeDataUrl('P-26-02-0045');
     expect(dataUrl.startsWith('data:image/png;base64,')).toBe(true);
   });
 
   test('le code-barres embarque sa zone silencieuse de 10 modules de chaque côté', async () => {
-    const png = Buffer.from((await barcodeDataUrl('P-26-000045')).split(',')[1], 'base64');
+    const png = Buffer.from((await barcodeDataUrl('P-26-02-0045')).split(',')[1], 'base64');
     // largeur PNG lue dans l'IHDR ; `scale: 3` = 3 pixels par module
     const modules = png.readUInt32BE(16) / 3;
-    // P-26-000045 tient sur 11 symboles Code 128 (11 modules chacun) + le stop (13)
-    expect(modules).toBe(11 * 11 + 13 + 2 * 10);
+    // P-26-02-0045 tient sur 13 symboles Code 128 (11 modules chacun) + le stop (13)
+    expect(modules).toBe(13 * 11 + 13 + 2 * 10);
   });
 });
 

@@ -22,6 +22,7 @@ import {
   nextEchantillonReferences,
   nextFTPReference,
   nextPoolReference,
+  referenceCodeForEntity,
   notifyTrichineUsers,
   TrichineNotificationType,
   TrichineObjetType,
@@ -221,10 +222,11 @@ router.post(
       return sendError(res, 400, prelevementInvalide);
     }
 
+    const entityCode = await referenceCodeForEntity(body.preleve_par_entity_id, req.user.id);
     const echantillon = await withReferenceRetry(async () =>
       prisma.trichineEchantillon.create({
         data: {
-          reference_echantillon: await nextEchantillonReference(),
+          reference_echantillon: await nextEchantillonReference(entityCode),
           zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
           preleve_par_user_id: req.user.id,
           preleve_par_entity_id: body.preleve_par_entity_id ?? null,
@@ -355,7 +357,8 @@ router.post(
       }
     }
 
-    const references = await nextEchantillonReferences(body.echantillons.length);
+    const entityCode = await referenceCodeForEntity(body.preleve_par_entity_id, req.user.id);
+    const references = await nextEchantillonReferences(entityCode, body.echantillons.length);
     const maintenant = new Date();
     const echantillons = await withReferenceRetry(async () =>
       prisma.$transaction(
@@ -615,10 +618,11 @@ router.post(
       return sendError(res, 400, compositionError);
     }
 
+    const entityCode = await referenceCodeForEntity(body.cree_par_entity_id, req.user.id);
     const pool = await withReferenceRetry(async () =>
       prisma.trichinePool.create({
         data: {
-          reference_pool: await nextPoolReference(),
+          reference_pool: await nextPoolReference(entityCode),
           cree_par_user_id: req.user.id,
           cree_par_entity_id: body.cree_par_entity_id ?? null,
           type: parent ? TrichineType.COMPLEMENTAIRE : TrichineType.INITIAL,
@@ -968,10 +972,11 @@ router.post(
       return sendError(res, 400, 'Un des pools est déjà rattaché à une FTP');
     }
 
+    const entityCode = await referenceCodeForEntity(body.expediteur_entity_id, req.user.id);
     const ftp = await withReferenceRetry(async () =>
       prisma.trichineFTP.create({
         data: {
-          numero_fiche: await nextFTPReference(),
+          numero_fiche: await nextFTPReference(entityCode),
           expediteur_user_id: req.user.id,
           expediteur_entity_id: body.expediteur_entity_id ?? null,
           destinataire_entity_id: destinataire.id,
