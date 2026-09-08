@@ -313,7 +313,6 @@ model Fei {
   heure_evisceration_derniere_carcasse                    String?
   created_by_user_id                                      String
   creation_context                                        String?   @default("zacharie") // zacharie, api 
-  resume_nombre_de_carcasses                              String?
   /**
    * examinateur initial
    */

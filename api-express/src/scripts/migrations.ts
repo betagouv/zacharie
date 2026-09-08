@@ -1,27 +1,5 @@
 import prisma from '~/prisma';
 import { EntityTypes, UserRoles } from '@prisma/client';
-import { formatCountCarcasseByEspece } from '~/utils/count-carcasses';
-/* 
-prisma.fei
-  .findMany({
-    where: {
-      numero: 'ZACH-20250130-BK7LC-195237',
-    },
-    include: {
-      Carcasses: true,
-    },
-  })
-  .then(async (feis) => {
-    for (const fei of feis) {
-      const nombreDAnimaux = formatCountCarcasseByEspece(fei.Carcasses).filter(Boolean).join('\n');
-      await prisma.fei.update({
-        where: { numero: fei.numero },
-        data: { resume_nombre_de_carcasses: nombreDAnimaux },
-      });
-    }
-    console.log('done renaming all resume_nombre_de_carcasses');
-  });
- */
 // prisma.user
 //   .findMany({
 //     where: {

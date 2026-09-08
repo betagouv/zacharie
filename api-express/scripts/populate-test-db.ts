@@ -992,7 +992,6 @@ const feiValidatedByExaminateur: Prisma.FeiUncheckedCreateInput = {
   examinateur_initial_date_approbation_mise_sur_le_marche: '2025-07-07T13:52:52.026Z',
   heure_mise_a_mort_premiere_carcasse: '12:12',
   heure_evisceration_derniere_carcasse: '12:14',
-  resume_nombre_de_carcasses: '4 daims',
   premier_detenteur_user_id: '0Y545',
   premier_detenteur_name_cache: 'Pierre Petit',
 };

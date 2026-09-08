@@ -19,7 +19,6 @@ const feiBodyZodSchema = z.object({
   heure_evisceration_derniere_carcasse: z.string().optional().nullable(),
   created_by_user_id: z.string().optional().nullable(),
   creation_context: z.string().optional().nullable(),
-  resume_nombre_de_carcasses: z.string().optional().nullable(),
   examinateur_initial_offline: z.boolean().optional().nullable(),
   examinateur_initial_user_id: z.string().optional().nullable(),
   examinateur_initial_approbation_mise_sur_le_marche: z.boolean().optional().nullable(),
@@ -158,9 +157,6 @@ export async function syncFei(
   }
   if (canWriteOwnership && body.hasOwnProperty(Prisma.FeiScalarFieldEnum.created_by_user_id)) {
     nextFei.created_by_user_id = body.created_by_user_id ? sanitize(body.created_by_user_id as string) : null;
-  }
-  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.resume_nombre_de_carcasses)) {
-    nextFei.resume_nombre_de_carcasses = body.resume_nombre_de_carcasses || null;
   }
 
   /*

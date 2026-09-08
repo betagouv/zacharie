@@ -8,7 +8,6 @@ import { Button } from '@codegouvfr/react-dsfr/Button';
 import Alert from '@codegouvfr/react-dsfr/Alert';
 import InputNotEditable from '@app/components/InputNotEditable';
 import InputVille from '@app/components/InputVille';
-import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
 import useZustandStore from '@app/zustand/store';
 import { syncData } from '@app/utils/sync-data';
 import useUser from '@app/zustand/user';
@@ -120,8 +119,6 @@ function FEIChasseurLoaded() {
   const [showErrors, setShowErrors] = useState(false);
   const [showBloc2Errors, setShowBloc2Errors] = useState(false);
   const destinataireRef = useRef<DestinatairePremierDetenteurHandle | null>(null);
-
-  const countCarcassesByEspece = useMemo(() => formatCountCarcasseByEspece(carcasses), [carcasses]);
 
   const [carcassesNotReady, atLeastOneCarcasseWithAnomalie] = useMemo(() => {
     const notReady = [];
@@ -673,7 +670,6 @@ function FEIChasseurLoaded() {
                             onClick={() => {
                               updateFei(fei.numero, {
                                 examinateur_initial_date_approbation_mise_sur_le_marche: dayjs().toDate(),
-                                resume_nombre_de_carcasses: countCarcassesByEspece.join('\n'),
                               });
                             }}
                           >
@@ -724,7 +720,6 @@ function FEIChasseurLoaded() {
                           examinateur_initial_date_approbation_mise_sur_le_marche: dayjs(
                             e.target.value
                           ).toDate(),
-                          resume_nombre_de_carcasses: countCarcassesByEspece.join('\n'),
                         });
                       },
                       defaultValue: fei?.examinateur_initial_date_approbation_mise_sur_le_marche
