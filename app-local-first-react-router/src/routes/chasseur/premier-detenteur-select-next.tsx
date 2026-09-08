@@ -43,6 +43,7 @@ import { Badge } from '@codegouvfr/react-dsfr/Badge';
 import type { EntityWithUserRelation } from '~/src/types/entity';
 import { CarcasseTransmission } from '@app/types/carcasse';
 import { isCarcasseDejaEnvoyee } from '@app/utils/carcasse-deja-envoyee';
+import { USAGE_DOMESTIQUE_ID, USAGE_DOMESTIQUE_LABEL } from '@app/utils/usage-domestique';
 
 export interface DestinatairePremierDetenteurHandle {
   validate: () => string | null;
@@ -63,6 +64,12 @@ interface DispatchGroup {
 
 // Étape « Carcasses » : soit tout part chez le destinataire, soit le chasseur retire ce qui reste.
 type CarcasseMode = 'all' | 'partial';
+
+// Dans le wizard, l'usage domestique privé est un destinataire comme un autre, sauf que rien
+// ne bouge : pas de prochain détenteur, pas de stockage, pas de transport.
+function isUsageDomestique(group: Pick<DispatchGroup, 'recipientEntityId'>): boolean {
+  return group.recipientEntityId === USAGE_DOMESTIQUE_ID;
+}
 
 // Ordre d'affichage des carcasses : groupées par espèce, dans leur ordre d'apparition.
 function orderCarcassesByEspece(carcasses: Carcasse[]): Carcasse[] {
@@ -134,6 +141,7 @@ function getTransportLabel(
   group: DispatchGroup,
   entities: Record<string, EntityWithUserRelation>
 ): string | null {
+  if (isUsageDomestique(group)) return null;
   const type = group.recipientEntityId ? entities[group.recipientEntityId]?.type : null;
   if (!needTransportForType(type)) return null;
   if (group.transportType === TransportType.PREMIER_DETENTEUR) return 'Je transporte moi-même';
@@ -162,6 +170,9 @@ function getGroupFieldErrors(
   }
   if (group.carcasseIds.length === 0) {
     errors.carcasseIds = 'Veuillez sélectionner au moins une carcasse pour cette vente ou ce don';
+  }
+  if (isUsageDomestique(group)) {
+    return errors;
   }
   if (!group.depotType) {
     errors.depotType = 'Veuillez indiquer le lieu de stockage des carcasses';
@@ -239,8 +250,11 @@ function DispatchGroupCard({
   canEdit: boolean;
   onEdit: () => void;
 }) {
+  const usageDomestique = isUsageDomestique(group);
   const recipient = group.recipientEntityId ? entities[group.recipientEntityId] : null;
-  const title = recipient?.nom_d_usage ?? `Vente / don ${index + 1}`;
+  const title = usageDomestique
+    ? USAGE_DOMESTIQUE_LABEL
+    : (recipient?.nom_d_usage ?? `Vente / don ${index + 1}`);
   const transportLabel = getTransportLabel(group, entities);
   const details = (
     <div className="flex flex-1 flex-col">
@@ -258,7 +272,11 @@ function DispatchGroupCard({
       ) : (
         <p className="text-sm/4">{formatCarcasseLotCount(groupCarcasses)}</p>
       )}
-      <p className="text-sm/4">{getDepotLabel(group, entities)}</p>
+      {usageDomestique ? (
+        <p className="text-sm/4">Je garde ces carcasses pour moi</p>
+      ) : (
+        <p className="text-sm/4">{getDepotLabel(group, entities)}</p>
+      )}
       {transportLabel && <p className="text-sm/4">{transportLabel}</p>}
       {variant === 'sent' && (
         <Badge
@@ -330,45 +348,62 @@ function CarcasseChip({
   canEdit,
   autreVenteDon,
   onClick,
+  onDelete,
 }: {
   carcasse: Carcasse;
   variant: 'retenue' | 'retiree';
   canEdit: boolean;
   autreVenteDon?: string;
   onClick: () => void;
+  onDelete?: () => void;
 }) {
   const retenue = variant === 'retenue';
   return (
-    <button
-      type="button"
-      disabled={!canEdit}
-      aria-label={`${retenue ? 'Retirer' : 'Remettre'} ${carcasse.espece} N° ${carcasse.numero_bracelet}`}
-      onClick={onClick}
+    <div
       className={[
         'flex min-h-11 w-full items-center gap-2 rounded border px-3 py-2 text-left transition-colors duration-150 sm:w-auto',
-        canEdit ? 'cursor-pointer' : 'cursor-not-allowed',
         retenue
           ? 'border-action-high-blue-france text-action-high-blue-france border-solid bg-blue-100 hover:bg-blue-50'
           : 'border-dashed border-gray-400 bg-white text-gray-700 hover:bg-gray-50',
       ].join(' ')}
     >
-      <span className="flex-1 text-sm">
-        <span className="font-bold">
-          {carcasse.espece}
-          {getCarcasseNombre(carcasse)}
-        </span>
-        <span className="ml-2">N° {carcasse.numero_bracelet}</span>
-        {autreVenteDon && <span className="ml-2 text-gray-600">chez {autreVenteDon}</span>}
-      </span>
-      <span
+      <button
+        type="button"
+        disabled={!canEdit}
+        aria-label={`${retenue ? 'Retirer' : 'Remettre'} ${carcasse.espece} N° ${carcasse.numero_bracelet}`}
+        onClick={onClick}
         className={[
-          'shrink-0',
-          retenue ? 'fr-icon-close-line' : 'fr-icon-arrow-go-back-line',
-          'fr-icon--sm',
+          'flex flex-1 items-center gap-2 border-none bg-transparent p-0 text-left text-inherit hover:bg-transparent',
+          canEdit ? 'cursor-pointer' : 'cursor-not-allowed',
         ].join(' ')}
-        aria-hidden="true"
-      />
-    </button>
+      >
+        <span className="flex-1 text-sm">
+          <span className="font-bold">
+            {carcasse.espece}
+            {getCarcasseNombre(carcasse)}
+          </span>
+          <span className="ml-2">N° {carcasse.numero_bracelet}</span>
+          {autreVenteDon && <span className="ml-2 text-gray-600">chez {autreVenteDon}</span>}
+        </span>
+        <span
+          className={[
+            'shrink-0',
+            retenue ? 'fr-icon-close-line' : 'fr-icon-arrow-go-back-line',
+            'fr-icon--sm',
+          ].join(' ')}
+          aria-hidden="true"
+        />
+      </button>
+      {onDelete && (
+        <button
+          type="button"
+          aria-label={`Supprimer de la fiche ${carcasse.espece} N° ${carcasse.numero_bracelet}`}
+          title="Supprimer de la fiche"
+          onClick={onDelete}
+          className="fr-icon-delete-bin-line fr-icon--sm shrink-0 cursor-pointer border-none bg-transparent p-0 text-gray-600 hover:text-red-700"
+        />
+      )}
+    </div>
   );
 }
 
@@ -385,6 +420,7 @@ function CarcassesStep({
   error,
   onChangeMode,
   onToggleCarcasse,
+  onDeleteCarcasse,
 }: {
   canEdit: boolean;
   mode: CarcasseMode;
@@ -395,6 +431,7 @@ function CarcassesStep({
   error?: string;
   onChangeMode: (mode: CarcasseMode) => void;
   onToggleCarcasse: (carcasseId: string) => void;
+  onDeleteCarcasse: (carcasseId: string) => void;
 }) {
   const ordered = useMemo(() => orderCarcassesByEspece(pool), [pool]);
   const selected = useMemo(() => new Set(selectedIds), [selectedIds]);
@@ -546,6 +583,7 @@ function DispatchGroupForm({
   showErrors,
   onChangeCarcasseMode,
   onToggleCarcasse,
+  onDeleteCarcasse,
   onChange,
 }: {
   group: DispatchGroup;
@@ -565,8 +603,10 @@ function DispatchGroupForm({
   showErrors: boolean;
   onChangeCarcasseMode: (mode: CarcasseMode) => void;
   onToggleCarcasse: (carcasseId: string) => void;
+  onDeleteCarcasse: (carcasseId: string) => void;
   onChange: (updates: Partial<DispatchGroup>) => void;
 }) {
+  const usageDomestique = isUsageDomestique(group);
   const prochainDetenteur = group.recipientEntityId ? entities[group.recipientEntityId] : null;
 
   // Création inline (pas de modale imbriquée dans la modale de vente / don).
@@ -689,18 +729,23 @@ function DispatchGroupForm({
         <CarcassesStep
           canEdit={canEdit}
           mode={carcasseMode}
-          recipientName={prochainDetenteur?.nom_d_usage ?? 'ce destinataire'}
+          recipientName={
+            usageDomestique
+              ? 'vous (usage domestique privé)'
+              : (prochainDetenteur?.nom_d_usage ?? 'ce destinataire')
+          }
           pool={allCarcassesRestantes}
           selectedIds={group.carcasseIds}
           carcasseToGroupLabel={carcasseToGroupLabel}
           error={errorFor('carcasseIds')}
           onChangeMode={onChangeCarcasseMode}
           onToggleCarcasse={onToggleCarcasse}
+          onDeleteCarcasse={onDeleteCarcasse}
         />
       )}
 
       {/* Étape 3 — Stockage */}
-      {showStep('Stockage') && (
+      {!usageDomestique && showStep('Stockage') && (
         <>
           <RadioButtons
             // legend="Lieu de stockage des carcasses"
@@ -858,7 +903,7 @@ function DispatchGroupForm({
       )}
 
       {/* Étape 4 — Transport */}
-      {showStep('Transport') && (
+      {!usageDomestique && showStep('Transport') && (
         <>
           <RadioButtons
             legend="Transport des carcasses jusqu'au destinataire"
@@ -965,6 +1010,7 @@ export default function DestinataireSelectPremierDetenteur({
   const navigate = useNavigate();
   const user = useUser((state) => state.user)!;
   const updateCarcassesTransmission = useZustandStore((state) => state.updateCarcassesTransmission);
+  const updateCarcasse = useZustandStore((state) => state.updateCarcasse);
   const addLog = useZustandStore((state) => state.addLog);
   const feis = useZustandStore((state) => state.feis);
   const entities = useZustandStore((state) => state.entities);
@@ -1033,11 +1079,17 @@ export default function DestinataireSelectPremierDetenteur({
   }, [ccgs]);
 
   const prochainsDetenteursOptions = useMemo(() => {
-    return prochainsDetenteurs.map((entity) => ({
-      label: getEntityDisplay(entity),
-      value: entity.id,
-    }));
-  }, [prochainsDetenteurs]);
+    return [
+      {
+        label: `Moi-même — ${user.prenom} ${user.nom_de_famille} (usage domestique privé)`,
+        value: USAGE_DOMESTIQUE_ID,
+      },
+      ...prochainsDetenteurs.map((entity) => ({
+        label: getEntityDisplay(entity),
+        value: entity.id,
+      })),
+    ];
+  }, [prochainsDetenteurs, user.prenom, user.nom_de_famille]);
 
   // Ventes / dons déjà transmis. La transmission est portée par les carcasses, pas par un lot en base :
   // on les regroupe par destinataire + stockage + transport pour reconstituer les cartes en revenant
@@ -1045,20 +1097,25 @@ export default function DestinataireSelectPremierDetenteur({
   const ventesDonsDejaEnvoyes = useMemo(() => {
     const parSignature = new Map<string, DispatchGroup>();
     for (const carcasse of carcassesDejaEnvoyees) {
+      // Les carcasses gardées pour soi n'ont ni destinataire ni stockage ni transport :
+      // elles forment un lot à part, sinon elles se mélangeraient dans une signature toute vide.
+      const usageDomestique = !!carcasse.consommateur_final_usage_domestique;
       const depotDate = carcasse.premier_detenteur_depot_ccg_at
         ? dayjs(carcasse.premier_detenteur_depot_ccg_at).format('YYYY-MM-DDTHH:mm')
         : undefined;
       const transportDate = carcasse.premier_detenteur_transport_date
         ? dayjs(carcasse.premier_detenteur_transport_date).format('YYYY-MM-DDTHH:mm')
         : undefined;
-      const signature = [
-        carcasse.premier_detenteur_prochain_detenteur_id_cache,
-        carcasse.premier_detenteur_depot_type,
-        carcasse.premier_detenteur_depot_entity_id,
-        depotDate,
-        carcasse.premier_detenteur_transport_type,
-        transportDate,
-      ].join('|');
+      const signature = usageDomestique
+        ? USAGE_DOMESTIQUE_ID
+        : [
+          carcasse.premier_detenteur_prochain_detenteur_id_cache,
+          carcasse.premier_detenteur_depot_type,
+          carcasse.premier_detenteur_depot_entity_id,
+          depotDate,
+          carcasse.premier_detenteur_transport_type,
+          transportDate,
+        ].join('|');
       const existing = parSignature.get(signature);
       if (existing) {
         existing.carcasseIds.push(carcasse.zacharie_carcasse_id);
@@ -1066,7 +1123,9 @@ export default function DestinataireSelectPremierDetenteur({
       }
       parSignature.set(signature, {
         id: `sent-${signature}`,
-        recipientEntityId: carcasse.premier_detenteur_prochain_detenteur_id_cache,
+        recipientEntityId: usageDomestique
+          ? USAGE_DOMESTIQUE_ID
+          : carcasse.premier_detenteur_prochain_detenteur_id_cache,
         carcasseIds: [carcasse.zacharie_carcasse_id],
         depotType: carcasse.premier_detenteur_depot_type,
         depotEntityId: carcasse.premier_detenteur_depot_entity_id,
@@ -1227,6 +1286,36 @@ export default function DestinataireSelectPremierDetenteur({
     });
   }, []);
 
+  // Suppression d'une carcasse depuis l'étape « Carcasses » : elle ne part chez personne et n'a
+  // pas à rester sur la fiche. Même écriture que la corbeille du bloc carcasses.
+  const deleteCarcasse = useCallback(
+    (carcasseId: string) => {
+      const carcasse = allCarcasses.find((c) => c.zacharie_carcasse_id === carcasseId);
+      if (!carcasse) return;
+      const confirmed = window.confirm(
+        `Voulez-vous supprimer de la fiche ${carcasse.espece} N° ${carcasse.numero_bracelet} ? Cette opération est irréversible`
+      );
+      if (!confirmed) return;
+      const nextPartialCarcasse: Partial<Carcasse> = { deleted_at: dayjs().toDate() };
+      updateCarcasse(carcasseId, nextPartialCarcasse);
+      addLog({
+        user_id: user.id,
+        user_role: UserRoles.CHASSEUR,
+        action: 'premier-detenteur-carcasse-delete',
+        fei_numero: fei.numero,
+        history: createHistoryInput(carcasse, nextPartialCarcasse),
+        entity_id: fei.premier_detenteur_entity_id,
+        zacharie_carcasse_id: carcasseId,
+        carcasse_intermediaire_id: null,
+        intermediaire_id: null,
+      });
+      setDraft((prev) =>
+        prev ? { ...prev, carcasseIds: prev.carcasseIds.filter((id) => id !== carcasseId) } : prev
+      );
+    },
+    [allCarcasses, updateCarcasse, addLog, user.id, fei?.numero, fei?.premier_detenteur_entity_id]
+  );
+
   const otherGroups = useMemo(
     () => dispatchGroups.filter((g) => g.id !== draft?.id),
     [dispatchGroups, draft?.id]
@@ -1259,16 +1348,20 @@ export default function DestinataireSelectPremierDetenteur({
     : null;
 
   // Étapes de la modale : le transport n'existe que si le premier détenteur doit l'organiser.
-  const draftNeedTransport = draft
-    ? needTransportForType(draft.recipientEntityId ? entities[draft.recipientEntityId]?.type : null)
-    : false;
+  const draftUsageDomestique = !!draft && isUsageDomestique(draft);
+  const draftNeedTransport =
+    !!draft &&
+    !draftUsageDomestique &&
+    needTransportForType(draft.recipientEntityId ? entities[draft.recipientEntityId]?.type : null);
   const steps = useMemo(() => {
     const nextSteps = ['Destinataire'];
     if (showCarcasseSelector) nextSteps.push('Carcasses');
+    // Rien ne quitte le chasseur : ni stockage ni transport à renseigner.
+    if (draftUsageDomestique) return nextSteps;
     nextSteps.push('Stockage');
     if (draftNeedTransport) nextSteps.push('Transport');
     return nextSteps;
-  }, [showCarcasseSelector, draftNeedTransport]);
+  }, [showCarcasseSelector, draftNeedTransport, draftUsageDomestique]);
   // Le nombre d'étapes peut diminuer (ex : passage ETG → collecteur) ; on borne l'étape courante.
   const boundedStep = Math.min(currentStep, steps.length);
 
@@ -1356,7 +1449,7 @@ export default function DestinataireSelectPremierDetenteur({
           ),
         };
       }
-      if (type === EntityTypes.CONSOMMATEUR_FINAL) {
+      if (isUsageDomestique(group) || type === EntityTypes.CONSOMMATEUR_FINAL) {
         return {
           title: 'Rappel : test trichine recommande',
           content: (
@@ -1438,6 +1531,28 @@ export default function DestinataireSelectPremierDetenteur({
       if (!group.recipientEntityId) continue;
       // Garde-fou : un groupe vidé entre-temps n'a rien à transmettre ni à journaliser.
       if (group.carcasseIds.length === 0) continue;
+      if (isUsageDomestique(group)) {
+        const nextUsageDomestique: CarcasseTransmission = {
+          consommateur_final_usage_domestique: dayjs().toDate(),
+        };
+        const carcasseRef = allCarcasses.find((c) => c.zacharie_carcasse_id === group.carcasseIds[0]);
+        updateCarcassesTransmission(group.carcasseIds, nextUsageDomestique);
+        addLog({
+          user_id: user.id,
+          user_role: UserRoles.CHASSEUR,
+          action: 'premier-detenteur-usage-domestique',
+          fei_numero: fei.numero,
+          history: createHistoryInput(
+            carcasseRef ? getCarcasseTransmission(carcasseRef) : null,
+            nextUsageDomestique
+          ),
+          entity_id: fei.premier_detenteur_entity_id,
+          zacharie_carcasse_id: null,
+          carcasse_intermediaire_id: null,
+          intermediaire_id: null,
+        });
+        continue;
+      }
       const prochainDetenteurType = entities[group.recipientEntityId]?.type;
       const needTransport = needTransportForType(prochainDetenteurType);
       const nextDepotEntityId = group.depotType === DepotType.AUCUN ? null : group.depotEntityId;
@@ -1540,40 +1655,40 @@ export default function DestinataireSelectPremierDetenteur({
   const modalMainButton: ModalProps.ActionAreaButtonProps =
     boundedStep < steps.length
       ? {
-          children: 'Suivant',
-          doClosesModal: false,
-          disabled: noCarcasseSelected,
-          nativeButtonProps: { onClick: goToNextStep },
-        }
+        children: 'Suivant',
+        doClosesModal: false,
+        disabled: noCarcasseSelected,
+        nativeButtonProps: { onClick: goToNextStep },
+      }
       : {
-          children: 'Enregistrer',
-          doClosesModal: false,
-          nativeButtonProps: { onClick: () => saveDraft() },
-        };
+        children: 'Enregistrer',
+        doClosesModal: false,
+        nativeButtonProps: { onClick: () => saveDraft() },
+      };
   // Sur la première étape, une vente / un don déjà enregistré (donc pas encore transmis) se supprime
   // depuis la modale. À la création il n'y a rien à supprimer : on ferme avec la croix.
   const modalSecondaryButton: ModalProps.ActionAreaButtonProps | null =
     boundedStep > 1
       ? {
-          children: 'Précédent',
-          priority: 'secondary',
-          doClosesModal: false,
-          nativeButtonProps: { onClick: goToPrevStep },
-        }
+        children: 'Précédent',
+        priority: 'secondary',
+        doClosesModal: false,
+        nativeButtonProps: { onClick: goToPrevStep },
+      }
       : draftMode === 'edit'
         ? {
-            children: 'Supprimer',
-            priority: 'tertiary no outline',
-            iconId: 'fr-icon-delete-bin-line',
-            className: 'text-error-main-525',
-            doClosesModal: false,
-            // On ferme la modale d'édition avant d'ouvrir la confirmation :
-            // les modales DSFR ne s'empilent pas proprement (verrou de scroll booléen).
-            onClick: () => {
-              dispatchModal.close();
-              confirmDeleteDispatchModal.open();
-            },
-          }
+          children: 'Supprimer',
+          priority: 'tertiary no outline',
+          iconId: 'fr-icon-delete-bin-line',
+          className: 'text-error-main-525',
+          doClosesModal: false,
+          // On ferme la modale d'édition avant d'ouvrir la confirmation :
+          // les modales DSFR ne s'empilent pas proprement (verrou de scroll booléen).
+          onClick: () => {
+            dispatchModal.close();
+            confirmDeleteDispatchModal.open();
+          },
+        }
         : null;
 
   return (
@@ -1600,7 +1715,7 @@ export default function DestinataireSelectPremierDetenteur({
                   group.carcasseIds.includes(c.zacharie_carcasse_id)
                 )}
                 canEdit={false}
-                onEdit={() => {}}
+                onEdit={() => { }}
               />
             ))}
             {carcassesRestantes.length > 0 &&
@@ -1730,6 +1845,7 @@ export default function DestinataireSelectPremierDetenteur({
             showErrors={showModalErrors}
             onChangeCarcasseMode={onChangeCarcasseMode}
             onToggleCarcasse={onToggleDraftCarcasse}
+            onDeleteCarcasse={deleteCarcasse}
             onChange={onChangeDraft}
           />
         )}

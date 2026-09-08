@@ -11,6 +11,7 @@ import useUser from '@app/zustand/user';
 import SuccessSvg from '@app/assets/svg/success.svg';
 import { CarcasseType, FeiOwnerRole, type Carcasse } from '@prisma/client';
 import { useGetTransmissionsForFei } from '@app/utils/get-transmissions-sorted';
+import { isCarcasseDejaEnvoyee } from '@app/utils/carcasse-deja-envoyee';
 
 export default function ChasseurFeiEnvoyée() {
   const params = useParams();
@@ -51,13 +52,13 @@ export default function ChasseurFeiEnvoyée() {
     );
   }, [transmissions]);
 
-  console.log({ transmissions });
-
+  // Le lot « pas encore transmis » contient aussi les carcasses que le premier détenteur garde pour
+  // son usage domestique privé : elles n'ont pas de destinataire, mais il n'y a plus rien à attribuer.
   const unsendCarcasses = useMemo(() => {
     if (!unsendTransmissions.length) return [];
     const _unsendCarcasses = [];
     for (const unsendTransmission of unsendTransmissions) {
-      _unsendCarcasses.push(...unsendTransmission.carcasses);
+      _unsendCarcasses.push(...unsendTransmission.carcasses.filter((c) => !isCarcasseDejaEnvoyee(c)));
     }
     return _unsendCarcasses;
   }, [unsendTransmissions]);

@@ -197,14 +197,7 @@ export function computeTransmissions({
     if (partialRefusal) transmissions[transmissionId].partialRefusals.push(partialRefusal);
     // une fois la transmission marquée non-clôturée, inutile de réévaluer son statut
     if (transmissions[transmissionId].labels.simpleStatus !== 'Clôturée') continue;
-    if (
-      transmissions[transmissionId].content.consommateur_final_usage_domestique &&
-      transmissions[transmissionId].content.premier_detenteur_user_id
-    ) {
-      continue;
-    }
-
-    // rejected, svi accepted
+    // rejected, svi accepted, gardée par le chasseur pour son usage domestique privé
     if (isCarcasseDone(carcasse)) continue;
 
     // FEI UNDER MY RESPONSABILITY
