@@ -156,7 +156,7 @@ export default function TrichinePools() {
               )
             }
           >
-            Envoyer au laboratoire{selectedIds.length ? ` (${selectedIds.length})` : ''}
+            Créer une nouvelle FTP{selectedIds.length ? ` (${selectedIds.length})` : ''}
           </Button>
         </>
       }
