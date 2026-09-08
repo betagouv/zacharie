@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
+import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import { Badge } from '@codegouvfr/react-dsfr/Badge';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
+import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
 import { toast } from 'react-toastify';
 import dayjs from 'dayjs';
 import { TrichineResultatAnalyse, TrichineType, type TrichineHistoriqueStatut } from '@prisma/client';
@@ -22,13 +24,21 @@ import {
   useTrichinePrelevementEnLot,
 } from '@app/utils/trichine-hooks';
 import {
+  getTrichineEchantillons,
   getTrichinePool,
   modifierTrichinePool,
   renoncerDeuxiemeIntention,
   retirerEchantillonDuPool,
   supprimerTrichinePool,
+  type TrichineEchantillonWithCarcasse,
   type TrichinePoolDetail,
 } from '@app/services/trichine';
+import {
+  erreurPool,
+  LIMITES_POOL_FILLE,
+  LIMITES_POOL_INITIAL,
+  LIMITES_POOL_PETITE_FILLE,
+} from '@app/utils/trichine-repartition';
 import {
   etapePool,
   poolEstFige,
@@ -40,6 +50,7 @@ import {
 
 const modifierModal = createModal({ isOpenedByDefault: false, id: 'trichine-pool-modifier' });
 const supprimerModal = createModal({ isOpenedByDefault: false, id: 'trichine-pool-supprimer' });
+const ajouterModal = createModal({ isOpenedByDefault: false, id: 'trichine-pool-ajouter-echantillon' });
 
 export default function TrichinePoolDetailPage() {
   const { reference } = useParams();
@@ -272,27 +283,39 @@ export default function TrichinePoolDetailPage() {
       <TrichineCard
         titre="Composition"
         hint={`${pool.TrichineEchantillons.length} échantillon${pool.TrichineEchantillons.length > 1 ? 's' : ''} — ${masseTotale} g`}
+        actions={
+          !fige && (
+            <Button
+              type="button"
+              size="small"
+              priority="secondary"
+              onClick={() => ajouterModal.open()}
+            >
+              Ajouter un échantillon
+            </Button>
+          )
+        }
       >
-        <ul className="m-0 list-none space-y-3 p-0">
+        <ul className="m-0 list-none divide-y divide-gray-100 p-0">
           {pool.TrichineEchantillons.map((echantillon) => {
             const lienCarcasse = carcasseLink(echantillon.Carcasse);
             return (
               <li
                 key={echantillon.id}
-                className="flex flex-wrap items-baseline justify-between gap-2 border-b border-gray-100 pb-3 last:border-0 last:pb-0"
+                className="flex items-center gap-x-4 py-3 first:pt-0 last:pb-0"
               >
-                <div>
+                <div className="min-w-0 flex-1">
                   <Link
                     to={`${basePath}/echantillons/${echantillon.reference_echantillon}`}
-                    className="fr-link"
+                    className="fr-link font-semibold"
                   >
                     {echantillon.reference_echantillon}
                   </Link>
-                  <p className="fr-text--sm fr-mb-0 text-gray-600">
+                  <p className="fr-text--xs fr-mb-0 text-gray-600">
                     {lienCarcasse ? (
                       <Link
                         to={lienCarcasse}
-                        className="fr-link fr-link--sm"
+                        className="fr-link fr-text--xs"
                       >
                         {echantillon.Carcasse.numero_bracelet}
                       </Link>
@@ -300,39 +323,43 @@ export default function TrichinePoolDetailPage() {
                       echantillon.Carcasse.numero_bracelet
                     )}
                     {echantillon.Carcasse.Fei?.commune_mise_a_mort
-                      ? ` — ${echantillon.Carcasse.Fei.commune_mise_a_mort}`
+                      ? ` · ${echantillon.Carcasse.Fei.commune_mise_a_mort}`
                       : ''}
                   </p>
                 </div>
-                <div className="flex flex-wrap items-baseline gap-2">
-                  <p className="fr-text--sm fr-mb-0 text-gray-600">
-                    {sitePrelevementLabels[echantillon.site_prelevement]} — {echantillon.masse_grammes} g —
-                    prélevé le {dayjs(echantillon.date_prelevement).format('DD/MM/YYYY')}
+                {/* Ce qui compte pour le pool — la masse — porte le poids visuel, le reste situe le prélèvement */}
+                <div className="shrink-0 text-right">
+                  <p className="fr-text--sm fr-mb-0 font-medium text-gray-900">
+                    {echantillon.masse_grammes} g
                   </p>
-                  {!fige && pool.TrichineEchantillons.length > 1 && (
-                    <button
-                      type="button"
-                      className="fr-link fr-text--sm"
-                      disabled={isSubmitting}
-                      onClick={() => {
-                        setIsSubmitting(true);
-                        retirerEchantillonDuPool(echantillon.id)
-                          .then((response) => {
-                            if (response.ok) {
-                              toast.success(`${echantillon.reference_echantillon} retiré du pool`);
-                              refresh();
-                            } else {
-                              toast.error(response.error || 'Une erreur est survenue');
-                            }
-                          })
-                          .catch(() => toast.error('Une erreur est survenue'))
-                          .finally(() => setIsSubmitting(false));
-                      }}
-                    >
-                      Retirer
-                    </button>
-                  )}
+                  <p className="fr-text--xs fr-mb-0 text-gray-600">
+                    {sitePrelevementLabels[echantillon.site_prelevement]} ·{' '}
+                    {dayjs(echantillon.date_prelevement).format('DD/MM/YYYY')}
+                  </p>
                 </div>
+                {!fige && pool.TrichineEchantillons.length > 1 && (
+                  <Button
+                    type="button"
+                    iconId="fr-icon-close-circle-line"
+                    priority="tertiary no outline"
+                    title={`Retirer ${echantillon.reference_echantillon} du pool`}
+                    disabled={isSubmitting}
+                    onClick={() => {
+                      setIsSubmitting(true);
+                      retirerEchantillonDuPool(echantillon.id)
+                        .then((response) => {
+                          if (response.ok) {
+                            toast.success(`${echantillon.reference_echantillon} retiré du pool`);
+                            refresh();
+                          } else {
+                            toast.error(response.error || 'Une erreur est survenue');
+                          }
+                        })
+                        .catch(() => toast.error('Une erreur est survenue'))
+                        .finally(() => setIsSubmitting(false));
+                    }}
+                  />
+                )}
               </li>
             );
           })}
@@ -402,6 +429,13 @@ export default function TrichinePoolDetailPage() {
         pool={pool}
         onDone={refresh}
       />
+
+      {!fige && (
+        <AjouterEchantillonModalContent
+          pool={pool}
+          onDone={refresh}
+        />
+      )}
 
       <supprimerModal.Component title={`Supprimer le pool ${pool.reference_pool}`}>
         <p className="fr-text--sm">
@@ -489,5 +523,204 @@ function ModifierModalContent({ pool, onDone }: { pool: TrichinePoolDetail; onDo
         Enregistrer
       </Button>
     </modifierModal.Component>
+  );
+}
+
+/**
+ * Ajout d'échantillons à un pool déjà constitué, tant qu'il n'est pas parti au laboratoire.
+ * Les échantillons proposés suivent la règle de composition du rang du pool : les prélèvements
+ * initiaux en attente pour un pool initial, les complémentaires réalisés sur les carcasses du
+ * pool parent pour une 2e intention. Une carcasse déjà présente n'est plus proposée : un pool
+ * ne porte qu'un échantillon par carcasse.
+ */
+function AjouterEchantillonModalContent({ pool, onDone }: { pool: TrichinePoolDetail; onDone: () => void }) {
+  const isOpen = useIsModalOpen(ajouterModal);
+  const referenceParent = pool.PoolParent?.reference_pool ?? null;
+  const [chargement, setChargement] = useState(true);
+  const [echantillons, setEchantillons] = useState<Array<TrichineEchantillonWithCarcasse>>([]);
+  const [parent, setParent] = useState<TrichinePoolDetail | null>(null);
+  const [recherche, setRecherche] = useState('');
+  const [selectedIds, setSelectedIds] = useState<Array<string>>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Les échantillons libres bougent vite : on repart des données du serveur à chaque ouverture
+  useEffect(() => {
+    if (!isOpen) return;
+    setSelectedIds([]);
+    setRecherche('');
+    setChargement(true);
+    Promise.all([
+      getTrichineEchantillons({ sansPool: true }),
+      referenceParent ? getTrichinePool(referenceParent) : null,
+    ])
+      .then(([reponseEchantillons, reponseParent]) => {
+        setEchantillons(reponseEchantillons.ok ? (reponseEchantillons.data?.echantillons ?? []) : []);
+        setParent(reponseParent?.ok ? (reponseParent.data?.pool ?? null) : null);
+      })
+      .catch(console.error)
+      .finally(() => setChargement(false));
+  }, [isOpen, referenceParent]);
+
+  const carcassesDuPool = new Set(
+    pool.TrichineEchantillons.map((echantillon) => echantillon.zacharie_carcasse_id)
+  );
+  const carcassesDuParent = new Set(
+    (parent?.TrichineEchantillons ?? []).map((echantillon) => echantillon.zacharie_carcasse_id)
+  );
+  const limites = !referenceParent
+    ? LIMITES_POOL_INITIAL
+    : parent?.pool_parent_id
+      ? LIMITES_POOL_PETITE_FILLE
+      : LIMITES_POOL_FILLE;
+
+  const proposes = echantillons.filter((echantillon) => {
+    if (carcassesDuPool.has(echantillon.zacharie_carcasse_id)) return false;
+    if (!referenceParent) return echantillon.type === TrichineType.INITIAL;
+    return (
+      echantillon.type === TrichineType.COMPLEMENTAIRE &&
+      carcassesDuParent.has(echantillon.zacharie_carcasse_id)
+    );
+  });
+
+  const terme = recherche.trim().toLowerCase();
+  const visibles = !terme
+    ? proposes
+    : proposes.filter((echantillon) =>
+        `${echantillon.reference_echantillon} ${echantillon.Carcasse.numero_bracelet ?? ''}`
+          .toLowerCase()
+          .includes(terme)
+      );
+
+  const selected = proposes.filter((echantillon) => selectedIds.includes(echantillon.id));
+
+  // Les limites du pool se comptent par carcasse : on additionne l'existant et la sélection
+  const massesParCarcasse = new Map<string, number>();
+  for (const echantillon of [...pool.TrichineEchantillons, ...selected]) {
+    massesParCarcasse.set(
+      echantillon.zacharie_carcasse_id,
+      (massesParCarcasse.get(echantillon.zacharie_carcasse_id) ?? 0) + echantillon.masse_grammes
+    );
+  }
+  const masses = [...massesParCarcasse.values()];
+  const masseTotale = masses.reduce((total, masse) => total + masse, 0);
+  const erreur = selected.length ? erreurPool(masses, limites) : null;
+
+  return (
+    <ajouterModal.Component title={`Ajouter un échantillon au pool ${pool.reference_pool}`}>
+      {chargement ? (
+        <p className="fr-text--sm fr-mb-0 py-8 text-center text-gray-600">Chargement…</p>
+      ) : proposes.length === 0 ? (
+        <p className="fr-text--sm fr-mb-0 py-8 text-center text-gray-600">
+          {referenceParent
+            ? `Aucun prélèvement complémentaire en attente sur les carcasses du pool ${referenceParent}.`
+            : "Aucun échantillon en attente de regroupement. Prélevez d'abord une carcasse de sanglier."}
+        </p>
+      ) : (
+        <>
+          <Input
+            label="Rechercher"
+            hintText="Référence d'échantillon, n° de marquage"
+            nativeInputProps={{
+              type: 'search',
+              value: recherche,
+              placeholder: 'Référence…',
+              onChange: (event) => setRecherche(event.target.value),
+            }}
+          />
+          {visibles.length === 0 ? (
+            <p className="fr-text--sm fr-mb-2w py-4 text-center text-gray-500">
+              Aucun échantillon ne correspond à votre recherche.
+            </p>
+          ) : (
+            <ul className="fr-mb-2w m-0 max-h-80 list-none overflow-y-auto p-0">
+              {visibles.map((echantillon) => {
+                const retenu = selectedIds.includes(echantillon.id);
+                return (
+                  <li
+                    key={echantillon.id}
+                    className="border-b border-gray-100 last:border-0"
+                  >
+                    <button
+                      type="button"
+                      aria-pressed={retenu}
+                      className={`flex w-full items-center justify-between gap-2 px-2 py-2 text-left hover:bg-gray-50 ${retenu ? 'bg-gray-50' : ''}`}
+                      onClick={() =>
+                        setSelectedIds((previous) =>
+                          retenu
+                            ? previous.filter((id) => id !== echantillon.id)
+                            : [...previous, echantillon.id]
+                        )
+                      }
+                    >
+                      <span className="min-w-0 text-sm">
+                        <span className="block font-semibold text-gray-900">
+                          {echantillon.reference_echantillon}
+                        </span>
+                        <span className="block text-gray-600">
+                          {echantillon.Carcasse.numero_bracelet} · {echantillon.masse_grammes} g · prélevé le{' '}
+                          {dayjs(echantillon.date_prelevement).format('DD/MM/YYYY')}
+                        </span>
+                      </span>
+                      <span
+                        aria-hidden="true"
+                        className={`text-lg leading-none font-bold ${retenu ? 'text-action-high-blue-france' : 'text-gray-600'}`}
+                      >
+                        {retenu ? '✓' : '+'}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+
+          <p className="fr-text--sm fr-mb-2w text-gray-700">
+            Pool après ajout : <strong>{masses.length}</strong> carcasse{masses.length > 1 ? 's' : ''} —{' '}
+            <strong>{masseTotale} g</strong>
+            {` (maximum ${limites.maxCarcasses} carcasse${limites.maxCarcasses > 1 ? 's' : ''}${limites.maxMasse ? `, ${limites.maxMasse} g` : ''}${limites.minMasse ? `, minimum ${limites.minMasse} g` : ''})`}
+          </p>
+
+          {erreur && (
+            <Alert
+              severity="error"
+              small
+              className="fr-mb-2w"
+              description={erreur}
+            />
+          )}
+
+          <Button
+            type="button"
+            disabled={!selected.length || !!erreur || isSubmitting}
+            onClick={() => {
+              setIsSubmitting(true);
+              modifierTrichinePool(pool.id, {
+                echantillon_ids: [
+                  ...pool.TrichineEchantillons.map((echantillon) => echantillon.id),
+                  ...selected.map((echantillon) => echantillon.id),
+                ],
+              })
+                .then((response) => {
+                  if (response.ok) {
+                    toast.success(
+                      selected.length > 1
+                        ? `${selected.length} échantillons ajoutés au pool`
+                        : `${selected[0].reference_echantillon} ajouté au pool`
+                    );
+                    ajouterModal.close();
+                    onDone();
+                  } else {
+                    toast.error(response.error || 'Une erreur est survenue');
+                  }
+                })
+                .catch(() => toast.error('Une erreur est survenue'))
+                .finally(() => setIsSubmitting(false));
+            }}
+          >
+            {selected.length > 1 ? `Ajouter ${selected.length} échantillons` : 'Ajouter au pool'}
+          </Button>
+        </>
+      )}
+    </ajouterModal.Component>
   );
 }
