@@ -8,6 +8,8 @@ import {
 import prisma from '~/prisma';
 import {
   nextReferenceFromLatest,
+  referenceEntityCode,
+  sanitizeEntityTrichineCode,
   validateNouveauPrelevement,
   validatePoolComposition,
   isFtpPartie,
@@ -30,18 +32,43 @@ vi.mock('~/service/notifications', () => ({
 vi.mock('~/third-parties/sentry', () => ({ capture: vi.fn() }));
 
 /* -------------------------------------------------------------------------- */
-/* Références E-{YY}-{séquence}                                                */
+/* Références {E|P|F}-{YY}-{code établissement}-{séquence}                     */
 /* -------------------------------------------------------------------------- */
 
 describe('nextReferenceFromLatest', () => {
-  test('première référence de l’année', () => {
-    expect(nextReferenceFromLatest('E', '26', null)).toBe('E-26-000001');
+  test('première référence de l’année pour l’établissement', () => {
+    expect(nextReferenceFromLatest('E', '26', '02', null)).toBe('E-26-02-0001');
   });
   test('incrémente la séquence', () => {
-    expect(nextReferenceFromLatest('P', '26', 'P-26-000045')).toBe('P-26-000046');
+    expect(nextReferenceFromLatest('P', '26', '02', 'P-26-02-0045')).toBe('P-26-02-0046');
   });
   test('repart à 1 si la référence est illisible', () => {
-    expect(nextReferenceFromLatest('F', '26', 'F-26-corrompue')).toBe('F-26-000001');
+    expect(nextReferenceFromLatest('F', '26', 'A3F1', 'F-26-A3F1-corrompue')).toBe('F-26-A3F1-0001');
+  });
+  test('la séquence dépasse les 4 chiffres sans casser le format', () => {
+    expect(nextReferenceFromLatest('E', '26', 'A3F1', 'E-26-A3F1-9999')).toBe('E-26-A3F1-10000');
+  });
+});
+
+describe('referenceEntityCode', () => {
+  test('code trichine de l’entité quand elle en porte un', () => {
+    expect(referenceEntityCode({ code_trichine: 'SVI01' }, 'K7M2Q')).toBe('SVI01');
+  });
+  test('repli sur l’utilisateur quand l’entité n’a pas de code', () => {
+    expect(referenceEntityCode({ code_trichine: null }, 'K7M2Q')).toBe('K7M2Q');
+  });
+  test('repli sur l’utilisateur quand le prélèvement est fait sans entité', () => {
+    expect(referenceEntityCode(null, 'K7M2Q')).toBe('K7M2Q');
+  });
+});
+
+describe('sanitizeEntityTrichineCode', () => {
+  test('majuscules et alphanumérique uniquement', () => {
+    expect(sanitizeEntityTrichineCode(' lvd-28 ')).toBe('LVD28');
+  });
+  test('un code vide vaut pas de code', () => {
+    expect(sanitizeEntityTrichineCode('  --  ')).toBeNull();
+    expect(sanitizeEntityTrichineCode(null)).toBeNull();
   });
 });
 
