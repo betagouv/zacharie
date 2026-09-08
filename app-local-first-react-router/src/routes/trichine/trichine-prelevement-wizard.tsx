@@ -22,6 +22,7 @@ import {
   ChampSelect,
   ChampTexte,
   FilEtapes,
+  Onglets,
   Pastille,
 } from '@app/components/trichine/wizard-ui';
 import { useTrichineBasePath, useTrichinePrelevementEnLot } from '@app/utils/trichine-hooks';
@@ -686,6 +687,13 @@ function decisionIpm2De(carcasse: CarcasseAPrelever): IPM2Decision {
   return carcasse.svi_ipm2_decision ?? IPM2Decision.NON_RENSEIGNEE;
 }
 
+/**
+ * Deux listes plutôt qu'une : les carcasses jamais prélevées sont le plan de travail du jour,
+ * les autres ne servent qu'à retrouver un pool, une FTP ou un résultat. Les colonnes et les
+ * filtres suivent l'onglet, une carcasse jamais prélevée n'ayant ni pool ni résultat.
+ */
+type OngletCarcasses = 'A_FAIRE' | 'FAIT';
+
 function EtapeCarcasses({
   carcasses,
   etats,
@@ -709,22 +717,50 @@ function EtapeCarcasses({
   const [pool, setPool] = useState('');
   const [ftp, setFtp] = useState('');
   const [resultat, setResultat] = useState('');
+  const [onglet, setOnglet] = useState<OngletCarcasses>('A_FAIRE');
+
+  // 2e intention : les carcasses du pool douteux sont toutes déjà prélevées, l'onglet n'a pas lieu d'être
+  const avecOnglets = !parentPoolId;
+  const { aFaire, faites } = useMemo(() => {
+    const aFaire: Array<CarcasseAPrelever> = [];
+    const faites: Array<CarcasseAPrelever> = [];
+    for (const carcasse of carcasses) {
+      (etats.has(carcasse.zacharie_carcasse_id) ? faites : aFaire).push(carcasse);
+    }
+    return { aFaire, faites };
+  }, [carcasses, etats]);
+  const listee = !avecOnglets ? carcasses : onglet === 'A_FAIRE' ? aFaire : faites;
+  const afficheDates = !avecOnglets || onglet === 'A_FAIRE';
+  const afficheRattachement = !avecOnglets || onglet === 'FAIT';
+
+  const changerOnglet = (suivant: OngletCarcasses) => {
+    setOnglet(suivant);
+    // Un filtre que l'onglet masque continuerait à restreindre la liste sans être visible
+    if (suivant === 'A_FAIRE') {
+      setPool('');
+      setFtp('');
+      setResultat('');
+    } else {
+      setMiseAMort('');
+      setReception('');
+    }
+  };
 
   const optionsFiches = useMemo(() => {
     const compte = new Map<string, number>();
-    for (const carcasse of carcasses) {
+    for (const carcasse of listee) {
       if (carcasse.fei_numero) compte.set(carcasse.fei_numero, (compte.get(carcasse.fei_numero) ?? 0) + 1);
     }
     return [...compte.entries()]
       .sort((a, b) => b[1] - a[1])
       .map(([numero, nombre]) => ({ value: numero, label: numero, nombre }));
-  }, [carcasses]);
+  }, [listee]);
 
   // On ne propose que les pools et les FTP qui portent une carcasse de la liste
   const { optionsPools, optionsFtps } = useMemo(() => {
     const pools = new Map<string, number>();
     const ftps = new Map<string, number>();
-    for (const carcasse of carcasses) {
+    for (const carcasse of listee) {
       const etat = etats.get(carcasse.zacharie_carcasse_id);
       if (!etat) continue;
       if (etat.pool) pools.set(etat.pool, (pools.get(etat.pool) ?? 0) + 1);
@@ -735,13 +771,13 @@ function EtapeCarcasses({
         .sort((a, b) => b[0].localeCompare(a[0]))
         .map(([reference, nombre]) => ({ value: reference, label: `${reference} (${nombre})` }));
     return { optionsPools: enOptions(pools), optionsFtps: enOptions(ftps) };
-  }, [carcasses, etats]);
+  }, [listee, etats]);
 
   const visibles = useMemo(() => {
     const terme = recherche.trim().toLowerCase();
     const limiteMiseAMort = miseAMort ? dayjs().subtract(Number(miseAMort), 'day') : null;
     const limiteReception = reception ? dayjs().subtract(Number(reception), 'day') : null;
-    return carcasses.filter((carcasse) => {
+    return listee.filter((carcasse) => {
       const etat = etats.get(carcasse.zacharie_carcasse_id);
       if (terme && !carcasse.numero_bracelet?.toLowerCase().includes(terme)) return false;
       if (fiche && carcasse.fei_numero !== fiche) return false;
@@ -764,7 +800,7 @@ function EtapeCarcasses({
       }
       return true;
     });
-  }, [carcasses, etats, recherche, fiche, ipm2, miseAMort, reception, pool, ftp, resultat]);
+  }, [listee, etats, recherche, fiche, ipm2, miseAMort, reception, pool, ftp, resultat]);
 
   const idsSelectionnables = visibles
     .filter((carcasse) => estPrelevable(etats.get(carcasse.zacharie_carcasse_id), parentPoolId))
@@ -785,17 +821,20 @@ function EtapeCarcasses({
         : [...selection, carcasseId]
     );
 
-  const nbAVenir = carcasses.filter((carcasse) => carcasse.a_venir).length;
-
   return (
-    <Carte
-      titre="Carcasses"
-      hint={
-        nbAVenir > 0
-          ? `${nbAVenir} carcasse${nbAVenir > 1 ? 's sont' : ' est'} arrivée${nbAVenir > 1 ? 's' : ''} chez l'ETG sans vous avoir encore été transmise${nbAVenir > 1 ? 's' : ''} : elles sont marquées « Non transmise au SVI » et restent prélevables.`
-          : undefined
-      }
-    >
+    <Carte titre="Carcasses">
+      {avecOnglets && (
+        <Onglets
+          label="Carcasses à prélever ou déjà prélevées"
+          value={onglet}
+          options={[
+            { value: 'A_FAIRE', label: 'À prélever', nombre: aFaire.length },
+            { value: 'FAIT', label: 'Déjà prélevées', nombre: faites.length },
+          ]}
+          onChange={changerOnglet}
+        />
+      )}
+
       {/* Le lot d’une 2e intention tient en une page : les filtres ne servent qu’au registre complet */}
       {!parentPoolId && (
         <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -815,7 +854,7 @@ function EtapeCarcasses({
               options={optionsFiches}
               value={optionsFiches.find((option) => option.value === fiche) ?? null}
               isClearable
-              placeholder={`Toutes les fiches (${carcasses.length})`}
+              placeholder={`Toutes les fiches (${listee.length})`}
               noOptionsMessage={() => 'Aucune fiche ne correspond'}
               onChange={(option) => setFiche((option as OptionFiche | null)?.value ?? '')}
               formatOptionLabel={(option, meta) =>
@@ -847,85 +886,93 @@ function EtapeCarcasses({
               ))}
             </ChampSelect>
           </Champ>
-          <Champ label="Réception">
-            <ChampSelect
-              value={reception}
-              onChange={(event) => setReception(event.target.value)}
-            >
-              {PERIODES.map((option) => (
-                <option
-                  key={option.value}
-                  value={option.value}
+          {afficheDates && (
+            <>
+              <Champ label="Réception">
+                <ChampSelect
+                  value={reception}
+                  onChange={(event) => setReception(event.target.value)}
                 >
-                  {option.label}
-                </option>
-              ))}
-            </ChampSelect>
-          </Champ>
-          <Champ label="Mise à mort">
-            <ChampSelect
-              value={miseAMort}
-              onChange={(event) => setMiseAMort(event.target.value)}
-            >
-              {PERIODES.map((option) => (
-                <option
-                  key={option.value}
-                  value={option.value}
+                  {PERIODES.map((option) => (
+                    <option
+                      key={option.value}
+                      value={option.value}
+                    >
+                      {option.label}
+                    </option>
+                  ))}
+                </ChampSelect>
+              </Champ>
+              <Champ label="Mise à mort">
+                <ChampSelect
+                  value={miseAMort}
+                  onChange={(event) => setMiseAMort(event.target.value)}
                 >
-                  {option.label}
-                </option>
-              ))}
-            </ChampSelect>
-          </Champ>
-          <Champ label="Pool">
-            <ChampSelect
-              value={pool}
-              onChange={(event) => setPool(event.target.value)}
-            >
-              <option value="">Tous les pools</option>
-              <option value={SANS_RATTACHEMENT}>Sans pool</option>
-              {optionsPools.map((option) => (
-                <option
-                  key={option.value}
-                  value={option.value}
+                  {PERIODES.map((option) => (
+                    <option
+                      key={option.value}
+                      value={option.value}
+                    >
+                      {option.label}
+                    </option>
+                  ))}
+                </ChampSelect>
+              </Champ>
+            </>
+          )}
+          {afficheRattachement && (
+            <>
+              <Champ label="Pool">
+                <ChampSelect
+                  value={pool}
+                  onChange={(event) => setPool(event.target.value)}
                 >
-                  {option.label}
-                </option>
-              ))}
-            </ChampSelect>
-          </Champ>
-          <Champ label="Fiche de transmission">
-            <ChampSelect
-              value={ftp}
-              onChange={(event) => setFtp(event.target.value)}
-            >
-              <option value="">Toutes les fiches de transmission</option>
-              <option value={SANS_RATTACHEMENT}>Sans fiche de transmission</option>
-              {optionsFtps.map((option) => (
-                <option
-                  key={option.value}
-                  value={option.value}
+                  <option value="">Tous les pools</option>
+                  <option value={SANS_RATTACHEMENT}>Sans pool</option>
+                  {optionsPools.map((option) => (
+                    <option
+                      key={option.value}
+                      value={option.value}
+                    >
+                      {option.label}
+                    </option>
+                  ))}
+                </ChampSelect>
+              </Champ>
+              <Champ label="Fiche de transmission">
+                <ChampSelect
+                  value={ftp}
+                  onChange={(event) => setFtp(event.target.value)}
                 >
-                  {option.label}
-                </option>
-              ))}
-            </ChampSelect>
-          </Champ>
-          <Champ label="Résultat du laboratoire">
-            <ChampSelect
-              value={resultat}
-              onChange={(event) => setResultat(event.target.value)}
-            >
-              {RESULTAT_FILTRES.map((option) => (
-                <option
-                  key={option.value}
-                  value={option.value}
+                  <option value="">Toutes les fiches de transmission</option>
+                  <option value={SANS_RATTACHEMENT}>Sans fiche de transmission</option>
+                  {optionsFtps.map((option) => (
+                    <option
+                      key={option.value}
+                      value={option.value}
+                    >
+                      {option.label}
+                    </option>
+                  ))}
+                </ChampSelect>
+              </Champ>
+              <Champ label="Résultat du laboratoire">
+                <ChampSelect
+                  value={resultat}
+                  onChange={(event) => setResultat(event.target.value)}
                 >
-                  {option.label}
-                </option>
-              ))}
-            </ChampSelect>
-          </Champ>
+                  {RESULTAT_FILTRES.map((option) => (
+                    <option
+                      key={option.value}
+                      value={option.value}
+                    >
+                      {option.label}
+                    </option>
+                  ))}
+                </ChampSelect>
+              </Champ>
+            </>
+          )}
         </div>
       )}
 
@@ -933,8 +980,8 @@ function EtapeCarcasses({
         <p className="m-0 text-sm text-gray-700">
           <strong>{visibles.length}</strong> carcasse{visibles.length > 1 ? 's' : ''} affichée
           {visibles.length > 1 ? 's' : ''}
-          {filtresActifs > 0 && <> sur {carcasses.length}</>} · <strong>{selection.length}</strong>{' '}
-          sélectionnée{selection.length > 1 ? 's' : ''}
+          {filtresActifs > 0 && <> sur {listee.length}</>} · <strong>{selection.length}</strong> sélectionnée
+          {selection.length > 1 ? 's' : ''}
           {selectionMasquee > 0 && (
             <span className="text-gray-500"> (dont {selectionMasquee} hors filtres)</span>
           )}
@@ -986,9 +1033,13 @@ function EtapeCarcasses({
 
       {visibles.length === 0 ? (
         <p className="m-0 py-8 text-center text-sm text-gray-500">
-          {carcasses.length === 0
-            ? 'Aucun sanglier dans le registre. Les carcasses retirées de leur fiche ne sont pas proposées.'
-            : 'Aucune carcasse ne correspond aux filtres.'}
+          {listee.length > 0
+            ? 'Aucune carcasse ne correspond aux filtres.'
+            : carcasses.length === 0
+              ? 'Aucun sanglier dans le registre. Les carcasses retirées de leur fiche ne sont pas proposées.'
+              : onglet === 'A_FAIRE'
+                ? 'Tous les sangliers du registre ont déjà été prélevés.'
+                : 'Aucun sanglier prélevé pour le moment.'}
         </p>
       ) : (
         <div className="max-h-[32rem] overflow-y-auto">
@@ -998,11 +1049,19 @@ function EtapeCarcasses({
                 <th className="w-10 py-2 font-medium" />
                 <th className="py-2 font-medium">N° de marquage</th>
                 <th className="py-2 font-medium">Fiche</th>
-                <th className="py-2 font-medium whitespace-nowrap">Réception</th>
-                <th className="py-2 font-medium whitespace-nowrap">Mise à mort</th>
-                <th className="py-2 font-medium">Pool</th>
-                <th className="py-2 font-medium">FTP</th>
-                <th className="py-2 font-medium">Résultat</th>
+                {afficheDates && (
+                  <>
+                    <th className="py-2 font-medium whitespace-nowrap">Réception</th>
+                    <th className="py-2 font-medium whitespace-nowrap">Mise à mort</th>
+                  </>
+                )}
+                {afficheRattachement && (
+                  <>
+                    <th className="py-2 font-medium">Pool</th>
+                    <th className="py-2 font-medium">FTP</th>
+                    <th className="py-2 font-medium">Résultat</th>
+                  </>
+                )}
                 <th className="py-2 text-right font-medium">IPM2</th>
               </tr>
             </thead>
@@ -1052,44 +1111,52 @@ function EtapeCarcasses({
                     >
                       {carcasse.fei_numero}
                     </td>
-                    <td className="py-2 whitespace-nowrap text-gray-600">
-                      {carcasse.latest_intermediaire_signed_at
-                        ? dayjs(carcasse.latest_intermediaire_signed_at).format('DD/MM/YYYY')
-                        : '—'}
-                    </td>
-                    <td className="py-2 whitespace-nowrap text-gray-600">
-                      {carcasse.date_mise_a_mort
-                        ? dayjs(carcasse.date_mise_a_mort).format('DD/MM/YYYY')
-                        : '—'}
-                    </td>
-                    <td className="py-2 whitespace-nowrap text-gray-600">
-                      {!etat ? (
-                        '—'
-                      ) : etat.pool ? (
-                        <LienTrichine to={`${basePath}/pools/${etat.pool}`}>{etat.pool}</LienTrichine>
-                      ) : (
-                        <Pastille ton="info">À regrouper</Pastille>
-                      )}
-                    </td>
-                    <td className="py-2 whitespace-nowrap text-gray-600">
-                      {etat?.ftps.length
-                        ? etat.ftps.map((numero, index) => (
-                            <span key={numero}>
-                              {index > 0 && ', '}
-                              <LienTrichine to={`${basePath}/ftp/${numero}`}>{numero}</LienTrichine>
-                            </span>
-                          ))
-                        : '—'}
-                    </td>
-                    <td className="py-2 whitespace-nowrap text-gray-600">
-                      {etat?.resultat ? (
-                        <Pastille ton={RESULTAT_TONS[etat.resultat]}>
-                          {resultatCourtLabels[etat.resultat]}
-                        </Pastille>
-                      ) : (
-                        '—'
-                      )}
-                    </td>
+                    {afficheDates && (
+                      <>
+                        <td className="py-2 whitespace-nowrap text-gray-600">
+                          {carcasse.latest_intermediaire_signed_at
+                            ? dayjs(carcasse.latest_intermediaire_signed_at).format('DD/MM/YYYY')
+                            : '—'}
+                        </td>
+                        <td className="py-2 whitespace-nowrap text-gray-600">
+                          {carcasse.date_mise_a_mort
+                            ? dayjs(carcasse.date_mise_a_mort).format('DD/MM/YYYY')
+                            : '—'}
+                        </td>
+                      </>
+                    )}
+                    {afficheRattachement && (
+                      <>
+                        <td className="py-2 whitespace-nowrap text-gray-600">
+                          {!etat ? (
+                            '—'
+                          ) : etat.pool ? (
+                            <LienTrichine to={`${basePath}/pools/${etat.pool}`}>{etat.pool}</LienTrichine>
+                          ) : (
+                            <Pastille ton="info">À regrouper</Pastille>
+                          )}
+                        </td>
+                        <td className="py-2 whitespace-nowrap text-gray-600">
+                          {etat?.ftps.length
+                            ? etat.ftps.map((numero, index) => (
+                                <span key={numero}>
+                                  {index > 0 && ', '}
+                                  <LienTrichine to={`${basePath}/ftp/${numero}`}>{numero}</LienTrichine>
+                                </span>
+                              ))
+                            : '—'}
+                        </td>
+                        <td className="py-2 whitespace-nowrap text-gray-600">
+                          {etat?.resultat ? (
+                            <Pastille ton={RESULTAT_TONS[etat.resultat]}>
+                              {resultatCourtLabels[etat.resultat]}
+                            </Pastille>
+                          ) : (
+                            '—'
+                          )}
+                        </td>
+                      </>
+                    )}
                     <td className="py-2 text-right">
                       <DecisionIpm2 carcasse={carcasse} />
                     </td>
