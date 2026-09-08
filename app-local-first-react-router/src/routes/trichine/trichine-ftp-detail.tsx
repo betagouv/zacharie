@@ -6,6 +6,7 @@ import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Select } from '@codegouvfr/react-dsfr/Select';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
+import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
 import { toast } from 'react-toastify';
 import dayjs from 'dayjs';
 import { EntityTypes, TrichineStatutLogistiqueFTP, type TrichineHistoriqueStatut } from '@prisma/client';
@@ -23,15 +24,18 @@ import {
   envoyerTrichineFTP,
   getTrichineFTP,
   getTrichineLaboratoires,
+  getTrichinePools,
   modifierTrichineFTP,
   supprimerTrichineFTP,
   type TrichineFTPDetail as TrichineFTPDetailType,
   type TrichineLaboratoire,
   type TrichinePartieConcernee,
+  type TrichinePoolPopulated,
 } from '@app/services/trichine';
 import { useTrichineBasePath } from '@app/utils/trichine-hooks';
 import {
   etapeFTP,
+  poolSansFTP,
   resultatAnalyseLabels,
   resultatBadgeSeverity,
   statutAnalyseBadgeSeverity,
@@ -42,6 +46,12 @@ import {
 const modifierModal = createModal({ isOpenedByDefault: false, id: 'trichine-ftp-modifier' });
 const supprimerModal = createModal({ isOpenedByDefault: false, id: 'trichine-ftp-supprimer' });
 const annulerModal = createModal({ isOpenedByDefault: false, id: 'trichine-ftp-annuler' });
+const ajouterPoolModal = createModal({ isOpenedByDefault: false, id: 'trichine-ftp-ajouter-pool' });
+
+/** Nombre de carcasses représentées par un pool : une carcasse peut porter plusieurs échantillons. */
+function carcassesDuPool(pool: { TrichineEchantillons: Array<{ zacharie_carcasse_id: string }> }) {
+  return new Set(pool.TrichineEchantillons.map((echantillon) => echantillon.zacharie_carcasse_id)).size;
+}
 
 /** Détail d'une fiche de transmission des prélèvements : composition, envoi, suivi. */
 export default function TrichineFTPDetail() {
@@ -268,43 +278,92 @@ export default function TrichineFTPDetail() {
       <TrichineCard
         titre="Pools transmis"
         hint={`${pools.length} pool${pools.length > 1 ? 's' : ''} — ${echantillons.length} échantillon${echantillons.length > 1 ? 's' : ''}`}
+        actions={
+          isBrouillon && (
+            <Button
+              type="button"
+              size="small"
+              priority="secondary"
+              onClick={() => ajouterPoolModal.open()}
+            >
+              Ajouter un pool
+            </Button>
+          )
+        }
       >
-        <ul className="m-0 list-none space-y-4 p-0">
+        <ul className="m-0 list-none divide-y divide-gray-100 p-0">
           {pools.map((pool) => (
             <li
               key={pool.id}
-              className="border-b border-gray-100 pb-4 last:border-0 last:pb-0"
+              className="flex items-center gap-x-4 py-3 first:pt-0 last:pb-0"
             >
-              <div className="flex flex-wrap items-center gap-2">
-                <Link
-                  to={`${basePath}/pools/${pool.reference_pool}`}
-                  className="fr-link font-semibold"
-                >
-                  {pool.reference_pool}
-                </Link>
-                <Badge
-                  small
-                  severity={statutAnalyseBadgeSeverity(pool.statut)}
-                >
-                  {statutAnalyseLabels[pool.statut]}
-                </Badge>
-                {!!pool.resultat_analyse && (
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Link
+                    to={`${basePath}/pools/${pool.reference_pool}`}
+                    className="fr-link font-semibold"
+                  >
+                    {pool.reference_pool}
+                  </Link>
                   <Badge
                     small
-                    severity={resultatBadgeSeverity(pool.resultat_analyse)}
+                    severity={statutAnalyseBadgeSeverity(pool.statut)}
                   >
-                    {resultatAnalyseLabels[pool.resultat_analyse]}
+                    {statutAnalyseLabels[pool.statut]}
                   </Badge>
+                  {!!pool.resultat_analyse && (
+                    <Badge
+                      small
+                      severity={resultatBadgeSeverity(pool.resultat_analyse)}
+                    >
+                      {resultatAnalyseLabels[pool.resultat_analyse]}
+                    </Badge>
+                  )}
+                </div>
+                <p className="fr-text--xs fr-mb-0 text-gray-600">
+                  {pool.TrichineEchantillons.map((echantillon) => echantillon.Carcasse.numero_bracelet)
+                    .filter(Boolean)
+                    .join(' · ')}
+                </p>
+                {!!pool.raison_refus && (
+                  <p className="fr-text--xs fr-mb-0 text-red-700">Refus : {pool.raison_refus}</p>
                 )}
               </div>
-              <p className="fr-text--sm fr-mb-0 text-gray-600">
-                {pool.TrichineEchantillons.length} échantillon
-                {pool.TrichineEchantillons.length > 1 ? 's' : ''} —{' '}
-                {pool.TrichineEchantillons.map((echantillon) => echantillon.Carcasse.numero_bracelet)
-                  .filter(Boolean)
-                  .join(', ')}
-              </p>
-              {!!pool.raison_refus && <p className="fr-text--sm fr-mb-0">Refus : {pool.raison_refus}</p>}
+              {/* Ce que le colis contient pour ce pool : le décompte prime, le détail est dans le pool */}
+              <div className="shrink-0 text-right">
+                <p className="fr-text--sm fr-mb-0 font-medium whitespace-nowrap text-gray-900">
+                  {pool.TrichineEchantillons.length} échantillon
+                  {pool.TrichineEchantillons.length > 1 ? 's' : ''}
+                </p>
+                <p className="fr-text--xs fr-mb-0 whitespace-nowrap text-gray-600">
+                  {carcassesDuPool(pool)} carcasse{carcassesDuPool(pool) > 1 ? 's' : ''}
+                </p>
+              </div>
+              {isBrouillon && pools.length > 1 && (
+                <Button
+                  type="button"
+                  iconId="fr-icon-close-circle-line"
+                  priority="tertiary no outline"
+                  title={`Retirer ${pool.reference_pool} de la fiche`}
+                  disabled={isSubmitting}
+                  onClick={() => {
+                    setIsSubmitting(true);
+                    modifierTrichineFTP(ftp.id, {
+                      pool_ids: pools.filter((autre) => autre.id !== pool.id).map((autre) => autre.id),
+                    })
+                      .then((response) => {
+                        if (response.ok) {
+                          toast.success(`${pool.reference_pool} retiré de la fiche`);
+                          refresh();
+                        } else {
+                          toast.error(response.error || 'Une erreur est survenue');
+                        }
+                      })
+                      .catch(() => toast.error('Une erreur est survenue'))
+                      .finally(() => setIsSubmitting(false));
+                  }}
+                />
+              )}
             </li>
           ))}
         </ul>
@@ -343,6 +402,14 @@ export default function TrichineFTPDetail() {
         ftp={ftp}
         onDone={refresh}
       />
+
+      {isBrouillon && (
+        <AjouterPoolModalContent
+          ftp={ftp}
+          poolIdsDeLaFiche={pools.map((pool) => pool.id)}
+          onDone={refresh}
+        />
+      )}
 
       <supprimerModal.Component title={`Supprimer le brouillon ${ftp.numero_fiche}`}>
         <p className="fr-text--sm">
@@ -507,5 +574,148 @@ function AnnulerModalContent({ ftp, onDone }: { ftp: TrichineFTPDetailType; onDo
         Confirmer l'annulation
       </Button>
     </annulerModal.Component>
+  );
+}
+
+/**
+ * Ajout de pools à une fiche encore au brouillon : une fois le colis parti, la fiche papier fait
+ * foi et la composition ne bouge plus. Ne sont proposés que les pools qu'aucune fiche vivante
+ * n'emporte déjà.
+ */
+function AjouterPoolModalContent({
+  ftp,
+  poolIdsDeLaFiche,
+  onDone,
+}: {
+  ftp: TrichineFTPDetailType;
+  poolIdsDeLaFiche: Array<string>;
+  onDone: () => void;
+}) {
+  const isOpen = useIsModalOpen(ajouterPoolModal);
+  const [chargement, setChargement] = useState(true);
+  const [pools, setPools] = useState<Array<TrichinePoolPopulated>>([]);
+  const [recherche, setRecherche] = useState('');
+  const [selectedIds, setSelectedIds] = useState<Array<string>>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Les pools libres bougent vite : on repart des données du serveur à chaque ouverture
+  useEffect(() => {
+    if (!isOpen) return;
+    setSelectedIds([]);
+    setRecherche('');
+    setChargement(true);
+    getTrichinePools()
+      .then((response) => setPools(response.ok ? (response.data?.pools ?? []) : []))
+      .catch(console.error)
+      .finally(() => setChargement(false));
+  }, [isOpen]);
+
+  const disponibles = pools.filter(poolSansFTP);
+  const terme = recherche.trim().toLowerCase();
+  const visibles = !terme
+    ? disponibles
+    : disponibles.filter((pool) => pool.reference_pool.toLowerCase().includes(terme));
+  const selected = disponibles.filter((pool) => selectedIds.includes(pool.id));
+
+  return (
+    <ajouterPoolModal.Component title={`Ajouter un pool à la fiche ${ftp.numero_fiche}`}>
+      {chargement ? (
+        <p className="fr-text--sm fr-mb-0 py-8 text-center text-gray-600">Chargement…</p>
+      ) : disponibles.length === 0 ? (
+        <p className="fr-text--sm fr-mb-0 py-8 text-center text-gray-600">
+          Aucun pool disponible : tous vos pools sont déjà rattachés à une fiche.
+        </p>
+      ) : (
+        <>
+          <Input
+            label="Rechercher"
+            hintText="Référence de pool"
+            nativeInputProps={{
+              type: 'search',
+              value: recherche,
+              placeholder: 'Référence…',
+              onChange: (event) => setRecherche(event.target.value),
+            }}
+          />
+          {visibles.length === 0 ? (
+            <p className="fr-text--sm fr-mb-2w py-4 text-center text-gray-500">
+              Aucun pool ne correspond à votre recherche.
+            </p>
+          ) : (
+            <ul className="fr-mb-2w m-0 max-h-80 list-none overflow-y-auto p-0">
+              {visibles.map((pool) => {
+                const retenu = selectedIds.includes(pool.id);
+                return (
+                  <li
+                    key={pool.id}
+                    className="border-b border-gray-100 last:border-0"
+                  >
+                    <button
+                      type="button"
+                      aria-pressed={retenu}
+                      className={`flex w-full items-center justify-between gap-2 px-2 py-2 text-left hover:bg-gray-50 ${retenu ? 'bg-gray-50' : ''}`}
+                      onClick={() =>
+                        setSelectedIds((previous) =>
+                          retenu ? previous.filter((id) => id !== pool.id) : [...previous, pool.id]
+                        )
+                      }
+                    >
+                      <span className="min-w-0 text-sm">
+                        <span className="block font-semibold text-gray-900">{pool.reference_pool}</span>
+                        <span className="block text-gray-600">
+                          {pool.TrichineEchantillons.length} échantillon
+                          {pool.TrichineEchantillons.length > 1 ? 's' : ''} · {carcassesDuPool(pool)} carcasse
+                          {carcassesDuPool(pool) > 1 ? 's' : ''} · constitué le{' '}
+                          {dayjs(pool.date_constitution).format('DD/MM/YYYY')}
+                        </span>
+                      </span>
+                      <span
+                        aria-hidden="true"
+                        className={`text-lg leading-none font-bold ${retenu ? 'text-action-high-blue-france' : 'text-gray-600'}`}
+                      >
+                        {retenu ? '✓' : '+'}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+
+          <p className="fr-text--sm fr-mb-2w text-gray-700">
+            Fiche après ajout : <strong>{poolIdsDeLaFiche.length + selected.length}</strong> pool
+            {poolIdsDeLaFiche.length + selected.length > 1 ? 's' : ''}
+          </p>
+
+          <Button
+            type="button"
+            disabled={!selected.length || isSubmitting}
+            onClick={() => {
+              setIsSubmitting(true);
+              modifierTrichineFTP(ftp.id, {
+                pool_ids: [...poolIdsDeLaFiche, ...selected.map((pool) => pool.id)],
+              })
+                .then((response) => {
+                  if (response.ok) {
+                    toast.success(
+                      selected.length > 1
+                        ? `${selected.length} pools ajoutés à la fiche`
+                        : `${selected[0].reference_pool} ajouté à la fiche`
+                    );
+                    ajouterPoolModal.close();
+                    onDone();
+                  } else {
+                    toast.error(response.error || 'Une erreur est survenue');
+                  }
+                })
+                .catch(() => toast.error('Une erreur est survenue'))
+                .finally(() => setIsSubmitting(false));
+            }}
+          >
+            {selected.length > 1 ? `Ajouter ${selected.length} pools` : 'Ajouter à la fiche'}
+          </Button>
+        </>
+      )}
+    </ajouterPoolModal.Component>
   );
 }
