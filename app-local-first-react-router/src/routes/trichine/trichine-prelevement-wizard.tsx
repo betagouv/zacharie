@@ -121,7 +121,7 @@ const MODES: Array<{ value: ModeRegroupement; label: string; hint: string }> = [
 
 /**
  * Rang du pool qu'on s'apprête à constituer. En 2e intention, on re-prélève sur les carcasses
- * d'un pool douteux pour resserrer la recherche : une fille regroupe au plus 4 carcasses du
+ * d'un pool douteux pour resserrer la recherche : une fille regroupe au plus 5 carcasses du
  * pool mère, une petite-fille en isole une seule (cf doc/trichine.md §5.1).
  */
 type ModePrelevement =

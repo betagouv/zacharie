@@ -104,20 +104,20 @@ describe('reconcilierPools', () => {
   });
 });
 
-// 2e intention : les limites changent de rang. Une fille regroupe au plus 4 carcasses du pool
+// 2e intention : les limites changent de rang. Une fille regroupe au plus 5 carcasses du pool
 // mère, une petite-fille en isole une seule avec 50 g minimum (cf doc/trichine.md §9).
 describe('limites des pools de 2e intention', () => {
-  test('un pool fille coupe à 4 carcasses, sans limite de masse', () => {
-    const pools = repartirEnPools(lot(9, 20), LIMITES_POOL_FILLE);
-    expect(pools.map((pool) => pool.length)).toEqual([4, 4, 1]);
+  test('un pool fille coupe à 5 carcasses, sans limite de masse', () => {
+    const pools = repartirEnPools(lot(11, 20), LIMITES_POOL_FILLE);
+    expect(pools.map((pool) => pool.length)).toEqual([5, 5, 1]);
   });
 
-  test('un pool fille de 5 carcasses est signalé', () => {
-    expect(erreurPool([20, 20, 20, 20, 20], LIMITES_POOL_FILLE)).toMatch(/maximum 4/);
+  test('un pool fille de 6 carcasses est signalé', () => {
+    expect(erreurPool([20, 20, 20, 20, 20, 20], LIMITES_POOL_FILLE)).toMatch(/maximum 5/);
   });
 
-  test('4 carcasses à 20 g passent, alors que 100 g dépasseraient un pool initial', () => {
-    expect(erreurPool([20, 20, 20, 20], LIMITES_POOL_FILLE)).toBeNull();
+  test('5 carcasses à 20 g passent, alors que 100 g dépasseraient un pool initial', () => {
+    expect(erreurPool([20, 20, 20, 20, 20], LIMITES_POOL_FILLE)).toBeNull();
   });
 
   test('une petite-fille isole une seule carcasse', () => {
@@ -134,7 +134,7 @@ describe('limites des pools de 2e intention', () => {
 
   test('le regroupement par détenteur respecte aussi les limites du rang', () => {
     const carcasses = [
-      ...lot(5, 20).map((c) => ({ ...c, detenteur: 'A' })),
+      ...lot(6, 20).map((c) => ({ ...c, detenteur: 'A' })),
       ...lot(2, 20).map((c) => ({
         ...c,
         zacharie_carcasse_id: `b${c.zacharie_carcasse_id}`,
@@ -146,6 +146,6 @@ describe('limites des pools de 2e intention', () => {
       (carcasse) => (carcasse as never as { detenteur: string }).detenteur,
       LIMITES_POOL_FILLE
     );
-    expect(pools.map((pool) => pool.length)).toEqual([4, 1, 2]);
+    expect(pools.map((pool) => pool.length)).toEqual([5, 1, 2]);
   });
 });

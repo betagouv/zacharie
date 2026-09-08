@@ -26,7 +26,7 @@ export const TRICHINE_POOL_MAX_CARCASSES = 19;
 export const TRICHINE_POOL_MAX_MASSE_GRAMMES = 100;
 
 // Contraintes des pools de 2e intention (miroir de api-express/src/utils/trichine.ts)
-export const TRICHINE_POOL_FILLE_MAX_CARCASSES = 4;
+export const TRICHINE_POOL_FILLE_MAX_CARCASSES = 5;
 export const TRICHINE_POOL_PETITE_FILLE_MIN_MASSE_GRAMMES = 50;
 
 // Masses de prélèvement par défaut selon le rang du pool
