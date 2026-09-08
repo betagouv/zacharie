@@ -1232,9 +1232,9 @@ export default function DestinataireSelectPremierDetenteur({
     [dispatchGroups, draft?.id]
   );
 
-  // Étape « Carcasses » dès qu'il reste quelque chose à envoyer : avec une seule carcasse
-  // elle se réduit à un récapitulatif.
-  const showCarcasseSelector = carcassesRestantes.length > 0;
+  // Étape « Carcasses » seulement s'il y a de quoi répartir : avec une seule carcasse
+  // elle n'apporte rien, la carcasse part avec la vente / le don.
+  const showCarcasseSelector = carcassesRestantes.length > 1;
 
   const draftCarcasseToGroupLabel = useMemo(() => {
     const map: Record<string, string> = {};
