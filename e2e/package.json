@@ -14,7 +14,6 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
-    "@bgotink/playwright-coverage": "^0.3.2",
     "@playwright/test": "^1.53.2",
     "@types/node": "^24.0.10",
     "bcryptjs": "^3.0.2",

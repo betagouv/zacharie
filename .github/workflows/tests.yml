@@ -197,13 +197,6 @@ jobs:
           PGBASEURL: postgres://postgres:postgres@localhost:5432
           POSTGRESQL_ADDON_URI: postgres://postgres:postgres@localhost:5432/zacharietest
 
-      - name: Rename coverage for shard merging
-        if: ${{ !cancelled() }}
-        run: |
-          if [ -f e2e/coverage/coverage.json ]; then
-            mv e2e/coverage/coverage.json e2e/coverage/coverage-${{ matrix.shard }}.json
-          fi
-
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
@@ -215,7 +208,7 @@ jobs:
         if: ${{ !cancelled() }}
         with:
           name: coverage-${{ matrix.shard }}
-          path: e2e/coverage/coverage-${{ matrix.shard }}.json
+          path: e2e/.nyc_output
           retention-days: 7
           if-no-files-found: ignore
 

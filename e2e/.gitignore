@@ -7,4 +7,5 @@ node_modules/
 /playwright/.cache/
 
 # Coverage
+/.nyc_output/
 /coverage/

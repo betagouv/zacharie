@@ -1,6 +1,6 @@
-import { mergeTests, expect } from '@playwright/test';
-import { test as testWithCoverage } from '@bgotink/playwright-coverage';
-import { test as base } from '@playwright/test';
+import { test as base, expect } from '@playwright/test';
+import * as fs from 'fs';
+import * as path from 'path';
 
 // `capture('Transmssion differs from one of the carcasses')` is a "this must never happen" telemetry:
 // every carcasse of a single transmission must agree on the fields they share (see
@@ -11,7 +11,9 @@ import { test as base } from '@playwright/test';
 // Specs import { test, expect } from this module instead of '@playwright/test' to get the guard for free.
 const TRANSMISSION_DIFFER_MESSAGE = 'Transmssion differs from one of the carcasses';
 
-const baseWithGuard = base.extend({
+const coverageDir = path.join(__dirname, '..', '.nyc_output');
+
+export const test = base.extend({
   page: async ({ page }, use, testInfo) => {
     const offendingLogs: string[] = [];
     page.on('console', (msg) => {
@@ -20,6 +22,18 @@ const baseWithGuard = base.extend({
       }
     });
     await use(page);
+
+    // Collect Istanbul coverage from the browser
+    const coverage = await page.evaluate(() => (window as any).__coverage__);
+    if (coverage) {
+      if (!fs.existsSync(coverageDir)) {
+        fs.mkdirSync(coverageDir, { recursive: true });
+      }
+      const safeName = testInfo.titlePath.join('--').replace(/[^a-zA-Z0-9-]/g, '_');
+      const filePath = path.join(coverageDir, `coverage-${safeName}-${testInfo.workerIndex}.json`);
+      fs.writeFileSync(filePath, JSON.stringify(coverage));
+    }
+
     expect(
       offendingLogs,
       `capture('${TRANSMISSION_DIFFER_MESSAGE}') fired ${offendingLogs.length}× during "${testInfo.title}" — ` +
@@ -29,8 +43,6 @@ const baseWithGuard = base.extend({
     ).toHaveLength(0);
   },
 });
-
-export const test = mergeTests(testWithCoverage, baseWithGuard);
 
 export { expect };
 export type { Page } from '@playwright/test';
