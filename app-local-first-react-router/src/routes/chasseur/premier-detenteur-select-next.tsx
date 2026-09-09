@@ -348,14 +348,12 @@ function CarcasseChip({
   canEdit,
   autreVenteDon,
   onClick,
-  onDelete,
 }: {
   carcasse: Carcasse;
   variant: 'retenue' | 'retiree';
   canEdit: boolean;
   autreVenteDon?: string;
   onClick: () => void;
-  onDelete?: () => void;
 }) {
   const retenue = variant === 'retenue';
   return (
@@ -394,15 +392,6 @@ function CarcasseChip({
           aria-hidden="true"
         />
       </button>
-      {onDelete && (
-        <button
-          type="button"
-          aria-label={`Supprimer de la fiche ${carcasse.espece} N° ${carcasse.numero_bracelet}`}
-          title="Supprimer de la fiche"
-          onClick={onDelete}
-          className="fr-icon-delete-bin-line fr-icon--sm shrink-0 cursor-pointer border-none bg-transparent p-0 text-gray-600 hover:text-red-700"
-        />
-      )}
     </div>
   );
 }
@@ -420,7 +409,6 @@ function CarcassesStep({
   error,
   onChangeMode,
   onToggleCarcasse,
-  onDeleteCarcasse,
 }: {
   canEdit: boolean;
   mode: CarcasseMode;
@@ -431,7 +419,6 @@ function CarcassesStep({
   error?: string;
   onChangeMode: (mode: CarcasseMode) => void;
   onToggleCarcasse: (carcasseId: string) => void;
-  onDeleteCarcasse: (carcasseId: string) => void;
 }) {
   const ordered = useMemo(() => orderCarcassesByEspece(pool), [pool]);
   const selected = useMemo(() => new Set(selectedIds), [selectedIds]);
@@ -583,7 +570,6 @@ function DispatchGroupForm({
   showErrors,
   onChangeCarcasseMode,
   onToggleCarcasse,
-  onDeleteCarcasse,
   onChange,
 }: {
   group: DispatchGroup;
@@ -603,7 +589,6 @@ function DispatchGroupForm({
   showErrors: boolean;
   onChangeCarcasseMode: (mode: CarcasseMode) => void;
   onToggleCarcasse: (carcasseId: string) => void;
-  onDeleteCarcasse: (carcasseId: string) => void;
   onChange: (updates: Partial<DispatchGroup>) => void;
 }) {
   const usageDomestique = isUsageDomestique(group);
@@ -740,7 +725,6 @@ function DispatchGroupForm({
           error={errorFor('carcasseIds')}
           onChangeMode={onChangeCarcasseMode}
           onToggleCarcasse={onToggleCarcasse}
-          onDeleteCarcasse={onDeleteCarcasse}
         />
       )}
 
@@ -1010,7 +994,6 @@ export default function DestinataireSelectPremierDetenteur({
   const navigate = useNavigate();
   const user = useUser((state) => state.user)!;
   const updateCarcassesTransmission = useZustandStore((state) => state.updateCarcassesTransmission);
-  const updateCarcasse = useZustandStore((state) => state.updateCarcasse);
   const addLog = useZustandStore((state) => state.addLog);
   const feis = useZustandStore((state) => state.feis);
   const entities = useZustandStore((state) => state.entities);
@@ -1285,36 +1268,6 @@ export default function DestinataireSelectPremierDetenteur({
       };
     });
   }, []);
-
-  // Suppression d'une carcasse depuis l'étape « Carcasses » : elle ne part chez personne et n'a
-  // pas à rester sur la fiche. Même écriture que la corbeille du bloc carcasses.
-  const deleteCarcasse = useCallback(
-    (carcasseId: string) => {
-      const carcasse = allCarcasses.find((c) => c.zacharie_carcasse_id === carcasseId);
-      if (!carcasse) return;
-      const confirmed = window.confirm(
-        `Voulez-vous supprimer de la fiche ${carcasse.espece} N° ${carcasse.numero_bracelet} ? Cette opération est irréversible`
-      );
-      if (!confirmed) return;
-      const nextPartialCarcasse: Partial<Carcasse> = { deleted_at: dayjs().toDate() };
-      updateCarcasse(carcasseId, nextPartialCarcasse);
-      addLog({
-        user_id: user.id,
-        user_role: UserRoles.CHASSEUR,
-        action: 'premier-detenteur-carcasse-delete',
-        fei_numero: fei.numero,
-        history: createHistoryInput(carcasse, nextPartialCarcasse),
-        entity_id: fei.premier_detenteur_entity_id,
-        zacharie_carcasse_id: carcasseId,
-        carcasse_intermediaire_id: null,
-        intermediaire_id: null,
-      });
-      setDraft((prev) =>
-        prev ? { ...prev, carcasseIds: prev.carcasseIds.filter((id) => id !== carcasseId) } : prev
-      );
-    },
-    [allCarcasses, updateCarcasse, addLog, user.id, fei?.numero, fei?.premier_detenteur_entity_id]
-  );
 
   const otherGroups = useMemo(
     () => dispatchGroups.filter((g) => g.id !== draft?.id),
@@ -1845,7 +1798,6 @@ export default function DestinataireSelectPremierDetenteur({
             showErrors={showModalErrors}
             onChangeCarcasseMode={onChangeCarcasseMode}
             onToggleCarcasse={onToggleDraftCarcasse}
-            onDeleteCarcasse={deleteCarcasse}
             onChange={onChangeDraft}
           />
         )}

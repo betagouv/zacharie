@@ -9,8 +9,8 @@ import { expect, type Page } from '@playwright/test';
 export const venteDonModal = (page: Page) => page.locator('#dispatch-modal-pd');
 
 // Étape « Carcasses » : on part de « toutes », et on retire les carcasses qui ne partent pas.
-// Chaque carcasse est un tag cliquable, dans l'une des deux zones. On cible le bouton de bascule
-// par son libellé : un tag retiré porte en plus un bouton « Supprimer de la fiche ».
+// Chaque carcasse est un tag cliquable, dans l'une des deux zones : « Retirer … » côté retenues,
+// « Remettre … » côté retirées.
 export const carcassesRetenues = (page: Page) =>
   venteDonModal(page)
     .locator('#vente-don-carcasses-retenues')
