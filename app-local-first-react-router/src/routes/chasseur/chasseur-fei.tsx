@@ -589,7 +589,7 @@ function FEIChasseurLoaded() {
                         <>
                           <Component
                             label="Fin de l’examen initial"
-                            hintText="Heure de le dernière éviscération"
+                            hintText="Heure de la dernière éviscération"
                             state={
                               fieldHasError('heure_evisceration_derniere_carcasse', showBloc2Errors)
                                 ? 'error'
