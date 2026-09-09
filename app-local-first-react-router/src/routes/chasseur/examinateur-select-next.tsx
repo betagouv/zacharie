@@ -19,7 +19,16 @@ import { useEntitiesIdsWorkingDirectlyFor, useDetenteursInitiaux } from '@app/ut
 import { CarcasseTransmission } from '@app/types/carcasse';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 
-export default function SelectNextForExaminateur({ disabled = false }: { disabled?: boolean }) {
+type SelectNextForExaminateurProps = {
+  disabled?: boolean;
+  // le bloc parent affiche les erreurs de la date et de la commune de mise à mort
+  onValidationError?: () => void;
+};
+
+export default function SelectNextForExaminateur({
+  disabled = false,
+  onValidationError,
+}: SelectNextForExaminateurProps) {
   const params = useParams();
   const navigate = useNavigate();
   const user = useUser((state) => state.user)!;
@@ -80,25 +89,43 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
     return '';
   }, [nextOwnerUser, nextOwnerEntity]);
 
-  const validationErrors = useMemo(() => {
-    const errors: string[] = [];
+  const [showErrors, setShowErrors] = useState(false);
+
+  // les messages de la date et de la commune sont affichés par le bloc parent, ici on a juste besoin de
+  // savoir ce qui manque
+  const missingFields = useMemo(() => {
+    const fields: string[] = [];
     if (!fei.date_mise_a_mort) {
-      errors.push('Veuillez renseigner la date de mise à mort');
+      fields.push('date_mise_a_mort');
     }
     if (!fei.commune_mise_a_mort) {
-      errors.push('Veuillez renseigner la commune de prélèvement du gibier');
+      fields.push('commune_mise_a_mort');
     }
     if (!nextOwnerUserOrEntityId) {
-      errors.push('Veuillez sélectionner le propriétaire initial');
+      fields.push('premier_detenteur');
     }
-    return errors;
+    return fields;
   }, [fei.date_mise_a_mort, fei.commune_mise_a_mort, nextOwnerUserOrEntityId]);
+
+  const premierDetenteurError =
+    showErrors && missingFields.includes('premier_detenteur')
+      ? 'Veuillez sélectionner le propriétaire initial'
+      : undefined;
 
   if (user.id !== fei.examinateur_initial_user_id) {
     return null;
   }
 
   function handleSubmitFromSelect(nextOwnerUserId?: string) {
+    // le propriétaire initial peut arriver en argument (« Je suis le propriétaire initial », recherche par
+    // email) : il n'est pas encore dans le state au moment du clic
+    const missing = missingFields.filter((field) => field !== 'premier_detenteur' || !nextOwnerUserId);
+    if (missing.length > 0) {
+      setShowErrors(true);
+      onValidationError?.();
+      return;
+    }
+    setShowErrors(false);
     const nextIsMe = nextOwnerUserId === user.id;
     const nextIsMyAssociation = !!nextOwnerEntity?.id;
     let nextFei: Partial<typeof fei>;
@@ -228,6 +255,8 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
             label=""
             key={fei.premier_detenteur_entity_id ?? fei.premier_detenteur_user_id ?? 'no-choice-yet'}
             disabled={disabled}
+            state={premierDetenteurError ? 'error' : 'default'}
+            stateRelatedMessage={premierDetenteurError}
             hint={
               <>
                 {!nextOwnerUserOrEntityId && !disabled ? (
@@ -313,7 +342,7 @@ export default function SelectNextForExaminateur({ disabled = false }: { disable
             <>
               <Button
                 type="button"
-                disabled={disabled || validationErrors.length > 0}
+                disabled={disabled}
                 onClick={() => handleSubmitFromSelect()}
               >
                 Continuer
