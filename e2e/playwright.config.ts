@@ -90,9 +90,9 @@ const config: PlaywrightTestConfig = {
       url: 'http://localhost:3290',
       timeout: 120 * 1000,
       reuseExistingServer: true, // FALSE FOR DEBUG
-      // server logs are too verbose, only display when current browser logs are not enough
-      stdout: 'ignore', // PIPE FOR DEBUG
-      stderr: 'ignore', // PIPE FOR DEBUG
+      // TODO: restore to 'ignore' after debugging coverage in CI
+      stdout: 'pipe',
+      stderr: 'pipe',
       env: {
         PORT: '3290',
         VITE_HOST: '127.0.0.1:3290',
