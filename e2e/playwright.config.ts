@@ -2,8 +2,12 @@
 
 import type { PlaywrightTestConfig } from '@playwright/test';
 import { devices } from '@playwright/test';
+import { defineCoverageReporterConfig } from '@bgotink/playwright-coverage';
+import path from 'path';
 
 // uncomment many things if you need to debug
+
+const isCI = !!process.env.CI;
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -15,15 +19,26 @@ const config: PlaywrightTestConfig = {
     timeout: 5000,
   },
   fullyParallel: true,
-  forbidOnly: process.env.CI ? true : false,
+  forbidOnly: isCI,
   retries: 0, // 0 prevents flaky tests to be retried, so its better for tests stability
   workers: 1,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
-    ['html'], // HTML report for artifacts
+    // CI: blob for shard merging; local: html for interactive viewing
+    isCI ? ['blob'] : ['html'],
     // ["github"], // GitHub Actions integration // ONLY FOR DEBUG
     // ["list"], // Detailed console output // ONLY FOR DEBUG
     // ["junit", { outputFile: "test-results/junit.xml" }], // For CI integration // ONLY FOR DEBUG
+    [
+      '@bgotink/playwright-coverage',
+      defineCoverageReporterConfig({
+        sourceRoot: path.resolve(__dirname, '../app-local-first-react-router'),
+        exclude: ['node_modules/**', 'build/**'],
+        resultDir: path.join(__dirname, 'coverage'),
+        // CI: JSON only (merged across shards later); local: HTML + text summary
+        reports: isCI ? [['json', { file: 'coverage.json' }]] : [['html'], ['text-summary', { file: null }]],
+      }),
+    ],
   ],
   use: {
     actionTimeout: 15 * 1000, // pour tuer le test si une action (genre clic sur un bouton) prend plus de 15s

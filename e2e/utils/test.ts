@@ -1,4 +1,6 @@
-import { test as base, expect } from '@playwright/test';
+import { mergeTests, expect } from '@playwright/test';
+import { test as testWithCoverage } from '@bgotink/playwright-coverage';
+import { test as base } from '@playwright/test';
 
 // `capture('Transmssion differs from one of the carcasses')` is a "this must never happen" telemetry:
 // every carcasse of a single transmission must agree on the fields they share (see
@@ -9,7 +11,7 @@ import { test as base, expect } from '@playwright/test';
 // Specs import { test, expect } from this module instead of '@playwright/test' to get the guard for free.
 const TRANSMISSION_DIFFER_MESSAGE = 'Transmssion differs from one of the carcasses';
 
-export const test = base.extend({
+const baseWithGuard = base.extend({
   page: async ({ page }, use, testInfo) => {
     const offendingLogs: string[] = [];
     page.on('console', (msg) => {
@@ -27,6 +29,8 @@ export const test = base.extend({
     ).toHaveLength(0);
   },
 });
+
+export const test = mergeTests(testWithCoverage, baseWithGuard);
 
 export { expect };
 export type { Page } from '@playwright/test';
