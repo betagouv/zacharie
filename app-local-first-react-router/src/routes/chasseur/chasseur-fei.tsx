@@ -117,6 +117,7 @@ function FEIChasseurLoaded() {
     fei.examinateur_initial_approbation_mise_sur_le_marche ? true : false
   );
   const [showErrors, setShowErrors] = useState(false);
+  const [showBloc1Errors, setShowBloc1Errors] = useState(false);
   const [showBloc2Errors, setShowBloc2Errors] = useState(false);
   const destinataireRef = useRef<DestinatairePremierDetenteurHandle | null>(null);
 
@@ -421,7 +422,7 @@ function FEIChasseurLoaded() {
                 <h4 className="fr-h5">Informations de chasse</h4>
                 <Component
                   label="Date de la chasse"
-                  state={fieldHasError('date_mise_a_mort') ? 'error' : 'default'}
+                  state={fieldHasError('date_mise_a_mort', showBloc1Errors) ? 'error' : 'default'}
                   stateRelatedMessage={fieldErrorMessage('date_mise_a_mort')}
                   hintText={
                     canEdit && !fei.date_mise_a_mort ? (
@@ -472,7 +473,7 @@ function FEIChasseurLoaded() {
                 />
                 <VilleComponent
                   label="Commune de prélèvement du gibier"
-                  state={fieldHasError('commune_mise_a_mort') ? 'error' : 'default'}
+                  state={fieldHasError('commune_mise_a_mort', showBloc1Errors) ? 'error' : 'default'}
                   stateRelatedMessage={fieldErrorMessage('commune_mise_a_mort')}
                   key={fei?.commune_mise_a_mort}
                   onSelect={(commune_mise_a_mort) => updateFei(fei.numero, { commune_mise_a_mort })}
@@ -502,7 +503,7 @@ function FEIChasseurLoaded() {
                     defaultValue: fei?.commune_mise_a_mort ?? '',
                   }}
                 />
-                <SelectNextForExaminateur />
+                <SelectNextForExaminateur onValidationError={() => setShowBloc1Errors(true)} />
               </div>
 
               {/* Bloc 2 — Carcasses */}
