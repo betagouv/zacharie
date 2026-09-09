@@ -192,10 +192,17 @@ jobs:
       - name: Run Playwright shard ${{ matrix.shard }}/4
         run: |
           cd e2e
-          npx playwright test --shard=${{ matrix.shard }}/4 --reporter=blob
+          npx playwright test --shard=${{ matrix.shard }}/4
         env:
           PGBASEURL: postgres://postgres:postgres@localhost:5432
           POSTGRESQL_ADDON_URI: postgres://postgres:postgres@localhost:5432/zacharietest
+
+      - name: Rename coverage for shard merging
+        if: ${{ !cancelled() }}
+        run: |
+          if [ -f e2e/coverage/coverage.json ]; then
+            mv e2e/coverage/coverage.json e2e/coverage/coverage-${{ matrix.shard }}.json
+          fi
 
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
@@ -203,6 +210,14 @@ jobs:
           name: blob-report-${{ matrix.shard }}
           path: e2e/blob-report
           retention-days: 7
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: coverage-${{ matrix.shard }}
+          path: e2e/coverage/coverage-${{ matrix.shard }}.json
+          retention-days: 7
+          if-no-files-found: ignore
 
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
@@ -217,6 +232,9 @@ jobs:
     if: ${{ !cancelled() && needs.e2e.result != 'skipped' }}
     needs: [e2e]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
 
     steps:
       - uses: actions/checkout@v4
@@ -243,8 +261,59 @@ jobs:
           cd e2e
           npx playwright merge-reports --reporter=html ./all-blob-reports
 
+      - name: Download coverage reports
+        uses: actions/download-artifact@v4
+        with:
+          path: e2e/.nyc_output
+          pattern: coverage-*
+          merge-multiple: true
+
+      - name: Merge coverage reports
+        run: |
+          cd e2e
+          npx nyc report \
+            --temp-dir=.nyc_output \
+            --report-dir=coverage \
+            --reporter=html \
+            --reporter=text-summary \
+            2>&1 | tee coverage-summary.txt
+
+      - name: Coverage step summary
+        if: ${{ !cancelled() }}
+        run: |
+          {
+            echo "## E2E Code Coverage"
+            echo ""
+            echo '```'
+            cat e2e/coverage-summary.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Comment coverage on PR
+        if: ${{ github.event_name == 'pull_request' && !cancelled() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          {
+            echo "## E2E Code Coverage"
+            echo ""
+            echo '```'
+            cat e2e/coverage-summary.txt
+            echo '```'
+            echo ""
+            echo "Full HTML report available as \`coverage-report\` artifact."
+          } > /tmp/coverage-comment.md
+          gh pr comment ${{ github.event.pull_request.number }} --body-file /tmp/coverage-comment.md
+
       - uses: actions/upload-artifact@v4
         with:
           name: playwright-report
           path: e2e/playwright-report
+          retention-days: 30
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: coverage-report
+          path: e2e/coverage
           retention-days: 30
