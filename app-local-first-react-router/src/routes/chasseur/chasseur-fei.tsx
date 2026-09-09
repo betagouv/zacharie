@@ -697,7 +697,7 @@ function FEIChasseurLoaded() {
                   />
                   <div id={Prisma.FeiScalarFieldEnum.examinateur_initial_approbation_mise_sur_le_marche}>
                     <Checkbox
-                      className={canEdit ? '' : 'checkbox-black'}
+                      className={canEdit && !approbation ? '' : 'checkbox-black'}
                       state={
                         fieldHasError('examinateur_initial_approbation_mise_sur_le_marche')
                           ? 'error'
@@ -714,10 +714,13 @@ function FEIChasseurLoaded() {
                             name: Prisma.FeiScalarFieldEnum
                               .examinateur_initial_approbation_mise_sur_le_marche,
                             value: 'true',
-                            disabled: !canEdit,
+                            // La certification vaut approbation de mise sur le marché : une fois
+                            // cochée on ne la décoche plus. La décocher redescendrait sur toutes les
+                            // carcasses de la fiche, y compris des lots déjà partis chez un ETG.
+                            disabled: !canEdit || approbation,
                             onChange: () =>
                               updateFei(fei.numero, {
-                                examinateur_initial_approbation_mise_sur_le_marche: !approbation,
+                                examinateur_initial_approbation_mise_sur_le_marche: true,
                               }),
                             checked: approbation,
                           },
