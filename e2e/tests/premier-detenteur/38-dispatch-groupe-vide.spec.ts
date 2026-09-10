@@ -56,7 +56,6 @@ test('Une vente / un don vidé par une autre reste visible et bloque la transmis
   await openVenteDon(page);
   await selectDestinataire(page, 'ETG 2 - 75000 Paris (');
   await allerAEtape(page, 'Carcasses');
-  await choisirRepartition(page, 'toutes');
   // « Toutes les carcasses restantes » ne prend rien à l'ETG 1 : pour le vider il faut reprendre
   // explicitement ses carcasses dans « Part ailleurs ».
   await garderCarcasses(page, [0, 1, 2, 3]);
