@@ -9,7 +9,7 @@ import {
   etapeCourante,
   venteDonModal,
   carcassesRetenues,
-  choisirRepartition,
+  garderCarcasses,
   choisirStockage,
   choisirTransport,
   enregistrerVenteDon,
@@ -57,6 +57,10 @@ test('Une vente / un don vidé par une autre reste visible et bloque la transmis
   await selectDestinataire(page, 'ETG 2 - 75000 Paris (');
   await allerAEtape(page, 'Carcasses');
   await choisirRepartition(page, 'toutes');
+  // « Toutes les carcasses restantes » ne prend rien à l'ETG 1 : pour le vider il faut reprendre
+  // explicitement ses carcasses dans « Part ailleurs ».
+  await garderCarcasses(page, [0, 1, 2, 3]);
+  await expect(carcassesRetenues(page)).toHaveCount(4);
   await allerAEtape(page, 'Stockage');
   await choisirStockage(page, 'aucun');
   await allerAEtape(page, 'Transport');
