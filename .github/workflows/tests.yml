@@ -204,6 +204,17 @@ jobs:
           path: e2e/blob-report
           retention-days: 7
 
+      # TODO: remove after debugging coverage
+      - name: Debug coverage files
+        if: ${{ !cancelled() }}
+        run: |
+          echo "--- ls e2e/.nyc_output ---"
+          ls -la e2e/.nyc_output/ 2>&1 || echo "directory does not exist"
+          echo "--- find .nyc_output ---"
+          find e2e -name ".nyc_output" -type d 2>/dev/null || echo "not found"
+          echo "--- find coverage json ---"
+          find e2e -name "coverage-*.json" 2>/dev/null | head -5 || echo "no coverage json"
+
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:

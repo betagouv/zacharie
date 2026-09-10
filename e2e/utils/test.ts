@@ -25,17 +25,23 @@ export const test = base.extend({
 
     // Collect Istanbul coverage from the browser
     const coverage = await page.evaluate(() => (window as any).__coverage__);
-    // TODO: remove after verifying coverage works in CI
-    const hasCoverage = coverage != null;
-    const keyCount = hasCoverage ? Object.keys(coverage).length : 0;
-    console.log(`[coverage] __coverage__ present: ${hasCoverage}, keys: ${keyCount}, dir: ${coverageDir}`);
     if (coverage) {
-      if (!fs.existsSync(coverageDir)) {
-        fs.mkdirSync(coverageDir, { recursive: true });
+      try {
+        if (!fs.existsSync(coverageDir)) {
+          fs.mkdirSync(coverageDir, { recursive: true });
+        }
+        const safeName = testInfo.titlePath.join('--').replace(/[^a-zA-Z0-9-]/g, '_');
+        const filePath = path.join(coverageDir, `coverage-${safeName}-${testInfo.workerIndex}.json`);
+        fs.writeFileSync(filePath, JSON.stringify(coverage));
+        // TODO: remove after verifying coverage works in CI
+        const exists = fs.existsSync(filePath);
+        const size = exists ? fs.statSync(filePath).size : 0;
+        console.log(`[coverage] wrote ${filePath} (exists: ${exists}, size: ${size})`);
+      } catch (e) {
+        console.error(`[coverage] write failed:`, e);
       }
-      const safeName = testInfo.titlePath.join('--').replace(/[^a-zA-Z0-9-]/g, '_');
-      const filePath = path.join(coverageDir, `coverage-${safeName}-${testInfo.workerIndex}.json`);
-      fs.writeFileSync(filePath, JSON.stringify(coverage));
+    } else {
+      console.log(`[coverage] __coverage__ not present on page`);
     }
 
     expect(
