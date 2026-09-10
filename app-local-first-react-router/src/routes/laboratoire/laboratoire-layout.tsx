@@ -15,9 +15,9 @@ import { useMostFreshUser, refreshUser } from '@app/utils-offline/get-most-fresh
  */
 const links = [
   { to: '/app/laboratoire', label: 'À traiter', icon: 'fr-icon-dashboard-3-line', exact: true },
-  { to: '/app/laboratoire/ftp', label: 'Transmissions', icon: 'fr-icon-send-plane-line' },
-  { to: '/app/laboratoire/pools', label: 'Pools', icon: 'fr-icon-microscope-line' },
   { to: '/app/laboratoire/echantillons', label: 'Échantillons', icon: 'fr-icon-test-tube-line' },
+  { to: '/app/laboratoire/pools', label: 'Pools', icon: 'fr-icon-microscope-line' },
+  { to: '/app/laboratoire/ftp', label: 'Transmissions', icon: 'fr-icon-send-plane-line' },
   { to: '/app/laboratoire/results/import', label: 'Importer', icon: 'fr-icon-upload-line' },
   { to: '/app/laboratoire/profil', label: 'Mon laboratoire', icon: 'fr-icon-building-line' },
 ];
