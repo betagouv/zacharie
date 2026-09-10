@@ -12,7 +12,6 @@ import API from '@app/services/api';
 import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
 import MesCCGs from './chasseur-ccgs';
 import MesAssociationsDeChasse from './chasseur-associations-de-chasse';
-import MesPartenaires from './chasseur-partenaires';
 import { toast } from 'react-toastify';
 
 type InformationsDeChasseProps = {
@@ -25,12 +24,11 @@ type InformationsDeChasseProps = {
 export default function MesInformationsDeChasse({
   withExaminateurInitial = false,
   withAssociationsDeChasse = false,
-  withPartenaires = false,
   withCCGs = false,
 }: InformationsDeChasseProps) {
   const [searchParams] = useSearchParams();
   const redirect = searchParams.get('redirect');
-  let withEverything = withExaminateurInitial && withAssociationsDeChasse && withCCGs && withPartenaires;
+  let withEverything = withExaminateurInitial && withAssociationsDeChasse && withCCGs;
 
   const user = useUser((state) => state.user)!;
 
@@ -97,8 +95,6 @@ export default function MesInformationsDeChasse({
     title = 'Mes informations de chasse';
   } else if (withAssociationsDeChasse) {
     title = 'Mes associations de chasse';
-  } else if (withPartenaires) {
-    title = 'Mes partenaires';
   } else if (withCCGs) {
     title = 'Mes chambres froides (CCGs)';
   }
@@ -108,8 +104,6 @@ export default function MesInformationsDeChasse({
     calloutTitle = 'Informations de chasse';
   } else if (withAssociationsDeChasse) {
     calloutTitle = 'Associations de chasse';
-  } else if (withPartenaires) {
-    calloutTitle = 'Partenaires';
   } else if (withCCGs) {
     calloutTitle = 'Chambres froides (CCGs)';
   }
@@ -221,19 +215,6 @@ export default function MesInformationsDeChasse({
 
           {withCCGs && <MesCCGs />}
 
-          {withPartenaires && (
-            <div className="mb-6 bg-white md:shadow-sm">
-              <div className="p-4 md:p-8">
-                <h3
-                  className="mb-8 text-lg font-semibold text-gray-900"
-                  id={`onboarding-etape-2-associations-data-title`}
-                >
-                  Partenaires
-                </h3>
-                <MesPartenaires />
-              </div>
-            </div>
-          )}
           {showEntrpriseVisibilityCheckbox && (
             <div className="mb-6 bg-white md:shadow-sm">
               <div className="p-4 md:p-8">

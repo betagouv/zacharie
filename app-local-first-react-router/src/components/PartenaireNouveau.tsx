@@ -165,7 +165,7 @@ export default function PartenaireNouveau({ newEntityNomDUsageProps, onFinish }:
           description="Attention : les établissements de traitement du gibier et les collecteurs professionnels sont déjà enregistrés sur Zacharie. Ce formulaire sert à enregistrer les autres catégories de destinataires (commerces de détail, associations, particuliers…)."
         />
         <RadioButtons
-          legend="Qualité du partenaire *"
+          legend="Qualité du destinataire *"
           hintText="Est-ce un commerce de détail, repas de chasse ou associatif, ou encore un consommateur final ?"
           orientation="vertical"
           options={[
@@ -406,7 +406,7 @@ export default function PartenaireNouveau({ newEntityNomDUsageProps, onFinish }:
           type="submit"
           nativeButtonProps={{ form: 'partenaire_data_form' }}
         >
-          Me rattacher à ce partenaire
+          Enregistrer
         </Button>
       </form>
     </>

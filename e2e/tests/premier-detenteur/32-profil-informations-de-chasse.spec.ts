@@ -27,18 +27,6 @@ test('32a - Profil associations de chasse : page se charge et association seedé
   await expect(page.getByText(/Association de chasseurs/i).first()).toBeVisible({ timeout: 10000 });
 });
 
-// Scenario 32b — Profil → Partenaires : page loads.
-test('32b - Profil partenaires : page se charge', async ({ page }) => {
-  await connectWith(page, 'premier-detenteur@example.fr');
-  await expect(page).toHaveURL(/\/app\/chasseur/, { timeout: 10000 });
-
-  await page.goto('http://localhost:3290/app/chasseur/profil/partenaires');
-  await expect(page).toHaveURL(/\/profil\/partenaires/);
-
-  // Page should render without crashing — no 500 / "Erreur" headings
-  await expect(page.getByRole('heading', { name: /Erreur/i })).toHaveCount(0);
-});
-
 // Scenario 32c — Profil → CCGs : page loads and pre-seeded CCG-01 visible.
 test('32c - Profil CCGs : page se charge et CCG-01 visible', async ({ page }) => {
   await connectWith(page, 'premier-detenteur@example.fr');
