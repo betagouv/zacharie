@@ -400,6 +400,8 @@ function CarcassesStep({
   const selected = useMemo(() => new Set(selectedIds), [selectedIds]);
   const retenues = ordered.filter((carcasse) => selected.has(carcasse.zacharie_carcasse_id));
   const retirees = ordered.filter((carcasse) => !selected.has(carcasse.zacharie_carcasse_id));
+  const partAilleurs = retirees.filter((carcasse) => carcasseToGroupLabel[carcasse.zacharie_carcasse_id]);
+  const resteAAttribuer = retirees.filter((carcasse) => !carcasseToGroupLabel[carcasse.zacharie_carcasse_id]);
 
   // Une seule carcasse : il n'y a rien à répartir, on se contente de la rappeler.
   if (ordered.length === 1) {
@@ -473,27 +475,41 @@ function CarcassesStep({
             </div>
           </div>
 
-          <div>
-            <p className="mb-2 text-sm font-bold tracking-wide text-gray-600 uppercase">Reste à attribuer</p>
-            {retirees.length === 0 ? (
-              <p className="mb-0 text-sm text-gray-600">
-                Rien pour l'instant — touchez une carcasse ci-dessus pour la retirer.
-              </p>
-            ) : (
-              <div
-                id="vente-don-carcasses-retirees"
-                className="flex flex-col items-stretch gap-2 sm:flex-row sm:flex-wrap sm:items-start"
-              >
-                {retirees.map((carcasse) => (
-                  <CarcasseChip
-                    key={carcasse.zacharie_carcasse_id}
-                    carcasse={carcasse}
-                    variant="retiree"
-                    canEdit={canEdit}
-                    autreVenteDon={carcasseToGroupLabel[carcasse.zacharie_carcasse_id]}
-                    onClick={() => onToggleCarcasse(carcasse.zacharie_carcasse_id)}
-                  />
-                ))}
+          <div id="vente-don-carcasses-retirees">
+            {resteAAttribuer.length > 0 && (
+              <div>
+                <p className="mb-2 text-sm font-bold tracking-wide text-gray-600 uppercase">
+                  Reste à attribuer
+                </p>
+                <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:flex-wrap sm:items-start">
+                  {resteAAttribuer.map((carcasse) => (
+                    <CarcasseChip
+                      key={carcasse.zacharie_carcasse_id}
+                      carcasse={carcasse}
+                      variant="retiree"
+                      canEdit={canEdit}
+                      onClick={() => onToggleCarcasse(carcasse.zacharie_carcasse_id)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {partAilleurs.length > 0 && (
+              <div className="mt-4">
+                <p className="mb-2 text-sm font-bold tracking-wide text-gray-600 uppercase">Part ailleurs</p>
+                <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:flex-wrap sm:items-start">
+                  {partAilleurs.map((carcasse) => (
+                    <CarcasseChip
+                      key={carcasse.zacharie_carcasse_id}
+                      carcasse={carcasse}
+                      variant="retiree"
+                      canEdit={canEdit}
+                      autreVenteDon={carcasseToGroupLabel[carcasse.zacharie_carcasse_id]}
+                      onClick={() => onToggleCarcasse(carcasse.zacharie_carcasse_id)}
+                    />
+                  ))}
+                </div>
               </div>
             )}
           </div>
@@ -1077,6 +1093,11 @@ export default function DestinataireSelectPremierDetenteur({
     [carcassesRestantes, assignedCarcasseIds]
   );
 
+  const unassignedCarcasseIds = useMemo(
+    () => unassignedCarcasses.map((c) => c.zacharie_carcasse_id),
+    [unassignedCarcasses]
+  );
+
   const openAddDispatchGroup = useCallback(() => {
     const isFirst = dispatchGroups.length === 0;
     const nextDraft: DispatchGroup = {
@@ -1085,9 +1106,7 @@ export default function DestinataireSelectPremierDetenteur({
         isFirst && prefilledInfos?.premier_detenteur_prochain_detenteur_id_cache
           ? prefilledInfos.premier_detenteur_prochain_detenteur_id_cache
           : null,
-      // Première vente / premier don : toutes les carcasses restantes par défaut.
-      // Suivants : l'utilisateur choisit lesquelles déplacer.
-      carcasseIds: isFirst ? carcassesRestantesIds : [],
+      carcasseIds: isFirst ? carcassesRestantesIds : unassignedCarcasseIds,
       depotType:
         isFirst && prefilledInfos?.premier_detenteur_depot_type
           ? prefilledInfos.premier_detenteur_depot_type
@@ -1110,7 +1129,7 @@ export default function DestinataireSelectPremierDetenteur({
     setShowModalErrors(false);
     setCurrentStep(1);
     dispatchModal.open();
-  }, [dispatchGroups.length, prefilledInfos, carcassesRestantesIds]);
+  }, [dispatchGroups.length, prefilledInfos, carcassesRestantesIds, unassignedCarcasseIds]);
 
   // L'état initial des lots est figé au montage. Une carcasse créée après coup rejoint donc le lot
   // par défaut, sinon elle reste en arrière : la fiche part sans elle et elle devient orpheline,
