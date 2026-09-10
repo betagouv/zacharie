@@ -27,7 +27,7 @@ export function getUserOnboardingRoute(user: User): string {
     return '/app/svi/onboarding/coordonnees';
   }
   if (user.roles.includes(UserRoles.LABORATOIRE)) {
-    return '/app/laboratoire/ftp';
+    return '/app/laboratoire';
   }
   if (user.roles.includes(UserRoles.FDC)) {
     return '/app/fdc/tableau-de-bord';

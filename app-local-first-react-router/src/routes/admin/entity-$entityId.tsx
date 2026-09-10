@@ -53,6 +53,7 @@ const initialData: State = {
     inc_certificat: 0,
     inc_decision: 0,
     code_etbt_certificat: null,
+    code_trichine: null,
     is_lnr: false,
   },
   dedicatedApiKey: null,
@@ -445,6 +446,18 @@ export default function AdminEntity() {
                       />
                     </div>
                   </div>
+                  <Input
+                    label="Code établissement (trichine)"
+                    hintText="Il s'intercale dans les références de prélèvement, de pool et de FTP (P-26-SVI01-0045). Généré à la création de l'entité, modifiable ici. Lettres et chiffres uniquement, 8 caractères maximum. Laissé vide, les références sont codées sur l'identifiant de l'utilisateur qui fait l'acte"
+                    nativeInputProps={{
+                      id: Prisma.EntityScalarFieldEnum.code_trichine,
+                      name: Prisma.EntityScalarFieldEnum.code_trichine,
+                      autoComplete: 'off',
+                      placeholder: 'SVI01',
+                      defaultValue: entity.code_trichine ?? '',
+                      onBlur: (e) => handleSave(e.target.name, e.target.value),
+                    }}
+                  />
                   {entity.type === EntityTypes.ETG && (
                     <>
                       <Input

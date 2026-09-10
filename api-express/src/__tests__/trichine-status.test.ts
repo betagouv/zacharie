@@ -1,9 +1,18 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
-import { TrichineResultatAnalyse, TrichineStatutAnalyse, TrichineStatutLogistiqueFTP } from '@prisma/client';
+import {
+  TrichineResultatAnalyse,
+  TrichineStatutAnalyse,
+  TrichineStatutLogistiqueFTP,
+  TrichineType,
+} from '@prisma/client';
 import prisma from '~/prisma';
 import {
   nextReferenceFromLatest,
+  referenceEntityCode,
+  sanitizeEntityTrichineCode,
+  validateNouveauPrelevement,
   validatePoolComposition,
+  isFtpPartie,
   logTrichineStatutChange,
   TrichineActionRequise,
   TrichineObjetType,
@@ -23,18 +32,43 @@ vi.mock('~/service/notifications', () => ({
 vi.mock('~/third-parties/sentry', () => ({ capture: vi.fn() }));
 
 /* -------------------------------------------------------------------------- */
-/* Références E-{YY}-{séquence}                                                */
+/* Références {E|P|F}-{YY}-{code établissement}-{séquence}                     */
 /* -------------------------------------------------------------------------- */
 
 describe('nextReferenceFromLatest', () => {
-  test('première référence de l’année', () => {
-    expect(nextReferenceFromLatest('E', '26', null)).toBe('E-26-000001');
+  test('première référence de l’année pour l’établissement', () => {
+    expect(nextReferenceFromLatest('E', '26', '02', null)).toBe('E-26-02-0001');
   });
   test('incrémente la séquence', () => {
-    expect(nextReferenceFromLatest('P', '26', 'P-26-000045')).toBe('P-26-000046');
+    expect(nextReferenceFromLatest('P', '26', '02', 'P-26-02-0045')).toBe('P-26-02-0046');
   });
   test('repart à 1 si la référence est illisible', () => {
-    expect(nextReferenceFromLatest('F', '26', 'F-26-corrompue')).toBe('F-26-000001');
+    expect(nextReferenceFromLatest('F', '26', 'A3F1', 'F-26-A3F1-corrompue')).toBe('F-26-A3F1-0001');
+  });
+  test('la séquence dépasse les 4 chiffres sans casser le format', () => {
+    expect(nextReferenceFromLatest('E', '26', 'A3F1', 'E-26-A3F1-9999')).toBe('E-26-A3F1-10000');
+  });
+});
+
+describe('referenceEntityCode', () => {
+  test('code trichine de l’entité quand elle en porte un', () => {
+    expect(referenceEntityCode({ code_trichine: 'SVI01' }, 'K7M2Q')).toBe('SVI01');
+  });
+  test('repli sur l’utilisateur quand l’entité n’a pas de code', () => {
+    expect(referenceEntityCode({ code_trichine: null }, 'K7M2Q')).toBe('K7M2Q');
+  });
+  test('repli sur l’utilisateur quand le prélèvement est fait sans entité', () => {
+    expect(referenceEntityCode(null, 'K7M2Q')).toBe('K7M2Q');
+  });
+});
+
+describe('sanitizeEntityTrichineCode', () => {
+  test('majuscules et alphanumérique uniquement', () => {
+    expect(sanitizeEntityTrichineCode(' lvd-28 ')).toBe('LVD28');
+  });
+  test('un code vide vaut pas de code', () => {
+    expect(sanitizeEntityTrichineCode('  --  ')).toBeNull();
+    expect(sanitizeEntityTrichineCode(null)).toBeNull();
   });
 });
 
@@ -46,10 +80,15 @@ const makeEchantillon = (carcasseId: string, masse = 5, overrides: any = {}) => 
   id: `ech-${carcasseId}-${masse}-${Math.abs(overrides.seed ?? 0)}`,
   zacharie_carcasse_id: carcasseId,
   masse_grammes: masse,
+  type: TrichineType.INITIAL,
   pool_id: null,
   deleted_at: null,
   ...overrides,
 });
+
+/** Prélèvement de 2e intention : c'est le seul type qu'un pool fille accepte */
+const makeComplementaire = (carcasseId: string, masse = 20, overrides: any = {}) =>
+  makeEchantillon(carcasseId, masse, { type: TrichineType.COMPLEMENTAIRE, ...overrides });
 
 describe('validatePoolComposition — pool initial', () => {
   test('valide avec 19 carcasses / 95 g', () => {
@@ -68,6 +107,10 @@ describe('validatePoolComposition — pool initial', () => {
     const echantillons = [makeEchantillon('c-1', 5, { pool_id: 'pool-x' })];
     expect(validatePoolComposition({ echantillons, parent: null })).toMatch(/déjà rattaché/);
   });
+  test('édition : les échantillons du pool modifié ne comptent pas comme déjà rattachés', () => {
+    const echantillons = [makeEchantillon('c-1', 5, { pool_id: 'pool-x' })];
+    expect(validatePoolComposition({ echantillons, parent: null, poolId: 'pool-x' })).toBeNull();
+  });
   test('bloqué si deux échantillons de la même carcasse', () => {
     const echantillons = [makeEchantillon('c-1', 5, { seed: 1 }), makeEchantillon('c-1', 5, { seed: 2 })];
     expect(validatePoolComposition({ echantillons, parent: null })).toMatch(/un échantillon par carcasse/);
@@ -82,26 +125,73 @@ describe('validatePoolComposition — pool fille', () => {
     id: 'pool-mere',
     pool_parent_id: null as string | null,
     resultat_analyse: TrichineResultatAnalyse.DOUTEUX,
-    carcasseIds: ['c-1', 'c-2', 'c-3', 'c-4', 'c-5'],
+    carcasseIds: ['c-1', 'c-2', 'c-3', 'c-4', 'c-5', 'c-6'],
     parentHasGrandParent: false,
   };
 
-  test('valide avec 4 carcasses du pool mère', () => {
-    const echantillons = ['c-1', 'c-2', 'c-3', 'c-4'].map((id) => makeEchantillon(id, 20));
+  test('valide avec 5 carcasses du pool mère', () => {
+    const echantillons = ['c-1', 'c-2', 'c-3', 'c-4', 'c-5'].map((id) => makeComplementaire(id, 20));
     expect(validatePoolComposition({ echantillons, parent: parentDouteux })).toBeNull();
   });
-  test('bloqué au-delà de 4 carcasses du pool mère', () => {
-    const echantillons = ['c-1', 'c-2', 'c-3', 'c-4', 'c-5'].map((id) => makeEchantillon(id, 20));
-    expect(validatePoolComposition({ echantillons, parent: parentDouteux })).toMatch(/4 carcasses/);
+  test('bloqué au-delà de 5 carcasses du pool mère', () => {
+    const echantillons = ['c-1', 'c-2', 'c-3', 'c-4', 'c-5', 'c-6'].map((id) => makeComplementaire(id, 20));
+    expect(validatePoolComposition({ echantillons, parent: parentDouteux })).toMatch(/5 carcasses/);
   });
   test('bloqué avec une carcasse hors pool mère', () => {
-    const echantillons = [makeEchantillon('c-1', 20), makeEchantillon('c-hors-pool', 20)];
+    const echantillons = [makeComplementaire('c-1', 20), makeComplementaire('c-hors-pool', 20)];
     expect(validatePoolComposition({ echantillons, parent: parentDouteux })).toMatch(/pool parent/);
   });
   test('bloqué si le pool parent n’est pas douteux', () => {
     const parent = { ...parentDouteux, resultat_analyse: TrichineResultatAnalyse.NEGATIF };
-    const echantillons = [makeEchantillon('c-1', 20)];
+    const echantillons = [makeComplementaire('c-1', 20)];
     expect(validatePoolComposition({ echantillons, parent })).toMatch(/douteux/);
+  });
+  test('bloqué si un complémentaire est regroupé dans un pool initial', () => {
+    const echantillons = [makeComplementaire('c-1', 20)];
+    expect(validatePoolComposition({ echantillons, parent: null })).toMatch(/prélèvements initiaux/);
+  });
+});
+
+describe('validateNouveauPrelevement', () => {
+  const pool = (resultat: TrichineResultatAnalyse | null, jour = '2026-01-01') => ({
+    resultat_analyse: resultat,
+    created_at: new Date(jour),
+  });
+  const prelever = (type: TrichineType, pools: ReturnType<typeof pool>[], sansPool = false) =>
+    validateNouveauPrelevement({
+      type,
+      numeroBracelet: 'BR-1',
+      pools,
+      aUnEchantillonSansPool: sansPool,
+    });
+
+  test('initial sur une carcasse jamais prélevée', () => {
+    expect(prelever(TrichineType.INITIAL, [])).toBeNull();
+  });
+  test('initial refusé si une analyse est en cours', () => {
+    expect(prelever(TrichineType.INITIAL, [pool(null)])).toMatch(/déjà été prélevée/);
+  });
+  test('initial refusé si un échantillon attend son pool', () => {
+    expect(prelever(TrichineType.INITIAL, [], true)).toMatch(/en attente de regroupement/);
+  });
+  test('initial accepté après une analyse impossible', () => {
+    expect(prelever(TrichineType.INITIAL, [pool(TrichineResultatAnalyse.ANALYSE_IMPOSSIBLE)])).toBeNull();
+  });
+  test('initial refusé si l’analyse impossible n’est pas la dernière', () => {
+    expect(
+      prelever(TrichineType.INITIAL, [
+        pool(TrichineResultatAnalyse.ANALYSE_IMPOSSIBLE, '2026-01-01'),
+        pool(TrichineResultatAnalyse.NEGATIF, '2026-02-01'),
+      ])
+    ).toMatch(/déjà été prélevée/);
+  });
+  test('complémentaire accepté après un pool douteux', () => {
+    expect(prelever(TrichineType.COMPLEMENTAIRE, [pool(TrichineResultatAnalyse.DOUTEUX)])).toBeNull();
+  });
+  test('complémentaire refusé sans pool douteux', () => {
+    expect(prelever(TrichineType.COMPLEMENTAIRE, [pool(TrichineResultatAnalyse.NEGATIF)])).toMatch(
+      /pool douteux/
+    );
   });
 });
 
@@ -115,20 +205,20 @@ describe('validatePoolComposition — pool petite-fille', () => {
   };
 
   test('valide avec 1 carcasse / 50 g', () => {
-    const echantillons = [makeEchantillon('c-1', 50)];
+    const echantillons = [makeComplementaire('c-1', 50)];
     expect(validatePoolComposition({ echantillons, parent: parentFille })).toBeNull();
   });
   test('bloqué avec 2 carcasses', () => {
-    const echantillons = [makeEchantillon('c-1', 50), makeEchantillon('c-2', 50)];
+    const echantillons = [makeComplementaire('c-1', 50), makeComplementaire('c-2', 50)];
     expect(validatePoolComposition({ echantillons, parent: parentFille })).toMatch(/une seule carcasse/);
   });
   test('bloqué sous 50 g', () => {
-    const echantillons = [makeEchantillon('c-1', 20)];
+    const echantillons = [makeComplementaire('c-1', 20)];
     expect(validatePoolComposition({ echantillons, parent: parentFille })).toMatch(/50 g/);
   });
   test('bloqué au-delà de la profondeur petite-fille', () => {
     const parent = { ...parentFille, parentHasGrandParent: true };
-    const echantillons = [makeEchantillon('c-1', 50)];
+    const echantillons = [makeComplementaire('c-1', 50)];
     expect(validatePoolComposition({ echantillons, parent })).toMatch(/hiérarchie/i);
   });
 });
@@ -421,5 +511,31 @@ describe('recomputePoolTrichine', () => {
         nouveau_statut: TrichineStatutAnalyse.ANALYSES_TERMINEES,
       }),
     });
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+/* Point de non-retour : la fiche est partie (édition / annulation)            */
+/* -------------------------------------------------------------------------- */
+
+describe('isFtpPartie', () => {
+  const ftp = (statut: TrichineStatutLogistiqueFTP, deleted: Date | null = null) => ({
+    deleted_at: deleted,
+    statut_logistique: statut,
+  });
+
+  test('un brouillon n’est pas parti : tout reste modifiable', () => {
+    expect(isFtpPartie(ftp(TrichineStatutLogistiqueFTP.BROUILLON))).toBe(false);
+  });
+  test('une fiche annulée n’est plus partie : ses pools se libèrent', () => {
+    expect(isFtpPartie(ftp(TrichineStatutLogistiqueFTP.ANNULEE))).toBe(false);
+  });
+  test('une fiche supprimée ne fige rien', () => {
+    expect(isFtpPartie(ftp(TrichineStatutLogistiqueFTP.ENVOYEE, new Date()))).toBe(false);
+  });
+  test('envoyée, reçue et traitée figent leur contenu', () => {
+    expect(isFtpPartie(ftp(TrichineStatutLogistiqueFTP.ENVOYEE))).toBe(true);
+    expect(isFtpPartie(ftp(TrichineStatutLogistiqueFTP.RECUE))).toBe(true);
+    expect(isFtpPartie(ftp(TrichineStatutLogistiqueFTP.TRAITEE))).toBe(true);
   });
 });
