@@ -359,6 +359,14 @@ export default function ChasseurFiches() {
         if (transmission.fei.numero!.toLowerCase().includes(q)) isIncluded = true;
         if (transmission.fei.commune_mise_a_mort?.toLowerCase().includes(q)) isIncluded = true;
         if (transmission.content.premier_detenteur_name_cache?.toLowerCase().includes(q)) isIncluded = true;
+        if (!isIncluded) {
+          for (const carcasse of transmission.carcasses) {
+            if (carcasse.numero_bracelet?.toLowerCase().includes(q)) {
+              isIncluded = true;
+              break;
+            }
+          }
+        }
         if (!isIncluded) continue;
       }
       if (filterStatuses.length > 0) {
@@ -444,7 +452,7 @@ export default function ChasseurFiches() {
         />
         <input
           type="search"
-          placeholder="Rechercher une fiche..."
+          placeholder="Rechercher une fiche, un marquage..."
           value={searchQuery}
           onChange={(e) => {
             setSearchQuery(e.target.value);
