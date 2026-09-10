@@ -42,7 +42,7 @@ export const statutAnalyseLabels: Record<TrichineStatutAnalyse, string> = {
 
 export const resultatAnalyseLabels: Record<TrichineResultatAnalyse, string> = {
   [TrichineResultatAnalyse.NEGATIF]: 'Négatif',
-  [TrichineResultatAnalyse.DOUTEUX]: 'Douteux — confirmation LNR en cours',
+  [TrichineResultatAnalyse.DOUTEUX]: 'Douteux — à confirmer par le LNR',
   [TrichineResultatAnalyse.ANALYSE_IMPOSSIBLE]: 'Analyse impossible',
   [TrichineResultatAnalyse.NON_NEGATIF]: 'Non négatif (autre parasite)',
   [TrichineResultatAnalyse.PRESENCE_PARASITE_NON_IDENTIFIE]: 'Parasite non identifié',
