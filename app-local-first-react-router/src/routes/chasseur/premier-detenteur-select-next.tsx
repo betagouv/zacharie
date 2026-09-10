@@ -474,9 +474,7 @@ function CarcassesStep({
           </div>
 
           <div>
-            <p className="mb-2 text-sm font-bold tracking-wide text-gray-600 uppercase">
-              Reste à attribuer plus tard
-            </p>
+            <p className="mb-2 text-sm font-bold tracking-wide text-gray-600 uppercase">Reste à attribuer</p>
             {retirees.length === 0 ? (
               <p className="mb-0 text-sm text-gray-600">
                 Rien pour l'instant — touchez une carcasse ci-dessus pour la retirer.
@@ -677,7 +675,7 @@ function DispatchGroupForm({
       {showStep('Stockage') && (
         <>
           <RadioButtons
-            legend="Lieu de stockage des carcasses"
+            // legend="Lieu de stockage des carcasses"
             classes={richRadioClasses}
             className={canEdit ? '' : 'radio-black'}
             state={errorFor('depotType') ? 'error' : 'default'}
@@ -704,9 +702,7 @@ function DispatchGroupForm({
                 },
               },
               {
-                label: 'Carcasses déposées dans une chambre froide (Centre de Collecte du Gibier sauvage)',
-                hintText:
-                  'Toute chambre froide où vous entreposez le gibier avant de le céder ou le vendre est un Centre de Collecte du Gibier sauvage (CCG).',
+                label: 'Carcasses déposées dans une chambre froide',
                 nativeInputProps: {
                   checked: group.depotType === DepotType.CCG,
                   readOnly: !canEdit,
@@ -734,7 +730,7 @@ function DispatchGroupForm({
               <>
                 <div>
                   <SelectCustom
-                    label="Chambre froide (Centre de Collecte du Gibier sauvage)"
+                    label="Chambre froide"
                     isReadOnly={!canEdit}
                     hint={
                       <>
@@ -812,6 +808,10 @@ function DispatchGroupForm({
                     },
                   }}
                 />
+                <span className="fr-hint-text">
+                  Note : Toute chambre froide où vous entreposez le gibier avant de le céder ou le vendre est
+                  un Centre de Collecte du Gibier sauvage (CCG).
+                </span>
               </>
             ) : (
               <div className="flex flex-col items-start gap-2">
