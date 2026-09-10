@@ -426,6 +426,8 @@ function CarcassesStep({
   const retirees = ordered.filter((carcasse) => !selected.has(carcasse.zacharie_carcasse_id));
   const partAilleurs = retirees.filter((carcasse) => carcasseToGroupLabel[carcasse.zacharie_carcasse_id]);
   const resteAAttribuer = retirees.filter((carcasse) => !carcasseToGroupLabel[carcasse.zacharie_carcasse_id]);
+  // « Toutes les carcasses restantes » ne prend que ce qui n'est pas déjà promis à un autre lot.
+  const libres = ordered.filter((carcasse) => !carcasseToGroupLabel[carcasse.zacharie_carcasse_id]);
 
   // Une seule carcasse : il n'y a rien à répartir, on se contente de la rappeler.
   if (ordered.length === 1) {
@@ -520,7 +522,10 @@ function CarcassesStep({
             )}
 
             {partAilleurs.length > 0 && (
-              <div className="mt-4">
+              <div
+                id="vente-don-carcasses-part-ailleurs"
+                className="mt-4"
+              >
                 <p className="mb-2 text-sm font-bold tracking-wide text-gray-600 uppercase">Part ailleurs</p>
                 <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:flex-wrap sm:items-start">
                   {partAilleurs.map((carcasse) => (
@@ -535,8 +540,8 @@ function CarcassesStep({
                   ))}
                 </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </>
       )}
 
@@ -545,7 +550,8 @@ function CarcassesStep({
         aria-live="polite"
       >
         {retenues.length} carcasse{retenues.length > 1 ? 's' : ''} transmise
-        {retenues.length > 1 ? 's' : ''} · {aAttribuer.length} conservée{aAttribuer.length > 1 ? 's' : ''}
+        {retenues.length > 1 ? 's' : ''} · {resteAAttribuer.length} conservée
+        {resteAAttribuer.length > 1 ? 's' : ''}
       </p>
     </div>
   );
@@ -1092,13 +1098,13 @@ export default function DestinataireSelectPremierDetenteur({
       const signature = usageDomestique
         ? USAGE_DOMESTIQUE_ID
         : [
-          carcasse.premier_detenteur_prochain_detenteur_id_cache,
-          carcasse.premier_detenteur_depot_type,
-          carcasse.premier_detenteur_depot_entity_id,
-          depotDate,
-          carcasse.premier_detenteur_transport_type,
-          transportDate,
-        ].join('|');
+            carcasse.premier_detenteur_prochain_detenteur_id_cache,
+            carcasse.premier_detenteur_depot_type,
+            carcasse.premier_detenteur_depot_entity_id,
+            depotDate,
+            carcasse.premier_detenteur_transport_type,
+            transportDate,
+          ].join('|');
       const existing = parSignature.get(signature);
       if (existing) {
         existing.carcasseIds.push(carcasse.zacharie_carcasse_id);
@@ -1147,9 +1153,17 @@ export default function DestinataireSelectPremierDetenteur({
     [carcassesRestantes, assignedCarcasseIds]
   );
 
-  const unassignedCarcasseIds = useMemo(
-    () => unassignedCarcasses.map((c) => c.zacharie_carcasse_id),
-    [unassignedCarcasses]
+  // Les carcasses qu'un lot peut prendre sans en priver un autre : celles qui ne sont dans aucune
+  // autre vente / aucun autre don. Reprendre une carcasse déjà attribuée reste possible, mais c'est
+  // un geste explicite dans l'étape « Carcasses ».
+  const getCarcassesLibresIds = useCallback(
+    (groupId: string | null) => {
+      const prisesAilleurs = new Set(
+        dispatchGroups.filter((g) => g.id !== groupId).flatMap((g) => g.carcasseIds)
+      );
+      return carcassesRestantesIds.filter((id) => !prisesAilleurs.has(id));
+    },
+    [dispatchGroups, carcassesRestantesIds]
   );
 
   const openAddDispatchGroup = useCallback(() => {
@@ -1161,7 +1175,9 @@ export default function DestinataireSelectPremierDetenteur({
         isFirst && prefilledInfos?.premier_detenteur_prochain_detenteur_id_cache
           ? prefilledInfos.premier_detenteur_prochain_detenteur_id_cache
           : null,
-      carcasseIds: isFirst ? carcassesRestantesIds : unassignedCarcasseIds,
+      // On part de toutes les carcasses encore libres : le chasseur n'a qu'à retirer ce qui ne
+      // part pas chez ce destinataire.
+      carcasseIds: libresIds,
       depotType:
         isFirst && prefilledInfos?.premier_detenteur_depot_type
           ? prefilledInfos.premier_detenteur_depot_type
@@ -1184,7 +1200,7 @@ export default function DestinataireSelectPremierDetenteur({
     setShowModalErrors(false);
     setCurrentStep(1);
     dispatchModal.open();
-  }, [dispatchGroups.length, prefilledInfos, carcassesRestantesIds, unassignedCarcasseIds]);
+  }, [dispatchGroups.length, prefilledInfos, getCarcassesLibresIds]);
 
   // L'état initial des lots est figé au montage. Une carcasse créée après coup rejoint donc le lot
   // par défaut, sinon elle reste en arrière : la fiche part sans elle et elle devient orpheline,
@@ -1611,40 +1627,40 @@ export default function DestinataireSelectPremierDetenteur({
   const modalMainButton: ModalProps.ActionAreaButtonProps =
     boundedStep < steps.length
       ? {
-        children: 'Suivant',
-        doClosesModal: false,
-        disabled: noCarcasseSelected,
-        nativeButtonProps: { onClick: goToNextStep },
-      }
+          children: 'Suivant',
+          doClosesModal: false,
+          disabled: noCarcasseSelected,
+          nativeButtonProps: { onClick: goToNextStep },
+        }
       : {
-        children: 'Enregistrer',
-        doClosesModal: false,
-        nativeButtonProps: { onClick: () => saveDraft() },
-      };
+          children: 'Enregistrer',
+          doClosesModal: false,
+          nativeButtonProps: { onClick: () => saveDraft() },
+        };
   // Sur la première étape, une vente / un don déjà enregistré (donc pas encore transmis) se supprime
   // depuis la modale. À la création il n'y a rien à supprimer : on ferme avec la croix.
   const modalSecondaryButton: ModalProps.ActionAreaButtonProps | null =
     boundedStep > 1
       ? {
-        children: 'Précédent',
-        priority: 'secondary',
-        doClosesModal: false,
-        nativeButtonProps: { onClick: goToPrevStep },
-      }
+          children: 'Précédent',
+          priority: 'secondary',
+          doClosesModal: false,
+          nativeButtonProps: { onClick: goToPrevStep },
+        }
       : draftMode === 'edit'
         ? {
-          children: 'Supprimer',
-          priority: 'tertiary no outline',
-          iconId: 'fr-icon-delete-bin-line',
-          className: 'text-error-main-525',
-          doClosesModal: false,
-          // On ferme la modale d'édition avant d'ouvrir la confirmation :
-          // les modales DSFR ne s'empilent pas proprement (verrou de scroll booléen).
-          onClick: () => {
-            dispatchModal.close();
-            confirmDeleteDispatchModal.open();
-          },
-        }
+            children: 'Supprimer',
+            priority: 'tertiary no outline',
+            iconId: 'fr-icon-delete-bin-line',
+            className: 'text-error-main-525',
+            doClosesModal: false,
+            // On ferme la modale d'édition avant d'ouvrir la confirmation :
+            // les modales DSFR ne s'empilent pas proprement (verrou de scroll booléen).
+            onClick: () => {
+              dispatchModal.close();
+              confirmDeleteDispatchModal.open();
+            },
+          }
         : null;
 
   return (
@@ -1671,7 +1687,7 @@ export default function DestinataireSelectPremierDetenteur({
                   group.carcasseIds.includes(c.zacharie_carcasse_id)
                 )}
                 canEdit={false}
-                onEdit={() => { }}
+                onEdit={() => {}}
               />
             ))}
             {carcassesRestantes.length > 0 &&

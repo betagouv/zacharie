@@ -8,9 +8,10 @@ import { expect, type Page } from '@playwright/test';
 
 export const venteDonModal = (page: Page) => page.locator('#dispatch-modal-pd');
 
-// Étape « Carcasses » : on part de « toutes », et on retire les carcasses qui ne partent pas.
-// Chaque carcasse est un tag cliquable, dans l'une des deux zones : « Retirer … » côté retenues,
-// « Remettre … » côté retirées.
+// Étape « Carcasses » : on part des carcasses encore libres, et on retire celles qui ne partent
+// pas chez ce destinataire. Chaque carcasse est un tag cliquable : « Retirer … » quand elle est
+// dans le lot, « Remettre … » sinon. Trois zones — retenues, « Reste à attribuer », et
+// « Part ailleurs » (déjà attribuées à une autre vente / un autre don, reprenables).
 export const carcassesRetenues = (page: Page) =>
   venteDonModal(page)
     .locator('#vente-don-carcasses-retenues')
@@ -21,11 +22,11 @@ export const carcassesRetirees = (page: Page) =>
     .locator('#vente-don-carcasses-retirees')
     .getByRole('button', { name: /^Remettre / });
 
-// Zone « Déjà attribuées à un autre destinataire » : les carcasses d'une autre vente / d'un autre
-// don, qu'on peut reprendre pour le lot en cours.
+// Sous-zone « Part ailleurs » : les carcasses d'une autre vente / d'un autre don, qu'on peut
+// reprendre pour le lot en cours. Incluse dans carcassesRetirees, qui couvre les deux sous-zones.
 export const carcassesAutreLot = (page: Page) =>
   venteDonModal(page)
-    .locator('#vente-don-carcasses-autre-lot')
+    .locator('#vente-don-carcasses-part-ailleurs')
     .getByRole('button', { name: /^Remettre / });
 
 export async function openVenteDon(page: Page) {
