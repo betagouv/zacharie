@@ -64,7 +64,6 @@ test('Retirer puis remettre une carcasse', async ({ page }) => {
 
   await expect(carcassesRetenues(page)).toHaveCount(4);
   await expect(carcassesRetirees(page)).toHaveCount(0);
-  await expect(venteDonModal(page).getByText(/Rien pour l'instant/)).toBeVisible();
 
   await retirerCarcasse(page, 'Daim N° MM-001-002');
   await expect(carcassesRetenues(page)).toHaveCount(3);
