@@ -21,10 +21,13 @@ SELECT
   NULLIF(upper(regexp_replace(e.code_trichine, '[^A-Za-z0-9]', '', 'g')), '') AS code
 FROM "Entity" e;
 
+-- La séquence est padée sur 4 chiffres sans jamais tronquer : lpad() coupe à droite au-delà
+-- de la longueur demandée, ce qui écraserait les séquences à 5 chiffres et plus.
 CREATE FUNCTION pg_temp.trichine_new_reference(reference text, code text)
 RETURNS text LANGUAGE sql IMMUTABLE AS $$
   SELECT split_part(reference, '-', 1) || '-' || split_part(reference, '-', 2) || '-' || code
-         || '-' || lpad(ltrim(split_part(reference, '-', 3), '0'), 4, '0');
+         || '-' || lpad(seq, greatest(4, length(seq)), '0')
+  FROM (SELECT ltrim(split_part(reference, '-', 3), '0') AS seq) s;
 $$;
 
 -- Échantillons : entité de prélèvement, à défaut le préleveur
