@@ -5,6 +5,8 @@ import { devices } from '@playwright/test';
 
 // uncomment many things if you need to debug
 
+const isCI = !!process.env.CI;
+
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
@@ -15,12 +17,13 @@ const config: PlaywrightTestConfig = {
     timeout: 5000,
   },
   fullyParallel: true,
-  forbidOnly: process.env.CI ? true : false,
+  forbidOnly: isCI,
   retries: 0, // 0 prevents flaky tests to be retried, so its better for tests stability
   workers: 1,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
-    ['html'], // HTML report for artifacts
+    // CI: blob for shard merging; local: html for interactive viewing
+    isCI ? ['blob'] : ['html'],
     // ["github"], // GitHub Actions integration // ONLY FOR DEBUG
     // ["list"], // Detailed console output // ONLY FOR DEBUG
     // ["junit", { outputFile: "test-results/junit.xml" }], // For CI integration // ONLY FOR DEBUG
@@ -87,9 +90,9 @@ const config: PlaywrightTestConfig = {
       url: 'http://localhost:3290',
       timeout: 120 * 1000,
       reuseExistingServer: true, // FALSE FOR DEBUG
-      // server logs are too verbose, only display when current browser logs are not enough
-      stdout: 'ignore', // PIPE FOR DEBUG
-      stderr: 'ignore', // PIPE FOR DEBUG
+      // TODO: restore to 'ignore' after debugging coverage in CI
+      stdout: 'pipe',
+      stderr: 'pipe',
       env: {
         PORT: '3290',
         VITE_HOST: '127.0.0.1:3290',
