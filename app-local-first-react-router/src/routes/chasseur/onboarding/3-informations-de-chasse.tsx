@@ -12,7 +12,6 @@ import API from '@app/services/api';
 import { trackFeature } from '@app/services/matomo';
 import MesCCGs from './3b-mes-ccgs';
 import MesAssociationsDeChasse from './3a-associations-de-chasse';
-import MesPartenaires from './3c-mes-partenaires';
 
 export default function OnboardingMesInformationsDeChasse() {
   const [searchParams] = useSearchParams();
@@ -99,7 +98,6 @@ export default function OnboardingMesInformationsDeChasse() {
           </p>
           <MesAssociationsDeChasse />
           <MesCCGs />
-          <MesPartenaires />
           {showEntrpriseVisibilityCheckbox && (
             <div className="mb-6 bg-white md:shadow-sm">
               <div className="p-4 md:p-8">
