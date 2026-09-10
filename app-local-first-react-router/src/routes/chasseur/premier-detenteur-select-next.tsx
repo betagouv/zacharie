@@ -659,6 +659,18 @@ function DispatchGroupForm({
               {errorFor('recipientEntityId') && (
                 <p className="fr-error-text mt-1">{errorFor('recipientEntityId')}</p>
               )}
+              {canEdit && (
+                <p className="fr-hint-text mt-2">
+                  Vous ne trouvez pas votre destinataire ?{' '}
+                  <button
+                    type="button"
+                    className="fr-link fr-link--sm"
+                    onClick={() => setCreatingPartenaire('')}
+                  >
+                    Ajoutez-le en cliquant ici
+                  </button>
+                </p>
+              )}
             </div>
           )}
 
