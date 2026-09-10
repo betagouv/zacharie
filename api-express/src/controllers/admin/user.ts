@@ -40,8 +40,6 @@ router.post(
     ) => {
       const body = req.body;
       const email = body.email;
-      console.log('body', body);
-      console.log('Email:', email);
       if (!email) {
         res.status(400).send({
           ok: false,
