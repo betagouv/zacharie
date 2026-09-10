@@ -452,8 +452,8 @@ function CarcassesStep({
         stateRelatedMessage={error}
         options={[
           {
-            label: `Toutes mes carcasses (${ordered.length})`,
-            hintText: formatCountCarcasseByEspece(ordered).join(', '),
+            label: `Toutes les carcasses restantes (${libres.length})`,
+            hintText: formatCountCarcasseByEspece(libres).join(', '),
             nativeInputProps: {
               checked: mode === 'all',
               readOnly: !canEdit,
@@ -535,8 +535,8 @@ function CarcassesStep({
                   ))}
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </>
       )}
 
@@ -545,7 +545,7 @@ function CarcassesStep({
         aria-live="polite"
       >
         {retenues.length} carcasse{retenues.length > 1 ? 's' : ''} transmise
-        {retenues.length > 1 ? 's' : ''} · {retirees.length} conservée{retirees.length > 1 ? 's' : ''}
+        {retenues.length > 1 ? 's' : ''} · {aAttribuer.length} conservée{aAttribuer.length > 1 ? 's' : ''}
       </p>
     </div>
   );
@@ -1154,6 +1154,7 @@ export default function DestinataireSelectPremierDetenteur({
 
   const openAddDispatchGroup = useCallback(() => {
     const isFirst = dispatchGroups.length === 0;
+    const libresIds = getCarcassesLibresIds(null);
     const nextDraft: DispatchGroup = {
       id: `group-${Date.now()}`,
       recipientEntityId:
@@ -1179,7 +1180,7 @@ export default function DestinataireSelectPremierDetenteur({
     setDraft(nextDraft);
     setDraftMode('add');
     draftInitialCarcasseIds.current = nextDraft.carcasseIds;
-    setDraftCarcasseMode(getCarcasseMode(nextDraft.carcasseIds, carcassesRestantesIds.length));
+    setDraftCarcasseMode(getCarcasseMode(nextDraft.carcasseIds, libresIds.length));
     setShowModalErrors(false);
     setCurrentStep(1);
     dispatchModal.open();
@@ -1219,12 +1220,12 @@ export default function DestinataireSelectPremierDetenteur({
       setDraft({ ...group });
       setDraftMode('edit');
       draftInitialCarcasseIds.current = group.carcasseIds;
-      setDraftCarcasseMode(getCarcasseMode(group.carcasseIds, carcassesRestantesIds.length));
+      setDraftCarcasseMode(getCarcasseMode(group.carcasseIds, getCarcassesLibresIds(group.id).length));
       setShowModalErrors(false);
       setCurrentStep(1);
       dispatchModal.open();
     },
-    [carcassesRestantesIds.length]
+    [getCarcassesLibresIds]
   );
 
   const onChangeDraft = useCallback(
@@ -1235,7 +1236,9 @@ export default function DestinataireSelectPremierDetenteur({
         !!draft &&
         updates.recipientEntityId !== draft.recipientEntityId;
       if (resetCarcasses) {
-        setDraftCarcasseMode(getCarcasseMode(draftInitialCarcasseIds.current, carcassesRestantesIds.length));
+        setDraftCarcasseMode(
+          getCarcasseMode(draftInitialCarcasseIds.current, getCarcassesLibresIds(draft.id).length)
+        );
       }
       setDraft((prev) => {
         if (!prev) return prev;
@@ -1243,7 +1246,7 @@ export default function DestinataireSelectPremierDetenteur({
         return resetCarcasses ? { ...next, carcasseIds: draftInitialCarcasseIds.current } : next;
       });
     },
-    [draft, carcassesRestantesIds.length]
+    [draft, getCarcassesLibresIds]
   );
 
   // « Toutes » comme « une partie » démarrent sur « tout retenu » : la seconde ne fait que
@@ -1251,9 +1254,9 @@ export default function DestinataireSelectPremierDetenteur({
   const onChangeCarcasseMode = useCallback(
     (mode: CarcasseMode) => {
       setDraftCarcasseMode(mode);
-      setDraft((prev) => (prev ? { ...prev, carcasseIds: carcassesRestantesIds } : prev));
+      setDraft((prev) => (prev ? { ...prev, carcasseIds: getCarcassesLibresIds(prev.id) } : prev));
     },
-    [carcassesRestantesIds]
+    [getCarcassesLibresIds]
   );
 
   const onToggleDraftCarcasse = useCallback((carcasseId: string) => {
@@ -1339,7 +1342,7 @@ export default function DestinataireSelectPremierDetenteur({
     // « Toutes mes carcasses » n'est pas un drapeau : on fige la liste des ids au moment de la validation.
     const finalDraft: DispatchGroup =
       draftCarcasseMode === 'all' || !showCarcasseSelector
-        ? { ...draft, carcasseIds: carcassesRestantesIds }
+        ? { ...draft, carcasseIds: getCarcassesLibresIds(draft.id) }
         : draft;
     if (getGroupValidationError(finalDraft, entities)) {
       setShowModalErrors(true);
@@ -1355,7 +1358,7 @@ export default function DestinataireSelectPremierDetenteur({
     });
     setDraft(null);
     dispatchModal.close();
-  }, [draft, draftCarcasseMode, showCarcasseSelector, carcassesRestantesIds, entities]);
+  }, [draft, draftCarcasseMode, showCarcasseSelector, getCarcassesLibresIds, entities]);
 
   const removeGroup = useCallback((groupId: string) => {
     setDispatchGroups((prev) => prev.filter((g) => g.id !== groupId));

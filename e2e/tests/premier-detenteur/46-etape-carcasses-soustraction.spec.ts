@@ -49,7 +49,7 @@ test('Par défaut toutes les carcasses partent chez le destinataire', async ({ p
   await ouvrirEtapeCarcasses(page, 'ETG 1 - 75000 Paris (');
 
   await expect(venteDonModal(page).getByRole('radio').first()).toBeChecked();
-  await expect(venteDonModal(page).getByText('Toutes mes carcasses (4)')).toBeVisible();
+  await expect(venteDonModal(page).getByText('Toutes les carcasses restantes (4)')).toBeVisible();
   // Les zones de tags n'apparaissent qu'avec « une partie seulement ».
   await expect(carcassesRetenues(page)).toHaveCount(0);
 

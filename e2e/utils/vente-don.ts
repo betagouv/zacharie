@@ -21,6 +21,13 @@ export const carcassesRetirees = (page: Page) =>
     .locator('#vente-don-carcasses-retirees')
     .getByRole('button', { name: /^Remettre / });
 
+// Zone « Déjà attribuées à un autre destinataire » : les carcasses d'une autre vente / d'un autre
+// don, qu'on peut reprendre pour le lot en cours.
+export const carcassesAutreLot = (page: Page) =>
+  venteDonModal(page)
+    .locator('#vente-don-carcasses-autre-lot')
+    .getByRole('button', { name: /^Remettre / });
+
 export async function openVenteDon(page: Page) {
   const addCard = page.getByRole('button', { name: /Ajouter une (autre )?vente/i }).first();
   await addCard.scrollIntoViewIfNeeded();
@@ -35,27 +42,29 @@ function radioLabel(page: Page, texte: string) {
 }
 
 export async function choisirRepartition(page: Page, choix: 'toutes' | 'partie') {
-  const label = choix === 'toutes' ? 'Toutes mes carcasses' : 'Une partie seulement';
+  const label = choix === 'toutes' ? 'Toutes les carcasses restantes' : 'Une partie seulement';
   const radio = radioLabel(page, label);
   await radio.scrollIntoViewIfNeeded();
   await radio.click();
 }
 
-// Ne garde que les carcasses aux indices donnés. L'ordre de référence est celui de la zone
-// « Part chez … » juste après être passé sur « Une partie seulement » : tout y est encore retenu.
+// Ne garde que les carcasses aux indices donnés. L'ordre de référence est celui des tags de
+// l'étape « Carcasses », toutes zones confondues (retenues, à attribuer, déjà attribuées ailleurs).
 export async function garderCarcasses(page: Page, indices: Array<number>) {
-  // Passage par « toutes » : sur une 2e vente / un 2e don la modale s'ouvre déjà sur « une partie »
-  // avec zéro carcasse retenue, et recliquer un radio déjà coché ne déclenche rien.
-  await choisirRepartition(page, 'toutes');
+  // La modale s'ouvre sur « toutes les carcasses restantes » : passer sur « une partie » déroule
+  // les tags.
   await choisirRepartition(page, 'partie');
-  const tags = carcassesRetenues(page);
+  const tags = venteDonModal(page).getByRole('button', { name: /^(Retirer|Remettre) / });
   await expect(tags.first()).toBeVisible({ timeout: 10000 });
-  const labels = await tags.evaluateAll((elements) =>
-    elements.map((element) => element.getAttribute('aria-label') ?? '')
+  const noms = await tags.evaluateAll((elements) =>
+    elements.map((element) => (element.getAttribute('aria-label') ?? '').replace(/^\S+ /, ''))
   );
-  for (const [index, label] of labels.entries()) {
-    if (indices.includes(index)) continue;
-    const tag = venteDonModal(page).getByRole('button', { name: label, exact: true });
+  for (const [index, nom] of noms.entries()) {
+    // « Retirer X » = X est dans le lot, « Remettre X » = X est hors du lot : on ne clique que le
+    // tag qui est du mauvais côté, les autres n'existent pas sous ce libellé.
+    const verbe = indices.includes(index) ? 'Remettre' : 'Retirer';
+    const tag = venteDonModal(page).getByRole('button', { name: `${verbe} ${nom}`, exact: true });
+    if ((await tag.count()) === 0) continue;
     await tag.scrollIntoViewIfNeeded();
     await tag.click();
   }
