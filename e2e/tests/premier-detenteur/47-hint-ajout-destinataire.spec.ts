@@ -68,7 +68,11 @@ test("Le hint « Ajoutez-le en cliquant ici » ouvre la création inline d'un pa
   await villeSuggestion.scrollIntoViewIfNeeded();
   await villeSuggestion.click();
 
-  const submit = modal.getByRole('button', { name: 'Me rattacher à ce partenaire' });
+  // Le formulaire inline a son propre bouton « Enregistrer », distinct de celui de la modale
+  // vente / don : on le cible via l'id du formulaire.
+  const submit = modal
+    .locator('#partenaire_data_form')
+    .getByRole('button', { name: 'Enregistrer', exact: true });
   await submit.scrollIntoViewIfNeeded();
   await submit.click();
 
