@@ -17,6 +17,7 @@ import CardCarcasse from '@app/components/CardCarcasse';
 import { isCarcassePriseEnChargeEnAval } from '@app/utils/carcasse-deja-envoyee';
 import type { Carcasse } from '@prisma/client';
 import { lookupAnomalie } from '@app/utils/anomalies-referentiel';
+import { USAGE_DOMESTIQUE_ID, USAGE_DOMESTIQUE_LABEL } from '@app/utils/usage-domestique';
 
 // Gravité du référentiel (1 bénin → 4 danger) vers la sévérité DSFR.
 // Sans niveau renseigné on reste sur l'avertissement : l'anomalie porte quand même un message.
@@ -53,7 +54,9 @@ export default function CarcassesExaminateur({
     for (const c of carcasses) {
       // Côté chasseur, on ne regroupe que par le destinataire choisi par le premier détenteur.
       // Le reste de la chaîne aval (ETG suivant, SVI…) ne le concerne pas.
-      const destinataireId = c.premier_detenteur_prochain_detenteur_id_cache;
+      const destinataireId = c.consommateur_final_usage_domestique
+        ? USAGE_DOMESTIQUE_ID
+        : c.premier_detenteur_prochain_detenteur_id_cache;
       if (!destinataireId) {
         restantesList.push(c);
         continue;
@@ -158,8 +161,10 @@ export default function CarcassesExaminateur({
           {Object.entries(dejaEnvoyeesParDestinataire).map(([entityId, group]) => (
             <div key={entityId}>
               <p className="mt-0 mb-2 text-sm text-gray-500">
-                Envoyée à {entities[entityId]?.nom_d_usage ?? 'destinataire inconnu'} (
-                {formatCarcasseLotCount(group)})
+                {entityId === USAGE_DOMESTIQUE_ID
+                  ? USAGE_DOMESTIQUE_LABEL
+                  : `Envoyée à ${entities[entityId]?.nom_d_usage ?? 'destinataire inconnu'}`}{' '}
+                ({formatCarcasseLotCount(group)})
               </p>
               <div className="grid grid-cols-1 gap-2 md:grid-cols-2">{group.map(renderCarcasseCard)}</div>
             </div>

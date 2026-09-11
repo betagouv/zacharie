@@ -11,6 +11,7 @@ function c(overrides: Partial<Carcasse> = {}): Carcasse {
     svi_ipm1_date: null,
     svi_ipm2_date: null,
     svi_carcasse_status: CarcasseStatus.SANS_DECISION,
+    consommateur_final_usage_domestique: null,
     current_owner_role: null,
     next_owner_role: null,
     ...overrides,
@@ -55,6 +56,17 @@ describe('deriveCarcasseUiState — possession lue au niveau carcasse', () => {
     expect(deriveCarcasseUiState(carcasse, undefined, {})).toBe('transmise-circuit-court');
   });
 
+  // Gardée par le premier détenteur : même signature de possession qu'une carcasse en création
+  // (owner = PD, pas de prochain détenteur), mais son sort est réglé.
+  it('carcasse gardée pour usage domestique privé → "usage-domestique"', () => {
+    const carcasse = c({
+      current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+      next_owner_role: null,
+      consommateur_final_usage_domestique: new Date(),
+    });
+    expect(deriveCarcasseUiState(carcasse, undefined, {})).toBe('usage-domestique');
+  });
+
   // Régression : après un « Retour à l'envoyeur » d'un ETG, seul next_owner_role de la
   // carcasse repasse à null. La carte doit lire la carcasse (et non le snapshot FEI périmé)
   // → l'état repasse à "creation", actionnable, et non "transmise".
@@ -97,6 +109,24 @@ describe('getCarcasseCardDisplay — vue chasseur', () => {
     expect(display.uiState).toBe('transmise-circuit-court');
     expect(display.statusLabel).toBe('Transmise');
     expect(display.accentColor).toBe('blue');
+  });
+
+  it('carcasse gardée pour usage domestique privé → libellé "Usage domestique privé" (bleu)', () => {
+    const carcasse = c({
+      current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+      next_owner_role: null,
+      consommateur_final_usage_domestique: new Date(),
+    });
+    const display = getCarcasseCardDisplay({
+      carcasse,
+      latestIntermediaire: undefined,
+      entities: noEntities,
+      viewRole: 'chasseur',
+    });
+    expect(display.uiState).toBe('usage-domestique');
+    expect(display.statusLabel).toBe('Usage domestique privé');
+    expect(display.accentColor).toBe('blue');
+    expect(display.showStatusLine).toBe(true);
   });
 
   it('carcasse renvoyée par l\'ETG → plus de "En cours de traitement"', () => {

@@ -113,9 +113,9 @@ function FEIChasseurLoaded() {
     fei.heure_mise_a_mort_premiere_carcasse ? carcassesExamenSignature : null
   );
   const allCarcassesConfirmed = confirmedSignature === carcassesExamenSignature;
-  const [approbation, setApprobation] = useState(
-    fei.examinateur_initial_approbation_mise_sur_le_marche ? true : false
-  );
+  // Enregistrée dès la coche, comme tous les autres champs de la fiche : la certification vaut
+  // examen initial validé, elle ne dépend pas de la transmission qui peut venir bien plus tard.
+  const approbation = !!fei.examinateur_initial_approbation_mise_sur_le_marche;
   const [showErrors, setShowErrors] = useState(false);
   const [showBloc1Errors, setShowBloc1Errors] = useState(false);
   const [showBloc2Errors, setShowBloc2Errors] = useState(false);
@@ -357,9 +357,6 @@ function FEIChasseurLoaded() {
       if (destinataireError) {
         return;
       }
-      updateFei(fei.numero, {
-        examinateur_initial_approbation_mise_sur_le_marche: approbation,
-      });
       updateCarcassesTransmission(carcassesRestantesIds, {
         current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
         current_owner_user_id: user.id,
@@ -369,9 +366,6 @@ function FEIChasseurLoaded() {
       });
       destinataireRef.current?.submit();
     } else {
-      updateFei(fei.numero, {
-        examinateur_initial_approbation_mise_sur_le_marche: approbation,
-      });
       updateCarcassesTransmission(carcassesRestantesIds, {
         current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
         current_owner_user_id: fei.premier_detenteur_user_id,
@@ -676,35 +670,6 @@ function FEIChasseurLoaded() {
                           >
                             {dayjs().format('dddd DD MMMM, HH:mm')}
                           </button>
-                          <button
-                            className="inline-block text-left"
-                            type="button"
-                            onClick={() => {
-                              let nextConsoPrivee = fei.consommateur_final_usage_domestique
-                                ? null
-                                : dayjs().toDate();
-                              updateFei(fei.numero, {
-                                consommateur_final_usage_domestique: nextConsoPrivee,
-                                premier_detenteur_user_id: nextConsoPrivee ? user.id : null,
-                                premier_detenteur_name_cache: nextConsoPrivee
-                                  ? `${user.prenom} ${user.nom_de_famille}`
-                                  : null,
-                              });
-                            }}
-                          >
-                            {/* TODO : a réactiver plus tard pour l'intégrer dans "vente ou don" */}
-                            {/* {fei.consommateur_final_usage_domestique ? (
-                              <>
-                                <u className="inline">Cliquez là</u> si les carcasses sont destinées à une
-                                mise sur le marché.
-                              </>
-                            ) : (
-                              <>
-                                <u className="inline">Cliquez là</u> si vous êtes le consommateur final, ou si
-                                vous en faites un usage domestique privé.
-                              </>
-                            )} */}
-                          </button>
                         </>
                       ) : (
                         "Cette date vaut date d'approbation de mise sur le marché"
@@ -732,7 +697,7 @@ function FEIChasseurLoaded() {
                   />
                   <div id={Prisma.FeiScalarFieldEnum.examinateur_initial_approbation_mise_sur_le_marche}>
                     <Checkbox
-                      className={canEdit ? '' : 'checkbox-black'}
+                      className={canEdit && !approbation ? '' : 'checkbox-black'}
                       state={
                         fieldHasError('examinateur_initial_approbation_mise_sur_le_marche')
                           ? 'error'
@@ -749,9 +714,14 @@ function FEIChasseurLoaded() {
                             name: Prisma.FeiScalarFieldEnum
                               .examinateur_initial_approbation_mise_sur_le_marche,
                             value: 'true',
-                            disabled: !canEdit,
-                            onChange: () => setApprobation(!approbation),
-                            readOnly: !!fei.examinateur_initial_approbation_mise_sur_le_marche,
+                            // La certification vaut approbation de mise sur le marché : une fois
+                            // cochée on ne la décoche plus. La décocher redescendrait sur toutes les
+                            // carcasses de la fiche, y compris des lots déjà partis chez un ETG.
+                            disabled: !canEdit || approbation,
+                            onChange: () =>
+                              updateFei(fei.numero, {
+                                examinateur_initial_approbation_mise_sur_le_marche: true,
+                              }),
                             checked: approbation,
                           },
                         },
