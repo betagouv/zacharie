@@ -64,11 +64,11 @@ router.post(
 );
 
 router.post(
-  '/api-key/new-access-token/:api_key_id',
+  '/api-key/new-access-token/:id',
   catchErrors(
     async (req: express.Request, res: express.Response<AdminApiKeyResponse>, next: express.NextFunction) => {
       const apiKey = await prisma.apiKey.findUnique({
-        where: { id: req.params.api_key_id },
+        where: { id: req.params.id },
       });
       if (!apiKey) {
         res.status(404).send({ ok: false, data: null, error: 'API key not found' });
@@ -76,7 +76,7 @@ router.post(
       }
       const accessToken = crypto.randomBytes(32).toString('hex');
       const updatedApiKey = await prisma.apiKey.update({
-        where: { id: req.params.api_key_id },
+        where: { id: req.params.id },
         data: {
           access_token: accessToken,
           access_token_read_at: null,
@@ -88,7 +88,7 @@ router.post(
 );
 
 router.get(
-  '/api-key/:api_key_id',
+  '/api-key/:id',
   catchErrors(
     async (
       req: express.Request,
@@ -96,7 +96,7 @@ router.get(
       next: express.NextFunction
     ) => {
       const apiKey = await prisma.apiKey.findUnique({
-        where: { id: req.params.api_key_id },
+        where: { id: req.params.id },
         include: {
           approvals: {
             include: {
