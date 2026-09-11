@@ -15,5 +15,5 @@ test('79 - Vue /app/svi (liste fiches) avec barre latérale de filtres', async (
   await expect(page.getByRole('link', { name: feiId })).toBeVisible({ timeout: 10000 });
 
   // La liste des transmissions affiche désormais une barre latérale de filtres (recherche + statut).
-  await expect(page.getByPlaceholder('Rechercher une fiche...').first()).toBeVisible();
+  await expect(page.getByPlaceholder('Rechercher une fiche').first()).toBeVisible();
 });
