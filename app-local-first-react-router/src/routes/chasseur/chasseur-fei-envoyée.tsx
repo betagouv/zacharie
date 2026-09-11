@@ -42,6 +42,13 @@ export default function ChasseurFeiEnvoyée() {
     return Object.values(grouped);
   }, [transmissions, entities]);
 
+  // La transmission est portée par les carcasses (`updateCarcassesTransmission`), pas par la fiche :
+  // c'est leur état de synchro, et non `fei.is_synced`, qui dit si le destinataire a été notifié.
+  const allSentCarcassesSynced = useMemo(
+    () => sentByRecipient.every((recipient) => recipient.carcasses.every((c) => c.is_synced)),
+    [sentByRecipient]
+  );
+
   const unsendTransmissions = useMemo(() => {
     return transmissions.filter(
       (t) =>
@@ -107,7 +114,11 @@ export default function ChasseurFeiEnvoyée() {
                 {sentByRecipient.length === 1 && (
                   <>
                     <h1 className="fr-h4 fr-mb-0">
-                      {singleDestinataireCaption(sentByRecipient[0].entityName, isOnline, fei?.is_synced)}
+                      {singleDestinataireCaption(
+                        sentByRecipient[0].entityName,
+                        isOnline,
+                        allSentCarcassesSynced
+                      )}
                     </h1>
                     <p className="fr-mb-0">({formatCarcasseLotCount(sentByRecipient[0].carcasses)})</p>
                   </>
@@ -115,7 +126,7 @@ export default function ChasseurFeiEnvoyée() {
                 {sentByRecipient.length > 1 && (
                   <>
                     <h1 className="fr-h4 fr-mb-0">
-                      {multiDestinatairesCaption(sentByRecipient.length, isOnline, fei?.is_synced)}
+                      {multiDestinatairesCaption(sentByRecipient.length, isOnline, allSentCarcassesSynced)}
                     </h1>
                     <ul className="fr-mb-0 list-none p-0">
                       {sentByRecipient.map((recipient) => (
