@@ -20,17 +20,34 @@ const gibierSelect = {
 
 const especesRaccourcis = ['Sanglier', 'Chevreuil', 'Cerf élaphe'];
 
+// Le numero CFEI est de la forme CFEI-DEP-AA-123 : on en garde le departement et le numero d'ordre.
+// Si le numero saisi ne suit pas ce format, on retombe sur ses 6 derniers caracteres alphanumeriques.
+function getDepartementEtOrdreFromNumeroCfei(numeroCfei: string) {
+  const segments = numeroCfei
+    .toUpperCase()
+    .split('-')
+    .map((segment) => segment.replace(/[^0-9A-Z]/g, ''))
+    .filter(Boolean);
+  if (segments.length < 4) {
+    return numeroCfei
+      .toUpperCase()
+      .replace(/[^0-9A-Z]/g, '')
+      .slice(-6);
+  }
+  const [, departement, , ordre] = segments;
+  return `${departement}${ordre}`;
+}
+
 function getNewDefaultNumeroBracelet(user: User) {
   if (!user.numero_cfei) {
     return '';
   }
-  const prenom = user.prenom?.slice(0, 1).toUpperCase();
-  const nom = user.nom_de_famille?.slice(0, 1).toUpperCase();
-  // 4 derniers chiffres du numero cfei
-  const numeroCfei = user.numero_cfei?.slice(-4);
+  const prenom = user.prenom?.slice(0, 1).toUpperCase() ?? '';
+  const nom = user.nom_de_famille?.slice(0, 1).toUpperCase() ?? '';
+  const departementEtOrdre = getDepartementEtOrdreFromNumeroCfei(user.numero_cfei);
   // denier marquage utilise + pad start 0 sur 3 chiffres
   const prochain_bracelet_a_utiliser = (user.prochain_bracelet_a_utiliser || 1).toString().padStart(3, '0');
-  return `${prenom}${nom}${numeroCfei}-${prochain_bracelet_a_utiliser}`;
+  return `${prenom}${nom}${departementEtOrdre}-${prochain_bracelet_a_utiliser}`;
 }
 
 export default function NouvelleCarcasse({
