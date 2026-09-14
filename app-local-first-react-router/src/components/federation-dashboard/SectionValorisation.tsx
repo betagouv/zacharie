@@ -1,28 +1,15 @@
-import { useState } from 'react';
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  Legend,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
+import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import DepartementValorisationCard from '@app/components/DepartementValorisationCard';
-import ValorisationTable, { type DepartementRow } from '@app/components/ValorisationTable';
+import { type DepartementRow } from './DepartementsTable';
 
 interface ValorisationTotals {
   ggAgree: number;
   ggNonAgree: number;
   ggDomestique: number;
   ggTauxSaisie: number | null;
-  pgAgree: number;
-  pgNonAgree: number;
-  pgDomestique: number;
+  pgAgreeAnimaux: number;
+  pgNonAgreeAnimaux: number;
+  pgDomestiqueAnimaux: number;
   pgTauxSaisie: number | null;
 }
 
@@ -38,25 +25,20 @@ const CIRCUIT_COLORS = {
   domestique: '#10b981',
 };
 
+// Grand gibier : une carcasse = un animal. Petit gibier : on compte les animaux des lots.
 function buildPie(totals: ValorisationTotals, type: 'gg' | 'pg') {
-  const prefix = type;
+  const [agree, nonAgree, domestique] =
+    type === 'gg'
+      ? [totals.ggAgree, totals.ggNonAgree, totals.ggDomestique]
+      : [totals.pgAgreeAnimaux, totals.pgNonAgreeAnimaux, totals.pgDomestiqueAnimaux];
   return [
-    { name: 'Circuit agréé (ETG)', value: totals[`${prefix}Agree` as const], color: CIRCUIT_COLORS.agree },
-    {
-      name: 'Circuit non agréé',
-      value: totals[`${prefix}NonAgree` as const],
-      color: CIRCUIT_COLORS.nonAgree,
-    },
-    {
-      name: 'Usage domestique privé',
-      value: totals[`${prefix}Domestique` as const],
-      color: CIRCUIT_COLORS.domestique,
-    },
+    { name: 'Circuit agréé (ETG)', value: agree, color: CIRCUIT_COLORS.agree },
+    { name: 'Circuit non agréé', value: nonAgree, color: CIRCUIT_COLORS.nonAgree },
+    { name: 'Usage domestique privé', value: domestique, color: CIRCUIT_COLORS.domestique },
   ].filter((d) => d.value > 0);
 }
 
 export default function SectionValorisation({ scope, departements, totals }: Props) {
-  const [showTable, setShowTable] = useState(false);
   const isSingleDept = scope === 'departemental' && departements.length === 1;
 
   if (departements.length === 0) {
@@ -71,26 +53,6 @@ export default function SectionValorisation({ scope, departements, totals }: Pro
   if (isSingleDept) {
     return <DepartementValorisationCard {...departements[0]} />;
   }
-
-  // Stacked bar par dept (limité aux 30 plus gros volumes pour la lisibilité)
-  const sortedByVolume = [...departements].sort((a, b) => {
-    const totA = a.gg.agree + a.gg.nonAgree + a.gg.domestique + a.pg.agree + a.pg.nonAgree + a.pg.domestique;
-    const totB = b.gg.agree + b.gg.nonAgree + b.gg.domestique + b.pg.agree + b.pg.nonAgree + b.pg.domestique;
-    return totB - totA;
-  });
-  const topForChart = sortedByVolume.slice(0, 30);
-
-  const chartData = topForChart
-    .map((d) => ({
-      code: d.code,
-      gg_agree: d.gg.agree,
-      gg_nonAgree: d.gg.nonAgree,
-      gg_domestique: d.gg.domestique,
-      pg_agree: d.pg.agree,
-      pg_nonAgree: d.pg.nonAgree,
-      pg_domestique: d.pg.domestique,
-    }))
-    .sort((a, b) => a.code.localeCompare(b.code));
 
   const pieGg = totals ? buildPie(totals, 'gg') : [];
   const pieGgTotal = pieGg.reduce((s, d) => s + d.value, 0);
@@ -148,7 +110,7 @@ export default function SectionValorisation({ scope, departements, totals }: Pro
           )}
         </div>
         <div className="rounded-lg bg-white p-4 shadow-sm">
-          <h3 className="fr-h6 mb-3">Répartition Petit gibier</h3>
+          <h3 className="fr-h6 mb-1">Répartition Petit gibier</h3>
           {piePgEmpty ? (
             <p className="py-12 text-center text-sm text-gray-500">Aucune donnée</p>
           ) : (
@@ -181,88 +143,6 @@ export default function SectionValorisation({ scope, departements, totals }: Pro
             </ResponsiveContainer>
           )}
         </div>
-      </div>
-
-      <div className="rounded-lg bg-white p-4 shadow-sm">
-        <h3 className="fr-h6 mb-3">
-          Circuits par département
-          {topForChart.length < departements.length ? ` (top ${topForChart.length})` : ''}
-        </h3>
-        <ResponsiveContainer
-          width="100%"
-          height={Math.max(280, chartData.length * 28)}
-        >
-          <BarChart
-            data={chartData}
-            layout="vertical"
-            margin={{ left: 8, right: 16 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis type="number" />
-            <YAxis
-              dataKey="code"
-              type="category"
-              width={48}
-              tick={{ fontSize: 12 }}
-            />
-            <Tooltip />
-            <Legend />
-            <Bar
-              dataKey="gg_agree"
-              stackId="gg"
-              fill={CIRCUIT_COLORS.agree}
-              name="GG agréé"
-            />
-            <Bar
-              dataKey="gg_nonAgree"
-              stackId="gg"
-              fill={CIRCUIT_COLORS.nonAgree}
-              name="GG non agréé"
-            />
-            <Bar
-              dataKey="gg_domestique"
-              stackId="gg"
-              fill={CIRCUIT_COLORS.domestique}
-              name="GG domestique"
-            />
-            <Bar
-              dataKey="pg_agree"
-              stackId="pg"
-              fill="#93c5fd"
-              name="PG agréé"
-            />
-            <Bar
-              dataKey="pg_nonAgree"
-              stackId="pg"
-              fill="#fcd34d"
-              name="PG non agréé"
-            />
-            <Bar
-              dataKey="pg_domestique"
-              stackId="pg"
-              fill="#6ee7b7"
-              name="PG domestique"
-            />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-
-      <div>
-        <button
-          type="button"
-          className="fr-btn fr-btn--tertiary fr-btn--sm"
-          onClick={() => setShowTable((s) => !s)}
-        >
-          {showTable ? 'Masquer le détail' : 'Voir le détail par département'}
-        </button>
-        {showTable && (
-          <div className="mt-3">
-            <ValorisationTable
-              rows={departements}
-              showSearch={scope === 'national'}
-            />
-          </div>
-        )}
       </div>
     </div>
   );
