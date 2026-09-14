@@ -272,6 +272,14 @@ export default function CollecteurFiches() {
         if (transmission.content.premier_detenteur_name_cache) {
           if (transmission.content.premier_detenteur_name_cache.toLowerCase().includes(q)) isIncluded = true;
         }
+        if (!isIncluded) {
+          for (const carcasse of transmission.carcasses) {
+            if (carcasse.numero_bracelet?.toLowerCase().includes(q)) {
+              isIncluded = true;
+              break;
+            }
+          }
+        }
         if (!isIncluded) continue;
       }
       if (filterStatuses.length > 0) {
@@ -355,7 +363,7 @@ export default function CollecteurFiches() {
         />
         <input
           type="search"
-          placeholder="Rechercher une fiche..."
+          placeholder="Rechercher une fiche, un marquage..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full rounded border border-gray-300 py-2 pr-3 pl-10 text-sm transition-colors outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"

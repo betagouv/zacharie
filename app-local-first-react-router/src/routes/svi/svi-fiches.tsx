@@ -407,6 +407,14 @@ export default function SviFiches() {
         if (transmission.content.premier_detenteur_name_cache) {
           if (transmission.content.premier_detenteur_name_cache.toLowerCase().includes(q)) isIncluded = true;
         }
+        if (!isIncluded) {
+          for (const carcasse of transmission.carcasses) {
+            if (carcasse.numero_bracelet?.toLowerCase().includes(q)) {
+              isIncluded = true;
+              break;
+            }
+          }
+        }
         if (!isIncluded) continue;
       }
       if (filterStatuses.length > 0) {
@@ -518,7 +526,7 @@ export default function SviFiches() {
         />
         <input
           type="search"
-          placeholder="Rechercher une fiche..."
+          placeholder="Rechercher une fiche, un marquage..."
           value={searchQuery}
           onChange={(e) => {
             setSearchQuery(e.target.value);
