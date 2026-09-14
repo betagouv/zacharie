@@ -48,6 +48,10 @@ describe('updateFei ne réécrit que les carcasses encore chez le chasseur', () 
         RESTANTE: makeCarcasse('RESTANTE'),
         // destinataire choisi, pas encore prise en charge
         ENVOYEE: makeCarcasse('ENVOYEE', { next_owner_entity_id: 'ETG-1' }),
+        // gardée par le premier détenteur pour son usage domestique privé
+        GARDEE: makeCarcasse('GARDEE', {
+          consommateur_final_usage_domestique: new Date('2026-05-22T11:00:00.000Z'),
+        }),
         // prise en charge par l'ETG
         CHEZ_ETG: makeCarcasse('CHEZ_ETG', {
           current_owner_role: FeiOwnerRole.ETG,
@@ -87,6 +91,18 @@ describe('updateFei ne réécrit que les carcasses encore chez le chasseur', () 
     expect(carcasses.CHEZ_ETG.current_owner_role).toBe(FeiOwnerRole.ETG);
     expect(carcasses.CHEZ_ETG.current_owner_entity_id).toBe('ETG-1');
     expect(carcasses.ENVOYEE.next_owner_entity_id).toBe('ETG-1');
+  });
+
+  // Régression : `consommateur_final_usage_domestique` est propre à la carcasse — le premier
+  // détenteur ne garde parfois qu'une partie de son gibier. Recopié depuis la fiche, il était remis
+  // à null à la moindre modification de celle-ci et la carcasse gardée repartait « à attribuer ».
+  test("l'usage domestique privé d'une carcasse survit à une modification de la fiche", () => {
+    useZustandStore.getState().updateFei(FEI_NUMERO, { commune_mise_a_mort: 'CHASSENARD' });
+
+    const { carcasses } = useZustandStore.getState();
+    expect(carcasses.GARDEE.consommateur_final_usage_domestique).toEqual(
+      new Date('2026-05-22T11:00:00.000Z')
+    );
   });
 
   test('les champs de fiche sont bien propagés aux carcasses restantes', () => {

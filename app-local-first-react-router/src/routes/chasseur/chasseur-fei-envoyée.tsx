@@ -11,6 +11,7 @@ import useUser from '@app/zustand/user';
 import SuccessSvg from '@app/assets/svg/success.svg';
 import { CarcasseType, FeiOwnerRole, type Carcasse } from '@prisma/client';
 import { useGetTransmissionsForFei } from '@app/utils/get-transmissions-sorted';
+import { isCarcasseDejaEnvoyee } from '@app/utils/carcasse-deja-envoyee';
 
 export default function ChasseurFeiEnvoyée() {
   const params = useParams();
@@ -41,6 +42,13 @@ export default function ChasseurFeiEnvoyée() {
     return Object.values(grouped);
   }, [transmissions, entities]);
 
+  // La transmission est portée par les carcasses (`updateCarcassesTransmission`), pas par la fiche :
+  // c'est leur état de synchro, et non `fei.is_synced`, qui dit si le destinataire a été notifié.
+  const allSentCarcassesSynced = useMemo(
+    () => sentByRecipient.every((recipient) => recipient.carcasses.every((c) => c.is_synced)),
+    [sentByRecipient]
+  );
+
   const unsendTransmissions = useMemo(() => {
     return transmissions.filter(
       (t) =>
@@ -51,13 +59,13 @@ export default function ChasseurFeiEnvoyée() {
     );
   }, [transmissions]);
 
-  console.log({ transmissions });
-
+  // Le lot « pas encore transmis » contient aussi les carcasses que le premier détenteur garde pour
+  // son usage domestique privé : elles n'ont pas de destinataire, mais il n'y a plus rien à attribuer.
   const unsendCarcasses = useMemo(() => {
     if (!unsendTransmissions.length) return [];
     const _unsendCarcasses = [];
     for (const unsendTransmission of unsendTransmissions) {
-      _unsendCarcasses.push(...unsendTransmission.carcasses);
+      _unsendCarcasses.push(...unsendTransmission.carcasses.filter((c) => !isCarcasseDejaEnvoyee(c)));
     }
     return _unsendCarcasses;
   }, [unsendTransmissions]);
@@ -106,7 +114,11 @@ export default function ChasseurFeiEnvoyée() {
                 {sentByRecipient.length === 1 && (
                   <>
                     <h1 className="fr-h4 fr-mb-0">
-                      {singleDestinataireCaption(sentByRecipient[0].entityName, isOnline, fei?.is_synced)}
+                      {singleDestinataireCaption(
+                        sentByRecipient[0].entityName,
+                        isOnline,
+                        allSentCarcassesSynced
+                      )}
                     </h1>
                     <p className="fr-mb-0">({formatCarcasseLotCount(sentByRecipient[0].carcasses)})</p>
                   </>
@@ -114,7 +126,7 @@ export default function ChasseurFeiEnvoyée() {
                 {sentByRecipient.length > 1 && (
                   <>
                     <h1 className="fr-h4 fr-mb-0">
-                      {multiDestinatairesCaption(sentByRecipient.length, isOnline, fei?.is_synced)}
+                      {multiDestinatairesCaption(sentByRecipient.length, isOnline, allSentCarcassesSynced)}
                     </h1>
                     <ul className="fr-mb-0 list-none p-0">
                       {sentByRecipient.map((recipient) => (

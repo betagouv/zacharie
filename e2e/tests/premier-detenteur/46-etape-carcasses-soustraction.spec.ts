@@ -3,6 +3,7 @@ import type { Page } from '@playwright/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 import {
+  ajouterVenteDon,
   openVenteDon,
   selectDestinataire,
   allerAEtape,
@@ -12,6 +13,7 @@ import {
   venteDonModal,
   carcassesRetenues,
   carcassesRetirees,
+  carcassesAutreLot,
   choisirRepartition,
   retirerCarcasse,
   remettreCarcasse,
@@ -49,7 +51,7 @@ test('Par défaut toutes les carcasses partent chez le destinataire', async ({ p
   await ouvrirEtapeCarcasses(page, 'ETG 1 - 75000 Paris (');
 
   await expect(venteDonModal(page).getByRole('radio').first()).toBeChecked();
-  await expect(venteDonModal(page).getByText('Toutes mes carcasses (4)')).toBeVisible();
+  await expect(venteDonModal(page).getByText('Toutes les carcasses restantes (4)')).toBeVisible();
   // Les zones de tags n'apparaissent qu'avec « une partie seulement ».
   await expect(carcassesRetenues(page)).toHaveCount(0);
 
@@ -73,6 +75,28 @@ test('Retirer puis remettre une carcasse', async ({ page }) => {
   await remettreCarcasse(page, 'Daim N° MM-001-002');
   await expect(carcassesRetenues(page)).toHaveCount(4);
   await expect(carcassesRetirees(page)).toHaveCount(0);
+});
+
+// Une carcasse déjà promise à une autre vente / un autre don n'est pas « à attribuer » : elle a sa
+// propre zone, et la reprendre est un geste explicite.
+test('Reprendre une carcasse attribuée à un autre destinataire', async ({ page }) => {
+  await connectWith(page, 'premier-detenteur@example.fr');
+  await page.getByRole('link', { name: feiId }).click();
+  await ajouterVenteDon(page, { destinataire: 'ETG 1 - 75000 Paris (' });
+
+  // ETG 2 : plus rien de libre, les 4 carcasses sont chez ETG 1.
+  await openVenteDon(page);
+  await selectDestinataire(page, 'ETG 2 - 75000 Paris (');
+  await allerAEtape(page, 'Carcasses');
+  await expect(carcassesRetenues(page)).toHaveCount(0);
+  await expect(carcassesRetirees(page)).toHaveCount(4);
+  await expect(carcassesAutreLot(page)).toHaveCount(4);
+  await expect(venteDonModal(page).getByText('0 carcasse transmise · 0 conservée')).toBeVisible();
+
+  await remettreCarcasse(page, 'Daim N° MM-001-002');
+  await expect(carcassesRetenues(page)).toHaveCount(1);
+  await expect(carcassesAutreLot(page)).toHaveCount(3);
+  await expect(venteDonModal(page).getByText('1 carcasse transmise · 0 conservée')).toBeVisible();
 });
 
 test('« Suivant » est désactivé quand plus aucune carcasse n’est retenue', async ({ page }) => {

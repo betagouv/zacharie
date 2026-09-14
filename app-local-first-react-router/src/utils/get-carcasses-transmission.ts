@@ -81,7 +81,6 @@ export function getCarcasseTransmission(carcasseRef: Carcasse): CarcasseTransmis
 const ALWAYS_SAME_FIELDS: Partial<Record<keyof CarcasseTransmission, boolean>> = {
   fei_numero: true,
   date_mise_a_mort: true,
-  consommateur_final_usage_domestique: true,
   is_synced: true,
   created_at: true,
   updated_at: true,
@@ -110,6 +109,7 @@ const PER_CARCASSE_METADATA_FIELDS: Partial<Record<keyof CarcasseTransmission, b
   created_by_user_id: true, // because a carcasse can have been created from RequestNewCarcasseForm
   examinateur_initial_approbation_mise_sur_le_marche: true, // because a carcasse can have been created from RequestNewCarcasseForm
   examinateur_initial_date_approbation_mise_sur_le_marche: true, // a carcasse from RequestNewCarcasseForm is approved later, so its approbation date differs legitimately
+  consommateur_final_usage_domestique: true, // le premier détenteur garde une partie seulement de ses carcasses : le champ est propre au lot, pas à la transmission
 };
 
 const REFUSAL_FIELDS: Partial<Record<keyof CarcasseTransmission, boolean>> = {

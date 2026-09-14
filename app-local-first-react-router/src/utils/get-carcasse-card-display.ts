@@ -2,12 +2,14 @@ import { Carcasse, CarcasseStatus, CarcasseType, FeiOwnerRole } from '@prisma/cl
 import type useZustandStore from '@app/zustand/store';
 import type { useCarcassesIntermediairesForCarcasse } from '@app/utils/get-carcasses-intermediaires';
 import { isRoleCircuitCourt } from '@app/utils/circuit-court';
+import { USAGE_DOMESTIQUE_LABEL } from '@app/utils/usage-domestique';
 
 export type CardViewRole = 'chasseur' | 'etg-coll' | 'svi';
 export type CardUiState =
   | 'creation'
   | 'transmise'
   | 'transmise-circuit-court'
+  | 'usage-domestique'
   | 'manquante-etg'
   | 'refusee-etg'
   | 'acceptee-etg'
@@ -67,6 +69,9 @@ export function deriveCarcasseUiState(
     case CarcasseStatus.TRAITEMENT_ASSAINISSANT:
       return 'accepte-svi';
     case CarcasseStatus.SANS_DECISION: {
+      // Gardée par le premier détenteur pour son usage domestique privé : elle ne part chez personne
+      // et n'ira pas plus loin. À vérifier avant « création », qui a la même signature de possession.
+      if (carcasse.consommateur_final_usage_domestique) return 'usage-domestique';
       // On lit l'état de possession de la carcasse elle-même (source de vérité),
       // pas le snapshot FEI qui peut être périmé après un « Retour à l'envoyeur ».
       const isCreation =
@@ -113,6 +118,16 @@ export function getCarcasseCardDisplay(params: CardDisplayParams): CardDisplay {
     ? entities[latestIntermediaire.intermediaire_entity_id]
     : null;
   const intermediaireName = intermediaireEntity?.nom_d_usage ?? '';
+
+  if (uiState === 'usage-domestique') {
+    return {
+      uiState,
+      iconId: 'fr-icon-home-4-line',
+      accentColor: 'blue',
+      statusLabel: USAGE_DOMESTIQUE_LABEL,
+      showStatusLine: true,
+    };
+  }
 
   if (uiState === 'transmise-circuit-court') {
     return {

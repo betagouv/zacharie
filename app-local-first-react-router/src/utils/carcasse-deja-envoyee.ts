@@ -8,8 +8,14 @@ import { FeiOwnerRole } from '@prisma/client';
 export function isCarcasseDejaEnvoyee(carcasse: {
   next_owner_entity_id?: string | null;
   current_owner_role?: FeiOwnerRole | null;
+  consommateur_final_usage_domestique?: Date | null;
 }) {
   if (carcasse.next_owner_entity_id != null) {
+    return true;
+  }
+  // Gardée par le premier détenteur pour son usage domestique privé : elle ne part chez personne,
+  // mais son sort est réglé — elle sort du lot à répartir.
+  if (carcasse.consommateur_final_usage_domestique != null) {
     return true;
   }
   return isCarcassePriseEnChargeEnAval(carcasse);

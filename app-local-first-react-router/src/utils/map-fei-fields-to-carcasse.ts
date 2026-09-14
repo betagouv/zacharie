@@ -1,6 +1,9 @@
 import { CarcasseFieldsTakenFromFei } from '@app/types/carcasse';
 import { Fei } from '@prisma/client';
 
+// `consommateur_final_usage_domestique` n'est volontairement pas de la partie : il est propre à
+// chaque carcasse (le premier détenteur n'en garde parfois qu'une partie pour lui), le recopier
+// depuis la fiche écraserait le choix fait carcasse par carcasse.
 export function mapFeiFieldsToCarcasse(fei: Fei): CarcasseFieldsTakenFromFei {
   return {
     date_mise_a_mort: fei.date_mise_a_mort,
@@ -12,7 +15,6 @@ export function mapFeiFieldsToCarcasse(fei: Fei): CarcasseFieldsTakenFromFei {
       fei.examinateur_initial_approbation_mise_sur_le_marche,
     examinateur_initial_date_approbation_mise_sur_le_marche:
       fei.examinateur_initial_date_approbation_mise_sur_le_marche,
-    consommateur_final_usage_domestique: fei.consommateur_final_usage_domestique,
     premier_detenteur_offline: fei.premier_detenteur_offline,
     premier_detenteur_user_id: fei.premier_detenteur_user_id,
     premier_detenteur_entity_id: fei.premier_detenteur_entity_id,
