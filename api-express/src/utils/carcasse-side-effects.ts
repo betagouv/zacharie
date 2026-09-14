@@ -9,7 +9,7 @@ import {
   UserRoles,
 } from '@prisma/client';
 import prisma from '~/prisma';
-import sendNotificationToUser from '~/service/notifications';
+import sendNotificationToUser, { type PushWording } from '~/service/notifications';
 import {
   formatCarcasseManquanteChasseurEmail,
   formatCarcasseRefusChasseurEmail,
@@ -37,6 +37,7 @@ async function notifyExaminateurAndPremierDetenteur({
   fei_numero,
   title,
   email,
+  push,
   notificationLogAction,
   emailTemplateId,
   emailTemplateParams,
@@ -44,6 +45,7 @@ async function notifyExaminateurAndPremierDetenteur({
   fei_numero: string;
   title: string;
   email: string;
+  push: PushWording;
   notificationLogAction: string;
   emailTemplateId?: number;
   emailTemplateParams?: Record<string, unknown>;
@@ -60,11 +62,10 @@ async function notifyExaminateurAndPremierDetenteur({
       return [fei?.FeiExaminateurInitialUser, fei?.FeiPremierDetenteurUser];
     });
 
-  // Le template Brevo ne couvre que l'email ; le push reste en texte (`email`).
   const notification = {
     title,
-    body: email,
     email,
+    push,
     notificationLogAction,
     emailTemplateId,
     emailTemplateParams,
@@ -132,13 +133,14 @@ export async function notifySaisieChasseur(existingCarcasse: Carcasse, updatedCa
     (updatedCarcasse.svi_ipm2_decision === IPM2Decision.SAISIE_PARTIELLE ||
       updatedCarcasse.svi_ipm2_decision === IPM2Decision.SAISIE_TOTALE)
   ) {
-    const { object, text, params } = formatSaisieChasseurEmail(updatedCarcasse);
+    const { object, text, params, push } = formatSaisieChasseurEmail(updatedCarcasse);
     await notifyExaminateurAndPremierDetenteur({
       fei_numero: existingCarcasse.fei_numero,
       title: object,
       email: text,
       emailTemplateId: BrevoTemplateId.CARCASSE_SAISIE,
       emailTemplateParams: params,
+      push,
       notificationLogAction: `CARCASSE_SAISIE_${updatedCarcasse.zacharie_carcasse_id}`,
     });
   }
@@ -149,13 +151,14 @@ export async function notifyManquanteChasseur(existingCarcasse: Carcasse, update
     !existingCarcasse.intermediaire_carcasse_manquante &&
     updatedCarcasse.intermediaire_carcasse_manquante
   ) {
-    const { object, text, params } = await formatCarcasseManquanteChasseurEmail(updatedCarcasse);
+    const { object, text, params, push } = await formatCarcasseManquanteChasseurEmail(updatedCarcasse);
     await notifyExaminateurAndPremierDetenteur({
       fei_numero: existingCarcasse.fei_numero,
       title: object,
       email: text,
       emailTemplateId: BrevoTemplateId.CARCASSE_MANQUANTE,
       emailTemplateParams: params,
+      push,
       notificationLogAction: `CARCASSE_MANQUANTE_${updatedCarcasse.zacharie_carcasse_id}`,
     });
   }
@@ -167,13 +170,14 @@ export async function notifyRefusChasseur(existingCarcasse: Carcasse, updatedCar
     updatedCarcasse.intermediaire_carcasse_refus_intermediaire_id &&
     updatedCarcasse.intermediaire_carcasse_refus_motif
   ) {
-    const { object, text, params } = await formatCarcasseRefusChasseurEmail(updatedCarcasse);
+    const { object, text, params, push } = await formatCarcasseRefusChasseurEmail(updatedCarcasse);
     await notifyExaminateurAndPremierDetenteur({
       fei_numero: existingCarcasse.fei_numero,
       title: object,
       email: text,
       emailTemplateId: BrevoTemplateId.CARCASSE_REFUS,
       emailTemplateParams: params,
+      push,
       notificationLogAction: `CARCASSE_REFUS_${updatedCarcasse.zacharie_carcasse_id}`,
     });
   }
@@ -205,7 +209,7 @@ export async function notifyRenvoiExpediteur(existingCarcasse: Carcasse, updated
     existingCarcasse.next_owner_entity_name_cache || existingCarcasse.next_owner_user_name_cache || null;
   const action = `FEI_RENVOYEE_${updatedCarcasse.fei_numero}_${existingCarcasse.next_owner_entity_id ?? existingCarcasse.next_owner_user_id}`;
 
-  const [object, email] = formatRenvoiExpediteurEmail(
+  const { object, text, push } = formatRenvoiExpediteurEmail(
     fei,
     updatedCarcasse.current_owner_role!,
     renvoyeurName,
@@ -214,8 +218,8 @@ export async function notifyRenvoiExpediteur(existingCarcasse: Carcasse, updated
   await sendNotificationToUser({
     user: expediteur,
     title: object,
-    body: email,
-    email,
+    email: text,
+    push,
     notificationLogAction: action,
   });
 }
@@ -262,12 +266,11 @@ export async function closeFeiAndNotifyChasseurOnSviCarcasseClose(
     if (already) return;
   }
 
-  const { object, text, params } = await formatFeiClosedEmail(updatedCarcasse.fei_numero, carcasses);
-  // Le template Brevo ne couvre que l'email ; le push reste en texte (`text`).
+  const { object, text, params, push } = await formatFeiClosedEmail(updatedCarcasse.fei_numero, carcasses);
   const notification = {
     title: object,
-    body: text,
     email: text,
+    push,
     notificationLogAction: action,
     emailTemplateId: BrevoTemplateId.FEI_CLOSED,
     emailTemplateParams: params,
@@ -326,14 +329,13 @@ export async function notifySviAssignment(
   });
   // Le side-effect tourne une fois par carcasse, mais la notification couvre toute la fiche :
   // c'est la dédup sur `notificationLogAction` qui garantit un seul envoi par user SVI.
-  // Le template Brevo ne couvre que l'email ; le push reste en texte (`text`).
-  const { object, text, params } = await formatSviAssignedEmail(updatedCarcasse);
+  const { object, text, params, push } = await formatSviAssignedEmail(updatedCarcasse);
   for (const sviUser of sviUsers) {
     await sendNotificationToUser({
       user: sviUser,
       title: object,
-      body: text,
       email: text,
+      push,
       emailTemplateId: BrevoTemplateId.FEI_TRANSMITTED_TO_SVI,
       emailTemplateParams: params,
       notificationLogAction: `FEI_ASSIGNED_TO_${updatedCarcasse.next_owner_role}_${updatedCarcasse.premier_detenteur_prochain_detenteur_id_cache}_${updatedCarcasse.fei_numero}`,
@@ -438,8 +440,11 @@ export async function notifyCircuitCourt(
       await sendNotificationToUser({
         user: nextOwner as User,
         title: `${user.prenom} ${user.nom_de_famille} vous a attribué une fiche d'examen initial du gibier sauvage n° ${updatedCarcasse?.fei_numero}`,
-        body: email,
         email: email,
+        push: {
+          title: 'Nouvelle fiche reçue',
+          body: `${user.prenom} ${user.nom_de_famille} vous a attribué la fiche ${updatedCarcasse.fei_numero}.`,
+        },
         emailTemplateId: BrevoTemplateId.FEI_ASSIGNED_CIRCUIT_COURT,
         emailTemplateParams: formatCircuitCourtAssignedTemplateEmail(updatedCarcasse, user, nextOwner.email),
         notificationLogAction: `FEI_ASSIGNED_TO_${updatedCarcasse.next_owner_role}_${updatedCarcasse.fei_numero}_${updatedCarcasse.premier_detenteur_prochain_detenteur_id_cache}`,
@@ -517,8 +522,11 @@ export async function notifyNextOwnerUser(existingCarcasse: Carcasse, updatedCar
     await sendNotificationToUser({
       user: nextOwner!,
       title: `${user.prenom} ${user.nom_de_famille} vous a attribué la fiche ${updatedCarcasse?.fei_numero}`,
-      body: email,
       email: email,
+      push: {
+        title: 'Nouvelle fiche à traiter',
+        body: `${user.prenom} ${user.nom_de_famille} vous a attribué la fiche ${updatedCarcasse.fei_numero}.`,
+      },
       emailTemplateId: BrevoTemplateId.FEI_ASSIGNED,
       emailTemplateParams: formatFeiAssignedTemplateEmail(updatedCarcasse, user, role),
       notificationLogAction: `FEI_ASSIGNED_TO_${updatedCarcasse.next_owner_role}_${updatedCarcasse?.fei_numero}_${updatedCarcasse.premier_detenteur_prochain_detenteur_id_cache}`,
@@ -541,8 +549,11 @@ export async function notifyNextOwnerUser(existingCarcasse: Carcasse, updatedCar
     await sendNotificationToUser({
       user: exNextOwner!,
       title: `La fiche n° ${existingCarcasse?.fei_numero} ne vous est plus attribuée`,
-      body: email,
       email: email,
+      push: {
+        title: 'Fiche retirée',
+        body: `La fiche ${existingCarcasse.fei_numero} ne vous est plus attribuée.`,
+      },
       emailTemplateId: BrevoTemplateId.FEI_UNASSIGNED,
       emailTemplateParams: formatFeiUnassignedTemplateEmail(existingCarcasse, user),
       notificationLogAction: `FEI_REMOVED_FROM_${updatedCarcasse.next_owner_role}_${updatedCarcasse?.fei_numero}_${updatedCarcasse.premier_detenteur_prochain_detenteur_id_cache}`,
@@ -607,8 +618,11 @@ export async function notifyNextOwnerEntity(
       await sendNotificationToUser({
         user: nextOwner as User,
         title: `${user.prenom} ${user.nom_de_famille} vous a attribué la fiche ${updatedCarcasse?.fei_numero}`,
-        body: email,
         email: email,
+        push: {
+          title: 'Nouvelle fiche à traiter',
+          body: `${user.prenom} ${user.nom_de_famille} vous a attribué la fiche ${updatedCarcasse.fei_numero}.`,
+        },
         emailTemplateId: BrevoTemplateId.FEI_ASSIGNED,
         emailTemplateParams: formatFeiAssignedTemplateEmail(updatedCarcasse, user, role),
         notificationLogAction: `FEI_ASSIGNED_TO_${updatedCarcasse.next_owner_role}_${updatedCarcasse.fei_numero}_${updatedCarcasse.premier_detenteur_prochain_detenteur_id_cache}`,

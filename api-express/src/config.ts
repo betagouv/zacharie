@@ -24,11 +24,11 @@ const IS_PRODUCTION = process.env.NODE_ENV === 'production' && ENVIRONMENT === '
 const IS_TEST = process.env.NODE_ENV === 'test'; // when e2e testing
 const IS_DEV_OR_TEST = IS_DEV || IS_TEST;
 
-// Interrupteur manuel, temporaire : le temps de vérifier le contenu des notifications, le push natif
-// n'envoie rien en production, il se contente de logger le payload (third-parties/expo-push.ts).
-// Aucun NotificationLog n'est écrit pendant ce temps, la dédup s'appuyant dessus : un log écrit
-// maintenant empêcherait définitivement l'envoi une fois l'interrupteur relevé.
-const NATIVE_PUSH_DRY_RUN = true;
+// Interrupteur manuel : à `true`, le push natif n'envoie rien en production et se contente de logger
+// le payload (third-parties/expo-push.ts). Aucun NotificationLog n'est écrit pendant ce temps, la
+// dédup s'appuyant dessus : un log écrit en dry run empêcherait définitivement l'envoi une fois
+// l'interrupteur relevé. On le garde comme coupe-circuit en cas de problème d'envoi en production.
+const NATIVE_PUSH_DRY_RUN = false;
 
 export {
   PORT,

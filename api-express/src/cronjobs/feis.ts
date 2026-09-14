@@ -157,13 +157,12 @@ export async function automaticClosingOfFeis({ force = false }: AutomaticClosing
     const allCarcassesDone = carcasses.every(isCarcasseDone);
     if (!allCarcassesDone) continue;
 
-    const { object, text, params } = await formatFeiClosedEmail(fei_numero, carcasses);
+    const { object, text, params, push } = await formatFeiClosedEmail(fei_numero, carcasses);
     // auto close and notify examinateur and premier detenteur
-    // Le template Brevo ne couvre que l'email ; le push reste en texte (`text`).
     const notification = {
       title: object,
-      body: text,
       email: text,
+      push,
       notificationLogAction: `FEI_AUTO_CLOSED_${fei_numero}_${premier_detenteur_prochain_detenteur_id_cache}`,
       emailTemplateId: BrevoTemplateId.FEI_AUTOMATIC_CLOSED,
       emailTemplateParams: params,

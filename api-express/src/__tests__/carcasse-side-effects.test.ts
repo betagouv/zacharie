@@ -38,12 +38,22 @@ vi.mock('~/utils/formatCarcasseEmail', async (importOriginal) => ({
     .fn()
     .mockReturnValue({ object: 'object', text: 'body', params: {} }),
   formatCarcasseManquanteOrRefusChasseurEmail: vi.fn().mockResolvedValue(['object', 'body']),
-  formatSaisieChasseurEmail: vi.fn().mockReturnValue(['object', 'body']),
-  formatRenvoiExpediteurEmail: vi.fn().mockReturnValue(['object', 'body']),
+  formatSaisieChasseurEmail: vi.fn().mockReturnValue({
+    object: 'object',
+    text: 'body',
+    params: {},
+    push: { title: 'push title', body: 'push body' },
+  }),
+  formatRenvoiExpediteurEmail: vi.fn().mockReturnValue({
+    object: 'object',
+    text: 'body',
+    push: { title: 'push title', body: 'push body' },
+  }),
   formatSviAssignedEmail: vi.fn().mockResolvedValue({
     object: 'object',
     text: 'body',
     params: { entity_name: 'ETG 1', count: 3 },
+    push: { title: 'push title', body: 'push body' },
   }),
 }));
 vi.mock('~/utils/generate-certificats', () => ({ checkGenerateCertificat: vi.fn() }));

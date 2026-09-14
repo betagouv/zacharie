@@ -26,9 +26,17 @@ queue.on('next', () => {
   console.log(`Task is completed.  Size: ${queue.size}  Pending: ${queue.pending}`);
 });
 
-type WebPushNotification = {
-  user: User;
+// Wording dédié au push : il s'affiche sur un écran verrouillé, largement tronqué. Titre générique
+// par type d'évènement, corps d'une phrase. Ni « Bonjour », ni URL, ni mention d'envoi automatique —
+// tout ça appartient à l'email.
+export type PushWording = {
+  title: string;
   body: string;
+};
+
+type NotificationToUser = {
+  user: User;
+  push: PushWording;
   title: string;
   email: string;
   notificationLogAction: string;
@@ -43,7 +51,7 @@ type WebPushNotification = {
 
 export default async function queueSendNotificationToUser({
   user,
-  body,
+  push,
   title,
   email,
   notificationLogAction,
@@ -51,11 +59,11 @@ export default async function queueSendNotificationToUser({
   emailTemplateId,
   emailTemplateParams,
   img = 'https://zacharie.beta.gouv.fr/favicon.svg',
-}: WebPushNotification) {
+}: NotificationToUser) {
   await queue.add(async () => {
     await sendNotificationToUser({
       user,
-      body,
+      push,
       title,
       email,
       notificationLogAction,
@@ -70,14 +78,14 @@ export default async function queueSendNotificationToUser({
 // Les deux canaux sont indépendants : un utilisateur qui a coché PUSH et EMAIL reçoit les deux, et
 // l'échec de l'un ne doit ni empêcher l'autre ni faire remonter une erreur aux appelants (qui
 // notifient souvent plusieurs utilisateurs à la suite).
-async function sendNotificationToUser(notification: WebPushNotification) {
-  const { user, title, body, email, img } = notification;
+async function sendNotificationToUser(notification: NotificationToUser) {
+  const { user, title, push, email, img } = notification;
   if (user.notifications.includes(UserNotifications.PUSH)) {
     try {
       await sendPushToUser(notification);
     } catch (error) {
       console.error('error in push notification', user.id);
-      Sentry.captureException(error, { extra: { user, body, email, title, img } });
+      Sentry.captureException(error, { extra: { user, push, email, title, img } });
     }
   }
 
@@ -86,19 +94,19 @@ async function sendNotificationToUser(notification: WebPushNotification) {
       await sendEmailToUser(notification);
     } catch (error) {
       console.error('error in email notification', user.id);
-      Sentry.captureException(error, { extra: { user, body, email, title, img } });
+      Sentry.captureException(error, { extra: { user, push, email, title, img } });
     }
   }
 }
 
 async function sendPushToUser({
   user,
-  body,
-  title,
+  push,
   email,
   notificationLogAction,
   img = 'https://zacharie.beta.gouv.fr/favicon.svg',
-}: WebPushNotification) {
+}: NotificationToUser) {
+  const { title, body } = push;
   const webPushTokens = user.web_push_tokens.filter((token) => !!token && token !== 'null');
   const nativePushTokens = user.native_push_tokens.filter((token) => !!token && token !== 'null');
   if (!webPushTokens.length && !nativePushTokens.length) {
@@ -234,7 +242,6 @@ async function sendPushToUser({
 
 async function sendEmailToUser({
   user,
-  body,
   title,
   email,
   notificationLogAction,
@@ -242,7 +249,7 @@ async function sendEmailToUser({
   emailTemplateId,
   emailTemplateParams,
   img = 'https://zacharie.beta.gouv.fr/favicon.svg',
-}: WebPushNotification) {
+}: NotificationToUser) {
   const existingNotification = await prisma.notificationLog.findFirst({
     where: {
       user_id: user.id,
@@ -257,15 +264,14 @@ async function sendEmailToUser({
   if (IS_TEST) {
     console.log(
       'SENDING EMAIL NOTIFICATION IN DEV',
-      JSON.stringify({ user: user.email, body, title, email, notificationLogAction, img }, null, 2)
+      JSON.stringify({ user: user.email, title, email, notificationLogAction, img }, null, 2)
     );
     await prisma.notificationLog.create({
       data: {
         user_id: user.id,
         payload: JSON.stringify({
           title,
-          body,
-          email,
+          body: email,
           response: JSON.stringify({ message: 'Email not sent in dev' }),
         }),
         type: 'EMAIL',
@@ -304,8 +310,7 @@ async function sendEmailToUser({
         user_id: user.id,
         payload: JSON.stringify({
           title,
-          body,
-          email,
+          body: email,
           emailTemplateId,
           emailTemplateParams,
         }),
@@ -316,7 +321,7 @@ async function sendEmailToUser({
     });
   } catch (error) {
     Sentry.captureException(error, {
-      extra: { user, body, email, title, img },
+      extra: { user, email, title, img },
     });
   }
 }
