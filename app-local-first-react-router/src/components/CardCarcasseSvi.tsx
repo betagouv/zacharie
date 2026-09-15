@@ -45,7 +45,7 @@ function getIpm1Lines(carcasse: Carcasse): Array<string> {
         decision += ` (${precisions.join(', ')})`;
       }
     }
-    lines.push(`Décision\u00A0: ${decision}`);
+    lines.push(`Décision IPM1\u00A0: ${decision}`);
   }
   if (carcasse.svi_ipm1_lesions_ou_motifs.length) {
     lines.push(`Lésions ou motifs\u00A0: ${carcasse.svi_ipm1_lesions_ou_motifs.join(', ')}`);
@@ -72,7 +72,7 @@ function getIpm2Lines(carcasse: Carcasse): Array<string> {
     if (carcasse.svi_ipm2_poids_saisie) {
       decision += ` (${carcasse.svi_ipm2_poids_saisie}\u00A0kg)`;
     }
-    lines.push(`Décision\u00A0: ${decision}`);
+    lines.push(`Décision IPM2\u00A0: ${decision}`);
   }
   const traitement = [
     carcasse.svi_ipm2_traitement_assainissant_type,

@@ -47,7 +47,7 @@ test('SVI can still inspect when a pending modif exists on the carcasse', async 
     { timeout: 15000 }
   );
   await accepterBtn.click();
-  await expect(sviCard.getByText(/Décision IPM1 : Acceptée/)).toBeVisible({ timeout: 10000 });
+  await expect(sviCard.getByText(/Décision IPM1\s*:\s*Acceptée/)).toBeVisible({ timeout: 10000 });
   await syncResponse;
 
   // Step 4: la page d'inspection reste utilisable et la bannière informative y est toujours affichée.
@@ -67,6 +67,6 @@ test('SVI can still inspect when a pending modif exists on the carcasse', async 
     page
       .getByRole('button', { name: /Daim.*MM-001-NEW/ })
       .first()
-      .getByText(/Décision IPM1 : Acceptée/)
+      .getByText(/Décision IPM1\s*:\s*Acceptée/)
   ).toBeVisible({ timeout: 10000 });
 });
