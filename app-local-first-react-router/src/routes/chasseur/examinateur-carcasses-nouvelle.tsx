@@ -20,7 +20,7 @@ const gibierSelect = {
 
 const especesRaccourcis = ['Sanglier', 'Chevreuil', 'Cerf élaphe'];
 
-// Le numero CFEI est de la forme CFEI-DEP-AA-123 : on en garde le departement et le numero d'ordre.
+// Le numero CFEI est de la forme CFEI-DEP-AA-123 : le departement en est le 2e segment.
 // Si le numero saisi ne suit pas ce format, on retombe sur ses 6 derniers caracteres alphanumeriques.
 function getDepartementFromNumeroCfei(numeroCfei: string) {
   const segments = numeroCfei
@@ -34,8 +34,7 @@ function getDepartementFromNumeroCfei(numeroCfei: string) {
       .replace(/[^0-9A-Z]/g, '')
       .slice(-6);
   }
-  const [, departement, ,] = segments;
-  return departement;
+  return segments[1];
 }
 
 function getNewDefaultNumeroBracelet(user: User) {
