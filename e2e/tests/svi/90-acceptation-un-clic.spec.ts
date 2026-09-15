@@ -39,7 +39,7 @@ test.describe('depuis la fiche SVI', () => {
     await expect(page).toHaveURL(new RegExp(`/app/svi/fei/${feiId}`));
 
     // La carte affiche la décision IPM1 « Acceptée » et le statut accepté ; le bouton disparaît.
-    await expect(carcasseCard.getByText(/Décision IPM1 : Acceptée/)).toBeVisible({ timeout: 10000 });
+    await expect(carcasseCard.getByText(/Décision IPM1\s*:\s*Acceptée/)).toBeVisible({ timeout: 10000 });
     await expect(carcasseCard.getByText('accepté', { exact: true })).toBeVisible();
     await expect(accepterBtn).toBeHidden();
 
@@ -55,7 +55,7 @@ test.describe('depuis la fiche SVI', () => {
     await expect(page.getByRole('link', { name: feiId })).toBeVisible({ timeout: 10000 });
     await page.getByRole('link', { name: feiId }).click();
     const cardApresReconnexion = page.getByRole('button', { name: /Daim.*MM-001-001/ }).first();
-    await expect(cardApresReconnexion.getByText(/Décision IPM1 : Acceptée/)).toBeVisible({
+    await expect(cardApresReconnexion.getByText(/Décision IPM1\s*:\s*Acceptée/)).toBeVisible({
       timeout: 10000,
     });
     await expect(cardApresReconnexion.getByRole('button', { name: 'Accepter' })).toBeHidden();
@@ -88,7 +88,7 @@ test.describe('depuis la fiche SVI', () => {
 
     // Une fois acceptée, la section devient « Résumé de la décision » avec l'IPM1 « Acceptée ».
     await expect(page.getByText('Résumé de la décision')).toBeVisible({ timeout: 10000 });
-    await expect(page.getByText(/Décision IPM1 : Acceptée/)).toBeVisible();
+    await expect(page.getByText(/Décision IPM1\s*:\s*Acceptée/)).toBeVisible();
     await expect(accepterBtn).toBeHidden();
 
     await syncResponse;
@@ -130,7 +130,7 @@ test.describe('après transmission ETG → SVI (prise de responsabilité)', () =
       { timeout: 15000 }
     );
     await accepterBtn.click();
-    await expect(carcasseCard.getByText(/Décision IPM1 : Acceptée/)).toBeVisible({ timeout: 10000 });
+    await expect(carcasseCard.getByText(/Décision IPM1\s*:\s*Acceptée/)).toBeVisible({ timeout: 10000 });
     await syncResponse;
 
     // 3. Reconnexion : la transmission appartient désormais au SVI, la fiche et ses carcasses
@@ -139,7 +139,7 @@ test.describe('après transmission ETG → SVI (prise de responsabilité)', () =
     await expect(page.getByRole('link', { name: feiId })).toBeVisible({ timeout: 10000 });
     await page.getByRole('link', { name: feiId }).click();
     const cardApresReconnexion = page.getByRole('button', { name: /Daim.*MM-001-001/ }).first();
-    await expect(cardApresReconnexion.getByText(/Décision IPM1 : Acceptée/)).toBeVisible({
+    await expect(cardApresReconnexion.getByText(/Décision IPM1\s*:\s*Acceptée/)).toBeVisible({
       timeout: 10000,
     });
     const autreCarcasse = page.getByRole('button', { name: /Daim.*MM-001-002/ }).first();

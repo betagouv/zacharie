@@ -54,7 +54,7 @@ test('Ajout carcasse manquante pré-transmission SVI : visible par SVI, pas de b
     { timeout: 15000 }
   );
   await accepterBtn.click();
-  await expect(sviCard.getByText(/Décision IPM1 : Acceptée/)).toBeVisible({ timeout: 10000 });
+  await expect(sviCard.getByText(/Décision IPM1\s*:\s*Acceptée/)).toBeVisible({ timeout: 10000 });
   await syncResponse;
 
   // Step 4: l'examinateur signe l'examen initial après coup — le refus n'était pas un préalable.
@@ -89,6 +89,6 @@ test('Ajout carcasse manquante pré-transmission SVI : visible par SVI, pas de b
     page
       .getByRole('button', { name: new RegExp(`Cerf élaphe.*${newBracelet}`) })
       .first()
-      .getByText(/Décision IPM1 : Acceptée/)
+      .getByText(/Décision IPM1\s*:\s*Acceptée/)
   ).toBeVisible({ timeout: 10000 });
 });
