@@ -22,7 +22,7 @@ const especesRaccourcis = ['Sanglier', 'Chevreuil', 'Cerf élaphe'];
 
 // Le numero CFEI est de la forme CFEI-DEP-AA-123 : on en garde le departement et le numero d'ordre.
 // Si le numero saisi ne suit pas ce format, on retombe sur ses 6 derniers caracteres alphanumeriques.
-function getDepartementEtOrdreFromNumeroCfei(numeroCfei: string) {
+function getDepartementFromNumeroCfei(numeroCfei: string) {
   const segments = numeroCfei
     .toUpperCase()
     .split('-')
@@ -34,8 +34,8 @@ function getDepartementEtOrdreFromNumeroCfei(numeroCfei: string) {
       .replace(/[^0-9A-Z]/g, '')
       .slice(-6);
   }
-  const [, departement, , ordre] = segments;
-  return `${departement}${ordre}`;
+  const [, departement, ,] = segments;
+  return departement;
 }
 
 function getNewDefaultNumeroBracelet(user: User) {
@@ -44,10 +44,10 @@ function getNewDefaultNumeroBracelet(user: User) {
   }
   const prenom = user.prenom?.slice(0, 1).toUpperCase() ?? '';
   const nom = user.nom_de_famille?.slice(0, 1).toUpperCase() ?? '';
-  const departementEtOrdre = getDepartementEtOrdreFromNumeroCfei(user.numero_cfei);
+  const departement = getDepartementFromNumeroCfei(user.numero_cfei);
   // denier marquage utilise + pad start 0 sur 3 chiffres
   const prochain_bracelet_a_utiliser = (user.prochain_bracelet_a_utiliser || 1).toString().padStart(3, '0');
-  return `${prenom}${nom}${departementEtOrdre}-${prochain_bracelet_a_utiliser}`;
+  return `${prenom}${nom}-${departement}-${prochain_bracelet_a_utiliser}`;
 }
 
 export default function NouvelleCarcasse({
