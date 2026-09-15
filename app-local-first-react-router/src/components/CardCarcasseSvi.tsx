@@ -13,6 +13,103 @@ interface CarcasseAVerifierProps {
   canClick: boolean;
 }
 
+const ipm1DecisionLabel: Record<IPM1Decision, string> = {
+  [IPM1Decision.NON_RENSEIGNEE]: 'Non renseignée',
+  [IPM1Decision.ACCEPTE]: 'Acceptée',
+  [IPM1Decision.MISE_EN_CONSIGNE]: 'Mise en consigne',
+};
+
+const ipm2DecisionLabel: Record<IPM2Decision, string> = {
+  [IPM2Decision.NON_RENSEIGNEE]: 'Non renseignée',
+  [IPM2Decision.LEVEE_DE_LA_CONSIGNE]: 'Levée de la consigne',
+  [IPM2Decision.SAISIE_TOTALE]: 'Saisie totale',
+  [IPM2Decision.SAISIE_PARTIELLE]: 'Saisie partielle',
+  [IPM2Decision.TRAITEMENT_ASSAINISSANT]: 'Traitement assainissant',
+};
+
+// une ligne par information, listes mises bout à bout : la carte reste lisible d'un coup d'œil,
+// le détail complet est sur la page de la carcasse
+function getIpm1Lines(carcasse: Carcasse): Array<string> {
+  if (!carcasse.svi_ipm1_presentee_inspection) {
+    return ['Carcasse manquante'];
+  }
+  const lines: Array<string> = [];
+  if (carcasse.svi_ipm1_decision) {
+    let decision = ipm1DecisionLabel[carcasse.svi_ipm1_decision];
+    if (carcasse.svi_ipm1_decision === IPM1Decision.MISE_EN_CONSIGNE) {
+      const precisions = [
+        carcasse.svi_ipm1_duree_consigne ? `${carcasse.svi_ipm1_duree_consigne}\u00A0h` : null,
+        carcasse.svi_ipm1_poids_consigne ? `${carcasse.svi_ipm1_poids_consigne}\u00A0kg` : null,
+      ].filter(Boolean);
+      if (precisions.length) {
+        decision += ` (${precisions.join(', ')})`;
+      }
+    }
+    lines.push(`Décision\u00A0: ${decision}`);
+  }
+  if (carcasse.svi_ipm1_lesions_ou_motifs.length) {
+    lines.push(`Lésions ou motifs\u00A0: ${carcasse.svi_ipm1_lesions_ou_motifs.join(', ')}`);
+  }
+  if (carcasse.svi_ipm1_pieces.length) {
+    lines.push(`Pièces observées\u00A0: ${carcasse.svi_ipm1_pieces.join(', ')}`);
+  }
+  if (carcasse.type === CarcasseType.PETIT_GIBIER) {
+    lines.push(`Nombre d'animaux\u00A0: ${carcasse.svi_ipm1_nombre_animaux}`);
+  }
+  if (carcasse.svi_ipm1_commentaire) {
+    lines.push(`Commentaire\u00A0: ${carcasse.svi_ipm1_commentaire}`);
+  }
+  return lines;
+}
+
+function getIpm2Lines(carcasse: Carcasse): Array<string> {
+  if (!carcasse.svi_ipm2_presentee_inspection) {
+    return ['Carcasse manquante'];
+  }
+  const lines: Array<string> = [];
+  if (carcasse.svi_ipm2_decision) {
+    let decision = ipm2DecisionLabel[carcasse.svi_ipm2_decision];
+    if (carcasse.svi_ipm2_poids_saisie) {
+      decision += ` (${carcasse.svi_ipm2_poids_saisie}\u00A0kg)`;
+    }
+    lines.push(`Décision\u00A0: ${decision}`);
+  }
+  const traitement = [
+    carcasse.svi_ipm2_traitement_assainissant_type,
+    carcasse.svi_ipm2_traitement_assainissant_cuisson_temps
+      ? `cuisson ${carcasse.svi_ipm2_traitement_assainissant_cuisson_temps}`
+      : null,
+    carcasse.svi_ipm2_traitement_assainissant_cuisson_temp,
+    carcasse.svi_ipm2_traitement_assainissant_congelation_temps
+      ? `congélation ${carcasse.svi_ipm2_traitement_assainissant_congelation_temps}`
+      : null,
+    carcasse.svi_ipm2_traitement_assainissant_congelation_temp,
+    carcasse.svi_ipm2_traitement_assainissant_paramètres,
+    carcasse.svi_ipm2_traitement_assainissant_poids
+      ? `${carcasse.svi_ipm2_traitement_assainissant_poids}\u00A0kg`
+      : null,
+  ].filter(Boolean);
+  if (traitement.length) {
+    lines.push(`Traitement\u00A0: ${traitement.join(', ')}`);
+  }
+  if (carcasse.svi_ipm2_traitement_assainissant_etablissement) {
+    lines.push(`Établissement\u00A0: ${carcasse.svi_ipm2_traitement_assainissant_etablissement}`);
+  }
+  if (carcasse.svi_ipm2_lesions_ou_motifs.length) {
+    lines.push(`Lésions ou motifs\u00A0: ${carcasse.svi_ipm2_lesions_ou_motifs.join(', ')}`);
+  }
+  if (carcasse.svi_ipm2_pieces.length) {
+    lines.push(`Pièces observées\u00A0: ${carcasse.svi_ipm2_pieces.join(', ')}`);
+  }
+  if (carcasse.type === CarcasseType.PETIT_GIBIER) {
+    lines.push(`Nombre d'animaux\u00A0: ${carcasse.svi_ipm2_nombre_animaux}`);
+  }
+  if (carcasse.svi_ipm2_commentaire) {
+    lines.push(`Commentaire\u00A0: ${carcasse.svi_ipm2_commentaire}`);
+  }
+  return lines;
+}
+
 export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifierProps) {
   // const { fei, inetermediairesPopulated } = useLoaderData<typeof clientLoader>();
   const params = useParams();
@@ -47,6 +144,11 @@ export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifie
     : {};
 
   const status = getSimplifiedCarcasseStatus(carcasse);
+  // la mise en consigne est un statut « en cours de traitement » pour le reste de l'app,
+  // mais le SVI doit la repérer d'un coup d'œil : il devra y revenir (levée de consigne ou saisie)
+  const isMiseEnConsigne = carcasse.svi_carcasse_status === CarcasseStatus.CONSIGNE;
+  const miseEnConsigneLabel =
+    carcasse.type === CarcasseType.PETIT_GIBIER ? 'Mis en consigne' : 'Mise en consigne';
   const isEcarteePourInspection =
     status === 'en cours de traitement' &&
     !!latestIntermediaire?.ecarte_pour_inspection &&
@@ -75,6 +177,7 @@ export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifie
         'bg-contrast-grey flex basis-full items-center justify-between border-0 p-4',
         status === 'refusé' && 'border-l-3! border-solid border-red-500!',
         isEcarteePourInspection && 'border-l-3! border-solid border-red-500!',
+        isMiseEnConsigne && 'border-warning-main-525! border-l-3! border-solid',
         status === 'accepté' && 'border-action-high-blue-france! border-l-3! border-solid',
         status === 'saisie partielle' && 'border-action-high-blue-france! border-l-3! border-solid',
         // priseEnCharge && 'border-action-high-blue-france!',
@@ -88,9 +191,13 @@ export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifie
         {miseAMort && <p className="text-sm/4">{miseAMort}</p>}
         <p
           className={[
-            'text-sm first-letter:uppercase',
-            status === 'en cours de traitement' && !isEcarteePourInspection && 'text-transparent!',
+            'inline-flex items-center gap-1 text-sm first-letter:uppercase',
+            status === 'en cours de traitement' &&
+              !isEcarteePourInspection &&
+              !isMiseEnConsigne &&
+              'text-transparent!',
             isEcarteePourInspection && 'text-error-main-525 font-bold',
+            isMiseEnConsigne && 'text-warning-main-525 font-bold',
             status === 'refusé' && 'text-error-main-525 font-bold',
             status === 'saisie partielle' && 'text-action-high-blue-france font-bold',
             status === 'accepté' && 'text-action-high-blue-france font-bold',
@@ -98,9 +205,17 @@ export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifie
             .filter(Boolean)
             .join(' ')}
         >
+          {isMiseEnConsigne && (
+            <span
+              className="fr-icon-time-line fr-icon--sm shrink-0"
+              aria-hidden="true"
+            />
+          )}
           {isEcarteePourInspection
             ? "Écarté par l'établissement de traitement pour inspection par le service vétérinaire"
-            : status}
+            : isMiseEnConsigne
+              ? miseEnConsigneLabel
+              : status}
         </p>
         {!!carcasse.examinateur_anomalies_abats?.length && (
           <p className="mt-2 text-sm">
@@ -145,178 +260,40 @@ export default function CardCarcasseSvi({ carcasse, canClick }: CarcasseAVerifie
           );
         })}
         {carcasse.svi_ipm1_date && (
-          <p
-            className="m-0 mt-2 block text-sm font-bold"
+          <div
+            className="mt-2 text-sm"
             key={JSON.stringify(carcasse.svi_ipm1_signed_at)}
           >
-            SVI Inspection Post Mortem 1 du {dayjs(carcasse.svi_ipm1_date).format('DD-MM-YYYY')}&nbsp;:
-            <br />
-            {!carcasse.svi_ipm1_presentee_inspection ? (
-              <span className="m-0 ml-2 block font-medium">- Carcasse manquante</span>
-            ) : (
-              <>
-                {carcasse.type === CarcasseType.PETIT_GIBIER && (
-                  <span className="m-0 ml-2 block font-medium">
-                    - Nombre d'animaux : {carcasse.svi_ipm1_nombre_animaux}
-                  </span>
-                )}
-                {carcasse.svi_ipm1_commentaire && (
-                  <span className="m-0 ml-2 block font-medium">
-                    - Commentaire : {carcasse.svi_ipm1_commentaire}
-                  </span>
-                )}
-                {!!carcasse.svi_ipm1_pieces.length && (
-                  <span className="m-0 ml-2 block font-medium">- Pièces observées&nbsp;:</span>
-                )}
-                {carcasse.svi_ipm1_pieces.map((piece, index) => {
-                  return (
-                    <span
-                      className="m-0 ml-6 block font-medium"
-                      key={piece + index}
-                    >
-                      - {piece}
-                    </span>
-                  );
-                })}
-                {!!carcasse.svi_ipm1_lesions_ou_motifs.length && (
-                  <span className="m-0 ml-2 block font-medium">- Lésions ou motifs de consigne&nbsp;:</span>
-                )}
-                {carcasse.svi_ipm1_lesions_ou_motifs.map((type, index) => {
-                  return (
-                    <span
-                      className="m-0 ml-6 block font-medium"
-                      key={type + index}
-                    >
-                      - {type}
-                    </span>
-                  );
-                })}
-                <span className="m-0 ml-2 block font-medium">
-                  - Décision IPM1 :{' '}
-                  {carcasse.svi_ipm1_decision === IPM1Decision.NON_RENSEIGNEE && 'Non renseigné'}
-                  {carcasse.svi_ipm1_decision === IPM1Decision.ACCEPTE && 'Acceptée'}
-                  {carcasse.svi_ipm1_decision === IPM1Decision.MISE_EN_CONSIGNE && 'Mise en consigne'}
-                </span>
-                {carcasse.svi_ipm1_decision === IPM1Decision.MISE_EN_CONSIGNE && (
-                  <span className="m-0 ml-2 block font-medium">
-                    - Durée de la consigne : {carcasse.svi_ipm1_duree_consigne} heures
-                  </span>
-                )}
-                {carcasse.svi_ipm1_decision === IPM1Decision.MISE_EN_CONSIGNE &&
-                  carcasse.svi_ipm1_poids_consigne && (
-                    <span className="m-0 ml-2 block font-medium">
-                      - Poids de la consigne : {carcasse.svi_ipm1_poids_consigne}kg
-                    </span>
-                  )}
-              </>
-            )}
-          </p>
+            <p className="m-0 font-bold">
+              Inspection post mortem 1 du {dayjs(carcasse.svi_ipm1_date).format('DD/MM/YYYY')}&nbsp;:
+            </p>
+            {getIpm1Lines(carcasse).map((line) => (
+              <p
+                className="m-0"
+                key={line}
+              >
+                {line}
+              </p>
+            ))}
+          </div>
         )}
         {carcasse.svi_ipm2_date && (
-          <p
-            className="m-0 mt-2 block text-sm font-bold"
+          <div
+            className="mt-2 text-sm"
             key={JSON.stringify(carcasse.svi_ipm2_signed_at)}
           >
-            SVI Inspection Post Mortem 2 du {dayjs(carcasse.svi_ipm2_date).format('DD-MM-YYYY')}&nbsp;:
-            <br />
-            {!carcasse.svi_ipm2_presentee_inspection ? (
-              <span className="m-0 ml-2 block font-medium">- Carcasse manquante</span>
-            ) : (
-              <>
-                {carcasse.type === CarcasseType.PETIT_GIBIER && (
-                  <span className="m-0 ml-2 block font-medium">
-                    - Nombre d'animaux : {carcasse.svi_ipm2_nombre_animaux}
-                  </span>
-                )}
-                {carcasse.svi_ipm2_commentaire && (
-                  <span className="m-0 ml-2 block font-medium">
-                    - Commentaire : {carcasse.svi_ipm2_commentaire}
-                  </span>
-                )}
-                {!!carcasse.svi_ipm2_pieces.length && (
-                  <span className="m-0 ml-2 block font-medium">- Pièces observées&nbsp;:</span>
-                )}
-                {carcasse.svi_ipm2_pieces.map((piece, index) => {
-                  return (
-                    <span
-                      className="m-0 ml-6 block font-medium"
-                      key={piece + index}
-                    >
-                      - {piece}
-                    </span>
-                  );
-                })}
-                {!!carcasse.svi_ipm2_lesions_ou_motifs.length && (
-                  <span className="m-0 ml-2 block font-medium">- Lésions ou motifs de consigne&nbsp;:</span>
-                )}
-                {carcasse.svi_ipm2_lesions_ou_motifs.map((type, index) => {
-                  return (
-                    <span
-                      className="m-0 ml-6 block font-medium"
-                      key={type + index}
-                    >
-                      - {type}
-                    </span>
-                  );
-                })}
-                <span className="m-0 ml-2 block font-medium">
-                  - Décision IPM2 :{' '}
-                  {carcasse.svi_ipm2_decision === IPM2Decision.LEVEE_DE_LA_CONSIGNE && 'Levée de la consigne'}
-                  {carcasse.svi_ipm2_decision === IPM2Decision.SAISIE_TOTALE && 'Saisie totale'}
-                  {carcasse.svi_ipm2_decision === IPM2Decision.SAISIE_PARTIELLE && 'Saisie partielle'}
-                  {carcasse.svi_ipm2_decision === IPM2Decision.TRAITEMENT_ASSAINISSANT &&
-                    'Traitement assainissant'}
-                </span>
-                {carcasse.svi_ipm2_traitement_assainissant_cuisson_temps && (
-                  <span className="m-0 ml-6 block font-medium">
-                    - Temps de cuisson : {carcasse.svi_ipm2_traitement_assainissant_cuisson_temps}
-                  </span>
-                )}
-                {carcasse.svi_ipm2_traitement_assainissant_cuisson_temp && (
-                  <span className="m-0 ml-6 block font-medium">
-                    - Température de cuisson : {carcasse.svi_ipm2_traitement_assainissant_cuisson_temp}
-                  </span>
-                )}
-                {carcasse.svi_ipm2_traitement_assainissant_congelation_temps && (
-                  <span className="m-0 ml-6 block font-medium">
-                    - Temps de congélation : {carcasse.svi_ipm2_traitement_assainissant_congelation_temps}
-                  </span>
-                )}
-                {carcasse.svi_ipm2_traitement_assainissant_congelation_temp && (
-                  <span className="m-0 ml-6 block font-medium">
-                    - Température de congélation :{' '}
-                    {carcasse.svi_ipm2_traitement_assainissant_congelation_temp}
-                  </span>
-                )}
-                {carcasse.svi_ipm2_traitement_assainissant_type && (
-                  <span className="m-0 ml-6 block font-medium">
-                    - Type de traitement : {carcasse.svi_ipm2_traitement_assainissant_type}
-                  </span>
-                )}
-                {carcasse.svi_ipm2_traitement_assainissant_paramètres && (
-                  <span className="m-0 ml-6 block font-medium">
-                    - Paramètres : {carcasse.svi_ipm2_traitement_assainissant_paramètres}
-                  </span>
-                )}
-                {carcasse.svi_ipm2_traitement_assainissant_etablissement && (
-                  <span className="m-0 ml-6 block font-medium">
-                    - Établissement désigné pour réaliser le traitement assainissant :{' '}
-                    {carcasse.svi_ipm2_traitement_assainissant_etablissement}
-                  </span>
-                )}
-                {carcasse.svi_ipm2_traitement_assainissant_poids && (
-                  <span className="m-0 ml-6 block font-medium">
-                    - Poids : {carcasse.svi_ipm2_traitement_assainissant_poids}
-                  </span>
-                )}
-                {carcasse.svi_ipm2_poids_saisie && (
-                  <span className="m-0 ml-6 block font-medium">
-                    - Poids : {carcasse.svi_ipm2_poids_saisie}
-                  </span>
-                )}
-              </>
-            )}
-          </p>
+            <p className="m-0 font-bold">
+              Inspection post mortem 2 du {dayjs(carcasse.svi_ipm2_date).format('DD/MM/YYYY')}&nbsp;:
+            </p>
+            {getIpm2Lines(carcasse).map((line) => (
+              <p
+                className="m-0"
+                key={line}
+              >
+                {line}
+              </p>
+            ))}
+          </div>
         )}
         {carcasse.svi_carcasse_commentaire && (
           <>
