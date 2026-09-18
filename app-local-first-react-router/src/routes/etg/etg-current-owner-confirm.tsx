@@ -1,7 +1,8 @@
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { type ButtonProps } from '@codegouvfr/react-dsfr/Button';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
-import { useMemo, useState } from 'react';
+import { createModal } from '@codegouvfr/react-dsfr/Modal';
+import { useMemo, useRef, useState } from 'react';
 import dayjs from 'dayjs';
 import { toast } from 'react-toastify';
 import {
@@ -384,8 +385,14 @@ export default function CurrentOwnerConfirm() {
     return null;
   }
 
+  const renvoiModal = useRef(
+    createModal({
+      id: 'etg-renvoi-modal',
+      isOpenedByDefault: false,
+    })
+  ).current;
+
   function handleRenvoi() {
-    // Only reset my carcasses' next_owner
     const nextTransmission: CarcasseTransmission = {
       next_owner_entity_id: null,
       next_owner_entity_name_cache: null,
@@ -410,6 +417,7 @@ export default function CurrentOwnerConfirm() {
   }
 
   const actionButtons: ButtonProps[] = [];
+
   if (currentTransmission.next_owner_role === FeiOwnerRole.ETG) {
     if (user.etg_role === UserEtgRoles.RECEPTION) {
       actionButtons.push({
@@ -464,7 +472,7 @@ export default function CurrentOwnerConfirm() {
     priority: 'secondary',
     nativeButtonProps: {
       type: 'button',
-      onClick: handleRenvoi,
+      onClick: () => renvoiModal.open(),
     },
   });
 
@@ -488,6 +496,23 @@ export default function CurrentOwnerConfirm() {
           buttons={actionButtons as [ButtonProps, ...ButtonProps[]]}
         />
       </div>
+      <renvoiModal.Component
+        title="Renvoyer à l'expéditeur"
+        buttons={[
+          {
+            children: 'Annuler',
+            priority: 'secondary',
+            doClosesModal: true,
+          },
+          {
+            children: 'Confirmer le renvoi',
+            doClosesModal: true,
+            onClick: handleRenvoi,
+          },
+        ]}
+      >
+        <p>Êtes-vous sûr de renvoyer cette fiche à l'expéditeur&nbsp;?</p>
+      </renvoiModal.Component>
     </div>
   );
 }

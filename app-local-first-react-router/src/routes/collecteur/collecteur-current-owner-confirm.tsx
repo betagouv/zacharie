@@ -1,7 +1,8 @@
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { type ButtonProps } from '@codegouvfr/react-dsfr/Button';
+import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import { toast } from 'react-toastify';
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { EntityRelationType, FeiOwnerRole, UserRoles } from '@prisma/client';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
@@ -171,8 +172,14 @@ export default function CurrentOwnerConfirm() {
     return null;
   }
 
+  const renvoiModal = useRef(
+    createModal({
+      id: 'collecteur-renvoi-modal',
+      isOpenedByDefault: false,
+    })
+  ).current;
+
   function handleRenvoi() {
-    // Only reset my carcasses' next_owner
     const nextTransmission: CarcasseTransmission = {
       next_owner_entity_id: null,
       next_owner_entity_name_cache: null,
@@ -213,7 +220,7 @@ export default function CurrentOwnerConfirm() {
       priority: 'secondary',
       nativeButtonProps: {
         type: 'button',
-        onClick: handleRenvoi,
+        onClick: () => renvoiModal.open(),
       },
     },
   ];
@@ -226,6 +233,23 @@ export default function CurrentOwnerConfirm() {
           buttons={actionButtons}
         />
       </div>
+      <renvoiModal.Component
+        title="Renvoyer à l'expéditeur"
+        buttons={[
+          {
+            children: 'Annuler',
+            priority: 'secondary',
+            doClosesModal: true,
+          },
+          {
+            children: 'Confirmer le renvoi',
+            doClosesModal: true,
+            onClick: handleRenvoi,
+          },
+        ]}
+      >
+        <p>Êtes-vous sûr de renvoyer cette fiche à l'expéditeur&nbsp;?</p>
+      </renvoiModal.Component>
     </div>
   );
 }
