@@ -189,8 +189,6 @@ model Password {
   password                          String
   reset_password_last_email_sent_at DateTime?
   reset_password_token              String?
-  failed_login_attempts             Int       @default(0)
-  locked_until                      DateTime?
   created_at                        DateTime  @default(now())
   updated_at                        DateTime  @default(now()) @updatedAt
   deleted_at                        DateTime?
@@ -274,6 +272,17 @@ model Log {
   // CarcasseIntermediaire     CarcasseIntermediaire? @relation(fields: [carcasse_intermediaire_id], references: [id], onDelete: NoAction)
 
   @@index([user_id, action])
+}
+
+model SecurityLog {
+  id         String   @id @default(uuid())
+  email      String
+  action     String
+  ip         String?
+  user_agent String?
+  created_at DateTime @default(now())
+
+  @@index([email, action, created_at])
 }
 
 enum DepotType {
