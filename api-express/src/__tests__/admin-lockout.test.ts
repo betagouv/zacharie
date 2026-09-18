@@ -4,6 +4,7 @@ import { describe, test, expect, vi, beforeEach } from 'vitest';
 import adminUserRouter from '~/controllers/admin/user';
 import { sendError } from '~/middlewares/errors';
 import prisma from '~/prisma';
+import { sendTemplateEmail } from '~/third-parties/brevo';
 
 vi.mock('~/third-parties/brevo', () => ({
   createBrevoContact: vi.fn().mockResolvedValue(undefined),
@@ -44,10 +45,10 @@ const targetUser = {
   code_postal: '75001',
   ville: 'Paris',
   activated: true,
-  deleted_at: null,
-  numero_cfei: null,
+  deleted_at: null as Date | null,
+  numero_cfei: null as string | null,
   est_forme_a_l_examen_initial: false,
-  onboarded_at: null,
+  onboarded_at: null as Date | null,
   isZacharieAdmin: false,
 };
 
@@ -160,8 +161,6 @@ describe('Admin lockout management', () => {
       (prisma.user.findUnique as any).mockResolvedValue(targetUser);
       (prisma.password.upsert as any).mockResolvedValue({});
       (prisma.securityLog.create as any).mockResolvedValue({});
-      const { sendTemplateEmail } = await import('~/third-parties/brevo');
-
       const res = await request(app).post('/user/target-1/send-reset-password');
 
       expect(res.status).toBe(200);
