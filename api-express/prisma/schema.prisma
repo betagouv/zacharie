@@ -189,6 +189,8 @@ model Password {
   password                          String
   reset_password_last_email_sent_at DateTime?
   reset_password_token              String?
+  failed_login_attempts             Int       @default(0)
+  locked_until                      DateTime?
   created_at                        DateTime  @default(now())
   updated_at                        DateTime  @default(now()) @updatedAt
   deleted_at                        DateTime?

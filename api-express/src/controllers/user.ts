@@ -156,8 +156,46 @@ router.post(
         return;
       }
 
+      const MAX_FAILED_ATTEMPTS = 5;
+      const LOCKOUT_DURATION_MINUTES = 15;
+
+      if (existingPassword.locked_until && existingPassword.locked_until > new Date()) {
+        const minutesLeft = Math.ceil(
+          (existingPassword.locked_until.getTime() - Date.now()) / 60_000
+        );
+        res.status(429).send({
+          ok: false,
+          data: { user: null },
+          message: '',
+          error: `Compte temporairement verrouillé. Réessayez dans ${minutesLeft} minute${minutesLeft > 1 ? 's' : ''}.`,
+        });
+        return;
+      }
+
       const isOk = await comparePassword(passwordUser, existingPassword.password);
       if (!isOk) {
+        const attempts = existingPassword.failed_login_attempts + 1;
+        const lockData: { failed_login_attempts: number; locked_until?: Date } = {
+          failed_login_attempts: attempts,
+        };
+        if (attempts >= MAX_FAILED_ATTEMPTS) {
+          lockData.locked_until = dayjs().add(LOCKOUT_DURATION_MINUTES, 'minute').toDate();
+        }
+        await prisma.password.update({
+          where: { id: existingPassword.id },
+          data: lockData,
+        });
+
+        if (attempts >= MAX_FAILED_ATTEMPTS) {
+          res.status(429).send({
+            ok: false,
+            data: { user: null },
+            message: '',
+            error: `Trop de tentatives. Compte verrouillé pour ${LOCKOUT_DURATION_MINUTES} minutes.`,
+          });
+          return;
+        }
+
         res.status(400).send({
           ok: false,
           data: { user: null },
@@ -165,6 +203,13 @@ router.post(
           error: 'Email ou mot de passe incorrect',
         });
         return;
+      }
+
+      if (existingPassword.failed_login_attempts > 0) {
+        await prisma.password.update({
+          where: { id: existingPassword.id },
+          data: { failed_login_attempts: 0, locked_until: null },
+        });
       }
 
       // Un admin ouvre une session normale ici, mais /admin exige ensuite ProConnect (middlewares/passport.ts)
