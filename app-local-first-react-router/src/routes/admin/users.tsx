@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Badge } from '@codegouvfr/react-dsfr/Badge';
-import { UserRoles } from '@prisma/client';
+import { UserEtgRoles, UserRoles } from '@prisma/client';
 import dayjs from 'dayjs';
 import type { AdminUsersResponse, AdminOfficialCfeisResponse, OfficialCfei } from '@api/src/types/responses';
 import Chargement from '@app/components/Chargement';
@@ -49,7 +49,13 @@ export default function AdminUsers() {
   const [selectedCfeiValidations, setSelectedCfeiValidations] = useState<string[]>([]);
   const [selectedOnboardingStatuses, setSelectedOnboardingStatuses] = useState<string[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
-  const [sortBy, setSortBy] = useState('created_desc');
+  const [sortBy, setSortBy] = useState(() => {
+    try {
+      return localStorage.getItem('admin-users-sortBy') || 'created_desc';
+    } catch {
+      return 'created_desc';
+    }
+  });
 
   const officialCfeiMap = useMemo(() => {
     const map = new Map<string, OfficialCfei>();
@@ -69,12 +75,24 @@ export default function AdminUsers() {
     return officialCfeiMap.get(user.numero_cfei.toUpperCase()) || null;
   };
 
-  const uniqueRoles = useMemo(() => {
+  const roleOptions = useMemo(() => {
     const rolesSet = new Set<UserRoles>();
     users.forEach((user) => {
       user.roles?.forEach((role) => rolesSet.add(role));
     });
-    return Array.from(rolesSet).sort();
+    const options: Array<{ value: string; label: string }> = Array.from(rolesSet)
+      .sort()
+      .map((role) => ({ value: role, label: role }));
+    if (rolesSet.has(UserRoles.ETG)) {
+      const etgIndex = options.findIndex((o) => o.value === UserRoles.ETG);
+      options.splice(
+        etgIndex + 1,
+        0,
+        { value: 'ETG_TRANSPORT', label: 'ETG (transport)' },
+        { value: 'ETG_RECEPTION', label: 'ETG (gestion)' }
+      );
+    }
+    return options;
   }, [users]);
 
   const filteredUsers = users.filter((user) => {
@@ -100,9 +118,16 @@ export default function AdminUsers() {
       }
     }
     if (selectedRoles.length) {
-      if (!selectedRoles.some((role) => user.roles?.includes(role as UserRoles))) {
-        return false;
-      }
+      const match = selectedRoles.some((role) => {
+        if (role === 'ETG_TRANSPORT') {
+          return user.roles?.includes(UserRoles.ETG) && user.etg_role === UserEtgRoles.TRANSPORT;
+        }
+        if (role === 'ETG_RECEPTION') {
+          return user.roles?.includes(UserRoles.ETG) && user.etg_role === UserEtgRoles.RECEPTION;
+        }
+        return user.roles?.includes(role as UserRoles);
+      });
+      if (!match) return false;
     }
     if (selectedCfeiStatuses.length) {
       const match = selectedCfeiStatuses.some((status) => {
@@ -153,9 +178,8 @@ export default function AdminUsers() {
       return sortBy === 'created_asc' ? cmp : -cmp;
     }
     if (sortBy === 'last_seen_asc' || sortBy === 'last_seen_desc') {
-      // last_seen_at absent toujours en bas de liste
-      const aSeen = a.last_seen_at ? dayjs(a.last_seen_at).valueOf() : null;
-      const bSeen = b.last_seen_at ? dayjs(b.last_seen_at).valueOf() : null;
+      const aSeen = a.last_login_at ? dayjs(a.last_login_at).valueOf() : null;
+      const bSeen = b.last_login_at ? dayjs(b.last_login_at).valueOf() : null;
       if (aSeen === null && bSeen === null) return 0;
       if (aSeen === null) return 1;
       if (bSeen === null) return -1;
@@ -220,7 +244,7 @@ export default function AdminUsers() {
           <CheckboxFilterSection
             title="Rôle"
             scroll
-            options={uniqueRoles.map((role) => ({ value: role, label: role }))}
+            options={roleOptions}
             selected={selectedRoles}
             onChange={setSelectedRoles}
           />
@@ -273,7 +297,12 @@ export default function AdminUsers() {
               <span className="whitespace-nowrap">Trier par</span>
               <select
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
+                onChange={(e) => {
+                  setSortBy(e.target.value);
+                  try {
+                    localStorage.setItem('admin-users-sortBy', e.target.value);
+                  } catch {}
+                }}
                 className="rounded border border-gray-300 px-2 py-1.5 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
               >
                 <option value="name_asc">Nom (A → Z)</option>
@@ -384,7 +413,7 @@ export default function AdminUsers() {
                         suppressHydrationWarning
                       >
                         Créé {dayjs(user.created_at).format('DD/MM/YY')}
-                        {user.last_seen_at && ` · Vu ${dayjs(user.last_seen_at).format('DD/MM/YY')}`}
+                        {user.last_login_at && ` · Vu ${dayjs(user.last_login_at).format('DD/MM/YY')}`}
                       </span>
                       {!user.activated && !user.deleted_at && isChasseur && (
                         <Button

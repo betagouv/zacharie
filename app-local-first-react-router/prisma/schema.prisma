@@ -57,7 +57,6 @@ model User {
   created_at                            DateTime                       @default(now())
   updated_at                            DateTime                       @default(now()) @updatedAt
   last_login_at                         DateTime?
-  last_seen_at                          DateTime?
   deleted_at                            DateTime?
   onboarded_at                          DateTime?
   notifications                         UserNotifications[]            @default([EMAIL, PUSH])
@@ -105,7 +104,7 @@ model User {
   @@index([onboarded_at])
   @@index([roles])
   @@index([updated_at])
-  @@index([last_seen_at])
+  @@index([last_login_at])
   @@index([roles, updated_at])
 }
 
