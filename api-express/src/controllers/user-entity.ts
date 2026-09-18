@@ -217,8 +217,11 @@ router.post(
               await sendNotificationToUser({
                 user: entityAdminRelation.UserRelatedWithEntity,
                 title: "Un nouvel utilisateur s'est inscrit sur Zacharie au sein de votre entité",
-                body: email,
                 email: email,
+                push: {
+                  title: "Nouvelle demande d'accès",
+                  body: `${req.user.prenom} ${req.user.nom_de_famille} souhaite traiter des fiches au nom de ${entity.nom_d_usage}.`,
+                },
                 notificationLogAction: `NEW_USER_IN_ENTITY_${entity.id}`,
               });
             }

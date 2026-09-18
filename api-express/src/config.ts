@@ -47,10 +47,10 @@ const PROCONNECT_CLIENT_SECRET = PROCONNECT_MOCK_ENABLED
   : (process.env.PROCONNECT_CLIENT_SECRET ?? '');
 const PROCONNECT_REDIRECT_URI = `${API_URL}/user/proconnect/callback`;
 
-// Interrupteur manuel, temporaire : le temps de vérifier le contenu des notifications, le push natif
-// n'envoie rien en production, il se contente de logger le payload (third-parties/expo-push.ts).
-// Aucun NotificationLog n'est écrit pendant ce temps, la dédup s'appuyant dessus : un log écrit
-// maintenant empêcherait définitivement l'envoi une fois l'interrupteur relevé.
+// Interrupteur manuel : à `true`, le push natif n'envoie rien en production et se contente de logger
+// le payload (third-parties/expo-push.ts). Aucun NotificationLog n'est écrit pendant ce temps, la
+// dédup s'appuyant dessus : un log écrit en dry run empêcherait définitivement l'envoi une fois
+// l'interrupteur relevé. On le garde comme coupe-circuit en cas de problème d'envoi en production.
 const NATIVE_PUSH_DRY_RUN = true;
 
 export {

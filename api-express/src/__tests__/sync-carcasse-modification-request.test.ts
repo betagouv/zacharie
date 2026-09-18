@@ -543,11 +543,14 @@ describe('notification content', () => {
 
     const call = vi.mocked(sendNotificationToUser).mock.calls[0][0];
     expect(call.title).toMatch(/^Chasse du \d{2}\/\d{2}$/);
-    expect(call.body).toContain('ETG de la Garenne');
-    expect(call.body).toContain('BR-NEW');
-    expect(call.body).toContain('BR-OLD');
-    expect(call.body).toContain('https://zacharie.beta.gouv.fr/app/chasseur/demandes-de-modification');
+    expect(call.email).toContain('ETG de la Garenne');
+    expect(call.email).toContain('BR-NEW');
+    expect(call.email).toContain('BR-OLD');
+    expect(call.email).toContain('https://zacharie.beta.gouv.fr/app/chasseur/demandes-de-modification');
     expect(call.notificationLogAction).toBe(`MODIF_CREATED_${renamePending.id}`);
+    // Le push est un wording à part : pas de lien, une phrase.
+    expect(call.push.body).toContain('BR-NEW');
+    expect(call.push.body).not.toContain('https://');
   });
 
   test('notifyExaminateur for NEW mentions espèce + marquage', async () => {
@@ -569,9 +572,9 @@ describe('notification content', () => {
     });
 
     const call = vi.mocked(sendNotificationToUser).mock.calls[0][0];
-    expect(call.body).toContain('Sanglier');
-    expect(call.body).toContain('BR-NEW-LOT');
-    expect(call.body).toContain('Collecteur Pro');
+    expect(call.email).toContain('Sanglier');
+    expect(call.email).toContain('BR-NEW-LOT');
+    expect(call.email).toContain('Collecteur Pro');
   });
 
   test('notifyRequester title = "Carcasse numéro X", body mentions examinateur + date + commune', async () => {
@@ -588,9 +591,9 @@ describe('notification content', () => {
     const call = vi.mocked(sendNotificationToUser).mock.calls.find((c) => c[0].user.id === requester.id)?.[0];
     expect(call).toBeDefined();
     expect(call!.title).toMatch(/^Carcasse numéro /);
-    expect(call!.body).toContain('Jean Dupont');
-    expect(call!.body).toContain('Villette');
-    expect(call!.body).toMatch(/confirmé/);
+    expect(call!.email).toContain('Jean Dupont');
+    expect(call!.email).toContain('Villette');
+    expect(call!.email).toMatch(/confirmé/);
   });
 
   test('notifyRequester pour un refus de renommage dit que le numéro reste inchangé', async () => {
@@ -609,9 +612,9 @@ describe('notification content', () => {
     });
 
     const call = vi.mocked(sendNotificationToUser).mock.calls.find((c) => c[0].user.id === requester.id)?.[0];
-    expect(call!.body).toMatch(/conteste/);
-    expect(call!.body).toMatch(/reste celui que vous avez relevé/);
-    expect(call!.body).toContain('je lis bien BR-OLD');
+    expect(call!.email).toMatch(/conteste/);
+    expect(call!.email).toMatch(/reste celui que vous avez relevé/);
+    expect(call!.email).toContain('je lis bien BR-OLD');
   });
 
   test('notifyRequester pour un refus de carcasse ajoutée dit "refusé"', async () => {
@@ -627,6 +630,6 @@ describe('notification content', () => {
     });
 
     const call = vi.mocked(sendNotificationToUser).mock.calls.find((c) => c[0].user.id === requester.id)?.[0];
-    expect(call!.body).toMatch(/refusé/);
+    expect(call!.email).toMatch(/refusé/);
   });
 });

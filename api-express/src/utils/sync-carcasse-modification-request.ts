@@ -6,7 +6,7 @@ import {
   type CarcasseModificationRequest,
   type User,
 } from '@prisma/client';
-import sendNotificationToUser from '~/service/notifications';
+import sendNotificationToUser, { type PushWording } from '~/service/notifications';
 import { capture } from '~/third-parties/sentry';
 import type { SyncScope } from '~/utils/sync-scope';
 import dayjs from 'dayjs';
@@ -294,18 +294,27 @@ async function notifyExaminateur(modif: CarcasseModificationRequest) {
 
   // Ton informatif : la modification est déjà appliquée, l'examinateur n'a rien à débloquer.
   let body: string;
+  let push: PushWording;
   if (modif.type === CarcasseModificationRequestType.BRACELET_RENAME) {
     body = `${entityName}, qui traite actuellement les carcasses de votre chasse du ${chasseDate}, a corrigé un numéro de marquage : ${modif.numero_bracelet_after} au lieu de ${modif.numero_bracelet_before}. La correction est déjà prise en compte et la carcasse continue son parcours. Pour la consulter : ${link}`;
+    push = {
+      title: `Correction sur votre chasse du ${chasseDate}`,
+      body: `${entityName} a corrigé un numéro de marquage : ${modif.numero_bracelet_after} au lieu de ${modif.numero_bracelet_before}.`,
+    };
   } else {
     body = `${entityName}, qui traite actuellement les carcasses de votre chasse du ${chasseDate}, a ajouté une carcasse manquante (${carcasse?.espece ?? 'espèce non renseignée'}, marquage ${carcasse?.numero_bracelet}). Elle suit déjà son parcours ; il vous reste à signer son examen initial quand vous le pourrez : ${link}`;
+    push = {
+      title: `Correction sur votre chasse du ${chasseDate}`,
+      body: `${entityName} a ajouté une carcasse (${carcasse?.espece ?? 'espèce non renseignée'}, marquage ${carcasse?.numero_bracelet}) : examen initial à signer.`,
+    };
   }
 
   try {
     await sendNotificationToUser({
       user: examinateur,
       title,
-      body,
       email: body,
+      push,
       notificationLogAction: `MODIF_CREATED_${modif.id}`,
     });
   } catch (error) {
@@ -351,8 +360,9 @@ async function notifyRequester(modif: CarcasseModificationRequest) {
     await sendNotificationToUser({
       user: requester,
       title,
-      body,
       email: body,
+      // Le texte est déjà court et sans lien : le même corps convient aux deux canaux.
+      push: { title: bracelet ? `Carcasse n°${bracelet}` : 'Demande traitée', body },
       notificationLogAction: `MODIF_${modif.status}_${modif.id}`,
     });
   } catch (error) {

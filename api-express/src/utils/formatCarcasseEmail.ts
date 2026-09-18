@@ -13,6 +13,7 @@ import lesions from '../assets/lesions.json';
 import prisma from '~/prisma';
 import { getCircuitCourtFeiUrl, getFeiUrlForRole } from './fei-url';
 import { VITE_APP_URL } from '~/config';
+import type { PushWording } from '~/service/notifications';
 
 function getMotifForChasseur(motif: string, carcasseType: CarcasseType) {
   const lesion = lesions[carcasseType]
@@ -107,6 +108,7 @@ export function formatSaisieChasseurEmail(carcasse: Carcasse): {
   object: string;
   text: string;
   params: CarcasseSaisieTemplateParams;
+  push: PushWording;
 } {
   const saisieLabel = getCarcasseStatusLabelForEmail(carcasse).toLowerCase();
   const params: CarcasseSaisieTemplateParams = {
@@ -130,7 +132,12 @@ export function formatSaisieChasseurEmail(carcasse: Carcasse): {
     `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur cette saisie, merci de contacter l’établissement où a été effectuée l’inspection.`,
   ];
 
-  return { object, text: text.filter(Boolean).join('\n\n'), params };
+  const push: PushWording = {
+    title: 'Carcasse saisie',
+    body: `${params.saisie_label_capitalized} ${params.carcasse_label} de ${params.espece} n°${params.numero_bracelet}.`,
+  };
+
+  return { object, text: text.filter(Boolean).join('\n\n'), params, push };
 }
 
 // Manquante et refus sont constatés par le même intermédiaire : mêmes infos à charger, deux emails
@@ -182,6 +189,7 @@ export async function formatCarcasseManquanteChasseurEmail(carcasse: Carcasse): 
   object: string;
   text: string;
   params: CarcasseManquanteTemplateParams;
+  push: PushWording;
 }> {
   const constat = await getIntermediaireConstat(carcasse);
   const params: CarcasseManquanteTemplateParams = {
@@ -198,7 +206,12 @@ export async function formatCarcasseManquanteChasseurEmail(carcasse: Carcasse): 
     `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur ce constat, merci de contacter l’organisme qui a constaté ce manque.`,
   ];
 
-  return { object, text: text.filter(Boolean).join('\n\n'), params };
+  const push: PushWording = {
+    title: 'Carcasse manquante',
+    body: `${params.entity_name} a constaté que ${params.carcasse_label} de ${params.espece} n°${params.numero_bracelet} est ${params.manquante_label}.`,
+  };
+
+  return { object, text: text.filter(Boolean).join('\n\n'), params, push };
 }
 
 export type CarcasseRefusTemplateParams = {
@@ -217,6 +230,7 @@ export async function formatCarcasseRefusChasseurEmail(carcasse: Carcasse): Prom
   object: string;
   text: string;
   params: CarcasseRefusTemplateParams;
+  push: PushWording;
 }> {
   const constat = await getIntermediaireConstat(carcasse);
   const params: CarcasseRefusTemplateParams = {
@@ -235,7 +249,17 @@ export async function formatCarcasseRefusChasseurEmail(carcasse: Carcasse): Prom
     `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur ce constat, merci de contacter l’organisme qui a constaté ce manque.`,
   ];
 
-  return { object, text: text.filter(Boolean).join('\n\n'), params };
+  const push: PushWording = {
+    title: 'Carcasse refusée',
+    body: [
+      `${params.entity_name} a refusé ${params.carcasse_label} de ${params.espece} n°${params.numero_bracelet}.`,
+      params.motif ? `Motif : ${params.motif}` : null,
+    ]
+      .filter(Boolean)
+      .join(' '),
+  };
+
+  return { object, text: text.filter(Boolean).join('\n\n'), params, push };
 }
 
 export function formatRenvoiExpediteurEmail(
@@ -243,7 +267,7 @@ export function formatRenvoiExpediteurEmail(
   expediteurRole: FeiOwnerRole,
   renvoyeurName: string | null,
   premierDetenteurProchainDetenteurIdCache: string | null
-): [string, string] {
+): { object: string; text: string; push: PushWording } {
   const url =
     expediteurRole === FeiOwnerRole.COLLECTEUR_PRO
       ? `https://zacharie.beta.gouv.fr/app/collecteur/fei/${fei.numero}/${premierDetenteurProchainDetenteurIdCache}`
@@ -259,7 +283,11 @@ export function formatRenvoiExpediteurEmail(
   ];
 
   const object = `La fiche ${fei.numero} vous a été renvoyée.`;
-  return [object, email.filter(Boolean).join('\n\n')];
+  const push: PushWording = {
+    title: 'Fiche renvoyée',
+    body: `${renvoyeur} vous a renvoyé la fiche ${fei.numero}.`,
+  };
+  return { object, text: email.filter(Boolean).join('\n\n'), push };
 }
 
 // Params des templates Brevo FEI_CLOSED (clôture par le SVI) et FEI_AUTOMATIC_CLOSED (clôture
@@ -309,7 +337,7 @@ function countCarcassesForBilan(carcasses: Carcasse[]) {
 export async function formatFeiClosedEmail(
   fei_numero: Fei['numero'],
   carcasses: Carcasse[]
-): Promise<{ object: string; text: string; params: FeiClosedTemplateParams }> {
+): Promise<{ object: string; text: string; params: FeiClosedTemplateParams; push: PushWording }> {
   // L'établissement à contacter est l'ETG qui a traité la fiche. On passe par les intermédiaires :
   // `Carcasse.latest_intermediaire_entity_id` vaut le SVI une fois la carcasse assignée.
   const etgIntermediaire = await prisma.carcasseIntermediaire.findFirst({
@@ -343,7 +371,11 @@ export async function formatFeiClosedEmail(
       : null,
     `Ce message a été généré automatiquement par l’application Zacharie.`,
   ];
-  return { object, text: text.filter(Boolean).join('\n\n'), params };
+  const push: PushWording = {
+    title: 'Fiche clôturée',
+    body: `L’inspection de la fiche ${params.fei_numero} est terminée, les résultats sont disponibles.`,
+  };
+  return { object, text: text.filter(Boolean).join('\n\n'), params, push };
 }
 
 // Params du template Brevo FEI_TRANSMITTED_TO_SVI (placeholders {{ params.xxx }}).
@@ -359,7 +391,7 @@ export type SviAssignedTemplateParams = {
 // tourne une fois par carcasse de la fiche).
 export async function formatSviAssignedEmail(
   carcasse: Carcasse
-): Promise<{ object: string; text: string; params: SviAssignedTemplateParams }> {
+): Promise<{ object: string; text: string; params: SviAssignedTemplateParams; push: PushWording }> {
   const currentEntity = await prisma.entity.findUnique({
     where: {
       id: carcasse.current_owner_entity_id,
@@ -404,7 +436,11 @@ export async function formatSviAssignedEmail(
     `Pour consulter la fiche, rendez-vous sur Zacharie : ${params.cta}`,
     `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur l'attribution de cette fiche, merci de contacter l’établissement qui a traité votre fiche.`,
   ];
-  return { object, text: text.filter(Boolean).join('\n\n'), params };
+  const push: PushWording = {
+    title: 'Nouvelle fiche à inspecter',
+    body: `${params.entity_name} vous a transmis ${params.count} carcasse(s) ou lot(s) à inspecter.`,
+  };
+  return { object, text: text.filter(Boolean).join('\n\n'), params, push };
 }
 
 // Attribution d'une fiche à un user, ou aux users d'une entité : même template des deux côtés,

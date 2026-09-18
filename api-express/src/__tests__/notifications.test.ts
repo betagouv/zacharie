@@ -27,8 +27,8 @@ const user = {
 const notification = {
   user,
   title: 'Un titre',
-  body: 'Un corps',
   email: 'Un texte inline',
+  push: { title: 'Un titre push', body: 'Un corps push' },
   notificationLogAction: 'FEI_ASSIGNED_TO_SVI_etg-1_ZACH-TEST-001',
 };
 
@@ -135,6 +135,18 @@ describe('sendNotificationToUser — canaux push et email', () => {
 
     expect(sendExpoPushNotification).toHaveBeenCalled();
     expect(sendEmail).toHaveBeenCalled();
+  });
+
+  // Le push a son propre wording : il ne doit jamais reprendre le sujet ni le texte de l'email.
+  test('envoie le wording push, pas le contenu de l’email', async () => {
+    await queueSendNotificationToUser({ ...notification, user: pushAndEmailUser });
+
+    expect(sendExpoPushNotification).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Un titre push', body: 'Un corps push' })
+    );
+    expect(sendEmail).toHaveBeenCalledWith(
+      expect.objectContaining({ subject: 'Un titre', text: 'Un texte inline' })
+    );
   });
 
   // La dédup est par canal : un push déjà envoyé ne doit pas empêcher l'email.
