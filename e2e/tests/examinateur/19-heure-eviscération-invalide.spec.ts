@@ -35,11 +35,11 @@ test("Heure d'éviscération < heure de mise à mort → erreur ou auto-correcti
   await page.getByRole('dialog').getByRole('button', { name: 'Continuer' }).click();
 
   // Heure mise à mort = 10:00, éviscération = 08:00 (invalide)
-  const miseAMort = page.getByRole('textbox', { name: 'Début de la chasse' });
+  const miseAMort = page.getByRole('textbox', { name: 'Heure du prélèvement de la première carcasse' });
   await miseAMort.fill('10:00');
   await miseAMort.blur();
 
-  const evisc = page.getByRole('textbox', { name: 'Fin de l’examen initial' });
+  const evisc = page.getByRole('textbox', { name: 'Heure d’éviscération de la dernière carcasse' });
   await evisc.fill('08:00');
   await evisc.blur();
 

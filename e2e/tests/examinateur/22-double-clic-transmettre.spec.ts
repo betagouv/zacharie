@@ -35,10 +35,10 @@ test('Double-clic Transmettre — pas de double soumission', async ({ page }) =>
   await page.getByRole('button', { name: 'Continuer' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Continuer' }).click();
 
-  await page.getByRole('textbox', { name: 'Début de la chasse' }).fill('01:00');
-  await page.getByRole('textbox', { name: 'Début de la chasse' }).blur();
-  await page.getByRole('textbox', { name: 'Fin de l’examen initial' }).fill('02:00');
-  await page.getByRole('textbox', { name: 'Fin de l’examen initial' }).blur();
+  await page.getByRole('textbox', { name: 'Heure du prélèvement de la première carcasse' }).fill('01:00');
+  await page.getByRole('textbox', { name: 'Heure du prélèvement de la première carcasse' }).blur();
+  await page.getByRole('textbox', { name: 'Heure d’éviscération de la dernière carcasse' }).fill('02:00');
+  await page.getByRole('textbox', { name: 'Heure d’éviscération de la dernière carcasse' }).blur();
 
   await page.getByRole('button', { name: dateApprobationDuJour() }).click();
   await page.getByText('Je, Martin Marie, certifie qu').click();

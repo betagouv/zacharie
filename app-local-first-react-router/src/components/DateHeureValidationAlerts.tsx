@@ -85,7 +85,7 @@ export default function DateHeureValidationAlerts({
           title="Attention"
           className="my-4"
           severity="warning"
-          description={'"Début de la chasse" doit être dans le passé.'}
+          description="L'heure du prélèvement de la première carcasse doit être dans le passé."
         />
       )}
       {showHeureEviscerationAlert && isHeureEviscerationAfterNow && (
@@ -93,7 +93,7 @@ export default function DateHeureValidationAlerts({
           title="Attention"
           className="mt-4"
           severity="warning"
-          description="La fin de l’examen initial doit être dans le passé."
+          description="L’heure d’éviscération de la dernière carcasse doit être dans le passé."
         />
       )}
     </>
