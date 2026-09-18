@@ -22,10 +22,13 @@ test("Collecteur renvoie la fiche à l'expéditeur", async ({ page }) => {
     timeout: 10000,
   });
 
-  // Click "Renvoyer à l'expéditeur"
+  // Click "Renvoyer à l'expéditeur" and confirm via the DSFR modal
   const returnBtn = page.getByRole('button', { name: /Renvoyer à l'expéditeur/ });
   await expect(returnBtn).toBeVisible();
+  await returnBtn.scrollIntoViewIfNeeded();
   await returnBtn.click();
+  await expect(page.getByText("Êtes-vous sûr de renvoyer cette fiche à l'expéditeur")).toBeVisible();
+  await page.getByRole('button', { name: 'Confirmer le renvoi' }).click();
 
   // After returning, the fiche should no longer show the take-charge UI
   // The collecteur should be redirected or the fiche should reflect the return
