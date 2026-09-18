@@ -223,6 +223,7 @@ router.get(
           seasonStart: null,
           seasonEnd: null,
           scope: 'departemental',
+          scopeLabel: user.nom_de_famille ?? null,
           scopeDepts: [],
           departements: [],
           totals: emptyValorisationTotals(),
@@ -359,6 +360,7 @@ router.get(
         seasonStart: seasonStart.toISOString(),
         seasonEnd: seasonEnd.toISOString(),
         scope,
+        scopeLabel: scope === 'national' ? null : (user.nom_de_famille ?? null),
         scopeDepts: scopeDepts ?? [],
         departements,
         totals: {

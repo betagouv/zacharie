@@ -60,16 +60,14 @@ export default function SectionSuiviSanitaire({
           />
         </div>
 
-        <div className="relative overflow-hidden rounded-lg border border-gray-200 bg-white p-4 pl-5">
-          <span
-            aria-hidden
-            className="absolute inset-y-0 left-0 w-1 bg-blue-600"
-          />
-          <h4 className="mb-3 text-lg font-bold">Anomalies signalées</h4>
-          {anomaliesPie.values.length === 0 ? (
-            <p className="py-12 text-center text-sm text-gray-500">Aucune anomalie signalée</p>
-          ) : (
-            // @ts-expect-error dsfr-chart web component
+        {anomaliesPie.values.length > 0 && (
+          <div className="relative overflow-hidden rounded-lg border border-gray-200 bg-white p-4 pl-5">
+            <span
+              aria-hidden
+              className="absolute inset-y-0 left-0 w-1 bg-blue-600"
+            />
+            <h4 className="mb-3 text-lg font-bold">Anomalies signalées</h4>
+            {/* @ts-expect-error dsfr-chart web component */}
             <pie-chart
               x={JSON.stringify([anomaliesPie.labels])}
               y={JSON.stringify([anomaliesPie.values])}
@@ -78,8 +76,8 @@ export default function SectionSuiviSanitaire({
               unit-tooltip=""
               selected-palette="categorical"
             />
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       <div className="space-y-6">
@@ -99,16 +97,14 @@ export default function SectionSuiviSanitaire({
           />
         </div>
 
-        <div className="relative overflow-hidden rounded-lg border border-gray-200 bg-white p-4 pl-5">
-          <span
-            aria-hidden
-            className="absolute inset-y-0 left-0 w-1 bg-blue-600"
-          />
-          <h4 className="mb-3 text-lg font-bold">Motifs de saisies sanitaires</h4>
-          {motifsPie.values.length === 0 ? (
-            <p className="py-12 text-center text-sm text-gray-500">Aucune saisie sanitaire</p>
-          ) : (
-            // @ts-expect-error dsfr-chart web component
+        {motifsPie.values.length > 0 && (
+          <div className="relative overflow-hidden rounded-lg border border-gray-200 bg-white p-4 pl-5">
+            <span
+              aria-hidden
+              className="absolute inset-y-0 left-0 w-1 bg-blue-600"
+            />
+            <h4 className="mb-3 text-lg font-bold">Motifs de saisies sanitaires</h4>
+            {/* @ts-expect-error dsfr-chart web component */}
             <pie-chart
               x={JSON.stringify([motifsPie.labels])}
               y={JSON.stringify([motifsPie.values])}
@@ -117,8 +113,8 @@ export default function SectionSuiviSanitaire({
               unit-tooltip=""
               selected-palette="categorical"
             />
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

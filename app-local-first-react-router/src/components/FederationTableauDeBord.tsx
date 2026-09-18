@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import dayjs from 'dayjs';
 import API from '@app/services/api';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
+import Chargement from '@app/components/Chargement';
 import KpiTile from '@app/components/federation-dashboard/KpiTile';
 import DepartementsTable, {
   type DepartementRow,
@@ -42,6 +43,7 @@ interface SeasonRange {
 
 interface ValorisationData extends SeasonRange {
   scope: FederationScope;
+  scopeLabel: string | null;
   scopeDepts: string[];
   departements: DepartementRow[];
   totals: ValorisationTotals;
@@ -75,12 +77,6 @@ interface ApiResponse<T> {
   data?: T;
   error?: string;
 }
-
-const SCOPE_LABEL: Record<FederationScope, string> = {
-  departemental: 'Tableau de bord départemental',
-  regional: 'Tableau de bord régional',
-  national: 'Tableau de bord national',
-};
 
 function useEndpoint<T>(path: string) {
   const [data, setData] = useState<T | null>(null);
@@ -129,19 +125,31 @@ function formatSeasonRange({ seasonStart, seasonEnd }: SeasonRange): string | nu
   return `Données du ${start.format('D MMMM YYYY')} au ${last.format('D MMMM YYYY')}`;
 }
 
+function buildTitle(valoData: ValorisationData | null): string {
+  if (!valoData) return 'Tableau de bord';
+  if (valoData.scope === 'national') return 'Tableau de bord national';
+  if (valoData.scopeLabel) return `Tableau de bord ${valoData.scopeLabel}`;
+  return valoData.scope === 'departemental' ? 'Tableau de bord départemental' : 'Tableau de bord régional';
+}
+
 export default function FederationTableauDeBord() {
   const valo = useEndpoint<ValorisationData>('/stats/federation/valorisation');
   const sani = useEndpoint<SanitaireData>('/stats/federation/sanitaire');
   const form = useEndpoint<FormationData>('/stats/federation/formation');
 
+  const allLoading = valo.loading || sani.loading || form.loading;
   const headerData = valo.data ?? sani.data ?? form.data;
+
+  if (allLoading) {
+    return <Chargement />;
+  }
 
   return (
     <div className="fr-container fr-container--fluid min-h-screen pb-12">
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center pt-8">
         <div className="fr-col-12 fr-col-lg-11">
           <header className="mb-8 flex flex-wrap items-start justify-between gap-2 px-2 md:px-0">
-            <h1 className="fr-h1 mb-0">{headerData ? SCOPE_LABEL[headerData.scope] : 'Tableau de bord'}</h1>
+            <h1 className="fr-h1 mb-0">{buildTitle(valo.data)}</h1>
             {headerData?.season && (
               <div className="flex flex-col items-start gap-1 md:items-end">
                 <span className="fr-badge fr-badge--blue-france">Saison {headerData.season}</span>
@@ -178,28 +186,20 @@ export default function FederationTableauDeBord() {
 
             <section className="px-2 md:px-0">
               <h2 className="mb-4 text-3xl font-medium">Circuits de valorisation</h2>
-              {valo.loading ? (
-                <div className="h-40 animate-pulse rounded bg-gray-100" />
-              ) : valo.error || !valo.data ? (
+              {valo.error || !valo.data ? (
                 <Alert
                   severity="error"
                   title="Erreur"
                   description={valo.error || 'Aucune donnée disponible'}
                 />
               ) : (
-                <SectionValorisation
-                  scope={valo.data.scope}
-                  departements={valo.data.departements}
-                  totals={valo.data.totals}
-                />
+                <SectionValorisation totals={valo.data.totals} />
               )}
             </section>
 
             <section className="px-2 md:px-0">
               <h2 className="mb-4 text-3xl font-medium">Suivi sanitaire grand gibier</h2>
-              {sani.loading || form.loading || valo.loading ? (
-                <div className="h-40 animate-pulse rounded bg-gray-100" />
-              ) : sani.error || !sani.data || form.error || !form.data || !valo.data ? (
+              {sani.error || !sani.data || form.error || !form.data || !valo.data ? (
                 <Alert
                   severity="error"
                   title="Erreur"
@@ -217,24 +217,24 @@ export default function FederationTableauDeBord() {
               )}
             </section>
 
-            <section className="px-2 md:px-0">
-              <h2 className="mb-4 text-3xl font-medium">Détail par département</h2>
-              {valo.loading || form.loading ? (
-                <div className="h-40 animate-pulse rounded bg-gray-100" />
-              ) : valo.error || form.error || !valo.data || !form.data ? (
-                <Alert
-                  severity="error"
-                  title="Erreur"
-                  description={valo.error || form.error || 'Aucune donnée disponible'}
-                />
-              ) : (
-                <DepartementsTable
-                  valorisation={valo.data.departements}
-                  formation={form.data.departements}
-                  showSearch={valo.data.scope === 'national'}
-                />
-              )}
-            </section>
+            {valo.data?.scope !== 'departemental' && (
+              <section className="px-2 md:px-0">
+                <h2 className="mb-4 text-3xl font-medium">Détail par département</h2>
+                {valo.error || form.error || !valo.data || !form.data ? (
+                  <Alert
+                    severity="error"
+                    title="Erreur"
+                    description={valo.error || form.error || 'Aucune donnée disponible'}
+                  />
+                ) : (
+                  <DepartementsTable
+                    valorisation={valo.data.departements}
+                    formation={form.data.departements}
+                    showSearch={valo.data.scope === 'national'}
+                  />
+                )}
+              </section>
+            )}
           </div>
         </div>
       </div>

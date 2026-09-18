@@ -1,8 +1,6 @@
 import '@gouvfr/dsfr-chart/PieChart';
 // @ts-expect-error dsfr-chart CSS has no type declarations
 import '@gouvfr/dsfr-chart/PieChart/css';
-import DepartementValorisationCard from '@app/components/DepartementValorisationCard';
-import { type DepartementRow } from './DepartementsTable';
 
 interface ValorisationTotals {
   ggAgree: number;
@@ -16,8 +14,6 @@ interface ValorisationTotals {
 }
 
 interface Props {
-  scope: 'departemental' | 'regional' | 'national';
-  departements: DepartementRow[];
   totals: ValorisationTotals | null;
 }
 
@@ -43,22 +39,7 @@ function buildPieData(totals: ValorisationTotals, type: 'gg' | 'pg') {
   return { labels, values };
 }
 
-export default function SectionValorisation({ scope, departements, totals }: Props) {
-  const isSingleDept = scope === 'departemental' && departements.length === 1;
-
-  if (departements.length === 0) {
-    return (
-      <p className="text-sm text-gray-500">
-        Aucune carcasse n'a été enregistrée dans Zacharie pour le périmètre de votre fédération sur la saison
-        en cours.
-      </p>
-    );
-  }
-
-  if (isSingleDept) {
-    return <DepartementValorisationCard {...departements[0]} />;
-  }
-
+export default function SectionValorisation({ totals }: Props) {
   const gg = totals ? buildPieData(totals, 'gg') : { labels: [], values: [] };
   const pg = totals ? buildPieData(totals, 'pg') : { labels: [], values: [] };
   const ggEmpty = gg.values.length === 0;
