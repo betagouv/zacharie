@@ -115,6 +115,11 @@ class ApiService {
           if (readableRes && typeof readableRes === 'object' && readableRes.data?.token) {
             setNativeAuthToken(readableRes.data.token);
           }
+          if (response.status === 403 && readableRes?.error === 'PROCONNECT_REQUIRED') {
+            const redirect = encodeURIComponent(window.location.pathname + window.location.search);
+            window.history.pushState({}, '', `/app/proconnect?redirect=${redirect}`);
+            window.dispatchEvent(new PopStateEvent('popstate'));
+          }
           return readableRes;
         } catch (e) {
           console.log('ERROR IN RESPONSE JSON', response);
