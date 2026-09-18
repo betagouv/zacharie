@@ -195,6 +195,14 @@ export interface AdminUsersResponse {
   error: string;
 }
 
+export interface AdminUserLockoutInfo {
+  is_locked: boolean;
+  recent_failures: number;
+  lockout_expires_at: string | null;
+  last_failure_action: string | null;
+  last_failure_at: string | null;
+}
+
 export interface AdminUserDataResponse {
   ok: boolean;
   data: null | {
@@ -204,6 +212,7 @@ export interface AdminUserDataResponse {
     allEntities: Array<Entity>;
     userEntitiesRelations: Array<EntityForAdmin>;
     officialCfei: OfficialCfei | null;
+    lockout: AdminUserLockoutInfo;
   };
   error: string;
 }

@@ -3,6 +3,8 @@ import { catchErrors } from '~/middlewares/errors';
 const router: express.Router = express.Router();
 import prisma from '~/prisma';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
+import dayjs from 'dayjs';
 import createUserId from '~/utils/createUserId';
 import { Prisma, User, UserEtgRoles, UserNotifications, UserRoles } from '@prisma/client';
 import { cookieOptions, JWT_MAX_AGE } from '~/utils/cookie';
@@ -18,18 +20,50 @@ import type {
   AdminFeisResponse,
   AdminCarcassesResponse,
   AdminUserNotificationsResponse,
+  AdminUserLockoutInfo,
   UserConnexionResponse,
 } from '~/types/responses';
 import { entityAdminInclude } from '~/types/entity';
 import {
   createBrevoContact,
   sendEmail,
+  sendTemplateEmail,
   updateBrevoChasseurDeal,
   updateBrevoContact,
 } from '~/third-parties/brevo';
 import { getDefaultScopeDepartementsForRoles } from '~/utils/federation-stats';
 import { sendOnboardingEmailOnce } from '~/utils/send-onboarding-email';
 import { BrevoTemplateId } from '~/third-parties/brevo-templates';
+
+const MAX_FAILED_ATTEMPTS = 5;
+const LOCKOUT_DURATION_MINUTES = 15;
+
+async function getLockoutInfo(email: string): Promise<AdminUserLockoutInfo> {
+  const since = dayjs().subtract(LOCKOUT_DURATION_MINUTES, 'minute').toDate();
+  const lastUnlock = await prisma.securityLog.findFirst({
+    where: { email, action: 'LOGIN_UNLOCK_FROM_ADMIN', created_at: { gte: since } },
+    orderBy: { created_at: 'desc' },
+  });
+  const failureSince = lastUnlock ? lastUnlock.created_at : since;
+  const recentFailures = await prisma.securityLog.count({
+    where: { email, action: { startsWith: 'LOGIN_FAILED' }, created_at: { gte: failureSince } },
+  });
+  const lastFailure = await prisma.securityLog.findFirst({
+    where: { email, action: { startsWith: 'LOGIN_FAILED' }, created_at: { gte: failureSince } },
+    orderBy: { created_at: 'desc' },
+  });
+  const isLocked = recentFailures >= MAX_FAILED_ATTEMPTS;
+  return {
+    is_locked: isLocked,
+    recent_failures: recentFailures,
+    lockout_expires_at:
+      isLocked && lastFailure
+        ? dayjs(lastFailure.created_at).add(LOCKOUT_DURATION_MINUTES, 'minute').toISOString()
+        : null,
+    last_failure_action: lastFailure?.action ?? null,
+    last_failure_at: lastFailure?.created_at.toISOString() ?? null,
+  };
+}
 
 router.post(
   '/user/connect-as',
@@ -405,6 +439,8 @@ router.get(
         });
       }
 
+      const lockout = await getLockoutInfo(user.email);
+
       res.status(200).send({
         ok: true,
         data: {
@@ -422,6 +458,7 @@ router.get(
           allEntities,
           userEntitiesRelations,
           officialCfei,
+          lockout,
         },
         error: '',
       });
@@ -569,6 +606,78 @@ router.get(
         data: { users },
         error: '',
       });
+    }
+  )
+);
+
+router.post(
+  '/user/:user_id/unblock',
+  catchErrors(
+    async (
+      req: express.Request,
+      res: express.Response<{ ok: boolean; data: { lockout: AdminUserLockoutInfo } | null; error: string }>,
+      next: express.NextFunction
+    ) => {
+      const userId = req.params.user_id;
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (!user) {
+        res.status(400).send({ ok: false, data: null, error: 'User not found' });
+        return;
+      }
+      await prisma.securityLog.create({
+        data: {
+          email: user.email,
+          action: 'LOGIN_UNLOCK_FROM_ADMIN',
+        },
+      });
+      const lockout = await getLockoutInfo(user.email);
+      res.status(200).send({ ok: true, data: { lockout }, error: '' });
+    }
+  )
+);
+
+router.post(
+  '/user/:user_id/send-reset-password',
+  catchErrors(
+    async (
+      req: express.Request,
+      res: express.Response<{ ok: boolean; error: string }>,
+      next: express.NextFunction
+    ) => {
+      const userId = req.params.user_id;
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (!user) {
+        res.status(400).send({ ok: false, error: 'User not found' });
+        return;
+      }
+      const token = crypto.randomUUID();
+      await prisma.password.upsert({
+        where: { user_id: user.id },
+        update: {
+          reset_password_token: token,
+          reset_password_last_email_sent_at: new Date(),
+        },
+        create: {
+          User: { connect: { id: user.id } },
+          password: '',
+          reset_password_token: token,
+          reset_password_last_email_sent_at: new Date(),
+        },
+      });
+      await sendTemplateEmail({
+        emails: [user.email!],
+        templateId: BrevoTemplateId.PASSWORD_RESET,
+        params: {
+          cta: `${VITE_APP_URL}/app/connexion/reset-mot-de-passe?reset-password-token=${token}`,
+        },
+      });
+      await prisma.securityLog.create({
+        data: {
+          email: user.email,
+          action: 'PASSWORD_RESET_SENT_FROM_ADMIN',
+        },
+      });
+      res.status(200).send({ ok: true, error: '' });
     }
   )
 );

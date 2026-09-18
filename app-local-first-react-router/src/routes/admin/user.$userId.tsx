@@ -111,12 +111,19 @@ const initialState: State = {
   allEntities: [],
   userEntitiesRelations: [],
   officialCfei: null,
+  lockout: {
+    is_locked: false,
+    recent_failures: 0,
+    lockout_expires_at: null,
+    last_failure_action: null,
+    last_failure_at: null,
+  },
 };
 
 export default function AdminUser() {
   const params = useParams();
   const [userResponseData, setUserResponseData] = useState<State>(initialState);
-  const { user, userEntitiesRelations, officialCfei } = userResponseData;
+  const { user, userEntitiesRelations, officialCfei, lockout } = userResponseData;
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -250,6 +257,33 @@ export default function AdminUser() {
       });
       toast.success(user.isZacharieAdmin ? 'Droits admin retirés' : 'Droits admin accordés');
     });
+  };
+
+  const handleUnblock = () => {
+    API.post({ path: `admin/user/${params.userId}/unblock` }).then((res) => {
+      if (!res.ok) {
+        return toast.error('Une erreur est survenue lors du déblocage');
+      }
+      loadData(params.userId!).then((res) => {
+        if (res.ok && res.data) {
+          setUserResponseData(res.data as State);
+        }
+      });
+      toast.success('Utilisateur débloqué');
+    });
+  };
+
+  const [sendingResetPassword, setSendingResetPassword] = useState(false);
+  const handleSendResetPassword = () => {
+    setSendingResetPassword(true);
+    API.post({ path: `admin/user/${params.userId}/send-reset-password` })
+      .then((res) => {
+        if (!res.ok) {
+          return toast.error("Une erreur est survenue lors de l'envoi du lien");
+        }
+        toast.success(`Lien de réinitialisation envoyé à ${user.email}`);
+      })
+      .finally(() => setSendingResetPassword(false));
   };
 
   const fullName = [user.nom_de_famille, user.prenom].filter(Boolean).join(' ');
@@ -391,6 +425,14 @@ export default function AdminUser() {
                     Admin
                   </Badge>
                 )}
+                {lockout.is_locked && (
+                  <Badge
+                    severity="error"
+                    small
+                  >
+                    Bloqué
+                  </Badge>
+                )}
                 {user.roles.includes(UserRoles.CHASSEUR) && (
                   <Badge
                     severity={user.est_forme_a_l_examen_initial ? 'success' : 'warning'}
@@ -411,6 +453,72 @@ export default function AdminUser() {
                 {user.onboarded_at && <> · Onboardé le {dayjs(user.onboarded_at).format('DD/MM/YYYY')}</>}
               </p>
             </header>
+            {(lockout.is_locked || lockout.recent_failures > 0) && (
+              <div
+                className={`mt-4 rounded-lg border p-4 ${
+                  lockout.is_locked ? 'border-red-300 bg-red-50' : 'border-orange-300 bg-orange-50'
+                }`}
+              >
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <h2 className="m-0 text-base font-bold">
+                      {lockout.is_locked ? 'Connexion bloquée' : 'Tentatives de connexion échouées'}
+                    </h2>
+                    <p className="mt-1 mb-0 text-sm">
+                      {lockout.is_locked ? (
+                        <>
+                          Cet utilisateur est bloqué suite à {lockout.recent_failures} tentatives échouées en
+                          moins de 15 minutes.
+                          {lockout.lockout_expires_at && (
+                            <>
+                              {' '}
+                              Le blocage expire le{' '}
+                              {dayjs(lockout.lockout_expires_at).format('DD/MM/YYYY à HH:mm')}.
+                            </>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          {lockout.recent_failures} tentative(s) échouée(s) récente(s).
+                          {lockout.last_failure_at && (
+                            <>
+                              {' '}
+                              Dernière tentative le{' '}
+                              {dayjs(lockout.last_failure_at).format('DD/MM/YYYY à HH:mm')}.
+                            </>
+                          )}
+                        </>
+                      )}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 flex-wrap items-center gap-2">
+                    {lockout.is_locked && (
+                      <Button
+                        type="button"
+                        priority="primary"
+                        size="small"
+                        iconId="fr-icon-lock-unlock-line"
+                        onClick={handleUnblock}
+                      >
+                        Débloquer
+                      </Button>
+                    )}
+                    <Button
+                      type="button"
+                      priority="secondary"
+                      size="small"
+                      iconId="fr-icon-mail-line"
+                      disabled={sendingResetPassword}
+                      onClick={handleSendResetPassword}
+                    >
+                      {sendingResetPassword
+                        ? 'Envoi en cours…'
+                        : 'Envoyer un lien de réinitialisation du mot de passe'}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
             <Tabs
               selectedTabId={selectedTabId}
               tabs={tabs}
