@@ -49,6 +49,32 @@ export function initMatomo(): void {
   }
 }
 
+// Custom dimension IDs configured in Matomo admin (Settings → Custom Dimensions).
+// Scope: Visit.
+export const MATOMO_DIMENSION_CONNEXION = 1;
+export const MATOMO_DIMENSION_ADMIN = 2;
+
+export function setCustomDimensions(user: { isZacharieAdmin: boolean } | null): void {
+  if (!window._paq) {
+    window._paq = [];
+  }
+
+  window._paq.push(['setCustomDimension', MATOMO_DIMENSION_CONNEXION, user ? 'connecté' : 'non connecté']);
+  window._paq.push([
+    'setCustomDimension',
+    MATOMO_DIMENSION_ADMIN,
+    user?.isZacharieAdmin ? 'admin' : 'non admin',
+  ]);
+
+  if (import.meta.env.DEV) {
+    console.log(
+      '[Matomo] Custom dimensions:',
+      user ? 'connecté' : 'non connecté',
+      user?.isZacharieAdmin ? 'admin' : 'non admin'
+    );
+  }
+}
+
 export function trackPageView(path?: string, title?: string): void {
   if (!isMatomoEnabled) {
     if (import.meta.env.DEV) {
