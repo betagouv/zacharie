@@ -32,6 +32,7 @@ export async function populateDb(role?: FeiOwnerRole) {
   }
 
   // Delete in FK-safe order: children before parents
+  await prisma.securityLog.deleteMany();
   await prisma.log.deleteMany();
   await prisma.carcasseIntermediaire.deleteMany();
   await prisma.carcasse.deleteMany();

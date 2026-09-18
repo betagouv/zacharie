@@ -171,6 +171,17 @@ router.post(
             user_agent: req.headers['user-agent'],
           },
         });
+
+        if (recentFailures + 1 >= MAX_FAILED_ATTEMPTS) {
+          res.status(429).send({
+            ok: false,
+            data: { user: null },
+            message: '',
+            error: `Trop de tentatives. Réessayez dans ${LOCKOUT_DURATION_MINUTES} minutes.`,
+          });
+          return;
+        }
+
         res.status(400).send({
           ok: false,
           data: { user: null },
@@ -192,6 +203,17 @@ router.post(
             user_agent: req.headers['user-agent'],
           },
         });
+
+        if (recentFailures + 1 >= MAX_FAILED_ATTEMPTS) {
+          res.status(429).send({
+            ok: false,
+            data: { user: null },
+            message: '',
+            error: `Trop de tentatives. Réessayez dans ${LOCKOUT_DURATION_MINUTES} minutes.`,
+          });
+          return;
+        }
+
         res.status(400).send({
           ok: false,
           data: { user: null },
