@@ -28,6 +28,7 @@ const departementsLabels = (departementsRegions as { departements: Record<string
 // les statistiques personnelles du chasseur — mêmes bases que les taux personnels (carcasses SVI-éligibles).
 const NATIONAL_SEIZURE_RATE_BIG_GAME = 13.75; // % taux de saisie national grand gibier sauvage
 const NATIONAL_BPH_RATE_BIG_GAME = 5.49; // % taux BPH national grand gibier
+const NATIONAL_GG_TAUX_SAISIE_25_26 = 23.9; // % taux de saisie national GG saison 25-26 (valeur officielle)
 
 router.get(
   '/mes-chasses',
@@ -385,6 +386,7 @@ router.get(
             totals.pg.sviEligible > 0 && totals.pg.hasSviReturn
               ? Math.round((totals.pg.seized / totals.pg.sviEligible) * 1000) / 10
               : null,
+          nationalGgTauxSaisie25_26: NATIONAL_GG_TAUX_SAISIE_25_26,
         },
       },
     });
@@ -456,6 +458,8 @@ router.get(
         espece: true,
         examinateur_anomalies_carcasse: true,
         examinateur_anomalies_abats: true,
+        svi_carcasse_status: true,
+        svi_ipm2_lesions_ou_motifs: true,
         Fei: { select: { commune_mise_a_mort: true } },
       },
     });
@@ -465,6 +469,10 @@ router.get(
 
     const stats = new Map<string, Bucket>();
     const totals = emptyBucket();
+
+    let anomaliesTotal = 0;
+    const anomaliesMap = new Map<string, number>();
+    const sviMotifsMap = new Map<string, number>();
 
     for (const c of carcasses) {
       const dept = extractDepartementFromCommune(c.Fei?.commune_mise_a_mort);
@@ -490,6 +498,26 @@ router.get(
         deptStats.tularemie++;
         totals.tularemie++;
       }
+
+      if (c.type === CarcasseType.GROS_GIBIER) {
+        const anomaliesCarcasse = c.examinateur_anomalies_carcasse ?? [];
+        const anomaliesAbats = c.examinateur_anomalies_abats ?? [];
+        if (anomaliesCarcasse.length > 0 || anomaliesAbats.length > 0) {
+          anomaliesTotal++;
+          for (const motif of anomaliesCarcasse) {
+            anomaliesMap.set(motif, (anomaliesMap.get(motif) ?? 0) + 1);
+          }
+          for (const motif of anomaliesAbats) {
+            anomaliesMap.set(motif, (anomaliesMap.get(motif) ?? 0) + 1);
+          }
+        }
+
+        if (c.svi_carcasse_status === CarcasseStatus.SAISIE_TOTALE) {
+          for (const motif of c.svi_ipm2_lesions_ou_motifs ?? []) {
+            sviMotifsMap.set(motif, (sviMotifsMap.get(motif) ?? 0) + 1);
+          }
+        }
+      }
     }
 
     const departements = Array.from(stats.entries())
@@ -504,6 +532,14 @@ router.get(
       }))
       .sort((a, b) => a.code.localeCompare(b.code));
 
+    const anomaliesBreakdown = Array.from(anomaliesMap.entries())
+      .map(([motif, count]) => ({ motif, count }))
+      .sort((a, b) => b.count - a.count);
+
+    const sviMotifs = Array.from(sviMotifsMap.entries())
+      .map(([motif, count]) => ({ motif, count }))
+      .sort((a, b) => b.count - a.count);
+
     res.status(200).send({
       ok: true,
       data: {
@@ -514,6 +550,11 @@ router.get(
         scopeDepts: scopeDepts ?? [],
         departements,
         totals,
+        anomalies: {
+          total: anomaliesTotal,
+          breakdown: anomaliesBreakdown,
+        },
+        sviMotifs,
       },
     });
   })

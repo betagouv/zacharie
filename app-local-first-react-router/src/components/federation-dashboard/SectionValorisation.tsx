@@ -1,4 +1,6 @@
-import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
+import '@gouvfr/dsfr-chart/PieChart';
+// @ts-expect-error dsfr-chart CSS has no type declarations
+import '@gouvfr/dsfr-chart/PieChart/css';
 import DepartementValorisationCard from '@app/components/DepartementValorisationCard';
 import { type DepartementRow } from './DepartementsTable';
 
@@ -19,23 +21,26 @@ interface Props {
   totals: ValorisationTotals | null;
 }
 
-const CIRCUIT_COLORS = {
-  agree: '#3b82f6',
-  nonAgree: '#f59e0b',
-  domestique: '#10b981',
-};
-
-// Grand gibier : une carcasse = un animal. Petit gibier : on compte les animaux des lots.
-function buildPie(totals: ValorisationTotals, type: 'gg' | 'pg') {
+function buildPieData(totals: ValorisationTotals, type: 'gg' | 'pg') {
   const [agree, nonAgree, domestique] =
     type === 'gg'
       ? [totals.ggAgree, totals.ggNonAgree, totals.ggDomestique]
       : [totals.pgAgreeAnimaux, totals.pgNonAgreeAnimaux, totals.pgDomestiqueAnimaux];
-  return [
-    { name: 'Circuit agréé (ETG)', value: agree, color: CIRCUIT_COLORS.agree },
-    { name: 'Circuit non agréé', value: nonAgree, color: CIRCUIT_COLORS.nonAgree },
-    { name: 'Usage domestique privé', value: domestique, color: CIRCUIT_COLORS.domestique },
-  ].filter((d) => d.value > 0);
+  const labels: string[] = [];
+  const values: number[] = [];
+  if (agree > 0) {
+    labels.push('Circuit agréé (ETG)');
+    values.push(agree);
+  }
+  if (nonAgree > 0) {
+    labels.push('Circuit non agréé');
+    values.push(nonAgree);
+  }
+  if (domestique > 0) {
+    labels.push('Usage domestique privé');
+    values.push(domestique);
+  }
+  return { labels, values };
 }
 
 export default function SectionValorisation({ scope, departements, totals }: Props) {
@@ -54,95 +59,52 @@ export default function SectionValorisation({ scope, departements, totals }: Pro
     return <DepartementValorisationCard {...departements[0]} />;
   }
 
-  const pieGg = totals ? buildPie(totals, 'gg') : [];
-  const pieGgTotal = pieGg.reduce((s, d) => s + d.value, 0);
-  const pieGgEmpty = pieGgTotal === 0;
-  const pieGgData = pieGgEmpty ? [{ name: 'Aucune donnée', value: 1, color: '#e5e7eb' }] : pieGg;
-  const pieGgPercents = (() => {
-    if (pieGgTotal === 0) return new Map<string, number>();
-    return new Map(pieGg.map((d) => [d.name, Math.round((d.value / pieGgTotal) * 100)]));
-  })();
-
-  const piePg = totals ? buildPie(totals, 'pg') : [];
-  const piePgTotal = piePg.reduce((s, d) => s + d.value, 0);
-  const piePgEmpty = piePgTotal === 0;
-  const piePgData = piePgEmpty ? [{ name: 'Aucune donnée', value: 1, color: '#e5e7eb' }] : piePg;
-  const piePgPercents = (() => {
-    if (piePgTotal === 0) return new Map<string, number>();
-    return new Map(piePg.map((d) => [d.name, Math.round((d.value / piePgTotal) * 100)]));
-  })();
+  const gg = totals ? buildPieData(totals, 'gg') : { labels: [], values: [] };
+  const pg = totals ? buildPieData(totals, 'pg') : { labels: [], values: [] };
+  const ggEmpty = gg.values.length === 0;
+  const pgEmpty = pg.values.length === 0;
 
   return (
-    <div className="space-y-4">
-      <div className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded-lg bg-white p-4 shadow-sm">
-          <h3 className="fr-h6 mb-3">Répartition Grand gibier</h3>
-          {pieGgEmpty ? (
-            <p className="py-12 text-center text-sm text-gray-500">Aucune donnée</p>
-          ) : (
-            <ResponsiveContainer
-              width="100%"
-              height={240}
-            >
-              <PieChart>
-                <Pie
-                  data={pieGgData}
-                  dataKey="value"
-                  nameKey="name"
-                  outerRadius={90}
-                  label={(entry) => {
-                    if (!('name' in entry)) return '';
-                    const pct = pieGgPercents.get(entry.name as string);
-                    return pct !== undefined ? `${pct}%` : '';
-                  }}
-                >
-                  {pieGgData.map((d) => (
-                    <Cell
-                      key={d.name}
-                      fill={d.color}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(v, n) => [Number(v).toLocaleString('fr-FR'), String(n)]} />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          )}
-        </div>
-        <div className="rounded-lg bg-white p-4 shadow-sm">
-          <h3 className="fr-h6 mb-1">Répartition Petit gibier</h3>
-          {piePgEmpty ? (
-            <p className="py-12 text-center text-sm text-gray-500">Aucune donnée</p>
-          ) : (
-            <ResponsiveContainer
-              width="100%"
-              height={240}
-            >
-              <PieChart>
-                <Pie
-                  data={piePgData}
-                  dataKey="value"
-                  nameKey="name"
-                  outerRadius={90}
-                  label={(entry) => {
-                    if (!('name' in entry)) return '';
-                    const pct = piePgPercents.get(entry.name as string);
-                    return pct !== undefined ? `${pct}%` : '';
-                  }}
-                >
-                  {piePgData.map((d) => (
-                    <Cell
-                      key={d.name}
-                      fill={d.color}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(v, n) => [Number(v).toLocaleString('fr-FR'), String(n)]} />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          )}
-        </div>
+    <div className="grid gap-4 lg:grid-cols-2">
+      <div className="relative overflow-hidden rounded-lg border border-gray-200 bg-white p-4 pl-5">
+        <span
+          aria-hidden
+          className="absolute inset-y-0 left-0 w-1 bg-blue-600"
+        />
+        <h3 className="mb-3 text-lg font-bold">Circuits grand gibier</h3>
+        {ggEmpty ? (
+          <p className="py-12 text-center text-sm text-gray-500">Aucune donnée</p>
+        ) : (
+          // @ts-expect-error dsfr-chart web component
+          <pie-chart
+            x={JSON.stringify([gg.labels])}
+            y={JSON.stringify([gg.values])}
+            name={JSON.stringify(gg.labels)}
+            fill="true"
+            unit-tooltip=""
+            selected-palette="categorical"
+          />
+        )}
+      </div>
+      <div className="relative overflow-hidden rounded-lg border border-gray-200 bg-white p-4 pl-5">
+        <span
+          aria-hidden
+          className="absolute inset-y-0 left-0 w-1 bg-amber-500"
+        />
+        <h3 className="mb-3 text-lg font-bold">Circuits petit gibier</h3>
+        {pgEmpty ? (
+          <p className="py-12 text-center text-sm text-gray-500">Aucune donnée</p>
+        ) : (
+          // @ts-expect-error dsfr-chart web component
+          <pie-chart
+            x={JSON.stringify([pg.labels])}
+            y={JSON.stringify([pg.values])}
+            name={JSON.stringify(pg.labels)}
+            fill="true"
+            unit-tooltip=""
+            selected-palette="categorical"
+          />
+        )}
       </div>
     </div>
   );

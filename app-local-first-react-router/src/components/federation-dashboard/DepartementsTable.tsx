@@ -1,5 +1,4 @@
 import { useMemo, useState, type ReactNode } from 'react';
-import { type FormationRow } from './SectionFormation';
 
 export interface CircuitBucket {
   agree: number;
@@ -38,10 +37,12 @@ interface MergedRow {
   pgNonAgree: number;
   pgDomestique: number;
   pgTotal: number;
-  pgLots: number;
-  pgTauxSaisie: number | null;
-  tauxSaisieBph: number | null;
-  scoreBph: number | null;
+}
+
+export interface FormationRow {
+  code: string;
+  nom: string;
+  examinateursActifs: number;
 }
 
 interface Props {
@@ -79,10 +80,6 @@ function mergeRows(valorisation: DepartementRow[], formation: FormationRow[]): M
         pgNonAgree: pg?.nonAgreeAnimaux ?? 0,
         pgDomestique: pg?.domestiqueAnimaux ?? 0,
         pgTotal: (pg?.agreeAnimaux ?? 0) + (pg?.nonAgreeAnimaux ?? 0) + (pg?.domestiqueAnimaux ?? 0),
-        pgLots: (pg?.agree ?? 0) + (pg?.nonAgree ?? 0) + (pg?.domestique ?? 0),
-        pgTauxSaisie: pg?.tauxSaisie ?? null,
-        tauxSaisieBph: f?.tauxSaisieBph ?? null,
-        scoreBph: f?.scoreBph ?? null,
       };
     })
     .sort((a, b) => a.code.localeCompare(b.code));
@@ -106,7 +103,7 @@ interface Group {
 
 const GROUPS: Group[] = [
   {
-    label: 'Grand gibier',
+    label: 'Grand gibier (carcasses)',
     className: 'bg-blue-50',
     columns: [
       { key: 'ggAgree', label: 'Agréé', summable: true },
@@ -122,38 +119,13 @@ const GROUPS: Group[] = [
     ],
   },
   {
-    label: 'Petit gibier (animaux)',
+    label: 'Petit gibier (carcasses)',
     className: 'bg-amber-50',
     columns: [
       { key: 'pgAgree', label: 'Agréé', summable: true },
       { key: 'pgNonAgree', label: 'Non agréé', summable: true },
       { key: 'pgDomestique', label: 'Domestique', summable: true },
       { key: 'pgTotal', label: 'Total', summable: true },
-      { key: 'pgLots', label: 'Lots', summable: true },
-      {
-        key: 'pgTauxSaisie',
-        label: 'Taux saisie (lots)',
-        render: (r) => formatTaux(r.pgTauxSaisie),
-        summable: false,
-      },
-    ],
-  },
-  {
-    label: "Bonnes pratiques d'hygiène",
-    className: 'bg-purple-50',
-    columns: [
-      {
-        key: 'tauxSaisieBph',
-        label: 'Taux saisie BPH',
-        render: (r) => formatTaux(r.tauxSaisieBph),
-        summable: false,
-      },
-      {
-        key: 'scoreBph',
-        label: 'Score BPH',
-        render: (r) => (r.scoreBph !== null ? `${r.scoreBph}/100` : '—'),
-        summable: false,
-      },
     ],
   },
 ];

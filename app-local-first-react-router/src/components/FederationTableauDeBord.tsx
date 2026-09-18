@@ -2,19 +2,13 @@ import { useEffect, useState } from 'react';
 import dayjs from 'dayjs';
 import API from '@app/services/api';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
-import HeroKpis from '@app/components/federation-dashboard/HeroKpis';
+import KpiTile from '@app/components/federation-dashboard/KpiTile';
 import DepartementsTable, {
   type DepartementRow,
+  type FormationRow,
 } from '@app/components/federation-dashboard/DepartementsTable';
 import SectionValorisation from '@app/components/federation-dashboard/SectionValorisation';
-import {
-  type SanitaireRow,
-  type SanitaireTotals,
-} from '@app/components/federation-dashboard/SectionSanitaire';
-import {
-  type FormationNational,
-  type FormationRow,
-} from '@app/components/federation-dashboard/SectionFormation';
+import SectionSuiviSanitaire from '@app/components/federation-dashboard/SectionSuiviSanitaire';
 
 type FederationScope = 'departemental' | 'regional' | 'national';
 
@@ -37,6 +31,7 @@ interface ValorisationTotals {
   pgSeized: number;
   pgSviEligible: number;
   pgTauxSaisie: number | null;
+  nationalGgTauxSaisie25_26: number;
 }
 
 interface SeasonRange {
@@ -55,15 +50,23 @@ interface ValorisationData extends SeasonRange {
 interface SanitaireData extends SeasonRange {
   scope: FederationScope;
   scopeDepts: string[];
-  departements: SanitaireRow[];
-  totals: SanitaireTotals;
+  totals: {
+    tuberculose: number;
+    pestePorcine: number;
+    brucellose: number;
+    tularemie: number;
+  };
+  anomalies: {
+    total: number;
+    breakdown: Array<{ motif: string; count: number }>;
+  };
+  sviMotifs: Array<{ motif: string; count: number }>;
 }
 
 interface FormationData extends SeasonRange {
   scope: FederationScope;
   scopeDepts: string[];
   departements: FormationRow[];
-  national: FormationNational;
   totals: { examinateursActifs: number };
 }
 
@@ -131,15 +134,14 @@ export default function FederationTableauDeBord() {
   const sani = useEndpoint<SanitaireData>('/stats/federation/sanitaire');
   const form = useEndpoint<FormationData>('/stats/federation/formation');
 
-  // Header — l'attente du valo suffit, c'est le seul à porter scope/season fiables.
   const headerData = valo.data ?? sani.data ?? form.data;
 
   return (
     <div className="fr-container fr-container--fluid min-h-screen pb-12">
-      <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center pt-4">
+      <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center pt-8">
         <div className="fr-col-12 fr-col-lg-11">
-          <header className="mb-4 flex flex-wrap items-baseline justify-between gap-2 px-2 md:px-0">
-            <h1 className="fr-h3 mb-0">{headerData ? SCOPE_LABEL[headerData.scope] : 'Tableau de bord'}</h1>
+          <header className="mb-8 flex flex-wrap items-start justify-between gap-2 px-2 md:px-0">
+            <h1 className="fr-h1 mb-0">{headerData ? SCOPE_LABEL[headerData.scope] : 'Tableau de bord'}</h1>
             {headerData?.season && (
               <div className="flex flex-col items-start gap-1 md:items-end">
                 <span className="fr-badge fr-badge--blue-france">Saison {headerData.season}</span>
@@ -155,24 +157,27 @@ export default function FederationTableauDeBord() {
             description="Statistiques anonymes agrégées par département de prélèvement. Les fiches individuelles ne sont pas accessibles."
           />
 
-          <div className="mt-6 space-y-8">
+          <div className="mt-8 space-y-10">
             <section className="px-2 md:px-0">
-              <HeroKpis
-                valorisation={valo.data?.totals ?? null}
-                sanitaire={sani.data?.totals ?? null}
-                formation={
-                  form.data
-                    ? {
-                        totalExaminateurs: form.data.totals.examinateursActifs,
-                        nationalScoreBph: form.data.national.scoreBph,
-                      }
-                    : null
-                }
-              />
+              <h2 className="mb-4 text-3xl font-medium">Carcasses prélevées</h2>
+              <div className="grid grid-cols-2 gap-4">
+                <KpiTile
+                  label="Grand gibier"
+                  value={valo.data?.totals.ggTotal ?? '—'}
+                  sublabel="Carcasses prélevées cette saison"
+                  accent="blue"
+                />
+                <KpiTile
+                  label="Petit gibier"
+                  value={valo.data?.totals.pgTotalAnimaux ?? '—'}
+                  sublabel="Carcasses prélevées cette saison"
+                  accent="amber"
+                />
+              </div>
             </section>
 
             <section className="px-2 md:px-0">
-              <h2 className="fr-h4 mb-3">Modalités de valorisation</h2>
+              <h2 className="mb-4 text-3xl font-medium">Circuits de valorisation</h2>
               {valo.loading ? (
                 <div className="h-40 animate-pulse rounded bg-gray-100" />
               ) : valo.error || !valo.data ? (
@@ -191,7 +196,29 @@ export default function FederationTableauDeBord() {
             </section>
 
             <section className="px-2 md:px-0">
-              <h2 className="fr-h4 mb-3">Détail par département</h2>
+              <h2 className="mb-4 text-3xl font-medium">Suivi sanitaire grand gibier</h2>
+              {sani.loading || form.loading || valo.loading ? (
+                <div className="h-40 animate-pulse rounded bg-gray-100" />
+              ) : sani.error || !sani.data || form.error || !form.data || !valo.data ? (
+                <Alert
+                  severity="error"
+                  title="Erreur"
+                  description={sani.error || form.error || 'Aucune donnée disponible'}
+                />
+              ) : (
+                <SectionSuiviSanitaire
+                  examinateursActifs={form.data.totals.examinateursActifs}
+                  anomalies={sani.data.anomalies}
+                  sviMotifs={sani.data.sviMotifs}
+                  ggTauxSaisie={valo.data.totals.ggTauxSaisie}
+                  nationalGgTauxSaisie25_26={valo.data.totals.nationalGgTauxSaisie25_26}
+                  season={valo.data.season}
+                />
+              )}
+            </section>
+
+            <section className="px-2 md:px-0">
+              <h2 className="mb-4 text-3xl font-medium">Détail par département</h2>
               {valo.loading || form.loading ? (
                 <div className="h-40 animate-pulse rounded bg-gray-100" />
               ) : valo.error || form.error || !valo.data || !form.data ? (
