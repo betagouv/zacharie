@@ -6,6 +6,7 @@ import { resolve } from 'path';
 import dayjs from 'dayjs';
 import { VitePWA } from 'vite-plugin-pwa';
 import tailwindcss from '@tailwindcss/vite';
+import istanbul from 'vite-plugin-istanbul';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -164,6 +165,14 @@ export default defineConfig({
     }),
     tailwindcss(),
     spaManifestPlugin(),
+    process.env.VITE_TEST_PLAYWRIGHT
+      ? istanbul({
+          include: 'src/*',
+          exclude: ['node_modules', 'test/'],
+          extension: ['.ts', '.tsx'],
+          requireEnv: false,
+        })
+      : undefined,
   ],
   build: {
     outDir: 'build',

@@ -5,7 +5,9 @@
   "scripts": {
     "test:start-app-for-record": "VITE_HOST=127.0.0.1:3290 VITE_SCHEME=http VITE_TEST=true VITE_TEST_PLAYWRIGHT=true VITE_API_URL=http://localhost:3291 PORT=3290 npm run dev-test --prefix ../app-local-first-react-router",
     "test:start-api-for-record": "PORT=3291 NODE_ENV=test PGDATABASE=zacharietest npm run dev-test --prefix ../api-express",
-    "test:init-db": "PGDATABASE=zacharietest tsx ./scripts/init-db.ts"
+    "test:init-db": "PGDATABASE=zacharietest tsx ./scripts/init-db.ts",
+    "test:coverage": "rm -rf coverage && playwright test",
+    "coverage:clean": "rm -rf coverage"
   },
   "keywords": [],
   "author": "",
@@ -18,6 +20,7 @@
     "dayjs": "^1.11.13",
     "dotenv": "^17.0.1",
     "nanoid": "^5.1.5",
+    "nyc": "^18.0.0",
     "pg": "^8.16.3",
     "prettier": "^3.8.3",
     "tsx": "^4.20.3",

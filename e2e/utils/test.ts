@@ -1,4 +1,6 @@
 import { test as base, expect } from '@playwright/test';
+import * as fs from 'fs';
+import * as path from 'path';
 
 // `capture('Transmssion differs from one of the carcasses')` is a "this must never happen" telemetry:
 // every carcasse of a single transmission must agree on the fields they share (see
@@ -9,6 +11,8 @@ import { test as base, expect } from '@playwright/test';
 // Specs import { test, expect } from this module instead of '@playwright/test' to get the guard for free.
 const TRANSMISSION_DIFFER_MESSAGE = 'Transmssion differs from one of the carcasses';
 
+const coverageDir = path.join(__dirname, '..', '.nyc_output');
+
 export const test = base.extend({
   page: async ({ page }, use, testInfo) => {
     const offendingLogs: string[] = [];
@@ -18,6 +22,28 @@ export const test = base.extend({
       }
     });
     await use(page);
+
+    // Collect Istanbul coverage from the browser
+    const coverage = await page.evaluate(() => (window as any).__coverage__);
+    if (coverage) {
+      try {
+        if (!fs.existsSync(coverageDir)) {
+          fs.mkdirSync(coverageDir, { recursive: true });
+        }
+        const safeName = testInfo.titlePath.join('--').replace(/[^a-zA-Z0-9-]/g, '_');
+        const filePath = path.join(coverageDir, `coverage-${safeName}-${testInfo.workerIndex}.json`);
+        fs.writeFileSync(filePath, JSON.stringify(coverage));
+        // TODO: remove after verifying coverage works in CI
+        const exists = fs.existsSync(filePath);
+        const size = exists ? fs.statSync(filePath).size : 0;
+        console.log(`[coverage] wrote ${filePath} (exists: ${exists}, size: ${size})`);
+      } catch (e) {
+        console.error(`[coverage] write failed:`, e);
+      }
+    } else {
+      console.log(`[coverage] __coverage__ not present on page`);
+    }
+
     expect(
       offendingLogs,
       `capture('${TRANSMISSION_DIFFER_MESSAGE}') fired ${offendingLogs.length}× during "${testInfo.title}" — ` +
