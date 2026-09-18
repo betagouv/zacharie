@@ -67,7 +67,9 @@ test('Anomalie ajoutée après confirmation — la fiche se replie et le message
 
   // La confirmation est invalidée : bloc de validation replié, transmission bloquée.
   await expect(page.getByRole('heading', { name: "Validation de l'examen initial" })).toBeHidden();
-  await expect(page.getByRole('textbox', { name: 'Heure du prélèvement de la première carcasse' })).toBeHidden();
+  await expect(
+    page.getByRole('textbox', { name: 'Heure du prélèvement de la première carcasse' })
+  ).toBeHidden();
   await expect(page.getByRole('button', { name: 'Transmettre', exact: true })).toBeDisabled();
 
   // Re-confirmer fait passer par le message d'avertissement de l'anomalie.
@@ -78,9 +80,9 @@ test('Anomalie ajoutée après confirmation — la fiche se replie et le message
   await confirmDialog.getByRole('button', { name: 'Continuer' }).click();
 
   // Les heures saisies plus tôt sont conservées, la transmission redevient possible.
-  await expect(page.getByRole('textbox', { name: 'Heure du prélèvement de la première carcasse' })).toHaveValue(
-    dayjs().startOf('day').add(1, 'hour').format('HH:mm')
-  );
+  await expect(
+    page.getByRole('textbox', { name: 'Heure du prélèvement de la première carcasse' })
+  ).toHaveValue(dayjs().startOf('day').add(1, 'hour').format('HH:mm'));
   await page.getByRole('button', { name: dateApprobationDuJour() }).click();
   await page
     .getByText(/Je, .* certifie qu/i)

@@ -563,7 +563,7 @@ function FEIChasseurLoaded() {
                             } else if (
                               fei.heure_evisceration_derniere_carcasse <= heure_mise_a_mort_premiere_carcasse
                             ) {
-                              alert(‘L’heure du prélèvement doit être avant l’heure d’éviscération.’);
+                              alert('L’heure du prélèvement doit être avant l’heure d’éviscération.');
                               e.target.value = '';
                               updateFei(fei.numero, { heure_mise_a_mort_premiere_carcasse: '' });
                             } else {
@@ -608,7 +608,7 @@ function FEIChasseurLoaded() {
                                   fei.heure_mise_a_mort_premiere_carcasse >=
                                   heure_evisceration_derniere_carcasse
                                 ) {
-                                  alert(‘L’heure d’éviscération doit être après l’heure du prélèvement.’);
+                                  alert('L’heure d’éviscération doit être après l’heure du prélèvement.');
                                   e.target.value = '';
                                   updateFei(fei.numero, { heure_evisceration_derniere_carcasse: '' });
                                 } else {
