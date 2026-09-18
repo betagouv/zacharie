@@ -65,6 +65,19 @@ vi.mock('./src/prisma', () => ({
       create: vi.fn(),
       update: vi.fn(),
     },
+    securityLog: {
+      count: vi.fn().mockResolvedValue(0),
+      findFirst: vi.fn().mockResolvedValue(null),
+      findMany: vi.fn().mockResolvedValue([]),
+      create: vi.fn(),
+      deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+    },
+    password: {
+      upsert: vi.fn(),
+    },
+    officialCfei: {
+      findUnique: vi.fn().mockResolvedValue(null),
+    },
     notificationLog: {
       findFirst: vi.fn(),
       create: vi.fn(),

@@ -135,11 +135,16 @@ router.post(
       const MAX_FAILED_ATTEMPTS = 5;
       const LOCKOUT_DURATION_MINUTES = 15;
 
+      const since = dayjs().subtract(LOCKOUT_DURATION_MINUTES, 'minute').toDate();
+      const lastUnlock = await prisma.securityLog.findFirst({
+        where: { email, action: 'LOGIN_UNLOCK_FROM_ADMIN', created_at: { gte: since } },
+        orderBy: { created_at: 'desc' },
+      });
       const recentFailures = await prisma.securityLog.count({
         where: {
           email,
           action: { startsWith: 'LOGIN_FAILED' },
-          created_at: { gte: dayjs().subtract(LOCKOUT_DURATION_MINUTES, 'minute').toDate() },
+          created_at: { gte: lastUnlock ? lastUnlock.created_at : since },
         },
       });
 
