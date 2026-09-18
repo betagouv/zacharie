@@ -19,6 +19,7 @@ import dayjs from 'dayjs';
 import prisma from '~/prisma';
 import { hashPassword } from '~/service/crypto';
 import createUserId from '~/utils/createUserId';
+import { ALL_DEPARTEMENT_CODES } from '~/utils/federation-stats';
 
 export async function populateDb(role?: FeiOwnerRole) {
   console.log('Populate db', process.env.NODE_ENV, process.env.POSTGRESQL_ADDON_URI);
@@ -333,6 +334,35 @@ Christine
       },
       {
         id: await createUserId(),
+        email: 'fdc@example.fr',
+        roles: [UserRoles.FDC],
+        activated: true,
+        activated_at: dayjs().toDate(),
+        prenom: 'Paul',
+        nom_de_famille: "FDC de l'Allier",
+        addresse_ligne_1: '1 rue de la fédération',
+        code_postal: '03000',
+        ville: 'Moulins',
+        telephone: '0606060620',
+        onboarded_at: dayjs().toDate(),
+        scope_departements_codes: ['03'],
+      },
+      {
+        id: await createUserId(),
+        email: 'fnc@example.fr',
+        roles: [UserRoles.FNC],
+        activated: true,
+        activated_at: dayjs().toDate(),
+        prenom: 'Jacques',
+        nom_de_famille: 'FNC nationale',
+        addresse_ligne_1: '1 rue de la chasse',
+        code_postal: '75000',
+        ville: 'Paris',
+        telephone: '0606060621',
+        onboarded_at: dayjs().toDate(),
+      },
+      {
+        id: await createUserId(),
         email: 'svi-2@example.fr',
         roles: [UserRoles.SVI],
         activated: true,
@@ -346,6 +376,12 @@ Christine
         onboarded_at: dayjs().toDate(),
       },
     ],
+  });
+
+  // FNC needs all department codes for national scope
+  await prisma.user.update({
+    where: { email: 'fnc@example.fr' },
+    data: { scope_departements_codes: ALL_DEPARTEMENT_CODES },
   });
 
   const users = await prisma.user.findMany();
