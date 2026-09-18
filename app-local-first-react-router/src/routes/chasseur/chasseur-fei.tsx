@@ -424,7 +424,7 @@ function FEIChasseurLoaded() {
                         {[dayjs.utc().startOf('day').toDate()].map((date) => (
                           <button
                             key={dayjs(date).format('dddd DD MMMM')}
-                            className="mr-2 rounded-full bg-[#E8EDFF] px-3 py-1 text-sm text-[#000091]"
+                            className="mr-1 mb-1 rounded-full bg-[#E8EDFF] px-3 py-1 text-left text-sm text-[#000091]"
                             type="button"
                             onClick={() => {
                               updateFei(fei.numero, { date_mise_a_mort: date });
@@ -478,7 +478,7 @@ function FEIChasseurLoaded() {
                           <button
                             key={commune}
                             type="button"
-                            className="mr-2 rounded-full bg-[#E8EDFF] px-3 py-1 text-sm text-[#000091]"
+                            className="mr-1 mb-1 rounded-full bg-[#E8EDFF] px-3 py-1 text-left text-sm text-[#000091]"
                             onClick={() => updateFei(fei.numero, { commune_mise_a_mort: commune })}
                           >
                             {commune}
@@ -658,7 +658,7 @@ function FEIChasseurLoaded() {
                         <>
                           <button
                             key={dayjs().format('dddd DD MMMM HH mm')}
-                            className="mr-2 rounded-full bg-[#E8EDFF] px-3 py-1 text-sm text-[#000091]"
+                            className="mr-1 mb-1 rounded-full bg-[#E8EDFF] px-3 py-1 text-left text-sm text-[#000091]"
                             type="button"
                             onClick={() => {
                               updateFei(fei.numero, {

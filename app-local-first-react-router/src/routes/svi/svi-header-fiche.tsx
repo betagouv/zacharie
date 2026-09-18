@@ -33,7 +33,7 @@ export default function SviHeaderFiche() {
   return (
     <div className="fr-mb-2w rounded bg-white p-4 md:p-8">
       <h1 className="fr-h5 fr-mb-1w">{title}</h1>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-col items-start gap-1 sm:flex-row sm:items-center sm:gap-2">
         <Tag
           small
           className={[
@@ -44,11 +44,13 @@ export default function SviHeaderFiche() {
         >
           {simpleStatus}
         </Tag>
-        <IconStep
-          displayLabel={currentStepLabel}
-          simpleStatus={simpleStatus}
-        />
-        <span className="text-sm">{currentStepLabel}</span>
+        <span className="flex items-center gap-2">
+          <IconStep
+            displayLabel={currentStepLabel}
+            simpleStatus={simpleStatus}
+          />
+          <span className="text-sm">{currentStepLabel}</span>
+        </span>
       </div>
     </div>
   );

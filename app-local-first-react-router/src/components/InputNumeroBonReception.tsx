@@ -72,7 +72,7 @@ export default function InputNumeroBonReception({ value, onChange, className }: 
               {rappel.numeros.map((numero) => (
                 <button
                   key={numero}
-                  className="mr-2 rounded-full bg-[#E8EDFF] px-3 py-1 text-sm text-[#000091]"
+                  className="mr-1 mb-1 rounded-full bg-[#E8EDFF] px-3 py-1 text-left text-sm text-[#000091]"
                   type="button"
                   onClick={() => onChange(numero)}
                 >

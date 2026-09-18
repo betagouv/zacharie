@@ -176,7 +176,7 @@ export default function NouvelleCarcasse({
         className="group grow"
         hint={
           !espece && (
-            <div className="flex flex-row flex-wrap items-center gap-2">
+            <div className="flex flex-row flex-wrap items-center gap-1">
               {especesRaccourcis.map((_espece) => (
                 <button
                   type="button"

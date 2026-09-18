@@ -191,7 +191,7 @@ export default function DestinataireSousTraite({
                       <Tag
                         key={entity.id}
                         iconId="fr-icon-checkbox-circle-line"
-                        className="mr-2"
+                        className="mr-1 mb-1 text-left"
                         nativeButtonProps={{
                           onClick: () => setProchainDetenteurEntityId(entity.id),
                         }}
