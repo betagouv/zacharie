@@ -1,8 +1,12 @@
 import RootDisplay from '@app/components/RootDisplay';
+import Chargement from '@app/components/Chargement';
+import API from '@app/services/api';
 import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { UserRoles } from '@prisma/client';
 import { useEffect, useState } from 'react';
 import { Link, Navigate, Outlet, useLocation } from 'react-router';
+
+type AdminSessionStatus = 'loading' | 'ok' | 'proconnect-required';
 
 const adminLinks = [
   { to: '/app/admin/dashboard', label: 'Tableau de bord', icon: 'fr-icon-dashboard-3-line' },
@@ -47,6 +51,19 @@ export default function AdminLayout() {
   const [navCollapsed, setNavCollapsed] = useState(
     () => window.localStorage.getItem('admin-nav-collapsed') === 'true'
   );
+  const [sessionStatus, setSessionStatus] = useState<AdminSessionStatus>('loading');
+
+  // Le backend exige ProConnect sur /admin : on le vérifie avant d'afficher les pages admin
+  useEffect(() => {
+    let cancelled = false;
+    API.get({ path: 'admin/session' }).then((response) => {
+      if (cancelled) return;
+      setSessionStatus(response?.error === 'PROCONNECT_REQUIRED' ? 'proconnect-required' : 'ok');
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (window.innerWidth < 768) {
@@ -60,6 +77,13 @@ export default function AdminLayout() {
 
   if (!user?.isZacharieAdmin) {
     return <Navigate to="/app/connexion" />;
+  }
+  if (sessionStatus === 'loading') {
+    return <Chargement />;
+  }
+  if (sessionStatus === 'proconnect-required') {
+    const redirect = encodeURIComponent(location.pathname + location.search);
+    return <Navigate to={`/app/proconnect?redirect=${redirect}`} />;
   }
   let mainLink = '/app/admin';
   if (user.roles.includes(UserRoles.CHASSEUR)) {

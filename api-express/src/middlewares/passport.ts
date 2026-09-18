@@ -5,10 +5,12 @@ import prisma from '~/prisma';
 import { ApiKey, User } from '@prisma/client';
 import type { Request } from 'express';
 import { SECRET } from '~/config';
+import { hasValidProConnect, type SessionTokenPayload } from '~/utils/session-token';
 
-interface JwtPayload {
-  userId: string;
-}
+type JwtPayload = SessionTokenPayload;
+
+// Code renvoyé (403) quand un admin a une session valide mais pas d'authentification ProConnect récente
+export const PROCONNECT_REQUIRED = 'PROCONNECT_REQUIRED';
 
 const cookieExtractor = (req: Request): string | null => {
   // console.log('Cookies extractor called', req.cookies);
@@ -84,7 +86,10 @@ passport.use(
   'admin',
   new JwtStrategy(
     jwtOptions,
-    async (jwt_payload: JwtPayload, done: (error: Error | null, user: User | null) => void) => {
+    async (
+      jwt_payload: JwtPayload,
+      done: (error: Error | null, user: User | null | false, info?: { code: string }) => void
+    ) => {
       // console.log('JWT Strategy called');
       // console.log('JWT payload:', jwt_payload);
 
@@ -102,6 +107,16 @@ passport.use(
         const user = await prisma.user.findUnique({
           where: { id: jwt_payload.userId, isZacharieAdmin: true, deleted_at: null },
         });
+
+        if (!user) {
+          return done(null, null);
+        }
+
+        // Un admin doit avoir validé ProConnect (moins de 12h) pour accéder aux routes /admin,
+        // même avec un mot de passe correct : voir doc/proconnect-admin.md
+        if (!hasValidProConnect(jwt_payload)) {
+          return done(null, false, { code: PROCONNECT_REQUIRED });
+        }
 
         return done(null, user);
       } catch (error) {

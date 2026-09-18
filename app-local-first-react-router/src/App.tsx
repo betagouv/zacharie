@@ -30,6 +30,7 @@ import RouterChasseur from './routes/chasseur/chasseur-router';
 import RouterCollecteur from './routes/collecteur/collecteur-router';
 import RouterEtg from './routes/etg/etg-router';
 import RouterAdmin from './routes/admin/admin-router';
+import ProConnect from './routes/proconnect';
 import NouvelleFiche from './routes/nouvelle-fiche';
 import TableauDeBordRedirect from './routes/tableau-de-bord-redirect';
 import RouterCircuitCourt from './routes/circuit-court/circuit-court-router';
@@ -154,6 +155,10 @@ function App() {
           {RouterFnc()}
           {RouterLaboratoire()}
           {RouterAdmin()}
+          <Route
+            path="proconnect"
+            element={<ProConnect />}
+          />
           <Route
             path="contact"
             element={

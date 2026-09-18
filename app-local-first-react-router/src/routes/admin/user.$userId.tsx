@@ -95,7 +95,6 @@ const initialState: State = {
     updated_at: new Date(),
     activated_at: null,
     last_login_at: null,
-    last_seen_at: null,
     deleted_at: null,
     onboarded_at: null,
     notifications: [UserNotifications.EMAIL, UserNotifications.PUSH],
@@ -421,7 +420,19 @@ export default function AdminUser() {
               {selectedTabId === 'Identité' && (
                 <div className="flex flex-col gap-4">
                   {/* Rôle & accès — enregistrement direct au changement */}
-                  <Section title="Rôle & accès">
+                  <Checkbox
+                    className="m-0"
+                    options={[
+                      {
+                        label: 'Administrateur Zacharie',
+                        nativeInputProps: {
+                          checked: user.isZacharieAdmin,
+                          onChange: handleToggleAdmin,
+                        },
+                      },
+                    ]}
+                  />
+                  <Section title="Rôle">
                     <div className="flex flex-wrap items-end gap-x-6 gap-y-2">
                       <Select
                         label="Rôle"
@@ -440,18 +451,34 @@ export default function AdminUser() {
                           </option>
                         ))}
                       </Select>
-                      <Checkbox
-                        className="m-0"
-                        options={[
-                          {
-                            label: 'Administrateur',
-                            nativeInputProps: {
-                              checked: user.isZacharieAdmin,
-                              onChange: handleToggleAdmin,
+                      {user.roles.includes(UserRoles.ETG) && (
+                        <Select
+                          label="Fonction ETG"
+                          className="m-0 min-w-72"
+                          nativeSelectProps={{
+                            value: user.etg_role,
+                            onChange: (e) => {
+                              API.post({
+                                path: `admin/user/${params.userId}`,
+                                body: { etg_role: e.target.value },
+                              }).then((res) => {
+                                if (!res.ok) {
+                                  return toast.error('Une erreur est survenue lors de la mise à jour');
+                                }
+                                loadData(params.userId!).then((res) => {
+                                  if (res.ok && res.data) {
+                                    setUserResponseData(res.data as State);
+                                  }
+                                });
+                                toast.success('Fonction ETG mise à jour');
+                              });
                             },
-                          },
-                        ]}
-                      />
+                          }}
+                        >
+                          <option value={UserEtgRoles.TRANSPORT}>Transport</option>
+                          <option value={UserEtgRoles.RECEPTION}>Réception et gestion</option>
+                        </Select>
+                      )}
                     </div>
                   </Section>
 

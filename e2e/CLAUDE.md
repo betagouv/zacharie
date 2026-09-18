@@ -29,6 +29,7 @@ Emails are semantic, one per role, all on `@example.fr`. Password for every acco
 - Collecteur : `collecteur-pro@example.fr`, `collecteur-pro-1-etg-1@example.fr`, `collecteur-pro-nouveau@example.fr`
 - SVI : `svi@example.fr`, `svi-2@example.fr`, `svi-nouveau@example.fr`
 - Circuit court : `commerce-de-detail@example.fr`, `commerce-de-detail-nouveau@example.fr`
+- Admin Zacharie : `admin@example.fr` (chasseur + `isZacharieAdmin`). Le login le renvoie sur `/app/chasseur` ; `/app/admin` exige ProConnect (simulé en test sur `/mock-proconnect`, voir `doc/proconnect-admin.md`)
 
 Required env vars:
 

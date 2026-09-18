@@ -1,9 +1,7 @@
-import { useMemo, useState } from 'react';
 import {
   Bar,
   BarChart,
   CartesianGrid,
-  Cell,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -29,50 +27,11 @@ export interface FormationNational {
 }
 
 interface Props {
-  scope: 'departemental' | 'regional' | 'national';
   departements: FormationRow[];
   national: FormationNational;
 }
 
-function scoreColor(score: number | null): string {
-  if (score === null) return '#9ca3af';
-  if (score >= 75) return '#16a34a';
-  if (score >= 50) return '#ca8a04';
-  if (score >= 25) return '#ea580c';
-  return '#dc2626';
-}
-
-type SortKey = 'code' | 'examinateursActifs' | 'tauxSaisieBph' | 'scoreBph';
-
-export default function SectionFormation({ scope, departements, national }: Props) {
-  const [sortKey, setSortKey] = useState<SortKey>('examinateursActifs');
-  const [sortDesc, setSortDesc] = useState(true);
-
-  const sortedTable = useMemo(() => {
-    const arr = [...departements];
-    arr.sort((a, b) => {
-      if (sortKey === 'code') {
-        const cmp = a.code.localeCompare(b.code);
-        return sortDesc ? -cmp : cmp;
-      }
-      const aVal = a[sortKey];
-      const bVal = b[sortKey];
-      const aNum = aVal === null ? -Infinity : aVal;
-      const bNum = bVal === null ? -Infinity : bVal;
-      const cmp = (aNum as number) - (bNum as number);
-      return sortDesc ? -cmp : cmp;
-    });
-    return arr;
-  }, [departements, sortKey, sortDesc]);
-
-  const handleSort = (k: SortKey) => {
-    if (k === sortKey) setSortDesc((d) => !d);
-    else {
-      setSortKey(k);
-      setSortDesc(true);
-    }
-  };
-
+export default function SectionFormation({ departements, national }: Props) {
   // Top 30 par examinateurs
   const topExaminateurs = [...departements]
     .filter((d) => d.examinateursActifs > 0)
@@ -178,111 +137,6 @@ export default function SectionFormation({ scope, departements, national }: Prop
           )}
         </div>
       </div>
-
-      <div className="rounded-lg bg-white p-4 shadow-sm">
-        <h3 className="fr-h6 mb-2">Score BPH par département</h3>
-        <p className="mb-3 text-xs text-gray-500">
-          Score sur 100 (plus c'est haut, mieux c'est). Calcul&nbsp;: 100 × (1 − tauxBPH dept / (2 × tauxBPH
-          national)). Score national&nbsp;: {national.scoreBph ?? '—'}/100.
-        </p>
-        {bphChartData.length === 0 ? (
-          <p className="py-12 text-center text-sm text-gray-500">Pas encore de données SVI.</p>
-        ) : (
-          <ResponsiveContainer
-            width="100%"
-            height={Math.max(280, bphChartData.length * 26)}
-          >
-            <BarChart
-              data={bphChartData}
-              layout="vertical"
-              margin={{ left: 8, right: 16 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis
-                type="number"
-                domain={[0, 100]}
-              />
-              <YAxis
-                dataKey="code"
-                type="category"
-                width={48}
-                tick={{ fontSize: 12 }}
-              />
-              <Tooltip formatter={(v) => `${v}/100`} />
-              <Bar
-                dataKey="scoreBph"
-                name="Score BPH"
-              >
-                {bphChartData.map((d) => (
-                  <Cell
-                    key={d.code}
-                    fill={scoreColor(d.scoreBph)}
-                  />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        )}
-      </div>
-
-      {scope !== 'departemental' && departements.length > 0 && (
-        <div className="overflow-x-auto rounded-lg bg-white shadow-sm">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50">
-              <tr>
-                <th
-                  scope="col"
-                  className="cursor-pointer px-3 py-2 text-left font-semibold"
-                  onClick={() => handleSort('code')}
-                >
-                  Département {sortKey === 'code' ? (sortDesc ? '▼' : '▲') : ''}
-                </th>
-                <th
-                  scope="col"
-                  className="cursor-pointer px-2 py-2 text-right font-semibold"
-                  onClick={() => handleSort('examinateursActifs')}
-                >
-                  Examinateurs actifs {sortKey === 'examinateursActifs' ? (sortDesc ? '▼' : '▲') : ''}
-                </th>
-                <th
-                  scope="col"
-                  className="cursor-pointer px-2 py-2 text-right font-semibold"
-                  onClick={() => handleSort('tauxSaisieBph')}
-                >
-                  Taux saisie BPH {sortKey === 'tauxSaisieBph' ? (sortDesc ? '▼' : '▲') : ''}
-                </th>
-                <th
-                  scope="col"
-                  className="cursor-pointer px-2 py-2 text-right font-semibold"
-                  onClick={() => handleSort('scoreBph')}
-                >
-                  Score BPH {sortKey === 'scoreBph' ? (sortDesc ? '▼' : '▲') : ''}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {sortedTable.map((r) => (
-                <tr
-                  key={r.code}
-                  className="border-t hover:bg-gray-50"
-                >
-                  <td className="px-3 py-2">
-                    <span className="font-mono text-gray-500">{r.code}</span>{' '}
-                    <span className="text-gray-800">{r.nom}</span>
-                  </td>
-                  <td className="px-2 py-2 text-right font-semibold">{r.examinateursActifs}</td>
-                  <td className="px-2 py-2 text-right">
-                    {r.tauxSaisieBph !== null ? `${r.tauxSaisieBph}%` : '—'}
-                  </td>
-                  <td className="px-2 py-2 text-right font-semibold">
-                    {r.scoreBph !== null ? `${r.scoreBph}/100` : '—'}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
     </div>
   );
 }

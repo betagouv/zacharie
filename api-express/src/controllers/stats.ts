@@ -219,6 +219,8 @@ router.get(
         ok: true,
         data: {
           season: null,
+          seasonStart: null,
+          seasonEnd: null,
           scope: 'departemental',
           scopeDepts: [],
           departements: [],
@@ -241,18 +243,26 @@ router.get(
       },
     });
 
+    // `agree`/`nonAgree`/`domestique` comptent les lignes de carcasse : une carcasse pour le grand
+    // gibier, un lot pour le petit gibier. Les compteurs `*Animaux` comptent les animaux.
     type Bucket = {
       agree: number;
+      agreeAnimaux: number;
       nonAgree: number;
+      nonAgreeAnimaux: number;
       domestique: number;
+      domestiqueAnimaux: number;
       sviEligible: number;
       seized: number;
       hasSviReturn: boolean;
     };
     const emptyBucket = (): Bucket => ({
       agree: 0,
+      agreeAnimaux: 0,
       nonAgree: 0,
+      nonAgreeAnimaux: 0,
       domestique: 0,
+      domestiqueAnimaux: 0,
       sviEligible: 0,
       seized: 0,
       hasSviReturn: false,
@@ -280,15 +290,23 @@ router.get(
         c.prev_owner_role === FeiOwnerRole.SVI ||
         c.CarcasseIntermediaire.some((ci) => ci.intermediaire_role === FeiOwnerRole.ETG);
 
+      const animaux = c.type === CarcasseType.PETIT_GIBIER ? (c.nombre_d_animaux ?? 1) : 1;
+
       if (c.consommateur_final_usage_domestique != null) {
         bucket.domestique++;
+        bucket.domestiqueAnimaux += animaux;
         totalBucket.domestique++;
+        totalBucket.domestiqueAnimaux += animaux;
       } else if (wasInEtg) {
         bucket.agree++;
+        bucket.agreeAnimaux += animaux;
         totalBucket.agree++;
+        totalBucket.agreeAnimaux += animaux;
       } else if (c.current_owner_role && circuitCourtRoles.includes(c.current_owner_role)) {
         bucket.nonAgree++;
+        bucket.nonAgreeAnimaux += animaux;
         totalBucket.nonAgree++;
+        totalBucket.nonAgreeAnimaux += animaux;
       }
 
       const isSviEligible = !c.next_owner_role || !circuitCourtRoles.includes(c.next_owner_role);
@@ -311,8 +329,11 @@ router.get(
 
     const formatBucket = (b: Bucket) => ({
       agree: b.agree,
+      agreeAnimaux: b.agreeAnimaux,
       nonAgree: b.nonAgree,
+      nonAgreeAnimaux: b.nonAgreeAnimaux,
       domestique: b.domestique,
+      domestiqueAnimaux: b.domestiqueAnimaux,
       tauxSaisie:
         b.sviEligible > 0 && b.hasSviReturn ? Math.round((b.seized / b.sviEligible) * 1000) / 10 : null,
     });
@@ -328,11 +349,14 @@ router.get(
 
     const totalGg = totals.gg.agree + totals.gg.nonAgree + totals.gg.domestique;
     const totalPg = totals.pg.agree + totals.pg.nonAgree + totals.pg.domestique;
+    const totalPgAnimaux = totals.pg.agreeAnimaux + totals.pg.nonAgreeAnimaux + totals.pg.domestiqueAnimaux;
 
     res.status(200).send({
       ok: true,
       data: {
         season,
+        seasonStart: seasonStart.toISOString(),
+        seasonEnd: seasonEnd.toISOString(),
         scope,
         scopeDepts: scopeDepts ?? [],
         departements,
@@ -348,9 +372,13 @@ router.get(
               ? Math.round((totals.gg.seized / totals.gg.sviEligible) * 1000) / 10
               : null,
           pgAgree: totals.pg.agree,
+          pgAgreeAnimaux: totals.pg.agreeAnimaux,
           pgNonAgree: totals.pg.nonAgree,
+          pgNonAgreeAnimaux: totals.pg.nonAgreeAnimaux,
           pgDomestique: totals.pg.domestique,
+          pgDomestiqueAnimaux: totals.pg.domestiqueAnimaux,
           pgTotal: totalPg,
+          pgTotalAnimaux: totalPgAnimaux,
           pgSeized: totals.pg.seized,
           pgSviEligible: totals.pg.sviEligible,
           pgTauxSaisie:
@@ -373,9 +401,13 @@ function emptyValorisationTotals() {
     ggSviEligible: 0,
     ggTauxSaisie: null as number | null,
     pgAgree: 0,
+    pgAgreeAnimaux: 0,
     pgNonAgree: 0,
+    pgNonAgreeAnimaux: 0,
     pgDomestique: 0,
+    pgDomestiqueAnimaux: 0,
     pgTotal: 0,
+    pgTotalAnimaux: 0,
     pgSeized: 0,
     pgSviEligible: 0,
     pgTauxSaisie: null as number | null,
@@ -401,6 +433,8 @@ router.get(
         ok: true,
         data: {
           season: null,
+          seasonStart: null,
+          seasonEnd: null,
           scope: 'departemental',
           scopeDepts: [],
           departements: [],
@@ -474,6 +508,8 @@ router.get(
       ok: true,
       data: {
         season,
+        seasonStart: seasonStart.toISOString(),
+        seasonEnd: seasonEnd.toISOString(),
         scope,
         scopeDepts: scopeDepts ?? [],
         departements,
@@ -502,6 +538,8 @@ router.get(
         ok: true,
         data: {
           season: null,
+          seasonStart: null,
+          seasonEnd: null,
           scope: 'departemental',
           scopeDepts: [],
           departements: [],
@@ -615,6 +653,8 @@ router.get(
       ok: true,
       data: {
         season,
+        seasonStart: seasonStart.toISOString(),
+        seasonEnd: seasonEnd.toISOString(),
         scope,
         scopeDepts: scopeDepts ?? [],
         departements,

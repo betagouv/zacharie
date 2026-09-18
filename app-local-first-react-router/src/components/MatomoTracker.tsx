@@ -1,14 +1,16 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router';
-import { trackPageView } from '../services/matomo';
+import { trackPageView, setCustomDimensions } from '../services/matomo';
+import useUser from '../zustand/user';
 
 export function MatomoTracker() {
   const location = useLocation();
+  const user = useUser((state) => state.user);
 
   useEffect(() => {
-    // Track page view on route change
+    setCustomDimensions(user ? { isZacharieAdmin: user.isZacharieAdmin } : null);
     trackPageView(location.pathname + location.search, document.title);
-  }, [location]);
+  }, [location, user]);
 
   return null;
 }
