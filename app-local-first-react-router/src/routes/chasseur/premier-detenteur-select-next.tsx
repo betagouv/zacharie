@@ -655,7 +655,7 @@ function DispatchGroupForm({
                             <button
                               key={entity.id}
                               type="button"
-                              className="mr-2 rounded-full bg-[#E8EDFF] px-3 py-1 text-sm text-[#000091]"
+                              className="mr-1 mb-1 rounded-full bg-[#E8EDFF] px-3 py-1 text-left text-sm text-[#000091]"
                               onClick={() => onChange({ recipientEntityId: entity.id })}
                             >
                               {entity.nom_d_usage}
@@ -804,7 +804,7 @@ function DispatchGroupForm({
                                 <button
                                   key={entity.id}
                                   type="button"
-                                  className="mr-2 rounded-full bg-[#E8EDFF] px-3 py-1 text-sm text-[#000091]"
+                                  className="mr-1 mb-1 rounded-full bg-[#E8EDFF] px-3 py-1 text-left text-sm text-[#000091]"
                                   onClick={() => {
                                     onChange({ depotEntityId: entity.id });
                                   }}

@@ -260,13 +260,13 @@ export default function SelectNextForExaminateur({
             hint={
               <>
                 {!nextOwnerUserOrEntityId && !disabled ? (
-                  <div className="flex flex-wrap gap-1">
+                  <div className="flex flex-wrap">
                     {Object.values(associationsDeChasse).map((entity) => {
                       return (
                         <button
                           key={entity.id}
                           type="button"
-                          className="mr-2 rounded-full bg-[#E8EDFF] px-3 py-1 text-sm text-[#000091]"
+                          className="mr-1 mb-1 rounded-full bg-[#E8EDFF] px-3 py-1 text-left text-sm text-[#000091]"
                           onClick={() => {
                             setNextOwnerUserOrEntityId(entity.id);
                           }}
@@ -280,7 +280,7 @@ export default function SelectNextForExaminateur({
                         <button
                           key={user.id}
                           type="button"
-                          className="mr-2 rounded-full bg-[#E8EDFF] px-3 py-1 text-sm text-[#000091]"
+                          className="mr-1 mb-1 rounded-full bg-[#E8EDFF] px-3 py-1 text-left text-sm text-[#000091]"
                           onClick={() => {
                             setNextOwnerUserOrEntityId(user.id);
                           }}
