@@ -426,9 +426,9 @@ test('Pas de stockage - Je transfère à un autre ETG', async ({ page, context }
   //       - listitem:
   //         - paragraph: "/Date de mise à mort : lundi 7 juillet \\\\d+/"
   //       - listitem:
-  //         - paragraph: "/Début de la chasse de la fiche : \\\\d+:\\\\d+/"
+  //         - paragraph: "/Heure du prélèvement de la première carcasse de la fiche : \\\\d+:\\\\d+/"
   //       - listitem:
-  //         - paragraph: "/Fin de l’examen initial derniÃ¨re carcasse de la fiche : \\\\d+:\\\\d+/"
+  //         - paragraph: "/Heure d’éviscération de la dernière carcasse derniÃ¨re carcasse de la fiche : \\\\d+:\\\\d+/"
   //       - listitem:
   //         - paragraph: "Nom du Centre de Collecte (CCG) : CCG Chasseurs"
   //       - listitem:

@@ -43,13 +43,13 @@ test('Anomalie ajoutée après confirmation — la fiche se replie et le message
 
   // Les heures : c'est ce qui, avant le fix, gardait les blocs suivants ouverts pour toujours.
   await page
-    .getByRole('textbox', { name: 'Début de la chasse' })
+    .getByRole('textbox', { name: 'Heure du prélèvement de la première carcasse' })
     .fill(dayjs().startOf('day').add(1, 'hour').format('HH:mm'));
-  await page.getByRole('textbox', { name: 'Début de la chasse' }).blur();
+  await page.getByRole('textbox', { name: 'Heure du prélèvement de la première carcasse' }).blur();
   await page
-    .getByRole('textbox', { name: 'Fin de l’examen initial' })
+    .getByRole('textbox', { name: 'Heure d’éviscération de la dernière carcasse' })
     .fill(dayjs().startOf('day').add(2, 'hour').format('HH:mm'));
-  await page.getByRole('textbox', { name: 'Fin de l’examen initial' }).blur();
+  await page.getByRole('textbox', { name: 'Heure d’éviscération de la dernière carcasse' }).blur();
 
   // Le destinataire est un autre utilisateur (Pierre Petit) : ici le bloc suivant est la validation.
   await expect(page.getByRole('heading', { name: "Validation de l'examen initial" })).toBeVisible();
@@ -67,7 +67,7 @@ test('Anomalie ajoutée après confirmation — la fiche se replie et le message
 
   // La confirmation est invalidée : bloc de validation replié, transmission bloquée.
   await expect(page.getByRole('heading', { name: "Validation de l'examen initial" })).toBeHidden();
-  await expect(page.getByRole('textbox', { name: 'Début de la chasse' })).toBeHidden();
+  await expect(page.getByRole('textbox', { name: 'Heure du prélèvement de la première carcasse' })).toBeHidden();
   await expect(page.getByRole('button', { name: 'Transmettre', exact: true })).toBeDisabled();
 
   // Re-confirmer fait passer par le message d'avertissement de l'anomalie.
@@ -78,7 +78,7 @@ test('Anomalie ajoutée après confirmation — la fiche se replie et le message
   await confirmDialog.getByRole('button', { name: 'Continuer' }).click();
 
   // Les heures saisies plus tôt sont conservées, la transmission redevient possible.
-  await expect(page.getByRole('textbox', { name: 'Début de la chasse' })).toHaveValue(
+  await expect(page.getByRole('textbox', { name: 'Heure du prélèvement de la première carcasse' })).toHaveValue(
     dayjs().startOf('day').add(1, 'hour').format('HH:mm')
   );
   await page.getByRole('button', { name: dateApprobationDuJour() }).click();

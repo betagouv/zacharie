@@ -43,7 +43,7 @@ test('Pas de stockage - Transporter les carcasses soi-même', async ({ page }) =
   await expect(page.getByText('Abcès - Système respiratoire (trachée, poumons)')).toBeVisible();
   await expect(page.getByLabel('Daim - N° MM-001-001').getByText('Prélevé à')).toBeVisible();
   await expect(page.getByRole('listitem').filter({ hasText: 'Chasse du 07/07/25' })).toBeVisible();
-  await expect(page.getByLabel('Daim - N° MM-001-001').getByText('Début de la chasse')).toBeVisible();
+  await expect(page.getByLabel('Daim - N° MM-001-001').getByText('Heure du prélèvement de la première carcasse')).toBeVisible();
   await page.getByRole('listitem').filter({ hasText: 'Fermer' }).getByRole('button').click();
   await page.getByRole('button', { name: 'Daim N° MM-001-002 Mise à' }).click();
   await expect(page.getByText('Abcès unique - Externe')).toBeVisible();

@@ -40,13 +40,13 @@ test('Création fiche grand gibier mono-carcasse — 1 daim', async ({ page }) =
 
   // Heures
   await page
-    .getByRole('textbox', { name: 'Début de la chasse' })
+    .getByRole('textbox', { name: 'Heure du prélèvement de la première carcasse' })
     .fill(dayjs().startOf('day').add(1, 'hour').format('HH:mm'));
-  await page.getByRole('textbox', { name: 'Début de la chasse' }).blur();
+  await page.getByRole('textbox', { name: 'Heure du prélèvement de la première carcasse' }).blur();
   await page
-    .getByRole('textbox', { name: 'Fin de l’examen initial' })
+    .getByRole('textbox', { name: 'Heure d’éviscération de la dernière carcasse' })
     .fill(dayjs().startOf('day').add(2, 'hour').format('HH:mm'));
-  await page.getByRole('textbox', { name: 'Fin de l’examen initial' }).blur();
+  await page.getByRole('textbox', { name: 'Heure d’éviscération de la dernière carcasse' }).blur();
 
   // Bloc 4 — Validation
   await page.getByRole('button', { name: dateApprobationDuJour() }).click();
