@@ -112,9 +112,9 @@ export default function Connexion() {
           <div className="fr-col-12 fr-col-md-10 fr-col-lg-8">
             {communication && <CallOut>{decodeURIComponent(communication)}</CallOut>}
             {userResponse?.message && <CallOut>{userResponse?.message}</CallOut>}
-            {userResponse?.error && userResponse.error.includes('Trop de tentatives') && (
-              <CallOut>{userResponse.error}</CallOut>
-            )}
+            {userResponse?.error &&
+              (userResponse.error.includes('Trop de tentatives') ||
+                userResponse.error.includes('verrouillé')) && <CallOut>{userResponse.error}</CallOut>}
             <form
               onSubmit={handleSubmit}
               id="login_form"

@@ -273,6 +273,17 @@ model Log {
   @@index([user_id, action])
 }
 
+model SecurityLog {
+  id         String   @id @default(uuid())
+  email      String
+  action     String
+  ip         String?
+  user_agent String?
+  created_at DateTime @default(now())
+
+  @@index([email, action, created_at])
+}
+
 enum DepotType {
   CCG
   ETG

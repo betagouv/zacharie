@@ -132,8 +132,56 @@ router.post(
         return;
       }
 
+      const MAX_FAILED_ATTEMPTS = 5;
+      const LOCKOUT_DURATION_MINUTES = 15;
+
+      const recentFailures = await prisma.securityLog.count({
+        where: {
+          email,
+          action: { startsWith: 'LOGIN_FAILED' },
+          created_at: { gte: dayjs().subtract(LOCKOUT_DURATION_MINUTES, 'minute').toDate() },
+        },
+      });
+
+      if (recentFailures >= MAX_FAILED_ATTEMPTS) {
+        await prisma.securityLog.create({
+          data: {
+            email,
+            action: 'LOGIN_FAILED_ALREADY_LOCKED',
+            ip: req.ip,
+            user_agent: req.headers['user-agent'],
+          },
+        });
+        res.status(429).send({
+          ok: false,
+          data: { user: null },
+          message: '',
+          error: `Trop de tentatives. Réessayez dans ${LOCKOUT_DURATION_MINUTES} minutes.`,
+        });
+        return;
+      }
+
       let user = await prisma.user.findUnique({ where: { email } });
       if (!user || user.deleted_at) {
+        await prisma.securityLog.create({
+          data: {
+            email,
+            action: 'LOGIN_FAILED_EMAIL_NOT_IN_DB',
+            ip: req.ip,
+            user_agent: req.headers['user-agent'],
+          },
+        });
+
+        if (recentFailures + 1 >= MAX_FAILED_ATTEMPTS) {
+          res.status(429).send({
+            ok: false,
+            data: { user: null },
+            message: '',
+            error: `Trop de tentatives. Réessayez dans ${LOCKOUT_DURATION_MINUTES} minutes.`,
+          });
+          return;
+        }
+
         res.status(400).send({
           ok: false,
           data: { user: null },
@@ -147,6 +195,25 @@ router.post(
         where: { user_id: user.id },
       });
       if (!existingPassword) {
+        await prisma.securityLog.create({
+          data: {
+            email,
+            action: 'LOGIN_FAILED_NO_PASSWORD',
+            ip: req.ip,
+            user_agent: req.headers['user-agent'],
+          },
+        });
+
+        if (recentFailures + 1 >= MAX_FAILED_ATTEMPTS) {
+          res.status(429).send({
+            ok: false,
+            data: { user: null },
+            message: '',
+            error: `Trop de tentatives. Réessayez dans ${LOCKOUT_DURATION_MINUTES} minutes.`,
+          });
+          return;
+        }
+
         res.status(400).send({
           ok: false,
           data: { user: null },
@@ -158,6 +225,25 @@ router.post(
 
       const isOk = await comparePassword(passwordUser, existingPassword.password);
       if (!isOk) {
+        await prisma.securityLog.create({
+          data: {
+            email,
+            action: 'LOGIN_FAILED_WRONG_PASSWORD',
+            ip: req.ip,
+            user_agent: req.headers['user-agent'],
+          },
+        });
+
+        if (recentFailures + 1 >= MAX_FAILED_ATTEMPTS) {
+          res.status(429).send({
+            ok: false,
+            data: { user: null },
+            message: '',
+            error: `Trop de tentatives. Réessayez dans ${LOCKOUT_DURATION_MINUTES} minutes.`,
+          });
+          return;
+        }
+
         res.status(400).send({
           ok: false,
           data: { user: null },
@@ -166,6 +252,15 @@ router.post(
         });
         return;
       }
+
+      await prisma.securityLog.create({
+        data: {
+          email,
+          action: 'LOGIN_SUCCESS',
+          ip: req.ip,
+          user_agent: req.headers['user-agent'],
+        },
+      });
 
       // Un admin ouvre une session normale ici, mais /admin exige ensuite ProConnect (middlewares/passport.ts)
       const token = signSessionToken({ userId: user.id });
@@ -263,6 +358,15 @@ router.post(
         data: { user_id: user.id, password: hashedPassword },
       });
 
+      await prisma.securityLog.create({
+        data: {
+          email,
+          action: 'ACCOUNT_CREATED',
+          ip: req.ip,
+          user_agent: req.headers['user-agent'],
+        },
+      });
+
       const token = jwt.sign({ userId: user.id }, SECRET, {
         expiresIn: JWT_MAX_AGE,
       });
@@ -333,6 +437,14 @@ router.post(
       let user = await prisma.user.findUnique({ where: { email } });
 
       if (!user) {
+        await prisma.securityLog.create({
+          data: {
+            email,
+            action: 'INVITATION_TOKEN_FAILED_EMAIL_NOT_IN_DB',
+            ip: req.ip,
+            user_agent: req.headers['user-agent'],
+          },
+        });
         res.status(400).send({
           ok: false,
           data: { user: null },
@@ -346,6 +458,14 @@ router.post(
         where: { user_id: user?.id },
       });
       if (!existingPassword) {
+        await prisma.securityLog.create({
+          data: {
+            email,
+            action: 'INVITATION_TOKEN_FAILED_NO_PASSWORD',
+            ip: req.ip,
+            user_agent: req.headers['user-agent'],
+          },
+        });
         res.status(400).send({
           ok: false,
           data: { user: null },
@@ -356,6 +476,14 @@ router.post(
       }
       const isOk = existingPassword.reset_password_token === invitationToken;
       if (!isOk) {
+        await prisma.securityLog.create({
+          data: {
+            email,
+            action: 'INVITATION_TOKEN_FAILED_INVALID',
+            ip: req.ip,
+            user_agent: req.headers['user-agent'],
+          },
+        });
         res.status(400).send({
           ok: false,
           data: { user: null },
@@ -366,6 +494,14 @@ router.post(
       }
       const delay = dayjs().diff(existingPassword.reset_password_last_email_sent_at, 'days');
       if (delay > 7) {
+        await prisma.securityLog.create({
+          data: {
+            email,
+            action: 'INVITATION_TOKEN_FAILED_EXPIRED',
+            ip: req.ip,
+            user_agent: req.headers['user-agent'],
+          },
+        });
         await prisma.password.delete({
           where: { id: existingPassword.id },
         });
@@ -390,6 +526,15 @@ router.post(
           reset_password_token: null,
           reset_password_last_email_sent_at: null,
           password: await hashPassword(passwordUser),
+        },
+      });
+
+      await prisma.securityLog.create({
+        data: {
+          email,
+          action: 'ACCOUNT_CREATED_WITH_INVITATION',
+          ip: req.ip,
+          user_agent: req.headers['user-agent'],
         },
       });
 
@@ -480,6 +625,15 @@ router.post(
         },
       });
 
+      await prisma.securityLog.create({
+        data: {
+          email,
+          action: 'PASSWORD_RESET_REQUESTED',
+          ip: req.ip,
+          user_agent: req.headers['user-agent'],
+        },
+      });
+
       // Pour des raisons de sécurité, on ne révèle pas si l'email existe ou non
       res.status(200).send({
         ok: true,
@@ -545,6 +699,14 @@ router.post(
         include: { User: true },
       });
       if (!password) {
+        await prisma.securityLog.create({
+          data: {
+            email: 'unknown',
+            action: 'PASSWORD_RESET_FAILED_INVALID_TOKEN',
+            ip: req.ip,
+            user_agent: req.headers['user-agent'],
+          },
+        });
         res.status(400).send({
           ok: false,
           data: { user: null },
@@ -554,6 +716,14 @@ router.post(
         return;
       }
       if (dayjs().diff(password.reset_password_last_email_sent_at, 'minutes') > 60) {
+        await prisma.securityLog.create({
+          data: {
+            email: password.User.email!,
+            action: 'PASSWORD_RESET_FAILED_EXPIRED',
+            ip: req.ip,
+            user_agent: req.headers['user-agent'],
+          },
+        });
         await prisma.password.update({
           where: { id: password.id },
           data: { reset_password_token: null, reset_password_last_email_sent_at: null },
@@ -578,6 +748,16 @@ router.post(
       });
 
       const user = password.User;
+
+      await prisma.securityLog.create({
+        data: {
+          email: user.email!,
+          action: 'PASSWORD_RESET_COMPLETED',
+          ip: req.ip,
+          user_agent: req.headers['user-agent'],
+        },
+      });
+
       const token = jwt.sign({ userId: user.id }, SECRET, {
         expiresIn: JWT_MAX_AGE,
       });
@@ -667,6 +847,15 @@ router.post(
         },
       });
 
+      await prisma.securityLog.create({
+        data: {
+          email: user.email!,
+          action: 'PASSWORD_CHANGED',
+          ip: req.ip,
+          user_agent: req.headers['user-agent'],
+        },
+      });
+
       await sendEmail({
         emails: [user.email!],
         subject: '[Zacharie] Votre mot de passe a été modifié',
@@ -725,6 +914,14 @@ router.post(
       });
 
       if (!approval) {
+        await prisma.securityLog.create({
+          data: {
+            email: 'unknown',
+            action: 'ACCESS_TOKEN_FAILED_INVALID',
+            ip: req.ip,
+            user_agent: req.headers['user-agent'],
+          },
+        });
         res.status(400).send({
           ok: false,
           data: { user: null },
@@ -734,6 +931,14 @@ router.post(
         return;
       }
       if (dayjs().diff(approval.access_token_created_at, 'minutes') > 5) {
+        await prisma.securityLog.create({
+          data: {
+            email: approval.User?.email ?? 'unknown',
+            action: 'ACCESS_TOKEN_FAILED_EXPIRED',
+            ip: req.ip,
+            user_agent: req.headers['user-agent'],
+          },
+        });
         await prisma.apiKeyApprovalByUserOrEntity.update({
           where: { access_token: accessToken },
           data: { access_token: null, access_token_created_at: null },
@@ -747,6 +952,14 @@ router.post(
         return;
       }
       if (approval.status !== ApiKeyApprovalStatus.APPROVED) {
+        await prisma.securityLog.create({
+          data: {
+            email: approval.User?.email ?? 'unknown',
+            action: 'ACCESS_TOKEN_FAILED_NOT_APPROVED',
+            ip: req.ip,
+            user_agent: req.headers['user-agent'],
+          },
+        });
         await prisma.apiKeyApprovalByUserOrEntity.update({
           where: { access_token: accessToken },
           data: { access_token: null, access_token_created_at: null },
@@ -763,6 +976,14 @@ router.post(
       let user = approval.User;
 
       if (!user) {
+        await prisma.securityLog.create({
+          data: {
+            email: 'unknown',
+            action: 'ACCESS_TOKEN_FAILED_NO_USER',
+            ip: req.ip,
+            user_agent: req.headers['user-agent'],
+          },
+        });
         await prisma.apiKeyApprovalByUserOrEntity.update({
           where: { access_token: accessToken },
           data: { access_token: null, access_token_created_at: null },
@@ -775,6 +996,15 @@ router.post(
         });
         return;
       }
+
+      await prisma.securityLog.create({
+        data: {
+          email: user.email!,
+          action: 'LOGIN_SUCCESS_ACCESS_TOKEN',
+          ip: req.ip,
+          user_agent: req.headers['user-agent'],
+        },
+      });
 
       const token = jwt.sign({ userId: user.id }, SECRET, {
         expiresIn: JWT_MAX_AGE,
@@ -802,7 +1032,15 @@ router.post(
 router.post(
   '/logout',
   passport.authenticate('user', { session: false, failWithError: true }),
-  catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  catchErrors(async (req: RequestWithUser, res: express.Response, next: express.NextFunction) => {
+    await prisma.securityLog.create({
+      data: {
+        email: req.user.email!,
+        action: 'LOGOUT',
+        ip: req.ip,
+        user_agent: req.headers['user-agent'],
+      },
+    });
     res.clearCookie('zacharie_express_jwt', logoutCookieOptions(req));
     res.status(200).send({ ok: true, data: { user: null, token: null } });
   })
