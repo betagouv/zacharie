@@ -4,7 +4,7 @@ import { HeaderAPIKeyStrategy } from 'passport-headerapikey';
 import prisma from '~/prisma';
 import { ApiKey, User } from '@prisma/client';
 import type { Request } from 'express';
-import { SECRET } from '~/config';
+import { SECRET, PROCONNECT_ADMIN_DISABLED } from '~/config';
 import { hasValidProConnect, type SessionTokenPayload } from '~/utils/session-token';
 
 type JwtPayload = SessionTokenPayload;
@@ -112,9 +112,7 @@ passport.use(
           return done(null, null);
         }
 
-        // Un admin doit avoir validé ProConnect (moins de 12h) pour accéder aux routes /admin,
-        // même avec un mot de passe correct : voir doc/proconnect-admin.md
-        if (!hasValidProConnect(jwt_payload)) {
+        if (!PROCONNECT_ADMIN_DISABLED && !hasValidProConnect(jwt_payload)) {
           return done(null, false, { code: PROCONNECT_REQUIRED });
         }
 

@@ -37,6 +37,7 @@ session usurpée n'hérite pas de `proconnect_at`.
 | `PROCONNECT_CLIENT_ID`     | fourni par l'Espace Partenaires                                     |
 | `PROCONNECT_CLIENT_SECRET` | fourni par l'Espace Partenaires                                     |
 | `VITE_API_URL`             | base du `redirect_uri` : `${VITE_API_URL}/user/proconnect/callback` |
+| `PROCONNECT_ADMIN_DISABLED` | `true` en dev pour désactiver ProConnect sur les routes `/admin`    |
 
 En test (`NODE_ENV=test`, e2e) l'API embarque toujours un ProConnect factice sur `/mock-proconnect`
 (`src/mock-proconnect.ts`) ; en dev, seulement si `PROCONNECT_ISSUER` n'est pas défini. Sa page
