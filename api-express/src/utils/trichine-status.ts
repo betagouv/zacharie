@@ -1,6 +1,11 @@
 import { TrichineResultatAnalyse, TrichineStatutAnalyse, TrichineStatutLogistiqueFTP } from '@prisma/client';
 import prisma from '~/prisma';
-import { logTrichineStatutChange, TrichineActionRequise, TrichineObjetType } from '~/utils/trichine';
+import {
+  isFtpPartie,
+  logTrichineStatutChange,
+  TrichineActionRequise,
+  TrichineObjetType,
+} from '~/utils/trichine';
 
 /**
  * Recalcul des statuts trichine (cf doc/trichine.md §4.11).
@@ -236,10 +241,7 @@ export async function recomputePoolTrichine(poolId: string, userId: string) {
   const hasChildEnCours = descendants.some(
     (descendant) => descendant.statut === TrichineStatutAnalyse.EN_COURS_ANALYSES
   );
-  const isInSentFtp = pool.TrichinePoolFTPs.some(
-    ({ TrichineFTP: ftp }) =>
-      !ftp.deleted_at && ftp.statut_logistique !== TrichineStatutLogistiqueFTP.BROUILLON
-  );
+  const isInSentFtp = pool.TrichinePoolFTPs.some(({ TrichineFTP: ftp }) => isFtpPartie(ftp));
 
   const statut = computePoolStatut({ resultatAnalyse: pool.resultat_analyse, hasChildEnCours, isInSentFtp });
   if (statut !== pool.statut) {
@@ -287,6 +289,8 @@ export async function recomputeFTPTrichine(ftpId: string, userId: string) {
     include: { TrichinePoolFTPs: { include: { TrichinePool: true } } },
   });
   if (!ftp || ftp.deleted_at) return;
+  // Une fiche annulée est figée : ses pools sont retournés à l'émetteur
+  if (ftp.statut_logistique === TrichineStatutLogistiqueFTP.ANNULEE) return;
 
   const poolResults = ftp.TrichinePoolFTPs.filter(({ TrichinePool: pool }) => !pool.deleted_at).map(
     ({ TrichinePool: pool }) => pool.resultat_analyse
@@ -320,5 +324,18 @@ export async function recomputeFTPTrichine(ftpId: string, userId: string) {
         commentaire: 'statut_analytique',
       });
     }
+  }
+}
+
+/**
+ * Recompute le pool + TOUTES les FTP qui le référencent : un pool peut être dans
+ * deux FTP successives (émetteur → LVD puis LVD → LNR), et la FTP d'origine doit
+ * aussi se clôturer quand le LNR rend son résultat.
+ */
+export async function recomputePoolAndLinkedFTPs(poolId: string, userId: string) {
+  await recomputePoolTrichine(poolId, userId);
+  const links = await prisma.trichinePoolFTP.findMany({ where: { pool_id: poolId } });
+  for (const link of links) {
+    await recomputeFTPTrichine(link.ftp_id, userId);
   }
 }

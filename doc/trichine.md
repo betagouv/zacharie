@@ -198,7 +198,7 @@ enum EntityTypes {
 ```prisma
 model TrichineEchantillon {
   id                    String @id @default(uuid())
-  reference_echantillon String @unique // E-{YY}-{séquence}
+  reference_echantillon String @unique // E-{YY}-{code établissement}-{séquence}
 
   zacharie_carcasse_id  String
   preleve_par_user_id   String
@@ -228,7 +228,7 @@ model TrichineEchantillon {
 ```prisma
 model TrichinePool {
   id             String @id @default(uuid())
-  reference_pool String @unique // P-{YY}-{séquence}
+  reference_pool String @unique // P-{YY}-{code établissement}-{séquence}
 
   cree_par_user_id   String
   cree_par_entity_id String? // Entity SVI (agréé) ou Entity PD (court)
@@ -264,7 +264,7 @@ model TrichinePool {
 ```prisma
 model TrichineFTP {
   id            String    @id @default(uuid())
-  numero_fiche  String    @unique // F-{YY}-{séquence}
+  numero_fiche  String    @unique // F-{YY}-{code établissement}-{séquence}
   date_creation DateTime  @default(now())
   date_envoi    DateTime?
 
@@ -870,9 +870,12 @@ Découpe en PRs distinctes. **État d'avancement tenu à jour dans [trichine-tod
 
 **Formats et conventions** :
 
-- `reference_echantillon` : `E-{YY}-{séquence}` (ex : `E-26-000123`)
-- `reference_pool` : `P-{YY}-{séquence}` (ex : `P-26-000045`)
-- `numero_fiche` : `F-{YY}-{séquence}` (ex : `F-26-000012`)
+- `reference_echantillon` : `E-{YY}-{code établissement}-{séquence}` (ex : `E-26-SVI01-0123`)
+- `reference_pool` : `P-{YY}-{code établissement}-{séquence}` (ex : `P-26-SVI01-0045`)
+- `numero_fiche` : `F-{YY}-{code établissement}-{séquence}` (ex : `F-26-SVI01-0012`)
+- Code établissement : `Entity.code_trichine` — généré à la création de l'entité (préfixe du type + compteur : `SVI01`, `LAB07`, `PD142`), modifiable dans l'admin. Champ distinct de `code_etbt_certificat`, qui sert au numérotage des certificats ETG et ne doit pas bouger
+- Sans entité (chasseur prélevant en son nom propre) ou entité sans code : l'`id` de l'utilisateur, déjà court, lisible et unique (5 caractères, comme dans les numéros de FEI) — ex : `P-26-K7M2Q-0045`
+- La séquence repart à `0001` par code établissement et par année
 - Prélèvement en circuit agréé : `preleve_par_entity_id` = Entity SVI (pas ETG)
 - Retrait carcasse FEI en circuit agréé : pas de champ dédié, on utilise `decision_ipm = SAISIE_TOTALE` (l'info trichine est portée par le résultat lié)
 
