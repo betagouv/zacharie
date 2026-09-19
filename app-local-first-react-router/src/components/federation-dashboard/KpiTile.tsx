@@ -20,7 +20,7 @@ export default function KpiTile({ label, value, sublabel, accent = 'gray' }: Pro
     <div className="relative overflow-hidden rounded-lg border border-gray-200 bg-white py-4 pr-4 pl-5">
       <span
         aria-hidden
-        className={`absolute inset-y-0 left-0 w-[3px] ${ACCENT_RULE[accent]}`}
+        className={`absolute inset-y-0 left-0 w-1 ${ACCENT_RULE[accent]}`}
       />
       <div className="text-xs font-medium tracking-wide text-gray-500 uppercase">{label}</div>
       <div className="mt-2 text-3xl font-semibold tracking-tight text-gray-900 tabular-nums sm:text-4xl">

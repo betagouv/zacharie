@@ -314,7 +314,7 @@ test('Premier détenteur devient examinateur initial depuis son profil', async (
 
   // Navigate to profile to become examinateur initial
   await page.getByRole('button', { name: 'Paramètres' }).click();
-  await page.getByRole('link', { name: 'Informations de chasse' }).click();
+  await page.getByLabel('Menu principal').getByRole('link', { name: 'Informations de chasse' }).click();
   await expect(page.getByRole('heading', { name: 'Informations de chasse' })).toBeVisible();
 
   // Change to examinateur initial
@@ -354,7 +354,7 @@ test('Premier détenteur ajoute association et CCG depuis son profil', async ({ 
 
   // Navigate to profile
   await page.getByRole('button', { name: 'Paramètres' }).click();
-  await page.getByRole('link', { name: 'Informations de chasse' }).click();
+  await page.getByLabel('Menu principal').getByRole('link', { name: 'Informations de chasse' }).click();
 
   // Add an existing association - use input name selector for the "Oui" radio
   await page.getByText('Oui').nth(1).click();

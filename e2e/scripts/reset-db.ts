@@ -53,7 +53,9 @@ export type SeedRole =
   | 'ETG_PD_EXAMINATEUR'
   | 'ETG_PD_ASSOCIATION'
   | 'CHASSEUR_MULTI_STATUS'
-  | 'CHASSEUR_MANY_FICHES';
+  | 'CHASSEUR_MANY_FICHES'
+  | 'FDC'
+  | 'FNC';
 
 export async function resetDb(role?: SeedRole) {
   try {
