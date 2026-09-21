@@ -1,6 +1,5 @@
-import '@gouvfr/dsfr-chart/PieChart';
-// @ts-expect-error dsfr-chart CSS has no type declarations
-import '@gouvfr/dsfr-chart/PieChart/css';
+import { PieChart } from 'react-dsfr-chart/PieChart';
+import 'react-dsfr-chart/css';
 
 interface ValorisationTotals {
   ggAgree: number;
@@ -56,14 +55,12 @@ export default function SectionValorisation({ totals }: Props) {
         {ggEmpty ? (
           <p className="py-12 text-center text-sm text-gray-500">Aucune donnée</p>
         ) : (
-          // @ts-expect-error dsfr-chart web component
-          <pie-chart
-            x={JSON.stringify([gg.labels])}
-            y={JSON.stringify([gg.values])}
-            name={JSON.stringify(gg.labels)}
-            fill="true"
-            unit-tooltip=""
-            selected-palette="categorical"
+          <PieChart
+            x={gg.labels}
+            y={gg.values}
+            name={gg.labels}
+            fill
+            selectedPalette="categorical"
           />
         )}
       </div>
@@ -76,14 +73,12 @@ export default function SectionValorisation({ totals }: Props) {
         {pgEmpty ? (
           <p className="py-12 text-center text-sm text-gray-500">Aucune donnée</p>
         ) : (
-          // @ts-expect-error dsfr-chart web component
-          <pie-chart
-            x={JSON.stringify([pg.labels])}
-            y={JSON.stringify([pg.values])}
-            name={JSON.stringify(pg.labels)}
-            fill="true"
-            unit-tooltip=""
-            selected-palette="categorical"
+          <PieChart
+            x={pg.labels}
+            y={pg.values}
+            name={pg.labels}
+            fill
+            selectedPalette="categorical"
           />
         )}
       </div>

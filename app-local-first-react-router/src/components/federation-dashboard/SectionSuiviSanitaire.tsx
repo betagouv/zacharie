@@ -1,6 +1,5 @@
-import '@gouvfr/dsfr-chart/PieChart';
-// @ts-expect-error dsfr-chart CSS has no type declarations
-import '@gouvfr/dsfr-chart/PieChart/css';
+import { PieChart } from 'react-dsfr-chart/PieChart';
+import 'react-dsfr-chart/css';
 import KpiTile from './KpiTile';
 
 interface AnomaliesData {
@@ -67,14 +66,12 @@ export default function SectionSuiviSanitaire({
               className="absolute inset-y-0 left-0 w-1 bg-blue-600"
             />
             <h4 className="mb-3 text-lg font-bold">Anomalies signalées</h4>
-            {/* @ts-expect-error dsfr-chart web component */}
-            <pie-chart
-              x={JSON.stringify([anomaliesPie.labels])}
-              y={JSON.stringify([anomaliesPie.values])}
-              name={JSON.stringify(anomaliesPie.labels)}
-              fill="true"
-              unit-tooltip=""
-              selected-palette="categorical"
+            <PieChart
+              x={anomaliesPie.labels}
+              y={anomaliesPie.values}
+              name={anomaliesPie.labels}
+              fill
+              selectedPalette="categorical"
             />
           </div>
         )}
@@ -104,14 +101,12 @@ export default function SectionSuiviSanitaire({
               className="absolute inset-y-0 left-0 w-1 bg-blue-600"
             />
             <h4 className="mb-3 text-lg font-bold">Motifs de saisies sanitaires</h4>
-            {/* @ts-expect-error dsfr-chart web component */}
-            <pie-chart
-              x={JSON.stringify([motifsPie.labels])}
-              y={JSON.stringify([motifsPie.values])}
-              name={JSON.stringify(motifsPie.labels)}
-              fill="true"
-              unit-tooltip=""
-              selected-palette="categorical"
+            <PieChart
+              x={motifsPie.labels}
+              y={motifsPie.values}
+              name={motifsPie.labels}
+              fill
+              selectedPalette="categorical"
             />
           </div>
         )}
