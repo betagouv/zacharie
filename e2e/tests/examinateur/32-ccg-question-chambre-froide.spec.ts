@@ -1,4 +1,5 @@
 import { test, expect } from '../../utils/test';
+import type { Page } from '@playwright/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 
@@ -18,9 +19,14 @@ test.beforeEach(async () => {
   await resetDb('EXAMINATEUR_INITIAL');
 });
 
-test('CCG : aucune option cochée tant que le chasseur n’a pas répondu, "Non" persiste', async ({
-  page,
-}) => {
+// on clique le label DSFR : il recouvre l'input radio, qui n'est pas cliquable directement
+async function cocher(page: Page, label: RegExp) {
+  const option = page.getByText(label);
+  await option.scrollIntoViewIfNeeded();
+  await option.click();
+}
+
+test('CCG : aucune option cochée tant que le chasseur n’a pas répondu, "Non" persiste', async ({ page }) => {
   await connectWith(page, 'examinateur@example.fr');
   await page.goto('http://localhost:3290/app/chasseur/profil/ccgs');
   await expect(page.getByText(question)).toBeVisible({ timeout: 10000 });
@@ -33,11 +39,9 @@ test('CCG : aucune option cochée tant que le chasseur n’a pas répondu, "Non"
   const reponseEnregistree = page.waitForResponse(
     (res) => res.url().includes('/user/') && res.request().method() === 'POST' && res.ok()
   );
-  const non = page.getByRole('radio', { name: nonPasDeCCG });
-  await non.scrollIntoViewIfNeeded();
-  await non.click();
+  await cocher(page, nonPasDeCCG);
   await reponseEnregistree;
-  await expect(non).toBeChecked();
+  await expect(page.getByRole('radio', { name: nonPasDeCCG })).toBeChecked();
 
   // réponse enregistrée et toujours aucune CCG : "Non" reste coché
   await page.reload();
@@ -52,10 +56,8 @@ test('CCG : la question disparaît une fois une chambre froide enregistrée', as
   await page.goto('http://localhost:3290/app/chasseur/profil/ccgs');
   await expect(page.getByText(question)).toBeVisible({ timeout: 10000 });
 
-  const oui = page.getByRole('radio', { name: ouiAvecNumero });
-  await oui.scrollIntoViewIfNeeded();
-  await oui.click();
-  await expect(oui).toBeChecked();
+  await cocher(page, ouiAvecNumero);
+  await expect(page.getByRole('radio', { name: ouiAvecNumero })).toBeChecked();
 
   await page.getByRole('textbox', { name: /Numéro d'identification/ }).fill('CCG-01');
   await page.getByRole('button', { name: 'Ajouter cette chambre froide' }).click();
