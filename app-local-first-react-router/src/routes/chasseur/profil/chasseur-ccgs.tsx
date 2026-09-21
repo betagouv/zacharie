@@ -48,7 +48,9 @@ export default function MesCCGs() {
     refreshUserCCGs();
   }, []);
 
-  const [explicitelySaidNoCCG, setExplicitelySaidNoCCG] = useState(false);
+  // aucune option n'est cochée tant que l'utilisateur n'a pas répondu
+  // `checked_has_ccg` renseigné sans CCG enregistré = l'utilisateur a répondu "Non"
+  const [ccgAnswer, setCCGAnswer] = useState<'oui' | 'non' | null>(user.checked_has_ccg ? 'non' : null);
   const [newCCGExpanded, setNewCCGExpanded] = useState(false);
   const [registerOneMoreCCG, setRegisterOneMoreCCG] = useState(false);
   const [ccgPostalCode, setCCGPostalCode] = useState('');
@@ -96,13 +98,13 @@ export default function MesCCGs() {
               {
                 nativeInputProps: {
                   required: true,
-                  checked: !!user.checked_has_ccg && !newCCGExpanded,
+                  checked: ccgAnswer === 'oui' && !newCCGExpanded,
                   name: Prisma.UserScalarFieldEnum.checked_has_ccg,
                   onClick: () => {
                     handleUserSubmit(true);
                     setNewCCGExpanded(false);
                     setRegisterOneMoreCCG(true);
-                    setExplicitelySaidNoCCG(false);
+                    setCCGAnswer('oui');
                   },
                 },
                 label: 'Oui et la chambre froide a un numéro d’identification',
@@ -110,13 +112,13 @@ export default function MesCCGs() {
               {
                 nativeInputProps: {
                   required: true,
-                  checked: !!user.checked_has_ccg && newCCGExpanded,
+                  checked: ccgAnswer === 'oui' && newCCGExpanded,
                   name: Prisma.UserScalarFieldEnum.checked_has_ccg,
                   onClick: () => {
                     handleUserSubmit(true);
                     setNewCCGExpanded(true);
                     setRegisterOneMoreCCG(true);
-                    setExplicitelySaidNoCCG(false);
+                    setCCGAnswer('oui');
                   },
                 },
                 label: 'Oui mais la chambre froide n’a pas de numéro d’identification',
@@ -124,13 +126,14 @@ export default function MesCCGs() {
               {
                 nativeInputProps: {
                   required: true,
-                  checked: explicitelySaidNoCCG,
+                  checked: ccgAnswer === 'non',
                   name: 'not_checked_has_ccg',
                   onClick: () => {
-                    handleUserSubmit(false);
+                    // on enregistre que l'utilisateur a répondu, même s'il n'a pas de chambre froide
+                    handleUserSubmit(true);
                     setNewCCGExpanded(false);
                     setRegisterOneMoreCCG(false);
-                    setExplicitelySaidNoCCG(true);
+                    setCCGAnswer('non');
                   },
                 },
                 label: 'Non, pas d’utilisation de chambre froide',
@@ -419,6 +422,7 @@ export default function MesCCGs() {
                         setNewCCGExpanded(false);
                         handleUserSubmit(false);
                         setRegisterOneMoreCCG(false);
+                        setCCGAnswer(null);
                         setTimeout(() => {
                           document
                             .getElementById('onboarding-etape-2-ccgs-data')

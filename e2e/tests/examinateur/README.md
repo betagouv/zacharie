@@ -30,3 +30,4 @@ Mobile viewport (350x667). `resetDb('EXAMINATEUR_INITIAL')` in `beforeAll`/`befo
 - 21 — 0 carcasse → Transmettre désactivé — `21-zero-carcasse-transmettre-disabled.spec.ts`
 - 22 — Double-clic "Transmettre" — `22-double-clic-transmettre.spec.ts`
 - 23 — Déconnexion en plein formulaire — `23-deconnexion-pendant-formulaire.spec.ts`
+- 32 — CCG : question chambre froide (aucune case cochée par défaut) — `32-ccg-question-chambre-froide.spec.ts`
