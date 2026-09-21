@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Prisma, Entity } from '@prisma/client';
-import InputVille from '@app/components/InputVille';
+import InputCodePostalEtVille from '@app/components/InputCodePostalEtVille';
 import API from '@app/services/api';
 import Chargement from '@app/components/Chargement';
 
@@ -27,7 +27,6 @@ function ChasseurCCGEditContent() {
   const navigate = useNavigate();
   const [ccg, setCcg] = useState<Entity | null>(null);
   const [loading, setLoading] = useState(true);
-  const [postalCode, setPostalCode] = useState('');
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -37,7 +36,6 @@ function ChasseurCCGEditContent() {
       .then((res) => {
         if (res.ok) {
           setCcg(res.data.entity);
-          setPostalCode(res.data.entity.code_postal || '');
         } else {
           setError(res.error || 'Erreur lors du chargement du CCG');
         }
@@ -166,38 +164,11 @@ function ChasseurCCGEditContent() {
             }}
           />
 
-          <div className="flex w-full flex-col gap-x-4 md:flex-row">
-            <Input
-              label="Code postal *"
-              hintText="5 chiffres"
-              className="shrink-0 md:basis-2/5"
-              nativeInputProps={{
-                id: Prisma.EntityScalarFieldEnum.code_postal,
-                name: Prisma.EntityScalarFieldEnum.code_postal,
-                autoComplete: 'off',
-                required: true,
-                value: postalCode,
-                onChange: (e) => {
-                  setPostalCode(e.currentTarget.value);
-                },
-              }}
-            />
-            <div className="basis-3/5">
-              <InputVille
-                postCode={postalCode}
-                trimPostCode
-                label="Ville ou commune *"
-                hintText="Exemple : Montpellier"
-                nativeInputProps={{
-                  id: Prisma.EntityScalarFieldEnum.ville,
-                  name: Prisma.EntityScalarFieldEnum.ville,
-                  autoComplete: 'off',
-                  required: true,
-                  defaultValue: ccg.ville || '',
-                }}
-              />
-            </div>
-          </div>
+          <InputCodePostalEtVille
+            required
+            defaultCodePostal={ccg.code_postal || ''}
+            defaultVille={ccg.ville || ''}
+          />
           <Button type="submit">Enregistrer les modifications</Button>
         </form>
       </div>

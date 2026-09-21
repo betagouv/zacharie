@@ -43,23 +43,23 @@ test("Le hint « Ajoutez-le en cliquant ici » ouvre la création inline d'un pa
   await commerceDeDetail.click();
 
   // Remplir les champs obligatoires — scrollIntoViewIfNeeded sur mobile viewport
-  const email = modal.locator('#email');
+  const email = modal.locator('#partenaire-nouveau-email');
   await email.scrollIntoViewIfNeeded();
   await email.fill('boucher@test.fr');
 
-  const nom = modal.locator('#nom_de_famille');
+  const nom = modal.locator('#partenaire-nouveau-nom_de_famille');
   await nom.scrollIntoViewIfNeeded();
   await nom.fill('Dupont');
 
-  const prenom = modal.locator('#prenom');
+  const prenom = modal.locator('#partenaire-nouveau-prenom');
   await prenom.scrollIntoViewIfNeeded();
   await prenom.fill('Jean');
 
-  const adresse = modal.locator('#address_ligne_1');
+  const adresse = modal.locator('#partenaire-nouveau-address_ligne_1');
   await adresse.scrollIntoViewIfNeeded();
   await adresse.fill('12 rue du Commerce');
 
-  const codePostal = modal.locator('#code_postal');
+  const codePostal = modal.locator('#partenaire-nouveau-code_postal');
   await codePostal.scrollIntoViewIfNeeded();
   await codePostal.fill('75015');
 

@@ -3,7 +3,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { EntityRelationType, Prisma, Entity, EntityRelationStatus, EntityTypes } from '@prisma/client';
-import InputVille from '@app/components/InputVille';
+import InputCodePostalEtVille from '@app/components/InputCodePostalEtVille';
 import type { PartenairesResponse, UserEntityResponse } from '@api/src/types/responses';
 import type { EntitiesById } from '@api/src/types/entity';
 import useUser from '@app/zustand/user';
@@ -21,6 +21,11 @@ interface PartenaireNouveauProps {
   newEntityNomDUsageProps?: string;
   onFinish: (entity: UserEntityResponse['data']['entity']) => void;
 }
+// une même page peut afficher plusieurs formulaires d'entité : on préfixe les id des champs
+// pour qu'ils restent uniques dans le document
+const ID_PREFIX = 'partenaire-nouveau';
+const fieldId = (field: string) => `${ID_PREFIX}-${field}`;
+
 export default function PartenaireNouveau({ newEntityNomDUsageProps, onFinish }: PartenaireNouveauProps) {
   const user = useUser((state) => state.user)!;
   const entities = useZustandStore((state) => state.entities);
@@ -74,7 +79,6 @@ export default function PartenaireNouveau({ newEntityNomDUsageProps, onFinish }:
 
   const ComponentToDisplay = isAdminOfEntity ? Input : InputNotEditable;
 
-  const [assoPostalCode, setAssoPostalCode] = useState('');
   const [entityType, setEntityType] = useState<EntityTypes | undefined>(undefined);
 
   const hasSiret = entityType !== EntityTypes.CONSOMMATEUR_FINAL;
@@ -98,7 +102,6 @@ export default function PartenaireNouveau({ newEntityNomDUsageProps, onFinish }:
         if (response.ok) {
           setRefreshKey((prev) => prev + 1);
           setCurrentEntityId(null);
-          setAssoPostalCode('');
           setEntityType(undefined);
           onFinish(response.data.entity!);
           useZustandStore.setState({
@@ -240,7 +243,6 @@ export default function PartenaireNouveau({ newEntityNomDUsageProps, onFinish }:
             onCreateOption={async (raison_sociale) => {
               setNewEntityNomDUsage(raison_sociale);
               setIsUnregisteredEntity(true);
-              setAssoPostalCode('');
               setEntityType(undefined);
               setCurrentEntityId(null);
             }}
@@ -260,14 +262,12 @@ export default function PartenaireNouveau({ newEntityNomDUsageProps, onFinish }:
             onChange={(newEntity) => {
               if (newEntity?.id) {
                 setCurrentEntityId(newEntity.id);
-                setAssoPostalCode(newEntity.code_postal || '');
                 setEntityType(newEntity.type);
                 setNewEntityNomDUsage('');
                 setIsUnregisteredEntity(false);
               }
               if (!newEntity) {
                 setCurrentEntityId(null);
-                setAssoPostalCode('');
                 setNewEntityNomDUsage('');
                 setEntityType(undefined);
                 setIsUnregisteredEntity(false);
@@ -285,7 +285,7 @@ export default function PartenaireNouveau({ newEntityNomDUsageProps, onFinish }:
             label="SIRET"
             key={'SIRET' + currentEntityId}
             nativeInputProps={{
-              id: Prisma.EntityScalarFieldEnum.siret,
+              id: fieldId(Prisma.EntityScalarFieldEnum.siret),
               name: Prisma.EntityScalarFieldEnum.siret,
               autoComplete: 'off',
               defaultValue: currentEntity?.siret ?? '',
@@ -296,7 +296,7 @@ export default function PartenaireNouveau({ newEntityNomDUsageProps, onFinish }:
           label="Email du représentant *"
           key={'Email' + currentEntityUser?.id}
           nativeInputProps={{
-            id: Prisma.UserScalarFieldEnum.email,
+            id: fieldId(Prisma.UserScalarFieldEnum.email),
             name: Prisma.UserScalarFieldEnum.email,
             autoComplete: 'off',
             required: true,
@@ -309,7 +309,7 @@ export default function PartenaireNouveau({ newEntityNomDUsageProps, onFinish }:
             className="shrink-0 md:basis-1/2"
             key={'Nom' + currentEntityUser?.id + hasSiret}
             nativeInputProps={{
-              id: Prisma.UserScalarFieldEnum.nom_de_famille,
+              id: fieldId(Prisma.UserScalarFieldEnum.nom_de_famille),
               name: Prisma.UserScalarFieldEnum.nom_de_famille,
               autoComplete: 'off',
               required: true,
@@ -321,7 +321,7 @@ export default function PartenaireNouveau({ newEntityNomDUsageProps, onFinish }:
             className="shrink-0 md:basis-1/2"
             key={'Prenom' + currentEntityUser?.id}
             nativeInputProps={{
-              id: Prisma.UserScalarFieldEnum.prenom,
+              id: fieldId(Prisma.UserScalarFieldEnum.prenom),
               name: Prisma.UserScalarFieldEnum.prenom,
               autoComplete: 'off',
               required: true,
@@ -334,7 +334,7 @@ export default function PartenaireNouveau({ newEntityNomDUsageProps, onFinish }:
           key={'Adresse *' + currentEntityId}
           hintText="Indication : numéro et voie"
           nativeInputProps={{
-            id: Prisma.EntityScalarFieldEnum.address_ligne_1,
+            id: fieldId(Prisma.EntityScalarFieldEnum.address_ligne_1),
             name: Prisma.EntityScalarFieldEnum.address_ligne_1,
             autoComplete: 'off',
             required: true,
@@ -346,62 +346,21 @@ export default function PartenaireNouveau({ newEntityNomDUsageProps, onFinish }:
           hintText="Indication : bâtiment, immeuble, escalier et numéro d'appartement"
           key={"Complément d'adresse (optionnel)" + currentEntityId}
           nativeInputProps={{
-            id: Prisma.EntityScalarFieldEnum.address_ligne_2,
+            id: fieldId(Prisma.EntityScalarFieldEnum.address_ligne_2),
             name: Prisma.EntityScalarFieldEnum.address_ligne_2,
             autoComplete: 'off',
             defaultValue: currentEntity?.address_ligne_2 ?? '',
           }}
         />
 
-        <div className="flex w-full flex-col gap-x-4 md:flex-row">
-          <ComponentToDisplay
-            label="Code postal *"
-            hintText="5 chiffres"
-            className="shrink-0 md:basis-2/5"
-            key={'Code postal *' + currentEntityId}
-            nativeInputProps={{
-              id: Prisma.EntityScalarFieldEnum.code_postal,
-              name: Prisma.EntityScalarFieldEnum.code_postal,
-              autoComplete: 'off',
-              required: true,
-              value: assoPostalCode,
-              onChange: (e) => {
-                setAssoPostalCode(e.currentTarget.value);
-              },
-            }}
-          />
-          <div className="basis-3/5">
-            {isAdminOfEntity ? (
-              <InputVille
-                postCode={assoPostalCode}
-                trimPostCode
-                key={'Ville ou commune *' + currentEntityId}
-                label="Ville ou commune *"
-                hintText="Exemple : Montpellier"
-                nativeInputProps={{
-                  id: Prisma.EntityScalarFieldEnum.ville,
-                  name: Prisma.EntityScalarFieldEnum.ville,
-                  autoComplete: 'off',
-                  required: true,
-                  defaultValue: currentEntity?.ville ?? '',
-                }}
-              />
-            ) : (
-              <InputNotEditable
-                label="Ville ou commune *"
-                key={'Ville ou commune *' + currentEntityId}
-                hintText="Exemple : Montpellier"
-                nativeInputProps={{
-                  id: Prisma.EntityScalarFieldEnum.ville,
-                  name: Prisma.EntityScalarFieldEnum.ville,
-                  autoComplete: 'off',
-                  required: true,
-                  defaultValue: currentEntity?.ville ?? '',
-                }}
-              />
-            )}
-          </div>
-        </div>
+        <InputCodePostalEtVille
+          key={currentEntityId}
+          idPrefix={ID_PREFIX}
+          required
+          notEditable={!isAdminOfEntity}
+          defaultCodePostal={currentEntity?.code_postal ?? ''}
+          defaultVille={currentEntity?.ville ?? ''}
+        />
         <Button
           type="submit"
           nativeButtonProps={{ form: 'partenaire_data_form' }}

@@ -8,7 +8,7 @@ import type { EntitiesWorkingForResponse, UserConnexionResponse } from '@api/src
 import useUser from '@app/zustand/user';
 import API from '@app/services/api';
 import SelectCustom from '@app/components/SelectCustom';
-import InputVille from '@app/components/InputVille';
+import InputCodePostalEtVille from '@app/components/InputCodePostalEtVille';
 import RelationEntityUser from '@app/components/RelationEntityUser';
 
 const empytEntitiesByTypeAndId: EntitiesByTypeAndId = {
@@ -89,7 +89,6 @@ export default function ChasseurOnboardingMesAssociationsDeChasse() {
     ? (selectOptions.find((option) => option.id === 'nouvelle') ?? undefined)
     : (selectOptions.find((option) => option.id === currentEntityId) ?? undefined);
 
-  const [assoPostalCode, setAssoPostalCode] = useState('');
   // un ref et pas un state : il bloque aussi deux submits déclenchés dans le même tick React
   const isSubmittingRef = useRef(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -111,7 +110,6 @@ export default function ChasseurOnboardingMesAssociationsDeChasse() {
           if (response.ok) {
             setRefreshKey((prev) => prev + 1);
             setCurrentEntityId(null);
-            setAssoPostalCode('');
             setShowForm(false);
             document
               .getElementById('onboarding-etape-2-associations-data-title')
@@ -251,7 +249,6 @@ export default function ChasseurOnboardingMesAssociationsDeChasse() {
                           onCreateOption={async (raison_sociale: string) => {
                             setNewEntityNomDUsage(raison_sociale);
                             setIsUnregisteredEntity(true);
-                            setAssoPostalCode('');
                             setCurrentEntityId(null);
                           }}
                           label="Rechercher une association, société ou domaine de chasse"
@@ -270,13 +267,11 @@ export default function ChasseurOnboardingMesAssociationsDeChasse() {
                           onChange={(newEntity) => {
                             if (newEntity?.id) {
                               setCurrentEntityId(newEntity.id);
-                              setAssoPostalCode(newEntity.code_postal || '');
                               setNewEntityNomDUsage('');
                               setIsUnregisteredEntity(false);
                             }
                             if (!newEntity) {
                               setCurrentEntityId(null);
-                              setAssoPostalCode('');
                               setNewEntityNomDUsage('');
                               setIsUnregisteredEntity(false);
                             }
@@ -340,7 +335,6 @@ export default function ChasseurOnboardingMesAssociationsDeChasse() {
                             className="fr-link fr-link--sm"
                             onClick={() => {
                               setCurrentEntityId(null);
-                              setAssoPostalCode('');
                             }}
                           >
                             Annuler
@@ -400,37 +394,7 @@ export default function ChasseurOnboardingMesAssociationsDeChasse() {
                               autoComplete: 'off',
                             }}
                           />
-                          <div className="flex w-full flex-col gap-x-4 md:flex-row">
-                            <Input
-                              label="Code postal *"
-                              hintText="5 chiffres"
-                              className="shrink-0 md:basis-2/5"
-                              nativeInputProps={{
-                                id: Prisma.EntityScalarFieldEnum.code_postal,
-                                name: Prisma.EntityScalarFieldEnum.code_postal,
-                                autoComplete: 'off',
-                                required: true,
-                                value: assoPostalCode,
-                                onChange: (e) => {
-                                  setAssoPostalCode(e.currentTarget.value);
-                                },
-                              }}
-                            />
-                            <div className="basis-3/5">
-                              <InputVille
-                                postCode={assoPostalCode}
-                                trimPostCode
-                                label="Ville ou commune *"
-                                hintText="Exemple : Montpellier"
-                                nativeInputProps={{
-                                  id: Prisma.EntityScalarFieldEnum.ville,
-                                  name: Prisma.EntityScalarFieldEnum.ville,
-                                  autoComplete: 'off',
-                                  required: true,
-                                }}
-                              />
-                            </div>
-                          </div>
+                          <InputCodePostalEtVille required />
                           <div className="mt-4 flex items-center gap-4">
                             <Button
                               type="submit"
@@ -446,7 +410,6 @@ export default function ChasseurOnboardingMesAssociationsDeChasse() {
                                 setIsUnregisteredEntity(false);
                                 setNewEntityNomDUsage('');
                                 setCurrentEntityId(null);
-                                setAssoPostalCode('');
                               }}
                             >
                               Chercher une entité existante

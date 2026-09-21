@@ -4,43 +4,48 @@ import { useDebounce } from '@uidotdev/usehooks';
 import { searchVilles } from '@app/utils/search-ville';
 
 interface InputVilleProps extends InputProps.RegularInput {
-  trimPostCode?: boolean;
-  postCode?: string;
   onSelect?: (ville: string) => void;
 }
 export default function InputVille(props: InputVilleProps) {
-  const { trimPostCode, postCode, onSelect, ...inputProps } = props;
+  const { onSelect, ...inputProps } = props;
   const [villeSearched, setVilleSearched] = useState<string>(() => {
     const defaultValue = props.nativeInputProps?.defaultValue;
     return typeof defaultValue === 'string' ? defaultValue : '';
   });
-  const debouncedVilleSearched = useDebounce(`${postCode ? postCode + ' ' : ''}${villeSearched}`, 300);
-  const [villesResults, setVillesResults] = useState<string[]>([]);
-  const canSearch = useRef(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [villesResults, setVillesResults] = useState<Array<string>>([]);
+  const debouncedVilleSearched = useDebounce(villeSearched, 300);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!debouncedVilleSearched || !canSearch.current) {
+    if (!isOpen) {
+      setVillesResults([]);
       return;
     }
     setVillesResults(searchVilles(debouncedVilleSearched));
-  }, [debouncedVilleSearched]);
+  }, [debouncedVilleSearched, isOpen]);
 
   useEffect(() => {
-    if (!villeSearched && postCode && postCode.length >= 5) {
-      setVillesResults(searchVilles(postCode));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [postCode]);
+    if (!isOpen) return;
+    const dismissOnClickOutside = (event: PointerEvent) => {
+      if (containerRef.current?.contains(event.target as Node)) return;
+      setIsOpen(false);
+    };
+    document.addEventListener('pointerdown', dismissOnClickOutside);
+    return () => document.removeEventListener('pointerdown', dismissOnClickOutside);
+  }, [isOpen]);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    canSearch.current = true;
+    setIsOpen(true);
     setVilleSearched(e.target.value);
   };
 
-  const ref = useRef<HTMLInputElement>(null);
+  const isVisible = isOpen && villesResults.length > 0;
 
   return (
-    <>
+    <div ref={containerRef}>
       <Input
         {...inputProps}
         nativeInputProps={{
@@ -50,43 +55,41 @@ export default function InputVille(props: InputVilleProps) {
           defaultValue: undefined,
           value: villeSearched,
           onChange: handleChange,
+          onKeyDown: (e) => {
+            if (e.key === 'Escape') setIsOpen(false);
+            props.nativeInputProps?.onKeyDown?.(e);
+          },
         }}
       />
+      {/* la liste reste montée même vide : sans elle le champ devient `:last-child` et le DSFR
+          lui retire sa marge basse */}
       <div
-        className={[
-          'flex max-h-60 w-full flex-col overflow-y-auto border border-gray-200',
-          villesResults.length > 0 ? '-mt-6' : 'hidden',
-        ].join(' ')}
+        className={
+          isVisible ? '-mt-6 flex max-h-60 w-full flex-col overflow-y-auto border border-gray-200' : 'hidden'
+        }
       >
-        {villesResults.map((ville) => {
-          return (
-            <button
-              key={ville}
-              onClick={() => {
-                if (trimPostCode) {
-                  const codePostal = ville.split(' ')[0];
-                  const trimedVille = ville.replace(codePostal, '').trim();
-                  setVilleSearched(trimedVille);
-                  if (onSelect) onSelect(trimedVille);
-                } else {
+        {isVisible &&
+          villesResults.map((ville) => {
+            return (
+              <button
+                key={ville}
+                onClick={() => {
                   setVilleSearched(ville);
                   if (onSelect) onSelect(ville);
-                }
-                setVillesResults([]);
-                // the parent form is submitted on blur
-                // trigger a focus event then a blur again to submit the form
-                // this is a hack to submit the form on blur again
-                ref.current?.focus();
-                canSearch.current = false;
-              }}
-              type="button"
-              className="block border-b-2! border-b-gray-200 py-1 pl-4 text-left"
-            >
-              {ville}
-            </button>
-          );
-        })}
+                  setIsOpen(false);
+                  // the parent form is submitted on blur
+                  // trigger a focus event then a blur again to submit the form
+                  // this is a hack to submit the form on blur again
+                  ref.current?.focus();
+                }}
+                type="button"
+                className="block border-b-2! border-b-gray-200 py-1 pl-4 text-left"
+              >
+                {ville}
+              </button>
+            );
+          })}
       </div>
-    </>
+    </div>
   );
 }

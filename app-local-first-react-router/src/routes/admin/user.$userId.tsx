@@ -15,7 +15,7 @@ import {
   EntityTypes,
   UserEtgRoles,
 } from '@prisma/client';
-import InputVille from '@app/components/InputVille';
+import InputCodePostalEtVille from '@app/components/InputCodePostalEtVille';
 import { Tabs, type TabsProps } from '@codegouvfr/react-dsfr/Tabs';
 import { Table } from '@codegouvfr/react-dsfr/Table';
 import departementsRegions from '@app/data/departements-regions.json';
@@ -663,29 +663,12 @@ export default function AdminUser() {
                             defaultValue: user.addresse_ligne_2 ?? '',
                           }}
                         />
-                        <Input
-                          label="Code postal"
-                          hintText="5 chiffres"
-                          nativeInputProps={{
-                            id: Prisma.UserScalarFieldEnum.code_postal,
-                            name: Prisma.UserScalarFieldEnum.code_postal,
-                            autoComplete: 'off',
-                            defaultValue: user.code_postal ?? '',
-                          }}
-                        />
-                        <InputVille
-                          key={user.ville}
-                          postCode={user.code_postal ?? ''}
-                          trimPostCode
-                          label="Ville ou commune"
-                          hintText="Exemple : Montpellier"
-                          nativeInputProps={{
-                            id: Prisma.UserScalarFieldEnum.ville,
-                            name: Prisma.UserScalarFieldEnum.ville,
-                            autoComplete: 'off',
-                            defaultValue: user.ville ?? '',
-                          }}
-                        />
+                        <div className="md:col-span-2">
+                          <InputCodePostalEtVille
+                            defaultCodePostal={user.code_postal ?? ''}
+                            defaultVille={user.ville ?? ''}
+                          />
+                        </div>
                       </div>
                     </Section>
                     {user.roles.includes(UserRoles.CHASSEUR) && (
