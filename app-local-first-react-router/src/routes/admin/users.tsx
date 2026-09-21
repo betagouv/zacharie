@@ -236,6 +236,9 @@ export default function AdminUsers() {
             <input
               type="search"
               placeholder="Nom, email, tél, CFEI..."
+              autoComplete="off"
+              data-1p-ignore
+              data-lpignore="true"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full rounded border border-gray-300 py-2 pr-3 pl-10 text-sm transition-colors outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"

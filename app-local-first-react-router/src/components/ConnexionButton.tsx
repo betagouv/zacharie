@@ -8,6 +8,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import useZustandStore from '@app/zustand/store';
 
+// Pas de <form> autour du bouton : la liste admin en affiche un par utilisateur,
+// et un millier de formulaires font ramer l'autofill du navigateur à chaque focus.
 export default function ConnexionButton({
   user,
   type = 'primary',
@@ -19,10 +21,12 @@ export default function ConnexionButton({
   const [isLoading, setIsLoading] = useState(false);
 
   return (
-    <form
-      method="POST"
-      onSubmit={async (event) => {
-        event.preventDefault();
+    <Button
+      type="button"
+      priority={type}
+      disabled={isLoading}
+      size="small"
+      onClick={async () => {
         setIsLoading(true);
         // Session swap (NOT a logout): the POST establishes the
         // impersonated user's session (cookie on web, JWT injected by
@@ -43,14 +47,7 @@ export default function ConnexionButton({
         }
       }}
     >
-      <Button
-        type="submit"
-        priority={type}
-        disabled={isLoading}
-        size="small"
-      >
-        {isLoading ? 'Connexion en cours...' : 'Connexion'}
-      </Button>
-    </form>
+      {isLoading ? 'Connexion en cours...' : 'Connexion'}
+    </Button>
   );
 }
