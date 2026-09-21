@@ -40,7 +40,7 @@ export default function FiltersSidebar({
   return (
     <>
       {/* Mobile : bouton filtres */}
-      <div className="mb-2 flex md:hidden">
+      <div className="mb-2 hidden max-md:flex">
         <button
           type="button"
           aria-label="Filtres"
@@ -58,7 +58,7 @@ export default function FiltersSidebar({
 
       {/* Mobile : panneau modal */}
       {showMobileFilters && (
-        <div className="fixed inset-0 z-[800] md:hidden">
+        <div className="fixed inset-0 z-[800] hidden max-md:block">
           <div
             className="absolute inset-0 bg-black/30"
             onClick={() => setShowMobileFilters(false)}

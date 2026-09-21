@@ -108,7 +108,7 @@ export default function AdminLayout() {
         {/* Backdrop mobile */}
         {sidebarOpen && (
           <div
-            className="fixed inset-0 z-20 bg-black/30 md:hidden"
+            className="fixed inset-0 z-20 hidden bg-black/30 max-md:block"
             onClick={() => setSidebarOpen(false)}
           />
         )}
@@ -118,7 +118,7 @@ export default function AdminLayout() {
             sidebarOpen ? 'translate-x-0' : '-translate-x-full'
           } ${navCollapsed ? 'md:w-14' : 'md:w-auto'}`}
         >
-          <div className="flex justify-end px-2 md:hidden">
+          <div className="hidden justify-end px-2 max-md:flex">
             <button
               type="button"
               onClick={() => setSidebarOpen(false)}
