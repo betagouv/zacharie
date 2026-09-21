@@ -3,3 +3,9 @@
 **/.next
 **/coverage
 **/node_modules
+
+# référentiel des communes : volontairement minifié, ne pas ré-indenter (~39 000 entrées)
+src/data/villes.json
+
+# référentiel des établissements : volontairement minifié, ne pas ré-indenter
+src/data/etablissements-traitement-sanitaire.json

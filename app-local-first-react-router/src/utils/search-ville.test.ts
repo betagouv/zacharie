@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import villes from '@app/data/villes.json';
 import { normalizeVille, searchVilles } from './search-ville';
 
 describe('normalizeVille', () => {
@@ -62,5 +63,28 @@ describe('searchVilles', () => {
   });
   it('ne renvoie rien pour une recherche vide', () => {
     expect(searchVilles('   ')).toEqual([]);
+  });
+});
+
+// villes.json est importé dans le bundle : les clés y sont abrégées (c = code postal, v = ville)
+// et « code postal + ville » est recomposé à la lecture. Ces tests verrouillent ce format, qu'un
+// passage de data/update-villes.js pourrait faire régresser sans qu'aucun autre test ne casse.
+describe('référentiel villes.json', () => {
+  it('contient toutes les communes', () => {
+    expect(villes).toHaveLength(39192);
+  });
+  it("n'a que les clés abrégées c et v", () => {
+    const entriesWithOtherKeys = villes.filter((item) => Object.keys(item).sort().join(',') !== 'c,v');
+    expect(entriesWithOtherKeys).toEqual([]);
+  });
+  it('a un code postal à 5 chiffres et un nom de commune non vide', () => {
+    const invalides = villes.filter((item) => !/^\d{5}$/.test(item.c) || !item.v.trim());
+    expect(invalides).toEqual([]);
+  });
+  it('recompose « code postal + commune » dans les résultats', () => {
+    const results = searchVilles('Paris');
+    expect(results.length).toBeGreaterThan(0);
+    expect(results.every((result) => /^\d{5} \S/.test(result))).toBe(true);
+    expect(results).toContain('75001 PARIS 01');
   });
 });

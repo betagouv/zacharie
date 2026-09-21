@@ -1,6 +1,7 @@
 import villes from '@app/data/villes.json';
 
-type Ville = { code_postal: string; ville: string; code_postal_ville: string };
+// Le fichier est volumineux (~39 000 communes) : les clés sont abrégées pour alléger le bundle.
+type Ville = { c: string; v: string };
 
 const DEFAULT_MAX_RESULTS = 30;
 
@@ -23,15 +24,22 @@ export function normalizeVille(value: string): string {
     .join(' ');
 }
 
-type IndexedVille = Ville & { normalized_ville: string };
+type IndexedVille = {
+  code_postal: string;
+  ville: string;
+  code_postal_ville: string;
+  normalized_ville: string;
+};
 
 let index: Array<IndexedVille> | null = null;
 
 function getIndex(): Array<IndexedVille> {
   if (!index) {
     index = (villes as Array<Ville>).map((item) => ({
-      ...item,
-      normalized_ville: normalizeVille(item.ville),
+      code_postal: item.c,
+      ville: item.v,
+      code_postal_ville: `${item.c} ${item.v}`,
+      normalized_ville: normalizeVille(item.v),
     }));
   }
   return index;
