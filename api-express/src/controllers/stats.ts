@@ -454,6 +454,8 @@ router.get(
           scopeDepts: [],
           departements: [],
           totals: { tuberculose: 0, pestePorcine: 0, brucellose: 0, tularemie: 0 },
+          anomalies: { total: 0, breakdown: [] },
+          sviMotifs: [],
         },
       });
       return;
