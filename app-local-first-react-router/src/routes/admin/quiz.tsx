@@ -57,6 +57,7 @@ export default function AdminQuiz() {
 
   return (
     <div className="fr-py-4w">
+      <title>Quiz | Admin | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
       <h1 className="fr-h3 fr-mb-1w">Quiz — Banque de questions</h1>
       <p className="fr-text--sm fr-mb-3w text-gray-600">
         {allQuestions.length} questions au total. Source :{' '}

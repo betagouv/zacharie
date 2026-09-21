@@ -139,13 +139,20 @@ export default function FederationTableauDeBord() {
 
   const allLoading = valo.loading || sani.loading || form.loading;
   const headerData = valo.data ?? sani.data ?? form.data;
+  const pageTitle = `${buildTitle(valo.data)} | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`;
 
   if (allLoading) {
-    return <Chargement />;
+    return (
+      <>
+        <title>{pageTitle}</title>
+        <Chargement />
+      </>
+    );
   }
 
   return (
     <div className="fr-container fr-container--fluid min-h-screen pb-12">
+      <title>{pageTitle}</title>
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center pt-8">
         <div className="fr-col-12 fr-col-lg-11">
           <header className="mb-8 flex flex-wrap items-start justify-between gap-2 px-2 md:px-0">

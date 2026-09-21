@@ -173,10 +173,12 @@ export default function NouvelleFiche() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (error) {
-    return <CantCreateNewFiche validationError={validationError} />;
-  }
-  return <Chargement />;
+  return (
+    <>
+      <title>Nouvelle fiche | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
+      {error ? <CantCreateNewFiche validationError={validationError} /> : <Chargement />}
+    </>
+  );
 }
 
 function CantCreateNewFiche({ validationError }: { validationError?: string | null }) {

@@ -84,6 +84,9 @@ const PILLARS: Pillar[] = [
 export default function ImpactMatrix() {
   return (
     <div className="mx-auto max-w-4xl space-y-8 px-4 py-8">
+      <title>
+        Matrice d'impact | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire
+      </title>
       <section className="mx-auto max-w-6xl">
         <h2 className="mb-2 text-2xl font-bold">Matrice d'impact</h2>
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">

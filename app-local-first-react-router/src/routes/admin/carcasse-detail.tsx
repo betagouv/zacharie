@@ -306,6 +306,16 @@ type CarcasseTabId = (typeof carcasseTabs)[number]['tabId'];
 
 export default function AdminCarcasseDetail() {
   const params = useParams<{ zacharie_carcasse_id: string }>();
+  return (
+    <>
+      <title>{`Carcasse ${params.zacharie_carcasse_id} | Admin | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}</title>
+      <AdminCarcasseDetailContent />
+    </>
+  );
+}
+
+function AdminCarcasseDetailContent() {
+  const params = useParams<{ zacharie_carcasse_id: string }>();
   const [carcasse, setCarcasse] = useState<CarcasseDetail | null>(null);
   const [depotEntity, setDepotEntity] = useState<DepotEntityInfo | null>(null);
   const [loading, setLoading] = useState(true);

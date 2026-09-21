@@ -53,6 +53,9 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-6 py-6">
+      <title>
+        Tableau de bord | Admin | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire
+      </title>
       <h2 className="text-xl font-bold">Tableau de bord</h2>
 
       <Tabs

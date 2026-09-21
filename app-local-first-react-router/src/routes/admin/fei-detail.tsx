@@ -64,6 +64,16 @@ type FeiTabId = (typeof feiTabs)[number]['tabId'];
 
 export default function AdminFeiDetail() {
   const params = useParams<{ fei_numero: string }>();
+  return (
+    <>
+      <title>{`Fiche ${params.fei_numero} | Admin | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}</title>
+      <AdminFeiDetailContent />
+    </>
+  );
+}
+
+function AdminFeiDetailContent() {
+  const params = useParams<{ fei_numero: string }>();
   const [fei, setFei] = useState<FeiDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedTab, setSelectedTab] = useState<FeiTabId>('infos');

@@ -31,6 +31,15 @@ interface DashboardResponse {
 }
 
 export default function MesChasses() {
+  return (
+    <>
+      <title>Tableau de bord | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
+      <MesChassesContent />
+    </>
+  );
+}
+
+function MesChassesContent() {
   const me = useMostFreshUser('MesChasses')!;
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
