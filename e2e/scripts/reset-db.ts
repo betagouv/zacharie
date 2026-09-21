@@ -55,7 +55,9 @@ export type SeedRole =
   | 'CHASSEUR_MULTI_STATUS'
   | 'CHASSEUR_MANY_FICHES'
   | 'FDC'
-  | 'FNC';
+  | 'FRC'
+  | 'FNC'
+  | 'FEDERATION_STATS';
 
 export async function resetDb(role?: SeedRole) {
   try {
