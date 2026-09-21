@@ -52,9 +52,18 @@ export default function InputCodePostalEtVille({
   const villeInputRef = useRef<HTMLInputElement>(null);
 
   // le parent peut changer l'adresse affichée : chargement asynchrone, choix d'une autre entité...
+  // chaque champ ne suit que sa propre valeur par défaut, sinon l'enregistrement du code postal
+  // effacerait la ville en cours de saisie
+  const appliedDefaults = useRef({ codePostal: defaultCodePostal, ville: defaultVille });
   useEffect(() => {
-    setCodePostal(defaultCodePostal);
-    setVille(defaultVille);
+    if (defaultCodePostal !== appliedDefaults.current.codePostal) {
+      appliedDefaults.current.codePostal = defaultCodePostal;
+      setCodePostal(defaultCodePostal);
+    }
+    if (defaultVille !== appliedDefaults.current.ville) {
+      appliedDefaults.current.ville = defaultVille;
+      setVille(defaultVille);
+    }
   }, [defaultCodePostal, defaultVille]);
 
   // la liste est recalculée à chaque changement de code postal ou de saisie : elle ne propose
