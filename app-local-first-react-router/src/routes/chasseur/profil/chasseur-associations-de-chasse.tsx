@@ -410,6 +410,8 @@ export default function MesAssociationsDeChasse() {
                         <div className="basis-3/5">
                           <InputVille
                             postCode={assoPostalCode}
+                            postCodeInputId={Prisma.EntityScalarFieldEnum.code_postal}
+                            onSelectPostCode={setAssoPostalCode}
                             trimPostCode
                             label="Ville ou commune *"
                             hintText="Exemple : Montpellier"

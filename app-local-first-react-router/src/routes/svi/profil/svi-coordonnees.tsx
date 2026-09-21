@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { Input } from '@codegouvfr/react-dsfr/Input';
@@ -12,6 +12,7 @@ import { toast } from 'react-toastify';
 
 export default function SviProfilCoordonnees() {
   const user = useUser((state) => state.user)!;
+  const [codePostal, setCodePostal] = useState(user.code_postal ?? '');
 
   const handleUserFormBlur = useCallback(
     async (event: React.FocusEvent<HTMLFormElement>) => {
@@ -127,12 +128,15 @@ export default function SviProfilCoordonnees() {
                       id: Prisma.UserScalarFieldEnum.code_postal,
                       name: Prisma.UserScalarFieldEnum.code_postal,
                       autoComplete: 'postal-code',
-                      defaultValue: user.code_postal ?? '',
+                      value: codePostal,
+                      onChange: (e) => setCodePostal(e.currentTarget.value),
                     }}
                   />
                   <div className="basis-3/5">
                     <InputVille
-                      postCode={user.code_postal ?? ''}
+                      postCode={codePostal}
+                      onSelectPostCode={setCodePostal}
+                      postCodeInputId={Prisma.UserScalarFieldEnum.code_postal}
                       trimPostCode
                       label="Ville ou commune"
                       hintText="Exemple : Montpellier"

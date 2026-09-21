@@ -76,6 +76,12 @@ export default function AdminEntity() {
     etgsRelatedWithSvi,
   } = adminEntityResponse ?? initialData;
   const entity = adminEntityResponse.entity as EntityForAdmin;
+  const [codePostal, setCodePostal] = useState(entity.code_postal ?? '');
+
+  // les coordonnées de l'entité arrivent après le premier rendu
+  useEffect(() => {
+    setCodePostal(entity.code_postal ?? '');
+  }, [entity.code_postal]);
 
   useEffect(() => {
     loadData(params.entityId!).then((response) => {
@@ -423,13 +429,19 @@ export default function AdminEntity() {
                         name: Prisma.EntityScalarFieldEnum.code_postal,
                         autoComplete: 'off',
                         required: true,
-                        defaultValue: entity.code_postal ?? '',
+                        value: codePostal,
+                        onChange: (e) => setCodePostal(e.currentTarget.value),
                         onBlur: (e) => handleSave(e.target.name, e.target.value),
                       }}
                     />
                     <div className="basis-3/5">
                       <InputVille
-                        postCode={entity.code_postal ?? ''}
+                        postCode={codePostal}
+                        onSelectPostCode={(newCodePostal) => {
+                          setCodePostal(newCodePostal);
+                          handleSave(Prisma.EntityScalarFieldEnum.code_postal, newCodePostal);
+                        }}
+                        postCodeInputId={Prisma.EntityScalarFieldEnum.code_postal}
                         key={entity.ville}
                         trimPostCode
                         label="Ville ou commune"

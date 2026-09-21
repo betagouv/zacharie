@@ -371,6 +371,8 @@ export default function MesCCGs() {
                       <div className="basis-3/5">
                         <InputVille
                           postCode={ccgPostalCode}
+                          postCodeInputId={Prisma.EntityScalarFieldEnum.code_postal}
+                          onSelectPostCode={setCCGPostalCode}
                           trimPostCode
                           label="Ville ou commune *"
                           hintText="Exemple : Montpellier"

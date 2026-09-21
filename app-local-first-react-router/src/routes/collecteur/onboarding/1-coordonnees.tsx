@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { Input } from '@codegouvfr/react-dsfr/Input';
@@ -13,6 +13,7 @@ import API from '@app/services/api';
 
 export default function CollecteurOnboardingCoordonnees() {
   const user = useUser((state) => state.user)!;
+  const [codePostal, setCodePostal] = useState(user.code_postal ?? '');
 
   const navigate = useNavigate();
 
@@ -143,12 +144,15 @@ export default function CollecteurOnboardingCoordonnees() {
                       name: Prisma.UserScalarFieldEnum.code_postal,
                       autoComplete: 'postal-code',
                       required: false,
-                      defaultValue: user.code_postal ?? '',
+                      value: codePostal,
+                      onChange: (e) => setCodePostal(e.currentTarget.value),
                     }}
                   />
                   <div className="basis-3/5">
                     <InputVille
-                      postCode={user.code_postal ?? ''}
+                      postCode={codePostal}
+                      onSelectPostCode={setCodePostal}
+                      postCodeInputId={Prisma.UserScalarFieldEnum.code_postal}
                       trimPostCode
                       label="Ville ou commune"
                       hintText="Exemple : Montpellier"

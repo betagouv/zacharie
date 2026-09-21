@@ -23,6 +23,10 @@ interface CCGNouveauProps {
   onFinish: (entity: UserEntityResponse['data']['entity']) => void;
 }
 
+// une même page peut afficher plusieurs formulaires d'entité : on préfixe les id des champs
+// pour qu'ils restent uniques dans le document
+const fieldId = (field: string) => `ccg-nouveau-${field}`;
+
 export default function CCGNouveau({ onFinish }: CCGNouveauProps) {
   const user = useUser((state) => state.user)!;
   const entities = useZustandStore((state) => state.entities);
@@ -153,7 +157,7 @@ export default function CCGNouveau({ onFinish }: CCGNouveauProps) {
             nativeInputProps={{
               type: 'text',
               placeholder: 'Exemples : 03-CCG-123, ou encore 03.564.345',
-              id: Prisma.EntityScalarFieldEnum.numero_ddecpp,
+              id: fieldId(Prisma.EntityScalarFieldEnum.numero_ddecpp),
               required: true,
               name: Prisma.EntityScalarFieldEnum.numero_ddecpp,
             }}
@@ -189,7 +193,7 @@ export default function CCGNouveau({ onFinish }: CCGNouveauProps) {
           <Input
             label="Nom usuel *"
             nativeInputProps={{
-              id: Prisma.EntityScalarFieldEnum.nom_d_usage,
+              id: fieldId(Prisma.EntityScalarFieldEnum.nom_d_usage),
               name: Prisma.EntityScalarFieldEnum.nom_d_usage,
               autoComplete: 'off',
               required: true,
@@ -199,7 +203,7 @@ export default function CCGNouveau({ onFinish }: CCGNouveauProps) {
             label="SIRET"
             hintText="Si vous n'en n'avez pas, laissez vide."
             nativeInputProps={{
-              id: Prisma.EntityScalarFieldEnum.siret,
+              id: fieldId(Prisma.EntityScalarFieldEnum.siret),
               name: Prisma.EntityScalarFieldEnum.siret,
               autoComplete: 'off',
             }}
@@ -208,7 +212,7 @@ export default function CCGNouveau({ onFinish }: CCGNouveauProps) {
             label="Numéro d'identification du CCG"
             hintText="De la forme 03-CCG-123, ou encore 03.564.345. Remplissez-le si vous le connaissez."
             nativeInputProps={{
-              id: Prisma.EntityScalarFieldEnum.numero_ddecpp,
+              id: fieldId(Prisma.EntityScalarFieldEnum.numero_ddecpp),
               name: Prisma.EntityScalarFieldEnum.numero_ddecpp,
               autoComplete: 'off',
             }}
@@ -217,7 +221,7 @@ export default function CCGNouveau({ onFinish }: CCGNouveauProps) {
             label="Adresse *"
             hintText="Indication : numéro et voie"
             nativeInputProps={{
-              id: Prisma.EntityScalarFieldEnum.address_ligne_1,
+              id: fieldId(Prisma.EntityScalarFieldEnum.address_ligne_1),
               name: Prisma.EntityScalarFieldEnum.address_ligne_1,
               autoComplete: 'off',
               required: true,
@@ -227,7 +231,7 @@ export default function CCGNouveau({ onFinish }: CCGNouveauProps) {
             label="Complément d'adresse (optionnel)"
             hintText="Indication : bâtiment, immeuble, escalier et numéro d'appartement"
             nativeInputProps={{
-              id: Prisma.EntityScalarFieldEnum.address_ligne_2,
+              id: fieldId(Prisma.EntityScalarFieldEnum.address_ligne_2),
               name: Prisma.EntityScalarFieldEnum.address_ligne_2,
               autoComplete: 'off',
             }}
@@ -238,7 +242,7 @@ export default function CCGNouveau({ onFinish }: CCGNouveauProps) {
               hintText="5 chiffres"
               className="shrink-0 md:basis-2/5"
               nativeInputProps={{
-                id: Prisma.EntityScalarFieldEnum.code_postal,
+                id: fieldId(Prisma.EntityScalarFieldEnum.code_postal),
                 name: Prisma.EntityScalarFieldEnum.code_postal,
                 autoComplete: 'off',
                 required: true,
@@ -249,11 +253,13 @@ export default function CCGNouveau({ onFinish }: CCGNouveauProps) {
             <div className="basis-3/5">
               <InputVille
                 postCode={ccgPostalCode}
+                postCodeInputId={fieldId(Prisma.EntityScalarFieldEnum.code_postal)}
+                onSelectPostCode={setCCGPostalCode}
                 trimPostCode
                 label="Ville ou commune *"
                 hintText="Exemple : Montpellier"
                 nativeInputProps={{
-                  id: Prisma.EntityScalarFieldEnum.ville,
+                  id: fieldId(Prisma.EntityScalarFieldEnum.ville),
                   name: Prisma.EntityScalarFieldEnum.ville,
                   autoComplete: 'off',
                   required: true,

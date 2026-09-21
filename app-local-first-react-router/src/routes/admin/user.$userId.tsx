@@ -124,6 +124,12 @@ export default function AdminUser() {
   const params = useParams();
   const [userResponseData, setUserResponseData] = useState<State>(initialState);
   const { user, userEntitiesRelations, officialCfei, lockout } = userResponseData;
+  const [codePostal, setCodePostal] = useState(user.code_postal ?? '');
+
+  // les coordonnées de l'utilisateur arrivent après le premier rendu
+  useEffect(() => {
+    setCodePostal(user.code_postal ?? '');
+  }, [user.code_postal]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -670,12 +676,15 @@ export default function AdminUser() {
                             id: Prisma.UserScalarFieldEnum.code_postal,
                             name: Prisma.UserScalarFieldEnum.code_postal,
                             autoComplete: 'off',
-                            defaultValue: user.code_postal ?? '',
+                            value: codePostal,
+                            onChange: (e) => setCodePostal(e.currentTarget.value),
                           }}
                         />
                         <InputVille
                           key={user.ville}
-                          postCode={user.code_postal ?? ''}
+                          postCode={codePostal}
+                          onSelectPostCode={setCodePostal}
+                          postCodeInputId={Prisma.UserScalarFieldEnum.code_postal}
                           trimPostCode
                           label="Ville ou commune"
                           hintText="Exemple : Montpellier"
