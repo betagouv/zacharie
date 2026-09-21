@@ -1,6 +1,9 @@
 export default function Accessibility() {
   return (
     <main className="mx-auto max-w-prose space-y-8 px-4 py-8">
+      <title>
+        Déclaration d'accessibilité | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire
+      </title>
       <h1 className="mb-6 text-3xl font-bold">Déclaration d'accessibilité</h1>
 
       <section className="space-y-4">

@@ -166,6 +166,9 @@ export default function AdminCarcassesIntermediaires() {
 
   return (
     <div className="md:-ml-4 md:flex">
+      <title>
+        Carcasses | Admin | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire
+      </title>
       <FiltersSidebar
         storageKey="admin-carcasses-filters"
         activeFilterCount={activeFilterCount}

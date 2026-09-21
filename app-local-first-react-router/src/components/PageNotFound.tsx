@@ -69,6 +69,9 @@ export default function PageNotFound() {
       className="flex min-h-[80vh] items-center justify-center"
     >
       <div className="fr-container fr-py-7w flex flex-col items-center text-center">
+        <title>
+          Page non trouvée | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire
+        </title>
         <svg
           xmlns="http://www.w3.org/2000/svg"
           className="fr-artwork mb-8 w-48 md:w-64"

@@ -14,6 +14,15 @@ interface CCGResponse {
 }
 
 export default function ChasseurCCGEdit() {
+  return (
+    <>
+      <title>Chambre froide | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
+      <ChasseurCCGEditContent />
+    </>
+  );
+}
+
+function ChasseurCCGEditContent() {
   const { entityId } = useParams<{ entityId: string }>();
   const navigate = useNavigate();
   const [ccg, setCcg] = useState<Entity | null>(null);

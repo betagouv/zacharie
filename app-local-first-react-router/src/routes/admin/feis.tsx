@@ -108,6 +108,7 @@ export default function AdminFeis() {
 
   return (
     <div className="md:-ml-4 md:flex">
+      <title>Fiches | Admin | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire</title>
       <FiltersSidebar
         storageKey="admin-feis-filters"
         activeFilterCount={activeFilterCount}
