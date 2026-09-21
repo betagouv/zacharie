@@ -1,18 +1,18 @@
 import fs from 'fs';
 import path from 'path';
 
-// Read the JSON file
+// Transforme le référentiel brut des communes ({ code_postal, ville }) vers le format compact
+// stocké dans villes.json : clés abrégées (c = code postal, v = ville) et écriture sans
+// indentation, car le fichier est importé dans le bundle (~39 000 communes, chaque caractère
+// compte). `code_postal_ville` n'est pas stocké : utils/search-ville.ts le recompose à la lecture.
 const filePath = path.join('./villes.json');
 const jsonData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
 
-// Modify the data
 const modifiedData = jsonData.map((item) => ({
-  ...item,
-  code_postal: item.code_postal.toString().padStart(5, '0'),
-  code_postal_ville: `${item.code_postal.toString().padStart(5, '0')} ${item.ville}`,
+  c: item.code_postal.toString().padStart(5, '0'),
+  v: item.ville,
 }));
 
-// Write the modified data back to the file
-fs.writeFileSync(filePath, JSON.stringify(modifiedData, null, 2));
+fs.writeFileSync(filePath, JSON.stringify(modifiedData));
 
 console.log('File updated successfully');
