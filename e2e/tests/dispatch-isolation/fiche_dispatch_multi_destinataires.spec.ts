@@ -1,6 +1,7 @@
 import { test, expect } from '../../utils/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
+import { logoutAndConnect } from '../../utils/logout-and-connect';
 import { ajouterVenteDon } from '../../utils/vente-don';
 
 test.use({
@@ -40,11 +41,7 @@ test('Dispatch 4 carcasses vers 2 destinataires ETG', async ({ page, context }) 
   await expect(page.getByText(/ETG 2.*2 carcasse/)).toBeVisible();
 
   // 10. Connecter en tant que ETG 1 et vérifier qu'il ne voit que 2 carcasses
-  await page.getByRole('button', { name: 'Menu' }).click();
-  await page.getByRole('button', { name: 'Déconnexion' }).click();
-
-  await page.goto('http://localhost:3290/app/connexion', { timeout: 10000 });
-  await connectWith(page, 'etg-1@example.fr');
+  await logoutAndConnect(page, 'etg-1@example.fr');
   await page.getByRole('link', { name: feiId }).click();
   // Verify the section title shows "Carcasses (2)" not "Carcasses (4)"
   await expect(page.getByText('Carcasses (2)')).toBeVisible();
@@ -60,10 +57,7 @@ test('Dispatch 4 carcasses vers 2 destinataires ETG', async ({ page, context }) 
   await expect(page.getByText('Carcasses (2)')).toBeVisible();
 
   // 11. Connecter en tant que ETG 2 et vérifier qu'il ne voit que 2 carcasses
-  await page.getByRole('button', { name: 'Menu' }).click();
-  await page.getByRole('button', { name: 'Déconnexion' }).click();
-  await page.goto('http://localhost:3290/app/connexion', { timeout: 10000 });
-  await connectWith(page, 'etg-2@example.fr');
+  await logoutAndConnect(page, 'etg-2@example.fr');
   await page.getByRole('link', { name: feiId }).click();
   await expect(page.getByText('Carcasses (2)')).toBeVisible();
   const priseEnChargeBtn2 = page.getByRole('button', { name: 'Prendre en charge' });
