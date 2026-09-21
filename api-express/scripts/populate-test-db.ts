@@ -375,6 +375,22 @@ Christine
         telephone: '0606060610',
         onboarded_at: dayjs().toDate(),
       },
+      // Périmètre multi-départemental (régional) : ni un seul département, ni les 101.
+      {
+        id: await createUserId(),
+        email: 'frc@example.fr',
+        roles: [UserRoles.FRC],
+        activated: true,
+        activated_at: dayjs().toDate(),
+        prenom: 'Nicolas',
+        nom_de_famille: 'FRC Auvergne-Rhône-Alpes',
+        addresse_ligne_1: '1 rue de la région',
+        code_postal: '07000',
+        ville: 'Privas',
+        telephone: '0606060622',
+        onboarded_at: dayjs().toDate(),
+        scope_departements_codes: ['07', '75'],
+      },
     ],
   });
 
@@ -1010,6 +1026,55 @@ Christine
       });
       console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (ETG all refused to SVI)`);
     }
+    // Tableau de bord des fédérations : trois fiches de la saison en cours, toutes prises en
+    // charge par l'ETG (circuit agréé), chacune avec 3 carcasses grand gibier et 1 lot de
+    // 10 pigeons.
+    //   - Allier (03) et Ardèche (07) par Marie Martin → comptées
+    //   - Allier (03) par le compte admin Zacharie → exclue (fiche de test / tuto vidéo)
+    // La fiche admin a exactement la même forme que celle de l'Allier : si l'exclusion des
+    // comptes admin régresse, les chiffres de l'Allier doublent.
+    if ((role as string) === 'FEDERATION_STATS') {
+      const adminUserId = users.find((u) => u.email === 'admin@example.fr')?.id ?? '';
+
+      const feiAllier = await prisma.fei.create({ data: feiFederationAllier });
+      await prisma.carcasse.createMany({ data: getCarcasses(feiAllier, ownershipTakenChargeByEtg) });
+      // Une carcasse grand gibier saisie pour un motif BPH → taux de saisie GG 33,3 % sur l'Allier.
+      await prisma.carcasse.update({
+        where: { zacharie_carcasse_id: `${feiAllier.numero}_MM-001-001` },
+        data: {
+          svi_carcasse_status: CarcasseStatus.SAISIE_TOTALE,
+          svi_carcasse_status_set_at: dayjs().toDate(),
+          svi_ipm2_lesions_ou_motifs: ['Souillures telluriques'],
+        },
+      });
+
+      const feiArdeche = await prisma.fei.create({ data: feiFederationArdeche });
+      await prisma.carcasse.createMany({ data: getCarcasses(feiArdeche, ownershipTakenChargeByEtg) });
+
+      const feiAdmin = await prisma.fei.create({
+        data: {
+          ...feiFederationAllier,
+          numero: 'ZACH-20250707-QZ6E0-400003',
+          created_by_user_id: adminUserId,
+          examinateur_initial_user_id: adminUserId,
+          premier_detenteur_user_id: adminUserId,
+          premier_detenteur_name_cache: 'Alice Admin',
+        },
+      });
+      await prisma.carcasse.createMany({ data: getCarcasses(feiAdmin, ownershipTakenChargeByEtg) });
+      await prisma.carcasse.updateMany({
+        where: { fei_numero: feiAdmin.numero, type: CarcasseType.GROS_GIBIER },
+        data: {
+          svi_carcasse_status: CarcasseStatus.SAISIE_TOTALE,
+          svi_carcasse_status_set_at: dayjs().toDate(),
+          svi_ipm2_lesions_ou_motifs: ['Souillures telluriques'],
+        },
+      });
+
+      console.log(
+        `FEDERATION_STATS seeded: ${feiAllier.numero} (03), ${feiArdeche.numero} (07), ${feiAdmin.numero} (03, admin, exclue)`
+      );
+    }
   }
 
   console.log('Database populated successfully');
@@ -1279,6 +1344,30 @@ const ownershipRefusedByEtg: CarcasseOwnership = {
   intermediaire_closed_by_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
   latest_intermediaire_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
   latest_intermediaire_name_cache: 'ETG 1',
+};
+
+// Tableau de bord des fédérations (FDC / FRC / FNC) : les statistiques ne portent que sur la
+// saison de chasse en cours. Les autres fixtures sont datées du 07/07/2025 et n'y apparaissent
+// donc jamais — d'où ces fiches datées d'aujourd'hui. Le segment date du numéro de fiche est
+// inerte (rien ne le parse), seul `date_mise_a_mort` compte pour les statistiques.
+const feiFederationAllier: Prisma.FeiUncheckedCreateInput = {
+  numero: 'ZACH-20250707-QZ6E0-400001',
+  date_mise_a_mort: dayjs().toDate(),
+  commune_mise_a_mort: '03510 CHASSENARD',
+  created_by_user_id: 'QZ6E0',
+  examinateur_initial_user_id: 'QZ6E0',
+  examinateur_initial_approbation_mise_sur_le_marche: true,
+  examinateur_initial_date_approbation_mise_sur_le_marche: dayjs().toDate(),
+  heure_mise_a_mort_premiere_carcasse: '12:12',
+  heure_evisceration_derniere_carcasse: '12:14',
+  premier_detenteur_user_id: '0Y545',
+  premier_detenteur_name_cache: 'Pierre Petit',
+};
+
+const feiFederationArdeche: Prisma.FeiUncheckedCreateInput = {
+  ...feiFederationAllier,
+  numero: 'ZACH-20250707-QZ6E0-400002',
+  commune_mise_a_mort: '07430 DAVEZIEUX',
 };
 
 function getCarcasses(

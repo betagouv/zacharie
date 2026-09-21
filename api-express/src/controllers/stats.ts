@@ -5,7 +5,7 @@ const router: express.Router = express.Router();
 import { RequestWithUser } from '~/types/request';
 import { getIframeUrl } from '~/service/metabase-embed';
 import prisma from '~/prisma';
-import { CarcasseType, CarcasseStatus, DepotType, FeiOwnerRole, UserRoles } from '@prisma/client';
+import { CarcasseType, CarcasseStatus, DepotType, FeiOwnerRole, Prisma, UserRoles } from '@prisma/client';
 import validateUser from '~/middlewares/validateUser';
 import departementsRegions from '~/data/departements-regions.json';
 import {
@@ -29,6 +29,16 @@ const departementsLabels = (departementsRegions as { departements: Record<string
 const NATIONAL_SEIZURE_RATE_BIG_GAME = 13.75; // % taux de saisie national grand gibier sauvage
 const NATIONAL_BPH_RATE_BIG_GAME = 5.49; // % taux BPH national grand gibier
 const NATIONAL_GG_TAUX_SAISIE_25_26 = 23.9; // % taux de saisie national GG saison 25-26 (valeur officielle)
+
+// Les comptes admin Zacharie servent aux fiches de test et aux tutos vidéo : leurs fiches
+// sont exclues des statistiques fédérations (valorisation, sanitaire, formation).
+// `isNot` matche aussi une relation nulle : une fiche sans examinateur ou sans premier
+// détenteur reste comptée.
+const EXCLUDE_ADMIN_FEI_WHERE: Prisma.FeiWhereInput = {
+  FeiCreatedByUser: { isNot: { isZacharieAdmin: true } },
+  FeiExaminateurInitialUser: { isNot: { isZacharieAdmin: true } },
+  FeiPremierDetenteurUser: { isNot: { isZacharieAdmin: true } },
+};
 
 router.get(
   '/mes-chasses',
@@ -238,6 +248,7 @@ router.get(
       where: {
         deleted_at: null,
         date_mise_a_mort: { gte: seasonStart.toDate(), lte: seasonEnd.toDate() },
+        Fei: EXCLUDE_ADMIN_FEI_WHERE,
       },
       include: {
         Fei: { select: { commune_mise_a_mort: true } },
@@ -454,6 +465,7 @@ router.get(
       where: {
         deleted_at: null,
         date_mise_a_mort: { gte: seasonStart.toDate(), lte: seasonEnd.toDate() },
+        Fei: EXCLUDE_ADMIN_FEI_WHERE,
       },
       select: {
         type: true,
@@ -602,6 +614,7 @@ router.get(
         date_mise_a_mort: { gte: seasonStart.toDate(), lte: seasonEnd.toDate() },
         examinateur_initial_user_id: { not: null },
         examinateur_initial_date_approbation_mise_sur_le_marche: { not: null },
+        ...EXCLUDE_ADMIN_FEI_WHERE,
       },
       select: {
         examinateur_initial_user_id: true,
@@ -626,6 +639,7 @@ router.get(
         deleted_at: null,
         date_mise_a_mort: { gte: seasonStart.toDate(), lte: seasonEnd.toDate() },
         type: CarcasseType.GROS_GIBIER,
+        Fei: EXCLUDE_ADMIN_FEI_WHERE,
       },
       select: {
         type: true,
