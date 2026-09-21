@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Badge } from '@codegouvfr/react-dsfr/Badge';
@@ -11,6 +11,8 @@ import CheckboxFilterSection from '@app/components/CheckboxFilterSection';
 import API from '@app/services/api';
 
 import ConnexionButton from '@app/components/ConnexionButton';
+
+type AdminUser = NonNullable<AdminUsersResponse['data']['users']>[number];
 
 type CfeiValidationStatus = 'valid' | 'invalid' | 'missing';
 
@@ -40,10 +42,147 @@ function StatusIcon({
   );
 }
 
+// Ligne mémoïsée : une frappe dans la recherche ne refabrique que les lignes qui changent.
+const UserRow = memo(function UserRow({
+  user,
+  cfeiStatus,
+  officialDetails,
+  showCfeiShield,
+  onActivate,
+}: {
+  user: AdminUser;
+  cfeiStatus: CfeiValidationStatus | null;
+  officialDetails: OfficialCfei | null;
+  showCfeiShield: boolean;
+  onActivate: (userId: string) => void;
+}) {
+  const isChasseur = user.roles?.includes(UserRoles.CHASSEUR);
+  const fullName =
+    [user.nom_de_famille, user.prenom].filter(Boolean).join(' ') || user.email || 'Voir le détail';
+  const cfeiTooltip =
+    cfeiStatus === 'valid'
+      ? `CFEI validé${
+          officialDetails
+            ? ` : ${officialDetails.prenom} ${officialDetails.nom}${
+                officialDetails.departement ? ` — ${officialDetails.departement}` : ''
+              }`
+            : ''
+        }`
+      : cfeiStatus === 'invalid'
+        ? 'CFEI non trouvé'
+        : 'CFEI non renseigné';
+
+  return (
+    <div className="border-b border-gray-200 px-2 py-1.5 hover:bg-gray-50">
+      {/* Ligne 1 : identité + pictos statut (à gauche) + dates + actions (à droite) */}
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+        <Link
+          to={`/app/admin/user/${user.id}`}
+          className="max-w-[14rem] truncate text-sm font-medium no-underline"
+          title={fullName}
+        >
+          {fullName}
+        </Link>
+        {user.isZacharieAdmin && (
+          <span
+            className="fr-icon-admin-fill fr-icon--sm text-action-high-blue-france shrink-0"
+            title="Administrateur"
+            aria-label="Administrateur"
+            role="img"
+          />
+        )}
+        {user.roles.map((role) => (
+          <Badge
+            key={role}
+            severity="info"
+            small
+          >
+            {role}
+          </Badge>
+        ))}
+        {/* Cluster de pictos statut */}
+        <span className="flex items-center gap-1.5">
+          {user.deleted_at && (
+            <StatusIcon
+              icon="fr-icon-delete-bin-fill"
+              color="red"
+              title="Supprimé"
+            />
+          )}
+          <StatusIcon
+            icon="fr-icon-account-circle-fill"
+            color={user.activated ? 'green' : 'red'}
+            title={user.activated ? 'Activé' : 'Inactif'}
+          />
+          <StatusIcon
+            icon="fr-icon-road-map-fill"
+            color={user.onboarded_at ? 'green' : 'orange'}
+            title={user.onboarded_at ? 'Onboardé' : 'Non onboardé'}
+          />
+          {isChasseur && (
+            <StatusIcon
+              icon="fr-icon-award-fill"
+              color={user.est_forme_a_l_examen_initial ? 'green' : 'red'}
+              title={user.est_forme_a_l_examen_initial ? 'Formé EI' : 'Non formé EI'}
+            />
+          )}
+          {isChasseur && showCfeiShield && (
+            <StatusIcon
+              icon="fr-icon-shield-fill"
+              color={cfeiStatus === 'valid' ? 'green' : cfeiStatus === 'invalid' ? 'red' : 'grey'}
+              title={cfeiTooltip}
+            />
+          )}
+        </span>
+        <span className="ml-auto flex items-center gap-2">
+          <span
+            className="text-xs whitespace-nowrap text-gray-500"
+            suppressHydrationWarning
+          >
+            Créé {dayjs(user.created_at).format('DD/MM/YY')}
+            {user.last_login_at && ` · Vu ${dayjs(user.last_login_at).format('DD/MM/YY')}`}
+          </span>
+          {!user.activated && !user.deleted_at && isChasseur && (
+            <Button
+              size="small"
+              priority="primary"
+              onClick={() => onActivate(user.id)}
+            >
+              Activer
+            </Button>
+          )}
+          <ConnexionButton
+            user={user}
+            type="tertiary no outline"
+          />
+        </span>
+      </div>
+      {/* Ligne 2 : coordonnées + CFEI (gris) */}
+      <div className="flex flex-wrap items-center gap-x-2 text-xs text-gray-500">
+        {user.email && (
+          <span
+            className="max-w-[18rem] truncate"
+            title={user.email}
+          >
+            {user.email}
+          </span>
+        )}
+        {user.telephone && <span>· {user.telephone}</span>}
+        {(user.code_postal || user.ville) && (
+          <span>· {[user.code_postal, user.ville].filter(Boolean).join(' ')}</span>
+        )}
+        {isChasseur && <span>· CFEI {user.numero_cfei || <span className="text-gray-400">—</span>}</span>}
+      </div>
+    </div>
+  );
+});
+
 export default function AdminUsers() {
-  const [users, setUsers] = useState<NonNullable<AdminUsersResponse['data']['users']>>([]);
+  const [users, setUsers] = useState<Array<AdminUser>>([]);
   const [officialCfeis, setOfficialCfeis] = useState<Array<OfficialCfei>>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  // Le champ affiche la frappe tout de suite ; la liste se recalcule après, en tâche de fond.
+  const deferredSearchQuery = useDeferredValue(searchQuery);
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const [selectedCfeiStatuses, setSelectedCfeiStatuses] = useState<string[]>([]);
   const [selectedCfeiValidations, setSelectedCfeiValidations] = useState<string[]>([]);
@@ -65,15 +204,21 @@ export default function AdminUsers() {
     return map;
   }, [officialCfeis]);
 
-  const getCfeiValidationStatus = (user: { numero_cfei: string | null }): CfeiValidationStatus => {
-    if (!user.numero_cfei) return 'missing';
-    return officialCfeiMap.has(user.numero_cfei.toUpperCase()) ? 'valid' : 'invalid';
-  };
+  const getCfeiValidationStatus = useCallback(
+    (user: { numero_cfei: string | null }): CfeiValidationStatus => {
+      if (!user.numero_cfei) return 'missing';
+      return officialCfeiMap.has(user.numero_cfei.toUpperCase()) ? 'valid' : 'invalid';
+    },
+    [officialCfeiMap]
+  );
 
-  const getOfficialCfeiDetails = (user: { numero_cfei: string | null }): OfficialCfei | null => {
-    if (!user.numero_cfei) return null;
-    return officialCfeiMap.get(user.numero_cfei.toUpperCase()) || null;
-  };
+  const getOfficialCfeiDetails = useCallback(
+    (user: { numero_cfei: string | null }): OfficialCfei | null => {
+      if (!user.numero_cfei) return null;
+      return officialCfeiMap.get(user.numero_cfei.toUpperCase()) || null;
+    },
+    [officialCfeiMap]
+  );
 
   const roleOptions = useMemo(() => {
     const rolesSet = new Set<UserRoles>();
@@ -95,99 +240,135 @@ export default function AdminUsers() {
     return options;
   }, [users]);
 
-  const filteredUsers = users.filter((user) => {
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      const searchableText = [
-        user.prenom,
-        user.nom_de_famille,
-        user.email,
-        user.telephone,
-        user.addresse_ligne_1,
-        user.addresse_ligne_2,
-        user.code_postal,
-        user.ville,
-        user.numero_cfei,
-        ...user.roles,
-      ]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase();
-      if (!searchableText.includes(query)) {
+  // Texte de recherche fabriqué une fois par utilisateur, pas à chaque frappe.
+  const searchableTextByUserId = useMemo(() => {
+    const map = new Map<string, string>();
+    users.forEach((user) => {
+      map.set(
+        user.id,
+        [
+          user.prenom,
+          user.nom_de_famille,
+          user.email,
+          user.telephone,
+          user.addresse_ligne_1,
+          user.addresse_ligne_2,
+          user.code_postal,
+          user.ville,
+          user.numero_cfei,
+          ...user.roles,
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase()
+      );
+    });
+    return map;
+  }, [users]);
+
+  const filteredUsers = useMemo(() => {
+    const query = deferredSearchQuery.trim().toLowerCase();
+    return users.filter((user) => {
+      if (query && !searchableTextByUserId.get(user.id)?.includes(query)) {
         return false;
       }
-    }
-    if (selectedRoles.length) {
-      const match = selectedRoles.some((role) => {
-        if (role === 'ETG_TRANSPORT') {
-          return user.roles?.includes(UserRoles.ETG) && user.etg_role === UserEtgRoles.TRANSPORT;
-        }
-        if (role === 'ETG_RECEPTION') {
-          return user.roles?.includes(UserRoles.ETG) && user.etg_role === UserEtgRoles.RECEPTION;
-        }
-        return user.roles?.includes(role as UserRoles);
-      });
-      if (!match) return false;
-    }
-    if (selectedCfeiStatuses.length) {
-      const match = selectedCfeiStatuses.some((status) => {
-        if (status === 'with_cfei') return !!user.numero_cfei;
-        if (status === 'without_cfei') return !user.numero_cfei;
-        if (status === 'trained') return user.est_forme_a_l_examen_initial;
-        if (status === 'not_trained') return !user.est_forme_a_l_examen_initial;
-        return false;
-      });
-      if (!match) return false;
-    }
-    if (selectedOnboardingStatuses.length) {
-      const match = selectedOnboardingStatuses.some((status) => {
-        if (status === 'completed') return !!user.onboarded_at;
-        if (status === 'incomplete') return !user.onboarded_at;
-        return false;
-      });
-      if (!match) return false;
-    }
-    if (selectedCfeiValidations.length && officialCfeis.length > 0) {
-      if (!selectedCfeiValidations.includes(getCfeiValidationStatus(user))) return false;
-    }
-    return true;
-  });
+      if (selectedRoles.length) {
+        const match = selectedRoles.some((role) => {
+          if (role === 'ETG_TRANSPORT') {
+            return user.roles?.includes(UserRoles.ETG) && user.etg_role === UserEtgRoles.TRANSPORT;
+          }
+          if (role === 'ETG_RECEPTION') {
+            return user.roles?.includes(UserRoles.ETG) && user.etg_role === UserEtgRoles.RECEPTION;
+          }
+          return user.roles?.includes(role as UserRoles);
+        });
+        if (!match) return false;
+      }
+      if (selectedCfeiStatuses.length) {
+        const match = selectedCfeiStatuses.some((status) => {
+          if (status === 'with_cfei') return !!user.numero_cfei;
+          if (status === 'without_cfei') return !user.numero_cfei;
+          if (status === 'trained') return user.est_forme_a_l_examen_initial;
+          if (status === 'not_trained') return !user.est_forme_a_l_examen_initial;
+          return false;
+        });
+        if (!match) return false;
+      }
+      if (selectedOnboardingStatuses.length) {
+        const match = selectedOnboardingStatuses.some((status) => {
+          if (status === 'completed') return !!user.onboarded_at;
+          if (status === 'incomplete') return !user.onboarded_at;
+          return false;
+        });
+        if (!match) return false;
+      }
+      if (selectedCfeiValidations.length && officialCfeis.length > 0) {
+        if (!selectedCfeiValidations.includes(getCfeiValidationStatus(user))) return false;
+      }
+      return true;
+    });
+  }, [
+    users,
+    searchableTextByUserId,
+    deferredSearchQuery,
+    selectedRoles,
+    selectedCfeiStatuses,
+    selectedOnboardingStatuses,
+    selectedCfeiValidations,
+    officialCfeis.length,
+    getCfeiValidationStatus,
+  ]);
 
   // Le filtre Statut s'applique par-dessus les filtres de base. Sans statut coché, on cache les supprimés.
-  const statusFilteredUsers = filteredUsers.filter((user) => {
-    if (selectedStatuses.length) {
-      return selectedStatuses.some((status) => {
-        if (status === 'activated') return user.activated && !user.deleted_at;
-        if (status === 'deactivated') return !user.activated && !user.deleted_at;
-        if (status === 'deleted') return !!user.deleted_at;
-        return false;
-      });
-    }
-    return !user.deleted_at;
-  });
+  const statusFilteredUsers = useMemo(() => {
+    return filteredUsers.filter((user) => {
+      if (selectedStatuses.length) {
+        return selectedStatuses.some((status) => {
+          if (status === 'activated') return user.activated && !user.deleted_at;
+          if (status === 'deactivated') return !user.activated && !user.deleted_at;
+          if (status === 'deleted') return !!user.deleted_at;
+          return false;
+        });
+      }
+      return !user.deleted_at;
+    });
+  }, [filteredUsers, selectedStatuses]);
 
-  const sortedUsers = [...statusFilteredUsers].sort((a, b) => {
-    if (sortBy === 'name_asc' || sortBy === 'name_desc') {
-      const nameA = ([a.nom_de_famille, a.prenom].filter(Boolean).join(' ') || a.email || '').toLowerCase();
-      const nameB = ([b.nom_de_famille, b.prenom].filter(Boolean).join(' ') || b.email || '').toLowerCase();
-      const cmp = nameA.localeCompare(nameB, 'fr');
-      return sortBy === 'name_asc' ? cmp : -cmp;
-    }
-    if (sortBy === 'created_asc' || sortBy === 'created_desc') {
-      const cmp = dayjs(a.created_at).valueOf() - dayjs(b.created_at).valueOf();
-      return sortBy === 'created_asc' ? cmp : -cmp;
-    }
-    if (sortBy === 'last_seen_asc' || sortBy === 'last_seen_desc') {
-      const aSeen = a.last_login_at ? dayjs(a.last_login_at).valueOf() : null;
-      const bSeen = b.last_login_at ? dayjs(b.last_login_at).valueOf() : null;
-      if (aSeen === null && bSeen === null) return 0;
-      if (aSeen === null) return 1;
-      if (bSeen === null) return -1;
-      const cmp = aSeen - bSeen;
-      return sortBy === 'last_seen_asc' ? cmp : -cmp;
-    }
-    return 0;
-  });
+  const sortedUsers = useMemo(() => {
+    return [...statusFilteredUsers].sort((a, b) => {
+      if (sortBy === 'name_asc' || sortBy === 'name_desc') {
+        const nameA = ([a.nom_de_famille, a.prenom].filter(Boolean).join(' ') || a.email || '').toLowerCase();
+        const nameB = ([b.nom_de_famille, b.prenom].filter(Boolean).join(' ') || b.email || '').toLowerCase();
+        const cmp = nameA.localeCompare(nameB, 'fr');
+        return sortBy === 'name_asc' ? cmp : -cmp;
+      }
+      if (sortBy === 'created_asc' || sortBy === 'created_desc') {
+        const cmp = dayjs(a.created_at).valueOf() - dayjs(b.created_at).valueOf();
+        return sortBy === 'created_asc' ? cmp : -cmp;
+      }
+      if (sortBy === 'last_seen_asc' || sortBy === 'last_seen_desc') {
+        const aSeen = a.last_login_at ? dayjs(a.last_login_at).valueOf() : null;
+        const bSeen = b.last_login_at ? dayjs(b.last_login_at).valueOf() : null;
+        if (aSeen === null && bSeen === null) return 0;
+        if (aSeen === null) return 1;
+        if (bSeen === null) return -1;
+        const cmp = aSeen - bSeen;
+        return sortBy === 'last_seen_asc' ? cmp : -cmp;
+      }
+      return 0;
+    });
+  }, [statusFilteredUsers, sortBy]);
+
+  const onActivate = useCallback((userId: string) => {
+    API.post({
+      path: `admin/user/${userId}`,
+      body: { activated: 'true' },
+    }).then((res) => {
+      if (res.ok) {
+        setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, activated: true } : u)));
+      }
+    });
+  }, []);
 
   useEffect(() => {
     Promise.all([
@@ -236,6 +417,9 @@ export default function AdminUsers() {
             <input
               type="search"
               placeholder="Nom, email, tél, CFEI..."
+              autoComplete="off"
+              data-1p-ignore
+              data-lpignore="true"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full rounded border border-gray-300 py-2 pr-3 pl-10 text-sm transition-colors outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
@@ -323,143 +507,15 @@ export default function AdminUsers() {
           <div className="flex flex-col bg-white">
             {sortedUsers.map((user) => {
               const isChasseur = user.roles?.includes(UserRoles.CHASSEUR);
-              const cfeiStatus = isChasseur ? getCfeiValidationStatus(user) : null;
-              const officialDetails = isChasseur ? getOfficialCfeiDetails(user) : null;
-              const fullName =
-                [user.nom_de_famille, user.prenom].filter(Boolean).join(' ') ||
-                user.email ||
-                'Voir le détail';
-              const cfeiTooltip =
-                cfeiStatus === 'valid'
-                  ? `CFEI validé${
-                      officialDetails
-                        ? ` : ${officialDetails.prenom} ${officialDetails.nom}${
-                            officialDetails.departement ? ` — ${officialDetails.departement}` : ''
-                          }`
-                        : ''
-                    }`
-                  : cfeiStatus === 'invalid'
-                    ? 'CFEI non trouvé'
-                    : 'CFEI non renseigné';
-
               return (
-                <div
+                <UserRow
                   key={user.id}
-                  className="border-b border-gray-200 px-2 py-1.5 hover:bg-gray-50"
-                >
-                  {/* Ligne 1 : identité + pictos statut (à gauche) + dates + actions (à droite) */}
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                    <Link
-                      to={`/app/admin/user/${user.id}`}
-                      className="max-w-[14rem] truncate text-sm font-medium no-underline"
-                      title={fullName}
-                    >
-                      {fullName}
-                    </Link>
-                    {user.isZacharieAdmin && (
-                      <span
-                        className="fr-icon-admin-fill fr-icon--sm text-action-high-blue-france shrink-0"
-                        title="Administrateur"
-                        aria-label="Administrateur"
-                        role="img"
-                      />
-                    )}
-                    {user.roles.map((role) => (
-                      <Badge
-                        key={role}
-                        severity="info"
-                        small
-                      >
-                        {role}
-                      </Badge>
-                    ))}
-                    {/* Cluster de pictos statut */}
-                    <span className="flex items-center gap-1.5">
-                      {user.deleted_at && (
-                        <StatusIcon
-                          icon="fr-icon-delete-bin-fill"
-                          color="red"
-                          title="Supprimé"
-                        />
-                      )}
-                      <StatusIcon
-                        icon="fr-icon-account-circle-fill"
-                        color={user.activated ? 'green' : 'red'}
-                        title={user.activated ? 'Activé' : 'Inactif'}
-                      />
-                      <StatusIcon
-                        icon="fr-icon-road-map-fill"
-                        color={user.onboarded_at ? 'green' : 'orange'}
-                        title={user.onboarded_at ? 'Onboardé' : 'Non onboardé'}
-                      />
-                      {isChasseur && (
-                        <StatusIcon
-                          icon="fr-icon-award-fill"
-                          color={user.est_forme_a_l_examen_initial ? 'green' : 'red'}
-                          title={user.est_forme_a_l_examen_initial ? 'Formé EI' : 'Non formé EI'}
-                        />
-                      )}
-                      {isChasseur && officialCfeis.length > 0 && (
-                        <StatusIcon
-                          icon="fr-icon-shield-fill"
-                          color={cfeiStatus === 'valid' ? 'green' : cfeiStatus === 'invalid' ? 'red' : 'grey'}
-                          title={cfeiTooltip}
-                        />
-                      )}
-                    </span>
-                    <span className="ml-auto flex items-center gap-2">
-                      <span
-                        className="text-xs whitespace-nowrap text-gray-500"
-                        suppressHydrationWarning
-                      >
-                        Créé {dayjs(user.created_at).format('DD/MM/YY')}
-                        {user.last_login_at && ` · Vu ${dayjs(user.last_login_at).format('DD/MM/YY')}`}
-                      </span>
-                      {!user.activated && !user.deleted_at && isChasseur && (
-                        <Button
-                          size="small"
-                          priority="primary"
-                          onClick={() => {
-                            API.post({
-                              path: `admin/user/${user.id}`,
-                              body: { activated: 'true' },
-                            }).then((res) => {
-                              if (res.ok) {
-                                setUsers((prev) =>
-                                  prev.map((u) => (u.id === user.id ? { ...u, activated: true } : u))
-                                );
-                              }
-                            });
-                          }}
-                        >
-                          Activer
-                        </Button>
-                      )}
-                      <ConnexionButton
-                        user={user}
-                        type="tertiary no outline"
-                      />
-                    </span>
-                  </div>
-                  {/* Ligne 2 : coordonnées + CFEI (gris) */}
-                  <div className="flex flex-wrap items-center gap-x-2 text-xs text-gray-500">
-                    {user.email && (
-                      <span
-                        className="max-w-[18rem] truncate"
-                        title={user.email}
-                      >
-                        {user.email}
-                      </span>
-                    )}
-                    {user.telephone && <span>· {user.telephone}</span>}
-                    {(user.code_postal || user.ville) && (
-                      <span>· {[user.code_postal, user.ville].filter(Boolean).join(' ')}</span>
-                    )}
-                    {isChasseur && (
-                      <span>· CFEI {user.numero_cfei || <span className="text-gray-400">—</span>}</span>
-                    )}
-                  </div>
-                </div>
+                  user={user}
+                  cfeiStatus={isChasseur ? getCfeiValidationStatus(user) : null}
+                  officialDetails={isChasseur ? getOfficialCfeiDetails(user) : null}
+                  showCfeiShield={officialCfeis.length > 0}
+                  onActivate={onActivate}
+                />
               );
             })}
           </div>
