@@ -3,7 +3,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { EntityTypes, EntityRelationType, Prisma, Entity } from '@prisma/client';
-import InputVille from '@app/components/InputVille';
+import InputCodePostalEtVille from '@app/components/InputCodePostalEtVille';
 import type { UserConnexionResponse } from '@api/src/types/responses';
 import useUser from '@app/zustand/user';
 import API from '@app/services/api';
@@ -51,7 +51,6 @@ export default function MesCCGs() {
   const [explicitelySaidNoCCG, setExplicitelySaidNoCCG] = useState(false);
   const [newCCGExpanded, setNewCCGExpanded] = useState(false);
   const [registerOneMoreCCG, setRegisterOneMoreCCG] = useState(false);
-  const [ccgPostalCode, setCCGPostalCode] = useState('');
   const handleNewCCGSubmit = useCallback(async (event: React.FocusEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
@@ -62,7 +61,6 @@ export default function MesCCGs() {
     }).then((response) => response as UserConnexionResponse);
     if (response.ok) {
       refreshUserCCGs();
-      setCCGPostalCode('');
       setNewCCGExpanded(false);
       setRegisterOneMoreCCG(false);
       document.getElementById('onboarding-etape-2-ccgs-data')?.scrollIntoView({ behavior: 'smooth' });
@@ -352,40 +350,7 @@ export default function MesCCGs() {
                       }}
                     />
 
-                    <div className="flex w-full flex-col gap-x-4 md:flex-row">
-                      <Input
-                        label="Code postal *"
-                        hintText="5 chiffres"
-                        className="shrink-0 md:basis-2/5"
-                        nativeInputProps={{
-                          id: Prisma.EntityScalarFieldEnum.code_postal,
-                          name: Prisma.EntityScalarFieldEnum.code_postal,
-                          autoComplete: 'off',
-                          required: true,
-                          value: ccgPostalCode,
-                          onChange: (e) => {
-                            setCCGPostalCode(e.currentTarget.value);
-                          },
-                        }}
-                      />
-                      <div className="basis-3/5">
-                        <InputVille
-                          postCode={ccgPostalCode}
-                          postCodeInputId={Prisma.EntityScalarFieldEnum.code_postal}
-                          onSelectPostCode={setCCGPostalCode}
-                          trimPostCode
-                          label="Ville ou commune *"
-                          hintText="Exemple : Montpellier"
-                          nativeInputProps={{
-                            id: Prisma.EntityScalarFieldEnum.ville,
-                            name: Prisma.EntityScalarFieldEnum.ville,
-                            autoComplete: 'off',
-                            required: true,
-                            defaultValue: '',
-                          }}
-                        />
-                      </div>
-                    </div>
+                    <InputCodePostalEtVille required />
                     <Alert
                       severity="warning"
                       small

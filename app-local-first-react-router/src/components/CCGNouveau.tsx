@@ -3,7 +3,7 @@ import { useState, useCallback } from 'react';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { EntityTypes, EntityRelationType, Prisma, Entity, EntityAndUserRelations } from '@prisma/client';
-import InputVille from '@app/components/InputVille';
+import InputCodePostalEtVille from '@app/components/InputCodePostalEtVille';
 import type { UserEntityResponse } from '@api/src/types/responses';
 import useUser from '@app/zustand/user';
 import API from '@app/services/api';
@@ -25,7 +25,8 @@ interface CCGNouveauProps {
 
 // une même page peut afficher plusieurs formulaires d'entité : on préfixe les id des champs
 // pour qu'ils restent uniques dans le document
-const fieldId = (field: string) => `ccg-nouveau-${field}`;
+const ID_PREFIX = 'ccg-nouveau';
+const fieldId = (field: string) => `${ID_PREFIX}-${field}`;
 
 export default function CCGNouveau({ onFinish }: CCGNouveauProps) {
   const user = useUser((state) => state.user)!;
@@ -34,7 +35,6 @@ export default function CCGNouveau({ onFinish }: CCGNouveauProps) {
   const [mode, setMode] = useState<'select' | 'quick' | 'full'>('select');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const [ccgPostalCode, setCCGPostalCode] = useState('');
 
   // Quick add by numero_ddecpp
   const handleQuickAdd = useCallback(
@@ -236,37 +236,10 @@ export default function CCGNouveau({ onFinish }: CCGNouveauProps) {
               autoComplete: 'off',
             }}
           />
-          <div className="flex w-full flex-col gap-x-4 md:flex-row">
-            <Input
-              label="Code postal *"
-              hintText="5 chiffres"
-              className="shrink-0 md:basis-2/5"
-              nativeInputProps={{
-                id: fieldId(Prisma.EntityScalarFieldEnum.code_postal),
-                name: Prisma.EntityScalarFieldEnum.code_postal,
-                autoComplete: 'off',
-                required: true,
-                value: ccgPostalCode,
-                onChange: (e) => setCCGPostalCode(e.currentTarget.value),
-              }}
-            />
-            <div className="basis-3/5">
-              <InputVille
-                postCode={ccgPostalCode}
-                postCodeInputId={fieldId(Prisma.EntityScalarFieldEnum.code_postal)}
-                onSelectPostCode={setCCGPostalCode}
-                trimPostCode
-                label="Ville ou commune *"
-                hintText="Exemple : Montpellier"
-                nativeInputProps={{
-                  id: fieldId(Prisma.EntityScalarFieldEnum.ville),
-                  name: Prisma.EntityScalarFieldEnum.ville,
-                  autoComplete: 'off',
-                  required: true,
-                }}
-              />
-            </div>
-          </div>
+          <InputCodePostalEtVille
+            idPrefix={ID_PREFIX}
+            required
+          />
           {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
           <p className="my-4 text-sm">
             Ceci ne remplace pas la déclaration officielle du CCG. Cela permet simplement de pouvoir en faire
@@ -285,7 +258,6 @@ export default function CCGNouveau({ onFinish }: CCGNouveauProps) {
               onClick={() => {
                 setMode('select');
                 setError('');
-                setCCGPostalCode('');
               }}
             >
               Retour

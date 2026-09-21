@@ -7,7 +7,7 @@ import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Notice } from '@codegouvfr/react-dsfr/Notice';
 import { EntityRelationType, EntityTypes, UserRoles, Prisma, User } from '@prisma/client';
 import { Tabs, type TabsProps } from '@codegouvfr/react-dsfr/Tabs';
-import InputVille from '@app/components/InputVille';
+import InputCodePostalEtVille from '@app/components/InputCodePostalEtVille';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Table } from '@codegouvfr/react-dsfr/Table';
 import type { AdminGetEntityResponse, AdminActionEntityResponse } from '@api/src/types/responses';
@@ -76,12 +76,6 @@ export default function AdminEntity() {
     etgsRelatedWithSvi,
   } = adminEntityResponse ?? initialData;
   const entity = adminEntityResponse.entity as EntityForAdmin;
-  const [codePostal, setCodePostal] = useState(entity.code_postal ?? '');
-
-  // les coordonnées de l'entité arrivent après le premier rendu
-  useEffect(() => {
-    setCodePostal(entity.code_postal ?? '');
-  }, [entity.code_postal]);
 
   useEffect(() => {
     loadData(params.entityId!).then((response) => {
@@ -123,10 +117,14 @@ export default function AdminEntity() {
   }
 
   async function handleSave(name: string, value: string | boolean) {
+    return handleSaveFields({ [name]: value });
+  }
+
+  async function handleSaveFields(fields: Record<string, string | boolean>) {
     setIsSaving(true);
     API.post({
       path: `admin/entity/${params.entityId}`,
-      body: { [name]: value },
+      body: fields,
     })
       .then((res) => res as AdminActionEntityResponse)
       .then((response) => {
@@ -419,44 +417,17 @@ export default function AdminEntity() {
                     }}
                   />
 
-                  <div className="flex w-full flex-col gap-x-4 md:flex-row">
-                    <Input
-                      label="Code postal"
-                      hintText="5 chiffres"
-                      className="shrink-0 md:basis-2/5"
-                      nativeInputProps={{
-                        id: Prisma.EntityScalarFieldEnum.code_postal,
-                        name: Prisma.EntityScalarFieldEnum.code_postal,
-                        autoComplete: 'off',
-                        required: true,
-                        value: codePostal,
-                        onChange: (e) => setCodePostal(e.currentTarget.value),
-                        onBlur: (e) => handleSave(e.target.name, e.target.value),
-                      }}
-                    />
-                    <div className="basis-3/5">
-                      <InputVille
-                        postCode={codePostal}
-                        onSelectPostCode={(newCodePostal) => {
-                          setCodePostal(newCodePostal);
-                          handleSave(Prisma.EntityScalarFieldEnum.code_postal, newCodePostal);
-                        }}
-                        postCodeInputId={Prisma.EntityScalarFieldEnum.code_postal}
-                        key={entity.ville}
-                        trimPostCode
-                        label="Ville ou commune"
-                        hintText="Exemple : Montpellier"
-                        nativeInputProps={{
-                          id: Prisma.EntityScalarFieldEnum.ville,
-                          name: Prisma.EntityScalarFieldEnum.ville,
-                          autoComplete: 'off',
-                          required: true,
-                          defaultValue: entity.ville ?? '',
-                          onBlur: (e) => handleSave(e.target.name, e.target.value),
-                        }}
-                      />
-                    </div>
-                  </div>
+                  <InputCodePostalEtVille
+                    required
+                    defaultCodePostal={entity.code_postal ?? ''}
+                    defaultVille={entity.ville ?? ''}
+                    onBlur={({ codePostal, ville }) =>
+                      handleSaveFields({
+                        [Prisma.EntityScalarFieldEnum.code_postal]: codePostal,
+                        [Prisma.EntityScalarFieldEnum.ville]: ville,
+                      })
+                    }
+                  />
                   {entity.type === EntityTypes.ETG && (
                     <>
                       <Input

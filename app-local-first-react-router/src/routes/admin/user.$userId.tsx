@@ -15,7 +15,7 @@ import {
   EntityTypes,
   UserEtgRoles,
 } from '@prisma/client';
-import InputVille from '@app/components/InputVille';
+import InputCodePostalEtVille from '@app/components/InputCodePostalEtVille';
 import { Tabs, type TabsProps } from '@codegouvfr/react-dsfr/Tabs';
 import { Table } from '@codegouvfr/react-dsfr/Table';
 import departementsRegions from '@app/data/departements-regions.json';
@@ -124,12 +124,6 @@ export default function AdminUser() {
   const params = useParams();
   const [userResponseData, setUserResponseData] = useState<State>(initialState);
   const { user, userEntitiesRelations, officialCfei, lockout } = userResponseData;
-  const [codePostal, setCodePostal] = useState(user.code_postal ?? '');
-
-  // les coordonnées de l'utilisateur arrivent après le premier rendu
-  useEffect(() => {
-    setCodePostal(user.code_postal ?? '');
-  }, [user.code_postal]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -669,32 +663,12 @@ export default function AdminUser() {
                             defaultValue: user.addresse_ligne_2 ?? '',
                           }}
                         />
-                        <Input
-                          label="Code postal"
-                          hintText="5 chiffres"
-                          nativeInputProps={{
-                            id: Prisma.UserScalarFieldEnum.code_postal,
-                            name: Prisma.UserScalarFieldEnum.code_postal,
-                            autoComplete: 'off',
-                            value: codePostal,
-                            onChange: (e) => setCodePostal(e.currentTarget.value),
-                          }}
-                        />
-                        <InputVille
-                          key={user.ville}
-                          postCode={codePostal}
-                          onSelectPostCode={setCodePostal}
-                          postCodeInputId={Prisma.UserScalarFieldEnum.code_postal}
-                          trimPostCode
-                          label="Ville ou commune"
-                          hintText="Exemple : Montpellier"
-                          nativeInputProps={{
-                            id: Prisma.UserScalarFieldEnum.ville,
-                            name: Prisma.UserScalarFieldEnum.ville,
-                            autoComplete: 'off',
-                            defaultValue: user.ville ?? '',
-                          }}
-                        />
+                        <div className="md:col-span-2">
+                          <InputCodePostalEtVille
+                            defaultCodePostal={user.code_postal ?? ''}
+                            defaultVille={user.ville ?? ''}
+                          />
+                        </div>
                       </div>
                     </Section>
                     {user.roles.includes(UserRoles.CHASSEUR) && (

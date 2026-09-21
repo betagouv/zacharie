@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Prisma, User } from '@prisma/client';
-import InputVille from '@app/components/InputVille';
+import InputCodePostalEtVille from '@app/components/InputCodePostalEtVille';
 import InputNotEditable from '@app/components/InputNotEditable';
 import type { UserConnexionResponse } from '@api/src/types/responses';
 import useUser from '@app/zustand/user';
@@ -12,7 +12,6 @@ import { toast } from 'react-toastify';
 
 export default function CircuitCourtProfilCoordonnees() {
   const user = useUser((state) => state.user)!;
-  const [codePostal, setCodePostal] = useState(user.code_postal ?? '');
 
   const handleUserFormBlur = useCallback(
     async (event: React.FocusEvent<HTMLFormElement>) => {
@@ -120,38 +119,11 @@ export default function CircuitCourtProfilCoordonnees() {
                     defaultValue: user.addresse_ligne_2 ?? '',
                   }}
                 />
-                <div className="flex w-full flex-col gap-x-4 md:flex-row">
-                  <Input
-                    label="Code postal"
-                    hintText="5 chiffres"
-                    className="shrink-0 md:basis-2/5"
-                    nativeInputProps={{
-                      id: Prisma.UserScalarFieldEnum.code_postal,
-                      name: Prisma.UserScalarFieldEnum.code_postal,
-                      autoComplete: 'postal-code',
-                      required: false,
-                      value: codePostal,
-                      onChange: (e) => setCodePostal(e.currentTarget.value),
-                    }}
-                  />
-                  <div className="basis-3/5">
-                    <InputVille
-                      postCode={codePostal}
-                      onSelectPostCode={setCodePostal}
-                      postCodeInputId={Prisma.UserScalarFieldEnum.code_postal}
-                      trimPostCode
-                      label="Ville ou commune"
-                      hintText="Exemple : Montpellier"
-                      nativeInputProps={{
-                        id: Prisma.UserScalarFieldEnum.ville,
-                        name: Prisma.UserScalarFieldEnum.ville,
-                        autoComplete: 'address-level2',
-                        required: false,
-                        defaultValue: user.ville ?? '',
-                      }}
-                    />
-                  </div>
-                </div>
+                <InputCodePostalEtVille
+                  autoCompleteAddress
+                  defaultCodePostal={user.code_postal ?? ''}
+                  defaultVille={user.ville ?? ''}
+                />
               </form>
             </div>
           </div>
