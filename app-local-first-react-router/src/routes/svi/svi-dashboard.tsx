@@ -2,19 +2,9 @@ import { useMemo, type ReactNode } from 'react';
 import dayjs from 'dayjs';
 import { CarcasseType } from '@prisma/client';
 import type { SviTracabiliteAmont } from '@api/src/types/responses';
-import {
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  LabelList,
-} from 'recharts';
+import { BarChart } from 'react-dsfr-chart/BarChart';
+import { PieChart } from 'react-dsfr-chart/PieChart';
+import 'react-dsfr-chart/css';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import Chargement from '@app/components/Chargement';
 import {
@@ -28,6 +18,10 @@ import SviCarcassesAVenirModal from '@app/components/SviCarcassesAVenirModal';
 const COLOR_GRAND = 'var(--background-action-high-blue-france)';
 const COLOR_PETIT = '#6277df';
 const BAR_COLOR = 'var(--background-action-high-blue-france)';
+
+// Borne minimale de l'axe des valeurs. Les décomptes sont entiers : sous 6,
+// l'axe se graduerait en demis (0 / 0,5 / 1).
+const MIN_COUNT_AXIS = 6;
 
 // Tranches d'ancienneté depuis l'arrivée chez l'ETG : plus c'est ancien, plus la
 // transmission au SVI est imminente (ordre = priorité d'inspection à venir).
@@ -168,32 +162,16 @@ export default function SviDashboard() {
                   hint="Nombre d'animaux par tranche d'attente depuis leur arrivée chez l'ETG. Plus l'attente est longue, plus la transmission au SVI est probablement imminente."
                   className="md:col-span-2"
                 >
-                  <ResponsiveContainer
-                    width="100%"
+                  <BarChart
+                    x={stats.parAnciennete.map((d) => d.name)}
+                    y={[stats.parAnciennete.map((d) => d.value)]}
+                    name={['Animaux']}
+                    colors={[BAR_COLOR]}
+                    yMax={Math.max(...stats.parAnciennete.map((d) => d.value), MIN_COUNT_AXIS)}
                     height={240}
-                  >
-                    <BarChart
-                      data={stats.parAnciennete}
-                      margin={{ left: 0, right: 10 }}
-                    >
-                      <XAxis
-                        dataKey="name"
-                        tick={{ fontSize: 12 }}
-                      />
-                      <YAxis allowDecimals={false} />
-                      <Tooltip />
-                      <Bar
-                        dataKey="value"
-                        name="Animaux"
-                        fill={BAR_COLOR}
-                      >
-                        <LabelList
-                          dataKey="value"
-                          position="top"
-                        />
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
+                    unitTooltip="animaux"
+                    ariaLabel="Nombre d'animaux par tranche d'ancienneté chez l'ETG"
+                  />
                 </ChartCard>
 
                 {/* Répartition grand / petit gibier */}
@@ -201,31 +179,18 @@ export default function SviDashboard() {
                   title="Grand / petit gibier"
                   hint="Répartition des animaux à venir entre grand et petit gibier."
                 >
-                  <ResponsiveContainer
-                    width="100%"
+                  <PieChart
+                    x={stats.typeData.map((d) => d.name)}
+                    y={stats.typeData.map((d) => d.value)}
+                    name={stats.typeData.map((d) => d.name)}
                     height={240}
-                  >
-                    <PieChart>
-                      <Pie
-                        data={stats.typeData}
-                        dataKey="value"
-                        nameKey="name"
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={80}
-                        label={(entry) => `${entry.name} : ${entry.value}`}
-                      >
-                        {stats.typeData.map((entry) => (
-                          <Cell
-                            key={entry.name}
-                            fill={entry.name === 'Grand gibier' ? COLOR_GRAND : COLOR_PETIT}
-                          />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
+                    colors={stats.typeData.map((d) =>
+                      d.name === 'Grand gibier' ? COLOR_GRAND : COLOR_PETIT
+                    )}
+                    fill
+                    unitTooltip="animaux"
+                    ariaLabel="Répartition des animaux à venir entre grand et petit gibier"
+                  />
                 </ChartCard>
 
                 {/* Par espèce */}
@@ -233,38 +198,17 @@ export default function SviDashboard() {
                   title="Par espèce"
                   hint="Nombre d'animaux à venir par espèce, du plus fréquent au moins fréquent."
                 >
-                  <ResponsiveContainer
-                    width="100%"
+                  <BarChart
+                    x={stats.parEspece.map((d) => d.name)}
+                    y={[stats.parEspece.map((d) => d.value)]}
+                    name={['Animaux']}
+                    colors={[BAR_COLOR]}
+                    horizontal
+                    xMax={Math.max(...stats.parEspece.map((d) => d.value), MIN_COUNT_AXIS)}
                     height={Math.max(240, stats.parEspece.length * 32)}
-                  >
-                    <BarChart
-                      data={stats.parEspece}
-                      layout="vertical"
-                      margin={{ left: 20, right: 30 }}
-                    >
-                      <XAxis
-                        type="number"
-                        allowDecimals={false}
-                      />
-                      <YAxis
-                        type="category"
-                        dataKey="name"
-                        width={120}
-                        tick={{ fontSize: 12 }}
-                      />
-                      <Tooltip />
-                      <Bar
-                        dataKey="value"
-                        name="Animaux"
-                        fill={BAR_COLOR}
-                      >
-                        <LabelList
-                          dataKey="value"
-                          position="right"
-                        />
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
+                    unitTooltip="animaux"
+                    ariaLabel="Nombre d'animaux à venir par espèce"
+                  />
                 </ChartCard>
               </div>
             </section>
@@ -326,32 +270,16 @@ function TracabiliteAmontSection({ amont }: { amont: SviTracabiliteAmont }) {
         title="Répartition du déclaré"
         hint="Sur le total déclaré des fiches qui arrivent : ce qui vous sera présenté (à venir), ce qui reste en attente de décision de l'ETG, et ce qui est perdu en amont (refusé ou déclaré manquant par l'ETG)."
       >
-        <ResponsiveContainer
-          width="100%"
+        <BarChart
+          x={repartitionData.map((d) => d.name)}
+          y={[repartitionData.map((d) => d.value)]}
+          name={['Animaux']}
+          colors={[BAR_COLOR]}
+          yMax={Math.max(...repartitionData.map((d) => d.value), MIN_COUNT_AXIS)}
           height={240}
-        >
-          <BarChart
-            data={repartitionData}
-            margin={{ left: 0, right: 10 }}
-          >
-            <XAxis
-              dataKey="name"
-              tick={{ fontSize: 12 }}
-            />
-            <YAxis allowDecimals={false} />
-            <Tooltip />
-            <Bar
-              dataKey="value"
-              name="Animaux"
-              fill={BAR_COLOR}
-            >
-              <LabelList
-                dataKey="value"
-                position="top"
-              />
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+          unitTooltip="animaux"
+          ariaLabel="Répartition du total déclaré"
+        />
       </ChartCard>
     </section>
   );
