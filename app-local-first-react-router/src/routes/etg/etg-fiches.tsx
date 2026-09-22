@@ -54,6 +54,7 @@ const ITEMS_PER_PAGE = 100;
 export default function EtgFiches() {
   const user = useMostFreshUser('etg-fiches')!;
   const { transmissionsEnCours, transmissionsACompleter, transmissionsCloturees } = useTransmissionsSorted();
+  const feiIdsRenvoiToHide = useZustandStore((state) => state.feiIdsRenvoiToHide);
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
   const entities = useZustandStore((state) => state.entities);
   const usersById = useZustandStore((state) => state.users);
@@ -225,8 +226,12 @@ export default function EtgFiches() {
   }, [filtersKey, setSearchParams]);
 
   const allTransmissions = useMemo(() => {
-    return [...transmissionsACompleter, ...transmissionsEnCours, ...transmissionsCloturees];
-  }, [transmissionsACompleter, transmissionsEnCours, transmissionsCloturees]);
+    const all = [...transmissionsACompleter, ...transmissionsEnCours, ...transmissionsCloturees];
+    // Fiches renvoyées à l'expéditeur : elles ne concernent plus ce compte.
+    if (feiIdsRenvoiToHide.length === 0) return all;
+    const toHide = new Set(feiIdsRenvoiToHide);
+    return all.filter((transmission) => !toHide.has(transmission.fei.numero));
+  }, [transmissionsACompleter, transmissionsEnCours, transmissionsCloturees, feiIdsRenvoiToHide]);
 
   const premierDetenteurOptions = useMemo(() => {
     const map = new Map<string, string>();

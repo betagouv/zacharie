@@ -127,9 +127,16 @@ export async function loadCarcasses() {
 
     if (signal.aborted || !useUser.getState().user) return;
 
-    useZustandStore.setState(() => ({
+    // Le serveur ne renvoie que les carcasses du périmètre du compte. Une fiche qu'il avait renvoyée
+    // à l'expéditeur et qui redescend lui a donc été réattribuée : elle doit réapparaître.
+    const feiNumerosBackInScope = new Set(carcassesFetched.map((c) => c.fei_numero));
+
+    useZustandStore.setState((state) => ({
       carcasses: newCarcasses,
       carcassesRegistry: Object.values(newCarcasses),
+      feiIdsRenvoiToHide: state.feiIdsRenvoiToHide.filter(
+        (fei_numero) => !feiNumerosBackInScope.has(fei_numero)
+      ),
       feis: newFeis,
       carcassesIntermediaireById: newCarcassesIntermediaires,
       modifRequestsByCarcasseId: nextModifRequestsByCarcasseId,
