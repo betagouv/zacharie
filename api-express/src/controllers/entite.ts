@@ -38,6 +38,7 @@ import { sanitize } from '~/utils/sanitize';
 import { z } from 'zod';
 import createUserId from '~/utils/createUserId';
 import { inviteUser } from '~/utils/invite-user';
+import { createDestinataire, destinataireSchema } from '~/utils/create-destinataire';
 
 router.get(
   '/working-for',
@@ -356,26 +357,6 @@ router.post(
   })
 );
 
-const partenaireSchema = z.object({
-  raison_sociale: z.string(),
-  address_ligne_1: z.string(),
-  address_ligne_2: z.string(),
-  code_postal: z.string(),
-  email: z.string(),
-  nom_de_famille: z.string(),
-  prenom: z.string(),
-  ville: z.string(),
-  siret: z.string().optional(),
-  zacharie_compatible: z.boolean().optional(),
-  type: z.enum([
-    EntityTypes.COMMERCE_DE_DETAIL,
-    EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE,
-    EntityTypes.ASSOCIATION_CARITATIVE,
-    EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF,
-    EntityTypes.CONSOMMATEUR_FINAL,
-  ]),
-});
-
 router.post(
   '/partenaire',
   passport.authenticate('user', { session: false, failWithError: true }),
@@ -383,116 +364,33 @@ router.post(
     async (req: RequestWithUser, res: express.Response<UserEntityResponse>, next: express.NextFunction) => {
       const user = req.user!;
 
-      const result = partenaireSchema.safeParse(req.body);
+      const result = destinataireSchema.safeParse(req.body);
       if (!result.success) {
         const error = new Error(result.error.message);
         res.status(406);
         return next(error);
       }
-      const body = result.data;
 
-      const data: Prisma.EntityUncheckedCreateInput = {
-        raison_sociale: sanitize(body[Prisma.EntityScalarFieldEnum.raison_sociale]),
-        nom_d_usage: sanitize(body[Prisma.EntityScalarFieldEnum.raison_sociale]),
-        type: body[Prisma.EntityScalarFieldEnum.type] as EntityTypes,
-        address_ligne_1: sanitize(body[Prisma.EntityScalarFieldEnum.address_ligne_1]),
-        address_ligne_2: sanitize(body[Prisma.EntityScalarFieldEnum.address_ligne_2]),
-        code_postal: sanitize(body[Prisma.EntityScalarFieldEnum.code_postal]),
-        ville: sanitize(body[Prisma.EntityScalarFieldEnum.ville]),
-        siret: sanitize(body[Prisma.EntityScalarFieldEnum.siret]) || null,
-        zacharie_compatible: true,
-      };
-
-      const existingEntity = await prisma.entity.findFirst({
-        where: {
-          raison_sociale: data.raison_sociale,
-          type: data.type,
-          code_postal: data.code_postal,
-          ville: data.ville,
-          siret: data.siret,
-        },
-      });
-
-      if (existingEntity) {
-        const error = new Error('Entité déjà existante');
-        res.status(406);
+      const created = await createDestinataire(result.data, user);
+      if (!created.entity) {
+        const error = new Error(created.error);
+        res.status(created.status);
         return next(error);
       }
 
-      // Vérifier si l'email est déjà utilisé par un compte existant AVANT de créer l'entité
-      const existingUser = await prisma.user.findUnique({
-        where: {
-          email: body[Prisma.UserScalarFieldEnum.email],
-        },
-      });
-
-      if (existingUser && existingUser.roles.length > 0) {
-        const error = new Error(
-          "Cette adresse email est déjà associée à un compte Zacharie existant. Veuillez utiliser une autre adresse email ou contacter l'utilisateur pour qu'il ajoute lui-même cette entité à son compte."
-        );
-        res.status(409);
-        return next(error);
-      }
-
-      let createdEntity = await prisma.entity.create({ data });
-
-      createdEntity = await updateOrCreateBrevoCompany(createdEntity);
-
-      let ownerUser: User;
-      if (!existingUser) {
-        ownerUser = await prisma.user.create({
-          data: {
-            id: await createUserId(),
-            email: body[Prisma.UserScalarFieldEnum.email],
-            nom_de_famille: body[Prisma.UserScalarFieldEnum.nom_de_famille],
-            prenom: body[Prisma.UserScalarFieldEnum.prenom],
-            roles: [body[Prisma.EntityScalarFieldEnum.type] as UserRoles],
-          },
-        });
-      } else {
-        // L'utilisateur existe mais n'a pas de rôles (compte vide)
-        ownerUser = await prisma.user.update({
-          where: { id: existingUser.id },
-          data: {
-            roles: [body[Prisma.EntityScalarFieldEnum.type] as UserRoles],
-            nom_de_famille: body[Prisma.UserScalarFieldEnum.nom_de_famille],
-            prenom: body[Prisma.UserScalarFieldEnum.prenom],
-          },
-        });
-      }
-
-      await prisma.entityAndUserRelations.create({
-        data: {
-          owner_id: ownerUser.id,
-          entity_id: createdEntity.id,
-          relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-          status: EntityRelationStatus.ADMIN,
-        },
-      });
-
+      // le destinataire est enregistré par un chasseur ou un ETG : il devient un de ses partenaires
       const createdEntityRelation = await prisma.entityAndUserRelations.create({
         data: {
           owner_id: user.id,
           relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-          entity_id: createdEntity.id,
+          entity_id: created.entity.id,
           status: EntityRelationStatus.MEMBER,
         },
       });
 
-      await sendEmail({
-        emails: ['contact@zacharie.beta.gouv.fr'],
-        subject: `Nouveau partenaire pré-enregistré dans Zacharie`,
-        text: `Un nouveau partenaire a été pré-enregistré dans Zacharie\u00A0: ${createdEntity.nom_d_usage}`,
-      });
-
-      ownerUser = await createBrevoContact(ownerUser, 'USER');
-      await linkBrevoCompanyToContact(createdEntity, ownerUser);
-
-      await inviteUser(ownerUser, user);
-
       res
         .status(200)
-        .send({ ok: true, error: '', data: { entity: createdEntity, relation: createdEntityRelation } });
+        .send({ ok: true, error: '', data: { entity: created.entity, relation: createdEntityRelation } });
     }
   )
 );
