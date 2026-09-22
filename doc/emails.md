@@ -21,25 +21,26 @@ Tout passe par **Brevo** — pas de SMTP / nodemailer / autre.
 
 ## 1. Transactionnels (action directe d'un user)
 
-| Déclencheur                                   | Destinataire             | Objet                                                        | Fichier                                                     |
-| --------------------------------------------- | ------------------------ | ------------------------------------------------------------ | ----------------------------------------------------------- |
-| Formulaire de contact (`POST /utils/contact`) | `contact@…` + l'émetteur | `Contact : {prenom} {nom} - {email} - {object}`              | `controllers/utils.ts:34`                                   |
-| Demande de reset mot de passe                 | l'user (prod)            | `[Zacharie] Réinitialisation de votre mot de passe`          | `controllers/user.ts:469`                                   |
-| Mot de passe changé depuis le profil          | l'user (prod)            | `[Zacharie] Votre mot de passe a été modifié`                | `controllers/user.ts:662`                                   |
-| Invitation d'un user (entité / partenaire)    | l'invité                 | `{prenom} {nom} vous a invité à rejoindre Zacharie`          | `utils/invite-user.ts:33`                                   |
-| Fin d'onboarding                              | l'user                   | **template Brevo `ONBOARDING_DONE` (id 76)** — sans params   | `controllers/user.ts:1234`                                  |
-| Compte activé (user ou admin)                 | l'user                   | **template Brevo `ACCOUNT_ACTIVATED` (id 77)** — param `cta` | `controllers/user.ts:1243`, `controllers/admin/user.ts:290` |
+| Déclencheur                                          | Destinataire             | Objet                                                        | Fichier                                                     |
+| ---------------------------------------------------- | ------------------------ | ------------------------------------------------------------ | ----------------------------------------------------------- |
+| Formulaire de contact (`POST /utils/contact`)        | `contact@…` + l'émetteur | `Contact : {prenom} {nom} - {email} - {object}`              | `controllers/utils.ts:34`                                   |
+| Demande de reset mot de passe                        | l'user (prod)            | `[Zacharie] Réinitialisation de votre mot de passe`          | `controllers/user.ts:469`                                   |
+| Mot de passe changé depuis le profil                 | l'user (prod)            | `[Zacharie] Votre mot de passe a été modifié`                | `controllers/user.ts:662`                                   |
+| Invitation d'un user (entité / partenaire)           | l'invité                 | `{prenom} {nom} vous a invité à rejoindre Zacharie`          | `utils/invite-user.ts:33`                                   |
+| Destinataire pré-enregistré (chasseur, ETG ou admin) | le représentant          | `{prenom} {nom} vous a invité à rejoindre Zacharie`          | `utils/create-destinataire.ts:144`                          |
+| Fin d'onboarding                                     | l'user                   | **template Brevo `ONBOARDING_DONE` (id 76)** — sans params   | `controllers/user.ts:1234`                                  |
+| Compte activé (user ou admin)                        | l'user                   | **template Brevo `ACCOUNT_ACTIVATED` (id 77)** — param `cta` | `controllers/user.ts:1243`, `controllers/admin/user.ts:290` |
 
 ## 2. Notices internes équipe (→ `contact@zacharie.beta.gouv.fr`)
 
-| Déclencheur                                  | Objet                                                          | Fichier                              |
-| -------------------------------------------- | -------------------------------------------------------------- | ------------------------------------ |
-| Nouvelle ouverture de compte                 | `Nouvelle ouverture de compte pour {email}`                    | `brevo.ts:143,172`                   |
-| Inscription finie                            | `Inscription finie pour {email}…`                              | `user.ts:1213`, `admin/user.ts:272`  |
-| N° CFEI renseigné/changé après l'inscription | `Numéro CFEI changé pour {email}…`                             | `user.ts:1213` (rien depuis l'admin) |
-| Asso de chasse pré-enregistrée               | `Nouvelle association de chasse pré-enregistrée dans Zacharie` | `entite.ts:259`                      |
-| Partenaire pré-enregistré                    | `Nouveau partenaire pré-enregistré dans Zacharie`              | `entite.ts:394`                      |
-| CCG pré-enregistré                           | `Nouveau CCG pré-enregistré dans Zacharie`                     | `entite.ts:469`                      |
+| Déclencheur                                  | Objet                                                          | Fichier                                                     |
+| -------------------------------------------- | -------------------------------------------------------------- | ----------------------------------------------------------- |
+| Nouvelle ouverture de compte                 | `Nouvelle ouverture de compte pour {email}`                    | `brevo.ts:143,172`                                          |
+| Inscription finie                            | `Inscription finie pour {email}…`                              | `user.ts:1213`, `admin/user.ts:272`                         |
+| N° CFEI renseigné/changé après l'inscription | `Numéro CFEI changé pour {email}…`                             | `user.ts:1213` (rien depuis l'admin)                        |
+| Asso de chasse pré-enregistrée               | `Nouvelle association de chasse pré-enregistrée dans Zacharie` | `entite.ts:350`                                             |
+| Partenaire pré-enregistré                    | `Nouveau partenaire pré-enregistré dans Zacharie`              | `utils/create-destinataire.ts:137` (chasseur, ETG ou admin) |
+| CCG pré-enregistré                           | `Nouveau CCG pré-enregistré dans Zacharie`                     | `entite.ts:457`                                             |
 
 ## 3. Notifications automatiques (event-driven, sync FEI/carcasse — email si préf. EMAIL active)
 

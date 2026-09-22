@@ -21,7 +21,10 @@ import type {
 } from '~/types/responses';
 import { entityAdminInclude } from '~/types/entity';
 import { updateOrCreateBrevoCompany } from '~/third-parties/brevo';
+import { createDestinataire, destinataireSchema } from '~/utils/create-destinataire';
+import type { RequestWithUser } from '~/types/request';
 import slugify from 'slugify';
+import { z } from 'zod';
 
 router.get(
   '/entities',
@@ -284,6 +287,23 @@ router.post(
   )
 );
 
+// le consommateur final n'est pas une entité : un admin ne le pré-enregistre pas
+const adminDestinataireTypes: Array<EntityTypes> = [
+  EntityTypes.COMMERCE_DE_DETAIL,
+  EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE,
+  EntityTypes.ASSOCIATION_CARITATIVE,
+  EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF,
+];
+
+const adminDestinataireSchema = destinataireSchema.extend({
+  type: z.enum([
+    EntityTypes.COMMERCE_DE_DETAIL,
+    EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE,
+    EntityTypes.ASSOCIATION_CARITATIVE,
+    EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF,
+  ]),
+});
+
 router.post(
   '/entity/nouvelle',
   catchErrors(
@@ -295,6 +315,30 @@ router.post(
       const body = req.body;
 
       const type = body[Prisma.EntityScalarFieldEnum.type] as EntityTypes;
+
+      // le consommateur final n'est pas une entité : il n'est jamais créé depuis l'admin
+      if (type === EntityTypes.CONSOMMATEUR_FINAL) {
+        res.status(406);
+        return next(new Error("Le consommateur final n'est pas une entité"));
+      }
+
+      // un destinataire porte aussi son représentant et son adresse : même formulaire, même
+      // création que côté chasseur, sans la relation « je lui transmets des carcasses »
+      if (adminDestinataireTypes.includes(type)) {
+        const parsed = adminDestinataireSchema.safeParse(body);
+        if (!parsed.success) {
+          res.status(406);
+          return next(new Error(parsed.error.message));
+        }
+        const created = await createDestinataire(parsed.data, (req as RequestWithUser).user!);
+        if (!created.entity) {
+          res.status(created.status);
+          return next(new Error(created.error));
+        }
+        res.status(200).send({ ok: true, data: { entity: created.entity }, error: '' });
+        return;
+      }
+
       let code_etbt_certificat;
       if (type === EntityTypes.ETG) {
         const existingEtgs = await prisma.entity.count({
