@@ -23,7 +23,12 @@ test('ETG toggle notification email et enregistre', async ({ page }) => {
 
   const before = await emailCheckbox.isChecked();
   await emailCheckbox.click({ force: true });
+  // le toast s'affiche au clic, avant la fin du POST : on attend la réponse pour ne pas l'annuler au reload
+  const saved = page.waitForResponse(
+    (res) => res.request().method() === 'POST' && /\/user\/[^/]+$/.test(res.url()) && res.ok()
+  );
   await page.getByRole('button', { name: 'Enregistrer' }).click();
+  await saved;
 
   // Reload and verify persistence
   await page.reload();
