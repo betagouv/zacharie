@@ -6,7 +6,9 @@ import type {
   AdminPartsDeMarcheResponse,
   AdminSaisiesSviResponse,
 } from '@api/src/types/responses';
-import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { BarChart } from 'react-dsfr-chart/BarChart';
+import { LineChart } from 'react-dsfr-chart/LineChart';
+import 'react-dsfr-chart/css';
 import { Tabs } from '@codegouvfr/react-dsfr/Tabs';
 
 const dashboardTabs = [
@@ -71,60 +73,21 @@ export default function AdminDashboard() {
                 <h3 className="mb-1 text-lg font-semibold">Parts de marché par circuit</h3>
                 <p className="mb-5 text-sm text-gray-500">
                   Part de marché absolue, potentielle et réelle sur l&apos;ensemble du circuit long, par
-                  saison de chasse
+                  saison de chasse, en tonnes de viande de gibier
                 </p>
-                <ResponsiveContainer
-                  width="100%"
+                <BarChart
+                  x={partsDeMarche.circuit_long.map((row) => row.saison)}
+                  y={[
+                    partsDeMarche.circuit_long.map((row) => row.volume_absolu),
+                    partsDeMarche.circuit_long.map((row) => row.volume_potentiel),
+                    partsDeMarche.circuit_long.map((row) => row.volume_reel),
+                  ]}
+                  name={['Volume absolu', 'Volume potentiel', 'Volume réel']}
+                  colors={['#cacafb', '#6a6af4', '#000091']}
                   height={350}
-                >
-                  <BarChart data={partsDeMarche.circuit_long}>
-                    <XAxis
-                      dataKey="saison"
-                      xAxisId="absolu"
-                    />
-                    <XAxis
-                      dataKey="saison"
-                      xAxisId="potentiel"
-                      hide
-                    />
-                    <XAxis
-                      dataKey="saison"
-                      xAxisId="reel"
-                      hide
-                    />
-                    <YAxis
-                      label={{
-                        value: 'Tonnes de viande de gibier',
-                        angle: -90,
-                        position: 'insideLeft',
-                        offset: 10,
-                      }}
-                    />
-                    <Tooltip formatter={(value, name) => [`${value} t`, name]} />
-                    <Legend />
-                    <Bar
-                      dataKey="volume_absolu"
-                      name="Volume absolu"
-                      xAxisId="absolu"
-                      fill="#cacafb"
-                      barSize={60}
-                    />
-                    <Bar
-                      dataKey="volume_potentiel"
-                      name="Volume potentiel"
-                      xAxisId="potentiel"
-                      fill="#6a6af4"
-                      barSize={40}
-                    />
-                    <Bar
-                      dataKey="volume_reel"
-                      name="Volume réel"
-                      xAxisId="reel"
-                      fill="#000091"
-                      barSize={24}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
+                  unitTooltip="t"
+                  ariaLabel="Parts de marché par circuit"
+                />
               </div>
             )}
 
@@ -152,42 +115,21 @@ export default function AdminDashboard() {
                     </h3>
                     <p className="mb-5 text-sm text-gray-500">
                       Différence entre la moyenne des 5 fiches les plus récentes et les 5 premières fiches
-                      (score BPH absolu). Examinateurs avec au moins 10 fiches.
+                      (score BPH absolu). Examinateurs avec au moins 10 fiches. L&apos;axe vertical donne le
+                      nombre d&apos;examinateurs initiaux.
                     </p>
-                    <ResponsiveContainer
-                      width="100%"
+                    <LineChart
+                      x={chartData.map((d) => d.delta)}
+                      y={[chartData.map((d) => d.count)]}
+                      name={['Examinateurs']}
+                      colors={['#e3a902']}
                       height={350}
-                    >
-                      <AreaChart data={chartData}>
-                        <XAxis
-                          dataKey="delta"
-                          type="number"
-                          domain={[-100, 100]}
-                          ticks={[-100, -75, -50, -25, 0, 25, 50, 75, 100]}
-                        />
-                        <YAxis
-                          allowDecimals={false}
-                          label={{
-                            value: "Nombre d'examinateurs initiaux",
-                            angle: -90,
-                            position: 'insideLeft',
-                            offset: 10,
-                          }}
-                        />
-                        <Tooltip
-                          labelFormatter={(d) => `Delta : ${d} à ${Number(d) + bucketSize}`}
-                          formatter={(value) => [value, 'Examinateurs']}
-                        />
-                        <Area
-                          type="monotone"
-                          dataKey="count"
-                          stroke="#e3a902"
-                          fill="#e3a902"
-                          fillOpacity={0.1}
-                          strokeWidth={2.5}
-                        />
-                      </AreaChart>
-                    </ResponsiveContainer>
+                      fill
+                      xMin={-100}
+                      xMax={100}
+                      yMax={Math.max(...chartData.map((d) => d.count), 6)}
+                      ariaLabel="Répartition des examinateurs initiaux par delta de score BPH"
+                    />
                   </div>
                 );
               })()}

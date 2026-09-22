@@ -21,7 +21,6 @@
     "@af-utils/scrollend-polyfill": "^0.0.14",
     "@codegouvfr/react-dsfr": "^1.35.0",
     "@e965/xlsx": "^0.20.3",
-    "@gouvfr/dsfr-chart": "^2.1.1",
     "@prisma/client": "6.8.2",
     "@react-hookz/web": "^25.1.1",
     "@sentry/react": "^9.22.0",
@@ -36,13 +35,13 @@
     "qrcode.react": "^4.2.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "react-dsfr-chart": "https://github.com/betagouv/react-dsfr-chart/releases/download/v0.1.2-rc.2/react-dsfr-chart-0.1.2-rc.2.tgz",
     "react-error-boundary": "^6.0.0",
     "react-icons": "^5.6.0",
     "react-player": "^3.3.2",
     "react-router": "^7.12.0",
     "react-select": "^5.10.1",
     "react-toastify": "^11.0.5",
-    "recharts": "^3.8.0",
     "sortablejs": "^1.15.6",
     "uuid": "^11.0.3",
     "zod": "^4.1.11",
@@ -90,11 +89,6 @@
     "plugins": [
       "prettier-plugin-tailwindcss"
     ]
-  },
-  "overrides": {
-    "@codegouvfr/react-dsfr": {
-      "@gouvfr/dsfr-chart": "$@gouvfr/dsfr-chart"
-    }
   },
   "engines": {
     "node": ">=20.0.0"

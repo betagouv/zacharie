@@ -11,7 +11,9 @@ import {
 } from '@prisma/client';
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
 import { Tooltip as DsfrTooltip } from '@codegouvfr/react-dsfr/Tooltip';
-import { Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { BarChart } from 'react-dsfr-chart/BarChart';
+import { PieChart } from 'react-dsfr-chart/PieChart';
+import 'react-dsfr-chart/css';
 import type { EtgUserInteractedResponse, EtgUserInteracted } from '@api/src/types/responses';
 import API from '@app/services/api';
 import useZustandStore from '@app/zustand/store';
@@ -226,8 +228,15 @@ const STATUS_COLORS: Record<StatusDisplayLabel, string> = {
   'Manquant(e)': '#868e96', // gris
   'Sans décision': '#ced4da', // gris clair
 };
-const HYGIENE_COLOR = '#e1000f';
-const NON_HYGIENE_COLOR = '#3b82f6';
+
+// Borne minimale de l'axe des valeurs. Les décomptes sont entiers : sous 6,
+// l'axe se graduerait en demis (0 / 0,5 / 1).
+const MIN_COUNT_AXIS = 6;
+
+// Palette `neutral` + `highlightIndex` : les motifs d'hygiène prennent la
+// couleur d'accent, les autres le gris neutre.
+const HYGIENE_COLOR = 'var(--rdc-default)';
+const NON_HYGIENE_COLOR = 'var(--rdc-neutral)';
 
 // Un motif relevant de l'hygiène est mis en évidence (rouge) dans les graphes.
 type MotifDatum = { motif: string; count: number; hygiene: boolean };
@@ -361,44 +370,15 @@ function SaisieStats({ carcasses }: { carcasses: Array<Carcasse> }) {
         </div>
         <div className="grid gap-4 lg:grid-cols-2">
           <ChartCard title="Répartition par décision SVI">
-            <ResponsiveContainer
-              width="100%"
+            <PieChart
+              x={stats.statusData.map((d) => d.name)}
+              y={stats.statusData.map((d) => d.value)}
+              name={stats.statusData.map((d) => `${d.name} — ${d.value} (${d.pct} %)`)}
+              colors={stats.statusData.map((d) => d.color)}
               height={220}
-            >
-              <PieChart>
-                <Pie
-                  data={stats.statusData}
-                  dataKey="value"
-                  nameKey="name"
-                  innerRadius={55}
-                  outerRadius={85}
-                >
-                  {stats.statusData.map((d) => (
-                    <Cell
-                      key={d.name}
-                      fill={d.color}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(v, n) => [Number(v).toLocaleString('fr-FR'), String(n)]} />
-              </PieChart>
-            </ResponsiveContainer>
-            <ul className="mt-3 flex flex-col gap-1">
-              {stats.statusData.map((d) => (
-                <li
-                  key={d.name}
-                  className="flex items-center gap-2 text-sm"
-                >
-                  <span
-                    className="inline-block h-3 w-3 shrink-0 rounded-sm"
-                    style={{ backgroundColor: d.color }}
-                  />
-                  <span className="flex-1 truncate">{d.name}</span>
-                  <span className="font-semibold text-gray-900">{d.value}</span>
-                  <span className="w-10 text-right text-gray-500">{d.pct}%</span>
-                </li>
-              ))}
-            </ul>
+              unitTooltip="carcasses"
+              ariaLabel="Répartition par décision SVI"
+            />
           </ChartCard>
 
           <ChartCard
@@ -523,43 +503,18 @@ function MotifBarChart({ data, emptyLabel }: { data: MotifDatum[]; emptyLabel: s
     return <p className="py-12 text-center text-sm text-gray-500">{emptyLabel}</p>;
   }
   return (
-    <ResponsiveContainer
-      width="100%"
+    <BarChart
+      x={data.map((d) => getMotifShortLabel(d.motif))}
+      y={[data.map((d) => d.count)]}
+      name={['Nombre de carcasses']}
+      horizontal
+      selectedPalette="neutral"
+      highlightIndex={data.flatMap((d, index) => (d.hygiene ? [index] : []))}
+      xMax={Math.max(...data.map((d) => d.count), MIN_COUNT_AXIS)}
       height={Math.max(220, data.length * 28)}
-    >
-      <BarChart
-        data={data}
-        layout="vertical"
-        margin={{ left: 8, right: 16 }}
-      >
-        <XAxis
-          type="number"
-          allowDecimals={false}
-        />
-        <YAxis
-          dataKey="motif"
-          type="category"
-          width={140}
-          tick={{ fontSize: 11 }}
-          tickFormatter={getMotifShortLabel}
-        />
-        <Tooltip
-          formatter={(v) => [Number(v).toLocaleString('fr-FR'), 'Nombre']}
-          labelFormatter={(label) => getMotifShortLabel(String(label))}
-        />
-        <Bar
-          dataKey="count"
-          name="Nombre de carcasses"
-        >
-          {data.map((d) => (
-            <Cell
-              key={d.motif}
-              fill={d.hygiene ? HYGIENE_COLOR : NON_HYGIENE_COLOR}
-            />
-          ))}
-        </Bar>
-      </BarChart>
-    </ResponsiveContainer>
+      unitTooltip="carcasses"
+      ariaLabel="Motifs de saisie"
+    />
   );
 }
 
