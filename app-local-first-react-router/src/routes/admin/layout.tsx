@@ -82,6 +82,9 @@ export default function AdminLayout() {
     return <Chargement />;
   }
   if (sessionStatus === 'proconnect-required') {
+    // api.ts a déjà pu pousser /app/proconnect en recevant le 403 : on ne ré-encapsule pas cette
+    // URL dans un second `redirect`, sinon ProConnect renvoie l'admin sur /app/proconnect
+    if (location.pathname === '/app/proconnect') return null;
     const redirect = encodeURIComponent(location.pathname + location.search);
     return <Navigate to={`/app/proconnect?redirect=${redirect}`} />;
   }

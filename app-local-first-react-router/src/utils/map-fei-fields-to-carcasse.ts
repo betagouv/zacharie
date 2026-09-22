@@ -19,5 +19,6 @@ export function mapFeiFieldsToCarcasse(fei: Fei): CarcasseFieldsTakenFromFei {
     premier_detenteur_user_id: fei.premier_detenteur_user_id,
     premier_detenteur_entity_id: fei.premier_detenteur_entity_id,
     premier_detenteur_name_cache: fei.premier_detenteur_name_cache,
+    deleted_at  : fei.deleted_at  ,
   };
 }

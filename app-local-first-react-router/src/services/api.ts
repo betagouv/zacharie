@@ -116,9 +116,13 @@ class ApiService {
             setNativeAuthToken(readableRes.data.token);
           }
           if (response.status === 403 && readableRes?.error === 'PROCONNECT_REQUIRED') {
-            const redirect = encodeURIComponent(window.location.pathname + window.location.search);
-            window.history.pushState({}, '', `/app/proconnect?redirect=${redirect}`);
-            window.dispatchEvent(new PopStateEvent('popstate'));
+            // plusieurs appels admin peuvent recevoir ce 403 : une fois sur /app/proconnect on ne
+            // ré-encapsule pas l'URL courante, sinon ProConnect renvoie l'admin sur /app/proconnect
+            if (window.location.pathname !== '/app/proconnect') {
+              const redirect = encodeURIComponent(window.location.pathname + window.location.search);
+              window.history.pushState({}, '', `/app/proconnect?redirect=${redirect}`);
+              window.dispatchEvent(new PopStateEvent('popstate'));
+            }
           }
           return readableRes;
         } catch (e) {
