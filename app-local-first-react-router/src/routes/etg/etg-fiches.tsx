@@ -226,11 +226,16 @@ export default function EtgFiches() {
   }, [filtersKey, setSearchParams]);
 
   const allTransmissions = useMemo(() => {
-    const all = [...transmissionsACompleter, ...transmissionsEnCours, ...transmissionsCloturees];
-    // Fiches renvoyées à l'expéditeur : elles ne concernent plus ce compte.
-    if (feiIdsRenvoiToHide.length === 0) return all;
+    // Un seul passage sur les trois statuts : on concatène en écartant au vol les fiches renvoyées
+    // à l'expéditeur, qui ne concernent plus ce compte.
     const toHide = new Set(feiIdsRenvoiToHide);
-    return all.filter((transmission) => !toHide.has(transmission.fei.numero));
+    const all: Array<CarcasseTransmissionWihMetadata> = [];
+    for (const group of [transmissionsACompleter, transmissionsEnCours, transmissionsCloturees]) {
+      for (const transmission of group) {
+        if (!toHide.has(transmission.fei.numero)) all.push(transmission);
+      }
+    }
+    return all;
   }, [transmissionsACompleter, transmissionsEnCours, transmissionsCloturees, feiIdsRenvoiToHide]);
 
   const premierDetenteurOptions = useMemo(() => {
