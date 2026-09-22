@@ -271,8 +271,10 @@ export default function PartenaireNouveau({ newEntityNomDUsageProps, onFinish }:
               }
             }}
             isClearable={!!newEntityNomDUsage}
-            required
-            className="mb-4"
+            required={true}
+            inputId={Prisma.EntityScalarFieldEnum.raison_sociale}
+            classNamePrefix={Prisma.EntityScalarFieldEnum.raison_sociale}
+            className="mb-6"
           />
         )}
         {hasSiret && (

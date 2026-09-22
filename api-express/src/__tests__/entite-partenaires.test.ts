@@ -71,7 +71,7 @@ describe('GET /entite/partenaires', () => {
       raison_sociale: 'Ma Boucherie',
       siret: '12345678900012',
       brevo_id: 'brevo-secret',
-      deleted_at: null,
+      deleted_at: null as Date | null,
       EntityRelationsWithUsers: [
         {
           id: 'mine-rel',
@@ -136,14 +136,15 @@ describe('POST /entite/partenaire', () => {
     type: EntityTypes.COMMERCE_DE_DETAIL,
     nom_d_usage: 'Boucherie Martin',
     siret: '12345678900012',
-    deleted_at: null,
+    deleted_at: null as Date | null,
   };
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(prisma.entityAndUserRelations.create).mockImplementation(
-      async ({ data }: any) => ({ id: 'rel-created', ...data }) as any
-    );
+    vi.mocked(prisma.entityAndUserRelations.create).mockImplementation((async ({ data }: any) => ({
+      id: 'rel-created',
+      ...data,
+    })) as any);
   });
 
   test('partenaire existant (même SIRET) → rattachement silencieux, aucun doublon, aucun compte créé', async () => {
@@ -227,12 +228,11 @@ describe('POST /entite/partenaire', () => {
   test('nouveau partenaire → création de l’entité, du contact administrateur et invitation', async () => {
     vi.mocked(prisma.entity.findFirst).mockResolvedValueOnce(null);
     vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
-    vi.mocked(prisma.entity.create).mockImplementation(
-      async ({ data }: any) => ({ id: 'entity-created', ...data }) as any
-    );
-    vi.mocked(prisma.user.create).mockImplementation(
-      async ({ data }: any) => ({ ...data, roles: data.roles }) as any
-    );
+    vi.mocked(prisma.entity.create).mockImplementation((async ({ data }: any) => ({
+      id: 'entity-created',
+      ...data,
+    })) as any);
+    vi.mocked(prisma.user.create).mockImplementation((async ({ data }: any) => ({ ...data })) as any);
 
     const res = await authed(request(app).post('/entite/partenaire').send(validBody));
 
