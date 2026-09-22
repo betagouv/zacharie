@@ -1,21 +1,23 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useRef } from 'react';
 
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { EntityRelationType, Prisma, Entity, EntityRelationStatus, EntityTypes } from '@prisma/client';
 import InputCodePostalEtVille from '@app/components/InputCodePostalEtVille';
-import type { PartenairesResponse, UserEntityResponse } from '@api/src/types/responses';
+import type { UserEntityResponse } from '@api/src/types/responses';
 import type { EntitiesById } from '@api/src/types/entity';
-import useUser from '@app/zustand/user';
 import SelectCustom from '@app/components/SelectCustom';
 import API from '@app/services/api';
 import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
-import InputNotEditable from '@app/components/InputNotEditable';
 import useZustandStore from '@app/zustand/store';
 import { toast } from 'react-toastify';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
-
-const empytEntitiesByTypeAndId: EntitiesById = {};
+import {
+  getEtablissementBySiret,
+  isSiret,
+  searchEntreprises,
+  type EtablissementTrouve,
+} from '@app/services/recherche-entreprises';
 
 interface PartenaireNouveauProps {
   newEntityNomDUsageProps?: string;
@@ -26,131 +28,127 @@ interface PartenaireNouveauProps {
 const ID_PREFIX = 'partenaire-nouveau';
 const fieldId = (field: string) => `${ID_PREFIX}-${field}`;
 
+// les établissements venant de l'annuaire des entreprises ne sont pas des entités Zacharie :
+// on les préfixe pour les reconnaître à la sélection
+const ANNUAIRE_OPTION_PREFIX = 'annuaire-';
+
+type SelectOption = EntitiesById[string];
+
+// Le chasseur ne voit jamais les partenaires enregistrés par d'autres chasseurs : un commerce ne veut pas
+// que ses concurrents sachent qu'il est livré via Zacharie. Il saisit toujours le partenaire en entier
+// (aidé par l'annuaire des entreprises) et c'est le serveur qui le rattache à une fiche existante ou en crée une.
 export default function PartenaireNouveau({ newEntityNomDUsageProps, onFinish }: PartenaireNouveauProps) {
-  const user = useUser((state) => state.user)!;
   const entities = useZustandStore((state) => state.entities);
-  const [allEntitiesById, setAllEntitiesById] = useState<EntitiesById>(empytEntitiesByTypeAndId);
-  const [userEntitiesById, setUserEntitiesById] = useState<EntitiesById>(empytEntitiesByTypeAndId);
-  const [refreshKey, setRefreshKey] = useState(0);
 
-  useEffect(() => {
-    API.get({ path: 'entite/partenaires' })
-      .then((res) => res as PartenairesResponse)
-      .then((res) => {
-        if (res.ok) {
-          setAllEntitiesById(res.data.allEntitiesById);
-          setUserEntitiesById(res.data.userEntitiesById);
-        }
-      });
-  }, [refreshKey]);
-
-  const userEntities = Object.values(userEntitiesById);
-  const remainingEntities = Object.values(allEntitiesById).filter((entity) => !userEntitiesById[entity.id]);
-
-  const [currentEntityId, setCurrentEntityId] = useState<string | null>(null);
-  const currentEntity = remainingEntities.find((entity) => entity.id === currentEntityId);
-  const currentEntityUser = currentEntity?.EntityRelationsWithUsers.find(
-    (relation) => relation.status === EntityRelationStatus.ADMIN
-  )?.UserRelatedWithEntity;
   const [newEntityNomDUsage, setNewEntityNomDUsage] = useState(newEntityNomDUsageProps);
-  const [isUnregisteredEntity, setIsUnregisteredEntity] = useState(false);
+  const [entityType, setEntityType] = useState<EntityTypes | undefined>(undefined);
+  const [annuairePrefill, setAnnuairePrefill] = useState<EtablissementTrouve | null>(null);
+
+  const hasSiret = entityType !== EntityTypes.CONSOMMATEUR_FINAL;
 
   const newEntity = newEntityNomDUsage
     ? ({
         nom_d_usage: newEntityNomDUsage,
         id: 'nouvelle',
-      } as (typeof remainingEntities)[number])
+      } as SelectOption)
     : undefined;
-  const selectOptions = newEntity ? [newEntity, ...remainingEntities] : remainingEntities;
-  const selectValue = newEntityNomDUsage
-    ? (selectOptions.find((option) => option.id === 'nouvelle') ?? undefined)
-    : (selectOptions.find((option) => option.id === currentEntityId) ?? undefined);
 
-  const isAdminOfEntity =
-    newEntityNomDUsage ||
-    !currentEntityId ||
-    userEntities
-      .find((entity) => entity.id === currentEntityId)
-      ?.EntityRelationsWithUsers.find(
-        (relation) =>
-          relation.owner_id === user.id &&
-          relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
-      )?.status === EntityRelationStatus.ADMIN;
+  // les champs adresse/SIRET sont non contrôlés : on les remonte avec une clé
+  // qui change à chaque nouveau préremplissage
+  const prefillKey = annuairePrefill?.siret ?? 'vide';
 
-  const ComponentToDisplay = isAdminOfEntity ? Input : InputNotEditable;
+  function selectAnnuaireEtablissement(etablissement: EtablissementTrouve) {
+    setAnnuairePrefill(etablissement);
+    setNewEntityNomDUsage(etablissement.raison_sociale);
+  }
 
-  const [entityType, setEntityType] = useState<EntityTypes | undefined>(undefined);
+  function clearSelection() {
+    setNewEntityNomDUsage('');
+    setEntityType(undefined);
+    setAnnuairePrefill(null);
+  }
 
-  const hasSiret = entityType !== EntityTypes.CONSOMMATEUR_FINAL;
+  // l'annuaire est interrogé à chaque frappe : on attend 300 ms de pause avant l'appel réseau,
+  // et on annule la requête précédente pour qu'une réponse lente n'écrase pas la plus récente
+  const annuaireTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const annuaireAbort = useRef<AbortController | null>(null);
+  function searchAnnuaire(inputValue: string): Promise<Array<EtablissementTrouve>> {
+    return new Promise((resolve) => {
+      if (annuaireTimeout.current) clearTimeout(annuaireTimeout.current);
+      annuaireAbort.current?.abort();
+      const controller = new AbortController();
+      annuaireAbort.current = controller;
+      controller.signal.addEventListener('abort', () => resolve([]));
+      annuaireTimeout.current = setTimeout(() => {
+        searchEntreprises(inputValue, controller.signal).then(resolve);
+      }, 300);
+    });
+  }
+
+  function toAnnuaireOption(etablissement: EtablissementTrouve) {
+    return {
+      id: `${ANNUAIRE_OPTION_PREFIX}${etablissement.siret}`,
+      nom_d_usage: etablissement.raison_sociale,
+      raison_sociale: etablissement.raison_sociale,
+      siret: etablissement.siret,
+      address_ligne_1: etablissement.address_ligne_1,
+      address_ligne_2: etablissement.address_ligne_2,
+      code_postal: etablissement.code_postal,
+      ville: etablissement.ville,
+    } as unknown as SelectOption;
+  }
+
+  async function loadRaisonSocialeOptions(inputValue: string) {
+    const etablissements = await searchAnnuaire(inputValue);
+    if (!etablissements.length) return [];
+    return [{ label: 'Annuaire des entreprises', options: etablissements.map(toAnnuaireOption) }];
+  }
+
+  function handleSiretBlur(siretSaisi: string) {
+    if (!isSiret(siretSaisi)) return;
+    const cleaned = siretSaisi.replace(/\s/g, '');
+    if (annuairePrefill?.siret === cleaned) return;
+    getEtablissementBySiret(cleaned).then((etablissement) => {
+      if (!etablissement) return;
+      selectAnnuaireEtablissement(etablissement);
+    });
+  }
 
   const handleEntitySubmit = useCallback(
     async (event: React.FocusEvent<HTMLFormElement>) => {
       event.preventDefault();
-      if (isUnregisteredEntity || !currentEntityId) {
-        const formData = new FormData(event.currentTarget);
-        const body: Partial<Entity> = Object.fromEntries(formData.entries());
-        body.raison_sociale = newEntityNomDUsage;
-        if (!entityType) {
-          alert('Veuillez sélectionner un type de partenaire');
-          return;
-        }
-        body.type = entityType!;
-        const response = await API.post({
-          path: 'entite/partenaire',
-          body,
-        }).then((data) => data as UserEntityResponse);
-        if (response.ok) {
-          setRefreshKey((prev) => prev + 1);
-          setCurrentEntityId(null);
-          setEntityType(undefined);
-          onFinish(response.data.entity!);
-          useZustandStore.setState({
-            entities: {
-              ...entities,
-              [response.data.entity!.id]: {
-                ...response.data.entity!,
-                relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-                relationStatus: EntityRelationStatus.ADMIN,
-              },
+      const formData = new FormData(event.currentTarget);
+      const body: Partial<Entity> = Object.fromEntries(formData.entries());
+      body.raison_sociale = newEntityNomDUsage;
+      if (!entityType) {
+        alert('Veuillez sélectionner un type de partenaire');
+        return;
+      }
+      body.type = entityType;
+      const response = await API.post({
+        path: 'entite/partenaire',
+        body,
+      }).then((data) => data as UserEntityResponse);
+      if (response.ok) {
+        setEntityType(undefined);
+        setAnnuairePrefill(null);
+        onFinish(response.data.entity!);
+        useZustandStore.setState({
+          entities: {
+            ...entities,
+            [response.data.entity!.id]: {
+              ...response.data.entity!,
+              relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+              relationStatus: EntityRelationStatus.ADMIN,
             },
-          });
-        } else {
-          toast.error(response.error || 'Une erreur est survenue lors de la création du partenaire');
-        }
-      } else {
-        API.post({
-          path: '/user-entity',
-          body: {
-            [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
-            [Prisma.EntityAndUserRelationsScalarFieldEnum.relation]:
-              EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-            [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: currentEntityId,
           },
-        })
-          .then((res) => res as UserEntityResponse)
-          .then((res) => {
-            if (res.ok) {
-              setRefreshKey((k) => k + 1);
-              setCurrentEntityId(null);
-              onFinish(res.data.entity);
-              useZustandStore.setState({
-                entities: {
-                  ...entities,
-                  [res.data.entity!.id]: {
-                    ...res.data.entity!,
-                    relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-                    relationStatus: EntityRelationStatus.ADMIN,
-                  },
-                },
-              });
-            } else {
-              toast.error(res.error || 'Une erreur est survenue lors du rattachement au partenaire');
-            }
-          });
+        });
+      } else {
+        toast.error(response.error || 'Une erreur est survenue lors de la création du partenaire');
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [isUnregisteredEntity, currentEntityId, newEntityNomDUsage, entityType, user.id]
+    [newEntityNomDUsage, entityType]
   );
 
   return (
@@ -226,8 +224,6 @@ export default function PartenaireNouveau({ newEntityNomDUsageProps, onFinish }:
         />
         {hasSiret && (
           <SelectCustom
-            key={'Raison Sociale *' + currentEntityId}
-            options={selectOptions}
             getOptionLabel={(entity) => `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`}
             getOptionValue={(entity) => entity.id}
             formatOptionLabel={(entity, options) => {
@@ -242,124 +238,120 @@ export default function PartenaireNouveau({ newEntityNomDUsageProps, onFinish }:
             // @ts-expect-error - onCreateOption is not typed
             onCreateOption={async (raison_sociale) => {
               setNewEntityNomDUsage(raison_sociale);
-              setIsUnregisteredEntity(true);
               setEntityType(undefined);
-              setCurrentEntityId(null);
+              setAnnuairePrefill(null);
             }}
             label="Raison Sociale *"
+            hint="Recherchez l'entreprise par son nom : le SIRET et l'adresse se remplissent automatiquement."
             name={Prisma.EntityScalarFieldEnum.raison_sociale}
             placeholder=""
             creatable={true}
-            value={selectValue}
+            async={true}
+            loadOptions={loadRaisonSocialeOptions}
+            value={newEntity}
             onBlur={(event) => {
-              if (!currentEntityId) {
-                if (event.target.value) {
-                  setNewEntityNomDUsage(event.target.value);
-                  setIsUnregisteredEntity(true);
-                }
+              if (event.target.value) {
+                setNewEntityNomDUsage(event.target.value);
               }
             }}
-            onChange={(newEntity) => {
-              if (newEntity?.id) {
-                setCurrentEntityId(newEntity.id);
-                setEntityType(newEntity.type);
-                setNewEntityNomDUsage('');
-                setIsUnregisteredEntity(false);
+            onChange={(option) => {
+              if (option?.id?.startsWith(ANNUAIRE_OPTION_PREFIX)) {
+                selectAnnuaireEtablissement({
+                  siret: option.siret!,
+                  raison_sociale: option.nom_d_usage ?? '',
+                  address_ligne_1: option.address_ligne_1 ?? '',
+                  address_ligne_2: option.address_ligne_2 ?? '',
+                  code_postal: option.code_postal ?? '',
+                  ville: option.ville ?? '',
+                });
+                return;
               }
-              if (!newEntity) {
-                setCurrentEntityId(null);
-                setNewEntityNomDUsage('');
-                setEntityType(undefined);
-                setIsUnregisteredEntity(false);
+              if (!option) {
+                clearSelection();
               }
             }}
-            isClearable={!!currentEntityId}
-            required={true}
-            inputId={Prisma.EntityScalarFieldEnum.raison_sociale}
-            classNamePrefix={Prisma.EntityScalarFieldEnum.raison_sociale}
-            className="mb-6"
+            isClearable={!!newEntityNomDUsage}
+            required
+            className="mb-4"
           />
         )}
         {hasSiret && (
-          <ComponentToDisplay
+          <Input
             label="SIRET"
-            key={'SIRET' + currentEntityId}
+            hintText="14 chiffres : la raison sociale et l'adresse se remplissent automatiquement."
+            key={'SIRET' + prefillKey}
             nativeInputProps={{
               id: fieldId(Prisma.EntityScalarFieldEnum.siret),
               name: Prisma.EntityScalarFieldEnum.siret,
               autoComplete: 'off',
-              defaultValue: currentEntity?.siret ?? '',
+              defaultValue: annuairePrefill?.siret ?? '',
+              onBlur: (event) => handleSiretBlur(event.target.value),
             }}
           />
         )}
-        <ComponentToDisplay
+        <Input
           label="Email du représentant *"
-          key={'Email' + currentEntityUser?.id}
           nativeInputProps={{
             id: fieldId(Prisma.UserScalarFieldEnum.email),
             name: Prisma.UserScalarFieldEnum.email,
             autoComplete: 'off',
             required: true,
-            defaultValue: currentEntityUser?.email ?? '',
           }}
         />
         <div className="flex w-full flex-col gap-x-4 md:flex-row">
-          <ComponentToDisplay
+          <Input
             label="Nom du représentant *"
             className="shrink-0 md:basis-1/2"
-            key={'Nom' + currentEntityUser?.id + hasSiret}
+            key={'Nom' + hasSiret}
             nativeInputProps={{
               id: fieldId(Prisma.UserScalarFieldEnum.nom_de_famille),
               name: Prisma.UserScalarFieldEnum.nom_de_famille,
               autoComplete: 'off',
               required: true,
-              defaultValue: hasSiret ? (currentEntityUser?.nom_de_famille ?? '') : newEntityNomDUsageProps,
+              defaultValue: hasSiret ? '' : newEntityNomDUsageProps,
             }}
           />
-          <ComponentToDisplay
+          <Input
             label="Prénom du représentant *"
             className="shrink-0 md:basis-1/2"
-            key={'Prenom' + currentEntityUser?.id}
             nativeInputProps={{
               id: fieldId(Prisma.UserScalarFieldEnum.prenom),
               name: Prisma.UserScalarFieldEnum.prenom,
               autoComplete: 'off',
               required: true,
-              defaultValue: currentEntityUser?.prenom ?? '',
             }}
           />
         </div>
-        <ComponentToDisplay
+        <Input
           label="Adresse *"
-          key={'Adresse *' + currentEntityId}
+          key={'Adresse *' + prefillKey}
           hintText="Indication : numéro et voie"
           nativeInputProps={{
             id: fieldId(Prisma.EntityScalarFieldEnum.address_ligne_1),
             name: Prisma.EntityScalarFieldEnum.address_ligne_1,
             autoComplete: 'off',
             required: true,
-            defaultValue: currentEntity?.address_ligne_1 ?? '',
+            defaultValue: annuairePrefill?.address_ligne_1 ?? '',
           }}
         />
-        <ComponentToDisplay
+        <Input
           label="Complément d'adresse (optionnel)"
           hintText="Indication : bâtiment, immeuble, escalier et numéro d'appartement"
-          key={"Complément d'adresse (optionnel)" + currentEntityId}
+          key={"Complément d'adresse (optionnel)" + prefillKey}
           nativeInputProps={{
             id: fieldId(Prisma.EntityScalarFieldEnum.address_ligne_2),
             name: Prisma.EntityScalarFieldEnum.address_ligne_2,
             autoComplete: 'off',
-            defaultValue: currentEntity?.address_ligne_2 ?? '',
+            defaultValue: annuairePrefill?.address_ligne_2 ?? '',
           }}
         />
 
         <InputCodePostalEtVille
-          key={currentEntityId}
+          key={prefillKey}
           idPrefix={ID_PREFIX}
           required
-          notEditable={!isAdminOfEntity}
-          defaultCodePostal={currentEntity?.code_postal ?? ''}
-          defaultVille={currentEntity?.ville ?? ''}
+          defaultCodePostal={annuairePrefill?.code_postal ?? ''}
+          defaultVille={annuairePrefill?.ville ?? ''}
         />
         <Button
           type="submit"

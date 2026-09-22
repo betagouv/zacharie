@@ -86,6 +86,11 @@ export default function PolitiqueDeConfidentialite() {
                 <li>Clever Cloud : hébergement de la plateforme</li>
                 <li>OVH : gestion des noms de domaine</li>
                 <li>Brevo : envoi des emails</li>
+                <li>
+                  Annuaire des entreprises (recherche-entreprises.api.gouv.fr, DINUM) : recherche d'un
+                  établissement par son nom ou son SIRET lors de l'ajout d'un partenaire. Seul le texte saisi
+                  est transmis
+                </li>
                 <li>Notion : gestion du pipeline de développement</li>
                 <li>Github : gestion du code source</li>
               </ul>

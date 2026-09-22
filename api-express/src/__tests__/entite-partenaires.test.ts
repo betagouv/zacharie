@@ -3,13 +3,15 @@ import request from 'supertest';
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import entiteRouter from '~/controllers/entite';
 import prisma from '~/prisma';
+import { sendEmail } from '~/third-parties/brevo';
+import { inviteUser } from '~/utils/invite-user';
 import { EntityRelationStatus, EntityRelationType, EntityTypes, UserRoles } from '@prisma/client';
 
 vi.mock('~/third-parties/brevo', () => ({
   linkBrevoCompanyToContact: vi.fn().mockResolvedValue(undefined),
-  createBrevoContact: vi.fn().mockResolvedValue(undefined),
+  createBrevoContact: vi.fn().mockImplementation(async (user) => user),
   updateBrevoContact: vi.fn().mockResolvedValue(undefined),
-  updateOrCreateBrevoCompany: vi.fn().mockResolvedValue(undefined),
+  updateOrCreateBrevoCompany: vi.fn().mockImplementation(async (entity) => entity),
   sendEmail: vi.fn().mockResolvedValue(undefined),
 }));
 
@@ -22,9 +24,9 @@ vi.mock('~/third-parties/sentry', () => ({
   captureException: vi.fn(),
 }));
 
-// vitest.setup.ts mocks prisma.entity.{findFirst,findUnique} but not findMany,
-// which /partenaires uses. Add it here.
-(prisma.entity as any).findMany = vi.fn();
+// vitest.setup.ts ne mocke pas entity.create ni user.create, utilisés par POST /partenaire
+(prisma.entity as any).create = vi.fn();
+(prisma.user as any).create = vi.fn();
 
 const app = express();
 app.use(express.json());
@@ -40,44 +42,17 @@ const regularUser = {
   isZacharieAdmin: false,
 };
 
-const adminUser = {
-  ...regularUser,
-  id: 'admin-1',
-  email: 'admin@example.com',
-  isZacharieAdmin: true,
-};
-
 function authed(req: request.Test, user: object = regularUser) {
   return req.set('x-test-user', JSON.stringify(user));
 }
 
-function publicEntity(id: string, type: EntityTypes, extras: Record<string, any> = {}) {
-  return {
-    id,
-    type,
-    nom_d_usage: `${id}-name`,
-    deleted_at: null as Date | null,
-    EntityRelationsWithUsers: [
-      {
-        id: `${id}-rel-admin`,
-        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-        status: EntityRelationStatus.ADMIN,
-        owner_id: 'someone-else',
-        entity_id: id,
-        UserRelatedWithEntity: {
-          id: 'someone-else',
-          email: 'leaked@example.com',
-          nom_de_famille: 'Leaked',
-          prenom: 'Owner',
-          code_postal: '75000',
-          ville: 'Paris',
-          roles: [UserRoles.COMMERCE_DE_DETAIL],
-        },
-      },
-    ],
-    ...extras,
-  };
-}
+const PARTENAIRE_TYPES = [
+  EntityTypes.COMMERCE_DE_DETAIL,
+  EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE,
+  EntityTypes.ASSOCIATION_CARITATIVE,
+  EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF,
+  EntityTypes.CONSOMMATEUR_FINAL,
+];
 
 describe('GET /entite/partenaires', () => {
   beforeEach(() => {
@@ -88,134 +63,198 @@ describe('GET /entite/partenaires', () => {
     await request(app).get('/entite/partenaires').expect(401);
   });
 
-  test('allEntitiesById strips EntityRelationsWithUsers (privacy fix); userEntitiesById keeps them', async () => {
-    const otherBoucherie = publicEntity('boucherie-other', EntityTypes.COMMERCE_DE_DETAIL);
-    const myAsso = publicEntity('asso-mine', EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF, {
+  test('ne renvoie que mes partenaires, avec ma seule relation et sans aucune donnée de contact', async () => {
+    const myBoucherie = {
+      id: 'boucherie-mine',
+      type: EntityTypes.COMMERCE_DE_DETAIL,
+      nom_d_usage: 'Ma Boucherie',
+      raison_sociale: 'Ma Boucherie',
+      siret: '12345678900012',
+      brevo_id: 'brevo-secret',
+      deleted_at: null,
       EntityRelationsWithUsers: [
         {
           id: 'mine-rel',
           relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-          status: EntityRelationStatus.MEMBER,
+          status: EntityRelationStatus.REQUESTED,
           owner_id: regularUser.id,
-          entity_id: 'asso-mine',
-          UserRelatedWithEntity: {
-            id: regularUser.id,
-            email: regularUser.email,
-            nom_de_famille: regularUser.nom_de_famille,
-            prenom: regularUser.prenom,
-            code_postal: '75000',
-            ville: 'Paris',
-            roles: regularUser.roles,
-          },
+          entity_id: 'boucherie-mine',
         },
       ],
-    });
-
-    vi.mocked(prisma.entity.findMany)
-      // First call: allEntities — caller MUST NOT see relations on these
-      .mockResolvedValueOnce([otherBoucherie, myAsso] as any)
-      // Second call: authorizedEntities (validated relation) — relations are expected here
-      .mockResolvedValueOnce([myAsso] as any)
-      // Third call: pendingEntities (REQUESTED) — none here
-      .mockResolvedValueOnce([] as any);
+    };
+    vi.mocked(prisma.entity.findMany).mockResolvedValueOnce([myBoucherie] as any);
 
     const res = await authed(request(app).get('/entite/partenaires'));
 
     expect(res.status).toBe(200);
+    // une seule requête : il n'existe plus de liste de tous les partenaires de Zacharie
+    expect(prisma.entity.findMany).toHaveBeenCalledTimes(1);
+    expect(res.body.data.allEntitiesById).toBeUndefined();
 
-    const allById = res.body.data.allEntitiesById;
-    // Both entities present, no admin emails leaked — this is the whole point of the fix
-    expect(allById['boucherie-other'].EntityRelationsWithUsers).toEqual([]);
-    expect(allById['asso-mine'].EntityRelationsWithUsers).toEqual([]);
+    const args = vi.mocked(prisma.entity.findMany).mock.calls[0][0] as any;
+    expect(args.where.type.in).toEqual(PARTENAIRE_TYPES);
+    expect(args.where.deleted_at).toBeNull();
+    // toute relation active compte, quel que soit son statut
+    expect(args.where.EntityRelationsWithUsers.some).toEqual({
+      owner_id: regularUser.id,
+      relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+      deleted_at: null,
+    });
+    // seule ma relation est incluse, jamais le contact du partenaire ni les autres chasseurs
+    expect(args.include.EntityRelationsWithUsers.where).toEqual({
+      owner_id: regularUser.id,
+      relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+      deleted_at: null,
+    });
+    expect(args.include.EntityRelationsWithUsers.select.UserRelatedWithEntity).toBeUndefined();
 
     const userById = res.body.data.userEntitiesById;
-    // Entities the user can transmit to keep relations — UI uses them to know "I already attached"
-    expect(userById['asso-mine'].EntityRelationsWithUsers).toHaveLength(1);
-    expect(userById['asso-mine'].EntityRelationsWithUsers[0].owner_id).toBe(regularUser.id);
-    expect(userById['boucherie-other']).toBeUndefined();
+    expect(userById['boucherie-mine'].nom_d_usage).toBe('Ma Boucherie');
+    expect(userById['boucherie-mine'].brevo_id).toBeUndefined();
+    expect(userById['boucherie-mine'].EntityRelationsWithUsers).toHaveLength(1);
+    expect(userById['boucherie-mine'].EntityRelationsWithUsers[0].owner_id).toBe(regularUser.id);
+    expect(userById['boucherie-mine'].EntityRelationsWithUsers[0].UserRelatedWithEntity).toBeUndefined();
+  });
+});
+
+describe('POST /entite/partenaire', () => {
+  const validBody = {
+    raison_sociale: 'Boucherie Martin',
+    type: EntityTypes.COMMERCE_DE_DETAIL,
+    address_ligne_1: '12 rue du Commerce',
+    address_ligne_2: '',
+    code_postal: '75015',
+    ville: 'Paris',
+    siret: '123 456 789 00012',
+    email: 'boucher@example.com',
+    nom_de_famille: 'Martin',
+    prenom: 'Paul',
+  };
+
+  const existingEntity = {
+    id: 'boucherie-existante',
+    type: EntityTypes.COMMERCE_DE_DETAIL,
+    nom_d_usage: 'Boucherie Martin',
+    siret: '12345678900012',
+    deleted_at: null,
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(prisma.entityAndUserRelations.create).mockImplementation(
+      async ({ data }: any) => ({ id: 'rel-created', ...data }) as any
+    );
   });
 
-  test('pending (REQUESTED) partenaires are listed but expose NO contact PII, regardless of activated', async () => {
-    const requestingUser = { ...regularUser, activated: false };
-    const pendingAsso = publicEntity('asso-pending', EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF, {
-      EntityRelationsWithUsers: [
-        {
-          id: 'pending-rel',
-          relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-          status: EntityRelationStatus.REQUESTED,
-          owner_id: requestingUser.id,
-          entity_id: 'asso-pending',
-        },
-      ],
-    });
+  test('partenaire existant (même SIRET) → rattachement silencieux, aucun doublon, aucun compte créé', async () => {
+    vi.mocked(prisma.entity.findFirst).mockResolvedValueOnce(existingEntity as any);
+    vi.mocked(prisma.entityAndUserRelations.findFirst).mockResolvedValueOnce(null);
+    vi.mocked(prisma.entityAndUserRelations.findMany).mockResolvedValueOnce([
+      { UserRelatedWithEntity: { email: 'admin-existant@example.com' } },
+    ] as any);
 
-    vi.mocked(prisma.entity.findMany)
-      .mockResolvedValueOnce([pendingAsso] as any) // allEntities
-      .mockResolvedValueOnce([] as any) // authorizedEntities — none, the relation is only REQUESTED
-      .mockResolvedValueOnce([pendingAsso] as any); // pendingEntities
-
-    const res = await authed(request(app).get('/entite/partenaires'), requestingUser);
+    const res = await authed(request(app).post('/entite/partenaire').send(validBody));
 
     expect(res.status).toBe(200);
+    // recherche par SIRET normalisé (sans espaces)
+    const findArgs = vi.mocked(prisma.entity.findFirst).mock.calls[0][0] as any;
+    expect(findArgs.where).toEqual({
+      deleted_at: null,
+      type: EntityTypes.COMMERCE_DE_DETAIL,
+      siret: '12345678900012',
+    });
 
-    const pendingCallArgs = vi.mocked(prisma.entity.findMany).mock.calls[2][0] as any;
-    expect(pendingCallArgs.where.EntityRelationsWithUsers.some.status).toBe(EntityRelationStatus.REQUESTED);
-    // Pending query keeps the partenaire-type filter and exposes no contact PII.
-    expect(pendingCallArgs.where.EntityRelationsWithUsers.some.EntityRelatedWithUser.type.in).toEqual([
-      EntityTypes.COMMERCE_DE_DETAIL,
-      EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF,
-      EntityTypes.CONSOMMATEUR_FINAL,
-    ]);
-    expect(pendingCallArgs.include.EntityRelationsWithUsers.select.UserRelatedWithEntity).toBeUndefined();
+    expect(prisma.entity.create).not.toHaveBeenCalled();
+    expect(prisma.user.create).not.toHaveBeenCalled();
+    expect(prisma.user.findUnique).not.toHaveBeenCalled();
+    expect(inviteUser).not.toHaveBeenCalled();
 
-    const userById = res.body.data.userEntitiesById;
-    expect(userById['asso-pending']).toBeDefined();
-    expect(userById['asso-pending'].EntityRelationsWithUsers[0].UserRelatedWithEntity).toBeUndefined();
+    // ma relation est créée sans statut particulier
+    expect(prisma.entityAndUserRelations.create).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(prisma.entityAndUserRelations.create).mock.calls[0][0].data).toEqual({
+      owner_id: regularUser.id,
+      entity_id: 'boucherie-existante',
+      relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+      deleted_at: null,
+    });
+
+    // l'équipe est prévenue, jamais le chasseur
+    expect(sendEmail).toHaveBeenCalledTimes(1);
+    const email = vi.mocked(sendEmail).mock.calls[0][0] as any;
+    expect(email.emails).toEqual(['contact@zacharie.beta.gouv.fr']);
+    expect(email.subject).toBe('Partenaire existant rattaché par un chasseur');
+    expect(email.text).toContain('boucher@example.com');
+    expect(email.text).toContain('admin-existant@example.com');
+
+    // la réponse a la même forme qu'une création : rien ne révèle que le partenaire existait
+    expect(res.body.data.entity.id).toBe('boucherie-existante');
+    expect(res.body.data.relation.id).toBe('rel-created');
+    expect(JSON.stringify(res.body)).not.toContain('admin-existant@example.com');
   });
 
-  test('allEntities query restricts to partenaire types and skips for_testing for non-admins', async () => {
-    vi.mocked(prisma.entity.findMany).mockResolvedValue([] as any);
+  test('partenaire existant déjà rattaché → 200 idempotent, pas de nouvelle relation ni de notice', async () => {
+    vi.mocked(prisma.entity.findFirst).mockResolvedValueOnce(existingEntity as any);
+    vi.mocked(prisma.entityAndUserRelations.findFirst).mockResolvedValueOnce({ id: 'rel-existing' } as any);
 
-    await authed(request(app).get('/entite/partenaires')).expect(200);
+    const res = await authed(request(app).post('/entite/partenaire').send(validBody));
 
-    const firstCallArgs = vi.mocked(prisma.entity.findMany).mock.calls[0][0] as any;
-    expect(firstCallArgs.where.type.in).toEqual([
-      EntityTypes.COMMERCE_DE_DETAIL,
-      EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE,
-      EntityTypes.ASSOCIATION_CARITATIVE,
-      EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF,
-    ]);
-    expect(firstCallArgs.where.for_testing).toBe(false);
-    expect(firstCallArgs.where.deleted_at).toBeNull();
-    // No include — that's the whole point of the fix
-    expect(firstCallArgs.include).toBeUndefined();
+    expect(res.status).toBe(200);
+    expect(res.body.data.relation.id).toBe('rel-existing');
+    expect(prisma.entityAndUserRelations.create).not.toHaveBeenCalled();
+    expect(sendEmail).not.toHaveBeenCalled();
   });
 
-  test('platform admin sees for_testing entities (no for_testing filter)', async () => {
-    vi.mocked(prisma.entity.findMany).mockResolvedValue([] as any);
+  test('sans SIRET, le partenaire existant est retrouvé par type + raison sociale + code postal', async () => {
+    vi.mocked(prisma.entity.findFirst).mockResolvedValueOnce(existingEntity as any);
+    vi.mocked(prisma.entityAndUserRelations.findFirst).mockResolvedValueOnce({ id: 'rel-existing' } as any);
 
-    await authed(request(app).get('/entite/partenaires'), adminUser).expect(200);
+    await authed(
+      request(app)
+        .post('/entite/partenaire')
+        .send({ ...validBody, siret: '', raison_sociale: '  boucherie MARTIN ' })
+    ).expect(200);
 
-    const firstCallArgs = vi.mocked(prisma.entity.findMany).mock.calls[0][0] as any;
-    expect(firstCallArgs.where.for_testing).toBeUndefined();
+    const findArgs = vi.mocked(prisma.entity.findFirst).mock.calls[0][0] as any;
+    expect(findArgs.where).toEqual({
+      deleted_at: null,
+      type: EntityTypes.COMMERCE_DE_DETAIL,
+      raison_sociale: { equals: 'boucherie MARTIN', mode: 'insensitive' },
+      code_postal: '75015',
+    });
+    expect(prisma.entity.create).not.toHaveBeenCalled();
   });
 
-  test('userEntities query filters by CAN_TRANSMIT relation and the right related-entity types', async () => {
-    vi.mocked(prisma.entity.findMany).mockResolvedValue([] as any);
-
-    await authed(request(app).get('/entite/partenaires')).expect(200);
-
-    const secondCallArgs = vi.mocked(prisma.entity.findMany).mock.calls[1][0] as any;
-    expect(secondCallArgs.where.EntityRelationsWithUsers.some.owner_id).toBe(regularUser.id);
-    expect(secondCallArgs.where.EntityRelationsWithUsers.some.relation).toBe(
-      EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY
+  test('nouveau partenaire → création de l’entité, du contact administrateur et invitation', async () => {
+    vi.mocked(prisma.entity.findFirst).mockResolvedValueOnce(null);
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
+    vi.mocked(prisma.entity.create).mockImplementation(
+      async ({ data }: any) => ({ id: 'entity-created', ...data }) as any
     );
-    expect(secondCallArgs.where.EntityRelationsWithUsers.some.EntityRelatedWithUser.type.in).toEqual([
-      EntityTypes.COMMERCE_DE_DETAIL,
-      EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF,
-      EntityTypes.CONSOMMATEUR_FINAL,
+    vi.mocked(prisma.user.create).mockImplementation(
+      async ({ data }: any) => ({ ...data, roles: data.roles }) as any
+    );
+
+    const res = await authed(request(app).post('/entite/partenaire').send(validBody));
+
+    expect(res.status).toBe(200);
+    expect(vi.mocked(prisma.entity.create).mock.calls[0][0].data.siret).toBe('12345678900012');
+    expect(prisma.user.create).toHaveBeenCalledTimes(1);
+    expect(inviteUser).toHaveBeenCalledTimes(1);
+
+    const relations = vi.mocked(prisma.entityAndUserRelations.create).mock.calls.map((call) => call[0].data);
+    expect(relations).toEqual([
+      expect.objectContaining({
+        entity_id: 'entity-created',
+        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        status: EntityRelationStatus.ADMIN,
+      }),
+      {
+        owner_id: regularUser.id,
+        entity_id: 'entity-created',
+        relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+      },
     ]);
-    // This query DOES include — it's the populated side
-    expect(secondCallArgs.include).toBeDefined();
+    expect(res.body.data.entity.id).toBe('entity-created');
+    expect(res.body.data.relation.id).toBe('rel-created');
   });
 });

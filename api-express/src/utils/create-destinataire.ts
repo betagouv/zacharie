@@ -43,9 +43,11 @@ export const destinataireSchema = z.object({
 
 export type DestinataireInput = z.infer<typeof destinataireSchema>;
 
-// `entity` est null quand la création est refusée : `status` et `error` portent alors la réponse HTTP
+// `entity` est null quand la création est refusée : `status` et `error` portent alors la réponse HTTP.
+// `existingEntity` est renseigné quand le destinataire est déjà enregistré sur Zacharie.
 export type CreateDestinataireResult = {
   entity: Entity | null;
+  existingEntity?: Entity;
   status: number;
   error: string;
 };
@@ -55,29 +57,34 @@ export async function createDestinataire(
   invitedBy: User
 ): Promise<CreateDestinataireResult> {
   const data: Prisma.EntityUncheckedCreateInput = {
-    raison_sociale: sanitize(body.raison_sociale),
-    nom_d_usage: sanitize(body.raison_sociale),
+    raison_sociale: sanitize(body.raison_sociale).trim(),
+    nom_d_usage: sanitize(body.raison_sociale).trim(),
     type: body.type,
     address_ligne_1: sanitize(body.address_ligne_1),
     address_ligne_2: sanitize(body.address_ligne_2),
-    code_postal: sanitize(body.code_postal),
+    code_postal: sanitize(body.code_postal).trim(),
     ville: sanitize(body.ville),
-    siret: sanitize(body.siret ?? '') || null,
+    siret: sanitize(body.siret ?? '').replace(/\s/g, '') || null,
     zacharie_compatible: true,
   };
 
+  // un destinataire déjà enregistré sur Zacharie ne doit pas être créé en double.
+  // On le retrouve par SIRET, sinon par type + raison sociale + code postal.
   const existingEntity = await prisma.entity.findFirst({
     where: {
-      raison_sociale: data.raison_sociale,
+      deleted_at: null,
       type: data.type,
-      code_postal: data.code_postal,
-      ville: data.ville,
-      siret: data.siret,
+      ...(data.siret
+        ? { siret: data.siret }
+        : {
+            raison_sociale: { equals: data.raison_sociale, mode: 'insensitive' },
+            code_postal: data.code_postal,
+          }),
     },
   });
 
   if (existingEntity) {
-    return { entity: null, status: 406, error: 'Entité déjà existante' };
+    return { entity: null, existingEntity, status: 406, error: 'Entité déjà existante' };
   }
 
   // on vérifie que l'email est libre AVANT de créer l'entité, sinon on laisse une entité orpheline

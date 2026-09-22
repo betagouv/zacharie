@@ -16,6 +16,11 @@ test.beforeEach(async () => {
 
 test("Le hint « Ajoutez-le en cliquant ici » ouvre la création inline d'un partenaire", async ({ page }) => {
   const feiId = 'ZACH-20250707-QZ6E0-155242';
+  // Le champ « Raison Sociale » interroge l'annuaire des entreprises (API externe) : on le neutralise
+  // pour que le test ne dépende pas du réseau ni des résultats réels.
+  await page.route('https://recherche-entreprises.api.gouv.fr/**', (route) =>
+    route.fulfill({ json: { results: [] } })
+  );
   await connectWith(page, 'premier-detenteur@example.fr');
   await page.getByRole('link', { name: feiId }).click();
 

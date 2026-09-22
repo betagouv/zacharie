@@ -2,7 +2,10 @@
 import { Fragment } from 'react';
 import Select from 'react-select';
 import CreatableSelect from 'react-select/creatable';
+import AsyncSelect from 'react-select/async';
+import AsyncCreatableSelect from 'react-select/async-creatable';
 import type { GroupBase, Props, StylesConfig } from 'react-select';
+import type { AsyncProps } from 'react-select/async';
 import InputNotEditable from './InputNotEditable';
 
 export interface SelectCustomProps<
@@ -11,6 +14,10 @@ export interface SelectCustomProps<
   Group extends GroupBase<Option> = GroupBase<Option>,
 > extends Props<Option, IsMulti, Group> {
   creatable?: boolean;
+  async?: boolean;
+  loadOptions?: AsyncProps<Option, IsMulti, Group>['loadOptions'];
+  defaultOptions?: AsyncProps<Option, IsMulti, Group>['defaultOptions'];
+  cacheOptions?: AsyncProps<Option, IsMulti, Group>['cacheOptions'];
   label?: string;
   hint?: React.ReactNode;
   isReadOnly?: boolean;
@@ -21,8 +28,14 @@ function SelectCustom<
   IsMulti extends boolean = false,
   Group extends GroupBase<Option> = GroupBase<Option>,
 >(allProps: SelectCustomProps<Option, IsMulti, Group>) {
-  const { creatable, isReadOnly, label, hint, ...props } = allProps;
-  const Component = creatable ? CreatableSelect : Select;
+  const { creatable, async: isAsync, isReadOnly, label, hint, ...props } = allProps;
+  const Component = isAsync
+    ? creatable
+      ? AsyncCreatableSelect
+      : AsyncSelect
+    : creatable
+      ? CreatableSelect
+      : Select;
 
   const filterStyles: StylesConfig<Option, IsMulti, Group> = {
     control: (styles) => ({

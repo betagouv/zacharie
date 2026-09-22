@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, Fragment } from 'react';
 
 import { Button } from '@codegouvfr/react-dsfr/Button';
-import { EntityRelationType, Prisma, EntityRelationStatus } from '@prisma/client';
+import { EntityRelationType, Prisma } from '@prisma/client';
 import type { PartenairesResponse, UserConnexionResponse } from '@api/src/types/responses';
 import type { EntitiesById } from '@api/src/types/entity';
 import useUser from '@app/zustand/user';
@@ -101,7 +101,6 @@ export default function MesPartenaires() {
             relationType={EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY}
             entity={entity}
             user={user}
-            enableUsersView={relation.status === EntityRelationStatus.ADMIN}
             displayEntity={true}
             displayUser={false}
             onChange={() => {

@@ -130,6 +130,15 @@ router.get(
   )
 );
 
+// les types de partenaires "circuit court" qu'un chasseur peut enregistrer et livrer
+const PARTENAIRE_TYPES = [
+  EntityTypes.COMMERCE_DE_DETAIL,
+  EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE,
+  EntityTypes.ASSOCIATION_CARITATIVE,
+  EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF,
+  EntityTypes.CONSOMMATEUR_FINAL,
+];
+
 router.get(
   '/partenaires',
   passport.authenticate('user', { session: false }),
@@ -137,81 +146,29 @@ router.get(
     async (req: RequestWithUser, res: express.Response<PartenairesResponse>, next: express.NextFunction) => {
       const user = req.user!;
 
-      const allEntities = await prisma.entity
-        .findMany({
-          where: {
-            deleted_at: null,
-            type: {
-              in: [
-                EntityTypes.COMMERCE_DE_DETAIL,
-                EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE,
-                EntityTypes.ASSOCIATION_CARITATIVE,
-                EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF,
-                // EntityTypes.CONSOMMATEUR_FINAL, // pas besoin du consommateur final, il ne sera pas réutilisé
-              ],
-            },
-            ...(user.isZacharieAdmin ? {} : { for_testing: false }),
-          },
-          orderBy: {
-            nom_d_usage: 'asc',
-          },
-        })
-        .then((entities) =>
-          entities.map((entity) => ({
-            ...entity,
-            EntityRelationsWithUsers: [] as any,
-          }))
-        );
-
-      const partenaireRelatedTypeFilter = {
-        EntityRelatedWithUser: {
-          type: {
-            in: [
-              EntityTypes.COMMERCE_DE_DETAIL,
-              EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF,
-              EntityTypes.CONSOMMATEUR_FINAL,
-            ],
-          },
-        },
-      };
-
-      // Partenaires dont j'ai le droit (relation validée) → relations complètes, PII du contact autorisée
-      const authorizedEntities = await prisma.entity.findMany({
+      // On ne renvoie que MES partenaires. Les autres partenaires enregistrés sur Zacharie restent
+      // confidentiels : un commerce ne veut pas que ses concurrents sachent qu'il est livré via Zacharie.
+      // Le statut de la relation CAN_TRANSMIT n'a pas de rôle fonctionnel : toute relation active compte.
+      // On ne renvoie jamais les autres relations du partenaire (contact administrateur, autres chasseurs).
+      const myPartenaires = await prisma.entity.findMany({
         where: {
           deleted_at: null,
+          type: { in: PARTENAIRE_TYPES },
           EntityRelationsWithUsers: {
             some: {
               owner_id: user.id,
               relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-              status: { in: [EntityRelationStatus.MEMBER, EntityRelationStatus.ADMIN] },
               deleted_at: null,
-              ...partenaireRelatedTypeFilter,
-            },
-          },
-        },
-        include: entityAdminInclude,
-        orderBy: {
-          nom_d_usage: 'asc',
-        },
-      });
-
-      // Partenaires dont je n'ai pas (encore) le droit (demande en attente) → ma seule relation, aucune PII tierce
-      const pendingEntities = await prisma.entity.findMany({
-        where: {
-          deleted_at: null,
-          EntityRelationsWithUsers: {
-            some: {
-              owner_id: user.id,
-              relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-              status: EntityRelationStatus.REQUESTED,
-              deleted_at: null,
-              ...partenaireRelatedTypeFilter,
             },
           },
         },
         include: {
           EntityRelationsWithUsers: {
-            where: { owner_id: user.id },
+            where: {
+              owner_id: user.id,
+              relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+              deleted_at: null,
+            },
             select: {
               id: true,
               relation: true,
@@ -226,35 +183,27 @@ router.get(
         },
       });
 
-      const entitiesUserCanHandleOnBehalf = [...authorizedEntities, ...pendingEntities].map((entity) => ({
-        id: entity.id,
-        raison_sociale: entity.raison_sociale,
-        nom_d_usage: entity.nom_d_usage,
-        address_ligne_1: entity.address_ligne_1,
-        address_ligne_2: entity.address_ligne_2,
-        code_postal: entity.code_postal,
-        ville: entity.ville,
-        siret: entity.siret,
-        type: entity.type,
-        created_at: entity.created_at,
-        updated_at: entity.updated_at,
-        is_synced: entity.is_synced,
-        EntityRelationsWithUsers: entity.EntityRelationsWithUsers,
-      }));
-
-      const allEntitiesById: EntitiesById = {};
-      for (const entity of allEntities) {
-        allEntitiesById[entity.id] = entity;
-      }
       const userEntitiesById: EntitiesById = {};
-      for (const entity of entitiesUserCanHandleOnBehalf) {
-        // @ts-expect-error - TODO: fix this
-        userEntitiesById[entity.id] = entity;
+      for (const entity of myPartenaires) {
+        userEntitiesById[entity.id] = {
+          id: entity.id,
+          raison_sociale: entity.raison_sociale,
+          nom_d_usage: entity.nom_d_usage,
+          address_ligne_1: entity.address_ligne_1,
+          address_ligne_2: entity.address_ligne_2,
+          code_postal: entity.code_postal,
+          ville: entity.ville,
+          siret: entity.siret,
+          type: entity.type,
+          created_at: entity.created_at,
+          updated_at: entity.updated_at,
+          is_synced: entity.is_synced,
+          EntityRelationsWithUsers: entity.EntityRelationsWithUsers,
+        } as EntitiesById[string];
       }
       res.status(200).send({
         ok: true,
         data: {
-          allEntitiesById,
           userEntitiesById,
         },
         error: '',
@@ -371,7 +320,47 @@ router.post(
         return next(error);
       }
 
-      const created = await createDestinataire(result.data, user);
+      const body = result.data;
+      const created = await createDestinataire(body, user);
+
+      if (created.existingEntity) {
+        const existingEntity = created.existingEntity;
+        // Le chasseur ne doit pas pouvoir savoir que ce partenaire existait déjà (ni qui le livre,
+        // ni qui le représente) : on le rattache et on répond exactement comme pour une création.
+        // Le contact saisi est ignoré ; l'équipe Zacharie est prévenue pour arbitrer si besoin.
+        const relationWhere: Prisma.EntityAndUserRelationsUncheckedCreateInput = {
+          owner_id: user.id,
+          entity_id: existingEntity.id,
+          relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+          deleted_at: null,
+        };
+        let relation = await prisma.entityAndUserRelations.findFirst({ where: relationWhere });
+        if (!relation) {
+          relation = await prisma.entityAndUserRelations.create({ data: relationWhere });
+          const existingAdmins = await prisma.entityAndUserRelations.findMany({
+            where: {
+              entity_id: existingEntity.id,
+              relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+              status: EntityRelationStatus.ADMIN,
+              deleted_at: null,
+            },
+            include: { UserRelatedWithEntity: { select: { email: true } } },
+          });
+          await sendEmail({
+            emails: ['contact@zacharie.beta.gouv.fr'],
+            subject: `Partenaire existant rattaché par un chasseur`,
+            text: [
+              `Un chasseur a rattaché un partenaire déjà enregistré dans Zacharie : ${existingEntity.nom_d_usage} (${existingEntity.type}, SIRET ${existingEntity.siret ?? 'inconnu'}).`,
+              `Chasseur : ${user.prenom} ${user.nom_de_famille} (${user.email})`,
+              `Contact saisi par le chasseur : ${body.prenom} ${body.nom_de_famille} (${body.email})`,
+              `Contact administrateur existant : ${existingAdmins.map((admin) => admin.UserRelatedWithEntity.email).join(', ') || 'aucun'}`,
+            ].join('\n\n'),
+          });
+        }
+        res.status(200).send({ ok: true, error: '', data: { entity: existingEntity, relation } });
+        return;
+      }
+
       if (!created.entity) {
         const error = new Error(created.error);
         res.status(created.status);
@@ -384,7 +373,6 @@ router.post(
           owner_id: user.id,
           relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
           entity_id: created.entity.id,
-          status: EntityRelationStatus.MEMBER,
         },
       });
 
