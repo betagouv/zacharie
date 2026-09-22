@@ -92,6 +92,7 @@ interface Actions {
     zacharie_carcasse_ids: string[],
     transmissionFields: CarcasseTransmission
   ) => void;
+  removeCarcassesFromLocalStore: (zacharie_carcasse_ids: string[]) => void;
   createCarcassesIntermediaire: (
     newFeiIntermediaires: CarcassesIntermediaire[],
     specificCarcasseIds: string[]
@@ -276,6 +277,20 @@ const useZustandStore = create<State & Actions>()(
             carcasses: nextCarcasses,
             dataIsSynced: false,
           });
+        },
+        // Retire des données locales les carcasses qui ne me concernent plus (renvoi à
+        // l'expéditeur). À n'appeler qu'une fois la synchro faite : on efface la copie locale, pas
+        // la donnée serveur, qui ne me les renverra plus (cf. getCarcasseAccessWhere côté api-express).
+        removeCarcassesFromLocalStore: (zacharie_carcasse_ids) => {
+          const idsToRemove = new Set(zacharie_carcasse_ids);
+          useZustandStore.setState((state) => ({
+            carcasses: Object.fromEntries(
+              Object.entries(state.carcasses).filter(([id]) => !idsToRemove.has(id))
+            ),
+            carcassesRegistry: state.carcassesRegistry.filter(
+              (c) => !idsToRemove.has(c.zacharie_carcasse_id)
+            ),
+          }));
         },
         createCarcassesIntermediaire: async (
           newIntermediaires: CarcassesIntermediaire[],

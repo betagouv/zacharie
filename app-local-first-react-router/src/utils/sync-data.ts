@@ -56,7 +56,9 @@ function isEverythingSynced(unsynced: ReturnType<typeof collectUnsynced>) {
   return Object.values(unsynced).every((items) => items.length === 0);
 }
 
-export async function syncData(calledFrom?: string) {
+// Retourne true quand le serveur a bien reçu la charge utile (ou qu'il n'y avait rien à envoyer).
+// Le renvoi à l'expéditeur s'en sert pour n'effacer ses carcasses locales qu'une fois parties.
+export async function syncData(calledFrom?: string): Promise<boolean> {
   await hydrationPromise;
 
   // Cancel any in-flight sync
@@ -69,7 +71,7 @@ export async function syncData(calledFrom?: string) {
     const state = useZustandStore.getState();
     if (!state.isOnline) {
       console.log('not syncing data because not online');
-      return;
+      return false;
     }
 
     if (debug) console.log('syncing data from', calledFrom);
@@ -82,7 +84,7 @@ export async function syncData(calledFrom?: string) {
     // Nothing to sync
     if (isEverythingSynced(unsynced)) {
       useZustandStore.setState({ dataIsSynced: true });
-      return;
+      return true;
     }
 
     if (debug) {
@@ -97,12 +99,12 @@ export async function syncData(calledFrom?: string) {
       signal,
     });
 
-    if (signal.aborted) return;
+    if (signal.aborted) return false;
 
     const res = response as SyncResponse;
     if (!res.ok || !res.data) {
       console.error('sync failed', res.error);
-      return;
+      return false;
     }
 
     // Refus définitifs : on arrête de les repousser. On ne touche pas à la donnée locale — le
@@ -121,10 +123,12 @@ export async function syncData(calledFrom?: string) {
         logs: state.logs.filter((l) => !acknowledgedLogIds.has(l.id)),
       }));
     }
+    return true;
   } catch (error) {
-    if (signal.aborted) return;
+    if (signal.aborted) return false;
     console.error('sync error', error);
     capture(error as Error, { extra: { calledFrom } });
+    return false;
   } finally {
     if (!signal.aborted) {
       await loadCarcasses();

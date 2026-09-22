@@ -3,6 +3,7 @@ import { type ButtonProps } from '@codegouvfr/react-dsfr/Button';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import { useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router';
 import dayjs from 'dayjs';
 import { toast } from 'react-toastify';
 import {
@@ -27,6 +28,8 @@ import InputNumeroBonReception from '@app/components/InputNumeroBonReception';
 export default function CurrentOwnerConfirm() {
   const user = useUser((state) => state.user)!;
   const updateCarcassesTransmission = useZustandStore((state) => state.updateCarcassesTransmission);
+  const removeCarcassesFromLocalStore = useZustandStore((state) => state.removeCarcassesFromLocalStore);
+  const navigate = useNavigate();
   const createCarcassesIntermediaire = useZustandStore((state) => state.createCarcassesIntermediaire);
   const addLog = useZustandStore((state) => state.addLog);
   const transmissionMetadata = useGetTransmissionFromURLParams();
@@ -392,7 +395,7 @@ export default function CurrentOwnerConfirm() {
     })
   ).current;
 
-  function handleRenvoi() {
+  async function handleRenvoi() {
     const nextTransmission: CarcasseTransmission = {
       next_owner_entity_id: null,
       next_owner_entity_name_cache: null,
@@ -400,6 +403,13 @@ export default function CurrentOwnerConfirm() {
       next_owner_user_name_cache: null,
       next_owner_role: null,
     };
+    // Ai-je déjà pris en charge ces carcasses plus tôt dans la chaîne (premier détenteur → moi →
+    // un autre → moi) ? Alors la fiche me concerne encore et je garde mes données locales.
+    const jaiDejaPrisEnCharge = transmissionMetadata.intermediaires.some(
+      (i) =>
+        i.intermediaire_user_id === user.id ||
+        (!!i.intermediaire_entity_id && userEntityIds.includes(i.intermediaire_entity_id))
+    );
     updateCarcassesTransmission(myCarcasseIds, nextTransmission);
     addLog({
       user_id: user.id,
@@ -412,8 +422,14 @@ export default function CurrentOwnerConfirm() {
       carcasse_intermediaire_id: null,
       history: createHistoryInput(currentTransmission, nextTransmission),
     });
-    syncData('current-owner-renvoi');
     toast.success("La fiche a été renvoyée à l'expéditeur");
+    // Le renvoi part au serveur AVANT le nettoyage : effacer les carcasses d'abord les retirerait
+    // de la charge utile de synchro et le renvoi serait perdu.
+    const synced = await syncData('current-owner-renvoi');
+    if (synced && !jaiDejaPrisEnCharge) {
+      removeCarcassesFromLocalStore(myCarcasseIds);
+    }
+    navigate(-1);
   }
 
   const actionButtons: ButtonProps[] = [];
