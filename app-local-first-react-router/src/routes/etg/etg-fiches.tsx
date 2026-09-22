@@ -54,6 +54,7 @@ const ITEMS_PER_PAGE = 100;
 export default function EtgFiches() {
   const user = useMostFreshUser('etg-fiches')!;
   const { transmissionsEnCours, transmissionsACompleter, transmissionsCloturees } = useTransmissionsSorted();
+  const feiIdsRenvoiToHide = useZustandStore((state) => state.feiIdsRenvoiToHide);
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
   const entities = useZustandStore((state) => state.entities);
   const usersById = useZustandStore((state) => state.users);
@@ -338,86 +339,94 @@ export default function EtgFiches() {
       .map((year) => ({ year, label: getSaisonLabel(year) }));
   }, [allTransmissions]);
 
-  const [filteredTransmissions, filteredCarcasses] = useMemo(() => {
-    let transmissions = [];
-    let carcasses: CarcasseTransmissionWihMetadata['carcasses'] = [];
-    let q = searchQuery.trim() ? searchQuery.trim().toLowerCase() : undefined;
-    for (const transmission of allTransmissions) {
-      if (q) {
-        let isIncluded = false;
-        if (transmission.fei.numero!.toLowerCase().includes(q)) isIncluded = true;
-        if (transmission.fei.commune_mise_a_mort) {
-          if (transmission.fei.commune_mise_a_mort.toLowerCase().includes(q)) isIncluded = true;
+  const [filteredTransmissions, filteredCarcasses] = useMemo(
+    function filterTransmissions() {
+      let transmissions = [];
+      let carcasses: CarcasseTransmissionWihMetadata['carcasses'] = [];
+      let q = searchQuery.trim() ? searchQuery.trim().toLowerCase() : undefined;
+      const renvoiToHide = new Set(feiIdsRenvoiToHide);
+      for (const transmission of allTransmissions) {
+        // Fiche renvoyée à l'expéditeur : elle ne concerne plus ce compte.
+        if (renvoiToHide.has(transmission.fei.numero)) continue;
+        if (q) {
+          let isIncluded = false;
+          if (transmission.fei.numero!.toLowerCase().includes(q)) isIncluded = true;
+          if (transmission.fei.commune_mise_a_mort) {
+            if (transmission.fei.commune_mise_a_mort.toLowerCase().includes(q)) isIncluded = true;
+          }
+          if (transmission.content.premier_detenteur_name_cache) {
+            if (transmission.content.premier_detenteur_name_cache.toLowerCase().includes(q))
+              isIncluded = true;
+          }
+          if (!isIncluded) {
+            for (const carcasse of transmission.carcasses) {
+              if (carcasse.numero_bracelet?.toLowerCase().includes(q)) {
+                isIncluded = true;
+                break;
+              }
+            }
+          }
+          if (!isIncluded) continue;
         }
-        if (transmission.content.premier_detenteur_name_cache) {
-          if (transmission.content.premier_detenteur_name_cache.toLowerCase().includes(q)) isIncluded = true;
+        if (filterStatuses.length > 0) {
+          if (!filterStatuses.includes(transmission.labels.simpleStatus)) continue;
         }
-        if (!isIncluded) {
-          for (const carcasse of transmission.carcasses) {
-            if (carcasse.numero_bracelet?.toLowerCase().includes(q)) {
+        if (filterPremierDetenteurs.length > 0) {
+          if (
+            !filterPremierDetenteurs.includes(transmission.content.premier_detenteur_user_id ?? '') &&
+            !filterPremierDetenteurs.includes(transmission.content.premier_detenteur_entity_id ?? '')
+          )
+            continue;
+        }
+        if (filterCCGs.length > 0) {
+          if (!filterCCGs.includes(transmission.content.premier_detenteur_depot_entity_id ?? '')) continue;
+        }
+        if (filterCollecteurs.length > 0) {
+          let isIncluded = false;
+          for (const collecteurId of feiCollecteurIdsByFeiNumero[transmission.fei.numero]) {
+            if (filterCollecteurs.includes(collecteurId)) {
               isIncluded = true;
               break;
             }
           }
+          if (!isIncluded) continue;
         }
-        if (!isIncluded) continue;
-      }
-      if (filterStatuses.length > 0) {
-        if (!filterStatuses.includes(transmission.labels.simpleStatus)) continue;
-      }
-      if (filterPremierDetenteurs.length > 0) {
-        if (
-          !filterPremierDetenteurs.includes(transmission.content.premier_detenteur_user_id ?? '') &&
-          !filterPremierDetenteurs.includes(transmission.content.premier_detenteur_entity_id ?? '')
-        )
-          continue;
-      }
-      if (filterCCGs.length > 0) {
-        if (!filterCCGs.includes(transmission.content.premier_detenteur_depot_entity_id ?? '')) continue;
-      }
-      if (filterCollecteurs.length > 0) {
-        let isIncluded = false;
-        for (const collecteurId of feiCollecteurIdsByFeiNumero[transmission.fei.numero]) {
-          if (filterCollecteurs.includes(collecteurId)) {
-            isIncluded = true;
-            break;
+        if (filterSaisons.length > 0) {
+          if (!transmission.fei.date_mise_a_mort) continue;
+          let isIncluded = false;
+          for (const saison of filterSaisons) {
+            if (isDateInSaison(transmission.content.date_mise_a_mort!, saison)) {
+              isIncluded = true;
+              break;
+            }
           }
+          if (!isIncluded) continue;
         }
-        if (!isIncluded) continue;
-      }
-      if (filterSaisons.length > 0) {
-        if (!transmission.fei.date_mise_a_mort) continue;
-        let isIncluded = false;
-        for (const saison of filterSaisons) {
-          if (isDateInSaison(transmission.content.date_mise_a_mort!, saison)) {
-            isIncluded = true;
-            break;
-          }
+        if (filterDateFrom || filterDateTo) {
+          if (!transmission.fei.date_mise_a_mort) continue;
+          const d = dayjs(transmission.fei.date_mise_a_mort).format('YYYY-MM-DD');
+          if (filterDateFrom && d < filterDateFrom) continue;
+          if (filterDateTo && d > filterDateTo) continue;
         }
-        if (!isIncluded) continue;
+        transmissions.push(transmission);
+        carcasses.push(...transmission.carcasses);
       }
-      if (filterDateFrom || filterDateTo) {
-        if (!transmission.fei.date_mise_a_mort) continue;
-        const d = dayjs(transmission.fei.date_mise_a_mort).format('YYYY-MM-DD');
-        if (filterDateFrom && d < filterDateFrom) continue;
-        if (filterDateTo && d > filterDateTo) continue;
-      }
-      transmissions.push(transmission);
-      carcasses.push(...transmission.carcasses);
-    }
-    return [transmissions, carcasses];
-  }, [
-    allTransmissions,
-    searchQuery,
-    filterStatuses,
-    filterPremierDetenteurs,
-    filterCCGs,
-    filterCollecteurs,
-    filterSaisons,
-    filterDateFrom,
-    filterDateTo,
-    feiCollecteurIdsByFeiNumero,
-  ]);
+      return [transmissions, carcasses];
+    },
+    [
+      allTransmissions,
+      searchQuery,
+      filterStatuses,
+      filterPremierDetenteurs,
+      filterCCGs,
+      filterCollecteurs,
+      filterSaisons,
+      filterDateFrom,
+      filterDateTo,
+      feiCollecteurIdsByFeiNumero,
+      feiIdsRenvoiToHide,
+    ]
+  );
 
   const totalPages = Math.ceil(filteredTransmissions.length / ITEMS_PER_PAGE);
   const paginatedTransmissions = useMemo(() => {

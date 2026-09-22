@@ -45,6 +45,7 @@ const PERSISTED_KEYS: (keyof State)[] = [
   'lastUpdateFromServer',
   'carcassesRegistry',
   'logs',
+  'feiIdsRenvoiToHide',
 ];
 
 export interface State {
@@ -63,6 +64,11 @@ export interface State {
   apiKeyApprovals: NonNullable<UserConnexionResponse['data']['apiKeyApprovals']>;
   lastUpdateFromServer: number;
   carcassesRegistry: Array<Carcasse>;
+  // Fiches que ce compte a renvoyées à l'expéditeur : masquées de ses listes sans attendre la
+  // synchro, pour que le renvoi marche hors ligne. Le serveur ne les lui enverra plus (périmètre
+  // getCarcasseAccessWhere côté api-express) ; si elles lui sont réattribuées plus tard,
+  // loadCarcasses les redescend et retire la fiche de cette liste.
+  feiIdsRenvoiToHide: Array<Fei['numero']>;
   logs: Array<Log>;
   _hasHydrated: boolean;
 }
@@ -92,6 +98,7 @@ interface Actions {
     zacharie_carcasse_ids: string[],
     transmissionFields: CarcasseTransmission
   ) => void;
+  hideFeiRenvoi: (fei_numero: Fei['numero']) => void;
   createCarcassesIntermediaire: (
     newFeiIntermediaires: CarcassesIntermediaire[],
     specificCarcasseIds: string[]
@@ -128,6 +135,7 @@ function initialState(): State {
     isOnline: true,
     dataIsSynced: true,
     carcassesRegistry: [],
+    feiIdsRenvoiToHide: [],
     lastUpdateFromServer: 0,
     logs: [],
     feis: {},
@@ -276,6 +284,13 @@ const useZustandStore = create<State & Actions>()(
             carcasses: nextCarcasses,
             dataIsSynced: false,
           });
+        },
+        hideFeiRenvoi: (fei_numero) => {
+          useZustandStore.setState((state) => ({
+            feiIdsRenvoiToHide: state.feiIdsRenvoiToHide.includes(fei_numero)
+              ? state.feiIdsRenvoiToHide
+              : [...state.feiIdsRenvoiToHide, fei_numero],
+          }));
         },
         createCarcassesIntermediaire: async (
           newIntermediaires: CarcassesIntermediaire[],
