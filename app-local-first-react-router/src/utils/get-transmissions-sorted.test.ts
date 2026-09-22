@@ -564,6 +564,65 @@ describe('computeTransmissions — skips', () => {
   });
 });
 
+describe("computeTransmissions — renvoi à l'expéditeur (ETG / collecteur)", () => {
+  const etg = user([UserRoles.ETG], 'etg-user');
+  const collecteur = user([UserRoles.COLLECTEUR_PRO], 'collecteur-user');
+  // Après un renvoi : le next_owner est vidé, le current_owner reste l'expéditeur.
+  const renvoyee = (ov: Partial<Carcasse> = {}) =>
+    carcasse({
+      current_owner_user_id: 'premier-detenteur',
+      current_owner_entity_id: null,
+      next_owner_user_id: null,
+      next_owner_entity_id: null,
+      ...ov,
+    });
+
+  it("retire la transmission renvoyée de la liste de l'ETG", () => {
+    const t = run({ carcasses: [renvoyee()], user: etg, entities: working('my-etg') });
+    expect(t).toEqual({});
+  });
+
+  it('retire la transmission renvoyée de la liste du collecteur', () => {
+    const t = run({ carcasses: [renvoyee()], user: collecteur, entities: working('my-collecteur') });
+    expect(t).toEqual({});
+  });
+
+  it("garde la fiche quand mon entité l'a déjà prise en charge (PD → moi → autre → moi)", () => {
+    const t = run({
+      carcasses: [renvoyee()],
+      intermediaires: [intermediaire({ intermediaire_entity_id: 'my-etg' })],
+      user: etg,
+      entities: working('my-etg'),
+    });
+    expect(Object.keys(t)).toEqual([TID]);
+  });
+
+  it("garde la fiche quand je l'ai sous-traitée", () => {
+    const t = run({
+      carcasses: [renvoyee({ next_owner_sous_traite_by_entity_id: 'my-etg' })],
+      user: etg,
+      entities: working('my-etg'),
+    });
+    expect(Object.keys(t)).toEqual([TID]);
+  });
+
+  it.each([
+    ['next_owner_entity_id', { next_owner_entity_id: 'my-etg' }],
+    ['current_owner_entity_id', { current_owner_entity_id: 'my-etg' }],
+  ])('garde la fiche tant que mon entité est %s', (_label, ov) => {
+    const t = run({ carcasses: [renvoyee(ov as Partial<Carcasse>)], user: etg, entities: working('my-etg') });
+    expect(Object.keys(t)).toEqual([TID]);
+  });
+
+  it('ne filtre pas les autres rôles : le chasseur garde sa fiche renvoyée', () => {
+    const t = run({
+      carcasses: [renvoyee({ current_owner_user_id: 'chasseur' })],
+      user: chasseur,
+    });
+    expect(Object.keys(t)).toEqual([TID]);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // Pure sibling helpers (the hooks need a React renderer and are left out)
 // ---------------------------------------------------------------------------

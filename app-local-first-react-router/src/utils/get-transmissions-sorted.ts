@@ -74,11 +74,16 @@ export function computeTransmissions({
   const role = user.roles[0]; // only one role anyway
   const meIsSvi = user.roles.includes(UserRoles.SVI);
   const meIsChassseur = user.roles.includes(UserRoles.CHASSEUR);
+  const meIsEtgOrCollecteur =
+    user.roles.includes(UserRoles.ETG) || user.roles.includes(UserRoles.COLLECTEUR_PRO);
 
   const transmissionIdsByFeiNumero: Record<Fei['numero'], Array<string>> = {};
   const feiDispatches: Record<Fei['numero'], number> = {};
 
   const transmissions: Record<string, CarcasseTransmissionWihMetadata> = {};
+  // Destinataires (ETG, collecteur) : true dès qu'une carcasse du groupe me relie encore à la
+  // transmission. Voir le filtre en fin de fonction.
+  const transmissionInMyScope: Record<string, boolean> = {};
 
   // Dernière prise en charge de chaque carcasse, en une seule passe sur tous les intermédiaires.
   // Sert à calculer les refus partiels (lots de petit gibier dont une partie a été refusée).
@@ -192,6 +197,14 @@ export function computeTransmissions({
         partialRefusals: [],
       };
       transmissions[transmissionId] = transmissionWithIntermediaires;
+    }
+    if (meIsEtgOrCollecteur && !transmissionInMyScope[transmissionId]) {
+      transmissionInMyScope[transmissionId] = isCarcasseStillMine(
+        carcasse,
+        intermediairesByCarcasseId[carcasse.zacharie_carcasse_id] || [],
+        user,
+        entitiesWorkingDirectlyFor
+      );
     }
     const partialRefusal = getCarcassePartialRefusal(carcasse, dernierAccepteParCarcasse);
     if (partialRefusal) transmissions[transmissionId].partialRefusals.push(partialRefusal);
@@ -365,7 +378,50 @@ export function computeTransmissions({
         numberOfPremierDetenteurProchainDetenteur;
     }
   }
+  // Renvoi à l'expéditeur : le destinataire vide son next_owner sans devenir détenteur, donc plus
+  // rien ne le relie à la transmission. Le serveur ne la lui enverra plus, mais le store local la
+  // garde ; on la retire de ses listes. Le filtre agit dès la mutation locale, avant le sync.
+  if (meIsEtgOrCollecteur) {
+    for (const transmissionId of Object.keys(transmissions)) {
+      if (!transmissionInMyScope[transmissionId]) delete transmissions[transmissionId];
+    }
+  }
   return transmissions;
+}
+
+// Ai-je encore un lien avec cette carcasse ? Miroir client de `getCarcasseAccessWhere`
+// (api-express/src/utils/carcasse-access.ts) pour les ETG et collecteurs, plus la sous-traitance :
+// l'ETG qui sous-traite n'est plus détenteur mais doit continuer à suivre la fiche.
+function isCarcasseStillMine(
+  carcasse: Carcasse,
+  intermediaires: Array<CarcassesIntermediaire>,
+  me: User,
+  entitiesWorkingDirectlyFor: Record<EntityWithUserRelation['id'], EntityWithUserRelation>
+): boolean {
+  if (carcasse.next_owner_user_id === me.id) return true;
+  if (carcasse.current_owner_user_id === me.id) return true;
+  if (carcasse.next_owner_entity_id && entitiesWorkingDirectlyFor[carcasse.next_owner_entity_id]) {
+    return true;
+  }
+  if (carcasse.current_owner_entity_id && entitiesWorkingDirectlyFor[carcasse.current_owner_entity_id]) {
+    return true;
+  }
+  if (
+    carcasse.next_owner_sous_traite_by_entity_id &&
+    entitiesWorkingDirectlyFor[carcasse.next_owner_sous_traite_by_entity_id]
+  ) {
+    return true;
+  }
+  for (const intermediaire of intermediaires) {
+    if (intermediaire.intermediaire_user_id === me.id) return true;
+    if (
+      intermediaire.intermediaire_entity_id &&
+      entitiesWorkingDirectlyFor[intermediaire.intermediaire_entity_id]
+    ) {
+      return true;
+    }
+  }
+  return false;
 }
 
 // Refus partiel d'un lot de petit gibier : nombre d'animaux refusés par le dernier détenteur (ex: "3 perdrix")
