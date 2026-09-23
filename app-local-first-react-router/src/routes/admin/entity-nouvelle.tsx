@@ -223,11 +223,14 @@ export default function AdminNouvelleEntite() {
                   existingEntities.length ? [{ label: EXISTING_GROUP_LABEL, options: existingEntities }] : []
                 }
                 loadingMessage={() => "Recherche dans l'annuaire des entreprises..."}
-                getOptionLabel={(entity) =>
-                  entity.code_postal
+                getOptionLabel={(entity) => {
+                  // l'option de création « Ajouter "…" » n'est pas une entité : elle porte son propre label
+                  // @ts-expect-error - __isNew__ et label ne sont pas typés
+                  if (entity.__isNew__) return entity.label;
+                  return entity.code_postal
                     ? `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`
-                    : (entity.nom_d_usage ?? '')
-                }
+                    : (entity.nom_d_usage ?? '');
+                }}
                 getOptionValue={(entity) => entity.id}
                 creatable
                 label="Raison Sociale *"
