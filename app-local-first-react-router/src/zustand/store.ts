@@ -30,6 +30,7 @@ import { mapFeiFieldsToCarcasse } from '@app/utils/map-fei-fields-to-carcasse';
 import { isCarcassePriseEnChargeEnAval } from '@app/utils/carcasse-deja-envoyee';
 import { createSlicedIDBStorage } from './idb-sliced-storage';
 import { CarcasseTransmission } from '@app/types/carcasse';
+import { datesToIso } from '@app/utils/dates-to-iso';
 
 // State keys to persist in IndexedDB (each stored as its own entry)
 const PERSISTED_KEYS: (keyof State)[] = [
@@ -165,7 +166,7 @@ const useZustandStore = create<State & Actions>()(
           newFei.updated_at = dayjs().toDate();
           useZustandStore.setState((state) => ({
             ...state,
-            feis: { ...state.feis, [newFei.numero]: newFei },
+            feis: { ...state.feis, [newFei.numero]: datesToIso(newFei) },
             dataIsSynced: false,
           }));
         },
@@ -182,21 +183,21 @@ const useZustandStore = create<State & Actions>()(
           const carcassefeiCarcasses = Object.values(get().carcasses).filter(
             (c) => c.fei_numero === fei_numero && !isCarcassePriseEnChargeEnAval(c)
           );
-          const nextFei: Fei = {
+          const nextFei: Fei = datesToIso({
             ...useZustandStore.getState().feis[fei_numero],
             ...partialFei,
             updated_at: dayjs().toDate(),
             is_synced: false,
-          };
+          });
 
           const nextCarcasses: Record<Carcasse['zacharie_carcasse_id'], Carcasse> = {};
           for (const carcasse of carcassefeiCarcasses) {
-            nextCarcasses[carcasse.zacharie_carcasse_id] = {
+            nextCarcasses[carcasse.zacharie_carcasse_id] = datesToIso({
               ...carcasse,
               ...mapFeiFieldsToCarcasse(nextFei),
               updated_at: dayjs().toDate(),
               is_synced: false,
-            };
+            });
           }
 
           useZustandStore.setState((state) => ({
@@ -221,12 +222,12 @@ const useZustandStore = create<State & Actions>()(
               feis: fei
                 ? {
                     ...state.feis,
-                    [fei.numero]: { ...fei, updated_at: dayjs().toDate(), is_synced: false },
+                    [fei.numero]: datesToIso({ ...fei, updated_at: dayjs().toDate(), is_synced: false }),
                   }
                 : state.feis,
               carcasses: {
                 ...state.carcasses,
-                [newCarcasse.zacharie_carcasse_id]: newCarcasse,
+                [newCarcasse.zacharie_carcasse_id]: datesToIso(newCarcasse),
               },
               dataIsSynced: false,
             };
@@ -252,7 +253,7 @@ const useZustandStore = create<State & Actions>()(
           useZustandStore.setState({
             carcasses: {
               ...carcasses,
-              [zacharie_carcasse_id]: nextCarcasse,
+              [zacharie_carcasse_id]: datesToIso(nextCarcasse),
             },
             dataIsSynced: false,
           });
@@ -278,7 +279,7 @@ const useZustandStore = create<State & Actions>()(
               nextCarcasse.svi_carcasse_status = nextStatus;
               nextCarcasse.svi_carcasse_status_set_at = now;
             }
-            nextCarcasses[id] = nextCarcasse;
+            nextCarcasses[id] = datesToIso(nextCarcasse);
           }
           useZustandStore.setState({
             carcasses: nextCarcasses,
@@ -340,7 +341,7 @@ const useZustandStore = create<State & Actions>()(
 
               for (const ci of carcassesIntermediaires) {
                 const feiAndCarcasseAndIntermediaireId = getFeiAndCarcasseAndIntermediaireIds(ci);
-                byId[feiAndCarcasseAndIntermediaireId] = ci;
+                byId[feiAndCarcasseAndIntermediaireId] = datesToIso(ci);
               }
             }
 
@@ -373,12 +374,13 @@ const useZustandStore = create<State & Actions>()(
           );
           for (const [carcassesIntermediaireId, carcassesIntermediaire] of matchingEntries) {
             if (!carcassesIntermediaire.prise_en_charge) continue;
-            nextCarcassesIntermediaireById[carcassesIntermediaireId as FeiAndCarcasseAndIntermediaireIds] = {
-              ...carcassesIntermediaire,
-              ...nextCarcasseIntermediaire,
-              updated_at: dayjs().toDate(),
-              is_synced: false,
-            };
+            nextCarcassesIntermediaireById[carcassesIntermediaireId as FeiAndCarcasseAndIntermediaireIds] =
+              datesToIso({
+                ...carcassesIntermediaire,
+                ...nextCarcasseIntermediaire,
+                updated_at: dayjs().toDate(),
+                is_synced: false,
+              });
           }
 
           useZustandStore.setState((state) => {
@@ -409,12 +411,12 @@ const useZustandStore = create<State & Actions>()(
               ...state,
               carcassesIntermediaireById: {
                 ...state.carcassesIntermediaireById,
-                [feiAndCarcasseAndIntermediaireIds]: {
+                [feiAndCarcasseAndIntermediaireIds]: datesToIso({
                   ...carcasseIntermediaire,
                   ...partialCarcasseIntermediaire,
                   updated_at: dayjs().toDate(),
                   is_synced: false,
-                },
+                }),
               },
               dataIsSynced: false,
             };
@@ -426,11 +428,11 @@ const useZustandStore = create<State & Actions>()(
         createCarcasseModifRequest: (request: CarcasseModificationRequest) => {
           // Modif requests live in a full-history map keyed by carcasse id. We append the new one and
           // sync it; the UI derives pending/history from this same array.
-          const next: CarcasseModificationRequest = {
+          const next: CarcasseModificationRequest = datesToIso({
             ...request,
             is_synced: false,
             updated_at: dayjs().toDate(),
-          };
+          });
           useZustandStore.setState((state) => {
             const existing = state.modifRequestsByCarcasseId[next.zacharie_carcasse_id] ?? [];
             return {
@@ -451,12 +453,13 @@ const useZustandStore = create<State & Actions>()(
             (r) => r.status === CarcasseModificationRequestStatus.PENDING && !r.deleted_at
           );
           if (pendingIdx === -1) return;
-          const next: CarcasseModificationRequest & { _approvalPayload?: typeof approvalPayload } = {
-            ...existing[pendingIdx],
-            ...partial,
-            updated_at: dayjs().toDate(),
-            is_synced: false,
-          };
+          const next: CarcasseModificationRequest & { _approvalPayload?: typeof approvalPayload } =
+            datesToIso({
+              ...existing[pendingIdx],
+              ...partial,
+              updated_at: dayjs().toDate(),
+              is_synced: false,
+            });
           // approvalPayload is transient: it rides along on this row only to be sent in the next /sync
           // POST so the backend can apply the examinateur sanitary fields to the underlying Carcasse on
           // NEW_CARCASSE approval. It's not part of the persisted CarcasseModificationRequest schema.
@@ -473,7 +476,7 @@ const useZustandStore = create<State & Actions>()(
           }));
         },
         addLog: (newLog: Omit<CreateLog, 'fei_intermediaire_id'>) => {
-          const log = {
+          const log = datesToIso({
             id: uuidv4(),
             user_id: newLog.user_id!,
             user_role: newLog.user_role!,
@@ -490,7 +493,7 @@ const useZustandStore = create<State & Actions>()(
             created_at: dayjs().toDate(),
             updated_at: dayjs().toDate(),
             deleted_at: null,
-          };
+          });
           useZustandStore.setState((state) => ({
             ...state,
             logs: [...state.logs, log],
