@@ -204,7 +204,7 @@ export default function FEIDonneesDeChasse({
       { label: 'Fiche n°', value: fei.numero },
       {
         label: carcasses.length > 1 ? 'Espèces' : 'Espèce',
-        value: [...new Set(carcasses.map((c) => c.espece))].join(', '),
+        value: [...new Set(carcasses.map((c) => c.espece))].sort().join(', '),
       },
       {
         label: 'Mise à mort',
