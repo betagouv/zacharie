@@ -100,9 +100,7 @@ describe('updateFei ne réécrit que les carcasses encore chez le chasseur', () 
     useZustandStore.getState().updateFei(FEI_NUMERO, { commune_mise_a_mort: 'CHASSENARD' });
 
     const { carcasses } = useZustandStore.getState();
-    expect(carcasses.GARDEE.consommateur_final_usage_domestique).toEqual(
-      new Date('2026-05-22T11:00:00.000Z')
-    );
+    expect(carcasses.GARDEE.consommateur_final_usage_domestique).toBe('2026-05-22T11:00:00.000Z');
   });
 
   test('les champs de fiche sont bien propagés aux carcasses restantes', () => {
