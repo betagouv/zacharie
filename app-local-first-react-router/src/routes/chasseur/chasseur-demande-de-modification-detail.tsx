@@ -221,7 +221,7 @@ export default function ChasseurDemandeDeModificationDetail() {
             currentPageLabel={pageTitle}
             segments={[
               {
-                label: 'Demandes de modification',
+                label: 'Modifications suite à la prise en charge',
                 linkProps: {
                   to: '/app/chasseur/demandes-de-modification',
                   href: '#',
@@ -261,7 +261,7 @@ export default function ChasseurDemandeDeModificationDetail() {
                 title={isRename ? 'La correction est déjà appliquée' : 'La carcasse suit déjà son parcours'}
                 description={
                   isRename
-                    ? `Le numéro de marquage de cette carcasse est déjà « ${request.numero_bracelet_after} ». Votre retour est informatif : il ne bloque ni l'intermédiaire ni le SVI.`
+                    ? 'Sans retour de votre part, cette correction sera maintenue.'
                     : 'La carcasse a rejoint votre fiche et peut être inspectée par le SVI sans attendre. Il vous reste à signer son examen initial.'
                 }
               />
@@ -457,11 +457,12 @@ export default function ChasseurDemandeDeModificationDetail() {
                         },
                       ]}
                     />
-                    <p className="fr-mt-2w mb-0 text-sm opacity-70">
-                      {isRename
-                        ? `Confirmer indique à ${entityLabel} que le numéro relevé est bon. Dans tous les cas, la carcasse continue son parcours.`
-                        : "Votre signature complète l'examen initial de cette carcasse. Le SVI peut l'inspecter sans l'attendre."}
-                    </p>
+                    {!isRename && (
+                      <p className="fr-mt-2w mb-0 text-sm opacity-70">
+                        Votre signature complète l'examen initial de cette carcasse. Le SVI peut l'inspecter
+                        sans l'attendre.
+                      </p>
+                    )}
                   </>
                 ) : (
                   <div className="border-l-4 border-[#b34000] pl-4">

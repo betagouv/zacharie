@@ -52,7 +52,7 @@ test('Ajout carcasse manquante : ETG ajoute → examinateur signe → carcasse r
   await expect(page.getByRole('heading', { name: 'Modifications signalées sur vos carcasses' })).toBeVisible({
     timeout: 10000,
   });
-  await page.getByRole('button', { name: 'Voir les demandes' }).click();
+  await page.getByRole('button', { name: 'Voir la modification' }).click();
   await page.getByRole('link', { name: 'Voir la demande' }).first().click();
 
   await expect(page.getByRole('heading', { name: "Examen initial d'une carcasse ajoutée" })).toBeVisible();
