@@ -182,7 +182,10 @@ export default function NouvelleCarcasse({
                   type="button"
                   key={_espece}
                   className="rounded-full bg-[#E8EDFF] px-3 py-1 text-sm text-[#000091]"
-                  onClick={() => setEspece(_espece)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setEspece(_espece);
+                  }}
                 >
                   {_espece}
                 </button>
@@ -254,7 +257,8 @@ export default function NouvelleCarcasse({
                       'rounded-full bg-[#E8EDFF] px-3 py-1 text-sm text-[#000091]',
                       // numeroBracelet ? 'pointer-events-none opacity-20' : '',
                     ].join(' ')}
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.preventDefault();
                       incProchainBraceletAUtiliser();
                       setNumeroBracelet(defaultNumeroBracelet);
                     }}

@@ -857,7 +857,8 @@ function CollecteurProFeiContent({
                           <button
                             className="inline-block"
                             type="button"
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.preventDefault();
                               setPriseEnChargeAt(dayjs().toDate());
                             }}
                           >

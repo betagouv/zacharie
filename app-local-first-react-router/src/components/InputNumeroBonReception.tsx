@@ -74,7 +74,10 @@ export default function InputNumeroBonReception({ value, onChange, className }: 
                   key={numero}
                   className="mr-1 mb-1 rounded-full bg-[#E8EDFF] px-3 py-1 text-left text-sm text-[#000091]"
                   type="button"
-                  onClick={() => onChange(numero)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onChange(numero);
+                  }}
                 >
                   {numero}
                 </button>
