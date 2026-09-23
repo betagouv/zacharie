@@ -50,10 +50,10 @@ test('Rename marquage : ETG corrige → maj immédiate → examinateur confirme'
   await expect(page.getByRole('heading', { name: 'Modifications signalées sur vos carcasses' })).toBeVisible({
     timeout: 10000,
   });
-  await page.getByRole('button', { name: 'Voir les demandes' }).click();
+  await page.getByRole('button', { name: 'Voir la modification' }).click();
   await expect(page).toHaveURL(/\/app\/chasseur\/demandes-de-modification$/);
 
-  await page.getByRole('link', { name: 'Voir la demande' }).first().click();
+  await page.getByRole('link', { name: 'Voir la modification' }).first().click();
   await expect(page.getByRole('heading', { name: 'Numéro de marquage corrigé' })).toBeVisible();
   // `exact` : la page affiche aussi l'historique, dont le libellé contient les deux numéros.
   await expect(page.getByText('MM-001-001', { exact: true })).toBeVisible();

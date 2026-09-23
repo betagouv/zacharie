@@ -62,7 +62,7 @@ test('Ajout carcasse manquante pré-transmission SVI : visible par SVI, pas de b
   await expect(page.getByRole('heading', { name: 'Modifications signalées sur vos carcasses' })).toBeVisible({
     timeout: 10000,
   });
-  await page.getByRole('button', { name: 'Voir les demandes' }).click();
+  await page.getByRole('button', { name: 'Voir la modification' }).click();
   await page.getByRole('link', { name: 'Voir la demande' }).first().click();
   await expect(page.getByRole('heading', { name: "Examen initial d'une carcasse ajoutée" })).toBeVisible();
   const sansAnomalieCheckbox = page.getByText('Aucune anomalie constatée');

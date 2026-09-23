@@ -37,7 +37,7 @@ test('Examinateur dashboard alert modal + nav badge + grouping', async ({ page }
   await expect(page.getByRole('heading', { name: 'Modifications signalées sur vos carcasses' })).toBeVisible({
     timeout: 10000,
   });
-  await expect(page.getByText(/a signalé 1 modification/)).toBeVisible();
+  await expect(page.getByText("Le numéro de marquage d'une carcasse a été modifié.")).toBeVisible();
 
   // "Plus tard" closes the modal without navigating.
   await page.getByRole('button', { name: 'Plus tard' }).click();
@@ -52,9 +52,9 @@ test('Examinateur dashboard alert modal + nav badge + grouping', async ({ page }
     timeout: 10000,
   });
 
-  // "Voir les demandes" navigates to the dashboard list. Heading uses "Fiche du DD/MM - {Commune}"
+  // "Voir la modification" navigates to the dashboard list. Heading uses "Fiche du DD/MM - {Commune}"
   // (not the FEI numero).
-  await page.getByRole('button', { name: 'Voir les demandes' }).click();
+  await page.getByRole('button', { name: 'Voir la modification' }).click();
   await expect(page).toHaveURL(/\/app\/chasseur\/demandes-de-modification$/);
   await expect(page.getByRole('heading', { name: /Fiche du 07\/07.*CHASSENARD/ })).toBeVisible();
   await expect(page.getByText(/MM-001-001/).first()).toBeVisible();

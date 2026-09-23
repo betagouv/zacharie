@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import { Button } from '@codegouvfr/react-dsfr/Button';
-import { CarcasseModificationRequestStatus } from '@prisma/client';
+import { CarcasseModificationRequestStatus, CarcasseModificationRequestType } from '@prisma/client';
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 
@@ -47,6 +47,10 @@ export default function PendingModifRequestsAlertModal() {
   }, [modifRequestsByCarcasseId, carcasses, user]);
 
   const count = pendingForMe.length;
+  const renameCount = pendingForMe.filter(
+    (r) => r.type === CarcasseModificationRequestType.BRACELET_RENAME
+  ).length;
+  const newCarcasseCount = count - renameCount;
 
   // Open whenever the user lands on /app/chasseur and has pending demandes. We track an
   // "already opened for this visit" ref so:
@@ -70,11 +74,20 @@ export default function PendingModifRequestsAlertModal() {
   return (
     <modal.Component title="Modifications signalées sur vos carcasses">
       <div>
-        <p className="mb-3">
-          Un intermédiaire a signalé <strong>{count}</strong> {count > 1 ? 'modifications' : 'modification'}{' '}
-          sur {count > 1 ? 'des carcasses' : 'une carcasse'} dont vous êtes l'examinateur initial. C'est déjà
-          pris en compte : les carcasses continuent leur parcours, votre retour est informatif.
-        </p>
+        {renameCount > 0 && (
+          <p className="mb-3">
+            {renameCount > 1
+              ? `Le numéro de marquage de ${renameCount} carcasses a été modifié.`
+              : "Le numéro de marquage d'une carcasse a été modifié."}
+          </p>
+        )}
+        {newCarcasseCount > 0 && (
+          <p className="mb-3">
+            {newCarcasseCount > 1
+              ? `${newCarcasseCount} carcasses ont été ajoutées à vos fiches et attendent la signature de votre examen initial.`
+              : "Une carcasse a été ajoutée à l'une de vos fiches et attend la signature de votre examen initial."}
+          </p>
+        )}
         <div className="mt-4 flex flex-wrap gap-2">
           <Button
             priority="primary"
@@ -84,7 +97,7 @@ export default function PendingModifRequestsAlertModal() {
             }}
             type="button"
           >
-            Voir les demandes
+            {count > 1 ? 'Voir les modifications' : 'Voir la modification'}
           </Button>
           <Button
             priority="secondary"

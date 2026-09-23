@@ -34,8 +34,8 @@ test('Rename contesté : le numéro corrigé reste, le désaccord est tracé', a
   await expect(page.getByRole('heading', { name: 'Modifications signalées sur vos carcasses' })).toBeVisible({
     timeout: 10000,
   });
-  await page.getByRole('button', { name: 'Voir les demandes' }).click();
-  await page.getByRole('link', { name: 'Voir la demande' }).first().click();
+  await page.getByRole('button', { name: 'Voir la modification' }).click();
+  await page.getByRole('link', { name: 'Voir la modification' }).first().click();
 
   // Le chemin « désaccord » est replié par défaut : on l'ouvre, on motive, on envoie.
   await page.getByRole('button', { name: 'Contester le numéro' }).click();

@@ -40,16 +40,19 @@ export default function ChasseurDemandesDeModification() {
   return (
     <div className="fr-container fr-py-4w">
       <title>
-        Demandes de modification | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire
+        Modifications suite à la prise en charge des carcasses | Zacharie | Ministère de l'Agriculture et de
+        la Souveraineté Alimentaire
       </title>
-      <h1>Demandes de modification</h1>
+      <h1>Modifications suite à la prise en charge des carcasses</h1>
       <p className="opacity-80">
-        Un intermédiaire a corrigé un numéro de marquage ou ajouté une carcasse sur une de vos fiches. C'est
-        déjà pris en compte : les carcasses continuent leur parcours. En tant qu'examinateur initial, vous
-        pouvez confirmer ou contester la modification, et signer l'examen initial des carcasses ajoutées.
+        Lors de la prise en charge, un intermédiaire peut corriger le numéro de marquage d'une carcasse ou
+        ajouter une carcasse à votre fiche. Une correction de numéro est déjà appliquée : vous pouvez la
+        confirmer ou la contester, sans obligation. Une carcasse ajoutée nécessite la signature de votre
+        examen initial.
       </p>
       {pendingForMe.length === 0 && (
         <Alert
+          className="fr-my-4w"
           severity="info"
           title="Aucune demande en cours"
           description="Aucun intermédiaire n'a signalé de modification actuellement."
@@ -86,7 +89,8 @@ export default function ChasseurDemandesDeModification() {
                       </p>
                     )}
                     <p className="m-0 text-sm opacity-70">
-                      Demandée le {dayjs(r.requested_at).format('DD/MM/YYYY HH:mm')}
+                      {isRename ? 'Effectuée' : 'Demandée'} le{' '}
+                      {dayjs(r.requested_at).format('DD/MM/YYYY HH:mm')}
                     </p>
                     {r.comment_intermediaire && (
                       <p className="m-0 text-sm opacity-80">Commentaire : {r.comment_intermediaire}</p>
@@ -96,7 +100,7 @@ export default function ChasseurDemandesDeModification() {
                         to={`/app/chasseur/demandes-de-modification/${r.id}`}
                         className="fr-btn fr-btn--secondary fr-btn--sm"
                       >
-                        Voir la demande
+                        {isRename ? 'Voir la modification' : 'Voir la demande'}
                       </Link>
                     </div>
                   </li>
