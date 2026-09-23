@@ -426,7 +426,9 @@ function FEIChasseurLoaded() {
                             key={dayjs(date).format('dddd DD MMMM')}
                             className="mr-1 mb-1 rounded-full bg-[#E8EDFF] px-3 py-1 text-left text-sm text-[#000091]"
                             type="button"
-                            onClick={() => {
+                            onClick={(e) => {
+                              // le bouton est dans le <label> du champ : sans preventDefault, iOS focus le champ
+                              e.preventDefault();
                               updateFei(fei.numero, { date_mise_a_mort: date });
                             }}
                           >
@@ -479,7 +481,10 @@ function FEIChasseurLoaded() {
                             key={commune}
                             type="button"
                             className="mr-1 mb-1 rounded-full bg-[#E8EDFF] px-3 py-1 text-left text-sm text-[#000091]"
-                            onClick={() => updateFei(fei.numero, { commune_mise_a_mort: commune })}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              updateFei(fei.numero, { commune_mise_a_mort: commune });
+                            }}
                           >
                             {commune}
                           </button>
@@ -662,7 +667,8 @@ function FEIChasseurLoaded() {
                             key={dayjs().format('dddd DD MMMM HH mm')}
                             className="mr-1 mb-1 rounded-full bg-[#E8EDFF] px-3 py-1 text-left text-sm text-[#000091]"
                             type="button"
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.preventDefault();
                               updateFei(fei.numero, {
                                 examinateur_initial_date_approbation_mise_sur_le_marche: dayjs().toDate(),
                               });

@@ -658,7 +658,10 @@ function DispatchGroupForm({
                               key={entity.id}
                               type="button"
                               className="mr-1 mb-1 rounded-full bg-[#E8EDFF] px-3 py-1 text-left text-sm text-[#000091]"
-                              onClick={() => onChange({ recipientEntityId: entity.id })}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                onChange({ recipientEntityId: entity.id });
+                              }}
                             >
                               {entity.nom_d_usage}
                             </button>
@@ -805,7 +808,8 @@ function DispatchGroupForm({
                                   key={entity.id}
                                   type="button"
                                   className="mr-1 mb-1 rounded-full bg-[#E8EDFF] px-3 py-1 text-left text-sm text-[#000091]"
-                                  onClick={() => {
+                                  onClick={(e) => {
+                                    e.preventDefault();
                                     onChange({ depotEntityId: entity.id });
                                   }}
                                 >
@@ -848,7 +852,8 @@ function DispatchGroupForm({
                       <button
                         className="rounded-full bg-[#E8EDFF] px-3 py-1 text-sm text-[#000091]"
                         type="button"
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.preventDefault();
                           onChange({ depotDate: now });
                         }}
                       >
@@ -952,7 +957,8 @@ function DispatchGroupForm({
                     <button
                       className="mr-1 rounded-full bg-[#E8EDFF] px-3 py-1 text-sm text-[#000091]"
                       type="button"
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.preventDefault();
                         onChange({ transportDate: now });
                       }}
                     >
