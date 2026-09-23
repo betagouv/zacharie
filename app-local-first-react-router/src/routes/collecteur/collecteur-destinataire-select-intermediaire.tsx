@@ -249,7 +249,6 @@ export default function CollecteurDestinataireIntermediaire({
           inputId={Prisma.CarcasseScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache}
           classNamePrefix={`select-prochain-detenteur`}
           required
-          creatable
           isReadOnly={!canEdit}
           name={Prisma.CarcasseScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache}
         />

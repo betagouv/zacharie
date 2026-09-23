@@ -11,8 +11,13 @@ test.use({ launchOptions: { slowMo: 100 } });
 // La création passe par api-express/src/utils/create-destinataire.ts, qui crée aussi le compte du
 // représentant et lui envoie une invitation.
 
-test.beforeEach(async () => {
+test.beforeEach(async ({ page }) => {
   await resetDb();
+  // Le champ « Raison Sociale » interroge l'annuaire des entreprises (API externe) : on le neutralise
+  // pour que le test ne dépende pas du réseau ni des résultats réels.
+  await page.route('https://recherche-entreprises.api.gouv.fr/**', (route) =>
+    route.fulfill({ json: { results: [] } })
+  );
 });
 
 // Le login mot de passe ouvre une session normale ; /app/admin exige en plus ProConnect (voir 136)
@@ -35,13 +40,13 @@ async function cocher(page: Page, label: string) {
   await option.click();
 }
 
-// la raison sociale est un react-select créable : on valide la saisie avec Entrée, comme le
-// fait déjà le spec 47 sur le même composant côté chasseur
+// la raison sociale est un react-select créable qui interroge l'annuaire : l'option « Ajouter »
+// n'apparaît qu'une fois la recherche terminée, on l'attend avant de la choisir
 async function creerRaisonSociale(page: Page, raisonSociale: string) {
   const input = page.locator("[class*='raison_sociale'] input").first();
   await input.scrollIntoViewIfNeeded();
   await input.fill(raisonSociale);
-  await input.press('Enter');
+  await page.getByRole('option', { name: `Ajouter "${raisonSociale}"` }).click();
 }
 
 // pour une entité déjà enregistrée, on ouvre le menu et on choisit l'option proposée
@@ -94,7 +99,7 @@ test('le formulaire destinataire ne demande pas de représentant pour un ETG', a
 
   // un ETG garde le formulaire historique : une simple raison sociale, aucun représentant
   await expect(page.locator(fieldIds.email)).toBeHidden();
-  await page.getByLabel('Raison Sociale', { exact: true }).fill('ETG Zacharie E2E');
+  await creerRaisonSociale(page, 'ETG Zacharie E2E');
   await page.getByRole('button', { name: 'Créer' }).click();
 
   await expect(page).toHaveURL(/\/app\/admin\/entity\/[^/]+$/, { timeout: 10000 });

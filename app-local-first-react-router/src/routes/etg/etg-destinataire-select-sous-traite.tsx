@@ -15,16 +15,8 @@ import { createHistoryInput } from '@app/utils/create-history-entry';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import type { CarcassesIntermediaire, FeiAndIntermediaireIds } from '@app/types/carcasses-intermediaire';
 import { CarcasseIntermediaire } from '@prisma/client';
-import { createModal } from '@codegouvfr/react-dsfr/Modal';
-import PartenaireNouveau from '@app/components/PartenaireNouveau';
-import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
 import { CarcasseTransmission } from '@app/types/carcasse';
 import { useGetTransmissionFromURLParams } from '@app/utils/get-transmissions-sorted';
-
-const partenaireModal = createModal({
-  isOpenedByDefault: false,
-  id: 'partenaire-modal-st',
-});
 
 export default function DestinataireSousTraite({
   className = '',
@@ -44,8 +36,6 @@ export default function DestinataireSousTraite({
   const etgsIds = useEtgIds();
   const svisIds = useSviIds();
   const collecteursProIds = useCollecteursProIds();
-
-  const isPartenaireModalOpen = useIsModalOpen(partenaireModal);
 
   const transmissionMetadata = useGetTransmissionFromURLParams();
   const fei_numero = transmissionMetadata.fei.numero;
@@ -90,7 +80,6 @@ export default function DestinataireSousTraite({
     }
     return null;
   });
-  const [newEntityNomDUsage, setNewEntityNomDUsage] = useState<string | null>(null);
 
   const prochainDetenteur = prochainDetenteurEntityId ? entities[prochainDetenteurEntityId] : null;
   const prochainDetenteurType = prochainDetenteur?.type;
@@ -216,12 +205,6 @@ export default function DestinataireSousTraite({
           inputId={Prisma.CarcasseScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache}
           classNamePrefix={`select-prochain-detenteur`}
           required
-          creatable
-          // @ts-expect-error - onCreateOption is not typed
-          onCreateOption={(newOption) => {
-            setNewEntityNomDUsage(newOption);
-            partenaireModal.open();
-          }}
           isReadOnly={false}
           name={Prisma.CarcasseScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache}
         />
@@ -271,18 +254,6 @@ export default function DestinataireSousTraite({
           </>
         )}
       </div>
-      <partenaireModal.Component title="Ajouter un destinataire">
-        {isPartenaireModalOpen && (
-          <PartenaireNouveau
-            key={newEntityNomDUsage ?? ''}
-            newEntityNomDUsageProps={newEntityNomDUsage ?? undefined}
-            onFinish={(newEntity) => {
-              partenaireModal.close();
-              if (newEntity) setProchainDetenteurEntityId(newEntity.id);
-            }}
-          />
-        )}
-      </partenaireModal.Component>
     </>
   );
 }

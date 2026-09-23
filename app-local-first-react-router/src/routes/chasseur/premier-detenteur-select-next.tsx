@@ -574,9 +574,13 @@ function DispatchGroupForm({
   carcasseToGroupLabel,
   fieldErrors,
   showErrors,
+  creatingPartenaire,
+  creatingCcg,
   onChangeCarcasseMode,
   onToggleCarcasse,
   onChange,
+  onCreatingPartenaireChange,
+  onCreatingCcgChange,
 }: {
   group: DispatchGroup;
   canEdit: boolean;
@@ -593,16 +597,16 @@ function DispatchGroupForm({
   carcasseToGroupLabel: Record<string, string>;
   fieldErrors: GroupFieldErrors;
   showErrors: boolean;
+  creatingPartenaire: boolean;
+  creatingCcg: boolean;
   onChangeCarcasseMode: (mode: CarcasseMode) => void;
   onToggleCarcasse: (carcasseId: string) => void;
   onChange: (updates: Partial<DispatchGroup>) => void;
+  onCreatingPartenaireChange: (creating: boolean) => void;
+  onCreatingCcgChange: (creating: boolean) => void;
 }) {
   const usageDomestique = isUsageDomestique(group);
   const prochainDetenteur = group.recipientEntityId ? entities[group.recipientEntityId] : null;
-
-  // Création inline (pas de modale imbriquée dans la modale de vente / don).
-  const [creatingPartenaire, setCreatingPartenaire] = useState<string | null>(null);
-  const [creatingCcg, setCreatingCcg] = useState(false);
 
   // Le raccourci de date affiche l'heure qu'il va renseigner, on la garde à jour tant que la modale est ouverte.
   const [now, setNow] = useState(() => dayjs().format('YYYY-MM-DDTHH:mm'));
@@ -624,17 +628,15 @@ function DispatchGroupForm({
       {/* Étape 1 — Destinataire */}
       {showStep('Destinataire') && (
         <>
-          {creatingPartenaire !== null ? (
+          {creatingPartenaire ? (
             <div className="rounded border border-gray-300 p-3">
               <p className="mb-2 text-sm font-bold">Ajouter un destinataire</p>
               <PartenaireNouveau
-                key={creatingPartenaire}
-                newEntityNomDUsageProps={creatingPartenaire || undefined}
                 onFinish={(newEntity) => {
                   if (newEntity) {
                     onChange({ recipientEntityId: newEntity.id });
                   }
-                  setCreatingPartenaire(null);
+                  onCreatingPartenaireChange(false);
                 }}
               />
             </div>
@@ -668,6 +670,9 @@ function DispatchGroupForm({
                 }
                 options={prochainsDetenteursOptions}
                 placeholder="Sélectionnez le prochain détenteur des carcasses"
+                noOptionsMessage={() =>
+                  'Aucun résultat, ajoutez-le en cliquant sur le bouton sous le sélecteur'
+                }
                 value={
                   prochainsDetenteursOptions.find((option) => option.value === group.recipientEntityId) ??
                   null
@@ -679,11 +684,6 @@ function DispatchGroupForm({
                 inputId={`${Prisma.CarcasseScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache}_${group.id}`}
                 classNamePrefix={`select-prochain-detenteur-${group.id}`}
                 required
-                creatable
-                // @ts-expect-error - onCreateOption is not typed
-                onCreateOption={(newOption: string) => {
-                  setCreatingPartenaire(newOption ?? '');
-                }}
                 isReadOnly={!canEdit}
                 name={`${Prisma.CarcasseScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache}_${group.id}`}
               />
@@ -695,8 +695,8 @@ function DispatchGroupForm({
                   Vous ne trouvez pas votre destinataire ?{' '}
                   <button
                     type="button"
-                    className="fr-link fr-link--sm"
-                    onClick={() => setCreatingPartenaire('')}
+                    className="fr-link text-xs!"
+                    onClick={() => onCreatingPartenaireChange(true)}
                   >
                     Ajoutez-le en cliquant ici
                   </button>
@@ -785,7 +785,7 @@ function DispatchGroupForm({
                     if (newEntity) {
                       onChange({ depotEntityId: newEntity.id });
                     }
-                    setCreatingCcg(false);
+                    onCreatingCcgChange(false);
                   }}
                 />
               </div>
@@ -824,7 +824,7 @@ function DispatchGroupForm({
                     getOptionValue={(f) => f.value}
                     onChange={(f) => {
                       if (f?.value === 'add_new') {
-                        setCreatingCcg(true);
+                        onCreatingCcgChange(true);
                         return;
                       }
                       onChange({ depotEntityId: f?.value ?? null });
@@ -882,7 +882,7 @@ function DispatchGroupForm({
                 <Button
                   type="button"
                   nativeButtonProps={{
-                    onClick: () => setCreatingCcg(true),
+                    onClick: () => onCreatingCcgChange(true),
                   }}
                 >
                   Renseigner ma chambre froide (CCG)
@@ -1009,6 +1009,16 @@ export default function DestinataireSelectPremierDetenteur({
   const circuitCourtIds = useCircuitCourtIds();
 
   const isDispatchModalOpen = useIsModalOpen(dispatchModal);
+  // Création inline (pas de modale imbriquée dans la modale de vente / don) : pendant la saisie,
+  // le pied de la modale ne propose que « Annuler », le formulaire a son propre bouton d'enregistrement
+  const [creatingPartenaire, setCreatingPartenaire] = useState(false);
+  const [creatingCcg, setCreatingCcg] = useState(false);
+  useEffect(() => {
+    if (!isDispatchModalOpen) {
+      setCreatingPartenaire(false);
+      setCreatingCcg(false);
+    }
+  }, [isDispatchModalOpen]);
   const isTrichineModalOpen = useIsModalOpen(trichineModal);
   const [dontShowTrichineAgain, setDontShowTrichineAgain] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
@@ -1033,7 +1043,11 @@ export default function DestinataireSelectPremierDetenteur({
   const ccgs = ccgsIds.map((id) => entities[id]);
   const etgs = etgsIds.map((id) => entities[id]);
   const collecteursPros = collecteursProIds.map((id) => entities[id]);
-  const circuitCourt = circuitCourtIds.map((id) => entities[id]);
+  // le store contient aussi les partenaires circuit court vus sur des fiches (relation NONE) :
+  // on ne propose que ceux que le chasseur a lui-même enregistrés
+  const circuitCourt = circuitCourtIds
+    .map((id) => entities[id])
+    .filter((entity) => entity.relation !== EntityRelationType.NONE);
 
   const prochainsDetenteurs = useMemo(() => {
     return [
@@ -1793,9 +1807,23 @@ export default function DestinataireSelectPremierDetenteur({
         buttons={
           !canEdit
             ? [{ children: 'Fermer' }]
-            : modalSecondaryButton
-              ? [modalSecondaryButton, modalMainButton]
-              : [modalMainButton]
+            : creatingPartenaire || creatingCcg
+              ? [
+                  {
+                    children: 'Annuler',
+                    priority: 'secondary',
+                    doClosesModal: false,
+                    nativeButtonProps: {
+                      onClick: () => {
+                        setCreatingPartenaire(false);
+                        setCreatingCcg(false);
+                      },
+                    },
+                  },
+                ]
+              : modalSecondaryButton
+                ? [modalSecondaryButton, modalMainButton]
+                : [modalMainButton]
         }
       >
         {isDispatchModalOpen && draft && (
@@ -1815,6 +1843,10 @@ export default function DestinataireSelectPremierDetenteur({
             carcasseToGroupLabel={draftCarcasseToGroupLabel}
             fieldErrors={draftFieldErrors}
             showErrors={showModalErrors}
+            creatingPartenaire={creatingPartenaire}
+            creatingCcg={creatingCcg}
+            onCreatingPartenaireChange={setCreatingPartenaire}
+            onCreatingCcgChange={setCreatingCcg}
             onChangeCarcasseMode={onChangeCarcasseMode}
             onToggleCarcasse={onToggleDraftCarcasse}
             onChange={onChangeDraft}

@@ -1697,6 +1697,11 @@ router.get(
                 EntityTypes.PREMIER_DETENTEUR, // les associations de chasse doivent rester confidentielles
                 EntityTypes.SVI, // les SVI sont déjà inclus dans les ETGs
                 EntityTypes.CONSOMMATEUR_FINAL, // les collecteurs pro sont déjà inclus dans les associations de chasse
+                // le circuit court reste confidentiel : un chasseur ne voit que les partenaires qu'il a lui-même enregistrés
+                EntityTypes.COMMERCE_DE_DETAIL,
+                EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE,
+                EntityTypes.ASSOCIATION_CARITATIVE,
+                EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF,
               ],
             },
             id: {

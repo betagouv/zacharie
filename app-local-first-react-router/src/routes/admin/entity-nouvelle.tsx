@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import { Button } from '@codegouvfr/react-dsfr/Button';
@@ -12,6 +12,12 @@ import InputCodePostalEtVille from '@app/components/InputCodePostalEtVille';
 import SelectCustom from '@app/components/SelectCustom';
 import API from '@app/services/api';
 import { toast } from 'react-toastify';
+import {
+  getEtablissementBySiret,
+  isSiret,
+  searchEntreprises,
+  type EtablissementTrouve,
+} from '@app/services/recherche-entreprises';
 
 // un destinataire n'a pas de compte Zacharie : on l'enregistre avec son représentant, qui reçoit
 // une invitation. Le consommateur final n'est pas une entité, il n'est donc pas proposé ici.
@@ -23,6 +29,23 @@ const destinataireTypes: Array<EntityTypes> = [
 ];
 
 const NOUVELLE_ENTITE_ID = 'nouvelle';
+// les établissements venant de l'annuaire des entreprises ne sont pas des entités Zacharie :
+// on les préfixe pour les reconnaître à la sélection
+const ANNUAIRE_OPTION_PREFIX = 'annuaire-';
+const EXISTING_GROUP_LABEL = 'Déjà dans Zacharie';
+
+function toAnnuaireOption(etablissement: EtablissementTrouve) {
+  return {
+    id: `${ANNUAIRE_OPTION_PREFIX}${etablissement.siret}`,
+    nom_d_usage: etablissement.raison_sociale,
+    raison_sociale: etablissement.raison_sociale,
+    siret: etablissement.siret,
+    address_ligne_1: etablissement.address_ligne_1,
+    address_ligne_2: etablissement.address_ligne_2,
+    code_postal: etablissement.code_postal,
+    ville: etablissement.ville,
+  } as Entity;
+}
 
 export default function AdminNouvelleEntite() {
   const [isLoading, setIsLoading] = useState(false);
@@ -30,6 +53,7 @@ export default function AdminNouvelleEntite() {
   const [existingEntities, setExistingEntities] = useState<Array<Entity>>([]);
   const [existingEntityId, setExistingEntityId] = useState<string | null>(null);
   const [nouvelleRaisonSociale, setNouvelleRaisonSociale] = useState('');
+  const [annuairePrefill, setAnnuairePrefill] = useState<EtablissementTrouve | null>(null);
   const navigate = useNavigate();
 
   const isDestinataire = !!entityType && destinataireTypes.includes(entityType);
@@ -49,12 +73,75 @@ export default function AdminNouvelleEntite() {
       });
   }, [entityType, isDestinataire]);
 
-  const selectOptions = nouvelleRaisonSociale
-    ? [{ id: NOUVELLE_ENTITE_ID, nom_d_usage: nouvelleRaisonSociale } as Entity, ...existingEntities]
-    : existingEntities;
   const selectValue = nouvelleRaisonSociale
-    ? selectOptions.find((option) => option.id === NOUVELLE_ENTITE_ID)
+    ? ({
+        id: NOUVELLE_ENTITE_ID,
+        nom_d_usage: nouvelleRaisonSociale,
+        code_postal: annuairePrefill?.code_postal ?? null,
+        ville: annuairePrefill?.ville ?? null,
+      } as Entity)
     : existingEntity;
+
+  // les champs adresse/SIRET sont non contrôlés : on les remonte avec une clé
+  // qui change à chaque nouveau préremplissage
+  const prefillKey = annuairePrefill?.siret ?? 'vide';
+
+  function selectAnnuaireEtablissement(etablissement: EtablissementTrouve) {
+    // un établissement déjà enregistré est signalé plutôt que dupliqué
+    const existing = existingEntities.find((entity) => entity.siret === etablissement.siret);
+    if (existing) {
+      setNouvelleRaisonSociale('');
+      setAnnuairePrefill(null);
+      setExistingEntityId(existing.id);
+      return;
+    }
+    setExistingEntityId(null);
+    setAnnuairePrefill(etablissement);
+    setNouvelleRaisonSociale(etablissement.raison_sociale);
+  }
+
+  // l'annuaire est interrogé à chaque frappe : on attend 300 ms de pause avant l'appel réseau,
+  // et on annule la requête précédente pour qu'une réponse lente n'écrase pas la plus récente
+  const annuaireTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const annuaireAbort = useRef<AbortController | null>(null);
+  function searchAnnuaire(inputValue: string): Promise<Array<EtablissementTrouve>> {
+    return new Promise((resolve) => {
+      if (annuaireTimeout.current) clearTimeout(annuaireTimeout.current);
+      annuaireAbort.current?.abort();
+      const controller = new AbortController();
+      annuaireAbort.current = controller;
+      controller.signal.addEventListener('abort', () => resolve([]));
+      annuaireTimeout.current = setTimeout(() => {
+        searchEntreprises(inputValue, controller.signal).then(resolve);
+      }, 300);
+    });
+  }
+
+  async function loadRaisonSocialeOptions(inputValue: string) {
+    const search = inputValue.trim().toLowerCase();
+    const existing = existingEntities.filter((entity) =>
+      [entity.nom_d_usage, entity.raison_sociale, entity.siret].some((value) =>
+        value?.toLowerCase().includes(search)
+      )
+    );
+    const etablissements = await searchAnnuaire(inputValue);
+    const groups = [];
+    if (existing.length) groups.push({ label: EXISTING_GROUP_LABEL, options: existing });
+    if (etablissements.length) {
+      groups.push({ label: 'Annuaire des entreprises', options: etablissements.map(toAnnuaireOption) });
+    }
+    return groups;
+  }
+
+  function handleSiretBlur(siretSaisi: string) {
+    if (!isSiret(siretSaisi)) return;
+    const cleaned = siretSaisi.replace(/\s/g, '');
+    if (annuairePrefill?.siret === cleaned) return;
+    getEtablissementBySiret(cleaned).then((etablissement) => {
+      if (!etablissement) return;
+      selectAnnuaireEtablissement(etablissement);
+    });
+  }
 
   const typeOption = (type: EntityTypes, label: string) => ({
     nativeInputProps: {
@@ -66,6 +153,7 @@ export default function AdminNouvelleEntite() {
         setEntityType(type);
         setExistingEntityId(null);
         setNouvelleRaisonSociale('');
+        setAnnuairePrefill(null);
       },
     },
     label,
@@ -80,9 +168,7 @@ export default function AdminNouvelleEntite() {
         setIsLoading(true);
         const formData = new FormData(event.target as HTMLFormElement);
         const body: Record<string, string> = Object.fromEntries(formData) as Record<string, string>;
-        if (isDestinataire) {
-          body[Prisma.EntityScalarFieldEnum.raison_sociale] = nouvelleRaisonSociale;
-        }
+        body[Prisma.EntityScalarFieldEnum.raison_sociale] = nouvelleRaisonSociale;
         API.post({
           path: 'admin/entity/nouvelle',
           body,
@@ -129,72 +215,90 @@ export default function AdminNouvelleEntite() {
                   typeOption(EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF, 'Repas de chasse ou associatif'),
                 ]}
               />
-              {!isDestinataire && (
-                <Input
-                  label="Raison Sociale"
-                  nativeInputProps={{
-                    id: Prisma.EntityScalarFieldEnum.raison_sociale,
-                    name: Prisma.EntityScalarFieldEnum.raison_sociale,
-                    placeholder: 'ETG de la Garenne',
-                    required: true,
-                    autoComplete: 'off',
-                  }}
+              <SelectCustom
+                key={entityType ?? 'aucun'}
+                async
+                loadOptions={loadRaisonSocialeOptions}
+                defaultOptions={
+                  existingEntities.length ? [{ label: EXISTING_GROUP_LABEL, options: existingEntities }] : []
+                }
+                loadingMessage={() => "Recherche dans l'annuaire des entreprises..."}
+                getOptionLabel={(entity) => {
+                  // l'option de création « Ajouter "…" » n'est pas une entité : elle porte son propre label
+                  // @ts-expect-error - __isNew__ et label ne sont pas typés
+                  if (entity.__isNew__) return entity.label;
+                  return entity.code_postal
+                    ? `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`
+                    : (entity.nom_d_usage ?? '');
+                }}
+                getOptionValue={(entity) => entity.id}
+                creatable
+                label="Raison Sociale *"
+                hint="Recherchez l'entreprise par son nom : le SIRET et l'adresse se remplissent automatiquement."
+                placeholder=""
+                value={selectValue ?? null}
+                // @ts-expect-error - onCreateOption n'est pas typé
+                onCreateOption={(raisonSociale: string) => {
+                  setNouvelleRaisonSociale(raisonSociale);
+                  setExistingEntityId(null);
+                  setAnnuairePrefill(null);
+                }}
+                // une raison sociale saisie sans valider avec Entrée est gardée à la sortie du champ
+                onBlur={(event) => {
+                  if (!event.target.value) return;
+                  setNouvelleRaisonSociale(event.target.value);
+                  setExistingEntityId(null);
+                  setAnnuairePrefill(null);
+                }}
+                onChange={(entity) => {
+                  if (entity?.id.startsWith(ANNUAIRE_OPTION_PREFIX)) {
+                    selectAnnuaireEtablissement({
+                      siret: entity.siret!,
+                      raison_sociale: entity.nom_d_usage ?? '',
+                      address_ligne_1: entity.address_ligne_1 ?? '',
+                      address_ligne_2: entity.address_ligne_2 ?? '',
+                      code_postal: entity.code_postal ?? '',
+                      ville: entity.ville ?? '',
+                    });
+                    return;
+                  }
+                  setNouvelleRaisonSociale('');
+                  setAnnuairePrefill(null);
+                  setExistingEntityId(entity?.id ?? null);
+                }}
+                isClearable
+                inputId={Prisma.EntityScalarFieldEnum.raison_sociale}
+                classNamePrefix={Prisma.EntityScalarFieldEnum.raison_sociale}
+                className="mb-6"
+              />
+              {existingEntity && (
+                <Alert
+                  className="mb-8"
+                  severity="warning"
+                  title="Cette entité est déjà enregistrée dans Zacharie"
+                  description={
+                    <Button
+                      size="small"
+                      priority="secondary"
+                      linkProps={{ to: `/app/admin/entity/${existingEntity.id}` }}
+                    >
+                      Ouvrir sa fiche
+                    </Button>
+                  }
                 />
-              )}
-              {isDestinataire && (
-                <>
-                  <SelectCustom
-                    options={selectOptions}
-                    getOptionLabel={(entity) =>
-                      entity.code_postal
-                        ? `${entity.nom_d_usage} - ${entity.code_postal} ${entity.ville}`
-                        : (entity.nom_d_usage ?? '')
-                    }
-                    getOptionValue={(entity) => entity.id}
-                    creatable
-                    label="Raison Sociale *"
-                    placeholder=""
-                    value={selectValue ?? null}
-                    // @ts-expect-error - onCreateOption n'est pas typé
-                    onCreateOption={(raisonSociale: string) => {
-                      setNouvelleRaisonSociale(raisonSociale);
-                      setExistingEntityId(null);
-                    }}
-                    onChange={(entity) => {
-                      setNouvelleRaisonSociale('');
-                      setExistingEntityId(entity?.id ?? null);
-                    }}
-                    isClearable
-                    inputId={Prisma.EntityScalarFieldEnum.raison_sociale}
-                    classNamePrefix={Prisma.EntityScalarFieldEnum.raison_sociale}
-                    className="mb-6"
-                  />
-                  {existingEntity && (
-                    <Alert
-                      className="mb-8"
-                      severity="warning"
-                      title="Cette entité est déjà enregistrée dans Zacharie"
-                      description={
-                        <Button
-                          size="small"
-                          priority="secondary"
-                          linkProps={{ to: `/app/admin/entity/${existingEntity.id}` }}
-                        >
-                          Ouvrir sa fiche
-                        </Button>
-                      }
-                    />
-                  )}
-                </>
               )}
               {isDestinataire && !!nouvelleRaisonSociale && (
                 <>
                   <Input
                     label="SIRET"
+                    hintText="14 chiffres : la raison sociale et l'adresse se remplissent automatiquement."
+                    key={'SIRET' + prefillKey}
                     nativeInputProps={{
                       id: Prisma.EntityScalarFieldEnum.siret,
                       name: Prisma.EntityScalarFieldEnum.siret,
                       autoComplete: 'off',
+                      defaultValue: annuairePrefill?.siret ?? '',
+                      onBlur: (event) => handleSiretBlur(event.target.value),
                     }}
                   />
                   <Input
@@ -232,23 +336,32 @@ export default function AdminNouvelleEntite() {
                   <Input
                     label="Adresse *"
                     hintText="Indication : numéro et voie"
+                    key={'Adresse' + prefillKey}
                     nativeInputProps={{
                       id: Prisma.EntityScalarFieldEnum.address_ligne_1,
                       name: Prisma.EntityScalarFieldEnum.address_ligne_1,
                       autoComplete: 'off',
                       required: true,
+                      defaultValue: annuairePrefill?.address_ligne_1 ?? '',
                     }}
                   />
                   <Input
                     label="Complément d'adresse (optionnel)"
                     hintText="Indication : bâtiment, immeuble, escalier et numéro d'appartement"
+                    key={'Complément' + prefillKey}
                     nativeInputProps={{
                       id: Prisma.EntityScalarFieldEnum.address_ligne_2,
                       name: Prisma.EntityScalarFieldEnum.address_ligne_2,
                       autoComplete: 'off',
+                      defaultValue: annuairePrefill?.address_ligne_2 ?? '',
                     }}
                   />
-                  <InputCodePostalEtVille required />
+                  <InputCodePostalEtVille
+                    key={prefillKey}
+                    required
+                    defaultCodePostal={annuairePrefill?.code_postal ?? ''}
+                    defaultVille={annuairePrefill?.ville ?? ''}
+                  />
                 </>
               )}
             </div>
@@ -257,7 +370,7 @@ export default function AdminNouvelleEntite() {
                 buttons={[
                   {
                     children: isLoading ? 'Création en cours...' : 'Créer',
-                    disabled: isLoading || (isDestinataire && !nouvelleRaisonSociale),
+                    disabled: isLoading || !nouvelleRaisonSociale,
                     type: 'submit',
                   },
                 ]}

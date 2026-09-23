@@ -554,6 +554,12 @@ Christine
 
   const entityAndUserRelations = await prisma.entityAndUserRelations.createMany({
     data: [
+      // le premier détenteur ne voit que les partenaires circuit court qu'il a lui-même enregistrés
+      {
+        owner_id: users.find((user) => user.email === 'premier-detenteur@example.fr')?.id,
+        entity_id: entities.find((entity) => entity.raison_sociale === 'Commerce de Détail 1')?.id,
+        relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+      },
       {
         owner_id: users.find((user) => user.email === 'examinateur@example.fr')?.id,
         entity_id: entities.find((entity) => entity.raison_sociale === 'Association de chasseurs')?.id,

@@ -133,7 +133,6 @@ export interface EtgUserInteractedResponse {
 export interface PartenairesResponse {
   ok: true;
   data: {
-    allEntitiesById: EntitiesById;
     userEntitiesById: EntitiesById;
   };
   error: '';
