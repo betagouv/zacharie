@@ -40,13 +40,13 @@ async function cocher(page: Page, label: string) {
   await option.click();
 }
 
-// la raison sociale est un react-select créable : on valide la saisie avec Entrée, comme le
-// fait déjà le spec 47 sur le même composant côté chasseur
+// la raison sociale est un react-select créable qui interroge l'annuaire : l'option « Ajouter »
+// n'apparaît qu'une fois la recherche terminée, on l'attend avant de la choisir
 async function creerRaisonSociale(page: Page, raisonSociale: string) {
   const input = page.locator("[class*='raison_sociale'] input").first();
   await input.scrollIntoViewIfNeeded();
   await input.fill(raisonSociale);
-  await input.press('Enter');
+  await page.getByRole('option', { name: `Ajouter "${raisonSociale}"` }).click();
 }
 
 // pour une entité déjà enregistrée, on ouvre le menu et on choisit l'option proposée

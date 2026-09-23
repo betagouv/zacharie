@@ -256,7 +256,6 @@ describe('POST /entite/partenaire (chasseur)', () => {
         owner_id: 'chasseur-1',
         entity_id: 'entity-new',
         relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-        status: EntityRelationStatus.MEMBER,
       },
     });
     expect(inviteUser).toHaveBeenCalledWith(createdOwner, expect.objectContaining({ id: 'chasseur-1' }));
