@@ -844,7 +844,7 @@ function DispatchGroupForm({
                   state={errorFor('depotDate') ? 'error' : 'default'}
                   stateRelatedMessage={errorFor('depotDate')}
                   hintText={
-                    canEdit ? (
+                    canEdit && !group.depotDate ? (
                       <button
                         className="rounded-full bg-[#E8EDFF] px-3 py-1 text-sm text-[#000091]"
                         type="button"
@@ -947,7 +947,7 @@ function DispatchGroupForm({
               state={errorFor('transportDate') ? 'error' : 'default'}
               stateRelatedMessage={errorFor('transportDate')}
               hintText={
-                canEdit ? (
+                canEdit && !group.transportDate ? (
                   <>
                     <button
                       className="mr-1 rounded-full bg-[#E8EDFF] px-3 py-1 text-sm text-[#000091]"

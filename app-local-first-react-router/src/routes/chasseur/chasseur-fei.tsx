@@ -654,7 +654,9 @@ function FEIChasseurLoaded() {
                       'examinateur_initial_date_approbation_mise_sur_le_marche'
                     )}
                     hintText={
-                      canEdit ? (
+                      !canEdit ? (
+                        "Cette date vaut date d'approbation de mise sur le marché"
+                      ) : !fei.examinateur_initial_date_approbation_mise_sur_le_marche ? (
                         <>
                           <button
                             key={dayjs().format('dddd DD MMMM HH mm')}
@@ -669,9 +671,7 @@ function FEIChasseurLoaded() {
                             {dayjs().format('dddd DD MMMM, HH:mm')}
                           </button>
                         </>
-                      ) : (
-                        "Cette date vaut date d'approbation de mise sur le marché"
-                      )
+                      ) : null
                     }
                     nativeInputProps={{
                       id: Prisma.FeiScalarFieldEnum.examinateur_initial_date_approbation_mise_sur_le_marche,
