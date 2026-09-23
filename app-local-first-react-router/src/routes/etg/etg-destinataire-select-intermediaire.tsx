@@ -143,7 +143,6 @@ export default function DestinataireIntermediaire({
     }
     return null;
   });
-  const [newEntityNomDUsage, setNewEntityNomDUsage] = useState<string | null>(null);
 
   const prochainDetenteur = prochainDetenteurEntityId ? entities[prochainDetenteurEntityId] : null;
   const prochainDetenteurType = prochainDetenteur?.type;
@@ -288,6 +287,7 @@ export default function DestinataireIntermediaire({
           }
           options={prochainsDetenteursOptions}
           placeholder="Sélectionnez le prochain détenteur des carcasses"
+          noOptionsMessage={() => 'Aucun résultat, ajoutez-le en cliquant sur le bouton sous le sélecteur'}
           value={
             prochainsDetenteursOptions.find((option) => option.value === prochainDetenteurEntityId) ?? null
           }
@@ -298,15 +298,21 @@ export default function DestinataireIntermediaire({
           inputId={Prisma.CarcasseScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache}
           classNamePrefix={`select-prochain-detenteur`}
           required
-          creatable
-          // @ts-expect-error - onCreateOption is not typed
-          onCreateOption={(newOption) => {
-            setNewEntityNomDUsage(newOption);
-            partenaireModal.open();
-          }}
           isReadOnly={!canEdit}
           name={Prisma.CarcasseScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache}
         />
+        {canEdit && (
+          <p className="fr-hint-text mt-2">
+            Vous ne trouvez pas votre destinataire ?{' '}
+            <button
+              type="button"
+              className="fr-link text-xs!"
+              onClick={() => partenaireModal.open()}
+            >
+              Ajoutez-le en cliquant ici
+            </button>
+          </p>
+        )}
         {!!prochainDetenteur && !prochainDetenteur?.zacharie_compatible && (
           <Alert
             severity="warning"
@@ -454,8 +460,6 @@ export default function DestinataireIntermediaire({
       <partenaireModal.Component title="Ajouter un destinataire">
         {isPartenaireModalOpen && (
           <PartenaireNouveau
-            key={newEntityNomDUsage ?? ''}
-            newEntityNomDUsageProps={newEntityNomDUsage ?? undefined}
             onFinish={(newEntity) => {
               partenaireModal.close();
               if (newEntity) setProchainDetenteurEntityId(newEntity.id);

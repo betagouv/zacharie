@@ -16,6 +16,14 @@ import type { CarcassesIntermediaire, FeiAndIntermediaireIds } from '@app/types/
 import { CarcasseIntermediaire } from '@prisma/client';
 import { CarcasseTransmission } from '@app/types/carcasse';
 import { useGetTransmissionFromURLParams } from '@app/utils/get-transmissions-sorted';
+import { createModal } from '@codegouvfr/react-dsfr/Modal';
+import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
+import PartenaireNouveau from '@app/components/PartenaireNouveau';
+
+const partenaireModal = createModal({
+  isOpenedByDefault: false,
+  id: 'collecteur-partenaire-modal-sous-traite',
+});
 
 export default function CollecteurDestinataireSousTraite({
   className = '',
@@ -34,6 +42,7 @@ export default function CollecteurDestinataireSousTraite({
   const entities = useZustandStore((state) => state.entities);
   const etgsIds = useEtgIds();
   const collecteursProIds = useCollecteursProIds();
+  const isPartenaireModalOpen = useIsModalOpen(partenaireModal);
 
   const transmissionMetadata = useGetTransmissionFromURLParams();
   const fei_numero = transmissionMetadata.fei.numero;
@@ -171,6 +180,7 @@ export default function CollecteurDestinataireSousTraite({
           }
           options={prochainsDetenteursOptions}
           placeholder="Sélectionnez le prochain détenteur des carcasses"
+          noOptionsMessage={() => 'Aucun résultat, ajoutez-le en cliquant sur le bouton sous le sélecteur'}
           value={
             prochainsDetenteursOptions.find((option) => option.value === prochainDetenteurEntityId) ?? null
           }
@@ -181,10 +191,19 @@ export default function CollecteurDestinataireSousTraite({
           inputId={Prisma.CarcasseScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache}
           classNamePrefix={`select-prochain-detenteur`}
           required
-          creatable
           isReadOnly={false}
           name={Prisma.CarcasseScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache}
         />
+        <p className="fr-hint-text mt-2">
+          Vous ne trouvez pas votre destinataire ?{' '}
+          <button
+            type="button"
+            className="fr-link text-xs!"
+            onClick={() => partenaireModal.open()}
+          >
+            Ajoutez-le en cliquant ici
+          </button>
+        </p>
         {!!prochainDetenteur && !prochainDetenteur?.zacharie_compatible && (
           <Alert
             severity="warning"
@@ -231,6 +250,16 @@ export default function CollecteurDestinataireSousTraite({
           </>
         )}
       </div>
+      <partenaireModal.Component title="Ajouter un destinataire">
+        {isPartenaireModalOpen && (
+          <PartenaireNouveau
+            onFinish={(newEntity) => {
+              partenaireModal.close();
+              if (newEntity) setProchainDetenteurEntityId(newEntity.id);
+            }}
+          />
+        )}
+      </partenaireModal.Component>
     </>
   );
 }

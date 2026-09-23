@@ -20,7 +20,6 @@ import {
 } from '@app/services/recherche-entreprises';
 
 interface PartenaireNouveauProps {
-  newEntityNomDUsageProps?: string;
   onFinish: (entity: UserEntityResponse['data']['entity']) => void;
 }
 // une même page peut afficher plusieurs formulaires d'entité : on préfixe les id des champs
@@ -37,10 +36,10 @@ type SelectOption = EntitiesById[string];
 // Le chasseur ne voit jamais les partenaires enregistrés par d'autres chasseurs : un commerce ne veut pas
 // que ses concurrents sachent qu'il est livré via Zacharie. Il saisit toujours le partenaire en entier
 // (aidé par l'annuaire des entreprises) et c'est le serveur qui le rattache à une fiche existante ou en crée une.
-export default function PartenaireNouveau({ newEntityNomDUsageProps, onFinish }: PartenaireNouveauProps) {
+export default function PartenaireNouveau({ onFinish }: PartenaireNouveauProps) {
   const entities = useZustandStore((state) => state.entities);
 
-  const [newEntityNomDUsage, setNewEntityNomDUsage] = useState(newEntityNomDUsageProps);
+  const [newEntityNomDUsage, setNewEntityNomDUsage] = useState<string | undefined>(undefined);
   const [entityType, setEntityType] = useState<EntityTypes | undefined>(undefined);
   const [annuairePrefill, setAnnuairePrefill] = useState<EtablissementTrouve | null>(null);
 
@@ -248,6 +247,7 @@ export default function PartenaireNouveau({ newEntityNomDUsageProps, onFinish }:
             creatable={true}
             async={true}
             loadOptions={loadRaisonSocialeOptions}
+            loadingMessage={() => "Recherche dans l'annuaire des entreprises..."}
             value={newEntity}
             onBlur={(event) => {
               if (event.target.value) {
@@ -310,7 +310,6 @@ export default function PartenaireNouveau({ newEntityNomDUsageProps, onFinish }:
               name: Prisma.UserScalarFieldEnum.nom_de_famille,
               autoComplete: 'off',
               required: true,
-              defaultValue: hasSiret ? '' : newEntityNomDUsageProps,
             }}
           />
           <Input
