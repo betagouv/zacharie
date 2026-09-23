@@ -1,7 +1,7 @@
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 
-// En prod, req.ip est l'IP du load balancer, partagée par tous les utilisateurs :
-// on compte donc les tentatives par email (ou par jeton de réinitialisation), pas par IP
+// On compte les tentatives par email (ou par jeton de réinitialisation) : plusieurs utilisateurs
+// peuvent partager la même IP (réseau d'une administration, d'une entreprise)
 export const authRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: process.env.NODE_ENV === 'production' ? 10 : 1000,

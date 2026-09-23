@@ -58,6 +58,10 @@ import packageJson from '../package.json';
 // Put together a schema
 const app = express();
 
+// L'API est derrière le reverse proxy de Clever Cloud : req.ip doit être l'IP du client
+// (lue dans X-Forwarded-For), pas celle du proxy
+app.set('trust proxy', 1);
+
 // Gzip/brotli des réponses : les payloads JSON (ex: GET /carcasse ~13MB) sont très
 // compressibles et l'essentiel du coût côté client est le transfert. Doit être monté tôt.
 app.use(compression());
