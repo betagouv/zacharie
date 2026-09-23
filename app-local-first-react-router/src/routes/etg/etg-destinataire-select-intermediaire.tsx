@@ -23,16 +23,10 @@ import { createHistoryInput } from '@app/utils/create-history-entry';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import type { CarcassesIntermediaire, FeiAndIntermediaireIds } from '@app/types/carcasses-intermediaire';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
-import PartenaireNouveau from '@app/components/PartenaireNouveau';
 import CCGNouveau from '@app/components/CCGNouveau';
 import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
 import { CarcasseTransmission } from '@app/types/carcasse';
 import { useGetTransmissionFromURLParams } from '@app/utils/get-transmissions-sorted';
-
-const partenaireModal = createModal({
-  isOpenedByDefault: false,
-  id: 'partenaire-modal-int',
-});
 
 const ccgModal = createModal({
   isOpenedByDefault: false,
@@ -67,7 +61,6 @@ export default function DestinataireIntermediaire({
   const collecteursProIds = useCollecteursProIds();
   // const circuitCourtIds = useCircuitCourtIds();
 
-  const isPartenaireModalOpen = useIsModalOpen(partenaireModal);
   const isCCGModalOpen = useIsModalOpen(ccgModal);
 
   const transmissionMetadata = useGetTransmissionFromURLParams();
@@ -287,7 +280,6 @@ export default function DestinataireIntermediaire({
           }
           options={prochainsDetenteursOptions}
           placeholder="Sélectionnez le prochain détenteur des carcasses"
-          noOptionsMessage={() => 'Aucun résultat, ajoutez-le en cliquant sur le bouton sous le sélecteur'}
           value={
             prochainsDetenteursOptions.find((option) => option.value === prochainDetenteurEntityId) ?? null
           }
@@ -301,18 +293,6 @@ export default function DestinataireIntermediaire({
           isReadOnly={!canEdit}
           name={Prisma.CarcasseScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache}
         />
-        {canEdit && (
-          <p className="fr-hint-text mt-2">
-            Vous ne trouvez pas votre destinataire ?{' '}
-            <button
-              type="button"
-              className="fr-link text-xs!"
-              onClick={() => partenaireModal.open()}
-            >
-              Ajoutez-le en cliquant ici
-            </button>
-          </p>
-        )}
         {!!prochainDetenteur && !prochainDetenteur?.zacharie_compatible && (
           <Alert
             severity="warning"
@@ -457,16 +437,6 @@ export default function DestinataireIntermediaire({
           </>
         )}
       </div>
-      <partenaireModal.Component title="Ajouter un destinataire">
-        {isPartenaireModalOpen && (
-          <PartenaireNouveau
-            onFinish={(newEntity) => {
-              partenaireModal.close();
-              if (newEntity) setProchainDetenteurEntityId(newEntity.id);
-            }}
-          />
-        )}
-      </partenaireModal.Component>
       <ccgModal.Component title="Ajouter une chambre froide (CCG)">
         {isCCGModalOpen && (
           <CCGNouveau
