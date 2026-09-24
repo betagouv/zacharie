@@ -34,6 +34,11 @@ const adminLinks = [
     label: 'Quiz',
     icon: 'fr-icon-questionnaire-line',
   },
+  {
+    to: '/app/admin/trichine',
+    label: 'Trichine',
+    icon: 'fr-icon-microscope-line',
+  },
 ];
 
 const externalLinks = [
@@ -100,6 +105,9 @@ export default function AdminLayout() {
   }
   if (user.roles.includes(UserRoles.COLLECTEUR_PRO)) {
     mainLink = '/app/collecteur';
+  }
+  if (user.roles.includes(UserRoles.LABORATOIRE)) {
+    mainLink = '/app/laboratoire';
   }
 
   return (

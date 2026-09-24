@@ -126,37 +126,30 @@ describe('poolSansFTP', () => {
 });
 
 describe('filtreLaboFTP', () => {
-  const makeLaboFtp = (
-    statutLogistique: TrichineStatutLogistiqueFTP,
-    resultats: Array<TrichineResultatAnalyse | null>
-  ) => ({
+  const makeLaboFtp = (statutLogistique: TrichineStatutLogistiqueFTP) => ({
     statut_logistique: statutLogistique,
-    TrichinePoolFTPs: resultats.map((resultat) => ({ TrichinePool: { resultat_analyse: resultat } })),
   });
 
-  test('à traiter quand aucun résultat saisi', () => {
-    expect(filtreLaboFTP(makeLaboFtp(TrichineStatutLogistiqueFTP.ENVOYEE, [null, null]))).toBe('a-traiter');
-    expect(filtreLaboFTP(makeLaboFtp(TrichineStatutLogistiqueFTP.RECUE, [null]))).toBe('a-traiter');
+  // Le classement suit la réception, pas la présence d'un résultat : une FTP de confirmation
+  // vers le LNR porte déjà le DOUTEUX saisi par le LVD avant même que le LNR l'ait reçue.
+  test('à traiter tant que la FTP n’est pas réceptionnée', () => {
+    expect(filtreLaboFTP(makeLaboFtp(TrichineStatutLogistiqueFTP.ENVOYEE))).toBe('a-traiter');
   });
 
-  test('en cours sur saisie partielle', () => {
-    expect(
-      filtreLaboFTP(makeLaboFtp(TrichineStatutLogistiqueFTP.RECUE, [TrichineResultatAnalyse.NEGATIF, null]))
-    ).toBe('en-cours');
+  test('en cours une fois réceptionnée', () => {
+    expect(filtreLaboFTP(makeLaboFtp(TrichineStatutLogistiqueFTP.RECUE))).toBe('en-cours');
   });
 
   test('clôturée quand TRAITEE', () => {
-    expect(
-      filtreLaboFTP(makeLaboFtp(TrichineStatutLogistiqueFTP.TRAITEE, [TrichineResultatAnalyse.NEGATIF]))
-    ).toBe('cloturees');
+    expect(filtreLaboFTP(makeLaboFtp(TrichineStatutLogistiqueFTP.TRAITEE))).toBe('cloturees');
   });
 });
 
 describe('filterTrichineRows', () => {
   const rows = [
-    { id: '1', texte: 'E-26-000001 Bracelet-12' },
-    { id: '2', texte: 'E-26-000002 Préselection' },
-    { id: '3', texte: 'P-26-000045 Labo Eurofins' },
+    { id: '1', texte: 'E-26-02-0001 Bracelet-12' },
+    { id: '2', texte: 'E-26-02-0002 Préselection' },
+    { id: '3', texte: 'P-26-02-0045 Labo Eurofins' },
   ];
   const getText = (row: (typeof rows)[number]) => row.texte;
 
@@ -178,18 +171,18 @@ describe('filterTrichineRows', () => {
 
 describe('sortTrichineRows', () => {
   const rows = [
-    { ref: 'P-26-000003', date: '2026-06-03' as string | null, nb: 2 },
-    { ref: 'P-26-000001', date: null as string | null, nb: 10 },
-    { ref: 'P-26-000002', date: '2026-06-01' as string | null, nb: 5 },
+    { ref: 'P-26-02-0003', date: '2026-06-03' as string | null, nb: 2 },
+    { ref: 'P-26-02-0001', date: null as string | null, nb: 10 },
+    { ref: 'P-26-02-0002', date: '2026-06-01' as string | null, nb: 5 },
   ];
 
   test('tri string ASC/DESC', () => {
     expect(sortTrichineRows(rows, 'ref', 'ASC').map((r) => r.ref)).toEqual([
-      'P-26-000001',
-      'P-26-000002',
-      'P-26-000003',
+      'P-26-02-0001',
+      'P-26-02-0002',
+      'P-26-02-0003',
     ]);
-    expect(sortTrichineRows(rows, 'ref', 'DESC')[0].ref).toBe('P-26-000003');
+    expect(sortTrichineRows(rows, 'ref', 'DESC')[0].ref).toBe('P-26-02-0003');
   });
   test('tri date ISO string, null en dernier quel que soit l’ordre', () => {
     expect(sortTrichineRows(rows, 'date', 'ASC').map((r) => r.date)).toEqual([

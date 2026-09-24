@@ -23,6 +23,7 @@ import { entityAdminInclude } from '~/types/entity';
 import { updateOrCreateBrevoCompany } from '~/third-parties/brevo';
 import { createDestinataire, destinataireSchema } from '~/utils/create-destinataire';
 import type { RequestWithUser } from '~/types/request';
+import { nextEntityTrichineCode, sanitizeEntityTrichineCode, withReferenceRetry } from '~/utils/trichine';
 import slugify from 'slugify';
 import { z } from 'zod';
 
@@ -339,7 +340,7 @@ router.post(
         return;
       }
 
-      let code_etbt_certificat;
+      let code_etbt_certificat: number | undefined;
       if (type === EntityTypes.ETG) {
         const existingEtgs = await prisma.entity.count({
           where: {
@@ -354,18 +355,23 @@ router.post(
         entityType === EntityTypes.PREMIER_DETENTEUR ||
         entityType === EntityTypes.SVI ||
         entityType === EntityTypes.CCG;
-      const createdEntity = await prisma.entity.create({
-        data: {
-          raison_sociale: body[Prisma.EntityScalarFieldEnum.raison_sociale],
-          nom_d_usage: body[Prisma.EntityScalarFieldEnum.raison_sociale],
-          type: body[Prisma.EntityScalarFieldEnum.type],
-          zacharie_compatible,
-          code_etbt_certificat: code_etbt_certificat
-            ? code_etbt_certificat.toString().padStart(2, '0')
-            : null,
-        },
-        include: entityAdminInclude,
-      });
+      // Deux créations concurrentes peuvent tomber sur le même code trichine : il est @unique,
+      // le P2002 nous fait recalculer.
+      const createdEntity = await withReferenceRetry(async () =>
+        prisma.entity.create({
+          data: {
+            raison_sociale: body[Prisma.EntityScalarFieldEnum.raison_sociale],
+            nom_d_usage: body[Prisma.EntityScalarFieldEnum.raison_sociale],
+            type: body[Prisma.EntityScalarFieldEnum.type],
+            zacharie_compatible,
+            code_etbt_certificat: code_etbt_certificat
+              ? code_etbt_certificat.toString().padStart(2, '0')
+              : null,
+            code_trichine: await nextEntityTrichineCode(entityType),
+          },
+          include: entityAdminInclude,
+        })
+      );
 
       await updateOrCreateBrevoCompany(createdEntity);
 
@@ -421,14 +427,30 @@ router.post(
       if (body.hasOwnProperty(Prisma.EntityScalarFieldEnum.zacharie_compatible)) {
         data.zacharie_compatible = body[Prisma.EntityScalarFieldEnum.zacharie_compatible];
       }
+      if (body.hasOwnProperty(Prisma.EntityScalarFieldEnum.code_trichine)) {
+        data.code_trichine = sanitizeEntityTrichineCode(body[Prisma.EntityScalarFieldEnum.code_trichine]);
+      }
 
-      const updatedEntity = await prisma.entity.update({
-        where: {
-          id: req.params.entity_id,
-        },
-        data,
-        include: entityAdminInclude,
-      });
+      let updatedEntity;
+      try {
+        updatedEntity = await prisma.entity.update({
+          where: {
+            id: req.params.entity_id,
+          },
+          data,
+          include: entityAdminInclude,
+        });
+      } catch (error) {
+        if (
+          error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === 'P2002' &&
+          (error.meta?.target as string[] | undefined)?.includes('code_trichine')
+        ) {
+          res.status(400).send({ ok: false, data: null, error: 'Ce code établissement est déjà utilisé' });
+          return;
+        }
+        throw error;
+      }
 
       await updateOrCreateBrevoCompany(updatedEntity);
 

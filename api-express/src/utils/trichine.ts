@@ -1,8 +1,11 @@
 import {
   EntityRelationStatus,
   EntityRelationType,
+  EntityTypes,
   Prisma,
   TrichineResultatAnalyse,
+  TrichineStatutLogistiqueFTP,
+  TrichineType,
   User,
 } from '@prisma/client';
 import prisma from '~/prisma';
@@ -27,10 +30,49 @@ export const TrichineDocumentType = {
   AUTRE: 'AUTRE',
 } as const;
 
+// Un document est soit déposé dans l'app, soit reçu en pièce jointe sur l'adresse de dépôt
+export const TrichineDocumentSource = {
+  UPLOAD: 'UPLOAD',
+  EMAIL: 'EMAIL',
+} as const;
+export type TrichineDocumentSourceValue =
+  (typeof TrichineDocumentSource)[keyof typeof TrichineDocumentSource];
+
+// D'où vient la référence qui a permis de rattacher un document reçu par email
+export const TrichineRattachementSource = {
+  CONTENU_FICHIER: 'CONTENU_FICHIER',
+  CONTENU_OCR: 'CONTENU_OCR',
+  EMAIL: 'EMAIL',
+} as const;
+
+/**
+ * Ce qui, dans le document, a permis de retrouver le pool. Les rapports réels ne portent ni la
+ * référence de pool ni celle de la FTP : ils identifient les échantillons par leur n° de scellé,
+ * c'est-à-dire le numéro de bracelet que la FTP a imprimé au laboratoire.
+ */
+export const TrichineRattachementIndice = {
+  REFERENCE_POOL: 'REFERENCE_POOL',
+  REFERENCE_ECHANTILLON: 'REFERENCE_ECHANTILLON',
+  NUMEROS_BRACELET: 'NUMEROS_BRACELET',
+  REFERENCE_FTP: 'REFERENCE_FTP',
+} as const;
+export type TrichineRattachementIndiceValue =
+  (typeof TrichineRattachementIndice)[keyof typeof TrichineRattachementIndice];
+
+// D'où vient le texte lu dans un document reçu par email
+export const TrichineTexteSource = {
+  PDF_NATIF: 'PDF_NATIF',
+  OCR_ALBERT: 'OCR_ALBERT',
+} as const;
+export type TrichineTexteSourceValue = (typeof TrichineTexteSource)[keyof typeof TrichineTexteSource];
+export type TrichineRattachementSourceValue =
+  (typeof TrichineRattachementSource)[keyof typeof TrichineRattachementSource];
+
 export const TrichineNotificationType = {
   RESULTAT_ANALYSE: 'RESULTAT_ANALYSE',
   FTP_RECUE: 'FTP_RECUE',
   POOL_REFUSE: 'POOL_REFUSE',
+  FTP_ANNULEE: 'FTP_ANNULEE',
   CHANGEMENT_STATUT: 'CHANGEMENT_STATUT',
 } as const;
 
@@ -42,60 +84,149 @@ export const TrichineObjetType = {
 } as const;
 export type TrichineObjetTypeValue = (typeof TrichineObjetType)[keyof typeof TrichineObjetType];
 
+// Seule espèce soumise à la recherche de trichine dans Zacharie
+export const TRICHINE_ESPECE_CONCERNEE = 'Sanglier';
+
 // Contraintes réglementaires (UE 2015/1375, cf doc/trichine.md §9)
 export const TRICHINE_POOL_INITIAL_MAX_CARCASSES = 19;
 export const TRICHINE_POOL_INITIAL_MAX_MASSE_GRAMMES = 100;
-export const TRICHINE_POOL_FILLE_MAX_CARCASSES = 4;
+export const TRICHINE_POOL_FILLE_MAX_CARCASSES = 5;
 export const TRICHINE_POOL_PETITE_FILLE_MIN_MASSE_GRAMMES = 50;
 export const TRICHINE_MASSE_DEFAUT_INITIAL = 5;
 export const TRICHINE_MASSE_DEFAUT_COMPLEMENTAIRE = 20;
 export const TRICHINE_MASSE_DEFAUT_CONFIRMATION = 50;
 
 /* -------------------------------------------------------------------------- */
-/* Références auto-générées : E-{YY}-{séquence} / P-{YY}-{séquence} / F-{YY}-{séquence} */
+/* Références auto-générées : {E|P|F}-{YY}-{code établissement}-{séquence}      */
 /* -------------------------------------------------------------------------- */
 
-export function nextReferenceFromLatest(prefix: 'E' | 'P' | 'F', yy: string, latestReference: string | null) {
+/** Préfixe du code établissement, par type d'entité. */
+export const TRICHINE_ENTITY_CODE_PREFIX: Record<EntityTypes, string> = {
+  [EntityTypes.PREMIER_DETENTEUR]: 'PD',
+  [EntityTypes.COLLECTEUR_PRO]: 'CO',
+  [EntityTypes.CCG]: 'CG',
+  [EntityTypes.ETG]: 'EG',
+  [EntityTypes.SVI]: 'SVI',
+  [EntityTypes.COMMERCE_DE_DETAIL]: 'CD',
+  [EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE]: 'CR',
+  [EntityTypes.ASSOCIATION_CARITATIVE]: 'AC',
+  [EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF]: 'RC',
+  [EntityTypes.CONSOMMATEUR_FINAL]: 'CF',
+  [EntityTypes.LABORATOIRE]: 'LAB',
+};
+
+/** Un code saisi à la main ou importé est ramené à l'alphabet des références. */
+export function sanitizeEntityTrichineCode(code: string | null | undefined): string | null {
+  const sanitized = (code ?? '')
+    .replace(/[^A-Za-z0-9]/g, '')
+    .toUpperCase()
+    .slice(0, 8);
+  return sanitized || null;
+}
+
+/**
+ * Prochain code libre pour ce type d'entité : `SVI01`, `LAB07`, `PD142`…
+ * Le compteur est lu sur la partie numérique du plus grand code déjà attribué — une
+ * comparaison de chaînes ferait passer `SVI9` devant `SVI10`.
+ */
+export async function nextEntityTrichineCode(type: EntityTypes): Promise<string> {
+  const prefix = TRICHINE_ENTITY_CODE_PREFIX[type];
+  const rows = await prisma.$queryRaw<Array<{ max: number | null }>>`
+    SELECT MAX(CAST(substring(code_trichine FROM '[0-9]+$') AS integer)) AS max
+    FROM "Entity"
+    WHERE code_trichine ~ ${`^${prefix}[0-9]+$`}
+  `;
+  return `${prefix}${String((rows[0]?.max ?? 0) + 1).padStart(2, '0')}`;
+}
+
+/**
+ * Segment établissement d'une référence : le code trichine de l'entité qui fait l'acte.
+ * À défaut — pas d'entité (chasseur en son nom propre) ou entité sans code — l'identifiant
+ * de l'utilisateur, déjà court, lisible et unique (5 caractères, comme dans les numéros de FEI).
+ */
+export function referenceEntityCode(
+  entity: { code_trichine: string | null } | null,
+  fallbackUserId: string
+): string {
+  return sanitizeEntityTrichineCode(entity?.code_trichine) ?? fallbackUserId.toUpperCase();
+}
+
+/** Même code, lu depuis la base à partir de l'entity_id reçu du client (souvent nul). */
+export async function referenceCodeForEntity(
+  entityId: string | null | undefined,
+  fallbackUserId: string
+): Promise<string> {
+  if (!entityId) return referenceEntityCode(null, fallbackUserId);
+  const entity = await prisma.entity.findUnique({
+    where: { id: entityId },
+    select: { code_trichine: true },
+  });
+  return referenceEntityCode(entity, fallbackUserId);
+}
+
+export function nextReferenceFromLatest(
+  prefix: 'E' | 'P' | 'F',
+  yy: string,
+  entityCode: string,
+  latestReference: string | null
+) {
   let next = 1;
   if (latestReference) {
-    const seq = Number(latestReference.split('-')[2]);
+    const seq = Number(latestReference.split('-')[3]);
     if (Number.isFinite(seq)) next = seq + 1;
   }
-  return `${prefix}-${yy}-${String(next).padStart(6, '0')}`;
+  return `${prefix}-${yy}-${entityCode}-${String(next).padStart(4, '0')}`;
 }
 
 function currentYY() {
   return String(new Date().getFullYear()).slice(-2);
 }
 
-export async function nextEchantillonReference(): Promise<string> {
+/**
+ * Réserve `count` références consécutives en une lecture : un prélèvement en lot crée
+ * des dizaines d'échantillons, une lecture par échantillon serait inutilement coûteuse.
+ * L'unicité reste garantie par la contrainte SQL + `withReferenceRetry`.
+ */
+export async function nextEchantillonReferences(entityCode: string, count: number): Promise<Array<string>> {
   const yy = currentYY();
   const latest = await prisma.trichineEchantillon.findFirst({
-    where: { reference_echantillon: { startsWith: `E-${yy}-` } },
+    where: { reference_echantillon: { startsWith: `E-${yy}-${entityCode}-` } },
     orderBy: { reference_echantillon: 'desc' },
     select: { reference_echantillon: true },
   });
-  return nextReferenceFromLatest('E', yy, latest?.reference_echantillon ?? null);
+  const references: Array<string> = [];
+  let precedente = latest?.reference_echantillon ?? null;
+  for (let index = 0; index < count; index++) {
+    const reference = nextReferenceFromLatest('E', yy, entityCode, precedente);
+    references.push(reference);
+    precedente = reference;
+  }
+  return references;
 }
 
-export async function nextPoolReference(): Promise<string> {
+export async function nextEchantillonReference(entityCode: string): Promise<string> {
+  const [reference] = await nextEchantillonReferences(entityCode, 1);
+  return reference;
+}
+
+export async function nextPoolReference(entityCode: string): Promise<string> {
   const yy = currentYY();
   const latest = await prisma.trichinePool.findFirst({
-    where: { reference_pool: { startsWith: `P-${yy}-` } },
+    where: { reference_pool: { startsWith: `P-${yy}-${entityCode}-` } },
     orderBy: { reference_pool: 'desc' },
     select: { reference_pool: true },
   });
-  return nextReferenceFromLatest('P', yy, latest?.reference_pool ?? null);
+  return nextReferenceFromLatest('P', yy, entityCode, latest?.reference_pool ?? null);
 }
 
-export async function nextFTPReference(): Promise<string> {
+export async function nextFTPReference(entityCode: string): Promise<string> {
   const yy = currentYY();
   const latest = await prisma.trichineFTP.findFirst({
-    where: { numero_fiche: { startsWith: `F-${yy}-` } },
+    where: { numero_fiche: { startsWith: `F-${yy}-${entityCode}-` } },
     orderBy: { numero_fiche: 'desc' },
     select: { numero_fiche: true },
   });
-  return nextReferenceFromLatest('F', yy, latest?.numero_fiche ?? null);
+  return nextReferenceFromLatest('F', yy, entityCode, latest?.numero_fiche ?? null);
 }
 
 /**
@@ -121,6 +252,22 @@ export async function withReferenceRetry<T>(fn: () => Promise<T>, attempts = 3):
 /* -------------------------------------------------------------------------- */
 /* Historique des statuts (audit réglementaire)                                */
 /* -------------------------------------------------------------------------- */
+
+/**
+ * Une fiche « partie » : le colis a quitté l'émetteur et la fiche papier est dedans.
+ * C'est le point de non-retour — tout ce qu'elle contient (pools, échantillons) est figé.
+ * Un brouillon n'est pas encore parti ; une fiche annulée ne l'est plus.
+ */
+export function isFtpPartie(ftp: {
+  deleted_at: Date | null;
+  statut_logistique: TrichineStatutLogistiqueFTP;
+}): boolean {
+  if (ftp.deleted_at) return false;
+  return (
+    ftp.statut_logistique !== TrichineStatutLogistiqueFTP.BROUILLON &&
+    ftp.statut_logistique !== TrichineStatutLogistiqueFTP.ANNULEE
+  );
+}
 
 export async function logTrichineStatutChange({
   objetType,
@@ -180,6 +327,20 @@ export async function getUsersWorkingForEntity(entityId: string): Promise<Trichi
   return relations.map((relation) => relation.UserRelatedWithEntity);
 }
 
+/** Entités pour lesquelles l'utilisateur peut agir (membre ou admin). */
+export async function getUserEntityIds(userId: string): Promise<Set<string>> {
+  const relations = await prisma.entityAndUserRelations.findMany({
+    where: {
+      owner_id: userId,
+      relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+      status: { in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER] },
+      deleted_at: null,
+    },
+    select: { entity_id: true },
+  });
+  return new Set(relations.map((relation) => relation.entity_id));
+}
+
 /**
  * Vérifie que l'utilisateur travaille pour l'entité (membre ou admin).
  * À appeler systématiquement quand un entity_id arrive du client
@@ -199,6 +360,31 @@ export async function userBelongsToEntity(userId: string, entityId: string): Pro
 }
 
 /**
+ * Résultat négatif = seul résultat qui débloque une carcasse de sanglier :
+ * acceptation par le SVI (§9) et auto-clôture J+10 (§6.2).
+ */
+const echantillonAvecPoolNegatif: Prisma.TrichineEchantillonWhereInput = {
+  deleted_at: null,
+  TrichinePool: {
+    deleted_at: null,
+    resultat_analyse: TrichineResultatAnalyse.NEGATIF,
+  },
+};
+
+// Même règle, côté requête sur les carcasses
+export const carcasseAvecTrichineNegatifFilter: Prisma.CarcasseWhereInput = {
+  TrichineEchantillons: { some: echantillonAvecPoolNegatif },
+};
+
+export async function carcasseHasResultatTrichineNegatif(zacharieCarcasseId: string): Promise<boolean> {
+  const echantillon = await prisma.trichineEchantillon.findFirst({
+    where: { zacharie_carcasse_id: zacharieCarcasseId, ...echantillonAvecPoolNegatif },
+    select: { id: true },
+  });
+  return !!echantillon;
+}
+
+/**
  * Persiste une TrichineNotification par utilisateur + push/email immédiat.
  * `notificationLogAction` doit être unique par évènement (la table notificationLog
  * déduplique par user + action).
@@ -212,6 +398,7 @@ export async function notifyTrichineUsers({
   message,
   notificationLogAction,
   excludeUserIds = [],
+  attachments,
 }: {
   users: TrichineNotifiableUser[];
   type: string;
@@ -221,6 +408,7 @@ export async function notifyTrichineUsers({
   message: string;
   notificationLogAction: string;
   excludeUserIds?: string[];
+  attachments?: Array<{ content: string; name: string }>;
 }) {
   const seen = new Set<string>(excludeUserIds);
   for (const user of users) {
@@ -235,28 +423,14 @@ export async function notifyTrichineUsers({
         message,
       },
     });
-    console.log(
-      '*** NOTIFICATION ***\n',
-      JSON.stringify(
-        {
-          user: user as User,
-          title,
-          body: message,
-          email: message,
-          notificationLogAction,
-        },
-        null,
-        2
-      ),
-      '**********************'
-    );
-    // await queueSendNotificationToUser({
-    //   user: user as User,
-    //   title,
-    //   body: message,
-    //   email: message,
-    //   notificationLogAction,
-    // });
+    await queueSendNotificationToUser({
+      user: user as User,
+      title,
+      body: message,
+      email: message,
+      notificationLogAction,
+      attachments,
+    });
   }
 }
 
@@ -293,6 +467,81 @@ export async function getCarcassesStakeholderUsers(
   return [...byId.values()];
 }
 
+// Émetteur d'une FTP : l'utilisateur expéditeur + tous ceux de l'entité expéditrice
+export async function getFtpEmitterUsers(ftp: {
+  expediteur_user_id: string;
+  expediteur_entity_id: string | null;
+}): Promise<TrichineNotifiableUser[]> {
+  const byId = new Map<string, TrichineNotifiableUser>();
+  const user = await prisma.user.findUnique({
+    where: { id: ftp.expediteur_user_id },
+    select: trichineNotifiableUserSelect,
+  });
+  if (user) byId.set(user.id, user);
+  if (ftp.expediteur_entity_id) {
+    for (const entityUser of await getUsersWorkingForEntity(ftp.expediteur_entity_id)) {
+      byId.set(entityUser.id, entityUser);
+    }
+  }
+  return [...byId.values()];
+}
+
+/* -------------------------------------------------------------------------- */
+/* Légitimité d'un nouveau prélèvement (cf doc/trichine.md §5.1)               */
+/* -------------------------------------------------------------------------- */
+
+type PrelevementPoolInput = {
+  resultat_analyse: TrichineResultatAnalyse | null;
+  created_at: Date;
+};
+
+/**
+ * Un prélèvement n'a de sens que pour ouvrir une analyse. On ne reprélève donc pas une
+ * carcasse dont l'analyse est en cours ou rendue : soit c'est un complémentaire, et il lui
+ * faut un pool douteux à resserrer, soit l'analyse précédente a été déclarée impossible.
+ * Retourne un message d'erreur (français, montrable à l'utilisateur) ou null si valide.
+ */
+export function validateNouveauPrelevement({
+  type,
+  numeroBracelet,
+  pools,
+  aUnEchantillonSansPool,
+}: {
+  type: TrichineType;
+  numeroBracelet: string | null;
+  /** Pools actifs couvrant la carcasse, du plus ancien au plus récent */
+  pools: PrelevementPoolInput[];
+  /** La carcasse porte déjà un échantillon pas encore rattaché à un pool */
+  aUnEchantillonSansPool: boolean;
+}): string | null {
+  const carcasse = `La carcasse ${numeroBracelet ?? ''}`.trim();
+
+  if (type === TrichineType.COMPLEMENTAIRE) {
+    if (!pools.some((pool) => pool.resultat_analyse === TrichineResultatAnalyse.DOUTEUX)) {
+      return `${carcasse} n'appartient à aucun pool douteux : un prélèvement complémentaire n'a pas lieu d'être`;
+    }
+    return null;
+  }
+
+  if (type === TrichineType.INITIAL) {
+    if (aUnEchantillonSansPool) {
+      return `${carcasse} porte déjà un échantillon en attente de regroupement`;
+    }
+    if (!pools.length) {
+      return null;
+    }
+    // Analyse impossible = analyse inexistante : on repart sur un prélèvement initial
+    const dernier = pools[pools.length - 1];
+    if (dernier.resultat_analyse === TrichineResultatAnalyse.ANALYSE_IMPOSSIBLE) {
+      return null;
+    }
+    return `${carcasse} a déjà été prélevée et son analyse suit son cours`;
+  }
+
+  // CONFIRMATION : prélèvement à destination du LNR, hors parcours émetteur
+  return null;
+}
+
 /* -------------------------------------------------------------------------- */
 /* Validation de la composition d'un pool (cf doc/trichine.md §9)              */
 /* -------------------------------------------------------------------------- */
@@ -301,6 +550,7 @@ type PoolEchantillonInput = {
   id: string;
   zacharie_carcasse_id: string;
   masse_grammes: number;
+  type: TrichineType;
   pool_id: string | null;
   deleted_at: Date | null;
 };
@@ -318,9 +568,12 @@ type PoolParentInput = {
 export function validatePoolComposition({
   echantillons,
   parent,
+  poolId,
 }: {
   echantillons: PoolEchantillonInput[];
   parent: PoolParentInput | null;
+  /** Pool en cours de modification : ses propres échantillons ne comptent pas comme déjà rattachés */
+  poolId?: string;
 }): string | null {
   if (!echantillons.length) {
     return 'Un pool doit contenir au moins un échantillon';
@@ -328,7 +581,7 @@ export function validatePoolComposition({
   if (echantillons.some((e) => e.deleted_at)) {
     return 'Un des échantillons a été supprimé';
   }
-  if (echantillons.some((e) => e.pool_id)) {
+  if (echantillons.some((e) => e.pool_id && e.pool_id !== poolId)) {
     return 'Un des échantillons est déjà rattaché à un pool';
   }
   const carcasseIds = new Set(echantillons.map((e) => e.zacharie_carcasse_id));
@@ -336,6 +589,15 @@ export function validatePoolComposition({
     return 'Un pool ne peut contenir qu’un échantillon par carcasse';
   }
   const masseTotale = echantillons.reduce((sum, e) => sum + e.masse_grammes, 0);
+
+  // Le rang du pool et celui de ses échantillons vont de pair : un complémentaire ne se
+  // regroupe qu'en 2e intention, un initial jamais.
+  const typeAttendu = parent ? TrichineType.COMPLEMENTAIRE : TrichineType.INITIAL;
+  if (echantillons.some((e) => e.type !== typeAttendu)) {
+    return parent
+      ? 'Un pool de 2e intention ne peut contenir que des prélèvements complémentaires'
+      : 'Un pool initial ne peut contenir que des prélèvements initiaux';
+  }
 
   if (!parent) {
     // Pool initial
