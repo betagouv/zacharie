@@ -2,7 +2,7 @@ import { useState, useCallback, useRef } from 'react';
 
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Input } from '@codegouvfr/react-dsfr/Input';
-import { EntityRelationType, Prisma, Entity, EntityRelationStatus, EntityTypes } from '@prisma/client';
+import { EntityRelationType, Prisma, Entity, EntityTypes } from '@prisma/client';
 import InputCodePostalEtVille from '@app/components/InputCodePostalEtVille';
 import type { UserEntityResponse } from '@api/src/types/responses';
 import type { EntitiesById } from '@api/src/types/entity';
@@ -137,8 +137,8 @@ export default function PartenaireNouveau({ onFinish }: PartenaireNouveauProps) 
             ...entities,
             [response.data.entity!.id]: {
               ...response.data.entity!,
-              relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-              relationStatus: EntityRelationStatus.ADMIN,
+              relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+              relationStatus: undefined,
             },
           },
         });
@@ -162,11 +162,11 @@ export default function PartenaireNouveau({ onFinish }: PartenaireNouveauProps) 
           className="mb-8 bg-white"
           small
           severity="info"
-          description="Attention : les établissements de traitement du gibier et les collecteurs professionnels sont déjà enregistrés sur Zacharie. Ce formulaire sert à enregistrer les autres catégories de destinataires (commerces de détail, associations, particuliers…)."
+          description="Attention : les établissements de traitement du gibier et la plupart des collecteurs professionnels sont déjà enregistrés sur Zacharie, choisissez-les dans la liste. Ce formulaire sert à enregistrer les autres destinataires (collecteurs professionnels absents de la liste, commerces de détail, associations, particuliers…)."
         />
         <RadioButtons
           legend="Qualité du destinataire *"
-          hintText="Est-ce un commerce de détail, repas de chasse ou associatif, ou encore un consommateur final ?"
+          hintText="Est-ce un commerce de détail, repas de chasse ou associatif, un consommateur final, ou encore un collecteur professionnel ?"
           orientation="vertical"
           options={[
             {
@@ -218,6 +218,16 @@ export default function PartenaireNouveau({ onFinish }: PartenaireNouveauProps) 
                 },
               },
               label: 'Consommateur final',
+            },
+            {
+              nativeInputProps: {
+                checked: entityType === EntityTypes.COLLECTEUR_PRO ? true : false,
+                name: EntityTypes.COLLECTEUR_PRO,
+                onChange: () => {
+                  setEntityType(EntityTypes.COLLECTEUR_PRO);
+                },
+              },
+              label: 'Collecteur professionnel',
             },
           ]}
         />

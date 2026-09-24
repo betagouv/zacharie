@@ -312,8 +312,8 @@ router.post(
   catchErrors(
     async (req: RequestWithUser, res: express.Response<UserEntityResponse>, next: express.NextFunction) => {
       const user = req.user!;
-      // un destinataire circuit court n'est ajouté que par le premier détenteur (ou par l'admin,
-      // depuis /admin) : l'ETG et le collecteur ne transmettent pas au circuit court
+      // un destinataire (circuit court ou collecteur pro) n'est ajouté que par le premier détenteur
+      // (ou par l'admin, depuis /admin) : l'ETG et le collecteur ne transmettent pas au circuit court
       if (!user.roles.includes(UserRoles.CHASSEUR)) {
         res.status(403);
         return next(new Error('Seulement un chasseur peut ajouter un destinataire'));
