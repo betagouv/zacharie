@@ -11,7 +11,7 @@ import DepartementsTable, {
 import SectionValorisation from '@app/components/federation-dashboard/SectionValorisation';
 import SectionSuiviSanitaire from '@app/components/federation-dashboard/SectionSuiviSanitaire';
 
-type FederationScope = 'departemental' | 'regional' | 'national';
+import type { FederationScope } from '@api/src/utils/federation-stats';
 
 interface ValorisationTotals {
   ggAgree: number;
@@ -214,6 +214,7 @@ export default function FederationTableauDeBord() {
                 />
               ) : (
                 <SectionSuiviSanitaire
+                  valoScope={valo.data.scope}
                   examinateursActifs={form.data.totals.examinateursActifs}
                   anomalies={sani.data.anomalies}
                   sviMotifs={sani.data.sviMotifs}
