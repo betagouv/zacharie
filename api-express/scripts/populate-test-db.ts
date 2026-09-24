@@ -344,6 +344,7 @@ Christine
         code_postal: '03000',
         ville: 'Moulins',
         telephone: '0606060620',
+        est_forme_a_l_examen_initial: false,
         onboarded_at: dayjs().toDate(),
       },
       {
@@ -387,6 +388,7 @@ Christine
         code_postal: '07000',
         ville: 'Privas',
         telephone: '0606060622',
+        est_forme_a_l_examen_initial: false,
         onboarded_at: dayjs().toDate(),
       },
     ],

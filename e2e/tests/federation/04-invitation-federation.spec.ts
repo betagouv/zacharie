@@ -18,7 +18,9 @@ test("Chasseur non membre d'une fédération : aucune fédération affichée", a
   await expect(page).toHaveURL(/\/app\/chasseur/, { timeout: 10000 });
 
   await page.goto('http://localhost:3290/app/chasseur/profil/ma-federation');
-  await expect(page.getByRole('heading', { level: 1, name: 'Ma fédération' })).toBeVisible({ timeout: 10000 });
+  await expect(page.getByRole('heading', { level: 1, name: 'Ma fédération' })).toBeVisible({
+    timeout: 10000,
+  });
   await expect(page.locator('#federation-title')).toHaveCount(0);
 });
 
