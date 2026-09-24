@@ -190,6 +190,7 @@ export interface AdminUsersResponse {
   ok: boolean;
   data: {
     users: Array<User>;
+    counts: Record<User['id'], { carcasses: number; fiches: number }>;
   };
   error: string;
 }

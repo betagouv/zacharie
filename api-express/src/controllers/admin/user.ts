@@ -601,9 +601,45 @@ router.get(
           last_login_at: { sort: 'desc', nulls: 'last' },
         },
       });
+      // carcasses et fiches (non supprimées) où l'utilisateur apparaît à n'importe quelle étape du circuit :
+      // création, examen initial, premier détenteur, intermédiaire ou SVI
+      const countsRows = await prisma.$queryRaw<
+        Array<{ user_id: string; carcasses: number; fiches: number }>
+      >`
+        WITH links AS (
+          SELECT u.user_id, c.zacharie_carcasse_id, c.fei_numero
+          FROM "Carcasse" c
+          JOIN "Fei" f ON f.numero = c.fei_numero AND f.deleted_at IS NULL
+          CROSS JOIN LATERAL unnest(ARRAY[
+            c.created_by_user_id,
+            c.examinateur_initial_user_id,
+            c.premier_detenteur_user_id,
+            c.svi_user_id,
+            c.svi_ipm1_user_id,
+            c.svi_ipm2_user_id,
+            c.svi_closed_by_user_id
+          ]) AS u(user_id)
+          WHERE c.deleted_at IS NULL AND u.user_id IS NOT NULL
+          UNION
+          SELECT ci.intermediaire_user_id, ci.zacharie_carcasse_id, ci.fei_numero
+          FROM "CarcasseIntermediaire" ci
+          JOIN "Carcasse" c ON c.zacharie_carcasse_id = ci.zacharie_carcasse_id AND c.deleted_at IS NULL
+          JOIN "Fei" f ON f.numero = ci.fei_numero AND f.deleted_at IS NULL
+          WHERE ci.deleted_at IS NULL
+        )
+        SELECT user_id,
+          COUNT(DISTINCT zacharie_carcasse_id)::int AS carcasses,
+          COUNT(DISTINCT fei_numero)::int AS fiches
+        FROM links
+        GROUP BY user_id;
+      `;
+      const counts: AdminUsersResponse['data']['counts'] = {};
+      for (const row of countsRows) {
+        counts[row.user_id] = { carcasses: row.carcasses, fiches: row.fiches };
+      }
       res.status(200).send({
         ok: true,
-        data: { users },
+        data: { users, counts },
         error: '',
       });
     }

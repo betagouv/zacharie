@@ -13,6 +13,9 @@ import API from '@app/services/api';
 import ConnexionButton from '@app/components/ConnexionButton';
 
 type AdminUser = NonNullable<AdminUsersResponse['data']['users']>[number];
+type AdminUserCounts = AdminUsersResponse['data']['counts'];
+
+const NO_COUNTS = { carcasses: 0, fiches: 0 };
 
 type CfeiValidationStatus = 'valid' | 'invalid' | 'missing';
 
@@ -48,12 +51,14 @@ const UserRow = memo(function UserRow({
   cfeiStatus,
   officialDetails,
   showCfeiShield,
+  counts,
   onActivate,
 }: {
   user: AdminUser;
   cfeiStatus: CfeiValidationStatus | null;
   officialDetails: OfficialCfei | null;
   showCfeiShield: boolean;
+  counts: AdminUserCounts[string];
   onActivate: (userId: string) => void;
 }) {
   const isChasseur = user.roles?.includes(UserRoles.CHASSEUR);
@@ -172,6 +177,10 @@ const UserRow = memo(function UserRow({
           <span>· {[user.code_postal, user.ville].filter(Boolean).join(' ')}</span>
         )}
         {isChasseur && <span>· CFEI {user.numero_cfei || <span className="text-gray-400">—</span>}</span>}
+        <span className="ml-auto whitespace-nowrap">
+          {counts.carcasses} carcasse{counts.carcasses > 1 ? 's' : ''} - {counts.fiches} fiche
+          {counts.fiches > 1 ? 's' : ''}
+        </span>
       </div>
     </div>
   );
@@ -179,6 +188,7 @@ const UserRow = memo(function UserRow({
 
 export default function AdminUsers() {
   const [users, setUsers] = useState<Array<AdminUser>>([]);
+  const [counts, setCounts] = useState<AdminUserCounts>({});
   const [officialCfeis, setOfficialCfeis] = useState<Array<OfficialCfei>>([]);
   const [searchQuery, setSearchQuery] = useState('');
   // Le champ affiche la frappe tout de suite ; la liste se recalcule après, en tâche de fond.
@@ -355,9 +365,13 @@ export default function AdminUsers() {
         const cmp = aSeen - bSeen;
         return sortBy === 'last_seen_asc' ? cmp : -cmp;
       }
+      if (sortBy === 'carcasses_desc' || sortBy === 'fiches_desc') {
+        const key = sortBy === 'carcasses_desc' ? 'carcasses' : 'fiches';
+        return (counts[b.id]?.[key] ?? 0) - (counts[a.id]?.[key] ?? 0);
+      }
       return 0;
     });
-  }, [statusFilteredUsers, sortBy]);
+  }, [statusFilteredUsers, sortBy, counts]);
 
   const onActivate = useCallback((userId: string) => {
     API.post({
@@ -375,7 +389,10 @@ export default function AdminUsers() {
       API.get({ path: 'admin/users' }).then((res) => res as AdminUsersResponse),
       API.get({ path: 'admin/official-cfeis' }).then((res) => res as AdminOfficialCfeisResponse),
     ]).then(([usersRes, cfeisRes]) => {
-      if (usersRes.ok) setUsers(usersRes.data.users);
+      if (usersRes.ok) {
+        setUsers(usersRes.data.users);
+        setCounts(usersRes.data.counts);
+      }
       if (cfeisRes.ok) setOfficialCfeis(cfeisRes.data.officialCfeis);
     });
   }, []);
@@ -495,6 +512,8 @@ export default function AdminUsers() {
                 <option value="created_asc">Date de création (ancien → récent)</option>
                 <option value="last_seen_desc">Dernière connexion (récent → ancien)</option>
                 <option value="last_seen_asc">Dernière connexion (ancien → récent)</option>
+                <option value="carcasses_desc">Nombre de carcasses (plus → moins)</option>
+                <option value="fiches_desc">Nombre de fiches (plus → moins)</option>
               </select>
             </label>
             <Button
@@ -514,6 +533,7 @@ export default function AdminUsers() {
                   cfeiStatus={isChasseur ? getCfeiValidationStatus(user) : null}
                   officialDetails={isChasseur ? getOfficialCfeiDetails(user) : null}
                   showCfeiShield={officialCfeis.length > 0}
+                  counts={counts[user.id] ?? NO_COUNTS}
                   onActivate={onActivate}
                 />
               );
