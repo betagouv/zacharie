@@ -19,10 +19,8 @@ enum UserRoles {
   ASSOCIATION_CARITATIVE // Repas de chasse ou associatif
   REPAS_DE_CHASSE_OU_ASSOCIATIF // Repas de chasse ou associatif
   CONSOMMATEUR_FINAL // Je suis consommateur final
-  FDC // Fédération Départementale des Chasseurs
-  FRC // Fédération Régionale des Chasseurs
-  FNC // Fédération Nationale des Chasseurs
   LABORATOIRE // Laboratoire d'analyses trichine (LVD agréé ou LNR)
+  FEDERATION // Membre d'une fédération (FDC / FRC / FNC) sans être chasseur : tableau de bord uniquement
 }
 
 enum UserEtgRoles {
@@ -72,9 +70,6 @@ model User {
   checked_has_ccg                       DateTime?
   checked_has_partenaires               DateTime?
   onboarding_chasse_info_done_at        DateTime?
-  // Scope géographique pour les rôles FDC/FRC/FNC (dashboard de pilotage des fédérations).
-  // FDC = 1 code dept ; FRC = depts de la région ; FNC = [] (= national, tous les depts).
-  scope_departements_codes              String[]
   Password                              Password?
   UserRelationsAsOwner                  UserRelations[]                @relation("UserOwnerOfUserRelation")
   UserRelationsAsRelated                UserRelations[]                @relation("UserRelatedOfUserRelation")
@@ -120,6 +115,9 @@ enum EntityTypes {
   REPAS_DE_CHASSE_OU_ASSOCIATIF
   CONSOMMATEUR_FINAL
   LABORATOIRE // Laboratoire d'analyses trichine (LVD agréé ou LNR)
+  FDC // Fédération Départementale des Chasseurs
+  FRC // Fédération Régionale des Chasseurs
+  FNC // Fédération Nationale des Chasseurs
 }
 
 model Entity {
@@ -146,6 +144,9 @@ model Entity {
   type                                  EntityTypes
   // Trichine — laboratoires (type = LABORATOIRE)
   is_lnr                                Boolean                        @default(false) // true pour l'entité ANSES (LNR unique seedé)
+  // Fédérations (type = FDC / FRC / FNC) : départements couverts par le tableau de bord.
+  // FDC = son département ; FRC = les départements de sa région ; FNC = tous les départements.
+  scope_departements_codes              String[]
   created_at                            DateTime                       @default(now())
   updated_at                            DateTime                       @default(now()) @updatedAt
   deleted_at                            DateTime?

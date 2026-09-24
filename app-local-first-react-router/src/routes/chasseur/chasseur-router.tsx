@@ -1,6 +1,8 @@
 import { Route, Outlet } from 'react-router';
 import Contact from '@app/routes/contact';
 import MesChasses from './tableau-de-bord/chasseur-tableau-de-bord';
+import FederationTableauDeBord from '@app/components/FederationTableauDeBord';
+import FederationMaFederation from '@app/routes/federation/federation-ma-federation';
 import PartageDeMesDonnees from './profil/chasseur-partage-de-mes-donnees';
 import MesNotifications from './profil/chasseur-notifications';
 import MesInformationsDeChasse from './profil/chasseur-informations-de-chasse';
@@ -95,6 +97,10 @@ export default function RouterChasseur() {
           element={<ChasseurCCGEdit />}
         />
         <Route
+          path="ma-federation"
+          element={<FederationMaFederation />}
+        />
+        <Route
           path="notifications"
           element={<MesNotifications />}
         />
@@ -122,6 +128,10 @@ export default function RouterChasseur() {
       <Route
         path="tableau-de-bord"
         element={<MesChasses />}
+      />
+      <Route
+        path="tableau-de-bord-federation"
+        element={<FederationTableauDeBord />}
       />
       <Route
         path="carcasse-svi/:fei_numero/:zacharie_carcasse_id"

@@ -22,10 +22,6 @@ vi.mock('~/utils/invite-user', () => ({
   inviteUser: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock('~/utils/federation-stats', () => ({
-  ensureScopeForRoles: vi.fn((roles: UserRoles[]) => roles),
-}));
-
 const app = express();
 app.use(express.json());
 app.use('/user', userRouter);
@@ -52,11 +48,18 @@ const testEntity: Partial<Entity> = {
   deleted_at: null,
 };
 
+const federationEntity: Partial<Entity> = {
+  id: 'federation-fdc-03',
+  nom_d_usage: 'FDC Allier (03)',
+  type: EntityTypes.FDC,
+  deleted_at: null,
+};
+
 function authed(req: request.Test, user: object) {
   return req.set('x-test-user', JSON.stringify(user));
 }
 
-describe('POST /user/invite-user — CHASSEUR guard', () => {
+describe('POST /user/invite-user — CHASSEUR guard and federations', () => {
   beforeAll(() => {
     // global vitest setup mocks user.{findUnique, findFirst, update, delete} but not create
     (prisma.user as any).create = vi.fn();
@@ -70,19 +73,13 @@ describe('POST /user/invite-user — CHASSEUR guard', () => {
     await request(app).post(BASE).send({ email: 'newbie@example.com', entity_id: 'entity-1' }).expect(401);
   });
 
-  test('CHASSEUR is blocked with 400 and French error message', async () => {
+  test('CHASSEUR is blocked with 400 and French error message on a non-federation entity', async () => {
+    vi.mocked(prisma.entity.findUnique).mockResolvedValue(testEntity as any);
+
     const res = await authed(
       request(app).post(BASE).send({ email: 'newbie@example.com', entity_id: 'entity-1' }),
       chasseur
     );
-
-    expect(res.status).toBe(400);
-    expect(res.body.error).toMatch(/chasseur ne peut pas inviter/i);
-  });
-
-  test('CHASSEUR blocked before schema validation (invalid body still returns guard error)', async () => {
-    // empty body would normally fail Zod with 406; the guard must fire first with 400
-    const res = await authed(request(app).post(BASE).send({}), chasseur);
 
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/chasseur ne peut pas inviter/i);
@@ -93,6 +90,7 @@ describe('POST /user/invite-user — CHASSEUR guard', () => {
     const { inviteUser } = await import('~/utils/invite-user');
     // @ts-expect-error
     const { createBrevoContact } = await import('~/third-parties/brevo');
+    vi.mocked(prisma.entity.findUnique).mockResolvedValue(testEntity as any);
 
     await authed(
       request(app).post(BASE).send({ email: 'victim@example.com', entity_id: 'entity-1' }),
@@ -100,7 +98,6 @@ describe('POST /user/invite-user — CHASSEUR guard', () => {
     );
 
     expect(prisma.user.findUnique).not.toHaveBeenCalled();
-    expect(prisma.entity.findUnique).not.toHaveBeenCalled();
     expect(prisma.entityAndUserRelations.findFirst).not.toHaveBeenCalled();
     expect(prisma.entityAndUserRelations.create).not.toHaveBeenCalled();
     expect(inviteUser).not.toHaveBeenCalled();
@@ -114,6 +111,7 @@ describe('POST /user/invite-user — CHASSEUR guard', () => {
       email: 'multi@example.com',
       roles: [UserRoles.CHASSEUR, UserRoles.ETG],
     };
+    vi.mocked(prisma.entity.findUnique).mockResolvedValue(testEntity as any);
 
     const res = await authed(
       request(app).post(BASE).send({ email: 'newbie@example.com', entity_id: 'entity-1' }),
@@ -122,6 +120,52 @@ describe('POST /user/invite-user — CHASSEUR guard', () => {
 
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/chasseur ne peut pas inviter/i);
+  });
+
+  test('CHASSEUR admin of a federation → invite succeeds, invitee gets the FEDERATION role', async () => {
+    // @ts-expect-error
+    const { inviteUser } = await import('~/utils/invite-user');
+
+    vi.mocked(prisma.entity.findUnique).mockResolvedValue(federationEntity as any);
+    vi.mocked(prisma.entityAndUserRelations.findFirst)
+      .mockResolvedValueOnce({ status: EntityRelationStatus.ADMIN } as any) // my ADMIN relation
+      .mockResolvedValueOnce(null); // no existing relation for the invitee
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
+    vi.mocked(prisma.user.create).mockResolvedValue({
+      id: 'user-new',
+      email: 'directeur@example.com',
+      roles: [UserRoles.FEDERATION],
+    } as any);
+    vi.mocked(prisma.entityAndUserRelations.create).mockResolvedValue({} as any);
+
+    const res = await authed(
+      request(app).post(BASE).send({ email: 'directeur@example.com', entity_id: 'federation-fdc-03' }),
+      chasseur
+    );
+
+    expect(res.status).toBe(200);
+    expect(inviteUser).toHaveBeenCalledOnce();
+    const createCall = vi.mocked(prisma.user.create).mock.calls[0][0];
+    expect((createCall.data as any).roles).toEqual([UserRoles.FEDERATION]);
+  });
+
+  test('CHASSEUR member (not admin) of a federation → 400 permissions', async () => {
+    // @ts-expect-error
+    const { inviteUser } = await import('~/utils/invite-user');
+
+    vi.mocked(prisma.entity.findUnique).mockResolvedValue(federationEntity as any);
+    vi.mocked(prisma.entityAndUserRelations.findFirst).mockResolvedValue({
+      status: EntityRelationStatus.MEMBER,
+    } as any);
+
+    const res = await authed(
+      request(app).post(BASE).send({ email: 'directeur@example.com', entity_id: 'federation-fdc-03' }),
+      chasseur
+    );
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/permissions/i);
+    expect(inviteUser).not.toHaveBeenCalled();
   });
 
   test('non-CHASSEUR admin of entity → invite succeeds', async () => {

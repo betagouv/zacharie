@@ -5,14 +5,15 @@ const router: express.Router = express.Router();
 import { RequestWithUser } from '~/types/request';
 import { getIframeUrl } from '~/service/metabase-embed';
 import prisma from '~/prisma';
-import { CarcasseType, CarcasseStatus, DepotType, FeiOwnerRole, Prisma, UserRoles } from '@prisma/client';
-import validateUser from '~/middlewares/validateUser';
+import { CarcasseType, CarcasseStatus, DepotType, FeiOwnerRole, Prisma } from '@prisma/client';
 import departementsRegions from '~/data/departements-regions.json';
 import {
   circuitCourtRoles,
   extractDepartementFromCommune,
   getCurrentSeason,
   hasBphMotif,
+  ALL_DEPARTEMENT_CODES,
+  getUserFederationEntity,
   resolveScope,
 } from '~/utils/federation-stats';
 import {
@@ -214,7 +215,6 @@ router.get(
 router.get(
   '/federation/valorisation',
   passport.authenticate('user', { session: false }),
-  validateUser([UserRoles.FDC, UserRoles.FRC, UserRoles.FNC]),
   catchErrors(async (req: RequestWithUser, res: express.Response, next: express.NextFunction) => {
     const user = req.user;
     if (!user) {
@@ -223,7 +223,13 @@ router.get(
       return;
     }
 
-    const { isNational, scopeDepts, scope } = resolveScope(user);
+    const federation = await getUserFederationEntity(user.id);
+    if (!federation) {
+      res.status(403).send({ ok: false, data: null, error: 'Accès réservé aux membres d’une fédération' });
+      return;
+    }
+
+    const { isNational, scopeDepts, scope } = resolveScope(federation);
 
     if (!isNational && (!scopeDepts || scopeDepts.length === 0)) {
       res.status(200).send({
@@ -233,7 +239,7 @@ router.get(
           seasonStart: null,
           seasonEnd: null,
           scope: 'departemental',
-          scopeLabel: user.nom_de_famille ?? null,
+          scopeLabel: federation.nom_d_usage ?? null,
           scopeDepts: [],
           departements: [],
           totals: emptyValorisationTotals(),
@@ -282,6 +288,10 @@ router.get(
     });
 
     const stats = new Map<string, { gg: Bucket; pg: Bucket }>();
+    // tous les départements du périmètre ont une ligne, même sans carcasse
+    for (const code of scopeDepts ?? ALL_DEPARTEMENT_CODES) {
+      stats.set(code, { gg: emptyBucket(), pg: emptyBucket() });
+    }
     const totals = { gg: emptyBucket(), pg: emptyBucket() };
 
     for (const c of carcasses) {
@@ -371,7 +381,7 @@ router.get(
         seasonStart: seasonStart.toISOString(),
         seasonEnd: seasonEnd.toISOString(),
         scope,
-        scopeLabel: scope === 'national' ? null : (user.nom_de_famille ?? null),
+        scopeLabel: scope === 'national' ? null : (federation.nom_d_usage ?? null),
         scopeDepts: scopeDepts ?? [],
         departements,
         totals: {
@@ -432,7 +442,6 @@ function emptyValorisationTotals() {
 router.get(
   '/federation/sanitaire',
   passport.authenticate('user', { session: false }),
-  validateUser([UserRoles.FDC, UserRoles.FRC, UserRoles.FNC]),
   catchErrors(async (req: RequestWithUser, res: express.Response, next: express.NextFunction) => {
     const user = req.user;
     if (!user) {
@@ -441,7 +450,13 @@ router.get(
       return;
     }
 
-    const { isNational, scopeDepts, scope } = resolveScope(user);
+    const federation = await getUserFederationEntity(user.id);
+    if (!federation) {
+      res.status(403).send({ ok: false, data: null, error: 'Accès réservé aux membres d’une fédération' });
+      return;
+    }
+
+    const { isNational, scopeDepts, scope } = resolveScope(federation);
 
     if (!isNational && (!scopeDepts || scopeDepts.length === 0)) {
       res.status(200).send({
@@ -579,7 +594,6 @@ router.get(
 router.get(
   '/federation/formation',
   passport.authenticate('user', { session: false }),
-  validateUser([UserRoles.FDC, UserRoles.FRC, UserRoles.FNC]),
   catchErrors(async (req: RequestWithUser, res: express.Response, next: express.NextFunction) => {
     const user = req.user;
     if (!user) {
@@ -588,7 +602,13 @@ router.get(
       return;
     }
 
-    const { isNational, scopeDepts, scope } = resolveScope(user);
+    const federation = await getUserFederationEntity(user.id);
+    if (!federation) {
+      res.status(403).send({ ok: false, data: null, error: 'Accès réservé aux membres d’une fédération' });
+      return;
+    }
+
+    const { isNational, scopeDepts, scope } = resolveScope(federation);
 
     if (!isNational && (!scopeDepts || scopeDepts.length === 0)) {
       res.status(200).send({

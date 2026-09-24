@@ -23,10 +23,6 @@ vi.mock('~/utils/send-onboarding-email', () => ({
   sendOnboardingEmailOnce: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock('~/utils/federation-stats', () => ({
-  getDefaultScopeDepartementsForRoles: vi.fn(() => []),
-}));
-
 const adminUser = {
   id: 'admin-1',
   email: 'admin@example.fr',

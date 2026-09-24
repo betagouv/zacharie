@@ -4,11 +4,13 @@ export function getUserRoleLabel(role: UserRoles | FeiOwnerRole | EntityTypes | 
   switch (role) {
     case UserRoles.CHASSEUR:
       return 'Chasseur';
-    case UserRoles.FDC:
+    case UserRoles.FEDERATION:
+      return 'Fédération des Chasseurs';
+    case EntityTypes.FDC:
       return 'Fédération Départementale des Chasseurs';
-    case UserRoles.FRC:
+    case EntityTypes.FRC:
       return 'Fédération Régionale des Chasseurs';
-    case UserRoles.FNC:
+    case EntityTypes.FNC:
       return 'Fédération Nationale des Chasseurs';
     case FeiOwnerRole.PREMIER_DETENTEUR:
       return 'Premier Détenteur';

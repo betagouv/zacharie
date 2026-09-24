@@ -26,17 +26,14 @@ export function getUserOnboardingRoute(user: User): string {
     }
     return '/app/svi/onboarding/coordonnees';
   }
+  if (user.roles.includes(UserRoles.FEDERATION)) {
+    if (user.onboarded_at) {
+      return '/app/federation/tableau-de-bord';
+    }
+    return '/app/federation/onboarding/coordonnees';
+  }
   if (user.roles.includes(UserRoles.LABORATOIRE)) {
     return '/app/laboratoire/ftp';
-  }
-  if (user.roles.includes(UserRoles.FDC)) {
-    return '/app/fdc/tableau-de-bord';
-  }
-  if (user.roles.includes(UserRoles.FRC)) {
-    return '/app/frc/tableau-de-bord';
-  }
-  if (user.roles.includes(UserRoles.FNC)) {
-    return '/app/fnc/tableau-de-bord';
   }
   if (isCircuitCourt(user)) {
     if (user.onboarded_at) {

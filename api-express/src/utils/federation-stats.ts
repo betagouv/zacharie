@@ -1,35 +1,79 @@
-import { FeiOwnerRole, UserRoles, type User } from '@prisma/client';
+import {
+  EntityRelationStatus,
+  EntityRelationType,
+  EntityTypes,
+  FeiOwnerRole,
+  Prisma,
+  type Entity,
+} from '@prisma/client';
 import dayjs from 'dayjs';
 import departementsRegions from '~/data/departements-regions.json';
+import prisma from '~/prisma';
 
 export const ALL_DEPARTEMENT_CODES: string[] = Object.keys(
   (departementsRegions as { departements: Record<string, string> }).departements
-);
+).sort();
 
 const ALL_DEPARTEMENT_CODES_SET = new Set(ALL_DEPARTEMENT_CODES);
 
+const departementsLabels = (departementsRegions as { departements: Record<string, string> }).departements;
+const regionsLabels = (departementsRegions as { regions: Record<string, string> }).regions;
+const departementToRegion = (departementsRegions as { departementToRegion: Record<string, string> })
+  .departementToRegion;
+
+export const FEDERATION_ENTITY_TYPES: EntityTypes[] = [EntityTypes.FDC, EntityTypes.FRC, EntityTypes.FNC];
+
 /**
- * Liste par défaut à attribuer à un user FNC : tous les départements.
- * Permet de garder un comportement déclaratif (pas d'override par rôle au runtime).
+ * Toutes les fédérations, pré-créées : une FDC par département, une FRC par région, la FNC.
+ * Ids fixes pour que la création soit idempotente.
  */
-export function getDefaultScopeDepartementsForRoles(roles: UserRoles[]): string[] {
-  if (roles.includes(UserRoles.FNC)) return [...ALL_DEPARTEMENT_CODES];
-  return [];
+export function getAllFederationEntities(): Array<Prisma.EntityCreateManyInput> {
+  const fnc: Prisma.EntityCreateManyInput = {
+    id: 'federation-fnc',
+    type: EntityTypes.FNC,
+    raison_sociale: 'Fédération Nationale des Chasseurs',
+    nom_d_usage: 'FNC',
+    scope_departements_codes: [...ALL_DEPARTEMENT_CODES],
+  };
+  const frcs = Object.entries(regionsLabels).map(
+    ([regionCode, regionLabel]): Prisma.EntityCreateManyInput => ({
+      id: `federation-frc-${regionCode}`,
+      type: EntityTypes.FRC,
+      raison_sociale: `Fédération Régionale des Chasseurs – ${regionLabel}`,
+      nom_d_usage: `FRC ${regionLabel}`,
+      scope_departements_codes: ALL_DEPARTEMENT_CODES.filter(
+        (departementCode) => departementToRegion[departementCode] === regionCode
+      ),
+    })
+  );
+  const fdcs = ALL_DEPARTEMENT_CODES.map(
+    (departementCode): Prisma.EntityCreateManyInput => ({
+      id: `federation-fdc-${departementCode}`,
+      type: EntityTypes.FDC,
+      raison_sociale: `Fédération Départementale des Chasseurs – ${departementsLabels[departementCode]}`,
+      nom_d_usage: `FDC ${departementsLabels[departementCode]} (${departementCode})`,
+      scope_departements_codes: [departementCode],
+    })
+  );
+  return [fnc, ...frcs, ...fdcs];
 }
 
 /**
- * Si l'utilisateur prend le rôle FNC et n'a pas (encore) de scope explicite,
- * on remplit avec les 101 codes pour rester déclaratif (jamais "0 = tout").
+ * Fédération dont l'utilisateur est membre (MEMBER ou ADMIN), ou null.
+ * Un utilisateur n'est membre que d'une seule fédération (contrainte portée par le frontend).
  */
-export function ensureScopeForRoles(
-  currentScope: string[] | null | undefined,
-  roles: UserRoles[]
-): string[] | undefined {
-  const current = currentScope ?? [];
-  if (roles.includes(UserRoles.FNC) && current.length === 0) {
-    return [...ALL_DEPARTEMENT_CODES];
-  }
-  return undefined;
+export async function getUserFederationEntity(userId: string): Promise<Entity | null> {
+  const relation = await prisma.entityAndUserRelations.findFirst({
+    where: {
+      owner_id: userId,
+      relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+      status: { in: [EntityRelationStatus.MEMBER, EntityRelationStatus.ADMIN] },
+      deleted_at: null,
+      EntityRelatedWithUser: { type: { in: FEDERATION_ENTITY_TYPES }, deleted_at: null },
+    },
+    include: { EntityRelatedWithUser: true },
+  });
+  return relation?.EntityRelatedWithUser ?? null;
 }
 
 export const circuitCourtRoles: FeiOwnerRole[] = [
@@ -97,21 +141,18 @@ export type FederationScope = 'national' | 'regional' | 'departemental';
 
 /**
  * Le périmètre est entièrement déclaratif : la seule source de vérité est
- * `user.scope_departements_codes`.
+ * `entity.scope_departements_codes` de la fédération.
  *  - 0 département       → aucun accès (jamais "tout")
  *  - 1 département       → départemental
  *  - 101 départements    → national (équivalent à `null` pour le filtre)
  *  - sinon               → régional / multi-départemental
- *
- * Les rôles (FDC/FRC/FNC) ne court-circuitent plus la liste : le pré-remplissage
- * éventuel se fait à la création / au changement de rôle, pas à la lecture.
  */
-export function resolveScope(user: User): {
+export function resolveScope(federation: Pick<Entity, 'scope_departements_codes'>): {
   isNational: boolean;
   scopeDepts: string[] | null;
   scope: FederationScope;
 } {
-  const explicit = user.scope_departements_codes ?? [];
+  const explicit = federation.scope_departements_codes ?? [];
   const isNational =
     explicit.length === ALL_DEPARTEMENT_CODES.length &&
     explicit.every((c) => ALL_DEPARTEMENT_CODES_SET.has(c));

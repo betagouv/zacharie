@@ -16,6 +16,7 @@ import {
   User,
 } from '@prisma/client';
 import sendNotificationToUser from '~/service/notifications';
+import { FEDERATION_ENTITY_TYPES } from '~/utils/federation-stats';
 import { z } from 'zod';
 
 const userEntitySchema = z.object({
@@ -158,6 +159,16 @@ router.post(
         return;
       }
 
+      // on ne demande pas à rejoindre une fédération : l'équipe Zacharie ou un admin de la fédération rattache ses membres
+      if (FEDERATION_ENTITY_TYPES.includes(entity.type) && !isAdmin) {
+        res.status(403).send({
+          ok: false,
+          data: { relation: null, entity: null },
+          error: 'Unauthorized',
+        });
+        return;
+      }
+
       const nextEntityRelation: Prisma.EntityAndUserRelationsUncheckedCreateInput = {
         owner_id: body.owner_id,
         entity_id: entity.id,
@@ -182,6 +193,22 @@ router.post(
         if (isAdmin) {
           nextEntityRelation.status = body.status;
         }
+      }
+
+      // rattachement direct par un admin : le premier utilisateur de l'entité en devient l'admin
+      if (
+        nextEntityRelation.status === EntityRelationStatus.MEMBER &&
+        body.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
+      ) {
+        const entityHasUsers = await prisma.entityAndUserRelations.findFirst({
+          where: {
+            entity_id: entity.id,
+            relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+            status: { in: [EntityRelationStatus.MEMBER, EntityRelationStatus.ADMIN] },
+            deleted_at: null,
+          },
+        });
+        if (!entityHasUsers) nextEntityRelation.status = EntityRelationStatus.ADMIN;
       }
 
       const relation = await prisma.entityAndUserRelations.create({

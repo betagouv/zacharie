@@ -22,6 +22,9 @@ const entityTypeLabels: Record<EntityTypes, string> = {
   [EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF]: 'Repas de chasse / Associatif',
   [EntityTypes.CONSOMMATEUR_FINAL]: 'Consommateur final',
   [EntityTypes.LABORATOIRE]: 'Laboratoire (trichine)',
+  [EntityTypes.FDC]: 'FDC',
+  [EntityTypes.FRC]: 'FRC',
+  [EntityTypes.FNC]: 'FNC',
 };
 
 export default function AdminEntites() {

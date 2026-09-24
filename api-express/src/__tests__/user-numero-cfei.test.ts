@@ -26,10 +26,6 @@ vi.mock('~/utils/invite-user', () => ({
   inviteUser: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock('~/utils/federation-stats', () => ({
-  ensureScopeForRoles: vi.fn((roles: UserRoles[]) => roles),
-}));
-
 const app = express();
 app.use(express.json());
 app.use('/user', userRouter);

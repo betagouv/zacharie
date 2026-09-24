@@ -5,7 +5,14 @@ import { Badge } from '@codegouvfr/react-dsfr/Badge';
 import { Link, useParams } from 'react-router';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Notice } from '@codegouvfr/react-dsfr/Notice';
-import { EntityRelationType, EntityTypes, UserRoles, Prisma, User } from '@prisma/client';
+import {
+  EntityRelationStatus,
+  EntityRelationType,
+  EntityTypes,
+  UserRoles,
+  Prisma,
+  User,
+} from '@prisma/client';
 import { Tabs, type TabsProps } from '@codegouvfr/react-dsfr/Tabs';
 import InputCodePostalEtVille from '@app/components/InputCodePostalEtVille';
 import { Button } from '@codegouvfr/react-dsfr/Button';
@@ -17,6 +24,8 @@ import InputNotEditable from '@app/components/InputNotEditable';
 import API from '@app/services/api';
 import RelationEntityUser from '@app/components/RelationEntityUser';
 import { toast } from 'react-toastify';
+const FEDERATION_TYPES: EntityTypes[] = [EntityTypes.FDC, EntityTypes.FRC, EntityTypes.FNC];
+
 const loadData = (entityId: string): Promise<AdminGetEntityResponse> =>
   API.get({ path: `admin/entity/${entityId}` }).then((res) => res as AdminGetEntityResponse);
 
@@ -54,6 +63,7 @@ const initialData: State = {
     inc_decision: 0,
     code_etbt_certificat: null,
     is_lnr: false,
+    scope_departements_codes: [],
   },
   dedicatedApiKey: null,
   canTakeFichesForEntity: [],
@@ -91,7 +101,12 @@ export default function AdminEntity() {
       label: 'Raison Sociale',
     },
   ];
-  if (entity.type !== EntityTypes.CCG) {
+  if (FEDERATION_TYPES.includes(entity.type)) {
+    tabs.push({
+      tabId: 'Utilisateurs pouvant traiter des fiches pour cette entité',
+      label: `Utilisateurs ayant accès au tableau de bord de la fédération (${entity.EntityRelationsWithUsers.filter((rel) => rel.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY).length})`,
+    });
+  } else if (entity.type !== EntityTypes.CCG) {
     tabs.push({
       tabId: 'Utilisateurs pouvant traiter des fiches pour cette entité',
       label: `Utilisateurs pouvant traiter des fiches pour cette entité (${entity.EntityRelationsWithUsers.filter((rel) => rel.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY).length})`,
@@ -599,6 +614,10 @@ function UserWorkingWithOrFor({
                     [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
                     relation: relationType,
                     [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entity.id,
+                    // ajout par un admin Zacharie : validé d'office (le premier devient admin de l'entité)
+                    ...(relationType === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
+                      ? { [Prisma.EntityAndUserRelationsScalarFieldEnum.status]: EntityRelationStatus.MEMBER }
+                      : {}),
                   },
                 })
                   .then((res) => res as AdminActionEntityResponse)

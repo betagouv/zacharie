@@ -6,6 +6,7 @@ import { TRICHINE_FEATURE_ENABLED } from '@app/utils/trichine';
 export default function useChasseurNavigationMenu(): MainNavigationProps.Item[] {
   const location = useLocation();
   const apiKeyApprovals = useZustandStore((state) => state.apiKeyApprovals);
+  const federation = useZustandStore((state) => state.federation);
 
   const navigationBase: MainNavigationProps.Item[] = [
     {
@@ -13,6 +14,15 @@ export default function useChasseurNavigationMenu(): MainNavigationProps.Item[] 
       isActive: location.pathname === '/app/chasseur/tableau-de-bord',
       linkProps: { to: '/app/chasseur/tableau-de-bord', href: '#' },
     },
+    ...(federation
+      ? [
+          {
+            text: 'Tableau de bord Fédération',
+            isActive: location.pathname === '/app/chasseur/tableau-de-bord-federation',
+            linkProps: { to: '/app/chasseur/tableau-de-bord-federation', href: '#' },
+          },
+        ]
+      : []),
     {
       text: 'Fiches',
       isActive: location.pathname.startsWith('/app/chasseur/fei') || location.pathname === '/app/chasseur',
@@ -41,6 +51,14 @@ export default function useChasseurNavigationMenu(): MainNavigationProps.Item[] 
           linkProps: {
             href: '#',
             to: '/app/chasseur/profil/informations-de-chasse',
+          },
+        },
+        {
+          text: 'Ma fédération',
+          isActive: location.pathname === '/app/chasseur/profil/ma-federation',
+          linkProps: {
+            href: '#',
+            to: '/app/chasseur/profil/ma-federation',
           },
         },
         {
@@ -76,6 +94,7 @@ export default function useChasseurNavigationMenu(): MainNavigationProps.Item[] 
           },
         },
       ].filter((link) => {
+        if (link.text === 'Ma fédération') return !!federation;
         if (link.text !== 'Partage de données') return true;
         return !!apiKeyApprovals?.length;
       }),

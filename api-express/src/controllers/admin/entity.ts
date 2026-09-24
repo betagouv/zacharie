@@ -3,6 +3,7 @@ import { catchErrors } from '~/middlewares/errors';
 import crypto from 'crypto';
 const router: express.Router = express.Router();
 import prisma from '~/prisma';
+import { FEDERATION_ENTITY_TYPES } from '~/utils/federation-stats';
 import {
   ApiKeyApprovalStatus,
   ApiKeyScope,
@@ -109,6 +110,11 @@ router.get(
                   if (entity.type === EntityTypes.PREMIER_DETENTEUR) {
                     return {
                       has: UserRoles.CHASSEUR,
+                    };
+                  }
+                  if (FEDERATION_ENTITY_TYPES.includes(entity.type)) {
+                    return {
+                      hasSome: [UserRoles.CHASSEUR, UserRoles.FEDERATION],
                     };
                   }
                   if (

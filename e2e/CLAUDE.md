@@ -29,7 +29,7 @@ Emails are semantic, one per role, all on `@example.fr`. Password for every acco
 - Collecteur : `collecteur-pro@example.fr`, `collecteur-pro-1-etg-1@example.fr`, `collecteur-pro-nouveau@example.fr`
 - SVI : `svi@example.fr`, `svi-2@example.fr`, `svi-nouveau@example.fr`
 - Circuit court : `commerce-de-detail@example.fr`, `commerce-de-detail-nouveau@example.fr`
-- Fédérations : `fdc@example.fr` (dept 03), `frc@example.fr` (depts 07 + 75), `fnc@example.fr` (national). Le périmètre vient de `scope_departements_codes`, pas du rôle
+- Fédérations : `fdc@example.fr` (FDC Allier 03), `frc@example.fr` (FRC Auvergne-Rhône-Alpes), `fnc@example.fr` (FNC). Tous ADMIN de l'entité fédération. `fdc@`/`frc@` sont chasseurs (onglet « Tableau de bord Fédération ») ; `fnc@` a le rôle `FEDERATION` (sans être chasseur, `/app/federation`). Le périmètre vient de `Entity.scope_departements_codes`
 - Admin Zacharie : `admin@example.fr` (chasseur + `isZacharieAdmin`). Le login le renvoie sur `/app/chasseur` ; `/app/admin` exige ProConnect (simulé en test sur `/mock-proconnect`, voir `doc/proconnect-admin.md`)
 
 Required env vars:

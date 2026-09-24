@@ -44,6 +44,7 @@ export interface UserConnexionResponse {
         >;
       }
     >;
+    federation?: Entity | null;
     token?: string | null;
     contexte?: string;
   };
