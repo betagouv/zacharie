@@ -20,7 +20,8 @@ import { inviteUser } from '~/utils/invite-user';
 import { sanitize } from '~/utils/sanitize';
 
 // un destinataire ne s'inscrit pas lui-même sur Zacharie : un chasseur, un ETG ou un admin
-// le pré-enregistre avec le compte de son représentant, qui reçoit une invitation
+// le pré-enregistre avec le compte de son représentant, qui reçoit une invitation.
+// Le collecteur pro n'est pas du circuit court, mais un chasseur peut le pré-enregistrer de la même façon.
 export const destinataireSchema = z.object({
   raison_sociale: z.string(),
   address_ligne_1: z.string(),
@@ -33,6 +34,7 @@ export const destinataireSchema = z.object({
   siret: z.string().optional(),
   zacharie_compatible: z.boolean().optional(),
   type: z.enum([
+    EntityTypes.COLLECTEUR_PRO,
     EntityTypes.COMMERCE_DE_DETAIL,
     EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE,
     EntityTypes.ASSOCIATION_CARITATIVE,
@@ -40,6 +42,17 @@ export const destinataireSchema = z.object({
     EntityTypes.CONSOMMATEUR_FINAL,
   ]),
 });
+
+// les entités auxquelles un chasseur transmet des carcasses
+const RECIPIENT_TYPES: Array<EntityTypes> = [
+  EntityTypes.ETG,
+  EntityTypes.COLLECTEUR_PRO,
+  EntityTypes.COMMERCE_DE_DETAIL,
+  EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE,
+  EntityTypes.ASSOCIATION_CARITATIVE,
+  EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF,
+  EntityTypes.CONSOMMATEUR_FINAL,
+];
 
 export type DestinataireInput = z.infer<typeof destinataireSchema>;
 
@@ -69,11 +82,12 @@ export async function createDestinataire(
   };
 
   // un destinataire déjà enregistré sur Zacharie ne doit pas être créé en double.
-  // On le retrouve par SIRET, sinon par type + raison sociale + code postal.
+  // On le retrouve par SIRET, sinon par raison sociale + code postal, quel que soit le type saisi :
+  // un ETG saisi comme commerce de détail est retrouvé comme ETG.
   const existingEntity = await prisma.entity.findFirst({
     where: {
       deleted_at: null,
-      type: data.type,
+      type: { in: RECIPIENT_TYPES },
       ...(data.siret
         ? { siret: data.siret }
         : {
@@ -85,6 +99,21 @@ export async function createDestinataire(
 
   if (existingEntity) {
     return { entity: null, existingEntity, status: 406, error: 'Entité déjà existante' };
+  }
+
+  // un SIRET déjà porté par une entité qui ne reçoit pas de carcasses (CCG, SVI, association de chasse)
+  // est une erreur de saisie : on ne crée pas de destinataire en double
+  if (data.siret) {
+    const otherEntity = await prisma.entity.findFirst({
+      where: { deleted_at: null, siret: data.siret },
+    });
+    if (otherEntity) {
+      return {
+        entity: null,
+        status: 409,
+        error: 'Ce SIRET ne correspond pas à un destinataire de carcasses. Veuillez vérifier le SIRET saisi.',
+      };
+    }
   }
 
   // on vérifie que l'email est libre AVANT de créer l'entité, sinon on laisse une entité orpheline

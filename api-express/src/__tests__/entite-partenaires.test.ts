@@ -161,7 +161,17 @@ describe('POST /entite/partenaire', () => {
     const findArgs = vi.mocked(prisma.entity.findFirst).mock.calls[0][0] as any;
     expect(findArgs.where).toEqual({
       deleted_at: null,
-      type: EntityTypes.COMMERCE_DE_DETAIL,
+      type: {
+        in: [
+          EntityTypes.ETG,
+          EntityTypes.COLLECTEUR_PRO,
+          EntityTypes.COMMERCE_DE_DETAIL,
+          EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE,
+          EntityTypes.ASSOCIATION_CARITATIVE,
+          EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF,
+          EntityTypes.CONSOMMATEUR_FINAL,
+        ],
+      },
       siret: '12345678900012',
     });
 
@@ -205,7 +215,7 @@ describe('POST /entite/partenaire', () => {
     expect(sendEmail).not.toHaveBeenCalled();
   });
 
-  test('sans SIRET, le partenaire existant est retrouvé par type + raison sociale + code postal', async () => {
+  test('sans SIRET, le partenaire existant est retrouvé par raison sociale + code postal', async () => {
     vi.mocked(prisma.entity.findFirst).mockResolvedValueOnce(existingEntity as any);
     vi.mocked(prisma.entityAndUserRelations.findFirst).mockResolvedValueOnce({ id: 'rel-existing' } as any);
 
@@ -218,7 +228,17 @@ describe('POST /entite/partenaire', () => {
     const findArgs = vi.mocked(prisma.entity.findFirst).mock.calls[0][0] as any;
     expect(findArgs.where).toEqual({
       deleted_at: null,
-      type: EntityTypes.COMMERCE_DE_DETAIL,
+      type: {
+        in: [
+          EntityTypes.ETG,
+          EntityTypes.COLLECTEUR_PRO,
+          EntityTypes.COMMERCE_DE_DETAIL,
+          EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE,
+          EntityTypes.ASSOCIATION_CARITATIVE,
+          EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF,
+          EntityTypes.CONSOMMATEUR_FINAL,
+        ],
+      },
       raison_sociale: { equals: 'boucherie MARTIN', mode: 'insensitive' },
       code_postal: '75015',
     });
@@ -256,5 +276,101 @@ describe('POST /entite/partenaire', () => {
     ]);
     expect(res.body.data.entity.id).toBe('entity-created');
     expect(res.body.data.relation.id).toBe('rel-created');
+  });
+
+  test('un ETG saisi comme commerce de détail est retrouvé comme ETG : rattachement, pas de commerce créé', async () => {
+    const existingEtg = {
+      ...existingEntity,
+      id: 'etg-existant',
+      type: EntityTypes.ETG,
+      nom_d_usage: 'ETG Martin',
+    };
+    vi.mocked(prisma.entity.findFirst).mockResolvedValueOnce(existingEtg as any);
+    vi.mocked(prisma.entityAndUserRelations.findFirst).mockResolvedValueOnce(null);
+    vi.mocked(prisma.entityAndUserRelations.findMany).mockResolvedValueOnce([] as any);
+
+    const res = await authed(request(app).post('/entite/partenaire').send(validBody));
+
+    expect(res.status).toBe(200);
+    expect(prisma.entity.create).not.toHaveBeenCalled();
+    expect(prisma.user.create).not.toHaveBeenCalled();
+    expect(inviteUser).not.toHaveBeenCalled();
+    expect(vi.mocked(prisma.entityAndUserRelations.create).mock.calls[0][0].data).toEqual({
+      owner_id: regularUser.id,
+      entity_id: 'etg-existant',
+      relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+      deleted_at: null,
+    });
+    expect(res.body.data.entity.type).toBe(EntityTypes.ETG);
+  });
+
+  test('collecteur pro existant → rattachement, aucun compte créé', async () => {
+    const existingCollecteur = {
+      ...existingEntity,
+      id: 'collecteur-existant',
+      type: EntityTypes.COLLECTEUR_PRO,
+    };
+    vi.mocked(prisma.entity.findFirst).mockResolvedValueOnce(existingCollecteur as any);
+    vi.mocked(prisma.entityAndUserRelations.findFirst).mockResolvedValueOnce(null);
+    vi.mocked(prisma.entityAndUserRelations.findMany).mockResolvedValueOnce([] as any);
+
+    const res = await authed(
+      request(app)
+        .post('/entite/partenaire')
+        .send({ ...validBody, type: EntityTypes.COLLECTEUR_PRO })
+    );
+
+    expect(res.status).toBe(200);
+    expect(prisma.entity.create).not.toHaveBeenCalled();
+    expect(prisma.user.create).not.toHaveBeenCalled();
+    expect(res.body.data.entity.id).toBe('collecteur-existant');
+  });
+
+  test('SIRET d’une entité qui ne reçoit pas de carcasses (CCG, SVI…) → 409, rien n’est créé', async () => {
+    vi.mocked(prisma.entity.findFirst)
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ id: 'ccg-1', type: EntityTypes.CCG, siret: '12345678900012' } as any);
+
+    const res = await authed(request(app).post('/entite/partenaire').send(validBody));
+
+    expect(res.status).toBe(409);
+    expect(prisma.entity.create).not.toHaveBeenCalled();
+    expect(prisma.user.create).not.toHaveBeenCalled();
+    expect(prisma.entityAndUserRelations.create).not.toHaveBeenCalled();
+    expect(inviteUser).not.toHaveBeenCalled();
+  });
+
+  test('nouveau collecteur pro → entité COLLECTEUR_PRO et représentant avec le seul rôle COLLECTEUR_PRO', async () => {
+    vi.mocked(prisma.entity.findFirst).mockResolvedValueOnce(null).mockResolvedValueOnce(null);
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
+    vi.mocked(prisma.entity.create).mockImplementation((async ({ data }: any) => ({
+      id: 'collecteur-created',
+      ...data,
+    })) as any);
+    vi.mocked(prisma.user.create).mockImplementation((async ({ data }: any) => ({ ...data })) as any);
+
+    const res = await authed(
+      request(app)
+        .post('/entite/partenaire')
+        .send({ ...validBody, type: EntityTypes.COLLECTEUR_PRO })
+    );
+
+    expect(res.status).toBe(200);
+    expect(vi.mocked(prisma.entity.create).mock.calls[0][0].data.type).toBe(EntityTypes.COLLECTEUR_PRO);
+    expect(vi.mocked(prisma.user.create).mock.calls[0][0].data.roles).toEqual([UserRoles.COLLECTEUR_PRO]);
+    expect(inviteUser).toHaveBeenCalledTimes(1);
+    const relations = vi.mocked(prisma.entityAndUserRelations.create).mock.calls.map((call) => call[0].data);
+    expect(relations).toEqual([
+      expect.objectContaining({
+        entity_id: 'collecteur-created',
+        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        status: EntityRelationStatus.ADMIN,
+      }),
+      {
+        owner_id: regularUser.id,
+        entity_id: 'collecteur-created',
+        relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+      },
+    ]);
   });
 });
