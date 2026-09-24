@@ -102,7 +102,7 @@ export default function PageNotFound() {
           </g>
         </svg>
         <p className="fr-text--sm fr-mb-1w tracking-widest text-gray-500 uppercase">Erreur 404</p>
-        <h1 className="fr-display--xs fr-mb-2w">Mince, Zach'a pas trouvé</h1>
+        <h1 className="fr-display--xs fr-mb-2w">Mince, Zach'a ri-en trouvé</h1>
         <p className="fr-text--lead fr-mb-6w max-w-xl text-gray-600">
           La page que vous cherchez n'existe pas ou a été déplacée.
         </p>
