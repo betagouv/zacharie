@@ -77,7 +77,13 @@ router.get(
             },
           },
         },
-        include: entityAdminInclude,
+        include: {
+          EntityRelationsWithUsers: {
+            ...entityAdminInclude.EntityRelationsWithUsers,
+            // les admins Zacharie rattachés à une entité (support, tests) n'apparaissent pas parmi ses membres
+            where: { OR: [{ owner_id: user.id }, { UserRelatedWithEntity: { isZacharieAdmin: false } }] },
+          },
+        },
         orderBy: {
           nom_d_usage: 'asc',
         },

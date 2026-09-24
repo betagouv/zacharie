@@ -43,6 +43,7 @@ const PERSISTED_KEYS: (keyof State)[] = [
   'carcassesIntermediaireById',
   'modifRequestsByCarcasseId',
   'apiKeyApprovals',
+  'federation',
   'lastUpdateFromServer',
   'carcassesRegistry',
   'logs',
@@ -63,6 +64,8 @@ export interface State {
   // and the single source of truth for both sync and the modif-request UI.
   modifRequestsByCarcasseId: Record<Carcasse['zacharie_carcasse_id'], Array<CarcasseModificationRequest>>;
   apiKeyApprovals: NonNullable<UserConnexionResponse['data']['apiKeyApprovals']>;
+  // fédération (FDC / FRC / FNC) dont l'utilisateur est membre validé : donne accès au tableau de bord fédération
+  federation: NonNullable<UserConnexionResponse['data']['federation']> | null;
   lastUpdateFromServer: number;
   carcassesRegistry: Array<Carcasse>;
   // Fiches que ce compte a renvoyées à l'expéditeur : masquées de ses listes sans attendre la
@@ -144,6 +147,7 @@ function initialState(): State {
     entities: {},
     detenteursInitiauxIds: [],
     apiKeyApprovals: [],
+    federation: null,
     carcasses: {},
     carcassesIntermediaireById: {},
     modifRequestsByCarcasseId: {},

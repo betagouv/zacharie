@@ -10,11 +10,12 @@ test('FDC — tableau de bord départemental affiche les sections sans le détai
   page,
 }) => {
   await connectWith(page, 'fdc@example.fr');
-  await page.goto('http://localhost:3290/app/fdc/tableau-de-bord');
-  await expect(page).toHaveURL(/\/app\/fdc\/tableau-de-bord/);
+  await expect(page).toHaveURL(/\/app\/chasseur/);
+  await page.getByRole('link', { name: 'Tableau de bord Fédération' }).click();
+  await expect(page).toHaveURL(/\/app\/chasseur\/tableau-de-bord-federation/);
 
-  // Title uses nom_de_famille, not "départemental"
-  await expect(page.getByRole('heading', { name: /Tableau de bord FDC de l'Allier/ })).toBeVisible({
+  // Title uses the federation name, not "départemental"
+  await expect(page.getByRole('heading', { name: 'Tableau de bord FDC Allier (03)' })).toBeVisible({
     timeout: 15000,
   });
 

@@ -60,8 +60,10 @@ export async function refreshUser(_calledFrom?: string) {
           const user = userResponse.data.user as User;
           useUser.setState({ user });
           const apiKeyApprovals = userResponse.data?.apiKeyApprovals || [];
+          const federation = userResponse.data?.federation ?? null;
           useZustandStore.setState((state) => ({
             apiKeyApprovals,
+            federation,
             users: {
               ...state.users,
               [user.id]: user,

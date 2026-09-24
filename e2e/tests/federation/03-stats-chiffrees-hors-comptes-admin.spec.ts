@@ -37,9 +37,16 @@ async function rowCells(row: Locator) {
   return row.getByRole('cell').allTextContents();
 }
 
+async function openTableauDeBordFederation(page: Page, email: string) {
+  await connectWith(page, email);
+  await expect(page).toHaveURL(/\/app\/chasseur/);
+  await page.getByRole('link', { name: 'Tableau de bord Fédération' }).click();
+  await expect(page).toHaveURL(/\/app\/chasseur\/tableau-de-bord-federation/);
+}
+
 test('FNC — chiffres nationaux, fiches du compte admin exclues', async ({ page }) => {
   await connectWith(page, 'fnc@example.fr');
-  await expect(page).toHaveURL(/\/app\/fnc\/tableau-de-bord/);
+  await expect(page).toHaveURL(/\/app\/federation\/tableau-de-bord/);
 
   await expect(page.getByRole('heading', { level: 1, name: 'Tableau de bord national' })).toBeVisible({
     timeout: 15000,
@@ -100,10 +107,9 @@ test('FNC — chiffres nationaux, fiches du compte admin exclues', async ({ page
 });
 
 test("FDC — chiffres limités à son département, fiche admin de l'Allier exclue", async ({ page }) => {
-  await connectWith(page, 'fdc@example.fr');
-  await expect(page).toHaveURL(/\/app\/fdc\/tableau-de-bord/);
+  await openTableauDeBordFederation(page, 'fdc@example.fr');
 
-  await expect(page.getByRole('heading', { level: 1, name: "Tableau de bord FDC de l'Allier" })).toBeVisible({
+  await expect(page.getByRole('heading', { level: 1, name: 'Tableau de bord FDC Allier (03)' })).toBeVisible({
     timeout: 15000,
   });
 
@@ -123,27 +129,28 @@ test("FDC — chiffres limités à son département, fiche admin de l'Allier exc
   await expect(page.getByRole('heading', { level: 2, name: 'Détail par département' })).toHaveCount(0);
 });
 
-test('FRC — chiffres limités aux départements de son périmètre', async ({ page }) => {
-  await connectWith(page, 'frc@example.fr');
-  await expect(page).toHaveURL(/\/app\/frc\/tableau-de-bord/);
+test('FRC — chiffres limités aux départements de sa région', async ({ page }) => {
+  await openTableauDeBordFederation(page, 'frc@example.fr');
 
   await expect(
     page.getByRole('heading', { level: 1, name: 'Tableau de bord FRC Auvergne-Rhône-Alpes' })
   ).toBeVisible({ timeout: 15000 });
 
-  // Périmètre 07 + 75. Seule l'Ardèche porte des carcasses, Paris n'a donc pas de ligne.
+  // Auvergne-Rhône-Alpes couvre l'Allier et l'Ardèche : mêmes chiffres qu'au national,
+  // fiche admin toujours exclue. Tous les départements de la région ont une ligne, même sans carcasse.
   const prelevees = section(page, 'Carcasses prélevées');
-  await expect(kpi(prelevees, 'Grand gibier')).toHaveText('3');
-  await expect(kpi(prelevees, 'Petit gibier')).toHaveText('10');
+  await expect(kpi(prelevees, 'Grand gibier')).toHaveText('6');
+  await expect(kpi(prelevees, 'Petit gibier')).toHaveText('20');
 
   const sanitaire = section(page, 'Suivi sanitaire grand gibier');
-  await expect(kpi(sanitaire, 'Examinateurs actifs')).toHaveText('1');
-  await expect(kpi(sanitaire, /^Taux de saisie saison \d{2}-\d{2}$/)).toHaveText('0%');
+  await expect(kpi(sanitaire, 'Examinateurs actifs')).toHaveText('2');
+  await expect(kpi(sanitaire, /^Taux de saisie saison \d{2}-\d{2}$/)).toHaveText('16.7%');
 
   // Périmètre régional : le détail par département est affiché, sans le filtre.
   await expect(page.getByRole('heading', { level: 2, name: 'Détail par département' })).toBeVisible();
   await expect(page.getByPlaceholder('Filtrer par département')).toHaveCount(0);
   await expect(page.getByRole('row').filter({ hasText: 'Ardèche' })).toHaveCount(1);
-  await expect(page.getByRole('row').filter({ hasText: 'Allier' })).toHaveCount(0);
+  await expect(page.getByRole('row').filter({ hasText: 'Allier' })).toHaveCount(1);
+  await expect(page.getByRole('row').filter({ hasText: '69 Rhône' })).toHaveCount(1);
   await expect(page.getByRole('row').filter({ hasText: 'Paris' })).toHaveCount(0);
 });

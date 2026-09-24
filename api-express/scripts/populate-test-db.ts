@@ -19,7 +19,7 @@ import dayjs from 'dayjs';
 import prisma from '~/prisma';
 import { hashPassword } from '~/service/crypto';
 import createUserId from '~/utils/createUserId';
-import { ALL_DEPARTEMENT_CODES } from '~/utils/federation-stats';
+import { getAllFederationEntities } from '~/utils/federation-stats';
 
 export async function populateDb(role?: FeiOwnerRole) {
   console.log('Populate db', process.env.NODE_ENV, process.env.POSTGRESQL_ADDON_URI);
@@ -335,26 +335,27 @@ Christine
       {
         id: await createUserId(),
         email: 'fdc@example.fr',
-        roles: [UserRoles.FDC],
+        roles: [UserRoles.CHASSEUR],
         activated: true,
         activated_at: dayjs().toDate(),
         prenom: 'Paul',
-        nom_de_famille: "FDC de l'Allier",
+        nom_de_famille: 'Lefebvre',
         addresse_ligne_1: '1 rue de la fédération',
         code_postal: '03000',
         ville: 'Moulins',
         telephone: '0606060620',
+        est_forme_a_l_examen_initial: false,
         onboarded_at: dayjs().toDate(),
-        scope_departements_codes: ['03'],
       },
       {
         id: await createUserId(),
         email: 'fnc@example.fr',
-        roles: [UserRoles.FNC],
+        // membre de fédération sans être chasseur
+        roles: [UserRoles.FEDERATION],
         activated: true,
         activated_at: dayjs().toDate(),
         prenom: 'Jacques',
-        nom_de_famille: 'FNC nationale',
+        nom_de_famille: 'Michel',
         addresse_ligne_1: '1 rue de la chasse',
         code_postal: '75000',
         ville: 'Paris',
@@ -375,29 +376,22 @@ Christine
         telephone: '0606060610',
         onboarded_at: dayjs().toDate(),
       },
-      // Périmètre multi-départemental (régional) : ni un seul département, ni les 101.
       {
         id: await createUserId(),
         email: 'frc@example.fr',
-        roles: [UserRoles.FRC],
+        roles: [UserRoles.CHASSEUR],
         activated: true,
         activated_at: dayjs().toDate(),
         prenom: 'Nicolas',
-        nom_de_famille: 'FRC Auvergne-Rhône-Alpes',
+        nom_de_famille: 'Laurent',
         addresse_ligne_1: '1 rue de la région',
         code_postal: '07000',
         ville: 'Privas',
         telephone: '0606060622',
+        est_forme_a_l_examen_initial: false,
         onboarded_at: dayjs().toDate(),
-        scope_departements_codes: ['07', '75'],
       },
     ],
-  });
-
-  // FNC needs all department codes for national scope
-  await prisma.user.update({
-    where: { email: 'fnc@example.fr' },
-    data: { scope_departements_codes: ALL_DEPARTEMENT_CODES },
   });
 
   const users = await prisma.user.findMany();
@@ -537,6 +531,9 @@ Christine
     ],
   });
 
+  // Fédérations pré-créées (en prod par la migration)
+  await prisma.entity.createMany({ data: getAllFederationEntities() });
+
   const entities = await prisma.entity.findMany();
   console.log('Entities created for test', entities.length);
 
@@ -639,6 +636,24 @@ Christine
       {
         owner_id: users.find((user) => user.email === 'svi-2@example.fr')?.id,
         entity_id: entities.find((entity) => entity.raison_sociale === 'SVI 2')?.id,
+        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        status: EntityRelationStatus.ADMIN,
+      },
+      {
+        owner_id: users.find((user) => user.email === 'fdc@example.fr')?.id,
+        entity_id: 'federation-fdc-03',
+        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        status: EntityRelationStatus.ADMIN,
+      },
+      {
+        owner_id: users.find((user) => user.email === 'frc@example.fr')?.id,
+        entity_id: 'federation-frc-ARA',
+        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        status: EntityRelationStatus.ADMIN,
+      },
+      {
+        owner_id: users.find((user) => user.email === 'fnc@example.fr')?.id,
+        entity_id: 'federation-fnc',
         relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
         status: EntityRelationStatus.ADMIN,
       },

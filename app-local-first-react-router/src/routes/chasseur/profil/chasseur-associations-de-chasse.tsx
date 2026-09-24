@@ -25,6 +25,9 @@ const empytEntitiesByTypeAndId: EntitiesByTypeAndId = {
   [EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF]: {},
   [EntityTypes.CONSOMMATEUR_FINAL]: {},
   [EntityTypes.LABORATOIRE]: {},
+  [EntityTypes.FDC]: {},
+  [EntityTypes.FRC]: {},
+  [EntityTypes.FNC]: {},
 };
 
 export default function MesAssociationsDeChasse() {

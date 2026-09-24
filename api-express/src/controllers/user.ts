@@ -4,6 +4,7 @@ import { catchErrors } from '~/middlewares/errors';
 import type { RequestWithUser } from '~/types/request';
 const router: express.Router = express.Router();
 import prisma from '~/prisma';
+import { FEDERATION_ENTITY_TYPES, getUserFederationEntity } from '~/utils/federation-stats';
 import jwt from 'jsonwebtoken';
 import dayjs from 'dayjs';
 import crypto from 'crypto';
@@ -17,7 +18,6 @@ import {
 import { BrevoTemplateId } from '~/third-parties/brevo-templates';
 import { capture } from '~/third-parties/sentry';
 import createUserId from '~/utils/createUserId';
-import { ensureScopeForRoles } from '~/utils/federation-stats';
 import { comparePassword, hashPassword } from '~/service/crypto';
 import { userFeiSelect, type UserForFei } from '~/types/user';
 import type {
@@ -1165,11 +1165,6 @@ router.post(
   passport.authenticate('user', { session: false, failWithError: true }),
   catchErrors(async (req: RequestWithUser, res: express.Response, next: express.NextFunction) => {
     const user = req.user!;
-    if (user.roles.includes(UserRoles.CHASSEUR)) {
-      const error = new Error('Un chasseur ne peut pas inviter un utilisateur à une entité');
-      res.status(400);
-      return next(error);
-    }
     let result = inviteUserBodySchema.safeParse(req.body);
     if (!result.success) {
       const error = new Error(result.error.message);
@@ -1194,6 +1189,13 @@ router.post(
       res.status(406);
       return next(error);
     }
+    const isFederation = FEDERATION_ENTITY_TYPES.includes(entity.type);
+    // un chasseur n'invite que dans sa fédération
+    if (user.roles.includes(UserRoles.CHASSEUR) && !isFederation) {
+      const error = new Error('Un chasseur ne peut pas inviter un utilisateur à une entité');
+      res.status(400);
+      return next(error);
+    }
     const myRelation = await prisma.entityAndUserRelations.findFirst({
       where: {
         owner_id: user.id,
@@ -1216,8 +1218,9 @@ router.post(
         data: {
           id: await createUserId(),
           email,
-          // un nouvel utilisateur invité ne peut l'être qu'avec un rôle identique à celui de l'utilisateur qui l'invite
-          roles: req.user.roles,
+          // un nouvel utilisateur invité a le rôle de celui qui l'invite, sauf dans une fédération :
+          // l'invité n'est pas forcément chasseur
+          roles: isFederation ? [UserRoles.FEDERATION] : req.user.roles,
           isZacharieAdmin: false,
           activated: true,
           prefilled: false,
@@ -1281,7 +1284,6 @@ const userUpdateSchema = z.object({
   native_push_token: z.string().optional(),
   [Prisma.UserScalarFieldEnum.numero_cfei]: z.string().optional().nullable(),
   [Prisma.UserScalarFieldEnum.est_forme_a_l_examen_initial]: z.enum(['true', 'false']).optional(),
-  [Prisma.UserScalarFieldEnum.scope_departements_codes]: z.array(z.string()).optional(),
   onboarding_finished: z.boolean().optional(),
 });
 
@@ -1397,25 +1399,6 @@ router.post(
           nextUser.activated = false;
           if (nextUser.activated_at) nextUser.activated_at = new Date();
         }
-      }
-
-      if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.scope_departements_codes)) {
-        if (req.user.isZacharieAdmin) {
-          nextUser.scope_departements_codes = [
-            ...new Set(body[Prisma.UserScalarFieldEnum.scope_departements_codes] as string[]),
-          ].sort();
-        } else {
-          throw new Error('User tried to update scope_departements_codes without being admin');
-        }
-      }
-
-      // Si l'admin attribue FNC sans toucher au scope (et que celui-ci est vide),
-      // on remplit automatiquement avec les 101 départements pour rester déclaratif.
-      if (Array.isArray(nextUser.roles) && req.user.isZacharieAdmin) {
-        const nextScope =
-          (nextUser.scope_departements_codes as string[] | undefined) ?? user.scope_departements_codes;
-        const filled = ensureScopeForRoles(nextScope, nextUser.roles as UserRoles[]);
-        if (filled) nextUser.scope_departements_codes = filled;
       }
 
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.est_forme_a_l_examen_initial)) {
@@ -1561,7 +1544,10 @@ router.get(
           },
         },
       });
-      res.status(200).send({ ok: true, data: { user: req.user, apiKeyApprovals }, error: null, message: '' });
+      const federation = await getUserFederationEntity(user.id);
+      res
+        .status(200)
+        .send({ ok: true, data: { user: req.user, apiKeyApprovals, federation }, error: null, message: '' });
     }
   )
 );
@@ -1619,6 +1605,8 @@ router.get(
             owner_id: user.id,
             relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
             deleted_at: null,
+            // l'appartenance à une fédération ne sert qu'au tableau de bord, pas à la circulation des carcasses
+            EntityRelatedWithUser: { type: { notIn: FEDERATION_ENTITY_TYPES } },
           },
           include: {
             EntityRelatedWithUser: true,
@@ -1702,6 +1690,7 @@ router.get(
                 EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE,
                 EntityTypes.ASSOCIATION_CARITATIVE,
                 EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF,
+                ...FEDERATION_ENTITY_TYPES,
               ],
             },
             id: {

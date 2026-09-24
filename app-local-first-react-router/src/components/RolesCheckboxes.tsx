@@ -127,42 +127,18 @@ export default function RolesCheckBoxes({
     },
   ];
 
-  // Rôles fédérations : non opérationnels, accès dashboard de pilotage uniquement.
-  // Ne sont proposés que dans l'interface admin (assignation manuelle).
-  const federationRoleOptions = [
-    {
-      label: 'Fédération Départementale des Chasseurs (FDC)',
-      hintText: 'Accès au tableau de bord de pilotage de son département.',
-      nativeInputProps: {
-        name: Prisma.UserScalarFieldEnum.roles,
-        value: UserRoles.FDC,
-        onChange: () => handleRoleChange(UserRoles.FDC),
-        checked: selectedRole === UserRoles.FDC,
-      },
+  // Rattachement à une fédération sans être chasseur : attribué uniquement par l'équipe Zacharie
+  const federationOption = {
+    label: 'Fédération des Chasseurs (FDC / FRC / FNC)',
+    hintText:
+      "Accès au tableau de bord de la fédération, sans remplir de fiches. À rattacher ensuite à l'entité fédération.",
+    nativeInputProps: {
+      name: Prisma.UserScalarFieldEnum.roles,
+      value: UserRoles.FEDERATION,
+      onChange: () => handleRoleChange(UserRoles.FEDERATION),
+      checked: selectedRole === UserRoles.FEDERATION,
     },
-    {
-      label: 'Fédération Régionale des Chasseurs (FRC)',
-      hintText: 'Accès au tableau de bord de pilotage des départements de sa région.',
-      nativeInputProps: {
-        name: Prisma.UserScalarFieldEnum.roles,
-        value: UserRoles.FRC,
-        onChange: () => handleRoleChange(UserRoles.FRC),
-        checked: selectedRole === UserRoles.FRC,
-      },
-    },
-    {
-      label: 'Fédération Nationale des Chasseurs (FNC)',
-      hintText: 'Accès au tableau de bord de pilotage national.',
-      nativeInputProps: {
-        name: Prisma.UserScalarFieldEnum.roles,
-        value: UserRoles.FNC,
-        onChange: () => handleRoleChange(UserRoles.FNC),
-        checked: selectedRole === UserRoles.FNC,
-      },
-    },
-  ];
-
-  const finalOptions = withAdmin ? [...roleOptions, ...federationRoleOptions] : roleOptions;
+  };
 
   return (
     <>
@@ -170,7 +146,7 @@ export default function RolesCheckBoxes({
         hintText="Vous ne pouvez pas cumuler plusieurs activités dans Zacharie."
         legend={canChange ? legend : 'Voici votre activité sur Zacharie'}
         className={radioButtonsClass}
-        options={finalOptions}
+        options={withAdmin ? [...roleOptions, federationOption] : roleOptions}
       />
       {withAdmin && (
         <Checkbox

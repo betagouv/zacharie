@@ -542,6 +542,8 @@ async function updateOrCreateBrevoCompany(props: Entity): Promise<Entity> {
 async function linkBrevoCompanyToContact(entity: Entity, user: User) {
   try {
     if (DISABLED) return;
+    // les fédérations, pré-créées, n'ont pas d'entreprise Brevo
+    if (!entity.brevo_id) return;
     const apiInstance = new brevo.CompaniesApi();
     apiInstance.setApiKey(brevo.CompaniesApiApiKeys.apiKey, API_KEY);
     console.log('Linking Brevo company to contact', entity.brevo_id, user.brevo_contact_id);
@@ -561,6 +563,8 @@ async function linkBrevoCompanyToContact(entity: Entity, user: User) {
 async function unlinkBrevoCompanyToContact(entity: Entity, user: User) {
   try {
     if (DISABLED) return;
+    // les fédérations, pré-créées, n'ont pas d'entreprise Brevo
+    if (!entity.brevo_id) return;
     const apiInstance = new brevo.CompaniesApi();
     apiInstance.setApiKey(brevo.CompaniesApiApiKeys.apiKey, API_KEY);
     await apiInstance.companiesLinkUnlinkIdPatch(entity.brevo_id, {
