@@ -9,9 +9,9 @@ import DepartementsTable, {
   type FormationRow,
 } from '@app/components/federation-dashboard/DepartementsTable';
 import SectionValorisation from '@app/components/federation-dashboard/SectionValorisation';
-import SectionSuiviSanitaire from '@app/components/federation-dashboard/SectionSuiviSanitaire';
-
-import type { FederationScope } from '@api/src/utils/federation-stats';
+import SectionSuiviSanitaire, {
+  type FederationScope,
+} from '@app/components/federation-dashboard/SectionSuiviSanitaire';
 
 interface ValorisationTotals {
   ggAgree: number;
