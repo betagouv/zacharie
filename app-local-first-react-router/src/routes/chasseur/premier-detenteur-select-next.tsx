@@ -672,7 +672,7 @@ function DispatchGroupForm({
                   </>
                 }
                 options={prochainsDetenteursOptions}
-                placeholder="Sélectionnez le prochain détenteur des carcasses"
+                placeholder="Cliquez ici pour sélectionner un établissement déjà connu par Zacharie"
                 noOptionsMessage={() =>
                   'Aucun résultat, ajoutez-le en cliquant sur le bouton sous le sélecteur'
                 }
