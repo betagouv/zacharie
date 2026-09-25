@@ -331,10 +331,12 @@ const useZustandStore = create<State & Actions>()(
                   ecarte_pour_inspection: false,
                   prise_en_charge: true, // always true by default, confirmed by the intermediaire globally
                   prise_en_charge_at: newIntermediaire.prise_en_charge_at, // will be set by the intermediaire when he confirms all the carcasse
-                  intermediaire_depot_type: null,
-                  intermediaire_depot_entity_id: null,
-                  intermediaire_prochain_detenteur_role_cache: null,
-                  intermediaire_prochain_detenteur_id_cache: null,
+                  intermediaire_depot_type: newIntermediaire.intermediaire_depot_type,
+                  intermediaire_depot_entity_id: newIntermediaire.intermediaire_depot_entity_id,
+                  intermediaire_prochain_detenteur_role_cache:
+                    newIntermediaire.intermediaire_prochain_detenteur_role_cache,
+                  intermediaire_prochain_detenteur_id_cache:
+                    newIntermediaire.intermediaire_prochain_detenteur_id_cache,
                   intermediaire_poids: null,
                   numero_bon_reception: newIntermediaire.numero_bon_reception,
                   created_at: newIntermediaire.created_at,
