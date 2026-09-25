@@ -610,6 +610,12 @@ Christine
         status: EntityRelationStatus.MEMBER,
       },
       {
+        owner_id: users.find((user) => user.email === 'collecteur-pro-1-etg-1@example.fr')?.id,
+        entity_id: entities.find((entity) => entity.raison_sociale === 'ETG 1')?.id,
+        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        status: EntityRelationStatus.MEMBER,
+      },
+      {
         owner_id: users.find((user) => user.email === 'svi@example.fr')?.id,
         entity_id: entities.find((entity) => entity.raison_sociale === 'SVI 1')?.id,
         relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,

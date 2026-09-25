@@ -180,7 +180,13 @@ export function computeTransmissions({
       intermediaireByIdByTransmission[transmissionId] = intermediaireById;
       const transmissionWithIntermediaires: CarcasseTransmissionWihMetadata = {
         content: transmission,
-        labels: getTransmissionLabels('Clôturée', transmission, role, entitiesWorkingDirectlyFor),
+        labels: getTransmissionLabels(
+          'Clôturée',
+          transmission,
+          role,
+          entitiesWorkingDirectlyFor,
+          user.etg_role
+        ),
         fei: {
           numero: fei.numero,
           commune_mise_a_mort: fei.commune_mise_a_mort,
@@ -213,7 +219,8 @@ export function computeTransmissions({
         'À compléter',
         transmissions[transmissionId].content,
         role,
-        entitiesWorkingDirectlyFor
+        entitiesWorkingDirectlyFor,
+        user.etg_role
       );
       continue;
     }
@@ -227,7 +234,8 @@ export function computeTransmissions({
           'À compléter',
           transmissions[transmissionId].content,
           role,
-          entitiesWorkingDirectlyFor
+          entitiesWorkingDirectlyFor,
+          user.etg_role
         );
         continue;
       }
@@ -240,7 +248,8 @@ export function computeTransmissions({
           'En cours',
           transmissions[transmissionId].content,
           role,
-          entitiesWorkingDirectlyFor
+          entitiesWorkingDirectlyFor,
+          user.etg_role
         );
         continue;
       }
@@ -249,7 +258,8 @@ export function computeTransmissions({
           'En cours',
           transmissions[transmissionId].content,
           role,
-          entitiesWorkingDirectlyFor
+          entitiesWorkingDirectlyFor,
+          user.etg_role
         );
         continue;
       }
@@ -259,7 +269,8 @@ export function computeTransmissions({
             'En cours',
             transmissions[transmissionId].content,
             role,
-            entitiesWorkingDirectlyFor
+            entitiesWorkingDirectlyFor,
+            user.etg_role
           );
           continue;
         }
@@ -273,7 +284,8 @@ export function computeTransmissions({
           'En cours',
           transmissions[transmissionId].content,
           role,
-          entitiesWorkingDirectlyFor
+          entitiesWorkingDirectlyFor,
+          user.etg_role
         );
         continue;
       }
@@ -284,7 +296,8 @@ export function computeTransmissions({
             'En cours',
             transmissions[transmissionId].content,
             role,
-            entitiesWorkingDirectlyFor
+            entitiesWorkingDirectlyFor,
+            user.etg_role
           );
           isIntermediaire = true;
           break;
@@ -295,7 +308,8 @@ export function computeTransmissions({
               'En cours',
               transmissions[transmissionId].content,
               role,
-              entitiesWorkingDirectlyFor
+              entitiesWorkingDirectlyFor,
+              user.etg_role
             );
             isIntermediaire = true;
             break;
@@ -313,7 +327,8 @@ export function computeTransmissions({
             'À compléter',
             transmissions[transmissionId].content,
             role,
-            entitiesWorkingDirectlyFor
+            entitiesWorkingDirectlyFor,
+            user.etg_role
           );
         }
         continue;
@@ -322,7 +337,8 @@ export function computeTransmissions({
         'En cours',
         transmissions[transmissionId].content,
         role,
-        entitiesWorkingDirectlyFor
+        entitiesWorkingDirectlyFor,
+        user.etg_role
       );
       continue;
     }
@@ -345,7 +361,7 @@ export function computeTransmissions({
           current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
           current_owner_user_id: user.id,
         }, // fields like examinateur_initial, etc. that will also exists in carcasses (when they will be created)
-        labels: getTransmissionLabels('À compléter', fei, role, entitiesWorkingDirectlyFor),
+        labels: getTransmissionLabels('À compléter', fei, role, entitiesWorkingDirectlyFor, user.etg_role),
         fei: {
           numero: fei.numero,
           commune_mise_a_mort: fei.commune_mise_a_mort,
