@@ -9,9 +9,9 @@ import DepartementsTable, {
   type FormationRow,
 } from '@app/components/federation-dashboard/DepartementsTable';
 import SectionValorisation from '@app/components/federation-dashboard/SectionValorisation';
-import SectionSuiviSanitaire from '@app/components/federation-dashboard/SectionSuiviSanitaire';
-
-type FederationScope = 'departemental' | 'regional' | 'national';
+import SectionSuiviSanitaire, {
+  type FederationScope,
+} from '@app/components/federation-dashboard/SectionSuiviSanitaire';
 
 interface ValorisationTotals {
   ggAgree: number;
@@ -214,6 +214,7 @@ export default function FederationTableauDeBord() {
                 />
               ) : (
                 <SectionSuiviSanitaire
+                  valoScope={valo.data.scope}
                   examinateursActifs={form.data.totals.examinateursActifs}
                   anomalies={sani.data.anomalies}
                   sviMotifs={sani.data.sviMotifs}

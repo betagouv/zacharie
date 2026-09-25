@@ -63,7 +63,7 @@ test('FNC — chiffres nationaux, fiches du compte admin exclues', async ({ page
   const sanitaire = section(page, 'Suivi sanitaire grand gibier');
   await expect(kpi(sanitaire, 'Examinateurs actifs')).toHaveText('2');
   await expect(kpiFromSublabel(sanitaire, "Anomalies signalées lors de l'examen initial")).toHaveText('4');
-  await expect(kpi(sanitaire, /^Taux de saisie saison \d{2}-\d{2}$/)).toHaveText('16.7%');
+  await expect(kpi(sanitaire, /^Taux de saisie national saison \d{2}-\d{2}$/)).toHaveText('16.7%');
   await expect(kpi(sanitaire, 'Taux de saisie national 25-26')).toHaveText('23.9%');
 
   // Le filtre par département n'est proposé qu'au périmètre national.
@@ -123,7 +123,7 @@ test("FDC — chiffres limités à son département, fiche admin de l'Allier exc
   const sanitaire = section(page, 'Suivi sanitaire grand gibier');
   await expect(kpi(sanitaire, 'Examinateurs actifs')).toHaveText('1');
   await expect(kpiFromSublabel(sanitaire, "Anomalies signalées lors de l'examen initial")).toHaveText('2');
-  await expect(kpi(sanitaire, /^Taux de saisie saison \d{2}-\d{2}$/)).toHaveText('33.3%');
+  await expect(kpi(sanitaire, /^Taux de saisie départemental saison \d{2}-\d{2}$/)).toHaveText('33.3%');
 
   // Périmètre départemental : pas de détail par département.
   await expect(page.getByRole('heading', { level: 2, name: 'Détail par département' })).toHaveCount(0);
@@ -144,7 +144,7 @@ test('FRC — chiffres limités aux départements de sa région', async ({ page 
 
   const sanitaire = section(page, 'Suivi sanitaire grand gibier');
   await expect(kpi(sanitaire, 'Examinateurs actifs')).toHaveText('2');
-  await expect(kpi(sanitaire, /^Taux de saisie saison \d{2}-\d{2}$/)).toHaveText('16.7%');
+  await expect(kpi(sanitaire, /^Taux de saisie régional saison \d{2}-\d{2}$/)).toHaveText('16.7%');
 
   // Périmètre régional : le détail par département est affiché, sans le filtre.
   await expect(page.getByRole('heading', { level: 2, name: 'Détail par département' })).toBeVisible();

@@ -2,6 +2,14 @@ import { PieChart } from 'react-dsfr-chart/PieChart';
 import 'react-dsfr-chart/css';
 import KpiTile from './KpiTile';
 
+export type FederationScope = 'departemental' | 'regional' | 'national';
+
+const scopeLabel: Record<FederationScope, string> = {
+  departemental: 'départemental',
+  regional: 'régional',
+  national: 'national',
+};
+
 interface AnomaliesData {
   total: number;
   breakdown: Array<{ motif: string; count: number }>;
@@ -13,6 +21,7 @@ interface SviMotif {
 }
 
 interface Props {
+  valoScope: FederationScope;
   examinateursActifs: number;
   anomalies: AnomaliesData;
   sviMotifs: SviMotif[];
@@ -30,6 +39,7 @@ function buildPieData(items: Array<{ motif: string; count: number }>, max: numbe
 }
 
 export default function SectionSuiviSanitaire({
+  valoScope,
   examinateursActifs,
   anomalies,
   sviMotifs,
@@ -81,7 +91,7 @@ export default function SectionSuiviSanitaire({
         <h3 className="text-2xl font-normal">Inspections services vétérinaires</h3>
         <div className="grid grid-cols-2 gap-4">
           <KpiTile
-            label={`Taux de saisie saison ${season ?? ''}`}
+            label={`Taux de saisie ${scopeLabel[valoScope]} saison ${season ?? ''}`}
             value={ggTauxSaisie !== null ? `${ggTauxSaisie}%` : '—'}
             sublabel="Pourcentage de carcasses saisies en circuit agréé"
             accent="blue"
