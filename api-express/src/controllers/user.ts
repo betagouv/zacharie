@@ -1247,7 +1247,7 @@ router.post(
       });
     }
 
-    await inviteUser(newUser, user);
+    await inviteUser(newUser, user, entity);
 
     res.status(200).send({ ok: true, error: '', data: { newUser } });
   })
