@@ -3,17 +3,27 @@ import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 import { logoutAndConnect } from '../../utils/logout-and-connect';
 
-test.beforeEach(async () => {
-  await resetDb('ETG');
-});
-
 test.use({ launchOptions: { slowMo: 100 } });
+
+// Une fiche prise en charge par l'atelier de mon ETG : un salarié en « transport uniquement »
+// n'a rien à y faire, elle est « En cours » pour lui.
+test('ETG transport uniquement - une fiche prise en charge par mon atelier est en cours', async ({
+  page,
+}) => {
+  await resetDb('ETG_TAKEN_CHARGE');
+  const feiId = 'ZACH-20250707-QZ6E0-235242';
+  await connectWith(page, 'collecteur-pro-1-etg-1@example.fr');
+  await expect(page).toHaveURL('http://localhost:3290/app/etg');
+  await expect(page.getByRole('link', { name: feiId })).toContainText('En cours', { timeout: 10000 });
+  await expect(page.getByRole('link', { name: feiId })).not.toContainText('À compléter');
+});
 
 // Un salarié d'ETG en « transport uniquement » n'a qu'à cliquer sur « Prendre en charge » :
 // la fiche est automatiquement transmise à son ETG, où la réception peut la prendre en charge.
 test('ETG transport uniquement - la prise en charge suffit à transmettre la fiche à mon ETG', async ({
   page,
 }) => {
+  await resetDb('ETG');
   const feiId = 'ZACH-20250707-QZ6E0-165242';
   await connectWith(page, 'collecteur-pro-1-etg-1@example.fr');
   await expect(page).toHaveURL('http://localhost:3290/app/etg');

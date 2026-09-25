@@ -57,6 +57,10 @@ export function isCarcasseUnderMyResponsability(
 ) {
   // At least one carcasse where current_owner is me/my entity AND no next_owner
   if (carcasse.next_owner_user_id || carcasse.next_owner_entity_id) return false;
+  // Salarié d'ETG en « transport uniquement » : ce que l'atelier a pris en charge ne le concerne pas
+  if (me.etg_role === UserEtgRoles.TRANSPORT && carcasse.current_owner_role === FeiOwnerRole.ETG) {
+    return false;
+  }
   if (carcasse.current_owner_user_id === me.id) return true;
   if (carcasse.current_owner_entity_id && entitiesWorkingDirectlyFor[carcasse.current_owner_entity_id]) {
     return true;

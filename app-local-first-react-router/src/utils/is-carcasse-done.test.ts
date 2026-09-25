@@ -188,6 +188,14 @@ describe('isCarcasseUnderMyResponsability', () => {
     expect(isCarcasseUnderMyResponsability(c({ current_owner_user_id: 'me' }), me, noEntities)).toBe(true);
   });
 
+  it('held by my ETG atelier: not under the responsability of a TRANSPORT employee, but of RECEPTION', () => {
+    const heldByAtelier = c({ current_owner_role: FeiOwnerRole.ETG, current_owner_entity_id: 'mine' });
+    const transport = { id: 'me', etg_role: UserEtgRoles.TRANSPORT } as User;
+    const reception = { id: 'me', etg_role: UserEtgRoles.RECEPTION } as User;
+    expect(isCarcasseUnderMyResponsability(heldByAtelier, transport, working('mine'))).toBe(false);
+    expect(isCarcasseUnderMyResponsability(heldByAtelier, reception, working('mine'))).toBe(true);
+  });
+
   it('true when the current owner entity is one I work directly for', () => {
     expect(isCarcasseUnderMyResponsability(c({ current_owner_entity_id: 'mine' }), me, working('mine'))).toBe(
       true
