@@ -31,6 +31,13 @@ test('ETG transport uniquement - la prise en charge suffit à transmettre la fic
   await expect(page.getByText('ETG 1 a été notifié')).toBeVisible({ timeout: 10000 });
   await expect(page.getByRole('button', { name: 'Transmettre la fiche' })).toBeDisabled();
 
+  // Nicolas n'a plus rien à faire : la fiche attend l'atelier, elle est « En cours » pour lui
+  await expect(page.getByText("En attente de prise en charge par l'atelier")).toBeVisible();
+  await expect(page.getByText('Fiche reçue, pas encore prise en charge')).not.toBeVisible();
+  await page.getByRole('link', { name: 'Voir toutes mes fiches' }).click();
+  await expect(page.getByRole('link', { name: feiId })).toContainText('En cours', { timeout: 10000 });
+  await expect(page.getByRole('link', { name: feiId })).not.toContainText('À compléter');
+
   // La réception de l'ETG reçoit la fiche et peut la prendre en charge
   await logoutAndConnect(page, 'etg-1@example.fr');
   await expect(page).toHaveURL('http://localhost:3290/app/etg');

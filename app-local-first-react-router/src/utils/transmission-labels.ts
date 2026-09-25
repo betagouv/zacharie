@@ -8,7 +8,7 @@ import type {
   TransmissionSimpleStatus,
   TransmissionNextStep,
 } from '@app/types/transmission-steps';
-import { FeiOwnerRole, UserRoles } from '@prisma/client';
+import { FeiOwnerRole, User, UserRoles } from '@prisma/client';
 import { useEntitiesIdsWorkingDirectlyForObj } from '@app/utils/get-entity-relations';
 import { createElement } from 'react';
 import {
@@ -22,18 +22,21 @@ import { ReactElement } from 'react';
 import { CarcasseTransmission } from '@app/types/carcasse';
 import { isRoleCircuitCourt } from './circuit-court';
 import { capture } from '@app/services/sentry';
+import { isTransportToMyEtgDone } from './is-carcasse-done';
 
 export function getTransmissionLabels(
   simpleStatus: TransmissionSimpleStatus,
   transmission: CarcasseTransmission,
   role: UserRoles,
-  entitiesIdsWorkingDirectlyFor: ReturnType<typeof useEntitiesIdsWorkingDirectlyForObj>
+  entitiesIdsWorkingDirectlyFor: ReturnType<typeof useEntitiesIdsWorkingDirectlyForObj>,
+  etgRole?: User['etg_role']
 ) {
   const currentStepLabel = getCurrentStepLabel(
     simpleStatus,
     transmission,
     role,
-    entitiesIdsWorkingDirectlyFor
+    entitiesIdsWorkingDirectlyFor,
+    etgRole
   );
   const nextStepLabel = getNextStepLabel(currentStepLabel);
   const transportOrSoustraiteLabel = getTransportOrSoustraiteLabel(
@@ -53,7 +56,8 @@ export function getCurrentStepLabel(
   simpleStatus: TransmissionSimpleStatus,
   transmission: CarcasseTransmission,
   role: UserRoles,
-  entitiesIdsWorkingDirectlyFor: ReturnType<typeof useEntitiesIdsWorkingDirectlyForObj>
+  entitiesIdsWorkingDirectlyFor: ReturnType<typeof useEntitiesIdsWorkingDirectlyForObj>,
+  etgRole?: User['etg_role']
 ): TransmissionStep {
   try {
     // Circuit court (commerce de détail, boucher, ...) is a passive viewer : la fiche est toujours clôturée pour lui.
@@ -63,7 +67,7 @@ export function getCurrentStepLabel(
       return getCurrentStepLabelForChasseur(simpleStatus, transmission);
     }
     if (role === 'ETG') {
-      return getCurrentStepLabelForEtg(simpleStatus, transmission, entitiesIdsWorkingDirectlyFor);
+      return getCurrentStepLabelForEtg(simpleStatus, transmission, entitiesIdsWorkingDirectlyFor, etgRole);
     }
     if (role === 'COLLECTEUR_PRO') {
       return getCurrentStepLabelForCollecteurPro(simpleStatus, transmission);
@@ -117,7 +121,8 @@ export function getCurrentStepLabelForChasseur(
 export function getCurrentStepLabelForEtg(
   simpleStatus: TransmissionSimpleStatus,
   transmission: CarcasseTransmission,
-  entitiesIdsWorkingDirectlyFor: ReturnType<typeof useEntitiesIdsWorkingDirectlyForObj>
+  entitiesIdsWorkingDirectlyFor: ReturnType<typeof useEntitiesIdsWorkingDirectlyForObj>,
+  etgRole?: User['etg_role']
 ): TransmissionStep {
   // une fiche est clôturée quand aucune des carcasse n'est toujours en cours
   if (simpleStatus === 'Clôturée') {
@@ -138,6 +143,9 @@ export function getCurrentStepLabelForEtg(
       return "Prise en charge par l'atelier" satisfies TransmissionStepForEtg;
     }
     return 'Prise en charge par un autre atelier' satisfies TransmissionStepForEtg;
+  }
+  if (isTransportToMyEtgDone(transmission, etgRole, entitiesIdsWorkingDirectlyFor)) {
+    return "En attente de prise en charge par l'atelier" satisfies TransmissionStepForEtg;
   }
   if (transmission.next_owner_role === 'ETG') {
     if (entitiesIdsWorkingDirectlyFor[transmission.next_owner_entity_id!]) {
@@ -182,6 +190,7 @@ export function getNextStepLabel(currentStepLabel: TransmissionStep): Transmissi
     case 'Prise en charge par un autre atelier':
     case 'Fiche reçue, pas encore prise en charge':
     case 'Prise en charge par le transporteur':
+    case "En attente de prise en charge par l'atelier":
     case "Prise en charge par l'atelier":
     case 'Validation par le premier détenteur':
       return 'Traitement des carcasses';
