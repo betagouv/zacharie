@@ -108,6 +108,11 @@ test('Fiche transmise à un ETG pas encore prise en charge : le propriétaire in
   await transmettre.click();
   await expect(page.getByText(/ETG 1 a été notifié/i)).toBeVisible({ timeout: 10000 });
 
+  // la transmission mène à la page de confirmation /envoyée : on revient sur la fiche
+  await expect(page).toHaveURL(/\/envoy%C3%A9e$|\/envoyée$/);
+  await page.goBack();
+  await expect(page).toHaveURL(/\/app\/chasseur\/fei\/ZACH-[^/]+$/);
+
   const select = proprietaireInitialSelect(page);
   await select.scrollIntoViewIfNeeded();
   await expect(select).toBeDisabled();
