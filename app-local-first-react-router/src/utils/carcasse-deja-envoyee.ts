@@ -34,3 +34,20 @@ export function isCarcassePriseEnChargeEnAval(carcasse: { current_owner_role?: F
     carcasse.current_owner_role !== FeiOwnerRole.EXAMINATEUR_INITIAL
   );
 }
+
+// « Le propriétaire initial ne peut plus changer » — le changer réécrit next_owner sur toutes les
+// carcasses, ce qui annulerait sans prévenir une transmission en aval déjà faite.
+// Désigner le premier détenteur (y compris une association, donc avec next_owner_entity_id) ne verrouille pas.
+export function isPremierDetenteurVerrouille(carcasse: {
+  next_owner_role?: FeiOwnerRole | null;
+  current_owner_role?: FeiOwnerRole | null;
+  consommateur_final_usage_domestique?: Date | null;
+}) {
+  if (carcasse.next_owner_role != null && carcasse.next_owner_role !== FeiOwnerRole.PREMIER_DETENTEUR) {
+    return true;
+  }
+  if (carcasse.consommateur_final_usage_domestique != null) {
+    return true;
+  }
+  return isCarcassePriseEnChargeEnAval(carcasse);
+}

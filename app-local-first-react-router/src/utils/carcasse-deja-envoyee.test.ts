@@ -1,6 +1,10 @@
 import { describe, test, expect } from 'vitest';
 import { FeiOwnerRole } from '@prisma/client';
-import { isCarcasseDejaEnvoyee, isCarcassePriseEnChargeEnAval } from './carcasse-deja-envoyee';
+import {
+  isCarcasseDejaEnvoyee,
+  isCarcassePriseEnChargeEnAval,
+  isPremierDetenteurVerrouille,
+} from './carcasse-deja-envoyee';
 
 describe('isCarcasseDejaEnvoyee', () => {
   test('carcasse tout juste créée : encore chez le chasseur', () => {
@@ -73,5 +77,62 @@ describe('isCarcassePriseEnChargeEnAval', () => {
 
   test('rôle absent : le chasseur garde la main', () => {
     expect(isCarcassePriseEnChargeEnAval({ current_owner_role: null })).toBe(false);
+  });
+});
+
+describe('isPremierDetenteurVerrouille', () => {
+  test('carcasse tout juste créée : propriétaire initial modifiable', () => {
+    expect(
+      isPremierDetenteurVerrouille({
+        next_owner_role: null,
+        current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
+      })
+    ).toBe(false);
+  });
+
+  test('premier détenteur désigné (utilisateur ou association) : propriétaire initial modifiable', () => {
+    expect(
+      isPremierDetenteurVerrouille({
+        next_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+        current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
+      })
+    ).toBe(false);
+  });
+
+  test('chez le premier détenteur, sans destinataire : propriétaire initial modifiable', () => {
+    expect(
+      isPremierDetenteurVerrouille({
+        next_owner_role: null,
+        current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+      })
+    ).toBe(false);
+  });
+
+  test('transmise à un collecteur, pas encore prise en charge : verrouillé', () => {
+    expect(
+      isPremierDetenteurVerrouille({
+        next_owner_role: FeiOwnerRole.COLLECTEUR_PRO,
+        current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+      })
+    ).toBe(true);
+  });
+
+  test('gardée pour usage domestique : verrouillé', () => {
+    expect(
+      isPremierDetenteurVerrouille({
+        next_owner_role: null,
+        current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+        consommateur_final_usage_domestique: new Date(),
+      })
+    ).toBe(true);
+  });
+
+  test('prise en charge par un ETG : verrouillé', () => {
+    expect(
+      isPremierDetenteurVerrouille({
+        next_owner_role: null,
+        current_owner_role: FeiOwnerRole.ETG,
+      })
+    ).toBe(true);
   });
 });
