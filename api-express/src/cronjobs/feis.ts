@@ -140,54 +140,72 @@ export async function automaticClosingOfFeis({ force = false }: AutomaticClosing
   }
 
   // Pour chaque FEI touchée : clôturer la FEI + notifier uniquement si TOUTES ses carcasses sont terminales.
-  const transmissionsNumeros = [
-    ...new Set(
-      carcassesToAutoClose.map((c) => `${c.fei_numero}_${c.premier_detenteur_prochain_detenteur_id_cache}`)
-    ),
-  ];
-  for (const transmission of transmissionsNumeros) {
-    const [fei_numero, premier_detenteur_prochain_detenteur_id_cache] = transmission.split('_');
-    const carcasses = await prisma.carcasse.findMany({
-      where: {
-        fei_numero,
-        premier_detenteur_prochain_detenteur_id_cache,
-        deleted_at: null,
-      },
+  // Regroupement par (fei_numero, destinataire du premier détenteur) ; le destinataire peut être null.
+  const transmissions = new Map<
+    string,
+    { fei_numero: string; premier_detenteur_prochain_detenteur_id_cache: string | null }
+  >();
+  for (const c of carcassesToAutoClose) {
+    const key = JSON.stringify([c.fei_numero, c.premier_detenteur_prochain_detenteur_id_cache]);
+    transmissions.set(key, {
+      fei_numero: c.fei_numero,
+      premier_detenteur_prochain_detenteur_id_cache: c.premier_detenteur_prochain_detenteur_id_cache,
     });
-    const allCarcassesDone = carcasses.every(isCarcasseDone);
-    if (!allCarcassesDone) continue;
+  }
+  // une transmission en erreur ne doit pas empêcher de notifier les suivantes
+  for (const { fei_numero, premier_detenteur_prochain_detenteur_id_cache } of transmissions.values()) {
+    try {
+      await notifyTransmissionClosed(fei_numero, premier_detenteur_prochain_detenteur_id_cache);
+    } catch (error) {
+      capture(error as Error, { extra: { fei_numero, premier_detenteur_prochain_detenteur_id_cache } });
+    }
+  }
+}
 
-    const { object, text, params, push } = await formatFeiClosedEmail(fei_numero, carcasses);
-    // auto close and notify examinateur and premier detenteur
-    const notification = {
-      title: object,
-      email: text,
-      push,
-      notificationLogAction: `FEI_AUTO_CLOSED_${fei_numero}_${premier_detenteur_prochain_detenteur_id_cache}`,
-      emailTemplateId: BrevoTemplateId.FEI_AUTOMATIC_CLOSED,
-      emailTemplateParams: params,
-    };
-    const examinateur = await prisma.user.findUnique({
-      where: { id: carcasses[0].examinateur_initial_user_id },
+async function notifyTransmissionClosed(
+  fei_numero: string,
+  premier_detenteur_prochain_detenteur_id_cache: string | null
+) {
+  const carcasses = await prisma.carcasse.findMany({
+    where: {
+      fei_numero,
+      premier_detenteur_prochain_detenteur_id_cache,
+      deleted_at: null,
+    },
+  });
+  if (carcasses.length === 0) return;
+  const allCarcassesDone = carcasses.every(isCarcasseDone);
+  if (!allCarcassesDone) return;
+
+  const { object, text, params, push } = await formatFeiClosedEmail(fei_numero, carcasses);
+  // auto close and notify examinateur and premier detenteur
+  const notification = {
+    title: object,
+    email: text,
+    push,
+    notificationLogAction: `FEI_AUTO_CLOSED_${fei_numero}_${premier_detenteur_prochain_detenteur_id_cache}`,
+    emailTemplateId: BrevoTemplateId.FEI_AUTOMATIC_CLOSED,
+    emailTemplateParams: params,
+  };
+  const { examinateur_initial_user_id, premier_detenteur_user_id } = carcasses[0];
+  const examinateur = examinateur_initial_user_id
+    ? await prisma.user.findUnique({ where: { id: examinateur_initial_user_id } })
+    : null;
+  if (examinateur) {
+    await sendNotificationToUser({
+      user: examinateur,
+      ...notification,
     });
-    if (examinateur) {
+    await sendWebhook(examinateur.id, 'FEI_CLOTUREE', { feiNumero: fei_numero });
+  }
+  if (premier_detenteur_user_id && premier_detenteur_user_id !== examinateur_initial_user_id) {
+    const premierDetenteur = await prisma.user.findUnique({ where: { id: premier_detenteur_user_id } });
+    if (premierDetenteur) {
       await sendNotificationToUser({
-        user: examinateur,
+        user: premierDetenteur,
         ...notification,
       });
-      await sendWebhook(examinateur.id, 'FEI_CLOTUREE', { feiNumero: fei_numero });
-    }
-    if (carcasses[0].premier_detenteur_user_id !== carcasses[0].examinateur_initial_user_id) {
-      const premierDetenteur = await prisma.user.findUnique({
-        where: { id: carcasses[0].premier_detenteur_user_id },
-      });
-      if (premierDetenteur) {
-        await sendNotificationToUser({
-          user: premierDetenteur,
-          ...notification,
-        });
-        await sendWebhook(premierDetenteur.id, 'FEI_CLOTUREE', { feiNumero: fei_numero });
-      }
+      await sendWebhook(premierDetenteur.id, 'FEI_CLOTUREE', { feiNumero: fei_numero });
     }
   }
 }

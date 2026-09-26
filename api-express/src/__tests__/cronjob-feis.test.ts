@@ -4,6 +4,7 @@ import prisma from '~/prisma';
 import { automaticClosingOfFeis } from '~/cronjobs/feis';
 import sendNotificationToUser from '~/service/notifications';
 import { sendWebhook } from '~/utils/api';
+import { capture } from '~/third-parties/sentry';
 import dayjs from 'dayjs';
 
 vi.mock('~/service/notifications', () => ({
@@ -219,5 +220,55 @@ describe('automaticClosingOfFeis — notifies chasseurs only when all carcasses 
     expect(prisma.fei.update).not.toHaveBeenCalled();
     expect(sendNotificationToUser).not.toHaveBeenCalled();
     expect(sendWebhook).not.toHaveBeenCalled();
+  });
+
+  test('une transmission sans destinataire (cache null) est interrogée avec null, pas avec la chaîne "null"', async () => {
+    const carcasse = makeCarcasse({
+      examinateur_initial_user_id: 'exam-1',
+      premier_detenteur_user_id: 'exam-1',
+      premier_detenteur_prochain_detenteur_id_cache: null,
+    });
+    vi.mocked(prisma.carcasse.findMany)
+      .mockResolvedValueOnce([carcasse] as any)
+      .mockResolvedValueOnce([{ ...carcasse, svi_automatic_closed_at: new Date() }] as any);
+    (prisma.carcasse.update as any).mockImplementation(async ({ data }: any) => ({ ...carcasse, ...data }));
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: 'exam-1' } as any);
+
+    await automaticClosingOfFeis();
+
+    const where = (vi.mocked(prisma.carcasse.findMany).mock.calls[1][0] as any).where;
+    expect(where.fei_numero).toBe('ZACH-TEST-001');
+    expect(where.premier_detenteur_prochain_detenteur_id_cache).toBeNull();
+    expect(sendNotificationToUser).toHaveBeenCalledTimes(1);
+  });
+
+  test('une transmission sans carcasse ou en erreur ne bloque pas les suivantes', async () => {
+    const carcasseA = makeCarcasse({
+      fei_numero: 'ZACH-TEST-A',
+      premier_detenteur_prochain_detenteur_id_cache: sviEntityId,
+    });
+    const carcasseB = makeCarcasse({
+      fei_numero: 'ZACH-TEST-B',
+      premier_detenteur_prochain_detenteur_id_cache: sviEntityId,
+    });
+    const carcasseC = makeCarcasse({
+      fei_numero: 'ZACH-TEST-C',
+      examinateur_initial_user_id: 'exam-1',
+      premier_detenteur_user_id: 'exam-1',
+      premier_detenteur_prochain_detenteur_id_cache: sviEntityId,
+    });
+    vi.mocked(prisma.carcasse.findMany)
+      .mockResolvedValueOnce([carcasseA, carcasseB, carcasseC] as any)
+      .mockResolvedValueOnce([] as any) // A : plus aucune carcasse
+      .mockRejectedValueOnce(new Error('db error')) // B : erreur
+      .mockResolvedValueOnce([{ ...carcasseC, svi_automatic_closed_at: new Date() }] as any);
+    (prisma.carcasse.update as any).mockImplementation(async ({ data }: any) => ({ ...carcasseA, ...data }));
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: 'exam-1' } as any);
+
+    await automaticClosingOfFeis();
+
+    expect(capture).toHaveBeenCalledTimes(1);
+    expect(sendNotificationToUser).toHaveBeenCalledTimes(1);
+    expect(sendWebhook).toHaveBeenCalledWith('exam-1', 'FEI_CLOTUREE', { feiNumero: 'ZACH-TEST-C' });
   });
 });
