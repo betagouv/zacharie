@@ -1,5 +1,6 @@
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Link, useSearchParams, useNavigate } from 'react-router';
+import { sanitizeRedirect } from '@app/utils/sanitize-redirect';
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { PasswordInput } from '@codegouvfr/react-dsfr/blocks/PasswordInput';
 import { getUserOnboardingRoute } from '@app/utils/user-onboarded.client';
@@ -22,7 +23,7 @@ export default function Connexion() {
   // we don't user   useMostFreshUser() here on purpose to avoid infinite loop
   const navigate = useNavigate();
 
-  const redirect = searchParams.get('redirect');
+  const redirect = sanitizeRedirect(searchParams.get('redirect'));
   const communication = searchParams.get('communication');
 
   const handleRedirect = (u: User) => {

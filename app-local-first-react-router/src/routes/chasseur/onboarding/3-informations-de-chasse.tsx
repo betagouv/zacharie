@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
+import { sanitizeRedirect } from '@app/utils/sanitize-redirect';
 import { toast } from 'react-toastify';
 import { Prisma } from '@prisma/client';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
@@ -15,7 +16,7 @@ import MesAssociationsDeChasse from './3a-associations-de-chasse';
 
 export default function OnboardingMesInformationsDeChasse() {
   const [searchParams] = useSearchParams();
-  const redirect = searchParams.get('redirect');
+  const redirect = sanitizeRedirect(searchParams.get('redirect'));
   const user = useUser((state) => state.user)!;
   const navigate = useNavigate();
 
