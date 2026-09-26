@@ -112,6 +112,7 @@ test('Fiche transmise à un ETG pas encore prise en charge : le propriétaire in
   // revenir sur la fiche pour vérifier que le select est verrouillé
   const envoyeeUrl = page.url(); // …/fei/<numero>/envoyée
   const feiNumero = envoyeeUrl.match(/\/fei\/([^/]+)/)?.[1];
+  expect(feiNumero, 'numéro de fiche introuvable dans l\'URL').toBeTruthy();
   await page.goto(`http://localhost:3290/app/chasseur/fei/${feiNumero}`);
 
   const select = proprietaireInitialSelect(page);
