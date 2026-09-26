@@ -3,13 +3,16 @@ import { Entity, EntityTypes, User, UserEtgRoles, UserRoles } from '@prisma/clie
 import parsePhoneNumber from 'libphonenumber-js';
 import prisma from '~/prisma';
 import { capture } from './sentry';
-import { IS_DEV_OR_TEST, ENVIRONMENT } from '~/config';
+import { IS_DEV_OR_TEST, IS_STAGING, ENVIRONMENT } from '~/config';
 import { escapeBrevoPlaceholders } from '~/utils/sanitize';
 
 const DISABLED = ENVIRONMENT === 'test' || IS_DEV_OR_TEST;
 // const DISABLED = false;
 
 const API_KEY = process.env.BREVO_API;
+
+// Les emails ne partent qu'en production : en dev, en test et en préprod ils sont seulement loggés.
+const EMAILS_DISABLED = IS_DEV_OR_TEST || IS_STAGING;
 
 type SendEmailProps = {
   emails: Array<string>;
@@ -23,11 +26,11 @@ type SendEmailProps = {
   attachments?: brevo.SendSmtpEmailAttachmentInner[];
 };
 
-// Renvoie `true` si l'email est parti (ou a été volontairement court-circuité en dev), `false` en cas
+// Renvoie `true` si l'email est parti (ou a été volontairement court-circuité hors production), `false` en cas
 // d'échec. L'appelant s'en sert pour ne pas enregistrer un envoi raté comme un succès.
 async function sendEmail(props: SendEmailProps): Promise<boolean> {
   try {
-    if (IS_DEV_OR_TEST) {
+    if (EMAILS_DISABLED) {
       console.log('Sending email in development mode');
       console.log(props);
       return true;
@@ -100,7 +103,7 @@ async function sendTemplateEmail(props: SendTemplateEmailProps): Promise<boolean
       });
       return false;
     }
-    if (IS_DEV_OR_TEST) {
+    if (EMAILS_DISABLED) {
       console.log('Sending template email in development mode');
       console.log(props);
       return true;
