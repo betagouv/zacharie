@@ -106,7 +106,13 @@ test('Fiche transmise à un ETG pas encore prise en charge : le propriétaire in
   const transmettre = page.getByRole('button', { name: 'Transmettre', exact: true });
   await transmettre.scrollIntoViewIfNeeded();
   await transmettre.click();
+  // après transmission le chasseur est redirigé vers /envoyée
   await expect(page.getByText(/ETG 1 a été notifié/i)).toBeVisible({ timeout: 10000 });
+
+  // revenir sur la fiche pour vérifier que le select est verrouillé
+  const envoyeeUrl = page.url(); // …/fei/<numero>/envoyée
+  const feiNumero = envoyeeUrl.match(/\/fei\/([^/]+)/)?.[1];
+  await page.goto(`http://localhost:3290/app/chasseur/fei/${feiNumero}`);
 
   const select = proprietaireInitialSelect(page);
   await select.scrollIntoViewIfNeeded();
