@@ -12,10 +12,7 @@ export function useMostFreshUser(_calledFrom: string) {
   const isOnline = useZustandStore((state) => state.isOnline);
   if (!isOnline) {
     if (cachedUser) {
-      Sentry.setUser({
-        email: cachedUser.email!,
-        id: cachedUser.id,
-      });
+      Sentry.setUser({ id: cachedUser.id });
     }
     return cachedUser;
   }
@@ -69,7 +66,7 @@ export async function refreshUser(_calledFrom?: string) {
               [user.id]: user,
             },
           }));
-          Sentry.setUser({ email: user.email!, id: user.id });
+          Sentry.setUser({ id: user.id });
 
           return user;
         }

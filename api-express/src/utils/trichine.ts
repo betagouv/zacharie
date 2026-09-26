@@ -1,10 +1,4 @@
-import {
-  EntityRelationStatus,
-  EntityRelationType,
-  Prisma,
-  TrichineResultatAnalyse,
-  User,
-} from '@prisma/client';
+import { EntityRelationStatus, EntityRelationType, Prisma, TrichineResultatAnalyse } from '@prisma/client';
 import prisma from '~/prisma';
 import queueSendNotificationToUser from '~/service/notifications';
 
@@ -239,7 +233,7 @@ export async function notifyTrichineUsers({
       '*** NOTIFICATION ***\n',
       JSON.stringify(
         {
-          user: user as User,
+          userId: user.id,
           title,
           body: message,
           email: message,

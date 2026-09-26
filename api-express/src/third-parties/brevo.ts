@@ -62,9 +62,11 @@ async function sendEmail(props: SendEmailProps): Promise<boolean> {
     // console.log('Email sent successfully:', result);
     return true;
   } catch (error) {
+    // Ni contenu ni paramètres : ils portent des liens avec jeton (reset, invitation) et des données personnelles.
     capture(error as Error, {
       extra: {
-        props,
+        subject: props.subject,
+        recipientsCount: props.emails.length,
       },
     });
     return false;
@@ -95,7 +97,8 @@ async function sendTemplateEmail(props: SendTemplateEmailProps): Promise<boolean
     if (!props.templateId) {
       capture(new Error('sendTemplateEmail appelé sans templateId'), {
         extra: {
-          props,
+          recipientsCount: props.emails.length,
+          paramsKeys: Object.keys(props.params ?? {}),
         },
       });
       return false;
@@ -125,7 +128,8 @@ async function sendTemplateEmail(props: SendTemplateEmailProps): Promise<boolean
   } catch (error) {
     capture(error as Error, {
       extra: {
-        props,
+        templateId: props.templateId,
+        recipientsCount: props.emails.length,
       },
     });
     return false;
@@ -301,7 +305,7 @@ async function createBrevoContact(props: User, createdBy: 'ADMIN' | 'USER'): Pro
   } catch (error) {
     capture(error as Error, {
       extra: {
-        user: props,
+        userId: props.id,
       },
     });
     return props;
@@ -372,11 +376,8 @@ async function createBrevoContactFromContactForm(props: ContactForm) {
 
     const result = await apiInstance.createContact(createContact);
   } catch (error) {
-    capture(error as Error, {
-      extra: {
-        user: props,
-      },
-    });
+    // Formulaire de contact : aucune donnée à joindre qui ne soit personnelle.
+    capture(error as Error);
   }
 }
 
@@ -406,7 +407,7 @@ async function updateBrevoContact(props: User): Promise<User> {
   } catch (error) {
     capture(error as Error, {
       extra: {
-        user: props,
+        userId: props.id,
       },
     });
     return props;
@@ -554,7 +555,7 @@ async function linkBrevoCompanyToContact(entity: Entity, user: User) {
     capture(error as Error, {
       extra: {
         entity,
-        user,
+        userId: user.id,
       },
     });
   }
@@ -574,7 +575,7 @@ async function unlinkBrevoCompanyToContact(entity: Entity, user: User) {
     capture(error as Error, {
       extra: {
         entity,
-        user,
+        userId: user.id,
       },
     });
   }
@@ -742,7 +743,7 @@ async function updateBrevoChasseurDeal(chasseur: User) {
   } catch (error) {
     capture(error as Error, {
       extra: {
-        user: chasseur,
+        userId: chasseur.id,
       },
     });
   }
@@ -788,7 +789,7 @@ async function updateBrevoETGDealPremiereFiche(etg: Entity) {
   } catch (error) {
     capture(error as Error, {
       extra: {
-        user: etg,
+        userId: etg.id,
       },
     });
   }
@@ -834,7 +835,7 @@ async function updateBrevoSVIDealPremiereFiche(svi: Entity) {
   } catch (error) {
     capture(error as Error, {
       extra: {
-        user: svi,
+        userId: svi.id,
       },
     });
   }
