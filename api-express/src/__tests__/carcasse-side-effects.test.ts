@@ -555,6 +555,18 @@ describe('notifySviAssignment', () => {
     const actions = vi.mocked(sendNotificationToUser).mock.calls.map(([p]) => p.notificationLogAction);
     expect(new Set(actions)).toEqual(new Set([expectedAction]));
   });
+
+  test('sends the webhook only to the examinateur when the premier détenteur is an entity', async () => {
+    const existing = makeSviCarcasse({ next_owner_role: null, premier_detenteur_user_id: null });
+    const updated = makeSviCarcasse({ premier_detenteur_user_id: null });
+
+    await notifySviAssignment(existing as any, updated as any);
+
+    expect(sendWebhook).toHaveBeenCalledOnce();
+    expect(sendWebhook).toHaveBeenCalledWith('exam-1', 'CARCASSE_ASSIGNEE_AU_SVI', {
+      carcasseZacharieId: updated.zacharie_carcasse_id,
+    });
+  });
 });
 
 // Le `cta` du template porte le seul lien de l'email : s'il perd le préfixe `/app`, le destinataire
