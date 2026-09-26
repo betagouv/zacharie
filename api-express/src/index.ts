@@ -238,7 +238,9 @@ app.use('/v1', v1Router);
 // Auth rate limiting
 import { authRateLimit, adminRateLimit } from './middlewares/auth-rate-limit.ts';
 app.use('/user/login', authRateLimit);
-app.use('/user/sign-up', authRateLimit);
+app.use('/user/signup', authRateLimit);
+app.use('/user/signup-with-invitation-token', authRateLimit);
+app.use('/user/access-token', authRateLimit);
 app.use('/user/forget-password', authRateLimit);
 app.use('/user/reset-password', authRateLimit);
 app.use('/user/change-password', authRateLimit);
