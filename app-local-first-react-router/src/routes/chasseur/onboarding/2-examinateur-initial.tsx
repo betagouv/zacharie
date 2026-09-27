@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 
 import { useNavigate, useSearchParams } from 'react-router';
+import { sanitizeRedirect } from '@app/utils/sanitize-redirect';
 import { Prisma } from '@prisma/client';
 
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
@@ -15,7 +16,7 @@ import type { UserConnexionResponse } from '@api/src/types/responses';
 
 export default function ChasseurOnboardingExaminateurInitial() {
   const [searchParams] = useSearchParams();
-  const redirect = searchParams.get('redirect');
+  const redirect = sanitizeRedirect(searchParams.get('redirect'));
   const navigate = useNavigate();
 
   useEffect(() => {
