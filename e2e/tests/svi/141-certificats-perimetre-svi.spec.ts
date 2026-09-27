@@ -3,7 +3,7 @@ import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 import { logoutAndConnect } from '../../utils/logout-and-connect';
 
-// Scenario 140 — Périmètre des certificats SVI.
+// Scenario 141 — Périmètre des certificats SVI.
 // Seed SVI_CONSIGNE : la fiche est assignée à SVI 1 (svi@example.fr) et la carcasse MM-001-001 a une
 // décision IPM1 de mise en consigne signée, sans décision IPM2. Seul un SVI de l'entité assignée peut
 // lister, lire ou générer ses certificats, et seulement le certificat qui correspond à sa décision.
