@@ -1286,6 +1286,8 @@ const userUpdateSchema = z.object({
   [Prisma.UserScalarFieldEnum.numero_cfei]: z.string().optional().nullable(),
   [Prisma.UserScalarFieldEnum.est_forme_a_l_examen_initial]: z.enum(['true', 'false']).optional(),
   onboarding_finished: z.boolean().optional(),
+  // exigé uniquement pour changer d'email
+  currentPassword: z.string().optional(),
 });
 
 router.post(
@@ -1356,7 +1358,89 @@ router.post(
         nextUser.telephone = sanitize(body[Prisma.UserScalarFieldEnum.telephone] as string);
       }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.email)) {
-        nextUser.email = sanitize(body[Prisma.UserScalarFieldEnum.email].toLowerCase() as string);
+        const nextEmail = sanitize(body[Prisma.UserScalarFieldEnum.email]!.toLowerCase().trim());
+        // les formulaires de coordonnées renvoient l'email inchangé à chaque enregistrement :
+        // le mot de passe n'est demandé que si l'email change réellement. L'email sert d'identité
+        // pour ProConnect, il ne doit pas pouvoir être changé avec une simple session.
+        if (nextEmail !== user.email?.toLowerCase().trim()) {
+          const since = dayjs().subtract(15, 'minutes').toDate();
+          const recentFailures = await prisma.securityLog.count({
+            where: {
+              email: user.email!,
+              action: 'EMAIL_CHANGE_FAILED_WRONG_PASSWORD',
+              created_at: { gte: since },
+            },
+          });
+          if (recentFailures >= 10) {
+            res.status(429).send({
+              ok: false,
+              data: { user: null },
+              message: '',
+              error: 'Trop de tentatives, veuillez réessayer dans 15 minutes.',
+            });
+            return;
+          }
+          const existingPassword = await prisma.password.findFirst({ where: { user_id: user.id } });
+          if (!existingPassword?.password) {
+            await prisma.securityLog.create({
+              data: {
+                email: user.email!,
+                action: 'EMAIL_CHANGE_FAILED_NO_PASSWORD',
+                ip: req.ip,
+                user_agent: req.headers['user-agent'],
+              },
+            });
+            res.status(403).send({
+              ok: false,
+              data: { user: null },
+              message: '',
+              error:
+                "Vous devez d'abord définir un mot de passe pour changer votre email : utilisez « Mot de passe oublié » sur la page de connexion.",
+            });
+            return;
+          }
+          const isOk = body.currentPassword
+            ? await comparePassword(body.currentPassword, existingPassword.password)
+            : false;
+          if (!isOk) {
+            await prisma.securityLog.create({
+              data: {
+                email: user.email!,
+                action: 'EMAIL_CHANGE_FAILED_WRONG_PASSWORD',
+                ip: req.ip,
+                user_agent: req.headers['user-agent'],
+              },
+            });
+            res.status(403).send({
+              ok: false,
+              data: { user: null },
+              message: '',
+              error: body.currentPassword
+                ? 'Mot de passe actuel incorrect'
+                : 'Veuillez renseigner votre mot de passe actuel pour changer votre email',
+            });
+            return;
+          }
+          const emailTaken = await prisma.user.findUnique({ where: { email: nextEmail } });
+          if (emailTaken) {
+            res.status(409).send({
+              ok: false,
+              data: { user: null },
+              message: '',
+              error: 'Un compte existe déjà avec cet email',
+            });
+            return;
+          }
+          await prisma.securityLog.create({
+            data: {
+              email: user.email!,
+              action: 'EMAIL_CHANGED',
+              ip: req.ip,
+              user_agent: req.headers['user-agent'],
+            },
+          });
+        }
+        nextUser.email = nextEmail;
       }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.addresse_ligne_1)) {
         nextUser.addresse_ligne_1 = sanitize(body[Prisma.UserScalarFieldEnum.addresse_ligne_1] as string);
