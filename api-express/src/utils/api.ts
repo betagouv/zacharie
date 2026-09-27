@@ -249,7 +249,7 @@ export type WebhookEvent =
   | 'FEI_CLOTUREE';
 
 export async function sendWebhook(
-  userId: string,
+  userId: string | null,
   event: WebhookEvent,
   {
     feiNumero = undefined,
@@ -262,6 +262,8 @@ export async function sendWebhook(
   }
 ) {
   if (!userApprovals) {
+    // sans user, `user_id: null` matcherait toutes les approbations d'entité
+    if (!userId) return;
     userApprovals = await prisma.apiKeyApprovalByUserOrEntity.findMany({
       where: {
         user_id: userId,
@@ -278,6 +280,7 @@ export async function sendWebhook(
     if (!apiKey.webhook_url.startsWith('https://')) continue;
     let fei: FeiGetForApi | null = null;
     let carcasses: CarcasseGetForApi[] = [];
+    let carcassesFei: FeiGetForApi | null = null;
     if (feiNumero) {
       fei = await prisma.fei.findUnique({
         where: {
@@ -294,6 +297,7 @@ export async function sendWebhook(
         },
         select: carcasseForApiSelect,
       });
+      carcassesFei = fei;
     }
     if (carcasseZacharieId) {
       const carcasse = await prisma.carcasse.findUnique({
@@ -305,9 +309,19 @@ export async function sendWebhook(
       });
       if (carcasse) {
         carcasses.push(carcasse);
+        // la FEI ne sert qu'aux noms examinateur / premier détenteur de la carcasse
+        carcassesFei ??= await prisma.fei.findUnique({
+          where: { numero: carcasse.fei_numero },
+          select: feiForApiSelect,
+        });
       }
     }
-    const payload = { event, fei, carcasses };
+    // même forme que les réponses de l'API v1 (cf WebhookPayload dans les swagger)
+    const payload = {
+      event,
+      fei: fei ? mapFeiForApi(fei, carcasses) : null,
+      carcasses: carcasses.map((carcasse) => mapCarcasseForApi(carcasse, carcassesFei)),
+    };
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
@@ -322,7 +336,7 @@ export async function sendWebhook(
     })
       .then((res) => {
         clearTimeout(timeoutId); // Clear timeout on success
-        prisma.apiKeyLog.create({
+        return prisma.apiKeyLog.create({
           data: {
             api_key_id: apiKey.id,
             action: ApiKeyLogAction.WEBHOOK_SENT,

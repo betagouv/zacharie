@@ -357,7 +357,10 @@ export async function notifySviAssignment(
   await sendWebhook(updatedCarcasse.examinateur_initial_user_id, 'CARCASSE_ASSIGNEE_AU_SVI', {
     carcasseZacharieId: updatedCarcasse.zacharie_carcasse_id,
   });
-  if (updatedCarcasse.examinateur_initial_user_id !== updatedCarcasse.premier_detenteur_user_id) {
+  if (
+    updatedCarcasse.premier_detenteur_user_id &&
+    updatedCarcasse.examinateur_initial_user_id !== updatedCarcasse.premier_detenteur_user_id
+  ) {
     await sendWebhook(updatedCarcasse.premier_detenteur_user_id, 'CARCASSE_ASSIGNEE_AU_SVI', {
       carcasseZacharieId: updatedCarcasse.zacharie_carcasse_id,
     });
