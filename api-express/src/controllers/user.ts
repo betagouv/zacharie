@@ -20,6 +20,7 @@ import { capture } from '~/third-parties/sentry';
 import createUserId from '~/utils/createUserId';
 import { comparePassword, hashPassword } from '~/service/crypto';
 import { userFeiSelect, type UserForFei } from '~/types/user';
+import { apiKeySafeSelect } from '~/types/api-key';
 import type {
   UserConnexionResponse,
   UserMyRelationsResponse,
@@ -1519,28 +1520,21 @@ router.get(
             },
             {
               entity_id: {
-                in: entites.map((entity) => entity.entity_id),
+                in: entites
+                  .filter(
+                    (entity) =>
+                      !entity.deleted_at &&
+                      (entity.status === EntityRelationStatus.MEMBER ||
+                        entity.status === EntityRelationStatus.ADMIN)
+                  )
+                  .map((entity) => entity.entity_id),
               },
             },
           ],
         },
         include: {
           ApiKey: {
-            select: {
-              id: true,
-              dedicated_to_entity_id: true,
-              name: true,
-              description: true,
-              active: true,
-              webhook_url: true,
-              expires_at: true,
-              last_used_at: true,
-              scopes: true,
-              rate_limit: true,
-              created_at: true,
-              updated_at: true,
-              deleted_at: true,
-            },
+            select: apiKeySafeSelect,
           },
         },
       });
