@@ -23,7 +23,7 @@ FROM "Carcasse" c
 JOIN "Fei" f ON c.fei_numero = f.numero
 WHERE 
     c.deleted_at IS NULL 
-    AND f.svi_assigned_at IS NOT NULL
+    AND c.svi_assigned_at IS NOT NULL
     AND NOT (f.created_by_user_id LIKE '%GLOP%')
     AND c.svi_carcasse_status NOT IN ('MANQUANTE_ETG_COLLECTEUR', 'REFUS_ETG_COLLECTEUR', 'SANS_DECISION', 'CONSIGNE', 'MANQUANTE_SVI')
 GROUP BY 

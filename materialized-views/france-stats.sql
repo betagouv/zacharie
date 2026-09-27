@@ -1,5 +1,3 @@
-CREATE INDEX ON department_statistics (department_number);
-
 DROP MATERIALIZED VIEW IF EXISTS department_statistics;
 
 CREATE MATERIALIZED VIEW department_statistics AS
@@ -58,10 +56,10 @@ LEFT JOIN "Carcasse" c ON c.fei_numero = f.numero
 LEFT JOIN "User" u ON u.id = f.created_by_user_id 
   OR u.id = f.premier_detenteur_user_id 
   OR u.id = f.examinateur_initial_user_id
-  OR u.id = f.svi_user_id
+  OR u.id = c.svi_user_id
 LEFT JOIN "Entity" e ON e.id = f.premier_detenteur_entity_id 
-  OR e.id = f.premier_detenteur_depot_entity_id
-  OR e.id = f.svi_entity_id
+  OR e.id = c.premier_detenteur_depot_entity_id
+  OR e.id = c.svi_entity_id
 WHERE f.deleted_at IS NULL 
   AND c.deleted_at IS NULL
 
@@ -79,18 +77,22 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Create triggers to refresh the materialized view
+DROP TRIGGER IF EXISTS refresh_department_statistics_fei ON "Fei";
 CREATE TRIGGER refresh_department_statistics_fei
 AFTER INSERT OR UPDATE OR DELETE ON "Fei"
 EXECUTE FUNCTION refresh_department_statistics();
 
+DROP TRIGGER IF EXISTS refresh_department_statistics_user ON "User";
 CREATE TRIGGER refresh_department_statistics_user
 AFTER INSERT OR UPDATE OR DELETE ON "User"
 EXECUTE FUNCTION refresh_department_statistics();
 
+DROP TRIGGER IF EXISTS refresh_department_statistics_entity ON "Entity";
 CREATE TRIGGER refresh_department_statistics_entity
 AFTER INSERT OR UPDATE OR DELETE ON "Entity"
 EXECUTE FUNCTION refresh_department_statistics();
 
+DROP TRIGGER IF EXISTS refresh_department_statistics_carcasse ON "Carcasse";
 CREATE TRIGGER refresh_department_statistics_carcasse
 AFTER INSERT OR UPDATE OR DELETE ON "Carcasse"
 EXECUTE FUNCTION refresh_department_statistics();
