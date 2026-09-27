@@ -15,7 +15,11 @@ const BREVO_API = process.env.BREVO_API;
 const buildId = JSON.stringify(`${dayjs().format('DD-MM-YYYY')} vers ${dayjs().format('HH')}:00`);
 const VERSION = buildId;
 
-const SECRET = process.env.VITE_SECRET ?? 'not-so-secret-lalalala';
+// en production (et staging), un secret par défaut permettrait à n'importe qui de forger un JWT de session
+if (process.env.NODE_ENV === 'production' && !process.env.VITE_SECRET) {
+  throw new Error('VITE_SECRET est obligatoire en production : il signe les JWT de session.');
+}
+const SECRET = process.env.VITE_SECRET || 'not-so-secret-lalalala';
 const METABASE_SECRET_KEY = process.env.METABASE_SECRET_KEY;
 
 const IS_DEV = process.env.NODE_ENV === 'development'; // local dev
