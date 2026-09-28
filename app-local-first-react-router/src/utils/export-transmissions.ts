@@ -6,9 +6,12 @@ import { EntityWithUserRelation } from '@api/src/types/entity';
 import { getIntermediaireRoleLabel } from './get-user-roles-label';
 import dayjs from 'dayjs';
 import { getFeiAndCarcasseAndIntermediaireIdsFromCarcasse } from './get-carcasse-intermediaire-id';
-import { filterFeiIntermediaires } from './get-carcasses-intermediaires';
+import {
+  filterCarcassesIntermediairesForCarcasse,
+  filterFeiIntermediaires,
+} from './get-carcasses-intermediaires';
 import { capture } from '@app/services/sentry';
-import { IPM1Decision, IPM2Decision, FeiOwnerRole } from '@prisma/client';
+import { IPM1Decision, IPM2Decision, FeiOwnerRole, CarcasseType } from '@prisma/client';
 import { useTransmissions } from './get-transmissions-sorted';
 
 type FeiExcelData = {
@@ -21,6 +24,7 @@ type CarcasseExcelData = {
   Éspèce: string | null;
   Poids: string | null;
   "Nombre d'animaux": number | null | undefined;
+  "Nombre d'animaux acceptés": number | null;
   'Numéro suivi trichine': string | null;
   // Estampille: string | null;
   // infos de SVI
@@ -73,6 +77,7 @@ export const EXPORT_COLUMNS_CATALOG: Array<{ key: string; label: keyof CarcasseE
   { key: 'espece', label: 'Éspèce' },
   { key: 'poids', label: 'Poids' },
   { key: 'nombre_animaux', label: "Nombre d'animaux" },
+  { key: 'nombre_animaux_acceptes', label: "Nombre d'animaux acceptés" },
   { key: 'numero_trichine', label: 'Numéro suivi trichine' },
   { key: 'svi_consigne', label: 'SVI - Consigne' },
   { key: 'svi_motif_consigne', label: 'SVI - Motif Consigne' },
@@ -200,6 +205,7 @@ function createSheet(data: Array<Record<string, unknown>>) {
       case 'SVI - Saisie totale':
       case 'SVI - Certificat de saisie OK':
       case "Nombre d'animaux":
+      case "Nombre d'animaux acceptés":
       case 'SVI - Consigne':
       case 'SVI - Motif Consigne':
       case 'Date de la chasse':
@@ -386,6 +392,14 @@ export default function useExportTransmissions() {
               }
             }
           }
+          // Petit gibier : nombre d'animaux acceptés par le dernier détenteur qui l'a renseigné
+          const nombreAnimauxAcceptes =
+            carcasse.type === CarcasseType.PETIT_GIBIER
+              ? (filterCarcassesIntermediairesForCarcasse(
+                  carcassesIntermediaireById,
+                  carcasse.zacharie_carcasse_id
+                ).find((ci) => ci.nombre_d_animaux_acceptes != null)?.nombre_d_animaux_acceptes ?? null)
+              : null;
           allCarcasses.push({
             'Premier détenteur':
               premierDetenteurEntity?.nom_d_usage ||
@@ -399,6 +413,7 @@ export default function useExportTransmissions() {
             Éspèce: carcasse.espece,
             Poids: poids ? poids.toString() : null,
             "Nombre d'animaux": carcasse.nombre_d_animaux || 1,
+            "Nombre d'animaux acceptés": nombreAnimauxAcceptes,
             'Numéro suivi trichine': '',
             // Estampille: '',
             // infos de SVI
