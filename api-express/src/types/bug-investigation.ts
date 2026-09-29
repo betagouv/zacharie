@@ -28,4 +28,7 @@ export type AlbertMessage =
 // et la description est gardée avec le message
 export type BugInvestigationUserMessage = AlbertUserMessage & { image_descriptions?: Array<string> };
 
-export type BugInvestigationMessage = BugInvestigationUserMessage | AlbertAssistantMessage | AlbertToolMessage;
+export type BugInvestigationMessage =
+  | BugInvestigationUserMessage
+  | AlbertAssistantMessage
+  | AlbertToolMessage;
