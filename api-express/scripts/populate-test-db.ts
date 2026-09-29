@@ -844,6 +844,8 @@ Christine
         data: {
           svi_carcasse_status: CarcasseStatus.ACCEPTE,
           svi_carcasse_status_set_at: dayjs().subtract(2, 'day').toDate(),
+          // date sans heure, le même jour que la prise en charge ETG
+          svi_ipm2_date: dayjs().subtract(2, 'day').startOf('day').toDate(),
         },
       });
       console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (SVI closed)`);
