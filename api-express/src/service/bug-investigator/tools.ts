@@ -272,6 +272,39 @@ type TimelineRow = {
   history: unknown;
 };
 
+type ActorRow = {
+  id: string;
+  name: string | null;
+  roles: Array<string> | null;
+  etg_role: string | null;
+  entities: string | null;
+};
+
+// le rôle d'un log est celui avec lequel l'utilisateur a agi (ex : un salarié d'ETG en mode transport agit
+// comme COLLECTEUR_PRO) : on donne aussi son vrai compte, sinon on le prend pour une autre entreprise
+async function describeActors(userIds: Array<string>) {
+  if (!userIds.length) return 'Acteurs : aucun';
+  const actors = await readonlyQuery<ActorRow>(
+    `SELECT u."id", NULLIF(TRIM(CONCAT(u."prenom", ' ', u."nom_de_famille")), '') AS name,
+       u."roles"::text[] AS roles, u."etg_role"::text AS etg_role,
+       STRING_AGG(e."nom_d_usage" || ' (' || e."id" || ', ' || e."type"::text || ')', ' ; ') AS entities
+     FROM "User" u
+     LEFT JOIN "EntityAndUserRelations" r ON r."owner_id" = u."id" AND r."deleted_at" IS NULL
+       AND r."relation" = 'CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY'
+     LEFT JOIN "Entity" e ON e."id" = r."entity_id"
+     WHERE u."id" = ANY($1)
+     GROUP BY u."id"`,
+    userIds
+  );
+  const lines = actors.map((actor) => {
+    const roles = (actor.roles ?? []).join(', ') || 'aucun rôle';
+    const etgRole =
+      (actor.roles ?? []).includes('ETG') && actor.etg_role ? `, etg_role ${actor.etg_role}` : '';
+    return `- ${actor.name ?? ''} (${actor.id}) : compte ${roles}${etgRole} ; travaille pour : ${actor.entities ?? 'aucune entité'}`;
+  });
+  return `Acteurs (compte réel de chaque utilisateur, qui peut différer du rôle avec lequel il agit) :\n${lines.join('\n')}`;
+}
+
 async function feiTimeline(feiNumero: string) {
   if (!feiNumero.trim()) return 'Numéro de fiche manquant';
   const rows = await readonlyQuery<TimelineRow>(
@@ -287,7 +320,13 @@ async function feiTimeline(feiNumero: string) {
   );
   if (!rows.length) return `Aucune action journalisée pour la fiche ${feiNumero}`;
   const lines = rows.map((row, index) => {
-    const who = [row.user_name, row.user_id && `(${row.user_id})`, row.user_role].filter(Boolean).join(' ');
+    const who = [
+      row.user_name,
+      row.user_id && `(${row.user_id})`,
+      row.user_role && `agit comme ${row.user_role}`,
+    ]
+      .filter(Boolean)
+      .join(' ');
     const entity = row.entity_id ? ` pour ${row.entity_name ?? ''} (${row.entity_id})` : '';
     const carcasse = row.zacharie_carcasse_id ? ` carcasse ${row.zacharie_carcasse_id}` : '';
     const changes = summarizeHistory(row.history);
@@ -303,7 +342,10 @@ async function feiTimeline(feiNumero: string) {
   ) {
     omitted++;
   }
-  const header = `${rows.length} action(s) pour la fiche ${feiNumero}, de la plus ancienne à la plus récente.${
+  const actors = await describeActors([
+    ...new Set(rows.map((row) => row.user_id).filter(Boolean) as Array<string>),
+  ]);
+  const header = `${actors}\n\n${rows.length} action(s) pour la fiche ${feiNumero}, de la plus ancienne à la plus récente.${
     omitted
       ? ` ⚠️ Les ${omitted} plus anciennes sont omises (trop longues) : utilise query_db sur "Log" pour les voir.`
       : ''
