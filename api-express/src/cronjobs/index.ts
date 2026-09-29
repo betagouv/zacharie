@@ -6,7 +6,7 @@ import { ENVIRONMENT, SENTRY_KEY, VERSION } from '~/config';
 import { initFeisCron } from './feis';
 import { initRelanceInscriptionCron } from './relance-inscription';
 import { initDataHealthCron } from './data-health';
-import { capture } from '~/third-parties/sentry';
+import { capture, scrubSentryBreadcrumb, scrubSentryEvent } from '~/third-parties/sentry';
 const sentryEnabled = !!SENTRY_KEY;
 
 if (sentryEnabled) {
@@ -23,6 +23,8 @@ if (sentryEnabled) {
     // of transactions for performance monitoring.
     // We recommend adjusting this value in production
     tracesSampleRate: 0.05,
+    beforeSend: scrubSentryEvent,
+    beforeBreadcrumb: scrubSentryBreadcrumb,
   });
 }
 

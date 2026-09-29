@@ -62,7 +62,7 @@ function App() {
 
   useEffect(() => {
     if (user) {
-      Sentry.setUser({ id: user.id, email: user.email ?? undefined, role: user.roles?.[0] });
+      Sentry.setUser({ id: user.id, role: user.roles?.[0] });
     } else {
       Sentry.setUser(null);
     }

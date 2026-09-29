@@ -23,7 +23,7 @@ export default function PageNotFound() {
     // `initial-path` périmé rejoué au démarrage (cf. réparation plus bas).
     const navEntry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
     trackEvent('error', '404', pathname + search);
-    // L'identité (id/email/rôle) est déjà attachée globalement via Sentry.setUser
+    // L'identité (id/rôle) est déjà attachée globalement via Sentry.setUser
     // dans App.tsx. Ici on ajoute le contexte propre à la route : des tags
     // filtrables/groupables dans l'UI + le userAgent (version app native / OS).
     capture('PageNotFound 404', {

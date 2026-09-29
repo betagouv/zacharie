@@ -85,7 +85,7 @@ async function sendNotificationToUser(notification: NotificationToUser) {
       await sendPushToUser(notification);
     } catch (error) {
       console.error('error in push notification', user.id);
-      Sentry.captureException(error, { extra: { user, push, email, title, img } });
+      Sentry.captureException(error, { extra: { userId: user.id, push, email, title, img } });
     }
   }
 
@@ -94,7 +94,7 @@ async function sendNotificationToUser(notification: NotificationToUser) {
       await sendEmailToUser(notification);
     } catch (error) {
       console.error('error in email notification', user.id);
-      Sentry.captureException(error, { extra: { user, push, email, title, img } });
+      Sentry.captureException(error, { extra: { userId: user.id, push, email, title, img } });
     }
   }
 }
@@ -176,9 +176,9 @@ async function sendPushToUser({
         })
         .catch((error) => {
           console.error('error in web push');
-          console.error(error, web_push_subscription, title, body, img);
+          console.error(error, user.id, title);
           Sentry.captureException(error, {
-            extra: { web_push_subscription, title, body, img },
+            extra: { userId: user.id, title, body, img },
           });
         });
     }
@@ -207,7 +207,9 @@ async function sendPushToUser({
         `;
       } catch (error) {
         console.error('error while removing native push tokens', user.id);
-        Sentry.captureException(error, { extra: { user, tokensToRemove } });
+        Sentry.captureException(error, {
+          extra: { userId: user.id, tokensToRemoveCount: tokensToRemove.length },
+        });
       }
     }
     // Envoi raté : on n'écrit pas le log, sinon la dédup bloquerait définitivement le renvoi.
@@ -229,7 +231,7 @@ async function sendPushToUser({
         });
       } catch (error) {
         Sentry.captureException(error, {
-          extra: { user, body, email, title, img },
+          extra: { userId: user.id, body, email, title, img },
         });
       }
     }
@@ -321,7 +323,7 @@ async function sendEmailToUser({
     });
   } catch (error) {
     Sentry.captureException(error, {
-      extra: { user, email, title, img },
+      extra: { userId: user.id, email, title, img },
     });
   }
 }

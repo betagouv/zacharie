@@ -1,4 +1,6 @@
 import * as Sentry from '@sentry/react';
+import type { Breadcrumb, ErrorEvent } from '@sentry/react';
+import { scrubSensitive, scrubString } from '@app/utils/scrub-sensitive';
 
 interface Context {
   extra?: Record<string, unknown>;
@@ -190,38 +192,27 @@ export function getPerformanceContext(): {
 }
 
 export function capture(err: ErrorType, context: Context | string = {}): void {
-  let parsedContext: Context;
+  const parsedContext = scrubSensitive(
+    typeof context === 'string' ? JSON.parse(context) : context
+  ) as Context;
 
   if (import.meta.env.VITEST) {
     console.log('capture import.meta.env.VITEST');
-    return console.log('capture', err, JSON.stringify(context, null, 2));
+    return console.log('capture', err, JSON.stringify(parsedContext, null, 2));
   }
   if (import.meta.env.VITE_ENV !== 'prod' && import.meta.env.VITE_ENV !== 'test') {
     console.log(
       'capture import.meta.env.VITE_ENV !== prod && import.meta.env.VITE_ENV !== test',
       import.meta.env.VITE_ENV
     );
-    return console.log('capture', err, context);
-  }
-  if (typeof context === 'string') {
-    parsedContext = JSON.parse(context);
-  } else {
-    parsedContext = structuredClone(context);
+    return console.log('capture', err, parsedContext);
   }
 
   if (parsedContext.extra && typeof parsedContext.extra === 'object') {
     try {
       const newExtra: Record<string, string> = {};
       for (const [extraKey, extraValue] of Object.entries(parsedContext.extra)) {
-        if (typeof extraValue === 'string') {
-          newExtra[extraKey] = extraValue;
-        } else {
-          const extraValueObj = extraValue as Record<string, unknown>;
-          if (extraValueObj && 'password' in extraValueObj) {
-            extraValueObj.password = '******';
-          }
-          newExtra[extraKey] = JSON.stringify(extraValueObj);
-        }
+        newExtra[extraKey] = typeof extraValue === 'string' ? extraValue : JSON.stringify(extraValue);
       }
       parsedContext.extra = newExtra;
     } catch (e) {
@@ -253,4 +244,27 @@ export function capture(err: ErrorType, context: Context | string = {}): void {
   } else {
     Sentry.captureException(err, parsedContext as Record<string, unknown>);
   }
+}
+
+// Branché en `beforeSend` : masque les secrets (mots de passe, jetons) et données personnelles, y compris
+// dans l'URL et le Referer ajoutés automatiquement par Sentry. De l'utilisateur, on ne garde que id et rôle.
+export function scrubSentryEvent(event: ErrorEvent): ErrorEvent {
+  if (event.message) event.message = scrubString(event.message);
+  for (const exception of event.exception?.values ?? []) {
+    if (exception.value) exception.value = scrubString(exception.value);
+  }
+  if (event.request) event.request = scrubSensitive(event.request) as ErrorEvent['request'];
+  if (event.extra) event.extra = scrubSensitive(event.extra) as ErrorEvent['extra'];
+  if (event.contexts) event.contexts = scrubSensitive(event.contexts) as ErrorEvent['contexts'];
+  if (event.user) event.user = { id: event.user.id, role: event.user.role };
+  if (event.breadcrumbs) event.breadcrumbs = event.breadcrumbs.map(scrubSentryBreadcrumb);
+  return event;
+}
+
+export function scrubSentryBreadcrumb(breadcrumb: Breadcrumb): Breadcrumb {
+  return {
+    ...breadcrumb,
+    message: breadcrumb.message ? scrubString(breadcrumb.message) : breadcrumb.message,
+    data: breadcrumb.data ? (scrubSensitive(breadcrumb.data) as Breadcrumb['data']) : breadcrumb.data,
+  };
 }

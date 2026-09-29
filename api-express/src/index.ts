@@ -29,7 +29,7 @@ import {
   VERSION,
 } from './config.ts';
 import { sendError } from './middlewares/errors.ts';
-import { capture } from './third-parties/sentry.ts';
+import { capture, scrubSentryBreadcrumb, scrubSentryEvent } from './third-parties/sentry.ts';
 
 import userRouter from './controllers/user.ts';
 import userEntityRouter from './controllers/user-entity.ts';
@@ -95,6 +95,8 @@ if (sentryEnabled) {
     // of transactions for performance monitoring.
     // We recommend adjusting this value in production
     tracesSampleRate: 0.01,
+    beforeSend: scrubSentryEvent,
+    beforeBreadcrumb: scrubSentryBreadcrumb,
   });
 }
 
