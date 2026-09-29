@@ -19,7 +19,6 @@ import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import { syncData } from '@app/utils/sync-data';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
-import { CompteEnAttenteValidationAlert } from '@app/components/CompteEnAttenteValidation';
 import { formatCarcasseLotCount, formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
 import {
   useCcgIds,
@@ -1774,8 +1773,6 @@ export default function DestinataireSelectPremierDetenteur({
                 description=""
               />
             )}
-
-            {canEdit && notActivated && <CompteEnAttenteValidationAlert className="mt-4" />}
 
             {/* Bouton de transmission (mode premier détenteur autonome) */}
             {canEdit && !hideSubmitButton && (
