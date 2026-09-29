@@ -12,7 +12,9 @@ vi.mock('~/third-parties/sentry', () => ({ capture: vi.fn() }));
 
 import {
   checkReadOnlySql,
+  describeTables,
   executeInvestigatorTool,
+  listSchemaBlocks,
   summarizeHistory,
 } from '~/service/bug-investigator/tools';
 import { runBugInvestigation } from '~/service/bug-investigator';
