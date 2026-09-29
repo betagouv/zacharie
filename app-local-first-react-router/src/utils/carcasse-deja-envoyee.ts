@@ -7,10 +7,13 @@ import { FeiOwnerRole } from '@prisma/client';
 // on la transmettrait deux fois. Le chasseur garde pourtant encore la main dessus : voir ci-dessous.
 export function isCarcasseDejaEnvoyee(carcasse: {
   next_owner_entity_id?: string | null;
+  next_owner_role?: FeiOwnerRole | null;
   current_owner_role?: FeiOwnerRole | null;
   consommateur_final_usage_domestique?: Date | null;
 }) {
-  if (carcasse.next_owner_entity_id != null) {
+  // Une association désignée comme premier détenteur porte aussi next_owner_entity_id : ce n'est pas
+  // un destinataire, la carcasse reste à répartir.
+  if (carcasse.next_owner_entity_id != null && carcasse.next_owner_role !== FeiOwnerRole.PREMIER_DETENTEUR) {
     return true;
   }
   // Gardée par le premier détenteur pour son usage domestique privé : elle ne part chez personne,
