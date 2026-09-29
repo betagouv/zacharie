@@ -727,15 +727,13 @@ enum BugInvestigationStatus {
   ERREUR
 }
 
-// Enquête de l'assistant Albert (admin > Résolution de bug) : lecture seule du code et de la base de production
+// Conversation avec l'assistant Albert (admin > Résolution de bug) : lecture seule du code et de la base de production
 model BugInvestigation {
   id          String                 @id @default(uuid())
   user_id     String
-  description String
-  images      Json                   @default("[]") // data URLs des captures d'écran jointes
+  description String // premier message, pour la liste des conversations
   status      BugInvestigationStatus @default(EN_COURS)
-  steps       Json                   @default("[]") // appels d'outils : { tool, args, result, at }
-  report      String?
+  messages    Json                   @default("[]") // historique de la conversation avec Albert, sans le prompt système
   error       String?
   created_at  DateTime               @default(now())
   updated_at  DateTime               @default(now()) @updatedAt

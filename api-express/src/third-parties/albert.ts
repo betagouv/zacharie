@@ -1,22 +1,7 @@
 import { ALBERT_API_KEY, ALBERT_API_URL, ALBERT_MODEL } from '~/config';
+import type { AlbertAssistantMessage, AlbertMessage } from '~/types/bug-investigation';
 
 // Albert API (DINUM) expose une API compatible OpenAI : https://guides.ia.numerique.gouv.fr/albert-api
-
-export type AlbertContentPart =
-  | { type: 'text'; text: string }
-  | { type: 'image_url'; image_url: { url: string } };
-
-export interface AlbertToolCall {
-  id: string;
-  type: 'function';
-  function: { name: string; arguments: string };
-}
-
-export type AlbertMessage =
-  | { role: 'system'; content: string }
-  | { role: 'user'; content: string | Array<AlbertContentPart> }
-  | { role: 'assistant'; content: string | null; tool_calls?: Array<AlbertToolCall> }
-  | { role: 'tool'; tool_call_id: string; content: string };
 
 export interface AlbertTool {
   type: 'function';
@@ -33,7 +18,7 @@ export async function albertChatCompletion({
   messages: Array<AlbertMessage>;
   tools?: Array<AlbertTool>;
   toolChoice?: 'auto' | 'none';
-}): Promise<{ message: Extract<AlbertMessage, { role: 'assistant' }>; finishReason: string }> {
+}): Promise<{ message: AlbertAssistantMessage; finishReason: string }> {
   if (!ALBERT_API_KEY) throw new Error('ALBERT_API_KEY manquante');
   for (let attempt = 1; ; attempt++) {
     const response = await fetch(`${ALBERT_API_URL}/chat/completions`, {

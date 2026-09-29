@@ -5,13 +5,14 @@ import { BugInvestigationStatus, Prisma } from '@prisma/client';
 import prisma from '~/prisma';
 import { SOURCE_COMMIT, GITHUB_REPO } from '~/config';
 import { capture } from '~/third-parties/sentry';
-import { albertChatCompletion, type AlbertContentPart, type AlbertMessage } from '~/third-parties/albert';
-import type { BugInvestigationStep } from '~/types/bug-investigation';
+import { albertChatCompletion } from '~/third-parties/albert';
+import type { AlbertMessage, BugInvestigationMessage } from '~/types/bug-investigation';
 import { executeInvestigatorTool, investigatorTools } from './tools';
 
 const MAX_ITERATIONS = 40;
 const MAX_DURATION_MS = 15 * 60 * 1000;
-const STEP_RESULT_PREVIEW_CHARS = 3000;
+// les résultats d'outils des tours précédents sont raccourcis avant l'envoi, pour rester dans le contexte du modèle
+const PREVIOUS_TURNS_TOOL_RESULT_CHARS = 1500;
 
 function buildSystemPrompt() {
   const schema = fs.readFileSync(path.join(process.cwd(), 'prisma/schema.prisma'), 'utf-8');
@@ -19,6 +20,7 @@ function buildSystemPrompt() {
 
 # Ta mission
 Un développeur ou un membre de l'équipe te décrit un dysfonctionnement (texte et/ou capture d'écran d'un ticket Notion). Tu enquêtes dans le code et dans la base de production pour comprendre ce qui s'est passé, puis tu proposes une solution.
+C'est une conversation : après ton rapport, la personne peut te corriger, te poser une question ou t'apporter une information. Prends-la au sérieux, vérifie de nouveau avec les outils si besoin, et réponds directement. Ne réécris le rapport complet que si ta conclusion change.
 
 # Règles absolues
 - Tu es en LECTURE SEULE. Tu ne peux ni modifier le code, ni modifier la base. Tu ne proposes que des pistes : ce sont les développeurs qui décideront et exécuteront.
@@ -34,7 +36,7 @@ Un développeur ou un membre de l'équipe te décrit un dysfonctionnement (texte
 - Domaines : FEI (Fiche d'Examen Initial, table "Fei", identifiant "numero"), Carcasse (identifiant "zacharie_carcasse_id"), CarcasseIntermediaire (prise en charge par les collecteurs / ETG), rôles CHASSEUR, COLLECTEUR_PRO, ETG, SVI, COMMERCE_DE_DETAIL...
 - Certains champs de la FEI sont recopiés sur chaque carcasse, côté client (src/utils/map-fei-fields-to-carcasse.ts) et côté serveur (syncCarcasseDates dans fei-side-effects.ts).
 
-# Format du rapport final (Markdown, en français)
+# Format du premier rapport (Markdown, en français)
 Quand tu as fini d'enquêter, réponds SANS appeler d'outil, avec ce rapport :
 ## Résumé
 ## Chronologie reconstituée
@@ -55,81 +57,76 @@ ${schema}
 \`\`\``;
 }
 
-async function saveProgress(id: string, steps: Array<BugInvestigationStep>) {
-  await prisma.bugInvestigation.update({
-    where: { id },
-    data: { steps: steps as unknown as Prisma.InputJsonValue },
+function toJson(messages: Array<BugInvestigationMessage>) {
+  return messages as unknown as Prisma.InputJsonValue;
+}
+
+function shortenPreviousTurns(messages: Array<BugInvestigationMessage>, currentTurnStart: number) {
+  return messages.map((message, index) => {
+    if (index >= currentTurnStart || message.role !== 'tool') return message;
+    if (message.content.length <= PREVIOUS_TURNS_TOOL_RESULT_CHARS) return message;
+    return {
+      ...message,
+      content: `${message.content.slice(0, PREVIOUS_TURNS_TOOL_RESULT_CHARS)}\n… (tronqué)`,
+    };
   });
 }
 
-async function finish(
-  id: string,
-  data: { status: BugInvestigationStatus; report?: string; error?: string },
-  steps: Array<BugInvestigationStep>
-) {
-  await prisma.bugInvestigation.update({
-    where: { id },
-    data: { ...data, steps: steps as unknown as Prisma.InputJsonValue },
-  });
-}
-
+// Répond au dernier message de l'utilisateur : Albert appelle des outils jusqu'à pouvoir répondre sans outil
 export async function runBugInvestigation(id: string) {
   const investigation = await prisma.bugInvestigation.findUniqueOrThrow({ where: { id } });
-  const images = investigation.images as Array<string>;
-  const steps: Array<BugInvestigationStep> = [];
+  const messages = investigation.messages as unknown as Array<BugInvestigationMessage>;
+  const currentTurnStart = messages.length - 1;
+  const systemPrompt = buildSystemPrompt();
   const startedAt = Date.now();
-
-  const userContent: Array<AlbertContentPart> = [
-    { type: 'text', text: `Description du problème :\n${investigation.description}` },
-    ...images.map((url) => ({ type: 'image_url' as const, image_url: { url } })),
-  ];
-  const messages: Array<AlbertMessage> = [
-    { role: 'system', content: buildSystemPrompt() },
-    { role: 'user', content: userContent },
-  ];
 
   try {
     for (let iteration = 1; ; iteration++) {
       const outOfBudget = iteration >= MAX_ITERATIONS || Date.now() - startedAt > MAX_DURATION_MS;
+      const request: Array<AlbertMessage> = [
+        { role: 'system', content: systemPrompt },
+        ...shortenPreviousTurns(messages, currentTurnStart),
+      ];
       if (outOfBudget) {
-        messages.push({
+        request.push({
           role: 'user',
           content:
-            "Tu as atteint la limite d'étapes de l'enquête. Rédige maintenant le rapport final avec ce que tu as trouvé, en précisant ce qui reste à vérifier.",
+            "Tu as atteint la limite d'étapes pour ce message. Réponds maintenant avec ce que tu as trouvé, en précisant ce qui reste à vérifier.",
         });
       }
       const { message } = await albertChatCompletion({
-        messages,
+        messages: request,
         tools: investigatorTools,
         toolChoice: outOfBudget ? 'none' : 'auto',
       });
-      messages.push(message);
 
       if (!message.tool_calls?.length || outOfBudget) {
-        const report = message.content?.trim();
-        if (!report) throw new Error("Albert n'a pas rendu de rapport");
-        await finish(id, { status: BugInvestigationStatus.TERMINE, report }, steps);
+        const answer = message.content?.trim();
+        if (!answer) throw new Error("Albert n'a pas rendu de réponse");
+        messages.push({ role: 'assistant', content: answer });
+        await prisma.bugInvestigation.update({
+          where: { id },
+          data: { status: BugInvestigationStatus.TERMINE, messages: toJson(messages) },
+        });
         return;
       }
 
-      if (message.content?.trim()) {
-        steps.push({ type: 'message', content: message.content.trim(), at: new Date().toISOString() });
-      }
+      messages.push(message);
       for (const toolCall of message.tool_calls) {
         const result = await executeInvestigatorTool(toolCall.function.name, toolCall.function.arguments);
         messages.push({ role: 'tool', tool_call_id: toolCall.id, content: result });
-        steps.push({
-          type: 'tool',
-          tool: toolCall.function.name,
-          args: toolCall.function.arguments,
-          result: result.slice(0, STEP_RESULT_PREVIEW_CHARS),
-          at: new Date().toISOString(),
-        });
       }
-      await saveProgress(id, steps);
+      await prisma.bugInvestigation.update({ where: { id }, data: { messages: toJson(messages) } });
     }
   } catch (error) {
     capture(error as Error, { extra: { bugInvestigationId: id } });
-    await finish(id, { status: BugInvestigationStatus.ERREUR, error: (error as Error).message }, steps);
+    await prisma.bugInvestigation.update({
+      where: { id },
+      data: {
+        status: BugInvestigationStatus.ERREUR,
+        error: (error as Error).message,
+        messages: toJson(messages),
+      },
+    });
   }
 }

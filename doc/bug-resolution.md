@@ -1,14 +1,16 @@
 # Résolution de bug (admin)
 
-Page `/app/admin/bug-resolution` : un admin décrit un dysfonctionnement (texte et/ou captures d'écran d'un ticket Notion). Albert (Albert API, DINUM) enquête dans le code et la base de production, puis rend un rapport : résumé, chronologie, cause racine, preuves, plan d'action, niveau de confiance.
+Page `/app/admin/bug-resolution` : un admin décrit un dysfonctionnement (texte et/ou captures d'écran d'un ticket Notion). Albert (Albert API, DINUM) enquête dans le code et la base de production, puis rend un rapport : résumé, chronologie, cause racine, preuves, plan d'action, niveau de confiance. C'est un chat : l'admin peut ensuite répondre à Albert pour le corriger ou lui poser des questions.
 
 **Albert est en lecture seule.** Il ne peut ni pousser de code, ni modifier la base. Le plan d'action est une proposition que les développeurs valident et exécutent eux-mêmes.
 
 ## Fonctionnement
 
-- `POST /admin/bug-resolution` crée une ligne `BugInvestigation` et lance l'enquête dans le process de l'API (sans attendre). Le front interroge `GET /admin/bug-resolution/:id` toutes les 3 s et affiche les étapes au fil de l'eau.
-- Boucle d'agent : `api-express/src/service/bug-investigator/`. 40 étapes et 15 minutes au maximum, puis Albert doit rendre son rapport avec ce qu'il a trouvé.
-- Une enquête sans nouvelle depuis 20 minutes (serveur redémarré) passe en `ERREUR`.
+- `POST /admin/bug-resolution` crée une conversation (`BugInvestigation`) avec le premier message et lance Albert dans le process de l'API (sans attendre). `POST /admin/bug-resolution/:id/message` ajoute un message à une conversation et relance Albert (refusé tant qu'Albert répond).
+- `BugInvestigation.messages` contient tout l'historique au format de l'API Albert (messages, appels d'outils et leurs résultats), sans le prompt système, reconstruit à chaque tour. Albert garde donc tout ce qu'il a déjà trouvé.
+- Le front interroge `GET /admin/bug-resolution/:id` toutes les 3 s tant qu'Albert répond, et affiche les appels d'outils au fil de l'eau.
+- Boucle d'agent : `api-express/src/service/bug-investigator/`. 40 étapes et 15 minutes au maximum par message, puis Albert doit répondre avec ce qu'il a trouvé. Les résultats d'outils des tours précédents sont raccourcis à 1 500 caractères avant l'envoi, pour rester dans le contexte du modèle.
+- Une conversation sans nouvelle depuis 20 minutes (serveur redémarré) passe en `ERREUR`. On peut alors renvoyer un message pour relancer Albert.
 - Les routes sont derrière la stratégie `admin` : ProConnect obligatoire (voir `proconnect-admin.md`).
 
 Outils d'Albert, tous en lecture :
@@ -86,5 +88,5 @@ Quotas en mode expérimentation : environ 10 requêtes par minute par modèle. U
 
 - Albert API est hébergé en France sur un cloud SecNumCloud, ne conserve pas les conversations et n'envoie rien sur Internet.
 - Les résultats de requêtes envoyés à Albert peuvent contenir des données personnelles (noms, emails, téléphones). Les secrets (mots de passe, clés API, tokens push) ne sont jamais lisibles.
-- Les rapports et les étapes enregistrés dans `BugInvestigation` contiennent ces données. Pas de purge automatique pour l'instant.
+- Les conversations enregistrées dans `BugInvestigation` (y compris les résultats de requêtes et les captures) contiennent ces données. Pas de purge automatique pour l'instant.
 - À valider avec le DPO : inscription au registre des traitements, durée de conservation des enquêtes.

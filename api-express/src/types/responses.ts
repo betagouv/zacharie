@@ -15,7 +15,7 @@ import type {
   BugInvestigation,
 } from '@prisma/client';
 import type { UserForFei, UserForAdmin } from './user';
-import type { BugInvestigationStep } from './bug-investigation';
+import type { BugInvestigationMessage } from './bug-investigation';
 import type { EntityForAdmin, EntityWithUserRelation, EntitiesByTypeAndId, EntitiesById } from './entity';
 
 export interface SearchResponse {
@@ -671,9 +671,8 @@ export interface AdminNewBugInvestigationResponse {
 export interface AdminBugInvestigationResponse {
   ok: boolean;
   data: {
-    investigation: Omit<BugInvestigation, 'steps' | 'images'> & {
-      steps: Array<BugInvestigationStep>;
-      images: Array<string>;
+    investigation: Omit<BugInvestigation, 'messages'> & {
+      messages: Array<BugInvestigationMessage>;
     } & BugInvestigationAuthor;
   } | null;
   error: string;

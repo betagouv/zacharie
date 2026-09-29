@@ -34,16 +34,14 @@ describe('checkReadOnlySql', () => {
 });
 
 describe('runBugInvestigation', () => {
+  const firstQuestion = { role: 'user', content: [{ type: 'text', text: 'La fiche ne se transmet pas' }] };
+
   beforeEach(() => {
     vi.clearAllMocks();
-    findUniqueOrThrow.mockResolvedValue({
-      id: 'inv-1',
-      description: 'La fiche ne se transmet pas',
-      images: [],
-    });
+    findUniqueOrThrow.mockResolvedValue({ id: 'inv-1', messages: [structuredClone(firstQuestion)] });
   });
 
-  test('exécute les outils demandés puis enregistre le rapport final', async () => {
+  test('exécute les outils demandés puis enregistre la réponse dans la conversation', async () => {
     albertChatCompletion
       .mockResolvedValueOnce({
         message: {
@@ -66,21 +64,56 @@ describe('runBugInvestigation', () => {
 
     await runBugInvestigation('inv-1');
 
-    const messages = albertChatCompletion.mock.calls[1][0].messages;
-    expect(messages.find((m: { role: string }) => m.role === 'tool')).toEqual({
-      role: 'tool',
-      tool_call_id: 'call-1',
-      content: expect.stringMatching(/^Refusé/),
-    });
     expect(update).toHaveBeenLastCalledWith({
       where: { id: 'inv-1' },
       data: {
         status: 'TERMINE',
-        report: '## Résumé\nRAS',
-        steps: [
-          expect.objectContaining({ type: 'message', content: 'Je vérifie la requête.' }),
-          expect.objectContaining({ type: 'tool', tool: 'query_db' }),
+        messages: [
+          firstQuestion,
+          expect.objectContaining({ role: 'assistant', content: 'Je vérifie la requête.' }),
+          { role: 'tool', tool_call_id: 'call-1', content: expect.stringMatching(/^Refusé/) },
+          { role: 'assistant', content: '## Résumé\nRAS' },
         ],
+      },
+    });
+  });
+
+  test("reprend la conversation et raccourcit les résultats d'outils des tours précédents", async () => {
+    const longResult = 'x'.repeat(5000);
+    const history = [
+      firstQuestion,
+      {
+        role: 'assistant',
+        content: null,
+        tool_calls: [{ id: 'call-1', type: 'function', function: { name: 'query_db', arguments: '{}' } }],
+      },
+      { role: 'tool', tool_call_id: 'call-1', content: longResult },
+      { role: 'assistant', content: 'Premier rapport' },
+      { role: 'user', content: [{ type: 'text', text: "Non, c'est faux" }] },
+    ];
+    findUniqueOrThrow.mockResolvedValue({ id: 'inv-1', messages: structuredClone(history) });
+    albertChatCompletion.mockResolvedValueOnce({
+      message: { role: 'assistant', content: 'Deuxième réponse' },
+      finishReason: 'stop',
+    });
+
+    await runBugInvestigation('inv-1');
+
+    const sent = albertChatCompletion.mock.calls[0][0].messages;
+    expect(sent[0].role).toBe('system');
+    expect(sent.slice(1).map((m: { role: string }) => m.role)).toEqual([
+      'user',
+      'assistant',
+      'tool',
+      'assistant',
+      'user',
+    ]);
+    expect(sent[3].content.length).toBeLessThan(longResult.length);
+    expect(update).toHaveBeenLastCalledWith({
+      where: { id: 'inv-1' },
+      data: {
+        status: 'TERMINE',
+        messages: [...history, { role: 'assistant', content: 'Deuxième réponse' }],
       },
     });
   });
@@ -92,7 +125,7 @@ describe('runBugInvestigation', () => {
 
     expect(update).toHaveBeenLastCalledWith({
       where: { id: 'inv-1' },
-      data: { status: 'ERREUR', error: 'Albert API 500', steps: [] },
+      data: { status: 'ERREUR', error: 'Albert API 500', messages: [firstQuestion] },
     });
   });
 });

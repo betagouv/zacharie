@@ -17,8 +17,7 @@ import CcgImport from './ccg-import';
 import AdminDashboard from './dashboard';
 import AdminLesions from './lesions';
 import AdminQuiz from './quiz';
-import AdminBugResolutions from './bug-resolutions';
-import AdminBugResolution from './bug-resolution.$id';
+import AdminBugResolution from './bug-resolution';
 
 export default function RouterAdmin() {
   return (
@@ -96,7 +95,7 @@ export default function RouterAdmin() {
       />
       <Route
         path="bug-resolution"
-        element={<AdminBugResolutions />}
+        element={<AdminBugResolution />}
       />
       <Route
         path="bug-resolution/:id"
