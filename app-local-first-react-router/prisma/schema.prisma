@@ -78,6 +78,7 @@ model User {
   FeiPremierDetenteurUser               Fei[]                          @relation("FeiPremierDetenteurUser")
   FeiExaminateurInitialUser             Fei[]                          @relation("FeiExaminateurInitialUser")
   NotificationLog                       NotificationLog[]
+  BugInvestigations                     BugInvestigation[]
   CarcasseIntermediaire                 CarcasseIntermediaire[]        @relation("CarcasseIntermediaireUser")
   CarcassesIpm1                         Carcasse[]                     @relation("SviIpm1User")
   ApiKeyApprovalByUser                  ApiKeyApprovalByUserOrEntity[]
@@ -718,6 +719,29 @@ model NotificationLog {
   User           User?             @relation(fields: [user_id], references: [id], onDelete: SetNull)
 
   @@index([user_id, action])
+}
+
+enum BugInvestigationStatus {
+  EN_COURS
+  TERMINE
+  ERREUR
+}
+
+// Enquête de l'assistant Albert (admin > Résolution de bug) : lecture seule du code et de la base de production
+model BugInvestigation {
+  id          String                 @id @default(uuid())
+  user_id     String
+  description String
+  images      Json                   @default("[]") // data URLs des captures d'écran jointes
+  status      BugInvestigationStatus @default(EN_COURS)
+  steps       Json                   @default("[]") // appels d'outils : { tool, args, result, at }
+  report      String?
+  error       String?
+  created_at  DateTime               @default(now())
+  updated_at  DateTime               @default(now()) @updatedAt
+  User        User                   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([created_at])
 }
 
 model CronJob {
