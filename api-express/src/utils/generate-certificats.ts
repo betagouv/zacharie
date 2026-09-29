@@ -25,46 +25,50 @@ function checkDatesAreEqual(oldDate: Date, newDate: Date) {
   return dayjs(oldDate).toISOString() === dayjs(newDate).toISOString();
 }
 
+// Certificat émis pour chaque décision IPM2 qui en donne un.
+const certificatTypeByIpm2Decision: Partial<Record<IPM2Decision, CarcasseCertificatType>> = {
+  [IPM2Decision.SAISIE_PARTIELLE]: CarcasseCertificatType.CSP,
+  [IPM2Decision.SAISIE_TOTALE]: CarcasseCertificatType.CST,
+  [IPM2Decision.TRAITEMENT_ASSAINISSANT]: CarcasseCertificatType.LPS,
+  [IPM2Decision.LEVEE_DE_LA_CONSIGNE]: CarcasseCertificatType.LC,
+};
+
 export async function checkGenerateCertificat(oldCarcasse: Carcasse, newCarcasse: Carcasse) {
   if (!checkDatesAreEqual(oldCarcasse.svi_ipm1_signed_at, newCarcasse.svi_ipm1_signed_at)) {
     if (newCarcasse.svi_ipm1_decision === IPM1Decision.MISE_EN_CONSIGNE) {
       await generateDBCertificat(CarcasseCertificatType.CC, newCarcasse.zacharie_carcasse_id);
     }
   } else if (!checkDatesAreEqual(oldCarcasse.svi_ipm2_signed_at, newCarcasse.svi_ipm2_signed_at)) {
-    if (newCarcasse.svi_ipm2_decision === IPM2Decision.SAISIE_PARTIELLE) {
-      await generateDBCertificat(CarcasseCertificatType.CSP, newCarcasse.zacharie_carcasse_id);
-    } else if (newCarcasse.svi_ipm2_decision === IPM2Decision.SAISIE_TOTALE) {
-      await generateDBCertificat(CarcasseCertificatType.CST, newCarcasse.zacharie_carcasse_id);
-    } else if (newCarcasse.svi_ipm2_decision === IPM2Decision.TRAITEMENT_ASSAINISSANT) {
-      await generateDBCertificat(CarcasseCertificatType.LPS, newCarcasse.zacharie_carcasse_id);
-    } else if (newCarcasse.svi_ipm2_decision === IPM2Decision.LEVEE_DE_LA_CONSIGNE) {
-      await generateDBCertificat(CarcasseCertificatType.LC, newCarcasse.zacharie_carcasse_id);
+    const certificatType = newCarcasse.svi_ipm2_decision
+      ? certificatTypeByIpm2Decision[newCarcasse.svi_ipm2_decision]
+      : undefined;
+    if (certificatType) {
+      await generateDBCertificat(certificatType, newCarcasse.zacharie_carcasse_id);
     }
   }
 }
 
 export async function generateCertficatId(entity: Entity, type: CarcasseCertificatType) {
   const year = dayjs().format('YYYY');
-  const inc = (entity.inc_certificat ?? 0) + 1;
-  const code = entity.code_etbt_certificat;
-  const id = `${code}-${type}-${year}-${inc.toString().padStart(4, '0')}`;
-  await prisma.entity.update({
+  // incrément atomique : deux générations simultanées ne peuvent pas obtenir le même numéro
+  const { inc_certificat: inc } = await prisma.entity.update({
     where: { id: entity.id },
-    data: { inc_certificat: inc },
+    data: { inc_certificat: { increment: 1 } },
+    select: { inc_certificat: true },
   });
-  return id;
+  const code = entity.code_etbt_certificat;
+  return `${code}-${type}-${year}-${inc.toString().padStart(4, '0')}`;
 }
 
 export async function generateDecisionId(entity: Entity) {
   const year = dayjs().format('YYYY');
-  const inc = (entity.inc_decision ?? 0) + 1;
-  const code = entity.code_etbt_certificat;
-  const id = `${code}-${year}-${inc.toString().padStart(4, '0')}`;
-  await prisma.entity.update({
+  const { inc_decision: inc } = await prisma.entity.update({
     where: { id: entity.id },
-    data: { inc_decision: inc },
+    data: { inc_decision: { increment: 1 } },
+    select: { inc_decision: true },
   });
-  return id;
+  const code = entity.code_etbt_certificat;
+  return `${code}-${year}-${inc.toString().padStart(4, '0')}`;
 }
 
 function getTraitementAssainissant(existingCarcasse: Carcasse) {
@@ -148,12 +152,26 @@ export async function generateDBCertificat(
     certificatType === CarcasseCertificatType.LPS ||
     certificatType === CarcasseCertificatType.LC;
 
+  if (afterConsigne) {
+    if (
+      !existingCarcasse.svi_ipm2_signed_at ||
+      !existingCarcasse.svi_ipm2_decision ||
+      certificatTypeByIpm2Decision[existingCarcasse.svi_ipm2_decision] !== certificatType
+    ) {
+      return {
+        ok: false,
+        data: { certificat: null },
+        error: 'Ce certificat ne correspond pas à la décision du service vétérinaire',
+      };
+    }
+  }
+
   let numero_decision_ipm1;
   if (afterConsigne) {
     const consigneCertificat = await prisma.carcasseCertificat.findFirst({
       where: {
         zacharie_carcasse_id: existingCarcasse.zacharie_carcasse_id,
-        type: certificatType,
+        type: CarcasseCertificatType.CC,
         svi_ipm1_signed_at: existingCarcasse.svi_ipm1_signed_at,
       },
       orderBy: {
@@ -183,9 +201,6 @@ export async function generateDBCertificat(
 
   const fei = existingCarcasse.Fei;
   const examinateur = fei.FeiExaminateurInitialUser;
-  const etg = fei.CarcasseIntermediaire.find(
-    (intermediaire) => intermediaire.intermediaire_role === EntityTypes.ETG
-  )?.CarcasseIntermediaireEntity;
   const collecteursPro = Array.from(
     new Set(
       fei.CarcasseIntermediaire.filter(
@@ -195,9 +210,28 @@ export async function generateDBCertificat(
   ).join(', ');
 
   if (!certificat) {
+    // l'ETG qui a reçu CETTE carcasse (en dispatch multi-destinataires, une fiche peut avoir plusieurs ETG)
+    const etg = (
+      await prisma.carcasseIntermediaire.findFirst({
+        where: {
+          zacharie_carcasse_id: existingCarcasse.zacharie_carcasse_id,
+          intermediaire_role: FeiOwnerRole.ETG,
+          deleted_at: null,
+        },
+        orderBy: { created_at: 'desc' },
+        select: { CarcasseIntermediaireEntity: true },
+      })
+    )?.CarcasseIntermediaireEntity;
+    if (!etg) {
+      return {
+        ok: false,
+        data: { certificat: null },
+        error: "Aucun ETG n'a pris en charge cette carcasse",
+      };
+    }
+
     // Le n° de bon de réception est saisi par l'ETG au contrôle à réception, sur ses propres carcasses.
-    // On le lit sur l'intermédiaire de CETTE carcasse : `fei.CarcasseIntermediaire` ci-dessus n'est pas
-    // scopé à la carcasse, donc en dispatch multi-destinataires il ramènerait le BR d'un autre ETG.
+    // On le lit sur l'intermédiaire ETG de CETTE carcasse qui l'a saisi.
     const intermediaireEtgDeLaCarcasse = await prisma.carcasseIntermediaire.findFirst({
       where: {
         zacharie_carcasse_id: existingCarcasse.zacharie_carcasse_id,

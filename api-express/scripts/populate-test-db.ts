@@ -7,6 +7,7 @@ import {
   EntityRelationType,
   EntityTypes,
   FeiOwnerRole,
+  IPM1Decision,
   Prisma,
   TransportType,
   Fei,
@@ -770,7 +771,7 @@ Christine
       // });
       console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (for collecteur pro)`);
     }
-    if (role === FeiOwnerRole.SVI) {
+    if (role === FeiOwnerRole.SVI || (role as string) === 'SVI_CONSIGNE') {
       const fei = await prisma.fei.create({ data: feiTransmittedByEtgToSvi });
       const carcasses = await prisma.carcasse.createMany({
         data: getCarcasses(fei, ownershipTransmittedByEtgToSvi),
@@ -790,6 +791,25 @@ Christine
           prise_en_charge_at: dayjs().subtract(2, 'day').toDate(),
         })),
       });
+      // SVI_CONSIGNE : la carcasse MM-001-001 a une décision IPM1 de mise en consigne signée (certificats SVI, e2e spec 140)
+      if ((role as string) === 'SVI_CONSIGNE') {
+        const svi = users.find((u) => u.email === 'svi@example.fr');
+        await prisma.carcasse.update({
+          where: { zacharie_carcasse_id: `${fei.numero}_MM-001-001` },
+          data: {
+            svi_carcasse_status: CarcasseStatus.CONSIGNE,
+            svi_carcasse_status_set_at: dayjs().subtract(1, 'hour').toDate(),
+            svi_ipm1_date: dayjs().subtract(1, 'hour').toDate(),
+            svi_ipm1_presentee_inspection: true,
+            svi_ipm1_user_id: svi?.id,
+            svi_ipm1_pieces: ['Carcasse entière'],
+            svi_ipm1_lesions_ou_motifs: ['Souillures telluriques'],
+            svi_ipm1_decision: IPM1Decision.MISE_EN_CONSIGNE,
+            svi_ipm1_duree_consigne: 48,
+            svi_ipm1_signed_at: dayjs().subtract(1, 'hour').toDate(),
+          },
+        });
+      }
       console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (for svi)`);
     }
     if (role === FeiOwnerRole.COMMERCE_DE_DETAIL) {
