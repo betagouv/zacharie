@@ -79,7 +79,7 @@ Si l'add-on PostgreSQL de Clever Cloud refuse `CREATE ROLE`, demander au support
 | Variable                       | Rôle                                                                                                               |
 | ------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
 | `ALBERT_API_KEY`               | clé Albert API (créée dans le Playground, connexion ProConnect)                                                    |
-| `ALBERT_MODEL`                 | modèle d'enquête, défaut `deepseek-ai/DeepSeek-V4-Flash-0731` (raisonnement + outils, texte seul)                  |
+| `ALBERT_MODEL`                 | modèle d'enquête, défaut `openai/gpt-oss-120b` (raisonnement + outils, texte seul)                                 |
 | `ALBERT_VISION_MODEL`          | modèle qui transcrit les captures d'écran, défaut `google/gemma-4-31B-it`                                          |
 | `ALBERT_API_URL`               | défaut `https://albert.api.etalab.gouv.fr/v1`                                                                      |
 | `ALBERT_READONLY_DATABASE_URL` | URL PostgreSQL avec le rôle `zacharie_albert_readonly`                                                             |
