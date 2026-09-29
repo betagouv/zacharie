@@ -204,14 +204,14 @@ describe('syncFei — deletion', () => {
     });
   });
 
-  test('soft-delete by isZacharieAdmin → allowed', async () => {
+  // les pouvoirs d'admin Zacharie passent par /admin (ProConnect), pas par /sync
+  test('soft-delete by isZacharieAdmin → throws "Unauthorized"', async () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
-    vi.mocked(prisma.fei.update).mockResolvedValue(baseFei as any);
 
     await expect(
       syncFei('FEI-1', { numero: 'FEI-1', deleted_at: '2026-03-01T00:00:00Z' } as any, platformAdmin, scope)
-    ).resolves.toBeDefined();
-    expect(prisma.fei.update).toHaveBeenCalledOnce();
+    ).rejects.toThrow('Unauthorized');
+    expect(prisma.fei.update).not.toHaveBeenCalled();
   });
 
   test('soft-delete by unrelated user → throws "Unauthorized"', async () => {

@@ -59,7 +59,7 @@ Toutes via `sendNotificationToUser`. Dédup via `NotificationLog`. Déclenchées
 | Carcasse refusée                     | examinateur + 1er détenteur  | template `CARCASSE_REFUS` (pas encore créé → texte inline)                      | `carcasse-side-effects.ts:notifyRefusChasseur`                         |
 | FEI clôturée (dernière carcasse)     | examinateur + 1er détenteur  | **template `FEI_CLOSED` (id 91)**                                               | `carcasse-side-effects.ts:closeFeiAndNotifyChasseurOnSviCarcasseClose` |
 | Fiche renvoyée à l'expéditeur        | l'expéditeur (current-owner) | `La fiche {numero} vous a été renvoyée.`                                        | `carcasse-side-effects.ts:notifyRenvoiExpediteur`                      |
-| Nouvel user dans une entité          | admins de l'entité           | `Un nouvel utilisateur s'est inscrit sur Zacharie au sein de votre entité`      | `user-entity.ts:217`                                                   |
+| Nouvel user dans une entité          | admins de l'entité           | `Un nouvel utilisateur s'est inscrit sur Zacharie au sein de votre entité`      | `user-entity.ts:238`                                                   |
 | Modif carcasse signalée (indicative) | examinateur de la FEI        | `Chasse du {date}` / `Demande de modification`                                  | `sync-carcasse-modification-request.ts:250`                            |
 | Retour de l'examinateur sur la modif | le demandeur                 | `Carcasse numéro {bracelet}` / `Demande traitée`                                | `sync-carcasse-modification-request.ts:297`                            |
 

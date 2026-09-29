@@ -1233,6 +1233,7 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
                 entityLink={`/app/admin/entity/${entity.id}`}
                 canApproveRelation={relationType === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY}
                 canDelete={!isSviLinkedToEtg}
+                userEntityPath="admin/user-entity"
                 onChange={() => {
                   loadData(user.id).then((response) => {
                     if (response.data) setUserResponseData(response.data!);
@@ -1273,7 +1274,7 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
                 onSubmit={(event) => {
                   event.preventDefault();
                   API.post({
-                    path: '/user-entity',
+                    path: 'admin/user-entity',
                     body: {
                       [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
                       relation: relationType,

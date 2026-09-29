@@ -25,6 +25,8 @@ interface RelationEntityUserProps {
   displayEntity?: boolean;
   displayUser?: boolean;
   canDelete?: boolean;
+  // les écrans admin Zacharie passent par /admin/user-entity (ProConnect)
+  userEntityPath?: '/user-entity' | 'admin/user-entity';
 }
 
 export default function RelationEntityUser({
@@ -40,6 +42,7 @@ export default function RelationEntityUser({
   displayEntity = true,
   displayUser = false,
   canDelete = false,
+  userEntityPath = '/user-entity',
 }: RelationEntityUserProps) {
   const me = useUser((state) => state.user)!;
   const [searchParams] = useSearchParams();
@@ -189,6 +192,7 @@ export default function RelationEntityUser({
               relation={canHandleCarcassesForEntity}
               user={user}
               onChange={onChange}
+              userEntityPath={userEntityPath}
             />
           </div>
         )}
@@ -200,7 +204,7 @@ export default function RelationEntityUser({
               onClick={() => {
                 if (!window.confirm('Voulez-vous vraiment supprimer cette relation ?')) return;
                 API.delete({
-                  path: '/user-entity',
+                  path: userEntityPath,
                   body: {
                     [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
                     [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entity.id,
@@ -266,11 +270,13 @@ function RelationStatusSelector({
   relation,
   user,
   onChange,
+  userEntityPath,
 }: {
   entity: EntityWithUserRelations;
   user: User;
   relation?: EntityWithUserRelations['EntityRelationsWithUsers'][number];
   onChange?: () => void;
+  userEntityPath: NonNullable<RelationEntityUserProps['userEntityPath']>;
 }) {
   const [status, setStatus] = useState<EntityRelationStatus | null>(relation?.status || null);
   return (
@@ -285,7 +291,7 @@ function RelationStatusSelector({
             return;
         }
         API.put({
-          path: '/user-entity',
+          path: userEntityPath,
           body: {
             [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
             [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entity.id,

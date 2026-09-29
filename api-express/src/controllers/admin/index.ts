@@ -10,6 +10,7 @@ import officialCfeiRouter from './official-cfei.ts';
 import carcasseRouter from './carcasse.ts';
 import analyticsRouter from './analytics.ts';
 import ccgRouter from './ccg.ts';
+import userEntityRouter from './user-entity.ts';
 
 const router: express.Router = express.Router();
 
@@ -48,5 +49,6 @@ router.use(officialCfeiRouter);
 router.use(carcasseRouter);
 router.use(analyticsRouter);
 router.use(ccgRouter);
+router.use(userEntityRouter);
 
 export default router;

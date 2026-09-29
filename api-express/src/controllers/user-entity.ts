@@ -19,7 +19,7 @@ import sendNotificationToUser from '~/service/notifications';
 import { FEDERATION_ENTITY_TYPES } from '~/utils/federation-stats';
 import { z } from 'zod';
 
-const userEntitySchema = z.object({
+export const userEntitySchema = z.object({
   owner_id: z.string(),
   entity_id: z.string().optional(),
   numero_ddecpp: z.string().optional(),
@@ -32,7 +32,7 @@ const userEntitySchema = z.object({
     .optional(),
 });
 
-async function getEntity(body: z.infer<typeof userEntitySchema>) {
+export async function getEntity(body: z.infer<typeof userEntitySchema>) {
   let entityId: string = body.entity_id;
   if (body.numero_ddecpp && body.type === EntityTypes.CCG) {
     const sanitizedNumeroDdecpp = body.numero_ddecpp.toLowerCase().includes('ccg')
@@ -75,10 +75,6 @@ async function getEntity(body: z.infer<typeof userEntitySchema>) {
 async function checkIfUserIsAdmin(body: z.infer<typeof userEntitySchema>, user: User, entity: Entity) {
   if (!body.owner_id) {
     return false;
-  }
-
-  if (user.isZacharieAdmin) {
-    return true;
   }
 
   const isCurrentUserAdminOfEntity = await prisma.entityAndUserRelations.findFirst({
@@ -221,37 +217,34 @@ router.post(
           if (req.user.roles[0] !== UserRoles.CHASSEUR) {
             throw new Error('Forbidden role in notifying entity admin: ' + req.user.roles[0]);
           }
-          const isZacharieAdminSettingRolesToOtherUser = req.user.isZacharieAdmin;
-          if (!isZacharieAdminSettingRolesToOtherUser) {
-            const entityAdmins = await prisma.entityAndUserRelations.findMany({
-              where: {
-                entity_id: entity.id,
-                relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-                status: EntityRelationStatus.ADMIN,
-                deleted_at: null,
+          const entityAdmins = await prisma.entityAndUserRelations.findMany({
+            where: {
+              entity_id: entity.id,
+              relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+              status: EntityRelationStatus.ADMIN,
+              deleted_at: null,
+            },
+            include: {
+              UserRelatedWithEntity: true,
+            },
+          });
+          for (const entityAdminRelation of entityAdmins) {
+            const email = [
+              'Bonjour,',
+              `${req.user.prenom} ${req.user.nom_de_famille} (${req.user.email}) vient de s'inscrire sur Zacharie au sein de ${entity.nom_d_usage}.`,
+              `Pour l'autoriser à traiter des fiches au nom de ${entity.nom_d_usage}, veuillez cliquer sur le lien suivant : https://zacharie.beta.gouv.fr/app/chasseur/profil/coordonnees?open-entity=${entity.id}`,
+              `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur l'attribution de cette fiche, n'hésitez pas à contacter la personne qui vous l'a envoyée.`,
+            ].join('\n\n');
+            await sendNotificationToUser({
+              user: entityAdminRelation.UserRelatedWithEntity,
+              title: "Un nouvel utilisateur s'est inscrit sur Zacharie au sein de votre entité",
+              email: email,
+              push: {
+                title: "Nouvelle demande d'accès",
+                body: `${req.user.prenom} ${req.user.nom_de_famille} souhaite traiter des fiches au nom de ${entity.nom_d_usage}.`,
               },
-              include: {
-                UserRelatedWithEntity: true,
-              },
+              notificationLogAction: `NEW_USER_IN_ENTITY_${entity.id}`,
             });
-            for (const entityAdminRelation of entityAdmins) {
-              const email = [
-                'Bonjour,',
-                `${req.user.prenom} ${req.user.nom_de_famille} (${req.user.email}) vient de s'inscrire sur Zacharie au sein de ${entity.nom_d_usage}.`,
-                `Pour l'autoriser à traiter des fiches au nom de ${entity.nom_d_usage}, veuillez cliquer sur le lien suivant : https://zacharie.beta.gouv.fr/app/chasseur/profil/coordonnees?open-entity=${entity.id}`,
-                `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur l'attribution de cette fiche, n'hésitez pas à contacter la personne qui vous l'a envoyée.`,
-              ].join('\n\n');
-              await sendNotificationToUser({
-                user: entityAdminRelation.UserRelatedWithEntity,
-                title: "Un nouvel utilisateur s'est inscrit sur Zacharie au sein de votre entité",
-                email: email,
-                push: {
-                  title: "Nouvelle demande d'accès",
-                  body: `${req.user.prenom} ${req.user.nom_de_famille} souhaite traiter des fiches au nom de ${entity.nom_d_usage}.`,
-                },
-                notificationLogAction: `NEW_USER_IN_ENTITY_${entity.id}`,
-              });
-            }
           }
         }
       }

@@ -584,6 +584,7 @@ function UserWorkingWithOrFor({
               displayUser={true}
               canApproveRelation
               canDelete
+              userEntityPath="admin/user-entity"
               userLink={`/app/admin/user/${owner.id}`}
               onChange={() => {
                 loadData(entity.id).then((response) => {
@@ -609,7 +610,7 @@ function UserWorkingWithOrFor({
                 event.preventDefault();
                 setIsSaving(true);
                 API.post({
-                  path: '/user-entity',
+                  path: 'admin/user-entity',
                   body: {
                     [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
                     relation: relationType,
