@@ -25,7 +25,7 @@ test('142 - Traçabilité : inspection SVI après la prise en charge ETG du mêm
   await carcasseButton.scrollIntoViewIfNeeded();
   await carcasseButton.click();
 
-  const tracabilite = page.getByRole('heading', { name: 'Traçabilité' }).locator('..');
+  const tracabilite = page.getByRole('heading', { name: 'Traçabilité', exact: true }).locator('..');
   await expect(tracabilite).toBeVisible({ timeout: 10000 });
   await expect(tracabilite).toHaveText(
     /Prise en charge par ETG.*Inspection du service vétérinaire.*Contrôle par service vétérinaire/
