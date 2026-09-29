@@ -87,7 +87,7 @@ describe('runBugInvestigation', () => {
     findUniqueOrThrow.mockResolvedValue({ id: 'inv-1', messages: [structuredClone(firstQuestion)] });
   });
 
-  test('exécute les outils demandés puis enregistre la réponse dans la conversation', async () => {
+  test("contrôle deux fois un premier rapport rendu sans avoir lu de code, puis l'enregistre", async () => {
     albertChatCompletion
       .mockResolvedValueOnce({
         message: {
@@ -103,6 +103,8 @@ describe('runBugInvestigation', () => {
         },
         finishReason: 'tool_calls',
       })
+      .mockResolvedValueOnce({ message: { role: 'assistant', content: 'Brouillon 1' }, finishReason: 'stop' })
+      .mockResolvedValueOnce({ message: { role: 'assistant', content: 'Brouillon 2' }, finishReason: 'stop' })
       .mockResolvedValueOnce({
         message: { role: 'assistant', content: '## Résumé\nRAS' },
         finishReason: 'stop',
@@ -110,6 +112,7 @@ describe('runBugInvestigation', () => {
 
     await runBugInvestigation('inv-1');
 
+    expect(albertChatCompletion).toHaveBeenCalledTimes(4);
     expect(update).toHaveBeenLastCalledWith({
       where: { id: 'inv-1' },
       data: {
@@ -119,10 +122,43 @@ describe('runBugInvestigation', () => {
           firstQuestion,
           expect.objectContaining({ role: 'assistant', content: 'Je vérifie la requête.' }),
           { role: 'tool', tool_call_id: 'call-1', content: expect.stringMatching(/^Refusé/) },
+          { role: 'assistant', content: 'Brouillon 1', draft: true },
+          { role: 'user', content: expect.stringContaining("Tu n'as lu AUCUN fichier"), control: true },
+          { role: 'assistant', content: 'Brouillon 2', draft: true },
+          { role: 'user', content: expect.stringContaining("Tu n'as lu AUCUN fichier"), control: true },
           { role: 'assistant', content: '## Résumé\nRAS' },
         ],
       },
     });
+    // le brouillon et le contrôle sont envoyés à Albert sans les champs internes
+    const lastRequest = albertChatCompletion.mock.calls[3][0].messages;
+    expect(JSON.stringify(lastRequest)).not.toMatch(/"draft"|"control"/);
+  });
+
+  test('contrôle une seule fois un premier rapport quand le code a été lu', async () => {
+    const history: Array<BugInvestigationMessage> = [
+      firstQuestion,
+      {
+        role: 'assistant',
+        content: null,
+        tool_calls: [{ id: 'call-1', type: 'function', function: { name: 'read_file', arguments: '{}' } }],
+      },
+      { role: 'tool', tool_call_id: 'call-1', content: 'contenu du fichier' },
+    ];
+    findUniqueOrThrow.mockResolvedValue({ id: 'inv-1', messages: structuredClone(history) });
+    albertChatCompletion
+      .mockResolvedValueOnce({ message: { role: 'assistant', content: 'Brouillon' }, finishReason: 'stop' })
+      .mockResolvedValueOnce({ message: { role: 'assistant', content: 'Rapport' }, finishReason: 'stop' });
+
+    await runBugInvestigation('inv-1');
+
+    const saved = update.mock.lastCall[0].data;
+    expect(saved.status).toBe('TERMINE');
+    expect(saved.messages.slice(3)).toEqual([
+      { role: 'assistant', content: 'Brouillon', draft: true },
+      { role: 'user', content: expect.not.stringContaining('AUCUN fichier'), control: true },
+      { role: 'assistant', content: 'Rapport' },
+    ]);
   });
 
   test("reprend la conversation et raccourcit les résultats d'outils des tours précédents", async () => {
@@ -188,7 +224,7 @@ describe('runBugInvestigation', () => {
     findUniqueOrThrow.mockResolvedValue({ id: 'inv-1', messages: [structuredClone(withImage)] });
     albertChatCompletion
       .mockResolvedValueOnce({ message: { role: 'assistant', content: 'Aucune action à effectuer' } })
-      .mockResolvedValueOnce({ message: { role: 'assistant', content: 'Réponse' }, finishReason: 'stop' });
+      .mockResolvedValue({ message: { role: 'assistant', content: 'Réponse' }, finishReason: 'stop' });
 
     await runBugInvestigation('inv-1');
 
@@ -197,17 +233,9 @@ describe('runBugInvestigation', () => {
     expect(sentToInvestigator.content).toContain('Regarde');
     expect(sentToInvestigator.content).toContain('Aucune action à effectuer');
     expect(JSON.stringify(sentToInvestigator)).not.toContain('data:image');
-    expect(update).toHaveBeenLastCalledWith({
-      where: { id: 'inv-1' },
-      data: {
-        status: 'TERMINE',
-        live_output: null,
-        messages: [
-          { ...withImage, image_descriptions: ['Aucune action à effectuer'] },
-          { role: 'assistant', content: 'Réponse' },
-        ],
-      },
-    });
+    const saved = update.mock.lastCall[0].data;
+    expect(saved.status).toBe('TERMINE');
+    expect(saved.messages[0]).toEqual({ ...withImage, image_descriptions: ['Aucune action à effectuer'] });
   });
 
   test("garde les résultats complets d'un tour interrompu, sans réponse d'Albert", async () => {

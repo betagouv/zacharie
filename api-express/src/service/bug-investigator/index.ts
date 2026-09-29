@@ -111,7 +111,14 @@ Transcris INTÉGRALEMENT et fidèlement tout le texte visible : titres, onglets,
 }
 
 function toAlbertMessage(message: BugInvestigationMessage): AlbertMessage {
-  if (message.role !== 'user') return message;
+  if (message.role === 'tool') return message;
+  if (message.role === 'assistant') {
+    return {
+      role: 'assistant',
+      content: message.content,
+      ...(message.tool_calls ? { tool_calls: message.tool_calls } : {}),
+    };
+  }
   if (typeof message.content === 'string') return { role: 'user', content: message.content };
   const text = message.content
     .map((part) => (part.type === 'text' ? part.text : ''))
@@ -128,16 +135,46 @@ function toJson(messages: Array<BugInvestigationMessage>) {
   return messages as unknown as Prisma.InputJsonValue;
 }
 
+function isAnswer(message: BugInvestigationMessage) {
+  return message.role === 'assistant' && !message.tool_calls?.length && !message.draft;
+}
+
+// Contrôle du premier rapport : les modèles rapides concluent trop tôt et citent du code qu'ils n'ont pas lu.
+// On renvoie le premier jet à Albert avec une liste de vérifications ; s'il n'a toujours lu aucun fichier
+// de code, on le renvoie une seconde fois.
+const MAX_REPORT_CONTROLS = 2;
+
+function hasReadCode(messages: Array<BugInvestigationMessage>) {
+  return messages.some(
+    (message) =>
+      message.role === 'assistant' && message.tool_calls?.some((call) => call.function.name === 'read_file')
+  );
+}
+
+function buildReportControl(readCode: boolean) {
+  return [
+    'Contrôle automatique avant validation de ton rapport. Ne réponds pas à ce message par un commentaire : vérifie, enquête si besoin, puis rends le rapport complet corrigé.',
+    readCode
+      ? null
+      : "- Tu n'as lu AUCUN fichier de code avec read_file. Ton rapport ne peut citer aucun fichier, aucune fonction ni aucune ligne : lis d'abord le code de la dernière action et de l'écran concerné.",
+    '- Liste chaque fichier, fonction et numéro de ligne que tu cites. Les as-tu lus avec read_file dans cette conversation ? Sinon, lis-les ou retire-les.',
+    "- Reprends chaque symptôme décrit par l'utilisateur (pour chaque acteur). Est-il expliqué, avec une preuve ?",
+    '- Le guide métier décrit-il ce cas ou un cas proche ? Ton explication est-elle cohérente avec lui ?',
+    '- Ton niveau de confiance est-il justifié par ce que tu as réellement vérifié ?',
+  ]
+    .filter(Boolean)
+    .join('\n');
+}
+
 // on ne raccourcit que les tours terminés par une réponse d'Albert : un tour interrompu (erreur,
 // redémarrage) garde ses résultats complets, l'enquête en a encore besoin
 function shortenAnsweredTurns(messages: Array<BugInvestigationMessage>) {
   let lastAnswerIndex = -1;
   messages.forEach((message, index) => {
-    if (message.role === 'assistant' && !message.tool_calls?.length) lastAnswerIndex = index;
+    if (isAnswer(message)) lastAnswerIndex = index;
   });
   return messages.map((message, index): AlbertMessage => {
-    if (message.role === 'user') return toAlbertMessage(message);
-    if (index > lastAnswerIndex || message.role !== 'tool') return message;
+    if (message.role !== 'tool' || index > lastAnswerIndex) return toAlbertMessage(message);
     if (message.content.length <= PREVIOUS_TURNS_TOOL_RESULT_CHARS) return message;
     return {
       ...message,
@@ -201,6 +238,21 @@ export async function runBugInvestigation(id: string) {
       if (!message.tool_calls?.length || outOfBudget) {
         const answer = message.content?.trim();
         if (!answer) throw new Error("Albert n'a pas rendu de réponse");
+        const isFirstReport = !messages.some(isAnswer);
+        const controls = messages.filter((m) => m.role === 'user' && m.control).length;
+        const needsControl =
+          isFirstReport &&
+          !outOfBudget &&
+          (controls === 0 || (controls < MAX_REPORT_CONTROLS && !hasReadCode(messages)));
+        if (needsControl) {
+          messages.push({ role: 'assistant', content: answer, draft: true });
+          messages.push({ role: 'user', content: buildReportControl(hasReadCode(messages)), control: true });
+          await prisma.bugInvestigation.update({
+            where: { id },
+            data: { messages: toJson(messages), live_output: null },
+          });
+          continue;
+        }
         messages.push({ role: 'assistant', content: answer });
         await prisma.bugInvestigation.update({
           where: { id },

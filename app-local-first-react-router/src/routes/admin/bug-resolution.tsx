@@ -64,7 +64,8 @@ function formatToolArgs(args: string) {
 
 type AlbertPart =
   | { kind: 'text'; text: string; isFinal: boolean }
-  | { kind: 'tool'; call: AlbertToolCall; result: string | null };
+  | { kind: 'tool'; call: AlbertToolCall; result: string | null }
+  | { kind: 'collapsed'; title: string; text: string };
 
 type ThreadBlock =
   | { author: 'user'; message: BugInvestigationUserMessage }
@@ -78,15 +79,29 @@ function buildThread(messages: Array<BugInvestigationMessage>): Array<ThreadBloc
   }
   const blocks: Array<ThreadBlock> = [];
   for (const message of messages) {
-    if (message.role === 'user') {
+    if (message.role === 'user' && !message.control) {
       blocks.push({ author: 'user', message });
       continue;
     }
-    if (message.role !== 'assistant') continue;
+    if (message.role === 'tool') continue;
     let block = blocks.at(-1);
     if (block?.author !== 'albert') {
       block = { author: 'albert', parts: [] };
       blocks.push(block);
+    }
+    // le contrôle automatique et le premier jet qu'il vérifie restent visibles, mais repliés
+    if (message.role === 'user') {
+      const text = typeof message.content === 'string' ? message.content : '';
+      block.parts.push({ kind: 'collapsed', title: 'Contrôle automatique du rapport', text });
+      continue;
+    }
+    if (message.draft) {
+      block.parts.push({
+        kind: 'collapsed',
+        title: 'Premier jet du rapport (avant contrôle)',
+        text: message.content ?? '',
+      });
+      continue;
     }
     if (message.content?.trim()) {
       block.parts.push({ kind: 'text', text: message.content.trim(), isFinal: !message.tool_calls?.length });
@@ -454,6 +469,19 @@ export default function AdminBugResolution() {
                       </summary>
                       <pre className="mt-1 max-h-96 overflow-auto bg-gray-100 p-2 text-xs whitespace-pre-wrap">
                         {part.result ?? '…'}
+                      </pre>
+                    </details>
+                  );
+                }
+                if (part.kind === 'collapsed') {
+                  return (
+                    <details
+                      key={partIndex}
+                      className="text-sm text-gray-600"
+                    >
+                      <summary className="cursor-pointer">› {part.title}</summary>
+                      <pre className="mt-1 max-h-96 overflow-auto bg-gray-100 p-2 text-xs whitespace-pre-wrap">
+                        {part.text}
                       </pre>
                     </details>
                   );

@@ -29,6 +29,8 @@ Le prompt système contient une méthode d'enquête (symptômes → chronologie 
 
 Le modèle d'enquête ne lit pas les images. Chaque nouvelle capture est transcrite une fois par le modèle de vision ; la transcription est gardée dans le message (`image_descriptions`) et visible dans le chat (« Ce qu'Albert a lu dans les captures »).
 
+Avant d'accepter le premier rapport d'une conversation, la boucle le renvoie à Albert avec un contrôle automatique : fichiers et fonctions cités réellement lus, chaque symptôme expliqué, cohérence avec le guide métier, confiance justifiée. S'il n'a lu aucun fichier de code, il est renvoyé une seconde fois. Le premier jet et le contrôle sont gardés dans `messages` (`draft`, `control`) et repliés dans le chat.
+
 Un résultat d'outil de plus de 30 000 caractères est tronqué, avec un avertissement en tête qui demande à Albert de refaire une requête plus ciblée.
 
 ## Sécurité de la base
