@@ -53,4 +53,6 @@ test('ETG transport uniquement - la prise en charge suffit à transmettre la fic
   await expect(page).toHaveURL('http://localhost:3290/app/etg');
   await page.getByRole('link', { name: feiId }).click();
   await expect(page.getByRole('button', { name: 'Prendre en charge' })).toBeVisible({ timeout: 10000 });
+  // L'expéditeur est le transport de son propre ETG : un renvoi laisserait la fiche chez l'ETG, sans action
+  await expect(page.getByRole('button', { name: "Renvoyer à l'expéditeur" })).not.toBeVisible();
 });
