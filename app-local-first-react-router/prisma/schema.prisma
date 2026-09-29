@@ -734,6 +734,7 @@ model BugInvestigation {
   description String // premier message, pour la liste des conversations
   status      BugInvestigationStatus @default(EN_COURS)
   messages    Json                   @default("[]") // historique de la conversation avec Albert, sans le prompt système
+  live_output String? // réflexion et réponse d'Albert en cours de streaming, vidée à la fin de chaque étape
   error       String?
   created_at  DateTime               @default(now())
   updated_at  DateTime               @default(now()) @updatedAt

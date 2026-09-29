@@ -8,6 +8,7 @@ CREATE TABLE "BugInvestigation" (
     "description" TEXT NOT NULL,
     "status" "BugInvestigationStatus" NOT NULL DEFAULT 'EN_COURS',
     "messages" JSONB NOT NULL DEFAULT '[]',
+    "live_output" TEXT,
     "error" TEXT,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,

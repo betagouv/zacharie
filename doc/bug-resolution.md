@@ -15,16 +15,17 @@ Page `/app/admin/bug-resolution` : un admin décrit un dysfonctionnement (texte 
 
 Outils d'Albert, tous en lecture :
 
-| Outil          | Source                                                                                                   |
-| -------------- | -------------------------------------------------------------------------------------------------------- |
-| `query_db`     | base de production via le rôle `zacharie_albert_readonly` (voir ci-dessous)                              |
-| `fei_timeline` | base de production : chronologie compacte des actions (`Log`) d'une fiche, champs modifiés avant → après |
-| `search_code`  | recherche de code GitHub sur `betagouv/zacharie` (branche principale)                                    |
-| `read_file`    | GitHub, au commit déployé (`COMMIT_ID` de Clever Cloud, sinon `main`)                                    |
-| `list_dir`     | GitHub, au commit déployé                                                                                |
-| `list_commits` | GitHub, 20 derniers commits au commit déployé                                                            |
+| Outil             | Source                                                                                                   |
+| ----------------- | -------------------------------------------------------------------------------------------------------- |
+| `query_db`        | base de production via le rôle `zacharie_albert_readonly` (voir ci-dessous)                              |
+| `fei_timeline`    | base de production : chronologie compacte des actions (`Log`) d'une fiche, champs modifiés avant → après |
+| `describe_tables` | schéma Prisma local : définition des tables ou enums demandés                                            |
+| `search_code`     | recherche de code GitHub sur `betagouv/zacharie` (branche principale)                                    |
+| `read_file`       | GitHub, au commit déployé (`COMMIT_ID` de Clever Cloud, sinon `main`)                                    |
+| `list_dir`        | GitHub, au commit déployé                                                                                |
+| `list_commits`    | GitHub, 20 derniers commits au commit déployé                                                            |
 
-Le prompt système contient une méthode d'enquête (symptômes → chronologie → état actuel → code → hypothèse qui explique tous les symptômes), le guide métier `api-express/src/service/bug-investigator/metier.md` et le schéma Prisma. **Quand le métier change (nouveau rôle, nouvelle transition de propriété, nouvelle action journalisée), mettre à jour `metier.md`** : c'est ce qu'Albert sait du fonctionnement de Zacharie.
+Le prompt système contient une méthode d'enquête (symptômes → chronologie → état actuel → code → hypothèse qui explique tous les symptômes), le guide métier `api-express/src/service/bug-investigator/metier.md` et la liste des tables. Le schéma Prisma complet n'y est pas (trop long, chaque appel à Albert le renverrait) : Albert lit les tables utiles avec `describe_tables`. **Quand le métier change (nouveau rôle, nouvelle transition de propriété, nouvelle action journalisée), mettre à jour `metier.md`** : c'est ce qu'Albert sait du fonctionnement de Zacharie.
 
 Le modèle d'enquête ne lit pas les images. Chaque nouvelle capture est transcrite une fois par le modèle de vision ; la transcription est gardée dans le message (`image_descriptions`) et visible dans le chat (« Ce qu'Albert a lu dans les captures »).
 

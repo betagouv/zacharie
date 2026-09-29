@@ -29,6 +29,7 @@ const MAX_IMAGE_SIDE = 1600;
 const toolLabels: Record<string, string> = {
   query_db: 'Requête SQL',
   fei_timeline: 'Chronologie de la fiche',
+  describe_tables: 'Structure des tables',
   search_code: 'Recherche dans le code',
   read_file: 'Lecture de fichier',
   list_dir: 'Lecture de dossier',
@@ -477,7 +478,16 @@ export default function AdminBugResolution() {
             </div>
           )
         )}
-        {isRunning && <p className="text-sm text-gray-600 italic">Albert enquête…</p>}
+        {isRunning && (
+          <div className="bg-white p-4">
+            <p className="mb-2 text-sm text-gray-600 italic">Albert réfléchit…</p>
+            {conversation.live_output && (
+              <pre className="max-h-64 overflow-auto bg-gray-100 p-2 text-xs whitespace-pre-wrap text-gray-600">
+                {conversation.live_output}
+              </pre>
+            )}
+          </div>
+        )}
         {conversation.status === BugInvestigationStatus.ERREUR && (
           <div className="fr-alert fr-alert--error fr-alert--sm">
             <p>{conversation.error}</p>
