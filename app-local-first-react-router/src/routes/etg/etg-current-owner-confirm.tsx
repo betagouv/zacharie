@@ -481,14 +481,20 @@ export default function CurrentOwnerConfirm() {
       });
     }
   }
-  actionButtons.push({
-    children: "Renvoyer à l'expéditeur",
-    priority: 'secondary',
-    nativeButtonProps: {
-      type: 'button',
-      onClick: () => renvoiModal.open(),
-    },
-  });
+  // Pas de renvoi quand l'expéditeur est le transport de mon propre ETG : la fiche resterait chez nous.
+  const expediteurIsMyEntity =
+    !!currentTransmission.current_owner_entity_id &&
+    userEntityIds.includes(currentTransmission.current_owner_entity_id);
+  if (!expediteurIsMyEntity) {
+    actionButtons.push({
+      children: "Renvoyer à l'expéditeur",
+      priority: 'secondary',
+      nativeButtonProps: {
+        type: 'button',
+        onClick: () => renvoiModal.open(),
+      },
+    });
+  }
 
   // le n° de bon de réception n'est demandé que si l'ETG destinataire l'a activé dans ses paramètres
   const canFillNumeroBonReception =
