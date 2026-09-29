@@ -4,6 +4,7 @@ import { describe, test, expect, vi, beforeEach } from 'vitest';
 import carcasseRouter from '~/controllers/carcasse';
 import prisma from '~/prisma';
 import { EntityRelationStatus, EntityRelationType, UserRoles } from '@prisma/client';
+import { FORCE_FULL_RELOAD_AFTER } from '~/utils/force-full-reload';
 
 // Permissions for the unified GET /carcasse/ endpoint. After the carcasse-first
 // refactor, the three role-segmented routes (/carcasse/svi, /carcasse/etg,
@@ -225,7 +226,8 @@ describe('Pagination + delta-fetch contract', () => {
   });
 
   test('after=<timestamp> with withDeleted=false → where.updated_at = { gte: Date(after) }', async () => {
-    const cutoff = new Date('2026-03-01T00:00:00Z').getTime();
+    // postérieur à FORCE_FULL_RELOAD_AFTER, sinon le serveur force un rechargement complet
+    const cutoff = FORCE_FULL_RELOAD_AFTER.getTime() + 1;
     await authed(request(app).get(`/carcasse?page=0&after=${cutoff}&limit=100&withDeleted=false`), sviUser);
 
     const where: any = vi.mocked(prisma.carcasse.findMany).mock.calls[0][0]!.where;
@@ -234,7 +236,8 @@ describe('Pagination + delta-fetch contract', () => {
   });
 
   test('withDeleted=true → deleted_at is NOT forced to null; updated_at gates the delta', async () => {
-    const cutoff = new Date('2026-03-01T00:00:00Z').getTime();
+    // postérieur à FORCE_FULL_RELOAD_AFTER, sinon le serveur force un rechargement complet
+    const cutoff = FORCE_FULL_RELOAD_AFTER.getTime() + 1;
     await authed(request(app).get(`/carcasse?page=0&after=${cutoff}&limit=100&withDeleted=true`), sviUser);
 
     const where: any = vi.mocked(prisma.carcasse.findMany).mock.calls[0][0]!.where;
