@@ -14,7 +14,7 @@ import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import dayjs from 'dayjs';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import CardCarcasse from '@app/components/CardCarcasse';
-import { isCarcassePriseEnChargeEnAval } from '@app/utils/carcasse-deja-envoyee';
+import { isCarcasseDejaEnvoyee, isCarcassePriseEnChargeEnAval } from '@app/utils/carcasse-deja-envoyee';
 import type { Carcasse } from '@prisma/client';
 import { lookupAnomalie } from '@app/utils/anomalies-referentiel';
 import { USAGE_DOMESTIQUE_ID, USAGE_DOMESTIQUE_LABEL } from '@app/utils/usage-domestique';
@@ -48,26 +48,40 @@ export default function CarcassesExaminateur({
   const hasCarcasses = carcasses.length > 0;
   const lastEspece = hasCarcasses ? carcasses[carcasses.length - 1].espece : null;
 
-  const { restantes, dejaEnvoyeesParDestinataire } = useMemo(() => {
+  const { restantes, renvoyeesParDestinataire, dejaEnvoyeesParDestinataire } = useMemo(() => {
     const restantesList: Carcasse[] = [];
+    const renvoyees: Record<string, Carcasse[]> = {};
     const grouped: Record<string, Carcasse[]> = {};
     for (const c of carcasses) {
+      if (!isCarcasseDejaEnvoyee(c)) {
+        // Le destinataire a renvoyé la carcasse à l'expéditeur : il vide next_owner mais le
+        // destinataire choisi par le premier détenteur reste en cache jusqu'au prochain envoi.
+        const renvoyeurId = c.premier_detenteur_prochain_detenteur_id_cache;
+        if (!renvoyeurId) {
+          restantesList.push(c);
+          continue;
+        }
+        if (!renvoyees[renvoyeurId]) renvoyees[renvoyeurId] = [];
+        renvoyees[renvoyeurId].push(c);
+        continue;
+      }
       // Côté chasseur, on ne regroupe que par le destinataire choisi par le premier détenteur.
       // Le reste de la chaîne aval (ETG suivant, SVI…) ne le concerne pas.
       const destinataireId = c.consommateur_final_usage_domestique
         ? USAGE_DOMESTIQUE_ID
-        : c.premier_detenteur_prochain_detenteur_id_cache;
-      if (!destinataireId) {
-        restantesList.push(c);
-        continue;
-      }
+        : c.premier_detenteur_prochain_detenteur_id_cache!;
       if (!grouped[destinataireId]) grouped[destinataireId] = [];
       grouped[destinataireId].push(c);
     }
-    return { restantes: restantesList, dejaEnvoyeesParDestinataire: grouped };
+    return {
+      restantes: restantesList,
+      renvoyeesParDestinataire: renvoyees,
+      dejaEnvoyeesParDestinataire: grouped,
+    };
   }, [carcasses]);
 
-  const hasGroups = Object.keys(dejaEnvoyeesParDestinataire).length > 0;
+  const hasGroups =
+    Object.keys(dejaEnvoyeesParDestinataire).length > 0 || Object.keys(renvoyeesParDestinataire).length > 0;
 
   const confirmModal = useRef(
     createModal({ id: `carcasse-confirm-${fei.numero}`, isOpenedByDefault: false })
@@ -158,6 +172,15 @@ export default function CarcassesExaminateur({
               </div>
             </div>
           )}
+          {Object.entries(renvoyeesParDestinataire).map(([entityId, group]) => (
+            <div key={`renvoi-${entityId}`}>
+              <p className="mt-0 mb-2 text-sm text-gray-500">
+                Renvoyée par {entities[entityId]?.nom_d_usage ?? 'le destinataire'}, à attribuer de nouveau (
+                {formatCarcasseLotCount(group)})
+              </p>
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-2">{group.map(renderCarcasseCard)}</div>
+            </div>
+          ))}
           {Object.entries(dejaEnvoyeesParDestinataire).map(([entityId, group]) => (
             <div key={entityId}>
               <p className="mt-0 mb-2 text-sm text-gray-500">
