@@ -10,7 +10,11 @@ vi.mock('~/prisma', () => ({ default: { bugInvestigation: { update, findUniqueOr
 vi.mock('~/third-parties/albert', () => ({ albertChatCompletion }));
 vi.mock('~/third-parties/sentry', () => ({ capture: vi.fn() }));
 
-import { checkReadOnlySql, executeInvestigatorTool } from '~/service/bug-investigator/tools';
+import {
+  checkReadOnlySql,
+  executeInvestigatorTool,
+  summarizeHistory,
+} from '~/service/bug-investigator/tools';
 import { runBugInvestigation } from '~/service/bug-investigator';
 
 describe('checkReadOnlySql', () => {
@@ -29,6 +33,32 @@ describe('checkReadOnlySql', () => {
   test("l'outil query_db refuse une écriture sans toucher à la base", async () => {
     expect(await executeInvestigatorTool('query_db', JSON.stringify({ sql: 'DELETE FROM "Fei"' }))).toMatch(
       /^Refusé/
+    );
+  });
+});
+
+describe('summarizeHistory', () => {
+  test('ne garde que les champs modifiés, avant → après', () => {
+    const history = JSON.stringify({
+      before: {
+        next_owner_role: 'ETG',
+        next_owner_entity_id: 'e1',
+        updated_at: 'a',
+        current_owner_role: 'ETG',
+      },
+      after: {
+        next_owner_role: null,
+        next_owner_entity_id: null,
+        updated_at: 'b',
+        current_owner_role: 'ETG',
+      },
+    });
+    expect(summarizeHistory(history)).toBe('next_owner_role: ETG → null ; next_owner_entity_id: e1 → null');
+  });
+
+  test('résume une création', () => {
+    expect(summarizeHistory({ before: null, after: { numero: 'ZACH-1', is_synced: false } })).toBe(
+      'création : numero=ZACH-1'
     );
   });
 });
@@ -84,7 +114,7 @@ describe('runBugInvestigation', () => {
       firstQuestion,
       {
         role: 'assistant',
-        content: null,
+        content: null as string | null,
         tool_calls: [{ id: 'call-1', type: 'function', function: { name: 'query_db', arguments: '{}' } }],
       },
       { role: 'tool', tool_call_id: 'call-1', content: longResult },
@@ -126,6 +156,38 @@ describe('runBugInvestigation', () => {
     expect(update).toHaveBeenLastCalledWith({
       where: { id: 'inv-1' },
       data: { status: 'ERREUR', error: 'Albert API 500', messages: [firstQuestion] },
+    });
+  });
+
+  test('fait décrire les captures par le modèle de vision, puis envoie la transcription au modèle d’enquête', async () => {
+    const withImage = {
+      role: 'user',
+      content: [
+        { type: 'text', text: 'Regarde' },
+        { type: 'image_url', image_url: { url: 'data:image/jpeg;base64,xxx' } },
+      ],
+    };
+    findUniqueOrThrow.mockResolvedValue({ id: 'inv-1', messages: [structuredClone(withImage)] });
+    albertChatCompletion
+      .mockResolvedValueOnce({ message: { role: 'assistant', content: 'Aucune action à effectuer' } })
+      .mockResolvedValueOnce({ message: { role: 'assistant', content: 'Réponse' }, finishReason: 'stop' });
+
+    await runBugInvestigation('inv-1');
+
+    expect(albertChatCompletion.mock.calls[0][0].model).toBe('google/gemma-4-31B-it');
+    const sentToInvestigator = albertChatCompletion.mock.calls[1][0].messages[1];
+    expect(sentToInvestigator.content).toContain('Regarde');
+    expect(sentToInvestigator.content).toContain('Aucune action à effectuer');
+    expect(JSON.stringify(sentToInvestigator)).not.toContain('data:image');
+    expect(update).toHaveBeenLastCalledWith({
+      where: { id: 'inv-1' },
+      data: {
+        status: 'TERMINE',
+        messages: [
+          { ...withImage, image_descriptions: ['Aucune action à effectuer'] },
+          { role: 'assistant', content: 'Réponse' },
+        ],
+      },
     });
   });
 });

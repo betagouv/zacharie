@@ -24,4 +24,8 @@ export type AlbertMessage =
   | AlbertAssistantMessage
   | AlbertToolMessage;
 
-export type BugInvestigationMessage = AlbertUserMessage | AlbertAssistantMessage | AlbertToolMessage;
+// le modèle d'enquête ne lit pas les images : chaque capture est décrite une fois par le modèle de vision,
+// et la description est gardée avec le message
+export type BugInvestigationUserMessage = AlbertUserMessage & { image_descriptions?: Array<string> };
+
+export type BugInvestigationMessage = BugInvestigationUserMessage | AlbertAssistantMessage | AlbertToolMessage;

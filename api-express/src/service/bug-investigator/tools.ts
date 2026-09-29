@@ -25,6 +25,21 @@ export const investigatorTools: Array<AlbertTool> = [
   {
     type: 'function',
     function: {
+      name: 'fei_timeline',
+      description:
+        "Chronologie complète d'une fiche : toutes les actions de la table Log, dans l'ordre, avec l'utilisateur, son rôle, l'entité, la carcasse et les champs modifiés (avant → après). À appeler EN PREMIER dès qu'un numéro de fiche est connu. La dernière action est signalée à la fin.",
+      parameters: {
+        type: 'object',
+        properties: {
+          fei_numero: { type: 'string', description: 'Numéro de fiche, ex : ZACH-20260925-Q4MVT-085039' },
+        },
+        required: ['fei_numero'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
       name: 'search_code',
       description:
         "Recherche plein texte dans le code du dépôt GitHub (branche principale). Renvoie les fichiers et extraits correspondants. Utilise des mots-clés précis (nom de fonction, texte affiché à l'écran, nom de colonne).",
@@ -91,6 +106,8 @@ export async function executeInvestigatorTool(name: string, rawArgs: string): Pr
     switch (name) {
       case 'query_db':
         return truncate(await queryDb(String(args.sql ?? '')));
+      case 'fei_timeline':
+        return await feiTimeline(String(args.fei_numero ?? ''));
       case 'search_code':
         return truncate(await searchCode(String(args.query ?? '')));
       case 'read_file':
@@ -109,9 +126,10 @@ export async function executeInvestigatorTool(name: string, rawArgs: string): Pr
   }
 }
 
+// l'avertissement est en tête : un modèle qui ne lit que le début doit savoir que la fin manque
 function truncate(text: string) {
   if (text.length <= MAX_RESULT_CHARS) return text;
-  return `${text.slice(0, MAX_RESULT_CHARS)}\n… (résultat tronqué à ${MAX_RESULT_CHARS} caractères)`;
+  return `⚠️ RÉSULTAT TRONQUÉ : seuls les ${MAX_RESULT_CHARS} premiers caractères sur ${text.length} sont affichés, LA FIN MANQUE. Refais une requête plus ciblée (colonnes précises, WHERE, ORDER BY ... DESC, LIMIT) avant de conclure.\n${text.slice(0, MAX_RESULT_CHARS)}`;
 }
 
 /* SQL */
@@ -134,25 +152,114 @@ function getReadonlyPrisma() {
   return readonlyPrisma;
 }
 
-async function queryDb(sql: string) {
-  const check = checkReadOnlySql(sql);
-  if (check.error !== null) return `Refusé : ${check.error}`;
-  const rows = await getReadonlyPrisma().$transaction(
+function readonlyQuery<T>(sql: string, ...params: Array<unknown>) {
+  return getReadonlyPrisma().$transaction(
     async (tx) => {
       await tx.$executeRawUnsafe('SET TRANSACTION READ ONLY');
       await tx.$executeRawUnsafe("SET LOCAL statement_timeout = '10s'");
-      // la sous-requête impose la limite de lignes, et PostgreSQL y refuse les CTE qui écrivent
-      return tx.$queryRawUnsafe<Array<Record<string, unknown>>>(
-        `SELECT * FROM (${check.sql}) AS q LIMIT ${MAX_ROWS + 1}`
-      );
+      return tx.$queryRawUnsafe<Array<T>>(sql, ...params);
     },
     { timeout: 15_000 }
+  );
+}
+
+async function queryDb(sql: string) {
+  const check = checkReadOnlySql(sql);
+  if (check.error !== null) return `Refusé : ${check.error}`;
+  // la sous-requête impose la limite de lignes, et PostgreSQL y refuse les CTE qui écrivent
+  const rows = await readonlyQuery<Record<string, unknown>>(
+    `SELECT * FROM (${check.sql}) AS q LIMIT ${MAX_ROWS + 1}`
   );
   const truncated = rows.length > MAX_ROWS;
   const json = JSON.stringify(rows.slice(0, MAX_ROWS), (_key, value) =>
     typeof value === 'bigint' ? Number(value) : value
   );
   return `${Math.min(rows.length, MAX_ROWS)} ligne(s)${truncated ? ` (limitées à ${MAX_ROWS})` : ''}\n${json}`;
+}
+
+/* Chronologie d'une fiche */
+
+const IGNORED_HISTORY_FIELDS = ['updated_at', 'is_synced'];
+
+function formatValue(value: unknown) {
+  if (value === null || value === undefined) return 'null';
+  const text = typeof value === 'string' ? value : JSON.stringify(value);
+  return text.length > 80 ? `${text.slice(0, 80)}…` : text;
+}
+
+export function summarizeHistory(history: unknown): string {
+  if (!history) return '';
+  let parsed: { before?: Record<string, unknown> | null; after?: Record<string, unknown> | null };
+  try {
+    parsed = typeof history === 'string' ? JSON.parse(history) : (history as typeof parsed);
+  } catch {
+    return formatValue(history);
+  }
+  const before = parsed.before ?? {};
+  const after = parsed.after ?? {};
+  const keys = [...new Set([...Object.keys(before), ...Object.keys(after)])].filter(
+    (key) => !IGNORED_HISTORY_FIELDS.includes(key)
+  );
+  const changes = keys
+    .filter((key) => JSON.stringify(before[key] ?? null) !== JSON.stringify(after[key] ?? null))
+    .map((key) =>
+      parsed.before
+        ? `${key}: ${formatValue(before[key])} → ${formatValue(after[key])}`
+        : `${key}=${formatValue(after[key])}`
+    );
+  if (!changes.length) return '';
+  return parsed.before ? changes.join(' ; ') : `création : ${changes.join(' ; ')}`;
+}
+
+type TimelineRow = {
+  created_at: Date;
+  action: string;
+  user_id: string | null;
+  user_role: string | null;
+  user_name: string | null;
+  entity_id: string | null;
+  entity_name: string | null;
+  zacharie_carcasse_id: string | null;
+  history: unknown;
+};
+
+async function feiTimeline(feiNumero: string) {
+  if (!feiNumero.trim()) return 'Numéro de fiche manquant';
+  const rows = await readonlyQuery<TimelineRow>(
+    `SELECT l."created_at", l."action", l."user_id", l."user_role", l."entity_id", l."zacharie_carcasse_id", l."history",
+       NULLIF(TRIM(CONCAT(u."prenom", ' ', u."nom_de_famille")), '') AS user_name,
+       e."nom_d_usage" AS entity_name
+     FROM "Log" l
+     LEFT JOIN "User" u ON u."id" = l."user_id"
+     LEFT JOIN "Entity" e ON e."id" = l."entity_id"
+     WHERE l."fei_numero" = $1 AND l."deleted_at" IS NULL
+     ORDER BY l."created_at" ASC`,
+    feiNumero.trim()
+  );
+  if (!rows.length) return `Aucune action journalisée pour la fiche ${feiNumero}`;
+  const lines = rows.map((row, index) => {
+    const who = [row.user_name, row.user_id && `(${row.user_id})`, row.user_role].filter(Boolean).join(' ');
+    const entity = row.entity_id ? ` pour ${row.entity_name ?? ''} (${row.entity_id})` : '';
+    const carcasse = row.zacharie_carcasse_id ? ` carcasse ${row.zacharie_carcasse_id}` : '';
+    const changes = summarizeHistory(row.history);
+    return `${index + 1}. ${new Date(row.created_at).toISOString()} ${row.action} — ${who}${entity}${carcasse}${changes ? `\n   ${changes}` : ''}`;
+  });
+  const last = rows.at(-1)!;
+  const footer = `\nDERNIÈRE ACTION : n°${rows.length}, ${last.action} le ${new Date(last.created_at).toISOString()}`;
+  // si c'est trop long, on retire les plus anciennes : ce sont les dernières actions qui expliquent l'état actuel
+  let omitted = 0;
+  while (
+    omitted < lines.length - 1 &&
+    lines.slice(omitted).join('\n').length + footer.length > MAX_RESULT_CHARS
+  ) {
+    omitted++;
+  }
+  const header = `${rows.length} action(s) pour la fiche ${feiNumero}, de la plus ancienne à la plus récente.${
+    omitted
+      ? ` ⚠️ Les ${omitted} plus anciennes sont omises (trop longues) : utilise query_db sur "Log" pour les voir.`
+      : ''
+  }`;
+  return [header, ...lines.slice(omitted)].join('\n') + footer;
 }
 
 /* GitHub */
@@ -164,6 +271,11 @@ function checkRepoPath(path: string) {
 }
 
 async function github(path: string, accept = 'application/vnd.github+json') {
+  if (!GITHUB_TOKEN && path.startsWith('/search/')) {
+    throw new Error(
+      'GITHUB_TOKEN manquant : la recherche de code est indisponible. Utilise list_dir et read_file.'
+    );
+  }
   const response = await fetch(`https://api.github.com${path}`, {
     headers: {
       Accept: accept,
@@ -202,7 +314,8 @@ async function readFile(path: string, startLine: number, endLine: number) {
   const start = Math.max(1, startLine);
   const end = Math.min(lines.length, endLine > 0 ? endLine : lines.length, start + MAX_FILE_LINES - 1);
   const numbered = lines.slice(start - 1, end).map((line, index) => `${start + index}\t${line}`);
-  return `${path} (lignes ${start}-${end} sur ${lines.length})\n${numbered.join('\n')}`;
+  const next = end < lines.length ? `\n… suite du fichier : read_file avec start_line=${end + 1}` : '';
+  return `${path} (lignes ${start}-${end} sur ${lines.length})\n${numbered.join('\n')}${next}`;
 }
 
 async function listDir(path: string) {

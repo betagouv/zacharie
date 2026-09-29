@@ -65,7 +65,9 @@ const NATIVE_PUSH_DRY_RUN = true;
 // Voir doc/bug-resolution.md.
 const ALBERT_API_URL = process.env.ALBERT_API_URL ?? 'https://albert.api.etalab.gouv.fr/v1';
 const ALBERT_API_KEY = process.env.ALBERT_API_KEY ?? '';
-const ALBERT_MODEL = process.env.ALBERT_MODEL ?? 'google/gemma-4-31B-it';
+// modèle d'enquête (raisonnement + outils, texte seul) et modèle de vision qui décrit les captures d'écran
+const ALBERT_MODEL = process.env.ALBERT_MODEL ?? 'deepseek-ai/DeepSeek-V4-Flash-0731';
+const ALBERT_VISION_MODEL = process.env.ALBERT_VISION_MODEL ?? 'google/gemma-4-31B-it';
 const ALBERT_READONLY_DATABASE_URL = process.env.ALBERT_READONLY_DATABASE_URL ?? '';
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN ?? '';
 const GITHUB_REPO = 'betagouv/zacharie';
@@ -100,6 +102,7 @@ export {
   ALBERT_API_URL,
   ALBERT_API_KEY,
   ALBERT_MODEL,
+  ALBERT_VISION_MODEL,
   ALBERT_READONLY_DATABASE_URL,
   GITHUB_TOKEN,
   GITHUB_REPO,

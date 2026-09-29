@@ -11,10 +11,12 @@ export interface AlbertTool {
 const MAX_ATTEMPTS = 5;
 
 export async function albertChatCompletion({
+  model = ALBERT_MODEL,
   messages,
   tools,
   toolChoice,
 }: {
+  model?: string;
   messages: Array<AlbertMessage>;
   tools?: Array<AlbertTool>;
   toolChoice?: 'auto' | 'none';
@@ -25,7 +27,7 @@ export async function albertChatCompletion({
       method: 'POST',
       headers: { Authorization: `Bearer ${ALBERT_API_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: ALBERT_MODEL,
+        model,
         messages,
         // tool_choice vaut "none" par défaut chez Albert : sans "auto" explicite, le modèle n'appelle aucun outil
         ...(tools?.length ? { tools, tool_choice: toolChoice ?? 'auto' } : {}),

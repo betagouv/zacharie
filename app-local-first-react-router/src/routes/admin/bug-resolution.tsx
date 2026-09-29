@@ -13,8 +13,8 @@ import type {
 } from '@api/src/types/responses';
 import type {
   AlbertToolCall,
-  AlbertUserMessage,
   BugInvestigationMessage,
+  BugInvestigationUserMessage,
 } from '@api/src/types/bug-investigation';
 import API from '@app/services/api';
 import Chargement from '@app/components/Chargement';
@@ -28,6 +28,7 @@ const MAX_IMAGE_SIDE = 1600;
 
 const toolLabels: Record<string, string> = {
   query_db: 'Requête SQL',
+  fei_timeline: 'Chronologie de la fiche',
   search_code: 'Recherche dans le code',
   read_file: 'Lecture de fichier',
   list_dir: 'Lecture de dossier',
@@ -65,7 +66,7 @@ type AlbertPart =
   | { kind: 'tool'; call: AlbertToolCall; result: string | null };
 
 type ThreadBlock =
-  | { author: 'user'; message: AlbertUserMessage }
+  | { author: 'user'; message: BugInvestigationUserMessage }
   | { author: 'albert'; parts: Array<AlbertPart> };
 
 // regroupe les messages successifs d'Albert (appels d'outils + réponse) en un seul bloc
@@ -96,7 +97,7 @@ function buildThread(messages: Array<BugInvestigationMessage>): Array<ThreadBloc
   return blocks;
 }
 
-function UserMessageContent({ message }: { message: AlbertUserMessage }) {
+function UserMessageContent({ message }: { message: BugInvestigationUserMessage }) {
   const parts =
     typeof message.content === 'string'
       ? [{ type: 'text' as const, text: message.content }]
@@ -127,6 +128,19 @@ function UserMessageContent({ message }: { message: AlbertUserMessage }) {
             />
           </a>
         )
+      )}
+      {!!message.image_descriptions?.length && (
+        <details className="mt-2 text-sm text-gray-600">
+          <summary className="cursor-pointer">Ce qu'Albert a lu dans les captures</summary>
+          {message.image_descriptions.map((description, index) => (
+            <pre
+              key={index}
+              className="mt-1 max-h-96 overflow-auto bg-gray-100 p-2 text-xs whitespace-pre-wrap"
+            >
+              {description}
+            </pre>
+          ))}
+        </details>
       )}
     </>
   );
