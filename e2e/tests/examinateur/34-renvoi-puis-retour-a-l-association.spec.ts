@@ -34,6 +34,8 @@ function proprietaireInitialSelect(page: Page) {
 test("Renvoi par l'ETG puis retour à l'association : aucune vente fantôme, la fiche reste à transmettre", async ({
   page,
 }) => {
+  // Chasseur en mobile, ETG en desktop
+  await page.setViewportSize({ width: 350, height: 667 });
   await connectWith(page, 'examinateur-premier-detenteur@example.fr');
   await expect(page).toHaveURL('http://localhost:3290/app/chasseur');
 
@@ -89,6 +91,7 @@ test("Renvoi par l'ETG puis retour à l'association : aucune vente fantôme, la 
   await expect(page.getByText(/ETG 1 a été notifié/i)).toBeVisible({ timeout: 10000 });
 
   // L'ETG renvoie la fiche à l'expéditeur
+  await page.setViewportSize({ width: 1280, height: 900 });
   await logoutAndConnect(page, 'etg-1@example.fr');
   await expect(page).toHaveURL('http://localhost:3290/app/etg');
   const etgLink = page.getByRole('link', { name: new RegExp(feiNumero!) });
@@ -102,6 +105,7 @@ test("Renvoi par l'ETG puis retour à l'association : aucune vente fantôme, la 
   await expect(page.getByText("La fiche a été renvoyée à l'expéditeur")).toBeVisible({ timeout: 10000 });
 
   // Le chasseur change de propriétaire initial, puis remet l'association
+  await page.setViewportSize({ width: 350, height: 667 });
   await logoutAndConnect(page, 'examinateur-premier-detenteur@example.fr');
   await page.goto(`http://localhost:3290/app/chasseur/fei/${feiNumero}`);
 
