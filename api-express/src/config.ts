@@ -61,6 +61,19 @@ const PROCONNECT_REDIRECT_URI = `${API_URL}/user/proconnect/callback`;
 // l'interrupteur relevé. On le garde comme coupe-circuit en cas de problème d'envoi en production.
 const NATIVE_PUSH_DRY_RUN = true;
 
+// Résolution de bug (admin) : l'assistant Albert lit le code sur GitHub et la base via un rôle en lecture seule.
+// Voir doc/bug-resolution.md.
+const ALBERT_API_URL = process.env.ALBERT_API_URL ?? 'https://albert.api.etalab.gouv.fr/v1';
+const ALBERT_API_KEY = process.env.ALBERT_API_KEY ?? '';
+// modèle d'enquête (raisonnement + outils, texte seul) et modèle de vision qui décrit les captures d'écran
+const ALBERT_MODEL = process.env.ALBERT_MODEL ?? 'openai/gpt-oss-120b';
+const ALBERT_VISION_MODEL = process.env.ALBERT_VISION_MODEL ?? 'google/gemma-4-31B-it';
+const ALBERT_READONLY_DATABASE_URL = process.env.ALBERT_READONLY_DATABASE_URL ?? '';
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN ?? '';
+const GITHUB_REPO = 'betagouv/zacharie';
+// Clever Cloud expose le commit déployé dans COMMIT_ID : l'assistant lit le code réellement en production
+const SOURCE_COMMIT = process.env.COMMIT_ID ?? 'main';
+
 export {
   PORT,
   ENVIRONMENT,
@@ -86,4 +99,12 @@ export {
   PROCONNECT_CLIENT_ID,
   PROCONNECT_CLIENT_SECRET,
   PROCONNECT_REDIRECT_URI,
+  ALBERT_API_URL,
+  ALBERT_API_KEY,
+  ALBERT_MODEL,
+  ALBERT_VISION_MODEL,
+  ALBERT_READONLY_DATABASE_URL,
+  GITHUB_TOKEN,
+  GITHUB_REPO,
+  SOURCE_COMMIT,
 };

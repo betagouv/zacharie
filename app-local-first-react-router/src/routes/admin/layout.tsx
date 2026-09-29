@@ -34,6 +34,11 @@ const adminLinks = [
     label: 'Quiz',
     icon: 'fr-icon-questionnaire-line',
   },
+  {
+    to: '/app/admin/bug-resolution',
+    label: 'Résolution de bug',
+    icon: 'fr-icon-bug-line',
+  },
 ];
 
 const externalLinks = [

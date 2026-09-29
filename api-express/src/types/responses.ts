@@ -12,8 +12,10 @@ import type {
   ApiKey,
   ApiKeyApprovalByUserOrEntity,
   UserNotifications,
+  BugInvestigation,
 } from '@prisma/client';
 import type { UserForFei, UserForAdmin } from './user';
+import type { BugInvestigationMessage } from './bug-investigation';
 import type { EntityForAdmin, EntityWithUserRelation, EntitiesByTypeAndId, EntitiesById } from './entity';
 
 export interface SearchResponse {
@@ -646,6 +648,34 @@ export interface CarcasseModificationRequestsForExaminateurResponse {
   ok: boolean;
   data: {
     requests: Array<CarcasseModificationRequestPopulated>;
+  } | null;
+  error: string;
+}
+
+type BugInvestigationAuthor = { User: Pick<User, 'prenom' | 'nom_de_famille'> };
+
+export interface AdminBugInvestigationsResponse {
+  ok: boolean;
+  data: {
+    investigations: Array<
+      Pick<BugInvestigation, 'id' | 'description' | 'status' | 'created_at'> & BugInvestigationAuthor
+    >;
+  };
+  error: string;
+}
+
+export interface AdminNewBugInvestigationResponse {
+  ok: boolean;
+  data: { id: BugInvestigation['id'] } | null;
+  error: string;
+}
+
+export interface AdminBugInvestigationResponse {
+  ok: boolean;
+  data: {
+    investigation: Omit<BugInvestigation, 'messages'> & {
+      messages: Array<BugInvestigationMessage>;
+    } & BugInvestigationAuthor;
   } | null;
   error: string;
 }
