@@ -34,6 +34,16 @@ describe('isCarcasseDejaEnvoyee', () => {
     ).toBe(true);
   });
 
+  test('association désignée comme premier détenteur : encore chez le chasseur', () => {
+    expect(
+      isCarcasseDejaEnvoyee({
+        next_owner_entity_id: 'ASSOCIATION-1',
+        next_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+        current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+      })
+    ).toBe(false);
+  });
+
   test('prise en charge par un ETG : déjà partie', () => {
     expect(isCarcasseDejaEnvoyee({ next_owner_entity_id: null, current_owner_role: FeiOwnerRole.ETG })).toBe(
       true
