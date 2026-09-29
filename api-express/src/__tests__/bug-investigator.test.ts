@@ -16,6 +16,7 @@ import {
   summarizeHistory,
 } from '~/service/bug-investigator/tools';
 import { runBugInvestigation } from '~/service/bug-investigator';
+import type { BugInvestigationMessage } from '~/types/bug-investigation';
 
 describe('checkReadOnlySql', () => {
   test('accepte un SELECT ou un WITH, avec ou sans point-virgule final', () => {
@@ -64,7 +65,10 @@ describe('summarizeHistory', () => {
 });
 
 describe('runBugInvestigation', () => {
-  const firstQuestion = { role: 'user', content: [{ type: 'text', text: 'La fiche ne se transmet pas' }] };
+  const firstQuestion: BugInvestigationMessage = {
+    role: 'user',
+    content: [{ type: 'text', text: 'La fiche ne se transmet pas' }],
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -110,7 +114,7 @@ describe('runBugInvestigation', () => {
 
   test("reprend la conversation et raccourcit les résultats d'outils des tours précédents", async () => {
     const longResult = 'x'.repeat(5000);
-    const history = [
+    const history: Array<BugInvestigationMessage> = [
       firstQuestion,
       {
         role: 'assistant',
