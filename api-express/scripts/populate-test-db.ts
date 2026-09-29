@@ -1078,6 +1078,8 @@ Christine
     // 10 pigeons.
     //   - Allier (03) et Ardèche (07) par Marie Martin → comptées
     //   - Allier (03) par le compte admin Zacharie → exclue (fiche de test / tuto vidéo)
+    //   - Ain (01) par Pierre Petit, signée par l'examinateur mais jamais transmise → Pierre Petit
+    //     n'est pas un examinateur actif
     // La fiche admin a exactement la même forme que celle de l'Allier : si l'exclusion des
     // comptes admin régresse, les chiffres de l'Allier doublent.
     if ((role as string) === 'FEDERATION_STATS') {
@@ -1118,8 +1120,11 @@ Christine
         },
       });
 
+      // Sans carcasse : les chiffres de valorisation et sanitaires restent ceux de l'Allier et de l'Ardèche.
+      const feiAinNonTransmise = await prisma.fei.create({ data: feiFederationAinNonTransmise });
+
       console.log(
-        `FEDERATION_STATS seeded: ${feiAllier.numero} (03), ${feiArdeche.numero} (07), ${feiAdmin.numero} (03, admin, exclue)`
+        `FEDERATION_STATS seeded: ${feiAllier.numero} (03), ${feiArdeche.numero} (07), ${feiAdmin.numero} (03, admin, exclue), ${feiAinNonTransmise.numero} (01, non transmise)`
       );
     }
   }
@@ -1415,6 +1420,14 @@ const feiFederationArdeche: Prisma.FeiUncheckedCreateInput = {
   ...feiFederationAllier,
   numero: 'ZACH-20250707-QZ6E0-400002',
   commune_mise_a_mort: '07430 DAVEZIEUX',
+};
+
+const feiFederationAinNonTransmise: Prisma.FeiUncheckedCreateInput = {
+  ...feiFederationAllier,
+  numero: 'ZACH-20250707-0Y545-400004',
+  commune_mise_a_mort: '01000 BOURG-EN-BRESSE',
+  created_by_user_id: '0Y545',
+  examinateur_initial_user_id: '0Y545',
 };
 
 function getCarcasses(
