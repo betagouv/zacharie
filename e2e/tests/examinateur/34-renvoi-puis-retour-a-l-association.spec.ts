@@ -114,7 +114,9 @@ test("Renvoi par l'ETG puis retour à l'association : aucune vente fantôme, la 
   await expect(select).toBeEnabled({ timeout: 10000 });
   await select.selectOption('new-user');
   await page.getByLabel("Saisissez l'email du propriétaire initial").fill('premier-detenteur@example.fr');
-  await page.getByRole('button', { name: 'Rechercher' }).click();
+  const rechercher = page.locator('#content').getByRole('button', { name: 'Rechercher' });
+  await rechercher.scrollIntoViewIfNeeded();
+  await rechercher.click();
   const continuer = page.getByRole('button', { name: 'Continuer' }).first();
   await continuer.scrollIntoViewIfNeeded();
   await continuer.click();
