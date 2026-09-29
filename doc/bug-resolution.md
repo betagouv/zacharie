@@ -1,6 +1,6 @@
 # Résolution de bug (admin)
 
-Page `/app/admin/bug-resolution` : un admin décrit un dysfonctionnement (texte et/ou captures d'écran d'un ticket Notion). Albert (Albert API, DINUM) enquête dans le code et la base de production, puis rend un rapport : résumé, chronologie, cause racine, preuves, plan d'action, niveau de confiance. C'est un chat : l'admin peut ensuite répondre à Albert pour le corriger ou lui poser des questions.
+Page `/app/admin/bug-resolution` : un admin décrit un dysfonctionnement (texte et/ou captures d'écran d'un ticket Notion). Albert (Albert API, DINUM) enquête dans le code et la base de production, puis rend un diagnostic en français : résumé, chronologie, comportement attendu / observé, cause racine avec preuves, correctif proposé sous forme de mini-spec fonctionnelle (sans aucun code ni SQL), niveau de confiance. C'est un chat : l'admin peut ensuite répondre à Albert pour le corriger ou lui poser des questions.
 
 **Albert est en lecture seule.** Il ne peut ni pousser de code, ni modifier la base. Le plan d'action est une proposition que les développeurs valident et exécutent eux-mêmes.
 
