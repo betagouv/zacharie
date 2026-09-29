@@ -387,7 +387,7 @@ function formatModalTimelineDate(date: Date, withTime?: boolean): string {
   return dayjs(date).format(withTime ? 'dddd D MMMM YYYY à HH:mm' : 'dddd D MMMM YYYY');
 }
 
-type ModalTimelineEvent = { date: Date; label: string; withTime?: boolean };
+type ModalTimelineEvent = { date: Date; label: string; withTime?: boolean; sortDate?: Date };
 
 function buildModalTimeline(args: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -440,9 +440,13 @@ function buildModalTimeline(args: {
     });
   }
   if (carcasse.svi_ipm2_date) {
+    // la date d'inspection n'a pas d'heure : on la place après les prises en charge et l'assignation au SVI
+    const ipm2Date = new Date(carcasse.svi_ipm2_date);
+    const previousEventsTimes = events.filter((e) => e.withTime).map((e) => e.date.getTime());
     events.push({
-      date: new Date(carcasse.svi_ipm2_date),
+      date: ipm2Date,
       label: 'Inspection du service vétérinaire',
+      sortDate: new Date(Math.max(ipm2Date.getTime(), ...previousEventsTimes)),
     });
   }
   if (carcasse.svi_carcasse_status_set_at) {
@@ -452,7 +456,7 @@ function buildModalTimeline(args: {
       withTime: true,
     });
   }
-  return events.sort((a, b) => a.date.getTime() - b.date.getTime());
+  return events.sort((a, b) => (a.sortDate ?? a.date).getTime() - (b.sortDate ?? b.date).getTime());
 }
 
 function ModalStatusBadge({
