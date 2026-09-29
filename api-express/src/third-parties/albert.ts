@@ -17,10 +17,18 @@ const MAX_CALL_DURATION_MS = 10 * 60 * 1000;
 
 type StreamDelta = {
   content?: string | null;
+  // texte de réflexion des modèles à raisonnement (le nom du champ dépend de la version de vLLM)
+  reasoning_content?: string | null;
+  reasoning?: string | null;
   tool_calls?: Array<{ index: number; id?: string; function?: { name?: string; arguments?: string } }>;
 };
 
-export type StreamState = { content: string; toolCalls: Array<AlbertToolCall>; finishReason: string };
+export type StreamState = {
+  reasoning: string;
+  content: string;
+  toolCalls: Array<AlbertToolCall>;
+  finishReason: string;
+};
 
 // assemble les fragments du flux (format OpenAI) : le texte et les appels d'outils arrivent par morceaux
 export function applyStreamChunk(
@@ -29,6 +37,8 @@ export function applyStreamChunk(
 ) {
   const choice = chunk.choices?.[0];
   if (!choice) return;
+  const reasoning = choice.delta?.reasoning_content ?? choice.delta?.reasoning;
+  if (reasoning) state.reasoning += reasoning;
   if (choice.delta?.content) state.content += choice.delta.content;
   for (const toolCallDelta of choice.delta?.tool_calls ?? []) {
     const toolCall = (state.toolCalls[toolCallDelta.index] ??= {
@@ -43,8 +53,12 @@ export function applyStreamChunk(
   if (choice.finish_reason) state.finishReason = choice.finish_reason;
 }
 
-async function readStream(response: Response, onActivity: () => void): Promise<StreamState> {
-  const state: StreamState = { content: '', toolCalls: [], finishReason: '' };
+async function readStream(
+  response: Response,
+  onActivity: () => void,
+  onProgress?: (state: StreamState) => void
+): Promise<StreamState> {
+  const state: StreamState = { reasoning: '', content: '', toolCalls: [], finishReason: '' };
   const reader = response.body!.getReader();
   const decoder = new TextDecoder();
   let buffer = '';
@@ -60,6 +74,7 @@ async function readStream(response: Response, onActivity: () => void): Promise<S
       if (!line.startsWith('data:') || !data || data === '[DONE]') continue;
       applyStreamChunk(state, JSON.parse(data));
     }
+    onProgress?.(state);
   }
   return state;
 }
@@ -69,11 +84,13 @@ export async function albertChatCompletion({
   messages,
   tools,
   toolChoice,
+  onProgress,
 }: {
   model?: string;
   messages: Array<AlbertMessage>;
   tools?: Array<AlbertTool>;
   toolChoice?: 'auto' | 'none';
+  onProgress?: (state: StreamState) => void;
 }): Promise<{ message: AlbertAssistantMessage; finishReason: string }> {
   if (!ALBERT_API_KEY) throw new Error('ALBERT_API_KEY manquante');
   let networkAttempts = 0;
@@ -114,7 +131,7 @@ export async function albertChatCompletion({
         signal: controller.signal,
       });
       if (response.ok) {
-        const state = await readStream(response, resetIdleTimer);
+        const state = await readStream(response, resetIdleTimer, onProgress);
         const toolCalls = state.toolCalls.filter((toolCall) => toolCall.function.name);
         return {
           message: {

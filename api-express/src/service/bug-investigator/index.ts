@@ -7,7 +7,7 @@ import { SOURCE_COMMIT, GITHUB_REPO, ALBERT_VISION_MODEL } from '~/config';
 import { capture } from '~/third-parties/sentry';
 import { albertChatCompletion } from '~/third-parties/albert';
 import type { AlbertMessage, BugInvestigationMessage } from '~/types/bug-investigation';
-import { executeInvestigatorTool, investigatorTools } from './tools';
+import { executeInvestigatorTool, investigatorTools, listSchemaBlocks } from './tools';
 
 const MAX_ITERATIONS = 40;
 const MAX_DURATION_MS = 15 * 60 * 1000;
@@ -31,6 +31,7 @@ C'est une conversation : après ta réponse, la personne peut te corriger, te po
 - N'invente jamais d'intention ou d'histoire (« le développeur a probablement oublié… »). Décris des faits.
 - Pas d'excuses, pas de compliments, pas de « tu as raison ». Si on te corrige, vérifie avec les outils puis réponds sur le fond. Si la correction contredit tes preuves, dis-le.
 - Si un résultat d'outil est TRONQUÉ, ne conclus pas : refais une requête plus ciblée.
+- Chaque étape est lente : quand plusieurs appels d'outils sont indépendants, fais-les tous dans la même étape (ex : fei_timeline, describe_tables et la lecture des carcasses ensemble).
 
 # Méthode d'enquête (dans cet ordre)
 1. Symptômes : liste chaque symptôme décrit, pour chaque acteur concerné (ex : « visible chez l'ETG dans À compléter », « la fiche affiche Aucune action à effectuer », « le chasseur voit En cours »). Relève les identifiants : numéro de fiche (ZACH-…), identifiants d'entité ou d'utilisateur dans l'URL, numéros de bracelet.
@@ -63,12 +64,12 @@ Pour les messages suivants, réponds directement à la question, sans reprendre 
 # Guide métier
 ${readLocalFile('src/service/bug-investigator/metier.md')}
 
-Date du jour : ${dayjs().format('YYYY-MM-DD HH:mm')}.
+# Base de données
+Tables (modèles Prisma) : ${listSchemaBlocks('model').join(', ')}.
+Enums : ${listSchemaBlocks('enum').join(', ')}.
+Pour les colonnes exactes d'une table ou les valeurs d'un enum, appelle describe_tables avant d'écrire ta requête.
 
-# Schéma Prisma de la base
-\`\`\`prisma
-${readLocalFile('prisma/schema.prisma')}
-\`\`\``;
+Date du jour : ${dayjs().format('YYYY-MM-DD HH:mm')}.`;
 }
 
 // Le modèle d'enquête ne lit pas les images : le modèle de vision décrit une fois chaque nouvelle capture,
@@ -127,24 +128,49 @@ function toJson(messages: Array<BugInvestigationMessage>) {
   return messages as unknown as Prisma.InputJsonValue;
 }
 
-function shortenPreviousTurns(messages: Array<BugInvestigationMessage>, currentTurnStart: number) {
+// on ne raccourcit que les tours terminés par une réponse d'Albert : un tour interrompu (erreur,
+// redémarrage) garde ses résultats complets, l'enquête en a encore besoin
+function shortenAnsweredTurns(messages: Array<BugInvestigationMessage>) {
+  let lastAnswerIndex = -1;
+  messages.forEach((message, index) => {
+    if (message.role === 'assistant' && !message.tool_calls?.length) lastAnswerIndex = index;
+  });
   return messages.map((message, index): AlbertMessage => {
     if (message.role === 'user') return toAlbertMessage(message);
-    if (index >= currentTurnStart || message.role !== 'tool') return message;
+    if (index > lastAnswerIndex || message.role !== 'tool') return message;
     if (message.content.length <= PREVIOUS_TURNS_TOOL_RESULT_CHARS) return message;
     return {
       ...message,
-      content: `${message.content.slice(0, PREVIOUS_TURNS_TOOL_RESULT_CHARS)}\n… (tronqué)`,
+      content: `(Résultat d'un tour précédent, raccourci : rappelle l'outil si tu as besoin de la suite.)\n${message.content.slice(0, PREVIOUS_TURNS_TOOL_RESULT_CHARS)}\n…`,
     };
   });
+}
+
+const LIVE_OUTPUT_SAVE_INTERVAL_MS = 2000;
+const LIVE_OUTPUT_MAX_CHARS = 4000;
+
+function formatLiveOutput({ reasoning, content }: { reasoning: string; content: string }) {
+  const text = [reasoning.trim(), content.trim()].filter(Boolean).join('\n\n');
+  return text.length > LIVE_OUTPUT_MAX_CHARS ? `…${text.slice(-LIVE_OUTPUT_MAX_CHARS)}` : text;
 }
 
 // Répond au dernier message de l'utilisateur : Albert appelle des outils jusqu'à pouvoir répondre sans outil
 export async function runBugInvestigation(id: string) {
   const investigation = await prisma.bugInvestigation.findUniqueOrThrow({ where: { id } });
   const messages = investigation.messages as unknown as Array<BugInvestigationMessage>;
-  const currentTurnStart = messages.length - 1;
   const startedAt = Date.now();
+  // sauvegardes du texte en cours de streaming : une à la fois, et toujours terminées avant d'enregistrer
+  // l'étape, sinon une sauvegarde en retard réafficherait un texte périmé
+  let liveOutputSave: Promise<unknown> = Promise.resolve();
+  let lastLiveOutputSaveAt = 0;
+  const saveLiveOutput = (state: { reasoning: string; content: string }) => {
+    if (Date.now() - lastLiveOutputSaveAt < LIVE_OUTPUT_SAVE_INTERVAL_MS) return;
+    lastLiveOutputSaveAt = Date.now();
+    const liveOutput = formatLiveOutput(state);
+    liveOutputSave = liveOutputSave
+      .then(() => prisma.bugInvestigation.update({ where: { id }, data: { live_output: liveOutput } }))
+      .catch(() => {});
+  };
 
   try {
     const systemPrompt = buildSystemPrompt();
@@ -155,7 +181,7 @@ export async function runBugInvestigation(id: string) {
       const outOfBudget = iteration >= MAX_ITERATIONS || Date.now() - startedAt > MAX_DURATION_MS;
       const request: Array<AlbertMessage> = [
         { role: 'system', content: systemPrompt },
-        ...shortenPreviousTurns(messages, currentTurnStart),
+        ...shortenAnsweredTurns(messages),
       ];
       if (outOfBudget) {
         request.push({
@@ -168,7 +194,9 @@ export async function runBugInvestigation(id: string) {
         messages: request,
         tools: investigatorTools,
         toolChoice: outOfBudget ? 'none' : 'auto',
+        onProgress: saveLiveOutput,
       });
+      await liveOutputSave;
 
       if (!message.tool_calls?.length || outOfBudget) {
         const answer = message.content?.trim();
@@ -176,7 +204,7 @@ export async function runBugInvestigation(id: string) {
         messages.push({ role: 'assistant', content: answer });
         await prisma.bugInvestigation.update({
           where: { id },
-          data: { status: BugInvestigationStatus.TERMINE, messages: toJson(messages) },
+          data: { status: BugInvestigationStatus.TERMINE, messages: toJson(messages), live_output: null },
         });
         return;
       }
@@ -186,16 +214,21 @@ export async function runBugInvestigation(id: string) {
         const result = await executeInvestigatorTool(toolCall.function.name, toolCall.function.arguments);
         messages.push({ role: 'tool', tool_call_id: toolCall.id, content: result });
       }
-      await prisma.bugInvestigation.update({ where: { id }, data: { messages: toJson(messages) } });
+      await prisma.bugInvestigation.update({
+        where: { id },
+        data: { messages: toJson(messages), live_output: null },
+      });
     }
   } catch (error) {
     capture(error as Error, { extra: { bugInvestigationId: id } });
+    await liveOutputSave;
     await prisma.bugInvestigation.update({
       where: { id },
       data: {
         status: BugInvestigationStatus.ERREUR,
         error: (error as Error).message,
         messages: toJson(messages),
+        live_output: null,
       },
     });
   }

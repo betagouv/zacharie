@@ -38,6 +38,16 @@ describe('checkReadOnlySql', () => {
   });
 });
 
+describe('describeTables', () => {
+  test('renvoie la définition des tables et enums demandés, et signale les noms inconnus', () => {
+    const result = describeTables(['Log', 'FeiOwnerRole', 'Inexistante']);
+    expect(result).toMatch(/^model Log \{[\s\S]*fei_numero[\s\S]*^\}/m);
+    expect(result).toMatch(/^enum FeiOwnerRole \{/m);
+    expect(result).toContain('Inexistante : table ou enum inconnu');
+    expect(listSchemaBlocks('model')).toContain('Carcasse');
+  });
+});
+
 describe('summarizeHistory', () => {
   test('ne garde que les champs modifiés, avant → après', () => {
     const history = JSON.stringify({
@@ -102,6 +112,7 @@ describe('runBugInvestigation', () => {
       where: { id: 'inv-1' },
       data: {
         status: 'TERMINE',
+        live_output: null,
         messages: [
           firstQuestion,
           expect.objectContaining({ role: 'assistant', content: 'Je vérifie la requête.' }),
@@ -147,6 +158,7 @@ describe('runBugInvestigation', () => {
       where: { id: 'inv-1' },
       data: {
         status: 'TERMINE',
+        live_output: null,
         messages: [...history, { role: 'assistant', content: 'Deuxième réponse' }],
       },
     });
@@ -159,7 +171,7 @@ describe('runBugInvestigation', () => {
 
     expect(update).toHaveBeenLastCalledWith({
       where: { id: 'inv-1' },
-      data: { status: 'ERREUR', error: 'Albert API 500', messages: [firstQuestion] },
+      data: { status: 'ERREUR', error: 'Albert API 500', messages: [firstQuestion], live_output: null },
     });
   });
 
@@ -187,11 +199,50 @@ describe('runBugInvestigation', () => {
       where: { id: 'inv-1' },
       data: {
         status: 'TERMINE',
+        live_output: null,
         messages: [
           { ...withImage, image_descriptions: ['Aucune action à effectuer'] },
           { role: 'assistant', content: 'Réponse' },
         ],
       },
     });
+  });
+
+  test("garde les résultats complets d'un tour interrompu, sans réponse d'Albert", async () => {
+    const longResult = 'x'.repeat(5000);
+    const history = [
+      firstQuestion,
+      {
+        role: 'assistant',
+        content: null as string | null,
+        tool_calls: [{ id: 'call-1', type: 'function', function: { name: 'fei_timeline', arguments: '{}' } }],
+      },
+      { role: 'tool', tool_call_id: 'call-1', content: longResult },
+      { role: 'user', content: [{ type: 'text', text: 'Tu en es où ?' }] },
+    ];
+    findUniqueOrThrow.mockResolvedValue({ id: 'inv-1', messages: structuredClone(history) });
+    albertChatCompletion.mockResolvedValueOnce({
+      message: { role: 'assistant', content: 'Réponse' },
+      finishReason: 'stop',
+    });
+
+    await runBugInvestigation('inv-1');
+
+    expect(albertChatCompletion.mock.calls[0][0].messages[3].content).toBe(longResult);
+  });
+
+  test('enregistre le texte en cours de streaming, puis le vide à la fin', async () => {
+    albertChatCompletion.mockImplementationOnce(async ({ onProgress }) => {
+      onProgress({ reasoning: 'Je regarde les logs', content: '' });
+      return { message: { role: 'assistant', content: 'Réponse' }, finishReason: 'stop' };
+    });
+
+    await runBugInvestigation('inv-1');
+
+    expect(update).toHaveBeenCalledWith({
+      where: { id: 'inv-1' },
+      data: { live_output: 'Je regarde les logs' },
+    });
+    expect(update.mock.lastCall[0].data.live_output).toBeNull();
   });
 });

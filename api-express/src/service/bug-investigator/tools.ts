@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import { PrismaClient } from '@prisma/client';
 import { ALBERT_READONLY_DATABASE_URL, GITHUB_REPO, GITHUB_TOKEN, SOURCE_COMMIT } from '~/config';
 import type { AlbertTool } from '~/third-parties/albert';
@@ -34,6 +36,25 @@ export const investigatorTools: Array<AlbertTool> = [
           fei_numero: { type: 'string', description: 'Numéro de fiche, ex : ZACH-20260925-Q4MVT-085039' },
         },
         required: ['fei_numero'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'describe_tables',
+      description:
+        'Renvoie la définition Prisma (colonnes, types, commentaires, relations) des tables ou enums demandés.',
+      parameters: {
+        type: 'object',
+        properties: {
+          names: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Noms de modèles ou d\'enums Prisma, ex : ["Carcasse", "Log", "FeiOwnerRole"]',
+          },
+        },
+        required: ['names'],
       },
     },
   },
@@ -106,6 +127,8 @@ export async function executeInvestigatorTool(name: string, rawArgs: string): Pr
     switch (name) {
       case 'query_db':
         return truncate(await queryDb(String(args.sql ?? '')));
+      case 'describe_tables':
+        return truncate(describeTables(Array.isArray(args.names) ? args.names.map(String) : []));
       case 'fei_timeline':
         return await feiTimeline(String(args.fei_numero ?? ''));
       case 'search_code':
@@ -175,6 +198,32 @@ async function queryDb(sql: string) {
     typeof value === 'bigint' ? Number(value) : value
   );
   return `${Math.min(rows.length, MAX_ROWS)} ligne(s)${truncated ? ` (limitées à ${MAX_ROWS})` : ''}\n${json}`;
+}
+
+/* Schéma Prisma */
+
+let schemaBlocks: Map<string, { kind: 'model' | 'enum'; text: string }> | null = null;
+function getSchemaBlocks() {
+  if (!schemaBlocks) {
+    const schema = fs.readFileSync(path.join(process.cwd(), 'prisma/schema.prisma'), 'utf-8');
+    schemaBlocks = new Map();
+    for (const match of schema.matchAll(/^(model|enum) (\w+) \{[\s\S]*?^\}/gm)) {
+      schemaBlocks.set(match[2], { kind: match[1] as 'model' | 'enum', text: match[0] });
+    }
+  }
+  return schemaBlocks;
+}
+
+export function listSchemaBlocks(kind: 'model' | 'enum') {
+  return [...getSchemaBlocks()].filter(([, block]) => block.kind === kind).map(([name]) => name);
+}
+
+export function describeTables(names: Array<string>) {
+  if (!names.length) return 'Aucun nom de table fourni';
+  const blocks = getSchemaBlocks();
+  return names
+    .map((name) => blocks.get(name.replace(/"/g, '').trim())?.text ?? `${name} : table ou enum inconnu`)
+    .join('\n\n');
 }
 
 /* Chronologie d'une fiche */
