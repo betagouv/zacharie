@@ -12,6 +12,7 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "@e965/xlsx": "^0.20.3",
     "@playwright/test": "^1.53.2",
     "@types/node": "^24.0.10",
     "bcryptjs": "^3.0.2",
