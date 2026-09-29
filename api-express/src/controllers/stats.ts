@@ -31,6 +31,11 @@ const NATIONAL_SEIZURE_RATE_BIG_GAME = 13.75; // % taux de saisie national grand
 const NATIONAL_BPH_RATE_BIG_GAME = 5.49; // % taux BPH national grand gibier
 const NATIONAL_GG_TAUX_SAISIE_25_26 = 23.9; // % taux de saisie national GG saison 25-26 (valeur officielle)
 
+// Rôles d'un destinataire de la fiche : une carcasse qui a eu l'un de ces propriétaires a quitté le chasseur.
+const transmittedOwnerRoles: FeiOwnerRole[] = Object.values(FeiOwnerRole).filter(
+  (role) => role !== FeiOwnerRole.EXAMINATEUR_INITIAL && role !== FeiOwnerRole.PREMIER_DETENTEUR
+);
+
 // Les comptes admin Zacharie servent aux fiches de test et aux tutos vidéo : leurs fiches
 // sont exclues des statistiques fédérations (valorisation, sanitaire, formation).
 // `isNot` matche aussi une relation nulle : une fiche sans examinateur ou sans premier
@@ -629,13 +634,26 @@ router.get(
 
     const { season, seasonStart, seasonEnd } = getCurrentSeason();
 
-    // Q1 — examinateurs actifs (≥1 FEI transmise sur la saison) par dept de prélèvement.
+    // Q1 — examinateurs actifs par dept de prélèvement : ≥1 FEI de la saison dont au moins une
+    // carcasse est partie chez un destinataire (collecteur, ETG, SVI, circuit court). Une fiche
+    // signée par l'examinateur mais jamais transmise ne compte pas. `prev_owner_role` garde
+    // comptée une carcasse renvoyée au chasseur par son destinataire.
     const feis = await prisma.fei.findMany({
       where: {
         deleted_at: null,
         date_mise_a_mort: { gte: seasonStart.toDate(), lte: seasonEnd.toDate() },
         examinateur_initial_user_id: { not: null },
         examinateur_initial_date_approbation_mise_sur_le_marche: { not: null },
+        Carcasses: {
+          some: {
+            deleted_at: null,
+            OR: [
+              { current_owner_role: { in: transmittedOwnerRoles } },
+              { next_owner_role: { in: transmittedOwnerRoles } },
+              { prev_owner_role: { in: transmittedOwnerRoles } },
+            ],
+          },
+        },
         ...EXCLUDE_ADMIN_FEI_WHERE,
       },
       select: {

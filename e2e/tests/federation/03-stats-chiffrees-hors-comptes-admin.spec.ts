@@ -11,6 +11,8 @@ import { connectWith } from '../../utils/connect-with';
 //   - Allier (03), examinateur Marie Martin, 1 carcasse GG saisie
 //   - Ardèche (07), examinateur Marie Martin, aucune saisie
 //   - Allier (03), examinateur = compte admin Zacharie → EXCLUE des statistiques
+//   - Ain (01), examinateur Pierre Petit, fiche signée mais jamais transmise (sans carcasse)
+//     → Pierre Petit n'est PAS un examinateur actif
 // Toutes les autres fixtures du seed sont datées du 07/07/2025, hors saison en cours : elles
 // n'apparaissent jamais dans ces tableaux de bord.
 test.beforeAll(async () => {
@@ -101,6 +103,11 @@ test('FNC — chiffres nationaux, fiches du compte admin exclues', async ({ page
     '10',
   ]);
 
+  // La fiche de l'Ain n'a jamais été transmise : son examinateur n'est pas actif.
+  const ain = page.getByRole('row').filter({ hasText: '01 Ain' });
+  await expect(ain).toHaveCount(1);
+  expect((await rowCells(ain))[1]).toBe('0');
+
   // Ligne Total : un taux ne se somme pas, il vaut « — ».
   const total = page.getByRole('table').locator('tfoot').getByRole('row');
   expect(await rowCells(total)).toEqual(['Total', '2', '6', '0', '0', '6', '—', '20', '0', '0', '20']);
@@ -145,6 +152,11 @@ test('FRC — chiffres limités aux départements de sa région', async ({ page 
   const sanitaire = section(page, 'Suivi sanitaire grand gibier');
   await expect(kpi(sanitaire, 'Examinateurs actifs')).toHaveText('2');
   await expect(kpi(sanitaire, /^Taux de saisie régional saison \d{2}-\d{2}$/)).toHaveText('16.7%');
+
+  // L'Ain est dans la région, mais sa fiche n'a jamais été transmise : 2 examinateurs actifs, pas 3.
+  const ain = page.getByRole('row').filter({ hasText: '01 Ain' });
+  await expect(ain).toHaveCount(1);
+  expect((await rowCells(ain))[1]).toBe('0');
 
   // Périmètre régional : le détail par département est affiché, sans le filtre.
   await expect(page.getByRole('heading', { level: 2, name: 'Détail par département' })).toBeVisible();
