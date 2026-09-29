@@ -19,6 +19,7 @@ import z from 'zod';
 import { capture } from '~/third-parties/sentry';
 import { userFeiSelect } from '~/types/user';
 import { getCarcasseAccessWhere } from '~/utils/carcasse-access';
+import { FORCE_FULL_RELOAD_AFTER } from '~/utils/force-full-reload';
 
 const zodQuerySchema = z.object({
   page: z.string(),
@@ -54,7 +55,10 @@ router.get(
     const parsedPage = parseInt(page, 10);
     const parsedLimit = parseInt(limit, 10);
     const includeDeleted = withDeleted === 'true';
-    const afterDate = Number(after) ? new Date(Number(after)) : undefined;
+    const requestedAfterDate = Number(after) ? new Date(Number(after)) : undefined;
+    // dernier pull antérieur à une correction de données : on renvoie tout le périmètre
+    const fullReload = !!requestedAfterDate && requestedAfterDate < FORCE_FULL_RELOAD_AFTER;
+    const afterDate = fullReload ? undefined : requestedAfterDate;
 
     // Base query conditions : périmètre d'accès role-aware (partagé avec /refusees/:fei_numero).
     const accessWhere = await getCarcasseAccessWhere(req.user);
@@ -160,6 +164,7 @@ router.get(
         carcasseModifRequests,
         hasMore: carcasses.length === parsedLimit,
         total,
+        fullReload,
       },
       error: '',
     });

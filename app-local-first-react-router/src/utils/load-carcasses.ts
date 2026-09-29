@@ -43,6 +43,7 @@ export async function loadCarcasses() {
     const entitiesFetched: CarcassesGetResponse['data']['entities'] = [];
     let page = 0;
     let hasMore = true;
+    let fullReload = false;
 
     while (hasMore) {
       const res = await API.get({
@@ -65,13 +66,14 @@ export async function loadCarcasses() {
       carcasseModifRequests.push(...(res.data.carcasseModifRequests || []));
       carcassesIntermediairesFetched.push(...(res.data.carcassesIntermediaires || []));
       hasMore = res.data.hasMore;
+      if (page === 0) fullReload = res.data.fullReload;
       page += 1;
     }
 
     // Guard against logout/abort races: don't clobber a freshly-reset store.
     if (signal.aborted || !useUser.getState().user) return;
 
-    if (carcassesFetched.length === 0) {
+    if (carcassesFetched.length === 0 && !fullReload) {
       console.log('no carcasses fetched');
       useZustandStore.setState(() => ({
         lastUpdateFromServer: serverDate,
@@ -79,8 +81,13 @@ export async function loadCarcasses() {
       return;
     }
 
+    // Rechargement complet : le serveur a renvoyé tout le périmètre, les copies locales absentes de
+    // la réponse sont sorties du périmètre. On ne garde que les modifications locales pas encore synchronisées.
+    const keepLocal = <T extends { is_synced: boolean }>(items: Array<T>) =>
+      fullReload ? items.filter((item) => !item.is_synced) : items;
+
     const newCarcasses = mergeItems({
-      oldItems: Object.values(useZustandStore.getState().carcasses) || [],
+      oldItems: keepLocal(Object.values(useZustandStore.getState().carcasses)),
       newItems: carcassesFetched,
       idKey: (c) => c.zacharie_carcasse_id,
     });
@@ -92,7 +99,7 @@ export async function loadCarcasses() {
     });
 
     const newCarcassesIntermediaires = mergeItems({
-      oldItems: Object.values(useZustandStore.getState().carcassesIntermediaireById) || [],
+      oldItems: keepLocal(Object.values(useZustandStore.getState().carcassesIntermediaireById)),
       newItems: carcassesIntermediairesFetched,
       idKey: getFeiAndCarcasseAndIntermediaireIds,
     });
@@ -116,7 +123,7 @@ export async function loadCarcasses() {
     // Merge modif requests by their own id (drops cancelled ones via deleted_at, like other entities),
     // then regroup into the full-history-by-carcasse map the store and UI consume.
     const mergedModifRequestsById = mergeItems({
-      oldItems: Object.values(useZustandStore.getState().modifRequestsByCarcasseId).flat(),
+      oldItems: keepLocal(Object.values(useZustandStore.getState().modifRequestsByCarcasseId).flat()),
       newItems: carcasseModifRequests,
       idKey: (r) => r.id,
     });

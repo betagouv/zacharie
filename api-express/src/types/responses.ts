@@ -253,6 +253,8 @@ export interface CarcassesGetResponse {
     carcasseModifRequests: Array<CarcasseModificationRequest>;
     hasMore: boolean;
     total: number;
+    // le client remplace ses carcasses locales au lieu de les merger (voir FORCE_FULL_RELOAD_AFTER)
+    fullReload: boolean;
   };
   error: string;
 }
