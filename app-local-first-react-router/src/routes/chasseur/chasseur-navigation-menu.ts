@@ -18,7 +18,7 @@ export default function useChasseurNavigationMenu(): MainNavigationProps.Item[] 
       ? [
           {
             text: 'Tableau de bord Fédération',
-            isActive: location.pathname === '/app/chasseur/tableau-de-bord-federation',
+            isActive: location.pathname.startsWith('/app/chasseur/tableau-de-bord-federation'),
             linkProps: { to: '/app/chasseur/tableau-de-bord-federation', href: '#' },
           },
         ]

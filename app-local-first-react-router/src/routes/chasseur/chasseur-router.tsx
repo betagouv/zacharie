@@ -131,7 +131,11 @@ export default function RouterChasseur() {
       />
       <Route
         path="tableau-de-bord-federation"
-        element={<FederationTableauDeBord />}
+        element={<FederationTableauDeBord basePath="/app/chasseur/tableau-de-bord-federation" />}
+      />
+      <Route
+        path="tableau-de-bord-federation/:federationId"
+        element={<FederationTableauDeBord basePath="/app/chasseur/tableau-de-bord-federation" />}
       />
       <Route
         path="carcasse-svi/:fei_numero/:zacharie_carcasse_id"

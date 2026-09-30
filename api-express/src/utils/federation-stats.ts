@@ -76,6 +76,39 @@ export async function getUserFederationEntity(userId: string): Promise<Entity | 
   return relation?.EntityRelatedWithUser ?? null;
 }
 
+/**
+ * Une fédération peut consulter le tableau de bord d'une autre fédération si tous les départements
+ * de celle-ci sont dans son propre périmètre : la FNC voit toutes les FRC/FDC, une FRC voit ses FDC,
+ * une FDC ne voit qu'elle-même.
+ */
+export function canAccessFederation(
+  viewer: Pick<Entity, 'scope_departements_codes'>,
+  target: Pick<Entity, 'scope_departements_codes'>
+): boolean {
+  const viewerDepts = new Set(viewer.scope_departements_codes ?? []);
+  const targetDepts = target.scope_departements_codes ?? [];
+  if (targetDepts.length === 0) return false;
+  return targetDepts.every((code) => viewerDepts.has(code));
+}
+
+/**
+ * Fédération dont on affiche le tableau de bord : celle de l'utilisateur par défaut, ou
+ * `targetFederationId` si l'utilisateur a le droit de la consulter. null = accès refusé.
+ */
+export async function getViewableFederationEntity(
+  userId: string,
+  targetFederationId: string | undefined
+): Promise<Entity | null> {
+  const federation = await getUserFederationEntity(userId);
+  if (!federation) return null;
+  if (!targetFederationId || targetFederationId === federation.id) return federation;
+  const target = await prisma.entity.findFirst({
+    where: { id: targetFederationId, type: { in: FEDERATION_ENTITY_TYPES }, deleted_at: null },
+  });
+  if (!target || !canAccessFederation(federation, target)) return null;
+  return target;
+}
+
 export const circuitCourtRoles: FeiOwnerRole[] = [
   FeiOwnerRole.COMMERCE_DE_DETAIL,
   FeiOwnerRole.REPAS_DE_CHASSE_OU_ASSOCIATIF,
