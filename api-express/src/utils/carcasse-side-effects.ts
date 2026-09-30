@@ -6,6 +6,7 @@ import {
   FeiOwnerRole,
   IPM2Decision,
   User,
+  UserNotifications,
   UserRoles,
 } from '@prisma/client';
 import prisma from '~/prisma';
@@ -26,10 +27,13 @@ import { checkGenerateCertificat } from '~/utils/generate-certificats';
 import { isCarcasseDone } from '~/utils/is-carcasse-done';
 import { sendWebhook } from '~/utils/api';
 import {
+  getEmailDeliveryFailure,
+  sendEmail,
   updateBrevoChasseurDeal,
   updateBrevoETGDealPremiereFiche,
   updateBrevoSVIDealPremiereFiche,
 } from '~/third-parties/brevo';
+import { capture } from '~/third-parties/sentry';
 import { getFichePdf } from '~/templates/get-fiche-pdf';
 import { BrevoTemplateId } from '~/third-parties/brevo-templates';
 
@@ -369,6 +373,82 @@ export async function notifySviAssignment(
   return true;
 }
 
+// Délai laissé à Brevo pour remonter un rebond ou un blocage avant qu'on lui demande le statut.
+export const CIRCUIT_COURT_DELIVERY_CHECK_DELAY_MS = 10_000;
+
+type CircuitCourtNotReachedReason = 'NO_RECIPIENT' | 'SEND_FAILED' | 'NOT_DELIVERED';
+
+function scheduleCircuitCourtDeliveryCheck(
+  messageId: string,
+  recipientEmail: string,
+  updatedCarcasse: Carcasse,
+  sender: User
+) {
+  setTimeout(async () => {
+    try {
+      const failure = await getEmailDeliveryFailure(messageId, recipientEmail);
+      if (failure) {
+        await alertSenderCircuitCourtNotReached(updatedCarcasse, sender, 'NOT_DELIVERED');
+      }
+    } catch (error) {
+      capture(error as Error, { extra: { messageId, fei_numero: updatedCarcasse.fei_numero } });
+    }
+  }, CIRCUIT_COURT_DELIVERY_CHECK_DELAY_MS);
+}
+
+// Email texte à l'expéditeur quand la fiche n'a pas atteint le destinataire circuit court. Envoyé
+// même si l'expéditeur a désactivé les emails : c'est son seul moyen de le savoir. Dédupliqué par
+// fiche et destinataire, car le side-effect tourne une fois par carcasse.
+async function alertSenderCircuitCourtNotReached(
+  updatedCarcasse: Carcasse,
+  sender: User,
+  reason: CircuitCourtNotReachedReason
+) {
+  if (!sender.email) return;
+  const action = `FEI_CIRCUIT_COURT_NOT_REACHED_${updatedCarcasse.fei_numero}_${updatedCarcasse.premier_detenteur_prochain_detenteur_id_cache}`;
+  const existing = await prisma.notificationLog.findFirst({
+    where: { user_id: sender.id, type: UserNotifications.EMAIL, action },
+  });
+  if (existing) return;
+
+  const entity = await prisma.entity.findUnique({
+    where: { id: updatedCarcasse.next_owner_entity_id },
+    select: { nom_d_usage: true, raison_sociale: true },
+  });
+  const entityName = entity?.nom_d_usage || entity?.raison_sociale || 'votre destinataire';
+  const numero = updatedCarcasse.fei_numero;
+
+  const explanation = {
+    NO_RECIPIENT: `Aucun compte de ${entityName} ne reçoit les emails de Zacharie.`,
+    SEND_FAILED: `L'envoi de l'email à ${entityName} a échoué.`,
+    NOT_DELIVERED: `L'email n'a pas pu être distribué à l'adresse de ${entityName}.`,
+  }[reason];
+  const whatToDo =
+    reason === 'NOT_DELIVERED'
+      ? `Vous avez reçu une copie de cet email, avec le résumé de la fiche en pièce jointe : transférez-le directement à ${entityName}.`
+      : `Prenez contact avec ${entityName} pour lui transmettre les informations de la fiche.`;
+  const subject = `La fiche ${numero} n'a pas pu être envoyée à ${entityName}`;
+  const text = [
+    `Bonjour,`,
+    `Vous avez attribué la fiche ${numero} à ${entityName}, mais ${entityName} n'a pas reçu l'email avec la fiche. ${explanation}`,
+    whatToDo,
+    `Ce message a été généré automatiquement par l'application Zacharie.`,
+  ].join('\n\n');
+
+  const sent = await sendEmail({ emails: [sender.email], subject, text });
+  // Envoi raté : pas de log, sinon la dédup bloquerait le renvoi à la carcasse suivante.
+  if (!sent) return;
+  await prisma.notificationLog.create({
+    data: {
+      user_id: sender.id,
+      type: UserNotifications.EMAIL,
+      email: sender.email,
+      action,
+      payload: JSON.stringify({ title: subject, body: text, reason }),
+    },
+  });
+}
+
 export async function notifyCircuitCourt(
   existingCarcasse: Carcasse,
   updatedCarcasse: Carcasse,
@@ -432,32 +512,50 @@ export async function notifyCircuitCourt(
     updatedCarcasse.premier_detenteur_prochain_detenteur_id_cache
   );
 
-  for (const nextOwner of usersWorkingForEntity) {
-    if (nextOwner.id !== user.id) {
-      const email = [
-        `Bonjour,`,
-        `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche. Vous trouverez un résumé en pièce jointe, à conserver pour votre enregistrement.`,
-        `Pour consulter la fiche, rendez-vous sur Zacharie avec votre email ${nextOwner.email} : ${circuitCourtUrl}`,
-        `Ce message a été généré automatiquement par l'application Zacharie. Si vous avez des questions sur l'attribution de cette fiche, n'hésitez pas à contacter la personne qui vous l'a envoyée.`,
-      ].join('\n\n');
-      await sendNotificationToUser({
-        user: nextOwner as User,
-        title: `${user.prenom} ${user.nom_de_famille} vous a attribué une fiche d'examen initial du gibier sauvage n° ${updatedCarcasse?.fei_numero}`,
-        email: email,
-        push: {
-          title: 'Nouvelle fiche reçue',
-          body: `${user.prenom} ${user.nom_de_famille} vous a attribué la fiche ${updatedCarcasse.fei_numero}.`,
+  const recipients = usersWorkingForEntity.filter((nextOwner) => nextOwner.id !== user.id);
+  // L'expéditeur est en copie d'un seul email (le premier destinataire qui reçoit les emails), pour
+  // ne pas recevoir une copie par membre de l'entité.
+  const copyRecipient = recipients.find((nextOwner) =>
+    nextOwner.notifications.includes(UserNotifications.EMAIL)
+  );
+  if (!copyRecipient) {
+    await alertSenderCircuitCourtNotReached(updatedCarcasse, user, 'NO_RECIPIENT');
+  }
+
+  for (const nextOwner of recipients) {
+    const email = [
+      `Bonjour,`,
+      `${user.prenom} ${user.nom_de_famille} vous a attribué une nouvelle fiche. Vous trouverez un résumé en pièce jointe, à conserver pour votre enregistrement.`,
+      `Pour consulter la fiche, rendez-vous sur Zacharie avec votre email ${nextOwner.email} : ${circuitCourtUrl}`,
+      `Ce message a été généré automatiquement par l'application Zacharie. Si vous avez des questions sur l'attribution de cette fiche, n'hésitez pas à contacter la personne qui vous l'a envoyée.`,
+    ].join('\n\n');
+    const emailResult = await sendNotificationToUser({
+      user: nextOwner as User,
+      title: `${user.prenom} ${user.nom_de_famille} vous a attribué une fiche d'examen initial du gibier sauvage n° ${updatedCarcasse?.fei_numero}`,
+      email: email,
+      push: {
+        title: 'Nouvelle fiche reçue',
+        body: `${user.prenom} ${user.nom_de_famille} vous a attribué la fiche ${updatedCarcasse.fei_numero}.`,
+      },
+      emailTemplateId: BrevoTemplateId.FEI_ASSIGNED_CIRCUIT_COURT,
+      emailTemplateParams: formatCircuitCourtAssignedTemplateEmail(updatedCarcasse, user, nextOwner.email),
+      notificationLogAction: `FEI_ASSIGNED_TO_${updatedCarcasse.next_owner_role}_${updatedCarcasse.fei_numero}_${updatedCarcasse.premier_detenteur_prochain_detenteur_id_cache}`,
+      attachments: [
+        {
+          content: fichePdf,
+          name: `${updatedCarcasse.fei_numero}.pdf`,
         },
-        emailTemplateId: BrevoTemplateId.FEI_ASSIGNED_CIRCUIT_COURT,
-        emailTemplateParams: formatCircuitCourtAssignedTemplateEmail(updatedCarcasse, user, nextOwner.email),
-        notificationLogAction: `FEI_ASSIGNED_TO_${updatedCarcasse.next_owner_role}_${updatedCarcasse.fei_numero}_${updatedCarcasse.premier_detenteur_prochain_detenteur_id_cache}`,
-        attachments: [
-          {
-            content: fichePdf,
-            name: `${updatedCarcasse.fei_numero}.pdf`,
-          },
-        ],
-      });
+      ],
+      cc: nextOwner === copyRecipient && user.email ? [user.email] : undefined,
+    });
+    if (nextOwner === copyRecipient) {
+      if (emailResult.status === 'FAILED') {
+        await alertSenderCircuitCourtNotReached(updatedCarcasse, user, 'SEND_FAILED');
+      }
+      if (emailResult.status === 'SENT' && emailResult.messageId) {
+        // Pas d'await : la vérification ne doit pas retarder la synchronisation.
+        scheduleCircuitCourtDeliveryCheck(emailResult.messageId, nextOwner.email, updatedCarcasse, user);
+      }
     }
   }
 

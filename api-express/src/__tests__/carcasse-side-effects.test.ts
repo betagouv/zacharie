@@ -1,13 +1,14 @@
-import { describe, test, expect, vi, beforeEach } from 'vitest';
+import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
 import { CarcasseStatus, FeiOwnerRole, UserRoles } from '@prisma/client';
 import prisma from '~/prisma';
 import { VITE_APP_URL } from '~/config';
 import sendNotificationToUser from '~/service/notifications';
 import { sendWebhook } from '~/utils/api';
 import { formatRenvoiExpediteurEmail } from '~/utils/formatCarcasseEmail';
-import { sendTemplateEmail } from '~/third-parties/brevo';
+import { getEmailDeliveryFailure, sendEmail, sendTemplateEmail } from '~/third-parties/brevo';
 import { BrevoTemplateId } from '~/third-parties/brevo-templates';
 import {
+  CIRCUIT_COURT_DELIVERY_CHECK_DELAY_MS,
   closeFeiAndNotifyChasseurOnSviCarcasseClose,
   notifyRenvoiExpediteur,
   notifyCircuitCourt,
@@ -18,7 +19,7 @@ import {
 } from '~/utils/carcasse-side-effects';
 
 vi.mock('~/service/notifications', () => ({
-  default: vi.fn().mockResolvedValue(undefined),
+  default: vi.fn().mockResolvedValue({ status: 'SKIPPED' }),
 }));
 vi.mock('~/templates/get-fiche-pdf', () => ({
   getFichePdf: vi.fn().mockResolvedValue('base64pdf'),
@@ -26,6 +27,7 @@ vi.mock('~/templates/get-fiche-pdf', () => ({
 vi.mock('~/third-parties/brevo', () => ({
   sendEmail: vi.fn().mockResolvedValue(undefined),
   sendTemplateEmail: vi.fn().mockResolvedValue(undefined),
+  getEmailDeliveryFailure: vi.fn().mockResolvedValue(null),
   updateBrevoChasseurDeal: vi.fn().mockResolvedValue(undefined),
   updateBrevoETGDealPremiereFiche: vi.fn().mockResolvedValue(undefined),
   updateBrevoSVIDealPremiereFiche: vi.fn().mockResolvedValue(undefined),
@@ -371,7 +373,12 @@ describe('webhookIntermediaireClose', () => {
 });
 
 describe('notifyCircuitCourt', () => {
-  const actingUser = { id: 'pd-1', prenom: 'Pierre', nom_de_famille: 'Petit' } as any;
+  const actingUser = {
+    id: 'pd-1',
+    prenom: 'Pierre',
+    nom_de_famille: 'Petit',
+    email: 'pierre@example.fr',
+  } as any;
 
   const makeCircuitCarcasse = (overrides: any = {}) => ({
     zacharie_carcasse_id: `${feiNumero}_BR-A`,
@@ -476,6 +483,156 @@ describe('notifyCircuitCourt', () => {
 
     expect(result).toBe(true);
     expect(prisma.carcasse.updateMany).not.toHaveBeenCalled();
+  });
+});
+
+describe('notifyCircuitCourt — copie à l’expéditeur et alerte de non-réception', () => {
+  const sender = { id: 'pd-1', prenom: 'Pierre', nom_de_famille: 'Petit', email: 'pierre@example.fr' } as any;
+  const existing = {
+    fei_numero: feiNumero,
+    premier_detenteur_prochain_detenteur_id_cache: 'commerce-1',
+    next_owner_entity_id: 'commerce-1',
+    next_owner_role: null as FeiOwnerRole | null,
+    examinateur_initial_user_id: 'exam-1',
+    premier_detenteur_user_id: 'pd-1',
+  };
+  const updated = { ...existing, next_owner_role: FeiOwnerRole.COMMERCE_DE_DETAIL };
+  const alertAction = `FEI_CIRCUIT_COURT_NOT_REACHED_${feiNumero}_commerce-1`;
+
+  const makeEntityUser = (id: string, notifications: string[]) => ({
+    UserRelatedWithEntity: {
+      id,
+      email: `${id}@example.fr`,
+      prenom: 'Commerce',
+      nom_de_famille: id,
+      notifications,
+      web_push_tokens: [] as string[],
+      native_push_tokens: [] as string[],
+    },
+  });
+
+  const mockEntityUsers = (users: Array<ReturnType<typeof makeEntityUser>>) =>
+    vi.mocked(prisma.entityAndUserRelations.findMany).mockResolvedValueOnce(users as any);
+
+  const alertCalls = () =>
+    vi.mocked(sendEmail).mock.calls.filter(([props]) => props.emails[0] === sender.email);
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.mocked(prisma.carcasse.findMany).mockResolvedValue([updated] as any);
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: 'pd-1' } as any);
+    vi.mocked(prisma.entity.findUnique).mockResolvedValue({ nom_d_usage: 'Boucherie Martin' } as any);
+    vi.mocked(sendEmail).mockResolvedValue({ messageId: null });
+    vi.mocked(getEmailDeliveryFailure).mockResolvedValue(null);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  test('met l’expéditeur en copie d’un seul email, même avec plusieurs membres', async () => {
+    mockEntityUsers([makeEntityUser('commerce-a', ['EMAIL']), makeEntityUser('commerce-b', ['EMAIL'])]);
+
+    await notifyCircuitCourt(existing as any, updated as any, sender);
+
+    const calls = vi.mocked(sendNotificationToUser).mock.calls.map(([n]) => n);
+    expect(calls).toHaveLength(2);
+    expect(calls[0].cc).toEqual([sender.email]);
+    expect(calls[1].cc).toBeUndefined();
+  });
+
+  test('met en copie le premier membre qui reçoit les emails', async () => {
+    mockEntityUsers([makeEntityUser('commerce-push', ['PUSH']), makeEntityUser('commerce-mail', ['EMAIL'])]);
+
+    await notifyCircuitCourt(existing as any, updated as any, sender);
+
+    const calls = vi.mocked(sendNotificationToUser).mock.calls.map(([n]) => n);
+    expect(calls.find((n) => n.user.id === 'commerce-push').cc).toBeUndefined();
+    expect(calls.find((n) => n.user.id === 'commerce-mail').cc).toEqual([sender.email]);
+    expect(alertCalls()).toHaveLength(0);
+  });
+
+  test('alerte l’expéditeur quand l’entité n’a aucun membre actif', async () => {
+    mockEntityUsers([]);
+
+    await notifyCircuitCourt(existing as any, updated as any, sender);
+
+    expect(alertCalls()).toHaveLength(1);
+    const [{ subject, text }] = alertCalls()[0];
+    expect(subject).toBe(`La fiche ${feiNumero} n'a pas pu être envoyée à Boucherie Martin`);
+    expect(text).toContain('Aucun compte de Boucherie Martin ne reçoit les emails de Zacharie.');
+    expect(prisma.notificationLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ user_id: sender.id, email: sender.email, action: alertAction }),
+    });
+  });
+
+  test('alerte l’expéditeur quand aucun membre ne reçoit les emails', async () => {
+    mockEntityUsers([makeEntityUser('commerce-push', ['PUSH'])]);
+
+    await notifyCircuitCourt(existing as any, updated as any, sender);
+
+    expect(alertCalls()).toHaveLength(1);
+  });
+
+  test('n’alerte pas deux fois pour la même fiche et le même destinataire', async () => {
+    mockEntityUsers([]);
+    vi.mocked(prisma.notificationLog.findFirst).mockResolvedValue({ id: 'log-1' } as any);
+
+    await notifyCircuitCourt(existing as any, updated as any, sender);
+
+    expect(alertCalls()).toHaveLength(0);
+  });
+
+  test('alerte l’expéditeur quand l’envoi de l’email échoue', async () => {
+    mockEntityUsers([makeEntityUser('commerce-a', ['EMAIL'])]);
+    vi.mocked(sendNotificationToUser).mockResolvedValueOnce({ status: 'FAILED' });
+
+    await notifyCircuitCourt(existing as any, updated as any, sender);
+
+    expect(alertCalls()).toHaveLength(1);
+    expect(alertCalls()[0][0].text).toContain("L'envoi de l'email à Boucherie Martin a échoué.");
+    expect(getEmailDeliveryFailure).not.toHaveBeenCalled();
+  });
+
+  test('alerte l’expéditeur quand Brevo signale un rebond après le délai', async () => {
+    mockEntityUsers([makeEntityUser('commerce-a', ['EMAIL'])]);
+    vi.mocked(sendNotificationToUser).mockResolvedValueOnce({ status: 'SENT', messageId: 'msg-1' });
+    vi.mocked(getEmailDeliveryFailure).mockResolvedValue('hardBounces');
+
+    await notifyCircuitCourt(existing as any, updated as any, sender);
+
+    // la vérification n'est pas lancée avant le délai
+    expect(getEmailDeliveryFailure).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(CIRCUIT_COURT_DELIVERY_CHECK_DELAY_MS);
+
+    expect(getEmailDeliveryFailure).toHaveBeenCalledWith('msg-1', 'commerce-a@example.fr');
+    expect(alertCalls()).toHaveLength(1);
+    expect(alertCalls()[0][0].text).toContain(
+      "L'email n'a pas pu être distribué à l'adresse de Boucherie Martin."
+    );
+    expect(alertCalls()[0][0].text).toContain('Vous avez reçu une copie de cet email');
+  });
+
+  test('n’alerte pas quand Brevo ne signale aucun échec', async () => {
+    mockEntityUsers([makeEntityUser('commerce-a', ['EMAIL'])]);
+    vi.mocked(sendNotificationToUser).mockResolvedValueOnce({ status: 'SENT', messageId: 'msg-1' });
+
+    await notifyCircuitCourt(existing as any, updated as any, sender);
+    await vi.advanceTimersByTimeAsync(CIRCUIT_COURT_DELIVERY_CHECK_DELAY_MS);
+
+    expect(getEmailDeliveryFailure).toHaveBeenCalledOnce();
+    expect(alertCalls()).toHaveLength(0);
+  });
+
+  test('ne vérifie rien quand l’email a déjà été envoyé pour une autre carcasse', async () => {
+    mockEntityUsers([makeEntityUser('commerce-a', ['EMAIL'])]);
+    vi.mocked(sendNotificationToUser).mockResolvedValueOnce({ status: 'SKIPPED' });
+
+    await notifyCircuitCourt(existing as any, updated as any, sender);
+    await vi.advanceTimersByTimeAsync(CIRCUIT_COURT_DELIVERY_CHECK_DELAY_MS);
+
+    expect(getEmailDeliveryFailure).not.toHaveBeenCalled();
+    expect(alertCalls()).toHaveLength(0);
   });
 });
 

@@ -21,16 +21,20 @@ type SendEmailProps = {
     email: string;
   };
   attachments?: brevo.SendSmtpEmailAttachmentInner[];
+  cc?: Array<string>;
 };
 
-// Renvoie `true` si l'email est parti (ou a été volontairement court-circuité en dev), `false` en cas
-// d'échec. L'appelant s'en sert pour ne pas enregistrer un envoi raté comme un succès.
-async function sendEmail(props: SendEmailProps): Promise<boolean> {
+// `messageId` est l'identifiant Brevo de l'envoi, `null` quand l'envoi est court-circuité en dev.
+export type SentEmail = { messageId: string | null };
+
+// Renvoie un `SentEmail` si l'email est parti (ou a été volontairement court-circuité en dev), `false`
+// en cas d'échec. L'appelant s'en sert pour ne pas enregistrer un envoi raté comme un succès.
+async function sendEmail(props: SendEmailProps): Promise<SentEmail | false> {
   try {
     if (IS_DEV_OR_TEST) {
       console.log('Sending email in development mode');
       console.log(props);
-      return true;
+      return { messageId: null };
     }
     if (!props.html && !props.text) {
       throw new Error('html or text is required');
@@ -58,9 +62,11 @@ async function sendEmail(props: SendEmailProps): Promise<boolean> {
       sendSmtpEmail.attachment = props.attachments;
     }
     sendSmtpEmail.to = props.emails.map((email) => ({ email }));
+    if (props.cc?.length) {
+      sendSmtpEmail.cc = props.cc.map((email) => ({ email }));
+    }
     const result = await apiInstance.sendTransacEmail(sendSmtpEmail);
-    // console.log('Email sent successfully:', result);
-    return true;
+    return { messageId: result.body.messageId ?? null };
   } catch (error) {
     // Ni contenu ni paramètres : ils portent des liens avec jeton (reset, invitation) et des données personnelles.
     capture(error as Error, {
@@ -84,12 +90,13 @@ type SendTemplateEmailProps = {
     email: string;
   };
   attachments?: brevo.SendSmtpEmailAttachmentInner[];
+  cc?: Array<string>;
 };
 
 // Envoi via un template Brevo (sujet + HTML gérés côté dashboard Brevo, remplis par `params`).
 // À utiliser pour tout email migré ; le contenu n'est plus construit dans le code.
-// Même contrat de retour que `sendEmail` : `true` si parti, `false` sinon.
-async function sendTemplateEmail(props: SendTemplateEmailProps): Promise<boolean> {
+// Même contrat de retour que `sendEmail` : un `SentEmail` si parti, `false` sinon.
+async function sendTemplateEmail(props: SendTemplateEmailProps): Promise<SentEmail | false> {
   try {
     // Les ids du registre valent `null` tant que le template n'existe pas côté Brevo, et
     // `strictNullChecks` étant désactivé le compilateur laisse passer ce `null` : sans ce garde
@@ -106,7 +113,7 @@ async function sendTemplateEmail(props: SendTemplateEmailProps): Promise<boolean
     if (IS_DEV_OR_TEST) {
       console.log('Sending template email in development mode');
       console.log(props);
-      return true;
+      return { messageId: null };
     }
     const apiInstance = new brevo.TransactionalEmailsApi();
     apiInstance.setApiKey(brevo.TransactionalEmailsApiApiKeys.apiKey, API_KEY);
@@ -123,8 +130,11 @@ async function sendTemplateEmail(props: SendTemplateEmailProps): Promise<boolean
       sendSmtpEmail.attachment = props.attachments;
     }
     sendSmtpEmail.to = props.emails.map((email) => ({ email }));
-    await apiInstance.sendTransacEmail(sendSmtpEmail);
-    return true;
+    if (props.cc?.length) {
+      sendSmtpEmail.cc = props.cc.map((email) => ({ email }));
+    }
+    const result = await apiInstance.sendTransacEmail(sendSmtpEmail);
+    return { messageId: result.body.messageId ?? null };
   } catch (error) {
     capture(error as Error, {
       extra: {
@@ -133,6 +143,38 @@ async function sendTemplateEmail(props: SendTemplateEmailProps): Promise<boolean
       },
     });
     return false;
+  }
+}
+
+// Évènements Brevo qui signifient que l'email n'a pas atteint le destinataire.
+const DELIVERY_FAILURE_EVENTS = ['bounces', 'hardBounces', 'softBounces', 'invalid', 'blocked', 'error'];
+
+// Renvoie le premier évènement d'échec connu de Brevo pour cet envoi et ce destinataire, `null` sinon.
+// Une erreur de l'API Brevo renvoie aussi `null` : faute de savoir, on ne signale pas d'échec.
+async function getEmailDeliveryFailure(messageId: string, email: string): Promise<string | null> {
+  try {
+    const apiInstance = new brevo.TransactionalEmailsApi();
+    apiInstance.setApiKey(brevo.TransactionalEmailsApiApiKeys.apiKey, API_KEY);
+    // `days: 2` couvre un envoi fait juste avant minuit.
+    const result = await apiInstance.getEmailEventReport(
+      50,
+      0,
+      undefined,
+      undefined,
+      2,
+      email,
+      undefined,
+      undefined,
+      messageId
+    );
+    // Le SDK type `event` en enum numérique, mais l'API renvoie le nom de l'évènement.
+    const failure = (result.body.events ?? []).find((event) =>
+      DELIVERY_FAILURE_EVENTS.includes(String(event.event))
+    );
+    return failure ? String(failure.event) : null;
+  } catch (error) {
+    capture(error as Error, { extra: { messageId } });
+    return null;
   }
 }
 
@@ -845,6 +887,7 @@ export {
   // services
   sendEmail,
   sendTemplateEmail,
+  getEmailDeliveryFailure,
   // specific to zacharie
   // contact
   createBrevoContactFromContactForm,
