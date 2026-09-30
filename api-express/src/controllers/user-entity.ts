@@ -91,6 +91,35 @@ async function checkIfUserIsAdmin(body: z.infer<typeof userEntitySchema>, user: 
   return false;
 }
 
+// une entité doit toujours garder un admin pour gérer ses utilisateurs
+async function getLastAdminSituation(relation: {
+  id: string;
+  entity_id: string;
+  relation: EntityRelationType;
+  status: EntityRelationStatus;
+}): Promise<'NOT_LAST_ADMIN' | 'LAST_ADMIN_WITH_OTHER_USERS' | 'SOLE_USER'> {
+  if (
+    relation.relation !== EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY ||
+    relation.status !== EntityRelationStatus.ADMIN
+  ) {
+    return 'NOT_LAST_ADMIN';
+  }
+  const otherRelations = await prisma.entityAndUserRelations.findMany({
+    where: {
+      entity_id: relation.entity_id,
+      relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+      deleted_at: null,
+      id: { not: relation.id },
+      // les admins Zacharie rattachés à une entité (support, tests) n'en sont pas membres
+      UserRelatedWithEntity: { isZacharieAdmin: false },
+    },
+    select: { status: true },
+  });
+  if (otherRelations.some((other) => other.status === EntityRelationStatus.ADMIN)) return 'NOT_LAST_ADMIN';
+  if (otherRelations.length > 0) return 'LAST_ADMIN_WITH_OTHER_USERS';
+  return 'SOLE_USER';
+}
+
 async function checkIfUserCanCrudEntityRelation(
   body: z.infer<typeof userEntitySchema>,
   user: User,
@@ -336,6 +365,18 @@ router.put(
         }
       }
 
+      if (nextEntityRelation.status && nextEntityRelation.status !== EntityRelationStatus.ADMIN) {
+        if ((await getLastAdminSituation(existingEntityRelation)) !== 'NOT_LAST_ADMIN') {
+          res.status(409).send({
+            ok: false,
+            data: { relation: null, entity: null },
+            error:
+              'Vous êtes le seul administrateur de cette entité. Nommez un autre administrateur avant de retirer vos droits.',
+          });
+          return;
+        }
+      }
+
       const relation = await prisma.entityAndUserRelations.update({
         where: {
           id: existingEntityRelation.id,
@@ -412,11 +453,40 @@ router.delete(
       });
 
       if (existingEntityRelation) {
+        const lastAdminSituation = await getLastAdminSituation(existingEntityRelation);
+        if (lastAdminSituation === 'LAST_ADMIN_WITH_OTHER_USERS') {
+          res.status(409).send({
+            ok: false,
+            data: { relation: null, entity: null },
+            error:
+              'Vous êtes le seul administrateur de cette entité. Nommez un autre administrateur avant de la quitter.',
+          });
+          return;
+        }
+        // seul utilisateur d'une association de chasse : la quitter la supprime.
+        // les autres entités (ETG, SVI...) sont gérées par l'équipe Zacharie
+        const softDeleteEntity =
+          lastAdminSituation === 'SOLE_USER' && entity.type === EntityTypes.PREMIER_DETENTEUR;
+        if (lastAdminSituation === 'SOLE_USER' && !softDeleteEntity) {
+          res.status(409).send({
+            ok: false,
+            data: { relation: null, entity: null },
+            error:
+              "Vous êtes le seul utilisateur de cette entité. Contactez l'équipe Zacharie pour la quitter.",
+          });
+          return;
+        }
         await prisma.entityAndUserRelations.delete({
           where: {
             id: existingEntityRelation.id,
           },
         });
+        if (softDeleteEntity) {
+          await prisma.entity.update({
+            where: { id: entity.id },
+            data: { deleted_at: new Date() },
+          });
+        }
         if (existingEntityRelation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
           await unlinkBrevoCompanyToContact(entity, req.user);
         }

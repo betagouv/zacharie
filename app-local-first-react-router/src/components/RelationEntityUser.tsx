@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { Button } from '@codegouvfr/react-dsfr/Button';
-import { EntityRelationType, EntityRelationStatus, User, Prisma } from '@prisma/client';
+import { EntityRelationType, EntityRelationStatus, EntityTypes, User, Prisma } from '@prisma/client';
 import type { EntityWithUserRelations } from '@api/src/types/entity';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
@@ -74,6 +74,16 @@ export default function RelationEntityUser({
     ? false
     : canHandleCarcassesForEntity.status === EntityRelationStatus.ADMIN &&
       canHandleCarcassesForEntity.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY;
+
+  // la quitter supprime l'association de Zacharie (cf. DELETE /user-entity)
+  const isSoleUserOfAssociation =
+    entity.type === EntityTypes.PREMIER_DETENTEUR &&
+    isAdminOfEntity &&
+    !entity.EntityRelationsWithUsers?.some(
+      (relation) =>
+        relation.owner_id !== user.id &&
+        relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
+    );
 
   const myRelationIsPending = !canHandleCarcassesForEntity
     ? false
@@ -202,7 +212,10 @@ export default function RelationEntityUser({
               type="button"
               iconId="fr-icon-delete-bin-line"
               onClick={() => {
-                if (!window.confirm('Voulez-vous vraiment supprimer cette relation ?')) return;
+                const confirmMessage = isSoleUserOfAssociation
+                  ? 'Vous êtes le seul membre de cette association, voulez-vous vraiment la supprimer de Zacharie ?'
+                  : 'Voulez-vous vraiment supprimer cette relation ?';
+                if (!window.confirm(confirmMessage)) return;
                 API.delete({
                   path: userEntityPath,
                   body: {
@@ -213,6 +226,8 @@ export default function RelationEntityUser({
                 }).then((res) => {
                   if (res.ok) {
                     onChange?.();
+                  } else if (res.error) {
+                    window.alert(res.error);
                   }
                 });
               }}
@@ -302,10 +317,13 @@ function RelationStatusSelector({
           if (res.ok) {
             onChange?.();
             setStatus(newStatus || null);
+          } else if (res.error) {
+            window.alert(res.error);
           }
         });
       }}
       className="w-full bg-white"
+      classNamePrefix="select-relation-status"
       value={relationStatusOptions.find((opt) => opt.value === status)}
     />
   );
