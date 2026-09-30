@@ -80,7 +80,7 @@ interface ApiResponse<T> {
   error?: string;
 }
 
-function useEndpoint<T>(path: string) {
+function useEndpoint<T>(path: string, federationId: string | undefined) {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -91,7 +91,10 @@ function useEndpoint<T>(path: string) {
       try {
         setLoading(true);
         setError(null);
-        const response = (await API.get({ path })) as ApiResponse<T>;
+        const response = (await API.get({
+          path,
+          query: federationId ? { federation_id: federationId } : {},
+        })) as ApiResponse<T>;
         if (cancelled) return;
         if (response.ok && response.data) {
           setData(response.data);
@@ -109,7 +112,7 @@ function useEndpoint<T>(path: string) {
     return () => {
       cancelled = true;
     };
-  }, [path]);
+  }, [path, federationId]);
 
   return { data, loading, error };
 }
@@ -141,10 +144,9 @@ interface Props {
 
 export default function FederationTableauDeBord({ basePath }: Props) {
   const { federationId } = useParams();
-  const query = federationId ? `?federation_id=${encodeURIComponent(federationId)}` : '';
-  const valo = useEndpoint<ValorisationData>(`/stats/federation/valorisation${query}`);
-  const sani = useEndpoint<SanitaireData>(`/stats/federation/sanitaire${query}`);
-  const form = useEndpoint<FormationData>(`/stats/federation/formation${query}`);
+  const valo = useEndpoint<ValorisationData>('/stats/federation/valorisation', federationId);
+  const sani = useEndpoint<SanitaireData>('/stats/federation/sanitaire', federationId);
+  const form = useEndpoint<FormationData>('/stats/federation/formation', federationId);
 
   const allLoading = valo.loading || sani.loading || form.loading;
   const headerData = valo.data ?? sani.data ?? form.data;
