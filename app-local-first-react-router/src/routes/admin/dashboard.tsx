@@ -10,6 +10,9 @@ import { BarChart } from 'react-dsfr-chart/BarChart';
 import { LineChart } from 'react-dsfr-chart/LineChart';
 import 'react-dsfr-chart/css';
 import { Tabs } from '@codegouvfr/react-dsfr/Tabs';
+import { Button } from '@codegouvfr/react-dsfr/Button';
+import useExportBilanAnomalies from '@app/utils/export-bilan-anomalies';
+import { getSaisonLabel, getSaisonStartYear } from '@app/utils/get-saison';
 
 const dashboardTabs = [
   { tabId: 'general' as const, label: 'Général' },
@@ -22,6 +25,8 @@ export default function AdminDashboard() {
   const [saisiesSvi, setSaisiesSvi] = useState<AdminSaisiesSviResponse['data'] | null>(null);
   const [deltaBph, setDeltaBph] = useState<AdminDeltaBphResponse['data'] | null>(null);
   const [selectedTab, setSelectedTab] = useState('general');
+  const { exportBilanAnomalies, isExporting } = useExportBilanAnomalies('admin/bilan-anomalies');
+  const saisonEnCours = getSaisonStartYear(new Date());
 
   useEffect(() => {
     Promise.all([
@@ -138,6 +143,25 @@ export default function AdminDashboard() {
 
         {selectedTab === 'saisies-svi' && (
           <div className="space-y-6 pt-4">
+            <div className="rounded-lg border border-gray-100 bg-white p-6 shadow-sm">
+              <h3 className="mb-1 text-lg font-semibold">Bilan des anomalies de fin de saison (DGAL)</h3>
+              <p className="mb-5 text-sm text-gray-500">
+                Calque DGAL pré-rempli avec les données Zacharie, une ligne par ETG et par espèce
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {[saisonEnCours, saisonEnCours - 1, saisonEnCours - 2].map((saison) => (
+                  <Button
+                    key={saison}
+                    priority="secondary"
+                    iconId="fr-icon-download-line"
+                    disabled={isExporting}
+                    onClick={() => exportBilanAnomalies(saison)}
+                  >
+                    {getSaisonLabel(saison)}
+                  </Button>
+                ))}
+              </div>
+            </div>
             {/* Taux de saisie SVI */}
             {saisiesSvi && (
               <div className="grid grid-cols-3 gap-4">

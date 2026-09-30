@@ -6,7 +6,9 @@ import type {
   AdminSaisiesSviResponse,
   AdminPartsDeMarcheResponse,
   AdminDeltaBphResponse,
+  BilanAnomaliesResponse,
 } from '~/types/responses';
+import { getBilanAnomalies } from '~/utils/bilan-anomalies';
 import dayjs from 'dayjs';
 
 router.get(
@@ -298,6 +300,20 @@ router.get(
       });
     }
   )
+);
+
+// Bilan des anomalies de fin de saison (calque DGAL), pour tous les ETG.
+router.get(
+  '/bilan-anomalies',
+  catchErrors(async (req: express.Request, res: express.Response<BilanAnomaliesResponse>) => {
+    const saison = Number(req.query.saison);
+    if (!Number.isInteger(saison)) {
+      res.status(400).send({ ok: false, data: null, error: 'Saison invalide' });
+      return;
+    }
+    const bilan = await getBilanAnomalies(saison, null);
+    res.status(200).send({ ok: true, data: bilan, error: '' });
+  })
 );
 
 export default router;

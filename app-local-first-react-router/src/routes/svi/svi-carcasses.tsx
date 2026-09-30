@@ -23,6 +23,7 @@ import { useLocalStorage } from '@uidotdev/usehooks';
 import Chargement from '@app/components/Chargement';
 import DropDownMenu from '@app/components/DropDownMenu';
 import useExportCarcasses from '@app/utils/export-carcasses';
+import useExportBilanAnomalies from '@app/utils/export-bilan-anomalies';
 import { useApproveCarcasses } from '@app/utils/svi-approve-carcasse';
 import useDownloadCertificats from '@app/utils/svi-download-certificats';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
@@ -105,6 +106,8 @@ export default function SviCarcasses() {
   const [acceptProgress, setAcceptProgress] = useState<{ done: number; total: number } | null>(null);
 
   const { onExportToXlsx, isExporting } = useExportCarcasses();
+  const { exportBilanAnomalies, isExporting: isExportingBilan } =
+    useExportBilanAnomalies('svi/bilan-anomalies');
   const approveCarcasses = useApproveCarcasses();
   const { onDownloadCertificats, isDownloading } = useDownloadCertificats();
   const isOnline = useIsOnline();
@@ -1380,6 +1383,27 @@ export default function SviCarcasses() {
                 />
                 Colonnes ({visibleColumns.length}/{allColumns.length})
               </button>
+              <DropDownMenu
+                text="Bilan de saison"
+                isActive={saisonOptions.length > 0}
+                menuLinks={saisonOptions.map((option) => ({
+                  linkProps: {
+                    href: '#',
+                    'aria-disabled': !isOnline || isExportingBilan,
+                    className: !isOnline || isExportingBilan ? 'cursor-not-allowed opacity-50' : '',
+                    title: !isOnline
+                      ? "L'export du bilan de saison nécessite une connexion internet"
+                      : 'Bilan des anomalies demandé par la DGAL, pré-rempli avec les données Zacharie',
+                    onClick: (e) => {
+                      e.preventDefault();
+                      if (!isOnline || isExportingBilan) return;
+                      trackFeature('registre-svi-carcasses', 'export', 'bilan-saison', option.year);
+                      exportBilanAnomalies(option.year);
+                    },
+                  },
+                  text: `Excel ${option.label}`,
+                }))}
+              />
               <DropDownMenu
                 text="Actions"
                 isActive={selectedCarcassesIds.length > 0}

@@ -293,6 +293,37 @@ export interface SviCarcassesAVenirResponse {
   error: string;
 }
 
+// Bilan des anomalies de fin de saison (calque DGAL) : une ligne par ETG et groupe d'espèces.
+// Les nombres sont des nombres d'animaux (un lot de petit gibier compte pour ses animaux).
+export interface BilanAnomaliesLigne {
+  etg_id: string;
+  etg_nom: string;
+  etg_departement: string | null;
+  groupe_espece: string;
+  receptionnees: number;
+  controlees: number;
+  saisies_partielles: number;
+  saisies_totales: number;
+  saisies_non_signalees_fei: number;
+  ei_non_valide: number;
+  ei_non_identifiee: number;
+  saisies_totales_ei: number;
+  anomalies: Record<string, number>;
+  autres_motifs: Record<string, number>;
+}
+
+export interface BilanAnomaliesData {
+  saison: number;
+  colonnes_anomalies: Array<string>;
+  lignes: Array<BilanAnomaliesLigne>;
+}
+
+export interface BilanAnomaliesResponse {
+  ok: boolean;
+  data: BilanAnomaliesData | null;
+  error: string;
+}
+
 // Traçabilité amont : sur les fiches en cours d'acheminement vers le SVI (celles ayant au
 // moins une carcasse à venir), répartition en nombre d'animaux entre ce qui a été déclaré
 // et ce qui a été refusé / déclaré manquant par l'ETG (l'écart avec ce qui arrivera).
