@@ -860,6 +860,7 @@ Christine
           intermediaire_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
           intermediaire_user_id: users.find((u) => u.email === 'etg-1@example.fr')?.id ?? '',
           intermediaire_role: FeiOwnerRole.ETG,
+          prise_en_charge: true,
           prise_en_charge_at: dayjs().subtract(2, 'day').toDate(),
         })),
       });
