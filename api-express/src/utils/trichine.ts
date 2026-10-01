@@ -11,6 +11,7 @@ import {
 } from '@prisma/client';
 import prisma from '~/prisma';
 import queueSendNotificationToUser from '~/service/notifications';
+import { buildTrichineEmail, type TrichineEmailContent } from '~/templates/trichine-email';
 
 /**
  * Valeurs conventionnelles des champs String évolutifs (cf doc/trichine.md §4.10).
@@ -342,7 +343,6 @@ export async function getUserEntityIds(userId: string): Promise<Set<string>> {
   return new Set(relations.map((relation) => relation.entity_id));
 }
 
-/**
 const relationActiveAvecEntite: Prisma.EntityAndUserRelationsWhereInput = {
   relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
   status: { in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER] },
@@ -369,6 +369,7 @@ export async function trichineEquipeUserIds(user: Pick<User, 'id' | 'roles'>): P
   return [...new Set([user.id, ...collegues.map((relation) => relation.owner_id)])];
 }
 
+/**
  * Vérifie que l'utilisateur travaille pour l'entité (membre ou admin).
  * À appeler systématiquement quand un entity_id arrive du client
  * (preleve_par_entity_id, cree_par_entity_id, expediteur_entity_id...).
@@ -423,6 +424,7 @@ export async function notifyTrichineUsers({
   objetId,
   title,
   message,
+  email,
   notificationLogAction,
   excludeUserIds = [],
   attachments,
@@ -433,10 +435,14 @@ export async function notifyTrichineUsers({
   objetId: string;
   title: string;
   message: string;
+  // Contenu de l'email HTML (fonctionnalité en TEST) ; `title` / `message` restent pour le push
+  // et la TrichineNotification en base.
+  email: TrichineEmailContent;
   notificationLogAction: string;
   excludeUserIds?: string[];
   attachments?: Array<{ content: string; name: string }>;
 }) {
+  const builtEmail = buildTrichineEmail(email);
   const seen = new Set<string>(excludeUserIds);
   for (const user of users) {
     if (seen.has(user.id)) continue;
@@ -452,9 +458,10 @@ export async function notifyTrichineUsers({
     });
     await queueSendNotificationToUser({
       user: user as User,
-      title,
-      body: message,
-      email: message,
+      push: { title, body: message },
+      title: builtEmail.subject,
+      email: builtEmail.text,
+      emailHtml: builtEmail.html,
       notificationLogAction,
       attachments,
     });

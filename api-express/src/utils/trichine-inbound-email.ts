@@ -286,6 +286,7 @@ const poolForInboundInclude = Prisma.validator<Prisma.TrichinePoolInclude>()({
       TrichineFTP: {
         select: {
           id: true,
+          numero_fiche: true,
           deleted_at: true,
           statut_logistique: true,
           destinataire_entity_id: true,

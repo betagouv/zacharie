@@ -21,6 +21,7 @@ import {
   withReferenceRetry,
   type TrichineNotifiableUser,
 } from '~/utils/trichine';
+import type { TrichineEmailContent } from '~/templates/trichine-email';
 import { recomputeFTPTrichine, recomputePoolAndLinkedFTPs } from '~/utils/trichine-status';
 
 // Résultats saisissables selon le type de laboratoire (cf doc/trichine.md §6.3-6.4)
@@ -97,6 +98,7 @@ type ApplyPoolResultPool = {
 
 type ApplyPoolResultFtp = {
   id: string;
+  numero_fiche: string;
   destinataire_entity_id: string;
   ftp_parent_id: string | null;
   expediteur_user_id: string;
@@ -203,6 +205,21 @@ export async function applyPoolResult({
       objetId: pool.id,
       title: `Résultat négatif — pool ${pool.reference_pool}`,
       message: `Le laboratoire a rendu un résultat négatif (pas de trichine) pour le pool ${pool.reference_pool}. Les carcasses associées peuvent être commercialisées.`,
+      email: {
+        subject: `Résultat négatif · pool ${pool.reference_pool}`,
+        tone: 'success',
+        badge: 'Résultat négatif',
+        heading: 'Pas de trichine détectée',
+        intro: `Bonne nouvelle : le laboratoire n’a détecté aucune larve de trichine dans le pool ${pool.reference_pool}.`,
+        details: [
+          { label: 'Pool', value: pool.reference_pool },
+          { label: 'Fiche de transmission', value: ftp.numero_fiche },
+        ],
+        actions: [
+          'Les carcasses de ce pool peuvent être commercialisées, sous réserve des autres contrôles sanitaires.',
+          'Aucune autre action n’est requise côté trichine.',
+        ],
+      },
       notificationLogAction: `TRICHINE_RESULTAT_${pool.reference_pool}_NEGATIF`,
     });
   }
@@ -263,6 +280,21 @@ export async function applyPoolResult({
         objetId: lnrFtp.id,
         title: `Pool douteux à confirmer — FTP ${lnrFtp.numero_fiche}`,
         message: `Un laboratoire vous a transmis le pool ${pool.reference_pool} (résultat douteux) pour confirmation via la FTP ${lnrFtp.numero_fiche}.`,
+        email: {
+          subject: `Pool douteux à confirmer · FTP ${lnrFtp.numero_fiche}`,
+          tone: 'warning',
+          badge: 'Confirmation demandée',
+          heading: 'Un pool douteux vous est transmis pour confirmation',
+          intro: `Un laboratoire agréé a obtenu un résultat douteux sur le pool ${pool.reference_pool} et vous le transmet pour analyse de confirmation. La fiche de transmission est jointe à cet email.`,
+          details: [
+            { label: 'Pool', value: pool.reference_pool },
+            { label: 'Fiche de transmission', value: lnrFtp.numero_fiche },
+          ],
+          actions: [
+            'Réceptionnez la fiche de transmission dans Zacharie à l’arrivée des échantillons.',
+            'Saisissez le résultat de confirmation dès qu’il est disponible : l’émetteur en est averti automatiquement.',
+          ],
+        },
         notificationLogAction: `TRICHINE_FTP_ENVOYEE_${lnrFtp.numero_fiche}`,
         attachments: lnrPdf
           ? [{ content: lnrPdf.toString('base64'), name: `FTP-${lnrFtp.numero_fiche}.pdf` }]
@@ -277,6 +309,22 @@ export async function applyPoolResult({
       objetId: pool.id,
       title: `Résultat douteux — pool ${pool.reference_pool}`,
       message: `Le laboratoire a détecté une larve dans le pool ${pool.reference_pool}. Une confirmation par le LNR est en cours. Vous pouvez réaliser des prélèvements de 2e intention pour identifier la carcasse incriminée.`,
+      email: {
+        subject: `Résultat douteux · pool ${pool.reference_pool}`,
+        tone: 'warning',
+        badge: 'Résultat douteux',
+        heading: 'Une larve a été détectée, confirmation en cours',
+        intro: `Le laboratoire a détecté une larve dans le pool ${pool.reference_pool}. Le pool a été transmis automatiquement au laboratoire national de référence (LNR) pour confirmer s’il s’agit bien de trichine.`,
+        details: [
+          { label: 'Pool', value: pool.reference_pool },
+          { label: 'Fiche de transmission', value: ftp.numero_fiche },
+        ],
+        actions: [
+          'Ne mettez pas sur le marché les carcasses de ce pool tant que le résultat définitif n’est pas connu.',
+          'Pour identifier la carcasse concernée, vous pouvez réaliser des prélèvements de 2e intention sur les carcasses du pool.',
+          'Si vous renoncez aux analyses de 2e intention, toutes les carcasses du pool seront retirées de leur fiche.',
+        ],
+      },
       notificationLogAction: `TRICHINE_RESULTAT_${pool.reference_pool}_DOUTEUX`,
     });
   }
@@ -298,6 +346,52 @@ export async function applyPoolResult({
       [TrichineResultatAnalyse.NON_NEGATIF]: `Le LNR a identifié un parasite autre que la trichine (${body.parasite_identifie}) dans le pool ${pool.reference_pool}. Une décision est à prendre sur les carcasses concernées.`,
       [TrichineResultatAnalyse.PRESENCE_PARASITE_NON_IDENTIFIE]: `Le LNR a détecté un parasite non identifié dans le pool ${pool.reference_pool}. Une décision est à prendre sur les carcasses concernées.`,
     };
+    const lnrDetails = [
+      { label: 'Pool', value: pool.reference_pool },
+      { label: 'Fiche de transmission', value: ftp.numero_fiche },
+    ];
+    const lnrDecisionActions = [
+      'Ne mettez pas sur le marché les carcasses concernées avant d’avoir pris une décision.',
+      'Rapprochez-vous des services vétérinaires de votre département pour statuer sur leur devenir.',
+      'Le cas échéant, retirez les carcasses de leur fiche dans Zacharie.',
+    ];
+    const emails: Partial<Record<TrichineResultatAnalyse, TrichineEmailContent>> = {
+      [TrichineResultatAnalyse.POSITIF]: {
+        subject: `ALERTE SANITAIRE · trichine confirmée · pool ${pool.reference_pool}`,
+        tone: 'danger',
+        badge: 'Alerte sanitaire · Positif',
+        heading: 'Présence de trichine confirmée',
+        intro: `Le laboratoire national de référence (LNR) a confirmé la présence de trichine dans le pool ${pool.reference_pool}. Les carcasses concernées sont impropres à la consommation humaine.`,
+        details: lnrDetails,
+        actions: [
+          'Ne commercialisez pas et ne consommez pas les carcasses concernées.',
+          'Si des carcasses ou des morceaux ont déjà été cédés, prévenez immédiatement leurs détenteurs.',
+          'Retirez les carcasses de leur fiche dans Zacharie et procédez à leur saisie.',
+          'Prenez contact avec les services vétérinaires (DDPP / DDETSPP) de votre département.',
+        ],
+      },
+      [TrichineResultatAnalyse.NON_NEGATIF]: {
+        subject: `Parasite identifié · pool ${pool.reference_pool}`,
+        tone: 'danger',
+        badge: 'Parasite autre que la trichine',
+        heading: 'Un parasite autre que la trichine a été identifié',
+        intro: `Le laboratoire national de référence (LNR) a identifié un parasite autre que la trichine dans le pool ${pool.reference_pool}. Une décision doit être prise sur les carcasses concernées.`,
+        details: [
+          ...lnrDetails,
+          { label: 'Parasite identifié', value: body.parasite_identifie ?? 'Non précisé' },
+        ],
+        actions: lnrDecisionActions,
+      },
+      [TrichineResultatAnalyse.PRESENCE_PARASITE_NON_IDENTIFIE]: {
+        subject: `Parasite non identifié · pool ${pool.reference_pool}`,
+        tone: 'danger',
+        badge: 'Parasite non identifié',
+        heading: 'Un parasite non identifié a été détecté',
+        intro: `Le laboratoire national de référence (LNR) a détecté un parasite qu’il n’a pas pu identifier dans le pool ${pool.reference_pool}. Une décision doit être prise sur les carcasses concernées.`,
+        details: lnrDetails,
+        actions: lnrDecisionActions,
+      },
+    };
     await notifyTrichineUsers({
       users: [...recipients.values()],
       type: TrichineNotificationType.RESULTAT_ANALYSE,
@@ -305,6 +399,7 @@ export async function applyPoolResult({
       objetId: pool.id,
       title: `Résultat LNR — pool ${pool.reference_pool}`,
       message: messages[body.resultat_analyse]!,
+      email: emails[body.resultat_analyse]!,
       notificationLogAction: `TRICHINE_RESULTAT_${pool.reference_pool}_${body.resultat_analyse}`,
       excludeUserIds: [userId],
     });

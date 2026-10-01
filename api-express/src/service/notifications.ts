@@ -47,6 +47,9 @@ type NotificationToUser = {
   // Cf. src/third-parties/brevo-templates.ts.
   emailTemplateId?: number | null;
   emailTemplateParams?: Record<string, unknown>;
+  // Email HTML construit dans le code (ex. trichine, cf. src/templates/trichine-email.ts) ;
+  // `email` reste la version texte, loggée dans le NotificationLog.
+  emailHtml?: string;
 };
 
 export default async function queueSendNotificationToUser({
@@ -58,6 +61,7 @@ export default async function queueSendNotificationToUser({
   attachments,
   emailTemplateId,
   emailTemplateParams,
+  emailHtml,
   img = 'https://zacharie.beta.gouv.fr/favicon.svg',
 }: NotificationToUser) {
   await queue.add(async () => {
@@ -70,6 +74,7 @@ export default async function queueSendNotificationToUser({
       attachments,
       emailTemplateId,
       emailTemplateParams,
+      emailHtml,
       img,
     });
   });
@@ -248,6 +253,7 @@ async function sendEmailToUser({
   attachments,
   emailTemplateId,
   emailTemplateParams,
+  emailHtml,
   img = 'https://zacharie.beta.gouv.fr/favicon.svg',
 }: NotificationToUser) {
   const existingNotification = await prisma.notificationLog.findFirst({
@@ -296,6 +302,7 @@ async function sendEmailToUser({
         emails: [user.email!],
         subject: title,
         text: email,
+        html: emailHtml,
         attachments: attachments,
       });
   // Envoi raté : on n'écrit pas le log, sinon la dédup bloquerait définitivement le renvoi.

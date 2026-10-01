@@ -750,6 +750,25 @@ router.post(
       objetId: pool.id,
       title: `Carcasses retirées de leur fiche — pool ${pool.reference_pool}`,
       message: `Suite au résultat douteux du pool ${pool.reference_pool}, le premier détenteur a renoncé aux analyses de 2e intention. Les carcasses concernées sont retirées de leur fiche et ne peuvent plus être commercialisées.`,
+      email: {
+        subject: `Carcasses retirées de leur fiche · pool ${pool.reference_pool}`,
+        tone: 'danger',
+        badge: 'Carcasses retirées',
+        heading: 'Des carcasses que vous détenez ont été retirées de leur fiche',
+        intro: `Suite au résultat douteux du pool ${pool.reference_pool}, le premier détenteur a renoncé aux analyses de 2e intention. Toutes les carcasses du pool sont retirées de leur fiche et ne peuvent plus être commercialisées.`,
+        details: [
+          { label: 'Pool', value: pool.reference_pool },
+          {
+            label: 'Carcasses retirées',
+            value: carcasses.map((carcasse) => carcasse.numero_bracelet).join(', '),
+          },
+        ],
+        actions: [
+          'Ne commercialisez pas ces carcasses et isolez-les si elles sont encore en votre possession.',
+          'Si des morceaux ont déjà été cédés, prévenez immédiatement leurs détenteurs.',
+          'En cas de doute sur la conduite à tenir, contactez les services vétérinaires de votre département.',
+        ],
+      },
       notificationLogAction: `TRICHINE_RENONCEMENT_${pool.reference_pool}`,
       excludeUserIds: [req.user.id],
     });
@@ -1062,6 +1081,25 @@ router.post(
       objetId: ftp.id,
       title: `Nouvelle FTP ${ftp.numero_fiche}`,
       message: `${req.user.prenom} ${req.user.nom_de_famille} vous a transmis la fiche de transmission des prélèvements ${ftp.numero_fiche} (${ftp.TrichinePoolFTPs.length} pool(s)). Connectez-vous à Zacharie pour la traiter.`,
+      email: {
+        subject: `Nouvelle fiche de transmission · FTP ${ftp.numero_fiche}`,
+        tone: 'info',
+        badge: 'Nouvelle FTP',
+        heading: 'Des prélèvements vous ont été envoyés',
+        intro: `${req.user.prenom} ${req.user.nom_de_famille} vous a transmis la fiche de transmission des prélèvements ${ftp.numero_fiche}, jointe à cet email. Les échantillons sont en route vers votre laboratoire.`,
+        details: [
+          { label: 'Fiche de transmission', value: ftp.numero_fiche },
+          { label: 'Expéditeur', value: `${req.user.prenom} ${req.user.nom_de_famille}` },
+          {
+            label: 'Pools',
+            value: ftp.TrichinePoolFTPs.map((link) => link.TrichinePool.reference_pool).join(', '),
+          },
+        ],
+        actions: [
+          'À l’arrivée des échantillons, réceptionnez la fiche de transmission dans Zacharie.',
+          'Saisissez ensuite le résultat de chaque pool, ou refusez-le s’il ne peut pas être analysé.',
+        ],
+      },
       notificationLogAction: `TRICHINE_FTP_ENVOYEE_${ftp.numero_fiche}`,
       attachments: pdf
         ? [{ content: pdf.toString('base64'), name: `FTP-${ftp.numero_fiche}.pdf` }]
@@ -1276,6 +1314,22 @@ router.post(
       objetId: ftp.id,
       title: `FTP ${ftp.numero_fiche} annulée`,
       message: `${req.user.prenom} ${req.user.nom_de_famille} a annulé la fiche de transmission des prélèvements ${ftp.numero_fiche} : ${bodyResult.data.raison_annulation}. Si le colis vous parvient malgré tout, ne l'analysez pas.`,
+      email: {
+        subject: `FTP annulée · ${ftp.numero_fiche}`,
+        tone: 'warning',
+        badge: 'FTP annulée',
+        heading: 'Une fiche de transmission a été annulée',
+        intro: `${req.user.prenom} ${req.user.nom_de_famille} a annulé la fiche de transmission des prélèvements ${ftp.numero_fiche} avant sa prise en charge par votre laboratoire.`,
+        details: [
+          { label: 'Fiche de transmission', value: ftp.numero_fiche },
+          { label: 'Expéditeur', value: `${req.user.prenom} ${req.user.nom_de_famille}` },
+          { label: 'Motif de l’annulation', value: bodyResult.data.raison_annulation },
+        ],
+        actions: [
+          'Si le colis vous parvient malgré tout, ne l’analysez pas.',
+          'Aucune autre action n’est requise de votre part.',
+        ],
+      },
       notificationLogAction: `TRICHINE_FTP_ANNULEE_${ftp.numero_fiche}`,
     });
 

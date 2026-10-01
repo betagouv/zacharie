@@ -30,6 +30,8 @@ import {
   TrichineNotificationType,
   TrichineObjetType,
 } from '~/utils/trichine';
+import dayjs from 'dayjs';
+import { TRICHINE_RESULTAT_EMAIL_LABELS } from '~/templates/trichine-email';
 import { isTerminalResult, recomputePoolAndLinkedFTPs } from '~/utils/trichine-status';
 import { applyPoolResult, resultatSchema, validateResultForPool } from '~/utils/trichine-result';
 import { getMappingForLab } from '~/utils/lims-mapping';
@@ -547,6 +549,23 @@ router.post(
       objetId: ftp.id,
       title: `FTP ${ftp.numero_fiche} réceptionnée`,
       message: `Votre fiche de transmission des prélèvements ${ftp.numero_fiche} a été réceptionnée par le laboratoire. Les analyses vont démarrer.`,
+      email: {
+        subject: `Prélèvements réceptionnés · FTP ${ftp.numero_fiche}`,
+        tone: 'info',
+        badge: 'Prélèvements réceptionnés',
+        heading: 'Vos prélèvements sont arrivés au laboratoire',
+        intro: `Le laboratoire a bien réceptionné les prélèvements de la fiche de transmission ${ftp.numero_fiche}. Les analyses de recherche de trichine vont démarrer.`,
+        details: [
+          { label: 'Fiche de transmission', value: ftp.numero_fiche },
+          { label: 'Date de réception', value: dayjs(dateReception).format('DD/MM/YYYY') },
+          { label: 'Pools', value: String(ftp.TrichinePoolFTPs.length) },
+        ],
+        actions: [
+          'Aucune action de votre part pour le moment.',
+          'Vous serez notifié dès que le laboratoire aura rendu un résultat.',
+          'En attendant le résultat, les carcasses concernées ne doivent pas être mises sur le marché.',
+        ],
+      },
       notificationLogAction: `TRICHINE_FTP_RECUE_${ftp.numero_fiche}`,
     });
 
@@ -634,6 +653,22 @@ router.post(
       objetId: pool.id,
       title: `Pool ${pool.reference_pool} refusé par le laboratoire`,
       message: `Le laboratoire n'a pas pu analyser le pool ${pool.reference_pool} : ${bodyResult.data.raison_refus}. De nouveaux prélèvements sont nécessaires.`,
+      email: {
+        subject: `Pool refusé · ${pool.reference_pool}`,
+        tone: 'warning',
+        badge: 'Analyse impossible',
+        heading: 'Le laboratoire n’a pas pu analyser votre pool',
+        intro: `Le laboratoire a refusé le pool ${pool.reference_pool} : l’analyse de recherche de trichine n’a pas pu être réalisée.`,
+        details: [
+          { label: 'Pool', value: pool.reference_pool },
+          { label: 'Fiche de transmission', value: ftp.numero_fiche },
+          { label: 'Motif du refus', value: bodyResult.data.raison_refus },
+        ],
+        actions: [
+          'Réalisez de nouveaux prélèvements sur les carcasses concernées et envoyez-les au laboratoire.',
+          'En attendant un résultat, les carcasses ne doivent pas être mises sur le marché.',
+        ],
+      },
       notificationLogAction: `TRICHINE_POOL_REFUSE_${pool.reference_pool}`,
     });
 
@@ -738,6 +773,27 @@ router.post(
       objetId: pool.id,
       title: `Résultat corrigé — pool ${pool.reference_pool}`,
       message: `Le laboratoire a corrigé le résultat du pool ${pool.reference_pool} : ${raison}.`,
+      email: {
+        subject: `Résultat corrigé · pool ${pool.reference_pool}`,
+        tone: 'warning',
+        badge: 'Résultat corrigé',
+        heading: 'Le laboratoire a corrigé un résultat',
+        intro: `Le laboratoire a corrigé le résultat d’analyse du pool ${pool.reference_pool}. Le nouveau résultat remplace le précédent.`,
+        details: [
+          { label: 'Pool', value: pool.reference_pool },
+          { label: 'Fiche de transmission', value: ftp.numero_fiche },
+          {
+            label: 'Ancien résultat',
+            value: ancienResultat ? TRICHINE_RESULTAT_EMAIL_LABELS[ancienResultat] : 'Aucun',
+          },
+          { label: 'Nouveau résultat', value: TRICHINE_RESULTAT_EMAIL_LABELS[body.resultat_analyse] },
+          { label: 'Raison de la correction', value: raison },
+        ],
+        actions: [
+          'Vérifiez dans Zacharie ce que le nouveau résultat implique pour les carcasses du pool.',
+          'Si des décisions ont été prises sur la base de l’ancien résultat, réexaminez-les.',
+        ],
+      },
       notificationLogAction: `TRICHINE_RESULTAT_CORRIGE_${pool.reference_pool}`,
     });
 

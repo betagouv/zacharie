@@ -360,6 +360,22 @@ router.post(
       objetId: carcasse.zacharie_carcasse_id,
       title: `Carcasse ${carcasse.numero_bracelet} retirée de sa fiche`,
       message: `Suite au résultat d'analyse trichine, la carcasse ${carcasse.numero_bracelet} a été retirée de sa fiche par le premier détenteur. Elle est impropre à la consommation et ne peut plus être commercialisée. Motif : ${bodyResult.data.motif}`,
+      email: {
+        subject: `Carcasse ${carcasse.numero_bracelet} retirée de sa fiche`,
+        tone: 'danger',
+        badge: 'Carcasse retirée',
+        heading: 'Une carcasse que vous détenez a été retirée de sa fiche',
+        intro: `Suite au résultat d’analyse trichine, le premier détenteur a retiré la carcasse ${carcasse.numero_bracelet} de sa fiche. Elle est impropre à la consommation et ne peut plus être commercialisée.`,
+        details: [
+          { label: 'Carcasse', value: carcasse.numero_bracelet },
+          { label: 'Motif', value: bodyResult.data.motif },
+        ],
+        actions: [
+          'Ne commercialisez pas cette carcasse et isolez-la si elle est encore en votre possession.',
+          'Si des morceaux ont déjà été cédés, prévenez immédiatement leurs détenteurs.',
+          'En cas de doute sur la conduite à tenir, contactez les services vétérinaires de votre département.',
+        ],
+      },
       notificationLogAction: `TRICHINE_RETRAIT_FEI_${carcasse.zacharie_carcasse_id}`,
       excludeUserIds: [req.user.id],
     });
