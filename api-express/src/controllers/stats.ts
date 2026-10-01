@@ -13,7 +13,7 @@ import {
   getCurrentSeason,
   hasBphMotif,
   ALL_DEPARTEMENT_CODES,
-  getUserFederationEntity,
+  getViewableFederationEntity,
   resolveScope,
 } from '~/utils/federation-stats';
 import {
@@ -228,9 +228,10 @@ router.get(
       return;
     }
 
-    const federation = await getUserFederationEntity(user.id);
+    const federationId = typeof req.query.federation_id === 'string' ? req.query.federation_id : undefined;
+    const federation = await getViewableFederationEntity(user.id, federationId);
     if (!federation) {
-      res.status(403).send({ ok: false, data: null, error: 'Accès réservé aux membres d’une fédération' });
+      res.status(403).send({ ok: false, data: null, error: 'Accès non autorisé à ce tableau de bord' });
       return;
     }
 
@@ -455,9 +456,10 @@ router.get(
       return;
     }
 
-    const federation = await getUserFederationEntity(user.id);
+    const federationId = typeof req.query.federation_id === 'string' ? req.query.federation_id : undefined;
+    const federation = await getViewableFederationEntity(user.id, federationId);
     if (!federation) {
-      res.status(403).send({ ok: false, data: null, error: 'Accès réservé aux membres d’une fédération' });
+      res.status(403).send({ ok: false, data: null, error: 'Accès non autorisé à ce tableau de bord' });
       return;
     }
 
@@ -607,9 +609,10 @@ router.get(
       return;
     }
 
-    const federation = await getUserFederationEntity(user.id);
+    const federationId = typeof req.query.federation_id === 'string' ? req.query.federation_id : undefined;
+    const federation = await getViewableFederationEntity(user.id, federationId);
     if (!federation) {
-      res.status(403).send({ ok: false, data: null, error: 'Accès réservé aux membres d’une fédération' });
+      res.status(403).send({ ok: false, data: null, error: 'Accès non autorisé à ce tableau de bord' });
       return;
     }
 

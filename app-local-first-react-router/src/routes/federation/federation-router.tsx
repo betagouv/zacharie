@@ -27,7 +27,11 @@ export default function RouterFederation() {
       />
       <Route
         path="tableau-de-bord"
-        element={<FederationTableauDeBord />}
+        element={<FederationTableauDeBord basePath="/app/federation/tableau-de-bord" />}
+      />
+      <Route
+        path="tableau-de-bord/:federationId"
+        element={<FederationTableauDeBord basePath="/app/federation/tableau-de-bord" />}
       />
       <Route
         path="profil/ma-federation"

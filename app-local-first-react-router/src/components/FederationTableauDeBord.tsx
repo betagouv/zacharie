@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import dayjs from 'dayjs';
+import { useParams } from 'react-router';
+import { Button } from '@codegouvfr/react-dsfr/Button';
 import API from '@app/services/api';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import Chargement from '@app/components/Chargement';
@@ -78,7 +80,7 @@ interface ApiResponse<T> {
   error?: string;
 }
 
-function useEndpoint<T>(path: string) {
+function useEndpoint<T>(path: string, federationId: string | undefined) {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -89,7 +91,10 @@ function useEndpoint<T>(path: string) {
       try {
         setLoading(true);
         setError(null);
-        const response = (await API.get({ path })) as ApiResponse<T>;
+        const response = (await API.get({
+          path,
+          query: federationId ? { federation_id: federationId } : {},
+        })) as ApiResponse<T>;
         if (cancelled) return;
         if (response.ok && response.data) {
           setData(response.data);
@@ -107,7 +112,7 @@ function useEndpoint<T>(path: string) {
     return () => {
       cancelled = true;
     };
-  }, [path]);
+  }, [path, federationId]);
 
   return { data, loading, error };
 }
@@ -132,10 +137,16 @@ function buildTitle(valoData: ValorisationData | null): string {
   return valoData.scope === 'departemental' ? 'Tableau de bord départemental' : 'Tableau de bord régional';
 }
 
-export default function FederationTableauDeBord() {
-  const valo = useEndpoint<ValorisationData>('/stats/federation/valorisation');
-  const sani = useEndpoint<SanitaireData>('/stats/federation/sanitaire');
-  const form = useEndpoint<FormationData>('/stats/federation/formation');
+interface Props {
+  /** URL du tableau de bord de la fédération de l'utilisateur ; `${basePath}/:federationId` affiche une autre fédération. */
+  basePath: string;
+}
+
+export default function FederationTableauDeBord({ basePath }: Props) {
+  const { federationId } = useParams();
+  const valo = useEndpoint<ValorisationData>('/stats/federation/valorisation', federationId);
+  const sani = useEndpoint<SanitaireData>('/stats/federation/sanitaire', federationId);
+  const form = useEndpoint<FormationData>('/stats/federation/formation', federationId);
 
   const allLoading = valo.loading || sani.loading || form.loading;
   const headerData = valo.data ?? sani.data ?? form.data;
@@ -155,6 +166,16 @@ export default function FederationTableauDeBord() {
       <title>{pageTitle}</title>
       <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center pt-8">
         <div className="fr-col-12 fr-col-lg-11">
+          {federationId && (
+            <Button
+              priority="tertiary no outline"
+              iconId="fr-icon-arrow-left-line"
+              className="mb-4"
+              linkProps={{ to: basePath }}
+            >
+              Retour à mon tableau de bord
+            </Button>
+          )}
           <header className="mb-8 flex flex-wrap items-start justify-between gap-2 px-2 md:px-0">
             <h1 className="fr-h1 mb-0">{buildTitle(valo.data)}</h1>
             {headerData?.season && (
@@ -239,6 +260,7 @@ export default function FederationTableauDeBord() {
                     valorisation={valo.data.departements}
                     formation={form.data.departements}
                     showSearch={valo.data.scope === 'national'}
+                    basePath={basePath}
                   />
                 )}
               </section>

@@ -85,6 +85,7 @@ test('FNC — chiffres nationaux, fiches du compte admin exclues', async ({ page
     '0',
     '0',
     '10', // PG total (animaux)
+    'Accéder au tableau de bord',
   ]);
 
   const ardeche = page.getByRole('row').filter({ hasText: 'Ardèche' });
@@ -101,6 +102,7 @@ test('FNC — chiffres nationaux, fiches du compte admin exclues', async ({ page
     '0',
     '0',
     '10',
+    'Accéder au tableau de bord',
   ]);
 
   // La fiche de l'Ain n'a jamais été transmise : son examinateur n'est pas actif.
@@ -110,7 +112,19 @@ test('FNC — chiffres nationaux, fiches du compte admin exclues', async ({ page
 
   // Ligne Total : un taux ne se somme pas, il vaut « — ».
   const total = page.getByRole('table').locator('tfoot').getByRole('row');
-  expect(await rowCells(total)).toEqual(['Total', '2', '6', '0', '0', '6', '—', '20', '0', '0', '20']);
+  expect(await rowCells(total)).toEqual(['Total', '2', '6', '0', '0', '6', '—', '20', '0', '0', '20', '']);
+
+  // La FNC accède au tableau de bord de chaque département.
+  await allier.getByRole('link', { name: 'Accéder au tableau de bord' }).click();
+  await expect(page).toHaveURL(/\/app\/federation\/tableau-de-bord\/federation-fdc-03$/);
+  await expect(page.getByRole('heading', { level: 1, name: 'Tableau de bord FDC Allier (03)' })).toBeVisible({
+    timeout: 15000,
+  });
+  await expect(kpi(section(page, 'Carcasses prélevées'), 'Grand gibier')).toHaveText('3');
+  await page.getByRole('link', { name: 'Retour à mon tableau de bord' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Tableau de bord national' })).toBeVisible({
+    timeout: 15000,
+  });
 });
 
 test("FDC — chiffres limités à son département, fiche admin de l'Allier exclue", async ({ page }) => {

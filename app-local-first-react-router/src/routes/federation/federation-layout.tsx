@@ -15,7 +15,7 @@ export default function FederationLayout() {
   const navigation: MainNavigationProps.Item[] = [
     {
       text: 'Tableau de bord',
-      isActive: location.pathname === '/app/federation/tableau-de-bord',
+      isActive: location.pathname.startsWith('/app/federation/tableau-de-bord'),
       linkProps: { to: '/app/federation/tableau-de-bord', href: '#' },
     },
     {
