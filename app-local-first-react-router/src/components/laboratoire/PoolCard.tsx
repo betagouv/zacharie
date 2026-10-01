@@ -111,9 +111,8 @@ export default function PoolCard({
         <button
           type="button"
           onClick={() => setCompositionOuverte((ouverte) => !ouverte)}
-          className={`fr-link fr-text--sm fr-link--icon-left ${
-            compositionOuverte ? 'fr-icon-arrow-up-s-line' : 'fr-icon-arrow-down-s-line'
-          }`}
+          className={`fr-link fr-text--sm fr-link--icon-left ${compositionOuverte ? 'fr-icon-arrow-up-s-line' : 'fr-icon-arrow-down-s-line'
+            }`}
           aria-expanded={compositionOuverte}
         >
           {compositionOuverte ? 'Masquer le détail' : 'Afficher le détail'}
@@ -244,9 +243,8 @@ export function ResultatModalContent({
           severity="info"
           small
           className="fr-mb-2w"
-          description={`Résultat actuel : ${
-            pool?.resultat_analyse ? resultatAnalyseLabels[pool.resultat_analyse] : '—'
-          }. La correction est refusée si le service d'inspection a déjà statué sur une carcasse du pool.`}
+          description={`Résultat actuel : ${pool?.resultat_analyse ? resultatAnalyseLabels[pool.resultat_analyse] : '—'
+            }. La correction est refusée si le service d'inspection a déjà statué sur une carcasse du pool.`}
         />
       )}
       <Select
@@ -315,7 +313,7 @@ export function ResultatModalContent({
           severity="warning"
           small
           className="fr-mb-2w"
-          description="Une FTP de confirmation sera générée automatiquement vers le LNR. L'upload des photographies de larves sera disponible prochainement."
+          description="Une FTP de confirmation sera générée automatiquement vers le LNR."
         />
       )}
       {correction && (
