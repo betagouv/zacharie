@@ -30,6 +30,7 @@ import {
   TRICHINE_MASSE_DEFAUT_COMPLEMENTAIRE,
   TRICHINE_MASSE_DEFAUT_CONFIRMATION,
   TRICHINE_MASSE_DEFAUT_INITIAL,
+  trichineEquipeUserIds,
   userBelongsToEntity,
   validateNouveauPrelevement,
   validatePoolComposition,
@@ -260,7 +261,7 @@ router.get(
     const sansPool = req.query.sans_pool === 'true';
     const echantillons = await prisma.trichineEchantillon.findMany({
       where: {
-        preleve_par_user_id: req.user.id,
+        preleve_par_user_id: { in: await trichineEquipeUserIds(req.user) },
         deleted_at: null,
         ...(sansPool ? { pool_id: null } : {}),
       },
@@ -656,7 +657,7 @@ router.get(
   catchErrors(async (req: RequestWithUser, res: express.Response) => {
     if (!guardEmitter(req, res)) return;
     const pools = await prisma.trichinePool.findMany({
-      where: { cree_par_user_id: req.user.id, deleted_at: null },
+      where: { cree_par_user_id: { in: await trichineEquipeUserIds(req.user) }, deleted_at: null },
       include: {
         TrichineEchantillons: { where: { deleted_at: null } },
         TrichinePoolFTPs: { include: { TrichineFTP: true } },
@@ -1288,7 +1289,7 @@ router.get(
   catchErrors(async (req: RequestWithUser, res: express.Response) => {
     if (!guardEmitter(req, res)) return;
     const ftps = await prisma.trichineFTP.findMany({
-      where: { expediteur_user_id: req.user.id, deleted_at: null },
+      where: { expediteur_user_id: { in: await trichineEquipeUserIds(req.user) }, deleted_at: null },
       include: {
         DestinataireEntity: { select: { id: true, nom_d_usage: true, raison_sociale: true, is_lnr: true } },
         TrichinePoolFTPs: { include: { TrichinePool: true } },
@@ -1341,7 +1342,7 @@ router.get(
         Documents: { where: { deleted_at: null } },
       },
     });
-    if (!ftp || ftp.deleted_at || ftp.expediteur_user_id !== req.user.id) {
+    if (!ftp || ftp.deleted_at || !(await trichineEquipeUserIds(req.user)).includes(ftp.expediteur_user_id)) {
       return sendError(res, 404, 'FTP introuvable');
     }
     const historique = await prisma.trichineHistoriqueStatut.findMany({
@@ -1380,7 +1381,11 @@ router.get(
         },
       },
     });
-    if (!echantillon || echantillon.deleted_at || echantillon.preleve_par_user_id !== req.user.id) {
+    if (
+      !echantillon ||
+      echantillon.deleted_at ||
+      !(await trichineEquipeUserIds(req.user)).includes(echantillon.preleve_par_user_id)
+    ) {
       return sendError(res, 404, 'Échantillon introuvable');
     }
     const historique = await prisma.trichineHistoriqueStatut.findMany({
@@ -1424,7 +1429,11 @@ router.get(
         Documents: { where: { deleted_at: null } },
       },
     });
-    if (!pool || pool.deleted_at || pool.cree_par_user_id !== req.user.id) {
+    if (
+      !pool ||
+      pool.deleted_at ||
+      !(await trichineEquipeUserIds(req.user)).includes(pool.cree_par_user_id)
+    ) {
       return sendError(res, 404, 'Pool introuvable');
     }
     const historique = await prisma.trichineHistoriqueStatut.findMany({
@@ -1445,7 +1454,7 @@ router.get(
       where: { id: req.params.ftp_id },
       select: { numero_fiche: true, expediteur_user_id: true, deleted_at: true },
     });
-    if (!ftp || ftp.deleted_at || ftp.expediteur_user_id !== req.user.id) {
+    if (!ftp || ftp.deleted_at || !(await trichineEquipeUserIds(req.user)).includes(ftp.expediteur_user_id)) {
       return sendError(res, 404, 'FTP introuvable');
     }
     const pdf = await getArchivedOrFreshFtpPdf(req.params.ftp_id);

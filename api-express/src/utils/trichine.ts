@@ -7,6 +7,7 @@ import {
   TrichineStatutLogistiqueFTP,
   TrichineType,
   User,
+  UserRoles,
 } from '@prisma/client';
 import prisma from '~/prisma';
 import queueSendNotificationToUser from '~/service/notifications';
@@ -342,6 +343,32 @@ export async function getUserEntityIds(userId: string): Promise<Set<string>> {
 }
 
 /**
+const relationActiveAvecEntite: Prisma.EntityAndUserRelationsWhereInput = {
+  relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+  status: { in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER] },
+  deleted_at: null,
+};
+
+/**
+ * Utilisateurs dont l'émetteur voit les échantillons, pools et FTP : un SVI voit le travail
+ * de tout son service d'inspection, un 1er détenteur ne voit que le sien.
+ */
+export async function trichineEquipeUserIds(user: Pick<User, 'id' | 'roles'>): Promise<Array<string>> {
+  if (!user.roles.includes(UserRoles.SVI)) return [user.id];
+  const collegues = await prisma.entityAndUserRelations.findMany({
+    where: {
+      ...relationActiveAvecEntite,
+      EntityRelatedWithUser: {
+        type: EntityTypes.SVI,
+        deleted_at: null,
+        EntityRelationsWithUsers: { some: { ...relationActiveAvecEntite, owner_id: user.id } },
+      },
+    },
+    select: { owner_id: true },
+  });
+  return [...new Set([user.id, ...collegues.map((relation) => relation.owner_id)])];
+}
+
  * Vérifie que l'utilisateur travaille pour l'entité (membre ou admin).
  * À appeler systématiquement quand un entity_id arrive du client
  * (preleve_par_entity_id, cree_par_entity_id, expediteur_entity_id...).
