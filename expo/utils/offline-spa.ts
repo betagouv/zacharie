@@ -9,7 +9,8 @@ const SPA_DIR = new Directory(Paths.document, 'spa');
 
 let forceRefreshKey = '1';
 
-export const checkAndDownloadSpa = async (): Promise<void> => {
+// Renvoie true si une nouvelle version a été téléchargée.
+export const checkAndDownloadSpa = async (): Promise<boolean> => {
   const MANIFEST_URL = `${APP_URL}spa-manifest.json`;
   try {
     // 1. Get remote version
@@ -18,7 +19,7 @@ export const checkAndDownloadSpa = async (): Promise<void> => {
     console.log('manifestResponse: ', manifestResponse);
     if (!manifestResponse.ok) {
       console.warn('Failed to fetch spa-manifest.json, using fallback or online only');
-      return;
+      return false;
     }
     const manifest = (await manifestResponse.json()) as { assets: { url: string }[] };
     const manifestVersioning = JSON.stringify(manifest);
@@ -34,7 +35,7 @@ export const checkAndDownloadSpa = async (): Promise<void> => {
     if (manifestVersioning === localVersioning && localForceRefreshKey === forceRefreshKey) {
       console.log('SPA is up to date');
       // Check if we actually have files, if not, force download
-      if (SPA_DIR.exists) return;
+      if (SPA_DIR.exists) return false;
     }
 
     console.log('New version detected or missing files. Downloading SPA...');
@@ -76,8 +77,10 @@ export const checkAndDownloadSpa = async (): Promise<void> => {
     // 6. Update version
     await AsyncStorage.setItem('spa-versioning', manifestVersioning);
     await AsyncStorage.setItem('spa-force-refresh-key', forceRefreshKey);
+    return true;
   } catch (error) {
     console.error('Error in checkAndDownloadSpa:', error);
+    return false;
   }
 };
 

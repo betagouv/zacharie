@@ -7,6 +7,7 @@ import {
   View,
   TouchableOpacity,
   Text,
+  AppState,
 } from 'react-native';
 import { WebView, type WebViewMessageEvent } from '@dr.pogodin/react-native-webview';
 import { registerForPushNotificationsAsync } from './services/expo-push-notifs';
@@ -89,6 +90,26 @@ function App() {
       }
     );
   }, []);
+
+  // Au retour au premier plan, on télécharge une éventuelle nouvelle version sans recharger la WebView
+  // (des données peuvent ne pas être synchronisées) : la page affiche un message invitant à rouvrir l'app.
+  const isCheckingSpa = useRef(false);
+  useEffect(() => {
+    if (!spaReady) return;
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state !== 'active' || isCheckingSpa.current) return;
+      isCheckingSpa.current = true;
+      checkAndDownloadSpa()
+        .then((downloaded) => {
+          if (!downloaded) return;
+          ref.current?.injectJavaScript(`window.dispatchEvent(new Event('zacharie-new-native-bundle'));true`);
+        })
+        .finally(() => {
+          isCheckingSpa.current = false;
+        });
+    });
+    return () => subscription.remove();
+  }, [spaReady]);
 
   // lien ouvert alors que l'app tourne déjà : la SPA navigue via pushState + popstate
   useEffect(() => {

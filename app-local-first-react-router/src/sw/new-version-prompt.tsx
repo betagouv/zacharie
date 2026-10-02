@@ -5,11 +5,21 @@ import { useIsOnline } from '@app/utils-offline/use-is-offline';
 import { syncData } from '@app/utils/sync-data';
 
 export function showNewVersionPrompt() {
-  toast.info(<NewVersionPrompt />, {
+  // Dans l'app mobile, la page est servie depuis les fichiers téléchargés au lancement : recharger
+  // redonnerait la même version, la nouvelle n'est installée qu'à la réouverture de l'application.
+  toast.info(window.ReactNativeWebView ? <NewNativeVersionPrompt /> : <NewVersionPrompt />, {
     toastId: 'nouvelle-version',
     autoClose: false,
     closeOnClick: false,
   });
+}
+
+function NewNativeVersionPrompt() {
+  return (
+    <p className="m-0">
+      Une nouvelle version de Zacharie est disponible. Fermez puis rouvrez l'application pour l'utiliser.
+    </p>
+  );
 }
 
 function NewVersionPrompt() {
