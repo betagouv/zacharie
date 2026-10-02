@@ -216,7 +216,11 @@ test('Chaîne 300 carcasses : examinateur → PD → collecteur → ETG → SVI 
   await logoutAndConnect(page, 'collecteur-pro@example.fr');
   await expect(page).toHaveURL(/\/app\/collecteur/);
   await page.getByRole('link', { name: feiId }).click();
-  await page.getByRole('button', { name: /Je contrôle et transporte les carcasses/ }).click();
+  const priseEnChargeColl = page.getByRole('button', { name: /Je contrôle et transporte les carcasses/ });
+  await priseEnChargeColl.click();
+  // La liste des carcasses ne devient éditable qu'au re-rendu qui suit la prise en charge : avant, un
+  // clic sur une carte ouvre la modale de consultation, sans « Carcasse manquante ».
+  await expect(priseEnChargeColl).toBeHidden({ timeout: 15000 });
 
   await context.setOffline(true);
 
@@ -239,7 +243,9 @@ test('Chaîne 300 carcasses : examinateur → PD → collecteur → ETG → SVI 
   // ===== 4. ETG : prise en charge en ligne, puis marquage + transmission HORS-LIGNE =====
   await logoutAndConnect(page, 'etg-1@example.fr');
   await page.getByRole('link', { name: feiId }).click();
-  await page.getByRole('button', { name: 'Prendre en charge' }).click();
+  const priseEnChargeEtg = page.getByRole('button', { name: 'Prendre en charge' });
+  await priseEnChargeEtg.click();
+  await expect(priseEnChargeEtg).toBeHidden({ timeout: 15000 });
 
   await context.setOffline(true);
 
