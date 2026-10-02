@@ -261,6 +261,16 @@ export interface CarcassesGetResponse {
   error: string;
 }
 
+// Nombre de carcasses non supprimées du périmètre de synchro de l'utilisateur, comparé par le client
+// à son store local pour détecter les écarts (observation seulement). Voir GET /carcasse/count.
+export interface CarcassesCountResponse {
+  ok: boolean;
+  data: {
+    count: number;
+  } | null;
+  error: string;
+}
+
 // Carcasses d'une fiche hors du périmètre de synchro delta (refusées/manquantes/orphelines),
 // récupérées à la demande par fiche puis mergées dans le store. Voir GET /carcasse/refusees/:fei_numero.
 export interface CarcassesRefuseesResponse {
