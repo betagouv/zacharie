@@ -8,6 +8,7 @@ import API from '@app/services/api';
 import { capture } from '@app/services/sentry';
 import useZustandStore, { hydrationPromise } from '@app/zustand/store';
 import { loadCarcasses } from './load-carcasses';
+import { mergeSyncedFeis } from './merge-synced-feis';
 
 // SYNC DATA
 
@@ -112,6 +113,11 @@ export async function syncData(calledFrom?: string) {
     for (const rejection of res.data.rejected ?? []) {
       rejectedBySync.add(`${rejection.kind}:${rejection.id}`);
     }
+
+    const savedFeis = res.data.feis;
+    useZustandStore.setState((state) => ({
+      feis: mergeSyncedFeis(state.feis, unsynced.feis, savedFeis),
+    }));
 
     // Le serveur confirme les logs qu'il a écrits : on les retire du store, sinon ils
     // repartent dans chaque payload de sync pour toute la durée de la session.
