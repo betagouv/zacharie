@@ -87,9 +87,10 @@ app.get('/.well-known/assetlinks.json', (req, res) => {
   ]);
 });
 
-// index.html and the service worker reference the hashed assets of the current build:
+// index.html, the service worker and spa-manifest.json (read by the mobile app to download the web
+// assets) reference the hashed assets of the current build:
 // never cache them, so a deploy reaches users on the next load.
-const noStoreFiles = ['index.html', 'service-worker.js'];
+const noStoreFiles = ['index.html', 'service-worker.js', 'spa-manifest.json'];
 
 // Serve static files from the build/client directory
 app.use(
