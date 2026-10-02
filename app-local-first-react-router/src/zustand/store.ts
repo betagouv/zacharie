@@ -524,6 +524,8 @@ const useZustandStore = create<State & Actions>()(
         // full-history map keyed by carcasse id. Bump forces a full re-fetch so the map repopulates.
         version: 10,
         storage: createSlicedIDBStorage<Partial<State>>(PERSISTED_KEYS),
+        // l'hydratation est lancée par single-active-tab.ts, une fois que l'onglet est le seul actif
+        skipHydration: true,
         onRehydrateStorage: (state) => {
           return () => state.setHasHydrated(true);
         },
