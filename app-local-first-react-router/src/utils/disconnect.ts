@@ -2,11 +2,11 @@ import { flushSync } from 'react-dom';
 import { clearCache } from '@app/services/indexed-db';
 import { setNativeAuthToken } from '@app/services/api';
 import useUser from '@app/zustand/user';
-import useZustandStore from '@app/zustand/store';
+import useZustandStore, { hydrationPromise } from '@app/zustand/store';
 import { setLocalTeardownInProgress } from '@app/zustand/idb-sliced-storage';
 import { abortLoadCarcasses } from './load-carcasses';
 import { abortLoadMyRelations } from './load-my-relations';
-import { abortSyncData } from './sync-data';
+import { abortSyncData, hasUnsyncedData } from './sync-data';
 
 interface DisconnectOptions {
   // Free-form tag for logs/aborts: 'logout', '401', etc.
@@ -16,9 +16,19 @@ interface DisconnectOptions {
   // Optional path the user was on before being kicked out; /app/connexion
   // uses it to bounce them back after re-login.
   redirectTo?: string;
+  // Session expirée (401) : s'il reste des modifications non synchronisées, on garde le store local
+  // (IndexedDB + Zustand) au lieu de l'effacer, pour les synchroniser après la reconnexion du même
+  // compte. Voir `prepareLocalDataForUser`.
+  keepUnsyncedData?: boolean;
 }
 
 let disconnecting = false;
+
+function abortLoaders(reason: string) {
+  abortSyncData(reason);
+  abortLoadCarcasses(reason);
+  abortLoadMyRelations(reason);
+}
 
 /**
  * Cancel in-flight loaders and wipe persisted state (IndexedDB +
@@ -46,9 +56,7 @@ export async function clearLocalAppState(reason: string) {
   // the same microtask chain, so no event can slip in between.
   setLocalTeardownInProgress(true);
   try {
-    abortSyncData(reason);
-    abortLoadCarcasses(reason);
-    abortLoadMyRelations(reason);
+    abortLoaders(reason);
     await clearCache(reason);
 
     // Give pending writes a beat to flush before any caller state mutation.
@@ -66,7 +74,7 @@ export async function clearLocalAppState(reason: string) {
  *
  * Used by:
  *   - the manual logout button (RootDisplay.tsx)
- *   - the 401 auto-disconnect (api.ts)
+ *   - the 401 auto-disconnect (api.ts), with keepUnsyncedData
  *   - the admin "connect-as" flow (ConnexionButton.tsx), with skipNavigate
  *
  * --- IMPORTANT — navigation strategy ---
@@ -99,10 +107,27 @@ export async function disconnect(options: DisconnectOptions) {
     // 1. Wipe the native JWT (no React subscribers, safe to do up-front).
     setNativeAuthToken(null);
 
+    // Le store doit être hydraté avant de chercher des données non synchronisées : un 401 peut
+    // arriver au démarrage (refreshUser) avant la fin de l'hydratation.
+    // Un 401 peut arriver alors que `user` est déjà vide (données déjà gardées) : on conserve
+    // alors le propriétaire enregistré au premier 401. Sans propriétaire connu, on efface.
+    let keepLocalData = false;
+    let keptDataOwnerId: string | null = null;
+    if (options.keepUnsyncedData) {
+      await hydrationPromise;
+      keptDataOwnerId = useUser.getState().user?.id ?? useZustandStore.getState().keptDataOwnerId;
+      keepLocalData = !!keptDataOwnerId && hasUnsyncedData(useZustandStore.getState());
+    }
+
     // 2. Async I/O cleanup. `useUser` is still populated in memory, so
     // role layouts won't yet fire their own <Navigate to="/app/connexion
     // ?redirect=..."/> — that's important (see atomic block below).
-    await clearLocalAppState(options.reason);
+    // When local data is kept, only the loaders are aborted: no cache wipe.
+    if (keepLocalData) {
+      abortLoaders(options.reason);
+    } else {
+      await clearLocalAppState(options.reason);
+    }
 
     // 3. Atomic final step: navigate AND clear user state in a single
     // React commit so role layouts never observe `user=null` while
@@ -138,10 +163,31 @@ export async function disconnect(options: DisconnectOptions) {
         window.dispatchEvent(new PopStateEvent('popstate'));
       }
       useUser.setState({ user: null });
-      useZustandStore.getState().reset();
+      if (keepLocalData) {
+        useZustandStore.setState({ keptDataOwnerId });
+      } else {
+        useZustandStore.getState().reset();
+      }
     });
     useUser.persist.clearStorage();
   } finally {
     disconnecting = false;
   }
+}
+
+/**
+ * À appeler à chaque connexion réussie, avant de renseigner `useUser`. Si des données non
+ * synchronisées ont été gardées lors d'une session expirée (`keptDataOwnerId`), on les garde pour le
+ * même compte (la synchro les enverra au chargement) et on les efface pour un autre compte.
+ */
+export async function prepareLocalDataForUser(userId: string) {
+  await hydrationPromise;
+  const { keptDataOwnerId } = useZustandStore.getState();
+  if (!keptDataOwnerId) return;
+  if (keptDataOwnerId === userId) {
+    useZustandStore.setState({ keptDataOwnerId: null });
+    return;
+  }
+  await clearLocalAppState('login-other-user');
+  useZustandStore.getState().reset();
 }
