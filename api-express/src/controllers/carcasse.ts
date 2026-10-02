@@ -21,12 +21,18 @@ import { userFeiSelect } from '~/types/user';
 import { getCarcasseAccessWhere } from '~/utils/carcasse-access';
 import { FORCE_FULL_RELOAD_AFTER } from '~/utils/force-full-reload';
 
-const zodQuerySchema = z.object({
-  page: z.string(),
-  after: z.string(),
-  limit: z.string(),
-  withDeleted: z.string(),
-});
+// Pagination par curseur (updated_at, zacharie_carcasse_id) : le client repasse la dernière carcasse
+// reçue, la page suivante commence strictement après. Un offset sauterait ou doublerait des lignes
+// quand plusieurs carcasses partagent le même updated_at ou quand une carcasse sort du périmètre.
+const zodQuerySchema = z
+  .object({
+    after: z.string(),
+    limit: z.string(),
+    withDeleted: z.string(),
+    cursor_updated_at: z.string().optional(),
+    cursor_id: z.string().optional(),
+  })
+  .refine((query) => !!query.cursor_updated_at === !!query.cursor_id);
 
 router.get(
   '/',
@@ -50,9 +56,8 @@ router.get(
       res.status(400).send({ ok: false, data: null, error: 'Invalid query parameters' });
       return;
     }
-    const { page, after, limit, withDeleted } = queryResult.data;
+    const { after, limit, withDeleted, cursor_updated_at, cursor_id } = queryResult.data;
 
-    const parsedPage = parseInt(page, 10);
     const parsedLimit = parseInt(limit, 10);
     const includeDeleted = withDeleted === 'true';
     const requestedAfterDate = Number(after) ? new Date(Number(after)) : undefined;
@@ -81,13 +86,21 @@ router.get(
       where.updated_at = { gte: afterDate };
     }
 
+    const pageWhere: Prisma.CarcasseWhereInput = { ...where };
+    if (cursor_updated_at && cursor_id) {
+      const cursorDate = new Date(Number(cursor_updated_at));
+      pageWhere.updated_at = { gte: cursorDate };
+      pageWhere.AND = [
+        { OR: [{ updated_at: { gt: cursorDate } }, { zacharie_carcasse_id: { gt: cursor_id } }] },
+      ];
+    }
+
     // Execute count and findMany in parallel
     const [total, carcasses] = await Promise.all([
       prisma.carcasse.count({ where }),
       prisma.carcasse.findMany({
-        where,
-        orderBy: { updated_at: 'desc' },
-        skip: parsedPage * parsedLimit,
+        where: pageWhere,
+        orderBy: [{ updated_at: 'asc' }, { zacharie_carcasse_id: 'asc' }],
         take: parsedLimit,
       }),
     ]);

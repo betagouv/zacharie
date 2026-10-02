@@ -32,10 +32,10 @@ beforeEach(() => {
   vi.mocked(prisma.entityAndUserRelations.findMany).mockResolvedValue([{ entity_id: 'entity-1' } as any]);
 });
 
-function getCarcasses(after: number) {
+function getCarcasses(after: number, cursor: Record<string, string> = {}) {
   return request(app)
     .get('/carcasse')
-    .query({ after: `${after}`, withDeleted: 'true', page: '0', limit: '5000' })
+    .query({ after: `${after}`, withDeleted: 'true', limit: '5000', ...cursor })
     .set('x-test-user', JSON.stringify(etgUser));
 }
 
@@ -64,5 +64,49 @@ describe('GET /carcasse — rechargement complet forcé', () => {
     expect(res.status).toBe(200);
     expect(res.body.data.fullReload).toBe(false);
     expect(findManyWhere().updated_at).toBeUndefined();
+  });
+});
+
+describe('GET /carcasse — pagination par curseur', () => {
+  const after = FORCE_FULL_RELOAD_AFTER.getTime() + 1;
+
+  test('première page → tri (updated_at, zacharie_carcasse_id) croissant, sans offset', async () => {
+    const res = await getCarcasses(after);
+    expect(res.status).toBe(200);
+    const args = vi.mocked(prisma.carcasse.findMany).mock.calls[0][0]!;
+    expect(args.orderBy).toEqual([{ updated_at: 'asc' }, { zacharie_carcasse_id: 'asc' }]);
+    expect(args.skip).toBeUndefined();
+    expect(args.where!.AND).toBeUndefined();
+  });
+
+  test('page suivante → strictement après la dernière carcasse reçue, ex aequo départagés par id', async () => {
+    const cursorDate = after + 1000;
+    const res = await getCarcasses(after, { cursor_updated_at: `${cursorDate}`, cursor_id: 'FEI-1_B2' });
+    expect(res.status).toBe(200);
+    const where = findManyWhere();
+    expect(where.updated_at).toEqual({ gte: new Date(cursorDate) });
+    expect(where.AND).toEqual([
+      { OR: [{ updated_at: { gt: new Date(cursorDate) } }, { zacharie_carcasse_id: { gt: 'FEI-1_B2' } }] },
+    ]);
+    // le total reste celui du delta complet, sans le curseur
+    expect(vi.mocked(prisma.carcasse.count).mock.calls[0][0]!.where!.updated_at).toEqual({
+      gte: new Date(after),
+    });
+  });
+
+  test('curseur incomplet → 400', async () => {
+    const res = await getCarcasses(after, { cursor_updated_at: `${after}` });
+    expect(res.status).toBe(400);
+  });
+
+  test('hasMore quand la page est pleine', async () => {
+    vi.mocked(prisma.carcasse.findMany).mockResolvedValue(
+      Array.from({ length: 2 }, (_, i) => ({ zacharie_carcasse_id: `c${i}`, fei_numero: 'FEI-1' }) as any)
+    );
+    const res = await request(app)
+      .get('/carcasse')
+      .query({ after: `${after}`, withDeleted: 'true', limit: '2' })
+      .set('x-test-user', JSON.stringify(etgUser));
+    expect(res.body.data.hasMore).toBe(true);
   });
 });
