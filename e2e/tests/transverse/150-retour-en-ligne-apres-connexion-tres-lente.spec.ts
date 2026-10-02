@@ -2,7 +2,7 @@ import { test, expect } from '../../utils/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 
-// Scenario 144 — Après un événement 'very-bad-connection' (timeout de GET /user/me), le navigateur
+// Scenario 150 — Après un événement 'very-bad-connection' (timeout de GET /user/me), le navigateur
 // ne renvoie pas d'événement 'online' car navigator.onLine est resté vrai. L'application retente
 // /user/me toutes les 30 s (use-is-offline.ts) : le succès émet 'good-connection' et la remet en
 // ligne toute seule, sans rechargement.
