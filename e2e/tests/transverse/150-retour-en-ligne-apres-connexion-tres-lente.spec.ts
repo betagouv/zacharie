@@ -20,8 +20,13 @@ test.beforeAll(async () => {
 });
 
 test("L'application repasse en ligne d'elle-même après une connexion très lente", async ({ page }) => {
+  // Le chargement initial appelle GET /user/me ; son succès émet 'good-connection'. On attend la fin
+  // de ce chargement (GET /carcasse vient après) pour qu'il ne remette pas l'application en ligne
+  // juste après notre événement 'very-bad-connection'.
+  const initialLoadDone = page.waitForResponse((response) => response.url().includes('/carcasse?'));
   await connectWith(page, 'examinateur@example.fr');
   await expect(page).toHaveURL('http://localhost:3290/app/chasseur');
+  await initialLoadDone;
 
   const offlineBanner = page.getByText("Vous n'avez pas internet, ou votre connexion est très mauvaise.");
   await expect(offlineBanner).toBeHidden();
