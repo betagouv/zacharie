@@ -1,10 +1,11 @@
-import type { CarcassesGetResponse } from '@api/src/types/responses';
+import type { CarcassesGetResponse, SyncRejection } from '@api/src/types/responses';
 import useZustandStore from '@app/zustand/store';
 import { mergeItems } from './merge-fetched-items';
 import API from '@app/services/api';
 import { getFeiAndCarcasseAndIntermediaireIds } from './get-carcasse-intermediaire-id';
 import type { CarcasseModificationRequest } from '@prisma/client';
 import useUser from '@app/zustand/user';
+import { isRejectedBySync } from './sync-rejections';
 
 let loadCarcassesAbortController: AbortController | null = null;
 
@@ -86,22 +87,33 @@ export async function loadCarcasses() {
     const keepLocal = <T extends { is_synced: boolean }>(items: Array<T>) =>
       fullReload ? items.filter((item) => !item.is_synced) : items;
 
+    // Une modification locale pas encore poussée l'emporte sur la version serveur : la prochaine
+    // synchro l'enverra, et sa réponse la remplacera par la version serveur (is_synced = true). Les items
+    // refusés définitivement par /sync ne repartiront jamais : pour eux la version serveur l'emporte.
+    const keepUnsynced =
+      <T extends { is_synced: boolean }>(kind: SyncRejection['kind'], idKey: (item: T) => string) =>
+      (item: T) =>
+        !item.is_synced && !isRejectedBySync(kind, idKey(item));
+
     const newCarcasses = mergeItems({
       oldItems: keepLocal(Object.values(useZustandStore.getState().carcasses)),
       newItems: carcassesFetched,
       idKey: (c) => c.zacharie_carcasse_id,
+      keepOldItem: keepUnsynced('carcasse', (c) => c.zacharie_carcasse_id),
     });
 
     const newFeis = mergeItems({
       oldItems: Object.values(useZustandStore.getState().feis) || [],
       newItems: feisFetched,
       idKey: (c) => c.numero,
+      keepOldItem: keepUnsynced('fei', (f) => f.numero),
     });
 
     const newCarcassesIntermediaires = mergeItems({
       oldItems: keepLocal(Object.values(useZustandStore.getState().carcassesIntermediaireById)),
       newItems: carcassesIntermediairesFetched,
       idKey: getFeiAndCarcasseAndIntermediaireIds,
+      keepOldItem: keepUnsynced('carcasseIntermediaire', getFeiAndCarcasseAndIntermediaireIds),
     });
 
     const newUsers = mergeItems({
@@ -126,6 +138,7 @@ export async function loadCarcasses() {
       oldItems: keepLocal(Object.values(useZustandStore.getState().modifRequestsByCarcasseId).flat()),
       newItems: carcasseModifRequests,
       idKey: (r) => r.id,
+      keepOldItem: keepUnsynced('carcasseModifRequest', (r) => r.id),
     });
     const nextModifRequestsByCarcasseId: Record<string, Array<CarcasseModificationRequest>> = {};
     for (const request of Object.values(mergedModifRequestsById) as Array<CarcasseModificationRequest>) {

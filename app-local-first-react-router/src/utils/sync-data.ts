@@ -8,17 +8,13 @@ import API from '@app/services/api';
 import { capture } from '@app/services/sentry';
 import useZustandStore, { hydrationPromise } from '@app/zustand/store';
 import { loadCarcasses } from './load-carcasses';
+import type { CarcasseModificationRequest } from '@prisma/client';
+import { confirmPushedItems } from './confirm-pushed-items';
+import { addSyncRejection, clearSyncRejections, isRejectedBySync } from './sync-rejections';
 
 // SYNC DATA
 
 let debug = false;
-
-// Items que le serveur a définitivement refusé d'écrire (autorisation), en clés `kind:id`. Sans ça
-// ils restent `is_synced = false` — le serveur n'ayant pas touché sa ligne, elle ne revient jamais
-// dans le delta de loadCarcasses qui ferait basculer le flag — et repartent dans chaque payload de
-// synchro. La portée est la session : `abortSyncData` vide le Set, donc on retente au prochain
-// chargement comme à la connexion suivante. L'équipe est prévenue par le Sentry émis côté serveur.
-const rejectedBySync = new Set<string>();
 
 // Single AbortController for the current sync request
 let syncAbortController: AbortController | null = null;
@@ -32,11 +28,11 @@ export function abortSyncData(reason: string = 'aborted') {
   // fonction à chaque teardown de session, et c'est le seul moment où le Set doit repartir de zéro :
   // `disconnect` navigue en pushState, qui ne recharge pas la page, donc sans ce clear le Set
   // survivrait au changement de compte et bloquerait les écritures légitimes du suivant.
-  rejectedBySync.clear();
+  clearSyncRejections();
 }
 
 function collectUnsynced(state: ReturnType<typeof useZustandStore.getState>) {
-  const notRejected = (kind: SyncRejection['kind'], id: string) => !rejectedBySync.has(`${kind}:${id}`);
+  const notRejected = (kind: SyncRejection['kind'], id: string) => !isRejectedBySync(kind, id);
   return {
     feis: Object.values(state.feis).filter((f) => !f.is_synced && notRejected('fei', f.numero)),
     carcasses: Object.values(state.carcasses).filter(
@@ -108,10 +104,54 @@ export async function syncData(calledFrom?: string) {
     // Refus définitifs : on arrête de les repousser. On ne touche pas à la donnée locale — le
     // serveur ne renvoie pas sa version (ce serait exposer la fiche d'un tiers), donc on n'a rien
     // pour la corriger ici. Elle le sera dès que la ligne serveur bougera légitimement et reviendra
-    // dans un delta, mergeItems étant server-wins.
+    // dans un delta : loadCarcasses garde les copies locales non synchronisées, sauf celles refusées
+    // ici, pour lesquelles la version serveur l'emporte.
     for (const rejection of res.data.rejected ?? []) {
-      rejectedBySync.add(`${rejection.kind}:${rejection.id}`);
+      addSyncRejection(rejection.kind, rejection.id);
     }
+
+    // Le serveur confirme les items qu'il a écrits : sans ça ils resteraient is_synced = false, et
+    // loadCarcasses, qui garde les copies locales non synchronisées, ignorerait leur version serveur.
+    const saved = res.data;
+    useZustandStore.setState((state) => {
+      const carcasses = confirmPushedItems({
+        localItems: state.carcasses,
+        pushedItems: unsynced.carcasses,
+        savedItems: saved.carcasses,
+        idKey: (c) => c.zacharie_carcasse_id,
+      });
+      const modifRequestsById = confirmPushedItems({
+        localItems: Object.fromEntries(
+          Object.values(state.modifRequestsByCarcasseId)
+            .flat()
+            .map((r) => [r.id, r])
+        ),
+        pushedItems: unsynced.carcasseModifRequests,
+        savedItems: saved.carcasseModifRequests,
+        idKey: (r) => r.id,
+      });
+      const modifRequestsByCarcasseId: Record<string, Array<CarcasseModificationRequest>> = {};
+      for (const request of Object.values(modifRequestsById)) {
+        (modifRequestsByCarcasseId[request.zacharie_carcasse_id] ??= []).push(request);
+      }
+      return {
+        feis: confirmPushedItems({
+          localItems: state.feis,
+          pushedItems: unsynced.feis,
+          savedItems: saved.feis,
+          idKey: (f) => f.numero,
+        }),
+        carcasses,
+        carcassesRegistry: Object.values(carcasses),
+        carcassesIntermediaireById: confirmPushedItems({
+          localItems: state.carcassesIntermediaireById,
+          pushedItems: unsynced.carcassesIntermediaires,
+          savedItems: saved.carcassesIntermediaires,
+          idKey: getFeiAndCarcasseAndIntermediaireIds,
+        }),
+        modifRequestsByCarcasseId,
+      };
+    });
 
     // Le serveur confirme les logs qu'il a écrits : on les retire du store, sinon ils
     // repartent dans chaque payload de sync pour toute la durée de la session.

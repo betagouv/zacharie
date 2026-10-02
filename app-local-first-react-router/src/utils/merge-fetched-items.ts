@@ -8,9 +8,12 @@ interface MergeParams<T extends ItemBase> {
   oldItems: T[];
   newItems: T[];
   idKey: (item: T) => string;
+  // Par défaut le serveur l'emporte. Un item local pour lequel ce prédicat renvoie true est gardé à
+  // la place de la version serveur, sauf si le serveur l'a supprimé.
+  keepOldItem?: (oldItem: T) => boolean;
 }
 
-export function mergeItems<T extends ItemBase>({ oldItems, newItems, idKey }: MergeParams<T>) {
+export function mergeItems<T extends ItemBase>({ oldItems, newItems, idKey, keepOldItem }: MergeParams<T>) {
   const toReturn = {};
   const newItemIds = {};
   const newItemIdsDeleted = {};
@@ -33,7 +36,7 @@ export function mergeItems<T extends ItemBase>({ oldItems, newItems, idKey }: Me
     // @ts-expect-error idKey is not a property of T
     if (newItemIdsDeleted[idKey(oldItem)]) continue;
     // @ts-expect-error idKey is not a property of T
-    if (!toReturn[idKey(oldItem)]) {
+    if (!toReturn[idKey(oldItem)] || keepOldItem?.(oldItem)) {
       // @ts-expect-error idKey is not a property of T
       toReturn[idKey(oldItem)] = oldItem;
     }
