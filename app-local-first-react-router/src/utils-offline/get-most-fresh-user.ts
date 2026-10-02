@@ -51,9 +51,10 @@ export async function refreshUser(_calledFrom?: string) {
     })
       .then((res) => res as UserConnexionResponse)
       .then(async (userResponse) => {
-        window.dispatchEvent(new Event('good-connection'));
-
         if (userResponse?.ok && userResponse.data?.user) {
+          // API.get renvoie { ok: false } sans lever d'erreur quand le réseau tombe :
+          // seule une vraie réponse prouve que la connexion est revenue
+          window.dispatchEvent(new Event('good-connection'));
           const user = userResponse.data.user as User;
           useUser.setState({ user });
           const apiKeyApprovals = userResponse.data?.apiKeyApprovals || [];
