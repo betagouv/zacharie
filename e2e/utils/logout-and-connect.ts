@@ -5,7 +5,14 @@ export async function logoutAndConnect(page: Page, email: string, password: stri
   // In mobile viewport, the DSFR header hides quick-access items behind a "Menu" button.
   // In desktop viewport, "Déconnexion" is directly visible — no hamburger menu.
   const menuBtn = page.getByRole('button', { name: 'Menu' });
-  if (await menuBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+  // isVisible() n'attend pas : on attend d'abord que l'en-tête soit rendu (l'app n'affiche rien tant
+  // que l'onglet n'a pas obtenu le verrou d'onglet actif et réhydraté le store).
+  await menuBtn
+    .or(page.getByRole('button', { name: 'Déconnexion' }))
+    .filter({ visible: true })
+    .first()
+    .waitFor({ timeout: 15000 });
+  if (await menuBtn.isVisible()) {
     await menuBtn.click();
   }
   await page.getByRole('button', { name: 'Déconnexion' }).click();
