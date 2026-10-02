@@ -7,7 +7,7 @@ dayjs.locale('fr');
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 
-// Scenario 143 — Les détenteurs initiaux chargés par load-my-relations survivent à un rechargement
+// Scenario 149 — Les détenteurs initiaux chargés par load-my-relations survivent à un rechargement
 // hors ligne. L'examinateur (examinateur@example.fr) a une relation PREMIER_DETENTEUR vers
 // Pierre Petit (premier-detenteur@example.fr, id 0Y545) dans le seed : Pierre n'est connu du store
 // que par user/my-relations. Après rechargement, user/my-relations est coupé puis le réseau aussi :
