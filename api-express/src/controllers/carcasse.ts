@@ -50,6 +50,14 @@ router.get(
       return;
     }
 
+    // Un bundle qui pagine encore par `page` (app mobile pas relancée, onglet resté ouvert) recevrait
+    // la même première page à chaque tour et bouclerait sans fin : on refuse ses pages suivantes,
+    // il abandonne alors le chargement sans rien fusionner.
+    if (req.query.page !== undefined && req.query.page !== '0') {
+      res.status(400).send({ ok: false, data: null, error: 'Invalid query parameters' });
+      return;
+    }
+
     // Parse and validate query parameters
     const queryResult = zodQuerySchema.safeParse(req.query);
     if (!queryResult.success) {

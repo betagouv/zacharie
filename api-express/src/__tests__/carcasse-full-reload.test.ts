@@ -109,4 +109,12 @@ describe('GET /carcasse — pagination par curseur', () => {
       .set('x-test-user', JSON.stringify(etgUser));
     expect(res.body.data.hasMore).toBe(true);
   });
+
+  test('ancien bundle paginé par page → première page servie, pages suivantes refusées', async () => {
+    const firstPage = await getCarcasses(after, { page: '0' });
+    expect(firstPage.status).toBe(200);
+    const nextPage = await getCarcasses(after, { page: '1' });
+    expect(nextPage.status).toBe(400);
+    expect(nextPage.body.ok).toBe(false);
+  });
 });
