@@ -9,7 +9,7 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import type { UserForFei } from '~/src/types/user';
 import type { EntityWithUserRelation } from '~/src/types/entity';
-import type { UserConnexionResponse } from '~/src/types/responses';
+import type { SyncRejection, UserConnexionResponse } from '~/src/types/responses';
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import dayjs from 'dayjs';
@@ -31,10 +31,12 @@ import { isCarcassePriseEnChargeEnAval } from '@app/utils/carcasse-deja-envoyee'
 import { createSlicedIDBStorage } from './idb-sliced-storage';
 import { CarcasseTransmission } from '@app/types/carcasse';
 import { datesToIso } from '@app/utils/dates-to-iso';
+import { hasUnsyncedData } from '@app/utils/has-unsynced-data';
 
 // State keys to persist in IndexedDB (each stored as its own entry)
+// `dataIsSynced` et `syncRejections` n'y sont pas : le premier est recalculé à l'hydratation depuis les
+// items persistés, le second ne vaut que pour la session en cours.
 const PERSISTED_KEYS: (keyof State)[] = [
-  'dataIsSynced',
   'feis',
   'users',
   'entities',
@@ -74,6 +76,9 @@ export interface State {
   // loadCarcasses les redescend et retire la fiche de cette liste.
   feiIdsRenvoiToHide: Array<Fei['numero']>;
   logs: Array<Log>;
+  // Items que le serveur a définitivement refusé d'écrire lors d'une synchro de cette session.
+  // Ils restent `is_synced = false` et ne sont plus renvoyés (voir sync-data.ts).
+  syncRejections: Array<SyncRejection>;
   _hasHydrated: boolean;
 }
 
@@ -151,6 +156,7 @@ function initialState(): State {
     carcasses: {},
     carcassesIntermediaireById: {},
     modifRequestsByCarcasseId: {},
+    syncRejections: [],
     _hasHydrated: false,
   };
 }
@@ -511,6 +517,7 @@ const useZustandStore = create<State & Actions>()(
         setHasHydrated: (state) => {
           set({
             _hasHydrated: state,
+            ...(state ? { dataIsSynced: !hasUnsyncedData(get()) } : {}),
           });
           if (state) resolveHydration();
         },
