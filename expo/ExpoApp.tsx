@@ -18,7 +18,12 @@ import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 import { useFonts } from 'expo-font';
-import { checkAndDownloadSpa, startSpaServer, stopSpaServer } from './utils/offline-spa';
+import {
+  checkAndDownloadSpa,
+  isSpaUpdateAvailable,
+  startSpaServer,
+  stopSpaServer,
+} from './utils/offline-spa';
 import Chargement from './components/Chargement';
 
 SplashScreen.preventAutoHideAsync();
@@ -91,17 +96,17 @@ function App() {
     );
   }, []);
 
-  // Au retour au premier plan, on télécharge une éventuelle nouvelle version sans recharger la WebView
-  // (des données peuvent ne pas être synchronisées) : la page affiche un message invitant à rouvrir l'app.
+  // Au retour au premier plan, on vérifie seulement si une nouvelle version existe : elle n'est téléchargée
+  // qu'au prochain lancement. La page affiche alors un message invitant à rouvrir l'application.
   const isCheckingSpa = useRef(false);
   useEffect(() => {
     if (!spaReady) return;
     const subscription = AppState.addEventListener('change', (state) => {
       if (state !== 'active' || isCheckingSpa.current) return;
       isCheckingSpa.current = true;
-      checkAndDownloadSpa()
-        .then((downloaded) => {
-          if (!downloaded) return;
+      isSpaUpdateAvailable()
+        .then((updateAvailable) => {
+          if (!updateAvailable) return;
           ref.current?.injectJavaScript(`window.dispatchEvent(new Event('zacharie-new-native-bundle'));true`);
         })
         .finally(() => {

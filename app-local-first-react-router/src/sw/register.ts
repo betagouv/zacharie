@@ -3,7 +3,7 @@ import { showNewVersionPrompt } from './new-version-prompt';
 export async function registerServiceWorker() {
   // Un chunk introuvable signifie que l'onglet tourne sur un bundle dont les fichiers ont été remplacés.
   window.addEventListener('vite:preloadError', () => showNewVersionPrompt());
-  // Envoyé par l'app mobile quand elle a téléchargé une nouvelle version au retour au premier plan.
+  // Envoyé par l'app mobile quand elle détecte une nouvelle version au retour au premier plan.
   window.addEventListener('zacharie-new-native-bundle', () => showNewVersionPrompt());
 
   if ('serviceWorker' in navigator) {
