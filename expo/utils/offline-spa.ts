@@ -158,3 +158,18 @@ export const stopSpaServer = async (): Promise<void> => {
     serverOrigin = null;
   }
 };
+
+// Compare le manifeste distant à la version installée, sans rien télécharger : les fichiers servis
+// ne doivent pas changer sous la WebView en cours d'utilisation.
+export const isSpaUpdateAvailable = async (): Promise<boolean> => {
+  try {
+    const manifestResponse = await fetch(`${APP_URL}spa-manifest.json`);
+    if (!manifestResponse.ok) return false;
+    const manifestVersioning = JSON.stringify(await manifestResponse.json());
+    const localVersioning = await AsyncStorage.getItem('spa-versioning');
+    return manifestVersioning !== localVersioning;
+  } catch (error) {
+    console.error('Error in isSpaUpdateAvailable:', error);
+    return false;
+  }
+};
