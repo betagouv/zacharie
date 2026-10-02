@@ -7,7 +7,7 @@ import { getUserOnboardingRoute } from '@app/utils/user-onboarded.client';
 import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
 import { type User } from '@prisma/client';
 import { type UserConnexionResponse } from '@api/src/types/responses';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { refreshUser } from '@app/utils-offline/get-most-fresh-user';
 import Chargement from '@app/components/Chargement';
 import { capture } from '@app/services/sentry';
@@ -89,7 +89,12 @@ export default function CreationDeCompte() {
     return '';
   };
 
+  // En développement, StrictMode lance cet effet deux fois : deux nettoyages concurrents, dont le
+  // second effacerait l'utilisateur que le premier vient d'enregistrer. On ne le lance qu'une fois.
+  const initStarted = useRef(false);
   useEffect(() => {
+    if (initStarted.current) return;
+    initStarted.current = true;
     clearLocalAppState('invitation').then(() => {
       useZustandStore.getState().reset();
       refreshUser('invitation').then((user) => {
