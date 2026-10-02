@@ -14,7 +14,7 @@ import { capture } from '@app/services/sentry';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import API from '@app/services/api';
-import { clearCache } from '@app/services/indexed-db';
+import { clearLocalAppState } from '@app/utils/disconnect';
 
 export default function CreationDeCompte() {
   const user = useUser((state) => state.user);
@@ -90,7 +90,8 @@ export default function CreationDeCompte() {
   };
 
   useEffect(() => {
-    clearCache('invitation').then(() =>
+    clearLocalAppState('invitation').then(() => {
+      useZustandStore.getState().reset();
       refreshUser('invitation').then((user) => {
         console.log('init user', user);
         if (!user) {
@@ -98,8 +99,8 @@ export default function CreationDeCompte() {
         } else {
           handleRedirect(user);
         }
-      })
-    );
+      });
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
