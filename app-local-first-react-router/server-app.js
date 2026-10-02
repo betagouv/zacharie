@@ -87,11 +87,22 @@ app.get('/.well-known/assetlinks.json', (req, res) => {
   ]);
 });
 
+// index.html and the service worker reference the hashed assets of the current build:
+// never cache them, so a deploy reaches users on the next load.
+const noStoreFiles = ['index.html', 'service-worker.js'];
+
 // Serve static files from the build/client directory
-app.use(express.static(path.join(process.cwd(), 'build')));
+app.use(
+  express.static(path.join(process.cwd(), 'build'), {
+    setHeaders: (res, filePath) => {
+      if (noStoreFiles.includes(path.basename(filePath))) res.setHeader('Cache-Control', 'no-store');
+    },
+  })
+);
 
 // For any other routes, send the index.html file
 app.get('*', (req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store');
   res.sendFile(path.join(process.cwd(), 'build', 'index.html'), next);
 });
 
