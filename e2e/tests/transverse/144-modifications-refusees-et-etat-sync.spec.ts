@@ -7,7 +7,7 @@ dayjs.locale('fr');
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 
-// Scenario 143 — Modifications refusées par le serveur + état de synchro après rechargement.
+// Scenario 144 — Modifications refusées par le serveur + état de synchro après rechargement.
 
 test.use({
   viewport: { width: 350, height: 667 },
