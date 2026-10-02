@@ -2,6 +2,7 @@ import { Navigate, Outlet, useLocation, useNavigate } from 'react-router';
 import { useCallback, useEffect, useMemo } from 'react';
 import useZustandStore from '@app/zustand/store';
 import RootDisplay from '@app/components/RootDisplay';
+import SyncRejectionsNotice from '@app/components/SyncRejectionsNotice';
 import BottomNavigation from '@app/components/BottomNavigation';
 import FloatingNewFicheButton from '@app/components/FloatingNewFicheButton';
 import { useMostFreshUser, refreshUser } from '@app/utils-offline/get-most-fresh-user';
@@ -70,6 +71,7 @@ export default function ChasseurLayout() {
           id="content"
           className="fr-background-alt--blue-france relative flex min-h-full flex-col overflow-visible pb-16 md:pb-0"
         >
+          <SyncRejectionsNotice />
           {!_hasHydrated ? <Chargement /> : showDeactivatedAccount ? <ChasseurDeactivated /> : <Outlet />}
         </main>
       </RootDisplay>
