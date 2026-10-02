@@ -55,6 +55,22 @@ export function createSlicedIDBStorage<S extends Record<string, unknown>>(
         }
         // Clean up legacy key if still around
         del(OLD_KEY).catch(() => {});
+        // Drop slices of keys that are no longer persisted
+        keys()
+          .then((allKeys) =>
+            Promise.all(
+              allKeys
+                .filter(
+                  (key) =>
+                    typeof key === 'string' &&
+                    key.startsWith(PREFIX) &&
+                    key !== META_KEY &&
+                    !idbKeys.includes(key)
+                )
+                .map((key) => del(key))
+            )
+          )
+          .catch(() => {});
         hydrated = true;
         return { state: state as S, version: meta.version };
       }
