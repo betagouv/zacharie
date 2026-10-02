@@ -52,7 +52,7 @@ The frontend stores data in IndexedDB via Zustand. Changes apply locally first (
 
 - **Queue**: `concurrency: 1`, 30ms throttle to prevent race conditions
 - **Order**: FEIs → Carcasses → CarcassesIntermediaires → Logs (each waits for dependencies)
-- **Conflict resolution** (`mergeItems` in `loadCarcasses`): the server copy wins, except a local item with `is_synced = false` (not yet pushed) is kept, unless `/sync` rejected it permanently or the server deleted it
+- **Conflict resolution** (`mergeItems` in `loadCarcasses`): the server copy wins, except a local item with `is_synced = false` (not yet pushed) is kept, unless `/sync` rejected it permanently or the server deleted it. After a successful `/sync`, `confirmPushedItems` replaces each pushed item not edited since by the server copy (`is_synced = true`)
 - **AbortController per record**: Cancels in-flight requests if same record changes again
 
 Key helpers in `@app/utils/get-carcasse-intermediaire-id.ts` for composite IDs (CarcasseIntermediaire uses `fei_numero + zacharie_carcasse_id + intermediaire_id`).

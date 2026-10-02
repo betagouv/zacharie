@@ -8,6 +8,8 @@ import API from '@app/services/api';
 import { capture } from '@app/services/sentry';
 import useZustandStore, { hydrationPromise } from '@app/zustand/store';
 import { loadCarcasses } from './load-carcasses';
+import type { CarcasseModificationRequest } from '@prisma/client';
+import { confirmPushedItems } from './confirm-pushed-items';
 import { addSyncRejection, clearSyncRejections, isRejectedBySync } from './sync-rejections';
 
 // SYNC DATA
@@ -107,6 +109,49 @@ export async function syncData(calledFrom?: string) {
     for (const rejection of res.data.rejected ?? []) {
       addSyncRejection(rejection.kind, rejection.id);
     }
+
+    // Le serveur confirme les items qu'il a écrits : sans ça ils resteraient is_synced = false, et
+    // loadCarcasses, qui garde les copies locales non synchronisées, ignorerait leur version serveur.
+    const saved = res.data;
+    useZustandStore.setState((state) => {
+      const carcasses = confirmPushedItems({
+        localItems: state.carcasses,
+        pushedItems: unsynced.carcasses,
+        savedItems: saved.carcasses,
+        idKey: (c) => c.zacharie_carcasse_id,
+      });
+      const modifRequestsById = confirmPushedItems({
+        localItems: Object.fromEntries(
+          Object.values(state.modifRequestsByCarcasseId)
+            .flat()
+            .map((r) => [r.id, r])
+        ),
+        pushedItems: unsynced.carcasseModifRequests,
+        savedItems: saved.carcasseModifRequests,
+        idKey: (r) => r.id,
+      });
+      const modifRequestsByCarcasseId: Record<string, Array<CarcasseModificationRequest>> = {};
+      for (const request of Object.values(modifRequestsById)) {
+        (modifRequestsByCarcasseId[request.zacharie_carcasse_id] ??= []).push(request);
+      }
+      return {
+        feis: confirmPushedItems({
+          localItems: state.feis,
+          pushedItems: unsynced.feis,
+          savedItems: saved.feis,
+          idKey: (f) => f.numero,
+        }),
+        carcasses,
+        carcassesRegistry: Object.values(carcasses),
+        carcassesIntermediaireById: confirmPushedItems({
+          localItems: state.carcassesIntermediaireById,
+          pushedItems: unsynced.carcassesIntermediaires,
+          savedItems: saved.carcassesIntermediaires,
+          idKey: getFeiAndCarcasseAndIntermediaireIds,
+        }),
+        modifRequestsByCarcasseId,
+      };
+    });
 
     // Le serveur confirme les logs qu'il a écrits : on les retire du store, sinon ils
     // repartent dans chaque payload de sync pour toute la durée de la session.

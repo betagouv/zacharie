@@ -88,7 +88,7 @@ export async function loadCarcasses() {
       fullReload ? items.filter((item) => !item.is_synced) : items;
 
     // Une modification locale pas encore poussée l'emporte sur la version serveur : la prochaine
-    // synchro l'enverra et le delta suivant ramènera la version serveur (is_synced = true). Les items
+    // synchro l'enverra, et sa réponse la remplacera par la version serveur (is_synced = true). Les items
     // refusés définitivement par /sync ne repartiront jamais : pour eux la version serveur l'emporte.
     const keepUnsynced =
       <T extends { is_synced: boolean }>(kind: SyncRejection['kind'], idKey: (item: T) => string) =>
