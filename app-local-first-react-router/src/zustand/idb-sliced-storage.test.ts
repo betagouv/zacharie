@@ -25,7 +25,7 @@ vi.mock('@app/services/sentry', () => ({ capture: vi.fn() }));
 import { setMany } from 'idb-keyval';
 import { toast } from 'react-toastify';
 import { capture } from '@app/services/sentry';
-import { createSlicedIDBStorage } from './idb-sliced-storage';
+import { createSlicedIDBStorage, setLocalTeardownInProgress } from './idb-sliced-storage';
 
 type State = { feis: Record<string, unknown>; logs: unknown[] };
 const KEYS = ['feis', 'logs'];
@@ -35,6 +35,7 @@ beforeEach(() => {
   failures.get = false;
   failures.setMany = false;
   vi.clearAllMocks();
+  setLocalTeardownInProgress(false);
 });
 
 describe('createSlicedIDBStorage', () => {
@@ -112,5 +113,18 @@ describe('createSlicedIDBStorage', () => {
     await storage.setItem('x', { state: { feis: feis2, logs }, version: 10 });
     // logs failed in the first write and was not written since: it is retried, feis2 is not
     expect(vi.mocked(setMany).mock.calls[0][0].map(([key]) => key)).toEqual(['zs:logs', 'zs:__meta__']);
+  });
+
+  it('drops writes while the local teardown is in progress', async () => {
+    const storage = createSlicedIDBStorage<State>(KEYS);
+    await storage.getItem('x');
+
+    setLocalTeardownInProgress(true);
+    await storage.setItem('x', { state: { feis: { a: 'ancienne session' }, logs: [] }, version: 10 });
+    expect(setMany).not.toHaveBeenCalled();
+
+    setLocalTeardownInProgress(false);
+    await storage.setItem('x', { state: { feis: {}, logs: [] }, version: 10 });
+    expect(idb.get('zs:feis')).toEqual({});
   });
 });

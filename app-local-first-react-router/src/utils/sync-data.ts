@@ -7,6 +7,7 @@ import { syncProchainBraceletAUtiliser } from '@app/zustand/user';
 import API from '@app/services/api';
 import { capture } from '@app/services/sentry';
 import useZustandStore, { hydrationPromise } from '@app/zustand/store';
+import { isLocalTeardownInProgress } from '@app/zustand/idb-sliced-storage';
 import { loadCarcasses } from './load-carcasses';
 import type { FeiAndCarcasseAndIntermediaireIds } from '@app/types/carcasses-intermediaire';
 
@@ -59,6 +60,10 @@ function isEverythingSynced(unsynced: ReturnType<typeof collectUnsynced>) {
 
 export async function syncData(calledFrom?: string) {
   await hydrationPromise;
+  if (isLocalTeardownInProgress()) {
+    console.log('not syncing data because local state is being cleared');
+    return;
+  }
 
   // Cancel any in-flight sync
   if (syncAbortController && !syncAbortController.signal.aborted) {
