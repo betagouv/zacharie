@@ -10,6 +10,7 @@ import { type UserConnexionResponse } from '@api/src/types/responses';
 import { useState } from 'react';
 import { capture } from '@app/services/sentry';
 import useUser from '@app/zustand/user';
+import { prepareLocalDataForUser } from '@app/utils/disconnect';
 import useZustandStore from '@app/zustand/store';
 import API from '@app/services/api';
 
@@ -64,6 +65,7 @@ export default function ResetMotDePasse() {
     }
     if (response.ok && response.data?.user?.id) {
       const user = response.data.user as User;
+      await prepareLocalDataForUser(user.id);
       useUser.setState({ user });
       useZustandStore.setState((state) => ({
         users: { ...state.users, [user.id]: user },

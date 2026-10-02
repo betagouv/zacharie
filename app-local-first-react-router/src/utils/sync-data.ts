@@ -57,6 +57,10 @@ function isEverythingSynced(unsynced: ReturnType<typeof collectUnsynced>) {
   return Object.values(unsynced).every((items) => items.length === 0);
 }
 
+export function hasUnsyncedData(state: ReturnType<typeof useZustandStore.getState>) {
+  return !isEverythingSynced(collectUnsynced(state));
+}
+
 export async function syncData(calledFrom?: string) {
   await hydrationPromise;
   if (isLocalTeardownInProgress()) {

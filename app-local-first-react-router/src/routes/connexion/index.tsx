@@ -11,6 +11,7 @@ import { useEffect, useState } from 'react';
 import Chargement from '@app/components/Chargement';
 import { capture } from '@app/services/sentry';
 import useUser from '@app/zustand/user';
+import { prepareLocalDataForUser } from '@app/utils/disconnect';
 import useZustandStore from '@app/zustand/store';
 import API from '@app/services/api';
 
@@ -68,6 +69,7 @@ export default function Connexion() {
         })
       );
       const user = response.data.user as User;
+      await prepareLocalDataForUser(user.id);
       useUser.setState({ user });
       useZustandStore.setState((state) => ({
         users: { ...state.users, [user.id]: user },

@@ -48,6 +48,7 @@ const PERSISTED_KEYS: (keyof State)[] = [
   'carcassesRegistry',
   'logs',
   'feiIdsRenvoiToHide',
+  'keptDataOwnerId',
 ];
 
 export interface State {
@@ -74,6 +75,10 @@ export interface State {
   // loadCarcasses les redescend et retire la fiche de cette liste.
   feiIdsRenvoiToHide: Array<Fei['numero']>;
   logs: Array<Log>;
+  // Compte propriétaire des données gardées lors d'une session expirée avec des modifications non
+  // synchronisées (voir `disconnect` avec `keepUnsyncedData`). À la reconnexion, on garde ces données
+  // si c'est le même compte, sinon on les efface. `null` hors de cette situation.
+  keptDataOwnerId: UserForFei['id'] | null;
   _hasHydrated: boolean;
 }
 
@@ -151,6 +156,7 @@ function initialState(): State {
     carcasses: {},
     carcassesIntermediaireById: {},
     modifRequestsByCarcasseId: {},
+    keptDataOwnerId: null,
     _hasHydrated: false,
   };
 }

@@ -102,6 +102,7 @@ class ApiService {
           reason: '401',
           communication: 'Votre session a expiré, veuillez vous reconnecter.',
           redirectTo: window.location.pathname + window.location.search,
+          keepUnsyncedData: true,
         });
         return {
           ok: false,
