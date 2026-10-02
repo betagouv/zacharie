@@ -1,12 +1,55 @@
-import type { CarcassesGetResponse } from '@api/src/types/responses';
+import type { CarcassesCountResponse, CarcassesGetResponse } from '@api/src/types/responses';
 import useZustandStore from '@app/zustand/store';
 import { mergeItems } from './merge-fetched-items';
 import API from '@app/services/api';
 import { getFeiAndCarcasseAndIntermediaireIds } from './get-carcasse-intermediaire-id';
 import type { CarcasseModificationRequest } from '@prisma/client';
 import useUser from '@app/zustand/user';
+import { capture } from '@app/services/sentry';
 
 let loadCarcassesAbortController: AbortController | null = null;
+
+// Contrôle d'intégrité store local / serveur : au plus une fois par utilisateur toutes les 6 heures.
+const INTEGRITY_CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000;
+let lastIntegrityCheck: { userId: string; at: number } | null = null;
+
+// Observation seulement : compare le nombre de carcasses non supprimées du périmètre serveur
+// au nombre de carcasses non supprimées synchronisées du store, et remonte l'écart à Sentry.
+async function checkLocalCarcassesIntegrity(signal: AbortSignal) {
+  const user = useUser.getState().user;
+  if (!user) return;
+  if (
+    lastIntegrityCheck?.userId === user.id &&
+    Date.now() - lastIntegrityCheck.at < INTEGRITY_CHECK_INTERVAL_MS
+  ) {
+    return;
+  }
+  lastIntegrityCheck = { userId: user.id, at: Date.now() };
+
+  const res = (await API.get({ path: '/carcasse/count', signal })) as CarcassesCountResponse;
+  if (signal.aborted || !res.ok || !res.data || useUser.getState().user?.id !== user.id) return;
+
+  const state = useZustandStore.getState();
+  const localCarcasses = Object.values(state.carcasses).filter((c) => !c.deleted_at);
+  // des modifications locales en attente fausseraient la comparaison
+  if (localCarcasses.some((c) => !c.is_synced)) return;
+
+  const serverCount = res.data.count;
+  const localCount = localCarcasses.length;
+  if (serverCount === localCount) return;
+
+  capture('Écart entre le nombre de carcasses du serveur et du store local', {
+    extra: {
+      serverCount,
+      localCount,
+      lastUpdateFromServer: state.lastUpdateFromServer,
+      role: user.roles.join(', '),
+    },
+    tags: {
+      integrity_gap: serverCount > localCount ? 'manquantes_localement' : 'en_trop_localement',
+    },
+  });
+}
 
 export function abortLoadCarcasses(reason: string = 'aborted') {
   if (loadCarcassesAbortController && !loadCarcassesAbortController.signal.aborted) {
@@ -78,6 +121,7 @@ export async function loadCarcasses() {
       useZustandStore.setState(() => ({
         lastUpdateFromServer: serverDate,
       }));
+      checkLocalCarcassesIntegrity(signal);
       return;
     }
 
@@ -151,6 +195,7 @@ export async function loadCarcasses() {
       entities: newEntities,
       lastUpdateFromServer: serverDate,
     }));
+    checkLocalCarcassesIntegrity(signal);
   } finally {
     if (loadCarcassesAbortController?.signal === signal) {
       loadCarcassesAbortController = null;
