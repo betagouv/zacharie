@@ -18,6 +18,18 @@ const PREFIX = 'zs:';
 const META_KEY = `${PREFIX}__meta__`;
 const OLD_KEY = 'zacharie-zustand-store';
 
+// Vrai pendant clearLocalAppState() : aucune écriture persistée ni aucun chargement ne doit
+// démarrer, sinon des données de l'ancienne session réapparaissent après le nettoyage.
+let localTeardownInProgress = false;
+
+export function setLocalTeardownInProgress(inProgress: boolean) {
+  localTeardownInProgress = inProgress;
+}
+
+export function isLocalTeardownInProgress() {
+  return localTeardownInProgress;
+}
+
 interface StorageValue<S> {
   state: S;
   version?: number;
@@ -92,7 +104,7 @@ export function createSlicedIDBStorage<S extends Record<string, unknown>>(
     },
 
     setItem: async (_name, value): Promise<void> => {
-      if (!hydrated) return;
+      if (!hydrated || localTeardownInProgress) return;
       const state = value.state as Record<string, unknown>;
       const entries: [IDBValidKey, unknown][] = [];
 
