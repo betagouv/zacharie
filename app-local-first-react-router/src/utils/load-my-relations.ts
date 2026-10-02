@@ -3,6 +3,7 @@ import type { EntityWithUserRelation } from '@api/src/types/entity';
 import useZustandStore from '@app/zustand/store';
 import API from '@app/services/api';
 import useUser from '@app/zustand/user';
+import { isLocalTeardownInProgress } from '@app/zustand/idb-sliced-storage';
 
 let loadMyRelationsAbortController: AbortController | null = null;
 
@@ -14,6 +15,10 @@ export function abortLoadMyRelations(reason: string = 'aborted') {
 }
 
 export async function loadMyRelations() {
+  if (isLocalTeardownInProgress()) {
+    console.log('not loading relations because local state is being cleared');
+    return;
+  }
   const isOnline = useZustandStore.getState().isOnline;
   console.log('chargement relations ?', isOnline);
   if (!isOnline) {
