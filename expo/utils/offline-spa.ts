@@ -5,7 +5,10 @@ import { Platform } from 'react-native';
 import Server, { STATES } from '@dr.pogodin/react-native-static-server';
 
 const APP_URL = 'https://zacharie.beta.gouv.fr/';
-const SPA_DIR = new Directory(Paths.document, 'spa');
+const SPA_DIR_NAME = 'spa';
+const SPA_DIR = new Directory(Paths.document, SPA_DIR_NAME);
+// downloads land here first, and replace SPA_DIR only once every asset has arrived
+const SPA_NEXT_DIR_NAME = 'spa-next';
 
 let forceRefreshKey = '1';
 
@@ -34,46 +37,49 @@ export const checkAndDownloadSpa = async (): Promise<void> => {
     if (manifestVersioning === localVersioning && localForceRefreshKey === forceRefreshKey) {
       console.log('SPA is up to date');
       // Check if we actually have files, if not, force download
-      if (SPA_DIR.exists) return;
+      if (new File(SPA_DIR, 'index.html').exists) return;
     }
 
     console.log('New version detected or missing files. Downloading SPA...');
 
-    // 4. Create directory
-    if (!SPA_DIR.exists) {
-      SPA_DIR.create();
-    }
+    // 4. Download into a fresh temporary directory
+    const nextDir = new Directory(Paths.document, SPA_NEXT_DIR_NAME);
+    if (nextDir.exists) nextDir.delete();
+    nextDir.create();
 
-    // 5. Download files
-    let downloadedCount = 0;
+    // 5. Download files: any failure aborts the update, the current SPA stays untouched
+    try {
+      for (const asset of assets) {
+        const url = asset.url.startsWith('/') ? asset.url.substring(1) : asset.url; // Remove leading slash
+        const remoteUrl = `${APP_URL}${url}`;
 
-    for (const asset of assets) {
-      const url = asset.url.startsWith('/') ? asset.url.substring(1) : asset.url; // Remove leading slash
-      const remoteUrl = `${APP_URL}${url}`;
+        const file = new File(nextDir, url);
+        // Ensure parent directory exists
+        if (file.parentDirectory && !file.parentDirectory.exists) {
+          file.parentDirectory.create({ intermediates: true });
+        }
 
-      const file = new File(SPA_DIR, url);
-      // Ensure parent directory exists
-      if (file.parentDirectory && !file.parentDirectory.exists) {
-        file.parentDirectory.create({ intermediates: true });
-      }
-
-      try {
         const assetResponse = await fetch(remoteUrl);
         if (!assetResponse.ok) throw new Error(`Failed to fetch ${remoteUrl}`);
-
-        // Write bytes to file
-        const bytes = await assetResponse.bytes();
-        file.write(bytes);
-
-        downloadedCount++;
-      } catch (e) {
-        console.error(`Failed to download ${remoteUrl}`, e);
+        file.write(await assetResponse.bytes());
       }
+    } catch (e) {
+      console.error('SPA download incomplete, keeping current version', e);
+      if (nextDir.exists) nextDir.delete();
+      return;
     }
 
-    console.log(`Downloaded ${downloadedCount} assets`);
+    console.log(`Downloaded ${assets.length} assets`);
 
-    // 6. Update version
+    // 6. Swap: replace the current SPA with the complete download (also drops old hashed files)
+    if (SPA_DIR.exists) SPA_DIR.delete();
+    nextDir.rename(SPA_DIR_NAME);
+    if (!new File(SPA_DIR, 'index.html').exists) {
+      console.error('SPA swap failed: index.html missing');
+      return;
+    }
+
+    // 7. Update version
     await AsyncStorage.setItem('spa-versioning', manifestVersioning);
     await AsyncStorage.setItem('spa-force-refresh-key', forceRefreshKey);
   } catch (error) {
