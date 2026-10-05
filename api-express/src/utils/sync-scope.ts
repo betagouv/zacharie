@@ -24,6 +24,9 @@ export type SyncScope = {
   // ultérieure du même appel laisserait une ligne nue que plus personne — pas même son créateur — ne
   // pourrait reprendre ni même lire.
   grant: (zacharieCarcasseId: string) => void;
+  // Carcasses hors du périmètre, relu en base sans le cache des accès accordés : après les écritures
+  // du lot, pour repérer celles que l'utilisateur vient de faire sortir de son périmètre (renvoi).
+  findOutOfScope: (zacharieCarcasseIds: Array<string>) => Promise<Array<string>>;
   isFeiOwner: (fei: FeiOwnershipFields) => boolean;
   canWriteFei: (fei: FeiOwnershipFields) => Promise<boolean>;
 };
@@ -70,6 +73,16 @@ export async function createSyncScope(user: User): Promise<SyncScope> {
       if (granted.has(zacharieCarcasseId)) return true;
       await resolve([zacharieCarcasseId]);
       return granted.has(zacharieCarcasseId);
+    },
+    async findOutOfScope(zacharieCarcasseIds) {
+      if (!zacharieCarcasseIds.length) return [];
+      if (!accessWhere) return zacharieCarcasseIds;
+      const inScope = await prisma.carcasse.findMany({
+        where: { zacharie_carcasse_id: { in: zacharieCarcasseIds }, ...accessWhere },
+        select: { zacharie_carcasse_id: true },
+      });
+      const inScopeIds = new Set(inScope.map((carcasse) => carcasse.zacharie_carcasse_id));
+      return zacharieCarcasseIds.filter((id) => !inScopeIds.has(id));
     },
     isFeiOwner,
     // Une fiche est modifiable par un rattaché, ou par un détenteur aval tant qu'il en détient au

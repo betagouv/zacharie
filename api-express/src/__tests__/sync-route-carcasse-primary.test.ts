@@ -14,6 +14,19 @@ import { UserRoles } from '@prisma/client';
 vi.mock('~/utils/sync-fei', () => ({ syncFei: vi.fn() }));
 vi.mock('~/utils/sync-carcasse', () => ({ syncCarcasse: vi.fn() }));
 vi.mock('~/utils/sync-carcasse-intermediaire', () => ({ syncCarcasseIntermediaire: vi.fn() }));
+// Ce fichier pin la forme de la réponse, pas l'autorisation : périmètre permissif.
+const { permissiveScope } = vi.hoisted(() => ({
+  permissiveScope: {
+    entityIds: [],
+    prefetch: async () => {},
+    canWriteCarcasse: async () => true,
+    grant: () => {},
+    findOutOfScope: async () => [],
+    isFeiOwner: () => true,
+    canWriteFei: async () => true,
+  },
+}));
+vi.mock('~/utils/sync-scope', () => ({ createSyncScope: vi.fn(async () => permissiveScope) }));
 vi.mock('~/utils/fei-side-effects', () => ({
   runFeiUpdateSideEffects: vi.fn().mockResolvedValue(undefined),
 }));
@@ -252,6 +265,7 @@ describe('Response shape preserved for partial payloads', () => {
         carcasseModifRequests: [],
         syncedLogIds: [],
         rejected: [],
+        toBeRemoved: [],
       },
     });
   });

@@ -1,7 +1,7 @@
 import express from 'express';
 import passport from 'passport';
 import { catchErrors } from '~/middlewares/errors';
-import type { SyncRejection, SyncRequest, SyncResponse } from '~/types/responses';
+import type { SyncRejection, SyncRemoval, SyncRequest, SyncResponse } from '~/types/responses';
 import prisma from '~/prisma';
 import { Prisma, User, UserRoles, Carcasse, Fei, EntityRelationType } from '@prisma/client';
 import { syncFei, type SaveFeiResult } from '~/utils/sync-fei';
@@ -339,6 +339,54 @@ router.post(
           })
         : [];
 
+    // Ce que le client doit retirer de son store : les items refusés, et les carcasses que les
+    // écritures du lot viennent de faire sortir du périmètre (ex. renvoi à l'expéditeur — le delta de
+    // loadCarcasses ne les renverrait jamais, elles resteraient `is_synced = false` côté client).
+    // L'accès se lit sur les carcasses : leurs lignes d'intermédiaire partent avec elles, et une fiche
+    // part quand l'utilisateur n'y a plus accès.
+    const removedCarcasseIds = new Set<string>([
+      ...rejected.filter((r) => r.kind === 'carcasse').map((r) => r.id),
+      ...(await scope.findOutOfScope(
+        carcasseResults.filter((r) => !r.isDeleted).map((r) => r.savedCarcasse.zacharie_carcasse_id)
+      )),
+    ]);
+    const removedIntermediaireIds = new Set<string>(
+      rejected.filter((r) => r.kind === 'carcasseIntermediaire').map((r) => r.id)
+    );
+    const removedFeiNumeros = new Set<string>(rejected.filter((r) => r.kind === 'fei').map((r) => r.id));
+    if (removedCarcasseIds.size > 0) {
+      const removedCarcasses =
+        (await prisma.carcasse.findMany({
+          where: { zacharie_carcasse_id: { in: [...removedCarcasseIds] } },
+          select: { zacharie_carcasse_id: true, fei_numero: true },
+        })) ?? [];
+      const intermediaires =
+        (await prisma.carcasseIntermediaire.findMany({
+          where: { zacharie_carcasse_id: { in: [...removedCarcasseIds] } },
+          select: { fei_numero: true, zacharie_carcasse_id: true, intermediaire_id: true },
+        })) ?? [];
+      for (const ci of intermediaires) {
+        removedIntermediaireIds.add(`${ci.fei_numero}_${ci.zacharie_carcasse_id}_${ci.intermediaire_id}`);
+      }
+      // Une carcasse refusée à la création n'existe pas en base : sa fiche se lit dans le lot.
+      const candidateFeiNumeros = new Set([
+        ...removedCarcasses.map((c) => c.fei_numero),
+        ...carcasseList
+          .filter((c) => removedCarcasseIds.has(c.zacharie_carcasse_id))
+          .map((c) => c.fei_numero),
+      ]);
+      const candidateFeis =
+        (await prisma.fei.findMany({ where: { numero: { in: [...candidateFeiNumeros] } } })) ?? [];
+      for (const fei of candidateFeis) {
+        if (!(await scope.canWriteFei(fei))) removedFeiNumeros.add(fei.numero);
+      }
+    }
+    const toBeRemoved: Array<SyncRemoval> = [
+      ...[...removedFeiNumeros].map((id) => ({ kind: 'fei' as const, id })),
+      ...[...removedCarcasseIds].map((id) => ({ kind: 'carcasse' as const, id })),
+      ...[...removedIntermediaireIds].map((id) => ({ kind: 'carcasseIntermediaire' as const, id })),
+    ];
+
     if (rejected.length > 0) {
       // Message fixe pour que Sentry regroupe : le détail est dans extra.
       capture(new Error('Écritures /sync refusées'), {
@@ -362,6 +410,7 @@ router.post(
         carcasseModifRequests: modifResults.map((r) => r.saved),
         syncedLogIds,
         rejected,
+        toBeRemoved,
       },
       error: '',
     });

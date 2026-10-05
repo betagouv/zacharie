@@ -386,6 +386,13 @@ export type SyncRejection = {
   reason: string;
 };
 
+// Items hors du périmètre du compte, que le client retire de son store quelles que soient les dates.
+// Mêmes identifiants que SyncRejection.
+export type SyncRemoval = {
+  kind: 'fei' | 'carcasse' | 'carcasseIntermediaire';
+  id: string;
+};
+
 export interface SyncResponse {
   ok: boolean;
   data: {
@@ -398,6 +405,7 @@ export interface SyncResponse {
     // serveur faisant foi n'est volontairement PAS jointe — ce serait divulguer la fiche d'un
     // tiers à quelqu'un à qui on vient d'en refuser l'accès.
     rejected: Array<SyncRejection>;
+    toBeRemoved: Array<SyncRemoval>;
   } | null;
   error: string;
 }

@@ -41,8 +41,9 @@ const { permissiveScope } = vi.hoisted(() => ({
     prefetch: async () => {},
     canWriteCarcasse: async () => true,
     grant: () => {},
+    findOutOfScope: vi.fn(async (): Promise<Array<string>> => []),
     isFeiOwner: () => true,
-    canWriteFei: async () => true,
+    canWriteFei: vi.fn(async () => true),
   },
 }));
 vi.mock('~/utils/sync-scope', () => ({ createSyncScope: vi.fn(async () => permissiveScope) }));
@@ -330,6 +331,7 @@ describe('POST /sync — response shape', () => {
         carcasseModifRequests: [],
         syncedLogIds: [],
         rejected: [],
+        toBeRemoved: [],
       },
     });
     expect(syncFei).not.toHaveBeenCalled();
@@ -511,6 +513,102 @@ describe('POST /sync — refus définitifs vs erreurs transitoires', () => {
 
     expect(res.body.data.rejected).toHaveLength(1);
     expect(res.body.data.carcasses).toHaveLength(1);
+  });
+});
+
+describe('POST /sync — toBeRemoved', () => {
+  const savedCarcasse = (zid: string) =>
+    ({
+      savedCarcasse: { zacharie_carcasse_id: zid, fei_numero: 'F1' },
+      existingCarcasse: { zacharie_carcasse_id: zid, fei_numero: 'F1' },
+      isDeleted: false,
+    }) as any;
+
+  test('une carcasse renvoyée à l’expéditeur sort du périmètre : elle part avec ses intermédiaires et sa fiche', async () => {
+    vi.mocked(syncCarcasse).mockResolvedValueOnce(savedCarcasse('ZC-1'));
+    permissiveScope.findOutOfScope.mockResolvedValueOnce(['ZC-1']);
+    permissiveScope.canWriteFei.mockResolvedValueOnce(false);
+    vi.mocked(prisma.carcasse.findMany)
+      .mockResolvedValueOnce([]) // carcasses existantes du lot
+      .mockResolvedValueOnce([{ zacharie_carcasse_id: 'ZC-1', fei_numero: 'F1' }] as any);
+    vi.mocked(prisma.carcasseIntermediaire.findMany).mockResolvedValueOnce([
+      { fei_numero: 'F1', zacharie_carcasse_id: 'ZC-1', intermediaire_id: 'I1' },
+    ] as any);
+    vi.mocked(prisma.fei.findMany).mockResolvedValue([{ numero: 'F1' }] as any);
+
+    const res = await authed(
+      request(app)
+        .post('/sync')
+        .send({ carcasses: [{ fei_numero: 'F1', zacharie_carcasse_id: 'ZC-1' }] })
+    );
+
+    expect(res.body.data.toBeRemoved).toEqual([
+      { kind: 'fei', id: 'F1' },
+      { kind: 'carcasse', id: 'ZC-1' },
+      { kind: 'carcasseIntermediaire', id: 'F1_ZC-1_I1' },
+    ]);
+  });
+
+  test('la fiche reste quand une autre de ses carcasses est encore dans le périmètre', async () => {
+    vi.mocked(syncCarcasse).mockResolvedValueOnce(savedCarcasse('ZC-1'));
+    permissiveScope.findOutOfScope.mockResolvedValueOnce(['ZC-1']);
+    vi.mocked(prisma.carcasse.findMany)
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{ zacharie_carcasse_id: 'ZC-1', fei_numero: 'F1' }] as any);
+    vi.mocked(prisma.fei.findMany).mockResolvedValue([{ numero: 'F1' }] as any);
+
+    const res = await authed(
+      request(app)
+        .post('/sync')
+        .send({ carcasses: [{ fei_numero: 'F1', zacharie_carcasse_id: 'ZC-1' }] })
+    );
+
+    expect(res.body.data.toBeRemoved).toEqual([{ kind: 'carcasse', id: 'ZC-1' }]);
+  });
+
+  test('les items refusés sont à retirer, pas les demandes de modification', async () => {
+    vi.mocked(syncFei).mockRejectedValueOnce(new SyncRejectedError("Vous n'avez pas accès à cette fiche"));
+    vi.mocked(syncCarcasse).mockRejectedValueOnce(
+      new SyncRejectedError("Vous n'avez pas accès à cette carcasse")
+    );
+    vi.mocked(syncCarcasseIntermediaire).mockRejectedValueOnce(
+      new SyncRejectedError("Vous n'avez pas accès à cette carcasse")
+    );
+    vi.mocked(syncCarcasseModifRequest).mockRejectedValueOnce(
+      new SyncRejectedError("Seul l'auteur de la demande peut l'annuler")
+    );
+
+    const res = await authed(
+      request(app)
+        .post('/sync')
+        .send({
+          feis: [{ numero: 'F-INTERDITE' }],
+          carcasses: [{ fei_numero: 'F1', zacharie_carcasse_id: 'ZC-INTERDITE' }],
+          carcassesIntermediaires: [
+            { fei_numero: 'F1', zacharie_carcasse_id: 'ZC-2', intermediaire_id: 'I1' },
+          ],
+          carcasseModifRequests: [{ id: 'M1', zacharie_carcasse_id: 'ZC-2' }],
+        })
+    );
+
+    expect(res.body.data.rejected).toHaveLength(4);
+    expect(res.body.data.toBeRemoved).toEqual([
+      { kind: 'fei', id: 'F-INTERDITE' },
+      { kind: 'carcasse', id: 'ZC-INTERDITE' },
+      { kind: 'carcasseIntermediaire', id: 'F1_ZC-2_I1' },
+    ]);
+  });
+
+  test('une écriture qui garde la carcasse dans le périmètre ne retire rien', async () => {
+    vi.mocked(syncCarcasse).mockResolvedValueOnce(savedCarcasse('ZC-1'));
+
+    const res = await authed(
+      request(app)
+        .post('/sync')
+        .send({ carcasses: [{ fei_numero: 'F1', zacharie_carcasse_id: 'ZC-1' }] })
+    );
+
+    expect(res.body.data.toBeRemoved).toEqual([]);
   });
 });
 

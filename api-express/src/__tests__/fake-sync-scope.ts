@@ -9,6 +9,7 @@ export function fakeSyncScope(overrides: Partial<SyncScope> = {}): SyncScope {
     prefetch: async () => {},
     canWriteCarcasse: async () => true,
     grant: () => {},
+    findOutOfScope: async () => [],
     isFeiOwner: () => true,
     canWriteFei: async () => true,
     ...overrides,

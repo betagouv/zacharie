@@ -1,4 +1,5 @@
 import type { SyncRejection, SyncResponse } from '~/src/types/responses';
+import type { FeiAndCarcasseAndIntermediaireIds } from '@app/types/carcasses-intermediaire';
 import { getFeiAndCarcasseAndIntermediaireIds } from '@app/utils/get-carcasse-intermediaire-id';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -105,12 +106,36 @@ export async function syncData(calledFrom?: string) {
       return;
     }
 
-    // Refus définitifs : on arrête de les repousser. On ne touche pas à la donnée locale — le
-    // serveur ne renvoie pas sa version (ce serait exposer la fiche d'un tiers), donc on n'a rien
-    // pour la corriger ici. Elle le sera dès que la ligne serveur bougera légitimement et reviendra
-    // dans un delta, mergeItems étant server-wins.
+    // Refus définitifs : on arrête de les repousser pour la session. Les fiches, carcasses et
+    // intermédiaires refusés sont en plus retirés du store ci-dessous (`toBeRemoved`) ; une demande
+    // de modification refusée reste affichée, le serveur ne renvoyant pas sa version.
     for (const rejection of res.data.rejected ?? []) {
       rejectedBySync.add(`${rejection.kind}:${rejection.id}`);
+    }
+
+    // Le serveur liste ce qui est hors du périmètre du compte (refusé, ou sorti du périmètre par une
+    // écriture du lot comme un renvoi à l'expéditeur) : on le retire du store, quelles que soient les
+    // dates. Sans ça la copie locale resterait `is_synced = false` et repartirait à chaque session.
+    const toBeRemoved = res.data.toBeRemoved ?? [];
+    if (toBeRemoved.length > 0) {
+      useZustandStore.setState((state) => {
+        const feis = { ...state.feis };
+        const carcasses = { ...state.carcasses };
+        const carcassesIntermediaireById = { ...state.carcassesIntermediaireById };
+        for (const item of toBeRemoved) {
+          if (item.kind === 'fei') delete feis[item.id];
+          if (item.kind === 'carcasse') delete carcasses[item.id];
+          if (item.kind === 'carcasseIntermediaire') {
+            delete carcassesIntermediaireById[item.id as FeiAndCarcasseAndIntermediaireIds];
+          }
+        }
+        return {
+          feis,
+          carcasses,
+          carcassesRegistry: Object.values(carcasses),
+          carcassesIntermediaireById,
+        };
+      });
     }
 
     // Le serveur confirme les logs qu'il a écrits : on les retire du store, sinon ils

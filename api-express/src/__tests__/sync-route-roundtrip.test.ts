@@ -40,6 +40,7 @@ const { permissiveScope } = vi.hoisted(() => ({
     prefetch: async () => {},
     canWriteCarcasse: async () => true,
     grant: () => {},
+    findOutOfScope: async () => [],
     isFeiOwner: () => true,
     canWriteFei: async () => true,
   },
