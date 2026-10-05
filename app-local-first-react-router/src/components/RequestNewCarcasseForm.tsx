@@ -235,6 +235,8 @@ export default function RequestNewCarcasseButton({
       updated_at: dayjs().toDate(),
       deleted_at: null,
       is_synced: false,
+      version: 0,
+      version_user_id: null,
     };
 
     const modifRequest: CarcasseModificationRequest = {

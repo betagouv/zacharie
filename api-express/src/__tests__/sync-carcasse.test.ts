@@ -219,7 +219,7 @@ describe('syncCarcasse — deletion', () => {
     expect(result.isDeleted).toBe(true);
     expect(prisma.carcasseIntermediaire.updateMany).toHaveBeenCalledWith({
       where: { zacharie_carcasse_id: 'ZC-1' },
-      data: { deleted_at: '2026-03-01' },
+      data: { deleted_at: '2026-03-01', version: { increment: 1 }, version_user_id: expect.any(String) },
     });
   });
 });

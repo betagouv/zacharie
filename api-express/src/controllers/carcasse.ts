@@ -20,6 +20,7 @@ import { capture } from '~/third-parties/sentry';
 import { userFeiSelect } from '~/types/user';
 import { getCarcasseAccessWhere } from '~/utils/carcasse-access';
 import { FORCE_FULL_RELOAD_AFTER } from '~/utils/force-full-reload';
+import { nextVersion } from '~/utils/sync-version';
 
 const zodQuerySchema = z.object({
   page: z.string(),
@@ -344,6 +345,7 @@ router.post(
         trichine_retire_de_fei_at: new Date(),
         trichine_retire_de_fei_motif: bodyResult.data.motif,
         trichine_retire_de_fei_user_id: req.user.id,
+        ...nextVersion(req.user.id),
       },
     });
     await logTrichineStatutChange({

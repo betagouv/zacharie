@@ -461,7 +461,11 @@ describe('notifyCircuitCourt', () => {
         premier_detenteur_prochain_detenteur_id_cache: 'commerce-1',
         deleted_at: null,
       },
-      data: { svi_automatic_closed_at: expect.any(Date) },
+      data: {
+        svi_automatic_closed_at: expect.any(Date),
+        version: { increment: 1 },
+        version_user_id: expect.any(String),
+      },
     });
   });
 

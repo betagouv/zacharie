@@ -343,6 +343,8 @@ const useZustandStore = create<State & Actions>()(
                   updated_at: newIntermediaire.created_at,
                   deleted_at: null,
                   is_synced: false,
+                  version: 0,
+                  version_user_id: null,
                 }));
 
               for (const ci of carcassesIntermediaires) {
@@ -482,6 +484,20 @@ const useZustandStore = create<State & Actions>()(
           }));
         },
         addLog: (newLog: Omit<CreateLog, 'fei_intermediaire_id'>) => {
+          // Version et date de la copie locale au moment de l'action : permet de retrouver, côté
+          // serveur, quelle version une écriture refusée comme périmée avait sous les yeux.
+          const fei = newLog.fei_numero ? get().feis[newLog.fei_numero] : null;
+          const carcasse = newLog.zacharie_carcasse_id ? get().carcasses[newLog.zacharie_carcasse_id] : null;
+          const history =
+            fei || carcasse
+              ? {
+                  ...newLog.history,
+                  ...(fei ? { fei: { version: fei.version, updated_at: fei.updated_at } } : {}),
+                  ...(carcasse
+                    ? { carcasse: { version: carcasse.version, updated_at: carcasse.updated_at } }
+                    : {}),
+                }
+              : newLog.history;
           const log = datesToIso({
             id: uuidv4(),
             user_id: newLog.user_id!,
@@ -493,7 +509,7 @@ const useZustandStore = create<State & Actions>()(
             intermediaire_id: newLog.intermediaire_id || null,
             carcasse_intermediaire_id: newLog.carcasse_intermediaire_id || null,
             action: newLog.action!,
-            history: JSON.stringify(newLog.history!),
+            history: JSON.stringify(history),
             date: dayjs().toDate(),
             is_synced: false,
             created_at: dayjs().toDate(),
