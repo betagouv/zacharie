@@ -8,6 +8,7 @@ import API from '@app/services/api';
 import { capture } from '@app/services/sentry';
 import useZustandStore, { hydrationPromise } from '@app/zustand/store';
 import { loadCarcasses } from './load-carcasses';
+import type { FeiAndCarcasseAndIntermediaireIds } from '@app/types/carcasses-intermediaire';
 
 // SYNC DATA
 
@@ -105,12 +106,27 @@ export async function syncData(calledFrom?: string) {
       return;
     }
 
-    // Refus définitifs : on arrête de les repousser. On ne touche pas à la donnée locale — le
-    // serveur ne renvoie pas sa version (ce serait exposer la fiche d'un tiers), donc on n'a rien
-    // pour la corriger ici. Elle le sera dès que la ligne serveur bougera légitimement et reviendra
-    // dans un delta, mergeItems étant server-wins.
-    for (const rejection of res.data.rejected ?? []) {
-      rejectedBySync.add(`${rejection.kind}:${rejection.id}`);
+    const shouldRemoveFromLocalStore = res.data.shouldRemoveFromLocalStore ?? [];
+    if (shouldRemoveFromLocalStore.length > 0) {
+      useZustandStore.setState((state) => {
+        const feis = { ...state.feis };
+        const carcasses = { ...state.carcasses };
+        const carcassesIntermediaireById = { ...state.carcassesIntermediaireById };
+        for (const rejection of shouldRemoveFromLocalStore) {
+          rejectedBySync.add(`${rejection.kind}:${rejection.id}`);
+          if (rejection.kind === 'fei') delete feis[rejection.id];
+          if (rejection.kind === 'carcasse') delete carcasses[rejection.id];
+          if (rejection.kind === 'carcasseIntermediaire') {
+            delete carcassesIntermediaireById[rejection.id as FeiAndCarcasseAndIntermediaireIds];
+          }
+        }
+        return {
+          feis,
+          carcasses,
+          carcassesRegistry: Object.values(carcasses),
+          carcassesIntermediaireById,
+        };
+      });
     }
 
     // Le serveur confirme les logs qu'il a écrits : on les retire du store, sinon ils

@@ -398,6 +398,7 @@ export interface SyncResponse {
     // serveur faisant foi n'est volontairement PAS jointe — ce serait divulguer la fiche d'un
     // tiers à quelqu'un à qui on vient d'en refuser l'accès.
     rejected: Array<SyncRejection>;
+    shouldRemoveFromLocalStore: Array<SyncRejection>;
   } | null;
   error: string;
 }

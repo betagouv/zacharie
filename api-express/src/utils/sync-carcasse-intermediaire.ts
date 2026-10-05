@@ -48,6 +48,7 @@ export async function syncCarcasseIntermediaire(
   // en son nom propre, pour une entité dont il est membre. Le rôle, lui, vient du client : un ETG
   // enregistre l'étape de transport d'un collecteur, donc un rôle différent du sien est légitime.
   if (!body.intermediaire_entity_id || !scope.entityIds.includes(body.intermediaire_entity_id)) {
+    // Cette ligne ne devrait jamais arriver, puisqu'elle est interdite par le périmètre de l'utilisateur.
     throw new SyncRejectedError('Vous ne pouvez pas agir au nom de cette entité');
   }
 

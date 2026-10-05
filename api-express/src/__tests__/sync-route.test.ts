@@ -42,7 +42,7 @@ const { permissiveScope } = vi.hoisted(() => ({
     canWriteCarcasse: async () => true,
     grant: () => {},
     isFeiOwner: () => true,
-    canWriteFei: async () => true,
+    canWriteFei: vi.fn(async () => true),
   },
 }));
 vi.mock('~/utils/sync-scope', () => ({ createSyncScope: vi.fn(async () => permissiveScope) }));
@@ -330,6 +330,7 @@ describe('POST /sync — response shape', () => {
         carcasseModifRequests: [],
         syncedLogIds: [],
         rejected: [],
+        shouldRemoveFromLocalStore: [],
       },
     });
     expect(syncFei).not.toHaveBeenCalled();
@@ -511,6 +512,63 @@ describe('POST /sync — refus définitifs vs erreurs transitoires', () => {
 
     expect(res.body.data.rejected).toHaveLength(1);
     expect(res.body.data.carcasses).toHaveLength(1);
+  });
+});
+
+describe('POST /sync — shouldRemoveFromLocalStore', () => {
+  test('une carcasse sans accès part avec ses intermédiaires, et sa fiche si plus aucune carcasse n’est accessible', async () => {
+    vi.mocked(syncCarcasse).mockRejectedValueOnce(
+      new SyncRejectedError("Vous n'avez pas accès à cette carcasse")
+    );
+    vi.mocked(prisma.carcasseIntermediaire.findMany).mockResolvedValueOnce([
+      { fei_numero: 'F1', zacharie_carcasse_id: 'ZC-1', intermediaire_id: 'I1' },
+    ] as any);
+    vi.mocked(prisma.fei.findMany).mockResolvedValue([{ numero: 'F1' }] as any);
+    permissiveScope.canWriteFei.mockResolvedValueOnce(false);
+
+    const res = await authed(
+      request(app)
+        .post('/sync')
+        .send({ carcasses: [{ fei_numero: 'F1', zacharie_carcasse_id: 'ZC-1' }] })
+    );
+
+    expect(res.body.data.shouldRemoveFromLocalStore.map((i: any) => [i.kind, i.id])).toEqual([
+      ['carcasse', 'ZC-1'],
+      ['carcasseIntermediaire', 'F1_ZC-1_I1'],
+      ['fei', 'F1'],
+    ]);
+  });
+
+  test('la fiche reste quand une autre de ses carcasses est encore accessible', async () => {
+    vi.mocked(syncCarcasse).mockRejectedValueOnce(
+      new SyncRejectedError("Vous n'avez pas accès à cette carcasse")
+    );
+    vi.mocked(prisma.fei.findMany).mockResolvedValue([{ numero: 'F1' }] as any);
+
+    const res = await authed(
+      request(app)
+        .post('/sync')
+        .send({ carcasses: [{ fei_numero: 'F1', zacharie_carcasse_id: 'ZC-1' }] })
+    );
+
+    expect(res.body.data.shouldRemoveFromLocalStore.map((i: any) => [i.kind, i.id])).toEqual([
+      ['carcasse', 'ZC-1'],
+    ]);
+  });
+
+  test('un refus qui n’est pas un défaut d’accès ne retire rien du store', async () => {
+    vi.mocked(syncFei).mockRejectedValueOnce(
+      new SyncRejectedError('Vous ne pouvez pas supprimer cette fiche')
+    );
+
+    const res = await authed(
+      request(app)
+        .post('/sync')
+        .send({ feis: [{ numero: 'F1' }] })
+    );
+
+    expect(res.body.data.rejected).toHaveLength(1);
+    expect(res.body.data.shouldRemoveFromLocalStore).toEqual([]);
   });
 });
 
