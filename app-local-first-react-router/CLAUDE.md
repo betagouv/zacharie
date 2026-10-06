@@ -50,6 +50,8 @@ All session teardown lives in `src/utils/disconnect.ts`, which exports two helpe
 
 The frontend stores data in IndexedDB via Zustand. Changes apply locally first (`is_synced = false`), then sync to server via PQueue:
 
+Known sync risks, decisions and open points: `doc/audit-local-first-2026-10.md`. Read it before changing the sync, storage or service worker code.
+
 - **Queue**: `concurrency: 1`, 30ms throttle to prevent race conditions
 - **Order**: FEIs → Carcasses → CarcassesIntermediaires → Logs (each waits for dependencies)
 - **Conflict resolution**: Compares `updated_at`, keeps newest
