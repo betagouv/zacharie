@@ -23,6 +23,63 @@ interface SyncCarcasseOpts {
   ensuredRelationEntityIds?: Set<string>;
 }
 
+// Colonnes qui décrivent où en est la carcasse dans la chaîne (détenteurs, décisions des
+// intermédiaires, assignation et statut SVI) : elles sont écrites par celui qui la détient.
+const TRANSMISSION_FIELDS = [
+  Prisma.CarcasseScalarFieldEnum.current_owner_user_id,
+  Prisma.CarcasseScalarFieldEnum.current_owner_user_name_cache,
+  Prisma.CarcasseScalarFieldEnum.current_owner_entity_id,
+  Prisma.CarcasseScalarFieldEnum.current_owner_entity_name_cache,
+  Prisma.CarcasseScalarFieldEnum.current_owner_role,
+  Prisma.CarcasseScalarFieldEnum.next_owner_wants_to_sous_traite,
+  Prisma.CarcasseScalarFieldEnum.next_owner_sous_traite_at,
+  Prisma.CarcasseScalarFieldEnum.next_owner_sous_traite_by_user_id,
+  Prisma.CarcasseScalarFieldEnum.next_owner_sous_traite_by_entity_id,
+  Prisma.CarcasseScalarFieldEnum.next_owner_user_id,
+  Prisma.CarcasseScalarFieldEnum.next_owner_user_name_cache,
+  Prisma.CarcasseScalarFieldEnum.next_owner_entity_id,
+  Prisma.CarcasseScalarFieldEnum.next_owner_entity_name_cache,
+  Prisma.CarcasseScalarFieldEnum.next_owner_role,
+  Prisma.CarcasseScalarFieldEnum.prev_owner_user_id,
+  Prisma.CarcasseScalarFieldEnum.prev_owner_entity_id,
+  Prisma.CarcasseScalarFieldEnum.prev_owner_role,
+  Prisma.CarcasseScalarFieldEnum.intermediaire_closed_at,
+  Prisma.CarcasseScalarFieldEnum.intermediaire_closed_by_user_id,
+  Prisma.CarcasseScalarFieldEnum.intermediaire_closed_by_entity_id,
+  Prisma.CarcasseScalarFieldEnum.latest_intermediaire_user_id,
+  Prisma.CarcasseScalarFieldEnum.latest_intermediaire_entity_id,
+  Prisma.CarcasseScalarFieldEnum.latest_intermediaire_name_cache,
+  Prisma.CarcasseScalarFieldEnum.latest_intermediaire_signed_at,
+  Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_manquante,
+  Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_intermediaire_id,
+  Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_motif,
+  Prisma.CarcasseScalarFieldEnum.svi_assigned_at,
+  Prisma.CarcasseScalarFieldEnum.svi_entity_id,
+  Prisma.CarcasseScalarFieldEnum.svi_carcasse_status,
+  Prisma.CarcasseScalarFieldEnum.svi_carcasse_status_set_at,
+] as const;
+
+// Détenteur courant ou désigné (prochain détenteur, qui la prend en charge), en son nom ou par une
+// de ses entités. Une carcasse sans détenteur vient d'être créée : son créateur pose la chaîne.
+export function holdsCarcasse(
+  carcasse: Pick<
+    Carcasse,
+    | 'current_owner_role'
+    | 'current_owner_user_id'
+    | 'current_owner_entity_id'
+    | 'next_owner_user_id'
+    | 'next_owner_entity_id'
+  >,
+  user: Pick<User, 'id'>,
+  entityIds: Array<string>
+): boolean {
+  if (!carcasse.current_owner_role) return true;
+  if (carcasse.current_owner_user_id === user.id) return true;
+  if (carcasse.next_owner_user_id === user.id) return true;
+  if (carcasse.current_owner_entity_id && entityIds.includes(carcasse.current_owner_entity_id)) return true;
+  return !!carcasse.next_owner_entity_id && entityIds.includes(carcasse.next_owner_entity_id);
+}
+
 export async function syncCarcasse(
   fei_numero: string,
   zacharie_carcasse_id: string,
@@ -118,6 +175,14 @@ export async function syncCarcasse(
   // modification qui le désignent. Il peut toujours ajouter une carcasse manquante — elle hérite
   // simplement de la fiche.
   const canWriteOwnership = scope.isFeiOwner(existingFei);
+
+  // Le client renvoie la carcasse entière, y compris les colonnes de la chaîne de transmission, telles
+  // qu'il les a vues lors de sa dernière modification locale. Un appareil resté hors ligne pendant
+  // que la carcasse passait au détenteur suivant réécrirait donc une étape plus ancienne (la prise en
+  // charge ETG annulée par le snapshot du chasseur). Seul le détenteur courant ou désigné sur la ligne
+  // serveur fait avancer la chaîne : pour les autres, ces colonnes sont ignorées, comme les colonnes
+  // réservées au SVI plus bas, et le reste de leur saisie est appliqué.
+  const canWriteTransmission = holdsCarcasse(existingCarcasse, user, scope.entityIds);
 
   if (body.deleted_at) {
     // existingCarcasse est garantie non-nulle ici (créée juste au-dessus si absente).
@@ -342,7 +407,7 @@ export async function syncCarcasse(
     const nextOwnerEntityId = body[Prisma.CarcasseScalarFieldEnum.next_owner_entity_id] as string | null;
     // En sync de masse, la relation est la même pour toutes les carcasses transmises au même
     // destinataire : on ne l'assure qu'une fois par entité.
-    if (nextOwnerEntityId && !opts.ensuredRelationEntityIds?.has(nextOwnerEntityId)) {
+    if (canWriteTransmission && nextOwnerEntityId && !opts.ensuredRelationEntityIds?.has(nextOwnerEntityId)) {
       const nextRelation: Prisma.EntityAndUserRelationsUncheckedCreateInput = {
         entity_id: nextOwnerEntityId,
         owner_id: user.id,
@@ -535,6 +600,12 @@ export async function syncCarcasse(
     }
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_ipm2_signed_at)) {
       nextCarcasse.svi_ipm2_signed_at = body[Prisma.CarcasseScalarFieldEnum.svi_ipm2_signed_at];
+    }
+  }
+
+  if (!canWriteTransmission) {
+    for (const field of TRANSMISSION_FIELDS) {
+      delete nextCarcasse[field];
     }
   }
 
