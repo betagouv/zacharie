@@ -135,7 +135,9 @@ export function formatSaisieChasseurEmail(carcasse: Carcasse): {
     params.saisie_type === 'PARTIELLE'
       ? `Seules les pièces listées ci-dessous ont été retirées de la consommation. Le reste ${params.carcasse_label} a été accepté.`
       : `La totalité ${params.carcasse_label} a été retirée de la consommation.`,
-    params.pieces.length ? `Pièces retirées :\n${params.pieces.map((piece) => `-> ${piece}`).join('\n')}` : null,
+    params.pieces.length
+      ? `Pièces retirées :\n${params.pieces.map((piece) => `-> ${piece}`).join('\n')}`
+      : null,
     `Motif${params.motifs.length > 1 ? 's' : ''} de la saisie:\n${params.motifs.map((motif) => `-> ${motif}`).join('\n')}`,
     params.commentaire ? `Commentaire du service vétérinaire:\n${params.commentaire}` : null,
     `Pour consulter les détails de cette carcasse, rendez-vous sur Zacharie : ${params.cta}`,
