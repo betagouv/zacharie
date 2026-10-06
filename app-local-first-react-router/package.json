@@ -26,7 +26,7 @@
     "@sentry/react": "^9.22.0",
     "@tailwindcss/vite": "^4.1.11",
     "@uidotdev/usehooks": "^2.4.1",
-    "compression": "^1.8.1",
+    "compression": "^1.8.2",
     "dayjs": "^1.11.13",
     "express": "^4.22.1",
     "fake-indexeddb": "^6.0.1",
