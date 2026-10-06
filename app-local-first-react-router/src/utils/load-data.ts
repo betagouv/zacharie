@@ -4,9 +4,10 @@ import { useEffect, useRef } from 'react';
 import { syncData } from '@app/utils/sync-data';
 
 export async function loadData(from?: string) {
+  // les relations avant les fiches : les libellés ETG ont besoin des entités pour lesquelles l'utilisateur travaille
   return refreshUser(from)
-    .then(() => syncData(from))
-    .then(loadMyRelations);
+    .then(loadMyRelations)
+    .then(() => syncData(from));
 }
 
 export function useLoaderEffect(loader: () => void, deps: React.DependencyList = []) {
