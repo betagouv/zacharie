@@ -32,6 +32,8 @@ export async function loadMyRelations() {
       (res) => res as UserMyRelationsResponse
     );
     if (signal.aborted) return;
+    // en cas d'échec réseau, API.get renvoie { ok: false } : on garde les relations déjà en stockage local
+    if (!myRelationsData?.ok) return;
 
     // Seed with entities already in the store (e.g. those referenced by fiches, loaded by
     // load-carcasses). The user's own relations below overlay them so they keep their relation info.
