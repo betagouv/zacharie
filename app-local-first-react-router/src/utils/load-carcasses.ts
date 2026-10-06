@@ -41,18 +41,20 @@ export async function loadCarcasses() {
     const carcasseModifRequests: CarcassesGetResponse['data']['carcasseModifRequests'] = [];
     const usersFetched: CarcassesGetResponse['data']['users'] = [];
     const entitiesFetched: CarcassesGetResponse['data']['entities'] = [];
-    let page = 0;
+    // curseur de page : dernière carcasse reçue, la page suivante commence strictement après
+    let cursor: Record<string, string> = {};
+    let isFirstPage = true;
     let hasMore = true;
     let fullReload = false;
 
     while (hasMore) {
-      const res = await API.get({
+      const res: CarcassesGetResponse = await API.get({
         path: '/carcasse',
         query: {
           after,
           withDeleted: 'true',
-          page: `${page}`,
           limit: '5000',
+          ...cursor,
         },
         signal,
       }).then((r) => r as CarcassesGetResponse);
@@ -66,8 +68,16 @@ export async function loadCarcasses() {
       carcasseModifRequests.push(...(res.data.carcasseModifRequests || []));
       carcassesIntermediairesFetched.push(...(res.data.carcassesIntermediaires || []));
       hasMore = res.data.hasMore;
-      if (page === 0) fullReload = res.data.fullReload;
-      page += 1;
+      if (isFirstPage) fullReload = res.data.fullReload;
+      isFirstPage = false;
+      const lastCarcasse: CarcassesGetResponse['data']['carcasses'][number] | undefined =
+        res.data.carcasses.at(-1);
+      if (lastCarcasse) {
+        cursor = {
+          cursor_updated_at: String(new Date(lastCarcasse.updated_at).getTime()),
+          cursor_id: lastCarcasse.zacharie_carcasse_id,
+        };
+      }
     }
 
     // Guard against logout/abort races: don't clobber a freshly-reset store.

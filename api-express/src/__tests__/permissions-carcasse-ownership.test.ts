@@ -63,7 +63,7 @@ app.use(express.json());
 app.use('/carcasse', carcasseRouter);
 
 // Default required query params (zod schema rejects requests missing any of them)
-const DEFAULT_QS = 'page=0&after=0&limit=100&withDeleted=false';
+const DEFAULT_QS = 'after=0&limit=100&withDeleted=false';
 
 function authed(req: request.Test, user: object) {
   return req.set('x-test-user', JSON.stringify(user));
@@ -217,18 +217,18 @@ describe('Role branching — where clause shape', () => {
 });
 
 describe('Pagination + delta-fetch contract', () => {
-  test('page/limit map to skip/take', async () => {
-    await authed(request(app).get('/carcasse?page=2&after=0&limit=50&withDeleted=false'), sviUser);
+  test('limit maps to take, pagination by cursor (no skip)', async () => {
+    await authed(request(app).get('/carcasse?after=0&limit=50&withDeleted=false'), sviUser);
 
     const args = vi.mocked(prisma.carcasse.findMany).mock.calls[0][0]!;
-    expect(args.skip).toBe(100); // page=2 * limit=50
+    expect(args.skip).toBeUndefined();
     expect(args.take).toBe(50);
   });
 
   test('after=<timestamp> with withDeleted=false → where.updated_at = { gte: Date(after) }', async () => {
     // postérieur à FORCE_FULL_RELOAD_AFTER, sinon le serveur force un rechargement complet
     const cutoff = FORCE_FULL_RELOAD_AFTER.getTime() + 1;
-    await authed(request(app).get(`/carcasse?page=0&after=${cutoff}&limit=100&withDeleted=false`), sviUser);
+    await authed(request(app).get(`/carcasse?after=${cutoff}&limit=100&withDeleted=false`), sviUser);
 
     const where: any = vi.mocked(prisma.carcasse.findMany).mock.calls[0][0]!.where;
     expect(where.updated_at).toEqual({ gte: new Date(cutoff) });
@@ -238,7 +238,7 @@ describe('Pagination + delta-fetch contract', () => {
   test('withDeleted=true → deleted_at is NOT forced to null; updated_at gates the delta', async () => {
     // postérieur à FORCE_FULL_RELOAD_AFTER, sinon le serveur force un rechargement complet
     const cutoff = FORCE_FULL_RELOAD_AFTER.getTime() + 1;
-    await authed(request(app).get(`/carcasse?page=0&after=${cutoff}&limit=100&withDeleted=true`), sviUser);
+    await authed(request(app).get(`/carcasse?after=${cutoff}&limit=100&withDeleted=true`), sviUser);
 
     const where: any = vi.mocked(prisma.carcasse.findMany).mock.calls[0][0]!.where;
     expect(where.updated_at).toEqual({ gte: new Date(cutoff) });

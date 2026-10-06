@@ -342,21 +342,33 @@ describe('computeTransmissions — intermédiaires', () => {
     expect(merged.intermediaire_depot_entity_id).toBe('depot-1');
   });
 
-  it('merge ignores intermédiaire ids that are not on the transmission', () => {
-    // CARC_B carries a decision on INT2, which CARC_A's transmission never had → no crash, no graft.
+  it('a refused carcasse listed first does not hide the next prise en charge of its siblings', () => {
+    // CARC_A was refused by the collecteur (INT1) so the ETG (INT2) only took charge of CARC_B.
+    // The transmission must list INT2 (most recent first) whatever the carcasse order in the store.
     const t = run({
       carcasses: [carcasse({ zacharie_carcasse_id: 'CARC_A' }), carcasse({ zacharie_carcasse_id: 'CARC_B' })],
       intermediaires: [
-        intermediaire({ zacharie_carcasse_id: 'CARC_A', intermediaire_id: 'INT1' }),
+        intermediaire({
+          zacharie_carcasse_id: 'CARC_A',
+          intermediaire_id: 'INT1',
+          created_at: new Date('2024-02-01T00:00:00Z'),
+        }),
+        intermediaire({
+          zacharie_carcasse_id: 'CARC_B',
+          intermediaire_id: 'INT1',
+          created_at: new Date('2024-02-01T00:00:00Z'),
+        }),
         intermediaire({
           zacharie_carcasse_id: 'CARC_B',
           intermediaire_id: 'INT2',
+          created_at: new Date('2024-02-02T00:00:00Z'),
           intermediaire_prochain_detenteur_id_cache: 'dest-2',
         }),
       ],
       user: admin,
     });
-    expect(t[TID].intermediaires.map((i) => i.id)).toEqual(['INT1']);
+    expect(t[TID].intermediaires.map((i) => i.id)).toEqual(['INT2', 'INT1']);
+    expect(t[TID].intermediaires[0].intermediaire_prochain_detenteur_id_cache).toBe('dest-2');
   });
 });
 
