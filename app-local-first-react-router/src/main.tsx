@@ -26,6 +26,8 @@ import 'dayjs/locale/fr';
 import dayjs from 'dayjs';
 dayjs.locale('fr');
 import { ToastContainer } from 'react-toastify';
+import SingleActiveTabGate from './components/SingleActiveTabGate.tsx';
+import { startSingleActiveTab } from './utils/single-active-tab.ts';
 
 startReactDsfr({
   // defaultColorScheme: "system",
@@ -34,6 +36,8 @@ startReactDsfr({
 });
 
 registerServiceWorker();
+
+startSingleActiveTab();
 
 // Initialize Matomo tracking
 initMatomo();
@@ -134,7 +138,9 @@ createRoot(document.getElementById('root')!).render(
           window.dispatchEvent(new PopStateEvent('popstate'));
         }}
       >
-        <App />
+        <SingleActiveTabGate>
+          <App />
+        </SingleActiveTabGate>
         <ToastContainer />
       </ErrorBoundary>
     </BrowserRouter>

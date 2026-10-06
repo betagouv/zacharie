@@ -573,6 +573,8 @@ const useZustandStore = create<State & Actions>()(
         version: 10,
         migrate: migratePersistedState,
         storage: createSlicedIDBStorage<Partial<State>>(PERSISTED_KEYS),
+        // l'hydratation est lancée par single-active-tab.ts, une fois que l'onglet est le seul actif
+        skipHydration: true,
         onRehydrateStorage: (state) => {
           return () => state.setHasHydrated(true);
         },

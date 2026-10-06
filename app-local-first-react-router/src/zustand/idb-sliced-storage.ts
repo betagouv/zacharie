@@ -18,6 +18,15 @@ const PREFIX = 'zs:';
 const META_KEY = `${PREFIX}__meta__`;
 const OLD_KEY = 'zacharie-zustand-store';
 
+// Un onglet qui cède sa place (voir single-active-tab.ts) n'écrit plus rien dans IndexedDB.
+let writesStopped = false;
+let lastWrite: Promise<unknown> = Promise.resolve();
+
+export async function stopPersistWrites() {
+  writesStopped = true;
+  await lastWrite.catch(() => {});
+}
+
 interface StorageValue<S> {
   state: S;
   version?: number;
@@ -92,7 +101,7 @@ export function createSlicedIDBStorage<S extends Record<string, unknown>>(
     },
 
     setItem: async (_name, value): Promise<void> => {
-      if (!hydrated) return;
+      if (!hydrated || writesStopped) return;
       const state = value.state as Record<string, unknown>;
       const entries: [IDBValidKey, unknown][] = [];
 
@@ -108,7 +117,8 @@ export function createSlicedIDBStorage<S extends Record<string, unknown>>(
 
       if (entries.length > 0) {
         entries.push([META_KEY, { version: value.version }]);
-        await setMany(entries);
+        lastWrite = setMany(entries);
+        await lastWrite;
       }
     },
 
