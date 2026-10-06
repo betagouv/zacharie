@@ -236,7 +236,7 @@ export default function RequestNewCarcasseButton({
       deleted_at: null,
       is_synced: false,
       version: 0,
-      version_user_id: null,
+      version_user_id: user.id,
     };
 
     const modifRequest: CarcasseModificationRequest = {

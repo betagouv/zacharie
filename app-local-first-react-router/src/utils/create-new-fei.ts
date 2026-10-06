@@ -47,7 +47,7 @@ export async function createNewFei(props?: InitialParamsProps): Promise<Fei> {
     deleted_at: null,
     is_synced: false,
     version: 0,
-    version_user_id: null,
+    version_user_id: user.id,
   };
   useZustandStore.getState().createFei(newFei);
   useZustandStore.getState().addLog({

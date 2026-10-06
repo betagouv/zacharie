@@ -167,7 +167,7 @@ export async function createNewCarcasse({
     deleted_at: null,
     is_synced: false,
     version: 0,
-    version_user_id: null,
+    version_user_id: user.id,
   };
   useZustandStore.getState().createCarcasse(newCarcasse);
   return newCarcasse;

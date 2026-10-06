@@ -344,7 +344,7 @@ const useZustandStore = create<State & Actions>()(
                   deleted_at: null,
                   is_synced: false,
                   version: 0,
-                  version_user_id: null,
+                  version_user_id: newIntermediaire.intermediaire_user_id,
                 }));
 
               for (const ci of carcassesIntermediaires) {
