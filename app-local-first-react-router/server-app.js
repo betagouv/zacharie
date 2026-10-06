@@ -1,5 +1,6 @@
 import compression from 'compression';
 import express from 'express';
+import fs from 'fs';
 import path from 'path';
 
 const viteDevServer =
@@ -101,10 +102,15 @@ app.use(
   })
 );
 
-// For any other routes, send the index.html file
+// For any other routes, send the index.html file.
+// Read once at startup: no file system access per request (in dev, Vite serves index.html).
+const indexHtml = viteDevServer
+  ? null
+  : fs.readFileSync(path.join(process.cwd(), 'build', 'index.html'), 'utf8');
 app.get('*', (req, res, next) => {
+  if (!indexHtml) return next();
   res.setHeader('Cache-Control', 'no-store');
-  res.sendFile(path.join(process.cwd(), 'build', 'index.html'), next);
+  res.type('html').send(indexHtml);
 });
 
 const port = process.env.PORT || 8080;
