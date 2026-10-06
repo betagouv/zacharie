@@ -155,6 +155,54 @@ function initialState(): State {
   };
 }
 
+// Changement de `version` : tout le stockage local est remis à zéro, sauf les éléments pas encore
+// synchronisés (is_synced = false), quelle que soit l'ancienne version. Sans ce `migrate`, zustand
+// jetterait tout l'état stocké et ces saisies seraient perdues définitivement. Exception volontaire
+// à la règle « pas de code de rétrocompatibilité », pour la sécurité des données : les éléments
+// gardés sont renvoyés tels quels à /sync, donc un bump qui change la forme d'un élément exige
+// toujours un correctif côté serveur ou base. lastUpdateFromServer = 0 force un rechargement complet,
+// qui conserve ces éléments (keepLocal dans load-carcasses).
+export function migratePersistedState(persistedState: unknown): Partial<State> {
+  const persisted = (persistedState ?? {}) as Partial<State>;
+  const isUnsynced = (item: { is_synced: boolean }) => !item.is_synced;
+
+  const feis = Object.fromEntries(
+    Object.entries(persisted.feis ?? {}).filter(([, fei]) => isUnsynced(fei))
+  ) as State['feis'];
+  const carcasses = Object.fromEntries(
+    Object.entries(persisted.carcasses ?? {}).filter(([, carcasse]) => isUnsynced(carcasse))
+  ) as State['carcasses'];
+  const carcassesIntermediaireById = Object.fromEntries(
+    Object.entries(persisted.carcassesIntermediaireById ?? {}).filter(([, ci]) => isUnsynced(ci))
+  ) as State['carcassesIntermediaireById'];
+  const modifRequestsByCarcasseId: State['modifRequestsByCarcasseId'] = {};
+  for (const [zacharie_carcasse_id, requests] of Object.entries(persisted.modifRequestsByCarcasseId ?? {})) {
+    const unsyncedRequests = requests.filter(isUnsynced);
+    if (unsyncedRequests.length > 0) modifRequestsByCarcasseId[zacharie_carcasse_id] = unsyncedRequests;
+  }
+  const logs = (persisted.logs ?? []).filter(isUnsynced);
+
+  const hasUnsynced =
+    Object.keys(feis).length > 0 ||
+    Object.keys(carcasses).length > 0 ||
+    Object.keys(carcassesIntermediaireById).length > 0 ||
+    Object.keys(modifRequestsByCarcasseId).length > 0 ||
+    logs.length > 0;
+
+  const initial = initialState();
+  return {
+    ...Object.fromEntries(PERSISTED_KEYS.map((key) => [key, initial[key]])),
+    dataIsSynced: !hasUnsynced,
+    feis,
+    carcasses,
+    carcassesRegistry: Object.values(carcasses),
+    carcassesIntermediaireById,
+    modifRequestsByCarcasseId,
+    logs,
+    lastUpdateFromServer: 0,
+  };
+}
+
 let resolveHydration: () => void;
 export const hydrationPromise = new Promise<void>((resolve) => {
   resolveHydration = resolve;
@@ -523,6 +571,7 @@ const useZustandStore = create<State & Actions>()(
         // v10: modif requests moved from an embedded carcasse array + pending-only map to a single
         // full-history map keyed by carcasse id. Bump forces a full re-fetch so the map repopulates.
         version: 10,
+        migrate: migratePersistedState,
         storage: createSlicedIDBStorage<Partial<State>>(PERSISTED_KEYS),
         onRehydrateStorage: (state) => {
           return () => state.setHasHydrated(true);
