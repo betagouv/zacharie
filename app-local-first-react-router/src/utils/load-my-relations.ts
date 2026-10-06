@@ -52,7 +52,7 @@ export async function loadMyRelations() {
       }
     }
 
-    const users = useZustandStore.getState().users;
+    const users = { ...useZustandStore.getState().users };
     const detenteursInitiauxIds: string[] = [];
     for (const detenteurInitial of myRelationsData.data?.detenteursInitiaux || []) {
       detenteursInitiauxIds.push(detenteurInitial.id);
