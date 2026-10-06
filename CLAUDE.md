@@ -187,6 +187,7 @@ Two API types:
 - **Prisma** schema at `api-express/prisma/schema.prisma`
 - Create migrations: `npm run prisma-create-migration <name>` (in api-express/)
 - Schema is copied to frontend via `api-express/scripts/copy-schema-to-app-side.js`
+- After a DB-level data correction or a change of access scope rules, bump `FORCE_FULL_RELOAD_AFTER` so every client re-downloads its scope. See `doc/rechargement-complet.md`.
 
 ### Frontend
 
