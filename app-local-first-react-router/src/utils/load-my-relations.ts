@@ -1,6 +1,6 @@
 import type { UserMyRelationsResponse } from '@api/src/types/responses';
 import type { EntityWithUserRelation } from '@api/src/types/entity';
-import useZustandStore from '@app/zustand/store';
+import useZustandStore, { hydrationPromise } from '@app/zustand/store';
 import API from '@app/services/api';
 import useUser from '@app/zustand/user';
 
@@ -14,6 +14,8 @@ export function abortLoadMyRelations(reason: string = 'aborted') {
 }
 
 export async function loadMyRelations() {
+  // on attend le store local : sinon le résultat serait écrasé par la réhydratation
+  await hydrationPromise;
   const isOnline = useZustandStore.getState().isOnline;
   console.log('chargement relations ?', isOnline);
   if (!isOnline) {
@@ -29,9 +31,10 @@ export async function loadMyRelations() {
 
   try {
     const myRelationsData = await API.get({ path: 'user/my-relations', signal }).then(
-      (res) => res as UserMyRelationsResponse
+      (res) => res as UserMyRelationsResponse | { ok: false }
     );
-    if (signal.aborted) return;
+    // API.get ne lève pas d'erreur : en cas d'échec on garde les relations déjà en mémoire
+    if (signal.aborted || !myRelationsData.ok) return;
 
     // Seed with entities already in the store (e.g. those referenced by fiches, loaded by
     // load-carcasses). The user's own relations below overlay them so they keep their relation info.
