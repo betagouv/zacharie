@@ -107,6 +107,10 @@ export default function CollecteurProfilPartageDeMesDonnees() {
                                 return <li>Lire des carcasses au nom d'un utilisateur</li>;
                               case ApiKeyScope.CARCASSE_READ_FOR_ENTITY:
                                 return <li>Lire des carcasses au nom d'une entité</li>;
+                              case ApiKeyScope.USER_LOGIN_FOR_USER:
+                                return (
+                                  <li>Se connecter à mon compte Zacharie et créer des fiches en mon nom</li>
+                                );
                               default:
                                 return null;
                             }
@@ -176,6 +180,10 @@ export default function CollecteurProfilPartageDeMesDonnees() {
                                 return <li>Lire des carcasses au nom d'un utilisateur</li>;
                               case ApiKeyScope.CARCASSE_READ_FOR_ENTITY:
                                 return <li>Lire des carcasses au nom d'une entité</li>;
+                              case ApiKeyScope.USER_LOGIN_FOR_USER:
+                                return (
+                                  <li>Se connecter à mon compte Zacharie et créer des fiches en mon nom</li>
+                                );
                               default:
                                 return null;
                             }
@@ -246,6 +254,10 @@ export default function CollecteurProfilPartageDeMesDonnees() {
                                 return <li>Lire des carcasses en mon nom</li>;
                               case ApiKeyScope.CARCASSE_READ_FOR_ENTITY:
                                 return <li>Lire des carcasses au nom de mon entreprise</li>;
+                              case ApiKeyScope.USER_LOGIN_FOR_USER:
+                                return (
+                                  <li>Se connecter à mon compte Zacharie et créer des fiches en mon nom</li>
+                                );
                               default:
                                 return null;
                             }

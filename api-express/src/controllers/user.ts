@@ -42,7 +42,12 @@ import {
   EntityRelationStatus,
   ApiKeyApprovalStatus,
 } from '@prisma/client';
-import { cookieOptions, JWT_MAX_AGE, logoutCookieOptions } from '~/utils/cookie';
+import {
+  ACCESS_TOKEN_SESSION_MAX_AGE,
+  cookieOptions,
+  JWT_MAX_AGE,
+  logoutCookieOptions,
+} from '~/utils/cookie';
 import { signSessionToken } from '~/utils/session-token';
 import { SECRET, VITE_APP_URL } from '~/config';
 import { hasAllRequiredFields } from '~/utils/user';
@@ -1013,14 +1018,14 @@ router.post(
       });
 
       const token = jwt.sign({ userId: user.id }, SECRET, {
-        expiresIn: JWT_MAX_AGE,
+        expiresIn: ACCESS_TOKEN_SESSION_MAX_AGE,
       });
       user = await prisma.user.update({
         where: { id: user.id },
         data: { last_login_at: new Date() },
       });
       // refreshMaterializedViews();
-      res.cookie('zacharie_express_jwt', token, cookieOptions(req));
+      res.cookie('zacharie_express_jwt', token, cookieOptions(req, ACCESS_TOKEN_SESSION_MAX_AGE));
       await prisma.apiKeyApprovalByUserOrEntity.update({
         where: { access_token: accessToken },
         data: { access_token: null, access_token_created_at: null },

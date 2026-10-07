@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "ApiKeyScope" ADD VALUE 'USER_LOGIN_FOR_USER';

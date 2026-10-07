@@ -336,6 +336,14 @@ export default function AdminApiKey() {
                           defaultChecked: apiKey.scopes.includes(ApiKeyScope.CARCASSE_READ_FOR_ENTITY),
                         },
                       },
+                      {
+                        label: "Connexion au compte d'un utilisateur (création de fiches en son nom)",
+                        nativeInputProps: {
+                          name: Prisma.ApiKeyScalarFieldEnum.scopes,
+                          value: ApiKeyScope.USER_LOGIN_FOR_USER,
+                          defaultChecked: apiKey.scopes.includes(ApiKeyScope.USER_LOGIN_FOR_USER),
+                        },
+                      },
                     ]}
                   />
                   <div className="fixed bottom-16 left-0 z-50 flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:relative md:bottom-0 md:w-auto md:items-center md:shadow-none md:[&_ul]:min-w-96">
