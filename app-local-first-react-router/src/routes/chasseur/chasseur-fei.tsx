@@ -703,8 +703,8 @@ function FEIChasseurLoaded() {
                       },
                       defaultValue: fei?.examinateur_initial_date_approbation_mise_sur_le_marche
                         ? dayjs(fei?.examinateur_initial_date_approbation_mise_sur_le_marche).format(
-                            'YYYY-MM-DDTHH:mm'
-                          )
+                          'YYYY-MM-DDTHH:mm'
+                        )
                         : undefined,
                     }}
                   />
@@ -760,7 +760,7 @@ function FEIChasseurLoaded() {
 
               {/* Bloc 4 — Vente / don. Reste affiché une fois tout transmis : le bloc récapitule
                   alors les ventes / dons déjà faits. */}
-              {showVenteDon && isPremierDetenteur && (
+              {showVenteDon && isPremierDetenteur && user.activated && (
                 <div className="bg-white p-4 md:p-8">
                   <h4 className="fr-h5">Vente ou don</h4>
                   <DestinataireSelectPremierDetenteur
