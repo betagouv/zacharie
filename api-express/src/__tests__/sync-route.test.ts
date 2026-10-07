@@ -281,8 +281,8 @@ describe('POST /sync — logs', () => {
           carcasses: [],
           carcassesIntermediaires: [],
           logs: [
-            { id: 'L1', user_id: 'u1', user_role: UserRoles.CHASSEUR, action: 'CREATE' },
-            { id: 'L2', user_id: 'u1', user_role: UserRoles.CHASSEUR, action: 'UPDATE' },
+            { id: 'L1', user_id: 'user-cfei', user_role: UserRoles.CHASSEUR, action: 'CREATE' },
+            { id: 'L2', user_id: 'user-cfei', user_role: UserRoles.CHASSEUR, action: 'UPDATE' },
           ],
         })
     );
@@ -303,14 +303,34 @@ describe('POST /sync — logs', () => {
           carcasses: [],
           carcassesIntermediaires: [],
           logs: [
-            { id: 'L1', user_id: 'u1', user_role: UserRoles.CHASSEUR, action: 'CREATE' },
-            { id: 'L-BAD', user_id: 'u1', user_role: UserRoles.CHASSEUR, action: 'CREATE' },
+            { id: 'L1', user_id: 'user-cfei', user_role: UserRoles.CHASSEUR, action: 'CREATE' },
+            { id: 'L-BAD', user_id: 'user-cfei', user_role: UserRoles.CHASSEUR, action: 'CREATE' },
           ],
         })
     );
 
     expect(res.status).toBe(200);
     expect(res.body.data.syncedLogIds).toEqual([]);
+    expect(capture).toHaveBeenCalled();
+  });
+  test('rejects a log written on behalf of another user', async () => {
+    vi.mocked(prisma.log.createMany).mockResolvedValue({ count: 1 } as any);
+
+    const res = await authed(
+      request(app)
+        .post('/sync')
+        .send({
+          logs: [
+            { id: 'L-OWN', user_id: 'user-cfei', user_role: UserRoles.CHASSEUR, action: 'CREATE' },
+            { id: 'L-FORGED', user_id: 'user-other', user_role: UserRoles.SVI, action: 'CREATE' },
+          ],
+        })
+    );
+
+    expect(res.status).toBe(200);
+    const { data } = vi.mocked(prisma.log.createMany).mock.calls[0][0] as { data: Array<{ id: string }> };
+    expect(data.map((l) => l.id)).toEqual(['L-OWN']);
+    expect(res.body.data.syncedLogIds).toEqual(['L-OWN']);
     expect(capture).toHaveBeenCalled();
   });
 });
@@ -669,7 +689,7 @@ describe('POST /sync — carcasse modification requests', () => {
     expect(runCarcasseModifRequestSideEffects).toHaveBeenCalledOnce();
     const args = vi.mocked(runCarcasseModifRequestSideEffects).mock.calls[0];
     expect(args[0].transitionedTo).toBe(CarcasseModificationRequestStatus.APPROVED);
-    expect(args[1]).toEqual(approvalPayload);
+    expect(args[2]).toEqual(approvalPayload);
   });
 
   test('_approvalPayload is stripped from the persisted body sent to syncCarcasseModifRequest', async () => {
@@ -783,7 +803,7 @@ describe('POST /sync — carcasse modification requests', () => {
           logs: [
             {
               id: 'L1',
-              user_id: 'u1',
+              user_id: 'user-cfei',
               user_role: 'CHASSEUR',
               action: 'log-action',
             },

@@ -66,6 +66,9 @@ export async function syncData(calledFrom?: string) {
   }
   syncAbortController = new AbortController();
   const signal = syncAbortController.signal;
+  // Un push échoué laisse des éditions locales non synchronisées : le pull qui suit les écraserait
+  // (mergeItems est server-wins), donc on ne recharge pas dans ce cas.
+  let pushFailed = false;
   try {
     const state = useZustandStore.getState();
     if (!state.isOnline) {
@@ -103,6 +106,7 @@ export async function syncData(calledFrom?: string) {
     const res = response as SyncResponse;
     if (!res.ok || !res.data) {
       console.error('sync failed', res.error);
+      pushFailed = true;
       return;
     }
 
@@ -145,10 +149,11 @@ export async function syncData(calledFrom?: string) {
     }
   } catch (error) {
     if (signal.aborted) return;
+    pushFailed = true;
     console.error('sync error', error);
     capture(error as Error, { extra: { calledFrom } });
   } finally {
-    if (!signal.aborted) {
+    if (!signal.aborted && !pushFailed) {
       await loadCarcasses();
       // Le delta vient de fusionner la version serveur (is_synced = true) : l'indicateur
       // « Synchronisation en cours » se met à jour sans attendre un prochain appel.

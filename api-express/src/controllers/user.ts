@@ -1091,9 +1091,12 @@ router.post(
         });
         return;
       }
-      const fei = await prisma.fei.findUnique({
+      // seul l'examinateur initial de la fiche peut rechercher son premier détenteur
+      const fei = await prisma.fei.findFirst({
         where: {
           numero: body[Prisma.FeiScalarFieldEnum.numero],
+          examinateur_initial_user_id: user.id,
+          deleted_at: null,
         },
       });
       if (!fei) {

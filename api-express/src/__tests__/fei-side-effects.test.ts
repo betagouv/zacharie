@@ -29,37 +29,49 @@ describe('syncCarcasseDates — propagates fei date/heure changes down to its ca
     const date = new Date('2026-05-01');
     const existing = makeFei({ date_mise_a_mort: date });
     const saved = makeFei({ date_mise_a_mort: date });
-    await syncCarcasseDates(existing as any, saved as any);
+    await syncCarcasseDates(existing as any, saved as any, { id: 'user-1' } as any);
     expect(prisma.carcasse.updateMany).not.toHaveBeenCalled();
   });
 
   test('date_mise_a_mort change → propagates the new date to every carcasse of the fiche', async () => {
     const existing = makeFei();
     const saved = makeFei({ date_mise_a_mort: new Date('2026-06-15') });
-    await syncCarcasseDates(existing as any, saved as any);
+    await syncCarcasseDates(existing as any, saved as any, { id: 'user-1' } as any);
     expect(prisma.carcasse.updateMany).toHaveBeenCalledWith({
       where: { fei_numero: feiNumero },
-      data: { date_mise_a_mort: saved.date_mise_a_mort },
+      data: {
+        date_mise_a_mort: saved.date_mise_a_mort,
+        version: { increment: 1 },
+        version_user_id: expect.any(String),
+      },
     });
   });
 
   test('heure_mise_a_mort_premiere_carcasse change → maps to carcasse.heure_mise_a_mort_premiere_carcasse_fei', async () => {
     const existing = makeFei();
     const saved = makeFei({ heure_mise_a_mort_premiere_carcasse: '07:30' });
-    await syncCarcasseDates(existing as any, saved as any);
+    await syncCarcasseDates(existing as any, saved as any, { id: 'user-1' } as any);
     expect(prisma.carcasse.updateMany).toHaveBeenCalledWith({
       where: { fei_numero: feiNumero },
-      data: { heure_mise_a_mort_premiere_carcasse_fei: '07:30' },
+      data: {
+        heure_mise_a_mort_premiere_carcasse_fei: '07:30',
+        version: { increment: 1 },
+        version_user_id: expect.any(String),
+      },
     });
   });
 
   test('heure_evisceration_derniere_carcasse change → maps to carcasse.heure_evisceration_derniere_carcasse_fei', async () => {
     const existing = makeFei();
     const saved = makeFei({ heure_evisceration_derniere_carcasse: '10:15' });
-    await syncCarcasseDates(existing as any, saved as any);
+    await syncCarcasseDates(existing as any, saved as any, { id: 'user-1' } as any);
     expect(prisma.carcasse.updateMany).toHaveBeenCalledWith({
       where: { fei_numero: feiNumero },
-      data: { heure_evisceration_derniere_carcasse_fei: '10:15' },
+      data: {
+        heure_evisceration_derniere_carcasse_fei: '10:15',
+        version: { increment: 1 },
+        version_user_id: expect.any(String),
+      },
     });
   });
 
@@ -67,7 +79,7 @@ describe('syncCarcasseDates — propagates fei date/heure changes down to its ca
     const date = new Date('2026-05-01');
     const existing = makeFei({ date_mise_a_mort: date });
     const saved = makeFei({ date_mise_a_mort: date, heure_mise_a_mort_premiere_carcasse: '07:30' });
-    await syncCarcasseDates(existing as any, saved as any);
+    await syncCarcasseDates(existing as any, saved as any, { id: 'user-1' } as any);
     expect(prisma.carcasse.updateMany).toHaveBeenCalledTimes(1);
   });
 });

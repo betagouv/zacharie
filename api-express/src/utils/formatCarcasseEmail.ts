@@ -91,11 +91,14 @@ export async function formatCarcasseChasseurEmail(carcasse: Carcasse) {
 }
 
 export type CarcasseSaisieTemplateParams = {
+  saisie_type: 'PARTIELLE' | 'TOTALE';
   saisie_label: string;
   saisie_label_capitalized: string;
   carcasse_label: string;
   espece: string;
   numero_bracelet: string;
+  // Pièces retirées de la consommation (saisie partielle uniquement)
+  pieces: string[];
   motifs: string[];
   commentaire: string | null;
   cta: string;
@@ -111,12 +114,15 @@ export function formatSaisieChasseurEmail(carcasse: Carcasse): {
   push: PushWording;
 } {
   const saisieLabel = getCarcasseStatusLabelForEmail(carcasse).toLowerCase();
+  const saisieType = carcasse.svi_ipm2_decision === IPM2Decision.SAISIE_PARTIELLE ? 'PARTIELLE' : 'TOTALE';
   const params: CarcasseSaisieTemplateParams = {
+    saisie_type: saisieType,
     saisie_label: saisieLabel,
     saisie_label_capitalized: saisieLabel.charAt(0).toUpperCase() + saisieLabel.slice(1),
     carcasse_label: carcasse.type === CarcasseType.GROS_GIBIER ? 'de la carcasse' : 'du lot de carcasses',
     espece: carcasse.espece.toLowerCase(),
     numero_bracelet: carcasse.numero_bracelet,
+    pieces: saisieType === 'PARTIELLE' ? carcasse.svi_ipm2_pieces : [],
     motifs: carcasse.svi_ipm2_lesions_ou_motifs.map((motif) => getMotifForChasseur(motif, carcasse.type)),
     commentaire: carcasse.svi_carcasse_commentaire || null,
     cta: `${VITE_APP_URL}/app/chasseur/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`,
@@ -126,6 +132,12 @@ export function formatSaisieChasseurEmail(carcasse: Carcasse): {
   const text = [
     `Bonjour,`,
     `Le service vétérinaire d’inspection a décidé la ${params.saisie_label} ${params.carcasse_label} de ${params.espece} n°${params.numero_bracelet}.`,
+    params.saisie_type === 'PARTIELLE'
+      ? `Seules les pièces listées ci-dessous ont été retirées de la consommation. Le reste ${params.carcasse_label} a été accepté.`
+      : `La totalité ${params.carcasse_label} a été retirée de la consommation.`,
+    params.pieces.length
+      ? `Pièces retirées :\n${params.pieces.map((piece) => `-> ${piece}`).join('\n')}`
+      : null,
     `Motif${params.motifs.length > 1 ? 's' : ''} de la saisie:\n${params.motifs.map((motif) => `-> ${motif}`).join('\n')}`,
     params.commentaire ? `Commentaire du service vétérinaire:\n${params.commentaire}` : null,
     `Pour consulter les détails de cette carcasse, rendez-vous sur Zacharie : ${params.cta}`,
@@ -133,7 +145,7 @@ export function formatSaisieChasseurEmail(carcasse: Carcasse): {
   ];
 
   const push: PushWording = {
-    title: 'Carcasse saisie',
+    title: params.saisie_label_capitalized,
     body: `${params.saisie_label_capitalized} ${params.carcasse_label} de ${params.espece} n°${params.numero_bracelet}.`,
   };
 

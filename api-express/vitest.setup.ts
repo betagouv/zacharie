@@ -6,6 +6,7 @@ vi.mock('./src/prisma', () => ({
     $executeRaw: vi.fn(),
     fei: {
       findMany: vi.fn().mockResolvedValue([]),
+      findFirst: vi.fn(),
       findUnique: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
@@ -20,6 +21,7 @@ vi.mock('./src/prisma', () => ({
       updateMany: vi.fn().mockResolvedValue({ count: 0 }),
     },
     carcasseIntermediaire: {
+      findUnique: vi.fn().mockResolvedValue(null),
       findFirst: vi.fn(),
       findMany: vi.fn().mockResolvedValue([]),
       upsert: vi.fn(),
@@ -75,6 +77,11 @@ vi.mock('./src/prisma', () => ({
     },
     password: {
       upsert: vi.fn(),
+    },
+    userRelations: {
+      findFirst: vi.fn(),
+      findMany: vi.fn().mockResolvedValue([]),
+      create: vi.fn(),
     },
     officialCfei: {
       findUnique: vi.fn().mockResolvedValue(null),

@@ -9,7 +9,8 @@ export type SyncRejectedErrorMessage =
   | "Seul l'examinateur initial peut approuver ou refuser une demande"
   | "Seul l'auteur de la demande peut l'annuler"
   | 'Seul un examinateur initial peut créer une fiche'
-  | 'Vous ne pouvez pas supprimer cette fiche';
+  | 'Vous ne pouvez pas supprimer cette fiche'
+  | 'Version obsolète';
 
 export class SyncRejectedError extends Error {
   constructor(message: SyncRejectedErrorMessage) {

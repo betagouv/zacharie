@@ -237,6 +237,21 @@ Christine
         onboarded_at: dayjs().toDate(),
       },
       {
+        // Second membre de SVI 1 : deux agents du même service sur la même fiche (spec 143).
+        id: await createUserId(),
+        email: 'svi-1-bis@example.fr',
+        roles: [UserRoles.SVI],
+        activated: true,
+        activated_at: dayjs().toDate(),
+        prenom: 'Bernard',
+        nom_de_famille: 'Petit',
+        addresse_ligne_1: '7 rue de la paix',
+        code_postal: '75000',
+        ville: 'Paris',
+        telephone: '0606060617',
+        onboarded_at: dayjs().toDate(),
+      },
+      {
         id: await createUserId(),
         email: 'svi-nouveau@example.fr',
         roles: [UserRoles.SVI],
@@ -621,6 +636,12 @@ Christine
         entity_id: entities.find((entity) => entity.raison_sociale === 'SVI 1')?.id,
         relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
         status: EntityRelationStatus.ADMIN,
+      },
+      {
+        owner_id: users.find((user) => user.email === 'svi-1-bis@example.fr')?.id,
+        entity_id: entities.find((entity) => entity.raison_sociale === 'SVI 1')?.id,
+        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        status: EntityRelationStatus.MEMBER,
       },
       {
         owner_id: users.find((user) => user.email === 'svi-nouveau@example.fr')?.id,
