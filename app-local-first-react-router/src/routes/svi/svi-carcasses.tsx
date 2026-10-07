@@ -4,6 +4,7 @@ import dayjs from 'dayjs';
 import { toast } from 'react-toastify';
 import { CarcasseStatus, DepotType, FeiOwnerRole } from '@prisma/client';
 import useZustandStore from '@app/zustand/store';
+import { useCarcassesRegistry } from '@app/utils/useCarcassesRegistry';
 import { Pagination } from '@codegouvfr/react-dsfr/Pagination';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
@@ -94,7 +95,7 @@ type TransmissionMeta = {
 
 export default function SviCarcasses() {
   const user = useMostFreshUser('svi-carcasses')!;
-  const carcassesRegistry = useZustandStore((state) => state.carcassesRegistry);
+  const carcassesRegistry = useCarcassesRegistry();
   const transmissions = useTransmissions();
   const feis = useZustandStore((state) => state.feis);
   const entities = useZustandStore((state) => state.entities);
