@@ -67,7 +67,10 @@ describe('POST /user/fei/trouver-premier-detenteur', () => {
   test("fiche d'un autre examinateur → même erreur qu'une fiche inexistante, aucune donnée utilisateur", async () => {
     vi.mocked(prisma.fei.findFirst).mockResolvedValue(null);
 
-    const res = await authed(request(app).post('/user/fei/trouver-premier-detenteur').send(body), examinateur);
+    const res = await authed(
+      request(app).post('/user/fei/trouver-premier-detenteur').send(body),
+      examinateur
+    );
 
     expect(res.status).toBe(400);
     expect(res.body).toEqual({ ok: false, data: { user: null }, error: "La fiche n'existe pas" });
@@ -83,7 +86,10 @@ describe('POST /user/fei/trouver-premier-detenteur', () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue(premierDetenteur as unknown as User);
     vi.mocked(prisma.userRelations.findFirst).mockResolvedValue(null);
 
-    const res = await authed(request(app).post('/user/fei/trouver-premier-detenteur').send(body), examinateur);
+    const res = await authed(
+      request(app).post('/user/fei/trouver-premier-detenteur').send(body),
+      examinateur
+    );
 
     expect(res.status).toBe(200);
     expect(res.body.data.user.id).toBe(premierDetenteur.id);
