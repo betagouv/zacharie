@@ -45,7 +45,6 @@ const PERSISTED_KEYS: (keyof State)[] = [
   'apiKeyApprovals',
   'federation',
   'lastUpdateFromServer',
-  'carcassesRegistry',
   'logs',
   'feiIdsRenvoiToHide',
 ];
@@ -67,6 +66,8 @@ export interface State {
   // fédération (FDC / FRC / FNC) dont l'utilisateur est membre validé : donne accès au tableau de bord fédération
   federation: NonNullable<UserConnexionResponse['data']['federation']> | null;
   lastUpdateFromServer: number;
+  // Copie de carcasses figée à chaque chargement depuis le serveur. Non persistée (elle doublerait
+  // carcasses dans IndexedDB) : reconstruite depuis carcasses à l'hydratation.
   carcassesRegistry: Array<Carcasse>;
   // Fiches que ce compte a renvoyées à l'expéditeur : masquées de ses listes sans attendre la
   // synchro, pour que le renvoi marche hors ligne. Le serveur ne les lui enverra plus (périmètre
@@ -575,6 +576,10 @@ const useZustandStore = create<State & Actions>()(
         setHasHydrated: (state) => {
           set({
             _hasHydrated: state,
+            // Comme au chargement, où mergeItems écarte les carcasses supprimées.
+            ...(state && {
+              carcassesRegistry: Object.values(get().carcasses).filter((c) => !c.deleted_at),
+            }),
           });
           if (state) resolveHydration();
         },

@@ -113,4 +113,22 @@ describe('createSlicedIDBStorage', () => {
     // logs failed in the first write and was not written since: it is retried, feis2 is not
     expect(vi.mocked(setMany).mock.calls[0][0].map(([key]) => key)).toEqual(['zs:logs', 'zs:__meta__']);
   });
+
+  it('supprime les clés zs:* qui ne sont plus persistées', async () => {
+    idb.set('zs:__meta__', { version: 10 });
+    idb.set('zs:carcasses', { C1: { zacharie_carcasse_id: 'C1' } });
+    // clé autrefois persistée, retirée de PERSISTED_KEYS
+    idb.set('zs:carcassesRegistry', [{ zacharie_carcasse_id: 'C1' }]);
+    // clé hors du préfixe zs: (autre usage d'idb-keyval)
+    idb.set('autre-cle', 'conservee');
+
+    const storage = createSlicedIDBStorage(['carcasses']);
+    const result = await storage.getItem('zacharie-zustand-store');
+
+    expect(result).toEqual({ state: { carcasses: { C1: { zacharie_carcasse_id: 'C1' } } }, version: 10 });
+    await vi.waitFor(() => expect(idb.has('zs:carcassesRegistry')).toBe(false));
+    expect(idb.has('zs:carcasses')).toBe(true);
+    expect(idb.has('zs:__meta__')).toBe(true);
+    expect(idb.get('autre-cle')).toBe('conservee');
+  });
 });
