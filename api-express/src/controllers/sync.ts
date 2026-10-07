@@ -236,13 +236,23 @@ router.post(
     // Les logs sont des entrées d'historique immuables à id généré côté client : un seul
     // createMany (skipDuplicates) au lieu d'un upsert par log. Log n'a aucune contrainte FK,
     // donc le batch ne peut pas échouer sur une carcasse/fiche manquante.
-    const logsToSync = (logs || []).filter((l) => l.id);
+    // Un log n'est accepté qu'au nom de l'utilisateur authentifié : sinon on pourrait forger
+    // l'historique d'un autre utilisateur.
+    const logsWithId = (logs || []).filter((l) => l.id);
+    const logsToSync = logsWithId.filter((l) => l.user_id === user.id);
+    const forgedLogs = logsWithId.filter((l) => l.user_id !== user.id);
+    if (forgedLogs.length > 0) {
+      capture(new Error('User ID does not match'), {
+        extra: { logIds: forgedLogs.map((l) => l.id), userId: user.id },
+        user,
+      });
+    }
     if (logsToSync.length > 0) {
       try {
         await prisma.log.createMany({
           data: logsToSync.map((logData) => ({
             id: logData.id,
-            user_id: logData.user_id!,
+            user_id: user.id,
             user_role: logData.user_role!,
             fei_numero: logData.fei_numero ?? null,
             entity_id: logData.entity_id ?? null,
