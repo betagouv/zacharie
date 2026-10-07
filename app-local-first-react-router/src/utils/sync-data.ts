@@ -133,7 +133,6 @@ export async function syncData(calledFrom?: string) {
         return {
           feis,
           carcasses,
-          carcassesRegistry: Object.values(carcasses),
           carcassesIntermediaireById,
         };
       });

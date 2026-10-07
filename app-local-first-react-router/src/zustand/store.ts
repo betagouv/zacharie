@@ -66,9 +66,6 @@ export interface State {
   // fédération (FDC / FRC / FNC) dont l'utilisateur est membre validé : donne accès au tableau de bord fédération
   federation: NonNullable<UserConnexionResponse['data']['federation']> | null;
   lastUpdateFromServer: number;
-  // Copie de carcasses figée à chaque chargement depuis le serveur. Non persistée (elle doublerait
-  // carcasses dans IndexedDB) : reconstruite depuis carcasses à l'hydratation.
-  carcassesRegistry: Array<Carcasse>;
   // Fiches que ce compte a renvoyées à l'expéditeur : masquées de ses listes sans attendre la
   // synchro, pour que le renvoi marche hors ligne. Le serveur ne les lui enverra plus (périmètre
   // getCarcasseAccessWhere côté api-express) ; si elles lui sont réattribuées plus tard,
@@ -139,7 +136,6 @@ function initialState(): State {
   return {
     isOnline: true,
     dataIsSynced: true,
-    carcassesRegistry: [],
     feiIdsRenvoiToHide: [],
     lastUpdateFromServer: 0,
     logs: [],
@@ -196,7 +192,6 @@ export function migratePersistedState(persistedState: unknown): Partial<State> {
     dataIsSynced: !hasUnsynced,
     feis,
     carcasses,
-    carcassesRegistry: Object.values(carcasses),
     carcassesIntermediaireById,
     modifRequestsByCarcasseId,
     logs,
@@ -224,9 +219,6 @@ const useZustandStore = create<State & Actions>()(
           }));
         },
         updateFei: (fei_numero: Fei['numero'], partialFei: Partial<Fei>) => {
-          // Base sur le registre vivant (state.carcasses), pas sur carcassesRegistry qui n'est figé
-          // qu'au chargement : sinon on réécrit les carcasses avec des données périmées et on écrase
-          // les mutations locales récentes (ex : current_owner_role posé juste avant par une prise en charge).
           // On exclut les carcasses prises en charge en aval : les repasser en is_synced=false les
           // repousse entières vers le serveur depuis un snapshot local antérieur à cette prise en
           // charge — et /sync applique le body sans comparer updated_at. Le serveur propage de toute
@@ -352,10 +344,6 @@ const useZustandStore = create<State & Actions>()(
         ) => {
           if (newIntermediaires.length === 0) return;
           return new Promise((resolve) => {
-            // Registre vivant (state.carcasses) et non carcassesRegistry figé au chargement : une
-            // carcasse tout juste créée (ex : ajout d'une carcasse manquante par l'intermédiaire)
-            // n'est pas encore dans carcassesRegistry, sinon aucune CarcasseIntermediaire n'est créée
-            // pour elle et elle n'apparaît pas dans la liste de l'intermédiaire.
             const carcasses = Object.values(get().carcasses).filter((c) =>
               specificCarcasseIds.includes(c.zacharie_carcasse_id)
             );
@@ -576,10 +564,6 @@ const useZustandStore = create<State & Actions>()(
         setHasHydrated: (state) => {
           set({
             _hasHydrated: state,
-            // Comme au chargement, où mergeItems écarte les carcasses supprimées.
-            ...(state && {
-              carcassesRegistry: Object.values(get().carcasses).filter((c) => !c.deleted_at),
-            }),
           });
           if (state) resolveHydration();
         },
