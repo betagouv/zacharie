@@ -45,7 +45,7 @@ router.post(
           owner_id: user.id,
           relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
           entity_id: approval.entity_id,
-          status: { in: [EntityRelationStatus.MEMBER, EntityRelationStatus.ADMIN] },
+          status: EntityRelationStatus.ADMIN,
           deleted_at: null,
         },
       });
