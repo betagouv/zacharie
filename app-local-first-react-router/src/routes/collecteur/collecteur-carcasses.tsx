@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
-import useZustandStore from '@app/zustand/store';
+import { useCarcassesRegistry } from '@app/utils/useCarcassesRegistry';
 import { Pagination } from '@codegouvfr/react-dsfr/Pagination';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
@@ -71,7 +71,7 @@ type CatalogColumn = {
 
 export default function CollecteurCarcasses() {
   const user = useMostFreshUser('collecteur-carcasses')!;
-  const carcassesRegistry = useZustandStore((state) => state.carcassesRegistry);
+  const carcassesRegistry = useCarcassesRegistry();
   // Le collecteur travaille avec la Transmission (dérivée des carcasses), jamais avec le store `feis`.
   // commune_mise_a_mort vit sur transmissions[fei_numero].fei (les autres champs filtrables sont sur la carcasse).
   const transmissions = useTransmissions();

@@ -189,7 +189,6 @@ export async function loadCarcasses() {
 
     useZustandStore.setState((state) => ({
       carcasses: newCarcasses,
-      carcassesRegistry: Object.values(newCarcasses),
       feiIdsRenvoiToHide: state.feiIdsRenvoiToHide.filter(
         (fei_numero) => !feiNumerosBackInScope.has(fei_numero)
       ),
