@@ -766,6 +766,7 @@ enum ApiKeyScope {
   FEI_READ_FOR_ENTITY
   CARCASSE_READ_FOR_USER
   CARCASSE_READ_FOR_ENTITY
+  USER_LOGIN_FOR_USER // se connecter au compte de l'utilisateur via un access token (créer des fiches en son nom)
 }
 
 model ApiKey {

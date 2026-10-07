@@ -716,7 +716,11 @@ Christine
       private_key: 'test-private-key-user',
       public_key: 'test-public-key-user',
       active: true,
-      scopes: [ApiKeyScope.FEI_READ_FOR_USER, ApiKeyScope.CARCASSE_READ_FOR_USER],
+      scopes: [
+        ApiKeyScope.FEI_READ_FOR_USER,
+        ApiKeyScope.CARCASSE_READ_FOR_USER,
+        ApiKeyScope.USER_LOGIN_FOR_USER,
+      ],
     },
   });
   const etg1User = users.find((u) => u.email === 'etg-1@example.fr');
