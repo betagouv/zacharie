@@ -106,6 +106,11 @@ export async function syncData(calledFrom?: string) {
       return;
     }
 
+    // Refus définitifs : on arrête de les repousser, le même payload serait refusé à chaque envoi.
+    for (const rejection of res.data.rejected ?? []) {
+      rejectedBySync.add(`${rejection.kind}:${rejection.id}`);
+    }
+
     const shouldRemoveFromLocalStore = res.data.shouldRemoveFromLocalStore ?? [];
     if (shouldRemoveFromLocalStore.length > 0) {
       useZustandStore.setState((state) => {
@@ -113,6 +118,7 @@ export async function syncData(calledFrom?: string) {
         const carcasses = { ...state.carcasses };
         const carcassesIntermediaireById = { ...state.carcassesIntermediaireById };
         for (const rejection of shouldRemoveFromLocalStore) {
+          // les items ajoutés par le serveur (intermédiaires, fiche) ne sont pas dans `rejected`
           rejectedBySync.add(`${rejection.kind}:${rejection.id}`);
           if (rejection.kind === 'fei') delete feis[rejection.id];
           if (rejection.kind === 'carcasse') delete carcasses[rejection.id];
