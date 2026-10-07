@@ -17,14 +17,7 @@
     "MTQ": "Martinique",
     "GUF": "Guyane",
     "REU": "La Réunion",
-    "SPM": "Saint-Pierre-et-Miquelon",
-    "MYT": "Mayotte",
-    "BLM": "Saint-Barthélemy",
-    "MAF": "Saint-Martin",
-    "ATF": "Terres australes et antarctiques françaises",
-    "WLF": "Wallis-et-Futuna",
-    "PYF": "Polynésie française",
-    "NCL": "Nouvelle-Calédonie"
+    "MYT": "Mayotte"
   },
   "departements": {
     "01": "Ain",
@@ -127,14 +120,7 @@
     "972": "Martinique",
     "973": "Guyane",
     "974": "La Réunion",
-    "975": "Saint-Pierre-et-Miquelon",
-    "976": "Mayotte",
-    "977": "Saint-Barthélemy",
-    "978": "Saint-Martin",
-    "984": "Terres australes et antarctiques françaises",
-    "986": "Wallis-et-Futuna",
-    "987": "Polynésie française",
-    "988": "Nouvelle-Calédonie"
+    "976": "Mayotte"
   },
   "departementToRegion": {
     "01": "ARA",
@@ -237,13 +223,6 @@
     "972": "MTQ",
     "973": "GUF",
     "974": "REU",
-    "975": "SPM",
-    "976": "MYT",
-    "977": "BLM",
-    "978": "MAF",
-    "984": "ATF",
-    "986": "WLF",
-    "987": "PYF",
-    "988": "NCL"
+    "976": "MYT"
   }
 }
