@@ -631,7 +631,7 @@ describe('POST /sync — carcasse modification requests', () => {
     expect(runCarcasseModifRequestSideEffects).toHaveBeenCalledOnce();
     const args = vi.mocked(runCarcasseModifRequestSideEffects).mock.calls[0];
     expect(args[0].transitionedTo).toBe(CarcasseModificationRequestStatus.APPROVED);
-    expect(args[1]).toEqual(approvalPayload);
+    expect(args[2]).toEqual(approvalPayload);
   });
 
   test('_approvalPayload is stripped from the persisted body sent to syncCarcasseModifRequest', async () => {

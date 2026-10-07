@@ -196,11 +196,19 @@ describe('syncFei — deletion', () => {
     expect(result.isDeleted).toBe(true);
     expect(prisma.carcasse.updateMany).toHaveBeenCalledWith({
       where: { fei_numero: 'FEI-1' },
-      data: { deleted_at: '2026-03-01T00:00:00Z' },
+      data: {
+        deleted_at: '2026-03-01T00:00:00Z',
+        version: { increment: 1 },
+        version_user_id: expect.any(String),
+      },
     });
     expect(prisma.carcasseIntermediaire.updateMany).toHaveBeenCalledWith({
       where: { fei_numero: 'FEI-1' },
-      data: { deleted_at: '2026-03-01T00:00:00Z' },
+      data: {
+        deleted_at: '2026-03-01T00:00:00Z',
+        version: { increment: 1 },
+        version_user_id: expect.any(String),
+      },
     });
   });
 

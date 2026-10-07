@@ -35,6 +35,7 @@ import {
 } from '~/third-parties/brevo';
 import { capture } from '~/third-parties/sentry';
 import { getFichePdf } from '~/templates/get-fiche-pdf';
+import { nextVersion } from '~/utils/sync-version';
 import { BrevoTemplateId } from '~/third-parties/brevo-templates';
 
 async function notifyExaminateurAndPremierDetenteur({
@@ -590,7 +591,7 @@ export async function notifyCircuitCourt(
           updatedCarcasse.premier_detenteur_prochain_detenteur_id_cache,
         deleted_at: null,
       },
-      data: { svi_automatic_closed_at: new Date() },
+      data: { svi_automatic_closed_at: new Date(), ...nextVersion(user.id) },
     });
   }
 

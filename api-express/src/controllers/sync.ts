@@ -299,7 +299,7 @@ router.post(
     for (const feiResult of feiResults) {
       try {
         if (!feiResult.isDeleted && feiResult.existingFei) {
-          await runFeiUpdateSideEffects(feiResult.existingFei, feiResult.savedFei);
+          await runFeiUpdateSideEffects(feiResult.existingFei, feiResult.savedFei, user);
         }
       } catch (error) {
         capture(error as Error, {
@@ -312,7 +312,7 @@ router.post(
     // Modif-request side effects: apply Carcasse mutations on approve, notify on create/approve/reject.
     for (const r of modifResults) {
       try {
-        await runCarcasseModifRequestSideEffects(r, r.approvalPayload);
+        await runCarcasseModifRequestSideEffects(r, user, r.approvalPayload);
       } catch (error) {
         capture(error as Error, {
           extra: { modifId: r.saved.id, context: 'modif_request_side_effects' },

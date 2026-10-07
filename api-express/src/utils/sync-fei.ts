@@ -5,6 +5,7 @@ import { capture } from '~/third-parties/sentry';
 import { z } from 'zod';
 import type { SyncScope } from '~/utils/sync-scope';
 import { SyncRejectedError } from '~/utils/sync-errors';
+import { isStaleWrite, nextVersion } from '~/utils/sync-version';
 
 export interface SaveFeiResult {
   savedFei: Fei;
@@ -73,17 +74,21 @@ export async function syncFei(
     if (!canDelete) {
       throw new SyncRejectedError('Unauthorized');
     }
+    if (isStaleWrite(existingFei, body.version, user)) {
+      await prisma.carcasse.updateMany({ where: { fei_numero: numero }, data: { updated_at: new Date() } });
+      throw new SyncRejectedError('Version obsolète');
+    }
     const deletedFei = await prisma.fei.update({
       where: { numero },
-      data: { deleted_at: body.deleted_at },
+      data: { deleted_at: body.deleted_at, ...nextVersion(user.id) },
     });
     await prisma.carcasse.updateMany({
       where: { fei_numero: numero },
-      data: { deleted_at: body.deleted_at },
+      data: { deleted_at: body.deleted_at, ...nextVersion(user.id) },
     });
     await prisma.carcasseIntermediaire.updateMany({
       where: { fei_numero: numero },
-      data: { deleted_at: body.deleted_at },
+      data: { deleted_at: body.deleted_at, ...nextVersion(user.id) },
     });
     return { savedFei: deletedFei, existingFei, isDeleted: true };
   }
@@ -92,6 +97,14 @@ export async function syncFei(
   // quel compte activé pouvait écraser les champs d'une fiche tierce en connaissant son numéro.
   if (existingFei && !(await scope.canWriteFei(existingFei))) {
     throw new SyncRejectedError("Vous n'avez pas accès à cette fiche");
+  }
+
+  // Version périmée : on ne l'écrit pas. Le delta du client (/carcasse) se fonde sur
+  // `carcasse.updated_at` et charge les fiches par leurs carcasses : on touche donc les carcasses pour
+  // qu'il récupère la version à jour.
+  if (existingFei && isStaleWrite(existingFei, body.version, user)) {
+    await prisma.carcasse.updateMany({ where: { fei_numero: numero }, data: { updated_at: new Date() } });
+    throw new SyncRejectedError('Version obsolète');
   }
 
   // Les colonnes de rattachement (créateur, examinateur initial, premier détenteur) sont celles sur
@@ -221,7 +234,7 @@ export async function syncFei(
   const savedFei = existingFei
     ? await prisma.fei.update({
         where: { numero },
-        data: nextFei,
+        data: { ...nextFei, ...nextVersion(user.id) },
       })
     : await prisma.fei.create({
         data: {
