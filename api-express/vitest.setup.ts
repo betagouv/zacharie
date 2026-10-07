@@ -23,6 +23,7 @@ vi.mock('./src/prisma', () => ({
     carcasseIntermediaire: {
       findUnique: vi.fn().mockResolvedValue(null),
       findFirst: vi.fn(),
+      findMany: vi.fn().mockResolvedValue([]),
       upsert: vi.fn(),
       updateMany: vi.fn().mockResolvedValue({ count: 0 }),
     },

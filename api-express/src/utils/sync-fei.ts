@@ -72,7 +72,7 @@ export async function syncFei(
     const canDelete =
       user.roles.includes(UserRoles.CHASSEUR) && existingFei.examinateur_initial_user_id === user.id;
     if (!canDelete) {
-      throw new SyncRejectedError('Unauthorized');
+      throw new SyncRejectedError('Vous ne pouvez pas supprimer cette fiche');
     }
     if (isStaleWrite(existingFei, body.version, user)) {
       await prisma.carcasse.updateMany({ where: { fei_numero: numero }, data: { updated_at: new Date() } });

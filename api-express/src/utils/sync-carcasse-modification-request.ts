@@ -66,6 +66,7 @@ export async function syncCarcasseModifRequest(
     // L'identité du demandeur est décidée par le serveur : on demande toujours en son nom propre,
     // pour une entité dont on est membre, et une demande naît toujours PENDING.
     if (!body.requested_by_entity_id || !scope.entityIds.includes(body.requested_by_entity_id)) {
+      // Cette ligne ne devrait jamais arriver, puisqu'elle est interdite par le périmètre de l'utilisateur.
       throw new SyncRejectedError('Vous ne pouvez pas agir au nom de cette entité');
     }
     const created = await prisma.carcasseModificationRequest.create({
@@ -115,6 +116,7 @@ export async function syncCarcasseModifRequest(
     });
     if (!carcasse) throw new Error('Carcasse introuvable');
     if (carcasse.examinateur_initial_user_id !== user.id) {
+      // Cette ligne ne devrait jamais arriver, puisqu'elle est interdite par le périmètre de l'utilisateur.
       throw new SyncRejectedError("Seul l'examinateur initial peut approuver ou refuser une demande");
     }
   }
