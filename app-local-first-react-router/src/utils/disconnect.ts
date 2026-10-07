@@ -3,6 +3,7 @@ import { clearCache } from '@app/services/indexed-db';
 import { setNativeAuthToken } from '@app/services/api';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
+import { setLocalTeardownInProgress } from '@app/zustand/idb-sliced-storage';
 import { abortLoadCarcasses } from './load-carcasses';
 import { abortLoadMyRelations } from './load-my-relations';
 import { abortSyncData } from './sync-data';
@@ -38,14 +39,24 @@ let disconnecting = false;
  * test 107 asserts that the VALUES are empty, not that the count is 0.
  */
 export async function clearLocalAppState(reason: string) {
-  abortSyncData(reason);
-  abortLoadCarcasses(reason);
-  abortLoadMyRelations(reason);
-  await clearCache(reason);
+  // While the teardown flag is set, the Zustand persist storage drops writes and
+  // syncData / loadCarcasses / loadMyRelations refuse to start (e.g. on an
+  // 'online' event), so nothing from the old session lands during or after the
+  // clear. Callers run `useZustandStore.reset()` right after this resolves, in
+  // the same microtask chain, so no event can slip in between.
+  setLocalTeardownInProgress(true);
+  try {
+    abortSyncData(reason);
+    abortLoadCarcasses(reason);
+    abortLoadMyRelations(reason);
+    await clearCache(reason);
 
-  // Give pending writes a beat to flush before any caller state mutation.
-  if (!import.meta.env.VITE_TEST_PLAYWRIGHT) {
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    // Give pending writes a beat to flush before any caller state mutation.
+    if (!import.meta.env.VITE_TEST_PLAYWRIGHT) {
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+    }
+  } finally {
+    setLocalTeardownInProgress(false);
   }
 }
 
