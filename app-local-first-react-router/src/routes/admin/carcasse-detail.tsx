@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { Tabs } from '@codegouvfr/react-dsfr/Tabs';
+import { Badge } from '@codegouvfr/react-dsfr/Badge';
+import { Button } from '@codegouvfr/react-dsfr/Button';
+import { toast } from 'react-toastify';
 import API from '@app/services/api';
 import Chargement from '@app/components/Chargement';
-import type { AdminCarcasseDetailResponse } from '@api/src/types/responses';
+import type { AdminCarcasseDetailResponse, AdminSoftDeleteResponse } from '@api/src/types/responses';
 import type { Carcasse, CarcasseIntermediaire, Fei } from '@prisma/client';
 import dayjs from 'dayjs';
 
@@ -320,6 +323,7 @@ function AdminCarcasseDetailContent() {
   const [depotEntity, setDepotEntity] = useState<DepotEntityInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedTab, setSelectedTab] = useState<CarcasseTabId>('identite');
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (!params.zacharie_carcasse_id) return;
@@ -339,6 +343,23 @@ function AdminCarcasseDetailContent() {
   if (!carcasse) return <p className="py-8 text-center text-gray-500">Carcasse introuvable</p>;
 
   const timeline = buildTimeline(carcasse, depotEntity);
+
+  function handleSoftDelete() {
+    if (!carcasse) return;
+    const confirmMessage = `Supprimer la carcasse ${carcasse.numero_bracelet} ? Elle disparaîtra de l'application et des statistiques.`;
+    if (!window.confirm(confirmMessage)) return;
+    setIsDeleting(true);
+    API.post({ path: `admin/carcasse/${encodeURIComponent(carcasse.zacharie_carcasse_id)}/soft-delete` })
+      .then((res) => res as AdminSoftDeleteResponse)
+      .then((response) => {
+        if (!response.ok || !response.data) {
+          return toast.error(response.error);
+        }
+        setCarcasse({ ...carcasse, deleted_at: response.data.deleted_at });
+        toast.success('La carcasse a été supprimée');
+      })
+      .finally(() => setIsDeleting(false));
+  }
 
   return (
     <>
@@ -363,7 +384,24 @@ function AdminCarcasseDetailContent() {
               {carcasse.nombre_d_animaux ? ` · ${carcasse.nombre_d_animaux} animal(aux)` : ''}
             </p>
           </div>
-          <StatusBadge status={carcasse.svi_carcasse_status} />
+          <div className="flex flex-wrap items-center gap-2">
+            <StatusBadge status={carcasse.svi_carcasse_status} />
+            {carcasse.deleted_at ? (
+              <Badge severity="error">Supprimée le {formatDate(carcasse.deleted_at)}</Badge>
+            ) : (
+              <Button
+                type="button"
+                priority="tertiary"
+                size="small"
+                iconId="fr-icon-delete-line"
+                className="text-red-600! [&_*]:text-red-600! [&:hover]:bg-red-50!"
+                disabled={isDeleting}
+                onClick={handleSoftDelete}
+              >
+                Supprimer
+              </Button>
+            )}
+          </div>
         </div>
         <p className="mt-2 mb-0 text-sm text-gray-500">
           FEI&nbsp;:{' '}

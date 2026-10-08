@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { Tabs } from '@codegouvfr/react-dsfr/Tabs';
+import { Badge } from '@codegouvfr/react-dsfr/Badge';
+import { Button } from '@codegouvfr/react-dsfr/Button';
+import { toast } from 'react-toastify';
 import API from '@app/services/api';
 import Chargement from '@app/components/Chargement';
-import type { AdminFeiDetailResponse } from '@api/src/types/responses';
+import type { AdminFeiDetailResponse, AdminSoftDeleteResponse } from '@api/src/types/responses';
 import dayjs from 'dayjs';
 
 type FeiDetail = AdminFeiDetailResponse['data']['fei'];
@@ -77,6 +80,7 @@ function AdminFeiDetailContent() {
   const [fei, setFei] = useState<FeiDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedTab, setSelectedTab] = useState<FeiTabId>('infos');
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (!params.fei_numero) return;
@@ -94,6 +98,23 @@ function AdminFeiDetailContent() {
   if (loading) return <Chargement />;
   if (!fei) return <p className="py-8 text-center text-gray-500">Fiche introuvable</p>;
 
+  function handleSoftDelete() {
+    if (!fei) return;
+    const confirmMessage = `Supprimer la fiche ${fei.numero} et ses ${fei.Carcasses.length} carcasse(s) ? Elles disparaîtront de l'application et des statistiques.`;
+    if (!window.confirm(confirmMessage)) return;
+    setIsDeleting(true);
+    API.post({ path: `admin/fei/${encodeURIComponent(fei.numero)}/soft-delete` })
+      .then((res) => res as AdminSoftDeleteResponse)
+      .then((response) => {
+        if (!response.ok || !response.data) {
+          return toast.error(response.error);
+        }
+        setFei({ ...fei, deleted_at: response.data.deleted_at });
+        toast.success('La fiche a été supprimée');
+      })
+      .finally(() => setIsDeleting(false));
+  }
+
   return (
     <>
       <Link
@@ -108,12 +129,31 @@ function AdminFeiDetailContent() {
       </Link>
 
       <header className="mt-2 rounded-lg border border-gray-200 bg-white p-4">
-        <h2 className="mb-0 text-xl font-bold">Fiche {fei.numero}</h2>
-        <p className="mb-0 text-sm text-gray-500">
-          {formatDateOnly(fei.date_mise_a_mort)}
-          {fei.commune_mise_a_mort ? ` · ${fei.commune_mise_a_mort}` : ''}
-          {` · ${fei.Carcasses.length} carcasse(s)`}
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 className="mb-0 text-xl font-bold">Fiche {fei.numero}</h2>
+            <p className="mb-0 text-sm text-gray-500">
+              {formatDateOnly(fei.date_mise_a_mort)}
+              {fei.commune_mise_a_mort ? ` · ${fei.commune_mise_a_mort}` : ''}
+              {` · ${fei.Carcasses.length} carcasse(s)`}
+            </p>
+          </div>
+          {fei.deleted_at ? (
+            <Badge severity="error">Supprimée le {formatDate(fei.deleted_at)}</Badge>
+          ) : (
+            <Button
+              type="button"
+              priority="tertiary"
+              size="small"
+              iconId="fr-icon-delete-line"
+              className="text-red-600! [&_*]:text-red-600! [&:hover]:bg-red-50!"
+              disabled={isDeleting}
+              onClick={handleSoftDelete}
+            >
+              Supprimer
+            </Button>
+          )}
+        </div>
       </header>
 
       <Tabs
