@@ -94,18 +94,14 @@ function buildWorkbook({ lignes, colonnes_anomalies }: BilanAnomaliesData) {
   utils.book_append_sheet(
     workbook,
     buildSheet(
-      [...etgColumns, ...colonnes_anomalies, 'Autres motifs', 'Détail des autres motifs'],
-      lignes.map((ligne) => {
-        const autresMotifs = Object.entries(ligne.autres_motifs).sort(([, a], [, b]) => b - a);
-        return [
-          ligne.etg_nom,
-          ligne.etg_departement ?? '',
-          ligne.groupe_espece,
-          ...colonnes_anomalies.map((colonne) => ligne.anomalies[colonne] ?? ''),
-          autresMotifs.reduce((total, [, count]) => total + count, 0),
-          autresMotifs.map(([motif, count]) => `${motif} (${count})`).join(' ; '),
-        ];
-      })
+      // Une colonne par motif SVI, avec l'intitulé du référentiel Zacharie.
+      [...etgColumns, ...colonnes_anomalies],
+      lignes.map((ligne) => [
+        ligne.etg_nom,
+        ligne.etg_departement ?? '',
+        ligne.groupe_espece,
+        ...colonnes_anomalies.map((motif) => ligne.anomalies[motif] ?? 0),
+      ])
     ),
     'III - Anomalies carcasses'
   );

@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { CarcasseStatus, CarcasseType } from '@prisma/client';
-import { buildBilanAnomalies, getSaisonBounds, type BilanCarcasse } from '~/utils/bilan-anomalies';
+import {
+  buildBilanAnomalies,
+  getColonnesAnomalies,
+  getSaisonBounds,
+  type BilanCarcasse,
+} from '~/utils/bilan-anomalies';
 
 const etgs = [
   { id: 'etg-b', nom: 'ETG B', code_postal: '63000' },
@@ -81,7 +86,7 @@ describe('buildBilanAnomalies', () => {
     expect(ligne.anomalies['Moisissures']).toBe(3);
   });
 
-  it('répartit les motifs SVI entre colonnes du calque, examen initial et autres motifs', () => {
+  it('reprend tels quels les motifs SVI et en déduit les anomalies d’examen initial', () => {
     const [ligne] = buildBilanAnomalies(
       [
         carcasse({
@@ -98,12 +103,29 @@ describe('buildBilanAnomalies', () => {
       ],
       etgs
     ).filter((l) => l.groupe_espece === 'Chevreuil');
-    expect(ligne.anomalies['Putréfaction profonde']).toBe(1);
-    expect(ligne.anomalies['Anomalies de couleur ou de consistance']).toBe(1);
+    expect(ligne.anomalies).toEqual({
+      'Putréfaction profonde': 1,
+      Ictère: 1,
+      'Couleur anormale': 1,
+      "Viandes provenant d'une carcasse dont l'examen initial n'est pas valide": 1,
+      Fracture: 1,
+    });
     expect(ligne.ei_non_valide).toBe(1);
     expect(ligne.saisies_totales_ei).toBe(1);
-    expect(ligne.autres_motifs).toEqual({ Fracture: 1 });
-    expect(ligne.anomalies['Douchage des venaisons']).toBeUndefined();
+  });
+});
+
+describe('getColonnesAnomalies', () => {
+  it('liste les motifs relevés, les plus fréquents en premier', () => {
+    const lignes = buildBilanAnomalies(
+      [
+        carcasse({ svi_ipm2_lesions_ou_motifs: ['Moisissures', 'Fracture'] }),
+        carcasse({ espece: 'Sanglier', svi_ipm2_lesions_ou_motifs: ['Moisissures'] }),
+        carcasse({ svi_ipm2_lesions_ou_motifs: ['Ictère'] }),
+      ],
+      etgs
+    );
+    expect(getColonnesAnomalies(lignes)).toEqual(['Moisissures', 'Fracture', 'Ictère']);
   });
 });
 
