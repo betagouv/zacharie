@@ -38,74 +38,6 @@ const groupeByEspece: Record<string, BilanGroupeEspece> = {
   'Autres petits gibiers à poils': 'Petit gibier à poils',
 };
 
-// Colonnes du chapitre III du calque (anomalies carcasses), avec les motifs SVI (lesions.json,
-// grand et petit gibier) qui les alimentent. Une colonne sans motif n'existe pas dans Zacharie :
-// elle reste vide, à compléter par le SVI.
-export const BILAN_COLONNES_ANOMALIES: Array<{ colonne: string; motifs: Array<string> }> = [
-  {
-    colonne: "Balle d'abdomen avérée",
-    motifs: ["Souillures d'origine digestive liées à une balle d'abdomen"],
-  },
-  { colonne: "Balle d'abdomen non avérée", motifs: [] },
-  { colonne: "Souillures d'éviscération", motifs: ["Souillures d'origine digestive"] },
-  {
-    colonne: "Souillures d'habillage",
-    motifs: ["Souillures autres que liées au contenu digestif : souillures d'habillage"],
-  },
-  {
-    colonne: 'Souillures telluriques',
-    motifs: ['Souillures autres que liées au contenu digestif : souillures telluriques'],
-  },
-  { colonne: 'Douchage des venaisons', motifs: [] },
-  {
-    colonne: 'Infiltrations hémorragiques',
-    motifs: [
-      'Infiltration hémorragique',
-      "Infiltration hémorragique liée à l'action de chasse",
-      'Infiltration hémorragique liée à une fracture',
-      'Infiltration hémorragique liée à une morsure de chien',
-    ],
-  },
-  {
-    colonne: 'Anomalies de couleur ou de consistance',
-    motifs: [
-      'Couleur anormale',
-      'Couleur anormale : mélanose',
-      'Consistance anormale',
-      'Ictère',
-      'Sclérose musculaire',
-      'Viande à évolution anormale : myopathie exsudative dépigmentaire',
-      'Viande à évolution anormale : viande fiévreuse',
-      'Viande à évolution anormale : viande surmenée',
-    ],
-  },
-  { colonne: "Anomalies d'odeur", motifs: ['Odeur anormale'] },
-  { colonne: 'Putréfaction superficielle', motifs: ['Putréfaction superficielle'] },
-  { colonne: 'Putréfaction profonde', motifs: ['Putréfaction profonde'] },
-  { colonne: 'Moisissures', motifs: ['Moisissures'] },
-  { colonne: 'Œufs ou larves de mouche', motifs: ['Œufs ou larves de mouche'] },
-  { colonne: 'Varrons', motifs: ["Hypodermose (ou lésions d')"] },
-  {
-    colonne: 'Défauts de présentation des venaisons',
-    motifs: [
-      "Carcasse dont certaines pièces n'ont pas été soumises à l'inspection post mortem",
-      "Viandes dont au moins 5% du lot n'a pas été présenté à l'inspection post mortem",
-    ],
-  },
-  {
-    colonne: 'Test trichine positif',
-    motifs: [
-      "Viandes issues d'un suidé soumis à un test de dépistage de la trichinellose pour lequel le résultat du laboratoire agréé est non négatif",
-      "Viandes issues d'un suidé soumis à un test de dépistage de la trichinellose pour lequel le résultat du LNR est positif",
-      "Viandes issues d'un suidé soumis à un test de dépistage de la trichinellose pour lequel le résultat du LNR est non négatif",
-    ],
-  },
-];
-
-const colonneByMotif = new Map(
-  BILAN_COLONNES_ANOMALIES.flatMap(({ colonne, motifs }) => motifs.map((motif) => [motif, colonne]))
-);
-
 // Chapitre II du calque (anomalies examen initial) : seules ces deux anomalies sont tracées dans Zacharie.
 const MOTIFS_EI_NON_VALIDE = [
   "Viandes provenant d'une carcasse dont l'examen initial n'est pas valide",
@@ -115,6 +47,19 @@ const MOTIFS_EI_NON_IDENTIFIEE = [
   "Viandes provenant d'une carcasse non identifiée",
   "Viandes provenant d'un lot de carcasses non identifié",
 ];
+
+// Une colonne par motif relevé dans le bilan, les plus fréquents en premier.
+export function getColonnesAnomalies(lignes: Array<BilanAnomaliesLigne>): Array<string> {
+  const totalByMotif = new Map<string, number>();
+  for (const ligne of lignes) {
+    for (const [motif, count] of Object.entries(ligne.anomalies)) {
+      totalByMotif.set(motif, (totalByMotif.get(motif) ?? 0) + count);
+    }
+  }
+  return [...totalByMotif.entries()]
+    .sort(([motifA, a], [motifB, b]) => b - a || motifA.localeCompare(motifB, 'fr'))
+    .map(([motif]) => motif);
+}
 
 // Une saison de chasse va du 1er juin (année N) au 31 mai (année N+1), identifiée par N.
 export function getSaisonBounds(saison: number) {
@@ -153,11 +98,7 @@ function emptyLigne(etg: BilanEtg, groupe_espece: BilanGroupeEspece): BilanAnoma
     ei_non_valide: 0,
     ei_non_identifiee: 0,
     saisies_totales_ei: 0,
-    // Les colonnes sans motif Zacharie sont absentes : l'export les laisse vides.
-    anomalies: Object.fromEntries(
-      BILAN_COLONNES_ANOMALIES.filter(({ motifs }) => motifs.length > 0).map(({ colonne }) => [colonne, 0])
-    ),
-    autres_motifs: {},
+    anomalies: {},
   };
 }
 
@@ -211,26 +152,15 @@ export function buildBilanAnomalies(
       carcasse,
       carcasse.svi_ipm2_nombre_animaux ?? carcasse.svi_ipm1_nombre_animaux
     );
-    const colonnes = new Set<string>();
+    // Chapitre III : le référentiel Zacharie des motifs est le référentiel officiel, chaque motif
+    // est repris tel quel. Chapitre II : seules deux anomalies d'examen initial sont tracées par des motifs.
     let isEiNonValide = false;
     let isEiNonIdentifiee = false;
     for (const motif of motifs) {
-      if (MOTIFS_EI_NON_VALIDE.includes(motif)) {
-        isEiNonValide = true;
-        continue;
-      }
-      if (MOTIFS_EI_NON_IDENTIFIEE.includes(motif)) {
-        isEiNonIdentifiee = true;
-        continue;
-      }
-      const colonne = colonneByMotif.get(motif);
-      if (colonne) {
-        colonnes.add(colonne);
-      } else {
-        ligne.autres_motifs[motif] = (ligne.autres_motifs[motif] ?? 0) + animauxInspectes;
-      }
+      ligne.anomalies[motif] = (ligne.anomalies[motif] ?? 0) + animauxInspectes;
+      if (MOTIFS_EI_NON_VALIDE.includes(motif)) isEiNonValide = true;
+      if (MOTIFS_EI_NON_IDENTIFIEE.includes(motif)) isEiNonIdentifiee = true;
     }
-    for (const colonne of colonnes) ligne.anomalies[colonne] += animauxInspectes;
     if (isEiNonValide) ligne.ei_non_valide += animauxInspectes;
     if (isEiNonIdentifiee) ligne.ei_non_identifiee += animauxInspectes;
     if ((isEiNonValide || isEiNonIdentifiee) && status === CarcasseStatus.SAISIE_TOTALE) {
@@ -304,16 +234,13 @@ export async function getBilanAnomalies(
     select: { id: true, nom_d_usage: true, raison_sociale: true, code_postal: true },
   });
 
-  return {
-    saison,
-    colonnes_anomalies: BILAN_COLONNES_ANOMALIES.map(({ colonne }) => colonne),
-    lignes: buildBilanAnomalies(
-      bilanCarcasses,
-      etgs.map((etg) => ({
-        id: etg.id,
-        nom: etg.nom_d_usage || etg.raison_sociale || 'ETG',
-        code_postal: etg.code_postal,
-      }))
-    ),
-  };
+  const lignes = buildBilanAnomalies(
+    bilanCarcasses,
+    etgs.map((etg) => ({
+      id: etg.id,
+      nom: etg.nom_d_usage || etg.raison_sociale || 'ETG',
+      code_postal: etg.code_postal,
+    }))
+  );
+  return { saison, colonnes_anomalies: getColonnesAnomalies(lignes), lignes };
 }

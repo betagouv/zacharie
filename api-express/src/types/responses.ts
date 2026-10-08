@@ -308,8 +308,8 @@ export interface BilanAnomaliesLigne {
   ei_non_valide: number;
   ei_non_identifiee: number;
   saisies_totales_ei: number;
+  // Nombre d'animaux par motif SVI (IPM1 ou IPM2), intitulé du référentiel Zacharie.
   anomalies: Record<string, number>;
-  autres_motifs: Record<string, number>;
 }
 
 export interface BilanAnomaliesData {
