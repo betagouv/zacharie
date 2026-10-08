@@ -286,6 +286,18 @@ model SecurityLog {
   @@index([email, action, created_at])
 }
 
+// Alimentée uniquement par les triggers de prisma/audit-log-triggers.sql, jamais par l'app.
+model AuditLog {
+  id         BigInt   @id @default(autoincrement())
+  table_name String
+  row_id     String // colonnes identifiantes de la ligne, séparées par '|'
+  op         String // INSERT | UPDATE | DELETE
+  changed    Json // UPDATE : {colonne: {old, new}} ; INSERT / DELETE : ligne complète
+  created_at DateTime @default(now())
+
+  @@index([table_name, row_id, created_at])
+}
+
 enum DepotType {
   CCG
   ETG
