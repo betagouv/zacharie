@@ -11,7 +11,12 @@ import {
   UserRoles,
 } from '@prisma/client';
 import { RequestWithUser } from '~/types/request';
-import type { SviCarcassesAVenirResponse, SviTracabiliteAmontResponse } from '~/types/responses';
+import type {
+  BilanAnomaliesResponse,
+  SviCarcassesAVenirResponse,
+  SviTracabiliteAmontResponse,
+} from '~/types/responses';
+import { getBilanAnomalies } from '~/utils/bilan-anomalies';
 
 // ETG rattachés au(x) SVI de l'utilisateur, avec un libellé d'affichage par ETG.
 async function getEtgsLinkedToSviUser(userId: string) {
@@ -212,6 +217,27 @@ router.get(
     amont.enAttente = Math.max(0, amont.recuesEtg - amont.aVenir - amont.refuseesEtg - amont.manquantesEtg);
 
     res.status(200).send({ ok: true, data: { amont }, error: '' });
+  })
+);
+
+// Bilan des anomalies de fin de saison (calque DGAL), pour les ETG rattachés au SVI.
+router.get(
+  '/bilan-anomalies',
+  passport.authenticate('user', { session: false }),
+  catchErrors(async (req: RequestWithUser, res: express.Response<BilanAnomaliesResponse>) => {
+    if (!req.user.roles.includes(UserRoles.SVI)) {
+      res.status(403).send({ ok: false, data: null, error: 'Accès réservé au SVI' });
+      return;
+    }
+    const saison = Number(req.query.saison);
+    if (!Number.isInteger(saison)) {
+      res.status(400).send({ ok: false, data: null, error: 'Saison invalide' });
+      return;
+    }
+
+    const { etgIds } = await getEtgsLinkedToSviUser(req.user.id);
+    const bilan = await getBilanAnomalies(saison, etgIds);
+    res.status(200).send({ ok: true, data: bilan, error: '' });
   })
 );
 
