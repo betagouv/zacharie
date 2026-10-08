@@ -51,6 +51,7 @@ const initialData: State = {
     at_least_one_fei_treated: null,
     zacharie_compatible: false,
     for_testing: false,
+    exclude_from_stats: false,
     EntityRelationsWithUsers: [],
     created_at: new Date(),
     updated_at: new Date(),
@@ -347,6 +348,28 @@ export default function AdminEntity() {
                               handleSave(
                                 Prisma.EntityScalarFieldEnum.zacharie_compatible,
                                 !entity.zacharie_compatible
+                              );
+                            },
+                          },
+                        },
+                      ]}
+                    />
+                    <Checkbox
+                      className="mb-4"
+                      options={[
+                        {
+                          label: 'Exclure des statistiques',
+                          hintText:
+                            "Entité de test ou de démo : les fiches où elle apparaît sont exclues des vues Metabase. N'a aucun effet dans l'application.",
+                          nativeInputProps: {
+                            name: Prisma.EntityScalarFieldEnum.exclude_from_stats,
+                            value: 'true',
+                            checked: entity.exclude_from_stats === true,
+                            onChange: async (event) => {
+                              event.preventDefault();
+                              handleSave(
+                                Prisma.EntityScalarFieldEnum.exclude_from_stats,
+                                !entity.exclude_from_stats
                               );
                             },
                           },

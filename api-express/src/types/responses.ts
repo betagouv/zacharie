@@ -172,6 +172,12 @@ export interface AdminActionEntityResponse {
   error: string;
 }
 
+export interface AdminSoftDeleteResponse {
+  ok: boolean;
+  data: { deleted_at: Date } | null;
+  error: string;
+}
+
 export interface AdminNewEntityResponse {
   ok: boolean;
   data: {

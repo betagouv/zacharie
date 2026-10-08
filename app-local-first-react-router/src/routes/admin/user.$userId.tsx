@@ -85,6 +85,7 @@ const initialState: State = {
     roles: [],
     role: null,
     isZacharieAdmin: false,
+    exclude_from_stats: false,
     etg_role: UserEtgRoles.RECEPTION,
     est_forme_a_l_examen_initial: false,
     numero_cfei: '',
@@ -204,6 +205,23 @@ export default function AdminUser() {
           ? "Marqué comme non formé à l'examen initial"
           : "Marqué comme formé à l'examen initial"
       );
+    });
+  };
+
+  const handleToggleExcludeFromStats = () => {
+    API.post({
+      path: `admin/user/${params.userId}`,
+      body: { exclude_from_stats: user.exclude_from_stats ? 'false' : 'true' },
+    }).then((res) => {
+      if (!res.ok) {
+        return toast.error("Une erreur est survenue lors de la mise à jour de l'utilisateur");
+      }
+      loadData(params.userId!).then((res) => {
+        if (res.ok && res.data) {
+          setUserResponseData(res.data as State);
+        }
+      });
+      toast.success(user.exclude_from_stats ? 'Réintégré dans les statistiques' : 'Exclu des statistiques');
     });
   };
 
@@ -542,6 +560,15 @@ export default function AdminUser() {
                         nativeInputProps: {
                           checked: user.isZacharieAdmin,
                           onChange: handleToggleAdmin,
+                        },
+                      },
+                      {
+                        label: 'Exclure des statistiques',
+                        hintText:
+                          "Compte de test ou de démo : les fiches où il apparaît sont exclues des vues Metabase. N'a aucun effet dans l'application.",
+                        nativeInputProps: {
+                          checked: user.exclude_from_stats,
+                          onChange: handleToggleExcludeFromStats,
                         },
                       },
                     ]}

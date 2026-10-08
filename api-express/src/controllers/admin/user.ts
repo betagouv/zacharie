@@ -165,6 +165,7 @@ const adminUserUpdateSchema = z.object({
     .optional(),
   [Prisma.UserScalarFieldEnum.numero_cfei]: z.string().optional().nullable(),
   [Prisma.UserScalarFieldEnum.est_forme_a_l_examen_initial]: z.enum(['true', 'false']).optional(),
+  [Prisma.UserScalarFieldEnum.exclude_from_stats]: z.enum(['true', 'false']).optional(),
   onboarding_finished: z.boolean().optional(),
 });
 
@@ -276,6 +277,9 @@ router.post(
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.est_forme_a_l_examen_initial)) {
         nextUser.est_forme_a_l_examen_initial =
           body[Prisma.UserScalarFieldEnum.est_forme_a_l_examen_initial] === 'true';
+      }
+      if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.exclude_from_stats)) {
+        nextUser.exclude_from_stats = body[Prisma.UserScalarFieldEnum.exclude_from_stats] === 'true';
       }
       if (body.hasOwnProperty('onboarding_finished')) {
         nextUser.onboarded_at = new Date();
