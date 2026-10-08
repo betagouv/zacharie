@@ -21,7 +21,7 @@ test('91 - Le SVI exporte le bilan de saison, une ligne par ETG et par espèce',
   await menuButton.scrollIntoViewIfNeeded();
   await menuButton.click();
   const downloadPromise = page.waitForEvent('download');
-  await page.getByRole('link', { name: 'Excel Juin 2025 - Mai 2026' }).click();
+  await page.getByRole('button', { name: 'Excel Juin 2025 - Mai 2026' }).click();
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toBe('Zacharie - Bilan des anomalies - saison 2025-2026.xlsx');
 
