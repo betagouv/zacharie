@@ -6,13 +6,13 @@ Guidance for Claude Code when working in this repository.
 
 Zacharie is a French government application (beta.gouv.fr) for tracing game meat (venaison) from hunting to consumption. It follows a **local-first architecture** enabling offline operation with asynchronous sync.
 
-| Dossier                            | Stack                                                         | Rôle                            |
-| ---------------------------------- | ------------------------------------------------------------- | ------------------------------- |
-| `api-express/`                     | Express + Prisma + PostgreSQL (Node.js >= 20, TS)             | API REST (port 3235)            |
-| `app-local-first-react-router/`    | React 19 + React Router 7 + Vite + DSFR + Tailwind + Zustand  | Frontend local-first (port 3234)|
-| `expo/`                            | Expo (WebView wrapper)                                        | App mobile iOS/Android          |
-| `e2e/`                             | Playwright                                                    | Tests end-to-end                |
-| `materialized-views/`              | SQL                                                           | Vues matérialisées PostgreSQL   |
+| Dossier                         | Stack                                                        | Rôle                             |
+| ------------------------------- | ------------------------------------------------------------ | -------------------------------- |
+| `api-express/`                  | Express + Prisma + PostgreSQL (Node.js >= 20, TS)            | API REST (port 3235)             |
+| `app-local-first-react-router/` | React 19 + React Router 7 + Vite + DSFR + Tailwind + Zustand | Frontend local-first (port 3234) |
+| `expo/`                         | Expo (WebView wrapper)                                       | App mobile iOS/Android           |
+| `e2e/`                          | Playwright                                                   | Tests end-to-end                 |
+| `materialized-views/`           | SQL                                                          | Vues matérialisées PostgreSQL    |
 
 Key domains:
 
@@ -29,12 +29,12 @@ Key domains:
 - **Verification**: run `npm run typecheck` in `api-express/` and `app-local-first-react-router/`. Run `npm run test` in `api-express/` (vitest) if the change touches backend logic. **Don't run e2e** (needs full DB + servers). Don't start dev servers or builds to verify. Signal which e2e specs are affected.
 - `typecheck` uses `noEmit`: **no output + exit code 0 = success**. Don't re-run thinking the output was truncated.
 
-| Service                         | Verification                          | Tests                                |
-| ------------------------------- | ------------------------------------- | ------------------------------------ |
-| `api-express/`                  | `npm run typecheck`                   | `npm run test` (vitest)              |
-| `app-local-first-react-router/` | `npm run typecheck` · `npm run lint`  | `npm run vitest`                     |
-| `e2e/`                          | —                                     | Don't run (needs DB + servers)       |
-| `expo/`                         | —                                     | —                                    |
+| Service                         | Verification                         | Tests                          |
+| ------------------------------- | ------------------------------------ | ------------------------------ |
+| `api-express/`                  | `npm run typecheck`                  | `npm run test` (vitest)        |
+| `app-local-first-react-router/` | `npm run typecheck` · `npm run lint` | `npm run vitest`               |
+| `e2e/`                          | —                                    | Don't run (needs DB + servers) |
+| `expo/`                         | —                                    | —                              |
 
 ## Hard Rules (non-negotiable)
 
@@ -188,6 +188,7 @@ Two API types:
 - Create migrations: `npm run prisma-create-migration <name>` (in api-express/)
 - Schema is copied to frontend via `api-express/scripts/copy-schema-to-app-side.js`
 - After a DB-level data correction or a change of access scope rules, bump `FORCE_FULL_RELOAD_AFTER` so every client re-downloads its scope. See `doc/rechargement-complet.md`.
+- **Audit triggers** (migration `20261008100000_audit_log`): Postgres triggers on Fei, Carcasse, CarcasseIntermediaire, User, Entity, EntityAndUserRelations write every change into `AuditLog` (diff only on UPDATE). Invisible to Prisma: never drop them in a migration; change them through a new migration (`CREATE OR REPLACE FUNCTION`). Absent from the e2e test DB (built by `prisma db push`, which ignores migration SQL). A broken trigger fails the business write, so keep the function generic (jsonb, no named columns).
 
 ### Frontend
 
