@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { Tabs } from '@codegouvfr/react-dsfr/Tabs';
-import { Badge } from '@codegouvfr/react-dsfr/Badge';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { toast } from 'react-toastify';
 import API from '@app/services/api';
 import Chargement from '@app/components/Chargement';
+import AdminDeletedBanner from '@app/components/AdminDeletedBanner';
 import type { AdminCarcasseDetailResponse, AdminSoftDeleteResponse } from '@api/src/types/responses';
 import type { Carcasse, CarcasseIntermediaire, Fei } from '@prisma/client';
 import dayjs from 'dayjs';
@@ -363,6 +363,12 @@ function AdminCarcasseDetailContent() {
 
   return (
     <>
+      {carcasse.deleted_at && (
+        <AdminDeletedBanner
+          label="Carcasse supprimée"
+          deletedAt={carcasse.deleted_at}
+        />
+      )}
       <Link
         to="/app/admin/carcasses"
         className="fr-btn fr-btn--sm fr-btn--tertiary-no-outline"
@@ -386,9 +392,7 @@ function AdminCarcasseDetailContent() {
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <StatusBadge status={carcasse.svi_carcasse_status} />
-            {carcasse.deleted_at ? (
-              <Badge severity="error">Supprimée le {formatDate(carcasse.deleted_at)}</Badge>
-            ) : (
+            {!carcasse.deleted_at && (
               <Button
                 type="button"
                 priority="tertiary"

@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { Tabs } from '@codegouvfr/react-dsfr/Tabs';
-import { Badge } from '@codegouvfr/react-dsfr/Badge';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { toast } from 'react-toastify';
 import API from '@app/services/api';
 import Chargement from '@app/components/Chargement';
+import AdminDeletedBanner from '@app/components/AdminDeletedBanner';
 import type { AdminFeiDetailResponse, AdminSoftDeleteResponse } from '@api/src/types/responses';
 import dayjs from 'dayjs';
 
@@ -117,6 +117,12 @@ function AdminFeiDetailContent() {
 
   return (
     <>
+      {fei.deleted_at && (
+        <AdminDeletedBanner
+          label="Fiche supprimée"
+          deletedAt={fei.deleted_at}
+        />
+      )}
       <Link
         to="/app/admin/feis"
         className="fr-btn fr-btn--sm fr-btn--tertiary-no-outline"
@@ -138,9 +144,7 @@ function AdminFeiDetailContent() {
               {` · ${fei.Carcasses.length} carcasse(s)`}
             </p>
           </div>
-          {fei.deleted_at ? (
-            <Badge severity="error">Supprimée le {formatDate(fei.deleted_at)}</Badge>
-          ) : (
+          {!fei.deleted_at && (
             <Button
               type="button"
               priority="tertiary"
@@ -180,7 +184,6 @@ function AdminFeiDetailContent() {
                 <Field label="Contexte de création">{fei.creation_context ?? '—'}</Field>
                 <Field label="Créée le">{formatDate(fei.created_at)}</Field>
                 <Field label="Mise à jour le">{formatDate(fei.updated_at)}</Field>
-                {fei.deleted_at && <Field label="Supprimée le">{formatDate(fei.deleted_at)}</Field>}
               </FieldGrid>
             </Section>
 
