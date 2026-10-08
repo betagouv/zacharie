@@ -21,6 +21,7 @@ import type { AdminGetEntityResponse, AdminActionEntityResponse } from '@api/src
 import type { EntityForAdmin } from '@api/src/types/entity';
 import { Highlight } from '@codegouvfr/react-dsfr/Highlight';
 import InputNotEditable from '@app/components/InputNotEditable';
+import AdminDeletedBanner from '@app/components/AdminDeletedBanner';
 import API from '@app/services/api';
 import RelationEntityUser from '@app/components/RelationEntityUser';
 import { toast } from 'react-toastify';
@@ -193,235 +194,224 @@ export default function AdminEntity() {
   }
 
   return (
-    <div className="fr-container fr-container--fluid relative">
+    <>
       <title>{`${entity.nom_d_usage} (${entity.type}) | Admin | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}</title>
       {isSaving && (
         <div className="bg-action-high-blue-france fixed top-0 right-0">
           <span className="p-4 text-white">Enregistrement en cours</span>
         </div>
       )}
-      <div
-        className="fr-grid-row fr-grid-row-gutters fr-grid-row--center"
-        key={entity.id}
-      >
-        <div className="fr-col-12 p-4 md:p-0">
-          <div className="p-4 pb-32 md:p-8 md:pb-0">
-            <header
-              className={`rounded-lg border bg-white p-4 md:p-6 ${
-                entity.deleted_at ? 'border-red-300 bg-red-50/40' : 'border-gray-200'
-              }`}
-            >
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div className="min-w-0">
-                  <h1 className="m-0 text-2xl font-bold break-words">
-                    {entity.nom_d_usage || entity.raison_sociale || 'Entité sans nom'}
-                  </h1>
-                  {entity.nom_d_usage && entity.raison_sociale && (
-                    <p className="mt-0.5 mb-0 text-sm break-words text-gray-500">{entity.raison_sociale}</p>
-                  )}
-                  <div className="mt-3 flex flex-wrap items-center gap-1">
-                    <Badge
-                      severity="info"
-                      small
-                    >
-                      {entity.type}
-                    </Badge>
-                    <Badge
-                      severity={entity.zacharie_compatible ? 'success' : 'warning'}
-                      small
-                    >
-                      {entity.zacharie_compatible ? 'Prêt pour Zacharie' : 'Pas prêt'}
-                    </Badge>
-                    <Badge
-                      severity={entity.onboarded_at ? 'success' : 'new'}
-                      small
-                    >
-                      {entity.onboarded_at ? 'Onboardé' : 'Onboarding incomplet'}
-                    </Badge>
-                    {entity.for_testing && (
-                      <Badge
-                        severity="warning"
-                        small
-                      >
-                        Test
-                      </Badge>
-                    )}
-                    {entity.deleted_at && (
-                      <Badge
-                        severity="error"
-                        small
-                      >
-                        Supprimée
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="mt-3 mb-0 text-xs text-gray-500">
-                    {entity.siret && <>SIRET {entity.siret} · </>}
-                    {entity.numero_ddecpp && <>N° DD(ec)PP {entity.numero_ddecpp} · </>}
-                    {(entity.code_postal || entity.ville) && (
-                      <>
-                        {entity.code_postal} {entity.ville} ·{' '}
-                      </>
-                    )}
-                    Créée le {dayjs(entity.created_at).format('DD/MM/YYYY')}
-                  </p>
-                </div>
-                <div className="flex shrink-0 flex-col items-stretch gap-2">
-                  {dedicatedApiKey ? (
-                    <Button
-                      size="small"
-                      linkProps={{
-                        to: `/app/admin/api-key/${dedicatedApiKey.id}`,
-                      }}
-                    >
-                      Aller vers la clé API dédiée
-                    </Button>
-                  ) : (
-                    <Button
-                      size="small"
-                      type="button"
-                      onClick={() => {
-                        API.post({
-                          path: `admin/entity-dedicated-api-key/${params.entityId}`,
-                        })
-                          .then((response) => {
-                            if (!response.ok) {
-                              return toast.error(response.error);
-                            }
-                            toast.success("L'entité a été mise à jour avec succès");
-                          })
-                          .then(() => {
-                            loadData(params.entityId!).then((response) => {
-                              if (response.data) setAdminEntityResponse(response.data!);
-                              if (!response.ok) {
-                                return toast.error(response.error);
-                              }
-                            });
-                          });
-                      }}
-                    >
-                      Activer la clé API dédiée
-                    </Button>
-                  )}
-                  <Button
-                    type="button"
-                    priority={entity.deleted_at ? 'secondary' : 'tertiary'}
-                    size="small"
-                    iconId={entity.deleted_at ? 'fr-icon-arrow-go-back-line' : 'fr-icon-delete-line'}
-                    className={
-                      entity.deleted_at ? undefined : 'text-red-600! [&_*]:text-red-600! [&:hover]:bg-red-50!'
-                    }
-                    onClick={handleToggleSoftDelete}
-                  >
-                    {entity.deleted_at ? 'Restaurer' : 'Supprimer'}
-                  </Button>
-                </div>
-              </div>
-            </header>
-            <Tabs
-              selectedTabId={selectedTabId}
-              tabs={tabs}
-              onTabChange={setSelectedTabId}
-              className="mt-4"
-            >
-              {selectedTabId === 'Raison Sociale' && (
-                <form
-                  id="entity_data_form"
-                  method="POST"
-                  ref={formRef}
+      <Fragment key={entity.id}>
+        {entity.deleted_at && (
+          <AdminDeletedBanner
+            label="Entité supprimée"
+            deletedAt={entity.deleted_at}
+          />
+        )}
+        <header className="rounded-lg border border-gray-200 bg-white p-4 md:p-6">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="min-w-0">
+              <h1 className="m-0 text-2xl font-bold break-words">
+                {entity.nom_d_usage || entity.raison_sociale || 'Entité sans nom'}
+              </h1>
+              {entity.nom_d_usage && entity.raison_sociale && (
+                <p className="mt-0.5 mb-0 text-sm break-words text-gray-500">{entity.raison_sociale}</p>
+              )}
+              <div className="mt-3 flex flex-wrap items-center gap-1">
+                <Badge
+                  severity="info"
+                  small
                 >
-                  <div className="flex items-center gap-12">
-                    <Checkbox
-                      className="mb-4"
-                      options={[
-                        {
-                          label: 'Prêt pour Zacharie',
-                          hintText:
-                            "Si l'entité peut traiter des fiches Zacharie, recevoir ou en envoyer, cochez la case. Si cette case n'est pas cochée, un message sera affiché à l'utilisateur lorsqu'il voudra transmettre une fiche à cette entité.",
-                          nativeInputProps: {
-                            required: true,
-                            name: Prisma.EntityScalarFieldEnum.zacharie_compatible,
-                            value: 'true',
-                            checked: entity.zacharie_compatible === true,
-                            onChange: async (event) => {
-                              event.preventDefault();
-                              handleSave(
-                                Prisma.EntityScalarFieldEnum.zacharie_compatible,
-                                !entity.zacharie_compatible
-                              );
-                            },
-                          },
+                  {entity.type}
+                </Badge>
+                <Badge
+                  severity={entity.zacharie_compatible ? 'success' : 'warning'}
+                  small
+                >
+                  {entity.zacharie_compatible ? 'Prêt pour Zacharie' : 'Pas prêt'}
+                </Badge>
+                <Badge
+                  severity={entity.onboarded_at ? 'success' : 'new'}
+                  small
+                >
+                  {entity.onboarded_at ? 'Onboardé' : 'Onboarding incomplet'}
+                </Badge>
+                {entity.for_testing && (
+                  <Badge
+                    severity="warning"
+                    small
+                  >
+                    Test
+                  </Badge>
+                )}
+              </div>
+              <p className="mt-3 mb-0 text-xs text-gray-500">
+                {entity.siret && <>SIRET {entity.siret} · </>}
+                {entity.numero_ddecpp && <>N° DD(ec)PP {entity.numero_ddecpp} · </>}
+                {(entity.code_postal || entity.ville) && (
+                  <>
+                    {entity.code_postal} {entity.ville} ·{' '}
+                  </>
+                )}
+                Créée le {dayjs(entity.created_at).format('DD/MM/YYYY')}
+              </p>
+            </div>
+            <div className="flex shrink-0 flex-col items-stretch gap-2">
+              {dedicatedApiKey ? (
+                <Button
+                  size="small"
+                  linkProps={{
+                    to: `/app/admin/api-key/${dedicatedApiKey.id}`,
+                  }}
+                >
+                  Aller vers la clé API dédiée
+                </Button>
+              ) : (
+                <Button
+                  size="small"
+                  type="button"
+                  onClick={() => {
+                    API.post({
+                      path: `admin/entity-dedicated-api-key/${params.entityId}`,
+                    })
+                      .then((response) => {
+                        if (!response.ok) {
+                          return toast.error(response.error);
+                        }
+                        toast.success("L'entité a été mise à jour avec succès");
+                      })
+                      .then(() => {
+                        loadData(params.entityId!).then((response) => {
+                          if (response.data) setAdminEntityResponse(response.data!);
+                          if (!response.ok) {
+                            return toast.error(response.error);
+                          }
+                        });
+                      });
+                  }}
+                >
+                  Activer la clé API dédiée
+                </Button>
+              )}
+              <Button
+                type="button"
+                priority={entity.deleted_at ? 'secondary' : 'tertiary'}
+                size="small"
+                iconId={entity.deleted_at ? 'fr-icon-arrow-go-back-line' : 'fr-icon-delete-line'}
+                className={
+                  entity.deleted_at ? undefined : 'text-red-600! [&_*]:text-red-600! [&:hover]:bg-red-50!'
+                }
+                onClick={handleToggleSoftDelete}
+              >
+                {entity.deleted_at ? 'Restaurer' : 'Supprimer'}
+              </Button>
+            </div>
+          </div>
+        </header>
+        <Tabs
+          selectedTabId={selectedTabId}
+          tabs={tabs}
+          onTabChange={setSelectedTabId}
+          className="mt-4"
+        >
+          {selectedTabId === 'Raison Sociale' && (
+            <form
+              id="entity_data_form"
+              method="POST"
+              ref={formRef}
+            >
+              <div className="flex items-center gap-12">
+                <Checkbox
+                  className="mb-4"
+                  options={[
+                    {
+                      label: 'Prêt pour Zacharie',
+                      hintText:
+                        "Si l'entité peut traiter des fiches Zacharie, recevoir ou en envoyer, cochez la case. Si cette case n'est pas cochée, un message sera affiché à l'utilisateur lorsqu'il voudra transmettre une fiche à cette entité.",
+                      nativeInputProps: {
+                        required: true,
+                        name: Prisma.EntityScalarFieldEnum.zacharie_compatible,
+                        value: 'true',
+                        checked: entity.zacharie_compatible === true,
+                        onChange: async (event) => {
+                          event.preventDefault();
+                          handleSave(
+                            Prisma.EntityScalarFieldEnum.zacharie_compatible,
+                            !entity.zacharie_compatible
+                          );
                         },
-                      ]}
-                    />
-                    <Checkbox
-                      className="mb-4"
-                      options={[
-                        {
-                          label: 'Exclure des statistiques',
-                          hintText:
-                            "Entité de test ou de démo : les fiches où elle apparaît sont exclues des vues Metabase. N'a aucun effet dans l'application.",
-                          nativeInputProps: {
-                            name: Prisma.EntityScalarFieldEnum.exclude_from_stats,
-                            value: 'true',
-                            checked: entity.exclude_from_stats === true,
-                            onChange: async (event) => {
-                              event.preventDefault();
-                              handleSave(
-                                Prisma.EntityScalarFieldEnum.exclude_from_stats,
-                                !entity.exclude_from_stats
-                              );
-                            },
-                          },
+                      },
+                    },
+                  ]}
+                />
+                <Checkbox
+                  className="mb-4"
+                  options={[
+                    {
+                      label: 'Exclure des statistiques',
+                      hintText:
+                        "Entité de test ou de démo : les fiches où elle apparaît sont exclues des vues Metabase. N'a aucun effet dans l'application.",
+                      nativeInputProps: {
+                        name: Prisma.EntityScalarFieldEnum.exclude_from_stats,
+                        value: 'true',
+                        checked: entity.exclude_from_stats === true,
+                        onChange: async (event) => {
+                          event.preventDefault();
+                          handleSave(
+                            Prisma.EntityScalarFieldEnum.exclude_from_stats,
+                            !entity.exclude_from_stats
+                          );
                         },
-                      ]}
-                    />
-                  </div>
+                      },
+                    },
+                  ]}
+                />
+              </div>
 
-                  <Input
-                    label="Nom d'usage"
-                    nativeInputProps={{
-                      id: Prisma.EntityScalarFieldEnum.nom_d_usage,
-                      name: Prisma.EntityScalarFieldEnum.nom_d_usage,
-                      autoComplete: 'off',
-                      required: true,
-                      defaultValue: entity.nom_d_usage ?? '',
-                      onBlur: (e) => handleSave(e.target.name, e.target.value),
-                    }}
-                  />
-                  <Input
-                    label="Raison Sociale"
-                    nativeInputProps={{
-                      id: Prisma.EntityScalarFieldEnum.raison_sociale,
-                      name: Prisma.EntityScalarFieldEnum.raison_sociale,
-                      autoComplete: 'off',
-                      required: true,
-                      defaultValue: entity.raison_sociale ?? '',
-                      onBlur: (e) => handleSave(e.target.name, e.target.value),
-                    }}
-                  />
-                  <Input
-                    label="SIRET"
-                    nativeInputProps={{
-                      id: Prisma.EntityScalarFieldEnum.siret,
-                      name: Prisma.EntityScalarFieldEnum.siret,
-                      autoComplete: 'off',
-                      defaultValue: entity.siret ?? '',
-                      onBlur: (e) => handleSave(e.target.name, e.target.value),
-                    }}
-                  />
-                  <Input
-                    label="Numéro DD(ec)PP"
-                    nativeInputProps={{
-                      id: Prisma.EntityScalarFieldEnum.numero_ddecpp,
-                      name: Prisma.EntityScalarFieldEnum.numero_ddecpp,
-                      autoComplete: 'off',
-                      defaultValue: entity.numero_ddecpp ?? '',
-                      onBlur: (e) => handleSave(e.target.name, e.target.value),
-                    }}
-                  />
+              <Input
+                label="Nom d'usage"
+                nativeInputProps={{
+                  id: Prisma.EntityScalarFieldEnum.nom_d_usage,
+                  name: Prisma.EntityScalarFieldEnum.nom_d_usage,
+                  autoComplete: 'off',
+                  required: true,
+                  defaultValue: entity.nom_d_usage ?? '',
+                  onBlur: (e) => handleSave(e.target.name, e.target.value),
+                }}
+              />
+              <Input
+                label="Raison Sociale"
+                nativeInputProps={{
+                  id: Prisma.EntityScalarFieldEnum.raison_sociale,
+                  name: Prisma.EntityScalarFieldEnum.raison_sociale,
+                  autoComplete: 'off',
+                  required: true,
+                  defaultValue: entity.raison_sociale ?? '',
+                  onBlur: (e) => handleSave(e.target.name, e.target.value),
+                }}
+              />
+              <Input
+                label="SIRET"
+                nativeInputProps={{
+                  id: Prisma.EntityScalarFieldEnum.siret,
+                  name: Prisma.EntityScalarFieldEnum.siret,
+                  autoComplete: 'off',
+                  defaultValue: entity.siret ?? '',
+                  onBlur: (e) => handleSave(e.target.name, e.target.value),
+                }}
+              />
+              <Input
+                label="Numéro DD(ec)PP"
+                nativeInputProps={{
+                  id: Prisma.EntityScalarFieldEnum.numero_ddecpp,
+                  name: Prisma.EntityScalarFieldEnum.numero_ddecpp,
+                  autoComplete: 'off',
+                  defaultValue: entity.numero_ddecpp ?? '',
+                  onBlur: (e) => handleSave(e.target.name, e.target.value),
+                }}
+              />
 
-                  {/*  <Input
+              {/*  <Input
                       label="Téléphone"
                       hintText="Format attendu : 01 22 33 44 55"
                       nativeInputProps={{
@@ -431,137 +421,135 @@ export default function AdminEntity() {
                         defaultValue: entity.telephone ?? "",
                       }}
                     /> */}
-                  <Input
-                    label="Adresse"
-                    hintText="Indication : numéro et voie"
-                    nativeInputProps={{
-                      id: Prisma.EntityScalarFieldEnum.address_ligne_1,
-                      name: Prisma.EntityScalarFieldEnum.address_ligne_1,
-                      autoComplete: 'off',
-                      required: true,
-                      defaultValue: entity.address_ligne_1 ?? '',
-                      onBlur: (e) => handleSave(e.target.name, e.target.value),
-                    }}
-                  />
-                  <Input
-                    label="Complément d'adresse (optionnel)"
-                    hintText="Indication : bâtiment, immeuble, escalier et numéro d'appartement"
-                    nativeInputProps={{
-                      id: Prisma.EntityScalarFieldEnum.address_ligne_2,
-                      name: Prisma.EntityScalarFieldEnum.address_ligne_2,
-                      autoComplete: 'off',
-                      defaultValue: entity.address_ligne_2 ?? '',
-                      onBlur: (e) => handleSave(e.target.name, e.target.value),
-                    }}
-                  />
+              <Input
+                label="Adresse"
+                hintText="Indication : numéro et voie"
+                nativeInputProps={{
+                  id: Prisma.EntityScalarFieldEnum.address_ligne_1,
+                  name: Prisma.EntityScalarFieldEnum.address_ligne_1,
+                  autoComplete: 'off',
+                  required: true,
+                  defaultValue: entity.address_ligne_1 ?? '',
+                  onBlur: (e) => handleSave(e.target.name, e.target.value),
+                }}
+              />
+              <Input
+                label="Complément d'adresse (optionnel)"
+                hintText="Indication : bâtiment, immeuble, escalier et numéro d'appartement"
+                nativeInputProps={{
+                  id: Prisma.EntityScalarFieldEnum.address_ligne_2,
+                  name: Prisma.EntityScalarFieldEnum.address_ligne_2,
+                  autoComplete: 'off',
+                  defaultValue: entity.address_ligne_2 ?? '',
+                  onBlur: (e) => handleSave(e.target.name, e.target.value),
+                }}
+              />
 
-                  <InputCodePostalEtVille
-                    required
-                    defaultCodePostal={entity.code_postal ?? ''}
-                    defaultVille={entity.ville ?? ''}
-                    onBlur={({ codePostal, ville }) =>
-                      handleSaveFields({
-                        [Prisma.EntityScalarFieldEnum.code_postal]: codePostal,
-                        [Prisma.EntityScalarFieldEnum.ville]: ville,
-                      })
-                    }
+              <InputCodePostalEtVille
+                required
+                defaultCodePostal={entity.code_postal ?? ''}
+                defaultVille={entity.ville ?? ''}
+                onBlur={({ codePostal, ville }) =>
+                  handleSaveFields({
+                    [Prisma.EntityScalarFieldEnum.code_postal]: codePostal,
+                    [Prisma.EntityScalarFieldEnum.ville]: ville,
+                  })
+                }
+              />
+              {entity.type === EntityTypes.ETG && (
+                <>
+                  <Input
+                    label="Préfecture du Service Vétérinaire d'Inspection attaché à l'ETG"
+                    hintText="Pour générer des certificats et des consignes. Ce que vous indiquerez s'affichera tel quel, donc notez bien en entier 'Préfecture d'Eure-et-Loire' par exemple, il n'y a aucune intelligence derrière"
+                    nativeInputProps={{
+                      id: Prisma.EntityScalarFieldEnum.prefecture_svi,
+                      name: Prisma.EntityScalarFieldEnum.prefecture_svi,
+                      autoComplete: 'off',
+                      placeholder: "Préfecture d'Eure-et-Loire",
+                      defaultValue: entity.prefecture_svi ?? '',
+                      onBlur: (e) => handleSave(e.target.name, e.target.value),
+                    }}
                   />
-                  {entity.type === EntityTypes.ETG && (
-                    <>
-                      <Input
-                        label="Préfecture du Service Vétérinaire d'Inspection attaché à l'ETG"
-                        hintText="Pour générer des certificats et des consignes. Ce que vous indiquerez s'affichera tel quel, donc notez bien en entier 'Préfecture d'Eure-et-Loire' par exemple, il n'y a aucune intelligence derrière"
-                        nativeInputProps={{
-                          id: Prisma.EntityScalarFieldEnum.prefecture_svi,
-                          name: Prisma.EntityScalarFieldEnum.prefecture_svi,
-                          autoComplete: 'off',
-                          placeholder: "Préfecture d'Eure-et-Loire",
-                          defaultValue: entity.prefecture_svi ?? '',
-                          onBlur: (e) => handleSave(e.target.name, e.target.value),
-                        }}
-                      />
-                      <Input
-                        label="Prénom et Nom du responsable de l'ETG"
-                        hintText="Pour générer des certificats et des consignes. 'Jean Dupont', par exemple"
-                        nativeInputProps={{
-                          id: Prisma.EntityScalarFieldEnum.nom_prenom_responsable,
-                          name: Prisma.EntityScalarFieldEnum.nom_prenom_responsable,
-                          autoComplete: 'off',
-                          placeholder: 'M. Jean Dupont',
-                          defaultValue: entity.nom_prenom_responsable ?? '',
-                          onBlur: (e) => handleSave(e.target.name, e.target.value),
-                        }}
-                      />
-                      <InputNotEditable
-                        label="Code Établissement"
-                        hintText="Pour générer des numéros de certificats et de consignes. Généré automatiquement lors de la création de l'ETG. Ne peut pas être modifié"
-                        nativeInputProps={{
-                          id: Prisma.EntityScalarFieldEnum.code_etbt_certificat,
-                          name: Prisma.EntityScalarFieldEnum.code_etbt_certificat,
-                          autoComplete: 'off',
-                          defaultValue: entity.code_etbt_certificat ?? '',
-                          onBlur: (e) => handleSave(e.target.name, e.target.value),
-                        }}
-                      />
-                    </>
-                  )}
-                </form>
+                  <Input
+                    label="Prénom et Nom du responsable de l'ETG"
+                    hintText="Pour générer des certificats et des consignes. 'Jean Dupont', par exemple"
+                    nativeInputProps={{
+                      id: Prisma.EntityScalarFieldEnum.nom_prenom_responsable,
+                      name: Prisma.EntityScalarFieldEnum.nom_prenom_responsable,
+                      autoComplete: 'off',
+                      placeholder: 'M. Jean Dupont',
+                      defaultValue: entity.nom_prenom_responsable ?? '',
+                      onBlur: (e) => handleSave(e.target.name, e.target.value),
+                    }}
+                  />
+                  <InputNotEditable
+                    label="Code Établissement"
+                    hintText="Pour générer des numéros de certificats et de consignes. Généré automatiquement lors de la création de l'ETG. Ne peut pas être modifié"
+                    nativeInputProps={{
+                      id: Prisma.EntityScalarFieldEnum.code_etbt_certificat,
+                      name: Prisma.EntityScalarFieldEnum.code_etbt_certificat,
+                      autoComplete: 'off',
+                      defaultValue: entity.code_etbt_certificat ?? '',
+                      onBlur: (e) => handleSave(e.target.name, e.target.value),
+                    }}
+                  />
+                </>
               )}
-              {selectedTabId === 'Utilisateurs pouvant traiter des fiches pour cette entité' && (
-                <UserWorkingWithOrFor
-                  adminEntityResponse={adminEntityResponse}
-                  setAdminEntityResponse={setAdminEntityResponse}
-                  potentialUsers={canTakeFichesForEntity}
-                  relationType={EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY}
-                  fetcherKey="working-for"
-                  setIsSaving={setIsSaving}
-                />
-              )}
-              {selectedTabId === 'Utilisateurs pouvant envoyer des fiches à cette entité' && (
-                <UserWorkingWithOrFor
-                  adminEntityResponse={adminEntityResponse}
-                  setAdminEntityResponse={setAdminEntityResponse}
-                  potentialUsers={canSendFichesToEntity}
-                  relationType={EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY}
-                  fetcherKey="working-with"
-                  setIsSaving={setIsSaving}
-                />
-              )}
-              {selectedTabId === 'ETGs associés' && (
-                <EntitiesRelatedTo
-                  adminEntityResponse={adminEntityResponse}
-                  setAdminEntityResponse={setAdminEntityResponse}
-                  entityType={EntityTypes.ETG}
-                  description="Si une fiche est envoyée à un ETG associé listé ci-dessous, le Collecteur Pro sera aussi en capacité de la traiter"
-                  setIsSaving={setIsSaving}
-                />
-              )}
-              {selectedTabId === 'SVI associé' && (
-                <EntitiesRelatedTo
-                  adminEntityResponse={adminEntityResponse}
-                  setAdminEntityResponse={setAdminEntityResponse}
-                  entityType={EntityTypes.SVI}
-                  description={
-                    !sviRelatedToETG
-                      ? "Un utilisateur d'un ETG ne peut envoyer des fiches qu'à un SVI listé ci-dessous"
-                      : ''
-                  }
-                  setIsSaving={setIsSaving}
-                />
-              )}
-              <div className="mt-6 mb-16 ml-6">
-                <a
-                  className="fr-link fr-icon-arrow-up-fill fr-link--icon-left"
-                  href="#top"
-                >
-                  Haut de page
-                </a>
-              </div>
-            </Tabs>
+            </form>
+          )}
+          {selectedTabId === 'Utilisateurs pouvant traiter des fiches pour cette entité' && (
+            <UserWorkingWithOrFor
+              adminEntityResponse={adminEntityResponse}
+              setAdminEntityResponse={setAdminEntityResponse}
+              potentialUsers={canTakeFichesForEntity}
+              relationType={EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY}
+              fetcherKey="working-for"
+              setIsSaving={setIsSaving}
+            />
+          )}
+          {selectedTabId === 'Utilisateurs pouvant envoyer des fiches à cette entité' && (
+            <UserWorkingWithOrFor
+              adminEntityResponse={adminEntityResponse}
+              setAdminEntityResponse={setAdminEntityResponse}
+              potentialUsers={canSendFichesToEntity}
+              relationType={EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY}
+              fetcherKey="working-with"
+              setIsSaving={setIsSaving}
+            />
+          )}
+          {selectedTabId === 'ETGs associés' && (
+            <EntitiesRelatedTo
+              adminEntityResponse={adminEntityResponse}
+              setAdminEntityResponse={setAdminEntityResponse}
+              entityType={EntityTypes.ETG}
+              description="Si une fiche est envoyée à un ETG associé listé ci-dessous, le Collecteur Pro sera aussi en capacité de la traiter"
+              setIsSaving={setIsSaving}
+            />
+          )}
+          {selectedTabId === 'SVI associé' && (
+            <EntitiesRelatedTo
+              adminEntityResponse={adminEntityResponse}
+              setAdminEntityResponse={setAdminEntityResponse}
+              entityType={EntityTypes.SVI}
+              description={
+                !sviRelatedToETG
+                  ? "Un utilisateur d'un ETG ne peut envoyer des fiches qu'à un SVI listé ci-dessous"
+                  : ''
+              }
+              setIsSaving={setIsSaving}
+            />
+          )}
+          <div className="mt-6 mb-16 ml-6">
+            <a
+              className="fr-link fr-icon-arrow-up-fill fr-link--icon-left"
+              href="#top"
+            >
+              Haut de page
+            </a>
           </div>
-        </div>
-      </div>
-    </div>
+        </Tabs>
+      </Fragment>
+    </>
   );
 }
 

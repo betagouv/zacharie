@@ -34,6 +34,7 @@ import RelationEntityUser from '@app/components/RelationEntityUser';
 import { EntityWithUserRelations } from '@api/src/types/entity';
 import { toast } from 'react-toastify';
 import ConnexionButton from '@app/components/ConnexionButton';
+import AdminDeletedBanner from '@app/components/AdminDeletedBanner';
 
 const loadData = (userId: string): Promise<AdminUserDataResponse> =>
   API.get({ path: `admin/user/${userId}` }).then((res) => res as AdminUserDataResponse);
@@ -365,462 +366,445 @@ export default function AdminUser() {
   }
 
   return (
-    <div className="fr-container fr-container--fluid">
+    <>
       <title>
         {`${user.prenom ? `${user.prenom} ${user.nom_de_famille}` : user.email} | Admin | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}
       </title>
-      <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
-        <div className="fr-col-12 p-4 md:p-0">
-          <div className="p-4 pb-32 md:p-8 md:pb-0">
-            <header
-              className={`rounded-lg border bg-white p-3 md:p-4 ${
-                user.deleted_at ? 'border-red-300 bg-red-50/40' : 'border-gray-200'
-              }`}
-            >
-              {/* Ligne 1 : identité + actions */}
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <h1 className="m-0 text-xl font-bold break-words">
-                    {fullName || user.email || 'Utilisateur sans nom'}
-                  </h1>
-                  {fullName && user.email && (
-                    <p className="m-0 text-sm break-words text-gray-500">{user.email}</p>
-                  )}
-                </div>
-                <div className="flex shrink-0 flex-wrap items-center gap-2">
-                  <ConnexionButton
-                    user={user}
-                    type="tertiary no outline"
-                  />
-                  {!user.deleted_at && (
-                    <Button
-                      type="button"
-                      priority="secondary"
-                      size="small"
-                      iconId={user.activated ? 'fr-icon-pause-circle-line' : 'fr-icon-play-circle-line'}
-                      onClick={handleToggleActivated}
-                    >
-                      {user.activated ? 'Désactiver' : 'Activer'}
-                    </Button>
-                  )}
-                  <Button
-                    type="button"
-                    priority={user.deleted_at ? 'secondary' : 'tertiary'}
-                    size="small"
-                    iconId={user.deleted_at ? 'fr-icon-arrow-go-back-line' : 'fr-icon-delete-line'}
-                    className={
-                      user.deleted_at ? undefined : 'text-red-600! [&_*]:text-red-600! [&:hover]:bg-red-50!'
-                    }
-                    onClick={handleToggleSoftDelete}
-                  >
-                    {user.deleted_at ? 'Restaurer' : 'Supprimer'}
-                  </Button>
-                </div>
-              </div>
-
-              {/* Ligne 2 : état en un coup d'œil */}
-              <div className="mt-2 flex flex-wrap items-center gap-1">
-                {user.deleted_at ? (
-                  <Badge
-                    severity="error"
-                    small
-                  >
-                    Supprimé
-                  </Badge>
-                ) : (
-                  <Badge
-                    severity={user.activated ? 'success' : 'warning'}
-                    small
-                  >
-                    {user.activated ? 'Activé' : 'Inactif'}
-                  </Badge>
-                )}
-                <Badge
-                  severity={user.onboarded_at ? 'success' : 'new'}
-                  small
-                >
-                  {user.onboarded_at ? 'Onboardé' : 'Onboarding incomplet'}
-                </Badge>
-                {user.isZacharieAdmin && (
-                  <Badge
-                    severity="info"
-                    small
-                  >
-                    Admin
-                  </Badge>
-                )}
-                {lockout.is_locked && (
-                  <Badge
-                    severity="error"
-                    small
-                  >
-                    Bloqué
-                  </Badge>
-                )}
-                {user.roles.includes(UserRoles.CHASSEUR) && (
-                  <Badge
-                    severity={user.est_forme_a_l_examen_initial ? 'success' : 'warning'}
-                    small
-                  >
-                    {user.est_forme_a_l_examen_initial ? 'Formé EI' : 'Non formé EI'}
-                  </Badge>
-                )}
-              </div>
-
-              {/* Ligne 3 : méta */}
-              <p className="mt-2 mb-0 text-xs text-gray-500">
-                {user.telephone && <>{user.telephone} · </>}
-                Créé le {dayjs(user.created_at).format('DD/MM/YYYY')}
-                {user.last_login_at && (
-                  <> · Dernière connexion {dayjs(user.last_login_at).format('DD/MM/YYYY')}</>
-                )}
-                {user.onboarded_at && <> · Onboardé le {dayjs(user.onboarded_at).format('DD/MM/YYYY')}</>}
-              </p>
-            </header>
-            {(lockout.is_locked || lockout.recent_failures > 0) && (
-              <div
-                className={`mt-4 rounded-lg border p-4 ${
-                  lockout.is_locked ? 'border-red-300 bg-red-50' : 'border-orange-300 bg-orange-50'
-                }`}
+      {user.deleted_at && (
+        <AdminDeletedBanner
+          label="Compte supprimé"
+          deletedAt={user.deleted_at}
+        />
+      )}
+      <header className="rounded-lg border border-gray-200 bg-white p-3 md:p-4">
+        {/* Ligne 1 : identité + actions */}
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="m-0 text-xl font-bold break-words">
+              {fullName || user.email || 'Utilisateur sans nom'}
+            </h1>
+            {fullName && user.email && <p className="m-0 text-sm break-words text-gray-500">{user.email}</p>}
+          </div>
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
+            <ConnexionButton
+              user={user}
+              type="tertiary no outline"
+            />
+            {!user.deleted_at && (
+              <Button
+                type="button"
+                priority="secondary"
+                size="small"
+                iconId={user.activated ? 'fr-icon-pause-circle-line' : 'fr-icon-play-circle-line'}
+                onClick={handleToggleActivated}
               >
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <h2 className="m-0 text-base font-bold">
-                      {lockout.is_locked ? 'Connexion bloquée' : 'Tentatives de connexion échouées'}
-                    </h2>
-                    <p className="mt-1 mb-0 text-sm">
-                      {lockout.is_locked ? (
-                        <>
-                          Cet utilisateur est bloqué suite à {lockout.recent_failures} tentatives échouées en
-                          moins de 15 minutes.
-                          {lockout.lockout_expires_at && (
-                            <>
-                              {' '}
-                              Le blocage expire le{' '}
-                              {dayjs(lockout.lockout_expires_at).format('DD/MM/YYYY à HH:mm')}.
-                            </>
-                          )}
-                        </>
-                      ) : (
-                        <>
-                          {lockout.recent_failures} tentative(s) échouée(s) récente(s).
-                          {lockout.last_failure_at && (
-                            <>
-                              {' '}
-                              Dernière tentative le{' '}
-                              {dayjs(lockout.last_failure_at).format('DD/MM/YYYY à HH:mm')}.
-                            </>
-                          )}
-                        </>
-                      )}
-                    </p>
-                  </div>
-                  <div className="flex shrink-0 flex-wrap items-center gap-2">
-                    {lockout.is_locked && (
-                      <Button
-                        type="button"
-                        priority="primary"
-                        size="small"
-                        iconId="fr-icon-lock-unlock-line"
-                        onClick={handleUnblock}
-                      >
-                        Débloquer
-                      </Button>
+                {user.activated ? 'Désactiver' : 'Activer'}
+              </Button>
+            )}
+            <Button
+              type="button"
+              priority={user.deleted_at ? 'secondary' : 'tertiary'}
+              size="small"
+              iconId={user.deleted_at ? 'fr-icon-arrow-go-back-line' : 'fr-icon-delete-line'}
+              className={
+                user.deleted_at ? undefined : 'text-red-600! [&_*]:text-red-600! [&:hover]:bg-red-50!'
+              }
+              onClick={handleToggleSoftDelete}
+            >
+              {user.deleted_at ? 'Restaurer' : 'Supprimer'}
+            </Button>
+          </div>
+        </div>
+
+        {/* Ligne 2 : état en un coup d'œil */}
+        <div className="mt-2 flex flex-wrap items-center gap-1">
+          {!user.deleted_at && (
+            <Badge
+              severity={user.activated ? 'success' : 'warning'}
+              small
+            >
+              {user.activated ? 'Activé' : 'Inactif'}
+            </Badge>
+          )}
+          <Badge
+            severity={user.onboarded_at ? 'success' : 'new'}
+            small
+          >
+            {user.onboarded_at ? 'Onboardé' : 'Onboarding incomplet'}
+          </Badge>
+          {user.isZacharieAdmin && (
+            <Badge
+              severity="info"
+              small
+            >
+              Admin
+            </Badge>
+          )}
+          {lockout.is_locked && (
+            <Badge
+              severity="error"
+              small
+            >
+              Bloqué
+            </Badge>
+          )}
+          {user.roles.includes(UserRoles.CHASSEUR) && (
+            <Badge
+              severity={user.est_forme_a_l_examen_initial ? 'success' : 'warning'}
+              small
+            >
+              {user.est_forme_a_l_examen_initial ? 'Formé EI' : 'Non formé EI'}
+            </Badge>
+          )}
+        </div>
+
+        {/* Ligne 3 : méta */}
+        <p className="mt-2 mb-0 text-xs text-gray-500">
+          {user.telephone && <>{user.telephone} · </>}
+          Créé le {dayjs(user.created_at).format('DD/MM/YYYY')}
+          {user.last_login_at && <> · Dernière connexion {dayjs(user.last_login_at).format('DD/MM/YYYY')}</>}
+          {user.onboarded_at && <> · Onboardé le {dayjs(user.onboarded_at).format('DD/MM/YYYY')}</>}
+        </p>
+      </header>
+      {(lockout.is_locked || lockout.recent_failures > 0) && (
+        <div
+          className={`mt-4 rounded-lg border p-4 ${
+            lockout.is_locked ? 'border-red-300 bg-red-50' : 'border-orange-300 bg-orange-50'
+          }`}
+        >
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="m-0 text-base font-bold">
+                {lockout.is_locked ? 'Connexion bloquée' : 'Tentatives de connexion échouées'}
+              </h2>
+              <p className="mt-1 mb-0 text-sm">
+                {lockout.is_locked ? (
+                  <>
+                    Cet utilisateur est bloqué suite à {lockout.recent_failures} tentatives échouées en moins
+                    de 15 minutes.
+                    {lockout.lockout_expires_at && (
+                      <>
+                        {' '}
+                        Le blocage expire le {dayjs(lockout.lockout_expires_at).format('DD/MM/YYYY à HH:mm')}.
+                      </>
                     )}
-                    <Button
-                      type="button"
-                      priority="secondary"
-                      size="small"
-                      iconId="fr-icon-mail-line"
-                      disabled={sendingResetPassword}
-                      onClick={handleSendResetPassword}
+                  </>
+                ) : (
+                  <>
+                    {lockout.recent_failures} tentative(s) échouée(s) récente(s).
+                    {lockout.last_failure_at && (
+                      <>
+                        {' '}
+                        Dernière tentative le {dayjs(lockout.last_failure_at).format('DD/MM/YYYY à HH:mm')}.
+                      </>
+                    )}
+                  </>
+                )}
+              </p>
+            </div>
+            <div className="flex shrink-0 flex-wrap items-center gap-2">
+              {lockout.is_locked && (
+                <Button
+                  type="button"
+                  priority="primary"
+                  size="small"
+                  iconId="fr-icon-lock-unlock-line"
+                  onClick={handleUnblock}
+                >
+                  Débloquer
+                </Button>
+              )}
+              <Button
+                type="button"
+                priority="secondary"
+                size="small"
+                iconId="fr-icon-mail-line"
+                disabled={sendingResetPassword}
+                onClick={handleSendResetPassword}
+              >
+                {sendingResetPassword
+                  ? 'Envoi en cours…'
+                  : 'Envoyer un lien de réinitialisation du mot de passe'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+      <Tabs
+        selectedTabId={selectedTabId}
+        tabs={tabs}
+        onTabChange={setSelectedTabId}
+        className="mt-4"
+      >
+        {selectedTabId === 'Identité' && (
+          <div className="flex flex-col gap-4">
+            {/* Rôle & accès — enregistrement direct au changement */}
+            <Checkbox
+              className="m-0"
+              options={[
+                {
+                  label: 'Administrateur Zacharie',
+                  nativeInputProps: {
+                    checked: user.isZacharieAdmin,
+                    onChange: handleToggleAdmin,
+                  },
+                },
+                {
+                  label: 'Exclure des statistiques',
+                  hintText:
+                    "Compte de test ou de démo : les fiches où il apparaît sont exclues des vues Metabase. N'a aucun effet dans l'application.",
+                  nativeInputProps: {
+                    checked: user.exclude_from_stats,
+                    onChange: handleToggleExcludeFromStats,
+                  },
+                },
+              ]}
+            />
+            <Section title="Rôle">
+              <div className="flex flex-wrap items-end gap-x-6 gap-y-2">
+                <Select
+                  label="Rôle"
+                  className="m-0 min-w-72"
+                  nativeSelectProps={{
+                    value: user.roles[0] ?? '',
+                    onChange: (e) => handleChangeRole(e.target.value as UserRoles),
+                  }}
+                >
+                  {ROLE_OPTIONS.map((option) => (
+                    <option
+                      key={option.value}
+                      value={option.value}
                     >
-                      {sendingResetPassword
-                        ? 'Envoi en cours…'
-                        : 'Envoyer un lien de réinitialisation du mot de passe'}
-                    </Button>
+                      {option.label}
+                    </option>
+                  ))}
+                </Select>
+                {user.roles.includes(UserRoles.ETG) && (
+                  <Select
+                    label="Fonction ETG"
+                    className="m-0 min-w-72"
+                    nativeSelectProps={{
+                      value: user.etg_role,
+                      onChange: (e) => {
+                        API.post({
+                          path: `admin/user/${params.userId}`,
+                          body: { etg_role: e.target.value },
+                        }).then((res) => {
+                          if (!res.ok) {
+                            return toast.error('Une erreur est survenue lors de la mise à jour');
+                          }
+                          loadData(params.userId!).then((res) => {
+                            if (res.ok && res.data) {
+                              setUserResponseData(res.data as State);
+                            }
+                          });
+                          toast.success('Fonction ETG mise à jour');
+                        });
+                      },
+                    }}
+                  >
+                    <option value={UserEtgRoles.TRANSPORT}>Transport</option>
+                    <option value={UserEtgRoles.RECEPTION}>Réception et gestion</option>
+                  </Select>
+                )}
+              </div>
+            </Section>
+
+            {/* Coordonnées + examen initial — enregistrement par le bouton */}
+            <form
+              id="user_data_form"
+              method="POST"
+              ref={idFormRef}
+              onBlur={handleUserFormBlur(idFormRef)}
+              onSubmit={(event) => event.preventDefault()}
+              className="flex flex-col gap-4"
+            >
+              <input
+                type="hidden"
+                name={Prisma.UserScalarFieldEnum.prefilled}
+                value="true"
+              />
+              <Section title="Coordonnées">
+                <div className="grid grid-cols-1 gap-x-4 md:grid-cols-2">
+                  <Input
+                    label="Nom"
+                    nativeInputProps={{
+                      id: Prisma.UserScalarFieldEnum.nom_de_famille,
+                      name: Prisma.UserScalarFieldEnum.nom_de_famille,
+                      autoComplete: 'off',
+                      defaultValue: user.nom_de_famille ?? '',
+                    }}
+                  />
+                  <Input
+                    label="Prénom"
+                    nativeInputProps={{
+                      id: Prisma.UserScalarFieldEnum.prenom,
+                      name: Prisma.UserScalarFieldEnum.prenom,
+                      autoComplete: 'off',
+                      defaultValue: user.prenom ?? '',
+                    }}
+                  />
+                  <Input
+                    label="Email"
+                    nativeInputProps={{
+                      id: Prisma.UserScalarFieldEnum.email,
+                      name: Prisma.UserScalarFieldEnum.email,
+                      autoComplete: 'off',
+                      defaultValue: user.email ?? '',
+                    }}
+                  />
+                  <Input
+                    label="Téléphone"
+                    hintText="Format attendu : 01 22 33 44 55"
+                    nativeInputProps={{
+                      id: Prisma.UserScalarFieldEnum.telephone,
+                      name: Prisma.UserScalarFieldEnum.telephone,
+                      autoComplete: 'off',
+                      defaultValue: user.telephone ?? '',
+                    }}
+                  />
+                  <Input
+                    label="Adresse"
+                    hintText="Indication : numéro et voie"
+                    nativeInputProps={{
+                      id: Prisma.UserScalarFieldEnum.addresse_ligne_1,
+                      name: Prisma.UserScalarFieldEnum.addresse_ligne_1,
+                      autoComplete: 'off',
+                      defaultValue: user.addresse_ligne_1 ?? '',
+                    }}
+                  />
+                  <Input
+                    label="Complément d'adresse (optionnel)"
+                    hintText="Indication : bâtiment, immeuble, escalier et numéro d'appartement"
+                    nativeInputProps={{
+                      id: Prisma.UserScalarFieldEnum.addresse_ligne_2,
+                      name: Prisma.UserScalarFieldEnum.addresse_ligne_2,
+                      autoComplete: 'off',
+                      defaultValue: user.addresse_ligne_2 ?? '',
+                    }}
+                  />
+                  <div className="md:col-span-2">
+                    <InputCodePostalEtVille
+                      defaultCodePostal={user.code_postal ?? ''}
+                      defaultVille={user.ville ?? ''}
+                    />
                   </div>
                 </div>
-              </div>
-            )}
-            <Tabs
-              selectedTabId={selectedTabId}
-              tabs={tabs}
-              onTabChange={setSelectedTabId}
-              className="mt-4"
-            >
-              {selectedTabId === 'Identité' && (
-                <div className="flex flex-col gap-4">
-                  {/* Rôle & accès — enregistrement direct au changement */}
+              </Section>
+              {user.roles.includes(UserRoles.CHASSEUR) && (
+                <Section title="Examen initial">
                   <Checkbox
-                    className="m-0"
+                    className="mb-2!"
                     options={[
                       {
-                        label: 'Administrateur Zacharie',
+                        label: "Formé à l'examen initial",
                         nativeInputProps: {
-                          checked: user.isZacharieAdmin,
-                          onChange: handleToggleAdmin,
-                        },
-                      },
-                      {
-                        label: 'Exclure des statistiques',
-                        hintText:
-                          "Compte de test ou de démo : les fiches où il apparaît sont exclues des vues Metabase. N'a aucun effet dans l'application.",
-                        nativeInputProps: {
-                          checked: user.exclude_from_stats,
-                          onChange: handleToggleExcludeFromStats,
+                          checked: !!user.est_forme_a_l_examen_initial,
+                          onChange: handleToggleFormeExamenInitial,
                         },
                       },
                     ]}
                   />
-                  <Section title="Rôle">
-                    <div className="flex flex-wrap items-end gap-x-6 gap-y-2">
-                      <Select
-                        label="Rôle"
-                        className="m-0 min-w-72"
-                        nativeSelectProps={{
-                          value: user.roles[0] ?? '',
-                          onChange: (e) => handleChangeRole(e.target.value as UserRoles),
-                        }}
-                      >
-                        {ROLE_OPTIONS.map((option) => (
-                          <option
-                            key={option.value}
-                            value={option.value}
-                          >
-                            {option.label}
-                          </option>
-                        ))}
-                      </Select>
-                      {user.roles.includes(UserRoles.ETG) && (
-                        <Select
-                          label="Fonction ETG"
-                          className="m-0 min-w-72"
-                          nativeSelectProps={{
-                            value: user.etg_role,
-                            onChange: (e) => {
-                              API.post({
-                                path: `admin/user/${params.userId}`,
-                                body: { etg_role: e.target.value },
-                              }).then((res) => {
-                                if (!res.ok) {
-                                  return toast.error('Une erreur est survenue lors de la mise à jour');
-                                }
-                                loadData(params.userId!).then((res) => {
-                                  if (res.ok && res.data) {
-                                    setUserResponseData(res.data as State);
-                                  }
-                                });
-                                toast.success('Fonction ETG mise à jour');
-                              });
-                            },
-                          }}
-                        >
-                          <option value={UserEtgRoles.TRANSPORT}>Transport</option>
-                          <option value={UserEtgRoles.RECEPTION}>Réception et gestion</option>
-                        </Select>
-                      )}
-                    </div>
-                  </Section>
-
-                  {/* Coordonnées + examen initial — enregistrement par le bouton */}
-                  <form
-                    id="user_data_form"
-                    method="POST"
-                    ref={idFormRef}
-                    onBlur={handleUserFormBlur(idFormRef)}
-                    onSubmit={(event) => event.preventDefault()}
-                    className="flex flex-col gap-4"
-                  >
-                    <input
-                      type="hidden"
-                      name={Prisma.UserScalarFieldEnum.prefilled}
-                      value="true"
-                    />
-                    <Section title="Coordonnées">
-                      <div className="grid grid-cols-1 gap-x-4 md:grid-cols-2">
-                        <Input
-                          label="Nom"
-                          nativeInputProps={{
-                            id: Prisma.UserScalarFieldEnum.nom_de_famille,
-                            name: Prisma.UserScalarFieldEnum.nom_de_famille,
-                            autoComplete: 'off',
-                            defaultValue: user.nom_de_famille ?? '',
-                          }}
-                        />
-                        <Input
-                          label="Prénom"
-                          nativeInputProps={{
-                            id: Prisma.UserScalarFieldEnum.prenom,
-                            name: Prisma.UserScalarFieldEnum.prenom,
-                            autoComplete: 'off',
-                            defaultValue: user.prenom ?? '',
-                          }}
-                        />
-                        <Input
-                          label="Email"
-                          nativeInputProps={{
-                            id: Prisma.UserScalarFieldEnum.email,
-                            name: Prisma.UserScalarFieldEnum.email,
-                            autoComplete: 'off',
-                            defaultValue: user.email ?? '',
-                          }}
-                        />
-                        <Input
-                          label="Téléphone"
-                          hintText="Format attendu : 01 22 33 44 55"
-                          nativeInputProps={{
-                            id: Prisma.UserScalarFieldEnum.telephone,
-                            name: Prisma.UserScalarFieldEnum.telephone,
-                            autoComplete: 'off',
-                            defaultValue: user.telephone ?? '',
-                          }}
-                        />
-                        <Input
-                          label="Adresse"
-                          hintText="Indication : numéro et voie"
-                          nativeInputProps={{
-                            id: Prisma.UserScalarFieldEnum.addresse_ligne_1,
-                            name: Prisma.UserScalarFieldEnum.addresse_ligne_1,
-                            autoComplete: 'off',
-                            defaultValue: user.addresse_ligne_1 ?? '',
-                          }}
-                        />
-                        <Input
-                          label="Complément d'adresse (optionnel)"
-                          hintText="Indication : bâtiment, immeuble, escalier et numéro d'appartement"
-                          nativeInputProps={{
-                            id: Prisma.UserScalarFieldEnum.addresse_ligne_2,
-                            name: Prisma.UserScalarFieldEnum.addresse_ligne_2,
-                            autoComplete: 'off',
-                            defaultValue: user.addresse_ligne_2 ?? '',
-                          }}
-                        />
-                        <div className="md:col-span-2">
-                          <InputCodePostalEtVille
-                            defaultCodePostal={user.code_postal ?? ''}
-                            defaultVille={user.ville ?? ''}
-                          />
-                        </div>
-                      </div>
-                    </Section>
-                    {user.roles.includes(UserRoles.CHASSEUR) && (
-                      <Section title="Examen initial">
-                        <Checkbox
-                          className="mb-2!"
-                          options={[
-                            {
-                              label: "Formé à l'examen initial",
-                              nativeInputProps: {
-                                checked: !!user.est_forme_a_l_examen_initial,
-                                onChange: handleToggleFormeExamenInitial,
-                              },
-                            },
-                          ]}
-                        />
-                        <Input
-                          label="Numéro d'attestation de Chasseur Formé à l'Examen Initial"
-                          hintText="De la forme CFEI-DEP-AA-123 ou DEP-FREI-YY-001"
-                          disabled={!user.est_forme_a_l_examen_initial}
-                          nativeInputProps={{
-                            id: Prisma.UserScalarFieldEnum.numero_cfei,
-                            name: Prisma.UserScalarFieldEnum.numero_cfei,
-                            autoComplete: 'off',
-                            defaultValue: user.numero_cfei ?? '',
-                          }}
-                        />
-                        {!user.est_forme_a_l_examen_initial ? null : user.numero_cfei ? (
-                          officialCfei ? (
-                            <Alert
-                              severity="success"
-                              small
-                              className="mb-0"
-                              description={`CFEI trouvé dans la liste officielle : ${officialCfei.nom ?? ''} ${officialCfei.prenom ?? ''}${officialCfei.departement ? ` — Département ${officialCfei.departement}` : ''}`}
-                            />
-                          ) : (
-                            <Alert
-                              severity="error"
-                              small
-                              className="mb-0"
-                              description="CFEI non trouvé dans la liste officielle"
-                            />
-                          )
-                        ) : (
-                          <Alert
-                            severity="warning"
-                            small
-                            className="mb-0"
-                            description="Numéro CFEI non renseigné"
-                          />
-                        )}
-                      </Section>
-                    )}
-                    <div className="fixed bottom-16 left-0 z-50 flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:relative md:bottom-0 md:w-auto md:items-start md:shadow-none">
-                      <ButtonsGroup
-                        buttons={[
-                          {
-                            children: 'Enregistrer',
-                            type: 'submit',
-                            nativeButtonProps: {
-                              form: 'user_data_form',
-                            },
-                          },
-                        ]}
+                  <Input
+                    label="Numéro d'attestation de Chasseur Formé à l'Examen Initial"
+                    hintText="De la forme CFEI-DEP-AA-123 ou DEP-FREI-YY-001"
+                    disabled={!user.est_forme_a_l_examen_initial}
+                    nativeInputProps={{
+                      id: Prisma.UserScalarFieldEnum.numero_cfei,
+                      name: Prisma.UserScalarFieldEnum.numero_cfei,
+                      autoComplete: 'off',
+                      defaultValue: user.numero_cfei ?? '',
+                    }}
+                  />
+                  {!user.est_forme_a_l_examen_initial ? null : user.numero_cfei ? (
+                    officialCfei ? (
+                      <Alert
+                        severity="success"
+                        small
+                        className="mb-0"
+                        description={`CFEI trouvé dans la liste officielle : ${officialCfei.nom ?? ''} ${officialCfei.prenom ?? ''}${officialCfei.departement ? ` — Département ${officialCfei.departement}` : ''}`}
                       />
-                    </div>
-                  </form>
-                </div>
+                    ) : (
+                      <Alert
+                        severity="error"
+                        small
+                        className="mb-0"
+                        description="CFEI non trouvé dans la liste officielle"
+                      />
+                    )
+                  ) : (
+                    <Alert
+                      severity="warning"
+                      small
+                      className="mb-0"
+                      description="Numéro CFEI non renseigné"
+                    />
+                  )}
+                </Section>
               )}
-              {selectedTabId === 'Peut traiter des fiches au nom de' && (
-                <PeutEnvoyerDesFichesAOuTraiterAuNomDe
-                  relationType={EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY}
-                  id={selectedTabId}
-                  userResponseData={userResponseData}
-                  setUserResponseData={setUserResponseData}
+              <div className="fixed bottom-16 left-0 z-50 flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:relative md:bottom-0 md:w-auto md:items-start md:shadow-none">
+                <ButtonsGroup
+                  buttons={[
+                    {
+                      children: 'Enregistrer',
+                      type: 'submit',
+                      nativeButtonProps: {
+                        form: 'user_data_form',
+                      },
+                    },
+                  ]}
                 />
-              )}
-              {selectedTabId === 'Fédération' && (
-                <PeutEnvoyerDesFichesAOuTraiterAuNomDe
-                  relationType={EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY}
-                  id={selectedTabId}
-                  userResponseData={userResponseData}
-                  setUserResponseData={setUserResponseData}
-                  forFederation
-                />
-              )}
-              {selectedTabId === 'CCGs' && (
-                <PeutEnvoyerDesFichesAOuTraiterAuNomDe
-                  relationType={EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY}
-                  id={selectedTabId}
-                  userResponseData={userResponseData}
-                  setUserResponseData={setUserResponseData}
-                  forCCG
-                />
-              )}
-              {selectedTabId === 'Peut envoyer des fiches à' && (
-                <PeutEnvoyerDesFichesAOuTraiterAuNomDe
-                  relationType={EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY}
-                  id={selectedTabId}
-                  userResponseData={userResponseData}
-                  setUserResponseData={setUserResponseData}
-                />
-              )}
-              {selectedTabId === 'Fiches' && <UserFeis userId={user.id} />}
-              {selectedTabId === 'Carcasses' && <UserCarcasses userId={user.id} />}
-              {selectedTabId === 'Notifications' && <UserNotificationsLogs userId={user.id} />}
-              <div className="mt-6 mb-16 ml-6">
-                <a
-                  className="fr-link fr-icon-arrow-up-fill fr-link--icon-left"
-                  href="#top"
-                >
-                  Haut de page
-                </a>
               </div>
-            </Tabs>
+            </form>
           </div>
+        )}
+        {selectedTabId === 'Peut traiter des fiches au nom de' && (
+          <PeutEnvoyerDesFichesAOuTraiterAuNomDe
+            relationType={EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY}
+            id={selectedTabId}
+            userResponseData={userResponseData}
+            setUserResponseData={setUserResponseData}
+          />
+        )}
+        {selectedTabId === 'Fédération' && (
+          <PeutEnvoyerDesFichesAOuTraiterAuNomDe
+            relationType={EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY}
+            id={selectedTabId}
+            userResponseData={userResponseData}
+            setUserResponseData={setUserResponseData}
+            forFederation
+          />
+        )}
+        {selectedTabId === 'CCGs' && (
+          <PeutEnvoyerDesFichesAOuTraiterAuNomDe
+            relationType={EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY}
+            id={selectedTabId}
+            userResponseData={userResponseData}
+            setUserResponseData={setUserResponseData}
+            forCCG
+          />
+        )}
+        {selectedTabId === 'Peut envoyer des fiches à' && (
+          <PeutEnvoyerDesFichesAOuTraiterAuNomDe
+            relationType={EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY}
+            id={selectedTabId}
+            userResponseData={userResponseData}
+            setUserResponseData={setUserResponseData}
+          />
+        )}
+        {selectedTabId === 'Fiches' && <UserFeis userId={user.id} />}
+        {selectedTabId === 'Carcasses' && <UserCarcasses userId={user.id} />}
+        {selectedTabId === 'Notifications' && <UserNotificationsLogs userId={user.id} />}
+        <div className="mt-6 mb-16 ml-6">
+          <a
+            className="fr-link fr-icon-arrow-up-fill fr-link--icon-left"
+            href="#top"
+          >
+            Haut de page
+          </a>
         </div>
-      </div>
-    </div>
+      </Tabs>
+    </>
   );
 }
 
