@@ -175,8 +175,10 @@ function AlbertAnswer({ text }: { text: string }) {
         priority="tertiary no outline"
         iconId="fr-icon-clipboard-line"
         onClick={() => {
-          navigator.clipboard.writeText(text);
-          setCopied(true);
+          navigator.clipboard
+            .writeText(text)
+            .then(() => setCopied(true))
+            .catch(() => setCopied(false));
         }}
       >
         {copied ? 'Copié' : 'Copier'}
