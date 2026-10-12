@@ -25,7 +25,7 @@ import {
 import { getCircuitCourtFeiUrl, getFeiUrlForRole } from '~/utils/fei-url';
 import { checkGenerateCertificat } from '~/utils/generate-certificats';
 import { isCarcasseDone } from '~/utils/is-carcasse-done';
-import { sendWebhook } from '~/utils/api';
+import { sendWebhook, type WebhookEvent } from '~/utils/api';
 import {
   getEmailDeliveryFailure,
   sendEmail,
@@ -80,6 +80,21 @@ async function notifyExaminateurAndPremierDetenteur({
 
   if (premierDetenteur?.id !== examinateurInitial?.id) {
     await sendNotificationToUser({ user: premierDetenteur!, ...notification });
+  }
+}
+
+// Le premier détenteur peut être une entité (association) : premier_detenteur_user_id est alors null.
+async function webhookExaminateurAndPremierDetenteur(carcasse: Carcasse, event: WebhookEvent) {
+  await sendWebhook(carcasse.examinateur_initial_user_id, event, {
+    carcasseZacharieId: carcasse.zacharie_carcasse_id,
+  });
+  if (
+    carcasse.premier_detenteur_user_id &&
+    carcasse.premier_detenteur_user_id !== carcasse.examinateur_initial_user_id
+  ) {
+    await sendWebhook(carcasse.premier_detenteur_user_id, event, {
+      carcasseZacharieId: carcasse.zacharie_carcasse_id,
+    });
   }
 }
 
@@ -261,9 +276,9 @@ export async function closeFeiAndNotifyChasseurOnSviCarcasseClose(
   if (!carcasses.every(isCarcasseDone)) return;
 
   const action = `FEI_MANUAL_CLOSED_${updatedCarcasse.fei_numero}_${updatedCarcasse.premier_detenteur_prochain_detenteur_id_cache}`;
-  const examinateur = await prisma.user.findUnique({
-    where: { id: updatedCarcasse.examinateur_initial_user_id },
-  });
+  const examinateur = updatedCarcasse.examinateur_initial_user_id
+    ? await prisma.user.findUnique({ where: { id: updatedCarcasse.examinateur_initial_user_id } })
+    : null;
   if (examinateur) {
     const already = await prisma.notificationLog.findFirst({
       where: { user_id: updatedCarcasse.examinateur_initial_user_id, action, deleted_at: null },
@@ -283,20 +298,21 @@ export async function closeFeiAndNotifyChasseurOnSviCarcasseClose(
 
   if (examinateur) {
     await sendNotificationToUser({ user: examinateur, ...notification });
-    await sendWebhook(examinateur.id, 'CARCASSE_CLOTUREE', {
-      carcasseZacharieId: updatedCarcasse.zacharie_carcasse_id,
-    });
   }
 
-  if (updatedCarcasse.premier_detenteur_user_id !== examinateur?.id) {
+  if (
+    updatedCarcasse.premier_detenteur_user_id &&
+    updatedCarcasse.premier_detenteur_user_id !== updatedCarcasse.examinateur_initial_user_id
+  ) {
     const premierDetenteur = await prisma.user.findUnique({
       where: { id: updatedCarcasse.premier_detenteur_user_id },
     });
-    await sendNotificationToUser({ user: premierDetenteur, ...notification });
-    await sendWebhook(premierDetenteur.id, 'CARCASSE_CLOTUREE', {
-      carcasseZacharieId: updatedCarcasse.zacharie_carcasse_id,
-    });
+    if (premierDetenteur) {
+      await sendNotificationToUser({ user: premierDetenteur, ...notification });
+    }
   }
+
+  await webhookExaminateurAndPremierDetenteur(updatedCarcasse, 'CARCASSE_CLOTUREE');
 }
 
 export async function webhookOwnerChange(existingCarcasse: Carcasse, updatedCarcasse: Carcasse) {
@@ -347,29 +363,21 @@ export async function notifySviAssignment(
     });
   }
 
-  const svi = await prisma.entity.findUnique({
-    where: {
-      deleted_at: null,
-      id: updatedCarcasse.current_owner_entity_id,
-    },
-  });
+  const svi = updatedCarcasse.current_owner_entity_id
+    ? await prisma.entity.findUnique({
+        where: {
+          deleted_at: null,
+          id: updatedCarcasse.current_owner_entity_id,
+        },
+      })
+    : null;
   if (svi?.type === EntityTypes.SVI) {
     if (!svi.at_least_one_fei_treated) {
       await updateBrevoSVIDealPremiereFiche(svi);
     }
   }
 
-  await sendWebhook(updatedCarcasse.examinateur_initial_user_id, 'CARCASSE_ASSIGNEE_AU_SVI', {
-    carcasseZacharieId: updatedCarcasse.zacharie_carcasse_id,
-  });
-  if (
-    updatedCarcasse.premier_detenteur_user_id &&
-    updatedCarcasse.examinateur_initial_user_id !== updatedCarcasse.premier_detenteur_user_id
-  ) {
-    await sendWebhook(updatedCarcasse.premier_detenteur_user_id, 'CARCASSE_ASSIGNEE_AU_SVI', {
-      carcasseZacharieId: updatedCarcasse.zacharie_carcasse_id,
-    });
-  }
+  await webhookExaminateurAndPremierDetenteur(updatedCarcasse, 'CARCASSE_ASSIGNEE_AU_SVI');
 
   return true;
 }
@@ -560,22 +568,7 @@ export async function notifyCircuitCourt(
     }
   }
 
-  const examinateur = await prisma.user.findUnique({
-    where: { id: updatedCarcasse.examinateur_initial_user_id },
-  });
-  if (examinateur) {
-    await sendWebhook(examinateur.id, 'CARCASSE_ASSIGNEE_AU_PROCHAIN_DETENTEUR', {
-      carcasseZacharieId: updatedCarcasse.zacharie_carcasse_id,
-    });
-  }
-  if (updatedCarcasse.premier_detenteur_user_id !== examinateur?.id) {
-    const premierDetenteur = await prisma.user.findUnique({
-      where: { id: updatedCarcasse.premier_detenteur_user_id },
-    });
-    await sendWebhook(premierDetenteur.id, 'CARCASSE_ASSIGNEE_AU_PROCHAIN_DETENTEUR', {
-      carcasseZacharieId: updatedCarcasse.zacharie_carcasse_id,
-    });
-  }
+  await webhookExaminateurAndPremierDetenteur(updatedCarcasse, 'CARCASSE_ASSIGNEE_AU_PROCHAIN_DETENTEUR');
 
   const allInCircuitCourt =
     carcasses.length > 0 &&
@@ -732,22 +725,7 @@ export async function notifyNextOwnerEntity(
     }
   }
 
-  const examinateur = await prisma.user.findUnique({
-    where: { id: updatedCarcasse.examinateur_initial_user_id },
-  });
-  if (examinateur) {
-    await sendWebhook(examinateur.id, 'CARCASSE_ASSIGNEE_AU_PROCHAIN_DETENTEUR', {
-      carcasseZacharieId: updatedCarcasse.zacharie_carcasse_id,
-    });
-  }
-  if (updatedCarcasse.premier_detenteur_user_id !== examinateur?.id) {
-    const premierDetenteur = await prisma.user.findUnique({
-      where: { id: updatedCarcasse.premier_detenteur_user_id },
-    });
-    await sendWebhook(premierDetenteur.id, 'CARCASSE_ASSIGNEE_AU_PROCHAIN_DETENTEUR', {
-      carcasseZacharieId: updatedCarcasse.zacharie_carcasse_id,
-    });
-  }
+  await webhookExaminateurAndPremierDetenteur(updatedCarcasse, 'CARCASSE_ASSIGNEE_AU_PROCHAIN_DETENTEUR');
 }
 
 export async function webhookIntermediaireClose(existingCarcasse: Carcasse, updatedCarcasse: Carcasse) {
@@ -755,21 +733,24 @@ export async function webhookIntermediaireClose(existingCarcasse: Carcasse, upda
     return;
   }
 
-  const examinateur = await prisma.user.findUnique({
-    where: { id: updatedCarcasse.examinateur_initial_user_id },
-  });
-  if (examinateur) {
-    await sendWebhook(examinateur.id, 'CARCASSE_CLOTUREE', {
-      carcasseZacharieId: updatedCarcasse.zacharie_carcasse_id,
+  await webhookExaminateurAndPremierDetenteur(updatedCarcasse, 'CARCASSE_CLOTUREE');
+}
+
+// Chaque side-effect est isolé : l'échec de l'un n'empêche pas les suivants.
+async function runSideEffect<T>(
+  step: string,
+  carcasse: Carcasse,
+  user: User,
+  fn: () => Promise<T>
+): Promise<T | undefined> {
+  try {
+    return await fn();
+  } catch (error) {
+    capture(error as Error, {
+      extra: { context: 'carcasse_side_effects', step, zacharieCarcasseId: carcasse.zacharie_carcasse_id },
+      user,
     });
-  }
-  if (updatedCarcasse.premier_detenteur_user_id !== examinateur?.id) {
-    const premierDetenteur = await prisma.user.findUnique({
-      where: { id: updatedCarcasse.premier_detenteur_user_id },
-    });
-    await sendWebhook(premierDetenteur.id, 'CARCASSE_CLOTUREE', {
-      carcasseZacharieId: updatedCarcasse.zacharie_carcasse_id,
-    });
+    return undefined;
   }
 }
 
@@ -778,22 +759,27 @@ export async function runCarcasseUpdateSideEffects(
   updatedCarcasse: Carcasse,
   user: User
 ) {
-  await trackFirstFeiTreated(existingCarcasse, updatedCarcasse, user);
-  await trackEtgFirstFei(existingCarcasse, updatedCarcasse);
-  await notifySaisieChasseur(existingCarcasse, updatedCarcasse);
-  await notifyManquanteChasseur(existingCarcasse, updatedCarcasse);
-  await notifyRefusChasseur(existingCarcasse, updatedCarcasse);
-  await notifyRenvoiExpediteur(existingCarcasse, updatedCarcasse);
-  await closeFeiAndNotifyChasseurOnSviCarcasseClose(existingCarcasse, updatedCarcasse);
-  await checkCertificat(existingCarcasse, updatedCarcasse);
+  const run = <T>(step: string, fn: (existing: Carcasse, updated: Carcasse) => Promise<T>) =>
+    runSideEffect(step, updatedCarcasse, user, () => fn(existingCarcasse, updatedCarcasse));
 
-  const handledBySvi = await notifySviAssignment(existingCarcasse, updatedCarcasse);
-  if (handledBySvi) return;
+  await run('trackFirstFeiTreated', (e, u) => trackFirstFeiTreated(e, u, user));
+  await run('trackEtgFirstFei', trackEtgFirstFei);
+  await run('notifySaisieChasseur', notifySaisieChasseur);
+  await run('notifyManquanteChasseur', notifyManquanteChasseur);
+  await run('notifyRefusChasseur', notifyRefusChasseur);
+  await run('notifyRenvoiExpediteur', notifyRenvoiExpediteur);
+  await run('closeFeiAndNotifyChasseurOnSviCarcasseClose', closeFeiAndNotifyChasseurOnSviCarcasseClose);
+  await run('checkCertificat', checkCertificat);
 
-  const handledByCircuitCourt = await notifyCircuitCourt(existingCarcasse, updatedCarcasse, user);
-  if (handledByCircuitCourt) return;
+  // en cas d'échec (undefined), on ne sait pas si la transmission était pour le SVI ou le circuit court :
+  // on s'arrête pour ne pas envoyer une notification de prochain détenteur à tort.
+  const handledBySvi = await run('notifySviAssignment', notifySviAssignment);
+  if (handledBySvi !== false) return;
 
-  await notifyNextOwnerUser(existingCarcasse, updatedCarcasse, user);
-  await notifyNextOwnerEntity(existingCarcasse, updatedCarcasse, user);
-  await webhookIntermediaireClose(existingCarcasse, updatedCarcasse);
+  const handledByCircuitCourt = await run('notifyCircuitCourt', (e, u) => notifyCircuitCourt(e, u, user));
+  if (handledByCircuitCourt !== false) return;
+
+  await run('notifyNextOwnerUser', (e, u) => notifyNextOwnerUser(e, u, user));
+  await run('notifyNextOwnerEntity', (e, u) => notifyNextOwnerEntity(e, u, user));
+  await run('webhookIntermediaireClose', webhookIntermediaireClose);
 }
