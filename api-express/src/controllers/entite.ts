@@ -327,9 +327,13 @@ router.post(
 
       const result = destinataireSchema.safeParse(req.body);
       if (!result.success) {
-        const error = new Error(result.error.message);
-        res.status(406);
-        return next(error);
+        const champs = result.error.issues.map((issue) => issue.path.join('.')).join(', ');
+        res.status(400).send({
+          ok: false,
+          data: { entity: null, relation: null },
+          error: `Le formulaire est incomplet ou invalide. Veuillez vérifier les champs suivants : ${champs}.`,
+        });
+        return;
       }
 
       const body = result.data;
