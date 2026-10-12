@@ -127,6 +127,10 @@ export async function trackEtgFirstFei(existingCarcasse: Carcasse, updatedCarcas
     if (etg?.type === EntityTypes.ETG) {
       if (!etg.at_least_one_fei_treated) {
         await updateBrevoETGDealPremiereFiche(etg);
+        await prisma.entity.update({
+          where: { id: etg.id },
+          data: { at_least_one_fei_treated: updatedCarcasse.updated_at },
+        });
       }
     }
   }
@@ -356,6 +360,10 @@ export async function notifySviAssignment(
   if (svi?.type === EntityTypes.SVI) {
     if (!svi.at_least_one_fei_treated) {
       await updateBrevoSVIDealPremiereFiche(svi);
+      await prisma.entity.update({
+        where: { id: svi.id },
+        data: { at_least_one_fei_treated: updatedCarcasse.updated_at },
+      });
     }
   }
 

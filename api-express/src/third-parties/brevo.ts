@@ -795,6 +795,8 @@ async function updateBrevoETGDealPremiereFiche(etg: Entity) {
   try {
     if (DISABLED) return;
     if (etg.type !== EntityTypes.ETG) return;
+    // sans brevo_id, crmDealsGet renverrait tous les deals de Brevo
+    if (!etg.brevo_id) return;
 
     const apiInstance = new brevo.DealsApi();
     apiInstance.setApiKey(brevo.DealsApiApiKeys.apiKey, API_KEY);
@@ -812,11 +814,8 @@ async function updateBrevoETGDealPremiereFiche(etg: Entity) {
     const dealToUpdate = deals?.find((deal) => deal.attributes.pipeline === etgPipeline.pipeline);
 
     if (!dealToUpdate) {
-      capture(new Error('No deal found for ETG'), {
-        extra: {
-          etg,
-        },
-      });
+      // aucun deal ETG n'est créé automatiquement : un deal manquant est attendu
+      console.log('No deal found for ETG', etg.id);
       return;
     }
 
@@ -841,6 +840,8 @@ async function updateBrevoSVIDealPremiereFiche(svi: Entity) {
   try {
     if (DISABLED) return;
     if (svi.type !== EntityTypes.SVI) return;
+    // sans brevo_id, crmDealsGet renverrait tous les deals de Brevo
+    if (!svi.brevo_id) return;
 
     const apiInstance = new brevo.DealsApi();
     apiInstance.setApiKey(brevo.DealsApiApiKeys.apiKey, API_KEY);
@@ -858,11 +859,8 @@ async function updateBrevoSVIDealPremiereFiche(svi: Entity) {
     const dealToUpdate = deals?.find((deal) => deal.attributes.pipeline === sviPipeline.pipeline);
 
     if (!dealToUpdate) {
-      capture(new Error('No deal found for SVI'), {
-        extra: {
-          svi,
-        },
-      });
+      // aucun deal SVI n'est créé automatiquement : un deal manquant est attendu
+      console.log('No deal found for SVI', svi.id);
       return;
     }
 
