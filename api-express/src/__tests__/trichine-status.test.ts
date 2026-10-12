@@ -144,7 +144,7 @@ describe('validatePoolComposition — pool fille', () => {
   test('bloqué si le pool parent n’est pas douteux', () => {
     const parent = { ...parentDouteux, resultat_analyse: TrichineResultatAnalyse.NEGATIF };
     const echantillons = [makeComplementaire('c-1', 20)];
-    expect(validatePoolComposition({ echantillons, parent })).toMatch(/douteux/);
+    expect(validatePoolComposition({ echantillons, parent })).toMatch(/non négatif/);
   });
   test('bloqué si un complémentaire est regroupé dans un pool initial', () => {
     const echantillons = [makeComplementaire('c-1', 20)];
@@ -190,7 +190,7 @@ describe('validateNouveauPrelevement', () => {
   });
   test('complémentaire refusé sans pool douteux', () => {
     expect(prelever(TrichineType.COMPLEMENTAIRE, [pool(TrichineResultatAnalyse.NEGATIF)])).toMatch(
-      /pool douteux/
+      /pool non négatif/
     );
   });
 });

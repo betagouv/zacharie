@@ -69,7 +69,7 @@ export function validateResultForPool({
     return {
       code: 'parasite_required',
       status: 400,
-      error: 'Le parasite identifié est obligatoire pour un résultat non négatif',
+      error: 'Le parasite identifié est obligatoire pour un résultat « autre parasite identifié »',
     };
   }
   // Seul le LNR peut écraser un résultat DOUTEUX (confirmation) ; tout autre résultat est définitif
@@ -256,7 +256,7 @@ export async function applyPoolResult({
             ftp_parent_id: ftp.id,
             statut_logistique: TrichineStatutLogistiqueFTP.ENVOYEE,
             date_envoi: new Date(),
-            commentaire: `Confirmation LNR du pool ${pool.reference_pool} (résultat douteux)`,
+            commentaire: `Confirmation LNR du pool ${pool.reference_pool} (résultat non négatif)`,
           },
         })
       );
@@ -278,14 +278,14 @@ export async function applyPoolResult({
         type: TrichineNotificationType.FTP_RECUE,
         objetType: TrichineObjetType.FTP,
         objetId: lnrFtp.id,
-        title: `Pool douteux à confirmer — FTP ${lnrFtp.numero_fiche}`,
-        message: `Un laboratoire vous a transmis le pool ${pool.reference_pool} (résultat douteux) pour confirmation via la FTP ${lnrFtp.numero_fiche}.`,
+        title: `Pool non négatif à confirmer — FTP ${lnrFtp.numero_fiche}`,
+        message: `Un laboratoire vous a transmis le pool ${pool.reference_pool} (résultat non négatif) pour confirmation via la FTP ${lnrFtp.numero_fiche}.`,
         email: {
-          subject: `Pool douteux à confirmer · FTP ${lnrFtp.numero_fiche}`,
+          subject: `Pool non négatif à confirmer · FTP ${lnrFtp.numero_fiche}`,
           tone: 'warning',
           badge: 'Confirmation demandée',
-          heading: 'Un pool douteux vous est transmis pour confirmation',
-          intro: `Un laboratoire agréé a obtenu un résultat douteux sur le pool ${pool.reference_pool} et vous le transmet pour analyse de confirmation. La fiche de transmission est jointe à cet email.`,
+          heading: 'Un pool non négatif vous est transmis pour confirmation',
+          intro: `Un laboratoire agréé a obtenu un résultat non négatif sur le pool ${pool.reference_pool} et vous le transmet pour analyse de confirmation. La fiche de transmission est jointe à cet email.`,
           details: [
             { label: 'Pool', value: pool.reference_pool },
             { label: 'Fiche de transmission', value: lnrFtp.numero_fiche },
@@ -307,12 +307,12 @@ export async function applyPoolResult({
       type: TrichineNotificationType.RESULTAT_ANALYSE,
       objetType: TrichineObjetType.POOL,
       objetId: pool.id,
-      title: `Résultat douteux — pool ${pool.reference_pool}`,
+      title: `Résultat non négatif — pool ${pool.reference_pool}`,
       message: `Le laboratoire a détecté une larve dans le pool ${pool.reference_pool}. Une confirmation par le LNR est en cours. Vous pouvez réaliser des prélèvements de 2e intention pour identifier la carcasse incriminée.`,
       email: {
-        subject: `Résultat douteux · pool ${pool.reference_pool}`,
+        subject: `Résultat non négatif · pool ${pool.reference_pool}`,
         tone: 'warning',
-        badge: 'Résultat douteux',
+        badge: 'Résultat non négatif',
         heading: 'Une larve a été détectée, confirmation en cours',
         intro: `Le laboratoire a détecté une larve dans le pool ${pool.reference_pool}. Le pool a été transmis automatiquement au laboratoire national de référence (LNR) pour confirmer s’il s’agit bien de trichine.`,
         details: [

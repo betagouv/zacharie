@@ -10,7 +10,7 @@ const CONTACT_EMAIL = 'contact@zacharie.beta.gouv.fr';
 
 export const TRICHINE_RESULTAT_EMAIL_LABELS: Record<TrichineResultatAnalyse, string> = {
   NEGATIF: 'Négatif',
-  DOUTEUX: 'Douteux',
+  DOUTEUX: 'Non négatif',
   ANALYSE_IMPOSSIBLE: 'Analyse impossible',
   NON_NEGATIF: 'Parasite autre que la trichine',
   PRESENCE_PARASITE_NON_IDENTIFIE: 'Parasite non identifié',

@@ -713,7 +713,7 @@ router.post(
       return sendError(res, 403, "Ce pool n'a pas été créé par vous");
     }
     if (pool.resultat_analyse !== TrichineResultatAnalyse.DOUTEUX) {
-      return sendError(res, 400, 'Le renoncement ne concerne que les pools au résultat douteux');
+      return sendError(res, 400, 'Le renoncement ne concerne que les pools au résultat non négatif');
     }
 
     const motif = `Renoncement aux analyses de 2e intention — pool ${pool.reference_pool}`;
@@ -749,13 +749,13 @@ router.post(
       objetType: TrichineObjetType.POOL,
       objetId: pool.id,
       title: `Carcasses retirées de leur fiche — pool ${pool.reference_pool}`,
-      message: `Suite au résultat douteux du pool ${pool.reference_pool}, le premier détenteur a renoncé aux analyses de 2e intention. Les carcasses concernées sont retirées de leur fiche et ne peuvent plus être commercialisées.`,
+      message: `Suite au résultat non négatif du pool ${pool.reference_pool}, le premier détenteur a renoncé aux analyses de 2e intention. Les carcasses concernées sont retirées de leur fiche et ne peuvent plus être commercialisées.`,
       email: {
         subject: `Carcasses retirées de leur fiche · pool ${pool.reference_pool}`,
         tone: 'danger',
         badge: 'Carcasses retirées',
         heading: 'Des carcasses que vous détenez ont été retirées de leur fiche',
-        intro: `Suite au résultat douteux du pool ${pool.reference_pool}, le premier détenteur a renoncé aux analyses de 2e intention. Toutes les carcasses du pool sont retirées de leur fiche et ne peuvent plus être commercialisées.`,
+        intro: `Suite au résultat non négatif du pool ${pool.reference_pool}, le premier détenteur a renoncé aux analyses de 2e intention. Toutes les carcasses du pool sont retirées de leur fiche et ne peuvent plus être commercialisées.`,
         details: [
           { label: 'Pool', value: pool.reference_pool },
           {

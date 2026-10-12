@@ -53,7 +53,7 @@ function isClosed(ftp: LaboFTPListItem): boolean {
   return ftp.statut_logistique === TrichineStatutLogistiqueFTP.TRAITEE;
 }
 
-// Point coloré devant le n° de fiche : rouge (positif) / orange (douteux) / rien
+// Point coloré devant le n° de fiche : rouge (positif) / orange (non négatif) / rien
 function NumeroCell({ ftp }: { ftp: LaboFTPListItem }) {
   const niveau = ftpTrichineNiveau(ftp);
   return (

@@ -107,9 +107,9 @@ Les rapports d'analyses (LVD et LNR) sont accrédités COFRAC. **Zacharie ne peu
 | **LNR**                                               | Laboratoire National de Référence (ANSES Maisons-Alfort) — confirme les résultats douteux                                                      |
 | **Émetteur**                                          | Acteur qui envoie une FTP : SVI (agréé), 1er détenteur (court), LVD (vers LNR)                                                                 |
 | **Résultat négatif**                                  | Pas de larve. Carcasses du pool acceptées.                                                                                                     |
-| **Résultat douteux**                                  | LVD a détecté une larve — confirmation LNR obligatoire + analyses 2e intention (mère/fille/petite-fille) optionnelles.                         |
+| **Résultat non négatif** (`DOUTEUX`)                  | LVD a détecté une larve — confirmation LNR obligatoire + analyses 2e intention (mère/fille/petite-fille) optionnelles.                         |
 | **Analyse impossible**                                | LVD refuse le pool (échantillons non analysables). Équivalent au statut "absence d'analyse".                                                   |
-| **Résultat non négatif**                              | LNR identifie une larve autre que trichine (parasite nommé).                                                                                   |
+| **Autre parasite identifié** (`NON_NEGATIF`)          | LNR identifie une larve autre que trichine (parasite nommé).                                                                                   |
 | **Présence de parasite non identifié**                | LNR n'a pas pu identifier la larve.                                                                                                            |
 | **Résultat positif**                                  | LNR confirme la présence de trichine. Carcasse(s) à éliminer / saisir.                                                                         |
 
@@ -141,7 +141,7 @@ Ajouts modèle :
 - Voit la liste des FTP qui lui ont été envoyées
 - Saisit la date de réception
 - Refuse un pool individuel ou tous les pools d'une FTP (en masse) → `resultat_analyse = ANALYSE_IMPOSSIBLE` + `raison_refus`
-- Saisit le résultat par pool (`NEGATIF` ou `DOUTEUX`), avec saisie en masse possible
+- Saisit le résultat par pool (`NEGATIF` ou `DOUTEUX`, affiché « Non négatif »), avec saisie en masse possible
 - Upload PDF rapport COFRAC via `TrichineDocument`
 - Si `DOUTEUX` : génération auto d'une FTP vers LNR + upload photos larves
 - **Visibilité stricte** sur les données :
@@ -159,7 +159,7 @@ Ajouts modèle :
 #### Capacités LNR (en plus des capacités LVD)
 
 - Reçoit les FTP des pools douteux
-- Saisit résultat de confirmation : `NON_NEGATIF` (avec `parasite_identifie`) / `PRESENCE_PARASITE_NON_IDENTIFIE` / `POSITIF`
+- Saisit résultat de confirmation : `NON_NEGATIF` (« Autre parasite identifié », avec `parasite_identifie`) / `PRESENCE_PARASITE_NON_IDENTIFIE` / `POSITIF`
 - Upload PDF rapport COFRAC
 
 ### 3.3 Acteurs HORS V1

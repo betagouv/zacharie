@@ -328,7 +328,8 @@ router.post(
       res.status(400).send({
         ok: false,
         data: null,
-        error: 'Le retrait nécessite un résultat trichine positif, non négatif ou parasite non identifié',
+        error:
+          'Le retrait nécessite un résultat trichine positif, autre parasite identifié ou parasite non identifié',
       });
       return;
     }

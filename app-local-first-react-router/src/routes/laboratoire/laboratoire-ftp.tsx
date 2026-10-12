@@ -197,7 +197,7 @@ export default function LaboratoireFTP() {
         <Alert
           severity="info"
           small
-          description={`Cette fiche a été générée automatiquement après votre résultat douteux. Elle est destinée à ${ftp.DestinataireEntity.nom_d_usage || ftp.DestinataireEntity.raison_sociale}, qui saisira le résultat de confirmation.`}
+          description={`Cette fiche a été générée automatiquement après votre résultat non négatif. Elle est destinée à ${ftp.DestinataireEntity.nom_d_usage || ftp.DestinataireEntity.raison_sociale}, qui saisira le résultat de confirmation.`}
         />
       )}
 

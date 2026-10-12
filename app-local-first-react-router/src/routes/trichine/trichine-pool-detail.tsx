@@ -179,7 +179,9 @@ export default function TrichinePoolDetailPage() {
               <span className="fr-icon-alert-fill" />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="fr-mb-0 font-bold text-gray-900">Résultat douteux : une larve a été détectée</p>
+              <p className="fr-mb-0 font-bold text-gray-900">
+                Résultat non négatif : une larve a été détectée
+              </p>
               <p className="fr-mb-0 fr-text--sm text-gray-700">
                 {circuitAgree
                   ? 'Identifiez la carcasse concernée par des analyses de 2e intention.'

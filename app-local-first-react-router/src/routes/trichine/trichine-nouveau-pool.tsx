@@ -213,7 +213,7 @@ export default function TrichineNouveauPool() {
             <div className="fr-mb-2w rounded bg-white p-4 md:p-6 md:shadow-sm">
               <Select
                 label="Pool de rattachement"
-                hint="Un pool rattaché à un pool douteux est une analyse de 2e intention."
+                hint="Un pool rattaché à un pool non négatif est une analyse de 2e intention."
                 className="fr-mb-0"
                 nativeSelectProps={{
                   value: parentId,
@@ -231,7 +231,8 @@ export default function TrichineNouveauPool() {
                     key={pool.id}
                     value={pool.id}
                   >
-                    Pool {pool.reference_pool} (douteux) — {pool.pool_parent_id ? 'petite-fille' : 'fille'}
+                    Pool {pool.reference_pool} (non négatif) —{' '}
+                    {pool.pool_parent_id ? 'petite-fille' : 'fille'}
                   </option>
                 ))}
               </Select>
@@ -266,7 +267,7 @@ export default function TrichineNouveauPool() {
               {echantillonsProposes.length === 0 ? (
                 <p className="fr-text--sm fr-mb-0 py-8 text-center text-gray-600">
                   {parent
-                    ? `Aucun prélèvement complémentaire en attente sur les carcasses du pool ${parent.reference_pool}. Réalisez-les depuis le pool douteux.`
+                    ? `Aucun prélèvement complémentaire en attente sur les carcasses du pool ${parent.reference_pool}. Réalisez-les depuis le pool non négatif.`
                     : "Aucun échantillon en attente de regroupement. Prélevez d'abord une carcasse de sanglier."}
                 </p>
               ) : (

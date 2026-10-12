@@ -203,7 +203,7 @@ export default function LaboratoirePoolDetail() {
       {pool.TrichinePoolFTPs.length > 1 && (
         <TrichineCard
           titre="Fiches de transmission"
-          hint="Un pool douteux repart au laboratoire national de référence par une fiche de confirmation."
+          hint="Un pool non négatif repart au laboratoire national de référence par une fiche de confirmation."
         >
           <ul className="m-0 list-none space-y-2 p-0">
             {pool.TrichinePoolFTPs.map(({ TrichineFTP: fiche }) => (

@@ -204,7 +204,7 @@ describe('POST /trichine/echantillons', () => {
       .send({ ...body(['c1']), type: TrichineType.COMPLEMENTAIRE });
 
     expect(res.status).toBe(400);
-    expect(res.body.error).toMatch(/pool douteux/);
+    expect(res.body.error).toMatch(/pool non négatif/);
     expect(prisma.trichineEchantillon.create).not.toHaveBeenCalled();
   });
 

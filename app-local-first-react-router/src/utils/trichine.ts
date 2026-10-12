@@ -42,9 +42,9 @@ export const statutAnalyseLabels: Record<TrichineStatutAnalyse, string> = {
 
 export const resultatAnalyseLabels: Record<TrichineResultatAnalyse, string> = {
   [TrichineResultatAnalyse.NEGATIF]: 'Négatif',
-  [TrichineResultatAnalyse.DOUTEUX]: 'Douteux — à confirmer par le LNR',
+  [TrichineResultatAnalyse.DOUTEUX]: 'Non négatif — à confirmer par le LNR',
   [TrichineResultatAnalyse.ANALYSE_IMPOSSIBLE]: 'Analyse impossible',
-  [TrichineResultatAnalyse.NON_NEGATIF]: 'Non négatif (autre parasite)',
+  [TrichineResultatAnalyse.NON_NEGATIF]: 'Autre parasite identifié',
   [TrichineResultatAnalyse.PRESENCE_PARASITE_NON_IDENTIFIE]: 'Parasite non identifié',
   [TrichineResultatAnalyse.POSITIF]: 'Positif — trichine confirmée',
 };
@@ -154,9 +154,9 @@ export function poolEnAttenteIpm2(
 // Libellés courts (pour badges de liste ; resultatAnalyseLabels est trop long)
 export const resultatCourtLabels: Record<TrichineResultatAnalyse, string> = {
   [TrichineResultatAnalyse.NEGATIF]: 'Négatif',
-  [TrichineResultatAnalyse.DOUTEUX]: 'Douteux',
+  [TrichineResultatAnalyse.DOUTEUX]: 'Non négatif',
   [TrichineResultatAnalyse.ANALYSE_IMPOSSIBLE]: 'Impossible',
-  [TrichineResultatAnalyse.NON_NEGATIF]: 'Non négatif',
+  [TrichineResultatAnalyse.NON_NEGATIF]: 'Autre parasite',
   [TrichineResultatAnalyse.PRESENCE_PARASITE_NON_IDENTIFIE]: 'Parasite ?',
   [TrichineResultatAnalyse.POSITIF]: 'Positif',
 };
@@ -356,7 +356,7 @@ function etapeResultat(resultat: TrichineResultatAnalyse): EtapeTrichine {
       };
     case TrichineResultatAnalyse.DOUTEUX:
       return {
-        label: 'Résultat douteux',
+        label: 'Résultat non négatif',
         severity: 'warning',
         explication:
           'Une larve a été détectée. Identifiez la carcasse concernée par des analyses de 2e intention.',

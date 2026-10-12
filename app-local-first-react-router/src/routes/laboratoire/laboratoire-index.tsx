@@ -83,7 +83,7 @@ export default function LaboratoireIndex() {
     ];
   }, [ftps, pools]);
 
-  // Le LNR ne reçoit que des confirmations de résultats douteux : l'alerte n'y a pas de sens.
+  // Le LNR ne reçoit que des confirmations de résultats non négatifs : l'alerte n'y a pas de sens.
   // Ailleurs, une fiche dont toutes les carcasses ont une IPM2 a été traitée par le SVI.
   const trichine = useMemo(
     () => (isLnr ? [] : ftps.filter((ftp) => ftpTrichineNiveau(ftp) !== null && ftp.carcasses_sans_ipm2 > 0)),
@@ -153,7 +153,7 @@ export default function LaboratoireIndex() {
               {trichine.length} fiche{trichine.length > 1 ? 's' : ''} avec trichine confirmée ou suspectée
             </span>
             <span className="block text-sm text-red-800">
-              À traiter en priorité : un résultat douteux part en confirmation au laboratoire national de
+              À traiter en priorité : un résultat non négatif part en confirmation au laboratoire national de
               référence.
             </span>
           </span>

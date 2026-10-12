@@ -426,7 +426,7 @@ export default function TrichinePrelevementWizard() {
       <ImpossibleDeuxiemeIntention
         basePath={basePath}
         reference={parent.reference_pool}
-        raison={`Le pool ${parent.reference_pool} n'a pas de résultat douteux. Les analyses de 2e intention ne se déclenchent qu'après un résultat douteux, pour identifier la carcasse en cause.`}
+        raison={`Le pool ${parent.reference_pool} n'a pas de résultat non négatif. Les analyses de 2e intention ne se déclenchent qu'après un résultat non négatif, pour identifier la carcasse en cause.`}
       />
     );
   }

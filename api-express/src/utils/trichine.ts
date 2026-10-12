@@ -552,7 +552,7 @@ export function validateNouveauPrelevement({
 
   if (type === TrichineType.COMPLEMENTAIRE) {
     if (!pools.some((pool) => pool.resultat_analyse === TrichineResultatAnalyse.DOUTEUX)) {
-      return `${carcasse} n'appartient à aucun pool douteux : un prélèvement complémentaire n'a pas lieu d'être`;
+      return `${carcasse} n'appartient à aucun pool non négatif : un prélèvement complémentaire n'a pas lieu d'être`;
     }
     return null;
   }
@@ -646,7 +646,7 @@ export function validatePoolComposition({
 
   // Pools complémentaires : uniquement après un résultat douteux du pool parent
   if (parent.resultat_analyse !== TrichineResultatAnalyse.DOUTEUX) {
-    return 'Un pool complémentaire ne peut être créé qu’après un résultat douteux du pool parent';
+    return 'Un pool complémentaire ne peut être créé qu’après un résultat non négatif du pool parent';
   }
   const horsParent = [...carcasseIds].filter((id) => !parent.carcasseIds.includes(id));
   if (horsParent.length) {

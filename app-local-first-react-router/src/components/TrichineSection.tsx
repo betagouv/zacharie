@@ -405,7 +405,7 @@ function RenoncerModalContent({ poolId, onDone }: { poolId: string | null; onDon
   return (
     <renoncerModal.Component title="Renoncer aux analyses de 2e intention">
       <p className="fr-text--sm">
-        Suite au résultat douteux, vous pouvez renoncer aux analyses de 2e intention. Dans ce cas,{' '}
+        Suite au résultat non négatif, vous pouvez renoncer aux analyses de 2e intention. Dans ce cas,{' '}
         <strong>toutes les carcasses du pool seront retirées de leur fiche</strong> et ne pourront plus être
         commercialisées. Les destinataires actuels seront notifiés.
       </p>
