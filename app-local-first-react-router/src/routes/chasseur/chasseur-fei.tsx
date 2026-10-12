@@ -478,7 +478,11 @@ function FEIChasseurLoaded() {
                   state={fieldHasError('commune_mise_a_mort', showBloc1Errors) ? 'error' : 'default'}
                   stateRelatedMessage={fieldErrorMessage('commune_mise_a_mort')}
                   key={fei?.commune_mise_a_mort}
-                  onSelect={(commune_mise_a_mort) => updateFei(fei.numero, { commune_mise_a_mort })}
+                  onSelect={
+                    canEdit
+                      ? (commune_mise_a_mort: string) => updateFei(fei.numero, { commune_mise_a_mort })
+                      : undefined
+                  }
                   hintText={
                     <>
                       {communesDeChasseFavorites.map((commune) => {
@@ -695,10 +699,11 @@ function FEIChasseurLoaded() {
                       autoComplete: 'off',
                       suppressHydrationWarning: true,
                       onBlur: (e) => {
+                        // une saisie incomplète du navigateur donne une valeur vide ou invalide
+                        const date = dayjs(e.target.value);
+                        if (!e.target.value || !date.isValid()) return;
                         updateFei(fei.numero, {
-                          examinateur_initial_date_approbation_mise_sur_le_marche: dayjs(
-                            e.target.value
-                          ).toDate(),
+                          examinateur_initial_date_approbation_mise_sur_le_marche: date.toDate(),
                         });
                       },
                       defaultValue: fei?.examinateur_initial_date_approbation_mise_sur_le_marche
