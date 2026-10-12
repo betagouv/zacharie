@@ -685,7 +685,8 @@ function DispatchGroupForm({
                 isClearable={!!group.recipientEntityId}
                 inputId={`${Prisma.CarcasseScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache}_${group.id}`}
                 classNamePrefix={`select-prochain-detenteur-${group.id}`}
-                required
+                // pas de `required` dans une modale : react-select rend alors un <input> sans `type`
+                // que le piège à focus DSFR prend pour un radio, et plante à l'ouverture
                 isReadOnly={!canEdit}
                 name={`${Prisma.CarcasseScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache}_${group.id}`}
               />
@@ -835,7 +836,6 @@ function DispatchGroupForm({
                     isClearable={!!group.depotEntityId}
                     inputId={`${Prisma.CarcasseScalarFieldEnum.premier_detenteur_depot_entity_id}_${group.id}`}
                     classNamePrefix={`select-ccg-${group.id}`}
-                    required
                     name={`${Prisma.CarcasseScalarFieldEnum.premier_detenteur_depot_entity_id}_${group.id}`}
                   />
                   {errorFor('depotEntityId') && (
