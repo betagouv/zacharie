@@ -357,6 +357,24 @@ router.post(
           })
         : [];
 
+    // Une écriture acceptée peut sortir la carcasse du périmètre de son auteur (ex. un renvoi à
+    // l'expéditeur vide next_owner_*). Le client la garde alors `is_synced = false` — le delta ne la
+    // renvoie plus pour basculer le flag — et la repousserait pour se la faire refuser. On lui
+    // demande de la retirer dès maintenant. Seules les carcasses déjà en base avant ce lot sont
+    // concernées : une carcasse créée ici n'a pas de périmètre « avant » à quitter.
+    const writtenExistingCarcasseIds = carcasseResults
+      .filter((cr) => !cr.isDeleted && existingCarcasseMap.has(cr.savedCarcasse.zacharie_carcasse_id))
+      .map((cr) => cr.savedCarcasse.zacharie_carcasse_id);
+    if (writtenExistingCarcasseIds.length > 0) {
+      for (const id of await scope.outOfScope(writtenExistingCarcasseIds)) {
+        shouldRemoveFromLocalStore.push({
+          kind: 'carcasse',
+          id,
+          reason: "Vous n'avez pas accès à cette carcasse",
+        });
+      }
+    }
+
     // Une carcasse retirée emporte ses lignes d'intermédiaire, et sa fiche si l'utilisateur n'a plus
     // accès à aucune de ses carcasses : le client ne les renvoie pas forcément (déjà synchronisées),
     // elles ne seraient donc jamais refusées et resteraient dans son store.
@@ -409,6 +427,10 @@ router.post(
           rejectedBodies,
           bodiesTruncated: rejected.length > rejectedBodies.length,
           userId: user.id,
+          // Distingue un bundle client périmé (mobile hors ligne, onglet jamais rechargé) d'un bug
+          // du code actuel.
+          appversion: req.headers.appversion,
+          platform: req.headers.platform,
         },
         user,
       });
