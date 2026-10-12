@@ -16,7 +16,6 @@ import {
   updateBrevoContact,
 } from '~/third-parties/brevo';
 import { BrevoTemplateId } from '~/third-parties/brevo-templates';
-import { capture } from '~/third-parties/sentry';
 import createUserId from '~/utils/createUserId';
 import { comparePassword, hashPassword } from '~/service/crypto';
 import { userFeiSelect, type UserForFei } from '~/types/user';
@@ -112,9 +111,7 @@ router.post(
 
       email = email.toLowerCase().trim();
       if (username) {
-        capture(new Error('Spam detected'), {
-          extra: { email, message: 'Spam detected' },
-        });
+        console.log('Spam detected', email);
         // honey pot
         res.status(200).send({ ok: true, data: null, message: null, error: null });
         return;
@@ -408,9 +405,7 @@ router.post(
 
       email = email.toLowerCase().trim();
       if (username) {
-        capture(new Error('Spam detected'), {
-          extra: { email, message: 'Spam detected' },
-        });
+        console.log('Spam detected', email);
         // honey pot
         res.status(200).send({ ok: true, data: null, message: null, error: null });
         return;
@@ -583,9 +578,7 @@ router.post(
 
       email = email.toLowerCase().trim();
       if (username) {
-        capture(new Error('Spam detected'), {
-          extra: { email, message: 'Spam detected' },
-        });
+        console.log('Spam detected', email);
         // honey pot
         res.status(200).send({ ok: true, data: null, message: null, error: null });
         return;
@@ -677,9 +670,7 @@ router.post(
       let { username, passwordUser, resetPasswordToken } = result.data;
 
       if (username) {
-        capture(new Error('Spam detected'), {
-          extra: { message: 'Spam detected' },
-        });
+        console.log('Spam detected');
         // honey pot
         res.status(200).send({ ok: true, data: null, message: null, error: null });
         return;
