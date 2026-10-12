@@ -73,6 +73,7 @@ async function sendEmail(props: SendEmailProps): Promise<SentEmail | false> {
       extra: {
         subject: props.subject,
         recipientsCount: props.emails.length,
+        brevoResponse: brevoErrorResponse(error).data,
       },
     });
     return false;
@@ -140,6 +141,7 @@ async function sendTemplateEmail(props: SendTemplateEmailProps): Promise<SentEma
       extra: {
         templateId: props.templateId,
         recipientsCount: props.emails.length,
+        brevoResponse: brevoErrorResponse(error).data,
       },
     });
     return false;
@@ -348,6 +350,7 @@ async function createBrevoContact(props: User, createdBy: 'ADMIN' | 'USER'): Pro
     capture(error as Error, {
       extra: {
         userId: props.id,
+        brevoResponse: brevoErrorResponse(error).data,
       },
     });
     return props;
@@ -423,7 +426,21 @@ async function createBrevoContactFromContactForm(props: ContactForm) {
   }
 }
 
-async function updateBrevoContact(props: User): Promise<User> {
+// Le SDK Brevo rejette avec l'AxiosError brute : `response.data` porte la raison donnée par Brevo.
+function brevoErrorResponse(error: unknown): { status?: number; data?: unknown } {
+  const response = (error as { response?: { status?: number; data?: unknown } })?.response;
+  return { status: response?.status, data: response?.data };
+}
+
+// SMS et WHATSAPP doivent être uniques parmi tous les contacts Brevo (y compris ceux créés hors Zacharie).
+function isBrevoDuplicatePhoneError(error: unknown): boolean {
+  const { status, data } = brevoErrorResponse(error);
+  if (status !== 400) return false;
+  return /duplicate|SMS|WHATSAPP/i.test(JSON.stringify(data ?? ''));
+}
+
+// Met à jour le contact Brevo, ou le crée s'il n'existe pas encore dans Brevo.
+async function updateBrevoContact(props: User, createdBy: 'ADMIN' | 'USER'): Promise<User> {
   try {
     if (DISABLED) return props;
     if (props.isZacharieAdmin) return props;
@@ -431,10 +448,15 @@ async function updateBrevoContact(props: User): Promise<User> {
     apiInstance.setApiKey(brevo.ContactsApiApiKeys.apiKey, API_KEY);
 
     if (!props.brevo_contact_id) {
-      const getContact = await apiInstance.getContactInfo(props.email);
-      const brevoContact = getContact.body as BrevoContact;
+      let brevoContact: BrevoContact | null = null;
+      try {
+        const getContact = await apiInstance.getContactInfo(props.email);
+        brevoContact = getContact.body as BrevoContact;
+      } catch (error) {
+        if (brevoErrorResponse(error).status !== 404) throw error;
+      }
       if (!brevoContact?.id) {
-        return props;
+        return createBrevoContact(props, createdBy);
       }
       props = await prisma.user.update({
         where: { id: props.id },
@@ -442,14 +464,23 @@ async function updateBrevoContact(props: User): Promise<User> {
       });
     }
 
+    const attributes = await formatContactAttributes(props);
     const updateContact = new brevo.UpdateContact();
-    updateContact.attributes = await formatContactAttributes(props);
-    const result = await apiInstance.updateContact(props.brevo_contact_id.toString(), updateContact);
+    updateContact.attributes = attributes;
+    try {
+      await apiInstance.updateContact(props.brevo_contact_id.toString(), updateContact);
+    } catch (error) {
+      if (!isBrevoDuplicatePhoneError(error)) throw error;
+      const { SMS: _sms, WHATSAPP: _whatsapp, ...attributesWithoutUniquePhone } = attributes;
+      updateContact.attributes = attributesWithoutUniquePhone;
+      await apiInstance.updateContact(props.brevo_contact_id.toString(), updateContact);
+    }
     return props;
   } catch (error) {
     capture(error as Error, {
       extra: {
         userId: props.id,
+        brevoResponse: brevoErrorResponse(error).data,
       },
     });
     return props;
@@ -786,6 +817,7 @@ async function updateBrevoChasseurDeal(chasseur: User) {
     capture(error as Error, {
       extra: {
         userId: chasseur.id,
+        brevoResponse: brevoErrorResponse(error).data,
       },
     });
   }

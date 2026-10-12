@@ -79,7 +79,7 @@ async function main() {
       console.log(`❌ ${user.email} — contact non créé (voir Sentry)`);
       continue;
     }
-    await updateBrevoContact(withContact);
+    await updateBrevoContact(withContact, 'ADMIN');
     if (alreadyHadContact) {
       updated++;
       console.log(`🔄 ${user.email} — contact ${withContact.brevo_contact_id} mis à jour`);

@@ -1447,7 +1447,7 @@ router.post(
         where: { id: user.id },
         data: nextUser,
       });
-      await updateBrevoContact(savedUser);
+      await updateBrevoContact(savedUser, 'USER');
       await updateBrevoChasseurDeal(savedUser);
 
       const userHasNowAllRequiredFields =
