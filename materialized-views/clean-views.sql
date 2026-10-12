@@ -18,8 +18,10 @@ DROP VIEW IF EXISTS fei_exclue_des_stats;
 DROP VIEW IF EXISTS user_view;
 DROP VIEW IF EXISTS entity_view;
 
+-- Metabase ne sait pas filtrer une colonne tableau : roles_texte expose les rôles en texte
+-- (un seul rôle par utilisateur, séparés par une virgule sinon).
 CREATE VIEW user_view AS
-SELECT u.*
+SELECT u.*, array_to_string(u.roles, ', ') AS roles_texte
 FROM "User" u
 WHERE u.deleted_at IS NULL
   AND u."isZacharieAdmin" = FALSE
@@ -32,53 +34,50 @@ WHERE e.deleted_at IS NULL
   AND e.exclude_from_stats = FALSE;
 
 -- Fiches où apparaît un compte ou une entité exclus des stats : sur la fiche (créateur, examinateur,
--- premier détenteur), sur l'une de ses carcasses (détenteurs successifs, dépôt, SVI) ou sur l'une de
--- ses lignes d'intermédiaire. version_user_id n'est pas un acteur (auteur technique de la dernière écriture).
+-- premier détenteur), sur l'une de ses carcasses (détenteurs successifs, SVI) ou sur l'une de ses
+-- lignes d'intermédiaire. version_user_id n'est pas un acteur (auteur technique de la dernière écriture).
+-- On part des quelques comptes et entités exclus, une branche par colonne : chaque branche lit l'index
+-- de la colonne au lieu de parcourir toute la table. Seules des colonnes indexées sont lues, sauf
+-- Fei.premier_detenteur_entity_id (table petite).
 CREATE VIEW fei_exclue_des_stats AS
-SELECT f.numero AS fei_numero
-FROM "Fei" f
-WHERE EXISTS (
-    SELECT 1 FROM "User" u
-    WHERE u.exclude_from_stats
-      AND u.id IN (f.created_by_user_id, f.examinateur_initial_user_id, f.premier_detenteur_user_id)
-  )
-  OR EXISTS (
-    SELECT 1 FROM "Entity" e
-    WHERE e.exclude_from_stats
-      AND e.id = f.premier_detenteur_entity_id
-  )
+SELECT numero AS fei_numero FROM "Fei"
+WHERE created_by_user_id IN (SELECT id FROM "User" WHERE exclude_from_stats)
 UNION
-SELECT c.fei_numero
-FROM "Carcasse" c
-WHERE EXISTS (
-    SELECT 1 FROM "User" u
-    WHERE u.exclude_from_stats
-      AND u.id IN (
-        c.current_owner_user_id, c.next_owner_user_id, c.prev_owner_user_id,
-        c.latest_intermediaire_user_id, c.svi_user_id
-      )
-  )
-  OR EXISTS (
-    SELECT 1 FROM "Entity" e
-    WHERE e.exclude_from_stats
-      AND e.id IN (
-        c.current_owner_entity_id, c.next_owner_entity_id, c.prev_owner_entity_id,
-        c.latest_intermediaire_entity_id, c.premier_detenteur_depot_entity_id, c.svi_entity_id
-      )
-  )
+SELECT numero FROM "Fei"
+WHERE examinateur_initial_user_id IN (SELECT id FROM "User" WHERE exclude_from_stats)
 UNION
-SELECT ci.fei_numero
-FROM "CarcasseIntermediaire" ci
-WHERE EXISTS (
-    SELECT 1 FROM "User" u
-    WHERE u.exclude_from_stats
-      AND u.id = ci.intermediaire_user_id
-  )
-  OR EXISTS (
-    SELECT 1 FROM "Entity" e
-    WHERE e.exclude_from_stats
-      AND e.id IN (ci.intermediaire_entity_id, ci.intermediaire_depot_entity_id)
-  );
+SELECT numero FROM "Fei"
+WHERE premier_detenteur_user_id IN (SELECT id FROM "User" WHERE exclude_from_stats)
+UNION
+SELECT numero FROM "Fei"
+WHERE premier_detenteur_entity_id IN (SELECT id FROM "Entity" WHERE exclude_from_stats)
+UNION
+SELECT fei_numero FROM "Carcasse"
+WHERE current_owner_user_id IN (SELECT id FROM "User" WHERE exclude_from_stats)
+UNION
+SELECT fei_numero FROM "Carcasse"
+WHERE next_owner_user_id IN (SELECT id FROM "User" WHERE exclude_from_stats)
+UNION
+SELECT fei_numero FROM "Carcasse"
+WHERE prev_owner_user_id IN (SELECT id FROM "User" WHERE exclude_from_stats)
+UNION
+SELECT fei_numero FROM "Carcasse"
+WHERE current_owner_entity_id IN (SELECT id FROM "Entity" WHERE exclude_from_stats)
+UNION
+SELECT fei_numero FROM "Carcasse"
+WHERE next_owner_entity_id IN (SELECT id FROM "Entity" WHERE exclude_from_stats)
+UNION
+SELECT fei_numero FROM "Carcasse"
+WHERE prev_owner_entity_id IN (SELECT id FROM "Entity" WHERE exclude_from_stats)
+UNION
+SELECT fei_numero FROM "Carcasse"
+WHERE svi_entity_id IN (SELECT id FROM "Entity" WHERE exclude_from_stats)
+UNION
+SELECT fei_numero FROM "CarcasseIntermediaire"
+WHERE intermediaire_user_id IN (SELECT id FROM "User" WHERE exclude_from_stats)
+UNION
+SELECT fei_numero FROM "CarcasseIntermediaire"
+WHERE intermediaire_entity_id IN (SELECT id FROM "Entity" WHERE exclude_from_stats);
 
 CREATE VIEW fei_view AS
 SELECT f.*
