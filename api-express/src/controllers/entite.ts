@@ -378,9 +378,10 @@ router.post(
       }
 
       if (!created.entity) {
-        const error = new Error(created.error);
-        res.status(created.status);
-        return next(error);
+        res
+          .status(created.status)
+          .send({ ok: false, data: { entity: null, relation: null }, error: created.error });
+        return;
       }
 
       // le destinataire est enregistré par un chasseur ou un ETG : il devient un de ses partenaires

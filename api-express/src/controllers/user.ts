@@ -308,9 +308,7 @@ router.post(
 
       email = email.toLowerCase().trim();
       if (username) {
-        capture(new Error('Spam detected'), {
-          extra: { email, message: 'Spam detected' },
-        });
+        console.log('Spam detected', email);
         // honey pot
         res.status(200).send({ ok: true, data: null, message: null, error: null });
         return;
