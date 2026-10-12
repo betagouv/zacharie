@@ -42,7 +42,7 @@ export default function MesAssociationsDeChasse() {
     API.get({ path: 'entite/working-for' })
       .then((res) => res as EntitiesWorkingForResponse)
       .then((res) => {
-        if (res.ok) {
+        if (res.ok && res.data) {
           setAllEntitiesByTypeAndId(res.data.allEntitiesByTypeAndId);
           setUserEntitiesByTypeAndId(res.data.userEntitiesByTypeAndId);
         }

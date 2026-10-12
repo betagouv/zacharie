@@ -51,6 +51,9 @@ export const setNativeAuthToken = (token: string | null): void => {
   } catch {}
 };
 
+const UNEXPECTED_ERROR_MESSAGE =
+  "Veuillez nous excuser, cette erreur est inattendue : l'équipe technique a été prévenue. Veuillez retenter dans quelques instants ou nous contacter si l'erreur persiste.";
+
 class ApiService {
   origin = import.meta.env.VITE_API_URL;
   getUrl = (path: string, query = {}) => {
@@ -126,8 +129,14 @@ class ApiService {
           }
           return readableRes;
         } catch (e) {
+          // corps non JSON (page HTML d'un proxy, corps vide…) : on renvoie une erreur plutôt que la
+          // Response brute, dont `ok` peut valoir true sans `data`
           console.log('ERROR IN RESPONSE JSON', response);
           console.log(e);
+          return {
+            ok: false,
+            error: UNEXPECTED_ERROR_MESSAGE,
+          };
         }
       }
 
@@ -137,8 +146,7 @@ class ApiService {
       console.log(e);
       return {
         ok: false,
-        error:
-          "Veuillez nous excuser, cette erreur est inattendue : l'équipe technique a été prévenue. Veuillez retenter dans quelques instants ou nous contacter si l'erreur persiste.",
+        error: UNEXPECTED_ERROR_MESSAGE,
       };
     }
   };
