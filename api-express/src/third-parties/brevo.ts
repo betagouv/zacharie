@@ -283,7 +283,12 @@ async function formatContactAttributes(
   };
 }
 
-async function createBrevoContact(props: User, createdBy: 'ADMIN' | 'USER'): Promise<User> {
+// `notifyTeam: false` : pas de notice « Nouvelle ouverture de compte » (contact créé lors d'une mise à jour de profil).
+async function createBrevoContact(
+  props: User,
+  createdBy: 'ADMIN' | 'USER',
+  { notifyTeam = true }: { notifyTeam?: boolean } = {}
+): Promise<User> {
   try {
     if (DISABLED) return props;
     if (props.isZacharieAdmin) return props;
@@ -309,7 +314,7 @@ async function createBrevoContact(props: User, createdBy: 'ADMIN' | 'USER'): Pro
           };
           await apiInstance.updateContact(props.brevo_contact_id.toString(), updateContact);
         }
-        if (createdBy === 'USER') {
+        if (notifyTeam && createdBy === 'USER') {
           await sendEmail({
             emails: ['contact@zacharie.beta.gouv.fr'],
             subject: `Nouvelle ouverture de compte pour ${props.email}`,
@@ -338,7 +343,7 @@ async function createBrevoContact(props: User, createdBy: 'ADMIN' | 'USER'): Pro
       where: { id: props.id },
       data: { brevo_contact_id: result.body.id },
     });
-    if (createdBy === 'USER') {
+    if (notifyTeam && createdBy === 'USER') {
       await sendEmail({
         emails: ['contact@zacharie.beta.gouv.fr'],
         subject: `Nouvelle ouverture de compte pour ${props.email}`,
@@ -456,7 +461,7 @@ async function updateBrevoContact(props: User, createdBy: 'ADMIN' | 'USER'): Pro
         if (brevoErrorResponse(error).status !== 404) throw error;
       }
       if (!brevoContact?.id) {
-        return createBrevoContact(props, createdBy);
+        return createBrevoContact(props, createdBy, { notifyTeam: false });
       }
       props = await prisma.user.update({
         where: { id: props.id },
