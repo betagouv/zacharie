@@ -24,6 +24,31 @@ import { generateSaisieDocx } from '~/templates/get-saisie-docx';
 import { generateLeveeSaisieDocx } from '~/templates/get-levee-saisie-docx';
 import { generateLaissezPasserSanitaireDocx } from '~/templates/get-laissez-passer-sanitaire';
 
+// Une carcasse est dans le périmètre de l'utilisateur SVI si elle est assignée (ou en cours d'assignation)
+// à une entité pour laquelle il travaille.
+async function getUserCarcasseScope(user: User): Promise<Prisma.CarcasseWhereInput> {
+  const userEntityRelations = await prisma.entityAndUserRelations.findMany({
+    where: {
+      owner_id: user.id,
+      relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+      status: { in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER] },
+    },
+    select: { entity_id: true },
+  });
+  const userEntityIds = userEntityRelations.map((relation) => relation.entity_id);
+  return {
+    OR: [{ svi_entity_id: { in: userEntityIds } }, { next_owner_entity_id: { in: userEntityIds } }],
+  };
+}
+
+async function isCarcasseInUserScope(user: User, zacharie_carcasse_id: string): Promise<boolean> {
+  const carcasse = await prisma.carcasse.findFirst({
+    where: { zacharie_carcasse_id, ...(await getUserCarcasseScope(user)) },
+    select: { zacharie_carcasse_id: true },
+  });
+  return !!carcasse;
+}
+
 // Génère le .docx d'un certificat + son nom de fichier, selon son type.
 async function generateDocxForCertificat(
   certificat: CarcasseCertificat,
@@ -81,6 +106,10 @@ router.get(
       return;
     }
     const { zacharie_carcasse_id } = req.params;
+    if (!(await isCarcasseInUserScope(req.user, zacharie_carcasse_id))) {
+      res.status(404).send({ ok: false, data: null, error: 'Carcasse non trouvée' });
+      return;
+    }
     const certificats = await prisma.carcasseCertificat
       .findMany({
         where: {
@@ -126,6 +155,14 @@ router.get(
         data: null,
         error: 'Seul un service vétérinaire peut accéder à cette ressource',
       });
+      return;
+    }
+    if (!Object.values(CarcasseCertificatType).includes(certificatType)) {
+      res.status(400).send({ ok: false, data: null, error: 'Type de certificat inconnu' });
+      return;
+    }
+    if (!(await isCarcasseInUserScope(user, zacharie_carcasse_id))) {
+      res.status(404).send({ ok: false, data: null, error: 'Carcasse non trouvée' });
       return;
     }
 
@@ -188,9 +225,10 @@ router.get(
       return;
     }
 
-    const certificat = await prisma.carcasseCertificat.findUnique({
+    const certificat = await prisma.carcasseCertificat.findFirst({
       where: {
         certificat_id: certificat_id,
+        Carcasse: await getUserCarcasseScope(user),
       },
     });
 
@@ -248,23 +286,10 @@ router.post(
       return;
     }
 
-    // les entités pour lesquelles l'utilisateur travaille : on ne sert que leurs certificats
-    const userEntityRelations = await prisma.entityAndUserRelations.findMany({
-      where: {
-        owner_id: user.id,
-        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-        status: { in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER] },
-      },
-      select: { entity_id: true },
-    });
-    const userEntityIds = userEntityRelations.map((relation) => relation.entity_id);
-
     const certificats = await prisma.carcasseCertificat.findMany({
       where: {
         zacharie_carcasse_id: { in: zacharie_carcasse_ids },
-        Carcasse: {
-          OR: [{ svi_entity_id: { in: userEntityIds } }, { next_owner_entity_id: { in: userEntityIds } }],
-        },
+        Carcasse: await getUserCarcasseScope(user),
       },
       orderBy: { created_at: 'desc' },
     });

@@ -50,7 +50,16 @@ type NotificationToUser = {
   // Email HTML construit dans le code (ex. trichine, cf. src/templates/trichine-email.ts) ;
   // `email` reste la version texte, loggée dans le NotificationLog.
   emailHtml?: string;
+  // Adresses en copie de l'email. Elles suivent l'email du destinataire : pas d'email, pas de copie.
+  cc?: Array<string>;
 };
+
+// Résultat du canal email : SENT porte l'identifiant Brevo (`null` en test), SKIPPED couvre
+// l'utilisateur qui a désactivé les emails et l'email déjà envoyé (dédup).
+export type EmailResult =
+  | { status: 'SENT'; messageId: string | null }
+  | { status: 'FAILED' }
+  | { status: 'SKIPPED' };
 
 export default async function queueSendNotificationToUser({
   user,
@@ -62,10 +71,12 @@ export default async function queueSendNotificationToUser({
   emailTemplateId,
   emailTemplateParams,
   emailHtml,
+  cc,
   img = 'https://zacharie.beta.gouv.fr/favicon.svg',
-}: NotificationToUser) {
-  await queue.add(async () => {
-    await sendNotificationToUser({
+}: NotificationToUser): Promise<EmailResult> {
+  // `queue.add` est typé `void | T` (cas du timeout de p-queue, non configuré ici).
+  const result = await queue.add(async () => {
+    return sendNotificationToUser({
       user,
       push,
       title,
@@ -75,32 +86,36 @@ export default async function queueSendNotificationToUser({
       emailTemplateId,
       emailTemplateParams,
       emailHtml,
+      cc,
       img,
     });
   });
+  return result || { status: 'FAILED' };
 }
 
 // Les deux canaux sont indépendants : un utilisateur qui a coché PUSH et EMAIL reçoit les deux, et
 // l'échec de l'un ne doit ni empêcher l'autre ni faire remonter une erreur aux appelants (qui
 // notifient souvent plusieurs utilisateurs à la suite).
-async function sendNotificationToUser(notification: NotificationToUser) {
+async function sendNotificationToUser(notification: NotificationToUser): Promise<EmailResult> {
   const { user, title, push, email, img } = notification;
   if (user.notifications.includes(UserNotifications.PUSH)) {
     try {
       await sendPushToUser(notification);
     } catch (error) {
       console.error('error in push notification', user.id);
-      Sentry.captureException(error, { extra: { user, push, email, title, img } });
+      Sentry.captureException(error, { extra: { userId: user.id, push, email, title, img } });
     }
   }
 
-  if (user.notifications.includes(UserNotifications.EMAIL)) {
-    try {
-      await sendEmailToUser(notification);
-    } catch (error) {
-      console.error('error in email notification', user.id);
-      Sentry.captureException(error, { extra: { user, push, email, title, img } });
-    }
+  if (!user.notifications.includes(UserNotifications.EMAIL)) {
+    return { status: 'SKIPPED' };
+  }
+  try {
+    return await sendEmailToUser(notification);
+  } catch (error) {
+    console.error('error in email notification', user.id);
+    Sentry.captureException(error, { extra: { userId: user.id, push, email, title, img } });
+    return { status: 'FAILED' };
   }
 }
 
@@ -181,9 +196,9 @@ async function sendPushToUser({
         })
         .catch((error) => {
           console.error('error in web push');
-          console.error(error, web_push_subscription, title, body, img);
+          console.error(error, user.id, title);
           Sentry.captureException(error, {
-            extra: { web_push_subscription, title, body, img },
+            extra: { userId: user.id, title, body, img },
           });
         });
     }
@@ -212,7 +227,9 @@ async function sendPushToUser({
         `;
       } catch (error) {
         console.error('error while removing native push tokens', user.id);
-        Sentry.captureException(error, { extra: { user, tokensToRemove } });
+        Sentry.captureException(error, {
+          extra: { userId: user.id, tokensToRemoveCount: tokensToRemove.length },
+        });
       }
     }
     // Envoi raté : on n'écrit pas le log, sinon la dédup bloquerait définitivement le renvoi.
@@ -234,7 +251,7 @@ async function sendPushToUser({
         });
       } catch (error) {
         Sentry.captureException(error, {
-          extra: { user, body, email, title, img },
+          extra: { userId: user.id, body, email, title, img },
         });
       }
     }
@@ -254,8 +271,9 @@ async function sendEmailToUser({
   emailTemplateId,
   emailTemplateParams,
   emailHtml,
+  cc,
   img = 'https://zacharie.beta.gouv.fr/favicon.svg',
-}: NotificationToUser) {
+}: NotificationToUser): Promise<EmailResult> {
   const existingNotification = await prisma.notificationLog.findFirst({
     where: {
       user_id: user.id,
@@ -265,7 +283,7 @@ async function sendEmailToUser({
   });
   if (existingNotification) {
     console.log('Email already sent', user.id);
-    return;
+    return { status: 'SKIPPED' };
   }
   if (IS_TEST) {
     console.log(
@@ -285,7 +303,7 @@ async function sendEmailToUser({
         action: notificationLogAction,
       },
     });
-    return;
+    return { status: 'SENT', messageId: null };
   }
   console.log('SENDING EMAIL NOTIFICATION FOR REAL', user.id);
   // On attend l'envoi avant de rendre la main : c'est le `notificationLog.create` qui porte la
@@ -297,6 +315,7 @@ async function sendEmailToUser({
         templateId: emailTemplateId,
         params: emailTemplateParams,
         attachments: attachments,
+        cc,
       })
     : await sendEmail({
         emails: [user.email!],
@@ -304,12 +323,13 @@ async function sendEmailToUser({
         text: email,
         html: emailHtml,
         attachments: attachments,
+        cc,
       });
   // Envoi raté : on n'écrit pas le log, sinon la dédup bloquerait définitivement le renvoi.
   // Les senders remontent déjà l'erreur à Sentry.
   if (!sent) {
     console.error('error in send email', user.id);
-    return;
+    return { status: 'FAILED' };
   }
   try {
     await prisma.notificationLog.create({
@@ -320,6 +340,7 @@ async function sendEmailToUser({
           body: email,
           emailTemplateId,
           emailTemplateParams,
+          cc,
         }),
         type: 'EMAIL',
         email: user.email,
@@ -328,7 +349,8 @@ async function sendEmailToUser({
     });
   } catch (error) {
     Sentry.captureException(error, {
-      extra: { user, email, title, img },
+      extra: { userId: user.id, email, title, img },
     });
   }
+  return { status: 'SENT', messageId: sent.messageId };
 }

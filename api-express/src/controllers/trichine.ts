@@ -44,6 +44,7 @@ import {
   recomputeFTPTrichine,
   recomputePoolTrichine,
 } from '~/utils/trichine-status';
+import { nextVersion } from '~/utils/sync-version';
 
 const router: express.Router = express.Router();
 
@@ -729,6 +730,7 @@ router.post(
           trichine_retire_de_fei_at: now,
           trichine_retire_de_fei_motif: motif,
           trichine_retire_de_fei_user_id: req.user.id,
+          ...nextVersion(req.user.id),
         },
       });
       await logTrichineStatutChange({

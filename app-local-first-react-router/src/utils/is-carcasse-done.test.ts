@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import dayjs from 'dayjs';
-import { Fei, Carcasse, CarcasseStatus, User } from '@prisma/client';
+import { Fei, Carcasse, CarcasseStatus, FeiOwnerRole, User, UserEtgRoles } from '@prisma/client';
 import type { EntityWithUserRelation } from '@api/src/types/entity';
 import {
   isCarcasseClosedBySvi,
@@ -188,6 +188,14 @@ describe('isCarcasseUnderMyResponsability', () => {
     expect(isCarcasseUnderMyResponsability(c({ current_owner_user_id: 'me' }), me, noEntities)).toBe(true);
   });
 
+  it('held by my ETG atelier: not under the responsability of a TRANSPORT employee, but of RECEPTION', () => {
+    const heldByAtelier = c({ current_owner_role: FeiOwnerRole.ETG, current_owner_entity_id: 'mine' });
+    const transport = { id: 'me', etg_role: UserEtgRoles.TRANSPORT } as User;
+    const reception = { id: 'me', etg_role: UserEtgRoles.RECEPTION } as User;
+    expect(isCarcasseUnderMyResponsability(heldByAtelier, transport, working('mine'))).toBe(false);
+    expect(isCarcasseUnderMyResponsability(heldByAtelier, reception, working('mine'))).toBe(true);
+  });
+
   it('true when the current owner entity is one I work directly for', () => {
     expect(isCarcasseUnderMyResponsability(c({ current_owner_entity_id: 'mine' }), me, working('mine'))).toBe(
       true
@@ -222,5 +230,28 @@ describe('isCarcasseToTake', () => {
 
   it('false when there is no next owner pointing at me', () => {
     expect(isCarcasseToTake(c({ current_owner_user_id: 'me' }), me, noEntities)).toBe(false);
+  });
+
+  it('transported by my ETG to my ETG: nothing to take for a TRANSPORT employee, to take for RECEPTION', () => {
+    const transportDone = c({
+      current_owner_role: FeiOwnerRole.COLLECTEUR_PRO,
+      current_owner_entity_id: 'mine',
+      next_owner_role: FeiOwnerRole.ETG,
+      next_owner_entity_id: 'mine',
+    });
+    const transport = { id: 'me', etg_role: UserEtgRoles.TRANSPORT } as User;
+    const reception = { id: 'me', etg_role: UserEtgRoles.RECEPTION } as User;
+    expect(isCarcasseToTake(transportDone, transport, working('mine'))).toBe(false);
+    expect(isCarcasseToTake(transportDone, reception, working('mine'))).toBe(true);
+  });
+
+  it('fiche sent to my ETG by the premier détenteur: to take for a TRANSPORT employee', () => {
+    const transport = { id: 'me', etg_role: UserEtgRoles.TRANSPORT } as User;
+    const received = c({
+      current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+      next_owner_role: FeiOwnerRole.ETG,
+      next_owner_entity_id: 'mine',
+    });
+    expect(isCarcasseToTake(received, transport, working('mine'))).toBe(true);
   });
 });

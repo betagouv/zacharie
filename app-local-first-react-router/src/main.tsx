@@ -15,12 +15,20 @@ import {
 } from 'react-router';
 import { ErrorBoundary } from 'react-error-boundary';
 import UnexpectedError from './components/UnexpectedError.tsx';
-import { capture, getPerformanceContext } from './services/sentry.ts';
+import {
+  capture,
+  getPerformanceContext,
+  scrubSentryBreadcrumb,
+  scrubSentryEvent,
+} from './services/sentry.ts';
 import { initMatomo } from './services/matomo.ts';
 import 'dayjs/locale/fr';
 import dayjs from 'dayjs';
 dayjs.locale('fr');
 import { ToastContainer } from 'react-toastify';
+import OfflineSingleTabGate from './components/OfflineSingleTabGate.tsx';
+import { startTabsBroadcast } from './utils/tabs-broadcast.ts';
+import { startOfflineSingleTab } from './utils/offline-single-tab.ts';
 
 startReactDsfr({
   // defaultColorScheme: "system",
@@ -29,6 +37,9 @@ startReactDsfr({
 });
 
 registerServiceWorker();
+
+startTabsBroadcast();
+startOfflineSingleTab();
 
 // Initialize Matomo tracking
 initMatomo();
@@ -98,8 +109,9 @@ if (import.meta.env.VITE_ENV === 'prod' || import.meta.env.VITE_ENV === 'test') 
         console.error('Failed to add performance context to Sentry event', e);
       }
 
-      return event;
+      return scrubSentryEvent(event);
     },
+    beforeBreadcrumb: scrubSentryBreadcrumb,
   });
 } else {
   console.log('Sentry not init', import.meta.env.VITE_ENV);
@@ -128,7 +140,9 @@ createRoot(document.getElementById('root')!).render(
           window.dispatchEvent(new PopStateEvent('popstate'));
         }}
       >
-        <App />
+        <OfflineSingleTabGate>
+          <App />
+        </OfflineSingleTabGate>
         <ToastContainer />
       </ErrorBoundary>
     </BrowserRouter>

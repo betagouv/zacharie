@@ -2,7 +2,11 @@ import express from 'express';
 const router: express.Router = express.Router();
 import passport from 'passport';
 import { catchErrors } from '~/middlewares/errors';
-import type { CarcassesGetResponse, CarcassesRefuseesResponse } from '~/types/responses';
+import type {
+  CarcassesCountResponse,
+  CarcassesGetResponse,
+  CarcassesRefuseesResponse,
+} from '~/types/responses';
 import prisma from '~/prisma';
 import { EntityRelationType, Prisma, TrichineResultatAnalyse, UserRoles } from '@prisma/client';
 import {
@@ -19,6 +23,8 @@ import z from 'zod';
 import { capture } from '~/third-parties/sentry';
 import { userFeiSelect } from '~/types/user';
 import { getCarcasseAccessWhere } from '~/utils/carcasse-access';
+import { FORCE_FULL_RELOAD_AFTER } from '~/utils/force-full-reload';
+import { nextVersion } from '~/utils/sync-version';
 
 const zodQuerySchema = z.object({
   page: z.string(),
@@ -54,7 +60,10 @@ router.get(
     const parsedPage = parseInt(page, 10);
     const parsedLimit = parseInt(limit, 10);
     const includeDeleted = withDeleted === 'true';
-    const afterDate = Number(after) ? new Date(Number(after)) : undefined;
+    const requestedAfterDate = Number(after) ? new Date(Number(after)) : undefined;
+    // dernier pull antérieur à une correction de données : on renvoie tout le périmètre
+    const fullReload = !!requestedAfterDate && requestedAfterDate < FORCE_FULL_RELOAD_AFTER;
+    const afterDate = fullReload ? undefined : requestedAfterDate;
 
     // Base query conditions : périmètre d'accès role-aware (partagé avec /refusees/:fei_numero).
     const accessWhere = await getCarcasseAccessWhere(req.user);
@@ -160,9 +169,34 @@ router.get(
         carcasseModifRequests,
         hasMore: carcasses.length === parsedLimit,
         total,
+        fullReload,
       },
       error: '',
     });
+  })
+);
+
+// Nombre de carcasses non supprimées du périmètre de synchro (même périmètre que GET /, sans filtre
+// updated_at). Le client le compare à son store local pour remonter les écarts à Sentry.
+router.get(
+  '/count',
+  passport.authenticate('user', { session: false }),
+  catchErrors(async (req: RequestWithUser, res: express.Response<CarcassesCountResponse>) => {
+    const isExaminateurInitialNotYetActivated =
+      req.user.roles.includes(UserRoles.CHASSEUR) && !!req.user.numero_cfei;
+    if (!req.user.activated && !isExaminateurInitialNotYetActivated) {
+      res.status(400).send({ ok: false, data: null, error: "Le compte n'est pas activé" });
+      return;
+    }
+
+    const accessWhere = await getCarcasseAccessWhere(req.user);
+    if (!accessWhere) {
+      res.status(403).send({ ok: false, data: null, error: "Vous n'avez pas les permissions." });
+      return;
+    }
+
+    const count = await prisma.carcasse.count({ where: { ...accessWhere, deleted_at: null } });
+    res.status(200).send({ ok: true, data: { count }, error: '' });
   })
 );
 
@@ -340,6 +374,7 @@ router.post(
         trichine_retire_de_fei_at: new Date(),
         trichine_retire_de_fei_motif: bodyResult.data.motif,
         trichine_retire_de_fei_user_id: req.user.id,
+        ...nextVersion(req.user.id),
       },
     });
     await logTrichineStatutChange({

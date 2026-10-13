@@ -12,10 +12,7 @@ export function useMostFreshUser(_calledFrom: string) {
   const isOnline = useZustandStore((state) => state.isOnline);
   if (!isOnline) {
     if (cachedUser) {
-      Sentry.setUser({
-        email: cachedUser.email!,
-        id: cachedUser.id,
-      });
+      Sentry.setUser({ id: cachedUser.id });
     }
     return cachedUser;
   }
@@ -25,9 +22,10 @@ export function useMostFreshUser(_calledFrom: string) {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function refreshUser(_calledFrom?: string) {
   const isOnline = useZustandStore.getState().isOnline;
-  if (!isOnline) {
-    // we need this because if offLine then the service worker return the latest GET /user/me
-    // and it makes the prochain_bracelet_a_utiliser stale
+  // Hors ligne côté appareil, le service worker renverrait le dernier GET /user/me en cache, ce qui
+  // rendrait prochain_bracelet_a_utiliser obsolète. Si on est hors ligne seulement à cause d'une
+  // connexion très lente (navigator.onLine encore vrai), on retente : un succès nous remet en ligne.
+  if (!isOnline && !navigator.onLine) {
     return null;
   }
   const cachedUser = useUser.getState().user;
@@ -54,20 +52,23 @@ export async function refreshUser(_calledFrom?: string) {
     })
       .then((res) => res as UserConnexionResponse)
       .then(async (userResponse) => {
-        window.dispatchEvent(new Event('good-connection'));
-
         if (userResponse?.ok && userResponse.data?.user) {
+          // API.get renvoie { ok: false } sans lever d'erreur quand le réseau tombe :
+          // seule une vraie réponse prouve que la connexion est revenue
+          window.dispatchEvent(new Event('good-connection'));
           const user = userResponse.data.user as User;
           useUser.setState({ user });
           const apiKeyApprovals = userResponse.data?.apiKeyApprovals || [];
+          const federation = userResponse.data?.federation ?? null;
           useZustandStore.setState((state) => ({
             apiKeyApprovals,
+            federation,
             users: {
               ...state.users,
               [user.id]: user,
             },
           }));
-          Sentry.setUser({ email: user.email!, id: user.id });
+          Sentry.setUser({ id: user.id });
 
           return user;
         }

@@ -5,6 +5,7 @@ import { capture } from '~/third-parties/sentry';
 import { z } from 'zod';
 import type { SyncScope } from '~/utils/sync-scope';
 import { SyncRejectedError } from '~/utils/sync-errors';
+import { isStaleWrite, nextVersion } from '~/utils/sync-version';
 
 export interface SaveFeiResult {
   savedFei: Fei;
@@ -69,22 +70,25 @@ export async function syncFei(
       throw new Error('Fei not found');
     }
     const canDelete =
-      user.isZacharieAdmin ||
-      (user.roles.includes(UserRoles.CHASSEUR) && existingFei.examinateur_initial_user_id === user.id);
+      user.roles.includes(UserRoles.CHASSEUR) && existingFei.examinateur_initial_user_id === user.id;
     if (!canDelete) {
-      throw new SyncRejectedError('Unauthorized');
+      throw new SyncRejectedError('Vous ne pouvez pas supprimer cette fiche');
+    }
+    if (isStaleWrite(existingFei, body.version, user)) {
+      await prisma.carcasse.updateMany({ where: { fei_numero: numero }, data: { updated_at: new Date() } });
+      throw new SyncRejectedError('Version obsolète');
     }
     const deletedFei = await prisma.fei.update({
       where: { numero },
-      data: { deleted_at: body.deleted_at },
+      data: { deleted_at: body.deleted_at, ...nextVersion(user.id) },
     });
     await prisma.carcasse.updateMany({
       where: { fei_numero: numero },
-      data: { deleted_at: body.deleted_at },
+      data: { deleted_at: body.deleted_at, ...nextVersion(user.id) },
     });
     await prisma.carcasseIntermediaire.updateMany({
       where: { fei_numero: numero },
-      data: { deleted_at: body.deleted_at },
+      data: { deleted_at: body.deleted_at, ...nextVersion(user.id) },
     });
     return { savedFei: deletedFei, existingFei, isDeleted: true };
   }
@@ -93,6 +97,14 @@ export async function syncFei(
   // quel compte activé pouvait écraser les champs d'une fiche tierce en connaissant son numéro.
   if (existingFei && !(await scope.canWriteFei(existingFei))) {
     throw new SyncRejectedError("Vous n'avez pas accès à cette fiche");
+  }
+
+  // Version périmée : on ne l'écrit pas. Le delta du client (/carcasse) se fonde sur
+  // `carcasse.updated_at` et charge les fiches par leurs carcasses : on touche donc les carcasses pour
+  // qu'il récupère la version à jour.
+  if (existingFei && isStaleWrite(existingFei, body.version, user)) {
+    await prisma.carcasse.updateMany({ where: { fei_numero: numero }, data: { updated_at: new Date() } });
+    throw new SyncRejectedError('Version obsolète');
   }
 
   // Les colonnes de rattachement (créateur, examinateur initial, premier détenteur) sont celles sur
@@ -154,9 +166,6 @@ export async function syncFei(
     nextFei.heure_evisceration_derniere_carcasse = body.heure_evisceration_derniere_carcasse
       ? sanitize(body.heure_evisceration_derniere_carcasse as string)
       : null;
-  }
-  if (canWriteOwnership && body.hasOwnProperty(Prisma.FeiScalarFieldEnum.created_by_user_id)) {
-    nextFei.created_by_user_id = body.created_by_user_id ? sanitize(body.created_by_user_id as string) : null;
   }
 
   /*
@@ -222,7 +231,7 @@ export async function syncFei(
   const savedFei = existingFei
     ? await prisma.fei.update({
         where: { numero },
-        data: nextFei,
+        data: { ...nextFei, ...nextVersion(user.id) },
       })
     : await prisma.fei.create({
         data: {

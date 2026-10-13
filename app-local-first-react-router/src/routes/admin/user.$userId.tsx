@@ -8,6 +8,7 @@ import { Select } from '@codegouvfr/react-dsfr/Select';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import {
   Entity,
+  EntityRelationStatus,
   EntityRelationType,
   UserRoles,
   Prisma,
@@ -18,7 +19,6 @@ import {
 import InputCodePostalEtVille from '@app/components/InputCodePostalEtVille';
 import { Tabs, type TabsProps } from '@codegouvfr/react-dsfr/Tabs';
 import { Table } from '@codegouvfr/react-dsfr/Table';
-import departementsRegions from '@app/data/departements-regions.json';
 import type {
   AdminUserDataResponse,
   AdminFeisResponse,
@@ -34,6 +34,7 @@ import RelationEntityUser from '@app/components/RelationEntityUser';
 import { EntityWithUserRelations } from '@api/src/types/entity';
 import { toast } from 'react-toastify';
 import ConnexionButton from '@app/components/ConnexionButton';
+import AdminDeletedBanner from '@app/components/AdminDeletedBanner';
 
 const loadData = (userId: string): Promise<AdminUserDataResponse> =>
   API.get({ path: `admin/user/${userId}` }).then((res) => res as AdminUserDataResponse);
@@ -49,11 +50,11 @@ const ROLE_OPTIONS: Array<{ value: UserRoles; label: string }> = [
   { value: UserRoles.ASSOCIATION_CARITATIVE, label: 'Association caritative' },
   { value: UserRoles.REPAS_DE_CHASSE_OU_ASSOCIATIF, label: 'Repas de chasse ou associatif' },
   { value: UserRoles.CONSOMMATEUR_FINAL, label: 'Consommateur final' },
-  { value: UserRoles.FDC, label: 'Fédération Départementale (FDC)' },
-  { value: UserRoles.FRC, label: 'Fédération Régionale (FRC)' },
-  { value: UserRoles.FNC, label: 'Fédération Nationale (FNC)' },
   { value: UserRoles.LABORATOIRE, label: 'Laboratoire' },
+  { value: UserRoles.FEDERATION, label: 'Fédération (sans être chasseur)' },
 ];
+
+const FEDERATION_TYPES: EntityTypes[] = [EntityTypes.FDC, EntityTypes.FRC, EntityTypes.FNC];
 
 // Sous-bloc encadré et titré, pour structurer l'onglet Identité.
 function Section({ title, children, className }: { title: string; children: ReactNode; className?: string }) {
@@ -85,6 +86,7 @@ const initialState: State = {
     roles: [],
     role: null,
     isZacharieAdmin: false,
+    exclude_from_stats: false,
     etg_role: UserEtgRoles.RECEPTION,
     est_forme_a_l_examen_initial: false,
     numero_cfei: '',
@@ -104,7 +106,6 @@ const initialState: State = {
     prefilled: false,
     is_synced: true,
     onboarding_chasse_info_done_at: null,
-    scope_departements_codes: [],
   },
   identityDone: false,
   examinateurDone: false,
@@ -208,6 +209,23 @@ export default function AdminUser() {
     });
   };
 
+  const handleToggleExcludeFromStats = () => {
+    API.post({
+      path: `admin/user/${params.userId}`,
+      body: { exclude_from_stats: user.exclude_from_stats ? 'false' : 'true' },
+    }).then((res) => {
+      if (!res.ok) {
+        return toast.error("Une erreur est survenue lors de la mise à jour de l'utilisateur");
+      }
+      loadData(params.userId!).then((res) => {
+        if (res.ok && res.data) {
+          setUserResponseData(res.data as State);
+        }
+      });
+      toast.success(user.exclude_from_stats ? 'Réintégré dans les statistiques' : 'Exclu des statistiques');
+    });
+  };
+
   const handleToggleActivated = () => {
     API.post({
       path: `admin/user/${params.userId}`,
@@ -296,9 +314,16 @@ export default function AdminUser() {
     },
     {
       tabId: 'Peut traiter des fiches au nom de',
-      label: `Peut traiter des fiches au nom de (${userEntitiesRelations.filter((rel) => rel.EntityRelationsWithUsers.find((r) => r.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY && r.owner_id === user.id)).length})`,
+      label: `Peut traiter des fiches au nom de (${userEntitiesRelations.filter((rel) => !FEDERATION_TYPES.includes(rel.type) && rel.EntityRelationsWithUsers.find((r) => r.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY && r.owner_id === user.id)).length})`,
     },
   ];
+
+  if (user.roles.includes(UserRoles.CHASSEUR) || user.roles.includes(UserRoles.FEDERATION)) {
+    tabs.push({
+      tabId: 'Fédération',
+      label: `Fédération (${userEntitiesRelations.filter((rel) => FEDERATION_TYPES.includes(rel.type)).length})`,
+    });
+  }
 
   if (user.roles.includes(UserRoles.CHASSEUR)) {
     tabs.push({
@@ -341,464 +366,445 @@ export default function AdminUser() {
   }
 
   return (
-    <div className="fr-container fr-container--fluid">
+    <>
       <title>
         {`${user.prenom ? `${user.prenom} ${user.nom_de_famille}` : user.email} | Admin | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}
       </title>
-      <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
-        <div className="fr-col-12 p-4 md:p-0">
-          <div className="p-4 pb-32 md:p-8 md:pb-0">
-            <header
-              className={`rounded-lg border bg-white p-3 md:p-4 ${
-                user.deleted_at ? 'border-red-300 bg-red-50/40' : 'border-gray-200'
-              }`}
-            >
-              {/* Ligne 1 : identité + actions */}
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <h1 className="m-0 text-xl font-bold break-words">
-                    {fullName || user.email || 'Utilisateur sans nom'}
-                  </h1>
-                  {fullName && user.email && (
-                    <p className="m-0 text-sm break-words text-gray-500">{user.email}</p>
-                  )}
-                </div>
-                <div className="flex shrink-0 flex-wrap items-center gap-2">
-                  <ConnexionButton
-                    user={user}
-                    type="tertiary no outline"
-                  />
-                  {!user.deleted_at && (
-                    <Button
-                      type="button"
-                      priority="secondary"
-                      size="small"
-                      iconId={user.activated ? 'fr-icon-pause-circle-line' : 'fr-icon-play-circle-line'}
-                      onClick={handleToggleActivated}
-                    >
-                      {user.activated ? 'Désactiver' : 'Activer'}
-                    </Button>
-                  )}
-                  <Button
-                    type="button"
-                    priority={user.deleted_at ? 'secondary' : 'tertiary'}
-                    size="small"
-                    iconId={user.deleted_at ? 'fr-icon-arrow-go-back-line' : 'fr-icon-delete-line'}
-                    className={
-                      user.deleted_at ? undefined : 'text-red-600! [&_*]:text-red-600! [&:hover]:bg-red-50!'
-                    }
-                    onClick={handleToggleSoftDelete}
-                  >
-                    {user.deleted_at ? 'Restaurer' : 'Supprimer'}
-                  </Button>
-                </div>
-              </div>
-
-              {/* Ligne 2 : état en un coup d'œil */}
-              <div className="mt-2 flex flex-wrap items-center gap-1">
-                {user.deleted_at ? (
-                  <Badge
-                    severity="error"
-                    small
-                  >
-                    Supprimé
-                  </Badge>
-                ) : (
-                  <Badge
-                    severity={user.activated ? 'success' : 'warning'}
-                    small
-                  >
-                    {user.activated ? 'Activé' : 'Inactif'}
-                  </Badge>
-                )}
-                <Badge
-                  severity={user.onboarded_at ? 'success' : 'new'}
-                  small
-                >
-                  {user.onboarded_at ? 'Onboardé' : 'Onboarding incomplet'}
-                </Badge>
-                {user.isZacharieAdmin && (
-                  <Badge
-                    severity="info"
-                    small
-                  >
-                    Admin
-                  </Badge>
-                )}
-                {lockout.is_locked && (
-                  <Badge
-                    severity="error"
-                    small
-                  >
-                    Bloqué
-                  </Badge>
-                )}
-                {user.roles.includes(UserRoles.CHASSEUR) && (
-                  <Badge
-                    severity={user.est_forme_a_l_examen_initial ? 'success' : 'warning'}
-                    small
-                  >
-                    {user.est_forme_a_l_examen_initial ? 'Formé EI' : 'Non formé EI'}
-                  </Badge>
-                )}
-              </div>
-
-              {/* Ligne 3 : méta */}
-              <p className="mt-2 mb-0 text-xs text-gray-500">
-                {user.telephone && <>{user.telephone} · </>}
-                Créé le {dayjs(user.created_at).format('DD/MM/YYYY')}
-                {user.last_login_at && (
-                  <> · Dernière connexion {dayjs(user.last_login_at).format('DD/MM/YYYY')}</>
-                )}
-                {user.onboarded_at && <> · Onboardé le {dayjs(user.onboarded_at).format('DD/MM/YYYY')}</>}
-              </p>
-            </header>
-            {(lockout.is_locked || lockout.recent_failures > 0) && (
-              <div
-                className={`mt-4 rounded-lg border p-4 ${
-                  lockout.is_locked ? 'border-red-300 bg-red-50' : 'border-orange-300 bg-orange-50'
-                }`}
+      {user.deleted_at && (
+        <AdminDeletedBanner
+          label="Compte supprimé"
+          deletedAt={user.deleted_at}
+        />
+      )}
+      <header className="rounded-lg border border-gray-200 bg-white p-3 md:p-4">
+        {/* Ligne 1 : identité + actions */}
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="m-0 text-xl font-bold break-words">
+              {fullName || user.email || 'Utilisateur sans nom'}
+            </h1>
+            {fullName && user.email && <p className="m-0 text-sm break-words text-gray-500">{user.email}</p>}
+          </div>
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
+            <ConnexionButton
+              user={user}
+              type="tertiary no outline"
+            />
+            {!user.deleted_at && (
+              <Button
+                type="button"
+                priority="secondary"
+                size="small"
+                iconId={user.activated ? 'fr-icon-pause-circle-line' : 'fr-icon-play-circle-line'}
+                onClick={handleToggleActivated}
               >
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <h2 className="m-0 text-base font-bold">
-                      {lockout.is_locked ? 'Connexion bloquée' : 'Tentatives de connexion échouées'}
-                    </h2>
-                    <p className="mt-1 mb-0 text-sm">
-                      {lockout.is_locked ? (
-                        <>
-                          Cet utilisateur est bloqué suite à {lockout.recent_failures} tentatives échouées en
-                          moins de 15 minutes.
-                          {lockout.lockout_expires_at && (
-                            <>
-                              {' '}
-                              Le blocage expire le{' '}
-                              {dayjs(lockout.lockout_expires_at).format('DD/MM/YYYY à HH:mm')}.
-                            </>
-                          )}
-                        </>
-                      ) : (
-                        <>
-                          {lockout.recent_failures} tentative(s) échouée(s) récente(s).
-                          {lockout.last_failure_at && (
-                            <>
-                              {' '}
-                              Dernière tentative le{' '}
-                              {dayjs(lockout.last_failure_at).format('DD/MM/YYYY à HH:mm')}.
-                            </>
-                          )}
-                        </>
-                      )}
-                    </p>
-                  </div>
-                  <div className="flex shrink-0 flex-wrap items-center gap-2">
-                    {lockout.is_locked && (
-                      <Button
-                        type="button"
-                        priority="primary"
-                        size="small"
-                        iconId="fr-icon-lock-unlock-line"
-                        onClick={handleUnblock}
-                      >
-                        Débloquer
-                      </Button>
+                {user.activated ? 'Désactiver' : 'Activer'}
+              </Button>
+            )}
+            <Button
+              type="button"
+              priority={user.deleted_at ? 'secondary' : 'tertiary'}
+              size="small"
+              iconId={user.deleted_at ? 'fr-icon-arrow-go-back-line' : 'fr-icon-delete-line'}
+              className={
+                user.deleted_at ? undefined : 'text-red-600! [&_*]:text-red-600! [&:hover]:bg-red-50!'
+              }
+              onClick={handleToggleSoftDelete}
+            >
+              {user.deleted_at ? 'Restaurer' : 'Supprimer'}
+            </Button>
+          </div>
+        </div>
+
+        {/* Ligne 2 : état en un coup d'œil */}
+        <div className="mt-2 flex flex-wrap items-center gap-1">
+          {!user.deleted_at && (
+            <Badge
+              severity={user.activated ? 'success' : 'warning'}
+              small
+            >
+              {user.activated ? 'Activé' : 'Inactif'}
+            </Badge>
+          )}
+          <Badge
+            severity={user.onboarded_at ? 'success' : 'new'}
+            small
+          >
+            {user.onboarded_at ? 'Onboardé' : 'Onboarding incomplet'}
+          </Badge>
+          {user.isZacharieAdmin && (
+            <Badge
+              severity="info"
+              small
+            >
+              Admin
+            </Badge>
+          )}
+          {lockout.is_locked && (
+            <Badge
+              severity="error"
+              small
+            >
+              Bloqué
+            </Badge>
+          )}
+          {user.roles.includes(UserRoles.CHASSEUR) && (
+            <Badge
+              severity={user.est_forme_a_l_examen_initial ? 'success' : 'warning'}
+              small
+            >
+              {user.est_forme_a_l_examen_initial ? 'Formé EI' : 'Non formé EI'}
+            </Badge>
+          )}
+        </div>
+
+        {/* Ligne 3 : méta */}
+        <p className="mt-2 mb-0 text-xs text-gray-500">
+          {user.telephone && <>{user.telephone} · </>}
+          Créé le {dayjs(user.created_at).format('DD/MM/YYYY')}
+          {user.last_login_at && <> · Dernière connexion {dayjs(user.last_login_at).format('DD/MM/YYYY')}</>}
+          {user.onboarded_at && <> · Onboardé le {dayjs(user.onboarded_at).format('DD/MM/YYYY')}</>}
+        </p>
+      </header>
+      {(lockout.is_locked || lockout.recent_failures > 0) && (
+        <div
+          className={`mt-4 rounded-lg border p-4 ${
+            lockout.is_locked ? 'border-red-300 bg-red-50' : 'border-orange-300 bg-orange-50'
+          }`}
+        >
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="m-0 text-base font-bold">
+                {lockout.is_locked ? 'Connexion bloquée' : 'Tentatives de connexion échouées'}
+              </h2>
+              <p className="mt-1 mb-0 text-sm">
+                {lockout.is_locked ? (
+                  <>
+                    Cet utilisateur est bloqué suite à {lockout.recent_failures} tentatives échouées en moins
+                    de 15 minutes.
+                    {lockout.lockout_expires_at && (
+                      <>
+                        {' '}
+                        Le blocage expire le {dayjs(lockout.lockout_expires_at).format('DD/MM/YYYY à HH:mm')}.
+                      </>
                     )}
-                    <Button
-                      type="button"
-                      priority="secondary"
-                      size="small"
-                      iconId="fr-icon-mail-line"
-                      disabled={sendingResetPassword}
-                      onClick={handleSendResetPassword}
+                  </>
+                ) : (
+                  <>
+                    {lockout.recent_failures} tentative(s) échouée(s) récente(s).
+                    {lockout.last_failure_at && (
+                      <>
+                        {' '}
+                        Dernière tentative le {dayjs(lockout.last_failure_at).format('DD/MM/YYYY à HH:mm')}.
+                      </>
+                    )}
+                  </>
+                )}
+              </p>
+            </div>
+            <div className="flex shrink-0 flex-wrap items-center gap-2">
+              {lockout.is_locked && (
+                <Button
+                  type="button"
+                  priority="primary"
+                  size="small"
+                  iconId="fr-icon-lock-unlock-line"
+                  onClick={handleUnblock}
+                >
+                  Débloquer
+                </Button>
+              )}
+              <Button
+                type="button"
+                priority="secondary"
+                size="small"
+                iconId="fr-icon-mail-line"
+                disabled={sendingResetPassword}
+                onClick={handleSendResetPassword}
+              >
+                {sendingResetPassword
+                  ? 'Envoi en cours…'
+                  : 'Envoyer un lien de réinitialisation du mot de passe'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+      <Tabs
+        selectedTabId={selectedTabId}
+        tabs={tabs}
+        onTabChange={setSelectedTabId}
+        className="mt-4"
+      >
+        {selectedTabId === 'Identité' && (
+          <div className="flex flex-col gap-4">
+            {/* Rôle & accès — enregistrement direct au changement */}
+            <Checkbox
+              className="m-0"
+              options={[
+                {
+                  label: 'Administrateur Zacharie',
+                  nativeInputProps: {
+                    checked: user.isZacharieAdmin,
+                    onChange: handleToggleAdmin,
+                  },
+                },
+                {
+                  label: 'Exclure des statistiques',
+                  hintText:
+                    "Compte de test ou de démo : les fiches où il apparaît sont exclues des vues Metabase. N'a aucun effet dans l'application.",
+                  nativeInputProps: {
+                    checked: user.exclude_from_stats,
+                    onChange: handleToggleExcludeFromStats,
+                  },
+                },
+              ]}
+            />
+            <Section title="Rôle">
+              <div className="flex flex-wrap items-end gap-x-6 gap-y-2">
+                <Select
+                  label="Rôle"
+                  className="m-0 min-w-72"
+                  nativeSelectProps={{
+                    value: user.roles[0] ?? '',
+                    onChange: (e) => handleChangeRole(e.target.value as UserRoles),
+                  }}
+                >
+                  {ROLE_OPTIONS.map((option) => (
+                    <option
+                      key={option.value}
+                      value={option.value}
                     >
-                      {sendingResetPassword
-                        ? 'Envoi en cours…'
-                        : 'Envoyer un lien de réinitialisation du mot de passe'}
-                    </Button>
+                      {option.label}
+                    </option>
+                  ))}
+                </Select>
+                {user.roles.includes(UserRoles.ETG) && (
+                  <Select
+                    label="Fonction ETG"
+                    className="m-0 min-w-72"
+                    nativeSelectProps={{
+                      value: user.etg_role,
+                      onChange: (e) => {
+                        API.post({
+                          path: `admin/user/${params.userId}`,
+                          body: { etg_role: e.target.value },
+                        }).then((res) => {
+                          if (!res.ok) {
+                            return toast.error('Une erreur est survenue lors de la mise à jour');
+                          }
+                          loadData(params.userId!).then((res) => {
+                            if (res.ok && res.data) {
+                              setUserResponseData(res.data as State);
+                            }
+                          });
+                          toast.success('Fonction ETG mise à jour');
+                        });
+                      },
+                    }}
+                  >
+                    <option value={UserEtgRoles.TRANSPORT}>Transport</option>
+                    <option value={UserEtgRoles.RECEPTION}>Réception et gestion</option>
+                  </Select>
+                )}
+              </div>
+            </Section>
+
+            {/* Coordonnées + examen initial — enregistrement par le bouton */}
+            <form
+              id="user_data_form"
+              method="POST"
+              ref={idFormRef}
+              onBlur={handleUserFormBlur(idFormRef)}
+              onSubmit={(event) => event.preventDefault()}
+              className="flex flex-col gap-4"
+            >
+              <input
+                type="hidden"
+                name={Prisma.UserScalarFieldEnum.prefilled}
+                value="true"
+              />
+              <Section title="Coordonnées">
+                <div className="grid grid-cols-1 gap-x-4 md:grid-cols-2">
+                  <Input
+                    label="Nom"
+                    nativeInputProps={{
+                      id: Prisma.UserScalarFieldEnum.nom_de_famille,
+                      name: Prisma.UserScalarFieldEnum.nom_de_famille,
+                      autoComplete: 'off',
+                      defaultValue: user.nom_de_famille ?? '',
+                    }}
+                  />
+                  <Input
+                    label="Prénom"
+                    nativeInputProps={{
+                      id: Prisma.UserScalarFieldEnum.prenom,
+                      name: Prisma.UserScalarFieldEnum.prenom,
+                      autoComplete: 'off',
+                      defaultValue: user.prenom ?? '',
+                    }}
+                  />
+                  <Input
+                    label="Email"
+                    nativeInputProps={{
+                      id: Prisma.UserScalarFieldEnum.email,
+                      name: Prisma.UserScalarFieldEnum.email,
+                      autoComplete: 'off',
+                      defaultValue: user.email ?? '',
+                    }}
+                  />
+                  <Input
+                    label="Téléphone"
+                    hintText="Format attendu : 01 22 33 44 55"
+                    nativeInputProps={{
+                      id: Prisma.UserScalarFieldEnum.telephone,
+                      name: Prisma.UserScalarFieldEnum.telephone,
+                      autoComplete: 'off',
+                      defaultValue: user.telephone ?? '',
+                    }}
+                  />
+                  <Input
+                    label="Adresse"
+                    hintText="Indication : numéro et voie"
+                    nativeInputProps={{
+                      id: Prisma.UserScalarFieldEnum.addresse_ligne_1,
+                      name: Prisma.UserScalarFieldEnum.addresse_ligne_1,
+                      autoComplete: 'off',
+                      defaultValue: user.addresse_ligne_1 ?? '',
+                    }}
+                  />
+                  <Input
+                    label="Complément d'adresse (optionnel)"
+                    hintText="Indication : bâtiment, immeuble, escalier et numéro d'appartement"
+                    nativeInputProps={{
+                      id: Prisma.UserScalarFieldEnum.addresse_ligne_2,
+                      name: Prisma.UserScalarFieldEnum.addresse_ligne_2,
+                      autoComplete: 'off',
+                      defaultValue: user.addresse_ligne_2 ?? '',
+                    }}
+                  />
+                  <div className="md:col-span-2">
+                    <InputCodePostalEtVille
+                      defaultCodePostal={user.code_postal ?? ''}
+                      defaultVille={user.ville ?? ''}
+                    />
                   </div>
                 </div>
-              </div>
-            )}
-            <Tabs
-              selectedTabId={selectedTabId}
-              tabs={tabs}
-              onTabChange={setSelectedTabId}
-              className="mt-4"
-            >
-              {selectedTabId === 'Identité' && (
-                <div className="flex flex-col gap-4">
-                  {/* Rôle & accès — enregistrement direct au changement */}
+              </Section>
+              {user.roles.includes(UserRoles.CHASSEUR) && (
+                <Section title="Examen initial">
                   <Checkbox
-                    className="m-0"
+                    className="mb-2!"
                     options={[
                       {
-                        label: 'Administrateur Zacharie',
+                        label: "Formé à l'examen initial",
                         nativeInputProps: {
-                          checked: user.isZacharieAdmin,
-                          onChange: handleToggleAdmin,
+                          checked: !!user.est_forme_a_l_examen_initial,
+                          onChange: handleToggleFormeExamenInitial,
                         },
                       },
                     ]}
                   />
-                  <Section title="Rôle">
-                    <div className="flex flex-wrap items-end gap-x-6 gap-y-2">
-                      <Select
-                        label="Rôle"
-                        className="m-0 min-w-72"
-                        nativeSelectProps={{
-                          value: user.roles[0] ?? '',
-                          onChange: (e) => handleChangeRole(e.target.value as UserRoles),
-                        }}
-                      >
-                        {ROLE_OPTIONS.map((option) => (
-                          <option
-                            key={option.value}
-                            value={option.value}
-                          >
-                            {option.label}
-                          </option>
-                        ))}
-                      </Select>
-                      {user.roles.includes(UserRoles.ETG) && (
-                        <Select
-                          label="Fonction ETG"
-                          className="m-0 min-w-72"
-                          nativeSelectProps={{
-                            value: user.etg_role,
-                            onChange: (e) => {
-                              API.post({
-                                path: `admin/user/${params.userId}`,
-                                body: { etg_role: e.target.value },
-                              }).then((res) => {
-                                if (!res.ok) {
-                                  return toast.error('Une erreur est survenue lors de la mise à jour');
-                                }
-                                loadData(params.userId!).then((res) => {
-                                  if (res.ok && res.data) {
-                                    setUserResponseData(res.data as State);
-                                  }
-                                });
-                                toast.success('Fonction ETG mise à jour');
-                              });
-                            },
-                          }}
-                        >
-                          <option value={UserEtgRoles.TRANSPORT}>Transport</option>
-                          <option value={UserEtgRoles.RECEPTION}>Réception et gestion</option>
-                        </Select>
-                      )}
-                    </div>
-                  </Section>
-
-                  {/* Coordonnées + examen initial — enregistrement par le bouton */}
-                  <form
-                    id="user_data_form"
-                    method="POST"
-                    ref={idFormRef}
-                    onBlur={handleUserFormBlur(idFormRef)}
-                    onSubmit={(event) => event.preventDefault()}
-                    className="flex flex-col gap-4"
-                  >
-                    <input
-                      type="hidden"
-                      name={Prisma.UserScalarFieldEnum.prefilled}
-                      value="true"
-                    />
-                    <Section title="Coordonnées">
-                      <div className="grid grid-cols-1 gap-x-4 md:grid-cols-2">
-                        <Input
-                          label="Nom"
-                          nativeInputProps={{
-                            id: Prisma.UserScalarFieldEnum.nom_de_famille,
-                            name: Prisma.UserScalarFieldEnum.nom_de_famille,
-                            autoComplete: 'off',
-                            defaultValue: user.nom_de_famille ?? '',
-                          }}
-                        />
-                        <Input
-                          label="Prénom"
-                          nativeInputProps={{
-                            id: Prisma.UserScalarFieldEnum.prenom,
-                            name: Prisma.UserScalarFieldEnum.prenom,
-                            autoComplete: 'off',
-                            defaultValue: user.prenom ?? '',
-                          }}
-                        />
-                        <Input
-                          label="Email"
-                          nativeInputProps={{
-                            id: Prisma.UserScalarFieldEnum.email,
-                            name: Prisma.UserScalarFieldEnum.email,
-                            autoComplete: 'off',
-                            defaultValue: user.email ?? '',
-                          }}
-                        />
-                        <Input
-                          label="Téléphone"
-                          hintText="Format attendu : 01 22 33 44 55"
-                          nativeInputProps={{
-                            id: Prisma.UserScalarFieldEnum.telephone,
-                            name: Prisma.UserScalarFieldEnum.telephone,
-                            autoComplete: 'off',
-                            defaultValue: user.telephone ?? '',
-                          }}
-                        />
-                        <Input
-                          label="Adresse"
-                          hintText="Indication : numéro et voie"
-                          nativeInputProps={{
-                            id: Prisma.UserScalarFieldEnum.addresse_ligne_1,
-                            name: Prisma.UserScalarFieldEnum.addresse_ligne_1,
-                            autoComplete: 'off',
-                            defaultValue: user.addresse_ligne_1 ?? '',
-                          }}
-                        />
-                        <Input
-                          label="Complément d'adresse (optionnel)"
-                          hintText="Indication : bâtiment, immeuble, escalier et numéro d'appartement"
-                          nativeInputProps={{
-                            id: Prisma.UserScalarFieldEnum.addresse_ligne_2,
-                            name: Prisma.UserScalarFieldEnum.addresse_ligne_2,
-                            autoComplete: 'off',
-                            defaultValue: user.addresse_ligne_2 ?? '',
-                          }}
-                        />
-                        <div className="md:col-span-2">
-                          <InputCodePostalEtVille
-                            defaultCodePostal={user.code_postal ?? ''}
-                            defaultVille={user.ville ?? ''}
-                          />
-                        </div>
-                      </div>
-                    </Section>
-                    {user.roles.includes(UserRoles.CHASSEUR) && (
-                      <Section title="Examen initial">
-                        <Checkbox
-                          className="mb-2!"
-                          options={[
-                            {
-                              label: "Formé à l'examen initial",
-                              nativeInputProps: {
-                                checked: !!user.est_forme_a_l_examen_initial,
-                                onChange: handleToggleFormeExamenInitial,
-                              },
-                            },
-                          ]}
-                        />
-                        <Input
-                          label="Numéro d'attestation de Chasseur Formé à l'Examen Initial"
-                          hintText="De la forme CFEI-DEP-AA-123 ou DEP-FREI-YY-001"
-                          disabled={!user.est_forme_a_l_examen_initial}
-                          nativeInputProps={{
-                            id: Prisma.UserScalarFieldEnum.numero_cfei,
-                            name: Prisma.UserScalarFieldEnum.numero_cfei,
-                            autoComplete: 'off',
-                            defaultValue: user.numero_cfei ?? '',
-                          }}
-                        />
-                        {!user.est_forme_a_l_examen_initial ? null : user.numero_cfei ? (
-                          officialCfei ? (
-                            <Alert
-                              severity="success"
-                              small
-                              className="mb-0"
-                              description={`CFEI trouvé dans la liste officielle : ${officialCfei.nom ?? ''} ${officialCfei.prenom ?? ''}${officialCfei.departement ? ` — Département ${officialCfei.departement}` : ''}`}
-                            />
-                          ) : (
-                            <Alert
-                              severity="error"
-                              small
-                              className="mb-0"
-                              description="CFEI non trouvé dans la liste officielle"
-                            />
-                          )
-                        ) : (
-                          <Alert
-                            severity="warning"
-                            small
-                            className="mb-0"
-                            description="Numéro CFEI non renseigné"
-                          />
-                        )}
-                      </Section>
-                    )}
-                    <div className="fixed bottom-16 left-0 z-50 flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:relative md:bottom-0 md:w-auto md:items-start md:shadow-none">
-                      <ButtonsGroup
-                        buttons={[
-                          {
-                            children: 'Enregistrer',
-                            type: 'submit',
-                            nativeButtonProps: {
-                              form: 'user_data_form',
-                            },
-                          },
-                        ]}
+                  <Input
+                    label="Numéro d'attestation de Chasseur Formé à l'Examen Initial"
+                    hintText="De la forme CFEI-DEP-AA-123 ou DEP-FREI-YY-001"
+                    disabled={!user.est_forme_a_l_examen_initial}
+                    nativeInputProps={{
+                      id: Prisma.UserScalarFieldEnum.numero_cfei,
+                      name: Prisma.UserScalarFieldEnum.numero_cfei,
+                      autoComplete: 'off',
+                      defaultValue: user.numero_cfei ?? '',
+                    }}
+                  />
+                  {!user.est_forme_a_l_examen_initial ? null : user.numero_cfei ? (
+                    officialCfei ? (
+                      <Alert
+                        severity="success"
+                        small
+                        className="mb-0"
+                        description={`CFEI trouvé dans la liste officielle : ${officialCfei.nom ?? ''} ${officialCfei.prenom ?? ''}${officialCfei.departement ? ` — Département ${officialCfei.departement}` : ''}`}
                       />
-                    </div>
-                  </form>
-
-                  {/* Périmètre départements — repliable, enregistrement par son propre bouton */}
-                  <Section title="Périmètre départements">
-                    <details>
-                      <summary className="cursor-pointer text-sm font-medium text-gray-700">
-                        {user.scope_departements_codes?.length ?? 0} département(s) — afficher / modifier
-                      </summary>
-                      <div className="mt-4">
-                        <DepartementsScope
-                          userId={user.id}
-                          initialCodes={user.scope_departements_codes ?? []}
-                          onSaved={() => {
-                            loadData(user.id).then((res) => {
-                              if (res.ok && res.data) setUserResponseData(res.data as State);
-                            });
-                          }}
-                        />
-                      </div>
-                    </details>
-                  </Section>
-                </div>
+                    ) : (
+                      <Alert
+                        severity="error"
+                        small
+                        className="mb-0"
+                        description="CFEI non trouvé dans la liste officielle"
+                      />
+                    )
+                  ) : (
+                    <Alert
+                      severity="warning"
+                      small
+                      className="mb-0"
+                      description="Numéro CFEI non renseigné"
+                    />
+                  )}
+                </Section>
               )}
-              {selectedTabId === 'Peut traiter des fiches au nom de' && (
-                <PeutEnvoyerDesFichesAOuTraiterAuNomDe
-                  relationType={EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY}
-                  id={selectedTabId}
-                  userResponseData={userResponseData}
-                  setUserResponseData={setUserResponseData}
+              <div className="fixed bottom-16 left-0 z-50 flex w-full flex-col bg-white p-6 pb-2 shadow-2xl md:relative md:bottom-0 md:w-auto md:items-start md:shadow-none">
+                <ButtonsGroup
+                  buttons={[
+                    {
+                      children: 'Enregistrer',
+                      type: 'submit',
+                      nativeButtonProps: {
+                        form: 'user_data_form',
+                      },
+                    },
+                  ]}
                 />
-              )}
-              {selectedTabId === 'CCGs' && (
-                <PeutEnvoyerDesFichesAOuTraiterAuNomDe
-                  relationType={EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY}
-                  id={selectedTabId}
-                  userResponseData={userResponseData}
-                  setUserResponseData={setUserResponseData}
-                  forCCG
-                />
-              )}
-              {selectedTabId === 'Peut envoyer des fiches à' && (
-                <PeutEnvoyerDesFichesAOuTraiterAuNomDe
-                  relationType={EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY}
-                  id={selectedTabId}
-                  userResponseData={userResponseData}
-                  setUserResponseData={setUserResponseData}
-                />
-              )}
-              {selectedTabId === 'Fiches' && <UserFeis userId={user.id} />}
-              {selectedTabId === 'Carcasses' && <UserCarcasses userId={user.id} />}
-              {selectedTabId === 'Notifications' && <UserNotificationsLogs userId={user.id} />}
-              <div className="mt-6 mb-16 ml-6">
-                <a
-                  className="fr-link fr-icon-arrow-up-fill fr-link--icon-left"
-                  href="#top"
-                >
-                  Haut de page
-                </a>
               </div>
-            </Tabs>
+            </form>
           </div>
+        )}
+        {selectedTabId === 'Peut traiter des fiches au nom de' && (
+          <PeutEnvoyerDesFichesAOuTraiterAuNomDe
+            relationType={EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY}
+            id={selectedTabId}
+            userResponseData={userResponseData}
+            setUserResponseData={setUserResponseData}
+          />
+        )}
+        {selectedTabId === 'Fédération' && (
+          <PeutEnvoyerDesFichesAOuTraiterAuNomDe
+            relationType={EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY}
+            id={selectedTabId}
+            userResponseData={userResponseData}
+            setUserResponseData={setUserResponseData}
+            forFederation
+          />
+        )}
+        {selectedTabId === 'CCGs' && (
+          <PeutEnvoyerDesFichesAOuTraiterAuNomDe
+            relationType={EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY}
+            id={selectedTabId}
+            userResponseData={userResponseData}
+            setUserResponseData={setUserResponseData}
+            forCCG
+          />
+        )}
+        {selectedTabId === 'Peut envoyer des fiches à' && (
+          <PeutEnvoyerDesFichesAOuTraiterAuNomDe
+            relationType={EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY}
+            id={selectedTabId}
+            userResponseData={userResponseData}
+            setUserResponseData={setUserResponseData}
+          />
+        )}
+        {selectedTabId === 'Fiches' && <UserFeis userId={user.id} />}
+        {selectedTabId === 'Carcasses' && <UserCarcasses userId={user.id} />}
+        {selectedTabId === 'Notifications' && <UserNotificationsLogs userId={user.id} />}
+        <div className="mt-6 mb-16 ml-6">
+          <a
+            className="fr-link fr-icon-arrow-up-fill fr-link--icon-left"
+            href="#top"
+          >
+            Haut de page
+          </a>
         </div>
-      </div>
-    </div>
+      </Tabs>
+    </>
   );
 }
 
@@ -1072,6 +1078,7 @@ interface PeutEnvoyerDesFichesAOuTraiterAuNomDeProps {
   userResponseData: State;
   setUserResponseData: (data: State) => void;
   forCCG?: boolean;
+  forFederation?: boolean;
 }
 
 function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
@@ -1080,6 +1087,7 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
   userResponseData,
   setUserResponseData,
   forCCG,
+  forFederation = false,
 }: PeutEnvoyerDesFichesAOuTraiterAuNomDeProps) {
   const { user, userEntitiesRelations, allEntities } = userResponseData;
 
@@ -1121,7 +1129,14 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
       }
     }
     const entities = [];
+    // un utilisateur n'est membre que d'une seule fédération
+    const hasFederation = userEntitiesRelations.some((entity) => FEDERATION_TYPES.includes(entity.type));
     for (const entity of allEntities) {
+      if (FEDERATION_TYPES.includes(entity.type) !== forFederation) continue;
+      if (forFederation) {
+        if (!hasFederation && !userEntityIds[entity.id]) entities.push(entity);
+        continue;
+      }
       if (entity.type === EntityTypes.SVI) {
         if (relationType === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY) {
           // cette relation est définie dans l'ETG:
@@ -1174,7 +1189,7 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
       }
     }
     return entities;
-  }, [allEntities, userEntitiesRelations, forCCG, relationType, user.roles]);
+  }, [allEntities, userEntitiesRelations, forCCG, forFederation, relationType, user.roles]);
 
   return (
     <>
@@ -1205,6 +1220,8 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
           // if (!entity.EntityRelationsWithUsers.some((r) => r.relation === relation)) return false;
           if (forCCG && entity.type !== EntityTypes.CCG) return false;
           if (!forCCG && entity.type === EntityTypes.CCG) return false;
+          // les fédérations ont leur propre onglet
+          if (FEDERATION_TYPES.includes(entity.type) !== forFederation) return false;
           return true;
         })
         .map((entity) => {
@@ -1227,8 +1244,9 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
                 entityLink={`/app/admin/entity/${entity.id}`}
                 canApproveRelation={relationType === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY}
                 canDelete={!isSviLinkedToEtg}
+                userEntityPath="admin/user-entity"
                 onChange={() => {
-                  loadData(entity.id).then((response) => {
+                  loadData(user.id).then((response) => {
                     if (response.data) setUserResponseData(response.data!);
                   });
                 }}
@@ -1267,11 +1285,18 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
                 onSubmit={(event) => {
                   event.preventDefault();
                   API.post({
-                    path: '/user-entity',
+                    path: 'admin/user-entity',
                     body: {
                       [Prisma.EntityAndUserRelationsScalarFieldEnum.owner_id]: user.id,
                       relation: relationType,
                       [Prisma.EntityAndUserRelationsScalarFieldEnum.entity_id]: entity.id,
+                      // ajout par un admin Zacharie : validé d'office (le premier devient admin de l'entité)
+                      ...(relationType === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
+                        ? {
+                            [Prisma.EntityAndUserRelationsScalarFieldEnum.status]:
+                              EntityRelationStatus.MEMBER,
+                          }
+                        : {}),
                     },
                   }).then(() => {
                     loadData(user.id).then((response) => {
@@ -1310,226 +1335,5 @@ function PeutEnvoyerDesFichesAOuTraiterAuNomDe({
         </div>
       )}
     </>
-  );
-}
-
-const REGIONS_LABELS = (departementsRegions as { regions: Record<string, string> }).regions;
-const DEPARTEMENTS_LABELS = (departementsRegions as { departements: Record<string, string> }).departements;
-const DEPARTEMENT_TO_REGION = (departementsRegions as { departementToRegion: Record<string, string> })
-  .departementToRegion;
-
-const REGION_TO_DEPARTEMENTS: Record<string, string[]> = (() => {
-  const map: Record<string, string[]> = {};
-  for (const [dep, region] of Object.entries(DEPARTEMENT_TO_REGION)) {
-    if (!map[region]) map[region] = [];
-    map[region].push(dep);
-  }
-  for (const region of Object.keys(map)) {
-    map[region].sort((a, b) => a.localeCompare(b, 'fr', { numeric: true }));
-  }
-  return map;
-})();
-
-const ALL_DEPARTEMENT_CODES = Object.keys(DEPARTEMENTS_LABELS);
-
-interface DepartementsScopeProps {
-  userId: string;
-  initialCodes: string[];
-  onSaved: () => void;
-}
-
-function DepartementsScope({ userId, initialCodes, onSaved }: DepartementsScopeProps) {
-  const [selected, setSelected] = useState<Set<string>>(() => new Set(initialCodes));
-  const [search, setSearch] = useState('');
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    setSelected(new Set(initialCodes));
-  }, [initialCodes]);
-
-  const initialSet = useMemo(() => new Set(initialCodes), [initialCodes]);
-  const isDirty = useMemo(() => {
-    if (selected.size !== initialSet.size) return true;
-    for (const code of selected) if (!initialSet.has(code)) return true;
-    return false;
-  }, [selected, initialSet]);
-
-  const toggleDept = (code: string) => {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(code)) next.delete(code);
-      else next.add(code);
-      return next;
-    });
-  };
-
-  const setRegion = (regionCode: string, checked: boolean) => {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      for (const dep of REGION_TO_DEPARTEMENTS[regionCode] ?? []) {
-        if (checked) next.add(dep);
-        else next.delete(dep);
-      }
-      return next;
-    });
-  };
-
-  const selectAll = () => setSelected(new Set(ALL_DEPARTEMENT_CODES));
-  const unselectAll = () => setSelected(new Set());
-
-  const save = () => {
-    setSaving(true);
-    API.post({
-      path: `/admin/user/${userId}`,
-      body: {
-        [Prisma.UserScalarFieldEnum.scope_departements_codes]: Array.from(selected),
-      },
-    })
-      .then((res) => {
-        if (!res.ok) {
-          toast.error('Une erreur est survenue lors de la mise à jour du périmètre');
-          return;
-        }
-        toast.success('Périmètre mis à jour');
-        onSaved();
-      })
-      .finally(() => setSaving(false));
-  };
-
-  const matchesSearch = (depCode: string) => {
-    if (!search.trim()) return true;
-    const q = search.trim().toLowerCase();
-    const name = (DEPARTEMENTS_LABELS[depCode] ?? '').toLowerCase();
-    return depCode.toLowerCase().includes(q) || name.includes(q);
-  };
-
-  const orderedRegionCodes = useMemo(
-    () =>
-      Object.keys(REGION_TO_DEPARTEMENTS).sort((a, b) =>
-        (REGIONS_LABELS[a] ?? a).localeCompare(REGIONS_LABELS[b] ?? b, 'fr')
-      ),
-    []
-  );
-
-  const totalDeps = ALL_DEPARTEMENT_CODES.length;
-  const isNational = selected.size === totalDeps;
-  const isEmpty = selected.size === 0;
-
-  return (
-    <div className="flex flex-col gap-4">
-      <p className="m-0 text-sm">
-        Sélectionnez les départements sur lesquels cet utilisateur a un périmètre. Cliquez sur le nom d'une
-        région pour cocher ou décocher tous ses départements en une fois. Pour donner un accès national,
-        sélectionnez explicitement les {totalDeps} départements&nbsp;: la valeur est toujours déclarative,
-        zéro département ne signifie jamais «&nbsp;tout&nbsp;».
-      </p>
-      <div className="flex flex-wrap items-end gap-4">
-        <div className="grow">
-          <Input
-            label="Rechercher un département"
-            hintText="Par numéro ou par nom"
-            nativeInputProps={{
-              value: search,
-              onChange: (e) => setSearch(e.target.value),
-              placeholder: 'ex: 75, Hérault, Rhône…',
-            }}
-          />
-        </div>
-        <div className="flex flex-wrap items-center gap-2 pb-1">
-          <Button
-            type="button"
-            priority="secondary"
-            size="small"
-            onClick={selectAll}
-            disabled={isNational}
-          >
-            Sélectionner tous les départements (national)
-          </Button>
-          <Button
-            type="button"
-            priority="secondary"
-            size="small"
-            onClick={unselectAll}
-            disabled={isEmpty}
-          >
-            Tout désélectionner
-          </Button>
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-4">
-        {orderedRegionCodes.map((regionCode) => {
-          const deps = REGION_TO_DEPARTEMENTS[regionCode] ?? [];
-          const visibleDeps = deps.filter(matchesSearch);
-          if (search.trim() && visibleDeps.length === 0) return null;
-          const checkedCount = deps.filter((d) => selected.has(d)).length;
-          const allChecked = checkedCount === deps.length;
-          const someChecked = checkedCount > 0 && !allChecked;
-          return (
-            <fieldset
-              key={regionCode}
-              className="border border-gray-300 bg-white p-4"
-            >
-              <legend className="px-2 text-base font-semibold">
-                <label className="flex cursor-pointer items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={allChecked}
-                    ref={(el) => {
-                      if (el) el.indeterminate = someChecked;
-                    }}
-                    onChange={(e) => setRegion(regionCode, e.target.checked)}
-                  />
-                  <span>
-                    {REGIONS_LABELS[regionCode] ?? regionCode}{' '}
-                    <span className="font-normal text-gray-600">
-                      ({checkedCount}/{deps.length})
-                    </span>
-                  </span>
-                </label>
-              </legend>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-1 md:grid-cols-3 lg:grid-cols-4">
-                {visibleDeps.map((depCode) => (
-                  <Checkbox
-                    key={depCode}
-                    className="m-0!"
-                    options={[
-                      {
-                        label: `${depCode} — ${DEPARTEMENTS_LABELS[depCode] ?? ''}`,
-                        nativeInputProps: {
-                          checked: selected.has(depCode),
-                          onChange: () => toggleDept(depCode),
-                        },
-                      },
-                    ]}
-                  />
-                ))}
-              </div>
-            </fieldset>
-          );
-        })}
-      </div>
-
-      <div className="sticky bottom-0 z-50 flex w-full flex-col bg-white p-4 shadow-2xl md:relative md:items-start md:p-0 md:shadow-none">
-        <ButtonsGroup
-          inlineLayoutWhen="md and up"
-          buttons={[
-            {
-              children: saving ? 'Enregistrement…' : 'Enregistrer',
-              type: 'button',
-              disabled: saving || !isDirty,
-              onClick: save,
-            },
-            {
-              children: 'Annuler les modifications',
-              type: 'button',
-              priority: 'secondary',
-              disabled: saving || !isDirty,
-              onClick: () => setSelected(new Set(initialCodes)),
-            },
-          ]}
-        />
-      </div>
-    </div>
   );
 }

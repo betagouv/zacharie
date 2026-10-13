@@ -3,6 +3,7 @@ import { catchErrors } from '~/middlewares/errors';
 import crypto from 'crypto';
 const router: express.Router = express.Router();
 import prisma from '~/prisma';
+import { FEDERATION_ENTITY_TYPES } from '~/utils/federation-stats';
 import {
   ApiKeyApprovalStatus,
   ApiKeyScope,
@@ -110,6 +111,11 @@ router.get(
                   if (entity.type === EntityTypes.PREMIER_DETENTEUR) {
                     return {
                       has: UserRoles.CHASSEUR,
+                    };
+                  }
+                  if (FEDERATION_ENTITY_TYPES.includes(entity.type)) {
+                    return {
+                      hasSome: [UserRoles.CHASSEUR, UserRoles.FEDERATION],
                     };
                   }
                   if (
@@ -429,6 +435,9 @@ router.post(
       }
       if (body.hasOwnProperty(Prisma.EntityScalarFieldEnum.code_trichine)) {
         data.code_trichine = sanitizeEntityTrichineCode(body[Prisma.EntityScalarFieldEnum.code_trichine]);
+      }
+      if (body.hasOwnProperty(Prisma.EntityScalarFieldEnum.exclude_from_stats)) {
+        data.exclude_from_stats = body[Prisma.EntityScalarFieldEnum.exclude_from_stats];
       }
 
       let updatedEntity;

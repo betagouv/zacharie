@@ -7,6 +7,7 @@ import {
   View,
   TouchableOpacity,
   Text,
+  AppState,
 } from 'react-native';
 import { WebView, type WebViewMessageEvent } from '@dr.pogodin/react-native-webview';
 import { registerForPushNotificationsAsync } from './services/expo-push-notifs';
@@ -17,7 +18,12 @@ import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 import { useFonts } from 'expo-font';
-import { checkAndDownloadSpa, startSpaServer, stopSpaServer } from './utils/offline-spa';
+import {
+  checkAndDownloadSpa,
+  isSpaUpdateAvailable,
+  startSpaServer,
+  stopSpaServer,
+} from './utils/offline-spa';
 import Chargement from './components/Chargement';
 
 SplashScreen.preventAutoHideAsync();
@@ -89,6 +95,26 @@ function App() {
       }
     );
   }, []);
+
+  // Au retour au premier plan, on vérifie seulement si une nouvelle version existe : elle n'est téléchargée
+  // qu'au prochain lancement. La page affiche alors un message invitant à rouvrir l'application.
+  const isCheckingSpa = useRef(false);
+  useEffect(() => {
+    if (!spaReady) return;
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state !== 'active' || isCheckingSpa.current) return;
+      isCheckingSpa.current = true;
+      isSpaUpdateAvailable()
+        .then((updateAvailable) => {
+          if (!updateAvailable) return;
+          ref.current?.injectJavaScript(`window.dispatchEvent(new Event('zacharie-new-native-bundle'));true`);
+        })
+        .finally(() => {
+          isCheckingSpa.current = false;
+        });
+    });
+    return () => subscription.remove();
+  }, [spaReady]);
 
   // lien ouvert alors que l'app tourne déjà : la SPA navigue via pushState + popstate
   useEffect(() => {

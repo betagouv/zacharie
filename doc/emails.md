@@ -21,15 +21,15 @@ Tout passe par **Brevo** — pas de SMTP / nodemailer / autre.
 
 ## 1. Transactionnels (action directe d'un user)
 
-| Déclencheur                                          | Destinataire             | Objet                                                        | Fichier                                                     |
-| ---------------------------------------------------- | ------------------------ | ------------------------------------------------------------ | ----------------------------------------------------------- |
-| Formulaire de contact (`POST /utils/contact`)        | `contact@…` + l'émetteur | `Contact : {prenom} {nom} - {email} - {object}`              | `controllers/utils.ts:34`                                   |
-| Demande de reset mot de passe                        | l'user (prod)            | `[Zacharie] Réinitialisation de votre mot de passe`          | `controllers/user.ts:469`                                   |
-| Mot de passe changé depuis le profil                 | l'user (prod)            | `[Zacharie] Votre mot de passe a été modifié`                | `controllers/user.ts:662`                                   |
-| Invitation d'un user (entité / partenaire)           | l'invité                 | `{prenom} {nom} vous a invité à rejoindre Zacharie`          | `utils/invite-user.ts:33`                                   |
-| Destinataire pré-enregistré (chasseur, ETG ou admin) | le représentant          | `{prenom} {nom} vous a invité à rejoindre Zacharie`          | `utils/create-destinataire.ts:151`                          |
-| Fin d'onboarding                                     | l'user                   | **template Brevo `ONBOARDING_DONE` (id 76)** — sans params   | `controllers/user.ts:1234`                                  |
-| Compte activé (user ou admin)                        | l'user                   | **template Brevo `ACCOUNT_ACTIVATED` (id 77)** — param `cta` | `controllers/user.ts:1243`, `controllers/admin/user.ts:290` |
+| Déclencheur                                                                           | Destinataire             | Objet                                                                                                                                                              | Fichier                                                     |
+| ------------------------------------------------------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------- |
+| Formulaire de contact (`POST /utils/contact`)                                         | `contact@…` + l'émetteur | `Contact : {prenom} {nom} - {email} - {object}`                                                                                                                    | `controllers/utils.ts:34`                                   |
+| Demande de reset mot de passe                                                         | l'user (prod)            | `[Zacharie] Réinitialisation de votre mot de passe`                                                                                                                | `controllers/user.ts:469`                                   |
+| Mot de passe changé depuis le profil                                                  | l'user (prod)            | `[Zacharie] Votre mot de passe a été modifié`                                                                                                                      | `controllers/user.ts:662`                                   |
+| Invitation d'un user (entité, fédération, partenaire)                                 | l'invité                 | `{prenom} {nom} vous a invité à rejoindre Zacharie` (nouveau compte) ou `{prenom} {nom} vous a ajouté à sa fédération / son équipe sur Zacharie` (compte existant) | `utils/invite-user.ts:37`                                   |
+| Destinataire pré-enregistré, circuit court ou collecteur pro (chasseur, ETG ou admin) | le représentant          | `{prenom} {nom} vous a invité à rejoindre Zacharie`                                                                                                                | `utils/create-destinataire.ts:180`                          |
+| Fin d'onboarding                                                                      | l'user                   | **template Brevo `ONBOARDING_DONE` (id 76)** — sans params                                                                                                         | `controllers/user.ts:1234`                                  |
+| Compte activé (user ou admin)                                                         | l'user                   | **template Brevo `ACCOUNT_ACTIVATED` (id 77)** — param `cta`                                                                                                       | `controllers/user.ts:1243`, `controllers/admin/user.ts:290` |
 
 ## 2. Notices internes équipe (→ `contact@zacharie.beta.gouv.fr`)
 
@@ -39,29 +39,32 @@ Tout passe par **Brevo** — pas de SMTP / nodemailer / autre.
 | Inscription finie                            | `Inscription finie pour {email}…`                              | `user.ts:1213`, `admin/user.ts:272`                         |
 | N° CFEI renseigné/changé après l'inscription | `Numéro CFEI changé pour {email}…`                             | `user.ts:1213` (rien depuis l'admin)                        |
 | Asso de chasse pré-enregistrée               | `Nouvelle association de chasse pré-enregistrée dans Zacharie` | `entite.ts:299`                                             |
-| Partenaire pré-enregistré                    | `Nouveau partenaire pré-enregistré dans Zacharie`              | `utils/create-destinataire.ts:144` (chasseur, ETG ou admin) |
-| Partenaire existant rattaché par un chasseur | `Partenaire existant rattaché par un chasseur`                 | `entite.ts:351`                                             |
-| CCG pré-enregistré                           | `Nouveau CCG pré-enregistré dans Zacharie`                     | `entite.ts:445`                                             |
+| Partenaire pré-enregistré                    | `Nouveau partenaire pré-enregistré dans Zacharie`              | `utils/create-destinataire.ts:173` (chasseur, ETG ou admin) |
+| Partenaire existant rattaché par un chasseur | `Partenaire existant rattaché par un chasseur`                 | `entite.ts:357`                                             |
+| CCG pré-enregistré                           | `Nouveau CCG pré-enregistré dans Zacharie`                     | `entite.ts:451`                                             |
 
 ## 3. Notifications automatiques (event-driven, sync FEI/carcasse — email si préf. EMAIL active)
 
 Toutes via `sendNotificationToUser`. Dédup via `NotificationLog`. Déclenchées depuis les side-effects de sync (`controllers/sync.ts`).
 
-| Déclencheur                          | Destinataire                 | Objet                                                                           | Fichier                                                                |
-| ------------------------------------ | ---------------------------- | ------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| FEI transmise au SVI                 | users SVI de l'entité        | **template Brevo `FEI_TRANSMITTED_TO_SVI` (id 78)**                             | `carcasse-side-effects.ts:notifySviAssignment`                         |
-| FEI attribuée à entité circuit-court | users de l'entité (+ PDF)    | **template `FEI_ASSIGNED_CIRCUIT_COURT` (id 80)**                               | `carcasse-side-effects.ts:notifyCircuitCourt`                          |
-| FEI attribuée à un user              | le next-owner                | **template `FEI_ASSIGNED` (id 79)**                                             | `carcasse-side-effects.ts:notifyNextOwnerUser`                         |
-| FEI désattribuée (correction)        | l'ex-next-owner              | template `FEI_UNASSIGNED` (pas encore créé → texte inline)                      | `carcasse-side-effects.ts:notifyNextOwnerUser`                         |
-| FEI attribuée à une entité           | users de l'entité            | **template `FEI_ASSIGNED` (id 79)** — même template que l'attribution à un user | `carcasse-side-effects.ts:notifyNextOwnerEntity`                       |
-| Saisie SVI (partielle / totale)      | examinateur + 1er détenteur  | template `CARCASSE_SAISIE` (pas encore créé → texte inline)                     | `carcasse-side-effects.ts:notifySaisieChasseur`                        |
-| Carcasse manquante                   | examinateur + 1er détenteur  | template `CARCASSE_MANQUANTE` (pas encore créé → texte inline)                  | `carcasse-side-effects.ts:notifyManquanteChasseur`                     |
-| Carcasse refusée                     | examinateur + 1er détenteur  | template `CARCASSE_REFUS` (pas encore créé → texte inline)                      | `carcasse-side-effects.ts:notifyRefusChasseur`                         |
-| FEI clôturée (dernière carcasse)     | examinateur + 1er détenteur  | **template `FEI_CLOSED` (id 91)**                                               | `carcasse-side-effects.ts:closeFeiAndNotifyChasseurOnSviCarcasseClose` |
-| Fiche renvoyée à l'expéditeur        | l'expéditeur (current-owner) | `La fiche {numero} vous a été renvoyée.`                                        | `carcasse-side-effects.ts:notifyRenvoiExpediteur`                      |
-| Nouvel user dans une entité          | admins de l'entité           | `Un nouvel utilisateur s'est inscrit sur Zacharie au sein de votre entité`      | `user-entity.ts:217`                                                   |
-| Modif carcasse signalée (indicative) | examinateur de la FEI        | `Chasse du {date}` / `Demande de modification`                                  | `sync-carcasse-modification-request.ts:250`                            |
-| Retour de l'examinateur sur la modif | le demandeur                 | `Carcasse numéro {bracelet}` / `Demande traitée`                                | `sync-carcasse-modification-request.ts:297`                            |
+| Déclencheur                          | Destinataire                        | Objet                                                                           | Fichier                                                                |
+| ------------------------------------ | ----------------------------------- | ------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| FEI transmise au SVI                 | users SVI de l'entité               | **template Brevo `FEI_TRANSMITTED_TO_SVI` (id 78)**                             | `carcasse-side-effects.ts:notifySviAssignment`                         |
+| FEI attribuée à entité circuit-court | users de l'entité (+ PDF)           | **template `FEI_ASSIGNED_CIRCUIT_COURT` (id 80)**                               | `carcasse-side-effects.ts:notifyCircuitCourt`                          |
+| Fiche circuit court non reçue        | l'expéditeur, même sans préf. EMAIL | `La fiche {numero} n'a pas pu être envoyée à {entité}` (texte inline)           | `carcasse-side-effects.ts:alertSenderCircuitCourtNotReached`           |
+| FEI attribuée à un user              | le next-owner                       | **template `FEI_ASSIGNED` (id 79)**                                             | `carcasse-side-effects.ts:notifyNextOwnerUser`                         |
+| FEI désattribuée (correction)        | l'ex-next-owner                     | template `FEI_UNASSIGNED` (pas encore créé → texte inline)                      | `carcasse-side-effects.ts:notifyNextOwnerUser`                         |
+| FEI attribuée à une entité           | users de l'entité                   | **template `FEI_ASSIGNED` (id 79)** — même template que l'attribution à un user | `carcasse-side-effects.ts:notifyNextOwnerEntity`                       |
+| Saisie SVI (partielle / totale)      | examinateur + 1er détenteur         | **template `CARCASSE_SAISIE` (id 87)**                                          | `carcasse-side-effects.ts:notifySaisieChasseur`                        |
+| Carcasse manquante                   | examinateur + 1er détenteur         | **template `CARCASSE_MANQUANTE` (id 88)**                                       | `carcasse-side-effects.ts:notifyManquanteChasseur`                     |
+| Carcasse refusée                     | examinateur + 1er détenteur         | **template `CARCASSE_REFUS` (id 89)**                                           | `carcasse-side-effects.ts:notifyRefusChasseur`                         |
+| FEI clôturée (dernière carcasse)     | examinateur + 1er détenteur         | **template `FEI_CLOSED` (id 91)**                                               | `carcasse-side-effects.ts:closeFeiAndNotifyChasseurOnSviCarcasseClose` |
+| Fiche renvoyée à l'expéditeur        | l'expéditeur (current-owner)        | `La fiche {numero} vous a été renvoyée.`                                        | `carcasse-side-effects.ts:notifyRenvoiExpediteur`                      |
+| Nouvel user dans une entité          | admins de l'entité                  | `Un nouvel utilisateur s'est inscrit sur Zacharie au sein de votre entité`      | `user-entity.ts:238`                                                   |
+| Modif carcasse signalée (indicative) | examinateur de la FEI               | `Chasse du {date}` / `Demande de modification`                                  | `sync-carcasse-modification-request.ts:250`                            |
+| Retour de l'examinateur sur la modif | le demandeur                        | `Carcasse numéro {bracelet}` / `Demande traitée`                                | `sync-carcasse-modification-request.ts:297`                            |
+
+> **Circuit court** : l'expéditeur est en copie (cc) de l'email `FEI_ASSIGNED_CIRCUIT_COURT` envoyé au premier membre de l'entité qui a la préf. EMAIL (une seule copie, même avec plusieurs membres). L'expéditeur reçoit l'alerte « non reçue » (dédup par fiche + destinataire) quand : aucun membre de l'entité n'a la préf. EMAIL, l'envoi Brevo échoue, ou Brevo signale un rebond/blocage 10 s après l'envoi (`getEmailDeliveryFailure`, `brevo.ts`). Le template Brevo 80 doit mentionner la copie à l'expéditeur.
 
 ## 4. Cron (`npm run start-cronjobs` — prod uniquement, `cronjobs/index.ts`)
 
@@ -88,7 +91,7 @@ Le push a son propre wording, indépendant de l'email : il s'affiche sur un écr
 | FEI désattribuée                     | Fiche retirée                         | `La fiche {numero} ne vous est plus attribuée.`                                   |
 | FEI transmise au SVI                 | Nouvelle fiche à inspecter            | `{entity_name} vous a transmis {count} carcasse(s) ou lot(s) à inspecter.`        |
 | Fiche renvoyée à l'expéditeur        | Fiche renvoyée                        | `{renvoyeur} vous a renvoyé la fiche {numero}.`                                   |
-| Saisie SVI                           | Carcasse saisie                       | `{Saisie totale} {de la carcasse} de {espèce} n°{bracelet}.`                      |
+| Saisie SVI                           | Saisie partielle / Saisie totale      | `{Saisie totale} {de la carcasse} de {espèce} n°{bracelet}.`                      |
 | Carcasse manquante                   | Carcasse manquante                    | `{entity_name} a constaté que {la carcasse} … est {manquante}.`                   |
 | Carcasse refusée                     | Carcasse refusée                      | `{entity_name} a refusé {la carcasse} … Motif : {motif}`                          |
 | FEI clôturée (SVI ou cron)           | Fiche clôturée                        | `L'inspection de la fiche {numero} est terminée, les résultats sont disponibles.` |

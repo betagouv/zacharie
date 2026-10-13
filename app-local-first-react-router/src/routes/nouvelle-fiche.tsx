@@ -140,7 +140,7 @@ export default function NouvelleFiche() {
                   fei: newFei,
                 });
               } catch (carcasseError) {
-                capture(carcasseError as Error, { extra: { access_token: validatedParams.access_token } });
+                capture(carcasseError as Error);
                 // Continue with other carcasses even if one fails
                 setError(true);
               }
@@ -161,7 +161,7 @@ export default function NouvelleFiche() {
         }
       })
       .catch((error) => {
-        capture(error, { extra: { access_token: validatedParams.access_token } });
+        capture(error);
         setError(true);
         return {
           ok: false,

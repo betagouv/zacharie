@@ -4,7 +4,8 @@ import API from '@app/services/api';
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import SelectCustom from '@app/components/SelectCustom';
-import { ApiKeyApprovalStatus, ApiKeyScope, Entity, User } from '@prisma/client';
+import { ApiKeyApprovalStatus, ApiKeyScope, EntityRelationStatus, User } from '@prisma/client';
+import type { EntityWithUserRelation } from '@api/src/types/entity';
 import { Highlight } from '@codegouvfr/react-dsfr/Highlight';
 import { Link } from 'react-router';
 
@@ -107,6 +108,10 @@ export default function EtgProfilPartageDeMesDonnees() {
                                 return <li>Lire des carcasses au nom d'un utilisateur</li>;
                               case ApiKeyScope.CARCASSE_READ_FOR_ENTITY:
                                 return <li>Lire des carcasses au nom d'une entité</li>;
+                              case ApiKeyScope.USER_LOGIN_FOR_USER:
+                                return (
+                                  <li>Se connecter à mon compte Zacharie et créer des fiches en mon nom</li>
+                                );
                               default:
                                 return null;
                             }
@@ -176,6 +181,10 @@ export default function EtgProfilPartageDeMesDonnees() {
                                 return <li>Lire des carcasses au nom d'un utilisateur</li>;
                               case ApiKeyScope.CARCASSE_READ_FOR_ENTITY:
                                 return <li>Lire des carcasses au nom d'une entité</li>;
+                              case ApiKeyScope.USER_LOGIN_FOR_USER:
+                                return (
+                                  <li>Se connecter à mon compte Zacharie et créer des fiches en mon nom</li>
+                                );
                               default:
                                 return null;
                             }
@@ -246,6 +255,10 @@ export default function EtgProfilPartageDeMesDonnees() {
                                 return <li>Lire des carcasses en mon nom</li>;
                               case ApiKeyScope.CARCASSE_READ_FOR_ENTITY:
                                 return <li>Lire des carcasses au nom de mon entreprise</li>;
+                              case ApiKeyScope.USER_LOGIN_FOR_USER:
+                                return (
+                                  <li>Se connecter à mon compte Zacharie et créer des fiches en mon nom</li>
+                                );
                               default:
                                 return null;
                             }
@@ -300,11 +313,23 @@ function ApprovalStatusSelector({
   refreshApiApprovals,
 }: {
   approval: Approval;
-  entity?: Entity;
+  entity?: EntityWithUserRelation;
   user?: User;
   refreshApiApprovals: () => void;
 }) {
   const [status, setStatus] = useState<Approval['status']>(approval?.status);
+  // seul un administrateur de l'entité peut modifier l'accord donné au nom de l'entité
+  if (entity && entity.relationStatus !== EntityRelationStatus.ADMIN) {
+    return (
+      <p className="m-0 text-sm">
+        {approvalStatusOptions.find((opt) => opt.value === status)?.label}
+        <br />
+        <span className="text-xs text-gray-600">
+          Seul un administrateur de l'entité peut modifier l'accord
+        </span>
+      </p>
+    );
+  }
   return (
     <SelectCustom
       options={approvalStatusOptions}

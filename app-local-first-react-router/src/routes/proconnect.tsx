@@ -1,4 +1,5 @@
 import { Navigate, useSearchParams } from 'react-router';
+import { sanitizeRedirect } from '@app/utils/sanitize-redirect';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import { ProConnectButton } from '@codegouvfr/react-dsfr/ProConnectButton';
 import RootDisplay from '@app/components/RootDisplay';
@@ -20,7 +21,7 @@ export default function ProConnect() {
   const user = useUser((state) => state.user);
   const [searchParams] = useSearchParams();
   const error = searchParams.get('error');
-  const redirect = searchParams.get('redirect') || '/app/admin';
+  const redirect = sanitizeRedirect(searchParams.get('redirect')) || '/app/admin';
 
   if (!user) {
     return <Navigate to="/app/connexion" />;

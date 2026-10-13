@@ -3,8 +3,8 @@
 
 import * as IDB from 'idb-keyval';
 
-const CACHE_NAME = 'zacharie-pwa-cache-v3';
-const previousCacheNames = ['zacharie-pwa-cache-v0', 'zacharie-pwa-cache-v1', 'zacharie-pwa-cache-v2'];
+// le cache ne contient que les fichiers statiques de l'app (même origine), jamais de réponses de l'API
+const CACHE_NAME = 'zacharie-pwa-cache-v4';
 
 /*
 
@@ -68,18 +68,13 @@ HANDLE GET REQUESTS
 */
 
 self.addEventListener('fetch', (event: FetchEvent) => {
-  if (event.request.method === 'POST') {
-    // we dont care, we are local first
-    // event.respondWith(handlePostRequest(event.request));
-  } else {
-    event.respondWith(handleFetchRequest(event.request));
-  }
+  // les requêtes vers l'API (autre origine) et les requêtes non-GET vont directement au réseau
+  if (event.request.method !== 'GET') return;
+  if (new URL(event.request.url).origin !== self.location.origin) return;
+  event.respondWith(handleFetchRequest(event.request));
 });
 
 async function handleFetchRequest(request: Request): Promise<Response> {
-  if (request.method !== 'GET') {
-    return fetch(request);
-  }
   if (navigator.onLine) {
     try {
       const response = await fetch(request);
@@ -93,18 +88,16 @@ async function handleFetchRequest(request: Request): Promise<Response> {
     }
   }
 
-  if (request.url.startsWith('chrome-extension://')) {
-    return fetch(request);
-  }
-
   const cachedResponse = await caches.match(request);
   if (cachedResponse) {
     return cachedResponse;
   }
 
-  const indexHtml = await caches.match('/index.html');
-  if (indexHtml) {
-    return indexHtml;
+  if (request.mode === 'navigate') {
+    const indexHtml = await caches.match('/index.html');
+    if (indexHtml) {
+      return indexHtml;
+    }
   }
 
   return new Response(
@@ -216,11 +209,19 @@ self.addEventListener('message', (event: ExtendableMessageEvent) => {
   }
 
   if (event.data === 'SW_MESSAGE_CLEAR_CACHE') {
-    for (const _cache_name of [CACHE_NAME, ...previousCacheNames]) {
-      caches.delete(_cache_name).then(() => {
-        console.log('Cache cleared');
-      });
-    }
+    // CACHE_NAME ne contient aucune donnée utilisateur : on le garde pour que l'app démarre hors ligne
+    event.waitUntil(
+      caches
+        .keys()
+        .then((cacheNames) =>
+          Promise.all(
+            cacheNames
+              .filter((cacheName) => cacheName !== CACHE_NAME)
+              .map((cacheName) => caches.delete(cacheName))
+          )
+        )
+        .then(() => console.log('Cache cleared'))
+    );
   }
 
   if (event.data === 'SW_MESSAGE_BACK_TO_ONLINE') {

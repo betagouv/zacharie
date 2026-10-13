@@ -1,4 +1,4 @@
-import { Fei, Carcasse, CarcasseStatus, User } from '@prisma/client';
+import { Fei, Carcasse, CarcasseStatus, FeiOwnerRole, User, UserEtgRoles } from '@prisma/client';
 import updateCarcasseStatus from './get-carcasse-status';
 import { EntityWithUserRelation } from '@api/src/types/entity';
 import { isRoleCircuitCourt } from './circuit-court';
@@ -57,6 +57,10 @@ export function isCarcasseUnderMyResponsability(
 ) {
   // At least one carcasse where current_owner is me/my entity AND no next_owner
   if (carcasse.next_owner_user_id || carcasse.next_owner_entity_id) return false;
+  // Salarié d'ETG en « transport uniquement » : ce que l'atelier a pris en charge ne le concerne pas
+  if (me.etg_role === UserEtgRoles.TRANSPORT && carcasse.current_owner_role === FeiOwnerRole.ETG) {
+    return false;
+  }
   if (carcasse.current_owner_user_id === me.id) return true;
   if (carcasse.current_owner_entity_id && entitiesWorkingDirectlyFor[carcasse.current_owner_entity_id]) {
     return true;
@@ -64,11 +68,36 @@ export function isCarcasseUnderMyResponsability(
   return false;
 }
 
+// Salarié d'ETG en « transport uniquement » : son ETG a transporté les carcasses vers son ETG,
+// il n'a plus rien à faire, la fiche attend la prise en charge par l'atelier.
+export function isTransportToMyEtgDone(
+  carcasse: Partial<
+    Pick<
+      Carcasse,
+      'current_owner_role' | 'current_owner_entity_id' | 'next_owner_role' | 'next_owner_entity_id'
+    >
+  >,
+  etgRole: User['etg_role'] | undefined,
+  entitiesWorkingDirectlyFor: Record<EntityWithUserRelation['id'], EntityWithUserRelation>
+) {
+  if (etgRole !== UserEtgRoles.TRANSPORT) return false;
+  if (carcasse.current_owner_role !== FeiOwnerRole.COLLECTEUR_PRO) return false;
+  if (carcasse.next_owner_role !== FeiOwnerRole.ETG) return false;
+  if (!carcasse.current_owner_entity_id || !entitiesWorkingDirectlyFor[carcasse.current_owner_entity_id]) {
+    return false;
+  }
+  if (!carcasse.next_owner_entity_id || !entitiesWorkingDirectlyFor[carcasse.next_owner_entity_id]) {
+    return false;
+  }
+  return true;
+}
+
 export function isCarcasseToTake(
   carcasse: Carcasse,
   me: User,
   entitiesWorkingDirectlyFor: Record<EntityWithUserRelation['id'], EntityWithUserRelation>
 ) {
+  if (isTransportToMyEtgDone(carcasse, me.etg_role, entitiesWorkingDirectlyFor)) return false;
   if (carcasse.next_owner_user_id === me.id) return true;
   if (carcasse.next_owner_entity_id && entitiesWorkingDirectlyFor[carcasse.next_owner_entity_id]) {
     return true;

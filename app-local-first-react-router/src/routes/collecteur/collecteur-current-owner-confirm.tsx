@@ -190,6 +190,19 @@ export default function CurrentOwnerConfirm() {
       next_owner_user_name_cache: null,
       next_owner_role: null,
     };
+    if (currentTransmission.current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR) {
+      // Renvoi au premier détenteur : le stockage et le transport étaient ceux de l'envoi annulé, il
+      // les choisira de nouveau. On garde premier_detenteur_prochain_detenteur_id_cache : côté chasseur,
+      // il sert à afficher « Renvoyée par …, à attribuer de nouveau » jusqu'au prochain envoi.
+      Object.assign(nextTransmission, {
+        premier_detenteur_depot_type: null,
+        premier_detenteur_depot_entity_id: null,
+        premier_detenteur_depot_entity_name_cache: null,
+        premier_detenteur_depot_ccg_at: null,
+        premier_detenteur_transport_type: null,
+        premier_detenteur_transport_date: null,
+      });
+    }
     updateCarcassesTransmission(myCarcasseIds, nextTransmission);
     addLog({
       user_id: user.id,

@@ -5,14 +5,15 @@ const router: express.Router = express.Router();
 import { RequestWithUser } from '~/types/request';
 import { getIframeUrl } from '~/service/metabase-embed';
 import prisma from '~/prisma';
-import { CarcasseType, CarcasseStatus, DepotType, FeiOwnerRole, Prisma, UserRoles } from '@prisma/client';
-import validateUser from '~/middlewares/validateUser';
+import { CarcasseType, CarcasseStatus, DepotType, FeiOwnerRole, Prisma } from '@prisma/client';
 import departementsRegions from '~/data/departements-regions.json';
 import {
   circuitCourtRoles,
   extractDepartementFromCommune,
   getCurrentSeason,
   hasBphMotif,
+  ALL_DEPARTEMENT_CODES,
+  getViewableFederationEntity,
   resolveScope,
 } from '~/utils/federation-stats';
 import {
@@ -29,6 +30,11 @@ const departementsLabels = (departementsRegions as { departements: Record<string
 const NATIONAL_SEIZURE_RATE_BIG_GAME = 13.75; // % taux de saisie national grand gibier sauvage
 const NATIONAL_BPH_RATE_BIG_GAME = 5.49; // % taux BPH national grand gibier
 const NATIONAL_GG_TAUX_SAISIE_25_26 = 23.9; // % taux de saisie national GG saison 25-26 (valeur officielle)
+
+// Rôles d'un destinataire de la fiche : une carcasse qui a eu l'un de ces propriétaires a quitté le chasseur.
+const transmittedOwnerRoles: FeiOwnerRole[] = Object.values(FeiOwnerRole).filter(
+  (role) => role !== FeiOwnerRole.EXAMINATEUR_INITIAL && role !== FeiOwnerRole.PREMIER_DETENTEUR
+);
 
 // Les comptes admin Zacharie servent aux fiches de test et aux tutos vidéo : leurs fiches
 // sont exclues des statistiques fédérations (valorisation, sanitaire, formation).
@@ -214,7 +220,6 @@ router.get(
 router.get(
   '/federation/valorisation',
   passport.authenticate('user', { session: false }),
-  validateUser([UserRoles.FDC, UserRoles.FRC, UserRoles.FNC]),
   catchErrors(async (req: RequestWithUser, res: express.Response, next: express.NextFunction) => {
     const user = req.user;
     if (!user) {
@@ -223,7 +228,14 @@ router.get(
       return;
     }
 
-    const { isNational, scopeDepts, scope } = resolveScope(user);
+    const federationId = typeof req.query.federation_id === 'string' ? req.query.federation_id : undefined;
+    const federation = await getViewableFederationEntity(user.id, federationId);
+    if (!federation) {
+      res.status(403).send({ ok: false, data: null, error: 'Accès non autorisé à ce tableau de bord' });
+      return;
+    }
+
+    const { isNational, scopeDepts, scope } = resolveScope(federation);
 
     if (!isNational && (!scopeDepts || scopeDepts.length === 0)) {
       res.status(200).send({
@@ -233,7 +245,7 @@ router.get(
           seasonStart: null,
           seasonEnd: null,
           scope: 'departemental',
-          scopeLabel: user.nom_de_famille ?? null,
+          scopeLabel: federation.nom_d_usage ?? null,
           scopeDepts: [],
           departements: [],
           totals: emptyValorisationTotals(),
@@ -282,6 +294,10 @@ router.get(
     });
 
     const stats = new Map<string, { gg: Bucket; pg: Bucket }>();
+    // tous les départements du périmètre ont une ligne, même sans carcasse
+    for (const code of scopeDepts ?? ALL_DEPARTEMENT_CODES) {
+      stats.set(code, { gg: emptyBucket(), pg: emptyBucket() });
+    }
     const totals = { gg: emptyBucket(), pg: emptyBucket() };
 
     for (const c of carcasses) {
@@ -371,7 +387,7 @@ router.get(
         seasonStart: seasonStart.toISOString(),
         seasonEnd: seasonEnd.toISOString(),
         scope,
-        scopeLabel: scope === 'national' ? null : (user.nom_de_famille ?? null),
+        scopeLabel: scope === 'national' ? null : (federation.nom_d_usage ?? null),
         scopeDepts: scopeDepts ?? [],
         departements,
         totals: {
@@ -432,7 +448,6 @@ function emptyValorisationTotals() {
 router.get(
   '/federation/sanitaire',
   passport.authenticate('user', { session: false }),
-  validateUser([UserRoles.FDC, UserRoles.FRC, UserRoles.FNC]),
   catchErrors(async (req: RequestWithUser, res: express.Response, next: express.NextFunction) => {
     const user = req.user;
     if (!user) {
@@ -441,7 +456,14 @@ router.get(
       return;
     }
 
-    const { isNational, scopeDepts, scope } = resolveScope(user);
+    const federationId = typeof req.query.federation_id === 'string' ? req.query.federation_id : undefined;
+    const federation = await getViewableFederationEntity(user.id, federationId);
+    if (!federation) {
+      res.status(403).send({ ok: false, data: null, error: 'Accès non autorisé à ce tableau de bord' });
+      return;
+    }
+
+    const { isNational, scopeDepts, scope } = resolveScope(federation);
 
     if (!isNational && (!scopeDepts || scopeDepts.length === 0)) {
       res.status(200).send({
@@ -579,7 +601,6 @@ router.get(
 router.get(
   '/federation/formation',
   passport.authenticate('user', { session: false }),
-  validateUser([UserRoles.FDC, UserRoles.FRC, UserRoles.FNC]),
   catchErrors(async (req: RequestWithUser, res: express.Response, next: express.NextFunction) => {
     const user = req.user;
     if (!user) {
@@ -588,7 +609,14 @@ router.get(
       return;
     }
 
-    const { isNational, scopeDepts, scope } = resolveScope(user);
+    const federationId = typeof req.query.federation_id === 'string' ? req.query.federation_id : undefined;
+    const federation = await getViewableFederationEntity(user.id, federationId);
+    if (!federation) {
+      res.status(403).send({ ok: false, data: null, error: 'Accès non autorisé à ce tableau de bord' });
+      return;
+    }
+
+    const { isNational, scopeDepts, scope } = resolveScope(federation);
 
     if (!isNational && (!scopeDepts || scopeDepts.length === 0)) {
       res.status(200).send({
@@ -609,13 +637,26 @@ router.get(
 
     const { season, seasonStart, seasonEnd } = getCurrentSeason();
 
-    // Q1 — examinateurs actifs (≥1 FEI transmise sur la saison) par dept de prélèvement.
+    // Q1 — examinateurs actifs par dept de prélèvement : ≥1 FEI de la saison dont au moins une
+    // carcasse est partie chez un destinataire (collecteur, ETG, SVI, circuit court). Une fiche
+    // signée par l'examinateur mais jamais transmise ne compte pas. `prev_owner_role` garde
+    // comptée une carcasse renvoyée au chasseur par son destinataire.
     const feis = await prisma.fei.findMany({
       where: {
         deleted_at: null,
         date_mise_a_mort: { gte: seasonStart.toDate(), lte: seasonEnd.toDate() },
         examinateur_initial_user_id: { not: null },
         examinateur_initial_date_approbation_mise_sur_le_marche: { not: null },
+        Carcasses: {
+          some: {
+            deleted_at: null,
+            OR: [
+              { current_owner_role: { in: transmittedOwnerRoles } },
+              { next_owner_role: { in: transmittedOwnerRoles } },
+              { prev_owner_role: { in: transmittedOwnerRoles } },
+            ],
+          },
+        },
         ...EXCLUDE_ADMIN_FEI_WHERE,
       },
       select: {

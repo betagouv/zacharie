@@ -5,6 +5,7 @@ import syncRouter from '~/controllers/sync';
 import carcasseRouter from '~/controllers/carcasse';
 import prisma from '~/prisma';
 import { UserRoles } from '@prisma/client';
+import { FORCE_FULL_RELOAD_AFTER } from '~/utils/force-full-reload';
 
 // Goes through the real /sync orchestrator (sync-fei, sync-carcasse,
 // sync-carcasse-intermediaire are NOT mocked here) to verify the soft-delete
@@ -107,16 +108,16 @@ describe('FEI soft-delete via POST /sync', () => {
     expect(prisma.fei.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { numero: FEI_NUMERO },
-        data: { deleted_at: DELETED_AT },
+        data: { deleted_at: DELETED_AT, version: { increment: 1 }, version_user_id: expect.any(String) },
       })
     );
     expect(prisma.carcasse.updateMany).toHaveBeenCalledWith({
       where: { fei_numero: FEI_NUMERO },
-      data: { deleted_at: DELETED_AT },
+      data: { deleted_at: DELETED_AT, version: { increment: 1 }, version_user_id: expect.any(String) },
     });
     expect(prisma.carcasseIntermediaire.updateMany).toHaveBeenCalledWith({
       where: { fei_numero: FEI_NUMERO },
-      data: { deleted_at: DELETED_AT },
+      data: { deleted_at: DELETED_AT, version: { increment: 1 }, version_user_id: expect.any(String) },
     });
   });
 
@@ -203,7 +204,7 @@ describe('Carcasse soft-delete via POST /sync', () => {
     );
     expect(prisma.carcasseIntermediaire.updateMany).toHaveBeenCalledWith({
       where: { zacharie_carcasse_id: 'ZC-1' },
-      data: { deleted_at: DELETED_AT },
+      data: { deleted_at: DELETED_AT, version: { increment: 1 }, version_user_id: expect.any(String) },
     });
     // FEI must NOT be touched when only the carcasse is deleted
     expect(prisma.fei.update).not.toHaveBeenCalled();
@@ -221,7 +222,8 @@ describe('GET /carcasse/ after soft-delete', () => {
   });
 
   test('GET /carcasse/?withDeleted=true&after=... → updated_at gates the delta; deleted_at is not forced null', async () => {
-    const cutoff = new Date(DELETED_AT).getTime();
+    // postérieur à FORCE_FULL_RELOAD_AFTER, sinon le serveur force un rechargement complet
+    const cutoff = FORCE_FULL_RELOAD_AFTER.getTime() + 1;
     await authed(request(app).get(`/carcasse?page=0&after=${cutoff}&limit=100&withDeleted=true`), sviUser);
 
     const where: any = vi.mocked(prisma.carcasse.findMany).mock.calls[0][0]!.where;

@@ -68,7 +68,7 @@ describe('syncFei — create', () => {
 
     const result = await syncFei(
       'FEI-NEW',
-      { numero: 'FEI-NEW', date_mise_a_mort: '2026-01-01' } as any,
+      { numero: 'FEI-NEW', date_mise_a_mort: '2026-01-01', created_by_user_id: otherChasseur.id } as any,
       examinateurInitial,
       scope
     );
@@ -134,6 +134,21 @@ describe('syncFei — update', () => {
     const updateCall = vi.mocked(prisma.fei.update).mock.calls[0][0];
     expect(updateCall.data.commune_mise_a_mort).not.toContain('<script>');
   });
+
+  test('created_by_user_id du body est ignoré, même pour le propriétaire', async () => {
+    vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
+    vi.mocked(prisma.fei.update).mockResolvedValue(baseFei as any);
+
+    await syncFei(
+      'FEI-1',
+      { numero: 'FEI-1', created_by_user_id: otherChasseur.id } as any,
+      examinateurInitial,
+      scope
+    );
+
+    const updateCall = vi.mocked(prisma.fei.update).mock.calls[0][0];
+    expect(updateCall.data).not.toHaveProperty('created_by_user_id');
+  });
 });
 
 describe('syncFei — creation_context', () => {
@@ -196,30 +211,38 @@ describe('syncFei — deletion', () => {
     expect(result.isDeleted).toBe(true);
     expect(prisma.carcasse.updateMany).toHaveBeenCalledWith({
       where: { fei_numero: 'FEI-1' },
-      data: { deleted_at: '2026-03-01T00:00:00Z' },
+      data: {
+        deleted_at: '2026-03-01T00:00:00Z',
+        version: { increment: 1 },
+        version_user_id: expect.any(String),
+      },
     });
     expect(prisma.carcasseIntermediaire.updateMany).toHaveBeenCalledWith({
       where: { fei_numero: 'FEI-1' },
-      data: { deleted_at: '2026-03-01T00:00:00Z' },
+      data: {
+        deleted_at: '2026-03-01T00:00:00Z',
+        version: { increment: 1 },
+        version_user_id: expect.any(String),
+      },
     });
   });
 
-  test('soft-delete by isZacharieAdmin → allowed', async () => {
+  // les pouvoirs d'admin Zacharie passent par /admin (ProConnect), pas par /sync
+  test('soft-delete by isZacharieAdmin → throws "Vous ne pouvez pas supprimer cette fiche"', async () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
-    vi.mocked(prisma.fei.update).mockResolvedValue(baseFei as any);
 
     await expect(
       syncFei('FEI-1', { numero: 'FEI-1', deleted_at: '2026-03-01T00:00:00Z' } as any, platformAdmin, scope)
-    ).resolves.toBeDefined();
-    expect(prisma.fei.update).toHaveBeenCalledOnce();
+    ).rejects.toThrow('Vous ne pouvez pas supprimer cette fiche');
+    expect(prisma.fei.update).not.toHaveBeenCalled();
   });
 
-  test('soft-delete by unrelated user → throws "Unauthorized"', async () => {
+  test('soft-delete by unrelated user → throws "Vous ne pouvez pas supprimer cette fiche"', async () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
 
     await expect(
       syncFei('FEI-1', { numero: 'FEI-1', deleted_at: '2026-03-01T00:00:00Z' } as any, otherChasseur, scope)
-    ).rejects.toThrow('Unauthorized');
+    ).rejects.toThrow('Vous ne pouvez pas supprimer cette fiche');
 
     expect(prisma.fei.update).not.toHaveBeenCalled();
     expect(prisma.carcasse.updateMany).not.toHaveBeenCalled();

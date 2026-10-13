@@ -29,7 +29,7 @@ import {
   VERSION,
 } from './config.ts';
 import { sendError } from './middlewares/errors.ts';
-import { capture } from './third-parties/sentry.ts';
+import { capture, scrubSentryBreadcrumb, scrubSentryEvent } from './third-parties/sentry.ts';
 
 import userRouter from './controllers/user.ts';
 import userEntityRouter from './controllers/user-entity.ts';
@@ -95,6 +95,8 @@ if (sentryEnabled) {
     // of transactions for performance monitoring.
     // We recommend adjusting this value in production
     tracesSampleRate: 0.01,
+    beforeSend: scrubSentryEvent,
+    beforeBreadcrumb: scrubSentryBreadcrumb,
   });
 }
 
@@ -239,7 +241,9 @@ app.use('/v1', v1Router);
 // Auth rate limiting
 import { authRateLimit, adminRateLimit } from './middlewares/auth-rate-limit.ts';
 app.use('/user/login', authRateLimit);
-app.use('/user/sign-up', authRateLimit);
+app.use('/user/signup', authRateLimit);
+app.use('/user/signup-with-invitation-token', authRateLimit);
+app.use('/user/access-token', authRateLimit);
 app.use('/user/forget-password', authRateLimit);
 app.use('/user/reset-password', authRateLimit);
 app.use('/user/change-password', authRateLimit);

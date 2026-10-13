@@ -15,7 +15,7 @@ import {
 } from '~/utils/sync-carcasse-modification-request';
 import { runFeiUpdateSideEffects } from '~/utils/fei-side-effects';
 import { runCarcasseUpdateSideEffects } from '~/utils/carcasse-side-effects';
-import { SyncRejectedError } from '~/utils/sync-errors';
+import { SyncRejectedError, SyncRejectedErrorMessage } from '~/utils/sync-errors';
 import { capture } from '~/third-parties/sentry';
 import { redactPersonalData } from '~/utils/redact-personal-data';
 
@@ -52,9 +52,10 @@ router.post(
     const modifResults: Array<SyncModifRequestResult & { approvalPayload?: Record<string, unknown> }> = [];
     const syncedLogIds: Array<string> = [];
     const rejected: Array<SyncRejection> = [];
+    const shouldRemoveFromLocalStore: Array<SyncRejection> = [];
     // Le payload des items refusés, données personnelles masquées. Un refus ne laisse aucune trace en base — le serveur n'a rien
-    // écrit — et le client cesse de le pousser, sa copie locale disparaissant au prochain
-    // `clearCache`. Cet évènement Sentry est donc le seul endroit où la saisie de l'utilisateur
+    // écrit — et le client cesse de le pousser, sa copie locale disparaissant.
+    // Cet évènement Sentry est donc le seul endroit où la saisie de l'utilisateur
     // reste récupérable si le refus s'avère être un faux positif.
     const rejectedBodies: Array<Omit<SyncRejection, 'reason'> & { body: unknown }> = [];
     // Sentry tronque un extra au-delà de ~16 Ko : sans plafond, un lot massivement refusé ferait
@@ -65,11 +66,18 @@ router.post(
     // l'item, et on le remonte à l'équipe en un seul évènement en fin de requête plutôt qu'un par
     // item. Toute autre erreur est transitoire — on la capture et le client réessaiera, donc son
     // payload reviendra tout seul et n'a pas à être conservé ici.
+    const removeFromLocalStoreReasons: Array<SyncRejectedErrorMessage> = [
+      "Vous n'avez pas accès à cette carcasse",
+      "Vous n'avez pas accès à cette fiche",
+    ];
     function handleSyncError(error: unknown, item: Omit<SyncRejection, 'reason'>, body: unknown) {
       if (error instanceof SyncRejectedError) {
         rejected.push({ ...item, reason: error.message });
         if (rejectedBodies.length < MAX_REJECTED_BODIES) {
           rejectedBodies.push({ ...item, body: redactPersonalData(body) });
+        }
+        if (removeFromLocalStoreReasons.includes(error.message as SyncRejectedErrorMessage)) {
+          shouldRemoveFromLocalStore.push({ ...item, reason: error.message });
         }
         return;
       }
@@ -236,13 +244,23 @@ router.post(
     // Les logs sont des entrées d'historique immuables à id généré côté client : un seul
     // createMany (skipDuplicates) au lieu d'un upsert par log. Log n'a aucune contrainte FK,
     // donc le batch ne peut pas échouer sur une carcasse/fiche manquante.
-    const logsToSync = (logs || []).filter((l) => l.id);
+    // Un log n'est accepté qu'au nom de l'utilisateur authentifié : sinon on pourrait forger
+    // l'historique d'un autre utilisateur.
+    const logsWithId = (logs || []).filter((l) => l.id);
+    const logsToSync = logsWithId.filter((l) => l.user_id === user.id);
+    const forgedLogs = logsWithId.filter((l) => l.user_id !== user.id);
+    if (forgedLogs.length > 0) {
+      capture(new Error('User ID does not match'), {
+        extra: { logIds: forgedLogs.map((l) => l.id), userId: user.id },
+        user,
+      });
+    }
     if (logsToSync.length > 0) {
       try {
         await prisma.log.createMany({
           data: logsToSync.map((logData) => ({
             id: logData.id,
-            user_id: logData.user_id!,
+            user_id: user.id,
             user_role: logData.user_role!,
             fei_numero: logData.fei_numero ?? null,
             entity_id: logData.entity_id ?? null,
@@ -289,7 +307,7 @@ router.post(
     for (const feiResult of feiResults) {
       try {
         if (!feiResult.isDeleted && feiResult.existingFei) {
-          await runFeiUpdateSideEffects(feiResult.existingFei, feiResult.savedFei);
+          await runFeiUpdateSideEffects(feiResult.existingFei, feiResult.savedFei, user);
         }
       } catch (error) {
         capture(error as Error, {
@@ -302,7 +320,7 @@ router.post(
     // Modif-request side effects: apply Carcasse mutations on approve, notify on create/approve/reject.
     for (const r of modifResults) {
       try {
-        await runCarcasseModifRequestSideEffects(r, r.approvalPayload);
+        await runCarcasseModifRequestSideEffects(r, user, r.approvalPayload);
       } catch (error) {
         capture(error as Error, {
           extra: { modifId: r.saved.id, context: 'modif_request_side_effects' },
@@ -339,6 +357,49 @@ router.post(
           })
         : [];
 
+    // Une carcasse retirée emporte ses lignes d'intermédiaire, et sa fiche si l'utilisateur n'a plus
+    // accès à aucune de ses carcasses : le client ne les renvoie pas forcément (déjà synchronisées),
+    // elles ne seraient donc jamais refusées et resteraient dans son store.
+    const removedCarcasseIds = shouldRemoveFromLocalStore
+      .filter((item) => item.kind === 'carcasse')
+      .map((item) => item.id);
+    if (removedCarcasseIds.length > 0) {
+      const alreadyListed = new Set(shouldRemoveFromLocalStore.map((item) => `${item.kind}:${item.id}`));
+      const intermediaires =
+        (await prisma.carcasseIntermediaire.findMany({
+          where: { zacharie_carcasse_id: { in: removedCarcasseIds } },
+          select: { fei_numero: true, zacharie_carcasse_id: true, intermediaire_id: true },
+        })) ?? [];
+      for (const ci of intermediaires) {
+        const id = `${ci.fei_numero}_${ci.zacharie_carcasse_id}_${ci.intermediaire_id}`;
+        if (alreadyListed.has(`carcasseIntermediaire:${id}`)) continue;
+        shouldRemoveFromLocalStore.push({
+          kind: 'carcasseIntermediaire',
+          id,
+          reason: "Vous n'avez pas accès à cette carcasse",
+        });
+      }
+      // La carcasse refusée peut ne pas exister en base : sa fiche se lit dans le lot envoyé.
+      const removedFeiNumeros = new Set(
+        carcasseList
+          .filter((c) => removedCarcasseIds.includes(c.zacharie_carcasse_id))
+          .map((c) => c.fei_numero)
+          .filter((numero) => !!numero && !alreadyListed.has(`fei:${numero}`))
+      );
+      const feisToCheck =
+        removedFeiNumeros.size > 0
+          ? ((await prisma.fei.findMany({ where: { numero: { in: [...removedFeiNumeros] } } })) ?? [])
+          : [];
+      for (const fei of feisToCheck) {
+        if (await scope.canWriteFei(fei)) continue;
+        shouldRemoveFromLocalStore.push({
+          kind: 'fei',
+          id: fei.numero,
+          reason: "Vous n'avez pas accès à cette fiche",
+        });
+      }
+    }
+
     if (rejected.length > 0) {
       // Message fixe pour que Sentry regroupe : le détail est dans extra.
       capture(new Error('Écritures /sync refusées'), {
@@ -362,6 +423,7 @@ router.post(
         carcasseModifRequests: modifResults.map((r) => r.saved),
         syncedLogIds,
         rejected,
+        shouldRemoveFromLocalStore,
       },
       error: '',
     });

@@ -1,4 +1,5 @@
 import { Link, useSearchParams, useNavigate } from 'react-router';
+import { sanitizeRedirect } from '@app/utils/sanitize-redirect';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { PasswordInput } from '@codegouvfr/react-dsfr/blocks/PasswordInput';
@@ -19,7 +20,7 @@ export default function ResetMotDePasse() {
   const navigate = useNavigate();
 
   const resetPasswordToken = searchParams.get('reset-password-token') || '';
-  const redirect = searchParams.get('redirect');
+  const redirect = sanitizeRedirect(searchParams.get('redirect'));
   const communication = searchParams.get('communication');
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {

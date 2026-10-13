@@ -34,10 +34,8 @@ import ProConnect from './routes/proconnect';
 import NouvelleFiche from './routes/nouvelle-fiche';
 import TableauDeBordRedirect from './routes/tableau-de-bord-redirect';
 import RouterCircuitCourt from './routes/circuit-court/circuit-court-router';
-import RouterFdc from './routes/fdc/fdc-router';
-import RouterFrc from './routes/frc/frc-router';
-import RouterFnc from './routes/fnc/fnc-router';
 import RouterLaboratoire from './routes/laboratoire/laboratoire-router';
+import RouterFederation from './routes/federation/federation-router';
 import useUser from './zustand/user';
 import { getUserOnboardingRoute } from './utils/user-onboarded.client';
 
@@ -64,7 +62,7 @@ function App() {
 
   useEffect(() => {
     if (user) {
-      Sentry.setUser({ id: user.id, email: user.email ?? undefined, role: user.roles?.[0] });
+      Sentry.setUser({ id: user.id, role: user.roles?.[0] });
     } else {
       Sentry.setUser(null);
     }
@@ -150,10 +148,8 @@ function App() {
           {RouterCollecteur()}
           {RouterCircuitCourt()}
           {RouterSvi()}
-          {RouterFdc()}
-          {RouterFrc()}
-          {RouterFnc()}
           {RouterLaboratoire()}
+          {RouterFederation()}
           {RouterAdmin()}
           <Route
             path="proconnect"

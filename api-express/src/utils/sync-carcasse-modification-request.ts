@@ -11,6 +11,7 @@ import { capture } from '~/third-parties/sentry';
 import type { SyncScope } from '~/utils/sync-scope';
 import dayjs from 'dayjs';
 import { SyncRejectedError } from '~/utils/sync-errors';
+import { nextVersion } from '~/utils/sync-version';
 
 const FRONTEND_URL = 'https://zacharie.beta.gouv.fr';
 
@@ -65,6 +66,7 @@ export async function syncCarcasseModifRequest(
     // L'identité du demandeur est décidée par le serveur : on demande toujours en son nom propre,
     // pour une entité dont on est membre, et une demande naît toujours PENDING.
     if (!body.requested_by_entity_id || !scope.entityIds.includes(body.requested_by_entity_id)) {
+      // Cette ligne ne devrait jamais arriver, puisqu'elle est interdite par le périmètre de l'utilisateur.
       throw new SyncRejectedError('Vous ne pouvez pas agir au nom de cette entité');
     }
     const created = await prisma.carcasseModificationRequest.create({
@@ -88,7 +90,7 @@ export async function syncCarcasseModifRequest(
       where: { zacharie_carcasse_id: created.zacharie_carcasse_id },
       data: {
         updated_at: new Date(),
-        ...(renameNow ? { numero_bracelet: created.numero_bracelet_after! } : {}),
+        ...(renameNow ? { numero_bracelet: created.numero_bracelet_after!, ...nextVersion(user.id) } : {}),
       },
     });
     return { saved: created, isNew: true, transitionedTo: null, justCancelled: false };
@@ -114,6 +116,7 @@ export async function syncCarcasseModifRequest(
     });
     if (!carcasse) throw new Error('Carcasse introuvable');
     if (carcasse.examinateur_initial_user_id !== user.id) {
+      // Cette ligne ne devrait jamais arriver, puisqu'elle est interdite par le périmètre de l'utilisateur.
       throw new SyncRejectedError("Seul l'examinateur initial peut approuver ou refuser une demande");
     }
   }
@@ -203,6 +206,7 @@ async function isCarcasseFrozenBySvi(zacharieCarcasseId: string): Promise<boolea
  */
 export async function runCarcasseModifRequestSideEffects(
   result: SyncModifRequestResult,
+  user: User,
   approvalPayload?: {
     examinateur_anomalies_carcasse?: string[];
     examinateur_anomalies_abats?: string[];
@@ -226,12 +230,12 @@ export async function runCarcasseModifRequestSideEffects(
     if (saved.type === CarcasseModificationRequestType.NEW_CARCASSE) {
       await prisma.carcasse.update({
         where: { zacharie_carcasse_id: saved.zacharie_carcasse_id },
-        data: { deleted_at: new Date() },
+        data: { deleted_at: new Date(), ...nextVersion(user.id) },
       });
     } else if (saved.numero_bracelet_before) {
       await prisma.carcasse.update({
         where: { zacharie_carcasse_id: saved.zacharie_carcasse_id },
-        data: { numero_bracelet: saved.numero_bracelet_before },
+        data: { numero_bracelet: saved.numero_bracelet_before, ...nextVersion(user.id) },
       });
     }
     return;
@@ -248,6 +252,7 @@ export async function runCarcasseModifRequestSideEffects(
           examinateur_commentaire: approvalPayload?.examinateur_commentaire ?? null,
           examinateur_carcasse_sans_anomalie: approvalPayload?.examinateur_carcasse_sans_anomalie ?? false,
           examinateur_signed_at: new Date(),
+          ...nextVersion(user.id),
         },
       });
     }
@@ -262,7 +267,7 @@ export async function runCarcasseModifRequestSideEffects(
       if (!(await isCarcasseFrozenBySvi(saved.zacharie_carcasse_id))) {
         await prisma.carcasse.update({
           where: { zacharie_carcasse_id: saved.zacharie_carcasse_id },
-          data: { deleted_at: new Date() },
+          data: { deleted_at: new Date(), ...nextVersion(user.id) },
         });
       }
     }

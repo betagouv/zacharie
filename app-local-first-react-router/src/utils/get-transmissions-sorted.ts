@@ -56,6 +56,14 @@ export function useTransmissions(): Record<
   );
 }
 
+// insère l'intermédiaire en gardant la liste en ordre created_at décroissant (le plus récent en tête)
+function insertByCreatedAtDesc(list: Array<CarcassesIntermediaire>, item: CarcassesIntermediaire) {
+  const t = new Date(item.created_at).getTime();
+  let i = list.length;
+  while (i > 0 && new Date(list[i - 1].created_at).getTime() < t) i--;
+  list.splice(i, 0, item);
+}
+
 // Cœur pur de `useTransmissions` : une seule passe sur toutes les carcasses pour les regrouper en
 // transmissions et leur attribuer un statut. Extrait du hook pour être testable directement.
 export function computeTransmissions({
@@ -88,11 +96,7 @@ export function computeTransmissions({
     const list =
       intermediairesByCarcasseId[ci.zacharie_carcasse_id] ??
       (intermediairesByCarcasseId[ci.zacharie_carcasse_id] = []);
-    // insert ci so the list stays in descending created_at order (le plus récent en tête)
-    const t = new Date(ci.created_at).getTime();
-    let i = list.length;
-    while (i > 0 && new Date(list[i - 1].created_at).getTime() < t) i--;
-    list.splice(i, 0, {
+    insertByCreatedAtDesc(list, {
       id: ci.intermediaire_id,
       fei_numero: ci.fei_numero,
       intermediaire_user_id: ci.intermediaire_user_id,
@@ -127,16 +131,25 @@ export function computeTransmissions({
   // une transmission agrège plusieurs carcasses, on retient pour chaque intermédiaire la valeur
   // non-nulle de n'importe laquelle de ses carcasses (sinon une carcasse refusée en tête masque la
   // décision réelle et la sélection du prochain détenteur paraît perdue).
+  // De même, la liste des intermédiaires de la transmission est l'union de ceux de ses carcasses :
+  // une carcasse refusée/manquante n'a pas les prises en charge suivantes, et si elle est la première
+  // rencontrée, la prise en charge en cours (ex. celle de l'ETG) disparaîtrait de la transmission.
   // Index id → intermédiaire de chaque transmission, construit une fois à sa création : le merge
   // est alors en O(1) par intermédiaire au lieu d'un .find() linéaire sur la liste à chaque carcasse.
   const intermediaireByIdByTransmission: Record<string, Record<string, CarcassesIntermediaire>> = {};
-  const mergeIntermediaireDecisionFields = (
+  const mergeIntermediaires = (
+    list: Array<CarcassesIntermediaire>,
     into: Record<string, CarcassesIntermediaire>,
     from: Array<CarcassesIntermediaire>
   ) => {
     for (const src of from) {
       const dst = into[src.id];
-      if (!dst) continue;
+      if (!dst) {
+        const added = { ...src };
+        into[src.id] = added;
+        insertByCreatedAtDesc(list, added);
+        continue;
+      }
       if (src.intermediaire_prochain_detenteur_id_cache != null) {
         dst.intermediaire_prochain_detenteur_id_cache = src.intermediaire_prochain_detenteur_id_cache;
         dst.intermediaire_prochain_detenteur_role_cache = src.intermediaire_prochain_detenteur_role_cache;
@@ -156,7 +169,8 @@ export function computeTransmissions({
     const transmissionId = getTransmissionId(carcasse);
     if (transmissions[transmissionId]) {
       transmissions[transmissionId].carcasses.push(carcasse);
-      mergeIntermediaireDecisionFields(
+      mergeIntermediaires(
+        transmissions[transmissionId].intermediaires,
         intermediaireByIdByTransmission[transmissionId],
         intermediairesByCarcasseId[carcasse.zacharie_carcasse_id] || []
       );
@@ -170,7 +184,7 @@ export function computeTransmissions({
       transmissionIdsByFeiNumero[fei.numero].push(transmissionId);
       // ordre chronologique décroissant, du plus récent au plus ancien.
       // Clone : la transmission agrège ensuite les décisions des autres carcasses du groupe
-      // (mergeIntermediaireDecisionFields), sans muter les listes par-carcasse partagées.
+      // (mergeIntermediaires), sans muter les listes par-carcasse partagées.
       const intermediaires = (intermediairesByCarcasseId[carcasse.zacharie_carcasse_id] || []).map((i) => ({
         ...i,
       }));
@@ -180,7 +194,13 @@ export function computeTransmissions({
       intermediaireByIdByTransmission[transmissionId] = intermediaireById;
       const transmissionWithIntermediaires: CarcasseTransmissionWihMetadata = {
         content: transmission,
-        labels: getTransmissionLabels('Clôturée', transmission, role, entitiesWorkingDirectlyFor),
+        labels: getTransmissionLabels(
+          'Clôturée',
+          transmission,
+          role,
+          entitiesWorkingDirectlyFor,
+          user.etg_role
+        ),
         fei: {
           numero: fei.numero,
           commune_mise_a_mort: fei.commune_mise_a_mort,
@@ -213,7 +233,8 @@ export function computeTransmissions({
         'À compléter',
         transmissions[transmissionId].content,
         role,
-        entitiesWorkingDirectlyFor
+        entitiesWorkingDirectlyFor,
+        user.etg_role
       );
       continue;
     }
@@ -227,7 +248,8 @@ export function computeTransmissions({
           'À compléter',
           transmissions[transmissionId].content,
           role,
-          entitiesWorkingDirectlyFor
+          entitiesWorkingDirectlyFor,
+          user.etg_role
         );
         continue;
       }
@@ -240,7 +262,8 @@ export function computeTransmissions({
           'En cours',
           transmissions[transmissionId].content,
           role,
-          entitiesWorkingDirectlyFor
+          entitiesWorkingDirectlyFor,
+          user.etg_role
         );
         continue;
       }
@@ -249,7 +272,8 @@ export function computeTransmissions({
           'En cours',
           transmissions[transmissionId].content,
           role,
-          entitiesWorkingDirectlyFor
+          entitiesWorkingDirectlyFor,
+          user.etg_role
         );
         continue;
       }
@@ -259,7 +283,8 @@ export function computeTransmissions({
             'En cours',
             transmissions[transmissionId].content,
             role,
-            entitiesWorkingDirectlyFor
+            entitiesWorkingDirectlyFor,
+            user.etg_role
           );
           continue;
         }
@@ -273,7 +298,8 @@ export function computeTransmissions({
           'En cours',
           transmissions[transmissionId].content,
           role,
-          entitiesWorkingDirectlyFor
+          entitiesWorkingDirectlyFor,
+          user.etg_role
         );
         continue;
       }
@@ -284,7 +310,8 @@ export function computeTransmissions({
             'En cours',
             transmissions[transmissionId].content,
             role,
-            entitiesWorkingDirectlyFor
+            entitiesWorkingDirectlyFor,
+            user.etg_role
           );
           isIntermediaire = true;
           break;
@@ -295,7 +322,8 @@ export function computeTransmissions({
               'En cours',
               transmissions[transmissionId].content,
               role,
-              entitiesWorkingDirectlyFor
+              entitiesWorkingDirectlyFor,
+              user.etg_role
             );
             isIntermediaire = true;
             break;
@@ -313,7 +341,8 @@ export function computeTransmissions({
             'À compléter',
             transmissions[transmissionId].content,
             role,
-            entitiesWorkingDirectlyFor
+            entitiesWorkingDirectlyFor,
+            user.etg_role
           );
         }
         continue;
@@ -322,7 +351,8 @@ export function computeTransmissions({
         'En cours',
         transmissions[transmissionId].content,
         role,
-        entitiesWorkingDirectlyFor
+        entitiesWorkingDirectlyFor,
+        user.etg_role
       );
       continue;
     }
@@ -345,7 +375,7 @@ export function computeTransmissions({
           current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
           current_owner_user_id: user.id,
         }, // fields like examinateur_initial, etc. that will also exists in carcasses (when they will be created)
-        labels: getTransmissionLabels('À compléter', fei, role, entitiesWorkingDirectlyFor),
+        labels: getTransmissionLabels('À compléter', fei, role, entitiesWorkingDirectlyFor, user.etg_role),
         fei: {
           numero: fei.numero,
           commune_mise_a_mort: fei.commune_mise_a_mort,

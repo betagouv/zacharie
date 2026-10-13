@@ -16,9 +16,10 @@ import {
   User,
 } from '@prisma/client';
 import sendNotificationToUser from '~/service/notifications';
+import { FEDERATION_ENTITY_TYPES } from '~/utils/federation-stats';
 import { z } from 'zod';
 
-const userEntitySchema = z.object({
+export const userEntitySchema = z.object({
   owner_id: z.string(),
   entity_id: z.string().optional(),
   numero_ddecpp: z.string().optional(),
@@ -31,7 +32,7 @@ const userEntitySchema = z.object({
     .optional(),
 });
 
-async function getEntity(body: z.infer<typeof userEntitySchema>) {
+export async function getEntity(body: z.infer<typeof userEntitySchema>) {
   let entityId: string = body.entity_id;
   if (body.numero_ddecpp && body.type === EntityTypes.CCG) {
     const sanitizedNumeroDdecpp = body.numero_ddecpp.toLowerCase().includes('ccg')
@@ -76,10 +77,6 @@ async function checkIfUserIsAdmin(body: z.infer<typeof userEntitySchema>, user: 
     return false;
   }
 
-  if (user.isZacharieAdmin) {
-    return true;
-  }
-
   const isCurrentUserAdminOfEntity = await prisma.entityAndUserRelations.findFirst({
     where: {
       owner_id: user.id,
@@ -92,6 +89,35 @@ async function checkIfUserIsAdmin(body: z.infer<typeof userEntitySchema>, user: 
   }
 
   return false;
+}
+
+// une entité doit toujours garder un admin pour gérer ses utilisateurs
+async function getLastAdminSituation(relation: {
+  id: string;
+  entity_id: string;
+  relation: EntityRelationType;
+  status: EntityRelationStatus;
+}): Promise<'NOT_LAST_ADMIN' | 'LAST_ADMIN_WITH_OTHER_USERS' | 'SOLE_USER'> {
+  if (
+    relation.relation !== EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY ||
+    relation.status !== EntityRelationStatus.ADMIN
+  ) {
+    return 'NOT_LAST_ADMIN';
+  }
+  const otherRelations = await prisma.entityAndUserRelations.findMany({
+    where: {
+      entity_id: relation.entity_id,
+      relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+      deleted_at: null,
+      id: { not: relation.id },
+      // les admins Zacharie rattachés à une entité (support, tests) n'en sont pas membres
+      UserRelatedWithEntity: { isZacharieAdmin: false },
+    },
+    select: { status: true },
+  });
+  if (otherRelations.some((other) => other.status === EntityRelationStatus.ADMIN)) return 'NOT_LAST_ADMIN';
+  if (otherRelations.length > 0) return 'LAST_ADMIN_WITH_OTHER_USERS';
+  return 'SOLE_USER';
 }
 
 async function checkIfUserCanCrudEntityRelation(
@@ -158,6 +184,16 @@ router.post(
         return;
       }
 
+      // on ne demande pas à rejoindre une fédération : l'équipe Zacharie ou un admin de la fédération rattache ses membres
+      if (FEDERATION_ENTITY_TYPES.includes(entity.type) && !isAdmin) {
+        res.status(403).send({
+          ok: false,
+          data: { relation: null, entity: null },
+          error: 'Unauthorized',
+        });
+        return;
+      }
+
       const nextEntityRelation: Prisma.EntityAndUserRelationsUncheckedCreateInput = {
         owner_id: body.owner_id,
         entity_id: entity.id,
@@ -184,6 +220,22 @@ router.post(
         }
       }
 
+      // rattachement direct par un admin : le premier utilisateur de l'entité en devient l'admin
+      if (
+        nextEntityRelation.status === EntityRelationStatus.MEMBER &&
+        body.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
+      ) {
+        const entityHasUsers = await prisma.entityAndUserRelations.findFirst({
+          where: {
+            entity_id: entity.id,
+            relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+            status: { in: [EntityRelationStatus.MEMBER, EntityRelationStatus.ADMIN] },
+            deleted_at: null,
+          },
+        });
+        if (!entityHasUsers) nextEntityRelation.status = EntityRelationStatus.ADMIN;
+      }
+
       const relation = await prisma.entityAndUserRelations.create({
         data: nextEntityRelation,
       });
@@ -194,37 +246,34 @@ router.post(
           if (req.user.roles[0] !== UserRoles.CHASSEUR) {
             throw new Error('Forbidden role in notifying entity admin: ' + req.user.roles[0]);
           }
-          const isZacharieAdminSettingRolesToOtherUser = req.user.isZacharieAdmin;
-          if (!isZacharieAdminSettingRolesToOtherUser) {
-            const entityAdmins = await prisma.entityAndUserRelations.findMany({
-              where: {
-                entity_id: entity.id,
-                relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-                status: EntityRelationStatus.ADMIN,
-                deleted_at: null,
+          const entityAdmins = await prisma.entityAndUserRelations.findMany({
+            where: {
+              entity_id: entity.id,
+              relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+              status: EntityRelationStatus.ADMIN,
+              deleted_at: null,
+            },
+            include: {
+              UserRelatedWithEntity: true,
+            },
+          });
+          for (const entityAdminRelation of entityAdmins) {
+            const email = [
+              'Bonjour,',
+              `${req.user.prenom} ${req.user.nom_de_famille} (${req.user.email}) vient de s'inscrire sur Zacharie au sein de ${entity.nom_d_usage}.`,
+              `Pour l'autoriser à traiter des fiches au nom de ${entity.nom_d_usage}, veuillez cliquer sur le lien suivant : https://zacharie.beta.gouv.fr/app/chasseur/profil/coordonnees?open-entity=${entity.id}`,
+              `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur l'attribution de cette fiche, n'hésitez pas à contacter la personne qui vous l'a envoyée.`,
+            ].join('\n\n');
+            await sendNotificationToUser({
+              user: entityAdminRelation.UserRelatedWithEntity,
+              title: "Un nouvel utilisateur s'est inscrit sur Zacharie au sein de votre entité",
+              email: email,
+              push: {
+                title: "Nouvelle demande d'accès",
+                body: `${req.user.prenom} ${req.user.nom_de_famille} souhaite traiter des fiches au nom de ${entity.nom_d_usage}.`,
               },
-              include: {
-                UserRelatedWithEntity: true,
-              },
+              notificationLogAction: `NEW_USER_IN_ENTITY_${entity.id}`,
             });
-            for (const entityAdminRelation of entityAdmins) {
-              const email = [
-                'Bonjour,',
-                `${req.user.prenom} ${req.user.nom_de_famille} (${req.user.email}) vient de s'inscrire sur Zacharie au sein de ${entity.nom_d_usage}.`,
-                `Pour l'autoriser à traiter des fiches au nom de ${entity.nom_d_usage}, veuillez cliquer sur le lien suivant : https://zacharie.beta.gouv.fr/app/chasseur/profil/coordonnees?open-entity=${entity.id}`,
-                `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur l'attribution de cette fiche, n'hésitez pas à contacter la personne qui vous l'a envoyée.`,
-              ].join('\n\n');
-              await sendNotificationToUser({
-                user: entityAdminRelation.UserRelatedWithEntity,
-                title: "Un nouvel utilisateur s'est inscrit sur Zacharie au sein de votre entité",
-                email: email,
-                push: {
-                  title: "Nouvelle demande d'accès",
-                  body: `${req.user.prenom} ${req.user.nom_de_famille} souhaite traiter des fiches au nom de ${entity.nom_d_usage}.`,
-                },
-                notificationLogAction: `NEW_USER_IN_ENTITY_${entity.id}`,
-              });
-            }
           }
         }
       }
@@ -316,6 +365,18 @@ router.put(
         }
       }
 
+      if (nextEntityRelation.status && nextEntityRelation.status !== EntityRelationStatus.ADMIN) {
+        if ((await getLastAdminSituation(existingEntityRelation)) !== 'NOT_LAST_ADMIN') {
+          res.status(409).send({
+            ok: false,
+            data: { relation: null, entity: null },
+            error:
+              'Vous êtes le seul administrateur de cette entité. Nommez un autre administrateur avant de retirer vos droits.',
+          });
+          return;
+        }
+      }
+
       const relation = await prisma.entityAndUserRelations.update({
         where: {
           id: existingEntityRelation.id,
@@ -392,11 +453,40 @@ router.delete(
       });
 
       if (existingEntityRelation) {
+        const lastAdminSituation = await getLastAdminSituation(existingEntityRelation);
+        if (lastAdminSituation === 'LAST_ADMIN_WITH_OTHER_USERS') {
+          res.status(409).send({
+            ok: false,
+            data: { relation: null, entity: null },
+            error:
+              'Vous êtes le seul administrateur de cette entité. Nommez un autre administrateur avant de la quitter.',
+          });
+          return;
+        }
+        // seul utilisateur d'une association de chasse : la quitter la supprime.
+        // les autres entités (ETG, SVI...) sont gérées par l'équipe Zacharie
+        const softDeleteEntity =
+          lastAdminSituation === 'SOLE_USER' && entity.type === EntityTypes.PREMIER_DETENTEUR;
+        if (lastAdminSituation === 'SOLE_USER' && !softDeleteEntity) {
+          res.status(409).send({
+            ok: false,
+            data: { relation: null, entity: null },
+            error:
+              "Vous êtes le seul utilisateur de cette entité. Contactez l'équipe Zacharie pour la quitter.",
+          });
+          return;
+        }
         await prisma.entityAndUserRelations.delete({
           where: {
             id: existingEntityRelation.id,
           },
         });
+        if (softDeleteEntity) {
+          await prisma.entity.update({
+            where: { id: entity.id },
+            data: { deleted_at: new Date() },
+          });
+        }
         if (existingEntityRelation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
           await unlinkBrevoCompanyToContact(entity, req.user);
         }

@@ -115,6 +115,9 @@ export const TRICHINE_ENTITY_CODE_PREFIX: Record<EntityTypes, string> = {
   [EntityTypes.REPAS_DE_CHASSE_OU_ASSOCIATIF]: 'RC',
   [EntityTypes.CONSOMMATEUR_FINAL]: 'CF',
   [EntityTypes.LABORATOIRE]: 'LAB',
+  [EntityTypes.FDC]: 'FDC',
+  [EntityTypes.FRC]: 'FRC',
+  [EntityTypes.FNC]: 'FNC',
 };
 
 /** Un code saisi à la main ou importé est ramené à l'alphabet des références. */

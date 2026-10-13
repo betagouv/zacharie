@@ -11,6 +11,8 @@ import { connectWith } from '../../utils/connect-with';
 //   - Allier (03), examinateur Marie Martin, 1 carcasse GG saisie
 //   - Ardèche (07), examinateur Marie Martin, aucune saisie
 //   - Allier (03), examinateur = compte admin Zacharie → EXCLUE des statistiques
+//   - Ain (01), examinateur Pierre Petit, fiche signée mais jamais transmise (sans carcasse)
+//     → Pierre Petit n'est PAS un examinateur actif
 // Toutes les autres fixtures du seed sont datées du 07/07/2025, hors saison en cours : elles
 // n'apparaissent jamais dans ces tableaux de bord.
 test.beforeAll(async () => {
@@ -37,9 +39,16 @@ async function rowCells(row: Locator) {
   return row.getByRole('cell').allTextContents();
 }
 
+async function openTableauDeBordFederation(page: Page, email: string) {
+  await connectWith(page, email);
+  await expect(page).toHaveURL(/\/app\/chasseur/);
+  await page.getByRole('link', { name: 'Tableau de bord Fédération' }).click();
+  await expect(page).toHaveURL(/\/app\/chasseur\/tableau-de-bord-federation/);
+}
+
 test('FNC — chiffres nationaux, fiches du compte admin exclues', async ({ page }) => {
   await connectWith(page, 'fnc@example.fr');
-  await expect(page).toHaveURL(/\/app\/fnc\/tableau-de-bord/);
+  await expect(page).toHaveURL(/\/app\/federation\/tableau-de-bord/);
 
   await expect(page.getByRole('heading', { level: 1, name: 'Tableau de bord national' })).toBeVisible({
     timeout: 15000,
@@ -56,7 +65,7 @@ test('FNC — chiffres nationaux, fiches du compte admin exclues', async ({ page
   const sanitaire = section(page, 'Suivi sanitaire grand gibier');
   await expect(kpi(sanitaire, 'Examinateurs actifs')).toHaveText('2');
   await expect(kpiFromSublabel(sanitaire, "Anomalies signalées lors de l'examen initial")).toHaveText('4');
-  await expect(kpi(sanitaire, /^Taux de saisie saison \d{2}-\d{2}$/)).toHaveText('16.7%');
+  await expect(kpi(sanitaire, /^Taux de saisie national saison \d{2}-\d{2}$/)).toHaveText('16.7%');
   await expect(kpi(sanitaire, 'Taux de saisie national 25-26')).toHaveText('23.9%');
 
   // Le filtre par département n'est proposé qu'au périmètre national.
@@ -76,6 +85,7 @@ test('FNC — chiffres nationaux, fiches du compte admin exclues', async ({ page
     '0',
     '0',
     '10', // PG total (animaux)
+    'Accéder au tableau de bord',
   ]);
 
   const ardeche = page.getByRole('row').filter({ hasText: 'Ardèche' });
@@ -92,18 +102,35 @@ test('FNC — chiffres nationaux, fiches du compte admin exclues', async ({ page
     '0',
     '0',
     '10',
+    'Accéder au tableau de bord',
   ]);
+
+  // La fiche de l'Ain n'a jamais été transmise : son examinateur n'est pas actif.
+  const ain = page.getByRole('row').filter({ hasText: '01 Ain' });
+  await expect(ain).toHaveCount(1);
+  expect((await rowCells(ain))[1]).toBe('0');
 
   // Ligne Total : un taux ne se somme pas, il vaut « — ».
   const total = page.getByRole('table').locator('tfoot').getByRole('row');
-  expect(await rowCells(total)).toEqual(['Total', '2', '6', '0', '0', '6', '—', '20', '0', '0', '20']);
+  expect(await rowCells(total)).toEqual(['Total', '2', '6', '0', '0', '6', '—', '20', '0', '0', '20', '']);
+
+  // La FNC accède au tableau de bord de chaque département.
+  await allier.getByRole('link', { name: 'Accéder au tableau de bord' }).click();
+  await expect(page).toHaveURL(/\/app\/federation\/tableau-de-bord\/federation-fdc-03$/);
+  await expect(page.getByRole('heading', { level: 1, name: 'Tableau de bord FDC Allier (03)' })).toBeVisible({
+    timeout: 15000,
+  });
+  await expect(kpi(section(page, 'Carcasses prélevées'), 'Grand gibier')).toHaveText('3');
+  await page.getByRole('link', { name: 'Retour à mon tableau de bord' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Tableau de bord national' })).toBeVisible({
+    timeout: 15000,
+  });
 });
 
 test("FDC — chiffres limités à son département, fiche admin de l'Allier exclue", async ({ page }) => {
-  await connectWith(page, 'fdc@example.fr');
-  await expect(page).toHaveURL(/\/app\/fdc\/tableau-de-bord/);
+  await openTableauDeBordFederation(page, 'fdc@example.fr');
 
-  await expect(page.getByRole('heading', { level: 1, name: "Tableau de bord FDC de l'Allier" })).toBeVisible({
+  await expect(page.getByRole('heading', { level: 1, name: 'Tableau de bord FDC Allier (03)' })).toBeVisible({
     timeout: 15000,
   });
 
@@ -117,33 +144,39 @@ test("FDC — chiffres limités à son département, fiche admin de l'Allier exc
   const sanitaire = section(page, 'Suivi sanitaire grand gibier');
   await expect(kpi(sanitaire, 'Examinateurs actifs')).toHaveText('1');
   await expect(kpiFromSublabel(sanitaire, "Anomalies signalées lors de l'examen initial")).toHaveText('2');
-  await expect(kpi(sanitaire, /^Taux de saisie saison \d{2}-\d{2}$/)).toHaveText('33.3%');
+  await expect(kpi(sanitaire, /^Taux de saisie départemental saison \d{2}-\d{2}$/)).toHaveText('33.3%');
 
   // Périmètre départemental : pas de détail par département.
   await expect(page.getByRole('heading', { level: 2, name: 'Détail par département' })).toHaveCount(0);
 });
 
-test('FRC — chiffres limités aux départements de son périmètre', async ({ page }) => {
-  await connectWith(page, 'frc@example.fr');
-  await expect(page).toHaveURL(/\/app\/frc\/tableau-de-bord/);
+test('FRC — chiffres limités aux départements de sa région', async ({ page }) => {
+  await openTableauDeBordFederation(page, 'frc@example.fr');
 
   await expect(
     page.getByRole('heading', { level: 1, name: 'Tableau de bord FRC Auvergne-Rhône-Alpes' })
   ).toBeVisible({ timeout: 15000 });
 
-  // Périmètre 07 + 75. Seule l'Ardèche porte des carcasses, Paris n'a donc pas de ligne.
+  // Auvergne-Rhône-Alpes couvre l'Allier et l'Ardèche : mêmes chiffres qu'au national,
+  // fiche admin toujours exclue. Tous les départements de la région ont une ligne, même sans carcasse.
   const prelevees = section(page, 'Carcasses prélevées');
-  await expect(kpi(prelevees, 'Grand gibier')).toHaveText('3');
-  await expect(kpi(prelevees, 'Petit gibier')).toHaveText('10');
+  await expect(kpi(prelevees, 'Grand gibier')).toHaveText('6');
+  await expect(kpi(prelevees, 'Petit gibier')).toHaveText('20');
 
   const sanitaire = section(page, 'Suivi sanitaire grand gibier');
-  await expect(kpi(sanitaire, 'Examinateurs actifs')).toHaveText('1');
-  await expect(kpi(sanitaire, /^Taux de saisie saison \d{2}-\d{2}$/)).toHaveText('0%');
+  await expect(kpi(sanitaire, 'Examinateurs actifs')).toHaveText('2');
+  await expect(kpi(sanitaire, /^Taux de saisie régional saison \d{2}-\d{2}$/)).toHaveText('16.7%');
+
+  // L'Ain est dans la région, mais sa fiche n'a jamais été transmise : 2 examinateurs actifs, pas 3.
+  const ain = page.getByRole('row').filter({ hasText: '01 Ain' });
+  await expect(ain).toHaveCount(1);
+  expect((await rowCells(ain))[1]).toBe('0');
 
   // Périmètre régional : le détail par département est affiché, sans le filtre.
   await expect(page.getByRole('heading', { level: 2, name: 'Détail par département' })).toBeVisible();
   await expect(page.getByPlaceholder('Filtrer par département')).toHaveCount(0);
   await expect(page.getByRole('row').filter({ hasText: 'Ardèche' })).toHaveCount(1);
-  await expect(page.getByRole('row').filter({ hasText: 'Allier' })).toHaveCount(0);
+  await expect(page.getByRole('row').filter({ hasText: 'Allier' })).toHaveCount(1);
+  await expect(page.getByRole('row').filter({ hasText: '69 Rhône' })).toHaveCount(1);
   await expect(page.getByRole('row').filter({ hasText: 'Paris' })).toHaveCount(0);
 });

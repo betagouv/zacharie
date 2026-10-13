@@ -31,3 +31,4 @@ Mobile viewport (350x667). `resetDb('EXAMINATEUR_INITIAL')` in `beforeAll`/`befo
 - 22 — Double-clic "Transmettre" — `22-double-clic-transmettre.spec.ts`
 - 23 — Déconnexion en plein formulaire — `23-deconnexion-pendant-formulaire.spec.ts`
 - 32 — CCG : question chambre froide (aucune case cochée par défaut) — `32-ccg-question-chambre-froide.spec.ts`
+- 34 — Dernier admin d’une association : départ bloqué, ou suppression si seul membre — `34-dernier-admin-association.spec.ts`

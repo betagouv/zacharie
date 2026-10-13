@@ -14,6 +14,7 @@ import { TRICHINE_FEATURE_ENABLED } from '~/config';
 import type { SyncScope } from '~/utils/sync-scope';
 import { SyncRejectedError } from '~/utils/sync-errors';
 import { carcasseHasResultatTrichineNegatif, TRICHINE_ESPECE_CONCERNEE } from '~/utils/trichine';
+import { isStaleWrite, nextVersion } from '~/utils/sync-version';
 
 export interface SaveCarcasseResult {
   savedCarcasse: Carcasse;
@@ -87,6 +88,15 @@ export async function syncCarcasse(
     if (!(await scope.canWriteCarcasse(existingCarcasse.zacharie_carcasse_id))) {
       throw new SyncRejectedError("Vous n'avez pas accès à cette carcasse");
     }
+    // Version périmée : on ne l'écrit pas, et on touche `updated_at` pour que le prochain delta du
+    // client (/carcasse, fondé sur `carcasse.updated_at`) lui apporte la version à jour.
+    if (isStaleWrite(existingCarcasse, body.version, user)) {
+      await prisma.carcasse.update({
+        where: { zacharie_carcasse_id: existingCarcasse.zacharie_carcasse_id },
+        data: { updated_at: new Date() },
+      });
+      throw new SyncRejectedError('Version obsolète');
+    }
   } else if (!(await scope.canWriteFei(existingFei))) {
     throw new SyncRejectedError("Vous n'avez pas accès à cette fiche");
   }
@@ -103,6 +113,8 @@ export async function syncCarcasse(
           zacharie_carcasse_id,
           fei_numero,
           numero_bracelet: body.numero_bracelet,
+          // le créateur est l'auteur de la requête, jamais une valeur fournie par le client
+          created_by_user_id: user.id,
           created_at: body.created_at ?? undefined, // pour garder le même ordre de tri des carcasses dans le frontend
           is_synced: true,
         },
@@ -140,11 +152,12 @@ export async function syncCarcasse(
       data: {
         deleted_at: body.deleted_at,
         is_synced: true,
+        ...nextVersion(user.id),
       },
     });
     await prisma.carcasseIntermediaire.updateMany({
       where: { zacharie_carcasse_id: existingCarcasse.zacharie_carcasse_id },
-      data: { deleted_at: body.deleted_at },
+      data: { deleted_at: body.deleted_at, ...nextVersion(user.id) },
     });
     return { savedCarcasse: deletedCarcasse, existingCarcasse, isDeleted: true };
   }
@@ -193,9 +206,6 @@ export async function syncCarcasse(
       nextCarcasse.examinateur_anomalies_carcasse = [];
       nextCarcasse.examinateur_anomalies_abats = [];
     }
-  }
-  if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.created_by_user_id)) {
-    nextCarcasse.created_by_user_id = body[Prisma.CarcasseScalarFieldEnum.created_by_user_id];
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.examinateur_initial_offline)) {
     nextCarcasse.examinateur_initial_offline =
@@ -569,7 +579,7 @@ export async function syncCarcasse(
     where: {
       zacharie_carcasse_id: existingCarcasse.zacharie_carcasse_id,
     },
-    data: nextCarcasse,
+    data: { ...nextCarcasse, ...nextVersion(user.id) },
   });
 
   return { savedCarcasse: updatedCarcasse, existingCarcasse, isDeleted: false };

@@ -19,10 +19,8 @@ enum UserRoles {
   ASSOCIATION_CARITATIVE // Repas de chasse ou associatif
   REPAS_DE_CHASSE_OU_ASSOCIATIF // Repas de chasse ou associatif
   CONSOMMATEUR_FINAL // Je suis consommateur final
-  FDC // Fédération Départementale des Chasseurs
-  FRC // Fédération Régionale des Chasseurs
-  FNC // Fédération Nationale des Chasseurs
   LABORATOIRE // Laboratoire d'analyses trichine (LVD agréé ou LNR)
+  FEDERATION // Membre d'une fédération (FDC / FRC / FNC) sans être chasseur : tableau de bord uniquement
 }
 
 enum UserEtgRoles {
@@ -53,6 +51,7 @@ model User {
   roles                                 UserRoles[]
   role                                  UserRoles? // TODO: migrate from roles, in another PR
   isZacharieAdmin                       Boolean                        @default(false)
+  exclude_from_stats                    Boolean                        @default(false) // compte de test ou de démo : ses fiches sont exclues des vues Metabase
   etg_role                              UserEtgRoles                   @default(RECEPTION)
   created_at                            DateTime                       @default(now())
   updated_at                            DateTime                       @default(now()) @updatedAt
@@ -72,9 +71,6 @@ model User {
   checked_has_ccg                       DateTime?
   checked_has_partenaires               DateTime?
   onboarding_chasse_info_done_at        DateTime?
-  // Scope géographique pour les rôles FDC/FRC/FNC (dashboard de pilotage des fédérations).
-  // FDC = 1 code dept ; FRC = depts de la région ; FNC = [] (= national, tous les depts).
-  scope_departements_codes              String[]
   Password                              Password?
   UserRelationsAsOwner                  UserRelations[]                @relation("UserOwnerOfUserRelation")
   UserRelationsAsRelated                UserRelations[]                @relation("UserRelatedOfUserRelation")
@@ -83,6 +79,7 @@ model User {
   FeiPremierDetenteurUser               Fei[]                          @relation("FeiPremierDetenteurUser")
   FeiExaminateurInitialUser             Fei[]                          @relation("FeiExaminateurInitialUser")
   NotificationLog                       NotificationLog[]
+  BugInvestigations                     BugInvestigation[]
   CarcasseIntermediaire                 CarcasseIntermediaire[]        @relation("CarcasseIntermediaireUser")
   CarcassesIpm1                         Carcasse[]                     @relation("SviIpm1User")
   ApiKeyApprovalByUser                  ApiKeyApprovalByUserOrEntity[]
@@ -121,6 +118,9 @@ enum EntityTypes {
   REPAS_DE_CHASSE_OU_ASSOCIATIF
   CONSOMMATEUR_FINAL
   LABORATOIRE // Laboratoire d'analyses trichine (LVD agréé ou LNR)
+  FDC // Fédération Départementale des Chasseurs
+  FRC // Fédération Régionale des Chasseurs
+  FNC // Fédération Nationale des Chasseurs
 }
 
 model Entity {
@@ -150,6 +150,9 @@ model Entity {
   type                                  EntityTypes
   // Trichine — laboratoires (type = LABORATOIRE)
   is_lnr                                Boolean                        @default(false) // true pour l'entité ANSES (LNR unique seedé)
+  // Fédérations (type = FDC / FRC / FNC) : départements couverts par le tableau de bord.
+  // FDC = son département ; FRC = les départements de sa région ; FNC = tous les départements.
+  scope_departements_codes              String[]
   created_at                            DateTime                       @default(now())
   updated_at                            DateTime                       @default(now()) @updatedAt
   deleted_at                            DateTime?
@@ -157,6 +160,7 @@ model Entity {
   prefilled                             Boolean                        @default(false)
   is_synced                             Boolean                        @default(true) // just for typing purppose with zustand frontend
   for_testing                           Boolean                        @default(false)
+  exclude_from_stats                    Boolean                        @default(false) // entité de test ou de démo : ses fiches sont exclues des vues Metabase
   // for brevo
   brevo_id                              String?
   at_least_one_fei_treated              DateTime?
@@ -350,6 +354,9 @@ model Fei {
   updated_at                DateTime                @default(now()) @updatedAt
   deleted_at                DateTime?
   is_synced                 Boolean                 @default(true)
+  // verrou optimiste du /sync, incrémenté par le serveur à chaque écriture (voir utils/sync-version.ts)
+  version                   Int                     @default(0)
+  version_user_id           String?
   /**
    * relations
    */
@@ -577,6 +584,9 @@ model Carcasse {
   updated_at                                              DateTime                      @default(now()) @updatedAt
   deleted_at                                              DateTime?
   is_synced                                               Boolean                       @default(true)
+  // verrou optimiste du /sync, incrémenté par le serveur à chaque écriture (voir utils/sync-version.ts)
+  version                                                 Int                           @default(0)
+  version_user_id                                         String?
   Fei                                                     Fei                           @relation(fields: [fei_numero], references: [numero], onDelete: Cascade, onUpdate: Cascade)
   CarcasseIntermediaire                                   CarcasseIntermediaire[]
   SviIpm1User                                             User?                         @relation("SviIpm1User", fields: [svi_ipm1_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
@@ -691,6 +701,9 @@ model CarcasseIntermediaire {
   updated_at                                  DateTime      @default(now()) @updatedAt
   deleted_at                                  DateTime?
   is_synced                                   Boolean       @default(true) // just for typing purppose with zustand frontend
+  // verrou optimiste du /sync, incrémenté par le serveur à chaque écriture (voir utils/sync-version.ts)
+  version                                     Int           @default(0)
+  version_user_id                             String?
   CarcasseIntermediaireFei                    Fei           @relation(fields: [fei_numero], references: [numero], onDelete: Cascade, onUpdate: Cascade)
   CarcasseCarcasseIntermediaire               Carcasse      @relation(fields: [zacharie_carcasse_id], references: [zacharie_carcasse_id], onDelete: Cascade, onUpdate: Cascade)
   CarcasseIntermediaireUser                   User          @relation("CarcasseIntermediaireUser", fields: [intermediaire_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
@@ -723,6 +736,28 @@ model NotificationLog {
   @@index([user_id, action])
 }
 
+enum BugInvestigationStatus {
+  EN_COURS
+  TERMINE
+  ERREUR
+}
+
+// Conversation avec l'assistant Albert (admin > Résolution de bug) : lecture seule du code et de la base de production
+model BugInvestigation {
+  id          String                 @id @default(uuid())
+  user_id     String
+  description String // premier message, pour la liste des conversations
+  status      BugInvestigationStatus @default(EN_COURS)
+  messages    Json                   @default("[]") // historique de la conversation avec Albert, sans le prompt système
+  live_output String? // réflexion et réponse d'Albert en cours de streaming, vidée à la fin de chaque étape
+  error       String?
+  created_at  DateTime               @default(now())
+  updated_at  DateTime               @default(now()) @updatedAt
+  User        User                   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([created_at])
+}
+
 model CronJob {
   id         String   @id @default(uuid())
   unique_key String   @unique
@@ -737,6 +772,7 @@ enum ApiKeyScope {
   FEI_READ_FOR_ENTITY
   CARCASSE_READ_FOR_USER
   CARCASSE_READ_FOR_ENTITY
+  USER_LOGIN_FOR_USER // se connecter au compte de l'utilisateur via un access token (créer des fiches en son nom)
 }
 
 model ApiKey {

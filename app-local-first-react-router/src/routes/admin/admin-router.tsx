@@ -18,6 +18,7 @@ import AdminDashboard from './dashboard';
 import AdminLesions from './lesions';
 import AdminQuiz from './quiz';
 import AdminTrichine from './trichine';
+import AdminBugResolution from './bug-resolution';
 
 export default function RouterAdmin() {
   return (
@@ -96,6 +97,14 @@ export default function RouterAdmin() {
       <Route
         path="trichine"
         element={<AdminTrichine />}
+      />
+      <Route
+        path="bug-resolution"
+        element={<AdminBugResolution />}
+      />
+      <Route
+        path="bug-resolution/:id"
+        element={<AdminBugResolution />}
       />
     </Route>
   );

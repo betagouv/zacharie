@@ -215,20 +215,10 @@ describe('POST /user-entity/', () => {
       });
     });
 
-    test('platform admin can manage any user', async () => {
+    // les pouvoirs d'admin Zacharie passent par /admin/user-entity (ProConnect)
+    test('platform admin without entity admin relation cannot manage another user → 403', async () => {
       vi.mocked(prisma.entity.findUnique).mockResolvedValue(testEntity as any);
-      vi.mocked(prisma.entity.findFirst).mockResolvedValue(testEntity as any);
-      vi.mocked(prisma.entityAndUserRelations.findFirst)
-        .mockResolvedValueOnce(null) // isEntityAdmin check (admin doesn't need this, but route still checks)
-        .mockResolvedValueOnce(null); // no duplicate
-      vi.mocked(prisma.entityAndUserRelations.create).mockResolvedValue({
-        id: 'rel-1',
-        owner_id: otherUser.id,
-        entity_id: 'entity-1',
-        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-        status: EntityRelationStatus.MEMBER,
-        deleted_at: null,
-      } as any);
+      vi.mocked(prisma.entityAndUserRelations.findFirst).mockResolvedValueOnce(null); // not entity admin
 
       const res = await authed(
         request(app).post(BASE).send({
@@ -239,7 +229,8 @@ describe('POST /user-entity/', () => {
         platformAdmin as any
       );
 
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(403);
+      expect(prisma.entityAndUserRelations.create).not.toHaveBeenCalled();
     });
   });
 
@@ -708,10 +699,10 @@ describe('PUT /user-entity/', () => {
       });
     });
 
-    test('admin user can update status → 200', async () => {
+    test('platform admin cannot update status of a relation → status ignored', async () => {
       const existingRelation: EntityAndUserRelations = {
         id: 'rel-1',
-        owner_id: regularUser.id,
+        owner_id: platformAdmin.id,
         entity_id: 'entity-1',
         relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
         status: EntityRelationStatus.REQUESTED,
@@ -721,17 +712,15 @@ describe('PUT /user-entity/', () => {
         is_synced: true,
         brevo_id: null,
       };
-      const adminRelation: EntityAndUserRelations = {
-        ...existingRelation,
-        status: EntityRelationStatus.ADMIN,
-      };
       vi.mocked(prisma.entity.findUnique).mockResolvedValue(testEntity as any);
-      vi.mocked(prisma.entityAndUserRelations.findFirst).mockResolvedValue(existingRelation); // find existing relation (admin check returns null since platformAdmin doesn't need DB check)
-      vi.mocked(prisma.entityAndUserRelations.update).mockResolvedValue(adminRelation);
+      vi.mocked(prisma.entityAndUserRelations.findFirst)
+        .mockResolvedValueOnce(null) // not entity admin
+        .mockResolvedValueOnce(existingRelation);
+      vi.mocked(prisma.entityAndUserRelations.update).mockResolvedValue(existingRelation);
 
       const res = await authed(
         request(app).put(BASE).send({
-          owner_id: regularUser.id,
+          owner_id: platformAdmin.id,
           entity_id: 'entity-1',
           relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
           status: EntityRelationStatus.ADMIN,
@@ -741,15 +730,7 @@ describe('PUT /user-entity/', () => {
 
       expect(res.status).toBe(200);
       const updateCall = vi.mocked(prisma.entityAndUserRelations.update).mock.calls[0][0];
-      expect(updateCall.data).toHaveProperty('status');
-      expect(res.body).toEqual({
-        ok: true,
-        error: '',
-        data: {
-          relation: adminRelation,
-          entity: testEntity,
-        },
-      });
+      expect(updateCall.data).not.toHaveProperty('status');
     });
 
     test('missing relation → 400', async () => {

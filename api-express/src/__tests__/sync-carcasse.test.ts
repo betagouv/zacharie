@@ -94,6 +94,26 @@ describe('syncCarcasse — create', () => {
       is_synced: true,
     });
   });
+
+  test("created_by_user_id vient de l'auteur de la requête, jamais du body", async () => {
+    vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
+    vi.mocked(prisma.carcasse.findFirst).mockResolvedValueOnce(null);
+    vi.mocked(prisma.carcasse.create).mockResolvedValueOnce(baseCarcasse);
+    vi.mocked(prisma.carcasse.update).mockResolvedValueOnce(baseCarcasse);
+
+    await syncCarcasse(
+      'FEI-1',
+      'ZC-1',
+      { fei_numero: 'FEI-1', numero_bracelet: 'BR-1', created_by_user_id: 'user-victime' } as any,
+      chasseur,
+      scope
+    );
+
+    const createCall = vi.mocked(prisma.carcasse.create).mock.calls[0][0];
+    expect(createCall.data.created_by_user_id).toBe(chasseur.id);
+    const updateCall = vi.mocked(prisma.carcasse.update).mock.calls[0][0];
+    expect(updateCall.data).not.toHaveProperty('created_by_user_id');
+  });
 });
 
 describe('syncCarcasse — update', () => {
@@ -219,7 +239,7 @@ describe('syncCarcasse — deletion', () => {
     expect(result.isDeleted).toBe(true);
     expect(prisma.carcasseIntermediaire.updateMany).toHaveBeenCalledWith({
       where: { zacharie_carcasse_id: 'ZC-1' },
-      data: { deleted_at: '2026-03-01' },
+      data: { deleted_at: '2026-03-01', version: { increment: 1 }, version_user_id: expect.any(String) },
     });
   });
 });

@@ -7,6 +7,7 @@ import {
   EntityRelationType,
   EntityTypes,
   FeiOwnerRole,
+  IPM1Decision,
   Prisma,
   TransportType,
   Fei,
@@ -19,7 +20,7 @@ import dayjs from 'dayjs';
 import prisma from '~/prisma';
 import { hashPassword } from '~/service/crypto';
 import createUserId from '~/utils/createUserId';
-import { ALL_DEPARTEMENT_CODES } from '~/utils/federation-stats';
+import { getAllFederationEntities } from '~/utils/federation-stats';
 
 export async function populateDb(role?: FeiOwnerRole) {
   console.log('Populate db', process.env.NODE_ENV, process.env.POSTGRESQL_ADDON_URI);
@@ -236,6 +237,21 @@ Christine
         onboarded_at: dayjs().toDate(),
       },
       {
+        // Second membre de SVI 1 : deux agents du même service sur la même fiche (spec 143).
+        id: await createUserId(),
+        email: 'svi-1-bis@example.fr',
+        roles: [UserRoles.SVI],
+        activated: true,
+        activated_at: dayjs().toDate(),
+        prenom: 'Bernard',
+        nom_de_famille: 'Petit',
+        addresse_ligne_1: '7 rue de la paix',
+        code_postal: '75000',
+        ville: 'Paris',
+        telephone: '0606060617',
+        onboarded_at: dayjs().toDate(),
+      },
+      {
         id: await createUserId(),
         email: 'svi-nouveau@example.fr',
         roles: [UserRoles.SVI],
@@ -335,26 +351,27 @@ Christine
       {
         id: await createUserId(),
         email: 'fdc@example.fr',
-        roles: [UserRoles.FDC],
+        roles: [UserRoles.CHASSEUR],
         activated: true,
         activated_at: dayjs().toDate(),
         prenom: 'Paul',
-        nom_de_famille: "FDC de l'Allier",
+        nom_de_famille: 'Lefebvre',
         addresse_ligne_1: '1 rue de la fédération',
         code_postal: '03000',
         ville: 'Moulins',
         telephone: '0606060620',
+        est_forme_a_l_examen_initial: false,
         onboarded_at: dayjs().toDate(),
-        scope_departements_codes: ['03'],
       },
       {
         id: await createUserId(),
         email: 'fnc@example.fr',
-        roles: [UserRoles.FNC],
+        // membre de fédération sans être chasseur
+        roles: [UserRoles.FEDERATION],
         activated: true,
         activated_at: dayjs().toDate(),
         prenom: 'Jacques',
-        nom_de_famille: 'FNC nationale',
+        nom_de_famille: 'Michel',
         addresse_ligne_1: '1 rue de la chasse',
         code_postal: '75000',
         ville: 'Paris',
@@ -375,29 +392,22 @@ Christine
         telephone: '0606060610',
         onboarded_at: dayjs().toDate(),
       },
-      // Périmètre multi-départemental (régional) : ni un seul département, ni les 101.
       {
         id: await createUserId(),
         email: 'frc@example.fr',
-        roles: [UserRoles.FRC],
+        roles: [UserRoles.CHASSEUR],
         activated: true,
         activated_at: dayjs().toDate(),
         prenom: 'Nicolas',
-        nom_de_famille: 'FRC Auvergne-Rhône-Alpes',
+        nom_de_famille: 'Laurent',
         addresse_ligne_1: '1 rue de la région',
         code_postal: '07000',
         ville: 'Privas',
         telephone: '0606060622',
+        est_forme_a_l_examen_initial: false,
         onboarded_at: dayjs().toDate(),
-        scope_departements_codes: ['07', '75'],
       },
     ],
-  });
-
-  // FNC needs all department codes for national scope
-  await prisma.user.update({
-    where: { email: 'fnc@example.fr' },
-    data: { scope_departements_codes: ALL_DEPARTEMENT_CODES },
   });
 
   const users = await prisma.user.findMany();
@@ -547,6 +557,9 @@ Christine
     ],
   });
 
+  // Fédérations pré-créées (en prod par la migration)
+  await prisma.entity.createMany({ data: getAllFederationEntities() });
+
   const entities = await prisma.entity.findMany();
   console.log('Entities created for test', entities.length);
 
@@ -623,10 +636,22 @@ Christine
         status: EntityRelationStatus.MEMBER,
       },
       {
+        owner_id: users.find((user) => user.email === 'collecteur-pro-1-etg-1@example.fr')?.id,
+        entity_id: entities.find((entity) => entity.raison_sociale === 'ETG 1')?.id,
+        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        status: EntityRelationStatus.MEMBER,
+      },
+      {
         owner_id: users.find((user) => user.email === 'svi@example.fr')?.id,
         entity_id: entities.find((entity) => entity.raison_sociale === 'SVI 1')?.id,
         relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
         status: EntityRelationStatus.ADMIN,
+      },
+      {
+        owner_id: users.find((user) => user.email === 'svi-1-bis@example.fr')?.id,
+        entity_id: entities.find((entity) => entity.raison_sociale === 'SVI 1')?.id,
+        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        status: EntityRelationStatus.MEMBER,
       },
       {
         owner_id: users.find((user) => user.email === 'svi-nouveau@example.fr')?.id,
@@ -649,6 +674,24 @@ Christine
       {
         owner_id: users.find((user) => user.email === 'svi-2@example.fr')?.id,
         entity_id: entities.find((entity) => entity.raison_sociale === 'SVI 2')?.id,
+        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        status: EntityRelationStatus.ADMIN,
+      },
+      {
+        owner_id: users.find((user) => user.email === 'fdc@example.fr')?.id,
+        entity_id: 'federation-fdc-03',
+        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        status: EntityRelationStatus.ADMIN,
+      },
+      {
+        owner_id: users.find((user) => user.email === 'frc@example.fr')?.id,
+        entity_id: 'federation-frc-ARA',
+        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        status: EntityRelationStatus.ADMIN,
+      },
+      {
+        owner_id: users.find((user) => user.email === 'fnc@example.fr')?.id,
+        entity_id: 'federation-fnc',
         relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
         status: EntityRelationStatus.ADMIN,
       },
@@ -683,7 +726,11 @@ Christine
       private_key: 'test-private-key-user',
       public_key: 'test-public-key-user',
       active: true,
-      scopes: [ApiKeyScope.FEI_READ_FOR_USER, ApiKeyScope.CARCASSE_READ_FOR_USER],
+      scopes: [
+        ApiKeyScope.FEI_READ_FOR_USER,
+        ApiKeyScope.CARCASSE_READ_FOR_USER,
+        ApiKeyScope.USER_LOGIN_FOR_USER,
+      ],
     },
   });
   const etg1User = users.find((u) => u.email === 'etg-1@example.fr');
@@ -759,7 +806,7 @@ Christine
       // });
       console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (for collecteur pro)`);
     }
-    if (role === FeiOwnerRole.SVI) {
+    if (role === FeiOwnerRole.SVI || (role as string) === 'SVI_CONSIGNE') {
       const fei = await prisma.fei.create({ data: feiTransmittedByEtgToSvi });
       const carcasses = await prisma.carcasse.createMany({
         data: getCarcasses(fei, ownershipTransmittedByEtgToSvi),
@@ -779,6 +826,25 @@ Christine
           prise_en_charge_at: dayjs().subtract(2, 'day').toDate(),
         })),
       });
+      // SVI_CONSIGNE : la carcasse MM-001-001 a une décision IPM1 de mise en consigne signée (certificats SVI, e2e spec 140)
+      if ((role as string) === 'SVI_CONSIGNE') {
+        const svi = users.find((u) => u.email === 'svi@example.fr');
+        await prisma.carcasse.update({
+          where: { zacharie_carcasse_id: `${fei.numero}_MM-001-001` },
+          data: {
+            svi_carcasse_status: CarcasseStatus.CONSIGNE,
+            svi_carcasse_status_set_at: dayjs().subtract(1, 'hour').toDate(),
+            svi_ipm1_date: dayjs().subtract(1, 'hour').toDate(),
+            svi_ipm1_presentee_inspection: true,
+            svi_ipm1_user_id: svi?.id,
+            svi_ipm1_pieces: ['Carcasse entière'],
+            svi_ipm1_lesions_ou_motifs: ['Souillures telluriques'],
+            svi_ipm1_decision: IPM1Decision.MISE_EN_CONSIGNE,
+            svi_ipm1_duree_consigne: 48,
+            svi_ipm1_signed_at: dayjs().subtract(1, 'hour').toDate(),
+          },
+        });
+      }
       console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (for svi)`);
     }
     if (role === FeiOwnerRole.COMMERCE_DE_DETAIL) {
@@ -813,6 +879,8 @@ Christine
         data: {
           svi_carcasse_status: CarcasseStatus.ACCEPTE,
           svi_carcasse_status_set_at: dayjs().subtract(2, 'day').toDate(),
+          // date sans heure, le même jour que la prise en charge ETG
+          svi_ipm2_date: dayjs().subtract(2, 'day').startOf('day').toDate(),
         },
       });
       console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (SVI closed)`);
@@ -1047,6 +1115,8 @@ Christine
     // 10 pigeons.
     //   - Allier (03) et Ardèche (07) par Marie Martin → comptées
     //   - Allier (03) par le compte admin Zacharie → exclue (fiche de test / tuto vidéo)
+    //   - Ain (01) par Pierre Petit, signée par l'examinateur mais jamais transmise → Pierre Petit
+    //     n'est pas un examinateur actif
     // La fiche admin a exactement la même forme que celle de l'Allier : si l'exclusion des
     // comptes admin régresse, les chiffres de l'Allier doublent.
     if ((role as string) === 'FEDERATION_STATS') {
@@ -1087,8 +1157,11 @@ Christine
         },
       });
 
+      // Sans carcasse : les chiffres de valorisation et sanitaires restent ceux de l'Allier et de l'Ardèche.
+      const feiAinNonTransmise = await prisma.fei.create({ data: feiFederationAinNonTransmise });
+
       console.log(
-        `FEDERATION_STATS seeded: ${feiAllier.numero} (03), ${feiArdeche.numero} (07), ${feiAdmin.numero} (03, admin, exclue)`
+        `FEDERATION_STATS seeded: ${feiAllier.numero} (03), ${feiArdeche.numero} (07), ${feiAdmin.numero} (03, admin, exclue), ${feiAinNonTransmise.numero} (01, non transmise)`
       );
     }
   }
@@ -1384,6 +1457,14 @@ const feiFederationArdeche: Prisma.FeiUncheckedCreateInput = {
   ...feiFederationAllier,
   numero: 'ZACH-20250707-QZ6E0-400002',
   commune_mise_a_mort: '07430 DAVEZIEUX',
+};
+
+const feiFederationAinNonTransmise: Prisma.FeiUncheckedCreateInput = {
+  ...feiFederationAllier,
+  numero: 'ZACH-20250707-0Y545-400004',
+  commune_mise_a_mort: '01000 BOURG-EN-BRESSE',
+  created_by_user_id: '0Y545',
+  examinateur_initial_user_id: '0Y545',
 };
 
 function getCarcasses(

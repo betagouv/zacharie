@@ -1,4 +1,5 @@
 import { disconnect } from '@app/utils/disconnect';
+import { NATIVE_TOKEN_KEY } from '@app/services/indexed-db';
 
 let API_URL = new URL(import.meta.env.VITE_API_URL);
 
@@ -32,7 +33,6 @@ interface ApiServiceArgs {
 // Native WebView clients can't rely on cross-site cookies (WebKit ITP),
 // so the API returns the JWT in the response body and we send it back
 // as `Authorization: Bearer <token>`. Web clients keep using cookies.
-const NATIVE_TOKEN_KEY = 'zacharie_native_jwt';
 const isNativeClient = () => typeof window !== 'undefined' && !!window.ReactNativeWebView;
 export const getNativeAuthToken = (): string | null => {
   if (!isNativeClient()) return null;

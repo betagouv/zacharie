@@ -1,5 +1,5 @@
 import 'fake-indexeddb/auto';
-import { describe, test, expect, vi, beforeEach } from 'vitest';
+import { describe, test, expect, vi, beforeEach, type Mock } from 'vitest';
 import { FeiOwnerRole, UserRoles, CarcasseType } from '@prisma/client';
 
 import { createNewCarcasse } from '../src/utils/create-new-carcasse';
@@ -45,7 +45,7 @@ function makeFei(overrides: Partial<Fei> = {}): Fei {
 }
 
 describe('createNewCarcasse', () => {
-  let createCarcasseSpy: ReturnType<typeof vi.fn>;
+  let createCarcasseSpy: Mock<ReturnType<typeof useZustandStore.getState>['createCarcasse']>;
 
   beforeEach(() => {
     useUser.setState({ user: examinateurUser });

@@ -8,6 +8,7 @@ import { UserRoles, Prisma } from '@prisma/client';
 import type { UserConnexionResponse } from '@api/src/types/responses';
 import useUser from '@app/zustand/user';
 import { useNavigate, useSearchParams } from 'react-router';
+import { sanitizeRedirect } from '@app/utils/sanitize-redirect';
 import API from '@app/services/api';
 import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
 import MesCCGs from './chasseur-ccgs';
@@ -27,7 +28,7 @@ export default function MesInformationsDeChasse({
   withCCGs = false,
 }: InformationsDeChasseProps) {
   const [searchParams] = useSearchParams();
-  const redirect = searchParams.get('redirect');
+  const redirect = sanitizeRedirect(searchParams.get('redirect'));
   let withEverything = withExaminateurInitial && withAssociationsDeChasse && withCCGs;
 
   const user = useUser((state) => state.user)!;

@@ -403,6 +403,19 @@ export default function CurrentOwnerConfirm() {
       next_owner_user_name_cache: null,
       next_owner_role: null,
     };
+    if (currentTransmission.current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR) {
+      // Renvoi au premier détenteur : le stockage et le transport étaient ceux de l'envoi annulé, il
+      // les choisira de nouveau. On garde premier_detenteur_prochain_detenteur_id_cache : côté chasseur,
+      // il sert à afficher « Renvoyée par …, à attribuer de nouveau » jusqu'au prochain envoi.
+      Object.assign(nextTransmission, {
+        premier_detenteur_depot_type: null,
+        premier_detenteur_depot_entity_id: null,
+        premier_detenteur_depot_entity_name_cache: null,
+        premier_detenteur_depot_ccg_at: null,
+        premier_detenteur_transport_type: null,
+        premier_detenteur_transport_date: null,
+      });
+    }
     updateCarcassesTransmission(myCarcasseIds, nextTransmission);
     addLog({
       user_id: user.id,
@@ -481,14 +494,20 @@ export default function CurrentOwnerConfirm() {
       });
     }
   }
-  actionButtons.push({
-    children: "Renvoyer à l'expéditeur",
-    priority: 'secondary',
-    nativeButtonProps: {
-      type: 'button',
-      onClick: () => renvoiModal.open(),
-    },
-  });
+  // Pas de renvoi quand l'expéditeur est le transport de mon propre ETG : la fiche resterait chez nous.
+  const expediteurIsMyEntity =
+    !!currentTransmission.current_owner_entity_id &&
+    userEntityIds.includes(currentTransmission.current_owner_entity_id);
+  if (!expediteurIsMyEntity) {
+    actionButtons.push({
+      children: "Renvoyer à l'expéditeur",
+      priority: 'secondary',
+      nativeButtonProps: {
+        type: 'button',
+        onClick: () => renvoiModal.open(),
+      },
+    });
+  }
 
   // le n° de bon de réception n'est demandé que si l'ETG destinataire l'a activé dans ses paramètres
   const canFillNumeroBonReception =

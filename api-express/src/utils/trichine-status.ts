@@ -1,5 +1,6 @@
 import { TrichineResultatAnalyse, TrichineStatutAnalyse, TrichineStatutLogistiqueFTP } from '@prisma/client';
 import prisma from '~/prisma';
+import { nextVersion } from '~/utils/sync-version';
 import {
   isFtpPartie,
   logTrichineStatutChange,
@@ -182,7 +183,7 @@ export async function recomputeCarcasseTrichine(zacharieCarcasseId: string, user
   if (actionRequise !== carcasse.trichine_action_requise) {
     await prisma.carcasse.update({
       where: { zacharie_carcasse_id: zacharieCarcasseId },
-      data: { trichine_action_requise: actionRequise },
+      data: { trichine_action_requise: actionRequise, ...nextVersion(userId) },
     });
     await logTrichineStatutChange({
       objetType: TrichineObjetType.CARCASSE,

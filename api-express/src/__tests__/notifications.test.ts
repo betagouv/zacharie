@@ -8,8 +8,8 @@ import queueSendNotificationToUser from '~/service/notifications';
 // SENTRY_KEY est lu par third-parties/sentry.ts, importé via third-parties/expo-push.ts.
 vi.mock('~/config', () => ({ IS_TEST: false, SENTRY_KEY: '' }));
 vi.mock('~/third-parties/brevo', () => ({
-  sendEmail: vi.fn().mockResolvedValue(true),
-  sendTemplateEmail: vi.fn().mockResolvedValue(true),
+  sendEmail: vi.fn().mockResolvedValue({ messageId: 'msg-1' }),
+  sendTemplateEmail: vi.fn().mockResolvedValue({ messageId: 'msg-1' }),
 }));
 vi.mock('web-push', () => ({ default: { sendNotification: vi.fn() } }));
 vi.mock('~/third-parties/expo-push', () => ({
@@ -37,8 +37,8 @@ describe('sendNotificationToUser — canal email', () => {
     vi.clearAllMocks();
     vi.mocked(prisma.notificationLog.findFirst).mockResolvedValue(null as any);
     vi.mocked(prisma.notificationLog.create).mockResolvedValue({} as any);
-    vi.mocked(sendEmail).mockResolvedValue(true);
-    vi.mocked(sendTemplateEmail).mockResolvedValue(true);
+    vi.mocked(sendEmail).mockResolvedValue({ messageId: 'msg-1' });
+    vi.mocked(sendTemplateEmail).mockResolvedValue({ messageId: 'msg-1' });
   });
 
   test('route vers le template Brevo quand emailTemplateId est fourni', async () => {
@@ -113,6 +113,50 @@ describe('sendNotificationToUser — canal email', () => {
     expect(sendTemplateEmail).not.toHaveBeenCalled();
     expect(prisma.notificationLog.create).not.toHaveBeenCalled();
   });
+
+  test('transmet la copie (cc) à Brevo', async () => {
+    await queueSendNotificationToUser({
+      ...notification,
+      emailTemplateId: 78,
+      cc: ['expediteur@example.fr'],
+    });
+
+    expect(sendTemplateEmail).toHaveBeenCalledWith(
+      expect.objectContaining({ cc: ['expediteur@example.fr'] })
+    );
+  });
+
+  test('renvoie SENT avec le messageId Brevo quand l’envoi réussit', async () => {
+    const result = await queueSendNotificationToUser(notification);
+
+    expect(result).toEqual({ status: 'SENT', messageId: 'msg-1' });
+  });
+
+  test('renvoie FAILED quand l’envoi échoue', async () => {
+    vi.mocked(sendEmail).mockResolvedValue(false);
+
+    const result = await queueSendNotificationToUser(notification);
+
+    expect(result).toEqual({ status: 'FAILED' });
+  });
+
+  test('renvoie SKIPPED quand l’email a déjà été envoyé', async () => {
+    vi.mocked(prisma.notificationLog.findFirst).mockResolvedValue({ id: 'log-1' } as any);
+
+    const result = await queueSendNotificationToUser(notification);
+
+    expect(result).toEqual({ status: 'SKIPPED' });
+  });
+
+  test('renvoie SKIPPED quand l’utilisateur a désactivé les emails', async () => {
+    const result = await queueSendNotificationToUser({
+      ...notification,
+      user: { ...user, notifications: [] },
+    });
+
+    expect(result).toEqual({ status: 'SKIPPED' });
+    expect(sendEmail).not.toHaveBeenCalled();
+  });
 });
 
 describe('sendNotificationToUser — canaux push et email', () => {
@@ -126,7 +170,7 @@ describe('sendNotificationToUser — canaux push et email', () => {
     vi.clearAllMocks();
     vi.mocked(prisma.notificationLog.findFirst).mockResolvedValue(null as any);
     vi.mocked(prisma.notificationLog.create).mockResolvedValue({} as any);
-    vi.mocked(sendEmail).mockResolvedValue(true);
+    vi.mocked(sendEmail).mockResolvedValue({ messageId: 'msg-1' });
     vi.mocked(sendExpoPushNotification).mockResolvedValue({ sent: 1, tokensToRemove: [] });
   });
 

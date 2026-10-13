@@ -5,6 +5,7 @@ export type TransmissionStepForTransportOrSoustraite = 'Sous-traitée' | 'Transp
 export type TransmissionStepForEtg =
   | 'Fiche reçue, pas encore prise en charge'
   | 'Prise en charge par le transporteur'
+  | "En attente de prise en charge par l'atelier"
   | "Prise en charge par l'atelier"
   | 'Prise en charge par un autre atelier'
   | 'Fiche envoyée, pas encore prise en charge'

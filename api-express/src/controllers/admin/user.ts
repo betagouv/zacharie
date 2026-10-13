@@ -31,7 +31,6 @@ import {
   updateBrevoChasseurDeal,
   updateBrevoContact,
 } from '~/third-parties/brevo';
-import { getDefaultScopeDepartementsForRoles } from '~/utils/federation-stats';
 import { sendOnboardingEmailOnce } from '~/utils/send-onboarding-email';
 import { BrevoTemplateId } from '~/third-parties/brevo-templates';
 
@@ -125,7 +124,6 @@ router.post(
           email: body[Prisma.UserScalarFieldEnum.email],
           roles,
           isZacharieAdmin: body[Prisma.UserScalarFieldEnum.isZacharieAdmin] ? true : false,
-          scope_departements_codes: getDefaultScopeDepartementsForRoles(roles),
         },
       });
 
@@ -157,7 +155,6 @@ const adminUserUpdateSchema = z.object({
       z.enum(Object.values(UserRoles).filter((r) => r !== UserRoles.ADMIN) as [UserRoles, ...UserRoles[]])
     )
     .optional(),
-  [Prisma.UserScalarFieldEnum.scope_departements_codes]: z.array(z.string()).optional(),
   [Prisma.UserScalarFieldEnum.isZacharieAdmin]: z.boolean().optional(),
   [Prisma.UserScalarFieldEnum.ville]: z.string().optional(),
   [Prisma.UserScalarFieldEnum.etg_role]: z
@@ -168,6 +165,7 @@ const adminUserUpdateSchema = z.object({
     .optional(),
   [Prisma.UserScalarFieldEnum.numero_cfei]: z.string().optional().nullable(),
   [Prisma.UserScalarFieldEnum.est_forme_a_l_examen_initial]: z.enum(['true', 'false']).optional(),
+  [Prisma.UserScalarFieldEnum.exclude_from_stats]: z.enum(['true', 'false']).optional(),
   onboarding_finished: z.boolean().optional(),
 });
 
@@ -264,11 +262,6 @@ router.post(
           b.localeCompare(a)
         );
       }
-      if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.scope_departements_codes)) {
-        nextUser.scope_departements_codes = (
-          [...new Set(body[Prisma.UserScalarFieldEnum.scope_departements_codes])] as string[]
-        ).sort((a, b) => b.localeCompare(a));
-      }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.isZacharieAdmin)) {
         nextUser.isZacharieAdmin = body[Prisma.UserScalarFieldEnum.isZacharieAdmin] ? true : false;
       }
@@ -284,6 +277,9 @@ router.post(
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.est_forme_a_l_examen_initial)) {
         nextUser.est_forme_a_l_examen_initial =
           body[Prisma.UserScalarFieldEnum.est_forme_a_l_examen_initial] === 'true';
+      }
+      if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.exclude_from_stats)) {
+        nextUser.exclude_from_stats = body[Prisma.UserScalarFieldEnum.exclude_from_stats] === 'true';
       }
       if (body.hasOwnProperty('onboarding_finished')) {
         nextUser.onboarded_at = new Date();
@@ -601,9 +597,45 @@ router.get(
           last_login_at: { sort: 'desc', nulls: 'last' },
         },
       });
+      // carcasses et fiches (non supprimées) où l'utilisateur apparaît à n'importe quelle étape du circuit :
+      // création, examen initial, premier détenteur, intermédiaire ou SVI
+      const countsRows = await prisma.$queryRaw<
+        Array<{ user_id: string; carcasses: number; fiches: number }>
+      >`
+        WITH links AS (
+          SELECT u.user_id, c.zacharie_carcasse_id, c.fei_numero
+          FROM "Carcasse" c
+          JOIN "Fei" f ON f.numero = c.fei_numero AND f.deleted_at IS NULL
+          CROSS JOIN LATERAL unnest(ARRAY[
+            c.created_by_user_id,
+            c.examinateur_initial_user_id,
+            c.premier_detenteur_user_id,
+            c.svi_user_id,
+            c.svi_ipm1_user_id,
+            c.svi_ipm2_user_id,
+            c.svi_closed_by_user_id
+          ]) AS u(user_id)
+          WHERE c.deleted_at IS NULL AND u.user_id IS NOT NULL
+          UNION
+          SELECT ci.intermediaire_user_id, ci.zacharie_carcasse_id, ci.fei_numero
+          FROM "CarcasseIntermediaire" ci
+          JOIN "Carcasse" c ON c.zacharie_carcasse_id = ci.zacharie_carcasse_id AND c.deleted_at IS NULL
+          JOIN "Fei" f ON f.numero = ci.fei_numero AND f.deleted_at IS NULL
+          WHERE ci.deleted_at IS NULL
+        )
+        SELECT user_id,
+          COUNT(DISTINCT zacharie_carcasse_id)::int AS carcasses,
+          COUNT(DISTINCT fei_numero)::int AS fiches
+        FROM links
+        GROUP BY user_id;
+      `;
+      const counts: AdminUsersResponse['data']['counts'] = {};
+      for (const row of countsRows) {
+        counts[row.user_id] = { carcasses: row.carcasses, fiches: row.fiches };
+      }
       res.status(200).send({
         ok: true,
-        data: { users },
+        data: { users, counts },
         error: '',
       });
     }

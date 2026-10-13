@@ -15,7 +15,11 @@ const BREVO_API = process.env.BREVO_API;
 const buildId = JSON.stringify(`${dayjs().format('DD-MM-YYYY')} vers ${dayjs().format('HH')}:00`);
 const VERSION = buildId;
 
-const SECRET = process.env.VITE_SECRET ?? 'not-so-secret-lalalala';
+// en production (et staging), un secret par défaut permettrait à n'importe qui de forger un JWT de session
+if (process.env.NODE_ENV === 'production' && !process.env.VITE_SECRET) {
+  throw new Error('VITE_SECRET est obligatoire en production : il signe les JWT de session.');
+}
+const SECRET = process.env.VITE_SECRET || 'not-so-secret-lalalala';
 const METABASE_SECRET_KEY = process.env.METABASE_SECRET_KEY;
 
 const IS_DEV = process.env.NODE_ENV === 'development'; // local dev
@@ -64,14 +68,6 @@ const TRICHINE_FEATURE_ENABLED = process.env.VITE_FEATURE_TRICHINE === 'true';
 // Non posée = la consigne n'apparaît pas sur le document.
 const TRICHINE_RESULTATS_EMAIL = process.env.TRICHINE_RESULTATS_EMAIL ?? '';
 
-// Albert API (albert.api.etalab.gouv.fr) — OCR des rapports d'analyses scannés.
-// Non configurée : les rapports sans texte restent non lus, le résultat est saisi à la main.
-const ALBERT_API_KEY = process.env.ALBERT_API_KEY ?? '';
-const ALBERT_API_URL = process.env.ALBERT_API_URL ?? 'https://albert.api.etalab.gouv.fr/v1';
-// Modèle de vision utilisé pour l'OCR (cf GET /v1/models, type `image-text-to-text`).
-// lightonocr est un modèle dédié à l'OCR de documents : rapide et fidèle aux tableaux.
-const ALBERT_OCR_MODEL = process.env.ALBERT_OCR_MODEL ?? 'lightonocr-2-1b';
-
 // Object storage Cellar (Clever Cloud, compatible S3) — cf doc/trichine.md §12.2.
 // Les trois premières variables sont posées par l'add-on, le bucket est choisi par nous.
 // Non configuré (dev / test) : les documents sont régénérés à la volée, rien n'est stocké.
@@ -79,6 +75,23 @@ const CELLAR_HOST = process.env.CELLAR_ADDON_HOST ?? '';
 const CELLAR_KEY_ID = process.env.CELLAR_ADDON_KEY_ID ?? '';
 const CELLAR_KEY_SECRET = process.env.CELLAR_ADDON_KEY_SECRET ?? '';
 const CELLAR_BUCKET = process.env.CELLAR_ADDON_BUCKET ?? '';
+
+// Résolution de bug (admin) : l'assistant Albert lit le code sur GitHub et la base via un rôle en lecture seule.
+// Voir doc/bug-resolution.md.
+const ALBERT_API_URL = process.env.ALBERT_API_URL ?? 'https://albert.api.etalab.gouv.fr/v1';
+const ALBERT_API_KEY = process.env.ALBERT_API_KEY ?? '';
+// modèle d'enquête (raisonnement + outils, texte seul) et modèle de vision qui décrit les captures d'écran
+const ALBERT_MODEL = process.env.ALBERT_MODEL ?? 'openai/gpt-oss-120b';
+const ALBERT_VISION_MODEL = process.env.ALBERT_VISION_MODEL ?? 'google/gemma-4-31B-it';
+// OCR des rapports d'analyses trichine scannés (cf GET /v1/models, type `image-text-to-text`).
+// lightonocr est un modèle dédié à l'OCR de documents : rapide et fidèle aux tableaux.
+// Clé non posée : les rapports sans texte restent non lus, le résultat est saisi à la main.
+const ALBERT_OCR_MODEL = process.env.ALBERT_OCR_MODEL ?? 'lightonocr-2-1b';
+const ALBERT_READONLY_DATABASE_URL = process.env.ALBERT_READONLY_DATABASE_URL ?? '';
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN ?? '';
+const GITHUB_REPO = 'betagouv/zacharie';
+// Clever Cloud expose le commit déployé dans COMMIT_ID : l'assistant lit le code réellement en production
+const SOURCE_COMMIT = process.env.COMMIT_ID ?? 'main';
 
 export {
   PORT,
@@ -107,11 +120,17 @@ export {
   PROCONNECT_REDIRECT_URI,
   TRICHINE_FEATURE_ENABLED,
   TRICHINE_RESULTATS_EMAIL,
-  ALBERT_API_KEY,
-  ALBERT_API_URL,
-  ALBERT_OCR_MODEL,
   CELLAR_HOST,
   CELLAR_KEY_ID,
   CELLAR_KEY_SECRET,
   CELLAR_BUCKET,
+  ALBERT_API_URL,
+  ALBERT_API_KEY,
+  ALBERT_MODEL,
+  ALBERT_VISION_MODEL,
+  ALBERT_OCR_MODEL,
+  ALBERT_READONLY_DATABASE_URL,
+  GITHUB_TOKEN,
+  GITHUB_REPO,
+  SOURCE_COMMIT,
 };

@@ -1,5 +1,5 @@
 import { type CustomError } from '~/types/error';
-import { capture } from '../third-parties/sentry.js';
+import { capture, pickSafeHeaders } from '../third-parties/sentry.js';
 import type express from 'express';
 import type { RequestWithUser } from '~/types/request';
 /*
@@ -50,7 +50,7 @@ const sendError = (
   _next: express.NextFunction
 ) => {
   const { body, query, params, route, method, originalUrl, headers } = req;
-  const { auth, appversion, appbuild, appdevice } = headers;
+  const { appversion, appbuild, appdevice } = headers;
   // Le client a coupé la connexion avant la fin de l'envoi du body (onglet fermé,
   // perte réseau, sync annulé). Ce n'est pas une erreur serveur : on capture en info
   // pour garder la trace sans déclencher d'alerte Sentry.
@@ -75,8 +75,7 @@ const sendError = (
         appversion,
         appbuild,
         appdevice,
-        auth,
-        headers,
+        headers: pickSafeHeaders(headers),
       },
       user: (req as RequestWithUser).user,
     });

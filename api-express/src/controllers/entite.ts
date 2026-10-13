@@ -77,7 +77,13 @@ router.get(
             },
           },
         },
-        include: entityAdminInclude,
+        include: {
+          EntityRelationsWithUsers: {
+            ...entityAdminInclude.EntityRelationsWithUsers,
+            // les admins Zacharie rattachés à une entité (support, tests) n'apparaissent pas parmi ses membres
+            where: { OR: [{ owner_id: user.id }, { UserRelatedWithEntity: { isZacharieAdmin: false } }] },
+          },
+        },
         orderBy: {
           nom_d_usage: 'asc',
         },
@@ -312,8 +318,8 @@ router.post(
   catchErrors(
     async (req: RequestWithUser, res: express.Response<UserEntityResponse>, next: express.NextFunction) => {
       const user = req.user!;
-      // un destinataire circuit court n'est ajouté que par le premier détenteur (ou par l'admin,
-      // depuis /admin) : l'ETG et le collecteur ne transmettent pas au circuit court
+      // un destinataire (circuit court ou collecteur pro) n'est ajouté que par le premier détenteur
+      // (ou par l'admin, depuis /admin) : l'ETG et le collecteur ne transmettent pas au circuit court
       if (!user.roles.includes(UserRoles.CHASSEUR)) {
         res.status(403);
         return next(new Error('Seulement un chasseur peut ajouter un destinataire'));
@@ -321,9 +327,13 @@ router.post(
 
       const result = destinataireSchema.safeParse(req.body);
       if (!result.success) {
-        const error = new Error(result.error.message);
-        res.status(406);
-        return next(error);
+        const champs = result.error.issues.map((issue) => issue.path.join('.')).join(', ');
+        res.status(400).send({
+          ok: false,
+          data: { entity: null, relation: null },
+          error: `Le formulaire est incomplet ou invalide. Veuillez vérifier les champs suivants : ${champs}.`,
+        });
+        return;
       }
 
       const body = result.data;

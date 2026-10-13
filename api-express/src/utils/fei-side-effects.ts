@@ -1,7 +1,8 @@
-import { Fei } from '@prisma/client';
+import { Fei, User } from '@prisma/client';
 import dayjs from 'dayjs';
 import prisma from '~/prisma';
 import { sendWebhook } from '~/utils/api';
+import { nextVersion } from '~/utils/sync-version';
 
 export async function webhookApprobation(existingFei: Fei, savedFei: Fei) {
   if (
@@ -14,26 +15,32 @@ export async function webhookApprobation(existingFei: Fei, savedFei: Fei) {
   }
 }
 
-export async function syncCarcasseDates(existingFei: Fei, savedFei: Fei) {
+export async function syncCarcasseDates(existingFei: Fei, savedFei: Fei, user: User) {
   if (
     dayjs(existingFei.date_mise_a_mort).format('YYYY/MM/DD') !==
     dayjs(savedFei.date_mise_a_mort).format('YYYY/MM/DD')
   ) {
     await prisma.carcasse.updateMany({
       where: { fei_numero: savedFei.numero },
-      data: { date_mise_a_mort: savedFei.date_mise_a_mort },
+      data: { date_mise_a_mort: savedFei.date_mise_a_mort, ...nextVersion(user.id) },
     });
   }
   if (existingFei.heure_mise_a_mort_premiere_carcasse !== savedFei.heure_mise_a_mort_premiere_carcasse) {
     await prisma.carcasse.updateMany({
       where: { fei_numero: savedFei.numero },
-      data: { heure_mise_a_mort_premiere_carcasse_fei: savedFei.heure_mise_a_mort_premiere_carcasse },
+      data: {
+        heure_mise_a_mort_premiere_carcasse_fei: savedFei.heure_mise_a_mort_premiere_carcasse,
+        ...nextVersion(user.id),
+      },
     });
   }
   if (existingFei.heure_evisceration_derniere_carcasse !== savedFei.heure_evisceration_derniere_carcasse) {
     await prisma.carcasse.updateMany({
       where: { fei_numero: savedFei.numero },
-      data: { heure_evisceration_derniere_carcasse_fei: savedFei.heure_evisceration_derniere_carcasse },
+      data: {
+        heure_evisceration_derniere_carcasse_fei: savedFei.heure_evisceration_derniere_carcasse,
+        ...nextVersion(user.id),
+      },
     });
   }
 }
@@ -43,7 +50,7 @@ export async function syncCarcasseDates(existingFei: Fei, savedFei: Fei) {
  * SVI assignment and circuit court notifications are mutually exclusive
  * with generic next-owner notifications (matches original early-return flow).
  */
-export async function runFeiUpdateSideEffects(existingFei: Fei, savedFei: Fei) {
+export async function runFeiUpdateSideEffects(existingFei: Fei, savedFei: Fei, user: User) {
   await webhookApprobation(existingFei, savedFei);
-  await syncCarcasseDates(existingFei, savedFei);
+  await syncCarcasseDates(existingFei, savedFei, user);
 }

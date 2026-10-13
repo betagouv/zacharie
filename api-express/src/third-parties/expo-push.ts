@@ -39,7 +39,7 @@ export async function sendExpoPushNotification({
   // La preprod tourne sur une copie des données de prod, ses tokens sont ceux de vrais chasseurs.
   if (IS_STAGING || IS_DEV_OR_TEST) {
     console.log('Native push disabled outside production');
-    console.log({ tokens, title, body });
+    console.log({ tokensCount: tokens.length, title, body });
     result.sent = tokens.length;
     return result;
   }
@@ -47,7 +47,7 @@ export async function sendExpoPushNotification({
   // définitivement dédupliqué le temps de la vérification (cf. config.ts).
   if (NATIVE_PUSH_DRY_RUN) {
     console.log('Native push dry run, nothing sent');
-    console.log({ tokens, title, body });
+    console.log({ tokensCount: tokens.length, title, body });
     return result;
   }
   const validTokens = tokens.filter((token) => {
@@ -94,7 +94,7 @@ export async function sendExpoPushNotification({
         });
       });
     } catch (error) {
-      capture(error as Error, { extra: { chunk, title, body } });
+      capture(error as Error, { extra: { chunkSize: chunk.length, title, body } });
     }
   }
   return result;

@@ -169,14 +169,11 @@ export default function DestinataireIntermediaire({
     if (prochainDetenteurType === EntityTypes.SVI) {
       return false;
     }
-    if (myCurrentRole === EntityTypes.COLLECTEUR_PRO) {
+    if (needDepot) {
       if (!depotType) return true;
       if (depotType === EntityTypes.CCG && !depotEntityId) return true;
       if (depotType !== intermediaire?.intermediaire_depot_type) return true;
       if (depotEntityId !== intermediaire?.intermediaire_depot_entity_id) return true;
-    }
-    if (myCurrentRole === EntityTypes.ETG) {
-      // no additional checks for ETG
     }
     return false;
   }, [
@@ -185,7 +182,7 @@ export default function DestinataireIntermediaire({
     depotType,
     depotEntityId,
     transmission,
-    myCurrentRole,
+    needDepot,
     intermediaire?.intermediaire_depot_type,
     intermediaire?.intermediaire_depot_entity_id,
   ]);

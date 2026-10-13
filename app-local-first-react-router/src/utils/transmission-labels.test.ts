@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { FeiOwnerRole, UserRoles } from '@prisma/client';
+import { FeiOwnerRole, UserEtgRoles, UserRoles } from '@prisma/client';
 import {
   RiCheckboxCircleLine,
   RiEdit2Line,
@@ -234,6 +234,22 @@ describe('getCurrentStepLabelForEtg', () => {
         }),
         working('etg-mine')
       )
+    ).toBe('Fiche reçue, pas encore prise en charge');
+  });
+
+  it('transported by my ETG to my ETG, I am a TRANSPORT employee → en attente de prise en charge par l’atelier', () => {
+    const transportDone = t({
+      current_owner_role: FeiOwnerRole.COLLECTEUR_PRO,
+      current_owner_entity_id: 'etg-mine',
+      next_owner_role: 'ETG',
+      next_owner_entity_id: 'etg-mine',
+    });
+    expect(
+      getCurrentStepLabelForEtg('En cours', transportDone, working('etg-mine'), UserEtgRoles.TRANSPORT)
+    ).toBe("En attente de prise en charge par l'atelier");
+    // la réception de l'ETG, elle, doit prendre en charge la fiche
+    expect(
+      getCurrentStepLabelForEtg('En cours', transportDone, working('etg-mine'), UserEtgRoles.RECEPTION)
     ).toBe('Fiche reçue, pas encore prise en charge');
   });
 

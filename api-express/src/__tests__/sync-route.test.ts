@@ -42,7 +42,7 @@ const { permissiveScope } = vi.hoisted(() => ({
     canWriteCarcasse: async () => true,
     grant: () => {},
     isFeiOwner: () => true,
-    canWriteFei: async () => true,
+    canWriteFei: vi.fn(async () => true),
   },
 }));
 vi.mock('~/utils/sync-scope', () => ({ createSyncScope: vi.fn(async () => permissiveScope) }));
@@ -281,8 +281,8 @@ describe('POST /sync — logs', () => {
           carcasses: [],
           carcassesIntermediaires: [],
           logs: [
-            { id: 'L1', user_id: 'u1', user_role: UserRoles.CHASSEUR, action: 'CREATE' },
-            { id: 'L2', user_id: 'u1', user_role: UserRoles.CHASSEUR, action: 'UPDATE' },
+            { id: 'L1', user_id: 'user-cfei', user_role: UserRoles.CHASSEUR, action: 'CREATE' },
+            { id: 'L2', user_id: 'user-cfei', user_role: UserRoles.CHASSEUR, action: 'UPDATE' },
           ],
         })
     );
@@ -303,14 +303,34 @@ describe('POST /sync — logs', () => {
           carcasses: [],
           carcassesIntermediaires: [],
           logs: [
-            { id: 'L1', user_id: 'u1', user_role: UserRoles.CHASSEUR, action: 'CREATE' },
-            { id: 'L-BAD', user_id: 'u1', user_role: UserRoles.CHASSEUR, action: 'CREATE' },
+            { id: 'L1', user_id: 'user-cfei', user_role: UserRoles.CHASSEUR, action: 'CREATE' },
+            { id: 'L-BAD', user_id: 'user-cfei', user_role: UserRoles.CHASSEUR, action: 'CREATE' },
           ],
         })
     );
 
     expect(res.status).toBe(200);
     expect(res.body.data.syncedLogIds).toEqual([]);
+    expect(capture).toHaveBeenCalled();
+  });
+  test('rejects a log written on behalf of another user', async () => {
+    vi.mocked(prisma.log.createMany).mockResolvedValue({ count: 1 } as any);
+
+    const res = await authed(
+      request(app)
+        .post('/sync')
+        .send({
+          logs: [
+            { id: 'L-OWN', user_id: 'user-cfei', user_role: UserRoles.CHASSEUR, action: 'CREATE' },
+            { id: 'L-FORGED', user_id: 'user-other', user_role: UserRoles.SVI, action: 'CREATE' },
+          ],
+        })
+    );
+
+    expect(res.status).toBe(200);
+    const { data } = vi.mocked(prisma.log.createMany).mock.calls[0][0] as { data: Array<{ id: string }> };
+    expect(data.map((l) => l.id)).toEqual(['L-OWN']);
+    expect(res.body.data.syncedLogIds).toEqual(['L-OWN']);
     expect(capture).toHaveBeenCalled();
   });
 });
@@ -330,6 +350,7 @@ describe('POST /sync — response shape', () => {
         carcasseModifRequests: [],
         syncedLogIds: [],
         rejected: [],
+        shouldRemoveFromLocalStore: [],
       },
     });
     expect(syncFei).not.toHaveBeenCalled();
@@ -514,6 +535,63 @@ describe('POST /sync — refus définitifs vs erreurs transitoires', () => {
   });
 });
 
+describe('POST /sync — shouldRemoveFromLocalStore', () => {
+  test('une carcasse sans accès part avec ses intermédiaires, et sa fiche si plus aucune carcasse n’est accessible', async () => {
+    vi.mocked(syncCarcasse).mockRejectedValueOnce(
+      new SyncRejectedError("Vous n'avez pas accès à cette carcasse")
+    );
+    vi.mocked(prisma.carcasseIntermediaire.findMany).mockResolvedValueOnce([
+      { fei_numero: 'F1', zacharie_carcasse_id: 'ZC-1', intermediaire_id: 'I1' },
+    ] as any);
+    vi.mocked(prisma.fei.findMany).mockResolvedValue([{ numero: 'F1' }] as any);
+    permissiveScope.canWriteFei.mockResolvedValueOnce(false);
+
+    const res = await authed(
+      request(app)
+        .post('/sync')
+        .send({ carcasses: [{ fei_numero: 'F1', zacharie_carcasse_id: 'ZC-1' }] })
+    );
+
+    expect(res.body.data.shouldRemoveFromLocalStore.map((i: any) => [i.kind, i.id])).toEqual([
+      ['carcasse', 'ZC-1'],
+      ['carcasseIntermediaire', 'F1_ZC-1_I1'],
+      ['fei', 'F1'],
+    ]);
+  });
+
+  test('la fiche reste quand une autre de ses carcasses est encore accessible', async () => {
+    vi.mocked(syncCarcasse).mockRejectedValueOnce(
+      new SyncRejectedError("Vous n'avez pas accès à cette carcasse")
+    );
+    vi.mocked(prisma.fei.findMany).mockResolvedValue([{ numero: 'F1' }] as any);
+
+    const res = await authed(
+      request(app)
+        .post('/sync')
+        .send({ carcasses: [{ fei_numero: 'F1', zacharie_carcasse_id: 'ZC-1' }] })
+    );
+
+    expect(res.body.data.shouldRemoveFromLocalStore.map((i: any) => [i.kind, i.id])).toEqual([
+      ['carcasse', 'ZC-1'],
+    ]);
+  });
+
+  test('un refus qui n’est pas un défaut d’accès ne retire rien du store', async () => {
+    vi.mocked(syncFei).mockRejectedValueOnce(
+      new SyncRejectedError('Vous ne pouvez pas supprimer cette fiche')
+    );
+
+    const res = await authed(
+      request(app)
+        .post('/sync')
+        .send({ feis: [{ numero: 'F1' }] })
+    );
+
+    expect(res.body.data.rejected).toHaveLength(1);
+    expect(res.body.data.shouldRemoveFromLocalStore).toEqual([]);
+  });
+});
+
 describe('POST /sync — carcasse modification requests', () => {
   test('modifRequests processed after carcasses (step 4 in the pipeline)', async () => {
     const callOrder: string[] = [];
@@ -611,7 +689,7 @@ describe('POST /sync — carcasse modification requests', () => {
     expect(runCarcasseModifRequestSideEffects).toHaveBeenCalledOnce();
     const args = vi.mocked(runCarcasseModifRequestSideEffects).mock.calls[0];
     expect(args[0].transitionedTo).toBe(CarcasseModificationRequestStatus.APPROVED);
-    expect(args[1]).toEqual(approvalPayload);
+    expect(args[2]).toEqual(approvalPayload);
   });
 
   test('_approvalPayload is stripped from the persisted body sent to syncCarcasseModifRequest', async () => {
@@ -725,7 +803,7 @@ describe('POST /sync — carcasse modification requests', () => {
           logs: [
             {
               id: 'L1',
-              user_id: 'u1',
+              user_id: 'user-cfei',
               user_role: 'CHASSEUR',
               action: 'log-action',
             },

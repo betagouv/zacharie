@@ -14,8 +14,10 @@ import type {
   UserNotifications,
   TrichineResultatAnalyse,
   EmailEntrant,
+  BugInvestigation,
 } from '@prisma/client';
 import type { UserForFei, UserForAdmin } from './user';
+import type { BugInvestigationMessage } from './bug-investigation';
 import type { EntityForAdmin, EntityWithUserRelation, EntitiesByTypeAndId, EntitiesById } from './entity';
 
 export interface SearchResponse {
@@ -46,6 +48,7 @@ export interface UserConnexionResponse {
         >;
       }
     >;
+    federation?: Entity | null;
     token?: string | null;
     contexte?: string;
   };
@@ -171,6 +174,12 @@ export interface AdminActionEntityResponse {
   error: string;
 }
 
+export interface AdminSoftDeleteResponse {
+  ok: boolean;
+  data: { deleted_at: Date } | null;
+  error: string;
+}
+
 export interface AdminNewEntityResponse {
   ok: boolean;
   data: {
@@ -192,6 +201,7 @@ export interface AdminUsersResponse {
   ok: boolean;
   data: {
     users: Array<User>;
+    counts: Record<User['id'], { carcasses: number; fiches: number }>;
   };
   error: string;
 }
@@ -253,7 +263,19 @@ export interface CarcassesGetResponse {
     carcasseModifRequests: Array<CarcasseModificationRequest>;
     hasMore: boolean;
     total: number;
+    // le client remplace ses carcasses locales au lieu de les merger (voir FORCE_FULL_RELOAD_AFTER)
+    fullReload: boolean;
   };
+  error: string;
+}
+
+// Nombre de carcasses non supprimées du périmètre de synchro de l'utilisateur, comparé par le client
+// à son store local pour détecter les écarts (observation seulement). Voir GET /carcasse/count.
+export interface CarcassesCountResponse {
+  ok: boolean;
+  data: {
+    count: number;
+  } | null;
   error: string;
 }
 
@@ -396,6 +418,7 @@ export interface SyncResponse {
     // serveur faisant foi n'est volontairement PAS jointe — ce serait divulguer la fiche d'un
     // tiers à quelqu'un à qui on vient d'en refuser l'accès.
     rejected: Array<SyncRejection>;
+    shouldRemoveFromLocalStore: Array<SyncRejection>;
   } | null;
   error: string;
 }
@@ -738,6 +761,19 @@ export interface AdminUserNotificationsResponse {
   error: string;
 }
 
+export interface AdminSearchResponse {
+  ok: boolean;
+  data: {
+    users: Array<Pick<User, 'id' | 'email' | 'prenom' | 'nom_de_famille' | 'roles' | 'deleted_at'>>;
+    entities: Array<Pick<Entity, 'id' | 'nom_d_usage' | 'type' | 'ville' | 'deleted_at'>>;
+    feis: Array<Pick<Fei, 'numero' | 'date_mise_a_mort' | 'commune_mise_a_mort' | 'deleted_at'>>;
+    carcasses: Array<
+      Pick<Carcasse, 'zacharie_carcasse_id' | 'numero_bracelet' | 'fei_numero' | 'espece' | 'deleted_at'>
+    >;
+  };
+  error: string;
+}
+
 export interface AdminFeisResponse {
   ok: boolean;
   data: {
@@ -821,6 +857,34 @@ export interface CarcasseModificationRequestsForExaminateurResponse {
   ok: boolean;
   data: {
     requests: Array<CarcasseModificationRequestPopulated>;
+  } | null;
+  error: string;
+}
+
+type BugInvestigationAuthor = { User: Pick<User, 'prenom' | 'nom_de_famille'> };
+
+export interface AdminBugInvestigationsResponse {
+  ok: boolean;
+  data: {
+    investigations: Array<
+      Pick<BugInvestigation, 'id' | 'description' | 'status' | 'created_at'> & BugInvestigationAuthor
+    >;
+  };
+  error: string;
+}
+
+export interface AdminNewBugInvestigationResponse {
+  ok: boolean;
+  data: { id: BugInvestigation['id'] } | null;
+  error: string;
+}
+
+export interface AdminBugInvestigationResponse {
+  ok: boolean;
+  data: {
+    investigation: Omit<BugInvestigation, 'messages'> & {
+      messages: Array<BugInvestigationMessage>;
+    } & BugInvestigationAuthor;
   } | null;
   error: string;
 }

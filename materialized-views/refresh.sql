@@ -9,7 +9,8 @@ DROP INDEX IF EXISTS carcasse_intermediaire_refus_stats_status_idx;
 CREATE UNIQUE INDEX carcasse_intermediaire_refus_stats_status_idx ON carcasse_intermediaire_refus_stats (status);
 
 DROP INDEX IF EXISTS carcasse_svi_stats_svi_carcasse_saisie_motif_idx;
-CREATE UNIQUE INDEX carcasse_svi_stats_svi_carcasse_saisie_motif_idx ON carcasse_svi_stats (svi_carcasse_saisie_motif);
+DROP INDEX IF EXISTS carcasse_svi_stats_status_or_motif_idx;
+CREATE UNIQUE INDEX carcasse_svi_stats_status_or_motif_idx ON carcasse_svi_stats (status_or_motif);
 
 -- Refresh each materialized view
 REFRESH MATERIALIZED VIEW carcasses_funnel_stats;

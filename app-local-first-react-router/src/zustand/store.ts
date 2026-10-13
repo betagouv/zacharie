@@ -9,7 +9,7 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import type { UserForFei } from '~/src/types/user';
 import type { EntityWithUserRelation } from '~/src/types/entity';
-import type { UserConnexionResponse } from '~/src/types/responses';
+import type { SyncRejection, UserConnexionResponse } from '~/src/types/responses';
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import dayjs from 'dayjs';
@@ -31,10 +31,12 @@ import { isCarcassePriseEnChargeEnAval } from '@app/utils/carcasse-deja-envoyee'
 import { createSlicedIDBStorage } from './idb-sliced-storage';
 import { CarcasseTransmission } from '@app/types/carcasse';
 import { datesToIso } from '@app/utils/dates-to-iso';
+import { hasUnsyncedData } from '@app/utils/has-unsynced-data';
 
 // State keys to persist in IndexedDB (each stored as its own entry)
+// `dataIsSynced` et `syncRejections` n'y sont pas : le premier est recalculé à l'hydratation depuis les
+// items persistés, le second ne vaut que pour la session en cours.
 const PERSISTED_KEYS: (keyof State)[] = [
-  'dataIsSynced',
   'feis',
   'users',
   'entities',
@@ -43,8 +45,8 @@ const PERSISTED_KEYS: (keyof State)[] = [
   'carcassesIntermediaireById',
   'modifRequestsByCarcasseId',
   'apiKeyApprovals',
+  'federation',
   'lastUpdateFromServer',
-  'carcassesRegistry',
   'logs',
   'feiIdsRenvoiToHide',
 ];
@@ -63,7 +65,11 @@ export interface State {
   // and the single source of truth for both sync and the modif-request UI.
   modifRequestsByCarcasseId: Record<Carcasse['zacharie_carcasse_id'], Array<CarcasseModificationRequest>>;
   apiKeyApprovals: NonNullable<UserConnexionResponse['data']['apiKeyApprovals']>;
+  // fédération (FDC / FRC / FNC) dont l'utilisateur est membre validé : donne accès au tableau de bord fédération
+  federation: NonNullable<UserConnexionResponse['data']['federation']> | null;
   lastUpdateFromServer: number;
+  // Copie de carcasses figée à chaque chargement depuis le serveur. Non persistée (elle doublerait
+  // carcasses dans IndexedDB) : reconstruite depuis carcasses à l'hydratation.
   carcassesRegistry: Array<Carcasse>;
   // Fiches que ce compte a renvoyées à l'expéditeur : masquées de ses listes sans attendre la
   // synchro, pour que le renvoi marche hors ligne. Le serveur ne les lui enverra plus (périmètre
@@ -71,6 +77,9 @@ export interface State {
   // loadCarcasses les redescend et retire la fiche de cette liste.
   feiIdsRenvoiToHide: Array<Fei['numero']>;
   logs: Array<Log>;
+  // Items que le serveur a définitivement refusé d'écrire lors d'une synchro de cette session.
+  // Ils restent `is_synced = false` et ne sont plus renvoyés (voir sync-data.ts).
+  syncRejections: Array<SyncRejection>;
   _hasHydrated: boolean;
 }
 
@@ -144,10 +153,60 @@ function initialState(): State {
     entities: {},
     detenteursInitiauxIds: [],
     apiKeyApprovals: [],
+    federation: null,
     carcasses: {},
     carcassesIntermediaireById: {},
     modifRequestsByCarcasseId: {},
+    syncRejections: [],
     _hasHydrated: false,
+  };
+}
+
+// Changement de `version` : tout le stockage local est remis à zéro, sauf les éléments pas encore
+// synchronisés (is_synced = false), quelle que soit l'ancienne version. Sans ce `migrate`, zustand
+// jetterait tout l'état stocké et ces saisies seraient perdues définitivement. Exception volontaire
+// à la règle « pas de code de rétrocompatibilité », pour la sécurité des données : les éléments
+// gardés sont renvoyés tels quels à /sync, donc un bump qui change la forme d'un élément exige
+// toujours un correctif côté serveur ou base. lastUpdateFromServer = 0 force un rechargement complet,
+// qui conserve ces éléments (keepLocal dans load-carcasses).
+export function migratePersistedState(persistedState: unknown): Partial<State> {
+  const persisted = (persistedState ?? {}) as Partial<State>;
+  const isUnsynced = (item: { is_synced: boolean }) => !item.is_synced;
+
+  const feis = Object.fromEntries(
+    Object.entries(persisted.feis ?? {}).filter(([, fei]) => isUnsynced(fei))
+  ) as State['feis'];
+  const carcasses = Object.fromEntries(
+    Object.entries(persisted.carcasses ?? {}).filter(([, carcasse]) => isUnsynced(carcasse))
+  ) as State['carcasses'];
+  const carcassesIntermediaireById = Object.fromEntries(
+    Object.entries(persisted.carcassesIntermediaireById ?? {}).filter(([, ci]) => isUnsynced(ci))
+  ) as State['carcassesIntermediaireById'];
+  const modifRequestsByCarcasseId: State['modifRequestsByCarcasseId'] = {};
+  for (const [zacharie_carcasse_id, requests] of Object.entries(persisted.modifRequestsByCarcasseId ?? {})) {
+    const unsyncedRequests = requests.filter(isUnsynced);
+    if (unsyncedRequests.length > 0) modifRequestsByCarcasseId[zacharie_carcasse_id] = unsyncedRequests;
+  }
+  const logs = (persisted.logs ?? []).filter(isUnsynced);
+
+  const hasUnsynced =
+    Object.keys(feis).length > 0 ||
+    Object.keys(carcasses).length > 0 ||
+    Object.keys(carcassesIntermediaireById).length > 0 ||
+    Object.keys(modifRequestsByCarcasseId).length > 0 ||
+    logs.length > 0;
+
+  const initial = initialState();
+  return {
+    ...Object.fromEntries(PERSISTED_KEYS.map((key) => [key, initial[key]])),
+    dataIsSynced: !hasUnsynced,
+    feis,
+    carcasses,
+    carcassesRegistry: Object.values(carcasses),
+    carcassesIntermediaireById,
+    modifRequestsByCarcasseId,
+    logs,
+    lastUpdateFromServer: 0,
   };
 }
 
@@ -327,16 +386,20 @@ const useZustandStore = create<State & Actions>()(
                   ecarte_pour_inspection: false,
                   prise_en_charge: true, // always true by default, confirmed by the intermediaire globally
                   prise_en_charge_at: newIntermediaire.prise_en_charge_at, // will be set by the intermediaire when he confirms all the carcasse
-                  intermediaire_depot_type: null,
-                  intermediaire_depot_entity_id: null,
-                  intermediaire_prochain_detenteur_role_cache: null,
-                  intermediaire_prochain_detenteur_id_cache: null,
+                  intermediaire_depot_type: newIntermediaire.intermediaire_depot_type,
+                  intermediaire_depot_entity_id: newIntermediaire.intermediaire_depot_entity_id,
+                  intermediaire_prochain_detenteur_role_cache:
+                    newIntermediaire.intermediaire_prochain_detenteur_role_cache,
+                  intermediaire_prochain_detenteur_id_cache:
+                    newIntermediaire.intermediaire_prochain_detenteur_id_cache,
                   intermediaire_poids: null,
                   numero_bon_reception: newIntermediaire.numero_bon_reception,
                   created_at: newIntermediaire.created_at,
                   updated_at: newIntermediaire.created_at,
                   deleted_at: null,
                   is_synced: false,
+                  version: 0,
+                  version_user_id: newIntermediaire.intermediaire_user_id,
                 }));
 
               for (const ci of carcassesIntermediaires) {
@@ -476,6 +539,20 @@ const useZustandStore = create<State & Actions>()(
           }));
         },
         addLog: (newLog: Omit<CreateLog, 'fei_intermediaire_id'>) => {
+          // Version et date de la copie locale au moment de l'action : permet de retrouver, côté
+          // serveur, quelle version une écriture refusée comme périmée avait sous les yeux.
+          const fei = newLog.fei_numero ? get().feis[newLog.fei_numero] : null;
+          const carcasse = newLog.zacharie_carcasse_id ? get().carcasses[newLog.zacharie_carcasse_id] : null;
+          const history =
+            fei || carcasse
+              ? {
+                  ...newLog.history,
+                  ...(fei ? { fei: { version: fei.version, updated_at: fei.updated_at } } : {}),
+                  ...(carcasse
+                    ? { carcasse: { version: carcasse.version, updated_at: carcasse.updated_at } }
+                    : {}),
+                }
+              : newLog.history;
           const log = datesToIso({
             id: uuidv4(),
             user_id: newLog.user_id!,
@@ -487,7 +564,7 @@ const useZustandStore = create<State & Actions>()(
             intermediaire_id: newLog.intermediaire_id || null,
             carcasse_intermediaire_id: newLog.carcasse_intermediaire_id || null,
             action: newLog.action!,
-            history: JSON.stringify(newLog.history!),
+            history: JSON.stringify(history),
             date: dayjs().toDate(),
             is_synced: false,
             created_at: dayjs().toDate(),
@@ -505,6 +582,11 @@ const useZustandStore = create<State & Actions>()(
         setHasHydrated: (state) => {
           set({
             _hasHydrated: state,
+            // Comme au chargement, où mergeItems écarte les carcasses supprimées.
+            ...(state && {
+              carcassesRegistry: Object.values(get().carcasses).filter((c) => !c.deleted_at),
+              dataIsSynced: !hasUnsyncedData(get()),
+            }),
           });
           if (state) resolveHydration();
         },
@@ -517,6 +599,7 @@ const useZustandStore = create<State & Actions>()(
         // v10: modif requests moved from an embedded carcasse array + pending-only map to a single
         // full-history map keyed by carcasse id. Bump forces a full re-fetch so the map repopulates.
         version: 10,
+        migrate: migratePersistedState,
         storage: createSlicedIDBStorage<Partial<State>>(PERSISTED_KEYS),
         onRehydrateStorage: (state) => {
           return () => state.setHasHydrated(true);

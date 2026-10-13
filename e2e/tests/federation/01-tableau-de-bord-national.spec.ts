@@ -8,8 +8,8 @@ test.beforeAll(async () => {
 
 test('FNC — tableau de bord national affiche toutes les sections', async ({ page }) => {
   await connectWith(page, 'fnc@example.fr');
-  await page.goto('http://localhost:3290/app/fnc/tableau-de-bord');
-  await expect(page).toHaveURL(/\/app\/fnc\/tableau-de-bord/);
+  // fnc@ n'est pas chasseur (rôle FEDERATION) : il arrive directement sur le tableau de bord
+  await expect(page).toHaveURL(/\/app\/federation\/tableau-de-bord/);
 
   // Title
   await expect(page.getByRole('heading', { name: 'Tableau de bord national' })).toBeVisible({

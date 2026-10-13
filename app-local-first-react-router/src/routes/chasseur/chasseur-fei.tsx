@@ -27,7 +27,11 @@ import DateHeureValidationAlerts from '@app/components/DateHeureValidationAlerts
 import ChasseurHeaderFiche from './chasseur-header-fiche';
 import { CompteEnAttenteValidationAlert } from '@app/components/CompteEnAttenteValidation';
 import { useGetTransmissionsForFei } from '@app/utils/get-transmissions-sorted';
-import { isCarcasseDejaEnvoyee, isCarcassePriseEnChargeEnAval } from '@app/utils/carcasse-deja-envoyee';
+import {
+  isCarcasseDejaEnvoyee,
+  isCarcassePriseEnChargeEnAval,
+  isPremierDetenteurVerrouille,
+} from '@app/utils/carcasse-deja-envoyee';
 
 export default function ChasseurFei() {
   const params = useParams();
@@ -388,6 +392,8 @@ function FEIChasseurLoaded() {
     [carcasses.length, carcassesDejaEnvoyees.length]
   );
 
+  const premierDetenteurIsLocked = useMemo(() => carcasses.some(isPremierDetenteurVerrouille), [carcasses]);
+
   const submitIsDisabled = useMemo(() => {
     if (!user.activated) return true;
     if (!showValidation) return true;
@@ -502,7 +508,10 @@ function FEIChasseurLoaded() {
                     defaultValue: fei?.commune_mise_a_mort ?? '',
                   }}
                 />
-                <SelectNextForExaminateur onValidationError={() => setShowBloc1Errors(true)} />
+                <SelectNextForExaminateur
+                  disabled={premierDetenteurIsLocked}
+                  onValidationError={() => setShowBloc1Errors(true)}
+                />
               </div>
 
               {/* Bloc 2 — Carcasses */}
@@ -751,7 +760,7 @@ function FEIChasseurLoaded() {
 
               {/* Bloc 4 — Vente / don. Reste affiché une fois tout transmis : le bloc récapitule
                   alors les ventes / dons déjà faits. */}
-              {showVenteDon && isPremierDetenteur && (
+              {showVenteDon && isPremierDetenteur && user.activated && (
                 <div className="bg-white p-4 md:p-8">
                   <h4 className="fr-h5">Vente ou don</h4>
                   <DestinataireSelectPremierDetenteur

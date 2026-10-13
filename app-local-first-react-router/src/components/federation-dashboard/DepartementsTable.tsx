@@ -1,4 +1,5 @@
 import { useMemo, useState, type ReactNode } from 'react';
+import { Button } from '@codegouvfr/react-dsfr/Button';
 
 export interface CircuitBucket {
   agree: number;
@@ -49,6 +50,8 @@ interface Props {
   valorisation: DepartementRow[];
   formation: FormationRow[];
   showSearch?: boolean;
+  /** Le tableau de bord d'une FDC est à `${basePath}/federation-fdc-<code>` (ids fixes des fédérations). */
+  basePath: string;
 }
 
 function formatTaux(taux: number | null): string {
@@ -143,7 +146,7 @@ function sortIndicator(active: boolean, desc: boolean): string {
   return desc ? ' ▼' : ' ▲';
 }
 
-export default function DepartementsTable({ valorisation, formation, showSearch = false }: Props) {
+export default function DepartementsTable({ valorisation, formation, showSearch = false, basePath }: Props) {
   const [filter, setFilter] = useState('');
   const [sortKey, setSortKey] = useState<SortKey>('code');
   const [sortDesc, setSortDesc] = useState(false);
@@ -196,7 +199,7 @@ export default function DepartementsTable({ valorisation, formation, showSearch 
   };
 
   const leafColumns = GROUPS.flatMap((g) => g.columns);
-  const columnCount = 2 + leafColumns.length;
+  const columnCount = 3 + leafColumns.length;
 
   return (
     <div className="overflow-x-auto rounded-lg bg-white shadow-sm">
@@ -241,6 +244,13 @@ export default function DepartementsTable({ valorisation, formation, showSearch 
                 {group.label}
               </th>
             ))}
+            <th
+              scope="col"
+              rowSpan={2}
+              className="px-3 py-2"
+            >
+              <span className="fr-sr-only">Tableau de bord</span>
+            </th>
           </tr>
           <tr className="text-xs text-gray-600 uppercase">
             {GROUPS.map((group) =>
@@ -295,6 +305,15 @@ export default function DepartementsTable({ valorisation, formation, showSearch 
                     </td>
                   ))
                 )}
+                <td className="px-2 py-1 whitespace-nowrap">
+                  <Button
+                    size="small"
+                    priority="tertiary"
+                    linkProps={{ to: `${basePath}/federation-fdc-${r.code}` }}
+                  >
+                    Accéder au tableau de bord
+                  </Button>
+                </td>
               </tr>
             ))
           )}
@@ -318,6 +337,7 @@ export default function DepartementsTable({ valorisation, formation, showSearch 
                   </td>
                 ))
               )}
+              <td />
             </tr>
           </tfoot>
         )}

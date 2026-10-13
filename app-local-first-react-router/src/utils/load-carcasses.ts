@@ -1,12 +1,56 @@
-import type { CarcassesGetResponse } from '@api/src/types/responses';
+import type { CarcassesCountResponse, CarcassesGetResponse } from '@api/src/types/responses';
 import useZustandStore from '@app/zustand/store';
 import { mergeItems } from './merge-fetched-items';
 import API from '@app/services/api';
 import { getFeiAndCarcasseAndIntermediaireIds } from './get-carcasse-intermediaire-id';
 import type { CarcasseModificationRequest } from '@prisma/client';
 import useUser from '@app/zustand/user';
+import { capture } from '@app/services/sentry';
+import { isLocalTeardownInProgress } from '@app/zustand/idb-sliced-storage';
 
 let loadCarcassesAbortController: AbortController | null = null;
+
+// Contrôle d'intégrité store local / serveur : au plus une fois par utilisateur toutes les 6 heures.
+const INTEGRITY_CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000;
+let lastIntegrityCheck: { userId: string; at: number } | null = null;
+
+// Observation seulement : compare le nombre de carcasses non supprimées du périmètre serveur
+// au nombre de carcasses non supprimées synchronisées du store, et remonte l'écart à Sentry.
+async function checkLocalCarcassesIntegrity(signal: AbortSignal) {
+  const user = useUser.getState().user;
+  if (!user) return;
+  if (
+    lastIntegrityCheck?.userId === user.id &&
+    Date.now() - lastIntegrityCheck.at < INTEGRITY_CHECK_INTERVAL_MS
+  ) {
+    return;
+  }
+  lastIntegrityCheck = { userId: user.id, at: Date.now() };
+
+  const res = (await API.get({ path: '/carcasse/count', signal })) as CarcassesCountResponse;
+  if (signal.aborted || !res.ok || !res.data || useUser.getState().user?.id !== user.id) return;
+
+  const state = useZustandStore.getState();
+  const localCarcasses = Object.values(state.carcasses).filter((c) => !c.deleted_at);
+  // des modifications locales en attente fausseraient la comparaison
+  if (localCarcasses.some((c) => !c.is_synced)) return;
+
+  const serverCount = res.data.count;
+  const localCount = localCarcasses.length;
+  if (serverCount === localCount) return;
+
+  capture('Écart entre le nombre de carcasses du serveur et du store local', {
+    extra: {
+      serverCount,
+      localCount,
+      lastUpdateFromServer: state.lastUpdateFromServer,
+      role: user.roles.join(', '),
+    },
+    tags: {
+      integrity_gap: serverCount > localCount ? 'manquantes_localement' : 'en_trop_localement',
+    },
+  });
+}
 
 export function abortLoadCarcasses(reason: string = 'aborted') {
   if (loadCarcassesAbortController && !loadCarcassesAbortController.signal.aborted) {
@@ -16,6 +60,10 @@ export function abortLoadCarcasses(reason: string = 'aborted') {
 }
 
 export async function loadCarcasses() {
+  if (isLocalTeardownInProgress()) {
+    console.log('not loading carcasses because local state is being cleared');
+    return;
+  }
   const isOnline = useZustandStore.getState().isOnline;
   if (!isOnline) {
     console.log('not loading carcasses because not online');
@@ -43,6 +91,7 @@ export async function loadCarcasses() {
     const entitiesFetched: CarcassesGetResponse['data']['entities'] = [];
     let page = 0;
     let hasMore = true;
+    let fullReload = false;
 
     while (hasMore) {
       const res = await API.get({
@@ -65,22 +114,29 @@ export async function loadCarcasses() {
       carcasseModifRequests.push(...(res.data.carcasseModifRequests || []));
       carcassesIntermediairesFetched.push(...(res.data.carcassesIntermediaires || []));
       hasMore = res.data.hasMore;
+      if (page === 0) fullReload = res.data.fullReload;
       page += 1;
     }
 
     // Guard against logout/abort races: don't clobber a freshly-reset store.
     if (signal.aborted || !useUser.getState().user) return;
 
-    if (carcassesFetched.length === 0) {
+    if (carcassesFetched.length === 0 && !fullReload) {
       console.log('no carcasses fetched');
       useZustandStore.setState(() => ({
         lastUpdateFromServer: serverDate,
       }));
+      checkLocalCarcassesIntegrity(signal);
       return;
     }
 
+    // Rechargement complet : le serveur a renvoyé tout le périmètre, les copies locales absentes de
+    // la réponse sont sorties du périmètre. On ne garde que les modifications locales pas encore synchronisées.
+    const keepLocal = <T extends { is_synced: boolean }>(items: Array<T>) =>
+      fullReload ? items.filter((item) => !item.is_synced) : items;
+
     const newCarcasses = mergeItems({
-      oldItems: Object.values(useZustandStore.getState().carcasses) || [],
+      oldItems: keepLocal(Object.values(useZustandStore.getState().carcasses)),
       newItems: carcassesFetched,
       idKey: (c) => c.zacharie_carcasse_id,
     });
@@ -92,7 +148,7 @@ export async function loadCarcasses() {
     });
 
     const newCarcassesIntermediaires = mergeItems({
-      oldItems: Object.values(useZustandStore.getState().carcassesIntermediaireById) || [],
+      oldItems: keepLocal(Object.values(useZustandStore.getState().carcassesIntermediaireById)),
       newItems: carcassesIntermediairesFetched,
       idKey: getFeiAndCarcasseAndIntermediaireIds,
     });
@@ -116,7 +172,7 @@ export async function loadCarcasses() {
     // Merge modif requests by their own id (drops cancelled ones via deleted_at, like other entities),
     // then regroup into the full-history-by-carcasse map the store and UI consume.
     const mergedModifRequestsById = mergeItems({
-      oldItems: Object.values(useZustandStore.getState().modifRequestsByCarcasseId).flat(),
+      oldItems: keepLocal(Object.values(useZustandStore.getState().modifRequestsByCarcasseId).flat()),
       newItems: carcasseModifRequests,
       idKey: (r) => r.id,
     });
@@ -144,6 +200,7 @@ export async function loadCarcasses() {
       entities: newEntities,
       lastUpdateFromServer: serverDate,
     }));
+    checkLocalCarcassesIntegrity(signal);
   } finally {
     if (loadCarcassesAbortController?.signal === signal) {
       loadCarcassesAbortController = null;

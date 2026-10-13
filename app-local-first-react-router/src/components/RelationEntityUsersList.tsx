@@ -5,7 +5,6 @@ import type { EntityWithUserRelations } from '@api/src/types/entity';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
 import { useSearchParams } from 'react-router';
-import useUser from '@app/zustand/user';
 import RelationEntityUser from './RelationEntityUser';
 
 interface RelationEntityUserProps {
@@ -29,8 +28,6 @@ export default function RelationEntityUsersList({
     })
   ).current;
   const isOpen = useIsModalOpen(entityUsersModal);
-
-  const iAmAdmin = useUser((state) => state.user?.isZacharieAdmin);
 
   // const canTransmitCarcassesForEntity = entity.EntityRelationsWithUsers.find(
   //   (relation) =>
@@ -83,8 +80,8 @@ export default function RelationEntityUsersList({
             displayUser={true}
             onChange={onChange}
             refreshKey={refreshKey}
-            canApproveRelation={iAmAdmin || isAdminOfEntity}
-            canDelete={iAmAdmin || isAdminOfEntity}
+            canApproveRelation={isAdminOfEntity}
+            canDelete={isAdminOfEntity}
           />
         );
       })}
