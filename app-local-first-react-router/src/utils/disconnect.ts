@@ -7,6 +7,7 @@ import { setLocalTeardownInProgress } from '@app/zustand/idb-sliced-storage';
 import { abortLoadCarcasses } from './load-carcasses';
 import { abortLoadMyRelations } from './load-my-relations';
 import { abortSyncData } from './sync-data';
+import { broadcastToOtherTabs } from './tabs-broadcast';
 
 interface DisconnectOptions {
   // Free-form tag for logs/aborts: 'logout', '401', etc.
@@ -45,6 +46,8 @@ export async function clearLocalAppState(reason: string) {
   // clear. Callers run `useZustandStore.reset()` right after this resolves, in
   // the same microtask chain, so no event can slip in between.
   setLocalTeardownInProgress(true);
+  // Les autres onglets cessent d'écrire avant le vidage, puis se rechargent une fois qu'il est fini.
+  broadcastToOtherTabs({ type: 'local-state-clearing' });
   try {
     abortSyncData(reason);
     abortLoadCarcasses(reason);
@@ -57,6 +60,7 @@ export async function clearLocalAppState(reason: string) {
     }
   } finally {
     setLocalTeardownInProgress(false);
+    broadcastToOtherTabs({ type: 'local-state-cleared' });
   }
 }
 
