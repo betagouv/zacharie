@@ -541,6 +541,7 @@ function getBrevoCategory(type: EntityTypes) {
 async function updateOrCreateBrevoCompany(props: Entity): Promise<Entity> {
   try {
     if (DISABLED) return props;
+    if (props.for_testing) return props;
     const apiInstance = new brevo.CompaniesApi();
     apiInstance.setApiKey(brevo.CompaniesApiApiKeys.apiKey, API_KEY);
 
@@ -585,6 +586,7 @@ async function updateOrCreateBrevoCompany(props: Entity): Promise<Entity> {
 async function linkBrevoCompanyToContact(entity: Entity, user: User) {
   try {
     if (DISABLED) return;
+    if (entity.for_testing) return;
     // les fédérations, pré-créées, n'ont pas d'entreprise Brevo
     if (!entity.brevo_id) return;
     const apiInstance = new brevo.CompaniesApi();
@@ -606,6 +608,7 @@ async function linkBrevoCompanyToContact(entity: Entity, user: User) {
 async function unlinkBrevoCompanyToContact(entity: Entity, user: User) {
   try {
     if (DISABLED) return;
+    if (entity.for_testing) return;
     // les fédérations, pré-créées, n'ont pas d'entreprise Brevo
     if (!entity.brevo_id) return;
     const apiInstance = new brevo.CompaniesApi();
@@ -794,9 +797,8 @@ async function updateBrevoChasseurDeal(chasseur: User) {
 async function updateBrevoETGDealPremiereFiche(etg: Entity) {
   try {
     if (DISABLED) return;
+    if (etg.for_testing) return;
     if (etg.type !== EntityTypes.ETG) return;
-    // sans brevo_id, crmDealsGet renverrait tous les deals de Brevo
-    if (!etg.brevo_id) return;
 
     const apiInstance = new brevo.DealsApi();
     apiInstance.setApiKey(brevo.DealsApiApiKeys.apiKey, API_KEY);
@@ -814,8 +816,11 @@ async function updateBrevoETGDealPremiereFiche(etg: Entity) {
     const dealToUpdate = deals?.find((deal) => deal.attributes.pipeline === etgPipeline.pipeline);
 
     if (!dealToUpdate) {
-      // aucun deal ETG n'est créé automatiquement : un deal manquant est attendu
-      console.log('No deal found for ETG', etg.id);
+      capture(new Error('No deal found for ETG'), {
+        extra: {
+          etg,
+        },
+      });
       return;
     }
 
@@ -839,9 +844,8 @@ async function updateBrevoETGDealPremiereFiche(etg: Entity) {
 async function updateBrevoSVIDealPremiereFiche(svi: Entity) {
   try {
     if (DISABLED) return;
+    if (svi.for_testing) return;
     if (svi.type !== EntityTypes.SVI) return;
-    // sans brevo_id, crmDealsGet renverrait tous les deals de Brevo
-    if (!svi.brevo_id) return;
 
     const apiInstance = new brevo.DealsApi();
     apiInstance.setApiKey(brevo.DealsApiApiKeys.apiKey, API_KEY);
@@ -859,8 +863,11 @@ async function updateBrevoSVIDealPremiereFiche(svi: Entity) {
     const dealToUpdate = deals?.find((deal) => deal.attributes.pipeline === sviPipeline.pipeline);
 
     if (!dealToUpdate) {
-      // aucun deal SVI n'est créé automatiquement : un deal manquant est attendu
-      console.log('No deal found for SVI', svi.id);
+      capture(new Error('No deal found for SVI'), {
+        extra: {
+          svi,
+        },
+      });
       return;
     }
 
