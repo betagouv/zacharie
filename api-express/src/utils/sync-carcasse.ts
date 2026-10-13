@@ -103,6 +103,7 @@ export async function syncCarcasse(
     throw new SyncRejectedError("Vous n'avez pas accès à cette fiche");
   }
 
+  const isJustCreated = !existingCarcasse;
   if (!existingCarcasse) {
     const numeroBracelet = body.numero_bracelet;
     if (!numeroBracelet) {
@@ -355,6 +356,25 @@ export async function syncCarcasse(
   ) {
     nextCarcasse.premier_detenteur_prochain_detenteur_id_cache =
       body.premier_detenteur_prochain_detenteur_id_cache || null;
+  }
+  // Une carcasse ajoutée par un intermédiaire (demande NEW_CARCASSE) reprend les choix du premier
+  // détenteur depuis les autres carcasses de la fiche : sinon elle ne suit pas la même transmission.
+  if (isJustCreated && !isPremierDetenteur) {
+    const carcasseSoeur = await prisma.carcasse.findFirst({
+      where: { fei_numero, deleted_at: null, NOT: { zacharie_carcasse_id } },
+      orderBy: { created_at: 'asc' },
+      select: {
+        premier_detenteur_depot_entity_id: true,
+        premier_detenteur_depot_entity_name_cache: true,
+        premier_detenteur_depot_type: true,
+        premier_detenteur_depot_ccg_at: true,
+        premier_detenteur_transport_type: true,
+        premier_detenteur_transport_date: true,
+        premier_detenteur_prochain_detenteur_role_cache: true,
+        premier_detenteur_prochain_detenteur_id_cache: true,
+      },
+    });
+    if (carcasseSoeur) Object.assign(nextCarcasse, carcasseSoeur);
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_offline)) {
     nextCarcasse.premier_detenteur_offline = canWriteOwnership

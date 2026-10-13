@@ -469,6 +469,40 @@ describe('syncCarcasse — champs réservés à un rôle', () => {
     expect(data).not.toHaveProperty('consommateur_final_usage_domestique');
   });
 
+  test('une carcasse ajoutée en aval reprend les choix du premier détenteur des autres carcasses', async () => {
+    const carcasseCreee = { ...baseCarcasse, created_by_user_id: etgUser.id };
+    vi.mocked(prisma.carcasse.create).mockResolvedValueOnce(carcasseCreee);
+    // d'autres tests de ce fichier laissent des valeurs findFirst non consommées dans la file
+    vi.mocked(prisma.carcasse.findFirst).mockReset();
+    vi.mocked(prisma.carcasse.findFirst).mockResolvedValueOnce({
+      premier_detenteur_depot_type: 'AUCUN',
+      premier_detenteur_transport_type: 'PREMIER_DETENTEUR',
+      premier_detenteur_prochain_detenteur_id_cache: 'entity-etg',
+    } as any);
+    vi.mocked(prisma.carcasse.update).mockResolvedValueOnce(carcasseCreee);
+
+    await syncCarcasse(
+      'FEI-1',
+      'ZC-1',
+      {
+        fei_numero: 'FEI-1',
+        numero_bracelet: 'BR-1',
+        premier_detenteur_transport_type: 'CHOIX-FALSIFIE',
+        premier_detenteur_prochain_detenteur_id_cache: 'entity-falsifiee',
+      } as any,
+      etgUser,
+      etgScope,
+      { existingFei: baseFei, existingCarcasse: null }
+    );
+
+    const data = vi.mocked(prisma.carcasse.update).mock.calls[0][0].data;
+    expect(data).toMatchObject({
+      premier_detenteur_depot_type: 'AUCUN',
+      premier_detenteur_transport_type: 'PREMIER_DETENTEUR',
+      premier_detenteur_prochain_detenteur_id_cache: 'entity-etg',
+    });
+  });
+
   test("l'auteur d'une action est toujours l'utilisateur courant, pour une de ses entités", async () => {
     const data = await syncAsEtg({
       intermediaire_closed_at: new Date(),
