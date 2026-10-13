@@ -193,6 +193,8 @@ vi.mock('passport', () => ({
       });
     }),
     initialize: vi.fn(() => (req: any, res: any, next: any) => next()),
+    // appelé au chargement de middlewares/passport.ts (enregistrement des stratégies)
+    use: vi.fn(),
   },
 }));
 

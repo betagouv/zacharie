@@ -1,4 +1,3 @@
-import * as mupdf from 'mupdf';
 import { ALBERT_API_KEY, ALBERT_API_URL, ALBERT_MODEL, ALBERT_OCR_MODEL } from '~/config';
 import type { AlbertAssistantMessage, AlbertMessage, AlbertToolCall } from '~/types/bug-investigation';
 import { capture } from './sentry';
@@ -233,9 +232,14 @@ async function ocrImage(png: Buffer): Promise<string | null> {
   }
 }
 
-/** Rend chaque page d'un PDF en PNG. Renvoie un tableau vide si le document est illisible. */
-function rasteriserPdf(body: Buffer): Buffer[] {
+/**
+ * Rend chaque page d'un PDF en PNG. Renvoie un tableau vide si le document est illisible.
+ * mupdf (10 Mo de WASM) est chargé à la demande : seul l'OCR en a besoin, pas le démarrage de l'API.
+ */
+async function rasteriserPdf(body: Buffer): Promise<Buffer[]> {
   try {
+    // @ts-expect-error TS1323 : le tsconfig ne déclare pas de `module`, l'import dynamique fonctionne sous tsx
+    const mupdf = await import('mupdf');
     const document = mupdf.Document.openDocument(new Uint8Array(body), 'application/pdf');
     const pages: Buffer[] = [];
     const total = Math.min(document.countPages(), MAX_PAGES);
@@ -259,7 +263,7 @@ function rasteriserPdf(body: Buffer): Buffer[] {
 export async function ocrDocument(body: Buffer, contentType: string): Promise<string | null> {
   if (!IS_ALBERT_CONFIGURED) return null;
 
-  const images = contentType === 'application/pdf' ? rasteriserPdf(body) : [body];
+  const images = contentType === 'application/pdf' ? await rasteriserPdf(body) : [body];
   if (!images.length) return null;
 
   const pages: string[] = [];
