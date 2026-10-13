@@ -172,6 +172,12 @@ export interface AdminActionEntityResponse {
   error: string;
 }
 
+export interface AdminSoftDeleteResponse {
+  ok: boolean;
+  data: { deleted_at: Date } | null;
+  error: string;
+}
+
 export interface AdminNewEntityResponse {
   ok: boolean;
   data: {
@@ -408,6 +414,7 @@ export interface SyncResponse {
     // serveur faisant foi n'est volontairement PAS jointe — ce serait divulguer la fiche d'un
     // tiers à quelqu'un à qui on vient d'en refuser l'accès.
     rejected: Array<SyncRejection>;
+    shouldRemoveFromLocalStore: Array<SyncRejection>;
   } | null;
   error: string;
 }
@@ -571,6 +578,19 @@ export interface AdminUserNotificationsResponse {
       created_at: Date;
     }>;
     total: number;
+  };
+  error: string;
+}
+
+export interface AdminSearchResponse {
+  ok: boolean;
+  data: {
+    users: Array<Pick<User, 'id' | 'email' | 'prenom' | 'nom_de_famille' | 'roles' | 'deleted_at'>>;
+    entities: Array<Pick<Entity, 'id' | 'nom_d_usage' | 'type' | 'ville' | 'deleted_at'>>;
+    feis: Array<Pick<Fei, 'numero' | 'date_mise_a_mort' | 'commune_mise_a_mort' | 'deleted_at'>>;
+    carcasses: Array<
+      Pick<Carcasse, 'zacharie_carcasse_id' | 'numero_bracelet' | 'fei_numero' | 'espece' | 'deleted_at'>
+    >;
   };
   error: string;
 }

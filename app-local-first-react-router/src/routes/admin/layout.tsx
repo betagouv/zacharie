@@ -5,6 +5,7 @@ import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { UserRoles } from '@prisma/client';
 import { useEffect, useState } from 'react';
 import { Link, Navigate, Outlet, useLocation } from 'react-router';
+import AdminSearch from './admin-search';
 
 type AdminSessionStatus = 'loading' | 'ok' | 'proconnect-required';
 
@@ -147,6 +148,9 @@ export default function AdminLayout() {
             />
           </div>
           <ul className="m-0 list-none px-2">
+            <li>
+              <AdminSearch collapsed={navCollapsed} />
+            </li>
             {adminLinks.map((link) => {
               const isActive = location.pathname.startsWith(link.to);
               return (

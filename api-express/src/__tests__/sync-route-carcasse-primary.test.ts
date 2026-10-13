@@ -252,6 +252,7 @@ describe('Response shape preserved for partial payloads', () => {
         carcasseModifRequests: [],
         syncedLogIds: [],
         rejected: [],
+        shouldRemoveFromLocalStore: [],
       },
     });
   });

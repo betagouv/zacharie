@@ -1,5 +1,6 @@
 import compression from 'compression';
 import express from 'express';
+import fs from 'fs';
 import path from 'path';
 
 const viteDevServer =
@@ -87,12 +88,29 @@ app.get('/.well-known/assetlinks.json', (req, res) => {
   ]);
 });
 
-// Serve static files from the build/client directory
-app.use(express.static(path.join(process.cwd(), 'build')));
+// index.html, the service worker and spa-manifest.json (read by the mobile app to download the web
+// assets) reference the hashed assets of the current build:
+// never cache them, so a deploy reaches users on the next load.
+const noStoreFiles = ['index.html', 'service-worker.js', 'spa-manifest.json'];
 
-// For any other routes, send the index.html file
+// Serve static files from the build/client directory
+app.use(
+  express.static(path.join(process.cwd(), 'build'), {
+    setHeaders: (res, filePath) => {
+      if (noStoreFiles.includes(path.basename(filePath))) res.setHeader('Cache-Control', 'no-store');
+    },
+  })
+);
+
+// For any other routes, send the index.html file.
+// Read once at startup: no file system access per request (in dev, Vite serves index.html).
+const indexHtml = viteDevServer
+  ? null
+  : fs.readFileSync(path.join(process.cwd(), 'build', 'index.html'), 'utf8');
 app.get('*', (req, res, next) => {
-  res.sendFile(path.join(process.cwd(), 'build', 'index.html'), next);
+  if (!indexHtml) return next();
+  res.setHeader('Cache-Control', 'no-store');
+  res.type('html').send(indexHtml);
 });
 
 const port = process.env.PORT || 8080;

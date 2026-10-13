@@ -17,6 +17,7 @@ import updateCarcasseStatus from '~/utils/get-carcasse-status';
 import { isCarcasseDone } from '~/utils/is-carcasse-done';
 import { sendWebhook } from '~/utils/api';
 import { FeiOwnerRole, Prisma } from '@prisma/client';
+import { nextVersion } from '~/utils/sync-version';
 import { BrevoTemplateId } from '~/third-parties/brevo-templates';
 
 // /*
@@ -114,6 +115,7 @@ export async function automaticClosingOfFeis({ force = false }: AutomaticClosing
         svi_carcasse_status: newStatus,
         svi_carcasse_status_set_at: automaticClosedAt,
         svi_automatic_closed_at: automaticClosedAt,
+        ...nextVersion(null),
         current_owner_role: FeiOwnerRole.SVI,
         current_owner_entity_id: carcasse.svi_entity_id,
         current_owner_user_id: carcasse.svi_user_id || null,

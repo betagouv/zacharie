@@ -51,6 +51,7 @@ model User {
   roles                                 UserRoles[]
   role                                  UserRoles? // TODO: migrate from roles, in another PR
   isZacharieAdmin                       Boolean                        @default(false)
+  exclude_from_stats                    Boolean                        @default(false) // compte de test ou de démo : ses fiches sont exclues des vues Metabase
   etg_role                              UserEtgRoles                   @default(RECEPTION)
   created_at                            DateTime                       @default(now())
   updated_at                            DateTime                       @default(now()) @updatedAt
@@ -155,6 +156,7 @@ model Entity {
   prefilled                             Boolean                        @default(false)
   is_synced                             Boolean                        @default(true) // just for typing purppose with zustand frontend
   for_testing                           Boolean                        @default(false)
+  exclude_from_stats                    Boolean                        @default(false) // entité de test ou de démo : ses fiches sont exclues des vues Metabase
   // for brevo
   brevo_id                              String?
   at_least_one_fei_treated              DateTime?
@@ -348,6 +350,9 @@ model Fei {
   updated_at                DateTime                @default(now()) @updatedAt
   deleted_at                DateTime?
   is_synced                 Boolean                 @default(true)
+  // verrou optimiste du /sync, incrémenté par le serveur à chaque écriture (voir utils/sync-version.ts)
+  version                   Int                     @default(0)
+  version_user_id           String?
   /**
    * relations
    */
@@ -575,6 +580,9 @@ model Carcasse {
   updated_at                                              DateTime                      @default(now()) @updatedAt
   deleted_at                                              DateTime?
   is_synced                                               Boolean                       @default(true)
+  // verrou optimiste du /sync, incrémenté par le serveur à chaque écriture (voir utils/sync-version.ts)
+  version                                                 Int                           @default(0)
+  version_user_id                                         String?
   Fei                                                     Fei                           @relation(fields: [fei_numero], references: [numero], onDelete: Cascade, onUpdate: Cascade)
   CarcasseIntermediaire                                   CarcasseIntermediaire[]
   SviIpm1User                                             User?                         @relation("SviIpm1User", fields: [svi_ipm1_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
@@ -689,6 +697,9 @@ model CarcasseIntermediaire {
   updated_at                                  DateTime      @default(now()) @updatedAt
   deleted_at                                  DateTime?
   is_synced                                   Boolean       @default(true) // just for typing purppose with zustand frontend
+  // verrou optimiste du /sync, incrémenté par le serveur à chaque écriture (voir utils/sync-version.ts)
+  version                                     Int           @default(0)
+  version_user_id                             String?
   CarcasseIntermediaireFei                    Fei           @relation(fields: [fei_numero], references: [numero], onDelete: Cascade, onUpdate: Cascade)
   CarcasseCarcasseIntermediaire               Carcasse      @relation(fields: [zacharie_carcasse_id], references: [zacharie_carcasse_id], onDelete: Cascade, onUpdate: Cascade)
   CarcasseIntermediaireUser                   User          @relation("CarcasseIntermediaireUser", fields: [intermediaire_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
@@ -757,6 +768,7 @@ enum ApiKeyScope {
   FEI_READ_FOR_ENTITY
   CARCASSE_READ_FOR_USER
   CARCASSE_READ_FOR_ENTITY
+  USER_LOGIN_FOR_USER // se connecter au compte de l'utilisateur via un access token (créer des fiches en son nom)
 }
 
 model ApiKey {

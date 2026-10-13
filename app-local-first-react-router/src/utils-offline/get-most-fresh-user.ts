@@ -22,9 +22,10 @@ export function useMostFreshUser(_calledFrom: string) {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function refreshUser(_calledFrom?: string) {
   const isOnline = useZustandStore.getState().isOnline;
-  if (!isOnline) {
-    // we need this because if offLine then the service worker return the latest GET /user/me
-    // and it makes the prochain_bracelet_a_utiliser stale
+  // Hors ligne côté appareil, le service worker renverrait le dernier GET /user/me en cache, ce qui
+  // rendrait prochain_bracelet_a_utiliser obsolète. Si on est hors ligne seulement à cause d'une
+  // connexion très lente (navigator.onLine encore vrai), on retente : un succès nous remet en ligne.
+  if (!isOnline && !navigator.onLine) {
     return null;
   }
   const cachedUser = useUser.getState().user;

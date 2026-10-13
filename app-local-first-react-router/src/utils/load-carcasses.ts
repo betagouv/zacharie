@@ -6,6 +6,7 @@ import { getFeiAndCarcasseAndIntermediaireIds } from './get-carcasse-intermediai
 import type { CarcasseModificationRequest } from '@prisma/client';
 import useUser from '@app/zustand/user';
 import { capture } from '@app/services/sentry';
+import { isLocalTeardownInProgress } from '@app/zustand/idb-sliced-storage';
 
 let loadCarcassesAbortController: AbortController | null = null;
 
@@ -59,6 +60,10 @@ export function abortLoadCarcasses(reason: string = 'aborted') {
 }
 
 export async function loadCarcasses() {
+  if (isLocalTeardownInProgress()) {
+    console.log('not loading carcasses because local state is being cleared');
+    return;
+  }
   const isOnline = useZustandStore.getState().isOnline;
   if (!isOnline) {
     console.log('not loading carcasses because not online');

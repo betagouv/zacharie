@@ -108,16 +108,16 @@ describe('FEI soft-delete via POST /sync', () => {
     expect(prisma.fei.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { numero: FEI_NUMERO },
-        data: { deleted_at: DELETED_AT },
+        data: { deleted_at: DELETED_AT, version: { increment: 1 }, version_user_id: expect.any(String) },
       })
     );
     expect(prisma.carcasse.updateMany).toHaveBeenCalledWith({
       where: { fei_numero: FEI_NUMERO },
-      data: { deleted_at: DELETED_AT },
+      data: { deleted_at: DELETED_AT, version: { increment: 1 }, version_user_id: expect.any(String) },
     });
     expect(prisma.carcasseIntermediaire.updateMany).toHaveBeenCalledWith({
       where: { fei_numero: FEI_NUMERO },
-      data: { deleted_at: DELETED_AT },
+      data: { deleted_at: DELETED_AT, version: { increment: 1 }, version_user_id: expect.any(String) },
     });
   });
 
@@ -204,7 +204,7 @@ describe('Carcasse soft-delete via POST /sync', () => {
     );
     expect(prisma.carcasseIntermediaire.updateMany).toHaveBeenCalledWith({
       where: { zacharie_carcasse_id: 'ZC-1' },
-      data: { deleted_at: DELETED_AT },
+      data: { deleted_at: DELETED_AT, version: { increment: 1 }, version_user_id: expect.any(String) },
     });
     // FEI must NOT be touched when only the carcasse is deleted
     expect(prisma.fei.update).not.toHaveBeenCalled();

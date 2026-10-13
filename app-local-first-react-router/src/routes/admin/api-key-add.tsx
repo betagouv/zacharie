@@ -110,6 +110,13 @@ export default function AdminNewApiKey() {
                       value: ApiKeyScope.CARCASSE_READ_FOR_ENTITY,
                     },
                   },
+                  {
+                    label: "Connexion au compte d'un utilisateur (création de fiches en son nom)",
+                    nativeInputProps: {
+                      name: Prisma.ApiKeyScalarFieldEnum.scopes,
+                      value: ApiKeyScope.USER_LOGIN_FOR_USER,
+                    },
+                  },
                 ]}
               />
             </div>

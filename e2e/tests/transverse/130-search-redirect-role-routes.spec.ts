@@ -1,3 +1,4 @@
+import type { Locator, Page } from '@playwright/test';
 import { test, expect } from '../../utils/test';
 import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
@@ -10,6 +11,19 @@ import { connectWith } from '../../utils/connect-with';
 
 test.use({ launchOptions: { slowMo: 100 } });
 
+// L'URL du rôle est déjà affichée avant que son layout ne monte : un texte saisi trop tôt dans la
+// barre de recherche de la page de connexion est perdu quand l'en-tête du rôle la remplace. On
+// ressaisit donc la recherche (vidée d'abord, pour relancer la recherche locale) tant que le
+// résultat attendu n'apparaît pas.
+async function searchUntilVisible(page: Page, text: string, expected: Locator) {
+  await expect(async () => {
+    const search = page.getByPlaceholder('Rechercher (carcasse ou fiche en cours)').first();
+    await search.fill('');
+    await search.fill(text);
+    await expect(expected).toBeVisible({ timeout: 3000 });
+  }).toPass({ timeout: 20000 });
+}
+
 test.describe('Search dropdown redirectUrl', () => {
   test('SVI search lands on /app/svi/fei/:numero', async ({ page }) => {
     await resetDb('SVI');
@@ -17,12 +31,9 @@ test.describe('Search dropdown redirectUrl', () => {
     await connectWith(page, 'svi@example.fr');
     await expect(page).toHaveURL(/\/app\/svi/);
 
-    const search = page.getByPlaceholder('Rechercher (carcasse ou fiche en cours)').first();
-    await search.fill(feiId);
-
     // Le SVI navigue vers une transmission : /app/svi/fei/:numero/:premier_detenteur_prochain_detenteur_id_cache
     const result = page.getByRole('link', { name: new RegExp(`Fiche ${feiId}`) }).first();
-    await expect(result).toBeVisible({ timeout: 10000 });
+    await searchUntilVisible(page, feiId, result);
     await expect(result).toHaveAttribute('href', new RegExp(`^/app/svi/fei/${feiId}/`));
     await result.click();
     await expect(page).toHaveURL(new RegExp(`/app/svi/fei/${feiId}/`));
@@ -34,12 +45,9 @@ test.describe('Search dropdown redirectUrl', () => {
     await connectWith(page, 'etg-1@example.fr');
     await expect(page).toHaveURL(/\/app\/etg/);
 
-    const search = page.getByPlaceholder('Rechercher (carcasse ou fiche en cours)').first();
-    await search.fill(feiId);
-
     // L'ETG navigue vers une transmission : /app/etg/fei/:numero/:premier_detenteur_prochain_detenteur_id_cache
     const result = page.getByRole('link', { name: new RegExp(`Fiche ${feiId}`) }).first();
-    await expect(result).toBeVisible({ timeout: 10000 });
+    await searchUntilVisible(page, feiId, result);
     await expect(result).toHaveAttribute('href', new RegExp(`^/app/etg/fei/${feiId}/`));
     await result.click();
     await expect(page).toHaveURL(new RegExp(`/app/etg/fei/${feiId}/`));
@@ -53,12 +61,9 @@ test.describe('Search dropdown redirectUrl', () => {
     await connectWith(page, 'collecteur-pro@example.fr');
     await expect(page).toHaveURL(/\/app\/collecteur/);
 
-    const search = page.getByPlaceholder('Rechercher (carcasse ou fiche en cours)').first();
-    await search.fill(feiId);
-
     // Le collecteur navigue vers une transmission : /app/collecteur/fei/:numero/:premier_detenteur_prochain_detenteur_id_cache
     const result = page.getByRole('link', { name: new RegExp(`Fiche ${feiId}`) }).first();
-    await expect(result).toBeVisible({ timeout: 10000 });
+    await searchUntilVisible(page, feiId, result);
     await expect(result).toHaveAttribute('href', new RegExp(`^/app/collecteur/fei/${feiId}/`));
     await result.click();
     await expect(page).toHaveURL(new RegExp(`/app/collecteur/fei/${feiId}/`));
@@ -73,11 +78,8 @@ test.describe('Search dropdown redirectUrl', () => {
     await connectWith(page, 'examinateur@example.fr');
     await expect(page).toHaveURL(/\/app\/chasseur/);
 
-    const search = page.getByPlaceholder('Rechercher (carcasse ou fiche en cours)').first();
-    await search.fill(feiId);
-
     const result = page.getByRole('link', { name: new RegExp(feiId) });
-    await expect(result).toBeVisible({ timeout: 10000 });
+    await searchUntilVisible(page, feiId, result);
     await expect(result).toHaveAttribute('href', `/app/chasseur/fei/${feiId}`);
     await result.click();
     await expect(page).toHaveURL(`http://localhost:3290/app/chasseur/fei/${feiId}`);
@@ -91,11 +93,8 @@ test.describe('Search dropdown redirectUrl', () => {
     await connectWith(page, 'commerce-de-detail@example.fr');
     await expect(page).toHaveURL(/\/app\/circuit-court/);
 
-    const search = page.getByPlaceholder('Rechercher (carcasse ou fiche en cours)').first();
-    await search.fill(feiId);
-
     const result = page.getByRole('link', { name: new RegExp(`Fiche ${feiId}`) }).first();
-    await expect(result).toBeVisible({ timeout: 10000 });
+    await searchUntilVisible(page, feiId, result);
     await expect(result).toHaveAttribute('href', new RegExp(`^/app/circuit-court/fei/${feiId}/`));
     await result.click();
     await expect(page).toHaveURL(new RegExp(`/app/circuit-court/fei/${feiId}/`));
@@ -109,11 +108,8 @@ test.describe('Search dropdown redirectUrl', () => {
     await connectWith(page, 'svi@example.fr');
     await expect(page).toHaveURL(/\/app\/svi/);
 
-    const search = page.getByPlaceholder('Rechercher (carcasse ou fiche en cours)').first();
-    await search.fill(bracelet);
-
     const result = page.locator(`a[href="/app/svi/carcasse-svi/${feiId}/${feiId}_${bracelet}"]`);
-    await expect(result).toBeVisible({ timeout: 10000 });
+    await searchUntilVisible(page, bracelet, result);
     await result.click();
     await expect(page).toHaveURL(`http://localhost:3290/app/svi/carcasse-svi/${feiId}/${feiId}_${bracelet}`);
   });
@@ -126,11 +122,8 @@ test.describe('Search dropdown redirectUrl', () => {
     await connectWith(page, 'commerce-de-detail@example.fr');
     await expect(page).toHaveURL(/\/app\/circuit-court/);
 
-    const search = page.getByPlaceholder('Rechercher (carcasse ou fiche en cours)').first();
-    await search.fill(bracelet);
-
     const result = page.locator(`a[href^="/app/circuit-court/fei/${feiId}/"]`).first();
-    await expect(result).toBeVisible({ timeout: 10000 });
+    await searchUntilVisible(page, bracelet, result);
     await result.click();
     await expect(page).toHaveURL(new RegExp(`/app/circuit-court/fei/${feiId}/`));
   });
@@ -143,11 +136,8 @@ test.describe('Search dropdown redirectUrl', () => {
     await connectWith(page, 'examinateur@example.fr');
     await expect(page).toHaveURL(/\/app\/chasseur/);
 
-    const search = page.getByPlaceholder('Rechercher (carcasse ou fiche en cours)').first();
-    await search.fill(bracelet);
-
     const result = page.locator(`a[href="/app/chasseur/fei/${feiId}"]`);
-    await expect(result).toBeVisible({ timeout: 10000 });
+    await searchUntilVisible(page, bracelet, result);
     await result.click();
     await expect(page).toHaveURL(`http://localhost:3290/app/chasseur/fei/${feiId}`);
   });
@@ -161,11 +151,8 @@ test.describe('Search dropdown redirectUrl', () => {
     await connectWith(page, 'svi@example.fr');
     await expect(page).toHaveURL(/\/app\/svi/);
 
-    const search = page.getByPlaceholder('Rechercher (carcasse ou fiche en cours)').first();
-    await search.fill('RECHERCHE-COMMENTAIRE-TEST');
-
     const result = page.locator(`a[href="/app/svi/carcasse-svi/${feiId}/${feiId}_${bracelet}"]`);
-    await expect(result).toBeVisible({ timeout: 10000 });
+    await searchUntilVisible(page, 'RECHERCHE-COMMENTAIRE-TEST', result);
   });
 
   test('no match shows the "aucun élément" message', async ({ page }) => {
@@ -173,12 +160,11 @@ test.describe('Search dropdown redirectUrl', () => {
     await connectWith(page, 'examinateur@example.fr');
     await expect(page).toHaveURL(/\/app\/chasseur/);
 
-    const search = page.getByPlaceholder('Rechercher (carcasse ou fiche en cours)').first();
-    await search.fill('zzz-aucun-resultat-possible-zzz');
-
-    await expect(page.getByText('Aucun élément ne correspond à votre recherche')).toBeVisible({
-      timeout: 10000,
-    });
+    await searchUntilVisible(
+      page,
+      'zzz-aucun-resultat-possible-zzz',
+      page.getByText('Aucun élément ne correspond à votre recherche')
+    );
   });
 });
 

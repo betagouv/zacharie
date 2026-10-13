@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import type { CarcasseIntermediaire, User } from '@prisma/client';
 import type { SyncScope } from '~/utils/sync-scope';
 import { SyncRejectedError } from '~/utils/sync-errors';
+import { isStaleWrite, nextVersion } from '~/utils/sync-version';
 
 export async function syncCarcasseIntermediaire(
   fei_numero: string,
@@ -48,6 +49,7 @@ export async function syncCarcasseIntermediaire(
   // en son nom propre, pour une entité dont il est membre. Le rôle, lui, vient du client : un ETG
   // enregistre l'étape de transport d'un collecteur, donc un rôle différent du sien est légitime.
   if (!body.intermediaire_entity_id || !scope.entityIds.includes(body.intermediaire_entity_id)) {
+    // Cette ligne ne devrait jamais arriver, puisqu'elle est interdite par le périmètre de l'utilisateur.
     throw new SyncRejectedError('Vous ne pouvez pas agir au nom de cette entité');
   }
 
@@ -127,16 +129,29 @@ export async function syncCarcasseIntermediaire(
   // voir son entité ou son utilisateur réécrits par un autre appelant.
   const { intermediaire_entity_id, intermediaire_role, intermediaire_user_id, ...update } = data;
 
-  const carcasseIntermediaire = await prisma.carcasseIntermediaire.upsert({
-    where: {
-      fei_numero_zacharie_carcasse_id_intermediaire_id: {
-        fei_numero: fei_numero,
-        zacharie_carcasse_id: existingCarcasse.zacharie_carcasse_id,
-        intermediaire_id: intermediaire_id,
-      },
+  const where = {
+    fei_numero_zacharie_carcasse_id_intermediaire_id: {
+      fei_numero: fei_numero,
+      zacharie_carcasse_id: existingCarcasse.zacharie_carcasse_id,
+      intermediaire_id: intermediaire_id,
     },
+  };
+  // Version périmée : on ne l'écrit pas. Le delta du client (/carcasse) se fonde sur
+  // `carcasse.updated_at` et charge les lignes d'intermédiaire par leur carcasse : on touche donc la
+  // carcasse pour qu'il récupère la version à jour.
+  const existingIntermediaire = await prisma.carcasseIntermediaire.findUnique({ where });
+  if (existingIntermediaire && isStaleWrite(existingIntermediaire, body.version, user)) {
+    await prisma.carcasse.update({
+      where: { zacharie_carcasse_id: existingCarcasse.zacharie_carcasse_id },
+      data: { updated_at: new Date() },
+    });
+    throw new SyncRejectedError('Version obsolète');
+  }
+
+  const carcasseIntermediaire = await prisma.carcasseIntermediaire.upsert({
+    where,
     create: data,
-    update,
+    update: { ...update, ...nextVersion(user.id) },
   });
 
   return carcasseIntermediaire;

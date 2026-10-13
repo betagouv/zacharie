@@ -2,6 +2,7 @@ import prisma from '~/prisma';
 import { Carcasse, EntityRelationType, Fei, FeiOwnerRole, Prisma, User, UserRoles } from '@prisma/client';
 import type { SyncScope } from '~/utils/sync-scope';
 import { SyncRejectedError } from '~/utils/sync-errors';
+import { isStaleWrite, nextVersion } from '~/utils/sync-version';
 
 export interface SaveCarcasseResult {
   savedCarcasse: Carcasse;
@@ -75,6 +76,15 @@ export async function syncCarcasse(
     if (!(await scope.canWriteCarcasse(existingCarcasse.zacharie_carcasse_id))) {
       throw new SyncRejectedError("Vous n'avez pas accès à cette carcasse");
     }
+    // Version périmée : on ne l'écrit pas, et on touche `updated_at` pour que le prochain delta du
+    // client (/carcasse, fondé sur `carcasse.updated_at`) lui apporte la version à jour.
+    if (isStaleWrite(existingCarcasse, body.version, user)) {
+      await prisma.carcasse.update({
+        where: { zacharie_carcasse_id: existingCarcasse.zacharie_carcasse_id },
+        data: { updated_at: new Date() },
+      });
+      throw new SyncRejectedError('Version obsolète');
+    }
   } else if (!(await scope.canWriteFei(existingFei))) {
     throw new SyncRejectedError("Vous n'avez pas accès à cette fiche");
   }
@@ -128,11 +138,12 @@ export async function syncCarcasse(
       data: {
         deleted_at: body.deleted_at,
         is_synced: true,
+        ...nextVersion(user.id),
       },
     });
     await prisma.carcasseIntermediaire.updateMany({
       where: { zacharie_carcasse_id: existingCarcasse.zacharie_carcasse_id },
-      data: { deleted_at: body.deleted_at },
+      data: { deleted_at: body.deleted_at, ...nextVersion(user.id) },
     });
     return { savedCarcasse: deletedCarcasse, existingCarcasse, isDeleted: true };
   }
@@ -542,7 +553,7 @@ export async function syncCarcasse(
     where: {
       zacharie_carcasse_id: existingCarcasse.zacharie_carcasse_id,
     },
-    data: nextCarcasse,
+    data: { ...nextCarcasse, ...nextVersion(user.id) },
   });
 
   return { savedCarcasse: updatedCarcasse, existingCarcasse, isDeleted: false };

@@ -7,14 +7,14 @@ import { getUserOnboardingRoute } from '@app/utils/user-onboarded.client';
 import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
 import { type User } from '@prisma/client';
 import { type UserConnexionResponse } from '@api/src/types/responses';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { refreshUser } from '@app/utils-offline/get-most-fresh-user';
 import Chargement from '@app/components/Chargement';
 import { capture } from '@app/services/sentry';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import API from '@app/services/api';
-import { clearCache } from '@app/services/indexed-db';
+import { clearLocalAppState } from '@app/utils/disconnect';
 
 export default function CreationDeCompte() {
   const user = useUser((state) => state.user);
@@ -87,8 +87,14 @@ export default function CreationDeCompte() {
     return '';
   };
 
+  // En développement, StrictMode lance cet effet deux fois : deux nettoyages concurrents, dont le
+  // second effacerait l'utilisateur que le premier vient d'enregistrer. On ne le lance qu'une fois.
+  const initStarted = useRef(false);
   useEffect(() => {
-    clearCache('connexion').then(() =>
+    if (initStarted.current) return;
+    initStarted.current = true;
+    clearLocalAppState('connexion').then(() => {
+      useZustandStore.getState().reset();
       refreshUser('connexion').then((user) => {
         console.log('init user', user);
         if (!user) {
@@ -96,8 +102,8 @@ export default function CreationDeCompte() {
         } else {
           handleRedirect(user);
         }
-      })
-    );
+      });
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

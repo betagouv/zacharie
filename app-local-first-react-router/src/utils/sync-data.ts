@@ -7,7 +7,9 @@ import { syncProchainBraceletAUtiliser } from '@app/zustand/user';
 import API from '@app/services/api';
 import { capture } from '@app/services/sentry';
 import useZustandStore, { hydrationPromise } from '@app/zustand/store';
+import { isLocalTeardownInProgress } from '@app/zustand/idb-sliced-storage';
 import { loadCarcasses } from './load-carcasses';
+import type { FeiAndCarcasseAndIntermediaireIds } from '@app/types/carcasses-intermediaire';
 
 // SYNC DATA
 
@@ -58,6 +60,10 @@ function isEverythingSynced(unsynced: ReturnType<typeof collectUnsynced>) {
 
 export async function syncData(calledFrom?: string) {
   await hydrationPromise;
+  if (isLocalTeardownInProgress()) {
+    console.log('not syncing data because local state is being cleared');
+    return;
+  }
 
   // Cancel any in-flight sync
   if (syncAbortController && !syncAbortController.signal.aborted) {
@@ -65,6 +71,9 @@ export async function syncData(calledFrom?: string) {
   }
   syncAbortController = new AbortController();
   const signal = syncAbortController.signal;
+  // Un push échoué laisse des éditions locales non synchronisées : le pull qui suit les écraserait
+  // (mergeItems est server-wins), donc on ne recharge pas dans ce cas.
+  let pushFailed = false;
   try {
     const state = useZustandStore.getState();
     if (!state.isOnline) {
@@ -102,15 +111,37 @@ export async function syncData(calledFrom?: string) {
     const res = response as SyncResponse;
     if (!res.ok || !res.data) {
       console.error('sync failed', res.error);
+      pushFailed = true;
       return;
     }
 
-    // Refus définitifs : on arrête de les repousser. On ne touche pas à la donnée locale — le
-    // serveur ne renvoie pas sa version (ce serait exposer la fiche d'un tiers), donc on n'a rien
-    // pour la corriger ici. Elle le sera dès que la ligne serveur bougera légitimement et reviendra
-    // dans un delta, mergeItems étant server-wins.
+    // Refus définitifs : on arrête de les repousser, le même payload serait refusé à chaque envoi.
     for (const rejection of res.data.rejected ?? []) {
       rejectedBySync.add(`${rejection.kind}:${rejection.id}`);
+    }
+
+    const shouldRemoveFromLocalStore = res.data.shouldRemoveFromLocalStore ?? [];
+    if (shouldRemoveFromLocalStore.length > 0) {
+      useZustandStore.setState((state) => {
+        const feis = { ...state.feis };
+        const carcasses = { ...state.carcasses };
+        const carcassesIntermediaireById = { ...state.carcassesIntermediaireById };
+        for (const rejection of shouldRemoveFromLocalStore) {
+          // les items ajoutés par le serveur (intermédiaires, fiche) ne sont pas dans `rejected`
+          rejectedBySync.add(`${rejection.kind}:${rejection.id}`);
+          if (rejection.kind === 'fei') delete feis[rejection.id];
+          if (rejection.kind === 'carcasse') delete carcasses[rejection.id];
+          if (rejection.kind === 'carcasseIntermediaire') {
+            delete carcassesIntermediaireById[rejection.id as FeiAndCarcasseAndIntermediaireIds];
+          }
+        }
+        return {
+          feis,
+          carcasses,
+          carcassesRegistry: Object.values(carcasses),
+          carcassesIntermediaireById,
+        };
+      });
     }
 
     // Le serveur confirme les logs qu'il a écrits : on les retire du store, sinon ils
@@ -123,10 +154,11 @@ export async function syncData(calledFrom?: string) {
     }
   } catch (error) {
     if (signal.aborted) return;
+    pushFailed = true;
     console.error('sync error', error);
     capture(error as Error, { extra: { calledFrom } });
   } finally {
-    if (!signal.aborted) {
+    if (!signal.aborted && !pushFailed) {
       await loadCarcasses();
       // Le delta vient de fusionner la version serveur (is_synced = true) : l'indicateur
       // « Synchronisation en cours » se met à jour sans attendre un prochain appel.

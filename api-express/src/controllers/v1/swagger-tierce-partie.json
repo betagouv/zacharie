@@ -802,7 +802,7 @@
     "/access-token/user": {
       "post": {
         "summary": "Générer un token d'accès pour un utilisateur",
-        "description": "Génère un token d'accès temporaire pour un utilisateur qui a préalablement approuvé votre demande. Ce token peut être utilisé pour connecter automatiquement l'utilisateur à son compte Zacharie via une URL avec paramètres.",
+        "description": "Génère un token d'accès temporaire pour un utilisateur qui a préalablement approuvé votre demande. Ce token peut être utilisé pour connecter automatiquement l'utilisateur à son compte Zacharie via une URL avec paramètres. La clé API doit avoir le scope `USER_LOGIN_FOR_USER`. Le token expire après 5 minutes et ne sert qu'une fois. La session ouverte dure 24 heures.",
         "requestBody": {
           "required": true,
           "content": {

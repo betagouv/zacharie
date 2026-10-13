@@ -196,30 +196,38 @@ describe('syncFei — deletion', () => {
     expect(result.isDeleted).toBe(true);
     expect(prisma.carcasse.updateMany).toHaveBeenCalledWith({
       where: { fei_numero: 'FEI-1' },
-      data: { deleted_at: '2026-03-01T00:00:00Z' },
+      data: {
+        deleted_at: '2026-03-01T00:00:00Z',
+        version: { increment: 1 },
+        version_user_id: expect.any(String),
+      },
     });
     expect(prisma.carcasseIntermediaire.updateMany).toHaveBeenCalledWith({
       where: { fei_numero: 'FEI-1' },
-      data: { deleted_at: '2026-03-01T00:00:00Z' },
+      data: {
+        deleted_at: '2026-03-01T00:00:00Z',
+        version: { increment: 1 },
+        version_user_id: expect.any(String),
+      },
     });
   });
 
   // les pouvoirs d'admin Zacharie passent par /admin (ProConnect), pas par /sync
-  test('soft-delete by isZacharieAdmin → throws "Unauthorized"', async () => {
+  test('soft-delete by isZacharieAdmin → throws "Vous ne pouvez pas supprimer cette fiche"', async () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
 
     await expect(
       syncFei('FEI-1', { numero: 'FEI-1', deleted_at: '2026-03-01T00:00:00Z' } as any, platformAdmin, scope)
-    ).rejects.toThrow('Unauthorized');
+    ).rejects.toThrow('Vous ne pouvez pas supprimer cette fiche');
     expect(prisma.fei.update).not.toHaveBeenCalled();
   });
 
-  test('soft-delete by unrelated user → throws "Unauthorized"', async () => {
+  test('soft-delete by unrelated user → throws "Vous ne pouvez pas supprimer cette fiche"', async () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
 
     await expect(
       syncFei('FEI-1', { numero: 'FEI-1', deleted_at: '2026-03-01T00:00:00Z' } as any, otherChasseur, scope)
-    ).rejects.toThrow('Unauthorized');
+    ).rejects.toThrow('Vous ne pouvez pas supprimer cette fiche');
 
     expect(prisma.fei.update).not.toHaveBeenCalled();
     expect(prisma.carcasse.updateMany).not.toHaveBeenCalled();

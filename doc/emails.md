@@ -55,9 +55,9 @@ Toutes via `sendNotificationToUser`. Dédup via `NotificationLog`. Déclenchées
 | FEI attribuée à un user              | le next-owner                       | **template `FEI_ASSIGNED` (id 79)**                                             | `carcasse-side-effects.ts:notifyNextOwnerUser`                         |
 | FEI désattribuée (correction)        | l'ex-next-owner                     | template `FEI_UNASSIGNED` (pas encore créé → texte inline)                      | `carcasse-side-effects.ts:notifyNextOwnerUser`                         |
 | FEI attribuée à une entité           | users de l'entité                   | **template `FEI_ASSIGNED` (id 79)** — même template que l'attribution à un user | `carcasse-side-effects.ts:notifyNextOwnerEntity`                       |
-| Saisie SVI (partielle / totale)      | examinateur + 1er détenteur         | template `CARCASSE_SAISIE` (pas encore créé → texte inline)                     | `carcasse-side-effects.ts:notifySaisieChasseur`                        |
-| Carcasse manquante                   | examinateur + 1er détenteur         | template `CARCASSE_MANQUANTE` (pas encore créé → texte inline)                  | `carcasse-side-effects.ts:notifyManquanteChasseur`                     |
-| Carcasse refusée                     | examinateur + 1er détenteur         | template `CARCASSE_REFUS` (pas encore créé → texte inline)                      | `carcasse-side-effects.ts:notifyRefusChasseur`                         |
+| Saisie SVI (partielle / totale)      | examinateur + 1er détenteur         | **template `CARCASSE_SAISIE` (id 87)**                                          | `carcasse-side-effects.ts:notifySaisieChasseur`                        |
+| Carcasse manquante                   | examinateur + 1er détenteur         | **template `CARCASSE_MANQUANTE` (id 88)**                                       | `carcasse-side-effects.ts:notifyManquanteChasseur`                     |
+| Carcasse refusée                     | examinateur + 1er détenteur         | **template `CARCASSE_REFUS` (id 89)**                                           | `carcasse-side-effects.ts:notifyRefusChasseur`                         |
 | FEI clôturée (dernière carcasse)     | examinateur + 1er détenteur         | **template `FEI_CLOSED` (id 91)**                                               | `carcasse-side-effects.ts:closeFeiAndNotifyChasseurOnSviCarcasseClose` |
 | Fiche renvoyée à l'expéditeur        | l'expéditeur (current-owner)        | `La fiche {numero} vous a été renvoyée.`                                        | `carcasse-side-effects.ts:notifyRenvoiExpediteur`                      |
 | Nouvel user dans une entité          | admins de l'entité                  | `Un nouvel utilisateur s'est inscrit sur Zacharie au sein de votre entité`      | `user-entity.ts:238`                                                   |
@@ -91,7 +91,7 @@ Le push a son propre wording, indépendant de l'email : il s'affiche sur un écr
 | FEI désattribuée                     | Fiche retirée                         | `La fiche {numero} ne vous est plus attribuée.`                                   |
 | FEI transmise au SVI                 | Nouvelle fiche à inspecter            | `{entity_name} vous a transmis {count} carcasse(s) ou lot(s) à inspecter.`        |
 | Fiche renvoyée à l'expéditeur        | Fiche renvoyée                        | `{renvoyeur} vous a renvoyé la fiche {numero}.`                                   |
-| Saisie SVI                           | Carcasse saisie                       | `{Saisie totale} {de la carcasse} de {espèce} n°{bracelet}.`                      |
+| Saisie SVI                           | Saisie partielle / Saisie totale      | `{Saisie totale} {de la carcasse} de {espèce} n°{bracelet}.`                      |
 | Carcasse manquante                   | Carcasse manquante                    | `{entity_name} a constaté que {la carcasse} … est {manquante}.`                   |
 | Carcasse refusée                     | Carcasse refusée                      | `{entity_name} a refusé {la carcasse} … Motif : {motif}`                          |
 | FEI clôturée (SVI ou cron)           | Fiche clôturée                        | `L'inspection de la fiche {numero} est terminée, les résultats sont disponibles.` |

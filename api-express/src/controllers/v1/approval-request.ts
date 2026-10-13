@@ -26,7 +26,11 @@ router.post(
   '/user',
   apiRateLimit,
   passport.authenticate('apiKey', { session: false }),
-  checkApiKeyIsValidMiddleware([ApiKeyScope.CARCASSE_READ_FOR_USER, ApiKeyScope.FEI_READ_FOR_USER]),
+  checkApiKeyIsValidMiddleware([
+    ApiKeyScope.CARCASSE_READ_FOR_USER,
+    ApiKeyScope.FEI_READ_FOR_USER,
+    ApiKeyScope.USER_LOGIN_FOR_USER,
+  ]),
   catchErrors(
     async (
       req: RequestWithApiKey,

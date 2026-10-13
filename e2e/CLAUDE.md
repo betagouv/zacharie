@@ -27,7 +27,7 @@ Emails are semantic, one per role, all on `@example.fr`. Password for every acco
 - Variantes chasseur : `-onboarding`, `-en-attente-validation`, `examinateur-sans-formation@example.fr`
 - ETG : `etg-1@example.fr`, `etg-2@example.fr`, `etg-nouveau@example.fr`
 - Collecteur : `collecteur-pro@example.fr`, `collecteur-pro-1-etg-1@example.fr`, `collecteur-pro-nouveau@example.fr`
-- SVI : `svi@example.fr`, `svi-2@example.fr`, `svi-nouveau@example.fr`
+- SVI : `svi@example.fr`, `svi-1-bis@example.fr` (2e membre de SVI 1), `svi-2@example.fr`, `svi-nouveau@example.fr`
 - Circuit court : `commerce-de-detail@example.fr`, `commerce-de-detail-nouveau@example.fr`
 - Fédérations : `fdc@example.fr` (FDC Allier 03), `frc@example.fr` (FRC Auvergne-Rhône-Alpes), `fnc@example.fr` (FNC). Tous ADMIN de l'entité fédération. `fdc@`/`frc@` sont chasseurs (onglet « Tableau de bord Fédération ») ; `fnc@` a le rôle `FEDERATION` (sans être chasseur, `/app/federation`). Le périmètre vient de `Entity.scope_departements_codes`
 - Admin Zacharie : `admin@example.fr` (chasseur + `isZacharieAdmin`). Le login le renvoie sur `/app/chasseur` ; `/app/admin` exige ProConnect (simulé en test sur `/mock-proconnect`, voir `doc/proconnect-admin.md`)

@@ -124,6 +124,8 @@ describe('syncCarcasseIntermediaire — upsert', () => {
       intermediaire_entity_id: undefined,
       intermediaire_role: undefined,
       intermediaire_user_id: undefined,
+      version: { increment: 1 },
+      version_user_id: expect.any(String),
     });
   });
 
