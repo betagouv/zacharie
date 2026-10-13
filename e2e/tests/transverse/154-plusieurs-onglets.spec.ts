@@ -8,7 +8,7 @@ import { connectWith } from '../../utils/connect-with';
 // onglet déconnecte les autres. Hors ligne, seul le premier onglet utilisé fonctionne.
 
 const feiId = 'ZACH-20250707-QZ6E0-165242';
-const blockedTitle = 'Hors ligne, Zacharie ne fonctionne pas sur plusieurs onglets';
+const blockedTitle = 'Hors ligne, Zacharie arrête de fonctionner sur plusieurs onglets';
 
 test.beforeEach(async () => {
   await resetDb('ETG');
