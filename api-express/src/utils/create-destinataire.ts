@@ -23,7 +23,7 @@ import { sanitize } from '~/utils/sanitize';
 // le pré-enregistre avec le compte de son représentant, qui reçoit une invitation.
 // Le collecteur pro n'est pas du circuit court, mais un chasseur peut le pré-enregistrer de la même façon.
 export const destinataireSchema = z.object({
-  raison_sociale: z.string(),
+  raison_sociale: z.string().trim().min(1),
   address_ligne_1: z.string(),
   address_ligne_2: z.string(),
   code_postal: z.string(),
