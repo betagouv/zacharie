@@ -1,5 +1,6 @@
 import { Navigate, Outlet, useLocation } from 'react-router';
 import RootDisplay from '@app/components/RootDisplay';
+import SyncRejectionsNotice from '@app/components/SyncRejectionsNotice';
 import useZustandStore from '@app/zustand/store';
 import useCircuitCourtNavigationMenu from './circuit-court-navigation-menu';
 import BottomNavigation from '@app/components/BottomNavigation';
@@ -54,6 +55,7 @@ export default function CircuitCourtLayout() {
           id="content"
           className="fr-background-alt--blue-france relative flex min-h-full flex-col overflow-visible pb-16 md:pb-0"
         >
+          <SyncRejectionsNotice />
           {!_hasHydrated ? <Chargement /> : showDeactivatedAccount ? <CircuitCourtDeactivated /> : <Outlet />}
         </main>
       </RootDisplay>

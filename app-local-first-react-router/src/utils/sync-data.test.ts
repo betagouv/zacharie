@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => {
     modifRequestsByCarcasseId: {},
     logs: [] as Array<{ id: string; is_synced: boolean }>,
     dataIsSynced: false,
+    syncRejections: [] as Array<{ kind: string; id: string; reason: string }>,
   };
   return {
     state,
