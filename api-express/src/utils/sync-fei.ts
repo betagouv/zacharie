@@ -167,9 +167,6 @@ export async function syncFei(
       ? sanitize(body.heure_evisceration_derniere_carcasse as string)
       : null;
   }
-  if (canWriteOwnership && body.hasOwnProperty(Prisma.FeiScalarFieldEnum.created_by_user_id)) {
-    nextFei.created_by_user_id = body.created_by_user_id ? sanitize(body.created_by_user_id as string) : null;
-  }
 
   /*
   *

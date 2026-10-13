@@ -101,6 +101,8 @@ export async function syncCarcasse(
           zacharie_carcasse_id,
           fei_numero,
           numero_bracelet: body.numero_bracelet,
+          // le créateur est l'auteur de la requête, jamais une valeur fournie par le client
+          created_by_user_id: user.id,
           created_at: body.created_at ?? undefined, // pour garder le même ordre de tri des carcasses dans le frontend
           is_synced: true,
         },
@@ -192,9 +194,6 @@ export async function syncCarcasse(
       nextCarcasse.examinateur_anomalies_carcasse = [];
       nextCarcasse.examinateur_anomalies_abats = [];
     }
-  }
-  if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.created_by_user_id)) {
-    nextCarcasse.created_by_user_id = body[Prisma.CarcasseScalarFieldEnum.created_by_user_id];
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.examinateur_initial_offline)) {
     nextCarcasse.examinateur_initial_offline =
