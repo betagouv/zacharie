@@ -33,6 +33,7 @@ const allowAllScope: SyncScope = {
   grant: () => {},
   outOfScope: async () => [],
   isFeiOwner: () => true,
+  isPremierDetenteur: () => true,
   canWriteFei: async () => true,
 };
 

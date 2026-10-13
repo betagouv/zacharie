@@ -11,6 +11,7 @@ export function fakeSyncScope(overrides: Partial<SyncScope> = {}): SyncScope {
     grant: () => {},
     outOfScope: async () => [],
     isFeiOwner: () => true,
+    isPremierDetenteur: () => true,
     canWriteFei: async () => true,
     ...overrides,
   };

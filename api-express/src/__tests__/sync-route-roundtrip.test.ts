@@ -42,6 +42,7 @@ const { permissiveScope } = vi.hoisted(() => ({
     grant: () => {},
     outOfScope: async () => [],
     isFeiOwner: () => true,
+    isPremierDetenteur: () => true,
     canWriteFei: async () => true,
   },
 }));

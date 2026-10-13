@@ -10,6 +10,7 @@ export type SyncRejectedErrorMessage =
   | "Seul l'auteur de la demande peut l'annuler"
   | 'Seul un examinateur initial peut créer une fiche'
   | 'Vous ne pouvez pas supprimer cette fiche'
+  | 'Vous ne pouvez pas supprimer cette carcasse'
   | 'Version obsolète';
 
 export class SyncRejectedError extends Error {

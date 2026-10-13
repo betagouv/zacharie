@@ -1,6 +1,6 @@
 import prisma from '~/prisma';
 import { sanitize } from '~/utils/sanitize';
-import { Fei, Prisma, User, UserRoles } from '@prisma/client';
+import { Fei, FeiOwnerRole, Prisma, User, UserRoles } from '@prisma/client';
 import { capture } from '~/third-parties/sentry';
 import { z } from 'zod';
 import type { SyncScope } from '~/utils/sync-scope';
@@ -74,6 +74,21 @@ export async function syncFei(
     if (!canDelete) {
       throw new SyncRejectedError('Vous ne pouvez pas supprimer cette fiche');
     }
+    // Une fois une carcasse prise en charge en aval, la fiche ne peut plus être supprimée par le
+    // chasseur (même frontière que `isCarcassePriseEnChargeEnAval` côté client). La suppression d'une
+    // fiche transmise passe par le superadmin.
+    const carcassesPrisesEnChargeEnAval = await prisma.carcasse.count({
+      where: {
+        fei_numero: numero,
+        deleted_at: null,
+        current_owner_role: {
+          notIn: [FeiOwnerRole.EXAMINATEUR_INITIAL, FeiOwnerRole.PREMIER_DETENTEUR],
+        },
+      },
+    });
+    if (carcassesPrisesEnChargeEnAval > 0) {
+      throw new SyncRejectedError('Vous ne pouvez pas supprimer cette fiche');
+    }
     if (isStaleWrite(existingFei, body.version, user)) {
       await prisma.carcasse.updateMany({ where: { fei_numero: numero }, data: { updated_at: new Date() } });
       throw new SyncRejectedError('Version obsolète');
@@ -121,24 +136,31 @@ export async function syncFei(
   // quand une asso est désignée premier détenteur, c'est un de ses membres qui valide, et il n'est
   // rattaché à la fiche que par son entité (voir `isPremierDetenteur`, chasseur-fei.tsx).
   const canWriteApprobationExaminateur =
-    !existingFei ||
-    scope.isFeiOwner(existingFei) ||
-    (!!existingFei.premier_detenteur_entity_id &&
-      scope.entityIds.includes(existingFei.premier_detenteur_entity_id));
+    !existingFei || scope.isFeiOwner(existingFei) || scope.isPremierDetenteur(existingFei);
+
+  // Les données de l'examen initial (date, lieu, heures) n'appartiennent qu'à l'examinateur qui l'a
+  // fait. Elles sont recopiées sur toutes les carcasses de la fiche (`syncCarcasseDates`), donc un
+  // détenteur aval qui pourrait les écrire réécrirait toute la fiche. Valeur ignorée, comme plus haut.
+  const isExaminateur = !existingFei || existingFei.examinateur_initial_user_id === user.id;
+  // Ce que le premier détenteur garde pour sa consommation est son choix à lui.
+  const isPremierDetenteur = !existingFei || scope.isPremierDetenteur(existingFei);
 
   const nextFei: Prisma.FeiUncheckedUpdateInput = {
     is_synced: true,
   };
 
-  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.date_mise_a_mort)) {
+  if (isExaminateur && body.hasOwnProperty(Prisma.FeiScalarFieldEnum.date_mise_a_mort)) {
     nextFei.date_mise_a_mort = body.date_mise_a_mort || null;
   }
-  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.consommateur_final_usage_domestique)) {
+  if (
+    isPremierDetenteur &&
+    body.hasOwnProperty(Prisma.FeiScalarFieldEnum.consommateur_final_usage_domestique)
+  ) {
     nextFei.consommateur_final_usage_domestique = body.consommateur_final_usage_domestique
       ? sanitize(body.consommateur_final_usage_domestique as string)
       : null;
   }
-  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.creation_context)) {
+  if (isExaminateur && body.hasOwnProperty(Prisma.FeiScalarFieldEnum.creation_context)) {
     const contextSlug = body.creation_context;
     if (contextSlug) {
       if (contextSlug !== 'zacharie') {
@@ -152,17 +174,17 @@ export async function syncFei(
       nextFei.creation_context = sanitize(contextSlug as string);
     }
   }
-  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.commune_mise_a_mort)) {
+  if (isExaminateur && body.hasOwnProperty(Prisma.FeiScalarFieldEnum.commune_mise_a_mort)) {
     nextFei.commune_mise_a_mort = body.commune_mise_a_mort
       ? sanitize(body.commune_mise_a_mort as string)
       : null;
   }
-  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse)) {
+  if (isExaminateur && body.hasOwnProperty(Prisma.FeiScalarFieldEnum.heure_mise_a_mort_premiere_carcasse)) {
     nextFei.heure_mise_a_mort_premiere_carcasse = body.heure_mise_a_mort_premiere_carcasse
       ? sanitize(body.heure_mise_a_mort_premiere_carcasse as string)
       : null;
   }
-  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse)) {
+  if (isExaminateur && body.hasOwnProperty(Prisma.FeiScalarFieldEnum.heure_evisceration_derniere_carcasse)) {
     nextFei.heure_evisceration_derniere_carcasse = body.heure_evisceration_derniere_carcasse
       ? sanitize(body.heure_evisceration_derniere_carcasse as string)
       : null;
@@ -182,7 +204,7 @@ export async function syncFei(
       ? sanitize(body.examinateur_initial_user_id as string)
       : null;
   }
-  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.examinateur_initial_offline)) {
+  if (isExaminateur && body.hasOwnProperty(Prisma.FeiScalarFieldEnum.examinateur_initial_offline)) {
     nextFei.examinateur_initial_offline = body.examinateur_initial_offline || null;
   }
   if (
@@ -214,7 +236,7 @@ export async function syncFei(
       ? sanitize(body.premier_detenteur_user_id as string)
       : null;
   }
-  if (body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_offline)) {
+  if (canWriteOwnership && body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_offline)) {
     nextFei.premier_detenteur_offline = body.premier_detenteur_offline || null;
   }
   if (canWriteOwnership && body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_entity_id)) {

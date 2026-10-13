@@ -151,6 +151,47 @@ describe('syncCarcasseModifRequest — create', () => {
     expect(call.data.numero_bracelet).toBeUndefined();
     expect(call.data.updated_at).toBeInstanceOf(Date);
   });
+
+  test('RENAME créé sur une carcasse inspectée par le SVI → la carcasse est renommée', async () => {
+    vi.mocked(prisma.carcasseModificationRequest.findUnique).mockResolvedValueOnce(null);
+    vi.mocked(prisma.carcasse.findUnique).mockResolvedValueOnce({
+      ...baseCarcasse,
+      svi_ipm1_signed_at: new Date(),
+    });
+    vi.mocked(prisma.carcasseModificationRequest.create).mockResolvedValueOnce(renamePending);
+
+    await syncCarcasseModifRequest({ ...renamePending } as any, requester, scope);
+
+    const call = vi.mocked(prisma.carcasse.update).mock.calls[0][0] as any;
+    expect(call.data.numero_bracelet).toBe('BR-NEW');
+  });
+
+  test("seuls les champs connus du body sont enregistrés, le numéro d'origine vient de la carcasse", async () => {
+    vi.mocked(prisma.carcasseModificationRequest.findUnique).mockResolvedValueOnce(null);
+    vi.mocked(prisma.carcasse.findUnique).mockResolvedValueOnce(baseCarcasse);
+    vi.mocked(prisma.carcasseModificationRequest.create).mockResolvedValueOnce(renamePending);
+
+    await syncCarcasseModifRequest(
+      {
+        ...renamePending,
+        numero_bracelet_before: 'BR-FAUX',
+        status: CarcasseModificationRequestStatus.APPROVED,
+        reviewed_by_user_id: examinateur.id,
+        deleted_at: new Date(),
+      } as any,
+      requester,
+      scope
+    );
+
+    const createArgs = vi.mocked(prisma.carcasseModificationRequest.create).mock.calls[0][0];
+    expect(createArgs.data).toMatchObject({
+      numero_bracelet_before: 'BR-OLD',
+      status: CarcasseModificationRequestStatus.PENDING,
+      requested_by_user_id: requester.id,
+    });
+    expect(createArgs.data).not.toHaveProperty('reviewed_by_user_id');
+    expect(createArgs.data).not.toHaveProperty('deleted_at');
+  });
 });
 
 describe('syncCarcasseModifRequest — approval', () => {
@@ -272,6 +313,20 @@ describe('syncCarcasseModifRequest — cancellation', () => {
 
     expect(result.justCancelled).toBe(true);
     expect(result.transitionedTo).toBeNull();
+  });
+
+  test('une resynchro ne réécrit ni le commentaire ni les numéros de la demande', async () => {
+    vi.mocked(prisma.carcasseModificationRequest.findUnique).mockResolvedValueOnce(renamePending);
+    vi.mocked(prisma.carcasseModificationRequest.update).mockResolvedValueOnce(renamePending);
+
+    await syncCarcasseModifRequest(
+      { ...renamePending, comment_intermediaire: 'autre', numero_bracelet_after: 'BR-AUTRE' } as any,
+      requester,
+      scope
+    );
+
+    const updateArgs = vi.mocked(prisma.carcasseModificationRequest.update).mock.calls[0][0];
+    expect(updateArgs.data).toEqual({ is_synced: true });
   });
 
   test('non-requester trying to cancel → throws', async () => {
@@ -428,8 +483,6 @@ describe('runCarcasseModifRequestSideEffects — rejection', () => {
   test('NEW rejected → soft-deletes carcasse', async () => {
     vi.mocked(prisma.carcasse.update).mockResolvedValue({} as any);
     vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(requester);
-    // 1er findUnique : contrôle "carcasse gelée par le SVI ?" ; 2e : notifyRequester.
-    vi.mocked(prisma.carcasse.findUnique).mockResolvedValueOnce(baseCarcasse);
     vi.mocked(prisma.carcasse.findUnique).mockResolvedValueOnce(baseCarcasse);
 
     await runCarcasseModifRequestSideEffects(
@@ -445,28 +498,6 @@ describe('runCarcasseModifRequestSideEffects — rejection', () => {
     const call = vi.mocked(prisma.carcasse.update).mock.calls[0][0];
     expect(call.where).toEqual({ zacharie_carcasse_id: 'ZC-1' });
     expect(call.data.deleted_at).toBeInstanceOf(Date);
-  });
-
-  test('NEW rejected après inspection SVI → carcasse conservée, refus seulement notifié', async () => {
-    vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(requester);
-    vi.mocked(prisma.carcasse.findUnique).mockResolvedValueOnce({
-      ...baseCarcasse,
-      svi_ipm1_signed_at: new Date('2026-05-02T09:00:00Z'),
-    });
-    vi.mocked(prisma.carcasse.findUnique).mockResolvedValueOnce(baseCarcasse);
-
-    await runCarcasseModifRequestSideEffects(
-      {
-        saved: { ...newPending, status: CarcasseModificationRequestStatus.REJECTED } as any,
-        isNew: false,
-        transitionedTo: CarcasseModificationRequestStatus.REJECTED,
-        justCancelled: false,
-      },
-      examinateur
-    );
-
-    expect(prisma.carcasse.update).not.toHaveBeenCalled();
-    expect(sendNotificationToUser).toHaveBeenCalledOnce();
   });
 
   test('RENAME rejected → no carcasse mutation, just notify', async () => {
@@ -491,7 +522,6 @@ describe('runCarcasseModifRequestSideEffects — rejection', () => {
 describe('runCarcasseModifRequestSideEffects — cancellation', () => {
   test('NEW cancelled → soft-deletes carcasse, no requester notification', async () => {
     vi.mocked(prisma.carcasse.update).mockResolvedValue({} as any);
-    vi.mocked(prisma.carcasse.findUnique).mockResolvedValueOnce(baseCarcasse);
 
     await runCarcasseModifRequestSideEffects(
       {
@@ -510,7 +540,6 @@ describe('runCarcasseModifRequestSideEffects — cancellation', () => {
 
   test('RENAME cancelled → rétablit le numéro de marquage précédent', async () => {
     vi.mocked(prisma.carcasse.update).mockResolvedValue({} as any);
-    vi.mocked(prisma.carcasse.findUnique).mockResolvedValueOnce(baseCarcasse);
 
     await runCarcasseModifRequestSideEffects(
       {
@@ -529,25 +558,6 @@ describe('runCarcasseModifRequestSideEffects — cancellation', () => {
       version_user_id: expect.any(String),
     });
     expect(sendNotificationToUser).not.toHaveBeenCalled();
-  });
-
-  test('annulation après inspection SVI → aucune mutation de la carcasse', async () => {
-    vi.mocked(prisma.carcasse.findUnique).mockResolvedValueOnce({
-      ...baseCarcasse,
-      svi_closed_at: new Date('2026-05-02T09:00:00Z'),
-    });
-
-    await runCarcasseModifRequestSideEffects(
-      {
-        saved: newPending,
-        isNew: false,
-        transitionedTo: null,
-        justCancelled: true,
-      },
-      examinateur
-    );
-
-    expect(prisma.carcasse.update).not.toHaveBeenCalled();
   });
 });
 
