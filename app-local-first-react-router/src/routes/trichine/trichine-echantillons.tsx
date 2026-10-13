@@ -12,11 +12,7 @@ import TrichineListPage, {
   TrichineListToolbar,
 } from '@app/components/trichine/TrichineListPage';
 import { useListParam } from '@app/utils/trichine-list-params';
-import {
-  useTrichineBasePath,
-  useTrichineCarcasseLink,
-  useTrichinePrelevementEnLot,
-} from '@app/utils/trichine-hooks';
+import { useTrichineBasePath, useTrichineCarcasseLink } from '@app/utils/trichine-hooks';
 import { getTrichineEchantillons, type TrichineEchantillonWithCarcasse } from '@app/services/trichine';
 import {
   filterParPeriode,
@@ -60,7 +56,6 @@ function estRegroupable(echantillon: TrichineEchantillonWithCarcasse): boolean {
 export default function TrichineEchantillons() {
   const navigate = useNavigate();
   const basePath = useTrichineBasePath();
-  const prelevementEnLot = useTrichinePrelevementEnLot();
   const carcasseLink = useTrichineCarcasseLink();
   const [echantillons, setEchantillons] = useState<Array<TrichineEchantillonWithCarcasse>>([]);
   const [query, setQuery] = useListParam('q', '');
@@ -138,9 +133,7 @@ export default function TrichineEchantillons() {
       ]}
       actions={
         <>
-          {prelevementEnLot && (
-            <Button linkProps={{ to: `${basePath}/prelever` }}>Prélever des carcasses</Button>
-          )}
+          <Button linkProps={{ to: `${basePath}/prelever` }}>Prélever des carcasses</Button>
           <Button
             type="button"
             priority="secondary"

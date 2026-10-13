@@ -1,23 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useLocation } from 'react-router';
 import { TrichineResultatAnalyse } from '@prisma/client';
 import useZustandStore from '@app/zustand/store';
 import { getTrichineCarcasse } from '@app/services/trichine';
 import { isResultatDefavorable } from '@app/utils/trichine';
 
-/**
- * Base des liens trichine selon l'espace courant (chasseur mobile / SVI desktop).
- * Les pages de src/routes/trichine/ sont montées sous les deux espaces.
- */
+/** Base des liens trichine : les pages de src/routes/trichine/ sont montées sous l'espace SVI. */
 export function useTrichineBasePath(): string {
-  const location = useLocation();
-  return location.pathname.startsWith('/app/svi') ? '/app/svi/trichine' : '/app/chasseur/trichine';
-}
-
-/** L'assistant de prélèvement en lot n'est ouvert qu'au SVI pour l'instant (circuit agréé). */
-export function useTrichinePrelevementEnLot(): boolean {
-  const location = useLocation();
-  return location.pathname.startsWith('/app/svi');
+  return '/app/svi/trichine';
 }
 
 /** Carcasses sur lesquelles le SVI a statué (IPM2), pour écarter les résultats déjà traités. */
@@ -34,18 +23,11 @@ export function useCarcassesAvecIpm2(): Set<string> {
   );
 }
 
-/**
- * Lien vers la fiche carcasse depuis les écrans trichine : la route diffère selon l'espace,
- * et le numéro de fiche fait partie de l'URL.
- */
+/** Lien vers la fiche carcasse SVI depuis les écrans trichine : le numéro de fiche fait partie de l'URL. */
 export function useTrichineCarcasseLink() {
-  const location = useLocation();
-  const isSvi = location.pathname.startsWith('/app/svi');
   return (carcasse: { fei_numero?: string | null; zacharie_carcasse_id: string }): string | null => {
     if (!carcasse.fei_numero) return null;
-    return isSvi
-      ? `/app/svi/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`
-      : `/app/chasseur/carcasse/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`;
+    return `/app/svi/carcasse-svi/${carcasse.fei_numero}/${carcasse.zacharie_carcasse_id}`;
   };
 }
 

@@ -6,11 +6,7 @@ import dayjs from 'dayjs';
 import { TrichineStatutLogistiqueFTP } from '@prisma/client';
 import TrichineRechercheReference from '@app/components/trichine/TrichineRechercheReference';
 import useZustandStore from '@app/zustand/store';
-import {
-  useCarcassesAvecIpm2,
-  useTrichineBasePath,
-  useTrichinePrelevementEnLot,
-} from '@app/utils/trichine-hooks';
+import { useCarcassesAvecIpm2, useTrichineBasePath } from '@app/utils/trichine-hooks';
 import { useSviCarcassesAVenir } from '@app/utils/svi-carcasses-a-venir';
 import {
   getTrichineEchantillons,
@@ -40,10 +36,9 @@ import {
  */
 export default function TrichineIndex() {
   const basePath = useTrichineBasePath();
-  const prelevementEnLot = useTrichinePrelevementEnLot();
   const carcassesRegistry = useZustandStore((state) => state.carcassesRegistry);
   const carcassesAvecIpm2 = useCarcassesAvecIpm2();
-  const { carcasses: carcassesAVenir } = useSviCarcassesAVenir(prelevementEnLot);
+  const { carcasses: carcassesAVenir } = useSviCarcassesAVenir();
   const [echantillons, setEchantillons] = useState<Array<TrichineEchantillonWithCarcasse>>([]);
   const [pools, setPools] = useState<Array<TrichinePoolPopulated>>([]);
   const [ftps, setFtps] = useState<Array<TrichineFTPPopulated>>([]);
@@ -81,13 +76,13 @@ export default function TrichineIndex() {
     for (const echantillon of echantillons) {
       prelevables.delete(echantillon.zacharie_carcasse_id);
     }
-    const aPrelever = prelevementEnLot ? prelevables.size : null;
+    const aPrelever = prelevables.size;
     const brouillons = ftps.filter(
       (ftp) => ftp.statut_logistique === TrichineStatutLogistiqueFTP.BROUILLON
     ).length;
 
     return [
-      aPrelever !== null && {
+      {
         cle: 'prelever',
         icone: 'fr-icon-test-tube-line',
         compte: aPrelever,
@@ -129,7 +124,7 @@ export default function TrichineIndex() {
       to: string;
       attente?: boolean;
     }>;
-  }, [carcassesRegistry, carcassesAVenir, echantillons, pools, ftps, basePath, prelevementEnLot]);
+  }, [carcassesRegistry, carcassesAVenir, echantillons, pools, ftps, basePath]);
 
   // Un résultat défavorable déjà tranché par le SVI (IPM2) n'a plus à être signalé
   const defavorables = useMemo(

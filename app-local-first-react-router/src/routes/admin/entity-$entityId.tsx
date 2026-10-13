@@ -25,6 +25,7 @@ import AdminDeletedBanner from '@app/components/AdminDeletedBanner';
 import API from '@app/services/api';
 import RelationEntityUser from '@app/components/RelationEntityUser';
 import { toast } from 'react-toastify';
+import { TRICHINE_FEATURE_ENABLED } from '@app/utils/trichine';
 const FEDERATION_TYPES: EntityTypes[] = [EntityTypes.FDC, EntityTypes.FRC, EntityTypes.FNC];
 
 const loadData = (entityId: string): Promise<AdminGetEntityResponse> =>
@@ -457,18 +458,20 @@ export default function AdminEntity() {
                   })
                 }
               />
-              <Input
-                label="Code établissement (trichine)"
-                hintText="Il s'intercale dans les références de prélèvement, de pool et de FTP (P-26-SVI01-0045). Généré à la création de l'entité, modifiable ici. Lettres et chiffres uniquement, 8 caractères maximum. Laissé vide, les références sont codées sur l'identifiant de l'utilisateur qui fait l'acte"
-                nativeInputProps={{
-                  id: Prisma.EntityScalarFieldEnum.code_trichine,
-                  name: Prisma.EntityScalarFieldEnum.code_trichine,
-                  autoComplete: 'off',
-                  placeholder: 'SVI01',
-                  defaultValue: entity.code_trichine ?? '',
-                  onBlur: (e) => handleSave(e.target.name, e.target.value),
-                }}
-              />
+              {TRICHINE_FEATURE_ENABLED && (
+                <Input
+                  label="Code établissement (trichine)"
+                  hintText="Il s'intercale dans les références de prélèvement, de pool et de FTP (P-26-SVI01-0045). Généré à la création de l'entité, modifiable ici. Lettres et chiffres uniquement, 8 caractères maximum. Laissé vide, les références sont codées sur l'identifiant de l'utilisateur qui fait l'acte"
+                  nativeInputProps={{
+                    id: Prisma.EntityScalarFieldEnum.code_trichine,
+                    name: Prisma.EntityScalarFieldEnum.code_trichine,
+                    autoComplete: 'off',
+                    placeholder: 'SVI01',
+                    defaultValue: entity.code_trichine ?? '',
+                    onBlur: (e) => handleSave(e.target.name, e.target.value),
+                  }}
+                />
+              )}
               {entity.type === EntityTypes.ETG && (
                 <>
                   <Input

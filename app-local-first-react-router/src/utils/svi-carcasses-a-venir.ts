@@ -53,14 +53,12 @@ export function groupCarcassesAVenirByFiche(carcasses: Array<SviCarcasseAVenir>)
 }
 
 // Carcasses acceptées par un ETG rattaché au SVI mais pas encore transmises au SVI.
-// Servi hors du store local-first via un endpoint dédié. `enabled` à false pour les écrans
-// trichine montés aussi côté chasseur, où la route est réservée au SVI.
-export function useSviCarcassesAVenir(enabled: boolean = true) {
+// Servi hors du store local-first via un endpoint dédié.
+export function useSviCarcassesAVenir() {
   const [carcasses, setCarcasses] = useState<Array<SviCarcasseAVenir> | null>(null);
-  const [loading, setLoading] = useState(enabled);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!enabled) return;
     setLoading(true);
     API.get({ path: 'svi/carcasses-a-venir' })
       .then((res) => res as SviCarcassesAVenirResponse)
@@ -72,7 +70,7 @@ export function useSviCarcassesAVenir(enabled: boolean = true) {
         }
       })
       .finally(() => setLoading(false));
-  }, [enabled]);
+  }, []);
 
   return { carcasses, loading };
 }

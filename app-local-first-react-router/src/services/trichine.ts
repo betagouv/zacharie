@@ -220,12 +220,6 @@ export function getTrichinePools() {
   >;
 }
 
-export function renoncerDeuxiemeIntention(poolId: string) {
-  return API.post({ path: `/trichine/pool/${poolId}/renoncer-2e-intention`, body: {} }) as Promise<
-    ApiResponse<{ retirees: number }>
-  >;
-}
-
 export function createTrichineFTP(body: {
   pool_ids: Array<string>;
   destinataire_entity_id: string;
@@ -299,12 +293,6 @@ export function getTrichinePool(reference: string) {
 export function getTrichineLaboratoires() {
   return API.get({ path: '/trichine/laboratoires' }) as Promise<
     ApiResponse<{ laboratoires: Array<TrichineLaboratoire> }>
-  >;
-}
-
-export function retirerCarcasseDeFei(zacharieCarcasseId: string, motif: string) {
-  return API.post({ path: `/carcasse/${zacharieCarcasseId}/retirer-de-fei`, body: { motif } }) as Promise<
-    ApiResponse<{ carcasse: Carcasse }>
   >;
 }
 

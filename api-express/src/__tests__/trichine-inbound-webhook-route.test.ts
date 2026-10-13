@@ -11,6 +11,7 @@ import { ingestInboundEmails } from '~/utils/trichine-inbound-email';
 vi.mock('~/config', async (importOriginal) => ({
   ...(await importOriginal<typeof import('~/config')>()),
   BREVO_BEARER: 'bearer-de-test',
+  TRICHINE_FEATURE_ENABLED: true,
 }));
 vi.mock('~/third-parties/sentry', () => ({ capture: vi.fn() }));
 vi.mock('~/utils/trichine-inbound-email', async (importOriginal) => ({

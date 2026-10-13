@@ -22,8 +22,6 @@ import {
 import type { UserForFei } from '@api/src/types/user';
 import type { EntityWithUserRelation } from '@api/src/types/entity';
 import { loadData, useLoaderEffect } from '@app/utils/load-data';
-import TrichineSection from '@app/components/TrichineSection';
-import { TRICHINE_FEATURE_ENABLED } from '@app/utils/trichine';
 import { useGetTransmissionFromCarcasse } from '@app/utils/get-transmissions-sorted';
 import { CarcasseTransmissionWihMetadata } from '@app/types/carcasse';
 
@@ -445,10 +443,6 @@ function ExaminateurCarcasseDetailLoaded() {
               decisionLabel={cardDisplay.statusLabel ?? 'Décision rendue'}
               accentColor={cardDisplay.accentColor}
             />
-
-            {TRICHINE_FEATURE_ENABLED && carcasse.espece === 'Sanglier' && (
-              <TrichineSection carcasse={carcasse} />
-            )}
 
             <TraceabiliteTimeline events={timelineEvents} />
 

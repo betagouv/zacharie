@@ -38,6 +38,7 @@ import RouterLaboratoire from './routes/laboratoire/laboratoire-router';
 import RouterFederation from './routes/federation/federation-router';
 import useUser from './zustand/user';
 import { getUserOnboardingRoute } from './utils/user-onboarded.client';
+import { TRICHINE_FEATURE_ENABLED } from './utils/trichine';
 
 const SentryRoutes = Sentry.withSentryReactRouterV6Routing(Routes);
 
@@ -148,7 +149,8 @@ function App() {
           {RouterCollecteur()}
           {RouterCircuitCourt()}
           {RouterSvi()}
-          {RouterLaboratoire()}
+          {/* Espace laboratoire (trichine) : invisible tant que le feature flag n'est pas posé */}
+          {TRICHINE_FEATURE_ENABLED && RouterLaboratoire()}
           {RouterFederation()}
           {RouterAdmin()}
           <Route

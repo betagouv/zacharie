@@ -471,39 +471,6 @@ export async function notifyTrichineUsers({
   }
 }
 
-/**
- * Destinataires actuels d'une liste de carcasses : 1ers détenteurs + détenteurs
- * actuels (user direct et/ou tous les utilisateurs de l'entité détentrice).
- */
-export async function getCarcassesStakeholderUsers(
-  carcasses: Array<{
-    premier_detenteur_user_id: string | null;
-    current_owner_user_id: string | null;
-    current_owner_entity_id: string | null;
-  }>
-): Promise<TrichineNotifiableUser[]> {
-  const userIds = new Set<string>();
-  const entityIds = new Set<string>();
-  for (const carcasse of carcasses) {
-    if (carcasse.premier_detenteur_user_id) userIds.add(carcasse.premier_detenteur_user_id);
-    if (carcasse.current_owner_user_id) userIds.add(carcasse.current_owner_user_id);
-    if (carcasse.current_owner_entity_id) entityIds.add(carcasse.current_owner_entity_id);
-  }
-  const users = userIds.size
-    ? await prisma.user.findMany({
-        where: { id: { in: [...userIds] }, deleted_at: null },
-        select: trichineNotifiableUserSelect,
-      })
-    : [];
-  const entityUsers: TrichineNotifiableUser[] = [];
-  for (const entityId of entityIds) {
-    entityUsers.push(...(await getUsersWorkingForEntity(entityId)));
-  }
-  const byId = new Map<string, TrichineNotifiableUser>();
-  for (const user of [...users, ...entityUsers]) byId.set(user.id, user);
-  return [...byId.values()];
-}
-
 // Émetteur d'une FTP : l'utilisateur expéditeur + tous ceux de l'entité expéditrice
 export async function getFtpEmitterUsers(ftp: {
   expediteur_user_id: string;

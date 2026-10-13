@@ -353,7 +353,6 @@ export async function applyPoolResult({
     const lnrDecisionActions = [
       'Ne mettez pas sur le marché les carcasses concernées avant d’avoir pris une décision.',
       'Rapprochez-vous des services vétérinaires de votre département pour statuer sur leur devenir.',
-      'Le cas échéant, retirez les carcasses de leur fiche dans Zacharie.',
     ];
     const emails: Partial<Record<TrichineResultatAnalyse, TrichineEmailContent>> = {
       [TrichineResultatAnalyse.POSITIF]: {
@@ -366,7 +365,7 @@ export async function applyPoolResult({
         actions: [
           'Ne commercialisez pas et ne consommez pas les carcasses concernées.',
           'Si des carcasses ou des morceaux ont déjà été cédés, prévenez immédiatement leurs détenteurs.',
-          'Retirez les carcasses de leur fiche dans Zacharie et procédez à leur saisie.',
+          'Procédez à la saisie totale des carcasses concernées.',
           'Prenez contact avec les services vétérinaires (DDPP / DDETSPP) de votre département.',
         ],
       },

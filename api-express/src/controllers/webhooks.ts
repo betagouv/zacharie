@@ -4,6 +4,7 @@ const router: express.Router = express.Router();
 import crypto from 'crypto';
 import { SENTRY_SECRET, BREVO_BEARER } from '~/config';
 import { capture } from '~/third-parties/sentry';
+import { requireTrichineFeature } from '~/middlewares/trichine-feature';
 import { ingestInboundEmails, inboundEmailPayloadSchema } from '~/utils/trichine-inbound-email';
 
 // Comparaison à durée constante : un `!==` sur une chaîne s'arrête au premier caractère différent,
@@ -111,6 +112,7 @@ rattache au pool dont la référence figure dans le message (cf utils/trichine-i
 */
 router.post(
   '/brevo-inbound',
+  requireTrichineFeature,
   catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     if (!brevoBearerIsValid(req, res)) return;
 

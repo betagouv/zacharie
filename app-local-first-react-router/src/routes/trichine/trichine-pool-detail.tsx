@@ -18,16 +18,11 @@ import TrichineDetailPage, {
   TrichineFields,
 } from '@app/components/trichine/TrichineDetailPage';
 import TrichineResultatCard from '@app/components/trichine/TrichineResultatCard';
-import {
-  useTrichineBasePath,
-  useTrichineCarcasseLink,
-  useTrichinePrelevementEnLot,
-} from '@app/utils/trichine-hooks';
+import { useTrichineBasePath, useTrichineCarcasseLink } from '@app/utils/trichine-hooks';
 import {
   getTrichineEchantillons,
   getTrichinePool,
   modifierTrichinePool,
-  renoncerDeuxiemeIntention,
   retirerEchantillonDuPool,
   supprimerTrichinePool,
   type TrichineEchantillonWithCarcasse,
@@ -56,8 +51,6 @@ export default function TrichinePoolDetailPage() {
   const { reference } = useParams();
   const basePath = useTrichineBasePath();
   const carcasseLink = useTrichineCarcasseLink();
-  // Le renoncement appartient au circuit court : en circuit agréé, la décision passe par l'IPM
-  const circuitAgree = useTrichinePrelevementEnLot();
   const [pool, setPool] = useState<TrichinePoolDetail | null>(null);
   const [historique, setHistorique] = useState<Array<TrichineHistoriqueStatut>>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -108,14 +101,10 @@ export default function TrichinePoolDetailPage() {
     0
   );
   const etape = etapePool(pool);
-  // Renoncer aux analyses de 2e intention : circuit court, sur un pool douteux non encore tranché
-  const peutRenoncer = pool.resultat_analyse === TrichineResultatAnalyse.DOUTEUX;
-  // La décision est prise dès qu'un pool fille existe, ou que les carcasses ont été retirées de
-  // leur fiche (renoncement) : la bannière n'a plus lieu d'être.
-  const decisionAPrendre =
-    peutRenoncer &&
-    pool.PoolsFilles.length === 0 &&
-    pool.TrichineEchantillons.some((echantillon) => !echantillon.Carcasse.trichine_retire_de_fei_at);
+  // Un pool douteux appelle des analyses de 2e intention
+  const poolDouteux = pool.resultat_analyse === TrichineResultatAnalyse.DOUTEUX;
+  // La décision est prise dès qu'un pool fille existe : la bannière n'a plus lieu d'être.
+  const decisionAPrendre = poolDouteux && pool.PoolsFilles.length === 0;
   // Une fois le colis parti, la fiche papier fait foi : la composition ne bouge plus
   const fige = poolEstFige(pool);
 
@@ -145,21 +134,6 @@ export default function TrichinePoolDetailPage() {
       : { label: 'Laboratoire', value: 'À désigner', absent: true },
   ];
 
-  function renoncer() {
-    setIsSubmitting(true);
-    renoncerDeuxiemeIntention(pool!.id)
-      .then((response) => {
-        if (response.ok) {
-          toast.success('Carcasses retirées de leur fiche');
-          refresh();
-        } else {
-          toast.error(response.error || 'Une erreur est survenue');
-        }
-      })
-      .catch(() => toast.error('Une erreur est survenue'))
-      .finally(() => setIsSubmitting(false));
-  }
-
   return (
     <TrichineDetailPage
       surtitre={
@@ -183,25 +157,13 @@ export default function TrichinePoolDetailPage() {
                 Résultat non négatif : une larve a été détectée
               </p>
               <p className="fr-mb-0 fr-text--sm text-gray-700">
-                {circuitAgree
-                  ? 'Identifiez la carcasse concernée par des analyses de 2e intention.'
-                  : 'Identifiez la carcasse concernée, ou renoncez et retirez les carcasses de leur fiche.'}
+                Identifiez la carcasse concernée par des analyses de 2e intention.
               </p>
             </div>
             <div className="flex w-full flex-wrap gap-2 sm:w-auto">
               <Button linkProps={{ to: `${basePath}/pools/${pool.reference_pool}/2e-intention` }}>
                 Analyses de 2e intention
               </Button>
-              {!circuitAgree && (
-                <Button
-                  type="button"
-                  priority="tertiary"
-                  disabled={isSubmitting}
-                  onClick={renoncer}
-                >
-                  Renoncer
-                </Button>
-              )}
             </div>
           </div>
         ) : null
@@ -236,7 +198,7 @@ export default function TrichinePoolDetailPage() {
             </>
           )}
           {/* Tant que la décision est à prendre, les actions vivent dans la bannière collante */}
-          {peutRenoncer && !decisionAPrendre && (
+          {poolDouteux && !decisionAPrendre && (
             <Button
               priority="secondary"
               linkProps={{ to: `${basePath}/pools/${pool.reference_pool}/2e-intention` }}

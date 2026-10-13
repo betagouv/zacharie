@@ -14,7 +14,6 @@ import { catchErrors } from '~/middlewares/errors';
 import { archiveFtpPdf, getArchivedOrFreshFtpPdf } from '~/utils/trichine-ftp-document';
 import type { RequestWithUser } from '~/types/request';
 import {
-  getCarcassesStakeholderUsers,
   getUsersWorkingForEntity,
   logTrichineStatutChange,
   isFtpPartie,
@@ -44,12 +43,11 @@ import {
   recomputeFTPTrichine,
   recomputePoolTrichine,
 } from '~/utils/trichine-status';
-import { nextVersion } from '~/utils/sync-version';
 
 const router: express.Router = express.Router();
 
 /**
- * Routes émetteur (1er détenteur en circuit court, SVI en circuit agréé).
+ * Routes émetteur (SVI, circuit agréé).
  * Les routes laboratoire (LVD/LNR) sont dans controllers/laboratoire.ts.
  */
 
@@ -76,9 +74,9 @@ const carcasseProjectionSelect = {
   Fei: { select: { commune_mise_a_mort: true } },
 } as const;
 
-// Émetteurs trichine : 1er détenteur (rôle CHASSEUR) en circuit court, SVI en circuit agréé
+// Émetteurs trichine : le SVI, en circuit agréé
 function isEmitter(req: RequestWithUser): boolean {
-  return req.user.roles.includes(UserRoles.CHASSEUR) || req.user.roles.includes(UserRoles.SVI);
+  return req.user.roles.includes(UserRoles.SVI);
 }
 
 function guardEmitter(req: RequestWithUser, res: express.Response): boolean {
@@ -199,14 +197,10 @@ router.post(
     if (carcasse.trichine_retire_de_fei_at) {
       return sendError(res, 400, 'Cette carcasse a été retirée de la FEI');
     }
-    // Circuit court : seul le 1er détenteur prélève ; circuit agréé : le SVI assigné à la carcasse
-    if (req.user.roles.includes(UserRoles.SVI)) {
-      const accessibles = await carcassesAccessiblesAuSvi(req.user.id, [carcasse.zacharie_carcasse_id]);
-      if (!accessibles.has(carcasse.zacharie_carcasse_id)) {
-        return sendError(res, 403, "Cette carcasse n'est pas assignée à votre service d'inspection");
-      }
-    } else if (carcasse.premier_detenteur_user_id !== req.user.id) {
-      return sendError(res, 403, "Vous n'êtes pas le premier détenteur de cette carcasse");
+    // Seul le SVI assigné à la carcasse prélève
+    const accessibles = await carcassesAccessiblesAuSvi(req.user.id, [carcasse.zacharie_carcasse_id]);
+    if (!accessibles.has(carcasse.zacharie_carcasse_id)) {
+      return sendError(res, 403, "Cette carcasse n'est pas assignée à votre service d'inspection");
     }
     if (body.preleve_par_entity_id && !(await userBelongsToEntity(req.user.id, body.preleve_par_entity_id))) {
       return sendError(res, 403, "Vous ne faites pas partie de l'entité de prélèvement indiquée");
@@ -322,8 +316,7 @@ router.post(
       where: { zacharie_carcasse_id: { in: carcasseIds }, deleted_at: null },
     });
     const parId = new Map(carcasses.map((carcasse) => [carcasse.zacharie_carcasse_id, carcasse]));
-    const isSvi = req.user.roles.includes(UserRoles.SVI);
-    const accessibles = isSvi ? await carcassesAccessiblesAuSvi(req.user.id, carcasseIds) : new Set<string>();
+    const accessibles = await carcassesAccessiblesAuSvi(req.user.id, carcasseIds);
 
     for (const carcasseId of carcasseIds) {
       const carcasse = parId.get(carcasseId);
@@ -336,10 +329,7 @@ router.post(
       if (carcasse.trichine_retire_de_fei_at) {
         return sendError(res, 400, `La carcasse ${carcasse.numero_bracelet} a été retirée de sa fiche`);
       }
-      const canPrelever = isSvi
-        ? accessibles.has(carcasse.zacharie_carcasse_id)
-        : carcasse.premier_detenteur_user_id === req.user.id;
-      if (!canPrelever) {
+      if (!accessibles.has(carcasse.zacharie_carcasse_id)) {
         return sendError(res, 403, `La carcasse ${carcasse.numero_bracelet} ne vous est pas assignée`);
       }
     }
@@ -567,19 +557,12 @@ router.post(
 
     const echantillons = await prisma.trichineEchantillon.findMany({
       where: { id: { in: body.echantillon_ids } },
-      include: { Carcasse: { select: { premier_detenteur_user_id: true } } },
     });
     if (echantillons.length !== body.echantillon_ids.length) {
       return sendError(res, 404, 'Échantillon introuvable');
     }
     if (echantillons.some((echantillon) => echantillon.preleve_par_user_id !== req.user.id)) {
       return sendError(res, 403, "Un des échantillons n'a pas été prélevé par vous");
-    }
-    // Circuit court : pas de mix de 1ers détenteurs (uniquement le SVI peut mixer en circuit agréé)
-    if (!req.user.roles.includes(UserRoles.SVI)) {
-      if (echantillons.some((e) => e.Carcasse.premier_detenteur_user_id !== req.user.id)) {
-        return sendError(res, 403, 'Toutes les carcasses du pool doivent être à votre nom');
-      }
     }
     if (body.cree_par_entity_id && !(await userBelongsToEntity(req.user.id, body.cree_par_entity_id))) {
       return sendError(res, 403, "Vous ne faites pas partie de l'entité indiquée");
@@ -671,114 +654,6 @@ router.get(
   })
 );
 
-const renoncerSchema = z.object({
-  commentaire: z.string().optional(),
-});
-
-// Circuit court uniquement : renoncement aux analyses de 2e intention après pool douteux.
-// Toutes les carcasses du pool sont retirées de leur FEI avec un motif automatique.
-router.post(
-  '/pool/:pool_id/renoncer-2e-intention',
-  passport.authenticate('user', { session: false }),
-  catchErrors(async (req: RequestWithUser, res: express.Response) => {
-    if (!guardEmitter(req, res)) return;
-    const bodyResult = renoncerSchema.safeParse(req.body ?? {});
-    if (!bodyResult.success) {
-      return sendError(res, 400, 'Paramètres invalides');
-    }
-    const pool = await prisma.trichinePool.findUnique({
-      where: { id: req.params.pool_id },
-      include: {
-        TrichineEchantillons: {
-          where: { deleted_at: null },
-          include: {
-            Carcasse: {
-              select: {
-                zacharie_carcasse_id: true,
-                numero_bracelet: true,
-                trichine_action_requise: true,
-                trichine_retire_de_fei_at: true,
-                premier_detenteur_user_id: true,
-                current_owner_user_id: true,
-                current_owner_entity_id: true,
-              },
-            },
-          },
-        },
-      },
-    });
-    if (!pool || pool.deleted_at) {
-      return sendError(res, 404, 'Pool introuvable');
-    }
-    if (pool.cree_par_user_id !== req.user.id) {
-      return sendError(res, 403, "Ce pool n'a pas été créé par vous");
-    }
-    if (pool.resultat_analyse !== TrichineResultatAnalyse.DOUTEUX) {
-      return sendError(res, 400, 'Le renoncement ne concerne que les pools au résultat non négatif');
-    }
-
-    const motif = `Renoncement aux analyses de 2e intention — pool ${pool.reference_pool}`;
-    const now = new Date();
-    const carcasses = [
-      ...new Map(pool.TrichineEchantillons.map((e) => [e.zacharie_carcasse_id, e.Carcasse])).values(),
-    ];
-    for (const carcasse of carcasses) {
-      if (carcasse.trichine_retire_de_fei_at) continue;
-      await prisma.carcasse.update({
-        where: { zacharie_carcasse_id: carcasse.zacharie_carcasse_id },
-        data: {
-          trichine_retire_de_fei_at: now,
-          trichine_retire_de_fei_motif: motif,
-          trichine_retire_de_fei_user_id: req.user.id,
-          ...nextVersion(req.user.id),
-        },
-      });
-      await logTrichineStatutChange({
-        objetType: TrichineObjetType.CARCASSE,
-        objetId: carcasse.zacharie_carcasse_id,
-        ancienStatut: carcasse.trichine_action_requise,
-        nouveauStatut: 'RETIREE_DE_FEI',
-        userId: req.user.id,
-        commentaire: motif,
-      });
-      await recomputeCarcasseTrichine(carcasse.zacharie_carcasse_id, req.user.id);
-    }
-
-    const stakeholders = await getCarcassesStakeholderUsers(carcasses);
-    await notifyTrichineUsers({
-      users: stakeholders,
-      type: TrichineNotificationType.CHANGEMENT_STATUT,
-      objetType: TrichineObjetType.POOL,
-      objetId: pool.id,
-      title: `Carcasses retirées de leur fiche — pool ${pool.reference_pool}`,
-      message: `Suite au résultat non négatif du pool ${pool.reference_pool}, le premier détenteur a renoncé aux analyses de 2e intention. Les carcasses concernées sont retirées de leur fiche et ne peuvent plus être commercialisées.`,
-      email: {
-        subject: `Carcasses retirées de leur fiche · pool ${pool.reference_pool}`,
-        tone: 'danger',
-        badge: 'Carcasses retirées',
-        heading: 'Des carcasses que vous détenez ont été retirées de leur fiche',
-        intro: `Suite au résultat non négatif du pool ${pool.reference_pool}, le premier détenteur a renoncé aux analyses de 2e intention. Toutes les carcasses du pool sont retirées de leur fiche et ne peuvent plus être commercialisées.`,
-        details: [
-          { label: 'Pool', value: pool.reference_pool },
-          {
-            label: 'Carcasses retirées',
-            value: carcasses.map((carcasse) => carcasse.numero_bracelet).join(', '),
-          },
-        ],
-        actions: [
-          'Ne commercialisez pas ces carcasses et isolez-les si elles sont encore en votre possession.',
-          'Si des morceaux ont déjà été cédés, prévenez immédiatement leurs détenteurs.',
-          'En cas de doute sur la conduite à tenir, contactez les services vétérinaires de votre département.',
-        ],
-      },
-      notificationLogAction: `TRICHINE_RENONCEMENT_${pool.reference_pool}`,
-      excludeUserIds: [req.user.id],
-    });
-
-    res.status(200).send({ ok: true, data: { retirees: carcasses.length }, error: '' });
-  })
-);
-
 const poolEditSchema = z.object({
   echantillon_ids: z.array(z.string().min(1)).min(1).optional(),
   date_constitution: z.coerce.date().optional(),
@@ -821,18 +696,12 @@ router.put(
     if (body.echantillon_ids) {
       const echantillons = await prisma.trichineEchantillon.findMany({
         where: { id: { in: body.echantillon_ids } },
-        include: { Carcasse: { select: { premier_detenteur_user_id: true } } },
       });
       if (echantillons.length !== body.echantillon_ids.length) {
         return sendError(res, 404, 'Échantillon introuvable');
       }
       if (echantillons.some((echantillon) => echantillon.preleve_par_user_id !== req.user.id)) {
         return sendError(res, 403, "Un des échantillons n'a pas été prélevé par vous");
-      }
-      if (!req.user.roles.includes(UserRoles.SVI)) {
-        if (echantillons.some((e) => e.Carcasse.premier_detenteur_user_id !== req.user.id)) {
-          return sendError(res, 403, 'Toutes les carcasses du pool doivent être à votre nom');
-        }
       }
       const parent = pool.PoolParent
         ? {
@@ -1556,14 +1425,9 @@ router.get(
     if (!carcasse) {
       return sendError(res, 404, 'Carcasse introuvable');
     }
-    let canView =
-      carcasse.premier_detenteur_user_id === req.user.id ||
-      carcasse.examinateur_initial_user_id === req.user.id;
-    if (!canView && req.user.roles.includes(UserRoles.SVI)) {
-      canView = (await carcassesAccessiblesAuSvi(req.user.id, [carcasse.zacharie_carcasse_id])).has(
-        carcasse.zacharie_carcasse_id
-      );
-    }
+    const canView = (await carcassesAccessiblesAuSvi(req.user.id, [carcasse.zacharie_carcasse_id])).has(
+      carcasse.zacharie_carcasse_id
+    );
     if (!canView) {
       return sendError(res, 403, "Vous n'avez pas accès à cette carcasse");
     }

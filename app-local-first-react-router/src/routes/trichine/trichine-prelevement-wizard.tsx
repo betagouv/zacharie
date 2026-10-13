@@ -25,7 +25,7 @@ import {
   Onglets,
   Pastille,
 } from '@app/components/trichine/wizard-ui';
-import { useTrichineBasePath, useTrichinePrelevementEnLot } from '@app/utils/trichine-hooks';
+import { useTrichineBasePath } from '@app/utils/trichine-hooks';
 import { useSviCarcassesAVenir } from '@app/utils/svi-carcasses-a-venir';
 import {
   createTrichineEchantillonsBulk,
@@ -170,9 +170,7 @@ export default function TrichinePrelevementWizard() {
   // Référence du pool douteux quand l'assistant est monté sur `pools/:reference/2e-intention`
   const { reference } = useParams();
   const carcassesRegistry = useZustandStore((state) => state.carcassesRegistry);
-  // Les carcasses « à venir » sont servies par une route réservée au SVI : côté chasseur,
-  // l'assistant n'est monté que pour la 2e intention, sur les carcasses du pool douteux.
-  const { carcasses: carcassesAVenir } = useSviCarcassesAVenir(useTrichinePrelevementEnLot());
+  const { carcasses: carcassesAVenir } = useSviCarcassesAVenir();
 
   const [etape, setEtape] = useState(0);
   const [chargement, setChargement] = useState(true);

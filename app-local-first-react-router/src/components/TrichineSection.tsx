@@ -14,8 +14,6 @@ import { useTrichineBasePath } from '@app/utils/trichine-hooks';
 import {
   createTrichineEchantillon,
   getTrichineCarcasse,
-  renoncerDeuxiemeIntention,
-  retirerCarcasseDeFei,
   type TrichineCarcasseView,
 } from '@app/services/trichine';
 import type { TrichineHistoriqueStatut } from '@prisma/client';
@@ -31,30 +29,20 @@ import {
 } from '@app/utils/trichine';
 
 const echantillonModal = createModal({ isOpenedByDefault: false, id: 'trichine-echantillon-modal' });
-const retraitModal = createModal({ isOpenedByDefault: false, id: 'trichine-retrait-modal' });
-const renoncerModal = createModal({ isOpenedByDefault: false, id: 'trichine-renoncer-modal' });
 
 /**
  * Section trichine de la carte carcasse (sangliers uniquement, cf doc/trichine.md §6.1 et §6.2).
  * Données chargées directement depuis le serveur (pas de local-first : les
  * résultats viennent des laboratoires, le flux nécessite d'être en ligne).
  *
- * viewRole 'svi' (circuit agréé) : prélèvement autorisé, mais pas de retrait de
- * FEI ni de renoncement — la décision passe par l'IPM (SAISIE_TOTALE).
+ * Écran SVI (circuit agréé) : la décision sur un résultat défavorable passe par l'IPM (SAISIE_TOTALE).
  */
-export default function TrichineSection({
-  carcasse,
-  viewRole = 'chasseur',
-}: {
-  carcasse: Carcasse;
-  viewRole?: 'chasseur' | 'svi';
-}) {
+export default function TrichineSection({ carcasse }: { carcasse: Carcasse }) {
   const user = useUser((state) => state.user)!;
   const trichineBasePath = useTrichineBasePath();
   const [view, setView] = useState<TrichineCarcasseView | null>(null);
   const [historique, setHistorique] = useState<Array<TrichineHistoriqueStatut>>([]);
   const [hasTriedLoading, setHasTriedLoading] = useState(false);
-  const [renoncerPoolId, setRenoncerPoolId] = useState<string | null>(null);
 
   const refresh = useCallback(() => {
     getTrichineCarcasse(carcasse.zacharie_carcasse_id)
@@ -100,55 +88,35 @@ export default function TrichineSection({
     return null;
   }
 
-  const isPremierDetenteur = carcasse.premier_detenteur_user_id === user.id;
   // SVI : prélève sur les carcasses assignées à son service (vérifié côté backend)
-  const canAct = viewRole === 'svi' ? user.roles.includes(UserRoles.SVI) : isPremierDetenteur;
-  const retiree = view?.trichine_retire_de_fei_at ?? carcasse.trichine_retire_de_fei_at;
+  const canAct = user.roles.includes(UserRoles.SVI);
   const actionRequise = view?.trichine_action_requise ?? carcasse.trichine_action_requise;
 
   return (
     <div className="fr-mb-2w rounded bg-white p-4 md:p-8 md:shadow-sm">
       <h2 className="fr-h4 fr-mb-2w">Recherche de trichine</h2>
 
-      {retiree ? (
+      {resultatDefavorable && (
         <Alert
-          severity="warning"
+          severity="error"
           className="fr-mb-2w"
-          title={`Carcasse retirée de la fiche le ${dayjs(retiree).format('DD/MM/YYYY')}`}
-          description={`Motif : ${view?.trichine_retire_de_fei_motif ?? carcasse.trichine_retire_de_fei_motif ?? '—'}`}
+          title="Carcasse impropre à la consommation"
+          description={`Résultat d'analyse : ${resultatAnalyseLabels[resultatDefavorable]}. Prononcez la décision IPM correspondante (saisie totale).`}
         />
-      ) : (
-        <>
-          {resultatDefavorable && (
-            <Alert
-              severity="error"
-              className="fr-mb-2w"
-              title="Carcasse impropre à la consommation"
-              description={`Résultat d'analyse : ${resultatAnalyseLabels[resultatDefavorable]}. ${
-                viewRole === 'svi'
-                  ? 'Prononcez la décision IPM correspondante (saisie totale).'
-                  : 'Cette carcasse ne peut plus être cédée, retirez-la de la fiche.'
-              }`}
-            />
-          )}
-          {!resultatDefavorable && actionRequise && actionRequise !== 'AUCUNE' && (
-            <Alert
-              severity="info"
-              className="fr-mb-2w"
-              small
-              description={actionRequiseLabels[actionRequise] ?? actionRequise}
-            />
-          )}
-        </>
+      )}
+      {!resultatDefavorable && actionRequise && actionRequise !== 'AUCUNE' && (
+        <Alert
+          severity="info"
+          className="fr-mb-2w"
+          small
+          description={actionRequiseLabels[actionRequise] ?? actionRequise}
+        />
       )}
 
       {!hasTriedLoading && <p className="fr-text--sm">Chargement des analyses…</p>}
 
-      {hasTriedLoading && !echantillons.length && !retiree && (
-        <p className="fr-text--sm fr-mb-2w">
-          Aucun échantillon prélevé. La recherche de trichine est obligatoire pour toute cession de sanglier à
-          un commerce de détail ou un repas associatif.
-        </p>
+      {hasTriedLoading && !echantillons.length && (
+        <p className="fr-text--sm fr-mb-2w">Aucun échantillon prélevé.</p>
       )}
 
       {echantillons.length > 0 && (
@@ -192,7 +160,7 @@ export default function TrichineSection({
         </ul>
       )}
 
-      {canAct && !retiree && (
+      {canAct && (
         <div className="flex flex-wrap gap-2">
           {/* Après un résultat douteux, le prélèvement doit être rattaché au pool douteux :
               il passe par l'assistant de 2e intention, pas par un échantillon isolé. */}
@@ -210,28 +178,6 @@ export default function TrichineSection({
               onClick={() => echantillonModal.open()}
             >
               Réaliser un échantillon
-            </Button>
-          )}
-          {/* Retrait de FEI et renoncement : circuit court uniquement (en agréé, décision via IPM) */}
-          {viewRole === 'chasseur' && resultatDefavorable && (
-            <Button
-              type="button"
-              priority="secondary"
-              onClick={() => retraitModal.open()}
-            >
-              Retirer cette carcasse de la fiche
-            </Button>
-          )}
-          {viewRole === 'chasseur' && poolDouteux && !resultatDefavorable && (
-            <Button
-              type="button"
-              priority="secondary"
-              onClick={() => {
-                setRenoncerPoolId(poolDouteux.id);
-                renoncerModal.open();
-              }}
-            >
-              Renoncer aux analyses 2e intention
             </Button>
           )}
         </div>
@@ -267,14 +213,6 @@ export default function TrichineSection({
       <EchantillonModalContent
         carcasse={carcasse}
         onCreated={refresh}
-      />
-      <RetraitModalContent
-        carcasse={carcasse}
-        onDone={refresh}
-      />
-      <RenoncerModalContent
-        poolId={renoncerPoolId}
-        onDone={refresh}
       />
     </div>
   );
@@ -353,84 +291,5 @@ function EchantillonModalContent({ carcasse, onCreated }: { carcasse: Carcasse; 
         Valider l'échantillon
       </Button>
     </echantillonModal.Component>
-  );
-}
-
-function RetraitModalContent({ carcasse, onDone }: { carcasse: Carcasse; onDone: () => void }) {
-  const [motif, setMotif] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  return (
-    <retraitModal.Component title="Retirer cette carcasse de la fiche">
-      <p className="fr-text--sm">
-        La carcasse {carcasse.numero_bracelet} sera retirée de sa fiche : elle restera visible dans votre
-        registre mais ne pourra plus être cédée. Son élimination physique reste de votre responsabilité.
-      </p>
-      <Input
-        label="Motif du retrait (obligatoire)"
-        textArea
-        nativeTextAreaProps={{
-          value: motif,
-          onChange: (event) => setMotif(event.target.value),
-        }}
-      />
-      <Button
-        type="button"
-        disabled={isSubmitting || !motif.trim()}
-        onClick={() => {
-          setIsSubmitting(true);
-          retirerCarcasseDeFei(carcasse.zacharie_carcasse_id, motif.trim())
-            .then((response) => {
-              if (response.ok) {
-                toast.success('Carcasse retirée de la fiche');
-                retraitModal.close();
-                onDone();
-              } else {
-                toast.error(response.error || 'Une erreur est survenue');
-              }
-            })
-            .catch(() => toast.error('Une erreur est survenue'))
-            .finally(() => setIsSubmitting(false));
-        }}
-      >
-        Confirmer le retrait
-      </Button>
-    </retraitModal.Component>
-  );
-}
-
-function RenoncerModalContent({ poolId, onDone }: { poolId: string | null; onDone: () => void }) {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  return (
-    <renoncerModal.Component title="Renoncer aux analyses de 2e intention">
-      <p className="fr-text--sm">
-        Suite au résultat non négatif, vous pouvez renoncer aux analyses de 2e intention. Dans ce cas,{' '}
-        <strong>toutes les carcasses du pool seront retirées de leur fiche</strong> et ne pourront plus être
-        commercialisées. Les destinataires actuels seront notifiés.
-      </p>
-      <Button
-        type="button"
-        disabled={isSubmitting || !poolId}
-        onClick={() => {
-          if (!poolId) return;
-          setIsSubmitting(true);
-          renoncerDeuxiemeIntention(poolId)
-            .then((response) => {
-              if (response.ok && response.data) {
-                toast.success(`${response.data.retirees} carcasse(s) retirée(s) de leur fiche`);
-                renoncerModal.close();
-                onDone();
-              } else {
-                toast.error(response.error || 'Une erreur est survenue');
-              }
-            })
-            .catch(() => toast.error('Une erreur est survenue'))
-            .finally(() => setIsSubmitting(false));
-        }}
-      >
-        Je renonce aux analyses de 2e intention
-      </Button>
-    </renoncerModal.Component>
   );
 }

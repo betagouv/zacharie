@@ -6,6 +6,7 @@ import { UserRoles } from '@prisma/client';
 import { useEffect, useState } from 'react';
 import { Link, Navigate, Outlet, useLocation } from 'react-router';
 import AdminSearch from './admin-search';
+import { TRICHINE_FEATURE_ENABLED } from '@app/utils/trichine';
 
 type AdminSessionStatus = 'loading' | 'ok' | 'proconnect-required';
 
@@ -35,11 +36,15 @@ const adminLinks = [
     label: 'Quiz',
     icon: 'fr-icon-questionnaire-line',
   },
-  {
-    to: '/app/admin/trichine',
-    label: 'Trichine',
-    icon: 'fr-icon-microscope-line',
-  },
+  ...(TRICHINE_FEATURE_ENABLED
+    ? [
+        {
+          to: '/app/admin/trichine',
+          label: 'Trichine',
+          icon: 'fr-icon-microscope-line',
+        },
+      ]
+    : []),
   {
     to: '/app/admin/bug-resolution',
     label: 'Résolution de bug',
@@ -131,8 +136,9 @@ export default function AdminLayout() {
         )}
         {/* Sidebar */}
         <nav
-          className={`fixed top-0 z-[800] max-h-screen min-h-screen shrink-0 overflow-y-auto border-r border-gray-200 bg-white py-2 transition-transform duration-200 md:sticky md:z-auto ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-            } ${navCollapsed ? 'md:w-14' : 'md:w-auto'}`}
+          className={`fixed top-0 z-[800] max-h-screen min-h-screen shrink-0 overflow-y-auto border-r border-gray-200 bg-white py-2 transition-transform duration-200 md:sticky md:z-auto ${
+            sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          } ${navCollapsed ? 'md:w-14' : 'md:w-auto'}`}
         >
           <div className="hidden justify-end px-2 max-md:flex">
             <button
@@ -147,8 +153,9 @@ export default function AdminLayout() {
             <button
               type="button"
               onClick={() => setNavCollapsed((v) => !v)}
-              className={`fr-btn fr-btn--tertiary-no-outline fr-btn--sm ${navCollapsed ? 'fr-icon-arrow-right-s-line' : 'fr-icon-arrow-left-s-line'
-                }`}
+              className={`fr-btn fr-btn--tertiary-no-outline fr-btn--sm ${
+                navCollapsed ? 'fr-icon-arrow-right-s-line' : 'fr-icon-arrow-left-s-line'
+              }`}
               aria-label={navCollapsed ? 'Déplier le menu' : 'Replier le menu'}
               title={navCollapsed ? 'Déplier le menu' : 'Replier le menu'}
             />
@@ -165,11 +172,13 @@ export default function AdminLayout() {
                     style={{ backgroundImage: 'none' }}
                     to={link.to}
                     title={navCollapsed ? link.label : undefined}
-                    className={`flex items-center gap-2 border-l-2 px-3 py-1.5 text-sm no-underline hover:bg-gray-100 ${navCollapsed ? 'md:justify-center md:px-0' : ''
-                      } ${isActive
+                    className={`flex items-center gap-2 border-l-2 px-3 py-1.5 text-sm no-underline hover:bg-gray-100 ${
+                      navCollapsed ? 'md:justify-center md:px-0' : ''
+                    } ${
+                      isActive
                         ? 'bg-open-blue-975 text-action-high-blue-france border-action-high-blue-france font-medium'
                         : 'text-title-grey border-transparent'
-                      }`}
+                    }`}
                   >
                     <span
                       className={`${link.icon} fr-icon--sm shrink-0 ${navCollapsed ? 'md:mr-0' : 'mr-1'}`}
@@ -191,8 +200,9 @@ export default function AdminLayout() {
                   style={{ backgroundImage: 'none' }}
                   rel="noopener noreferrer"
                   title={navCollapsed ? link.label : undefined}
-                  className={`text-title-grey hover:bg-open-blue-975 flex items-center gap-2 rounded-md border-l-2 border-transparent px-3 py-1.5 text-sm no-underline hover:bg-gray-100 ${navCollapsed ? 'md:justify-center md:px-0' : ''
-                    }`}
+                  className={`text-title-grey hover:bg-open-blue-975 flex items-center gap-2 rounded-md border-l-2 border-transparent px-3 py-1.5 text-sm no-underline hover:bg-gray-100 ${
+                    navCollapsed ? 'md:justify-center md:px-0' : ''
+                  }`}
                 >
                   <span
                     className={`${link.icon} fr-icon--sm shrink-0 ${navCollapsed ? 'md:mr-0' : 'mr-1'}`}
