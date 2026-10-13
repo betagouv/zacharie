@@ -16,6 +16,7 @@ import {
   updateBrevoContact,
 } from '~/third-parties/brevo';
 import { BrevoTemplateId } from '~/third-parties/brevo-templates';
+import { capture } from '~/third-parties/sentry';
 import createUserId from '~/utils/createUserId';
 import { comparePassword, hashPassword } from '~/service/crypto';
 import { userFeiSelect, type UserForFei } from '~/types/user';
@@ -111,7 +112,10 @@ router.post(
 
       email = email.toLowerCase().trim();
       if (username) {
-        console.log('Spam detected', email);
+        capture(new Error('Spam detected'), {
+          level: 'info',
+          extra: { email, message: 'Spam detected' },
+        });
         // honey pot
         res.status(200).send({ ok: true, data: null, message: null, error: null });
         return;
@@ -305,7 +309,10 @@ router.post(
 
       email = email.toLowerCase().trim();
       if (username) {
-        console.log('Spam detected', email);
+        capture(new Error('Spam detected'), {
+          level: 'info',
+          extra: { email, message: 'Spam detected' },
+        });
         // honey pot
         res.status(200).send({ ok: true, data: null, message: null, error: null });
         return;
@@ -405,7 +412,10 @@ router.post(
 
       email = email.toLowerCase().trim();
       if (username) {
-        console.log('Spam detected', email);
+        capture(new Error('Spam detected'), {
+          level: 'info',
+          extra: { email, message: 'Spam detected' },
+        });
         // honey pot
         res.status(200).send({ ok: true, data: null, message: null, error: null });
         return;
@@ -578,7 +588,10 @@ router.post(
 
       email = email.toLowerCase().trim();
       if (username) {
-        console.log('Spam detected', email);
+        capture(new Error('Spam detected'), {
+          level: 'info',
+          extra: { email, message: 'Spam detected' },
+        });
         // honey pot
         res.status(200).send({ ok: true, data: null, message: null, error: null });
         return;
@@ -670,7 +683,10 @@ router.post(
       let { username, passwordUser, resetPasswordToken } = result.data;
 
       if (username) {
-        console.log('Spam detected');
+        capture(new Error('Spam detected'), {
+          level: 'info',
+          extra: { message: 'Spam detected' },
+        });
         // honey pot
         res.status(200).send({ ok: true, data: null, message: null, error: null });
         return;
