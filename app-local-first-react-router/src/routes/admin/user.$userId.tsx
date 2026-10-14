@@ -119,12 +119,13 @@ const initialState: State = {
     last_failure_action: null,
     last_failure_at: null,
   },
+  has_password: true,
 };
 
 export default function AdminUser() {
   const params = useParams();
   const [userResponseData, setUserResponseData] = useState<State>(initialState);
-  const { user, userEntitiesRelations, officialCfei, lockout } = userResponseData;
+  const { user, userEntitiesRelations, officialCfei, lockout, has_password } = userResponseData;
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -304,6 +305,22 @@ export default function AdminUser() {
       .finally(() => setSendingResetPassword(false));
   };
 
+  const [invitationLink, setInvitationLink] = useState<string | null>(null);
+  const handleCopyInvitationLink = () => {
+    API.post({ path: `admin/user/${params.userId}/invitation-link` }).then((res) => {
+      const response = res as { ok: boolean; data: { url: string } | null; error: string };
+      if (!response.ok || !response.data) {
+        return toast.error(response.error || 'Une erreur est survenue lors de la création du lien');
+      }
+      const url = response.data.url;
+      setInvitationLink(url);
+      navigator.clipboard
+        .writeText(url)
+        .then(() => toast.success("Lien d'invitation copié, valable 7 jours"))
+        .catch(() => toast.info('Copie impossible, sélectionnez le lien affiché pour le copier'));
+    });
+  };
+
   const fullName = [user.nom_de_famille, user.prenom].filter(Boolean).join(' ');
 
   const [selectedTabId, setSelectedTabId] = useState('Identité');
@@ -466,6 +483,31 @@ export default function AdminUser() {
           {user.onboarded_at && <> · Onboardé le {dayjs(user.onboarded_at).format('DD/MM/YYYY')}</>}
         </p>
       </header>
+      {!has_password && (
+        <div className="mt-4 rounded-lg border border-blue-300 bg-blue-50 p-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="m-0 text-base font-bold">Pas encore de mot de passe</h2>
+              <p className="mt-1 mb-0 text-sm">
+                Transmettez-lui le lien d'invitation pour qu'il choisisse son mot de passe. Le lien est
+                valable 7 jours.
+              </p>
+              {invitationLink && <p className="mt-1 mb-0 text-xs break-all select-all">{invitationLink}</p>}
+            </div>
+            <div className="flex shrink-0 flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                priority="secondary"
+                size="small"
+                iconId="fr-icon-clipboard-line"
+                onClick={handleCopyInvitationLink}
+              >
+                Copier le lien d'invitation
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
       {(lockout.is_locked || lockout.recent_failures > 0) && (
         <div
           className={`mt-4 rounded-lg border p-4 ${

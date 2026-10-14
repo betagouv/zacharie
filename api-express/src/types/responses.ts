@@ -223,6 +223,7 @@ export interface AdminUserDataResponse {
     userEntitiesRelations: Array<EntityForAdmin>;
     officialCfei: OfficialCfei | null;
     lockout: AdminUserLockoutInfo;
+    has_password: boolean;
   };
   error: string;
 }
