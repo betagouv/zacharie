@@ -51,21 +51,26 @@ const sendError = (
 ) => {
   const { body, query, params, route, method, originalUrl, headers } = req;
   const { appversion, appbuild, appdevice } = headers;
-  // Le client a coupé la connexion avant la fin de l'envoi du body (onglet fermé,
-  // perte réseau, sync annulé). Ce n'est pas une erreur serveur : on capture en info
-  // pour garder la trace sans déclencher d'alerte Sentry.
-  const requestAborted =
-    (err as { code?: string }).code === 'ECONNABORTED' ||
-    (err as { type?: string }).type === 'request.aborted';
-  if (res.statusCode === 401 || err.status === 401) {
-    console.log(res.statusCode, 'Unauthorized');
+  // body-parser (et les erreurs créées avec un status) portent leur code HTTP dans err.status,
+  // les contrôleurs le posent via res.status() avant next(error)
+  const status = (err as { status?: number }).status ?? (res.statusCode >= 400 ? res.statusCode : 500);
+  // requête coupée par le client (onglet fermé, perte réseau, sync annulé), JSON invalide
+  // (souvent des robots scanners) ou body trop gros : ce ne sont pas des erreurs serveur
+  const clientError =
+    status < 500 ||
+    ['request.aborted', 'entity.parse.failed', 'entity.too.large'].includes(
+      (err as { type?: string }).type ?? ''
+    );
+  if (status === 401) {
+    console.log(status, 'Unauthorized');
   } else if (process.env.NODE_ENV === 'test') {
     console.log(err);
+  } else if (clientError) {
+    console.log(status, (err as { type?: string }).type ?? '', method, originalUrl, err.message);
   } else {
     capture(err, {
-      level: requestAborted ? 'info' : 'error',
       extra: {
-        statusCode: res.statusCode,
+        statusCode: status,
         body,
         query,
         params,
@@ -81,19 +86,15 @@ const sendError = (
     });
   }
 
-  if (
-    err.message.includes("Can't reach database server") ||
-    !res.statusCode ||
-    res.statusCode === 406 ||
-    res.statusCode >= 500
-  ) {
-    return res.status(res.statusCode ?? 500).send({
+  // les 406 portent souvent un message zod brut : on ne l'affiche pas à l'utilisateur
+  if (err.message.includes("Can't reach database server") || status === 406 || status >= 500) {
+    return res.status(status).send({
       ok: false,
       code: 'SERVER_ERROR',
       error: "Désolé, une erreur est survenue, l'équipe technique est prévenue.",
     });
   }
-  return res.status(res.statusCode).send({
+  return res.status(status).send({
     ok: false,
     code: 'APPLICATION_ERROR',
     error: err.message || err || "Désolé, une erreur est survenue, l'équipe technique est prévenue.",

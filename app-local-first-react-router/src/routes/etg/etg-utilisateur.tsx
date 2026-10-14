@@ -17,6 +17,7 @@ import 'react-dsfr-chart/css';
 import type { EtgUserInteractedResponse, EtgUserInteracted } from '@api/src/types/responses';
 import API from '@app/services/api';
 import useZustandStore from '@app/zustand/store';
+import { useCarcassesRegistry } from '@app/utils/useCarcassesRegistry';
 import Chargement from '@app/components/Chargement';
 import { getUserRoleLabel } from '@app/utils/get-user-roles-label';
 import { getCarcasseStatusLabel, type CarcasseStatusLabel } from '@app/utils/get-carcasse-status';
@@ -34,7 +35,7 @@ export default function EtgUtilisateur() {
   const [user, setUser] = useState<EtgUserInteracted | null>(null);
   const [notFound, setNotFound] = useState(false);
 
-  const carcassesRegistry = useZustandStore((state) => state.carcassesRegistry);
+  const carcassesRegistry = useCarcassesRegistry();
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
   const modifRequestsByCarcasseId = useZustandStore((state) => state.modifRequestsByCarcasseId);
   const entities = useZustandStore((state) => state.entities);

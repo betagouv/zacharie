@@ -30,7 +30,7 @@ describe('getFeiUrlForRole', () => {
       `${VITE_APP_URL}/app/etg/fei/${feiNumero}/${prochainDetenteurIdCache}`
     );
     expect(getFeiUrlForRole(UserRoles.COLLECTEUR_PRO, feiNumero, prochainDetenteurIdCache)).toBe(
-      `${VITE_APP_URL}/app/collecteur-pro/fei/${feiNumero}/${prochainDetenteurIdCache}`
+      `${VITE_APP_URL}/app/collecteur/fei/${feiNumero}/${prochainDetenteurIdCache}`
     );
   });
 

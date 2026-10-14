@@ -1,12 +1,21 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Fragment } from 'react';
-import Select from 'react-select';
+import Select, { components as selectComponents, type InputProps } from 'react-select';
 import CreatableSelect from 'react-select/creatable';
 import AsyncSelect from 'react-select/async';
 import AsyncCreatableSelect from 'react-select/async-creatable';
 import type { GroupBase, Props, StylesConfig } from 'react-select';
 import type { AsyncProps } from 'react-select/async';
 import InputNotEditable from './InputNotEditable';
+
+function InputAriaRequired(inputProps: InputProps<any, boolean, GroupBase<any>>) {
+  return (
+    <selectComponents.Input
+      {...inputProps}
+      aria-required
+    />
+  );
+}
 
 export interface SelectCustomProps<
   Option,
@@ -28,7 +37,10 @@ function SelectCustom<
   IsMulti extends boolean = false,
   Group extends GroupBase<Option> = GroupBase<Option>,
 >(allProps: SelectCustomProps<Option, IsMulti, Group>) {
-  const { creatable, async: isAsync, isReadOnly, label, hint, ...props } = allProps;
+  // `required` n'est pas transmis à react-select : sans valeur, il rend un <input required> sans `type`
+  // que le piège à focus des modales DSFR prend pour un radio, et plante. Aucun de nos selects n'est
+  // dans un <form> (validation faite dans le code), on garde seulement l'info pour les lecteurs d'écran.
+  const { creatable, async: isAsync, isReadOnly, label, hint, required, ...props } = allProps;
   const Component = isAsync
     ? creatable
       ? AsyncCreatableSelect
@@ -125,6 +137,7 @@ function SelectCustom<
         inputId={props.inputId}
         classNamePrefix={props.classNamePrefix}
         {...props}
+        components={required ? { Input: InputAriaRequired, ...props.components } : props.components}
       />
     </Wrapper>
   );

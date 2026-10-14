@@ -41,5 +41,10 @@ export function getUserOnboardingRoute(user: User): string {
     }
     return '/app/circuit-court/onboarding/coordonnees';
   }
-  throw new Error('User has no onboarding route');
+  if (user.isZacharieAdmin) {
+    return '/app/admin';
+  }
+  // compte sans rôle reconnu : la page d'accueil ne redirige pas un utilisateur connecté,
+  // contrairement à /app/connexion qui le renverrait ici
+  return '/';
 }

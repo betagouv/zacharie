@@ -123,8 +123,23 @@ The message must answer **"what changes for the user?"**, not "what did I change
 ## Pull Requests
 
 - **Title**: same format as commits.
-- **Description**: only if necessary, a short descriptive text. No bullet points, no auto-generated sections.
-- **Test checklist**: only when the change needs non-obvious verifications (edge cases, specific configurations).
+- **Description** (in French): a short text of what changes for the user (one bullet per correction if several), then **always** a `## Comment tester` section. Write it so a non-dev can reproduce the fix/feat by hand. Reference: PR #776.
+  - One `###` sub-section per correction.
+  - First line: `- Compte : \`<seed email>\` / \`secret-secret\`` (seed from @e2e/CLAUDE.md), then the starting state (seed fiche number if any).
+  - Then one bullet per concrete UI step, with the exact labels in « ».
+  - End with two bullets: `- **Avant** (main) : <what goes wrong>` and `- **Après** (cette branche) : <what happens now>`. The Avant/Après pair is mandatory: it is how the reviewer checks the fix.
+  - Last line(s): `Tests e2e :` + the spec path(s).
+- **E2E**: a `fix:` or `feat:` with a user-visible impact comes with a new or updated Playwright spec in `e2e/`. Exempt: `chore:`, docs, pure backend changes covered by vitest. If you skip it, write `Pas de test e2e : <raison>` in the description.
+- The `PR checklist` workflow (`.github/workflows/pr-checklist.yml`) checks both points on every `fix:`/`feat:` PR and comments if one is missing (non-blocking).
+
+## After coding
+
+Once the change is done and verified, before handing back, always propose:
+
+1. **A branch name**, if the current branch is `main`: `<type>/<short-kebab-description>` (e.g. `fix/input-ville-vente-don`, `feat/modifications-refusees-visibles`).
+2. **A commit message** (see Commits).
+3. **A test**: a new or updated e2e spec (or vitest for backend logic) that covers the fix/feat. Name the spec file and the seed state. Write it when the user agrees.
+4. **The PR description**, in the PR #776 format (see Pull Requests).
 
 ## Preferences
 

@@ -21,7 +21,6 @@ import {
 import { ReactElement } from 'react';
 import { CarcasseTransmission } from '@app/types/carcasse';
 import { isRoleCircuitCourt } from './circuit-court';
-import { capture } from '@app/services/sentry';
 import { isTransportToMyEtgDone } from './is-carcasse-done';
 
 export function getTransmissionLabels(
@@ -59,38 +58,20 @@ export function getCurrentStepLabel(
   entitiesIdsWorkingDirectlyFor: ReturnType<typeof useEntitiesIdsWorkingDirectlyForObj>,
   etgRole?: User['etg_role']
 ): TransmissionStep {
-  try {
-    // Circuit court (commerce de détail, boucher, ...) is a passive viewer : la fiche est toujours clôturée pour lui.
-    if (isRoleCircuitCourt(role)) return 'Clôturée';
-    // Le libellé est propre à chaque rôle (chaque fonction gère ses états clôturé et en cours).
-    if (role === 'CHASSEUR') {
-      return getCurrentStepLabelForChasseur(simpleStatus, transmission);
-    }
-    if (role === 'ETG') {
-      return getCurrentStepLabelForEtg(simpleStatus, transmission, entitiesIdsWorkingDirectlyFor, etgRole);
-    }
-    if (role === 'COLLECTEUR_PRO') {
-      return getCurrentStepLabelForCollecteurPro(simpleStatus, transmission);
-    }
-    if (simpleStatus === 'Clôturée') return 'Clôturée';
-    return 'En cours' satisfies TransmissionStepGeneric;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (error: any) {
-    capture(error, {
-      extra: {
-        transmission,
-        simpleStatus,
-        role,
-        entitiesIdsWorkingDirectlyFor,
-      },
-      tags: {
-        simpleStatus,
-        role,
-        fei_numero: transmission.fei_numero,
-      },
-    });
+  // Circuit court (commerce de détail, boucher, ...) is a passive viewer : la fiche est toujours clôturée pour lui.
+  if (isRoleCircuitCourt(role)) return 'Clôturée';
+  // Le libellé est propre à chaque rôle (chaque fonction gère ses états clôturé et en cours).
+  if (role === 'CHASSEUR') {
+    return getCurrentStepLabelForChasseur(simpleStatus, transmission);
   }
-  return 'En cours';
+  if (role === 'ETG') {
+    return getCurrentStepLabelForEtg(simpleStatus, transmission, entitiesIdsWorkingDirectlyFor, etgRole);
+  }
+  if (role === 'COLLECTEUR_PRO') {
+    return getCurrentStepLabelForCollecteurPro(simpleStatus, transmission);
+  }
+  if (simpleStatus === 'Clôturée') return 'Clôturée';
+  return 'En cours' satisfies TransmissionStepGeneric;
 }
 
 // Côté chasseur (examinateur initial / premier détenteur) : où en est sa fiche.
@@ -151,8 +132,8 @@ export function getCurrentStepLabelForEtg(
     if (entitiesIdsWorkingDirectlyFor[transmission.next_owner_entity_id!]) {
       return 'Fiche reçue, pas encore prise en charge' satisfies TransmissionStepForEtg;
     }
-    // current n'est pas ETG, next est ETG, mais pas le mien ? bug
-    throw new Error('No current step label for ETG next/role');
+    // fiche envoyée à un autre établissement que le mien
+    return 'Transport vers un autre établissement de traitement' satisfies TransmissionStepForEtg;
   }
   if (transmission.current_owner_role === 'COLLECTEUR_PRO') {
     return 'Prise en charge par le transporteur' satisfies TransmissionStepForEtg;

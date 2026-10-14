@@ -5,6 +5,7 @@ import useZustandStore from '@app/zustand/store';
 import { syncData } from '@app/utils/sync-data';
 import dayjs from 'dayjs';
 import { createHistoryInput } from '@app/utils/create-history-entry';
+import { track } from '@app/services/matomo';
 
 export default function ExaminateurInitialDeleteFei() {
   const params = useParams();
@@ -29,6 +30,7 @@ export default function ExaminateurInitialDeleteFei() {
       onConfirm={() => {
         const nextFei = { deleted_at: dayjs().toDate() };
         updateFei(fei.numero, nextFei);
+        track('fiche', 'supprimer');
         addLog({
           user_id: user.id,
           user_role: user.roles[0],

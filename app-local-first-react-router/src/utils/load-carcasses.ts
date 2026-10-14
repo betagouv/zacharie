@@ -105,7 +105,7 @@ export async function loadCarcasses() {
         signal,
       }).then((r) => r as CarcassesGetResponse);
       if (signal.aborted) return;
-      if (!res.ok) return null;
+      if (!res.ok || !res.data) return null;
 
       carcassesFetched.push(...(res.data.carcasses || []));
       feisFetched.push(...(res.data.feis || []));
@@ -189,7 +189,6 @@ export async function loadCarcasses() {
 
     useZustandStore.setState((state) => ({
       carcasses: newCarcasses,
-      carcassesRegistry: Object.values(newCarcasses),
       feiIdsRenvoiToHide: state.feiIdsRenvoiToHide.filter(
         (fei_numero) => !feiNumerosBackInScope.has(fei_numero)
       ),

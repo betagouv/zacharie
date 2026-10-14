@@ -4,6 +4,7 @@ import dayjs from 'dayjs';
 import { toast } from 'react-toastify';
 import { CarcasseStatus, DepotType, FeiOwnerRole } from '@prisma/client';
 import useZustandStore from '@app/zustand/store';
+import { useCarcassesRegistry } from '@app/utils/useCarcassesRegistry';
 import { Pagination } from '@codegouvfr/react-dsfr/Pagination';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
@@ -23,6 +24,7 @@ import { useLocalStorage } from '@uidotdev/usehooks';
 import Chargement from '@app/components/Chargement';
 import DropDownMenu from '@app/components/DropDownMenu';
 import useExportCarcasses from '@app/utils/export-carcasses';
+import useExportBilanAnomalies from '@app/utils/export-bilan-anomalies';
 import { useApproveCarcasses } from '@app/utils/svi-approve-carcasse';
 import useDownloadCertificats from '@app/utils/svi-download-certificats';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
@@ -96,7 +98,7 @@ type TransmissionMeta = {
 export default function SviCarcasses() {
   const user = useMostFreshUser('svi-carcasses')!;
   const navigate = useNavigate();
-  const carcassesRegistry = useZustandStore((state) => state.carcassesRegistry);
+  const carcassesRegistry = useCarcassesRegistry();
   const transmissions = useTransmissions();
   const feis = useZustandStore((state) => state.feis);
   const entities = useZustandStore((state) => state.entities);
@@ -107,6 +109,8 @@ export default function SviCarcasses() {
   const [acceptProgress, setAcceptProgress] = useState<{ done: number; total: number } | null>(null);
 
   const { onExportToXlsx, isExporting } = useExportCarcasses();
+  const { exportBilanAnomalies, isExporting: isExportingBilan } =
+    useExportBilanAnomalies('svi/bilan-anomalies');
   const approveCarcasses = useApproveCarcasses();
   const { onDownloadCertificats, isDownloading } = useDownloadCertificats();
   const isOnline = useIsOnline();
@@ -210,7 +214,7 @@ export default function SviCarcasses() {
     especeOptions,
     statusOptions,
     saisonOptions,
-    filteredData,
+    metaByTransmissionId,
   } = useMemo(() => {
     // métadonnées de transmission mises en cache par transmissionId
     const metaByTransmissionId: Record<string, TransmissionMeta> = {};
@@ -299,70 +303,6 @@ export default function SviCarcasses() {
       if (carcasse.date_mise_a_mort) _saisonYears.add(getSaisonStartYear(carcasse.date_mise_a_mort));
     }
 
-    const braceletQuery = quickFilterBracelet.trim().toLowerCase();
-    const withStatuses = filterStatuses.length > 0;
-    const withSaisons = filterSaisons.length > 0;
-    const withPremierDetenteurs = filterPremierDetenteurs.length > 0;
-    const withEtgs = filterEtgs.length > 0;
-    const withCCGs = filterCCGs.length > 0;
-    const withCollecteurs = filterCollecteurs.length > 0;
-    const withEspeces = filterEspeces.length > 0;
-    const withStatutsCarcasse = filterStatutsCarcasse.length > 0;
-    const withDate = Boolean(filterDateFrom || filterDateTo);
-
-    // 2e passe : on filtre
-    const _filteredData: Array<Carcasse> = [];
-    for (const carcasse of carcassesRegistry) {
-      if (braceletQuery && !carcasse.numero_bracelet?.toLowerCase().includes(braceletQuery)) continue;
-      const meta = getMeta(carcasse);
-      if (withStatuses && !filterStatuses.includes(meta.simpleStatus)) continue;
-      if (withPremierDetenteurs && !filterPremierDetenteurs.includes(meta.premierDetenteurId)) continue;
-      if (withEtgs && !meta.etgIds.some((id) => filterEtgs.includes(id))) continue;
-      if (withCCGs && !filterCCGs.includes(meta.ccgId)) continue;
-      if (withCollecteurs && !meta.collecteurIds.some((id) => filterCollecteurs.includes(id))) continue;
-      if (withSaisons) {
-        if (!carcasse.date_mise_a_mort) continue;
-        if (!filterSaisons.some((saison) => isDateInSaison(carcasse.date_mise_a_mort!, saison))) continue;
-      }
-      if (withDate) {
-        if (!carcasse.date_mise_a_mort) continue;
-        const d = dayjs(carcasse.date_mise_a_mort).format('YYYY-MM-DD');
-        if (filterDateFrom && d < filterDateFrom) continue;
-        if (filterDateTo && d > filterDateTo) continue;
-      }
-      if (!filterCarcassesInRegistre(filters)(carcasse, feis[carcasse.fei_numero]!)) continue;
-      if (withEspeces && carcasse.espece && !filterEspeces.includes(carcasse.espece)) continue;
-      if (withStatutsCarcasse && !filterStatutsCarcasse.includes(getCarcasseStatusLabel(carcasse))) continue;
-      _filteredData.push(carcasse);
-    }
-
-    _filteredData.sort((a, b) => {
-      const aValue =
-        // @ts-expect-error: svi_carcasse_archived is isCarcasseSviArchived
-        sortBy === 'svi_carcasse_archived'
-          ? isCarcasseSviArchived(a)
-          : // @ts-expect-error: we know that the field is in the carcasse or the fei
-            a[sortBy] || feis[a.fei_numero]![sortBy];
-      const bValue =
-        // @ts-expect-error: svi_carcasse_archived is isCarcasseSviArchived
-        sortBy === 'svi_carcasse_archived'
-          ? isCarcasseSviArchived(b)
-          : // @ts-expect-error: svi_carcasse_archived is isCarcasseSviArchived
-            b[sortBy] || feis[b.fei_numero]![sortBy];
-      if (!aValue) {
-        if (bValue) return sortOrder === 'ASC' ? 1 : -1;
-        return 0;
-      }
-      if (!bValue) {
-        if (aValue) return sortOrder === 'ASC' ? -1 : 1;
-        return 0;
-      }
-      if (aValue === bValue) return 0;
-      if (aValue < bValue) return sortOrder === 'ASC' ? -1 : 1;
-      if (aValue > bValue) return sortOrder === 'ASC' ? 1 : -1;
-      return 0;
-    });
-
     const toOptions = (map: Map<string, string>) =>
       Array.from(map.entries())
         .map(([id, name]) => ({ id, name }))
@@ -384,8 +324,78 @@ export default function SviCarcasses() {
       saisonOptions: Array.from(_saisonYears)
         .sort((a, b) => b - a)
         .map((year) => ({ year, label: getSaisonLabel(year) })),
-      filteredData: _filteredData,
+      metaByTransmissionId,
     };
+  }, [carcassesRegistry, transmissions, entities, usersById]);
+
+  // Séparé des options : taper dans un filtre ne recalcule que le filtrage et le tri.
+  const filteredData = useMemo(() => {
+    const braceletQuery = quickFilterBracelet.trim().toLowerCase();
+    const withStatuses = filterStatuses.length > 0;
+    const withSaisons = filterSaisons.length > 0;
+    const withPremierDetenteurs = filterPremierDetenteurs.length > 0;
+    const withEtgs = filterEtgs.length > 0;
+    const withCCGs = filterCCGs.length > 0;
+    const withCollecteurs = filterCollecteurs.length > 0;
+    const withEspeces = filterEspeces.length > 0;
+    const withStatutsCarcasse = filterStatutsCarcasse.length > 0;
+    const withDate = Boolean(filterDateFrom || filterDateTo);
+    const withFilters = filters?.some((filter) => Boolean(filter?.value));
+    const isInRegistre = filterCarcassesInRegistre(filters);
+
+    const _filteredData: Array<Carcasse> = [];
+    for (const carcasse of carcassesRegistry) {
+      if (braceletQuery && !carcasse.numero_bracelet?.toLowerCase().includes(braceletQuery)) continue;
+      const meta = metaByTransmissionId[getTransmissionId(carcasse)];
+      if (withStatuses && !filterStatuses.includes(meta.simpleStatus)) continue;
+      if (withPremierDetenteurs && !filterPremierDetenteurs.includes(meta.premierDetenteurId)) continue;
+      if (withEtgs && !meta.etgIds.some((id) => filterEtgs.includes(id))) continue;
+      if (withCCGs && !filterCCGs.includes(meta.ccgId)) continue;
+      if (withCollecteurs && !meta.collecteurIds.some((id) => filterCollecteurs.includes(id))) continue;
+      if (withSaisons) {
+        if (!carcasse.date_mise_a_mort) continue;
+        if (!filterSaisons.some((saison) => isDateInSaison(carcasse.date_mise_a_mort!, saison))) continue;
+      }
+      if (withDate) {
+        if (!carcasse.date_mise_a_mort) continue;
+        const d = dayjs(carcasse.date_mise_a_mort).format('YYYY-MM-DD');
+        if (filterDateFrom && d < filterDateFrom) continue;
+        if (filterDateTo && d > filterDateTo) continue;
+      }
+      if (withFilters && !isInRegistre(carcasse, feis[carcasse.fei_numero]!)) continue;
+      if (withEspeces && carcasse.espece && !filterEspeces.includes(carcasse.espece)) continue;
+      if (withStatutsCarcasse && !filterStatutsCarcasse.includes(getCarcasseStatusLabel(carcasse))) continue;
+      _filteredData.push(carcasse);
+    }
+
+    _filteredData.sort((a, b) => {
+      const aValue =
+        // @ts-expect-error: svi_carcasse_archived is isCarcasseSviArchived
+        sortBy === 'svi_carcasse_archived'
+          ? isCarcasseSviArchived(a)
+          : // @ts-expect-error: we know that the field is in the carcasse or the fei
+          a[sortBy] || feis[a.fei_numero]![sortBy];
+      const bValue =
+        // @ts-expect-error: svi_carcasse_archived is isCarcasseSviArchived
+        sortBy === 'svi_carcasse_archived'
+          ? isCarcasseSviArchived(b)
+          : // @ts-expect-error: svi_carcasse_archived is isCarcasseSviArchived
+          b[sortBy] || feis[b.fei_numero]![sortBy];
+      if (!aValue) {
+        if (bValue) return sortOrder === 'ASC' ? 1 : -1;
+        return 0;
+      }
+      if (!bValue) {
+        if (aValue) return sortOrder === 'ASC' ? -1 : 1;
+        return 0;
+      }
+      if (aValue === bValue) return 0;
+      if (aValue < bValue) return sortOrder === 'ASC' ? -1 : 1;
+      if (aValue > bValue) return sortOrder === 'ASC' ? 1 : -1;
+      return 0;
+    });
+
+    return _filteredData;
   }, [
     quickFilterBracelet,
     filterStatuses,
@@ -399,11 +409,9 @@ export default function SviCarcasses() {
     filterEspeces,
     filterStatutsCarcasse,
     carcassesRegistry,
+    metaByTransmissionId,
     filters,
     feis,
-    transmissions,
-    entities,
-    usersById,
     sortBy,
     sortOrder,
   ]);
@@ -1233,12 +1241,12 @@ export default function SviCarcasses() {
                 <span>
                   {carcasse.svi_assigned_at
                     ? new Date(carcasse.svi_assigned_at).toLocaleDateString('fr-FR', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })
                     : '-'}
                 </span>
               </div>
@@ -1247,12 +1255,12 @@ export default function SviCarcasses() {
                 <span>
                   {carcasse.svi_carcasse_status_set_at
                     ? new Date(carcasse.svi_carcasse_status_set_at).toLocaleDateString('fr-FR', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })
                     : '-'}
                 </span>
               </div>
@@ -1389,6 +1397,27 @@ export default function SviCarcasses() {
                 Colonnes ({visibleColumns.length}/{allColumns.length})
               </button>
               <DropDownMenu
+                text="Bilan de saison"
+                isActive={saisonOptions.length > 0}
+                menuLinks={saisonOptions.map((option) => ({
+                  linkProps: {
+                    href: '#',
+                    'aria-disabled': !isOnline || isExportingBilan,
+                    className: !isOnline || isExportingBilan ? 'cursor-not-allowed opacity-50' : '',
+                    title: !isOnline
+                      ? "L'export du bilan de saison nécessite une connexion internet"
+                      : 'Bilan des anomalies demandé par la DGAL, pré-rempli avec les données Zacharie',
+                    onClick: (e) => {
+                      e.preventDefault();
+                      if (!isOnline || isExportingBilan) return;
+                      trackFeature('registre-svi-carcasses', 'export', 'bilan-saison', option.year);
+                      exportBilanAnomalies(option.year);
+                    },
+                  },
+                  text: `Excel ${option.label}`,
+                }))}
+              />
+              <DropDownMenu
                 text="Actions"
                 isActive={selectedCarcassesIds.length > 0}
                 menuLinks={[
@@ -1433,27 +1462,27 @@ export default function SviCarcasses() {
                   },
                   ...(TRICHINE_FEATURE_ENABLED
                     ? [
-                        {
-                          linkProps: {
-                            href: '#',
-                            'aria-disabled': sangliersSelectionnes.length === 0,
-                            className:
-                              sangliersSelectionnes.length === 0 ? 'cursor-not-allowed opacity-50' : '',
-                            title:
-                              sangliersSelectionnes.length === 0
-                                ? 'Sélectionnez des carcasses de sanglier avec la case à cocher'
-                                : '',
-                            onClick: (e: React.MouseEvent) => {
-                              e.preventDefault();
-                              if (sangliersSelectionnes.length === 0) return;
-                              navigate(
-                                `/app/svi/trichine/prelever?carcasses=${sangliersSelectionnes.join(',')}`
-                              );
-                            },
+                      {
+                        linkProps: {
+                          href: '#',
+                          'aria-disabled': sangliersSelectionnes.length === 0,
+                          className:
+                            sangliersSelectionnes.length === 0 ? 'cursor-not-allowed opacity-50' : '',
+                          title:
+                            sangliersSelectionnes.length === 0
+                              ? 'Sélectionnez des carcasses de sanglier avec la case à cocher'
+                              : '',
+                          onClick: (e: React.MouseEvent) => {
+                            e.preventDefault();
+                            if (sangliersSelectionnes.length === 0) return;
+                            navigate(
+                              `/app/svi/trichine/prelever?carcasses=${sangliersSelectionnes.join(',')}`
+                            );
                           },
-                          text: `Prélever pour la trichine (${sangliersSelectionnes.length})`,
                         },
-                      ]
+                        text: `Prélever pour la trichine (${sangliersSelectionnes.length})`,
+                      },
+                    ]
                     : []),
                   {
                     linkProps: {
@@ -1501,11 +1530,11 @@ export default function SviCarcasses() {
                 render: c.render,
                 ...(c.sortable
                   ? {
-                      onSortBy: handleSortBy,
-                      onSortOrder: setSortOrder,
-                      sortBy,
-                      sortOrder,
-                    }
+                    onSortBy: handleSortBy,
+                    onSortOrder: setSortOrder,
+                    sortBy,
+                    sortOrder,
+                  }
                   : {}),
               }))}
             />

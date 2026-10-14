@@ -2,6 +2,7 @@ import { UserConnexionResponse } from '@api/src/types/responses';
 import Chargement from '@app/components/Chargement';
 import API from '@app/services/api';
 import { capture } from '@app/services/sentry';
+import { track } from '@app/services/matomo';
 import { createNewFei } from '@app/utils/create-new-fei';
 import { createNewCarcasse } from '@app/utils/create-new-carcasse';
 import useZustandStore from '@app/zustand/store';
@@ -115,7 +116,7 @@ export default function NouvelleFiche() {
           useUser.setState({ user });
           useZustandStore.setState((state) => ({ users: { ...state.users, [user.id]: user } }));
 
-          const newFei = await createNewFei({
+          const newFei = await createNewFei('lien-direct', {
             contexte: contexte,
             date_mise_a_mort: validatedParams.date_mise_a_mort
               ? dayjs(validatedParams.date_mise_a_mort).toDate()
@@ -172,6 +173,12 @@ export default function NouvelleFiche() {
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (error) {
+      track('fiche', 'bloquer', 'lien-invalide');
+    }
+  }, [error]);
 
   return (
     <>

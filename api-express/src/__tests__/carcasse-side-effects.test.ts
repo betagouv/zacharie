@@ -4,6 +4,7 @@ import prisma from '~/prisma';
 import { VITE_APP_URL } from '~/config';
 import sendNotificationToUser from '~/service/notifications';
 import { sendWebhook } from '~/utils/api';
+import { capture } from '~/third-parties/sentry';
 import { formatRenvoiExpediteurEmail } from '~/utils/formatCarcasseEmail';
 import { getEmailDeliveryFailure, sendEmail, sendTemplateEmail } from '~/third-parties/brevo';
 import { BrevoTemplateId } from '~/third-parties/brevo-templates';
@@ -15,6 +16,7 @@ import {
   notifyNextOwnerEntity,
   notifyNextOwnerUser,
   notifySviAssignment,
+  runCarcasseUpdateSideEffects,
   webhookIntermediaireClose,
 } from '~/utils/carcasse-side-effects';
 
@@ -297,10 +299,11 @@ describe('notifyRenvoiExpediteur', () => {
 describe('closeFeiAndNotifyChasseurOnSviCarcasseClose — idempotency', () => {
   test('skips the FEI write when svi_closed_at is already set, and dedups the notification', async () => {
     const existing = makeClosedCarcasse({ svi_closed_at: null, svi_closed_by_user_id: null });
-    const updated = makeClosedCarcasse();
+    const updated = makeClosedCarcasse({ examinateur_initial_user_id: examinateur.id });
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(
       makeFei({ svi_closed_at: new Date('2026-05-19T09:00:00Z') }) as any
     );
+    vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(examinateur as any);
     vi.mocked(prisma.notificationLog.findFirst).mockResolvedValueOnce({ id: 'log-1' } as any);
 
     await closeFeiAndNotifyChasseurOnSviCarcasseClose(existing as any, updated as any);
@@ -853,10 +856,134 @@ describe('notifyNextOwnerEntity', () => {
         emailTemplateParams: {
           sender_name: 'Pierre Petit',
           fei_numero: feiNumero,
-          cta: `${VITE_APP_URL}/app/collecteur-pro/fei/${feiNumero}/collecteur-1`,
+          cta: `${VITE_APP_URL}/app/collecteur/fei/${feiNumero}/collecteur-1`,
         },
         notificationLogAction: `FEI_ASSIGNED_TO_${FeiOwnerRole.COLLECTEUR_PRO}_${feiNumero}_collecteur-1`,
       })
     );
+  });
+});
+
+// Premier détenteur = entité (association) : premier_detenteur_user_id est null. Aucune requête Prisma
+// ne doit partir avec un id null (PrismaClientValidationError "Argument id must not be null").
+describe('premier détenteur entité (premier_detenteur_user_id null)', () => {
+  const expectNoFindUniqueWithNullId = () => {
+    for (const [args] of vi.mocked(prisma.user.findUnique).mock.calls) {
+      expect((args as any).where.id).not.toBeNull();
+    }
+  };
+
+  test('webhookIntermediaireClose → webhook à l’examinateur seulement', async () => {
+    const base: any = {
+      zacharie_carcasse_id: `${feiNumero}_BR-A`,
+      fei_numero: feiNumero,
+      examinateur_initial_user_id: 'exam-1',
+      premier_detenteur_user_id: null,
+      intermediaire_closed_at: null,
+    };
+    await webhookIntermediaireClose(base as any, { ...base, intermediaire_closed_at: new Date() } as any);
+
+    expect(sendWebhook).toHaveBeenCalledOnce();
+    expect(sendWebhook).toHaveBeenCalledWith('exam-1', 'CARCASSE_CLOTUREE', {
+      carcasseZacharieId: `${feiNumero}_BR-A`,
+    });
+    expectNoFindUniqueWithNullId();
+  });
+
+  test('notifyNextOwnerEntity → webhook à l’examinateur seulement', async () => {
+    vi.mocked(prisma.entityAndUserRelations.findMany).mockResolvedValueOnce([] as any);
+    const base: any = {
+      zacharie_carcasse_id: `${feiNumero}_BR-A`,
+      fei_numero: feiNumero,
+      examinateur_initial_user_id: 'exam-1',
+      premier_detenteur_user_id: null,
+      premier_detenteur_prochain_detenteur_id_cache: 'collecteur-1',
+      next_owner_entity_id: null,
+      next_owner_role: FeiOwnerRole.COLLECTEUR_PRO,
+    };
+    await notifyNextOwnerEntity(
+      base as any,
+      { ...base, next_owner_entity_id: 'collecteur-1' } as any,
+      {
+        id: 'pd-user',
+        prenom: 'Pierre',
+        nom_de_famille: 'Petit',
+      } as any
+    );
+
+    expect(sendWebhook).toHaveBeenCalledOnce();
+    expect(sendWebhook).toHaveBeenCalledWith('exam-1', 'CARCASSE_ASSIGNEE_AU_PROCHAIN_DETENTEUR', {
+      carcasseZacharieId: `${feiNumero}_BR-A`,
+    });
+    expectNoFindUniqueWithNullId();
+  });
+
+  test('closeFeiAndNotifyChasseurOnSviCarcasseClose → notifie et webhook l’examinateur seulement', async () => {
+    const existing = makeClosedCarcasse({ svi_closed_at: null, svi_closed_by_user_id: null });
+    const updated = makeClosedCarcasse({
+      examinateur_initial_user_id: examinateur.id,
+      premier_detenteur_user_id: null,
+    });
+    vi.mocked(prisma.carcasse.findMany).mockResolvedValueOnce([makeClosedCarcasse()] as any);
+    vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(examinateur as any);
+
+    await closeFeiAndNotifyChasseurOnSviCarcasseClose(existing as any, updated as any);
+
+    expect(sendNotificationToUser).toHaveBeenCalledOnce();
+    expect(sendWebhook).toHaveBeenCalledOnce();
+    expect(sendWebhook).toHaveBeenCalledWith(examinateur.id, 'CARCASSE_CLOTUREE', {
+      carcasseZacharieId: updated.zacharie_carcasse_id,
+    });
+    expectNoFindUniqueWithNullId();
+  });
+});
+
+describe('runCarcasseUpdateSideEffects', () => {
+  test("l'échec d'un side-effect est capturé et n'empêche pas les suivants", async () => {
+    const existing = makeClosedCarcasse({
+      svi_closed_at: null,
+      svi_closed_by_user_id: null,
+      examinateur_initial_user_id: 'exam-1',
+      premier_detenteur_user_id: null,
+      intermediaire_closed_at: null,
+    });
+    const updated = { ...existing, svi_closed_at: new Date(), intermediaire_closed_at: new Date() };
+    const error = new Error('boom');
+    vi.mocked(prisma.carcasse.findMany).mockRejectedValueOnce(error);
+
+    await runCarcasseUpdateSideEffects(existing as any, updated as any, { id: 'svi-user-1' } as any);
+
+    expect(capture).toHaveBeenCalledWith(error, {
+      extra: {
+        context: 'carcasse_side_effects',
+        step: 'closeFeiAndNotifyChasseurOnSviCarcasseClose',
+        zacharieCarcasseId: updated.zacharie_carcasse_id,
+      },
+      user: { id: 'svi-user-1' },
+    });
+    // webhookIntermediaireClose, en fin de chaîne, a bien tourné
+    expect(sendWebhook).toHaveBeenCalledWith('exam-1', 'CARCASSE_CLOTUREE', {
+      carcasseZacharieId: updated.zacharie_carcasse_id,
+    });
+  });
+});
+
+describe('formatSviAssignedEmail', () => {
+  test("sans entité courante, ne requête pas l'entité et reprend le nom en cache", async () => {
+    const { formatSviAssignedEmail } = await vi.importActual<typeof import('~/utils/formatCarcasseEmail')>(
+      '~/utils/formatCarcasseEmail'
+    );
+    vi.mocked(prisma.carcasse.findMany).mockResolvedValueOnce([] as any);
+
+    const { params } = await formatSviAssignedEmail({
+      fei_numero: feiNumero,
+      current_owner_entity_id: null,
+      current_owner_entity_name_cache: null,
+      current_owner_user_name_cache: 'Pierre Petit',
+      premier_detenteur_prochain_detenteur_id_cache: 'etg-1',
+    } as any);
+
+    expect(prisma.entity.findUnique).not.toHaveBeenCalled();
+    expect(params.entity_name).toBe('Pierre Petit');
   });
 });

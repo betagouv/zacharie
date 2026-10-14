@@ -12,6 +12,7 @@ import SuccessSvg from '@app/assets/svg/success.svg';
 import { CarcasseType, FeiOwnerRole, type Carcasse } from '@prisma/client';
 import { useGetTransmissionsForFei } from '@app/utils/get-transmissions-sorted';
 import { isCarcasseDejaEnvoyee } from '@app/utils/carcasse-deja-envoyee';
+import { matomoClickId } from '@app/services/matomo';
 
 export default function ChasseurFeiEnvoyée() {
   const params = useParams();
@@ -163,6 +164,7 @@ export default function ChasseurFeiEnvoyée() {
                             className="mt-2"
                             linkProps={{
                               to: `/app/chasseur/fei/${params.fei_numero}`,
+                              ...matomoClickId('fiche-attribuer-carcasses-restantes'),
                             }}
                           >
                             Attribuer les carcasses restantes
@@ -178,6 +180,7 @@ export default function ChasseurFeiEnvoyée() {
                 priority="secondary"
                 linkProps={{
                   to: `/app/chasseur/`,
+                  ...matomoClickId('fiche-voir-toutes-les-fiches'),
                 }}
                 iconId="fr-icon-arrow-left-line"
               >
@@ -188,7 +191,7 @@ export default function ChasseurFeiEnvoyée() {
                   type="button"
                   // className="bg-white"
                   onClick={async () => {
-                    const newFei = await createNewFei();
+                    const newFei = await createNewFei('apres-envoi');
                     navigate(`/app/chasseur/fei/${newFei.numero}`);
                   }}
                   iconId="fr-icon-add-circle-line"

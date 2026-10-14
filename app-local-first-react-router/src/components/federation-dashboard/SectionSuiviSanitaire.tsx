@@ -110,7 +110,8 @@ export default function SectionSuiviSanitaire({
               aria-hidden
               className="absolute inset-y-0 left-0 w-1 bg-blue-600"
             />
-            <h4 className="mb-3 text-lg font-bold">Motifs de saisies sanitaires</h4>
+            <h4 className="mb-1 text-lg font-bold">Motifs de saisies sanitaires</h4>
+            <p className="mb-3 text-xs leading-snug text-gray-500">Saisies totales et partielles</p>
             <PieChart
               x={motifsPie.labels}
               y={motifsPie.values}

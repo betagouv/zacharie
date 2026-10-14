@@ -135,6 +135,9 @@ export default function InputCodePostalEtVille({
             return (
               <button
                 key={result}
+                // sans ça le champ perd le focus dès l'appui : le formulaire parent enregistre alors la
+                // saisie partielle, et sa réponse, arrivée après le clic, écrase la commune choisie
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={() => handleSelect(result)}
                 type="button"
                 className="block border-b-2! border-b-gray-200 py-1 pl-4 text-left"

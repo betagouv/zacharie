@@ -54,7 +54,7 @@ export default function FloatingNewFicheButton() {
           : '',
       ].join(' ')}
       onClick={async () => {
-        const newFei = await createNewFei();
+        const newFei = await createNewFei('bouton-flottant');
         navigate(`/app/chasseur/fei/${newFei.numero}`);
       }}
     >

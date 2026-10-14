@@ -1,4 +1,4 @@
-import { Routes, Route, Outlet } from 'react-router';
+import { Routes, Route, Outlet, Navigate, useLocation, useParams } from 'react-router';
 import { useEffect } from 'react';
 import * as Sentry from '@sentry/react';
 import { capture } from './services/sentry';
@@ -177,6 +177,11 @@ function App() {
             path="tableau-de-bord"
             element={<TableauDeBordRedirect />}
           />
+          {/* liens déjà envoyés par email avant la correction de fei-url */}
+          <Route
+            path="collecteur-pro/*"
+            element={<CollecteurProRedirect />}
+          />
         </Route>
         <Route
           path="*"
@@ -187,6 +192,17 @@ function App() {
       <MatomoTracker />
       <OfflineMode />
     </>
+  );
+}
+
+function CollecteurProRedirect() {
+  const params = useParams();
+  const location = useLocation();
+  return (
+    <Navigate
+      replace
+      to={`/app/collecteur/${params['*'] ?? ''}${location.search}${location.hash}`}
+    />
   );
 }
 

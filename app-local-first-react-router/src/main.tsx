@@ -89,6 +89,9 @@ if (import.meta.env.VITE_ENV === 'prod' || import.meta.env.VITE_ENV === 'test') 
       // Cf: https://stackoverflow.com/a/60860369/978690
       'TypeError: cancelled',
       'TypeError: annulé',
+      // Bot Outlook SafeLinks qui ouvre les liens des emails
+      /Object Not Found Matching Id:\d+, MethodName:update/,
+      'AbortError: The connection was closed',
     ],
     beforeSend(event) {
       try {

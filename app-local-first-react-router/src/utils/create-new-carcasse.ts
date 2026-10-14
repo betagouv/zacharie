@@ -3,6 +3,7 @@ import useUser from '@app/zustand/user';
 import { Fei, Carcasse, CarcasseStatus, CarcasseType, FeiOwnerRole, UserRoles } from '@prisma/client';
 import dayjs from 'dayjs';
 import petitGibier from '@app/data/petit-gibier.json';
+import { track } from '@app/services/matomo';
 
 type InitialParamsProps = {
   zacharieCarcasseId: string;
@@ -35,12 +36,15 @@ export async function createNewCarcasse({
   }
   const carcasses = useZustandStore.getState().carcasses;
   if (!numeroBracelet) {
+    track('carcasse', 'bloquer', 'numero-bracelet-manquant');
     throw new Error("Veuillez renseigner le numéro de marquage avant d'enregistrer la carcasse");
   }
   if (!espece) {
+    track('carcasse', 'bloquer', 'espece-manquante');
     throw new Error("Veuillez renseigner l'espèce du gibier avant d'enregistrer la carcasse");
   }
   if (carcasses[zacharieCarcasseId] && !carcasses[zacharieCarcasseId].deleted_at) {
+    track('carcasse', 'bloquer', 'numero-bracelet-deja-utilise');
     throw new Error('Le numéro de marquage est déjà utilisé pour cette fiche');
   }
   const isPetitGibier = petitGibier.especes.includes(espece);
@@ -139,9 +143,16 @@ export async function createNewCarcasse({
     svi_closed_by_user_id: null,
     current_owner_user_id: user.id,
     current_owner_user_name_cache: `${user.prenom} ${user.nom_de_famille}`,
-    current_owner_entity_id: null,
-    current_owner_entity_name_cache: null,
-    current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
+    // examen initial déjà validé : la carcasse rejoint directement le premier détenteur
+    current_owner_entity_id: fei.examinateur_initial_approbation_mise_sur_le_marche
+      ? fei.premier_detenteur_entity_id
+      : null,
+    current_owner_entity_name_cache: fei.examinateur_initial_approbation_mise_sur_le_marche
+      ? fei.premier_detenteur_name_cache
+      : null,
+    current_owner_role: fei.examinateur_initial_approbation_mise_sur_le_marche
+      ? FeiOwnerRole.PREMIER_DETENTEUR
+      : FeiOwnerRole.EXAMINATEUR_INITIAL,
     next_owner_wants_to_sous_traite: null,
     next_owner_sous_traite_at: null,
     next_owner_sous_traite_by_user_id: null,
@@ -170,5 +181,11 @@ export async function createNewCarcasse({
     version_user_id: user.id,
   };
   useZustandStore.getState().createCarcasse(newCarcasse);
+  track(
+    'carcasse',
+    'ajouter',
+    isPetitGibier ? 'petit-gibier' : 'grand-gibier',
+    examinateurAnomaliesCarcasse.length + examinateurAnomaliesAbats.length
+  );
   return newCarcasse;
 }

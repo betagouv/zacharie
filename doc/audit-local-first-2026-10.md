@@ -59,16 +59,16 @@ l'élément reste « non synchronisé » pour toujours (première version de #70
 
 ### C. Stockage local
 
-| #   | Constat                                                                                                                                                                                                                  | PR   | Statut     |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---- | ---------- |
-| C1  | `invitation.tsx` et `creation-de-compte.tsx` appelaient `clearCache()` sans `reset()` : après rechargement, curseur à jour et carcasses vides. Corrigé, plus un garde contre le double effet de StrictMode trouvé en CI. | #707 | Ouverte    |
-| C2  | Si la lecture IndexedDB échoue, plus rien n'est enregistré pendant toute la session, sans message.                                                                                                                       | #708 | Ouverte    |
-| C3  | Une tranche absente est remplacée par l'état initial (tranche vide avec un curseur valide si une écriture a échoué).                                                                                                     | —    | Non traité |
-| C4  | Une écriture en échec (quota, connexion fermée) n'était ni signalée ni retentée.                                                                                                                                         | #708 | Ouverte    |
-| C5  | `carcassesRegistry` était une seconde copie complète des carcasses, écrite à chaque chargement.                                                                                                                          | #709 | Ouverte    |
-| C6  | `localStorage.clear()` effaçait le jeton de l'app mobile pendant la connexion en tant que.                                                                                                                               | #711 | Ouverte    |
-| C7  | Le nettoyage de session pouvait rester bloqué après 10 essais, et des écritures pouvaient arriver pendant le nettoyage.                                                                                                  | #711 | Ouverte    |
-| C8  | `dataIsSynced` était persisté et pas recalculé au démarrage.                                                                                                                                                             | #716 | Ouverte    |
+| #   | Constat                                                                                                                                                                                                                                            | PR   | Statut     |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- | ---------- |
+| C1  | `invitation.tsx` et `creation-de-compte.tsx` appelaient `clearCache()` sans `reset()` : après rechargement, curseur à jour et carcasses vides. Corrigé, plus un garde contre le double effet de StrictMode trouvé en CI.                           | #707 | Ouverte    |
+| C2  | Si la lecture IndexedDB échoue, plus rien n'est enregistré pendant toute la session, sans message.                                                                                                                                                 | #708 | Ouverte    |
+| C3  | Une tranche absente est remplacée par l'état initial (tranche vide avec un curseur valide si une écriture a échoué).                                                                                                                               | —    | Non traité |
+| C4  | Une écriture en échec (quota, connexion fermée) n'était ni signalée ni retentée.                                                                                                                                                                   | #708 | Ouverte    |
+| C5  | `carcassesRegistry` était une seconde copie complète des carcasses, écrite à chaque chargement. Elle restait aussi figée entre deux chargements (modifications hors ligne absentes des listes) : supprimée, les listes la dérivent de `carcasses`. | #709 | Ouverte    |
+| C6  | `localStorage.clear()` effaçait le jeton de l'app mobile pendant la connexion en tant que.                                                                                                                                                         | #711 | Ouverte    |
+| C7  | Le nettoyage de session pouvait rester bloqué après 10 essais, et des écritures pouvaient arriver pendant le nettoyage.                                                                                                                            | #711 | Ouverte    |
+| C8  | `dataIsSynced` était persisté et pas recalculé au démarrage.                                                                                                                                                                                       | #716 | Ouverte    |
 
 ### D. Onglets multiples
 

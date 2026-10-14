@@ -3,6 +3,7 @@ import type {
   Entity,
   EntityAndUserRelations,
   Fei,
+  FeiOwnerRole,
   Carcasse,
   CarcasseType,
   CarcasseIntermediaire,
@@ -224,6 +225,7 @@ export interface AdminUserDataResponse {
     userEntitiesRelations: Array<EntityForAdmin>;
     officialCfei: OfficialCfei | null;
     lockout: AdminUserLockoutInfo;
+    has_password: boolean;
   };
   error: string;
 }
@@ -310,6 +312,37 @@ export interface SviCarcassesAVenirResponse {
   data: {
     carcasses: Array<SviCarcasseAVenir>;
   } | null;
+  error: string;
+}
+
+// Bilan des anomalies de fin de saison (calque DGAL) : une ligne par ETG et groupe d'espèces.
+// Les nombres sont des nombres d'animaux (un lot de petit gibier compte pour ses animaux).
+export interface BilanAnomaliesLigne {
+  etg_id: string;
+  etg_nom: string;
+  etg_departement: string | null;
+  groupe_espece: string;
+  receptionnees: number;
+  controlees: number;
+  saisies_partielles: number;
+  saisies_totales: number;
+  saisies_non_signalees_fei: number;
+  ei_non_valide: number;
+  ei_non_identifiee: number;
+  saisies_totales_ei: number;
+  // Nombre d'animaux par motif SVI (IPM1 ou IPM2), intitulé du référentiel Zacharie.
+  anomalies: Record<string, number>;
+}
+
+export interface BilanAnomaliesData {
+  saison: number;
+  colonnes_anomalies: Array<string>;
+  lignes: Array<BilanAnomaliesLigne>;
+}
+
+export interface BilanAnomaliesResponse {
+  ok: boolean;
+  data: BilanAnomaliesData | null;
   error: string;
 }
 
@@ -774,17 +807,37 @@ export interface AdminSearchResponse {
   error: string;
 }
 
+// Un groupe de carcasses d'une fiche qui partagent le même détenteur actuel et le même destinataire.
+// Le destinataire (next_owner) reste renseigné tant qu'il n'a pas pris en charge, et pour toujours en
+// circuit court, où le destinataire ne prend jamais en charge dans Zacharie.
+export interface AdminFeiDestinataire {
+  current_owner_role: FeiOwnerRole | null;
+  current_owner_label: string | null;
+  next_owner_role: FeiOwnerRole | null;
+  next_owner_label: string | null;
+  nb_carcasses: number;
+}
+
+type AdminFeiRow = Fei & {
+  FeiExaminateurInitialUser: { email: string } | null;
+  FeiPremierDetenteurUser: { email: string } | null;
+  FeiPremierDetenteurEntity: { nom_d_usage: string } | null;
+  _count: { Carcasses: number };
+};
+
 export interface AdminFeisResponse {
   ok: boolean;
   data: {
-    feis: Array<
-      Fei & {
-        FeiExaminateurInitialUser: { email: string } | null;
-        FeiPremierDetenteurUser: { email: string } | null;
-        FeiPremierDetenteurEntity: { nom_d_usage: string } | null;
-        _count: { Carcasses: number };
-      }
-    >;
+    feis: Array<AdminFeiRow & { destinataires: Array<AdminFeiDestinataire> }>;
+    total: number;
+  };
+  error: string;
+}
+
+export interface AdminUserFeisResponse {
+  ok: boolean;
+  data: {
+    feis: Array<AdminFeiRow>;
     total: number;
   };
   error: string;
@@ -842,6 +895,9 @@ export interface AdminFeiDetailResponse {
       FeiPremierDetenteurUser: { email: string } | null;
       FeiPremierDetenteurEntity: { nom_d_usage: string } | null;
     };
+    destinataires: Array<AdminFeiDestinataire>;
+    // Libellés des détenteurs (entités et utilisateurs) cités par les carcasses, par id.
+    ownerLabels: Record<string, string>;
   };
   error: string;
 }

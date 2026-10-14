@@ -17,7 +17,7 @@ import type {
   AdminUsersResponse,
   AdminUserDataResponse,
   AdminNewUserDataResponse,
-  AdminFeisResponse,
+  AdminUserFeisResponse,
   AdminCarcassesResponse,
   AdminUserNotificationsResponse,
   AdminUserLockoutInfo,
@@ -107,6 +107,16 @@ router.post(
   )
 );
 
+const adminNewUserSchema = z.object({
+  [Prisma.UserScalarFieldEnum.email]: z.string().trim().toLowerCase().email(),
+  [Prisma.UserScalarFieldEnum.roles]: z
+    .array(
+      z.enum(Object.values(UserRoles).filter((r) => r !== UserRoles.ADMIN) as [UserRoles, ...UserRoles[]])
+    )
+    .max(1, 'Un utilisateur ne peut avoir qu’un seul rôle'),
+  [Prisma.UserScalarFieldEnum.isZacharieAdmin]: z.boolean(),
+});
+
 router.post(
   '/user/nouveau',
   catchErrors(
@@ -115,15 +125,18 @@ router.post(
       res: express.Response<AdminNewUserDataResponse>,
       next: express.NextFunction
     ) => {
-      const body = req.body;
-
-      const roles = body[Prisma.UserScalarFieldEnum.roles] as UserRoles[];
+      const result = adminNewUserSchema.safeParse(req.body);
+      if (!result.success) {
+        res.status(400).send({ ok: false, data: null, error: result.error.errors[0].message });
+        return;
+      }
+      const { email, roles, isZacharieAdmin } = result.data;
       const createdUser = await prisma.user.create({
         data: {
           id: await createUserId(),
-          email: body[Prisma.UserScalarFieldEnum.email],
+          email,
           roles,
-          isZacharieAdmin: body[Prisma.UserScalarFieldEnum.isZacharieAdmin] ? true : false,
+          isZacharieAdmin,
         },
       });
 
@@ -289,7 +302,7 @@ router.post(
         where: { id: userId },
         data: nextUser,
       });
-      await updateBrevoContact(savedUser);
+      await updateBrevoContact(savedUser, 'ADMIN');
       await updateBrevoChasseurDeal(savedUser);
 
       const userHasNowAllRequiredFields =
@@ -436,6 +449,7 @@ router.get(
       }
 
       const lockout = await getLockoutInfo(user.email);
+      const password = await prisma.password.findUnique({ where: { user_id: user.id } });
 
       res.status(200).send({
         ok: true,
@@ -455,6 +469,7 @@ router.get(
           userEntitiesRelations,
           officialCfei,
           lockout,
+          has_password: !!password?.password,
         },
         error: '',
       });
@@ -472,7 +487,11 @@ const feiUserOR = (userId: string): Prisma.FeiWhereInput[] => [
 router.get(
   '/user/:user_id/feis',
   catchErrors(
-    async (req: express.Request, res: express.Response<AdminFeisResponse>, next: express.NextFunction) => {
+    async (
+      req: express.Request,
+      res: express.Response<AdminUserFeisResponse>,
+      next: express.NextFunction
+    ) => {
       const userId = req.params.user_id;
       const limit = parseInt(req.query.limit as string) || 100;
       const offset = parseInt(req.query.offset as string) || 0;
@@ -664,6 +683,57 @@ router.post(
       });
       const lockout = await getLockoutInfo(user.email);
       res.status(200).send({ ok: true, data: { lockout }, error: '' });
+    }
+  )
+);
+
+// Lien d'invitation à copier et transmettre à la main : l'utilisateur y choisit son mot de passe.
+// Valable 7 jours (voir /user/signup-with-invitation-token).
+router.post(
+  '/user/:user_id/invitation-link',
+  catchErrors(
+    async (
+      req: express.Request,
+      res: express.Response<{ ok: boolean; data: { url: string } | null; error: string }>,
+      next: express.NextFunction
+    ) => {
+      const userId = req.params.user_id;
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (!user) {
+        res.status(400).send({ ok: false, data: null, error: 'User not found' });
+        return;
+      }
+      if (!user.email) {
+        res.status(400).send({ ok: false, data: null, error: "Cet utilisateur n'a pas d'email" });
+        return;
+      }
+      const existingPassword = await prisma.password.findUnique({ where: { user_id: user.id } });
+      if (existingPassword?.password) {
+        res.status(400).send({ ok: false, data: null, error: 'Cet utilisateur a déjà un mot de passe' });
+        return;
+      }
+      const token = crypto.randomUUID();
+      await prisma.password.upsert({
+        where: { user_id: user.id },
+        update: {
+          reset_password_token: token,
+          reset_password_last_email_sent_at: new Date(),
+        },
+        create: {
+          User: { connect: { id: user.id } },
+          password: '',
+          reset_password_token: token,
+          reset_password_last_email_sent_at: new Date(),
+        },
+      });
+      await prisma.securityLog.create({
+        data: {
+          email: user.email,
+          action: 'INVITATION_LINK_GENERATED_FROM_ADMIN',
+        },
+      });
+      const url = `${VITE_APP_URL}/app/connexion/invitation?invitation-token=${token}&email=${encodeURIComponent(user.email)}`;
+      res.status(200).send({ ok: true, data: { url }, error: '' });
     }
   )
 );

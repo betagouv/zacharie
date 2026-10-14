@@ -12,7 +12,7 @@ export function getFeiUrlForRole(
   if (role === UserRoles.CHASSEUR) url += 'chasseur/';
   else if (role === UserRoles.SVI) url += 'svi/';
   else if (role === UserRoles.ETG) url += 'etg/';
-  else if (role === UserRoles.COLLECTEUR_PRO) url += 'collecteur-pro/';
+  else if (role === UserRoles.COLLECTEUR_PRO) url += 'collecteur/';
   else {
     throw new Error(`Unknown role in building fei url: ${role}`);
   }

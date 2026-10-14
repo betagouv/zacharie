@@ -22,7 +22,6 @@ describe('migratePersistedState', () => {
         c1: { zacharie_carcasse_id: 'c1', is_synced: true },
         c2: { zacharie_carcasse_id: 'c2', is_synced: false },
       },
-      carcassesRegistry: [{ zacharie_carcasse_id: 'c1', is_synced: true }],
       carcassesIntermediaireById: {
         ci1: { intermediaire_id: 'i1', is_synced: false },
         ci2: { intermediaire_id: 'i2', is_synced: true },
@@ -49,7 +48,6 @@ describe('migratePersistedState', () => {
 
     expect(Object.keys(migrated.feis!)).toEqual(['ZACH-1']);
     expect(Object.keys(migrated.carcasses!)).toEqual(['c2']);
-    expect(migrated.carcassesRegistry!.map((c) => c.zacharie_carcasse_id)).toEqual(['c2']);
     expect(Object.keys(migrated.carcassesIntermediaireById!)).toEqual(['ci1']);
     expect(migrated.modifRequestsByCarcasseId).toEqual({ c1: [{ id: 'r2', is_synced: false }] });
     expect(migrated.logs).toEqual([{ id: 'l2', is_synced: false }]);

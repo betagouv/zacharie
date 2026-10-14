@@ -43,6 +43,8 @@ import type { EntityWithUserRelation } from '~/src/types/entity';
 import { CarcasseTransmission } from '@app/types/carcasse';
 import { isCarcasseDejaEnvoyee } from '@app/utils/carcasse-deja-envoyee';
 import { USAGE_DOMESTIQUE_ID, USAGE_DOMESTIQUE_LABEL } from '@app/utils/usage-domestique';
+import { track } from '@app/services/matomo';
+import type { MatomoName } from '@app/services/matomo-events';
 
 export interface DestinatairePremierDetenteurHandle {
   validate: () => string | null;
@@ -158,6 +160,13 @@ interface GroupFieldErrors {
   transportType?: string;
   transportDate?: string;
 }
+
+const STEP_TRACKING_NAME: Record<string, MatomoName<'vente-don', 'bloquer'>> = {
+  Destinataire: 'destinataire',
+  Carcasses: 'carcasses',
+  Stockage: 'stockage',
+  Transport: 'transport',
+};
 
 function getGroupFieldErrors(
   group: DispatchGroup,
@@ -1358,14 +1367,19 @@ export default function DestinataireSelectPremierDetenteur({
 
   const currentStepValid = !(STEP_FIELDS[steps[boundedStep - 1]] ?? []).some((f) => draftFieldErrors[f]);
 
+  const trackBlockedStep = useCallback(() => {
+    track('vente-don', 'bloquer', STEP_TRACKING_NAME[steps[boundedStep - 1]]);
+  }, [steps, boundedStep]);
+
   const goToNextStep = useCallback(() => {
     if (!currentStepValid) {
+      trackBlockedStep();
       setShowModalErrors(true);
       return;
     }
     setShowModalErrors(false);
     setCurrentStep((s) => s + 1);
-  }, [currentStepValid]);
+  }, [currentStepValid, trackBlockedStep]);
 
   const goToPrevStep = useCallback(() => {
     setShowModalErrors(false);
@@ -1380,9 +1394,11 @@ export default function DestinataireSelectPremierDetenteur({
         ? { ...draft, carcasseIds: getCarcassesLibresIds(draft.id) }
         : draft;
     if (getGroupValidationError(finalDraft, entities)) {
+      trackBlockedStep();
       setShowModalErrors(true);
       return;
     }
+    track('vente-don', 'enregistrer', isUsageDomestique(finalDraft) ? 'usage-domestique' : 'destinataire');
     setDispatchGroups((prev) => {
       // Exclusivité : les carcasses de cette vente / ce don quittent les autres.
       const claimed = new Set(finalDraft.carcasseIds);
@@ -1393,7 +1409,7 @@ export default function DestinataireSelectPremierDetenteur({
     });
     setDraft(null);
     dispatchModal.close();
-  }, [draft, draftCarcasseMode, showCarcasseSelector, getCarcassesLibresIds, entities]);
+  }, [draft, draftCarcasseMode, showCarcasseSelector, getCarcassesLibresIds, entities, trackBlockedStep]);
 
   const removeGroup = useCallback((groupId: string) => {
     setDispatchGroups((prev) => prev.filter((g) => g.id !== groupId));
@@ -1402,6 +1418,7 @@ export default function DestinataireSelectPremierDetenteur({
   const confirmRemoveDraft = useCallback(() => {
     if (draft) {
       removeGroup(draft.id);
+      track('vente-don', 'supprimer');
     }
     setDraft(null);
     confirmDeleteDispatchModal.close();
@@ -1556,6 +1573,9 @@ export default function DestinataireSelectPremierDetenteur({
         : null;
 
       const nextTransmission: CarcasseTransmission = {
+        // le membre de l'association qui transmet devient le détenteur courant
+        current_owner_user_id: user.id,
+        current_owner_user_name_cache: `${user.prenom} ${user.nom_de_famille}`,
         next_owner_entity_id: group.recipientEntityId,
         next_owner_role: entities[group.recipientEntityId]?.type as FeiOwnerRole,
         premier_detenteur_prochain_detenteur_role_cache: entities[group.recipientEntityId]
@@ -1590,6 +1610,12 @@ export default function DestinataireSelectPremierDetenteur({
       });
     }
 
+    track(
+      'fiche',
+      'transmettre',
+      'destinataire',
+      dispatchGroups.reduce((total, group) => total + group.carcasseIds.length, 0)
+    );
     syncData('premier-detenteur-need-select-next-select-destinataire');
     navigate(`/app/chasseur/fei/${fei.numero}/envoyée`);
   };
@@ -1785,6 +1811,7 @@ export default function DestinataireSelectPremierDetenteur({
                     onClick: (event) => {
                       event.preventDefault();
                       if (globalValidationError) {
+                        track('fiche', 'bloquer', 'vente-don');
                         revealErrorsAndScroll();
                         return;
                       }

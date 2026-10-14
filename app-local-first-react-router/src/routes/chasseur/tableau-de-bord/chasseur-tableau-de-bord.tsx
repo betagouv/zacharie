@@ -102,7 +102,7 @@ function MesChassesContent() {
               priority="primary"
               iconId="fr-icon-add-circle-line"
               onClick={async () => {
-                const newFei = await createNewFei();
+                const newFei = await createNewFei('tableau-de-bord-vide');
                 navigate(`/app/chasseur/fei/${newFei.numero}`);
               }}
             >

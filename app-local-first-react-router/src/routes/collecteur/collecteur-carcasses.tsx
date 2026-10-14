@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
-import useZustandStore from '@app/zustand/store';
+import { useCarcassesRegistry } from '@app/utils/useCarcassesRegistry';
 import { Pagination } from '@codegouvfr/react-dsfr/Pagination';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
@@ -69,9 +69,14 @@ type CatalogColumn = {
   render?: (item: Carcasse, index: number) => React.ReactNode;
 };
 
+type FeiMeta = {
+  simpleStatus: TransmissionSimpleStatus | undefined;
+  premierDetenteurName: Carcasse['premier_detenteur_name_cache'];
+};
+
 export default function CollecteurCarcasses() {
   const user = useMostFreshUser('collecteur-carcasses')!;
-  const carcassesRegistry = useZustandStore((state) => state.carcassesRegistry);
+  const carcassesRegistry = useCarcassesRegistry();
   // Le collecteur travaille avec la Transmission (dérivée des carcasses), jamais avec le store `feis`.
   // commune_mise_a_mort vit sur transmissions[fei_numero].fei (les autres champs filtrables sont sur la carcasse).
   const transmissions = useTransmissions();
@@ -154,8 +159,9 @@ export default function CollecteurCarcasses() {
     );
   }, [filtersKey, setSearchParams]);
 
-  const [filterableFields, especeOptions, statusOptions, premierDetenteurOptions, filteredData] =
+  const { filterableFields, especeOptions, statusOptions, premierDetenteurOptions, feiMetaByFeiNumero } =
     useMemo(() => {
+      const _feiMetaByFeiNumero: Record<Carcasse['fei_numero'], FeiMeta> = {};
       const _ccgNames: Record<NonNullable<Carcasse['premier_detenteur_depot_entity_name_cache']>, true> = {};
       const _motifs: Record<
         string, // one of 'svi_ipm2_lesions_ou_motifs',
@@ -168,97 +174,108 @@ export default function CollecteurCarcasses() {
         NonNullable<Carcasse['premier_detenteur_name_cache']>,
         true
       > = {};
-      const _filteredData: Array<Carcasse> = [];
-      const braceletQuery = quickFilterBracelet.trim().toLowerCase();
-      // filter helper
-      const excludedFei: Record<Carcasse['fei_numero'], true> = {};
-      const seenFei: Record<Carcasse['fei_numero'], true> = {};
-      const withQuickFilterEspece = Object.keys(quickFilterEspeces).length > 0;
-      const withQuickFilterTransmissionStatuses = Object.keys(quickFilterTransmissionStatuses).length > 0;
-      const withQuickFilterStatuses = Object.keys(quickFilterStatuses).length > 0;
-      const withQuickFilterPremierDetenteurs = Object.keys(quickFilterPremierDetenteurs).length > 0;
 
       for (const carcasse of carcassesRegistry) {
-        /* create filters */
-        if (!seenFei[carcasse.fei_numero]) {
-          seenFei[carcasse.fei_numero] = true;
-          let feiIsExcluded = withQuickFilterPremierDetenteurs || withQuickFilterTransmissionStatuses;
-          const simpleStatus = transmissions[getTransmissionId(carcasse)]?.labels.simpleStatus;
-          if (
-            withQuickFilterTransmissionStatuses &&
-            simpleStatus &&
-            quickFilterTransmissionStatuses[simpleStatus]
-          )
-            feiIsExcluded = false;
+        if (!_feiMetaByFeiNumero[carcasse.fei_numero]) {
+          _feiMetaByFeiNumero[carcasse.fei_numero] = {
+            simpleStatus: transmissions[getTransmissionId(carcasse)]?.labels.simpleStatus,
+            premierDetenteurName: carcasse.premier_detenteur_name_cache,
+          };
           if (carcasse.premier_detenteur_name_cache) {
             _premierDetenteurOptions[carcasse.premier_detenteur_name_cache] = true;
-            if (
-              withQuickFilterPremierDetenteurs &&
-              quickFilterPremierDetenteurs[carcasse.premier_detenteur_name_cache]
-            )
-              feiIsExcluded = false;
           }
           if (carcasse.premier_detenteur_depot_entity_name_cache) {
             _ccgNames[carcasse.premier_detenteur_depot_entity_name_cache] = true;
           }
-          if (feiIsExcluded) excludedFei[carcasse.fei_numero] = true;
         }
         if (carcasse.espece) _especeOptions[carcasse.espece] = true;
         for (const motif of carcasse.svi_ipm2_lesions_ou_motifs) {
           if (motif && !_motifs[motif]) _motifs[motif] = true;
         }
-        const statusLabel = getCarcasseStatusLabel(carcasse);
-        _statusOptions[statusLabel] = true;
-        /* filter data */
-        if (excludedFei[carcasse.fei_numero]) continue;
-        if (!filterCarcassesInRegistre(filters)(carcasse, transmissions[getTransmissionId(carcasse)]?.fei))
-          continue;
-        if (braceletQuery && !carcasse.numero_bracelet?.toLowerCase().includes(braceletQuery)) {
-          continue;
-        }
-        if (withQuickFilterEspece && carcasse.espece && !quickFilterEspeces[carcasse.espece]) continue;
-        if (withQuickFilterStatuses && !quickFilterStatuses[getCarcasseStatusLabel(carcasse)]) continue;
-        _filteredData.push(carcasse);
+        _statusOptions[getCarcasseStatusLabel(carcasse)] = true;
       }
       const sortedMotifs = Object.keys(_motifs).sort();
       const sortedCcgNames = Object.keys(_ccgNames).sort();
       const sortedEtgNames: string[] = [];
-      return [
-        carcasseFilterableFields(sortedMotifs, sortedEtgNames, sortedCcgNames),
-        Object.keys(_especeOptions).sort(),
-        _statusOptions,
-        _premierDetenteurOptions,
-        _filteredData.sort((a, b) => {
-          // @ts-expect-error: svi_carcasse_archived is isCarcasseSviArchived
-          const aValue = sortBy === 'svi_carcasse_archived' ? isCarcasseSviArchived(a) : a[sortBy];
-          // @ts-expect-error: svi_carcasse_archived is isCarcasseSviArchived
-          const bValue = sortBy === 'svi_carcasse_archived' ? isCarcasseSviArchived(b) : b[sortBy];
-          if (!aValue) {
-            if (bValue) return sortOrder === 'ASC' ? 1 : -1;
-            return 0;
-          }
-          if (!bValue) {
-            if (aValue) return sortOrder === 'ASC' ? -1 : 1;
-            return 0;
-          }
-          if (aValue === bValue) return 0;
-          if (aValue < bValue) return sortOrder === 'ASC' ? -1 : 1;
-          if (aValue > bValue) return sortOrder === 'ASC' ? 1 : -1;
-          return 0;
-        }),
-      ];
-    }, [
-      quickFilterBracelet,
-      quickFilterEspeces,
-      quickFilterTransmissionStatuses,
-      quickFilterStatuses,
-      quickFilterPremierDetenteurs,
-      carcassesRegistry,
-      filters,
-      transmissions,
-      sortBy,
-      sortOrder,
-    ]);
+      return {
+        filterableFields: carcasseFilterableFields(sortedMotifs, sortedEtgNames, sortedCcgNames),
+        especeOptions: Object.keys(_especeOptions).sort(),
+        statusOptions: _statusOptions,
+        premierDetenteurOptions: _premierDetenteurOptions,
+        feiMetaByFeiNumero: _feiMetaByFeiNumero,
+      };
+    }, [carcassesRegistry, transmissions]);
+
+  // Séparé des options : taper dans un filtre ne recalcule que le filtrage et le tri.
+  const filteredData = useMemo(() => {
+    const _filteredData: Array<Carcasse> = [];
+    const braceletQuery = quickFilterBracelet.trim().toLowerCase();
+    const excludedFei: Record<Carcasse['fei_numero'], boolean> = {};
+    const withQuickFilterEspece = Object.keys(quickFilterEspeces).length > 0;
+    const withQuickFilterTransmissionStatuses = Object.keys(quickFilterTransmissionStatuses).length > 0;
+    const withQuickFilterStatuses = Object.keys(quickFilterStatuses).length > 0;
+    const withQuickFilterPremierDetenteurs = Object.keys(quickFilterPremierDetenteurs).length > 0;
+    const withFilters = filters?.some((filter) => Boolean(filter?.value));
+    const isInRegistre = filterCarcassesInRegistre(filters);
+    const isFeiExcluded = (fei_numero: Carcasse['fei_numero']) => {
+      const meta = feiMetaByFeiNumero[fei_numero];
+      if (
+        withQuickFilterTransmissionStatuses &&
+        meta.simpleStatus &&
+        quickFilterTransmissionStatuses[meta.simpleStatus]
+      )
+        return false;
+      if (
+        meta.premierDetenteurName &&
+        withQuickFilterPremierDetenteurs &&
+        quickFilterPremierDetenteurs[meta.premierDetenteurName]
+      )
+        return false;
+      return withQuickFilterPremierDetenteurs || withQuickFilterTransmissionStatuses;
+    };
+
+    for (const carcasse of carcassesRegistry) {
+      excludedFei[carcasse.fei_numero] ??= isFeiExcluded(carcasse.fei_numero);
+      if (excludedFei[carcasse.fei_numero]) continue;
+      if (withFilters && !isInRegistre(carcasse, transmissions[getTransmissionId(carcasse)]?.fei)) continue;
+      if (braceletQuery && !carcasse.numero_bracelet?.toLowerCase().includes(braceletQuery)) {
+        continue;
+      }
+      if (withQuickFilterEspece && carcasse.espece && !quickFilterEspeces[carcasse.espece]) continue;
+      if (withQuickFilterStatuses && !quickFilterStatuses[getCarcasseStatusLabel(carcasse)]) continue;
+      _filteredData.push(carcasse);
+    }
+    return _filteredData.sort((a, b) => {
+      // @ts-expect-error: svi_carcasse_archived is isCarcasseSviArchived
+      const aValue = sortBy === 'svi_carcasse_archived' ? isCarcasseSviArchived(a) : a[sortBy];
+      // @ts-expect-error: svi_carcasse_archived is isCarcasseSviArchived
+      const bValue = sortBy === 'svi_carcasse_archived' ? isCarcasseSviArchived(b) : b[sortBy];
+      if (!aValue) {
+        if (bValue) return sortOrder === 'ASC' ? 1 : -1;
+        return 0;
+      }
+      if (!bValue) {
+        if (aValue) return sortOrder === 'ASC' ? -1 : 1;
+        return 0;
+      }
+      if (aValue === bValue) return 0;
+      if (aValue < bValue) return sortOrder === 'ASC' ? -1 : 1;
+      if (aValue > bValue) return sortOrder === 'ASC' ? 1 : -1;
+      return 0;
+    });
+  }, [
+    quickFilterBracelet,
+    quickFilterEspeces,
+    quickFilterTransmissionStatuses,
+    quickFilterStatuses,
+    quickFilterPremierDetenteurs,
+    carcassesRegistry,
+    feiMetaByFeiNumero,
+    filters,
+    transmissions,
+    sortBy,
+    sortOrder,
+  ]);
 
   const paginatedData = useMemo(() => {
     const start = (page - 1) * itemsPerPage;

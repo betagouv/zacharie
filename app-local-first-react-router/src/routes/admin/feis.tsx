@@ -7,6 +7,7 @@ import CheckboxFilterSection from '@app/components/CheckboxFilterSection';
 import DateRangeFilterSection from '@app/components/DateRangeFilterSection';
 import type { AdminFeisResponse, AdminFeisFilterOptionsResponse } from '@api/src/types/responses';
 import dayjs from 'dayjs';
+import { formatDestinataire } from '@app/utils/admin-fei-destinataire';
 
 type FeiRow = AdminFeisResponse['data']['feis'][number];
 type FilterOptions = AdminFeisFilterOptionsResponse['data'];
@@ -243,6 +244,7 @@ export default function AdminFeis() {
               <th className="p-1">commune</th>
               <th className="p-1">examinateur</th>
               <th className="p-1">premier détenteur</th>
+              <th className="p-1">destinataire</th>
               <th className="p-1">nb carcasses</th>
               {/* <th className="p-1">SVI</th> */}
               <th className="p-1">created_at</th>
@@ -285,6 +287,24 @@ export default function AdminFeis() {
                   }
                 >
                   {row.FeiPremierDetenteurEntity?.nom_d_usage ?? row.FeiPremierDetenteurUser?.email ?? '—'}
+                </td>
+                <td className="max-w-[240px] p-1">
+                  {row.destinataires.length === 0
+                    ? '—'
+                    : row.destinataires.map((destinataire, index) => {
+                        const label = formatDestinataire(destinataire);
+                        const text =
+                          row.destinataires.length > 1 ? `${label} (${destinataire.nb_carcasses})` : label;
+                        return (
+                          <div
+                            key={index}
+                            className="truncate"
+                            title={text}
+                          >
+                            {text}
+                          </div>
+                        );
+                      })}
                 </td>
                 <td className="p-1">{row._count.Carcasses}</td>
                 {/* <td

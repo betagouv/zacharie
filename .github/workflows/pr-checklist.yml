@@ -1,0 +1,76 @@
+name: PR checklist
+
+# Pour une PR `fix:` / `feat:`, vérifie qu'elle contient un test e2e et une section « ## Comment tester ».
+# Non bloquant : poste (ou met à jour) un commentaire sur la PR et des annotations, sans jamais échouer.
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+
+concurrency:
+  group: pr-checklist-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  checklist:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+    steps:
+      - name: Check e2e test and manual test description
+        run: |
+          # Titre et description lus depuis le payload de l'événement, jamais interpolés dans le script.
+          title=$(jq -r '.pull_request.title' "$GITHUB_EVENT_PATH")
+          body=$(jq -r '.pull_request.body // ""' "$GITHUB_EVENT_PATH")
+
+          if ! grep -qE '^(fix|feat)(\(.+\))?:' <<<"$title"; then
+            echo "Titre « $title » : ni fix ni feat, rien à vérifier."
+            exit 0
+          fi
+
+          files=$(gh pr diff "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --name-only)
+
+          # e2e : un fichier modifié dans e2e/, ou une justification « Pas de test e2e » dans la description.
+          if grep -q '^e2e/' <<<"$files"; then
+            e2e="✅ Test e2e ajouté ou mis à jour"
+            e2e_ok=1
+          elif grep -qi 'pas de test e2e' <<<"$body"; then
+            e2e="➖ Pas de test e2e (justifié dans la description)"
+            e2e_ok=1
+          else
+            e2e="❌ Aucun fichier modifié dans \`e2e/\`. Ajoute ou mets à jour un test, ou écris « Pas de test e2e : <raison> » dans la description."
+            e2e_ok=0
+          fi
+
+          # Comment tester : un titre « ## Comment tester » suivi d'au moins une ligne non vide.
+          section=$(awk 'tolower($0) ~ /^##+ *comment tester/ {found=1; next} found && /^##+ / {exit} found' <<<"$body" | tr -d '[:space:]')
+          if [ -n "$section" ]; then
+            manual="✅ Section « Comment tester » présente"
+            manual_ok=1
+          else
+            manual="❌ Ajoute une section \`## Comment tester\` dans la description : compte de test, état de départ, étapes, résultat attendu."
+            manual_ok=0
+          fi
+
+          echo "$e2e"
+          echo "$manual"
+          [ "$e2e_ok" = 1 ] || echo "::warning title=PR checklist::Pas de test e2e"
+          [ "$manual_ok" = 1 ] || echo "::warning title=PR checklist::Pas de section « Comment tester »"
+
+          marker='<!-- pr-checklist -->'
+          printf '%s\n### Checklist PR\n\n- %s\n- %s\n' "$marker" "$e2e" "$manual" > comment.md
+
+          comment_id=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" --paginate \
+            --jq ".[] | select(.body | startswith(\"$marker\")) | .id" | head -n1)
+          # Le commentaire n'est créé que s'il manque quelque chose ; ensuite il est mis à jour à chaque run.
+          # `|| true` : sur une PR venant d'un fork, le token est en lecture seule.
+          if [ -n "$comment_id" ]; then
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$comment_id" -F body=@comment.md > /dev/null || true
+          elif [ "$e2e_ok" = 0 ] || [ "$manual_ok" = 0 ]; then
+            gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --body-file comment.md || true
+          fi

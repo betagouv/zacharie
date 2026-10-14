@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { FeiOwnerRole, UserEtgRoles, UserRoles } from '@prisma/client';
 import {
   RiCheckboxCircleLine,
@@ -13,9 +13,6 @@ import type { useEntitiesIdsWorkingDirectlyForObj } from '@app/utils/get-entity-
 // `@app/zustand/user` pulls in the whole IndexedDB/localStorage store chain (via circuit-court.ts),
 // which we don't need here — stub it so the module graph stays light.
 vi.mock('@app/zustand/user', () => ({ default: {} }));
-
-const capture = vi.fn();
-vi.mock('@app/services/sentry', () => ({ capture: (...args: unknown[]) => capture(...args) }));
 
 import {
   getCurrentStepLabel,
@@ -41,10 +38,6 @@ function working(...ids: string[]): EntitiesObj {
 }
 
 const noEntities: EntitiesObj = {} as EntitiesObj;
-
-beforeEach(() => {
-  capture.mockClear();
-});
 
 describe('getCurrentStepLabel — dispatch by role', () => {
   it('returns "Clôturée" for circuit court roles regardless of status', () => {
@@ -90,8 +83,7 @@ describe('getCurrentStepLabel — dispatch by role', () => {
     expect(getCurrentStepLabel('En cours', t(), UserRoles.SVI, noEntities)).toBe('En cours');
   });
 
-  it('captures the error and falls back to "En cours" when a label cannot be resolved', () => {
-    // current not ETG, next ETG, but next entity is not mine → throws inside the ETG helper.
+  it('ETG viewing a fiche sent to another ETG (current not ETG) → transport vers un autre établissement', () => {
     const result = getCurrentStepLabel(
       'En cours',
       t({
@@ -102,11 +94,7 @@ describe('getCurrentStepLabel — dispatch by role', () => {
       UserRoles.ETG,
       noEntities
     );
-    expect(result).toBe('En cours');
-    expect(capture).toHaveBeenCalledTimes(1);
-    const [error, context] = capture.mock.calls[0];
-    expect(error).toBeInstanceOf(Error);
-    expect((context as { tags: { role: string } }).tags.role).toBe('ETG');
+    expect(result).toBe('Transport vers un autre établissement de traitement');
   });
 });
 
@@ -253,8 +241,8 @@ describe('getCurrentStepLabelForEtg', () => {
     ).toBe('Fiche reçue, pas encore prise en charge');
   });
 
-  it('heading to an ETG that is not mine, current not ETG → throws (unresolvable)', () => {
-    expect(() =>
+  it('heading to an ETG that is not mine, current not ETG → transport vers un autre établissement', () => {
+    expect(
       getCurrentStepLabelForEtg(
         'En cours',
         t({
@@ -264,7 +252,21 @@ describe('getCurrentStepLabelForEtg', () => {
         }),
         noEntities
       )
-    ).toThrow('No current step label for ETG next/role');
+    ).toBe('Transport vers un autre établissement de traitement');
+  });
+
+  it('carried by a collecteur to an ETG that is not mine → transport vers un autre établissement', () => {
+    expect(
+      getCurrentStepLabelForEtg(
+        'En cours',
+        t({
+          current_owner_role: FeiOwnerRole.COLLECTEUR_PRO,
+          next_owner_role: 'ETG',
+          next_owner_entity_id: 'etg-other',
+        }),
+        working('etg-mine')
+      )
+    ).toBe('Transport vers un autre établissement de traitement');
   });
 
   it('currently held by the transporter (collecteur pro), not heading to ETG → prise en charge par le transporteur', () => {

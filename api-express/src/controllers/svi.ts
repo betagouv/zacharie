@@ -5,8 +5,37 @@ import { catchErrors } from '~/middlewares/errors';
 import prisma from '~/prisma';
 import { CarcasseType, UserRoles } from '@prisma/client';
 import { RequestWithUser } from '~/types/request';
-import type { SviCarcassesAVenirResponse, SviTracabiliteAmontResponse } from '~/types/responses';
+import type {
+  BilanAnomaliesResponse,
+  SviCarcassesAVenirResponse,
+  SviTracabiliteAmontResponse,
+} from '~/types/responses';
+import { getBilanAnomalies } from '~/utils/bilan-anomalies';
 import { carcassesAVenirChezEtgWhere, getEtgsLinkedToSviUser } from '~/utils/svi';
+
+// ETG rattachés au(x) SVI de l'utilisateur, avec un libellé d'affichage par ETG.
+async function getEtgsLinkedToSviUser(userId: string) {
+  const sviEntityRelations = await prisma.entityAndUserRelations.findMany({
+    where: {
+      owner_id: userId,
+      relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+      status: { in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER] },
+    },
+    select: { entity_id: true },
+  });
+  const sviEntityIds = sviEntityRelations.map((r) => r.entity_id);
+
+  const etgs = await prisma.entity.findMany({
+    where: {
+      etg_linked_to_svi_id: { in: sviEntityIds },
+      deleted_at: null,
+    },
+    select: { id: true, nom_d_usage: true, raison_sociale: true },
+  });
+  const etgIds = etgs.map((e) => e.id);
+  const etgNameById = new Map(etgs.map((e) => [e.id, e.nom_d_usage || e.raison_sociale || 'ETG']));
+  return { etgIds, etgNameById };
+}
 
 // Nombre d'animaux comptés par carcasse, comme ailleurs dans l'app :
 // petit gibier = un lot de plusieurs animaux, grand gibier = 1 carcasse = 1 animal.
@@ -165,6 +194,27 @@ router.get(
     amont.enAttente = Math.max(0, amont.recuesEtg - amont.aVenir - amont.refuseesEtg - amont.manquantesEtg);
 
     res.status(200).send({ ok: true, data: { amont }, error: '' });
+  })
+);
+
+// Bilan des anomalies de fin de saison (calque DGAL), pour les ETG rattachés au SVI.
+router.get(
+  '/bilan-anomalies',
+  passport.authenticate('user', { session: false }),
+  catchErrors(async (req: RequestWithUser, res: express.Response<BilanAnomaliesResponse>) => {
+    if (!req.user.roles.includes(UserRoles.SVI)) {
+      res.status(403).send({ ok: false, data: null, error: 'Accès réservé au SVI' });
+      return;
+    }
+    const saison = Number(req.query.saison);
+    if (!Number.isInteger(saison)) {
+      res.status(400).send({ ok: false, data: null, error: 'Saison invalide' });
+      return;
+    }
+
+    const { etgIds } = await getEtgsLinkedToSviUser(req.user.id);
+    const bilan = await getBilanAnomalies(saison, etgIds);
+    res.status(200).send({ ok: true, data: bilan, error: '' });
   })
 );
 
