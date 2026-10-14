@@ -13,30 +13,6 @@ import type {
 import { getBilanAnomalies } from '~/utils/bilan-anomalies';
 import { carcassesAVenirChezEtgWhere, getEtgsLinkedToSviUser } from '~/utils/svi';
 
-// ETG rattachés au(x) SVI de l'utilisateur, avec un libellé d'affichage par ETG.
-async function getEtgsLinkedToSviUser(userId: string) {
-  const sviEntityRelations = await prisma.entityAndUserRelations.findMany({
-    where: {
-      owner_id: userId,
-      relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-      status: { in: [EntityRelationStatus.ADMIN, EntityRelationStatus.MEMBER] },
-    },
-    select: { entity_id: true },
-  });
-  const sviEntityIds = sviEntityRelations.map((r) => r.entity_id);
-
-  const etgs = await prisma.entity.findMany({
-    where: {
-      etg_linked_to_svi_id: { in: sviEntityIds },
-      deleted_at: null,
-    },
-    select: { id: true, nom_d_usage: true, raison_sociale: true },
-  });
-  const etgIds = etgs.map((e) => e.id);
-  const etgNameById = new Map(etgs.map((e) => [e.id, e.nom_d_usage || e.raison_sociale || 'ETG']));
-  return { etgIds, etgNameById };
-}
-
 // Nombre d'animaux comptés par carcasse, comme ailleurs dans l'app :
 // petit gibier = un lot de plusieurs animaux, grand gibier = 1 carcasse = 1 animal.
 function countAnimaux(carcasse: { type: CarcasseType | null; nombre_d_animaux: number | null }): number {
