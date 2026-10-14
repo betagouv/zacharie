@@ -8,8 +8,10 @@ import Chargement from '@app/components/Chargement';
 import AdminDeletedBanner from '@app/components/AdminDeletedBanner';
 import type { AdminFeiDetailResponse, AdminSoftDeleteResponse } from '@api/src/types/responses';
 import dayjs from 'dayjs';
+import { formatOwner, getNextOwnerStatus } from '@app/utils/admin-fei-destinataire';
 
 type FeiDetail = AdminFeiDetailResponse['data']['fei'];
+type FeiDetailData = AdminFeiDetailResponse['data'];
 
 function formatDate(d: Date | string | null | undefined): string {
   if (!d) return '—';
@@ -78,6 +80,8 @@ export default function AdminFeiDetail() {
 function AdminFeiDetailContent() {
   const params = useParams<{ fei_numero: string }>();
   const [fei, setFei] = useState<FeiDetail | null>(null);
+  const [destinataires, setDestinataires] = useState<FeiDetailData['destinataires']>([]);
+  const [ownerLabels, setOwnerLabels] = useState<FeiDetailData['ownerLabels']>({});
   const [loading, setLoading] = useState(true);
   const [selectedTab, setSelectedTab] = useState<FeiTabId>('infos');
   const [isDeleting, setIsDeleting] = useState(false);
@@ -90,6 +94,8 @@ function AdminFeiDetailContent() {
       .then((res) => {
         if (res.ok) {
           setFei(res.data.fei);
+          setDestinataires(res.data.destinataires);
+          setOwnerLabels(res.data.ownerLabels);
         }
       })
       .finally(() => setLoading(false));
@@ -97,6 +103,12 @@ function AdminFeiDetailContent() {
 
   if (loading) return <Chargement />;
   if (!fei) return <p className="py-8 text-center text-gray-500">Fiche introuvable</p>;
+
+  function ownerLabel(entityId: string | null, userId: string | null) {
+    const id = entityId ?? userId;
+    if (!id) return null;
+    return ownerLabels[id] ?? id;
+  }
 
   function handleSoftDelete() {
     if (!fei) return;
@@ -244,6 +256,8 @@ function AdminFeiDetailContent() {
                         <th className="p-2">Marquage</th>
                         <th className="p-2">Espèce</th>
                         <th className="p-2">Type</th>
+                        <th className="p-2">Détenteur actuel</th>
+                        <th className="p-2">Destinataire</th>
                         <th className="p-2">Statut SVI</th>
                         <th className="p-2">Nb intermédiaires</th>
                       </tr>
@@ -265,6 +279,18 @@ function AdminFeiDetailContent() {
                           <td className="p-2">{carcasse.espece ?? '—'}</td>
                           <td className="p-2">{carcasse.type ?? '—'}</td>
                           <td className="p-2">
+                            {formatOwner(
+                              ownerLabel(carcasse.current_owner_entity_id, carcasse.current_owner_user_id),
+                              carcasse.current_owner_role
+                            )}
+                          </td>
+                          <td className="p-2">
+                            {formatOwner(
+                              ownerLabel(carcasse.next_owner_entity_id, carcasse.next_owner_user_id),
+                              carcasse.next_owner_role
+                            )}
+                          </td>
+                          <td className="p-2">
                             <StatusBadge status={carcasse.svi_carcasse_status} />
                           </td>
                           <td className="p-2">{carcasse._count.CarcasseIntermediaire}</td>
@@ -279,8 +305,46 @@ function AdminFeiDetailContent() {
         )}
 
         {selectedTab === 'intermediaires' && (
-          <div className="pt-2">
-            {/* 6. Intermédiaires */}
+          <div className="flex flex-col gap-4 pt-2">
+            {/* 6. Destinataires, lus sur les carcasses : couvre aussi ceux qui n'ont pas pris en charge et le circuit court */}
+            <Section title="Destinataires">
+              {destinataires.length === 0 ? (
+                <p className="text-sm text-gray-500">Aucune carcasse</p>
+              ) : (
+                <table className="w-full border-collapse text-xs">
+                  <thead>
+                    <tr className="border-b bg-gray-50 text-left">
+                      <th className="p-2">Détenteur actuel</th>
+                      <th className="p-2">Destinataire</th>
+                      <th className="p-2">Carcasses</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {destinataires.map((destinataire, index) => (
+                      <tr
+                        key={index}
+                        className="border-b"
+                      >
+                        <td className="p-2">
+                          {formatOwner(destinataire.current_owner_label, destinataire.current_owner_role)}
+                        </td>
+                        <td className="p-2">
+                          {formatOwner(destinataire.next_owner_label, destinataire.next_owner_role)}
+                          {destinataire.next_owner_role && (
+                            <span className="block text-gray-400">
+                              {getNextOwnerStatus(destinataire.next_owner_role)}
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-2">{destinataire.nb_carcasses}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </Section>
+
+            {/* 7. Intermédiaires */}
             {fei.CarcasseIntermediaire.length === 0 ? (
               <p className="py-4 text-sm text-gray-500">Aucun intermédiaire</p>
             ) : (

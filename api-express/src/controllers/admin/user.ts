@@ -17,7 +17,7 @@ import type {
   AdminUsersResponse,
   AdminUserDataResponse,
   AdminNewUserDataResponse,
-  AdminFeisResponse,
+  AdminUserFeisResponse,
   AdminCarcassesResponse,
   AdminUserNotificationsResponse,
   AdminUserLockoutInfo,
@@ -472,7 +472,11 @@ const feiUserOR = (userId: string): Prisma.FeiWhereInput[] => [
 router.get(
   '/user/:user_id/feis',
   catchErrors(
-    async (req: express.Request, res: express.Response<AdminFeisResponse>, next: express.NextFunction) => {
+    async (
+      req: express.Request,
+      res: express.Response<AdminUserFeisResponse>,
+      next: express.NextFunction
+    ) => {
       const userId = req.params.user_id;
       const limit = parseInt(req.query.limit as string) || 100;
       const offset = parseInt(req.query.offset as string) || 0;

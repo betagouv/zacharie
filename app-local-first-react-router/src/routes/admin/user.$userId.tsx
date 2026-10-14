@@ -21,7 +21,7 @@ import { Tabs, type TabsProps } from '@codegouvfr/react-dsfr/Tabs';
 import { Table } from '@codegouvfr/react-dsfr/Table';
 import type {
   AdminUserDataResponse,
-  AdminFeisResponse,
+  AdminUserFeisResponse,
   AdminCarcassesResponse,
   AdminUserNotificationsResponse,
 } from '@api/src/types/responses';
@@ -818,7 +818,7 @@ function formatDateOnly(d: Date | string | null): string {
   return dayjs(d).format('DD/MM/YYYY');
 }
 
-type UserFeiRow = AdminFeisResponse['data']['feis'][number];
+type UserFeiRow = AdminUserFeisResponse['data']['feis'][number];
 
 function UserFeis({ userId }: { userId: string }) {
   const [rows, setRows] = useState<UserFeiRow[]>([]);
@@ -828,7 +828,7 @@ function UserFeis({ userId }: { userId: string }) {
   useEffect(() => {
     setLoading(true);
     API.get({ path: `admin/user/${userId}/feis` })
-      .then((res) => res as AdminFeisResponse)
+      .then((res) => res as AdminUserFeisResponse)
       .then((res) => {
         if (res.ok) {
           setRows(res.data.feis);
