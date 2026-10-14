@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { canonicalOf, normalizeText, type AnomalieItem } from '@app/utils/anomalies-referentiel';
+import { track } from '@app/services/matomo';
 
 // Une section = un site anatomique (groupe + site), avec ses anomalies,
 // les canonicals déjà sélectionnés et le toggle branché sur le store / state local.
@@ -47,10 +48,30 @@ export default function AnomaliePicker({
   const [query, setQuery] = useState('');
   // Anomalie dont on affiche la photo en grand (avec sa description en légende).
   const [zoomItem, setZoomItem] = useState<AnomalieItem | null>(null);
+  useEffect(() => {
+    track('anomalie', 'ouvrir-selecteur', singleSection ? 'petit-gibier' : 'grand-gibier');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const toggle = (section: AnomaliePickerSection, canonical: string, from: 'liste' | 'recherche') => {
+    if (section.selected.includes(canonical)) {
+      track('anomalie', 'retirer', from);
+    } else {
+      track('anomalie', 'selectionner', from);
+    }
+    section.onToggle(canonical);
+  };
+
+  const zoom = (item: AnomalieItem) => {
+    track('anomalie', 'agrandir-photo');
+    setZoomItem(item);
+  };
+
   // Ajout hors famille, depuis une recherche infructueuse.
   const addAutreGlobal = (value: string) => {
     const trimmed = value.trim();
     if (!trimmed || autres.values.includes(trimmed)) return;
+    track('anomalie', 'saisir-libre', 'recherche-vide');
     autres.onAdd(trimmed);
     // On sort de la recherche : la nouvelle anomalie est visible dans la vue racine.
     setQuery('');
@@ -86,6 +107,17 @@ export default function AnomaliePicker({
     }
     return results;
   }, [normalizedQuery, activeSection, sections]);
+
+  // Une seule mesure par recherche, quand l'utilisateur arrête de taper.
+  const hasSearchResults = searchResults.length > 0;
+  useEffect(() => {
+    if (!normalizedQuery) return;
+    const timer = setTimeout(
+      () => track('anomalie', 'rechercher', hasSearchResults ? 'resultat-trouve' : 'resultat-vide'),
+      1500
+    );
+    return () => clearTimeout(timer);
+  }, [normalizedQuery, hasSearchResults]);
 
   // Retour contextuel : remonte d'un niveau à la fois
   // (recherche → famille → liste des sites → sortie du picker via onBack).
@@ -182,8 +214,8 @@ export default function AnomaliePicker({
                   item={item}
                   context={!activeSection ? siteLabel(section) : undefined}
                   isSelected={section.selected.includes(canonical)}
-                  onToggle={() => section.onToggle(canonical)}
-                  onZoom={() => setZoomItem(item)}
+                  onToggle={() => toggle(section, canonical, 'recherche')}
+                  onZoom={() => zoom(item)}
                 />
               ))
             )}
@@ -235,7 +267,10 @@ export default function AnomaliePicker({
                     <button
                       key={canonical}
                       type="button"
-                      onClick={() => activeSection.onToggle(canonical)}
+                      onClick={() => {
+                        track('anomalie', 'retirer', 'pastille');
+                        activeSection.onToggle(canonical);
+                      }}
                       className="flex items-center gap-1 rounded-full bg-[#000091] px-3 py-1 text-left text-sm text-white"
                       aria-label={`Retirer ${label}`}
                     >
@@ -258,8 +293,8 @@ export default function AnomaliePicker({
                     key={canonical}
                     item={item}
                     isSelected={activeSection.selected.includes(canonical)}
-                    onToggle={() => activeSection.onToggle(canonical)}
-                    onZoom={() => setZoomItem(item)}
+                    onToggle={() => toggle(activeSection, canonical, 'liste')}
+                    onZoom={() => zoom(item)}
                   />
                 );
               })}
@@ -270,6 +305,7 @@ export default function AnomaliePicker({
                 title="Autre anomalie"
                 placeholder={activeSection.champLibre}
                 autres={activeSection.autres}
+                trackingName="famille"
               />
             )}
           </div>
@@ -283,6 +319,7 @@ export default function AnomaliePicker({
           title="Autre anomalie (non listée)"
           placeholder="Décrivez l’anomalie"
           autres={autres}
+          trackingName="hors-famille"
         />
       )}
 
@@ -302,10 +339,12 @@ function AutreAnomalieBlock({
   title,
   placeholder,
   autres,
+  trackingName,
 }: {
   title: string;
   placeholder: string;
   autres: AnomaliePickerAutres;
+  trackingName: 'famille' | 'hors-famille';
 }) {
   const [draft, setDraft] = useState('');
 
@@ -314,6 +353,7 @@ function AutreAnomalieBlock({
     if (!trimmed) return;
     setDraft('');
     if (autres.values.includes(trimmed)) return;
+    track('anomalie', 'saisir-libre', trackingName);
     autres.onAdd(trimmed);
   };
 
@@ -326,7 +366,10 @@ function AutreAnomalieBlock({
             <button
               key={value}
               type="button"
-              onClick={() => autres.onRemove(value)}
+              onClick={() => {
+                track('anomalie', 'retirer', 'saisie-libre');
+                autres.onRemove(value);
+              }}
               className="flex items-center gap-1 rounded-full bg-[#000091] px-3 py-1 text-left text-sm text-white"
               aria-label={`Retirer ${value}`}
             >

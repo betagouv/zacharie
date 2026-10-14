@@ -3,6 +3,7 @@ import useUser from '@app/zustand/user';
 import { Fei, Carcasse, CarcasseStatus, CarcasseType, FeiOwnerRole, UserRoles } from '@prisma/client';
 import dayjs from 'dayjs';
 import petitGibier from '@app/data/petit-gibier.json';
+import { track } from '@app/services/matomo';
 
 type InitialParamsProps = {
   zacharieCarcasseId: string;
@@ -35,12 +36,15 @@ export async function createNewCarcasse({
   }
   const carcasses = useZustandStore.getState().carcasses;
   if (!numeroBracelet) {
+    track('carcasse', 'bloquer', 'numero-bracelet-manquant');
     throw new Error("Veuillez renseigner le numéro de marquage avant d'enregistrer la carcasse");
   }
   if (!espece) {
+    track('carcasse', 'bloquer', 'espece-manquante');
     throw new Error("Veuillez renseigner l'espèce du gibier avant d'enregistrer la carcasse");
   }
   if (carcasses[zacharieCarcasseId] && !carcasses[zacharieCarcasseId].deleted_at) {
+    track('carcasse', 'bloquer', 'numero-bracelet-deja-utilise');
     throw new Error('Le numéro de marquage est déjà utilisé pour cette fiche');
   }
   const isPetitGibier = petitGibier.especes.includes(espece);
@@ -170,5 +174,11 @@ export async function createNewCarcasse({
     version_user_id: user.id,
   };
   useZustandStore.getState().createCarcasse(newCarcasse);
+  track(
+    'carcasse',
+    'ajouter',
+    isPetitGibier ? 'petit-gibier' : 'grand-gibier',
+    examinateurAnomaliesCarcasse.length + examinateurAnomaliesAbats.length
+  );
   return newCarcasse;
 }

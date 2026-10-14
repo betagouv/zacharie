@@ -1,7 +1,14 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
-import { setCustomDimensions, MATOMO_DIMENSION_CONNEXION, MATOMO_DIMENSION_ADMIN } from './matomo';
+import {
+  setCustomDimensions,
+  normalizePathForTracking,
+  MATOMO_DIMENSION_CONNEXION,
+  MATOMO_DIMENSION_ADMIN,
+  MATOMO_DIMENSION_ROLE,
+} from './matomo';
+import { MATOMO_EVENTS } from './matomo-events';
 
 // --- Route path inventories ---
 // Landing layout children (under '/')
@@ -79,13 +86,20 @@ describe('setCustomDimensions', () => {
   });
 
   it('non-admin user → "connecté" + "non admin"', () => {
-    setCustomDimensions({ isZacharieAdmin: false });
+    setCustomDimensions({ isZacharieAdmin: false, roles: ['CHASSEUR'] });
     expect(window._paq).toContainEqual(['setCustomDimension', MATOMO_DIMENSION_CONNEXION, 'connecté']);
     expect(window._paq).toContainEqual(['setCustomDimension', MATOMO_DIMENSION_ADMIN, 'non admin']);
   });
 
+  it('rôle du user, "aucun" si non connecté', () => {
+    setCustomDimensions({ isZacharieAdmin: false, roles: ['ETG'] });
+    expect(window._paq).toContainEqual(['setCustomDimension', MATOMO_DIMENSION_ROLE, 'ETG']);
+    setCustomDimensions(null);
+    expect(window._paq).toContainEqual(['setCustomDimension', MATOMO_DIMENSION_ROLE, 'aucun']);
+  });
+
   it('admin user → "connecté" + "admin"', () => {
-    setCustomDimensions({ isZacharieAdmin: true });
+    setCustomDimensions({ isZacharieAdmin: true, roles: ['CHASSEUR'] });
     expect(window._paq).toContainEqual(['setCustomDimension', MATOMO_DIMENSION_CONNEXION, 'connecté']);
     expect(window._paq).toContainEqual(['setCustomDimension', MATOMO_DIMENSION_ADMIN, 'admin']);
   });
@@ -93,7 +107,53 @@ describe('setCustomDimensions', () => {
   it('creates _paq array when missing', () => {
     vi.stubGlobal('window', {} as any);
     setCustomDimensions(null);
-    expect((window as any)._paq).toHaveLength(2);
+    expect((window as any)._paq).toHaveLength(3);
+  });
+});
+
+// --- normalizePathForTracking ---
+
+describe('normalizePathForTracking', () => {
+  it('remplace les identifiants par :id', () => {
+    expect(normalizePathForTracking('/app/chasseur/fei/ZACH-20261012-ab12c-153000')).toBe(
+      '/app/chasseur/fei/:id'
+    );
+    expect(normalizePathForTracking('/app/chasseur/fei/ZACH-20261012-ab12c-153000/envoy%C3%A9e')).toBe(
+      '/app/chasseur/fei/:id/envoy%C3%A9e'
+    );
+    expect(
+      normalizePathForTracking(
+        '/app/chasseur/carcasse/ZACH-20261012-ab12c-153000/ZACH-20261012-ab12c-153000_1234'
+      )
+    ).toBe('/app/chasseur/carcasse/:id/:id');
+    expect(normalizePathForTracking('/app/admin/user/12')).toBe('/app/admin/user/:id');
+    expect(normalizePathForTracking('/app/chasseur/profil/ccgs/clx1a2b3c4d5e6f7g8h9i0j')).toBe(
+      '/app/chasseur/profil/ccgs/:id'
+    );
+  });
+
+  it('garde les segments de route', () => {
+    expect(normalizePathForTracking('/app/chasseur/onboarding/mes-coordonnees')).toBe(
+      '/app/chasseur/onboarding/mes-coordonnees'
+    );
+    expect(normalizePathForTracking('/politique-de-confidentialite')).toBe('/politique-de-confidentialite');
+  });
+});
+
+// --- Catalogue d'événements : conventions de nommage (doc/matomo.md) ---
+
+describe('MATOMO_EVENTS', () => {
+  const kebab = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+  it('catégories, actions et noms en kebab-case minuscule sans accent', () => {
+    for (const [category, actions] of Object.entries(MATOMO_EVENTS)) {
+      expect(category).toMatch(kebab);
+      for (const [action, names] of Object.entries(actions)) {
+        expect(action).toMatch(kebab);
+        for (const name of names as readonly string[]) {
+          expect(name).toMatch(kebab);
+        }
+      }
+    }
   });
 });
 

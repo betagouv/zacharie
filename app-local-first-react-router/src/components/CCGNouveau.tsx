@@ -9,6 +9,7 @@ import useUser from '@app/zustand/user';
 import API from '@app/services/api';
 import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
 import useZustandStore from '@app/zustand/store';
+import { track } from '@app/services/matomo';
 
 interface CCGCreateResponse {
   ok: boolean;
@@ -68,6 +69,7 @@ export default function CCGNouveau({ onFinish }: CCGNouveauProps) {
             },
           },
         });
+        track('ccg', 'creer', 'numero-existant');
         onFinish(response.data.entity);
       }
       if (response.error) {
@@ -105,6 +107,7 @@ export default function CCGNouveau({ onFinish }: CCGNouveauProps) {
             },
           },
         });
+        track('ccg', 'creer', 'nouvelle');
         onFinish(newCCG);
       } else {
         setError(response.error || 'Erreur lors de la création du CCG');

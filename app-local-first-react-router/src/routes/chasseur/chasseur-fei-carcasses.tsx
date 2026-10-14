@@ -18,6 +18,7 @@ import { isCarcasseDejaEnvoyee, isCarcassePriseEnChargeEnAval } from '@app/utils
 import type { Carcasse } from '@prisma/client';
 import { lookupAnomalie } from '@app/utils/anomalies-referentiel';
 import { USAGE_DOMESTIQUE_ID, USAGE_DOMESTIQUE_LABEL } from '@app/utils/usage-domestique';
+import { track } from '@app/services/matomo';
 
 // Gravité du référentiel (1 bénin → 4 danger) vers la sévérité DSFR.
 // Sans niveau renseigné on reste sur l'avertissement : l'anomalie porte quand même un message.
@@ -342,6 +343,7 @@ export function CarcasseExaminateur({
       deleted_at: dayjs().toDate(),
     };
     updateCarcasse(carcasse.zacharie_carcasse_id, nextPartialCarcasse);
+    track('carcasse', 'supprimer');
     addLog({
       user_id: user.id,
       user_role: UserRoles.CHASSEUR,
@@ -435,6 +437,7 @@ function AddCarcasseCard({ id, onClick }: { id: string; onClick: () => void }) {
     <button
       type="button"
       id={id}
+      data-matomo="carcasse-ouvrir-ajout"
       onClick={onClick}
       className="hover:border-action-high-blue-france flex min-h-24 basis-full flex-col items-center justify-center gap-3 border border-dashed border-gray-300 bg-white p-4 text-left transition-colors hover:bg-blue-50"
     >

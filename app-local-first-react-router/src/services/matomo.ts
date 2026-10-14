@@ -1,3 +1,5 @@
+import type { MatomoAction, MatomoCategory, MatomoName } from './matomo-events';
+
 // Matomo configuration from environment variables
 const MATOMO_URL = import.meta.env.VITE_MATOMO_URL;
 const MATOMO_SITE_ID = import.meta.env.VITE_MATOMO_SITE_ID;
@@ -53,8 +55,9 @@ export function initMatomo(): void {
 // Scope: Visit.
 export const MATOMO_DIMENSION_CONNEXION = 1;
 export const MATOMO_DIMENSION_ADMIN = 2;
+export const MATOMO_DIMENSION_ROLE = 3;
 
-export function setCustomDimensions(user: { isZacharieAdmin: boolean } | null): void {
+export function setCustomDimensions(user: { isZacharieAdmin: boolean; roles: string[] } | null): void {
   if (!window._paq) {
     window._paq = [];
   }
@@ -65,12 +68,14 @@ export function setCustomDimensions(user: { isZacharieAdmin: boolean } | null): 
     MATOMO_DIMENSION_ADMIN,
     user?.isZacharieAdmin ? 'admin' : 'non admin',
   ]);
+  window._paq.push(['setCustomDimension', MATOMO_DIMENSION_ROLE, user?.roles[0] ?? 'aucun']);
 
   if (import.meta.env.DEV) {
     console.log(
       '[Matomo] Custom dimensions:',
       user ? 'connecté' : 'non connecté',
-      user?.isZacharieAdmin ? 'admin' : 'non admin'
+      user?.isZacharieAdmin ? 'admin' : 'non admin',
+      user?.roles[0] ?? 'aucun'
     );
   }
 }
@@ -137,4 +142,54 @@ export function trackSearch(category: string): void {
     clearTimeout(searchTimer);
   }
   searchTimer = setTimeout(() => trackEvent(category, 'recherche'), 1500);
+}
+
+// Événement métier, typé par le catalogue de matomo-events.ts.
+export function track<C extends MatomoCategory, A extends MatomoAction<C>>(
+  category: C,
+  action: A,
+  name?: MatomoName<C, A>,
+  value?: number
+): void {
+  const reseau = navigator.onLine ? 'en ligne' : 'hors ligne';
+  if (!isMatomoEnabled) {
+    if (import.meta.env.DEV) {
+      console.log('[Matomo] Event:', category, action, name, value, reseau);
+    }
+    return;
+  }
+  if (!window._paq) {
+    window._paq = [];
+  }
+  window._paq.push(['trackEvent', category, action, name, value]);
+}
+
+// numéro de fiche (ZACH-…), id numérique, uuid/cuid ; pas les étapes du type `3-informations-de-chasse`
+function isIdentifier(segment: string): boolean {
+  const decoded = decodeURIComponent(segment);
+  return /\d{3,}/.test(decoded) || /^\d+$/.test(decoded) || (decoded.length >= 20 && /\d/.test(decoded));
+}
+
+// Remplace les identifiants d'une URL par `:id` pour regrouper les clics par écran.
+export function normalizePathForTracking(pathname: string): string {
+  return pathname
+    .split('/')
+    .map((segment) => (isIdentifier(segment) ? ':id' : segment))
+    .join('/');
+}
+
+// Pour les props objet (linkProps, nativeButtonProps des composants DSFR) qui refusent `data-*` en littéral.
+// En JSX direct, écrire `data-matomo="..."`.
+export function matomoClickId(id: string): Record<string, string> {
+  return { 'data-matomo': id };
+}
+
+// Clic sur un élément portant `data-matomo="<identifiant-stable>"`.
+// Seuls les éléments annotés sont suivis : leur libellé peut contenir des données personnelles.
+export function trackClick(element: HTMLElement): void {
+  const id = element.dataset.matomo;
+  if (!id) {
+    return;
+  }
+  trackEvent('clic', id, normalizePathForTracking(window.location.pathname));
 }

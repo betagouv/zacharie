@@ -18,6 +18,7 @@ import {
   searchEntreprises,
   type EtablissementTrouve,
 } from '@app/services/recherche-entreprises';
+import { track } from '@app/services/matomo';
 
 interface PartenaireNouveauProps {
   onFinish: (entity: UserEntityResponse['data']['entity']) => void;
@@ -141,6 +142,7 @@ export default function PartenaireNouveau({ onFinish }: PartenaireNouveauProps) 
       if (response.ok) {
         setEntityType(undefined);
         setAnnuairePrefill(null);
+        track('partenaire', 'creer');
         onFinish(response.data.entity!);
         useZustandStore.setState({
           entities: {

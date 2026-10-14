@@ -3,6 +3,7 @@ import dayjs from 'dayjs';
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import { createHistoryInput } from '@app/utils/create-history-entry';
+import { track } from '@app/services/matomo';
 import type { AnomaliePickerAutres, AnomaliePickerSection } from '@app/components/AnomaliePicker';
 import {
   canonicalOf,
@@ -41,6 +42,11 @@ export function setCarcasseAnomalie({
 
   const store = useZustandStore.getState();
   store.updateCarcasse(carcasse.zacharie_carcasse_id, partialCarcasse);
+  track(
+    'carcasse',
+    'modifier-anomalie',
+    nextValues.length > (carcasse[field] ?? []).length ? 'ajout' : 'retrait'
+  );
   store.addLog({
     user_id: user.id,
     user_role: UserRoles.CHASSEUR,

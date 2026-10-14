@@ -4,6 +4,8 @@ import useUser from '@app/zustand/user';
 import { Fei, UserRoles } from '@prisma/client';
 import dayjs from 'dayjs';
 import { createHistoryInput } from './create-history-entry';
+import { track } from '@app/services/matomo';
+import type { MatomoName } from '@app/services/matomo-events';
 
 type InitialParamsProps = {
   date_mise_a_mort?: Fei['date_mise_a_mort'];
@@ -13,7 +15,10 @@ type InitialParamsProps = {
   heure_evisceration_derniere_carcasse?: Fei['heure_evisceration_derniere_carcasse'];
 };
 
-export async function createNewFei(props?: InitialParamsProps): Promise<Fei> {
+export async function createNewFei(
+  source: MatomoName<'fiche', 'creer'>,
+  props?: InitialParamsProps
+): Promise<Fei> {
   const user = useUser.getState().user;
   if (!user?.id) {
     throw new Error('No user found');
@@ -61,6 +66,7 @@ export async function createNewFei(props?: InitialParamsProps): Promise<Fei> {
     intermediaire_id: null,
     carcasse_intermediaire_id: null,
   });
+  track('fiche', 'creer', source);
   syncData('create-new-fei');
   if (import.meta.env.VITE_TEST_PLAYWRIGHT === 'true') {
     // if it goes too fast, we have a race condition with the sync with the backend and PG doesn'tlike it

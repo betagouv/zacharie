@@ -769,7 +769,7 @@ export default function ChasseurFiches() {
               iconId="fr-icon-add-circle-line"
               priority="primary"
               onClick={async () => {
-                const newFei = await createNewFei();
+                const newFei = await createNewFei('liste-mobile');
                 navigate(`/app/chasseur/fei/${newFei.numero}`);
               }}
             >
@@ -862,7 +862,7 @@ export default function ChasseurFiches() {
                   iconId="fr-icon-add-circle-line"
                   priority="primary"
                   onClick={async () => {
-                    const newFei = await createNewFei();
+                    const newFei = await createNewFei('liste-bureau');
                     navigate(`/app/chasseur/fei/${newFei.numero}`);
                   }}
                 >
@@ -958,7 +958,7 @@ function FeisWrapper({
               priority="primary"
               iconId="fr-icon-add-circle-line"
               onClick={async () => {
-                const newFei = await createNewFei();
+                const newFei = await createNewFei('liste-vide');
                 navigate(`/app/chasseur/fei/${newFei.numero}`);
               }}
             >

@@ -39,7 +39,7 @@ export default function ChasseurLayout() {
   const isExaminateurInitial = !!user?.roles.includes(UserRoles.CHASSEUR) && !!user?.numero_cfei;
 
   const onNewFiche = useCallback(async () => {
-    const newFei = await createNewFei();
+    const newFei = await createNewFei('barre-navigation');
     navigate(`/app/chasseur/fei/${newFei.numero}`);
   }, [navigate]);
 
