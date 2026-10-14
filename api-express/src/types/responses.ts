@@ -3,6 +3,7 @@ import type {
   Entity,
   EntityAndUserRelations,
   Fei,
+  FeiOwnerRole,
   Carcasse,
   CarcasseType,
   CarcasseIntermediaire,
@@ -595,17 +596,37 @@ export interface AdminSearchResponse {
   error: string;
 }
 
+// Un groupe de carcasses d'une fiche qui partagent le même détenteur actuel et le même destinataire.
+// Le destinataire (next_owner) reste renseigné tant qu'il n'a pas pris en charge, et pour toujours en
+// circuit court, où le destinataire ne prend jamais en charge dans Zacharie.
+export interface AdminFeiDestinataire {
+  current_owner_role: FeiOwnerRole | null;
+  current_owner_label: string | null;
+  next_owner_role: FeiOwnerRole | null;
+  next_owner_label: string | null;
+  nb_carcasses: number;
+}
+
+type AdminFeiRow = Fei & {
+  FeiExaminateurInitialUser: { email: string } | null;
+  FeiPremierDetenteurUser: { email: string } | null;
+  FeiPremierDetenteurEntity: { nom_d_usage: string } | null;
+  _count: { Carcasses: number };
+};
+
 export interface AdminFeisResponse {
   ok: boolean;
   data: {
-    feis: Array<
-      Fei & {
-        FeiExaminateurInitialUser: { email: string } | null;
-        FeiPremierDetenteurUser: { email: string } | null;
-        FeiPremierDetenteurEntity: { nom_d_usage: string } | null;
-        _count: { Carcasses: number };
-      }
-    >;
+    feis: Array<AdminFeiRow & { destinataires: Array<AdminFeiDestinataire> }>;
+    total: number;
+  };
+  error: string;
+}
+
+export interface AdminUserFeisResponse {
+  ok: boolean;
+  data: {
+    feis: Array<AdminFeiRow>;
     total: number;
   };
   error: string;
@@ -663,6 +684,9 @@ export interface AdminFeiDetailResponse {
       FeiPremierDetenteurUser: { email: string } | null;
       FeiPremierDetenteurEntity: { nom_d_usage: string } | null;
     };
+    destinataires: Array<AdminFeiDestinataire>;
+    // Libellés des détenteurs (entités et utilisateurs) cités par les carcasses, par id.
+    ownerLabels: Record<string, string>;
   };
   error: string;
 }
