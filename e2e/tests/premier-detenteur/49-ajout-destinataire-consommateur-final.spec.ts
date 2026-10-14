@@ -93,10 +93,15 @@ test("Un destinataire autre qu'un consommateur final exige une raison sociale", 
       requetesCreation.push(request.url());
     }
   });
+  // La raison sociale (liste déroulante) n'est pas validée par le navigateur : le formulaire bloque
+  // l'envoi avec une alerte
+  const alerte = page.waitForEvent('dialog');
   await enregistrerPartenaire(page);
+  const dialog = await alerte;
+  expect(dialog.message()).toBe('Veuillez renseigner la raison sociale');
+  await dialog.dismiss();
 
-  // Seul le champ « Raison Sociale » est vide : la validation native du navigateur bloque l'envoi
-  await expect(modal.locator('#partenaire_data_form input:invalid')).toHaveCount(1);
+  await expect(modal.locator('#partenaire_data_form input:invalid')).toHaveCount(0);
   await expect(modal.getByText('Ajouter un destinataire')).toBeVisible();
   expect(requetesCreation).toHaveLength(0);
 });
