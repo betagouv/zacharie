@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import dayjs from 'dayjs';
 import { useParams } from 'react-router';
 import { toast } from 'react-toastify';
@@ -18,7 +18,6 @@ import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import useUser from '@app/zustand/user';
 import useZustandStore from '@app/zustand/store';
 import { syncData } from '@app/utils/sync-data';
-import { capture } from '@app/services/sentry';
 import {
   getFeiAndIntermediaireIdsFromFeiIntermediaire,
   getFeiAndCarcasseAndIntermediaireIds,
@@ -292,8 +291,6 @@ function CollecteurProFeiContent({
       .filter((c) => c != null && !carcasses[c.zacharie_carcasse_id]?.deleted_at);
   }, [allIntermediaireCarcasses, carcasses]);
 
-  const warnedForIncoherentNumberOfCarcasses = useRef(false);
-
   const carcassesDejaRefusees = useMemo(() => {
     const intermediaireCarcassesIds = intermediaireCarcasses.map((c) => c.zacharie_carcasse_id);
     return originalCarcasses.filter(
@@ -303,39 +300,6 @@ function CollecteurProFeiContent({
         c.svi_carcasse_status !== CarcasseStatus.ACCEPTE
     );
   }, [originalCarcasses, intermediaireCarcasses]);
-
-  useEffect(() => {
-    if (intermediaire?.id) {
-      const theoreticalNumberOfCarcassesToCheck = originalCarcasses.length - carcassesDejaRefusees.length;
-      if (
-        allIntermediaireCarcasses.length !== theoreticalNumberOfCarcassesToCheck &&
-        !warnedForIncoherentNumberOfCarcasses.current
-      ) {
-        warnedForIncoherentNumberOfCarcasses.current = true;
-        capture(new Error('Incoherent number of carcasses'), {
-          extra: {
-            allIntermediaireCarcassesLength: allIntermediaireCarcasses.length,
-            originalCarcassesLength: originalCarcasses.length,
-            theoreticalNumberOfCarcassesToCheck,
-            intermediaireCarcassesLength: intermediaireCarcasses.length,
-            carcassesDejaRefuseesLength: carcassesDejaRefusees.length,
-          },
-          tags: {
-            fei_numero: fei.numero,
-            intermediaire_id: intermediaire?.id,
-          },
-        });
-      }
-    }
-  }, [
-    carcassesDejaRefusees,
-    carcassesDejaRefusees.length,
-    allIntermediaireCarcasses,
-    intermediaireCarcasses,
-    originalCarcasses,
-    fei.numero,
-    intermediaire?.id,
-  ]);
 
   const isCollecteurWorkingFor = useMemo(() => {
     if (
