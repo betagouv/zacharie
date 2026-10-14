@@ -31,6 +31,7 @@ const allowAllScope: SyncScope = {
   prefetch: async () => {},
   canWriteCarcasse: async () => true,
   grant: () => {},
+  outOfScope: async () => [],
   isFeiOwner: () => true,
   canWriteFei: async () => true,
 };
