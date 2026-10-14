@@ -374,13 +374,13 @@ export default function SviCarcasses() {
         sortBy === 'svi_carcasse_archived'
           ? isCarcasseSviArchived(a)
           : // @ts-expect-error: we know that the field is in the carcasse or the fei
-          a[sortBy] || feis[a.fei_numero]![sortBy];
+            a[sortBy] || feis[a.fei_numero]![sortBy];
       const bValue =
         // @ts-expect-error: svi_carcasse_archived is isCarcasseSviArchived
         sortBy === 'svi_carcasse_archived'
           ? isCarcasseSviArchived(b)
           : // @ts-expect-error: svi_carcasse_archived is isCarcasseSviArchived
-          b[sortBy] || feis[b.fei_numero]![sortBy];
+            b[sortBy] || feis[b.fei_numero]![sortBy];
       if (!aValue) {
         if (bValue) return sortOrder === 'ASC' ? 1 : -1;
         return 0;
@@ -1241,12 +1241,12 @@ export default function SviCarcasses() {
                 <span>
                   {carcasse.svi_assigned_at
                     ? new Date(carcasse.svi_assigned_at).toLocaleDateString('fr-FR', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })
                     : '-'}
                 </span>
               </div>
@@ -1255,12 +1255,12 @@ export default function SviCarcasses() {
                 <span>
                   {carcasse.svi_carcasse_status_set_at
                     ? new Date(carcasse.svi_carcasse_status_set_at).toLocaleDateString('fr-FR', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })
                     : '-'}
                 </span>
               </div>
@@ -1462,27 +1462,27 @@ export default function SviCarcasses() {
                   },
                   ...(TRICHINE_FEATURE_ENABLED
                     ? [
-                      {
-                        linkProps: {
-                          href: '#',
-                          'aria-disabled': sangliersSelectionnes.length === 0,
-                          className:
-                            sangliersSelectionnes.length === 0 ? 'cursor-not-allowed opacity-50' : '',
-                          title:
-                            sangliersSelectionnes.length === 0
-                              ? 'Sélectionnez des carcasses de sanglier avec la case à cocher'
-                              : '',
-                          onClick: (e: React.MouseEvent) => {
-                            e.preventDefault();
-                            if (sangliersSelectionnes.length === 0) return;
-                            navigate(
-                              `/app/svi/trichine/prelever?carcasses=${sangliersSelectionnes.join(',')}`
-                            );
+                        {
+                          linkProps: {
+                            href: '#',
+                            'aria-disabled': sangliersSelectionnes.length === 0,
+                            className:
+                              sangliersSelectionnes.length === 0 ? 'cursor-not-allowed opacity-50' : '',
+                            title:
+                              sangliersSelectionnes.length === 0
+                                ? 'Sélectionnez des carcasses de sanglier avec la case à cocher'
+                                : '',
+                            onClick: (e: React.MouseEvent) => {
+                              e.preventDefault();
+                              if (sangliersSelectionnes.length === 0) return;
+                              navigate(
+                                `/app/svi/trichine/prelever?carcasses=${sangliersSelectionnes.join(',')}`
+                              );
+                            },
                           },
+                          text: `Prélever pour la trichine (${sangliersSelectionnes.length})`,
                         },
-                        text: `Prélever pour la trichine (${sangliersSelectionnes.length})`,
-                      },
-                    ]
+                      ]
                     : []),
                   {
                     linkProps: {
@@ -1530,11 +1530,11 @@ export default function SviCarcasses() {
                 render: c.render,
                 ...(c.sortable
                   ? {
-                    onSortBy: handleSortBy,
-                    onSortOrder: setSortOrder,
-                    sortBy,
-                    sortOrder,
-                  }
+                      onSortBy: handleSortBy,
+                      onSortOrder: setSortOrder,
+                      sortBy,
+                      sortOrder,
+                    }
                   : {}),
               }))}
             />
