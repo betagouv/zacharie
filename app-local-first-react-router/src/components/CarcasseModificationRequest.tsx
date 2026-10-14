@@ -15,6 +15,17 @@ import { syncData } from '@app/utils/sync-data';
 import useUser from '@app/zustand/user';
 import { getPendingModifRequest } from '@app/utils/modif-requests';
 
+// Une carcasse déjà inspectée par le SVI n'est plus modifiable par une demande : un certificat a pu
+// être émis dessus. Même règle que côté serveur (isCarcasseFrozenBySvi).
+function isFrozenBySvi(carcasse: Carcasse) {
+  return !!(
+    carcasse.svi_ipm1_signed_at ||
+    carcasse.svi_ipm2_signed_at ||
+    carcasse.svi_closed_at ||
+    carcasse.svi_automatic_closed_at
+  );
+}
+
 // ----------------------------------------------------------------------------
 // PendingModificationBanner
 // Affiché sur la carcasse, côté intermédiaire/ETG/SVI, quand une demande de
@@ -57,7 +68,9 @@ export function PendingModificationBanner({ carcasse }: { carcasse: Carcasse }) 
         ).format('DD/MM/YYYY HH:mm')}.`
       : '';
 
-  const canCancel = user?.id === pending.requested_by_user_id;
+  // On ne peut annuler que tant que le SVI n'est pas passé sur la carcasse (mêmes gardes qu'au
+  // serveur), sinon l'annulation supprimerait une carcasse déjà inspectée / certifiée.
+  const canCancel = user?.id === pending.requested_by_user_id && !isFrozenBySvi(carcasse);
 
   const onCancel = () => {
     // Soft-delete the modif request et on défait ce qu'elle avait appliqué : NEW_CARCASSE →
