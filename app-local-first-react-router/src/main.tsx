@@ -51,6 +51,20 @@ declare module '@codegouvfr/react-dsfr/spa' {
   }
 }
 
+// après un déploiement, les anciens chunks n'existent plus : on recharge la page une fois par build
+// pour récupérer le nouvel index.html (le service worker sert le réseau en priorité quand on est en ligne)
+window.addEventListener('vite:preloadError', (event) => {
+  const reloadKey = `zacharie-preload-error-reload-${__VITE_BUILD_ID__}`;
+  try {
+    if (window.sessionStorage.getItem(reloadKey)) return;
+    window.sessionStorage.setItem(reloadKey, '1');
+  } catch {
+    return;
+  }
+  event.preventDefault();
+  window.location.reload();
+});
+
 if (import.meta.env.VITE_ENV === 'prod' || import.meta.env.VITE_ENV === 'test') {
   console.log('Sentry init', import.meta.env.VITE_ENV);
   Sentry.init({
@@ -89,6 +103,9 @@ if (import.meta.env.VITE_ENV === 'prod' || import.meta.env.VITE_ENV === 'test') 
       // Cf: https://stackoverflow.com/a/60860369/978690
       'TypeError: cancelled',
       'TypeError: annulé',
+      // Bot Outlook SafeLinks qui ouvre les liens des emails
+      /Object Not Found Matching Id:\d+, MethodName:update/,
+      'AbortError: The connection was closed',
     ],
     beforeSend(event) {
       try {
