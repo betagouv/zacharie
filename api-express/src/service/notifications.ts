@@ -47,6 +47,9 @@ type NotificationToUser = {
   // Cf. src/third-parties/brevo-templates.ts.
   emailTemplateId?: number | null;
   emailTemplateParams?: Record<string, unknown>;
+  // Email HTML construit dans le code (ex. trichine, cf. src/templates/trichine-email.ts) ;
+  // `email` reste la version texte, loggée dans le NotificationLog.
+  emailHtml?: string;
   // Adresses en copie de l'email. Elles suivent l'email du destinataire : pas d'email, pas de copie.
   cc?: Array<string>;
 };
@@ -67,6 +70,7 @@ export default async function queueSendNotificationToUser({
   attachments,
   emailTemplateId,
   emailTemplateParams,
+  emailHtml,
   cc,
   img = 'https://zacharie.beta.gouv.fr/favicon.svg',
 }: NotificationToUser): Promise<EmailResult> {
@@ -81,6 +85,7 @@ export default async function queueSendNotificationToUser({
       attachments,
       emailTemplateId,
       emailTemplateParams,
+      emailHtml,
       cc,
       img,
     });
@@ -265,6 +270,7 @@ async function sendEmailToUser({
   attachments,
   emailTemplateId,
   emailTemplateParams,
+  emailHtml,
   cc,
   img = 'https://zacharie.beta.gouv.fr/favicon.svg',
 }: NotificationToUser): Promise<EmailResult> {
@@ -315,6 +321,7 @@ async function sendEmailToUser({
         emails: [user.email!],
         subject: title,
         text: email,
+        html: emailHtml,
         attachments: attachments,
         cc,
       });

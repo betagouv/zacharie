@@ -28,10 +28,12 @@ vi.mock('~/third-parties/sentry', () => ({
   captureException: vi.fn(),
 }));
 
-// vitest.setup.ts ne mocke ni entity.create/count ni user.create : on les ajoute ici
+// vitest.setup.ts ne mocke ni entity.create/count, ni user.create, ni le $queryRaw du code
+// trichine de l'entité : on les ajoute ici
 (prisma.entity as any).create = vi.fn();
 (prisma.entity as any).count = vi.fn();
 (prisma.user as any).create = vi.fn();
+(prisma as any).$queryRaw = vi.fn().mockResolvedValue([{ max: null }]);
 
 const adminUser = {
   id: 'admin-1',

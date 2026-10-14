@@ -190,10 +190,7 @@ function SviInspectionCarcasse() {
           )}
           {/* Circuit agréé : prélèvement trichine par le SVI (invisible sans le feature flag) */}
           {TRICHINE_FEATURE_ENABLED && carcasse.espece === 'Sanglier' && (
-            <TrichineSection
-              carcasse={carcasse}
-              viewRole="svi"
-            />
+            <TrichineSection carcasse={carcasse} />
           )}
           {canEdit && (
             <>

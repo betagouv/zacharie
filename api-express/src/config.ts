@@ -60,6 +60,21 @@ const PROCONNECT_REDIRECT_URI = `${API_URL}/user/proconnect/callback`;
 // dédup s'appuyant dessus : un log écrit en dry run empêcherait définitivement l'envoi une fois
 // l'interrupteur relevé. On le garde comme coupe-circuit en cas de problème d'envoi en production.
 const NATIVE_PUSH_DRY_RUN = true;
+// Recherche de trichine (cf doc/trichine.md). Même variable que le flag du frontend :
+// tant qu'elle n'est pas posée, les garde-fous sangliers restent inactifs.
+const TRICHINE_FEATURE_ENABLED = process.env.VITE_FEATURE_TRICHINE === 'true';
+
+// Adresse de dépôt des rapports COFRAC par les laboratoires (imprimée sur la FTP).
+// Non posée = la consigne n'apparaît pas sur le document.
+const TRICHINE_RESULTATS_EMAIL = process.env.TRICHINE_RESULTATS_EMAIL ?? '';
+
+// Object storage Cellar (Clever Cloud, compatible S3) — cf doc/trichine.md §12.2.
+// Les trois premières variables sont posées par l'add-on, le bucket est choisi par nous.
+// Non configuré (dev / test) : les documents sont régénérés à la volée, rien n'est stocké.
+const CELLAR_HOST = process.env.CELLAR_ADDON_HOST ?? '';
+const CELLAR_KEY_ID = process.env.CELLAR_ADDON_KEY_ID ?? '';
+const CELLAR_KEY_SECRET = process.env.CELLAR_ADDON_KEY_SECRET ?? '';
+const CELLAR_BUCKET = process.env.CELLAR_ADDON_BUCKET ?? '';
 
 // Résolution de bug (admin) : l'assistant Albert lit le code sur GitHub et la base via un rôle en lecture seule.
 // Voir doc/bug-resolution.md.
@@ -68,6 +83,10 @@ const ALBERT_API_KEY = process.env.ALBERT_API_KEY ?? '';
 // modèle d'enquête (raisonnement + outils, texte seul) et modèle de vision qui décrit les captures d'écran
 const ALBERT_MODEL = process.env.ALBERT_MODEL ?? 'openai/gpt-oss-120b';
 const ALBERT_VISION_MODEL = process.env.ALBERT_VISION_MODEL ?? 'google/gemma-4-31B-it';
+// OCR des rapports d'analyses trichine scannés (cf GET /v1/models, type `image-text-to-text`).
+// lightonocr est un modèle dédié à l'OCR de documents : rapide et fidèle aux tableaux.
+// Clé non posée : les rapports sans texte restent non lus, le résultat est saisi à la main.
+const ALBERT_OCR_MODEL = process.env.ALBERT_OCR_MODEL ?? 'lightonocr-2-1b';
 const ALBERT_READONLY_DATABASE_URL = process.env.ALBERT_READONLY_DATABASE_URL ?? '';
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN ?? '';
 const GITHUB_REPO = 'betagouv/zacharie';
@@ -99,10 +118,17 @@ export {
   PROCONNECT_CLIENT_ID,
   PROCONNECT_CLIENT_SECRET,
   PROCONNECT_REDIRECT_URI,
+  TRICHINE_FEATURE_ENABLED,
+  TRICHINE_RESULTATS_EMAIL,
+  CELLAR_HOST,
+  CELLAR_KEY_ID,
+  CELLAR_KEY_SECRET,
+  CELLAR_BUCKET,
   ALBERT_API_URL,
   ALBERT_API_KEY,
   ALBERT_MODEL,
   ALBERT_VISION_MODEL,
+  ALBERT_OCR_MODEL,
   ALBERT_READONLY_DATABASE_URL,
   GITHUB_TOKEN,
   GITHUB_REPO,

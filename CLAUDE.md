@@ -6,13 +6,13 @@ Guidance for Claude Code when working in this repository.
 
 Zacharie is a French government application (beta.gouv.fr) for tracing game meat (venaison) from hunting to consumption. It follows a **local-first architecture** enabling offline operation with asynchronous sync.
 
-| Dossier                            | Stack                                                         | Rôle                            |
-| ---------------------------------- | ------------------------------------------------------------- | ------------------------------- |
-| `api-express/`                     | Express + Prisma + PostgreSQL (Node.js >= 20, TS)             | API REST (port 3235)            |
-| `app-local-first-react-router/`    | React 19 + React Router 7 + Vite + DSFR + Tailwind + Zustand  | Frontend local-first (port 3234)|
-| `expo/`                            | Expo (WebView wrapper)                                        | App mobile iOS/Android          |
-| `e2e/`                             | Playwright                                                    | Tests end-to-end                |
-| `materialized-views/`              | SQL                                                           | Vues matérialisées PostgreSQL   |
+| Dossier                         | Stack                                                        | Rôle                             |
+| ------------------------------- | ------------------------------------------------------------ | -------------------------------- |
+| `api-express/`                  | Express + Prisma + PostgreSQL (Node.js >= 20, TS)            | API REST (port 3235)             |
+| `app-local-first-react-router/` | React 19 + React Router 7 + Vite + DSFR + Tailwind + Zustand | Frontend local-first (port 3234) |
+| `expo/`                         | Expo (WebView wrapper)                                       | App mobile iOS/Android           |
+| `e2e/`                          | Playwright                                                   | Tests end-to-end                 |
+| `materialized-views/`           | SQL                                                          | Vues matérialisées PostgreSQL    |
 
 Key domains:
 
@@ -29,12 +29,12 @@ Key domains:
 - **Verification**: run `npm run typecheck` in `api-express/` and `app-local-first-react-router/`. Run `npm run test` in `api-express/` (vitest) if the change touches backend logic. **Don't run e2e** (needs full DB + servers). Don't start dev servers or builds to verify. Signal which e2e specs are affected.
 - `typecheck` uses `noEmit`: **no output + exit code 0 = success**. Don't re-run thinking the output was truncated.
 
-| Service                         | Verification                          | Tests                                |
-| ------------------------------- | ------------------------------------- | ------------------------------------ |
-| `api-express/`                  | `npm run typecheck`                   | `npm run test` (vitest)              |
-| `app-local-first-react-router/` | `npm run typecheck` · `npm run lint`  | `npm run vitest`                     |
-| `e2e/`                          | —                                     | Don't run (needs DB + servers)       |
-| `expo/`                         | —                                     | —                                    |
+| Service                         | Verification                         | Tests                          |
+| ------------------------------- | ------------------------------------ | ------------------------------ |
+| `api-express/`                  | `npm run typecheck`                  | `npm run test` (vitest)        |
+| `app-local-first-react-router/` | `npm run typecheck` · `npm run lint` | `npm run vitest`               |
+| `e2e/`                          | —                                    | Don't run (needs DB + servers) |
+| `expo/`                         | —                                    | —                              |
 
 ## Hard Rules (non-negotiable)
 
@@ -226,5 +226,13 @@ GitHub Actions (`.github/workflows/`):
 API requires:
 
 - `POSTGRESQL_ADDON_URI`: PostgreSQL connection string
+
+Trichine (tous optionnels — non posés = fonctionnalité inactive, cf `doc/trichine-todo.md`) :
+
+- `VITE_FEATURE_TRICHINE`: `true` active la feature (frontend **et** garde-fous sangliers du backend)
+- `TRICHINE_RESULTATS_EMAIL`: adresse de dépôt des rapports COFRAC, imprimée sur la FTP
+- `CELLAR_ADDON_HOST` / `CELLAR_ADDON_KEY_ID` / `CELLAR_ADDON_KEY_SECRET` / `CELLAR_ADDON_BUCKET`: object storage Cellar
+- `BREVO_BEARER`: secret du Bearer des webhooks Brevo (sortants **et** entrants — même valeur que celle posée à la création du webhook côté Brevo)
+- `ALBERT_API_KEY` / `ALBERT_API_URL` / `ALBERT_OCR_MODEL`: OCR des rapports d'analyses scannés via l'Albert API. Non posée = les scans restent non lus (saisie manuelle)
 
 E2E env vars: see @e2e/CLAUDE.md.

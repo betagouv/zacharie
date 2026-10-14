@@ -199,7 +199,8 @@ app.use(
           'https://metabase.zacharie.beta.gouv.fr',
           'https://stats.beta.gouv.fr',
         ],
-        frameSrc: ['https://metabase.zacharie.beta.gouv.fr', 'https://www.youtube.com'],
+        // blob: pour l'aperçu des PDF (fiche de transmission) affichés dans une iframe
+        frameSrc: ['blob:', 'https://metabase.zacharie.beta.gouv.fr', 'https://www.youtube.com'],
         objectSrc: ["'none'"],
         baseUri: ["'self'"],
         formAction: ["'self'"],
@@ -239,6 +240,7 @@ app.use('/v1', v1Router);
 
 // Auth rate limiting
 import { authRateLimit, adminRateLimit } from './middlewares/auth-rate-limit.ts';
+import { requireTrichineFeature } from './middlewares/trichine-feature.ts';
 app.use('/user/login', authRateLimit);
 app.use('/user/signup', authRateLimit);
 app.use('/user/signup-with-invitation-token', authRateLimit);
@@ -257,8 +259,8 @@ app.use('/admin', passport.initialize(), adminRouter);
 app.use('/entite', passport.initialize(), entiteRouter);
 app.use('/carcasse', passport.initialize(), feiCarcasseRouter);
 app.use('/svi', passport.initialize(), sviRouter);
-app.use('/trichine', passport.initialize(), trichineRouter);
-app.use('/laboratoire', passport.initialize(), laboratoireRouter);
+app.use('/trichine', requireTrichineFeature, passport.initialize(), trichineRouter);
+app.use('/laboratoire', requireTrichineFeature, passport.initialize(), laboratoireRouter);
 app.use('/certificat', passport.initialize(), certificatsRouter);
 app.use('/log', passport.initialize(), logRouter);
 app.use('/sync', passport.initialize(), syncRouter);

@@ -32,6 +32,11 @@ Emails are semantic, one per role, all on `@example.fr`. Password for every acco
 - Fédérations : `fdc@example.fr` (FDC Allier 03), `frc@example.fr` (FRC Auvergne-Rhône-Alpes), `fnc@example.fr` (FNC). Tous ADMIN de l'entité fédération. `fdc@`/`frc@` sont chasseurs (onglet « Tableau de bord Fédération ») ; `fnc@` a le rôle `FEDERATION` (sans être chasseur, `/app/federation`). Le périmètre vient de `Entity.scope_departements_codes`
 - Admin Zacharie : `admin@example.fr` (chasseur + `isZacharieAdmin`). Le login le renvoie sur `/app/chasseur` ; `/app/admin` exige ProConnect (simulé en test sur `/mock-proconnect`, voir `doc/proconnect-admin.md`)
 
+Codes établissement trichine (`Entity.code_trichine`, posés en dur par le seed — ils s'intercalent
+dans les références `E/P/F-{YY}-{code}-{séquence}`) : `SVI01`/`SVI02`, `PD01`, `CG01`/`CG02`,
+`CO01`/`CO02`, `EG01`/`EG02`, `CD01`. Un prélèvement fait sans entité (chasseur en son nom propre)
+est codé sur l'`id` de l'utilisateur.
+
 Required env vars:
 
 - `PGBASEURL`: PostgreSQL base URL for test DB setup

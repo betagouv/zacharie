@@ -5,6 +5,7 @@ vi.mock('~/config', () => ({
   ALBERT_API_URL: 'https://albert.test/v1',
   ALBERT_MODEL: 'deepseek-test',
 }));
+vi.mock('~/third-parties/sentry', () => ({ capture: vi.fn() }));
 
 import { albertChatCompletion } from '~/third-parties/albert';
 

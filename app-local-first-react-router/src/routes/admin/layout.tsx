@@ -6,6 +6,7 @@ import { UserRoles } from '@prisma/client';
 import { useEffect, useState } from 'react';
 import { Link, Navigate, Outlet, useLocation } from 'react-router';
 import AdminSearch from './admin-search';
+import { TRICHINE_FEATURE_ENABLED } from '@app/utils/trichine';
 
 type AdminSessionStatus = 'loading' | 'ok' | 'proconnect-required';
 
@@ -35,6 +36,15 @@ const adminLinks = [
     label: 'Quiz',
     icon: 'fr-icon-questionnaire-line',
   },
+  ...(TRICHINE_FEATURE_ENABLED
+    ? [
+        {
+          to: '/app/admin/trichine',
+          label: 'Trichine',
+          icon: 'fr-icon-microscope-line',
+        },
+      ]
+    : []),
   {
     to: '/app/admin/bug-resolution',
     label: 'Résolution de bug',
@@ -106,6 +116,9 @@ export default function AdminLayout() {
   }
   if (user.roles.includes(UserRoles.COLLECTEUR_PRO)) {
     mainLink = '/app/collecteur';
+  }
+  if (user.roles.includes(UserRoles.LABORATOIRE)) {
+    mainLink = '/app/laboratoire';
   }
 
   return (

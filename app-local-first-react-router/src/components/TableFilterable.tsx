@@ -29,6 +29,8 @@ interface TableProps<T> {
   withCheckbox?: boolean;
   onRowClick?: (item: T) => void;
   rowDisabled?: (item: T) => boolean;
+  /** Lignes que la sélection ne peut pas prendre : leur case est présente mais désactivée */
+  checkboxDisabled?: (item: T) => boolean;
   nullDisplay?: string;
   className?: string;
   title?: string;
@@ -48,6 +50,7 @@ export default function TableFilterable<T>({
   withCheckbox = false,
   onRowClick,
   rowDisabled = () => false,
+  checkboxDisabled = () => false,
   className,
   title = '',
   noData,
@@ -82,7 +85,7 @@ export default function TableFilterable<T>({
 
   // La sélection peut couvrir plusieurs pages alors que `data` n'est que la page affichée :
   // la case d'en-tête n'ajoute/retire donc que les lignes visibles, sans écraser le reste.
-  const pageKeys = data.map((item) => item[rowKey] as string);
+  const pageKeys = data.filter((item) => !checkboxDisabled(item)).map((item) => item[rowKey] as string);
   const isWholePageChecked = pageKeys.length > 0 && pageKeys.every((key) => checked.includes(key));
   const toggleWholePage = () => {
     if (isWholePageChecked) {
@@ -218,6 +221,7 @@ export default function TableFilterable<T>({
           {data
             .filter((e) => e)
             .map((item, index) => {
+              const isCheckable = !checkboxDisabled(item);
               return (
                 <tr
                   onClick={() => (!rowDisabled(item) && onRowClick ? onRowClick(item) : null)}
@@ -244,16 +248,17 @@ export default function TableFilterable<T>({
                 >
                   {withCheckbox && (
                     <td
-                      className="cursor-pointer whitespace-nowrap"
+                      className={[isCheckable ? 'cursor-pointer' : '', 'whitespace-nowrap'].join(' ')}
                       onClick={(e) => {
                         e.stopPropagation();
-                        toggleRow(item[rowKey] as string);
+                        if (isCheckable) toggleRow(item[rowKey] as string);
                       }}
                     >
                       <input
                         type="checkbox"
-                        className="checked:accent-action-high-blue-france mx-2 cursor-pointer border-2"
+                        className="checked:accent-action-high-blue-france mx-2 cursor-pointer border-2 disabled:cursor-not-allowed disabled:opacity-40"
                         checked={checked.includes(item[rowKey] as string)}
+                        disabled={!isCheckable}
                         id={item[rowKey] as string}
                         onChange={onToggleCheckbox}
                         onClick={(e) => e.stopPropagation()}

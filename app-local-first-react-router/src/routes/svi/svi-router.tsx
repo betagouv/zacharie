@@ -13,7 +13,14 @@ import SviProfilEntrepriseUtilisateurs from './profil/svi-entreprise-utilisateur
 import SviFei from './svi-fei';
 import SviInspectionCarcasseLoader from './svi-carcasse-svi-inspection';
 import { TRICHINE_FEATURE_ENABLED } from '@app/utils/trichine';
-import TrichineTableau from '@app/routes/trichine/trichine-tableau';
+import TrichineLayout from '@app/routes/trichine/trichine-layout';
+import TrichineIndex from '@app/routes/trichine/trichine-index';
+import TrichinePrelevementWizard from '@app/routes/trichine/trichine-prelevement-wizard';
+import TrichineEchantillons from '@app/routes/trichine/trichine-echantillons';
+import TrichineEchantillonDetail from '@app/routes/trichine/trichine-echantillon-detail';
+import TrichinePools from '@app/routes/trichine/trichine-pools';
+import TrichinePoolDetail from '@app/routes/trichine/trichine-pool-detail';
+import TrichineFTPs from '@app/routes/trichine/trichine-ftps';
 import TrichineNouveauPool from '@app/routes/trichine/trichine-nouveau-pool';
 import TrichineNouvelleFTP from '@app/routes/trichine/trichine-nouvelle-ftp';
 import TrichineFTPDetail from '@app/routes/trichine/trichine-ftp-detail';
@@ -97,20 +104,53 @@ export default function RouterSvi() {
         <>
           <Route
             path="trichine"
-            element={<TrichineTableau />}
-          />
-          <Route
-            path="trichine/nouveau-pool"
-            element={<TrichineNouveauPool />}
-          />
-          <Route
-            path="trichine/nouvelle-ftp"
-            element={<TrichineNouvelleFTP />}
-          />
-          <Route
-            path="trichine/ftp/:ftp_id"
-            element={<TrichineFTPDetail />}
-          />
+            element={<TrichineLayout />}
+          >
+            <Route
+              index
+              element={<TrichineIndex />}
+            />
+            <Route
+              path="echantillons"
+              element={<TrichineEchantillons />}
+            />
+            <Route
+              path="echantillons/:reference"
+              element={<TrichineEchantillonDetail />}
+            />
+            <Route
+              path="pools"
+              element={<TrichinePools />}
+            />
+            <Route
+              path="pools/:reference"
+              element={<TrichinePoolDetail />}
+            />
+            <Route
+              path="pools/:reference/2e-intention"
+              element={<TrichinePrelevementWizard />}
+            />
+            <Route
+              path="ftp"
+              element={<TrichineFTPs />}
+            />
+            <Route
+              path="ftp/:reference"
+              element={<TrichineFTPDetail />}
+            />
+            <Route
+              path="prelever"
+              element={<TrichinePrelevementWizard />}
+            />
+            <Route
+              path="nouveau-pool"
+              element={<TrichineNouveauPool />}
+            />
+            <Route
+              path="nouvelle-ftp"
+              element={<TrichineNouvelleFTP />}
+            />
+          </Route>
         </>
       )}
     </Route>

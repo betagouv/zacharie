@@ -33,7 +33,7 @@ export function getUserOnboardingRoute(user: User): string {
     return '/app/federation/onboarding/coordonnees';
   }
   if (user.roles.includes(UserRoles.LABORATOIRE)) {
-    return '/app/laboratoire/ftp';
+    return '/app/laboratoire';
   }
   if (isCircuitCourt(user)) {
     if (user.onboarded_at) {

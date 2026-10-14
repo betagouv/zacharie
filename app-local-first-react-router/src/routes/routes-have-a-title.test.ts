@@ -34,7 +34,8 @@ function resolveModule(fromFile: string, specifier: string): string | null {
 
 function defaultImportsOf(file: string, source: string): Map<string, string> {
   const imports = new Map<string, string>();
-  for (const match of source.matchAll(/^import\s+([^\s,{}]+)\s+from\s+'([^']+)';/gm)) {
+  // `import X from '…'` et `import X, { Y } from '…'` (imports nommés éventuellement sur plusieurs lignes)
+  for (const match of source.matchAll(/^import\s+([^\s,{}]+)\s*(?:,\s*\{[^}]*\})?\s+from\s+'([^']+)';/gm)) {
     const resolved = resolveModule(file, match[2]);
     if (resolved) imports.set(match[1], resolved);
   }
@@ -82,7 +83,12 @@ describe('toutes les pages posent un <title>', () => {
   });
 
   it.each([...pages.keys()].sort())('%s rend un <title>', (pageFile) => {
-    const source = fs.readFileSync(path.join(srcDir, pageFile), 'utf8');
-    expect(source).toContain('<title>');
+    const file = path.join(srcDir, pageFile);
+    const source = fs.readFileSync(file, 'utf8');
+    // Le <title> peut venir d'un gabarit que la page rend (ex. TrichineListPage, TrichineDetailPage)
+    const gabaritsAvecTitre = [...defaultImportsOf(file, source)]
+      .filter(([componentName]) => source.includes(`<${componentName}`))
+      .filter(([, componentFile]) => fs.readFileSync(componentFile, 'utf8').includes('<title>'));
+    expect(source.includes('<title>') || gabaritsAvecTitre.length > 0).toBe(true);
   });
 });

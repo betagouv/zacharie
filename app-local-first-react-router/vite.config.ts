@@ -167,7 +167,10 @@ export default defineConfig({
   ],
   build: {
     outDir: 'build',
-    sourcemap: true,
+    // Pas de sourcemaps : leur génération fait doubler la RAM du build (2,4 Go vs 1,2 Go de
+    // pic) et sort l'OOM killer sur Clever. Personne ne les consomme — sentryVitePlugin est
+    // désactivé partout (`disable: !process.env.CI`, et la CI force `CI=''`).
+    sourcemap: false,
   },
   resolve: {
     alias: {

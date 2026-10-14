@@ -17,6 +17,8 @@ import CcgImport from './ccg-import';
 import AdminDashboard from './dashboard';
 import AdminLesions from './lesions';
 import AdminQuiz from './quiz';
+import AdminTrichine from './trichine';
+import { TRICHINE_FEATURE_ENABLED } from '@app/utils/trichine';
 import AdminBugResolution from './bug-resolution';
 
 export default function RouterAdmin() {
@@ -93,6 +95,12 @@ export default function RouterAdmin() {
         path="quiz"
         element={<AdminQuiz />}
       />
+      {TRICHINE_FEATURE_ENABLED && (
+        <Route
+          path="trichine"
+          element={<AdminTrichine />}
+        />
+      )}
       <Route
         path="bug-resolution"
         element={<AdminBugResolution />}
