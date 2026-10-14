@@ -106,20 +106,26 @@ test('Changement de version du stockage local : la fiche non synchronisée est g
     /CHASSENARD/i
   );
 
-  // Retour du serveur : la fiche se synchronise
+  // Retour du serveur : la fiche se synchronise.
+  // La réponse est lue côté Node (route.fetch) : lue côté navigateur, son corps est perdu si une
+  // navigation survient entre la réponse et la lecture (Network.getResponseBody).
   await page.unroute(isSyncRequest);
-  const syncResponse = page.waitForResponse(
-    (res) => isSyncRequest(new URL(res.url())) && res.request().method() === 'POST' && res.ok()
-  );
+  let syncedCommune: string | null | undefined;
+  await page.route(isSyncRequest, async (route) => {
+    const response = await route.fetch();
+    if (route.request().method() === 'POST' && response.ok()) {
+      const syncJson = (await response.json()) as {
+        data: { feis: Array<{ numero: string; commune_mise_a_mort: string | null }> };
+      };
+      syncedCommune =
+        syncJson.data.feis.find((fei) => fei.numero === feiNumero)?.commune_mise_a_mort ?? syncedCommune;
+    }
+    await route.fulfill({ response });
+  });
   await page.goto('http://localhost:3290/app/chasseur');
   // Le serveur a enregistré la fiche avec sa saisie. (On ne vérifie pas l'indicateur « En ligne » :
   // une fiche sans carcasse ne redescend pas dans le delta de GET /carcasse, donc reste
   // is_synced = false côté app même après une synchro réussie.)
-  const syncJson = (await (await syncResponse).json()) as {
-    data: { feis: Array<{ numero: string; commune_mise_a_mort: string | null }> };
-  };
-  expect(syncJson.data.feis.find((fei) => fei.numero === feiNumero)?.commune_mise_a_mort).toMatch(
-    /CHASSENARD/i
-  );
+  await expect.poll(() => syncedCommune, { timeout: 10000 }).toMatch(/CHASSENARD/i);
   await expect(page.getByRole('link', { name: feiNumero! }).first()).toBeVisible();
 });

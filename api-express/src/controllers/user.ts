@@ -113,6 +113,7 @@ router.post(
       email = email.toLowerCase().trim();
       if (username) {
         capture(new Error('Spam detected'), {
+          level: 'info',
           extra: { email, message: 'Spam detected' },
         });
         // honey pot
@@ -309,6 +310,7 @@ router.post(
       email = email.toLowerCase().trim();
       if (username) {
         capture(new Error('Spam detected'), {
+          level: 'info',
           extra: { email, message: 'Spam detected' },
         });
         // honey pot
@@ -411,6 +413,7 @@ router.post(
       email = email.toLowerCase().trim();
       if (username) {
         capture(new Error('Spam detected'), {
+          level: 'info',
           extra: { email, message: 'Spam detected' },
         });
         // honey pot
@@ -586,6 +589,7 @@ router.post(
       email = email.toLowerCase().trim();
       if (username) {
         capture(new Error('Spam detected'), {
+          level: 'info',
           extra: { email, message: 'Spam detected' },
         });
         // honey pot
@@ -680,6 +684,7 @@ router.post(
 
       if (username) {
         capture(new Error('Spam detected'), {
+          level: 'info',
           extra: { message: 'Spam detected' },
         });
         // honey pot
