@@ -29,6 +29,10 @@ import { useEntitiesIdsWorkingDirectlyForObj } from '@app/utils/get-entity-relat
 import { trackFeature, trackSearch } from '@app/services/matomo';
 import type { Carcasse } from '@prisma/client';
 import type { TransmissionSimpleStatus } from '@app/types/transmission-steps';
+import {
+  isFeiExcludedByQuickFilters,
+  type FeiQuickFilterMeta,
+} from '@app/utils/is-fei-excluded-by-quick-filters';
 import { getTransmissionId, getTransmissionLinkFromCarcasse } from '@app/utils/get-transmission-id';
 
 const advancedFiltersModal = createModal({
@@ -72,12 +76,6 @@ type CatalogColumn = {
   sortable?: boolean;
   small?: boolean;
   render?: (item: Carcasse, index: number) => React.ReactNode;
-};
-
-type FeiMeta = {
-  lastCollecteurId: string | null;
-  simpleStatus: TransmissionSimpleStatus | undefined;
-  premierDetenteurName: Carcasse['premier_detenteur_name_cache'];
 };
 
 export default function EtgCarcasses() {
@@ -197,7 +195,7 @@ export default function EtgCarcasses() {
     feiMetaByFeiNumero,
   } = useMemo(() => {
     const _collecteursNamesByFeiNumero: Record<Carcasse['fei_numero'], string> = {};
-    const _feiMetaByFeiNumero: Record<Carcasse['fei_numero'], FeiMeta> = {};
+    const _feiMetaByFeiNumero: Record<Carcasse['fei_numero'], FeiQuickFilterMeta> = {};
     const _ccgNames: Record<NonNullable<Carcasse['premier_detenteur_depot_entity_name_cache']>, true> = {};
     const _motifs: Record<
       string, // one of 'svi_ipm2_lesions_ou_motifs',
@@ -224,7 +222,6 @@ export default function EtgCarcasses() {
     for (const carcasse of carcassesRegistry) {
       if (!_feiMetaByFeiNumero[carcasse.fei_numero]) {
         const __collecteursIds: Record<Entity['id'], Entity['nom_d_usage']> = {};
-        let lastCollecteurId: string | null = null;
         // une carcasse du registre peut n'avoir aucune transmission (fiche absente ou supprimée)
         const transmission = transmissions[getTransmissionId(carcasse)];
         const intermediaires = transmission?.intermediaires ?? [];
@@ -232,14 +229,13 @@ export default function EtgCarcasses() {
           const collecteurId = intermediaire.intermediaire_entity_id || intermediaire.intermediaire_user_id;
           if (!collecteurId) continue;
           if (intermediaire.intermediaire_role === FeiOwnerRole.COLLECTEUR_PRO) {
-            lastCollecteurId = collecteurId;
             const collecteurName = collecteurNameById(collecteurId);
             _collecteurOptions[collecteurId] = collecteurName;
             __collecteursIds[collecteurId] = collecteurName;
           }
         }
         _feiMetaByFeiNumero[carcasse.fei_numero] = {
-          lastCollecteurId,
+          collecteurIds: Object.keys(__collecteursIds),
           simpleStatus: transmission?.labels.simpleStatus,
           premierDetenteurName: carcasse.premier_detenteur_name_cache,
         };
@@ -277,37 +273,21 @@ export default function EtgCarcasses() {
     const _filteredData: Array<Carcasse> = [];
     const searchQuery = quickFilterSearch.trim().toLowerCase();
     const excludedFei: Record<Carcasse['fei_numero'], boolean> = {};
-    const withQuickFilterCollecteur = Object.keys(quickFilterCollecteurIds).length > 0;
     const withQuickFilterEspece = Object.keys(quickFilterEspeces).length > 0;
-    const withQuickFilterTransmissionStatuses = Object.keys(quickFilterTransmissionStatuses).length > 0;
     const withQuickFilterStatuses = Object.keys(quickFilterStatuses).length > 0;
-    const withQuickFilterPremierDetenteurs = Object.keys(quickFilterPremierDetenteurs).length > 0;
     const withFilters = filters?.some((filter) => Boolean(filter?.value));
     const isInRegistre = filterCarcassesInRegistre(filters);
-    const isFeiExcluded = (fei_numero: Carcasse['fei_numero']) => {
-      const meta = feiMetaByFeiNumero[fei_numero];
-      // seul le dernier collecteur de la fiche compte pour le filtre collecteur
-      let feiIsExcluded = withQuickFilterPremierDetenteurs || withQuickFilterTransmissionStatuses;
-      if (meta.lastCollecteurId) {
-        feiIsExcluded = withQuickFilterCollecteur && !quickFilterCollecteurIds[meta.lastCollecteurId];
-      }
-      if (
-        withQuickFilterTransmissionStatuses &&
-        meta.simpleStatus &&
-        quickFilterTransmissionStatuses[meta.simpleStatus]
-      )
-        feiIsExcluded = false;
-      if (
-        meta.premierDetenteurName &&
-        withQuickFilterPremierDetenteurs &&
-        quickFilterPremierDetenteurs[meta.premierDetenteurName]
-      )
-        feiIsExcluded = false;
-      return feiIsExcluded;
+    const quickFilters = {
+      collecteurIds: quickFilterCollecteurIds,
+      transmissionStatuses: quickFilterTransmissionStatuses,
+      premierDetenteurs: quickFilterPremierDetenteurs,
     };
 
     for (const carcasse of carcassesRegistry) {
-      excludedFei[carcasse.fei_numero] ??= isFeiExcluded(carcasse.fei_numero);
+      excludedFei[carcasse.fei_numero] ??= isFeiExcludedByQuickFilters(
+        feiMetaByFeiNumero[carcasse.fei_numero],
+        quickFilters
+      );
       if (excludedFei[carcasse.fei_numero]) continue;
       if (withFilters && !isInRegistre(carcasse, feis[carcasse.fei_numero]!)) continue;
       const numeroBonReception = numeroBonReceptionByCarcasseId[carcasse.zacharie_carcasse_id];

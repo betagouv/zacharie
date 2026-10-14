@@ -58,7 +58,8 @@ export type SeedRole =
   | 'FDC'
   | 'FRC'
   | 'FNC'
-  | 'FEDERATION_STATS';
+  | 'FEDERATION_STATS'
+  | 'ETG_FILTRES_RAPIDES';
 
 export async function resetDb(role?: SeedRole) {
   try {
