@@ -18,6 +18,15 @@ import { usePrefillPremierDétenteurInfos } from '@app/utils/usePrefillPremierD�
 import { useEntitiesIdsWorkingDirectlyFor, useDetenteursInitiaux } from '@app/utils/get-entity-relations';
 import { CarcasseTransmission } from '@app/types/carcasse';
 import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
+import { track } from '@app/services/matomo';
+
+type MissingField = 'date_mise_a_mort' | 'commune_mise_a_mort' | 'premier_detenteur';
+
+const MISSING_FIELD_TRACKING_NAME = {
+  date_mise_a_mort: 'date-mise-a-mort',
+  commune_mise_a_mort: 'commune',
+  premier_detenteur: 'premier-detenteur',
+} as const satisfies Record<MissingField, string>;
 
 type SelectNextForExaminateurProps = {
   disabled?: boolean;
@@ -94,7 +103,7 @@ export default function SelectNextForExaminateur({
   // les messages de la date et de la commune sont affichés par le bloc parent, ici on a juste besoin de
   // savoir ce qui manque
   const missingFields = useMemo(() => {
-    const fields: string[] = [];
+    const fields: MissingField[] = [];
     if (!fei.date_mise_a_mort) {
       fields.push('date_mise_a_mort');
     }
@@ -121,6 +130,7 @@ export default function SelectNextForExaminateur({
     // email) : il n'est pas encore dans le state au moment du clic
     const missing = missingFields.filter((field) => field !== 'premier_detenteur' || !nextOwnerUserId);
     if (missing.length > 0) {
+      track('fiche', 'bloquer', MISSING_FIELD_TRACKING_NAME[missing[0]]);
       setShowErrors(true);
       onValidationError?.();
       return;
@@ -189,6 +199,11 @@ export default function SelectNextForExaminateur({
       nextCarcassesTransmission
     );
     updateFei(fei.numero, nextFei);
+    track(
+      'fiche',
+      'designer-premier-detenteur',
+      nextIsMe ? 'moi' : nextIsMyAssociation ? 'association' : 'autre-utilisateur'
+    );
     addLog({
       user_id: user.id,
       user_role: UserRoles.CHASSEUR,

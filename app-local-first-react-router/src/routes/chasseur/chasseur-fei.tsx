@@ -25,6 +25,8 @@ import DestinataireSelectPremierDetenteur, {
 import ExaminateurInitialDeleteFei from './examinateur-initial-delete-fei';
 import DateHeureValidationAlerts from '@app/components/DateHeureValidationAlerts';
 import ChasseurHeaderFiche from './chasseur-header-fiche';
+import { track } from '@app/services/matomo';
+import type { MatomoName } from '@app/services/matomo-events';
 import { CompteEnAttenteValidationAlert } from '@app/components/CompteEnAttenteValidation';
 import { useGetTransmissionsForFei } from '@app/utils/get-transmissions-sorted';
 import {
@@ -227,50 +229,64 @@ function FEIChasseurLoaded() {
   const VilleComponent = canEdit ? InputVille : InputNotEditable;
 
   const validationErrors = useMemo(() => {
-    const errors: { field: string; message: string }[] = [];
+    const errors: { field: string; message: string; tracking: MatomoName<'fiche', 'bloquer'> }[] = [];
     if (!fei.date_mise_a_mort) {
-      errors.push({ field: 'date_mise_a_mort', message: 'Il manque la date de mise à mort' });
+      errors.push({
+        field: 'date_mise_a_mort',
+        message: 'Il manque la date de mise à mort',
+        tracking: 'date-mise-a-mort',
+      });
     }
     if (!fei.commune_mise_a_mort) {
       errors.push({
         field: 'commune_mise_a_mort',
         message: 'Il manque la commune de prélèvement du gibier',
+        tracking: 'commune',
       });
     }
     if (!fei.premier_detenteur_user_id && !fei.premier_detenteur_entity_id) {
-      errors.push({ field: 'premier_detenteur', message: 'Il manque le premier détenteur' });
+      errors.push({
+        field: 'premier_detenteur',
+        message: 'Il manque le premier détenteur',
+        tracking: 'premier-detenteur',
+      });
     }
     if (!fei.heure_mise_a_mort_premiere_carcasse) {
       errors.push({
         field: 'heure_mise_a_mort_premiere_carcasse',
         message: "Il manque l'heure du prélèvement de la première carcasse",
+        tracking: 'heure-prelevement',
       });
     }
     if (!onlyPetitGibier && !fei.heure_evisceration_derniere_carcasse) {
       errors.push({
         field: 'heure_evisceration_derniere_carcasse',
         message: "Il manque l'heure de fin d’examen initial",
+        tracking: 'heure-evisceration',
       });
     }
     if (carcasses.length === 0) {
-      errors.push({ field: 'carcasses', message: "Il n'y a pas de carcasses" });
+      errors.push({ field: 'carcasses', message: "Il n'y a pas de carcasses", tracking: 'aucune-carcasse' });
     }
     if (carcassesNotReady.length > 0) {
       errors.push({
         field: 'carcasses',
         message: 'Il manque des informations sur certaines carcasses',
+        tracking: 'carcasse-incomplete',
       });
     }
     if (!fei.examinateur_initial_date_approbation_mise_sur_le_marche) {
       errors.push({
         field: 'examinateur_initial_date_approbation_mise_sur_le_marche',
         message: 'Il manque la date de validation de l\u2019examen initial',
+        tracking: 'date-validation-examen',
       });
     }
     if (!approbation) {
       errors.push({
         field: 'examinateur_initial_approbation_mise_sur_le_marche',
         message: 'Vous devez cocher la case pour valider la mise sur le marché',
+        tracking: 'certification',
       });
     }
     return errors;
@@ -341,6 +357,7 @@ function FEIChasseurLoaded() {
       return;
     }
     if (validationErrors.length > 0) {
+      track('fiche', 'bloquer', validationErrors[0].tracking);
       setShowErrors(true);
       // on scrolle vers le premier champ en erreur, après le rendu des messages d'erreur
       const firstErrorField = validationErrors[0].field;
@@ -359,6 +376,7 @@ function FEIChasseurLoaded() {
       // validate() reveals field-level errors inside the destinataire sub-form.
       const destinataireError = destinataireRef.current?.validate();
       if (destinataireError) {
+        track('fiche', 'bloquer', 'vente-don');
         return;
       }
       updateCarcassesTransmission(carcassesRestantesIds, {
@@ -378,6 +396,7 @@ function FEIChasseurLoaded() {
         current_owner_entity_id: fei.premier_detenteur_entity_id ?? null,
         current_owner_entity_name_cache: premierDetenteurEntity?.nom_d_usage ?? null,
       });
+      track('fiche', 'transmettre', 'premier-detenteur', carcassesRestantesIds.length);
       syncData('examinateur-initial-transfer-to-premier-detenteur');
       navigate(`/app/chasseur/fei/${fei.numero}/envoyée`, {
         state: { transferredToPremierDetenteur: true },
@@ -541,7 +560,14 @@ function FEIChasseurLoaded() {
                     canEdit={canEdit}
                     canEditAsPremierDetenteur={canEditAsPremierDetenteur}
                     allCarcassesConfirmed={allCarcassesConfirmed}
-                    onAllCarcassesConfirmed={() => setConfirmedSignature(carcassesExamenSignature)}
+                    onAllCarcassesConfirmed={() => {
+                      track(
+                        'fiche',
+                        'confirmer-examen',
+                        atLeastOneCarcasseWithAnomalie ? 'avec-anomalie' : 'sans-anomalie'
+                      );
+                      setConfirmedSignature(carcassesExamenSignature);
+                    }}
                   />
                   {fieldHasError('carcasses') && (
                     <p className="fr-error-text mt-2">{fieldErrorMessage('carcasses')}</p>
@@ -731,10 +757,16 @@ function FEIChasseurLoaded() {
                             // cochée on ne la décoche plus. La décocher redescendrait sur toutes les
                             // carcasses de la fiche, y compris des lots déjà partis chez un ETG.
                             disabled: !canEdit || approbation,
-                            onChange: () =>
+                            onChange: () => {
                               updateFei(fei.numero, {
                                 examinateur_initial_approbation_mise_sur_le_marche: true,
-                              }),
+                              });
+                              track(
+                                'fiche',
+                                'valider-examen',
+                                atLeastOneCarcasseWithAnomalie ? 'avec-anomalie' : 'sans-anomalie'
+                              );
+                            },
                             checked: approbation,
                           },
                         },
@@ -779,6 +811,11 @@ function FEIChasseurLoaded() {
                     className="col-span-2 bg-white md:col-span-1"
                     linkProps={{
                       to: `/app/chasseur/`,
+                      onClick: () => {
+                        if (canEdit && !allCarcassesAssigned) {
+                          track('fiche', 'quitter');
+                        }
+                      },
                     }}
                   >
                     Retour

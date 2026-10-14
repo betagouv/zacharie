@@ -58,3 +58,7 @@ Known sync risks, decisions and open points: `doc/audit-local-first-2026-10.md`.
 - **AbortController per record**: Cancels in-flight requests if same record changes again
 
 Key helpers in `@app/utils/get-carcasse-intermediaire-id.ts` for composite IDs (CarcasseIntermediaire uses `fei_numero + zacharie_carcasse_id + intermediaire_id`).
+
+## Matomo — keep the taxonomy and its doc in sync
+
+Business events go through `track(category, action, name?, value?)` (`src/services/matomo.ts`), typed by the catalog in `src/services/matomo-events.ts`. Buttons without a business action get `data-matomo="<id>"` (or `...matomoClickId('<id>')` in DSFR `linkProps`/`nativeButtonProps`). Never send a visible label, user input or personal data. Never rename an existing event. **`doc/matomo.md` is the team-facing inventory: update it in the same change** whenever you add or remove an event or a `data-matomo` id.
