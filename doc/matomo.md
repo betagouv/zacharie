@@ -22,7 +22,6 @@ Matomo n'envoie rien hors production : en dev, chaque événement s'affiche dans
 | 1   | Connexion | Visite | `connecté`, `non connecté`             |
 | 2   | Admin     | Visite | `admin`, `non admin`                   |
 | 3   | Rôle      | Visite | `CHASSEUR`, `ETG`, `SVI`, … ou `aucun` |
-| 4   | Réseau    | Action | `en ligne`, `hors ligne`               |
 
 Le rôle est porté par une dimension, **jamais par le nom de l'événement** : `fiche / transmettre` reste le même événement quel que soit l'acteur.
 
@@ -94,4 +93,4 @@ Un événement déclenché hors ligne est perdu : le tracker Matomo n'a pas de f
 
 ## Journal des changements
 
-- 2026-10 : création de la taxonomie, parcours de création de fiche chasseur, dimensions Rôle et Réseau.
+- 2026-10 : création de la taxonomie, parcours de création de fiche chasseur, dimension Rôle.

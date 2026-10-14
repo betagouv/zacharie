@@ -151,10 +151,9 @@ export function track<C extends MatomoCategory, A extends MatomoAction<C>>(
   name?: MatomoName<C, A>,
   value?: number
 ): void {
-  const reseau = navigator.onLine ? 'en ligne' : 'hors ligne';
   if (!isMatomoEnabled) {
     if (import.meta.env.DEV) {
-      console.log('[Matomo] Event:', category, action, name, value, reseau);
+      console.log('[Matomo] Event:', category, action, name, value);
     }
     return;
   }
