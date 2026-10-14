@@ -39,7 +39,16 @@ const CONNEXION_LEAF_PATHS = [
 const STANDALONE_PUBLIC_PATHS = ['/quiz/tv'];
 
 // Non-public paths in App.tsx (wrappers + authenticated app routes)
-const APP_NON_PUBLIC_PATHS = ['/', 'app', '*', 'proconnect', 'contact', 'nouvelle-fiche', 'tableau-de-bord'];
+const APP_NON_PUBLIC_PATHS = [
+  '/',
+  'app',
+  '*',
+  'proconnect',
+  'contact',
+  'nouvelle-fiche',
+  'tableau-de-bord',
+  'collecteur-pro/*',
+];
 
 // Full list of public routes (used by the E2E test and exported for reuse)
 export const ALL_PUBLIC_ROUTES = [

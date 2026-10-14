@@ -856,7 +856,7 @@ describe('notifyNextOwnerEntity', () => {
         emailTemplateParams: {
           sender_name: 'Pierre Petit',
           fei_numero: feiNumero,
-          cta: `${VITE_APP_URL}/app/collecteur-pro/fei/${feiNumero}/collecteur-1`,
+          cta: `${VITE_APP_URL}/app/collecteur/fei/${feiNumero}/collecteur-1`,
         },
         notificationLogAction: `FEI_ASSIGNED_TO_${FeiOwnerRole.COLLECTEUR_PRO}_${feiNumero}_collecteur-1`,
       })
