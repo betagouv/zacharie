@@ -15,13 +15,15 @@ import type { FeiAndCarcasseAndIntermediaireIds } from '@app/types/carcasses-int
 
 let debug = false;
 
-// Les items que le serveur a définitivement refusé d'écrire (autorisation) sont gardés dans
+// Les items que le serveur a refusé d'écrire (autorisation, version obsolète) sont gardés dans
 // `syncRejections` du store, avec la raison, pour que l'utilisateur la voie. Sans ça ils restent
-// `is_synced = false` — le serveur n'ayant pas touché sa ligne, elle ne revient jamais dans le delta
-// de loadCarcasses qui ferait basculer le flag — et repartent dans chaque payload de synchro. La
-// portée est la session : le champ n'est pas persisté et `abortSyncData` le vide, donc on retente au
-// prochain chargement comme à la connexion suivante. L'équipe est prévenue par le Sentry émis côté
-// serveur.
+// `is_synced = false` — le serveur n'ayant pas touché sa ligne, elle ne revient pas forcément dans
+// le delta de loadCarcasses qui ferait basculer le flag — et repartent dans chaque payload de
+// synchro. Le refus porte sur la version envoyée (son `updated_at`) : une nouvelle modification
+// locale de l'item change `updated_at`, elle est donc envoyée et le refus précédent disparaît de
+// l'alerte. La portée est la session : le champ n'est pas persisté et `abortSyncData` le vide, donc
+// on retente au prochain chargement comme à la connexion suivante. L'équipe est prévenue par le
+// Sentry émis côté serveur.
 
 // Items que le serveur a demandé de retirer du store local (`shouldRemoveFromLocalStore`) : ils
 // ne sont pas des refus à montrer à l'utilisateur, mais on ne doit pas non plus les renvoyer.
@@ -43,21 +45,68 @@ export function abortSyncData(reason: string = 'aborted') {
   removedBySync.clear();
 }
 
-function collectUnsynced(state: ReturnType<typeof useZustandStore.getState>) {
-  const rejectedKeys = new Set(state.syncRejections.map((r) => `${r.kind}:${r.id}`));
-  const notRejected = (kind: SyncRejection['kind'], id: string) =>
-    !rejectedKeys.has(`${kind}:${id}`) && !removedBySync.has(`${kind}:${id}`);
+type State = ReturnType<typeof useZustandStore.getState>;
+
+const rejectionKey = (kind: SyncRejection['kind'], id: string) => `${kind}:${id}`;
+
+// `updated_at` (en ms) de chaque item non synchronisé, par clé `kind:id`.
+function unsyncedUpdatedAtByKey(state: State) {
+  const entries: Array<[string, Date]> = [
+    ...Object.values(state.feis)
+      .filter((f) => !f.is_synced)
+      .map((f): [string, Date] => [rejectionKey('fei', f.numero), f.updated_at]),
+    ...Object.values(state.carcasses)
+      .filter((c) => !c.is_synced)
+      .map((c): [string, Date] => [rejectionKey('carcasse', c.zacharie_carcasse_id), c.updated_at]),
+    ...Object.values(state.carcassesIntermediaireById)
+      .filter((ci) => !ci.is_synced)
+      .map((ci): [string, Date] => [
+        rejectionKey('carcasseIntermediaire', getFeiAndCarcasseAndIntermediaireIds(ci)),
+        ci.updated_at,
+      ]),
+    ...Object.values(state.modifRequestsByCarcasseId)
+      .flat()
+      .filter((r) => !r.is_synced)
+      .map((r): [string, Date] => [rejectionKey('carcasseModifRequest', r.id), r.updated_at]),
+  ];
+  return new Map(entries.map(([key, updatedAt]) => [key, dayjs(updatedAt).valueOf()]));
+}
+
+// Retire de l'alerte les refus dont l'item a été modifié de nouveau en local : cette nouvelle
+// version va être envoyée. Un item remplacé par la version serveur (is_synced = true) garde son
+// refus : la modification de l'utilisateur est bien perdue.
+function dropSupersededRejections() {
+  const state = useZustandStore.getState();
+  if (state.syncRejections.length === 0) return;
+  const current = unsyncedUpdatedAtByKey(state);
+  const kept = state.syncRejections.filter((r) => {
+    const updatedAt = current.get(rejectionKey(r.kind, r.id));
+    return updatedAt === undefined || updatedAt === r.updated_at;
+  });
+  if (kept.length !== state.syncRejections.length) useZustandStore.setState({ syncRejections: kept });
+}
+
+function collectUnsynced(state: State) {
+  const rejectedUpdatedAt = new Map(
+    state.syncRejections.map((r) => [rejectionKey(r.kind, r.id), r.updated_at])
+  );
+  const notRejected = (kind: SyncRejection['kind'], id: string, updatedAt: Date) => {
+    const key = rejectionKey(kind, id);
+    return rejectedUpdatedAt.get(key) !== dayjs(updatedAt).valueOf() && !removedBySync.has(key);
+  };
   return {
-    feis: Object.values(state.feis).filter((f) => !f.is_synced && notRejected('fei', f.numero)),
+    feis: Object.values(state.feis).filter((f) => !f.is_synced && notRejected('fei', f.numero, f.updated_at)),
     carcasses: Object.values(state.carcasses).filter(
-      (c) => !c.is_synced && notRejected('carcasse', c.zacharie_carcasse_id)
+      (c) => !c.is_synced && notRejected('carcasse', c.zacharie_carcasse_id, c.updated_at)
     ),
     carcassesIntermediaires: Object.values(state.carcassesIntermediaireById).filter(
-      (ci) => !ci.is_synced && notRejected('carcasseIntermediaire', getFeiAndCarcasseAndIntermediaireIds(ci))
+      (ci) =>
+        !ci.is_synced &&
+        notRejected('carcasseIntermediaire', getFeiAndCarcasseAndIntermediaireIds(ci), ci.updated_at)
     ),
     carcasseModifRequests: Object.values(state.modifRequestsByCarcasseId)
       .flat()
-      .filter((r) => !r.is_synced && notRejected('carcasseModifRequest', r.id)),
+      .filter((r) => !r.is_synced && notRejected('carcasseModifRequest', r.id, r.updated_at)),
     logs: state.logs.filter((l) => !l.is_synced),
   };
 }
@@ -83,6 +132,7 @@ export async function syncData(calledFrom?: string) {
   // (mergeItems est server-wins), donc on ne recharge pas dans ce cas.
   let pushFailed = false;
   try {
+    dropSupersededRejections();
     const state = useZustandStore.getState();
     if (!state.isOnline) {
       console.log('not syncing data because not online');
@@ -123,13 +173,20 @@ export async function syncData(calledFrom?: string) {
       return;
     }
 
-    // Refus définitifs : on arrête de les repousser. On ne touche pas à la donnée locale — le
+    // Refus : on arrête de repousser la version refusée. On ne touche pas à la donnée locale — le
     // serveur ne renvoie pas sa version (ce serait exposer la fiche d'un tiers), donc on n'a rien
     // pour la corriger ici. Elle le sera dès que la ligne serveur bougera légitimement et reviendra
     // dans un delta, mergeItems étant server-wins.
     const rejected = res.data.rejected ?? [];
     if (rejected.length > 0) {
-      useZustandStore.setState((state) => ({ syncRejections: [...state.syncRejections, ...rejected] }));
+      const sentUpdatedAt = unsyncedUpdatedAtByKey(state);
+      const rejectedVersions = rejected.map((r) => ({
+        ...r,
+        updated_at: sentUpdatedAt.get(rejectionKey(r.kind, r.id)) ?? 0,
+      }));
+      useZustandStore.setState((state) => ({
+        syncRejections: [...state.syncRejections, ...rejectedVersions],
+      }));
     }
 
     const shouldRemoveFromLocalStore = res.data.shouldRemoveFromLocalStore ?? [];

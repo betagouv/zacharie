@@ -74,9 +74,10 @@ export interface State {
   // loadCarcasses les redescend et retire la fiche de cette liste.
   feiIdsRenvoiToHide: Array<Fei['numero']>;
   logs: Array<Log>;
-  // Items que le serveur a définitivement refusé d'écrire lors d'une synchro de cette session.
-  // Ils restent `is_synced = false` et ne sont plus renvoyés (voir sync-data.ts).
-  syncRejections: Array<SyncRejection>;
+  // Items que le serveur a refusé d'écrire lors d'une synchro de cette session, avec le `updated_at`
+  // (en ms) de la version refusée. Cette version n'est plus renvoyée ; une nouvelle modification
+  // locale de l'item l'est (voir sync-data.ts).
+  syncRejections: Array<SyncRejection & { updated_at: number }>;
   _hasHydrated: boolean;
 }
 
