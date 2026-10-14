@@ -41,6 +41,7 @@ const { permissiveScope } = vi.hoisted(() => ({
     prefetch: async () => {},
     canWriteCarcasse: async () => true,
     grant: () => {},
+    outOfScope: vi.fn(async (_ids: Array<string>): Promise<Array<string>> => []),
     isFeiOwner: () => true,
     canWriteFei: vi.fn(async () => true),
   },
@@ -448,6 +449,25 @@ describe('POST /sync — refus définitifs vs erreurs transitoires', () => {
     expect(captureCalls[0][1]?.extra).toMatchObject({ count: 2 });
   });
 
+  test("l'évènement de refus porte la version et la plateforme du client", async () => {
+    vi.mocked(syncCarcasse).mockRejectedValueOnce(
+      new SyncRejectedError("Vous n'avez pas accès à cette carcasse")
+    );
+
+    await authed(
+      request(app)
+        .post('/sync')
+        .set('appversion', 'build-123')
+        .set('platform', 'native')
+        .send({ carcasses: [{ fei_numero: 'FEI-1', zacharie_carcasse_id: 'ZC-INTERDITE' }] })
+    );
+
+    expect(vi.mocked(capture).mock.calls[0][1]?.extra).toMatchObject({
+      appversion: 'build-123',
+      platform: 'native',
+    });
+  });
+
   // Un refus ne laisse rien en base et le client cesse de pousser l'item : sans son payload dans
   // l'évènement, la saisie de l'utilisateur n'est plus récupérable nulle part.
   test("l'évènement de refus porte le payload de chaque item refusé, données personnelles masquées", async () => {
@@ -574,6 +594,77 @@ describe('POST /sync — shouldRemoveFromLocalStore', () => {
     expect(res.body.data.shouldRemoveFromLocalStore.map((i: any) => [i.kind, i.id])).toEqual([
       ['carcasse', 'ZC-1'],
     ]);
+  });
+
+  // Renvoi à l'expéditeur : l'écriture passe, mais vide next_owner_* et sort la carcasse du périmètre
+  // de son auteur. Sans retrait immédiat, le client la repousserait pour se la faire refuser.
+  test('une carcasse existante que l’écriture sort du périmètre est retirée sans être refusée', async () => {
+    vi.mocked(prisma.carcasse.findMany).mockResolvedValueOnce([
+      { zacharie_carcasse_id: 'ZC-1', fei_numero: 'F1' },
+    ] as any);
+    vi.mocked(syncCarcasse).mockResolvedValueOnce({
+      savedCarcasse: { zacharie_carcasse_id: 'ZC-1' },
+      existingCarcasse: { zacharie_carcasse_id: 'ZC-1' },
+      isDeleted: false,
+    } as any);
+    permissiveScope.outOfScope.mockResolvedValueOnce(['ZC-1']);
+    vi.mocked(prisma.carcasseIntermediaire.findMany).mockResolvedValueOnce([
+      { fei_numero: 'F1', zacharie_carcasse_id: 'ZC-1', intermediaire_id: 'I1' },
+    ] as any);
+    vi.mocked(prisma.fei.findMany).mockResolvedValue([{ numero: 'F1' }] as any);
+    permissiveScope.canWriteFei.mockResolvedValueOnce(false);
+
+    const res = await authed(
+      request(app)
+        .post('/sync')
+        .send({ carcasses: [{ fei_numero: 'F1', zacharie_carcasse_id: 'ZC-1' }] })
+    );
+
+    expect(permissiveScope.outOfScope).toHaveBeenCalledWith(['ZC-1']);
+    expect(res.body.data.rejected).toEqual([]);
+    expect(capture).not.toHaveBeenCalled();
+    expect(res.body.data.shouldRemoveFromLocalStore.map((i: any) => [i.kind, i.id])).toEqual([
+      ['carcasse', 'ZC-1'],
+      ['carcasseIntermediaire', 'F1_ZC-1_I1'],
+      ['fei', 'F1'],
+    ]);
+  });
+
+  test('une carcasse existante toujours dans le périmètre après écriture reste dans le store', async () => {
+    vi.mocked(prisma.carcasse.findMany).mockResolvedValueOnce([
+      { zacharie_carcasse_id: 'ZC-1', fei_numero: 'F1' },
+    ] as any);
+    vi.mocked(syncCarcasse).mockResolvedValueOnce({
+      savedCarcasse: { zacharie_carcasse_id: 'ZC-1' },
+      existingCarcasse: { zacharie_carcasse_id: 'ZC-1' },
+      isDeleted: false,
+    } as any);
+
+    const res = await authed(
+      request(app)
+        .post('/sync')
+        .send({ carcasses: [{ fei_numero: 'F1', zacharie_carcasse_id: 'ZC-1' }] })
+    );
+
+    expect(permissiveScope.outOfScope).toHaveBeenCalledWith(['ZC-1']);
+    expect(res.body.data.shouldRemoveFromLocalStore).toEqual([]);
+  });
+
+  test('une carcasse créée par le lot n’est pas vérifiée : elle n’avait pas de périmètre à quitter', async () => {
+    vi.mocked(syncCarcasse).mockResolvedValueOnce({
+      savedCarcasse: { zacharie_carcasse_id: 'ZC-NEW' },
+      existingCarcasse: { zacharie_carcasse_id: 'ZC-NEW' },
+      isDeleted: false,
+    } as any);
+
+    const res = await authed(
+      request(app)
+        .post('/sync')
+        .send({ carcasses: [{ fei_numero: 'F1', zacharie_carcasse_id: 'ZC-NEW' }] })
+    );
+
+    expect(permissiveScope.outOfScope).not.toHaveBeenCalled();
+    expect(res.body.data.shouldRemoveFromLocalStore).toEqual([]);
   });
 
   test('un refus qui n’est pas un défaut d’accès ne retire rien du store', async () => {

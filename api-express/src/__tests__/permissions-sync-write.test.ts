@@ -622,3 +622,24 @@ describe('syncCarcasseModifRequest — demande de modification sur une carcasse 
     expect(prisma.carcasseModificationRequest.create).toHaveBeenCalled();
   });
 });
+
+describe('SyncScope.outOfScope — carcasses sorties du périmètre par une écriture du lot', () => {
+  // Un renvoi à l'expéditeur vide next_owner_* : la carcasse, accordée en début de requête, n'est
+  // plus dans le périmètre une fois écrite. Le cache des accès accordés ne doit pas le masquer.
+  test('relit la base sans tenir compte des accès accordés plus tôt dans la requête', async () => {
+    const scope = await createSyncScope(attaquant);
+    vi.mocked(prisma.carcasse.findMany).mockResolvedValueOnce([{ zacharie_carcasse_id: 'ZC-1' }] as any);
+    await scope.prefetch(['ZC-1', 'ZC-2']);
+    expect(await scope.canWriteCarcasse('ZC-1')).toBe(true);
+
+    vi.mocked(prisma.carcasse.findMany).mockResolvedValueOnce([{ zacharie_carcasse_id: 'ZC-2' }] as any);
+    expect(await scope.outOfScope(['ZC-1', 'ZC-2'])).toEqual(['ZC-1']);
+  });
+
+  test('sans identifiant, aucune requête', async () => {
+    const scope = await createSyncScope(attaquant);
+    vi.mocked(prisma.carcasse.findMany).mockClear();
+    expect(await scope.outOfScope([])).toEqual([]);
+    expect(prisma.carcasse.findMany).not.toHaveBeenCalled();
+  });
+});
