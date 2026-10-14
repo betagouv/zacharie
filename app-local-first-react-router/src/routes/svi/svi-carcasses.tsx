@@ -209,7 +209,7 @@ export default function SviCarcasses() {
     especeOptions,
     statusOptions,
     saisonOptions,
-    filteredData,
+    metaByTransmissionId,
   } = useMemo(() => {
     // métadonnées de transmission mises en cache par transmissionId
     const metaByTransmissionId: Record<string, TransmissionMeta> = {};
@@ -298,6 +298,33 @@ export default function SviCarcasses() {
       if (carcasse.date_mise_a_mort) _saisonYears.add(getSaisonStartYear(carcasse.date_mise_a_mort));
     }
 
+    const toOptions = (map: Map<string, string>) =>
+      Array.from(map.entries())
+        .map(([id, name]) => ({ id, name }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+
+    return {
+      filterableFields: carcasseFilterableFields(
+        Array.from(_motifs).sort(),
+        Array.from(_etgOptions.values()).sort(),
+        Array.from(_ccgNames).sort()
+      ),
+      collecteursNamesByFeiNumero: _collecteursNamesByFeiNumero,
+      premierDetenteurOptions: toOptions(_premierDetenteurOptions),
+      etgOptions: toOptions(_etgOptions),
+      ccgOptions: toOptions(_ccgOptions),
+      collecteurOptions: toOptions(_collecteurOptions),
+      especeOptions: Array.from(_especeOptions).sort(),
+      statusOptions: _statusOptions,
+      saisonOptions: Array.from(_saisonYears)
+        .sort((a, b) => b - a)
+        .map((year) => ({ year, label: getSaisonLabel(year) })),
+      metaByTransmissionId,
+    };
+  }, [carcassesRegistry, transmissions, entities, usersById]);
+
+  // Séparé des options : taper dans un filtre ne recalcule que le filtrage et le tri.
+  const filteredData = useMemo(() => {
     const braceletQuery = quickFilterBracelet.trim().toLowerCase();
     const withStatuses = filterStatuses.length > 0;
     const withSaisons = filterSaisons.length > 0;
@@ -308,12 +335,13 @@ export default function SviCarcasses() {
     const withEspeces = filterEspeces.length > 0;
     const withStatutsCarcasse = filterStatutsCarcasse.length > 0;
     const withDate = Boolean(filterDateFrom || filterDateTo);
+    const withFilters = filters?.some((filter) => Boolean(filter?.value));
+    const isInRegistre = filterCarcassesInRegistre(filters);
 
-    // 2e passe : on filtre
     const _filteredData: Array<Carcasse> = [];
     for (const carcasse of carcassesRegistry) {
       if (braceletQuery && !carcasse.numero_bracelet?.toLowerCase().includes(braceletQuery)) continue;
-      const meta = getMeta(carcasse);
+      const meta = metaByTransmissionId[getTransmissionId(carcasse)];
       if (withStatuses && !filterStatuses.includes(meta.simpleStatus)) continue;
       if (withPremierDetenteurs && !filterPremierDetenteurs.includes(meta.premierDetenteurId)) continue;
       if (withEtgs && !meta.etgIds.some((id) => filterEtgs.includes(id))) continue;
@@ -329,7 +357,7 @@ export default function SviCarcasses() {
         if (filterDateFrom && d < filterDateFrom) continue;
         if (filterDateTo && d > filterDateTo) continue;
       }
-      if (!filterCarcassesInRegistre(filters)(carcasse, feis[carcasse.fei_numero]!)) continue;
+      if (withFilters && !isInRegistre(carcasse, feis[carcasse.fei_numero]!)) continue;
       if (withEspeces && carcasse.espece && !filterEspeces.includes(carcasse.espece)) continue;
       if (withStatutsCarcasse && !filterStatutsCarcasse.includes(getCarcasseStatusLabel(carcasse))) continue;
       _filteredData.push(carcasse);
@@ -362,29 +390,7 @@ export default function SviCarcasses() {
       return 0;
     });
 
-    const toOptions = (map: Map<string, string>) =>
-      Array.from(map.entries())
-        .map(([id, name]) => ({ id, name }))
-        .sort((a, b) => a.name.localeCompare(b.name));
-
-    return {
-      filterableFields: carcasseFilterableFields(
-        Array.from(_motifs).sort(),
-        Array.from(_etgOptions.values()).sort(),
-        Array.from(_ccgNames).sort()
-      ),
-      collecteursNamesByFeiNumero: _collecteursNamesByFeiNumero,
-      premierDetenteurOptions: toOptions(_premierDetenteurOptions),
-      etgOptions: toOptions(_etgOptions),
-      ccgOptions: toOptions(_ccgOptions),
-      collecteurOptions: toOptions(_collecteurOptions),
-      especeOptions: Array.from(_especeOptions).sort(),
-      statusOptions: _statusOptions,
-      saisonOptions: Array.from(_saisonYears)
-        .sort((a, b) => b - a)
-        .map((year) => ({ year, label: getSaisonLabel(year) })),
-      filteredData: _filteredData,
-    };
+    return _filteredData;
   }, [
     quickFilterBracelet,
     filterStatuses,
@@ -398,11 +404,9 @@ export default function SviCarcasses() {
     filterEspeces,
     filterStatutsCarcasse,
     carcassesRegistry,
+    metaByTransmissionId,
     filters,
     feis,
-    transmissions,
-    entities,
-    usersById,
     sortBy,
     sortOrder,
   ]);
