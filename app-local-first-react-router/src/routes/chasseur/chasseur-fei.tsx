@@ -341,7 +341,7 @@ function FEIChasseurLoaded() {
   // Progressive display conditions
   const hasPremierDetenteur = !!(premierDetenteurUser || premierDetenteurEntity);
   const showBloc2 = !canEdit || !!(fei.date_mise_a_mort && fei.commune_mise_a_mort && hasPremierDetenteur);
-  const showVenteDon =
+  const ficheAlmostReady =
     !canEdit ||
     !!(
       showBloc2 &&
@@ -351,7 +351,9 @@ function FEIChasseurLoaded() {
       fei.heure_mise_a_mort_premiere_carcasse &&
       (onlyPetitGibier || fei.heure_evisceration_derniere_carcasse)
     );
-  const showValidation = fei.consommateur_final_usage_domestique || showVenteDon;
+  const showValidation = fei.consommateur_final_usage_domestique || ficheAlmostReady;
+  const showVenteDon =
+    ficheAlmostReady && fei.examinateur_initial_date_approbation_mise_sur_le_marche && approbation;
 
   const handleTransmettre = () => {
     // Compte pas encore activé (CFEI non validé) : la fiche peut être préparée mais pas transmise.
@@ -772,6 +774,15 @@ function FEIChasseurLoaded() {
                                 'fiche',
                                 'valider-examen',
                                 atLeastOneCarcasseWithAnomalie ? 'avec-anomalie' : 'sans-anomalie'
+                              );
+                              updateCarcassesTransmission(
+                                carcasses.map((c) => c.zacharie_carcasse_id),
+                                {
+                                  current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+                                  current_owner_entity_id: premierDetenteurEntity?.id ?? null,
+                                  current_owner_entity_name_cache:
+                                    premierDetenteurEntity?.nom_d_usage ?? null,
+                                }
                               );
                             },
                             checked: approbation,

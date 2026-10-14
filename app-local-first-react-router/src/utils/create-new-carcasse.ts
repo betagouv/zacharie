@@ -143,9 +143,16 @@ export async function createNewCarcasse({
     svi_closed_by_user_id: null,
     current_owner_user_id: user.id,
     current_owner_user_name_cache: `${user.prenom} ${user.nom_de_famille}`,
-    current_owner_entity_id: null,
-    current_owner_entity_name_cache: null,
-    current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
+    // examen initial déjà validé : la carcasse rejoint directement le premier détenteur
+    current_owner_entity_id: fei.examinateur_initial_approbation_mise_sur_le_marche
+      ? fei.premier_detenteur_entity_id
+      : null,
+    current_owner_entity_name_cache: fei.examinateur_initial_approbation_mise_sur_le_marche
+      ? fei.premier_detenteur_name_cache
+      : null,
+    current_owner_role: fei.examinateur_initial_approbation_mise_sur_le_marche
+      ? FeiOwnerRole.PREMIER_DETENTEUR
+      : FeiOwnerRole.EXAMINATEUR_INITIAL,
     next_owner_wants_to_sous_traite: null,
     next_owner_sous_traite_at: null,
     next_owner_sous_traite_by_user_id: null,

@@ -57,10 +57,9 @@ describe('createNewCarcasse', () => {
   });
 
   test('new carcasse is born as EXAMINATEUR_INITIAL owned by the examinateur, with empty prev/consommateur', async () => {
-    // Locks in the new defaults from PR #399. The fei is already past examinateur stage
-    // (PREMIER_DETENTEUR with a non-null prev_owner), but the new carcasse must restart
-    // the ownership chain from EXAMINATEUR_INITIAL — NOT inherit fei_current_owner_*.
-    const fei = makeFei();
+    // Examen initial pas encore certifié : la carcasse démarre chez l'examinateur et n'hérite
+    // pas des fei_current_owner_*.
+    const fei = makeFei({ examinateur_initial_approbation_mise_sur_le_marche: false });
 
     await createNewCarcasse({
       zacharieCarcasseId: `${fei.numero}_NEW-BRACELET-1`,
@@ -107,16 +106,12 @@ describe('createNewCarcasse', () => {
     expect(carcasse.nombre_d_animaux).toBe(1);
   });
 
-  // Régression PR #399 × PR #383 — fiche déjà transmise, examinateur ajoute une carcasse en retard.
-  // Le code actuel donne TOUJOURS la nouvelle carcasse en EXAMINATEUR_INITIAL, peu importe l'état
-  // de la fiche. Ce pin-test documente le comportement actuel : si une refonte future change ça,
-  // ce test devra être ajusté EN MÊME TEMPS que les flux aval (PD voit la carcasse "fantôme",
-  // step ladder, etc.). À ne pas changer en silence.
-  test('late carcasse added to a fiche already owned by PD is STILL born as EXAMINATEUR_INITIAL', async () => {
+  // Examen initial déjà certifié : la fiche est passée au premier détenteur, une carcasse ajoutée
+  // ensuite y est directement, pour que les autres membres de l'association la voient aussi.
+  test('carcasse added after the examen certification is born as PREMIER_DETENTEUR of the association', async () => {
     const fei = makeFei({
-      fei_current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
-      fei_current_owner_user_id: 'PD-USER-1',
-      premier_detenteur_user_id: 'PD-USER-1',
+      premier_detenteur_entity_id: 'PD-ENTITY-1',
+      premier_detenteur_name_cache: 'Association de chasseurs',
     } as Partial<Fei>);
 
     await createNewCarcasse({
@@ -128,8 +123,10 @@ describe('createNewCarcasse', () => {
     });
 
     const carcasse = createCarcasseSpy.mock.calls[0][0] as Carcasse;
-    expect(carcasse.current_owner_role).toBe(FeiOwnerRole.EXAMINATEUR_INITIAL);
+    expect(carcasse.current_owner_role).toBe(FeiOwnerRole.PREMIER_DETENTEUR);
     expect(carcasse.current_owner_user_id).toBe(examinateurUser!.id);
+    expect(carcasse.current_owner_entity_id).toBe('PD-ENTITY-1');
+    expect(carcasse.current_owner_entity_name_cache).toBe('Association de chasseurs');
     expect(carcasse.prev_owner_role).toBeNull();
     expect(carcasse.prev_owner_user_id).toBeNull();
   });
