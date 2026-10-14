@@ -182,13 +182,15 @@ function FEIChasseurLoaded() {
 
   const canEditAsPremierDetenteur = useMemo(() => {
     for (const currentTransmission of transmissionsEncoreChezLeChasseur) {
+      // Un lot clôturé sans prise en charge (circuit court, clôturé dès l'envoi) ne doit pas
+      // verrouiller les carcasses restées à répartir : les droits viennent des lots encore ouverts.
       if (
         currentTransmission.content.svi_automatic_closed_at ||
         currentTransmission.content.svi_closed_at ||
         currentTransmission.content.svi_assigned_at ||
         currentTransmission.content.intermediaire_closed_at
       ) {
-        return false;
+        continue;
       }
       if (fei.examinateur_initial_user_id === user.id) {
         return true;

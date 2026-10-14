@@ -322,16 +322,22 @@ export function CarcasseExaminateur({
     createModal({ id: `carcasse-edit-${carcasse.zacharie_carcasse_id}`, isOpenedByDefault: false })
   ).current;
   const isEditModalOpen = useIsModalOpen(editModal);
+  const confirmDeleteModal = useRef(
+    createModal({ id: `carcasse-delete-${carcasse.zacharie_carcasse_id}`, isOpenedByDefault: false })
+  ).current;
 
   // Une carcasse prise en charge par l'aval ne se modifie ni ne se supprime plus, même si d'autres
   // carcasses de la fiche sont restées et rouvrent les droits d'édition du chasseur. Tant que la
   // prise en charge n'a pas eu lieu, le chasseur reste détenteur et peut encore la corriger.
-  if (isCarcassePriseEnChargeEnAval(carcasse)) {
+  // Idem pour une carcasse clôturée sans prise en charge (circuit court, clôturé dès l'envoi).
+  if (
+    isCarcassePriseEnChargeEnAval(carcasse) ||
+    carcasse.svi_automatic_closed_at ||
+    carcasse.svi_closed_at ||
+    carcasse.intermediaire_closed_at
+  ) {
     return <CardCarcasse carcasse={carcasse} />;
   }
-  const confirmDeleteModal = useRef(
-    createModal({ id: `carcasse-delete-${carcasse.zacharie_carcasse_id}`, isOpenedByDefault: false })
-  ).current;
 
   // Seul l'examinateur initial édite l'examen (espèce, numéro, anomalies) via la modale.
   // Le premier détenteur, propriétaire de la fiche, consulte en lecture seule mais peut
