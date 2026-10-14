@@ -1573,6 +1573,9 @@ export default function DestinataireSelectPremierDetenteur({
         : null;
 
       const nextTransmission: CarcasseTransmission = {
+        // le membre de l'association qui transmet devient le détenteur courant
+        current_owner_user_id: user.id,
+        current_owner_user_name_cache: `${user.prenom} ${user.nom_de_famille}`,
         next_owner_entity_id: group.recipientEntityId,
         next_owner_role: entities[group.recipientEntityId]?.type as FeiOwnerRole,
         premier_detenteur_prochain_detenteur_role_cache: entities[group.recipientEntityId]
