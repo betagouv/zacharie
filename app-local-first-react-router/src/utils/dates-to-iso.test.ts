@@ -36,6 +36,23 @@ describe('datesToIso', () => {
     datesToIso(record);
     expect(record.created_at).toBe(date);
   });
+
+  it('turns an invalid Date into null', () => {
+    expect(datesToIso({ date: new Date('invalid') })).toEqual({ date: null });
+  });
+
+  it('does not traverse non-plain objects, even cyclic ones', () => {
+    class Cyclic {
+      self: Cyclic;
+      constructor() {
+        this.self = this;
+      }
+    }
+    const instance = new Cyclic();
+    const result = datesToIso({ value: instance, nullProto: Object.assign(Object.create(null), { a: 1 }) });
+    expect(result.value).toBe(instance);
+    expect(result.nullProto).toEqual({ a: 1 });
+  });
 });
 
 describe('store — dates are stored as ISO strings, like server data', () => {
