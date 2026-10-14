@@ -123,7 +123,7 @@ The message must answer **"what changes for the user?"**, not "what did I change
 ## Pull Requests
 
 - **Title**: same format as commits.
-- **Description**: a short descriptive text if necessary, then **always** a `## Comment tester` section (in French): the seed account(s) from @e2e/CLAUDE.md, the starting state, the steps, and the expected result. Write it so a non-dev can reproduce the fix/feat by hand.
+- **Description**: a short descriptive text if necessary, then **always** a `## Comment tester` section (in French): the seed account(s) from @e2e/CLAUDE.md, the starting state, the steps, and the expected result. Write it so a non-dev can reproduce the fix/feat by hand. Give the result **before** (on `main`) and **after** (on the branch) — `**Avant** (main) : …` / `**Après** (cette branche) : …` — so the tester sees the difference with the same steps.
 - **E2E**: a `fix:` or `feat:` with a user-visible impact comes with a new or updated Playwright spec in `e2e/`. Exempt: `chore:`, docs, pure backend changes covered by vitest. If you skip it, write `Pas de test e2e : <raison>` in the description.
 - The `PR checklist` workflow (`.github/workflows/pr-checklist.yml`) checks both points on every `fix:`/`feat:` PR and comments if one is missing (non-blocking).
 
