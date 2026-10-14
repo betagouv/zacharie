@@ -85,18 +85,18 @@ test('Changement de version du stockage local : la fiche non synchronisée est g
   // La fiche non synchronisée est bien écrite dans IndexedDB avant le reload
   await expect
     .poll(async () => {
-      const feis = (await readFromIdb(page, 'zs:feis')) as Record<string, { is_synced: boolean }> | undefined;
-      return feis?.[feiNumero!]?.is_synced;
+      const fei = (await readFromIdb(page, `zs:feis/${feiNumero}`)) as { is_synced: boolean } | undefined;
+      return fei?.is_synced;
     })
     .toBe(false);
-  expect(await readFromIdb(page, 'zs:__meta__')).toEqual({ version: 10 });
+  expect(await readFromIdb(page, 'zs:__meta__')).toEqual({ version: 11 });
 
   // Reload avec une version stockée plus ancienne : le `migrate` du store s'exécute
   await page.evaluate(() => sessionStorage.setItem('e2e-downgrade-store-version', 'pending'));
   await page.goto('http://localhost:3290/app/chasseur');
 
   // Le migrate a tourné et réécrit la version courante
-  await expect.poll(() => readFromIdb(page, 'zs:__meta__')).toEqual({ version: 10 });
+  await expect.poll(() => readFromIdb(page, 'zs:__meta__')).toEqual({ version: 11 });
 
   // La fiche (jamais arrivée au serveur) est toujours là, avec sa saisie
   await expect(page.getByRole('link', { name: feiNumero! }).first()).toBeVisible({ timeout: 15000 });

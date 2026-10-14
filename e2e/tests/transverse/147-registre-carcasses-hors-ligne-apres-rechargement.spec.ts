@@ -33,9 +33,9 @@ async function getIdbKeys(page: Page): Promise<string[]> {
   );
 }
 
-// Scenario 147 — les carcasses ne sont persistées qu'une fois (pas de copie zs:carcassesRegistry) :
-// la liste est dérivée des carcasses. La liste ETG des carcasses doit rester complète après un
-// rechargement hors ligne.
+// Scenario 147 — les carcasses sont persistées une par une (zs:carcasses/<id>), sans seconde copie
+// (zs:carcassesRegistry) : la liste est dérivée des carcasses. La liste ETG des carcasses doit rester
+// complète après un rechargement hors ligne.
 test('ETG : la liste des carcasses reste affichée après un rechargement hors ligne', async ({
   page,
   context,
@@ -46,8 +46,13 @@ test('ETG : la liste des carcasses reste affichée après un rechargement hors l
   await expect(page.getByText('MM-001-001').first()).toBeVisible({ timeout: 10000 });
   await expect(page.getByText('MM-001-004').first()).toBeVisible();
 
-  // Les carcasses sont écrites dans IndexedDB, sans seconde copie.
-  await expect.poll(() => getIdbKeys(page), { timeout: 10000 }).toContain('zs:carcasses');
+  // Les carcasses sont écrites dans IndexedDB une par une, sans seconde copie.
+  await expect
+    .poll(async () => (await getIdbKeys(page)).filter((key) => key.startsWith('zs:carcasses/')).length, {
+      timeout: 10000,
+    })
+    .toBe(4);
+  expect(await getIdbKeys(page)).not.toContain('zs:carcasses');
   expect(await getIdbKeys(page)).not.toContain('zs:carcassesRegistry');
 
   // Hors ligne côté app : navigator.onLine à false dès le chargement et API injoignable. Le serveur

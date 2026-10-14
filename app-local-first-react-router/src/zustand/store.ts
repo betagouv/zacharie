@@ -51,6 +51,17 @@ const PERSISTED_KEYS: (keyof State)[] = [
   'feiIdsRenvoiToHide',
 ];
 
+// Tranches qui sont des maps par id : stockées enregistrement par enregistrement, pour qu'une
+// modification n'écrive que l'enregistrement modifié. Les autres tranches tiennent sur une clé.
+const RECORD_KEYS: (keyof State)[] = [
+  'feis',
+  'users',
+  'entities',
+  'carcasses',
+  'carcassesIntermediaireById',
+  'modifRequestsByCarcasseId',
+];
+
 export interface State {
   isOnline: boolean;
   dataIsSynced: boolean;
@@ -583,11 +594,11 @@ const useZustandStore = create<State & Actions>()(
       }),
       {
         name: 'zacharie-zustand-store',
-        // v10: modif requests moved from an embedded carcasse array + pending-only map to a single
-        // full-history map keyed by carcasse id. Bump forces a full re-fetch so the map repopulates.
-        version: 10,
+        // v11: les maps par id sont stockées enregistrement par enregistrement. Les tranches entières
+        // de la v10 ne sont plus lues : rechargement complet depuis le serveur.
+        version: 11,
         migrate: migratePersistedState,
-        storage: createSlicedIDBStorage<Partial<State>>(PERSISTED_KEYS),
+        storage: createSlicedIDBStorage<Partial<State>>(PERSISTED_KEYS, RECORD_KEYS),
         onRehydrateStorage: (state) => {
           return () => state.setHasHydrated(true);
         },
