@@ -14,7 +14,7 @@ export function isRoleCircuitCourt(role: UserRoles | FeiOwnerRole | null | undef
 
 export function isCircuitCourt(user: User) {
   if (!user) return false;
-  return isRoleCircuitCourt(user.roles[0]);
+  return user.roles.some((role) => isRoleCircuitCourt(role));
 }
 
 export function isEntityCircuitCourt(entity: Entity) {

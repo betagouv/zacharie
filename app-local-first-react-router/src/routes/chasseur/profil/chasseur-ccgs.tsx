@@ -37,7 +37,7 @@ export default function MesCCGs() {
     API.get({ path: 'user/my-ccgs' })
       .then((res) => res as UserCCGsResponse)
       .then((res) => {
-        if (res.ok) {
+        if (res.ok && res.data) {
           setUserCCGs(res.data.userCCGs);
         }
       });
