@@ -3,11 +3,15 @@ import { catchErrors } from '~/middlewares/errors';
 const router: express.Router = express.Router();
 import prisma from '~/prisma';
 import { Prisma } from '@prisma/client';
+import type { User } from '@prisma/client';
 import type {
+  AdminFeiDestinataire,
   AdminFeisResponse,
   AdminFeiDetailResponse,
   AdminFeisFilterOptionsResponse,
+  AdminSoftDeleteResponse,
 } from '~/types/responses';
+import { nextVersion } from '~/utils/sync-version';
 import {
   parseList,
   parseDateRange,
@@ -16,6 +20,71 @@ import {
   userLabel,
   sortByLabel,
 } from '~/utils/admin-list-filters';
+
+// Détenteurs actuels et destinataires des fiches, lus sur les carcasses : c'est là que vit la propriété,
+// et une même fiche peut partir vers plusieurs destinataires. On ignore les carcasses supprimées, sauf
+// sur une fiche supprimée (ses carcasses l'ont été avec elle) que l'admin affiche toujours.
+async function getFeisDestinataires(feiNumeros: Array<string>) {
+  const groups = await prisma.carcasse.groupBy({
+    by: [
+      'fei_numero',
+      'current_owner_role',
+      'current_owner_entity_id',
+      'current_owner_user_id',
+      'next_owner_role',
+      'next_owner_entity_id',
+      'next_owner_user_id',
+    ],
+    where: {
+      fei_numero: { in: feiNumeros },
+      OR: [{ deleted_at: null }, { Fei: { deleted_at: { not: null } } }],
+    },
+    _count: { _all: true },
+  });
+
+  const entityIds = new Set<string>();
+  const userIds = new Set<string>();
+  for (const group of groups) {
+    if (group.current_owner_entity_id) entityIds.add(group.current_owner_entity_id);
+    if (group.current_owner_user_id) userIds.add(group.current_owner_user_id);
+    if (group.next_owner_entity_id) entityIds.add(group.next_owner_entity_id);
+    if (group.next_owner_user_id) userIds.add(group.next_owner_user_id);
+  }
+  const [entities, users] = await Promise.all([
+    prisma.entity.findMany({
+      where: { id: { in: [...entityIds] } },
+      select: { id: true, nom_d_usage: true, raison_sociale: true },
+    }),
+    prisma.user.findMany({
+      where: { id: { in: [...userIds] } },
+      select: { id: true, email: true, prenom: true, nom_de_famille: true },
+    }),
+  ]);
+  const ownerLabels: Record<string, string> = {};
+  for (const entity of entities) ownerLabels[entity.id] = entityLabel(entity);
+  for (const user of users) ownerLabels[user.id] = userLabel(user);
+
+  // L'entité prime sur l'utilisateur : c'est elle qui détient, l'utilisateur agit pour elle.
+  function ownerLabel(entityId: string | null, userId: string | null) {
+    const id = entityId ?? userId;
+    if (!id) return null;
+    return ownerLabels[id] ?? id;
+  }
+
+  const byFei = new Map<string, Array<AdminFeiDestinataire>>();
+  for (const group of groups) {
+    const destinataires = byFei.get(group.fei_numero) ?? [];
+    destinataires.push({
+      current_owner_role: group.current_owner_role,
+      current_owner_label: ownerLabel(group.current_owner_entity_id, group.current_owner_user_id),
+      next_owner_role: group.next_owner_role,
+      next_owner_label: ownerLabel(group.next_owner_entity_id, group.next_owner_user_id),
+      nb_carcasses: group._count._all,
+    });
+    byFei.set(group.fei_numero, destinataires);
+  }
+  return { byFei, ownerLabels };
+}
 
 router.get(
   '/feis',
@@ -82,8 +151,16 @@ router.get(
         }),
         prisma.fei.count({ where }),
       ]);
+      const { byFei } = await getFeisDestinataires(feis.map((fei) => fei.numero));
 
-      res.status(200).send({ ok: true, data: { feis, total }, error: '' });
+      res.status(200).send({
+        ok: true,
+        data: {
+          feis: feis.map((fei) => ({ ...fei, destinataires: byFei.get(fei.numero) ?? [] })),
+          total,
+        },
+        error: '',
+      });
     }
   )
 );
@@ -197,7 +274,55 @@ router.get(
         return;
       }
 
-      res.status(200).send({ ok: true, data: { fei }, error: '' });
+      const { byFei, ownerLabels } = await getFeisDestinataires([fei.numero]);
+
+      res.status(200).send({
+        ok: true,
+        data: { fei, destinataires: byFei.get(fei.numero) ?? [], ownerLabels },
+        error: '',
+      });
+    }
+  )
+);
+
+// Soft delete d'une fiche de test ou de démo, avec ses carcasses et lignes d'intermédiaire, comme la
+// suppression par l'examinateur initial (syncFei). `nextVersion` rend périmée toute écriture hors
+// ligne d'un client sur ces lignes, et le bump d'updated_at leur propage la suppression au prochain pull.
+// Les stats (vues matérialisées, Metabase) excluent déjà les lignes où deleted_at est renseigné.
+router.post(
+  '/fei/:fei_numero/soft-delete',
+  catchErrors(
+    async (
+      req: express.Request,
+      res: express.Response<AdminSoftDeleteResponse>,
+      next: express.NextFunction
+    ) => {
+      const user = req.user as User;
+      const numero = req.params.fei_numero;
+      const fei = await prisma.fei.findUnique({ where: { numero } });
+      if (!fei) {
+        res.status(404).send({ ok: false, data: null, error: 'Fiche introuvable' });
+        return;
+      }
+      if (fei.deleted_at) {
+        res.status(400).send({ ok: false, data: null, error: 'La fiche est déjà supprimée' });
+        return;
+      }
+
+      const deleted_at = new Date();
+      await prisma.$transaction([
+        prisma.fei.update({ where: { numero }, data: { deleted_at, ...nextVersion(user.id) } }),
+        prisma.carcasse.updateMany({
+          where: { fei_numero: numero, deleted_at: null },
+          data: { deleted_at, ...nextVersion(user.id) },
+        }),
+        prisma.carcasseIntermediaire.updateMany({
+          where: { fei_numero: numero, deleted_at: null },
+          data: { deleted_at, ...nextVersion(user.id) },
+        }),
+      ]);
+
+      res.status(200).send({ ok: true, data: { deleted_at }, error: '' });
     }
   )
 );

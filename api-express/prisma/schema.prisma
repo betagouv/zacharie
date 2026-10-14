@@ -51,6 +51,7 @@ model User {
   roles                                 UserRoles[]
   role                                  UserRoles? // TODO: migrate from roles, in another PR
   isZacharieAdmin                       Boolean                        @default(false)
+  exclude_from_stats                    Boolean                        @default(false) // compte de test ou de démo : ses fiches sont exclues des vues Metabase
   etg_role                              UserEtgRoles                   @default(RECEPTION)
   created_at                            DateTime                       @default(now())
   updated_at                            DateTime                       @default(now()) @updatedAt
@@ -155,6 +156,7 @@ model Entity {
   prefilled                             Boolean                        @default(false)
   is_synced                             Boolean                        @default(true) // just for typing purppose with zustand frontend
   for_testing                           Boolean                        @default(false)
+  exclude_from_stats                    Boolean                        @default(false) // entité de test ou de démo : ses fiches sont exclues des vues Metabase
   // for brevo
   brevo_id                              String?
   at_least_one_fei_treated              DateTime?

@@ -68,7 +68,7 @@ describe('syncFei — create', () => {
 
     const result = await syncFei(
       'FEI-NEW',
-      { numero: 'FEI-NEW', date_mise_a_mort: '2026-01-01' } as any,
+      { numero: 'FEI-NEW', date_mise_a_mort: '2026-01-01', created_by_user_id: otherChasseur.id } as any,
       examinateurInitial,
       scope
     );
@@ -133,6 +133,21 @@ describe('syncFei — update', () => {
 
     const updateCall = vi.mocked(prisma.fei.update).mock.calls[0][0];
     expect(updateCall.data.commune_mise_a_mort).not.toContain('<script>');
+  });
+
+  test('created_by_user_id du body est ignoré, même pour le propriétaire', async () => {
+    vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
+    vi.mocked(prisma.fei.update).mockResolvedValue(baseFei as any);
+
+    await syncFei(
+      'FEI-1',
+      { numero: 'FEI-1', created_by_user_id: otherChasseur.id } as any,
+      examinateurInitial,
+      scope
+    );
+
+    const updateCall = vi.mocked(prisma.fei.update).mock.calls[0][0];
+    expect(updateCall.data).not.toHaveProperty('created_by_user_id');
   });
 });
 

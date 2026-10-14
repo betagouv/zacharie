@@ -17,7 +17,7 @@ import type {
   AdminUsersResponse,
   AdminUserDataResponse,
   AdminNewUserDataResponse,
-  AdminFeisResponse,
+  AdminUserFeisResponse,
   AdminCarcassesResponse,
   AdminUserNotificationsResponse,
   AdminUserLockoutInfo,
@@ -165,6 +165,7 @@ const adminUserUpdateSchema = z.object({
     .optional(),
   [Prisma.UserScalarFieldEnum.numero_cfei]: z.string().optional().nullable(),
   [Prisma.UserScalarFieldEnum.est_forme_a_l_examen_initial]: z.enum(['true', 'false']).optional(),
+  [Prisma.UserScalarFieldEnum.exclude_from_stats]: z.enum(['true', 'false']).optional(),
   onboarding_finished: z.boolean().optional(),
 });
 
@@ -276,6 +277,9 @@ router.post(
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.est_forme_a_l_examen_initial)) {
         nextUser.est_forme_a_l_examen_initial =
           body[Prisma.UserScalarFieldEnum.est_forme_a_l_examen_initial] === 'true';
+      }
+      if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.exclude_from_stats)) {
+        nextUser.exclude_from_stats = body[Prisma.UserScalarFieldEnum.exclude_from_stats] === 'true';
       }
       if (body.hasOwnProperty('onboarding_finished')) {
         nextUser.onboarded_at = new Date();
@@ -468,7 +472,11 @@ const feiUserOR = (userId: string): Prisma.FeiWhereInput[] => [
 router.get(
   '/user/:user_id/feis',
   catchErrors(
-    async (req: express.Request, res: express.Response<AdminFeisResponse>, next: express.NextFunction) => {
+    async (
+      req: express.Request,
+      res: express.Response<AdminUserFeisResponse>,
+      next: express.NextFunction
+    ) => {
       const userId = req.params.user_id;
       const limit = parseInt(req.query.limit as string) || 100;
       const offset = parseInt(req.query.offset as string) || 0;

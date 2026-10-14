@@ -118,10 +118,20 @@ export default function PartenaireNouveau({ onFinish }: PartenaireNouveauProps) 
       event.preventDefault();
       const formData = new FormData(event.currentTarget);
       const body: Partial<Entity> = Object.fromEntries(formData.entries());
-      body.raison_sociale = newEntityNomDUsage;
       if (!entityType) {
         alert('Veuillez sélectionner un type de partenaire');
         return;
+      }
+      // le consommateur final n'a pas de raison sociale : on le nomme par le nom de son représentant
+      if (entityType === EntityTypes.CONSOMMATEUR_FINAL) {
+        body.raison_sociale =
+          `${formData.get('prenom') ?? ''} ${formData.get('nom_de_famille') ?? ''}`.trim();
+      } else {
+        body.raison_sociale = newEntityNomDUsage?.trim();
+        if (!body.raison_sociale) {
+          alert('Veuillez renseigner la raison sociale');
+          return;
+        }
       }
       body.type = entityType;
       const response = await API.post({

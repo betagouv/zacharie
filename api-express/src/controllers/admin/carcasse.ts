@@ -3,12 +3,15 @@ import { catchErrors } from '~/middlewares/errors';
 const router: express.Router = express.Router();
 import prisma from '~/prisma';
 import { Prisma, CarcasseStatus, CarcasseType, FeiOwnerRole } from '@prisma/client';
+import type { User } from '@prisma/client';
 import type {
   AdminCarcassesIntermediairesResponse,
   AdminCarcassesResponse,
   AdminCarcasseDetailResponse,
   AdminCarcassesFilterOptionsResponse,
+  AdminSoftDeleteResponse,
 } from '~/types/responses';
+import { nextVersion } from '~/utils/sync-version';
 import {
   parseList,
   parseEnumList,
@@ -289,6 +292,46 @@ router.get(
       }
 
       res.status(200).send({ ok: true, data: { carcasse, depotEntity }, error: '' });
+    }
+  )
+);
+
+// Soft delete d'une carcasse de test ou de démo et de ses lignes d'intermédiaire, comme la
+// suppression côté client (syncCarcasse). `nextVersion` rend périmée toute écriture hors ligne d'un
+// client sur ces lignes, et le bump d'updated_at leur propage la suppression au prochain pull.
+router.post(
+  '/carcasse/:zacharie_carcasse_id/soft-delete',
+  catchErrors(
+    async (
+      req: express.Request,
+      res: express.Response<AdminSoftDeleteResponse>,
+      next: express.NextFunction
+    ) => {
+      const user = req.user as User;
+      const zacharie_carcasse_id = req.params.zacharie_carcasse_id;
+      const carcasse = await prisma.carcasse.findUnique({ where: { zacharie_carcasse_id } });
+      if (!carcasse) {
+        res.status(404).send({ ok: false, data: null, error: 'Carcasse introuvable' });
+        return;
+      }
+      if (carcasse.deleted_at) {
+        res.status(400).send({ ok: false, data: null, error: 'La carcasse est déjà supprimée' });
+        return;
+      }
+
+      const deleted_at = new Date();
+      await prisma.$transaction([
+        prisma.carcasse.update({
+          where: { zacharie_carcasse_id },
+          data: { deleted_at, ...nextVersion(user.id) },
+        }),
+        prisma.carcasseIntermediaire.updateMany({
+          where: { zacharie_carcasse_id, deleted_at: null },
+          data: { deleted_at, ...nextVersion(user.id) },
+        }),
+      ]);
+
+      res.status(200).send({ ok: true, data: { deleted_at }, error: '' });
     }
   )
 );

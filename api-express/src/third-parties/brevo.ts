@@ -541,6 +541,7 @@ function getBrevoCategory(type: EntityTypes) {
 async function updateOrCreateBrevoCompany(props: Entity): Promise<Entity> {
   try {
     if (DISABLED) return props;
+    if (props.for_testing) return props;
     const apiInstance = new brevo.CompaniesApi();
     apiInstance.setApiKey(brevo.CompaniesApiApiKeys.apiKey, API_KEY);
 
@@ -585,6 +586,7 @@ async function updateOrCreateBrevoCompany(props: Entity): Promise<Entity> {
 async function linkBrevoCompanyToContact(entity: Entity, user: User) {
   try {
     if (DISABLED) return;
+    if (entity.for_testing) return;
     // les fédérations, pré-créées, n'ont pas d'entreprise Brevo
     if (!entity.brevo_id) return;
     const apiInstance = new brevo.CompaniesApi();
@@ -606,6 +608,7 @@ async function linkBrevoCompanyToContact(entity: Entity, user: User) {
 async function unlinkBrevoCompanyToContact(entity: Entity, user: User) {
   try {
     if (DISABLED) return;
+    if (entity.for_testing) return;
     // les fédérations, pré-créées, n'ont pas d'entreprise Brevo
     if (!entity.brevo_id) return;
     const apiInstance = new brevo.CompaniesApi();
@@ -794,6 +797,7 @@ async function updateBrevoChasseurDeal(chasseur: User) {
 async function updateBrevoETGDealPremiereFiche(etg: Entity) {
   try {
     if (DISABLED) return;
+    if (etg.for_testing) return;
     if (etg.type !== EntityTypes.ETG) return;
 
     const apiInstance = new brevo.DealsApi();
@@ -840,6 +844,7 @@ async function updateBrevoETGDealPremiereFiche(etg: Entity) {
 async function updateBrevoSVIDealPremiereFiche(svi: Entity) {
   try {
     if (DISABLED) return;
+    if (svi.for_testing) return;
     if (svi.type !== EntityTypes.SVI) return;
 
     const apiInstance = new brevo.DealsApi();

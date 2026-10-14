@@ -65,4 +65,14 @@ describe('refreshUser hors ligne', () => {
     expect(goodConnection).toHaveBeenCalledTimes(1);
     expect(user).toEqual({ id: 'user-1' });
   });
+
+  it("ne signale pas le retour de la connexion quand l'appel échoue (réseau coupé)", async () => {
+    vi.stubGlobal('navigator', { onLine: true });
+    apiGet.mockResolvedValue({ ok: false, error: 'erreur réseau' });
+    const goodConnection = vi.fn();
+    fakeWindow.addEventListener('good-connection', goodConnection);
+
+    expect(await refreshUser('test')).toBeNull();
+    expect(goodConnection).not.toHaveBeenCalled();
+  });
 });

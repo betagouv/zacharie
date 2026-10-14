@@ -1,5 +1,22 @@
+import { showNewVersionPrompt } from './new-version-prompt';
+
 export async function registerServiceWorker() {
+  // Un chunk introuvable signifie que l'onglet tourne sur un bundle dont les fichiers ont été remplacés.
+  window.addEventListener('vite:preloadError', () => showNewVersionPrompt());
+  // Envoyé par l'app mobile quand elle détecte une nouvelle version au retour au premier plan.
+  window.addEventListener('zacharie-new-native-bundle', () => showNewVersionPrompt());
+
   if ('serviceWorker' in navigator) {
+    // Le service worker fait skipWaiting + clients.claim : un changement de contrôleur alors que la
+    // page en avait déjà un signifie qu'une nouvelle version est installée. Le premier contrôleur
+    // (première visite) n'est pas une mise à jour.
+    // Dans l'app mobile, ce signal est ignoré : le service worker se met à jour juste après un lancement
+    // qui a installé une nouvelle version, alors que la page tourne déjà sur cette nouvelle version.
+    const hadController = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (hadController && !window.ReactNativeWebView) showNewVersionPrompt();
+    });
+
     try {
       console.log('import.meta.env.DEV', import.meta.env.DEV);
       const swUrl = import.meta.env.DEV ? '/src/service-worker.ts' : '/service-worker.js';
@@ -8,25 +25,6 @@ export async function registerServiceWorker() {
         // scope: "/", // Uncomment and adjust if you need a specific scope
       });
       console.log('ServiceWorker registration successful with scope:', registration.scope);
-
-      // Handle updates
-      registration.addEventListener('updatefound', () => {
-        const newWorker = registration.installing;
-        newWorker?.addEventListener('statechange', () => {
-          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-            // New version available
-            // BE CAREFUL: right now, we don't touch the service worker's code
-            // so there is never any update necessary
-            // if there are critical tasks in the future, we should add a way to notify the user like below
-            /* 
-            if (confirm('Une nouvelle version est disponible. Mettre à jour maintenant ?')) {
-              newWorker.postMessage({ type: 'SKIP_WAITING' });
-              window.location.reload();
-            }
-            */
-          }
-        });
-      });
     } catch (error) {
       console.error('ServiceWorker registration failed:', error);
     }

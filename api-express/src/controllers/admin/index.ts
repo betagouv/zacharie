@@ -12,6 +12,7 @@ import analyticsRouter from './analytics.ts';
 import ccgRouter from './ccg.ts';
 import userEntityRouter from './user-entity.ts';
 import bugResolutionRouter from './bug-resolution.ts';
+import searchRouter from './search.ts';
 
 const router: express.Router = express.Router();
 
@@ -52,5 +53,6 @@ router.use(analyticsRouter);
 router.use(ccgRouter);
 router.use(userEntityRouter);
 router.use(bugResolutionRouter);
+router.use(searchRouter);
 
 export default router;

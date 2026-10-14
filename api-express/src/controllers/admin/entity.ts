@@ -427,6 +427,9 @@ router.post(
       if (body.hasOwnProperty(Prisma.EntityScalarFieldEnum.zacharie_compatible)) {
         data.zacharie_compatible = body[Prisma.EntityScalarFieldEnum.zacharie_compatible];
       }
+      if (body.hasOwnProperty(Prisma.EntityScalarFieldEnum.exclude_from_stats)) {
+        data.exclude_from_stats = body[Prisma.EntityScalarFieldEnum.exclude_from_stats];
+      }
 
       const updatedEntity = await prisma.entity.update({
         where: {

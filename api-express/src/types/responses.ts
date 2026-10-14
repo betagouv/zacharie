@@ -3,6 +3,7 @@ import type {
   Entity,
   EntityAndUserRelations,
   Fei,
+  FeiOwnerRole,
   Carcasse,
   CarcasseType,
   CarcasseIntermediaire,
@@ -172,6 +173,12 @@ export interface AdminActionEntityResponse {
   error: string;
 }
 
+export interface AdminSoftDeleteResponse {
+  ok: boolean;
+  data: { deleted_at: Date } | null;
+  error: string;
+}
+
 export interface AdminNewEntityResponse {
   ok: boolean;
   data: {
@@ -258,6 +265,16 @@ export interface CarcassesGetResponse {
     // le client remplace ses carcasses locales au lieu de les merger (voir FORCE_FULL_RELOAD_AFTER)
     fullReload: boolean;
   };
+  error: string;
+}
+
+// Nombre de carcasses non supprimées du périmètre de synchro de l'utilisateur, comparé par le client
+// à son store local pour détecter les écarts (observation seulement). Voir GET /carcasse/count.
+export interface CarcassesCountResponse {
+  ok: boolean;
+  data: {
+    count: number;
+  } | null;
   error: string;
 }
 
@@ -566,17 +583,50 @@ export interface AdminUserNotificationsResponse {
   error: string;
 }
 
+export interface AdminSearchResponse {
+  ok: boolean;
+  data: {
+    users: Array<Pick<User, 'id' | 'email' | 'prenom' | 'nom_de_famille' | 'roles' | 'deleted_at'>>;
+    entities: Array<Pick<Entity, 'id' | 'nom_d_usage' | 'type' | 'ville' | 'deleted_at'>>;
+    feis: Array<Pick<Fei, 'numero' | 'date_mise_a_mort' | 'commune_mise_a_mort' | 'deleted_at'>>;
+    carcasses: Array<
+      Pick<Carcasse, 'zacharie_carcasse_id' | 'numero_bracelet' | 'fei_numero' | 'espece' | 'deleted_at'>
+    >;
+  };
+  error: string;
+}
+
+// Un groupe de carcasses d'une fiche qui partagent le même détenteur actuel et le même destinataire.
+// Le destinataire (next_owner) reste renseigné tant qu'il n'a pas pris en charge, et pour toujours en
+// circuit court, où le destinataire ne prend jamais en charge dans Zacharie.
+export interface AdminFeiDestinataire {
+  current_owner_role: FeiOwnerRole | null;
+  current_owner_label: string | null;
+  next_owner_role: FeiOwnerRole | null;
+  next_owner_label: string | null;
+  nb_carcasses: number;
+}
+
+type AdminFeiRow = Fei & {
+  FeiExaminateurInitialUser: { email: string } | null;
+  FeiPremierDetenteurUser: { email: string } | null;
+  FeiPremierDetenteurEntity: { nom_d_usage: string } | null;
+  _count: { Carcasses: number };
+};
+
 export interface AdminFeisResponse {
   ok: boolean;
   data: {
-    feis: Array<
-      Fei & {
-        FeiExaminateurInitialUser: { email: string } | null;
-        FeiPremierDetenteurUser: { email: string } | null;
-        FeiPremierDetenteurEntity: { nom_d_usage: string } | null;
-        _count: { Carcasses: number };
-      }
-    >;
+    feis: Array<AdminFeiRow & { destinataires: Array<AdminFeiDestinataire> }>;
+    total: number;
+  };
+  error: string;
+}
+
+export interface AdminUserFeisResponse {
+  ok: boolean;
+  data: {
+    feis: Array<AdminFeiRow>;
     total: number;
   };
   error: string;
@@ -634,6 +684,9 @@ export interface AdminFeiDetailResponse {
       FeiPremierDetenteurUser: { email: string } | null;
       FeiPremierDetenteurEntity: { nom_d_usage: string } | null;
     };
+    destinataires: Array<AdminFeiDestinataire>;
+    // Libellés des détenteurs (entités et utilisateurs) cités par les carcasses, par id.
+    ownerLabels: Record<string, string>;
   };
   error: string;
 }
