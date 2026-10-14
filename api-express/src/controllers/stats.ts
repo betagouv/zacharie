@@ -550,7 +550,11 @@ router.get(
           }
         }
 
-        if (c.svi_carcasse_status === CarcasseStatus.SAISIE_TOTALE) {
+        // mêmes saisies que le taux de saisie : totales et partielles
+        if (
+          c.svi_carcasse_status === CarcasseStatus.SAISIE_TOTALE ||
+          c.svi_carcasse_status === CarcasseStatus.SAISIE_PARTIELLE
+        ) {
           for (const motif of c.svi_ipm2_lesions_ou_motifs ?? []) {
             sviMotifsMap.set(motif, (sviMotifsMap.get(motif) ?? 0) + 1);
           }
