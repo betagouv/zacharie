@@ -5,7 +5,7 @@ import Tooltip from '@codegouvfr/react-dsfr/Tooltip';
 import dayjs from 'dayjs';
 import { TrichineStatutLogistiqueFTP } from '@prisma/client';
 import TrichineRechercheReference from '@app/components/trichine/TrichineRechercheReference';
-import useZustandStore from '@app/zustand/store';
+import { useCarcassesRegistry } from '@app/utils/useCarcassesRegistry';
 import { useCarcassesAvecIpm2, useTrichineBasePath } from '@app/utils/trichine-hooks';
 import { useSviCarcassesAVenir } from '@app/utils/svi-carcasses-a-venir';
 import {
@@ -36,7 +36,7 @@ import {
  */
 export default function TrichineIndex() {
   const basePath = useTrichineBasePath();
-  const carcassesRegistry = useZustandStore((state) => state.carcassesRegistry);
+  const carcassesRegistry = useCarcassesRegistry();
   const carcassesAvecIpm2 = useCarcassesAvecIpm2();
   const { carcasses: carcassesAVenir } = useSviCarcassesAVenir();
   const [echantillons, setEchantillons] = useState<Array<TrichineEchantillonWithCarcasse>>([]);

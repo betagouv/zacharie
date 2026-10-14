@@ -9,7 +9,7 @@ import {
   TrichineType,
   type Carcasse,
 } from '@prisma/client';
-import useZustandStore from '@app/zustand/store';
+import { useCarcassesRegistry } from '@app/utils/useCarcassesRegistry';
 import Chargement from '@app/components/Chargement';
 import SelectCustom from '@app/components/SelectCustom';
 import LienTrichine from '@app/components/trichine/LienTrichine';
@@ -169,7 +169,7 @@ export default function TrichinePrelevementWizard() {
   const [searchParams] = useSearchParams();
   // Référence du pool douteux quand l'assistant est monté sur `pools/:reference/2e-intention`
   const { reference } = useParams();
-  const carcassesRegistry = useZustandStore((state) => state.carcassesRegistry);
+  const carcassesRegistry = useCarcassesRegistry();
   const { carcasses: carcassesAVenir } = useSviCarcassesAVenir();
 
   const [etape, setEtape] = useState(0);

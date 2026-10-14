@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { TrichineResultatAnalyse } from '@prisma/client';
-import useZustandStore from '@app/zustand/store';
+import { useCarcassesRegistry } from '@app/utils/useCarcassesRegistry';
 import { getTrichineCarcasse } from '@app/services/trichine';
 import { isResultatDefavorable } from '@app/utils/trichine';
 
@@ -11,7 +11,7 @@ export function useTrichineBasePath(): string {
 
 /** Carcasses sur lesquelles le SVI a statué (IPM2), pour écarter les résultats déjà traités. */
 export function useCarcassesAvecIpm2(): Set<string> {
-  const carcassesRegistry = useZustandStore((state) => state.carcassesRegistry);
+  const carcassesRegistry = useCarcassesRegistry();
   return useMemo(
     () =>
       new Set(
