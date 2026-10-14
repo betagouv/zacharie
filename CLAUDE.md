@@ -188,7 +188,7 @@ Two API types:
 - Create migrations: `npm run prisma-create-migration <name>` (in api-express/)
 - Schema is copied to frontend via `api-express/scripts/copy-schema-to-app-side.js`
 - After a DB-level data correction or a change of access scope rules, bump `FORCE_FULL_RELOAD_AFTER` so every client re-downloads its scope. See `doc/rechargement-complet.md`.
-- **Audit triggers** (migration `20261008100000_audit_log`): Postgres triggers on Fei, Carcasse, CarcasseIntermediaire, User, Entity, EntityAndUserRelations write every change into `AuditLog` (diff only on UPDATE). Invisible to Prisma: never drop them in a migration; change them through a new migration (`CREATE OR REPLACE FUNCTION`). Absent from the e2e test DB (built by `prisma db push`, which ignores migration SQL). A broken trigger fails the business write, so keep the function generic (jsonb, no named columns).
+- **History tables** (migration `20261014100000_history_tables`): before every UPDATE / DELETE on Fei, Carcasse, CarcasseIntermediaire, User, Entity, EntityAndUserRelations, a Postgres trigger copies the previous row into `<Table>History` (same columns, all nullable, plus `history_id`, `history_op`, `sys_period`). **Adding a column to one of these tables = add it, nullable, to its History model too** — `src/__tests__/history-tables.test.ts` fails otherwise. Triggers are invisible to Prisma: never drop them; change them through a new migration (`CREATE OR REPLACE FUNCTION`). Absent from the e2e test DB (`prisma db push` ignores migration SQL). A broken trigger fails the business write: copy by column name (`jsonb_populate_record`), never reference a non-key `OLD.<column>`.
 
 ### Frontend
 

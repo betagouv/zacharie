@@ -288,16 +288,310 @@ model SecurityLog {
   @@index([email, action, created_at])
 }
 
-// Alimentée uniquement par les triggers de prisma/audit-log-triggers.sql, jamais par l'app.
-model AuditLog {
-  id         BigInt   @id @default(autoincrement())
-  table_name String
-  row_id     String // colonnes identifiantes de la ligne, séparées par '|'
-  op         String // INSERT | UPDATE | DELETE
-  changed    Json // UPDATE : {colonne: {old, new}} ; INSERT / DELETE : ligne complète
-  created_at DateTime @default(now())
+// Versions précédentes de Fei, écrites par le trigger history_trigger (migration history_tables).
+// Mêmes colonnes que Fei, toutes nullables : vérifié par src/__tests__/history-tables.test.ts.
+model FeiHistory {
+  history_id                                              BigInt                   @id @default(autoincrement())
+  id                                                      Int?
+  numero                                                  String?
+  date_mise_a_mort                                        DateTime?                @db.Date
+  commune_mise_a_mort                                     String?
+  heure_mise_a_mort_premiere_carcasse                     String?
+  heure_evisceration_derniere_carcasse                    String?
+  created_by_user_id                                      String?
+  creation_context                                        String?
+  examinateur_initial_offline                             Boolean?
+  examinateur_initial_user_id                             String?
+  examinateur_initial_approbation_mise_sur_le_marche      Boolean?
+  examinateur_initial_date_approbation_mise_sur_le_marche DateTime?
+  consommateur_final_usage_domestique                     DateTime?
+  premier_detenteur_offline                               Boolean?
+  premier_detenteur_user_id                               String?
+  premier_detenteur_entity_id                             String?
+  premier_detenteur_name_cache                            String?
+  created_at                                              DateTime?
+  updated_at                                              DateTime?
+  deleted_at                                              DateTime?
+  is_synced                                               Boolean?
+  version                                                 Int?
+  version_user_id                                         String?
+  history_op                                              String // UPDATE | DELETE
+  sys_period                                              Unsupported("tstzrange") // période où la version était la ligne courante
 
-  @@index([table_name, row_id, created_at])
+  @@index([numero])
+}
+
+// Versions précédentes de Carcasse, écrites par le trigger history_trigger (migration history_tables).
+// Mêmes colonnes que Carcasse, toutes nullables : vérifié par src/__tests__/history-tables.test.ts.
+model CarcasseHistory {
+  history_id                                              BigInt                   @id @default(autoincrement())
+  zacharie_carcasse_id                                    String?
+  numero_bracelet                                         String?
+  fei_numero                                              String?
+  date_mise_a_mort                                        DateTime?                @db.Date
+  espece                                                  String?
+  type                                                    CarcasseType?
+  nombre_d_animaux                                        Int?
+  heure_mise_a_mort                                       String?
+  heure_evisceration                                      String?
+  heure_mise_a_mort_premiere_carcasse_fei                 String?
+  heure_evisceration_derniere_carcasse_fei                String?
+  consommateur_final_usage_domestique                     DateTime?
+  examinateur_carcasse_sans_anomalie                      Boolean?
+  examinateur_anomalies_carcasse                          String[]
+  examinateur_anomalies_abats                             String[]
+  examinateur_commentaire                                 String?
+  examinateur_signed_at                                   DateTime?
+  premier_detenteur_depot_type                            DepotType?
+  premier_detenteur_depot_entity_id                       String?
+  premier_detenteur_depot_entity_name_cache               String?
+  premier_detenteur_depot_ccg_at                          DateTime?
+  premier_detenteur_transport_type                        TransportType?
+  premier_detenteur_transport_date                        DateTime?
+  premier_detenteur_prochain_detenteur_role_cache         FeiOwnerRole?
+  premier_detenteur_prochain_detenteur_id_cache           String?
+  intermediaire_carcasse_refus_intermediaire_id           String?
+  intermediaire_carcasse_refus_motif                      String?
+  intermediaire_carcasse_manquante                        Boolean?
+  latest_intermediaire_signed_at                          DateTime?
+  svi_carcasse_commentaire                                String?
+  svi_carcasse_status                                     CarcasseStatus?
+  svi_carcasse_status_set_at                              DateTime?
+  svi_ipm1_date                                           DateTime?
+  svi_ipm1_presentee_inspection                           Boolean?
+  svi_ipm1_user_id                                        String?
+  svi_ipm1_user_name_cache                                String?
+  svi_ipm1_protocole                                      IPM1Protocole?
+  svi_ipm1_pieces                                         String[]
+  svi_ipm1_lesions_ou_motifs                              String[]
+  svi_ipm1_nombre_animaux                                 Int?
+  svi_ipm1_commentaire                                    String?
+  svi_ipm1_decision                                       IPM1Decision?
+  svi_ipm1_duree_consigne                                 Int?
+  svi_ipm1_poids_consigne                                 Float?
+  svi_ipm1_poids_type                                     PoidsType?
+  svi_ipm1_signed_at                                      DateTime?
+  svi_ipm2_date                                           DateTime?
+  svi_ipm2_presentee_inspection                           Boolean?
+  svi_ipm2_user_id                                        String?
+  svi_ipm2_user_name_cache                                String?
+  svi_ipm2_protocole                                      IPM1Protocole?
+  svi_ipm2_pieces                                         String[]
+  svi_ipm2_lesions_ou_motifs                              String[]
+  svi_ipm2_nombre_animaux                                 Int?
+  svi_ipm2_commentaire                                    String?
+  svi_ipm2_decision                                       IPM2Decision?
+  svi_ipm2_traitement_assainissant                        IPM2Traitement[]
+  svi_ipm2_traitement_assainissant_cuisson_temps          String?
+  svi_ipm2_traitement_assainissant_cuisson_temp           String?
+  svi_ipm2_traitement_assainissant_congelation_temps      String?
+  svi_ipm2_traitement_assainissant_congelation_temp       String?
+  svi_ipm2_traitement_assainissant_type                   String?
+  svi_ipm2_traitement_assainissant_etablissement          String?
+  svi_ipm2_traitement_assainissant_poids                  Float?
+  svi_ipm2_poids_saisie                                   Float?
+  svi_ipm2_poids_type                                     PoidsType?
+  svi_ipm2_signed_at                                      DateTime?
+  trichine_action_requise                                 String?
+  consommateur_final_email                                String?
+  notifier_consommateur                                   Boolean?
+  consommateur_notifie_at                                 DateTime?
+  trichine_retire_de_fei_at                               DateTime?
+  trichine_retire_de_fei_motif                            String?
+  trichine_retire_de_fei_user_id                          String?
+  created_by_user_id                                      String?
+  examinateur_initial_offline                             Boolean?
+  examinateur_initial_user_id                             String?
+  examinateur_initial_approbation_mise_sur_le_marche      Boolean?
+  examinateur_initial_date_approbation_mise_sur_le_marche DateTime?
+  premier_detenteur_offline                               Boolean?
+  premier_detenteur_user_id                               String?
+  premier_detenteur_entity_id                             String?
+  premier_detenteur_name_cache                            String?
+  intermediaire_closed_at                                 DateTime?
+  intermediaire_closed_by_user_id                         String?
+  intermediaire_closed_by_entity_id                       String?
+  latest_intermediaire_user_id                            String?
+  latest_intermediaire_entity_id                          String?
+  latest_intermediaire_name_cache                         String?
+  svi_assigned_at                                         DateTime?
+  svi_entity_id                                           String?
+  svi_user_id                                             String?
+  svi_closed_at                                           DateTime?
+  svi_automatic_closed_at                                 DateTime?
+  svi_closed_by_user_id                                   String?
+  current_owner_user_id                                   String?
+  current_owner_user_name_cache                           String?
+  current_owner_entity_id                                 String?
+  current_owner_entity_name_cache                         String?
+  current_owner_role                                      FeiOwnerRole?
+  next_owner_wants_to_sous_traite                         Boolean?
+  next_owner_sous_traite_at                               DateTime?
+  next_owner_sous_traite_by_user_id                       String?
+  next_owner_sous_traite_by_entity_id                     String?
+  next_owner_user_id                                      String?
+  next_owner_user_name_cache                              String?
+  next_owner_entity_id                                    String?
+  next_owner_entity_name_cache                            String?
+  next_owner_role                                         FeiOwnerRole?
+  prev_owner_user_id                                      String?
+  prev_owner_entity_id                                    String?
+  prev_owner_role                                         FeiOwnerRole?
+  created_at                                              DateTime?
+  updated_at                                              DateTime?
+  deleted_at                                              DateTime?
+  is_synced                                               Boolean?
+  version                                                 Int?
+  version_user_id                                         String?
+  history_op                                              String // UPDATE | DELETE
+  sys_period                                              Unsupported("tstzrange") // période où la version était la ligne courante
+
+  @@index([zacharie_carcasse_id])
+}
+
+// Versions précédentes de CarcasseIntermediaire, écrites par le trigger history_trigger (migration history_tables).
+// Mêmes colonnes que CarcasseIntermediaire, toutes nullables : vérifié par src/__tests__/history-tables.test.ts.
+model CarcasseIntermediaireHistory {
+  history_id                                  BigInt                   @id @default(autoincrement())
+  fei_numero                                  String?
+  numero_bracelet                             String?
+  zacharie_carcasse_id                        String?
+  prise_en_charge                             Boolean?
+  check_manuel                                Boolean?
+  manquante                                   Boolean?
+  refus                                       String?
+  ecarte_pour_inspection                      Boolean?
+  commentaire                                 String?
+  intermediaire_poids                         Float?
+  nombre_d_animaux_acceptes                   Int?
+  numero_bon_reception                        String?
+  decision_at                                 DateTime?
+  prise_en_charge_at                          DateTime?
+  intermediaire_id                            String?
+  intermediaire_entity_id                     String?
+  intermediaire_role                          FeiOwnerRole?
+  intermediaire_user_id                       String?
+  intermediaire_depot_type                    DepotType?
+  intermediaire_depot_entity_id               String?
+  intermediaire_prochain_detenteur_role_cache FeiOwnerRole?
+  intermediaire_prochain_detenteur_id_cache   String?
+  created_at                                  DateTime?
+  updated_at                                  DateTime?
+  deleted_at                                  DateTime?
+  is_synced                                   Boolean?
+  version                                     Int?
+  version_user_id                             String?
+  history_op                                  String // UPDATE | DELETE
+  sys_period                                  Unsupported("tstzrange") // période où la version était la ligne courante
+
+  @@index([fei_numero, zacharie_carcasse_id, intermediaire_id])
+}
+
+// Versions précédentes de User, écrites par le trigger history_trigger (migration history_tables).
+// Mêmes colonnes que User, toutes nullables : vérifié par src/__tests__/history-tables.test.ts.
+model UserHistory {
+  history_id                     BigInt                   @id @default(autoincrement())
+  id                             String?
+  email                          String?
+  telephone                      String?
+  prenom                         String?
+  nom_de_famille                 String?
+  numero_cfei                    String?
+  est_forme_a_l_examen_initial   Boolean?
+  prochain_bracelet_a_utiliser   Int?
+  addresse_ligne_1               String?
+  addresse_ligne_2               String?
+  code_postal                    String?
+  ville                          String?
+  user_entities_vivible_checkbox Boolean?
+  roles                          UserRoles[]
+  role                           UserRoles?
+  isZacharieAdmin                Boolean?
+  exclude_from_stats             Boolean?
+  etg_role                       UserEtgRoles?
+  created_at                     DateTime?
+  updated_at                     DateTime?
+  last_login_at                  DateTime?
+  deleted_at                     DateTime?
+  onboarded_at                   DateTime?
+  notifications                  UserNotifications[]
+  web_push_tokens                String[]
+  native_push_tokens             String[]
+  prefilled                      Boolean?
+  activated                      Boolean?
+  activated_at                   DateTime?
+  is_synced                      Boolean?
+  brevo_contact_id               Int?
+  at_least_one_fei_treated       DateTime?
+  checked_has_asso_de_chasse     DateTime?
+  checked_has_ccg                DateTime?
+  checked_has_partenaires        DateTime?
+  onboarding_chasse_info_done_at DateTime?
+  history_op                     String // UPDATE | DELETE
+  sys_period                     Unsupported("tstzrange") // période où la version était la ligne courante
+
+  @@index([id])
+}
+
+// Versions précédentes de Entity, écrites par le trigger history_trigger (migration history_tables).
+// Mêmes colonnes que Entity, toutes nullables : vérifié par src/__tests__/history-tables.test.ts.
+model EntityHistory {
+  history_id                       BigInt                   @id @default(autoincrement())
+  id                               String?
+  raison_sociale                   String?
+  nom_d_usage                      String?
+  address_ligne_1                  String?
+  address_ligne_2                  String?
+  code_postal                      String?
+  ville                            String?
+  siret                            String?
+  nom_prenom_responsable           String?
+  prefecture_svi                   String?
+  ccg_status                       String?
+  etg_linked_to_svi_id             String?
+  etg_demande_numero_bon_reception Boolean?
+  zacharie_compatible              Boolean?
+  numero_ddecpp                    String?
+  inc_certificat                   Int?
+  inc_decision                     Int?
+  code_etbt_certificat             String?
+  type                             EntityTypes?
+  is_lnr                           Boolean?
+  scope_departements_codes         String[]
+  created_at                       DateTime?
+  updated_at                       DateTime?
+  deleted_at                       DateTime?
+  onboarded_at                     DateTime?
+  prefilled                        Boolean?
+  is_synced                        Boolean?
+  for_testing                      Boolean?
+  exclude_from_stats               Boolean?
+  brevo_id                         String?
+  at_least_one_fei_treated         DateTime?
+  history_op                       String // UPDATE | DELETE
+  sys_period                       Unsupported("tstzrange") // période où la version était la ligne courante
+
+  @@index([id])
+}
+
+// Versions précédentes de EntityAndUserRelations, écrites par le trigger history_trigger (migration history_tables).
+// Mêmes colonnes que EntityAndUserRelations, toutes nullables : vérifié par src/__tests__/history-tables.test.ts.
+model EntityAndUserRelationsHistory {
+  history_id BigInt                   @id @default(autoincrement())
+  id         String?
+  owner_id   String?
+  entity_id  String?
+  relation   EntityRelationType?
+  status     EntityRelationStatus?
+  brevo_id   String?
+  created_at DateTime?
+  updated_at DateTime?
+  deleted_at DateTime?
+  is_synced  Boolean?
+  history_op String // UPDATE | DELETE
+  sys_period Unsupported("tstzrange") // période où la version était la ligne courante
+
+  @@index([id])
 }
 
 enum DepotType {
