@@ -48,7 +48,6 @@ export async function loadCarcassesRefusees(feiNumero: string) {
 
   useZustandStore.setState(() => ({
     carcasses: newCarcasses,
-    carcassesRegistry: Object.values(newCarcasses),
     carcassesIntermediaireById: newCarcassesIntermediaires,
     entities: newEntities,
   }));

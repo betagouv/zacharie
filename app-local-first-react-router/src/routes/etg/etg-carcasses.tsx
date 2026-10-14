@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { Entity, FeiOwnerRole } from '@prisma/client';
 import useZustandStore from '@app/zustand/store';
+import { useCarcassesRegistry } from '@app/utils/useCarcassesRegistry';
 import { Pagination } from '@codegouvfr/react-dsfr/Pagination';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
@@ -75,7 +76,7 @@ type CatalogColumn = {
 
 export default function EtgCarcasses() {
   const user = useMostFreshUser('etg-carcasses')!;
-  const carcassesRegistry = useZustandStore((state) => state.carcassesRegistry);
+  const carcassesRegistry = useCarcassesRegistry();
   const transmissions = useTransmissions();
   const feis = useZustandStore((state) => state.feis);
   const entities = useZustandStore((state) => state.entities);
