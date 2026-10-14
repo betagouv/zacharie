@@ -13,7 +13,7 @@ import {
   choisirStockage,
   choisirTransport,
   enregistrerVenteDon,
-  venteDonModal,
+  selectDestinataire,
 } from '../../utils/vente-don';
 import { logoutAndConnect } from '../../utils/logout-and-connect';
 
@@ -96,11 +96,9 @@ test("Un autre membre de l'association transmet la fiche certifiée par l'examin
 
   await expect(page.getByRole('heading', { name: 'Vente ou don' })).toBeVisible({ timeout: 15000 });
 
+  // ETG 1 n'est pas un partenaire de User B : pas de raccourci, on passe par la liste.
   await openVenteDon(page);
-  const etg1Pill = venteDonModal(page).getByRole('button', { name: /^ETG 1$/ });
-  await expect(etg1Pill).toBeVisible({ timeout: 15000 });
-  await etg1Pill.scrollIntoViewIfNeeded();
-  await etg1Pill.click();
+  await selectDestinataire(page, 'ETG 1 - 75000 Paris (');
   await allerAEtape(page, 'Stockage');
   await choisirStockage(page, 'aucun');
   await allerAEtape(page, 'Transport');
@@ -117,7 +115,7 @@ test("Un autre membre de l'association transmet la fiche certifiée par l'examin
       (res.request().postData() ?? '').includes('"current_owner_user_name_cache":"Pierre Petit"'),
     { timeout: 15000 }
   );
-  const transmettre = page.getByRole('button', { name: 'Transmettre', exact: true });
+  const transmettre = page.getByRole('button', { name: /^Transmettre/ });
   await transmettre.scrollIntoViewIfNeeded();
   await transmettre.click();
   await syncTransmissionParB;
