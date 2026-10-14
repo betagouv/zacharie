@@ -46,6 +46,7 @@ vi.mock('./src/prisma', () => ({
       findUnique: vi.fn(),
       findFirst: vi.fn(),
       findMany: vi.fn().mockResolvedValue([]),
+      create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
     },
@@ -76,6 +77,7 @@ vi.mock('./src/prisma', () => ({
       deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
     },
     password: {
+      findUnique: vi.fn().mockResolvedValue(null),
       upsert: vi.fn(),
     },
     userRelations: {
