@@ -404,12 +404,14 @@ export type SviAssignedTemplateParams = {
 export async function formatSviAssignedEmail(
   carcasse: Carcasse
 ): Promise<{ object: string; text: string; params: SviAssignedTemplateParams; push: PushWording }> {
-  const currentEntity = await prisma.entity.findUnique({
-    where: {
-      id: carcasse.current_owner_entity_id,
-      deleted_at: null,
-    },
-  });
+  const currentEntity = carcasse.current_owner_entity_id
+    ? await prisma.entity.findUnique({
+        where: {
+          id: carcasse.current_owner_entity_id,
+          deleted_at: null,
+        },
+      })
+    : null;
   const feiCarcasses = await prisma.carcasse.findMany({
     where: {
       fei_numero: carcasse.fei_numero,
@@ -431,7 +433,10 @@ export async function formatSviAssignedEmail(
     : carcasse.fei_numero;
 
   const params: SviAssignedTemplateParams = {
-    entity_name: currentEntity?.nom_d_usage,
+    entity_name:
+      currentEntity?.nom_d_usage ??
+      carcasse.current_owner_entity_name_cache ??
+      carcasse.current_owner_user_name_cache,
     count: feiCarcasses.length,
     carcasses: feiCarcasses.map(
       (carcasse) =>
