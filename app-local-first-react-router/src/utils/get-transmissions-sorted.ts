@@ -1,6 +1,6 @@
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
-import { useEntitiesIdsWorkingDirectlyForObj } from '@app/utils/get-entity-relations';
+import { filterEntitiesWorkingDirectlyForObj } from '@app/utils/get-entity-relations';
 import {
   isCarcasseDone,
   isCarcasseToTake,
@@ -37,23 +37,52 @@ export function useTransmissions(): Record<
   NonNullable<CarcasseTransmissionWihMetadata['fei']['numero']>,
   CarcasseTransmissionWihMetadata
 > {
-  const allCarcasses = useZustandStore((state) => state.carcasses);
+  const carcasses = useZustandStore((state) => state.carcasses);
   const carcassesIntermediaireById = useZustandStore((state) => state.carcassesIntermediaireById);
-  const entitiesWorkingDirectlyFor = useEntitiesIdsWorkingDirectlyForObj();
+  const entities = useZustandStore((state) => state.entities);
   const user = useUser((state) => state.user)!;
   const feis = useZustandStore((state) => state.feis);
 
-  return useMemo(
-    () =>
-      computeTransmissions({
-        carcasses: allCarcasses,
-        carcassesIntermediaireById,
-        feis,
-        user,
-        entitiesWorkingDirectlyFor,
-      }),
-    [allCarcasses, carcassesIntermediaireById, entitiesWorkingDirectlyFor, feis, user]
-  );
+  return getTransmissionsShared({ carcasses, carcassesIntermediaireById, feis, user, entities });
+}
+
+type SharedTransmissionsInputs = {
+  carcasses: Record<Carcasse['zacharie_carcasse_id'], Carcasse>;
+  carcassesIntermediaireById: Record<string, CarcasseIntermediaire>;
+  feis: Record<Fei['numero'], Fei>;
+  user: User;
+  entities: Record<EntityWithUserRelation['id'], EntityWithUserRelation>;
+};
+
+let sharedTransmissions: {
+  inputs: SharedTransmissionsInputs;
+  result: ReturnType<typeof computeTransmissions>;
+} | null = null;
+
+// Calcul partagé par tous les composants qui appellent useTransmissions : un useMemo par composant
+// referait la passe complète sur toutes les carcasses autant de fois qu'il y a de composants montés.
+// Le résultat est recalculé dès qu'une des entrées change de référence (le store est immuable).
+function getTransmissionsShared(inputs: SharedTransmissionsInputs) {
+  const previous = sharedTransmissions?.inputs;
+  if (
+    previous &&
+    previous.carcasses === inputs.carcasses &&
+    previous.carcassesIntermediaireById === inputs.carcassesIntermediaireById &&
+    previous.feis === inputs.feis &&
+    previous.user === inputs.user &&
+    previous.entities === inputs.entities
+  ) {
+    return sharedTransmissions!.result;
+  }
+  const result = computeTransmissions({
+    carcasses: inputs.carcasses,
+    carcassesIntermediaireById: inputs.carcassesIntermediaireById,
+    feis: inputs.feis,
+    user: inputs.user,
+    entitiesWorkingDirectlyFor: filterEntitiesWorkingDirectlyForObj(inputs.entities),
+  });
+  sharedTransmissions = { inputs, result };
+  return result;
 }
 
 // insère l'intermédiaire en gardant la liste en ordre created_at décroissant (le plus récent en tête)
