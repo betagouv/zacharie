@@ -20,7 +20,7 @@ import { checkCarcasseAgainstTransmission, getCarcasseTransmission } from './get
 import { CarcasseTransmission, CarcasseTransmissionWihMetadata } from '@app/types/carcasse';
 import { abbreviations } from './count-carcasses';
 import { getTransmissionLabels } from './transmission-labels';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { buildTransmissionId, getTransmissionId } from './get-transmission-id';
 import { useParams } from 'react-router';
 import { CarcassesIntermediaire } from '@app/types/carcasses-intermediaire';
@@ -504,23 +504,26 @@ export function useGetTransmissionFromCarcasse(carcasse: Carcasse) {
   return transmission;
 }
 
+export function withAllCarcassesDone(transmission: CarcasseTransmissionWihMetadata) {
+  return { ...transmission, allCarcassesDone: transmission.carcasses.every(isCarcasseDone) };
+}
+
 export function useGetTransmissionFromTransmissionId(transmissionId: string) {
   const transmissions = useTransmissions();
-  const [transmission, setTransmission] = useState<CarcasseTransmissionWihMetadata>(
-    transmissions[transmissionId]
+  // calculé pendant le rendu : allCarcassesDone est juste dès le premier rendu, sans second rendu
+  const transmission = useMemo(
+    () => withAllCarcassesDone(transmissions[transmissionId]),
+    [transmissions, transmissionId]
   );
 
+  // contrôle de cohérence remonté à Sentry : effet de bord, gardé hors du rendu
   useEffect(() => {
-    const transmission = transmissions[transmissionId]?.content;
-    const transmissionKeys = Object.keys(transmission) as Array<keyof CarcasseTransmission>;
-    let allCarcassesDone = true;
-    const carcasseRef = transmissions[transmissionId].carcasses[0]!;
-    for (const carcasse of transmissions[transmissionId].carcasses) {
-      checkCarcasseAgainstTransmission(transmissionKeys, transmission, carcasse, carcasseRef);
-      if (!isCarcasseDone(carcasse)) allCarcassesDone = false;
+    const transmissionKeys = Object.keys(transmission.content) as Array<keyof CarcasseTransmission>;
+    const carcasseRef = transmission.carcasses[0]!;
+    for (const carcasse of transmission.carcasses) {
+      checkCarcasseAgainstTransmission(transmissionKeys, transmission.content, carcasse, carcasseRef);
     }
-    setTransmission({ ...transmissions[transmissionId], allCarcassesDone });
-  }, [transmissions, transmissionId]);
+  }, [transmission]);
 
   return transmission;
 }

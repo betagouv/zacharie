@@ -13,6 +13,7 @@ import {
   computeTransmissions,
   getWorseLabelsOfTransmissions,
   sortTransmissions,
+  withAllCarcassesDone,
 } from './get-transmissions-sorted';
 import { buildTransmissionId } from './get-transmission-id';
 import type { CarcasseTransmissionWihMetadata } from '@app/types/carcasse';
@@ -640,5 +641,36 @@ describe('sortTransmissions — most recent approbation/creation first', () => {
     const older = withDates(null, '2024-01-01T00:00:00Z');
     const newer = withDates(null, '2024-06-01T00:00:00Z');
     expect([older, newer].sort(sortTransmissions)).toEqual([newer, older]);
+  });
+});
+
+describe('withAllCarcassesDone', () => {
+  it('vrai quand toutes les carcasses de la transmission sont terminées', () => {
+    const transmissions = run({
+      carcasses: [
+        carcasse({ zacharie_carcasse_id: 'C1', svi_closed_at: new Date('2024-02-01T00:00:00Z') }),
+        carcasse({ zacharie_carcasse_id: 'C2', intermediaire_carcasse_manquante: true }),
+      ],
+      user: admin,
+    });
+    expect(withAllCarcassesDone(transmissions[TID]).allCarcassesDone).toBe(true);
+  });
+
+  it("faux dès qu'une carcasse n'est pas terminée", () => {
+    const transmissions = run({
+      carcasses: [
+        carcasse({ zacharie_carcasse_id: 'C1', svi_closed_at: new Date('2024-02-01T00:00:00Z') }),
+        carcasse({ zacharie_carcasse_id: 'C2' }),
+      ],
+      user: admin,
+    });
+    expect(withAllCarcassesDone(transmissions[TID]).allCarcassesDone).toBe(false);
+  });
+
+  it('garde le reste de la transmission', () => {
+    const transmissions = run({ carcasses: [carcasse({ zacharie_carcasse_id: 'C1' })], user: admin });
+    const result = withAllCarcassesDone(transmissions[TID]);
+    expect(result.carcasses).toBe(transmissions[TID].carcasses);
+    expect(result.content).toBe(transmissions[TID].content);
   });
 });
