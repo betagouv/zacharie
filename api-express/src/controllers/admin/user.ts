@@ -289,7 +289,7 @@ router.post(
         where: { id: userId },
         data: nextUser,
       });
-      await updateBrevoContact(savedUser);
+      await updateBrevoContact(savedUser, 'ADMIN');
       await updateBrevoChasseurDeal(savedUser);
 
       const userHasNowAllRequiredFields =
