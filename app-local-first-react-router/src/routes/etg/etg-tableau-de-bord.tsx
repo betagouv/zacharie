@@ -67,20 +67,52 @@ function countBy(items: Array<string>) {
   return [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, MAX_BARRES);
 }
 
-// Évolution d'un volume : variation relative en %.
-function formatEvolutionVolume(current: number, previous: number): string {
-  if (previous === 0) return `Saison précédente : ${previous}`;
-  const evolution = Math.round(((current - previous) / previous) * 100);
-  return `Saison précédente : ${previous.toLocaleString('fr-FR')} (${evolution > 0 ? '+' : ''}${evolution} %)`;
-}
+// Sens d'une hausse pour l'établissement : favorable (vert), défavorable (rouge) ou sans jugement (gris).
+type SensHausse = 'favorable' | 'defavorable' | 'neutre';
 
-// Évolution d'un taux ou d'un score : écart en points.
-function formatEvolutionPoints(current: number | null, previous: number | null, unit: string): string {
-  if (previous === null) return 'Saison précédente : –';
+const EVOLUTION_COLORS: Record<'bonne' | 'mauvaise' | 'neutre', string> = {
+  bonne: 'text-green-700',
+  mauvaise: 'text-red-700',
+  neutre: 'text-gray-500',
+};
+
+// Valeur de la même période de la saison précédente et évolution : variation relative en % pour un
+// volume, écart en points pour un taux ou un score.
+function Evolution({
+  current,
+  previous,
+  mesure,
+  unit = '',
+  sensHausse,
+}: {
+  current: number | null;
+  previous: number | null;
+  mesure: 'volume' | 'taux';
+  unit?: string;
+  sensHausse: SensHausse;
+}) {
+  if (previous === null) return <>Saison précédente : –</>;
   const previousLabel = `${previous.toLocaleString('fr-FR')}${unit}`;
-  if (current === null) return `Saison précédente : ${previousLabel}`;
-  const ecart = Math.round((current - previous) * 10) / 10;
-  return `Saison précédente : ${previousLabel} (${ecart > 0 ? '+' : ''}${ecart.toLocaleString('fr-FR')} pt)`;
+  if (current === null || (mesure === 'volume' && previous === 0)) {
+    return <>Saison précédente : {previousLabel}</>;
+  }
+  const ecart =
+    mesure === 'volume'
+      ? Math.round(((current - previous) / previous) * 100)
+      : Math.round((current - previous) * 10) / 10;
+  let tendance: keyof typeof EVOLUTION_COLORS = 'neutre';
+  if (ecart !== 0 && sensHausse !== 'neutre') {
+    tendance = ecart > 0 === (sensHausse === 'favorable') ? 'bonne' : 'mauvaise';
+  }
+  return (
+    <>
+      Saison précédente : {previousLabel}{' '}
+      <span className={`font-semibold ${EVOLUTION_COLORS[tendance]}`}>
+        ({ecart > 0 ? '+' : ''}
+        {ecart.toLocaleString('fr-FR')} {mesure === 'volume' ? '%' : 'pt'})
+      </span>
+    </>
+  );
 }
 
 function getScoreNiveau(score: number) {
@@ -221,8 +253,7 @@ export default function EtgTableauDeBord() {
         <header>
           <h1 className="fr-h3 mb-1">Tableau de bord</h1>
           <p className="m-0 text-sm text-gray-600">
-            Saison {getSaisonLabel(periodes.saison)}, du 1er juin au{' '}
-            {periodes.courante.fin.format('DD/MM/YYYY')}, comparée à la même période de la saison précédente.
+            Saison {getSaisonLabel(periodes.saison)}, comparée à la même période de la saison précédente.
             Seules les carcasses passées par votre établissement sont comptées.
           </p>
         </header>
@@ -279,26 +310,54 @@ export default function EtgTableauDeBord() {
             <StatCard
               label="Carcasses et lots réceptionnés"
               value={courante.total.toLocaleString('fr-FR')}
-              sub={formatEvolutionVolume(courante.total, precedente.total)}
+              sub={
+                <Evolution
+                  current={courante.total}
+                  previous={precedente.total}
+                  mesure="volume"
+                  sensHausse="favorable"
+                />
+              }
             />
             {categorie === 'TOUT' && (
               <>
                 <StatCard
                   label="Grand gibier"
                   value={courante.totalGG.toLocaleString('fr-FR')}
-                  sub={formatEvolutionVolume(courante.totalGG, precedente.totalGG)}
+                  sub={
+                    <Evolution
+                      current={courante.totalGG}
+                      previous={precedente.totalGG}
+                      mesure="volume"
+                      sensHausse="favorable"
+                    />
+                  }
                 />
                 <StatCard
                   label="Petit gibier"
                   value={courante.totalPG.toLocaleString('fr-FR')}
-                  sub={formatEvolutionVolume(courante.totalPG, precedente.totalPG)}
+                  sub={
+                    <Evolution
+                      current={courante.totalPG}
+                      previous={precedente.totalPG}
+                      mesure="volume"
+                      sensHausse="favorable"
+                    />
+                  }
                 />
               </>
             )}
             <StatCard
               label="Apporteurs"
               value={courante.apporteurs.toLocaleString('fr-FR')}
-              sub={formatEvolutionVolume(courante.apporteurs, precedente.apporteurs)}
+              sub={
+                <Evolution
+                  current={courante.apporteurs}
+                  previous={precedente.apporteurs}
+                  mesure="volume"
+                  sensHausse="favorable"
+                />
+              }
               info="Nombre de premiers détenteurs distincts dont vous avez réceptionné des carcasses."
             />
           </div>
@@ -323,7 +382,18 @@ export default function EtgTableauDeBord() {
             <StatCard
               label="Taux de refus"
               value={formatTaux(courante.tauxRefus)}
-              sub={`${courante.refusees.toLocaleString('fr-FR')} refusée${courante.refusees > 1 ? 's' : ''} · ${formatEvolutionPoints(courante.tauxRefus, precedente.tauxRefus, ' %')}`}
+              sub={
+                <>
+                  {courante.refusees.toLocaleString('fr-FR')} refusée{courante.refusees > 1 ? 's' : ''} ·{' '}
+                  <Evolution
+                    current={courante.tauxRefus}
+                    previous={precedente.tauxRefus}
+                    mesure="taux"
+                    unit=" %"
+                    sensHausse="neutre"
+                  />
+                </>
+              }
             />
             <div className="flex min-w-48 flex-1 flex-col rounded-lg border border-gray-200 bg-white p-4">
               <span className="flex items-center gap-2 text-2xl font-bold text-gray-900">
@@ -343,7 +413,12 @@ export default function EtgTableauDeBord() {
                 {courante.saisiesDisqualifiantes} saisie{courante.saisiesDisqualifiantes > 1 ? 's' : ''} pour
                 motif disqualifiant sur {courante.inspectees} carcasse{courante.inspectees > 1 ? 's' : ''}{' '}
                 inspectée{courante.inspectees > 1 ? 's' : ''} ·{' '}
-                {formatEvolutionPoints(courante.scoreTri, precedente.scoreTri, '')}
+                <Evolution
+                  current={courante.scoreTri}
+                  previous={precedente.scoreTri}
+                  mesure="taux"
+                  sensHausse="favorable"
+                />
               </span>
             </div>
           </div>
@@ -369,7 +444,19 @@ export default function EtgTableauDeBord() {
             <StatCard
               label="Taux de saisie (totales + partielles)"
               value={formatTaux(courante.tauxSaisie)}
-              sub={`${courante.saisies.toLocaleString('fr-FR')} sur ${courante.inspectees.toLocaleString('fr-FR')} inspectée${courante.inspectees > 1 ? 's' : ''} · ${formatEvolutionPoints(courante.tauxSaisie, precedente.tauxSaisie, ' %')}`}
+              sub={
+                <>
+                  {courante.saisies.toLocaleString('fr-FR')} sur {courante.inspectees.toLocaleString('fr-FR')}{' '}
+                  inspectée{courante.inspectees > 1 ? 's' : ''} ·{' '}
+                  <Evolution
+                    current={courante.tauxSaisie}
+                    previous={precedente.tauxSaisie}
+                    mesure="taux"
+                    unit=" %"
+                    sensHausse="defavorable"
+                  />
+                </>
+              }
               info="Parmi les carcasses que vous avez acceptées et qui ont reçu une décision définitive du SVI."
             />
           </div>
