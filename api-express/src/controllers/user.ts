@@ -1733,7 +1733,11 @@ router.get(
         })
         .then((entities) =>
           entities.map(
-            (entity): EntityWithUserRelation => ({ ...entity, relation: 'NONE', relationStatus: undefined })
+            (entity): EntityWithUserRelation => ({
+              ...entity,
+              relation: 'NONE',
+              relationStatus: undefined,
+            })
           )
         );
 

@@ -199,8 +199,9 @@ export default function LaboratoireFTP() {
       {envoyee && (
         <TrichineCard
           titre="Envoi au LNR"
-          hint={`Fiche générée automatiquement après votre résultat non négatif. ${ftp.DestinataireEntity.nom_d_usage || ftp.DestinataireEntity.raison_sociale
-            } a été averti par email et saisira le résultat de confirmation.`}
+          hint={`Fiche générée automatiquement après votre résultat non négatif. ${
+            ftp.DestinataireEntity.nom_d_usage || ftp.DestinataireEntity.raison_sociale
+          } a été averti par email et saisira le résultat de confirmation.`}
         >
           <LarvePhotos
             ftpId={ftp.id}
