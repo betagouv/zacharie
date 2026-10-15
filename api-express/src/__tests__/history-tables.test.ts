@@ -5,7 +5,14 @@ import { describe, test, expect } from 'vitest';
 // Le trigger history_trigger copie chaque version précédente dans "<Table>History" par nom de colonne :
 // une colonne oubliée dans l'historique n'y est jamais enregistrée. Toute colonne ajoutée à une table
 // historisée doit donc l'être aussi, nullable, dans son modèle History.
-const HISTORIZED_TABLES = ['Fei', 'Carcasse', 'CarcasseIntermediaire', 'User', 'Entity', 'EntityAndUserRelations'];
+const HISTORIZED_TABLES = [
+  'Fei',
+  'Carcasse',
+  'CarcasseIntermediaire',
+  'User',
+  'Entity',
+  'EntityAndUserRelations',
+];
 const HISTORY_ONLY_FIELDS = ['history_id', 'history_op', 'sys_period'];
 
 const schema = fs.readFileSync(path.resolve(__dirname, '../../prisma/schema.prisma'), 'utf8');
