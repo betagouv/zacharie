@@ -73,6 +73,10 @@ export const MATOMO_EVENTS = {
   partenaire: {
     creer: [],
   },
+  laboratoire: {
+    // value = nombre de lignes exportées (cochées, sinon affichées)
+    exporter: ['pools-csv', 'pools-json', 'echantillons-csv', 'echantillons-json', 'ftps-csv', 'ftps-json'],
+  },
 } as const satisfies Record<string, Record<string, readonly string[]>>;
 
 export type MatomoEvents = typeof MATOMO_EVENTS;
