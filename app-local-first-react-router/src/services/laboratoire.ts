@@ -96,12 +96,18 @@ export type LaboFTPListItem = TrichineFTP &
 /** Fiche liée : la fiche d'origine, ou la fiche de confirmation générée vers le LNR */
 export type LaboFTPLiee = { numero_fiche: string; statut_logistique: TrichineStatutLogistiqueFTP };
 
+/** Fiche de confirmation vers le LNR, avec les pools qu'elle transmet */
+export type LaboFTPConfirmation = LaboFTPLiee & { id: string; pool_ids: Array<string> };
+
+/** FTP générée vers le LNR à la saisie d'un résultat non négatif */
+export type FtpConfirmationCreee = { id: string; numero_fiche: string };
+
 export type LaboFTPDetail = TrichineFTP &
   LaboExpediteur &
   LaboDestinataire & {
     // Le backend ne renvoie que les fiches liées auxquelles le laboratoire a accès
     FTPParent: LaboFTPLiee | null;
-    FTPChildren: Array<LaboFTPLiee>;
+    FTPChildren: Array<LaboFTPConfirmation>;
     TrichinePoolFTPs: Array<LaboPoolFTPLien & { TrichinePool: LaboPool }>;
     Documents: Array<TrichineDocument>;
   };
@@ -194,7 +200,7 @@ export function saisirResultatPool(
   }
 ) {
   return API.post({ path: `/laboratoire/pool/${poolId}/resultat`, body }) as Promise<
-    ApiResponse<{ pool: TrichinePool }>
+    ApiResponse<{ pool: TrichinePool; ftp_confirmation: FtpConfirmationCreee | null }>
   >;
 }
 
@@ -226,6 +232,22 @@ export function deposerDocumentPool(
 
 export function documentPoolPath(poolId: string, documentId: string) {
   return `/laboratoire/pool/${poolId}/document/${documentId}`;
+}
+
+/** Photographies des larves, jointes à la FTP de confirmation pour le LNR */
+export const PHOTO_CONTENT_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
+export function deposerPhotosLarveFTP(
+  ftpId: string,
+  files: Array<{ content_type: string; content: string }>
+) {
+  return API.post({ path: `/laboratoire/ftp/${ftpId}/photos`, body: { files } }) as Promise<
+    ApiResponse<{ documents: Array<TrichineDocument> }>
+  >;
+}
+
+export function documentFtpPath(ftpId: string, documentId: string) {
+  return `/laboratoire/ftp/${ftpId}/document/${documentId}`;
 }
 
 // Import de résultats depuis un export LIMS (cf doc/trichine-import-lims.md)

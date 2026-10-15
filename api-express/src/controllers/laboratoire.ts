@@ -353,7 +353,9 @@ router.get(
           select: { id: true, is_lnr: true, nom_d_usage: true, raison_sociale: true },
         },
         FTPParent: { select: ftpLieeSelect },
-        FTPChildren: { select: ftpLieeSelect },
+        FTPChildren: {
+          select: { ...ftpLieeSelect, id: true, TrichinePoolFTPs: { select: { pool_id: true } } },
+        },
         TrichinePoolFTPs: {
           include: {
             TrichinePool: {
@@ -396,7 +398,12 @@ router.get(
             TrichinePool: projeterPoolPourLabo(TrichinePool, context),
           })),
           FTPParent: FTPParent && ftpLieeVisible(FTPParent, context) ? projeterFtpLiee(FTPParent) : null,
-          FTPChildren: FTPChildren.filter((enfant) => ftpLieeVisible(enfant, context)).map(projeterFtpLiee),
+          // id et pools portés : le labo émetteur télécharge la fiche à joindre au colis depuis chaque pool
+          FTPChildren: FTPChildren.filter((enfant) => ftpLieeVisible(enfant, context)).map((enfant) => ({
+            ...projeterFtpLiee(enfant),
+            id: enfant.id,
+            pool_ids: enfant.TrichinePoolFTPs.map((lien) => lien.pool_id),
+          })),
         },
         historique,
         direction: estDestinataire ? 'recue' : 'envoyee',
@@ -600,7 +607,11 @@ router.post(
     if (outcome.kind === 'error') {
       return sendError(res, outcome.status, outcome.error);
     }
-    res.status(200).send({ ok: true, data: { pool: outcome.pool }, error: '' });
+    res.status(200).send({
+      ok: true,
+      data: { pool: outcome.pool, ftp_confirmation: outcome.ftpConfirmation },
+      error: '',
+    });
   })
 );
 
@@ -908,6 +919,43 @@ router.post(
       documents.push(stored.document);
     }
     res.status(200).send({ ok: true, data: { documents }, error: '' });
+  })
+);
+
+// Téléchargement d'une photographie de larve déposée sur une FTP de confirmation : mêmes droits que le dépôt
+router.get(
+  '/ftp/:ftp_id/document/:document_id',
+  passport.authenticate('user', { session: false }),
+  catchErrors(async (req: RequestWithUser, res: express.Response) => {
+    const context = await guardLabo(req, res);
+    if (!context) return;
+    const ftp = await prisma.trichineFTP.findUnique({ where: { id: req.params.ftp_id } });
+    const canAccess =
+      ftp &&
+      !ftp.deleted_at &&
+      ((ftp.expediteur_entity_id && context.entityIds.includes(ftp.expediteur_entity_id)) ||
+        context.entityIds.includes(ftp.destinataire_entity_id));
+    if (!canAccess) {
+      return sendError(res, 404, 'FTP introuvable');
+    }
+    const document = await prisma.trichineDocument.findFirst({
+      where: { id: req.params.document_id, ftp_id: ftp.id, deleted_at: null },
+    });
+    const file =
+      document?.fichier_url && IS_CELLAR_CONFIGURED ? await getFromCellar(document.fichier_url) : null;
+    if (!document || !file) {
+      return sendError(res, 404, 'Document introuvable');
+    }
+    const extension = document.fichier_url.split('.').pop() ?? '';
+    res.setHeader(
+      'Content-Type',
+      DOCUMENT_CONTENT_TYPE_BY_EXTENSION[extension] ?? 'application/octet-stream'
+    );
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${ftp.numero_fiche}-${document.id}.${extension}"`
+    );
+    res.send(file);
   })
 );
 

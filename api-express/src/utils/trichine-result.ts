@@ -123,10 +123,13 @@ export const resultatSchema = z.object({
 });
 export type ApplyPoolResultBody = z.infer<typeof resultatSchema>;
 
+// FTP générée vers le LNR sur un résultat DOUTEUX : le laboratoire doit l'imprimer et la joindre au colis
+export type FtpConfirmation = { id: string; numero_fiche: string };
+
 // Discriminant string-literal (et non booléen) : le repo compile avec strictNullChecks: false,
 // qui casse le narrowing des unions discriminées sur un booléen.
 export type ApplyPoolResultOutcome =
-  | { kind: 'ok'; pool: TrichinePool | null }
+  | { kind: 'ok'; pool: TrichinePool | null; ftpConfirmation: FtpConfirmation | null }
   | { kind: 'error'; status: number; error: string };
 
 /**
@@ -192,6 +195,8 @@ export async function applyPoolResult({
     commentaire: 'resultat_analyse',
   });
   await recomputePoolAndLinkedFTPs(pool.id, userId);
+
+  let ftpConfirmation: FtpConfirmation | null = null;
 
   // Un résultat n'est notifié qu'à l'émetteur de la FTP. Les détenteurs des carcasses ne le sont
   // pas : ils voient le résultat sur la carcasse, et le volume d'envois reste à cadrer avec eux.
@@ -261,6 +266,7 @@ export async function applyPoolResult({
         })
       );
       await prisma.trichinePoolFTP.create({ data: { pool_id: pool.id, ftp_id: lnrFtp.id } });
+      ftpConfirmation = { id: lnrFtp.id, numero_fiche: lnrFtp.numero_fiche };
       // Statut analytique de la FTP de confirmation (EN_COURS_ANALYSES)
       await recomputeFTPTrichine(lnrFtp.id, userId);
       await logTrichineStatutChange({
@@ -405,5 +411,5 @@ export async function applyPoolResult({
   }
 
   const updatedPool = await prisma.trichinePool.findUnique({ where: { id: pool.id } });
-  return { kind: 'ok', pool: updatedPool };
+  return { kind: 'ok', pool: updatedPool, ftpConfirmation };
 }

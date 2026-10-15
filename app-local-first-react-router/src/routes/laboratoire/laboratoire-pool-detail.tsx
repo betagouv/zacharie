@@ -95,6 +95,12 @@ export default function LaboratoirePoolDetail() {
     ? ftp.ExpediteurEntity.nom_d_usage || ftp.ExpediteurEntity.raison_sociale
     : null;
   const receptionne = !!pool.date_reception;
+  // Le LNR reçoit lui-même la fiche de confirmation : l'encadré d'envoi ne concerne que le LVD
+  const ftpConfirmation = isLnr
+    ? null
+    : (pool.TrichinePoolFTPs.map((lien) => lien.TrichineFTP).find(
+        (fiche) => fiche.DestinataireEntity.is_lnr
+      ) ?? null);
 
   const etapes: Array<ChaineEtape> = [
     { label: 'Émetteur', value: expediteurEntity || expediteur || '—' },
@@ -182,6 +188,7 @@ export default function LaboratoirePoolDetail() {
       <PoolCard
         pool={pool}
         isLnr={isLnr}
+        confirmation={ftpConfirmation}
         saisieActive={receptionne}
         onRefuser={() => {
           setRefusPool(pool);

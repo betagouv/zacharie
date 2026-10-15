@@ -6,8 +6,8 @@ import { Input } from '@codegouvfr/react-dsfr/Input';
 import { toast } from 'react-toastify';
 import dayjs from 'dayjs';
 import { TrichineStatutLogistiqueFTP, type TrichineHistoriqueStatut } from '@prisma/client';
-import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import Chargement from '@app/components/Chargement';
+import LarvePhotos from '@app/components/laboratoire/LarvePhotos';
 import PoolCard, {
   refusModal,
   RefusModalContent,
@@ -95,8 +95,11 @@ export default function LaboratoireFTP() {
 
   const envoyee = direction === 'envoyee';
   const aReceptionner = !envoyee && ftp.statut_logistique === TrichineStatutLogistiqueFTP.ENVOYEE;
+  const photosLarve = ftp.Documents.filter((document) => document.type === 'PHOTOGRAPHIE_LARVE');
   const pools = ftp.TrichinePoolFTPs.map((link) => link.TrichinePool);
   const echantillons = pools.flatMap((pool) => pool.TrichineEchantillons);
+  const confirmationDuPool = (poolId: string) =>
+    ftp.FTPChildren.find((enfant) => enfant.pool_ids.includes(poolId)) ?? null;
   const poolsSansResultat = pools.filter((pool) => !pool.resultat_analyse).length;
   const expediteur = `${ftp.ExpediteurUser.prenom ?? ''} ${ftp.ExpediteurUser.nom_de_famille ?? ''}`.trim();
   const expediteurEntity = ftp.ExpediteurEntity
@@ -194,11 +197,43 @@ export default function LaboratoireFTP() {
       }
     >
       {envoyee && (
-        <Alert
-          severity="info"
-          small
-          description={`Cette fiche a été générée automatiquement après votre résultat non négatif. Elle est destinée à ${ftp.DestinataireEntity.nom_d_usage || ftp.DestinataireEntity.raison_sociale}, qui saisira le résultat de confirmation.`}
-        />
+        <TrichineCard
+          titre="Envoi au LNR"
+          hint={`Fiche générée automatiquement après votre résultat non négatif. ${
+            ftp.DestinataireEntity.nom_d_usage || ftp.DestinataireEntity.raison_sociale
+          } a été averti par email et saisira le résultat de confirmation.`}
+        >
+          <p className="fr-text--sm fr-mb-1w">Imprimez cette fiche et joignez-la au colis envoyé au LNR.</p>
+          <Button
+            type="button"
+            className="fr-mb-3w"
+            iconId="fr-icon-printer-line"
+            disabled={isDownloading}
+            onClick={() => onDownloadFtpPdf(ftp.id, ftp.numero_fiche)}
+          >
+            Télécharger la fiche à joindre au colis
+          </Button>
+          <LarvePhotos
+            ftpId={ftp.id}
+            numeroFiche={ftp.numero_fiche}
+            documents={photosLarve}
+            peutDeposer
+            onDone={refresh}
+          />
+        </TrichineCard>
+      )}
+
+      {/* Le LNR consulte les photographies jointes par le LVD */}
+      {!envoyee && photosLarve.length > 0 && (
+        <TrichineCard titre="Photographies jointes par le laboratoire émetteur">
+          <LarvePhotos
+            ftpId={ftp.id}
+            numeroFiche={ftp.numero_fiche}
+            documents={photosLarve}
+            peutDeposer={false}
+            onDone={refresh}
+          />
+        </TrichineCard>
       )}
 
       {aReceptionner && (
@@ -240,32 +275,6 @@ export default function LaboratoireFTP() {
         </TrichineCard>
       )}
 
-      {pools.map((pool) => (
-        <PoolCard
-          key={pool.id}
-          pool={pool}
-          isLnr={isLnr}
-          saisieActive={
-            !envoyee && !aReceptionner && ftp.statut_logistique !== TrichineStatutLogistiqueFTP.BROUILLON
-          }
-          onRefuser={() => {
-            setRefusPool(pool);
-            refusModal.open();
-          }}
-          onSaisirResultat={() => {
-            setResultatPool(pool);
-            setResultatMode('saisie');
-            resultatModal.open();
-          }}
-          onCorrigerResultat={() => {
-            setResultatPool(pool);
-            setResultatMode('correction');
-            resultatModal.open();
-          }}
-          onDocumentDepose={refresh}
-        />
-      ))}
-
       {ftp.FTPChildren.length > 0 && (
         <TrichineCard
           titre="Transmissions de confirmation"
@@ -294,6 +303,33 @@ export default function LaboratoireFTP() {
           </ul>
         </TrichineCard>
       )}
+
+      {pools.map((pool) => (
+        <PoolCard
+          key={pool.id}
+          pool={pool}
+          isLnr={isLnr}
+          confirmation={confirmationDuPool(pool.id)}
+          saisieActive={
+            !envoyee && !aReceptionner && ftp.statut_logistique !== TrichineStatutLogistiqueFTP.BROUILLON
+          }
+          onRefuser={() => {
+            setRefusPool(pool);
+            refusModal.open();
+          }}
+          onSaisirResultat={() => {
+            setResultatPool(pool);
+            setResultatMode('saisie');
+            resultatModal.open();
+          }}
+          onCorrigerResultat={() => {
+            setResultatPool(pool);
+            setResultatMode('correction');
+            resultatModal.open();
+          }}
+          onDocumentDepose={refresh}
+        />
+      ))}
 
       <ResultatModalContent
         pool={resultatPool}
