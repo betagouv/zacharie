@@ -27,7 +27,6 @@ const departementsLabels = (departementsRegions as { departements: Record<string
 
 // Références nationales officielles (taux sur animaux présentés à l'inspection), pour comparer
 // les statistiques personnelles du chasseur — mêmes bases que les taux personnels (carcasses SVI-éligibles).
-const NATIONAL_SEIZURE_RATE_BIG_GAME = 13.75; // % taux de saisie national grand gibier sauvage
 const NATIONAL_BPH_RATE_BIG_GAME = 5.49; // % taux BPH national grand gibier
 const NATIONAL_GG_TAUX_SAISIE_25_26 = 23.9; // % taux de saisie national GG saison 25-26 (valeur officielle)
 
@@ -89,7 +88,7 @@ router.get(
           hygieneScore: null,
           refusalCauses: [],
           personalSeizureRate: null,
-          nationalSeizureRate: NATIONAL_SEIZURE_RATE_BIG_GAME,
+          nationalSeizureRate: NATIONAL_GG_TAUX_SAISIE_25_26,
         },
       });
       return;
@@ -180,7 +179,7 @@ router.get(
         hygieneScore,
         refusalCauses,
         personalSeizureRate: personalSeizureRate !== null ? Math.round(personalSeizureRate * 10) / 10 : null, // Round to 1 decimal
-        nationalSeizureRate: NATIONAL_SEIZURE_RATE_BIG_GAME,
+        nationalSeizureRate: NATIONAL_GG_TAUX_SAISIE_25_26,
         // Calculation details for debugging
         calculationDetails: {
           // User & season
