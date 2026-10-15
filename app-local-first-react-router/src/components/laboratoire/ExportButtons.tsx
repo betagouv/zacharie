@@ -1,10 +1,15 @@
-import { Button } from '@codegouvfr/react-dsfr/Button';
+import DropDownMenu from '@app/components/DropDownMenu';
 import { track } from '@app/services/matomo';
 import {
   downloadTrichineExport,
   type ExportRow,
   type TrichineExportFormat,
 } from '@app/utils/export-trichine';
+
+const EXPORT_FORMATS: Array<{ format: TrichineExportFormat; label: string }> = [
+  { format: 'csv', label: 'Format CSV' },
+  { format: 'json', label: 'Format JSON' },
+];
 
 /**
  * Export d'un registre du laboratoire pour import dans son LIMS : les lignes cochées,
@@ -27,25 +32,22 @@ export default function ExportButtons<T extends { id: string }>({
     track('laboratoire', 'exporter', `${nom}-${format}`, items.length);
   };
   return (
-    <>
-      <Button
-        type="button"
-        priority="secondary"
-        iconId="fr-icon-download-line"
-        disabled={!items.length}
-        onClick={() => exporter('csv')}
-      >
-        Exporter en CSV ({items.length})
-      </Button>
-      <Button
-        type="button"
-        priority="secondary"
-        iconId="fr-icon-download-line"
-        disabled={!items.length}
-        onClick={() => exporter('json')}
-      >
-        Exporter en JSON ({items.length})
-      </Button>
-    </>
+    <DropDownMenu
+      text={`Exporter (${items.length})`}
+      isActive={items.length > 0}
+      menuLinks={EXPORT_FORMATS.map(({ format, label }) => ({
+        text: label,
+        linkProps: {
+          href: '#',
+          'aria-disabled': !items.length,
+          className: !items.length ? 'cursor-not-allowed opacity-50' : '',
+          onClick: (e) => {
+            e.preventDefault();
+            if (!items.length) return;
+            exporter(format);
+          },
+        },
+      }))}
+    />
   );
 }
