@@ -13,6 +13,8 @@ import {
   StatutBadge,
 } from '@app/components/laboratoire/cellules';
 import { getLaboPools, type LaboPoolRegistre } from '@app/services/laboratoire';
+import ExportButtons from '@app/components/laboratoire/ExportButtons';
+import { poolToExportRow } from '@app/utils/export-trichine';
 import {
   filterTrichineRows,
   sortTrichineRows,
@@ -39,6 +41,7 @@ export default function LaboratoirePools() {
   const [statut, setStatut] = useListParam('statut', '');
   const [sortBy, setSortBy] = useState<keyof LaboPoolRegistre>('date_constitution');
   const [sortOrder, setSortOrder] = useState<TrichineSortOrder>('DESC');
+  const [selectedIds, setSelectedIds] = useState<Array<string>>([]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -85,6 +88,14 @@ export default function LaboratoirePools() {
         { value: compteurs.enTransit, label: 'Colis pas encore reçus' },
         { value: compteurs.avecResultat, label: 'Résultat saisi' },
       ]}
+      actions={
+        <ExportButtons
+          nom="pools"
+          rows={rows}
+          selectedIds={selectedIds}
+          toExportRow={poolToExportRow}
+        />
+      }
       toolbar={
         <TrichineListToolbar
           query={query}
@@ -113,6 +124,9 @@ export default function LaboratoirePools() {
           <TableFilterable
             data={rows}
             rowKey="id"
+            withCheckbox
+            checked={selectedIds}
+            onCheck={setSelectedIds}
             onRowClick={(pool) => navigate(`/app/laboratoire/pools/${pool.reference_pool}`)}
             noData={pools.length ? 'Aucun pool ne correspond' : 'Aucun pool reçu'}
             renderCellSmallDevices={(pool) => (
