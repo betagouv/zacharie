@@ -10,26 +10,13 @@ import {
   DOCUMENT_MAX_BYTES,
 } from '@app/services/laboratoire';
 import downloadApiFile from '@app/utils/download-api-file';
+import fileToBase64 from '@app/utils/file-to-base64';
 import { documentTypeLabels } from '@app/utils/trichine';
 
 /**
  * Dépôt du rapport d'analyse d'un pool : glisser-déposer ou sélection depuis l'ordinateur.
  * Le fichier part en base64, le serveur calcule la clé de stockage.
  */
-
-// Lit le fichier et renvoie son contenu encodé en base64 (sans le préfixe data:).
-function fileToBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = String(reader.result);
-      const comma = result.indexOf(',');
-      resolve(comma >= 0 ? result.slice(comma + 1) : result);
-    };
-    reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(file);
-  });
-}
 
 export default function PoolDocuments({
   poolId,

@@ -8,16 +8,25 @@ import { Select } from '@codegouvfr/react-dsfr/Select';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import { toast } from 'react-toastify';
 import dayjs from 'dayjs';
-import { TrichineResultatAnalyse } from '@prisma/client';
+import {
+  TrichineResultatAnalyse,
+  type TrichineDocument,
+  type TrichinePool,
+  type TrichineStatutLogistiqueFTP,
+} from '@prisma/client';
 import {
   corrigerResultatPool,
   refuserPool,
   saisirResultatPool,
+  type FtpConfirmationCreee,
   type LaboPool,
 } from '@app/services/laboratoire';
 import PoolDocuments from '@app/components/laboratoire/PoolDocuments';
+import LarvePhotos from '@app/components/laboratoire/LarvePhotos';
+import useDownloadFtpPdf from '@app/utils/download-ftp-pdf';
 import {
   resultatAnalyseLabels,
+  statutLogistiqueLabels,
   resultatBadgeSeverity,
   sitePrelevementLabels,
   statutAnalyseBadgeSeverity,
@@ -46,9 +55,17 @@ const LNR_RESULTS = [
 /** Saisie d'un premier résultat, ou correction d'un résultat déjà rendu. */
 export type ResultatMode = 'saisie' | 'correction';
 
+/** FTP par laquelle le laboratoire a transmis ce pool non négatif au LNR */
+export type PoolConfirmation = {
+  id: string;
+  numero_fiche: string;
+  statut_logistique: TrichineStatutLogistiqueFTP;
+};
+
 export default function PoolCard({
   pool,
   isLnr,
+  confirmation,
   saisieActive,
   onRefuser,
   onSaisirResultat,
@@ -57,6 +74,7 @@ export default function PoolCard({
 }: {
   pool: LaboPool;
   isLnr: boolean;
+  confirmation: PoolConfirmation | null;
   saisieActive: boolean;
   onRefuser: () => void;
   onSaisirResultat: () => void;
@@ -140,6 +158,21 @@ export default function PoolCard({
         )}
       </div>
 
+      {confirmation && (
+        <div className="fr-mb-2w rounded border-l-4 border-blue-800 bg-blue-50 p-4">
+          <p className="fr-text--sm fr-mb-1w font-bold">
+            Transmis au LNR pour confirmation — FTP{' '}
+            <Link
+              to={`/app/laboratoire/ftp/${confirmation.numero_fiche}`}
+              className="fr-link fr-text--sm"
+            >
+              {confirmation.numero_fiche}
+            </Link>{' '}
+            ({statutLogistiqueLabels[confirmation.statut_logistique].toLowerCase()})
+          </p>
+        </div>
+      )}
+
       {resultatSaisi && (
         <ul className="fr-text--sm fr-mb-2w space-y-1">
           {pool.parasite_identifie && <li>Parasite identifié : {pool.parasite_identifie}</li>}
@@ -212,8 +245,16 @@ export function ResultatModalContent({
   const [commentaire, setCommentaire] = useState('');
   const [raison, setRaison] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Sur un non négatif, la modale reste ouverte pour guider l'envoi au LNR
+  const [ftpConfirmation, setFtpConfirmation] = useState<FtpConfirmationCreee | null>(null);
+  const [photos, setPhotos] = useState<Array<TrichineDocument>>([]);
+  const { isDownloading, onDownloadFtpPdf } = useDownloadFtpPdf('laboratoire');
 
   // Une fiche porte plusieurs pools : rien de ce qui a été saisi pour l'un ne doit rester pour le suivant
+  useEffect(() => {
+    setFtpConfirmation(null);
+    setPhotos([]);
+  }, [pool?.id]);
   useEffect(() => {
     setResultat('');
     setParasite('');
@@ -227,10 +268,99 @@ export function ResultatModalContent({
   const correction = mode === 'correction';
   const options = isLnr ? LNR_RESULTS : LVD_RESULTS;
   const parasiteRequis = resultat === TrichineResultatAnalyse.NON_NEGATIF;
+  const versLnr = resultat === TrichineResultatAnalyse.DOUTEUX;
   const reference = pool?.reference_pool ?? '';
+
+  if (ftpConfirmation) {
+    return (
+      <resultatModal.Component title={`Pool ${reference} transmis au LNR`}>
+        <Alert
+          severity="success"
+          small
+          className="fr-mb-3w"
+          description={`Résultat non négatif enregistré. La fiche de transmission de confirmation ${ftpConfirmation.numero_fiche} a été créée et adressée au laboratoire national de référence, qui en a été averti par email. L’émetteur du pool a été averti.`}
+        />
+        <h3 className="fr-text--sm fr-mb-1w font-bold">1. Envoyez le pool au LNR</h3>
+        <p className="fr-text--sm fr-mb-1w">Imprimez la fiche et joignez-la au colis.</p>
+        <div className="fr-mb-3w flex flex-wrap gap-2">
+          <Button
+            type="button"
+            iconId="fr-icon-printer-line"
+            disabled={isDownloading}
+            onClick={() => onDownloadFtpPdf(ftpConfirmation.id, ftpConfirmation.numero_fiche)}
+          >
+            Télécharger la fiche à joindre au colis
+          </Button>
+          <Button
+            priority="secondary"
+            linkProps={{
+              to: `/app/laboratoire/ftp/${ftpConfirmation.numero_fiche}`,
+              onClick: () => resultatModal.close(),
+            }}
+          >
+            Voir la fiche
+          </Button>
+        </div>
+        <h3 className="fr-text--sm fr-mb-1w font-bold">2. Ajoutez les photographies des larves</h3>
+        <p className="fr-text--sm fr-mb-1w">
+          Le LNR les consulte sur la fiche. Vous pourrez aussi les ajouter plus tard depuis la fiche.
+        </p>
+        <LarvePhotos
+          ftpId={ftpConfirmation.id}
+          numeroFiche={ftpConfirmation.numero_fiche}
+          documents={photos}
+          peutDeposer
+          onDone={(documents) => setPhotos((deposees) => [...deposees, ...documents])}
+        />
+      </resultatModal.Component>
+    );
+  }
+
+  const enregistrer = () => {
+    if (!pool || !resultat) return;
+    setIsSubmitting(true);
+    const payload = {
+      resultat_analyse: resultat,
+      parasite_identifie: parasiteRequis ? parasite.trim() : undefined,
+      date_debut_analyse: dateDebut || undefined,
+      date_fin_analyse: dateFin || undefined,
+      reference_labo: referenceLabo.trim() || undefined,
+      commentaire: commentaire.trim() || undefined,
+    };
+    // Seule une première saisie peut générer une FTP de confirmation vers le LNR
+    const request: Promise<{
+      ok: boolean;
+      data: { pool: TrichinePool; ftp_confirmation?: FtpConfirmationCreee | null } | null;
+      error: string;
+    }> = correction
+      ? corrigerResultatPool(pool.id, { ...payload, raison: raison.trim() })
+      : saisirResultatPool(pool.id, payload);
+    request
+      .then((response) => {
+        if (response.ok) {
+          onDone();
+          const ftpCreee = response.data?.ftp_confirmation ?? null;
+          if (ftpCreee) {
+            setFtpConfirmation(ftpCreee);
+            return;
+          }
+          toast.success(
+            correction
+              ? 'Résultat corrigé, l’émetteur a été notifié'
+              : 'Résultat enregistré, l’émetteur a été notifié'
+          );
+          resultatModal.close();
+        } else {
+          toast.error(response.error || 'Une erreur est survenue');
+        }
+      })
+      .catch(() => toast.error('Une erreur est survenue'))
+      .finally(() => setIsSubmitting(false));
+  };
 
   return (
     <resultatModal.Component
+      size="large"
       title={
         correction
           ? `Corriger le résultat du pool ${reference}`
@@ -238,6 +368,22 @@ export function ResultatModalContent({
             ? `Résultat de confirmation du pool ${reference}`
             : `Résultat du pool ${reference}`
       }
+      // Le bouton dans le pied de la modale reste visible quel que soit le contenu affiché
+      buttons={{
+        children: correction
+          ? 'Enregistrer la correction'
+          : versLnr
+            ? 'Enregistrer et transmettre au LNR'
+            : 'Enregistrer le résultat',
+        doClosesModal: false,
+        disabled:
+          !pool ||
+          !resultat ||
+          (parasiteRequis && !parasite.trim()) ||
+          (correction && !raison.trim()) ||
+          isSubmitting,
+        onClick: enregistrer,
+      }}
     >
       {correction && (
         <Alert
@@ -276,7 +422,7 @@ export function ResultatModalContent({
           }}
         />
       )}
-      <div className="flex flex-wrap gap-4">
+      <div className="flex flex-wrap gap-x-4">
         <Input
           label="Début d'analyse"
           nativeInputProps={{
@@ -293,31 +439,25 @@ export function ResultatModalContent({
             onChange: (event) => setDateFin(event.target.value),
           }}
         />
+        <Input
+          label="Référence interne laboratoire (optionnel)"
+          className="grow"
+          nativeInputProps={{
+            type: 'text',
+            value: referenceLabo,
+            onChange: (event) => setReferenceLabo(event.target.value),
+          }}
+        />
       </div>
-      <Input
-        label="Référence interne laboratoire (optionnel)"
-        nativeInputProps={{
-          type: 'text',
-          value: referenceLabo,
-          onChange: (event) => setReferenceLabo(event.target.value),
-        }}
-      />
       <Input
         label="Commentaire (optionnel)"
         textArea
         nativeTextAreaProps={{
+          rows: 2,
           value: commentaire,
           onChange: (event) => setCommentaire(event.target.value),
         }}
       />
-      {resultat === TrichineResultatAnalyse.DOUTEUX && (
-        <Alert
-          severity="warning"
-          small
-          className="fr-mb-2w"
-          description="Une FTP de confirmation sera générée automatiquement vers le LNR."
-        />
-      )}
       {correction && (
         <Input
           label="Raison de la correction (obligatoire)"
@@ -328,51 +468,22 @@ export function ResultatModalContent({
           }}
         />
       )}
-      <Button
-        type="button"
-        disabled={
-          !pool ||
-          !resultat ||
-          (parasiteRequis && !parasite.trim()) ||
-          (correction && !raison.trim()) ||
-          isSubmitting
-        }
-        onClick={() => {
-          if (!pool || !resultat) return;
-          setIsSubmitting(true);
-          const payload = {
-            resultat_analyse: resultat,
-            parasite_identifie: parasiteRequis ? parasite.trim() : undefined,
-            date_debut_analyse: dateDebut || undefined,
-            date_fin_analyse: dateFin || undefined,
-            reference_labo: referenceLabo.trim() || undefined,
-            commentaire: commentaire.trim() || undefined,
-          };
-          const request = correction
-            ? corrigerResultatPool(pool.id, { ...payload, raison: raison.trim() })
-            : saisirResultatPool(pool.id, payload);
-          request
-            .then((response) => {
-              if (response.ok) {
-                toast.success(
-                  correction
-                    ? 'Résultat corrigé, l’émetteur a été notifié'
-                    : resultat === TrichineResultatAnalyse.DOUTEUX
-                      ? 'Résultat enregistré — FTP de confirmation générée vers le LNR'
-                      : 'Résultat enregistré, l’émetteur a été notifié'
-                );
-                resultatModal.close();
-                onDone();
-              } else {
-                toast.error(response.error || 'Une erreur est survenue');
-              }
-            })
-            .catch(() => toast.error('Une erreur est survenue'))
-            .finally(() => setIsSubmitting(false));
-        }}
-      >
-        {correction ? 'Enregistrer la correction' : 'Enregistrer le résultat'}
-      </Button>
+      {versLnr && (
+        <Alert
+          severity="warning"
+          className="fr-mb-2w"
+          title="Ce pool va partir au LNR pour confirmation"
+          description={
+            <div className="fr-mb-0">
+              <div>
+                Une nouvelle fiche de transmission est créée, adressée au laboratoire national de référence
+                (LNR), qui est averti par email.
+              </div>
+              <div>L’émetteur du pool est averti du résultat non négatif.</div>
+            </div>
+          }
+        />
+      )}
     </resultatModal.Component>
   );
 }
