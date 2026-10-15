@@ -20,6 +20,11 @@ test.beforeEach(async () => {
   await resetDb('EXAMINATEUR_INITIAL');
 });
 
+// un /sync peut encore être en vol dans le page.route à la fermeture de la page
+test.afterEach(async ({ page }) => {
+  await page.unrouteAll({ behavior: 'ignoreErrors' });
+});
+
 async function creerFiche(page: Page) {
   await page.getByRole('button', { name: 'Nouvelle fiche' }).first().click();
   await expect(page.getByText('Date de la chasse')).toBeVisible();
