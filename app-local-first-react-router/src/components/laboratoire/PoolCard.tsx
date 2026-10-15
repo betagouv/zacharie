@@ -82,7 +82,6 @@ export default function PoolCard({
   onDocumentDepose: () => void;
 }) {
   const [compositionOuverte, setCompositionOuverte] = useState(false);
-  const { isDownloading, onDownloadFtpPdf } = useDownloadFtpPdf('laboratoire');
   const resultatSaisi = pool.resultat_analyse !== null;
   // Le LNR confirme les pools non négatifs : la saisie reste ouverte sur un DOUTEUX
   const peutSaisir =
@@ -171,19 +170,6 @@ export default function PoolCard({
             </Link>{' '}
             ({statutLogistiqueLabels[confirmation.statut_logistique].toLowerCase()})
           </p>
-          <p className="fr-text--sm fr-mb-1w">
-            Imprimez cette fiche et joignez-la au colis que vous envoyez au LNR.
-          </p>
-          <Button
-            type="button"
-            size="small"
-            priority="secondary"
-            iconId="fr-icon-printer-line"
-            disabled={isDownloading}
-            onClick={() => onDownloadFtpPdf(confirmation.id, confirmation.numero_fiche)}
-          >
-            Télécharger la fiche à joindre au colis
-          </Button>
         </div>
       )}
 
@@ -330,8 +316,51 @@ export function ResultatModalContent({
     );
   }
 
+  const enregistrer = () => {
+    if (!pool || !resultat) return;
+    setIsSubmitting(true);
+    const payload = {
+      resultat_analyse: resultat,
+      parasite_identifie: parasiteRequis ? parasite.trim() : undefined,
+      date_debut_analyse: dateDebut || undefined,
+      date_fin_analyse: dateFin || undefined,
+      reference_labo: referenceLabo.trim() || undefined,
+      commentaire: commentaire.trim() || undefined,
+    };
+    // Seule une première saisie peut générer une FTP de confirmation vers le LNR
+    const request: Promise<{
+      ok: boolean;
+      data: { pool: TrichinePool; ftp_confirmation?: FtpConfirmationCreee | null } | null;
+      error: string;
+    }> = correction
+      ? corrigerResultatPool(pool.id, { ...payload, raison: raison.trim() })
+      : saisirResultatPool(pool.id, payload);
+    request
+      .then((response) => {
+        if (response.ok) {
+          onDone();
+          const ftpCreee = response.data?.ftp_confirmation ?? null;
+          if (ftpCreee) {
+            setFtpConfirmation(ftpCreee);
+            return;
+          }
+          toast.success(
+            correction
+              ? 'Résultat corrigé, l’émetteur a été notifié'
+              : 'Résultat enregistré, l’émetteur a été notifié'
+          );
+          resultatModal.close();
+        } else {
+          toast.error(response.error || 'Une erreur est survenue');
+        }
+      })
+      .catch(() => toast.error('Une erreur est survenue'))
+      .finally(() => setIsSubmitting(false));
+  };
+
   return (
     <resultatModal.Component
+      size="large"
       title={
         correction
           ? `Corriger le résultat du pool ${reference}`
@@ -339,6 +368,22 @@ export function ResultatModalContent({
             ? `Résultat de confirmation du pool ${reference}`
             : `Résultat du pool ${reference}`
       }
+      // Le bouton dans le pied de la modale reste visible quel que soit le contenu affiché
+      buttons={{
+        children: correction
+          ? 'Enregistrer la correction'
+          : versLnr
+            ? 'Enregistrer et transmettre au LNR'
+            : 'Enregistrer le résultat',
+        doClosesModal: false,
+        disabled:
+          !pool ||
+          !resultat ||
+          (parasiteRequis && !parasite.trim()) ||
+          (correction && !raison.trim()) ||
+          isSubmitting,
+        onClick: enregistrer,
+      }}
     >
       {correction && (
         <Alert
@@ -377,7 +422,7 @@ export function ResultatModalContent({
           }}
         />
       )}
-      <div className="flex flex-wrap gap-4">
+      <div className="flex flex-wrap gap-x-4">
         <Input
           label="Début d'analyse"
           nativeInputProps={{
@@ -394,19 +439,21 @@ export function ResultatModalContent({
             onChange: (event) => setDateFin(event.target.value),
           }}
         />
+        <Input
+          label="Référence interne laboratoire (optionnel)"
+          className="grow"
+          nativeInputProps={{
+            type: 'text',
+            value: referenceLabo,
+            onChange: (event) => setReferenceLabo(event.target.value),
+          }}
+        />
       </div>
-      <Input
-        label="Référence interne laboratoire (optionnel)"
-        nativeInputProps={{
-          type: 'text',
-          value: referenceLabo,
-          onChange: (event) => setReferenceLabo(event.target.value),
-        }}
-      />
       <Input
         label="Commentaire (optionnel)"
         textArea
         nativeTextAreaProps={{
+          rows: 2,
           value: commentaire,
           onChange: (event) => setCommentaire(event.target.value),
         }}
@@ -427,74 +474,16 @@ export function ResultatModalContent({
           className="fr-mb-2w"
           title="Ce pool va partir au LNR pour confirmation"
           description={
-            <ol className="fr-mb-0">
-              <li>
+            <div className="fr-mb-0">
+              <div>
                 Une nouvelle fiche de transmission est créée, adressée au laboratoire national de référence
                 (LNR), qui est averti par email.
-              </li>
-              <li>Vous devez imprimer cette fiche et l’envoyer au LNR avec le pool.</li>
-              <li>L’émetteur du pool est averti du résultat non négatif.</li>
-            </ol>
+              </div>
+              <div>L’émetteur du pool est averti du résultat non négatif.</div>
+            </div>
           }
         />
       )}
-      <Button
-        type="button"
-        disabled={
-          !pool ||
-          !resultat ||
-          (parasiteRequis && !parasite.trim()) ||
-          (correction && !raison.trim()) ||
-          isSubmitting
-        }
-        onClick={() => {
-          if (!pool || !resultat) return;
-          setIsSubmitting(true);
-          const payload = {
-            resultat_analyse: resultat,
-            parasite_identifie: parasiteRequis ? parasite.trim() : undefined,
-            date_debut_analyse: dateDebut || undefined,
-            date_fin_analyse: dateFin || undefined,
-            reference_labo: referenceLabo.trim() || undefined,
-            commentaire: commentaire.trim() || undefined,
-          };
-          // Seule une première saisie peut générer une FTP de confirmation vers le LNR
-          const request: Promise<{
-            ok: boolean;
-            data: { pool: TrichinePool; ftp_confirmation?: FtpConfirmationCreee | null } | null;
-            error: string;
-          }> = correction
-            ? corrigerResultatPool(pool.id, { ...payload, raison: raison.trim() })
-            : saisirResultatPool(pool.id, payload);
-          request
-            .then((response) => {
-              if (response.ok) {
-                onDone();
-                const ftpCreee = response.data?.ftp_confirmation ?? null;
-                if (ftpCreee) {
-                  setFtpConfirmation(ftpCreee);
-                  return;
-                }
-                toast.success(
-                  correction
-                    ? 'Résultat corrigé, l’émetteur a été notifié'
-                    : 'Résultat enregistré, l’émetteur a été notifié'
-                );
-                resultatModal.close();
-              } else {
-                toast.error(response.error || 'Une erreur est survenue');
-              }
-            })
-            .catch(() => toast.error('Une erreur est survenue'))
-            .finally(() => setIsSubmitting(false));
-        }}
-      >
-        {correction
-          ? 'Enregistrer la correction'
-          : versLnr
-            ? 'Enregistrer et transmettre au LNR'
-            : 'Enregistrer le résultat'}
-      </Button>
     </resultatModal.Component>
   );
 }

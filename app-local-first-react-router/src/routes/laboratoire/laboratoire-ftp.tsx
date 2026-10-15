@@ -199,20 +199,9 @@ export default function LaboratoireFTP() {
       {envoyee && (
         <TrichineCard
           titre="Envoi au LNR"
-          hint={`Fiche générée automatiquement après votre résultat non négatif. ${
-            ftp.DestinataireEntity.nom_d_usage || ftp.DestinataireEntity.raison_sociale
-          } a été averti par email et saisira le résultat de confirmation.`}
+          hint={`Fiche générée automatiquement après votre résultat non négatif. ${ftp.DestinataireEntity.nom_d_usage || ftp.DestinataireEntity.raison_sociale
+            } a été averti par email et saisira le résultat de confirmation.`}
         >
-          <p className="fr-text--sm fr-mb-1w">Imprimez cette fiche et joignez-la au colis envoyé au LNR.</p>
-          <Button
-            type="button"
-            className="fr-mb-3w"
-            iconId="fr-icon-printer-line"
-            disabled={isDownloading}
-            onClick={() => onDownloadFtpPdf(ftp.id, ftp.numero_fiche)}
-          >
-            Télécharger la fiche à joindre au colis
-          </Button>
           <LarvePhotos
             ftpId={ftp.id}
             numeroFiche={ftp.numero_fiche}
