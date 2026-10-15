@@ -13,6 +13,8 @@ import {
   StatutBadge,
 } from '@app/components/laboratoire/cellules';
 import { getLaboEchantillons, type LaboEchantillonRegistre } from '@app/services/laboratoire';
+import ExportButtons from '@app/components/laboratoire/ExportButtons';
+import { echantillonToExportRow } from '@app/utils/export-trichine';
 import {
   filterTrichineRows,
   sitePrelevementLabels,
@@ -40,6 +42,7 @@ export default function LaboratoireEchantillons() {
   const [statut, setStatut] = useListParam('statut', '');
   const [sortBy, setSortBy] = useState<keyof LaboEchantillonRegistre>('date_prelevement');
   const [sortOrder, setSortOrder] = useState<TrichineSortOrder>('DESC');
+  const [selectedIds, setSelectedIds] = useState<Array<string>>([]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -90,6 +93,14 @@ export default function LaboratoireEchantillons() {
         { value: compteurs.carcasses, label: 'Carcasses concernées' },
         { value: compteurs.sansResultat, label: 'Sans résultat' },
       ]}
+      actions={
+        <ExportButtons
+          nom="echantillons"
+          rows={rows}
+          selectedIds={selectedIds}
+          toExportRow={echantillonToExportRow}
+        />
+      }
       toolbar={
         <TrichineListToolbar
           query={query}
@@ -118,6 +129,9 @@ export default function LaboratoireEchantillons() {
           <TableFilterable
             data={rows}
             rowKey="id"
+            withCheckbox
+            checked={selectedIds}
+            onCheck={setSelectedIds}
             onRowClick={ouvrirPool}
             noData={echantillons.length ? 'Aucun échantillon ne correspond' : 'Aucun échantillon reçu'}
             renderCellSmallDevices={(echantillon) => (

@@ -11,6 +11,8 @@ import TrichineListPage, {
 } from '@app/components/trichine/TrichineListPage';
 import { useListParam } from '@app/utils/trichine-list-params';
 import { getLaboFTPs, type LaboFTPListItem } from '@app/services/laboratoire';
+import ExportButtons from '@app/components/laboratoire/ExportButtons';
+import { ftpToExportRow } from '@app/utils/export-trichine';
 import {
   filterTrichineRows,
   filtreLaboFTP,
@@ -107,6 +109,7 @@ export default function LaboratoireFTPs() {
   const [vue, setVue] = useListParam('vue', 'tous');
   const [sortBy, setSortBy] = useState<keyof LaboFTPListItem>('date_envoi');
   const [sortOrder, setSortOrder] = useState<TrichineSortOrder>('DESC');
+  const [selectedIds, setSelectedIds] = useState<Array<string>>([]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -204,6 +207,14 @@ export default function LaboratoireFTPs() {
         { value: compteurs.cloturees, label: 'Clôturées' },
         { value: compteurs.envoyees, label: 'Envoyées au LNR' },
       ]}
+      actions={
+        <ExportButtons
+          nom="ftps"
+          rows={rows}
+          selectedIds={selectedIds}
+          toExportRow={ftpToExportRow}
+        />
+      }
       toolbar={
         <TrichineListToolbar
           query={query}
@@ -225,6 +236,9 @@ export default function LaboratoireFTPs() {
         <TableFilterable
           data={rows}
           rowKey="id"
+          withCheckbox
+          checked={selectedIds}
+          onCheck={setSelectedIds}
           onRowClick={ouvrir}
           renderCellSmallDevices={renderMobileCard}
           noData={

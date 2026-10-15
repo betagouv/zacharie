@@ -75,6 +75,12 @@ Le rôle est porté par une dimension, **jamais par le nom de l'événement** : 
 | `ccg / creer`                        | `numero-existant`, `nouvelle`                                                                                                                                                                                    | —               | chambre froide ajoutée depuis la fiche                                                            |
 | `partenaire / creer`                 | —                                                                                                                                                                                                                | —               | destinataire ajouté depuis la fiche                                                               |
 
+### Laboratoire (trichine)
+
+| Catégorie / action       | Noms                                                                                        | Valeur                 | Déclenché quand                                                            |
+| ------------------------ | ------------------------------------------------------------------------------------------- | ---------------------- | -------------------------------------------------------------------------- |
+| `laboratoire / exporter` | `pools-csv`, `pools-json`, `echantillons-csv`, `echantillons-json`, `ftps-csv`, `ftps-json` | nb de lignes exportées | export d'un registre (lignes cochées, sinon lignes affichées) pour le LIMS |
+
 ### Clics annotés (`data-matomo`)
 
 | Id                                    | Où                             |
