@@ -1,0 +1,14 @@
+diff --git a/node_modules/react-dsfr-chart/dist/core/arc.js b/node_modules/react-dsfr-chart/dist/core/arc.js
+index db03a97..7c30774 100644
+--- a/node_modules/react-dsfr-chart/dist/core/arc.js
++++ b/node_modules/react-dsfr-chart/dist/core/arc.js
+@@ -52,7 +52,8 @@ export function arcPath({ cx, cy, innerRadius, outerRadius }, { startAngle, endA
+     if (sweep <= 0)
+         return '';
+     // A single SVG arc command cannot span a full turn: split it in two.
+-    if (sweep >= TAU) {
++    // Rounding can leave a full turn a hair under TAU: compare with a tolerance.
++    if (sweep >= TAU - 1e-9) {
+         const half = startAngle + Math.PI;
+         const outer = `M ${point(cx, cy, outerRadius, startAngle)} A ${outerRadius} ${outerRadius} 0 0 1 ${point(cx, cy, outerRadius, half)} A ${outerRadius} ${outerRadius} 0 0 1 ${point(cx, cy, outerRadius, startAngle)} Z`;
+         if (innerRadius <= 0)
