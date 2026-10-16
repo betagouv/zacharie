@@ -20,6 +20,12 @@ test.beforeEach(async () => {
   await resetDb('EXAMINATEUR_INITIAL');
 });
 
+// un /sync peut encore être en vol dans le page.route à la fin du test : on ignore ses erreurs une fois
+// le test terminé
+test.afterEach(async ({ page }) => {
+  await page.unrouteAll({ behavior: 'ignoreErrors' });
+});
+
 async function creerFiche(page: Page) {
   await page.getByRole('button', { name: 'Nouvelle fiche' }).first().click();
   await expect(page.getByText('Date de la chasse')).toBeVisible();
@@ -42,21 +48,15 @@ async function refuserLaPremiereFicheEnvoyee(page: Page, reason: string) {
   let feiRefusee: string | null = null;
   let actif = true;
   await page.route('**/sync', async (route) => {
-    try {
-      const response = await route.fetch();
-      const payload = route.request().postDataJSON() as { feis?: Array<{ numero: string }> } | null;
-      const json = await response.json();
-      feiRefusee ??= payload?.feis?.[0]?.numero ?? null;
-      const feiEnvoyee = payload?.feis?.some((fei) => fei.numero === feiRefusee);
-      if (actif && feiEnvoyee && json.data) {
-        json.data.rejected = [...(json.data.rejected ?? []), { kind: 'fei', id: feiRefusee, reason }];
-      }
-      await route.fulfill({ response, json });
-    } catch (error) {
-      // l'app relance des /sync en continu : une requête peut encore être en vol quand le test se
-      // termine et ferme la page
-      if (!page.isClosed()) throw error;
+    const response = await route.fetch();
+    const payload = route.request().postDataJSON() as { feis?: Array<{ numero: string }> } | null;
+    const json = await response.json();
+    feiRefusee ??= payload?.feis?.[0]?.numero ?? null;
+    const feiEnvoyee = payload?.feis?.some((fei) => fei.numero === feiRefusee);
+    if (actif && feiEnvoyee && json.data) {
+      json.data.rejected = [...(json.data.rejected ?? []), { kind: 'fei', id: feiRefusee, reason }];
     }
+    await route.fulfill({ response, json });
   });
   return {
     stop: () => {
