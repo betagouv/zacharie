@@ -202,10 +202,10 @@ describe('syncFei — auto-attribution des colonnes de rattachement', () => {
       await createSyncScope(attaquant)
     );
 
-    // Le reste de la fiche est bien écrit, seules les colonnes de rattachement sont ignorées — dont
-    // le name cache, qui est la valeur affichée partout dans l'app.
+    // La fiche n'est pas rejetée, les colonnes de rattachement sont ignorées — dont le name cache,
+    // qui est la valeur affichée partout dans l'app.
     const updateArgs = vi.mocked(prisma.fei.update).mock.calls[0][0];
-    expect(updateArgs.data).toMatchObject({ commune_mise_a_mort: 'Villette' });
+    expect(updateArgs.data).not.toHaveProperty('commune_mise_a_mort');
     expect(updateArgs.data).not.toHaveProperty('premier_detenteur_entity_id');
     expect(updateArgs.data).not.toHaveProperty('premier_detenteur_name_cache');
   });
@@ -250,7 +250,6 @@ describe('syncFei — auto-attribution des colonnes de rattachement', () => {
     );
 
     const updateArgs = vi.mocked(prisma.fei.update).mock.calls[0][0];
-    expect(updateArgs.data).toMatchObject({ commune_mise_a_mort: 'Villette' });
     expect(updateArgs.data).not.toHaveProperty('examinateur_initial_approbation_mise_sur_le_marche');
     expect(updateArgs.data).not.toHaveProperty('examinateur_initial_date_approbation_mise_sur_le_marche');
   });

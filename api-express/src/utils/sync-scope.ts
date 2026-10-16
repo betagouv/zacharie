@@ -1,5 +1,5 @@
 import prisma from '~/prisma';
-import type { Fei, User } from '@prisma/client';
+import type { Fei, Prisma, User } from '@prisma/client';
 import { getCarcasseAccessWhere } from '~/utils/carcasse-access';
 import { getUserCarcasseEntityIds } from '~/utils/user-entities';
 
@@ -7,7 +7,11 @@ import { getUserCarcasseEntityIds } from '~/utils/user-entities';
 // lit sur les carcasses.
 type FeiOwnershipFields = Pick<
   Fei,
-  'numero' | 'created_by_user_id' | 'examinateur_initial_user_id' | 'premier_detenteur_user_id'
+  | 'numero'
+  | 'created_by_user_id'
+  | 'examinateur_initial_user_id'
+  | 'premier_detenteur_user_id'
+  | 'premier_detenteur_entity_id'
 >;
 
 // Périmètre d'écriture d'une requête /sync, résolu une fois et passé à chaque fonction de synchro.
@@ -15,6 +19,8 @@ type FeiOwnershipFields = Pick<
 // d'accès ne changent pas d'une carcasse à l'autre.
 export type SyncScope = {
   entityIds: Array<string>;
+  // WHERE des carcasses que l'utilisateur peut lire, donc de sa branche de transmission. `null` : aucune.
+  carcasseAccessWhere: Prisma.CarcasseWhereInput | null;
   // Résout en une requête l'accès à tout un lot. Facultatif — `canWriteCarcasse` sait résoudre seul,
   // c'est juste ce qui évite une requête par carcasse dans les boucles.
   prefetch: (zacharieCarcasseIds: Array<string>) => Promise<void>;
@@ -28,6 +34,8 @@ export type SyncScope = {
   // écritures, les carcasses que l'utilisateur vient lui-même de faire sortir de son périmètre.
   outOfScope: (zacharieCarcasseIds: Array<string>) => Promise<Array<string>>;
   isFeiOwner: (fei: FeiOwnershipFields) => boolean;
+  // Premier détenteur de la fiche : en son nom propre, ou membre de l'entité (asso) désignée.
+  isPremierDetenteur: (fei: FeiOwnershipFields) => boolean;
   canWriteFei: (fei: FeiOwnershipFields) => Promise<boolean>;
 };
 
@@ -63,8 +71,14 @@ export async function createSyncScope(user: User): Promise<SyncScope> {
     return fei.premier_detenteur_user_id === user.id;
   }
 
+  function isPremierDetenteur(fei: FeiOwnershipFields): boolean {
+    if (fei.premier_detenteur_user_id === user.id) return true;
+    return !!fei.premier_detenteur_entity_id && entityIds.includes(fei.premier_detenteur_entity_id);
+  }
+
   return {
     entityIds,
+    carcasseAccessWhere: accessWhere,
     prefetch: resolve,
     grant(zacharieCarcasseId) {
       granted.add(zacharieCarcasseId);
@@ -86,6 +100,7 @@ export async function createSyncScope(user: User): Promise<SyncScope> {
       return ids.filter((id) => !accessibleIds.has(id));
     },
     isFeiOwner,
+    isPremierDetenteur,
     // Une fiche est modifiable par un rattaché, ou par un détenteur aval tant qu'il en détient au
     // moins une carcasse — même règle que `/carcasse/refusees/:fei_numero`.
     async canWriteFei(fei) {

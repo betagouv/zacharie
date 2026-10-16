@@ -64,6 +64,7 @@ vi.mock('./src/prisma', () => ({
       delete: vi.fn(),
     },
     carcasseModificationRequest: {
+      count: vi.fn().mockResolvedValue(0),
       findMany: vi.fn().mockResolvedValue([]),
       findUnique: vi.fn(),
       create: vi.fn(),

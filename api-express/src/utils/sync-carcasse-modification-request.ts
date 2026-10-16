@@ -60,7 +60,7 @@ export async function syncCarcasseModifRequest(
   if (!existing) {
     const carcasse = await prisma.carcasse.findUnique({
       where: { zacharie_carcasse_id: zacharieCarcasseId },
-      select: { fei_numero: true },
+      select: { fei_numero: true, numero_bracelet: true, created_by_user_id: true },
     });
     if (!carcasse) throw new Error('Carcasse introuvable');
     // L'identité du demandeur est décidée par le serveur : on demande toujours en son nom propre,
@@ -69,14 +69,32 @@ export async function syncCarcasseModifRequest(
       // Cette ligne ne devrait jamais arriver, puisqu'elle est interdite par le périmètre de l'utilisateur.
       throw new SyncRejectedError('Vous ne pouvez pas agir au nom de cette entité');
     }
+    const isRename = body.type === CarcasseModificationRequestType.BRACELET_RENAME;
+    // Le numéro d'origine est lu sur la carcasse : c'est lui que l'annulation rétablit. Sauf pour
+    // l'auteur de la carcasse, qui peut déjà avoir écrit le nouveau numéro sur la carcasse dans la
+    // même synchro (il en saisit l'identité) : son numéro d'origine vient alors de sa demande.
+    const numeroBraceletBefore =
+      carcasse.created_by_user_id === user.id
+        ? (body.numero_bracelet_before ?? carcasse.numero_bracelet)
+        : carcasse.numero_bracelet;
+    // Une demande annulée hors ligne avant sa première synchro est enregistrée annulée : elle
+    // n'applique rien et ne notifie personne.
+    const isCancelled = !!body.deleted_at;
     const created = await prisma.carcasseModificationRequest.create({
       data: {
-        ...body,
+        id: body.id,
+        type: body.type,
+        zacharie_carcasse_id: zacharieCarcasseId,
         fei_numero: carcasse.fei_numero,
         requested_by_user_id: user.id,
+        requested_by_entity_id: body.requested_by_entity_id,
+        requested_at: body.requested_at ?? undefined,
+        comment_intermediaire: body.comment_intermediaire ?? null,
+        numero_bracelet_before: isRename ? numeroBraceletBefore : null,
+        numero_bracelet_after: isRename ? (body.numero_bracelet_after ?? null) : null,
         status: CarcasseModificationRequestStatus.PENDING,
-        reviewed_by_user_id: null,
-        reviewed_at: null,
+        created_at: body.created_at ?? undefined,
+        deleted_at: isCancelled ? body.deleted_at : null,
         is_synced: true,
       },
     });
@@ -85,7 +103,9 @@ export async function syncCarcasseModifRequest(
     // Le renommage est appliqué immédiatement : c'est l'intermédiaire qui lit le numéro physique sur
     // la carcasse, il fait foi. L'examinateur est notifié pour information.
     const renameNow =
-      created.type === CarcasseModificationRequestType.BRACELET_RENAME && !!created.numero_bracelet_after;
+      !isCancelled &&
+      created.type === CarcasseModificationRequestType.BRACELET_RENAME &&
+      !!created.numero_bracelet_after;
     await prisma.carcasse.update({
       where: { zacharie_carcasse_id: created.zacharie_carcasse_id },
       data: {
@@ -125,25 +145,12 @@ export async function syncCarcasseModifRequest(
     throw new SyncRejectedError("Seul l'auteur de la demande peut l'annuler");
   }
 
-  // L'identité de la demande n'est posée qu'à la création, et l'issue de la revue appartient au
-  // serveur : une synchro ultérieure ne peut réécrire ni le demandeur, ni la carcasse, ni le statut.
-  const {
-    zacharie_carcasse_id,
-    fei_numero,
-    type,
-    requested_by_user_id,
-    requested_by_entity_id,
-    status,
-    reviewed_by_user_id,
-    reviewed_at,
-    rejection_reason,
-    ...update
-  } = body;
-
+  // Une demande ne change ensuite que de deux façons : son auteur l'annule, ou l'examinateur la
+  // tranche. Le reste est posé à la création et ne bouge plus.
   const saved = await prisma.carcasseModificationRequest.update({
     where: { id: body.id },
     data: {
-      ...update,
+      ...(justCancelled ? { deleted_at: incomingDeletedAt } : {}),
       // Seule une transition depuis PENDING enregistre une décision : un statut déjà résolu ne peut
       // pas être réécrit, ni renvoyé à PENDING.
       ...(willTransition
@@ -153,7 +160,7 @@ export async function syncCarcasseModifRequest(
             reviewed_at: new Date(),
             rejection_reason:
               incomingStatus === CarcasseModificationRequestStatus.REJECTED
-                ? (rejection_reason ?? null)
+                ? (body.rejection_reason ?? null)
                 : null,
           }
         : {}),
@@ -218,7 +225,7 @@ export async function runCarcasseModifRequestSideEffects(
   const { saved, isNew, transitionedTo, justCancelled } = result;
 
   if (isNew) {
-    await notifyExaminateur(saved);
+    if (!saved.deleted_at) await notifyExaminateur(saved);
     return;
   }
 

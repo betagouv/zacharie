@@ -2,6 +2,9 @@ import prisma from '~/prisma';
 
 import {
   Carcasse,
+  CarcasseModificationRequestStatus,
+  CarcasseModificationRequestType,
+  CarcasseStatus,
   EntityRelationType,
   Fei,
   FeiOwnerRole,
@@ -10,8 +13,10 @@ import {
   User,
   UserRoles,
 } from '@prisma/client';
+import dayjs from 'dayjs';
 import { TRICHINE_FEATURE_ENABLED } from '~/config';
 import type { SyncScope } from '~/utils/sync-scope';
+import { isCarcassePriseEnChargeEnAval } from '~/utils/carcasse-prise-en-charge';
 import { SyncRejectedError } from '~/utils/sync-errors';
 import { carcasseHasResultatTrichineNegatif, TRICHINE_ESPECE_CONCERNEE } from '~/utils/trichine';
 import { isStaleWrite, nextVersion } from '~/utils/sync-version';
@@ -101,6 +106,7 @@ export async function syncCarcasse(
     throw new SyncRejectedError("Vous n'avez pas accès à cette fiche");
   }
 
+  const isJustCreated = !existingCarcasse;
   if (!existingCarcasse) {
     const numeroBracelet = body.numero_bracelet;
     if (!numeroBracelet) {
@@ -143,7 +149,33 @@ export async function syncCarcasse(
   // simplement de la fiche.
   const canWriteOwnership = scope.isFeiOwner(existingFei);
 
+  // Chaque groupe de champs appartient à un rôle. Pour un autre utilisateur, la valeur du corps est
+  // ignorée au lieu de rejeter la carcasse : le client renvoie toujours la carcasse entière, avec les
+  // champs des autres rôles tels qu'il les a reçus.
+  // L'examen (anomalies, signature) n'appartient qu'à l'examinateur qui l'a fait.
+  const isExaminateur = existingFei.examinateur_initial_user_id === user.id;
+  // Stockage, transport et consommation personnelle sont les choix du premier détenteur.
+  const isPremierDetenteur = scope.isPremierDetenteur(existingFei);
+  // Même règle que `canWriteApprobationExaminateur` dans `sync-fei` : la carcasse en porte une copie.
+  const canWriteApprobationExaminateur = canWriteOwnership || isPremierDetenteur;
+  // Un intermédiaire peut ajouter une carcasse manquante (demande NEW_CARCASSE) : il en saisit
+  // l'identité (numéro, espèce, nombre), pas l'examen.
+  const isCreator = existingCarcasse.created_by_user_id === user.id;
+  const canWriteIdentity = isExaminateur || isCreator;
+  const isSvi = user.roles.includes(UserRoles.SVI);
+
   if (body.deleted_at) {
+    // L'examinateur ou le premier détenteur suppriment une carcasse tant qu'elle n'est pas prise en
+    // charge en aval. L'auteur d'une carcasse ajoutée en aval la supprime en annulant sa demande, tant
+    // que le SVI n'est pas passé dessus (même règle que l'annulation côté client). Au-delà, la
+    // suppression passe par le superadmin.
+    const canDelete =
+      isExaminateur || isPremierDetenteur
+        ? !isCarcassePriseEnChargeEnAval(existingCarcasse)
+        : isCreator && (await canCreatorCancelCarcasse(existingCarcasse, isJustCreated, user));
+    if (!canDelete) {
+      throw new SyncRejectedError('Vous ne pouvez pas supprimer cette carcasse');
+    }
     // existingCarcasse est garantie non-nulle ici (créée juste au-dessus si absente).
     const deletedCarcasse = await prisma.carcasse.update({
       where: {
@@ -162,44 +194,70 @@ export async function syncCarcasse(
     return { savedCarcasse: deletedCarcasse, existingCarcasse, isDeleted: true };
   }
 
+  // Pas de gel après l'inspection SVI : toute écriture est tracée (logs, `version_user_id`), donc une
+  // modification tardive se retrouve. On préfère pouvoir corriger que bloquer à tort.
   const nextCarcasse: Prisma.CarcasseUncheckedUpdateInput = {
     is_synced: true,
   };
 
-  if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.numero_bracelet)) {
+  // Les colonnes qui nomment l'auteur d'une action : l'auteur est toujours l'utilisateur courant, qui
+  // agit pour une entité dont il est membre. Une valeur déjà enregistrée est conservée telle quelle.
+  function actorUserId(field: keyof Carcasse): string | null | undefined {
+    const value = body[field as keyof typeof body] as string | null | undefined;
+    if (!value || value === existingCarcasse![field]) return value;
+    return user.id;
+  }
+  function isAllowedActorEntityId(field: keyof Carcasse): boolean {
+    const value = body[field as keyof typeof body] as string | null | undefined;
+    return !value || value === existingCarcasse![field] || scope.entityIds.includes(value);
+  }
+
+  if (canWriteIdentity && body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.numero_bracelet)) {
     nextCarcasse.numero_bracelet = body.numero_bracelet;
   }
-  if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.heure_evisceration)) {
+  if (canWriteIdentity && body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.heure_evisceration)) {
     nextCarcasse.heure_evisceration = body.heure_evisceration;
   }
-  if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.type)) {
+  if (canWriteIdentity && body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.type)) {
     nextCarcasse.type = body[Prisma.CarcasseScalarFieldEnum.type];
   }
-  if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.date_mise_a_mort)) {
+  if (canWriteIdentity && body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.date_mise_a_mort)) {
     nextCarcasse.date_mise_a_mort = body.date_mise_a_mort;
   }
-  if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.nombre_d_animaux)) {
+  if (canWriteIdentity && body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.nombre_d_animaux)) {
     nextCarcasse.nombre_d_animaux = Number(body[Prisma.CarcasseScalarFieldEnum.nombre_d_animaux]);
   }
-  if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.heure_mise_a_mort)) {
+  if (canWriteIdentity && body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.heure_mise_a_mort)) {
     nextCarcasse.heure_mise_a_mort = body[Prisma.CarcasseScalarFieldEnum.heure_mise_a_mort];
   }
-  if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.heure_mise_a_mort_premiere_carcasse_fei)) {
+  if (
+    canWriteIdentity &&
+    body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.heure_mise_a_mort_premiere_carcasse_fei)
+  ) {
     nextCarcasse.heure_mise_a_mort_premiere_carcasse_fei =
       body[Prisma.CarcasseScalarFieldEnum.heure_mise_a_mort_premiere_carcasse_fei];
   }
-  if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.consommateur_final_usage_domestique)) {
+  if (
+    isPremierDetenteur &&
+    body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.consommateur_final_usage_domestique)
+  ) {
     nextCarcasse.consommateur_final_usage_domestique =
       body[Prisma.CarcasseScalarFieldEnum.consommateur_final_usage_domestique];
   }
-  if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.heure_evisceration_derniere_carcasse_fei)) {
+  if (
+    canWriteIdentity &&
+    body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.heure_evisceration_derniere_carcasse_fei)
+  ) {
     nextCarcasse.heure_evisceration_derniere_carcasse_fei =
       body[Prisma.CarcasseScalarFieldEnum.heure_evisceration_derniere_carcasse_fei];
   }
-  if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.espece)) {
+  if (canWriteIdentity && body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.espece)) {
     nextCarcasse.espece = body[Prisma.CarcasseScalarFieldEnum.espece];
   }
-  if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.examinateur_carcasse_sans_anomalie)) {
+  if (
+    isExaminateur &&
+    body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.examinateur_carcasse_sans_anomalie)
+  ) {
     const nextValue = body[Prisma.CarcasseScalarFieldEnum.examinateur_carcasse_sans_anomalie];
     nextCarcasse.examinateur_carcasse_sans_anomalie = nextValue;
     if (nextValue === true) {
@@ -208,8 +266,10 @@ export async function syncCarcasse(
     }
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.examinateur_initial_offline)) {
-    nextCarcasse.examinateur_initial_offline =
-      body[Prisma.CarcasseScalarFieldEnum.examinateur_initial_offline];
+    // Même règle que la fiche (`sync-fei`) : seul l'examinateur l'écrit.
+    nextCarcasse.examinateur_initial_offline = isExaminateur
+      ? body[Prisma.CarcasseScalarFieldEnum.examinateur_initial_offline]
+      : existingFei.examinateur_initial_offline;
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.examinateur_initial_user_id)) {
     nextCarcasse.examinateur_initial_user_id = canWriteOwnership
@@ -217,12 +277,14 @@ export async function syncCarcasse(
       : existingFei.examinateur_initial_user_id;
   }
   if (
+    canWriteApprobationExaminateur &&
     body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.examinateur_initial_approbation_mise_sur_le_marche)
   ) {
     nextCarcasse.examinateur_initial_approbation_mise_sur_le_marche =
       body[Prisma.CarcasseScalarFieldEnum.examinateur_initial_approbation_mise_sur_le_marche];
   }
   if (
+    canWriteApprobationExaminateur &&
     body.hasOwnProperty(
       Prisma.CarcasseScalarFieldEnum.examinateur_initial_date_approbation_mise_sur_le_marche
     )
@@ -230,49 +292,111 @@ export async function syncCarcasse(
     nextCarcasse.examinateur_initial_date_approbation_mise_sur_le_marche =
       body[Prisma.CarcasseScalarFieldEnum.examinateur_initial_date_approbation_mise_sur_le_marche];
   }
-  if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.examinateur_anomalies_carcasse)) {
+  if (isExaminateur && body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.examinateur_anomalies_carcasse)) {
     const anomaliesCarcasses = (body.examinateur_anomalies_carcasse as string[]) || [];
     nextCarcasse.examinateur_anomalies_carcasse = anomaliesCarcasses.filter(Boolean);
   }
-  if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.examinateur_anomalies_abats)) {
+  if (isExaminateur && body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.examinateur_anomalies_abats)) {
     const anomaliesAbats = (body.examinateur_anomalies_abats as string[]) || [];
     nextCarcasse.examinateur_anomalies_abats = anomaliesAbats.filter(Boolean);
   }
-  if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.examinateur_commentaire)) {
+  if (isExaminateur && body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.examinateur_commentaire)) {
     nextCarcasse.examinateur_commentaire = body[Prisma.CarcasseScalarFieldEnum.examinateur_commentaire];
   }
-  if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.examinateur_signed_at)) {
+  if (isExaminateur && body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.examinateur_signed_at)) {
     nextCarcasse.examinateur_signed_at = body.examinateur_signed_at;
   }
-  if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_depot_entity_id)) {
+  // Un détenteur aval qui renvoie la carcasse au premier détenteur efface stockage et transport (il
+  // les choisira de nouveau) : tout le monde peut les effacer, seul le premier détenteur les remplit.
+  const canWritePremierDetenteurChoice = (value: unknown) => isPremierDetenteur || value == null;
+  if (
+    canWritePremierDetenteurChoice(body.premier_detenteur_depot_entity_id) &&
+    body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_depot_entity_id)
+  ) {
     nextCarcasse.premier_detenteur_depot_entity_id = body.premier_detenteur_depot_entity_id || null;
   }
-  if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_depot_entity_name_cache)) {
+  if (
+    canWritePremierDetenteurChoice(body.premier_detenteur_depot_entity_name_cache) &&
+    body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_depot_entity_name_cache)
+  ) {
     nextCarcasse.premier_detenteur_depot_entity_name_cache =
       body.premier_detenteur_depot_entity_name_cache || null;
   }
-  if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_depot_type)) {
+  if (
+    canWritePremierDetenteurChoice(body.premier_detenteur_depot_type) &&
+    body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_depot_type)
+  ) {
     nextCarcasse.premier_detenteur_depot_type = body.premier_detenteur_depot_type || null;
   }
-  if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_depot_ccg_at)) {
+  if (
+    canWritePremierDetenteurChoice(body.premier_detenteur_depot_ccg_at) &&
+    body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_depot_ccg_at)
+  ) {
     nextCarcasse.premier_detenteur_depot_ccg_at = body.premier_detenteur_depot_ccg_at || null;
   }
-  if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_transport_type)) {
+  if (
+    canWritePremierDetenteurChoice(body.premier_detenteur_transport_type) &&
+    body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_transport_type)
+  ) {
     nextCarcasse.premier_detenteur_transport_type = body.premier_detenteur_transport_type || null;
   }
-  if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_transport_date)) {
+  if (
+    canWritePremierDetenteurChoice(body.premier_detenteur_transport_date) &&
+    body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_transport_date)
+  ) {
     nextCarcasse.premier_detenteur_transport_date = body.premier_detenteur_transport_date || null;
   }
-  if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_prochain_detenteur_role_cache)) {
+  if (
+    isPremierDetenteur &&
+    body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_prochain_detenteur_role_cache)
+  ) {
     nextCarcasse.premier_detenteur_prochain_detenteur_role_cache =
       body.premier_detenteur_prochain_detenteur_role_cache || null;
   }
-  if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache)) {
+  if (
+    isPremierDetenteur &&
+    body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache)
+  ) {
     nextCarcasse.premier_detenteur_prochain_detenteur_id_cache =
       body.premier_detenteur_prochain_detenteur_id_cache || null;
   }
+  // Une carcasse ajoutée par un intermédiaire (demande NEW_CARCASSE) reprend les choix du premier
+  // détenteur d'une autre carcasse de la fiche dans le périmètre de l'intermédiaire : elle suit ainsi
+  // la même transmission que les carcasses de sa branche, et pas celle d'une autre branche. Une
+  // carcasse créée par l'examinateur n'a pas encore de choix du premier détenteur à reprendre.
+  if (isJustCreated && !canWriteOwnership && !isPremierDetenteur && scope.carcasseAccessWhere) {
+    const carcasseSoeur = await prisma.carcasse.findFirst({
+      where: {
+        AND: [
+          {
+            fei_numero,
+            deleted_at: null,
+            NOT: { zacharie_carcasse_id },
+            // une autre carcasse ajoutée dans le même lot n'a pas encore ces choix
+            premier_detenteur_prochain_detenteur_id_cache: { not: null },
+          },
+          scope.carcasseAccessWhere,
+        ],
+      },
+      orderBy: { created_at: 'asc' },
+      select: {
+        premier_detenteur_depot_entity_id: true,
+        premier_detenteur_depot_entity_name_cache: true,
+        premier_detenteur_depot_type: true,
+        premier_detenteur_depot_ccg_at: true,
+        premier_detenteur_transport_type: true,
+        premier_detenteur_transport_date: true,
+        premier_detenteur_prochain_detenteur_role_cache: true,
+        premier_detenteur_prochain_detenteur_id_cache: true,
+      },
+    });
+    if (carcasseSoeur) Object.assign(nextCarcasse, carcasseSoeur);
+  }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_offline)) {
-    nextCarcasse.premier_detenteur_offline = body[Prisma.CarcasseScalarFieldEnum.premier_detenteur_offline];
+    // Même règle que la fiche (`sync-fei`) : membre de l'asso désignée premier détenteur compris.
+    nextCarcasse.premier_detenteur_offline = canWriteApprobationExaminateur
+      ? body[Prisma.CarcasseScalarFieldEnum.premier_detenteur_offline]
+      : existingFei.premier_detenteur_offline;
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_user_id)) {
     nextCarcasse.premier_detenteur_user_id = canWriteOwnership
@@ -293,18 +417,26 @@ export async function syncCarcasse(
     nextCarcasse.intermediaire_closed_at = body[Prisma.CarcasseScalarFieldEnum.intermediaire_closed_at];
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.intermediaire_closed_by_user_id)) {
-    nextCarcasse.intermediaire_closed_by_user_id =
-      body[Prisma.CarcasseScalarFieldEnum.intermediaire_closed_by_user_id];
+    nextCarcasse.intermediaire_closed_by_user_id = actorUserId(
+      Prisma.CarcasseScalarFieldEnum.intermediaire_closed_by_user_id
+    );
   }
-  if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.intermediaire_closed_by_entity_id)) {
+  if (
+    isAllowedActorEntityId(Prisma.CarcasseScalarFieldEnum.intermediaire_closed_by_entity_id) &&
+    body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.intermediaire_closed_by_entity_id)
+  ) {
     nextCarcasse.intermediaire_closed_by_entity_id =
       body[Prisma.CarcasseScalarFieldEnum.intermediaire_closed_by_entity_id];
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.latest_intermediaire_user_id)) {
-    nextCarcasse.latest_intermediaire_user_id =
-      body[Prisma.CarcasseScalarFieldEnum.latest_intermediaire_user_id];
+    nextCarcasse.latest_intermediaire_user_id = actorUserId(
+      Prisma.CarcasseScalarFieldEnum.latest_intermediaire_user_id
+    );
   }
-  if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.latest_intermediaire_entity_id)) {
+  if (
+    isAllowedActorEntityId(Prisma.CarcasseScalarFieldEnum.latest_intermediaire_entity_id) &&
+    body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.latest_intermediaire_entity_id)
+  ) {
     nextCarcasse.latest_intermediaire_entity_id =
       body[Prisma.CarcasseScalarFieldEnum.latest_intermediaire_entity_id];
   }
@@ -345,10 +477,14 @@ export async function syncCarcasse(
     nextCarcasse.next_owner_sous_traite_at = body[Prisma.CarcasseScalarFieldEnum.next_owner_sous_traite_at];
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.next_owner_sous_traite_by_user_id)) {
-    nextCarcasse.next_owner_sous_traite_by_user_id =
-      body[Prisma.CarcasseScalarFieldEnum.next_owner_sous_traite_by_user_id];
+    nextCarcasse.next_owner_sous_traite_by_user_id = actorUserId(
+      Prisma.CarcasseScalarFieldEnum.next_owner_sous_traite_by_user_id
+    );
   }
-  if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.next_owner_sous_traite_by_entity_id)) {
+  if (
+    isAllowedActorEntityId(Prisma.CarcasseScalarFieldEnum.next_owner_sous_traite_by_entity_id) &&
+    body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.next_owner_sous_traite_by_entity_id)
+  ) {
     nextCarcasse.next_owner_sous_traite_by_entity_id =
       body[Prisma.CarcasseScalarFieldEnum.next_owner_sous_traite_by_entity_id];
   }
@@ -412,23 +548,25 @@ export async function syncCarcasse(
       body[Prisma.CarcasseScalarFieldEnum.intermediaire_carcasse_refus_motif];
   }
   // Le statut est recalculé par le client à chaque modification de carcasse, quel que soit le rôle
-  // (un refus ETG passe la carcasse en REFUSE) : il ne peut pas être réservé au rôle SVI.
-  if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_carcasse_status)) {
+  // (un refus ETG passe la carcasse en REFUSE) : il ne peut pas être réservé au rôle SVI. Mais hors
+  // SVI, il ne peut prendre que les statuts que le client calcule sans décision SVI.
+  const canWriteStatus = isSvi || canNonSviWriteStatus(existingCarcasse, body.svi_carcasse_status);
+  if (canWriteStatus && body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_carcasse_status)) {
     nextCarcasse.svi_carcasse_status = body[Prisma.CarcasseScalarFieldEnum.svi_carcasse_status];
   }
-  if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_carcasse_status_set_at)) {
+  if (canWriteStatus && body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_carcasse_status_set_at)) {
     nextCarcasse.svi_carcasse_status_set_at = body[Prisma.CarcasseScalarFieldEnum.svi_carcasse_status_set_at];
   }
 
   if (user.roles.includes(UserRoles.SVI)) {
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_user_id)) {
-      nextCarcasse.svi_user_id = body[Prisma.CarcasseScalarFieldEnum.svi_user_id];
+      nextCarcasse.svi_user_id = actorUserId(Prisma.CarcasseScalarFieldEnum.svi_user_id);
     }
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_closed_at)) {
       nextCarcasse.svi_closed_at = body[Prisma.CarcasseScalarFieldEnum.svi_closed_at];
     }
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_closed_by_user_id)) {
-      nextCarcasse.svi_closed_by_user_id = body[Prisma.CarcasseScalarFieldEnum.svi_closed_by_user_id];
+      nextCarcasse.svi_closed_by_user_id = actorUserId(Prisma.CarcasseScalarFieldEnum.svi_closed_by_user_id);
     }
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_carcasse_commentaire)) {
       nextCarcasse.svi_carcasse_commentaire = body[Prisma.CarcasseScalarFieldEnum.svi_carcasse_commentaire];
@@ -441,7 +579,7 @@ export async function syncCarcasse(
         body[Prisma.CarcasseScalarFieldEnum.svi_ipm1_presentee_inspection];
     }
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_ipm1_user_id)) {
-      nextCarcasse.svi_ipm1_user_id = body[Prisma.CarcasseScalarFieldEnum.svi_ipm1_user_id];
+      nextCarcasse.svi_ipm1_user_id = actorUserId(Prisma.CarcasseScalarFieldEnum.svi_ipm1_user_id);
     }
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_ipm1_user_name_cache)) {
       nextCarcasse.svi_ipm1_user_name_cache = body[Prisma.CarcasseScalarFieldEnum.svi_ipm1_user_name_cache];
@@ -500,7 +638,7 @@ export async function syncCarcasse(
         body[Prisma.CarcasseScalarFieldEnum.svi_ipm2_presentee_inspection];
     }
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_ipm2_user_id)) {
-      nextCarcasse.svi_ipm2_user_id = body[Prisma.CarcasseScalarFieldEnum.svi_ipm2_user_id];
+      nextCarcasse.svi_ipm2_user_id = actorUserId(Prisma.CarcasseScalarFieldEnum.svi_ipm2_user_id);
     }
     if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_ipm2_user_name_cache)) {
       nextCarcasse.svi_ipm2_user_name_cache = body[Prisma.CarcasseScalarFieldEnum.svi_ipm2_user_name_cache];
@@ -583,4 +721,60 @@ export async function syncCarcasse(
   });
 
   return { savedCarcasse: updatedCarcasse, existingCarcasse, isDeleted: false };
+}
+
+// L'auteur d'une carcasse ajoutée en aval l'annule avec sa demande NEW_CARCASSE encore en attente
+// (les carcasses sont synchronisées avant les demandes : l'annulation de la demande arrive après).
+// Une carcasse créée et annulée avant sa première synchro n'a pas encore de demande côté serveur.
+async function canCreatorCancelCarcasse(carcasse: Carcasse, isJustCreated: boolean, user: User) {
+  if (
+    carcasse.svi_ipm1_signed_at ||
+    carcasse.svi_ipm2_signed_at ||
+    carcasse.svi_closed_at ||
+    carcasse.svi_automatic_closed_at
+  ) {
+    return false;
+  }
+  if (isJustCreated) return true;
+  const pendingRequests = await prisma.carcasseModificationRequest.count({
+    where: {
+      zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
+      type: CarcasseModificationRequestType.NEW_CARCASSE,
+      status: CarcasseModificationRequestStatus.PENDING,
+      requested_by_user_id: user.id,
+      deleted_at: null,
+    },
+  });
+  return pendingRequests > 0;
+}
+
+const NON_SVI_STATUSES: Array<CarcasseStatus> = [
+  CarcasseStatus.SANS_DECISION,
+  CarcasseStatus.MANQUANTE_ETG_COLLECTEUR,
+  CarcasseStatus.REFUS_ETG_COLLECTEUR,
+];
+
+// Statuts qu'un non-SVI peut écrire, d'après `updateCarcasseStatus` côté client.
+function canNonSviWriteStatus(existing: Carcasse, next: CarcasseStatus | null | undefined): boolean {
+  if (next === undefined || next === existing.svi_carcasse_status) return true;
+  const isSviInspected = !!existing.svi_ipm1_date || !!existing.svi_ipm2_date;
+  // Un manque ou un refus de l'intermédiaire passe avant une acceptation automatique : le client
+  // les calcule en priorité.
+  if (
+    existing.svi_carcasse_status === CarcasseStatus.ACCEPTE &&
+    !isSviInspected &&
+    (next === CarcasseStatus.MANQUANTE_ETG_COLLECTEUR || next === CarcasseStatus.REFUS_ETG_COLLECTEUR)
+  ) {
+    return true;
+  }
+  // Une décision du SVI ne peut être réécrite que par le SVI.
+  if (existing.svi_carcasse_status && !NON_SVI_STATUSES.includes(existing.svi_carcasse_status)) return false;
+  if (next && NON_SVI_STATUSES.includes(next)) return true;
+  // Acceptation automatique : 10 jours après l'assignation au SVI, sans inspection.
+  return (
+    next === CarcasseStatus.ACCEPTE &&
+    !isSviInspected &&
+    !!existing.svi_assigned_at &&
+    dayjs().diff(dayjs(existing.svi_assigned_at), 'day') >= 10
+  );
 }

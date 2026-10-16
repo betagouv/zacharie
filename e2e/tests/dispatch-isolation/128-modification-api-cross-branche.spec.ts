@@ -110,7 +110,11 @@ test("Écriture /sync sur une carcasse d'une autre branche → refusée et repor
   // 4. ETG 1 tente d'écrire sur la carcasse de la branche ETG 2
   const attaque = await sync(page, cookieEtg1, {
     carcasses: [
-      { fei_numero: feiId, zacharie_carcasse_id: carcasseAutreBranche, heure_evisceration: '23:59' },
+      {
+        fei_numero: feiId,
+        zacharie_carcasse_id: carcasseAutreBranche,
+        intermediaire_carcasse_refus_motif: 'motif-test',
+      },
     ],
   });
 
@@ -130,19 +134,25 @@ test("Écriture /sync sur une carcasse d'une autre branche → refusée et repor
   const relecture = await getCarcasses(page, await jwtCookie(page));
   const carcasseApres = relecture.find(
     (c: { zacharie_carcasse_id: string }) => c.zacharie_carcasse_id === carcasseAutreBranche
-  ) as { heure_evisceration?: string };
-  expect(carcasseApres.heure_evisceration).not.toBe('23:59');
+  ) as { intermediaire_carcasse_refus_motif?: string | null };
+  expect(carcasseApres.intermediaire_carcasse_refus_motif).not.toBe('motif-test');
 
   // 6. Contrôle anti-faux-refus : la même écriture, sur sa propre carcasse, passe
   await logoutAndConnect(page, 'etg-1@example.fr');
   const cookieEtg1Bis = await jwtCookie(page);
   const legitime = await sync(page, cookieEtg1Bis, {
-    carcasses: [{ fei_numero: feiId, zacharie_carcasse_id: carcasseSienne, heure_evisceration: '23:59' }],
+    carcasses: [
+      {
+        fei_numero: feiId,
+        zacharie_carcasse_id: carcasseSienne,
+        intermediaire_carcasse_refus_motif: 'motif-test',
+      },
+    ],
   });
 
   expect(legitime.body.data.rejected).toEqual([]);
   expect(legitime.body.data.carcasses).toHaveLength(1);
-  expect(legitime.body.data.carcasses[0].heure_evisceration).toBe('23:59');
+  expect(legitime.body.data.carcasses[0].intermediaire_carcasse_refus_motif).toBe('motif-test');
 
   // 7. Une erreur technique n'est PAS un refus : elle reste hors de `rejected` pour que le client
   // réessaie. Sans cette distinction, un aléa côté base ferait abandonner la saisie de l'utilisateur.

@@ -151,6 +151,64 @@ describe('syncFei — update', () => {
   });
 });
 
+describe('syncFei — champs réservés', () => {
+  test("les données de l'examen sont ignorées pour un autre que l'examinateur", async () => {
+    vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
+    vi.mocked(prisma.fei.update).mockResolvedValue(baseFei as any);
+
+    await syncFei(
+      'FEI-1',
+      {
+        numero: 'FEI-1',
+        date_mise_a_mort: '2020-01-01',
+        commune_mise_a_mort: 'Lyon',
+        heure_mise_a_mort_premiere_carcasse: '05:00',
+        heure_evisceration_derniere_carcasse: '06:00',
+        examinateur_initial_offline: true,
+      } as any,
+      otherChasseur,
+      fakeSyncScope({ isFeiOwner: () => false, isPremierDetenteur: () => false })
+    );
+
+    const updateCall = vi.mocked(prisma.fei.update).mock.calls[0][0];
+    expect(updateCall.data).not.toHaveProperty('date_mise_a_mort');
+    expect(updateCall.data).not.toHaveProperty('commune_mise_a_mort');
+    expect(updateCall.data).not.toHaveProperty('heure_mise_a_mort_premiere_carcasse');
+    expect(updateCall.data).not.toHaveProperty('heure_evisceration_derniere_carcasse');
+    expect(updateCall.data).not.toHaveProperty('examinateur_initial_offline');
+  });
+
+  test("la consommation personnelle n'est écrite que par le premier détenteur", async () => {
+    vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
+    vi.mocked(prisma.fei.update).mockResolvedValue(baseFei as any);
+
+    await syncFei(
+      'FEI-1',
+      { numero: 'FEI-1', consommateur_final_usage_domestique: '2026-01-01' } as any,
+      examinateurInitial,
+      fakeSyncScope({ isPremierDetenteur: () => false })
+    );
+
+    const updateCall = vi.mocked(prisma.fei.update).mock.calls[0][0];
+    expect(updateCall.data).not.toHaveProperty('consommateur_final_usage_domestique');
+  });
+
+  test("un membre de l'asso premier détenteur enregistre qu'il a validé hors ligne", async () => {
+    vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
+    vi.mocked(prisma.fei.update).mockResolvedValue(baseFei as any);
+
+    await syncFei(
+      'FEI-1',
+      { numero: 'FEI-1', premier_detenteur_offline: true } as any,
+      otherChasseur,
+      fakeSyncScope({ isFeiOwner: () => false, isPremierDetenteur: () => true })
+    );
+
+    const updateCall = vi.mocked(prisma.fei.update).mock.calls[0][0];
+    expect(updateCall.data.premier_detenteur_offline).toBe(true);
+  });
+});
+
 describe('syncFei — creation_context', () => {
   test("'zacharie' context bypasses apiKey lookup", async () => {
     vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
@@ -233,6 +291,21 @@ describe('syncFei — deletion', () => {
 
     await expect(
       syncFei('FEI-1', { numero: 'FEI-1', deleted_at: '2026-03-01T00:00:00Z' } as any, platformAdmin, scope)
+    ).rejects.toThrow('Vous ne pouvez pas supprimer cette fiche');
+    expect(prisma.fei.update).not.toHaveBeenCalled();
+  });
+
+  test('soft-delete après une prise en charge en aval → throws', async () => {
+    vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
+    vi.mocked(prisma.carcasse.count).mockResolvedValueOnce(1);
+
+    await expect(
+      syncFei(
+        'FEI-1',
+        { numero: 'FEI-1', deleted_at: '2026-03-01T00:00:00Z' } as any,
+        examinateurInitial,
+        scope
+      )
     ).rejects.toThrow('Vous ne pouvez pas supprimer cette fiche');
     expect(prisma.fei.update).not.toHaveBeenCalled();
   });
