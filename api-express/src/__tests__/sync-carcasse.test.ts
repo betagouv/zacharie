@@ -420,6 +420,20 @@ describe('syncCarcasse — champs réservés à un rôle', () => {
     return vi.mocked(prisma.carcasse.update).mock.calls[0][0].data;
   }
 
+  test("l'examen hors ligne de la carcasse suit la fiche pour un autre que l'examinateur", async () => {
+    vi.mocked(prisma.carcasse.update).mockResolvedValueOnce(carcasseDuChasseur);
+    await syncCarcasse(
+      'FEI-1',
+      'ZC-1',
+      { fei_numero: 'FEI-1', examinateur_initial_offline: !baseFei.examinateur_initial_offline } as any,
+      etgUser,
+      fakeSyncScope({ isFeiOwner: () => true }),
+      { existingFei: baseFei, existingCarcasse: carcasseDuChasseur }
+    );
+    const data = vi.mocked(prisma.carcasse.update).mock.calls[0][0].data;
+    expect(data.examinateur_initial_offline).toBe(baseFei.examinateur_initial_offline);
+  });
+
   test("un membre de l'asso premier détenteur enregistre qu'il a validé hors ligne", async () => {
     vi.mocked(prisma.carcasse.update).mockResolvedValueOnce(carcasseDuChasseur);
     await syncCarcasse(

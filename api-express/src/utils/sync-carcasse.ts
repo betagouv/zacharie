@@ -270,7 +270,8 @@ export async function syncCarcasse(
     }
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.examinateur_initial_offline)) {
-    nextCarcasse.examinateur_initial_offline = canWriteOwnership
+    // Même règle que la fiche (`sync-fei`) : seul l'examinateur l'écrit.
+    nextCarcasse.examinateur_initial_offline = isExaminateur
       ? body[Prisma.CarcasseScalarFieldEnum.examinateur_initial_offline]
       : existingFei.examinateur_initial_offline;
   }
