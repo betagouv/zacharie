@@ -579,6 +579,22 @@ describe('syncCarcasse — champs réservés à un rôle', () => {
     );
     expect(data.svi_carcasse_status).toBe(CarcasseStatus.ACCEPTE);
   });
+
+  test("un manque de l'intermédiaire remplace une acceptation automatique", async () => {
+    const data = await syncAsEtg(
+      { svi_carcasse_status: CarcasseStatus.MANQUANTE_ETG_COLLECTEUR },
+      { ...carcasseDuChasseur, svi_carcasse_status: CarcasseStatus.ACCEPTE }
+    );
+    expect(data.svi_carcasse_status).toBe(CarcasseStatus.MANQUANTE_ETG_COLLECTEUR);
+  });
+
+  test("un refus de l'intermédiaire ne remplace pas une acceptation du SVI après inspection", async () => {
+    const data = await syncAsEtg(
+      { svi_carcasse_status: CarcasseStatus.REFUS_ETG_COLLECTEUR },
+      { ...carcasseDuChasseur, svi_carcasse_status: CarcasseStatus.ACCEPTE, svi_ipm1_date: new Date() }
+    );
+    expect(data).not.toHaveProperty('svi_carcasse_status');
+  });
 });
 
 describe('syncCarcasse — suppression', () => {

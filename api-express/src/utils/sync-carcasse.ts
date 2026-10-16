@@ -749,14 +749,23 @@ const NON_SVI_STATUSES: Array<CarcasseStatus> = [
 // Statuts qu'un non-SVI peut écrire, d'après `updateCarcasseStatus` côté client.
 function canNonSviWriteStatus(existing: Carcasse, next: CarcasseStatus | null | undefined): boolean {
   if (next === undefined || next === existing.svi_carcasse_status) return true;
+  const isSviInspected = !!existing.svi_ipm1_date || !!existing.svi_ipm2_date;
+  // Un manque ou un refus de l'intermédiaire passe avant une acceptation automatique : le client
+  // les calcule en priorité.
+  if (
+    existing.svi_carcasse_status === CarcasseStatus.ACCEPTE &&
+    !isSviInspected &&
+    (next === CarcasseStatus.MANQUANTE_ETG_COLLECTEUR || next === CarcasseStatus.REFUS_ETG_COLLECTEUR)
+  ) {
+    return true;
+  }
   // Une décision du SVI ne peut être réécrite que par le SVI.
   if (existing.svi_carcasse_status && !NON_SVI_STATUSES.includes(existing.svi_carcasse_status)) return false;
   if (next && NON_SVI_STATUSES.includes(next)) return true;
   // Acceptation automatique : 10 jours après l'assignation au SVI, sans inspection.
   return (
     next === CarcasseStatus.ACCEPTE &&
-    !existing.svi_ipm1_date &&
-    !existing.svi_ipm2_date &&
+    !isSviInspected &&
     !!existing.svi_assigned_at &&
     dayjs().diff(dayjs(existing.svi_assigned_at), 'day') >= 10
   );
