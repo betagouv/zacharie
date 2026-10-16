@@ -20,9 +20,10 @@ test.beforeEach(async () => {
   await resetDb('EXAMINATEUR_INITIAL');
 });
 
-// un /sync peut encore être en vol dans le page.route à la fermeture de la page
+// un /sync peut encore être en vol dans le page.route à la fin du test : on attend qu'il se termine
+// tant que la page est ouverte
 test.afterEach(async ({ page }) => {
-  await page.unrouteAll({ behavior: 'ignoreErrors' });
+  await page.unrouteAll({ behavior: 'wait' });
 });
 
 async function creerFiche(page: Page) {
