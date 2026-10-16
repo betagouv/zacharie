@@ -112,7 +112,7 @@ export type CarcasseTransmissionWihMetadata = {
   fei: Pick<Fei, 'numero' | 'commune_mise_a_mort' | 'date_mise_a_mort'> & {
     numberOfPremierDetenteurProchainDetenteur: number;
   };
-  allCarcassesDone?: boolean;
+  allCarcassesDone: boolean;
   labels: {
     simpleStatus: TransmissionSimpleStatus;
     currentStepLabel: TransmissionStep;

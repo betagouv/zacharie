@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   Fei,
   Carcasse,
@@ -13,11 +13,16 @@ import {
   computeTransmissions,
   getTransmissionsShared,
   getWorseLabelsOfTransmissions,
+  reportTransmissionsInconsistencies,
   sortTransmissions,
 } from './get-transmissions-sorted';
 import { buildTransmissionId } from './get-transmission-id';
 import type { CarcasseTransmissionWihMetadata } from '@app/types/carcasse';
 import type { TransmissionSimpleStatus } from '@app/types/transmission-steps';
+import { capture } from '@app/services/sentry';
+
+vi.mock('@app/services/sentry', () => ({ capture: vi.fn() }));
+const mockedCapture = vi.mocked(capture);
 
 // ---------------------------------------------------------------------------
 // Factories — only the fields computeTransmissions (and the pure helpers it
@@ -679,5 +684,79 @@ describe('getTransmissionsShared', () => {
     const shared = inputs();
     const first = getTransmissionsShared(shared);
     expect(getTransmissionsShared({ ...shared, [key]: value })).not.toBe(first);
+  });
+});
+
+describe('computeTransmissions — allCarcassesDone', () => {
+  it('vrai quand toutes les carcasses de la transmission sont terminées', () => {
+    const t = run({
+      carcasses: [
+        carcasse({ zacharie_carcasse_id: 'C1', svi_closed_at: new Date('2024-02-01T00:00:00Z') }),
+        carcasse({ zacharie_carcasse_id: 'C2', intermediaire_carcasse_manquante: true }),
+      ],
+      user: admin,
+    });
+    expect(t[TID].allCarcassesDone).toBe(true);
+  });
+
+  it("faux dès qu'une carcasse n'est pas terminée, même après que le statut a quitté « Clôturée »", () => {
+    const t = run({
+      carcasses: [
+        carcasse({ zacharie_carcasse_id: 'C1', current_owner_user_id: 'chasseur' }),
+        carcasse({ zacharie_carcasse_id: 'C2', svi_closed_at: new Date('2024-02-01T00:00:00Z') }),
+        carcasse({ zacharie_carcasse_id: 'C3' }),
+      ],
+      user: chasseur,
+    });
+    expect(t[TID].labels.simpleStatus).not.toBe('Clôturée');
+    expect(t[TID].allCarcassesDone).toBe(false);
+  });
+
+  it("faux pour une fiche du chasseur qui n'a encore aucune carcasse", () => {
+    const t = run({ carcasses: [], user: chasseur });
+    expect(t[TID].carcasses).toEqual([]);
+    expect(t[TID].allCarcassesDone).toBe(false);
+  });
+});
+
+describe('reportTransmissionsInconsistencies', () => {
+  beforeEach(() => mockedCapture.mockClear());
+
+  const c1 = carcasse({ zacharie_carcasse_id: 'C1' });
+  const c2Divergente = carcasse({ zacharie_carcasse_id: 'C2', date_mise_a_mort: new Date('2024-12-31') });
+
+  function byId(carcasses: Carcasse[]) {
+    return Object.fromEntries(carcasses.map((c) => [c.zacharie_carcasse_id, c]));
+  }
+
+  it('signale une transmission dont les carcasses divergent au premier calcul', () => {
+    const carcasses = byId([c1, c2Divergente]);
+    reportTransmissionsInconsistencies(
+      undefined,
+      carcasses,
+      run({ carcasses: [c1, c2Divergente], user: admin })
+    );
+    expect(mockedCapture).toHaveBeenCalledTimes(1);
+  });
+
+  it("ne recontrôle pas une transmission dont aucune carcasse n'a changé", () => {
+    const carcasses = byId([c1, c2Divergente]);
+    reportTransmissionsInconsistencies(
+      carcasses,
+      { ...carcasses },
+      run({ carcasses: [c1, c2Divergente], user: admin })
+    );
+    expect(mockedCapture).not.toHaveBeenCalled();
+  });
+
+  it("recontrôle la transmission dès qu'une de ses carcasses change", () => {
+    const previous = byId([c1, c2Divergente]);
+    const c1Modifiee = { ...c1, updated_at: new Date('2024-03-01T00:00:00Z') };
+    reportTransmissionsInconsistencies(
+      previous,
+      byId([c1Modifiee, c2Divergente]),
+      run({ carcasses: [c1Modifiee, c2Divergente], user: admin })
+    );
+    expect(mockedCapture).toHaveBeenCalledTimes(1);
   });
 });
