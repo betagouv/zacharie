@@ -1,5 +1,5 @@
 import prisma from '~/prisma';
-import type { Fei, User } from '@prisma/client';
+import type { Fei, Prisma, User } from '@prisma/client';
 import { getCarcasseAccessWhere } from '~/utils/carcasse-access';
 import { getUserCarcasseEntityIds } from '~/utils/user-entities';
 
@@ -19,6 +19,8 @@ type FeiOwnershipFields = Pick<
 // d'accès ne changent pas d'une carcasse à l'autre.
 export type SyncScope = {
   entityIds: Array<string>;
+  // WHERE des carcasses que l'utilisateur peut lire, donc de sa branche de transmission. `null` : aucune.
+  carcasseAccessWhere: Prisma.CarcasseWhereInput | null;
   // Résout en une requête l'accès à tout un lot. Facultatif — `canWriteCarcasse` sait résoudre seul,
   // c'est juste ce qui évite une requête par carcasse dans les boucles.
   prefetch: (zacharieCarcasseIds: Array<string>) => Promise<void>;
@@ -76,6 +78,7 @@ export async function createSyncScope(user: User): Promise<SyncScope> {
 
   return {
     entityIds,
+    carcasseAccessWhere: accessWhere,
     prefetch: resolve,
     grant(zacharieCarcasseId) {
       granted.add(zacharieCarcasseId);

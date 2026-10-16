@@ -503,6 +503,27 @@ describe('syncCarcasse — champs réservés à un rôle', () => {
     });
   });
 
+  test("une carcasse ajoutée en aval reprend les choix d'une carcasse de la branche de l'intermédiaire", async () => {
+    const accessWhere = { premier_detenteur_prochain_detenteur_id_cache: 'entity-etg-2' };
+    const carcasseCreee = { ...baseCarcasse, created_by_user_id: etgUser.id };
+    vi.mocked(prisma.carcasse.create).mockResolvedValueOnce(carcasseCreee);
+    vi.mocked(prisma.carcasse.findFirst).mockReset();
+    vi.mocked(prisma.carcasse.findFirst).mockResolvedValueOnce(null);
+    vi.mocked(prisma.carcasse.update).mockResolvedValueOnce(carcasseCreee);
+
+    await syncCarcasse(
+      'FEI-1',
+      'ZC-1',
+      { fei_numero: 'FEI-1', numero_bracelet: 'BR-1' } as any,
+      etgUser,
+      { ...etgScope, carcasseAccessWhere: accessWhere },
+      { existingFei: baseFei, existingCarcasse: null }
+    );
+
+    const where = vi.mocked(prisma.carcasse.findFirst).mock.calls[0][0]!.where as any;
+    expect(where.AND).toContainEqual(accessWhere);
+  });
+
   test("l'auteur d'une action est toujours l'utilisateur courant, pour une de ses entités", async () => {
     const data = await syncAsEtg({
       intermediaire_closed_at: new Date(),

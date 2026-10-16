@@ -6,6 +6,7 @@ import type { SyncScope } from '~/utils/sync-scope';
 export function fakeSyncScope(overrides: Partial<SyncScope> = {}): SyncScope {
   return {
     entityIds: ['entity-etg', 'entity-collecteur', 'entity-svi'],
+    carcasseAccessWhere: {},
     prefetch: async () => {},
     canWriteCarcasse: async () => true,
     grant: () => {},
