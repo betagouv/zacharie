@@ -28,6 +28,7 @@ import { automaticClosingOfFeis } from '~/cronjobs/feis';
 // scope qui autorise tout pour que la carcasse arrive jusqu'aux vérifications testées.
 const allowAllScope: SyncScope = {
   entityIds: [],
+  carcasseAccessWhere: {},
   prefetch: async () => {},
   canWriteCarcasse: async () => true,
   grant: () => {},
