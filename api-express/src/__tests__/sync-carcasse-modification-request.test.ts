@@ -177,7 +177,6 @@ describe('syncCarcasseModifRequest — create', () => {
         numero_bracelet_before: 'BR-FAUX',
         status: CarcasseModificationRequestStatus.APPROVED,
         reviewed_by_user_id: examinateur.id,
-        deleted_at: new Date(),
       } as any,
       requester,
       scope
@@ -190,7 +189,31 @@ describe('syncCarcasseModifRequest — create', () => {
       requested_by_user_id: requester.id,
     });
     expect(createArgs.data).not.toHaveProperty('reviewed_by_user_id');
-    expect(createArgs.data).not.toHaveProperty('deleted_at');
+    expect(createArgs.data.deleted_at).toBeNull();
+  });
+
+  test('RENAME annulé hors ligne avant sa synchro → créé annulé, la carcasse garde son numéro', async () => {
+    const deletedAt = new Date();
+    vi.mocked(prisma.carcasseModificationRequest.findUnique).mockResolvedValueOnce(null);
+    vi.mocked(prisma.carcasse.findUnique).mockResolvedValueOnce(baseCarcasse);
+    vi.mocked(prisma.carcasseModificationRequest.create).mockResolvedValueOnce({
+      ...renamePending,
+      deleted_at: deletedAt,
+    });
+
+    const result = await syncCarcasseModifRequest(
+      { ...renamePending, deleted_at: deletedAt } as any,
+      requester,
+      scope
+    );
+
+    const createArgs = vi.mocked(prisma.carcasseModificationRequest.create).mock.calls[0][0];
+    expect(createArgs.data.deleted_at).toBe(deletedAt);
+    const call = vi.mocked(prisma.carcasse.update).mock.calls[0][0] as any;
+    expect(call.data.numero_bracelet).toBeUndefined();
+
+    await runCarcasseModifRequestSideEffects(result, requester);
+    expect(sendNotificationToUser).not.toHaveBeenCalled();
   });
 });
 

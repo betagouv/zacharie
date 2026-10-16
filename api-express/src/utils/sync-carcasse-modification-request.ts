@@ -70,6 +70,9 @@ export async function syncCarcasseModifRequest(
       throw new SyncRejectedError('Vous ne pouvez pas agir au nom de cette entité');
     }
     const isRename = body.type === CarcasseModificationRequestType.BRACELET_RENAME;
+    // Une demande annulée hors ligne avant sa première synchro est enregistrée annulée : elle
+    // n'applique rien et ne notifie personne.
+    const isCancelled = !!body.deleted_at;
     const created = await prisma.carcasseModificationRequest.create({
       data: {
         id: body.id,
@@ -85,6 +88,7 @@ export async function syncCarcasseModifRequest(
         numero_bracelet_after: isRename ? (body.numero_bracelet_after ?? null) : null,
         status: CarcasseModificationRequestStatus.PENDING,
         created_at: body.created_at ?? undefined,
+        deleted_at: isCancelled ? body.deleted_at : null,
         is_synced: true,
       },
     });
@@ -93,7 +97,9 @@ export async function syncCarcasseModifRequest(
     // Le renommage est appliqué immédiatement : c'est l'intermédiaire qui lit le numéro physique sur
     // la carcasse, il fait foi. L'examinateur est notifié pour information.
     const renameNow =
-      created.type === CarcasseModificationRequestType.BRACELET_RENAME && !!created.numero_bracelet_after;
+      !isCancelled &&
+      created.type === CarcasseModificationRequestType.BRACELET_RENAME &&
+      !!created.numero_bracelet_after;
     await prisma.carcasse.update({
       where: { zacharie_carcasse_id: created.zacharie_carcasse_id },
       data: {
@@ -213,7 +219,7 @@ export async function runCarcasseModifRequestSideEffects(
   const { saved, isNew, transitionedTo, justCancelled } = result;
 
   if (isNew) {
-    await notifyExaminateur(saved);
+    if (!saved.deleted_at) await notifyExaminateur(saved);
     return;
   }
 
