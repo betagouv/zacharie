@@ -365,11 +365,21 @@ export async function syncCarcasse(
   }
   // Une carcasse ajoutée par un intermédiaire (demande NEW_CARCASSE) reprend les choix du premier
   // détenteur d'une autre carcasse de la fiche dans le périmètre de l'intermédiaire : elle suit ainsi
-  // la même transmission que les carcasses de sa branche, et pas celle d'une autre branche.
-  if (isJustCreated && !isPremierDetenteur && scope.carcasseAccessWhere) {
+  // la même transmission que les carcasses de sa branche, et pas celle d'une autre branche. Une
+  // carcasse créée par l'examinateur n'a pas encore de choix du premier détenteur à reprendre.
+  if (isJustCreated && !canWriteOwnership && !isPremierDetenteur && scope.carcasseAccessWhere) {
     const carcasseSoeur = await prisma.carcasse.findFirst({
       where: {
-        AND: [{ fei_numero, deleted_at: null, NOT: { zacharie_carcasse_id } }, scope.carcasseAccessWhere],
+        AND: [
+          {
+            fei_numero,
+            deleted_at: null,
+            NOT: { zacharie_carcasse_id },
+            // une autre carcasse ajoutée dans le même lot n'a pas encore ces choix
+            premier_detenteur_prochain_detenteur_id_cache: { not: null },
+          },
+          scope.carcasseAccessWhere,
+        ],
       },
       orderBy: { created_at: 'asc' },
       select: {

@@ -538,6 +538,23 @@ describe('syncCarcasse — champs réservés à un rôle', () => {
     expect(where.AND).toContainEqual(accessWhere);
   });
 
+  test("une carcasse créée par l'examinateur ne cherche pas de carcasse soeur", async () => {
+    vi.mocked(prisma.carcasse.create).mockResolvedValueOnce(baseCarcasse);
+    vi.mocked(prisma.carcasse.findFirst).mockReset();
+    vi.mocked(prisma.carcasse.update).mockResolvedValueOnce(baseCarcasse);
+
+    await syncCarcasse(
+      'FEI-1',
+      'ZC-1',
+      { fei_numero: 'FEI-1', numero_bracelet: 'BR-1' } as any,
+      etgUser,
+      fakeSyncScope({ isFeiOwner: () => true, isPremierDetenteur: () => false }),
+      { existingFei: baseFei, existingCarcasse: null }
+    );
+
+    expect(prisma.carcasse.findFirst).not.toHaveBeenCalled();
+  });
+
   test("l'auteur d'une action est toujours l'utilisateur courant, pour une de ses entités", async () => {
     const data = await syncAsEtg({
       intermediaire_closed_at: new Date(),
