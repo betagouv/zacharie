@@ -4,6 +4,9 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+    # Inutile de lancer les tests quand une PR ne touche que l'app mobile
+    paths-ignore:
+      - 'expo/**'
 permissions:
   contents: read
 
@@ -164,22 +167,48 @@ jobs:
           (cd api-express && npm ci && npx prisma generate) &
           wait
 
+      - name: Install e2e deps
+        run: |
+          cd e2e
+          npm ci
+
+      - name: Get Playwright version
+        id: pw-version
+        run: |
+          cd e2e
+          echo "version=$(node -e "console.log(require('@playwright/test/package.json').version)")" >> "$GITHUB_OUTPUT"
+
       - name: Cache Playwright browsers
         id: pw-cache
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          key: pw-${{ runner.os }}-${{ hashFiles('e2e/package-lock.json') }}
+          key: pw-${{ runner.os }}-${{ steps.pw-version.outputs.version }}
 
-      - name: Install Playwright
+      # Le miroir apt d'Azure est parfois très lent : on garde les .deb en cache
+      # pour ne plus dépendre de lui à chaque run
+      - name: Cache Playwright system deps (.deb)
+        uses: actions/cache@v4
+        with:
+          path: ~/apt-cache
+          key: pw-apt-${{ runner.os }}-${{ steps.pw-version.outputs.version }}
+
+      # Seul le projet chromium est actif dans playwright.config.ts
+      - name: Install Playwright system deps
+        timeout-minutes: 10
         run: |
           cd e2e
-          npm ci
-          if [ "${{ steps.pw-cache.outputs.cache-hit }}" != "true" ]; then
-            npx playwright install --with-deps
-          else
-            npx playwright install-deps
-          fi
+          if ls ~/apt-cache/*.deb > /dev/null 2>&1; then sudo cp ~/apt-cache/*.deb /var/cache/apt/archives/; fi
+          npx playwright install-deps chromium
+          mkdir -p ~/apt-cache
+          cp /var/cache/apt/archives/*.deb ~/apt-cache/ 2> /dev/null || true
+
+      - name: Install Playwright browsers
+        if: steps.pw-cache.outputs.cache-hit != 'true'
+        timeout-minutes: 8
+        run: |
+          cd e2e
+          npx playwright install chromium
 
       - name: Init DB
         run: |
