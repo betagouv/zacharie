@@ -236,7 +236,11 @@ export async function syncFei(
       ? sanitize(body.premier_detenteur_user_id as string)
       : null;
   }
-  if (canWriteOwnership && body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_offline)) {
+  // Posé par celui qui valide pour le premier détenteur, membre de l'asso désignée compris.
+  if (
+    canWriteApprobationExaminateur &&
+    body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_offline)
+  ) {
     nextFei.premier_detenteur_offline = body.premier_detenteur_offline || null;
   }
   if (canWriteOwnership && body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_entity_id)) {

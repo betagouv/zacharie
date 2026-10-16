@@ -386,7 +386,8 @@ export async function syncCarcasse(
     if (carcasseSoeur) Object.assign(nextCarcasse, carcasseSoeur);
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.premier_detenteur_offline)) {
-    nextCarcasse.premier_detenteur_offline = canWriteOwnership
+    // Même règle que la fiche (`sync-fei`) : membre de l'asso désignée premier détenteur compris.
+    nextCarcasse.premier_detenteur_offline = canWriteApprobationExaminateur
       ? body[Prisma.CarcasseScalarFieldEnum.premier_detenteur_offline]
       : existingFei.premier_detenteur_offline;
   }

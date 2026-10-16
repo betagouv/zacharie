@@ -420,6 +420,20 @@ describe('syncCarcasse — champs réservés à un rôle', () => {
     return vi.mocked(prisma.carcasse.update).mock.calls[0][0].data;
   }
 
+  test("un membre de l'asso premier détenteur enregistre qu'il a validé hors ligne", async () => {
+    vi.mocked(prisma.carcasse.update).mockResolvedValueOnce(carcasseDuChasseur);
+    await syncCarcasse(
+      'FEI-1',
+      'ZC-1',
+      { fei_numero: 'FEI-1', premier_detenteur_offline: true } as any,
+      etgUser,
+      fakeSyncScope({ isFeiOwner: () => false, isPremierDetenteur: () => true }),
+      { existingFei: baseFei, existingCarcasse: carcasseDuChasseur }
+    );
+    const data = vi.mocked(prisma.carcasse.update).mock.calls[0][0].data;
+    expect(data.premier_detenteur_offline).toBe(true);
+  });
+
   test("l'examen et l'identité de la carcasse sont ignorés pour un détenteur aval", async () => {
     const data = await syncAsEtg({
       numero_bracelet: 'BR-AUTRE',

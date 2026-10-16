@@ -192,6 +192,21 @@ describe('syncFei — champs réservés', () => {
     const updateCall = vi.mocked(prisma.fei.update).mock.calls[0][0];
     expect(updateCall.data).not.toHaveProperty('consommateur_final_usage_domestique');
   });
+
+  test("un membre de l'asso premier détenteur enregistre qu'il a validé hors ligne", async () => {
+    vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce(baseFei);
+    vi.mocked(prisma.fei.update).mockResolvedValue(baseFei as any);
+
+    await syncFei(
+      'FEI-1',
+      { numero: 'FEI-1', premier_detenteur_offline: true } as any,
+      otherChasseur,
+      fakeSyncScope({ isFeiOwner: () => false, isPremierDetenteur: () => true })
+    );
+
+    const updateCall = vi.mocked(prisma.fei.update).mock.calls[0][0];
+    expect(updateCall.data.premier_detenteur_offline).toBe(true);
+  });
 });
 
 describe('syncFei — creation_context', () => {
