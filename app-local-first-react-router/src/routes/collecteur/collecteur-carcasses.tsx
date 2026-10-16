@@ -26,6 +26,10 @@ import { useTransmissions } from '@app/utils/get-transmissions-sorted';
 import { trackFeature, trackSearch } from '@app/services/matomo';
 import type { Carcasse } from '@prisma/client';
 import type { TransmissionSimpleStatus } from '@app/types/transmission-steps';
+import {
+  isFeiExcludedByQuickFilters,
+  type FeiQuickFilterMeta,
+} from '@app/utils/is-fei-excluded-by-quick-filters';
 import { getTransmissionId, getTransmissionLinkFromCarcasse } from '@app/utils/get-transmission-id';
 
 const advancedFiltersModal = createModal({
@@ -67,11 +71,6 @@ type CatalogColumn = {
   sortable?: boolean;
   small?: boolean;
   render?: (item: Carcasse, index: number) => React.ReactNode;
-};
-
-type FeiMeta = {
-  simpleStatus: TransmissionSimpleStatus | undefined;
-  premierDetenteurName: Carcasse['premier_detenteur_name_cache'];
 };
 
 export default function CollecteurCarcasses() {
@@ -161,7 +160,7 @@ export default function CollecteurCarcasses() {
 
   const { filterableFields, especeOptions, statusOptions, premierDetenteurOptions, feiMetaByFeiNumero } =
     useMemo(() => {
-      const _feiMetaByFeiNumero: Record<Carcasse['fei_numero'], FeiMeta> = {};
+      const _feiMetaByFeiNumero: Record<Carcasse['fei_numero'], FeiQuickFilterMeta> = {};
       const _ccgNames: Record<NonNullable<Carcasse['premier_detenteur_depot_entity_name_cache']>, true> = {};
       const _motifs: Record<
         string, // one of 'svi_ipm2_lesions_ou_motifs',
@@ -178,6 +177,7 @@ export default function CollecteurCarcasses() {
       for (const carcasse of carcassesRegistry) {
         if (!_feiMetaByFeiNumero[carcasse.fei_numero]) {
           _feiMetaByFeiNumero[carcasse.fei_numero] = {
+            collecteurIds: [],
             simpleStatus: transmissions[getTransmissionId(carcasse)]?.labels.simpleStatus,
             premierDetenteurName: carcasse.premier_detenteur_name_cache,
           };
@@ -212,30 +212,19 @@ export default function CollecteurCarcasses() {
     const braceletQuery = quickFilterBracelet.trim().toLowerCase();
     const excludedFei: Record<Carcasse['fei_numero'], boolean> = {};
     const withQuickFilterEspece = Object.keys(quickFilterEspeces).length > 0;
-    const withQuickFilterTransmissionStatuses = Object.keys(quickFilterTransmissionStatuses).length > 0;
     const withQuickFilterStatuses = Object.keys(quickFilterStatuses).length > 0;
-    const withQuickFilterPremierDetenteurs = Object.keys(quickFilterPremierDetenteurs).length > 0;
     const withFilters = filters?.some((filter) => Boolean(filter?.value));
     const isInRegistre = filterCarcassesInRegistre(filters);
-    const isFeiExcluded = (fei_numero: Carcasse['fei_numero']) => {
-      const meta = feiMetaByFeiNumero[fei_numero];
-      if (
-        withQuickFilterTransmissionStatuses &&
-        meta.simpleStatus &&
-        quickFilterTransmissionStatuses[meta.simpleStatus]
-      )
-        return false;
-      if (
-        meta.premierDetenteurName &&
-        withQuickFilterPremierDetenteurs &&
-        quickFilterPremierDetenteurs[meta.premierDetenteurName]
-      )
-        return false;
-      return withQuickFilterPremierDetenteurs || withQuickFilterTransmissionStatuses;
+    const quickFilters = {
+      transmissionStatuses: quickFilterTransmissionStatuses,
+      premierDetenteurs: quickFilterPremierDetenteurs,
     };
 
     for (const carcasse of carcassesRegistry) {
-      excludedFei[carcasse.fei_numero] ??= isFeiExcluded(carcasse.fei_numero);
+      excludedFei[carcasse.fei_numero] ??= isFeiExcludedByQuickFilters(
+        feiMetaByFeiNumero[carcasse.fei_numero],
+        quickFilters
+      );
       if (excludedFei[carcasse.fei_numero]) continue;
       if (withFilters && !isInRegistre(carcasse, transmissions[getTransmissionId(carcasse)]?.fei)) continue;
       if (braceletQuery && !carcasse.numero_bracelet?.toLowerCase().includes(braceletQuery)) {

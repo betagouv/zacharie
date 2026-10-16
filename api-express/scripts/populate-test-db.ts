@@ -996,6 +996,70 @@ Christine
       });
       console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (Collecteur taken charge)`);
     }
+    // 3 fiches prises en charge par ETG 1, pour les filtres rapides de sa liste de carcasses :
+    //   - 600001 : Pierre Petit, via Collecteur Pro 1
+    //   - 600002 : Marie Martin, en direct (sans collecteur)
+    //   - 600003 : Marie Martin, via Collecteur Pro 2
+    if ((role as string) === 'ETG_FILTRES_RAPIDES') {
+      const etgUserId = users.find((u) => u.email === 'etg-1@example.fr')?.id ?? '';
+      const collecteurUserId = users.find((u) => u.email === 'collecteur-pro@example.fr')?.id ?? '';
+      const fiches = [
+        {
+          numero: 'ZACH-20250707-QZ6E0-600001',
+          pd: 'Pierre Petit',
+          collecteurEntityId: 'a447bab1-8796-48a4-b955-3a5466116bca',
+        },
+        { numero: 'ZACH-20250707-QZ6E0-600002', pd: 'Marie Martin', collecteurEntityId: null },
+        {
+          numero: 'ZACH-20250707-QZ6E0-600003',
+          pd: 'Marie Martin',
+          collecteurEntityId: '94684af1-ac01-46eb-8ff4-18dcb7ff560c',
+        },
+      ];
+      for (const fiche of fiches) {
+        const fei = await prisma.fei.create({
+          data: { ...feiTakenChargeByEtg, numero: fiche.numero, premier_detenteur_name_cache: fiche.pd },
+        });
+        await prisma.carcasse.createMany({ data: getCarcasses(fei, ownershipTakenChargeByEtg) });
+        const intermediaires: Array<{
+          entityId: string;
+          userId: string;
+          role: FeiOwnerRole;
+          daysAgo: number;
+        }> = [
+          {
+            entityId: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
+            userId: etgUserId,
+            role: FeiOwnerRole.ETG,
+            daysAgo: 1,
+          },
+        ];
+        if (fiche.collecteurEntityId) {
+          intermediaires.push({
+            entityId: fiche.collecteurEntityId,
+            userId: collecteurUserId,
+            role: FeiOwnerRole.COLLECTEUR_PRO,
+            daysAgo: 2,
+          });
+        }
+        for (const intermediaire of intermediaires) {
+          await prisma.carcasseIntermediaire.createMany({
+            data: getCarcasses(fei).map((c) => ({
+              fei_numero: fei.numero,
+              numero_bracelet: c.numero_bracelet,
+              zacharie_carcasse_id: c.zacharie_carcasse_id!,
+              intermediaire_id: `${fei.numero}_${intermediaire.entityId}_${intermediaire.userId}`,
+              intermediaire_entity_id: intermediaire.entityId,
+              intermediaire_user_id: intermediaire.userId,
+              intermediaire_role: intermediaire.role,
+              prise_en_charge_at: dayjs().subtract(intermediaire.daysAgo, 'day').toDate(),
+              created_at: dayjs().subtract(intermediaire.daysAgo, 'day').toDate(),
+            })),
+          });
+        }
+      }
+      console.log('ETG_FILTRES_RAPIDES seeded: 3 fiches prises en charge par ETG 1');
+    }
     if ((role as string) === 'PREMIER_DETENTEUR_WITH_PARTAGE') {
       const fei = await prisma.fei.create({ data: feiValidatedByExaminateur });
       const carcasses = await prisma.carcasse.createMany({
