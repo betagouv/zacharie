@@ -62,7 +62,7 @@ let sharedTransmissions: {
 // Calcul partagé par tous les composants qui appellent useTransmissions : un useMemo par composant
 // referait la passe complète sur toutes les carcasses autant de fois qu'il y a de composants montés.
 // Le résultat est recalculé dès qu'une des entrées change de référence (le store est immuable).
-function getTransmissionsShared(inputs: SharedTransmissionsInputs) {
+export function getTransmissionsShared(inputs: SharedTransmissionsInputs) {
   const previous = sharedTransmissions?.inputs;
   if (
     previous &&

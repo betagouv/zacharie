@@ -11,6 +11,7 @@ import {
 import type { EntityWithUserRelation } from '@api/src/types/entity';
 import {
   computeTransmissions,
+  getTransmissionsShared,
   getWorseLabelsOfTransmissions,
   sortTransmissions,
 } from './get-transmissions-sorted';
@@ -640,5 +641,43 @@ describe('sortTransmissions — most recent approbation/creation first', () => {
     const older = withDates(null, '2024-01-01T00:00:00Z');
     const newer = withDates(null, '2024-06-01T00:00:00Z');
     expect([older, newer].sort(sortTransmissions)).toEqual([newer, older]);
+  });
+});
+
+describe('getTransmissionsShared', () => {
+  function inputs() {
+    return {
+      carcasses: { C1: carcasse({ zacharie_carcasse_id: 'C1' }) },
+      carcassesIntermediaireById: {},
+      feis: { 'FEI-1': fei() },
+      user: admin,
+      entities: noEntities,
+    };
+  }
+
+  it('renvoie le même résultat, sans recalcul, pour les mêmes entrées', () => {
+    const shared = inputs();
+    const first = getTransmissionsShared(shared);
+    expect(getTransmissionsShared({ ...shared })).toBe(first);
+  });
+
+  it('recalcule quand les carcasses changent de référence', () => {
+    const shared = inputs();
+    const first = getTransmissionsShared(shared);
+    const carcasses = { ...shared.carcasses, C2: carcasse({ zacharie_carcasse_id: 'C2' }) };
+    const second = getTransmissionsShared({ ...shared, carcasses });
+    expect(second).not.toBe(first);
+    expect(second[TID].carcasses.map((c) => c.zacharie_carcasse_id).sort()).toEqual(['C1', 'C2']);
+  });
+
+  it.each([
+    ['carcassesIntermediaireById', {}],
+    ['feis', { 'FEI-1': fei() }],
+    ['user', svi],
+    ['entities', {}],
+  ] as const)('recalcule quand %s change de référence', (key, value) => {
+    const shared = inputs();
+    const first = getTransmissionsShared(shared);
+    expect(getTransmissionsShared({ ...shared, [key]: value })).not.toBe(first);
   });
 });
