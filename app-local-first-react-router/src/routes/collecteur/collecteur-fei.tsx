@@ -568,7 +568,7 @@ function CollecteurProFeiContent({
     const nextTransmission: CarcasseTransmission = {
       intermediaire_closed_at: now,
       intermediaire_closed_by_entity_id: intermediaire.intermediaire_entity_id,
-      intermediaire_closed_by_user_id: intermediaire.intermediaire_user_id,
+      intermediaire_closed_by_user_id: user.id,
     };
     updateCarcassesTransmission(
       myFeiCarcasses.map((c) => c.zacharie_carcasse_id),
@@ -622,7 +622,7 @@ function CollecteurProFeiContent({
         {
           intermediaire_closed_at: _priseEnChargeAt,
           intermediaire_closed_by_entity_id: intermediaire.intermediaire_entity_id,
-          intermediaire_closed_by_user_id: intermediaire.intermediaire_user_id,
+          intermediaire_closed_by_user_id: user.id,
         }
       );
     } else {
