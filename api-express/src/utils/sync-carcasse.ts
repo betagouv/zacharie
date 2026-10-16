@@ -16,6 +16,7 @@ import {
 import dayjs from 'dayjs';
 import { TRICHINE_FEATURE_ENABLED } from '~/config';
 import type { SyncScope } from '~/utils/sync-scope';
+import { isCarcassePriseEnChargeEnAval } from '~/utils/carcasse-prise-en-charge';
 import { SyncRejectedError } from '~/utils/sync-errors';
 import { carcasseHasResultatTrichineNegatif, TRICHINE_ESPECE_CONCERNEE } from '~/utils/trichine';
 import { isStaleWrite, nextVersion } from '~/utils/sync-version';
@@ -165,17 +166,12 @@ export async function syncCarcasse(
 
   if (body.deleted_at) {
     // L'examinateur ou le premier détenteur suppriment une carcasse tant qu'elle n'est pas prise en
-    // charge en aval (même frontière que `isCarcassePriseEnChargeEnAval` côté client). L'auteur
-    // d'une carcasse ajoutée en aval la supprime en annulant sa demande, tant que le SVI n'est pas
-    // passé dessus (même règle que l'annulation côté client). Au-delà, la suppression passe par le
-    // superadmin.
-    const isPriseEnChargeEnAval =
-      !!existingCarcasse.current_owner_role &&
-      existingCarcasse.current_owner_role !== FeiOwnerRole.EXAMINATEUR_INITIAL &&
-      existingCarcasse.current_owner_role !== FeiOwnerRole.PREMIER_DETENTEUR;
+    // charge en aval. L'auteur d'une carcasse ajoutée en aval la supprime en annulant sa demande, tant
+    // que le SVI n'est pas passé dessus (même règle que l'annulation côté client). Au-delà, la
+    // suppression passe par le superadmin.
     const canDelete =
       isExaminateur || isPremierDetenteur
-        ? !isPriseEnChargeEnAval
+        ? !isCarcassePriseEnChargeEnAval(existingCarcasse)
         : isCreator && (await canCreatorCancelCarcasse(existingCarcasse, isJustCreated, user));
     if (!canDelete) {
       throw new SyncRejectedError('Vous ne pouvez pas supprimer cette carcasse');

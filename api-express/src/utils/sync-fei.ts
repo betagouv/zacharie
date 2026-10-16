@@ -1,6 +1,7 @@
 import prisma from '~/prisma';
 import { sanitize } from '~/utils/sanitize';
-import { Fei, FeiOwnerRole, Prisma, User, UserRoles } from '@prisma/client';
+import { Fei, Prisma, User, UserRoles } from '@prisma/client';
+import { carcassePriseEnChargeEnAvalWhere } from '~/utils/carcasse-prise-en-charge';
 import { capture } from '~/third-parties/sentry';
 import { z } from 'zod';
 import type { SyncScope } from '~/utils/sync-scope';
@@ -75,16 +76,9 @@ export async function syncFei(
       throw new SyncRejectedError('Vous ne pouvez pas supprimer cette fiche');
     }
     // Une fois une carcasse prise en charge en aval, la fiche ne peut plus être supprimée par le
-    // chasseur (même frontière que `isCarcassePriseEnChargeEnAval` côté client). La suppression d'une
-    // fiche transmise passe par le superadmin.
+    // chasseur.
     const carcassesPrisesEnChargeEnAval = await prisma.carcasse.count({
-      where: {
-        fei_numero: numero,
-        deleted_at: null,
-        current_owner_role: {
-          notIn: [FeiOwnerRole.EXAMINATEUR_INITIAL, FeiOwnerRole.PREMIER_DETENTEUR],
-        },
-      },
+      where: { fei_numero: numero, deleted_at: null, ...carcassePriseEnChargeEnAvalWhere },
     });
     if (carcassesPrisesEnChargeEnAval > 0) {
       throw new SyncRejectedError('Vous ne pouvez pas supprimer cette fiche');
