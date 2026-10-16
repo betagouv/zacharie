@@ -633,22 +633,39 @@ describe('syncCarcasse — suppression', () => {
     expect(result.isDeleted).toBe(true);
   });
 
+  const etgUser = { id: 'user-etg', roles: [UserRoles.ETG] } as unknown as User;
+  const etgScope = fakeSyncScope({ isFeiOwner: () => false, isPremierDetenteur: () => false });
+  const carcasseAjoutee = {
+    ...baseCarcasse,
+    created_by_user_id: etgUser.id,
+    current_owner_role: FeiOwnerRole.ETG,
+  };
+  const supprimerEnTantQueEtg = (existing: typeof carcasseAjoutee) =>
+    syncCarcasse('FEI-1', 'ZC-1', { fei_numero: 'FEI-1', deleted_at: deletedAt } as any, etgUser, etgScope, {
+      existingFei: baseFei,
+      existingCarcasse: existing,
+    });
+
   test("l'auteur d'une carcasse ajoutée en aval la supprime (annulation de sa demande)", async () => {
-    const etgUser = { id: 'user-etg', roles: [UserRoles.ETG] } as unknown as User;
-    const existing = {
-      ...baseCarcasse,
-      created_by_user_id: etgUser.id,
-      current_owner_role: FeiOwnerRole.ETG,
-    };
+    vi.mocked(prisma.carcasseModificationRequest.count).mockResolvedValueOnce(1);
     vi.mocked(prisma.carcasse.update).mockResolvedValueOnce(baseCarcasse);
-    const result = await syncCarcasse(
-      'FEI-1',
-      'ZC-1',
-      { fei_numero: 'FEI-1', deleted_at: deletedAt } as any,
-      etgUser,
-      fakeSyncScope({ isFeiOwner: () => false, isPremierDetenteur: () => false }),
-      { existingFei: baseFei, existingCarcasse: existing }
-    );
+    const result = await supprimerEnTantQueEtg(carcasseAjoutee);
     expect(result.isDeleted).toBe(true);
+  });
+
+  test("l'auteur d'une carcasse ajoutée en aval ne la supprime pas sans demande en attente", async () => {
+    vi.mocked(prisma.carcasseModificationRequest.count).mockResolvedValueOnce(0);
+    await expect(supprimerEnTantQueEtg(carcasseAjoutee)).rejects.toThrow(
+      'Vous ne pouvez pas supprimer cette carcasse'
+    );
+    expect(prisma.carcasse.update).not.toHaveBeenCalled();
+  });
+
+  test("l'auteur d'une carcasse ajoutée en aval ne la supprime plus après l'inspection SVI", async () => {
+    vi.mocked(prisma.carcasseModificationRequest.count).mockResolvedValueOnce(1);
+    await expect(
+      supprimerEnTantQueEtg({ ...carcasseAjoutee, svi_ipm1_signed_at: new Date() })
+    ).rejects.toThrow('Vous ne pouvez pas supprimer cette carcasse');
+    expect(prisma.carcasse.update).not.toHaveBeenCalled();
   });
 });

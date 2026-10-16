@@ -2,6 +2,8 @@ import prisma from '~/prisma';
 
 import {
   Carcasse,
+  CarcasseModificationRequestStatus,
+  CarcasseModificationRequestType,
   CarcasseStatus,
   EntityRelationType,
   Fei,
@@ -164,13 +166,17 @@ export async function syncCarcasse(
   if (body.deleted_at) {
     // L'examinateur ou le premier détenteur suppriment une carcasse tant qu'elle n'est pas prise en
     // charge en aval (même frontière que `isCarcassePriseEnChargeEnAval` côté client). L'auteur
-    // d'une carcasse ajoutée en aval la supprime en annulant sa demande. Au-delà, la suppression
-    // passe par le superadmin.
+    // d'une carcasse ajoutée en aval la supprime en annulant sa demande, tant que le SVI n'est pas
+    // passé dessus (même règle que l'annulation côté client). Au-delà, la suppression passe par le
+    // superadmin.
     const isPriseEnChargeEnAval =
       !!existingCarcasse.current_owner_role &&
       existingCarcasse.current_owner_role !== FeiOwnerRole.EXAMINATEUR_INITIAL &&
       existingCarcasse.current_owner_role !== FeiOwnerRole.PREMIER_DETENTEUR;
-    const canDelete = isExaminateur || isPremierDetenteur ? !isPriseEnChargeEnAval : isCreator;
+    const canDelete =
+      isExaminateur || isPremierDetenteur
+        ? !isPriseEnChargeEnAval
+        : isCreator && (await canCreatorCancelCarcasse(existingCarcasse, isJustCreated, user));
     if (!canDelete) {
       throw new SyncRejectedError('Vous ne pouvez pas supprimer cette carcasse');
     }
@@ -707,6 +713,31 @@ export async function syncCarcasse(
   });
 
   return { savedCarcasse: updatedCarcasse, existingCarcasse, isDeleted: false };
+}
+
+// L'auteur d'une carcasse ajoutée en aval l'annule avec sa demande NEW_CARCASSE encore en attente
+// (les carcasses sont synchronisées avant les demandes : l'annulation de la demande arrive après).
+// Une carcasse créée et annulée avant sa première synchro n'a pas encore de demande côté serveur.
+async function canCreatorCancelCarcasse(carcasse: Carcasse, isJustCreated: boolean, user: User) {
+  if (
+    carcasse.svi_ipm1_signed_at ||
+    carcasse.svi_ipm2_signed_at ||
+    carcasse.svi_closed_at ||
+    carcasse.svi_automatic_closed_at
+  ) {
+    return false;
+  }
+  if (isJustCreated) return true;
+  const pendingRequests = await prisma.carcasseModificationRequest.count({
+    where: {
+      zacharie_carcasse_id: carcasse.zacharie_carcasse_id,
+      type: CarcasseModificationRequestType.NEW_CARCASSE,
+      status: CarcasseModificationRequestStatus.PENDING,
+      requested_by_user_id: user.id,
+      deleted_at: null,
+    },
+  });
+  return pendingRequests > 0;
 }
 
 const NON_SVI_STATUSES: Array<CarcasseStatus> = [
