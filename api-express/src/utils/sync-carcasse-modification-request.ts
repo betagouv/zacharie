@@ -60,7 +60,7 @@ export async function syncCarcasseModifRequest(
   if (!existing) {
     const carcasse = await prisma.carcasse.findUnique({
       where: { zacharie_carcasse_id: zacharieCarcasseId },
-      select: { fei_numero: true, numero_bracelet: true },
+      select: { fei_numero: true, numero_bracelet: true, created_by_user_id: true },
     });
     if (!carcasse) throw new Error('Carcasse introuvable');
     // L'identité du demandeur est décidée par le serveur : on demande toujours en son nom propre,
@@ -70,6 +70,13 @@ export async function syncCarcasseModifRequest(
       throw new SyncRejectedError('Vous ne pouvez pas agir au nom de cette entité');
     }
     const isRename = body.type === CarcasseModificationRequestType.BRACELET_RENAME;
+    // Le numéro d'origine est lu sur la carcasse : c'est lui que l'annulation rétablit. Sauf pour
+    // l'auteur de la carcasse, qui peut déjà avoir écrit le nouveau numéro sur la carcasse dans la
+    // même synchro (il en saisit l'identité) : son numéro d'origine vient alors de sa demande.
+    const numeroBraceletBefore =
+      carcasse.created_by_user_id === user.id
+        ? (body.numero_bracelet_before ?? carcasse.numero_bracelet)
+        : carcasse.numero_bracelet;
     // Une demande annulée hors ligne avant sa première synchro est enregistrée annulée : elle
     // n'applique rien et ne notifie personne.
     const isCancelled = !!body.deleted_at;
@@ -83,8 +90,7 @@ export async function syncCarcasseModifRequest(
         requested_by_entity_id: body.requested_by_entity_id,
         requested_at: body.requested_at ?? undefined,
         comment_intermediaire: body.comment_intermediaire ?? null,
-        // Le numéro d'origine est lu sur la carcasse : c'est lui que l'annulation rétablit.
-        numero_bracelet_before: isRename ? carcasse.numero_bracelet : null,
+        numero_bracelet_before: isRename ? numeroBraceletBefore : null,
         numero_bracelet_after: isRename ? (body.numero_bracelet_after ?? null) : null,
         status: CarcasseModificationRequestStatus.PENDING,
         created_at: body.created_at ?? undefined,

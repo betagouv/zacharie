@@ -192,6 +192,22 @@ describe('syncCarcasseModifRequest — create', () => {
     expect(createArgs.data.deleted_at).toBeNull();
   });
 
+  test("RENAME par l'auteur de la carcasse → le numéro d'origine vient de la demande", async () => {
+    vi.mocked(prisma.carcasseModificationRequest.findUnique).mockResolvedValueOnce(null);
+    // la carcasse, synchronisée juste avant dans le même lot, porte déjà le nouveau numéro
+    vi.mocked(prisma.carcasse.findUnique).mockResolvedValueOnce({
+      ...baseCarcasse,
+      numero_bracelet: 'BR-NEW',
+      created_by_user_id: requester.id,
+    });
+    vi.mocked(prisma.carcasseModificationRequest.create).mockResolvedValueOnce(renamePending);
+
+    await syncCarcasseModifRequest({ ...renamePending } as any, requester, scope);
+
+    const createArgs = vi.mocked(prisma.carcasseModificationRequest.create).mock.calls[0][0];
+    expect(createArgs.data.numero_bracelet_before).toBe('BR-OLD');
+  });
+
   test('RENAME annulé hors ligne avant sa synchro → créé annulé, la carcasse garde son numéro', async () => {
     const deletedAt = new Date();
     vi.mocked(prisma.carcasseModificationRequest.findUnique).mockResolvedValueOnce(null);
