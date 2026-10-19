@@ -56,7 +56,6 @@
     "jsonwebtoken": "^9.0.2",
     "jszip": "^3.10.1",
     "libphonenumber-js": "^1.12.8",
-    "matrix-js-sdk": "^34.11.1",
     "morgan": "^1.12.1",
     "mupdf": "^1.28.0",
     "openid-client": "^6.8.7",
