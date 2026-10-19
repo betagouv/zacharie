@@ -6,9 +6,10 @@ import { resetDb } from '../../scripts/reset-db';
 import { connectWith } from '../../utils/connect-with';
 
 // Scenario 157 — Easter egg : taper « zacharie » sur une nouvelle fiche ouvre un chat. Le chasseur
-// dicte sa chasse, le serveur la lit avec Albert et remplit la fiche. La CI n'a pas de clé Albert :
-// la route /assistant-fiche est simulée, on teste ici l'interface (ouverture, réponse, commune,
-// fiche remplie à la fermeture). L'écriture serveur est couverte par assistant-fiche-route.test.ts.
+// dicte sa chasse, le serveur la lit avec Albert et renvoie les données vérifiées, que le front écrit
+// sur la fiche. La CI n'a pas de clé Albert : la route /assistant-fiche est simulée, on teste ici
+// l'interface (ouverture, écriture locale, commune, fiche remplie à la fermeture). La lecture serveur
+// est couverte par assistant-fiche-route.test.ts.
 
 test.use({
   viewport: { width: 350, height: 667 },
@@ -64,22 +65,27 @@ test('taper zacharie ouvre le chat, la réponse remplit la fiche et la commune e
   let sentMessages: unknown = null;
   await page.route(isAssistantUrl, async (route) => {
     sentMessages = route.request().postDataJSON().messages;
-    const numero = new URL(route.request().url()).pathname.split('/').pop()!;
-    const fei = await readLocalFei(page, numero);
     await route.fulfill({
       json: {
         ok: true,
         data: {
-          reply:
-            "C'est noté :\n- Date de la chasse : aujourd'hui\n- Carcasse ajoutée : JD-03-001 — Chevreuil",
-          fei: {
-            ...fei,
-            date_mise_a_mort: `${today}T00:00:00.000Z`,
-            heure_mise_a_mort_premiere_carcasse: '07:30',
-            is_synced: true,
-          },
-          carcasses: [],
+          assistant_request_id: 'request-157',
+          reply: '',
+          date_mise_a_mort: today,
+          heure_mise_a_mort_premiere_carcasse: '07:30',
+          heure_evisceration_derniere_carcasse: null,
           commune_recherchee: 'Chassenard',
+          communes_trouvees: ['03510 CHASSENARD'],
+          premier_detenteur: null,
+          carcasses: [
+            {
+              numero_bracelet: 'JD-03-001',
+              espece: 'Chevreuil',
+              type: 'GROS_GIBIER',
+              nombre_d_animaux: 1,
+              commentaire: null,
+            },
+          ],
         },
         error: '',
       },
@@ -114,6 +120,8 @@ test('taper zacharie ouvre le chat, la réponse remplit la fiche et la commune e
   );
   // Pierre Petit (premier-detenteur@example.fr) dans le seed
   await expect(page.locator('select[name="next_owner"]')).toHaveValue('0Y545');
+  // la carcasse est écrite par le front, comme au formulaire
+  await expect(page.getByText('N° JD-03-001')).toBeVisible();
 });
 
 test("taper zacharie affiche l'erreur quand l'assistant est indisponible", async ({ page }) => {

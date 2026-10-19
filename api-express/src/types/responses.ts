@@ -447,17 +447,36 @@ export interface SyncResponse {
   error: string;
 }
 
+export interface AssistantFicheCarcasse {
+  numero_bracelet: string;
+  // null : non dite, le front garde celle de la carcasse existante
+  espece: string | null;
+  type: CarcasseType | null;
+  nombre_d_animaux: number | null;
+  commentaire: string | null;
+}
+
+// Ce qu'Albert a compris du message, vérifié par le serveur : le front l'écrit sur la fiche.
+// Chaque champ null n'a pas été dit.
+export interface AssistantFicheData {
+  // relie les écritures du front au log de l'échange (examinateur-assistant-message)
+  assistant_request_id: string;
+  // réponse d'Albert quand le message ne contient aucune donnée de la fiche
+  reply: string;
+  date_mise_a_mort: string | null; // YYYY-MM-DD
+  heure_mise_a_mort_premiere_carcasse: string | null; // HH:mm
+  heure_evisceration_derniere_carcasse: string | null; // HH:mm
+  // commune telle que dite, et les communes du référentiel qui y correspondent (une seule : on la prend)
+  commune_recherchee: string | null;
+  communes_trouvees: Array<string>;
+  // libellé repris de premier_detenteur_options
+  premier_detenteur: string | null;
+  carcasses: Array<AssistantFicheCarcasse>;
+}
+
 export interface AssistantFicheResponse {
   ok: boolean;
-  data: {
-    reply: string;
-    fei: Fei;
-    carcasses: Array<Carcasse>;
-    // commune telle que dite par le chasseur, à faire choisir dans le référentiel côté front
-    commune_recherchee: string | null;
-    // libellé repris de premier_detenteur_options
-    premier_detenteur_choisi: string | null;
-  } | null;
+  data: AssistantFicheData | null;
   error: string;
 }
 

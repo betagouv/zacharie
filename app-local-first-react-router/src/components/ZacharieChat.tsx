@@ -9,7 +9,8 @@ import { track } from '@app/services/matomo';
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import { syncData } from '@app/utils/sync-data';
-import { normalizeVille, searchVilles } from '@app/utils/search-ville';
+import { normalizeVille } from '@app/utils/search-ville';
+import { applyAssistantFiche } from '@app/utils/apply-assistant-fiche';
 import useGetCommunesDeChasseFavorites from '@app/utils/useGetCommunesDeChasseFavorites';
 import {
   useDesignerPremierDetenteur,
@@ -95,17 +96,22 @@ export default function ZacharieChat({
 
   const dictee = useDictee(async (audio) => {
     setIsTranscribing(true);
-    const response = (await API.post({
-      path: `/assistant-fiche/${feiNumero}/transcription`,
-      body: { audio: await blobToBase64(audio), mime_type: audio.type || 'audio/webm' },
-    })) as AssistantTranscriptionResponse;
-    setIsTranscribing(false);
-    if (!response.ok || !response.data) {
-      addAssistantMessage(response.error || "Je n'ai pas pu lire l'enregistrement, veuillez réessayer.");
-      return;
+    try {
+      const response = (await API.post({
+        path: `/assistant-fiche/${feiNumero}/transcription`,
+        body: { audio: await blobToBase64(audio), mime_type: audio.type || 'audio/webm' },
+      })) as AssistantTranscriptionResponse;
+      if (!response.ok || !response.data) {
+        addAssistantMessage(response.error || "Je n'ai pas pu lire l'enregistrement, veuillez réessayer.");
+        return;
+      }
+      const text = response.data.text;
+      setDraft((current) => [current.trim(), text].filter(Boolean).join(' '));
+    } catch {
+      addAssistantMessage("Je n'ai pas pu lire l'enregistrement, veuillez réessayer.");
+    } finally {
+      setIsTranscribing(false);
     }
-    const text = response.data.text;
-    setDraft((current) => [current.trim(), text].filter(Boolean).join(' '));
   });
 
   useEffect(() => {
@@ -144,7 +150,7 @@ export default function ZacharieChat({
     setIsSending(true);
     track('assistant-zacharie', 'envoyer-message');
 
-    // le serveur écrit sur la fiche : elle et ses carcasses locales doivent y être avant
+    // Albert reçoit l'état de la fiche lu en base : les saisies locales doivent y être avant
     if (!useZustandStore.getState().dataIsSynced) await syncData('assistant-zacharie');
 
     const response = (await API.post({
@@ -161,39 +167,37 @@ export default function ZacharieChat({
       return;
     }
 
-    const {
-      reply,
-      fei: savedFei,
-      carcasses: savedCarcasses,
-      commune_recherchee,
-      premier_detenteur_choisi,
-    } = response.data;
-    useZustandStore.setState((state) => ({
-      feis: { ...state.feis, [savedFei.numero]: savedFei },
-      carcasses: {
-        ...state.carcasses,
-        ...Object.fromEntries(savedCarcasses.map((carcasse) => [carcasse.zacharie_carcasse_id, carcasse])),
-      },
-    }));
-    if (reply) addAssistantMessage(reply);
+    const data = response.data;
+    if (data.reply) {
+      addAssistantMessage(data.reply);
+      return;
+    }
+    const lignes = await applyAssistantFiche(feiNumero, data, user);
+    if (lignes.length > 0) {
+      addAssistantMessage(["C'est noté :", ...lignes.map((ligne) => `- ${ligne}`)].join('\n'));
+      syncData('assistant-zacharie');
+    } else if (!data.commune_recherchee && !data.premier_detenteur) {
+      addAssistantMessage("Je n'ai trouvé aucune donnée à enregistrer.");
+    }
 
     // Albert peut redonner ce qui est déjà choisi : on ne redemande pas
     const currentFei = useZustandStore.getState().feis[feiNumero];
     const premierDetenteur = premierDetenteurChoices.find(
-      (choice) => choice.label === premier_detenteur_choisi
+      (choice) => choice.label === data.premier_detenteur
     );
     if (premierDetenteur && premierDetenteur.label !== currentFei.premier_detenteur_name_cache) {
       selectPremierDetenteur(premierDetenteur, false);
     }
 
+    const commune_recherchee = data.commune_recherchee;
     const communeDejaChoisie =
       !!commune_recherchee &&
       !!currentFei.commune_mise_a_mort &&
       normalizeVille(currentFei.commune_mise_a_mort).includes(normalizeVille(commune_recherchee));
     if (commune_recherchee && !communeDejaChoisie) {
-      const recherche = normalizeVille(commune_recherchee);
-      const favorites = communesFavorites.filter((commune) => normalizeVille(commune).includes(recherche));
-      const options = [...new Set([...favorites, ...searchVilles(commune_recherchee, 5)])].slice(0, 5);
+      // les communes de chasse favorites passent devant les homonymes
+      const favorites = data.communes_trouvees.filter((commune) => communesFavorites.includes(commune));
+      const options = favorites.length === 1 ? favorites : data.communes_trouvees;
       if (options.length === 1) {
         selectCommune(options[0], false);
       } else if (options.length > 1) {

@@ -1,19 +1,33 @@
 import express from 'express';
 import passport from 'passport';
-import { Prisma, User, UserRoles } from '@prisma/client';
+import { Fei, Prisma, User, UserRoles } from '@prisma/client';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { catchErrors } from '~/middlewares/errors';
 import { assistantFicheRateLimit } from '~/middlewares/auth-rate-limit';
 import prisma from '~/prisma';
 import { ALBERT_API_KEY, ALBERT_MODEL } from '~/config';
-import { applyFicheData, extractFicheData, type AssistantChatMessage } from '~/service/assistant-fiche';
-import type { AssistantFicheResponse, AssistantTranscriptionResponse } from '~/types/responses';
-import { SyncRejectedError } from '~/utils/sync-errors';
+import { extractFicheData, resolveFicheData, type AssistantChatMessage } from '~/service/assistant-fiche';
+import type {
+  AssistantFicheData,
+  AssistantFicheResponse,
+  AssistantTranscriptionResponse,
+} from '~/types/responses';
 import { transcribeAudio } from '~/third-parties/albert';
 import { capture } from '~/third-parties/sentry';
 
 const router: express.Router = express.Router();
+
+function getRefusFiche(fei: Fei | null, user: User) {
+  if (!fei || fei.deleted_at || fei.examinateur_initial_user_id !== user.id) {
+    return { status: 404, error: 'Fiche introuvable' };
+  }
+  // une fois l'examen validé, la fiche part au premier détenteur : on ne la remplit plus ici
+  if (fei.examinateur_initial_approbation_mise_sur_le_marche) {
+    return { status: 403, error: 'La fiche est déjà validée' };
+  }
+  return null;
+}
 
 const bodySchema = z.object({
   messages: z
@@ -47,13 +61,9 @@ router.post(
       return;
     }
     const fei = await prisma.fei.findUnique({ where: { numero: req.params.fei_numero } });
-    if (!fei || fei.deleted_at || fei.examinateur_initial_user_id !== user.id) {
-      res.status(404).send({ ok: false, data: null, error: 'Fiche introuvable' });
-      return;
-    }
-    // une fois l'examen validé, la fiche part au premier détenteur : on ne la remplit plus ici
-    if (fei.examinateur_initial_approbation_mise_sur_le_marche) {
-      res.status(403).send({ ok: false, data: null, error: 'La fiche est déjà validée' });
+    const refus = getRefusFiche(fei, user);
+    if (!fei || refus) {
+      res.status(refus!.status).send({ ok: false, data: null, error: refus!.error });
       return;
     }
     const existingCarcasses = await prisma.carcasse.findMany({
@@ -63,14 +73,14 @@ router.post(
 
     const requestId = randomUUID();
     const messages = body.data.messages as Array<AssistantChatMessage>;
-    // un log par échange : le message, ce qu'Albert en a compris et la réponse, écrit ou non
+    // un log par échange : le message, ce qu'Albert en a compris et ce qui est renvoyé au front
     const exchangeLog: Record<string, unknown> = {
       assistant_request_id: requestId,
       model: ALBERT_MODEL,
       user_message: messages[messages.length - 1].content,
       tool_arguments: null,
       validation_issues: null,
-      reply: null,
+      result: null,
       error: null,
     };
     try {
@@ -83,48 +93,23 @@ router.post(
       );
       exchangeLog.tool_arguments = toolArguments;
       exchangeLog.validation_issues = issues;
-      if (!extraction) {
-        exchangeLog.reply = text;
-        res.status(200).send({
-          ok: true,
-          data: {
+      const data: AssistantFicheData = extraction
+        ? { assistant_request_id: requestId, reply: '', ...resolveFicheData(extraction) }
+        : {
+            assistant_request_id: requestId,
             reply: text,
-            fei,
-            carcasses: existingCarcasses,
+            date_mise_a_mort: null,
+            heure_mise_a_mort_premiere_carcasse: null,
+            heure_evisceration_derniere_carcasse: null,
             commune_recherchee: null,
-            premier_detenteur_choisi: null,
-          },
-          error: '',
-        });
-        return;
-      }
-
-      const result = await applyFicheData(extraction, fei, existingCarcasses, user, requestId);
-      // la commune et le propriétaire initial sont confirmés par le front, qui les enregistre
-      const reply =
-        result.lignes.length > 0
-          ? ["C'est noté :", ...result.lignes.map((ligne) => `- ${ligne}`)].join('\n')
-          : result.commune_recherchee || result.premier_detenteur_choisi
-            ? ''
-            : "Je n'ai trouvé aucune donnée à enregistrer.";
-      exchangeLog.reply = reply;
-      res.status(200).send({
-        ok: true,
-        data: {
-          reply,
-          fei: result.fei,
-          carcasses: result.carcasses,
-          commune_recherchee: result.commune_recherchee,
-          premier_detenteur_choisi: result.premier_detenteur_choisi,
-        },
-        error: '',
-      });
+            communes_trouvees: [],
+            premier_detenteur: null,
+            carcasses: [],
+          };
+      exchangeLog.result = data;
+      res.status(200).send({ ok: true, data, error: '' });
     } catch (error) {
       exchangeLog.error = (error as Error).message;
-      if (error instanceof SyncRejectedError) {
-        res.status(403).send({ ok: false, data: null, error: error.message });
-        return;
-      }
       throw error;
     } finally {
       await prisma.log
@@ -181,8 +166,9 @@ router.post(
       return;
     }
     const fei = await prisma.fei.findUnique({ where: { numero: req.params.fei_numero } });
-    if (!fei || fei.deleted_at || fei.examinateur_initial_user_id !== user.id) {
-      res.status(404).send({ ok: false, data: null, error: 'Fiche introuvable' });
+    const refus = getRefusFiche(fei, user);
+    if (refus) {
+      res.status(refus.status).send({ ok: false, data: null, error: refus.error });
       return;
     }
     const text = await transcribeAudio(audio, body.data.mime_type);
