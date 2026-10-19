@@ -18,6 +18,16 @@ import { capture } from '~/third-parties/sentry';
 
 const router: express.Router = express.Router();
 
+function getRefusUtilisateur(user: User, indisponible: string) {
+  if (!user.roles.includes(UserRoles.CHASSEUR) || !user.numero_cfei) {
+    return { status: 403, error: 'Seul un examinateur initial peut utiliser Zacharie' };
+  }
+  if (!ALBERT_API_KEY) {
+    return { status: 503, error: indisponible };
+  }
+  return null;
+}
+
 function getRefusFiche(fei: Fei | null, user: User) {
   if (!fei || fei.deleted_at || fei.examinateur_initial_user_id !== user.id) {
     return { status: 404, error: 'Fiche introuvable' };
@@ -44,15 +54,9 @@ router.post(
   assistantFicheRateLimit,
   catchErrors(async (req: express.Request, res: express.Response<AssistantFicheResponse>) => {
     const user = req.user as User;
-    const isExaminateurInitial = user.roles.includes(UserRoles.CHASSEUR) && !!user.numero_cfei;
-    if (!isExaminateurInitial) {
-      res
-        .status(403)
-        .send({ ok: false, data: null, error: 'Seul un examinateur initial peut utiliser Zacharie' });
-      return;
-    }
-    if (!ALBERT_API_KEY) {
-      res.status(503).send({ ok: false, data: null, error: 'Assistant indisponible' });
+    const refusUtilisateur = getRefusUtilisateur(user, 'Assistant indisponible');
+    if (refusUtilisateur) {
+      res.status(refusUtilisateur.status).send({ ok: false, data: null, error: refusUtilisateur.error });
       return;
     }
     const body = bodySchema.safeParse(req.body);
@@ -144,15 +148,9 @@ router.post(
   assistantFicheRateLimit,
   catchErrors(async (req: express.Request, res: express.Response<AssistantTranscriptionResponse>) => {
     const user = req.user as User;
-    const isExaminateurInitial = user.roles.includes(UserRoles.CHASSEUR) && !!user.numero_cfei;
-    if (!isExaminateurInitial) {
-      res
-        .status(403)
-        .send({ ok: false, data: null, error: 'Seul un examinateur initial peut utiliser Zacharie' });
-      return;
-    }
-    if (!ALBERT_API_KEY) {
-      res.status(503).send({ ok: false, data: null, error: 'Dictée indisponible' });
+    const refusUtilisateur = getRefusUtilisateur(user, 'Dictée indisponible');
+    if (refusUtilisateur) {
+      res.status(refusUtilisateur.status).send({ ok: false, data: null, error: refusUtilisateur.error });
       return;
     }
     const body = transcriptionBodySchema.safeParse(req.body);
