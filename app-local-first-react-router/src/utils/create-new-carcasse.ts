@@ -125,7 +125,8 @@ export async function createNewCarcasse({
       fei.examinateur_initial_approbation_mise_sur_le_marche,
     examinateur_initial_date_approbation_mise_sur_le_marche:
       fei.examinateur_initial_date_approbation_mise_sur_le_marche,
-    // le premier détenteur a pu être choisi avant l'ajout de la carcasse
+    // le premier détenteur est choisi sur la fiche avant les carcasses : une carcasse ajoutée après la
+    // validation de l'examen ne repasse plus par updateFei pour le recevoir
     premier_detenteur_offline: fei.premier_detenteur_offline,
     premier_detenteur_user_id: fei.premier_detenteur_user_id,
     premier_detenteur_entity_id: fei.premier_detenteur_entity_id,

@@ -1,9 +1,9 @@
 -- Recopie du premier détenteur de la fiche sur les carcasses qui ne l'ont pas.
 --
--- Avant : `createNewCarcasse` créait toujours la carcasse avec premier_detenteur_* à NULL, même
---         quand le premier détenteur était déjà choisi sur la fiche (carcasse ajoutée après le
---         choix du propriétaire initial ou après la validation de l'examen initial). Rien ne
---         recopiait ensuite la fiche sur cette carcasse.
+-- Avant : `createNewCarcasse` créait toujours la carcasse avec premier_detenteur_* à NULL, alors
+--         que le premier détenteur est choisi sur la fiche avant les carcasses. C'est la case de
+--         validation de l'examen (updateFei → mapFeiFieldsToCarcasse) qui les recopiait ensuite.
+--         Une carcasse ajoutée après cette validation n'était donc jamais rattrapée.
 -- Effet : la carte de la fiche affiche « À renseigner » au lieu du premier détenteur (le nom est lu
 --         sur une carcasse), et ces carcasses manquent dans les filtres / exports par premier
 --         détenteur.
