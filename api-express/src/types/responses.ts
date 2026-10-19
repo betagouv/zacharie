@@ -447,6 +447,26 @@ export interface SyncResponse {
   error: string;
 }
 
+export interface AssistantFicheResponse {
+  ok: boolean;
+  data: {
+    reply: string;
+    fei: Fei;
+    carcasses: Array<Carcasse>;
+    // commune telle que dite par le chasseur, à faire choisir dans le référentiel côté front
+    commune_recherchee: string | null;
+    // libellé repris de premier_detenteur_options
+    premier_detenteur_choisi: string | null;
+  } | null;
+  error: string;
+}
+
+export interface AssistantTranscriptionResponse {
+  ok: boolean;
+  data: { text: string } | null;
+  error: string;
+}
+
 export interface OfficialCfei {
   numero_cfei: string;
   nom: string | null;

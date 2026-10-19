@@ -82,6 +82,8 @@ const ALBERT_API_KEY = process.env.ALBERT_API_KEY ?? '';
 // modèle d'enquête (raisonnement + outils, texte seul) et modèle de vision qui décrit les captures d'écran
 const ALBERT_MODEL = process.env.ALBERT_MODEL ?? 'openai/gpt-oss-120b';
 const ALBERT_VISION_MODEL = process.env.ALBERT_VISION_MODEL ?? 'google/gemma-4-31B-it';
+// Dictée de l'assistant de saisie de la fiche (cf GET /v1/models, type `automatic-speech-recognition`)
+const ALBERT_TRANSCRIPTION_MODEL = process.env.ALBERT_TRANSCRIPTION_MODEL ?? 'whisper-large-v3';
 const ALBERT_READONLY_DATABASE_URL = process.env.ALBERT_READONLY_DATABASE_URL ?? '';
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN ?? '';
 const GITHUB_REPO = 'betagouv/zacharie';
@@ -129,6 +131,7 @@ export {
   ALBERT_API_KEY,
   ALBERT_MODEL,
   ALBERT_VISION_MODEL,
+  ALBERT_TRANSCRIPTION_MODEL,
   ALBERT_READONLY_DATABASE_URL,
   GITHUB_TOKEN,
   GITHUB_REPO,

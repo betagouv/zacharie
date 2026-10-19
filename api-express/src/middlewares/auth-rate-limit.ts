@@ -36,3 +36,20 @@ export const adminRateLimit = rateLimit({
     data: null,
   },
 });
+
+// Chaque message ou dictée à l'assistant Zacharie est un appel Albert : on compte par utilisateur (la route
+// est authentifiée, donc ce middleware passe après passport)
+export const assistantFicheRateLimit = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 heure
+  max: process.env.NODE_ENV === 'production' ? 60 : 1000,
+  keyGenerator: (req) =>
+    `user:${(req.user as { id: string } | undefined)?.id ?? ipKeyGenerator(req.ip ?? '')}`,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: () => process.env.NODE_ENV === 'test',
+  message: {
+    ok: false,
+    error: 'Trop de messages envoyés à Zacharie, veuillez réessayer dans une heure.',
+    data: null,
+  },
+});
