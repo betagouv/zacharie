@@ -125,10 +125,11 @@ export async function createNewCarcasse({
       fei.examinateur_initial_approbation_mise_sur_le_marche,
     examinateur_initial_date_approbation_mise_sur_le_marche:
       fei.examinateur_initial_date_approbation_mise_sur_le_marche,
-    premier_detenteur_offline: null,
-    premier_detenteur_user_id: null,
-    premier_detenteur_entity_id: null,
-    premier_detenteur_name_cache: null,
+    // le premier détenteur a pu être choisi avant l'ajout de la carcasse
+    premier_detenteur_offline: fei.premier_detenteur_offline,
+    premier_detenteur_user_id: fei.premier_detenteur_user_id,
+    premier_detenteur_entity_id: fei.premier_detenteur_entity_id,
+    premier_detenteur_name_cache: fei.premier_detenteur_name_cache,
     intermediaire_closed_at: null,
     intermediaire_closed_by_user_id: null,
     intermediaire_closed_by_entity_id: null,
