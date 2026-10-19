@@ -59,10 +59,16 @@ export function searchVilles(search: string, maxResults = DEFAULT_MAX_RESULTS): 
   if (!query) {
     return [];
   }
-  // Un code postal ne peut être qu'en tête de recherche : dans un nom de commune les chiffres
-  // sont toujours en suffixe d'arrondissement (« MARSEILLE 01 »).
-  const codePostal = query.match(/^\d{1,5}/)?.[0] ?? '';
-  const nameQuery = query.slice(codePostal.length).trim();
+  // Un code postal est en tête de recherche, ou en fin s'il est complet (« Moulins 03000 ») : dans un
+  // nom de commune les chiffres sont toujours en suffixe d'arrondissement, sur deux chiffres (« MARSEILLE 01 »).
+  const codePostalEnTete = query.match(/^\d{1,5}/)?.[0];
+  const codePostalEnFin = codePostalEnTete ? undefined : query.match(/ (\d{5})$/)?.[1];
+  const codePostal = codePostalEnTete ?? codePostalEnFin ?? '';
+  const nameQuery = codePostalEnTete
+    ? query.slice(codePostalEnTete.length).trim()
+    : codePostalEnFin
+      ? query.slice(0, -codePostalEnFin.length).trim()
+      : query;
   const tokens = nameQuery.split(' ').filter(Boolean);
 
   const scored = scoreVilles(codePostal, nameQuery, tokens);

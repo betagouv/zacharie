@@ -58,24 +58,23 @@ const extractionSchema = z.object({
   premier_detenteur: z.string().trim().min(1).max(200).optional().nullable().catch(null),
   heure_mise_a_mort_premiere_carcasse: heureSchema.optional().nullable().catch(null),
   heure_evisceration_derniere_carcasse: heureSchema.optional().nullable().catch(null),
-  carcasses: z
-    .array(
-      z.object({
-        numero_bracelet: z.string().trim().min(1).max(50),
-        espece: z
-          .enum([...GRAND_GIBIER, ...PETIT_GIBIER] as [string, ...string[]])
-          .optional()
-          .nullable(),
-        nombre_d_animaux: z.number().int().min(1).max(1000).optional().nullable(),
-        commentaire: z.string().trim().max(500).optional().nullable(),
-      })
-    )
-    .max(300)
-    .optional()
-    .nullable(),
+  // chaque carcasse est vérifiée à part (carcasseSchema) : une carcasse invalide n'écarte pas le reste
+  carcasses: z.array(z.unknown()).max(300).optional().nullable().catch(null),
 });
 
-export type AssistantExtraction = z.infer<typeof extractionSchema>;
+const carcasseSchema = z.object({
+  numero_bracelet: z.string().trim().min(1).max(50),
+  espece: z
+    .enum([...GRAND_GIBIER, ...PETIT_GIBIER] as [string, ...string[]])
+    .optional()
+    .nullable(),
+  nombre_d_animaux: z.number().int().min(1).max(1000).optional().nullable(),
+  commentaire: z.string().trim().max(500).optional().nullable(),
+});
+
+export type AssistantExtraction = Omit<z.infer<typeof extractionSchema>, 'carcasses'> & {
+  carcasses: Array<z.infer<typeof carcasseSchema>>;
+};
 
 // le propriétaire initial ne peut être qu'un de ceux que le formulaire propose : on les donne en liste fermée
 const remplirFicheTool = (premierDetenteurOptions: Array<string>): AlbertTool => ({
@@ -237,11 +236,28 @@ export async function extractFicheData(
       issues: result.error.issues,
     };
   }
-  const extraction = result.data;
+  const carcassesValides: AssistantExtraction['carcasses'] = [];
+  const carcassesIssues: Array<z.ZodIssue> = [];
+  for (const item of result.data.carcasses ?? []) {
+    const carcasse = carcasseSchema.safeParse(item);
+    if (carcasse.success) carcassesValides.push(carcasse.data);
+    else carcassesIssues.push(...carcasse.error.issues);
+  }
+  if (carcassesIssues.length > 0) {
+    capture(new Error('Assistant fiche : carcasse invalide dans la sortie Albert'), {
+      extra: { issues: carcassesIssues, feiNumero: fei.numero },
+    });
+  }
+  const extraction: AssistantExtraction = { ...result.data, carcasses: carcassesValides };
   if (extraction.premier_detenteur && !premierDetenteurOptions.includes(extraction.premier_detenteur)) {
     extraction.premier_detenteur = null;
   }
-  return { extraction, text: '', toolArguments, issues: null };
+  return {
+    extraction,
+    text: '',
+    toolArguments,
+    issues: carcassesIssues.length > 0 ? carcassesIssues : null,
+  };
 }
 
 const MAX_COMMUNES_PROPOSEES = 5;
@@ -262,8 +278,8 @@ export function resolveFicheData(
     : [];
 
   // un même numéro de marquage dit deux fois dans le message : la dernière mention l'emporte
-  const carcassesParBracelet = new Map<string, NonNullable<AssistantExtraction['carcasses']>[number]>();
-  for (const carcasse of extraction.carcasses ?? []) {
+  const carcassesParBracelet = new Map<string, AssistantExtraction['carcasses'][number]>();
+  for (const carcasse of extraction.carcasses) {
     const precedente = carcassesParBracelet.get(carcasse.numero_bracelet);
     carcassesParBracelet.set(carcasse.numero_bracelet, {
       numero_bracelet: carcasse.numero_bracelet,

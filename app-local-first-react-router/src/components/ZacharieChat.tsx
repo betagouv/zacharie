@@ -74,16 +74,16 @@ export default function ZacharieChat({
       choices.push({ label, chipLabel: label, params: { ownerEntity: entity } });
     }
     for (const detenteur of Object.values(detenteursInitiaux)) {
+      // soi-même : toujours le choix « Moi » ci-dessous
+      if (detenteur.id === user.id) continue;
       const label = `${detenteur.prenom} ${detenteur.nom_de_famille}`;
       choices.push({ label, chipLabel: label, params: { ownerUser: detenteur } });
     }
-    if (!detenteursInitiaux[user.id]) {
-      choices.push({
-        label: `${user.prenom} ${user.nom_de_famille}`,
-        chipLabel: 'Moi',
-        params: { isMe: true },
-      });
-    }
+    choices.push({
+      label: `${user.prenom} ${user.nom_de_famille}`,
+      chipLabel: 'Moi',
+      params: { isMe: true },
+    });
     return choices.filter((choice) => !!choice.label);
   }, [associationsDeChasse, detenteursInitiaux, user]);
   // les messages envoyés au serveur : l'accueil n'en fait pas partie

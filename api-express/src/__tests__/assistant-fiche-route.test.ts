@@ -154,6 +154,12 @@ describe('POST /assistant-fiche/:fei_numero', () => {
     });
   });
 
+  test('trouve la commune dite avec son code postal après le nom', async () => {
+    albertCalls({ commune_mise_a_mort: 'Moulins 03000' });
+    const res = await post(message);
+    expect(res.body.data.communes_trouvees).toEqual(['03000 MOULINS']);
+  });
+
   test('propose les communes homonymes à choisir', async () => {
     albertCalls({ commune_mise_a_mort: 'Moulins' });
     const res = await post(message);
@@ -196,12 +202,27 @@ describe('POST /assistant-fiche/:fei_numero', () => {
     expect(resInconnu.body.data.premier_detenteur).toBeNull();
   });
 
-  test("n'écrit rien si Albert renvoie une espèce hors liste", async () => {
-    albertCalls({ carcasses: [{ numero_bracelet: 'JD-03-001', espece: 'Ours' }] });
+  test('écarte une carcasse à l’espèce hors liste et garde le reste', async () => {
+    albertCalls({
+      heure_mise_a_mort_premiere_carcasse: '07:30',
+      carcasses: [
+        { numero_bracelet: 'JD-03-001', espece: 'Ours' },
+        { numero_bracelet: 'JD-03-002', espece: 'Chevreuil' },
+      ],
+    });
     const res = await post(message);
     expect(res.status).toBe(200);
-    expect(res.body.data.carcasses).toEqual([]);
-    expect(res.body.data.reply).toContain('reformuler');
+    expect(res.body.data.reply).toBe('');
+    expect(res.body.data.heure_mise_a_mort_premiere_carcasse).toBe('07:30');
+    expect(res.body.data.carcasses).toEqual([
+      {
+        numero_bracelet: 'JD-03-002',
+        espece: 'Chevreuil',
+        type: CarcasseType.GROS_GIBIER,
+        nombre_d_animaux: 1,
+        commentaire: null,
+      },
+    ]);
     // la sortie refusée reste lisible dans le log de l'échange
     const exchange = vi.mocked(prisma.log.createMany).mock.calls[0][0]!.data as Array<{
       history: Record<string, unknown>;
