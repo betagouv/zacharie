@@ -1,4 +1,6 @@
-import villes from '@app/data/villes.json';
+// Source : api-express. Copié tel quel dans le front (hors ligne) par scripts/copy-schema-to-app-side.js :
+// on le modifie ici, jamais dans la copie. Import relatif pour que les deux copies soient identiques.
+import villes from '../data/villes.json';
 
 // Le fichier est volumineux (~39 000 communes) : les clés sont abrégées pour alléger le bundle.
 type Ville = { c: string; v: string };

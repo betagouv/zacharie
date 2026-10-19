@@ -1,31 +1,18 @@
-import {
-  Carcasse,
-  CarcasseStatus,
-  CarcasseType,
-  Fei,
-  FeiOwnerRole,
-  Prisma,
-  User,
-  UserRoles,
-} from '@prisma/client';
+import { Carcasse, CarcasseType, Fei, User } from '@prisma/client';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import { z } from 'zod';
-import prisma from '~/prisma';
 import { albertChatCompletion, type AlbertTool } from '~/third-parties/albert';
 import type { AlbertMessage } from '~/types/bug-investigation';
-import { syncFei } from '~/utils/sync-fei';
-import { syncCarcasse, type SaveCarcasseResult } from '~/utils/sync-carcasse';
-import { createSyncScope } from '~/utils/sync-scope';
-import { runFeiUpdateSideEffects } from '~/utils/fei-side-effects';
-import { runCarcasseUpdateSideEffects } from '~/utils/carcasse-side-effects';
+import type { AssistantFicheCarcasse, AssistantFicheData } from '~/types/responses';
+import { normalizeVille, searchVilles } from '~/utils/search-ville';
 import { capture } from '~/third-parties/sentry';
 
 dayjs.extend(utc);
 
 // Assistant de saisie d'une fiche (easter egg « zacharie ») : le chasseur tape ou dicte tout ce
-// qu'il sait, Albert en extrait les données, et on les écrit par les mêmes fonctions que /sync
-// (droits, versions, effets de bord). On ajoute ou on modifie, on ne supprime jamais.
+// qu'il sait, Albert en extrait les données, le serveur les vérifie (espèces, dates, heures, commune,
+// propriétaire initial) et le front les écrit sur la fiche. On ajoute ou on modifie, on ne supprime jamais.
 
 export const GRAND_GIBIER = [
   'Cerf élaphe',
@@ -257,203 +244,58 @@ export async function extractFicheData(
   return { extraction, text: '', toolArguments, issues: null };
 }
 
-export type AssistantApplyResult = {
-  fei: Fei;
-  carcasses: Array<Carcasse>;
-  // commune telle que dite : le front la ramène au référentiel des communes et la fait choisir
-  commune_recherchee: string | null;
-  // choisi par le front comme au clic sur le formulaire (transmission des carcasses, log)
-  premier_detenteur_choisi: string | null;
-  lignes: Array<string>;
-};
+const MAX_COMMUNES_PROPOSEES = 5;
 
-export async function applyFicheData(
-  extraction: AssistantExtraction,
-  existingFei: Fei,
-  existingCarcasses: Array<Carcasse>,
-  user: User,
-  // relie chaque écriture au log de l'échange qui l'a déclenchée (examinateur-assistant-message)
-  requestId: string
-): Promise<AssistantApplyResult> {
-  const scope = await createSyncScope(user);
-  const lignes: Array<string> = [];
+// Données vérifiées par le serveur, que le front écrit sur la fiche comme le formulaire (local-first,
+// mêmes fonctions, mêmes logs) : le serveur n'écrit que le log de l'échange.
+export function resolveFicheData(
+  extraction: AssistantExtraction
+): Omit<AssistantFicheData, 'reply' | 'assistant_request_id'> {
+  // une commune dite précisément (« Moulins 03000 ») ne donne qu'un résultat : le front la choisit
+  // directement ; sinon il fait choisir parmi les communes trouvées
+  const communeRecherchee = extraction.commune_mise_a_mort ?? null;
+  const communesTrouvees = communeRecherchee ? searchVilles(communeRecherchee, MAX_COMMUNES_PROPOSEES) : [];
+  const villeExacte = communeRecherchee
+    ? communesTrouvees.filter((commune) =>
+        normalizeVille(commune).endsWith(` ${normalizeVille(communeRecherchee)}`)
+      )
+    : [];
 
-  // created_by_user_id n'est écrit qu'à la création de la fiche, qui existe déjà ici
-  const feiBody = {
-    numero: existingFei.numero,
-    version: existingFei.version,
-  } as Prisma.FeiUncheckedCreateInput;
-  let feiChanged = false;
-  // Albert relit tout l'échange et renvoie souvent ce qui est déjà enregistré : on n'écrit que ce qui change
-  const isNewDate =
-    !!extraction.date_mise_a_mort &&
-    (!existingFei.date_mise_a_mort ||
-      dayjs.utc(existingFei.date_mise_a_mort).format('YYYY-MM-DD') !== extraction.date_mise_a_mort);
-  const heureMiseAMort = formatHeure(extraction.heure_mise_a_mort_premiere_carcasse);
-  const heureEvisceration = formatHeure(extraction.heure_evisceration_derniere_carcasse);
-  if (isNewDate) {
-    feiBody.date_mise_a_mort = dayjs.utc(extraction.date_mise_a_mort).startOf('day').toISOString();
-    lignes.push(`Date de la chasse : ${dayjs.utc(extraction.date_mise_a_mort).format('DD/MM/YYYY')}`);
-    feiChanged = true;
-  }
-  if (heureMiseAMort && heureMiseAMort !== existingFei.heure_mise_a_mort_premiere_carcasse) {
-    feiBody.heure_mise_a_mort_premiere_carcasse = heureMiseAMort;
-    lignes.push(`Heure de mise à mort de la première carcasse : ${heureMiseAMort}`);
-    feiChanged = true;
-  }
-  if (heureEvisceration && heureEvisceration !== existingFei.heure_evisceration_derniere_carcasse) {
-    feiBody.heure_evisceration_derniere_carcasse = heureEvisceration;
-    lignes.push(`Heure d'éviscération de la dernière carcasse : ${heureEvisceration}`);
-    feiChanged = true;
-  }
-
-  let savedFei = existingFei;
-  const logs: Array<Prisma.LogCreateManyInput> = [];
-  if (feiChanged) {
-    const { savedFei: fei } = await syncFei(existingFei.numero, feiBody, user, scope);
-    savedFei = fei;
-    const { numero: _numero, version: _version, ...diff } = feiBody;
-    logs.push({
-      user_id: user.id,
-      user_role: UserRoles.CHASSEUR,
-      fei_numero: existingFei.numero,
-      action: 'examinateur-assistant-update-fei',
-      history: historyInput(existingFei, diff, requestId),
-      date: new Date(),
+  // un même numéro de marquage dit deux fois dans le message : la dernière mention l'emporte
+  const carcassesParBracelet = new Map<string, NonNullable<AssistantExtraction['carcasses']>[number]>();
+  for (const carcasse of extraction.carcasses ?? []) {
+    const precedente = carcassesParBracelet.get(carcasse.numero_bracelet);
+    carcassesParBracelet.set(carcasse.numero_bracelet, {
+      numero_bracelet: carcasse.numero_bracelet,
+      espece: carcasse.espece ?? precedente?.espece ?? null,
+      nombre_d_animaux: carcasse.nombre_d_animaux ?? precedente?.nombre_d_animaux ?? null,
+      commentaire: carcasse.commentaire || precedente?.commentaire || null,
     });
   }
-
-  const carcasseResults: Array<SaveCarcasseResult> = [];
-  for (const item of extraction.carcasses ?? []) {
-    const existingCarcasse = existingCarcasses.find((c) => c.numero_bracelet === item.numero_bracelet);
-    const espece = item.espece ?? existingCarcasse?.espece ?? null;
-    if (!espece) {
-      lignes.push(`⚠️ Carcasse ${item.numero_bracelet} non ajoutée : espèce manquante`);
-      continue;
-    }
-    const isPetitGibier = PETIT_GIBIER.includes(espece);
-    if (existingCarcasse) {
-      const nombre = isPetitGibier ? (item.nombre_d_animaux ?? existingCarcasse.nombre_d_animaux) : 1;
-      const isUnchanged =
-        espece === existingCarcasse.espece &&
-        nombre === existingCarcasse.nombre_d_animaux &&
-        (!item.commentaire || item.commentaire === existingCarcasse.examinateur_commentaire);
-      if (isUnchanged) continue;
-    }
-    const carcasseBody: Prisma.CarcasseUncheckedCreateInput = existingCarcasse
-      ? {
-          zacharie_carcasse_id: existingCarcasse.zacharie_carcasse_id,
-          fei_numero: existingFei.numero,
-          numero_bracelet: existingCarcasse.numero_bracelet,
-          version: existingCarcasse.version,
-        }
-      : {
-          zacharie_carcasse_id: `${existingFei.numero}_${item.numero_bracelet}`,
-          fei_numero: existingFei.numero,
-          numero_bracelet: item.numero_bracelet,
-          date_mise_a_mort: savedFei.date_mise_a_mort,
-          heure_mise_a_mort_premiere_carcasse_fei: savedFei.heure_mise_a_mort_premiere_carcasse,
-          heure_evisceration_derniere_carcasse_fei: savedFei.heure_evisceration_derniere_carcasse,
-          examinateur_initial_user_id: user.id,
-          examinateur_initial_offline: false,
-          examinateur_anomalies_carcasse: [],
-          examinateur_anomalies_abats: [],
-          examinateur_signed_at: new Date(),
-          svi_carcasse_status: CarcasseStatus.SANS_DECISION,
-          current_owner_user_id: user.id,
-          current_owner_user_name_cache: `${user.prenom} ${user.nom_de_famille}`,
-          current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
-          created_at: new Date(),
-        };
-    if (item.espece || !existingCarcasse) {
-      carcasseBody.espece = espece;
-      carcasseBody.type = isPetitGibier ? CarcasseType.PETIT_GIBIER : CarcasseType.GROS_GIBIER;
-    }
-    if (!existingCarcasse || item.espece || item.nombre_d_animaux) {
-      carcasseBody.nombre_d_animaux = isPetitGibier
-        ? (item.nombre_d_animaux ?? existingCarcasse?.nombre_d_animaux ?? 1)
-        : 1;
-    }
-    if (item.commentaire) {
-      carcasseBody.examinateur_commentaire = item.commentaire;
-    }
-    const result = await syncCarcasse(
-      existingFei.numero,
-      carcasseBody.zacharie_carcasse_id,
-      carcasseBody,
-      user,
-      scope,
-      { existingFei: savedFei, existingCarcasse: existingCarcasse ?? null }
-    );
-    carcasseResults.push(result);
-    const { zacharie_carcasse_id: _id, fei_numero: _fei, version: _v, ...diff } = carcasseBody;
-    logs.push({
-      user_id: user.id,
-      user_role: UserRoles.CHASSEUR,
-      fei_numero: existingFei.numero,
-      zacharie_carcasse_id: carcasseBody.zacharie_carcasse_id,
-      action: existingCarcasse
-        ? 'examinateur-assistant-carcasse-edit'
-        : 'examinateur-assistant-carcasse-create',
-      history: historyInput(existingCarcasse ?? null, diff, requestId),
-      date: new Date(),
-    });
-    const nombre = isPetitGibier
-      ? ` — ${carcasseBody.nombre_d_animaux ?? existingCarcasse?.nombre_d_animaux} animaux`
-      : '';
-    lignes.push(
-      `${existingCarcasse ? 'Carcasse modifiée' : 'Carcasse ajoutée'} : ${item.numero_bracelet} — ${espece}${nombre}`
-    );
-  }
-
-  if (logs.length > 0) {
-    await prisma.log.createMany({ data: logs });
-  }
-
-  // effets de bord après toutes les écritures, comme /sync
-  for (const result of carcasseResults) {
-    try {
-      await runCarcasseUpdateSideEffects(result.existingCarcasse, result.savedCarcasse, user);
-    } catch (error) {
-      capture(error as Error, { extra: { context: 'assistant_carcasse_side_effects' }, user });
-    }
-  }
-  if (feiChanged) {
-    try {
-      await runFeiUpdateSideEffects(existingFei, savedFei, user);
-    } catch (error) {
-      capture(error as Error, { extra: { context: 'assistant_fei_side_effects' }, user });
-    }
-  }
-
-  const carcasses = await prisma.carcasse.findMany({
-    where: { fei_numero: existingFei.numero, deleted_at: null },
-    orderBy: { created_at: 'asc' },
+  const carcasses: Array<AssistantFicheCarcasse> = [...carcassesParBracelet.values()].map((carcasse) => {
+    const isPetitGibier = !!carcasse.espece && PETIT_GIBIER.includes(carcasse.espece);
+    return {
+      numero_bracelet: carcasse.numero_bracelet,
+      espece: carcasse.espece ?? null,
+      type: carcasse.espece ? (isPetitGibier ? CarcasseType.PETIT_GIBIER : CarcasseType.GROS_GIBIER) : null,
+      // le nombre d'animaux n'a de sens que pour un lot de petit gibier
+      nombre_d_animaux: carcasse.espece && !isPetitGibier ? 1 : (carcasse.nombre_d_animaux ?? null),
+      commentaire: carcasse.commentaire || null,
+    };
   });
-  const fei = (await prisma.fei.findUnique({ where: { numero: existingFei.numero } })) ?? savedFei;
 
   return {
-    fei,
+    date_mise_a_mort: extraction.date_mise_a_mort ?? null,
+    heure_mise_a_mort_premiere_carcasse: formatHeure(extraction.heure_mise_a_mort_premiere_carcasse),
+    heure_evisceration_derniere_carcasse: formatHeure(extraction.heure_evisceration_derniere_carcasse),
+    commune_recherchee: communeRecherchee,
+    communes_trouvees: villeExacte.length === 1 ? villeExacte : communesTrouvees,
+    premier_detenteur: extraction.premier_detenteur ?? null,
     carcasses,
-    commune_recherchee: extraction.commune_mise_a_mort ?? null,
-    premier_detenteur_choisi: extraction.premier_detenteur ?? null,
-    lignes,
   };
 }
 
-function historyInput(
-  before: Record<string, unknown> | null,
-  after: Record<string, unknown>,
-  requestId: string
-) {
-  return {
-    before: before ? Object.fromEntries(Object.keys(after).map((key) => [key, before[key]])) : null,
-    after,
-    assistant_request_id: requestId,
-  } as Prisma.InputJsonValue;
-}
-
-// « 8:30 » et « 08:30 » sont la même heure : on enregistre toujours HH:mm, comme le formulaire
+// « 8:30 » et « 08:30 » sont la même heure : on renvoie toujours HH:mm, comme le formulaire
 function formatHeure(heure: string | null | undefined) {
   if (!heure) return null;
   const [heures, minutes] = heure.split(':');

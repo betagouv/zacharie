@@ -19,6 +19,8 @@ export default function useDictee(onRecorded: (audio: Blob) => void) {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const onRecordedRef = useRef(onRecorded);
   onRecordedRef.current = onRecorded;
+  // fermé en cours d'enregistrement : on libère le micro sans envoyer l'audio
+  const isUnmountedRef = useRef(false);
 
   const stop = () => {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -27,6 +29,11 @@ export default function useDictee(onRecorded: (audio: Blob) => void) {
 
   const start = async () => {
     const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    // le chat a été fermé pendant la demande d'accès au micro
+    if (isUnmountedRef.current) {
+      micStream.getTracks().forEach((track) => track.stop());
+      return;
+    }
     const recorder = new MediaRecorder(micStream);
     const chunks: Array<Blob> = [];
     recorder.ondataavailable = (event) => {
@@ -35,6 +42,7 @@ export default function useDictee(onRecorded: (audio: Blob) => void) {
     recorder.onstop = () => {
       micStream.getTracks().forEach((track) => track.stop());
       recorderRef.current = null;
+      if (isUnmountedRef.current) return;
       setIsRecording(false);
       setStream(null);
       if (chunks.length > 0) onRecordedRef.current(new Blob(chunks, { type: recorder.mimeType }));
@@ -46,8 +54,13 @@ export default function useDictee(onRecorded: (audio: Blob) => void) {
     timerRef.current = setTimeout(stop, MAX_DUREE_MS);
   };
 
-  // fermer le chat en cours d'enregistrement libère le micro
-  useEffect(() => stop, []);
+  useEffect(() => {
+    isUnmountedRef.current = false;
+    return () => {
+      isUnmountedRef.current = true;
+      stop();
+    };
+  }, []);
 
   return { isRecording, stream, start, stop };
 }

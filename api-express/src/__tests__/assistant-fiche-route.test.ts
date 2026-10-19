@@ -1,29 +1,18 @@
 import express from 'express';
 import request from 'supertest';
 import { describe, test, expect, vi, beforeEach } from 'vitest';
-import { CarcasseType, FeiOwnerRole, UserRoles, type Fei } from '@prisma/client';
+import { CarcasseType, UserRoles, type Fei } from '@prisma/client';
 
 vi.mock('~/config', async (importOriginal) => ({
   ...(await importOriginal<typeof import('~/config')>()),
   ALBERT_API_KEY: 'test-key',
 }));
 vi.mock('~/third-parties/albert', () => ({ albertChatCompletion: vi.fn(), transcribeAudio: vi.fn() }));
-vi.mock('~/utils/sync-fei', () => ({ syncFei: vi.fn() }));
-vi.mock('~/utils/sync-carcasse', () => ({ syncCarcasse: vi.fn() }));
-vi.mock('~/utils/sync-scope', () => ({ createSyncScope: vi.fn(async () => ({})) }));
-vi.mock('~/utils/fei-side-effects', () => ({
-  runFeiUpdateSideEffects: vi.fn().mockResolvedValue(undefined),
-}));
-vi.mock('~/utils/carcasse-side-effects', () => ({
-  runCarcasseUpdateSideEffects: vi.fn().mockResolvedValue(undefined),
-}));
 vi.mock('~/third-parties/sentry', () => ({ capture: vi.fn(), captureException: vi.fn() }));
 
 import assistantFicheRouter from '~/controllers/assistant-fiche';
 import prisma from '~/prisma';
 import { albertChatCompletion, transcribeAudio } from '~/third-parties/albert';
-import { syncFei } from '~/utils/sync-fei';
-import { syncCarcasse } from '~/utils/sync-carcasse';
 
 const examinateur = {
   id: 'user-cfei',
@@ -80,16 +69,6 @@ beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(prisma.fei.findUnique).mockResolvedValue(fei as never);
   vi.mocked(prisma.carcasse.findMany).mockResolvedValue([]);
-  vi.mocked(syncFei).mockImplementation(async (_numero, body) => ({
-    savedFei: { ...fei, ...body } as never,
-    existingFei: fei as never,
-    isDeleted: false,
-  }));
-  vi.mocked(syncCarcasse).mockImplementation(async (_fei, _id, body) => ({
-    savedCarcasse: body as never,
-    existingCarcasse: body as never,
-    isDeleted: false,
-  }));
 });
 
 describe('POST /assistant-fiche/:fei_numero', () => {
@@ -118,80 +97,87 @@ describe('POST /assistant-fiche/:fei_numero', () => {
     expect(res.status).toBe(403);
   });
 
-  test('écrit la fiche et crée les carcasses dictées', async () => {
+  test('renvoie les données vérifiées sans rien écrire sur la fiche', async () => {
+    const today = new Date().toISOString().slice(0, 10);
     albertCalls({
-      date_mise_a_mort: new Date().toISOString().slice(0, 10),
-      commune_mise_a_mort: 'Moulins',
-      heure_mise_a_mort_premiere_carcasse: '07:30',
+      date_mise_a_mort: today,
+      commune_mise_a_mort: 'Chassenard',
+      heure_mise_a_mort_premiere_carcasse: '7:30',
       carcasses: [
-        { numero_bracelet: 'JD-03-001', espece: 'Chevreuil' },
+        { numero_bracelet: 'JD-03-001', espece: 'Chevreuil', nombre_d_animaux: 3 },
         { numero_bracelet: 'JD-03-002', espece: 'Faisans de chasse', nombre_d_animaux: 5 },
       ],
     });
     const res = await post(message);
     expect(res.status).toBe(200);
-    expect(res.body.data.commune_recherchee).toBe('Moulins');
-
-    expect(syncFei).toHaveBeenCalledTimes(1);
-    const feiBody = vi.mocked(syncFei).mock.calls[0][1];
-    expect(feiBody.heure_mise_a_mort_premiere_carcasse).toBe('07:30');
-    // syncFei valide la date comme une chaîne (format du corps /sync)
-    expect(feiBody.date_mise_a_mort).toBe(`${new Date().toISOString().slice(0, 10)}T00:00:00.000Z`);
-    // la commune est choisie côté front dans le référentiel
-    expect(feiBody).not.toHaveProperty('commune_mise_a_mort');
-
-    expect(syncCarcasse).toHaveBeenCalledTimes(2);
-    const [chevreuil, faisans] = vi.mocked(syncCarcasse).mock.calls.map((call) => call[2]);
-    expect(chevreuil).toMatchObject({
-      zacharie_carcasse_id: `${fei.numero}_JD-03-001`,
-      espece: 'Chevreuil',
-      type: CarcasseType.GROS_GIBIER,
-      nombre_d_animaux: 1,
-      examinateur_initial_user_id: 'user-cfei',
-      current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
-      heure_mise_a_mort_premiere_carcasse_fei: '07:30',
+    expect(res.body.data).toMatchObject({
+      reply: '',
+      date_mise_a_mort: today,
+      heure_mise_a_mort_premiere_carcasse: '07:30',
+      heure_evisceration_derniere_carcasse: null,
+      commune_recherchee: 'Chassenard',
+      communes_trouvees: ['03510 CHASSENARD'],
+      premier_detenteur: null,
+      carcasses: [
+        // grand gibier : une carcasse par animal
+        {
+          numero_bracelet: 'JD-03-001',
+          espece: 'Chevreuil',
+          type: CarcasseType.GROS_GIBIER,
+          nombre_d_animaux: 1,
+        },
+        {
+          numero_bracelet: 'JD-03-002',
+          espece: 'Faisans de chasse',
+          type: CarcasseType.PETIT_GIBIER,
+          nombre_d_animaux: 5,
+        },
+      ],
     });
-    expect(faisans).toMatchObject({ type: CarcasseType.PETIT_GIBIER, nombre_d_animaux: 5 });
-    // les écritures, puis l'échange, reliés par le même identifiant
-    expect(prisma.log.createMany).toHaveBeenCalledTimes(2);
-    const [writeLogs, exchangeLogs] = vi
-      .mocked(prisma.log.createMany)
-      .mock.calls.map((call) => call[0]!.data as Array<{ action: string; history: Record<string, unknown> }>);
-    const exchange = exchangeLogs[0];
+    // seul l'échange est écrit, relié aux écritures du front par le même identifiant
+    expect(prisma.fei.update).not.toHaveBeenCalled();
+    expect(prisma.carcasse.create).not.toHaveBeenCalled();
+    expect(prisma.log.createMany).toHaveBeenCalledTimes(1);
+    const exchange = (
+      vi.mocked(prisma.log.createMany).mock.calls[0][0]!.data as Array<{
+        action: string;
+        history: Record<string, unknown>;
+      }>
+    )[0];
     expect(exchange.action).toBe('examinateur-assistant-message');
     expect(exchange.history).toMatchObject({
+      assistant_request_id: res.body.data.assistant_request_id,
       user_message: 'hier à Moulins, deux chevreuils',
       validation_issues: null,
       error: null,
+      result: { commune_recherchee: 'Chassenard' },
     });
-    expect(JSON.parse(exchange.history.tool_arguments as string).commune_mise_a_mort).toBe('Moulins');
-    expect(exchange.history.reply).toContain('Carcasse ajoutée : JD-03-001 — Chevreuil');
-    for (const log of writeLogs) {
-      expect(log.history.assistant_request_id).toBe(exchange.history.assistant_request_id);
-    }
-    expect(res.body.data.reply).toContain('Carcasse ajoutée : JD-03-001 — Chevreuil');
   });
 
-  test("modifie une carcasse existante sans toucher à ce qui n'est pas dit", async () => {
-    vi.mocked(prisma.carcasse.findMany).mockResolvedValue([
+  test('propose les communes homonymes à choisir', async () => {
+    albertCalls({ commune_mise_a_mort: 'Moulins' });
+    const res = await post(message);
+    expect(res.body.data.communes_trouvees.length).toBeGreaterThan(1);
+    expect(res.body.data.communes_trouvees).toContain('03000 MOULINS');
+  });
+
+  test("garde la dernière mention d'un même numéro de marquage", async () => {
+    albertCalls({
+      carcasses: [
+        { numero_bracelet: '1230', espece: 'Sanglier' },
+        { numero_bracelet: '1230', commentaire: 'balle dans le ventre' },
+      ],
+    });
+    const res = await post(message);
+    expect(res.body.data.carcasses).toEqual([
       {
-        zacharie_carcasse_id: `${fei.numero}_JD-03-001`,
-        numero_bracelet: 'JD-03-001',
-        espece: 'Chevreuil',
+        numero_bracelet: '1230',
+        espece: 'Sanglier',
         type: CarcasseType.GROS_GIBIER,
         nombre_d_animaux: 1,
-        version: 3,
+        commentaire: 'balle dans le ventre',
       },
-    ] as never);
-    albertCalls({ carcasses: [{ numero_bracelet: 'JD-03-001', espece: 'Sanglier' }] });
-    const res = await post(message);
-    expect(res.status).toBe(200);
-    expect(syncFei).not.toHaveBeenCalled();
-    const body = vi.mocked(syncCarcasse).mock.calls[0][2];
-    expect(body).toMatchObject({ espece: 'Sanglier', version: 3 });
-    expect(body).not.toHaveProperty('current_owner_role');
-    expect(body).not.toHaveProperty('deleted_at');
-    expect(res.body.data.reply).toContain('Carcasse modifiée : JD-03-001 — Sanglier');
+    ]);
   });
 
   test("renvoie le propriétaire initial nommé, seulement s'il est dans la liste proposée", async () => {
@@ -199,9 +185,7 @@ describe('POST /assistant-fiche/:fei_numero', () => {
     albertCalls({ premier_detenteur: 'Les petits pieds' });
     const res = await post({ ...message, premier_detenteur_options: options });
     expect(res.status).toBe(200);
-    expect(res.body.data.premier_detenteur_choisi).toBe('Les petits pieds');
-    // le front l'enregistre et le confirme : pas de « C'est noté » vide
-    expect(res.body.data.reply).toBe('');
+    expect(res.body.data.premier_detenteur).toBe('Les petits pieds');
     const tools = vi.mocked(albertChatCompletion).mock.calls[0][0].tools!;
     expect(tools[0].function.parameters).toMatchObject({
       properties: { premier_detenteur: { enum: options } },
@@ -209,47 +193,14 @@ describe('POST /assistant-fiche/:fei_numero', () => {
 
     albertCalls({ premier_detenteur: 'Inconnu' });
     const resInconnu = await post({ ...message, premier_detenteur_options: options });
-    expect(resInconnu.body.data.premier_detenteur_choisi).toBeNull();
-  });
-
-  test("n'écrit pas ce qui est déjà enregistré (Albert relit tout l'échange)", async () => {
-    vi.mocked(prisma.fei.findUnique).mockResolvedValue({
-      ...fei,
-      date_mise_a_mort: new Date('2026-10-18T00:00:00.000Z'),
-      heure_mise_a_mort_premiere_carcasse: '08:30',
-    } as never);
-    vi.mocked(prisma.carcasse.findMany).mockResolvedValue([
-      {
-        zacharie_carcasse_id: `${fei.numero}_1230`,
-        numero_bracelet: '1230',
-        espece: 'Sanglier',
-        type: CarcasseType.GROS_GIBIER,
-        nombre_d_animaux: 1,
-        version: 2,
-      },
-    ] as never);
-    albertCalls({
-      date_mise_a_mort: '2026-10-18',
-      heure_mise_a_mort_premiere_carcasse: '8:30',
-      heure_evisceration_derniere_carcasse: '17:00',
-      carcasses: [{ numero_bracelet: '1230', espece: 'Sanglier' }],
-    });
-    const res = await post(message);
-    expect(res.status).toBe(200);
-    expect(syncCarcasse).not.toHaveBeenCalled();
-    // seule l'heure d'éviscération est nouvelle
-    const feiBody = vi.mocked(syncFei).mock.calls[0][1];
-    expect(feiBody).not.toHaveProperty('date_mise_a_mort');
-    expect(feiBody).not.toHaveProperty('heure_mise_a_mort_premiere_carcasse');
-    expect(feiBody.heure_evisceration_derniere_carcasse).toBe('17:00');
-    expect(res.body.data.reply).not.toContain('Carcasse');
+    expect(resInconnu.body.data.premier_detenteur).toBeNull();
   });
 
   test("n'écrit rien si Albert renvoie une espèce hors liste", async () => {
     albertCalls({ carcasses: [{ numero_bracelet: 'JD-03-001', espece: 'Ours' }] });
     const res = await post(message);
     expect(res.status).toBe(200);
-    expect(syncCarcasse).not.toHaveBeenCalled();
+    expect(res.body.data.carcasses).toEqual([]);
     expect(res.body.data.reply).toContain('reformuler');
     // la sortie refusée reste lisible dans le log de l'échange
     const exchange = vi.mocked(prisma.log.createMany).mock.calls[0][0]!.data as Array<{
@@ -267,7 +218,7 @@ describe('POST /assistant-fiche/:fei_numero', () => {
     const res = await post(message);
     expect(res.status).toBe(200);
     expect(res.body.data.reply).toBe('Quel est le numéro de marquage ?');
-    expect(syncFei).not.toHaveBeenCalled();
+    expect(res.body.data.carcasses).toEqual([]);
   });
 });
 
@@ -295,6 +246,16 @@ describe('POST /assistant-fiche/:fei_numero/transcription', () => {
       { audio: 'YQ==', mime_type: 'audio/webm' },
       { ...examinateur, numero_cfei: null }
     );
+    expect(res.status).toBe(403);
+    expect(transcribeAudio).not.toHaveBeenCalled();
+  });
+
+  test('refuse une fiche déjà validée', async () => {
+    vi.mocked(prisma.fei.findUnique).mockResolvedValue({
+      ...fei,
+      examinateur_initial_approbation_mise_sur_le_marche: true,
+    } as never);
+    const res = await postAudio({ audio: 'YQ==', mime_type: 'audio/webm' });
     expect(res.status).toBe(403);
     expect(transcribeAudio).not.toHaveBeenCalled();
   });
