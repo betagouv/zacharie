@@ -24,6 +24,8 @@ import DestinataireSelectPremierDetenteur, {
 } from './premier-detenteur-select-next';
 import ExaminateurInitialDeleteFei from './examinateur-initial-delete-fei';
 import DateHeureValidationAlerts from '@app/components/DateHeureValidationAlerts';
+import ZacharieChat from '@app/components/ZacharieChat';
+import useZacharieEasterEgg from '@app/utils/useZacharieEasterEgg';
 import ChasseurHeaderFiche from './chasseur-header-fiche';
 import { track } from '@app/services/matomo';
 import type { MatomoName } from '@app/services/matomo-events';
@@ -41,6 +43,9 @@ export default function ChasseurFei() {
   const feis = useZustandStore((state) => state.feis);
   const fei = feis[params.fei_numero!];
   const [hasTriedLoading, setHasTriedLoading] = useState(false);
+  // à la fermeture de l'assistant Zacharie, on remonte la fiche : ses champs non contrôlés
+  // (defaultValue) reprennent les valeurs écrites par l'assistant
+  const [remountKey, setRemountKey] = useState(0);
 
   useLoaderEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -57,10 +62,15 @@ export default function ChasseurFei() {
   if (!fei) {
     return hasTriedLoading ? <NotFound /> : <Chargement />;
   }
-  return <FEIChasseurLoaded key={fei.numero} />;
+  return (
+    <FEIChasseurLoaded
+      key={`${fei.numero}-${remountKey}`}
+      onZacharieChatClosed={() => setRemountKey((key) => key + 1)}
+    />
+  );
 }
 
-function FEIChasseurLoaded() {
+function FEIChasseurLoaded({ onZacharieChatClosed }: { onZacharieChatClosed: () => void }) {
   const params = useParams();
   const navigate = useNavigate();
   const user = useUser((state) => state.user)!;
@@ -448,6 +458,13 @@ function FEIChasseurLoaded() {
 
   const premierDetenteurIsLocked = useMemo(() => carcasses.some(isPremierDetenteurVerrouille), [carcasses]);
 
+  const zacharieChat = useZacharieEasterEgg(
+    canEdit &&
+      fei.examinateur_initial_user_id === user.id &&
+      !fei.examinateur_initial_approbation_mise_sur_le_marche &&
+      !fei.deleted_at
+  );
+
   const submitIsDisabled = useMemo(() => {
     if (!user.activated) return true;
     if (!showValidation) return true;
@@ -458,6 +475,16 @@ function FEIChasseurLoaded() {
   return (
     <>
       <title>{`${params.fei_numero} | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}</title>
+      {zacharieChat.isOpen && (
+        <ZacharieChat
+          feiNumero={fei.numero}
+          onUpdateFei={(nextFei) => updateFei(fei.numero, nextFei)}
+          onClose={() => {
+            zacharieChat.close();
+            onZacharieChatClosed();
+          }}
+        />
+      )}
       {fei.deleted_at && (
         <div className="bg-error-main-525 mb-2 py-2 text-center text-white">
           <p>Fiche supprimée</p>
