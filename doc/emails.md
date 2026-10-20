@@ -84,20 +84,24 @@ Toutes via `sendNotificationToUser`. Dédup via `NotificationLog`. Déclenchées
 
 Le push a son propre wording, indépendant de l'email : il s'affiche sur un écran verrouillé et est largement tronqué. Titre générique par type d'évènement, corps d'une phrase, **ni « Bonjour », ni URL, ni mention d'envoi automatique**. Pour les notifications dont l'email est construit par un `format*Email`, le wording push est renvoyé par le même formateur (clé `push`), pour que les deux canaux restent dérivés des mêmes `params`.
 
-| Évènement                            | Titre push                            | Corps push                                                                        |
-| ------------------------------------ | ------------------------------------- | --------------------------------------------------------------------------------- |
-| FEI attribuée (user / entité)        | Nouvelle fiche à traiter              | `{prénom} {nom} vous a attribué la fiche {numero}.`                               |
-| FEI attribuée circuit-court          | Nouvelle fiche reçue                  | `{prénom} {nom} vous a attribué la fiche {numero}.`                               |
-| FEI désattribuée                     | Fiche retirée                         | `La fiche {numero} ne vous est plus attribuée.`                                   |
-| FEI transmise au SVI                 | Nouvelle fiche à inspecter            | `{entity_name} vous a transmis {count} carcasse(s) ou lot(s) à inspecter.`        |
-| Fiche renvoyée à l'expéditeur        | Fiche renvoyée                        | `{renvoyeur} vous a renvoyé la fiche {numero}.`                                   |
-| Saisie SVI                           | Saisie partielle / Saisie totale      | `{Saisie totale} {de la carcasse} de {espèce} n°{bracelet}.`                      |
-| Carcasse manquante                   | Carcasse manquante                    | `{entity_name} a constaté que {la carcasse} … est {manquante}.`                   |
-| Carcasse refusée                     | Carcasse refusée                      | `{entity_name} a refusé {la carcasse} … Motif : {motif}`                          |
-| FEI clôturée (SVI ou cron)           | Fiche clôturée                        | `L'inspection de la fiche {numero} est terminée, les résultats sont disponibles.` |
-| Nouvel user dans une entité          | Nouvelle demande d'accès              | `{prénom} {nom} souhaite traiter des fiches au nom de {entité}.`                  |
-| Modif carcasse signalée (indicative) | Correction sur votre chasse du {date} | correction de marquage, ou carcasse ajoutée à signer                              |
-| Retour de l'examinateur sur la modif | Carcasse n°{bracelet}                 | même texte que l'email (déjà court et sans lien)                                  |
+| Évènement                            | Titre push                           | Corps push                                                                             |
+| ------------------------------------ | ------------------------------------ | -------------------------------------------------------------------------------------- |
+| FEI attribuée (user / entité)        | Nouvelle fiche à traiter             | `{prénom} {nom} vous a attribué {la chasse du JJ/MM}.`                                 |
+| FEI attribuée circuit-court          | Nouvelle fiche reçue                 | `{prénom} {nom} vous a attribué {la chasse du JJ/MM}. Récapitulatif envoyé par email.` |
+| FEI désattribuée                     | Fiche retirée                        | `{prénom} {nom} vous avait attribué cette fiche par erreur.`                           |
+| FEI transmise au SVI                 | {count} carcasse(s) à inspecter      | `{entity_name} vous a transmis la fiche de la chasse du {JJ/MM}.`                      |
+| Fiche renvoyée à l'expéditeur        | Fiche renvoyée                       | `{renvoyeur} vous a renvoyé {la chasse du JJ/MM}. Choisissez un autre destinataire.`   |
+| Saisie SVI                           | Saisie partielle / Saisie totale     | `{Espèce} n°{bracelet} : {premier motif, vulgarisé, 60 car. max}`                      |
+| Carcasse manquante                   | Carcasse manquante / Lot manquant    | `{Espèce} n°{bracelet}, constaté par {entity_name}`                                    |
+| Carcasse refusée                     | Carcasse refusée / Lot refusé        | `{Espèce} n°{bracelet} : {motif, 60 car. max}`                                         |
+| FEI clôturée par le SVI              | Fiche clôturée                       | `Chasse du {JJ/MM} traitée par le service vétérinaire : {n} acceptées, {n} refusées.`  |
+| FEI clôturée par le cron (J+10)      | Clôture automatique                  | `Chasse du {JJ/MM} clôturée 10 jours après réception : {n} acceptées, {n} refusées.`   |
+| Nouvel user dans une entité          | Inscription à valider                | `{prénom} {nom} s'est inscrit au sein de {entité}.`                                    |
+| Modif carcasse : marquage            | Chasse du {JJ/MM} : marquage corrigé | `{entité} a corrigé {après} au lieu de {avant}.`                                       |
+| Modif carcasse : carcasse ajoutée    | Chasse du {JJ/MM} : carcasse ajoutée | `{entité} a ajouté {Espèce} n°{bracelet} : examen initial à signer.`                   |
+| Retour de l'examinateur sur la modif | Carcasse n°{bracelet}                | même texte que l'email (déjà court et sans lien)                                       |
+
+La fiche est désignée par sa date de chasse (`date_mise_a_mort`), jamais par son numéro ; sans date, le push dit « la fiche ».
 
 ## Pas des emails (canaux liés mais distincts)
 

@@ -195,7 +195,7 @@ async function notifyTransmissionClosed(
   const allCarcassesDone = carcasses.every(isCarcasseDone);
   if (!allCarcassesDone) return;
 
-  const { object, text, params, push } = await formatFeiClosedEmail(fei_numero, carcasses);
+  const { object, text, params, push } = await formatFeiClosedEmail(fei_numero, carcasses, 'AUTOMATIQUE');
   // auto close and notify examinateur and premier detenteur
   const notification = {
     title: object,

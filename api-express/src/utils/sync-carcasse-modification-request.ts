@@ -310,14 +310,14 @@ async function notifyExaminateur(modif: CarcasseModificationRequest) {
   if (modif.type === CarcasseModificationRequestType.BRACELET_RENAME) {
     body = `${entityName}, qui traite actuellement les carcasses de votre chasse du ${chasseDate}, a corrigé un numéro de marquage : ${modif.numero_bracelet_after} au lieu de ${modif.numero_bracelet_before}. La correction est déjà prise en compte et la carcasse continue son parcours. Pour la consulter : ${link}`;
     push = {
-      title: `Correction sur votre chasse du ${chasseDate}`,
-      body: `${entityName} a corrigé un numéro de marquage : ${modif.numero_bracelet_after} au lieu de ${modif.numero_bracelet_before}.`,
+      title: chasseDate ? `Chasse du ${chasseDate} : marquage corrigé` : 'Marquage corrigé',
+      body: `${entityName} a corrigé ${modif.numero_bracelet_after} au lieu de ${modif.numero_bracelet_before}.`,
     };
   } else {
     body = `${entityName}, qui traite actuellement les carcasses de votre chasse du ${chasseDate}, a ajouté une carcasse manquante (${carcasse?.espece ?? 'espèce non renseignée'}, marquage ${carcasse?.numero_bracelet}). Elle suit déjà son parcours ; il vous reste à signer son examen initial quand vous le pourrez : ${link}`;
     push = {
-      title: `Correction sur votre chasse du ${chasseDate}`,
-      body: `${entityName} a ajouté une carcasse (${carcasse?.espece ?? 'espèce non renseignée'}, marquage ${carcasse?.numero_bracelet}) : examen initial à signer.`,
+      title: chasseDate ? `Chasse du ${chasseDate} : carcasse ajoutée` : 'Carcasse ajoutée',
+      body: `${entityName} a ajouté ${carcasse?.espece ?? 'une carcasse'} n°${carcasse?.numero_bracelet} : examen initial à signer.`,
     };
   }
 

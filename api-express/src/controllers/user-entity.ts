@@ -269,8 +269,8 @@ router.post(
               title: "Un nouvel utilisateur s'est inscrit sur Zacharie au sein de votre entité",
               email: email,
               push: {
-                title: "Nouvelle demande d'accès",
-                body: `${req.user.prenom} ${req.user.nom_de_famille} souhaite traiter des fiches au nom de ${entity.nom_d_usage}.`,
+                title: 'Inscription à valider',
+                body: `${req.user.prenom} ${req.user.nom_de_famille} s'est inscrit au sein de ${entity.nom_d_usage}.`,
               },
               notificationLogAction: `NEW_USER_IN_ENTITY_${entity.id}`,
             });

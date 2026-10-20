@@ -14,6 +14,7 @@ import sendNotificationToUser, { type PushWording } from '~/service/notification
 import {
   formatCarcasseManquanteChasseurEmail,
   formatCarcasseRefusChasseurEmail,
+  formatChassePush,
   formatCircuitCourtAssignedTemplateEmail,
   formatFeiAssignedTemplateEmail,
   formatFeiUnassignedTemplateEmail,
@@ -286,7 +287,11 @@ export async function closeFeiAndNotifyChasseurOnSviCarcasseClose(
     if (already) return;
   }
 
-  const { object, text, params, push } = await formatFeiClosedEmail(updatedCarcasse.fei_numero, carcasses);
+  const { object, text, params, push } = await formatFeiClosedEmail(
+    updatedCarcasse.fei_numero,
+    carcasses,
+    'SVI'
+  );
   const notification = {
     title: object,
     email: text,
@@ -544,7 +549,7 @@ export async function notifyCircuitCourt(
       email: email,
       push: {
         title: 'Nouvelle fiche reçue',
-        body: `${user.prenom} ${user.nom_de_famille} vous a attribué la fiche ${updatedCarcasse.fei_numero}.`,
+        body: `${user.prenom} ${user.nom_de_famille} vous a attribué ${formatChassePush(updatedCarcasse.date_mise_a_mort)}. Récapitulatif envoyé par email.`,
       },
       emailTemplateId: BrevoTemplateId.FEI_ASSIGNED_CIRCUIT_COURT,
       emailTemplateParams: formatCircuitCourtAssignedTemplateEmail(updatedCarcasse, user, nextOwner.email),
@@ -620,7 +625,7 @@ export async function notifyNextOwnerUser(existingCarcasse: Carcasse, updatedCar
       email: email,
       push: {
         title: 'Nouvelle fiche à traiter',
-        body: `${user.prenom} ${user.nom_de_famille} vous a attribué la fiche ${updatedCarcasse.fei_numero}.`,
+        body: `${user.prenom} ${user.nom_de_famille} vous a attribué ${formatChassePush(updatedCarcasse.date_mise_a_mort)}.`,
       },
       emailTemplateId: BrevoTemplateId.FEI_ASSIGNED,
       emailTemplateParams: formatFeiAssignedTemplateEmail(updatedCarcasse, user, role),
@@ -647,7 +652,7 @@ export async function notifyNextOwnerUser(existingCarcasse: Carcasse, updatedCar
       email: email,
       push: {
         title: 'Fiche retirée',
-        body: `La fiche ${existingCarcasse.fei_numero} ne vous est plus attribuée.`,
+        body: `${user.prenom} ${user.nom_de_famille} vous avait attribué cette fiche par erreur.`,
       },
       emailTemplateId: BrevoTemplateId.FEI_UNASSIGNED,
       emailTemplateParams: formatFeiUnassignedTemplateEmail(existingCarcasse, user),
@@ -716,7 +721,7 @@ export async function notifyNextOwnerEntity(
         email: email,
         push: {
           title: 'Nouvelle fiche à traiter',
-          body: `${user.prenom} ${user.nom_de_famille} vous a attribué la fiche ${updatedCarcasse.fei_numero}.`,
+          body: `${user.prenom} ${user.nom_de_famille} vous a attribué ${formatChassePush(updatedCarcasse.date_mise_a_mort)}.`,
         },
         emailTemplateId: BrevoTemplateId.FEI_ASSIGNED,
         emailTemplateParams: formatFeiAssignedTemplateEmail(updatedCarcasse, user, role),

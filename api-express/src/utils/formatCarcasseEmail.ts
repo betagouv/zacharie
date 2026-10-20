@@ -8,6 +8,7 @@ import {
   User,
   UserRoles,
 } from '@prisma/client';
+import dayjs from 'dayjs';
 import { getCarcasseStatusLabelForEmail } from './get-carcasse-status';
 import lesions from '../assets/lesions.json';
 import prisma from '~/prisma';
@@ -15,8 +16,8 @@ import { getCircuitCourtFeiUrl, getFeiUrlForRole } from './fei-url';
 import { VITE_APP_URL } from '~/config';
 import type { PushWording } from '~/service/notifications';
 
-function getMotifForChasseur(motif: string, carcasseType: CarcasseType) {
-  const lesion = lesions[carcasseType]
+function findLesion(motif: string, carcasseType: CarcasseType) {
+  return lesions[carcasseType]
     .map((l) => {
       return {
         ...l,
@@ -28,6 +29,10 @@ function getMotifForChasseur(motif: string, carcasseType: CarcasseType) {
       if (l['MOTIVATION EN FAIT (CERTIFICAT)'] === motif) return true;
       return false;
     });
+}
+
+function getMotifForChasseur(motif: string, carcasseType: CarcasseType) {
+  const lesion = findLesion(motif, carcasseType);
   if (!lesion) {
     return motif;
   }
@@ -40,6 +45,29 @@ function getMotifForChasseur(motif: string, carcasseType: CarcasseType) {
     return vulgarisation;
   }
   return motif;
+}
+
+// Le push ne garde que la vulgarisation : le complément d'information fait exploser la longueur.
+function getMotifCourtForChasseur(motif: string, carcasseType: CarcasseType) {
+  const lesion = findLesion(motif, carcasseType);
+  return lesion?.['VULGARISATION POUR PREMIER DÉTENTEUR ET EXAMINATEUR INITIAL'] || motif;
+}
+
+// Les motifs sont du texte libre ou des libellés longs : on les coupe pour l'écran verrouillé.
+const PUSH_MOTIF_MAX_LENGTH = 60;
+function truncateForPush(text: string) {
+  if (text.length <= PUSH_MOTIF_MAX_LENGTH) return text;
+  return `${text.slice(0, PUSH_MOTIF_MAX_LENGTH - 1).trimEnd()}…`;
+}
+
+// Le push désigne une fiche par sa date de chasse, plus parlante que son numéro.
+export function getChasseDateForPush(dateMiseAMort: Date | null): string | null {
+  return dateMiseAMort ? dayjs(dateMiseAMort).format('DD/MM') : null;
+}
+
+export function formatChassePush(dateMiseAMort: Date | null): string {
+  const chasseDate = getChasseDateForPush(dateMiseAMort);
+  return chasseDate ? `la chasse du ${chasseDate}` : 'la fiche';
 }
 
 export async function formatCarcasseChasseurEmail(carcasse: Carcasse) {
@@ -144,9 +172,15 @@ export function formatSaisieChasseurEmail(carcasse: Carcasse): {
     `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur cette saisie, merci de contacter l’établissement où a été effectuée l’inspection.`,
   ];
 
+  const premierMotif = carcasse.svi_ipm2_lesions_ou_motifs[0];
   const push: PushWording = {
     title: params.saisie_label_capitalized,
-    body: `${params.saisie_label_capitalized} ${params.carcasse_label} de ${params.espece} n°${params.numero_bracelet}.`,
+    body: [
+      `${carcasse.espece} n°${params.numero_bracelet}`,
+      premierMotif ? truncateForPush(getMotifCourtForChasseur(premierMotif, carcasse.type)) : null,
+    ]
+      .filter(Boolean)
+      .join(' : '),
   };
 
   return { object, text: text.filter(Boolean).join('\n\n'), params, push };
@@ -219,8 +253,8 @@ export async function formatCarcasseManquanteChasseurEmail(carcasse: Carcasse): 
   ];
 
   const push: PushWording = {
-    title: 'Carcasse manquante',
-    body: `${params.entity_name} a constaté que ${params.carcasse_label} de ${params.espece} n°${params.numero_bracelet} est ${params.manquante_label}.`,
+    title: carcasse.type === CarcasseType.GROS_GIBIER ? 'Carcasse manquante' : 'Lot manquant',
+    body: `${carcasse.espece} n°${params.numero_bracelet}, constaté par ${params.entity_name}`,
   };
 
   return { object, text: text.filter(Boolean).join('\n\n'), params, push };
@@ -262,13 +296,10 @@ export async function formatCarcasseRefusChasseurEmail(carcasse: Carcasse): Prom
   ];
 
   const push: PushWording = {
-    title: 'Carcasse refusée',
-    body: [
-      `${params.entity_name} a refusé ${params.carcasse_label} de ${params.espece} n°${params.numero_bracelet}.`,
-      params.motif ? `Motif : ${params.motif}` : null,
-    ]
-      .filter(Boolean)
-      .join(' '),
+    title: carcasse.type === CarcasseType.GROS_GIBIER ? 'Carcasse refusée' : 'Lot refusé',
+    body: params.motif
+      ? `${carcasse.espece} n°${params.numero_bracelet} : ${truncateForPush(params.motif)}`
+      : `${carcasse.espece} n°${params.numero_bracelet}, ${params.refus_label} par ${params.entity_name}`,
   };
 
   return { object, text: text.filter(Boolean).join('\n\n'), params, push };
@@ -297,7 +328,7 @@ export function formatRenvoiExpediteurEmail(
   const object = `La fiche ${fei.numero} vous a été renvoyée.`;
   const push: PushWording = {
     title: 'Fiche renvoyée',
-    body: `${renvoyeur} vous a renvoyé la fiche ${fei.numero}.`,
+    body: `${renvoyeur} vous a renvoyé ${formatChassePush(fei.date_mise_a_mort)}. Choisissez un autre destinataire.`,
   };
   return { object, text: email.filter(Boolean).join('\n\n'), push };
 }
@@ -343,12 +374,14 @@ function countCarcassesForBilan(carcasses: Carcasse[]) {
 }
 
 // Email de clôture de fiche, commun à la clôture SVI et à la clôture automatique : c'est
-// l'appelant qui choisit le template (FEI_CLOSED ou FEI_AUTOMATIC_CLOSED).
+// l'appelant qui choisit le template (FEI_CLOSED ou FEI_AUTOMATIC_CLOSED). Le push, lui, distingue
+// les deux clôtures.
 // L'email part en template Brevo, le push reste en texte : les deux sont dérivés des mêmes
 // `params` pour ne pas diverger. Les accords singulier/pluriel du bilan sont gérés côté template.
 export async function formatFeiClosedEmail(
   fei_numero: Fei['numero'],
-  carcasses: Carcasse[]
+  carcasses: Carcasse[],
+  cloture: 'SVI' | 'AUTOMATIQUE'
 ): Promise<{ object: string; text: string; params: FeiClosedTemplateParams; push: PushWording }> {
   // L'établissement à contacter est l'ETG qui a traité la fiche. On passe par les intermédiaires :
   // `Carcasse.latest_intermediaire_entity_id` vaut le SVI une fois la carcasse assignée.
@@ -383,10 +416,28 @@ export async function formatFeiClosedEmail(
       : null,
     `Ce message a été généré automatiquement par l’application Zacharie.`,
   ];
-  const push: PushWording = {
-    title: 'Fiche clôturée',
-    body: `L’inspection de la fiche ${params.fei_numero} est terminée, les résultats sont disponibles.`,
-  };
+  const chasseDate = getChasseDateForPush(carcasses[0]?.date_mise_a_mort ?? null);
+  const chasse = chasseDate ? `Chasse du ${chasseDate}` : 'Fiche';
+  const bilan = [
+    params.nombre_carcasses_acceptees
+      ? `${params.nombre_carcasses_acceptees} acceptée${params.nombre_carcasses_acceptees > 1 ? 's' : ''}`
+      : null,
+    params.nombre_carcasses_refusees
+      ? `${params.nombre_carcasses_refusees} refusée${params.nombre_carcasses_refusees > 1 ? 's' : ''}`
+      : null,
+  ]
+    .filter(Boolean)
+    .join(', ');
+  const push: PushWording =
+    cloture === 'SVI'
+      ? {
+          title: 'Fiche clôturée',
+          body: `${chasse} traitée par le service vétérinaire : ${bilan}.`,
+        }
+      : {
+          title: 'Clôture automatique',
+          body: `${chasse} clôturée 10 jours après réception : ${bilan}.`,
+        };
   return { object, text: text.filter(Boolean).join('\n\n'), params, push };
 }
 
@@ -453,9 +504,10 @@ export async function formatSviAssignedEmail(
     `Pour consulter la fiche, rendez-vous sur Zacharie : ${params.cta}`,
     `Ce message a été généré automatiquement par l’application Zacharie. Si vous avez des questions sur l'attribution de cette fiche, merci de contacter l’établissement qui a traité votre fiche.`,
   ];
+  const chasseDate = getChasseDateForPush(carcasse.date_mise_a_mort);
   const push: PushWording = {
-    title: 'Nouvelle fiche à inspecter',
-    body: `${params.entity_name} vous a transmis ${params.count} carcasse(s) ou lot(s) à inspecter.`,
+    title: `${params.count} carcasse${params.count > 1 ? 's' : ''} à inspecter`,
+    body: `${params.entity_name} vous a transmis ${chasseDate ? `la fiche de la chasse du ${chasseDate}` : 'une fiche'}.`,
   };
   return { object, text: text.filter(Boolean).join('\n\n'), params, push };
 }
