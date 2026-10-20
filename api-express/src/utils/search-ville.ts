@@ -1,5 +1,6 @@
-// Source : api-express. Copié tel quel dans le front (hors ligne) par scripts/copy-schema-to-app-side.js :
-// on le modifie ici, jamais dans la copie. Import relatif pour que les deux copies soient identiques.
+// Source : api-express/src/utils/search-ville.ts, copié tel quel dans le front (hors ligne) par
+// api-express/scripts/copy-schema-to-app-side.js : on modifie la source, jamais la copie du front.
+// Import relatif pour que les deux copies soient identiques.
 import villes from '../data/villes.json';
 
 // Le fichier est volumineux (~39 000 communes) : les clés sont abrégées pour alléger le bundle.
@@ -24,6 +25,18 @@ export function normalizeVille(value: string): string {
       return word;
     })
     .join(' ');
+}
+
+const CODE_POSTAL = /^\d{5}$/;
+
+// « Moulins », « Moulins 03000 » et « 03000 Moulins » désignent tous « 03000 MOULINS » : même nom
+// de commune, et même code postal quand la recherche en donne un.
+export function isSameCommune(codePostalVille: string, recherche: string): boolean {
+  const [codePostal, ...nom] = normalizeVille(codePostalVille).split(' ');
+  const mots = normalizeVille(recherche).split(' ');
+  const codePostalRecherche = mots.find((mot) => CODE_POSTAL.test(mot));
+  const nomRecherche = mots.filter((mot) => !CODE_POSTAL.test(mot)).join(' ');
+  return nom.join(' ') === nomRecherche && (!codePostalRecherche || codePostalRecherche === codePostal);
 }
 
 type IndexedVille = {

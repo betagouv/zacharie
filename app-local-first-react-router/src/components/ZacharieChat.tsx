@@ -9,8 +9,8 @@ import { track } from '@app/services/matomo';
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import { syncData } from '@app/utils/sync-data';
-import { normalizeVille } from '@app/utils/search-ville';
-import { applyAssistantFiche } from '@app/utils/apply-assistant-fiche';
+import { isSameCommune } from '@app/utils/search-ville';
+import { applyAssistantFiche, updateFeiFromAssistant } from '@app/utils/apply-assistant-fiche';
 import useGetCommunesDeChasseFavorites from '@app/utils/useGetCommunesDeChasseFavorites';
 import {
   useDesignerPremierDetenteur,
@@ -44,6 +44,17 @@ function getMissingLabels(fei: Fei, carcasses: Array<Carcasse>) {
   return missing;
 }
 
+// Albert peut redonner le propriétaire déjà désigné : on compare les identifiants, pas les libellés
+function isPremierDetenteurActuel(
+  params: { ownerUser?: { id: string } | null; ownerEntity?: { id: string } | null; isMe?: boolean },
+  fei: Fei,
+  userId: string
+) {
+  if (params.ownerEntity) return fei.premier_detenteur_entity_id === params.ownerEntity.id;
+  if (fei.premier_detenteur_entity_id) return false;
+  return fei.premier_detenteur_user_id === (params.isMe ? userId : params.ownerUser?.id);
+}
+
 export default function ZacharieChat({
   feiNumero,
   onUpdateFei,
@@ -69,22 +80,37 @@ export default function ZacharieChat({
       chipLabel: string;
       params: Parameters<typeof designerPremierDetenteur>[0];
     }> = [];
+    // précision ajoutée au libellé quand deux choix portent le même nom
+    const precisions: Array<string> = [];
     for (const entity of Object.values(associationsDeChasse)) {
       const label = entity.nom_d_usage ?? '';
       choices.push({ label, chipLabel: label, params: { ownerEntity: entity } });
+      precisions.push(entity.ville || 'association');
     }
     for (const detenteur of Object.values(detenteursInitiaux)) {
       // soi-même : toujours le choix « Moi » ci-dessous
       if (detenteur.id === user.id) continue;
       const label = `${detenteur.prenom} ${detenteur.nom_de_famille}`;
       choices.push({ label, chipLabel: label, params: { ownerUser: detenteur } });
+      precisions.push(detenteur.ville || detenteur.email || '');
     }
     choices.push({
       label: `${user.prenom} ${user.nom_de_famille}`,
       chipLabel: 'Moi',
       params: { isMe: true },
     });
-    return choices.filter((choice) => !!choice.label);
+    precisions.push('moi');
+    // Albert renvoie un libellé de la liste : chaque libellé doit désigner un seul choix
+    const isHomonyme = (label: string) => choices.filter((choice) => choice.label === label).length > 1;
+    const uniques = choices.map((choice, index) => {
+      if (!isHomonyme(choice.label)) return choice;
+      const label = `${choice.label} (${precisions[index] || index + 1})`;
+      return { ...choice, label, chipLabel: choice.chipLabel === choice.label ? label : choice.chipLabel };
+    });
+    return uniques.filter(
+      (choice, index) =>
+        !!choice.label && uniques.findIndex((other) => other.label === choice.label) === index
+    );
   }, [associationsDeChasse, detenteursInitiaux, user]);
   // les messages envoyés au serveur : l'accueil n'en fait pas partie
   const [messages, setMessages] = useState<Array<ChatMessage>>([]);
@@ -185,21 +211,21 @@ export default function ZacharieChat({
     const premierDetenteur = premierDetenteurChoices.find(
       (choice) => choice.label === data.premier_detenteur
     );
-    if (premierDetenteur && premierDetenteur.label !== currentFei.premier_detenteur_name_cache) {
-      selectPremierDetenteur(premierDetenteur, false);
+    if (premierDetenteur && !isPremierDetenteurActuel(premierDetenteur.params, currentFei, user.id)) {
+      selectPremierDetenteur(premierDetenteur, false, data.assistant_request_id);
     }
 
     const commune_recherchee = data.commune_recherchee;
     const communeDejaChoisie =
       !!commune_recherchee &&
       !!currentFei.commune_mise_a_mort &&
-      normalizeVille(currentFei.commune_mise_a_mort).includes(normalizeVille(commune_recherchee));
+      isSameCommune(currentFei.commune_mise_a_mort, commune_recherchee);
     if (commune_recherchee && !communeDejaChoisie) {
       // les communes de chasse favorites passent devant les homonymes
       const favorites = data.communes_trouvees.filter((commune) => communesFavorites.includes(commune));
       const options = favorites.length === 1 ? favorites : data.communes_trouvees;
       if (options.length === 1) {
-        selectCommune(options[0], false);
+        selectCommune(options[0], false, data.assistant_request_id);
       } else if (options.length > 1) {
         setCommuneOptions(options);
         addAssistantMessage(`Quelle commune pour « ${commune_recherchee} » ?`);
@@ -211,8 +237,14 @@ export default function ZacharieChat({
     askForMissing();
   };
 
-  const selectCommune = (commune: string, thenAskForMissing = true) => {
-    onUpdateFei({ commune_mise_a_mort: commune });
+  // assistantRequestId : commune choisie par l'assistant, et non cliquée par le chasseur
+  const selectCommune = (commune: string, thenAskForMissing = true, assistantRequestId?: string) => {
+    if (assistantRequestId) {
+      updateFeiFromAssistant(feiNumero, { commune_mise_a_mort: commune }, user, assistantRequestId);
+      syncData('assistant-zacharie');
+    } else {
+      onUpdateFei({ commune_mise_a_mort: commune });
+    }
     setCommuneOptions([]);
     addAssistantMessage(`Commune : ${commune}`);
     if (thenAskForMissing) askForMissing();
@@ -226,9 +258,10 @@ export default function ZacharieChat({
 
   const selectPremierDetenteur = (
     choice: (typeof premierDetenteurChoices)[number],
-    thenAskForMissing = true
+    thenAskForMissing = true,
+    assistantRequestId?: string
   ) => {
-    designerPremierDetenteur(choice.params);
+    designerPremierDetenteur({ ...choice.params, assistantRequestId });
     addAssistantMessage(`Propriétaire initial : ${choice.label}`);
     if (thenAskForMissing) askForMissing();
   };
