@@ -366,7 +366,7 @@ describe('syncCarcasse — SVI-only fields', () => {
     );
 
     const updateCall = vi.mocked(prisma.carcasse.update).mock.calls[0][0];
-    expect(updateCall.data.svi_assigned_at).toBeInstanceOf(Date);
+    expect(updateCall.data.svi_assigned_at).toBe(assignedAt);
     expect(updateCall.data.svi_entity_id).toBe('entity-svi');
     expect(updateCall.data.svi_carcasse_status).toBe('REFUS_ETG_COLLECTEUR');
     expect(updateCall.data.svi_carcasse_status_set_at).toBe(assignedAt);
@@ -631,13 +631,31 @@ describe('syncCarcasse — champs réservés à un rôle', () => {
     expect((data.svi_assigned_at as Date).getTime()).toBeGreaterThanOrEqual(avant);
   });
 
-  test("une date d'assignation déjà enregistrée n'est pas réécrite par le client", async () => {
-    const assigneeLe = new Date(Date.now() - 2 * 24 * 3600 * 1000);
+  test("une date d'assignation récente du client est conservée (même date pour toute la transmission)", async () => {
+    const assigneeLe = new Date(Date.now() - 3 * 3600 * 1000);
+    const data = await syncAsEtg({ svi_assigned_at: assigneeLe });
+    expect(data.svi_assigned_at).toBe(assigneeLe);
+  });
+
+  test("la date d'assignation déjà enregistrée sur la carcasse est conservée quand le client la renvoie", async () => {
+    const assigneeLe = new Date(Date.now() - 5 * 24 * 3600 * 1000);
     const data = await syncAsEtg(
-      { svi_assigned_at: new Date('2020-01-01') },
+      { svi_assigned_at: assigneeLe.toISOString() },
       { ...carcasseDuChasseur, svi_assigned_at: assigneeLe }
     );
+    expect(data.svi_assigned_at).toBe(assigneeLe.toISOString());
+    expect(prisma.carcasse.findFirst).not.toHaveBeenCalled();
+  });
+
+  test("une carcasse ajoutée après l'assignation reprend la date d'une autre carcasse de la fiche", async () => {
+    const assigneeLe = new Date(Date.now() - 5 * 24 * 3600 * 1000);
+    vi.mocked(prisma.carcasse.findFirst).mockResolvedValueOnce({ zacharie_carcasse_id: 'ZC-SOEUR' } as any);
+    const data = await syncAsEtg({ svi_assigned_at: assigneeLe });
     expect(data.svi_assigned_at).toBe(assigneeLe);
+    expect(vi.mocked(prisma.carcasse.findFirst).mock.calls[0][0]?.where).toMatchObject({
+      fei_numero: 'FEI-1',
+      svi_assigned_at: assigneeLe,
+    });
   });
 
   test("l'assignation au SVI peut être retirée", async () => {

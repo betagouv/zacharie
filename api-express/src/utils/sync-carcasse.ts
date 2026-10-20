@@ -446,12 +446,11 @@ export async function syncCarcasse(
   }
   // svi_assigned_at et svi_entity_id sont écrits par l'ETG qui assigne la fiche à un SVI,
   // pas par le SVI lui-même : ils restent hors du bloc réservé au rôle SVI plus bas.
-  // La date d'assignation est celle du serveur, jamais celle du client : elle ouvre l'acceptation
-  // automatique à J+10, une date antidatée permettrait d'accepter la carcasse sans inspection.
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_assigned_at)) {
-    nextCarcasse.svi_assigned_at = body[Prisma.CarcasseScalarFieldEnum.svi_assigned_at]
-      ? (existingCarcasse.svi_assigned_at ?? new Date())
-      : null;
+    nextCarcasse.svi_assigned_at = await getSviAssignedAt(
+      body[Prisma.CarcasseScalarFieldEnum.svi_assigned_at],
+      existingCarcasse
+    );
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_entity_id)) {
     nextCarcasse.svi_entity_id = body[Prisma.CarcasseScalarFieldEnum.svi_entity_id];
@@ -750,6 +749,34 @@ async function canCreatorCancelCarcasse(carcasse: Carcasse, isJustCreated: boole
     },
   });
   return pendingRequests > 0;
+}
+
+// Délai maximal toléré entre une assignation faite hors ligne et sa réception par le serveur.
+const SVI_ASSIGNED_AT_MAX_DELAY_HOURS = 48;
+
+// La date d'assignation ouvre l'acceptation automatique à J+10 : une date antidatée permettrait
+// d'accepter la carcasse sans inspection. On garde la date du client (toutes les carcasses d'une
+// transmission partagent la même) si elle est récente, ou si c'est déjà celle de la carcasse ou
+// d'une autre carcasse de la fiche (carcasse manquante ajoutée après l'assignation). Sinon, c'est
+// la date du serveur.
+async function getSviAssignedAt(
+  value: Prisma.CarcasseUncheckedCreateInput['svi_assigned_at'],
+  existingCarcasse: Carcasse
+): Promise<Prisma.CarcasseUncheckedCreateInput['svi_assigned_at']> {
+  if (!value) return null;
+  const assignedAt = dayjs(value);
+  if (!assignedAt.isValid()) return new Date();
+  if (dayjs().diff(assignedAt, 'hour', true) <= SVI_ASSIGNED_AT_MAX_DELAY_HOURS) return value;
+  if (existingCarcasse.svi_assigned_at && assignedAt.isSame(existingCarcasse.svi_assigned_at)) return value;
+  const carcasseSoeur = await prisma.carcasse.findFirst({
+    where: {
+      fei_numero: existingCarcasse.fei_numero,
+      svi_assigned_at: assignedAt.toDate(),
+      deleted_at: null,
+    },
+    select: { zacharie_carcasse_id: true },
+  });
+  return carcasseSoeur ? value : new Date();
 }
 
 const NON_SVI_STATUSES: Array<CarcasseStatus> = [
