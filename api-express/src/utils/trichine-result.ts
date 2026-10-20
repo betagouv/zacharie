@@ -23,12 +23,7 @@ import {
   type TrichineNotifiableUser,
 } from '~/utils/trichine';
 import type { TrichineEmailContent } from '~/templates/trichine-email';
-import {
-  ALIAS_REFERENCE_INVALIDE,
-  aliasReferenceDejaPrise,
-  aliasReferenceSchema,
-  upsertAlias,
-} from '~/utils/trichine-alias';
+import { aliasReferenceRefusee, upsertAlias } from '~/utils/trichine-alias';
 import { recomputeFTPTrichine, recomputePoolAndLinkedFTPs } from '~/utils/trichine-status';
 
 // Résultats saisissables selon le type de laboratoire (cf doc/trichine.md §6.3-6.4)
@@ -125,6 +120,13 @@ export const resultatSchema = z.object({
 });
 export type ApplyPoolResultBody = z.infer<typeof resultatSchema>;
 
+/**
+ * D'où vient le résultat. Saisi à la main, une référence labo refusée (format, déjà prise) bloque
+ * la saisie : le laboratoire la corrige. Lu dans un import LIMS ou un rapport reçu par email, la
+ * référence est facultative et ne doit jamais faire perdre le résultat : elle est alors ignorée.
+ */
+export type ApplyPoolResultOrigine = 'saisie' | 'automatique';
+
 // FTP générée vers le LNR sur un résultat DOUTEUX : le laboratoire doit l'imprimer et la joindre au colis
 export type FtpConfirmation = { id: string; numero_fiche: string };
 
@@ -150,12 +152,14 @@ export async function applyPoolResult({
   body,
   userId,
   isLnr,
+  origine,
 }: {
   pool: ApplyPoolResultPool;
   ftp: ApplyPoolResultFtp;
   body: ApplyPoolResultBody;
   userId: string;
   isLnr: boolean;
+  origine: ApplyPoolResultOrigine;
 }): Promise<ApplyPoolResultOutcome> {
   if (!body.resultat_analyse) {
     return { kind: 'error', status: 400, error: 'Le résultat est obligatoire' };
@@ -170,21 +174,19 @@ export async function applyPoolResult({
     return { kind: 'error', status: invalid.status, error: invalid.error };
   }
   // L'alias est posé au nom du laboratoire destinataire de la fiche par laquelle le pool est arrivé
-  const referenceLabo = body.reference_labo?.trim() || null;
-  if (referenceLabo) {
-    if (!aliasReferenceSchema.safeParse(referenceLabo).success) {
-      return { kind: 'error', status: 400, error: ALIAS_REFERENCE_INVALIDE };
-    }
-    const dejaPrise = await aliasReferenceDejaPrise({
-      entityId: ftp.destinataire_entity_id,
-      objetType: TrichineAliasObjet.POOL,
-      objetId: pool.id,
-      reference: referenceLabo,
-    });
-    if (dejaPrise) {
-      return { kind: 'error', status: 400, error: dejaPrise };
-    }
+  const referenceSaisie = body.reference_labo?.trim() || null;
+  const referenceRefusee = referenceSaisie
+    ? await aliasReferenceRefusee({
+        entityId: ftp.destinataire_entity_id,
+        objetType: TrichineAliasObjet.POOL,
+        objetId: pool.id,
+        reference: referenceSaisie,
+      })
+    : null;
+  if (referenceRefusee && origine === 'saisie') {
+    return { kind: 'error', status: 400, error: referenceRefusee };
   }
+  const referenceLabo = referenceRefusee ? null : referenceSaisie;
 
   await prisma.trichinePool.update({
     where: { id: pool.id },

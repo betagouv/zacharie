@@ -568,6 +568,7 @@ export async function appliquerResultatDuRapport({
     },
     userId: labo.userId,
     isLnr: labo.isLnr,
+    origine: 'automatique',
   });
   if (outcome.kind === 'error') {
     return { resultat_lu: resultat, resultat_applique: false, resultat_refus: outcome.error };

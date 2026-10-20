@@ -7,7 +7,9 @@ import { catchErrors } from '~/middlewares/errors';
 import type { RequestWithUser } from '~/types/request';
 import { trichineEquipeUserIds } from '~/utils/trichine';
 import {
+  ALIAS_REFERENCE_CONFLIT,
   ALIAS_REFERENCE_INVALIDE,
+  entiteSviPourObjet,
   aliasEntityIdsForUser,
   aliasEstFige,
   aliasReferenceDejaPrise,
@@ -61,6 +63,9 @@ async function resoudreCible(
   objetId: string
 ): Promise<Cible> {
   const introuvable: Cible = { kind: 'error', status: 404, error: 'Objet introuvable' };
+  if (!req.user.activated) {
+    return { kind: 'error', status: 400, error: "Le compte n'est pas activé" };
+  }
   const entityIds = await aliasEntityIdsForUser(req.user);
   if (!entityIds.length) {
     return { kind: 'error', status: 403, error: "Vous n'avez pas les droits pour effectuer cette action" };
@@ -68,22 +73,33 @@ async function resoudreCible(
 
   if (req.user.roles.includes(UserRoles.SVI)) {
     const equipe = await trichineEquipeUserIds(req.user);
-    const entityId = entityIds[0];
     if (objetType === TrichineAliasObjet.ECHANTILLON) {
       const echantillon = await prisma.trichineEchantillon.findUnique({ where: { id: objetId } });
       if (!echantillon || echantillon.deleted_at || !equipe.includes(echantillon.preleve_par_user_id)) {
         return introuvable;
       }
-      return { kind: 'ok', entityId, fige: aliasEstFige({ type: objetType, statut: echantillon.statut }) };
+      return {
+        kind: 'ok',
+        entityId: entiteSviPourObjet(entityIds, echantillon.preleve_par_entity_id),
+        fige: aliasEstFige({ type: objetType, statut: echantillon.statut }),
+      };
     }
     if (objetType === TrichineAliasObjet.POOL) {
       const pool = await prisma.trichinePool.findUnique({ where: { id: objetId } });
       if (!pool || pool.deleted_at || !equipe.includes(pool.cree_par_user_id)) return introuvable;
-      return { kind: 'ok', entityId, fige: aliasEstFige({ type: objetType, statut: pool.statut }) };
+      return {
+        kind: 'ok',
+        entityId: entiteSviPourObjet(entityIds, pool.cree_par_entity_id),
+        fige: aliasEstFige({ type: objetType, statut: pool.statut }),
+      };
     }
     const ftp = await prisma.trichineFTP.findUnique({ where: { id: objetId } });
     if (!ftp || ftp.deleted_at || !equipe.includes(ftp.expediteur_user_id)) return introuvable;
-    return { kind: 'ok', entityId, fige: aliasEstFige({ type: objetType, ...ftp }) };
+    return {
+      kind: 'ok',
+      entityId: entiteSviPourObjet(entityIds, ftp.expediteur_entity_id),
+      fige: aliasEstFige({ type: objetType, ...ftp }),
+    };
   }
 
   if (objetType === TrichineAliasObjet.FTP) {
@@ -153,13 +169,14 @@ router.put(
     });
     if (dejaPrise) return sendError(res, 400, dejaPrise);
 
-    const alias = await upsertAlias({
+    const outcome = await upsertAlias({
       entityId: cible.entityId,
       objetType,
       objetId: req.params.objet_id,
       reference,
     });
-    res.status(200).send({ ok: true, data: { alias }, error: '' });
+    if (outcome.kind === 'conflit') return sendError(res, 400, ALIAS_REFERENCE_CONFLIT);
+    res.status(200).send({ ok: true, data: { alias: outcome.alias }, error: '' });
   })
 );
 

@@ -65,6 +65,14 @@ export async function aliasEntityIdsForUser(user: Pick<User, 'id' | 'roles'>): P
 }
 
 /**
+ * Entité SVI au nom de laquelle poser l'alias : celle de l'objet quand l'agent en fait partie
+ * (un agent peut travailler pour plusieurs services), sinon son premier service.
+ */
+export function entiteSviPourObjet(entityIds: Array<string>, objetEntityId: string | null | undefined) {
+  return objetEntityId && entityIds.includes(objetEntityId) ? objetEntityId : entityIds[0];
+}
+
+/**
  * Un alias se fige avec l'objet : une fois les analyses terminées (échantillon, pool) ou la
  * fiche clôturée (FTP), la référence a servi et ne doit plus diverger des documents émis.
  */
@@ -161,6 +169,11 @@ export async function deleteAlias({
   await prisma.trichineAlias.deleteMany({ where: { entity_id: entityId, ...objetFk(objetType, objetId) } });
 }
 
+export type UpsertAliasOutcome =
+  | { kind: 'ok'; alias: TrichineAliasProjection }
+  // Référence prise entre la vérification et l'écriture (saisie simultanée) : l'index unique tranche
+  | { kind: 'conflit' };
+
 /** Pose (ou remplace) l'alias de l'entité sur l'objet. La référence doit avoir été vérifiée. */
 export async function upsertAlias({
   entityId,
@@ -172,20 +185,48 @@ export async function upsertAlias({
   objetType: TrichineAliasObjet;
   objetId: string;
   reference: string;
-}) {
+}): Promise<UpsertAliasOutcome> {
   const existant = await prisma.trichineAlias.findFirst({
     where: { entity_id: entityId, ...objetFk(objetType, objetId) },
     select: { id: true },
   });
-  if (existant) {
-    return prisma.trichineAlias.update({
-      where: { id: existant.id },
-      data: { reference },
-      select: trichineAliasSelect,
-    });
+  try {
+    const alias = existant
+      ? await prisma.trichineAlias.update({
+          where: { id: existant.id },
+          data: { reference },
+          select: trichineAliasSelect,
+        })
+      : await prisma.trichineAlias.create({
+          data: { entity_id: entityId, objet_type: objetType, ...objetFk(objetType, objetId), reference },
+          select: trichineAliasSelect,
+        });
+    return { kind: 'ok', alias };
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      return { kind: 'conflit' };
+    }
+    throw error;
   }
-  return prisma.trichineAlias.create({
-    data: { entity_id: entityId, objet_type: objetType, ...objetFk(objetType, objetId), reference },
-    select: trichineAliasSelect,
-  });
 }
+
+/**
+ * Vérifie une référence avant de la poser : format, puis unicité pour l'entité.
+ * Renvoie le message d'erreur, ou null si elle peut être posée.
+ */
+export async function aliasReferenceRefusee({
+  entityId,
+  objetType,
+  objetId,
+  reference,
+}: {
+  entityId: string;
+  objetType: TrichineAliasObjet;
+  objetId: string | null;
+  reference: string;
+}): Promise<string | null> {
+  if (!aliasReferenceSchema.safeParse(reference).success) return ALIAS_REFERENCE_INVALIDE;
+  return aliasReferenceDejaPrise({ entityId, objetType, objetId, reference });
+}
+
+export const ALIAS_REFERENCE_CONFLIT = 'Cette référence vient d’être utilisée pour un autre objet';

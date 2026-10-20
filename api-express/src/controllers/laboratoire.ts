@@ -195,20 +195,36 @@ async function findPoolForLabo(poolId: string, context: LaboContext) {
   return { pool, ftp: link.TrichineFTP };
 }
 
+type PoolTrouve = { pool: LaboPool; ftp: LaboFtp };
+
 /**
  * Variante batchée : rapproche des références lues dans un fichier aux pools destinés aux
- * laboratoires de l'utilisateur. Une référence est soit celle de Zacharie (P-YY-…), soit l'alias
- * que le laboratoire a donné au pool. Sert à l'import de résultats (une requête pour tout le fichier).
+ * laboratoires de l'utilisateur. Une référence est soit celle de Zacharie (P-YY-…), qui prime
+ * toujours, soit l'alias que le laboratoire a donné au pool (casse ignorée, comme son unicité).
+ * Un alias porté par deux pools (deux laboratoires de l'utilisateur) est ambigu : il ne rapproche
+ * rien. Sert à l'import de résultats (une requête pour tout le fichier).
  */
 async function findPoolsForLabo(references: string[], context: LaboContext) {
-  const byReference = new Map<string, { pool: LaboPool; ftp: LaboFtp }>();
-  if (!references.length) return byReference;
+  const parReference = new Map<string, PoolTrouve>();
+  const parAlias = new Map<string, PoolTrouve | 'ambigu'>();
+  const trouver = (reference: string) => {
+    const parAliasTrouve = parAlias.get(reference.toLowerCase());
+    return parReference.get(reference) ?? (parAliasTrouve === 'ambigu' ? undefined : parAliasTrouve);
+  };
+  if (!references.length) return trouver;
   const pools = await prisma.trichinePool.findMany({
     where: {
       deleted_at: null,
       OR: [
         { reference_pool: { in: references } },
-        { Aliases: { some: { entity_id: { in: context.entityIds }, reference: { in: references } } } },
+        {
+          Aliases: {
+            some: {
+              entity_id: { in: context.entityIds },
+              OR: references.map((reference) => ({ reference: { equals: reference, mode: 'insensitive' } })),
+            },
+          },
+        },
       ],
     },
     include: {
@@ -219,11 +235,15 @@ async function findPoolsForLabo(references: string[], context: LaboContext) {
   for (const { Aliases, ...pool } of pools) {
     const link = pickLaboLink(pool, context);
     if (!link) continue;
-    for (const reference of [pool.reference_pool, ...Aliases.map((alias) => alias.reference)]) {
-      byReference.set(reference, { pool, ftp: link.TrichineFTP });
+    const trouve = { pool, ftp: link.TrichineFTP };
+    parReference.set(pool.reference_pool, trouve);
+    for (const { reference } of Aliases) {
+      const cle = reference.toLowerCase();
+      const deja = parAlias.get(cle);
+      parAlias.set(cle, deja && deja !== 'ambigu' && deja.pool.id !== pool.id ? 'ambigu' : (deja ?? trouve));
     }
   }
-  return byReference;
+  return trouver;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -589,7 +609,7 @@ router.post(
     const { pool, ftp } = found;
     const isLnr = ftp.DestinataireEntity.is_lnr;
 
-    const outcome = await applyPoolResult({ pool, ftp, body, userId: req.user.id, isLnr });
+    const outcome = await applyPoolResult({ pool, ftp, body, userId: req.user.id, isLnr, origine: 'saisie' });
     if (outcome.kind === 'error') {
       return sendError(res, outcome.status, outcome.error);
     }
@@ -737,6 +757,7 @@ router.post(
       body,
       userId: req.user.id,
       isLnr: ftp.DestinataireEntity.is_lnr,
+      origine: 'saisie',
     });
     if (outcome.kind === 'error') {
       // La correction est refusée : on restitue le résultat d'origine
@@ -1020,11 +1041,11 @@ router.post(
     }
 
     const mapped = rawRows.map((raw) => mapRow(raw, mapping)).filter((row) => row.reference_pool);
-    const poolsByRef = await findPoolsForLabo(
+    const trouverPool = await findPoolsForLabo(
       mapped.map((row) => row.reference_pool),
       context
     );
-    const rows = mapped.map((row) => classifyLimsRow(row, poolsByRef.get(row.reference_pool)));
+    const rows = mapped.map((row) => classifyLimsRow(row, trouverPool(row.reference_pool)));
 
     const counts = { matched: 0, unmatched: 0, invalid: 0, conflict: 0 };
     for (const row of rows) counts[row.status]++;
@@ -1063,7 +1084,7 @@ router.post(
       return sendError(res, 400, 'Lignes invalides');
     }
     // On ne fait jamais confiance aux ids côté client : on re-résout chaque pool dans le scope du labo.
-    const poolsByRef = await findPoolsForLabo(
+    const trouverPool = await findPoolsForLabo(
       bodyResult.data.rows.map((row) => row.reference_pool),
       context
     );
@@ -1074,7 +1095,7 @@ router.post(
     const results: LaboResultsImportResponse['data']['results'] = [];
 
     for (const row of bodyResult.data.rows) {
-      const found = poolsByRef.get(row.reference_pool);
+      const found = trouverPool(row.reference_pool);
       if (!found) {
         skipped++;
         results.push({
@@ -1091,6 +1112,7 @@ router.post(
           body: row,
           userId: req.user.id,
           isLnr: found.ftp.DestinataireEntity.is_lnr,
+          origine: 'automatique',
         });
         if (outcome.kind === 'error') {
           errors++;

@@ -41,6 +41,7 @@ import { getEtgsDuServiceExpediteur } from '~/utils/trichine-parties';
 import {
   ALIAS_REFERENCE_INVALIDE,
   aliasEntityIdsForUser,
+  entiteSviPourObjet,
   aliasReferenceDejaPrise,
   aliasReferenceSchema,
   trichineAliasesInclude,
@@ -130,17 +131,20 @@ async function carcassesAccessiblesAuSvi(
 /**
  * Alias saisis à la création d'un objet : validés (format, unicité pour le service) avant de créer
  * quoi que ce soit, pour ne pas laisser un objet créé sans la référence que l'agent a tapée.
- * L'alias est posé au nom du service d'inspection de l'agent.
+ * L'alias est posé au nom du service d'inspection de l'objet (cf `entiteSviPourObjet`). Seule une
+ * saisie simultanée de la même référence peut encore le faire échouer : l'objet reste alors créé
+ * sans alias.
  */
 type AliasACreer = { kind: 'ok'; entityId: string | null } | { kind: 'error'; error: string };
 
 async function preparerAliases(
   req: RequestWithUser,
   objetType: TrichineAliasObjet,
-  references: Array<string>
+  references: Array<string>,
+  objetEntityId: string | undefined
 ): Promise<AliasACreer> {
   if (!references.length) return { kind: 'ok', entityId: null };
-  const [entityId] = await aliasEntityIdsForUser(req.user);
+  const entityId = entiteSviPourObjet(await aliasEntityIdsForUser(req.user), objetEntityId);
   if (!entityId) return { kind: 'error', error: "Aucun service d'inspection associé à votre compte" };
   if (new Set(references.map((reference) => reference.toLowerCase())).size !== references.length) {
     return { kind: 'error', error: 'Une même référence interne est saisie deux fois' };
@@ -268,7 +272,8 @@ router.post(
     const aliasACreer = await preparerAliases(
       req,
       TrichineAliasObjet.ECHANTILLON,
-      body.alias ? [body.alias] : []
+      body.alias ? [body.alias] : [],
+      body.preleve_par_entity_id
     );
     if (aliasACreer.kind === 'error') {
       return sendError(res, 400, aliasACreer.error);
@@ -417,7 +422,8 @@ router.post(
     const aliasACreer = await preparerAliases(
       req,
       TrichineAliasObjet.ECHANTILLON,
-      body.echantillons.map((ligne) => ligne.alias).filter((alias): alias is string => !!alias)
+      body.echantillons.map((ligne) => ligne.alias).filter((alias): alias is string => !!alias),
+      body.preleve_par_entity_id
     );
     if (aliasACreer.kind === 'error') {
       return sendError(res, 400, aliasACreer.error);
@@ -686,7 +692,12 @@ router.post(
     if (compositionError) {
       return sendError(res, 400, compositionError);
     }
-    const aliasACreer = await preparerAliases(req, TrichineAliasObjet.POOL, body.alias ? [body.alias] : []);
+    const aliasACreer = await preparerAliases(
+      req,
+      TrichineAliasObjet.POOL,
+      body.alias ? [body.alias] : [],
+      body.cree_par_entity_id
+    );
     if (aliasACreer.kind === 'error') {
       return sendError(res, 400, aliasACreer.error);
     }
@@ -960,7 +971,12 @@ router.post(
     if (dejaEngage) {
       return sendError(res, 400, 'Un des pools est déjà rattaché à une FTP');
     }
-    const aliasACreer = await preparerAliases(req, TrichineAliasObjet.FTP, body.alias ? [body.alias] : []);
+    const aliasACreer = await preparerAliases(
+      req,
+      TrichineAliasObjet.FTP,
+      body.alias ? [body.alias] : [],
+      body.expediteur_entity_id
+    );
     if (aliasACreer.kind === 'error') {
       return sendError(res, 400, aliasACreer.error);
     }

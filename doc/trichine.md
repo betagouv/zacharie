@@ -329,10 +329,10 @@ model TrichineAlias {
 ```
 
 - **Qui** : le SVI (au nom de son service) sur ce que son équipe a prélevé / constitué / expédié ; le laboratoire sur ce qui lui est arrivé par une FTP non brouillon (ou la FTP de confirmation qu'il envoie au LNR). Pas de chasseur / 1er détenteur en V1.
-- **Saisie** : à la création (prélèvement, pool, FTP côté SVI), sur la page de détail (« Références internes »), à la saisie du résultat et par l'import LIMS (colonne `reference_labo`) côté laboratoire.
+- **Saisie** : à la création (prélèvement, pool, FTP côté SVI), sur la page de détail (« Références internes »), à la saisie du résultat et par l'import LIMS (colonne `reference_labo`) ou le rapport reçu par email côté laboratoire. Une référence refusée (format, déjà prise) bloque une saisie manuelle ; lue automatiquement (LIMS, email), elle est ignorée et le résultat est appliqué quand même.
 - **Gel** : figée une fois les analyses terminées (échantillon, pool) ou la FTP clôturée (`TRAITEE`, `ANNULEE` ou analyses terminées).
-- **Format** : 50 caractères max, lettres, chiffres, espaces et `. _ - / # ( )`.
-- **Usages** : colonne « Ma réf. » et recherche dans les listes, export CSV/JSON du laboratoire (`reference_labo` = la sienne, `autres_references_internes`), rapprochement des lignes à l'import LIMS (référence Zacharie **ou** alias du labo), impression de tous les alias connus sur le PDF de la FTP.
+- **Format** : 50 caractères max, lettres, chiffres, espaces et `. _ - / # ( )`. Unicité **casse ignorée** (index unique sur `lower(reference)`, posé en SQL dans la migration : Prisma ne sait pas le déclarer).
+- **Usages** : colonne « Ma réf. » et recherche dans les listes, export CSV/JSON du laboratoire (`reference_labo` = la sienne, `autres_references_internes`), rapprochement des lignes à l'import LIMS (référence Zacharie, qui prime, **ou** alias du labo, casse ignorée ; un alias porté par deux pools ne rapproche rien), impression sur le PDF de la FTP des alias connus **à l'envoi** (le PDF est archivé tel qu'envoyé : en pratique ceux du SVI, jamais ceux des laboratoires).
 
 ### 4.6 Documents (polymorphique : pool OU ftp)
 

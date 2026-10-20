@@ -2,6 +2,7 @@ import express from 'express';
 import request from 'supertest';
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import {
+  Prisma,
   TrichineAliasObjet,
   TrichineStatutAnalyse,
   TrichineStatutLogistiqueFTP,
@@ -218,6 +219,47 @@ describe('PUT /trichine-alias/:objet/:id', () => {
     const response = await put(chasseur, 'pool/pool-1', 'A1');
 
     expect(response.status).toBe(403);
+  });
+
+  test('un compte non activé ne peut pas poser de référence', async () => {
+    travaillePour('svi-1', 'user-svi');
+
+    const response = await put({ ...sviUser, activated: false }, 'pool/pool-1', 'A1');
+
+    expect(response.status).toBe(400);
+    expect(prisma.trichineAlias.create).not.toHaveBeenCalled();
+  });
+
+  test('un agent de deux services pose la référence au nom du service qui a constitué le pool', async () => {
+    vi.mocked(prisma.entityAndUserRelations.findMany).mockResolvedValue([
+      { entity_id: 'svi-1', owner_id: 'user-svi' },
+      { entity_id: 'svi-2', owner_id: 'user-svi' },
+    ] as never);
+    vi.mocked(prisma.trichinePool.findUnique).mockResolvedValue({
+      ...pool,
+      cree_par_entity_id: 'svi-2',
+    } as never);
+
+    await put(sviUser, 'pool/pool-1', 'A1');
+
+    expect(prisma.trichineAlias.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ entity_id: 'svi-2' }) })
+    );
+  });
+
+  test('une référence prise au même instant par un collègue → 400, pas 500', async () => {
+    travaillePour('svi-1', 'user-svi');
+    vi.mocked(prisma.trichineAlias.create).mockRejectedValueOnce(
+      new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+        code: 'P2002',
+        clientVersion: 'test',
+      })
+    );
+
+    const response = await put(sviUser, 'pool/pool-1', 'A1');
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toMatch(/vient d’être utilisée/);
   });
 });
 

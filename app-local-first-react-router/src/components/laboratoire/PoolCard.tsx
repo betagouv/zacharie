@@ -266,9 +266,14 @@ export function ResultatModalContent({
     setParasite('');
     setDateDebut('');
     setDateFin(dayjs().format('YYYY-MM-DD'));
-    setReferenceLabo(maReference);
+    setReferenceLabo('');
     setCommentaire('');
     setRaison('');
+  }, [pool?.id]);
+  // Pré-remplit avec la référence déjà posée, qui peut arriver après l'ouverture : sans écraser
+  // ce que le laboratoire a commencé à saisir
+  useEffect(() => {
+    setReferenceLabo((saisie) => saisie || maReference);
   }, [pool?.id, maReference]);
 
   const correction = mode === 'correction';

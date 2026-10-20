@@ -9,11 +9,16 @@ import {
 } from '@prisma/client';
 import laboratoireRouter from '~/controllers/laboratoire';
 import prisma from '~/prisma';
+import { applyPoolResult } from '~/utils/trichine-result';
 
 // POST /laboratoire/results/preview — l'export LIMS peut citer le pool par sa référence Zacharie
 // ou par l'alias que le laboratoire lui a donné.
 
 vi.mock('~/third-parties/sentry', () => ({ capture: vi.fn() }));
+vi.mock('~/utils/trichine-result', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('~/utils/trichine-result')>()),
+  applyPoolResult: vi.fn().mockResolvedValue({ kind: 'ok', pool: null, ftpConfirmation: null }),
+}));
 
 const app = express();
 app.use(express.json());
@@ -61,11 +66,33 @@ describe('POST /laboratoire/results/preview', () => {
 
     expect(response.status).toBe(200);
     expect(response.body.data.rows[0]).toMatchObject({ reference_pool: 'LIMS-0087', status: 'matched' });
-    // L'alias n'est cherché que parmi ceux des laboratoires de l'utilisateur
+    // L'alias n'est cherché que parmi ceux des laboratoires de l'utilisateur, casse ignorée
     const where = vi.mocked(prisma.trichinePool.findMany).mock.calls[0][0]!.where as any;
     expect(where.OR[1]).toEqual({
-      Aliases: { some: { entity_id: { in: ['labo-1'] }, reference: { in: ['LIMS-0087'] } } },
+      Aliases: {
+        some: {
+          entity_id: { in: ['labo-1'] },
+          OR: [{ reference: { equals: 'LIMS-0087', mode: 'insensitive' } }],
+        },
+      },
     });
+  });
+
+  test('rapproche un alias écrit dans une autre casse', async () => {
+    const response = await preview('reference_pool,resultat_analyse\nlims-0087,negatif\n');
+
+    expect(response.body.data.rows[0]).toMatchObject({ status: 'matched' });
+  });
+
+  test('un alias porté par deux pools ne rapproche rien', async () => {
+    vi.mocked(prisma.trichinePool.findMany).mockResolvedValue([
+      poolRecu,
+      { ...poolRecu, id: 'pool-2', reference_pool: 'P-26-SVI01-0046' },
+    ] as never);
+
+    const response = await preview('reference_pool,resultat_analyse\nLIMS-0087,negatif\n');
+
+    expect(response.body.data.rows[0]).toMatchObject({ status: 'unmatched' });
   });
 
   test('rapproche toujours une ligne citant la référence Zacharie', async () => {
@@ -78,5 +105,32 @@ describe('POST /laboratoire/results/preview', () => {
     const response = await preview('reference_pool,resultat_analyse\nINCONNUE,negatif\n');
 
     expect(response.body.data.rows[0]).toMatchObject({ status: 'unmatched' });
+  });
+});
+
+describe('POST /laboratoire/results/import', () => {
+  const importer = (rows: Array<object>) =>
+    request(app)
+      .post('/laboratoire/results/import')
+      .set('x-test-user', JSON.stringify(laboUser))
+      .send({ rows });
+
+  test('la référence Zacharie prime sur un alias identique posé sur un autre pool', async () => {
+    vi.mocked(prisma.trichinePool.findMany).mockResolvedValue([
+      // Alias saisi par erreur avec la référence Zacharie de pool-1
+      {
+        ...poolRecu,
+        id: 'pool-2',
+        reference_pool: 'P-26-SVI01-0046',
+        Aliases: [{ reference: 'P-26-SVI01-0045' }],
+      },
+      poolRecu,
+    ] as never);
+
+    await importer([{ reference_pool: 'P-26-SVI01-0045', resultat_analyse: 'NEGATIF' }]);
+
+    expect(applyPoolResult).toHaveBeenCalledWith(
+      expect.objectContaining({ pool: expect.objectContaining({ id: 'pool-1' }), origine: 'automatique' })
+    );
   });
 });
