@@ -90,6 +90,10 @@ export async function syncCarcasse(
   // Deny by default : on ne modifie une carcasse que si elle est dans le périmètre de
   // l'utilisateur, et on n'en crée une que sur une fiche à laquelle il participe.
   if (existingCarcasse) {
+    // Les droits par rôle se lisent sur la fiche du corps : elle doit être celle de la carcasse.
+    if (existingCarcasse.fei_numero !== fei_numero) {
+      throw new SyncRejectedError("Cette carcasse n'appartient pas à cette fiche");
+    }
     if (!(await scope.canWriteCarcasse(existingCarcasse.zacharie_carcasse_id))) {
       throw new SyncRejectedError("Vous n'avez pas accès à cette carcasse");
     }
@@ -131,6 +135,9 @@ export async function syncCarcasse(
       if (!isUniqueViolation) throw error;
       existingCarcasse = await prisma.carcasse.findUnique({ where: { zacharie_carcasse_id } });
       if (!existingCarcasse) throw error;
+      if (existingCarcasse.fei_numero !== fei_numero) {
+        throw new SyncRejectedError("Cette carcasse n'appartient pas à cette fiche");
+      }
     }
     // La ligne créée n'a encore aucune colonne de rattachement — celles-ci ne sont écrites que par
     // l'update en fin de fonction. On accorde l'accès tout de suite, pour les sections suivantes de
