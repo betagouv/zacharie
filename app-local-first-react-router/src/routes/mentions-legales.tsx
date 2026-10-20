@@ -37,6 +37,12 @@ export default function MentionsLegales() {
             <p>44000 Nantes</p>
             <p>France</p>
             <p>Téléphone : 02 85 52 07 69</p>
+            <h2 className="mt-6 mb-2 text-xl font-semibold">Envoi des courriels</h2>
+            <p>Les courriels de la plateforme sont envoyés par :</p>
+            <p>Brevo (Sendinblue SAS)</p>
+            <p>106 boulevard Haussmann</p>
+            <p>75008 Paris</p>
+            <p>France</p>
             <h2 className="mt-6 mb-2 text-xl font-semibold">Accessibilité</h2>
             <p>
               La conformité aux normes d’accessibilité numérique est un objectif ultérieur mais nous tâchons
