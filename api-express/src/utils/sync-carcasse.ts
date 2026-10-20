@@ -446,8 +446,12 @@ export async function syncCarcasse(
   }
   // svi_assigned_at et svi_entity_id sont écrits par l'ETG qui assigne la fiche à un SVI,
   // pas par le SVI lui-même : ils restent hors du bloc réservé au rôle SVI plus bas.
+  // La date d'assignation est celle du serveur, jamais celle du client : elle ouvre l'acceptation
+  // automatique à J+10, une date antidatée permettrait d'accepter la carcasse sans inspection.
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_assigned_at)) {
-    nextCarcasse.svi_assigned_at = body[Prisma.CarcasseScalarFieldEnum.svi_assigned_at];
+    nextCarcasse.svi_assigned_at = body[Prisma.CarcasseScalarFieldEnum.svi_assigned_at]
+      ? (existingCarcasse.svi_assigned_at ?? new Date())
+      : null;
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_entity_id)) {
     nextCarcasse.svi_entity_id = body[Prisma.CarcasseScalarFieldEnum.svi_entity_id];

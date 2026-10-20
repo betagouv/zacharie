@@ -366,7 +366,7 @@ describe('syncCarcasse — SVI-only fields', () => {
     );
 
     const updateCall = vi.mocked(prisma.carcasse.update).mock.calls[0][0];
-    expect(updateCall.data.svi_assigned_at).toBe(assignedAt);
+    expect(updateCall.data.svi_assigned_at).toBeInstanceOf(Date);
     expect(updateCall.data.svi_entity_id).toBe('entity-svi');
     expect(updateCall.data.svi_carcasse_status).toBe('REFUS_ETG_COLLECTEUR');
     expect(updateCall.data.svi_carcasse_status_set_at).toBe(assignedAt);
@@ -623,6 +623,29 @@ describe('syncCarcasse — champs réservés à un rôle', () => {
       }
     );
     expect(data.svi_carcasse_status).toBe(CarcasseStatus.ACCEPTE);
+  });
+
+  test("une date d'assignation au SVI antidatée par le client est remplacée par celle du serveur", async () => {
+    const avant = Date.now();
+    const data = await syncAsEtg({ svi_assigned_at: new Date('2020-01-01') });
+    expect((data.svi_assigned_at as Date).getTime()).toBeGreaterThanOrEqual(avant);
+  });
+
+  test("une date d'assignation déjà enregistrée n'est pas réécrite par le client", async () => {
+    const assigneeLe = new Date(Date.now() - 2 * 24 * 3600 * 1000);
+    const data = await syncAsEtg(
+      { svi_assigned_at: new Date('2020-01-01') },
+      { ...carcasseDuChasseur, svi_assigned_at: assigneeLe }
+    );
+    expect(data.svi_assigned_at).toBe(assigneeLe);
+  });
+
+  test("l'assignation au SVI peut être retirée", async () => {
+    const data = await syncAsEtg(
+      { svi_assigned_at: null },
+      { ...carcasseDuChasseur, svi_assigned_at: new Date() }
+    );
+    expect(data.svi_assigned_at).toBeNull();
   });
 
   test("un manque de l'intermédiaire remplace une acceptation automatique", async () => {
