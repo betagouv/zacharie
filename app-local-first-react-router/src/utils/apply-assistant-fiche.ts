@@ -52,10 +52,11 @@ export function updateFeiFromAssistant(
 // Écrit sur la fiche ce que l'assistant Zacharie a compris, par les mêmes fonctions que le formulaire
 // (local-first, puis syncData). Albert relit tout l'échange et renvoie souvent ce qui est déjà
 // enregistré : on n'écrit que ce qui change. La commune et le propriétaire initial sont choisis à part.
-// Renvoie une ligne par donnée écrite, pour la réponse du chat.
+// Renvoie une ligne par donnée écrite, pour la réponse du chat, et le nombre de carcasses créées.
 export async function applyAssistantFiche(feiNumero: Fei['numero'], data: AssistantFicheData, user: User) {
   const { updateFei, updateCarcasse } = useZustandStore.getState();
   const lignes: Array<string> = [];
+  let carcassesCreees = 0;
   const log = (action: string, history: ReturnType<typeof createHistoryInput>, carcasseId: string | null) =>
     addAssistantLog(feiNumero, user, data.assistant_request_id, action, history, carcasseId);
 
@@ -121,6 +122,7 @@ export async function applyAssistantFiche(feiNumero: Fei['numero'], data: Assist
         newCarcasse.zacharie_carcasse_id
       );
       lignes.push(`Carcasse ajoutée : ${describeCarcasse(newCarcasse)}`);
+      carcassesCreees++;
       continue;
     }
     const nextCarcasse: Partial<Carcasse> = {};
@@ -148,7 +150,7 @@ export async function applyAssistantFiche(feiNumero: Fei['numero'], data: Assist
     lignes.push(`Carcasse modifiée : ${describeCarcasse({ ...existingCarcasse, ...nextCarcasse })}`);
   }
 
-  return lignes;
+  return { lignes, carcassesCreees };
 }
 
 function describeCarcasse(

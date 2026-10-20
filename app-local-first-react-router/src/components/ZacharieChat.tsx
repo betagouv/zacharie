@@ -27,6 +27,10 @@ const ACCUEIL = `Bonjour, je suis Zacharie ! Dites-moi tout ce que vous savez de
   isDicteeSupported ? 'dicter avec le bouton micro' : 'dicter avec le micro de votre clavier'
 }.`;
 
+// limites du serveur : 4000 caractères par message ; on n'envoie que la fin de l'échange
+const MAX_MESSAGE_LENGTH = 4000;
+const MAX_MESSAGES_ENVOYES = 20;
+
 const chipClassName = 'rounded-full border border-[#000091] px-3 py-1 text-sm text-[#000091]';
 
 function getMissingLabels(fei: Fei, carcasses: Array<Carcasse>) {
@@ -132,7 +136,7 @@ export default function ZacharieChat({
         return;
       }
       const text = response.data.text;
-      setDraft((current) => [current.trim(), text].filter(Boolean).join(' '));
+      setDraft((current) => [current.trim(), text].filter(Boolean).join(' ').slice(0, MAX_MESSAGE_LENGTH));
     } catch {
       addAssistantMessage("Je n'ai pas pu lire l'enregistrement, veuillez réessayer.");
     } finally {
@@ -175,18 +179,27 @@ export default function ZacharieChat({
     setCommuneOptions([]);
     setIsSending(true);
     track('assistant-zacharie', 'envoyer-message');
+    try {
+      await sendToAssistant(nextMessages);
+    } finally {
+      setIsSending(false);
+    }
+  };
 
+  const sendToAssistant = async (nextMessages: Array<ChatMessage>) => {
     // Albert reçoit l'état de la fiche lu en base : les saisies locales doivent y être avant
     if (!useZustandStore.getState().dataIsSynced) await syncData('assistant-zacharie');
 
     const response = (await API.post({
       path: `/assistant-fiche/${feiNumero}`,
       body: {
-        messages: nextMessages,
+        messages: nextMessages.slice(-MAX_MESSAGES_ENVOYES).map((message) => ({
+          role: message.role,
+          content: message.content.slice(0, MAX_MESSAGE_LENGTH),
+        })),
         premier_detenteur_options: premierDetenteurChoices.map((choice) => choice.label),
       },
     })) as AssistantFicheResponse;
-    setIsSending(false);
 
     if (!response.ok || !response.data) {
       addAssistantMessage(response.error || 'Une erreur est survenue, veuillez réessayer.');
@@ -198,7 +211,7 @@ export default function ZacharieChat({
       addAssistantMessage(data.reply);
       return;
     }
-    const lignes = await applyAssistantFiche(feiNumero, data, user);
+    const { lignes, carcassesCreees } = await applyAssistantFiche(feiNumero, data, user);
     if (lignes.length > 0) {
       addAssistantMessage(["C'est noté :", ...lignes.map((ligne) => `- ${ligne}`)].join('\n'));
       syncData('assistant-zacharie');
@@ -211,8 +224,20 @@ export default function ZacharieChat({
     const premierDetenteur = premierDetenteurChoices.find(
       (choice) => choice.label === data.premier_detenteur
     );
-    if (premierDetenteur && !isPremierDetenteurActuel(premierDetenteur.params, currentFei, user.id)) {
+    const premierDetenteurActuel =
+      currentFei.premier_detenteur_user_id || currentFei.premier_detenteur_entity_id
+        ? premierDetenteurChoices.find((choice) =>
+            isPremierDetenteurActuel(choice.params, currentFei, user.id)
+          )
+        : undefined;
+    if (premierDetenteur && premierDetenteur !== premierDetenteurActuel) {
       selectPremierDetenteur(premierDetenteur, false, data.assistant_request_id);
+    } else if (carcassesCreees > 0 && premierDetenteurActuel) {
+      // les carcasses ajoutées après la désignation reprennent le propriétaire initial déjà choisi
+      designerPremierDetenteur({
+        ...premierDetenteurActuel.params,
+        assistantRequestId: data.assistant_request_id,
+      });
     }
 
     const commune_recherchee = data.commune_recherchee;
@@ -401,6 +426,7 @@ export default function ZacharieChat({
                 : 'Connexion requise'
           }
           value={draft}
+          maxLength={MAX_MESSAGE_LENGTH}
           disabled={!isOnline}
           onChange={(event) => setDraft(event.target.value)}
         />

@@ -42,9 +42,6 @@ export default function ChasseurFei() {
   const feis = useZustandStore((state) => state.feis);
   const fei = feis[params.fei_numero!];
   const [hasTriedLoading, setHasTriedLoading] = useState(false);
-  // à la fermeture de l'assistant Zacharie, on remonte la fiche : ses champs non contrôlés
-  // (defaultValue) reprennent les valeurs écrites par l'assistant
-  const [remountKey, setRemountKey] = useState(0);
 
   useLoaderEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -61,15 +58,10 @@ export default function ChasseurFei() {
   if (!fei) {
     return hasTriedLoading ? <NotFound /> : <Chargement />;
   }
-  return (
-    <FEIChasseurLoaded
-      key={`${fei.numero}-${remountKey}`}
-      onZacharieChatClosed={() => setRemountKey((key) => key + 1)}
-    />
-  );
+  return <FEIChasseurLoaded key={fei.numero} />;
 }
 
-function FEIChasseurLoaded({ onZacharieChatClosed }: { onZacharieChatClosed: () => void }) {
+function FEIChasseurLoaded() {
   const params = useParams();
   const navigate = useNavigate();
   const user = useUser((state) => state.user)!;
@@ -427,6 +419,9 @@ function FEIChasseurLoaded({ onZacharieChatClosed }: { onZacharieChatClosed: () 
 
   const premierDetenteurIsLocked = useMemo(() => carcasses.some(isPremierDetenteurVerrouille), [carcasses]);
 
+  // à la fermeture de l'assistant Zacharie, les champs non contrôlés (defaultValue) de la date et des
+  // heures sont remontés pour reprendre les valeurs écrites par l'assistant
+  const [assistantClosedCount, setAssistantClosedCount] = useState(0);
   const zacharieChat = useZacharieEasterEgg(
     canEdit &&
       fei.examinateur_initial_user_id === user.id &&
@@ -450,7 +445,7 @@ function FEIChasseurLoaded({ onZacharieChatClosed }: { onZacharieChatClosed: () 
           onUpdateFei={(nextFei) => updateFei(fei.numero, nextFei)}
           onClose={() => {
             zacharieChat.close();
-            onZacharieChatClosed();
+            setAssistantClosedCount((count) => count + 1);
           }}
         />
       )}
@@ -471,6 +466,7 @@ function FEIChasseurLoaded({ onZacharieChatClosed }: { onZacharieChatClosed: () 
               <div className="bg-white p-4 md:p-8">
                 <h4 className="fr-h5">Informations de chasse</h4>
                 <Component
+                  key={`date-${assistantClosedCount}`}
                   label="Date de la chasse"
                   state={fieldHasError('date_mise_a_mort', showBloc1Errors) ? 'error' : 'default'}
                   stateRelatedMessage={fieldErrorMessage('date_mise_a_mort')}
@@ -615,6 +611,7 @@ function FEIChasseurLoaded({ onZacharieChatClosed }: { onZacharieChatClosed: () 
                   {allCarcassesConfirmed && (
                     <>
                       <Component
+                        key={`heure-mise-a-mort-${assistantClosedCount}`}
                         className="mt-4"
                         label="Heure du prélèvement de la première carcasse"
                         state={
@@ -657,6 +654,7 @@ function FEIChasseurLoaded({ onZacharieChatClosed }: { onZacharieChatClosed: () 
                       {!onlyPetitGibier && (
                         <>
                           <Component
+                            key={`heure-evisceration-${assistantClosedCount}`}
                             label="Heure d’éviscération de la dernière carcasse"
                             state={
                               fieldHasError('heure_evisceration_derniere_carcasse', showBloc2Errors)
