@@ -5,7 +5,6 @@ import dayjs from 'dayjs';
 import 'dayjs/locale/fr';
 import path from 'path';
 import prisma from '~/prisma';
-import { TRICHINE_RESULTATS_EMAIL } from '~/config';
 import { getEtgsDuServiceExpediteur, type TrichinePartieConcernee } from '~/utils/trichine-parties';
 
 dayjs.locale('fr');
@@ -323,16 +322,10 @@ export function TrichineFtpDocument({
         <View style={styles.consigne} wrap={false}>
           <Text style={styles.consigneTitle}>À l'attention du laboratoire</Text>
           <Text style={styles.consigneText}>
-            1. Reportez la référence de pool ci-dessous (P-…) dans le champ « référence client » de votre LIMS
-            : c'est elle qui permet de rattacher automatiquement votre résultat aux carcasses concernées. Le
+            Reportez la référence de pool ci-dessous (P-…) dans le champ « référence client » de votre LIMS :
+            c'est elle qui permet de rattacher automatiquement votre résultat aux carcasses concernées. Le
             code-barres est lisible à la douchette.
           </Text>
-          {!!TRICHINE_RESULTATS_EMAIL && (
-            <Text style={styles.consigneText}>
-              2. Renvoyez votre rapport COFRAC à {TRICHINE_RESULTATS_EMAIL} : les résultats sont intégrés
-              automatiquement dans Zacharie, sans ressaisie de votre part.
-            </Text>
-          )}
         </View>
 
         {pools.map((pool) => (
