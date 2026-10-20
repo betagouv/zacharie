@@ -4,6 +4,7 @@ import { Fei, Carcasse, CarcasseStatus, CarcasseType, FeiOwnerRole, UserRoles } 
 import dayjs from 'dayjs';
 import petitGibier from '@app/data/petit-gibier.json';
 import { track } from '@app/services/matomo';
+import { mapFeiFieldsToCarcasse } from '@app/utils/map-fei-fields-to-carcasse';
 
 type InitialParamsProps = {
   zacharieCarcasseId: string;
@@ -52,11 +53,9 @@ export async function createNewCarcasse({
     zacharie_carcasse_id: zacharieCarcasseId,
     numero_bracelet: numeroBracelet,
     fei_numero: fei.numero,
-    date_mise_a_mort: fei.date_mise_a_mort,
+    ...mapFeiFieldsToCarcasse(fei),
     type: isPetitGibier ? CarcasseType.PETIT_GIBIER : CarcasseType.GROS_GIBIER,
     nombre_d_animaux: isPetitGibier ? Number(nombreDAnimaux) : 1,
-    heure_mise_a_mort_premiere_carcasse_fei: fei.heure_mise_a_mort_premiere_carcasse,
-    heure_evisceration_derniere_carcasse_fei: fei.heure_evisceration_derniere_carcasse,
     consommateur_final_usage_domestique: null,
     heure_mise_a_mort: null,
     heure_evisceration: null,
@@ -119,16 +118,6 @@ export async function createNewCarcasse({
     svi_ipm2_poids_type: null,
     svi_ipm2_signed_at: null,
     created_by_user_id: user.id,
-    examinateur_initial_offline: fei.examinateur_initial_offline,
-    examinateur_initial_user_id: fei.examinateur_initial_user_id,
-    examinateur_initial_approbation_mise_sur_le_marche:
-      fei.examinateur_initial_approbation_mise_sur_le_marche,
-    examinateur_initial_date_approbation_mise_sur_le_marche:
-      fei.examinateur_initial_date_approbation_mise_sur_le_marche,
-    premier_detenteur_offline: null,
-    premier_detenteur_user_id: null,
-    premier_detenteur_entity_id: null,
-    premier_detenteur_name_cache: null,
     intermediaire_closed_at: null,
     intermediaire_closed_by_user_id: null,
     intermediaire_closed_by_entity_id: null,

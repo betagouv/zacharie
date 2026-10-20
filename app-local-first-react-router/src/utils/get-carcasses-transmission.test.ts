@@ -83,7 +83,7 @@ function carc(overrides: Partial<Carcasse> = {}): Carcasse {
   return { ...BASE, ...overrides } as unknown as Carcasse;
 }
 
-// Mirror the real caller (useGetTransmissionFromTransmissionId): the transmission is derived from
+// Mirror the real caller (reportTransmissionsInconsistencies): the transmission is derived from
 // the reference carcasse, and every carcasse of the lot is checked against it.
 function check(ref: Carcasse, carcasse: Carcasse) {
   const transmission = getCarcasseTransmission(ref);
