@@ -131,6 +131,29 @@ describe('createNewCarcasse', () => {
     expect(carcasse.prev_owner_user_id).toBeNull();
   });
 
+  test('carcasse added after the premier detenteur is chosen takes it from the fiche', async () => {
+    const fei = makeFei({
+      premier_detenteur_offline: false,
+      premier_detenteur_user_id: examinateurUser!.id,
+      premier_detenteur_entity_id: 'PD-ENTITY-1',
+      premier_detenteur_name_cache: 'Association de chasseurs',
+    } as Partial<Fei>);
+
+    await createNewCarcasse({
+      zacharieCarcasseId: `${fei.numero}_LATE-2`,
+      numeroBracelet: 'LATE-2',
+      espece: 'Daim',
+      nombreDAnimaux: '1',
+      fei,
+    });
+
+    const carcasse = createCarcasseSpy.mock.calls[0][0] as Carcasse;
+    expect(carcasse.premier_detenteur_offline).toBe(false);
+    expect(carcasse.premier_detenteur_user_id).toBe(examinateurUser!.id);
+    expect(carcasse.premier_detenteur_entity_id).toBe('PD-ENTITY-1');
+    expect(carcasse.premier_detenteur_name_cache).toBe('Association de chasseurs');
+  });
+
   test('throws if the user is not an examinateur initial', async () => {
     useUser.setState({
       user: { ...examinateurUser!, numero_cfei: null, est_forme_a_l_examen_initial: false },
