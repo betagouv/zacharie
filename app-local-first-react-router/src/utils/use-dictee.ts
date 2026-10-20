@@ -27,8 +27,18 @@ export default function useDictee(onRecorded: (audio: Blob) => void) {
     if (recorderRef.current?.state === 'recording') recorderRef.current.stop();
   };
 
+  // vrai pendant la demande d'accès au micro : un second appui n'ouvre pas un second enregistrement
+  const isStartingRef = useRef(false);
+
   const start = async () => {
-    const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    if (isStartingRef.current || recorderRef.current) return;
+    isStartingRef.current = true;
+    let micStream: MediaStream;
+    try {
+      micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } finally {
+      isStartingRef.current = false;
+    }
     // le chat a été fermé pendant la demande d'accès au micro
     if (isUnmountedRef.current) {
       micStream.getTracks().forEach((track) => track.stop());

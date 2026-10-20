@@ -1,12 +1,12 @@
 import { useMemo } from 'react';
-import { Entity, EntityTypes, FeiOwnerRole, UserRoles } from '@prisma/client';
+import { Entity, EntityTypes, Fei, FeiOwnerRole, UserRoles } from '@prisma/client';
 import type { UserForFei } from '~/src/types/user';
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import { syncData } from '@app/utils/sync-data';
 import { createHistoryInput } from '@app/utils/create-history-entry';
 import { getCarcasseTransmission } from '@app/utils/get-carcasses-transmission';
-import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
+import { filterCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { CarcasseTransmission } from '@app/types/carcasse';
 import { track } from '@app/services/matomo';
 import { useEntitiesIdsWorkingDirectlyFor, useDetenteursInitiaux } from '@app/utils/get-entity-relations';
@@ -15,8 +15,6 @@ import { useEntitiesIdsWorkingDirectlyFor, useDetenteursInitiaux } from '@app/ut
 // moi, une de mes associations, ou un autre utilisateur.
 export function useDesignerPremierDetenteur(feiNumero: string) {
   const user = useUser((state) => state.user)!;
-  const fei = useZustandStore((state) => state.feis[feiNumero]);
-  const myCarcasses = useCarcassesForFei(feiNumero);
   const updateFei = useZustandStore((state) => state.updateFei);
   const updateCarcassesTransmission = useZustandStore((state) => state.updateCarcassesTransmission);
   const addLog = useZustandStore((state) => state.addLog);
@@ -26,15 +24,20 @@ export function useDesignerPremierDetenteur(feiNumero: string) {
     ownerUser,
     ownerEntity,
     isMe = false,
+    assistantRequestId,
   }: {
     ownerUser?: UserForFei | null;
     ownerEntity?: Entity | null;
     isMe?: boolean;
+    // désigné par l'assistant Zacharie : relie le log à celui de l'échange
+    assistantRequestId?: string;
   }) {
+    // lues au moment de l'appel : l'assistant crée des carcasses juste avant de désigner le propriétaire
+    const myCarcasses = filterCarcassesForFei(useZustandStore.getState().carcasses, feiNumero);
     const nextIsMe = isMe;
     const nextIsMyAssociation = !!ownerEntity?.id;
     const offline = navigator.onLine ? false : true;
-    let nextFei: Partial<typeof fei>;
+    let nextFei: Partial<Fei>;
     let nextCarcassesTransmission: Partial<CarcasseTransmission> = {};
     if (nextIsMe) {
       nextFei = {
@@ -96,7 +99,7 @@ export function useDesignerPremierDetenteur(feiNumero: string) {
       myCarcasses.map((c) => c.zacharie_carcasse_id),
       nextCarcassesTransmission
     );
-    updateFei(fei.numero, nextFei);
+    updateFei(feiNumero, nextFei);
     track(
       'fiche',
       'designer-premier-detenteur',
@@ -105,12 +108,15 @@ export function useDesignerPremierDetenteur(feiNumero: string) {
     addLog({
       user_id: user.id,
       user_role: UserRoles.CHASSEUR,
-      fei_numero: fei.numero,
+      fei_numero: feiNumero,
       action: 'examinateur-select-next',
-      history: createHistoryInput(
-        myCarcasses[0] ? getCarcasseTransmission(myCarcasses[0]) : null,
-        nextCarcassesTransmission
-      ),
+      history: {
+        ...createHistoryInput(
+          myCarcasses[0] ? getCarcasseTransmission(myCarcasses[0]) : null,
+          nextCarcassesTransmission
+        ),
+        ...(assistantRequestId ? { assistant_request_id: assistantRequestId } : {}),
+      },
       entity_id: null,
       zacharie_carcasse_id: null,
       intermediaire_id: null,

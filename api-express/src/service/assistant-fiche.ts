@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { albertChatCompletion, type AlbertTool } from '~/third-parties/albert';
 import type { AlbertMessage } from '~/types/bug-investigation';
 import type { AssistantFicheCarcasse, AssistantFicheData } from '~/types/responses';
-import { normalizeVille, searchVilles } from '~/utils/search-ville';
+import { isSameCommune, searchVilles } from '~/utils/search-ville';
 import { capture } from '~/third-parties/sentry';
 
 dayjs.extend(utc);
@@ -272,9 +272,7 @@ export function resolveFicheData(
   const communeRecherchee = extraction.commune_mise_a_mort ?? null;
   const communesTrouvees = communeRecherchee ? searchVilles(communeRecherchee, MAX_COMMUNES_PROPOSEES) : [];
   const villeExacte = communeRecherchee
-    ? communesTrouvees.filter((commune) =>
-        normalizeVille(commune).endsWith(` ${normalizeVille(communeRecherchee)}`)
-      )
+    ? communesTrouvees.filter((commune) => isSameCommune(commune, communeRecherchee))
     : [];
 
   // un même numéro de marquage dit deux fois dans le message : la dernière mention l'emporte

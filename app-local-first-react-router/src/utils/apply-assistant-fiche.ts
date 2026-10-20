@@ -9,25 +9,55 @@ import { filterCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 
 dayjs.extend(utc);
 
+function addAssistantLog(
+  feiNumero: Fei['numero'],
+  user: User,
+  assistantRequestId: string,
+  action: string,
+  history: ReturnType<typeof createHistoryInput>,
+  carcasseId: string | null
+) {
+  useZustandStore.getState().addLog({
+    user_id: user.id,
+    user_role: UserRoles.CHASSEUR,
+    fei_numero: feiNumero,
+    action,
+    history: { ...history, assistant_request_id: assistantRequestId },
+    entity_id: null,
+    zacharie_carcasse_id: carcasseId,
+    intermediaire_id: null,
+    carcasse_intermediaire_id: null,
+  });
+}
+
+// Écrit sur la fiche un champ choisi par l'assistant (la commune trouvée), avec le log relié à l'échange.
+export function updateFeiFromAssistant(
+  feiNumero: Fei['numero'],
+  nextFei: Partial<Fei>,
+  user: User,
+  assistantRequestId: string
+) {
+  const existingFei = useZustandStore.getState().feis[feiNumero];
+  useZustandStore.getState().updateFei(feiNumero, nextFei);
+  addAssistantLog(
+    feiNumero,
+    user,
+    assistantRequestId,
+    'examinateur-assistant-update-fei',
+    createHistoryInput(existingFei, nextFei),
+    null
+  );
+}
+
 // Écrit sur la fiche ce que l'assistant Zacharie a compris, par les mêmes fonctions que le formulaire
 // (local-first, puis syncData). Albert relit tout l'échange et renvoie souvent ce qui est déjà
 // enregistré : on n'écrit que ce qui change. La commune et le propriétaire initial sont choisis à part.
 // Renvoie une ligne par donnée écrite, pour la réponse du chat.
 export async function applyAssistantFiche(feiNumero: Fei['numero'], data: AssistantFicheData, user: User) {
-  const { updateFei, updateCarcasse, addLog } = useZustandStore.getState();
+  const { updateFei, updateCarcasse } = useZustandStore.getState();
   const lignes: Array<string> = [];
   const log = (action: string, history: ReturnType<typeof createHistoryInput>, carcasseId: string | null) =>
-    addLog({
-      user_id: user.id,
-      user_role: UserRoles.CHASSEUR,
-      fei_numero: feiNumero,
-      action,
-      history: { ...history, assistant_request_id: data.assistant_request_id },
-      entity_id: null,
-      zacharie_carcasse_id: carcasseId,
-      intermediaire_id: null,
-      carcasse_intermediaire_id: null,
-    });
+    addAssistantLog(feiNumero, user, data.assistant_request_id, action, history, carcasseId);
 
   const existingFei = useZustandStore.getState().feis[feiNumero];
   const nextFei: Partial<Fei> = {};
@@ -70,14 +100,21 @@ export async function applyAssistantFiche(feiNumero: Fei['numero'], data: Assist
         lignes.push(`⚠️ Carcasse ${item.numero_bracelet} non ajoutée : espèce manquante`);
         continue;
       }
-      const newCarcasse = await createNewCarcasse({
-        zacharieCarcasseId: `${feiNumero}_${item.numero_bracelet}`,
-        numeroBracelet: item.numero_bracelet,
-        espece: item.espece,
-        nombreDAnimaux: String(item.nombre_d_animaux ?? 1),
-        fei,
-        examinateurCommentaire: item.commentaire ?? '',
-      });
+      let newCarcasse: Carcasse;
+      try {
+        newCarcasse = await createNewCarcasse({
+          zacharieCarcasseId: `${feiNumero}_${item.numero_bracelet}`,
+          numeroBracelet: item.numero_bracelet,
+          espece: item.espece,
+          nombreDAnimaux: String(item.nombre_d_animaux ?? 1),
+          fei,
+          examinateurCommentaire: item.commentaire ?? '',
+        });
+      } catch (error) {
+        // même refus que le formulaire (numéro déjà utilisé…) : on le dit et on passe aux suivantes
+        lignes.push(`⚠️ Carcasse ${item.numero_bracelet} non ajoutée : ${(error as Error).message}`);
+        continue;
+      }
       log(
         'examinateur-assistant-carcasse-create',
         createHistoryInput(null, newCarcasse),
