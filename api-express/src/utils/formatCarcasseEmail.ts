@@ -374,14 +374,12 @@ function countCarcassesForBilan(carcasses: Carcasse[]) {
 }
 
 // Email de clôture de fiche, commun à la clôture SVI et à la clôture automatique : c'est
-// l'appelant qui choisit le template (FEI_CLOSED ou FEI_AUTOMATIC_CLOSED). Le push, lui, distingue
-// les deux clôtures.
+// l'appelant qui choisit le template (FEI_CLOSED ou FEI_AUTOMATIC_CLOSED).
 // L'email part en template Brevo, le push reste en texte : les deux sont dérivés des mêmes
 // `params` pour ne pas diverger. Les accords singulier/pluriel du bilan sont gérés côté template.
 export async function formatFeiClosedEmail(
   fei_numero: Fei['numero'],
-  carcasses: Carcasse[],
-  cloture: 'SVI' | 'AUTOMATIQUE'
+  carcasses: Carcasse[]
 ): Promise<{ object: string; text: string; params: FeiClosedTemplateParams; push: PushWording }> {
   // L'établissement à contacter est l'ETG qui a traité la fiche. On passe par les intermédiaires :
   // `Carcasse.latest_intermediaire_entity_id` vaut le SVI une fois la carcasse assignée.
@@ -428,16 +426,10 @@ export async function formatFeiClosedEmail(
   ]
     .filter(Boolean)
     .join(', ');
-  const push: PushWording =
-    cloture === 'SVI'
-      ? {
-          title: 'Fiche clôturée',
-          body: `${chasse} traitée par le service vétérinaire : ${bilan}.`,
-        }
-      : {
-          title: 'Clôture automatique',
-          body: `${chasse} clôturée 10 jours après réception : ${bilan}.`,
-        };
+  const push: PushWording = {
+    title: 'Fiche clôturée',
+    body: `${chasse} traitée par le service vétérinaire : ${bilan}.`,
+  };
   return { object, text: text.filter(Boolean).join('\n\n'), params, push };
 }
 

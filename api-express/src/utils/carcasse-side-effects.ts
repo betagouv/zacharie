@@ -287,11 +287,7 @@ export async function closeFeiAndNotifyChasseurOnSviCarcasseClose(
     if (already) return;
   }
 
-  const { object, text, params, push } = await formatFeiClosedEmail(
-    updatedCarcasse.fei_numero,
-    carcasses,
-    'SVI'
-  );
+  const { object, text, params, push } = await formatFeiClosedEmail(updatedCarcasse.fei_numero, carcasses);
   const notification = {
     title: object,
     email: text,

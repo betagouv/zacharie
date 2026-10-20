@@ -94,8 +94,7 @@ Le push a son propre wording, indépendant de l'email : il s'affiche sur un écr
 | Saisie SVI                           | Saisie partielle / Saisie totale     | `{Espèce} n°{bracelet} : {premier motif, vulgarisé, 60 car. max}`                      |
 | Carcasse manquante                   | Carcasse manquante / Lot manquant    | `{Espèce} n°{bracelet}, constaté par {entity_name}`                                    |
 | Carcasse refusée                     | Carcasse refusée / Lot refusé        | `{Espèce} n°{bracelet} : {motif, 60 car. max}`                                         |
-| FEI clôturée par le SVI              | Fiche clôturée                       | `Chasse du {JJ/MM} traitée par le service vétérinaire : {n} acceptées, {n} refusées.`  |
-| FEI clôturée par le cron (J+10)      | Clôture automatique                  | `Chasse du {JJ/MM} clôturée 10 jours après réception : {n} acceptées, {n} refusées.`   |
+| FEI clôturée (SVI ou cron)           | Fiche clôturée                       | `Chasse du {JJ/MM} traitée par le service vétérinaire : {n} acceptées, {n} refusées.`  |
 | Nouvel user dans une entité          | Inscription à valider                | `{prénom} {nom} s'est inscrit au sein de {entité}.`                                    |
 | Modif carcasse : marquage            | Chasse du {JJ/MM} : marquage corrigé | `{entité} a corrigé {après} au lieu de {avant}.`                                       |
 | Modif carcasse : carcasse ajoutée    | Chasse du {JJ/MM} : carcasse ajoutée | `{entité} a ajouté {Espèce} n°{bracelet} : examen initial à signer.`                   |
