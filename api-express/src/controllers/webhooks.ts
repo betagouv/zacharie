@@ -4,8 +4,6 @@ const router: express.Router = express.Router();
 import crypto from 'crypto';
 import { SENTRY_SECRET, BREVO_BEARER } from '~/config';
 import { capture } from '~/third-parties/sentry';
-import { requireTrichineFeature } from '~/middlewares/trichine-feature';
-import { ingestInboundEmails, inboundEmailPayloadSchema } from '~/utils/trichine-inbound-email';
 
 // Comparaison à durée constante : un `!==` sur une chaîne s'arrête au premier caractère différent,
 // ce qui laisse fuiter le secret caractère par caractère à qui mesure les temps de réponse.
@@ -102,33 +100,6 @@ router.post(
       ok: true,
       message: 'Webhook received and validated', // More descriptive success message
     });
-  })
-);
-
-/*
-Webhook des emails entrants (Brevo Inbound Parsing) : les laboratoires renvoient leur rapport
-COFRAC à l'adresse de dépôt (TRICHINE_RESULTATS_EMAIL), on stocke la pièce jointe et on la
-rattache au pool dont la référence figure dans le message (cf utils/trichine-inbound-email.ts).
-*/
-router.post(
-  '/brevo-inbound',
-  requireTrichineFeature,
-  catchErrors(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    if (!brevoBearerIsValid(req, res)) return;
-
-    const payload = inboundEmailPayloadSchema.safeParse(req.body);
-    if (!payload.success) {
-      // 200 quand même : Brevo rejoue tant qu'il n'a pas de 2xx, et un payload illisible le restera
-      capture('Brevo inbound: payload inattendu', {
-        extra: { body: JSON.stringify(req.body).slice(0, 2000) },
-      });
-      res.status(200).send({ ok: false, error: 'Payload inattendu' });
-      return;
-    }
-
-    const results = await ingestInboundEmails(payload.data.items);
-
-    res.status(200).send({ ok: true, data: { results }, error: '' });
   })
 );
 

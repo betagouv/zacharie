@@ -127,3 +127,16 @@ nommées, tri par colonne, recherche (insensible casse/accents), filtre statut. 
 - [ ] Masquer `fei_numero` (contenu dans `zacharie_carcasse_id`) dans la projection labo
 - [ ] Scope équipe : `GET /trichine/pools|ftps` filtrent par user — les collègues d'une même entité SVI ne voient pas les pools/FTP de l'équipe (à élargir en P8)
 - [ ] Intégrer `getCarcasseAccess`/`getFeiAccess` (rôles LVD/LNR) quand P2 (#381) sera mergé
+
+## Réception des rapports par email + OCR — retirée (2026-10-20)
+
+Les laboratoires renvoyaient leur rapport COFRAC à une adresse de dépôt (webhook Brevo Inbound Parsing). Zacharie rattachait le PDF à un pool, au besoin via un OCR Albert, puis lisait le verdict et l'appliquait au pool au nom du laboratoire.
+
+**Retiré, car l'expéditeur d'un email n'est pas authentifié.** Le laboratoire était reconnu à la seule adresse `From`, qui se falsifie librement (aucune vérification SPF / DKIM / DMARC). Un email forgé « du laboratoire » portant une référence de pool et « négatif » suffisait à libérer une viande non analysée. Et comme un résultat est définitif, le vrai rapport positif aurait ensuite été refusé.
+
+Les résultats passent désormais uniquement par l'application, avec un utilisateur connecté : saisie sur le pool, import d'un fichier LIMS, dépôt du rapport PDF sur le pool.
+
+Pour y revenir (le code supprimé est dans l'historique git, PR de retrait) :
+
+- [ ] **OCR au dépôt manuel** : lire le rapport déposé dans l'app par le laboratoire et pré-remplir le résultat, validé par un clic. Le pool est choisi par un utilisateur connecté : pas de problème d'authentification.
+- [ ] **Canal email** : seulement avec une authentification de l'expéditeur (DKIM aligné sur le domaine du laboratoire, à vérifier dans les en-têtes transmis par Brevo), et sans application automatique d'un résultat négatif.

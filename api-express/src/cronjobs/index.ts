@@ -2,11 +2,10 @@ import 'dotenv/config';
 import '~/prisma';
 import * as Sentry from '@sentry/node';
 
-import { ENVIRONMENT, SENTRY_KEY, TRICHINE_FEATURE_ENABLED, VERSION } from '~/config';
+import { ENVIRONMENT, SENTRY_KEY, VERSION } from '~/config';
 import { initFeisCron } from './feis';
 import { initRelanceInscriptionCron } from './relance-inscription';
 import { initDataHealthCron } from './data-health';
-import { initTrichineOcrCron } from './trichine-ocr';
 import { capture, scrubSentryBreadcrumb, scrubSentryEvent } from '~/third-parties/sentry';
 const sentryEnabled = !!SENTRY_KEY;
 
@@ -39,7 +38,6 @@ if (!isLocalDevelopment && !isTest) {
     .then(() => console.log('All feis cronjobs are set up'))
     .then(initRelanceInscriptionCron)
     .then(initDataHealthCron)
-    .then(() => (TRICHINE_FEATURE_ENABLED ? initTrichineOcrCron() : undefined))
     .catch(capture);
   // .then(initMunicipalities) //
   // .then(initRecommandations) //

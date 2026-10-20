@@ -64,10 +64,6 @@ const NATIVE_PUSH_DRY_RUN = true;
 // tant qu'elle n'est pas posée, les garde-fous sangliers restent inactifs.
 const TRICHINE_FEATURE_ENABLED = process.env.VITE_FEATURE_TRICHINE === 'true';
 
-// Adresse de dépôt des rapports COFRAC par les laboratoires (imprimée sur la FTP).
-// Non posée = la consigne n'apparaît pas sur le document.
-const TRICHINE_RESULTATS_EMAIL = process.env.TRICHINE_RESULTATS_EMAIL ?? '';
-
 // Object storage Cellar (Clever Cloud, compatible S3) — cf doc/trichine.md §12.2.
 // Les trois premières variables sont posées par l'add-on, le bucket est choisi par nous.
 // Non configuré (dev / test) : les documents sont régénérés à la volée, rien n'est stocké.
@@ -83,10 +79,6 @@ const ALBERT_API_KEY = process.env.ALBERT_API_KEY ?? '';
 // modèle d'enquête (raisonnement + outils, texte seul) et modèle de vision qui décrit les captures d'écran
 const ALBERT_MODEL = process.env.ALBERT_MODEL ?? 'openai/gpt-oss-120b';
 const ALBERT_VISION_MODEL = process.env.ALBERT_VISION_MODEL ?? 'google/gemma-4-31B-it';
-// OCR des rapports d'analyses trichine scannés (cf GET /v1/models, type `image-text-to-text`).
-// lightonocr est un modèle dédié à l'OCR de documents : rapide et fidèle aux tableaux.
-// Clé non posée : les rapports sans texte restent non lus, le résultat est saisi à la main.
-const ALBERT_OCR_MODEL = process.env.ALBERT_OCR_MODEL ?? 'lightonocr-2-1b';
 const ALBERT_READONLY_DATABASE_URL = process.env.ALBERT_READONLY_DATABASE_URL ?? '';
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN ?? '';
 const GITHUB_REPO = 'betagouv/zacharie';
@@ -119,7 +111,6 @@ export {
   PROCONNECT_CLIENT_SECRET,
   PROCONNECT_REDIRECT_URI,
   TRICHINE_FEATURE_ENABLED,
-  TRICHINE_RESULTATS_EMAIL,
   CELLAR_HOST,
   CELLAR_KEY_ID,
   CELLAR_KEY_SECRET,
@@ -128,7 +119,6 @@ export {
   ALBERT_API_KEY,
   ALBERT_MODEL,
   ALBERT_VISION_MODEL,
-  ALBERT_OCR_MODEL,
   ALBERT_READONLY_DATABASE_URL,
   GITHUB_TOKEN,
   GITHUB_REPO,
