@@ -15,7 +15,6 @@ import TrichineIntrouvable from '@app/components/trichine/TrichineIntrouvable';
 import TrichineChaine, { type ChaineEtape } from '@app/components/trichine/TrichineChaine';
 import TrichineChronologie from '@app/components/trichine/TrichineChronologie';
 import TrichineAliasesCard from '@app/components/trichine/TrichineAliases';
-import { aliasFtpFige } from '@app/services/trichine-alias';
 import TrichineFTPPdfActions from '@app/components/trichine/TrichineFTPPdfActions';
 import TrichineDetailPage, {
   TrichineCard,
@@ -227,7 +226,7 @@ export default function TrichineFTPDetail() {
             objet="ftp"
             objetId={ftp.id}
             aliases={ftp.Aliases}
-            fige={aliasFtpFige(ftp)}
+            fige={!isBrouillon}
             onChange={refresh}
           />
           <TrichineChronologie historique={historique} />

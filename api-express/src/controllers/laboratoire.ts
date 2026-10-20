@@ -713,7 +713,8 @@ router.post(
     if (!bodyResult.success) {
       return sendError(res, 400, 'La raison de la correction est obligatoire');
     }
-    const { raison, ...body } = bodyResult.data;
+    // Les analyses du pool sont terminées : la référence du laboratoire est figée (cf trichine-alias)
+    const { raison, reference_labo: _referenceFigee, ...body } = bodyResult.data;
 
     const found = await findPoolForLabo(req.params.pool_id, context);
     if (!found) {

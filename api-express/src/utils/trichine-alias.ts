@@ -11,6 +11,7 @@ import {
 } from '@prisma/client';
 import z from 'zod';
 import prisma from '~/prisma';
+import { isFtpPartie } from '~/utils/trichine';
 
 /**
  * Références internes (alias) : chaque entité qui manipule un échantillon, un pool ou une FTP
@@ -65,6 +66,26 @@ export async function aliasEntityIdsForUser(user: Pick<User, 'id' | 'roles'>): P
 }
 
 /**
+ * Gel côté SVI : ses références sont imprimées sur la FTP archivée à l'envoi et jointe au colis.
+ * Une fois la fiche partie, elles ne doivent plus diverger du papier.
+ * - FTP : figée dès qu'elle n'est plus en brouillon (envoyée, reçue, traitée ou annulée) ;
+ * - pool / échantillon : figé dès qu'il est porté par une FTP partie (non annulée).
+ */
+export function aliasSviEstFige(
+  objet:
+    | { type: typeof TrichineAliasObjet.FTP; statut_logistique: TrichineStatutLogistiqueFTP }
+    | {
+        type: typeof TrichineAliasObjet.ECHANTILLON | typeof TrichineAliasObjet.POOL;
+        ftps: Array<{ deleted_at: Date | null; statut_logistique: TrichineStatutLogistiqueFTP }>;
+      }
+): boolean {
+  if (objet.type === TrichineAliasObjet.FTP) {
+    return objet.statut_logistique !== TrichineStatutLogistiqueFTP.BROUILLON;
+  }
+  return objet.ftps.some((ftp) => isFtpPartie(ftp));
+}
+
+/**
  * Entité SVI au nom de laquelle poser l'alias : celle de l'objet quand l'agent en fait partie
  * (un agent peut travailler pour plusieurs services), sinon son premier service.
  */
@@ -73,8 +94,9 @@ export function entiteSviPourObjet(entityIds: Array<string>, objetEntityId: stri
 }
 
 /**
- * Un alias se fige avec l'objet : une fois les analyses terminées (échantillon, pool) ou la
- * fiche clôturée (FTP), la référence a servi et ne doit plus diverger des documents émis.
+ * Gel côté laboratoire : une fois les analyses terminées (échantillon, pool) ou la fiche clôturée
+ * (FTP), la référence a servi et ne bouge plus. Côté SVI, le gel intervient plus tôt, à l'envoi
+ * de la FTP (cf `aliasSviEstFige`).
  */
 export function aliasEstFige(
   objet:
@@ -126,7 +148,9 @@ export async function aliasReferenceDejaPrise({
   objetId: string | null;
   reference: string;
 }): Promise<string | null> {
-  const existant = await prisma.trichineAlias.findFirst({
+  // Le filtre insensible à la casse de Prisma passe par ILIKE, où `_` vaut n'importe quel caractère :
+  // on retient en mémoire la seule référence vraiment égale (« LIMS_12 » n'est pas « LIMS-12 »)
+  const candidats = await prisma.trichineAlias.findMany({
     where: {
       entity_id: entityId,
       objet_type: objetType,
@@ -142,6 +166,7 @@ export async function aliasReferenceDejaPrise({
       TrichineFTP: { select: { numero_fiche: true } },
     },
   });
+  const existant = candidats.find((candidat) => candidat.reference.toLowerCase() === reference.toLowerCase());
   if (!existant || existant[objetIdField[objetType]] === objetId) return null;
   const autre =
     existant.TrichineEchantillon?.reference_echantillon ??

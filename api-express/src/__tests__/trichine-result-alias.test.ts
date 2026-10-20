@@ -48,15 +48,17 @@ const appliquer = (reference_labo: string, origine: ApplyPoolResultOrigine) =>
 
 // La référence est déjà donnée par ce labo à un autre pool
 const referenceDejaPrise = () =>
-  vi.mocked(prisma.trichineAlias.findFirst).mockResolvedValueOnce({
-    reference: 'DOSSIER-87',
-    echantillon_id: null,
-    pool_id: 'pool-2',
-    ftp_id: null,
-    TrichineEchantillon: null,
-    TrichinePool: { reference_pool: 'P-26-SVI01-0046' },
-    TrichineFTP: null,
-  } as never);
+  vi.mocked(prisma.trichineAlias.findMany).mockResolvedValueOnce([
+    {
+      reference: 'DOSSIER-87',
+      echantillon_id: null,
+      pool_id: 'pool-2',
+      ftp_id: null,
+      TrichineEchantillon: null,
+      TrichinePool: { reference_pool: 'P-26-SVI01-0046' },
+      TrichineFTP: null,
+    },
+  ] as never);
 
 beforeEach(() => {
   vi.clearAllMocks();

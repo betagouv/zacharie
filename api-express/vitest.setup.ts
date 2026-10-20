@@ -118,6 +118,7 @@ vi.mock('./src/prisma', () => ({
     },
     trichineAlias: {
       findFirst: vi.fn().mockResolvedValue(null),
+      findMany: vi.fn().mockResolvedValue([]),
       create: vi.fn(),
       update: vi.fn(),
       deleteMany: vi.fn().mockResolvedValue({ count: 0 }),

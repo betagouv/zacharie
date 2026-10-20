@@ -564,6 +564,8 @@ router.delete(
       where: { id: echantillon.id },
       data: { deleted_at: new Date() },
     });
+    // Un objet supprimé libère ses références : elles resservent pour celui qui le remplace
+    await prisma.trichineAlias.deleteMany({ where: { echantillon_id: echantillon.id } });
     await logTrichineStatutChange({
       objetType: TrichineObjetType.ECHANTILLON,
       objetId: echantillon.id,
@@ -896,6 +898,7 @@ router.delete(
     // Le pool n'est référencé que par des FTP brouillon : les liens n'ont plus d'objet
     await prisma.trichinePoolFTP.deleteMany({ where: { pool_id: pool.id } });
     await prisma.trichinePool.update({ where: { id: pool.id }, data: { deleted_at: new Date() } });
+    await prisma.trichineAlias.deleteMany({ where: { pool_id: pool.id } });
     await logTrichineStatutChange({
       objetType: TrichineObjetType.POOL,
       objetId: pool.id,
@@ -1226,6 +1229,7 @@ router.delete(
     }
 
     await prisma.trichineFTP.update({ where: { id: ftp.id }, data: { deleted_at: new Date() } });
+    await prisma.trichineAlias.deleteMany({ where: { ftp_id: ftp.id } });
     await logTrichineStatutChange({
       objetType: TrichineObjetType.FTP,
       objetId: ftp.id,

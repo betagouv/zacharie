@@ -12,6 +12,7 @@ import {
   entiteSviPourObjet,
   aliasEntityIdsForUser,
   aliasEstFige,
+  aliasSviEstFige,
   aliasReferenceDejaPrise,
   aliasReferenceSchema,
   deleteAlias,
@@ -36,19 +37,30 @@ const objetParSegment: Record<string, TrichineAliasObjet> = {
   ftp: TrichineAliasObjet.FTP,
 };
 
-const FIGE_ERROR = {
+const FIGE_LABO = {
   [TrichineAliasObjet.ECHANTILLON]: 'Les analyses de cet échantillon sont terminées : sa référence est figée',
   [TrichineAliasObjet.POOL]: 'Les analyses de ce pool sont terminées : sa référence est figée',
   [TrichineAliasObjet.FTP]: 'Cette FTP est clôturée : sa référence est figée',
 };
+
+const FIGE_SVI = {
+  [TrichineAliasObjet.ECHANTILLON]: 'Cet échantillon est parti au laboratoire : votre référence est figée',
+  [TrichineAliasObjet.POOL]: 'Ce pool est parti au laboratoire : votre référence est figée',
+  [TrichineAliasObjet.FTP]: 'Cette FTP est envoyée : votre référence est figée',
+};
+
+const liensFtp = {
+  TrichinePoolFTPs: { include: { TrichineFTP: { select: { deleted_at: true, statut_logistique: true } } } },
+} as const;
 
 // FTP par laquelle un laboratoire voit un objet : envoyée (ou annulée après envoi), pas brouillon
 function ftpVisibleParLabo(ftp: { deleted_at: Date | null; statut_logistique: TrichineStatutLogistiqueFTP }) {
   return !ftp.deleted_at && ftp.statut_logistique !== TrichineStatutLogistiqueFTP.BROUILLON;
 }
 
+// `fige` porte le motif du gel, null si la référence est encore modifiable
 type Cible =
-  | { kind: 'ok'; entityId: string; fige: boolean }
+  | { kind: 'ok'; entityId: string; fige: string | null }
   | { kind: 'error'; status: number; error: string };
 
 /**
@@ -74,23 +86,28 @@ async function resoudreCible(
   if (req.user.roles.includes(UserRoles.SVI)) {
     const equipe = await trichineEquipeUserIds(req.user);
     if (objetType === TrichineAliasObjet.ECHANTILLON) {
-      const echantillon = await prisma.trichineEchantillon.findUnique({ where: { id: objetId } });
+      const echantillon = await prisma.trichineEchantillon.findUnique({
+        where: { id: objetId },
+        include: { TrichinePool: { include: liensFtp } },
+      });
       if (!echantillon || echantillon.deleted_at || !equipe.includes(echantillon.preleve_par_user_id)) {
         return introuvable;
       }
+      const ftps = echantillon.TrichinePool?.TrichinePoolFTPs.map((lien) => lien.TrichineFTP) ?? [];
       return {
         kind: 'ok',
         entityId: entiteSviPourObjet(entityIds, echantillon.preleve_par_entity_id),
-        fige: aliasEstFige({ type: objetType, statut: echantillon.statut }),
+        fige: aliasSviEstFige({ type: objetType, ftps }) ? FIGE_SVI[objetType] : null,
       };
     }
     if (objetType === TrichineAliasObjet.POOL) {
-      const pool = await prisma.trichinePool.findUnique({ where: { id: objetId } });
+      const pool = await prisma.trichinePool.findUnique({ where: { id: objetId }, include: liensFtp });
       if (!pool || pool.deleted_at || !equipe.includes(pool.cree_par_user_id)) return introuvable;
+      const ftps = pool.TrichinePoolFTPs.map((lien) => lien.TrichineFTP);
       return {
         kind: 'ok',
         entityId: entiteSviPourObjet(entityIds, pool.cree_par_entity_id),
-        fige: aliasEstFige({ type: objetType, statut: pool.statut }),
+        fige: aliasSviEstFige({ type: objetType, ftps }) ? FIGE_SVI[objetType] : null,
       };
     }
     const ftp = await prisma.trichineFTP.findUnique({ where: { id: objetId } });
@@ -98,7 +115,7 @@ async function resoudreCible(
     return {
       kind: 'ok',
       entityId: entiteSviPourObjet(entityIds, ftp.expediteur_entity_id),
-      fige: aliasEstFige({ type: objetType, ...ftp }),
+      fige: aliasSviEstFige({ type: objetType, ...ftp }) ? FIGE_SVI[objetType] : null,
     };
   }
 
@@ -109,7 +126,11 @@ async function resoudreCible(
       (id) => !!id && entityIds.includes(id)
     );
     if (!entityId) return introuvable;
-    return { kind: 'ok', entityId, fige: aliasEstFige({ type: objetType, ...ftp }) };
+    return {
+      kind: 'ok',
+      entityId,
+      fige: aliasEstFige({ type: objetType, ...ftp }) ? FIGE_LABO[objetType] : null,
+    };
   }
 
   const liensDuLabo = { include: { TrichineFTP: true } } as const;
@@ -130,7 +151,11 @@ async function resoudreCible(
     (ftp) => ftpVisibleParLabo(ftp) && entityIds.includes(ftp.destinataire_entity_id)
   )?.destinataire_entity_id;
   if (!entityId) return introuvable;
-  return { kind: 'ok', entityId, fige: aliasEstFige({ type: objetType, statut: statut ?? pool.statut }) };
+  return {
+    kind: 'ok',
+    entityId,
+    fige: aliasEstFige({ type: objetType, statut: statut ?? pool.statut }) ? FIGE_LABO[objetType] : null,
+  };
 }
 
 // Entités dont l'utilisateur porte l'alias : sert à distinguer « ma référence » des autres
@@ -159,7 +184,7 @@ router.put(
 
     const cible = await resoudreCible(req, objetType, req.params.objet_id);
     if (cible.kind === 'error') return sendError(res, cible.status, cible.error);
-    if (cible.fige) return sendError(res, 400, FIGE_ERROR[objetType]);
+    if (cible.fige) return sendError(res, 400, cible.fige);
 
     const dejaPrise = await aliasReferenceDejaPrise({
       entityId: cible.entityId,
@@ -188,7 +213,7 @@ router.delete(
     if (!objetType) return sendError(res, 404, 'Objet introuvable');
     const cible = await resoudreCible(req, objetType, req.params.objet_id);
     if (cible.kind === 'error') return sendError(res, cible.status, cible.error);
-    if (cible.fige) return sendError(res, 400, FIGE_ERROR[objetType]);
+    if (cible.fige) return sendError(res, 400, cible.fige);
 
     await deleteAlias({ entityId: cible.entityId, objetType, objetId: req.params.objet_id });
     res.status(200).send({ ok: true, data: {}, error: '' });

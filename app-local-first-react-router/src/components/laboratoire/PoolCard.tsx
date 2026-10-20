@@ -335,7 +335,9 @@ export function ResultatModalContent({
       parasite_identifie: parasiteRequis ? parasite.trim() : undefined,
       date_debut_analyse: dateDebut || undefined,
       date_fin_analyse: dateFin || undefined,
-      reference_labo: referenceLabo.trim() || undefined,
+      // Seulement si le laboratoire l'a changée : celle déjà posée n'a pas à être revérifiée
+      reference_labo:
+        referenceLabo.trim() && referenceLabo.trim() !== maReference ? referenceLabo.trim() : undefined,
       commentaire: commentaire.trim() || undefined,
     };
     // Seule une première saisie peut générer une FTP de confirmation vers le LNR
@@ -450,15 +452,18 @@ export function ResultatModalContent({
             onChange: (event) => setDateFin(event.target.value),
           }}
         />
-        <Input
-          label="Ma référence interne (optionnel)"
-          className="grow"
-          nativeInputProps={{
-            type: 'text',
-            value: referenceLabo,
-            onChange: (event) => setReferenceLabo(event.target.value),
-          }}
-        />
+        {/* Une correction intervient analyses terminées : la référence est alors figée */}
+        {!correction && (
+          <Input
+            label="Ma référence interne (optionnel)"
+            className="grow"
+            nativeInputProps={{
+              type: 'text',
+              value: referenceLabo,
+              onChange: (event) => setReferenceLabo(event.target.value),
+            }}
+          />
+        )}
       </div>
       <Input
         label="Commentaire (optionnel)"

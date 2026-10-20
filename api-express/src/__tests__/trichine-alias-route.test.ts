@@ -46,6 +46,9 @@ const pool = {
   ],
 };
 
+// Pool du SVI pas encore parti au laboratoire : ses références restent modifiables
+const poolEnPreparation = { ...pool, TrichinePoolFTPs: [] as typeof pool.TrichinePoolFTPs };
+
 const ftp = {
   id: 'ftp-1',
   expediteur_user_id: 'user-svi',
@@ -76,6 +79,7 @@ beforeEach(() => {
 describe('PUT /trichine-alias/:objet/:id', () => {
   test('le SVI pose la référence de son service sur son pool', async () => {
     travaillePour('svi-1', 'user-svi');
+    vi.mocked(prisma.trichinePool.findUnique).mockResolvedValue(poolEnPreparation as never);
 
     const response = await put(sviUser, 'pool/pool-1', '  SVI-2026-12 ');
 
@@ -142,30 +146,51 @@ describe('PUT /trichine-alias/:objet/:id', () => {
     expect(prisma.trichineAlias.create).not.toHaveBeenCalled();
   });
 
-  test('la référence est figée une fois la FTP clôturée', async () => {
-    travaillePour('svi-1', 'user-svi');
+  test('la référence du laboratoire est figée une fois la FTP clôturée', async () => {
+    travaillePour('labo-1', 'user-labo');
     vi.mocked(prisma.trichineFTP.findUnique).mockResolvedValue({
       ...ftp,
       statut_logistique: TrichineStatutLogistiqueFTP.TRAITEE,
     } as never);
 
-    const response = await put(sviUser, 'ftp/ftp-1', 'A1');
+    const response = await put(laboUser, 'ftp/ftp-1', 'A1');
 
     expect(response.status).toBe(400);
     expect(response.body.error).toMatch(/clôturée/);
   });
 
+  test('la référence du SVI est figée dès l’envoi de la FTP (elle est imprimée sur le papier)', async () => {
+    travaillePour('svi-1', 'user-svi');
+
+    const response = await put(sviUser, 'ftp/ftp-1', 'A1');
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toMatch(/envoyée/);
+  });
+
+  test('la référence du SVI sur un pool est figée dès que le pool est parti au laboratoire', async () => {
+    travaillePour('svi-1', 'user-svi');
+
+    const response = await put(sviUser, 'pool/pool-1', 'A1');
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toMatch(/parti au laboratoire/);
+    expect(prisma.trichineAlias.create).not.toHaveBeenCalled();
+  });
+
   test("une référence déjà donnée par l'entité à un autre pool est refusée, casse ignorée", async () => {
     travaillePour('labo-1', 'user-labo');
-    vi.mocked(prisma.trichineAlias.findFirst).mockResolvedValueOnce({
-      reference: 'LIMS-1',
-      echantillon_id: null,
-      pool_id: 'pool-2',
-      ftp_id: null,
-      TrichineEchantillon: null,
-      TrichinePool: { reference_pool: 'P-26-SVI01-0002' },
-      TrichineFTP: null,
-    } as never);
+    vi.mocked(prisma.trichineAlias.findMany).mockResolvedValueOnce([
+      {
+        reference: 'LIMS-1',
+        echantillon_id: null,
+        pool_id: 'pool-2',
+        ftp_id: null,
+        TrichineEchantillon: null,
+        TrichinePool: { reference_pool: 'P-26-SVI01-0002' },
+        TrichineFTP: null,
+      },
+    ] as never);
 
     const response = await put(laboUser, 'pool/pool-1', 'lims-1');
 
@@ -173,7 +198,7 @@ describe('PUT /trichine-alias/:objet/:id', () => {
     expect(response.body.error).toBe(
       'La référence « LIMS-1 » est déjà utilisée pour le pool P-26-SVI01-0002'
     );
-    expect(prisma.trichineAlias.findFirst).toHaveBeenCalledWith(
+    expect(prisma.trichineAlias.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: {
           entity_id: 'labo-1',
@@ -185,17 +210,26 @@ describe('PUT /trichine-alias/:objet/:id', () => {
     expect(prisma.trichineAlias.create).not.toHaveBeenCalled();
   });
 
+  test('« LIMS_12 » n’est pas confondu avec « LIMS-12 » (le _ de ILIKE)', async () => {
+    travaillePour('labo-1', 'user-labo');
+    // ILIKE 'LIMS_12' remonte aussi LIMS-12 : la comparaison exacte en mémoire l'écarte
+    vi.mocked(prisma.trichineAlias.findMany).mockResolvedValueOnce([
+      { reference: 'LIMS-12', echantillon_id: null, pool_id: 'pool-2', ftp_id: null },
+    ] as never);
+
+    const response = await put(laboUser, 'pool/pool-1', 'LIMS_12');
+
+    expect(response.status).toBe(200);
+    expect(prisma.trichineAlias.create).toHaveBeenCalled();
+  });
+
   test('changer la casse de sa propre référence reste possible', async () => {
     travaillePour('labo-1', 'user-labo');
-    // 1er appel : contrôle des doublons (c'est ce pool) ; 2e : alias existant à mettre à jour
-    vi.mocked(prisma.trichineAlias.findFirst)
-      .mockResolvedValueOnce({
-        reference: 'lims-1',
-        echantillon_id: null,
-        pool_id: 'pool-1',
-        ftp_id: null,
-      } as never)
-      .mockResolvedValueOnce({ id: 'alias-1' } as never);
+    // Contrôle des doublons : la référence est celle de ce pool ; puis l'alias existant à mettre à jour
+    vi.mocked(prisma.trichineAlias.findMany).mockResolvedValueOnce([
+      { reference: 'lims-1', echantillon_id: null, pool_id: 'pool-1', ftp_id: null },
+    ] as never);
+    vi.mocked(prisma.trichineAlias.findFirst).mockResolvedValueOnce({ id: 'alias-1' } as never);
     vi.mocked(prisma.trichineAlias.update).mockResolvedValue({ id: 'alias-1' } as never);
 
     const response = await put(laboUser, 'pool/pool-1', 'LIMS-1');
@@ -236,7 +270,7 @@ describe('PUT /trichine-alias/:objet/:id', () => {
       { entity_id: 'svi-2', owner_id: 'user-svi' },
     ] as never);
     vi.mocked(prisma.trichinePool.findUnique).mockResolvedValue({
-      ...pool,
+      ...poolEnPreparation,
       cree_par_entity_id: 'svi-2',
     } as never);
 
@@ -249,6 +283,7 @@ describe('PUT /trichine-alias/:objet/:id', () => {
 
   test('une référence prise au même instant par un collègue → 400, pas 500', async () => {
     travaillePour('svi-1', 'user-svi');
+    vi.mocked(prisma.trichinePool.findUnique).mockResolvedValue(poolEnPreparation as never);
     vi.mocked(prisma.trichineAlias.create).mockRejectedValueOnce(
       new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
         code: 'P2002',

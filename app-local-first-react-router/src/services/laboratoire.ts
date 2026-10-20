@@ -283,7 +283,8 @@ export type LaboEchantillonRegistre = LaboEchantillon & {
 
 export type LaboPoolRegistre = TrichinePool &
   AvecAliases & {
-    TrichineEchantillons: Array<LaboEchantillon>;
+    // Le registre ne renvoie pas les alias des échantillons
+    TrichineEchantillons: Array<Omit<LaboEchantillon, 'Aliases'>>;
     PoolParent: { reference_pool: string } | null;
     TrichinePoolFTPs: Array<{ TrichineFTP: Pick<TrichineFTP, 'numero_fiche' | 'statut_logistique'> }>;
   };

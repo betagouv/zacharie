@@ -17,6 +17,8 @@ import {
 /**
  * Bloc « Références internes » des pages de détail : la référence de l'entité de l'utilisateur,
  * modifiable tant que l'objet n'est pas figé, et celles posées par les autres acteurs.
+ * Le gel dépend de qui regarde : le SVI dès l'envoi de la FTP (sa référence est imprimée dessus),
+ * le laboratoire une fois les analyses terminées ou la fiche clôturée.
  */
 export default function TrichineAliasesCard({
   objet,
@@ -64,7 +66,7 @@ export default function TrichineAliasesCard({
       titre="Références internes"
       hint={
         fige
-          ? 'Références figées : les analyses sont terminées.'
+          ? 'Votre référence ne peut plus être modifiée.'
           : 'La référence que chaque service ou laboratoire donne à cet objet dans ses propres outils.'
       }
     >
