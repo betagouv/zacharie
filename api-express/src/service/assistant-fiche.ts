@@ -39,17 +39,19 @@ export type AssistantChatMessage = { role: 'user' | 'assistant'; content: string
 
 const heureSchema = z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/);
 
+// le chasseur parle en heure de Paris : peu après minuit, la date UTC est encore celle de la veille
+function todayInParis() {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Paris' }).format(new Date());
+}
+
 const extractionSchema = z.object({
   date_mise_a_mort: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/)
     .refine((value) => {
       const date = dayjs.utc(value);
-      return (
-        date.isValid() &&
-        !date.isAfter(dayjs.utc().endOf('day')) &&
-        !date.isBefore(dayjs.utc().add(-6, 'months'))
-      );
+      const today = todayInParis();
+      return date.isValid() && value <= today && !date.isBefore(dayjs.utc(today).add(-6, 'months'));
     })
     .optional()
     .nullable()
@@ -159,7 +161,7 @@ function systemPrompt(
 ) {
   return `Tu es Zacharie, l'assistant de saisie d'une fiche d'examen initial du gibier sauvage.
 Le chasseur te donne en vrac (souvent dicté) les informations de sa chasse. Tu appelles l'outil remplir_fiche avec les données qu'il a données ou corrigées, et rien d'autre.
-Aujourd'hui : ${dayjs.utc().format('YYYY-MM-DD')} (« hier », « samedi dernier » se calculent à partir de cette date).
+Aujourd'hui : ${todayInParis()} (« hier », « samedi dernier » se calculent à partir de cette date).
 Règles :
 - n'invente jamais une donnée : un champ non dit n'est pas envoyé ;
 - n'envoie que ce que le DERNIER message du chasseur apporte ou corrige : ce qui est déjà dans l'état actuel de la fiche (ci-dessous) ne se renvoie pas ;

@@ -44,8 +44,15 @@ const bodySchema = z.object({
     .array(z.object({ role: z.enum(['user', 'assistant']), content: z.string().trim().min(1).max(4000) }))
     .min(1)
     .max(40),
-  // libellés des propriétaires initiaux que le formulaire propose (associations, détenteurs, soi-même)
-  premier_detenteur_options: z.array(z.string().trim().min(1).max(200)).max(50).default([]),
+  // libellés des propriétaires initiaux que le formulaire propose (associations, détenteurs, soi-même) :
+  // un libellé trop long est écarté sans refuser le message
+  premier_detenteur_options: z
+    .array(z.string())
+    .max(500)
+    .default([])
+    .transform((options) =>
+      options.map((option) => option.trim()).filter((option) => option.length > 0 && option.length <= 200)
+    ),
 });
 
 router.post(
