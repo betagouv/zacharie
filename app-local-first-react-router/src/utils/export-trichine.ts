@@ -1,10 +1,14 @@
 import dayjs from 'dayjs';
 import type { LaboEchantillonRegistre, LaboFTPListItem, LaboPoolRegistre } from '@app/services/laboratoire';
+import { monAlias, nomEntiteAlias, type TrichineAlias } from '@app/services/trichine-alias';
 
 /**
  * Export des registres du laboratoire, destiné à l'import dans son LIMS : noms de champs et
  * valeurs d'enums bruts, dates ISO. Le CSV et le JSON portent exactement les mêmes champs ;
  * une liste est un tableau en JSON et des valeurs séparées par `|` en CSV.
+ *
+ * `reference_labo` est l'alias que le laboratoire a donné à l'objet (le même nom de colonne
+ * que l'import de résultats), `autres_references_internes` ceux des autres acteurs.
  */
 
 export type TrichineExportFormat = 'csv' | 'json';
@@ -21,10 +25,20 @@ function isoDateTime(value: Date | string | null | undefined): string | null {
   return value ? dayjs(value).toISOString() : null;
 }
 
-export function poolToExportRow(pool: LaboPoolRegistre): ExportRow {
+function aliasesExport(aliases: Array<TrichineAlias>, mesEntites: Array<string>) {
+  const mien = monAlias(aliases, mesEntites);
+  return {
+    reference_labo: mien?.reference ?? null,
+    autres_references_internes: aliases
+      .filter((alias) => alias.id !== mien?.id)
+      .map((alias) => `${nomEntiteAlias(alias)} : ${alias.reference}`),
+  };
+}
+
+export function poolToExportRow(pool: LaboPoolRegistre, mesEntites: Array<string>): ExportRow {
   return {
     reference_pool: pool.reference_pool,
-    reference_labo: pool.reference_labo,
+    ...aliasesExport(pool.Aliases, mesEntites),
     type: pool.type,
     reference_pool_parent: pool.PoolParent?.reference_pool ?? null,
     date_constitution: isoDate(pool.date_constitution),
@@ -44,9 +58,13 @@ export function poolToExportRow(pool: LaboPoolRegistre): ExportRow {
   };
 }
 
-export function echantillonToExportRow(echantillon: LaboEchantillonRegistre): ExportRow {
+export function echantillonToExportRow(
+  echantillon: LaboEchantillonRegistre,
+  mesEntites: Array<string>
+): ExportRow {
   return {
     reference_echantillon: echantillon.reference_echantillon,
+    ...aliasesExport(echantillon.Aliases, mesEntites),
     numero_bracelet: echantillon.Carcasse.numero_bracelet,
     espece: echantillon.Carcasse.espece,
     date_mise_a_mort: isoDate(echantillon.Carcasse.date_mise_a_mort),
@@ -62,9 +80,10 @@ export function echantillonToExportRow(echantillon: LaboEchantillonRegistre): Ex
   };
 }
 
-export function ftpToExportRow(ftp: LaboFTPListItem): ExportRow {
+export function ftpToExportRow(ftp: LaboFTPListItem, mesEntites: Array<string>): ExportRow {
   return {
     numero_fiche: ftp.numero_fiche,
+    ...aliasesExport(ftp.Aliases, mesEntites),
     direction: ftp.direction,
     expediteur_prenom: ftp.ExpediteurUser.prenom,
     expediteur_nom: ftp.ExpediteurUser.nom_de_famille,

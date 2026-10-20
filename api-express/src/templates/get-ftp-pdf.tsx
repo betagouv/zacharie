@@ -7,6 +7,7 @@ import path from 'path';
 import prisma from '~/prisma';
 import { TRICHINE_RESULTATS_EMAIL } from '~/config';
 import { getEtgsDuServiceExpediteur, type TrichinePartieConcernee } from '~/utils/trichine-parties';
+import { trichineAliasesInclude, type TrichineAliasProjection } from '~/utils/trichine-alias';
 
 dayjs.locale('fr');
 
@@ -97,6 +98,7 @@ const styles = StyleSheet.create({
   },
   poolRef: { fontSize: 15, fontWeight: 'bold', letterSpacing: 1 },
   poolMeta: { fontSize: 8.5, marginTop: 2 },
+  tdAlias: { fontSize: 6.5, color: '#666666' },
   barcode: { width: 150, height: 'auto' },
 
   table: { padding: 5 },
@@ -184,13 +186,16 @@ async function getFtpForPdf(ftpId: string) {
                       Fei: { select: { commune_mise_a_mort: true } },
                     },
                   },
+                  ...trichineAliasesInclude,
                 },
                 orderBy: { reference_echantillon: 'asc' },
               },
+              ...trichineAliasesInclude,
             },
           },
         },
       },
+      ...trichineAliasesInclude,
     },
   });
 }
@@ -216,6 +221,13 @@ export async function barcodeDataUrl(text: string): Promise<string> {
 
 function formatAdresse(parts: Array<string | null>) {
   return parts.filter(Boolean).join(', ');
+}
+
+// Références internes de chaque acteur, à côté de celle de Zacharie : « SVI 35 : A-12 · LVD 35 : 2026-87 »
+export function formatAliases(aliases: Array<TrichineAliasProjection>): string {
+  return aliases
+    .map((alias) => `${alias.Entity.nom_d_usage || alias.Entity.raison_sociale || '—'} : ${alias.reference}`)
+    .join(' · ');
 }
 
 export function TrichineFtpDocument({
@@ -308,6 +320,9 @@ export function TrichineFtpDocument({
             Envoi : {ftp.date_envoi ? dayjs(ftp.date_envoi).format('DD/MM/YYYY') : 'non envoyée'}
           </Text>
           {!!ftp.mode_transport && <Text style={styles.line}>Transport : {ftp.mode_transport}</Text>}
+          {ftp.Aliases.length > 0 && (
+            <Text style={styles.line}>Réf. internes : {formatAliases(ftp.Aliases)}</Text>
+          )}
           <Text style={styles.line}>
             Contenu : {pools.length} pool{pools.length > 1 ? 's' : ''} — {nbEchantillons} échantillon
             {nbEchantillons > 1 ? 's' : ''}
@@ -347,6 +362,9 @@ export function TrichineFtpDocument({
                   {pool.TrichineEchantillons.length > 1 ? 's' : ''} —{' '}
                   {pool.TrichineEchantillons.reduce((total, e) => total + e.masse_grammes, 0)} g
                 </Text>
+                {pool.Aliases.length > 0 && (
+                  <Text style={styles.poolMeta}>Réf. internes : {formatAliases(pool.Aliases)}</Text>
+                )}
               </View>
               <Image style={styles.barcode} src={barcodes[pool.reference_pool]} />
             </View>
@@ -363,7 +381,14 @@ export function TrichineFtpDocument({
               </View>
               {pool.TrichineEchantillons.map((echantillon) => (
                 <View key={echantillon.id} style={styles.tr}>
-                  <Text style={[styles.td, styles.colEch]}>{echantillon.reference_echantillon}</Text>
+                  <View style={styles.colEch}>
+                    <Text style={styles.td}>{echantillon.reference_echantillon}</Text>
+                    {echantillon.Aliases.map((alias) => (
+                      <Text key={alias.id} style={styles.tdAlias}>
+                        {formatAliases([alias])}
+                      </Text>
+                    ))}
+                  </View>
                   <Text style={[styles.td, styles.colBracelet]}>{echantillon.Carcasse.numero_bracelet}</Text>
                   <Text style={[styles.td, styles.colEspece]}>{echantillon.Carcasse.espece}</Text>
                   <Text style={[styles.td, styles.colDate]}>

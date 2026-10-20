@@ -36,6 +36,7 @@ import { isTerminalResult, recomputePoolAndLinkedFTPs } from '~/utils/trichine-s
 import { applyPoolResult, resultatSchema, validateResultForPool } from '~/utils/trichine-result';
 import { getMappingForLab } from '~/utils/lims-mapping';
 import { mapRow, parseLimsFile, type MappedLimsRow } from '~/utils/lims-parse';
+import { trichineAliasesInclude } from '~/utils/trichine-alias';
 import type { LaboResultsImportResponse, LaboResultsPreviewResponse, LimsResultRow } from '~/types/responses';
 
 const router: express.Router = express.Router();
@@ -96,6 +97,7 @@ const carcasseLaboSelect = {
 
 const echantillonLaboInclude = {
   Carcasse: { select: carcasseLaboSelect },
+  ...trichineAliasesInclude,
 } as const;
 
 // Émetteur : nom + contact uniquement (facturation / relance)
@@ -173,7 +175,6 @@ type LaboLink = LaboPool['TrichinePoolFTPs'][number];
 type LaboFtp = LaboLink['TrichineFTP'];
 
 // Le lien (non brouillon) par lequel le pool est arrivé dans un des laboratoires de l'utilisateur.
-// C'est lui qui porte la référence interne de ce laboratoire.
 function pickLaboLink(pool: LaboPool, context: LaboContext): LaboLink | null {
   return (
     pool.TrichinePoolFTPs.find(
@@ -191,49 +192,38 @@ async function findPoolForLabo(poolId: string, context: LaboContext) {
   if (!pool || pool.deleted_at) return null;
   const link = pickLaboLink(pool, context);
   if (!link) return null;
-  return { pool, ftp: link.TrichineFTP, link };
+  return { pool, ftp: link.TrichineFTP };
 }
 
 /**
- * Variante batchée : rapproche des références pool (P-YY-…) aux pools destinés aux laboratoires
- * de l'utilisateur. Sert à l'import de résultats (une requête pour tout le fichier).
+ * Variante batchée : rapproche des références lues dans un fichier aux pools destinés aux
+ * laboratoires de l'utilisateur. Une référence est soit celle de Zacharie (P-YY-…), soit l'alias
+ * que le laboratoire a donné au pool. Sert à l'import de résultats (une requête pour tout le fichier).
  */
 async function findPoolsForLabo(references: string[], context: LaboContext) {
-  const byReference = new Map<string, { pool: LaboPool; ftp: LaboFtp; link: LaboLink }>();
+  const byReference = new Map<string, { pool: LaboPool; ftp: LaboFtp }>();
   if (!references.length) return byReference;
   const pools = await prisma.trichinePool.findMany({
-    where: { reference_pool: { in: references }, deleted_at: null },
-    include: poolForLaboInclude,
+    where: {
+      deleted_at: null,
+      OR: [
+        { reference_pool: { in: references } },
+        { Aliases: { some: { entity_id: { in: context.entityIds }, reference: { in: references } } } },
+      ],
+    },
+    include: {
+      ...poolForLaboInclude,
+      Aliases: { where: { entity_id: { in: context.entityIds } }, select: { reference: true } },
+    },
   });
-  for (const pool of pools) {
+  for (const { Aliases, ...pool } of pools) {
     const link = pickLaboLink(pool, context);
-    if (link) byReference.set(pool.reference_pool, { pool, ftp: link.TrichineFTP, link });
+    if (!link) continue;
+    for (const reference of [pool.reference_pool, ...Aliases.map((alias) => alias.reference)]) {
+      byReference.set(reference, { pool, ftp: link.TrichineFTP });
+    }
   }
   return byReference;
-}
-
-/**
- * La référence interne d'un pool appartient au laboratoire qui l'a attribuée : elle est portée
- * par le lien pool ↔ FTP, jamais par le pool. On projette donc sur le pool celle du laboratoire
- * connecté, et on retire des liens celle des autres (typiquement le LNR pour un LVD).
- */
-type LienProjetable = {
-  reference_labo: string | null;
-  TrichineFTP: { destinataire_entity_id: string };
-};
-
-function projeterPoolPourLabo<Pool extends { TrichinePoolFTPs: LienProjetable[] }>(
-  pool: Pool,
-  context: LaboContext
-) {
-  const lienDuLabo = pool.TrichinePoolFTPs.find((lien) =>
-    context.entityIds.includes(lien.TrichineFTP.destinataire_entity_id)
-  );
-  return {
-    ...pool,
-    reference_labo: lienDuLabo?.reference_labo ?? null,
-    TrichinePoolFTPs: pool.TrichinePoolFTPs.map(({ reference_labo, ...lien }) => lien),
-  };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -290,10 +280,12 @@ router.get(
         DestinataireEntity: {
           select: { id: true, is_lnr: true, nom_d_usage: true, raison_sociale: true },
         },
+        ...trichineAliasesInclude,
         TrichinePoolFTPs: {
           include: {
             TrichinePool: {
               include: {
+                ...trichineAliasesInclude,
                 // Uniquement pour compter les carcasses en attente d'IPM2 : la projection
                 // renvoyée au labo (§10.2) ne contient pas les échantillons.
                 TrichineEchantillons: {
@@ -325,7 +317,7 @@ router.get(
             0
           ),
           TrichinePoolFTPs: TrichinePoolFTPs.map(
-            ({ TrichinePool: { TrichineEchantillons, ...pool }, reference_labo, ...lien }) => ({
+            ({ TrichinePool: { TrichineEchantillons, ...pool }, ...lien }) => ({
               ...lien,
               TrichinePool: pool,
             })
@@ -362,15 +354,13 @@ router.get(
               include: {
                 TrichineEchantillons: { where: { deleted_at: null }, include: echantillonLaboInclude },
                 Documents: { where: { deleted_at: null } },
-                // Pour projeter la référence interne du labo connecté (portée par le lien)
-                TrichinePoolFTPs: {
-                  include: { TrichineFTP: { select: { destinataire_entity_id: true } } },
-                },
+                ...trichineAliasesInclude,
               },
             },
           },
         },
         Documents: { where: { deleted_at: null } },
+        ...trichineAliasesInclude,
       },
     });
     const estDestinataire = !!ftp && context.entityIds.includes(ftp.destinataire_entity_id);
@@ -393,10 +383,7 @@ router.get(
       data: {
         ftp: {
           ...ftpSansLiens,
-          TrichinePoolFTPs: TrichinePoolFTPs.map(({ TrichinePool, reference_labo, ...lien }) => ({
-            ...lien,
-            TrichinePool: projeterPoolPourLabo(TrichinePool, context),
-          })),
+          TrichinePoolFTPs,
           FTPParent: FTPParent && ftpLieeVisible(FTPParent, context) ? projeterFtpLiee(FTPParent) : null,
           // id et pools portés : le labo émetteur télécharge la fiche à joindre au colis depuis chaque pool
           FTPChildren: FTPChildren.filter((enfant) => ftpLieeVisible(enfant, context)).map((enfant) => ({
@@ -465,9 +452,10 @@ router.get(
       include: {
         TrichineEchantillons: {
           where: { deleted_at: null },
-          include: { Carcasse: { select: carcasseLaboSelect } },
+          include: echantillonLaboInclude,
           orderBy: { reference_echantillon: 'asc' },
         },
+        ...trichineAliasesInclude,
         TrichinePoolFTPs: {
           include: {
             TrichineFTP: {
@@ -499,9 +487,7 @@ router.get(
       where: { objet_type: TrichineObjetType.POOL, objet_id: pool.id },
       orderBy: { date_changement: 'desc' },
     });
-    res
-      .status(200)
-      .send({ ok: true, data: { pool: projeterPoolPourLabo(pool, context), ftp, historique }, error: '' });
+    res.status(200).send({ ok: true, data: { pool, ftp, historique }, error: '' });
   })
 );
 
@@ -600,10 +586,10 @@ router.post(
     if (!found) {
       return sendError(res, 404, 'Pool introuvable');
     }
-    const { pool, ftp, link } = found;
+    const { pool, ftp } = found;
     const isLnr = ftp.DestinataireEntity.is_lnr;
 
-    const outcome = await applyPoolResult({ pool, ftp, link, body, userId: req.user.id, isLnr });
+    const outcome = await applyPoolResult({ pool, ftp, body, userId: req.user.id, isLnr });
     if (outcome.kind === 'error') {
       return sendError(res, outcome.status, outcome.error);
     }
@@ -748,7 +734,6 @@ router.post(
     const outcome = await applyPoolResult({
       pool: { ...pool, resultat_analyse: null },
       ftp,
-      link: found.link,
       body,
       userId: req.user.id,
       isLnr: ftp.DestinataireEntity.is_lnr,
@@ -966,7 +951,7 @@ router.get(
 // Classe une ligne mappée du fichier selon le pool retrouvé + les règles de saisie.
 function classifyLimsRow(
   mapped: MappedLimsRow,
-  found: { pool: LaboPool; ftp: LaboFtp; link: LaboLink } | undefined
+  found: { pool: LaboPool; ftp: LaboFtp } | undefined
 ): LimsResultRow {
   const base: LimsResultRow = {
     reference_pool: mapped.reference_pool,
@@ -1103,7 +1088,6 @@ router.post(
         const outcome = await applyPoolResult({
           pool: found.pool,
           ftp: found.ftp,
-          link: found.link,
           body: row,
           userId: req.user.id,
           isLnr: found.ftp.DestinataireEntity.is_lnr,
@@ -1160,6 +1144,7 @@ router.get(
       include: {
         Carcasse: { select: carcasseLaboSelect },
         TrichinePool: { select: { reference_pool: true, statut: true, resultat_analyse: true } },
+        ...trichineAliasesInclude,
       },
       orderBy: { created_at: 'desc' },
     });
@@ -1180,6 +1165,7 @@ router.get(
           where: { deleted_at: null },
           include: { Carcasse: { select: carcasseLaboSelect } },
         },
+        ...trichineAliasesInclude,
         PoolParent: { select: { reference_pool: true } },
         TrichinePoolFTPs: {
           include: {
@@ -1193,7 +1179,7 @@ router.get(
     });
     res.status(200).send({
       ok: true,
-      data: { pools: pools.map((pool) => projeterPoolPourLabo(pool, context)) },
+      data: { pools },
       error: '',
     });
   })

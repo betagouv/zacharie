@@ -246,7 +246,6 @@ model TrichinePool {
   statut             TrichineStatutAnalyse    @default(A_COMPLETER)
   resultat_analyse   TrichineResultatAnalyse?
   parasite_identifie String?                  // rempli si NON_NEGATIF par LNR
-  reference_labo     String?                  // n° interne attribué par le labo
 
   refus_par_user_id String?
   raison_refus      String?
@@ -307,6 +306,33 @@ model TrichinePoolFTP {
   @@unique([pool_id, ftp_id])
 }
 ```
+
+### 4.5 bis Références internes (`TrichineAlias`)
+
+Chaque entité qui manipule un échantillon, un pool ou une FTP (le SVI qui prélève, le LVD, le LNR) peut lui donner **sa propre référence** — celle de son LIMS ou de son registre. Une par entité et par objet ; tous les acteurs qui voient l'objet voient les alias des autres.
+
+```prisma
+model TrichineAlias {
+  id             String             @id @default(uuid())
+  reference      String
+  objet_type     TrichineAliasObjet // ECHANTILLON | POOL | FTP
+  entity_id      String             // SVI ou laboratoire
+  echantillon_id String?            // une seule des trois FK, celle de objet_type (CHECK SQL)
+  pool_id        String?
+  ftp_id         String?
+
+  @@unique([entity_id, echantillon_id])
+  @@unique([entity_id, pool_id])
+  @@unique([entity_id, ftp_id])
+  @@unique([entity_id, objet_type, reference]) // pas deux fois la même référence pour un même type
+}
+```
+
+- **Qui** : le SVI (au nom de son service) sur ce que son équipe a prélevé / constitué / expédié ; le laboratoire sur ce qui lui est arrivé par une FTP non brouillon (ou la FTP de confirmation qu'il envoie au LNR). Pas de chasseur / 1er détenteur en V1.
+- **Saisie** : à la création (prélèvement, pool, FTP côté SVI), sur la page de détail (« Références internes »), à la saisie du résultat et par l'import LIMS (colonne `reference_labo`) côté laboratoire.
+- **Gel** : figée une fois les analyses terminées (échantillon, pool) ou la FTP clôturée (`TRAITEE`, `ANNULEE` ou analyses terminées).
+- **Format** : 50 caractères max, lettres, chiffres, espaces et `. _ - / # ( )`.
+- **Usages** : colonne « Ma réf. » et recherche dans les listes, export CSV/JSON du laboratoire (`reference_labo` = la sienne, `autres_references_internes`), rapprochement des lignes à l'import LIMS (référence Zacharie **ou** alias du labo), impression de tous les alias connus sur le PDF de la FTP.
 
 ### 4.6 Documents (polymorphique : pool OU ftp)
 
@@ -786,6 +812,7 @@ Intégration dans `api-express/src/utils/carcasse-access.ts` + `fei-access.ts` (
 - `POST /trichine/pool/:id/renoncer-2e-intention`
 - `POST /carcasse/:id/retirer-de-fei`
 - `GET /trichine/notifications` (user-scoped)
+- `GET /trichine-alias/mes-entites`, `PUT|DELETE /trichine-alias/:objet/:id` (références internes, SVI et laboratoires)
 
 ---
 

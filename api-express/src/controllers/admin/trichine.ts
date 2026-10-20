@@ -175,9 +175,9 @@ router.get(
           where: { deleted_at: null },
           select: { Carcasse: { select: { numero_bracelet: true, espece: true } } },
         },
+        Aliases: { select: { reference: true }, orderBy: { created_at: 'asc' } },
         TrichinePoolFTPs: {
           select: {
-            reference_labo: true,
             TrichineFTP: {
               select: {
                 numero_fiche: true,
@@ -211,7 +211,7 @@ router.get(
         ftp_numero: lien?.TrichineFTP.numero_fiche ?? null,
         laboratoire: destinataire?.nom_d_usage || destinataire?.raison_sociale || (destinataire ? '—' : null),
         est_lnr: destinataire?.is_lnr ?? false,
-        reference_labo: lien?.reference_labo ?? null,
+        aliases: pool.Aliases.map((alias) => alias.reference).join(', '),
       };
     });
 

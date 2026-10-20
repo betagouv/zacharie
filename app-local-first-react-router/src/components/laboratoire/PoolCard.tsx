@@ -21,6 +21,7 @@ import {
   type FtpConfirmationCreee,
   type LaboPool,
 } from '@app/services/laboratoire';
+import { formatAliases, monAlias, useMesEntitesAlias } from '@app/services/trichine-alias';
 import PoolDocuments from '@app/components/laboratoire/PoolDocuments';
 import LarvePhotos from '@app/components/laboratoire/LarvePhotos';
 import useDownloadFtpPdf from '@app/utils/download-ftp-pdf';
@@ -126,6 +127,9 @@ export default function PoolCard({
           {nombre} échantillon{nombre > 1 ? 's' : ''}
           {!!carcasses && ` — carcasses ${carcasses}`}
         </p>
+        {pool.Aliases.length > 0 && (
+          <p className="fr-text--sm fr-mb-0 text-gray-600">Réf. internes : {formatAliases(pool.Aliases)}</p>
+        )}
         <button
           type="button"
           onClick={() => setCompositionOuverte((ouverte) => !ouverte)}
@@ -143,7 +147,8 @@ export default function PoolCard({
                 key={echantillon.id}
                 className="rounded border border-gray-200 p-2"
               >
-                <span className="font-semibold">{echantillon.reference_echantillon}</span> —{' '}
+                <span className="font-semibold">{echantillon.reference_echantillon}</span>
+                {echantillon.Aliases.length > 0 && ` (${formatAliases(echantillon.Aliases)})`} —{' '}
                 {sitePrelevementLabels[echantillon.site_prelevement]} — {echantillon.masse_grammes} g
                 <br />
                 Carcasse {echantillon.Carcasse.numero_bracelet} ({echantillon.Carcasse.espece ?? '—'}) — mise
@@ -177,7 +182,6 @@ export default function PoolCard({
         <ul className="fr-text--sm fr-mb-2w space-y-1">
           {pool.parasite_identifie && <li>Parasite identifié : {pool.parasite_identifie}</li>}
           {pool.raison_refus && <li>Raison du refus : {pool.raison_refus}</li>}
-          {pool.reference_labo && <li>Référence laboratoire : {pool.reference_labo}</li>}
           {pool.date_debut_analyse && (
             <li>Début d'analyse : {dayjs(pool.date_debut_analyse).format('DD/MM/YYYY')}</li>
           )}
@@ -249,6 +253,8 @@ export function ResultatModalContent({
   const [ftpConfirmation, setFtpConfirmation] = useState<FtpConfirmationCreee | null>(null);
   const [photos, setPhotos] = useState<Array<TrichineDocument>>([]);
   const { isDownloading, onDownloadFtpPdf } = useDownloadFtpPdf('laboratoire');
+  const mesEntites = useMesEntitesAlias();
+  const maReference = monAlias(pool?.Aliases, mesEntites)?.reference ?? '';
 
   // Une fiche porte plusieurs pools : rien de ce qui a été saisi pour l'un ne doit rester pour le suivant
   useEffect(() => {
@@ -260,10 +266,10 @@ export function ResultatModalContent({
     setParasite('');
     setDateDebut('');
     setDateFin(dayjs().format('YYYY-MM-DD'));
-    setReferenceLabo(pool?.reference_labo ?? '');
+    setReferenceLabo(maReference);
     setCommentaire('');
     setRaison('');
-  }, [pool?.id, pool?.reference_labo]);
+  }, [pool?.id, maReference]);
 
   const correction = mode === 'correction';
   const options = isLnr ? LNR_RESULTS : LVD_RESULTS;
@@ -440,7 +446,7 @@ export function ResultatModalContent({
           }}
         />
         <Input
-          label="Référence interne laboratoire (optionnel)"
+          label="Ma référence interne (optionnel)"
           className="grow"
           nativeInputProps={{
             type: 'text',

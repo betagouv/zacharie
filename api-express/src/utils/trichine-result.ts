@@ -1,6 +1,7 @@
 import z from 'zod';
 import {
   EntityTypes,
+  TrichineAliasObjet,
   TrichineResultatAnalyse,
   TrichineStatutLogistiqueFTP,
   TrichineType,
@@ -22,6 +23,12 @@ import {
   type TrichineNotifiableUser,
 } from '~/utils/trichine';
 import type { TrichineEmailContent } from '~/templates/trichine-email';
+import {
+  ALIAS_REFERENCE_INVALIDE,
+  aliasReferenceDejaPrise,
+  aliasReferenceSchema,
+  upsertAlias,
+} from '~/utils/trichine-alias';
 import { recomputeFTPTrichine, recomputePoolAndLinkedFTPs } from '~/utils/trichine-status';
 
 // Résultats saisissables selon le type de laboratoire (cf doc/trichine.md §6.3-6.4)
@@ -105,12 +112,6 @@ type ApplyPoolResultFtp = {
   expediteur_entity_id: string | null;
 };
 
-// Lien pool ↔ FTP par lequel le pool est arrivé dans le laboratoire qui saisit : c'est lui qui
-// porte la référence interne de ce laboratoire.
-type ApplyPoolResultLink = {
-  id: string;
-};
-
 export const resultatSchema = z.object({
   resultat_analyse: z.enum(
     Object.values(TrichineResultatAnalyse) as [TrichineResultatAnalyse, ...TrichineResultatAnalyse[]]
@@ -118,6 +119,7 @@ export const resultatSchema = z.object({
   parasite_identifie: z.string().optional(),
   date_debut_analyse: z.coerce.date().optional(),
   date_fin_analyse: z.coerce.date().optional(),
+  // Référence interne du laboratoire pour ce pool : devient son alias (cf utils/trichine-alias.ts)
   reference_labo: z.string().optional(),
   commentaire: z.string().optional(),
 });
@@ -145,14 +147,12 @@ export type ApplyPoolResultOutcome =
 export async function applyPoolResult({
   pool,
   ftp,
-  link,
   body,
   userId,
   isLnr,
 }: {
   pool: ApplyPoolResultPool;
   ftp: ApplyPoolResultFtp;
-  link: ApplyPoolResultLink;
   body: ApplyPoolResultBody;
   userId: string;
   isLnr: boolean;
@@ -169,6 +169,22 @@ export async function applyPoolResult({
   if (invalid) {
     return { kind: 'error', status: invalid.status, error: invalid.error };
   }
+  // L'alias est posé au nom du laboratoire destinataire de la fiche par laquelle le pool est arrivé
+  const referenceLabo = body.reference_labo?.trim() || null;
+  if (referenceLabo) {
+    if (!aliasReferenceSchema.safeParse(referenceLabo).success) {
+      return { kind: 'error', status: 400, error: ALIAS_REFERENCE_INVALIDE };
+    }
+    const dejaPrise = await aliasReferenceDejaPrise({
+      entityId: ftp.destinataire_entity_id,
+      objetType: TrichineAliasObjet.POOL,
+      objetId: pool.id,
+      reference: referenceLabo,
+    });
+    if (dejaPrise) {
+      return { kind: 'error', status: 400, error: dejaPrise };
+    }
+  }
 
   await prisma.trichinePool.update({
     where: { id: pool.id },
@@ -180,10 +196,12 @@ export async function applyPoolResult({
       commentaire: body.commentaire ?? pool.commentaire,
     },
   });
-  if (body.reference_labo) {
-    await prisma.trichinePoolFTP.update({
-      where: { id: link.id },
-      data: { reference_labo: body.reference_labo },
+  if (referenceLabo) {
+    await upsertAlias({
+      entityId: ftp.destinataire_entity_id,
+      objetType: TrichineAliasObjet.POOL,
+      objetId: pool.id,
+      reference: referenceLabo,
     });
   }
   await logTrichineStatutChange({

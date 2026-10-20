@@ -13,6 +13,7 @@ import { useListParam } from '@app/utils/trichine-list-params';
 import { getLaboFTPs, type LaboFTPListItem } from '@app/services/laboratoire';
 import ExportButtons from '@app/components/laboratoire/ExportButtons';
 import { ftpToExportRow } from '@app/utils/export-trichine';
+import { aliasesRecherche, monAlias, useMesEntitesAlias } from '@app/services/trichine-alias';
 import {
   filterTrichineRows,
   filtreLaboFTP,
@@ -110,6 +111,7 @@ export default function LaboratoireFTPs() {
   const [sortBy, setSortBy] = useState<keyof LaboFTPListItem>('date_envoi');
   const [sortOrder, setSortOrder] = useState<TrichineSortOrder>('DESC');
   const [selectedIds, setSelectedIds] = useState<Array<string>>([]);
+  const mesEntites = useMesEntitesAlias();
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -148,7 +150,7 @@ export default function LaboratoireFTPs() {
     const filtered = filterTrichineRows(
       base,
       query,
-      (ftp) => `${ftp.numero_fiche} ${expediteurDisplay(ftp)}`
+      (ftp) => `${ftp.numero_fiche} ${expediteurDisplay(ftp)} ${aliasesRecherche(ftp.Aliases)}`
     );
     return sortTrichineRows(filtered, sortBy, sortOrder);
   }, [base, query, sortBy, sortOrder]);
@@ -212,14 +214,14 @@ export default function LaboratoireFTPs() {
           nom="ftps"
           rows={rows}
           selectedIds={selectedIds}
-          toExportRow={ftpToExportRow}
+          toExportRow={(ftp) => ftpToExportRow(ftp, mesEntites)}
         />
       }
       toolbar={
         <TrichineListToolbar
           query={query}
           onQueryChange={setQuery}
-          searchHint="N° de fiche, émetteur"
+          searchHint="N° de fiche, référence interne, émetteur"
         >
           <FiltreSelect
             label="Affichage"
@@ -250,6 +252,11 @@ export default function LaboratoireFTPs() {
               title: 'Numéro',
               ...sortProps,
               render: (ftp) => <NumeroCell ftp={ftp} />,
+            },
+            {
+              dataKey: 'Aliases',
+              title: 'Ma réf.',
+              render: (ftp) => monAlias(ftp.Aliases, mesEntites)?.reference ?? '—',
             },
             {
               dataKey: 'expediteur_user_id',

@@ -560,7 +560,6 @@ export async function appliquerResultatDuRapport({
   const outcome = await applyPoolResult({
     pool: cible.pool,
     ftp: cible.link.TrichineFTP,
-    link: cible.link,
     body: {
       resultat_analyse: resultat,
       parasite_identifie: labo.isLnr ? rapport.parasite_identifie : undefined,

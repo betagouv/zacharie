@@ -18,7 +18,7 @@ vi.mock('~/third-parties/cellar', async (importOriginal) => ({
 }));
 
 import prisma from '~/prisma';
-import { barcodeDataUrl, getFtpPdfBuffer, type FtpForPdf } from '~/templates/get-ftp-pdf';
+import { barcodeDataUrl, formatAliases, getFtpPdfBuffer, type FtpForPdf } from '~/templates/get-ftp-pdf';
 import { archiveFtpPdf, getArchivedOrFreshFtpPdf } from '~/utils/trichine-ftp-document';
 
 beforeEach(() => {
@@ -64,6 +64,14 @@ export const ftpFixture = {
     ville: 'Rennes',
     is_lnr: false,
   },
+  Aliases: [
+    {
+      id: 'a1',
+      reference: 'FTP-SVI-12',
+      entity_id: 'ent-a1',
+      Entity: { id: 'ent-a1', type: 'SVI', nom_d_usage: 'SVI 35', raison_sociale: null },
+    },
+  ],
   TrichinePoolFTPs: [
     {
       TrichinePool: {
@@ -71,12 +79,34 @@ export const ftpFixture = {
         reference_pool: 'P-26-02-0045',
         type: TrichineType.INITIAL,
         date_constitution: new Date('2026-08-11T00:00:00Z'),
+        Aliases: [
+          {
+            id: 'a2',
+            reference: 'POOL-7',
+            entity_id: 'ent-a2',
+            Entity: { id: 'ent-a2', type: 'SVI', nom_d_usage: 'SVI 35', raison_sociale: null },
+          },
+          {
+            id: 'a3',
+            reference: '2026-0087',
+            entity_id: 'ent-a3',
+            Entity: { id: 'ent-a3', type: 'SVI', nom_d_usage: 'LVD 35', raison_sociale: null },
+          },
+        ],
         TrichineEchantillons: [
           {
             id: 'ech-1',
             reference_echantillon: 'E-26-02-0101',
             site_prelevement: TrichineSitePrelevement.PILIER_DIAPHRAGME,
             masse_grammes: 5,
+            Aliases: [
+              {
+                id: 'a4',
+                reference: 'ECH-1',
+                entity_id: 'ent-a4',
+                Entity: { id: 'ent-a4', type: 'SVI', nom_d_usage: 'SVI 35', raison_sociale: null },
+              },
+            ],
             Carcasse: {
               numero_bracelet: 'FR-35-2026-0001',
               espece: 'Sanglier',
@@ -89,6 +119,7 @@ export const ftpFixture = {
             reference_echantillon: 'E-26-02-0102',
             site_prelevement: TrichineSitePrelevement.LANGUE,
             masse_grammes: 5,
+            Aliases: [],
             Carcasse: {
               numero_bracelet: 'FR-35-2026-0002',
               espece: 'Sanglier',
@@ -119,6 +150,12 @@ describe('getFtpPdfBuffer', () => {
     } as never);
 
     expect(await getFtpPdfBuffer('ftp-1')).toBeNull();
+  });
+
+  test('les références internes de chaque acteur sont imprimées avec le nom de son entité', () => {
+    expect(formatAliases(ftpFixture.TrichinePoolFTPs[0].TrichinePool.Aliases)).toBe(
+      'SVI 35 : POOL-7 · LVD 35 : 2026-0087'
+    );
   });
 
   test('la référence du pool est encodée en Code 128', async () => {

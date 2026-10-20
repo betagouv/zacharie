@@ -619,7 +619,8 @@ export type AdminTrichinePoolRow = {
   ftp_numero: string | null;
   laboratoire: string | null;
   est_lnr: boolean;
-  reference_labo: string | null;
+  // Références internes posées par le SVI et les laboratoires, séparées par des virgules
+  aliases: string;
 };
 
 export interface AdminTrichinePoolsResponse {

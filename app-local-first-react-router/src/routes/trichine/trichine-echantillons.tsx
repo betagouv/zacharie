@@ -6,6 +6,7 @@ import dayjs from 'dayjs';
 import { TrichineResultatAnalyse, TrichineStatutAnalyse, TrichineType } from '@prisma/client';
 import TableFilterable from '@app/components/TableFilterable';
 import LienTrichine from '@app/components/trichine/LienTrichine';
+import { aliasesRecherche, monAlias, useMesEntitesAlias } from '@app/services/trichine-alias';
 import TrichineListPage, {
   FiltrePeriode,
   FiltreSelect,
@@ -67,6 +68,7 @@ export default function TrichineEchantillons() {
   const [sortBy, setSortBy] = useState<keyof TrichineEchantillonWithCarcasse>('date_prelevement');
   const [sortOrder, setSortOrder] = useState<TrichineSortOrder>('DESC');
   const [selectedIds, setSelectedIds] = useState<Array<string>>([]);
+  const mesEntites = useMesEntitesAlias();
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -116,7 +118,7 @@ export default function TrichineEchantillons() {
       (echantillon) =>
         `${echantillon.reference_echantillon} ${echantillon.Carcasse.numero_bracelet ?? ''} ${
           echantillon.TrichinePool?.reference_pool ?? ''
-        }`
+        } ${aliasesRecherche(echantillon.Aliases)}`
     );
     return sortTrichineRows(filtered, sortBy, sortOrder);
   }, [echantillons, query, vue, pool, resultat, du, au, sortBy, sortOrder]);
@@ -152,7 +154,7 @@ export default function TrichineEchantillons() {
         <TrichineListToolbar
           query={query}
           onQueryChange={setQuery}
-          searchHint="Référence, n° de bracelet, pool"
+          searchHint="Référence, référence interne, n° de bracelet, pool"
         >
           <FiltreSelect
             label="Statut"
@@ -238,6 +240,11 @@ export default function TrichineEchantillons() {
             render: (echantillon) => (
               <span className="font-semibold">{echantillon.reference_echantillon}</span>
             ),
+          },
+          {
+            dataKey: 'Aliases',
+            title: 'Ma réf.',
+            render: (echantillon) => monAlias(echantillon.Aliases, mesEntites)?.reference ?? '—',
           },
           {
             dataKey: 'zacharie_carcasse_id',

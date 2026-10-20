@@ -12,6 +12,8 @@ import Chargement from '@app/components/Chargement';
 import TrichineIntrouvable from '@app/components/trichine/TrichineIntrouvable';
 import TrichineChaine, { type ChaineEtape } from '@app/components/trichine/TrichineChaine';
 import TrichineChronologie from '@app/components/trichine/TrichineChronologie';
+import TrichineAliasesCard from '@app/components/trichine/TrichineAliases';
+import { aliasAnalysesFige } from '@app/services/trichine-alias';
 import TrichineDetailPage, {
   TrichineCard,
   TrichineFields,
@@ -185,6 +187,13 @@ export default function TrichineEchantillonDetailPage() {
               ]}
             />
           </TrichineCard>
+          <TrichineAliasesCard
+            objet="echantillon"
+            objetId={echantillon.id}
+            aliases={echantillon.Aliases}
+            fige={aliasAnalysesFige(echantillon)}
+            onChange={refresh}
+          />
           <TrichineChronologie historique={historique} />
         </>
       }

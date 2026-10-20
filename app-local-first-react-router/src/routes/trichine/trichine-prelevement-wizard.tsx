@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { toast } from 'react-toastify';
+import { TRICHINE_ALIAS_MAX_LENGTH } from '@app/services/trichine-alias';
 import dayjs from 'dayjs';
 import {
   IPM2Decision,
@@ -186,6 +187,8 @@ export default function TrichinePrelevementWizard() {
   });
   const [datePrelevement, setDatePrelevement] = useState(dayjs().format('YYYY-MM-DD'));
   const [exceptions, setExceptions] = useState<Record<string, Reglage>>({});
+  // Référence interne du service, saisie carcasse par carcasse dans le détail
+  const [aliases, setAliases] = useState<Record<string, string>>({});
 
   const [mode, setMode] = useState<ModeRegroupement>('AUTOMATIQUE');
   const [pools, setPools] = useState<Array<Array<string>>>([]);
@@ -362,6 +365,7 @@ export default function TrichinePrelevementWizard() {
           site_prelevement: reglageDe(carcasseId).site_prelevement,
           masse_grammes: reglageDe(carcasseId).masse_grammes,
           date_prelevement: datePrelevement,
+          alias: aliases[carcasseId]?.trim() || undefined,
         })),
       });
       if (!response.ok || !response.data) {
@@ -455,6 +459,7 @@ export default function TrichinePrelevementWizard() {
           setResultat(null);
           setSelection([]);
           setExceptions({});
+          setAliases({});
           setPools([]);
           setMode('AUTOMATIQUE');
           setEtape(0);
@@ -507,6 +512,8 @@ export default function TrichinePrelevementWizard() {
           onDatePrelevement={setDatePrelevement}
           exceptions={exceptions}
           onExceptions={setExceptions}
+          aliases={aliases}
+          onAliases={setAliases}
         />
       )}
 
@@ -1182,6 +1189,8 @@ function EtapePrelevement({
   onDatePrelevement,
   exceptions,
   onExceptions,
+  aliases,
+  onAliases,
 }: {
   selection: Array<string>;
   parId: Map<string, CarcasseAPrelever>;
@@ -1191,6 +1200,8 @@ function EtapePrelevement({
   onDatePrelevement: (value: string) => void;
   exceptions: Record<string, Reglage>;
   onExceptions: (exceptions: Record<string, Reglage>) => void;
+  aliases: Record<string, string>;
+  onAliases: (aliases: Record<string, string>) => void;
 }) {
   const [ouvert, setOuvert] = useState(false);
   const nbExceptions = Object.keys(exceptions).length;
@@ -1245,6 +1256,7 @@ function EtapePrelevement({
                 <th className="py-2 font-medium">N° de marquage</th>
                 <th className="py-2 font-medium">Site</th>
                 <th className="py-2 font-medium">Masse (g)</th>
+                <th className="py-2 font-medium">Ma réf. (optionnel)</th>
                 <th className="py-2" />
               </tr>
             </thead>
@@ -1297,6 +1309,15 @@ function EtapePrelevement({
                             [carcasseId]: { ...reglage, masse_grammes: Number(event.target.value) || 1 },
                           })
                         }
+                      />
+                    </td>
+                    <td className="w-40 py-2 pr-3">
+                      <ChampTexte
+                        type="text"
+                        maxLength={TRICHINE_ALIAS_MAX_LENGTH}
+                        aria-label={`Référence interne pour ${carcasse?.numero_bracelet ?? carcasseId}`}
+                        value={aliases[carcasseId] ?? ''}
+                        onChange={(event) => onAliases({ ...aliases, [carcasseId]: event.target.value })}
                       />
                     </td>
                     <td className="py-2 text-right">

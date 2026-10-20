@@ -1,0 +1,224 @@
+import express from 'express';
+import request from 'supertest';
+import { describe, test, expect, vi, beforeEach } from 'vitest';
+import {
+  TrichineAliasObjet,
+  TrichineStatutAnalyse,
+  TrichineStatutLogistiqueFTP,
+  UserRoles,
+} from '@prisma/client';
+import trichineAliasRouter from '~/controllers/trichine-alias';
+import prisma from '~/prisma';
+
+// PUT/DELETE /trichine-alias/:objet/:id — chaque entité (SVI, LVD, LNR) pose sa propre référence
+// interne sur un objet qu'elle voit déjà, tant que l'objet n'est pas figé.
+
+const app = express();
+app.use(express.json());
+app.use('/trichine-alias', trichineAliasRouter);
+
+const sviUser = { id: 'user-svi', roles: [UserRoles.SVI], activated: true, isZacharieAdmin: false };
+const laboUser = { id: 'user-labo', roles: [UserRoles.LABORATOIRE], activated: true, isZacharieAdmin: false };
+const chasseur = {
+  id: 'user-chasseur',
+  roles: [UserRoles.CHASSEUR],
+  activated: true,
+  isZacharieAdmin: false,
+};
+
+const put = (user: object, path: string, reference: string) =>
+  request(app).put(`/trichine-alias/${path}`).set('x-test-user', JSON.stringify(user)).send({ reference });
+
+const pool = {
+  id: 'pool-1',
+  cree_par_user_id: 'user-svi',
+  statut: TrichineStatutAnalyse.EN_COURS_ANALYSES,
+  deleted_at: null as Date | null,
+  TrichinePoolFTPs: [
+    {
+      TrichineFTP: {
+        deleted_at: null as Date | null,
+        statut_logistique: TrichineStatutLogistiqueFTP.RECUE,
+        destinataire_entity_id: 'labo-1',
+      },
+    },
+  ],
+};
+
+const ftp = {
+  id: 'ftp-1',
+  expediteur_user_id: 'user-svi',
+  expediteur_entity_id: 'svi-1',
+  destinataire_entity_id: 'labo-1',
+  statut_logistique: TrichineStatutLogistiqueFTP.ENVOYEE,
+  statut_analytique: TrichineStatutAnalyse.EN_COURS_ANALYSES,
+  deleted_at: null as Date | null,
+};
+
+// Sert à la fois à l'entité de l'utilisateur (entity_id) et à son équipe SVI (owner_id)
+const travaillePour = (entityId: string, userId: string) =>
+  vi
+    .mocked(prisma.entityAndUserRelations.findMany)
+    .mockResolvedValue([{ entity_id: entityId, owner_id: userId }] as never);
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  vi.mocked(prisma.trichineAlias.findUnique).mockResolvedValue(null as never);
+  vi.mocked(prisma.trichineAlias.findFirst).mockResolvedValue(null as never);
+  vi.mocked(prisma.trichineAlias.create).mockImplementation((async ({ data }: { data: object }) => ({
+    id: 'alias-1',
+    ...data,
+  })) as never);
+  vi.mocked(prisma.trichinePool.findUnique).mockResolvedValue(pool as never);
+  vi.mocked(prisma.trichineFTP.findUnique).mockResolvedValue(ftp as never);
+});
+
+describe('PUT /trichine-alias/:objet/:id', () => {
+  test('le SVI pose la référence de son service sur son pool', async () => {
+    travaillePour('svi-1', 'user-svi');
+
+    const response = await put(sviUser, 'pool/pool-1', '  SVI-2026-12 ');
+
+    expect(response.status).toBe(200);
+    expect(prisma.trichineAlias.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: {
+          entity_id: 'svi-1',
+          objet_type: TrichineAliasObjet.POOL,
+          pool_id: 'pool-1',
+          reference: 'SVI-2026-12',
+        },
+      })
+    );
+  });
+
+  test("un pool d'une autre équipe SVI reste introuvable", async () => {
+    travaillePour('svi-1', 'user-svi');
+    vi.mocked(prisma.trichinePool.findUnique).mockResolvedValue({
+      ...pool,
+      cree_par_user_id: 'autre-agent',
+    } as never);
+
+    const response = await put(sviUser, 'pool/pool-1', 'A1');
+
+    expect(response.status).toBe(404);
+    expect(prisma.trichineAlias.create).not.toHaveBeenCalled();
+  });
+
+  test('le laboratoire pose sa référence au nom du labo destinataire de la FTP', async () => {
+    travaillePour('labo-1', 'user-labo');
+
+    const response = await put(laboUser, 'ftp/ftp-1', 'LIMS-0087');
+
+    expect(response.status).toBe(200);
+    expect(prisma.trichineAlias.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ entity_id: 'labo-1', ftp_id: 'ftp-1' }) })
+    );
+  });
+
+  test("une FTP encore en brouillon n'est pas visible du laboratoire", async () => {
+    travaillePour('labo-1', 'user-labo');
+    vi.mocked(prisma.trichineFTP.findUnique).mockResolvedValue({
+      ...ftp,
+      statut_logistique: TrichineStatutLogistiqueFTP.BROUILLON,
+    } as never);
+
+    const response = await put(laboUser, 'ftp/ftp-1', 'LIMS-0087');
+
+    expect(response.status).toBe(404);
+  });
+
+  test('la référence est figée une fois les analyses du pool terminées', async () => {
+    travaillePour('labo-1', 'user-labo');
+    vi.mocked(prisma.trichinePool.findUnique).mockResolvedValue({
+      ...pool,
+      statut: TrichineStatutAnalyse.ANALYSES_TERMINEES,
+    } as never);
+
+    const response = await put(laboUser, 'pool/pool-1', 'LIMS-1');
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toMatch(/figée/);
+    expect(prisma.trichineAlias.create).not.toHaveBeenCalled();
+  });
+
+  test('la référence est figée une fois la FTP clôturée', async () => {
+    travaillePour('svi-1', 'user-svi');
+    vi.mocked(prisma.trichineFTP.findUnique).mockResolvedValue({
+      ...ftp,
+      statut_logistique: TrichineStatutLogistiqueFTP.TRAITEE,
+    } as never);
+
+    const response = await put(sviUser, 'ftp/ftp-1', 'A1');
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toMatch(/clôturée/);
+  });
+
+  test("une référence déjà donnée par l'entité à un autre pool est refusée", async () => {
+    travaillePour('labo-1', 'user-labo');
+    vi.mocked(prisma.trichineAlias.findUnique).mockResolvedValue({
+      echantillon_id: null,
+      pool_id: 'pool-2',
+      ftp_id: null,
+      TrichineEchantillon: null,
+      TrichinePool: { reference_pool: 'P-26-SVI01-0002' },
+      TrichineFTP: null,
+    } as never);
+
+    const response = await put(laboUser, 'pool/pool-1', 'LIMS-1');
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe(
+      'La référence « LIMS-1 » est déjà utilisée pour le pool P-26-SVI01-0002'
+    );
+  });
+
+  test('remplacer sa propre référence par la même valeur reste possible', async () => {
+    travaillePour('labo-1', 'user-labo');
+    vi.mocked(prisma.trichineAlias.findUnique).mockResolvedValue({
+      echantillon_id: null,
+      pool_id: 'pool-1',
+      ftp_id: null,
+    } as never);
+    vi.mocked(prisma.trichineAlias.findFirst).mockResolvedValue({ id: 'alias-1' } as never);
+    vi.mocked(prisma.trichineAlias.update).mockResolvedValue({ id: 'alias-1' } as never);
+
+    const response = await put(laboUser, 'pool/pool-1', 'LIMS-1');
+
+    expect(response.status).toBe(200);
+    expect(prisma.trichineAlias.update).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: 'alias-1' }, data: { reference: 'LIMS-1' } })
+    );
+  });
+
+  test('format invalide → 400', async () => {
+    travaillePour('svi-1', 'user-svi');
+
+    const response = await put(sviUser, 'pool/pool-1', 'réf;DROP');
+
+    expect(response.status).toBe(400);
+    expect(prisma.trichineAlias.create).not.toHaveBeenCalled();
+  });
+
+  test('un utilisateur ni SVI ni laboratoire ne peut pas poser de référence', async () => {
+    const response = await put(chasseur, 'pool/pool-1', 'A1');
+
+    expect(response.status).toBe(403);
+  });
+});
+
+describe('DELETE /trichine-alias/:objet/:id', () => {
+  test("retire la référence de l'entité de l'utilisateur", async () => {
+    travaillePour('labo-1', 'user-labo');
+
+    const response = await request(app)
+      .delete('/trichine-alias/pool/pool-1')
+      .set('x-test-user', JSON.stringify(laboUser));
+
+    expect(response.status).toBe(200);
+    expect(prisma.trichineAlias.deleteMany).toHaveBeenCalledWith({
+      where: { entity_id: 'labo-1', pool_id: 'pool-1' },
+    });
+  });
+});

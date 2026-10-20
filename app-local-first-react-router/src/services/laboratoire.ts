@@ -11,6 +11,7 @@ import type {
 } from '@prisma/client';
 import type { LaboResultsImportResponse, LaboResultsPreviewResponse } from '@api/src/types/responses';
 import API from '@app/services/api';
+import type { AvecAliases } from '@app/services/trichine-alias';
 
 /**
  * Appels API de l'espace laboratoire (LVD / LNR, cf doc/trichine.md §6.3-6.4).
@@ -54,20 +55,13 @@ export type LaboCarcasseProjection = {
   Fei: { commune_mise_a_mort: string | null };
 };
 
-export type LaboEchantillon = TrichineEchantillon & { Carcasse: LaboCarcasseProjection };
+export type LaboEchantillon = TrichineEchantillon & AvecAliases & { Carcasse: LaboCarcasseProjection };
 
-/**
- * La référence interne appartient au laboratoire qui l'a attribuée : elle est portée en base par
- * le lien pool ↔ FTP. Le backend retire celle des autres laboratoires et projette sur le pool
- * celle du laboratoire connecté.
- */
-export type LaboPoolFTPLien = Omit<TrichinePoolFTP, 'reference_labo'>;
-
-export type LaboPool = TrichinePool & {
-  reference_labo: string | null;
-  TrichineEchantillons: Array<LaboEchantillon>;
-  Documents: Array<TrichineDocument>;
-};
+export type LaboPool = TrichinePool &
+  AvecAliases & {
+    TrichineEchantillons: Array<LaboEchantillon>;
+    Documents: Array<TrichineDocument>;
+  };
 
 /**
  * Sens de la fiche pour le laboratoire connecté : reçue d'un détenteur, ou envoyée par lui
@@ -86,11 +80,12 @@ export type LaboDestinataire = {
 
 export type LaboFTPListItem = TrichineFTP &
   LaboExpediteur &
-  LaboDestinataire & {
+  LaboDestinataire &
+  AvecAliases & {
     direction: LaboFTPDirection;
     /** Carcasses de la fiche sur lesquelles le SVI n'a pas encore statué (pas d'IPM2) */
     carcasses_sans_ipm2: number;
-    TrichinePoolFTPs: Array<LaboPoolFTPLien & { TrichinePool: TrichinePool }>;
+    TrichinePoolFTPs: Array<TrichinePoolFTP & { TrichinePool: TrichinePool & AvecAliases }>;
   };
 
 /** Fiche liée : la fiche d'origine, ou la fiche de confirmation générée vers le LNR */
@@ -104,11 +99,12 @@ export type FtpConfirmationCreee = { id: string; numero_fiche: string };
 
 export type LaboFTPDetail = TrichineFTP &
   LaboExpediteur &
-  LaboDestinataire & {
+  LaboDestinataire &
+  AvecAliases & {
     // Le backend ne renvoie que les fiches liées auxquelles le laboratoire a accès
     FTPParent: LaboFTPLiee | null;
     FTPChildren: Array<LaboFTPConfirmation>;
-    TrichinePoolFTPs: Array<LaboPoolFTPLien & { TrichinePool: LaboPool }>;
+    TrichinePoolFTPs: Array<TrichinePoolFTP & { TrichinePool: LaboPool }>;
     Documents: Array<TrichineDocument>;
   };
 
@@ -285,12 +281,12 @@ export type LaboEchantillonRegistre = LaboEchantillon & {
   } | null;
 };
 
-export type LaboPoolRegistre = TrichinePool & {
-  reference_labo: string | null;
-  TrichineEchantillons: Array<LaboEchantillon>;
-  PoolParent: { reference_pool: string } | null;
-  TrichinePoolFTPs: Array<{ TrichineFTP: Pick<TrichineFTP, 'numero_fiche' | 'statut_logistique'> }>;
-};
+export type LaboPoolRegistre = TrichinePool &
+  AvecAliases & {
+    TrichineEchantillons: Array<LaboEchantillon>;
+    PoolParent: { reference_pool: string } | null;
+    TrichinePoolFTPs: Array<{ TrichineFTP: Pick<TrichineFTP, 'numero_fiche' | 'statut_logistique'> }>;
+  };
 
 export function getLaboEchantillons() {
   return API.get({ path: '/laboratoire/echantillons' }) as Promise<

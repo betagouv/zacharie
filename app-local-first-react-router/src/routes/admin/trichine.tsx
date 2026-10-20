@@ -468,7 +468,7 @@ function OngletPools() {
     else if (resultat) filtres = filtres.filter((pool) => pool.resultat_analyse === resultat);
     if (laboratoire) filtres = filtres.filter((pool) => pool.laboratoire === laboratoire);
     return filterTrichineRows(filtres, query, (pool) =>
-      [pool.reference_pool, pool.bracelets, pool.ftp_numero, pool.reference_labo].filter(Boolean).join(' ')
+      [pool.reference_pool, pool.bracelets, pool.ftp_numero, pool.aliases].filter(Boolean).join(' ')
     );
   }, [pools, query, resultat, laboratoire]);
 
