@@ -41,7 +41,8 @@ CREATE UNIQUE INDEX "TrichineAlias_entity_id_pool_id_key" ON "TrichineAlias"("en
 CREATE UNIQUE INDEX "TrichineAlias_entity_id_ftp_id_key" ON "TrichineAlias"("entity_id", "ftp_id");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "TrichineAlias_entity_id_objet_type_reference_key" ON "TrichineAlias"("entity_id", "objet_type", "reference");
+-- Une même référence ne sert qu'une fois par entité et type d'objet, casse ignorée
+CREATE UNIQUE INDEX "TrichineAlias_entity_id_objet_type_lower_reference_key" ON "TrichineAlias"("entity_id", "objet_type", lower("reference"));
 
 -- AddForeignKey
 ALTER TABLE "TrichineAlias" ADD CONSTRAINT "TrichineAlias_entity_id_fkey" FOREIGN KEY ("entity_id") REFERENCES "Entity"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -57,7 +58,8 @@ ALTER TABLE "TrichineAlias" ADD CONSTRAINT "TrichineAlias_ftp_id_fkey" FOREIGN K
 
 -- Reprise des n° internes de laboratoire : celui posé par le labo destinataire sur le lien
 -- pool ↔ FTP devient l'alias du pool pour ce labo. Un même labo lié deux fois au même pool
--- garde le plus récent ; une référence déjà prise par ce labo pour un autre pool est ignorée.
+-- garde le plus récent ; une référence déjà prise par ce labo pour un autre pool (casse ignorée)
+-- est ignorée.
 INSERT INTO "TrichineAlias" ("id", "reference", "objet_type", "entity_id", "pool_id", "created_at", "updated_at")
 SELECT gen_random_uuid()::text, "reference", 'POOL', "entity_id", "pool_id", "date_ajout", "date_ajout"
 FROM (

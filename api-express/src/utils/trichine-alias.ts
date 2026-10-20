@@ -103,7 +103,8 @@ const objetLabel = {
 } as const;
 
 /**
- * Refuse une référence que l'entité a déjà donnée à un autre objet du même type.
+ * Refuse une référence que l'entité a déjà donnée à un autre objet du même type, sans tenir
+ * compte de la casse (« lims-12 » et « LIMS-12 » sont la même référence).
  * Renvoie le message d'erreur, ou null si la référence est libre.
  */
 export async function aliasReferenceDejaPrise({
@@ -117,9 +118,14 @@ export async function aliasReferenceDejaPrise({
   objetId: string | null;
   reference: string;
 }): Promise<string | null> {
-  const existant = await prisma.trichineAlias.findUnique({
-    where: { entity_id_objet_type_reference: { entity_id: entityId, objet_type: objetType, reference } },
+  const existant = await prisma.trichineAlias.findFirst({
+    where: {
+      entity_id: entityId,
+      objet_type: objetType,
+      reference: { equals: reference, mode: 'insensitive' },
+    },
     select: {
+      reference: true,
       echantillon_id: true,
       pool_id: true,
       ftp_id: true,
@@ -133,7 +139,7 @@ export async function aliasReferenceDejaPrise({
     existant.TrichineEchantillon?.reference_echantillon ??
     existant.TrichinePool?.reference_pool ??
     existant.TrichineFTP?.numero_fiche;
-  return `La référence « ${reference} » est déjà utilisée pour ${objetLabel[objetType]} ${autre}`;
+  return `La référence « ${existant.reference} » est déjà utilisée pour ${objetLabel[objetType]} ${autre}`;
 }
 
 function objetFk(objetType: TrichineAliasObjet, objetId: string) {

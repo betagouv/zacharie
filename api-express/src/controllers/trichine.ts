@@ -142,7 +142,7 @@ async function preparerAliases(
   if (!references.length) return { kind: 'ok', entityId: null };
   const [entityId] = await aliasEntityIdsForUser(req.user);
   if (!entityId) return { kind: 'error', error: "Aucun service d'inspection associé à votre compte" };
-  if (new Set(references).size !== references.length) {
+  if (new Set(references.map((reference) => reference.toLowerCase())).size !== references.length) {
     return { kind: 'error', error: 'Une même référence interne est saisie deux fois' };
   }
   for (const reference of references) {

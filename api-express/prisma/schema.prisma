@@ -1475,8 +1475,9 @@ model TrichineAlias {
   @@unique([entity_id, echantillon_id])
   @@unique([entity_id, pool_id])
   @@unique([entity_id, ftp_id])
-  // Une entité ne réutilise pas une même référence pour deux objets du même type
-  @@unique([entity_id, objet_type, reference])
+  // Une entité ne réutilise pas une même référence (casse ignorée) pour deux objets du même type :
+  // index unique sur lower(reference), posé en SQL dans la migration 20261020100000_trichine_alias
+  // (Prisma ne sait pas déclarer un index sur expression). Ne pas le supprimer.
   @@index([echantillon_id])
   @@index([pool_id])
   @@index([ftp_id])
