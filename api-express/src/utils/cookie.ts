@@ -26,7 +26,7 @@ export function cookieOptions(req: Request, maxAgeInSeconds = JWT_MAX_AGE) {
   }
 
   if (IS_REVIEW_APP) {
-    // l'app (zacharie-pr-<n>.cleverapps.io) et l'API (zacharie-api-pr-<n>.cleverapps.io) sont deux sites :
+    // l'app (pr-<n>-zacharie.cleverapps.io) et l'API (pr-<n>-zacharie-api.cleverapps.io) sont deux sites :
     // cleverapps.io est un suffixe public, donc pas de cookie partagé, et SameSite=None pour le cross-site
     return {
       maxAge,

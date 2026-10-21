@@ -1,9 +1,9 @@
 name: Review app
 
 # Pour une PR dont la branche commence par `feature-branch`, déploie une copie de staging sur Clever Cloud :
-# - API : zacharie-api-pr-<n>.cleverapps.io (api-express/), avec sa propre base PostgreSQL remplie par
+# - API : pr-<n>-zacharie-api.cleverapps.io (api-express/), avec sa propre base PostgreSQL remplie par
 #   une copie de la base de staging (sans les tables de logs, cf api-express/scripts/copy-db-from-source.sh)
-# - App : zacharie-pr-<n>.cleverapps.io (app-local-first-react-router/)
+# - App : pr-<n>-zacharie.cleverapps.io (app-local-first-react-router/)
 # Les variables d'environnement sont copiées des apps de staging, puis REVIEW_APP=true (cf IS_REVIEW_APP).
 # Redéploie à chaque push, supprime les deux apps et la base à la fermeture de la PR.
 # Si la première création échoue à mi-chemin : fermer puis rouvrir la PR.
@@ -36,12 +36,12 @@ jobs:
       ORGA_ID: ${{ secrets.CLEVER_ORGA_ID }}
       STAGING_API_APP_ID: ${{ secrets.CLEVER_STAGING_API_APP_ID }}
       STAGING_APP_APP_ID: ${{ secrets.CLEVER_STAGING_APP_APP_ID }}
-      API_NAME: zacharie-api-pr-${{ github.event.pull_request.number }}
-      APP_NAME: zacharie-pr-${{ github.event.pull_request.number }}
-      DB_NAME: zacharie-db-pr-${{ github.event.pull_request.number }}
+      API_NAME: pr-${{ github.event.pull_request.number }}-zacharie-api
+      APP_NAME: pr-${{ github.event.pull_request.number }}-zacharie
+      DB_NAME: pr-${{ github.event.pull_request.number }}-zacharie-db
       # pas API_HOST / APP_HOST : clever-tools lit API_HOST comme l'URL de l'API Clever Cloud
-      REVIEW_API_HOST: zacharie-api-pr-${{ github.event.pull_request.number }}.cleverapps.io
-      REVIEW_APP_HOST: zacharie-pr-${{ github.event.pull_request.number }}.cleverapps.io
+      REVIEW_API_HOST: pr-${{ github.event.pull_request.number }}-zacharie-api.cleverapps.io
+      REVIEW_APP_HOST: pr-${{ github.event.pull_request.number }}-zacharie.cleverapps.io
       DB_PLAN: xxs_sml
     steps:
       - uses: actions/checkout@v4
