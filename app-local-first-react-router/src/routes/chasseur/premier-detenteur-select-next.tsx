@@ -36,6 +36,7 @@ import { getCarcasseTransmission } from '@app/utils/get-carcasses-transmission';
 import { createModal, type ModalProps } from '@app/components/Modal';
 import PartenaireNouveau from '@app/components/PartenaireNouveau';
 import CCGNouveau from '@app/components/CCGNouveau';
+import InputDestinataire from '@app/components/InputDestinataire';
 import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import { Badge } from '@codegouvfr/react-dsfr/Badge';
@@ -565,6 +566,8 @@ function CarcassesStep({
   );
 }
 
+const NB_DESTINATAIRES_AFFICHES = 3;
+
 // === Formulaire d'une vente / d'un don (contenu de la modale, en étapes) ===
 function DispatchGroupForm({
   group,
@@ -575,7 +578,7 @@ function DispatchGroupForm({
   steps,
   entities,
   prochainsDetenteursOptions,
-  canTransmitCarcassesToEntities,
+  destinatairesEnregistres,
   ccgsOptions,
   ccgsWorkingWith,
   allCarcassesRestantes,
@@ -598,7 +601,7 @@ function DispatchGroupForm({
   steps: string[];
   entities: Record<string, EntityWithUserRelation>;
   prochainsDetenteursOptions: Array<{ label: string | null; value: string }>;
-  canTransmitCarcassesToEntities: EntityWithUserRelation[];
+  destinatairesEnregistres: EntityWithUserRelation[];
   ccgsOptions: Array<{ label: string | null; value: string; isLink?: boolean }>;
   ccgsWorkingWith: EntityWithUserRelation[];
   allCarcassesRestantes: Carcasse[];
@@ -615,6 +618,35 @@ function DispatchGroupForm({
 }) {
   const usageDomestique = isUsageDomestique(group);
   const prochainDetenteur = group.recipientEntityId ? entities[group.recipientEntityId] : null;
+  const recipientInputId = `${Prisma.CarcasseScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache}_${group.id}`;
+
+  // Sans destinataire enregistré, on cherche directement. Sinon on propose d'abord les plus récents,
+  // la recherche restant accessible via « Envoyer à un autre destinataire ». Un destinataire déjà
+  // choisi hors de ces boutons (via la recherche) s'affiche dans la recherche.
+  const [showAllDestinataires, setShowAllDestinataires] = useState(
+    () =>
+      !!group.recipientEntityId &&
+      destinatairesEnregistres.findIndex((entity) => entity.id === group.recipientEntityId) >=
+        NB_DESTINATAIRES_AFFICHES
+  );
+  const [showSearch, setShowSearch] = useState(
+    () =>
+      destinatairesEnregistres.length === 0 ||
+      (!!group.recipientEntityId &&
+        !usageDomestique &&
+        !destinatairesEnregistres.some((entity) => entity.id === group.recipientEntityId))
+  );
+  // « Moi-même » est toujours proposé, après les destinataires enregistrés
+  const destinatairesAffiches = [
+    ...(showAllDestinataires
+      ? destinatairesEnregistres
+      : destinatairesEnregistres.slice(0, NB_DESTINATAIRES_AFFICHES)
+    ).map((entity) => ({ id: entity.id, label: getEntityDisplay(entity) })),
+    {
+      id: USAGE_DOMESTIQUE_ID,
+      label: prochainsDetenteursOptions.find((option) => option.value === USAGE_DOMESTIQUE_ID)?.label,
+    },
+  ];
 
   // Le raccourci de date affiche l'heure qu'il va renseigner, on la garde à jour tant que la modale est ouverte.
   const [now, setNow] = useState(() => dayjs().format('YYYY-MM-DDTHH:mm'));
@@ -650,68 +682,77 @@ function DispatchGroupForm({
             </div>
           ) : (
             <div>
-              <SelectCustom
-                label="Prochain détenteur des carcasses"
-                hint={
-                  <>
-                    <span>
-                      Indiquez ici la personne ou la structure avec qui vous êtes en contact pour prendre en
-                      charge le gibier.
-                    </span>
-                    {!group.recipientEntityId && canEdit && (
-                      <div>
-                        {canTransmitCarcassesToEntities.map((entity) => {
-                          return (
-                            <button
-                              key={entity.id}
-                              type="button"
-                              className="mr-1 mb-1 rounded-full bg-[#E8EDFF] px-3 py-1 text-left text-sm text-[#000091]"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                onChange({ recipientEntityId: entity.id });
-                              }}
-                            >
-                              {entity.nom_d_usage}
-                            </button>
-                          );
-                        })}
-                      </div>
+              {!canEdit ? (
+                <InputNotEditable
+                  label="Prochain détenteur des carcasses"
+                  nativeInputProps={{
+                    id: recipientInputId,
+                    value:
+                      prochainsDetenteursOptions.find((option) => option.value === group.recipientEntityId)
+                        ?.label ?? '',
+                  }}
+                />
+              ) : showSearch ? (
+                <InputDestinataire
+                  label="Prochain détenteur des carcasses"
+                  hintText="Indiquez ici la personne ou la structure avec qui vous êtes en contact pour prendre en charge le gibier."
+                  inputId={recipientInputId}
+                  options={prochainsDetenteursOptions}
+                  value={group.recipientEntityId}
+                  onSelect={(recipientEntityId) => onChange({ recipientEntityId })}
+                  onCreate={() => onCreatingPartenaireChange(true)}
+                />
+              ) : (
+                <fieldset className="fr-fieldset">
+                  <legend className="fr-fieldset__legend">
+                    Prochain détenteur des carcasses
+                    <span className="fr-hint-text">Choisissez parmi vos destinataires habituels.</span>
+                  </legend>
+                  <div className="flex w-full flex-col items-start gap-2 px-2">
+                    <ul className="fr-tags-group">
+                      {destinatairesAffiches.map((destinataire) => (
+                        <li key={destinataire.id}>
+                          <Tag
+                            pressed={group.recipientEntityId === destinataire.id}
+                            // pas de coche sur le tag sélectionné : la couleur suffit
+                            className="bg-none! pr-3! after:hidden!"
+                            nativeButtonProps={{
+                              onClick: () => onChange({ recipientEntityId: destinataire.id }),
+                            }}
+                          >
+                            {destinataire.label}
+                          </Tag>
+                        </li>
+                      ))}
+                    </ul>
+                    {destinatairesEnregistres.length > NB_DESTINATAIRES_AFFICHES && (
+                      <button
+                        type="button"
+                        className="fr-link fr-text--sm"
+                        onClick={() => setShowAllDestinataires((showAll) => !showAll)}
+                      >
+                        {showAllDestinataires
+                          ? 'Afficher moins'
+                          : `Afficher tout (${destinatairesEnregistres.length})`}
+                      </button>
                     )}
-                  </>
-                }
-                options={prochainsDetenteursOptions}
-                placeholder="Cliquez ici pour sélectionner un établissement déjà connu par Zacharie"
-                noOptionsMessage={() =>
-                  'Aucun résultat, ajoutez-le en cliquant sur le bouton sous le sélecteur'
-                }
-                value={
-                  prochainsDetenteursOptions.find((option) => option.value === group.recipientEntityId) ??
-                  null
-                }
-                getOptionLabel={(f) => f.label!}
-                getOptionValue={(f) => f.value}
-                onChange={(f) => onChange({ recipientEntityId: f ? f.value : null })}
-                isClearable={!!group.recipientEntityId}
-                inputId={`${Prisma.CarcasseScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache}_${group.id}`}
-                classNamePrefix={`select-prochain-detenteur-${group.id}`}
-                required
-                isReadOnly={!canEdit}
-                name={`${Prisma.CarcasseScalarFieldEnum.premier_detenteur_prochain_detenteur_id_cache}_${group.id}`}
-              />
+                    <Button
+                      type="button"
+                      priority="secondary"
+                      iconId="fr-icon-add-line"
+                      className="mt-2"
+                      onClick={() => {
+                        onChange({ recipientEntityId: null });
+                        setShowSearch(true);
+                      }}
+                    >
+                      Envoyer à un autre destinataire
+                    </Button>
+                  </div>
+                </fieldset>
+              )}
               {errorFor('recipientEntityId') && (
                 <p className="fr-error-text mt-1">{errorFor('recipientEntityId')}</p>
-              )}
-              {canEdit && (
-                <p className="fr-hint-text mt-2">
-                  Vous ne trouvez pas votre destinataire ?{' '}
-                  <button
-                    type="button"
-                    className="fr-link text-xs!"
-                    onClick={() => onCreatingPartenaireChange(true)}
-                  >
-                    Ajoutez-le en cliquant ici
-                  </button>
-                </p>
               )}
             </div>
           )}
@@ -1017,6 +1058,7 @@ export default function DestinataireSelectPremierDetenteur({
   const addLog = useZustandStore((state) => state.addLog);
   const feis = useZustandStore((state) => state.feis);
   const entities = useZustandStore((state) => state.entities);
+  const allStoreCarcasses = useZustandStore((state) => state.carcasses);
   const ccgsIds = useCcgIds();
   const etgsIds = useEtgIds();
   const collecteursProIds = useCollecteursProIds();
@@ -1071,11 +1113,20 @@ export default function DestinataireSelectPremierDetenteur({
     ];
   }, [etgs, collecteursPros, circuitCourt]);
 
-  const canTransmitCarcassesToEntities = useMemo(() => {
-    return prochainsDetenteurs.filter(
-      (entity) => entity.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY
-    );
-  }, [prochainsDetenteurs]);
+  // Destinataires enregistrés par le chasseur, du plus récemment utilisé au plus ancien
+  // (d'après les carcasses présentes localement), puis ceux jamais utilisés.
+  const destinatairesEnregistres = useMemo(() => {
+    const derniereUtilisation: Record<string, number> = {};
+    for (const carcasse of Object.values(allStoreCarcasses)) {
+      const destinataireId = carcasse.premier_detenteur_prochain_detenteur_id_cache;
+      if (!destinataireId || carcasse.deleted_at) continue;
+      const date = dayjs(carcasse.created_at).valueOf();
+      if (date > (derniereUtilisation[destinataireId] ?? 0)) derniereUtilisation[destinataireId] = date;
+    }
+    return prochainsDetenteurs
+      .filter((entity) => entity.relation === EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY)
+      .sort((a, b) => (derniereUtilisation[b.id] ?? 0) - (derniereUtilisation[a.id] ?? 0));
+  }, [prochainsDetenteurs, allStoreCarcasses]);
 
   const ccgsOptions = useMemo(() => {
     return [
@@ -1866,7 +1917,7 @@ export default function DestinataireSelectPremierDetenteur({
             steps={steps}
             entities={entities}
             prochainsDetenteursOptions={prochainsDetenteursOptions}
-            canTransmitCarcassesToEntities={canTransmitCarcassesToEntities}
+            destinatairesEnregistres={destinatairesEnregistres}
             ccgsOptions={ccgsOptions}
             ccgsWorkingWith={ccgsWorkingWith}
             allCarcassesRestantes={carcassesRestantes}
