@@ -1504,3 +1504,52 @@ model TrichineHistoriqueStatut {
   @@index([objet_type, objet_id])
   @@index([modifie_par_user_id])
 }
+
+// Statistiques Matomo importées chaque jour par le cron matomo-stats (cf doc/matomo.md), lues par Metabase.
+// `date` est un jour dans le fuseau du site Matomo (Europe/Paris).
+model MatomoVisitsDaily {
+  date             DateTime @id @db.Date
+  nb_visits        Int
+  nb_uniq_visitors Int?
+  nb_actions       Int
+  bounce_rate      Float // en pourcentage : 45 = 45 %
+  avg_time_on_site Int // en secondes
+  synced_at        DateTime @default(now())
+
+  @@map("matomo_visits_daily")
+}
+
+model MatomoPagesDaily {
+  date             DateTime @db.Date
+  url              String
+  label            String
+  nb_visits        Int
+  nb_hits          Int
+  avg_time_on_page Int // en secondes
+  synced_at        DateTime @default(now())
+
+  @@id([date, url])
+  @@map("matomo_pages_daily")
+}
+
+model MatomoEventsDaily {
+  date      DateTime @db.Date
+  category  String
+  action    String
+  nb_events Int
+  nb_visits Int
+  synced_at DateTime @default(now())
+
+  @@id([date, category, action])
+  @@map("matomo_events_daily")
+}
+
+model MatomoReferrersDaily {
+  date          DateTime @db.Date
+  referrer_type String
+  nb_visits     Int
+  synced_at     DateTime @default(now())
+
+  @@id([date, referrer_type])
+  @@map("matomo_referrers_daily")
+}

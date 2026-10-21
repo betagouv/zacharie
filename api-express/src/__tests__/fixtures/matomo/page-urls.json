@@ -1,0 +1,48 @@
+{
+  "2026-10-13": [
+    {
+      "label": "app/chasseur",
+      "nb_visits": 158,
+      "nb_hits": 402,
+      "sum_time_spent": 12060,
+      "nb_hits_with_time_generation": 0,
+      "entry_nb_visits": 120,
+      "exit_nb_visits": 44,
+      "avg_time_on_page": 30,
+      "bounce_rate": "4%",
+      "exit_rate": "28%",
+      "url": "https://zacharie.beta.gouv.fr/app/chasseur",
+      "segment": "pageUrl==https%253A%252F%252Fzacharie.beta.gouv.fr%252Fapp%252Fchasseur"
+    },
+    {
+      "label": "app/chasseur/fei/ZACH-20261013-ABCDE-101010",
+      "nb_visits": 3,
+      "nb_hits": 5,
+      "sum_time_spent": 400,
+      "avg_time_on_page": 80,
+      "bounce_rate": "0%",
+      "exit_rate": "33%",
+      "url": "https://zacharie.beta.gouv.fr/app/chasseur/fei/ZACH-20261013-ABCDE-101010"
+    },
+    {
+      "label": "app/chasseur/index",
+      "nb_visits": 2,
+      "nb_hits": 2,
+      "sum_time_spent": 100,
+      "avg_time_on_page": 50,
+      "bounce_rate": "0%",
+      "exit_rate": "0%",
+      "url": "https://zacharie.beta.gouv.fr/app/chasseur"
+    },
+    {
+      "label": "Autres",
+      "nb_visits": 4,
+      "nb_hits": 6,
+      "sum_time_spent": 60,
+      "avg_time_on_page": 10,
+      "bounce_rate": "0%",
+      "exit_rate": "0%"
+    }
+  ],
+  "2026-10-14": []
+}

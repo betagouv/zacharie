@@ -85,6 +85,12 @@ const GITHUB_REPO = 'betagouv/zacharie';
 // Clever Cloud expose le commit déployé dans COMMIT_ID : l'assistant lit le code réellement en production
 const SOURCE_COMMIT = process.env.COMMIT_ID ?? 'main';
 
+// API Reporting Matomo (instance mutualisée beta.gouv), lue par le cron matomo-stats (cf doc/matomo.md).
+// Token non posé : le cron n'est pas lancé.
+const MATOMO_URL = process.env.MATOMO_URL ?? 'https://stats.beta.gouv.fr';
+const MATOMO_TOKEN = process.env.MATOMO_TOKEN ?? '';
+const MATOMO_SITE_ID = process.env.MATOMO_SITE_ID ?? '';
+
 export {
   PORT,
   ENVIRONMENT,
@@ -123,4 +129,7 @@ export {
   GITHUB_TOKEN,
   GITHUB_REPO,
   SOURCE_COMMIT,
+  MATOMO_URL,
+  MATOMO_TOKEN,
+  MATOMO_SITE_ID,
 };

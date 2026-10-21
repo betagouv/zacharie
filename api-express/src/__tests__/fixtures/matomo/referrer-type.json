@@ -1,0 +1,26 @@
+{
+  "2026-10-13": [
+    {
+      "label": "Entrée directe",
+      "nb_uniq_visitors": 190,
+      "nb_visits": 301,
+      "nb_actions": 2650,
+      "segment": "referrerType==direct"
+    },
+    {
+      "label": "Moteurs de recherche",
+      "nb_uniq_visitors": 22,
+      "nb_visits": 27,
+      "nb_actions": 160,
+      "segment": "referrerType==search"
+    },
+    {
+      "label": "Sites web",
+      "nb_uniq_visitors": 11,
+      "nb_visits": 13,
+      "nb_actions": 64,
+      "segment": "referrerType==website"
+    }
+  ],
+  "2026-10-14": []
+}

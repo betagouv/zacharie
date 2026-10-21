@@ -93,6 +93,52 @@ Le rôle est porté par une dimension, **jamais par le nom de l'événement** : 
 
 Gardés tels quels pour ne pas couper leur historique : `landing / …`, `Quiz / …`, `QuizTv / view`, `registre-* / …`, `fiches-chasseur / …`, `header-recherche / …`, `export / …`, `onboarding / skip`, `error / 404`. Ils passent par `trackEvent` / `trackFeature`, pas par le catalogue.
 
+## Export vers Metabase
+
+Matomo est hébergé sur l'instance mutualisée `stats.beta.gouv.fr` : on n'a pas accès à sa base, seulement à l'API Reporting. Le cron `Import statistiques Matomo` (`api-express/src/cronjobs/matomo-stats.ts`) lit cette API et écrit dans notre Postgres, que Metabase lit déjà.
+
+| Table                    | Rapport Matomo                                     | Clé                          |
+| ------------------------ | -------------------------------------------------- | ---------------------------- |
+| `matomo_visits_daily`    | `VisitsSummary.get`                                | `date`                       |
+| `matomo_pages_daily`     | `Actions.getPageUrls` (aplati)                     | `date`, `url`                |
+| `matomo_events_daily`    | `Events.getCategory` × `eventAction` (sous-tables) | `date`, `category`, `action` |
+| `matomo_referrers_daily` | `Referrers.getReferrerType` (libellés en français) | `date`, `referrer_type`      |
+
+- `date` est un jour dans le fuseau du site Matomo (Europe/Paris). `synced_at` dit quand la ligne a été écrite pour la dernière fois.
+- `bounce_rate` est en pourcentage (`15` = 15 %), les durées sont en secondes.
+- Une page sans URL (la ligne « Autres » que Matomo crée quand un rapport est tronqué) est rangée sous son libellé.
+
+### Déclenchement
+
+Tous les jours à 6h15 (Europe/Paris), dans le process `npm run start-cronjobs`. Le cron réimporte J-7 → J-1, parce que Matomo peut consolider une journée tardivement. L'écriture est un upsert : relancer sur une période déjà importée réécrit les mêmes lignes. Le log donne le nombre de lignes écrites par table et la durée. Une erreur part dans Sentry.
+
+Sans `MATOMO_TOKEN`, le cron n'est pas lancé.
+
+### Variables d'environnement (app cronjobs)
+
+| Variable         | Valeur                                                              |
+| ---------------- | ------------------------------------------------------------------- |
+| `MATOMO_URL`     | `https://stats.beta.gouv.fr` (valeur par défaut)                    |
+| `MATOMO_TOKEN`   | token d'API d'un compte qui a l'accès `view` sur le site            |
+| `MATOMO_SITE_ID` | id du site Zacharie dans Matomo (le même que `VITE_MATOMO_SITE_ID`) |
+
+### Obtenir le token
+
+1. Avoir un compte sur `stats.beta.gouv.fr` avec au moins l'accès `view` sur le site Zacharie. Sinon, le demander à un administrateur du site dans Matomo.
+2. Dans Matomo : Administration → Personnel → Sécurité → **Tokens d'authentification** → « Créer un nouveau token ».
+3. Cocher « Uniquement les requêtes POST sécurisées » : le client envoie toujours le token en POST, dans le body.
+4. Poser la valeur dans `MATOMO_TOKEN` sur l'app cronjobs (Clever Cloud) et redémarrer.
+
+### Import de l'historique
+
+À lancer une fois après la mise en place, ou pour combler un trou. L'import se fait par tranches d'un mois et peut être relancé sans risque.
+
+```bash
+cd api-express
+MATOMO_TOKEN=... MATOMO_SITE_ID=... POSTGRESQL_ADDON_URI=postgres://... \
+  npm run matomo-backfill -- --from 2025-01-01 --to 2026-10-20
+```
+
 ## Limite connue
 
 Un événement déclenché hors ligne est perdu : le tracker Matomo n'a pas de file d'attente. Une file locale, vidée au retour du réseau, est prévue dans un second temps.
@@ -100,3 +146,4 @@ Un événement déclenché hors ligne est perdu : le tracker Matomo n'a pas de f
 ## Journal des changements
 
 - 2026-10 : création de la taxonomie, parcours de création de fiche chasseur, dimension Rôle.
+- 2026-10 : export quotidien des statistiques Matomo vers Postgres pour Metabase.
