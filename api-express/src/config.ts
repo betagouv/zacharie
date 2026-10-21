@@ -24,6 +24,9 @@ const METABASE_SECRET_KEY = process.env.METABASE_SECRET_KEY;
 
 const IS_DEV = process.env.NODE_ENV === 'development'; // local dev
 const IS_STAGING = process.env.NODE_ENV === 'production' && ENVIRONMENT === 'test'; // staging
+// review app d'une PR (.github/workflows/review-app.yml) : un staging servi sur *.cleverapps.io,
+// où l'app et l'API sont deux sites distincts
+const IS_REVIEW_APP = IS_STAGING && process.env.REVIEW_APP === 'true';
 const IS_PRODUCTION = process.env.NODE_ENV === 'production' && ENVIRONMENT === 'production';
 const IS_TEST = process.env.NODE_ENV === 'test'; // when e2e testing
 const IS_DEV_OR_TEST = IS_DEV || IS_TEST;
@@ -105,6 +108,7 @@ export {
   IS_DEV,
   IS_TEST,
   IS_STAGING,
+  IS_REVIEW_APP,
   IS_PRODUCTION,
   NATIVE_PUSH_DRY_RUN,
   VITE_APP_URL,

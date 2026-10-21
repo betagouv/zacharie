@@ -1,0 +1,168 @@
+name: Review app
+
+# Pour une PR dont la branche commence par `feature-branch`, déploie une copie de staging sur Clever Cloud :
+# - API : pr-<n>-zacharie-api.cleverapps.io (api-express/), avec sa propre base PostgreSQL remplie par
+#   une copie de la base de staging (sans les tables de logs, cf api-express/scripts/copy-db-from-source.sh)
+# - App : pr-<n>-zacharie.cleverapps.io (app-local-first-react-router/)
+# Les variables d'environnement sont copiées des apps de staging, puis REVIEW_APP=true (cf IS_REVIEW_APP).
+# Redéploie à chaque push, supprime les deux apps et la base à la fermeture de la PR.
+# Si la première création échoue à mi-chemin : fermer puis rouvrir la PR.
+#
+# Secrets : CLEVER_TOKEN, CLEVER_SECRET (dans ~/.config/clever-cloud/clever-tools.json), CLEVER_ORGA_ID,
+# CLEVER_STAGING_API_APP_ID, CLEVER_STAGING_APP_APP_ID (les `app_...` des apps de staging)
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, closed]
+
+concurrency:
+  group: review-app-${{ github.event.pull_request.number }}
+  # pas d'annulation : une création interrompue laisserait une review app incomplète
+  cancel-in-progress: false
+
+jobs:
+  review-app:
+    # les PR de forks n'ont pas accès aux secrets
+    if: startsWith(github.head_ref, 'feature-branch') && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      CLEVER_TOKEN: ${{ secrets.CLEVER_TOKEN }}
+      CLEVER_SECRET: ${{ secrets.CLEVER_SECRET }}
+      ORGA_ID: ${{ secrets.CLEVER_ORGA_ID }}
+      STAGING_API_APP_ID: ${{ secrets.CLEVER_STAGING_API_APP_ID }}
+      STAGING_APP_APP_ID: ${{ secrets.CLEVER_STAGING_APP_APP_ID }}
+      API_NAME: pr-${{ github.event.pull_request.number }}-zacharie-api
+      APP_NAME: pr-${{ github.event.pull_request.number }}-zacharie
+      DB_NAME: pr-${{ github.event.pull_request.number }}-zacharie-db
+      # pas API_HOST / APP_HOST : clever-tools lit API_HOST comme l'URL de l'API Clever Cloud
+      REVIEW_API_HOST: pr-${{ github.event.pull_request.number }}-zacharie-api.cleverapps.io
+      REVIEW_APP_HOST: pr-${{ github.event.pull_request.number }}-zacharie.cleverapps.io
+      DB_PLAN: xxs_sml
+    steps:
+      - uses: actions/checkout@v4
+        if: github.event.action != 'closed'
+        with:
+          # `clever deploy` pousse la branche courante : il faut la branche et tout son historique
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Check configuration
+        run: |
+          for name in CLEVER_TOKEN CLEVER_SECRET ORGA_ID STAGING_API_APP_ID STAGING_APP_APP_ID; do
+            [ -n "${!name}" ] || { echo "::error::$name est vide : voir les secrets et variables en tête du workflow"; exit 1; }
+          done
+
+      - name: Install clever-tools
+        # authentifié par CLEVER_TOKEN / CLEVER_SECRET
+        run: npm install -g clever-tools@5.1.1
+
+      - name: Delete review app
+        if: github.event.action == 'closed'
+        run: |
+          for name in "$API_NAME" "$APP_NAME"; do
+            if clever env --app "$name" --format json > /dev/null 2>&1; then
+              clever delete --app "$name" --yes
+            fi
+          done
+          clever addon delete "$DB_NAME" --org "$ORGA_ID" --yes || echo "Pas de base $DB_NAME à supprimer"
+
+      - name: Create review app
+        id: create
+        if: github.event.action != 'closed'
+        run: |
+          set -euo pipefail
+          if clever env --app "$API_NAME" --format json > /dev/null 2>&1; then
+            clever link "$API_NAME" --org "$ORGA_ID" --alias api
+            clever link "$APP_NAME" --org "$ORGA_ID" --alias app
+            echo "created=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          clever create --type node "$API_NAME" --alias api --org "$ORGA_ID" --region par
+          clever create --type node "$APP_NAME" --alias app --org "$ORGA_ID" --region par
+          clever domain add "$REVIEW_API_HOST" --alias api
+          clever domain add "$REVIEW_APP_HOST" --alias app
+
+          # instance de build de staging (le build de l'app dépasse la mémoire d'une XS)
+          for pair in "api:$STAGING_API_APP_ID" "app:$STAGING_APP_APP_ID"; do
+            build_flavor=$(clever status --app "${pair#*:}" --format json \
+              | jq -r 'if .separateBuild then .buildFlavor else "disabled" end')
+            clever scale --build-flavor "$build_flavor" --alias "${pair%%:*}"
+          done
+
+          # variables de staging (sans la base de staging), puis ce qui est propre à la review app
+          clever env --app "$STAGING_API_APP_ID" --format json \
+            | jq '[.env[] | select(.name | startswith("POSTGRESQL_ADDON_") | not)]' \
+            | clever env import --alias api --json
+          clever env --app "$STAGING_APP_APP_ID" --format json | jq '.env' | clever env import --alias app --json
+          for alias in api app; do
+            clever env set REVIEW_APP true --alias "$alias"
+            clever env set VITE_API_URL "https://$REVIEW_API_HOST" --alias "$alias"
+            clever env set VITE_APP_URL "https://$REVIEW_APP_HOST" --alias "$alias"
+          done
+          echo "created=true" >> "$GITHUB_OUTPUT"
+
+      - name: Create database with a copy of staging
+        if: steps.create.outputs.created == 'true'
+        run: |
+          set -euo pipefail
+          source_url=$(clever env --app "$STAGING_API_APP_ID" --format json \
+            | jq -r '[.fromAddons[].env[] | select(.name == "POSTGRESQL_ADDON_URI") | .value][0]')
+          echo "::add-mask::$source_url"
+
+          # client PostgreSQL et base de la même version majeure que staging : pg_dump refuse un serveur
+          # plus récent, et un dump d'un client plus récent ne se restaure pas toujours sur un serveur plus ancien
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          major=$(psql "$source_url" -At -c 'SHOW server_version_num' | awk '{ print int($1 / 10000) }')
+          sudo apt-get install -y "postgresql-client-$major"
+          export PATH="/usr/lib/postgresql/$major/bin:$PATH"
+
+          clever addon create postgresql-addon "$DB_NAME" --plan "$DB_PLAN" --addon-version "$major" \
+            --org "$ORGA_ID" --region par --link api --yes
+          target_url=$(clever env --alias api --format json \
+            | jq -r '[.fromAddons[].env[] | select(.name == "POSTGRESQL_ADDON_URI") | .value][0]')
+          echo "::add-mask::$target_url"
+
+          # la base est provisionnée en asynchrone
+          for i in $(seq 1 60); do
+            psql "$target_url" -c 'SELECT 1' > /dev/null 2>&1 && break
+            [ "$i" = 60 ] && { echo "Base $DB_NAME injoignable"; exit 1; }
+            sleep 10
+          done
+
+          api-express/scripts/copy-db-from-source.sh --yes --force-target "$source_url" "$target_url"
+
+      - name: Deploy
+        if: github.event.action != 'closed'
+        run: |
+          # l'API d'abord : elle applique les migrations de la branche au démarrage
+          clever deploy --alias api --force --same-commit-policy rebuild
+          clever deploy --alias app --force --same-commit-policy rebuild
+
+      - name: Comment PR
+        if: always()
+        run: |
+          marker='<!-- review-app -->'
+          if [ "${{ github.event.action }}" = closed ]; then
+            status="🗑️ Review app supprimée."
+          elif [ "${{ job.status }}" = success ]; then
+            status="🚀 Review app déployée (commit ${{ github.event.pull_request.head.sha }}) :
+          - App : https://$REVIEW_APP_HOST
+          - API : https://$REVIEW_API_HOST"
+          else
+            status="❌ Échec du déploiement de la review app : $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          fi
+          printf '%s\n%s\n' "$marker" "$status" > comment.md
+
+          comment_id=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" --paginate \
+            --jq ".[] | select(.body | startswith(\"$marker\")) | .id" | head -n1)
+          if [ -n "$comment_id" ]; then
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$comment_id" -F body=@comment.md > /dev/null
+          else
+            gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --body-file comment.md
+          fi

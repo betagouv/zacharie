@@ -1,5 +1,5 @@
 import type { Request } from 'express';
-import { IS_DEV_OR_TEST, IS_STAGING } from '~/config';
+import { IS_DEV_OR_TEST, IS_REVIEW_APP, IS_STAGING } from '~/config';
 
 export const JWT_MAX_AGE = 60 * 60 * 24 * 90; // 90 days in seconds
 // session ouverte par une app tierce via un access token (clé API) : volontairement courte
@@ -22,6 +22,17 @@ export function cookieOptions(req: Request, maxAgeInSeconds = JWT_MAX_AGE) {
       httpOnly: true,
       secure: isNative,
       sameSite: isNative ? ('none' as const) : ('lax' as const),
+    };
+  }
+
+  if (IS_REVIEW_APP) {
+    // l'app (pr-<n>-zacharie.cleverapps.io) et l'API (pr-<n>-zacharie-api.cleverapps.io) sont deux sites :
+    // cleverapps.io est un suffixe public, donc pas de cookie partagé, et SameSite=None pour le cross-site
+    return {
+      maxAge,
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none' as const,
     };
   }
 
@@ -52,6 +63,14 @@ export function logoutCookieOptions(req: Request) {
       httpOnly: true,
       secure: isNative,
       sameSite: isNative ? ('none' as const) : ('lax' as const),
+    };
+  }
+
+  if (IS_REVIEW_APP) {
+    return {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none' as const,
     };
   }
 
