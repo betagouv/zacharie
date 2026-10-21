@@ -36,6 +36,7 @@ Le rôle est porté par une dimension, **jamais par le nom de l'événement** : 
 
 - Tout en minuscules, kebab-case, sans accent (vérifié par `matomo.test.ts`).
 - **Jamais de donnée personnelle ni de saisie libre** : pas de nom, d'email, de numéro de fiche ou de bracelet, de texte de recherche.
+- **Jamais de jeton ni d'email dans une URL trackée.** `MatomoTracker.tsx` passe l'URL des pages vues dans `scrubString` (`utils/scrub-sensitive.ts`) : tout paramètre dont le nom contient `token`, `password`, `secret`, `key` ou `email` est envoyé sous la forme `[masqué]`. Les paramètres `reset-password-token`, `invitation-token` et `email` sont aussi à déclarer dans Matomo (Administration → Sites web → Gérer → « Paramètres d'URL à exclure »), qui les retire dès la collecte.
 - `bloquer` = l'utilisateur a tenté une action et a été arrêté par une validation. Le nom dit pourquoi (premier motif rencontré).
 
 ## Faire évoluer la taxonomie
@@ -107,6 +108,7 @@ Matomo est hébergé sur l'instance mutualisée `stats.beta.gouv.fr` : on n'a pa
 - `date` est un jour dans le fuseau du site Matomo (Europe/Paris). `synced_at` dit quand la ligne a été écrite pour la dernière fois.
 - `bounce_rate` est en pourcentage (`15` = 15 %), les durées sont en secondes.
 - Une page sans URL (la ligne « Autres » que Matomo crée quand un rapport est tronqué) est rangée sous son libellé.
+- Les URL et libellés de pages passent dans `scrubString` avant l'écriture : les jetons et emails déjà stockés dans Matomo (avant le masquage côté front) n'arrivent pas dans la base lue par Metabase. Les URL qui ne différaient que par un jeton sont fusionnées en une seule ligne.
 
 ### Déclenchement
 
@@ -147,3 +149,4 @@ Un événement déclenché hors ligne est perdu : le tracker Matomo n'a pas de f
 
 - 2026-10 : création de la taxonomie, parcours de création de fiche chasseur, dimension Rôle.
 - 2026-10 : export quotidien des statistiques Matomo vers Postgres pour Metabase.
+- 2026-10 : les jetons et emails en paramètre d'URL sont masqués avant l'envoi à Matomo.

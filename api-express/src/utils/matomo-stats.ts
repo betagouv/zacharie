@@ -5,6 +5,7 @@ import timezone from 'dayjs/plugin/timezone';
 import { z } from 'zod';
 import prisma from '~/prisma';
 import { MATOMO_SITE_ID } from '~/config';
+import { scrubString } from '~/utils/scrub-sensitive';
 import { matomoBulkRequest, type MatomoRequestParams } from '~/third-parties/matomo-reporting';
 
 dayjs.extend(utc);
@@ -132,18 +133,20 @@ export function parseVisits(payload: unknown): Array<MatomoVisitsRow> {
 
 // Plusieurs libellés aplatis peuvent pointer vers la même URL (ligne « Autres » comprise) :
 // on les fusionne pour respecter la clé (date, url).
+// Les jetons et emails passés en paramètre d'URL sont masqués avant d'arriver dans la base lue par Metabase.
 export function parsePages(payload: unknown): Array<MatomoPagesRow> {
   const rows = new Map<string, MatomoPagesRow>();
   for (const [date, pages] of Object.entries(pagesSchema.parse(payload))) {
     for (const page of pages) {
-      const url = page.url ?? page.label;
+      const pageLabel = scrubString(page.label);
+      const url = page.url ? scrubString(page.url) : pageLabel;
       const key = `${date}|${url}`;
       const existing = rows.get(key);
       if (!existing) {
         rows.set(key, {
           date,
           url,
-          label: page.label,
+          label: pageLabel,
           nb_visits: page.nb_visits,
           nb_hits: page.nb_hits,
           avg_time_on_page: page.avg_time_on_page,

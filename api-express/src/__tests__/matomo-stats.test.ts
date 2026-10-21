@@ -72,6 +72,28 @@ describe('parsePages', () => {
   it('prend le libellé comme clé quand Matomo ne donne pas d’URL', () => {
     expect(parsePages(pageUrls).at(-1)).toMatchObject({ url: 'Autres', label: 'Autres', nb_hits: 6 });
   });
+  it('masque les jetons et emails passés en paramètre d’URL, et fusionne les lignes ainsi rendues identiques', () => {
+    const invitation = (token: string, email: string) => ({
+      label: `app/connexion/invitation?invitation-token=${token}&email=${email}`,
+      url: `https://zacharie.beta.gouv.fr/app/connexion/invitation?invitation-token=${token}&email=${email}`,
+      nb_visits: 1,
+      nb_hits: 1,
+      avg_time_on_page: 20,
+    });
+    const rows = parsePages({
+      '2026-10-13': [invitation('abc123', 'jean%40example.fr'), invitation('def456', 'marie%40example.fr')],
+    });
+    expect(rows).toEqual([
+      {
+        date: '2026-10-13',
+        url: 'https://zacharie.beta.gouv.fr/app/connexion/invitation?invitation-token=[masqué]&email=[masqué]',
+        label: 'app/connexion/invitation?invitation-token=[masqué]&email=[masqué]',
+        nb_visits: 2,
+        nb_hits: 2,
+        avg_time_on_page: 20,
+      },
+    ]);
+  });
 });
 
 describe('parseEvents', () => {
