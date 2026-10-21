@@ -237,14 +237,6 @@ export interface AdminNewUserDataResponse {
   error: string;
 }
 
-export interface LogResponse {
-  ok: boolean;
-  data: {
-    log: Log | null;
-  };
-  error: string;
-}
-
 export interface CarcasseResponse {
   ok: boolean;
   data: {
