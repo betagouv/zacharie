@@ -22,11 +22,13 @@ import './middlewares/passport';
 import {
   ENVIRONMENT,
   IS_PRODUCTION,
+  IS_REVIEW_APP,
   IS_STAGING,
   PORT,
   PROCONNECT_MOCK_ENABLED,
   SENTRY_KEY,
   VERSION,
+  VITE_APP_URL,
 } from './config.ts';
 import { sendError } from './middlewares/errors.ts';
 import { capture, scrubSentryBreadcrumb, scrubSentryEvent } from './third-parties/sentry.ts';
@@ -111,6 +113,7 @@ if (IS_STAGING) {
         'https://zacharie.incubateur.net',
         /\.zacharie\.incubateur\.net$/,
         // 'http://127.0.0.1:3000', // Expo WebView local SPA server
+        ...(IS_REVIEW_APP ? [VITE_APP_URL] : []),
       ],
     })
   );
