@@ -88,6 +88,13 @@ jobs:
           clever domain add "$REVIEW_API_HOST" --alias api
           clever domain add "$REVIEW_APP_HOST" --alias app
 
+          # instance de build de staging (le build de l'app dépasse la mémoire d'une XS)
+          for pair in "api:$STAGING_API_APP_ID" "app:$STAGING_APP_APP_ID"; do
+            build_flavor=$(clever status --app "${pair#*:}" --format json \
+              | jq -r 'if .separateBuild then .buildFlavor else "disabled" end')
+            clever scale --build-flavor "$build_flavor" --alias "${pair%%:*}"
+          done
+
           # variables de staging (sans la base de staging), puis ce qui est propre à la review app
           clever env --app "$STAGING_API_APP_ID" --format json \
             | jq '[.env[] | select(.name | startswith("POSTGRESQL_ADDON_") | not)]' \
