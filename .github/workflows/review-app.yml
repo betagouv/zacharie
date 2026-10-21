@@ -8,8 +8,8 @@ name: Review app
 # Redéploie à chaque push, supprime les deux apps et la base à la fermeture de la PR.
 # Si la première création échoue à mi-chemin : fermer puis rouvrir la PR.
 #
-# Secrets : CLEVER_TOKEN, CLEVER_SECRET (dans ~/.config/clever-cloud/clever-tools.json), CLEVER_ORGA_ID
-# Variables : CLEVER_STAGING_API_APP_ID, CLEVER_STAGING_APP_APP_ID (les `app_...` des apps de staging)
+# Secrets : CLEVER_TOKEN, CLEVER_SECRET (dans ~/.config/clever-cloud/clever-tools.json), CLEVER_ORGA_ID,
+# CLEVER_STAGING_API_APP_ID, CLEVER_STAGING_APP_APP_ID (les `app_...` des apps de staging)
 
 on:
   pull_request:
@@ -34,8 +34,8 @@ jobs:
       CLEVER_TOKEN: ${{ secrets.CLEVER_TOKEN }}
       CLEVER_SECRET: ${{ secrets.CLEVER_SECRET }}
       ORGA_ID: ${{ secrets.CLEVER_ORGA_ID }}
-      STAGING_API_APP_ID: ${{ vars.CLEVER_STAGING_API_APP_ID }}
-      STAGING_APP_APP_ID: ${{ vars.CLEVER_STAGING_APP_APP_ID }}
+      STAGING_API_APP_ID: ${{ secrets.CLEVER_STAGING_API_APP_ID }}
+      STAGING_APP_APP_ID: ${{ secrets.CLEVER_STAGING_APP_APP_ID }}
       API_NAME: zacharie-api-pr-${{ github.event.pull_request.number }}
       APP_NAME: zacharie-pr-${{ github.event.pull_request.number }}
       DB_NAME: zacharie-db-pr-${{ github.event.pull_request.number }}
