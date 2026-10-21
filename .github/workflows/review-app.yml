@@ -39,8 +39,9 @@ jobs:
       API_NAME: zacharie-api-pr-${{ github.event.pull_request.number }}
       APP_NAME: zacharie-pr-${{ github.event.pull_request.number }}
       DB_NAME: zacharie-db-pr-${{ github.event.pull_request.number }}
-      API_HOST: zacharie-api-pr-${{ github.event.pull_request.number }}.cleverapps.io
-      APP_HOST: zacharie-pr-${{ github.event.pull_request.number }}.cleverapps.io
+      # pas API_HOST / APP_HOST : clever-tools lit API_HOST comme l'URL de l'API Clever Cloud
+      REVIEW_API_HOST: zacharie-api-pr-${{ github.event.pull_request.number }}.cleverapps.io
+      REVIEW_APP_HOST: zacharie-pr-${{ github.event.pull_request.number }}.cleverapps.io
       DB_PLAN: xxs_sml
     steps:
       - uses: actions/checkout@v4
@@ -49,6 +50,12 @@ jobs:
           # `clever deploy` pousse la branche courante : il faut la branche et tout son historique
           ref: ${{ github.head_ref }}
           fetch-depth: 0
+
+      - name: Check configuration
+        run: |
+          for name in CLEVER_TOKEN CLEVER_SECRET ORGA_ID STAGING_API_APP_ID STAGING_APP_APP_ID; do
+            [ -n "${!name}" ] || { echo "::error::$name est vide : voir les secrets et variables en tête du workflow"; exit 1; }
+          done
 
       - name: Install clever-tools
         # authentifié par CLEVER_TOKEN / CLEVER_SECRET
@@ -78,8 +85,8 @@ jobs:
 
           clever create --type node "$API_NAME" --alias api --org "$ORGA_ID" --region par
           clever create --type node "$APP_NAME" --alias app --org "$ORGA_ID" --region par
-          clever domain add "$API_HOST" --alias api
-          clever domain add "$APP_HOST" --alias app
+          clever domain add "$REVIEW_API_HOST" --alias api
+          clever domain add "$REVIEW_APP_HOST" --alias app
 
           # variables de staging (sans la base de staging), puis ce qui est propre à la review app
           clever env --app "$STAGING_API_APP_ID" --format json \
@@ -88,8 +95,8 @@ jobs:
           clever env --app "$STAGING_APP_APP_ID" --format json | jq '.env' | clever env import --alias app --json
           for alias in api app; do
             clever env set REVIEW_APP true --alias "$alias"
-            clever env set VITE_API_URL "https://$API_HOST" --alias "$alias"
-            clever env set VITE_APP_URL "https://$APP_HOST" --alias "$alias"
+            clever env set VITE_API_URL "https://$REVIEW_API_HOST" --alias "$alias"
+            clever env set VITE_APP_URL "https://$REVIEW_APP_HOST" --alias "$alias"
           done
           echo "created=true" >> "$GITHUB_OUTPUT"
 
@@ -138,8 +145,8 @@ jobs:
             status="🗑️ Review app supprimée."
           elif [ "${{ job.status }}" = success ]; then
             status="🚀 Review app déployée (commit ${{ github.event.pull_request.head.sha }}) :
-          - App : https://$APP_HOST
-          - API : https://$API_HOST"
+          - App : https://$REVIEW_APP_HOST
+          - API : https://$REVIEW_API_HOST"
           else
             status="❌ Échec du déploiement de la review app : $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
           fi
