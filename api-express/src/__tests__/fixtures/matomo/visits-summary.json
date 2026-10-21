@@ -1,0 +1,16 @@
+{
+  "2026-10-13": {
+    "nb_uniq_visitors": 212,
+    "nb_users": 180,
+    "nb_visits": 341,
+    "nb_actions": 2874,
+    "nb_visits_converted": 0,
+    "bounce_count": 52,
+    "sum_visit_length": 214560,
+    "max_actions": 96,
+    "bounce_rate": "15%",
+    "nb_actions_per_visit": 8.4,
+    "avg_time_on_site": 629
+  },
+  "2026-10-14": []
+}
