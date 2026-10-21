@@ -41,6 +41,7 @@ import feiCarcasseRouter from './controllers/carcasse.ts';
 import sviRouter from './controllers/svi.ts';
 import certificatsRouter from './controllers/certificats.ts';
 import syncRouter from './controllers/sync.ts';
+import assistantFicheRouter from './controllers/assistant-fiche.ts';
 import webhooksRouter from './controllers/webhooks.ts';
 import utilsRouter from './controllers/utils.ts';
 import statsRouter from './controllers/stats.ts';
@@ -265,6 +266,7 @@ app.use('/trichine', requireTrichineFeature, passport.initialize(), trichineRout
 app.use('/laboratoire', requireTrichineFeature, passport.initialize(), laboratoireRouter);
 app.use('/certificat', passport.initialize(), certificatsRouter);
 app.use('/sync', passport.initialize(), syncRouter);
+app.use('/assistant-fiche', passport.initialize(), assistantFicheRouter);
 app.use('/webhooks', passport.initialize(), webhooksRouter);
 app.use('/stats', passport.initialize(), statsRouter);
 app.use('/api-key-approval', passport.initialize(), apiKeyApprovalRouter);

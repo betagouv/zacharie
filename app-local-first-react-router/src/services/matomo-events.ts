@@ -73,6 +73,12 @@ export const MATOMO_EVENTS = {
   partenaire: {
     creer: [],
   },
+  // easter egg « zacharie » sur la fiche : assistant de saisie par chat
+  'assistant-zacharie': {
+    ouvrir: [],
+    'envoyer-message': [],
+    dicter: [],
+  },
   laboratoire: {
     // value = nombre de lignes exportées (cochées, sinon affichées)
     exporter: ['pools-csv', 'pools-json', 'echantillons-csv', 'echantillons-json', 'ftps-csv', 'ftps-json'],

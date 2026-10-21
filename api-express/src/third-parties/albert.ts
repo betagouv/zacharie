@@ -1,4 +1,4 @@
-import { ALBERT_API_KEY, ALBERT_API_URL, ALBERT_MODEL } from '~/config';
+import { ALBERT_API_KEY, ALBERT_API_URL, ALBERT_MODEL, ALBERT_TRANSCRIPTION_MODEL } from '~/config';
 import type { AlbertAssistantMessage, AlbertMessage, AlbertToolCall } from '~/types/bug-investigation';
 import { capture } from './sentry';
 
@@ -163,4 +163,31 @@ export async function albertChatCompletion({
       clearTimeout(hardTimer);
     }
   }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Dictée de l'assistant de saisie de la fiche                                */
+/* -------------------------------------------------------------------------- */
+
+const TRANSCRIPTION_TIMEOUT_MS = 60_000;
+
+// Albert expose /audio/transcriptions au format OpenAI (multipart, champ `file`)
+export async function transcribeAudio(audio: Buffer, mimeType: string): Promise<string> {
+  if (!ALBERT_API_KEY) throw new Error('ALBERT_API_KEY manquante');
+  const extension = mimeType.includes('mp4') ? 'mp4' : mimeType.includes('ogg') ? 'ogg' : 'webm';
+  const form = new FormData();
+  form.append('file', new Blob([new Uint8Array(audio)], { type: mimeType }), `dictee.${extension}`);
+  form.append('model', ALBERT_TRANSCRIPTION_MODEL);
+  form.append('language', 'fr');
+  const response = await fetch(`${ALBERT_API_URL}/audio/transcriptions`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${ALBERT_API_KEY}` },
+    body: form,
+    signal: AbortSignal.timeout(TRANSCRIPTION_TIMEOUT_MS),
+  });
+  if (!response.ok) {
+    throw new Error(`Albert transcription ${response.status} : ${(await response.text()).slice(0, 500)}`);
+  }
+  const data = (await response.json()) as { text?: string };
+  return (data.text ?? '').trim();
 }
