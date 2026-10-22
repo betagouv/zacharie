@@ -35,12 +35,20 @@ export default function CollecteurProfilNotifications() {
       return nativePushEnabled;
     }
     return (
+      user.notifications.includes(UserNotifications.PUSH) &&
       canSendPush &&
       isSubscribed &&
       !!pushSubscription &&
       !!user?.web_push_tokens?.find((token) => JSON.parse(token)?.endpoint === pushSubscription?.endpoint)
     );
-  }, [nativePushEnabled, canSendPush, isSubscribed, pushSubscription, user.web_push_tokens]);
+  }, [
+    nativePushEnabled,
+    canSendPush,
+    isSubscribed,
+    pushSubscription,
+    user.web_push_tokens,
+    user.notifications,
+  ]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
