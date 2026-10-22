@@ -273,14 +273,14 @@ pg_dump \
   "$SOURCE_URL"
 echo "       dump size: $(du -h "$DUMP_FILE" | cut -f1)"
 
-echo "[2/4] Filtering unused extensions (postgis, pgvector) from TOC ..."
+echo "[2/4] Filtering extensions from TOC ..."
 # Exclude :
-#  - CREATE EXTENSION entries for postgis* and vector
-#  - COMMENT ON EXTENSION entries for the same
+#  - CREATE EXTENSION / COMMENT ON EXTENSION entries: Zacharie uses no extension, and Clever Cloud
+#    installs many by default (postgis, pg_stat_statements, dblink...) that only a superuser can create
 #  - TABLE DATA entries for tables provided by these extensions (e.g. spatial_ref_sys)
 pg_restore --list "$DUMP_FILE" \
-  | grep -v -E 'EXTENSION - (postgis|postgis_raster|postgis_tiger_geocoder|postgis_topology|vector)( |$)' \
-  | grep -v -E 'COMMENT - EXTENSION (postgis|postgis_raster|postgis_tiger_geocoder|postgis_topology|vector)( |$)' \
+  | grep -v -E ' EXTENSION - ' \
+  | grep -v -E ' COMMENT - EXTENSION ' \
   | grep -v -E 'TABLE DATA public (spatial_ref_sys|geometry_columns|geography_columns|raster_columns|raster_overviews)( |$)' \
   > "$TOC_FILE"
 

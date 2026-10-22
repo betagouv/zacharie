@@ -335,6 +335,22 @@ describe('POST /sync — logs', () => {
     expect(res.body.data.syncedLogIds).toEqual(['L-OWN']);
     expect(capture).toHaveBeenCalled();
   });
+
+  test('never overwrites an existing log: insert only, duplicates skipped', async () => {
+    vi.mocked(prisma.log.createMany).mockResolvedValue({ count: 0 } as any);
+
+    const res = await authed(
+      request(app)
+        .post('/sync')
+        .send({
+          logs: [{ id: 'L-EXISTING', user_id: 'user-cfei', user_role: UserRoles.CHASSEUR, action: 'CREATE' }],
+        })
+    );
+
+    expect(res.status).toBe(200);
+    const args = vi.mocked(prisma.log.createMany).mock.calls[0][0] as { skipDuplicates?: boolean };
+    expect(args.skipDuplicates).toBe(true);
+  });
 });
 
 describe('POST /sync — response shape', () => {

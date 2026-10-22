@@ -122,8 +122,8 @@ export type ApplyPoolResultBody = z.infer<typeof resultatSchema>;
 
 /**
  * D'où vient le résultat. Saisi à la main, une référence labo refusée (format, déjà prise) bloque
- * la saisie : le laboratoire la corrige. Lu dans un import LIMS ou un rapport reçu par email, la
- * référence est facultative et ne doit jamais faire perdre le résultat : elle est alors ignorée.
+ * la saisie : le laboratoire la corrige. Lu dans un import LIMS, la référence est facultative et ne
+ * doit jamais faire perdre le résultat : elle est alors ignorée.
  */
 export type ApplyPoolResultOrigine = 'saisie' | 'automatique';
 

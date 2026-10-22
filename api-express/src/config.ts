@@ -24,6 +24,9 @@ const METABASE_SECRET_KEY = process.env.METABASE_SECRET_KEY;
 
 const IS_DEV = process.env.NODE_ENV === 'development'; // local dev
 const IS_STAGING = process.env.NODE_ENV === 'production' && ENVIRONMENT === 'test'; // staging
+// review app d'une PR (.github/workflows/review-app.yml) : un staging servi sur *.cleverapps.io,
+// où l'app et l'API sont deux sites distincts
+const IS_REVIEW_APP = IS_STAGING && process.env.REVIEW_APP === 'true';
 const IS_PRODUCTION = process.env.NODE_ENV === 'production' && ENVIRONMENT === 'production';
 const IS_TEST = process.env.NODE_ENV === 'test'; // when e2e testing
 const IS_DEV_OR_TEST = IS_DEV || IS_TEST;
@@ -64,10 +67,6 @@ const NATIVE_PUSH_DRY_RUN = true;
 // tant qu'elle n'est pas posée, les garde-fous sangliers restent inactifs.
 const TRICHINE_FEATURE_ENABLED = process.env.VITE_FEATURE_TRICHINE === 'true';
 
-// Adresse de dépôt des rapports COFRAC par les laboratoires (imprimée sur la FTP).
-// Non posée = la consigne n'apparaît pas sur le document.
-const TRICHINE_RESULTATS_EMAIL = process.env.TRICHINE_RESULTATS_EMAIL ?? '';
-
 // Object storage Cellar (Clever Cloud, compatible S3) — cf doc/trichine.md §12.2.
 // Les trois premières variables sont posées par l'add-on, le bucket est choisi par nous.
 // Non configuré (dev / test) : les documents sont régénérés à la volée, rien n'est stocké.
@@ -83,15 +82,17 @@ const ALBERT_API_KEY = process.env.ALBERT_API_KEY ?? '';
 // modèle d'enquête (raisonnement + outils, texte seul) et modèle de vision qui décrit les captures d'écran
 const ALBERT_MODEL = process.env.ALBERT_MODEL ?? 'openai/gpt-oss-120b';
 const ALBERT_VISION_MODEL = process.env.ALBERT_VISION_MODEL ?? 'google/gemma-4-31B-it';
-// OCR des rapports d'analyses trichine scannés (cf GET /v1/models, type `image-text-to-text`).
-// lightonocr est un modèle dédié à l'OCR de documents : rapide et fidèle aux tableaux.
-// Clé non posée : les rapports sans texte restent non lus, le résultat est saisi à la main.
-const ALBERT_OCR_MODEL = process.env.ALBERT_OCR_MODEL ?? 'lightonocr-2-1b';
 const ALBERT_READONLY_DATABASE_URL = process.env.ALBERT_READONLY_DATABASE_URL ?? '';
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN ?? '';
 const GITHUB_REPO = 'betagouv/zacharie';
 // Clever Cloud expose le commit déployé dans COMMIT_ID : l'assistant lit le code réellement en production
 const SOURCE_COMMIT = process.env.COMMIT_ID ?? 'main';
+
+// API Reporting Matomo (instance mutualisée beta.gouv), lue par le cron matomo-stats (cf doc/matomo.md).
+// Token non posé : le cron n'est pas lancé.
+const MATOMO_URL = process.env.MATOMO_URL ?? 'https://stats.beta.gouv.fr';
+const MATOMO_TOKEN = process.env.MATOMO_TOKEN ?? '';
+const MATOMO_SITE_ID = process.env.MATOMO_SITE_ID ?? '';
 
 export {
   PORT,
@@ -107,6 +108,7 @@ export {
   IS_DEV,
   IS_TEST,
   IS_STAGING,
+  IS_REVIEW_APP,
   IS_PRODUCTION,
   NATIVE_PUSH_DRY_RUN,
   VITE_APP_URL,
@@ -119,7 +121,6 @@ export {
   PROCONNECT_CLIENT_SECRET,
   PROCONNECT_REDIRECT_URI,
   TRICHINE_FEATURE_ENABLED,
-  TRICHINE_RESULTATS_EMAIL,
   CELLAR_HOST,
   CELLAR_KEY_ID,
   CELLAR_KEY_SECRET,
@@ -128,9 +129,11 @@ export {
   ALBERT_API_KEY,
   ALBERT_MODEL,
   ALBERT_VISION_MODEL,
-  ALBERT_OCR_MODEL,
   ALBERT_READONLY_DATABASE_URL,
   GITHUB_TOKEN,
   GITHUB_REPO,
   SOURCE_COMMIT,
+  MATOMO_URL,
+  MATOMO_TOKEN,
+  MATOMO_SITE_ID,
 };

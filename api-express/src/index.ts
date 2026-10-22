@@ -22,11 +22,13 @@ import './middlewares/passport';
 import {
   ENVIRONMENT,
   IS_PRODUCTION,
+  IS_REVIEW_APP,
   IS_STAGING,
   PORT,
   PROCONNECT_MOCK_ENABLED,
   SENTRY_KEY,
   VERSION,
+  VITE_APP_URL,
 } from './config.ts';
 import { sendError } from './middlewares/errors.ts';
 import { capture, scrubSentryBreadcrumb, scrubSentryEvent } from './third-parties/sentry.ts';
@@ -38,7 +40,6 @@ import entiteRouter from './controllers/entite.ts';
 import feiCarcasseRouter from './controllers/carcasse.ts';
 import sviRouter from './controllers/svi.ts';
 import certificatsRouter from './controllers/certificats.ts';
-import logRouter from './controllers/log.ts';
 import syncRouter from './controllers/sync.ts';
 import webhooksRouter from './controllers/webhooks.ts';
 import utilsRouter from './controllers/utils.ts';
@@ -112,6 +113,7 @@ if (IS_STAGING) {
         'https://zacharie.incubateur.net',
         /\.zacharie\.incubateur\.net$/,
         // 'http://127.0.0.1:3000', // Expo WebView local SPA server
+        ...(IS_REVIEW_APP ? [VITE_APP_URL] : []),
       ],
     })
   );
@@ -264,7 +266,6 @@ app.use('/trichine', requireTrichineFeature, passport.initialize(), trichineRout
 app.use('/laboratoire', requireTrichineFeature, passport.initialize(), laboratoireRouter);
 app.use('/trichine-alias', requireTrichineFeature, passport.initialize(), trichineAliasRouter);
 app.use('/certificat', passport.initialize(), certificatsRouter);
-app.use('/log', passport.initialize(), logRouter);
 app.use('/sync', passport.initialize(), syncRouter);
 app.use('/webhooks', passport.initialize(), webhooksRouter);
 app.use('/stats', passport.initialize(), statsRouter);

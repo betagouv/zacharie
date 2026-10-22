@@ -18,6 +18,7 @@
     "prisma-reset-db": "rm -rf prisma/migrations && npx prisma migrate reset --force && npm run prisma-setup",
     "prisma-reset-db-temp": "NODE_ENV=development POSTGRESQL_ADDON_URI=postgresql://postgres@localhost/zacharie-temp npx prisma migrate reset --force",
     "fill-ccg-db": "tsx ./scripts/fill-ccg-db.ts",
+    "matomo-backfill": "tsx ./scripts/matomo-backfill.ts",
     "seed-villettes-actors": "tsx ./scripts/seed-villette/seed-villettes-actors.ts",
     "seed-villettes": "tsx ./scripts/seed-villette/seed-villettes-preprod.ts",
     "cleanup-villettes": "tsx ./scripts/seed-villette/cleanup-villettes-preprod.ts",
@@ -57,7 +58,6 @@
     "jszip": "^3.10.1",
     "libphonenumber-js": "^1.12.8",
     "morgan": "^1.12.1",
-    "mupdf": "^1.28.0",
     "openid-client": "^6.8.7",
     "p-queue": "^8.1.0",
     "passport": "^0.7.0",
@@ -71,7 +71,6 @@
     "slugify": "^1.6.6",
     "swagger-ui-express": "^5.0.1",
     "tsx": "^4.7.0",
-    "unpdf": "^1.7.0",
     "web-push": "^3.6.7",
     "xss": "^1.0.15",
     "zod": "^3.25.76"

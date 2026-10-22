@@ -1,22 +1,17 @@
 import express from 'express';
-import z from 'zod';
 import { catchErrors } from '~/middlewares/errors';
 import prisma from '~/prisma';
 import type {
-  AdminEmailEntrantResponse,
-  AdminEmailsEntrantsResponse,
   AdminTrichineDocumentsResponse,
   AdminTrichineEchantillonsResponse,
   AdminTrichineFtpsResponse,
   AdminTrichinePoolsResponse,
 } from '~/types/responses';
-import { EmailEntrantStatut } from '~/utils/trichine-inbound-email';
-import { analyserEmailEntrant } from '~/utils/trichine-inbound-ocr';
 
 const router: express.Router = express.Router();
 
 /**
- * Vue d'ensemble trichine pour l'admin : emails entrants, documents, pools, FTP, échantillons.
+ * Vue d'ensemble trichine pour l'admin : documents, pools, FTP, échantillons.
  *
  * Chaque section a sa route et renvoie des lignes **plates** : le tri et les filtres se font
  * côté client sur les colonnes affichées, comme les listes trichine métier. Les listes sont
@@ -32,79 +27,11 @@ function limite(req: express.Request): number {
   return Math.min(Math.max(demande, 1), LIMITE_MAX);
 }
 
-/**
- * Journal des emails reçus sur les adresses de dépôt (cf utils/trichine-inbound-email.ts).
- * Tout message y figure, y compris ceux qu'on a écartés : c'est de là qu'on diagnostique
- * un rapport qui « n'est jamais arrivé », et qu'on voit qui écrit à ces adresses.
- */
-router.get(
-  '/trichine/emails-entrants',
-  catchErrors(async (req: express.Request, res: express.Response<AdminEmailsEntrantsResponse>) => {
-    const [emails, total] = await Promise.all([
-      prisma.emailEntrant.findMany({ orderBy: { recu_at: 'desc' }, take: limite(req) }),
-      prisma.emailEntrant.count(),
-    ]);
-
-    res.status(200).send({ ok: true, data: { emails, total }, error: '' });
-  })
-);
-
-/**
- * Relance l'analyse d'un message : OCR des pièces jointes encore illisibles, rattachement et
- * lecture du résultat. Synchrone — l'OCR prend quelques secondes et l'admin attend sa réponse.
- */
-router.post(
-  '/trichine/emails-entrants/:id/analyser',
-  catchErrors(async (req: express.Request, res: express.Response<AdminEmailEntrantResponse>) => {
-    const emailEntrant = await prisma.emailEntrant.findUnique({ where: { id: req.params.id } });
-    if (!emailEntrant) {
-      res.status(404).send({ ok: false, data: null, error: 'Message introuvable' });
-      return;
-    }
-
-    const ocr = await analyserEmailEntrant(emailEntrant);
-    const email = await prisma.emailEntrant.findUnique({ where: { id: emailEntrant.id } });
-
-    res.status(200).send({ ok: true, data: { email, ocr }, error: '' });
-  })
-);
-
-const statutSchema = z.object({
-  statut: z.enum(Object.values(EmailEntrantStatut) as [string, ...string[]]),
-});
-
-// Repasser un message à A_ANALYSER est la façon de rejouer une analyse après une panne d'OCR
-router.put(
-  '/trichine/emails-entrants/:id/statut',
-  catchErrors(async (req: express.Request, res: express.Response<AdminEmailEntrantResponse>) => {
-    const body = statutSchema.safeParse(req.body);
-    if (!body.success) {
-      res.status(400).send({ ok: false, data: null, error: 'Statut invalide' });
-      return;
-    }
-    const existing = await prisma.emailEntrant.findUnique({ where: { id: req.params.id } });
-    if (!existing) {
-      res.status(404).send({ ok: false, data: null, error: 'Message introuvable' });
-      return;
-    }
-
-    const email = await prisma.emailEntrant.update({
-      where: { id: existing.id },
-      data: { statut: body.data.statut },
-    });
-
-    res.status(200).send({ ok: true, data: { email, ocr: null }, error: '' });
-  })
-);
-
 /* -------------------------------------------------------------------------- */
 /* Documents                                                                   */
 /* -------------------------------------------------------------------------- */
 
-/**
- * Rapports et pièces jointes. Les lignes sans pool ni FTP sont les documents **non rattachés** :
- * personne ne les voit dans l'application, c'est ici qu'on les repère.
- */
+// Rapports et photographies déposés par les laboratoires
 router.get(
   '/trichine/documents',
   catchErrors(async (req: express.Request, res: express.Response<AdminTrichineDocumentsResponse>) => {
@@ -127,35 +54,12 @@ router.get(
       date_ajout: document.date_ajout,
       pool_reference: document.TrichinePool?.reference_pool ?? null,
       ftp_numero: document.TrichineFTP?.numero_fiche ?? null,
-      rattachement_source: document.rattachement_source,
-      rattachement_indice: document.rattachement_indice,
-      texte_source: document.texte_source,
-      longueur_texte: document.texte_extrait?.length ?? 0,
-      email_expediteur: document.email_expediteur,
-      email_sujet: document.email_sujet,
-      depose_par: document.AjouteParUser
-        ? `${document.AjouteParUser.prenom ?? ''} ${document.AjouteParUser.nom_de_famille ?? ''}`.trim() ||
-          document.AjouteParUser.email
-        : null,
+      depose_par:
+        `${document.AjouteParUser.prenom ?? ''} ${document.AjouteParUser.nom_de_famille ?? ''}`.trim() ||
+        document.AjouteParUser.email,
     }));
 
     res.status(200).send({ ok: true, data: { documents: rows }, error: '' });
-  })
-);
-
-/** Texte lu dans un document — ce sur quoi le rattachement et le résultat ont été décidés. */
-router.get(
-  '/trichine/document/:id/texte',
-  catchErrors(async (req: express.Request, res: express.Response) => {
-    const document = await prisma.trichineDocument.findUnique({
-      where: { id: req.params.id },
-      select: { id: true, nom_fichier: true, texte_extrait: true, texte_source: true },
-    });
-    if (!document) {
-      res.status(404).send({ ok: false, data: null, error: 'Document introuvable' });
-      return;
-    }
-    res.status(200).send({ ok: true, data: { document }, error: '' });
   })
 );
 
