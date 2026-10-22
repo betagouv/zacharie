@@ -293,6 +293,28 @@ model SecurityLog {
   @@index([email, action, created_at])
 }
 
+// Journal des écritures faites depuis /admin (POST, PUT, DELETE), écrit par le middleware admin-audit-log.
+// Pas de relation vers User : la ligne reste si le compte de l'admin est supprimé.
+model AdminAuditLog {
+  id            String   @id @default(uuid())
+  admin_user_id String
+  action        String // méthode + route, ex. "POST /user/:user_id"
+  target_type   String? // user | entity | fei | carcasse | api_key | bug_investigation
+  target_id     String?
+  params        Json?
+  body          Json? // corps de la requête, secrets retirés
+  before        Json? // champs modifiés avant / après, seulement pour l'édition d'un utilisateur
+  after         Json?
+  status_code   Int
+  ip            String?
+  user_agent    String?
+  created_at    DateTime @default(now())
+
+  @@index([admin_user_id, created_at])
+  @@index([target_type, target_id, created_at])
+  @@index([created_at])
+}
+
 // Versions précédentes de Fei, écrites par le trigger history_trigger (migration history_tables).
 // Mêmes colonnes que Fei, toutes nullables : vérifié par src/__tests__/history-tables.test.ts.
 model FeiHistory {

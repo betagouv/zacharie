@@ -3,6 +3,7 @@ import passport from 'passport';
 import type { User } from '@prisma/client';
 import { PROCONNECT_REQUIRED } from '~/middlewares/passport';
 import { requireTrichineFeature } from '~/middlewares/trichine-feature';
+import { adminAuditLog } from '~/middlewares/admin-audit-log';
 import userRouter from './user.ts';
 import entityRouter from './entity.ts';
 import apiKeyRouter from './api-key.ts';
@@ -15,6 +16,7 @@ import trichineAdminRouter from './trichine.ts';
 import userEntityRouter from './user-entity.ts';
 import bugResolutionRouter from './bug-resolution.ts';
 import searchRouter from './search.ts';
+import auditLogRouter from './audit-log.ts';
 
 const router: express.Router = express.Router();
 
@@ -40,6 +42,8 @@ router.use((req: express.Request, res: express.Response, next: express.NextFunct
   )(req, res, next);
 });
 
+router.use(adminAuditLog);
+
 // Le front admin vérifie ici que la session admin est complète (ProConnect inclus) avant d'afficher quoi que ce soit
 router.get('/session', (_req: express.Request, res: express.Response) => {
   res.status(200).send({ ok: true, data: null, message: '', error: '' });
@@ -58,5 +62,6 @@ router.use(trichineAdminRouter);
 router.use(userEntityRouter);
 router.use(bugResolutionRouter);
 router.use(searchRouter);
+router.use(auditLogRouter);
 
 export default router;
