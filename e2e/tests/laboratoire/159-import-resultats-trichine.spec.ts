@@ -7,6 +7,10 @@ import { connectWith } from '../../utils/connect-with';
 // F-26-SVI01-0001 avec deux pools sans résultat : P-26-SVI01-0001 (2 carcasses) et P-26-SVI01-0002
 // (1 carcasse). L'aperçu montre ce que l'import va faire, le laboratoire choisit les lignes, puis importe.
 
+// L'espace laboratoire n'est monté que si l'app est construite avec VITE_FEATURE_TRICHINE=true
+// (cf App.tsx). Pour lancer la spec : construire l'app et lancer Playwright avec cette variable.
+test.skip(process.env.VITE_FEATURE_TRICHINE !== 'true', 'Feature trichine désactivée dans ce build');
+
 test.setTimeout(120_000);
 test.use({ launchOptions: { slowMo: 100 } });
 
@@ -32,7 +36,10 @@ async function deposerFichier(page: Page, contenu: string) {
 async function ouvrirImport(page: Page) {
   await connectWith(page, 'laboratoire@example.fr');
   await expect(page).toHaveURL(/\/app\/laboratoire/);
-  await page.getByRole('link', { name: 'Importer' }).first().click();
+  await page
+    .getByRole('navigation', { name: 'Navigation laboratoire' })
+    .getByRole('link', { name: 'Importer', exact: true })
+    .click();
   await expect(page.getByRole('heading', { name: "Importer des résultats d'analyse" })).toBeVisible();
 }
 
