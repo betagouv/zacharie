@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router';
+import { AdminHistoryTimeline } from './history-timeline';
 import { Tabs } from '@codegouvfr/react-dsfr/Tabs';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { toast } from 'react-toastify';
@@ -303,6 +304,7 @@ const carcasseTabs = [
   { tabId: 'svi' as const, label: 'Inspection SVI' },
   { tabId: 'propriete' as const, label: 'Propriété' },
   { tabId: 'timeline' as const, label: 'Fil de vie' },
+  { tabId: 'historique' as const, label: 'Historique' },
 ];
 
 type CarcasseTabId = (typeof carcasseTabs)[number]['tabId'];
@@ -781,6 +783,12 @@ function AdminCarcasseDetailContent() {
               </div>
             </Section>
           </div>
+        )}
+        {selectedTab === 'historique' && (
+          <AdminHistoryTimeline
+            type="carcasse"
+            id={carcasse.zacharie_carcasse_id}
+          />
         )}
       </Tabs>
     </>

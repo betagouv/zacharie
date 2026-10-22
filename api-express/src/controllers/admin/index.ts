@@ -17,6 +17,7 @@ import userEntityRouter from './user-entity.ts';
 import bugResolutionRouter from './bug-resolution.ts';
 import searchRouter from './search.ts';
 import auditLogRouter from './audit-log.ts';
+import historyRouter from './history.ts';
 
 const router: express.Router = express.Router();
 
@@ -63,5 +64,6 @@ router.use(userEntityRouter);
 router.use(bugResolutionRouter);
 router.use(searchRouter);
 router.use(auditLogRouter);
+router.use(historyRouter);
 
 export default router;
