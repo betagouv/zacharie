@@ -14,6 +14,8 @@ import PoolCard, {
 import TrichineIntrouvable from '@app/components/trichine/TrichineIntrouvable';
 import TrichineChaine, { type ChaineEtape } from '@app/components/trichine/TrichineChaine';
 import TrichineChronologie from '@app/components/trichine/TrichineChronologie';
+import TrichineAliasesCard from '@app/components/trichine/TrichineAliases';
+import { aliasAnalysesFige } from '@app/services/trichine-alias';
 import TrichineDetailPage, {
   TrichineCard,
   TrichineContact,
@@ -181,6 +183,13 @@ export default function LaboratoirePoolDetail() {
               ]}
             />
           </TrichineCard>
+          <TrichineAliasesCard
+            objet="pool"
+            objetId={pool.id}
+            aliases={pool.Aliases}
+            fige={aliasAnalysesFige(pool)}
+            onChange={refresh}
+          />
           <TrichineChronologie historique={historique} />
         </>
       }

@@ -18,6 +18,7 @@ import TrichineDetailPage, {
   TrichineFields,
 } from '@app/components/trichine/TrichineDetailPage';
 import TrichineResultatCard from '@app/components/trichine/TrichineResultatCard';
+import TrichineAliasesCard from '@app/components/trichine/TrichineAliases';
 import { useTrichineBasePath, useTrichineCarcasseLink } from '@app/utils/trichine-hooks';
 import {
   getTrichineEchantillons,
@@ -241,7 +242,14 @@ export default function TrichinePoolDetailPage() {
       <TrichineResultatCard
         pool={pool}
         laboratoire={laboratoire}
-        referenceLabo={dernierLien?.reference_labo}
+      />
+
+      <TrichineAliasesCard
+        objet="pool"
+        objetId={pool.id}
+        aliases={pool.Aliases}
+        fige={fige}
+        onChange={refresh}
       />
 
       <TrichineCard

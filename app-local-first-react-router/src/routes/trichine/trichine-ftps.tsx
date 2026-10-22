@@ -5,6 +5,7 @@ import { Button } from '@codegouvfr/react-dsfr/Button';
 import dayjs from 'dayjs';
 import { TrichineResultatAnalyse, TrichineStatutLogistiqueFTP } from '@prisma/client';
 import TableFilterable from '@app/components/TableFilterable';
+import { aliasesRecherche, monAlias, useMesEntitesAlias } from '@app/services/trichine-alias';
 import TrichineListPage, {
   FiltrePeriode,
   FiltreSelect,
@@ -73,6 +74,7 @@ export default function TrichineFTPs() {
   const navigate = useNavigate();
   const basePath = useTrichineBasePath();
   const [ftps, setFtps] = useState<Array<TrichineFTPPopulated>>([]);
+  const mesEntites = useMesEntitesAlias();
   const [query, setQuery] = useListParam('q', '');
   const [vue, setVue] = useListParam('vue', 'tous');
   const [labo, setLabo] = useListParam('labo', '');
@@ -131,7 +133,7 @@ export default function TrichineFTPs() {
       filtered,
       query,
       (ftp) =>
-        `${ftp.numero_fiche} ${ftp.DestinataireEntity.nom_d_usage ?? ''} ${ftp.DestinataireEntity.raison_sociale ?? ''}`
+        `${ftp.numero_fiche} ${ftp.DestinataireEntity.nom_d_usage ?? ''} ${ftp.DestinataireEntity.raison_sociale ?? ''} ${aliasesRecherche(ftp.Aliases)}`
     );
     return sortTrichineRows(filtered, sortBy, sortOrder);
   }, [ftps, query, vue, labo, resultat, nbPools, du, au, sortBy, sortOrder]);
@@ -151,7 +153,7 @@ export default function TrichineFTPs() {
         <TrichineListToolbar
           query={query}
           onQueryChange={setQuery}
-          searchHint="N° de fiche, laboratoire"
+          searchHint="N° de fiche, référence interne, laboratoire"
         >
           <FiltreSelect
             label="Suivi"
@@ -231,6 +233,11 @@ export default function TrichineFTPs() {
             title: 'Numéro',
             ...sortProps,
             render: (ftp) => <span className="font-semibold">{ftp.numero_fiche}</span>,
+          },
+          {
+            dataKey: 'Aliases',
+            title: 'Ma réf.',
+            render: (ftp) => monAlias(ftp.Aliases, mesEntites)?.reference ?? '—',
           },
           {
             dataKey: 'destinataire_entity_id',

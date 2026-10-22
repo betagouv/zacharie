@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { TRICHINE_ALIAS_MAX_LENGTH } from '@app/services/trichine-alias';
 import { useNavigate, useSearchParams } from 'react-router';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import { Button } from '@codegouvfr/react-dsfr/Button';
@@ -55,6 +56,7 @@ export default function TrichineNouveauPool() {
   );
   const [selectedIds, setSelectedIds] = useState<Array<string>>(preselection);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [alias, setAlias] = useState('');
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -429,6 +431,17 @@ export default function TrichineNouveauPool() {
                 />
               )}
 
+              <Input
+                label="Ma référence interne (optionnel)"
+                hintText="La référence de ce pool dans vos propres outils"
+                nativeInputProps={{
+                  type: 'text',
+                  maxLength: TRICHINE_ALIAS_MAX_LENGTH,
+                  value: alias,
+                  onChange: (event) => setAlias(event.target.value),
+                }}
+              />
+
               <div className="flex flex-wrap gap-2">
                 <Button
                   type="button"
@@ -438,6 +451,7 @@ export default function TrichineNouveauPool() {
                     createTrichinePool({
                       echantillon_ids: selected.map((echantillon) => echantillon.id),
                       pool_parent_id: parent?.id,
+                      alias: alias.trim() || undefined,
                     })
                       .then((response) => {
                         if (response.ok && response.data) {

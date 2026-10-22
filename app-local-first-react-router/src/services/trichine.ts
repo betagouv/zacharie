@@ -13,6 +13,7 @@ import type {
   TrichineType,
 } from '@prisma/client';
 import API from '@app/services/api';
+import type { AvecAliases } from '@app/services/trichine-alias';
 
 /**
  * Appels API trichine (cf doc/trichine.md §10.3).
@@ -27,23 +28,26 @@ export type TrichineCarcasseProjection = Pick<
   'zacharie_carcasse_id' | 'numero_bracelet' | 'espece' | 'date_mise_a_mort' | 'trichine_retire_de_fei_at'
 > & { fei_numero?: string; Fei?: { commune_mise_a_mort: string | null } };
 
-export type TrichineEchantillonWithCarcasse = TrichineEchantillon & {
-  Carcasse: TrichineCarcasseProjection;
-  TrichinePool: { reference_pool: string } | null;
-};
+export type TrichineEchantillonWithCarcasse = TrichineEchantillon &
+  AvecAliases & {
+    Carcasse: TrichineCarcasseProjection;
+    TrichinePool: { reference_pool: string } | null;
+  };
 
 export type TrichinePoolFTPWithFTP = TrichinePoolFTP & { TrichineFTP: TrichineFTP };
 
-export type TrichinePoolPopulated = TrichinePool & {
-  TrichineEchantillons: Array<TrichineEchantillon>;
-  TrichinePoolFTPs: Array<TrichinePoolFTPWithFTP>;
-  PoolsFilles: Array<TrichinePool>;
-};
+export type TrichinePoolPopulated = TrichinePool &
+  AvecAliases & {
+    TrichineEchantillons: Array<TrichineEchantillon>;
+    TrichinePoolFTPs: Array<TrichinePoolFTPWithFTP>;
+    PoolsFilles: Array<TrichinePool>;
+  };
 
-export type TrichineFTPPopulated = TrichineFTP & {
-  DestinataireEntity: TrichineLaboratoire & { is_lnr: boolean };
-  TrichinePoolFTPs: Array<TrichinePoolFTP & { TrichinePool: TrichinePool }>;
-};
+export type TrichineFTPPopulated = TrichineFTP &
+  AvecAliases & {
+    DestinataireEntity: TrichineLaboratoire & { is_lnr: boolean };
+    TrichinePoolFTPs: Array<TrichinePoolFTP & { TrichinePool: TrichinePool }>;
+  };
 
 export type TrichineFTPLight = TrichineFTP & {
   DestinataireEntity: Pick<TrichineLaboratoire, 'id' | 'nom_d_usage' | 'raison_sociale'> & {
@@ -51,30 +55,33 @@ export type TrichineFTPLight = TrichineFTP & {
   };
 };
 
-export type TrichineEchantillonAvecCarcasse = TrichineEchantillon & {
-  Carcasse: TrichineCarcasseProjection;
-};
+export type TrichineEchantillonAvecCarcasse = TrichineEchantillon &
+  AvecAliases & {
+    Carcasse: TrichineCarcasseProjection;
+  };
 
-export type TrichineFTPDetail = TrichineFTP & {
-  DestinataireEntity: TrichineLaboratoire & { is_lnr: boolean };
-  ExpediteurEntity: {
-    id: string;
-    type: EntityTypes | null;
-    nom_d_usage: string | null;
-    raison_sociale: string | null;
-  } | null;
-  FTPParent: { numero_fiche: string } | null;
-  FTPChildren: Array<{ numero_fiche: string; statut_logistique: TrichineStatutLogistiqueFTP }>;
-  TrichinePoolFTPs: Array<
-    TrichinePoolFTP & {
-      TrichinePool: TrichinePool & {
-        TrichineEchantillons: Array<TrichineEchantillonAvecCarcasse>;
-        Documents: Array<TrichineDocument>;
-      };
-    }
-  >;
-  Documents: Array<TrichineDocument>;
-};
+export type TrichineFTPDetail = TrichineFTP &
+  AvecAliases & {
+    DestinataireEntity: TrichineLaboratoire & { is_lnr: boolean };
+    ExpediteurEntity: {
+      id: string;
+      type: EntityTypes | null;
+      nom_d_usage: string | null;
+      raison_sociale: string | null;
+    } | null;
+    FTPParent: { numero_fiche: string } | null;
+    FTPChildren: Array<{ numero_fiche: string; statut_logistique: TrichineStatutLogistiqueFTP }>;
+    TrichinePoolFTPs: Array<
+      TrichinePoolFTP & {
+        TrichinePool: TrichinePool &
+          AvecAliases & {
+            TrichineEchantillons: Array<TrichineEchantillonAvecCarcasse>;
+            Documents: Array<TrichineDocument>;
+          };
+      }
+    >;
+    Documents: Array<TrichineDocument>;
+  };
 
 /** ETG où opère le service d'inspection expéditeur d'une FTP. */
 export type TrichinePartieConcernee = { id: string; nom: string };
@@ -85,13 +92,14 @@ export type TrichineEchantillonDetail = TrichineEchantillonAvecCarcasse & {
     | null;
 };
 
-export type TrichinePoolDetail = TrichinePool & {
-  TrichineEchantillons: Array<TrichineEchantillonAvecCarcasse>;
-  TrichinePoolFTPs: Array<TrichinePoolFTP & { TrichineFTP: TrichineFTPLight }>;
-  PoolParent: { reference_pool: string } | null;
-  PoolsFilles: Array<Pick<TrichinePool, 'reference_pool' | 'statut' | 'resultat_analyse'>>;
-  Documents: Array<TrichineDocument>;
-};
+export type TrichinePoolDetail = TrichinePool &
+  AvecAliases & {
+    TrichineEchantillons: Array<TrichineEchantillonAvecCarcasse>;
+    TrichinePoolFTPs: Array<TrichinePoolFTP & { TrichineFTP: TrichineFTPLight }>;
+    PoolParent: { reference_pool: string } | null;
+    PoolsFilles: Array<Pick<TrichinePool, 'reference_pool' | 'statut' | 'resultat_analyse'>>;
+    Documents: Array<TrichineDocument>;
+  };
 
 export type TrichineCarcasseView = Pick<
   Carcasse,
@@ -145,6 +153,8 @@ export function createTrichineEchantillonsBulk(body: {
     site_prelevement: TrichineSitePrelevement;
     masse_grammes?: number;
     date_prelevement?: string;
+    /** Référence interne du service pour cet échantillon */
+    alias?: string;
   }>;
   /** INITIAL au prélèvement, COMPLEMENTAIRE / CONFIRMATION en 2e intention */
   type?: TrichineType;
@@ -199,6 +209,8 @@ export function createTrichinePool(body: {
   /** Renseigné pour un pool de 2e intention : fille du pool douteux, ou petite-fille */
   pool_parent_id?: string;
   commentaire?: string;
+  /** Référence interne du service pour ce pool */
+  alias?: string;
 }) {
   return API.post({ path: '/trichine/pool', body }) as Promise<ApiResponse<{ pool: TrichinePool }>>;
 }
@@ -226,6 +238,8 @@ export function createTrichineFTP(body: {
   expediteur_entity_id?: string;
   mode_transport?: string;
   commentaire?: string;
+  /** Référence interne du service pour cette FTP */
+  alias?: string;
 }) {
   return API.post({ path: '/trichine/ftp', body }) as Promise<ApiResponse<{ ftp: TrichineFTP }>>;
 }

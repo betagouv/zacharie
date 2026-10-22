@@ -1,6 +1,7 @@
 import z from 'zod';
 import {
   EntityTypes,
+  TrichineAliasObjet,
   TrichineResultatAnalyse,
   TrichineStatutLogistiqueFTP,
   TrichineType,
@@ -22,6 +23,12 @@ import {
   type TrichineNotifiableUser,
 } from '~/utils/trichine';
 import type { TrichineEmailContent } from '~/templates/trichine-email';
+import {
+  ALIAS_REFERENCE_CONFLIT,
+  aliasReferenceRefusee,
+  deleteAlias,
+  upsertAlias,
+} from '~/utils/trichine-alias';
 import { recomputeFTPTrichine, recomputePoolAndLinkedFTPs } from '~/utils/trichine-status';
 
 // Résultats saisissables selon le type de laboratoire (cf doc/trichine.md §6.3-6.4)
@@ -105,12 +112,6 @@ type ApplyPoolResultFtp = {
   expediteur_entity_id: string | null;
 };
 
-// Lien pool ↔ FTP par lequel le pool est arrivé dans le laboratoire qui saisit : c'est lui qui
-// porte la référence interne de ce laboratoire.
-type ApplyPoolResultLink = {
-  id: string;
-};
-
 export const resultatSchema = z.object({
   resultat_analyse: z.enum(
     Object.values(TrichineResultatAnalyse) as [TrichineResultatAnalyse, ...TrichineResultatAnalyse[]]
@@ -118,10 +119,18 @@ export const resultatSchema = z.object({
   parasite_identifie: z.string().optional(),
   date_debut_analyse: z.coerce.date().optional(),
   date_fin_analyse: z.coerce.date().optional(),
+  // Référence interne du laboratoire pour ce pool : devient son alias (cf utils/trichine-alias.ts)
   reference_labo: z.string().optional(),
   commentaire: z.string().optional(),
 });
 export type ApplyPoolResultBody = z.infer<typeof resultatSchema>;
+
+/**
+ * D'où vient le résultat. Saisi à la main, une référence labo refusée (format, déjà prise) bloque
+ * la saisie : le laboratoire la corrige. Lu dans un import LIMS, la référence est facultative et ne
+ * doit jamais faire perdre le résultat : elle est alors ignorée.
+ */
+export type ApplyPoolResultOrigine = 'saisie' | 'automatique';
 
 // FTP générée vers le LNR sur un résultat DOUTEUX : le laboratoire doit l'imprimer et la joindre au colis
 export type FtpConfirmation = { id: string; numero_fiche: string };
@@ -129,7 +138,13 @@ export type FtpConfirmation = { id: string; numero_fiche: string };
 // Discriminant string-literal (et non booléen) : le repo compile avec strictNullChecks: false,
 // qui casse le narrowing des unions discriminées sur un booléen.
 export type ApplyPoolResultOutcome =
-  | { kind: 'ok'; pool: TrichinePool | null; ftpConfirmation: FtpConfirmation | null }
+  | {
+      kind: 'ok';
+      pool: TrichinePool | null;
+      ftpConfirmation: FtpConfirmation | null;
+      // Motif pour lequel la référence labo lue dans un import n'a pas été posée (le résultat l'est)
+      referenceIgnoree: string | null;
+    }
   | { kind: 'error'; status: number; error: string };
 
 /**
@@ -145,17 +160,17 @@ export type ApplyPoolResultOutcome =
 export async function applyPoolResult({
   pool,
   ftp,
-  link,
   body,
   userId,
   isLnr,
+  origine,
 }: {
   pool: ApplyPoolResultPool;
   ftp: ApplyPoolResultFtp;
-  link: ApplyPoolResultLink;
   body: ApplyPoolResultBody;
   userId: string;
   isLnr: boolean;
+  origine: ApplyPoolResultOrigine;
 }): Promise<ApplyPoolResultOutcome> {
   if (!body.resultat_analyse) {
     return { kind: 'error', status: 400, error: 'Le résultat est obligatoire' };
@@ -169,6 +184,23 @@ export async function applyPoolResult({
   if (invalid) {
     return { kind: 'error', status: invalid.status, error: invalid.error };
   }
+  // L'alias est posé au nom du laboratoire destinataire de la fiche par laquelle le pool est arrivé
+  const referenceSaisie = body.reference_labo?.trim() || null;
+  const referenceRefusee = referenceSaisie
+    ? await aliasReferenceRefusee({
+        entityId: ftp.destinataire_entity_id,
+        objetType: TrichineAliasObjet.POOL,
+        objetId: pool.id,
+        reference: referenceSaisie,
+      })
+    : null;
+  if (referenceRefusee && origine === 'saisie') {
+    return { kind: 'error', status: 400, error: referenceRefusee };
+  }
+  const referenceLabo = referenceRefusee ? null : referenceSaisie;
+  let referenceIgnoree = referenceRefusee;
+  // Saisie manuelle : un champ vidé retire la référence du laboratoire (un import ne retire jamais rien)
+  const referenceEffacee = origine === 'saisie' && body.reference_labo !== undefined && !referenceSaisie;
 
   await prisma.trichinePool.update({
     where: { id: pool.id },
@@ -180,10 +212,20 @@ export async function applyPoolResult({
       commentaire: body.commentaire ?? pool.commentaire,
     },
   });
-  if (body.reference_labo) {
-    await prisma.trichinePoolFTP.update({
-      where: { id: link.id },
-      data: { reference_labo: body.reference_labo },
+  if (referenceLabo) {
+    const aliasOutcome = await upsertAlias({
+      entityId: ftp.destinataire_entity_id,
+      objetType: TrichineAliasObjet.POOL,
+      objetId: pool.id,
+      reference: referenceLabo,
+    });
+    if (aliasOutcome.kind === 'conflit') referenceIgnoree = ALIAS_REFERENCE_CONFLIT;
+  }
+  if (referenceEffacee) {
+    await deleteAlias({
+      entityId: ftp.destinataire_entity_id,
+      objetType: TrichineAliasObjet.POOL,
+      objetId: pool.id,
     });
   }
   await logTrichineStatutChange({
@@ -411,5 +453,5 @@ export async function applyPoolResult({
   }
 
   const updatedPool = await prisma.trichinePool.findUnique({ where: { id: pool.id } });
-  return { kind: 'ok', pool: updatedPool, ftpConfirmation };
+  return { kind: 'ok', pool: updatedPool, ftpConfirmation, referenceIgnoree };
 }

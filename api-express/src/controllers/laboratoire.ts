@@ -6,6 +6,7 @@ import {
   EntityRelationType,
   EntityTypes,
   Prisma,
+  TrichineAliasObjet,
   TrichineResultatAnalyse,
   TrichineStatutLogistiqueFTP,
   UserRoles,
@@ -36,6 +37,7 @@ import { isTerminalResult, recomputePoolAndLinkedFTPs } from '~/utils/trichine-s
 import { applyPoolResult, resultatSchema, validateResultForPool } from '~/utils/trichine-result';
 import { getMappingForLab } from '~/utils/lims-mapping';
 import { mapRow, parseLimsFile, type MappedLimsRow } from '~/utils/lims-parse';
+import { aliasReferenceRefusee, trichineAliasesInclude } from '~/utils/trichine-alias';
 import type { LaboResultsImportResponse, LaboResultsPreviewResponse, LimsResultRow } from '~/types/responses';
 
 const router: express.Router = express.Router();
@@ -96,6 +98,7 @@ const carcasseLaboSelect = {
 
 const echantillonLaboInclude = {
   Carcasse: { select: carcasseLaboSelect },
+  ...trichineAliasesInclude,
 } as const;
 
 // Émetteur : nom + contact uniquement (facturation / relance)
@@ -173,7 +176,6 @@ type LaboLink = LaboPool['TrichinePoolFTPs'][number];
 type LaboFtp = LaboLink['TrichineFTP'];
 
 // Le lien (non brouillon) par lequel le pool est arrivé dans un des laboratoires de l'utilisateur.
-// C'est lui qui porte la référence interne de ce laboratoire.
 function pickLaboLink(pool: LaboPool, context: LaboContext): LaboLink | null {
   return (
     pool.TrichinePoolFTPs.find(
@@ -191,49 +193,60 @@ async function findPoolForLabo(poolId: string, context: LaboContext) {
   if (!pool || pool.deleted_at) return null;
   const link = pickLaboLink(pool, context);
   if (!link) return null;
-  return { pool, ftp: link.TrichineFTP, link };
+  return { pool, ftp: link.TrichineFTP };
 }
 
+type PoolTrouve = { pool: LaboPool; ftp: LaboFtp };
+
 /**
- * Variante batchée : rapproche des références pool (P-YY-…) aux pools destinés aux laboratoires
- * de l'utilisateur. Sert à l'import de résultats (une requête pour tout le fichier).
+ * Variante batchée : rapproche des références lues dans un fichier aux pools destinés aux
+ * laboratoires de l'utilisateur. Une référence est soit celle de Zacharie (P-YY-…), qui prime
+ * toujours, soit l'alias que le laboratoire a donné au pool (casse ignorée, comme son unicité).
+ * Un alias porté par deux pools (deux laboratoires de l'utilisateur) est ambigu : il ne rapproche
+ * rien. Sert à l'import de résultats (une requête pour tout le fichier).
  */
 async function findPoolsForLabo(references: string[], context: LaboContext) {
-  const byReference = new Map<string, { pool: LaboPool; ftp: LaboFtp; link: LaboLink }>();
-  if (!references.length) return byReference;
-  const pools = await prisma.trichinePool.findMany({
-    where: { reference_pool: { in: references }, deleted_at: null },
-    include: poolForLaboInclude,
-  });
-  for (const pool of pools) {
-    const link = pickLaboLink(pool, context);
-    if (link) byReference.set(pool.reference_pool, { pool, ftp: link.TrichineFTP, link });
-  }
-  return byReference;
-}
-
-/**
- * La référence interne d'un pool appartient au laboratoire qui l'a attribuée : elle est portée
- * par le lien pool ↔ FTP, jamais par le pool. On projette donc sur le pool celle du laboratoire
- * connecté, et on retire des liens celle des autres (typiquement le LNR pour un LVD).
- */
-type LienProjetable = {
-  reference_labo: string | null;
-  TrichineFTP: { destinataire_entity_id: string };
-};
-
-function projeterPoolPourLabo<Pool extends { TrichinePoolFTPs: LienProjetable[] }>(
-  pool: Pool,
-  context: LaboContext
-) {
-  const lienDuLabo = pool.TrichinePoolFTPs.find((lien) =>
-    context.entityIds.includes(lien.TrichineFTP.destinataire_entity_id)
-  );
-  return {
-    ...pool,
-    reference_labo: lienDuLabo?.reference_labo ?? null,
-    TrichinePoolFTPs: pool.TrichinePoolFTPs.map(({ reference_labo, ...lien }) => lien),
+  const parReference = new Map<string, PoolTrouve>();
+  const parAlias = new Map<string, PoolTrouve | 'ambigu'>();
+  const trouver = (reference: string) => {
+    const parAliasTrouve = parAlias.get(reference.toLowerCase());
+    return parReference.get(reference) ?? (parAliasTrouve === 'ambigu' ? undefined : parAliasTrouve);
   };
+  if (!references.length) return trouver;
+  // Égalité stricte sur lower(reference), comme l'index unique : le filtre insensible à la casse de
+  // Prisma passe par ILIKE, où un `%` ou un `_` lu dans le fichier vaudrait joker
+  const referencesMinuscules = [...new Set(references.map((reference) => reference.toLowerCase()))];
+  const aliasTrouves = await prisma.$queryRaw<Array<{ pool_id: string }>>`
+    SELECT "pool_id" FROM "TrichineAlias"
+    WHERE "objet_type" = 'POOL'
+      AND "entity_id" IN (${Prisma.join(context.entityIds)})
+      AND lower("reference") IN (${Prisma.join(referencesMinuscules)})
+  `;
+  const pools = await prisma.trichinePool.findMany({
+    where: {
+      deleted_at: null,
+      OR: [
+        { reference_pool: { in: references } },
+        { id: { in: aliasTrouves.map((alias) => alias.pool_id) } },
+      ],
+    },
+    include: {
+      ...poolForLaboInclude,
+      Aliases: { where: { entity_id: { in: context.entityIds } }, select: { reference: true } },
+    },
+  });
+  for (const { Aliases, ...pool } of pools) {
+    const link = pickLaboLink(pool, context);
+    if (!link) continue;
+    const trouve = { pool, ftp: link.TrichineFTP };
+    parReference.set(pool.reference_pool, trouve);
+    for (const { reference } of Aliases) {
+      const cle = reference.toLowerCase();
+      const deja = parAlias.get(cle);
+      parAlias.set(cle, deja && deja !== 'ambigu' && deja.pool.id !== pool.id ? 'ambigu' : (deja ?? trouve));
+    }
+  }
+  return trouver;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -290,10 +303,12 @@ router.get(
         DestinataireEntity: {
           select: { id: true, is_lnr: true, nom_d_usage: true, raison_sociale: true },
         },
+        ...trichineAliasesInclude,
         TrichinePoolFTPs: {
           include: {
             TrichinePool: {
               include: {
+                ...trichineAliasesInclude,
                 // Uniquement pour compter les carcasses en attente d'IPM2 : la projection
                 // renvoyée au labo (§10.2) ne contient pas les échantillons.
                 TrichineEchantillons: {
@@ -325,7 +340,7 @@ router.get(
             0
           ),
           TrichinePoolFTPs: TrichinePoolFTPs.map(
-            ({ TrichinePool: { TrichineEchantillons, ...pool }, reference_labo, ...lien }) => ({
+            ({ TrichinePool: { TrichineEchantillons, ...pool }, ...lien }) => ({
               ...lien,
               TrichinePool: pool,
             })
@@ -362,15 +377,13 @@ router.get(
               include: {
                 TrichineEchantillons: { where: { deleted_at: null }, include: echantillonLaboInclude },
                 Documents: { where: { deleted_at: null } },
-                // Pour projeter la référence interne du labo connecté (portée par le lien)
-                TrichinePoolFTPs: {
-                  include: { TrichineFTP: { select: { destinataire_entity_id: true } } },
-                },
+                ...trichineAliasesInclude,
               },
             },
           },
         },
         Documents: { where: { deleted_at: null } },
+        ...trichineAliasesInclude,
       },
     });
     const estDestinataire = !!ftp && context.entityIds.includes(ftp.destinataire_entity_id);
@@ -393,10 +406,7 @@ router.get(
       data: {
         ftp: {
           ...ftpSansLiens,
-          TrichinePoolFTPs: TrichinePoolFTPs.map(({ TrichinePool, reference_labo, ...lien }) => ({
-            ...lien,
-            TrichinePool: projeterPoolPourLabo(TrichinePool, context),
-          })),
+          TrichinePoolFTPs,
           FTPParent: FTPParent && ftpLieeVisible(FTPParent, context) ? projeterFtpLiee(FTPParent) : null,
           // id et pools portés : le labo émetteur télécharge la fiche à joindre au colis depuis chaque pool
           FTPChildren: FTPChildren.filter((enfant) => ftpLieeVisible(enfant, context)).map((enfant) => ({
@@ -465,9 +475,10 @@ router.get(
       include: {
         TrichineEchantillons: {
           where: { deleted_at: null },
-          include: { Carcasse: { select: carcasseLaboSelect } },
+          include: echantillonLaboInclude,
           orderBy: { reference_echantillon: 'asc' },
         },
+        ...trichineAliasesInclude,
         TrichinePoolFTPs: {
           include: {
             TrichineFTP: {
@@ -499,9 +510,7 @@ router.get(
       where: { objet_type: TrichineObjetType.POOL, objet_id: pool.id },
       orderBy: { date_changement: 'desc' },
     });
-    res
-      .status(200)
-      .send({ ok: true, data: { pool: projeterPoolPourLabo(pool, context), ftp, historique }, error: '' });
+    res.status(200).send({ ok: true, data: { pool, ftp, historique }, error: '' });
   })
 );
 
@@ -600,10 +609,10 @@ router.post(
     if (!found) {
       return sendError(res, 404, 'Pool introuvable');
     }
-    const { pool, ftp, link } = found;
+    const { pool, ftp } = found;
     const isLnr = ftp.DestinataireEntity.is_lnr;
 
-    const outcome = await applyPoolResult({ pool, ftp, link, body, userId: req.user.id, isLnr });
+    const outcome = await applyPoolResult({ pool, ftp, body, userId: req.user.id, isLnr, origine: 'saisie' });
     if (outcome.kind === 'error') {
       return sendError(res, outcome.status, outcome.error);
     }
@@ -707,7 +716,8 @@ router.post(
     if (!bodyResult.success) {
       return sendError(res, 400, 'La raison de la correction est obligatoire');
     }
-    const { raison, ...body } = bodyResult.data;
+    // Les analyses du pool sont terminées : la référence du laboratoire est figée (cf trichine-alias)
+    const { raison, reference_labo: _referenceFigee, ...body } = bodyResult.data;
 
     const found = await findPoolForLabo(req.params.pool_id, context);
     if (!found) {
@@ -748,10 +758,10 @@ router.post(
     const outcome = await applyPoolResult({
       pool: { ...pool, resultat_analyse: null },
       ftp,
-      link: found.link,
       body,
       userId: req.user.id,
       isLnr: ftp.DestinataireEntity.is_lnr,
+      origine: 'saisie',
     });
     if (outcome.kind === 'error') {
       // La correction est refusée : on restitue le résultat d'origine
@@ -966,7 +976,7 @@ router.get(
 // Classe une ligne mappée du fichier selon le pool retrouvé + les règles de saisie.
 function classifyLimsRow(
   mapped: MappedLimsRow,
-  found: { pool: LaboPool; ftp: LaboFtp; link: LaboLink } | undefined
+  found: { pool: LaboPool; ftp: LaboFtp } | undefined
 ): LimsResultRow {
   const base: LimsResultRow = {
     reference_pool: mapped.reference_pool,
@@ -1035,11 +1045,31 @@ router.post(
     }
 
     const mapped = rawRows.map((raw) => mapRow(raw, mapping)).filter((row) => row.reference_pool);
-    const poolsByRef = await findPoolsForLabo(
+    const trouverPool = await findPoolsForLabo(
       mapped.map((row) => row.reference_pool),
       context
     );
-    const rows = mapped.map((row) => classifyLimsRow(row, poolsByRef.get(row.reference_pool)));
+    const rows: Array<LimsResultRow> = [];
+    for (const row of mapped) {
+      const found = trouverPool(row.reference_pool);
+      const classee = classifyLimsRow(row, found);
+      const reference = row.reference_labo?.trim();
+      // Une référence labo refusée n'empêche pas l'import du résultat : on prévient dès l'aperçu
+      const referenceRefusee =
+        classee.status === 'matched' && reference
+          ? await aliasReferenceRefusee({
+              entityId: found!.ftp.destinataire_entity_id,
+              objetType: TrichineAliasObjet.POOL,
+              objetId: found!.pool.id,
+              reference,
+            })
+          : null;
+      rows.push(
+        referenceRefusee
+          ? { ...classee, message: `Référence interne ignorée : ${referenceRefusee}` }
+          : classee
+      );
+    }
 
     const counts = { matched: 0, unmatched: 0, invalid: 0, conflict: 0 };
     for (const row of rows) counts[row.status]++;
@@ -1078,7 +1108,7 @@ router.post(
       return sendError(res, 400, 'Lignes invalides');
     }
     // On ne fait jamais confiance aux ids côté client : on re-résout chaque pool dans le scope du labo.
-    const poolsByRef = await findPoolsForLabo(
+    const trouverPool = await findPoolsForLabo(
       bodyResult.data.rows.map((row) => row.reference_pool),
       context
     );
@@ -1089,7 +1119,7 @@ router.post(
     const results: LaboResultsImportResponse['data']['results'] = [];
 
     for (const row of bodyResult.data.rows) {
-      const found = poolsByRef.get(row.reference_pool);
+      const found = trouverPool(row.reference_pool);
       if (!found) {
         skipped++;
         results.push({
@@ -1103,17 +1133,23 @@ router.post(
         const outcome = await applyPoolResult({
           pool: found.pool,
           ftp: found.ftp,
-          link: found.link,
           body: row,
           userId: req.user.id,
           isLnr: found.ftp.DestinataireEntity.is_lnr,
+          origine: 'automatique',
         });
         if (outcome.kind === 'error') {
           errors++;
           results.push({ reference_pool: row.reference_pool, ok: false, error: outcome.error });
         } else {
           applied++;
-          results.push({ reference_pool: row.reference_pool, ok: true });
+          results.push({
+            reference_pool: row.reference_pool,
+            ok: true,
+            avertissement: outcome.referenceIgnoree
+              ? `Résultat appliqué, référence interne ignorée : ${outcome.referenceIgnoree}`
+              : undefined,
+          });
         }
       } catch (error) {
         capture(error as Error, { extra: { reference_pool: row.reference_pool } });
@@ -1160,6 +1196,7 @@ router.get(
       include: {
         Carcasse: { select: carcasseLaboSelect },
         TrichinePool: { select: { reference_pool: true, statut: true, resultat_analyse: true } },
+        ...trichineAliasesInclude,
       },
       orderBy: { created_at: 'desc' },
     });
@@ -1180,6 +1217,7 @@ router.get(
           where: { deleted_at: null },
           include: { Carcasse: { select: carcasseLaboSelect } },
         },
+        ...trichineAliasesInclude,
         PoolParent: { select: { reference_pool: true } },
         TrichinePoolFTPs: {
           include: {
@@ -1193,7 +1231,7 @@ router.get(
     });
     res.status(200).send({
       ok: true,
-      data: { pools: pools.map((pool) => projeterPoolPourLabo(pool, context)) },
+      data: { pools },
       error: '',
     });
   })

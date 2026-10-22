@@ -180,6 +180,7 @@ model Entity {
   TrichinePoolsCrees                    TrichinePool[]                 @relation("TrichinePoolCreeParEntity")
   TrichineFTPsExpediees                 TrichineFTP[]                  @relation("TrichineFTPExpediteurEntity")
   TrichineFTPsRecues                    TrichineFTP[]                  @relation("TrichineFTPDestinataireEntity")
+  TrichineAliases                       TrichineAlias[]                @relation("TrichineAliasEntity")
 
   @@index([updated_at]) // Time-based ordering
   @@index([nom_d_usage]) // Name-based ordering
@@ -1322,6 +1323,8 @@ model TrichineEchantillon {
 
   commentaire String?
 
+  Aliases TrichineAlias[]
+
   created_at DateTime  @default(now())
   updated_at DateTime  @default(now()) @updatedAt
   deleted_at DateTime?
@@ -1366,6 +1369,7 @@ model TrichinePool {
   TrichineEchantillons TrichineEchantillon[]
   TrichinePoolFTPs     TrichinePoolFTP[]
   Documents            TrichineDocument[]
+  Aliases              TrichineAlias[]
 
   created_at DateTime  @default(now())
   updated_at DateTime  @default(now()) @updatedAt
@@ -1412,6 +1416,7 @@ model TrichineFTP {
 
   TrichinePoolFTPs TrichinePoolFTP[]
   Documents        TrichineDocument[]
+  Aliases          TrichineAlias[]
 
   created_at DateTime  @default(now())
   updated_at DateTime  @default(now()) @updatedAt
@@ -1432,14 +1437,49 @@ model TrichinePoolFTP {
   ftp_id     String
   date_ajout DateTime @default(now())
 
-  // N° interne attribué au pool par le laboratoire destinataire de cette FTP. Il est propre à ce
-  // laboratoire : le LVD et le LNR ont chacun le leur, aucun ne voit celui de l'autre.
-  reference_labo String?
-
   TrichinePool TrichinePool @relation(fields: [pool_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   TrichineFTP  TrichineFTP  @relation(fields: [ftp_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@unique([pool_id, ftp_id])
+  @@index([ftp_id])
+}
+
+enum TrichineAliasObjet {
+  ECHANTILLON
+  POOL
+  FTP
+}
+
+// Référence interne qu'une entité (SVI, laboratoire) donne à un échantillon, un pool ou une FTP,
+// pour le retrouver dans ses propres outils (LIMS, registre). Une par entité et par objet,
+// visible par tous les acteurs qui voient l'objet. Exactement une des trois FK est remplie,
+// celle qui correspond à objet_type (contrainte CHECK posée dans la migration).
+model TrichineAlias {
+  id         String             @id @default(uuid())
+  reference  String
+  objet_type TrichineAliasObjet
+
+  entity_id String
+  Entity    Entity @relation("TrichineAliasEntity", fields: [entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  echantillon_id      String?
+  TrichineEchantillon TrichineEchantillon? @relation(fields: [echantillon_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  pool_id             String?
+  TrichinePool        TrichinePool?        @relation(fields: [pool_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  ftp_id              String?
+  TrichineFTP         TrichineFTP?         @relation(fields: [ftp_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
+
+  @@unique([entity_id, echantillon_id])
+  @@unique([entity_id, pool_id])
+  @@unique([entity_id, ftp_id])
+  // Une entité ne réutilise pas une même référence (casse ignorée) pour deux objets du même type :
+  // index unique sur lower(reference), posé en SQL dans la migration 20261020100000_trichine_alias
+  // (Prisma ne sait pas déclarer un index sur expression). Ne pas le supprimer.
+  @@index([echantillon_id])
+  @@index([pool_id])
   @@index([ftp_id])
 }
 

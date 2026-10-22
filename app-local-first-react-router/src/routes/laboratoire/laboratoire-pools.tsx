@@ -15,6 +15,7 @@ import {
 import { getLaboPools, type LaboPoolRegistre } from '@app/services/laboratoire';
 import ExportButtons from '@app/components/laboratoire/ExportButtons';
 import { poolToExportRow } from '@app/utils/export-trichine';
+import { aliasesRecherche, monAlias, useMesEntitesAlias } from '@app/services/trichine-alias';
 import {
   filterTrichineRows,
   sortTrichineRows,
@@ -42,6 +43,7 @@ export default function LaboratoirePools() {
   const [sortBy, setSortBy] = useState<keyof LaboPoolRegistre>('date_constitution');
   const [sortOrder, setSortOrder] = useState<TrichineSortOrder>('DESC');
   const [selectedIds, setSelectedIds] = useState<Array<string>>([]);
+  const mesEntites = useMesEntitesAlias();
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -71,7 +73,8 @@ export default function LaboratoirePools() {
     filtered = filterTrichineRows(
       filtered,
       query,
-      (pool) => `${pool.reference_pool} ${ftpNumeros(pool)} ${pool.PoolParent?.reference_pool ?? ''}`
+      (pool) =>
+        `${pool.reference_pool} ${ftpNumeros(pool)} ${pool.PoolParent?.reference_pool ?? ''} ${aliasesRecherche(pool.Aliases)}`
     );
     return sortTrichineRows(filtered, sortBy, sortOrder);
   }, [pools, query, vue, statut, sortBy, sortOrder]);
@@ -93,14 +96,14 @@ export default function LaboratoirePools() {
           nom="pools"
           rows={rows}
           selectedIds={selectedIds}
-          toExportRow={poolToExportRow}
+          toExportRow={(pool) => poolToExportRow(pool, mesEntites)}
         />
       }
       toolbar={
         <TrichineListToolbar
           query={query}
           onQueryChange={setQuery}
-          searchHint="Référence de pool, n° de fiche, pool parent"
+          searchHint="Référence de pool, référence interne, n° de fiche, pool parent"
         >
           <FiltreSelect
             label="Affichage"
@@ -188,9 +191,9 @@ export default function LaboratoirePools() {
                 render: (pool) => <ResultatBadge resultat={pool.resultat_analyse} />,
               },
               {
-                dataKey: 'reference_labo',
-                title: 'Réf. labo',
-                render: (pool) => pool.reference_labo || '—',
+                dataKey: 'Aliases',
+                title: 'Ma réf.',
+                render: (pool) => monAlias(pool.Aliases, mesEntites)?.reference ?? '—',
               },
             ]}
           />

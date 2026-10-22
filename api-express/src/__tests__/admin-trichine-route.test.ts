@@ -89,9 +89,9 @@ describe('listes de diagnostic', () => {
           { Carcasse: { numero_bracelet: '6940', espece: 'Sanglier' } },
           { Carcasse: { numero_bracelet: '7542', espece: 'Sanglier' } },
         ],
+        Aliases: [{ reference: 'SVI-12' }, { reference: 'LVD-1' }],
         TrichinePoolFTPs: [
           {
-            reference_labo: 'LVD-1',
             TrichineFTP: {
               numero_fiche: 'F-26-02-0012',
               DestinataireEntity: { nom_d_usage: 'LVD 44', raison_sociale: null, is_lnr: false },
@@ -110,6 +110,7 @@ describe('listes de diagnostic', () => {
       especes: 'Sanglier',
       laboratoire: 'LVD 44',
       ftp_numero: 'F-26-02-0012',
+      aliases: 'SVI-12, LVD-1',
     });
   });
 });
