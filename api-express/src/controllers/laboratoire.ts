@@ -34,9 +34,13 @@ import {
 import dayjs from 'dayjs';
 import { TRICHINE_RESULTAT_EMAIL_LABELS } from '~/templates/trichine-email';
 import { isTerminalResult, recomputePoolAndLinkedFTPs } from '~/utils/trichine-status';
-import { applyPoolResult, resultatSchema, validateResultForPool } from '~/utils/trichine-result';
-import { getMappingForLab } from '~/utils/lims-mapping';
-import { mapRow, parseLimsFile, type MappedLimsRow } from '~/utils/lims-parse';
+import {
+  applyPoolResult,
+  describePoolResultActions,
+  resultatSchema,
+  validateResultForPool,
+} from '~/utils/trichine-result';
+import { ImportFormatError, mapRow, parseLimsFile, type MappedLimsRow } from '~/utils/lims-parse';
 import { aliasReferenceRefusee, trichineAliasesInclude } from '~/utils/trichine-alias';
 import type { LaboResultsImportResponse, LaboResultsPreviewResponse, LimsResultRow } from '~/types/responses';
 
@@ -970,30 +974,26 @@ router.get(
 );
 
 /* -------------------------------------------------------------------------- */
-/* Import de résultats depuis un export LIMS (cf doc/trichine-import-lims.md)   */
+/* Import de résultats : fichier CSV au format Zacharie (cf utils/lims-parse.ts) */
 /* -------------------------------------------------------------------------- */
 
-// Classe une ligne mappée du fichier selon le pool retrouvé + les règles de saisie.
+// Classe une ligne lue du fichier selon le pool retrouvé + les règles de saisie.
+// referenceRefusee : motif pour lequel la référence labo de la ligne ne sera pas posée (le résultat l'est).
 function classifyLimsRow(
   mapped: MappedLimsRow,
-  found: { pool: LaboPool; ftp: LaboFtp } | undefined
+  found: { pool: LaboPool; ftp: LaboFtp } | undefined,
+  referenceRefusee: string | null
 ): LimsResultRow {
-  const base: LimsResultRow = {
-    reference_pool: mapped.reference_pool,
-    resultat_analyse: mapped.resultat_analyse,
-    raw_resultat: mapped.raw_resultat,
-    parasite_identifie: mapped.parasite_identifie,
-    date_debut_analyse: mapped.date_debut_analyse,
-    date_fin_analyse: mapped.date_fin_analyse,
-    reference_labo: mapped.reference_labo,
-    commentaire: mapped.commentaire,
-    status: 'matched',
-  };
+  const { erreur_format, ...champs } = mapped;
+  const base: LimsResultRow = { ...champs, status: 'matched' };
   if (!found) {
     return { ...base, status: 'unmatched', message: 'Pool introuvable ou non destiné à votre laboratoire' };
   }
   if (!mapped.resultat_analyse) {
     return { ...base, status: 'invalid', message: `Résultat non reconnu : « ${mapped.raw_resultat} »` };
+  }
+  if (erreur_format) {
+    return { ...base, status: 'invalid', message: erreur_format };
   }
   const invalid = validateResultForPool({
     existingResult: found.pool.resultat_analyse,
@@ -1008,10 +1008,40 @@ function classifyLimsRow(
       message: invalid.error,
     };
   }
-  return base;
+  const nbCarcasses = new Set(
+    found.pool.TrichineEchantillons.map(({ Carcasse }) => Carcasse.zacharie_carcasse_id)
+  ).size;
+  const { effet, actions } = describePoolResultActions({
+    resultat_analyse: mapped.resultat_analyse,
+    reference_pool: found.pool.reference_pool,
+    nbCarcasses,
+    ftpNumero: found.ftp.numero_fiche,
+    referenceLabo: referenceRefusee ? undefined : mapped.reference_labo,
+  });
+  return {
+    ...base,
+    message: referenceRefusee ? `Référence interne ignorée : ${referenceRefusee}` : undefined,
+    effet,
+    nb_carcasses: nbCarcasses,
+    actions,
+    reference_pool_zacharie: found.pool.reference_pool,
+  };
 }
 
-// Fichier transmis encodé en base64 (cf doc/trichine-import-lims.md §5)
+// Pools encore sans résultat de chaque fiche : une fiche reçue se clôture quand ils en ont tous un
+async function poolsSansResultatParFtp(ftpIds: string[]) {
+  const liens = await prisma.trichinePoolFTP.findMany({
+    where: { ftp_id: { in: ftpIds }, TrichinePool: { deleted_at: null, resultat_analyse: null } },
+    select: { ftp_id: true, TrichinePool: { select: { reference_pool: true } } },
+  });
+  const parFtp = new Map<string, string[]>();
+  for (const lien of liens) {
+    parFtp.set(lien.ftp_id, [...(parFtp.get(lien.ftp_id) ?? []), lien.TrichinePool.reference_pool]);
+  }
+  return parFtp;
+}
+
+// Fichier CSV transmis encodé en base64
 const previewSchema = z.object({
   filename: z.string().optional(),
   content: z.string().min(1),
@@ -1027,7 +1057,6 @@ router.post(
     if (!bodyResult.success) {
       return sendError(res, 400, 'Fichier manquant');
     }
-    const mapping = getMappingForLab(context.entityIds);
 
     let content: string;
     try {
@@ -1038,35 +1067,47 @@ router.post(
 
     let rawRows: Array<Record<string, string>>;
     try {
-      rawRows = parseLimsFile(content, bodyResult.data.filename, mapping);
+      rawRows = parseLimsFile(content);
     } catch (error) {
+      if (error instanceof ImportFormatError) return sendError(res, 400, error.message);
       capture(error as Error, { extra: { filename: bodyResult.data.filename } });
-      return sendError(res, 400, 'Fichier illisible (CSV ou XML attendu)');
+      return sendError(res, 400, 'Fichier illisible (CSV attendu)');
     }
 
-    const mapped = rawRows.map((raw) => mapRow(raw, mapping)).filter((row) => row.reference_pool);
+    const mapped = rawRows.map(mapRow).filter((row) => row.reference_pool);
     const trouverPool = await findPoolsForLabo(
       mapped.map((row) => row.reference_pool),
       context
     );
+    const ftpIds = [
+      ...new Set(mapped.map((row) => trouverPool(row.reference_pool)?.ftp.id).filter(Boolean)),
+    ] as string[];
+    const poolsSansResultat = await poolsSansResultatParFtp(ftpIds);
     const rows: Array<LimsResultRow> = [];
     for (const row of mapped) {
       const found = trouverPool(row.reference_pool);
-      const classee = classifyLimsRow(row, found);
       const reference = row.reference_labo?.trim();
       // Une référence labo refusée n'empêche pas l'import du résultat : on prévient dès l'aperçu
       const referenceRefusee =
-        classee.status === 'matched' && reference
+        found && reference
           ? await aliasReferenceRefusee({
-              entityId: found!.ftp.destinataire_entity_id,
+              entityId: found.ftp.destinataire_entity_id,
               objetType: TrichineAliasObjet.POOL,
-              objetId: found!.pool.id,
+              objetId: found.pool.id,
               reference,
             })
           : null;
+      const classee = classifyLimsRow(row, found, referenceRefusee);
       rows.push(
-        referenceRefusee
-          ? { ...classee, message: `Référence interne ignorée : ${referenceRefusee}` }
+        classee.status === 'matched'
+          ? {
+              ...classee,
+              ftp: {
+                numero_fiche: found!.ftp.numero_fiche,
+                recue: found!.ftp.statut_logistique === TrichineStatutLogistiqueFTP.RECUE,
+                pools_sans_resultat: poolsSansResultat.get(found!.ftp.id) ?? [],
+              },
+            }
           : classee
       );
     }

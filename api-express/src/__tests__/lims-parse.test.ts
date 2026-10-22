@@ -1,20 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { TrichineResultatAnalyse } from '@prisma/client';
-import { DEFAULT_MAPPING } from '~/utils/lims-mapping';
-import { detectFormat, mapRow, parseLimsFile } from '~/utils/lims-parse';
+import { ImportFormatError, mapRow, parseLimsFile } from '~/utils/lims-parse';
+import { describePoolResultActions } from '~/utils/trichine-result';
 
-describe('detectFormat', () => {
-  it('détecte par extension', () => {
-    expect(detectFormat('whatever', 'export.xml')).toBe('xml');
-    expect(detectFormat('whatever', 'export.csv')).toBe('csv');
-  });
-  it('détecte par contenu quand pas de nom fiable', () => {
-    expect(detectFormat('<resultats></resultats>')).toBe('xml');
-    expect(detectFormat('reference_pool;resultat_analyse')).toBe('csv');
-  });
-});
-
-describe('parseLimsFile + mapRow — CSV', () => {
+describe('parseLimsFile + mapRow', () => {
   const csv = [
     'reference_pool;resultat_analyse;parasite_identifie;date_debut_analyse;date_fin_analyse;reference_labo;commentaire',
     'P-26-02-0045;NEGATIF;;2026-07-01;2026-07-02;LAB-889;',
@@ -23,63 +12,89 @@ describe('parseLimsFile + mapRow — CSV', () => {
   ].join('\n');
 
   it('parse toutes les lignes de données', () => {
-    const rows = parseLimsFile(csv, 'export.csv', DEFAULT_MAPPING);
-    expect(rows).toHaveLength(3);
+    expect(parseLimsFile(csv)).toHaveLength(3);
   });
 
-  it('mappe les champs canoniques', () => {
-    const rows = parseLimsFile(csv, 'export.csv', DEFAULT_MAPPING).map((r) => mapRow(r, DEFAULT_MAPPING));
+  it('lit les colonnes du format', () => {
+    const rows = parseLimsFile(csv).map(mapRow);
     expect(rows[0]).toMatchObject({
       reference_pool: 'P-26-02-0045',
       resultat_analyse: TrichineResultatAnalyse.NEGATIF,
       reference_labo: 'LAB-889',
       date_debut_analyse: '2026-07-01',
     });
+    expect(rows[0].erreur_format).toBeUndefined();
   });
 
   it('normalise la valeur de résultat (casse + accents)', () => {
-    const rows = parseLimsFile(csv, 'export.csv', DEFAULT_MAPPING).map((r) => mapRow(r, DEFAULT_MAPPING));
-    expect(rows[1].resultat_analyse).toBe(TrichineResultatAnalyse.NEGATIF);
+    expect(parseLimsFile(csv).map(mapRow)[1].resultat_analyse).toBe(TrichineResultatAnalyse.NEGATIF);
   });
 
-  it('laisse resultat_analyse à null si le libellé est inconnu (→ ligne invalide)', () => {
-    const rows = parseLimsFile(csv, 'export.csv', DEFAULT_MAPPING).map((r) => mapRow(r, DEFAULT_MAPPING));
+  it('laisse resultat_analyse à null si la valeur est inconnue (→ ligne invalide)', () => {
+    const rows = parseLimsFile(csv).map(mapRow);
     expect(rows[2].resultat_analyse).toBeNull();
     expect(rows[2].raw_resultat).toBe('wat');
   });
 
   it('accepte le séparateur virgule', () => {
-    const commaCsv = 'reference_pool,resultat_analyse\nP-26-02-0050,POSITIF';
-    const rows = parseLimsFile(commaCsv, 'x.csv', DEFAULT_MAPPING).map((r) => mapRow(r, DEFAULT_MAPPING));
+    const rows = parseLimsFile('reference_pool,resultat_analyse\nP-26-02-0050,POSITIF').map(mapRow);
     expect(rows[0]).toMatchObject({
       reference_pool: 'P-26-02-0050',
       resultat_analyse: TrichineResultatAnalyse.POSITIF,
     });
   });
-});
 
-describe('parseLimsFile + mapRow — XML', () => {
-  const xml = `<resultats>
-    <analyse reference_pool="P-26-02-0045" resultat_analyse="POSITIF" reference_labo="LAB-1"/>
-    <analyse reference_pool="P-26-02-0046" resultat_analyse="DOUTEUX"/>
-  </resultats>`;
-
-  it('extrait les nœuds via rowSelector et mappe les attributs', () => {
-    const rows = parseLimsFile(xml, 'export.xml', DEFAULT_MAPPING).map((r) => mapRow(r, DEFAULT_MAPPING));
-    expect(rows).toHaveLength(2);
+  it('ignore les colonnes inconnues et la casse des en-têtes', () => {
+    const rows = parseLimsFile('Reference_Pool;RESULTAT_ANALYSE;colonne_lims\nP-26-02-0051;douteux;x').map(
+      mapRow
+    );
     expect(rows[0]).toMatchObject({
-      reference_pool: 'P-26-02-0045',
-      resultat_analyse: TrichineResultatAnalyse.POSITIF,
-      reference_labo: 'LAB-1',
+      reference_pool: 'P-26-02-0051',
+      resultat_analyse: TrichineResultatAnalyse.DOUTEUX,
     });
-    expect(rows[1].resultat_analyse).toBe(TrichineResultatAnalyse.DOUTEUX);
   });
 
-  it('gère un nœud unique (non-array)', () => {
-    const single = `<resultats><analyse reference_pool="P-26-02-0099" resultat_analyse="NEGATIF"/></resultats>`;
-    const rows = parseLimsFile(single, 'x.xml', DEFAULT_MAPPING).map((r) => mapRow(r, DEFAULT_MAPPING));
-    expect(rows).toHaveLength(1);
-    expect(rows[0].reference_pool).toBe('P-26-02-0099');
-    expect(rows[0].resultat_analyse).toBe(TrichineResultatAnalyse.NEGATIF);
+  it('refuse un fichier sans colonne obligatoire', () => {
+    expect(() => parseLimsFile('reference_pool;resultat\nP-26-02-0052;negatif')).toThrow(ImportFormatError);
+    expect(() => parseLimsFile('reference_pool;resultat\nP-26-02-0052;negatif')).toThrow(/resultat_analyse/);
+  });
+
+  it('signale une date qui ne suit pas le format AAAA-MM-JJ', () => {
+    const rows = parseLimsFile(
+      'reference_pool;resultat_analyse;date_fin_analyse\nP-1;negatif;02/07/2026\nP-2;negatif;2026-02-30'
+    ).map(mapRow);
+    expect(rows[0].erreur_format).toMatch(/date_fin_analyse/);
+    expect(rows[1].erreur_format).toMatch(/date_fin_analyse/);
+  });
+});
+
+describe('describePoolResultActions', () => {
+  const base = { reference_pool: 'P-26-02-0045', nbCarcasses: 3, ftpNumero: 'F-26-02-0012' };
+
+  it('négatif : carcasses libérées + émetteur prévenu', () => {
+    const { effet, actions } = describePoolResultActions({ ...base, resultat_analyse: 'NEGATIF' });
+    expect(effet).toBe('liberees');
+    expect(actions[0]).toMatch(/3 carcasses libérée/);
+    expect(actions.some((action) => action.includes('F-26-02-0012'))).toBe(true);
+  });
+
+  it('douteux : fiche de confirmation vers le LNR', () => {
+    const { effet, actions } = describePoolResultActions({ ...base, resultat_analyse: 'DOUTEUX' });
+    expect(effet).toBe('en_attente_confirmation');
+    expect(actions.some((action) => action.includes('LNR est créée'))).toBe(true);
+  });
+
+  it('positif : carcasses à saisir', () => {
+    const { effet } = describePoolResultActions({ ...base, resultat_analyse: 'POSITIF' });
+    expect(effet).toBe('a_saisir');
+  });
+
+  it('mentionne la référence interne quand elle est posée', () => {
+    const { actions } = describePoolResultActions({
+      ...base,
+      resultat_analyse: 'NEGATIF',
+      referenceLabo: 'LAB-1',
+    });
+    expect(actions.at(-1)).toMatch(/LAB-1/);
   });
 });

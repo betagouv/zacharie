@@ -23,6 +23,7 @@ import {
   type TrichineNotifiableUser,
 } from '~/utils/trichine';
 import type { TrichineEmailContent } from '~/templates/trichine-email';
+import type { PoolResultEffet } from '~/types/responses';
 import {
   ALIAS_REFERENCE_CONFLIT,
   aliasReferenceRefusee,
@@ -454,4 +455,63 @@ export async function applyPoolResult({
 
   const updatedPool = await prisma.trichinePool.findUnique({ where: { id: pool.id } });
   return { kind: 'ok', pool: updatedPool, ftpConfirmation, referenceIgnoree };
+}
+
+const EFFET_PAR_RESULTAT: Partial<Record<TrichineResultatAnalyse, PoolResultEffet>> = {
+  [TrichineResultatAnalyse.NEGATIF]: 'liberees',
+  [TrichineResultatAnalyse.DOUTEUX]: 'en_attente_confirmation',
+  [TrichineResultatAnalyse.POSITIF]: 'a_saisir',
+  [TrichineResultatAnalyse.NON_NEGATIF]: 'decision_a_prendre',
+  [TrichineResultatAnalyse.PRESENCE_PARASITE_NON_IDENTIFIE]: 'decision_a_prendre',
+};
+
+/**
+ * Décrit, en phrases lisibles par le laboratoire, ce que applyPoolResult va faire dans Zacharie.
+ * Sert à l'aperçu d'import : toute évolution des effets de bord de applyPoolResult se reporte ici.
+ * Pur, sans I/O.
+ */
+export function describePoolResultActions({
+  resultat_analyse,
+  reference_pool,
+  nbCarcasses,
+  ftpNumero,
+  referenceLabo,
+}: {
+  resultat_analyse: TrichineResultatAnalyse;
+  reference_pool: string;
+  nbCarcasses: number;
+  ftpNumero: string;
+  referenceLabo?: string;
+}): { effet: PoolResultEffet; actions: Array<string> } {
+  const carcasses = `${nbCarcasses} carcasse${nbCarcasses > 1 ? 's' : ''}`;
+  const effet = EFFET_PAR_RESULTAT[resultat_analyse]!;
+  const actions: Array<string> = [];
+  if (effet === 'liberees') {
+    actions.push(`Pool ${reference_pool} négatif : ${carcasses} libérée(s) côté trichine`);
+    actions.push(`L'émetteur de la fiche ${ftpNumero} est prévenu par email`);
+  }
+  if (effet === 'en_attente_confirmation') {
+    actions.push(
+      `Pool ${reference_pool} non négatif : ${carcasses} bloquée(s) jusqu'à la confirmation du LNR`
+    );
+    actions.push(
+      `Une fiche de transmission vers le LNR est créée et envoyée, à imprimer et joindre au colis`
+    );
+    actions.push(
+      `L'émetteur de la fiche ${ftpNumero} est prévenu par email et peut faire des prélèvements de 2e intention`
+    );
+  }
+  if (effet === 'a_saisir') {
+    actions.push(`Pool ${reference_pool} positif : trichine confirmée, ${carcasses} à saisir`);
+  }
+  if (effet === 'decision_a_prendre') {
+    actions.push(`Pool ${reference_pool} : parasite détecté, décision à prendre sur ${carcasses}`);
+  }
+  if (effet === 'a_saisir' || effet === 'decision_a_prendre') {
+    actions.push(`Le laboratoire qui vous a transmis le pool et l'émetteur initial sont alertés par email`);
+  }
+  if (referenceLabo) {
+    actions.push(`Votre référence interne « ${referenceLabo} » est enregistrée sur le pool`);
+  }
+  return { effet, actions };
 }
