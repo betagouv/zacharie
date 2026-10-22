@@ -62,7 +62,7 @@ const PROCONNECT_REDIRECT_URI = `${API_URL}/user/proconnect/callback`;
 // le payload (third-parties/expo-push.ts). Aucun NotificationLog n'est écrit pendant ce temps, la
 // dédup s'appuyant dessus : un log écrit en dry run empêcherait définitivement l'envoi une fois
 // l'interrupteur relevé. On le garde comme coupe-circuit en cas de problème d'envoi en production.
-const NATIVE_PUSH_DRY_RUN = true;
+const NATIVE_PUSH_DRY_RUN = false;
 // Recherche de trichine (cf doc/trichine.md). Même variable que le flag du frontend :
 // tant qu'elle n'est pas posée, les garde-fous sangliers restent inactifs.
 const TRICHINE_FEATURE_ENABLED = process.env.VITE_FEATURE_TRICHINE === 'true';
