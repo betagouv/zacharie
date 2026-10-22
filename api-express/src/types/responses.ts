@@ -15,6 +15,7 @@ import type {
   UserNotifications,
   TrichineResultatAnalyse,
   BugInvestigation,
+  AdminAuditLog,
 } from '@prisma/client';
 import type { UserForFei, UserForAdmin } from './user';
 import type { BugInvestigationMessage } from './bug-investigation';
@@ -897,6 +898,22 @@ export interface AdminBugInvestigationResponse {
     investigation: Omit<BugInvestigation, 'messages'> & {
       messages: Array<BugInvestigationMessage>;
     } & BugInvestigationAuthor;
+  } | null;
+  error: string;
+}
+
+export type AdminAuditLogRow = AdminAuditLog & {
+  admin_email: string | null;
+  target_label: string | null;
+};
+
+export interface AdminAuditLogResponse {
+  ok: boolean;
+  data: {
+    logs: Array<AdminAuditLogRow>;
+    total: number;
+    admins: Array<{ id: string; email: string }>;
+    actions: Array<string>;
   } | null;
   error: string;
 }

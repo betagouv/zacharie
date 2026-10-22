@@ -2,6 +2,7 @@ import express from 'express';
 import dayjs from 'dayjs';
 import { BugInvestigationStatus, Prisma, type User } from '@prisma/client';
 import { catchErrors } from '~/middlewares/errors';
+import { setAdminAuditTarget } from '~/middlewares/admin-audit-log';
 import prisma from '~/prisma';
 import { capture } from '~/third-parties/sentry';
 import { runBugInvestigation } from '~/service/bug-investigator';
@@ -92,6 +93,7 @@ router.post(
       },
     });
     startInvestigation(investigation.id);
+    setAdminAuditTarget(res, 'bug_investigation', investigation.id);
     res.status(200).send({ ok: true, data: { id: investigation.id }, error: '' });
   })
 );

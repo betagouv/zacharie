@@ -24,6 +24,7 @@ import type {
   UserConnexionResponse,
 } from '~/types/responses';
 import { entityAdminInclude } from '~/types/entity';
+import { setAdminAuditChanges, setAdminAuditTarget } from '~/middlewares/admin-audit-log';
 import {
   createBrevoContact,
   sendEmail,
@@ -93,6 +94,7 @@ router.post(
         });
         return;
       }
+      setAdminAuditTarget(res, 'user', user.id);
       // La session usurpée n'emporte pas le ProConnect de l'admin : si la cible est aussi admin,
       // elle devra refaire ProConnect pour atteindre /admin
       const token = signSessionToken({ userId: user.id });
@@ -140,6 +142,7 @@ router.post(
         },
       });
 
+      setAdminAuditTarget(res, 'user', createdUser.id);
       await createBrevoContact(createdUser, 'ADMIN');
 
       res.status(200).send({ ok: true, data: { user: createdUser }, error: '' });
@@ -167,6 +170,7 @@ const adminUserUpdateSchema = z.object({
     .array(
       z.enum(Object.values(UserRoles).filter((r) => r !== UserRoles.ADMIN) as [UserRoles, ...UserRoles[]])
     )
+    .max(1, 'Un utilisateur ne peut avoir qu’un seul rôle')
     .optional(),
   [Prisma.UserScalarFieldEnum.isZacharieAdmin]: z.boolean().optional(),
   [Prisma.UserScalarFieldEnum.ville]: z.string().optional(),
@@ -302,6 +306,8 @@ router.post(
         where: { id: userId },
         data: nextUser,
       });
+      // User n'a pas de version_user_id : seul ce journal garde la trace de l'admin qui a modifié le compte
+      setAdminAuditChanges(res, user, savedUser, Object.keys(nextUser));
       await updateBrevoContact(savedUser, 'ADMIN');
       await updateBrevoChasseurDeal(savedUser);
 

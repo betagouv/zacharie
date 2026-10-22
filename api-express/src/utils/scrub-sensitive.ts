@@ -2,7 +2,7 @@
 const VALEUR_MASQUEE = '[masqué]';
 
 // Mots de passe, jetons (session, reset, invitation, access token, push), clés d'API, cookies.
-const CLES_SECRETES =
+export const CLES_SECRETES =
   /password|passwd|token|secret|authorization|cookie|jwt|private[-_]?key|^(x-)?api[-_]?key$|^key$/i;
 
 // Identité en clair : e-mails, téléphones, adresses, noms.

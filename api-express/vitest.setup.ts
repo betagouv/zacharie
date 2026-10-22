@@ -70,6 +70,11 @@ vi.mock('./src/prisma', () => ({
       create: vi.fn(),
       update: vi.fn(),
     },
+    adminAuditLog: {
+      create: vi.fn().mockResolvedValue({}),
+      findMany: vi.fn().mockResolvedValue([]),
+      count: vi.fn().mockResolvedValue(0),
+    },
     securityLog: {
       count: vi.fn().mockResolvedValue(0),
       findFirst: vi.fn().mockResolvedValue(null),
