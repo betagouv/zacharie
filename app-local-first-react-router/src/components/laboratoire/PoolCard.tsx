@@ -335,9 +335,9 @@ export function ResultatModalContent({
       parasite_identifie: parasiteRequis ? parasite.trim() : undefined,
       date_debut_analyse: dateDebut || undefined,
       date_fin_analyse: dateFin || undefined,
-      // Seulement si le laboratoire l'a changée : celle déjà posée n'a pas à être revérifiée
-      reference_labo:
-        referenceLabo.trim() && referenceLabo.trim() !== maReference ? referenceLabo.trim() : undefined,
+      // Seulement si le laboratoire l'a changée : celle déjà posée n'a pas à être revérifiée.
+      // Une chaîne vide retire la référence déjà posée.
+      reference_labo: referenceLabo.trim() !== maReference ? referenceLabo.trim() : undefined,
       commentaire: commentaire.trim() || undefined,
     };
     // Seule une première saisie peut générer une FTP de confirmation vers le LNR

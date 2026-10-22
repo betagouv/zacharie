@@ -81,7 +81,10 @@ describe('applyPoolResult — référence labo', () => {
 
     const outcome = await appliquer('DOSSIER-87', 'automatique');
 
-    expect(outcome.kind).toBe('ok');
+    expect(outcome).toMatchObject({
+      kind: 'ok',
+      referenceIgnoree: expect.stringContaining('déjà utilisée pour le pool P-26-SVI01-0046'),
+    });
     expect(prisma.trichinePool.update).toHaveBeenCalled();
     expect(prisma.trichineAlias.create).not.toHaveBeenCalled();
   });
@@ -89,7 +92,10 @@ describe('applyPoolResult — référence labo', () => {
   test('import automatique : une référence hors format est ignorée, le résultat est enregistré', async () => {
     const outcome = await appliquer('n° dossier : 87+88', 'automatique');
 
-    expect(outcome.kind).toBe('ok');
+    expect(outcome).toMatchObject({
+      kind: 'ok',
+      referenceIgnoree: expect.stringContaining('Référence invalide'),
+    });
     expect(prisma.trichineAlias.create).not.toHaveBeenCalled();
   });
 
@@ -102,5 +108,20 @@ describe('applyPoolResult — référence labo', () => {
         data: { entity_id: 'labo-1', objet_type: 'POOL', pool_id: 'pool-1', reference: 'DOSSIER-87' },
       })
     );
+  });
+
+  test('saisie manuelle : un champ vidé retire la référence du labo', async () => {
+    const outcome = await appliquer('', 'saisie');
+
+    expect(outcome.kind).toBe('ok');
+    expect(prisma.trichineAlias.deleteMany).toHaveBeenCalledWith({
+      where: { entity_id: 'labo-1', pool_id: 'pool-1' },
+    });
+  });
+
+  test('import automatique : une référence vide ne retire rien', async () => {
+    await appliquer('', 'automatique');
+
+    expect(prisma.trichineAlias.deleteMany).not.toHaveBeenCalled();
   });
 });

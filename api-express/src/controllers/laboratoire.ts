@@ -6,6 +6,7 @@ import {
   EntityRelationType,
   EntityTypes,
   Prisma,
+  TrichineAliasObjet,
   TrichineResultatAnalyse,
   TrichineStatutLogistiqueFTP,
   UserRoles,
@@ -36,7 +37,7 @@ import { isTerminalResult, recomputePoolAndLinkedFTPs } from '~/utils/trichine-s
 import { applyPoolResult, resultatSchema, validateResultForPool } from '~/utils/trichine-result';
 import { getMappingForLab } from '~/utils/lims-mapping';
 import { mapRow, parseLimsFile, type MappedLimsRow } from '~/utils/lims-parse';
-import { trichineAliasesInclude } from '~/utils/trichine-alias';
+import { aliasReferenceRefusee, trichineAliasesInclude } from '~/utils/trichine-alias';
 import type { LaboResultsImportResponse, LaboResultsPreviewResponse, LimsResultRow } from '~/types/responses';
 
 const router: express.Router = express.Router();
@@ -212,19 +213,21 @@ async function findPoolsForLabo(references: string[], context: LaboContext) {
     return parReference.get(reference) ?? (parAliasTrouve === 'ambigu' ? undefined : parAliasTrouve);
   };
   if (!references.length) return trouver;
+  // Égalité stricte sur lower(reference), comme l'index unique : le filtre insensible à la casse de
+  // Prisma passe par ILIKE, où un `%` ou un `_` lu dans le fichier vaudrait joker
+  const referencesMinuscules = [...new Set(references.map((reference) => reference.toLowerCase()))];
+  const aliasTrouves = await prisma.$queryRaw<Array<{ pool_id: string }>>`
+    SELECT "pool_id" FROM "TrichineAlias"
+    WHERE "objet_type" = 'POOL'
+      AND "entity_id" IN (${Prisma.join(context.entityIds)})
+      AND lower("reference") IN (${Prisma.join(referencesMinuscules)})
+  `;
   const pools = await prisma.trichinePool.findMany({
     where: {
       deleted_at: null,
       OR: [
         { reference_pool: { in: references } },
-        {
-          Aliases: {
-            some: {
-              entity_id: { in: context.entityIds },
-              OR: references.map((reference) => ({ reference: { equals: reference, mode: 'insensitive' } })),
-            },
-          },
-        },
+        { id: { in: aliasTrouves.map((alias) => alias.pool_id) } },
       ],
     },
     include: {
@@ -1046,7 +1049,27 @@ router.post(
       mapped.map((row) => row.reference_pool),
       context
     );
-    const rows = mapped.map((row) => classifyLimsRow(row, trouverPool(row.reference_pool)));
+    const rows: Array<LimsResultRow> = [];
+    for (const row of mapped) {
+      const found = trouverPool(row.reference_pool);
+      const classee = classifyLimsRow(row, found);
+      const reference = row.reference_labo?.trim();
+      // Une référence labo refusée n'empêche pas l'import du résultat : on prévient dès l'aperçu
+      const referenceRefusee =
+        classee.status === 'matched' && reference
+          ? await aliasReferenceRefusee({
+              entityId: found!.ftp.destinataire_entity_id,
+              objetType: TrichineAliasObjet.POOL,
+              objetId: found!.pool.id,
+              reference,
+            })
+          : null;
+      rows.push(
+        referenceRefusee
+          ? { ...classee, message: `Référence interne ignorée : ${referenceRefusee}` }
+          : classee
+      );
+    }
 
     const counts = { matched: 0, unmatched: 0, invalid: 0, conflict: 0 };
     for (const row of rows) counts[row.status]++;
@@ -1120,7 +1143,13 @@ router.post(
           results.push({ reference_pool: row.reference_pool, ok: false, error: outcome.error });
         } else {
           applied++;
-          results.push({ reference_pool: row.reference_pool, ok: true });
+          results.push({
+            reference_pool: row.reference_pool,
+            ok: true,
+            avertissement: outcome.referenceIgnoree
+              ? `Résultat appliqué, référence interne ignorée : ${outcome.referenceIgnoree}`
+              : undefined,
+          });
         }
       } catch (error) {
         capture(error as Error, { extra: { reference_pool: row.reference_pool } });

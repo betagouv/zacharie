@@ -31,11 +31,11 @@ function sendError(res: express.Response, status: number, error: string) {
   res.status(status).send({ ok: false, data: null, error });
 }
 
-const objetParSegment: Record<string, TrichineAliasObjet> = {
-  echantillon: TrichineAliasObjet.ECHANTILLON,
-  pool: TrichineAliasObjet.POOL,
-  ftp: TrichineAliasObjet.FTP,
-};
+const objetParSegment = new Map<string, TrichineAliasObjet>([
+  ['echantillon', TrichineAliasObjet.ECHANTILLON],
+  ['pool', TrichineAliasObjet.POOL],
+  ['ftp', TrichineAliasObjet.FTP],
+]);
 
 const FIGE_LABO = {
   [TrichineAliasObjet.ECHANTILLON]: 'Les analyses de cet échantillon sont terminées : sa référence est figée',
@@ -174,7 +174,7 @@ router.put(
   '/:objet/:objet_id',
   passport.authenticate('user', { session: false }),
   catchErrors(async (req: RequestWithUser, res: express.Response) => {
-    const objetType = objetParSegment[req.params.objet];
+    const objetType = objetParSegment.get(req.params.objet);
     if (!objetType) return sendError(res, 404, 'Objet introuvable');
     const bodyResult = aliasSchema.safeParse(req.body);
     if (!bodyResult.success) return sendError(res, 400, 'Paramètres invalides');
@@ -209,7 +209,7 @@ router.delete(
   '/:objet/:objet_id',
   passport.authenticate('user', { session: false }),
   catchErrors(async (req: RequestWithUser, res: express.Response) => {
-    const objetType = objetParSegment[req.params.objet];
+    const objetType = objetParSegment.get(req.params.objet);
     if (!objetType) return sendError(res, 404, 'Objet introuvable');
     const cible = await resoudreCible(req, objetType, req.params.objet_id);
     if (cible.kind === 'error') return sendError(res, cible.status, cible.error);

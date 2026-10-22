@@ -58,6 +58,7 @@ beforeEach(() => {
     { EntityRelatedWithUser: { id: 'labo-1', is_lnr: false } },
   ] as never);
   vi.mocked(prisma.trichinePool.findMany).mockResolvedValue([poolRecu] as never);
+  vi.mocked(prisma.$queryRaw).mockResolvedValue([{ pool_id: 'pool-1' }] as never);
 });
 
 describe('POST /laboratoire/results/preview', () => {
@@ -67,15 +68,20 @@ describe('POST /laboratoire/results/preview', () => {
     expect(response.status).toBe(200);
     expect(response.body.data.rows[0]).toMatchObject({ reference_pool: 'LIMS-0087', status: 'matched' });
     // L'alias n'est cherché que parmi ceux des laboratoires de l'utilisateur, casse ignorée
+    const [, entityIds, references] = vi.mocked(prisma.$queryRaw).mock.calls[0] as Array<any>;
+    expect(entityIds.values).toEqual(['labo-1']);
+    expect(references.values).toEqual(['lims-0087']);
     const where = vi.mocked(prisma.trichinePool.findMany).mock.calls[0][0]!.where as any;
-    expect(where.OR[1]).toEqual({
-      Aliases: {
-        some: {
-          entity_id: { in: ['labo-1'] },
-          OR: [{ reference: { equals: 'LIMS-0087', mode: 'insensitive' } }],
-        },
-      },
-    });
+    expect(where.OR[1]).toEqual({ id: { in: ['pool-1'] } });
+  });
+
+  test('un % ou un _ du fichier ne sert pas de joker', async () => {
+    await preview('reference_pool,resultat_analyse\nLIMS-%,negatif\n');
+
+    // Comparaison par égalité sur lower(reference), jamais par LIKE / ILIKE
+    const [sql] = vi.mocked(prisma.$queryRaw).mock.calls[0] as Array<any>;
+    expect(sql.join('?')).toMatch(/lower\("reference"\) IN/);
+    expect(sql.join('?')).not.toMatch(/LIKE/i);
   });
 
   test('rapproche un alias écrit dans une autre casse', async () => {

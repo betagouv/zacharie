@@ -23,7 +23,12 @@ import {
   type TrichineNotifiableUser,
 } from '~/utils/trichine';
 import type { TrichineEmailContent } from '~/templates/trichine-email';
-import { aliasReferenceRefusee, upsertAlias } from '~/utils/trichine-alias';
+import {
+  ALIAS_REFERENCE_CONFLIT,
+  aliasReferenceRefusee,
+  deleteAlias,
+  upsertAlias,
+} from '~/utils/trichine-alias';
 import { recomputeFTPTrichine, recomputePoolAndLinkedFTPs } from '~/utils/trichine-status';
 
 // Résultats saisissables selon le type de laboratoire (cf doc/trichine.md §6.3-6.4)
@@ -133,7 +138,13 @@ export type FtpConfirmation = { id: string; numero_fiche: string };
 // Discriminant string-literal (et non booléen) : le repo compile avec strictNullChecks: false,
 // qui casse le narrowing des unions discriminées sur un booléen.
 export type ApplyPoolResultOutcome =
-  | { kind: 'ok'; pool: TrichinePool | null; ftpConfirmation: FtpConfirmation | null }
+  | {
+      kind: 'ok';
+      pool: TrichinePool | null;
+      ftpConfirmation: FtpConfirmation | null;
+      // Motif pour lequel la référence labo lue dans un import n'a pas été posée (le résultat l'est)
+      referenceIgnoree: string | null;
+    }
   | { kind: 'error'; status: number; error: string };
 
 /**
@@ -187,6 +198,9 @@ export async function applyPoolResult({
     return { kind: 'error', status: 400, error: referenceRefusee };
   }
   const referenceLabo = referenceRefusee ? null : referenceSaisie;
+  let referenceIgnoree = referenceRefusee;
+  // Saisie manuelle : un champ vidé retire la référence du laboratoire (un import ne retire jamais rien)
+  const referenceEffacee = origine === 'saisie' && body.reference_labo !== undefined && !referenceSaisie;
 
   await prisma.trichinePool.update({
     where: { id: pool.id },
@@ -199,11 +213,19 @@ export async function applyPoolResult({
     },
   });
   if (referenceLabo) {
-    await upsertAlias({
+    const aliasOutcome = await upsertAlias({
       entityId: ftp.destinataire_entity_id,
       objetType: TrichineAliasObjet.POOL,
       objetId: pool.id,
       reference: referenceLabo,
+    });
+    if (aliasOutcome.kind === 'conflit') referenceIgnoree = ALIAS_REFERENCE_CONFLIT;
+  }
+  if (referenceEffacee) {
+    await deleteAlias({
+      entityId: ftp.destinataire_entity_id,
+      objetType: TrichineAliasObjet.POOL,
+      objetId: pool.id,
     });
   }
   await logTrichineStatutChange({
@@ -431,5 +453,5 @@ export async function applyPoolResult({
   }
 
   const updatedPool = await prisma.trichinePool.findUnique({ where: { id: pool.id } });
-  return { kind: 'ok', pool: updatedPool, ftpConfirmation };
+  return { kind: 'ok', pool: updatedPool, ftpConfirmation, referenceIgnoree };
 }

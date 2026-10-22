@@ -14,7 +14,7 @@ type ImportResultData = {
   applied: number;
   skipped: number;
   errors: number;
-  results: Array<{ reference_pool: string; ok: boolean; error?: string }>;
+  results: Array<{ reference_pool: string; ok: boolean; error?: string; avertissement?: string }>;
 };
 
 const statusMeta: Record<
@@ -277,14 +277,14 @@ export default function LaboratoireResultsImport() {
             description={`${result.applied} appliqué(s), ${result.skipped} ignoré(s), ${result.errors} en erreur.`}
             className="mb-4"
           />
-          {result.errors > 0 && (
+          {result.results.some((line) => !line.ok || line.avertissement) && (
             <div className="mb-4 overflow-x-auto">
               <Table
                 noCaption
-                headers={['Réf. pool', 'Erreur']}
+                headers={['Réf. pool', 'Détail']}
                 data={result.results
-                  .filter((line) => !line.ok)
-                  .map((line) => [line.reference_pool, line.error ?? ''])}
+                  .filter((line) => !line.ok || line.avertissement)
+                  .map((line) => [line.reference_pool, line.error ?? line.avertissement ?? ''])}
               />
             </div>
           )}

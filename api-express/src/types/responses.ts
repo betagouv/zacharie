@@ -532,7 +532,7 @@ export interface LimsResultRow {
   reference_labo?: string;
   commentaire?: string;
   status: LimsResultRowStatus;
-  // Raison quand status ≠ matched
+  // Raison quand status ≠ matched, ou avertissement sur une ligne matched (référence interne ignorée)
   message?: string;
 }
 
@@ -551,7 +551,8 @@ export interface LaboResultsImportResponse {
     applied: number;
     skipped: number;
     errors: number;
-    results: Array<{ reference_pool: string; ok: boolean; error?: string }>;
+    // avertissement : résultat appliqué, mais la référence interne de la ligne n'a pas été posée
+    results: Array<{ reference_pool: string; ok: boolean; error?: string; avertissement?: string }>;
   };
   error: string;
 }

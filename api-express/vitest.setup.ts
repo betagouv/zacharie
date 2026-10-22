@@ -4,6 +4,7 @@ import { vi } from 'vitest';
 vi.mock('./src/prisma', () => ({
   default: {
     $executeRaw: vi.fn(),
+    $queryRaw: vi.fn().mockResolvedValue([]),
     fei: {
       findMany: vi.fn().mockResolvedValue([]),
       findFirst: vi.fn(),

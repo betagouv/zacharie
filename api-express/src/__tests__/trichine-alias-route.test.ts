@@ -296,6 +296,38 @@ describe('PUT /trichine-alias/:objet/:id', () => {
     expect(response.status).toBe(400);
     expect(response.body.error).toMatch(/vient d’être utilisée/);
   });
+
+  test('un alias créé en même temps sur le même objet est remplacé, pas signalé comme conflit', async () => {
+    travaillePour('svi-1', 'user-svi');
+    vi.mocked(prisma.trichinePool.findUnique).mockResolvedValue(poolEnPreparation as never);
+    vi.mocked(prisma.trichineAlias.create).mockRejectedValueOnce(
+      new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+        code: 'P2002',
+        clientVersion: 'test',
+      })
+    );
+    // L'alias concurrent apparaît entre la lecture et la création
+    vi.mocked(prisma.trichineAlias.findFirst)
+      .mockResolvedValueOnce(null as never)
+      .mockResolvedValueOnce({ id: 'alias-concurrent' } as never);
+    vi.mocked(prisma.trichineAlias.update).mockResolvedValueOnce({ id: 'alias-concurrent' } as never);
+
+    const response = await put(sviUser, 'pool/pool-1', 'A1');
+
+    expect(response.status).toBe(200);
+    expect(prisma.trichineAlias.update).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: 'alias-concurrent' }, data: { reference: 'A1' } })
+    );
+  });
+
+  test('un segment hérité d’Object (constructor) est un objet introuvable', async () => {
+    travaillePour('svi-1', 'user-svi');
+
+    const response = await put(sviUser, 'constructor/ftp-1', 'A1');
+
+    expect(response.status).toBe(404);
+    expect(prisma.trichineAlias.create).not.toHaveBeenCalled();
+  });
 });
 
 describe('DELETE /trichine-alias/:objet/:id', () => {

@@ -211,28 +211,45 @@ export async function upsertAlias({
   objetId: string;
   reference: string;
 }): Promise<UpsertAliasOutcome> {
-  const existant = await prisma.trichineAlias.findFirst({
-    where: { entity_id: entityId, ...objetFk(objetType, objetId) },
-    select: { id: true },
-  });
+  const aliasDeLObjet = () =>
+    prisma.trichineAlias.findFirst({
+      where: { entity_id: entityId, ...objetFk(objetType, objetId) },
+      select: { id: true },
+    });
+  const mettreAJour = async (id: string): Promise<UpsertAliasOutcome> => {
+    try {
+      const alias = await prisma.trichineAlias.update({
+        where: { id },
+        data: { reference },
+        select: trichineAliasSelect,
+      });
+      return { kind: 'ok', alias };
+    } catch (error) {
+      // Seul l'index unique sur la référence peut rejeter la mise à jour
+      if (isUniqueViolation(error)) return { kind: 'conflit' };
+      throw error;
+    }
+  };
+
+  const existant = await aliasDeLObjet();
+  if (existant) return mettreAJour(existant.id);
   try {
-    const alias = existant
-      ? await prisma.trichineAlias.update({
-          where: { id: existant.id },
-          data: { reference },
-          select: trichineAliasSelect,
-        })
-      : await prisma.trichineAlias.create({
-          data: { entity_id: entityId, objet_type: objetType, ...objetFk(objetType, objetId), reference },
-          select: trichineAliasSelect,
-        });
+    const alias = await prisma.trichineAlias.create({
+      data: { entity_id: entityId, objet_type: objetType, ...objetFk(objetType, objetId), reference },
+      select: trichineAliasSelect,
+    });
     return { kind: 'ok', alias };
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-      return { kind: 'conflit' };
-    }
-    throw error;
+    if (!isUniqueViolation(error)) throw error;
+    // Création simultanée de l'alias de cette entité sur le même objet : on remplace sa référence
+    const concurrent = await aliasDeLObjet();
+    if (concurrent) return mettreAJour(concurrent.id);
+    return { kind: 'conflit' };
   }
+}
+
+function isUniqueViolation(error: unknown) {
+  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002';
 }
 
 /**
