@@ -15,6 +15,10 @@ import {
   UserRelationType,
   UserRoles,
   Carcasse,
+  TrichineSitePrelevement,
+  TrichineStatutAnalyse,
+  TrichineStatutLogistiqueFTP,
+  TrichineType,
 } from '@prisma/client';
 import dayjs from 'dayjs';
 import prisma from '~/prisma';
@@ -846,6 +850,110 @@ Christine
         });
       }
       console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (for svi)`);
+    }
+    // LABORATOIRE_FTP_RECUE : un LVD a réceptionné la FTP F-26-SVI01-0001 du SVI 1, avec deux pools sans
+    // résultat (P-26-SVI01-0001 : MM-001-001 + MM-001-002, P-26-SVI01-0002 : MM-001-004). Import de
+    // résultats côté laboratoire (e2e laboratoire/import-resultats).
+    if ((role as string) === 'LABORATOIRE_FTP_RECUE') {
+      const laboratoire = await prisma.entity.create({
+        data: {
+          raison_sociale: 'Laboratoire 1',
+          nom_d_usage: 'Laboratoire 1',
+          siret: '12345678901234',
+          type: EntityTypes.LABORATOIRE,
+          is_lnr: false,
+          code_trichine: 'LV01',
+          zacharie_compatible: true,
+          address_ligne_1: '12 rue des analyses',
+          code_postal: '03000',
+          ville: 'Moulins',
+        },
+      });
+      const laborantin = await prisma.user.create({
+        data: {
+          id: await createUserId(),
+          email: 'laboratoire@example.fr',
+          roles: [UserRoles.LABORATOIRE],
+          activated: true,
+          activated_at: dayjs().toDate(),
+          prenom: 'Claire',
+          nom_de_famille: 'Garcia',
+          addresse_ligne_1: '12 rue des analyses',
+          code_postal: '03000',
+          ville: 'Moulins',
+          telephone: '0606060630',
+          onboarded_at: dayjs().toDate(),
+        },
+      });
+      await prisma.password.create({
+        data: { user_id: laborantin.id, password: await hashPassword('secret-secret') },
+      });
+      await prisma.entityAndUserRelations.create({
+        data: {
+          owner_id: laborantin.id,
+          entity_id: laboratoire.id,
+          relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+          status: EntityRelationStatus.ADMIN,
+        },
+      });
+
+      const fei = await prisma.fei.create({ data: feiTransmittedByEtgToSvi });
+      await prisma.carcasse.createMany({
+        data: getCarcasses(fei, ownershipTransmittedByEtgToSvi).map((carcasse) =>
+          carcasse.type === CarcasseType.GROS_GIBIER ? { ...carcasse, espece: 'Sanglier' } : carcasse
+        ),
+      });
+      const svi = users.find((u) => u.email === 'svi@example.fr')!;
+      const sviEntityId = '37a59a18-7f29-4177-a019-aafad6c73ee0'; // SVI 1
+      const datePrelevement = dayjs().subtract(3, 'day').startOf('day').toDate();
+      const poolsParReference: Record<string, Array<string>> = {
+        'P-26-SVI01-0001': ['MM-001-001', 'MM-001-002'],
+        'P-26-SVI01-0002': ['MM-001-004'],
+      };
+      const ftp = await prisma.trichineFTP.create({
+        data: {
+          numero_fiche: 'F-26-SVI01-0001',
+          expediteur_user_id: svi.id,
+          expediteur_entity_id: sviEntityId,
+          destinataire_entity_id: laboratoire.id,
+          statut_logistique: TrichineStatutLogistiqueFTP.RECUE,
+          statut_analytique: TrichineStatutAnalyse.EN_COURS_ANALYSES,
+          date_envoi: dayjs().subtract(2, 'day').toDate(),
+        },
+      });
+      let sequenceEchantillon = 0;
+      for (const [reference_pool, bracelets] of Object.entries(poolsParReference)) {
+        const pool = await prisma.trichinePool.create({
+          data: {
+            reference_pool,
+            cree_par_user_id: svi.id,
+            cree_par_entity_id: sviEntityId,
+            type: TrichineType.INITIAL,
+            date_constitution: datePrelevement,
+            date_reception: dayjs().subtract(1, 'day').toDate(),
+            statut: TrichineStatutAnalyse.EN_COURS_ANALYSES,
+          },
+        });
+        await prisma.trichinePoolFTP.create({ data: { pool_id: pool.id, ftp_id: ftp.id } });
+        for (const bracelet of bracelets) {
+          sequenceEchantillon++;
+          await prisma.trichineEchantillon.create({
+            data: {
+              reference_echantillon: `E-26-SVI01-000${sequenceEchantillon}`,
+              zacharie_carcasse_id: `${fei.numero}_${bracelet}`,
+              preleve_par_user_id: svi.id,
+              preleve_par_entity_id: sviEntityId,
+              type: TrichineType.INITIAL,
+              site_prelevement: TrichineSitePrelevement.PILIER_DIAPHRAGME,
+              masse_grammes: 5,
+              date_prelevement: datePrelevement,
+              statut: TrichineStatutAnalyse.EN_COURS_ANALYSES,
+              pool_id: pool.id,
+            },
+          });
+        }
+      }
+      console.log(`FTP ${ftp.numero_fiche} reçue par ${laboratoire.nom_d_usage} (fei ${fei.numero})`);
     }
     if (role === FeiOwnerRole.COMMERCE_DE_DETAIL) {
       const fei = await prisma.fei.create({ data: feiTransmittedByPremierDetenteurToCommerceDeDetail });
