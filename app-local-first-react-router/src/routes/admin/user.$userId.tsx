@@ -26,6 +26,7 @@ import type {
   AdminUserNotificationsResponse,
 } from '@api/src/types/responses';
 import { Link, useParams } from 'react-router';
+import { AdminHistoryTimeline } from './history-timeline';
 import Chargement from '@app/components/Chargement';
 import { Highlight } from '@codegouvfr/react-dsfr/Highlight';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
@@ -376,6 +377,10 @@ export default function AdminUser() {
   tabs.push({
     tabId: 'Notifications',
     label: 'Notifications',
+  });
+  tabs.push({
+    tabId: 'Historique',
+    label: 'Historique',
   });
 
   if (!user.id) {
@@ -837,6 +842,12 @@ export default function AdminUser() {
         {selectedTabId === 'Fiches' && <UserFeis userId={user.id} />}
         {selectedTabId === 'Carcasses' && <UserCarcasses userId={user.id} />}
         {selectedTabId === 'Notifications' && <UserNotificationsLogs userId={user.id} />}
+        {selectedTabId === 'Historique' && (
+          <AdminHistoryTimeline
+            type="user"
+            id={user.id}
+          />
+        )}
         <div className="mt-6 mb-16 ml-6">
           <a
             className="fr-link fr-icon-arrow-up-fill fr-link--icon-left"
