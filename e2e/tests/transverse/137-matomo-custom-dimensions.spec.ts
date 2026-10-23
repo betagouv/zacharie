@@ -47,8 +47,12 @@ async function getLastCustomDimension(page: Page, dimensionId: number): Promise<
   }, dimensionId);
 }
 
-test('public pages (logged out): custom dimension "non connecté" + "non admin"', async ({ page }) => {
-  for (const route of PUBLIC_ROUTES) {
+// un test (donc une page neuve) par route : en dev Vite chaque page charge ~490 modules, et enchaîner
+// tous les rechargements dans le même onglet finit en net::ERR_INSUFFICIENT_RESOURCES côté Chromium
+for (const route of PUBLIC_ROUTES) {
+  test(`public page ${route} (logged out): custom dimension "non connecté" + "non admin"`, async ({
+    page,
+  }) => {
     await page.goto(route);
     await waitForCustomDimension(page);
 
@@ -57,8 +61,8 @@ test('public pages (logged out): custom dimension "non connecté" + "non admin"'
 
     expect.soft(connexion, `${route}: expected "non connecté"`).toBe('non connecté');
     expect.soft(admin, `${route}: expected "non admin"`).toBe('non admin');
-  }
-});
+  });
+}
 
 test('logged-in non-admin: custom dimension "connecté" + "non admin"', async ({ page }) => {
   await connectWith(page, 'examinateur@example.fr');
