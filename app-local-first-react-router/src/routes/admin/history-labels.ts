@@ -8,11 +8,12 @@ export const HISTORY_KINDS: Array<{ value: AdminHistoryKind; label: string; clas
   { value: 'admin', label: 'Action admin', className: 'bg-purple-100 text-purple-800' },
 ];
 
-export const HISTORY_SUBJECT_TYPES: Array<{ value: AdminHistorySubjectType; label: string }> = [
-  { value: 'fei', label: 'Fiche' },
-  { value: 'carcasse', label: 'Carcasse' },
-  { value: 'carcasse_intermediaire', label: 'Ligne intermédiaire' },
-  { value: 'user', label: 'Utilisateur' },
-  { value: 'entity', label: 'Entité' },
-  { value: 'user_entity', label: 'Rattachement' },
-];
+export const HISTORY_SUBJECT_TYPES: Array<{ value: AdminHistorySubjectType; label: string; plural: string }> =
+  [
+    { value: 'fei', label: 'Fiche', plural: 'fiches' },
+    { value: 'carcasse', label: 'Carcasse', plural: 'carcasses' },
+    { value: 'carcasse_intermediaire', label: 'Ligne intermédiaire', plural: 'lignes intermédiaires' },
+    { value: 'user', label: 'Utilisateur', plural: 'utilisateurs' },
+    { value: 'entity', label: 'Entité', plural: 'entités' },
+    { value: 'user_entity', label: 'Rattachement', plural: 'rattachements' },
+  ];
