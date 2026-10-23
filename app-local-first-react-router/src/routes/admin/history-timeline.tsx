@@ -39,61 +39,155 @@ function hasDetails(details: unknown) {
   return Object.values(details).some((value) => value !== null && value !== undefined);
 }
 
-function HistoryEventRow({ event }: { event: AdminHistoryEvent }) {
-  const [opened, setOpened] = useState(false);
-  const kind = HISTORY_KINDS.find((option) => option.value === event.kind);
-  const subjectType = HISTORY_SUBJECT_TYPES.find((option) => option.value === event.subject.type)?.label;
+// Au-delà, les champs modifiés d'un événement sont repliés
+const VISIBLE_CHANGES = 3;
+
+type EventGroup = { key: string; events: Array<AdminHistoryEvent> };
+
+// Événements identiques (même minute, même auteur, mêmes changements) réunis en une ligne : une modification
+// de fiche recopiée sur chacune de ses carcasses n'apparaît qu'une fois
+function groupEvents(events: Array<AdminHistoryEvent>) {
+  const groups = new Map<string, EventGroup>();
+  for (const event of events) {
+    const key = JSON.stringify([
+      dayjs(event.date).format('YYYY-MM-DD HH:mm'),
+      event.kind,
+      event.title,
+      event.author_id ?? event.author_email,
+      event.subject.type,
+      event.changes,
+      event.details,
+    ]);
+    const group = groups.get(key);
+    if (group) group.events.push(event);
+    else groups.set(key, { key, events: [event] });
+  }
+  return [...groups.values()];
+}
+
+// Les événements arrivent du plus récent au plus ancien : chaque jour forme un bloc continu
+function groupByDay(events: Array<AdminHistoryEvent>) {
+  const days: Array<{ day: string; events: Array<AdminHistoryEvent> }> = [];
+  for (const event of events) {
+    const day = dayjs(event.date).format('YYYY-MM-DD');
+    if (days.at(-1)?.day === day) days.at(-1)!.events.push(event);
+    else days.push({ day, events: [event] });
+  }
+  return days;
+}
+
+function dayLabel(day: string) {
+  if (dayjs(day).isSame(dayjs(), 'day')) return "Aujourd'hui";
+  if (dayjs(day).isSame(dayjs().subtract(1, 'day'), 'day')) return 'Hier';
+  return dayjs(day).format('dddd D MMMM YYYY');
+}
+
+function SubjectLink({ subject }: { subject: AdminHistoryEvent['subject'] }) {
+  if (!subject.link_type || !subject.link_id) return <span>{subject.label ?? subject.id}</span>;
   return (
-    <li className="border-b border-gray-200 py-2">
-      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-xs">
-        <span className="text-gray-500 tabular-nums">{dayjs(event.date).format('DD/MM/YYYY HH:mm:ss')}</span>
-        <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${kind?.className ?? ''}`}>
+    <Link
+      to={`${LINK_PATHS[subject.link_type]}${encodeURIComponent(subject.link_id)}`}
+      className="text-blue-600 underline"
+    >
+      {subject.label ?? subject.id}
+    </Link>
+  );
+}
+
+function HistoryGroupRow({ group }: { group: EventGroup }) {
+  const [showDetails, setShowDetails] = useState(false);
+  const [showSubjects, setShowSubjects] = useState(false);
+  const [showAllChanges, setShowAllChanges] = useState(false);
+  const [event] = group.events;
+  const kind = HISTORY_KINDS.find((option) => option.value === event.kind);
+  const subjectType = HISTORY_SUBJECT_TYPES.find((option) => option.value === event.subject.type);
+  const author = event.author_email ?? event.author_id;
+  const changes = showAllChanges ? event.changes : event.changes.slice(0, VISIBLE_CHANGES);
+  const hiddenChanges = event.changes.length - changes.length;
+  return (
+    <li className="border-b border-gray-100 py-1.5 text-xs">
+      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+        <span
+          className="w-10 shrink-0 text-gray-500 tabular-nums"
+          title={dayjs(event.date).format('DD/MM/YYYY HH:mm:ss')}
+        >
+          {dayjs(event.date).format('HH:mm')}
+        </span>
+        <span className={`rounded-full px-1.5 text-[10px] font-semibold ${kind?.className ?? ''}`}>
           {kind?.label ?? event.kind}
         </span>
         <span className="font-semibold">{eventTitle(event)}</span>
-        {event.subject.link_type && event.subject.link_id ? (
+        {group.events.length > 1 ? (
+          <button
+            type="button"
+            className="text-blue-600 underline"
+            aria-expanded={showSubjects}
+            onClick={() => setShowSubjects(!showSubjects)}
+          >
+            {group.events.length} {subjectType?.plural}
+          </button>
+        ) : event.subject.link_type && event.subject.link_id ? (
           <span>
-            <span className="text-gray-500">{subjectType} </span>
-            <Link
-              to={`${LINK_PATHS[event.subject.link_type]}${encodeURIComponent(event.subject.link_id)}`}
-              className="text-blue-600 underline"
-            >
-              {event.subject.label ?? event.subject.id}
-            </Link>
+            <span className="text-gray-500">{subjectType?.label} </span>
+            <SubjectLink subject={event.subject} />
           </span>
         ) : null}
-        <span className="text-gray-500">par {event.author_email ?? event.author_id ?? 'auteur inconnu'}</span>
+        <span
+          className="text-gray-500"
+          title={author ?? undefined}
+        >
+          par {author ? author.split('@')[0] : 'auteur inconnu'}
+        </span>
         {hasDetails(event.details) && (
           <button
             type="button"
             className="text-blue-600 underline"
-            aria-expanded={opened}
-            onClick={() => setOpened(!opened)}
+            aria-expanded={showDetails}
+            onClick={() => setShowDetails(!showDetails)}
           >
-            {opened ? 'Masquer' : 'Détails'}
+            {showDetails ? 'Masquer' : 'Détails'}
           </button>
         )}
       </div>
-      {event.changes.length > 0 && (
-        <table className="mt-1 w-full border-collapse text-xs">
-          <tbody>
-            {event.changes.map((change) => (
-              <tr
-                key={change.field}
-                className="align-top"
-              >
-                <td className="w-1/4 py-0.5 pr-2 font-mono text-gray-600">{change.field}</td>
-                <td className="w-3/8 py-0.5 pr-2 break-all text-red-800 line-through decoration-red-300">
-                  {formatValue(change.before)}
-                </td>
-                <td className="w-3/8 py-0.5 break-all text-green-800">{formatValue(change.after)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {showSubjects && (
+        <p className="m-0 mt-0.5 ml-12 flex flex-wrap gap-x-2">
+          {group.events.map((groupEvent) => (
+            <SubjectLink
+              key={groupEvent.id}
+              subject={groupEvent.subject}
+            />
+          ))}
+        </p>
       )}
-      {opened && (
-        <pre className="m-0 mt-1 overflow-x-auto rounded bg-gray-50 p-2 text-[11px] whitespace-pre-wrap">
+      {changes.length > 0 && (
+        <ul className="m-0 mt-0.5 ml-12 list-none p-0">
+          {changes.map((change) => (
+            <li
+              key={change.field}
+              className="flex gap-2"
+            >
+              <span className="shrink-0 font-mono text-gray-500">{change.field}</span>
+              <span className="min-w-0 break-all">
+                <span className="text-gray-400">{formatValue(change.before)}</span> →{' '}
+                {formatValue(change.after)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {(hiddenChanges > 0 || showAllChanges) && event.changes.length > VISIBLE_CHANGES && (
+        <button
+          type="button"
+          className="mt-0.5 ml-12 text-blue-600 underline"
+          onClick={() => setShowAllChanges(!showAllChanges)}
+        >
+          {showAllChanges
+            ? 'Replier'
+            : `+ ${hiddenChanges} autre${hiddenChanges > 1 ? 's' : ''} champ${hiddenChanges > 1 ? 's' : ''}`}
+        </button>
+      )}
+      {showDetails && (
+        <pre className="m-0 mt-1 ml-12 overflow-x-auto rounded bg-gray-50 p-2 text-[11px] whitespace-pre-wrap">
           {JSON.stringify(event.details, null, 2)}
         </pre>
       )}
@@ -104,14 +198,23 @@ function HistoryEventRow({ event }: { event: AdminHistoryEvent }) {
 export function AdminHistoryEvents({ events }: { events: Array<AdminHistoryEvent> }) {
   if (!events.length) return <p className="mt-4 text-sm text-gray-500">Aucun événement.</p>;
   return (
-    <ul className="m-0 list-none p-0">
-      {events.map((event) => (
-        <HistoryEventRow
-          key={event.id}
-          event={event}
-        />
+    <div>
+      {groupByDay(events).map(({ day, events: dayEvents }) => (
+        <section key={day}>
+          <h4 className="m-0 mt-3 border-b border-gray-300 pb-1 text-sm font-bold first-letter:uppercase">
+            {dayLabel(day)}
+          </h4>
+          <ul className="m-0 list-none p-0">
+            {groupEvents(dayEvents).map((group) => (
+              <HistoryGroupRow
+                key={group.key}
+                group={group}
+              />
+            ))}
+          </ul>
+        </section>
       ))}
-    </ul>
+    </div>
   );
 }
 
