@@ -46,7 +46,8 @@ test("l'historique d'une fiche montre les modifications de ses carcasses, avec l
     .filter({ hasText: 'deleted_at' });
   await expect(modification).toBeVisible({ timeout: 10000 });
   await expect(modification).toContainText('Modification');
-  await expect(modification).toContainText('par admin@example.fr');
+  // l'auteur est affiché sans le domaine de son email, l'email complet est au survol
+  await expect(modification.getByTitle('admin@example.fr')).toHaveText('par admin');
 
   const adminAction = page.getByRole('listitem').filter({ hasText: 'Suppression de carcasse' });
   await expect(adminAction).toContainText('Action admin');
@@ -55,8 +56,12 @@ test("l'historique d'une fiche montre les modifications de ses carcasses, avec l
   await page.goto('http://localhost:3290/app/admin/historique');
   await page.getByLabel("Email de l'auteur").fill('admin@example.fr');
   await expect(
-    page.getByRole('listitem').filter({ hasText: 'Carcasse MM-001-001' }).filter({ hasText: 'deleted_at' })
-  ).toContainText('par admin@example.fr', { timeout: 10000 });
+    page
+      .getByRole('listitem')
+      .filter({ hasText: 'Carcasse MM-001-001' })
+      .filter({ hasText: 'deleted_at' })
+      .getByTitle('admin@example.fr')
+  ).toHaveText('par admin', { timeout: 10000 });
 });
 
 test("l'historique d'un utilisateur montre le champ modifié par l'admin", async ({ page }) => {
@@ -81,6 +86,6 @@ test("l'historique d'un utilisateur montre le champ modifié par l'admin", async
     .filter({ hasText: 'prenom' });
   await expect(modification).toContainText('Prénom modifié', { timeout: 10000 });
   const adminAction = page.getByRole('listitem').filter({ hasText: 'Modification d’utilisateur' });
-  await expect(adminAction).toContainText('par admin@example.fr');
+  await expect(adminAction.getByTitle('admin@example.fr')).toHaveText('par admin');
   await expect(adminAction).toContainText('Prénom modifié');
 });
