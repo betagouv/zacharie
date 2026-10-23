@@ -518,7 +518,10 @@ export interface AdminCcgImportResponse {
   error: string;
 }
 
-// Import de résultats labo depuis un export LIMS (cf doc/trichine-import-lims.md)
+// Import de résultats labo : fichier CSV au format Zacharie (cf utils/lims-parse.ts)
+// Ce que devient chaque carcasse d'un pool une fois le résultat appliqué
+export type PoolResultEffet = 'liberees' | 'en_attente_confirmation' | 'a_saisir' | 'decision_a_prendre';
+
 export type LimsResultRowStatus = 'matched' | 'unmatched' | 'invalid' | 'conflict';
 
 export interface LimsResultRow {
@@ -535,6 +538,14 @@ export interface LimsResultRow {
   status: LimsResultRowStatus;
   // Raison quand status ≠ matched, ou avertissement sur une ligne matched (référence interne ignorée)
   message?: string;
+  // Lignes matched : ce que l'import va faire dans Zacharie (cf describePoolResultActions)
+  effet?: PoolResultEffet;
+  nb_carcasses?: number;
+  actions?: string[];
+  // Référence Zacharie du pool (la ligne peut l'avoir désigné par l'alias du laboratoire)
+  reference_pool_zacharie?: string;
+  // Fiche par laquelle le pool est arrivé : elle se clôture quand tous ses pools ont un résultat
+  ftp?: { numero_fiche: string; recue: boolean; pools_sans_resultat: string[] };
 }
 
 export interface LaboResultsPreviewResponse {

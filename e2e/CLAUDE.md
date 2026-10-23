@@ -30,6 +30,7 @@ Emails are semantic, one per role, all on `@example.fr`. Password for every acco
 - SVI : `svi@example.fr`, `svi-1-bis@example.fr` (2e membre de SVI 1), `svi-2@example.fr`, `svi-nouveau@example.fr`
 - Circuit court : `commerce-de-detail@example.fr`, `commerce-de-detail-nouveau@example.fr`
 - Fédérations : `fdc@example.fr` (FDC Allier 03), `frc@example.fr` (FRC Auvergne-Rhône-Alpes), `fnc@example.fr` (FNC). Tous ADMIN de l'entité fédération. `fdc@`/`frc@` sont chasseurs (onglet « Tableau de bord Fédération ») ; `fnc@` a le rôle `FEDERATION` (sans être chasseur, `/app/federation`). Le périmètre vient de `Entity.scope_departements_codes`
+- Laboratoire : `laboratoire@example.fr` (LVD « Laboratoire 1 », code trichine `LV01`) — créé **uniquement** par le seed `LABORATOIRE_FTP_RECUE`
 - Admin Zacharie : `admin@example.fr` (chasseur + `isZacharieAdmin`). Le login le renvoie sur `/app/chasseur` ; `/app/admin` exige ProConnect (simulé en test sur `/mock-proconnect`, voir `doc/proconnect-admin.md`)
 
 Codes établissement trichine (`Entity.code_trichine`, posés en dur par le seed — ils s'intercalent

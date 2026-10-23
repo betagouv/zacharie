@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { Link } from 'react-router';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Table } from '@codegouvfr/react-dsfr/Table';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
@@ -7,6 +8,7 @@ import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import type { LimsResultRow, LimsResultRowStatus } from '@api/src/types/responses';
 import { importResultats, previewResultatsImport, type LimsImportRow } from '@app/services/laboratoire';
 import { resultatAnalyseLabels } from '@app/utils/trichine';
+import { computeImportRecap } from '@app/utils/trichine-import-recap';
 
 type Step = 'upload' | 'preview' | 'result';
 
@@ -80,7 +82,7 @@ export default function LaboratoireResultsImport() {
       );
       setStep('preview');
     } catch {
-      setError("Erreur lors de la lecture du fichier. Vérifiez qu'il s'agit d'un CSV ou d'un XML valide.");
+      setError("Erreur lors de la lecture du fichier. Vérifiez qu'il s'agit d'un CSV valide.");
     } finally {
       setLoading(false);
       // reset input pour pouvoir re-uploader le même fichier
@@ -149,6 +151,9 @@ export default function LaboratoireResultsImport() {
     },
     { matched: 0, conflict: 0, unmatched: 0, invalid: 0 } as Record<LimsResultRowStatus, number>
   );
+  const recap = computeImportRecap(
+    rows.filter((row, index) => row.status === 'matched' && selected.has(index))
+  );
 
   return (
     <div className="py-4">
@@ -167,13 +172,27 @@ export default function LaboratoireResultsImport() {
       {step === 'upload' && (
         <div className="mb-8">
           <p className="mb-4">
-            Déposez l'export de résultats de votre LIMS (fichier <code>.csv</code> ou <code>.xml</code>). Les
-            résultats sont rapprochés des pools par leur référence (<code>P-…</code>). Rien n'est enregistré
-            avant votre confirmation à l'étape suivante.
+            Déposez un fichier <code>.csv</code> au format Zacharie. Les résultats sont rapprochés des pools
+            par leur référence Zacharie (<code>P-…</code>) ou par votre référence interne. Avant d'enregistrer
+            quoi que ce soit, Zacharie vous montre ce que l'import va faire, et vous choisissez les lignes à
+            importer.
           </p>
+          <ul className="mb-4">
+            <li>
+              <Link to="/app/laboratoire/results/format">Format du fichier à respecter</Link>
+            </li>
+            <li>
+              <a
+                href="/modele-import-resultats-trichine.csv"
+                download
+              >
+                Télécharger le modèle (CSV)
+              </a>
+            </li>
+          </ul>
           <input
             type="file"
-            accept=".csv,.xml,.txt"
+            accept=".csv"
             onChange={handleFileChange}
             disabled={loading}
             className="fr-input"
@@ -219,7 +238,7 @@ export default function LaboratoireResultsImport() {
               fixed
               noCaption
               className="[&_td]:align-middle"
-              headers={['Import', 'Statut', 'Réf. pool', 'Résultat', 'Détail']}
+              headers={['Import', 'Statut', 'Réf. pool', 'Résultat', 'Ce que l’import fait dans Zacharie']}
               data={rows.map((row, index) => [
                 row.status === 'matched' ? (
                   <Checkbox
@@ -246,10 +265,50 @@ export default function LaboratoireResultsImport() {
                 </Badge>,
                 row.reference_pool,
                 resultatLabel(row),
-                row.message ?? '',
+                <div key="detail">
+                  {row.message && <p className="mb-1 text-sm">{row.message}</p>}
+                  {row.actions && (
+                    <ul className="mb-0 text-sm">
+                      {row.actions.map((action) => (
+                        <li key={action}>{action}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>,
               ])}
             />
           </div>
+          {selected.size > 0 && (
+            <div className="mb-4 bg-[var(--background-alt-blue-france)] p-4">
+              <h2 className="fr-h6 mb-2">Si vous importez les {selected.size} ligne(s) cochée(s)</h2>
+              <ul className="mb-0">
+                <li>{recap.pools} pool(s) reçoivent leur résultat</li>
+                {recap.carcasses.liberees > 0 && (
+                  <li>{recap.carcasses.liberees} carcasse(s) libérée(s) côté trichine (résultat négatif)</li>
+                )}
+                {recap.confirmationsLnr > 0 && (
+                  <li>
+                    {recap.confirmationsLnr} pool(s) transmis au LNR pour confirmation (
+                    {recap.carcasses.en_attente_confirmation} carcasse(s) bloquée(s)) : une fiche de
+                    transmission par pool, à imprimer et joindre au colis
+                  </li>
+                )}
+                {recap.carcasses.a_saisir > 0 && (
+                  <li>{recap.carcasses.a_saisir} carcasse(s) à saisir (trichine confirmée)</li>
+                )}
+                {recap.carcasses.decision_a_prendre > 0 && (
+                  <li>
+                    {recap.carcasses.decision_a_prendre} carcasse(s) en attente d’une décision (parasite
+                    détecté)
+                  </li>
+                )}
+                {recap.ftpsCloturees.length > 0 && (
+                  <li>Fiche(s) de transmission clôturée(s) : {recap.ftpsCloturees.join(', ')}</li>
+                )}
+                <li>Les émetteurs concernés sont prévenus par email</li>
+              </ul>
+            </div>
+          )}
 
           <div className="flex flex-wrap gap-4">
             <Button

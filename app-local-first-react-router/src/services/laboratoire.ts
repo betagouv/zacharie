@@ -246,7 +246,7 @@ export function documentFtpPath(ftpId: string, documentId: string) {
   return `/laboratoire/ftp/${ftpId}/document/${documentId}`;
 }
 
-// Import de résultats depuis un export LIMS (cf doc/trichine-import-lims.md)
+// Import de résultats : fichier CSV au format Zacharie (page /app/laboratoire/results/format)
 export type LimsImportRow = {
   reference_pool: string;
   resultat_analyse: TrichineResultatAnalyse;
@@ -257,7 +257,7 @@ export type LimsImportRow = {
   commentaire?: string;
 };
 
-// content = fichier encodé en base64 (parsing + mapping côté serveur)
+// content = fichier CSV encodé en base64 (lecture côté serveur)
 export function previewResultatsImport(body: { filename?: string; content: string }) {
   return API.post({ path: '/laboratoire/results/preview', body }) as Promise<LaboResultsPreviewResponse>;
 }
