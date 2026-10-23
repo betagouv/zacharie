@@ -3,6 +3,7 @@ import EtgLayout from './etg-layout';
 import EtgFiches from './etg-fiches';
 import Contact from '@app/routes/contact';
 import EtgCarcasses from './etg-carcasses';
+import EtgTableauDeBord from './etg-tableau-de-bord';
 import EtgOnboardingCoordonnees from './onboarding/1-coordonnees';
 import EtgOnboardingEntreprise from './onboarding/2-entreprise';
 import EtgProfilCoordonnees from './profil/etg-coordonnees';
@@ -33,6 +34,10 @@ export default function RouterEtg() {
       <Route
         path="carcasses"
         element={<EtgCarcasses />}
+      />
+      <Route
+        path="tableau-de-bord"
+        element={<EtgTableauDeBord />}
       />
       <Route
         path="utilisateurs"
