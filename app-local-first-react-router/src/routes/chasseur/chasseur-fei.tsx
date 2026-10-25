@@ -24,6 +24,8 @@ import DestinataireSelectPremierDetenteur, {
 } from './premier-detenteur-select-next';
 import ExaminateurInitialDeleteFei from './examinateur-initial-delete-fei';
 import DateHeureValidationAlerts from '@app/components/DateHeureValidationAlerts';
+import ZacharieChat from '@app/components/ZacharieChat';
+import useZacharieEasterEgg from '@app/utils/useZacharieEasterEgg';
 import ChasseurHeaderFiche from './chasseur-header-fiche';
 import { track } from '@app/services/matomo';
 import type { MatomoName } from '@app/services/matomo-events';
@@ -417,6 +419,16 @@ function FEIChasseurLoaded() {
 
   const premierDetenteurIsLocked = useMemo(() => carcasses.some(isPremierDetenteurVerrouille), [carcasses]);
 
+  // à la fermeture de l'assistant Zacharie, les champs non contrôlés (defaultValue) de la date et des
+  // heures sont remontés pour reprendre les valeurs écrites par l'assistant
+  const [assistantClosedCount, setAssistantClosedCount] = useState(0);
+  const zacharieChat = useZacharieEasterEgg(
+    canEdit &&
+      fei.examinateur_initial_user_id === user.id &&
+      !fei.examinateur_initial_approbation_mise_sur_le_marche &&
+      !fei.deleted_at
+  );
+
   const submitIsDisabled = useMemo(() => {
     if (!user.activated) return true;
     if (!showValidation) return true;
@@ -427,6 +439,16 @@ function FEIChasseurLoaded() {
   return (
     <>
       <title>{`${params.fei_numero} | Zacharie | Ministère de l'Agriculture et de la Souveraineté Alimentaire`}</title>
+      {zacharieChat.isOpen && (
+        <ZacharieChat
+          feiNumero={fei.numero}
+          onUpdateFei={(nextFei) => updateFei(fei.numero, nextFei)}
+          onClose={() => {
+            zacharieChat.close();
+            setAssistantClosedCount((count) => count + 1);
+          }}
+        />
+      )}
       {fei.deleted_at && (
         <div className="bg-error-main-525 mb-2 py-2 text-center text-white">
           <p>Fiche supprimée</p>
@@ -444,6 +466,7 @@ function FEIChasseurLoaded() {
               <div className="bg-white p-4 md:p-8">
                 <h4 className="fr-h5">Informations de chasse</h4>
                 <Component
+                  key={`date-${assistantClosedCount}`}
                   label="Date de la chasse"
                   state={fieldHasError('date_mise_a_mort', showBloc1Errors) ? 'error' : 'default'}
                   stateRelatedMessage={fieldErrorMessage('date_mise_a_mort')}
@@ -588,6 +611,7 @@ function FEIChasseurLoaded() {
                   {allCarcassesConfirmed && (
                     <>
                       <Component
+                        key={`heure-mise-a-mort-${assistantClosedCount}`}
                         className="mt-4"
                         label="Heure du prélèvement de la première carcasse"
                         state={
@@ -630,6 +654,7 @@ function FEIChasseurLoaded() {
                       {!onlyPetitGibier && (
                         <>
                           <Component
+                            key={`heure-evisceration-${assistantClosedCount}`}
                             label="Heure d’éviscération de la dernière carcasse"
                             state={
                               fieldHasError('heure_evisceration_derniere_carcasse', showBloc2Errors)

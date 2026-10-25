@@ -37,6 +37,24 @@ describe('deriveCarcasseUiState — possession lue au niveau carcasse', () => {
     expect(deriveCarcasseUiState(carcasse, undefined, {})).toBe('creation');
   });
 
+  it('propriétaire initial désigné avant la validation de l\'examen → "creation"', () => {
+    const carcasse = c({
+      current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
+      next_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+      examinateur_initial_approbation_mise_sur_le_marche: null,
+    });
+    expect(deriveCarcasseUiState(carcasse, undefined, {})).toBe('creation');
+  });
+
+  it('examen validé, en attente du propriétaire initial → "transmise"', () => {
+    const carcasse = c({
+      current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
+      next_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+      examinateur_initial_approbation_mise_sur_le_marche: true,
+    });
+    expect(deriveCarcasseUiState(carcasse, undefined, {})).toBe('transmise');
+  });
+
   it('carcasse transmise à un ETG (next_owner = ETG) → "transmise"', () => {
     const carcasse = c({
       current_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,

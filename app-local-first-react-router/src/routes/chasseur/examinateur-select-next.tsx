@@ -1,24 +1,22 @@
 import { useMemo, useState } from 'react';
 import { Input } from '@codegouvfr/react-dsfr/Input';
-import { Prisma, Entity, UserRoles, EntityTypes, FeiOwnerRole } from '@prisma/client';
+import { Prisma, Entity } from '@prisma/client';
 import type { UserForFeiResponse } from '@api/src/types/responses';
 import type { UserForFei } from '~/src/types/user';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Select } from '@codegouvfr/react-dsfr/Select';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import useZustandStore from '@app/zustand/store';
-import { syncData } from '@app/utils/sync-data';
 import useUser from '@app/zustand/user';
 import { useNavigate, useParams } from 'react-router';
 import { useIsOnline } from '@app/utils-offline/use-is-offline';
-import { createHistoryInput } from '@app/utils/create-history-entry';
-import { getCarcasseTransmission } from '@app/utils/get-carcasses-transmission';
 import API from '@app/services/api';
 import { usePrefillPremierDétenteurInfos } from '@app/utils/usePrefillPremierDétenteur';
-import { useEntitiesIdsWorkingDirectlyFor, useDetenteursInitiaux } from '@app/utils/get-entity-relations';
-import { CarcasseTransmission } from '@app/types/carcasse';
-import { useCarcassesForFei } from '@app/utils/get-carcasses-for-fei';
 import { track } from '@app/services/matomo';
+import {
+  useDesignerPremierDetenteur,
+  usePremierDetenteurOptions,
+} from '@app/utils/use-designer-premier-detenteur';
 
 type MissingField = 'date_mise_a_mort' | 'commune_mise_a_mort' | 'premier_detenteur';
 
@@ -42,27 +40,12 @@ export default function SelectNextForExaminateur({
   const navigate = useNavigate();
   const user = useUser((state) => state.user)!;
   const feis = useZustandStore((state) => state.feis);
-  const entities = useZustandStore((state) => state.entities);
-  const entitiesIdsWorkingDirectlyFor = useEntitiesIdsWorkingDirectlyFor();
   const fei = feis[params.fei_numero!];
-  const myCarcasses = useCarcassesForFei(params.fei_numero);
-  const detenteursInitiaux = useDetenteursInitiaux();
+  const { associationsDeChasse, detenteursInitiaux } = usePremierDetenteurOptions();
   const [showSearchUserByEmail, setShowSearchUserByEmail] = useState(false);
   const prefilledInfos = usePrefillPremierDétenteurInfos();
-  const associationsDeChasse = useMemo(() => {
-    const associationsDeChasse: typeof entities = {};
-    for (const entityId of Object.values(entitiesIdsWorkingDirectlyFor)) {
-      const entity = entities[entityId];
-      if (entity.type === EntityTypes.PREMIER_DETENTEUR) {
-        associationsDeChasse[entityId] = entity;
-      }
-    }
-    return associationsDeChasse;
-  }, [entities, entitiesIdsWorkingDirectlyFor]);
 
-  const updateFei = useZustandStore((state) => state.updateFei);
-  const updateCarcassesTransmission = useZustandStore((state) => state.updateCarcassesTransmission);
-  const addLog = useZustandStore((state) => state.addLog);
+  const designerPremierDetenteur = useDesignerPremierDetenteur(params.fei_numero!);
 
   const isOnline = useIsOnline();
 
@@ -87,16 +70,6 @@ export default function SelectNextForExaminateur({
     }
     return { nextOwnerUser: null, nextOwnerEntity: null };
   }, [detenteursInitiaux, associationsDeChasse, nextOwnerUserOrEntityId]);
-
-  const nextOwnerName = useMemo(() => {
-    if (nextOwnerUser) {
-      return `${nextOwnerUser.prenom} ${nextOwnerUser.nom_de_famille}`;
-    }
-    if (nextOwnerEntity) {
-      return nextOwnerEntity.nom_d_usage;
-    }
-    return '';
-  }, [nextOwnerUser, nextOwnerEntity]);
 
   const [showErrors, setShowErrors] = useState(false);
 
@@ -136,89 +109,11 @@ export default function SelectNextForExaminateur({
       return;
     }
     setShowErrors(false);
-    const nextIsMe = nextOwnerUserId === user.id;
-    const nextIsMyAssociation = !!nextOwnerEntity?.id;
-    let nextFei: Partial<typeof fei>;
-    let nextCarcassesTransmission: Partial<CarcasseTransmission> = {};
-    if (nextIsMe) {
-      nextFei = {
-        premier_detenteur_user_id: user.id,
-        premier_detenteur_offline: navigator.onLine ? false : true,
-        premier_detenteur_name_cache: `${user.prenom} ${user.nom_de_famille}`,
-        premier_detenteur_entity_id: null,
-      };
-      nextCarcassesTransmission = {
-        next_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
-        next_owner_user_id: user.id,
-        next_owner_user_name_cache: `${user.prenom} ${user.nom_de_famille}`,
-        next_owner_entity_id: null,
-        premier_detenteur_offline: navigator.onLine ? false : true,
-        premier_detenteur_user_id: user.id,
-        premier_detenteur_name_cache: `${user.prenom} ${user.nom_de_famille}`,
-        premier_detenteur_entity_id: null,
-      };
-    } else if (nextIsMyAssociation) {
-      nextFei = {
-        premier_detenteur_user_id: user.id,
-        premier_detenteur_name_cache: nextOwnerName,
-        premier_detenteur_entity_id: nextOwnerEntity.id,
-        premier_detenteur_offline: navigator.onLine ? false : true,
-      };
-      nextCarcassesTransmission = {
-        next_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
-        next_owner_user_id: user.id,
-        next_owner_user_name_cache: nextOwnerName,
-        next_owner_entity_id: nextOwnerEntity.id,
-        next_owner_entity_name_cache: nextOwnerEntity.nom_d_usage,
-        premier_detenteur_user_id: user.id,
-        premier_detenteur_offline: navigator.onLine ? false : true,
-        premier_detenteur_entity_id: nextOwnerEntity.id,
-        premier_detenteur_name_cache: nextOwnerName,
-      };
-    } else {
-      nextFei = {
-        premier_detenteur_user_id: nextOwnerUser?.id,
-        premier_detenteur_name_cache: nextOwnerName,
-        premier_detenteur_entity_id: nextOwnerEntity?.id ?? null,
-        premier_detenteur_offline: navigator.onLine ? false : true,
-      };
-      nextCarcassesTransmission = {
-        next_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
-        next_owner_user_id: nextOwnerUser?.id,
-        next_owner_user_name_cache: nextOwnerName,
-        next_owner_entity_id: nextOwnerEntity?.id ?? null,
-        next_owner_entity_name_cache: nextOwnerEntity?.nom_d_usage ?? null,
-        premier_detenteur_user_id: nextOwnerUser?.id,
-        premier_detenteur_offline: navigator.onLine ? false : true,
-        premier_detenteur_entity_id: nextOwnerEntity?.id ?? null,
-        premier_detenteur_name_cache: nextOwnerName,
-      };
-    }
-    updateCarcassesTransmission(
-      myCarcasses.map((c) => c.zacharie_carcasse_id),
-      nextCarcassesTransmission
-    );
-    updateFei(fei.numero, nextFei);
-    track(
-      'fiche',
-      'designer-premier-detenteur',
-      nextIsMe ? 'moi' : nextIsMyAssociation ? 'association' : 'autre-utilisateur'
-    );
-    addLog({
-      user_id: user.id,
-      user_role: UserRoles.CHASSEUR,
-      fei_numero: fei.numero,
-      action: 'examinateur-select-next',
-      history: createHistoryInput(
-        myCarcasses[0] ? getCarcasseTransmission(myCarcasses[0]) : null,
-        nextCarcassesTransmission
-      ),
-      entity_id: null,
-      zacharie_carcasse_id: null,
-      intermediaire_id: null,
-      carcasse_intermediaire_id: null,
+    designerPremierDetenteur({
+      ownerUser: nextOwnerUser,
+      ownerEntity: nextOwnerEntity,
+      isMe: nextOwnerUserId === user.id,
     });
-    syncData('examinateur-select-next');
   }
 
   const isFirstFei =
