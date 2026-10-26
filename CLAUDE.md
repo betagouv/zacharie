@@ -8,7 +8,7 @@ Zacharie is a French government application (beta.gouv.fr) for tracing game meat
 
 | Dossier                         | Stack                                                        | Rôle                             |
 | ------------------------------- | ------------------------------------------------------------ | -------------------------------- |
-| `api-express/`                  | Express + Prisma + PostgreSQL (Node.js >= 20, TS)            | API REST (port 3235)             |
+| `api-express/`                  | Express + Prisma + PostgreSQL (Node.js >= 22, TS)            | API REST (port 3235)             |
 | `app-local-first-react-router/` | React 19 + React Router 7 + Vite + DSFR + Tailwind + Zustand | Frontend local-first (port 3234) |
 | `expo/`                         | Expo (WebView wrapper)                                       | App mobile iOS/Android           |
 | `e2e/`                          | Playwright                                                   | Tests end-to-end                 |
@@ -211,7 +211,7 @@ Local-first sync and the disconnect/logout flow are deep topics — see @app-loc
 
 ## Conventions
 
-- Node.js >= 20 required; TypeScript throughout.
+- Node.js >= 22 required (version in `.nvmrc`); TypeScript throughout.
 - Pre-commit hook runs `prettier --write` per package via lint-staged + husky (`.lintstagedrc.mjs`). Prettier runs from within each package directory to match CI config resolution. Typecheck is NOT enforced at commit time — run `npm run typecheck` manually or rely on CI.
 
 ## CI
