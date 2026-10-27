@@ -144,8 +144,8 @@ export default function TrichineSection({ carcasse }: { carcasse: Carcasse }) {
                 )}
               </div>
               <p className="fr-text--sm fr-mb-0 mt-1">
-                {sitePrelevementLabels[echantillon.site_prelevement]} — {echantillon.masse_grammes} g —
-                prélevé le {dayjs(echantillon.date_prelevement).format('DD/MM/YYYY')}
+                {sitePrelevementLabels[echantillon.site_prelevement]} — au moins {echantillon.masse_grammes} g
+                — prélevé le {dayjs(echantillon.date_prelevement).format('DD/MM/YYYY')}
               </p>
               {echantillon.TrichinePool && (
                 <p className="fr-text--sm fr-mb-0 mt-1">
