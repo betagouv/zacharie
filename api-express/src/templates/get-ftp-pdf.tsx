@@ -109,8 +109,8 @@ const styles = StyleSheet.create({
   colEspece: { width: '11%' },
   colDate: { width: '12%' },
   colCommune: { width: '17%' },
-  colSite: { width: '19%' },
-  colMasse: { width: '7%', textAlign: 'right' },
+  colSite: { width: '16%' },
+  colMasse: { width: '10%', textAlign: 'right' },
 
   laboZone: { flexDirection: 'row', gap: 6, padding: 5, borderTopWidth: 1, borderTopColor: gris },
   laboField: { flex: 1, fontSize: 8, borderBottomWidth: 1, borderBottomColor: '#999999', paddingBottom: 9 },
@@ -352,7 +352,7 @@ export function TrichineFtpDocument({
                   {typeLabels[pool.type] ?? pool.type} — constitué le{' '}
                   {dayjs(pool.date_constitution).format('DD/MM/YYYY')} — {pool.TrichineEchantillons.length}{' '}
                   échantillon
-                  {pool.TrichineEchantillons.length > 1 ? 's' : ''} —{' '}
+                  {pool.TrichineEchantillons.length > 1 ? 's' : ''} — au moins{' '}
                   {pool.TrichineEchantillons.reduce((total, e) => total + e.masse_grammes, 0)} g
                 </Text>
                 {pool.Aliases.length > 0 && (
@@ -370,7 +370,7 @@ export function TrichineFtpDocument({
                 <Text style={[styles.th, styles.colDate]}>Mise à mort</Text>
                 <Text style={[styles.th, styles.colCommune]}>Commune</Text>
                 <Text style={[styles.th, styles.colSite]}>Site</Text>
-                <Text style={[styles.th, styles.colMasse]}>g</Text>
+                <Text style={[styles.th, styles.colMasse]}>Au moins (g)</Text>
               </View>
               {pool.TrichineEchantillons.map((echantillon) => (
                 <View key={echantillon.id} style={styles.tr}>

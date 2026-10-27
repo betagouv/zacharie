@@ -191,7 +191,7 @@ export default function LaboratoireEchantillons() {
                 dataKey: 'masse_grammes',
                 title: 'Masse',
                 small: true,
-                render: (echantillon) => `${echantillon.masse_grammes} g`,
+                render: (echantillon) => `au moins ${echantillon.masse_grammes} g`,
               },
               {
                 dataKey: 'date_prelevement',
