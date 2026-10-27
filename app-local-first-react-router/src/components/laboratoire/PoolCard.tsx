@@ -52,6 +52,11 @@ const LNR_RESULTS = [
   TrichineResultatAnalyse.PRESENCE_PARASITE_NON_IDENTIFIE,
   TrichineResultatAnalyse.POSITIF,
 ];
+// Résultats sur lesquels le laboratoire a vu des larves et peut indiquer leur nombre
+const RESULTATS_AVEC_LARVES: Array<TrichineResultatAnalyse> = [
+  TrichineResultatAnalyse.DOUTEUX,
+  ...LNR_RESULTS,
+];
 
 /** Saisie d'un premier résultat, ou correction d'un résultat déjà rendu. */
 export type ResultatMode = 'saisie' | 'correction';
@@ -181,6 +186,10 @@ export default function PoolCard({
       {resultatSaisi && (
         <ul className="fr-text--sm fr-mb-2w space-y-1">
           {pool.parasite_identifie && <li>Parasite identifié : {pool.parasite_identifie}</li>}
+          {pool.nombre_larves_lvd != null && (
+            <li>Larves comptées par le laboratoire agréé : {pool.nombre_larves_lvd}</li>
+          )}
+          {pool.nombre_larves_lnr != null && <li>Larves comptées par le LNR : {pool.nombre_larves_lnr}</li>}
           {pool.raison_refus && <li>Raison du refus : {pool.raison_refus}</li>}
           {pool.date_debut_analyse && (
             <li>Début d'analyse : {dayjs(pool.date_debut_analyse).format('DD/MM/YYYY')}</li>
@@ -243,6 +252,7 @@ export function ResultatModalContent({
 }) {
   const [resultat, setResultat] = useState<TrichineResultatAnalyse | ''>('');
   const [parasite, setParasite] = useState('');
+  const [nombreLarves, setNombreLarves] = useState('');
   const [dateDebut, setDateDebut] = useState('');
   const [dateFin, setDateFin] = useState(dayjs().format('YYYY-MM-DD'));
   const [referenceLabo, setReferenceLabo] = useState('');
@@ -264,6 +274,7 @@ export function ResultatModalContent({
   useEffect(() => {
     setResultat('');
     setParasite('');
+    setNombreLarves('');
     setDateDebut('');
     setDateFin(dayjs().format('YYYY-MM-DD'));
     setReferenceLabo('');
@@ -279,6 +290,7 @@ export function ResultatModalContent({
   const correction = mode === 'correction';
   const options = isLnr ? LNR_RESULTS : LVD_RESULTS;
   const parasiteRequis = resultat === TrichineResultatAnalyse.NON_NEGATIF;
+  const larvesSaisissables = !!resultat && RESULTATS_AVEC_LARVES.includes(resultat);
   const versLnr = resultat === TrichineResultatAnalyse.DOUTEUX;
   const reference = pool?.reference_pool ?? '';
 
@@ -333,6 +345,7 @@ export function ResultatModalContent({
     const payload = {
       resultat_analyse: resultat,
       parasite_identifie: parasiteRequis ? parasite.trim() : undefined,
+      nombre_larves: larvesSaisissables && nombreLarves ? Number(nombreLarves) : undefined,
       date_debut_analyse: dateDebut || undefined,
       date_fin_analyse: dateFin || undefined,
       // Seulement si le laboratoire l'a changée : celle déjà posée n'a pas à être revérifiée.
@@ -393,6 +406,7 @@ export function ResultatModalContent({
           !pool ||
           !resultat ||
           (parasiteRequis && !parasite.trim()) ||
+          (larvesSaisissables && !!nombreLarves && !(Number(nombreLarves) >= 1)) ||
           (correction && !raison.trim()) ||
           isSubmitting,
         onClick: enregistrer,
@@ -432,6 +446,20 @@ export function ResultatModalContent({
             type: 'text',
             value: parasite,
             onChange: (event) => setParasite(event.target.value),
+          }}
+        />
+      )}
+      {larvesSaisissables && (
+        <Input
+          label="Nombre de larves découvertes dans le pool (optionnel)"
+          hintText="Visible uniquement par les laboratoires"
+          nativeInputProps={{
+            type: 'number',
+            inputMode: 'numeric',
+            min: 1,
+            step: 1,
+            value: nombreLarves,
+            onChange: (event) => setNombreLarves(event.target.value),
           }}
         />
       )}

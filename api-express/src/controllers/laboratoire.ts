@@ -12,6 +12,7 @@ import {
   UserRoles,
 } from '@prisma/client';
 import prisma from '~/prisma';
+import { avecNombreLarves } from '~/prisma-omit';
 import { catchErrors } from '~/middlewares/errors';
 import { getArchivedOrFreshFtpPdf } from '~/utils/trichine-ftp-document';
 import {
@@ -199,7 +200,11 @@ function pickLaboLink(pool: LaboPool, context: LaboContext): LaboLink | null {
  * de l'utilisateur (le plus récent, hors brouillons).
  */
 async function findPoolForLabo(poolId: string, context: LaboContext) {
-  const pool = await prisma.trichinePool.findUnique({ where: { id: poolId }, include: poolForLaboInclude });
+  const pool = await prisma.trichinePool.findUnique({
+    where: { id: poolId },
+    include: poolForLaboInclude,
+    omit: avecNombreLarves,
+  });
   if (!pool || pool.deleted_at) return null;
   const link = pickLaboLink(pool, context);
   if (!link) return null;
@@ -240,6 +245,7 @@ async function findPoolsForLabo(references: string[], context: LaboContext) {
         { id: { in: aliasTrouves.map((alias) => alias.pool_id) } },
       ],
     },
+    omit: avecNombreLarves,
     include: {
       ...poolForLaboInclude,
       Aliases: { where: { entity_id: { in: context.entityIds } }, select: { reference: true } },
@@ -317,6 +323,7 @@ router.get(
         TrichinePoolFTPs: {
           include: {
             TrichinePool: {
+              omit: avecNombreLarves,
               include: {
                 ...trichineAliasesInclude,
                 // Uniquement pour compter les carcasses en attente d'IPM2 : la projection
@@ -384,6 +391,7 @@ router.get(
         TrichinePoolFTPs: {
           include: {
             TrichinePool: {
+              omit: avecNombreLarves,
               include: {
                 TrichineEchantillons: { where: { deleted_at: null }, include: echantillonLaboInclude },
                 Documents: { where: { deleted_at: null } },
@@ -482,6 +490,7 @@ router.get(
     if (!context) return;
     const pool = await prisma.trichinePool.findUnique({
       where: { reference_pool: req.params.reference },
+      omit: avecNombreLarves,
       include: {
         TrichineEchantillons: {
           where: { deleted_at: null },
@@ -1009,6 +1018,7 @@ function classifyLimsRow(
     existingResult: found.pool.resultat_analyse,
     resultat_analyse: mapped.resultat_analyse,
     parasite_identifie: mapped.parasite_identifie,
+    nombre_larves: mapped.nombre_larves,
     isLnr: found.ftp.DestinataireEntity.is_lnr,
   });
   if (invalid) {
@@ -1139,6 +1149,7 @@ const importSchema = z.object({
           Object.values(TrichineResultatAnalyse) as [TrichineResultatAnalyse, ...TrichineResultatAnalyse[]]
         ),
         parasite_identifie: z.string().optional(),
+        nombre_larves: z.number().int().min(1).optional(),
         date_debut_analyse: z.coerce.date().optional(),
         date_fin_analyse: z.coerce.date().optional(),
         reference_labo: z.string().optional(),
@@ -1263,6 +1274,7 @@ router.get(
     if (!context) return;
     const pools = await prisma.trichinePool.findMany({
       where: { deleted_at: null, TrichinePoolFTPs: laboFtpMatch(context.entityIds) },
+      omit: avecNombreLarves,
       include: {
         TrichineEchantillons: {
           where: { deleted_at: null },

@@ -531,6 +531,7 @@ export interface LimsResultRow {
   // Libellé brut du fichier, pour affichage
   raw_resultat: string;
   parasite_identifie?: string;
+  nombre_larves?: number;
   date_debut_analyse?: string;
   date_fin_analyse?: string;
   reference_labo?: string;
