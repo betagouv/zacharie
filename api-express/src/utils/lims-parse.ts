@@ -21,14 +21,22 @@ export type ImportColumn = (typeof IMPORT_COLUMNS)[number];
 
 export const IMPORT_REQUIRED_COLUMNS: Array<ImportColumn> = ['reference_pool', 'resultat_analyse'];
 
-// Valeur de la colonne resultat_analyse (normalisée) -> résultat Zacharie
-const RESULTAT_VALUES: Record<string, TrichineResultatAnalyse> = {
+// Valeur de la colonne resultat_analyse (normalisée) -> résultat Zacharie, selon le laboratoire.
+// « non_negatif » a le sens réglementaire de chaque laboratoire : pour un LVD, larve détectée à
+// confirmer par le LNR ; pour le LNR, parasite autre que la trichine.
+const RESULTAT_VALUES_LVD: Record<string, TrichineResultatAnalyse> = {
   negatif: TrichineResultatAnalyse.NEGATIF,
-  douteux: TrichineResultatAnalyse.DOUTEUX,
+  non_negatif: TrichineResultatAnalyse.DOUTEUX,
+};
+const RESULTAT_VALUES_LNR: Record<string, TrichineResultatAnalyse> = {
   non_negatif: TrichineResultatAnalyse.NON_NEGATIF,
   presence_parasite_non_identifie: TrichineResultatAnalyse.PRESENCE_PARASITE_NON_IDENTIFIE,
   positif: TrichineResultatAnalyse.POSITIF,
 };
+
+export function valeursResultatAcceptees(isLnr: boolean): Array<string> {
+  return Object.keys(isLnr ? RESULTAT_VALUES_LNR : RESULTAT_VALUES_LVD);
+}
 
 const DATE_COLUMNS: Array<ImportColumn> = ['date_debut_analyse', 'date_fin_analyse'];
 
@@ -85,14 +93,15 @@ export function parseLimsFile(content: string): Array<Record<string, string>> {
   return lines.map((line) => Object.fromEntries(columns.map((column, index) => [column, line[index] ?? ''])));
 }
 
-/** Lit une ligne brute selon le format Zacharie. */
-export function mapRow(raw: Record<string, string>): MappedLimsRow {
+/** Lit une ligne brute selon le format Zacharie, pour un LVD ou pour le LNR. */
+export function mapRow(raw: Record<string, string>, isLnr: boolean): MappedLimsRow {
   const get = (column: ImportColumn): string => (raw[column] != null ? String(raw[column]).trim() : '');
   const rawResultat = get('resultat_analyse');
   const dateInvalide = DATE_COLUMNS.find((column) => get(column) && !isValidIsoDate(get(column)));
   return {
     reference_pool: get('reference_pool'),
-    resultat_analyse: RESULTAT_VALUES[normalizeResultatValue(rawResultat)] ?? null,
+    resultat_analyse:
+      (isLnr ? RESULTAT_VALUES_LNR : RESULTAT_VALUES_LVD)[normalizeResultatValue(rawResultat)] ?? null,
     raw_resultat: rawResultat,
     parasite_identifie: get('parasite_identifie') || undefined,
     date_debut_analyse: get('date_debut_analyse') || undefined,

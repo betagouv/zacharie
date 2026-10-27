@@ -1,3 +1,3 @@
 reference_pool;resultat_analyse;parasite_identifie;date_debut_analyse;date_fin_analyse;reference_labo;commentaire
 P-26-EG01-0001;negatif;;2026-10-20;2026-10-21;LAB-2026-001;
-P-26-EG01-0002;douteux;;2026-10-20;2026-10-21;LAB-2026-002;Larve observée
+P-26-EG01-0002;non_negatif;;2026-10-20;2026-10-21;LAB-2026-002;Larve observée

@@ -40,7 +40,13 @@ import {
   resultatSchema,
   validateResultForPool,
 } from '~/utils/trichine-result';
-import { ImportFormatError, mapRow, parseLimsFile, type MappedLimsRow } from '~/utils/lims-parse';
+import {
+  ImportFormatError,
+  mapRow,
+  parseLimsFile,
+  valeursResultatAcceptees,
+  type MappedLimsRow,
+} from '~/utils/lims-parse';
 import { aliasReferenceRefusee, trichineAliasesInclude } from '~/utils/trichine-alias';
 import type { LaboResultsImportResponse, LaboResultsPreviewResponse, LimsResultRow } from '~/types/responses';
 
@@ -990,7 +996,11 @@ function classifyLimsRow(
     return { ...base, status: 'unmatched', message: 'Pool introuvable ou non destiné à votre laboratoire' };
   }
   if (!mapped.resultat_analyse) {
-    return { ...base, status: 'invalid', message: `Résultat non reconnu : « ${mapped.raw_resultat} »` };
+    return {
+      ...base,
+      status: 'invalid',
+      message: `Résultat non reconnu : « ${mapped.raw_resultat} ». Valeurs acceptées : ${valeursResultatAcceptees(found.ftp.DestinataireEntity.is_lnr).join(', ')}`,
+    };
   }
   if (erreur_format) {
     return { ...base, status: 'invalid', message: erreur_format };
@@ -1074,7 +1084,7 @@ router.post(
       return sendError(res, 400, 'Fichier illisible (CSV attendu)');
     }
 
-    const mapped = rawRows.map(mapRow).filter((row) => row.reference_pool);
+    const mapped = rawRows.map((raw) => mapRow(raw, context.isLnr)).filter((row) => row.reference_pool);
     const trouverPool = await findPoolsForLabo(
       mapped.map((row) => row.reference_pool),
       context

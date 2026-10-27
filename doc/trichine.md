@@ -698,7 +698,7 @@ Routes `/laboratoire/*` :
   - Action "Saisir résultat" → `NEGATIF` ou `DOUTEUX`
   - Si `DOUTEUX` : modal pour upload photos larves → génération auto FTP vers LNR
 - `/laboratoire/results/import` : import de résultats en masse par fichier CSV
-  - **Format unique imposé par Zacharie**, documenté aux laboratoires sur `/laboratoire/results/format` (+ modèle `modele-import-resultats-trichine.csv`). Pas de mapping par LIMS : c'est au laboratoire d'adapter son export. Colonnes obligatoires `reference_pool` + `resultat_analyse`, colonnes inconnues ignorées, dates `AAAA-MM-JJ`.
+  - **Format unique imposé par Zacharie**, documenté aux laboratoires sur `/laboratoire/results/format` (+ modèle `modele-import-resultats-trichine.csv`). Pas de mapping par LIMS : c'est au laboratoire d'adapter son export. Colonnes obligatoires `reference_pool` + `resultat_analyse`, colonnes inconnues ignorées, dates `AAAA-MM-JJ`. Valeurs de `resultat_analyse` selon le laboratoire : LVD `negatif` / `non_negatif` (→ `DOUTEUX`) ; LNR `positif` / `non_negatif` (→ `NON_NEGATIF`, `parasite_identifie` obligatoire) / `presence_parasite_non_identifie`.
   - Aperçu avant tout enregistrement : par ligne, statut (à importer / déjà résolu / introuvable / invalide) et les actions que l'import va faire dans Zacharie (carcasses libérées ou bloquées, FTP de confirmation LNR, emails, référence interne) ; récapitulatif des lignes cochées (dont les FTP qui se clôturent). Le laboratoire coche les lignes à importer.
   - Même chemin que la saisie manuelle (`applyPoolResult`) ; l'aperçu décrit ses effets via `describePoolResultActions`, à garder alignée.
 - `/laboratoire/profil/*` : coordonnées, accréditation, utilisateurs

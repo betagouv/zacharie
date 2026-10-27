@@ -10,7 +10,7 @@ const colonnes: Array<[string, string, string, string]> = [
     'P-26-EG01-0001',
   ],
   ['resultat_analyse', 'Oui', 'Résultat de l’analyse (valeurs ci-dessous)', 'negatif'],
-  ['parasite_identifie', 'Si non_negatif', 'Nom du parasite identifié', 'Sarcocystis'],
+  ['parasite_identifie', 'LNR, si non_negatif', 'Nom du parasite identifié', 'Sarcocystis'],
   ['date_debut_analyse', 'Non', 'Date de début de l’analyse, au format AAAA-MM-JJ', '2026-10-20'],
   [
     'date_fin_analyse',
@@ -24,7 +24,7 @@ const colonnes: Array<[string, string, string, string]> = [
 
 const valeurs: Array<[string, string, string]> = [
   ['negatif', 'LVD', 'Pas de larve : les carcasses du pool sont libérées'],
-  ['douteux', 'LVD', 'Larve détectée : le pool part automatiquement au LNR pour confirmation'],
+  ['non_negatif', 'LVD', 'Larve détectée : le pool part automatiquement au LNR pour confirmation'],
   ['positif', 'LNR', 'Trichine confirmée'],
   ['non_negatif', 'LNR', 'Parasite autre que la trichine (remplir parasite_identifie)'],
   ['presence_parasite_non_identifie', 'LNR', 'Parasite présent mais non identifié'],
@@ -82,7 +82,9 @@ export default function LaboratoireResultsFormat() {
 
       <h2 className="fr-h5">Valeurs de la colonne resultat_analyse</h2>
       <p>
-        Les majuscules et les accents sont ignorés : « Négatif », « NEGATIF » et « negatif » sont acceptés.
+        Les valeurs dépendent de votre laboratoire : <code>non_negatif</code> n’a pas le même sens pour un LVD
+        et pour le LNR. Les majuscules et les accents sont ignorés : « Négatif », « NEGATIF » et « negatif »
+        sont acceptés.
       </p>
       <div className="mb-6 overflow-x-auto">
         <Table
@@ -102,8 +104,8 @@ export default function LaboratoireResultsFormat() {
         <li>La valeur de résultat n'est pas dans la liste, ou n'est pas permise à votre laboratoire.</li>
         <li>Une date n'est pas au format AAAA-MM-JJ.</li>
         <li>
-          Le pool a déjà un résultat. Seul le LNR peut remplacer un résultat <code>douteux</code> par sa
-          confirmation.
+          Le pool a déjà un résultat. Seul le LNR peut remplacer un résultat <code>non_negatif</code> d’un LVD
+          par sa confirmation.
         </li>
       </ul>
       <p>
@@ -115,7 +117,7 @@ export default function LaboratoireResultsFormat() {
       <pre className="overflow-x-auto bg-[var(--background-alt-grey)] p-4 text-sm">
         {`reference_pool;resultat_analyse;parasite_identifie;date_debut_analyse;date_fin_analyse;reference_labo;commentaire
 P-26-EG01-0001;negatif;;2026-10-20;2026-10-21;LAB-2026-001;
-P-26-EG01-0002;douteux;;2026-10-20;2026-10-21;LAB-2026-002;Larve observée`}
+P-26-EG01-0002;non_negatif;;2026-10-20;2026-10-21;LAB-2026-002;Larve observée`}
       </pre>
     </div>
   );
