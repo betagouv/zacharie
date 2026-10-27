@@ -149,7 +149,7 @@ export default function PoolCard({
               >
                 <span className="font-semibold">{echantillon.reference_echantillon}</span>
                 {echantillon.Aliases.length > 0 && ` (${formatAliases(echantillon.Aliases)})`} —{' '}
-                {sitePrelevementLabels[echantillon.site_prelevement]} — {echantillon.masse_grammes} g
+                {sitePrelevementLabels[echantillon.site_prelevement]} — au moins {echantillon.masse_grammes} g
                 <br />
                 Carcasse {echantillon.Carcasse.numero_bracelet} ({echantillon.Carcasse.espece ?? '—'}) — mise
                 à mort le{' '}
