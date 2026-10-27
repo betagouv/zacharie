@@ -1094,18 +1094,23 @@ router.post(
       return sendError(res, 400, 'Fichier illisible (CSV attendu)');
     }
 
-    const mapped = rawRows.map((raw) => mapRow(raw, context.isLnr)).filter((row) => row.reference_pool);
+    const lignes = rawRows.filter((raw) => raw.reference_pool?.trim());
     const trouverPool = await findPoolsForLabo(
-      mapped.map((row) => row.reference_pool),
+      lignes.map((raw) => raw.reference_pool.trim()),
       context
     );
     const ftpIds = [
-      ...new Set(mapped.map((row) => trouverPool(row.reference_pool)?.ftp.id).filter(Boolean)),
+      ...new Set(lignes.map((raw) => trouverPool(raw.reference_pool.trim())?.ftp.id).filter(Boolean)),
     ] as string[];
     const poolsSansResultat = await poolsSansResultatParFtp(ftpIds);
     const rows: Array<LimsResultRow> = [];
-    for (const row of mapped) {
-      const found = trouverPool(row.reference_pool);
+    // Un pool ne reçoit qu'un résultat : seule sa première ligne importable dans le fichier est retenue
+    const poolsDejaRetenus = new Set<string>();
+    for (const raw of lignes) {
+      const found = trouverPool(raw.reference_pool.trim());
+      // non_negatif n'a pas le même sens pour un LVD et pour le LNR : on lit la valeur selon le
+      // laboratoire destinataire de la fiche par laquelle le pool est arrivé
+      const row = mapRow(raw, found ? found.ftp.DestinataireEntity.is_lnr : context.isLnr);
       const reference = row.reference_labo?.trim();
       // Une référence labo refusée n'empêche pas l'import du résultat : on prévient dès l'aperçu
       const referenceRefusee =
@@ -1118,6 +1123,18 @@ router.post(
             })
           : null;
       const classee = classifyLimsRow(row, found, referenceRefusee);
+      if (classee.status === 'matched' && poolsDejaRetenus.has(found!.pool.id)) {
+        rows.push({
+          ...classee,
+          status: 'conflict',
+          message: 'Ce pool apparaît plusieurs fois dans le fichier : seule sa première ligne est importée',
+          effet: undefined,
+          nb_carcasses: undefined,
+          actions: undefined,
+        });
+        continue;
+      }
+      if (classee.status === 'matched') poolsDejaRetenus.add(found!.pool.id);
       rows.push(
         classee.status === 'matched'
           ? {
@@ -1208,6 +1225,7 @@ router.post(
           results.push({
             reference_pool: row.reference_pool,
             ok: true,
+            ftp_confirmation: outcome.ftpConfirmation ?? undefined,
             avertissement: outcome.referenceIgnoree
               ? `Résultat appliqué, référence interne ignorée : ${outcome.referenceIgnoree}`
               : undefined,

@@ -6,19 +6,15 @@ import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import { Badge } from '@codegouvfr/react-dsfr/Badge';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import { Stepper } from '@codegouvfr/react-dsfr/Stepper';
-import type { LimsResultRow, LimsResultRowStatus } from '@api/src/types/responses';
+import type { LaboResultsImportResponse, LimsResultRow, LimsResultRowStatus } from '@api/src/types/responses';
 import { importResultats, previewResultatsImport, type LimsImportRow } from '@app/services/laboratoire';
 import { resultatAnalyseLabels, resultatBadgeSeverity } from '@app/utils/trichine';
 import { computeImportRecap } from '@app/utils/trichine-import-recap';
+import useDownloadFtpPdf from '@app/utils/download-ftp-pdf';
 
 type Step = 'upload' | 'preview' | 'result';
 
-type ImportResultData = {
-  applied: number;
-  skipped: number;
-  errors: number;
-  results: Array<{ reference_pool: string; ok: boolean; error?: string; avertissement?: string }>;
-};
+type ImportResultData = LaboResultsImportResponse['data'];
 
 const statusMeta: Record<
   LimsResultRowStatus,
@@ -100,6 +96,7 @@ export default function LaboratoireResultsImport() {
   const [isDragging, setIsDragging] = useState(false);
   const [nomFichier, setNomFichier] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  const { isDownloading, onDownloadFtpPdf } = useDownloadFtpPdf('laboratoire');
 
   const matchedIndexes = rows
     .map((row, index) => ({ row, index }))
@@ -197,6 +194,9 @@ export default function LaboratoireResultsImport() {
   );
   const recap = computeImportRecap(
     rows.filter((row, index) => row.status === 'matched' && selected.has(index))
+  );
+  const fichesLnr = (result?.results ?? []).flatMap((line) =>
+    line.ftp_confirmation ? [{ ...line.ftp_confirmation, reference_pool: line.reference_pool }] : []
   );
 
   return (
@@ -521,6 +521,40 @@ export default function LaboratoireResultsImport() {
                     valeur={result.errors}
                   />
                 </div>
+                {fichesLnr.length > 0 && (
+                  <div className="fr-mb-4w border-l-4 border-[var(--border-plain-warning)] bg-[var(--background-contrast-warning)] p-4 md:p-6">
+                    <h2 className="fr-h6 fr-mb-1w">
+                      {fichesLnr.length} fiche(s) de transmission à joindre aux colis envoyés au LNR
+                    </h2>
+                    <p className="fr-text--sm fr-mb-2w">
+                      Un pool non négatif part au laboratoire national de référence avec sa fiche imprimée.
+                    </p>
+                    <ul className="fr-mb-0 space-y-2">
+                      {fichesLnr.map((fiche) => (
+                        <li
+                          key={fiche.id}
+                          className="flex flex-wrap items-center gap-x-4 gap-y-2 pb-0"
+                        >
+                          <span className="fr-text--sm fr-mb-0">
+                            <Link to={`/app/laboratoire/ftp/${fiche.numero_fiche}`}>
+                              {fiche.numero_fiche}
+                            </Link>{' '}
+                            — pool {fiche.reference_pool}
+                          </span>
+                          <Button
+                            priority="secondary"
+                            size="small"
+                            iconId="fr-icon-download-line"
+                            disabled={isDownloading}
+                            onClick={() => onDownloadFtpPdf(fiche.id, fiche.numero_fiche)}
+                          >
+                            Télécharger la fiche
+                          </Button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
                 {result.results.some((line) => !line.ok || line.avertissement) && (
                   <div className="fr-mb-4w overflow-x-auto">
                     <Table
