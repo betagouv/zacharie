@@ -87,9 +87,15 @@ export default function PoolCard({
   // Le LNR confirme les pools non négatifs : la saisie reste ouverte sur un DOUTEUX
   const peutSaisir =
     saisieActive && (!resultatSaisi || (isLnr && pool.resultat_analyse === TrichineResultatAnalyse.DOUTEUX));
+  // Une fois le pool parti en confirmation, son résultat appartient au LNR
+  const transmisAuLnr = !isLnr && !!confirmation && confirmation.statut_logistique !== 'ANNULEE';
   // Un DOUTEUX n'est pas corrigeable : la confirmation est déjà partie au LNR
   const peutCorriger =
-    saisieActive && resultatSaisi && !peutSaisir && pool.resultat_analyse !== TrichineResultatAnalyse.DOUTEUX;
+    saisieActive &&
+    resultatSaisi &&
+    !peutSaisir &&
+    !transmisAuLnr &&
+    pool.resultat_analyse !== TrichineResultatAnalyse.DOUTEUX;
   const nombre = pool.TrichineEchantillons.length;
   const carcasses = pool.TrichineEchantillons.map((echantillon) => echantillon.Carcasse.numero_bracelet)
     .filter(Boolean)

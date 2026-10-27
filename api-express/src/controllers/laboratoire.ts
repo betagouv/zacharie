@@ -198,6 +198,17 @@ async function findPoolForLabo(poolId: string, context: LaboContext) {
 
 type PoolTrouve = { pool: LaboPool; ftp: LaboFtp };
 
+// Dès qu'un pool part en confirmation au LNR, son résultat appartient au LNR : le LVD ne peut plus
+// ni le refuser ni le corriger.
+function poolTransmisAuLnr(pool: LaboPool) {
+  return pool.TrichinePoolFTPs.some(
+    ({ TrichineFTP: ftp }) => isFtpPartie(ftp) && ftp.DestinataireEntity.is_lnr
+  );
+}
+
+const ERREUR_POOL_TRANSMIS_AU_LNR =
+  'Le pool a été transmis au laboratoire national de référence : seul le LNR peut modifier son résultat';
+
 /**
  * Variante batchée : rapproche des références lues dans un fichier aux pools destinés aux
  * laboratoires de l'utilisateur. Une référence est soit celle de Zacharie (P-YY-…), qui prime
@@ -643,6 +654,9 @@ router.post(
       return sendError(res, 404, 'Pool introuvable');
     }
     const { pool, ftp } = found;
+    if (!ftp.DestinataireEntity.is_lnr && poolTransmisAuLnr(pool)) {
+      return sendError(res, 400, ERREUR_POOL_TRANSMIS_AU_LNR);
+    }
     if (isTerminalResult(pool.resultat_analyse)) {
       return sendError(res, 400, 'Un résultat a déjà été saisi pour ce pool');
     }
@@ -702,9 +716,10 @@ const correctionSchema = resultatSchema.extend({
 
 /**
  * Correction d'un résultat déjà rendu (cf doc/trichine.md — édition/annulation).
- * Deux garde-fous : le SVI ne doit pas avoir statué sur les carcasses (passé l'IPM2, une
- * décision sanitaire a été prise et se rattrape hors application), et un DOUTEUX n'est pas
- * corrigeable puisque le colis est déjà reparti au LNR.
+ * Garde-fous : le SVI ne doit pas avoir statué sur les carcasses (passé l'IPM2, une
+ * décision sanitaire a été prise et se rattrape hors application), un DOUTEUX n'est pas
+ * corrigeable puisque le colis est déjà reparti au LNR, et un LVD ne corrige jamais un pool
+ * transmis au LNR (le résultat de confirmation est celui du LNR).
  */
 router.post(
   '/pool/:pool_id/corriger-resultat',
@@ -733,6 +748,9 @@ router.post(
         400,
         'La confirmation est déjà partie au laboratoire national de référence : ce résultat ne peut plus être corrigé'
       );
+    }
+    if (!ftp.DestinataireEntity.is_lnr && poolTransmisAuLnr(pool)) {
+      return sendError(res, 400, ERREUR_POOL_TRANSMIS_AU_LNR);
     }
     const ipm2 = pool.TrichineEchantillons.some((echantillon) => !!echantillon.Carcasse.svi_ipm2_date);
     if (ipm2) {
