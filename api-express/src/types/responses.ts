@@ -564,7 +564,14 @@ export interface LaboResultsImportResponse {
     skipped: number;
     errors: number;
     // avertissement : résultat appliqué, mais la référence interne de la ligne n'a pas été posée
-    results: Array<{ reference_pool: string; ok: boolean; error?: string; avertissement?: string }>;
+    // ftp_confirmation : fiche de transmission vers le LNR créée pour un résultat non négatif d'un LVD
+    results: Array<{
+      reference_pool: string;
+      ok: boolean;
+      error?: string;
+      avertissement?: string;
+      ftp_confirmation?: { id: string; numero_fiche: string };
+    }>;
   };
   error: string;
 }
