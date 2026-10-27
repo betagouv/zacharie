@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Table } from '@codegouvfr/react-dsfr/Table';
@@ -55,13 +55,14 @@ export default function LaboratoireResultsImport() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState<ImportResultData | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const matchedIndexes = rows
     .map((row, index) => ({ row, index }))
     .filter(({ row }) => row.status === 'matched');
 
-  const handleFileChange = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const deposer = useCallback(async (file: File | undefined) => {
     if (!file) return;
     setError('');
     setLoading(true);
@@ -85,8 +86,6 @@ export default function LaboratoireResultsImport() {
       setError("Erreur lors de la lecture du fichier. Vérifiez qu'il s'agit d'un CSV valide.");
     } finally {
       setLoading(false);
-      // reset input pour pouvoir re-uploader le même fichier
-      event.target.value = '';
     }
   }, []);
 
@@ -158,198 +157,262 @@ export default function LaboratoireResultsImport() {
   return (
     <div className="py-4">
       <title>Importer des résultats | Laboratoire | Zacharie</title>
-      <h1 className="fr-h3">Importer des résultats d'analyse</h1>
+      <div className="fr-grid-row fr-grid-row-gutters fr-grid-row--center">
+        <div className="fr-col-12 fr-col-md-10 p-4 md:p-0">
+          <h1 className="fr-h3 fr-mb-2w">Importer des résultats d'analyse</h1>
 
-      {error && (
-        <Alert
-          severity="error"
-          title="Erreur"
-          description={error}
-          className="mb-4"
-        />
-      )}
-
-      {step === 'upload' && (
-        <div className="mb-8">
-          <p className="mb-4">
-            Déposez un fichier <code>.csv</code> au format Zacharie. Les résultats sont rapprochés des pools
-            par leur référence Zacharie (<code>P-…</code>) ou par votre référence interne. Avant d'enregistrer
-            quoi que ce soit, Zacharie vous montre ce que l'import va faire, et vous choisissez les lignes à
-            importer.
-          </p>
-          <ul className="mb-4">
-            <li>
-              <Link to="/app/laboratoire/results/format">Format du fichier à respecter</Link>
-            </li>
-            <li>
-              <a
-                href="/modele-import-resultats-trichine.csv"
-                download
-              >
-                Télécharger le modèle (CSV)
-              </a>
-            </li>
-          </ul>
-          <input
-            type="file"
-            accept=".csv"
-            onChange={handleFileChange}
-            disabled={loading}
-            className="fr-input"
-          />
-          {loading && <p className="mt-2">Lecture du fichier…</p>}
-        </div>
-      )}
-
-      {step === 'preview' && (
-        <>
-          <div className="mb-4 flex flex-wrap items-center gap-2">
-            <Badge severity="success">{counts.matched} à importer</Badge>
-            {counts.conflict > 0 && <Badge severity="warning">{counts.conflict} déjà résolu(s)</Badge>}
-            {counts.unmatched > 0 && <Badge severity="info">{counts.unmatched} introuvable(s)</Badge>}
-            {counts.invalid > 0 && <Badge severity="error">{counts.invalid} invalide(s)</Badge>}
-          </div>
-
-          {counts.matched === 0 ? (
+          {error && (
             <Alert
-              severity="info"
-              small
-              className="mb-4"
-              description="Aucune ligne importable dans ce fichier. Vérifiez les références de pool et les résultats."
+              severity="error"
+              title="Erreur"
+              description={error}
+              className="fr-mb-2w"
             />
-          ) : (
-            <div className="mb-4">
-              <Checkbox
-                options={[
-                  {
-                    label: `Tout importer (${matchedIndexes.length})`,
-                    nativeInputProps: {
-                      checked: selected.size === matchedIndexes.length && matchedIndexes.length > 0,
-                      onChange: (e) => toggleAll(e.target.checked),
-                    },
-                  },
-                ]}
-              />
+          )}
+
+          {step === 'upload' && (
+            <div className="rounded bg-white p-4 md:p-8 md:shadow-sm">
+              <p className="fr-text--sm text-gray-700">
+                Déposez un fichier <code>.csv</code> au format Zacharie. Les résultats sont rapprochés des
+                pools par leur référence Zacharie (<code>P-…</code>) ou par votre référence interne. Avant
+                d'enregistrer quoi que ce soit, Zacharie vous montre ce que l'import va faire, et vous
+                choisissez les lignes à importer.
+              </p>
+              <div className="fr-mb-3w flex flex-wrap gap-x-6 gap-y-2">
+                <Link
+                  to="/app/laboratoire/results/format"
+                  className="fr-link fr-icon-file-text-line fr-link--icon-left"
+                >
+                  Format du fichier à respecter
+                </Link>
+                <a
+                  href="/modele-import-resultats-trichine.csv"
+                  download
+                  className="fr-link fr-icon-download-line fr-link--icon-left"
+                >
+                  Télécharger le modèle (CSV)
+                </a>
+              </div>
+              <div
+                onDragOver={(event) => {
+                  event.preventDefault();
+                  setIsDragging(true);
+                }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  setIsDragging(false);
+                  if (!loading) deposer(event.dataTransfer.files[0]);
+                }}
+                className={`flex flex-col items-center gap-3 rounded border-2 border-dashed px-4 py-8 text-center ${
+                  isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
+                }`}
+              >
+                <span
+                  className="fr-icon-upload-2-line text-gray-500"
+                  aria-hidden="true"
+                />
+                <p className="fr-text--sm fr-mb-0 text-gray-700">
+                  {loading ? 'Lecture du fichier…' : 'Glissez-déposez votre fichier CSV ici, ou :'}
+                </p>
+                <Button
+                  type="button"
+                  priority="secondary"
+                  size="small"
+                  disabled={loading}
+                  onClick={() => inputRef.current?.click()}
+                >
+                  Choisir un fichier
+                </Button>
+                <input
+                  ref={inputRef}
+                  type="file"
+                  accept=".csv"
+                  className="hidden"
+                  onChange={(event) => {
+                    deposer(event.target.files?.[0]);
+                    // reset pour pouvoir redéposer le même fichier
+                    event.target.value = '';
+                  }}
+                />
+                <p className="fr-text--xs fr-mb-0 text-gray-600">CSV encodé en UTF-8, séparateur « ; »</p>
+              </div>
             </div>
           )}
 
-          <div className="mb-4 overflow-x-auto">
-            <Table
-              fixed
-              noCaption
-              className="[&_td]:align-middle"
-              headers={['Import', 'Statut', 'Réf. pool', 'Résultat', 'Ce que l’import fait dans Zacharie']}
-              data={rows.map((row, index) => [
-                row.status === 'matched' ? (
+          {step === 'preview' && (
+            <div className="rounded bg-white p-4 md:p-8 md:shadow-sm">
+              <div className="fr-mb-2w flex flex-wrap items-center justify-between gap-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge severity="success">{counts.matched} à importer</Badge>
+                  {counts.conflict > 0 && <Badge severity="warning">{counts.conflict} déjà résolu(s)</Badge>}
+                  {counts.unmatched > 0 && <Badge severity="info">{counts.unmatched} introuvable(s)</Badge>}
+                  {counts.invalid > 0 && <Badge severity="error">{counts.invalid} invalide(s)</Badge>}
+                </div>
+                {counts.matched > 0 && (
                   <Checkbox
-                    key="check"
-                    className="mb-0! [&_.fr-fieldset\_\_element]:mb-0!"
+                    small
+                    className="fr-mb-0 [&_.fr-fieldset\_\_element]:mb-0!"
                     options={[
                       {
-                        label: '',
+                        label: `Tout importer (${matchedIndexes.length})`,
                         nativeInputProps: {
-                          checked: selected.has(index),
-                          onChange: () => toggle(index),
+                          checked: selected.size === matchedIndexes.length && matchedIndexes.length > 0,
+                          onChange: (e) => toggleAll(e.target.checked),
                         },
                       },
                     ]}
                   />
-                ) : (
-                  ''
-                ),
-                <Badge
-                  key="badge"
-                  severity={statusMeta[row.status].severity}
-                >
-                  {statusMeta[row.status].label}
-                </Badge>,
-                row.reference_pool,
-                resultatLabel(row),
-                <div key="detail">
-                  {row.message && <p className="mb-1 text-sm">{row.message}</p>}
-                  {row.actions && (
-                    <ul className="mb-0 text-sm">
-                      {row.actions.map((action) => (
-                        <li key={action}>{action}</li>
-                      ))}
+                )}
+              </div>
+
+              {counts.matched === 0 && (
+                <Alert
+                  severity="info"
+                  small
+                  className="fr-mb-2w"
+                  description="Aucune ligne importable dans ce fichier. Vérifiez les références de pool et les résultats."
+                />
+              )}
+
+              <div className="fr-mb-3w overflow-x-auto">
+                <Table
+                  fixed
+                  noCaption
+                  className="fr-mb-0 [&_td]:align-top"
+                  headers={[
+                    'Import',
+                    'Statut',
+                    'Réf. pool',
+                    'Résultat',
+                    'Ce que l’import fait dans Zacharie',
+                  ]}
+                  data={rows.map((row, index) => [
+                    row.status === 'matched' ? (
+                      <Checkbox
+                        key="check"
+                        className="mb-0! [&_.fr-fieldset\_\_element]:mb-0!"
+                        options={[
+                          {
+                            label: '',
+                            nativeInputProps: {
+                              checked: selected.has(index),
+                              onChange: () => toggle(index),
+                            },
+                          },
+                        ]}
+                      />
+                    ) : (
+                      ''
+                    ),
+                    <Badge
+                      key="badge"
+                      small
+                      severity={statusMeta[row.status].severity}
+                    >
+                      {statusMeta[row.status].label}
+                    </Badge>,
+                    row.reference_pool,
+                    resultatLabel(row),
+                    <div key="detail">
+                      {row.message && <p className="fr-text--xs fr-mb-1v text-gray-700">{row.message}</p>}
+                      {row.actions && (
+                        <ul className="fr-text--xs fr-mb-0 space-y-1 pl-4">
+                          {row.actions.map((action) => (
+                            <li
+                              key={action}
+                              className="fr-pb-0"
+                            >
+                              {action}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>,
+                  ])}
+                />
+              </div>
+
+              <div className="flex flex-col gap-4 md:flex-row md:items-end">
+                {selected.size > 0 && (
+                  <div className="flex-1 border-l-4 border-[var(--border-plain-blue-france)] bg-[var(--background-alt-blue-france)] p-4">
+                    <h2 className="fr-h6 fr-mb-1w">
+                      Si vous importez les {selected.size} ligne(s) cochée(s)
+                    </h2>
+                    <ul className="fr-text--sm fr-mb-0">
+                      <li>{recap.pools} pool(s) reçoivent leur résultat</li>
+                      {recap.carcasses.liberees > 0 && (
+                        <li>
+                          {recap.carcasses.liberees} carcasse(s) libérée(s) côté trichine (résultat négatif)
+                        </li>
+                      )}
+                      {recap.confirmationsLnr > 0 && (
+                        <li>
+                          {recap.confirmationsLnr} pool(s) transmis au LNR pour confirmation (
+                          {recap.carcasses.en_attente_confirmation} carcasse(s) bloquée(s)) : une fiche de
+                          transmission par pool, à imprimer et joindre au colis
+                        </li>
+                      )}
+                      {recap.carcasses.a_saisir > 0 && (
+                        <li>{recap.carcasses.a_saisir} carcasse(s) à saisir (trichine confirmée)</li>
+                      )}
+                      {recap.carcasses.decision_a_prendre > 0 && (
+                        <li>
+                          {recap.carcasses.decision_a_prendre} carcasse(s) en attente d’une décision (parasite
+                          détecté)
+                        </li>
+                      )}
+                      {recap.ftpsCloturees.length > 0 && (
+                        <li>Fiche(s) de transmission clôturée(s) : {recap.ftpsCloturees.join(', ')}</li>
+                      )}
+                      <li>Les émetteurs concernés sont prévenus par email</li>
                     </ul>
-                  )}
-                </div>,
-              ])}
-            />
-          </div>
-          {selected.size > 0 && (
-            <div className="mb-4 bg-[var(--background-alt-blue-france)] p-4">
-              <h2 className="fr-h6 mb-2">Si vous importez les {selected.size} ligne(s) cochée(s)</h2>
-              <ul className="mb-0">
-                <li>{recap.pools} pool(s) reçoivent leur résultat</li>
-                {recap.carcasses.liberees > 0 && (
-                  <li>{recap.carcasses.liberees} carcasse(s) libérée(s) côté trichine (résultat négatif)</li>
+                  </div>
                 )}
-                {recap.confirmationsLnr > 0 && (
-                  <li>
-                    {recap.confirmationsLnr} pool(s) transmis au LNR pour confirmation (
-                    {recap.carcasses.en_attente_confirmation} carcasse(s) bloquée(s)) : une fiche de
-                    transmission par pool, à imprimer et joindre au colis
-                  </li>
-                )}
-                {recap.carcasses.a_saisir > 0 && (
-                  <li>{recap.carcasses.a_saisir} carcasse(s) à saisir (trichine confirmée)</li>
-                )}
-                {recap.carcasses.decision_a_prendre > 0 && (
-                  <li>
-                    {recap.carcasses.decision_a_prendre} carcasse(s) en attente d’une décision (parasite
-                    détecté)
-                  </li>
-                )}
-                {recap.ftpsCloturees.length > 0 && (
-                  <li>Fiche(s) de transmission clôturée(s) : {recap.ftpsCloturees.join(', ')}</li>
-                )}
-                <li>Les émetteurs concernés sont prévenus par email</li>
-              </ul>
+                <div className="flex shrink-0 flex-wrap gap-4 md:ml-auto md:flex-col md:items-stretch">
+                  <Button
+                    onClick={handleImport}
+                    disabled={loading || selected.size === 0}
+                  >
+                    {loading ? 'Import en cours…' : `Importer ${selected.size} résultat(s)`}
+                  </Button>
+                  <Button
+                    priority="secondary"
+                    onClick={reset}
+                    disabled={loading}
+                  >
+                    Annuler
+                  </Button>
+                </div>
+              </div>
             </div>
           )}
 
-          <div className="flex flex-wrap gap-4">
-            <Button
-              onClick={handleImport}
-              disabled={loading || selected.size === 0}
-            >
-              {loading ? 'Import en cours…' : `Importer ${selected.size} résultat(s)`}
-            </Button>
-            <Button
-              priority="secondary"
-              onClick={reset}
-              disabled={loading}
-            >
-              Annuler
-            </Button>
-          </div>
-        </>
-      )}
-
-      {step === 'result' && result && (
-        <div className="mb-8">
-          <Alert
-            severity={result.errors > 0 ? 'warning' : 'success'}
-            title="Import terminé"
-            description={`${result.applied} appliqué(s), ${result.skipped} ignoré(s), ${result.errors} en erreur.`}
-            className="mb-4"
-          />
-          {result.results.some((line) => !line.ok || line.avertissement) && (
-            <div className="mb-4 overflow-x-auto">
-              <Table
-                noCaption
-                headers={['Réf. pool', 'Détail']}
-                data={result.results
-                  .filter((line) => !line.ok || line.avertissement)
-                  .map((line) => [line.reference_pool, line.error ?? line.avertissement ?? ''])}
+          {step === 'result' && result && (
+            <div className="rounded bg-white p-4 md:p-8 md:shadow-sm">
+              <Alert
+                severity={result.errors > 0 ? 'warning' : 'success'}
+                title="Import terminé"
+                description={`${result.applied} appliqué(s), ${result.skipped} ignoré(s), ${result.errors} en erreur.`}
+                className="fr-mb-3w"
               />
+              {result.results.some((line) => !line.ok || line.avertissement) && (
+                <div className="fr-mb-3w overflow-x-auto">
+                  <Table
+                    noCaption
+                    className="fr-mb-0"
+                    headers={['Réf. pool', 'Détail']}
+                    data={result.results
+                      .filter((line) => !line.ok || line.avertissement)
+                      .map((line) => [line.reference_pool, line.error ?? line.avertissement ?? ''])}
+                  />
+                </div>
+              )}
+              <Button onClick={reset}>Nouvel import</Button>
             </div>
           )}
-          <Button onClick={reset}>Nouvel import</Button>
         </div>
-      )}
+      </div>
     </div>
   );
 }
