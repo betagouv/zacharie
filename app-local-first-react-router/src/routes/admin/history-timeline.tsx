@@ -11,6 +11,7 @@ import type {
 } from '@api/src/types/admin-history';
 import { adminActionLabel } from './admin-action-labels';
 import { HISTORY_KINDS, HISTORY_SUBJECT_TYPES } from './history-labels';
+import { HistoryChanges } from './history-changes';
 
 const LINK_PATHS: Record<AdminHistoryLinkType, string> = {
   fei: '/app/admin/fei/',
@@ -18,17 +19,6 @@ const LINK_PATHS: Record<AdminHistoryLinkType, string> = {
   user: '/app/admin/user/',
   entity: '/app/admin/entity/',
 };
-
-const ISO_TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$/;
-
-function formatValue(value: unknown): string {
-  if (value === null || value === undefined || value === '') return '—';
-  if (typeof value === 'string')
-    return ISO_TIMESTAMP.test(value) ? dayjs(value).format('DD/MM/YYYY HH:mm:ss') : value;
-  if (Array.isArray(value)) return value.length ? value.map(formatValue).join(', ') : '—';
-  if (typeof value === 'object') return JSON.stringify(value);
-  return String(value);
-}
 
 function eventTitle(event: AdminHistoryEvent) {
   return event.kind === 'admin' ? adminActionLabel(event.title) : event.title;
@@ -38,9 +28,6 @@ function hasDetails(details: unknown) {
   if (!details || typeof details !== 'object') return false;
   return Object.values(details).some((value) => value !== null && value !== undefined);
 }
-
-// Au-delà, les champs modifiés d'un événement sont repliés
-const VISIBLE_CHANGES = 3;
 
 type EventGroup = { key: string; events: Array<AdminHistoryEvent> };
 
@@ -97,13 +84,10 @@ function SubjectLink({ subject }: { subject: AdminHistoryEvent['subject'] }) {
 function HistoryGroupRow({ group }: { group: EventGroup }) {
   const [showDetails, setShowDetails] = useState(false);
   const [showSubjects, setShowSubjects] = useState(false);
-  const [showAllChanges, setShowAllChanges] = useState(false);
   const [event] = group.events;
   const kind = HISTORY_KINDS.find((option) => option.value === event.kind);
   const subjectType = HISTORY_SUBJECT_TYPES.find((option) => option.value === event.subject.type);
   const author = event.author_email ?? event.author_id;
-  const changes = showAllChanges ? event.changes : event.changes.slice(0, VISIBLE_CHANGES);
-  const hiddenChanges = event.changes.length - changes.length;
   return (
     <li className="border-b border-gray-100 py-1.5 text-xs">
       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
@@ -116,7 +100,7 @@ function HistoryGroupRow({ group }: { group: EventGroup }) {
         <span className={`rounded-full px-1.5 text-[10px] font-semibold ${kind?.className ?? ''}`}>
           {kind?.label ?? event.kind}
         </span>
-        <span className="font-semibold">{eventTitle(event)}</span>
+        {eventTitle(event) !== kind?.label && <span className="font-semibold">{eventTitle(event)}</span>}
         {group.events.length > 1 ? (
           <button
             type="button"
@@ -159,33 +143,7 @@ function HistoryGroupRow({ group }: { group: EventGroup }) {
           ))}
         </p>
       )}
-      {changes.length > 0 && (
-        <ul className="m-0 mt-0.5 ml-12 list-none p-0">
-          {changes.map((change) => (
-            <li
-              key={change.field}
-              className="flex gap-2"
-            >
-              <span className="shrink-0 font-mono text-gray-500">{change.field}</span>
-              <span className="min-w-0 break-all">
-                <span className="text-gray-400">{formatValue(change.before)}</span> →{' '}
-                {formatValue(change.after)}
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
-      {(hiddenChanges > 0 || showAllChanges) && event.changes.length > VISIBLE_CHANGES && (
-        <button
-          type="button"
-          className="mt-0.5 ml-12 text-blue-600 underline"
-          onClick={() => setShowAllChanges(!showAllChanges)}
-        >
-          {showAllChanges
-            ? 'Replier'
-            : `+ ${hiddenChanges} autre${hiddenChanges > 1 ? 's' : ''} champ${hiddenChanges > 1 ? 's' : ''}`}
-        </button>
-      )}
+      <HistoryChanges changes={event.changes} />
       {showDetails && (
         <pre className="m-0 mt-1 ml-12 overflow-x-auto rounded bg-gray-50 p-2 text-[11px] whitespace-pre-wrap">
           {JSON.stringify(event.details, null, 2)}
