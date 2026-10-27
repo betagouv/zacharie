@@ -83,8 +83,8 @@ test("L'aperçu récapitule les actions, le laboratoire choisit les lignes puis 
   await expect(
     page.getByRole('heading', { name: 'Si vous importez les 2 ligne(s) cochée(s)' })
   ).toBeVisible();
-  await expect(page.getByText('3 carcasse(s) libérée(s) côté trichine (résultat négatif)')).toBeVisible();
-  await expect(page.getByText('Fiche(s) de transmission clôturée(s) : F-26-SVI01-0001')).toBeVisible();
+  await expect(page.getByText('3 carcasse(s) libérée(s)')).toBeVisible();
+  await expect(page.getByText('Fiche(s) clôturée(s) : F-26-SVI01-0001')).toBeVisible();
 
   // Décocher une ligne : le récapitulatif suit, la fiche ne se clôture plus
   // CSS : la case DSFR n'a pas de libellé accessible (colonne « Import »)
@@ -92,8 +92,8 @@ test("L'aperçu récapitule les actions, le laboratoire choisit les lignes puis 
   await expect(
     page.getByRole('heading', { name: 'Si vous importez les 1 ligne(s) cochée(s)' })
   ).toBeVisible();
-  await expect(page.getByText('2 carcasse(s) libérée(s) côté trichine (résultat négatif)')).toBeVisible();
-  await expect(page.getByText('Fiche(s) de transmission clôturée(s)')).toHaveCount(0);
+  await expect(page.getByText('2 carcasse(s) libérée(s)')).toBeVisible();
+  await expect(page.getByText('Fiche(s) clôturée(s)')).toHaveCount(0);
 
   await ligne2.locator('input[type="checkbox"]').check({ force: true });
   const importer = page.getByRole('button', { name: 'Importer 2 résultat(s)' });
