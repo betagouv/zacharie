@@ -1,5 +1,6 @@
 import express from 'express';
 import { catchErrors } from '~/middlewares/errors';
+import { setAdminAuditTarget } from '~/middlewares/admin-audit-log';
 import prisma from '~/prisma';
 import { EntityRelationStatus, EntityRelationType, Prisma } from '@prisma/client';
 import type { RequestWithUser } from '~/types/request';
@@ -19,6 +20,7 @@ async function parseAdminUserEntityBody(req: RequestWithUser, res: express.Respo
     return null;
   }
   const body = result.data;
+  if (body.owner_id) setAdminAuditTarget(res, 'user', body.owner_id);
   if (!body.relation) {
     res.status(400).send({ ok: false, data: { relation: null, entity: null }, error: 'Missing relation' });
     return null;

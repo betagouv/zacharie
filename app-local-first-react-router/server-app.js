@@ -29,7 +29,8 @@ app.use((req, res, next) => {
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: https://developer.apple.com https://play.google.com",
       "font-src 'self' data:",
-      "connect-src 'self' https://api.zacharie.beta.gouv.fr https://*.ingest.sentry.io https://sentry.incubateur.net https://metabase.zacharie.beta.gouv.fr https://stats.beta.gouv.fr https://api.zacharie.incubateur.net https://recherche-entreprises.api.gouv.fr",
+      // review app d'une PR : l'API est sur une URL cleverapps.io propre à la PR
+      `connect-src 'self' https://api.zacharie.beta.gouv.fr https://*.ingest.sentry.io https://sentry.incubateur.net https://metabase.zacharie.beta.gouv.fr https://stats.beta.gouv.fr https://api.zacharie.incubateur.net https://recherche-entreprises.api.gouv.fr${process.env.REVIEW_APP === 'true' ? ` ${process.env.VITE_API_URL}` : ''}`,
       // blob: pour l'aperçu des PDF (fiche de transmission) affichés dans une iframe
       'frame-src blob: https://metabase.zacharie.beta.gouv.fr https://www.youtube.com',
       "object-src 'none'",

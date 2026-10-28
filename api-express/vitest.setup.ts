@@ -4,6 +4,7 @@ import { vi } from 'vitest';
 vi.mock('./src/prisma', () => ({
   default: {
     $executeRaw: vi.fn(),
+    $queryRaw: vi.fn().mockResolvedValue([]),
     fei: {
       findMany: vi.fn().mockResolvedValue([]),
       findFirst: vi.fn(),
@@ -70,6 +71,11 @@ vi.mock('./src/prisma', () => ({
       create: vi.fn(),
       update: vi.fn(),
     },
+    adminAuditLog: {
+      create: vi.fn().mockResolvedValue({}),
+      findMany: vi.fn().mockResolvedValue([]),
+      count: vi.fn().mockResolvedValue(0),
+    },
     securityLog: {
       count: vi.fn().mockResolvedValue(0),
       findFirst: vi.fn().mockResolvedValue(null),
@@ -115,6 +121,13 @@ vi.mock('./src/prisma', () => ({
       findMany: vi.fn().mockResolvedValue([]),
       create: vi.fn(),
       update: vi.fn(),
+    },
+    trichineAlias: {
+      findFirst: vi.fn().mockResolvedValue(null),
+      findMany: vi.fn().mockResolvedValue([]),
+      create: vi.fn(),
+      update: vi.fn(),
+      deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
     },
     trichinePoolFTP: {
       create: vi.fn(),

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { TRICHINE_ALIAS_MAX_LENGTH } from '@app/services/trichine-alias';
 import { useNavigate, useSearchParams } from 'react-router';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import { Button } from '@codegouvfr/react-dsfr/Button';
@@ -57,6 +58,7 @@ export default function TrichineNouvelleFTP() {
   const [selectedPoolIds, setSelectedPoolIds] = useState<Array<string>>(preselection);
   const [laboratoireId, setLaboratoireId] = useState('');
   const [modeTransport, setModeTransport] = useState('');
+  const [alias, setAlias] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -305,6 +307,16 @@ export default function TrichineNouvelleFTP() {
                   onChange: (event) => setModeTransport(event.target.value),
                 }}
               />
+              <Input
+                label="Ma référence interne (optionnel)"
+                hintText="La référence de cette fiche dans vos propres outils"
+                nativeInputProps={{
+                  type: 'text',
+                  maxLength: TRICHINE_ALIAS_MAX_LENGTH,
+                  value: alias,
+                  onChange: (event) => setAlias(event.target.value),
+                }}
+              />
 
               <div className="flex flex-wrap gap-2">
                 <Button
@@ -317,6 +329,7 @@ export default function TrichineNouvelleFTP() {
                       destinataire_entity_id: laboratoireId,
                       expediteur_entity_id: expediteurEntityId,
                       mode_transport: modeTransport.trim() || undefined,
+                      alias: alias.trim() || undefined,
                     })
                       .then((response) => {
                         if (response.ok && response.data) {

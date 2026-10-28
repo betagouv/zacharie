@@ -19,6 +19,7 @@ import type { Carcasse } from '@prisma/client';
 import { lookupAnomalie } from '@app/utils/anomalies-referentiel';
 import { USAGE_DOMESTIQUE_ID, USAGE_DOMESTIQUE_LABEL } from '@app/utils/usage-domestique';
 import { track } from '@app/services/matomo';
+import { syncData } from '@app/utils/sync-data';
 
 // Gravité du référentiel (1 bénin → 4 danger) vers la sévérité DSFR.
 // Sans niveau renseigné on reste sur l'avertissement : l'anomalie porte quand même un message.
@@ -361,6 +362,7 @@ export function CarcasseExaminateur({
       intermediaire_id: null,
       carcasse_intermediaire_id: null,
     });
+    syncData('examinateur-carcasse-delete');
   };
 
   // Examinateur : suppression via la modale de confirmation DSFR.

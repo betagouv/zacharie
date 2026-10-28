@@ -13,6 +13,7 @@ import {
   UserRoles,
 } from '@prisma/client';
 import { userAdminSelect } from '~/types/user';
+import { setAdminAuditTarget } from '~/middlewares/admin-audit-log';
 import type {
   AdminGetEntityResponse,
   AdminActionEntityResponse,
@@ -342,6 +343,7 @@ router.post(
           res.status(created.status);
           return next(new Error(created.error));
         }
+        setAdminAuditTarget(res, 'entity', created.entity.id);
         res.status(200).send({ ok: true, data: { entity: created.entity }, error: '' });
         return;
       }
@@ -379,6 +381,7 @@ router.post(
         })
       );
 
+      setAdminAuditTarget(res, 'entity', createdEntity.id);
       await updateOrCreateBrevoCompany(createdEntity);
 
       res.status(200).send({ ok: true, data: { entity: createdEntity }, error: '' });

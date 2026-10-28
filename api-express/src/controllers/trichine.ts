@@ -3,6 +3,7 @@ import passport from 'passport';
 import z from 'zod';
 import {
   EntityTypes,
+  TrichineAliasObjet,
   TrichineSitePrelevement,
   TrichineStatutLogistiqueFTP,
   TrichineResultatAnalyse,
@@ -37,6 +38,15 @@ import {
 } from '~/utils/trichine';
 import { carcassesAVenirChezEtgWhere, getEtgsLinkedToSviUser } from '~/utils/svi';
 import { getEtgsDuServiceExpediteur } from '~/utils/trichine-parties';
+import {
+  ALIAS_REFERENCE_INVALIDE,
+  aliasEntityIdsForUser,
+  entiteSviPourObjet,
+  aliasReferenceDejaPrise,
+  aliasReferenceSchema,
+  trichineAliasesInclude,
+  upsertAlias,
+} from '~/utils/trichine-alias';
 import {
   recomputeCarcasseTrichine,
   recomputeEchantillonTrichine,
@@ -118,6 +128,47 @@ async function carcassesAccessiblesAuSvi(
   return new Set(carcasses.map((carcasse) => carcasse.zacharie_carcasse_id));
 }
 
+/**
+ * Alias saisis à la création d'un objet : validés (format, unicité pour le service) avant de créer
+ * quoi que ce soit, pour ne pas laisser un objet créé sans la référence que l'agent a tapée.
+ * L'alias est posé au nom du service d'inspection de l'objet (cf `entiteSviPourObjet`). Seule une
+ * saisie simultanée de la même référence peut encore le faire échouer : l'objet reste alors créé
+ * sans alias.
+ */
+type AliasACreer = { kind: 'ok'; entityId: string | null } | { kind: 'error'; error: string };
+
+async function preparerAliases(
+  req: RequestWithUser,
+  objetType: TrichineAliasObjet,
+  references: Array<string>,
+  objetEntityId: string | undefined
+): Promise<AliasACreer> {
+  if (!references.length) return { kind: 'ok', entityId: null };
+  const entityId = entiteSviPourObjet(await aliasEntityIdsForUser(req.user), objetEntityId);
+  if (!entityId) return { kind: 'error', error: "Aucun service d'inspection associé à votre compte" };
+  if (new Set(references.map((reference) => reference.toLowerCase())).size !== references.length) {
+    return { kind: 'error', error: 'Une même référence interne est saisie deux fois' };
+  }
+  for (const reference of references) {
+    const dejaPrise = await aliasReferenceDejaPrise({ entityId, objetType, objetId: null, reference });
+    if (dejaPrise) return { kind: 'error', error: dejaPrise };
+  }
+  return { kind: 'ok', entityId };
+}
+
+// Champ `alias` optionnel des routes de création : chaîne vide = pas d'alias
+const aliasCreationSchema = z
+  .string()
+  .optional()
+  .transform((value) => value?.trim() || undefined)
+  .pipe(aliasReferenceSchema.optional());
+
+function erreurParametres(error: z.ZodError) {
+  return error.issues.some((issue) => issue.path.includes('alias'))
+    ? ALIAS_REFERENCE_INVALIDE
+    : 'Paramètres invalides';
+}
+
 /* -------------------------------------------------------------------------- */
 /* Échantillons                                                                */
 /* -------------------------------------------------------------------------- */
@@ -172,6 +223,7 @@ const echantillonSchema = z.object({
   date_prelevement: z.coerce.date().optional(),
   preleve_par_entity_id: z.string().optional(),
   commentaire: z.string().optional(),
+  alias: aliasCreationSchema,
 });
 
 router.post(
@@ -181,7 +233,7 @@ router.post(
     if (!guardEmitter(req, res)) return;
     const bodyResult = echantillonSchema.safeParse(req.body);
     if (!bodyResult.success) {
-      return sendError(res, 400, 'Paramètres invalides');
+      return sendError(res, 400, erreurParametres(bodyResult.error));
     }
     const body = bodyResult.data;
 
@@ -217,6 +269,15 @@ router.post(
     if (prelevementInvalide) {
       return sendError(res, 400, prelevementInvalide);
     }
+    const aliasACreer = await preparerAliases(
+      req,
+      TrichineAliasObjet.ECHANTILLON,
+      body.alias ? [body.alias] : [],
+      body.preleve_par_entity_id
+    );
+    if (aliasACreer.kind === 'error') {
+      return sendError(res, 400, aliasACreer.error);
+    }
 
     const entityCode = await referenceCodeForEntity(body.preleve_par_entity_id, req.user.id);
     const echantillon = await withReferenceRetry(async () =>
@@ -242,6 +303,14 @@ router.post(
       userId: req.user.id,
       commentaire: `Création de l'échantillon ${echantillon.reference_echantillon}`,
     });
+    if (aliasACreer.entityId && body.alias) {
+      await upsertAlias({
+        entityId: aliasACreer.entityId,
+        objetType: TrichineAliasObjet.ECHANTILLON,
+        objetId: echantillon.id,
+        reference: body.alias,
+      });
+    }
     await recomputeCarcasseTrichine(carcasse.zacharie_carcasse_id, req.user.id);
 
     res.status(200).send({ ok: true, data: { echantillon }, error: '' });
@@ -263,6 +332,7 @@ router.get(
       include: {
         Carcasse: { select: carcasseProjectionSelect },
         TrichinePool: { select: { reference_pool: true } },
+        ...trichineAliasesInclude,
       },
       orderBy: { created_at: 'desc' },
     });
@@ -278,6 +348,7 @@ const echantillonsBulkSchema = z.object({
         site_prelevement: z.enum(Object.values(TrichineSitePrelevement) as [TrichineSitePrelevement]),
         masse_grammes: z.number().int().positive().optional(),
         date_prelevement: z.coerce.date().optional(),
+        alias: aliasCreationSchema,
       })
     )
     .min(1)
@@ -300,7 +371,7 @@ router.post(
     if (!guardEmitter(req, res)) return;
     const bodyResult = echantillonsBulkSchema.safeParse(req.body);
     if (!bodyResult.success) {
-      return sendError(res, 400, 'Paramètres invalides');
+      return sendError(res, 400, erreurParametres(bodyResult.error));
     }
     const body = bodyResult.data;
     const carcasseIds = [...new Set(body.echantillons.map((ligne) => ligne.zacharie_carcasse_id))];
@@ -348,6 +419,15 @@ router.post(
         return sendError(res, 400, prelevementInvalide);
       }
     }
+    const aliasACreer = await preparerAliases(
+      req,
+      TrichineAliasObjet.ECHANTILLON,
+      body.echantillons.map((ligne) => ligne.alias).filter((alias): alias is string => !!alias),
+      body.preleve_par_entity_id
+    );
+    if (aliasACreer.kind === 'error') {
+      return sendError(res, 400, aliasACreer.error);
+    }
 
     const entityCode = await referenceCodeForEntity(body.preleve_par_entity_id, req.user.id);
     const references = await nextEchantillonReferences(entityCode, body.echantillons.length);
@@ -372,7 +452,16 @@ router.post(
       )
     );
 
-    for (const echantillon of echantillons) {
+    for (const [index, echantillon] of echantillons.entries()) {
+      const alias = body.echantillons[index].alias;
+      if (aliasACreer.entityId && alias) {
+        await upsertAlias({
+          entityId: aliasACreer.entityId,
+          objetType: TrichineAliasObjet.ECHANTILLON,
+          objetId: echantillon.id,
+          reference: alias,
+        });
+      }
       await logTrichineStatutChange({
         objetType: TrichineObjetType.ECHANTILLON,
         objetId: echantillon.id,
@@ -475,6 +564,8 @@ router.delete(
       where: { id: echantillon.id },
       data: { deleted_at: new Date() },
     });
+    // Un objet supprimé libère ses références : elles resservent pour celui qui le remplace
+    await prisma.trichineAlias.deleteMany({ where: { echantillon_id: echantillon.id } });
     await logTrichineStatutChange({
       objetType: TrichineObjetType.ECHANTILLON,
       objetId: echantillon.id,
@@ -542,6 +633,7 @@ const poolSchema = z.object({
   date_constitution: z.coerce.date().optional(),
   cree_par_entity_id: z.string().optional(),
   commentaire: z.string().optional(),
+  alias: aliasCreationSchema,
 });
 
 router.post(
@@ -551,7 +643,7 @@ router.post(
     if (!guardEmitter(req, res)) return;
     const bodyResult = poolSchema.safeParse(req.body);
     if (!bodyResult.success) {
-      return sendError(res, 400, 'Paramètres invalides');
+      return sendError(res, 400, erreurParametres(bodyResult.error));
     }
     const body = bodyResult.data;
 
@@ -602,6 +694,15 @@ router.post(
     if (compositionError) {
       return sendError(res, 400, compositionError);
     }
+    const aliasACreer = await preparerAliases(
+      req,
+      TrichineAliasObjet.POOL,
+      body.alias ? [body.alias] : [],
+      body.cree_par_entity_id
+    );
+    if (aliasACreer.kind === 'error') {
+      return sendError(res, 400, aliasACreer.error);
+    }
 
     const entityCode = await referenceCodeForEntity(body.cree_par_entity_id, req.user.id);
     const pool = await withReferenceRetry(async () =>
@@ -629,6 +730,14 @@ router.post(
       userId: req.user.id,
       commentaire: `Création du pool ${pool.reference_pool} (${echantillons.length} échantillon(s))`,
     });
+    if (aliasACreer.entityId && body.alias) {
+      await upsertAlias({
+        entityId: aliasACreer.entityId,
+        objetType: TrichineAliasObjet.POOL,
+        objetId: pool.id,
+        reference: body.alias,
+      });
+    }
     await recomputePoolTrichine(pool.id, req.user.id);
 
     res.status(200).send({ ok: true, data: { pool }, error: '' });
@@ -647,6 +756,7 @@ router.get(
         TrichinePoolFTPs: { include: { TrichineFTP: true } },
         PoolsFilles: { where: { deleted_at: null } },
         Documents: { where: { deleted_at: null } },
+        ...trichineAliasesInclude,
       },
       orderBy: { created_at: 'desc' },
     });
@@ -788,6 +898,7 @@ router.delete(
     // Le pool n'est référencé que par des FTP brouillon : les liens n'ont plus d'objet
     await prisma.trichinePoolFTP.deleteMany({ where: { pool_id: pool.id } });
     await prisma.trichinePool.update({ where: { id: pool.id }, data: { deleted_at: new Date() } });
+    await prisma.trichineAlias.deleteMany({ where: { pool_id: pool.id } });
     await logTrichineStatutChange({
       objetType: TrichineObjetType.POOL,
       objetId: pool.id,
@@ -814,6 +925,7 @@ const ftpSchema = z.object({
   expediteur_entity_id: z.string().optional(),
   mode_transport: z.string().optional(),
   commentaire: z.string().optional(),
+  alias: aliasCreationSchema,
 });
 
 router.post(
@@ -823,7 +935,7 @@ router.post(
     if (!guardEmitter(req, res)) return;
     const bodyResult = ftpSchema.safeParse(req.body);
     if (!bodyResult.success) {
-      return sendError(res, 400, 'Paramètres invalides');
+      return sendError(res, 400, erreurParametres(bodyResult.error));
     }
     const body = bodyResult.data;
 
@@ -862,6 +974,15 @@ router.post(
     if (dejaEngage) {
       return sendError(res, 400, 'Un des pools est déjà rattaché à une FTP');
     }
+    const aliasACreer = await preparerAliases(
+      req,
+      TrichineAliasObjet.FTP,
+      body.alias ? [body.alias] : [],
+      body.expediteur_entity_id
+    );
+    if (aliasACreer.kind === 'error') {
+      return sendError(res, 400, aliasACreer.error);
+    }
 
     const entityCode = await referenceCodeForEntity(body.expediteur_entity_id, req.user.id);
     const ftp = await withReferenceRetry(async () =>
@@ -887,6 +1008,14 @@ router.post(
       userId: req.user.id,
       commentaire: `Création de la FTP ${ftp.numero_fiche} (${pools.length} pool(s))`,
     });
+    if (aliasACreer.entityId && body.alias) {
+      await upsertAlias({
+        entityId: aliasACreer.entityId,
+        objetType: TrichineAliasObjet.FTP,
+        objetId: ftp.id,
+        reference: body.alias,
+      });
+    }
 
     res.status(200).send({ ok: true, data: { ftp }, error: '' });
   })
@@ -1100,6 +1229,7 @@ router.delete(
     }
 
     await prisma.trichineFTP.update({ where: { id: ftp.id }, data: { deleted_at: new Date() } });
+    await prisma.trichineAlias.deleteMany({ where: { ftp_id: ftp.id } });
     await logTrichineStatutChange({
       objetType: TrichineObjetType.FTP,
       objetId: ftp.id,
@@ -1219,6 +1349,7 @@ router.get(
         DestinataireEntity: { select: { id: true, nom_d_usage: true, raison_sociale: true, is_lnr: true } },
         TrichinePoolFTPs: { include: { TrichinePool: true } },
         Documents: { where: { deleted_at: null } },
+        ...trichineAliasesInclude,
       },
       orderBy: { created_at: 'desc' },
     });
@@ -1256,15 +1387,17 @@ router.get(
               include: {
                 TrichineEchantillons: {
                   where: { deleted_at: null },
-                  include: { Carcasse: { select: carcasseProjectionSelect } },
+                  include: { Carcasse: { select: carcasseProjectionSelect }, ...trichineAliasesInclude },
                   orderBy: { reference_echantillon: 'asc' },
                 },
                 Documents: { where: { deleted_at: null } },
+                ...trichineAliasesInclude,
               },
             },
           },
         },
         Documents: { where: { deleted_at: null } },
+        ...trichineAliasesInclude,
       },
     });
     if (!ftp || ftp.deleted_at || !(await trichineEquipeUserIds(req.user)).includes(ftp.expediteur_user_id)) {
@@ -1289,6 +1422,7 @@ router.get(
       where: { reference_echantillon: req.params.reference },
       include: {
         Carcasse: { select: carcasseProjectionSelect },
+        ...trichineAliasesInclude,
         TrichinePool: {
           include: {
             TrichinePoolFTPs: {
@@ -1330,9 +1464,10 @@ router.get(
     const pool = await prisma.trichinePool.findUnique({
       where: { reference_pool: req.params.reference },
       include: {
+        ...trichineAliasesInclude,
         TrichineEchantillons: {
           where: { deleted_at: null },
-          include: { Carcasse: { select: carcasseProjectionSelect } },
+          include: { Carcasse: { select: carcasseProjectionSelect }, ...trichineAliasesInclude },
           orderBy: { reference_echantillon: 'asc' },
         },
         TrichinePoolFTPs: {

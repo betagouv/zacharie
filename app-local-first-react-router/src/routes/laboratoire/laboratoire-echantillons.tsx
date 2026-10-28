@@ -15,6 +15,7 @@ import {
 import { getLaboEchantillons, type LaboEchantillonRegistre } from '@app/services/laboratoire';
 import ExportButtons from '@app/components/laboratoire/ExportButtons';
 import { echantillonToExportRow } from '@app/utils/export-trichine';
+import { aliasesRecherche, monAlias, useMesEntitesAlias } from '@app/services/trichine-alias';
 import {
   filterTrichineRows,
   sitePrelevementLabels,
@@ -43,6 +44,7 @@ export default function LaboratoireEchantillons() {
   const [sortBy, setSortBy] = useState<keyof LaboEchantillonRegistre>('date_prelevement');
   const [sortOrder, setSortOrder] = useState<TrichineSortOrder>('DESC');
   const [selectedIds, setSelectedIds] = useState<Array<string>>([]);
+  const mesEntites = useMesEntitesAlias();
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -72,7 +74,7 @@ export default function LaboratoireEchantillons() {
       (echantillon) =>
         `${echantillon.reference_echantillon} ${echantillon.Carcasse.numero_bracelet} ${
           echantillon.TrichinePool?.reference_pool ?? ''
-        }`
+        } ${aliasesRecherche(echantillon.Aliases)}`
     );
     return sortTrichineRows(filtered, sortBy, sortOrder);
   }, [echantillons, query, vue, statut, sortBy, sortOrder]);
@@ -98,14 +100,14 @@ export default function LaboratoireEchantillons() {
           nom="echantillons"
           rows={rows}
           selectedIds={selectedIds}
-          toExportRow={echantillonToExportRow}
+          toExportRow={(echantillon) => echantillonToExportRow(echantillon, mesEntites)}
         />
       }
       toolbar={
         <TrichineListToolbar
           query={query}
           onQueryChange={setQuery}
-          searchHint="Référence, n° de marquage, pool"
+          searchHint="Référence, référence interne, n° de marquage, pool"
         >
           <FiltreSelect
             label="Affichage"
@@ -166,6 +168,11 @@ export default function LaboratoireEchantillons() {
                 ),
               },
               {
+                dataKey: 'Aliases',
+                title: 'Ma réf.',
+                render: (echantillon) => monAlias(echantillon.Aliases, mesEntites)?.reference ?? '—',
+              },
+              {
                 dataKey: 'zacharie_carcasse_id',
                 title: 'N° de marquage',
                 render: (echantillon) => echantillon.Carcasse.numero_bracelet,
@@ -184,7 +191,7 @@ export default function LaboratoireEchantillons() {
                 dataKey: 'masse_grammes',
                 title: 'Masse',
                 small: true,
-                render: (echantillon) => `${echantillon.masse_grammes} g`,
+                render: (echantillon) => `au moins ${echantillon.masse_grammes} g`,
               },
               {
                 dataKey: 'date_prelevement',

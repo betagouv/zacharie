@@ -56,7 +56,11 @@ async function refuserLaPremiereFicheEnvoyee(page: Page, reason: string) {
     if (actif && feiEnvoyee && json.data) {
       json.data.rejected = [...(json.data.rejected ?? []), { kind: 'fei', id: feiRefusee, reason }];
     }
-    await route.fulfill({ response, json });
+    // L'app annule un /sync en vol quand la même fiche change encore (un AbortController par
+    // enregistrement) : la route est alors déjà close, il n'y a plus de réponse à rendre.
+    await route.fulfill({ response, json }).catch((error: Error) => {
+      if (!error.message.includes('Route is already handled')) throw error;
+    });
   });
   return {
     stop: () => {

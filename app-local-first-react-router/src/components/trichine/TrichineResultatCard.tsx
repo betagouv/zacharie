@@ -11,16 +11,12 @@ import { TrichineCard, TrichineFields } from '@app/components/trichine/TrichineD
 
 /**
  * Le résultat d'analyse n'a pas de page à lui : il appartient au pool, et c'est ici qu'il
- * s'affiche avec sa provenance (laboratoire, dates, référence labo). Échantillons et carcasses
- * n'en portent qu'un écho.
- *
- * La référence interne est celle du laboratoire affiché : elle est portée par le lien
- * pool ↔ FTP, chaque laboratoire ayant la sienne.
+ * s'affiche avec sa provenance (laboratoire, dates). Échantillons et carcasses n'en portent
+ * qu'un écho.
  */
 export default function TrichineResultatCard({
   pool,
   laboratoire,
-  referenceLabo,
 }: {
   pool: Pick<
     TrichinePool,
@@ -34,7 +30,6 @@ export default function TrichineResultatCard({
     | 'commentaire'
   >;
   laboratoire?: string | null;
-  referenceLabo?: string | null;
 }) {
   const resultat = pool.resultat_analyse;
 
@@ -62,7 +57,6 @@ export default function TrichineResultatCard({
                 value: pool.parasite_identifie,
               },
               !!laboratoire && { label: 'Laboratoire', value: laboratoire },
-              !!referenceLabo && { label: 'Référence laboratoire', value: referenceLabo },
               !!pool.date_debut_analyse && {
                 label: 'Début d’analyse',
                 value: dayjs(pool.date_debut_analyse).format('DD/MM/YYYY'),

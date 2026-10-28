@@ -5,6 +5,7 @@
 export type SyncRejectedErrorMessage =
   | "Vous n'avez pas accès à cette carcasse"
   | "Vous n'avez pas accès à cette fiche"
+  | "Cette carcasse n'appartient pas à cette fiche"
   | 'Vous ne pouvez pas agir au nom de cette entité'
   | "Seul l'examinateur initial peut approuver ou refuser une demande"
   | "Seul l'auteur de la demande peut l'annuler"

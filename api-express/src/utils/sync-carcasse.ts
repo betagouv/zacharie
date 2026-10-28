@@ -90,6 +90,10 @@ export async function syncCarcasse(
   // Deny by default : on ne modifie une carcasse que si elle est dans le périmètre de
   // l'utilisateur, et on n'en crée une que sur une fiche à laquelle il participe.
   if (existingCarcasse) {
+    // Les droits par rôle se lisent sur la fiche du corps : elle doit être celle de la carcasse.
+    if (existingCarcasse.fei_numero !== fei_numero) {
+      throw new SyncRejectedError("Cette carcasse n'appartient pas à cette fiche");
+    }
     if (!(await scope.canWriteCarcasse(existingCarcasse.zacharie_carcasse_id))) {
       throw new SyncRejectedError("Vous n'avez pas accès à cette carcasse");
     }
@@ -131,6 +135,9 @@ export async function syncCarcasse(
       if (!isUniqueViolation) throw error;
       existingCarcasse = await prisma.carcasse.findUnique({ where: { zacharie_carcasse_id } });
       if (!existingCarcasse) throw error;
+      if (existingCarcasse.fei_numero !== fei_numero) {
+        throw new SyncRejectedError("Cette carcasse n'appartient pas à cette fiche");
+      }
     }
     // La ligne créée n'a encore aucune colonne de rattachement — celles-ci ne sont écrites que par
     // l'update en fin de fonction. On accorde l'accès tout de suite, pour les sections suivantes de
@@ -447,7 +454,10 @@ export async function syncCarcasse(
   // svi_assigned_at et svi_entity_id sont écrits par l'ETG qui assigne la fiche à un SVI,
   // pas par le SVI lui-même : ils restent hors du bloc réservé au rôle SVI plus bas.
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_assigned_at)) {
-    nextCarcasse.svi_assigned_at = body[Prisma.CarcasseScalarFieldEnum.svi_assigned_at];
+    nextCarcasse.svi_assigned_at = await getSviAssignedAt(
+      body[Prisma.CarcasseScalarFieldEnum.svi_assigned_at],
+      existingCarcasse
+    );
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.svi_entity_id)) {
     nextCarcasse.svi_entity_id = body[Prisma.CarcasseScalarFieldEnum.svi_entity_id];
@@ -746,6 +756,34 @@ async function canCreatorCancelCarcasse(carcasse: Carcasse, isJustCreated: boole
     },
   });
   return pendingRequests > 0;
+}
+
+// Délai maximal toléré entre une assignation faite hors ligne et sa réception par le serveur.
+const SVI_ASSIGNED_AT_MAX_DELAY_HOURS = 48;
+
+// La date d'assignation ouvre l'acceptation automatique à J+10 : une date antidatée permettrait
+// d'accepter la carcasse sans inspection. On garde la date du client (toutes les carcasses d'une
+// transmission partagent la même) si elle est récente, ou si c'est déjà celle de la carcasse ou
+// d'une autre carcasse de la fiche (carcasse manquante ajoutée après l'assignation). Sinon, c'est
+// la date du serveur.
+async function getSviAssignedAt(
+  value: Prisma.CarcasseUncheckedCreateInput['svi_assigned_at'],
+  existingCarcasse: Carcasse
+): Promise<Prisma.CarcasseUncheckedCreateInput['svi_assigned_at']> {
+  if (!value) return null;
+  const assignedAt = dayjs(value);
+  if (!assignedAt.isValid()) return new Date();
+  if (dayjs().diff(assignedAt, 'hour', true) <= SVI_ASSIGNED_AT_MAX_DELAY_HOURS) return value;
+  if (existingCarcasse.svi_assigned_at && assignedAt.isSame(existingCarcasse.svi_assigned_at)) return value;
+  const carcasseSoeur = await prisma.carcasse.findFirst({
+    where: {
+      fei_numero: existingCarcasse.fei_numero,
+      svi_assigned_at: assignedAt.toDate(),
+      deleted_at: null,
+    },
+    select: { zacharie_carcasse_id: true },
+  });
+  return carcasseSoeur ? value : new Date();
 }
 
 const NON_SVI_STATUSES: Array<CarcasseStatus> = [

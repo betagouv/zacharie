@@ -1,13 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Tabs, type TabsProps } from '@codegouvfr/react-dsfr/Tabs';
 import { Badge } from '@codegouvfr/react-dsfr/Badge';
-import { Button } from '@codegouvfr/react-dsfr/Button';
-import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import dayjs from 'dayjs';
-import type { EmailEntrant } from '@prisma/client';
 import type {
-  AdminEmailEntrantResponse,
-  AdminEmailsEntrantsResponse,
   AdminTrichineDocumentRow,
   AdminTrichineDocumentsResponse,
   AdminTrichineEchantillonRow,
@@ -23,23 +18,9 @@ import { filterTrichineRows } from '@app/utils/trichine';
 import API from '@app/services/api';
 
 /**
- * Vue d'ensemble trichine pour l'admin : ce qui arrive par email, ce qui est stocké, et l'état
- * des analyses. Les listes sont bornées aux plus récentes côté serveur, les filtres sont locaux.
+ * Vue d'ensemble trichine pour l'admin : ce qui est stocké, et l'état des analyses.
+ * Les listes sont bornées aux plus récentes côté serveur, les filtres sont locaux.
  */
-
-const STATUT_EMAIL_LABELS: Record<string, string> = {
-  A_ANALYSER: 'À analyser',
-  TRAITE: 'Traité',
-  IGNORE: 'Ignoré',
-  ERREUR: 'Erreur',
-};
-
-const STATUT_EMAIL_SEVERITY: Record<string, 'success' | 'error' | 'info' | undefined> = {
-  A_ANALYSER: 'info',
-  TRAITE: 'success',
-  IGNORE: undefined,
-  ERREUR: 'error',
-};
 
 const RESULTAT_SEVERITY: Record<string, 'success' | 'error' | 'warning' | undefined> = {
   NEGATIF: 'success',
@@ -69,223 +50,13 @@ function Resultat({ resultat }: { resultat: string | null }) {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Emails entrants                                                             */
-/* -------------------------------------------------------------------------- */
-
-function OngletEmails() {
-  const [emails, setEmails] = useState<EmailEntrant[]>([]);
-  const [total, setTotal] = useState(0);
-  const [query, setQuery] = useState('');
-  const [statut, setStatut] = useState('');
-  const [selectionne, setSelectionne] = useState<EmailEntrant | null>(null);
-  const [enCours, setEnCours] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
-
-  const charger = useCallback(async () => {
-    const res = (await API.get({ path: 'admin/trichine/emails-entrants' })) as AdminEmailsEntrantsResponse;
-    if (res.ok) {
-      setEmails(res.data.emails);
-      setTotal(res.data.total);
-    }
-  }, []);
-
-  useEffect(() => {
-    charger();
-  }, [charger]);
-
-  function remplacer(email: EmailEntrant) {
-    setEmails((liste) => liste.map((item) => (item.id === email.id ? email : item)));
-    setSelectionne((courant) => (courant?.id === email.id ? email : courant));
-  }
-
-  async function relancerAnalyse(email: EmailEntrant) {
-    setEnCours(email.id);
-    setMessage(null);
-    const res = (await API.post({
-      path: `admin/trichine/emails-entrants/${email.id}/analyser`,
-    })) as AdminEmailEntrantResponse;
-    setEnCours(null);
-    if (!res.ok || !res.data?.email) {
-      setMessage(res.error || "L'analyse a échoué");
-      return;
-    }
-    remplacer(res.data.email);
-    const lus = (res.data.ocr ?? []).filter((document) => document.texte_lu).length;
-    setMessage(`Analyse relancée : ${lus} document(s) lu(s) sur ${(res.data.ocr ?? []).length}.`);
-  }
-
-  async function changerStatut(email: EmailEntrant, nouveauStatut: string) {
-    setEnCours(email.id);
-    setMessage(null);
-    const res = (await API.put({
-      path: `admin/trichine/emails-entrants/${email.id}/statut`,
-      body: { statut: nouveauStatut },
-    })) as AdminEmailEntrantResponse;
-    setEnCours(null);
-    if (!res.ok || !res.data?.email) {
-      setMessage(res.error || 'Le statut n’a pas pu être changé');
-      return;
-    }
-    remplacer(res.data.email);
-    setMessage(`Statut passé à ${STATUT_EMAIL_LABELS[nouveauStatut] ?? nouveauStatut}.`);
-  }
-
-  const rows = useMemo(() => {
-    const filtres = statut ? emails.filter((email) => email.statut === statut) : emails;
-    return filterTrichineRows(filtres, query, (email) =>
-      [email.expediteur, email.sujet, email.message_id].filter(Boolean).join(' ')
-    );
-  }, [emails, query, statut]);
-
-  return (
-    <>
-      <TrichineListToolbar
-        query={query}
-        onQueryChange={setQuery}
-        searchHint="Expéditeur, sujet, Message-ID"
-      >
-        <FiltreSelect
-          label="Statut"
-          value={statut}
-          onChange={setStatut}
-          options={[
-            { value: '', label: 'Tous' },
-            ...Object.entries(STATUT_EMAIL_LABELS).map(([value, label]) => ({ value, label })),
-          ]}
-        />
-      </TrichineListToolbar>
-
-      {!!message && (
-        <Alert
-          className="fr-mb-2w"
-          severity="info"
-          small
-          description={message}
-        />
-      )}
-      <p className="fr-text--sm text-gray-600">
-        {rows.length} message(s) affiché(s) — {total} au total
-      </p>
-
-      <TableFilterable
-        data={rows}
-        rowKey="id"
-        noData="Aucun message reçu"
-        columns={[
-          {
-            title: 'Reçu le',
-            dataKey: 'recu_at',
-            render: (email) => dayjs(email.recu_at).format('DD/MM/YYYY HH:mm'),
-          },
-          {
-            title: 'Expéditeur',
-            dataKey: 'expediteur',
-            render: (email) => (
-              <span className="break-all">
-                {email.expediteur || '—'}
-                {!email.laboratoire_reconnu && (
-                  <span className="fr-text--xs block text-gray-500">laboratoire non reconnu</span>
-                )}
-              </span>
-            ),
-          },
-          {
-            title: 'Sujet',
-            dataKey: 'sujet',
-            render: (email) => (
-              <span className="break-words">
-                {email.sujet || '—'}
-                {!!email.motif_ignore && (
-                  <span className="fr-text--xs block text-gray-500">écarté : {email.motif_ignore}</span>
-                )}
-              </span>
-            ),
-          },
-          { title: 'PJ', dataKey: 'nb_pieces_jointes' },
-          {
-            title: 'Statut',
-            dataKey: 'statut',
-            render: (email) => (
-              <Badge
-                small
-                severity={STATUT_EMAIL_SEVERITY[email.statut]}
-              >
-                {STATUT_EMAIL_LABELS[email.statut] ?? email.statut}
-              </Badge>
-            ),
-          },
-          {
-            title: 'Actions',
-            dataKey: 'id',
-            render: (email) => (
-              <div className="flex flex-col items-start gap-1">
-                <Button
-                  priority="tertiary no outline"
-                  size="small"
-                  onClick={() => setSelectionne(selectionne?.id === email.id ? null : email)}
-                >
-                  {selectionne?.id === email.id ? 'Masquer' : 'Détail'}
-                </Button>
-                <Button
-                  priority="tertiary no outline"
-                  size="small"
-                  disabled={enCours === email.id}
-                  onClick={() => relancerAnalyse(email)}
-                >
-                  {enCours === email.id ? 'Analyse…' : 'Relancer l’analyse'}
-                </Button>
-              </div>
-            ),
-          },
-        ]}
-      />
-
-      {!!selectionne && (
-        <div className="fr-callout fr-mt-2w">
-          <h2 className="fr-callout__title fr-h6 break-words">{selectionne.sujet || 'Sans sujet'}</h2>
-          <div className="fr-callout__text fr-text--sm">
-            <p className="break-all">
-              <strong>Message-ID</strong> : {selectionne.message_id}
-              <br />
-              <strong>Destinataires</strong> : {selectionne.destinataires.join(', ') || '—'}
-              <br />
-              <strong>Score spam</strong> : {selectionne.spam_score ?? '—'}
-              <br />
-              <strong>UUID Brevo</strong> : {selectionne.brevo_uuid || '—'}
-            </p>
-
-            <div className="fr-mb-2w flex flex-wrap items-end gap-4">
-              <FiltreSelect
-                label="Changer le statut"
-                value={selectionne.statut}
-                onChange={(valeur) => changerStatut(selectionne, valeur)}
-                options={Object.entries(STATUT_EMAIL_LABELS).map(([value, label]) => ({ value, label }))}
-              />
-            </div>
-
-            <p className="fr-text--xs text-gray-600">
-              Détail de l'ingestion et de l'OCR, tel qu'enregistré au traitement :
-            </p>
-            <pre className="fr-text--xs max-h-96 overflow-auto bg-gray-50 p-2">
-              {JSON.stringify(selectionne.detail, null, 2)}
-            </pre>
-          </div>
-        </div>
-      )}
-    </>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
 /* Documents                                                                   */
 /* -------------------------------------------------------------------------- */
 
 function OngletDocuments() {
   const [documents, setDocuments] = useState<AdminTrichineDocumentRow[]>([]);
   const [query, setQuery] = useState('');
-  const [source, setSource] = useState('');
-  const [rattachement, setRattachement] = useState('');
-  const [texte, setTexte] = useState<{ nom: string; contenu: string } | null>(null);
+  const [type, setType] = useState('');
 
   useEffect(() => {
     API.get({ path: 'admin/trichine/documents' }).then((res) => {
@@ -295,58 +66,26 @@ function OngletDocuments() {
   }, []);
 
   const rows = useMemo(() => {
-    let filtres = source ? documents.filter((document) => document.source === source) : documents;
-    if (rattachement === 'NON_RATTACHE') {
-      filtres = filtres.filter((document) => !document.pool_reference && !document.ftp_numero);
-    } else if (rattachement) {
-      filtres = filtres.filter((document) => document.rattachement_indice === rattachement);
-    }
+    const filtres = type ? documents.filter((document) => document.type === type) : documents;
     return filterTrichineRows(filtres, query, (document) =>
-      [document.nom_fichier, document.pool_reference, document.ftp_numero, document.email_expediteur]
+      [document.nom_fichier, document.pool_reference, document.ftp_numero, document.depose_par]
         .filter(Boolean)
         .join(' ')
     );
-  }, [documents, query, source, rattachement]);
-
-  const nonRattaches = documents.filter(
-    (document) => !document.pool_reference && !document.ftp_numero
-  ).length;
-
-  async function voirTexte(document: AdminTrichineDocumentRow) {
-    const res = (await API.get({ path: `admin/trichine/document/${document.id}/texte` })) as {
-      ok: boolean;
-      data: { document: { nom_fichier: string | null; texte_extrait: string | null } };
-    };
-    if (res.ok) {
-      setTexte({
-        nom: res.data.document.nom_fichier ?? 'document',
-        contenu: res.data.document.texte_extrait ?? 'Aucun texte lu dans ce document.',
-      });
-    }
-  }
+  }, [documents, query, type]);
 
   return (
     <>
       <TrichineListToolbar
         query={query}
         onQueryChange={setQuery}
-        searchHint="Nom de fichier, pool, FTP, expéditeur"
+        searchHint="Nom de fichier, pool, FTP, déposé par"
       >
         <FiltreSelect
-          label="Provenance"
-          value={source}
-          onChange={setSource}
-          options={optionsDe(documents, (document) => document.source)}
-        />
-        <FiltreSelect
-          label="Rattachement"
-          value={rattachement}
-          onChange={setRattachement}
-          options={[
-            { value: '', label: 'Tous' },
-            { value: 'NON_RATTACHE', label: `Non rattachés (${nonRattaches})` },
-            ...optionsDe(documents, (document) => document.rattachement_indice).slice(1),
-          ]}
+          label="Type"
+          value={type}
+          onChange={setType}
+          options={optionsDe(documents, (document) => document.type)}
         />
       </TrichineListToolbar>
 
@@ -373,74 +112,17 @@ function OngletDocuments() {
             ),
           },
           {
-            title: 'Provenance',
-            dataKey: 'source',
-            render: (document) => (
-              <span>
-                {document.source}
-                {!!document.email_expediteur && (
-                  <span className="fr-text--xs block break-all text-gray-500">
-                    {document.email_expediteur}
-                  </span>
-                )}
-              </span>
-            ),
+            title: 'Déposé par',
+            dataKey: 'depose_par',
+            render: (document) => <span className="break-all">{document.depose_par}</span>,
           },
           {
             title: 'Rattaché à',
             dataKey: 'pool_reference',
-            render: (document) => (
-              <span>
-                {document.pool_reference || document.ftp_numero || (
-                  <Badge
-                    small
-                    severity="warning"
-                  >
-                    non rattaché
-                  </Badge>
-                )}
-                {!!document.rattachement_indice && (
-                  <span className="fr-text--xs block text-gray-500">{document.rattachement_indice}</span>
-                )}
-              </span>
-            ),
-          },
-          {
-            title: 'Texte lu',
-            dataKey: 'longueur_texte',
-            render: (document) =>
-              document.longueur_texte ? (
-                <Button
-                  priority="tertiary no outline"
-                  size="small"
-                  onClick={() => voirTexte(document)}
-                >
-                  {document.texte_source} ({document.longueur_texte} car.)
-                </Button>
-              ) : (
-                '—'
-              ),
+            render: (document) => document.pool_reference || document.ftp_numero || '—',
           },
         ]}
       />
-
-      {!!texte && (
-        <div className="fr-callout fr-mt-2w">
-          <h2 className="fr-callout__title fr-h6 break-words">{texte.nom}</h2>
-          <div className="fr-callout__text">
-            <Button
-              priority="tertiary no outline"
-              size="small"
-              onClick={() => setTexte(null)}
-            >
-              Masquer
-            </Button>
-            <pre className="fr-text--xs max-h-96 overflow-auto bg-gray-50 p-2 whitespace-pre-wrap">
-              {texte.contenu}
-            </pre>
-          </div>
-        </div>
-      )}
     </>
   );
 }
@@ -468,7 +150,7 @@ function OngletPools() {
     else if (resultat) filtres = filtres.filter((pool) => pool.resultat_analyse === resultat);
     if (laboratoire) filtres = filtres.filter((pool) => pool.laboratoire === laboratoire);
     return filterTrichineRows(filtres, query, (pool) =>
-      [pool.reference_pool, pool.bracelets, pool.ftp_numero, pool.reference_labo].filter(Boolean).join(' ')
+      [pool.reference_pool, pool.bracelets, pool.ftp_numero, pool.aliases].filter(Boolean).join(' ')
     );
   }, [pools, query, resultat, laboratoire]);
 
@@ -780,7 +462,6 @@ function OngletEchantillons() {
 /* -------------------------------------------------------------------------- */
 
 const ONGLETS: TabsProps.Controlled['tabs'] = [
-  { tabId: 'emails', label: 'Emails entrants' },
   { tabId: 'documents', label: 'Documents' },
   { tabId: 'pools', label: 'Pools' },
   { tabId: 'ftps', label: 'Transmissions' },
@@ -788,7 +469,7 @@ const ONGLETS: TabsProps.Controlled['tabs'] = [
 ];
 
 export default function AdminTrichine() {
-  const [onglet, setOnglet] = useState('emails');
+  const [onglet, setOnglet] = useState('documents');
 
   return (
     <div className="p-2 md:p-4">
@@ -806,7 +487,6 @@ export default function AdminTrichine() {
         tabs={ONGLETS}
         onTabChange={setOnglet}
       >
-        {onglet === 'emails' && <OngletEmails />}
         {onglet === 'documents' && <OngletDocuments />}
         {onglet === 'pools' && <OngletPools />}
         {onglet === 'ftps' && <OngletFtps />}

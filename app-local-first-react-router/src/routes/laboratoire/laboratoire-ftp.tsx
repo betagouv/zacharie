@@ -18,6 +18,8 @@ import PoolCard, {
 import TrichineIntrouvable from '@app/components/trichine/TrichineIntrouvable';
 import TrichineChaine, { type ChaineEtape } from '@app/components/trichine/TrichineChaine';
 import TrichineChronologie from '@app/components/trichine/TrichineChronologie';
+import TrichineAliasesCard from '@app/components/trichine/TrichineAliases';
+import { aliasFtpFige } from '@app/services/trichine-alias';
 import TrichineDetailPage, {
   TrichineCard,
   TrichineContact,
@@ -192,6 +194,13 @@ export default function LaboratoireFTP() {
             />
             {!!ftp.commentaire && <p className="fr-text--sm fr-mt-2w fr-mb-0">{ftp.commentaire}</p>}
           </TrichineCard>
+          <TrichineAliasesCard
+            objet="ftp"
+            objetId={ftp.id}
+            aliases={ftp.Aliases}
+            fige={aliasFtpFige(ftp)}
+            onChange={refresh}
+          />
           <TrichineChronologie historique={historique} />
         </>
       }

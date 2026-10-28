@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useLocation } from 'react-router';
 import { trackPageView, setCustomDimensions, trackClick } from '../services/matomo';
 import useUser from '../zustand/user';
+import { scrubString } from '../utils/scrub-sensitive';
 
 export function MatomoTracker() {
   const location = useLocation();
@@ -9,7 +10,8 @@ export function MatomoTracker() {
 
   useEffect(() => {
     setCustomDimensions(user ? { isZacharieAdmin: user.isZacharieAdmin, roles: user.roles } : null);
-    trackPageView(location.pathname + location.search, document.title);
+    // les jetons d'invitation / de réinitialisation et les emails passent en paramètre d'URL
+    trackPageView(scrubString(location.pathname + location.search), document.title);
   }, [location, user]);
 
   useEffect(() => {

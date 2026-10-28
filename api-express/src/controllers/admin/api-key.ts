@@ -1,5 +1,6 @@
 import express from 'express';
 import { catchErrors } from '~/middlewares/errors';
+import { setAdminAuditTarget } from '~/middlewares/admin-audit-log';
 import crypto from 'crypto';
 const router: express.Router = express.Router();
 import prisma from '~/prisma';
@@ -58,6 +59,7 @@ router.post(
         },
       });
 
+      setAdminAuditTarget(res, 'api_key', createdApiKey.id);
       res.status(200).send({ ok: true, data: { apiKey: createdApiKey }, error: '' });
     }
   )

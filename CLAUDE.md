@@ -8,7 +8,7 @@ Zacharie is a French government application (beta.gouv.fr) for tracing game meat
 
 | Dossier                         | Stack                                                        | Rôle                             |
 | ------------------------------- | ------------------------------------------------------------ | -------------------------------- |
-| `api-express/`                  | Express + Prisma + PostgreSQL (Node.js >= 20, TS)            | API REST (port 3235)             |
+| `api-express/`                  | Express + Prisma + PostgreSQL (Node.js >= 22, TS)            | API REST (port 3235)             |
 | `app-local-first-react-router/` | React 19 + React Router 7 + Vite + DSFR + Tailwind + Zustand | Frontend local-first (port 3234) |
 | `expo/`                         | Expo (WebView wrapper)                                       | App mobile iOS/Android           |
 | `e2e/`                          | Playwright                                                   | Tests end-to-end                 |
@@ -203,7 +203,7 @@ Two API types:
 - Create migrations: `npm run prisma-create-migration <name>` (in api-express/)
 - Schema is copied to frontend via `api-express/scripts/copy-schema-to-app-side.js`
 - After a DB-level data correction or a change of access scope rules, bump `FORCE_FULL_RELOAD_AFTER` so every client re-downloads its scope. See `doc/rechargement-complet.md`.
-- **History tables** (migration `20261014100000_history_tables`): before every UPDATE / DELETE on Fei, Carcasse, CarcasseIntermediaire, User, Entity, EntityAndUserRelations, a Postgres trigger copies the previous row into `<Table>History` (same columns, all nullable, plus `history_id`, `history_op`, `sys_period`). **Adding a column to one of these tables = add it, nullable, to its History model too** — `src/__tests__/history-tables.test.ts` fails otherwise. Triggers are invisible to Prisma: never drop them; change them through a new migration (`CREATE OR REPLACE FUNCTION`). Absent from the e2e test DB (`prisma db push` ignores migration SQL). A broken trigger fails the business write: copy by column name (`jsonb_populate_record`), never reference a non-key `OLD.<column>`.
+- **History tables** (migration `20261014100000_history_tables`): before every UPDATE / DELETE on Fei, Carcasse, CarcasseIntermediaire, User, Entity, EntityAndUserRelations, a Postgres trigger copies the previous row into `<Table>History` (same columns, all nullable, plus `history_id`, `history_op`, `sys_period`). **Adding a column to one of these tables = add it, nullable, to its History model too** — `src/__tests__/history-tables.test.ts` fails otherwise. Triggers are invisible to Prisma: never drop them; change them through a new migration (`CREATE OR REPLACE FUNCTION`). `prisma db push` ignores migration SQL, so the e2e seed replays the trigger functions from the migrations on every `resetDb` (`api-express/scripts/apply-history-triggers.ts`): keep them as `CREATE OR REPLACE FUNCTION history_trigger_*` + `CREATE TRIGGER`. The admin reads them through `api-express/src/utils/admin-history.ts` (tabs « Historique », page `/app/admin/historique`). A broken trigger fails the business write: copy by column name (`jsonb_populate_record`), never reference a non-key `OLD.<column>`.
 
 ### Frontend
 
@@ -211,7 +211,7 @@ Local-first sync and the disconnect/logout flow are deep topics — see @app-loc
 
 ## Conventions
 
-- Node.js >= 20 required; TypeScript throughout.
+- Node.js >= 22 required (version in `.nvmrc`); TypeScript throughout.
 - Pre-commit hook runs `prettier --write` per package via lint-staged + husky (`.lintstagedrc.mjs`). Prettier runs from within each package directory to match CI config resolution. Typecheck is NOT enforced at commit time — run `npm run typecheck` manually or rely on CI.
 
 ## CI
@@ -231,9 +231,7 @@ API requires:
 Trichine (tous optionnels — non posés = fonctionnalité inactive, cf `doc/trichine-todo.md`) :
 
 - `VITE_FEATURE_TRICHINE`: `true` active la feature (frontend **et** garde-fous sangliers du backend)
-- `TRICHINE_RESULTATS_EMAIL`: adresse de dépôt des rapports COFRAC, imprimée sur la FTP
 - `CELLAR_ADDON_HOST` / `CELLAR_ADDON_KEY_ID` / `CELLAR_ADDON_KEY_SECRET` / `CELLAR_ADDON_BUCKET`: object storage Cellar
-- `BREVO_BEARER`: secret du Bearer des webhooks Brevo (sortants **et** entrants — même valeur que celle posée à la création du webhook côté Brevo)
-- `ALBERT_API_KEY` / `ALBERT_API_URL` / `ALBERT_OCR_MODEL`: OCR des rapports d'analyses scannés via l'Albert API. Non posée = les scans restent non lus (saisie manuelle)
+- `BREVO_BEARER`: secret du Bearer des webhooks Brevo (même valeur que celle posée à la création du webhook côté Brevo)
 
 E2E env vars: see @e2e/CLAUDE.md.

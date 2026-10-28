@@ -180,6 +180,7 @@ model Entity {
   TrichinePoolsCrees                    TrichinePool[]                 @relation("TrichinePoolCreeParEntity")
   TrichineFTPsExpediees                 TrichineFTP[]                  @relation("TrichineFTPExpediteurEntity")
   TrichineFTPsRecues                    TrichineFTP[]                  @relation("TrichineFTPDestinataireEntity")
+  TrichineAliases                       TrichineAlias[]                @relation("TrichineAliasEntity")
 
   @@index([updated_at]) // Time-based ordering
   @@index([nom_d_usage]) // Name-based ordering
@@ -290,6 +291,28 @@ model SecurityLog {
   created_at DateTime @default(now())
 
   @@index([email, action, created_at])
+}
+
+// Journal des écritures faites depuis /admin (POST, PUT, DELETE), écrit par le middleware admin-audit-log.
+// Pas de relation vers User : la ligne reste si le compte de l'admin est supprimé.
+model AdminAuditLog {
+  id            String   @id @default(uuid())
+  admin_user_id String
+  action        String // méthode + route, ex. "POST /user/:user_id"
+  target_type   String? // user | entity | fei | carcasse | api_key | bug_investigation
+  target_id     String?
+  params        Json?
+  body          Json? // corps de la requête, secrets retirés
+  before        Json? // champs modifiés avant / après, seulement pour l'édition d'un utilisateur
+  after         Json?
+  status_code   Int
+  ip            String?
+  user_agent    String?
+  created_at    DateTime @default(now())
+
+  @@index([admin_user_id, created_at])
+  @@index([target_type, target_id, created_at])
+  @@index([created_at])
 }
 
 // Versions précédentes de Fei, écrites par le trigger history_trigger (migration history_tables).
@@ -1322,6 +1345,8 @@ model TrichineEchantillon {
 
   commentaire String?
 
+  Aliases TrichineAlias[]
+
   created_at DateTime  @default(now())
   updated_at DateTime  @default(now()) @updatedAt
   deleted_at DateTime?
@@ -1366,6 +1391,7 @@ model TrichinePool {
   TrichineEchantillons TrichineEchantillon[]
   TrichinePoolFTPs     TrichinePoolFTP[]
   Documents            TrichineDocument[]
+  Aliases              TrichineAlias[]
 
   created_at DateTime  @default(now())
   updated_at DateTime  @default(now()) @updatedAt
@@ -1412,6 +1438,7 @@ model TrichineFTP {
 
   TrichinePoolFTPs TrichinePoolFTP[]
   Documents        TrichineDocument[]
+  Aliases          TrichineAlias[]
 
   created_at DateTime  @default(now())
   updated_at DateTime  @default(now()) @updatedAt
@@ -1432,14 +1459,49 @@ model TrichinePoolFTP {
   ftp_id     String
   date_ajout DateTime @default(now())
 
-  // N° interne attribué au pool par le laboratoire destinataire de cette FTP. Il est propre à ce
-  // laboratoire : le LVD et le LNR ont chacun le leur, aucun ne voit celui de l'autre.
-  reference_labo String?
-
   TrichinePool TrichinePool @relation(fields: [pool_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   TrichineFTP  TrichineFTP  @relation(fields: [ftp_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@unique([pool_id, ftp_id])
+  @@index([ftp_id])
+}
+
+enum TrichineAliasObjet {
+  ECHANTILLON
+  POOL
+  FTP
+}
+
+// Référence interne qu'une entité (SVI, laboratoire) donne à un échantillon, un pool ou une FTP,
+// pour le retrouver dans ses propres outils (LIMS, registre). Une par entité et par objet,
+// visible par tous les acteurs qui voient l'objet. Exactement une des trois FK est remplie,
+// celle qui correspond à objet_type (contrainte CHECK posée dans la migration).
+model TrichineAlias {
+  id         String             @id @default(uuid())
+  reference  String
+  objet_type TrichineAliasObjet
+
+  entity_id String
+  Entity    Entity @relation("TrichineAliasEntity", fields: [entity_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  echantillon_id      String?
+  TrichineEchantillon TrichineEchantillon? @relation(fields: [echantillon_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  pool_id             String?
+  TrichinePool        TrichinePool?        @relation(fields: [pool_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  ftp_id              String?
+  TrichineFTP         TrichineFTP?         @relation(fields: [ftp_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
+
+  @@unique([entity_id, echantillon_id])
+  @@unique([entity_id, pool_id])
+  @@unique([entity_id, ftp_id])
+  // Une entité ne réutilise pas une même référence (casse ignorée) pour deux objets du même type :
+  // index unique sur lower(reference), posé en SQL dans la migration 20261020100000_trichine_alias
+  // (Prisma ne sait pas déclarer un index sur expression). Ne pas le supprimer.
+  @@index([echantillon_id])
+  @@index([pool_id])
   @@index([ftp_id])
 }
 
@@ -1448,29 +1510,13 @@ model TrichinePoolFTP {
 model TrichineDocument {
   id          String  @id @default(uuid())
   type        String
-  source      String  @default("UPLOAD") // UPLOAD (dépôt applicatif) ou EMAIL (adresse de dépôt des rapports)
+  source      String  @default("UPLOAD") // UPLOAD (dépôt applicatif)
   fichier_url String // clé S3/Cellar
-  nom_fichier String? // nom d'origine de la pièce jointe, pour l'affichage
+  nom_fichier String? // nom d'origine du fichier, pour l'affichage
 
   date_ajout         DateTime @default(now())
-  // Null quand le document arrive par email : l'expéditeur n'est pas nécessairement un utilisateur Zacharie
-  ajoute_par_user_id String?
-  AjouteParUser      User?    @relation("TrichineDocumentAjouteParUser", fields: [ajoute_par_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-
-  // Provenance du dépôt par email (source = EMAIL)
-  email_message_id    String?
-  email_expediteur    String?
-  email_sujet         String?
-  email_recu_at       DateTime?
-  // CONTENU_FICHIER (référence lue dans le PDF), CONTENU_OCR (lue par OCR sur un scan)
-  // ou EMAIL (lue dans le sujet / le corps du message)
-  rattachement_source String?
-  // Ce qui a été reconnu dans le document : référence de pool / d'échantillon, ou numéros de bracelet
-  rattachement_indice String?
-  // Texte lu dans le document : c'est lui qui a décidé du rattachement et du résultat, on le garde
-  // pour pouvoir expliquer une lecture après coup
-  texte_extrait       String?
-  texte_source        String? // PDF_NATIF / OCR_ALBERT
+  ajoute_par_user_id String
+  AjouteParUser      User     @relation("TrichineDocumentAjouteParUser", fields: [ajoute_par_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   pool_id      String?
   TrichinePool TrichinePool? @relation(fields: [pool_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
@@ -1482,8 +1528,6 @@ model TrichineDocument {
   deleted_at DateTime?
   is_synced  Boolean   @default(true)
 
-  // Idempotence : Brevo peut rejouer un webhook, une pièce jointe n'est stockée qu'une fois
-  @@unique([email_message_id, nom_fichier])
   @@index([pool_id])
   @@index([ftp_id])
 }
@@ -1491,36 +1535,6 @@ model TrichineDocument {
 // Notification polymorphique. type/objet_type sont String pour permettre l'évolution UX.
 // type : "RESULTAT_ANALYSE" | "FTP_RECUE" | "POOL_REFUSE" | "CHANGEMENT_STATUT" | ...
 // objet_type : "CARCASSE" | "ECHANTILLON" | "POOL" | "FTP" | ...
-// Journal des emails reçus sur les adresses de dépôt (webhook Brevo Inbound Parsing).
-// Tracé pour le debug et la sécurité : tout message reçu laisse une ligne, y compris ceux qu'on
-// écarte (spam, expéditeur inconnu). Le corps du message n'est pas conservé, seulement ce qui
-// permet de comprendre ce qui a été fait — et de retrouver l'événement chez Brevo.
-model EmailEntrant {
-  id            String   @id @default(uuid())
-  message_id    String   @unique
-  brevo_uuid    String? // pour rejouer / consulter GET /v3/inbound/events/{uuid}
-  expediteur    String
-  destinataires String[]
-  sujet         String?
-  recu_at       DateTime
-  spam_score    Float?
-
-  nb_pieces_jointes   Int     @default(0)
-  // A_ANALYSER = pièces jointes stockées, en attente de l'OCR (cronjob) ; puis TRAITE / IGNORE / ERREUR
-  statut              String
-  motif_ignore        String?
-  laboratoire_reconnu Boolean @default(false)
-  // Détail pièce jointe par pièce jointe : rattachement, source du rattachement, résultat appliqué
-  detail              Json?
-
-  created_at DateTime @default(now())
-  updated_at DateTime @default(now()) @updatedAt
-
-  @@index([recu_at])
-  @@index([statut])
-  @@index([expediteur])
-}
-
 model TrichineNotification {
   id             String    @id @default(uuid())
   utilisateur_id String
@@ -1551,4 +1565,53 @@ model TrichineHistoriqueStatut {
 
   @@index([objet_type, objet_id])
   @@index([modifie_par_user_id])
+}
+
+// Statistiques Matomo importées chaque jour par le cron matomo-stats (cf doc/matomo.md), lues par Metabase.
+// `date` est un jour dans le fuseau du site Matomo (Europe/Paris).
+model MatomoVisitsDaily {
+  date             DateTime @id @db.Date
+  nb_visits        Int
+  nb_uniq_visitors Int?
+  nb_actions       Int
+  bounce_rate      Float // en pourcentage : 45 = 45 %
+  avg_time_on_site Int // en secondes
+  synced_at        DateTime @default(now())
+
+  @@map("matomo_visits_daily")
+}
+
+model MatomoPagesDaily {
+  date             DateTime @db.Date
+  url              String
+  label            String
+  nb_visits        Int
+  nb_hits          Int
+  avg_time_on_page Int // en secondes
+  synced_at        DateTime @default(now())
+
+  @@id([date, url])
+  @@map("matomo_pages_daily")
+}
+
+model MatomoEventsDaily {
+  date      DateTime @db.Date
+  category  String
+  action    String
+  nb_events Int
+  nb_visits Int
+  synced_at DateTime @default(now())
+
+  @@id([date, category, action])
+  @@map("matomo_events_daily")
+}
+
+model MatomoReferrersDaily {
+  date          DateTime @db.Date
+  referrer_type String
+  nb_visits     Int
+  synced_at     DateTime @default(now())
+
+  @@id([date, referrer_type])
+  @@map("matomo_referrers_daily")
 }

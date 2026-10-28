@@ -14,6 +14,7 @@ import Chargement from '@app/components/Chargement';
 import TrichineIntrouvable from '@app/components/trichine/TrichineIntrouvable';
 import TrichineChaine, { type ChaineEtape } from '@app/components/trichine/TrichineChaine';
 import TrichineChronologie from '@app/components/trichine/TrichineChronologie';
+import TrichineAliasesCard from '@app/components/trichine/TrichineAliases';
 import TrichineFTPPdfActions from '@app/components/trichine/TrichineFTPPdfActions';
 import TrichineDetailPage, {
   TrichineCard,
@@ -221,6 +222,13 @@ export default function TrichineFTPDetail() {
             />
             {!!ftp.commentaire && <p className="fr-text--sm fr-mt-2w fr-mb-0">{ftp.commentaire}</p>}
           </TrichineCard>
+          <TrichineAliasesCard
+            objet="ftp"
+            objetId={ftp.id}
+            aliases={ftp.Aliases}
+            fige={!isBrouillon}
+            onChange={refresh}
+          />
           <TrichineChronologie historique={historique} />
         </>
       }

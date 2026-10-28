@@ -5,8 +5,8 @@ import dayjs from 'dayjs';
 import 'dayjs/locale/fr';
 import path from 'path';
 import prisma from '~/prisma';
-import { TRICHINE_RESULTATS_EMAIL } from '~/config';
 import { getEtgsDuServiceExpediteur, type TrichinePartieConcernee } from '~/utils/trichine-parties';
+import { trichineAliasesInclude, type TrichineAliasProjection } from '~/utils/trichine-alias';
 
 dayjs.locale('fr');
 
@@ -97,6 +97,7 @@ const styles = StyleSheet.create({
   },
   poolRef: { fontSize: 15, fontWeight: 'bold', letterSpacing: 1 },
   poolMeta: { fontSize: 8.5, marginTop: 2 },
+  tdAlias: { fontSize: 6.5, color: '#666666' },
   barcode: { width: 150, height: 'auto' },
 
   table: { padding: 5 },
@@ -108,8 +109,8 @@ const styles = StyleSheet.create({
   colEspece: { width: '11%' },
   colDate: { width: '12%' },
   colCommune: { width: '17%' },
-  colSite: { width: '19%' },
-  colMasse: { width: '7%', textAlign: 'right' },
+  colSite: { width: '16%' },
+  colMasse: { width: '10%', textAlign: 'right' },
 
   laboZone: { flexDirection: 'row', gap: 6, padding: 5, borderTopWidth: 1, borderTopColor: gris },
   laboField: { flex: 1, fontSize: 8, borderBottomWidth: 1, borderBottomColor: '#999999', paddingBottom: 9 },
@@ -184,13 +185,16 @@ async function getFtpForPdf(ftpId: string) {
                       Fei: { select: { commune_mise_a_mort: true } },
                     },
                   },
+                  ...trichineAliasesInclude,
                 },
                 orderBy: { reference_echantillon: 'asc' },
               },
+              ...trichineAliasesInclude,
             },
           },
         },
       },
+      ...trichineAliasesInclude,
     },
   });
 }
@@ -216,6 +220,13 @@ export async function barcodeDataUrl(text: string): Promise<string> {
 
 function formatAdresse(parts: Array<string | null>) {
   return parts.filter(Boolean).join(', ');
+}
+
+// Références internes de chaque acteur, à côté de celle de Zacharie : « SVI 35 : A-12 · LVD 35 : 2026-87 »
+export function formatAliases(aliases: Array<TrichineAliasProjection>): string {
+  return aliases
+    .map((alias) => `${alias.Entity.nom_d_usage || alias.Entity.raison_sociale || '—'} : ${alias.reference}`)
+    .join(' · ');
 }
 
 export function TrichineFtpDocument({
@@ -308,6 +319,9 @@ export function TrichineFtpDocument({
             Envoi : {ftp.date_envoi ? dayjs(ftp.date_envoi).format('DD/MM/YYYY') : 'non envoyée'}
           </Text>
           {!!ftp.mode_transport && <Text style={styles.line}>Transport : {ftp.mode_transport}</Text>}
+          {ftp.Aliases.length > 0 && (
+            <Text style={styles.line}>Réf. internes : {formatAliases(ftp.Aliases)}</Text>
+          )}
           <Text style={styles.line}>
             Contenu : {pools.length} pool{pools.length > 1 ? 's' : ''} — {nbEchantillons} échantillon
             {nbEchantillons > 1 ? 's' : ''}
@@ -323,16 +337,10 @@ export function TrichineFtpDocument({
         <View style={styles.consigne} wrap={false}>
           <Text style={styles.consigneTitle}>À l'attention du laboratoire</Text>
           <Text style={styles.consigneText}>
-            1. Reportez la référence de pool ci-dessous (P-…) dans le champ « référence client » de votre LIMS
-            : c'est elle qui permet de rattacher automatiquement votre résultat aux carcasses concernées. Le
+            Reportez la référence de pool ci-dessous (P-…) dans le champ « référence client » de votre LIMS :
+            c'est elle qui permet de rattacher automatiquement votre résultat aux carcasses concernées. Le
             code-barres est lisible à la douchette.
           </Text>
-          {!!TRICHINE_RESULTATS_EMAIL && (
-            <Text style={styles.consigneText}>
-              2. Renvoyez votre rapport COFRAC à {TRICHINE_RESULTATS_EMAIL} : les résultats sont intégrés
-              automatiquement dans Zacharie, sans ressaisie de votre part.
-            </Text>
-          )}
         </View>
 
         {pools.map((pool) => (
@@ -344,9 +352,12 @@ export function TrichineFtpDocument({
                   {typeLabels[pool.type] ?? pool.type} — constitué le{' '}
                   {dayjs(pool.date_constitution).format('DD/MM/YYYY')} — {pool.TrichineEchantillons.length}{' '}
                   échantillon
-                  {pool.TrichineEchantillons.length > 1 ? 's' : ''} —{' '}
+                  {pool.TrichineEchantillons.length > 1 ? 's' : ''} — au moins{' '}
                   {pool.TrichineEchantillons.reduce((total, e) => total + e.masse_grammes, 0)} g
                 </Text>
+                {pool.Aliases.length > 0 && (
+                  <Text style={styles.poolMeta}>Réf. internes : {formatAliases(pool.Aliases)}</Text>
+                )}
               </View>
               <Image style={styles.barcode} src={barcodes[pool.reference_pool]} />
             </View>
@@ -359,11 +370,18 @@ export function TrichineFtpDocument({
                 <Text style={[styles.th, styles.colDate]}>Mise à mort</Text>
                 <Text style={[styles.th, styles.colCommune]}>Commune</Text>
                 <Text style={[styles.th, styles.colSite]}>Site</Text>
-                <Text style={[styles.th, styles.colMasse]}>g</Text>
+                <Text style={[styles.th, styles.colMasse]}>Au moins (g)</Text>
               </View>
               {pool.TrichineEchantillons.map((echantillon) => (
                 <View key={echantillon.id} style={styles.tr}>
-                  <Text style={[styles.td, styles.colEch]}>{echantillon.reference_echantillon}</Text>
+                  <View style={styles.colEch}>
+                    <Text style={styles.td}>{echantillon.reference_echantillon}</Text>
+                    {echantillon.Aliases.map((alias) => (
+                      <Text key={alias.id} style={styles.tdAlias}>
+                        {formatAliases([alias])}
+                      </Text>
+                    ))}
+                  </View>
                   <Text style={[styles.td, styles.colBracelet]}>{echantillon.Carcasse.numero_bracelet}</Text>
                   <Text style={[styles.td, styles.colEspece]}>{echantillon.Carcasse.espece}</Text>
                   <Text style={[styles.td, styles.colDate]}>

@@ -3,6 +3,7 @@ import {
   CarcasseModificationRequestStatus,
   CarcasseModificationRequestType,
   FeiOwnerRole,
+  Prisma,
   UserRoles,
 } from '@prisma/client';
 import type { User } from '@prisma/client';
@@ -472,6 +473,63 @@ describe('syncCarcasse — écriture sur une carcasse tierce', () => {
     );
 
     await expect(scope.canWriteCarcasse('ZC-NOUVELLE')).resolves.toBe(true);
+  });
+
+  // Les droits par rôle (examen, suppression…) se lisent sur la fiche du corps : envoyer une
+  // carcasse de son périmètre avec sa propre fiche ne doit pas en faire l'examinateur.
+  test('une carcasse ne peut pas être écrite via une autre fiche que la sienne', async () => {
+    vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce({
+      ...feiTierce,
+      numero: 'FEI-ATTAQUANT',
+      examinateur_initial_user_id: attaquant.id,
+    });
+    vi.mocked(prisma.carcasse.findMany).mockResolvedValue([{ zacharie_carcasse_id: 'ZC-VICTIME' }] as any);
+
+    await expect(
+      syncCarcasse(
+        'FEI-ATTAQUANT',
+        'ZC-VICTIME',
+        {
+          fei_numero: 'FEI-ATTAQUANT',
+          examinateur_initial_user_id: attaquant.id,
+          examinateur_anomalies_carcasse: ['Abcès'],
+        } as any,
+        attaquant,
+        await createSyncScope(attaquant),
+        { existingCarcasse: carcasseTierce }
+      )
+    ).rejects.toThrow("Cette carcasse n'appartient pas à cette fiche");
+
+    expect(prisma.carcasse.update).not.toHaveBeenCalled();
+  });
+
+  test("la carcasse d'une autre fiche est refusée aussi quand elle n'est trouvée qu'à la création", async () => {
+    vi.mocked(prisma.fei.findUnique).mockResolvedValueOnce({
+      ...feiTierce,
+      numero: 'FEI-ATTAQUANT',
+      created_by_user_id: attaquant.id,
+      examinateur_initial_user_id: attaquant.id,
+    });
+    vi.mocked(prisma.carcasse.findFirst).mockResolvedValueOnce(null);
+    vi.mocked(prisma.carcasse.create).mockRejectedValueOnce(
+      new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+        code: 'P2002',
+        clientVersion: 'test',
+      })
+    );
+    vi.mocked(prisma.carcasse.findUnique).mockResolvedValueOnce(carcasseTierce);
+
+    await expect(
+      syncCarcasse(
+        'FEI-ATTAQUANT',
+        'ZC-VICTIME',
+        { fei_numero: 'FEI-ATTAQUANT', numero_bracelet: 'BR-VICTIME' } as any,
+        attaquant,
+        await createSyncScope(attaquant)
+      )
+    ).rejects.toThrow("Cette carcasse n'appartient pas à cette fiche");
+
+    expect(prisma.carcasse.update).not.toHaveBeenCalled();
   });
 
   test('la suppression est soumise au même périmètre', async () => {

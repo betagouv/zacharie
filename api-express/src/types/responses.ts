@@ -14,8 +14,8 @@ import type {
   ApiKeyApprovalByUserOrEntity,
   UserNotifications,
   TrichineResultatAnalyse,
-  EmailEntrant,
   BugInvestigation,
+  AdminAuditLog,
 } from '@prisma/client';
 import type { UserForFei, UserForAdmin } from './user';
 import type { BugInvestigationMessage } from './bug-investigation';
@@ -234,14 +234,6 @@ export interface AdminNewUserDataResponse {
   ok: boolean;
   data: null | {
     user: User;
-  };
-  error: string;
-}
-
-export interface LogResponse {
-  ok: boolean;
-  data: {
-    log: Log | null;
   };
   error: string;
 }
@@ -541,7 +533,7 @@ export interface LimsResultRow {
   reference_labo?: string;
   commentaire?: string;
   status: LimsResultRowStatus;
-  // Raison quand status ≠ matched
+  // Raison quand status ≠ matched, ou avertissement sur une ligne matched (référence interne ignorée)
   message?: string;
 }
 
@@ -560,7 +552,8 @@ export interface LaboResultsImportResponse {
     applied: number;
     skipped: number;
     errors: number;
-    results: Array<{ reference_pool: string; ok: boolean; error?: string }>;
+    // avertissement : résultat appliqué, mais la référence interne de la ligne n'a pas été posée
+    results: Array<{ reference_pool: string; ok: boolean; error?: string; avertissement?: string }>;
   };
   error: string;
 }
@@ -589,13 +582,7 @@ export type AdminTrichineDocumentRow = {
   date_ajout: Date;
   pool_reference: string | null;
   ftp_numero: string | null;
-  rattachement_source: string | null;
-  rattachement_indice: string | null;
-  texte_source: string | null;
-  longueur_texte: number;
-  email_expediteur: string | null;
-  email_sujet: string | null;
-  depose_par: string | null;
+  depose_par: string;
 };
 
 export interface AdminTrichineDocumentsResponse {
@@ -619,7 +606,8 @@ export type AdminTrichinePoolRow = {
   ftp_numero: string | null;
   laboratoire: string | null;
   est_lnr: boolean;
-  reference_labo: string | null;
+  // Références internes posées par le SVI et les laboratoires, séparées par des virgules
+  aliases: string;
 };
 
 export interface AdminTrichinePoolsResponse {
@@ -669,35 +657,6 @@ export type AdminTrichineEchantillonRow = {
 export interface AdminTrichineEchantillonsResponse {
   ok: boolean;
   data: { echantillons: AdminTrichineEchantillonRow[] };
-  error: string;
-}
-
-export interface AdminEmailEntrantResponse {
-  ok: boolean;
-  data: {
-    email: EmailEntrant | null;
-    // Détail de l'analyse quand elle vient d'être relancée
-    ocr: Array<{
-      document_id: string;
-      nom_fichier: string | null;
-      texte_lu: boolean;
-      pool_reference?: string;
-      ftp_numero?: string;
-      resultat_lu?: string;
-      resultat_applique?: boolean;
-      resultat_refus?: string;
-      rapport_ambigu?: boolean;
-    }> | null;
-  } | null;
-  error: string;
-}
-
-export interface AdminEmailsEntrantsResponse {
-  ok: boolean;
-  data: {
-    emails: EmailEntrant[];
-    total: number;
-  };
   error: string;
 }
 
@@ -941,6 +900,22 @@ export interface AdminBugInvestigationResponse {
     investigation: Omit<BugInvestigation, 'messages'> & {
       messages: Array<BugInvestigationMessage>;
     } & BugInvestigationAuthor;
+  } | null;
+  error: string;
+}
+
+export type AdminAuditLogRow = AdminAuditLog & {
+  admin_email: string | null;
+  target_label: string | null;
+};
+
+export interface AdminAuditLogResponse {
+  ok: boolean;
+  data: {
+    logs: Array<AdminAuditLogRow>;
+    total: number;
+    admins: Array<{ id: string; email: string }>;
+    actions: Array<string>;
   } | null;
   error: string;
 }

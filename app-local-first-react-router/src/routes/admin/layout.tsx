@@ -50,6 +50,16 @@ const adminLinks = [
     label: 'Résolution de bug',
     icon: 'fr-icon-bug-line',
   },
+  {
+    to: '/app/admin/journal',
+    label: 'Journal admin',
+    icon: 'fr-icon-time-line',
+  },
+  {
+    to: '/app/admin/historique',
+    label: 'Historique',
+    icon: 'fr-icon-history-line',
+  },
 ];
 
 const externalLinks = [

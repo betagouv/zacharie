@@ -18,6 +18,7 @@ import TrichineDetailPage, {
   TrichineFields,
 } from '@app/components/trichine/TrichineDetailPage';
 import TrichineResultatCard from '@app/components/trichine/TrichineResultatCard';
+import TrichineAliasesCard from '@app/components/trichine/TrichineAliases';
 import { useTrichineBasePath, useTrichineCarcasseLink } from '@app/utils/trichine-hooks';
 import {
   getTrichineEchantillons,
@@ -219,7 +220,7 @@ export default function TrichinePoolDetailPage() {
                   label: 'Constitué le',
                   value: dayjs(pool.date_constitution).format('DD/MM/YYYY'),
                 },
-                { label: 'Masse totale', value: `${masseTotale} g` },
+                { label: 'Masse totale', value: `au moins ${masseTotale} g` },
                 !!pool.PoolParent && {
                   label: 'Pool parent',
                   value: (
@@ -241,12 +242,19 @@ export default function TrichinePoolDetailPage() {
       <TrichineResultatCard
         pool={pool}
         laboratoire={laboratoire}
-        referenceLabo={dernierLien?.reference_labo}
+      />
+
+      <TrichineAliasesCard
+        objet="pool"
+        objetId={pool.id}
+        aliases={pool.Aliases}
+        fige={fige}
+        onChange={refresh}
       />
 
       <TrichineCard
         titre="Composition"
-        hint={`${pool.TrichineEchantillons.length} échantillon${pool.TrichineEchantillons.length > 1 ? 's' : ''} — ${masseTotale} g`}
+        hint={`${pool.TrichineEchantillons.length} échantillon${pool.TrichineEchantillons.length > 1 ? 's' : ''} — au moins ${masseTotale} g`}
         actions={
           !fige && (
             <Button
@@ -294,7 +302,7 @@ export default function TrichinePoolDetailPage() {
                 {/* Ce qui compte pour le pool — la masse — porte le poids visuel, le reste situe le prélèvement */}
                 <div className="shrink-0 text-right">
                   <p className="fr-text--sm fr-mb-0 font-medium text-gray-900">
-                    {echantillon.masse_grammes} g
+                    au moins {echantillon.masse_grammes} g
                   </p>
                   <p className="fr-text--xs fr-mb-0 text-gray-600">
                     {sitePrelevementLabels[echantillon.site_prelevement]} ·{' '}
@@ -621,8 +629,8 @@ function AjouterEchantillonModalContent({ pool, onDone }: { pool: TrichinePoolDe
                           {echantillon.reference_echantillon}
                         </span>
                         <span className="block text-gray-600">
-                          {echantillon.Carcasse.numero_bracelet} · {echantillon.masse_grammes} g · prélevé le{' '}
-                          {dayjs(echantillon.date_prelevement).format('DD/MM/YYYY')}
+                          {echantillon.Carcasse.numero_bracelet} · au moins {echantillon.masse_grammes} g ·
+                          prélevé le {dayjs(echantillon.date_prelevement).format('DD/MM/YYYY')}
                         </span>
                       </span>
                       <span
@@ -640,7 +648,7 @@ function AjouterEchantillonModalContent({ pool, onDone }: { pool: TrichinePoolDe
 
           <p className="fr-text--sm fr-mb-2w text-gray-700">
             Pool après ajout : <strong>{masses.length}</strong> carcasse{masses.length > 1 ? 's' : ''} —{' '}
-            <strong>{masseTotale} g</strong>
+            <strong>au moins {masseTotale} g</strong>
             {` (maximum ${limites.maxCarcasses} carcasse${limites.maxCarcasses > 1 ? 's' : ''}${limites.maxMasse ? `, ${limites.maxMasse} g` : ''}${limites.minMasse ? `, minimum ${limites.minMasse} g` : ''})`}
           </p>
 

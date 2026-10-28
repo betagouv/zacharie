@@ -48,7 +48,7 @@ jobs:
           fi
 
           # Comment tester : un titre « ## Comment tester » suivi d'au moins une ligne non vide.
-          section=$(awk 'tolower($0) ~ /^##+ *comment tester/ {found=1; next} found && /^##+ / {exit} found' <<<"$body" | tr -d '[:space:]')
+          section=$(awk 'tolower($0) ~ /^##+ *comment tester/ {found=1; next} found && /^##? / {exit} found' <<<"$body" | tr -d '[:space:]')
           if [ -n "$section" ]; then
             manual="✅ Section « Comment tester » présente"
             manual_ok=1

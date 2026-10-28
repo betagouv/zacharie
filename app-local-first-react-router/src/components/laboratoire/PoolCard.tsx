@@ -21,6 +21,7 @@ import {
   type FtpConfirmationCreee,
   type LaboPool,
 } from '@app/services/laboratoire';
+import { formatAliases, monAlias, useMesEntitesAlias } from '@app/services/trichine-alias';
 import PoolDocuments from '@app/components/laboratoire/PoolDocuments';
 import LarvePhotos from '@app/components/laboratoire/LarvePhotos';
 import useDownloadFtpPdf from '@app/utils/download-ftp-pdf';
@@ -86,9 +87,15 @@ export default function PoolCard({
   // Le LNR confirme les pools non négatifs : la saisie reste ouverte sur un DOUTEUX
   const peutSaisir =
     saisieActive && (!resultatSaisi || (isLnr && pool.resultat_analyse === TrichineResultatAnalyse.DOUTEUX));
+  // Une fois le pool parti en confirmation, son résultat appartient au LNR
+  const transmisAuLnr = !isLnr && !!confirmation && confirmation.statut_logistique !== 'ANNULEE';
   // Un DOUTEUX n'est pas corrigeable : la confirmation est déjà partie au LNR
   const peutCorriger =
-    saisieActive && resultatSaisi && !peutSaisir && pool.resultat_analyse !== TrichineResultatAnalyse.DOUTEUX;
+    saisieActive &&
+    resultatSaisi &&
+    !peutSaisir &&
+    !transmisAuLnr &&
+    pool.resultat_analyse !== TrichineResultatAnalyse.DOUTEUX;
   const nombre = pool.TrichineEchantillons.length;
   const carcasses = pool.TrichineEchantillons.map((echantillon) => echantillon.Carcasse.numero_bracelet)
     .filter(Boolean)
@@ -126,6 +133,9 @@ export default function PoolCard({
           {nombre} échantillon{nombre > 1 ? 's' : ''}
           {!!carcasses && ` — carcasses ${carcasses}`}
         </p>
+        {pool.Aliases.length > 0 && (
+          <p className="fr-text--sm fr-mb-0 text-gray-600">Réf. internes : {formatAliases(pool.Aliases)}</p>
+        )}
         <button
           type="button"
           onClick={() => setCompositionOuverte((ouverte) => !ouverte)}
@@ -143,8 +153,9 @@ export default function PoolCard({
                 key={echantillon.id}
                 className="rounded border border-gray-200 p-2"
               >
-                <span className="font-semibold">{echantillon.reference_echantillon}</span> —{' '}
-                {sitePrelevementLabels[echantillon.site_prelevement]} — {echantillon.masse_grammes} g
+                <span className="font-semibold">{echantillon.reference_echantillon}</span>
+                {echantillon.Aliases.length > 0 && ` (${formatAliases(echantillon.Aliases)})`} —{' '}
+                {sitePrelevementLabels[echantillon.site_prelevement]} — au moins {echantillon.masse_grammes} g
                 <br />
                 Carcasse {echantillon.Carcasse.numero_bracelet} ({echantillon.Carcasse.espece ?? '—'}) — mise
                 à mort le{' '}
@@ -177,7 +188,6 @@ export default function PoolCard({
         <ul className="fr-text--sm fr-mb-2w space-y-1">
           {pool.parasite_identifie && <li>Parasite identifié : {pool.parasite_identifie}</li>}
           {pool.raison_refus && <li>Raison du refus : {pool.raison_refus}</li>}
-          {pool.reference_labo && <li>Référence laboratoire : {pool.reference_labo}</li>}
           {pool.date_debut_analyse && (
             <li>Début d'analyse : {dayjs(pool.date_debut_analyse).format('DD/MM/YYYY')}</li>
           )}
@@ -249,6 +259,8 @@ export function ResultatModalContent({
   const [ftpConfirmation, setFtpConfirmation] = useState<FtpConfirmationCreee | null>(null);
   const [photos, setPhotos] = useState<Array<TrichineDocument>>([]);
   const { isDownloading, onDownloadFtpPdf } = useDownloadFtpPdf('laboratoire');
+  const mesEntites = useMesEntitesAlias();
+  const maReference = monAlias(pool?.Aliases, mesEntites)?.reference ?? '';
 
   // Une fiche porte plusieurs pools : rien de ce qui a été saisi pour l'un ne doit rester pour le suivant
   useEffect(() => {
@@ -260,10 +272,15 @@ export function ResultatModalContent({
     setParasite('');
     setDateDebut('');
     setDateFin(dayjs().format('YYYY-MM-DD'));
-    setReferenceLabo(pool?.reference_labo ?? '');
+    setReferenceLabo('');
     setCommentaire('');
     setRaison('');
-  }, [pool?.id, pool?.reference_labo]);
+  }, [pool?.id]);
+  // Pré-remplit avec la référence déjà posée, qui peut arriver après l'ouverture : sans écraser
+  // ce que le laboratoire a commencé à saisir
+  useEffect(() => {
+    setReferenceLabo((saisie) => saisie || maReference);
+  }, [pool?.id, maReference]);
 
   const correction = mode === 'correction';
   const options = isLnr ? LNR_RESULTS : LVD_RESULTS;
@@ -324,7 +341,9 @@ export function ResultatModalContent({
       parasite_identifie: parasiteRequis ? parasite.trim() : undefined,
       date_debut_analyse: dateDebut || undefined,
       date_fin_analyse: dateFin || undefined,
-      reference_labo: referenceLabo.trim() || undefined,
+      // Seulement si le laboratoire l'a changée : celle déjà posée n'a pas à être revérifiée.
+      // Une chaîne vide retire la référence déjà posée.
+      reference_labo: referenceLabo.trim() !== maReference ? referenceLabo.trim() : undefined,
       commentaire: commentaire.trim() || undefined,
     };
     // Seule une première saisie peut générer une FTP de confirmation vers le LNR
@@ -439,15 +458,18 @@ export function ResultatModalContent({
             onChange: (event) => setDateFin(event.target.value),
           }}
         />
-        <Input
-          label="Référence interne laboratoire (optionnel)"
-          className="grow"
-          nativeInputProps={{
-            type: 'text',
-            value: referenceLabo,
-            onChange: (event) => setReferenceLabo(event.target.value),
-          }}
-        />
+        {/* Une correction intervient analyses terminées : la référence est alors figée */}
+        {!correction && (
+          <Input
+            label="Ma référence interne (optionnel)"
+            className="grow"
+            nativeInputProps={{
+              type: 'text',
+              value: referenceLabo,
+              onChange: (event) => setReferenceLabo(event.target.value),
+            }}
+          />
+        )}
       </div>
       <Input
         label="Commentaire (optionnel)"

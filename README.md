@@ -77,6 +77,8 @@ cd zacharie
 POSTGRESQL_ADDON_URI=postgresql://user:password@localhost:5432/zacharie
 ```
 
+Import des statistiques Matomo pour Metabase (optionnel, app cronjobs) : `MATOMO_URL`, `MATOMO_TOKEN`, `MATOMO_SITE_ID`. Voir [doc/matomo.md](doc/matomo.md#export-vers-metabase).
+
 **E2E** (`e2e/`) :
 
 ```
@@ -129,20 +131,21 @@ Comptes de test : `admin1@example.org` à `admin12@example.org`, mot de passe : 
 
 ## Commandes utiles
 
-| Package                        | Commande            | Description                |
-| ------------------------------ | ------------------- | -------------------------- |
-| `api-express`                  | `npm run dev`       | Serveur de dev (port 3235) |
-| `api-express`                  | `npm run test`      | Tests Vitest               |
-| `api-express`                  | `npm run typecheck` | Vérification TypeScript    |
-| `api-express`                  | `npm run format`    | Formatage Prettier         |
-| `app-local-first-react-router` | `npm run dev`       | Serveur Vite (port 3234)   |
-| `app-local-first-react-router` | `npm run vitest`    | Tests Vitest               |
-| `app-local-first-react-router` | `npm run lint`      | ESLint                     |
-| `app-local-first-react-router` | `npm run typecheck` | Vérification TypeScript    |
-| `app-local-first-react-router` | `npm run build`     | Build de production        |
-| `expo`                         | `npm run start`     | Serveur Expo               |
-| `expo`                         | `npm run ios`       | Simulateur iOS             |
-| `expo`                         | `npm run android`   | Émulateur Android          |
+| Package                        | Commande                                     | Description                   |
+| ------------------------------ | -------------------------------------------- | ----------------------------- |
+| `api-express`                  | `npm run dev`                                | Serveur de dev (port 3235)    |
+| `api-express`                  | `npm run test`                               | Tests Vitest                  |
+| `api-express`                  | `npm run typecheck`                          | Vérification TypeScript       |
+| `api-express`                  | `npm run format`                             | Formatage Prettier            |
+| `api-express`                  | `npm run matomo-backfill -- --from … --to …` | Import de l'historique Matomo |
+| `app-local-first-react-router` | `npm run dev`                                | Serveur Vite (port 3234)      |
+| `app-local-first-react-router` | `npm run vitest`                             | Tests Vitest                  |
+| `app-local-first-react-router` | `npm run lint`                               | ESLint                        |
+| `app-local-first-react-router` | `npm run typecheck`                          | Vérification TypeScript       |
+| `app-local-first-react-router` | `npm run build`                              | Build de production           |
+| `expo`                         | `npm run start`                              | Serveur Expo                  |
+| `expo`                         | `npm run ios`                                | Simulateur iOS                |
+| `expo`                         | `npm run android`                            | Émulateur Android             |
 
 ## Licence
 

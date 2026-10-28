@@ -9,6 +9,7 @@ import AdminDeletedBanner from '@app/components/AdminDeletedBanner';
 import type { AdminFeiDetailResponse, AdminSoftDeleteResponse } from '@api/src/types/responses';
 import dayjs from 'dayjs';
 import { formatOwner, getNextOwnerStatus } from '@app/utils/admin-fei-destinataire';
+import { AdminHistoryTimeline } from './history-timeline';
 
 type FeiDetail = AdminFeiDetailResponse['data']['fei'];
 type FeiDetailData = AdminFeiDetailResponse['data'];
@@ -63,6 +64,7 @@ const feiTabs = [
   { tabId: 'infos' as const, label: 'Informations' },
   { tabId: 'carcasses' as const, label: 'Carcasses' },
   { tabId: 'intermediaires' as const, label: 'Intermédiaires' },
+  { tabId: 'historique' as const, label: 'Historique' },
 ];
 
 type FeiTabId = (typeof feiTabs)[number]['tabId'];
@@ -404,6 +406,12 @@ function AdminFeiDetailContent() {
               </Section>
             )}
           </div>
+        )}
+        {selectedTab === 'historique' && (
+          <AdminHistoryTimeline
+            type="fei"
+            id={fei.numero}
+          />
         )}
       </Tabs>
     </>

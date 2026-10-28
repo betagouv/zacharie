@@ -6,6 +6,7 @@ import dayjs from 'dayjs';
 import { TrichineResultatAnalyse } from '@prisma/client';
 import TableFilterable from '@app/components/TableFilterable';
 import LienTrichine from '@app/components/trichine/LienTrichine';
+import { aliasesRecherche, monAlias, useMesEntitesAlias } from '@app/services/trichine-alias';
 import TrichineListPage, {
   FiltrePeriode,
   FiltreSelect,
@@ -69,6 +70,7 @@ export default function TrichinePools() {
   const [sortBy, setSortBy] = useState<keyof TrichinePoolPopulated>('date_constitution');
   const [sortOrder, setSortOrder] = useState<TrichineSortOrder>('DESC');
   const [selectedIds, setSelectedIds] = useState<Array<string>>([]);
+  const mesEntites = useMesEntitesAlias();
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -124,7 +126,11 @@ export default function TrichinePools() {
       filtered = filtered.filter((pool) => String(pool.TrichineEchantillons.length) === nbEchantillons);
     }
     filtered = filterParPeriode(filtered, du, au, (pool) => pool.date_constitution);
-    filtered = filterTrichineRows(filtered, query, (pool) => `${pool.reference_pool} ${ftpNumeros(pool)}`);
+    filtered = filterTrichineRows(
+      filtered,
+      query,
+      (pool) => `${pool.reference_pool} ${ftpNumeros(pool)} ${aliasesRecherche(pool.Aliases)}`
+    );
     return sortTrichineRows(filtered, sortBy, sortOrder);
   }, [pools, query, vue, resultat, ftp, nbEchantillons, du, au, sortBy, sortOrder, carcassesAvecIpm2]);
 
@@ -164,7 +170,7 @@ export default function TrichinePools() {
         <TrichineListToolbar
           query={query}
           onQueryChange={setQuery}
-          searchHint="Référence de pool, n° de FTP"
+          searchHint="Référence de pool, référence interne, n° de FTP"
         >
           <FiltreSelect
             label="Suivi"
@@ -252,6 +258,11 @@ export default function TrichinePools() {
             title: 'Référence',
             ...sortProps,
             render: (pool) => <span className="font-semibold">{pool.reference_pool}</span>,
+          },
+          {
+            dataKey: 'Aliases',
+            title: 'Ma réf.',
+            render: (pool) => monAlias(pool.Aliases, mesEntites)?.reference ?? '—',
           },
           {
             dataKey: 'date_constitution',

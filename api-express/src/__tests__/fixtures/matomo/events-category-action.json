@@ -1,0 +1,45 @@
+{
+  "2026-10-13": [
+    {
+      "label": "fiche",
+      "nb_uniq_visitors": 31,
+      "nb_visits": 38,
+      "nb_events": 77,
+      "nb_events_with_value": 20,
+      "sum_event_value": 143,
+      "min_event_value": 1,
+      "max_event_value": 24,
+      "avg_event_value": 7.15,
+      "segment": "eventCategory==fiche",
+      "idsubdatatable": 4,
+      "subtable": [
+        {
+          "label": "creer",
+          "nb_uniq_visitors": 25,
+          "nb_visits": 29,
+          "nb_events": 45,
+          "nb_events_with_value": 0,
+          "sum_event_value": 0,
+          "segment": "eventAction==creer"
+        },
+        {
+          "label": "transmettre",
+          "nb_uniq_visitors": 18,
+          "nb_visits": 20,
+          "nb_events": 32,
+          "nb_events_with_value": 20,
+          "sum_event_value": 143,
+          "segment": "eventAction==transmettre"
+        }
+      ]
+    },
+    {
+      "label": "clic",
+      "nb_visits": 12,
+      "nb_events": 19,
+      "idsubdatatable": 5,
+      "subtable": [{ "label": "fiche-voir-toutes-les-fiches", "nb_visits": 12, "nb_events": 19 }]
+    }
+  ],
+  "2026-10-14": []
+}

@@ -20,6 +20,8 @@ import AdminQuiz from './quiz';
 import AdminTrichine from './trichine';
 import { TRICHINE_FEATURE_ENABLED } from '@app/utils/trichine';
 import AdminBugResolution from './bug-resolution';
+import AdminAuditLog from './audit-log';
+import AdminHistory from './history';
 
 export default function RouterAdmin() {
   return (
@@ -108,6 +110,14 @@ export default function RouterAdmin() {
       <Route
         path="bug-resolution/:id"
         element={<AdminBugResolution />}
+      />
+      <Route
+        path="journal"
+        element={<AdminAuditLog />}
+      />
+      <Route
+        path="historique"
+        element={<AdminHistory />}
       />
     </Route>
   );
