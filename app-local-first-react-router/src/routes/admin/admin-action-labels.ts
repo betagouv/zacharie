@@ -18,6 +18,8 @@ const ADMIN_ACTION_LABELS: Record<string, string> = {
   'POST /entity-dedicated-api-key/:entity_id': 'Clé API dédiée à une entité',
   'POST /fei/:fei_numero/soft-delete': 'Suppression de fiche',
   'POST /carcasse/:zacharie_carcasse_id/soft-delete': 'Suppression de carcasse',
+  'POST /fei/:fei_numero/corrections': 'Correction de fiche',
+  'POST /fei/:fei_numero/carcasse': 'Ajout de carcasse',
   'POST /api-key/nouvelle': 'Création de clé API',
   'POST /api-key/new-access-token/:id': 'Nouveau jeton de clé API',
   'POST /api-key-approval': 'Approbation de clé API',
