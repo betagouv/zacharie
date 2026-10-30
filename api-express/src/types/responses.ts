@@ -175,6 +175,12 @@ export interface AdminActionEntityResponse {
   error: string;
 }
 
+export interface AdminFeiCorrectionResponse {
+  ok: boolean;
+  data: null;
+  error: string;
+}
+
 export interface AdminSoftDeleteResponse {
   ok: boolean;
   data: { deleted_at: Date } | null;
@@ -857,6 +863,12 @@ export interface AdminFeiDetailResponse {
     destinataires: Array<AdminFeiDestinataire>;
     // Libellés des détenteurs (entités et utilisateurs) cités par les carcasses, par id.
     ownerLabels: Record<string, string>;
+    corrections: {
+      // Raison pour laquelle l'admin ne peut plus corriger la fiche, null si c'est possible
+      blocage: string | null;
+      ajoutCarcasseBlocage: string | null;
+      associationsDeChasse: Array<{ id: string; nom_d_usage: string | null }>;
+    };
   };
   error: string;
 }
