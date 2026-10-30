@@ -9,6 +9,9 @@ import PoolCard, {
   RefusModalContent,
   resultatModal,
   ResultatModalContent,
+  retraitModal,
+  RetraitEchantillonModalContent,
+  type RetraitEchantillon,
   type ResultatMode,
 } from '@app/components/laboratoire/PoolCard';
 import TrichineIntrouvable from '@app/components/trichine/TrichineIntrouvable';
@@ -52,6 +55,7 @@ export default function LaboratoirePoolDetail() {
   const [isLoading, setIsLoading] = useState(true);
   const [refusPool, setRefusPool] = useState<LaboPool | null>(null);
   const [resultatPool, setResultatPool] = useState<LaboPool | null>(null);
+  const [retrait, setRetrait] = useState<RetraitEchantillon | null>(null);
   const [resultatMode, setResultatMode] = useState<ResultatMode>('saisie');
 
   const refresh = useCallback(() => {
@@ -213,7 +217,12 @@ export default function LaboratoirePoolDetail() {
           setResultatMode('correction');
           resultatModal.open();
         }}
+        onRetirerEchantillon={(echantillon) => {
+          setRetrait({ echantillon, referencePool: pool.reference_pool });
+          retraitModal.open();
+        }}
         onDocumentDepose={refresh}
+        onAliasChange={refresh}
       />
 
       {pool.TrichinePoolFTPs.length > 1 && (
@@ -256,6 +265,11 @@ export default function LaboratoirePoolDetail() {
 
       <RefusModalContent
         pool={refusPool}
+        onDone={refresh}
+      />
+
+      <RetraitEchantillonModalContent
+        retrait={retrait}
         onDone={refresh}
       />
     </TrichineDetailPage>

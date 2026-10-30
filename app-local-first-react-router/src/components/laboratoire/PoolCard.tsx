@@ -17,19 +17,21 @@ import {
 import {
   corrigerResultatPool,
   refuserPool,
+  retirerEchantillonDuPoolLabo,
   saisirResultatPool,
   type FtpConfirmationCreee,
+  type LaboEchantillon,
   type LaboPool,
 } from '@app/services/laboratoire';
 import { formatAliases, monAlias, useMesEntitesAlias } from '@app/services/trichine-alias';
 import PoolDocuments from '@app/components/laboratoire/PoolDocuments';
+import EchantillonLabo, { EchantillonRetireLabo } from '@app/components/laboratoire/EchantillonLabo';
 import LarvePhotos from '@app/components/laboratoire/LarvePhotos';
 import useDownloadFtpPdf from '@app/utils/download-ftp-pdf';
 import {
   resultatAnalyseLabels,
   statutLogistiqueLabels,
   resultatBadgeSeverity,
-  sitePrelevementLabels,
   statutAnalyseBadgeSeverity,
   statutAnalyseLabels,
 } from '@app/utils/trichine';
@@ -44,6 +46,10 @@ import {
  */
 export const refusModal = createModal({ isOpenedByDefault: false, id: 'labo-refus-pool-modal' });
 export const resultatModal = createModal({ isOpenedByDefault: false, id: 'labo-resultat-pool-modal' });
+export const retraitModal = createModal({ isOpenedByDefault: false, id: 'labo-retrait-echantillon-modal' });
+
+/** Échantillon que le laboratoire s'apprête à retirer de son pool */
+export type RetraitEchantillon = { echantillon: LaboEchantillon; referencePool: string };
 
 // Résultats autorisés par type de laboratoire (cf doc/trichine.md §3.2)
 const LVD_RESULTS = [TrichineResultatAnalyse.NEGATIF, TrichineResultatAnalyse.DOUTEUX];
@@ -76,7 +82,9 @@ export default function PoolCard({
   onRefuser,
   onSaisirResultat,
   onCorrigerResultat,
+  onRetirerEchantillon,
   onDocumentDepose,
+  onAliasChange,
 }: {
   pool: LaboPool;
   isLnr: boolean;
@@ -85,9 +93,12 @@ export default function PoolCard({
   onRefuser: () => void;
   onSaisirResultat: () => void;
   onCorrigerResultat: () => void;
+  onRetirerEchantillon: (echantillon: LaboEchantillon) => void;
   onDocumentDepose: () => void;
+  onAliasChange: () => void;
 }) {
   const [compositionOuverte, setCompositionOuverte] = useState(false);
+  const mesEntites = useMesEntitesAlias();
   const resultatSaisi = pool.resultat_analyse !== null;
   // Le LNR confirme les pools non négatifs : la saisie reste ouverte sur un DOUTEUX
   const peutSaisir =
@@ -102,6 +113,10 @@ export default function PoolCard({
     !transmisAuLnr &&
     pool.resultat_analyse !== TrichineResultatAnalyse.DOUTEUX;
   const nombre = pool.TrichineEchantillons.length;
+  const nombreRetires = pool.EchantillonsRetires.length;
+  // Retrait possible tant que le résultat peut être saisi. Le dernier échantillon ne se retire
+  // pas : c'est alors le pool qu'on refuse.
+  const peutRetirer = peutSaisir && nombre > 1;
   const carcasses = pool.TrichineEchantillons.map((echantillon) => echantillon.Carcasse.numero_bracelet)
     .filter(Boolean)
     .join(', ');
@@ -137,6 +152,8 @@ export default function PoolCard({
         <p className="fr-text--sm fr-mb-0 text-gray-600">
           {nombre} échantillon{nombre > 1 ? 's' : ''}
           {!!carcasses && ` — carcasses ${carcasses}`}
+          {nombreRetires > 0 &&
+            ` — ${nombreRetires} retiré${nombreRetires > 1 ? 's' : ''} par le laboratoire`}
         </p>
         {pool.Aliases.length > 0 && (
           <p className="fr-text--sm fr-mb-0 text-gray-600">Réf. internes : {formatAliases(pool.Aliases)}</p>
@@ -154,23 +171,28 @@ export default function PoolCard({
         {compositionOuverte && (
           <ul className="fr-text--sm fr-mt-1w list-none space-y-1 p-0">
             {pool.TrichineEchantillons.map((echantillon) => (
-              <li
+              <EchantillonLabo
                 key={echantillon.id}
-                className="rounded border border-gray-200 p-2"
-              >
-                <span className="font-semibold">{echantillon.reference_echantillon}</span>
-                {echantillon.Aliases.length > 0 && ` (${formatAliases(echantillon.Aliases)})`} —{' '}
-                {sitePrelevementLabels[echantillon.site_prelevement]} — au moins {echantillon.masse_grammes} g
-                <br />
-                Carcasse {echantillon.Carcasse.numero_bracelet} ({echantillon.Carcasse.espece ?? '—'}) — mise
-                à mort le{' '}
-                {echantillon.Carcasse.date_mise_a_mort
-                  ? dayjs(echantillon.Carcasse.date_mise_a_mort).format('DD/MM/YYYY')
-                  : '—'}{' '}
-                à {echantillon.Carcasse.Fei.commune_mise_a_mort ?? '—'}
-              </li>
+                echantillon={echantillon}
+                mesEntites={mesEntites}
+                onRetirer={peutRetirer ? () => onRetirerEchantillon(echantillon) : null}
+                onAliasChange={onAliasChange}
+              />
             ))}
           </ul>
+        )}
+        {compositionOuverte && nombreRetires > 0 && (
+          <>
+            <p className="fr-text--sm fr-mt-2w fr-mb-1v font-bold">Retirés du pool par le laboratoire</p>
+            <ul className="fr-text--sm list-none space-y-1 p-0">
+              {pool.EchantillonsRetires.map((echantillon) => (
+                <EchantillonRetireLabo
+                  key={echantillon.id}
+                  echantillon={echantillon}
+                />
+              ))}
+            </ul>
+          </>
         )}
       </div>
 
@@ -639,5 +661,68 @@ export function RefusModalContent({ pool, onDone }: { pool: LaboPool | null; onD
         Confirmer le refus
       </Button>
     </refusModal.Component>
+  );
+}
+
+export function RetraitEchantillonModalContent({
+  retrait,
+  onDone,
+}: {
+  retrait: RetraitEchantillon | null;
+  onDone: () => void;
+}) {
+  const [motif, setMotif] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Évite qu'un motif saisi pour un échantillon ne reste pré-rempli pour le suivant
+  useEffect(() => {
+    setMotif('');
+  }, [retrait?.echantillon.id]);
+
+  const echantillon = retrait?.echantillon;
+
+  return (
+    <retraitModal.Component
+      title={`Retirer l'échantillon ${echantillon?.reference_echantillon ?? ''} du pool ${
+        retrait?.referencePool ?? ''
+      }`}
+    >
+      <p className="fr-text--sm">
+        L'échantillon ne sera pas analysé avec le pool et n'en recevra pas le résultat. La carcasse{' '}
+        {echantillon?.Carcasse.numero_bracelet} sera à prélever de nouveau : l'émetteur en est averti.
+      </p>
+      <Input
+        label="Motif du retrait (obligatoire)"
+        hintText="Par exemple : tube absent du colis, échantillon abîmé, numéro illisible"
+        textArea
+        nativeTextAreaProps={{
+          value: motif,
+          onChange: (event) => setMotif(event.target.value),
+        }}
+      />
+      <Button
+        type="button"
+        disabled={isSubmitting || !motif.trim() || !echantillon}
+        onClick={() => {
+          if (!echantillon) return;
+          setIsSubmitting(true);
+          retirerEchantillonDuPoolLabo(echantillon.id, motif.trim())
+            .then((response) => {
+              if (response.ok) {
+                toast.success('Échantillon retiré du pool, l’émetteur a été notifié');
+                retraitModal.close();
+                setMotif('');
+                onDone();
+              } else {
+                toast.error(response.error || 'Une erreur est survenue');
+              }
+            })
+            .catch(() => toast.error('Une erreur est survenue'))
+            .finally(() => setIsSubmitting(false));
+        }}
+      >
+        Confirmer le retrait
+      </Button>
+    </retraitModal.Component>
   );
 }

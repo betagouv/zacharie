@@ -338,6 +338,31 @@ export default function TrichinePoolDetailPage() {
         </ul>
       </TrichineCard>
 
+      {pool.EchantillonsRetires.length > 0 && (
+        <TrichineCard
+          titre="Retirés par le laboratoire"
+          hint="Ces échantillons n'ont pas été analysés avec le pool : prélevez de nouveau leurs carcasses."
+        >
+          <ul className="m-0 list-none space-y-2 p-0">
+            {pool.EchantillonsRetires.map((echantillon) => (
+              <li key={echantillon.id}>
+                <Link
+                  to={`${basePath}/echantillons/${echantillon.reference_echantillon}`}
+                  className="fr-link font-semibold"
+                >
+                  {echantillon.reference_echantillon}
+                </Link>
+                <p className="fr-text--xs fr-mb-0 text-gray-600">
+                  Carcasse {echantillon.Carcasse.numero_bracelet} — retiré le{' '}
+                  {dayjs(echantillon.retire_par_labo_at).format('DD/MM/YYYY')} — motif :{' '}
+                  {echantillon.retire_par_labo_motif ?? '—'}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </TrichineCard>
+      )}
+
       {pool.PoolsFilles.length > 0 && (
         <TrichineCard
           titre="Analyses de 2e intention"

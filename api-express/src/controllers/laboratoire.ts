@@ -31,10 +31,15 @@ import {
   TrichineDocumentType,
   TrichineNotificationType,
   TrichineObjetType,
+  type TrichineNotifiableUser,
 } from '~/utils/trichine';
 import dayjs from 'dayjs';
 import { TRICHINE_RESULTAT_EMAIL_LABELS } from '~/templates/trichine-email';
-import { isTerminalResult, recomputePoolAndLinkedFTPs } from '~/utils/trichine-status';
+import {
+  isTerminalResult,
+  recomputeEchantillonTrichine,
+  recomputePoolAndLinkedFTPs,
+} from '~/utils/trichine-status';
 import {
   applyPoolResult,
   describePoolResultActions,
@@ -405,6 +410,7 @@ router.get(
               omit: avecNombreLarves,
               include: {
                 TrichineEchantillons: { where: { deleted_at: null }, include: echantillonLaboInclude },
+                EchantillonsRetires: { where: { deleted_at: null }, include: echantillonLaboInclude },
                 Documents: { where: { deleted_at: null } },
                 ...trichineAliasesInclude,
               },
@@ -504,6 +510,11 @@ router.get(
       omit: avecNombreLarves,
       include: {
         TrichineEchantillons: {
+          where: { deleted_at: null },
+          include: echantillonLaboInclude,
+          orderBy: { reference_echantillon: 'asc' },
+        },
+        EchantillonsRetires: {
           where: { deleted_at: null },
           include: echantillonLaboInclude,
           orderBy: { reference_echantillon: 'asc' },
@@ -726,6 +737,135 @@ router.post(
     });
 
     res.status(200).send({ ok: true, data: { pool: updatedPool }, error: '' });
+  })
+);
+
+const retraitEchantillonSchema = z.object({
+  motif: z.string().trim().min(1),
+});
+
+/**
+ * Retrait d'un échantillon de son pool par le laboratoire (échantillon absent du colis, abîmé,
+ * mal identifié…), à réception ou en cours d'analyse. L'échantillon sort du pool : il n'hérite
+ * pas du résultat, sa carcasse repasse à prélever. Possible tant que le laboratoire peut encore
+ * saisir le résultat du pool (cf PoolCard côté front).
+ */
+router.post(
+  '/echantillon/:echantillon_id/retirer-du-pool',
+  passport.authenticate('user', { session: false }),
+  catchErrors(async (req: RequestWithUser, res: express.Response) => {
+    const context = await guardLabo(req, res);
+    if (!context) return;
+    const bodyResult = retraitEchantillonSchema.safeParse(req.body);
+    if (!bodyResult.success) {
+      return sendError(res, 400, 'Le motif du retrait est obligatoire');
+    }
+    const { motif } = bodyResult.data;
+    const echantillon = await prisma.trichineEchantillon.findUnique({
+      where: { id: req.params.echantillon_id },
+    });
+    if (!echantillon || echantillon.deleted_at || !echantillon.pool_id) {
+      return sendError(res, 404, 'Échantillon introuvable');
+    }
+    const found = await findPoolForLabo(echantillon.pool_id, context);
+    if (!found) {
+      return sendError(res, 404, 'Échantillon introuvable');
+    }
+    const { pool, ftp } = found;
+    const isLnr = ftp.DestinataireEntity.is_lnr;
+    if (ftp.statut_logistique !== TrichineStatutLogistiqueFTP.RECUE) {
+      return sendError(res, 400, "Confirmez d'abord la réception du colis");
+    }
+    if (!isLnr && poolTransmisAuLnr(pool)) {
+      return sendError(res, 400, ERREUR_POOL_TRANSMIS_AU_LNR);
+    }
+    // Le LNR confirme un pool douteux : il garde la main tant qu'il n'a pas rendu son résultat
+    const resultatEnAttente =
+      pool.resultat_analyse === null || (isLnr && pool.resultat_analyse === TrichineResultatAnalyse.DOUTEUX);
+    if (!resultatEnAttente) {
+      return sendError(res, 400, 'Un résultat a déjà été saisi pour ce pool');
+    }
+    // Un pool vide n'existe pas : sans échantillon analysable, c'est le pool entier qu'on refuse
+    if (pool.TrichineEchantillons.length <= 1) {
+      return sendError(res, 400, 'Dernier échantillon du pool : refusez plutôt le pool');
+    }
+
+    // Filtre sur pool_id : deux retraits simultanés n'en appliquent qu'un
+    const { count } = await prisma.trichineEchantillon.updateMany({
+      where: { id: echantillon.id, pool_id: pool.id },
+      data: {
+        pool_id: null,
+        retire_du_pool_id: pool.id,
+        retire_par_labo_at: new Date(),
+        retire_par_labo_motif: motif,
+        retire_par_labo_user_id: req.user.id,
+      },
+    });
+    if (!count) {
+      return sendError(res, 400, "Cet échantillon n'est plus dans ce pool");
+    }
+    await logTrichineStatutChange({
+      objetType: TrichineObjetType.ECHANTILLON,
+      objetId: echantillon.id,
+      ancienStatut: echantillon.statut,
+      nouveauStatut: echantillon.statut,
+      userId: req.user.id,
+      commentaire: `Retiré du pool ${pool.reference_pool} par le laboratoire : ${motif}`,
+    });
+    await logTrichineStatutChange({
+      objetType: TrichineObjetType.POOL,
+      objetId: pool.id,
+      ancienStatut: pool.statut,
+      nouveauStatut: pool.statut,
+      userId: req.user.id,
+      commentaire: `Échantillon ${echantillon.reference_echantillon} retiré par le laboratoire : ${motif}`,
+    });
+    await recomputeEchantillonTrichine(echantillon.id, req.user.id);
+    await recomputePoolAndLinkedFTPs(pool.id, req.user.id);
+
+    // Le pool vient du détenteur ou du SVI : sur une fiche de confirmation, c'est l'émetteur de la
+    // fiche d'origine qui doit re-prélever, le LVD est seulement tenu informé
+    const destinataires = new Map<string, TrichineNotifiableUser>();
+    for (const user of await getFtpEmitterUsers(ftp)) destinataires.set(user.id, user);
+    if (ftp.ftp_parent_id) {
+      const ftpOrigine = await prisma.trichineFTP.findUnique({ where: { id: ftp.ftp_parent_id } });
+      if (ftpOrigine) {
+        for (const user of await getFtpEmitterUsers(ftpOrigine)) destinataires.set(user.id, user);
+      }
+    }
+    const carcasse = await prisma.carcasse.findUnique({
+      where: { zacharie_carcasse_id: echantillon.zacharie_carcasse_id },
+      select: { numero_bracelet: true },
+    });
+    await notifyTrichineUsers({
+      users: [...destinataires.values()],
+      type: TrichineNotificationType.CHANGEMENT_STATUT,
+      objetType: TrichineObjetType.ECHANTILLON,
+      objetId: echantillon.id,
+      title: `Échantillon ${echantillon.reference_echantillon} retiré du pool ${pool.reference_pool}`,
+      message: `Le laboratoire a retiré l'échantillon ${echantillon.reference_echantillon} (carcasse ${carcasse?.numero_bracelet ?? '—'}) du pool ${pool.reference_pool} : ${motif}. Cette carcasse ne sera pas analysée avec le pool, elle est à prélever de nouveau.`,
+      email: {
+        subject: `Échantillon retiré par le laboratoire · ${echantillon.reference_echantillon}`,
+        tone: 'warning',
+        badge: 'Échantillon retiré',
+        heading: 'Le laboratoire a retiré un échantillon de votre pool',
+        intro: `Le laboratoire a retiré l'échantillon ${echantillon.reference_echantillon} du pool ${pool.reference_pool}. Le reste du pool est analysé normalement.`,
+        details: [
+          { label: 'Échantillon', value: echantillon.reference_echantillon },
+          { label: 'Carcasse', value: carcasse?.numero_bracelet ?? '—' },
+          { label: 'Pool', value: pool.reference_pool },
+          { label: 'Fiche de transmission', value: ftp.numero_fiche },
+          { label: 'Motif du retrait', value: motif },
+        ],
+        actions: [
+          'Réalisez un nouveau prélèvement sur cette carcasse et envoyez-le au laboratoire.',
+          'En attendant un résultat, la carcasse ne doit pas être mise sur le marché.',
+        ],
+      },
+      notificationLogAction: `TRICHINE_ECHANTILLON_RETIRE_${echantillon.reference_echantillon}`,
+    });
+
+    res.status(200).send({ ok: true, data: {}, error: '' });
   })
 );
 

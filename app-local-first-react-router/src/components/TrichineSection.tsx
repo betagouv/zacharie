@@ -147,6 +147,13 @@ export default function TrichineSection({ carcasse }: { carcasse: Carcasse }) {
                 {sitePrelevementLabels[echantillon.site_prelevement]} — au moins {echantillon.masse_grammes} g
                 — prélevé le {dayjs(echantillon.date_prelevement).format('DD/MM/YYYY')}
               </p>
+              {echantillon.retire_par_labo_at && (
+                <p className="fr-text--sm fr-mb-0 mt-1">
+                  Retiré de son pool par le laboratoire le{' '}
+                  {dayjs(echantillon.retire_par_labo_at).format('DD/MM/YYYY')} — motif :{' '}
+                  {echantillon.retire_par_labo_motif ?? '—'}. À prélever de nouveau.
+                </p>
+              )}
               {echantillon.TrichinePool && (
                 <p className="fr-text--sm fr-mb-0 mt-1">
                   Pool {echantillon.TrichinePool.reference_pool}

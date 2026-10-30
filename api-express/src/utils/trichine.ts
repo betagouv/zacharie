@@ -524,6 +524,7 @@ type PoolEchantillonInput = {
   type: TrichineType;
   pool_id: string | null;
   deleted_at: Date | null;
+  retire_par_labo_at: Date | null;
 };
 
 type PoolParentInput = {
@@ -554,6 +555,9 @@ export function validatePoolComposition({
   }
   if (echantillons.some((e) => e.pool_id && e.pool_id !== poolId)) {
     return 'Un des échantillons est déjà rattaché à un pool';
+  }
+  if (echantillons.some((e) => e.retire_par_labo_at)) {
+    return 'Un des échantillons a été retiré de son pool par le laboratoire : la carcasse est à re-prélever';
   }
   const carcasseIds = new Set(echantillons.map((e) => e.zacharie_carcasse_id));
   if (carcasseIds.size !== echantillons.length) {

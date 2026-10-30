@@ -77,7 +77,7 @@ Toutes via `sendNotificationToUser`. Dédup via `NotificationLog`. Déclenchées
 
 ## ⚠️ Pas branché / mort
 
-- **Trichine** (`utils/trichine.ts:253`) — `queueSendNotificationToUser` **commenté**. Écrit seulement dans la table `trichineNotification` + `console.log`. **Aucun email.** (feature en cours)
+- **Trichine** (derrière `VITE_FEATURE_TRICHINE`) — `notifyTrichineUsers` (`utils/trichine.ts`) écrit une `TrichineNotification` puis envoie push + email HTML (`templates/trichine-email.ts`, en test). Évènements (`notificationLogAction`) : `TRICHINE_FTP_ENVOYEE_*`, `TRICHINE_FTP_RECUE_*`, `TRICHINE_FTP_ANNULEE_*`, `TRICHINE_RESULTAT_*`, `TRICHINE_RESULTAT_CORRIGE_*`, `TRICHINE_POOL_REFUSE_*`, `TRICHINE_ECHANTILLON_RETIRE_*` (le laboratoire retire un échantillon de son pool → émetteur de la FTP, et émetteur de la FTP d'origine si c'est le LNR, sujet « Échantillon retiré par le laboratoire · {référence} »).
 - `cronjobs/index.ts:38-41` — `initMunicipalities` / `initRecommandations` / `initAggregators` / `initNotifications` commentés.
 
 ## Wordings push

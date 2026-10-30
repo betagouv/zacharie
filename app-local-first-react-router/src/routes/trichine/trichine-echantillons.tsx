@@ -27,6 +27,7 @@ import {
   statutAnalyseBadgeSeverity,
   statutAnalyseLabels,
   type TrichineSortOrder,
+  estRetireParLabo,
 } from '@app/utils/trichine';
 
 // Options du filtre « Statut » : exactement les statuts affichés dans la colonne Statut
@@ -51,7 +52,12 @@ const RESULTATS = [
 // Seuls des prélèvements initiaux pas encore regroupés peuvent constituer un nouveau pool.
 // Les complémentaires se regroupent depuis le pool douteux (2e intention).
 function estRegroupable(echantillon: TrichineEchantillonWithCarcasse): boolean {
-  return !echantillon.pool_id && echantillon.type === TrichineType.INITIAL;
+  return estARegrouper(echantillon) && echantillon.type === TrichineType.INITIAL;
+}
+
+// Un échantillon retiré par le laboratoire n'a plus de pool, mais ne se regroupe plus
+function estARegrouper(echantillon: TrichineEchantillonWithCarcasse): boolean {
+  return !echantillon.pool_id && !estRetireParLabo(echantillon);
 }
 
 export default function TrichineEchantillons() {
@@ -80,7 +86,7 @@ export default function TrichineEchantillons() {
   const stats = useMemo(
     () => ({
       total: echantillons.length,
-      sansPool: echantillons.filter((echantillon) => !echantillon.pool_id).length,
+      sansPool: echantillons.filter(estARegrouper).length,
       termines: echantillons.filter(
         (echantillon) => echantillon.statut === TrichineStatutAnalyse.ANALYSES_TERMINEES
       ).length,
@@ -100,7 +106,7 @@ export default function TrichineEchantillons() {
   const rows = useMemo(() => {
     let filtered = echantillons;
     if (vue !== 'tous') filtered = filtered.filter((echantillon) => echantillon.statut === vue);
-    if (pool === 'sans') filtered = filtered.filter((echantillon) => !echantillon.pool_id);
+    if (pool === 'sans') filtered = filtered.filter(estARegrouper);
     else if (pool) {
       filtered = filtered.filter((echantillon) => echantillon.TrichinePool?.reference_pool === pool);
     }
@@ -226,7 +232,9 @@ export default function TrichineEchantillons() {
                   {echantillon.Carcasse.numero_bracelet} — prélevé le{' '}
                   {dayjs(echantillon.date_prelevement).format('DD/MM/YYYY')}
                   <br />
-                  Pool : {echantillon.TrichinePool?.reference_pool ?? 'à regrouper'}
+                  Pool :{' '}
+                  {echantillon.TrichinePool?.reference_pool ??
+                    (estRetireParLabo(echantillon) ? 'retiré par le laboratoire' : 'à regrouper')}
                 </p>
               </div>
             </td>
@@ -269,6 +277,13 @@ export default function TrichineEchantillons() {
                 <LienTrichine to={`${basePath}/pools/${echantillon.TrichinePool.reference_pool}`}>
                   {echantillon.TrichinePool.reference_pool}
                 </LienTrichine>
+              ) : estRetireParLabo(echantillon) ? (
+                <Badge
+                  small
+                  severity="warning"
+                >
+                  Retiré par le labo
+                </Badge>
               ) : (
                 <Badge
                   small
