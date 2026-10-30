@@ -183,6 +183,10 @@ export default function LaboratoireFTP() {
                   value: ftp.date_envoi ? dayjs(ftp.date_envoi).format('DD/MM/YYYY') : '—',
                 },
                 !!ftp.mode_transport && { label: 'Transport', value: ftp.mode_transport },
+                !!ftp.conditions_conservation && {
+                  label: 'Conservation',
+                  value: ftp.conditions_conservation,
+                },
                 !!ftp.FTPParent && {
                   label: 'FTP d’origine',
                   value: (

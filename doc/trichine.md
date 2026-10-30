@@ -248,7 +248,7 @@ model TrichinePool {
   statut             TrichineStatutAnalyse    @default(A_COMPLETER)
   resultat_analyse   TrichineResultatAnalyse?
   parasite_identifie String?                  // rempli si NON_NEGATIF par LNR
-  nombre_larves_lvd  Int?                     // facultatif, LVD sur DOUTEUX
+  nombre_larves_lvd  Int?                     // LVD sur DOUTEUX : obligatoire en saisie manuelle, facultatif à l'import
   nombre_larves_lnr  Int?                     // facultatif, LNR sur son résultat de confirmation
 
   refus_par_user_id String?
@@ -283,8 +283,9 @@ model TrichineFTP {
   statut_logistique TrichineStatutLogistiqueFTP @default(BROUILLON)   // enum dédié
   statut_analytique TrichineStatutAnalyse       @default(A_COMPLETER) // partagé Pool/Échantillon
 
-  mode_transport String?
-  commentaire    String?
+  mode_transport          String?
+  conditions_conservation String? // FTP de confirmation LVD → LNR
+  commentaire             String?
 
   created_at DateTime  @default(now())
   updated_at DateTime  @updatedAt
@@ -700,7 +701,7 @@ Routes `/laboratoire/*` :
   - Pour chaque pool : sélection résultat + dates analyse + commentaire + upload PDF
   - Action "Refuser pool(s)" → `resultat_analyse = ANALYSE_IMPOSSIBLE` + `raison_refus` (saisie en masse possible)
   - Action "Saisir résultat" → `NEGATIF` ou `DOUTEUX`
-  - Si `DOUTEUX` : modal pour upload photos larves → génération auto FTP vers LNR
+  - Si `DOUTEUX` : saisie obligatoire du nombre de larves et des conditions de conservation de l'élément parasitaire, facultative de la date d'envoi (aujourd'hui par défaut) et des modalités de transmission → génération auto de la FTP vers le LNR, directement envoyée, qui porte ces informations (`date_envoi`, `mode_transport`, `conditions_conservation`) ; la référence interne du LVD reste celle du pool (alias). Puis modal pour upload photos larves. Un `DOUTEUX` importé par CSV n'a pas ces colonnes : la FTP part sans
   - Pour chaque échantillon : sa référence interne (alias), et l'action « Retirer du pool » (voir ci-dessous)
 - **Retrait d'un échantillon par le laboratoire** (`POST /laboratoire/echantillon/:id/retirer-du-pool`, motif libre obligatoire) : échantillon absent du colis, abîmé, mal identifié… LVD comme LNR, colis réceptionné (`RECUE`), tant que le laboratoire peut encore saisir le résultat du pool (LVD : aucun résultat et pool pas transmis au LNR ; LNR : pas encore de confirmation). Pas sur le dernier échantillon d'un pool : on refuse alors le pool. Même règle pour les pools fille / petite-fille.
   - L'échantillon sort du pool (`pool_id = null`) : il n'hérite pas du résultat. `retire_par_labo_at` / `_motif` / `_user_id` et `retire_du_pool_id` gardent la trace, plus une ligne d'historique sur l'échantillon et sur le pool. Le PDF de la FTP archivé à l'envoi reste la composition d'origine.
