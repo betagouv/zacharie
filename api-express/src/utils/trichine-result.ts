@@ -161,6 +161,10 @@ export const resultatSchema = z.object({
   // Référence interne du laboratoire pour ce pool : devient son alias (cf utils/trichine-alias.ts)
   reference_labo: z.string().optional(),
   commentaire: z.string().optional(),
+  // FTP de confirmation générée vers le LNR sur un DOUTEUX saisi par un LVD
+  date_envoi_lnr: z.coerce.date().optional(),
+  mode_transport_lnr: z.string().optional(),
+  conditions_conservation_lnr: z.string().optional(),
 });
 export type ApplyPoolResultBody = z.infer<typeof resultatSchema>;
 
@@ -223,6 +227,22 @@ export async function applyPoolResult({
   });
   if (invalid) {
     return { kind: 'error', status: invalid.status, error: invalid.error };
+  }
+  // Saisi à la main, un DOUTEUX part au LNR avec ce qu'il doit savoir de l'échantillon. Un import
+  // LIMS n'a pas ces colonnes : la FTP de confirmation part sans.
+  const versLnr = body.resultat_analyse === TrichineResultatAnalyse.DOUTEUX && !isLnr;
+  if (versLnr && origine === 'saisie') {
+    if (body.nombre_larves == null) {
+      return { kind: 'error', status: 400, error: 'Le nombre de larves est obligatoire pour un non négatif' };
+    }
+    if (!body.conditions_conservation_lnr?.trim()) {
+      return {
+        kind: 'error',
+        status: 400,
+        error:
+          'Les conditions de conservation de l’élément parasitaire sont obligatoires pour un non négatif',
+      };
+    }
   }
   // L'alias est posé au nom du laboratoire destinataire de la fiche par laquelle le pool est arrivé
   const referenceSaisie = body.reference_labo?.trim() || null;
@@ -347,7 +367,9 @@ export async function applyPoolResult({
             destinataire_entity_id: lnrEntity.id,
             ftp_parent_id: ftp.id,
             statut_logistique: TrichineStatutLogistiqueFTP.ENVOYEE,
-            date_envoi: new Date(),
+            date_envoi: body.date_envoi_lnr ?? new Date(),
+            mode_transport: body.mode_transport_lnr?.trim() || null,
+            conditions_conservation: body.conditions_conservation_lnr?.trim() || null,
             commentaire: `Confirmation LNR du pool ${pool.reference_pool} (résultat non négatif)`,
           },
         })
@@ -383,6 +405,10 @@ export async function applyPoolResult({
             { label: 'Pool', value: pool.reference_pool },
             { label: 'Fiche de transmission', value: lnrFtp.numero_fiche },
             ...detailsNombreLarves({ nombre_larves_lvd: nombreLarves }),
+            ...(lnrFtp.mode_transport ? [{ label: 'Transport', value: lnrFtp.mode_transport }] : []),
+            ...(lnrFtp.conditions_conservation
+              ? [{ label: 'Conservation', value: lnrFtp.conditions_conservation }]
+              : []),
           ],
           actions: [
             'Réceptionnez la fiche de transmission dans Zacharie à l’arrivée des échantillons.',

@@ -321,6 +321,9 @@ export function TrichineFtpDocument({
             Envoi : {ftp.date_envoi ? dayjs(ftp.date_envoi).format('DD/MM/YYYY') : 'non envoyée'}
           </Text>
           {!!ftp.mode_transport && <Text style={styles.line}>Transport : {ftp.mode_transport}</Text>}
+          {!!ftp.conditions_conservation && (
+            <Text style={styles.line}>Conservation : {ftp.conditions_conservation}</Text>
+          )}
           {ftp.Aliases.length > 0 && (
             <Text style={styles.line}>Réf. internes : {formatAliases(ftp.Aliases)}</Text>
           )}

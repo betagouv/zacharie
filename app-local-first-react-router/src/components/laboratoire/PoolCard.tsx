@@ -263,6 +263,9 @@ export function ResultatModalContent({
   const [dateFin, setDateFin] = useState(dayjs().format('YYYY-MM-DD'));
   const [referenceLabo, setReferenceLabo] = useState('');
   const [commentaire, setCommentaire] = useState('');
+  const [dateEnvoiLnr, setDateEnvoiLnr] = useState(dayjs().format('YYYY-MM-DD'));
+  const [modeTransportLnr, setModeTransportLnr] = useState('');
+  const [conditionsConservationLnr, setConditionsConservationLnr] = useState('');
   const [raison, setRaison] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   // Sur un non négatif, la modale reste ouverte pour guider l'envoi au LNR
@@ -285,6 +288,9 @@ export function ResultatModalContent({
     setDateFin(dayjs().format('YYYY-MM-DD'));
     setReferenceLabo('');
     setCommentaire('');
+    setDateEnvoiLnr(dayjs().format('YYYY-MM-DD'));
+    setModeTransportLnr('');
+    setConditionsConservationLnr('');
     setRaison('');
   }, [pool?.id]);
   // Pré-remplit avec la référence déjà posée, qui peut arriver après l'ouverture : sans écraser
@@ -302,6 +308,8 @@ export function ResultatModalContent({
     !!nombreLarves &&
     !(Number.isInteger(Number(nombreLarves)) && Number(nombreLarves) >= 1);
   const versLnr = resultat === TrichineResultatAnalyse.DOUTEUX;
+  // La FTP de confirmation part au LNR avec ce qu'il doit savoir de l'échantillon
+  const envoiLnrIncomplet = versLnr && (!nombreLarves || !conditionsConservationLnr.trim());
   const reference = pool?.reference_pool ?? '';
 
   if (ftpConfirmation) {
@@ -362,6 +370,11 @@ export function ResultatModalContent({
       // Une chaîne vide retire la référence déjà posée.
       reference_labo: referenceLabo.trim() !== maReference ? referenceLabo.trim() : undefined,
       commentaire: commentaire.trim() || undefined,
+      ...(versLnr && {
+        date_envoi_lnr: dateEnvoiLnr || undefined,
+        mode_transport_lnr: modeTransportLnr.trim() || undefined,
+        conditions_conservation_lnr: conditionsConservationLnr.trim(),
+      }),
     };
     // Seule une première saisie peut générer une FTP de confirmation vers le LNR
     const request: Promise<{
@@ -417,6 +430,7 @@ export function ResultatModalContent({
           !resultat ||
           (parasiteRequis && !parasite.trim()) ||
           nombreLarvesInvalide ||
+          envoiLnrIncomplet ||
           (correction && !raison.trim()) ||
           isSubmitting,
         onClick: enregistrer,
@@ -461,7 +475,7 @@ export function ResultatModalContent({
       )}
       {larvesSaisissables && (
         <Input
-          label="Nombre de larves découvertes dans le pool (optionnel)"
+          label={`Nombre de larves découvertes dans le pool (${versLnr ? 'obligatoire' : 'optionnel'})`}
           hintText="Visible uniquement par les laboratoires"
           state={nombreLarvesInvalide ? 'error' : 'default'}
           stateRelatedMessage="Nombre entier supérieur à 0 attendu"
@@ -523,6 +537,40 @@ export function ResultatModalContent({
             onChange: (event) => setRaison(event.target.value),
           }}
         />
+      )}
+      {versLnr && (
+        <fieldset className="fr-mb-2w border-0 p-0">
+          <legend className="fr-text--sm fr-mb-1w font-bold">
+            Envoi au LNR (figure sur la fiche de transmission)
+          </legend>
+          <Input
+            label="Date d'envoi des échantillons"
+            nativeInputProps={{
+              type: 'date',
+              value: dateEnvoiLnr,
+              onChange: (event) => setDateEnvoiLnr(event.target.value),
+            }}
+          />
+          <Input
+            label="Modalités de transmission (optionnel)"
+            hintText="Transporteur, type de colis…"
+            nativeInputProps={{
+              type: 'text',
+              value: modeTransportLnr,
+              onChange: (event) => setModeTransportLnr(event.target.value),
+            }}
+          />
+          <Input
+            label="Conditions de conservation de l'élément parasitaire (obligatoire)"
+            hintText="Ex. : larves dans l'éthanol à 70 %, sous froid positif"
+            textArea
+            nativeTextAreaProps={{
+              rows: 2,
+              value: conditionsConservationLnr,
+              onChange: (event) => setConditionsConservationLnr(event.target.value),
+            }}
+          />
+        </fieldset>
       )}
       {versLnr && (
         <Alert
