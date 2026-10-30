@@ -60,6 +60,8 @@ export type LaboEchantillon = TrichineEchantillon & AvecAliases & { Carcasse: La
 export type LaboPool = TrichinePool &
   AvecAliases & {
     TrichineEchantillons: Array<LaboEchantillon>;
+    /** Échantillons que le laboratoire a sortis du pool (absents, abîmés, mal identifiés…) */
+    EchantillonsRetires: Array<LaboEchantillon>;
     Documents: Array<TrichineDocument>;
   };
 
@@ -207,6 +209,13 @@ export function refuserPool(poolId: string, raisonRefus: string) {
     path: `/laboratoire/pool/${poolId}/refuser`,
     body: { raison_refus: raisonRefus },
   }) as Promise<ApiResponse<{ pool: TrichinePool }>>;
+}
+
+export function retirerEchantillonDuPoolLabo(echantillonId: string, motif: string) {
+  return API.post({
+    path: `/laboratoire/echantillon/${echantillonId}/retirer-du-pool`,
+    body: { motif },
+  }) as Promise<ApiResponse<Record<string, never>>>;
 }
 
 /* -------------------------------------------------------------------------- */

@@ -428,10 +428,24 @@ export function etapePool(
   }
 }
 
+/** Échantillon sorti de son pool par le laboratoire : jamais analysé, la carcasse est à re-prélever */
+export function estRetireParLabo(echantillon: { retire_par_labo_at: Date | string | null }): boolean {
+  return !!echantillon.retire_par_labo_at;
+}
+
 export function etapeEchantillon(echantillon: {
   resultat_analyse: TrichineResultatAnalyse | null;
+  retire_par_labo_at: Date | string | null;
   TrichinePool: PoolFTPLinks | null;
 }): EtapeTrichine {
+  if (estRetireParLabo(echantillon)) {
+    return {
+      label: 'Retiré par le laboratoire',
+      severity: 'warning',
+      explication:
+        "Le laboratoire a retiré cet échantillon de son pool : il n'a pas été analysé. Prélevez de nouveau la carcasse.",
+    };
+  }
   if (echantillon.resultat_analyse) return etapeResultat(echantillon.resultat_analyse);
   if (!echantillon.TrichinePool) {
     return {

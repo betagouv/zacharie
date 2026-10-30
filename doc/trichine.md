@@ -333,7 +333,7 @@ model TrichineAlias {
 ```
 
 - **Qui** : le SVI (au nom de son service) sur ce que son équipe a prélevé / constitué / expédié ; le laboratoire sur ce qui lui est arrivé par une FTP non brouillon (ou la FTP de confirmation qu'il envoie au LNR). Pas de chasseur / 1er détenteur en V1.
-- **Saisie** : à la création (prélèvement, pool, FTP côté SVI), sur la page de détail (« Références internes »), à la saisie du résultat et par l'import LIMS (colonne `reference_labo`) côté laboratoire. Une référence refusée (format, déjà prise) bloque une saisie manuelle ; lue à l'import LIMS, elle est ignorée et le résultat est appliqué quand même, avec un avertissement dès l'aperçu et dans le compte rendu de l'import. Vider le champ à la saisie du résultat retire la référence du laboratoire.
+- **Saisie** : à la création (prélèvement, pool, FTP côté SVI), sur la page de détail (« Références internes »), dans le détail de chaque pool reçu pour ses échantillons (laboratoire), à la saisie du résultat et par l'import LIMS (colonne `reference_labo`) côté laboratoire. Une référence refusée (format, déjà prise) bloque une saisie manuelle ; lue à l'import LIMS, elle est ignorée et le résultat est appliqué quand même, avec un avertissement dès l'aperçu et dans le compte rendu de l'import. Vider le champ à la saisie du résultat retire la référence du laboratoire.
 - **Gel** : côté SVI, dès l'envoi de la FTP (ses références sont imprimées sur la fiche archivée et jointe au colis) ; côté laboratoire, une fois les analyses terminées (échantillon, pool) ou la FTP clôturée (`TRAITEE`, `ANNULEE` ou analyses terminées). La correction d'un résultat ne change pas la référence. Supprimer un échantillon, un pool ou une FTP en brouillon libère ses références.
 - **Format** : 50 caractères max, lettres, chiffres, espaces et `. _ - / # ( )`. Unicité **casse ignorée** (index unique sur `lower(reference)`, posé en SQL dans la migration : Prisma ne sait pas le déclarer).
 - **Usages** : colonne « Ma réf. » et recherche dans les listes, export CSV/JSON du laboratoire (`reference_labo` = la sienne, `autres_references_internes`), rapprochement des lignes à l'import LIMS (référence Zacharie, qui prime, **ou** alias du labo, casse ignorée ; un alias porté par deux pools ne rapproche rien), impression sur le PDF de la FTP des alias connus **à l'envoi** (le PDF est archivé tel qu'envoyé : en pratique ceux du SVI, jamais ceux des laboratoires).
@@ -701,6 +701,11 @@ Routes `/laboratoire/*` :
   - Action "Refuser pool(s)" → `resultat_analyse = ANALYSE_IMPOSSIBLE` + `raison_refus` (saisie en masse possible)
   - Action "Saisir résultat" → `NEGATIF` ou `DOUTEUX`
   - Si `DOUTEUX` : modal pour upload photos larves → génération auto FTP vers LNR
+  - Pour chaque échantillon : sa référence interne (alias), et l'action « Retirer du pool » (voir ci-dessous)
+- **Retrait d'un échantillon par le laboratoire** (`POST /laboratoire/echantillon/:id/retirer-du-pool`, motif libre obligatoire) : échantillon absent du colis, abîmé, mal identifié… LVD comme LNR, colis réceptionné (`RECUE`), tant que le laboratoire peut encore saisir le résultat du pool (LVD : aucun résultat et pool pas transmis au LNR ; LNR : pas encore de confirmation). Pas sur le dernier échantillon d'un pool : on refuse alors le pool. Même règle pour les pools fille / petite-fille.
+  - L'échantillon sort du pool (`pool_id = null`) : il n'hérite pas du résultat. `retire_par_labo_at` / `_motif` / `_user_id` et `retire_du_pool_id` gardent la trace, plus une ligne d'historique sur l'échantillon et sur le pool. Le PDF de la FTP archivé à l'envoi reste la composition d'origine.
+  - L'échantillon retiré n'est plus regroupable, modifiable ni supprimable : la carcasse est **à re-prélever** (`trichine_action_requise = PRELEVEMENT_COMPLEMENTAIRE` tant qu'aucun prélèvement plus récent n'existe ; le nouveau prélèvement initial est autorisé).
+  - Notification (`CHANGEMENT_STATUT`, push + email) à l'émetteur de la FTP, et à l'émetteur de la FTP d'origine quand c'est le LNR qui retire. Pas de validation de l'émetteur.
 - `/laboratoire/results/import` : import de résultats en masse par fichier CSV
   - **Format unique imposé par Zacharie**, documenté aux laboratoires sur `/laboratoire/results/format` (+ modèle `modele-import-resultats-trichine.csv`). Pas de mapping par LIMS : c'est au laboratoire d'adapter son export. Colonnes obligatoires `reference_pool` + `resultat_analyse`, colonnes inconnues ignorées, dates `AAAA-MM-JJ`. Valeurs de `resultat_analyse` selon le laboratoire : LVD `negatif` / `non_negatif` (→ `DOUTEUX`) ; LNR `positif` / `non_negatif` (→ `NON_NEGATIF`, `parasite_identifie` obligatoire) / `presence_parasite_non_identifie`. Colonne facultative `nombre_larves` (entier > 0, refusée sur `negatif`), enregistrée dans `nombre_larves_lvd` ou `nombre_larves_lnr` selon le laboratoire.
   - Aperçu avant tout enregistrement : par ligne, statut (à importer / déjà résolu / introuvable / invalide) et les actions que l'import va faire dans Zacharie (carcasses libérées ou bloquées, FTP de confirmation LNR, emails, référence interne) ; récapitulatif des lignes cochées (dont les FTP qui se clôturent). Le laboratoire coche les lignes à importer.
@@ -816,6 +821,7 @@ Intégration dans `api-express/src/utils/carcasse-access.ts` + `fei-access.ts` (
 - `POST /laboratoire/ftp/:id/reception`
 - `POST /laboratoire/pool/:id/resultat`
 - `POST /laboratoire/pool/:id/refuser`
+- `POST /laboratoire/echantillon/:id/retirer-du-pool` (motif obligatoire)
 - `POST /laboratoire/pool/:id/documents` (upload PDF rapport)
 - `POST /laboratoire/ftp/:id/photos` (LVD upload photos larves pour LNR)
 - `POST /trichine/echantillon`

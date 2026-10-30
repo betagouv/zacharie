@@ -88,6 +88,7 @@ model User {
   CarcasseModificationRequestsReviewed  CarcasseModificationRequest[]  @relation("ModifReviewedByUser")
   // Trichine
   TrichineEchantillonsPreleves          TrichineEchantillon[]          @relation("TrichineEchantillonPreleveParUser")
+  TrichineEchantillonsRetiresParLabo    TrichineEchantillon[]          @relation("TrichineEchantillonRetireParLaboUser")
   TrichinePoolsCrees                    TrichinePool[]                 @relation("TrichinePoolCreeParUser")
   TrichinePoolsRefuses                  TrichinePool[]                 @relation("TrichinePoolRefusParUser")
   TrichineFTPsExpediees                 TrichineFTP[]                  @relation("TrichineFTPExpediteurUser")
@@ -1341,7 +1342,17 @@ model TrichineEchantillon {
   resultat_analyse TrichineResultatAnalyse? // cache hérité du pool
 
   pool_id      String?
-  TrichinePool TrichinePool? @relation(fields: [pool_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  TrichinePool TrichinePool? @relation("TrichinePoolEchantillons", fields: [pool_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  // Retrait par le laboratoire (échantillon absent du colis, abîmé, mal identifié…) : l'échantillon
+  // sort de son pool sans en hériter le résultat, la carcasse est à re-prélever. L'échantillon
+  // retiré n'est plus regroupable ni modifiable.
+  retire_par_labo_at      DateTime?
+  retire_par_labo_motif   String?
+  retire_par_labo_user_id String?
+  RetireParLaboUser       User?         @relation("TrichineEchantillonRetireParLaboUser", fields: [retire_par_labo_user_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  retire_du_pool_id       String?
+  RetireDuPool            TrichinePool? @relation("TrichinePoolEchantillonsRetires", fields: [retire_du_pool_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
 
   commentaire String?
 
@@ -1354,6 +1365,7 @@ model TrichineEchantillon {
 
   @@index([zacharie_carcasse_id])
   @@index([pool_id])
+  @@index([retire_du_pool_id])
   @@index([updated_at])
 }
 
@@ -1392,7 +1404,8 @@ model TrichinePool {
 
   commentaire String?
 
-  TrichineEchantillons TrichineEchantillon[]
+  TrichineEchantillons TrichineEchantillon[] @relation("TrichinePoolEchantillons")
+  EchantillonsRetires  TrichineEchantillon[] @relation("TrichinePoolEchantillonsRetires")
   TrichinePoolFTPs     TrichinePoolFTP[]
   Documents            TrichineDocument[]
   Aliases              TrichineAlias[]
