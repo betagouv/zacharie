@@ -1437,8 +1437,10 @@ model TrichineFTP {
   AnnulationParUser      User?     @relation("TrichineFTPAnnulationParUser", fields: [annulation_par_user_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
   raison_annulation      String?
 
-  mode_transport String?
-  commentaire    String?
+  mode_transport          String?
+  // FTP de confirmation LVD → LNR : conditions de conservation de l'élément parasitaire
+  conditions_conservation String?
+  commentaire             String?
 
   TrichinePoolFTPs TrichinePoolFTP[]
   Documents        TrichineDocument[]

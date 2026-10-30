@@ -144,6 +144,9 @@ export function corrigerResultatPool(
     date_fin_analyse?: string;
     reference_labo?: string;
     commentaire?: string;
+    date_envoi_lnr?: string;
+    mode_transport_lnr?: string;
+    conditions_conservation_lnr?: string;
     raison: string;
   }
 ) {
@@ -195,6 +198,10 @@ export function saisirResultatPool(
     date_fin_analyse?: string;
     reference_labo?: string;
     commentaire?: string;
+    // FTP de confirmation générée vers le LNR sur un non négatif
+    date_envoi_lnr?: string;
+    mode_transport_lnr?: string;
+    conditions_conservation_lnr?: string;
   }
 ) {
   return API.post({ path: `/laboratoire/pool/${poolId}/resultat`, body }) as Promise<

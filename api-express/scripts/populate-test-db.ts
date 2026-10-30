@@ -902,6 +902,48 @@ Christine
           status: EntityRelationStatus.ADMIN,
         },
       });
+      // LNR : destinataire de la FTP de confirmation générée sur un non négatif
+      const lnr = await prisma.entity.create({
+        data: {
+          raison_sociale: 'LNR Parasites',
+          nom_d_usage: 'LNR Parasites',
+          siret: '12345678901235',
+          type: EntityTypes.LABORATOIRE,
+          is_lnr: true,
+          code_trichine: 'LN01',
+          zacharie_compatible: true,
+          address_ligne_1: '14 rue Pierre et Marie Curie',
+          code_postal: '94700',
+          ville: 'Maisons-Alfort',
+        },
+      });
+      const laborantinLnr = await prisma.user.create({
+        data: {
+          id: await createUserId(),
+          email: 'lnr@example.fr',
+          roles: [UserRoles.LABORATOIRE],
+          activated: true,
+          activated_at: dayjs().toDate(),
+          prenom: 'Louis',
+          nom_de_famille: 'Martin',
+          addresse_ligne_1: '14 rue Pierre et Marie Curie',
+          code_postal: '94700',
+          ville: 'Maisons-Alfort',
+          telephone: '0606060631',
+          onboarded_at: dayjs().toDate(),
+        },
+      });
+      await prisma.password.create({
+        data: { user_id: laborantinLnr.id, password: await hashPassword('secret-secret') },
+      });
+      await prisma.entityAndUserRelations.create({
+        data: {
+          owner_id: laborantinLnr.id,
+          entity_id: lnr.id,
+          relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+          status: EntityRelationStatus.ADMIN,
+        },
+      });
 
       const fei = await prisma.fei.create({ data: feiTransmittedByEtgToSvi });
       await prisma.carcasse.createMany({
