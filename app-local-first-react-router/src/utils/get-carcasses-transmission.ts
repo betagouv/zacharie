@@ -91,12 +91,6 @@ const ALWAYS_SAME_FIELDS: Partial<Record<keyof CarcasseTransmission, boolean>> =
   premier_detenteur_offline: true,
   premier_detenteur_entity_id: true,
   premier_detenteur_name_cache: true,
-  premier_detenteur_depot_type: true,
-  premier_detenteur_depot_entity_id: true,
-  premier_detenteur_depot_entity_name_cache: true,
-  premier_detenteur_depot_ccg_at: true,
-  premier_detenteur_transport_type: true,
-  premier_detenteur_transport_date: true,
   premier_detenteur_prochain_detenteur_role_cache: true,
   premier_detenteur_prochain_detenteur_id_cache: true,
 };
@@ -110,6 +104,17 @@ const PER_CARCASSE_METADATA_FIELDS: Partial<Record<keyof CarcasseTransmission, b
   examinateur_initial_approbation_mise_sur_le_marche: true, // because a carcasse can have been created from RequestNewCarcasseForm
   examinateur_initial_date_approbation_mise_sur_le_marche: true, // a carcasse from RequestNewCarcasseForm is approved later, so its approbation date differs legitimately
   consommateur_final_usage_domestique: true, // le premier détenteur garde une partie seulement de ses carcasses : le champ est propre au lot, pas à la transmission
+};
+// une transmission regroupe les carcasses d'une fiche par destinataire : le premier détenteur peut y
+// envoyer plusieurs lots (transmission partielle), chacun avec son propre dépôt et son propre transport
+// on ne les compare pas
+const PER_LOT_FIELDS: Partial<Record<keyof CarcasseTransmission, boolean>> = {
+  premier_detenteur_depot_type: true,
+  premier_detenteur_depot_entity_id: true,
+  premier_detenteur_depot_entity_name_cache: true,
+  premier_detenteur_depot_ccg_at: true,
+  premier_detenteur_transport_type: true,
+  premier_detenteur_transport_date: true,
 };
 
 const REFUSAL_FIELDS: Partial<Record<keyof CarcasseTransmission, boolean>> = {
@@ -141,6 +146,7 @@ export function checkCarcasseAgainstTransmission(
   let shouldNOTdifferButDiffer = false;
   for (let field of transmissionKeys) {
     if (PER_CARCASSE_METADATA_FIELDS[field]) continue; // always differ, we dont care
+    if (PER_LOT_FIELDS[field]) continue;
     if (ALWAYS_SAME_FIELDS[field]) {
       if (carcasse[field] !== transmission[field]) {
         shouldNOTdifferButDiffer = true;

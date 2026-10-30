@@ -159,6 +159,27 @@ describe('checkCarcasseAgainstTransmission — silent (no false positive)', () =
     check(carc(), carc({ intermediaire_carcasse_manquante: true, next_owner_entity_id: 'someone-else' }));
     expect(mockedCapture).not.toHaveBeenCalled();
   });
+
+  it('two lots sent to the same recipient with different depot / transport does not report', () => {
+    // Transmission partielle : un premier lot déposé au CCG à 19:45, un second plus tard à 19:30.
+    check(
+      carc({
+        premier_detenteur_depot_type: 'CCG',
+        premier_detenteur_depot_entity_id: 'ccg-1',
+        premier_detenteur_depot_entity_name_cache: 'CCG Un',
+        premier_detenteur_depot_ccg_at: new Date('2024-01-01T19:45:00.000Z'),
+      }),
+      carc({
+        premier_detenteur_depot_type: 'CCG',
+        premier_detenteur_depot_entity_id: 'ccg-2',
+        premier_detenteur_depot_entity_name_cache: 'CCG Deux',
+        premier_detenteur_depot_ccg_at: new Date('2024-01-01T19:30:00.000Z'),
+        premier_detenteur_transport_type: 'PREMIER_DETENTEUR',
+        premier_detenteur_transport_date: new Date('2024-01-02T08:00:00.000Z'),
+      })
+    );
+    expect(mockedCapture).not.toHaveBeenCalled();
+  });
 });
 
 // ---------------------------------------------------------------------------
