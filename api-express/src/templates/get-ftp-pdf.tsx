@@ -5,6 +5,7 @@ import dayjs from 'dayjs';
 import 'dayjs/locale/fr';
 import path from 'path';
 import prisma from '~/prisma';
+import { avecNombreLarves } from '~/prisma-omit';
 import { getEtgsDuServiceExpediteur, type TrichinePartieConcernee } from '~/utils/trichine-parties';
 import { trichineAliasesInclude, type TrichineAliasProjection } from '~/utils/trichine-alias';
 
@@ -173,6 +174,7 @@ async function getFtpForPdf(ftpId: string) {
       TrichinePoolFTPs: {
         include: {
           TrichinePool: {
+            omit: avecNombreLarves,
             include: {
               TrichineEchantillons: {
                 where: { deleted_at: null },
@@ -357,6 +359,12 @@ export function TrichineFtpDocument({
                 </Text>
                 {pool.Aliases.length > 0 && (
                   <Text style={styles.poolMeta}>Réf. internes : {formatAliases(pool.Aliases)}</Text>
+                )}
+                {/* Fiche de confirmation LVD → LNR : seuls les laboratoires la consultent */}
+                {!!ftp.ftp_parent_id && pool.nombre_larves_lvd != null && (
+                  <Text style={styles.poolMeta}>
+                    Larves comptées par le laboratoire agréé : {pool.nombre_larves_lvd}
+                  </Text>
                 )}
               </View>
               <Image style={styles.barcode} src={barcodes[pool.reference_pool]} />

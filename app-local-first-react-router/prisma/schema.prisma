@@ -1381,6 +1381,10 @@ model TrichinePool {
   statut             TrichineStatutAnalyse    @default(A_COMPLETER)
   resultat_analyse   TrichineResultatAnalyse?
   parasite_identifie String? // rempli si NON_NEGATIF par LNR
+  // Larves comptées dans le pool, facultatif. Réservé aux laboratoires : jamais renvoyé à l'émetteur
+  // (omis par défaut, cf src/prisma-omit.ts)
+  nombre_larves_lvd  Int? // LVD, sur un résultat DOUTEUX
+  nombre_larves_lnr  Int? // LNR, sur un résultat de confirmation
 
   refus_par_user_id String?
   RefusParUser      User?   @relation("TrichinePoolRefusParUser", fields: [refus_par_user_id], references: [id], onDelete: SetNull, onUpdate: Cascade)

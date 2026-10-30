@@ -51,13 +51,20 @@ function Resultat({ row }: { row: LimsResultRow }) {
     return <span className="text-gray-600">{row.raw_resultat ? `« ${row.raw_resultat} »` : '—'}</span>;
   }
   return (
-    <Badge
-      small
-      noIcon
-      severity={resultatBadgeSeverity(row.resultat_analyse)}
-    >
-      {resultatAnalyseLabels[row.resultat_analyse]}
-    </Badge>
+    <>
+      <Badge
+        small
+        noIcon
+        severity={resultatBadgeSeverity(row.resultat_analyse)}
+      >
+        {resultatAnalyseLabels[row.resultat_analyse]}
+      </Badge>
+      {row.nombre_larves != null && (
+        <span className="fr-text--xs block text-gray-600">
+          {row.nombre_larves} larve{row.nombre_larves > 1 ? 's' : ''}
+        </span>
+      )}
+    </>
   );
 }
 
@@ -149,6 +156,7 @@ export default function LaboratoireResultsImport() {
         reference_pool: row.reference_pool,
         resultat_analyse: row.resultat_analyse!,
         parasite_identifie: row.parasite_identifie,
+        nombre_larves: row.nombre_larves,
         date_debut_analyse: row.date_debut_analyse,
         date_fin_analyse: row.date_fin_analyse,
         reference_labo: row.reference_labo,

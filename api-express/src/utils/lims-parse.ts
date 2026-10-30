@@ -12,6 +12,7 @@ export const IMPORT_COLUMNS = [
   'reference_pool',
   'resultat_analyse',
   'parasite_identifie',
+  'nombre_larves',
   'date_debut_analyse',
   'date_fin_analyse',
   'reference_labo',
@@ -47,11 +48,12 @@ export type MappedLimsRow = {
   // valeur brute du fichier, conservée pour l'affichage / le diagnostic
   raw_resultat: string;
   parasite_identifie?: string;
+  nombre_larves?: number;
   date_debut_analyse?: string;
   date_fin_analyse?: string;
   reference_labo?: string;
   commentaire?: string;
-  // Erreur de format propre à la ligne (date mal écrite)
+  // Erreur de format propre à la ligne (date ou nombre de larves mal écrit)
   erreur_format?: string;
 };
 
@@ -98,18 +100,23 @@ export function mapRow(raw: Record<string, string>, isLnr: boolean): MappedLimsR
   const get = (column: ImportColumn): string => (raw[column] != null ? String(raw[column]).trim() : '');
   const rawResultat = get('resultat_analyse');
   const dateInvalide = DATE_COLUMNS.find((column) => get(column) && !isValidIsoDate(get(column)));
+  const nombreLarves = get('nombre_larves');
+  const nombreLarvesInvalide = !!nombreLarves && !/^[1-9]\d*$/.test(nombreLarves);
   return {
     reference_pool: get('reference_pool'),
     resultat_analyse:
       (isLnr ? RESULTAT_VALUES_LNR : RESULTAT_VALUES_LVD)[normalizeResultatValue(rawResultat)] ?? null,
     raw_resultat: rawResultat,
     parasite_identifie: get('parasite_identifie') || undefined,
+    nombre_larves: nombreLarves && !nombreLarvesInvalide ? Number(nombreLarves) : undefined,
     date_debut_analyse: get('date_debut_analyse') || undefined,
     date_fin_analyse: get('date_fin_analyse') || undefined,
     reference_labo: get('reference_labo') || undefined,
     commentaire: get('commentaire') || undefined,
     erreur_format: dateInvalide
       ? `Date invalide dans ${dateInvalide} : « ${get(dateInvalide)} » (format attendu AAAA-MM-JJ)`
-      : undefined,
+      : nombreLarvesInvalide
+        ? `Nombre de larves invalide : « ${nombreLarves} » (nombre entier supérieur à 0 attendu)`
+        : undefined,
   };
 }

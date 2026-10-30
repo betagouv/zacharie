@@ -3,6 +3,7 @@ import dayjs from 'dayjs';
 import Checkbox from '@codegouvfr/react-dsfr/Checkbox';
 import { Badge } from '@codegouvfr/react-dsfr/Badge';
 import { Link, useParams } from 'react-router';
+import { AdminHistoryTimeline } from './history-timeline';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { Notice } from '@codegouvfr/react-dsfr/Notice';
 import {
@@ -134,6 +135,10 @@ export default function AdminEntity() {
       label: `ETGs associés (${etgsRelatedWithSvi.length})`,
     });
   }
+  tabs.push({
+    tabId: 'Historique',
+    label: 'Historique',
+  });
 
   async function handleSave(name: string, value: string | boolean) {
     return handleSaveFields({ [name]: value });
@@ -553,6 +558,12 @@ export default function AdminEntity() {
                   : ''
               }
               setIsSaving={setIsSaving}
+            />
+          )}
+          {selectedTabId === 'Historique' && (
+            <AdminHistoryTimeline
+              type="entity"
+              id={entity.id}
             />
           )}
           <div className="mt-6 mb-16 ml-6">

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { TrichineResultatAnalyse } from '@prisma/client';
 import { ImportFormatError, mapRow, parseLimsFile } from '~/utils/lims-parse';
-import { describePoolResultActions } from '~/utils/trichine-result';
+import { describePoolResultActions, validateResultForPool } from '~/utils/trichine-result';
 
 const lireLvd = (raw: Record<string, string>) => mapRow(raw, false);
 const lireLnr = (raw: Record<string, string>) => mapRow(raw, true);
@@ -80,6 +80,38 @@ describe('parseLimsFile + mapRow', () => {
     ).map(lireLvd);
     expect(rows[0].erreur_format).toMatch(/date_fin_analyse/);
     expect(rows[1].erreur_format).toMatch(/date_fin_analyse/);
+  });
+
+  it('lit le nombre de larves et signale une valeur qui n’est pas un entier positif', () => {
+    const rows = parseLimsFile(
+      'reference_pool;resultat_analyse;nombre_larves\nP-1;non_negatif;3\nP-2;non_negatif;\nP-3;non_negatif;0\nP-4;non_negatif;1,5'
+    ).map(lireLvd);
+    expect(rows[0]).toMatchObject({ nombre_larves: 3, erreur_format: undefined });
+    expect(rows[1]).toMatchObject({ nombre_larves: undefined, erreur_format: undefined });
+    expect(rows[2].erreur_format).toMatch(/Nombre de larves/);
+    expect(rows[3].erreur_format).toMatch(/Nombre de larves/);
+  });
+});
+
+describe('validateResultForPool : nombre de larves', () => {
+  const valider = (resultat_analyse: TrichineResultatAnalyse, isLnr: boolean) =>
+    validateResultForPool({
+      existingResult: isLnr ? TrichineResultatAnalyse.DOUTEUX : null,
+      resultat_analyse,
+      parasite_identifie: 'Sarcocystis',
+      nombre_larves: 2,
+      isLnr,
+    });
+
+  it('accepte un nombre de larves sur un résultat non négatif, LVD comme LNR', () => {
+    expect(valider(TrichineResultatAnalyse.DOUTEUX, false)).toBeNull();
+    expect(valider(TrichineResultatAnalyse.POSITIF, true)).toBeNull();
+    expect(valider(TrichineResultatAnalyse.NON_NEGATIF, true)).toBeNull();
+    expect(valider(TrichineResultatAnalyse.PRESENCE_PARASITE_NON_IDENTIFIE, true)).toBeNull();
+  });
+
+  it('refuse un nombre de larves sur un résultat négatif', () => {
+    expect(valider(TrichineResultatAnalyse.NEGATIF, false)?.code).toBe('larves_not_allowed');
   });
 });
 

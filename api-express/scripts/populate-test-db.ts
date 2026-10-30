@@ -25,6 +25,7 @@ import prisma from '~/prisma';
 import { hashPassword } from '~/service/crypto';
 import createUserId from '~/utils/createUserId';
 import { getAllFederationEntities } from '~/utils/federation-stats';
+import { applyHistoryTriggers } from './apply-history-triggers';
 
 export async function populateDb(role?: FeiOwnerRole) {
   console.log('Populate db', process.env.NODE_ENV, process.env.POSTGRESQL_ADDON_URI);
@@ -37,7 +38,10 @@ export async function populateDb(role?: FeiOwnerRole) {
     return;
   }
 
+  await applyHistoryTriggers();
+
   // Delete in FK-safe order: children before parents
+  await prisma.adminAuditLog.deleteMany();
   await prisma.securityLog.deleteMany();
   await prisma.log.deleteMany();
   await prisma.carcasseIntermediaire.deleteMany();
@@ -51,6 +55,8 @@ export async function populateDb(role?: FeiOwnerRole) {
   await prisma.password.deleteMany();
   await prisma.entity.deleteMany();
   await prisma.user.deleteMany();
+  // les suppressions ci-dessus remplissent les tables d'historique par les triggers : on les vide en dernier
+  await prisma.$executeRaw`TRUNCATE "FeiHistory", "CarcasseHistory", "CarcasseIntermediaireHistory", "UserHistory", "EntityHistory", "EntityAndUserRelationsHistory"`;
 
   /* 
   Martin

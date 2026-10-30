@@ -6,6 +6,7 @@ import { connectWith } from '../../utils/connect-with';
 // Seed LABORATOIRE_FTP_RECUE : laboratoire@example.fr (Laboratoire 1, LVD) a réceptionné la FTP
 // F-26-SVI01-0001 avec deux pools sans résultat : P-26-SVI01-0001 (2 carcasses) et P-26-SVI01-0002
 // (1 carcasse). L'aperçu montre ce que l'import va faire, le laboratoire choisit les lignes, puis importe.
+// Sur un non négatif, le laboratoire peut indiquer le nombre de larves (colonne nombre_larves).
 
 // L'espace laboratoire n'est monté que si l'app est construite avec VITE_FEATURE_TRICHINE=true
 // (cf App.tsx). Pour lancer la spec : construire l'app et lancer Playwright avec cette variable.
@@ -103,6 +104,28 @@ test("L'aperçu récapitule les actions, le laboratoire choisit les lignes puis 
   await expect(page.getByText('Import terminé')).toBeVisible({ timeout: 10000 });
   await expect(page.getByText('2 appliqué(s), 0 ignoré(s), 0 en erreur.')).toBeVisible();
   expect(await statutLogistiqueFtp(page, 'F-26-SVI01-0001')).toBe('TRAITEE');
+});
+
+test('Le nombre de larves lu dans le fichier est affiché à l’aperçu puis sur le pool', async ({ page }) => {
+  await ouvrirImport(page);
+  await deposerFichier(
+    page,
+    ['reference_pool;resultat_analyse;nombre_larves', 'P-26-SVI01-0002;non_negatif;2'].join('\n')
+  );
+
+  const ligne = page.getByRole('row').filter({ hasText: 'P-26-SVI01-0002' });
+  await expect(ligne.getByText('À importer')).toBeVisible({ timeout: 10000 });
+  await expect(ligne.getByText('2 larves')).toBeVisible();
+
+  const importer = page.getByRole('button', { name: 'Importer 1 résultat(s)' });
+  await importer.scrollIntoViewIfNeeded();
+  await importer.click();
+  await expect(page.getByText('1 appliqué(s), 0 ignoré(s), 0 en erreur.')).toBeVisible({ timeout: 10000 });
+
+  await page.goto('/app/laboratoire/pools/P-26-SVI01-0002');
+  await expect(page.getByText('Larves comptées par le laboratoire agréé : 2')).toBeVisible({
+    timeout: 10000,
+  });
 });
 
 test('Un fichier sans colonne obligatoire est refusé avec la liste des colonnes attendues', async ({

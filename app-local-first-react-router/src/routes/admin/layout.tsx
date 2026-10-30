@@ -55,6 +55,11 @@ const adminLinks = [
     label: 'Journal admin',
     icon: 'fr-icon-time-line',
   },
+  {
+    to: '/app/admin/historique',
+    label: 'Historique',
+    icon: 'fr-icon-history-line',
+  },
 ];
 
 const externalLinks = [

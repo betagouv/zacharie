@@ -235,7 +235,7 @@ export async function syncFei(
     canWriteApprobationExaminateur &&
     body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_offline)
   ) {
-    nextFei.premier_detenteur_offline = body.premier_detenteur_offline || null;
+    nextFei.premier_detenteur_offline = body.premier_detenteur_offline ?? null;
   }
   if (canWriteOwnership && body.hasOwnProperty(Prisma.FeiScalarFieldEnum.premier_detenteur_entity_id)) {
     nextFei.premier_detenteur_entity_id = body.premier_detenteur_entity_id

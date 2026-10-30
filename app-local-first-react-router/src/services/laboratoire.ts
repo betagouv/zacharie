@@ -139,6 +139,7 @@ export function corrigerResultatPool(
   body: {
     resultat_analyse: TrichineResultatAnalyse;
     parasite_identifie?: string;
+    nombre_larves?: number;
     date_debut_analyse?: string;
     date_fin_analyse?: string;
     reference_labo?: string;
@@ -189,6 +190,7 @@ export function saisirResultatPool(
   body: {
     resultat_analyse: TrichineResultatAnalyse;
     parasite_identifie?: string;
+    nombre_larves?: number;
     date_debut_analyse?: string;
     date_fin_analyse?: string;
     reference_labo?: string;
@@ -251,6 +253,7 @@ export type LimsImportRow = {
   reference_pool: string;
   resultat_analyse: TrichineResultatAnalyse;
   parasite_identifie?: string;
+  nombre_larves?: number;
   date_debut_analyse?: string;
   date_fin_analyse?: string;
   reference_labo?: string;

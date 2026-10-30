@@ -11,6 +11,12 @@ const colonnes: Array<[string, string, string, string]> = [
   ],
   ['resultat_analyse', 'Oui', 'Résultat de l’analyse (valeurs ci-dessous)', 'negatif'],
   ['parasite_identifie', 'LNR, si non_negatif', 'Nom du parasite identifié', 'Sarcocystis'],
+  [
+    'nombre_larves',
+    'Non',
+    'Nombre de larves découvertes dans le pool, sur un résultat autre que negatif. Visible uniquement par les laboratoires',
+    '2',
+  ],
   ['date_debut_analyse', 'Non', 'Date de début de l’analyse, au format AAAA-MM-JJ', '2026-10-20'],
   [
     'date_fin_analyse',
@@ -104,6 +110,10 @@ export default function LaboratoireResultsFormat() {
         <li>La valeur de résultat n'est pas dans la liste, ou n'est pas permise à votre laboratoire.</li>
         <li>Une date n'est pas au format AAAA-MM-JJ.</li>
         <li>
+          Le nombre de larves n'est pas un nombre entier supérieur à 0, ou il est indiqué sur un résultat{' '}
+          <code>negatif</code>.
+        </li>
+        <li>
           Le pool a déjà un résultat. Seul le LNR peut remplacer un résultat <code>non_negatif</code> d’un LVD
           par sa confirmation.
         </li>
@@ -115,9 +125,9 @@ export default function LaboratoireResultsFormat() {
 
       <h2 className="fr-h5">Exemple</h2>
       <pre className="overflow-x-auto bg-[var(--background-alt-grey)] p-4 text-sm">
-        {`reference_pool;resultat_analyse;parasite_identifie;date_debut_analyse;date_fin_analyse;reference_labo;commentaire
-P-26-EG01-0001;negatif;;2026-10-20;2026-10-21;LAB-2026-001;
-P-26-EG01-0002;non_negatif;;2026-10-20;2026-10-21;LAB-2026-002;Larve observée`}
+        {`reference_pool;resultat_analyse;parasite_identifie;nombre_larves;date_debut_analyse;date_fin_analyse;reference_labo;commentaire
+P-26-EG01-0001;negatif;;;2026-10-20;2026-10-21;LAB-2026-001;
+P-26-EG01-0002;non_negatif;;2;2026-10-20;2026-10-21;LAB-2026-002;Larve observée`}
       </pre>
     </div>
   );
