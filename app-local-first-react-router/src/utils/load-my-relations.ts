@@ -1,5 +1,6 @@
 import type { UserMyRelationsResponse } from '@api/src/types/responses';
 import type { EntityWithUserRelation } from '@api/src/types/entity';
+import { EntityRelationType } from '@prisma/client';
 import useZustandStore, { hydrationPromise } from '@app/zustand/store';
 import API from '@app/services/api';
 import useUser from '@app/zustand/user';
@@ -41,11 +42,15 @@ export async function loadMyRelations() {
     // API.get ne lève pas d'erreur : en cas d'échec on garde les relations déjà en mémoire
     if (signal.aborted || !myRelationsData.ok) return;
 
-    // Seed with entities already in the store (e.g. those referenced by fiches, loaded by
-    // load-carcasses). The user's own relations below overlay them so they keep their relation info.
-    const entities: Record<EntityWithUserRelation['id'], EntityWithUserRelation> = {
-      ...useZustandStore.getState().entities,
-    };
+    // Seed with the entities referenced by fiches only (relation NONE, loaded by load-carcasses). The
+    // user's own relations come from the server alone: one the server no longer returns (entity
+    // deleted by an admin, relation removed) leaves the store and the pickers.
+    const entities: Record<EntityWithUserRelation['id'], EntityWithUserRelation> = {};
+    for (const entity of Object.values(useZustandStore.getState().entities)) {
+      if (entity.relation === EntityRelationType.NONE) {
+        entities[entity.id] = entity;
+      }
+    }
     for (const entity of [
       ...(myRelationsData.data?.associationsDeChasse || []),
       ...(myRelationsData.data?.ccgs || []),

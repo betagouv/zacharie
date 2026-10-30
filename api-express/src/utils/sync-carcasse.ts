@@ -18,6 +18,7 @@ import { TRICHINE_FEATURE_ENABLED } from '~/config';
 import type { SyncScope } from '~/utils/sync-scope';
 import { isCarcassePriseEnChargeEnAval } from '~/utils/carcasse-prise-en-charge';
 import { SyncRejectedError } from '~/utils/sync-errors';
+import { assertNoNewDeletedEntity } from '~/utils/deleted-entities';
 import { carcasseHasResultatTrichineNegatif, TRICHINE_ESPECE_CONCERNEE } from '~/utils/trichine';
 import { isStaleWrite, nextVersion } from '~/utils/sync-version';
 
@@ -35,10 +36,13 @@ export interface SaveCarcasseResult {
 // - ensuredRelationEntityIds : entités dont la relation CAN_TRANSMIT a déjà été assurée dans ce
 //   batch (évite un findFirst/create par carcasse pour le même destinataire). En sync parallèle,
 //   l'appelant pré-remplit ce Set pour que le bloc relation soit entièrement sauté (pas de race).
+// - deletedEntityIds : entités supprimées parmi celles référencées par le lot (évite une requête
+//   par carcasse).
 interface SyncCarcasseOpts {
   existingFei?: Fei | null;
   existingCarcasse?: Carcasse | null;
   ensuredRelationEntityIds?: Set<string>;
+  deletedEntityIds?: Set<string>;
 }
 
 export async function syncCarcasse(
@@ -200,6 +204,18 @@ export async function syncCarcasse(
     });
     return { savedCarcasse: deletedCarcasse, existingCarcasse, isDeleted: true };
   }
+
+  // Avant toute écriture : le bloc `next_owner_entity_id` plus bas crée une relation vers l'entité.
+  await assertNoNewDeletedEntity(
+    body,
+    existingCarcasse,
+    [
+      'next_owner_entity_id',
+      ...(isPremierDetenteur ? (['premier_detenteur_depot_entity_id'] as const) : []),
+      ...(canWriteOwnership ? (['premier_detenteur_entity_id'] as const) : []),
+    ],
+    opts.deletedEntityIds
+  );
 
   // Pas de gel après l'inspection SVI : toute écriture est tracée (logs, `version_user_id`), donc une
   // modification tardive se retrouve. On préfère pouvoir corriger que bloquer à tort.
