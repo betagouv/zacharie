@@ -23,6 +23,7 @@ const pool = {
   reference_pool: 'P-26-SVI01-0045',
   resultat_analyse: null as TrichineResultatAnalyse | null,
   nombre_larves_lvd: null as number | null,
+  nombre_larves_lnr: null as number | null,
   date_debut_analyse: null as Date | null,
   commentaire: null as string | null,
   TrichineEchantillons: [] as Array<never>,

@@ -1196,6 +1196,9 @@ router.post(
     let skipped = 0;
     let errors = 0;
     const results: LaboResultsImportResponse['data']['results'] = [];
+    // Les pools sont lus une fois avant la boucle : un pool déjà traité ne doit pas recevoir un second
+    // résultat (sa version lue n'a pas encore de résultat, la validation ne l'arrêterait pas)
+    const poolsTraites = new Set<string>();
 
     for (const row of bodyResult.data.rows) {
       const found = trouverPool(row.reference_pool);
@@ -1205,6 +1208,15 @@ router.post(
           reference_pool: row.reference_pool,
           ok: false,
           error: 'Pool introuvable ou non destiné à votre laboratoire',
+        });
+        continue;
+      }
+      if (poolsTraites.has(found.pool.id)) {
+        skipped++;
+        results.push({
+          reference_pool: row.reference_pool,
+          ok: false,
+          error: 'Ce pool apparaît plusieurs fois dans le fichier : seule sa première ligne est importée',
         });
         continue;
       }
@@ -1222,6 +1234,7 @@ router.post(
           results.push({ reference_pool: row.reference_pool, ok: false, error: outcome.error });
         } else {
           applied++;
+          poolsTraites.add(found.pool.id);
           results.push({
             reference_pool: row.reference_pool,
             ok: true,
@@ -1232,6 +1245,8 @@ router.post(
           });
         }
       } catch (error) {
+        // Le résultat a pu être écrit en partie : pas de seconde tentative sur ce pool
+        poolsTraites.add(found.pool.id);
         capture(error as Error, { extra: { reference_pool: row.reference_pool } });
         errors++;
         results.push({ reference_pool: row.reference_pool, ok: false, error: 'Erreur serveur' });

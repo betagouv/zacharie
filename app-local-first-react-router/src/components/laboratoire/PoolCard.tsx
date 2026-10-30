@@ -291,6 +291,10 @@ export function ResultatModalContent({
   const options = isLnr ? LNR_RESULTS : LVD_RESULTS;
   const parasiteRequis = resultat === TrichineResultatAnalyse.NON_NEGATIF;
   const larvesSaisissables = !!resultat && RESULTATS_AVEC_LARVES.includes(resultat);
+  const nombreLarvesInvalide =
+    larvesSaisissables &&
+    !!nombreLarves &&
+    !(Number.isInteger(Number(nombreLarves)) && Number(nombreLarves) >= 1);
   const versLnr = resultat === TrichineResultatAnalyse.DOUTEUX;
   const reference = pool?.reference_pool ?? '';
 
@@ -406,7 +410,7 @@ export function ResultatModalContent({
           !pool ||
           !resultat ||
           (parasiteRequis && !parasite.trim()) ||
-          (larvesSaisissables && !!nombreLarves && !(Number(nombreLarves) >= 1)) ||
+          nombreLarvesInvalide ||
           (correction && !raison.trim()) ||
           isSubmitting,
         onClick: enregistrer,
@@ -453,6 +457,8 @@ export function ResultatModalContent({
         <Input
           label="Nombre de larves découvertes dans le pool (optionnel)"
           hintText="Visible uniquement par les laboratoires"
+          state={nombreLarvesInvalide ? 'error' : 'default'}
+          stateRelatedMessage="Nombre entier supérieur à 0 attendu"
           nativeInputProps={{
             type: 'number',
             inputMode: 'numeric',

@@ -110,6 +110,7 @@ type ApplyPoolResultPool = {
   reference_pool: string;
   resultat_analyse: TrichineResultatAnalyse | null;
   nombre_larves_lvd: number | null;
+  nombre_larves_lnr: number | null;
   date_debut_analyse: Date | null;
   commentaire: string | null;
   TrichineEchantillons: Array<{
@@ -240,6 +241,9 @@ export async function applyPoolResult({
   let referenceIgnoree = referenceRefusee;
   // Saisie manuelle : un champ vidé retire la référence du laboratoire (un import ne retire jamais rien)
   const referenceEffacee = origine === 'saisie' && body.reference_labo !== undefined && !referenceSaisie;
+  // Comme les dates et le commentaire, un nombre de larves non renseigné garde celui déjà posé
+  // (correction d'un résultat)
+  const nombreLarves = body.nombre_larves ?? (isLnr ? pool.nombre_larves_lnr : pool.nombre_larves_lvd);
 
   await prisma.trichinePool.update({
     where: { id: pool.id },
@@ -247,9 +251,7 @@ export async function applyPoolResult({
       resultat_analyse: body.resultat_analyse,
       parasite_identifie: body.parasite_identifie ?? null,
       // Le LNR ne touche pas au nombre compté par le LVD, et inversement
-      ...(isLnr
-        ? { nombre_larves_lnr: body.nombre_larves ?? null }
-        : { nombre_larves_lvd: body.nombre_larves ?? null }),
+      ...(isLnr ? { nombre_larves_lnr: nombreLarves } : { nombre_larves_lvd: nombreLarves }),
       date_debut_analyse: body.date_debut_analyse ?? pool.date_debut_analyse,
       date_fin_analyse: body.date_fin_analyse ?? new Date(),
       commentaire: body.commentaire ?? pool.commentaire,
@@ -380,7 +382,7 @@ export async function applyPoolResult({
           details: [
             { label: 'Pool', value: pool.reference_pool },
             { label: 'Fiche de transmission', value: lnrFtp.numero_fiche },
-            ...detailsNombreLarves({ nombre_larves_lvd: body.nombre_larves ?? null }),
+            ...detailsNombreLarves({ nombre_larves_lvd: nombreLarves }),
           ],
           actions: [
             'Réceptionnez la fiche de transmission dans Zacharie à l’arrivée des échantillons.',
@@ -501,7 +503,7 @@ export async function applyPoolResult({
           ...email.details,
           ...detailsNombreLarves({
             nombre_larves_lvd: pool.nombre_larves_lvd,
-            nombre_larves_lnr: body.nombre_larves ?? null,
+            nombre_larves_lnr: nombreLarves,
           }),
         ],
       },
