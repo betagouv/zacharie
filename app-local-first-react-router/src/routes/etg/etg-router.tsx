@@ -35,6 +35,7 @@ export default function RouterEtg() {
         path="carcasses"
         element={<EtgCarcasses />}
       />
+      {/* accessible par URL uniquement, pas d'entrée dans le menu tant que les chiffres ne sont pas validés */}
       <Route
         path="tableau-de-bord"
         element={<EtgTableauDeBord />}
