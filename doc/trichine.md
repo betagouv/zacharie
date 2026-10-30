@@ -144,6 +144,7 @@ Ajouts modèle :
 - Saisit le résultat par pool (`NEGATIF` ou `DOUTEUX`, affiché « Non négatif »), avec saisie en masse possible
 - Upload PDF rapport COFRAC via `TrichineDocument`
 - Si `DOUTEUX` : génération auto d'une FTP vers LNR + upload photos larves
+- Sur `DOUTEUX`, peut indiquer le nombre de larves découvertes dans le pool (facultatif, `nombre_larves_lvd`)
 - **Visibilité stricte** sur les données :
   - Carcasse : numéro d'identification, espèce, date + commune de mise à mort, site de prélèvement
   - Émetteur (1er détenteur ou SVI) : nom + contact (pour facturation et relance)
@@ -160,6 +161,7 @@ Ajouts modèle :
 
 - Reçoit les FTP des pools douteux
 - Saisit résultat de confirmation : `NON_NEGATIF` (« Autre parasite identifié », avec `parasite_identifie`) / `PRESENCE_PARASITE_NON_IDENTIFIE` / `POSITIF`
+- Peut indiquer le nombre de larves qu'il a comptées (facultatif, `nombre_larves_lnr`), sans écraser celui du LVD
 - Upload PDF rapport COFRAC
 
 ### 3.3 Acteurs HORS V1
@@ -246,6 +248,8 @@ model TrichinePool {
   statut             TrichineStatutAnalyse    @default(A_COMPLETER)
   resultat_analyse   TrichineResultatAnalyse?
   parasite_identifie String?                  // rempli si NON_NEGATIF par LNR
+  nombre_larves_lvd  Int?                     // facultatif, LVD sur DOUTEUX
+  nombre_larves_lnr  Int?                     // facultatif, LNR sur son résultat de confirmation
 
   refus_par_user_id String?
   raison_refus      String?
@@ -697,12 +701,20 @@ Routes `/laboratoire/*` :
   - Action "Refuser pool(s)" → `resultat_analyse = ANALYSE_IMPOSSIBLE` + `raison_refus` (saisie en masse possible)
   - Action "Saisir résultat" → `NEGATIF` ou `DOUTEUX`
   - Si `DOUTEUX` : modal pour upload photos larves → génération auto FTP vers LNR
+- `/laboratoire/results/import` : import de résultats en masse par fichier CSV
+  - **Format unique imposé par Zacharie**, documenté aux laboratoires sur `/laboratoire/results/format` (+ modèle `modele-import-resultats-trichine.csv`). Pas de mapping par LIMS : c'est au laboratoire d'adapter son export. Colonnes obligatoires `reference_pool` + `resultat_analyse`, colonnes inconnues ignorées, dates `AAAA-MM-JJ`. Valeurs de `resultat_analyse` selon le laboratoire : LVD `negatif` / `non_negatif` (→ `DOUTEUX`) ; LNR `positif` / `non_negatif` (→ `NON_NEGATIF`, `parasite_identifie` obligatoire) / `presence_parasite_non_identifie`. Colonne facultative `nombre_larves` (entier > 0, refusée sur `negatif`), enregistrée dans `nombre_larves_lvd` ou `nombre_larves_lnr` selon le laboratoire.
+  - Aperçu avant tout enregistrement : par ligne, statut (à importer / déjà résolu / introuvable / invalide) et les actions que l'import va faire dans Zacharie (carcasses libérées ou bloquées, FTP de confirmation LNR, emails, référence interne) ; récapitulatif des lignes cochées (dont les FTP qui se clôturent). Le laboratoire coche les lignes à importer.
+  - Même chemin que la saisie manuelle (`applyPoolResult`) ; l'aperçu décrit ses effets via `describePoolResultActions`, à garder alignée.
 - `/laboratoire/profil/*` : coordonnées, accréditation, utilisateurs
 
 ### 6.4 LNR (mêmes routes que LVD)
 
 - Filtre auto : voit uniquement les FTP qui lui sont destinées (`destinataire_entity_id` = LNR)
 - Saisie résultat de confirmation : `NON_NEGATIF` (avec `parasite_identifie`) / `PRESENCE_PARASITE_NON_IDENTIFIE` / `POSITIF`
+
+#### Nombre de larves : réservé aux laboratoires
+
+`nombre_larves_lvd` / `nombre_larves_lnr` ne sortent que vers les laboratoires. Le client Prisma les omet de toutes les requêtes (`src/prisma-omit.ts`) ; les lectures de `controllers/laboratoire.ts`, l'enregistrement d'un résultat et le PDF de FTP les réintègrent avec `omit: avecNombreLarves`. Le PDF ne les affiche que sur une FTP de confirmation (LVD → LNR). Côté emails : le nombre du LVD est dans l'email « pool à confirmer » envoyé au LNR ; sur un résultat LNR, le LVD reçoit un email avec les deux nombres, l'émetteur initial le même email sans eux.
 
 ### 6.5 ETG (desktop)
 

@@ -8,6 +8,7 @@ import {
   type TrichinePool,
 } from '@prisma/client';
 import prisma from '~/prisma';
+import { avecNombreLarves } from '~/prisma-omit';
 import { archiveFtpPdf } from '~/utils/trichine-ftp-document';
 import { capture } from '~/third-parties/sentry';
 import {
@@ -23,6 +24,7 @@ import {
   type TrichineNotifiableUser,
 } from '~/utils/trichine';
 import type { TrichineEmailContent } from '~/templates/trichine-email';
+import type { PoolResultEffet } from '~/types/responses';
 import {
   ALIAS_REFERENCE_CONFLIT,
   aliasReferenceRefusee,
@@ -42,8 +44,14 @@ export const LNR_RESULTS: TrichineResultatAnalyse[] = [
   TrichineResultatAnalyse.POSITIF,
 ];
 
+// Résultats sur lesquels le laboratoire a vu des larves et peut indiquer leur nombre
+export const RESULTATS_AVEC_LARVES: TrichineResultatAnalyse[] = [
+  TrichineResultatAnalyse.DOUTEUX,
+  ...LNR_RESULTS,
+];
+
 export type ResultValidationError = {
-  code: 'not_allowed' | 'parasite_required' | 'already_resulted';
+  code: 'not_allowed' | 'parasite_required' | 'larves_not_allowed' | 'already_resulted';
   status: number;
   error: string;
 };
@@ -57,11 +65,13 @@ export function validateResultForPool({
   existingResult,
   resultat_analyse,
   parasite_identifie,
+  nombre_larves,
   isLnr,
 }: {
   existingResult: TrichineResultatAnalyse | null;
   resultat_analyse: TrichineResultatAnalyse;
   parasite_identifie?: string;
+  nombre_larves?: number;
   isLnr: boolean;
 }): ResultValidationError | null {
   const allowed = isLnr ? LNR_RESULTS : LVD_RESULTS;
@@ -79,6 +89,13 @@ export function validateResultForPool({
       error: 'Le parasite identifié est obligatoire pour un résultat « autre parasite identifié »',
     };
   }
+  if (nombre_larves != null && !RESULTATS_AVEC_LARVES.includes(resultat_analyse)) {
+    return {
+      code: 'larves_not_allowed',
+      status: 400,
+      error: 'Le nombre de larves ne s’indique que sur un résultat non négatif',
+    };
+  }
   // Seul le LNR peut écraser un résultat DOUTEUX (confirmation) ; tout autre résultat est définitif
   if (existingResult && !(existingResult === TrichineResultatAnalyse.DOUTEUX && isLnr)) {
     return { code: 'already_resulted', status: 400, error: 'Un résultat a déjà été saisi pour ce pool' };
@@ -92,6 +109,8 @@ type ApplyPoolResultPool = {
   id: string;
   reference_pool: string;
   resultat_analyse: TrichineResultatAnalyse | null;
+  nombre_larves_lvd: number | null;
+  nombre_larves_lnr: number | null;
   date_debut_analyse: Date | null;
   commentaire: string | null;
   TrichineEchantillons: Array<{
@@ -112,11 +131,31 @@ type ApplyPoolResultFtp = {
   expediteur_entity_id: string | null;
 };
 
+// Lignes « nombre de larves » des emails destinés aux laboratoires (jamais à l'émetteur)
+export function detailsNombreLarves({
+  nombre_larves_lvd,
+  nombre_larves_lnr,
+}: {
+  nombre_larves_lvd?: number | null;
+  nombre_larves_lnr?: number | null;
+}): Array<{ label: string; value: string }> {
+  return [
+    ...(nombre_larves_lvd != null
+      ? [{ label: 'Larves comptées par le laboratoire agréé', value: String(nombre_larves_lvd) }]
+      : []),
+    ...(nombre_larves_lnr != null
+      ? [{ label: 'Larves comptées par le LNR', value: String(nombre_larves_lnr) }]
+      : []),
+  ];
+}
+
 export const resultatSchema = z.object({
   resultat_analyse: z.enum(
     Object.values(TrichineResultatAnalyse) as [TrichineResultatAnalyse, ...TrichineResultatAnalyse[]]
   ),
   parasite_identifie: z.string().optional(),
+  // Enregistré dans nombre_larves_lvd ou nombre_larves_lnr selon le laboratoire qui saisit
+  nombre_larves: z.number().int().min(1).optional(),
   date_debut_analyse: z.coerce.date().optional(),
   date_fin_analyse: z.coerce.date().optional(),
   // Référence interne du laboratoire pour ce pool : devient son alias (cf utils/trichine-alias.ts)
@@ -179,6 +218,7 @@ export async function applyPoolResult({
     existingResult: pool.resultat_analyse,
     resultat_analyse: body.resultat_analyse,
     parasite_identifie: body.parasite_identifie,
+    nombre_larves: body.nombre_larves,
     isLnr,
   });
   if (invalid) {
@@ -201,12 +241,17 @@ export async function applyPoolResult({
   let referenceIgnoree = referenceRefusee;
   // Saisie manuelle : un champ vidé retire la référence du laboratoire (un import ne retire jamais rien)
   const referenceEffacee = origine === 'saisie' && body.reference_labo !== undefined && !referenceSaisie;
+  // Comme les dates et le commentaire, un nombre de larves non renseigné garde celui déjà posé
+  // (correction d'un résultat)
+  const nombreLarves = body.nombre_larves ?? (isLnr ? pool.nombre_larves_lnr : pool.nombre_larves_lvd);
 
   await prisma.trichinePool.update({
     where: { id: pool.id },
     data: {
       resultat_analyse: body.resultat_analyse,
       parasite_identifie: body.parasite_identifie ?? null,
+      // Le LNR ne touche pas au nombre compté par le LVD, et inversement
+      ...(isLnr ? { nombre_larves_lnr: nombreLarves } : { nombre_larves_lvd: nombreLarves }),
       date_debut_analyse: body.date_debut_analyse ?? pool.date_debut_analyse,
       date_fin_analyse: body.date_fin_analyse ?? new Date(),
       commentaire: body.commentaire ?? pool.commentaire,
@@ -337,6 +382,7 @@ export async function applyPoolResult({
           details: [
             { label: 'Pool', value: pool.reference_pool },
             { label: 'Fiche de transmission', value: lnrFtp.numero_fiche },
+            ...detailsNombreLarves({ nombre_larves_lvd: nombreLarves }),
           ],
           actions: [
             'Réceptionnez la fiche de transmission dans Zacharie à l’arrivée des échantillons.',
@@ -379,13 +425,13 @@ export async function applyPoolResult({
 
   if (LNR_RESULTS.includes(body.resultat_analyse)) {
     // Résultat de confirmation LNR : alerte au LVD (expéditeur de la FTP de confirmation)
-    // + à l'émetteur initial (expéditeur de la FTP d'origine) + aux détenteurs des carcasses
-    const recipients = new Map<string, TrichineNotifiableUser>();
-    for (const user of emitterUsers) recipients.set(user.id, user);
+    // + à l'émetteur initial (expéditeur de la FTP d'origine). Le LVD reçoit en plus le nombre de
+    // larves, réservé aux laboratoires.
+    const emetteursInitiaux = new Map<string, TrichineNotifiableUser>();
     if (ftp.ftp_parent_id) {
       const parentFtp = await prisma.trichineFTP.findUnique({ where: { id: ftp.ftp_parent_id } });
       if (parentFtp) {
-        for (const user of await getFtpEmitterUsers(parentFtp)) recipients.set(user.id, user);
+        for (const user of await getFtpEmitterUsers(parentFtp)) emetteursInitiaux.set(user.id, user);
       }
     }
 
@@ -439,19 +485,100 @@ export async function applyPoolResult({
         actions: lnrDecisionActions,
       },
     };
-    await notifyTrichineUsers({
-      users: [...recipients.values()],
+    const notification = {
       type: TrichineNotificationType.RESULTAT_ANALYSE,
       objetType: TrichineObjetType.POOL,
       objetId: pool.id,
       title: `Résultat LNR — pool ${pool.reference_pool}`,
       message: messages[body.resultat_analyse]!,
-      email: emails[body.resultat_analyse]!,
       notificationLogAction: `TRICHINE_RESULTAT_${pool.reference_pool}_${body.resultat_analyse}`,
+    };
+    const email = emails[body.resultat_analyse]!;
+    await notifyTrichineUsers({
+      ...notification,
+      users: emitterUsers,
+      email: {
+        ...email,
+        details: [
+          ...email.details,
+          ...detailsNombreLarves({
+            nombre_larves_lvd: pool.nombre_larves_lvd,
+            nombre_larves_lnr: nombreLarves,
+          }),
+        ],
+      },
       excludeUserIds: [userId],
+    });
+    await notifyTrichineUsers({
+      ...notification,
+      users: [...emetteursInitiaux.values()],
+      email,
+      excludeUserIds: [userId, ...emitterUsers.map((user) => user.id)],
     });
   }
 
-  const updatedPool = await prisma.trichinePool.findUnique({ where: { id: pool.id } });
+  const updatedPool = await prisma.trichinePool.findUnique({
+    where: { id: pool.id },
+    omit: avecNombreLarves,
+  });
   return { kind: 'ok', pool: updatedPool, ftpConfirmation, referenceIgnoree };
+}
+
+const EFFET_PAR_RESULTAT: Partial<Record<TrichineResultatAnalyse, PoolResultEffet>> = {
+  [TrichineResultatAnalyse.NEGATIF]: 'liberees',
+  [TrichineResultatAnalyse.DOUTEUX]: 'en_attente_confirmation',
+  [TrichineResultatAnalyse.POSITIF]: 'a_saisir',
+  [TrichineResultatAnalyse.NON_NEGATIF]: 'decision_a_prendre',
+  [TrichineResultatAnalyse.PRESENCE_PARASITE_NON_IDENTIFIE]: 'decision_a_prendre',
+};
+
+/**
+ * Décrit, en phrases lisibles par le laboratoire, ce que applyPoolResult va faire dans Zacharie.
+ * Sert à l'aperçu d'import : toute évolution des effets de bord de applyPoolResult se reporte ici.
+ * Pur, sans I/O.
+ */
+export function describePoolResultActions({
+  resultat_analyse,
+  reference_pool,
+  nbCarcasses,
+  ftpNumero,
+  referenceLabo,
+}: {
+  resultat_analyse: TrichineResultatAnalyse;
+  reference_pool: string;
+  nbCarcasses: number;
+  ftpNumero: string;
+  referenceLabo?: string;
+}): { effet: PoolResultEffet; actions: Array<string> } {
+  const carcasses = `${nbCarcasses} carcasse${nbCarcasses > 1 ? 's' : ''}`;
+  const effet = EFFET_PAR_RESULTAT[resultat_analyse]!;
+  const actions: Array<string> = [];
+  if (effet === 'liberees') {
+    actions.push(`Pool ${reference_pool} négatif : ${carcasses} libérée(s) côté trichine`);
+    actions.push(`L'émetteur de la fiche ${ftpNumero} est prévenu par email`);
+  }
+  if (effet === 'en_attente_confirmation') {
+    actions.push(
+      `Pool ${reference_pool} non négatif : ${carcasses} bloquée(s) jusqu'à la confirmation du LNR`
+    );
+    actions.push(
+      `Une fiche de transmission vers le LNR est créée et envoyée, à imprimer et joindre au colis`
+    );
+    actions.push(
+      `L'émetteur de la fiche ${ftpNumero} est prévenu par email et peut faire des prélèvements de 2e intention`
+    );
+  }
+  if (effet === 'a_saisir') {
+    actions.push(`Pool ${reference_pool} positif : trichine confirmée, ${carcasses} à saisir`);
+  }
+  if (effet === 'decision_a_prendre') {
+    actions.push(`Pool ${reference_pool} : parasite détecté, décision à prendre sur ${carcasses}`);
+  }
+  if (effet === 'a_saisir' || effet === 'decision_a_prendre') {
+    actions.push(`Le laboratoire qui vous a transmis le pool et l'émetteur initial sont alertés par email`);
+  }
+  if (referenceLabo) {
+    actions.push(`Votre référence interne « ${referenceLabo} » est enregistrée sur le pool`);
+  }
+  return { effet, actions };
 }

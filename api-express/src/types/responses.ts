@@ -518,7 +518,10 @@ export interface AdminCcgImportResponse {
   error: string;
 }
 
-// Import de résultats labo depuis un export LIMS (cf doc/trichine-import-lims.md)
+// Import de résultats labo : fichier CSV au format Zacharie (cf utils/lims-parse.ts)
+// Ce que devient chaque carcasse d'un pool une fois le résultat appliqué
+export type PoolResultEffet = 'liberees' | 'en_attente_confirmation' | 'a_saisir' | 'decision_a_prendre';
+
 export type LimsResultRowStatus = 'matched' | 'unmatched' | 'invalid' | 'conflict';
 
 export interface LimsResultRow {
@@ -528,6 +531,7 @@ export interface LimsResultRow {
   // Libellé brut du fichier, pour affichage
   raw_resultat: string;
   parasite_identifie?: string;
+  nombre_larves?: number;
   date_debut_analyse?: string;
   date_fin_analyse?: string;
   reference_labo?: string;
@@ -535,6 +539,14 @@ export interface LimsResultRow {
   status: LimsResultRowStatus;
   // Raison quand status ≠ matched, ou avertissement sur une ligne matched (référence interne ignorée)
   message?: string;
+  // Lignes matched : ce que l'import va faire dans Zacharie (cf describePoolResultActions)
+  effet?: PoolResultEffet;
+  nb_carcasses?: number;
+  actions?: string[];
+  // Référence Zacharie du pool (la ligne peut l'avoir désigné par l'alias du laboratoire)
+  reference_pool_zacharie?: string;
+  // Fiche par laquelle le pool est arrivé : elle se clôture quand tous ses pools ont un résultat
+  ftp?: { numero_fiche: string; recue: boolean; pools_sans_resultat: string[] };
 }
 
 export interface LaboResultsPreviewResponse {
@@ -553,7 +565,14 @@ export interface LaboResultsImportResponse {
     skipped: number;
     errors: number;
     // avertissement : résultat appliqué, mais la référence interne de la ligne n'a pas été posée
-    results: Array<{ reference_pool: string; ok: boolean; error?: string; avertissement?: string }>;
+    // ftp_confirmation : fiche de transmission vers le LNR créée pour un résultat non négatif d'un LVD
+    results: Array<{
+      reference_pool: string;
+      ok: boolean;
+      error?: string;
+      avertissement?: string;
+      ftp_confirmation?: { id: string; numero_fiche: string };
+    }>;
   };
   error: string;
 }

@@ -1,99 +1,122 @@
 import { parse as parseCsv } from 'csv-parse/sync';
-import { XMLParser } from 'fast-xml-parser';
 import { TrichineResultatAnalyse } from '@prisma/client';
-import { normalizeLimsValue, type LimsCanonicalField, type LimsMapping } from '~/utils/lims-mapping';
 
 /**
- * Parse + mappe un export LIMS (CSV ou XML) vers des lignes de résultats Zacharie.
- * Fonctions pures (testables sans DB) : le rapprochement aux pools et l'application se font ailleurs.
+ * Lecture du fichier d'import de résultats trichine. Le format est unique et imposé par Zacharie
+ * (documenté aux laboratoires sur /app/laboratoire/results/format) : c'est au laboratoire d'adapter
+ * son export LIMS. Fonctions pures (testables sans DB) : le rapprochement aux pools et
+ * l'application se font ailleurs.
  */
+
+export const IMPORT_COLUMNS = [
+  'reference_pool',
+  'resultat_analyse',
+  'parasite_identifie',
+  'nombre_larves',
+  'date_debut_analyse',
+  'date_fin_analyse',
+  'reference_labo',
+  'commentaire',
+] as const;
+export type ImportColumn = (typeof IMPORT_COLUMNS)[number];
+
+export const IMPORT_REQUIRED_COLUMNS: Array<ImportColumn> = ['reference_pool', 'resultat_analyse'];
+
+// Valeur de la colonne resultat_analyse (normalisée) -> résultat Zacharie, selon le laboratoire.
+// « non_negatif » a le sens réglementaire de chaque laboratoire : pour un LVD, larve détectée à
+// confirmer par le LNR ; pour le LNR, parasite autre que la trichine.
+const RESULTAT_VALUES_LVD: Record<string, TrichineResultatAnalyse> = {
+  negatif: TrichineResultatAnalyse.NEGATIF,
+  non_negatif: TrichineResultatAnalyse.DOUTEUX,
+};
+const RESULTAT_VALUES_LNR: Record<string, TrichineResultatAnalyse> = {
+  non_negatif: TrichineResultatAnalyse.NON_NEGATIF,
+  presence_parasite_non_identifie: TrichineResultatAnalyse.PRESENCE_PARASITE_NON_IDENTIFIE,
+  positif: TrichineResultatAnalyse.POSITIF,
+};
+
+export function valeursResultatAcceptees(isLnr: boolean): Array<string> {
+  return Object.keys(isLnr ? RESULTAT_VALUES_LNR : RESULTAT_VALUES_LVD);
+}
+
+const DATE_COLUMNS: Array<ImportColumn> = ['date_debut_analyse', 'date_fin_analyse'];
 
 export type MappedLimsRow = {
   reference_pool: string;
-  // null si le libellé de résultat n'a pas pu être mappé (→ ligne « invalide » à l'aperçu)
+  // null si la valeur de résultat n'est pas reconnue (→ ligne « invalide » à l'aperçu)
   resultat_analyse: TrichineResultatAnalyse | null;
   // valeur brute du fichier, conservée pour l'affichage / le diagnostic
   raw_resultat: string;
   parasite_identifie?: string;
+  nombre_larves?: number;
   date_debut_analyse?: string;
   date_fin_analyse?: string;
   reference_labo?: string;
   commentaire?: string;
+  // Erreur de format propre à la ligne (date ou nombre de larves mal écrit)
+  erreur_format?: string;
 };
 
-export function detectFormat(content: string, filename?: string): 'csv' | 'xml' {
-  const name = filename?.toLowerCase() ?? '';
-  if (name.endsWith('.xml')) return 'xml';
-  if (name.endsWith('.csv')) return 'csv';
-  return content.trimStart().startsWith('<') ? 'xml' : 'csv';
+export class ImportFormatError extends Error {}
+
+// Minuscule, sans accent, sans espaces autour : « Négatif », « NEGATIF » et « negatif » sont acceptés
+export function normalizeResultatValue(value: string): string {
+  return value.normalize('NFD').replace(/[̀-ͯ]/g, '').trim().toLowerCase();
 }
 
-// Aplati un nœud XML en Record<string,string> : attributs et sous-balises texte accessibles par nom.
-function flattenXmlNode(node: unknown): Record<string, string> {
-  const out: Record<string, string> = {};
-  if (node == null || typeof node !== 'object') return out;
-  for (const [key, value] of Object.entries(node as Record<string, unknown>)) {
-    if (value == null) continue;
-    if (typeof value === 'object') {
-      const text = (value as Record<string, unknown>)['#text'];
-      if (text != null) out[key] = String(text);
-    } else {
-      out[key] = String(value);
-    }
-  }
-  return out;
+function isValidIsoDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().startsWith(value);
 }
 
-function selectByPath(doc: unknown, path?: string): unknown {
-  if (!path) return undefined;
-  let current: unknown = doc;
-  for (const segment of path.split('.')) {
-    if (current == null || typeof current !== 'object') return undefined;
-    current = (current as Record<string, unknown>)[segment];
-  }
-  return current;
-}
-
-/** Parse le contenu brut en lignes clé/valeur, sans mapping métier. */
-export function parseLimsFile(
-  content: string,
-  filename: string | undefined,
-  mapping: LimsMapping
-): Array<Record<string, string>> {
-  if (detectFormat(content, filename) === 'xml') {
-    const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '', trimValues: true });
-    const nodes = selectByPath(parser.parse(content), mapping.rowSelector);
-    const list = Array.isArray(nodes) ? nodes : nodes != null ? [nodes] : [];
-    return list.map(flattenXmlNode);
-  }
-  // CSV : séparateur détecté (`;` prioritaire), en-têtes en 1re ligne
-  const delimiter = content.includes(';') ? ';' : ',';
-  return parseCsv(content, {
-    columns: true,
+/**
+ * Parse le CSV en lignes clé/valeur. Lève ImportFormatError si une colonne obligatoire manque.
+ * Les colonnes inconnues sont ignorées.
+ */
+export function parseLimsFile(content: string): Array<Record<string, string>> {
+  // Séparateur détecté sur la ligne d'en-tête (`;` prioritaire)
+  const header = content.split(/\r?\n/, 1)[0] ?? '';
+  const delimiter = header.includes(';') ? ';' : ',';
+  const [headers = [], ...lines] = parseCsv(content, {
     delimiter,
     bom: true,
     skip_empty_lines: true,
     trim: true,
     relax_column_count: true,
-  }) as Array<Record<string, string>>;
+  }) as Array<Array<string>>;
+  const columns = headers.map((name) => name.toLowerCase());
+  const manquantes = IMPORT_REQUIRED_COLUMNS.filter((column) => !columns.includes(column));
+  if (manquantes.length) {
+    throw new ImportFormatError(
+      `Colonne(s) obligatoire(s) absente(s) : ${manquantes.join(', ')}. Colonnes attendues : ${IMPORT_COLUMNS.join(', ')}.`
+    );
+  }
+  return lines.map((line) => Object.fromEntries(columns.map((column, index) => [column, line[index] ?? ''])));
 }
 
-/** Mappe une ligne brute vers les champs Zacharie via le mapping du labo. */
-export function mapRow(raw: Record<string, string>, mapping: LimsMapping): MappedLimsRow {
-  const get = (field: LimsCanonicalField): string => {
-    const column = mapping.fields[field];
-    const value = column ? raw[column] : undefined;
-    return value != null ? String(value).trim() : '';
-  };
+/** Lit une ligne brute selon le format Zacharie, pour un LVD ou pour le LNR. */
+export function mapRow(raw: Record<string, string>, isLnr: boolean): MappedLimsRow {
+  const get = (column: ImportColumn): string => (raw[column] != null ? String(raw[column]).trim() : '');
   const rawResultat = get('resultat_analyse');
+  const dateInvalide = DATE_COLUMNS.find((column) => get(column) && !isValidIsoDate(get(column)));
+  const nombreLarves = get('nombre_larves');
+  const nombreLarvesInvalide = !!nombreLarves && !/^[1-9]\d*$/.test(nombreLarves);
   return {
     reference_pool: get('reference_pool'),
-    resultat_analyse: mapping.valueMap[normalizeLimsValue(rawResultat)] ?? null,
+    resultat_analyse:
+      (isLnr ? RESULTAT_VALUES_LNR : RESULTAT_VALUES_LVD)[normalizeResultatValue(rawResultat)] ?? null,
     raw_resultat: rawResultat,
     parasite_identifie: get('parasite_identifie') || undefined,
+    nombre_larves: nombreLarves && !nombreLarvesInvalide ? Number(nombreLarves) : undefined,
     date_debut_analyse: get('date_debut_analyse') || undefined,
     date_fin_analyse: get('date_fin_analyse') || undefined,
     reference_labo: get('reference_labo') || undefined,
     commentaire: get('commentaire') || undefined,
+    erreur_format: dateInvalide
+      ? `Date invalide dans ${dateInvalide} : « ${get(dateInvalide)} » (format attendu AAAA-MM-JJ)`
+      : nombreLarvesInvalide
+        ? `Nombre de larves invalide : « ${nombreLarves} » (nombre entier supérieur à 0 attendu)`
+        : undefined,
   };
 }
