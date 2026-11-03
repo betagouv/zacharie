@@ -3,6 +3,7 @@ import { Button } from '@codegouvfr/react-dsfr/Button';
 import { TransmissionSimpleStatus } from '@app/types/transmission-steps';
 import { CarcasseType, DepotType } from '@prisma/client';
 import { abbreviations } from '@app/utils/count-carcasses';
+import { keepAvailableFilterValues } from '@app/utils/keep-available-filter-values';
 import dayjs from 'dayjs';
 import useZustandStore from '@app/zustand/store';
 import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
@@ -209,7 +210,7 @@ export default function ChasseurFiches() {
     localStorage.setItem('chasseur-fiches-view-type', viewType);
   }, [viewType]);
 
-  const [filterPremierDetenteurs, setFilterPremierDetenteurs] = useState<string[]>(() => {
+  const [savedFilterPremierDetenteurs, setFilterPremierDetenteurs] = useState<string[]>(() => {
     try {
       const saved = localStorage.getItem('chasseur-fiches-filter-premier-detenteurs');
       if (saved) return JSON.parse(saved) as string[];
@@ -222,11 +223,11 @@ export default function ChasseurFiches() {
   useEffect(() => {
     localStorage.setItem(
       'chasseur-fiches-filter-premier-detenteurs',
-      JSON.stringify(filterPremierDetenteurs)
+      JSON.stringify(savedFilterPremierDetenteurs)
     );
-  }, [filterPremierDetenteurs]);
+  }, [savedFilterPremierDetenteurs]);
 
-  const [filterSaisons, setFilterSaisons] = useState<number[]>(() => {
+  const [savedFilterSaisons, setFilterSaisons] = useState<number[]>(() => {
     try {
       const saved = localStorage.getItem('chasseur-fiches-filter-saisons');
       if (saved) return JSON.parse(saved) as number[];
@@ -237,8 +238,8 @@ export default function ChasseurFiches() {
   });
 
   useEffect(() => {
-    localStorage.setItem('chasseur-fiches-filter-saisons', JSON.stringify(filterSaisons));
-  }, [filterSaisons]);
+    localStorage.setItem('chasseur-fiches-filter-saisons', JSON.stringify(savedFilterSaisons));
+  }, [savedFilterSaisons]);
 
   const [filterDateFrom, setFilterDateFrom] = useState<string>(
     () => localStorage.getItem('chasseur-fiches-filter-date-from') || ''
@@ -255,7 +256,7 @@ export default function ChasseurFiches() {
     localStorage.setItem('chasseur-fiches-filter-date-to', filterDateTo);
   }, [filterDateTo]);
 
-  const [filterCCGs, setFilterCCGs] = useState<string[]>(() => {
+  const [savedFilterCCGs, setFilterCCGs] = useState<string[]>(() => {
     try {
       const saved = localStorage.getItem('chasseur-fiches-filter-ccgs');
       if (saved) return JSON.parse(saved) as string[];
@@ -266,10 +267,10 @@ export default function ChasseurFiches() {
   });
 
   useEffect(() => {
-    localStorage.setItem('chasseur-fiches-filter-ccgs', JSON.stringify(filterCCGs));
-  }, [filterCCGs]);
+    localStorage.setItem('chasseur-fiches-filter-ccgs', JSON.stringify(savedFilterCCGs));
+  }, [savedFilterCCGs]);
 
-  const [filterCollecteurs, setFilterCollecteurs] = useState<string[]>(() => {
+  const [savedFilterCollecteurs, setFilterCollecteurs] = useState<string[]>(() => {
     try {
       const saved = localStorage.getItem('chasseur-fiches-filter-collecteurs');
       if (saved) return JSON.parse(saved) as string[];
@@ -280,8 +281,8 @@ export default function ChasseurFiches() {
   });
 
   useEffect(() => {
-    localStorage.setItem('chasseur-fiches-filter-collecteurs', JSON.stringify(filterCollecteurs));
-  }, [filterCollecteurs]);
+    localStorage.setItem('chasseur-fiches-filter-collecteurs', JSON.stringify(savedFilterCollecteurs));
+  }, [savedFilterCollecteurs]);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [showMobileFilters, setShowMobileFilters] = useState(false);
@@ -349,6 +350,39 @@ export default function ChasseurFiches() {
       .sort((a, b) => b - a)
       .map((year) => ({ year, label: getSaisonLabel(year) }));
   }, [allTransmissions]);
+
+  const filterPremierDetenteurs = useMemo(
+    () =>
+      keepAvailableFilterValues(
+        savedFilterPremierDetenteurs,
+        premierDetenteurOptions.map((option) => option.id)
+      ),
+    [savedFilterPremierDetenteurs, premierDetenteurOptions]
+  );
+  const filterCCGs = useMemo(
+    () =>
+      keepAvailableFilterValues(
+        savedFilterCCGs,
+        ccgOptions.map((option) => option.id)
+      ),
+    [savedFilterCCGs, ccgOptions]
+  );
+  const filterCollecteurs = useMemo(
+    () =>
+      keepAvailableFilterValues(
+        savedFilterCollecteurs,
+        collecteurOptions.map((option) => option.id)
+      ),
+    [savedFilterCollecteurs, collecteurOptions]
+  );
+  const filterSaisons = useMemo(
+    () =>
+      keepAvailableFilterValues(
+        savedFilterSaisons,
+        saisonOptions.map((option) => option.year)
+      ),
+    [savedFilterSaisons, saisonOptions]
+  );
 
   const filteredTransmissions = useMemo(() => {
     const result: CarcasseTransmissionWihMetadata[] = [];
@@ -518,7 +552,7 @@ export default function ChasseurFiches() {
       </CollapsibleSection>
 
       {/* Filtre Saison */}
-      {saisonOptions.length > 0 && (
+      {(saisonOptions.length > 0 || filterSaisons.length > 0) && (
         <CollapsibleSection
           title="Saison"
           badge={
@@ -595,7 +629,7 @@ export default function ChasseurFiches() {
       </CollapsibleSection>
 
       {/* Filtre Premier détenteur */}
-      {premierDetenteurOptions.length > 1 && (
+      {(premierDetenteurOptions.length > 1 || filterPremierDetenteurs.length > 0) && (
         <CollapsibleSection
           title="Premier détenteur"
           badge={
@@ -633,7 +667,7 @@ export default function ChasseurFiches() {
       )}
 
       {/* Filtre CCG */}
-      {ccgOptions.length > 1 && (
+      {(ccgOptions.length > 1 || filterCCGs.length > 0) && (
         <CollapsibleSection
           title="Centre de collecte (CCG)"
           badge={
@@ -671,7 +705,7 @@ export default function ChasseurFiches() {
       )}
 
       {/* Filtre Collecteur */}
-      {collecteurOptions.length > 1 && (
+      {(collecteurOptions.length > 1 || filterCollecteurs.length > 0) && (
         <CollapsibleSection
           title="Collecteur"
           badge={

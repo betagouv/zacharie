@@ -12,6 +12,7 @@ import { TransmissionSimpleStatus } from '@app/types/transmission-steps';
 import useZustandStore from '@app/zustand/store';
 import useUser from '@app/zustand/user';
 import { useNativePushToken } from '@app/utils/useNativePushToken';
+import { keepAvailableFilterValues } from '@app/utils/keep-available-filter-values';
 import { abbreviations } from '@app/utils/count-carcasses';
 import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { getSaisonStartYear, getSaisonLabel, isDateInSaison } from '@app/utils/get-saison';
@@ -132,7 +133,7 @@ export default function CircuitCourtFiches() {
     localStorage.setItem('circuit-court-fiches-view-type', viewType);
   }, [viewType]);
 
-  const [filterPremierDetenteurs, setFilterPremierDetenteurs] = useState<string[]>(() => {
+  const [savedFilterPremierDetenteurs, setFilterPremierDetenteurs] = useState<string[]>(() => {
     try {
       const saved = localStorage.getItem('circuit-court-fiches-filter-premier-detenteurs');
       if (saved) return JSON.parse(saved) as string[];
@@ -145,11 +146,11 @@ export default function CircuitCourtFiches() {
   useEffect(() => {
     localStorage.setItem(
       'circuit-court-fiches-filter-premier-detenteurs',
-      JSON.stringify(filterPremierDetenteurs)
+      JSON.stringify(savedFilterPremierDetenteurs)
     );
-  }, [filterPremierDetenteurs]);
+  }, [savedFilterPremierDetenteurs]);
 
-  const [filterSaisons, setFilterSaisons] = useState<number[]>(() => {
+  const [savedFilterSaisons, setFilterSaisons] = useState<number[]>(() => {
     try {
       const saved = localStorage.getItem('circuit-court-fiches-filter-saisons');
       if (saved) return JSON.parse(saved) as number[];
@@ -160,8 +161,8 @@ export default function CircuitCourtFiches() {
   });
 
   useEffect(() => {
-    localStorage.setItem('circuit-court-fiches-filter-saisons', JSON.stringify(filterSaisons));
-  }, [filterSaisons]);
+    localStorage.setItem('circuit-court-fiches-filter-saisons', JSON.stringify(savedFilterSaisons));
+  }, [savedFilterSaisons]);
 
   const [filterDateFrom, setFilterDateFrom] = useState<string>(
     () => localStorage.getItem('circuit-court-fiches-filter-date-from') || ''
@@ -178,7 +179,7 @@ export default function CircuitCourtFiches() {
     localStorage.setItem('circuit-court-fiches-filter-date-to', filterDateTo);
   }, [filterDateTo]);
 
-  const [filterCCGs, setFilterCCGs] = useState<string[]>(() => {
+  const [savedFilterCCGs, setFilterCCGs] = useState<string[]>(() => {
     try {
       const saved = localStorage.getItem('circuit-court-fiches-filter-ccgs');
       if (saved) return JSON.parse(saved) as string[];
@@ -189,10 +190,10 @@ export default function CircuitCourtFiches() {
   });
 
   useEffect(() => {
-    localStorage.setItem('circuit-court-fiches-filter-ccgs', JSON.stringify(filterCCGs));
-  }, [filterCCGs]);
+    localStorage.setItem('circuit-court-fiches-filter-ccgs', JSON.stringify(savedFilterCCGs));
+  }, [savedFilterCCGs]);
 
-  const [filterCollecteurs, setFilterCollecteurs] = useState<string[]>(() => {
+  const [savedFilterCollecteurs, setFilterCollecteurs] = useState<string[]>(() => {
     try {
       const saved = localStorage.getItem('circuit-court-fiches-filter-collecteurs');
       if (saved) return JSON.parse(saved) as string[];
@@ -203,13 +204,13 @@ export default function CircuitCourtFiches() {
   });
 
   useEffect(() => {
-    localStorage.setItem('circuit-court-fiches-filter-collecteurs', JSON.stringify(filterCollecteurs));
-  }, [filterCollecteurs]);
+    localStorage.setItem('circuit-court-fiches-filter-collecteurs', JSON.stringify(savedFilterCollecteurs));
+  }, [savedFilterCollecteurs]);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
-  const filtersKey = `${filterStatuses.join(',')}|${filterPremierDetenteurs.join(',')}|${filterCCGs.join(',')}|${filterCollecteurs.join(',')}|${filterSaisons.join(',')}|${filterDateFrom}|${filterDateTo}|${searchQuery}`;
+  const filtersKey = `${filterStatuses.join(',')}|${savedFilterPremierDetenteurs.join(',')}|${savedFilterCCGs.join(',')}|${savedFilterCollecteurs.join(',')}|${savedFilterSaisons.join(',')}|${filterDateFrom}|${filterDateTo}|${searchQuery}`;
   // on réinitialise la page seulement quand les filtres changent vraiment :
   // setSearchParams change d'identité à chaque navigation (react-router), donc on
   // compare la valeur précédente de filtersKey plutôt que de garder le 1er render.
@@ -340,6 +341,39 @@ export default function CircuitCourtFiches() {
       .sort((a, b) => b - a)
       .map((year) => ({ year, label: getSaisonLabel(year) }));
   }, [allTransmissions]);
+
+  const filterPremierDetenteurs = useMemo(
+    () =>
+      keepAvailableFilterValues(
+        savedFilterPremierDetenteurs,
+        premierDetenteurOptions.map((option) => option.id)
+      ),
+    [savedFilterPremierDetenteurs, premierDetenteurOptions]
+  );
+  const filterCCGs = useMemo(
+    () =>
+      keepAvailableFilterValues(
+        savedFilterCCGs,
+        ccgOptions.map((option) => option.id)
+      ),
+    [savedFilterCCGs, ccgOptions]
+  );
+  const filterCollecteurs = useMemo(
+    () =>
+      keepAvailableFilterValues(
+        savedFilterCollecteurs,
+        collecteurOptions.map((option) => option.id)
+      ),
+    [savedFilterCollecteurs, collecteurOptions]
+  );
+  const filterSaisons = useMemo(
+    () =>
+      keepAvailableFilterValues(
+        savedFilterSaisons,
+        saisonOptions.map((option) => option.year)
+      ),
+    [savedFilterSaisons, saisonOptions]
+  );
 
   const [filteredTransmissions, filteredCarcasses] = useMemo(() => {
     let transmissions = [];
@@ -522,7 +556,7 @@ export default function CircuitCourtFiches() {
       </CollapsibleSection>
 
       {/* Filtre Saison */}
-      {saisonOptions.length > 0 && (
+      {(saisonOptions.length > 0 || filterSaisons.length > 0) && (
         <CollapsibleSection
           title="Saison"
           defaultOpen={false}
@@ -594,7 +628,7 @@ export default function CircuitCourtFiches() {
       </CollapsibleSection>
 
       {/* Filtre Premier détenteur */}
-      {premierDetenteurOptions.length > 1 && (
+      {(premierDetenteurOptions.length > 1 || filterPremierDetenteurs.length > 0) && (
         <CollapsibleSection
           title="Premier détenteur"
           defaultOpen={false}
@@ -632,7 +666,7 @@ export default function CircuitCourtFiches() {
       )}
 
       {/* Filtre CCG */}
-      {ccgOptions.length > 1 && (
+      {(ccgOptions.length > 1 || filterCCGs.length > 0) && (
         <CollapsibleSection
           title="Centre de collecte (CCG)"
           defaultOpen={false}
@@ -670,7 +704,7 @@ export default function CircuitCourtFiches() {
       )}
 
       {/* Filtre Collecteur */}
-      {collecteurOptions.length > 1 && (
+      {(collecteurOptions.length > 1 || filterCollecteurs.length > 0) && (
         <CollapsibleSection
           title="Collecteur"
           defaultOpen={false}
