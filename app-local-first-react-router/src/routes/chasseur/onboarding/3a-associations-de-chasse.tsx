@@ -259,14 +259,6 @@ export default function ChasseurOnboardingMesAssociationsDeChasse() {
                           placeholder=""
                           creatable={true}
                           value={selectValue}
-                          onBlur={(event) => {
-                            if (!currentEntityId) {
-                              if (event.target.value) {
-                                setNewEntityNomDUsage(event.target.value);
-                                setIsUnregisteredEntity(true);
-                              }
-                            }
-                          }}
                           onChange={(newEntity) => {
                             if (newEntity?.id) {
                               setCurrentEntityId(newEntity.id);

@@ -69,6 +69,36 @@ test("44a - Onboarding asso : recherche et sélection d'une entité existante", 
   await expect(page.getByText(/Association de chasseurs/i).first()).toBeVisible({ timeout: 10000 });
 });
 
+// Scenario 44a-bis — sur iOS, le champ de recherche perd le focus avant le tap sur une option
+// (ou au tap sur « ✓ » du clavier) : le texte saisi ne doit pas ouvrir le formulaire de création
+test("44a-bis - Onboarding asso : la perte de focus du champ de recherche n'ouvre pas la création", async ({
+  page,
+}) => {
+  await connectWith(page, 'examinateur-onboarding@example.fr');
+  await gotoStep3MesInformationsDeChasse(page);
+
+  await page.locator('label.fr-label:has-text("Oui")').first().click();
+  await expect(page.getByText(/Rechercher une association, société ou domaine de chasse/i)).toBeVisible({
+    timeout: 5000,
+  });
+
+  const searchInput = page.locator('input#raison_sociale');
+  await searchInput.fill('chasseurs');
+  await expect(page.getByRole('option', { name: /Association de chasseurs/i })).toBeVisible({
+    timeout: 5000,
+  });
+  await searchInput.blur();
+
+  await expect(page.getByRole('button', { name: /Créer et me rattacher à cette entité/i })).toBeHidden();
+  await expect(page.getByText(/Rechercher une association, société ou domaine de chasse/i)).toBeVisible();
+
+  await searchInput.fill('chasseurs');
+  await page.getByRole('option', { name: /Association de chasseurs/i }).click();
+  await expect(page.getByRole('button', { name: /Me rattacher à cette entité/i })).toBeVisible({
+    timeout: 5000,
+  });
+});
+
 // Scenario 44b — Onboarding step 3 / Asso : créer une nouvelle association via le formulaire complet
 test("44b - Onboarding asso : création d'une nouvelle association via le formulaire", async ({ page }) => {
   await connectWith(page, 'examinateur-onboarding@example.fr');
