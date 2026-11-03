@@ -17,19 +17,21 @@ import {
 import {
   corrigerResultatPool,
   refuserPool,
+  retirerEchantillonDuPoolLabo,
   saisirResultatPool,
   type FtpConfirmationCreee,
+  type LaboEchantillon,
   type LaboPool,
 } from '@app/services/laboratoire';
 import { formatAliases, monAlias, useMesEntitesAlias } from '@app/services/trichine-alias';
 import PoolDocuments from '@app/components/laboratoire/PoolDocuments';
+import EchantillonLabo, { EchantillonRetireLabo } from '@app/components/laboratoire/EchantillonLabo';
 import LarvePhotos from '@app/components/laboratoire/LarvePhotos';
 import useDownloadFtpPdf from '@app/utils/download-ftp-pdf';
 import {
   resultatAnalyseLabels,
   statutLogistiqueLabels,
   resultatBadgeSeverity,
-  sitePrelevementLabels,
   statutAnalyseBadgeSeverity,
   statutAnalyseLabels,
 } from '@app/utils/trichine';
@@ -44,6 +46,10 @@ import {
  */
 export const refusModal = createModal({ isOpenedByDefault: false, id: 'labo-refus-pool-modal' });
 export const resultatModal = createModal({ isOpenedByDefault: false, id: 'labo-resultat-pool-modal' });
+export const retraitModal = createModal({ isOpenedByDefault: false, id: 'labo-retrait-echantillon-modal' });
+
+/** Échantillon que le laboratoire s'apprête à retirer de son pool */
+export type RetraitEchantillon = { echantillon: LaboEchantillon; referencePool: string };
 
 // Résultats autorisés par type de laboratoire (cf doc/trichine.md §3.2)
 const LVD_RESULTS = [TrichineResultatAnalyse.NEGATIF, TrichineResultatAnalyse.DOUTEUX];
@@ -51,6 +57,11 @@ const LNR_RESULTS = [
   TrichineResultatAnalyse.NON_NEGATIF,
   TrichineResultatAnalyse.PRESENCE_PARASITE_NON_IDENTIFIE,
   TrichineResultatAnalyse.POSITIF,
+];
+// Résultats sur lesquels le laboratoire a vu des larves et peut indiquer leur nombre
+const RESULTATS_AVEC_LARVES: Array<TrichineResultatAnalyse> = [
+  TrichineResultatAnalyse.DOUTEUX,
+  ...LNR_RESULTS,
 ];
 
 /** Saisie d'un premier résultat, ou correction d'un résultat déjà rendu. */
@@ -71,7 +82,9 @@ export default function PoolCard({
   onRefuser,
   onSaisirResultat,
   onCorrigerResultat,
+  onRetirerEchantillon,
   onDocumentDepose,
+  onAliasChange,
 }: {
   pool: LaboPool;
   isLnr: boolean;
@@ -80,17 +93,30 @@ export default function PoolCard({
   onRefuser: () => void;
   onSaisirResultat: () => void;
   onCorrigerResultat: () => void;
+  onRetirerEchantillon: (echantillon: LaboEchantillon) => void;
   onDocumentDepose: () => void;
+  onAliasChange: () => void;
 }) {
   const [compositionOuverte, setCompositionOuverte] = useState(false);
+  const mesEntites = useMesEntitesAlias();
   const resultatSaisi = pool.resultat_analyse !== null;
   // Le LNR confirme les pools non négatifs : la saisie reste ouverte sur un DOUTEUX
   const peutSaisir =
     saisieActive && (!resultatSaisi || (isLnr && pool.resultat_analyse === TrichineResultatAnalyse.DOUTEUX));
+  // Une fois le pool parti en confirmation, son résultat appartient au LNR
+  const transmisAuLnr = !isLnr && !!confirmation && confirmation.statut_logistique !== 'ANNULEE';
   // Un DOUTEUX n'est pas corrigeable : la confirmation est déjà partie au LNR
   const peutCorriger =
-    saisieActive && resultatSaisi && !peutSaisir && pool.resultat_analyse !== TrichineResultatAnalyse.DOUTEUX;
+    saisieActive &&
+    resultatSaisi &&
+    !peutSaisir &&
+    !transmisAuLnr &&
+    pool.resultat_analyse !== TrichineResultatAnalyse.DOUTEUX;
   const nombre = pool.TrichineEchantillons.length;
+  const nombreRetires = pool.EchantillonsRetires.length;
+  // Retrait possible tant que le résultat peut être saisi. Le dernier échantillon ne se retire
+  // pas : c'est alors le pool qu'on refuse.
+  const peutRetirer = peutSaisir && nombre > 1;
   const carcasses = pool.TrichineEchantillons.map((echantillon) => echantillon.Carcasse.numero_bracelet)
     .filter(Boolean)
     .join(', ');
@@ -126,6 +152,8 @@ export default function PoolCard({
         <p className="fr-text--sm fr-mb-0 text-gray-600">
           {nombre} échantillon{nombre > 1 ? 's' : ''}
           {!!carcasses && ` — carcasses ${carcasses}`}
+          {nombreRetires > 0 &&
+            ` — ${nombreRetires} retiré${nombreRetires > 1 ? 's' : ''} par le laboratoire`}
         </p>
         {pool.Aliases.length > 0 && (
           <p className="fr-text--sm fr-mb-0 text-gray-600">Réf. internes : {formatAliases(pool.Aliases)}</p>
@@ -143,23 +171,28 @@ export default function PoolCard({
         {compositionOuverte && (
           <ul className="fr-text--sm fr-mt-1w list-none space-y-1 p-0">
             {pool.TrichineEchantillons.map((echantillon) => (
-              <li
+              <EchantillonLabo
                 key={echantillon.id}
-                className="rounded border border-gray-200 p-2"
-              >
-                <span className="font-semibold">{echantillon.reference_echantillon}</span>
-                {echantillon.Aliases.length > 0 && ` (${formatAliases(echantillon.Aliases)})`} —{' '}
-                {sitePrelevementLabels[echantillon.site_prelevement]} — {echantillon.masse_grammes} g
-                <br />
-                Carcasse {echantillon.Carcasse.numero_bracelet} ({echantillon.Carcasse.espece ?? '—'}) — mise
-                à mort le{' '}
-                {echantillon.Carcasse.date_mise_a_mort
-                  ? dayjs(echantillon.Carcasse.date_mise_a_mort).format('DD/MM/YYYY')
-                  : '—'}{' '}
-                à {echantillon.Carcasse.Fei.commune_mise_a_mort ?? '—'}
-              </li>
+                echantillon={echantillon}
+                mesEntites={mesEntites}
+                onRetirer={peutRetirer ? () => onRetirerEchantillon(echantillon) : null}
+                onAliasChange={onAliasChange}
+              />
             ))}
           </ul>
+        )}
+        {compositionOuverte && nombreRetires > 0 && (
+          <>
+            <p className="fr-text--sm fr-mt-2w fr-mb-1v font-bold">Retirés du pool par le laboratoire</p>
+            <ul className="fr-text--sm list-none space-y-1 p-0">
+              {pool.EchantillonsRetires.map((echantillon) => (
+                <EchantillonRetireLabo
+                  key={echantillon.id}
+                  echantillon={echantillon}
+                />
+              ))}
+            </ul>
+          </>
         )}
       </div>
 
@@ -181,6 +214,10 @@ export default function PoolCard({
       {resultatSaisi && (
         <ul className="fr-text--sm fr-mb-2w space-y-1">
           {pool.parasite_identifie && <li>Parasite identifié : {pool.parasite_identifie}</li>}
+          {pool.nombre_larves_lvd != null && (
+            <li>Larves comptées par le laboratoire agréé : {pool.nombre_larves_lvd}</li>
+          )}
+          {pool.nombre_larves_lnr != null && <li>Larves comptées par le LNR : {pool.nombre_larves_lnr}</li>}
           {pool.raison_refus && <li>Raison du refus : {pool.raison_refus}</li>}
           {pool.date_debut_analyse && (
             <li>Début d'analyse : {dayjs(pool.date_debut_analyse).format('DD/MM/YYYY')}</li>
@@ -243,10 +280,14 @@ export function ResultatModalContent({
 }) {
   const [resultat, setResultat] = useState<TrichineResultatAnalyse | ''>('');
   const [parasite, setParasite] = useState('');
+  const [nombreLarves, setNombreLarves] = useState('');
   const [dateDebut, setDateDebut] = useState('');
   const [dateFin, setDateFin] = useState(dayjs().format('YYYY-MM-DD'));
   const [referenceLabo, setReferenceLabo] = useState('');
   const [commentaire, setCommentaire] = useState('');
+  const [dateEnvoiLnr, setDateEnvoiLnr] = useState(dayjs().format('YYYY-MM-DD'));
+  const [modeTransportLnr, setModeTransportLnr] = useState('');
+  const [conditionsConservationLnr, setConditionsConservationLnr] = useState('');
   const [raison, setRaison] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   // Sur un non négatif, la modale reste ouverte pour guider l'envoi au LNR
@@ -264,10 +305,14 @@ export function ResultatModalContent({
   useEffect(() => {
     setResultat('');
     setParasite('');
+    setNombreLarves('');
     setDateDebut('');
     setDateFin(dayjs().format('YYYY-MM-DD'));
     setReferenceLabo('');
     setCommentaire('');
+    setDateEnvoiLnr(dayjs().format('YYYY-MM-DD'));
+    setModeTransportLnr('');
+    setConditionsConservationLnr('');
     setRaison('');
   }, [pool?.id]);
   // Pré-remplit avec la référence déjà posée, qui peut arriver après l'ouverture : sans écraser
@@ -279,7 +324,14 @@ export function ResultatModalContent({
   const correction = mode === 'correction';
   const options = isLnr ? LNR_RESULTS : LVD_RESULTS;
   const parasiteRequis = resultat === TrichineResultatAnalyse.NON_NEGATIF;
+  const larvesSaisissables = !!resultat && RESULTATS_AVEC_LARVES.includes(resultat);
+  const nombreLarvesInvalide =
+    larvesSaisissables &&
+    !!nombreLarves &&
+    !(Number.isInteger(Number(nombreLarves)) && Number(nombreLarves) >= 1);
   const versLnr = resultat === TrichineResultatAnalyse.DOUTEUX;
+  // La FTP de confirmation part au LNR avec ce qu'il doit savoir de l'échantillon
+  const envoiLnrIncomplet = versLnr && (!nombreLarves || !conditionsConservationLnr.trim());
   const reference = pool?.reference_pool ?? '';
 
   if (ftpConfirmation) {
@@ -333,12 +385,18 @@ export function ResultatModalContent({
     const payload = {
       resultat_analyse: resultat,
       parasite_identifie: parasiteRequis ? parasite.trim() : undefined,
+      nombre_larves: larvesSaisissables && nombreLarves ? Number(nombreLarves) : undefined,
       date_debut_analyse: dateDebut || undefined,
       date_fin_analyse: dateFin || undefined,
       // Seulement si le laboratoire l'a changée : celle déjà posée n'a pas à être revérifiée.
       // Une chaîne vide retire la référence déjà posée.
       reference_labo: referenceLabo.trim() !== maReference ? referenceLabo.trim() : undefined,
       commentaire: commentaire.trim() || undefined,
+      ...(versLnr && {
+        date_envoi_lnr: dateEnvoiLnr || undefined,
+        mode_transport_lnr: modeTransportLnr.trim() || undefined,
+        conditions_conservation_lnr: conditionsConservationLnr.trim(),
+      }),
     };
     // Seule une première saisie peut générer une FTP de confirmation vers le LNR
     const request: Promise<{
@@ -393,6 +451,8 @@ export function ResultatModalContent({
           !pool ||
           !resultat ||
           (parasiteRequis && !parasite.trim()) ||
+          nombreLarvesInvalide ||
+          envoiLnrIncomplet ||
           (correction && !raison.trim()) ||
           isSubmitting,
         onClick: enregistrer,
@@ -432,6 +492,22 @@ export function ResultatModalContent({
             type: 'text',
             value: parasite,
             onChange: (event) => setParasite(event.target.value),
+          }}
+        />
+      )}
+      {larvesSaisissables && (
+        <Input
+          label={`Nombre de larves découvertes dans le pool (${versLnr ? 'obligatoire' : 'optionnel'})`}
+          hintText="Visible uniquement par les laboratoires"
+          state={nombreLarvesInvalide ? 'error' : 'default'}
+          stateRelatedMessage="Nombre entier supérieur à 0 attendu"
+          nativeInputProps={{
+            type: 'number',
+            inputMode: 'numeric',
+            min: 1,
+            step: 1,
+            value: nombreLarves,
+            onChange: (event) => setNombreLarves(event.target.value),
           }}
         />
       )}
@@ -483,6 +559,40 @@ export function ResultatModalContent({
             onChange: (event) => setRaison(event.target.value),
           }}
         />
+      )}
+      {versLnr && (
+        <fieldset className="fr-mb-2w border-0 p-0">
+          <legend className="fr-text--sm fr-mb-1w font-bold">
+            Envoi au LNR (figure sur la fiche de transmission)
+          </legend>
+          <Input
+            label="Date d'envoi des échantillons"
+            nativeInputProps={{
+              type: 'date',
+              value: dateEnvoiLnr,
+              onChange: (event) => setDateEnvoiLnr(event.target.value),
+            }}
+          />
+          <Input
+            label="Modalités de transmission (optionnel)"
+            hintText="Transporteur, type de colis…"
+            nativeInputProps={{
+              type: 'text',
+              value: modeTransportLnr,
+              onChange: (event) => setModeTransportLnr(event.target.value),
+            }}
+          />
+          <Input
+            label="Conditions de conservation de l'élément parasitaire (obligatoire)"
+            hintText="Ex. : larves dans l'éthanol à 70 %, sous froid positif"
+            textArea
+            nativeTextAreaProps={{
+              rows: 2,
+              value: conditionsConservationLnr,
+              onChange: (event) => setConditionsConservationLnr(event.target.value),
+            }}
+          />
+        </fieldset>
       )}
       {versLnr && (
         <Alert
@@ -551,5 +661,68 @@ export function RefusModalContent({ pool, onDone }: { pool: LaboPool | null; onD
         Confirmer le refus
       </Button>
     </refusModal.Component>
+  );
+}
+
+export function RetraitEchantillonModalContent({
+  retrait,
+  onDone,
+}: {
+  retrait: RetraitEchantillon | null;
+  onDone: () => void;
+}) {
+  const [motif, setMotif] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Évite qu'un motif saisi pour un échantillon ne reste pré-rempli pour le suivant
+  useEffect(() => {
+    setMotif('');
+  }, [retrait?.echantillon.id]);
+
+  const echantillon = retrait?.echantillon;
+
+  return (
+    <retraitModal.Component
+      title={`Retirer l'échantillon ${echantillon?.reference_echantillon ?? ''} du pool ${
+        retrait?.referencePool ?? ''
+      }`}
+    >
+      <p className="fr-text--sm">
+        L'échantillon ne sera pas analysé avec le pool et n'en recevra pas le résultat. La carcasse{' '}
+        {echantillon?.Carcasse.numero_bracelet} sera à prélever de nouveau : l'émetteur en est averti.
+      </p>
+      <Input
+        label="Motif du retrait (obligatoire)"
+        hintText="Par exemple : tube absent du colis, échantillon abîmé, numéro illisible"
+        textArea
+        nativeTextAreaProps={{
+          value: motif,
+          onChange: (event) => setMotif(event.target.value),
+        }}
+      />
+      <Button
+        type="button"
+        disabled={isSubmitting || !motif.trim() || !echantillon}
+        onClick={() => {
+          if (!echantillon) return;
+          setIsSubmitting(true);
+          retirerEchantillonDuPoolLabo(echantillon.id, motif.trim())
+            .then((response) => {
+              if (response.ok) {
+                toast.success('Échantillon retiré du pool, l’émetteur a été notifié');
+                retraitModal.close();
+                setMotif('');
+                onDone();
+              } else {
+                toast.error(response.error || 'Une erreur est survenue');
+              }
+            })
+            .catch(() => toast.error('Une erreur est survenue'))
+            .finally(() => setIsSubmitting(false));
+        }}
+      >
+        Confirmer le retrait
+      </Button>
+    </retraitModal.Component>
   );
 }

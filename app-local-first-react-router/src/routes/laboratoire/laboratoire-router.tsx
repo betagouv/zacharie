@@ -6,6 +6,7 @@ import LaboratoireFTPs from './laboratoire-ftps';
 import LaboratoireFTP from './laboratoire-ftp';
 import LaboratoireProfil from './laboratoire-profil';
 import LaboratoireResultsImport from './laboratoire-results-import';
+import LaboratoireResultsFormat from './laboratoire-results-format';
 import LaboratoirePools from './laboratoire-pools';
 import LaboratoireEchantillons from './laboratoire-echantillons';
 import LaboratoirePoolDetail from './laboratoire-pool-detail';
@@ -31,6 +32,10 @@ export default function RouterLaboratoire() {
       <Route
         path="results/import"
         element={<LaboratoireResultsImport />}
+      />
+      <Route
+        path="results/format"
+        element={<LaboratoireResultsFormat />}
       />
       <Route
         path="pools"

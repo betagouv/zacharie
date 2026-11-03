@@ -12,12 +12,25 @@ const TRANSMISSION_DIFFER_MESSAGE = 'Transmssion differs from one of the carcass
 export const test = base.extend({
   page: async ({ page }, use, testInfo) => {
     const offendingLogs: string[] = [];
+    const pendingDetails: Array<Promise<void>> = [];
     page.on('console', (msg) => {
-      if (msg.text().includes(TRANSMISSION_DIFFER_MESSAGE)) {
-        offendingLogs.push(msg.text());
-      }
+      if (!msg.text().includes(TRANSMISSION_DIFFER_MESSAGE)) return;
+      // capture() logs ('capture', err, context): the 3rd arg holds `differ`, i.e. which field disagrees
+      const contextArg = msg.args()[2];
+      pendingDetails.push(
+        (contextArg ? contextArg.jsonValue() : Promise.resolve(null))
+          .then((context) => {
+            offendingLogs.push(
+              `${msg.text()} ${JSON.stringify({ tags: context?.tags, differ: context?.extra?.differ })}`
+            );
+          })
+          .catch(() => {
+            offendingLogs.push(msg.text());
+          })
+      );
     });
     await use(page);
+    await Promise.all(pendingDetails);
     expect(
       offendingLogs,
       `capture('${TRANSMISSION_DIFFER_MESSAGE}') fired ${offendingLogs.length}× during "${testInfo.title}" — ` +

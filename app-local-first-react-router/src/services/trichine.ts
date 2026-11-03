@@ -87,6 +87,8 @@ export type TrichineFTPDetail = TrichineFTP &
 export type TrichinePartieConcernee = { id: string; nom: string };
 
 export type TrichineEchantillonDetail = TrichineEchantillonAvecCarcasse & {
+  /** Pool dont le laboratoire a retiré l'échantillon */
+  RetireDuPool: { reference_pool: string } | null;
   TrichinePool:
     | (TrichinePool & { TrichinePoolFTPs: Array<TrichinePoolFTP & { TrichineFTP: TrichineFTPLight }> })
     | null;
@@ -95,6 +97,15 @@ export type TrichineEchantillonDetail = TrichineEchantillonAvecCarcasse & {
 export type TrichinePoolDetail = TrichinePool &
   AvecAliases & {
     TrichineEchantillons: Array<TrichineEchantillonAvecCarcasse>;
+    /** Échantillons que le laboratoire a sortis du pool : leurs carcasses sont à re-prélever */
+    EchantillonsRetires: Array<
+      Pick<
+        TrichineEchantillon,
+        'id' | 'reference_echantillon' | 'retire_par_labo_at' | 'retire_par_labo_motif'
+      > & {
+        Carcasse: { numero_bracelet: string };
+      }
+    >;
     TrichinePoolFTPs: Array<TrichinePoolFTP & { TrichineFTP: TrichineFTPLight }>;
     PoolParent: { reference_pool: string } | null;
     PoolsFilles: Array<Pick<TrichinePool, 'reference_pool' | 'statut' | 'resultat_analyse'>>;

@@ -1449,7 +1449,7 @@ function EtapeRegroupement({
                       <Pastille ton="alerte">{erreur}</Pastille>
                     ) : (
                       <Pastille ton="info">
-                        {pool.length} carcasse{pool.length > 1 ? 's' : ''} · {masseTotale} g
+                        {pool.length} carcasse{pool.length > 1 ? 's' : ''} · au moins {masseTotale} g
                       </Pastille>
                     )}
                   </div>
@@ -1633,7 +1633,7 @@ function EtapeRecapitulatif({
                     <Pastille ton="alerte">{erreur}</Pastille>
                   ) : (
                     <Pastille ton="info">
-                      {pool.length} carcasse{pool.length > 1 ? 's' : ''} · {masseTotale} g
+                      {pool.length} carcasse{pool.length > 1 ? 's' : ''} · au moins {masseTotale} g
                     </Pastille>
                   )}
                 </div>

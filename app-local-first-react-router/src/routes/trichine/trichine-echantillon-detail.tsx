@@ -26,6 +26,7 @@ import {
   type TrichineEchantillonDetail,
 } from '@app/services/trichine';
 import {
+  estRetireParLabo,
   etapeEchantillon,
   poolEstFige,
   resultatAnalyseLabels,
@@ -88,6 +89,8 @@ export default function TrichineEchantillonDetailPage() {
   const lienCarcasse = carcasseLink(echantillon.Carcasse);
   // Une fois le colis parti, la fiche papier fait foi : plus rien n'est modifiable
   const fige = !!pool && poolEstFige(pool);
+  // Retiré par le laboratoire : l'échantillon reste tel qu'il a été reçu, pour la traçabilité
+  const retire = estRetireParLabo(echantillon);
   const etape = etapeEchantillon(echantillon);
 
   const etapes: Array<ChaineEtape> = [
@@ -99,7 +102,9 @@ export default function TrichineEchantillonDetailPage() {
     { label: 'Échantillon', value: echantillon.reference_echantillon, current: true },
     pool
       ? { label: 'Pool', value: pool.reference_pool, to: `${basePath}/pools/${pool.reference_pool}` }
-      : { label: 'Pool', value: 'À regrouper', absent: true },
+      : retire
+        ? { label: 'Pool', value: 'Retiré par le laboratoire', absent: true }
+        : { label: 'Pool', value: 'À regrouper', absent: true },
     derniereFtp
       ? { label: 'FTP', value: derniereFtp.numero_fiche, to: `${basePath}/ftp/${derniereFtp.numero_fiche}` }
       : { label: 'FTP', value: 'Pas encore envoyé', absent: true },
@@ -124,7 +129,7 @@ export default function TrichineEchantillonDetailPage() {
         </>
       }
       actions={
-        fige ? undefined : (
+        fige || retire ? undefined : (
           <>
             <Button
               type="button"
@@ -190,7 +195,7 @@ export default function TrichineEchantillonDetailPage() {
             objet="echantillon"
             objetId={echantillon.id}
             aliases={echantillon.Aliases}
-            fige={fige}
+            fige={fige || retire}
             onChange={refresh}
           />
           <TrichineChronologie historique={historique} />
@@ -234,7 +239,28 @@ export default function TrichineEchantillonDetailPage() {
         titre="Analyse"
         hint="Le résultat est porté par le pool : un échantillon n'est jamais analysé seul."
       >
-        {pool ? (
+        {retire ? (
+          <TrichineFields
+            fields={[
+              !!echantillon.RetireDuPool && {
+                label: 'Retiré du pool',
+                value: (
+                  <Link
+                    to={`${basePath}/pools/${echantillon.RetireDuPool.reference_pool}`}
+                    className="fr-link"
+                  >
+                    {echantillon.RetireDuPool.reference_pool}
+                  </Link>
+                ),
+              },
+              {
+                label: 'Retiré par le laboratoire le',
+                value: dayjs(echantillon.retire_par_labo_at).format('DD/MM/YYYY'),
+              },
+              { label: 'Motif', value: echantillon.retire_par_labo_motif ?? '—' },
+            ]}
+          />
+        ) : pool ? (
           <TrichineFields
             fields={[
               {

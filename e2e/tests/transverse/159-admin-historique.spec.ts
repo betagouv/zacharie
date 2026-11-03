@@ -43,7 +43,7 @@ test("l'historique d'une fiche montre les modifications de ses carcasses, avec l
   const modification = page
     .getByRole('listitem')
     .filter({ hasText: 'Carcasse MM-001-001' })
-    .filter({ hasText: 'deleted_at' });
+    .filter({ hasText: 'Supprimé le' });
   await expect(modification).toBeVisible({ timeout: 10000 });
   await expect(modification).toContainText('Modification');
   // l'auteur est affiché sans le domaine de son email, l'email complet est au survol
@@ -59,7 +59,7 @@ test("l'historique d'une fiche montre les modifications de ses carcasses, avec l
     page
       .getByRole('listitem')
       .filter({ hasText: 'Carcasse MM-001-001' })
-      .filter({ hasText: 'deleted_at' })
+      .filter({ hasText: 'Supprimé le' })
       .getByTitle('admin@example.fr')
   ).toHaveText('par admin', { timeout: 10000 });
 });
@@ -83,7 +83,7 @@ test("l'historique d'un utilisateur montre le champ modifié par l'admin", async
   const modification = page
     .getByRole('listitem')
     .filter({ hasText: 'par auteur inconnu' })
-    .filter({ hasText: 'prenom' });
+    .filter({ hasText: 'Prénom' });
   await expect(modification).toContainText('Prénom modifié', { timeout: 10000 });
   const adminAction = page.getByRole('listitem').filter({ hasText: 'Modification d’utilisateur' });
   await expect(adminAction.getByTitle('admin@example.fr')).toHaveText('par admin');

@@ -99,26 +99,26 @@ function FEIChasseurLoaded() {
   };
 
   // La confirmation de l'examen ne vaut que pour l'état des carcasses au clic sur « Continuer » :
-  // ajouter, modifier ou retirer une carcasse l'invalide, ce qui replie les blocs suivants et fait
-  // repasser par la modale d'avertissement des anomalies.
-  const carcassesExamenSignature = useMemo(
+  // ajouter ou modifier une carcasse l'invalide, ce qui replie les blocs suivants et fait repasser
+  // par la modale d'avertissement des anomalies. Retirer une carcasse ne change pas l'examen des
+  // autres : la confirmation tient, et la vente déjà faite reste affichée.
+  const carcassesExamenSignatures = useMemo(
     () =>
-      carcasses
-        .map((c) =>
-          [
-            c.zacharie_carcasse_id,
-            (c.examinateur_anomalies_carcasse ?? []).join(','),
-            (c.examinateur_anomalies_abats ?? []).join(','),
-          ].join(':')
-        )
-        .sort()
-        .join('|'),
+      carcasses.map((c) =>
+        [
+          c.zacharie_carcasse_id,
+          (c.examinateur_anomalies_carcasse ?? []).join(','),
+          (c.examinateur_anomalies_abats ?? []).join(','),
+        ].join(':')
+      ),
     [carcasses]
   );
-  const [confirmedSignature, setConfirmedSignature] = useState<string | null>(() =>
-    fei.heure_mise_a_mort_premiere_carcasse ? carcassesExamenSignature : null
+  const [confirmedSignatures, setConfirmedSignatures] = useState<Set<string>>(() =>
+    fei.heure_mise_a_mort_premiere_carcasse ? new Set(carcassesExamenSignatures) : new Set()
   );
-  const allCarcassesConfirmed = confirmedSignature === carcassesExamenSignature;
+  const allCarcassesConfirmed =
+    carcassesExamenSignatures.length > 0 &&
+    carcassesExamenSignatures.every((signature) => confirmedSignatures.has(signature));
   // Enregistrée dès la coche, comme tous les autres champs de la fiche : la certification vaut
   // examen initial validé, elle ne dépend pas de la transmission qui peut venir bien plus tard.
   const approbation = !!fei.examinateur_initial_approbation_mise_sur_le_marche;
@@ -574,7 +574,7 @@ function FEIChasseurLoaded() {
                         'confirmer-examen',
                         atLeastOneCarcasseWithAnomalie ? 'avec-anomalie' : 'sans-anomalie'
                       );
-                      setConfirmedSignature(carcassesExamenSignature);
+                      setConfirmedSignatures(new Set(carcassesExamenSignatures));
                     }}
                   />
                   {fieldHasError('carcasses') && (

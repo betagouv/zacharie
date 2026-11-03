@@ -13,6 +13,9 @@ import PoolCard, {
   RefusModalContent,
   resultatModal,
   ResultatModalContent,
+  retraitModal,
+  RetraitEchantillonModalContent,
+  type RetraitEchantillon,
   type ResultatMode,
 } from '@app/components/laboratoire/PoolCard';
 import TrichineIntrouvable from '@app/components/trichine/TrichineIntrouvable';
@@ -55,6 +58,7 @@ export default function LaboratoireFTP() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [refusPool, setRefusPool] = useState<LaboPool | null>(null);
   const [resultatPool, setResultatPool] = useState<LaboPool | null>(null);
+  const [retrait, setRetrait] = useState<RetraitEchantillon | null>(null);
   const [resultatMode, setResultatMode] = useState<ResultatMode>('saisie');
 
   const refresh = useCallback(() => {
@@ -179,6 +183,10 @@ export default function LaboratoireFTP() {
                   value: ftp.date_envoi ? dayjs(ftp.date_envoi).format('DD/MM/YYYY') : '—',
                 },
                 !!ftp.mode_transport && { label: 'Transport', value: ftp.mode_transport },
+                !!ftp.conditions_conservation && {
+                  label: 'Conservation',
+                  value: ftp.conditions_conservation,
+                },
                 !!ftp.FTPParent && {
                   label: 'FTP d’origine',
                   value: (
@@ -326,7 +334,12 @@ export default function LaboratoireFTP() {
             setResultatMode('correction');
             resultatModal.open();
           }}
+          onRetirerEchantillon={(echantillon) => {
+            setRetrait({ echantillon, referencePool: pool.reference_pool });
+            retraitModal.open();
+          }}
           onDocumentDepose={refresh}
+          onAliasChange={refresh}
         />
       ))}
 
@@ -339,6 +352,11 @@ export default function LaboratoireFTP() {
 
       <RefusModalContent
         pool={refusPool}
+        onDone={refresh}
+      />
+
+      <RetraitEchantillonModalContent
+        retrait={retrait}
         onDone={refresh}
       />
     </TrichineDetailPage>

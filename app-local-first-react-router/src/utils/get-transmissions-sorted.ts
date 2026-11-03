@@ -20,7 +20,7 @@ import { checkCarcasseAgainstTransmission, getCarcasseTransmission } from './get
 import { CarcasseTransmission, CarcasseTransmissionWihMetadata } from '@app/types/carcasse';
 import { abbreviations } from './count-carcasses';
 import { getTransmissionLabels } from './transmission-labels';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { buildTransmissionId, getTransmissionId } from './get-transmission-id';
 import { useParams } from 'react-router';
 import { CarcassesIntermediaire } from '@app/types/carcasses-intermediaire';
@@ -81,8 +81,34 @@ export function getTransmissionsShared(inputs: SharedTransmissionsInputs) {
     user: inputs.user,
     entitiesWorkingDirectlyFor: filterEntitiesWorkingDirectlyForObj(inputs.entities),
   });
+  if (previous?.carcasses !== inputs.carcasses) {
+    reportTransmissionsInconsistencies(previous?.carcasses, inputs.carcasses, result);
+  }
   sharedTransmissions = { inputs, result };
   return result;
+}
+
+// Contrôle de cohérence remonté à Sentry : chaque carcasse d'une transmission doit porter les mêmes
+// champs de transmission. On ne contrôle que les transmissions dont une carcasse a changé.
+export function reportTransmissionsInconsistencies(
+  previousCarcasses: SharedTransmissionsInputs['carcasses'] | undefined,
+  carcasses: SharedTransmissionsInputs['carcasses'],
+  transmissions: ReturnType<typeof computeTransmissions>
+) {
+  const changedTransmissionIds = new Set<string>();
+  for (const carcasse of Object.values(carcasses)) {
+    if (previousCarcasses?.[carcasse.zacharie_carcasse_id] === carcasse) continue;
+    changedTransmissionIds.add(getTransmissionId(carcasse));
+  }
+  for (const transmissionId of changedTransmissionIds) {
+    const transmission = transmissions[transmissionId];
+    if (!transmission?.carcasses.length) continue;
+    const transmissionKeys = Object.keys(transmission.content) as Array<keyof CarcasseTransmission>;
+    const carcasseRef = transmission.carcasses[0];
+    for (const carcasse of transmission.carcasses) {
+      checkCarcasseAgainstTransmission(transmissionKeys, transmission.content, carcasse, carcasseRef);
+    }
+  }
 }
 
 // insère l'intermédiaire en gardant la liste en ordre created_at décroissant (le plus récent en tête)
@@ -239,15 +265,18 @@ export function computeTransmissions({
         carcasses: [carcasse],
         intermediaires,
         partialRefusals: [],
+        allCarcassesDone: true,
       };
       transmissions[transmissionId] = transmissionWithIntermediaires;
     }
     const partialRefusal = getCarcassePartialRefusal(carcasse, dernierAccepteParCarcasse);
     if (partialRefusal) transmissions[transmissionId].partialRefusals.push(partialRefusal);
+    // rejected, svi accepted, gardée par le chasseur pour son usage domestique privé
+    const carcasseDone = isCarcasseDone(carcasse);
+    if (!carcasseDone) transmissions[transmissionId].allCarcassesDone = false;
     // une fois la transmission marquée non-clôturée, inutile de réévaluer son statut
     if (transmissions[transmissionId].labels.simpleStatus !== 'Clôturée') continue;
-    // rejected, svi accepted, gardée par le chasseur pour son usage domestique privé
-    if (isCarcasseDone(carcasse)) continue;
+    if (carcasseDone) continue;
 
     // FEI UNDER MY RESPONSABILITY
     // At least one carcasse where current_owner is me/my entity AND no next_owner
@@ -414,6 +443,8 @@ export function computeTransmissions({
         carcasses: [],
         intermediaires: [],
         partialRefusals: [],
+        // pas encore de carcasse : rien n'est terminé
+        allCarcassesDone: false,
       };
       transmissions[tempTransmissionId] = transmission;
     }
@@ -506,23 +537,7 @@ export function useGetTransmissionFromCarcasse(carcasse: Carcasse) {
 
 export function useGetTransmissionFromTransmissionId(transmissionId: string) {
   const transmissions = useTransmissions();
-  const [transmission, setTransmission] = useState<CarcasseTransmissionWihMetadata>(
-    transmissions[transmissionId]
-  );
-
-  useEffect(() => {
-    const transmission = transmissions[transmissionId]?.content;
-    const transmissionKeys = Object.keys(transmission) as Array<keyof CarcasseTransmission>;
-    let allCarcassesDone = true;
-    const carcasseRef = transmissions[transmissionId].carcasses[0]!;
-    for (const carcasse of transmissions[transmissionId].carcasses) {
-      checkCarcasseAgainstTransmission(transmissionKeys, transmission, carcasse, carcasseRef);
-      if (!isCarcasseDone(carcasse)) allCarcassesDone = false;
-    }
-    setTransmission({ ...transmissions[transmissionId], allCarcassesDone });
-  }, [transmissions, transmissionId]);
-
-  return transmission;
+  return transmissions[transmissionId];
 }
 
 export function useGetTransmissionsForFei(fei_numero: string) {

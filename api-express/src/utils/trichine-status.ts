@@ -147,6 +147,17 @@ export function computeCarcasseActionRequise(
   return null;
 }
 
+/**
+ * Le prélèvement le plus récent de la carcasse a été retiré de son pool par le laboratoire :
+ * la carcasse n'a pas été analysée, elle est à re-prélever. Un nouveau prélèvement lève l'action.
+ */
+export function dernierEchantillonRetireParLabo(
+  echantillons: Array<{ created_at: Date; retire_par_labo_at: Date | null }>
+): boolean {
+  const dernier = [...echantillons].sort((a, b) => b.created_at.getTime() - a.created_at.getTime())[0];
+  return !!dernier?.retire_par_labo_at;
+}
+
 /* -------------------------------------------------------------------------- */
 /* Recompute persistants                                                       */
 /* -------------------------------------------------------------------------- */
@@ -160,7 +171,7 @@ export async function recomputeCarcasseTrichine(zacharieCarcasseId: string, user
       trichine_retire_de_fei_at: true,
       TrichineEchantillons: {
         where: { deleted_at: null },
-        select: { id: true, TrichinePool: true },
+        select: { id: true, created_at: true, retire_par_labo_at: true, TrichinePool: true },
       },
     },
   });
@@ -178,7 +189,9 @@ export async function recomputeCarcasseTrichine(zacharieCarcasseId: string, user
   // Carcasse retirée de la FEI : plus aucune action trichine attendue
   const actionRequise = carcasse.trichine_retire_de_fei_at
     ? TrichineActionRequise.AUCUNE
-    : computeCarcasseActionRequise([...poolsById.values()], carcasse.TrichineEchantillons.length > 0);
+    : dernierEchantillonRetireParLabo(carcasse.TrichineEchantillons)
+      ? TrichineActionRequise.PRELEVEMENT_COMPLEMENTAIRE
+      : computeCarcasseActionRequise([...poolsById.values()], carcasse.TrichineEchantillons.length > 0);
 
   if (actionRequise !== carcasse.trichine_action_requise) {
     await prisma.carcasse.update({

@@ -60,6 +60,8 @@ export type LaboEchantillon = TrichineEchantillon & AvecAliases & { Carcasse: La
 export type LaboPool = TrichinePool &
   AvecAliases & {
     TrichineEchantillons: Array<LaboEchantillon>;
+    /** Échantillons que le laboratoire a sortis du pool (absents, abîmés, mal identifiés…) */
+    EchantillonsRetires: Array<LaboEchantillon>;
     Documents: Array<TrichineDocument>;
   };
 
@@ -139,10 +141,14 @@ export function corrigerResultatPool(
   body: {
     resultat_analyse: TrichineResultatAnalyse;
     parasite_identifie?: string;
+    nombre_larves?: number;
     date_debut_analyse?: string;
     date_fin_analyse?: string;
     reference_labo?: string;
     commentaire?: string;
+    date_envoi_lnr?: string;
+    mode_transport_lnr?: string;
+    conditions_conservation_lnr?: string;
     raison: string;
   }
 ) {
@@ -189,10 +195,15 @@ export function saisirResultatPool(
   body: {
     resultat_analyse: TrichineResultatAnalyse;
     parasite_identifie?: string;
+    nombre_larves?: number;
     date_debut_analyse?: string;
     date_fin_analyse?: string;
     reference_labo?: string;
     commentaire?: string;
+    // FTP de confirmation générée vers le LNR sur un non négatif
+    date_envoi_lnr?: string;
+    mode_transport_lnr?: string;
+    conditions_conservation_lnr?: string;
   }
 ) {
   return API.post({ path: `/laboratoire/pool/${poolId}/resultat`, body }) as Promise<
@@ -205,6 +216,13 @@ export function refuserPool(poolId: string, raisonRefus: string) {
     path: `/laboratoire/pool/${poolId}/refuser`,
     body: { raison_refus: raisonRefus },
   }) as Promise<ApiResponse<{ pool: TrichinePool }>>;
+}
+
+export function retirerEchantillonDuPoolLabo(echantillonId: string, motif: string) {
+  return API.post({
+    path: `/laboratoire/echantillon/${echantillonId}/retirer-du-pool`,
+    body: { motif },
+  }) as Promise<ApiResponse<Record<string, never>>>;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -246,18 +264,19 @@ export function documentFtpPath(ftpId: string, documentId: string) {
   return `/laboratoire/ftp/${ftpId}/document/${documentId}`;
 }
 
-// Import de résultats depuis un export LIMS (cf doc/trichine-import-lims.md)
+// Import de résultats : fichier CSV au format Zacharie (page /app/laboratoire/results/format)
 export type LimsImportRow = {
   reference_pool: string;
   resultat_analyse: TrichineResultatAnalyse;
   parasite_identifie?: string;
+  nombre_larves?: number;
   date_debut_analyse?: string;
   date_fin_analyse?: string;
   reference_labo?: string;
   commentaire?: string;
 };
 
-// content = fichier encodé en base64 (parsing + mapping côté serveur)
+// content = fichier CSV encodé en base64 (lecture côté serveur)
 export function previewResultatsImport(body: { filename?: string; content: string }) {
   return API.post({ path: '/laboratoire/results/preview', body }) as Promise<LaboResultsPreviewResponse>;
 }

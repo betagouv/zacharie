@@ -59,7 +59,8 @@ export type SeedRole =
   | 'FRC'
   | 'FNC'
   | 'FEDERATION_STATS'
-  | 'ETG_FILTRES_RAPIDES';
+  | 'ETG_FILTRES_RAPIDES'
+  | 'LABORATOIRE_FTP_RECUE';
 
 export async function resetDb(role?: SeedRole) {
   try {

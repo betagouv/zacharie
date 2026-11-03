@@ -83,6 +83,7 @@ const makeEchantillon = (carcasseId: string, masse = 5, overrides: any = {}) => 
   type: TrichineType.INITIAL,
   pool_id: null,
   deleted_at: null,
+  retire_par_labo_at: null,
   ...overrides,
 });
 
@@ -91,6 +92,13 @@ const makeComplementaire = (carcasseId: string, masse = 20, overrides: any = {})
   makeEchantillon(carcasseId, masse, { type: TrichineType.COMPLEMENTAIRE, ...overrides });
 
 describe('validatePoolComposition — pool initial', () => {
+  test('bloqué pour un échantillon retiré par le laboratoire : la carcasse est à re-prélever', () => {
+    const echantillons = [
+      makeEchantillon('c-1'),
+      makeEchantillon('c-2', 5, { retire_par_labo_at: new Date() }),
+    ];
+    expect(validatePoolComposition({ echantillons, parent: null })).toMatch(/retiré de son pool/);
+  });
   test('valide avec 19 carcasses / 95 g', () => {
     const echantillons = Array.from({ length: 19 }, (_, i) => makeEchantillon(`c-${i}`, 5));
     expect(validatePoolComposition({ echantillons, parent: null })).toBeNull();

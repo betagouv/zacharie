@@ -180,7 +180,8 @@ function erreurParametres(error: z.ZodError) {
  */
 async function etatDesAnalyses(carcasseIds: Array<string>) {
   const echantillons = await prisma.trichineEchantillon.findMany({
-    where: { zacharie_carcasse_id: { in: carcasseIds }, deleted_at: null },
+    // Un échantillon retiré par le laboratoire n'a jamais été analysé : il ne compte pas
+    where: { zacharie_carcasse_id: { in: carcasseIds }, deleted_at: null, retire_par_labo_at: null },
     select: {
       zacharie_carcasse_id: true,
       pool_id: true,
@@ -327,7 +328,8 @@ router.get(
       where: {
         preleve_par_user_id: { in: await trichineEquipeUserIds(req.user) },
         deleted_at: null,
-        ...(sansPool ? { pool_id: null } : {}),
+        // Un échantillon retiré par le laboratoire ne se regroupe plus : la carcasse est à re-prélever
+        ...(sansPool ? { pool_id: null, retire_par_labo_at: null } : {}),
       },
       include: {
         Carcasse: { select: carcasseProjectionSelect },
@@ -482,6 +484,10 @@ router.post(
  * est dans le colis, l'écran ne peut plus diverger d'elle. Tant qu'elle est en brouillon
  * (ou qu'elle a été annulée), tout reste modifiable.
  */
+// L'échantillon retiré reste tel que le laboratoire l'a reçu : il trace pourquoi la carcasse est à re-prélever
+const ERREUR_RETIRE_PAR_LABO =
+  'Cet échantillon a été retiré de son pool par le laboratoire : il ne peut plus être modifié';
+
 async function poolEstFige(poolId: string): Promise<boolean> {
   const links = await prisma.trichinePoolFTP.findMany({
     where: { pool_id: poolId },
@@ -517,6 +523,9 @@ router.put(
     }
     if (echantillon.pool_id && (await poolEstFige(echantillon.pool_id))) {
       return sendError(res, 400, 'Cet échantillon est parti au laboratoire, il ne peut plus être modifié');
+    }
+    if (echantillon.retire_par_labo_at) {
+      return sendError(res, 400, ERREUR_RETIRE_PAR_LABO);
     }
 
     const body = bodyResult.data;
@@ -558,6 +567,9 @@ router.delete(
     }
     if (echantillon.pool_id) {
       return sendError(res, 400, "Retirez d'abord cet échantillon de son pool");
+    }
+    if (echantillon.retire_par_labo_at) {
+      return sendError(res, 400, ERREUR_RETIRE_PAR_LABO);
     }
 
     await prisma.trichineEchantillon.update({
@@ -1423,6 +1435,7 @@ router.get(
       include: {
         Carcasse: { select: carcasseProjectionSelect },
         ...trichineAliasesInclude,
+        RetireDuPool: { select: { reference_pool: true } },
         TrichinePool: {
           include: {
             TrichinePoolFTPs: {
@@ -1468,6 +1481,17 @@ router.get(
         TrichineEchantillons: {
           where: { deleted_at: null },
           include: { Carcasse: { select: carcasseProjectionSelect }, ...trichineAliasesInclude },
+          orderBy: { reference_echantillon: 'asc' },
+        },
+        EchantillonsRetires: {
+          where: { deleted_at: null },
+          select: {
+            id: true,
+            reference_echantillon: true,
+            retire_par_labo_at: true,
+            retire_par_labo_motif: true,
+            Carcasse: { select: { numero_bracelet: true } },
+          },
           orderBy: { reference_echantillon: 'asc' },
         },
         TrichinePoolFTPs: {

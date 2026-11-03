@@ -5,6 +5,7 @@ import dayjs from 'dayjs';
 import 'dayjs/locale/fr';
 import path from 'path';
 import prisma from '~/prisma';
+import { avecNombreLarves } from '~/prisma-omit';
 import { getEtgsDuServiceExpediteur, type TrichinePartieConcernee } from '~/utils/trichine-parties';
 import { trichineAliasesInclude, type TrichineAliasProjection } from '~/utils/trichine-alias';
 
@@ -109,8 +110,8 @@ const styles = StyleSheet.create({
   colEspece: { width: '11%' },
   colDate: { width: '12%' },
   colCommune: { width: '17%' },
-  colSite: { width: '19%' },
-  colMasse: { width: '7%', textAlign: 'right' },
+  colSite: { width: '16%' },
+  colMasse: { width: '10%', textAlign: 'right' },
 
   laboZone: { flexDirection: 'row', gap: 6, padding: 5, borderTopWidth: 1, borderTopColor: gris },
   laboField: { flex: 1, fontSize: 8, borderBottomWidth: 1, borderBottomColor: '#999999', paddingBottom: 9 },
@@ -173,6 +174,7 @@ async function getFtpForPdf(ftpId: string) {
       TrichinePoolFTPs: {
         include: {
           TrichinePool: {
+            omit: avecNombreLarves,
             include: {
               TrichineEchantillons: {
                 where: { deleted_at: null },
@@ -319,6 +321,9 @@ export function TrichineFtpDocument({
             Envoi : {ftp.date_envoi ? dayjs(ftp.date_envoi).format('DD/MM/YYYY') : 'non envoyée'}
           </Text>
           {!!ftp.mode_transport && <Text style={styles.line}>Transport : {ftp.mode_transport}</Text>}
+          {!!ftp.conditions_conservation && (
+            <Text style={styles.line}>Conservation : {ftp.conditions_conservation}</Text>
+          )}
           {ftp.Aliases.length > 0 && (
             <Text style={styles.line}>Réf. internes : {formatAliases(ftp.Aliases)}</Text>
           )}
@@ -352,11 +357,17 @@ export function TrichineFtpDocument({
                   {typeLabels[pool.type] ?? pool.type} — constitué le{' '}
                   {dayjs(pool.date_constitution).format('DD/MM/YYYY')} — {pool.TrichineEchantillons.length}{' '}
                   échantillon
-                  {pool.TrichineEchantillons.length > 1 ? 's' : ''} —{' '}
+                  {pool.TrichineEchantillons.length > 1 ? 's' : ''} — au moins{' '}
                   {pool.TrichineEchantillons.reduce((total, e) => total + e.masse_grammes, 0)} g
                 </Text>
                 {pool.Aliases.length > 0 && (
                   <Text style={styles.poolMeta}>Réf. internes : {formatAliases(pool.Aliases)}</Text>
+                )}
+                {/* Fiche de confirmation LVD → LNR : seuls les laboratoires la consultent */}
+                {!!ftp.ftp_parent_id && pool.nombre_larves_lvd != null && (
+                  <Text style={styles.poolMeta}>
+                    Larves comptées par le laboratoire agréé : {pool.nombre_larves_lvd}
+                  </Text>
                 )}
               </View>
               <Image style={styles.barcode} src={barcodes[pool.reference_pool]} />
@@ -370,7 +381,7 @@ export function TrichineFtpDocument({
                 <Text style={[styles.th, styles.colDate]}>Mise à mort</Text>
                 <Text style={[styles.th, styles.colCommune]}>Commune</Text>
                 <Text style={[styles.th, styles.colSite]}>Site</Text>
-                <Text style={[styles.th, styles.colMasse]}>g</Text>
+                <Text style={[styles.th, styles.colMasse]}>Au moins (g)</Text>
               </View>
               {pool.TrichineEchantillons.map((echantillon) => (
                 <View key={echantillon.id} style={styles.tr}>
