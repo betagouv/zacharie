@@ -14,6 +14,7 @@ function c(overrides: Partial<Carcasse> = {}): Carcasse {
     consommateur_final_usage_domestique: null,
     current_owner_role: null,
     next_owner_role: null,
+    examinateur_initial_date_approbation_mise_sur_le_marche: new Date('2026-11-03T12:00:00Z'),
     ...overrides,
   } as unknown as Carcasse;
 }
@@ -35,6 +36,23 @@ describe('deriveCarcasseUiState — possession lue au niveau carcasse', () => {
       next_owner_role: null,
     });
     expect(deriveCarcasseUiState(carcasse, undefined, {})).toBe('creation');
+  });
+
+  it('premier détenteur désigné mais examen initial non validé → "creation"', () => {
+    const carcasse = c({
+      current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
+      next_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+      examinateur_initial_date_approbation_mise_sur_le_marche: null,
+    });
+    expect(deriveCarcasseUiState(carcasse, undefined, {})).toBe('creation');
+  });
+
+  it('premier détenteur désigné et examen initial validé → "transmise"', () => {
+    const carcasse = c({
+      current_owner_role: FeiOwnerRole.EXAMINATEUR_INITIAL,
+      next_owner_role: FeiOwnerRole.PREMIER_DETENTEUR,
+    });
+    expect(deriveCarcasseUiState(carcasse, undefined, {})).toBe('transmise');
   });
 
   it('carcasse transmise à un ETG (next_owner = ETG) → "transmise"', () => {

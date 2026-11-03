@@ -71,6 +71,9 @@ self.addEventListener('fetch', (event: FetchEvent) => {
   // les requêtes vers l'API (autre origine) et les requêtes non-GET vont directement au réseau
   if (event.request.method !== 'GET') return;
   if (new URL(event.request.url).origin !== self.location.origin) return;
+  // Zacharie dans une iframe : le navigateur charge la page lui-même, avec Sec-Fetch-Dest: iframe.
+  // Le serveur en a besoin pour autoriser l'origine parente (frame-ancestors).
+  if (event.request.mode === 'navigate' && event.request.destination === 'iframe') return;
   event.respondWith(handleFetchRequest(event.request));
 });
 

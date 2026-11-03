@@ -74,10 +74,13 @@ export function deriveCarcasseUiState(
       if (carcasse.consommateur_final_usage_domestique) return 'usage-domestique';
       // On lit l'état de possession de la carcasse elle-même (source de vérité),
       // pas le snapshot FEI qui peut être périmé après un « Retour à l'envoyeur ».
+      // Tant que l'examen initial n'est pas validé, la carcasse reste en création, même si le
+      // premier détenteur est déjà désigné (next_owner_role = PREMIER_DETENTEUR).
       const isCreation =
-        (carcasse.current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL ||
+        !carcasse.examinateur_initial_date_approbation_mise_sur_le_marche ||
+        ((carcasse.current_owner_role === FeiOwnerRole.EXAMINATEUR_INITIAL ||
           carcasse.current_owner_role === FeiOwnerRole.PREMIER_DETENTEUR) &&
-        !carcasse.next_owner_role;
+          !carcasse.next_owner_role);
       if (isCreation) return 'creation';
       // Circuit court (commerce de détail, particulier…) est un destinataire terminal :
       // il n'inspecte ni ne retransmet, donc il ne « prend jamais en charge » et
