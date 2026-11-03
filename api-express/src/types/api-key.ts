@@ -6,6 +6,7 @@ export const apiKeySafeSelect = {
   description: true,
   active: true,
   webhook_url: true,
+  frame_ancestors: true,
   expires_at: true,
   last_used_at: true,
   scopes: true,

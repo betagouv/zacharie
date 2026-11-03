@@ -9,6 +9,8 @@ import { Tabs, type TabsProps } from '@codegouvfr/react-dsfr/Tabs';
 import API from '@app/services/api';
 import { ApiKeyApprovalStatus } from '@prisma/client';
 
+import { bacASableUrl } from '@app/utils/bac-a-sable-url';
+
 export default function AdminApiKeys() {
   const [apiKeys, setApiKeys] = useState<NonNullable<AdminApiKeysResponse['data']['apiKeys']>>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -72,6 +74,17 @@ export default function AdminApiKeys() {
           >
             Entités
           </a>
+          {bacASableUrl && (
+            <>
+              {' · '}
+              <a
+                href={bacASableUrl}
+                target="_blank"
+              >
+                Bac à sable
+              </a>
+            </>
+          )}
         </span>
         <Button
           size="small"

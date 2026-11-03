@@ -12,6 +12,7 @@ import type {
 } from '~/types/responses';
 import slugify from 'slugify';
 import { z } from 'zod';
+import { IS_DEV_OR_TEST } from '~/config';
 
 router.get(
   '/api-keys',
@@ -158,6 +159,20 @@ const apiKeyUpdateSchema = z.object({
     .trim()
     .url("L'URL de webhook est invalide")
     .refine((url) => /^https?:\/\//.test(url), "L'URL de webhook doit commencer par http:// ou https://")
+    .optional(),
+  frame_ancestors: z
+    .array(
+      z
+        .string()
+        .trim()
+        .refine(
+          (origin) =>
+            (IS_DEV_OR_TEST ? /^https?:\/\/[a-z0-9.-]+(:\d+)?$/ : /^https:\/\/[a-z0-9.-]+(:\d+)?$/).test(
+              origin
+            ),
+          `Origine iframe invalide : une origine par ligne, sans chemin (ex. https://www.exemple.fr)${IS_DEV_OR_TEST ? '' : ', en https'}`
+        )
+    )
     .optional(),
   scopes: z.array(z.enum(Object.values(ApiKeyScope) as [ApiKeyScope, ...ApiKeyScope[]])).optional(),
 });

@@ -1115,6 +1115,7 @@ model ApiKey {
   slug_for_context       String?
   description            String? // Purpose of the API key
   webhook_url            String? // Webhook URL for the API key
+  frame_ancestors        String[]      @default([]) // Origines autorisées à afficher Zacharie dans une iframe (CSP frame-ancestors)
   active                 Boolean       @default(true)
   expires_at             DateTime? // Optional expiration date
   last_used_at           DateTime? // Track when the key was last used
