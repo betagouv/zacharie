@@ -23,7 +23,7 @@ export default function FederationLayout() {
       isActive: location.pathname.startsWith('/app/federation/profil'),
       menuLinks: [
         {
-          text: 'Ma fédération',
+          text: 'Fédération',
           isActive: location.pathname === '/app/federation/profil/ma-federation',
           linkProps: { to: '/app/federation/profil/ma-federation', href: '#' },
         },

@@ -43,7 +43,7 @@ export default function useChasseurNavigationMenu(): MainNavigationProps.Item[] 
           },
         },
         {
-          text: 'Ma fédération',
+          text: 'Fédération',
           isActive: location.pathname === '/app/chasseur/profil/ma-federation',
           linkProps: {
             href: '#',
@@ -83,7 +83,7 @@ export default function useChasseurNavigationMenu(): MainNavigationProps.Item[] 
           },
         },
       ].filter((link) => {
-        if (link.text === 'Ma fédération') return !!federation;
+        if (link.text === 'Fédération') return !!federation;
         if (link.text !== 'Partage de données') return true;
         return !!apiKeyApprovals?.length;
       }),
