@@ -58,7 +58,7 @@ const adminLinks = [
   {
     to: '/app/admin/historique',
     label: 'Historique',
-    icon: 'fr-icon-history-line',
+    icon: 'ri-history-line',
   },
 ];
 
