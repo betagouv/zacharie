@@ -16,6 +16,17 @@ function getIcon(text: string): string {
   const lowerText = text.toLowerCase();
   if (lowerText === 'nouvelle fiche') return 'ri-add-circle-line';
   if (lowerText === 'tableau de bord') return 'ri-dashboard-3-line';
+  if (lowerText === 'tableau de bord fédération') return 'ri-bar-chart-box-line';
+  if (lowerText === 'fédération') return 'ri-team-line';
+  if (lowerText === 'paramètres') return 'ri-settings-3-line';
+  if (lowerText === 'informations de chasse') return 'ri-crosshair-2-line';
+  if (lowerText === 'coordonnées') return 'ri-map-pin-line';
+  if (lowerText === 'changer de mot de passe') return 'ri-lock-password-line';
+  if (lowerText === 'notifications') return 'ri-notification-line';
+  if (lowerText === 'partage de données') return 'ri-share-line';
+  if (lowerText === 'entreprise') return 'ri-building-line';
+  if (lowerText.startsWith('utilisateurs')) return 'ri-group-line';
+  if (lowerText === 'trichine') return 'ri-microscope-line';
   if (lowerText === 'fiches') return 'ri-file-list-line';
   if (lowerText === 'carcasses') return 'ri-archive-line';
   if (lowerText === 'mon profil') return 'ri-user-line';
@@ -32,13 +43,14 @@ function getIcon(text: string): string {
   if (lowerText === 'admin') return 'ri-admin-line';
   if (lowerText.startsWith('liste des')) return 'ri-list-check';
   if (lowerText === 'contact') return 'ri-mail-line';
-  return 'ri-menu-line';
+  return 'ri-arrow-right-s-line';
 }
 
 function getShortLabel(text: string): string {
   const lowerText = text.toLowerCase();
   if (lowerText === 'nouvelle fiche') return 'Nouvelle fiche';
   if (lowerText === 'tableau de bord') return 'Tableau de bord';
+  if (lowerText === 'tableau de bord fédération') return 'Fédération';
   if (lowerText === 'mon profil') return 'Profil';
   if (lowerText === 'mes informations de chasse') return 'Mes infos';
   if (lowerText.startsWith('mon entreprise')) return 'Entreprise';
@@ -198,7 +210,7 @@ export default function BottomNavigation({
 
   return (
     <nav
-      className="fixed right-0 bottom-0 left-0 z-[60] flex h-16 items-stretch border-t border-gray-200 bg-white md:hidden md:h-0"
+      className={`fixed right-0 bottom-0 left-0 ${moreOpen ? 'z-[1001]' : 'z-[60]'} flex h-16 items-stretch border-t border-gray-200 bg-white md:hidden md:h-0`}
       aria-label="Navigation mobile"
       id="bottom-navigation"
     >
