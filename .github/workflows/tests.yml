@@ -159,12 +159,14 @@ jobs:
           cache-dependency-path: |
             app-local-first-react-router/package-lock.json
             api-express/package-lock.json
+            api-playground/package-lock.json
             e2e/package-lock.json
 
-      - name: Install app + api deps in parallel
+      - name: Install app + api + bac à sable deps in parallel
         run: |
           (cd app-local-first-react-router && npm ci && npx prisma generate) &
           (cd api-express && npm ci && npx prisma generate) &
+          (cd api-playground && npm ci) &
           wait
 
       - name: Install e2e deps

@@ -756,6 +756,15 @@ Christine
 
   console.log('API keys created for test');
 
+  // bac à sable de l'API (api-playground) : la clé tierce partie lui envoie ses webhooks
+  if ((role as string) === 'API_BAC_A_SABLE') {
+    await prisma.apiKey.update({
+      where: { id: apiKeyUser.id },
+      data: { webhook_url: 'http://localhost:3292/api/webhook', slug_for_context: 'bac-a-sable' },
+    });
+    console.log('API_BAC_A_SABLE: webhook de la clé tierce partie vers le bac à sable');
+  }
+
   if (role) {
     if (role === FeiOwnerRole.PREMIER_DETENTEUR) {
       const fei = await prisma.fei.create({ data: feiValidatedByExaminateur });

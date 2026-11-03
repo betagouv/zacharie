@@ -19,6 +19,9 @@ app.use(compression());
 // http://expressjs.com/en/advanced/best-practice-security.html#at-a-minimum-disable-x-powered-by-header
 app.disable('x-powered-by');
 
+// staging uniquement : origine(s) autorisée(s) à afficher l'app dans une iframe (playground API)
+const FRAME_ANCESTORS_EXTRA = process.env.FRAME_ANCESTORS_EXTRA ?? '';
+
 // Security headers (Mozilla Observatory recommendations)
 app.use((req, res, next) => {
   res.setHeader(
@@ -36,13 +39,14 @@ app.use((req, res, next) => {
       "object-src 'none'",
       "base-uri 'self'",
       "form-action 'self'",
-      "frame-ancestors 'self'",
+      `frame-ancestors 'self'${FRAME_ANCESTORS_EXTRA ? ` ${FRAME_ANCESTORS_EXTRA}` : ''}`,
       'upgrade-insecure-requests',
     ].join('; ')
   );
   res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  // X-Frame-Options ne sait pas lister d'autres origines : frame-ancestors suffit quand il y en a
+  if (!FRAME_ANCESTORS_EXTRA) res.setHeader('X-Frame-Options', 'SAMEORIGIN');
   res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
   res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');

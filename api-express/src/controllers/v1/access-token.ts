@@ -96,7 +96,7 @@ router.post(
           accessToken: accessToken,
         },
         message:
-          "L'access token a été créé. Vous pouvez l'utiliser en paramètre d'URL pour connecter l'utilisateur à son compte Zacharie. Par exemple https://zacharie.beta.gouv.fr/app/nouvelle-fiche?access_token={accessToken}&date_mise_a_mort=2025-01-01&commune_mise_a_mort=Paris&heure_mise_a_mort_premiere_carcasse=10:00&heure_evisceration_derniere_carcasse=12:00",
+          "L'access token a été créé. Vous pouvez l'utiliser en paramètre d'URL pour connecter l'utilisateur à son compte Zacharie. Par exemple https://zacharie.beta.gouv.fr/app/nouvelle-fiche?access_token={accessToken}&date_mise_a_mort=2025-01-01&commune_mise_a_mort=Paris&heure_mise_a_mort_premiere_carcasse=10:00&heure_evisceration_derniere_carcasse=12:00. Ajoutez &embedded=true si vous affichez Zacharie dans une iframe ou une WebView : la navigation de Zacharie est alors masquée.",
       });
     }
   )
