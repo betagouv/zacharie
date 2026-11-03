@@ -695,7 +695,7 @@
     "/fei": {
       "get": {
         "summary": "Récupérer les FEI de votre entité",
-        "description": "Récupère toutes les Fiches d'Examen Initial (FEI) qui appartiennent à votre entité dans une plage de dates donnée. Votre clé API détermine automatiquement quelle entité vous représentez.",
+        "description": "Récupère toutes les Fiches d'Examen Initial (FEI) qui appartiennent à votre entité dans une plage de dates donnée. Votre clé API détermine automatiquement quelle entité vous représentez. Les fiches sont triées de la plus récente à la plus ancienne (date de mise à mort, puis date de création).",
         "parameters": [
           {
             "name": "date_from",

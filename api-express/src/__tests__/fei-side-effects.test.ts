@@ -99,4 +99,15 @@ describe('webhookApprobation', () => {
     await webhookApprobation(existing as any, saved as any);
     expect(sendWebhook).not.toHaveBeenCalled();
   });
+
+  test('approbation date unchanged but read as a new Date object → no webhook', async () => {
+    const existing = makeFei({
+      examinateur_initial_date_approbation_mise_sur_le_marche: new Date('2026-05-02T10:00:00Z'),
+    });
+    const saved = makeFei({
+      examinateur_initial_date_approbation_mise_sur_le_marche: new Date('2026-05-02T10:00:00Z'),
+    });
+    await webhookApprobation(existing as any, saved as any);
+    expect(sendWebhook).not.toHaveBeenCalled();
+  });
 });

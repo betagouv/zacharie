@@ -60,7 +60,8 @@ export type SeedRole =
   | 'FNC'
   | 'FEDERATION_STATS'
   | 'ETG_FILTRES_RAPIDES'
-  | 'LABORATOIRE_FTP_RECUE';
+  | 'LABORATOIRE_FTP_RECUE'
+  | 'API_BAC_A_SABLE';
 
 export async function resetDb(role?: SeedRole) {
   try {

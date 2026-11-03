@@ -944,6 +944,17 @@
                 "value": ["FR123456789,Sanglier,1", "FR987654321,Cerf,2", "FR555666777,Chevreuil"]
               }
             }
+          },
+          {
+            "name": "embedded",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["true"],
+              "example": "true"
+            },
+            "description": "À utiliser quand Zacharie est affiché dans une iframe ou une WebView de votre application : masque la navigation de Zacharie (menu, liens de compte, liens du pied de page). Le mode reste actif pendant toute la session de l'iframe / WebView, y compris après la redirection vers la fiche créée."
           }
         ],
         "responses": {
@@ -989,7 +1000,7 @@
     "/fei/user": {
       "get": {
         "summary": "Récupérer les FEI d'un utilisateur",
-        "description": "Récupère toutes les fiches d'examen initial d'un utilisateur dans une plage de dates donnée (nécessite l'email de l'utilisateur et son consentement préalable). Cette route permet aux applications tierces d'accéder aux données d'un utilisateur qui a donné son accord.",
+        "description": "Récupère toutes les fiches d'examen initial d'un utilisateur dans une plage de dates donnée (nécessite l'email de l'utilisateur et son consentement préalable). Cette route permet aux applications tierces d'accéder aux données d'un utilisateur qui a donné son accord. Les fiches sont triées de la plus récente à la plus ancienne (date de mise à mort, puis date de création).",
         "parameters": [
           {
             "name": "date_from",

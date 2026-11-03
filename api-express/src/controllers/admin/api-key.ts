@@ -11,6 +11,7 @@ import type {
   AdminApiKeyAndApprovalsResponse,
 } from '~/types/responses';
 import slugify from 'slugify';
+import { z } from 'zod';
 
 router.get(
   '/api-keys',
@@ -144,6 +145,47 @@ router.get(
           return allEntitiesRecord;
         });
       res.status(200).send({ ok: true, data: { apiKey: apiKey, allUsers, allEntities }, error: '' });
+    }
+  )
+);
+
+const apiKeyUpdateSchema = z.object({
+  name: z.string().trim().min(1).optional(),
+  description: z.string().optional(),
+  active: z.boolean().optional(),
+  webhook_url: z
+    .string()
+    .trim()
+    .url("L'URL de webhook est invalide")
+    .refine((url) => /^https?:\/\//.test(url), "L'URL de webhook doit commencer par http:// ou https://")
+    .optional(),
+  scopes: z.array(z.enum(Object.values(ApiKeyScope) as [ApiKeyScope, ...ApiKeyScope[]])).optional(),
+});
+
+router.post(
+  '/api-key/:id',
+  catchErrors(
+    async (req: express.Request, res: express.Response<AdminApiKeyResponse>, next: express.NextFunction) => {
+      const result = apiKeyUpdateSchema.safeParse(req.body);
+      if (!result.success) {
+        res.status(400).send({
+          ok: false,
+          data: null,
+          error: result.error.issues.map((issue) => issue.message).join('. '),
+        });
+        return;
+      }
+      const apiKey = await prisma.apiKey.findUnique({ where: { id: req.params.id } });
+      if (!apiKey) {
+        res.status(404).send({ ok: false, data: null, error: 'API key not found' });
+        return;
+      }
+      const updatedApiKey = await prisma.apiKey.update({
+        where: { id: apiKey.id },
+        data: result.data,
+      });
+      setAdminAuditTarget(res, 'api_key', updatedApiKey.id);
+      res.status(200).send({ ok: true, data: { apiKey: updatedApiKey }, error: '' });
     }
   )
 );

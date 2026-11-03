@@ -5,9 +5,10 @@ import { sendWebhook } from '~/utils/api';
 import { nextVersion } from '~/utils/sync-version';
 
 export async function webhookApprobation(existingFei: Fei, savedFei: Fei) {
+  // la fiche lue en base et la fiche sauvegardée ont deux objets Date distincts : on compare leur valeur
   if (
-    existingFei.examinateur_initial_date_approbation_mise_sur_le_marche !==
-    savedFei.examinateur_initial_date_approbation_mise_sur_le_marche
+    existingFei.examinateur_initial_date_approbation_mise_sur_le_marche?.getTime() !==
+    savedFei.examinateur_initial_date_approbation_mise_sur_le_marche?.getTime()
   ) {
     await sendWebhook(savedFei.examinateur_initial_user_id!, 'FEI_APPROBATION_MISE_SUR_LE_MARCHE', {
       feiNumero: savedFei.numero,

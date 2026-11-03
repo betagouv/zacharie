@@ -71,6 +71,8 @@ async function buildFeisResponse(accessWhere: Prisma.CarcasseWhereInput, dateFro
     prisma.fei.findMany({
       where: { numero: { in: feiNumeros }, deleted_at: null },
       select: feiForApiSelect,
+      // examens initiaux les plus récents en premier
+      orderBy: [{ date_mise_a_mort: 'desc' }, { created_at: 'desc' }],
     }),
     prisma.carcasse.findMany({
       where: { fei_numero: { in: feiNumeros }, deleted_at: null },

@@ -7,10 +7,11 @@ import { createNewFei } from '@app/utils/create-new-fei';
 import { createNewCarcasse } from '@app/utils/create-new-carcasse';
 import useZustandStore from '@app/zustand/store';
 import { syncData } from '@app/utils/sync-data';
+import { useIsEmbedded } from '@app/utils/use-is-embedded';
 import useUser from '@app/zustand/user';
 import Button from '@codegouvfr/react-dsfr/Button';
 import dayjs from 'dayjs';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { z } from 'zod';
 import grandGibier from '@app/data/grand-gibier.json';
@@ -81,12 +82,21 @@ type SearchParams = z.infer<typeof searchParamsSchema>;
 export default function NouvelleFiche() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  // la page est hors RootDisplay : on enregistre ici `embedded` avant la redirection vers la fiche
+  useIsEmbedded();
   const [error, setError] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+  // l'access token ne sert qu'une fois : l'effet ne doit pas être rejoué (StrictMode en dev)
+  const hasUsedAccessToken = useRef(false);
 
   useEffect(() => {
-    // Convert URLSearchParams to plain object for Zod validation
-    const searchParamsObject = Object.fromEntries(searchParams.entries());
+    if (hasUsedAccessToken.current) return;
+    hasUsedAccessToken.current = true;
+    // Object.fromEntries ne garde que le dernier `carcasse` : on les récupère tous avec getAll
+    const searchParamsObject = {
+      ...Object.fromEntries(searchParams.entries()),
+      carcasse: searchParams.getAll('carcasse'),
+    };
 
     // Validate search params with Zod
     const validationResult = searchParamsSchema.safeParse(searchParamsObject);
@@ -119,7 +129,7 @@ export default function NouvelleFiche() {
           const newFei = await createNewFei('lien-direct', {
             contexte: contexte,
             date_mise_a_mort: validatedParams.date_mise_a_mort
-              ? dayjs(validatedParams.date_mise_a_mort).toDate()
+              ? dayjs.utc(validatedParams.date_mise_a_mort).startOf('day').toDate()
               : undefined,
             commune_mise_a_mort: validatedParams.commune_mise_a_mort ?? undefined,
             heure_mise_a_mort_premiere_carcasse:

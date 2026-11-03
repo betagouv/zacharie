@@ -1,4 +1,5 @@
 import { useState, type RefObject, useRef, useEffect, Fragment } from 'react';
+import { toast } from 'react-toastify';
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Input } from '@codegouvfr/react-dsfr/Input';
@@ -95,7 +96,9 @@ export default function AdminApiKey() {
     API.post({
       path: `admin/api-key/${params.apiKeyId}`,
       body,
-    }).then(() => {
+    }).then((saveRes) => {
+      if (saveRes.ok) toast.success('Clé API mise à jour', { toastId: 'api-key-saved' });
+      else alert(saveRes.error);
       loadData(params.apiKeyId!)
         .then((res) => {
           if (res.ok && res.data) {

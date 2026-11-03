@@ -8,6 +8,7 @@ import {
   User,
 } from '@prisma/client';
 import prisma from '~/prisma';
+import { IS_DEV_OR_TEST } from '~/config';
 import { carcasseForApiSelect, CarcasseGetForApi } from '~/types/carcasse';
 import { feiForApiSelect, FeiGetForApi } from '~/types/fei';
 import { RequestWithApiKey } from '~/types/request';
@@ -277,7 +278,8 @@ export async function sendWebhook(
     if (userApproval.status !== ApiKeyApprovalStatus.APPROVED) continue;
     const apiKey = userApproval.ApiKey;
     if (!apiKey.webhook_url) continue;
-    if (!apiKey.webhook_url.startsWith('https://')) continue;
+    // en dev, le bac à sable de l'API reçoit les webhooks en http://localhost
+    if (!apiKey.webhook_url.startsWith('https://') && !IS_DEV_OR_TEST) continue;
     let fei: FeiGetForApi | null = null;
     let carcasses: CarcasseGetForApi[] = [];
     let carcassesFei: FeiGetForApi | null = null;

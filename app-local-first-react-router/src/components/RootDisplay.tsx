@@ -1,4 +1,5 @@
 import { Footer } from '@codegouvfr/react-dsfr/Footer';
+import { useIsEmbedded } from '@app/utils/use-is-embedded';
 import { Header, type HeaderProps } from '@codegouvfr/react-dsfr/Header';
 import { type MainNavigationProps } from '@codegouvfr/react-dsfr/MainNavigation';
 import { clearCache } from '@app/services/indexed-db';
@@ -7,7 +8,7 @@ import SearchInput from '@app/components/SearchInput';
 import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
 import { useRef, useState } from 'react';
 import API from '@app/services/api';
-import { useLocation, useSearchParams } from 'react-router';
+import { useLocation } from 'react-router';
 import { getUserOnboardingRoute } from '@app/utils/user-onboarded.client';
 import { disconnect } from '@app/utils/disconnect';
 
@@ -28,10 +29,9 @@ export default function RootDisplay({
   id: string;
   contactLink?: string;
 }) {
-  const [searchParams] = useSearchParams();
   const location = useLocation();
   const isInApp = location.pathname.startsWith('/app');
-  const embedded = searchParams.get('embedded') === 'true';
+  const embedded = useIsEmbedded();
   const user = useMostFreshUser('RootDisplay ' + id);
   const isOnline = useIsOnline();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -134,7 +134,7 @@ export default function RootDisplay({
         className="[&_.fr-header\\_\\_navbar_.fr-btn--search]:hidden [&_.fr-header\\_\\_service-title]:flex [&_.fr-header\\_\\_service-title]:items-end"
         navigation={embedded ? undefined : navigation}
         allowEmptySearch={false}
-        renderSearchInput={RenderedSearchInput}
+        renderSearchInput={embedded ? undefined : RenderedSearchInput}
         quickAccessItems={embedded ? undefined : quickAccessItems}
         operatorLogo={{
           alt: 'Logo de Zacharie - un bois de cerf bland sur fond bleu avec liseré rouge',

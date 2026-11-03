@@ -98,6 +98,20 @@ const config: PlaywrightTestConfig = {
         VITE_TEST_PLAYWRIGHT: 'true',
       },
     },
+    {
+      // bac à sable de l'API (api-playground) : application tierce qui utilise une clé API Zacharie
+      command: 'npm run dev-test --prefix ../api-playground',
+      url: 'http://localhost:3292/connexion',
+      timeout: 120 * 1000,
+      reuseExistingServer: true, // FALSE FOR DEBUG
+      stdout: 'ignore', // PIPE FOR DEBUG
+      stderr: 'ignore', // PIPE FOR DEBUG
+      env: {
+        DATABASE_URL: 'postgres://postgres:postgres@localhost:5432/zacharie-api-playground-test',
+        ZACHARIE_API_URL: 'http://localhost:3291',
+        ZACHARIE_APP_URL: 'http://localhost:3290',
+      },
+    },
   ],
 };
 

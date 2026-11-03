@@ -11,6 +11,7 @@ import { ApiKeyApprovalStatus } from '@prisma/client';
 
 export default function AdminApiKeys() {
   const [apiKeys, setApiKeys] = useState<NonNullable<AdminApiKeysResponse['data']['apiKeys']>>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const tabs: TabsProps['tabs'] = [
     {
       tabId: 'all',
@@ -42,10 +43,11 @@ export default function AdminApiKeys() {
         if (res.ok) {
           setApiKeys(res.data.apiKeys);
         }
-      });
+      })
+      .finally(() => setIsLoading(false));
   }, []);
 
-  if (!apiKeys?.length) {
+  if (isLoading) {
     return <Chargement />;
   }
 

@@ -1,0 +1,45 @@
+@import '@gouvfr/dsfr/dist/dsfr.min.css';
+
+.playground-banner {
+  background: #ffe552;
+  color: #161616;
+  font-weight: 700;
+  text-align: center;
+  padding: 0.5rem 1rem;
+}
+
+.zacharie-iframe {
+  width: 100%;
+  height: 80vh;
+  border: 2px dashed #000091;
+}
+
+.json-block {
+  max-height: 30rem;
+  overflow: auto;
+  background: #f6f6f6;
+  padding: 1rem;
+  font-size: 0.8rem;
+}
+
+/* le DSFR aligne les champs d'un fieldset sur leur dernière ligne de base :
+   un input date/time et un input texte n'ont pas la même, d'où un décalage vertical */
+.fr-fieldset {
+  align-items: flex-start;
+}
+
+/* une ligne par carcasse : champs et bouton « Retirer » alignés en bas */
+.carcasse-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 1rem;
+}
+
+.carcasse-row__field {
+  flex: 1 1 14rem;
+}
+
+.carcasse-row__number {
+  flex: 0 0 10rem;
+}
