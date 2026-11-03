@@ -5,9 +5,10 @@
   "scripts": {
     "dev": "vite dev --port 3236",
     "build": "vite build",
-    "start": "srvx --prod -s ../client dist/server/server.js",
+    "start": "NODE_ENV=production PORT=8080 node ./server-app.js",
     "typecheck": "tsc --noEmit",
-    "dev-test": "vite dev --port 3292"
+    "dev-test": "vite dev --port 3292",
+    "start-local": "NODE_ENV=production PORT=3236 node ./server-app.js"
   },
   "prettier": {
     "singleQuote": true,
@@ -30,10 +31,11 @@
     "@gouvfr/dsfr": "~1.14.4",
     "@tanstack/react-router": "^1.170.46",
     "@tanstack/react-start": "^1.169.4",
+    "compression": "^1.8.2",
+    "express": "^4.22.3",
     "postgres": "^3.4.9",
     "react": "^19.3.1",
-    "react-dom": "^19.3.1",
-    "srvx": "^1.0.8"
+    "react-dom": "^19.3.1"
   },
   "engines": {
     "node": ">=22"

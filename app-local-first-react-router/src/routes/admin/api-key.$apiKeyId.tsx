@@ -1,5 +1,6 @@
 import { useState, type RefObject, useRef, useEffect, Fragment } from 'react';
 import { toast } from 'react-toastify';
+import { bacASableUrl } from '@app/utils/bac-a-sable-url';
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Input } from '@codegouvfr/react-dsfr/Input';
@@ -34,6 +35,7 @@ const initialState: State = {
     public_key: '',
     description: '',
     webhook_url: '',
+    frame_ancestors: [],
     active: false,
     expires_at: null,
     last_used_at: null,
@@ -73,8 +75,15 @@ export default function AdminApiKey() {
     const name = formData.get(Prisma.ApiKeyScalarFieldEnum.name);
     const active = formData.get(Prisma.ApiKeyScalarFieldEnum.active);
     const webhook_url = formData.get(Prisma.ApiKeyScalarFieldEnum.webhook_url);
+    const frame_ancestors = formData.get(Prisma.ApiKeyScalarFieldEnum.frame_ancestors) as string;
 
-    const body: Prisma.ApiKeyUncheckedUpdateInput = {};
+    const body: Prisma.ApiKeyUncheckedUpdateInput = {
+      // une origine par ligne ; un champ vide retire toutes les origines
+      [Prisma.ApiKeyScalarFieldEnum.frame_ancestors]: frame_ancestors
+        .split('\n')
+        .map((origin) => origin.trim())
+        .filter(Boolean),
+    };
 
     if (scopes.length) {
       body[Prisma.ApiKeyScalarFieldEnum.scopes] = scopes.map((scope) => scope as ApiKeyScope);
@@ -225,6 +234,18 @@ export default function AdminApiKey() {
                 </a>
               )}
               .
+              {!apiKey.dedicated_to_entity_id && bacASableUrl && (
+                <>
+                  <br />
+                  <a
+                    href={bacASableUrl}
+                    target="_blank"
+                  >
+                    Tester cette clé dans le bac à sable de l'API
+                  </a>
+                  .
+                </>
+              )}
             </CallOut>
             <Tabs
               selectedTabId={selectedTabId}
@@ -300,6 +321,18 @@ export default function AdminApiKey() {
                       name: Prisma.ApiKeyScalarFieldEnum.webhook_url,
                       autoComplete: 'off',
                       defaultValue: apiKey.webhook_url ?? '',
+                    }}
+                  />
+                  <Input
+                    label="Origines autorisées à intégrer Zacharie (iframe)"
+                    hintText="Une origine par ligne, sans chemin (ex. https://www.exemple.fr). Ces sites peuvent afficher Zacharie dans une iframe (avec ?embedded=true)."
+                    textArea
+                    nativeTextAreaProps={{
+                      id: Prisma.ApiKeyScalarFieldEnum.frame_ancestors,
+                      name: Prisma.ApiKeyScalarFieldEnum.frame_ancestors,
+                      autoComplete: 'off',
+                      rows: 3,
+                      defaultValue: apiKey.frame_ancestors.join('\n'),
                     }}
                   />
                   <Checkbox

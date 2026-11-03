@@ -1,7 +1,7 @@
 import postgres from 'postgres';
 import { DATABASE_URL } from './config';
 
-export const sql = postgres(DATABASE_URL);
+export const sql = postgres(DATABASE_URL, { onnotice: () => {} });
 
 export type PlaygroundUser = {
   id: string;

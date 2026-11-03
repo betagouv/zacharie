@@ -17,7 +17,7 @@ La table `users` est créée (ou complétée) au premier appel.
 
 ## Staging
 
-- `npm run build && npm start` (`PORT` pour le port d'écoute).
+- `npm run build && npm start` (`node ./server-app.js`, port 8080), comme l'app Zacharie.
 - Variables : `DATABASE_URL`, `ZACHARIE_API_URL`, `ZACHARIE_APP_URL`, `SESSION_SECRET`.
-- Côté app Zacharie staging : `FRAME_ANCESTORS_EXTRA=https://zacharie-api-playground.incubateur.net`
-  pour autoriser l'iframe.
+- Côté admin Zacharie staging, sur la clé API : origine iframe `https://api-playground.zacharie.incubateur.net`
+  et URL de webhook `https://api-playground.zacharie.incubateur.net/api/webhook`.
