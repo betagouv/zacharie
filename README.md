@@ -58,7 +58,7 @@ Les modifications sont appliquées localement d'abord (`is_synced = false`), pui
 
 ## Prérequis
 
-- **Node.js** >= 20
+- **Node.js** >= 26
 - **PostgreSQL**
 - **npm**
 
