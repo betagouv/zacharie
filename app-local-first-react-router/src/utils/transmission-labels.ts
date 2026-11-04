@@ -149,7 +149,7 @@ export function getCurrentStepLabelForCollecteurPro(
   if (simpleStatus === 'Clôturée') return 'Carcasses traitées';
   if (transmission.current_owner_role === 'COLLECTEUR_PRO') {
     if (transmission.next_owner_role === 'ETG') {
-      return 'Transport vers un établissement de traitement';
+      return 'Fiche envoyée, pas encore prise en charge';
     }
     return 'Transport';
   }
@@ -162,7 +162,6 @@ export function getCurrentStepLabelForCollecteurPro(
 export function getNextStepLabel(currentStepLabel: TransmissionStep): TransmissionNextStep {
   switch (currentStepLabel) {
     case 'Transport':
-    case 'Transport vers un établissement de traitement':
     case 'Transport vers un autre établissement de traitement':
       return 'Réception par un établissement de traitement';
     case 'Information manquante':
