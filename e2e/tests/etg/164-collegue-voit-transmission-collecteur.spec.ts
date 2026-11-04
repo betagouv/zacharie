@@ -56,7 +56,7 @@ test('Un collègue voit la prise en charge, le refus et la transmission à un co
 
   // la carcasse refusée par Thomas est visible
   await expect(page.getByRole('button', { name: /Daim N° MM-001-002 Mise à/ })).toBeVisible();
-  await expect(page.getByText('Refusé par ETG 1')).toBeVisible();
+  await expect(page.getByText('Refusée par ETG 1')).toBeVisible();
 
   // la transmission faite par Thomas est visible
   await expect(page.getByText('Sélection du prochain destinataire')).toBeVisible();
