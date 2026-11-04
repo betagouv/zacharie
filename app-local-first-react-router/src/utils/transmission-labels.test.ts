@@ -191,6 +191,36 @@ describe('getCurrentStepLabelForEtg', () => {
     ).toBe('Fiche reçue, pas encore prise en charge');
   });
 
+  it('owned by my ETG, sent to another ETG → fiche envoyée, pas encore prise en charge', () => {
+    expect(
+      getCurrentStepLabelForEtg(
+        'En cours',
+        t({
+          current_owner_role: 'ETG',
+          current_owner_entity_id: 'etg-mine',
+          next_owner_role: 'ETG',
+          next_owner_entity_id: 'etg-other',
+        }),
+        working('etg-mine')
+      )
+    ).toBe('Fiche envoyée, pas encore prise en charge');
+  });
+
+  it('owned by my ETG, sent to a collecteur → fiche envoyée, pas encore prise en charge', () => {
+    expect(
+      getCurrentStepLabelForEtg(
+        'En cours',
+        t({
+          current_owner_role: 'ETG',
+          current_owner_entity_id: 'etg-mine',
+          next_owner_role: FeiOwnerRole.COLLECTEUR_PRO,
+          next_owner_entity_id: 'collecteur-other',
+        }),
+        working('etg-mine')
+      )
+    ).toBe('Fiche envoyée, pas encore prise en charge');
+  });
+
   it("owned by one of my ETGs (no onward ETG transfer) → prise en charge par l'atelier", () => {
     expect(
       getCurrentStepLabelForEtg(

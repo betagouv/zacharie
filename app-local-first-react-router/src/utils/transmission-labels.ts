@@ -114,13 +114,21 @@ export function getCurrentStepLabelForEtg(
   }
   if (transmission.svi_assigned_at) return 'Inspection par le SVI' satisfies TransmissionStepForEtg;
   if (transmission.current_owner_role === 'ETG') {
-    if (transmission.next_owner_role === 'ETG') {
-      if (!entitiesIdsWorkingDirectlyFor[transmission.next_owner_entity_id!]) {
-        return 'Transport vers un autre établissement de traitement' satisfies TransmissionStepForEtg;
-      }
+    const currentOwnerIsMine = !!entitiesIdsWorkingDirectlyFor[transmission.current_owner_entity_id!];
+    if (
+      transmission.next_owner_role === 'ETG' &&
+      entitiesIdsWorkingDirectlyFor[transmission.next_owner_entity_id!]
+    ) {
       return 'Fiche reçue, pas encore prise en charge' satisfies TransmissionStepForEtg;
     }
-    if (entitiesIdsWorkingDirectlyFor[transmission.current_owner_entity_id!]) {
+    // mon ETG a transmis la fiche (à un collecteur ou à un autre ETG), pas encore prise en charge
+    if (currentOwnerIsMine && transmission.next_owner_entity_id && transmission.next_owner_role !== 'SVI') {
+      return 'Fiche envoyée, pas encore prise en charge' satisfies TransmissionStepForEtg;
+    }
+    if (transmission.next_owner_role === 'ETG') {
+      return 'Transport vers un autre établissement de traitement' satisfies TransmissionStepForEtg;
+    }
+    if (currentOwnerIsMine) {
       return "Prise en charge par l'atelier" satisfies TransmissionStepForEtg;
     }
     return 'Prise en charge par un autre atelier' satisfies TransmissionStepForEtg;
