@@ -44,6 +44,7 @@ router.get(
       if (zacharie_compatible) where.zacharie_compatible = zacharie_compatible === 'true';
       if (search) {
         where.OR = [
+          { id: { contains: search, mode: 'insensitive' } },
           { nom_d_usage: { contains: search, mode: 'insensitive' } },
           { raison_sociale: { contains: search, mode: 'insensitive' } },
           { numero_ddecpp: { contains: search, mode: 'insensitive' } },

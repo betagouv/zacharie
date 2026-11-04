@@ -257,6 +257,7 @@ export default function AdminUsers() {
       map.set(
         user.id,
         [
+          user.id,
           user.prenom,
           user.nom_de_famille,
           user.email,
@@ -433,7 +434,7 @@ export default function AdminUsers() {
             />
             <input
               type="search"
-              placeholder="Nom, email, tél, CFEI..."
+              placeholder="Nom, email, tél, CFEI, id..."
               autoComplete="off"
               data-1p-ignore
               data-lpignore="true"

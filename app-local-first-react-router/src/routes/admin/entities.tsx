@@ -102,7 +102,7 @@ export default function AdminEntites() {
             />
             <input
               type="search"
-              placeholder="Nom, DDECPP, SIRET, adresse..."
+              placeholder="Nom, DDECPP, SIRET, adresse, id..."
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               className="w-full rounded border border-gray-300 py-2 pr-3 pl-10 text-sm transition-colors outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
