@@ -9,8 +9,6 @@ import { TrichineStatutLogistiqueFTP, type TrichineHistoriqueStatut } from '@pri
 import Chargement from '@app/components/Chargement';
 import LarvePhotos from '@app/components/laboratoire/LarvePhotos';
 import PoolCard, {
-  refusModal,
-  RefusModalContent,
   resultatModal,
   ResultatModalContent,
   retraitModal,
@@ -56,7 +54,6 @@ export default function LaboratoireFTP() {
   const [isLoading, setIsLoading] = useState(true);
   const [dateReception, setDateReception] = useState(dayjs().format('YYYY-MM-DD'));
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [refusPool, setRefusPool] = useState<LaboPool | null>(null);
   const [resultatPool, setResultatPool] = useState<LaboPool | null>(null);
   const [retrait, setRetrait] = useState<RetraitEchantillon | null>(null);
   const [resultatMode, setResultatMode] = useState<ResultatMode>('saisie');
@@ -320,10 +317,6 @@ export default function LaboratoireFTP() {
           saisieActive={
             !envoyee && !aReceptionner && ftp.statut_logistique !== TrichineStatutLogistiqueFTP.BROUILLON
           }
-          onRefuser={() => {
-            setRefusPool(pool);
-            refusModal.open();
-          }}
           onSaisirResultat={() => {
             setResultatPool(pool);
             setResultatMode('saisie');
@@ -347,11 +340,6 @@ export default function LaboratoireFTP() {
         pool={resultatPool}
         isLnr={isLnr}
         mode={resultatMode}
-        onDone={refresh}
-      />
-
-      <RefusModalContent
-        pool={refusPool}
         onDone={refresh}
       />
 

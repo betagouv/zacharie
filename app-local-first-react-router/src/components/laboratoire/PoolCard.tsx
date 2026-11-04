@@ -4,7 +4,7 @@ import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import { Badge } from '@codegouvfr/react-dsfr/Badge';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Input } from '@codegouvfr/react-dsfr/Input';
-import { Select } from '@codegouvfr/react-dsfr/Select';
+import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import { toast } from 'react-toastify';
 import dayjs from 'dayjs';
@@ -44,7 +44,6 @@ import {
  * Une fiche porte plusieurs pools : la carte se lit d'un coup d'œil (référence, statut, résultat),
  * le détail des échantillons se déplie à la demande et la saisie s'ouvre en modale.
  */
-export const refusModal = createModal({ isOpenedByDefault: false, id: 'labo-refus-pool-modal' });
 export const resultatModal = createModal({ isOpenedByDefault: false, id: 'labo-resultat-pool-modal' });
 export const retraitModal = createModal({ isOpenedByDefault: false, id: 'labo-retrait-echantillon-modal' });
 
@@ -79,7 +78,6 @@ export default function PoolCard({
   isLnr,
   confirmation,
   saisieActive,
-  onRefuser,
   onSaisirResultat,
   onCorrigerResultat,
   onRetirerEchantillon,
@@ -90,7 +88,6 @@ export default function PoolCard({
   isLnr: boolean;
   confirmation: PoolConfirmation | null;
   saisieActive: boolean;
-  onRefuser: () => void;
   onSaisirResultat: () => void;
   onCorrigerResultat: () => void;
   onRetirerEchantillon: (echantillon: LaboEchantillon) => void;
@@ -230,21 +227,12 @@ export default function PoolCard({
       )}
 
       {peutSaisir && (
-        <div className="flex flex-wrap gap-2">
-          <Button
-            type="button"
-            onClick={onSaisirResultat}
-          >
-            {isLnr ? 'Saisir le résultat de confirmation' : 'Saisir le résultat'}
-          </Button>
-          <Button
-            type="button"
-            priority="secondary"
-            onClick={onRefuser}
-          >
-            Refuser ce pool
-          </Button>
-        </div>
+        <Button
+          type="button"
+          onClick={onSaisirResultat}
+        >
+          {isLnr ? 'Saisir le résultat de confirmation' : 'Saisir le résultat'}
+        </Button>
       )}
 
       {peutCorriger && (
@@ -282,13 +270,14 @@ export function ResultatModalContent({
   const [parasite, setParasite] = useState('');
   const [nombreLarves, setNombreLarves] = useState('');
   const [dateDebut, setDateDebut] = useState('');
-  const [dateFin, setDateFin] = useState(dayjs().format('YYYY-MM-DD'));
+  const [dateFin, setDateFin] = useState('');
   const [referenceLabo, setReferenceLabo] = useState('');
   const [commentaire, setCommentaire] = useState('');
   const [dateEnvoiLnr, setDateEnvoiLnr] = useState(dayjs().format('YYYY-MM-DD'));
   const [modeTransportLnr, setModeTransportLnr] = useState('');
   const [conditionsConservationLnr, setConditionsConservationLnr] = useState('');
   const [raison, setRaison] = useState('');
+  const [raisonRefus, setRaisonRefus] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   // Sur un non négatif, la modale reste ouverte pour guider l'envoi au LNR
   const [ftpConfirmation, setFtpConfirmation] = useState<FtpConfirmationCreee | null>(null);
@@ -307,13 +296,14 @@ export function ResultatModalContent({
     setParasite('');
     setNombreLarves('');
     setDateDebut('');
-    setDateFin(dayjs().format('YYYY-MM-DD'));
+    setDateFin('');
     setReferenceLabo('');
     setCommentaire('');
     setDateEnvoiLnr(dayjs().format('YYYY-MM-DD'));
     setModeTransportLnr('');
     setConditionsConservationLnr('');
     setRaison('');
+    setRaisonRefus('');
   }, [pool?.id]);
   // Pré-remplit avec la référence déjà posée, qui peut arriver après l'ouverture : sans écraser
   // ce que le laboratoire a commencé à saisir
@@ -322,7 +312,10 @@ export function ResultatModalContent({
   }, [pool?.id, maReference]);
 
   const correction = mode === 'correction';
+  // Analyse impossible : un résultat comme un autre pour le laboratoire, enregistré par la route de refus
   const options = isLnr ? LNR_RESULTS : LVD_RESULTS;
+  const choix = correction ? options : [...options, TrichineResultatAnalyse.ANALYSE_IMPOSSIBLE];
+  const analyseImpossible = resultat === TrichineResultatAnalyse.ANALYSE_IMPOSSIBLE;
   const parasiteRequis = resultat === TrichineResultatAnalyse.NON_NEGATIF;
   const larvesSaisissables = !!resultat && RESULTATS_AVEC_LARVES.includes(resultat);
   const nombreLarvesInvalide =
@@ -332,6 +325,11 @@ export function ResultatModalContent({
   const versLnr = resultat === TrichineResultatAnalyse.DOUTEUX;
   // La FTP de confirmation part au LNR avec ce qu'il doit savoir de l'échantillon
   const envoiLnrIncomplet = versLnr && (!nombreLarves || !conditionsConservationLnr.trim());
+  const aujourdhui = dayjs().format('YYYY-MM-DD');
+  const dateFuture = (date: string) => !!date && date > aujourdhui;
+  const datesInvalides =
+    !analyseImpossible &&
+    (dateFuture(dateDebut) || dateFuture(dateFin) || (!!dateDebut && !!dateFin && dateDebut > dateFin));
   const reference = pool?.reference_pool ?? '';
 
   if (ftpConfirmation) {
@@ -379,8 +377,29 @@ export function ResultatModalContent({
     );
   }
 
+  const enregistrerAnalyseImpossible = () => {
+    if (!pool) return;
+    setIsSubmitting(true);
+    refuserPool(pool.id, raisonRefus.trim())
+      .then((response) => {
+        if (response.ok) {
+          onDone();
+          toast.success('Analyse impossible enregistrée, l’émetteur a été notifié');
+          resultatModal.close();
+        } else {
+          toast.error(response.error || 'Une erreur est survenue');
+        }
+      })
+      .catch(() => toast.error('Une erreur est survenue'))
+      .finally(() => setIsSubmitting(false));
+  };
+
   const enregistrer = () => {
     if (!pool || !resultat) return;
+    if (analyseImpossible) {
+      enregistrerAnalyseImpossible();
+      return;
+    }
     setIsSubmitting(true);
     const payload = {
       resultat_analyse: resultat,
@@ -450,44 +469,78 @@ export function ResultatModalContent({
         disabled:
           !pool ||
           !resultat ||
+          (analyseImpossible && !raisonRefus.trim()) ||
           (parasiteRequis && !parasite.trim()) ||
           nombreLarvesInvalide ||
           envoiLnrIncomplet ||
+          datesInvalides ||
           (correction && !raison.trim()) ||
           isSubmitting,
         onClick: enregistrer,
       }}
     >
+      <p className="fr-text--sm fr-mb-2w text-gray-600">
+        Sauf mention contraire, tous les champs sont requis.
+      </p>
       {correction && (
+        <>
+          <Alert
+            severity="info"
+            small
+            className="fr-mb-2w"
+            description={`Résultat actuel : ${
+              pool?.resultat_analyse ? resultatAnalyseLabels[pool.resultat_analyse] : '—'
+            }. La correction est refusée si le service d'inspection a déjà statué sur une carcasse du pool.`}
+          />
+          <Input
+            label="Raison de la correction"
+            textArea
+            nativeTextAreaProps={{
+              rows: 2,
+              value: raison,
+              onChange: (event) => setRaison(event.target.value),
+            }}
+          />
+        </>
+      )}
+      <RadioButtons
+        legend="Résultat d'analyse"
+        options={choix.map((option) => ({
+          label: resultatAnalyseLabels[option],
+          hintText:
+            option === TrichineResultatAnalyse.ANALYSE_IMPOSSIBLE
+              ? 'L’émetteur sera invité à réaliser de nouveaux prélèvements'
+              : undefined,
+          nativeInputProps: {
+            value: option,
+            checked: resultat === option,
+            onChange: () => setResultat(option),
+          },
+        }))}
+      />
+      {versLnr && (
         <Alert
-          severity="info"
+          severity="warning"
           small
-          className="fr-mb-2w"
-          description={`Résultat actuel : ${
-            pool?.resultat_analyse ? resultatAnalyseLabels[pool.resultat_analyse] : '—'
-          }. La correction est refusée si le service d'inspection a déjà statué sur une carcasse du pool.`}
+          className="fr-mb-3w"
+          description="Ce pool va partir au LNR pour confirmation : une fiche de transmission est créée et adressée au laboratoire national de référence, averti par email. L’émetteur du pool est averti du résultat non négatif."
         />
       )}
-      <Select
-        label="Résultat d'analyse"
-        nativeSelectProps={{
-          value: resultat,
-          onChange: (event) => setResultat(event.target.value as TrichineResultatAnalyse),
-        }}
-      >
-        <option value="">Sélectionnez un résultat</option>
-        {options.map((option) => (
-          <option
-            key={option}
-            value={option}
-          >
-            {resultatAnalyseLabels[option]}
-          </option>
-        ))}
-      </Select>
+      {analyseImpossible && (
+        <Input
+          label="Raison de l’analyse impossible"
+          hintText="Transmise à l’émetteur"
+          textArea
+          nativeTextAreaProps={{
+            rows: 2,
+            value: raisonRefus,
+            onChange: (event) => setRaisonRefus(event.target.value),
+          }}
+        />
+      )}
       {parasiteRequis && (
         <Input
-          label="Parasite identifié (obligatoire)"
+          label="Parasite identifié"
           nativeInputProps={{
             type: 'text',
             value: parasite,
@@ -497,7 +550,7 @@ export function ResultatModalContent({
       )}
       {larvesSaisissables && (
         <Input
-          label={`Nombre de larves découvertes dans le pool (${versLnr ? 'obligatoire' : 'optionnel'})`}
+          label={`Nombre de larves découvertes dans le pool${versLnr ? '' : ' (optionnel)'}`}
           hintText="Visible uniquement par les laboratoires"
           state={nombreLarvesInvalide ? 'error' : 'default'}
           stateRelatedMessage="Nombre entier supérieur à 0 attendu"
@@ -508,55 +561,6 @@ export function ResultatModalContent({
             step: 1,
             value: nombreLarves,
             onChange: (event) => setNombreLarves(event.target.value),
-          }}
-        />
-      )}
-      <div className="flex flex-wrap gap-x-4">
-        <Input
-          label="Début d'analyse"
-          nativeInputProps={{
-            type: 'date',
-            value: dateDebut,
-            onChange: (event) => setDateDebut(event.target.value),
-          }}
-        />
-        <Input
-          label="Fin d'analyse"
-          nativeInputProps={{
-            type: 'date',
-            value: dateFin,
-            onChange: (event) => setDateFin(event.target.value),
-          }}
-        />
-        {/* Une correction intervient analyses terminées : la référence est alors figée */}
-        {!correction && (
-          <Input
-            label="Ma référence interne (optionnel)"
-            className="grow"
-            nativeInputProps={{
-              type: 'text',
-              value: referenceLabo,
-              onChange: (event) => setReferenceLabo(event.target.value),
-            }}
-          />
-        )}
-      </div>
-      <Input
-        label="Commentaire (optionnel)"
-        textArea
-        nativeTextAreaProps={{
-          rows: 2,
-          value: commentaire,
-          onChange: (event) => setCommentaire(event.target.value),
-        }}
-      />
-      {correction && (
-        <Input
-          label="Raison de la correction (obligatoire)"
-          textArea
-          nativeTextAreaProps={{
-            value: raison,
-            onChange: (event) => setRaison(event.target.value),
           }}
         />
       )}
@@ -583,7 +587,7 @@ export function ResultatModalContent({
             }}
           />
           <Input
-            label="Conditions de conservation de l'élément parasitaire (obligatoire)"
+            label="Conditions de conservation de l'élément parasitaire"
             hintText="Ex. : larves dans l'éthanol à 70 %, sous froid positif"
             textArea
             nativeTextAreaProps={{
@@ -594,73 +598,60 @@ export function ResultatModalContent({
           />
         </fieldset>
       )}
-      {versLnr && (
-        <Alert
-          severity="warning"
-          className="fr-mb-2w"
-          title="Ce pool va partir au LNR pour confirmation"
-          description={
-            <div className="fr-mb-0">
-              <div>
-                Une nouvelle fiche de transmission est créée, adressée au laboratoire national de référence
-                (LNR), qui est averti par email.
-              </div>
-              <div>L’émetteur du pool est averti du résultat non négatif.</div>
-            </div>
-          }
-        />
+      {!!resultat && !analyseImpossible && (
+        <>
+          <div className="flex flex-wrap gap-x-4">
+            <Input
+              label="Début d'analyse (optionnel)"
+              state={dateFuture(dateDebut) ? 'error' : 'default'}
+              stateRelatedMessage="Date dans le futur"
+              nativeInputProps={{
+                type: 'date',
+                max: aujourdhui,
+                value: dateDebut,
+                onChange: (event) => setDateDebut(event.target.value),
+              }}
+            />
+            <Input
+              label="Fin d'analyse (optionnel)"
+              state={
+                dateFuture(dateFin) || (!!dateDebut && !!dateFin && dateDebut > dateFin) ? 'error' : 'default'
+              }
+              stateRelatedMessage={
+                dateFuture(dateFin) ? 'Date dans le futur' : 'La fin doit suivre le début d’analyse'
+              }
+              nativeInputProps={{
+                type: 'date',
+                min: dateDebut || undefined,
+                max: aujourdhui,
+                value: dateFin,
+                onChange: (event) => setDateFin(event.target.value),
+              }}
+            />
+          </div>
+          <Input
+            label="Commentaire (optionnel)"
+            textArea
+            nativeTextAreaProps={{
+              rows: 2,
+              value: commentaire,
+              onChange: (event) => setCommentaire(event.target.value),
+            }}
+          />
+          {/* Une correction intervient analyses terminées : la référence est alors figée */}
+          {!correction && (
+            <Input
+              label="Ma référence interne (optionnel)"
+              nativeInputProps={{
+                type: 'text',
+                value: referenceLabo,
+                onChange: (event) => setReferenceLabo(event.target.value),
+              }}
+            />
+          )}
+        </>
       )}
     </resultatModal.Component>
-  );
-}
-
-export function RefusModalContent({ pool, onDone }: { pool: LaboPool | null; onDone: () => void }) {
-  const [raison, setRaison] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Évite qu'une raison saisie pour un pool ne reste pré-remplie pour le suivant
-  useEffect(() => {
-    setRaison('');
-  }, [pool?.id]);
-
-  return (
-    <refusModal.Component title={`Refuser le pool ${pool?.reference_pool ?? ''}`}>
-      <p className="fr-text--sm">
-        Le pool sera marqué « analyse impossible » et l'émetteur sera invité à réaliser de nouveaux
-        prélèvements.
-      </p>
-      <Input
-        label="Raison du refus (obligatoire)"
-        textArea
-        nativeTextAreaProps={{
-          value: raison,
-          onChange: (event) => setRaison(event.target.value),
-        }}
-      />
-      <Button
-        type="button"
-        disabled={isSubmitting || !raison.trim() || !pool}
-        onClick={() => {
-          if (!pool) return;
-          setIsSubmitting(true);
-          refuserPool(pool.id, raison.trim())
-            .then((response) => {
-              if (response.ok) {
-                toast.success('Pool refusé, l’émetteur a été notifié');
-                refusModal.close();
-                setRaison('');
-                onDone();
-              } else {
-                toast.error(response.error || 'Une erreur est survenue');
-              }
-            })
-            .catch(() => toast.error('Une erreur est survenue'))
-            .finally(() => setIsSubmitting(false));
-        }}
-      >
-        Confirmer le refus
-      </Button>
-    </refusModal.Component>
   );
 }
 

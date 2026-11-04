@@ -7,7 +7,8 @@ import { logoutAndConnect } from '../../utils/logout-and-connect';
 // Seed LABORATOIRE_FTP_RECUE : laboratoire@example.fr (Laboratoire 1, LVD) a réceptionné la FTP
 // F-26-SVI01-0001 ; lnr@example.fr travaille pour le LNR. Sur un non négatif, le LVD indique le
 // nombre de larves, la date d'envoi, les modalités de transmission et les conditions de conservation :
-// la fiche de confirmation part d'office au LNR avec ces informations.
+// la fiche de confirmation part d'office au LNR avec ces informations. « Analyse impossible » se choisit
+// dans la même modale que les autres résultats.
 
 // L'espace laboratoire n'est monté que si l'app est construite avec VITE_FEATURE_TRICHINE=true
 test.skip(process.env.VITE_FEATURE_TRICHINE !== 'true', 'Feature trichine désactivée dans ce build');
@@ -36,21 +37,19 @@ test('Le LVD renseigne l’envoi au LNR avec le résultat non négatif, le LNR l
   await carte.getByRole('button', { name: 'Saisir le résultat' }).click();
 
   const modale = page.getByRole('dialog', { name: 'Résultat du pool P-26-SVI01-0002' });
-  await modale
-    .getByLabel("Résultat d'analyse")
-    .selectOption({ label: 'Non négatif — à confirmer par le LNR' });
+  await modale.getByText('Non négatif — à confirmer par le LNR', { exact: true }).click();
 
   const transmettre = modale.getByRole('button', { name: 'Enregistrer et transmettre au LNR' });
   // Nombre de larves et conditions de conservation sont obligatoires
   await expect(transmettre).toBeDisabled();
-  await modale.getByLabel('Nombre de larves découvertes dans le pool (obligatoire)').fill('3');
+  await modale.getByLabel('Nombre de larves découvertes dans le pool', { exact: true }).fill('3');
   await expect(transmettre).toBeDisabled();
 
   await modale.getByLabel("Date d'envoi des échantillons").fill('2026-10-28');
   await modale.getByLabel("Date d'envoi des échantillons").blur();
   await modale.getByLabel('Modalités de transmission (optionnel)').fill('Chronopost, colis isotherme');
   await modale
-    .getByLabel("Conditions de conservation de l'élément parasitaire (obligatoire)")
+    .getByLabel("Conditions de conservation de l'élément parasitaire")
     .fill('Larves dans l’éthanol à 70 %, sous froid positif');
   await transmettre.scrollIntoViewIfNeeded();
   await transmettre.click();
@@ -72,4 +71,46 @@ test('Le LVD renseigne l’envoi au LNR avec le résultat non négatif, le LNR l
   await expect(page.getByText('Chronopost, colis isotherme')).toBeVisible();
   await expect(page.getByText('Larves dans l’éthanol à 70 %, sous froid positif')).toBeVisible();
   await expect(page.getByText('Larves comptées par le laboratoire agréé : 3')).toBeVisible();
+});
+
+test('Le LVD enregistre une analyse impossible depuis la modale de résultat, dates d’analyse contrôlées', async ({
+  page,
+}) => {
+  await connectWith(page, 'laboratoire@example.fr');
+  await expect(page).toHaveURL(/\/app\/laboratoire/);
+  await page.goto('/app/laboratoire/ftp/F-26-SVI01-0001');
+
+  const carte = page
+    .locator('div')
+    .filter({ has: page.getByRole('link', { name: 'P-26-SVI01-0001' }) })
+    .filter({ has: page.getByRole('button', { name: 'Saisir le résultat' }) })
+    .last();
+  await expect(carte.getByRole('button', { name: 'Refuser ce pool' })).toHaveCount(0);
+  await carte.getByRole('button', { name: 'Saisir le résultat' }).scrollIntoViewIfNeeded();
+  await carte.getByRole('button', { name: 'Saisir le résultat' }).click();
+
+  const modale = page.getByRole('dialog', { name: 'Résultat du pool P-26-SVI01-0001' });
+  const enregistrer = modale.getByRole('button', { name: 'Enregistrer le résultat' });
+
+  // Un début d'analyse après la fin bloque l'enregistrement
+  await modale.getByText('Négatif', { exact: true }).click();
+  await modale.getByLabel("Début d'analyse (optionnel)").fill('2026-07-03');
+  await modale.getByLabel("Début d'analyse (optionnel)").blur();
+  await modale.getByLabel("Fin d'analyse (optionnel)").fill('2026-07-02');
+  await modale.getByLabel("Fin d'analyse (optionnel)").blur();
+  await expect(modale.getByText('La fin doit suivre le début d’analyse')).toBeVisible();
+  await expect(enregistrer).toBeDisabled();
+
+  // Analyse impossible : seule la raison est demandée
+  await modale.getByText('Analyse impossible', { exact: true }).click();
+  await expect(modale.getByLabel("Fin d'analyse (optionnel)")).toHaveCount(0);
+  await expect(enregistrer).toBeDisabled();
+  await modale.getByLabel('Raison de l’analyse impossible').fill('Échantillon putréfié');
+  await enregistrer.scrollIntoViewIfNeeded();
+  await enregistrer.click();
+
+  await expect(page.getByText('Analyse impossible enregistrée, l’émetteur a été notifié')).toBeVisible({
+    timeout: 10000,
+  });
+  await expect(page.getByText('Raison du refus : Échantillon putréfié')).toBeVisible({ timeout: 10000 });
 });
