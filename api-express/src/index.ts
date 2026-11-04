@@ -139,38 +139,6 @@ if (IS_STAGING) {
   );
 }
 
-// kube probe
-app.get('/healthz', async (req, res) => {
-  res.send('Hello World');
-});
-
-// security.txt
-app.get('/.well-known/security.txt', (_req, res) => {
-  res.type('text/plain').send(
-    `Contact: mailto:contact@zacharie.beta.gouv.fr
-Preferred-Languages: fr, en
-Expires: 2027-12-31T00:00:00.000Z`
-  );
-});
-
-// hello world
-const now = new Date();
-app.get('/', async (req, res) => {
-  // Log suspicious requests with User-Agent
-  const ip = req.ip || req.connection.remoteAddress;
-  const userAgent = req.headers['user-agent'];
-
-  if (ip?.match(/^(172\.233\.|45\.79\.|172\.104\.|50\.116\.|209\.38\.|66\.228\.)/)) {
-    console.log(`🔍 Linode request from ${ip}: ${userAgent}`);
-  }
-
-  res.send(`Hello World at ${now.toISOString()} version ${packageJson.version}`);
-});
-
-app.get('/config.js', async (req, res) => {
-  res.send({ VERSION });
-});
-
 // Add header with API version to compare with client.
 app.use((_req, res, next) => {
   res.header('X-API-VERSION', VERSION);
@@ -219,6 +187,39 @@ app.use((_req, res, next) => {
   next();
 });
 app.use(cookieParser());
+
+// Montées après helmet : même `/` doit porter les en-têtes de sécurité (c'est l'URL scannée par l'Observatory MDN)
+// kube probe
+app.get('/healthz', async (req, res) => {
+  res.send('Hello World');
+});
+
+// security.txt
+app.get('/.well-known/security.txt', (_req, res) => {
+  res.type('text/plain').send(
+    `Contact: mailto:contact@zacharie.beta.gouv.fr
+Preferred-Languages: fr, en
+Expires: 2027-12-31T00:00:00.000Z`
+  );
+});
+
+// hello world
+const now = new Date();
+app.get('/', async (req, res) => {
+  // Log suspicious requests with User-Agent
+  const ip = req.ip || req.connection.remoteAddress;
+  const userAgent = req.headers['user-agent'];
+
+  if (ip?.match(/^(172\.233\.|45\.79\.|172\.104\.|50\.116\.|209\.38\.|66\.228\.)/)) {
+    console.log(`🔍 Linode request from ${ip}: ${userAgent}`);
+  }
+
+  res.send(`Hello World at ${now.toISOString()} version ${packageJson.version}`);
+});
+
+app.get('/config.js', async (req, res) => {
+  res.send({ VERSION });
+});
 
 // sentry context/user
 // app.use(async (req, res, next) => {
