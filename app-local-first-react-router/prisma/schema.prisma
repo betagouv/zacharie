@@ -1730,6 +1730,7 @@ model TrichineDocumentHistory {
   ajoute_par_user_id String?
   pool_id            String?
   ftp_id             String?
+  echantillon_id     String?
   created_at         DateTime?
   updated_at         DateTime?
   deleted_at         DateTime?

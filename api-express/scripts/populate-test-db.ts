@@ -909,93 +909,36 @@ Christine
       }
       console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (for svi)`);
     }
+    // SVI_SANGLIERS : comme SVI, mais les carcasses de gros gibier sont des sangliers (MM-001-001,
+    // MM-001-002, MM-001-004), sans aucun prélèvement trichine ; les deux laboratoires existent.
+    // Chemin critique du circuit agréé (e2e chains/166-trichine-circuit-agree-negatif).
+    if ((role as string) === 'SVI_SANGLIERS') {
+      await createLaboratoiresTrichine();
+      const fei = await prisma.fei.create({ data: feiTransmittedByEtgToSvi });
+      await prisma.carcasse.createMany({
+        data: getCarcasses(fei, ownershipTransmittedByEtgToSvi).map((carcasse) =>
+          carcasse.type === CarcasseType.GROS_GIBIER ? { ...carcasse, espece: 'Sanglier' } : carcasse
+        ),
+      });
+      await prisma.carcasseIntermediaire.createMany({
+        data: getCarcasses(fei).map((c) => ({
+          fei_numero: fei.numero,
+          numero_bracelet: c.numero_bracelet,
+          zacharie_carcasse_id: c.zacharie_carcasse_id!,
+          intermediaire_id: `${fei.numero}_${'2a8bc866-a709-47d9-aebe-2768fceb2ecb'}_${users.find((u) => u.email === 'etg-1@example.fr')?.id}`,
+          intermediaire_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
+          intermediaire_user_id: users.find((u) => u.email === 'etg-1@example.fr')?.id ?? '',
+          intermediaire_role: FeiOwnerRole.ETG,
+          prise_en_charge_at: dayjs().subtract(2, 'day').toDate(),
+        })),
+      });
+      console.log(`Fei ${fei.numero} created with sangliers to sample (for svi)`);
+    }
     // LABORATOIRE_FTP_RECUE : un LVD a réceptionné la FTP F-26-SVI01-0001 du SVI 1, avec deux pools sans
     // résultat (P-26-SVI01-0001 : MM-001-001 + MM-001-002, P-26-SVI01-0002 : MM-001-004). Import de
     // résultats côté laboratoire (e2e laboratoire/import-resultats).
     if ((role as string) === 'LABORATOIRE_FTP_RECUE') {
-      const laboratoire = await prisma.entity.create({
-        data: {
-          raison_sociale: 'Laboratoire 1',
-          nom_d_usage: 'Laboratoire 1',
-          siret: '12345678901234',
-          type: EntityTypes.LABORATOIRE,
-          is_lnr: false,
-          code_trichine: 'LV01',
-          zacharie_compatible: true,
-          address_ligne_1: '12 rue des analyses',
-          code_postal: '03000',
-          ville: 'Moulins',
-        },
-      });
-      const laborantin = await prisma.user.create({
-        data: {
-          id: await createUserId(),
-          email: 'laboratoire@example.fr',
-          roles: [UserRoles.LABORATOIRE],
-          activated: true,
-          activated_at: dayjs().toDate(),
-          prenom: 'Claire',
-          nom_de_famille: 'Garcia',
-          addresse_ligne_1: '12 rue des analyses',
-          code_postal: '03000',
-          ville: 'Moulins',
-          telephone: '0606060630',
-          onboarded_at: dayjs().toDate(),
-        },
-      });
-      await prisma.password.create({
-        data: { user_id: laborantin.id, password: await hashPassword('secret-secret') },
-      });
-      await prisma.entityAndUserRelations.create({
-        data: {
-          owner_id: laborantin.id,
-          entity_id: laboratoire.id,
-          relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-          status: EntityRelationStatus.ADMIN,
-        },
-      });
-      // LNR : destinataire de la FTP de confirmation générée sur un non négatif
-      const lnr = await prisma.entity.create({
-        data: {
-          raison_sociale: 'LNR Parasites',
-          nom_d_usage: 'LNR Parasites',
-          siret: '12345678901235',
-          type: EntityTypes.LABORATOIRE,
-          is_lnr: true,
-          code_trichine: 'LN01',
-          zacharie_compatible: true,
-          address_ligne_1: '14 rue Pierre et Marie Curie',
-          code_postal: '94700',
-          ville: 'Maisons-Alfort',
-        },
-      });
-      const laborantinLnr = await prisma.user.create({
-        data: {
-          id: await createUserId(),
-          email: 'lnr@example.fr',
-          roles: [UserRoles.LABORATOIRE],
-          activated: true,
-          activated_at: dayjs().toDate(),
-          prenom: 'Louis',
-          nom_de_famille: 'Martin',
-          addresse_ligne_1: '14 rue Pierre et Marie Curie',
-          code_postal: '94700',
-          ville: 'Maisons-Alfort',
-          telephone: '0606060631',
-          onboarded_at: dayjs().toDate(),
-        },
-      });
-      await prisma.password.create({
-        data: { user_id: laborantinLnr.id, password: await hashPassword('secret-secret') },
-      });
-      await prisma.entityAndUserRelations.create({
-        data: {
-          owner_id: laborantinLnr.id,
-          entity_id: lnr.id,
-          relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-          status: EntityRelationStatus.ADMIN,
-        },
-      });
+      const { laboratoire } = await createLaboratoiresTrichine();
 
       const fei = await prisma.fei.create({ data: feiTransmittedByEtgToSvi });
       await prisma.carcasse.createMany({
@@ -1759,6 +1702,95 @@ const feiFederationAinNonTransmise: Prisma.FeiUncheckedCreateInput = {
   created_by_user_id: '0Y545',
   examinateur_initial_user_id: '0Y545',
 };
+
+// Laboratoires de la recherche de trichine : « Laboratoire 1 » (LVD, laboratoire@example.fr) et
+// « LNR Parasites » (LNR, lnr@example.fr), destinataire des FTP de confirmation.
+async function createLaboratoiresTrichine() {
+  const laboratoire = await prisma.entity.create({
+    data: {
+      raison_sociale: 'Laboratoire 1',
+      nom_d_usage: 'Laboratoire 1',
+      siret: '12345678901234',
+      type: EntityTypes.LABORATOIRE,
+      is_lnr: false,
+      code_trichine: 'LV01',
+      zacharie_compatible: true,
+      address_ligne_1: '12 rue des analyses',
+      code_postal: '03000',
+      ville: 'Moulins',
+    },
+  });
+  const laborantin = await prisma.user.create({
+    data: {
+      id: await createUserId(),
+      email: 'laboratoire@example.fr',
+      roles: [UserRoles.LABORATOIRE],
+      activated: true,
+      activated_at: dayjs().toDate(),
+      prenom: 'Claire',
+      nom_de_famille: 'Garcia',
+      addresse_ligne_1: '12 rue des analyses',
+      code_postal: '03000',
+      ville: 'Moulins',
+      telephone: '0606060630',
+      onboarded_at: dayjs().toDate(),
+    },
+  });
+  await prisma.password.create({
+    data: { user_id: laborantin.id, password: await hashPassword('secret-secret') },
+  });
+  await prisma.entityAndUserRelations.create({
+    data: {
+      owner_id: laborantin.id,
+      entity_id: laboratoire.id,
+      relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+      status: EntityRelationStatus.ADMIN,
+    },
+  });
+  // LNR : destinataire de la FTP de confirmation générée sur un non négatif
+  const lnr = await prisma.entity.create({
+    data: {
+      raison_sociale: 'LNR Parasites',
+      nom_d_usage: 'LNR Parasites',
+      siret: '12345678901235',
+      type: EntityTypes.LABORATOIRE,
+      is_lnr: true,
+      code_trichine: 'LN01',
+      zacharie_compatible: true,
+      address_ligne_1: '14 rue Pierre et Marie Curie',
+      code_postal: '94700',
+      ville: 'Maisons-Alfort',
+    },
+  });
+  const laborantinLnr = await prisma.user.create({
+    data: {
+      id: await createUserId(),
+      email: 'lnr@example.fr',
+      roles: [UserRoles.LABORATOIRE],
+      activated: true,
+      activated_at: dayjs().toDate(),
+      prenom: 'Louis',
+      nom_de_famille: 'Martin',
+      addresse_ligne_1: '14 rue Pierre et Marie Curie',
+      code_postal: '94700',
+      ville: 'Maisons-Alfort',
+      telephone: '0606060631',
+      onboarded_at: dayjs().toDate(),
+    },
+  });
+  await prisma.password.create({
+    data: { user_id: laborantinLnr.id, password: await hashPassword('secret-secret') },
+  });
+  await prisma.entityAndUserRelations.create({
+    data: {
+      owner_id: laborantinLnr.id,
+      entity_id: lnr.id,
+      relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+      status: EntityRelationStatus.ADMIN,
+    },
+  });
+  return { laboratoire, lnr };
+}
 
 function getCarcasses(
   fei: Fei,
