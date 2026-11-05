@@ -103,7 +103,10 @@ app.get('/.well-known/assetlinks.json', (req, res) => {
       target: {
         namespace: 'android_app',
         package_name: 'fr.gouv.zacharie.v1',
-        sha256_cert_fingerprints: [process.env.ANDROID_SHA256_CERT_FINGERPRINT],
+        sha256_cert_fingerprints: (process.env.ANDROID_SHA256_CERT_FINGERPRINTS || '')
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean),
       },
     },
   ]);
