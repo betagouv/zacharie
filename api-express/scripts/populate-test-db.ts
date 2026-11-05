@@ -1193,6 +1193,57 @@ Christine
       });
       console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (ETG taken charge)`);
     }
+    // Tableau de bord ETG 1 : une fiche du jour (saison en cours), 3 daims + 1 lot de 10 pigeons.
+    //   - MM-001-001 : acceptée, saisie totale pour balle d'abdomen (motif BPH et disqualifiant)
+    //   - MM-001-002 : refusée par l'ETG
+    //   - MM-001-003 : lot de 10 pigeons, 8 acceptés, 2 saisis par le SVI
+    //   - MM-001-004 : acceptée, acceptée par le SVI
+    if ((role as string) === 'ETG_TABLEAU_DE_BORD') {
+      const etgUserId = users.find((u) => u.email === 'etg-1@example.fr')?.id ?? '';
+      const fei = await prisma.fei.create({
+        data: { ...feiTakenChargeByEtg, numero: 'ZACH-20250707-QZ6E0-235244' },
+      });
+      const today = dayjs().startOf('day').toDate();
+      const svi: Record<string, Partial<Prisma.CarcasseUncheckedCreateInput>> = {
+        'MM-001-001': {
+          svi_carcasse_status: CarcasseStatus.SAISIE_TOTALE,
+          svi_ipm2_lesions_ou_motifs: ["Souillures d'origine digestive liées à une balle d'abdomen"],
+        },
+        'MM-001-002': {
+          svi_carcasse_status: CarcasseStatus.REFUS_ETG_COLLECTEUR,
+          intermediaire_carcasse_refus_motif: 'Carcasse avariée',
+        },
+        'MM-001-003': {
+          svi_carcasse_status: CarcasseStatus.SAISIE_PARTIELLE,
+          svi_ipm2_nombre_animaux: 2,
+          svi_ipm2_lesions_ou_motifs: ['Odeur anormale'],
+        },
+        'MM-001-004': { svi_carcasse_status: CarcasseStatus.ACCEPTE },
+      };
+      const carcasses = getCarcasses(fei, ownershipTakenChargeByEtg).map((c) => ({
+        ...c,
+        date_mise_a_mort: today,
+        ...svi[c.numero_bracelet],
+      }));
+      await prisma.carcasse.createMany({ data: carcasses });
+      await prisma.carcasseIntermediaire.createMany({
+        data: carcasses.map((c) => ({
+          fei_numero: fei.numero,
+          numero_bracelet: c.numero_bracelet,
+          zacharie_carcasse_id: c.zacharie_carcasse_id!,
+          intermediaire_id: `${fei.numero}_${'2a8bc866-a709-47d9-aebe-2768fceb2ecb'}_${etgUserId}`,
+          intermediaire_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
+          intermediaire_user_id: etgUserId,
+          intermediaire_role: FeiOwnerRole.ETG,
+          prise_en_charge_at: dayjs().subtract(1, 'day').toDate(),
+          ...(c.numero_bracelet === 'MM-001-002'
+            ? { refus: 'Carcasse avariée', prise_en_charge: false }
+            : { prise_en_charge: true }),
+          ...(c.numero_bracelet === 'MM-001-003' ? { check_manuel: true, nombre_d_animaux_acceptes: 8 } : {}),
+        })),
+      });
+      console.log(`Fei ${fei.numero} created with ${carcasses.length} carcasses (ETG tableau de bord)`);
+    }
     if ((role as string) === 'COLLECTEUR_TAKEN_CHARGE') {
       const fei = await prisma.fei.create({ data: feiTakenChargeByCollecteur });
       const carcasses = await prisma.carcasse.createMany({
