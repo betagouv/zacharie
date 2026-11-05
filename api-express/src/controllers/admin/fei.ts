@@ -3,7 +3,7 @@ import { catchErrors } from '~/middlewares/errors';
 const router: express.Router = express.Router();
 import prisma from '~/prisma';
 import { Prisma, CarcasseStatus, CarcasseType, FeiOwnerRole, UserRoles } from '@prisma/client';
-import type { User } from '@prisma/client';
+import type { Carcasse, Fei, User } from '@prisma/client';
 import { z } from 'zod';
 import type {
   AdminFeiDestinataire,
@@ -16,6 +16,8 @@ import type {
 import { nextVersion } from '~/utils/sync-version';
 import { getAdminFeiCorrectionsBlocage, getAssociationsDeChasse } from '~/utils/admin-fei-corrections';
 import { setAdminAuditChanges } from '~/middlewares/admin-audit-log';
+import { notifyNextOwnerEntity, notifyNextOwnerUser } from '~/utils/carcasse-side-effects';
+import { capture } from '~/third-parties/sentry';
 import {
   parseList,
   parseDateRange,
@@ -280,7 +282,7 @@ router.get(
 
       const [{ byFei, ownerLabels }, blocages, associationsDeChasse] = await Promise.all([
         getFeisDestinataires([fei.numero]),
-        getAdminFeiCorrectionsBlocage(fei.numero),
+        getAdminFeiCorrectionsBlocage(fei),
         getAssociationsDeChasse(fei.examinateur_initial_user_id),
       ]);
 
@@ -344,6 +346,11 @@ const adminFeiCorrectionsSchema = z.object({
   date_mise_a_mort: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date invalide')
+    // écarte les dates impossibles (2025-02-30, 2025-13-01) que la regex laisse passer
+    .refine((value) => {
+      const date = new Date(value);
+      return !Number.isNaN(date.getTime()) && date.toISOString().startsWith(value);
+    }, 'Date invalide')
     .optional(),
   commune_mise_a_mort: z.string().trim().min(1, 'Commune vide').optional(),
   // l'examinateur ou un autre chasseur (par email), ou une association de chasse de l'examinateur
@@ -354,6 +361,32 @@ const adminFeiCorrectionsSchema = z.object({
     ])
     .optional(),
 });
+
+// La fiche attend son premier détenteur : on prévient le nouveau, et l'ancien qu'elle ne lui est plus
+// attribuée, comme si l'examinateur avait fait le choix dans l'app (c'est lui l'expéditeur affiché).
+async function notifyNouveauPremierDetenteur(carcasseAvant: Carcasse, savedFei: Fei) {
+  const carcasseApres: Carcasse = {
+    ...carcasseAvant,
+    next_owner_user_id: savedFei.premier_detenteur_user_id,
+    next_owner_user_name_cache: savedFei.premier_detenteur_name_cache,
+    next_owner_entity_id: savedFei.premier_detenteur_entity_id,
+    next_owner_entity_name_cache: savedFei.premier_detenteur_entity_id
+      ? savedFei.premier_detenteur_name_cache
+      : null,
+    premier_detenteur_user_id: savedFei.premier_detenteur_user_id,
+    premier_detenteur_entity_id: savedFei.premier_detenteur_entity_id,
+    premier_detenteur_name_cache: savedFei.premier_detenteur_name_cache,
+  };
+  try {
+    if (!savedFei.examinateur_initial_user_id) return;
+    const examinateur = await prisma.user.findUnique({ where: { id: savedFei.examinateur_initial_user_id } });
+    if (!examinateur) return;
+    await notifyNextOwnerUser(carcasseAvant, carcasseApres, examinateur);
+    await notifyNextOwnerEntity(carcasseAvant, carcasseApres, examinateur);
+  } catch (error) {
+    capture(error as Error, { extra: { context: 'admin_fei_corrections', fei_numero: savedFei.numero } });
+  }
+}
 
 // Correction par l'admin des champs de base d'une fiche déjà transmise, que l'examinateur ne peut plus
 // modifier dans l'app. Les champs recopiés sur les carcasses (date, premier détenteur) le sont aussi,
@@ -375,21 +408,26 @@ router.post(
         return;
       }
       const body = result.data;
-      const { blocage } = await getAdminFeiCorrectionsBlocage(numero);
-      if (blocage) {
-        res.status(400).send({ ok: false, data: null, error: blocage });
+      const fei = await prisma.fei.findUnique({ where: { numero } });
+      const { blocage } = await getAdminFeiCorrectionsBlocage(fei);
+      if (!fei || blocage) {
+        res.status(400).send({ ok: false, data: null, error: blocage ?? 'Fiche introuvable' });
         return;
       }
-      const fei = await prisma.fei.findUniqueOrThrow({ where: { numero } });
 
       const feiData: Prisma.FeiUncheckedUpdateInput = {};
       const carcasseUpdates: Array<Prisma.CarcasseUpdateManyArgs> = [];
+      // les champs recopiés de la fiche le sont sur toutes ses carcasses, supprimées comprises, comme
+      // syncCarcasseDates ; l'état de transmission ne concerne que les carcasses encore sur la fiche
+      const toutesLesCarcasses: Prisma.CarcasseWhereInput = { fei_numero: numero };
       const carcassesDeLaFiche: Prisma.CarcasseWhereInput = { fei_numero: numero, deleted_at: null };
+      // détenteur suivant avant correction, pour prévenir le nouveau premier détenteur et l'ancien
+      let carcasseEnAttenteDuPremierDetenteur: Carcasse | null = null;
 
       if (body.date_mise_a_mort) {
         const date_mise_a_mort = new Date(body.date_mise_a_mort);
         feiData.date_mise_a_mort = date_mise_a_mort;
-        carcasseUpdates.push({ where: carcassesDeLaFiche, data: { date_mise_a_mort } });
+        carcasseUpdates.push({ where: toutesLesCarcasses, data: { date_mise_a_mort } });
       }
       if (body.commune_mise_a_mort) {
         feiData.commune_mise_a_mort = body.commune_mise_a_mort;
@@ -432,12 +470,15 @@ router.post(
         feiData.premier_detenteur_entity_id = premierDetenteur.entity_id;
         feiData.premier_detenteur_name_cache = premierDetenteur.name;
         carcasseUpdates.push({
-          where: carcassesDeLaFiche,
+          where: toutesLesCarcasses,
           data: {
             premier_detenteur_user_id: premierDetenteur.user_id,
             premier_detenteur_entity_id: premierDetenteur.entity_id,
             premier_detenteur_name_cache: premierDetenteur.name,
           },
+        });
+        carcasseEnAttenteDuPremierDetenteur = await prisma.carcasse.findFirst({
+          where: { ...carcassesDeLaFiche, next_owner_role: FeiOwnerRole.PREMIER_DETENTEUR },
         });
         // fiche pas encore transmise par le premier détenteur : il est aussi le détenteur suivant ou actuel
         carcasseUpdates.push({
@@ -458,6 +499,14 @@ router.post(
             current_owner_entity_name_cache: premierDetenteur.entity_id ? premierDetenteur.name : null,
           },
         });
+        // fiche déjà transmise par le premier détenteur : il en reste l'expéditeur pour le détenteur suivant
+        carcasseUpdates.push({
+          where: { ...carcassesDeLaFiche, prev_owner_role: FeiOwnerRole.PREMIER_DETENTEUR },
+          data: {
+            prev_owner_user_id: premierDetenteur.user_id,
+            prev_owner_entity_id: premierDetenteur.entity_id,
+          },
+        });
       }
 
       if (Object.keys(feiData).length === 0) {
@@ -474,6 +523,10 @@ router.post(
 
       setAdminAuditChanges(res, fei, savedFei, Object.keys(feiData));
       res.status(200).send({ ok: true, data: null, error: '' });
+
+      if (carcasseEnAttenteDuPremierDetenteur) {
+        await notifyNouveauPremierDetenteur(carcasseEnAttenteDuPremierDetenteur, savedFei);
+      }
     }
   )
 );
@@ -505,12 +558,12 @@ router.post(
         return;
       }
       const body = result.data;
-      const { ajoutCarcasseBlocage } = await getAdminFeiCorrectionsBlocage(numero);
-      if (ajoutCarcasseBlocage) {
-        res.status(400).send({ ok: false, data: null, error: ajoutCarcasseBlocage });
+      const fei = await prisma.fei.findUnique({ where: { numero } });
+      const { ajoutCarcasseBlocage } = await getAdminFeiCorrectionsBlocage(fei);
+      if (!fei || ajoutCarcasseBlocage) {
+        res.status(400).send({ ok: false, data: null, error: ajoutCarcasseBlocage ?? 'Fiche introuvable' });
         return;
       }
-      const fei = await prisma.fei.findUniqueOrThrow({ where: { numero } });
       const zacharie_carcasse_id = `${numero}_${body.numero_bracelet}`;
       const [carcasseModele, carcasseExistante] = await Promise.all([
         prisma.carcasse.findFirst({

@@ -3,11 +3,11 @@ import { Link, useParams } from 'react-router';
 import { AdminHistoryTimeline } from './history-timeline';
 import { Tabs } from '@codegouvfr/react-dsfr/Tabs';
 import { Button } from '@codegouvfr/react-dsfr/Button';
-import { toast } from 'react-toastify';
 import API from '@app/services/api';
 import Chargement from '@app/components/Chargement';
 import AdminDeletedBanner from '@app/components/AdminDeletedBanner';
-import type { AdminCarcasseDetailResponse, AdminSoftDeleteResponse } from '@api/src/types/responses';
+import { adminSoftDeleteCarcasse } from '@app/utils/admin-soft-delete-carcasse';
+import type { AdminCarcasseDetailResponse } from '@api/src/types/responses';
 import type { Carcasse, CarcasseIntermediaire, Fei } from '@prisma/client';
 import dayjs from 'dayjs';
 
@@ -348,17 +348,10 @@ function AdminCarcasseDetailContent() {
 
   function handleSoftDelete() {
     if (!carcasse) return;
-    const confirmMessage = `Supprimer la carcasse ${carcasse.numero_bracelet} ? Elle disparaîtra de l'application et des statistiques.`;
-    if (!window.confirm(confirmMessage)) return;
     setIsDeleting(true);
-    API.post({ path: `admin/carcasse/${encodeURIComponent(carcasse.zacharie_carcasse_id)}/soft-delete` })
-      .then((res) => res as AdminSoftDeleteResponse)
-      .then((response) => {
-        if (!response.ok || !response.data) {
-          return toast.error(response.error);
-        }
-        setCarcasse({ ...carcasse, deleted_at: response.data.deleted_at });
-        toast.success('La carcasse a été supprimée');
+    adminSoftDeleteCarcasse(carcasse)
+      .then((deleted_at) => {
+        if (deleted_at) setCarcasse({ ...carcasse, deleted_at });
       })
       .finally(() => setIsDeleting(false));
   }

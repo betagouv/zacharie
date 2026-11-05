@@ -1,12 +1,14 @@
 import { EntityRelationType, EntityTypes } from '@prisma/client';
+import type { Fei } from '@prisma/client';
 import prisma from '~/prisma';
 
 // Les corrections admin d'une fiche (date, commune, premier détenteur, carcasses) ne sont possibles que
 // tant qu'elle n'est pas clôturée : une clôture intermédiaire ou SVI, ou un certificat SVI émis, fige
 // des documents officiels qui ne seraient plus en phase avec la fiche.
-export async function getAdminFeiCorrectionsBlocage(fei_numero: string) {
-  const [fei, carcasseCloturee, certificat, intermediaire] = await Promise.all([
-    prisma.fei.findUnique({ where: { numero: fei_numero }, select: { deleted_at: true } }),
+export async function getAdminFeiCorrectionsBlocage(fei: Pick<Fei, 'numero' | 'deleted_at'> | null) {
+  if (!fei) return { blocage: 'Fiche introuvable', ajoutCarcasseBlocage: 'Fiche introuvable' };
+  const fei_numero = fei.numero;
+  const [carcasseCloturee, certificat, intermediaire] = await Promise.all([
     prisma.carcasse.findFirst({
       where: {
         fei_numero,
@@ -27,8 +29,7 @@ export async function getAdminFeiCorrectionsBlocage(fei_numero: string) {
   ]);
 
   let blocage: string | null = null;
-  if (!fei) blocage = 'Fiche introuvable';
-  else if (fei.deleted_at) blocage = 'La fiche est supprimée';
+  if (fei.deleted_at) blocage = 'La fiche est supprimée';
   else if (carcasseCloturee) blocage = 'La fiche est clôturée';
   else if (certificat) blocage = 'Un certificat SVI a déjà été émis sur cette fiche';
 
