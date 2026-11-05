@@ -8,10 +8,6 @@ import { connectWith } from '../../utils/connect-with';
 // (1 carcasse). L'aperçu montre ce que l'import va faire, le laboratoire choisit les lignes, puis importe.
 // Sur un non négatif, le laboratoire peut indiquer le nombre de larves (colonne nombre_larves).
 
-// L'espace laboratoire n'est monté que si l'app est construite avec VITE_FEATURE_TRICHINE=true
-// (cf App.tsx). Pour lancer la spec : construire l'app et lancer Playwright avec cette variable.
-test.skip(process.env.VITE_FEATURE_TRICHINE !== 'true', 'Feature trichine désactivée dans ce build');
-
 test.setTimeout(120_000);
 test.use({ launchOptions: { slowMo: 100 } });
 
@@ -66,7 +62,7 @@ test("L'aperçu récapitule les actions, le laboratoire choisit les lignes puis 
   await expect(ligne1.getByText('À importer')).toBeVisible({ timeout: 10000 });
   await expect(ligne2.getByText('À importer')).toBeVisible();
   await expect(
-    page.getByRole('row').filter({ hasText: 'P-26-XXXX-9999' }).getByText('Introuvable')
+    page.getByRole('row').filter({ hasText: 'P-26-XXXX-9999' }).getByText('Introuvable', { exact: true })
   ).toBeVisible();
 
   // Actions décrites ligne par ligne
