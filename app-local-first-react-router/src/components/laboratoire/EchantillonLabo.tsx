@@ -3,7 +3,8 @@ import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Input } from '@codegouvfr/react-dsfr/Input';
 import { toast } from 'react-toastify';
 import dayjs from 'dayjs';
-import type { LaboEchantillon } from '@app/services/laboratoire';
+import type { LaboEchantillonDuPool } from '@app/services/laboratoire';
+import EchantillonDocuments from '@app/components/laboratoire/EchantillonDocuments';
 import {
   aliasAnalysesFige,
   formatAliases,
@@ -16,19 +17,21 @@ import { sitePrelevementLabels } from '@app/utils/trichine';
 
 /**
  * Un échantillon d'un pool reçu au laboratoire : sa projection carcasse, la référence interne
- * que le laboratoire lui donne (modifiable tant que les analyses ne sont pas terminées) et, tant
- * que le résultat n'est pas rendu, son retrait du pool.
+ * que le laboratoire lui donne (modifiable tant que les analyses ne sont pas terminées), les
+ * documents qu'il lui joint et, tant que le résultat n'est pas rendu, son retrait du pool.
  */
 export default function EchantillonLabo({
   echantillon,
   mesEntites,
   onRetirer,
   onAliasChange,
+  onDocumentDepose,
 }: {
-  echantillon: LaboEchantillon;
+  echantillon: LaboEchantillonDuPool;
   mesEntites: Array<string>;
   onRetirer: (() => void) | null;
   onAliasChange: () => void;
+  onDocumentDepose: () => void;
 }) {
   const mien = monAlias(echantillon.Aliases, mesEntites);
   const autres = echantillon.Aliases.filter((alias) => alias.id !== mien?.id);
@@ -142,12 +145,18 @@ export default function EchantillonLabo({
           )}
         </>
       )}
+      <EchantillonDocuments
+        echantillonId={echantillon.id}
+        referenceEchantillon={echantillon.reference_echantillon}
+        documents={echantillon.Documents}
+        onDone={onDocumentDepose}
+      />
     </li>
   );
 }
 
 /** Échantillon sorti du pool par le laboratoire : en lecture seule, avec le motif. */
-export function EchantillonRetireLabo({ echantillon }: { echantillon: LaboEchantillon }) {
+export function EchantillonRetireLabo({ echantillon }: { echantillon: LaboEchantillonDuPool }) {
   return (
     <li className="rounded border border-dashed border-gray-300 p-2 text-gray-600">
       <span className="font-semibold line-through">{echantillon.reference_echantillon}</span> — carcasse{' '}
@@ -157,6 +166,13 @@ export function EchantillonRetireLabo({ echantillon }: { echantillon: LaboEchant
       Retiré le{' '}
       {echantillon.retire_par_labo_at ? dayjs(echantillon.retire_par_labo_at).format('DD/MM/YYYY') : '—'} —
       motif : {echantillon.retire_par_labo_motif ?? '—'}
+      {/* Retiré du pool : plus de nouveau document, ceux déjà joints restent téléchargeables */}
+      <EchantillonDocuments
+        echantillonId={echantillon.id}
+        referenceEchantillon={echantillon.reference_echantillon}
+        documents={echantillon.Documents}
+        onDone={null}
+      />
     </li>
   );
 }
