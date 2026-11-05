@@ -68,6 +68,8 @@ export type SeedRole =
   | 'API_BAC_A_SABLE';
 
 export async function resetDb(role?: SeedRole) {
+  const timer = `resetDb(${role ?? ''})`;
+  console.time(timer);
   try {
     console.log('Resetting database...');
 
@@ -80,5 +82,7 @@ export async function resetDb(role?: SeedRole) {
     console.log('Database reset and populated successfully');
   } catch (error) {
     console.error('Failed to reset database:', error);
+  } finally {
+    console.timeEnd(timer);
   }
 }
