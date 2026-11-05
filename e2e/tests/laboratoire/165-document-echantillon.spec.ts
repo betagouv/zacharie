@@ -10,10 +10,6 @@ import { connectWith } from '../../utils/connect-with';
 // vérifiés) et le serveur répond que le stockage n'est pas disponible. Un échantillon retiré du pool
 // n'accepte plus de fichier.
 
-// L'espace laboratoire n'est monté que si l'app est construite avec VITE_FEATURE_TRICHINE=true
-// (cf App.tsx). Pour lancer la spec : construire l'app et lancer Playwright avec cette variable.
-test.skip(process.env.VITE_FEATURE_TRICHINE !== 'true', 'Feature trichine désactivée dans ce build');
-
 test.setTimeout(120_000);
 test.use({ launchOptions: { slowMo: 100 } });
 
@@ -27,7 +23,9 @@ test('Le laboratoire joint un fichier à un échantillon, pas à un échantillon
   await connectWith(page, 'laboratoire@example.fr');
   await expect(page).toHaveURL(/\/app\/laboratoire/);
   await page.goto('/app/laboratoire/pools/P-26-SVI01-0001');
-  await expect(page.getByRole('heading', { name: 'P-26-SVI01-0001' })).toBeVisible({ timeout: 10000 });
+  await expect(page.getByRole('heading', { level: 1, name: 'P-26-SVI01-0001' })).toBeVisible({
+    timeout: 10000,
+  });
   await page.getByRole('button', { name: 'Afficher le détail' }).click();
 
   const echantillonGarde = page.getByRole('listitem').filter({ hasText: 'E-26-SVI01-0001' });

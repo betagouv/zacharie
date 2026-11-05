@@ -12,6 +12,7 @@ import type {
   AdminSoftDeleteResponse,
 } from '~/types/responses';
 import { nextVersion } from '~/utils/sync-version';
+import { getAdminFeiCorrectionsBlocage } from '~/utils/admin-fei-corrections';
 import {
   parseList,
   parseEnumList,
@@ -297,7 +298,8 @@ router.get(
 );
 
 // Soft delete d'une carcasse de test ou de démo et de ses lignes d'intermédiaire, comme la
-// suppression côté client (syncCarcasse). `nextVersion` rend périmée toute écriture hors ligne d'un
+// suppression côté client (syncCarcasse). Refusé sur une fiche clôturée, comme les autres corrections
+// admin de la fiche. `nextVersion` rend périmée toute écriture hors ligne d'un
 // client sur ces lignes, et le bump d'updated_at leur propage la suppression au prochain pull.
 router.post(
   '/carcasse/:zacharie_carcasse_id/soft-delete',
@@ -316,6 +318,12 @@ router.post(
       }
       if (carcasse.deleted_at) {
         res.status(400).send({ ok: false, data: null, error: 'La carcasse est déjà supprimée' });
+        return;
+      }
+      const fei = await prisma.fei.findUnique({ where: { numero: carcasse.fei_numero } });
+      const { blocage } = await getAdminFeiCorrectionsBlocage(fei);
+      if (blocage) {
+        res.status(400).send({ ok: false, data: null, error: blocage });
         return;
       }
 

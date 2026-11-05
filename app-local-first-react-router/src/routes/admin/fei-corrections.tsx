@@ -127,9 +127,16 @@ export function PremierDetenteurCorrectionForm({
   const premierDetenteurEmail = fei.FeiPremierDetenteurUser?.email ?? '';
   const estUnAutreChasseur =
     !fei.premier_detenteur_entity_id && !!premierDetenteurEmail && premierDetenteurEmail !== examinateurEmail;
-  const [choix, setChoix] = useState(
-    fei.premier_detenteur_entity_id ?? (estUnAutreChasseur ? AUTRE_CHASSEUR : examinateurEmail)
-  );
+  const [choix, setChoix] = useState(() => {
+    // une association dont l'examinateur n'est plus membre ne peut pas être reprise : on fait choisir
+    if (fei.premier_detenteur_entity_id) {
+      const estSelectionnable = corrections.associationsDeChasse.some(
+        (association) => association.id === fei.premier_detenteur_entity_id
+      );
+      return estSelectionnable ? fei.premier_detenteur_entity_id : '';
+    }
+    return estUnAutreChasseur || !examinateurEmail ? AUTRE_CHASSEUR : examinateurEmail;
+  });
   const [email, setEmail] = useState(estUnAutreChasseur ? premierDetenteurEmail : '');
   const { error, isSaving, save } = useCorrection(
     `admin/fei/${encodeURIComponent(fei.numero)}/corrections`,
@@ -151,8 +158,16 @@ export function PremierDetenteurCorrectionForm({
       <CorrectionError error={error} />
       <Select
         label="Premier détenteur"
-        nativeSelectProps={{ value: choix, onChange: (e) => setChoix(e.currentTarget.value) }}
+        nativeSelectProps={{ value: choix, required: true, onChange: (e) => setChoix(e.currentTarget.value) }}
       >
+        {choix === '' && (
+          <option
+            value=""
+            disabled
+          >
+            Sélectionnez le premier détenteur
+          </option>
+        )}
         {examinateurEmail && <option value={examinateurEmail}>{examinateurEmail} (examinateur)</option>}
         {corrections.associationsDeChasse.map((association) => (
           <option

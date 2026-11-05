@@ -1,11 +1,12 @@
-import { useState, useCallback } from 'react';
-import { read, utils } from '@e965/xlsx';
+import { useState, useCallback, useRef } from 'react';
+import { read } from '@e965/xlsx';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Table } from '@codegouvfr/react-dsfr/Table';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import { Badge } from '@codegouvfr/react-dsfr/Badge';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
 import API from '@app/services/api';
+import { parseCcgSheet } from '@app/utils/parse-ccg-sheet';
 import type {
   AdminCcgPreviewResponse,
   AdminCcgImportResponse,
@@ -17,6 +18,7 @@ type Step = 'upload' | 'preview' | 'result';
 
 export default function CcgImport() {
   const [step, setStep] = useState<Step>('upload');
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [nouveaux, setNouveaux] = useState<CcgPreviewRow[]>([]);
   const [modifies, setModifies] = useState<CcgPreviewModifiedRow[]>([]);
   const [unchangedCount, setUnchangedCount] = useState(0);
@@ -36,76 +38,7 @@ export default function CcgImport() {
       const data = await file.arrayBuffer();
       const workbook = read(data);
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonRows = utils.sheet_to_json<Record<string, string>>(sheet, { defval: '', range: 4 });
-
-      if (jsonRows.length === 0) {
-        setError('Le fichier est vide.');
-        setLoading(false);
-        return;
-      }
-
-      // Normalize a key: collapse all whitespace (spaces, \r, \n) into a single space, then trim
-      const normalize = (s: string) => s.replace(/[\s]+/g, ' ').trim();
-
-      // Build a normalized lookup from a row, then find the first matching normalized target
-      const col = (normalizedRow: Map<string, string>, ...targets: string[]) => {
-        for (const t of targets) {
-          const v = normalizedRow.get(normalize(t));
-          if (v !== undefined) return v;
-        }
-        return '';
-      };
-
-      const mapped: CcgPreviewRow[] = jsonRows.map((row) => {
-        const normalizedRow = new Map<string, string>();
-        for (const [k, v] of Object.entries(row)) {
-          normalizedRow.set(normalize(k), String(v).trim());
-        }
-        return {
-          numero_ddecpp: (() => {
-            const raw = col(
-              normalizedRow,
-              'Unité Activité (UA) : Identifier métier (Type : Valorisation)',
-              'numero_ddecpp',
-              'Numéro DDECPP'
-            );
-            const match = raw.match(/\d{2,3}-CCG-\d+/);
-            return match ? match[0] : raw;
-          })(),
-          nom_d_usage: col(
-            normalizedRow,
-            'Établissement : Enseigne usuelle (RESYTAL)',
-            'nom_d_usage',
-            'raison_sociale',
-            'Raison sociale'
-          ),
-          address_ligne_1: col(
-            normalizedRow,
-            'Unité Activité (UA) : Adresse de localisation : Concaténations des lignes adresses 1, 2 & 3',
-            'Établissement : Adresse postale : Concaténations des lignes adresses 1, 2 & 3',
-            'address_ligne_1',
-            'Adresse'
-          ),
-          address_ligne_2: '',
-          code_postal: col(
-            normalizedRow,
-            "Unité d'Activité (UA) : Code postal (Adresse de localisation)",
-            'Établissement : Adresse postale: Code postal',
-            'code_postal',
-            'Code postal'
-          ),
-          ville: col(
-            normalizedRow,
-            'Unité Activité (UA) : Adresse de localisation : Commune Nom',
-            'Établissement : Adresse postale: Bureau distributeur',
-            'ville',
-            'Ville'
-          ),
-          siret: col(normalizedRow, 'Établissement : SIRET/NUMAGRIT', 'siret', 'SIRET'),
-        };
-      });
-
-      const validRows = mapped.filter((r) => /^\d{2,3}-CCG-\d+$/.test(r.numero_ddecpp));
+      const validRows = parseCcgSheet(sheet);
       if (validRows.length === 0) {
         setError("Aucune ligne avec un numero_ddecpp n'a été trouvée. Vérifiez les colonnes du fichier.");
         setLoading(false);
@@ -218,25 +151,48 @@ export default function CcgImport() {
       {step === 'upload' && (
         <div className="mb-8">
           <p className="mb-4">
-            Sélectionnez un fichier Excel CCG (format RESYTAL, en-têtes en ligne 5). Les colonnes utilisées
-            sont&nbsp;: <code>Unité Activité (UA) : Identifier métier</code>,{' '}
+            Sélectionnez un fichier Excel CCG (format RESYTAL). Les colonnes utilisées sont&nbsp;:{' '}
+            <code>Unité Activité (UA) : Identifier métier</code>,{' '}
             <code>Établissement : Enseigne usuelle</code>, <code>Adresse postale</code>,{' '}
             <code>Code postal</code>, <code>Bureau distributeur</code>, <code>SIRET/NUMAGRIT</code>
           </p>
           <input
+            ref={fileInputRef}
             type="file"
             accept=".csv,.xls,.xlsx"
             onChange={handleFileChange}
             disabled={loading}
-            className="fr-input"
-            placeholder="Sélectionnez un fichier Excel CCG (format RESYTAL, en-têtes en ligne 5)"
+            className="hidden"
           />
+          <Button
+            iconId="fr-icon-upload-line"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={loading}
+          >
+            Choisir un fichier CCG
+          </Button>
           {loading && <p className="mt-2">Chargement...</p>}
         </div>
       )}
 
       {step === 'preview' && (
         <>
+          <div className="mb-4 flex gap-4">
+            <Button
+              onClick={handleImport}
+              disabled={loading}
+            >
+              {loading ? 'Import en cours...' : `Importer (${displayedRows.length} CCG)`}
+            </Button>
+            <Button
+              priority="secondary"
+              onClick={reset}
+              disabled={loading}
+            >
+              Annuler
+            </Button>
+          </div>
+
           <div className="mb-4 flex items-center gap-4">
             <Badge severity="success">{nouveaux.length} nouveau(x)</Badge>
             <Badge severity="warning">{modifies.length} existant(s) avec modifications</Badge>
@@ -321,22 +277,6 @@ export default function CcgImport() {
                 ];
               })}
             />
-          </div>
-
-          <div className="flex gap-4">
-            <Button
-              onClick={handleImport}
-              disabled={loading}
-            >
-              {loading ? 'Import en cours...' : `Importer (${displayedRows.length} CCG)`}
-            </Button>
-            <Button
-              priority="secondary"
-              onClick={reset}
-              disabled={loading}
-            >
-              Annuler
-            </Button>
           </div>
         </>
       )}

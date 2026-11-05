@@ -1,9 +1,11 @@
 import {
+  DepotType,
   EntityRelationStatus,
   EntityRelationType,
   EntityTypes,
   FeiOwnerRole,
   Prisma,
+  type Carcasse,
   type Entity,
 } from '@prisma/client';
 import dayjs from 'dayjs';
@@ -116,6 +118,41 @@ export const circuitCourtRoles: FeiOwnerRole[] = [
   FeiOwnerRole.ASSOCIATION_CARITATIVE,
   FeiOwnerRole.CONSOMMATEUR_FINAL,
 ];
+
+export type CircuitValorisation = 'agree' | 'nonAgree' | 'domestique';
+
+/**
+ * Circuit de valorisation d'une carcasse pour le tableau de bord des fédérations :
+ *  - domestique : gardée par le premier détenteur pour son usage domestique
+ *  - agree      : passée par un ETG
+ *  - nonAgree   : transmise à un destinataire du circuit court (commerce de détail, repas associatif…)
+ *  - null       : pas encore transmise, ou en route vers un collecteur / un ETG
+ */
+export function getCircuitValorisation(
+  carcasse: Pick<
+    Carcasse,
+    | 'consommateur_final_usage_domestique'
+    | 'premier_detenteur_depot_type'
+    | 'current_owner_role'
+    | 'prev_owner_role'
+    | 'next_owner_role'
+  > & { CarcasseIntermediaire: Array<{ intermediaire_role: FeiOwnerRole | null }> }
+): CircuitValorisation | null {
+  if (carcasse.consommateur_final_usage_domestique != null) return 'domestique';
+  const wasInEtg =
+    carcasse.premier_detenteur_depot_type === DepotType.ETG ||
+    carcasse.current_owner_role === FeiOwnerRole.ETG ||
+    carcasse.current_owner_role === FeiOwnerRole.SVI ||
+    carcasse.prev_owner_role === FeiOwnerRole.ETG ||
+    carcasse.prev_owner_role === FeiOwnerRole.SVI ||
+    carcasse.CarcasseIntermediaire.some((ci) => ci.intermediaire_role === FeiOwnerRole.ETG);
+  if (wasInEtg) return 'agree';
+  // le destinataire du circuit court ne prend jamais en charge dans Zacharie : son rôle reste en
+  // `next_owner_role`, le premier détenteur reste propriétaire courant
+  const destinataireRole = carcasse.next_owner_role ?? carcasse.current_owner_role;
+  if (destinataireRole && circuitCourtRoles.includes(destinataireRole)) return 'nonAgree';
+  return null;
+}
 
 export const BPH_PATTERNS = [
   "souillures d'origine digestive",

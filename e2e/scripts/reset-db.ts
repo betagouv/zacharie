@@ -41,6 +41,7 @@ export type SeedRole =
   | 'PREMIER_DETENTEUR_WITH_PARTAGE'
   | 'ETG'
   | 'ETG_TAKEN_CHARGE'
+  | 'ETG_TAKEN_CHARGE_PD_HORS_LIGNE'
   | 'ETG_TAKEN_CHARGE_AND_ASSIGNED_TO_SVI'
   | 'COLLECTEUR_PRO'
   | 'COLLECTEUR_TAKEN_CHARGE'
@@ -59,8 +60,10 @@ export type SeedRole =
   | 'FRC'
   | 'FNC'
   | 'FEDERATION_STATS'
+  | 'FEDERATION_STATS_CIRCUIT_COURT'
   | 'ETG_FILTRES_RAPIDES'
   | 'LABORATOIRE_FTP_RECUE'
+  | 'SVI_SANGLIERS'
   | 'API_BAC_A_SABLE';
 
 export async function resetDb(role?: SeedRole) {
