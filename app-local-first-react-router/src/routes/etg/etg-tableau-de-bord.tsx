@@ -11,7 +11,7 @@ import useZustandStore from '@app/zustand/store';
 import { useCarcassesRegistry } from '@app/utils/useCarcassesRegistry';
 import { loadData, useLoaderEffect } from '@app/utils/load-data';
 import { getSaisonLabel, getSaisonStartYear } from '@app/utils/get-saison';
-import { buildMotifData, hasMotifDisqualifiant } from '@app/utils/bph-motifs';
+import { buildMotifData, computeScoreBph, hasBphMotif, hasMotifDisqualifiant } from '@app/utils/bph-motifs';
 import {
   ChartCard,
   MIN_COUNT_AXIS,
@@ -23,11 +23,19 @@ import departementsRegions from '@app/data/departements-regions.json';
 
 type Categorie = 'TOUT' | CarcasseType;
 
+// Les volumes sont comptés en animaux : 1 carcasse de grand gibier = 1, un lot de petit gibier = son
+// nombre d'animaux.
 type CarcasseReception = {
   carcasse: Carcasse;
   refus: string | null;
   departement: string;
+  animauxRecus: number;
+  animauxRefuses: number;
+  animauxAcceptes: number;
 };
+
+// Refus partiel d'un lot de petit gibier : l'ETG ne saisit pas de motif.
+const MOTIF_REFUS_PARTIEL = 'Non renseigné (lot accepté partiellement)';
 
 // Décisions SVI définitives : la carcasse a été inspectée.
 const DECISIONS_SVI_FINALES: Array<CarcasseStatus> = [
@@ -61,9 +69,13 @@ function formatTaux(taux: number | null): string {
   return taux === null ? '–' : `${taux.toLocaleString('fr-FR')} %`;
 }
 
-function countBy(items: Array<string>) {
+function sum(values: Array<number>) {
+  return values.reduce((total, value) => total + value, 0);
+}
+
+function countBy(items: Array<[string, number]>) {
   const counts = new Map<string, number>();
-  for (const item of items) counts.set(item, (counts.get(item) ?? 0) + 1);
+  for (const [item, weight] of items) counts.set(item, (counts.get(item) ?? 0) + weight);
   return [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, MAX_BARRES);
 }
 
@@ -122,44 +134,89 @@ function getScoreNiveau(score: number) {
   return { label: 'À améliorer', severity: 'error' as const };
 }
 
+// Animaux saisis par le SVI : 1 pour une carcasse, le nombre de carcasses saisies pour un lot.
+function getAnimauxSaisis(r: CarcasseReception): number {
+  if (r.carcasse.type !== CarcasseType.PETIT_GIBIER) return 1;
+  return Math.min(r.carcasse.svi_ipm2_nombre_animaux ?? r.animauxAcceptes, r.animauxAcceptes);
+}
+
+// Score BPH moyen des apporteurs (moyenne simple) : score hygiène de chaque apporteur, calculé sur les
+// carcasses de grand gibier qu'il a apportées à l'établissement, acceptées et inspectées par le SVI.
+function computeScoreBphMoyen(inspectees: Array<CarcasseReception>): number | null {
+  const parApporteur = new Map<string, { inspectees: number; saisiesBph: number }>();
+  for (const r of inspectees) {
+    if (r.carcasse.type !== CarcasseType.GROS_GIBIER) continue;
+    const apporteur = r.carcasse.premier_detenteur_entity_id ?? r.carcasse.premier_detenteur_user_id;
+    if (!apporteur) continue;
+    const stats = parApporteur.get(apporteur) ?? { inspectees: 0, saisiesBph: 0 };
+    stats.inspectees += 1;
+    if (isSaisie(r.carcasse) && hasBphMotif(r.carcasse.svi_ipm2_lesions_ou_motifs ?? [])) {
+      stats.saisiesBph += 1;
+    }
+    parApporteur.set(apporteur, stats);
+  }
+  const scores = [...parApporteur.values()].map((a) => computeScoreBph(a.saisiesBph, a.inspectees)!);
+  return scores.length > 0 ? Math.round(sum(scores) / scores.length) : null;
+}
+
+function isSaisie(carcasse: Carcasse) {
+  return (
+    carcasse.svi_carcasse_status === CarcasseStatus.SAISIE_TOTALE ||
+    carcasse.svi_carcasse_status === CarcasseStatus.SAISIE_PARTIELLE
+  );
+}
+
 function computeStats(receptions: Array<CarcasseReception>) {
-  const refusees = receptions.filter((r) => r.refus);
-  const acceptees = receptions.filter((r) => !r.refus).map((r) => r.carcasse);
-  const inspectees = acceptees.filter(
-    (c) => c.svi_carcasse_status && DECISIONS_SVI_FINALES.includes(c.svi_carcasse_status)
+  const refusees = receptions.filter((r) => r.animauxRefuses > 0);
+  const inspectees = receptions.filter(
+    (r) =>
+      r.animauxAcceptes > 0 &&
+      r.carcasse.svi_carcasse_status &&
+      DECISIONS_SVI_FINALES.includes(r.carcasse.svi_carcasse_status)
   );
-  const saisies = inspectees.filter(
-    (c) =>
-      c.svi_carcasse_status === CarcasseStatus.SAISIE_TOTALE ||
-      c.svi_carcasse_status === CarcasseStatus.SAISIE_PARTIELLE
-  );
-  const saisiesDisqualifiantes = saisies.filter((c) =>
-    hasMotifDisqualifiant(c.svi_ipm2_lesions_ou_motifs ?? [])
+  const saisies = inspectees.filter((r) => isSaisie(r.carcasse));
+  const saisiesDisqualifiantes = saisies.filter((r) =>
+    hasMotifDisqualifiant(r.carcasse.svi_ipm2_lesions_ou_motifs ?? [])
   );
   const apporteurs = new Set(
     receptions
       .map((r) => r.carcasse.premier_detenteur_entity_id ?? r.carcasse.premier_detenteur_user_id)
       .filter(Boolean)
   );
+  const total = sum(receptions.map((r) => r.animauxRecus));
+  const nbRefuses = sum(refusees.map((r) => r.animauxRefuses));
+  const nbInspectes = sum(inspectees.map((r) => r.animauxAcceptes));
+  const nbSaisis = sum(saisies.map(getAnimauxSaisis));
+  const nbSaisisDisqualifiants = sum(saisiesDisqualifiantes.map(getAnimauxSaisis));
   return {
-    total: receptions.length,
-    totalGG: receptions.filter((r) => r.carcasse.type === CarcasseType.GROS_GIBIER).length,
-    totalPG: receptions.filter((r) => r.carcasse.type === CarcasseType.PETIT_GIBIER).length,
+    total,
+    totalGG: sum(
+      receptions.filter((r) => r.carcasse.type === CarcasseType.GROS_GIBIER).map((r) => r.animauxRecus)
+    ),
+    totalPG: sum(
+      receptions.filter((r) => r.carcasse.type === CarcasseType.PETIT_GIBIER).map((r) => r.animauxRecus)
+    ),
     apporteurs: apporteurs.size,
-    especes: countBy(receptions.map((r) => r.carcasse.espece ?? 'Non renseignée')),
-    departements: countBy(receptions.map((r) => r.departement)),
-    refusees: refusees.length,
-    tauxRefus: toTaux(refusees.length, receptions.length),
-    motifsRefus: buildMotifData(refusees, (r) => (r.refus ? [r.refus] : [])),
-    inspectees: inspectees.length,
-    saisiesDisqualifiantes: saisiesDisqualifiantes.length,
-    scoreTri:
-      inspectees.length > 0
-        ? Math.round(100 * (1 - saisiesDisqualifiantes.length / inspectees.length))
-        : null,
-    saisies: saisies.length,
-    tauxSaisie: toTaux(saisies.length, inspectees.length),
-    motifsSaisie: buildMotifData(saisies, (c) => c.svi_ipm2_lesions_ou_motifs ?? []),
+    especes: countBy(receptions.map((r) => [r.carcasse.espece ?? 'Non renseignée', r.animauxRecus])),
+    departements: countBy(receptions.map((r) => [r.departement, r.animauxRecus])),
+    refusees: nbRefuses,
+    tauxRefus: toTaux(nbRefuses, total),
+    motifsRefus: buildMotifData(
+      refusees,
+      (r) => [r.refus ?? MOTIF_REFUS_PARTIEL],
+      (r) => r.animauxRefuses
+    ),
+    inspectees: nbInspectes,
+    saisiesDisqualifiantes: nbSaisisDisqualifiants,
+    scoreTri: nbInspectes > 0 ? Math.round(100 * (1 - nbSaisisDisqualifiants / nbInspectes)) : null,
+    saisies: nbSaisis,
+    tauxSaisie: toTaux(nbSaisis, nbInspectes),
+    motifsSaisie: buildMotifData(
+      saisies,
+      (r) => r.carcasse.svi_ipm2_lesions_ou_motifs ?? [],
+      getAnimauxSaisis
+    ),
+    scoreBphMoyen: computeScoreBphMoyen(inspectees),
   };
 }
 
@@ -197,21 +254,36 @@ export default function EtgTableauDeBord() {
         )
         .map((e) => e.id)
     );
-    const refusByCarcasseId = new Map<string, string | null>();
+    const decisionByCarcasseId = new Map<
+      string,
+      { refus: string | null; nombreAnimauxAcceptes: number | null }
+    >();
     for (const ci of Object.values(carcassesIntermediaireById)) {
       if (ci.deleted_at || !myEtgIds.has(ci.intermediaire_entity_id)) continue;
-      if (ci.refus) refusByCarcasseId.set(ci.zacharie_carcasse_id, ci.refus);
-      else if (ci.prise_en_charge && !refusByCarcasseId.has(ci.zacharie_carcasse_id)) {
-        refusByCarcasseId.set(ci.zacharie_carcasse_id, null);
+      if (ci.refus) {
+        decisionByCarcasseId.set(ci.zacharie_carcasse_id, { refus: ci.refus, nombreAnimauxAcceptes: 0 });
+      } else if (ci.prise_en_charge && !decisionByCarcasseId.has(ci.zacharie_carcasse_id)) {
+        decisionByCarcasseId.set(ci.zacharie_carcasse_id, {
+          refus: null,
+          nombreAnimauxAcceptes: ci.nombre_d_animaux_acceptes,
+        });
       }
     }
     const result: Array<CarcasseReception> = [];
     for (const carcasse of carcassesRegistry) {
-      if (!refusByCarcasseId.has(carcasse.zacharie_carcasse_id)) continue;
+      const decision = decisionByCarcasseId.get(carcasse.zacharie_carcasse_id);
+      if (!decision) continue;
+      const animauxRecus = carcasse.type === CarcasseType.PETIT_GIBIER ? carcasse.nombre_d_animaux || 1 : 1;
+      const animauxAcceptes = decision.refus
+        ? 0
+        : Math.min(decision.nombreAnimauxAcceptes ?? animauxRecus, animauxRecus);
       result.push({
         carcasse,
-        refus: refusByCarcasseId.get(carcasse.zacharie_carcasse_id)!,
+        refus: decision.refus,
         departement: getDepartementLabel(feis[carcasse.fei_numero]?.commune_mise_a_mort ?? null),
+        animauxRecus,
+        animauxRefuses: animauxRecus - animauxAcceptes,
+        animauxAcceptes,
       });
     }
     return result;
@@ -308,7 +380,8 @@ export default function EtgTableauDeBord() {
         <StatsSection title="Activité">
           <div className="flex flex-wrap gap-4">
             <StatCard
-              label="Carcasses et lots réceptionnés"
+              label="Animaux réceptionnés"
+              info="Une carcasse de grand gibier compte pour 1, un lot de petit gibier pour son nombre d'animaux."
               value={courante.total.toLocaleString('fr-FR')}
               sub={
                 <Evolution
@@ -459,6 +532,27 @@ export default function EtgTableauDeBord() {
               }
               info="Parmi les carcasses que vous avez acceptées et qui ont reçu une décision définitive du SVI."
             />
+            <StatCard
+              label="Score BPH moyen des apporteurs"
+              value={
+                categorie === CarcasseType.PETIT_GIBIER || courante.scoreBphMoyen === null
+                  ? '–'
+                  : `${courante.scoreBphMoyen} / 100`
+              }
+              sub={
+                categorie === CarcasseType.PETIT_GIBIER ? (
+                  'Calculé sur le grand gibier uniquement'
+                ) : (
+                  <Evolution
+                    current={courante.scoreBphMoyen}
+                    previous={precedente.scoreBphMoyen}
+                    mesure="taux"
+                    sensHausse="favorable"
+                  />
+                )
+              }
+              info="Moyenne des scores hygiène de vos apporteurs, chacun calculé sur les carcasses de grand gibier qu'il vous a apportées et qui ont été inspectées par le SVI. 100 = aucune saisie liée aux bonnes pratiques d'hygiène."
+            />
           </div>
           <ChartCard
             title="Motifs de saisie"
@@ -477,17 +571,17 @@ export default function EtgTableauDeBord() {
 
 function CountBarChart({ data, ariaLabel }: { data: Array<[string, number]>; ariaLabel: string }) {
   if (data.length === 0) {
-    return <p className="py-12 text-center text-sm text-gray-500">Aucune carcasse sur la période.</p>;
+    return <p className="py-12 text-center text-sm text-gray-500">Aucun animal sur la période.</p>;
   }
   return (
     <BarChart
       x={data.map(([label]) => label)}
       y={[data.map(([, count]) => count)]}
-      name={['Nombre de carcasses']}
+      name={["Nombre d'animaux"]}
       horizontal
       xMax={Math.max(...data.map(([, count]) => count), MIN_COUNT_AXIS)}
       height={Math.max(220, data.length * 28)}
-      unitTooltip="carcasses"
+      unitTooltip="animaux"
       ariaLabel={ariaLabel}
     />
   );
