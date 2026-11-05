@@ -1357,7 +1357,8 @@ model TrichineEchantillon {
 
   commentaire String?
 
-  Aliases TrichineAlias[]
+  Aliases   TrichineAlias[]
+  Documents TrichineDocument[]
 
   created_at DateTime  @default(now())
   updated_at DateTime  @default(now()) @updatedAt
@@ -1525,7 +1526,7 @@ model TrichineAlias {
   @@index([ftp_id])
 }
 
-// Document attaché soit à un pool, soit à une FTP (jamais les deux en même temps).
+// Document attaché à un pool, à une FTP ou à un échantillon (un seul des trois).
 // Type non typé strictement (String) : "RAPPORT_COFRAC" / "PHOTOGRAPHIE_LARVE" / "FTP_PDF" / "AUTRE" / ...
 model TrichineDocument {
   id          String  @id @default(uuid())
@@ -1538,10 +1539,12 @@ model TrichineDocument {
   ajoute_par_user_id String
   AjouteParUser      User     @relation("TrichineDocumentAjouteParUser", fields: [ajoute_par_user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
-  pool_id      String?
-  TrichinePool TrichinePool? @relation(fields: [pool_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  ftp_id       String?
-  TrichineFTP  TrichineFTP?  @relation(fields: [ftp_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  pool_id             String?
+  TrichinePool        TrichinePool?        @relation(fields: [pool_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  ftp_id              String?
+  TrichineFTP         TrichineFTP?         @relation(fields: [ftp_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  echantillon_id      String?
+  TrichineEchantillon TrichineEchantillon? @relation(fields: [echantillon_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   created_at DateTime  @default(now())
   updated_at DateTime  @default(now()) @updatedAt
@@ -1550,6 +1553,7 @@ model TrichineDocument {
 
   @@index([pool_id])
   @@index([ftp_id])
+  @@index([echantillon_id])
 }
 
 // Notification polymorphique. type/objet_type sont String pour permettre l'évolution UX.

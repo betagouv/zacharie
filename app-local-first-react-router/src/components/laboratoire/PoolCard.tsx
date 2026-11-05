@@ -174,6 +174,7 @@ export default function PoolCard({
                 mesEntites={mesEntites}
                 onRetirer={peutRetirer ? () => onRetirerEchantillon(echantillon) : null}
                 onAliasChange={onAliasChange}
+                onDocumentDepose={onDocumentDepose}
               />
             ))}
           </ul>

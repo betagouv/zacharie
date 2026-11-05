@@ -1,23 +1,13 @@
 import { useCallback, useRef, useState } from 'react';
 import { Button } from '@codegouvfr/react-dsfr/Button';
-import { toast } from 'react-toastify';
 import dayjs from 'dayjs';
 import type { TrichineDocument } from '@prisma/client';
-import {
-  deposerDocumentPool,
-  documentPoolPath,
-  DOCUMENT_CONTENT_TYPES,
-  DOCUMENT_MAX_BYTES,
-} from '@app/services/laboratoire';
+import { deposerDocumentPool, documentPoolPath } from '@app/services/laboratoire';
+import { useDepotDocuments } from '@app/components/laboratoire/use-depot-documents';
 import downloadApiFile from '@app/utils/download-api-file';
-import fileToBase64 from '@app/utils/file-to-base64';
 import { documentTypeLabels } from '@app/utils/trichine';
 
-/**
- * Dépôt du rapport d'analyse d'un pool : glisser-déposer ou sélection depuis l'ordinateur.
- * Le fichier part en base64, le serveur calcule la clé de stockage.
- */
-
+/** Dépôt du rapport d'analyse d'un pool : glisser-déposer ou sélection depuis l'ordinateur. */
 export default function PoolDocuments({
   poolId,
   referencePool,
@@ -31,43 +21,12 @@ export default function PoolDocuments({
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
 
-  const deposer = useCallback(
-    async (files: Array<File>) => {
-      if (!files.length) return;
-      setIsUploading(true);
-      let deposes = 0;
-      try {
-        for (const file of files) {
-          if (!DOCUMENT_CONTENT_TYPES.includes(file.type)) {
-            toast.error(`${file.name} : format non accepté (PDF, JPEG, PNG ou WebP)`);
-            continue;
-          }
-          if (file.size > DOCUMENT_MAX_BYTES) {
-            toast.error(`${file.name} : fichier trop volumineux (3,5 Mo maximum)`);
-            continue;
-          }
-          const content = await fileToBase64(file);
-          const response = await deposerDocumentPool(poolId, { content_type: file.type, content });
-          if (response.ok) {
-            deposes++;
-          } else {
-            toast.error(response.error || `${file.name} n'a pas pu être déposé`);
-          }
-        }
-      } catch {
-        toast.error('Une erreur est survenue lors du dépôt');
-      } finally {
-        setIsUploading(false);
-      }
-      if (deposes > 0) {
-        toast.success(deposes > 1 ? `${deposes} documents déposés` : 'Document déposé');
-        onDone();
-      }
-    },
-    [poolId, onDone]
+  const deposerFichier = useCallback(
+    (file: { content_type: string; content: string }) => deposerDocumentPool(poolId, file),
+    [poolId]
   );
+  const { deposer, isUploading } = useDepotDocuments(deposerFichier, onDone);
 
   return (
     <div className="fr-mt-2w">

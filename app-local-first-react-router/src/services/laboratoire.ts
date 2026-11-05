@@ -57,11 +57,14 @@ export type LaboCarcasseProjection = {
 
 export type LaboEchantillon = TrichineEchantillon & AvecAliases & { Carcasse: LaboCarcasseProjection };
 
+/** Échantillon tel que renvoyé dans le détail d'un pool : avec les documents qui lui sont joints */
+export type LaboEchantillonDuPool = LaboEchantillon & { Documents: Array<TrichineDocument> };
+
 export type LaboPool = TrichinePool &
   AvecAliases & {
-    TrichineEchantillons: Array<LaboEchantillon>;
+    TrichineEchantillons: Array<LaboEchantillonDuPool>;
     /** Échantillons que le laboratoire a sortis du pool (absents, abîmés, mal identifiés…) */
-    EchantillonsRetires: Array<LaboEchantillon>;
+    EchantillonsRetires: Array<LaboEchantillonDuPool>;
     Documents: Array<TrichineDocument>;
   };
 
@@ -246,6 +249,19 @@ export function deposerDocumentPool(
 
 export function documentPoolPath(poolId: string, documentId: string) {
   return `/laboratoire/pool/${poolId}/document/${documentId}`;
+}
+
+export function deposerDocumentEchantillon(
+  echantillonId: string,
+  file: { content_type: string; content: string }
+) {
+  return API.post({ path: `/laboratoire/echantillon/${echantillonId}/documents`, body: { file } }) as Promise<
+    ApiResponse<{ document: TrichineDocument }>
+  >;
+}
+
+export function documentEchantillonPath(echantillonId: string, documentId: string) {
+  return `/laboratoire/echantillon/${echantillonId}/document/${documentId}`;
 }
 
 /** Photographies des larves, jointes à la FTP de confirmation pour le LNR */

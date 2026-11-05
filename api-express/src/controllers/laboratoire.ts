@@ -112,10 +112,11 @@ const carcasseLaboSelect = {
   Fei: { select: { commune_mise_a_mort: true } },
 } as const;
 
-const echantillonLaboInclude = {
+const echantillonLaboInclude = Prisma.validator<Prisma.TrichineEchantillonInclude>()({
   Carcasse: { select: carcasseLaboSelect },
+  Documents: { where: { deleted_at: null } },
   ...trichineAliasesInclude,
-} as const;
+});
 
 // Émetteur : nom + contact uniquement (facturation / relance)
 const expediteurLaboSelect = {
@@ -1063,6 +1064,87 @@ router.get(
     res.setHeader(
       'Content-Disposition',
       `attachment; filename="${found.pool.reference_pool}-${document.id}.${extension}"`
+    );
+    res.send(file);
+  })
+);
+
+/**
+ * Échantillon d'un pool reçu par un des laboratoires de l'utilisateur. Un échantillon retiré du
+ * pool reste accessible en lecture (ses documents déjà déposés restent téléchargeables), mais
+ * n'accepte plus de nouveau document.
+ */
+async function findEchantillonForLabo(
+  echantillonId: string,
+  context: LaboContext,
+  { inclureRetire }: { inclureRetire: boolean }
+) {
+  const echantillon = await prisma.trichineEchantillon.findUnique({ where: { id: echantillonId } });
+  if (!echantillon || echantillon.deleted_at) return null;
+  const poolId = echantillon.pool_id ?? (inclureRetire ? echantillon.retire_du_pool_id : null);
+  if (!poolId) return null;
+  const found = await findPoolForLabo(poolId, context);
+  if (!found) return null;
+  return echantillon;
+}
+
+router.post(
+  '/echantillon/:echantillon_id/documents',
+  passport.authenticate('user', { session: false }),
+  catchErrors(async (req: RequestWithUser, res: express.Response) => {
+    const context = await guardLabo(req, res);
+    if (!context) return;
+    const bodyResult = documentSchema.safeParse(req.body);
+    if (!bodyResult.success) {
+      return sendError(res, 400, 'Paramètres invalides');
+    }
+    const echantillon = await findEchantillonForLabo(req.params.echantillon_id, context, {
+      inclureRetire: false,
+    });
+    if (!echantillon) {
+      return sendError(res, 404, 'Échantillon introuvable');
+    }
+    const stored = await storeTrichineDocument({
+      type: TrichineDocumentType.AUTRE,
+      file: bodyResult.data.file,
+      userId: req.user.id,
+      echantillonId: echantillon.id,
+    });
+    if (stored.kind === 'error') {
+      return sendError(res, stored.status, stored.error);
+    }
+    res.status(200).send({ ok: true, data: { document: stored.document }, error: '' });
+  })
+);
+
+router.get(
+  '/echantillon/:echantillon_id/document/:document_id',
+  passport.authenticate('user', { session: false }),
+  catchErrors(async (req: RequestWithUser, res: express.Response) => {
+    const context = await guardLabo(req, res);
+    if (!context) return;
+    const echantillon = await findEchantillonForLabo(req.params.echantillon_id, context, {
+      inclureRetire: true,
+    });
+    if (!echantillon) {
+      return sendError(res, 404, 'Échantillon introuvable');
+    }
+    const document = await prisma.trichineDocument.findFirst({
+      where: { id: req.params.document_id, echantillon_id: echantillon.id, deleted_at: null },
+    });
+    const file =
+      document?.fichier_url && IS_CELLAR_CONFIGURED ? await getFromCellar(document.fichier_url) : null;
+    if (!document || !file) {
+      return sendError(res, 404, 'Document introuvable');
+    }
+    const extension = document.fichier_url.split('.').pop() ?? '';
+    res.setHeader(
+      'Content-Type',
+      DOCUMENT_CONTENT_TYPE_BY_EXTENSION[extension] ?? 'application/octet-stream'
+    );
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${echantillon.reference_echantillon}-${document.id}.${extension}"`
     );
     res.send(file);
   })

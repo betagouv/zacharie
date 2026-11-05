@@ -339,9 +339,9 @@ model TrichineAlias {
 - **Format** : 50 caractères max, lettres, chiffres, espaces et `. _ - / # ( )`. Unicité **casse ignorée** (index unique sur `lower(reference)`, posé en SQL dans la migration : Prisma ne sait pas le déclarer).
 - **Usages** : colonne « Ma réf. » et recherche dans les listes, export CSV/JSON du laboratoire (`reference_labo` = la sienne, `autres_references_internes`), rapprochement des lignes à l'import LIMS (référence Zacharie, qui prime, **ou** alias du labo, casse ignorée ; un alias porté par deux pools ne rapproche rien), impression sur le PDF de la FTP des alias connus **à l'envoi** (le PDF est archivé tel qu'envoyé : en pratique ceux du SVI, jamais ceux des laboratoires).
 
-### 4.6 Documents (polymorphique : pool OU ftp)
+### 4.6 Documents (polymorphique : pool, ftp OU échantillon)
 
-Une seule table avec deux FK nullables. Un document est attaché soit à un pool, soit à une FTP, jamais aux deux à la fois.
+Une seule table avec trois FK nullables. Un document est attaché à un pool, à une FTP ou à un échantillon, jamais à plusieurs à la fois. Le laboratoire joint des fichiers (type `AUTRE`) aux échantillons d'un pool reçu ; un échantillon retiré du pool n'en accepte plus, ceux déjà joints restent téléchargeables.
 
 ```prisma
 model TrichineDocument {
@@ -353,8 +353,9 @@ model TrichineDocument {
   date_ajout         DateTime @default(now())
   ajoute_par_user_id String
 
-  pool_id String?
-  ftp_id  String?
+  pool_id        String?
+  ftp_id         String?
+  echantillon_id String?
 
   created_at DateTime  @default(now())
   updated_at DateTime  @updatedAt

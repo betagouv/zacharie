@@ -5,7 +5,7 @@ import { IS_CELLAR_CONFIGURED, trichineDocumentKey, uploadToCellar } from '~/thi
 import { TrichineDocumentSource } from '~/utils/trichine';
 
 /**
- * Upload d'un document trichine (rapport COFRAC, photographie de larve) vers Cellar.
+ * Upload d'un document trichine (rapport COFRAC, photographie de larve, document d'échantillon) vers Cellar.
  *
  * La clé de stockage est toujours calculée par le serveur à partir de l'id du document :
  * le client n'envoie que le fichier, jamais un chemin. Sans ça, un client pourrait
@@ -46,12 +46,14 @@ export async function storeTrichineDocument({
   userId,
   poolId,
   ftpId,
+  echantillonId,
 }: {
   type: string;
   file: UploadedFile;
   userId: string;
   poolId?: string;
   ftpId?: string;
+  echantillonId?: string;
 }): Promise<StoreResult> {
   const body = Buffer.from(file.content, 'base64');
   const contentType = file.content_type;
@@ -81,6 +83,7 @@ export async function storeTrichineDocument({
       ajoute_par_user_id: userId,
       pool_id: poolId,
       ftp_id: ftpId,
+      echantillon_id: echantillonId,
     },
   });
   const key = trichineDocumentKey({ type, documentId: document.id, extension });
