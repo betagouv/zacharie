@@ -75,7 +75,7 @@ test('161 - une transmission hors ligne vers une entité supprimée est refusée
 }) => {
   await connectWith(page, 'premier-detenteur@example.fr');
   await page.getByRole('link', { name: feiId }).click();
-  await expect(page.getByRole('button', { name: /Ajouter une (autre )?vente/i }).first()).toBeVisible({
+  await expect(page.getByRole('button', { name: /Ajouter un destinataire/i }).first()).toBeVisible({
     timeout: 10000,
   });
 

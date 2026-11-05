@@ -26,7 +26,7 @@ test('Supprimer une carcasse après transmission laisse la vente affichée et la
   await expect(page).toHaveURL('http://localhost:3290/app/chasseur');
   await page.getByRole('link', { name: feiId }).first().click();
 
-  const venteOuDon = page.getByRole('heading', { name: 'Vente ou don' });
+  const venteOuDon = page.getByRole('heading', { name: 'Destinataires' });
   await expect(venteOuDon).toBeVisible({ timeout: 10000 });
 
   const carcasses = page.getByRole('button', { name: /Daim N°/ });

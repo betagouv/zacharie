@@ -30,7 +30,7 @@ export const carcassesAutreLot = (page: Page) =>
     .getByRole('button', { name: /^Remettre / });
 
 export async function openVenteDon(page: Page) {
-  const addCard = page.getByRole('button', { name: /Ajouter une (autre )?vente/i }).first();
+  const addCard = page.getByRole('button', { name: /Ajouter un destinataire/i }).first();
   await addCard.scrollIntoViewIfNeeded();
   await addCard.click();
   await expect(venteDonModal(page)).toBeVisible({ timeout: 10000 });

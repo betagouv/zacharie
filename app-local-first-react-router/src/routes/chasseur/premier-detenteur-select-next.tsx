@@ -177,7 +177,7 @@ function getGroupFieldErrors(
     errors.recipientEntityId = 'Veuillez sélectionner le prochain détenteur des carcasses';
   }
   if (group.carcasseIds.length === 0) {
-    errors.carcasseIds = 'Veuillez sélectionner au moins une carcasse pour cette vente ou ce don';
+    errors.carcasseIds = 'Veuillez sélectionner au moins une carcasse pour ce destinataire';
   }
   if (isUsageDomestique(group)) {
     return errors;
@@ -262,7 +262,7 @@ function DispatchGroupCard({
   const recipient = group.recipientEntityId ? entities[group.recipientEntityId] : null;
   const title = usageDomestique
     ? USAGE_DOMESTIQUE_LABEL
-    : (recipient?.nom_d_usage ?? `Vente / don ${index + 1}`);
+    : (recipient?.nom_d_usage ?? `Destinataire ${index + 1}`);
   const transportLabel = getTransportLabel(group, entities);
   const details = (
     <div className="flex flex-1 flex-col">
@@ -342,7 +342,7 @@ function AddDispatchGroupCard({ disabled, onClick }: { disabled: boolean; onClic
           className="fr-icon-add-line"
           aria-hidden="true"
         />
-        Ajouter une vente ou un don
+        Ajouter un destinataire
       </span>
     </button>
   );
@@ -1329,8 +1329,8 @@ export default function DestinataireSelectPremierDetenteur({
     const map: Record<string, string> = {};
     otherGroups.forEach((g, i) => {
       const label = g.recipientEntityId
-        ? (entities[g.recipientEntityId]?.nom_d_usage ?? `Vente / don ${i + 1}`)
-        : `Vente / don ${i + 1}`;
+        ? (entities[g.recipientEntityId]?.nom_d_usage ?? `Destinataire ${i + 1}`)
+        : `Destinataire ${i + 1}`;
       for (const cId of g.carcasseIds) {
         map[cId] = label;
       }
@@ -1506,10 +1506,10 @@ export default function DestinataireSelectPremierDetenteur({
   // la fiche, le reste est simplement signalé par une alerte.
   const globalValidationError = useMemo(() => {
     if (dispatchGroups.length === 0) {
-      return 'Veuillez ajouter au moins une vente ou un don';
+      return 'Veuillez ajouter au moins un destinataire';
     }
     if (emptyDispatchGroups.length > 0) {
-      return 'Une vente ou un don n’a plus aucune carcasse : attribuez-lui des carcasses ou supprimez-la';
+      return 'Un destinataire n’a plus aucune carcasse : attribuez-lui des carcasses ou supprimez-le';
     }
     return null;
   }, [dispatchGroups.length, emptyDispatchGroups.length]);
@@ -1664,7 +1664,7 @@ export default function DestinataireSelectPremierDetenteur({
         <span id="vente-don-etape-courante">{steps[boundedStep - 1]}</span>
       </>
     ) : draftMode === 'add' ? (
-      'Ajouter une vente ou un don'
+      'Ajouter un destinataire'
     ) : (
       'Modifier'
     );
@@ -1885,7 +1885,7 @@ export default function DestinataireSelectPremierDetenteur({
       </dispatchModal.Component>
 
       <confirmDeleteDispatchModal.Component
-        title="Supprimer la vente / le don"
+        title="Supprimer le destinataire"
         buttons={[
           { children: 'Annuler', priority: 'secondary', doClosesModal: true },
           {
@@ -1899,7 +1899,7 @@ export default function DestinataireSelectPremierDetenteur({
         ]}
       >
         <p className="mb-0">
-          Voulez-vous supprimer cette vente / ce don
+          Voulez-vous supprimer ce destinataire
           {draftRecipientName ? (
             <>
               {' '}
