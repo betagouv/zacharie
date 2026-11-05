@@ -1587,6 +1587,155 @@ model TrichineHistoriqueStatut {
   @@index([modifie_par_user_id])
 }
 
+// Versions précédentes de TrichineEchantillon, écrites par le trigger history_trigger (migration trichine_history_tables).
+// Mêmes colonnes que TrichineEchantillon, toutes nullables : vérifié par src/__tests__/history-tables.test.ts.
+model TrichineEchantillonHistory {
+  history_id              BigInt                   @id @default(autoincrement())
+  id                      String?
+  reference_echantillon   String?
+  zacharie_carcasse_id    String?
+  preleve_par_user_id     String?
+  preleve_par_entity_id   String?
+  type                    TrichineType?
+  site_prelevement        TrichineSitePrelevement?
+  masse_grammes           Int?
+  date_prelevement        DateTime?                @db.Date
+  statut                  TrichineStatutAnalyse?
+  resultat_analyse        TrichineResultatAnalyse?
+  pool_id                 String?
+  retire_par_labo_at      DateTime?
+  retire_par_labo_motif   String?
+  retire_par_labo_user_id String?
+  retire_du_pool_id       String?
+  commentaire             String?
+  created_at              DateTime?
+  updated_at              DateTime?
+  deleted_at              DateTime?
+  is_synced               Boolean?
+  history_op              String // UPDATE | DELETE
+  sys_period              Unsupported("tstzrange") // période où la version était la ligne courante
+
+  @@index([id])
+}
+
+// Versions précédentes de TrichinePool, écrites par le trigger history_trigger (migration trichine_history_tables).
+// Mêmes colonnes que TrichinePool, toutes nullables : vérifié par src/__tests__/history-tables.test.ts.
+model TrichinePoolHistory {
+  history_id         BigInt                   @id @default(autoincrement())
+  id                 String?
+  reference_pool     String?
+  cree_par_user_id   String?
+  cree_par_entity_id String?
+  type               TrichineType?
+  pool_parent_id     String?
+  date_constitution  DateTime?                @db.Date
+  date_reception     DateTime?
+  date_debut_analyse DateTime?                @db.Date
+  date_fin_analyse   DateTime?                @db.Date
+  statut             TrichineStatutAnalyse?
+  resultat_analyse   TrichineResultatAnalyse?
+  parasite_identifie String?
+  nombre_larves_lvd  Int?
+  nombre_larves_lnr  Int?
+  refus_par_user_id  String?
+  raison_refus       String?
+  commentaire        String?
+  created_at         DateTime?
+  updated_at         DateTime?
+  deleted_at         DateTime?
+  is_synced          Boolean?
+  history_op         String // UPDATE | DELETE
+  sys_period         Unsupported("tstzrange") // période où la version était la ligne courante
+
+  @@index([id])
+}
+
+// Versions précédentes de TrichineFTP, écrites par le trigger history_trigger (migration trichine_history_tables).
+// Mêmes colonnes que TrichineFTP, toutes nullables : vérifié par src/__tests__/history-tables.test.ts.
+model TrichineFTPHistory {
+  history_id              BigInt                       @id @default(autoincrement())
+  id                      String?
+  numero_fiche            String?
+  date_creation           DateTime?
+  date_envoi              DateTime?
+  expediteur_user_id      String?
+  expediteur_entity_id    String?
+  destinataire_entity_id  String?
+  ftp_parent_id           String?
+  statut_logistique       TrichineStatutLogistiqueFTP?
+  statut_analytique       TrichineStatutAnalyse?
+  date_annulation         DateTime?
+  annulation_par_user_id  String?
+  raison_annulation       String?
+  mode_transport          String?
+  conditions_conservation String?
+  commentaire             String?
+  created_at              DateTime?
+  updated_at              DateTime?
+  deleted_at              DateTime?
+  is_synced               Boolean?
+  history_op              String // UPDATE | DELETE
+  sys_period              Unsupported("tstzrange") // période où la version était la ligne courante
+
+  @@index([id])
+}
+
+// Versions précédentes de TrichinePoolFTP, écrites par le trigger history_trigger (migration trichine_history_tables).
+// Mêmes colonnes que TrichinePoolFTP, toutes nullables : vérifié par src/__tests__/history-tables.test.ts.
+model TrichinePoolFTPHistory {
+  history_id BigInt                   @id @default(autoincrement())
+  id         String?
+  pool_id    String?
+  ftp_id     String?
+  date_ajout DateTime?
+  history_op String // UPDATE | DELETE
+  sys_period Unsupported("tstzrange") // période où la version était la ligne courante
+
+  @@index([id])
+}
+
+// Versions précédentes de TrichineAlias, écrites par le trigger history_trigger (migration trichine_history_tables).
+// Mêmes colonnes que TrichineAlias, toutes nullables : vérifié par src/__tests__/history-tables.test.ts.
+model TrichineAliasHistory {
+  history_id     BigInt                   @id @default(autoincrement())
+  id             String?
+  reference      String?
+  objet_type     TrichineAliasObjet?
+  entity_id      String?
+  echantillon_id String?
+  pool_id        String?
+  ftp_id         String?
+  created_at     DateTime?
+  updated_at     DateTime?
+  history_op     String // UPDATE | DELETE
+  sys_period     Unsupported("tstzrange") // période où la version était la ligne courante
+
+  @@index([id])
+}
+
+// Versions précédentes de TrichineDocument, écrites par le trigger history_trigger (migration trichine_history_tables).
+// Mêmes colonnes que TrichineDocument, toutes nullables : vérifié par src/__tests__/history-tables.test.ts.
+model TrichineDocumentHistory {
+  history_id         BigInt                   @id @default(autoincrement())
+  id                 String?
+  type               String?
+  source             String?
+  fichier_url        String?
+  nom_fichier        String?
+  date_ajout         DateTime?
+  ajoute_par_user_id String?
+  pool_id            String?
+  ftp_id             String?
+  created_at         DateTime?
+  updated_at         DateTime?
+  deleted_at         DateTime?
+  is_synced          Boolean?
+  history_op         String // UPDATE | DELETE
+  sys_period         Unsupported("tstzrange") // période où la version était la ligne courante
+
+  @@index([id])
+}
+
 // Statistiques Matomo importées chaque jour par le cron matomo-stats (cf doc/matomo.md), lues par Metabase.
 // `date` est un jour dans le fuseau du site Matomo (Europe/Paris).
 model MatomoVisitsDaily {

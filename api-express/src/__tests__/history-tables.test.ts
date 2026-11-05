@@ -12,6 +12,12 @@ const HISTORIZED_TABLES = [
   'User',
   'Entity',
   'EntityAndUserRelations',
+  'TrichineEchantillon',
+  'TrichinePool',
+  'TrichineFTP',
+  'TrichinePoolFTP',
+  'TrichineAlias',
+  'TrichineDocument',
 ];
 const HISTORY_ONLY_FIELDS = ['history_id', 'history_op', 'sys_period'];
 
