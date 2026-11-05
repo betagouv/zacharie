@@ -63,6 +63,7 @@ export type SeedRole =
   | 'FEDERATION_STATS_CIRCUIT_COURT'
   | 'ETG_FILTRES_RAPIDES'
   | 'LABORATOIRE_FTP_RECUE'
+  | 'SVI_SANGLIERS'
   | 'API_BAC_A_SABLE';
 
 export async function resetDb(role?: SeedRole) {
