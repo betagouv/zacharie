@@ -9,6 +9,7 @@ import AdminDeletedBanner from '@app/components/AdminDeletedBanner';
 import type { AdminFeiDetailResponse, AdminSoftDeleteResponse } from '@api/src/types/responses';
 import dayjs from 'dayjs';
 import { formatOwner, getNextOwnerStatus } from '@app/utils/admin-fei-destinataire';
+import { adminSoftDeleteCarcasse } from '@app/utils/admin-soft-delete-carcasse';
 import { AdminHistoryTimeline } from './history-timeline';
 import { AddCarcasseForm, IdentiteCorrectionForm, PremierDetenteurCorrectionForm } from './fei-corrections';
 
@@ -147,14 +148,9 @@ function AdminFeiDetailContent() {
   }
 
   function handleCarcasseSoftDelete(carcasse: FeiDetail['Carcasses'][number]) {
-    if (!window.confirm(`Supprimer la carcasse ${carcasse.numero_bracelet} de cette fiche ?`)) return;
-    API.post({ path: `admin/carcasse/${encodeURIComponent(carcasse.zacharie_carcasse_id)}/soft-delete` })
-      .then((res) => res as AdminSoftDeleteResponse)
-      .then((response) => {
-        if (!response.ok) return toast.error(response.error);
-        setReloadKey((key) => key + 1);
-        toast.success('La carcasse a été supprimée');
-      });
+    adminSoftDeleteCarcasse(carcasse).then((deleted_at) => {
+      if (deleted_at) setReloadKey((key) => key + 1);
+    });
   }
 
   function handleSoftDelete() {
