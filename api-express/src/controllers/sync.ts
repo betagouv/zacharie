@@ -16,6 +16,7 @@ import {
 import { runFeiUpdateSideEffects } from '~/utils/fei-side-effects';
 import { runCarcasseUpdateSideEffects } from '~/utils/carcasse-side-effects';
 import { SyncRejectedError, SyncRejectedErrorMessage } from '~/utils/sync-errors';
+import { findDeletedEntityIds } from '~/utils/deleted-entities';
 import { capture } from '~/third-parties/sentry';
 import { redactPersonalData } from '~/utils/redact-personal-data';
 
@@ -89,10 +90,25 @@ router.post(
     // sections suivantes)
     const scope = await createSyncScope(user);
 
+    // Une requête pour tout le lot : les entités supprimées parmi celles que fiches et carcasses
+    // désignent, refusées par syncFei / syncCarcasse.
+    const deletedEntityIds = await findDeletedEntityIds(
+      [
+        ...(feis || []).map((f) => f.premier_detenteur_entity_id),
+        ...(carcasses || []).flatMap((c) => [
+          c.next_owner_entity_id,
+          c.premier_detenteur_depot_entity_id,
+          c.premier_detenteur_entity_id,
+        ]),
+      ].filter((id): id is string => !!id)
+    );
+
     // 1. Process FEIs first (carcasses depend on them)
     for (const feiData of feis || []) {
       try {
-        const result = await syncFei(feiData.numero, feiData as Prisma.FeiUncheckedCreateInput, user, scope);
+        const result = await syncFei(feiData.numero, feiData as Prisma.FeiUncheckedCreateInput, user, scope, {
+          deletedEntityIds,
+        });
         feiResults.push(result);
       } catch (error) {
         handleSyncError(error, { kind: 'fei', id: feiData.numero }, feiData);
@@ -145,6 +161,12 @@ router.post(
       ),
     ];
     for (const entityId of nextOwnerEntityIds) {
+      // Jamais de relation vers une entité supprimée : marquée comme traitée pour que syncCarcasse
+      // ne la crée pas non plus.
+      if (deletedEntityIds.has(entityId)) {
+        ensuredRelationEntityIds.add(entityId);
+        continue;
+      }
       try {
         const relation: Prisma.EntityAndUserRelationsUncheckedCreateInput = {
           entity_id: entityId,
@@ -180,6 +202,7 @@ router.post(
                 existingFei: carcasseFeiMap.get(carcasseData.fei_numero) ?? null,
                 existingCarcasse: existingCarcasseMap.get(carcasseData.zacharie_carcasse_id) ?? null,
                 ensuredRelationEntityIds,
+                deletedEntityIds,
               }
             );
           } catch (error) {

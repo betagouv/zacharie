@@ -6,6 +6,7 @@ import { capture } from '~/third-parties/sentry';
 import { z } from 'zod';
 import type { SyncScope } from '~/utils/sync-scope';
 import { SyncRejectedError } from '~/utils/sync-errors';
+import { assertNoNewDeletedEntity } from '~/utils/deleted-entities';
 import { isStaleWrite, nextVersion } from '~/utils/sync-version';
 
 export interface SaveFeiResult {
@@ -36,7 +37,8 @@ export async function syncFei(
   numero: string,
   body: Prisma.FeiUncheckedCreateInput,
   user: User,
-  scope: SyncScope
+  scope: SyncScope,
+  opts: { deletedEntityIds?: Set<string> } = {}
 ): Promise<SaveFeiResult> {
   let result = feiBodyZodSchema.safeParse(body);
   if (!result.success) {
@@ -122,6 +124,9 @@ export async function syncFei(
   // les carcasses parties et évincerait le premier détenteur désigné. Comme pour les colonnes
   // réservées au SVI dans `sync-carcasse`, on ignore la valeur au lieu de rejeter la fiche.
   const canWriteOwnership = !existingFei || scope.isFeiOwner(existingFei);
+  if (canWriteOwnership) {
+    await assertNoNewDeletedEntity(body, existingFei, ['premier_detenteur_entity_id'], opts.deletedEntityIds);
+  }
 
   // L'approbation de mise sur le marché est la signature réglementaire de l'examinateur initial.
   // Elle est portée par la fiche, donc `canWriteFei` seul l'ouvrirait à tout détenteur aval qui
