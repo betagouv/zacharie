@@ -8,6 +8,8 @@ import DateRangeFilterSection from '@app/components/DateRangeFilterSection';
 import type { AdminFeisResponse, AdminFeisFilterOptionsResponse } from '@api/src/types/responses';
 import dayjs from 'dayjs';
 import { formatDestinataire } from '@app/utils/admin-fei-destinataire';
+import AdminViews, { type AdminView } from './admin-views';
+import { toApiQuery, useDebouncedUrlText, usePageOffset, useUrlFilters, useUrlList } from './use-url-filters';
 
 type FeiRow = AdminFeisResponse['data']['feis'][number];
 type FilterOptions = AdminFeisFilterOptionsResponse['data'];
@@ -24,31 +26,41 @@ function formatDateOnly(d: Date | string | null): string {
   return dayjs(d).format('DD/MM/YYYY');
 }
 
+const LIMIT = 100;
+
+// Calculées au rendu : « 7 derniers jours » part de la date du jour.
+function getFeiViews(): Array<AdminView> {
+  return [
+    { label: 'Toutes', params: {} },
+    {
+      label: '7 derniers jours',
+      params: { created_at_from: dayjs().subtract(7, 'day').format('YYYY-MM-DD') },
+    },
+    { label: 'Sans carcasse', params: { avec_carcasses: 'sans' } },
+    { label: 'Créées via l’API', params: { creation_context: 'api' } },
+  ];
+}
+
 export default function AdminFeis() {
   const [rows, setRows] = useState<FeiRow[]>([]);
   const [total, setTotal] = useState(0);
-  const [offset, setOffset] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [filterOptions, setFilterOptions] = useState<FilterOptions>(emptyFilterOptions);
-  const [examinateurs, setExaminateurs] = useState<string[]>([]);
-  const [premiersDetenteurs, setPremiersDetenteurs] = useState<string[]>([]);
-  const [creationContexts, setCreationContexts] = useState<string[]>([]);
-  const [avecCarcasses, setAvecCarcasses] = useState<string[]>([]);
-  const [dateMiseAMortFrom, setDateMiseAMortFrom] = useState('');
-  const [dateMiseAMortTo, setDateMiseAMortTo] = useState('');
-  const [dateCreationFrom, setDateCreationFrom] = useState('');
-  const [dateCreationTo, setDateCreationTo] = useState('');
-  const limit = 100;
-
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      setDebouncedSearch(search);
-      setOffset(0);
-    }, 300);
-    return () => clearTimeout(timeout);
-  }, [search]);
+  const { searchParams, setFilters, replaceFilters } = useUrlFilters();
+  const offset = usePageOffset(searchParams, LIMIT);
+  const urlSearch = searchParams.get('search') ?? '';
+  const [search, setSearch] = useDebouncedUrlText(urlSearch, (value) =>
+    setFilters({ search: value }, { replace: true })
+  );
+  const examinateurs = useUrlList(searchParams, 'examinateur_ids');
+  const premiersDetenteurs = useUrlList(searchParams, 'premier_detenteur_ids');
+  const creationContexts = useUrlList(searchParams, 'creation_context');
+  const avecCarcasses = useUrlList(searchParams, 'avec_carcasses');
+  const dateMiseAMortFrom = searchParams.get('date_mise_a_mort_from') ?? '';
+  const dateMiseAMortTo = searchParams.get('date_mise_a_mort_to') ?? '';
+  const dateCreationFrom = searchParams.get('created_at_from') ?? '';
+  const dateCreationTo = searchParams.get('created_at_to') ?? '';
+  const queryString = searchParams.toString();
 
   useEffect(() => {
     API.get({ path: 'admin/feis/filter-options' })
@@ -60,16 +72,7 @@ export default function AdminFeis() {
 
   useEffect(() => {
     setLoading(true);
-    const query: Record<string, string> = { limit: String(limit), offset: String(offset) };
-    if (debouncedSearch) query.search = debouncedSearch;
-    if (examinateurs.length) query.examinateur_ids = examinateurs.join(',');
-    if (premiersDetenteurs.length) query.premier_detenteur_ids = premiersDetenteurs.join(',');
-    if (creationContexts.length) query.creation_context = creationContexts.join(',');
-    if (avecCarcasses.length) query.avec_carcasses = avecCarcasses.join(',');
-    if (dateMiseAMortFrom) query.date_mise_a_mort_from = dateMiseAMortFrom;
-    if (dateMiseAMortTo) query.date_mise_a_mort_to = dateMiseAMortTo;
-    if (dateCreationFrom) query.created_at_from = dateCreationFrom;
-    if (dateCreationTo) query.created_at_to = dateCreationTo;
+    const query = toApiQuery(new URLSearchParams(queryString), LIMIT, offset);
     API.get({ path: 'admin/feis', query })
       .then((res) => res as AdminFeisResponse)
       .then((res) => {
@@ -79,21 +82,10 @@ export default function AdminFeis() {
         }
       })
       .finally(() => setLoading(false));
-  }, [
-    offset,
-    debouncedSearch,
-    examinateurs,
-    premiersDetenteurs,
-    creationContexts,
-    avecCarcasses,
-    dateMiseAMortFrom,
-    dateMiseAMortTo,
-    dateCreationFrom,
-    dateCreationTo,
-  ]);
+  }, [queryString, offset]);
 
   const activeFilterCount =
-    (search ? 1 : 0) +
+    (urlSearch ? 1 : 0) +
     examinateurs.length +
     premiersDetenteurs.length +
     creationContexts.length +
@@ -113,18 +105,7 @@ export default function AdminFeis() {
       <FiltersSidebar
         storageKey="admin-feis-filters"
         activeFilterCount={activeFilterCount}
-        onReset={() => {
-          setSearch('');
-          setExaminateurs([]);
-          setPremiersDetenteurs([]);
-          setCreationContexts([]);
-          setAvecCarcasses([]);
-          setDateMiseAMortFrom('');
-          setDateMiseAMortTo('');
-          setDateCreationFrom('');
-          setDateCreationTo('');
-          setOffset(0);
-        }}
+        onReset={() => replaceFilters({})}
       >
         <div className="relative">
           <span
@@ -143,22 +124,14 @@ export default function AdminFeis() {
           title="Date de mise à mort"
           from={dateMiseAMortFrom}
           to={dateMiseAMortTo}
-          onChange={(from, to) => {
-            setDateMiseAMortFrom(from);
-            setDateMiseAMortTo(to);
-            setOffset(0);
-          }}
+          onChange={(from, to) => setFilters({ date_mise_a_mort_from: from, date_mise_a_mort_to: to })}
         />
         <DateRangeFilterSection
           title="Date de création"
           defaultOpen={false}
           from={dateCreationFrom}
           to={dateCreationTo}
-          onChange={(from, to) => {
-            setDateCreationFrom(from);
-            setDateCreationTo(to);
-            setOffset(0);
-          }}
+          onChange={(from, to) => setFilters({ created_at_from: from, created_at_to: to })}
         />
         <CheckboxFilterSection
           title="Examinateur"
@@ -168,10 +141,7 @@ export default function AdminFeis() {
             label: option.label,
           }))}
           selected={examinateurs}
-          onChange={(next) => {
-            setExaminateurs(next);
-            setOffset(0);
-          }}
+          onChange={(next) => setFilters({ examinateur_ids: next })}
         />
         <CheckboxFilterSection
           title="Premier détenteur"
@@ -181,10 +151,7 @@ export default function AdminFeis() {
             label: option.label,
           }))}
           selected={premiersDetenteurs}
-          onChange={(next) => {
-            setPremiersDetenteurs(next);
-            setOffset(0);
-          }}
+          onChange={(next) => setFilters({ premier_detenteur_ids: next })}
         />
         <CheckboxFilterSection
           title="Origine"
@@ -194,10 +161,7 @@ export default function AdminFeis() {
             { value: 'api', label: 'API' },
           ]}
           selected={creationContexts}
-          onChange={(next) => {
-            setCreationContexts(next);
-            setOffset(0);
-          }}
+          onChange={(next) => setFilters({ creation_context: next })}
         />
         <CheckboxFilterSection
           title="Contenu"
@@ -207,30 +171,28 @@ export default function AdminFeis() {
             { value: 'sans', label: 'Sans carcasse' },
           ]}
           selected={avecCarcasses}
-          onChange={(next) => {
-            setAvecCarcasses(next);
-            setOffset(0);
-          }}
+          onChange={(next) => setFilters({ avec_carcasses: next })}
         />
       </FiltersSidebar>
       <div className="min-w-0 flex-1 py-4 md:px-4">
+        <AdminViews views={getFeiViews()} />
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-lg font-bold">Fiches ({total})</h3>
           <div className="flex items-center gap-2">
             <button
               className="fr-btn fr-btn--sm fr-btn--secondary"
               disabled={offset === 0}
-              onClick={() => setOffset(Math.max(0, offset - limit))}
+              onClick={() => setFilters({ page: offset - LIMIT > 0 ? String(offset / LIMIT) : null })}
             >
               Précédent
             </button>
             <span className="text-sm tabular-nums">
-              {offset + 1}–{Math.min(offset + limit, total)} / {total}
+              {offset + 1}–{Math.min(offset + LIMIT, total)} / {total}
             </span>
             <button
               className="fr-btn fr-btn--sm fr-btn--secondary"
-              disabled={offset + limit >= total}
-              onClick={() => setOffset(offset + limit)}
+              disabled={offset + LIMIT >= total}
+              onClick={() => setFilters({ page: String(offset / LIMIT + 2) })}
             >
               Suivant
             </button>

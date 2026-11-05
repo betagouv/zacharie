@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Badge } from '@codegouvfr/react-dsfr/Badge';
@@ -9,6 +9,7 @@ import Chargement from '@app/components/Chargement';
 import FiltersSidebar from '@app/components/FiltersSidebar';
 import CheckboxFilterSection from '@app/components/CheckboxFilterSection';
 import API from '@app/services/api';
+import { useDebouncedUrlText, useUrlFilters, useUrlList } from './use-url-filters';
 
 const entityTypeLabels: Record<EntityTypes, string> = {
   [EntityTypes.PREMIER_DETENTEUR]: 'Premier détenteur',
@@ -31,15 +32,18 @@ export default function AdminEntites() {
   const [entities, setEntities] = useState<AdminEntitiesResponse['data']['entities']>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCompatibles, setSelectedCompatibles] = useState<string[]>([]);
-  const [selectedTabId, setSelectedTabId] = useState('all');
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { searchParams, setFilters, replaceFilters } = useUrlFilters();
+  const urlSearch = searchParams.get('search') ?? '';
+  const [searchQuery, setSearchQuery] = useDebouncedUrlText(urlSearch, (value) =>
+    setFilters({ search: value }, { replace: true })
+  );
+  const selectedCompatibles = useUrlList(searchParams, 'compatible');
+  const selectedTabId = searchParams.get('type') || 'all';
 
-  const fetchEntities = (search: string) => {
+  useEffect(() => {
     setLoading(true);
     const query: Record<string, string> = {};
-    if (search) query.search = search;
+    if (urlSearch) query.search = urlSearch;
 
     API.get({ path: 'admin/entities', query })
       .then((res) => res as AdminEntitiesResponse)
@@ -50,19 +54,7 @@ export default function AdminEntites() {
         }
       })
       .finally(() => setLoading(false));
-  };
-
-  useEffect(() => {
-    fetchEntities('');
-  }, []);
-
-  const onSearchChange = (value: string) => {
-    setSearchQuery(value);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      fetchEntities(value);
-    }, 300);
-  };
+  }, [urlSearch]);
 
   const filteredEntities = entities.filter((entity) => {
     if (selectedTabId !== 'all' && entity.type !== selectedTabId) return false;
@@ -88,12 +80,8 @@ export default function AdminEntites() {
       <div className="md:-ml-4 md:flex">
         <FiltersSidebar
           storageKey="admin-entities-filters"
-          activeFilterCount={(searchQuery.trim() ? 1 : 0) + selectedCompatibles.length}
-          onReset={() => {
-            setSearchQuery('');
-            setSelectedCompatibles([]);
-            fetchEntities('');
-          }}
+          activeFilterCount={(urlSearch.trim() ? 1 : 0) + selectedCompatibles.length}
+          onReset={() => replaceFilters({}, ['type'])}
         >
           <div className="relative">
             <span
@@ -104,7 +92,7 @@ export default function AdminEntites() {
               type="search"
               placeholder="Nom, DDECPP, SIRET, adresse, id..."
               value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full rounded border border-gray-300 py-2 pr-3 pl-10 text-sm transition-colors outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             />
           </div>
@@ -115,7 +103,7 @@ export default function AdminEntites() {
               { value: 'false', label: 'Non' },
             ]}
             selected={selectedCompatibles}
-            onChange={setSelectedCompatibles}
+            onChange={(next) => setFilters({ compatible: next })}
           />
         </FiltersSidebar>
         <div className="min-w-0 flex-1 md:px-4">
@@ -157,7 +145,7 @@ export default function AdminEntites() {
                         borderColor: 'var(--border-default-grey)',
                       }
                 }
-                onClick={() => setSelectedTabId(pill.id)}
+                onClick={() => setFilters({ type: pill.id === 'all' ? null : pill.id })}
               >
                 {pill.label} ({pill.count})
               </button>

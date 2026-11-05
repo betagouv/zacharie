@@ -1,4 +1,4 @@
-import { memo, useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Badge } from '@codegouvfr/react-dsfr/Badge';
@@ -11,6 +11,8 @@ import CheckboxFilterSection from '@app/components/CheckboxFilterSection';
 import API from '@app/services/api';
 
 import ConnexionButton from '@app/components/ConnexionButton';
+import AdminViews, { type AdminView } from './admin-views';
+import { useDebouncedUrlText, useUrlFilters, useUrlList } from './use-url-filters';
 
 type AdminUser = NonNullable<AdminUsersResponse['data']['users']>[number];
 type AdminUserCounts = AdminUsersResponse['data']['counts'];
@@ -18,6 +20,15 @@ type AdminUserCounts = AdminUsersResponse['data']['counts'];
 const NO_COUNTS = { carcasses: 0, fiches: 0 };
 
 type CfeiValidationStatus = 'valid' | 'invalid' | 'missing';
+
+const USER_VIEWS: Array<AdminView> = [
+  { label: 'Tous', params: {} },
+  { label: 'Onboarding incomplet', params: { onboarding: 'incomplete' } },
+  { label: 'CFEI introuvable', params: { cfei_validation: 'invalid' } },
+  { label: 'Chasseurs non formés EI', params: { roles: UserRoles.CHASSEUR, cfei: 'not_trained' } },
+  { label: 'Désactivés', params: { statut: 'deactivated' } },
+  { label: 'Supprimés', params: { statut: 'deleted' } },
+];
 
 const statusIconColors = {
   green: 'text-green-600',
@@ -190,21 +201,17 @@ export default function AdminUsers() {
   const [users, setUsers] = useState<Array<AdminUser>>([]);
   const [counts, setCounts] = useState<AdminUserCounts>({});
   const [officialCfeis, setOfficialCfeis] = useState<Array<OfficialCfei>>([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  // Le champ affiche la frappe tout de suite ; la liste se recalcule après, en tâche de fond.
-  const deferredSearchQuery = useDeferredValue(searchQuery);
-  const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
-  const [selectedCfeiStatuses, setSelectedCfeiStatuses] = useState<string[]>([]);
-  const [selectedCfeiValidations, setSelectedCfeiValidations] = useState<string[]>([]);
-  const [selectedOnboardingStatuses, setSelectedOnboardingStatuses] = useState<string[]>([]);
-  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
-  const [sortBy, setSortBy] = useState(() => {
-    try {
-      return localStorage.getItem('admin-users-sortBy') || 'created_desc';
-    } catch {
-      return 'created_desc';
-    }
-  });
+  const { searchParams, setFilters, replaceFilters } = useUrlFilters();
+  const urlSearchQuery = searchParams.get('q') ?? '';
+  const [searchQuery, setSearchQuery] = useDebouncedUrlText(urlSearchQuery, (value) =>
+    setFilters({ q: value }, { replace: true })
+  );
+  const selectedRoles = useUrlList(searchParams, 'roles');
+  const selectedCfeiStatuses = useUrlList(searchParams, 'cfei');
+  const selectedCfeiValidations = useUrlList(searchParams, 'cfei_validation');
+  const selectedOnboardingStatuses = useUrlList(searchParams, 'onboarding');
+  const selectedStatuses = useUrlList(searchParams, 'statut');
+  const sortBy = searchParams.get('tri') || 'created_desc';
 
   const officialCfeiMap = useMemo(() => {
     const map = new Map<string, OfficialCfei>();
@@ -278,7 +285,7 @@ export default function AdminUsers() {
   }, [users]);
 
   const filteredUsers = useMemo(() => {
-    const query = deferredSearchQuery.trim().toLowerCase();
+    const query = urlSearchQuery.trim().toLowerCase();
     return users.filter((user) => {
       if (query && !searchableTextByUserId.get(user.id)?.includes(query)) {
         return false;
@@ -321,7 +328,7 @@ export default function AdminUsers() {
   }, [
     users,
     searchableTextByUserId,
-    deferredSearchQuery,
+    urlSearchQuery,
     selectedRoles,
     selectedCfeiStatuses,
     selectedOnboardingStatuses,
@@ -411,21 +418,14 @@ export default function AdminUsers() {
         <FiltersSidebar
           storageKey="admin-users-filters"
           activeFilterCount={
-            (searchQuery.trim() ? 1 : 0) +
+            (urlSearchQuery.trim() ? 1 : 0) +
             selectedRoles.length +
             selectedStatuses.length +
             selectedCfeiStatuses.length +
             selectedOnboardingStatuses.length +
             selectedCfeiValidations.length
           }
-          onReset={() => {
-            setSearchQuery('');
-            setSelectedRoles([]);
-            setSelectedStatuses([]);
-            setSelectedCfeiStatuses([]);
-            setSelectedOnboardingStatuses([]);
-            setSelectedCfeiValidations([]);
-          }}
+          onReset={() => replaceFilters({}, ['tri'])}
         >
           <div className="relative">
             <span
@@ -448,7 +448,7 @@ export default function AdminUsers() {
             scroll
             options={roleOptions}
             selected={selectedRoles}
-            onChange={setSelectedRoles}
+            onChange={(next) => setFilters({ roles: next })}
           />
           <CheckboxFilterSection
             title="Statut"
@@ -458,7 +458,7 @@ export default function AdminUsers() {
               { value: 'deleted', label: 'Supprimés' },
             ]}
             selected={selectedStatuses}
-            onChange={setSelectedStatuses}
+            onChange={(next) => setFilters({ statut: next })}
           />
           <CheckboxFilterSection
             title="CFEI"
@@ -469,7 +469,7 @@ export default function AdminUsers() {
               { value: 'not_trained', label: 'Pas formé EI' },
             ]}
             selected={selectedCfeiStatuses}
-            onChange={setSelectedCfeiStatuses}
+            onChange={(next) => setFilters({ cfei: next })}
           />
           <CheckboxFilterSection
             title="Onboarding"
@@ -478,7 +478,7 @@ export default function AdminUsers() {
               { value: 'incomplete', label: 'Incomplet' },
             ]}
             selected={selectedOnboardingStatuses}
-            onChange={setSelectedOnboardingStatuses}
+            onChange={(next) => setFilters({ onboarding: next })}
           />
           {officialCfeis.length > 0 && (
             <CheckboxFilterSection
@@ -489,7 +489,7 @@ export default function AdminUsers() {
                 { value: 'missing', label: 'Non renseigné' },
               ]}
               selected={selectedCfeiValidations}
-              onChange={setSelectedCfeiValidations}
+              onChange={(next) => setFilters({ cfei_validation: next })}
             />
           )}
         </FiltersSidebar>
@@ -499,12 +499,7 @@ export default function AdminUsers() {
               <span className="whitespace-nowrap">Trier par</span>
               <select
                 value={sortBy}
-                onChange={(e) => {
-                  setSortBy(e.target.value);
-                  try {
-                    localStorage.setItem('admin-users-sortBy', e.target.value);
-                  } catch {}
-                }}
+                onChange={(e) => setFilters({ tri: e.target.value })}
                 className="rounded border border-gray-300 px-2 py-1.5 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
               >
                 <option value="name_asc">Nom (A → Z)</option>
@@ -524,6 +519,10 @@ export default function AdminUsers() {
               + Ajouter des utilisateurs
             </Button>
           </div>
+          <AdminViews
+            views={USER_VIEWS}
+            keep={['tri']}
+          />
           <div className="flex flex-col bg-white">
             {sortedUsers.map((user) => {
               const isChasseur = user.roles?.includes(UserRoles.CHASSEUR);

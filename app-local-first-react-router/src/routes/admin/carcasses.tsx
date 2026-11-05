@@ -8,6 +8,8 @@ import CheckboxFilterSection from '@app/components/CheckboxFilterSection';
 import DateRangeFilterSection from '@app/components/DateRangeFilterSection';
 import type { AdminCarcassesResponse, AdminCarcassesFilterOptionsResponse } from '@api/src/types/responses';
 import dayjs from 'dayjs';
+import AdminViews, { type AdminView } from './admin-views';
+import { toApiQuery, useDebouncedUrlText, usePageOffset, useUrlFilters, useUrlList } from './use-url-filters';
 
 type CarcasseRow = AdminCarcassesResponse['data']['carcasses'][number];
 type FilterOptions = AdminCarcassesFilterOptionsResponse['data'];
@@ -58,35 +60,52 @@ function formatDate(d: Date | string | null): string {
   return dayjs(d).format('DD/MM/YYYY HH:mm');
 }
 
+const LIMIT = 100;
+
+const CARCASSE_VIEWS: Array<AdminView> = [
+  { label: 'Toutes', params: {} },
+  {
+    label: 'Saisies / refusées',
+    params: {
+      statuts: [
+        CarcasseStatus.SAISIE_TOTALE,
+        CarcasseStatus.SAISIE_PARTIELLE,
+        CarcasseStatus.REFUS_ETG_COLLECTEUR,
+      ].join(','),
+    },
+  },
+  {
+    label: 'Manquantes',
+    params: { statuts: [CarcasseStatus.MANQUANTE_ETG_COLLECTEUR, CarcasseStatus.MANQUANTE_SVI].join(',') },
+  },
+  { label: 'Consignées', params: { statuts: CarcasseStatus.CONSIGNE } },
+  { label: 'Sans décision', params: { statuts: CarcasseStatus.SANS_DECISION } },
+];
+
 export default function AdminCarcassesIntermediaires() {
   const [rows, setRows] = useState<CarcasseRow[]>([]);
   const [total, setTotal] = useState(0);
-  const [offset, setOffset] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [filterOptions, setFilterOptions] = useState<FilterOptions>(emptyFilterOptions);
-  const [statuts, setStatuts] = useState<string[]>([]);
-  const [especes, setEspeces] = useState<string[]>([]);
-  const [types, setTypes] = useState<string[]>([]);
-  const [svis, setSvis] = useState<string[]>([]);
-  const [etgs, setEtgs] = useState<string[]>([]);
-  const [collecteurs, setCollecteurs] = useState<string[]>([]);
-  const [premiersDetenteurs, setPremiersDetenteurs] = useState<string[]>([]);
-  const [examinateurs, setExaminateurs] = useState<string[]>([]);
-  const [dateMiseAMortFrom, setDateMiseAMortFrom] = useState('');
-  const [dateMiseAMortTo, setDateMiseAMortTo] = useState('');
-  const [dateCreationFrom, setDateCreationFrom] = useState('');
-  const [dateCreationTo, setDateCreationTo] = useState('');
-  const limit = 100;
-
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      setDebouncedSearch(search);
-      setOffset(0);
-    }, 300);
-    return () => clearTimeout(timeout);
-  }, [search]);
+  const { searchParams, setFilters, replaceFilters } = useUrlFilters();
+  const offset = usePageOffset(searchParams, LIMIT);
+  const urlSearch = searchParams.get('search') ?? '';
+  const [search, setSearch] = useDebouncedUrlText(urlSearch, (value) =>
+    setFilters({ search: value }, { replace: true })
+  );
+  const statuts = useUrlList(searchParams, 'statuts');
+  const especes = useUrlList(searchParams, 'especes');
+  const types = useUrlList(searchParams, 'types');
+  const svis = useUrlList(searchParams, 'svi_ids');
+  const etgs = useUrlList(searchParams, 'etg_ids');
+  const collecteurs = useUrlList(searchParams, 'collecteur_ids');
+  const premiersDetenteurs = useUrlList(searchParams, 'premier_detenteur_ids');
+  const examinateurs = useUrlList(searchParams, 'examinateur_ids');
+  const dateMiseAMortFrom = searchParams.get('date_mise_a_mort_from') ?? '';
+  const dateMiseAMortTo = searchParams.get('date_mise_a_mort_to') ?? '';
+  const dateCreationFrom = searchParams.get('created_at_from') ?? '';
+  const dateCreationTo = searchParams.get('created_at_to') ?? '';
+  const queryString = searchParams.toString();
 
   useEffect(() => {
     API.get({ path: 'admin/carcasses/filter-options' })
@@ -98,20 +117,7 @@ export default function AdminCarcassesIntermediaires() {
 
   useEffect(() => {
     setLoading(true);
-    const query: Record<string, string> = { limit: String(limit), offset: String(offset) };
-    if (debouncedSearch) query.search = debouncedSearch;
-    if (statuts.length) query.statuts = statuts.join(',');
-    if (especes.length) query.especes = especes.join(',');
-    if (types.length) query.types = types.join(',');
-    if (svis.length) query.svi_ids = svis.join(',');
-    if (etgs.length) query.etg_ids = etgs.join(',');
-    if (collecteurs.length) query.collecteur_ids = collecteurs.join(',');
-    if (premiersDetenteurs.length) query.premier_detenteur_ids = premiersDetenteurs.join(',');
-    if (examinateurs.length) query.examinateur_ids = examinateurs.join(',');
-    if (dateMiseAMortFrom) query.date_mise_a_mort_from = dateMiseAMortFrom;
-    if (dateMiseAMortTo) query.date_mise_a_mort_to = dateMiseAMortTo;
-    if (dateCreationFrom) query.created_at_from = dateCreationFrom;
-    if (dateCreationTo) query.created_at_to = dateCreationTo;
+    const query = toApiQuery(new URLSearchParams(queryString), LIMIT, offset);
     API.get({ path: 'admin/carcasses', query })
       .then((res) => res as AdminCarcassesResponse)
       .then((res) => {
@@ -121,25 +127,10 @@ export default function AdminCarcassesIntermediaires() {
         }
       })
       .finally(() => setLoading(false));
-  }, [
-    offset,
-    debouncedSearch,
-    statuts,
-    especes,
-    types,
-    svis,
-    etgs,
-    collecteurs,
-    premiersDetenteurs,
-    examinateurs,
-    dateMiseAMortFrom,
-    dateMiseAMortTo,
-    dateCreationFrom,
-    dateCreationTo,
-  ]);
+  }, [queryString, offset]);
 
   const activeFilterCount =
-    (search ? 1 : 0) +
+    (urlSearch ? 1 : 0) +
     statuts.length +
     especes.length +
     types.length +
@@ -153,13 +144,6 @@ export default function AdminCarcassesIntermediaires() {
     (dateCreationFrom ? 1 : 0) +
     (dateCreationTo ? 1 : 0);
 
-  // Chaque section remet la pagination à zéro : sinon on reste sur un offset qui
-  // n'existe plus dans le nouveau jeu de résultats.
-  const onFilterChange = (setter: (next: string[]) => void) => (next: string[]) => {
-    setter(next);
-    setOffset(0);
-  };
-
   if (loading && rows.length === 0) {
     return <Chargement />;
   }
@@ -172,22 +156,7 @@ export default function AdminCarcassesIntermediaires() {
       <FiltersSidebar
         storageKey="admin-carcasses-filters"
         activeFilterCount={activeFilterCount}
-        onReset={() => {
-          setSearch('');
-          setStatuts([]);
-          setEspeces([]);
-          setTypes([]);
-          setSvis([]);
-          setEtgs([]);
-          setCollecteurs([]);
-          setPremiersDetenteurs([]);
-          setExaminateurs([]);
-          setDateMiseAMortFrom('');
-          setDateMiseAMortTo('');
-          setDateCreationFrom('');
-          setDateCreationTo('');
-          setOffset(0);
-        }}
+        onReset={() => replaceFilters({})}
       >
         <div className="relative">
           <span
@@ -210,14 +179,14 @@ export default function AdminCarcassesIntermediaires() {
             label: statusLabels[status],
           }))}
           selected={statuts}
-          onChange={onFilterChange(setStatuts)}
+          onChange={(next) => setFilters({ statuts: next })}
         />
         <CheckboxFilterSection
           title="Espèce"
           scroll
           options={filterOptions.especes.map((option) => ({ value: option.id, label: option.label }))}
           selected={especes}
-          onChange={onFilterChange(setEspeces)}
+          onChange={(next) => setFilters({ especes: next })}
         />
         <CheckboxFilterSection
           title="Type"
@@ -226,7 +195,7 @@ export default function AdminCarcassesIntermediaires() {
             label: typeLabels[type],
           }))}
           selected={types}
-          onChange={onFilterChange(setTypes)}
+          onChange={(next) => setFilters({ types: next })}
         />
         <CheckboxFilterSection
           title="SVI"
@@ -234,7 +203,7 @@ export default function AdminCarcassesIntermediaires() {
           defaultOpen={false}
           options={filterOptions.svis.map((option) => ({ value: option.id, label: option.label }))}
           selected={svis}
-          onChange={onFilterChange(setSvis)}
+          onChange={(next) => setFilters({ svi_ids: next })}
         />
         <CheckboxFilterSection
           title="ETG"
@@ -242,7 +211,7 @@ export default function AdminCarcassesIntermediaires() {
           defaultOpen={false}
           options={filterOptions.etgs.map((option) => ({ value: option.id, label: option.label }))}
           selected={etgs}
-          onChange={onFilterChange(setEtgs)}
+          onChange={(next) => setFilters({ etg_ids: next })}
         />
         <CheckboxFilterSection
           title="Collecteur"
@@ -250,7 +219,7 @@ export default function AdminCarcassesIntermediaires() {
           defaultOpen={false}
           options={filterOptions.collecteurs.map((option) => ({ value: option.id, label: option.label }))}
           selected={collecteurs}
-          onChange={onFilterChange(setCollecteurs)}
+          onChange={(next) => setFilters({ collecteur_ids: next })}
         />
         <CheckboxFilterSection
           title="Premier détenteur"
@@ -261,7 +230,7 @@ export default function AdminCarcassesIntermediaires() {
             label: option.label,
           }))}
           selected={premiersDetenteurs}
-          onChange={onFilterChange(setPremiersDetenteurs)}
+          onChange={(next) => setFilters({ premier_detenteur_ids: next })}
         />
         <CheckboxFilterSection
           title="Examinateur"
@@ -269,49 +238,42 @@ export default function AdminCarcassesIntermediaires() {
           defaultOpen={false}
           options={filterOptions.examinateurs.map((option) => ({ value: option.id, label: option.label }))}
           selected={examinateurs}
-          onChange={onFilterChange(setExaminateurs)}
+          onChange={(next) => setFilters({ examinateur_ids: next })}
         />
         <DateRangeFilterSection
           title="Date de mise à mort"
           defaultOpen={false}
           from={dateMiseAMortFrom}
           to={dateMiseAMortTo}
-          onChange={(from, to) => {
-            setDateMiseAMortFrom(from);
-            setDateMiseAMortTo(to);
-            setOffset(0);
-          }}
+          onChange={(from, to) => setFilters({ date_mise_a_mort_from: from, date_mise_a_mort_to: to })}
         />
         <DateRangeFilterSection
           title="Date de création"
           defaultOpen={false}
           from={dateCreationFrom}
           to={dateCreationTo}
-          onChange={(from, to) => {
-            setDateCreationFrom(from);
-            setDateCreationTo(to);
-            setOffset(0);
-          }}
+          onChange={(from, to) => setFilters({ created_at_from: from, created_at_to: to })}
         />
       </FiltersSidebar>
       <div className="min-w-0 flex-1 py-4 md:px-4">
+        <AdminViews views={CARCASSE_VIEWS} />
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-lg font-bold">Carcasses ({total})</h3>
           <div className="flex items-center gap-2">
             <button
               className="fr-btn fr-btn--sm fr-btn--secondary"
               disabled={offset === 0}
-              onClick={() => setOffset(Math.max(0, offset - limit))}
+              onClick={() => setFilters({ page: offset - LIMIT > 0 ? String(offset / LIMIT) : null })}
             >
               Précédent
             </button>
             <span className="text-sm tabular-nums">
-              {offset + 1}–{Math.min(offset + limit, total)} / {total}
+              {offset + 1}–{Math.min(offset + LIMIT, total)} / {total}
             </span>
             <button
               className="fr-btn fr-btn--sm fr-btn--secondary"
-              disabled={offset + limit >= total}
-              onClick={() => setOffset(offset + limit)}
+              disabled={offset + LIMIT >= total}
+              onClick={() => setFilters({ page: String(offset / LIMIT + 2) })}
             >
               Suivant
             </button>
