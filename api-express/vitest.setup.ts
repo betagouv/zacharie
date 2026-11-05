@@ -5,10 +5,12 @@ vi.mock('./src/prisma', () => ({
   default: {
     $executeRaw: vi.fn(),
     $queryRaw: vi.fn().mockResolvedValue([]),
+    $transaction: vi.fn((operations: Array<Promise<unknown>>) => Promise.all(operations)),
     fei: {
       findMany: vi.fn().mockResolvedValue([]),
       findFirst: vi.fn(),
       findUnique: vi.fn(),
+      findUniqueOrThrow: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
     },
@@ -63,6 +65,9 @@ vi.mock('./src/prisma', () => ({
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
+    },
+    carcasseCertificat: {
+      findFirst: vi.fn().mockResolvedValue(null),
     },
     carcasseModificationRequest: {
       count: vi.fn().mockResolvedValue(0),

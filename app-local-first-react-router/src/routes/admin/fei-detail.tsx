@@ -10,6 +10,7 @@ import type { AdminFeiDetailResponse, AdminSoftDeleteResponse } from '@api/src/t
 import dayjs from 'dayjs';
 import { formatOwner, getNextOwnerStatus } from '@app/utils/admin-fei-destinataire';
 import { AdminHistoryTimeline } from './history-timeline';
+import { AddCarcasseForm, IdentiteCorrectionForm, PremierDetenteurCorrectionForm } from './fei-corrections';
 
 type FeiDetail = AdminFeiDetailResponse['data']['fei'];
 type FeiDetailData = AdminFeiDetailResponse['data'];
@@ -47,10 +48,31 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({
+  title,
+  onEdit,
+  children,
+}: {
+  title: string;
+  onEdit?: () => void;
+  children: React.ReactNode;
+}) {
   return (
     <section className="rounded border border-gray-200 bg-white p-4">
-      <h4 className="mb-3 border-b pb-2 text-base font-bold">{title}</h4>
+      <h4 className="mb-3 flex items-center justify-between border-b pb-2 text-base font-bold">
+        {title}
+        {onEdit && (
+          <Button
+            type="button"
+            priority="tertiary no outline"
+            size="small"
+            iconId="fr-icon-edit-line"
+            onClick={onEdit}
+          >
+            Modifier
+          </Button>
+        )}
+      </h4>
       {children}
     </section>
   );
@@ -87,10 +109,13 @@ function AdminFeiDetailContent() {
   const [loading, setLoading] = useState(true);
   const [selectedTab, setSelectedTab] = useState<FeiTabId>('infos');
   const [isDeleting, setIsDeleting] = useState(false);
+  const [corrections, setCorrections] = useState<FeiDetailData['corrections'] | null>(null);
+  const [editing, setEditing] = useState<'identite' | 'premier-detenteur' | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     if (!params.fei_numero) return;
-    setLoading(true);
+    if (reloadKey === 0) setLoading(true);
     API.get({ path: `admin/fei/${encodeURIComponent(params.fei_numero)}` })
       .then((res) => res as AdminFeiDetailResponse)
       .then((res) => {
@@ -98,10 +123,11 @@ function AdminFeiDetailContent() {
           setFei(res.data.fei);
           setDestinataires(res.data.destinataires);
           setOwnerLabels(res.data.ownerLabels);
+          setCorrections(res.data.corrections);
         }
       })
       .finally(() => setLoading(false));
-  }, [params.fei_numero]);
+  }, [params.fei_numero, reloadKey]);
 
   if (loading) return <Chargement />;
   if (!fei) return <p className="py-8 text-center text-gray-500">Fiche introuvable</p>;
@@ -110,6 +136,25 @@ function AdminFeiDetailContent() {
     const id = entityId ?? userId;
     if (!id) return null;
     return ownerLabels[id] ?? id;
+  }
+
+  const canCorrect = !!corrections && !corrections.blocage;
+
+  function handleCorrectionSaved() {
+    setEditing(null);
+    setReloadKey((key) => key + 1);
+    toast.success('La fiche a été corrigée');
+  }
+
+  function handleCarcasseSoftDelete(carcasse: FeiDetail['Carcasses'][number]) {
+    if (!window.confirm(`Supprimer la carcasse ${carcasse.numero_bracelet} de cette fiche ?`)) return;
+    API.post({ path: `admin/carcasse/${encodeURIComponent(carcasse.zacharie_carcasse_id)}/soft-delete` })
+      .then((res) => res as AdminSoftDeleteResponse)
+      .then((response) => {
+        if (!response.ok) return toast.error(response.error);
+        setReloadKey((key) => key + 1);
+        toast.success('La carcasse a été supprimée');
+      });
   }
 
   function handleSoftDelete() {
@@ -157,6 +202,9 @@ function AdminFeiDetailContent() {
               {fei.commune_mise_a_mort ? ` · ${fei.commune_mise_a_mort}` : ''}
               {` · ${fei.Carcasses.length} carcasse(s)`}
             </p>
+            {corrections?.blocage && !fei.deleted_at && (
+              <p className="mb-0 text-sm text-gray-500">{corrections.blocage} : corrections impossibles</p>
+            )}
           </div>
           {!fei.deleted_at && (
             <Button
@@ -183,7 +231,17 @@ function AdminFeiDetailContent() {
         {selectedTab === 'infos' && (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {/* 1. Identité fiche */}
-            <Section title="Identité">
+            <Section
+              title="Identité"
+              onEdit={canCorrect && !editing ? () => setEditing('identite') : undefined}
+            >
+              {editing === 'identite' && (
+                <IdentiteCorrectionForm
+                  fei={fei}
+                  onCancel={() => setEditing(null)}
+                  onSaved={handleCorrectionSaved}
+                />
+              )}
               <FieldGrid>
                 <Field label="Numéro">{fei.numero}</Field>
                 <Field label="Date de mise à mort">{formatDateOnly(fei.date_mise_a_mort)}</Field>
@@ -226,7 +284,18 @@ function AdminFeiDetailContent() {
             </Section>
 
             {/* 3. Premier détenteur */}
-            <Section title="Premier détenteur">
+            <Section
+              title="Premier détenteur"
+              onEdit={canCorrect && !editing ? () => setEditing('premier-detenteur') : undefined}
+            >
+              {editing === 'premier-detenteur' && corrections && (
+                <PremierDetenteurCorrectionForm
+                  fei={fei}
+                  corrections={corrections}
+                  onCancel={() => setEditing(null)}
+                  onSaved={handleCorrectionSaved}
+                />
+              )}
               <FieldGrid>
                 <Field label="Nom (cache)">{fei.premier_detenteur_name_cache ?? '—'}</Field>
                 <Field label="Utilisateur">{fei.FeiPremierDetenteurUser?.email ?? '—'}</Field>
@@ -262,6 +331,7 @@ function AdminFeiDetailContent() {
                         <th className="p-2">Destinataire</th>
                         <th className="p-2">Statut SVI</th>
                         <th className="p-2">Nb intermédiaires</th>
+                        {canCorrect && <th className="p-2" />}
                       </tr>
                     </thead>
                     <tbody>
@@ -296,12 +366,41 @@ function AdminFeiDetailContent() {
                             <StatusBadge status={carcasse.svi_carcasse_status} />
                           </td>
                           <td className="p-2">{carcasse._count.CarcasseIntermediaire}</td>
+                          {canCorrect && (
+                            <td className="p-2">
+                              {!carcasse.deleted_at && (
+                                <Button
+                                  type="button"
+                                  priority="tertiary no outline"
+                                  size="small"
+                                  iconId="fr-icon-delete-line"
+                                  title={`Supprimer la carcasse ${carcasse.numero_bracelet}`}
+                                  className="text-red-600! [&_*]:text-red-600!"
+                                  onClick={() => handleCarcasseSoftDelete(carcasse)}
+                                />
+                              )}
+                            </td>
+                          )}
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
               )}
+              {corrections &&
+                (corrections.ajoutCarcasseBlocage ? (
+                  !corrections.blocage && (
+                    <p className="mt-4 mb-0 text-sm text-gray-500">
+                      Ajout de carcasse impossible : {corrections.ajoutCarcasseBlocage.toLowerCase()}. C'est à
+                      lui de l'ajouter (« Ajouter une carcasse manquante »).
+                    </p>
+                  )
+                ) : (
+                  <AddCarcasseForm
+                    fei={fei}
+                    onSaved={() => handleCorrectionSaved()}
+                  />
+                ))}
             </Section>
           </div>
         )}
