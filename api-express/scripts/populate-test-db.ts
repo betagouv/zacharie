@@ -26,6 +26,13 @@ import { hashPassword } from '~/service/crypto';
 import createUserId from '~/utils/createUserId';
 import { getAllFederationEntities } from '~/utils/federation-stats';
 
+// tous les comptes de test ont le même mot de passe : un seul hash bcrypt (~60 ms) par process
+let testPasswordHash: Promise<string> | undefined;
+function getTestPasswordHash() {
+  testPasswordHash ??= hashPassword('secret-secret');
+  return testPasswordHash;
+}
+
 export async function populateDb(role?: FeiOwnerRole) {
   if (process.env.NODE_ENV !== 'test') {
     throw new Error('populateDb: NODE_ENV must be test');
@@ -443,7 +450,7 @@ Christine
     data: await Promise.all(
       users.map(async (user) => ({
         user_id: user.id,
-        password: await hashPassword('secret-secret'),
+        password: await getTestPasswordHash(),
       }))
     ),
   });
@@ -1771,7 +1778,7 @@ async function createLaboratoiresTrichine() {
     },
   });
   await prisma.password.create({
-    data: { user_id: laborantin.id, password: await hashPassword('secret-secret') },
+    data: { user_id: laborantin.id, password: await getTestPasswordHash() },
   });
   await prisma.entityAndUserRelations.create({
     data: {
@@ -1813,7 +1820,7 @@ async function createLaboratoiresTrichine() {
     },
   });
   await prisma.password.create({
-    data: { user_id: laborantinLnr.id, password: await hashPassword('secret-secret') },
+    data: { user_id: laborantinLnr.id, password: await getTestPasswordHash() },
   });
   await prisma.entityAndUserRelations.create({
     data: {
