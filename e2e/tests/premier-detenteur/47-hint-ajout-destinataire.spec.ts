@@ -43,7 +43,7 @@ test("Le hint « Ajoutez-le en cliquant ici » ouvre la création inline d'un pa
   await raisonSocialeInput.press('Enter');
 
   // Sélectionner le type après avoir saisi la raison sociale
-  const commerceDeDetail = modal.getByText('Commerce de détail (boucherie, charcuterie, etc.)');
+  const commerceDeDetail = modal.getByText('Commerce de détail (boucherie, restaurant, etc.)');
   await commerceDeDetail.scrollIntoViewIfNeeded();
   await commerceDeDetail.click();
 

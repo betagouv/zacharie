@@ -70,7 +70,7 @@ const fieldIds = {
 test('un admin crée un commerce de détail avec son représentant', async ({ page }) => {
   await openAdminAddEntity(page);
 
-  await cocher(page, 'Commerce de détail (boucherie, charcuterie, etc.)');
+  await cocher(page, 'Commerce de détail (boucherie, restaurant, etc.)');
 
   // ce nom est absent de Zacharie : le select l'ajoute
   await creerRaisonSociale(page, 'Boucherie Zacharie E2E');
@@ -110,7 +110,7 @@ test('un destinataire déjà enregistré est signalé au lieu d’être dupliqu�
   await openAdminAddEntity(page);
 
   // on crée d'abord le commerce, puis on revient sur le formulaire avec la même raison sociale
-  await cocher(page, 'Commerce de détail (boucherie, charcuterie, etc.)');
+  await cocher(page, 'Commerce de détail (boucherie, restaurant, etc.)');
   await creerRaisonSociale(page, 'Boucherie Doublon E2E');
   await page.locator(fieldIds.email).fill('doublon-e2e@example.fr');
   await page.locator(fieldIds.nom).fill('Bernard');
@@ -123,7 +123,7 @@ test('un destinataire déjà enregistré est signalé au lieu d’être dupliqu�
   await expect(page).toHaveURL(/\/app\/admin\/entity\/[^/]+$/, { timeout: 10000 });
 
   await page.goto('http://localhost:3290/app/admin/add-entity');
-  await cocher(page, 'Commerce de détail (boucherie, charcuterie, etc.)');
+  await cocher(page, 'Commerce de détail (boucherie, restaurant, etc.)');
   await choisirRaisonSocialeExistante(page, /Boucherie Doublon E2E - 34000 Montpellier/);
 
   await expect(page.getByText('Cette entité est déjà enregistrée dans Zacharie')).toBeVisible({

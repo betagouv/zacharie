@@ -81,7 +81,7 @@ test('Un consommateur final ajouté comme destinataire est nommé par son repré
 test("Un destinataire autre qu'un consommateur final exige une raison sociale", async ({ page }) => {
   const modal = venteDonModal(page);
 
-  const commerceDeDetail = modal.getByText('Commerce de détail (boucherie, charcuterie, etc.)');
+  const commerceDeDetail = modal.getByText('Commerce de détail (boucherie, restaurant, etc.)');
   await commerceDeDetail.scrollIntoViewIfNeeded();
   await commerceDeDetail.click();
 

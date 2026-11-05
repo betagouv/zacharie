@@ -205,7 +205,7 @@ export default function AdminNouvelleEntite() {
                   typeOption(EntityTypes.SVI, getUserRoleLabel(EntityTypes.SVI)),
                   typeOption(
                     EntityTypes.COMMERCE_DE_DETAIL,
-                    'Commerce de détail (boucherie, charcuterie, etc.)'
+                    'Commerce de détail (boucherie, restaurant, etc.)'
                   ),
                   typeOption(
                     EntityTypes.CANTINE_OU_RESTAURATION_COLLECTIVE,
