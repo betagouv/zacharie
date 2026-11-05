@@ -10,9 +10,6 @@ import { logoutAndConnect } from '../../utils/logout-and-connect';
 // la fiche de confirmation part d'office au LNR avec ces informations. « Analyse impossible » se choisit
 // dans la même modale que les autres résultats.
 
-// L'espace laboratoire n'est monté que si l'app est construite avec VITE_FEATURE_TRICHINE=true
-test.skip(process.env.VITE_FEATURE_TRICHINE !== 'true', 'Feature trichine désactivée dans ce build');
-
 test.setTimeout(120_000);
 test.use({ launchOptions: { slowMo: 100 } });
 
@@ -42,7 +39,7 @@ test('Le LVD renseigne l’envoi au LNR avec le résultat non négatif, le LNR l
   const transmettre = modale.getByRole('button', { name: 'Enregistrer et transmettre au LNR' });
   // Nombre de larves et conditions de conservation sont obligatoires
   await expect(transmettre).toBeDisabled();
-  await modale.getByLabel('Nombre de larves découvertes dans le pool', { exact: true }).fill('3');
+  await modale.getByLabel('Nombre de larves découvertes dans le pool').fill('3');
   await expect(transmettre).toBeDisabled();
 
   await modale.getByLabel("Date d'envoi des échantillons").fill('2026-10-28');
@@ -102,7 +99,7 @@ test('Le LVD enregistre une analyse impossible depuis la modale de résultat, da
   await expect(enregistrer).toBeDisabled();
 
   // Analyse impossible : seule la raison est demandée
-  await modale.getByText('Analyse impossible', { exact: true }).click();
+  await modale.getByText(/^Analyse impossible/).click();
   await expect(modale.getByLabel("Fin d'analyse (optionnel)")).toHaveCount(0);
   await expect(enregistrer).toBeDisabled();
   await modale.getByLabel('Raison de l’analyse impossible').fill('Échantillon putréfié');

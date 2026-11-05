@@ -64,6 +64,7 @@ export type SeedRole =
   | 'ETG_FILTRES_RAPIDES'
   | 'ETG_TABLEAU_DE_BORD'
   | 'LABORATOIRE_FTP_RECUE'
+  | 'SVI_SANGLIERS'
   | 'API_BAC_A_SABLE';
 
 export async function resetDb(role?: SeedRole) {
