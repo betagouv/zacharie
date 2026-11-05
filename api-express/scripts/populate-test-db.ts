@@ -1147,8 +1147,16 @@ Christine
         `Fei ${fei.numero} created with ${carcasses.count} carcasses (delivered to commerce de détail)`
       );
     }
-    if ((role as string) === 'ETG_TAKEN_CHARGE') {
-      const fei = await prisma.fei.create({ data: feiTakenChargeByEtg });
+    if ((role as string) === 'ETG_TAKEN_CHARGE' || (role as string) === 'ETG_TAKEN_CHARGE_PD_HORS_LIGNE') {
+      // variante hors ligne : l'examinateur a désigné le premier détenteur sans réseau
+      const fei = await prisma.fei.create({
+        data: {
+          ...feiTakenChargeByEtg,
+          ...((role as string) === 'ETG_TAKEN_CHARGE_PD_HORS_LIGNE'
+            ? { premier_detenteur_offline: true }
+            : {}),
+        },
+      });
       const carcasses = await prisma.carcasse.createMany({
         data: getCarcasses(fei, ownershipTakenChargeByEtg),
       });
