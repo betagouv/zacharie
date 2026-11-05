@@ -1445,6 +1445,18 @@ Christine
         `FEDERATION_STATS seeded: ${feiAllier.numero} (03), ${feiArdeche.numero} (07), ${feiAdmin.numero} (03, admin, exclue), ${feiAinNonTransmise.numero} (01, non transmise)`
       );
     }
+
+    // Une fiche de l'Allier transmise par le premier détenteur à un commerce de détail (circuit
+    // non agréé) : le commerce ne prend jamais en charge, le premier détenteur reste propriétaire courant.
+    if ((role as string) === 'FEDERATION_STATS_CIRCUIT_COURT') {
+      const fei = await prisma.fei.create({
+        data: { ...feiFederationAllier, numero: 'ZACH-20250707-QZ6E0-400005' },
+      });
+      await prisma.carcasse.createMany({
+        data: getCarcasses(fei, ownershipTransmittedByPremierDetenteurToCommerceDeDetail),
+      });
+      console.log(`FEDERATION_STATS_CIRCUIT_COURT seeded: ${fei.numero} (03, commerce de détail)`);
+    }
   }
 
   console.log('Database populated successfully');

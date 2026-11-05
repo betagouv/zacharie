@@ -5,11 +5,12 @@ const router: express.Router = express.Router();
 import { RequestWithUser } from '~/types/request';
 import { getIframeUrl } from '~/service/metabase-embed';
 import prisma from '~/prisma';
-import { CarcasseType, CarcasseStatus, DepotType, FeiOwnerRole, Prisma } from '@prisma/client';
+import { CarcasseType, CarcasseStatus, FeiOwnerRole, Prisma } from '@prisma/client';
 import departementsRegions from '~/data/departements-regions.json';
 import {
   circuitCourtRoles,
   extractDepartementFromCommune,
+  getCircuitValorisation,
   getCurrentSeason,
   hasBphMotif,
   ALL_DEPARTEMENT_CODES,
@@ -310,27 +311,20 @@ router.get(
       const bucket = c.type === CarcasseType.GROS_GIBIER ? deptStats.gg : deptStats.pg;
       const totalBucket = c.type === CarcasseType.GROS_GIBIER ? totals.gg : totals.pg;
 
-      const wasInEtg =
-        c.premier_detenteur_depot_type === DepotType.ETG ||
-        c.current_owner_role === FeiOwnerRole.ETG ||
-        c.current_owner_role === FeiOwnerRole.SVI ||
-        c.prev_owner_role === FeiOwnerRole.ETG ||
-        c.prev_owner_role === FeiOwnerRole.SVI ||
-        c.CarcasseIntermediaire.some((ci) => ci.intermediaire_role === FeiOwnerRole.ETG);
-
       const animaux = c.type === CarcasseType.PETIT_GIBIER ? (c.nombre_d_animaux ?? 1) : 1;
 
-      if (c.consommateur_final_usage_domestique != null) {
+      const circuit = getCircuitValorisation(c);
+      if (circuit === 'domestique') {
         bucket.domestique++;
         bucket.domestiqueAnimaux += animaux;
         totalBucket.domestique++;
         totalBucket.domestiqueAnimaux += animaux;
-      } else if (wasInEtg) {
+      } else if (circuit === 'agree') {
         bucket.agree++;
         bucket.agreeAnimaux += animaux;
         totalBucket.agree++;
         totalBucket.agreeAnimaux += animaux;
-      } else if (c.current_owner_role && circuitCourtRoles.includes(c.current_owner_role)) {
+      } else if (circuit === 'nonAgree') {
         bucket.nonAgree++;
         bucket.nonAgreeAnimaux += animaux;
         totalBucket.nonAgree++;
