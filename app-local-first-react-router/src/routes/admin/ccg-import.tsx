@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { read } from '@e965/xlsx';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Table } from '@codegouvfr/react-dsfr/Table';
@@ -18,6 +18,7 @@ type Step = 'upload' | 'preview' | 'result';
 
 export default function CcgImport() {
   const [step, setStep] = useState<Step>('upload');
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [nouveaux, setNouveaux] = useState<CcgPreviewRow[]>([]);
   const [modifies, setModifies] = useState<CcgPreviewModifiedRow[]>([]);
   const [unchangedCount, setUnchangedCount] = useState(0);
@@ -156,19 +157,42 @@ export default function CcgImport() {
             <code>Code postal</code>, <code>Bureau distributeur</code>, <code>SIRET/NUMAGRIT</code>
           </p>
           <input
+            ref={fileInputRef}
             type="file"
             accept=".csv,.xls,.xlsx"
             onChange={handleFileChange}
             disabled={loading}
-            className="fr-input"
-            placeholder="Sélectionnez un fichier Excel CCG (format RESYTAL)"
+            className="hidden"
           />
+          <Button
+            iconId="fr-icon-upload-line"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={loading}
+          >
+            Choisir un fichier CCG
+          </Button>
           {loading && <p className="mt-2">Chargement...</p>}
         </div>
       )}
 
       {step === 'preview' && (
         <>
+          <div className="mb-4 flex gap-4">
+            <Button
+              onClick={handleImport}
+              disabled={loading}
+            >
+              {loading ? 'Import en cours...' : `Importer (${displayedRows.length} CCG)`}
+            </Button>
+            <Button
+              priority="secondary"
+              onClick={reset}
+              disabled={loading}
+            >
+              Annuler
+            </Button>
+          </div>
+
           <div className="mb-4 flex items-center gap-4">
             <Badge severity="success">{nouveaux.length} nouveau(x)</Badge>
             <Badge severity="warning">{modifies.length} existant(s) avec modifications</Badge>
@@ -253,22 +277,6 @@ export default function CcgImport() {
                 ];
               })}
             />
-          </div>
-
-          <div className="flex gap-4">
-            <Button
-              onClick={handleImport}
-              disabled={loading}
-            >
-              {loading ? 'Import en cours...' : `Importer (${displayedRows.length} CCG)`}
-            </Button>
-            <Button
-              priority="secondary"
-              onClick={reset}
-              disabled={loading}
-            >
-              Annuler
-            </Button>
           </div>
         </>
       )}
