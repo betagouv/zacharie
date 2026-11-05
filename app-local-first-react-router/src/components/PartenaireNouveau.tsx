@@ -189,7 +189,7 @@ export default function PartenaireNouveau({ onFinish }: PartenaireNouveauProps) 
                   setEntityType(EntityTypes.COMMERCE_DE_DETAIL);
                 },
               },
-              label: 'Commerce de détail (boucherie, charcuterie, etc.)',
+              label: 'Commerce de détail (boucherie, restaurant, etc.)',
             },
             {
               nativeInputProps: {
