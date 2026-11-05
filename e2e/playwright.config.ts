@@ -68,7 +68,8 @@ const config: PlaywrightTestConfig = {
   outputDir: 'test-results/',
   webServer: [
     {
-      command: 'PORT=3291 NODE_ENV=test PGDATABASE=zacharietest npm run dev-test --prefix ../api-express',
+      command:
+        'PORT=3291 NODE_ENV=test PGDATABASE=zacharietest VITE_FEATURE_TRICHINE=true npm run dev-test --prefix ../api-express',
       url: 'http://localhost:3291/healthz',
       timeout: 120 * 1000,
       reuseExistingServer: true, // FALSE FOR DEBUG
@@ -79,11 +80,12 @@ const config: PlaywrightTestConfig = {
         PORT: '3291',
         NODE_ENV: 'test',
         PGDATABASE: 'zacharietest',
+        VITE_FEATURE_TRICHINE: 'true',
       },
     },
     {
       command:
-        'VITE_HOST=127.0.0.1:3290 VITE_SCHEME=http VITE_TEST=true VITE_TEST_PLAYWRIGHT=true VITE_API_URL=http://localhost:3291 PORT=3290 npm run dev-test --prefix ../app-local-first-react-router',
+        'VITE_HOST=127.0.0.1:3290 VITE_SCHEME=http VITE_TEST=true VITE_TEST_PLAYWRIGHT=true VITE_FEATURE_TRICHINE=true VITE_API_URL=http://localhost:3291 PORT=3290 npm run dev-test --prefix ../app-local-first-react-router',
       url: 'http://localhost:3290',
       timeout: 120 * 1000,
       reuseExistingServer: true, // FALSE FOR DEBUG
@@ -96,6 +98,7 @@ const config: PlaywrightTestConfig = {
         VITE_SCHEME: 'http',
         VITE_TEST: 'true',
         VITE_TEST_PLAYWRIGHT: 'true',
+        VITE_FEATURE_TRICHINE: 'true',
       },
     },
     {
