@@ -186,7 +186,7 @@ export default function RequestNewCarcasseButton({
       examinateur_initial_user_id: fei.examinateur_initial_user_id,
       examinateur_initial_approbation_mise_sur_le_marche: null,
       examinateur_initial_date_approbation_mise_sur_le_marche: null,
-      premier_detenteur_offline: null,
+      premier_detenteur_offline: transmission.premier_detenteur_offline ?? null,
       premier_detenteur_user_id: fei.premier_detenteur_user_id,
       premier_detenteur_entity_id: fei.premier_detenteur_entity_id,
       premier_detenteur_name_cache: fei.premier_detenteur_name_cache,
