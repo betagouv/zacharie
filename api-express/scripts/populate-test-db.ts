@@ -1158,7 +1158,13 @@ Christine
         },
       });
       const carcasses = await prisma.carcasse.createMany({
-        data: getCarcasses(fei, ownershipTakenChargeByEtg),
+        data: getCarcasses(fei, {
+          ...ownershipTakenChargeByEtg,
+          // en prod, une carcasse prise en charge par l'ETG vaut `false`, comme une carcasse ajoutée
+          ...((role as string) === 'ETG_TAKEN_CHARGE_PD_HORS_LIGNE'
+            ? { intermediaire_carcasse_manquante: false }
+            : {}),
+        }),
       });
       await prisma.carcasseIntermediaire.createMany({
         data: getCarcasses(fei).map((c) => ({

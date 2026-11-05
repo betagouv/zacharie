@@ -9,9 +9,10 @@ test.beforeEach(async () => {
 test.use({ launchOptions: { slowMo: 100 } });
 
 // Le premier détenteur de cette fiche a été désigné hors ligne (`premier_detenteur_offline: true` sur la
-// fiche et sur ses carcasses). Une carcasse ajoutée par l'ETG doit reprendre cette valeur : sinon elle
-// diffère des autres carcasses de la transmission et `capture('Transmssion differs from one of the
-// carcasses')` se déclenche, ce que la garde de `utils/test.ts` fait échouer.
+// fiche et sur ses carcasses). Une carcasse ajoutée par l'ETG doit reprendre cette valeur, ainsi que le
+// propriétaire précédent (`prev_owner_*`) et le dernier intermédiaire (`latest_intermediaire_*`) de la
+// transmission : sinon elle diffère des autres carcasses et `capture('Transmssion differs from one of
+// the carcasses')` se déclenche, ce que la garde de `utils/test.ts` fait échouer.
 test("Ajout d'une carcasse manquante sur une fiche dont le premier détenteur a été désigné hors ligne", async ({
   page,
 }) => {
