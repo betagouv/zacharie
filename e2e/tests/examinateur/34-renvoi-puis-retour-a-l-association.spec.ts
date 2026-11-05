@@ -131,5 +131,5 @@ test("Renvoi par l'ETG puis retour à l'association : aucune vente fantôme, la 
   // La carcasse est à attribuer de nouveau, pas « Envoyée à ETG 1 », et on peut créer une vente
   await expect(page.getByText(/Renvoyée par ETG 1, à attribuer de nouveau/)).toBeVisible({ timeout: 10000 });
   await expect(page.getByText(/Envoyée à ETG 1/)).toHaveCount(0);
-  await expect(page.getByRole('button', { name: /Ajouter une (autre )?vente/i }).first()).toBeVisible();
+  await expect(page.getByRole('button', { name: /Ajouter un destinataire/i }).first()).toBeVisible();
 });

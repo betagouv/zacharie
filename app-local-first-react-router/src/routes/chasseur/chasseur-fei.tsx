@@ -829,7 +829,7 @@ function FEIChasseurLoaded() {
                   alors les ventes / dons déjà faits. */}
               {showVenteDon && isPremierDetenteur && user.activated && (
                 <div className="bg-white p-4 md:p-8">
-                  <h4 className="fr-h5">Vente ou don</h4>
+                  <h4 className="fr-h5">Destinataires</h4>
                   <DestinataireSelectPremierDetenteur
                     canEdit={canEditAsPremierDetenteur}
                     submitRef={destinataireRef}
