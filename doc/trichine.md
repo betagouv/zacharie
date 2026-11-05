@@ -699,8 +699,8 @@ Routes `/laboratoire/*` :
   - Détail composition (pools, échantillons, carcasses, dates/communes mise à mort, sites prélèvement)
   - Saisie date de réception → `statut_logistique = RECUE`
   - Pour chaque pool : sélection résultat + dates analyse + commentaire + upload PDF
-  - Action "Refuser pool(s)" → `resultat_analyse = ANALYSE_IMPOSSIBLE` + `raison_refus` (saisie en masse possible)
-  - Action "Saisir résultat" → `NEGATIF` ou `DOUTEUX`
+  - Action "Saisir le résultat" (une seule modale, boutons radio) → `NEGATIF`, `DOUTEUX` ou « Analyse impossible » ; ce dernier demande seulement une raison et passe par `POST /laboratoire/pool/:id/refuser` (`resultat_analyse = ANALYSE_IMPOSSIBLE` + `raison_refus`)
+  - Dates d'analyse facultatives, jamais dans le futur, début avant fin : contrôlé dans `validateResultForPool`, donc aussi à l'import
   - Si `DOUTEUX` : saisie obligatoire du nombre de larves et des conditions de conservation de l'élément parasitaire, facultative de la date d'envoi (aujourd'hui par défaut) et des modalités de transmission → génération auto de la FTP vers le LNR, directement envoyée, qui porte ces informations (`date_envoi`, `mode_transport`, `conditions_conservation`) ; la référence interne du LVD reste celle du pool (alias). Puis modal pour upload photos larves. Un `DOUTEUX` importé par CSV n'a pas ces colonnes : la FTP part sans
   - Pour chaque échantillon : sa référence interne (alias), et l'action « Retirer du pool » (voir ci-dessous)
 - **Retrait d'un échantillon par le laboratoire** (`POST /laboratoire/echantillon/:id/retirer-du-pool`, motif libre obligatoire) : échantillon absent du colis, abîmé, mal identifié… LVD comme LNR, colis réceptionné (`RECUE`), tant que le laboratoire peut encore saisir le résultat du pool (LVD : aucun résultat et pool pas transmis au LNR ; LNR : pas encore de confirmation). Pas sur le dernier échantillon d'un pool : on refuse alors le pool. Même règle pour les pools fille / petite-fille.

@@ -115,6 +115,39 @@ describe('validateResultForPool : nombre de larves', () => {
   });
 });
 
+describe('validateResultForPool : dates d’analyse', () => {
+  const valider = (date_debut_analyse?: Date | string, date_fin_analyse?: Date | string) =>
+    validateResultForPool({
+      existingResult: null,
+      resultat_analyse: TrichineResultatAnalyse.NEGATIF,
+      date_debut_analyse,
+      date_fin_analyse,
+      isLnr: false,
+    });
+
+  it('accepte des dates passées dans l’ordre, ou absentes', () => {
+    expect(valider('2026-07-01', '2026-07-02')).toBeNull();
+    expect(valider(new Date('2026-07-01'), new Date('2026-07-01'))).toBeNull();
+    expect(valider(undefined, '2026-07-02')).toBeNull();
+    expect(valider()).toBeNull();
+  });
+
+  it('accepte la date du jour', () => {
+    const aujourdhui = new Date().toISOString().slice(0, 10);
+    expect(valider(aujourdhui, aujourdhui)).toBeNull();
+  });
+
+  it('refuse un début après la fin', () => {
+    expect(valider('2026-07-03', '2026-07-02')?.code).toBe('dates_invalides');
+  });
+
+  it('refuse une date dans le futur', () => {
+    const futur = new Date(Date.now() + 3 * 24 * 3600 * 1000);
+    expect(valider(undefined, futur)?.code).toBe('dates_invalides');
+    expect(valider(futur)?.code).toBe('dates_invalides');
+  });
+});
+
 describe('describePoolResultActions', () => {
   const base = { reference_pool: 'P-26-02-0045', nbCarcasses: 3, ftpNumero: 'F-26-02-0012' };
 

@@ -1177,6 +1177,8 @@ function classifyLimsRow(
     resultat_analyse: mapped.resultat_analyse,
     parasite_identifie: mapped.parasite_identifie,
     nombre_larves: mapped.nombre_larves,
+    date_debut_analyse: mapped.date_debut_analyse,
+    date_fin_analyse: mapped.date_fin_analyse,
     isLnr: found.ftp.DestinataireEntity.is_lnr,
   });
   if (invalid) {

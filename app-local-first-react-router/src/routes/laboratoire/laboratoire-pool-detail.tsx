@@ -5,8 +5,6 @@ import dayjs from 'dayjs';
 import { TrichineStatutLogistiqueFTP, type TrichineHistoriqueStatut } from '@prisma/client';
 import Chargement from '@app/components/Chargement';
 import PoolCard, {
-  refusModal,
-  RefusModalContent,
   resultatModal,
   ResultatModalContent,
   retraitModal,
@@ -53,7 +51,6 @@ export default function LaboratoirePoolDetail() {
   const [historique, setHistorique] = useState<Array<TrichineHistoriqueStatut>>([]);
   const [isLnr, setIsLnr] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [refusPool, setRefusPool] = useState<LaboPool | null>(null);
   const [resultatPool, setResultatPool] = useState<LaboPool | null>(null);
   const [retrait, setRetrait] = useState<RetraitEchantillon | null>(null);
   const [resultatMode, setResultatMode] = useState<ResultatMode>('saisie');
@@ -203,10 +200,6 @@ export default function LaboratoirePoolDetail() {
         isLnr={isLnr}
         confirmation={ftpConfirmation}
         saisieActive={receptionne}
-        onRefuser={() => {
-          setRefusPool(pool);
-          refusModal.open();
-        }}
         onSaisirResultat={() => {
           setResultatPool(pool);
           setResultatMode('saisie');
@@ -260,11 +253,6 @@ export default function LaboratoirePoolDetail() {
         pool={resultatPool}
         isLnr={isLnr}
         mode={resultatMode}
-        onDone={refresh}
-      />
-
-      <RefusModalContent
-        pool={refusPool}
         onDone={refresh}
       />
 

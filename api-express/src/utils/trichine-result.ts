@@ -1,4 +1,5 @@
 import z from 'zod';
+import dayjs from 'dayjs';
 import {
   EntityTypes,
   TrichineAliasObjet,
@@ -51,7 +52,7 @@ export const RESULTATS_AVEC_LARVES: TrichineResultatAnalyse[] = [
 ];
 
 export type ResultValidationError = {
-  code: 'not_allowed' | 'parasite_required' | 'larves_not_allowed' | 'already_resulted';
+  code: 'not_allowed' | 'parasite_required' | 'larves_not_allowed' | 'dates_invalides' | 'already_resulted';
   status: number;
   error: string;
 };
@@ -66,12 +67,17 @@ export function validateResultForPool({
   resultat_analyse,
   parasite_identifie,
   nombre_larves,
+  date_debut_analyse,
+  date_fin_analyse,
   isLnr,
 }: {
   existingResult: TrichineResultatAnalyse | null;
   resultat_analyse: TrichineResultatAnalyse;
   parasite_identifie?: string;
   nombre_larves?: number;
+  // Date (saisie) ou AAAA-MM-JJ (import)
+  date_debut_analyse?: Date | string;
+  date_fin_analyse?: Date | string;
   isLnr: boolean;
 }): ResultValidationError | null {
   const allowed = isLnr ? LNR_RESULTS : LVD_RESULTS;
@@ -96,9 +102,25 @@ export function validateResultForPool({
       error: 'Le nombre de larves ne s’indique que sur un résultat non négatif',
     };
   }
+  const datesInvalides = erreurDatesAnalyse(date_debut_analyse, date_fin_analyse);
+  if (datesInvalides) {
+    return { code: 'dates_invalides', status: 400, error: datesInvalides };
+  }
   // Seul le LNR peut écraser un résultat DOUTEUX (confirmation) ; tout autre résultat est définitif
   if (existingResult && !(existingResult === TrichineResultatAnalyse.DOUTEUX && isLnr)) {
     return { code: 'already_resulted', status: 400, error: 'Un résultat a déjà été saisi pour ce pool' };
+  }
+  return null;
+}
+
+function erreurDatesAnalyse(debut?: Date | string, fin?: Date | string): string | null {
+  // Un jour de marge : une date AAAA-MM-JJ est lue à minuit UTC, en avance sur l'heure française
+  const limite = dayjs().add(1, 'day');
+  if ((debut && dayjs(debut).isAfter(limite)) || (fin && dayjs(fin).isAfter(limite))) {
+    return 'Une date d’analyse ne peut pas être dans le futur';
+  }
+  if (debut && fin && dayjs(debut).isAfter(dayjs(fin))) {
+    return 'La date de début d’analyse doit précéder la date de fin';
   }
   return null;
 }
@@ -223,6 +245,8 @@ export async function applyPoolResult({
     resultat_analyse: body.resultat_analyse,
     parasite_identifie: body.parasite_identifie,
     nombre_larves: body.nombre_larves,
+    date_debut_analyse: body.date_debut_analyse,
+    date_fin_analyse: body.date_fin_analyse,
     isLnr,
   });
   if (invalid) {
