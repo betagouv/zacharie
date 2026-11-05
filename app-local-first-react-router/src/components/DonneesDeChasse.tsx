@@ -4,7 +4,7 @@ import { Carcasse, CarcasseType, DepotType, EntityTypes, FeiOwnerRole } from '@p
 import { Tag } from '@codegouvfr/react-dsfr/Tag';
 import dayjs from 'dayjs';
 import useZustandStore from '@app/zustand/store';
-import { getIntermediaireRoleLabel } from '@app/utils/get-user-roles-label';
+import { getIntermediaireRoleLabel, getUserRoleLabel } from '@app/utils/get-user-roles-label';
 import { CarcassesIntermediaire } from '@app/types/carcasses-intermediaire';
 import {
   useGetTransmissionFromCarcasse,
@@ -83,7 +83,8 @@ export default function FEIDonneesDeChasse({
     }): Array<StepDetail> => {
       const details: Array<StepDetail> = [];
       if (entity.siret) details.push({ icon: 'fr-icon-building-line', text: `SIRET ${entity.siret}` });
-      details.push({ icon: 'fr-icon-map-pin-2-line', text: `${entity.code_postal} ${entity.ville}` });
+      const location = [entity.code_postal, entity.ville].filter(Boolean).join(' ');
+      if (location) details.push({ icon: 'fr-icon-map-pin-2-line', text: location });
       return details;
     };
 
@@ -147,6 +148,24 @@ export default function FEIDonneesDeChasse({
       });
     }
 
+    // Prochain détenteur désigné mais pas encore pris en charge : on l'affiche en dernière étape
+    // pour que tous les membres de l'entreprise expéditrice sachent que la fiche est partie.
+    const nextOwnerRole = transmission?.content?.next_owner_role;
+    const nextOwnerEntityId = transmission?.content?.next_owner_entity_id;
+    if (nextOwnerRole && nextOwnerRole !== FeiOwnerRole.SVI && nextOwnerEntityId) {
+      const nextOwnerEntity = entities[nextOwnerEntityId];
+      const details: Array<StepDetail> = entityLocation(nextOwnerEntity ?? {});
+      details.push({ icon: 'fr-icon-time-line', text: 'En attente de prise en charge' });
+      _steps.push({
+        role:
+          nextOwnerRole === FeiOwnerRole.COLLECTEUR_PRO || nextOwnerRole === FeiOwnerRole.ETG
+            ? getIntermediaireRoleLabel(nextOwnerRole)
+            : getUserRoleLabel(nextOwnerRole),
+        name: nextOwnerEntity?.nom_d_usage ?? transmission.content.next_owner_entity_name_cache ?? '',
+        details,
+      });
+    }
+
     if (transmission?.content?.svi_entity_id) {
       const sviEntity = entities[transmission.content.svi_entity_id];
       if (sviEntity) {
@@ -190,6 +209,9 @@ export default function FEIDonneesDeChasse({
     intermediaires,
     entities,
     transmission?.content?.svi_entity_id,
+    transmission?.content?.next_owner_role,
+    transmission?.content?.next_owner_entity_id,
+    transmission?.content?.next_owner_entity_name_cache,
     transmission.carcasses,
   ]);
 

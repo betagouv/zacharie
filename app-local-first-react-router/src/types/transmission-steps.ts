@@ -18,7 +18,7 @@ export type TransmissionStepForCollecteurPro =
   | 'Carcasses traitées'
   | 'Fiche reçue, pas encore prise en charge'
   | 'Traitement des carcasses'
-  | 'Transport vers un établissement de traitement'
+  | 'Fiche envoyée, pas encore prise en charge'
   | 'Transport';
 
 export type TransmissionStepForChasseur =

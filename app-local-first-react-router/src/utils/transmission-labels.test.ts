@@ -76,7 +76,7 @@ describe('getCurrentStepLabel — dispatch by role', () => {
         UserRoles.COLLECTEUR_PRO,
         noEntities
       )
-    ).toBe('Transport vers un établissement de traitement');
+    ).toBe('Fiche envoyée, pas encore prise en charge');
   });
 
   it('returns the generic "En cours" for any other role', () => {
@@ -191,6 +191,36 @@ describe('getCurrentStepLabelForEtg', () => {
     ).toBe('Fiche reçue, pas encore prise en charge');
   });
 
+  it('owned by my ETG, sent to another ETG → fiche envoyée, pas encore prise en charge', () => {
+    expect(
+      getCurrentStepLabelForEtg(
+        'En cours',
+        t({
+          current_owner_role: 'ETG',
+          current_owner_entity_id: 'etg-mine',
+          next_owner_role: 'ETG',
+          next_owner_entity_id: 'etg-other',
+        }),
+        working('etg-mine')
+      )
+    ).toBe('Fiche envoyée, pas encore prise en charge');
+  });
+
+  it('owned by my ETG, sent to a collecteur → fiche envoyée, pas encore prise en charge', () => {
+    expect(
+      getCurrentStepLabelForEtg(
+        'En cours',
+        t({
+          current_owner_role: 'ETG',
+          current_owner_entity_id: 'etg-mine',
+          next_owner_role: FeiOwnerRole.COLLECTEUR_PRO,
+          next_owner_entity_id: 'collecteur-other',
+        }),
+        working('etg-mine')
+      )
+    ).toBe('Fiche envoyée, pas encore prise en charge');
+  });
+
   it("owned by one of my ETGs (no onward ETG transfer) → prise en charge par l'atelier", () => {
     expect(
       getCurrentStepLabelForEtg(
@@ -295,13 +325,13 @@ describe('getCurrentStepLabelForCollecteurPro', () => {
     expect(getCurrentStepLabelForCollecteurPro('Clôturée', t())).toBe('Carcasses traitées');
   });
 
-  it('owned by collecteur, heading to ETG → transport vers un établissement de traitement', () => {
+  it('owned by collecteur, heading to ETG → fiche envoyée, pas encore prise en charge', () => {
     expect(
       getCurrentStepLabelForCollecteurPro(
         'En cours',
         t({ current_owner_role: 'COLLECTEUR_PRO', next_owner_role: 'ETG' })
       )
-    ).toBe('Transport vers un établissement de traitement');
+    ).toBe('Fiche envoyée, pas encore prise en charge');
   });
 
   it('owned by collecteur, not heading to ETG → transport', () => {
@@ -332,7 +362,6 @@ describe('getCurrentStepLabelForCollecteurPro', () => {
 describe('getNextStepLabel', () => {
   it.each([
     ['Transport', 'Réception par un établissement de traitement'],
-    ['Transport vers un établissement de traitement', 'Réception par un établissement de traitement'],
     ['Transport vers un autre établissement de traitement', 'Réception par un établissement de traitement'],
   ] as const)('%s → %s', (current, expected) => {
     expect(getNextStepLabel(current)).toBe(expected);
@@ -465,8 +494,8 @@ describe('getTransmissionLabels — orchestration', () => {
     );
     expect(result).toEqual({
       simpleStatus: 'En cours',
-      currentStepLabel: 'Transport vers un établissement de traitement',
-      nextStepLabel: 'Réception par un établissement de traitement',
+      currentStepLabel: 'Fiche envoyée, pas encore prise en charge',
+      nextStepLabel: 'Traitement des carcasses',
       transportOrSoustraiteLabel: '',
     });
   });

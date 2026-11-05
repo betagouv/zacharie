@@ -36,7 +36,7 @@ import FEIDonneesDeChasse from '@app/components/DonneesDeChasse';
 import Section from '@app/components/Section';
 import CardCarcasse from '@app/components/CardCarcasse';
 import CollecteurHeaderFiche from './collecteur-header-fiche';
-import { useCollecteursProIds } from '@app/utils/get-entity-relations';
+import { useCollecteursProIds, useEntitiesIdsWorkingDirectlyFor } from '@app/utils/get-entity-relations';
 import DestinataireSelectIntermediaire from './collecteur-destinataire-select-intermediaire';
 import FeiSousTraite from './collecteur-current-owner-sous-traite';
 import CarcasseIntermediaireComp from './collecteur-carcasse';
@@ -94,19 +94,22 @@ function CollecteurFeiLoader(props: Props) {
   const myCarcasses = transmissionWithMetadata.carcasses;
   const transmission = transmissionWithMetadata.content;
 
-  const [selectedIntermediaireId, setSelectedIntermediaireId] = useState<string | null>(
-    () => intermediaires.find((i) => i.intermediaire_user_id === user.id)?.id ?? null
-  );
+  // l'intermédiaire de mon entreprise le plus récent : un collègue a pu prendre en charge la fiche
+  const myEntitiesIds = useEntitiesIdsWorkingDirectlyFor();
+  const myIntermediaireId =
+    intermediaires.find(
+      (i) =>
+        i.intermediaire_user_id === user.id ||
+        (!!i.intermediaire_entity_id && myEntitiesIds.includes(i.intermediaire_entity_id))
+    )?.id ?? null;
+  const [selectedIntermediaireId, setSelectedIntermediaireId] = useState<string | null>(myIntermediaireId);
 
   // Update when intermediaires change (e.g., after take-charge creates new intermediaire)
   useEffect(() => {
-    if (!selectedIntermediaireId && intermediaires.length > 0) {
-      const found = intermediaires.find((i) => i.intermediaire_user_id === user.id);
-      if (found) {
-        setSelectedIntermediaireId(found.id);
-      }
+    if (!selectedIntermediaireId && myIntermediaireId) {
+      setSelectedIntermediaireId(myIntermediaireId);
     }
-  }, [intermediaires, selectedIntermediaireId, user.id]);
+  }, [myIntermediaireId, selectedIntermediaireId]);
 
   const intermediaire = intermediaires.find((i) => i.id === selectedIntermediaireId);
 
