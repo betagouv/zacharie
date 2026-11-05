@@ -759,4 +759,32 @@ describe('reportTransmissionsInconsistencies', () => {
     );
     expect(mockedCapture).toHaveBeenCalledTimes(1);
   });
+
+  it('ne signale pas deux ventes / dons vers le même destinataire avec des dates de dépôt différentes', () => {
+    // cas réel (ZACH-20260923-AMBRO-174847) : deux lots vers le même ETG, transmis en une fois,
+    // dépôt en chambre froide à 14:50 pour l'un et 14:51 pour l'autre
+    const lot = {
+      premier_detenteur_prochain_detenteur_id_cache: 'etg-1',
+      premier_detenteur_prochain_detenteur_role_cache: 'ETG',
+      premier_detenteur_depot_type: 'CCG',
+      premier_detenteur_depot_entity_id: 'ccg-1',
+      premier_detenteur_transport_type: 'COLLECTEUR_PRO',
+    } as Partial<Carcasse>;
+    const lot1 = carcasse({
+      ...lot,
+      zacharie_carcasse_id: 'C1',
+      premier_detenteur_depot_ccg_at: new Date('2026-09-23T14:50:00.000Z'),
+    });
+    const lot2 = carcasse({
+      ...lot,
+      zacharie_carcasse_id: 'C2',
+      premier_detenteur_depot_ccg_at: new Date('2026-09-23T14:51:00.000Z'),
+    });
+    const transmissions = run({ carcasses: [lot1, lot2], user: admin });
+    // les deux lots tombent dans la même transmission
+    expect(transmissions[buildTransmissionId('FEI-1', 'etg-1')].carcasses).toHaveLength(2);
+
+    reportTransmissionsInconsistencies(undefined, byId([lot1, lot2]), transmissions);
+    expect(mockedCapture).not.toHaveBeenCalled();
+  });
 });

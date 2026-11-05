@@ -155,6 +155,28 @@ describe('checkCarcasseAgainstTransmission — silent (no false positive)', () =
     expect(mockedCapture).not.toHaveBeenCalled();
   });
 
+  it('two lots sent to the same recipient with different storage and transport do not report', () => {
+    // Same recipient = same transmission id, but each vente / don has its own CCG, depot date and transport.
+    check(
+      carc({
+        premier_detenteur_depot_type: 'CCG',
+        premier_detenteur_depot_entity_id: 'ccg-1',
+        premier_detenteur_depot_entity_name_cache: 'CCG Un',
+        premier_detenteur_depot_ccg_at: new Date('2026-09-23T14:50:00.000Z'),
+        premier_detenteur_transport_type: 'COLLECTEUR_PRO',
+      }),
+      carc({
+        premier_detenteur_depot_type: 'CCG',
+        premier_detenteur_depot_entity_id: 'ccg-2',
+        premier_detenteur_depot_entity_name_cache: 'CCG Deux',
+        premier_detenteur_depot_ccg_at: new Date('2026-09-23T14:51:00.000Z'),
+        premier_detenteur_transport_type: 'PREMIER_DETENTEUR',
+        premier_detenteur_transport_date: new Date('2026-09-24T08:00:00.000Z'),
+      })
+    );
+    expect(mockedCapture).not.toHaveBeenCalled();
+  });
+
   it('a missing carcasse (manquante) with divergent downstream owner does not report', () => {
     check(carc(), carc({ intermediaire_carcasse_manquante: true, next_owner_entity_id: 'someone-else' }));
     expect(mockedCapture).not.toHaveBeenCalled();
