@@ -119,6 +119,15 @@ export default function AdminEntites() {
             </Button>
             <Button
               size="small"
+              priority="secondary"
+              linkProps={{
+                to: '/app/admin/import-premiers-detenteurs',
+              }}
+            >
+              Importer des premiers détenteurs (CSV/XLS)
+            </Button>
+            <Button
+              size="small"
               linkProps={{
                 to: '/app/admin/add-entity',
               }}
