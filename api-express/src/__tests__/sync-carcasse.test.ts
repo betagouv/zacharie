@@ -397,6 +397,67 @@ describe('syncCarcasse — next_owner_entity_id side effect', () => {
       }),
     });
   });
+
+  // Le chasseur renvoie la carcasse telle qu'il l'a reçue, après que l'ETG l'a transmise au SVI.
+  test('unchanged next_owner_entity_id → no relation', async () => {
+    const carcasseTransmiseAuSvi = { ...baseCarcasse, next_owner_entity_id: 'entity-svi' };
+    vi.mocked(prisma.carcasse.update).mockResolvedValueOnce(carcasseTransmiseAuSvi);
+
+    await syncCarcasse(
+      'FEI-1',
+      'ZC-1',
+      { fei_numero: 'FEI-1', next_owner_entity_id: 'entity-svi' } as any,
+      chasseur,
+      scope,
+      { existingFei: baseFei, existingCarcasse: carcasseTransmiseAuSvi }
+    );
+
+    expect(prisma.entityAndUserRelations.findFirst).not.toHaveBeenCalled();
+    expect(prisma.entityAndUserRelations.create).not.toHaveBeenCalled();
+  });
+
+  test('rejected write → no relation', async () => {
+    const carcasseTransmiseAuSvi = { ...baseCarcasse, next_owner_entity_id: 'entity-svi' };
+
+    await expect(
+      syncCarcasse(
+        'FEI-1',
+        'ZC-1',
+        { fei_numero: 'FEI-1', next_owner_entity_id: 'entity-Y' } as any,
+        chasseur,
+        fakeSyncScope({ canWriteCarcasse: async () => false }),
+        { existingFei: baseFei, existingCarcasse: carcasseTransmiseAuSvi }
+      )
+    ).rejects.toThrow("Vous n'avez pas accès à cette carcasse");
+
+    expect(prisma.entityAndUserRelations.create).not.toHaveBeenCalled();
+  });
+
+  test('parallel carcasses to the same entity → relation created once', async () => {
+    vi.mocked(prisma.entityAndUserRelations.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.entityAndUserRelations.create).mockResolvedValue({} as any);
+    vi.mocked(prisma.carcasse.update).mockResolvedValue(baseCarcasse);
+    const ensuredRelations = new Map<string, Promise<void>>();
+
+    await Promise.all(
+      ['ZC-1', 'ZC-2'].map((id) =>
+        syncCarcasse(
+          'FEI-1',
+          id,
+          { fei_numero: 'FEI-1', next_owner_entity_id: 'entity-Y' } as any,
+          chasseur,
+          scope,
+          {
+            existingFei: baseFei,
+            existingCarcasse: { ...baseCarcasse, zacharie_carcasse_id: id },
+            ensuredRelations,
+          }
+        )
+      )
+    );
+
+    expect(prisma.entityAndUserRelations.create).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('syncCarcasse — champs réservés à un rôle', () => {
