@@ -25,38 +25,30 @@ import prisma from '~/prisma';
 import { hashPassword } from '~/service/crypto';
 import createUserId from '~/utils/createUserId';
 import { getAllFederationEntities } from '~/utils/federation-stats';
-import { applyHistoryTriggers } from './apply-history-triggers';
+
+// tous les comptes de test ont le même mot de passe : un seul hash bcrypt (~60 ms) par process
+let testPasswordHash: Promise<string> | undefined;
+function getTestPasswordHash() {
+  testPasswordHash ??= hashPassword('secret-secret');
+  return testPasswordHash;
+}
 
 export async function populateDb(role?: FeiOwnerRole) {
-  console.log('Populate db', process.env.NODE_ENV, process.env.POSTGRESQL_ADDON_URI);
   if (process.env.NODE_ENV !== 'test') {
-    console.log('Not in test environment');
-    return;
+    throw new Error('populateDb: NODE_ENV must be test');
   }
   if (process.env.POSTGRESQL_ADDON_URI !== 'postgres://postgres:postgres@localhost:5432/zacharietest') {
-    console.log('Not the test db 🤪');
-    return;
+    throw new Error('populateDb: POSTGRESQL_ADDON_URI must be the local zacharietest database');
   }
 
-  await applyHistoryTriggers();
-
-  // Delete in FK-safe order: children before parents
-  await prisma.adminAuditLog.deleteMany();
-  await prisma.securityLog.deleteMany();
-  await prisma.log.deleteMany();
-  await prisma.carcasseIntermediaire.deleteMany();
-  await prisma.carcasse.deleteMany();
-  await prisma.fei.deleteMany();
-  await prisma.entityAndUserRelations.deleteMany();
-  await prisma.userRelations.deleteMany();
-  await prisma.apiKeyLog.deleteMany();
-  await prisma.apiKeyApprovalByUserOrEntity.deleteMany();
-  await prisma.apiKey.deleteMany();
-  await prisma.password.deleteMany();
-  await prisma.entity.deleteMany();
-  await prisma.user.deleteMany();
-  // les suppressions ci-dessus remplissent les tables d'historique par les triggers : on les vide en dernier
-  await prisma.$executeRaw`TRUNCATE "FeiHistory", "CarcasseHistory", "CarcasseIntermediaireHistory", "UserHistory", "EntityHistory", "EntityAndUserRelationsHistory"`;
+  // TRUNCATE ne déclenche pas les triggers d'historique (row-level) : les tables History restent vides
+  await prisma.$executeRaw`TRUNCATE
+    "AdminAuditLog", "SecurityLog", "Log", "CarcasseIntermediaire", "Carcasse", "Fei",
+    "EntityAndUserRelations", "UserRelations", "ApiKeyLog", "ApiKeyApprovalByUserOrEntity", "ApiKey",
+    "Password", "Entity", "User",
+    "FeiHistory", "CarcasseHistory", "CarcasseIntermediaireHistory", "UserHistory", "EntityHistory",
+    "EntityAndUserRelationsHistory"
+    RESTART IDENTITY CASCADE`;
 
   /* 
   Martin
@@ -458,7 +450,7 @@ Christine
     data: await Promise.all(
       users.map(async (user) => ({
         user_id: user.id,
-        password: await hashPassword('secret-secret'),
+        password: await getTestPasswordHash(),
       }))
     ),
   });
@@ -1456,13 +1448,11 @@ Christine
   console.log('Database populated successfully');
 }
 
-const withRole = process.argv.find((arg) => arg.includes('--role'));
-if (withRole) {
-  const roleArg = withRole?.split('=')[1];
+// lancé en CLI (`tsx ./scripts/populate-test-db.ts --role=ETG`) ; importé par l'API de test, il ne fait rien
+if (process.argv[1]?.endsWith('populate-test-db.ts')) {
+  const roleArg = process.argv.find((arg) => arg.includes('--role'))?.split('=')[1];
   console.log('Populate db with role', roleArg);
   populateDb(roleArg as FeiOwnerRole);
-} else {
-  populateDb();
 }
 
 // Les champs de propriété / transmission ont été retirés de la Fei : ils vivent désormais
@@ -1788,7 +1778,7 @@ async function createLaboratoiresTrichine() {
     },
   });
   await prisma.password.create({
-    data: { user_id: laborantin.id, password: await hashPassword('secret-secret') },
+    data: { user_id: laborantin.id, password: await getTestPasswordHash() },
   });
   await prisma.entityAndUserRelations.create({
     data: {
@@ -1830,7 +1820,7 @@ async function createLaboratoiresTrichine() {
     },
   });
   await prisma.password.create({
-    data: { user_id: laborantinLnr.id, password: await hashPassword('secret-secret') },
+    data: { user_id: laborantinLnr.id, password: await getTestPasswordHash() },
   });
   await prisma.entityAndUserRelations.create({
     data: {
