@@ -53,6 +53,7 @@ import laboratoireRouter from './controllers/laboratoire.ts';
 import trichineAliasRouter from './controllers/trichine-alias.ts';
 import proconnectRouter from './controllers/proconnect.ts';
 import mockProConnectRouter from './mock-proconnect.ts';
+import { mountE2eRoutes } from './utils/mount-e2e-routes.ts';
 import './cronjobs/index.ts';
 import './scripts/migrations.ts';
 
@@ -221,6 +222,8 @@ app.get('/', async (req, res) => {
 app.get('/config.js', async (req, res) => {
   res.send({ VERSION });
 });
+
+mountE2eRoutes(app, process.env.NODE_ENV);
 
 // sentry context/user
 // app.use(async (req, res, next) => {

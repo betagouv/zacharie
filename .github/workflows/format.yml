@@ -9,16 +9,25 @@ permissions:
 jobs:
   prettier:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        pkg: [api-express, app-local-first-react-router, e2e]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
-      - name: Install ${{ matrix.pkg }}
-        run: cd ${{ matrix.pkg }} && npm ci --ignore-scripts
-      - name: Prettier check ${{ matrix.pkg }}
-        run: cd ${{ matrix.pkg }} && npx prettier --check .
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+      # prettier et prettier-plugin-tailwindcss viennent du package.json racine : les plugins déclarés dans
+      # app-local-first-react-router/package.json se résolvent en remontant jusqu'au node_modules racine
+      - name: Install prettier
+        run: npm ci --ignore-scripts
+      # Chaque package garde sa config prettier (package.json) et son .prettierignore : on lance depuis
+      # chaque dossier, et on continue après un échec pour lister les trois résultats
+      - name: Prettier check
+        run: |
+          status=0
+          for pkg in api-express app-local-first-react-router e2e; do
+            echo "::group::$pkg"
+            (cd "$pkg" && npx prettier --check .) || status=1
+            echo "::endgroup::"
+          done
+          exit $status
