@@ -21,6 +21,7 @@ import { SyncRejectedError } from '~/utils/sync-errors';
 import { assertNoNewDeletedEntity } from '~/utils/deleted-entities';
 import { carcasseHasResultatTrichineNegatif, TRICHINE_ESPECE_CONCERNEE } from '~/utils/trichine';
 import { isStaleWrite, nextVersion } from '~/utils/sync-version';
+import { capture } from '~/third-parties/sentry';
 
 export interface SaveCarcasseResult {
   savedCarcasse: Carcasse;
@@ -33,15 +34,14 @@ export interface SaveCarcasseResult {
 // - existingFei : fiche déjà chargée par l'appelant (évite un findUnique par carcasse)
 // - existingCarcasse : carcasse déjà chargée par l'appelant (évite un findFirst par carcasse).
 //   `undefined` = pas fournie (on requête), `null` = fournie et absente en base (on crée).
-// - ensuredRelationEntityIds : entités dont la relation CAN_TRANSMIT a déjà été assurée dans ce
-//   batch (évite un findFirst/create par carcasse pour le même destinataire). En sync parallèle,
-//   l'appelant pré-remplit ce Set pour que le bloc relation soit entièrement sauté (pas de race).
+// - ensuredRelations : relation CAN_TRANSMIT en cours ou faite dans ce lot, par entité (évite un
+//   findFirst/create par carcasse pour le même destinataire, et les doublons en sync parallèle).
 // - deletedEntityIds : entités supprimées parmi celles référencées par le lot (évite une requête
 //   par carcasse).
 interface SyncCarcasseOpts {
   existingFei?: Fei | null;
   existingCarcasse?: Carcasse | null;
-  ensuredRelationEntityIds?: Set<string>;
+  ensuredRelations?: Map<string, Promise<void>>;
   deletedEntityIds?: Set<string>;
 }
 
@@ -522,25 +522,6 @@ export async function syncCarcasse(
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.next_owner_entity_id)) {
     nextCarcasse.next_owner_entity_id = body[Prisma.CarcasseScalarFieldEnum.next_owner_entity_id];
-    // Create CAN_TRANSMIT_CARCASSES_TO_ENTITY relation (mirrors fei.ts pattern)
-    const nextOwnerEntityId = body[Prisma.CarcasseScalarFieldEnum.next_owner_entity_id] as string | null;
-    // En sync de masse, la relation est la même pour toutes les carcasses transmises au même
-    // destinataire : on ne l'assure qu'une fois par entité.
-    if (nextOwnerEntityId && !opts.ensuredRelationEntityIds?.has(nextOwnerEntityId)) {
-      const nextRelation: Prisma.EntityAndUserRelationsUncheckedCreateInput = {
-        entity_id: nextOwnerEntityId,
-        owner_id: user.id,
-        relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-        deleted_at: null,
-      };
-      const existingRelation = await prisma.entityAndUserRelations.findFirst({
-        where: nextRelation,
-      });
-      if (!existingRelation) {
-        await prisma.entityAndUserRelations.create({ data: nextRelation });
-      }
-      opts.ensuredRelationEntityIds?.add(nextOwnerEntityId);
-    }
   }
   if (body.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.next_owner_entity_name_cache)) {
     nextCarcasse.next_owner_entity_name_cache =
@@ -746,7 +727,45 @@ export async function syncCarcasse(
     data: { ...nextCarcasse, ...nextVersion(user.id) },
   });
 
+  // L'utilisateur peut désormais transmettre à ce destinataire : seulement s'il vient de le choisir
+  // (valeur changée, écriture acceptée). Un client qui renvoie la carcasse telle qu'il l'a reçue
+  // porte le destinataire choisi par un autre acteur.
+  const nextOwnerEntityId = body.next_owner_entity_id;
+  if (nextOwnerEntityId && nextOwnerEntityId !== existingCarcasse.next_owner_entity_id) {
+    await ensureCanTransmitRelation(user, nextOwnerEntityId, opts.ensuredRelations);
+  }
+
   return { savedCarcasse: updatedCarcasse, existingCarcasse, isDeleted: false };
+}
+
+// En sync de masse, les carcasses transmises au même destinataire sont traitées en parallèle : la
+// promesse est gardée par entité pour ne créer la relation qu'une fois, sans doublon concurrent.
+// La carcasse est déjà écrite : un échec ici est remonté à Sentry sans faire échouer le sync.
+function ensureCanTransmitRelation(
+  user: User,
+  entityId: string,
+  ensuredRelations?: Map<string, Promise<void>>
+): Promise<void> {
+  const pending = ensuredRelations?.get(entityId);
+  if (pending) return pending;
+  const promise = (async () => {
+    const relation: Prisma.EntityAndUserRelationsUncheckedCreateInput = {
+      entity_id: entityId,
+      owner_id: user.id,
+      relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
+      deleted_at: null,
+    };
+    try {
+      const existingRelation = await prisma.entityAndUserRelations.findFirst({ where: relation });
+      if (!existingRelation) {
+        await prisma.entityAndUserRelations.create({ data: relation });
+      }
+    } catch (error) {
+      capture(error as Error, { extra: { entityId, userId: user.id, context: 'ensure_relation' }, user });
+    }
+  })();
+  ensuredRelations?.set(entityId, promise);
+  return promise;
 }
 
 // L'auteur d'une carcasse ajoutée en aval l'annule avec sa demande NEW_CARCASSE encore en attente

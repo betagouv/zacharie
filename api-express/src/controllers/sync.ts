@@ -3,7 +3,7 @@ import passport from 'passport';
 import { catchErrors } from '~/middlewares/errors';
 import type { SyncRejection, SyncRequest, SyncResponse } from '~/types/responses';
 import prisma from '~/prisma';
-import { Prisma, User, UserRoles, Carcasse, Fei, EntityRelationType } from '@prisma/client';
+import { Prisma, User, UserRoles, Carcasse, Fei } from '@prisma/client';
 import { syncFei, type SaveFeiResult } from '~/utils/sync-fei';
 import { syncCarcasse, type SaveCarcasseResult } from '~/utils/sync-carcasse';
 import { syncCarcasseIntermediaire } from '~/utils/sync-carcasse-intermediaire';
@@ -144,45 +144,9 @@ router.post(
     await scope.prefetch(carcasseIds);
 
     // Les carcasses sont traitées en parallèle (chaque syncCarcasse = un update de ligne
-    // distincte, sans dépendance entre elles). La relation CAN_TRANSMIT vers le destinataire est
-    // en revanche partagée : on l'assure séquentiellement AVANT la boucle parallèle (une fois par
-    // entité) et on pré-remplit ensuredRelationEntityIds pour que syncCarcasse saute ce bloc et
-    // évite toute création concurrente en double.
-    const ensuredRelationEntityIds = new Set<string>();
-    const nextOwnerEntityIds = [
-      ...new Set(
-        carcasseList
-          .filter(
-            (c) =>
-              c.hasOwnProperty(Prisma.CarcasseScalarFieldEnum.next_owner_entity_id) &&
-              !!c.next_owner_entity_id
-          )
-          .map((c) => c.next_owner_entity_id as string)
-      ),
-    ];
-    for (const entityId of nextOwnerEntityIds) {
-      // Jamais de relation vers une entité supprimée : marquée comme traitée pour que syncCarcasse
-      // ne la crée pas non plus.
-      if (deletedEntityIds.has(entityId)) {
-        ensuredRelationEntityIds.add(entityId);
-        continue;
-      }
-      try {
-        const relation: Prisma.EntityAndUserRelationsUncheckedCreateInput = {
-          entity_id: entityId,
-          owner_id: user.id,
-          relation: EntityRelationType.CAN_TRANSMIT_CARCASSES_TO_ENTITY,
-          deleted_at: null,
-        };
-        const existingRelation = await prisma.entityAndUserRelations.findFirst({ where: relation });
-        if (!existingRelation) {
-          await prisma.entityAndUserRelations.create({ data: relation });
-        }
-      } catch (error) {
-        capture(error as Error, { extra: { entityId, userId: user.id, context: 'ensure_relation' }, user });
-      }
-      ensuredRelationEntityIds.add(entityId);
-    }
+    // distincte, sans dépendance entre elles). La relation CAN_TRANSMIT vers un même destinataire
+    // est partagée par le lot : syncCarcasse la crée une seule fois par entité via cette Map.
+    const ensuredRelations = new Map<string, Promise<void>>();
 
     // Concurrence bornée : on ne sature pas le pool de connexions Prisma (au-delà, les requêtes
     // sont simplement mises en file).
@@ -201,7 +165,7 @@ router.post(
               {
                 existingFei: carcasseFeiMap.get(carcasseData.fei_numero) ?? null,
                 existingCarcasse: existingCarcasseMap.get(carcasseData.zacharie_carcasse_id) ?? null,
-                ensuredRelationEntityIds,
+                ensuredRelations,
                 deletedEntityIds,
               }
             );
