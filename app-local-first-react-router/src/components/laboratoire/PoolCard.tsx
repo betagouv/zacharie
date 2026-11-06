@@ -78,6 +78,7 @@ export default function PoolCard({
   isLnr,
   confirmation,
   saisieActive,
+  entete = true,
   onSaisirResultat,
   onCorrigerResultat,
   onRetirerEchantillon,
@@ -88,6 +89,8 @@ export default function PoolCard({
   isLnr: boolean;
   confirmation: PoolConfirmation | null;
   saisieActive: boolean;
+  /** Sur la page du pool, la référence et le statut sont déjà dans le titre */
+  entete?: boolean;
   onSaisirResultat: () => void;
   onCorrigerResultat: () => void;
   onRetirerEchantillon: (echantillon: LaboEchantillon) => void;
@@ -96,6 +99,8 @@ export default function PoolCard({
 }) {
   const [compositionOuverte, setCompositionOuverte] = useState(false);
   const mesEntites = useMesEntitesAlias();
+  const maReference = monAlias(pool.Aliases, mesEntites);
+  const autresReferences = pool.Aliases.filter((alias) => alias.id !== maReference?.id);
   const resultatSaisi = pool.resultat_analyse !== null;
   // Le LNR confirme les pools non négatifs : la saisie reste ouverte sur un DOUTEUX
   const peutSaisir =
@@ -120,80 +125,35 @@ export default function PoolCard({
 
   return (
     <div className="fr-mb-2w rounded bg-white p-4 md:p-8 md:shadow-sm">
-      <div className="fr-mb-2w flex flex-wrap items-center gap-2">
-        <h2 className="fr-h5 fr-mb-0">
-          <Link
-            to={`/app/laboratoire/pools/${pool.reference_pool}`}
-            className="fr-link"
-          >
-            {pool.reference_pool}
-          </Link>
-        </h2>
-        <Badge
-          small
-          severity={statutAnalyseBadgeSeverity(pool.statut)}
-        >
-          {statutAnalyseLabels[pool.statut]}
-        </Badge>
-        {pool.resultat_analyse && (
+      {entete && (
+        <div className="fr-mb-2w flex flex-wrap items-center gap-2">
+          <h2 className="fr-h5 fr-mb-0">
+            <Link
+              to={`/app/laboratoire/pools/${pool.reference_pool}`}
+              className="fr-link"
+            >
+              {maReference?.reference ?? pool.reference_pool}
+            </Link>
+          </h2>
+          {maReference && (
+            <span className="fr-text--sm fr-mb-0 text-gray-600">Réf. Zacharie {pool.reference_pool}</span>
+          )}
           <Badge
             small
-            severity={resultatBadgeSeverity(pool.resultat_analyse)}
+            severity={statutAnalyseBadgeSeverity(pool.statut)}
           >
-            {resultatAnalyseLabels[pool.resultat_analyse]}
+            {statutAnalyseLabels[pool.statut]}
           </Badge>
-        )}
-      </div>
-
-      <div className="fr-mb-2w">
-        <p className="fr-text--sm fr-mb-0 text-gray-600">
-          {nombre} échantillon{nombre > 1 ? 's' : ''}
-          {!!carcasses && ` — carcasses ${carcasses}`}
-          {nombreRetires > 0 &&
-            ` — ${nombreRetires} retiré${nombreRetires > 1 ? 's' : ''} par le laboratoire`}
-        </p>
-        {pool.Aliases.length > 0 && (
-          <p className="fr-text--sm fr-mb-0 text-gray-600">Réf. internes : {formatAliases(pool.Aliases)}</p>
-        )}
-        <button
-          type="button"
-          onClick={() => setCompositionOuverte((ouverte) => !ouverte)}
-          className={`fr-link fr-text--sm fr-link--icon-left ${
-            compositionOuverte ? 'fr-icon-arrow-up-s-line' : 'fr-icon-arrow-down-s-line'
-          }`}
-          aria-expanded={compositionOuverte}
-        >
-          {compositionOuverte ? 'Masquer le détail' : 'Afficher le détail'}
-        </button>
-        {compositionOuverte && (
-          <ul className="fr-text--sm fr-mt-1w list-none space-y-1 p-0">
-            {pool.TrichineEchantillons.map((echantillon) => (
-              <EchantillonLabo
-                key={echantillon.id}
-                echantillon={echantillon}
-                mesEntites={mesEntites}
-                onRetirer={peutRetirer ? () => onRetirerEchantillon(echantillon) : null}
-                onAliasChange={onAliasChange}
-                onDocumentDepose={onDocumentDepose}
-              />
-            ))}
-          </ul>
-        )}
-        {compositionOuverte && nombreRetires > 0 && (
-          <>
-            <p className="fr-text--sm fr-mt-2w fr-mb-1v font-bold">Retirés du pool par le laboratoire</p>
-            <ul className="fr-text--sm list-none space-y-1 p-0">
-              {pool.EchantillonsRetires.map((echantillon) => (
-                <EchantillonRetireLabo
-                  key={echantillon.id}
-                  echantillon={echantillon}
-                />
-              ))}
-            </ul>
-          </>
-        )}
-      </div>
-
+          {pool.resultat_analyse && (
+            <Badge
+              small
+              severity={resultatBadgeSeverity(pool.resultat_analyse)}
+            >
+              {resultatAnalyseLabels[pool.resultat_analyse]}
+            </Badge>
+          )}
+        </div>
+      )}
       {confirmation && (
         <div className="fr-mb-2w rounded border-l-4 border-blue-800 bg-blue-50 p-4">
           <p className="fr-text--sm fr-mb-1w font-bold">
@@ -252,6 +212,56 @@ export default function PoolCard({
         documents={pool.Documents}
         onDone={onDocumentDepose}
       />
+      <div className="fr-mt-2w">
+        <p className="fr-text--sm fr-mb-0 text-gray-600">
+          {nombre} échantillon{nombre > 1 ? 's' : ''}
+          {!!carcasses && ` — carcasses ${carcasses}`}
+          {nombreRetires > 0 &&
+            ` — ${nombreRetires} retiré${nombreRetires > 1 ? 's' : ''} par le laboratoire`}
+        </p>
+        {autresReferences.length > 0 && (
+          <p className="fr-text--sm fr-mb-0 text-gray-600">
+            Réf. internes : {formatAliases(autresReferences)}
+          </p>
+        )}
+        <button
+          type="button"
+          onClick={() => setCompositionOuverte((ouverte) => !ouverte)}
+          className={`fr-link fr-text--sm fr-link--icon-left ${
+            compositionOuverte ? 'fr-icon-arrow-up-s-line' : 'fr-icon-arrow-down-s-line'
+          }`}
+          aria-expanded={compositionOuverte}
+        >
+          {compositionOuverte ? 'Masquer le détail' : 'Afficher le détail'}
+        </button>
+        {compositionOuverte && (
+          <ul className="fr-text--sm fr-mt-1w list-none space-y-1 p-0">
+            {pool.TrichineEchantillons.map((echantillon) => (
+              <EchantillonLabo
+                key={echantillon.id}
+                echantillon={echantillon}
+                mesEntites={mesEntites}
+                onRetirer={peutRetirer ? () => onRetirerEchantillon(echantillon) : null}
+                onAliasChange={onAliasChange}
+                onDocumentDepose={onDocumentDepose}
+              />
+            ))}
+          </ul>
+        )}
+        {compositionOuverte && nombreRetires > 0 && (
+          <>
+            <p className="fr-text--sm fr-mt-2w fr-mb-1v font-bold">Retirés du pool par le laboratoire</p>
+            <ul className="fr-text--sm list-none space-y-1 p-0">
+              {pool.EchantillonsRetires.map((echantillon) => (
+                <EchantillonRetireLabo
+                  key={echantillon.id}
+                  echantillon={echantillon}
+                />
+              ))}
+            </ul>
+          </>
+        )}
+      </div>
     </div>
   );
 }

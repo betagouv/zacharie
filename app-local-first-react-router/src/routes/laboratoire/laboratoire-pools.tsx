@@ -140,7 +140,10 @@ export default function LaboratoirePools() {
                 <td className="block border-none p-0">
                   <div className="mb-3 rounded-lg border border-gray-200 bg-white p-3">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-semibold">{pool.reference_pool}</span>
+                      <ReferencePool
+                        pool={pool}
+                        mesEntites={mesEntites}
+                      />
                       <StatutBadge statut={pool.statut} />
                     </div>
                     <div className="fr-text--xs m-0 mt-1 text-gray-500">
@@ -159,7 +162,12 @@ export default function LaboratoirePools() {
                 dataKey: 'reference_pool',
                 title: 'Référence',
                 ...sortProps,
-                render: (pool) => <span className="font-semibold">{pool.reference_pool}</span>,
+                render: (pool) => (
+                  <ReferencePool
+                    pool={pool}
+                    mesEntites={mesEntites}
+                  />
+                ),
               },
               { dataKey: 'type', title: 'Type', render: (pool) => trichineTypeLabels[pool.type] },
               {
@@ -190,15 +198,22 @@ export default function LaboratoirePools() {
                 title: 'Résultat',
                 render: (pool) => <ResultatBadge resultat={pool.resultat_analyse} />,
               },
-              {
-                dataKey: 'Aliases',
-                title: 'Ma réf.',
-                render: (pool) => monAlias(pool.Aliases, mesEntites)?.reference ?? '—',
-              },
             ]}
           />
         </div>
       )}
     </TrichineListPage>
+  );
+}
+
+// La référence du laboratoire d'abord, celle de Zacharie en dessous
+function ReferencePool({ pool, mesEntites }: { pool: LaboPoolRegistre; mesEntites: Array<string> }) {
+  const maReference = monAlias(pool.Aliases, mesEntites)?.reference;
+  if (!maReference) return <span className="font-semibold">{pool.reference_pool}</span>;
+  return (
+    <span className="flex flex-col">
+      <span className="font-semibold">{maReference}</span>
+      <span className="fr-text--xs m-0 text-gray-500">{pool.reference_pool}</span>
+    </span>
   );
 }

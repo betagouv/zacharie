@@ -16,7 +16,7 @@ import TrichineIntrouvable from '@app/components/trichine/TrichineIntrouvable';
 import TrichineChaine, { type ChaineEtape } from '@app/components/trichine/TrichineChaine';
 import TrichineChronologie from '@app/components/trichine/TrichineChronologie';
 import TrichineAliasesCard from '@app/components/trichine/TrichineAliases';
-import { aliasAnalysesFige } from '@app/services/trichine-alias';
+import { aliasAnalysesFige, monAlias, useMesEntitesAlias } from '@app/services/trichine-alias';
 import TrichineDetailPage, {
   TrichineCard,
   TrichineContact,
@@ -31,6 +31,8 @@ import {
   type LaboExpediteur,
 } from '@app/services/laboratoire';
 import {
+  resultatAnalyseLabels,
+  resultatBadgeSeverity,
   statutAnalyseBadgeSeverity,
   statutAnalyseLabels,
   statutLogistiqueLabels,
@@ -54,6 +56,7 @@ export default function LaboratoirePoolDetail() {
   const [resultatPool, setResultatPool] = useState<LaboPool | null>(null);
   const [retrait, setRetrait] = useState<RetraitEchantillon | null>(null);
   const [resultatMode, setResultatMode] = useState<ResultatMode>('saisie');
+  const mesEntites = useMesEntitesAlias();
 
   const refresh = useCallback(() => {
     if (!reference) return;
@@ -98,6 +101,8 @@ export default function LaboratoirePoolDetail() {
     ? ftp.ExpediteurEntity.nom_d_usage || ftp.ExpediteurEntity.raison_sociale
     : null;
   const receptionne = !!pool.date_reception;
+  // La référence du laboratoire passe en titre, celle de Zacharie en sous-titre
+  const maReference = monAlias(pool.Aliases, mesEntites)?.reference;
   // Le LNR reçoit lui-même la fiche de confirmation : l'encadré d'envoi ne concerne que le LVD
   const ftpConfirmation = isLnr
     ? null
@@ -112,18 +117,27 @@ export default function LaboratoirePoolDetail() {
       value: ftp.numero_fiche,
       to: `/app/laboratoire/ftp/${ftp.numero_fiche}`,
     },
-    { label: 'Pool', value: pool.reference_pool, current: true },
+    { label: 'Pool', value: maReference ?? pool.reference_pool, current: true },
     { label: 'Échantillons', value: `${pool.TrichineEchantillons.length}` },
   ];
 
   return (
     <TrichineDetailPage
-      surtitre="Pool reçu au laboratoire"
-      titre={pool.reference_pool}
+      surtitre={
+        maReference
+          ? `Pool reçu au laboratoire · Réf. Zacharie ${pool.reference_pool}`
+          : 'Pool reçu au laboratoire'
+      }
+      titre={maReference ?? pool.reference_pool}
       retour={{ to: '/app/laboratoire/pools', label: 'Tous les pools' }}
       badges={
         <>
           <Badge severity={statutAnalyseBadgeSeverity(pool.statut)}>{statutAnalyseLabels[pool.statut]}</Badge>
+          {pool.resultat_analyse && (
+            <Badge severity={resultatBadgeSeverity(pool.resultat_analyse)}>
+              {resultatAnalyseLabels[pool.resultat_analyse]}
+            </Badge>
+          )}
           <Badge severity="info">{trichineTypeLabels[pool.type]}</Badge>
           {!receptionne && <Badge severity="new">Fiche non réceptionnée</Badge>}
         </>
@@ -200,6 +214,7 @@ export default function LaboratoirePoolDetail() {
         isLnr={isLnr}
         confirmation={ftpConfirmation}
         saisieActive={receptionne}
+        entete={false}
         onSaisirResultat={() => {
           setResultatPool(pool);
           setResultatMode('saisie');
