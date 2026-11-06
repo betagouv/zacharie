@@ -33,6 +33,7 @@ export const MATOMO_EVENTS = {
       'aucune-carcasse',
       'carcasse-incomplete',
       'date-validation-examen',
+      'date-validation-avant-mise-a-mort',
       'certification',
       'vente-don',
       'lien-invalide',

@@ -71,7 +71,7 @@ async function creerFicheJusquAuPremierDetenteur(page: Page) {
     .click();
   await page.getByRole('button', { name: 'Transmettre', exact: true }).click();
   // bascule en ligne vers la vue du premier détenteur
-  await expect(page.getByRole('button', { name: /Ajouter une (autre )?vente/i }).first()).toBeVisible({
+  await expect(page.getByRole('button', { name: /Ajouter un destinataire/i }).first()).toBeVisible({
     timeout: 15000,
   });
 }

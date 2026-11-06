@@ -263,6 +263,38 @@ describe('POST /entite/partenaire (chasseur)', () => {
     expect(inviteUser).toHaveBeenCalledWith(createdOwner, expect.objectContaining({ id: 'chasseur-1' }));
   });
 
+  test('email d’un compte existant saisi avec des majuscules → 409, aucun compte en double', async () => {
+    // la base ne stocke que des emails en minuscules : on ne répond que pour la valeur exacte
+    (prisma.user.findUnique as any).mockImplementation(({ where }: any) =>
+      Promise.resolve(
+        where?.email === 'boucher@example.fr'
+          ? { id: 'user-existing', email: 'boucher@example.fr', roles: [UserRoles.COLLECTEUR_PRO] }
+          : null
+      )
+    );
+
+    const res = await request(entiteApp)
+      .post('/entite/partenaire')
+      .set('x-test-user', JSON.stringify(chasseurUser))
+      .send({ ...destinataireBody, email: '  Boucher@Example.fr ' });
+
+    expect(res.status).toBe(409);
+    expect(prisma.entity.create).not.toHaveBeenCalled();
+    expect(prisma.user.create).not.toHaveBeenCalled();
+    expect(inviteUser).not.toHaveBeenCalled();
+  });
+
+  test('le compte du représentant est créé avec l’email en minuscules', async () => {
+    await request(entiteApp)
+      .post('/entite/partenaire')
+      .set('x-test-user', JSON.stringify(chasseurUser))
+      .send({ ...destinataireBody, email: 'Boucher@Example.fr' });
+
+    expect(prisma.user.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ email: 'boucher@example.fr' }) })
+    );
+  });
+
   test('non authentifié → 401', async () => {
     await request(entiteApp).post('/entite/partenaire').send(destinataireBody).expect(401);
   });

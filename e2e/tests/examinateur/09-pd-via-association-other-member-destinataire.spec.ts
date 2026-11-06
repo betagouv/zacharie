@@ -129,7 +129,7 @@ test("Autre membre de l'Association voit le bloc Vente / don sur la fiche", asyn
 
   // Cœur du test : sans le fix, `isPremierDetenteur` aurait été `false` et le
   // bloc Vente / don aurait été masqué. Avec le fix, il est visible.
-  // (Le titre « Vente ou don » n'est rendu QUE par `{showVenteDon && isPremierDetenteur}`
+  // (Le titre « Destinataires » n'est rendu QUE par `{showVenteDon && isPremierDetenteur}`
   // dans chasseur-fei.tsx — aucun autre composant ne l'émet.)
-  await expect(page.getByRole('heading', { name: 'Vente ou don' })).toBeVisible({ timeout: 15000 });
+  await expect(page.getByRole('heading', { name: 'Destinataires' })).toBeVisible({ timeout: 15000 });
 });

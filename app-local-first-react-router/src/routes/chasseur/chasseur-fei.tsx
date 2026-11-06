@@ -230,6 +230,13 @@ function FEIChasseurLoaded() {
   const Component = canEdit ? Input : InputNotEditable;
   const VilleComponent = canEdit ? InputVille : InputNotEditable;
 
+  // date_mise_a_mort est stockée à minuit UTC, la date de validation en heure locale : on compare les jours
+  const isDateValidationAvantMiseAMort =
+    !!fei.date_mise_a_mort &&
+    !!fei.examinateur_initial_date_approbation_mise_sur_le_marche &&
+    dayjs(fei.examinateur_initial_date_approbation_mise_sur_le_marche).format('YYYY-MM-DD') <
+      dayjs.utc(fei.date_mise_a_mort).format('YYYY-MM-DD');
+
   const validationErrors = useMemo(() => {
     const errors: { field: string; message: string; tracking: MatomoName<'fiche', 'bloquer'> }[] = [];
     if (!fei.date_mise_a_mort) {
@@ -283,6 +290,13 @@ function FEIChasseurLoaded() {
         message: 'Il manque la date de validation de l\u2019examen initial',
         tracking: 'date-validation-examen',
       });
+    } else if (isDateValidationAvantMiseAMort) {
+      errors.push({
+        field: 'examinateur_initial_date_approbation_mise_sur_le_marche',
+        message:
+          'La date de validation de l’examen initial ne peut pas être antérieure à la date de mise à mort',
+        tracking: 'date-validation-avant-mise-a-mort',
+      });
     }
     if (!approbation) {
       errors.push({
@@ -292,7 +306,7 @@ function FEIChasseurLoaded() {
       });
     }
     return errors;
-  }, [fei, carcassesNotReady, carcasses, onlyPetitGibier, approbation]);
+  }, [fei, carcassesNotReady, carcasses, onlyPetitGibier, approbation, isDateValidationAvantMiseAMort]);
 
   const fieldHasError = (field: string, extraShow = false) =>
     (showErrors || extraShow) && validationErrors.some((e) => e.field === field);
@@ -694,7 +708,10 @@ function FEIChasseurLoaded() {
                   <Component
                     label="Date de validation de l'examen initial"
                     state={
-                      fieldHasError('examinateur_initial_date_approbation_mise_sur_le_marche')
+                      fieldHasError(
+                        'examinateur_initial_date_approbation_mise_sur_le_marche',
+                        isDateValidationAvantMiseAMort
+                      )
                         ? 'error'
                         : 'default'
                     }
@@ -812,7 +829,7 @@ function FEIChasseurLoaded() {
                   alors les ventes / dons déjà faits. */}
               {showVenteDon && isPremierDetenteur && user.activated && (
                 <div className="bg-white p-4 md:p-8">
-                  <h4 className="fr-h5">Vente ou don</h4>
+                  <h4 className="fr-h5">Destinataires</h4>
                   <DestinataireSelectPremierDetenteur
                     canEdit={canEditAsPremierDetenteur}
                     submitRef={destinataireRef}

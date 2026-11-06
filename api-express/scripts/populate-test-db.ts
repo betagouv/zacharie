@@ -25,38 +25,30 @@ import prisma from '~/prisma';
 import { hashPassword } from '~/service/crypto';
 import createUserId from '~/utils/createUserId';
 import { getAllFederationEntities } from '~/utils/federation-stats';
-import { applyHistoryTriggers } from './apply-history-triggers';
+
+// tous les comptes de test ont le même mot de passe : un seul hash bcrypt (~60 ms) par process
+let testPasswordHash: Promise<string> | undefined;
+function getTestPasswordHash() {
+  testPasswordHash ??= hashPassword('secret-secret');
+  return testPasswordHash;
+}
 
 export async function populateDb(role?: FeiOwnerRole) {
-  console.log('Populate db', process.env.NODE_ENV, process.env.POSTGRESQL_ADDON_URI);
   if (process.env.NODE_ENV !== 'test') {
-    console.log('Not in test environment');
-    return;
+    throw new Error('populateDb: NODE_ENV must be test');
   }
   if (process.env.POSTGRESQL_ADDON_URI !== 'postgres://postgres:postgres@localhost:5432/zacharietest') {
-    console.log('Not the test db 🤪');
-    return;
+    throw new Error('populateDb: POSTGRESQL_ADDON_URI must be the local zacharietest database');
   }
 
-  await applyHistoryTriggers();
-
-  // Delete in FK-safe order: children before parents
-  await prisma.adminAuditLog.deleteMany();
-  await prisma.securityLog.deleteMany();
-  await prisma.log.deleteMany();
-  await prisma.carcasseIntermediaire.deleteMany();
-  await prisma.carcasse.deleteMany();
-  await prisma.fei.deleteMany();
-  await prisma.entityAndUserRelations.deleteMany();
-  await prisma.userRelations.deleteMany();
-  await prisma.apiKeyLog.deleteMany();
-  await prisma.apiKeyApprovalByUserOrEntity.deleteMany();
-  await prisma.apiKey.deleteMany();
-  await prisma.password.deleteMany();
-  await prisma.entity.deleteMany();
-  await prisma.user.deleteMany();
-  // les suppressions ci-dessus remplissent les tables d'historique par les triggers : on les vide en dernier
-  await prisma.$executeRaw`TRUNCATE "FeiHistory", "CarcasseHistory", "CarcasseIntermediaireHistory", "UserHistory", "EntityHistory", "EntityAndUserRelationsHistory"`;
+  // TRUNCATE ne déclenche pas les triggers d'historique (row-level) : les tables History restent vides
+  await prisma.$executeRaw`TRUNCATE
+    "AdminAuditLog", "SecurityLog", "Log", "CarcasseIntermediaire", "Carcasse", "Fei",
+    "EntityAndUserRelations", "UserRelations", "ApiKeyLog", "ApiKeyApprovalByUserOrEntity", "ApiKey",
+    "Password", "Entity", "User",
+    "FeiHistory", "CarcasseHistory", "CarcasseIntermediaireHistory", "UserHistory", "EntityHistory",
+    "EntityAndUserRelationsHistory"
+    RESTART IDENTITY CASCADE`;
 
   /* 
   Martin
@@ -458,7 +450,7 @@ Christine
     data: await Promise.all(
       users.map(async (user) => ({
         user_id: user.id,
-        password: await hashPassword('secret-secret'),
+        password: await getTestPasswordHash(),
       }))
     ),
   });
@@ -1101,7 +1093,13 @@ Christine
         },
       });
       const carcasses = await prisma.carcasse.createMany({
-        data: getCarcasses(fei, ownershipTakenChargeByEtg),
+        data: getCarcasses(fei, {
+          ...ownershipTakenChargeByEtg,
+          // en prod, une carcasse prise en charge par l'ETG vaut `false`, comme une carcasse ajoutée
+          ...((role as string) === 'ETG_TAKEN_CHARGE_PD_HORS_LIGNE'
+            ? { intermediaire_carcasse_manquante: false }
+            : {}),
+        }),
       });
       await prisma.carcasseIntermediaire.createMany({
         data: getCarcasses(fei).map((c) => ({
@@ -1135,6 +1133,57 @@ Christine
         })),
       });
       console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (ETG taken charge)`);
+    }
+    // Tableau de bord ETG 1 : une fiche du jour (saison en cours), 3 daims + 1 lot de 10 pigeons.
+    //   - MM-001-001 : acceptée, saisie totale pour balle d'abdomen (motif BPH et disqualifiant)
+    //   - MM-001-002 : refusée par l'ETG
+    //   - MM-001-003 : lot de 10 pigeons, 8 acceptés, 2 saisis par le SVI
+    //   - MM-001-004 : acceptée, acceptée par le SVI
+    if ((role as string) === 'ETG_TABLEAU_DE_BORD') {
+      const etgUserId = users.find((u) => u.email === 'etg-1@example.fr')?.id ?? '';
+      const fei = await prisma.fei.create({
+        data: { ...feiTakenChargeByEtg, numero: 'ZACH-20250707-QZ6E0-235244' },
+      });
+      const today = dayjs().startOf('day').toDate();
+      const svi: Record<string, Partial<Prisma.CarcasseUncheckedCreateInput>> = {
+        'MM-001-001': {
+          svi_carcasse_status: CarcasseStatus.SAISIE_TOTALE,
+          svi_ipm2_lesions_ou_motifs: ["Souillures d'origine digestive liées à une balle d'abdomen"],
+        },
+        'MM-001-002': {
+          svi_carcasse_status: CarcasseStatus.REFUS_ETG_COLLECTEUR,
+          intermediaire_carcasse_refus_motif: 'Carcasse avariée',
+        },
+        'MM-001-003': {
+          svi_carcasse_status: CarcasseStatus.SAISIE_PARTIELLE,
+          svi_ipm2_nombre_animaux: 2,
+          svi_ipm2_lesions_ou_motifs: ['Odeur anormale'],
+        },
+        'MM-001-004': { svi_carcasse_status: CarcasseStatus.ACCEPTE },
+      };
+      const carcasses = getCarcasses(fei, ownershipTakenChargeByEtg).map((c) => ({
+        ...c,
+        date_mise_a_mort: today,
+        ...svi[c.numero_bracelet],
+      }));
+      await prisma.carcasse.createMany({ data: carcasses });
+      await prisma.carcasseIntermediaire.createMany({
+        data: carcasses.map((c) => ({
+          fei_numero: fei.numero,
+          numero_bracelet: c.numero_bracelet,
+          zacharie_carcasse_id: c.zacharie_carcasse_id!,
+          intermediaire_id: `${fei.numero}_${'2a8bc866-a709-47d9-aebe-2768fceb2ecb'}_${etgUserId}`,
+          intermediaire_entity_id: '2a8bc866-a709-47d9-aebe-2768fceb2ecb',
+          intermediaire_user_id: etgUserId,
+          intermediaire_role: FeiOwnerRole.ETG,
+          prise_en_charge_at: dayjs().subtract(1, 'day').toDate(),
+          ...(c.numero_bracelet === 'MM-001-002'
+            ? { refus: 'Carcasse avariée', prise_en_charge: false }
+            : { prise_en_charge: true }),
+          ...(c.numero_bracelet === 'MM-001-003' ? { check_manuel: true, nombre_d_animaux_acceptes: 8 } : {}),
+        })),
+      });
+      console.log(`Fei ${fei.numero} created with ${carcasses.length} carcasses (ETG tableau de bord)`);
     }
     if ((role as string) === 'COLLECTEUR_TAKEN_CHARGE') {
       const fei = await prisma.fei.create({ data: feiTakenChargeByCollecteur });
@@ -1405,13 +1454,11 @@ Christine
   console.log('Database populated successfully');
 }
 
-const withRole = process.argv.find((arg) => arg.includes('--role'));
-if (withRole) {
-  const roleArg = withRole?.split('=')[1];
+// lancé en CLI (`tsx ./scripts/populate-test-db.ts --role=ETG`) ; importé par l'API de test, il ne fait rien
+if (process.argv[1]?.endsWith('populate-test-db.ts')) {
+  const roleArg = process.argv.find((arg) => arg.includes('--role'))?.split('=')[1];
   console.log('Populate db with role', roleArg);
   populateDb(roleArg as FeiOwnerRole);
-} else {
-  populateDb();
 }
 
 // Les champs de propriété / transmission ont été retirés de la Fei : ils vivent désormais
@@ -1737,7 +1784,7 @@ async function createLaboratoiresTrichine() {
     },
   });
   await prisma.password.create({
-    data: { user_id: laborantin.id, password: await hashPassword('secret-secret') },
+    data: { user_id: laborantin.id, password: await getTestPasswordHash() },
   });
   await prisma.entityAndUserRelations.create({
     data: {
@@ -1779,7 +1826,7 @@ async function createLaboratoiresTrichine() {
     },
   });
   await prisma.password.create({
-    data: { user_id: laborantinLnr.id, password: await hashPassword('secret-secret') },
+    data: { user_id: laborantinLnr.id, password: await getTestPasswordHash() },
   });
   await prisma.entityAndUserRelations.create({
     data: {

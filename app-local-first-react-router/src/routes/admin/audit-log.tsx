@@ -8,8 +8,14 @@ import CheckboxFilterSection from '@app/components/CheckboxFilterSection';
 import DateRangeFilterSection from '@app/components/DateRangeFilterSection';
 import type { AdminAuditLogResponse, AdminAuditLogRow } from '@api/src/types/responses';
 import { adminActionLabel as actionLabel } from './admin-action-labels';
+import { useMostFreshUser } from '@app/utils-offline/get-most-fresh-user';
+import AdminViews, { type AdminView } from './admin-views';
+import { toApiQuery, useDebouncedUrlText, usePageOffset, useUrlFilters, useUrlList } from './use-url-filters';
 
 type AuditLogData = NonNullable<AdminAuditLogResponse['data']>;
+
+const LIMIT = 100;
+const CONNECT_AS_ACTION = 'POST /user/connect-as';
 
 const TARGET_TYPES: Array<{ value: string; label: string }> = [
   { value: 'user', label: 'Utilisateur' },
@@ -59,48 +65,44 @@ function JsonBlock({ title, value }: { title: string; value: unknown }) {
 
 export default function AdminAuditLog() {
   const [data, setData] = useState<AuditLogData | null>(null);
-  const [offset, setOffset] = useState(0);
   const [loading, setLoading] = useState(true);
   const [openedLogId, setOpenedLogId] = useState<string | null>(null);
-  const [adminIds, setAdminIds] = useState<string[]>([]);
-  const [targetTypes, setTargetTypes] = useState<string[]>([]);
-  const [actions, setActions] = useState<string[]>([]);
-  const [targetId, setTargetId] = useState('');
-  const [debouncedTargetId, setDebouncedTargetId] = useState('');
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
-  const limit = 100;
-
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      setDebouncedTargetId(targetId);
-      setOffset(0);
-    }, 300);
-    return () => clearTimeout(timeout);
-  }, [targetId]);
+  const user = useMostFreshUser('AdminAuditLog');
+  const { searchParams, setFilters, replaceFilters } = useUrlFilters();
+  const offset = usePageOffset(searchParams, LIMIT);
+  const adminIds = useUrlList(searchParams, 'admin_user_ids');
+  const targetTypes = useUrlList(searchParams, 'target_types');
+  const actions = useUrlList(searchParams, 'actions');
+  const urlTargetId = searchParams.get('target_id') ?? '';
+  const [targetId, setTargetId] = useDebouncedUrlText(urlTargetId, (value) =>
+    setFilters({ target_id: value }, { replace: true })
+  );
+  const dateFrom = searchParams.get('created_at_from') ?? '';
+  const dateTo = searchParams.get('created_at_to') ?? '';
+  const queryString = searchParams.toString();
 
   useEffect(() => {
     setLoading(true);
-    const query: Record<string, string> = { limit: String(limit), offset: String(offset) };
-    if (adminIds.length) query.admin_user_ids = adminIds.join(',');
-    if (targetTypes.length) query.target_types = targetTypes.join(',');
-    if (actions.length) query.actions = actions.join(',');
-    if (debouncedTargetId) query.target_id = debouncedTargetId;
-    if (dateFrom) query.created_at_from = dateFrom;
-    if (dateTo) query.created_at_to = dateTo;
+    const query = toApiQuery(new URLSearchParams(queryString), LIMIT, offset);
     API.get({ path: 'admin/audit-log', query })
       .then((res) => res as AdminAuditLogResponse)
       .then((res) => {
         if (res.ok && res.data) setData(res.data);
       })
       .finally(() => setLoading(false));
-  }, [offset, adminIds, targetTypes, actions, debouncedTargetId, dateFrom, dateTo]);
+  }, [queryString, offset]);
+
+  const views: Array<AdminView> = [
+    { label: 'Tout', params: {} },
+    { label: 'Connexions « en tant que »', params: { actions: CONNECT_AS_ACTION } },
+    ...(user ? [{ label: 'Mes actions', params: { admin_user_ids: user.id } }] : []),
+  ];
 
   const activeFilterCount =
     adminIds.length +
     targetTypes.length +
     actions.length +
-    (targetId ? 1 : 0) +
+    (urlTargetId ? 1 : 0) +
     (dateFrom ? 1 : 0) +
     (dateTo ? 1 : 0);
 
@@ -119,15 +121,7 @@ export default function AdminAuditLog() {
       <FiltersSidebar
         storageKey="admin-audit-log-filters"
         activeFilterCount={activeFilterCount}
-        onReset={() => {
-          setAdminIds([]);
-          setTargetTypes([]);
-          setActions([]);
-          setTargetId('');
-          setDateFrom('');
-          setDateTo('');
-          setOffset(0);
-        }}
+        onReset={() => replaceFilters({})}
       >
         <input
           type="search"
@@ -141,29 +135,19 @@ export default function AdminAuditLog() {
           title="Date"
           from={dateFrom}
           to={dateTo}
-          onChange={(from, to) => {
-            setDateFrom(from);
-            setDateTo(to);
-            setOffset(0);
-          }}
+          onChange={(from, to) => setFilters({ created_at_from: from, created_at_to: to })}
         />
         <CheckboxFilterSection
           title="Admin"
           options={(data?.admins ?? []).map((admin) => ({ value: admin.id, label: admin.email }))}
           selected={adminIds}
-          onChange={(next) => {
-            setAdminIds(next);
-            setOffset(0);
-          }}
+          onChange={(next) => setFilters({ admin_user_ids: next })}
         />
         <CheckboxFilterSection
           title="Type de cible"
           options={TARGET_TYPES}
           selected={targetTypes}
-          onChange={(next) => {
-            setTargetTypes(next);
-            setOffset(0);
-          }}
+          onChange={(next) => setFilters({ target_types: next })}
         />
         <CheckboxFilterSection
           title="Action"
@@ -171,30 +155,28 @@ export default function AdminAuditLog() {
           defaultOpen={false}
           options={(data?.actions ?? []).map((action) => ({ value: action, label: actionLabel(action) }))}
           selected={actions}
-          onChange={(next) => {
-            setActions(next);
-            setOffset(0);
-          }}
+          onChange={(next) => setFilters({ actions: next })}
         />
       </FiltersSidebar>
       <div className="min-w-0 flex-1 py-4 md:px-4">
+        <AdminViews views={views} />
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-lg font-bold">Journal admin ({total})</h3>
           <div className="flex items-center gap-2">
             <button
               className="fr-btn fr-btn--sm fr-btn--secondary"
               disabled={offset === 0}
-              onClick={() => setOffset(Math.max(0, offset - limit))}
+              onClick={() => setFilters({ page: offset - LIMIT > 0 ? String(offset / LIMIT) : null })}
             >
               Précédent
             </button>
             <span className="text-sm tabular-nums">
-              {total ? offset + 1 : 0}–{Math.min(offset + limit, total)} / {total}
+              {total ? offset + 1 : 0}–{Math.min(offset + LIMIT, total)} / {total}
             </span>
             <button
               className="fr-btn fr-btn--sm fr-btn--secondary"
-              disabled={offset + limit >= total}
-              onClick={() => setOffset(offset + limit)}
+              disabled={offset + LIMIT >= total}
+              onClick={() => setFilters({ page: String(offset / LIMIT + 2) })}
             >
               Suivant
             </button>

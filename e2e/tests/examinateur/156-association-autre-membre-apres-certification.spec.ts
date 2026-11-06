@@ -94,7 +94,7 @@ test("Un autre membre de l'association transmet la fiche certifiée par l'examin
   await expect(lienFiche).toBeVisible({ timeout: 15000 });
   await lienFiche.click();
 
-  await expect(page.getByRole('heading', { name: 'Vente ou don' })).toBeVisible({ timeout: 15000 });
+  await expect(page.getByRole('heading', { name: 'Destinataires' })).toBeVisible({ timeout: 15000 });
 
   // ETG 1 n'est pas un partenaire de User B : pas de raccourci, on passe par la liste.
   await openVenteDon(page);
