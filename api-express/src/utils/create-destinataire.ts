@@ -27,7 +27,7 @@ export const destinataireSchema = z.object({
   address_ligne_1: z.string(),
   address_ligne_2: z.string(),
   code_postal: z.string(),
-  email: z.string(),
+  email: z.string().trim().toLowerCase(),
   nom_de_famille: z.string(),
   prenom: z.string(),
   ville: z.string(),
