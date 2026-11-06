@@ -15,77 +15,10 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  typecheck:
+  # typecheck + build + vitest dans un seul job : un seul runner et un seul `npm ci` par package
+  checks:
     if: ${{ !startsWith(github.event.head_commit.message, 'chore:') }}
-    timeout-minutes: 10
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-          cache: 'npm'
-          cache-dependency-path: |
-            app-local-first-react-router/package-lock.json
-            api-express/package-lock.json
-
-      # tsconfig.app.json mappe "@api/*" vers ../api-express/* : les deux packages
-      # doivent être installés et prisma-generated avant le moindre typecheck.
-      - name: Install app + api deps in parallel
-        run: |
-          (cd app-local-first-react-router && npm ci && npx prisma generate) &
-          (cd api-express && npm ci && npx prisma generate) &
-          wait
-
-      - name: Typecheck api-express
-        run: |
-          cd api-express
-          npm run typecheck
-
-      - name: Typecheck app
-        run: |
-          cd app-local-first-react-router
-          npm run typecheck
-
-  build:
-    if: ${{ !startsWith(github.event.head_commit.message, 'chore:') }}
-    timeout-minutes: 15
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-          cache: 'npm'
-          cache-dependency-path: |
-            app-local-first-react-router/package-lock.json
-            api-express/package-lock.json
-
-      - name: Install app + api deps in parallel
-        run: |
-          (cd app-local-first-react-router && npm ci) &
-          (cd api-express && npm ci && npx prisma generate) &
-          wait
-
-      # npm run build = prisma generate + react-dsfr update-icons + vite build.
-      # Les e2e tournent en `vite dev`, donc c'est le seul endroit où le bundle
-      # de production est vérifié.
-      - name: Build app (production)
-        run: |
-          cd app-local-first-react-router
-          npm run build
-        env:
-          # vite.config.ts : sentryVitePlugin({ disable: !process.env.CI }).
-          # Chaîne vide = falsy, le plugin se réduit à un noop et ne cherche
-          # jamais SENTRY_AUTH_TOKEN.
-          CI: ''
-          NODE_OPTIONS: --max-old-space-size=4096
-
-  vitest:
-    if: ${{ !startsWith(github.event.head_commit.message, 'chore:') }}
-    timeout-minutes: 15
+    timeout-minutes: 20
     runs-on: ubuntu-latest
 
     services:
@@ -111,24 +44,59 @@ jobs:
             app-local-first-react-router/package-lock.json
             api-express/package-lock.json
 
-      - name: App vitest
+      # tsconfig.app.json mappe "@api/*" vers ../api-express/* : les deux packages
+      # doivent être installés et prisma-generated avant le moindre typecheck.
+      - name: Install app + api deps in parallel
+        id: install
+        run: |
+          (cd app-local-first-react-router && npm ci && npx prisma generate) &
+          (cd api-express && npm ci && npx prisma generate) &
+          wait
+
+      - name: Typecheck api-express
+        run: |
+          cd api-express
+          npm run typecheck
+
+      - name: Typecheck app
+        # chaque vérification tourne même si la précédente échoue, pour tout voir en un run
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: |
           cd app-local-first-react-router
-          npm ci
-          npx prisma generate
+          npm run typecheck
+
+      # npm run build = prisma generate + react-dsfr update-icons + vite build.
+      # Les e2e tournent en `vite dev`, donc c'est le seul endroit où le bundle
+      # de production est vérifié.
+      - name: Build app (production)
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: |
+          cd app-local-first-react-router
+          npm run build
+        env:
+          # vite.config.ts : sentryVitePlugin({ disable: !process.env.CI }).
+          # Chaîne vide = falsy, le plugin se réduit à un noop et ne cherche
+          # jamais SENTRY_AUTH_TOKEN.
+          CI: ''
+          NODE_OPTIONS: --max-old-space-size=4096
+
+      - name: App vitest
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: |
+          cd app-local-first-react-router
           npm run vitest
 
       - name: API vitest
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: |
           cd api-express
-          npm ci
-          npx prisma generate
           npm run test
         env:
           POSTGRESQL_ADDON_URI: postgres://postgres:postgres@localhost:5432/zacharietest
 
+  # Pas d'e2e sur le push dans main : la PR les a déjà fait tourner sur le même code
   e2e:
-    if: ${{ !startsWith(github.event.head_commit.message, 'chore:') }}
+    if: ${{ github.event_name == 'pull_request' }}
     timeout-minutes: 20
     runs-on: ubuntu-latest
 
@@ -243,7 +211,7 @@ jobs:
           retention-days: 7
 
   merge-reports:
-    # e2e skippé (push `chore:`) => aucun artefact blob à fusionner, ce job
+    # e2e skippé (push dans main) => aucun artefact blob à fusionner, ce job
     # échouerait au download-artifact et peindrait main en rouge pour rien.
     if: ${{ !cancelled() && needs.e2e.result != 'skipped' }}
     needs: [e2e]
