@@ -74,10 +74,8 @@ jobs:
           cd app-local-first-react-router
           npm run build
         env:
-          # vite.config.ts : sentryVitePlugin({ disable: !process.env.CI }).
-          # Chaîne vide = falsy, le plugin se réduit à un noop et ne cherche
-          # jamais SENTRY_AUTH_TOKEN.
-          CI: ''
+          # pas de SENTRY_AUTH_TOKEN ici : sentryVitePlugin reste inactif,
+          # l'upload des sourcemaps se fait au build Clever
           NODE_OPTIONS: --max-old-space-size=4096
 
       - name: App vitest

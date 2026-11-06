@@ -76,8 +76,13 @@ export default defineConfig({
     sentryVitePlugin({
       org: 'betagouv',
       project: 'zacharie-vite-react-router-spa',
+      url: 'https://sentry.incubateur.net',
       telemetry: false,
-      disable: !process.env.CI,
+      // actif seulement sur le build Clever, qui a SENTRY_AUTH_TOKEN
+      disable: !process.env.SENTRY_AUTH_TOKEN,
+      release: { name: JSON.parse(buildId) },
+      // les sourcemaps partent sur Sentry, elles ne sont pas servies aux utilisateurs
+      sourcemaps: { filesToDeleteAfterUpload: ['build/**/*.map'] },
     }),
     !process.env.VITEST ? checker({ typescript: true }) : undefined,
     VitePWA({
@@ -167,10 +172,10 @@ export default defineConfig({
   ],
   build: {
     outDir: 'build',
-    // Pas de sourcemaps : leur génération fait doubler la RAM du build (2,4 Go vs 1,2 Go de
-    // pic) et sort l'OOM killer sur Clever. Personne ne les consomme — sentryVitePlugin est
-    // désactivé partout (`disable: !process.env.CI`, et la CI force `CI=''`).
-    sourcemap: false,
+    // 'hidden' : pas de commentaire sourceMappingURL dans les bundles.
+    // Les sourcemaps doublent la RAM du build (2,4 Go vs 1,2 Go de pic) :
+    // le build Clever a besoin d'un CC_BUILD_FLAVOR d'au moins M.
+    sourcemap: 'hidden',
   },
   resolve: {
     alias: {
