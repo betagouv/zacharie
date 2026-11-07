@@ -14,6 +14,7 @@ import AdminCarcasseDetail from './carcasse-detail';
 import AdminFeis from './feis';
 import AdminFeiDetail from './fei-detail';
 import CcgImport from './ccg-import';
+import PremiersDetenteursImport from './premiers-detenteurs-import';
 import AdminDashboard from './dashboard';
 import AdminLesions from './lesions';
 import AdminQuiz from './quiz';
@@ -72,6 +73,10 @@ export default function RouterAdmin() {
       <Route
         path="import-ccg"
         element={<CcgImport />}
+      />
+      <Route
+        path="import-premiers-detenteurs"
+        element={<PremiersDetenteursImport />}
       />
       <Route
         path="carcasses"

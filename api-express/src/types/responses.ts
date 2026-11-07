@@ -950,3 +950,27 @@ export interface AdminAuditLogResponse {
   } | null;
   error: string;
 }
+
+export interface PremierDetenteurImportRow {
+  raison_sociale: string;
+  code_postal: string;
+  ville: string;
+}
+
+export interface AdminPremiersDetenteursPreviewResponse {
+  ok: boolean;
+  data: {
+    nouveaux: PremierDetenteurImportRow[];
+    existants: PremierDetenteurImportRow[];
+  };
+  error: string;
+}
+
+export interface AdminPremiersDetenteursImportResponse {
+  ok: boolean;
+  data: {
+    created: number;
+    skipped: number;
+  };
+  error: string;
+}

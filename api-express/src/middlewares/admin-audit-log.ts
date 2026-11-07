@@ -13,7 +13,7 @@ type AdminAuditLocals = {
 
 const METHODES_JOURNALISEES = ['POST', 'PUT', 'PATCH', 'DELETE'];
 // Routes en POST qui n'écrivent rien
-const ROUTES_NON_JOURNALISEES = ['/ccg/preview'];
+const ROUTES_NON_JOURNALISEES = ['/ccg/preview', '/premiers-detenteurs/preview'];
 
 // Les captures d'écran en base64 et les gros imports ne sont pas recopiés en entier
 const LONGUEUR_MAX_TEXTE = 1000;
