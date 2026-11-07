@@ -1,7 +1,5 @@
 name: Tests - Vitest & Playwright
 on:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
     # Inutile de lancer les tests quand une PR ne touche que l'app mobile
@@ -12,12 +10,11 @@ permissions:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: true
 
 jobs:
   # typecheck + build + vitest dans un seul job : un seul runner et un seul `npm ci` par package
   checks:
-    if: ${{ !startsWith(github.event.head_commit.message, 'chore:') }}
     timeout-minutes: 20
     runs-on: ubuntu-latest
 
@@ -92,9 +89,7 @@ jobs:
         env:
           POSTGRESQL_ADDON_URI: postgres://postgres:postgres@localhost:5432/zacharietest
 
-  # Pas d'e2e sur le push dans main : la PR les a déjà fait tourner sur le même code
   e2e:
-    if: ${{ github.event_name == 'pull_request' }}
     timeout-minutes: 20
     runs-on: ubuntu-latest
 
@@ -209,9 +204,7 @@ jobs:
           retention-days: 7
 
   merge-reports:
-    # e2e skippé (push dans main) => aucun artefact blob à fusionner, ce job
-    # échouerait au download-artifact et peindrait main en rouge pour rien.
-    if: ${{ !cancelled() && needs.e2e.result != 'skipped' }}
+    if: ${{ !cancelled() }}
     needs: [e2e]
     runs-on: ubuntu-latest
 
