@@ -1,5 +1,5 @@
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
-import { Input } from '@codegouvfr/react-dsfr/Input';
+import { Input } from '@app/components/Input';
 import { Prisma } from '@prisma/client';
 import RolesCheckBoxes from '@app/components/RolesCheckboxes';
 import { useNavigate } from 'react-router';

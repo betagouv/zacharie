@@ -2,7 +2,7 @@ import API from '@app/services/api';
 import useUser from '@app/zustand/user';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { CallOut } from '@codegouvfr/react-dsfr/CallOut';
-import { Input } from '@codegouvfr/react-dsfr/Input';
+import { Input } from '@app/components/Input';
 import { Select } from '@codegouvfr/react-dsfr/Select';
 import { Prisma } from '@prisma/client';
 import { useEffect, useState } from 'react';

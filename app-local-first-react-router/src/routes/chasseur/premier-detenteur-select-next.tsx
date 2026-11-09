@@ -11,7 +11,7 @@ import {
   type Carcasse,
 } from '@prisma/client';
 import dayjs from 'dayjs';
-import { Input } from '@codegouvfr/react-dsfr/Input';
+import { Input } from '@app/components/Input';
 import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
 import InputNotEditable from '@app/components/InputNotEditable';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';

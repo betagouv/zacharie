@@ -78,6 +78,8 @@ export function ChampTexte(props: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
       {...props}
+      // sans `type`, le piège à focus des modales DSFR prend l'input pour un radio et plante
+      type={props.type || 'text'}
       className={CHAMP}
     />
   );

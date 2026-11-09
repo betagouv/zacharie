@@ -1,4 +1,4 @@
-import { Input, InputProps } from '@codegouvfr/react-dsfr/Input';
+import { Input, InputProps } from '@app/components/Input';
 
 export default function InputNotEditable(props: InputProps.RegularInput | InputProps.TextArea) {
   if (props.textArea) {

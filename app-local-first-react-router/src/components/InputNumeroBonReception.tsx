@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import dayjs from 'dayjs';
-import { Input } from '@codegouvfr/react-dsfr/Input';
+import { Input } from '@app/components/Input';
 import useZustandStore from '@app/zustand/store';
 import { useEtgIds } from '@app/utils/get-entity-relations';
 

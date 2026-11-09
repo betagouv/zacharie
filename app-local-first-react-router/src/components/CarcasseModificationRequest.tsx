@@ -7,7 +7,7 @@ import {
 } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 import { Button } from '@codegouvfr/react-dsfr/Button';
-import { Input } from '@codegouvfr/react-dsfr/Input';
+import { Input } from '@app/components/Input';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import dayjs from 'dayjs';
 import useZustandStore from '@app/zustand/store';

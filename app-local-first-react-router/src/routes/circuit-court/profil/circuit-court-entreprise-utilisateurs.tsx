@@ -6,7 +6,7 @@ import type { EntitiesById } from '@api/src/types/entity';
 import useUser from '@app/zustand/user';
 import API from '@app/services/api';
 import RelationEntityUsersList from '@app/components/RelationEntityUsersList';
-import { Input } from '@codegouvfr/react-dsfr/Input';
+import { Input } from '@app/components/Input';
 import Button from '@codegouvfr/react-dsfr/Button';
 
 export default function CircuitCourtProfilEntrepriseUtilisateurs() {
