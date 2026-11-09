@@ -99,6 +99,7 @@ const initialState: State = {
     activated_at: null,
     last_login_at: null,
     deleted_at: null,
+    carcasses_reload_requested_at: null,
     onboarded_at: null,
     notifications: [UserNotifications.EMAIL, UserNotifications.PUSH],
     web_push_tokens: [],
@@ -187,6 +188,27 @@ export default function AdminUser() {
         }
       });
       toast.success(isDeleted ? "L'utilisateur a été restauré" : "L'utilisateur a été supprimé");
+    });
+  };
+
+  const handleCarcassesReload = () => {
+    if (
+      !window.confirm(
+        `Tous les appareils de ${user.email} re-téléchargeront leurs fiches et carcasses à leur prochaine synchronisation. Continuer ?`
+      )
+    ) {
+      return;
+    }
+    API.post({ path: `admin/user/${params.userId}/carcasses-reload` }).then((res) => {
+      if (!res.ok) {
+        return toast.error('Une erreur est survenue lors de la demande de rechargement');
+      }
+      loadData(params.userId!).then((res) => {
+        if (res.ok && res.data) {
+          setUserResponseData(res.data as State);
+        }
+      });
+      toast.success('Rechargement demandé : il aura lieu à la prochaine synchronisation de chaque appareil');
     });
   };
 
@@ -421,6 +443,22 @@ export default function AdminUser() {
                 onClick={handleToggleActivated}
               >
                 {user.activated ? 'Désactiver' : 'Activer'}
+              </Button>
+            )}
+            {!user.deleted_at && (
+              <Button
+                type="button"
+                priority="tertiary"
+                size="small"
+                iconId="fr-icon-refresh-line"
+                title={
+                  user.carcasses_reload_requested_at
+                    ? `Dernière demande : ${dayjs(user.carcasses_reload_requested_at).format('DD/MM/YYYY HH:mm')}`
+                    : undefined
+                }
+                onClick={handleCarcassesReload}
+              >
+                Recharger ses données
               </Button>
             )}
             <Button

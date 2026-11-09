@@ -32,11 +32,11 @@ beforeEach(() => {
   vi.mocked(prisma.entityAndUserRelations.findMany).mockResolvedValue([{ entity_id: 'entity-1' } as any]);
 });
 
-function getCarcasses(after: number) {
+function getCarcasses(after: number, user: object = etgUser) {
   return request(app)
     .get('/carcasse')
     .query({ after: `${after}`, withDeleted: 'true', page: '0', limit: '5000' })
-    .set('x-test-user', JSON.stringify(etgUser));
+    .set('x-test-user', JSON.stringify(user));
 }
 
 function findManyWhere() {
@@ -64,5 +64,31 @@ describe('GET /carcasse — rechargement complet forcé', () => {
     expect(res.status).toBe(200);
     expect(res.body.data.fullReload).toBe(false);
     expect(findManyWhere().updated_at).toBeUndefined();
+  });
+});
+
+describe('GET /carcasse — rechargement complet demandé pour un utilisateur', () => {
+  const requestedAt = new Date(FORCE_FULL_RELOAD_AFTER.getTime() + 24 * 60 * 60 * 1000);
+  const userWithReload = { ...etgUser, carcasses_reload_requested_at: requestedAt };
+
+  test('dernier pull antérieur à la demande → tout le périmètre, fullReload: true', async () => {
+    const res = await getCarcasses(requestedAt.getTime() - 1, userWithReload);
+    expect(res.status).toBe(200);
+    expect(res.body.data.fullReload).toBe(true);
+    expect(findManyWhere().updated_at).toBeUndefined();
+  });
+
+  test('dernier pull postérieur à la demande (appareil déjà rechargé) → pull delta', async () => {
+    const after = requestedAt.getTime() + 1;
+    const res = await getCarcasses(after, userWithReload);
+    expect(res.status).toBe(200);
+    expect(res.body.data.fullReload).toBe(false);
+    expect(findManyWhere().updated_at).toEqual({ gte: new Date(after) });
+  });
+
+  test('demande antérieure à FORCE_FULL_RELOAD_AFTER → la date globale reste la référence', async () => {
+    const oldRequest = { ...etgUser, carcasses_reload_requested_at: new Date('2020-01-01') };
+    const res = await getCarcasses(FORCE_FULL_RELOAD_AFTER.getTime() - 1, oldRequest);
+    expect(res.body.data.fullReload).toBe(true);
   });
 });

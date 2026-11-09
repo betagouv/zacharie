@@ -39,6 +39,7 @@ import { z } from 'zod';
 import createUserId from '~/utils/createUserId';
 import { inviteUser } from '~/utils/invite-user';
 import { createDestinataire, destinataireSchema } from '~/utils/create-destinataire';
+import { requestCarcassesReloadIfAccessChanged } from '~/utils/carcasses-reload';
 
 router.get(
   '/working-for',
@@ -299,6 +300,7 @@ router.post(
         status: EntityRelationStatus.ADMIN,
       },
     });
+    await requestCarcassesReloadIfAccessChanged(null, createdEntityRelation);
 
     await sendEmail({
       emails: ['contact@zacharie.beta.gouv.fr'],

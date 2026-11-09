@@ -56,6 +56,7 @@ import { sendOnboardingEmailOnce } from '~/utils/send-onboarding-email';
 import { z } from 'zod';
 import { normalizeNumeroCfei, sanitize } from '~/utils/sanitize';
 import { inviteUser } from '~/utils/invite-user';
+import { requestCarcassesReload, requestCarcassesReloadIfAccessChanged } from '~/utils/carcasses-reload';
 // import { refreshMaterializedViews } from '~/utils/refreshMaterializedViews';
 
 // Schemas for validation
@@ -519,12 +520,13 @@ router.post(
         await prisma.password.delete({
           where: { id: existingPassword.id },
         });
-        await prisma.entityAndUserRelations.deleteMany({
+        const deletedRelations = await prisma.entityAndUserRelations.deleteMany({
           where: {
             owner_id: user.id,
             relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
           },
         });
+        if (deletedRelations.count > 0) await requestCarcassesReload(user.id);
         res.status(400).send({
           ok: false,
           data: { user: null },
@@ -1251,7 +1253,7 @@ router.post(
       },
     });
     if (!existingRelation) {
-      await prisma.entityAndUserRelations.create({
+      const createdRelation = await prisma.entityAndUserRelations.create({
         data: {
           owner_id: newUser.id,
           entity_id: entity_id,
@@ -1259,6 +1261,7 @@ router.post(
           relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
         },
       });
+      await requestCarcassesReloadIfAccessChanged(null, createdRelation);
     }
 
     await inviteUser(newUser, user, entity);

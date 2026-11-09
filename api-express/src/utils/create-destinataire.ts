@@ -18,6 +18,7 @@ import {
 import createUserId from '~/utils/createUserId';
 import { inviteUser } from '~/utils/invite-user';
 import { sanitize } from '~/utils/sanitize';
+import { requestCarcassesReloadIfAccessChanged } from '~/utils/carcasses-reload';
 
 // un destinataire ne s'inscrit pas lui-même sur Zacharie : un chasseur, un ETG ou un admin
 // le pré-enregistre avec le compte de son représentant, qui reçoit une invitation.
@@ -159,7 +160,7 @@ export async function createDestinataire(
     });
   }
 
-  await prisma.entityAndUserRelations.create({
+  const ownerRelation = await prisma.entityAndUserRelations.create({
     data: {
       owner_id: ownerUser.id,
       entity_id: createdEntity.id,
@@ -167,6 +168,7 @@ export async function createDestinataire(
       status: EntityRelationStatus.ADMIN,
     },
   });
+  await requestCarcassesReloadIfAccessChanged(null, ownerRelation);
 
   await sendEmail({
     emails: ['contact@zacharie.beta.gouv.fr'],

@@ -1,7 +1,11 @@
 # Rechargement complet des données locales
 
-`FORCE_FULL_RELOAD_AFTER` (`api-express/src/utils/force-full-reload.ts`) est le seul moyen de forcer
-tous les clients à re-télécharger leur périmètre de carcasses.
+Deux dates déclenchent un rechargement complet du périmètre de carcasses d'un appareil :
+
+- `FORCE_FULL_RELOAD_AFTER` (`api-express/src/utils/force-full-reload.ts`) : pour tous les utilisateurs ;
+- `User.carcasses_reload_requested_at` : pour un seul utilisateur, sur tous ses appareils.
+
+Le serveur prend la plus récente des deux (`getFullReloadAfter`, `api-express/src/utils/carcasses-reload.ts`).
 
 ## Pourquoi
 
@@ -12,16 +16,31 @@ corrigée en base sans que son `updated_at` bouge, n'est jamais renvoyée : la c
 ## Ce que fait la constante
 
 - Serveur (`api-express/src/controllers/carcasse.ts`) : si le curseur `after` du client est antérieur
-  à `FORCE_FULL_RELOAD_AFTER`, le filtre `updated_at` est ignoré, tout le périmètre est renvoyé et la
+  à cette date, le filtre `updated_at` est ignoré, tout le périmètre est renvoyé et la
   réponse porte `fullReload: true`. Un premier chargement (`after = 0`) renvoie aussi tout le
   périmètre, mais avec `fullReload: false`.
-- Client (`app-local-first-react-router/src/utils/load-carcasses.ts`) : sur `fullReload`, les
-  carcasses, les `CarcasseIntermediaire` et les demandes de modification locales sont remplacées par
-  la réponse. Seules les copies locales non synchronisées (`is_synced: false`) sont conservées, puis
-  mergées par `updated_at`. Les fiches, les utilisateurs et les entités ne sont pas remplacés : ils
-  sont mergés (les entités déjà présentes ne sont pas écrasées).
-- Une fois le rechargement fait, `lastUpdateFromServer` passe à l'heure serveur : le client repasse
-  en delta.
+- Client (`app-local-first-react-router/src/utils/load-carcasses.ts`) : sur `fullReload`, toutes les
+  données locales sont remplacées par la réponse : fiches, carcasses, `CarcasseIntermediaire`,
+  demandes de modification, utilisateurs et entités. Restent seulement les copies locales non
+  synchronisées (`is_synced: false`), mergées par `updated_at`, et les utilisateurs / entités des
+  relations de l'utilisateur (chargés par `load-my-relations`).
+- Une fois le rechargement fait, `lastUpdateFromServer` passe à l'heure serveur, postérieure à la
+  date : le client repasse en delta. Chaque appareil recharge une fois, sans accusé de réception.
+  Si le chargement échoue, le curseur ne bouge pas et le pull suivant recharge à nouveau.
+
+## Rechargement d'un seul utilisateur
+
+`User.carcasses_reload_requested_at` est posé :
+
+- par `requestCarcassesReloadIfAccessChanged()`, à chaque création / modification / suppression d'une
+  `EntityAndUserRelations` qui fait entrer ou sortir l'utilisateur d'une entité (relation
+  `CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY`, statut `ADMIN` ou `MEMBER`). Sans ça, les carcasses déjà
+  existantes d'une entité rejointe n'arrivent jamais (leur `updated_at` ne bouge pas), et celles d'une
+  entité quittée restent sur l'appareil. **Toute nouvelle écriture de `EntityAndUserRelations` doit
+  appeler ce helper.**
+- par un superadmin, bouton « Recharger ses données » sur la page de l'utilisateur
+  (`POST /admin/user/:user_id/carcasses-reload`), quand un seul compte a des données locales fausses :
+  pas besoin d'avancer la constante globale.
 
 ## Quand l'avancer
 

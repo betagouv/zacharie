@@ -57,6 +57,9 @@ model User {
   updated_at                            DateTime                       @default(now()) @updatedAt
   last_login_at                         DateTime?
   deleted_at                            DateTime?
+  // Un appareil dont le curseur de synchro est antérieur re-télécharge tout son périmètre au prochain pull.
+  // Posé par requestCarcassesReload() à chaque changement d'appartenance à une entité, ou par un superadmin.
+  carcasses_reload_requested_at         DateTime?
   onboarded_at                          DateTime?
   notifications                         UserNotifications[]            @default([EMAIL, PUSH])
   web_push_tokens                       String[]
@@ -541,6 +544,7 @@ model UserHistory {
   updated_at                     DateTime?
   last_login_at                  DateTime?
   deleted_at                     DateTime?
+  carcasses_reload_requested_at  DateTime?
   onboarded_at                   DateTime?
   notifications                  UserNotifications[]
   web_push_tokens                String[]

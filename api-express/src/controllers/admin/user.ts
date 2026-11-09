@@ -375,6 +375,30 @@ router.post(
   )
 );
 
+// Tous les appareils de l'utilisateur re-téléchargent leur périmètre de carcasses à leur prochaine synchro.
+router.post(
+  '/user/:user_id/carcasses-reload',
+  catchErrors(
+    async (
+      req: express.Request,
+      res: express.Response<UserConnexionResponse>,
+      next: express.NextFunction
+    ) => {
+      const userId = req.params.user_id;
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (!user) {
+        res.status(400).send({ ok: false, data: { user: null }, error: 'User not found', message: '' });
+        return;
+      }
+      const savedUser = await prisma.user.update({
+        where: { id: userId },
+        data: { carcasses_reload_requested_at: new Date() },
+      });
+      res.status(200).send({ ok: true, data: { user: savedUser }, error: '', message: '' });
+    }
+  )
+);
+
 // Restaure un utilisateur soft-deleted : remet deleted_at à null.
 router.post(
   '/user/:user_id/restore',
