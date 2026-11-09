@@ -16,6 +16,7 @@ import LandingProsPage from './routes/landing-pros';
 import LandingDemarchesPage from './routes/landing-demarches';
 import MentionsLegales from './routes/mentions-legales';
 import ModalitesDutilisation from './routes/modalites-d-utilisation';
+import ConditionsDUtilisationApi from './routes/conditions-d-utilisation-api';
 import PolitiqueDeConfidentialite from './routes/politique-de-confidentialite';
 import Accessibility from './routes/accessibility';
 import Stats from './routes/stats';
@@ -116,6 +117,10 @@ function App() {
           <Route
             path="modalites-d-utilisation"
             element={<ModalitesDutilisation />}
+          />
+          <Route
+            path="conditions-d-utilisation-api"
+            element={<ConditionsDUtilisationApi />}
           />
           <Route
             path="stats"

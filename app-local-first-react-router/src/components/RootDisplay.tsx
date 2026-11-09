@@ -190,6 +190,13 @@ export default function RootDisplay({
                     },
                     {
                       linkProps: {
+                        to: '/conditions-d-utilisation-api',
+                        href: '#',
+                      },
+                      text: "Conditions d'utilisation de l'API",
+                    },
+                    {
+                      linkProps: {
                         to: '/politique-de-confidentialite',
                         href: '#',
                       },

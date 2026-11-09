@@ -20,6 +20,7 @@ const LANDING_PATHS = [
   'accessibilite',
   'politique-de-confidentialite',
   'modalites-d-utilisation',
+  'conditions-d-utilisation-api',
   'stats',
   'stats/matrice-impact',
   'contact',
