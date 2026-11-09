@@ -4,7 +4,7 @@ import Checkbox from '@codegouvfr/react-dsfr/Checkbox';
 import { Badge } from '@codegouvfr/react-dsfr/Badge';
 import { Link, useParams } from 'react-router';
 import { AdminHistoryTimeline } from './history-timeline';
-import { Input } from '@codegouvfr/react-dsfr/Input';
+import { Input } from '@app/components/Input';
 import { Notice } from '@codegouvfr/react-dsfr/Notice';
 import {
   EntityRelationStatus,

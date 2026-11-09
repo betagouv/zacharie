@@ -1,4 +1,4 @@
-import { Input, InputProps } from '@codegouvfr/react-dsfr/Input';
+import { Input, InputProps } from '@app/components/Input';
 import { useState, ChangeEvent, useEffect, useRef } from 'react';
 import { useDebounce } from '@uidotdev/usehooks';
 import { searchVilles } from '@app/utils/search-ville';

@@ -7,6 +7,7 @@ import type { CarcasseModificationRequest } from '@prisma/client';
 import useUser from '@app/zustand/user';
 import { capture } from '@app/services/sentry';
 import { isLocalTeardownInProgress } from '@app/zustand/idb-sliced-storage';
+import { dropMarginOverwrites, getDeltaAfter } from './delta-margin';
 
 let loadCarcassesAbortController: AbortController | null = null;
 
@@ -82,7 +83,8 @@ export async function loadCarcasses() {
     const serverDate = await API.get({ path: 'now', signal }).then((res) => (res.ok ? res.data : null));
     if (signal.aborted) return;
 
-    const after = String(useZustandStore.getState().lastUpdateFromServer);
+    const lastUpdateFromServer = useZustandStore.getState().lastUpdateFromServer;
+    const after = String(getDeltaAfter(lastUpdateFromServer));
     const carcassesFetched: CarcassesGetResponse['data']['carcasses'] = [];
     const feisFetched: CarcassesGetResponse['data']['feis'] = [];
     const carcassesIntermediairesFetched: CarcassesGetResponse['data']['carcassesIntermediaires'] = [];
@@ -156,9 +158,22 @@ export async function loadCarcasses() {
       (ci) => !fullReload || !ci.is_synced || keptRefuseesIds.has(ci.zacharie_carcasse_id)
     );
 
+    // Hors rechargement complet : les lignes revenues seulement à cause de la marge du delta
+    // n'écrasent pas une modification locale pas encore envoyée.
+    const guardMargin = <T extends { updated_at: Date | string; is_synced: boolean }>(
+      fetched: Array<T>,
+      local: Record<string, T | undefined>,
+      idKey: (item: T) => string
+    ) => (fullReload ? fetched : dropMarginOverwrites({ fetched, local, lastUpdateFromServer, idKey }));
+    const localState = useZustandStore.getState();
+    const localModifRequestsById: Record<string, CarcasseModificationRequest> = {};
+    for (const request of Object.values(localState.modifRequestsByCarcasseId).flat()) {
+      localModifRequestsById[request.id] = request;
+    }
+
     const newCarcasses = mergeItems({
       oldItems: localCarcasses,
-      newItems: carcassesFetched,
+      newItems: guardMargin(carcassesFetched, localState.carcasses, (c) => c.zacharie_carcasse_id),
       idKey: (c) => c.zacharie_carcasse_id,
     });
 
@@ -179,7 +194,11 @@ export async function loadCarcasses() {
 
     const newCarcassesIntermediaires = mergeItems({
       oldItems: localCarcassesIntermediaires,
-      newItems: carcassesIntermediairesFetched,
+      newItems: guardMargin(
+        carcassesIntermediairesFetched,
+        localState.carcassesIntermediaireById,
+        getFeiAndCarcasseAndIntermediaireIds
+      ),
       idKey: getFeiAndCarcasseAndIntermediaireIds,
     });
 
@@ -203,7 +222,7 @@ export async function loadCarcasses() {
     // then regroup into the full-history-by-carcasse map the store and UI consume.
     const mergedModifRequestsById = mergeItems({
       oldItems: keepLocal(Object.values(useZustandStore.getState().modifRequestsByCarcasseId).flat()),
-      newItems: carcasseModifRequests,
+      newItems: guardMargin(carcasseModifRequests, localModifRequestsById, (r) => r.id),
       idKey: (r) => r.id,
     });
     const nextModifRequestsByCarcasseId: Record<string, Array<CarcasseModificationRequest>> = {};

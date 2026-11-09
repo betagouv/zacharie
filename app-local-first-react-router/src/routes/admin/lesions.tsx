@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Table } from '@codegouvfr/react-dsfr/Table';
 import { Tabs, type TabsProps } from '@codegouvfr/react-dsfr/Tabs';
-import { Input } from '@codegouvfr/react-dsfr/Input';
+import { Input } from '@app/components/Input';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Badge } from '@codegouvfr/react-dsfr/Badge';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';

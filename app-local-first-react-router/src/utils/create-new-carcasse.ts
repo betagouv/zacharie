@@ -138,9 +138,11 @@ export async function createNewCarcasse({
     current_owner_entity_id: fei.examinateur_initial_approbation_mise_sur_le_marche
       ? fei.premier_detenteur_entity_id
       : null,
-    current_owner_entity_name_cache: fei.examinateur_initial_approbation_mise_sur_le_marche
-      ? fei.premier_detenteur_name_cache
-      : null,
+    // premier_detenteur_name_cache porte le nom de la personne quand le premier détenteur n'est pas une association
+    current_owner_entity_name_cache:
+      fei.examinateur_initial_approbation_mise_sur_le_marche && fei.premier_detenteur_entity_id
+        ? fei.premier_detenteur_name_cache
+        : null,
     current_owner_role: fei.examinateur_initial_approbation_mise_sur_le_marche
       ? FeiOwnerRole.PREMIER_DETENTEUR
       : FeiOwnerRole.EXAMINATEUR_INITIAL,

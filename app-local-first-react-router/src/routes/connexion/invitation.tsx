@@ -1,4 +1,4 @@
-import { Input } from '@codegouvfr/react-dsfr/Input';
+import { Input } from '@app/components/Input';
 import { Link, useSearchParams, useNavigate } from 'react-router';
 import { sanitizeRedirect } from '@app/utils/sanitize-redirect';
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';

@@ -1,7 +1,7 @@
 import { useCallback, useEffect } from 'react';
 
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
-import { Input } from '@codegouvfr/react-dsfr/Input';
+import { Input } from '@app/components/Input';
 import { Prisma, User } from '@prisma/client';
 import { useNavigate } from 'react-router';
 import InputCodePostalEtVille from '@app/components/InputCodePostalEtVille';
