@@ -24,6 +24,7 @@ const ADMIN_ACTION_LABELS: Record<string, string> = {
   'POST /api-key/new-access-token/:id': 'Nouveau jeton de clé API',
   'POST /api-key-approval': 'Approbation de clé API',
   'POST /ccg/import': 'Import de CCG',
+  'POST /premiers-detenteurs/import': 'Import de premiers détenteurs',
   'POST /bug-resolution': 'Nouvelle enquête de bug',
   'POST /bug-resolution/:id/message': 'Message à Albert',
 };

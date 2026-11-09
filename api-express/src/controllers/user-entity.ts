@@ -4,7 +4,7 @@ import { catchErrors } from '~/middlewares/errors';
 import type { RequestWithUser } from '~/types/request';
 const router: express.Router = express.Router();
 import prisma from '~/prisma';
-import { linkBrevoCompanyToContact, unlinkBrevoCompanyToContact } from '~/third-parties/brevo';
+import { linkBrevoCompanyToContact, sendEmail, unlinkBrevoCompanyToContact } from '~/third-parties/brevo';
 import type { UserEntityResponse } from '~/types/responses';
 import {
   EntityRelationType,
@@ -220,9 +220,12 @@ router.post(
         }
       }
 
-      // rattachement direct par un admin : le premier utilisateur de l'entité en devient l'admin
+      // le premier utilisateur de l'entité en devient l'admin : rattachement direct par un admin,
+      // ou chasseur qui rejoint une association de chasse sans membre (ex. importée par l'équipe Zacharie)
+      const joinsAssociationDeChasse =
+        entity.type === EntityTypes.PREMIER_DETENTEUR && !nextEntityRelation.status;
       if (
-        nextEntityRelation.status === EntityRelationStatus.MEMBER &&
+        (nextEntityRelation.status === EntityRelationStatus.MEMBER || joinsAssociationDeChasse) &&
         body.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY
       ) {
         const entityHasUsers = await prisma.entityAndUserRelations.findFirst({
@@ -242,6 +245,18 @@ router.post(
 
       if (relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
         await linkBrevoCompanyToContact(entity, req.user);
+        // n'importe quel chasseur peut devenir admin d'une association sans membre : l'équipe vérifie
+        if (joinsAssociationDeChasse && relation.status === EntityRelationStatus.ADMIN) {
+          await sendEmail({
+            emails: ['contact@zacharie.beta.gouv.fr'],
+            subject: `Premier membre d'une association de chasse : ${entity.nom_d_usage}`,
+            text: [
+              `${req.user.prenom} ${req.user.nom_de_famille} (${req.user.email}) vient de rejoindre l'association de chasse ${entity.nom_d_usage} (${entity.code_postal} ${entity.ville}).`,
+              `Premier membre de l'association, cette personne en devient automatiquement l'administrateur.`,
+              `Fiche de l'association : https://zacharie.beta.gouv.fr/app/admin/entity/${entity.id}`,
+            ].join('\n\n'),
+          });
+        }
         if (relation.status === EntityRelationStatus.REQUESTED) {
           if (req.user.roles[0] !== UserRoles.CHASSEUR) {
             throw new Error('Forbidden role in notifying entity admin: ' + req.user.roles[0]);
