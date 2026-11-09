@@ -73,4 +73,22 @@ describe('sendExpoPushNotification', () => {
     expect(fetch).toHaveBeenCalled();
     expect(result.tokensToRemove).toEqual([]);
   });
+
+  // L'app mobile lit `data.url` pour ouvrir la bonne page quand on touche la notification.
+  test('transmet le chemin à ouvrir dans `data.url`', async () => {
+    mockExpoResponse([{ status: 'ok', id: '1' }]);
+
+    await sendExpoPushNotification({
+      tokens: ['ExponentPushToken[abc]'],
+      ...notification,
+      url: '/app/chasseur/profil/informations-de-chasse?open-entity=abc',
+    });
+
+    const [, options] = vi.mocked(fetch).mock.calls[0];
+    expect(JSON.parse(options!.body as string)).toEqual([
+      expect.objectContaining({
+        data: { url: '/app/chasseur/profil/informations-de-chasse?open-entity=abc' },
+      }),
+    ]);
+  });
 });

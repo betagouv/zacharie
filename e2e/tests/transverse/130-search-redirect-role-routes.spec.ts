@@ -171,7 +171,7 @@ test.describe('Search dropdown redirectUrl', () => {
 test.describe('Email link URLs resolve', () => {
   // Mirrors the URLs baked into outgoing emails:
   // - formatAutomaticClosingEmailForChasseur → /app/chasseur/fei/:numero
-  // - user-entity admin notification        → /app/chasseur/profil/coordonnees?open-entity=:id
+  // - user-entity admin notification        → /app/chasseur/profil/informations-de-chasse?open-entity=:id
   // If a chasseur opens these links after auth, they must land on the real page (no redirect, no crash).
 
   test('Auto-closing email URL /app/chasseur/fei/:numero resolves', async ({ page }) => {
@@ -183,13 +183,13 @@ test.describe('Email link URLs resolve', () => {
     await expect(page).toHaveURL(`http://localhost:3290/app/chasseur/fei/${feiId}`);
   });
 
-  test('Admin notification URL /app/chasseur/profil/coordonnees resolves', async ({ page }) => {
+  test('Admin notification URL /app/chasseur/profil/informations-de-chasse resolves', async ({ page }) => {
     await resetDb('EXAMINATEUR_INITIAL');
     await connectWith(page, 'examinateur@example.fr');
 
-    await page.goto('http://localhost:3290/app/chasseur/profil/coordonnees?open-entity=test-id', {
+    await page.goto('http://localhost:3290/app/chasseur/profil/informations-de-chasse?open-entity=test-id', {
       waitUntil: 'domcontentloaded',
     });
-    await expect(page).toHaveURL(/\/app\/chasseur\/profil\/coordonnees/);
+    await expect(page).toHaveURL(/\/app\/chasseur\/profil\/informations-de-chasse/);
   });
 });

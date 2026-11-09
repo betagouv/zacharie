@@ -49,6 +49,23 @@ function getPathFromDeepLink(url: string | null): string | null {
     return null;
   }
 }
+
+/**
+ * Chemin de l'app (`/app/...`) porté par une notification push (`data.url`, cf.
+ * api-express/src/third-parties/expo-push.ts) : on l'ouvre quand on touche la notification.
+ */
+function getPathFromNotificationResponse(response: Notifications.NotificationResponse | null): string | null {
+  const url = response?.notification.request.content.data?.url;
+  if (typeof url !== 'string' || !url.startsWith('/app/')) return null;
+  return url;
+}
+
+function navigateInWebView(webView: WebView | null, path: string) {
+  webView?.injectJavaScript(
+    `window.history.pushState(null, '', ${JSON.stringify(path)});window.dispatchEvent(new PopStateEvent('popstate'));true`
+  );
+}
+
 function App() {
   const ref = useRef<WebView>(null);
   const [externalLink, setExternalLink] = useState<string | null>(null);
@@ -72,28 +89,34 @@ function App() {
   }, [fontsLoaded]);
 
   useEffect(() => {
-    Promise.all([Linking.getInitialURL(), AsyncStorage.getItem('initial-path')]).then(
-      ([initialUrl, storedPath]) => {
-        // un lien ouvert depuis un mail prime sur le dernier chemin mémorisé
-        const initialPath = getPathFromDeepLink(initialUrl) || storedPath;
-        checkAndDownloadSpa().then(() => {
-          startSpaServer().then((url) => {
-            if (url) {
-              if (initialPath) url += initialPath;
-              console.log('url: ', url);
-              setSpaUrl(url);
-            }
-            setSpaReady(true);
-            setTimeout(() => {
-              setLoading(false);
-            }, 1500);
-          });
+    Promise.all([
+      Linking.getInitialURL(),
+      Notifications.getLastNotificationResponseAsync().catch(() => null),
+      AsyncStorage.getItem('initial-path'),
+    ]).then(([initialUrl, notificationResponse, storedPath]) => {
+      // un lien ouvert depuis un mail ou une notification prime sur le dernier chemin mémorisé
+      const initialPath =
+        getPathFromDeepLink(initialUrl) ||
+        getPathFromNotificationResponse(notificationResponse) ||
+        storedPath;
+      if (notificationResponse) Notifications.clearLastNotificationResponseAsync();
+      checkAndDownloadSpa().then(() => {
+        startSpaServer().then((url) => {
+          if (url) {
+            if (initialPath) url += initialPath;
+            console.log('url: ', url);
+            setSpaUrl(url);
+          }
+          setSpaReady(true);
+          setTimeout(() => {
+            setLoading(false);
+          }, 1500);
         });
-        return () => {
-          stopSpaServer();
-        };
-      }
-    );
+      });
+      return () => {
+        stopSpaServer();
+      };
+    });
   }, []);
 
   // Au retour au premier plan, on vérifie seulement si une nouvelle version existe : elle n'est téléchargée
@@ -120,10 +143,8 @@ function App() {
   useEffect(() => {
     const subscription = Linking.addEventListener('url', ({ url }) => {
       const path = getPathFromDeepLink(url);
-      if (!path || !ref.current) return;
-      ref.current.injectJavaScript(
-        `window.history.pushState(null, '', ${JSON.stringify(path)});window.dispatchEvent(new PopStateEvent('popstate'));true`
-      );
+      if (!path) return;
+      navigateInWebView(ref.current, path);
     });
     return () => subscription.remove();
   }, []);
@@ -217,9 +238,9 @@ function App() {
   useEffect(() => {
     responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
       console.log('responseListener', response);
-      setTimeout(() => {
-        // ref.current?.injectJavaScript(`window.onNotificationResponseReceived('${JSON.stringify(response)}');`);
-      }, 1500);
+      // notification touchée alors que l'app tourne déjà : la SPA navigue via pushState + popstate
+      const path = getPathFromNotificationResponse(response);
+      if (path) navigateInWebView(ref.current, path);
     });
 
     return () => {
