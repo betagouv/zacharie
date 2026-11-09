@@ -278,10 +278,6 @@ router.post(
         nextUser.roles = ([...new Set(body[Prisma.UserScalarFieldEnum.roles])] as UserRoles[]).sort((a, b) =>
           b.localeCompare(a)
         );
-        // le périmètre de carcasses dépend du rôle : tous ses appareils rechargent leur périmètre
-        if ([...nextUser.roles].sort().join() !== [...user.roles].sort().join()) {
-          nextUser.carcasses_reload_requested_at = new Date();
-        }
       }
       if (body.hasOwnProperty(Prisma.UserScalarFieldEnum.isZacharieAdmin)) {
         nextUser.isZacharieAdmin = body[Prisma.UserScalarFieldEnum.isZacharieAdmin] ? true : false;

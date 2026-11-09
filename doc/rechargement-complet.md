@@ -44,8 +44,6 @@ corrigée en base sans que son `updated_at` bouge, n'est jamais renvoyée : la c
   existantes d'une entité rejointe n'arrivent jamais (leur `updated_at` ne bouge pas), et celles d'une
   entité quittée restent sur l'appareil. **Toute nouvelle écriture de `EntityAndUserRelations` doit
   appeler ce helper.**
-- par l'admin qui change le rôle d'un utilisateur (`POST /admin/user/:user_id`) : le périmètre dépend
-  du rôle ;
 - par un superadmin, bouton « Recharger ses données » sur la page de l'utilisateur
   (`POST /admin/user/:user_id/carcasses-reload`), quand un seul compte a des données locales fausses :
   pas besoin d'avancer la constante globale.
