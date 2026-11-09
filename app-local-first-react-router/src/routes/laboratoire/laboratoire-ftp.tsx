@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { Badge } from '@codegouvfr/react-dsfr/Badge';
 import { Button } from '@codegouvfr/react-dsfr/Button';
-import { Input } from '@codegouvfr/react-dsfr/Input';
+import { Input } from '@app/components/Input';
 import { toast } from 'react-toastify';
 import dayjs from 'dayjs';
 import { TrichineStatutLogistiqueFTP, type TrichineHistoriqueStatut } from '@prisma/client';

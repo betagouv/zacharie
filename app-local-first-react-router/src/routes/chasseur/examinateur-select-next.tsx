@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Input } from '@codegouvfr/react-dsfr/Input';
+import { Input } from '@app/components/Input';
 import { Prisma, Entity, UserRoles, EntityTypes, FeiOwnerRole } from '@prisma/client';
 import type { UserForFeiResponse } from '@api/src/types/responses';
 import type { UserForFei } from '~/src/types/user';

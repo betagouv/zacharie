@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Input } from '@codegouvfr/react-dsfr/Input';
+import { Input } from '@app/components/Input';
 import { Select } from '@codegouvfr/react-dsfr/Select';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';

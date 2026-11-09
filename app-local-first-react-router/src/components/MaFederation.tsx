@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { EntityRelationStatus, EntityRelationType, EntityTypes, Prisma } from '@prisma/client';
-import { Input } from '@codegouvfr/react-dsfr/Input';
+import { Input } from '@app/components/Input';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import type { EntitiesWorkingForResponse } from '@api/src/types/responses';
 import type { EntityWithUserRelations } from '@api/src/types/entity';

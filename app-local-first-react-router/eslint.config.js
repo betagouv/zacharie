@@ -21,6 +21,18 @@ export default tseslint.config(
       ...reactHooks.configs.recommended.rules,
       'prefer-const': 'off',
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: '@codegouvfr/react-dsfr/Input',
+              message:
+                'Utiliser `@app/components/Input` : il pose `type="text"` par défaut, sans quoi le piège à focus des modales DSFR plante.',
+            },
+          ],
+        },
+      ],
     },
   }
 );

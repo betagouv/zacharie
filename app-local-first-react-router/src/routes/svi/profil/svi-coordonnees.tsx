@@ -1,7 +1,7 @@
 import { useCallback, useEffect } from 'react';
 
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
-import { Input } from '@codegouvfr/react-dsfr/Input';
+import { Input } from '@app/components/Input';
 import { Prisma, User } from '@prisma/client';
 import InputCodePostalEtVille from '@app/components/InputCodePostalEtVille';
 import InputNotEditable from '@app/components/InputNotEditable';

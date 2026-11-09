@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Input } from '@codegouvfr/react-dsfr/Input';
+import { Input } from '@app/components/Input';
 import { Badge } from '@codegouvfr/react-dsfr/Badge';
 import questionBank from '@app/data/quiz-prelevement-assiette.json';
 import type { QuizQuestion } from '@app/utils/quiz-shuffle';

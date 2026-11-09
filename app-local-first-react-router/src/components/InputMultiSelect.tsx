@@ -1,4 +1,4 @@
-import type { InputProps } from '@codegouvfr/react-dsfr/Input';
+import type { InputProps } from '@app/components/Input';
 import SelectCustom from './SelectCustom';
 import { type SingleValue, type MultiValue } from 'react-select';
 import { useMemo } from 'react';

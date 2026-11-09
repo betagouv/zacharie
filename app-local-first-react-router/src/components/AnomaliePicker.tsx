@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from '@codegouvfr/react-dsfr/Button';
-import { Input } from '@codegouvfr/react-dsfr/Input';
+import { Input } from '@app/components/Input';
 import { canonicalOf, normalizeText, type AnomalieItem } from '@app/utils/anomalies-referentiel';
 import { track } from '@app/services/matomo';
 

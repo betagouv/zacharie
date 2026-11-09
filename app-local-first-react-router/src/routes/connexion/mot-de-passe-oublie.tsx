@@ -1,4 +1,4 @@
-import { Input } from '@codegouvfr/react-dsfr/Input';
+import { Input } from '@app/components/Input';
 import { Link, useSearchParams } from 'react-router';
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { CallOut } from '@codegouvfr/react-dsfr/CallOut';

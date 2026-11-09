@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Button } from '@codegouvfr/react-dsfr/Button';
-import { Input } from '@codegouvfr/react-dsfr/Input';
+import { Input } from '@app/components/Input';
 import { Select } from '@codegouvfr/react-dsfr/Select';
 import { type Carcasse, CarcasseType, Prisma, UserRoles } from '@prisma/client';
 import grandGibier from '@app/data/grand-gibier.json';

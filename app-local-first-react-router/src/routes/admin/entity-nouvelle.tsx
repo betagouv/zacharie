@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import { Button } from '@codegouvfr/react-dsfr/Button';
-import { Input } from '@codegouvfr/react-dsfr/Input';
+import { Input } from '@app/components/Input';
 import { Prisma, EntityTypes, type Entity } from '@prisma/client';
 import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
 import { getUserRoleLabel } from '@app/utils/get-user-roles-label';

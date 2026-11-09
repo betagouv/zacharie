@@ -3,7 +3,7 @@ import { toast } from 'react-toastify';
 import { bacASableUrl } from '@app/utils/bac-a-sable-url';
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { Button } from '@codegouvfr/react-dsfr/Button';
-import { Input } from '@codegouvfr/react-dsfr/Input';
+import { Input } from '@app/components/Input';
 import { Prisma, ApiKeyScope, ApiKeyApprovalStatus, Entity, User } from '@prisma/client';
 import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
 import { Tabs, type TabsProps } from '@codegouvfr/react-dsfr/Tabs';

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Input } from '@codegouvfr/react-dsfr/Input';
+import { Input } from '@app/components/Input';
 import { Select } from '@codegouvfr/react-dsfr/Select';
 
 /**

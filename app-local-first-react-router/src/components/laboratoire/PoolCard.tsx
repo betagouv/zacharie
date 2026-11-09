@@ -3,7 +3,7 @@ import { Link } from 'react-router';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import { Badge } from '@codegouvfr/react-dsfr/Badge';
 import { Button } from '@codegouvfr/react-dsfr/Button';
-import { Input } from '@codegouvfr/react-dsfr/Input';
+import { Input } from '@app/components/Input';
 import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
 import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import { toast } from 'react-toastify';
