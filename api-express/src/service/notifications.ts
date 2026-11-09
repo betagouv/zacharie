@@ -32,6 +32,8 @@ queue.on('next', () => {
 export type PushWording = {
   title: string;
   body: string;
+  // Chemin de l'app (`/app/...`) ouvert par l'app mobile quand on touche la notification.
+  url?: string;
 };
 
 type NotificationToUser = {
@@ -126,7 +128,7 @@ async function sendPushToUser({
   notificationLogAction,
   img = 'https://zacharie.beta.gouv.fr/favicon.svg',
 }: NotificationToUser) {
-  const { title, body } = push;
+  const { title, body, url } = push;
   const webPushTokens = user.web_push_tokens.filter((token) => !!token && token !== 'null');
   const nativePushTokens = user.native_push_tokens.filter((token) => !!token && token !== 'null');
   if (!webPushTokens.length && !nativePushTokens.length) {
@@ -209,6 +211,7 @@ async function sendPushToUser({
       tokens: nativePushTokens,
       title,
       body,
+      url,
     });
     // Tokens périmés (app désinstallée) ou au format invalide : on les retire pour ne pas les rejouer.
     // Le retrait se fait en SQL sur la valeur courante de la colonne, et non en réécrivant le

@@ -20,6 +20,7 @@ type SendExpoPushProps = {
   tokens: Array<string>;
   title: string;
   body: string;
+  url?: string;
 };
 
 type ExpoPushResult = {
@@ -33,6 +34,7 @@ export async function sendExpoPushNotification({
   tokens,
   title,
   body,
+  url,
 }: SendExpoPushProps): Promise<ExpoPushResult> {
   const result: ExpoPushResult = { sent: 0, tokensToRemove: [] };
   // Comme pour Brevo (third-parties/brevo.ts) : seule la production pousse vers de vrais appareils.
@@ -67,7 +69,16 @@ export async function sendExpoPushNotification({
           'Content-Type': 'application/json',
           Accept: 'application/json',
         },
-        body: JSON.stringify(chunk.map((to) => ({ to, title, body, sound: 'default', priority: 'high' }))),
+        body: JSON.stringify(
+          chunk.map((to) => ({
+            to,
+            title,
+            body,
+            sound: 'default',
+            priority: 'high',
+            ...(url ? { data: { url } } : {}),
+          }))
+        ),
       });
       if (!response.ok) {
         throw new Error(`Expo push API ${response.status}: ${await response.text()}`);
