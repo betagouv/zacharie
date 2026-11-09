@@ -4,7 +4,7 @@ import dayjs from 'dayjs';
 import { Input } from '@app/components/Input';
 import { CarcasseType, Prisma } from '@prisma/client';
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
-import { createModal } from '@codegouvfr/react-dsfr/Modal';
+import { createModal } from '@app/components/Modal';
 import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
 import refusIntermedaire from '@app/data/refus-intermediaire.json';
 import useZustandStore from '@app/zustand/store';

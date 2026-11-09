@@ -8,7 +8,7 @@ import { Button } from '@codegouvfr/react-dsfr/Button';
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { Input } from '@app/components/Input';
 import { Checkbox } from '@codegouvfr/react-dsfr/Checkbox';
-import { createModal } from '@codegouvfr/react-dsfr/Modal';
+import { createModal } from '@app/components/Modal';
 import {
   CarcasseType,
   CarcasseModificationRequestStatus,

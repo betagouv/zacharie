@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { createModal } from '@codegouvfr/react-dsfr/Modal';
+import { createModal } from '@app/components/Modal';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { useIsModalOpen } from '@codegouvfr/react-dsfr/Modal/useIsModalOpen';
 

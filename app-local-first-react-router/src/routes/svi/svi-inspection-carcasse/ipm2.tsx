@@ -22,7 +22,7 @@ import {
 } from '@app/utils/etablissementsTraitementSaintaire';
 import dayjs from 'dayjs';
 import InputNotEditable from '@app/components/InputNotEditable';
-import { createModal } from '@codegouvfr/react-dsfr/Modal';
+import { createModal } from '@app/components/Modal';
 import ModalTreeDisplay from '@app/components/ModalTreeDisplay';
 import { RadioButtons } from '@codegouvfr/react-dsfr/RadioButtons';
 import useUser from '@app/zustand/user';

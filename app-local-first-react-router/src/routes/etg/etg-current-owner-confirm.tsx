@@ -1,7 +1,7 @@
 import { ButtonsGroup } from '@codegouvfr/react-dsfr/ButtonsGroup';
 import { type ButtonProps } from '@codegouvfr/react-dsfr/Button';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
-import { createModal } from '@codegouvfr/react-dsfr/Modal';
+import { createModal } from '@app/components/Modal';
 import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import dayjs from 'dayjs';
