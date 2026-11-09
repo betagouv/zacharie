@@ -103,3 +103,71 @@ test('Une carcasse ajoutée après la certification porte le premier détenteur 
   await expect(carteFiche).toBeVisible({ timeout: 15000 });
   await expect(carteFiche).toContainText('Association de chasseurs');
 });
+
+// Premier détenteur en son nom propre (pas d'association) : les carcasses de la fiche n'ont pas
+// d'entité détentrice. Une carcasse ajoutée après la certification ne doit pas en porter une non
+// plus, sinon elle diffère des autres carcasses de la même transmission.
+test('Une carcasse ajoutée après la certification, premier détenteur en son nom propre, ne porte pas de nom d’entité', async ({
+  page,
+}) => {
+  await connectWith(page, 'examinateur@example.fr');
+  await expect(page).toHaveURL('http://localhost:3290/app/chasseur');
+
+  await page.getByRole('button', { name: 'Nouvelle fiche' }).first().click();
+  await page.getByRole('button', { name: dayjs.utc().format('dddd DD MMMM') }).click();
+  await page.getByRole('textbox', { name: 'Commune de prélèvement du gibier' }).fill('CHASS');
+  await page.getByRole('button', { name: 'CHASSENARD' }).click();
+
+  // l'examinateur se désigne lui-même premier détenteur
+  await page.getByRole('button', { name: 'Marie Martin' }).click();
+  await page.getByRole('button', { name: 'Continuer' }).first().click();
+
+  await page.getByRole('button', { name: 'Ajouter une carcasse' }).click();
+  await page.getByLabel('Espèce (grand et petit gibier)').selectOption('Daim');
+  await page.getByRole('button', { name: /^MM-\d{3}-\d{3}$/ }).click();
+  await page.getByRole('button', { name: 'Ajouter la carcasse' }).click();
+  await page.getByRole('button', { name: 'Continuer' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Continuer' }).click();
+
+  await page
+    .getByRole('textbox', { name: 'Heure du prélèvement de la première carcasse' })
+    .fill(dayjs().startOf('day').add(1, 'hour').format('HH:mm'));
+  await page.getByRole('textbox', { name: 'Heure du prélèvement de la première carcasse' }).blur();
+  await page
+    .getByRole('textbox', { name: 'Heure d’éviscération de la dernière carcasse' })
+    .fill(dayjs().startOf('day').add(2, 'hour').format('HH:mm'));
+  await page.getByRole('textbox', { name: 'Heure d’éviscération de la dernière carcasse' }).blur();
+
+  await page.getByRole('button', { name: dateApprobationDuJour() }).click();
+  await page.getByText('Je, Martin Marie, certifie qu').click();
+
+  const ajouterCarcasse = page.getByRole('button', { name: 'Ajouter une carcasse' });
+  await ajouterCarcasse.scrollIntoViewIfNeeded();
+  await ajouterCarcasse.click();
+  await page.getByLabel('Espèce (grand et petit gibier)').selectOption('Daim');
+  const suggestionBracelet = page.getByRole('button', { name: /^MM-\d{3}-\d{3}$/ });
+  const numeroBraceletTardif = (await suggestionBracelet.textContent())!.trim();
+  await suggestionBracelet.click();
+
+  const syncCarcasseTardive = page.waitForRequest(
+    (req) =>
+      req.url().includes('/sync') &&
+      req.method() === 'POST' &&
+      (req.postData() ?? '').includes(numeroBraceletTardif),
+    { timeout: 15000 }
+  );
+  await page.getByRole('button', { name: 'Ajouter la carcasse' }).click();
+  const body = (await syncCarcasseTardive).postDataJSON() as {
+    carcasses: Array<{
+      numero_bracelet: string;
+      premier_detenteur_entity_id: string | null;
+      current_owner_entity_id: string | null;
+      current_owner_entity_name_cache: string | null;
+    }>;
+  };
+  const carcasseTardive = body.carcasses.find((c) => c.numero_bracelet === numeroBraceletTardif);
+  expect(carcasseTardive).toBeDefined();
+  expect(carcasseTardive!.premier_detenteur_entity_id).toBeNull();
+  expect(carcasseTardive!.current_owner_entity_id).toBeNull();
+  expect(carcasseTardive!.current_owner_entity_name_cache).toBeNull();
+});
