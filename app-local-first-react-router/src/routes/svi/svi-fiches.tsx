@@ -10,7 +10,6 @@ import { Tag } from '@codegouvfr/react-dsfr/Tag';
 import FichesEmptyState from '@app/components/FichesEmptyState';
 import { TransmissionSimpleStatus } from '@app/types/transmission-steps';
 import useZustandStore from '@app/zustand/store';
-import useUser from '@app/zustand/user';
 import { useNativePushToken } from '@app/utils/useNativePushToken';
 import { keepAvailableFilterValues } from '@app/utils/keep-available-filter-values';
 import { trackFeature, trackSearch } from '@app/services/matomo';
@@ -22,14 +21,13 @@ import { filterCarcassesIntermediairesForCarcasse } from '@app/utils/get-carcass
 import { formatCountCarcasseByEspece } from '@app/utils/count-carcasses';
 import { useSaveScroll } from '@app/services/useSaveScroll';
 import CarcassesEspeceSummary from '@app/components/CarcassesEspeceSummary';
-import { getPreviousDetenteur } from '@app/utils/get-previous-detenteur-from-transmission';
+import { getPremierDetenteur } from '@app/utils/get-previous-detenteur-from-transmission';
 import CollapsibleSection from '@app/components/CollapsibleSection';
 import { useLoaderEffect, loadData } from '@app/utils/load-data';
 import Chargement from '@app/components/Chargement';
 import { useTransmissionsSorted } from '@app/utils/get-transmissions-sorted';
 import { CarcasseTransmissionWihMetadata } from '@app/types/carcasse';
 import CardTransmission from '@app/components/CardTransmission';
-import { useEntitiesIdsWorkingDirectlyForObj } from '@app/utils/get-entity-relations';
 import { getTransmissionLink, getTransmissionIdFromMetadata } from '@app/utils/get-transmission-id';
 import { useSviCarcassesAVenir, sviCarcassesAVenirModal } from '@app/utils/svi-carcasses-a-venir';
 import SviCarcassesAVenirModal from '@app/components/SviCarcassesAVenirModal';
@@ -1098,8 +1096,6 @@ function FeisWrapper({
 }) {
   const nothingToShow = paginatedTransmissions.length === 0;
   const usersById = useZustandStore((state) => state.users);
-  const entitiesWorkingDirectlyFor = useEntitiesIdsWorkingDirectlyForObj();
-  const myUserId = useUser((state) => state.user?.id);
 
   if (nothingToShow) {
     if (hasActiveFilters) {
@@ -1144,12 +1140,7 @@ function FeisWrapper({
     <div className="grid w-full grid-cols-1 gap-4 justify-self-end sm:grid-cols-2 lg:grid-cols-3">
       {paginatedTransmissions.map((transmission) => {
         if (!transmission) return null;
-        const detenteurPrecedent = getPreviousDetenteur(
-          transmission,
-          usersById,
-          entitiesWorkingDirectlyFor,
-          myUserId!
-        );
+        const premierDetenteur = getPremierDetenteur(transmission, usersById);
         return (
           <CardTransmission
             key={getTransmissionIdFromMetadata(transmission)}
@@ -1158,8 +1149,8 @@ function FeisWrapper({
             onPrintSelect={handleCheckboxClick}
             isPrintSelected={selectedTransmissions.includes(getTransmissionIdFromMetadata(transmission))}
             linkTo={`/app/svi/fei/${getTransmissionLink(transmission)}`}
-            detenteurName={detenteurPrecedent.name}
-            detenteurIcon={detenteurPrecedent.icon}
+            detenteurName={premierDetenteur.name}
+            detenteurIcon={premierDetenteur.icon}
           />
         );
       })}
