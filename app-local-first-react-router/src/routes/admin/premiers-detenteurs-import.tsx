@@ -68,7 +68,8 @@ export default function PremiersDetenteursImport() {
 
     const response = (await API.post({
       path: 'admin/premiers-detenteurs/import',
-      body: { premiers_detenteurs: nouveaux },
+      // on envoie aussi les existants : le serveur les ignore et les compte
+      body: { premiers_detenteurs: [...nouveaux, ...existants] },
     })) as AdminPremiersDetenteursImportResponse;
 
     setLoading(false);
@@ -78,7 +79,7 @@ export default function PremiersDetenteursImport() {
     }
     setResult(response.data);
     setStep('result');
-  }, [nouveaux]);
+  }, [nouveaux, existants]);
 
   const reset = useCallback(() => {
     setStep('upload');
@@ -106,8 +107,8 @@ export default function PremiersDetenteursImport() {
         <div className="mb-8">
           <p className="mb-4">
             Sélectionnez un fichier d'associations de chasse (sociétés, ACCA…). Les colonnes utilisées
-            sont&nbsp;: <code>Raison sociale</code>, <code>Code postal</code>, <code>Commune</code>. Le code
-            numérique en début de raison sociale (ex.&nbsp;: «&nbsp;4111101 ANDREST&nbsp;») est retiré.
+            sont&nbsp;: <code>Raison sociale</code>, <code>Code postal</code>, <code>Commune</code>. Le
+            premier chasseur qui rejoint une association importée en devient l'administrateur.
           </p>
           <input
             ref={fileInputRef}

@@ -3,7 +3,7 @@ import { utils } from '@e965/xlsx';
 import { parsePremiersDetenteursSheet } from './parse-premiers-detenteurs-sheet';
 
 describe('parsePremiersDetenteursSheet', () => {
-  it('lit le fichier de la FDC 65 et retire le code interne de la raison sociale', () => {
+  it('lit le fichier de la FDC 65 et garde la raison sociale telle quelle', () => {
     const sheet = utils.aoa_to_sheet([
       ['Raison sociale', 'Code  postal', 'Commune'],
       ['4111101 ANDREST', '65800', 'AUREILHAN'],
@@ -11,9 +11,9 @@ describe('parsePremiersDetenteursSheet', () => {
       ['', '', ''],
     ]);
     expect(parsePremiersDetenteursSheet(sheet)).toEqual([
-      { raison_sociale: 'ANDREST', code_postal: '65800', ville: 'AUREILHAN' },
+      { raison_sociale: '4111101 ANDREST', code_postal: '65800', ville: 'AUREILHAN' },
       {
-        raison_sociale: 'Aouquerats - La Tyre (CASTELNAU RIVIERE BASSE)',
+        raison_sociale: '4111102 Aouquerats - La Tyre (CASTELNAU RIVIERE BASSE)',
         code_postal: '65700',
         ville: 'CASTELNAU-RIVIERE-BASSE',
       },

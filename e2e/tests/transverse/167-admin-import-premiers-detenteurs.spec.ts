@@ -4,7 +4,7 @@ import { connectWith } from '../../utils/connect-with';
 
 // Scenario 167 — Un admin Zacharie importe des associations de chasse (premiers détenteurs) depuis
 // un fichier CSV de fédération : colonnes « Raison sociale », « Code postal », « Commune ».
-// Le code interne en début de raison sociale (« 4111101 ANDREST ») est retiré. L'association
+// La raison sociale est gardée telle quelle (« 4111101 ANDREST »). L'association
 // « Association de chasseurs » (75000 Paris) existe déjà dans le seed : elle est ignorée.
 
 test.use({ launchOptions: { slowMo: 100 } });
@@ -47,9 +47,9 @@ test('importer des premiers détenteurs depuis un CSV de fédération', async ({
 
   await expect(page.getByText('2 nouveau(x)')).toBeVisible({ timeout: 10000 });
   await expect(page.getByText('1 déjà enregistré(s) (ignorés)')).toBeVisible();
-  await expect(page.getByRole('cell', { name: 'ANDREST', exact: true })).toBeVisible();
+  await expect(page.getByRole('cell', { name: '4111101 ANDREST', exact: true })).toBeVisible();
   await expect(
-    page.getByRole('cell', { name: 'Aouquerats - La Tyre (CASTELNAU RIVIERE BASSE)', exact: true })
+    page.getByRole('cell', { name: '4111102 Aouquerats - La Tyre (CASTELNAU RIVIERE BASSE)', exact: true })
   ).toBeVisible();
 
   await page.getByRole('button', { name: 'Importer (2 premier(s) détenteur(s))' }).click();
@@ -65,5 +65,7 @@ test('importer des premiers détenteurs depuis un CSV de fédération', async ({
 
   await page.goto('http://localhost:3290/app/admin/entities');
   await page.getByPlaceholder('Nom, DDECPP, SIRET, adresse, id...').fill('ANDREST');
-  await expect(page.getByRole('link', { name: 'ANDREST', exact: true })).toBeVisible({ timeout: 10000 });
+  await expect(page.getByRole('link', { name: '4111101 ANDREST', exact: true })).toBeVisible({
+    timeout: 10000,
+  });
 });

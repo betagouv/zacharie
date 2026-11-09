@@ -16,9 +16,6 @@ function findHeaderRowIndex(sheet: WorkSheet): number {
   );
 }
 
-// les fichiers des fédérations préfixent la raison sociale d'un code interne : « 4111101 ANDREST »
-const stripLeadingCode = (s: string) => s.replace(/^\d+\s+/, '');
-
 // Excel stocke le code postal comme un nombre et perd le 0 initial : 1000 → 01000
 const padCodePostal = (s: string) => (/^\d{4}$/.test(s) ? s.padStart(5, '0') : s);
 
@@ -41,7 +38,7 @@ export function parsePremiersDetenteursSheet(sheet: WorkSheet): PremierDetenteur
         return '';
       };
       return {
-        raison_sociale: stripLeadingCode(col(RAISON_SOCIALE_HEADERS)),
+        raison_sociale: col(RAISON_SOCIALE_HEADERS),
         code_postal: padCodePostal(col(CODE_POSTAL_HEADERS)),
         ville: col(VILLE_HEADERS),
       };

@@ -533,6 +533,74 @@ describe('POST /user-entity/', () => {
       );
     });
 
+    describe('association de chasse sans membre (ex. importée par l’équipe Zacharie)', () => {
+      const associationDeChasse: Partial<Entity> = {
+        id: 'entity-pd',
+        nom_d_usage: '4111101 ANDREST',
+        code_postal: '65800',
+        ville: 'AUREILHAN',
+        type: EntityTypes.PREMIER_DETENTEUR,
+        deleted_at: null,
+      };
+
+      function mockAssociation({ hasMembers }: { hasMembers: boolean }) {
+        vi.mocked(prisma.entity.findUnique).mockResolvedValue(associationDeChasse as any);
+        // @ts-expect-error
+        vi.mocked(prisma.entityAndUserRelations.findFirst).mockImplementation((args: any) => {
+          // recherche d'un membre ou admin existant (règle du premier utilisateur)
+          if (args.where?.status?.in) {
+            return Promise.resolve(hasMembers ? ({ id: 'rel-existing' } as any) : null);
+          }
+          return Promise.resolve(null);
+        });
+        // @ts-expect-error
+        vi.mocked(prisma.entityAndUserRelations.create).mockImplementation((args: any) =>
+          Promise.resolve({ id: 'rel-pd', status: EntityRelationStatus.REQUESTED, ...args.data })
+        );
+        vi.mocked(prisma.entityAndUserRelations.findMany).mockResolvedValue([]);
+      }
+
+      const joinRequest = () =>
+        authed(
+          request(app).post(BASE).send({
+            owner_id: regularUser.id,
+            entity_id: 'entity-pd',
+            relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+            status: EntityRelationStatus.REQUESTED,
+          }),
+          regularUser
+        );
+
+      test('le premier chasseur qui la rejoint en devient admin et l’équipe Zacharie est prévenue', async () => {
+        // @ts-expect-error
+        const { sendEmail } = await import('~/third-parties/brevo');
+        mockAssociation({ hasMembers: false });
+
+        const res = await joinRequest();
+
+        expect(res.status).toBe(200);
+        expect(res.body.data.relation.status).toBe(EntityRelationStatus.ADMIN);
+        expect(sendEmail).toHaveBeenCalledWith(
+          expect.objectContaining({
+            emails: ['contact@zacharie.beta.gouv.fr'],
+            subject: "Premier membre d'une association de chasse : 4111101 ANDREST",
+          })
+        );
+      });
+
+      test('un chasseur qui rejoint une association avec des membres reste en attente, sans email à l’équipe', async () => {
+        // @ts-expect-error
+        const { sendEmail } = await import('~/third-parties/brevo');
+        mockAssociation({ hasMembers: true });
+
+        const res = await joinRequest();
+
+        expect(res.status).toBe(200);
+        expect(res.body.data.relation.status).toBe(EntityRelationStatus.REQUESTED);
+        expect(sendEmail).not.toHaveBeenCalled();
+      });
+    });
+
     test('REQUESTED relation by non-CHASSEUR is blocked from notifying admins', async () => {
       // Guard rail: only CHASSEUR users may legitimately reach the REQUESTED notification path.
       // Frontend already prevents it; the backend throws to trip Sentry if anything bypasses.

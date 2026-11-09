@@ -33,15 +33,16 @@ Tout passe par **Brevo** — pas de SMTP / nodemailer / autre.
 
 ## 2. Notices internes équipe (→ `contact@zacharie.beta.gouv.fr`)
 
-| Déclencheur                                  | Objet                                                          | Fichier                                                     |
-| -------------------------------------------- | -------------------------------------------------------------- | ----------------------------------------------------------- |
-| Nouvelle ouverture de compte                 | `Nouvelle ouverture de compte pour {email}`                    | `brevo.ts:143,172`                                          |
-| Inscription finie                            | `Inscription finie pour {email}…`                              | `user.ts:1213`, `admin/user.ts:272`                         |
-| N° CFEI renseigné/changé après l'inscription | `Numéro CFEI changé pour {email}…`                             | `user.ts:1213` (rien depuis l'admin)                        |
-| Asso de chasse pré-enregistrée               | `Nouvelle association de chasse pré-enregistrée dans Zacharie` | `entite.ts:299`                                             |
-| Partenaire pré-enregistré                    | `Nouveau partenaire pré-enregistré dans Zacharie`              | `utils/create-destinataire.ts:173` (chasseur, ETG ou admin) |
-| Partenaire existant rattaché par un chasseur | `Partenaire existant rattaché par un chasseur`                 | `entite.ts:357`                                             |
-| CCG pré-enregistré                           | `Nouveau CCG pré-enregistré dans Zacharie`                     | `entite.ts:451`                                             |
+| Déclencheur                                                            | Objet                                                          | Fichier                                                     |
+| ---------------------------------------------------------------------- | -------------------------------------------------------------- | ----------------------------------------------------------- |
+| Nouvelle ouverture de compte                                           | `Nouvelle ouverture de compte pour {email}`                    | `brevo.ts:143,172`                                          |
+| Inscription finie                                                      | `Inscription finie pour {email}…`                              | `user.ts:1213`, `admin/user.ts:272`                         |
+| N° CFEI renseigné/changé après l'inscription                           | `Numéro CFEI changé pour {email}…`                             | `user.ts:1213` (rien depuis l'admin)                        |
+| Asso de chasse pré-enregistrée                                         | `Nouvelle association de chasse pré-enregistrée dans Zacharie` | `entite.ts:299`                                             |
+| Partenaire pré-enregistré                                              | `Nouveau partenaire pré-enregistré dans Zacharie`              | `utils/create-destinataire.ts:173` (chasseur, ETG ou admin) |
+| Partenaire existant rattaché par un chasseur                           | `Partenaire existant rattaché par un chasseur`                 | `entite.ts:357`                                             |
+| CCG pré-enregistré                                                     | `Nouveau CCG pré-enregistré dans Zacharie`                     | `entite.ts:451`                                             |
+| Premier membre d'une association de chasse sans membre (devient admin) | `Premier membre d'une association de chasse : {nom}`           | `user-entity.ts:250`                                        |
 
 ## 3. Notifications automatiques (event-driven, sync FEI/carcasse — email si préf. EMAIL active)
 
