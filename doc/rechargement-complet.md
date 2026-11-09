@@ -19,11 +19,17 @@ corrigée en base sans que son `updated_at` bouge, n'est jamais renvoyée : la c
   à cette date, le filtre `updated_at` est ignoré, tout le périmètre est renvoyé et la
   réponse porte `fullReload: true`. Un premier chargement (`after = 0`) renvoie aussi tout le
   périmètre, mais avec `fullReload: false`.
-- Client (`app-local-first-react-router/src/utils/load-carcasses.ts`) : sur `fullReload`, toutes les
-  données locales sont remplacées par la réponse : fiches, carcasses, `CarcasseIntermediaire`,
-  demandes de modification, utilisateurs et entités. Restent seulement les copies locales non
-  synchronisées (`is_synced: false`), mergées par `updated_at`, et les utilisateurs / entités des
-  relations de l'utilisateur (chargés par `load-my-relations`).
+- Client (`app-local-first-react-router/src/utils/load-carcasses.ts`) : sur `fullReload`, les fiches,
+  carcasses, `CarcasseIntermediaire` et demandes de modification locales sont remplacées par la
+  réponse. Restent :
+  - les copies locales non synchronisées (`is_synced: false`), mergées par `updated_at` ;
+  - les fiches sans carcasse locale (fiche en cours de saisie) : `GET /carcasse` ne renvoie que les
+    fiches qui ont une carcasse dans le périmètre ;
+  - les carcasses refusées / manquantes (et leurs `CarcasseIntermediaire`) des fiches encore dans le
+    périmètre : hors périmètre delta, elles viennent de `/carcasse/refusees/:fei_numero`.
+
+  Les utilisateurs et les entités (données de référence : noms, adresses) sont toujours mergés.
+
 - Une fois le rechargement fait, `lastUpdateFromServer` passe à l'heure serveur, postérieure à la
   date : le client repasse en delta. Chaque appareil recharge une fois, sans accusé de réception.
   Si le chargement échoue, le curseur ne bouge pas et le pull suivant recharge à nouveau.
@@ -38,6 +44,8 @@ corrigée en base sans que son `updated_at` bouge, n'est jamais renvoyée : la c
   existantes d'une entité rejointe n'arrivent jamais (leur `updated_at` ne bouge pas), et celles d'une
   entité quittée restent sur l'appareil. **Toute nouvelle écriture de `EntityAndUserRelations` doit
   appeler ce helper.**
+- par l'admin qui change le rôle d'un utilisateur (`POST /admin/user/:user_id`) : le périmètre dépend
+  du rôle ;
 - par un superadmin, bouton « Recharger ses données » sur la page de l'utilisateur
   (`POST /admin/user/:user_id/carcasses-reload`), quand un seul compte a des données locales fausses :
   pas besoin d'avancer la constante globale.

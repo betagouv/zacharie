@@ -3,7 +3,7 @@ import useZustandStore from '@app/zustand/store';
 import { mergeItems } from './merge-fetched-items';
 import API from '@app/services/api';
 import { getFeiAndCarcasseAndIntermediaireIds } from './get-carcasse-intermediaire-id';
-import { EntityRelationType, type CarcasseModificationRequest } from '@prisma/client';
+import type { CarcasseModificationRequest } from '@prisma/client';
 import useUser from '@app/zustand/user';
 import { capture } from '@app/services/sentry';
 import { isLocalTeardownInProgress } from '@app/zustand/idb-sliced-storage';
@@ -132,37 +132,59 @@ export async function loadCarcasses() {
 
     // Rechargement complet : le serveur a renvoyé tout le périmètre, les copies locales absentes de
     // la réponse sont sorties du périmètre. On ne garde que les modifications locales pas encore
-    // synchronisées, et les utilisateurs / entités de mes relations (chargés par load-my-relations).
+    // synchronisées, et les carcasses refusées / manquantes des fiches encore dans le périmètre :
+    // hors périmètre delta, elles viennent de /carcasse/refusees/:fei_numero (load-carcasses-refusees).
     const keepLocal = <T extends { is_synced: boolean }>(items: Array<T>) =>
       fullReload ? items.filter((item) => !item.is_synced) : items;
     const state = useZustandStore.getState();
-    const localUsers = fullReload
-      ? state.detenteursInitiauxIds.map((id) => state.users[id]).filter(Boolean)
-      : Object.values(state.users);
-    const localEntities = fullReload
-      ? Object.values(state.entities).filter((entity) => entity.relation !== EntityRelationType.NONE)
-      : Object.values(state.entities);
+    const feiNumerosFetched = new Set(feisFetched.map((fei) => fei.numero));
+    const keptRefuseesIds = new Set(
+      fullReload
+        ? Object.values(state.carcasses)
+            .filter(
+              (c) =>
+                feiNumerosFetched.has(c.fei_numero) &&
+                (!!c.intermediaire_carcasse_refus_intermediaire_id || !!c.intermediaire_carcasse_manquante)
+            )
+            .map((c) => c.zacharie_carcasse_id)
+        : []
+    );
+    const localCarcasses = Object.values(state.carcasses).filter(
+      (c) => !fullReload || !c.is_synced || keptRefuseesIds.has(c.zacharie_carcasse_id)
+    );
+    const localCarcassesIntermediaires = Object.values(state.carcassesIntermediaireById).filter(
+      (ci) => !fullReload || !ci.is_synced || keptRefuseesIds.has(ci.zacharie_carcasse_id)
+    );
 
     const newCarcasses = mergeItems({
-      oldItems: keepLocal(Object.values(useZustandStore.getState().carcasses)),
+      oldItems: localCarcasses,
       newItems: carcassesFetched,
       idKey: (c) => c.zacharie_carcasse_id,
     });
 
+    // GET /carcasse ne renvoie que les fiches qui ont une carcasse dans le périmètre : une fiche sans
+    // carcasse (en cours de saisie) n'existe que sur l'appareil qui l'a créée, on la garde.
+    const feiNumerosWithLocalCarcasses = new Set(Object.values(state.carcasses).map((c) => c.fei_numero));
+    const localFeis = fullReload
+      ? Object.values(state.feis).filter(
+          (fei) => !fei.is_synced || !feiNumerosWithLocalCarcasses.has(fei.numero)
+        )
+      : Object.values(state.feis);
+
     const newFeis = mergeItems({
-      oldItems: keepLocal(Object.values(useZustandStore.getState().feis)),
+      oldItems: localFeis,
       newItems: feisFetched,
       idKey: (c) => c.numero,
     });
 
     const newCarcassesIntermediaires = mergeItems({
-      oldItems: keepLocal(Object.values(useZustandStore.getState().carcassesIntermediaireById)),
+      oldItems: localCarcassesIntermediaires,
       newItems: carcassesIntermediairesFetched,
       idKey: getFeiAndCarcasseAndIntermediaireIds,
     });
 
     const newUsers = mergeItems({
-      oldItems: localUsers,
+      oldItems: Object.values(state.users),
       newItems: usersFetched,
       idKey: (c) => c.id,
     });
@@ -170,7 +192,7 @@ export async function loadCarcasses() {
     // Entities referenced by the fiches (premier détenteur asso, dépôt, SVI…). Fill gaps only:
     // existing store entities (loaded by load-my-relations) keep their relation metadata, since
     // fiche entities carry relation NONE.
-    const newEntities = Object.fromEntries(localEntities.map((entity) => [entity.id, entity]));
+    const newEntities = { ...state.entities };
     for (const entity of entitiesFetched) {
       if (!entity.deleted_at && !newEntities[entity.id]) {
         newEntities[entity.id] = entity;

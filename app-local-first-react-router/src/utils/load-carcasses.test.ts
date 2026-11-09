@@ -7,8 +7,18 @@ const mocks = vi.hoisted(() => {
     isOnline: true,
     lastUpdateFromServer: 1000,
     feis: {} as Record<string, Item & { numero: string }>,
-    carcasses: {} as Record<string, Item & { zacharie_carcasse_id: string; fei_numero: string }>,
-    carcassesIntermediaireById: {},
+    carcasses: {} as Record<
+      string,
+      Item & {
+        zacharie_carcasse_id: string;
+        fei_numero: string;
+        intermediaire_carcasse_refus_intermediaire_id?: string;
+      }
+    >,
+    carcassesIntermediaireById: {} as Record<
+      string,
+      Item & { fei_numero: string; zacharie_carcasse_id: string; intermediaire_id: string }
+    >,
     modifRequestsByCarcasseId: {},
     users: {} as Record<string, Item & { id: string }>,
     entities: {} as Record<string, Item & { id: string; relation: string }>,
@@ -66,9 +76,31 @@ beforeEach(() => {
     feis: {
       'FEI-SORTIE': { ...base(), numero: 'FEI-SORTIE' },
       'FEI-NON-SYNC': { ...base(false), numero: 'FEI-NON-SYNC' },
+      'FEI-SANS-CARCASSE': { ...base(), numero: 'FEI-SANS-CARCASSE' },
     },
     carcasses: {
       'C-SORTIE': { ...base(), zacharie_carcasse_id: 'C-SORTIE', fei_numero: 'FEI-SORTIE' },
+      // refusée en amont, chargée par /carcasse/refusees/:fei_numero : hors périmètre delta
+      'C-REFUSEE': {
+        ...base(),
+        zacharie_carcasse_id: 'C-REFUSEE',
+        fei_numero: 'FEI-SERVEUR',
+        intermediaire_carcasse_refus_intermediaire_id: 'INTER-1',
+      },
+    },
+    carcassesIntermediaireById: {
+      'FEI-SERVEUR_C-REFUSEE_INTER-1': {
+        ...base(),
+        fei_numero: 'FEI-SERVEUR',
+        zacharie_carcasse_id: 'C-REFUSEE',
+        intermediaire_id: 'INTER-1',
+      },
+      'FEI-SORTIE_C-SORTIE_INTER-2': {
+        ...base(),
+        fei_numero: 'FEI-SORTIE',
+        zacharie_carcasse_id: 'C-SORTIE',
+        intermediaire_id: 'INTER-2',
+      },
     },
     users: {
       'U-SORTI': { ...base(), id: 'U-SORTI' },
@@ -91,21 +123,36 @@ function mockServer(fullReload: boolean) {
 }
 
 describe('loadCarcasses — rechargement complet', () => {
-  it('remplace toutes les données locales synchronisées par le périmètre renvoyé', async () => {
+  it('remplace les fiches et carcasses synchronisées par le périmètre renvoyé', async () => {
     mockServer(true);
     await loadCarcasses();
-    expect(Object.keys(mocks.state.carcasses)).toEqual(['C-SERVEUR']);
-    expect(Object.keys(mocks.state.feis).sort()).toEqual(['FEI-NON-SYNC', 'FEI-SERVEUR']);
-    expect(Object.keys(mocks.state.users).sort()).toEqual(['U-DETENTEUR', 'U-SERVEUR']);
-    expect(Object.keys(mocks.state.entities).sort()).toEqual(['E-MA-RELATION', 'E-SERVEUR']);
+    // la carcasse refusée d'une fiche encore dans le périmètre reste, avec son intermédiaire
+    expect(Object.keys(mocks.state.carcasses).sort()).toEqual(['C-REFUSEE', 'C-SERVEUR']);
+    expect(
+      Object.values(mocks.state.carcassesIntermediaireById).map((ci) => ci.zacharie_carcasse_id)
+    ).toEqual(['C-REFUSEE']);
+    // une fiche sans carcasse n'est jamais renvoyée par GET /carcasse : elle reste
+    expect(Object.keys(mocks.state.feis).sort()).toEqual([
+      'FEI-NON-SYNC',
+      'FEI-SANS-CARCASSE',
+      'FEI-SERVEUR',
+    ]);
+    // utilisateurs et entités : données de référence (noms), toujours mergées
+    expect(Object.keys(mocks.state.users).sort()).toEqual(['U-DETENTEUR', 'U-SERVEUR', 'U-SORTI']);
+    expect(Object.keys(mocks.state.entities).sort()).toEqual(['E-MA-RELATION', 'E-SERVEUR', 'E-SORTIE']);
     expect(mocks.state.lastUpdateFromServer).toBe(2000);
   });
 
   it('pull delta : les données locales sont gardées et complétées', async () => {
     mockServer(false);
     await loadCarcasses();
-    expect(Object.keys(mocks.state.carcasses).sort()).toEqual(['C-SERVEUR', 'C-SORTIE']);
-    expect(Object.keys(mocks.state.feis).sort()).toEqual(['FEI-NON-SYNC', 'FEI-SERVEUR', 'FEI-SORTIE']);
+    expect(Object.keys(mocks.state.carcasses).sort()).toEqual(['C-REFUSEE', 'C-SERVEUR', 'C-SORTIE']);
+    expect(Object.keys(mocks.state.feis).sort()).toEqual([
+      'FEI-NON-SYNC',
+      'FEI-SANS-CARCASSE',
+      'FEI-SERVEUR',
+      'FEI-SORTIE',
+    ]);
     expect(Object.keys(mocks.state.users).sort()).toEqual(['U-DETENTEUR', 'U-SERVEUR', 'U-SORTI']);
     expect(Object.keys(mocks.state.entities).sort()).toEqual(['E-MA-RELATION', 'E-SERVEUR', 'E-SORTIE']);
   });
