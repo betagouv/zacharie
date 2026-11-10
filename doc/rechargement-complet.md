@@ -51,9 +51,10 @@ changement de version du stockage).
 `requestCarcassesReload(userId)` (`api-express/src/utils/carcasses-reload.ts`) incrémente
 `User.carcasses_reload_version`. Il est appelé :
 
-- après **chaque** écriture (création, modification, suppression) d'une `EntityAndUserRelations`,
-  sans condition, avec l'`owner_id` de la relation écrite. **Toute nouvelle écriture de
-  `EntityAndUserRelations` doit l'appeler.** ;
+- après chaque écriture (création, modification, suppression) d'une relation, sans condition, avec
+  l'`owner_id` de la relation écrite. **Toute écriture d'une relation
+  `CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY` appelle `requestCarcassesReload(owner_id)`.** Les relations
+  partenaires (`CAN_TRANSMIT_CARCASSES_TO_ENTITY`) ne changent pas le périmètre des carcasses ;
 - par un superadmin, bouton « Recharger ses données » sur la page de l'utilisateur
   (`POST /admin/user/:user_id/carcasses-reload`), quand un seul compte a des données locales fausses :
   pas besoin d'avancer la constante globale.

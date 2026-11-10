@@ -57,7 +57,7 @@ model User {
   updated_at                            DateTime                       @default(now()) @updatedAt
   last_login_at                         DateTime?
   deleted_at                            DateTime?
-  // Incrémenté par requestCarcassesReload() à chaque écriture d'une EntityAndUserRelations, ou par un superadmin.
+  // Incrémenté par requestCarcassesReload() à chaque écriture d'une relation CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY, ou par un superadmin.
   // Un appareil qui envoie une valeur inférieure re-télécharge tout son périmètre au prochain pull.
   carcasses_reload_version              Int                            @default(0)
   onboarded_at                          DateTime?
