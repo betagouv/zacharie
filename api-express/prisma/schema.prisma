@@ -292,6 +292,7 @@ model SecurityLog {
   created_at DateTime @default(now())
 
   @@index([email, action, created_at])
+  @@index([created_at])
 }
 
 // Journal des écritures faites depuis /admin (POST, PUT, DELETE), écrit par le middleware admin-audit-log.
