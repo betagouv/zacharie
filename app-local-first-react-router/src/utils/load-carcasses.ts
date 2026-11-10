@@ -85,6 +85,7 @@ export async function loadCarcasses() {
 
     const lastUpdateFromServer = useZustandStore.getState().lastUpdateFromServer;
     const after = String(getDeltaAfter(lastUpdateFromServer));
+    const reloadVersion = String(useZustandStore.getState().carcassesReloadVersion);
     const carcassesFetched: CarcassesGetResponse['data']['carcasses'] = [];
     const feisFetched: CarcassesGetResponse['data']['feis'] = [];
     const carcassesIntermediairesFetched: CarcassesGetResponse['data']['carcassesIntermediaires'] = [];
@@ -94,6 +95,7 @@ export async function loadCarcasses() {
     let page = 0;
     let hasMore = true;
     let fullReload = false;
+    let receivedReloadVersion = 0;
 
     while (hasMore) {
       const res = await API.get({
@@ -103,28 +105,12 @@ export async function loadCarcasses() {
           withDeleted: 'true',
           page: `${page}`,
           limit: '5000',
+          reloadVersion,
         },
         signal,
       }).then((r) => r as CarcassesGetResponse);
       if (signal.aborted) return;
       if (!res.ok || !res.data) return null;
-
-      // Rechargement complet demandé entre deux pages : les pages suivantes portent tout le périmètre,
-      // avec un offset qui ne correspond plus aux pages déjà lues. On recommence à la première page.
-      if (page > 0 && res.data.fullReload !== fullReload) {
-        for (const list of [
-          carcassesFetched,
-          feisFetched,
-          usersFetched,
-          entitiesFetched,
-          carcasseModifRequests,
-          carcassesIntermediairesFetched,
-        ]) {
-          list.length = 0;
-        }
-        page = 0;
-        continue;
-      }
 
       carcassesFetched.push(...(res.data.carcasses || []));
       feisFetched.push(...(res.data.feis || []));
@@ -133,7 +119,10 @@ export async function loadCarcasses() {
       carcasseModifRequests.push(...(res.data.carcasseModifRequests || []));
       carcassesIntermediairesFetched.push(...(res.data.carcassesIntermediaires || []));
       hasMore = res.data.hasMore;
-      if (page === 0) fullReload = res.data.fullReload;
+      if (page === 0) {
+        fullReload = res.data.fullReload;
+        receivedReloadVersion = res.data.reloadVersion;
+      }
       page += 1;
     }
 
@@ -144,36 +133,17 @@ export async function loadCarcasses() {
       console.log('no carcasses fetched');
       useZustandStore.setState(() => ({
         lastUpdateFromServer: serverDate,
+        carcassesReloadVersion: receivedReloadVersion,
       }));
       checkLocalCarcassesIntegrity(signal);
       return;
     }
 
     // Rechargement complet : le serveur a renvoyé tout le périmètre, les copies locales absentes de
-    // la réponse sont sorties du périmètre. On ne garde que les modifications locales pas encore
-    // synchronisées, et les carcasses refusées / manquantes des fiches encore dans le périmètre :
-    // hors périmètre delta, elles viennent de /carcasse/refusees/:fei_numero (load-carcasses-refusees).
+    // la réponse sont sorties du périmètre. On ne garde que les modifications locales pas encore synchronisées
+    // (fiches, carcasses, CarcasseIntermediaire, demandes de modification).
     const keepLocal = <T extends { is_synced: boolean }>(items: Array<T>) =>
       fullReload ? items.filter((item) => !item.is_synced) : items;
-    const state = useZustandStore.getState();
-    const feiNumerosFetched = new Set(feisFetched.map((fei) => fei.numero));
-    const keptRefuseesIds = new Set(
-      fullReload
-        ? Object.values(state.carcasses)
-            .filter(
-              (c) =>
-                feiNumerosFetched.has(c.fei_numero) &&
-                (!!c.intermediaire_carcasse_refus_intermediaire_id || !!c.intermediaire_carcasse_manquante)
-            )
-            .map((c) => c.zacharie_carcasse_id)
-        : []
-    );
-    const localCarcasses = Object.values(state.carcasses).filter(
-      (c) => !fullReload || !c.is_synced || keptRefuseesIds.has(c.zacharie_carcasse_id)
-    );
-    const localCarcassesIntermediaires = Object.values(state.carcassesIntermediaireById).filter(
-      (ci) => !fullReload || !ci.is_synced || keptRefuseesIds.has(ci.zacharie_carcasse_id)
-    );
 
     // Hors rechargement complet : les lignes revenues seulement à cause de la marge du delta
     // n'écrasent pas une modification locale pas encore envoyée.
@@ -189,28 +159,19 @@ export async function loadCarcasses() {
     }
 
     const newCarcasses = mergeItems({
-      oldItems: localCarcasses,
+      oldItems: keepLocal(Object.values(useZustandStore.getState().carcasses)),
       newItems: guardMargin(carcassesFetched, localState.carcasses, (c) => c.zacharie_carcasse_id),
       idKey: (c) => c.zacharie_carcasse_id,
     });
 
-    // GET /carcasse ne renvoie que les fiches qui ont une carcasse dans le périmètre : une fiche sans
-    // carcasse (en cours de saisie) n'existe que sur l'appareil qui l'a créée, on la garde.
-    const feiNumerosWithLocalCarcasses = new Set(Object.values(state.carcasses).map((c) => c.fei_numero));
-    const localFeis = fullReload
-      ? Object.values(state.feis).filter(
-          (fei) => !fei.is_synced || !feiNumerosWithLocalCarcasses.has(fei.numero)
-        )
-      : Object.values(state.feis);
-
     const newFeis = mergeItems({
-      oldItems: localFeis,
+      oldItems: keepLocal(Object.values(useZustandStore.getState().feis)),
       newItems: feisFetched,
       idKey: (c) => c.numero,
     });
 
     const newCarcassesIntermediaires = mergeItems({
-      oldItems: localCarcassesIntermediaires,
+      oldItems: keepLocal(Object.values(useZustandStore.getState().carcassesIntermediaireById)),
       newItems: guardMargin(
         carcassesIntermediairesFetched,
         localState.carcassesIntermediaireById,
@@ -220,7 +181,7 @@ export async function loadCarcasses() {
     });
 
     const newUsers = mergeItems({
-      oldItems: Object.values(state.users),
+      oldItems: Object.values(useZustandStore.getState().users) || [],
       newItems: usersFetched,
       idKey: (c) => c.id,
     });
@@ -228,7 +189,7 @@ export async function loadCarcasses() {
     // Entities referenced by the fiches (premier détenteur asso, dépôt, SVI…). Fill gaps only:
     // existing store entities (loaded by load-my-relations) keep their relation metadata, since
     // fiche entities carry relation NONE.
-    const newEntities = { ...state.entities };
+    const newEntities = { ...useZustandStore.getState().entities };
     for (const entity of entitiesFetched) {
       if (!entity.deleted_at && !newEntities[entity.id]) {
         newEntities[entity.id] = entity;
@@ -264,6 +225,7 @@ export async function loadCarcasses() {
       users: newUsers,
       entities: newEntities,
       lastUpdateFromServer: serverDate,
+      carcassesReloadVersion: receivedReloadVersion,
     }));
     checkLocalCarcassesIntegrity(signal);
   } finally {

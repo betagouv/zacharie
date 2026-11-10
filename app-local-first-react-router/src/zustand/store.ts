@@ -47,6 +47,7 @@ const PERSISTED_KEYS: (keyof State)[] = [
   'apiKeyApprovals',
   'federation',
   'lastUpdateFromServer',
+  'carcassesReloadVersion',
   'logs',
   'feiIdsRenvoiToHide',
 ];
@@ -79,6 +80,9 @@ export interface State {
   // fédération (FDC / FRC / FNC) dont l'utilisateur est membre validé : donne accès au tableau de bord fédération
   federation: NonNullable<UserConnexionResponse['data']['federation']> | null;
   lastUpdateFromServer: number;
+  // User.carcasses_reload_version reçue au dernier pull réussi, renvoyée au suivant : le serveur décide
+  // d'un rechargement complet (voir doc/rechargement-complet.md).
+  carcassesReloadVersion: number;
   // Fiches que ce compte a renvoyées à l'expéditeur : masquées de ses listes sans attendre la
   // synchro, pour que le renvoi marche hors ligne. Le serveur ne les lui enverra plus (périmètre
   // getCarcasseAccessWhere côté api-express) ; si elles lui sont réattribuées plus tard,
@@ -155,6 +159,7 @@ function initialState(): State {
     dataIsSynced: true,
     feiIdsRenvoiToHide: [],
     lastUpdateFromServer: 0,
+    carcassesReloadVersion: 0,
     logs: [],
     feis: {},
     users: {},
@@ -214,6 +219,7 @@ export function migratePersistedState(persistedState: unknown): Partial<State> {
     modifRequestsByCarcasseId,
     logs,
     lastUpdateFromServer: 0,
+    carcassesReloadVersion: 0,
   };
 }
 

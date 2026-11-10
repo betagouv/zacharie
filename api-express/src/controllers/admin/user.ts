@@ -34,6 +34,7 @@ import {
 } from '~/third-parties/brevo';
 import { sendOnboardingEmailOnce } from '~/utils/send-onboarding-email';
 import { BrevoTemplateId } from '~/third-parties/brevo-templates';
+import { requestCarcassesReload } from '~/utils/carcasses-reload';
 
 const MAX_FAILED_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MINUTES = 15;
@@ -390,11 +391,8 @@ router.post(
         res.status(400).send({ ok: false, data: { user: null }, error: 'User not found', message: '' });
         return;
       }
-      const savedUser = await prisma.user.update({
-        where: { id: userId },
-        data: { carcasses_reload_requested_at: new Date() },
-      });
-      setAdminAuditChanges(res, user, savedUser, ['carcasses_reload_requested_at']);
+      const savedUser = await requestCarcassesReload(userId);
+      setAdminAuditChanges(res, user, savedUser, ['carcasses_reload_version']);
       res.status(200).send({ ok: true, data: { user: savedUser }, error: '', message: '' });
     }
   )

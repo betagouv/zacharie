@@ -15,6 +15,7 @@ const etgUser = {
   roles: [UserRoles.ETG],
   activated: true,
   isZacharieAdmin: false,
+  carcasses_reload_version: 0,
 };
 
 const app = express();
@@ -32,10 +33,16 @@ beforeEach(() => {
   vi.mocked(prisma.entityAndUserRelations.findMany).mockResolvedValue([{ entity_id: 'entity-1' } as any]);
 });
 
-function getCarcasses(after: number, user: object = etgUser) {
+function getCarcasses(after: number, user: object = etgUser, reloadVersion?: number) {
   return request(app)
     .get('/carcasse')
-    .query({ after: `${after}`, withDeleted: 'true', page: '0', limit: '5000' })
+    .query({
+      after: `${after}`,
+      withDeleted: 'true',
+      page: '0',
+      limit: '5000',
+      ...(reloadVersion === undefined ? {} : { reloadVersion: `${reloadVersion}` }),
+    })
     .set('x-test-user', JSON.stringify(user));
 }
 
@@ -68,27 +75,32 @@ describe('GET /carcasse — rechargement complet forcé', () => {
 });
 
 describe('GET /carcasse — rechargement complet demandé pour un utilisateur', () => {
-  const requestedAt = new Date(FORCE_FULL_RELOAD_AFTER.getTime() + 24 * 60 * 60 * 1000);
-  const userWithReload = { ...etgUser, carcasses_reload_requested_at: requestedAt };
+  const userWithReload = { ...etgUser, carcasses_reload_version: 3 };
+  const after = FORCE_FULL_RELOAD_AFTER.getTime() + 1;
 
-  test('dernier pull antérieur à la demande → tout le périmètre, fullReload: true', async () => {
-    const res = await getCarcasses(requestedAt.getTime() - 1, userWithReload);
+  test('même version → pull delta, fullReload: false', async () => {
+    const res = await getCarcasses(after, userWithReload, 3);
+    expect(res.status).toBe(200);
+    expect(res.body.data.fullReload).toBe(false);
+    expect(findManyWhere().updated_at).toEqual({ gte: new Date(after) });
+  });
+
+  test('version inférieure → tout le périmètre, fullReload: true', async () => {
+    const res = await getCarcasses(after, userWithReload, 2);
     expect(res.status).toBe(200);
     expect(res.body.data.fullReload).toBe(true);
     expect(findManyWhere().updated_at).toBeUndefined();
   });
 
-  test('dernier pull postérieur à la demande (appareil déjà rechargé) → pull delta', async () => {
-    const after = requestedAt.getTime() + 1;
+  test('version absente → pull delta', async () => {
     const res = await getCarcasses(after, userWithReload);
     expect(res.status).toBe(200);
     expect(res.body.data.fullReload).toBe(false);
     expect(findManyWhere().updated_at).toEqual({ gte: new Date(after) });
   });
 
-  test('demande antérieure à FORCE_FULL_RELOAD_AFTER → la date globale reste la référence', async () => {
-    const oldRequest = { ...etgUser, carcasses_reload_requested_at: new Date('2020-01-01') };
-    const res = await getCarcasses(FORCE_FULL_RELOAD_AFTER.getTime() - 1, oldRequest);
-    expect(res.body.data.fullReload).toBe(true);
+  test('la réponse porte la version de l’utilisateur', async () => {
+    const res = await getCarcasses(after, userWithReload, 2);
+    expect(res.body.data.reloadVersion).toBe(3);
   });
 });

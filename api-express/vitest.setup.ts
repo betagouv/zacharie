@@ -5,10 +5,7 @@ vi.mock('./src/prisma', () => ({
   default: {
     $executeRaw: vi.fn(),
     $queryRaw: vi.fn().mockResolvedValue([]),
-    // tableau d'opérations, ou transaction interactive : le callback reçoit ce même mock
-    $transaction: vi.fn(function (this: unknown, arg: Array<Promise<unknown>> | ((tx: unknown) => unknown)) {
-      return typeof arg === 'function' ? Promise.resolve(arg(this)) : Promise.all(arg);
-    }),
+    $transaction: vi.fn((operations: Array<Promise<unknown>>) => Promise.all(operations)),
     fei: {
       findMany: vi.fn().mockResolvedValue([]),
       findFirst: vi.fn(),

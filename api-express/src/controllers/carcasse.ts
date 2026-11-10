@@ -15,13 +15,14 @@ import z from 'zod';
 import { capture } from '~/third-parties/sentry';
 import { userFeiSelect } from '~/types/user';
 import { getCarcasseAccessWhere } from '~/utils/carcasse-access';
-import { getFullReloadAfter } from '~/utils/carcasses-reload';
+import { FORCE_FULL_RELOAD_AFTER } from '~/utils/force-full-reload';
 
 const zodQuerySchema = z.object({
   page: z.string(),
   after: z.string(),
   limit: z.string(),
   withDeleted: z.string(),
+  reloadVersion: z.string().optional(),
 });
 
 router.get(
@@ -46,15 +47,17 @@ router.get(
       res.status(400).send({ ok: false, data: null, error: 'Invalid query parameters' });
       return;
     }
-    const { page, after, limit, withDeleted } = queryResult.data;
+    const { page, after, limit, withDeleted, reloadVersion } = queryResult.data;
 
     const parsedPage = parseInt(page, 10);
     const parsedLimit = parseInt(limit, 10);
     const includeDeleted = withDeleted === 'true';
     const requestedAfterDate = Number(after) ? new Date(Number(after)) : undefined;
-    // dernier pull antérieur à une correction de données ou à un changement d'entité de l'utilisateur :
-    // on renvoie tout le périmètre
-    const fullReload = !!requestedAfterDate && requestedAfterDate < getFullReloadAfter(req.user);
+    // dernier pull antérieur à une correction de données, ou rechargement demandé pour cet utilisateur
+    // depuis le dernier pull de l'appareil : on renvoie tout le périmètre
+    const fullReload =
+      (!!requestedAfterDate && requestedAfterDate < FORCE_FULL_RELOAD_AFTER) ||
+      (reloadVersion !== undefined && Number(reloadVersion) < req.user.carcasses_reload_version);
     const afterDate = fullReload ? undefined : requestedAfterDate;
 
     // Base query conditions : périmètre d'accès role-aware (partagé avec /refusees/:fei_numero).
@@ -162,6 +165,7 @@ router.get(
         hasMore: carcasses.length === parsedLimit,
         total,
         fullReload,
+        reloadVersion: req.user.carcasses_reload_version,
       },
       error: '',
     });

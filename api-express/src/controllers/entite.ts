@@ -39,7 +39,7 @@ import { z } from 'zod';
 import createUserId from '~/utils/createUserId';
 import { inviteUser } from '~/utils/invite-user';
 import { createDestinataire, destinataireSchema } from '~/utils/create-destinataire';
-import { requestCarcassesReloadIfAccessChanged } from '~/utils/carcasses-reload';
+import { requestCarcassesReload } from '~/utils/carcasses-reload';
 
 router.get(
   '/working-for',
@@ -292,18 +292,15 @@ router.post(
 
     createdEntity = await updateOrCreateBrevoCompany(createdEntity);
 
-    const createdEntityRelation = await prisma.$transaction(async (tx) => {
-      const created = await tx.entityAndUserRelations.create({
-        data: {
-          owner_id: user.id,
-          relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
-          entity_id: createdEntity.id,
-          status: EntityRelationStatus.ADMIN,
-        },
-      });
-      await requestCarcassesReloadIfAccessChanged(null, created, tx);
-      return created;
+    const createdEntityRelation = await prisma.entityAndUserRelations.create({
+      data: {
+        owner_id: user.id,
+        relation: EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY,
+        entity_id: createdEntity.id,
+        status: EntityRelationStatus.ADMIN,
+      },
     });
+    await requestCarcassesReload(createdEntityRelation.owner_id);
 
     await sendEmail({
       emails: ['contact@zacharie.beta.gouv.fr'],

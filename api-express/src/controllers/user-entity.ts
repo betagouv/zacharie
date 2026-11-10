@@ -18,7 +18,7 @@ import {
 import sendNotificationToUser from '~/service/notifications';
 import { FEDERATION_ENTITY_TYPES } from '~/utils/federation-stats';
 import { z } from 'zod';
-import { requestCarcassesReloadIfAccessChanged } from '~/utils/carcasses-reload';
+import { requestCarcassesReload } from '~/utils/carcasses-reload';
 
 export const userEntitySchema = z.object({
   owner_id: z.string(),
@@ -240,11 +240,10 @@ router.post(
         if (!entityHasUsers) nextEntityRelation.status = EntityRelationStatus.ADMIN;
       }
 
-      const relation = await prisma.$transaction(async (tx) => {
-        const created = await tx.entityAndUserRelations.create({ data: nextEntityRelation });
-        await requestCarcassesReloadIfAccessChanged(null, created, tx);
-        return created;
+      const relation = await prisma.entityAndUserRelations.create({
+        data: nextEntityRelation,
       });
+      await requestCarcassesReload(relation.owner_id);
 
       if (relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
         await linkBrevoCompanyToContact(entity, req.user);
@@ -397,14 +396,13 @@ router.put(
         }
       }
 
-      const relation = await prisma.$transaction(async (tx) => {
-        const updated = await tx.entityAndUserRelations.update({
-          where: { id: existingEntityRelation.id },
-          data: nextEntityRelation,
-        });
-        await requestCarcassesReloadIfAccessChanged(existingEntityRelation, updated, tx);
-        return updated;
+      const relation = await prisma.entityAndUserRelations.update({
+        where: {
+          id: existingEntityRelation.id,
+        },
+        data: nextEntityRelation,
       });
+      await requestCarcassesReload(relation.owner_id);
 
       if (relation.relation === EntityRelationType.CAN_HANDLE_CARCASSES_ON_BEHALF_ENTITY) {
         await linkBrevoCompanyToContact(entity, req.user);
@@ -498,10 +496,12 @@ router.delete(
           });
           return;
         }
-        await prisma.$transaction(async (tx) => {
-          await tx.entityAndUserRelations.delete({ where: { id: existingEntityRelation.id } });
-          await requestCarcassesReloadIfAccessChanged(existingEntityRelation, null, tx);
+        await prisma.entityAndUserRelations.delete({
+          where: {
+            id: existingEntityRelation.id,
+          },
         });
+        await requestCarcassesReload(existingEntityRelation.owner_id);
         if (softDeleteEntity) {
           await prisma.entity.update({
             where: { id: entity.id },

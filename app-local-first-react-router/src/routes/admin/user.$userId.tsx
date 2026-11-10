@@ -99,7 +99,7 @@ const initialState: State = {
     activated_at: null,
     last_login_at: null,
     deleted_at: null,
-    carcasses_reload_requested_at: null,
+    carcasses_reload_version: 0,
     onboarded_at: null,
     notifications: [UserNotifications.EMAIL, UserNotifications.PUSH],
     web_push_tokens: [],
@@ -451,11 +451,6 @@ export default function AdminUser() {
                 priority="tertiary"
                 size="small"
                 iconId="fr-icon-refresh-line"
-                title={
-                  user.carcasses_reload_requested_at
-                    ? `Dernière demande : ${dayjs(user.carcasses_reload_requested_at).format('DD/MM/YYYY HH:mm')}`
-                    : undefined
-                }
                 onClick={handleCarcassesReload}
               >
                 Recharger ses données

@@ -822,6 +822,31 @@ Christine
       });
       console.log(`Fei ${fei.numero} created with ${carcasses.count} carcasses (ETG, PD = association)`);
     }
+    // Fiche de « Association de chasseurs » où examinateur@ n'apparaît nulle part : elle n'y a accès
+    // qu'en devenant membre de l'association.
+    if ((role as string) === 'ASSOCIATION_FICHE_EXISTANTE') {
+      const membre = users.find((user) => user.email === 'examinateur-premier-detenteur@example.fr')!;
+      const fei = await prisma.fei.create({
+        data: {
+          ...feiPremierDetenteurEstAssociation,
+          numero: 'ZACH-20250707-ASSO1-165245',
+          created_by_user_id: membre.id,
+          examinateur_initial_user_id: membre.id,
+          premier_detenteur_user_id: membre.id,
+        },
+      });
+      const carcasses = await prisma.carcasse.createMany({
+        data: getCarcasses(fei, {
+          ...ownershipValidatedByPremierDetenteur,
+          current_owner_user_id: membre.id,
+          current_owner_user_name_cache: `${membre.prenom} ${membre.nom_de_famille}`,
+          prev_owner_user_id: membre.id,
+        }),
+      });
+      console.log(
+        `Fei ${fei.numero} created with ${carcasses.count} carcasses (association, sans examinateur@)`
+      );
+    }
     if (role === FeiOwnerRole.ETG) {
       const fei = await prisma.fei.create({ data: feiValidatedByPremierDetenteur });
       const carcasses = await prisma.carcasse.createMany({
