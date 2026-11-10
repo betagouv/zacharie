@@ -46,7 +46,7 @@ const APP_NON_PUBLIC_PATHS = [
   'proconnect',
   'contact',
   'nouvelle-fiche',
-  'tableau-de-bord',
+  'tableau-de-bord/*',
   'collecteur-pro/*',
 ];
 

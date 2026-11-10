@@ -174,7 +174,7 @@ function App() {
             element={<NouvelleFiche />}
           />
           <Route
-            path="tableau-de-bord"
+            path="tableau-de-bord/*"
             element={<TableauDeBordRedirect />}
           />
           {/* liens déjà envoyés par email avant la correction de fei-url */}
