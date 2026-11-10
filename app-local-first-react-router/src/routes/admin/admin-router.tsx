@@ -1,4 +1,4 @@
-import { Route } from 'react-router';
+import { Navigate, Route } from 'react-router';
 import AdminUsers from './users';
 import AdminNewUser from './user-add';
 import AdminUser from './user.$userId';
@@ -15,7 +15,8 @@ import AdminFeis from './feis';
 import AdminFeiDetail from './fei-detail';
 import CcgImport from './ccg-import';
 import PremiersDetenteursImport from './premiers-detenteurs-import';
-import AdminDashboard from './dashboard';
+import AdminStatistiques from './statistiques';
+import AdminATraiter from './a-traiter';
 import AdminLesions from './lesions';
 import AdminQuiz from './quiz';
 import AdminTrichine from './trichine';
@@ -31,8 +32,30 @@ export default function RouterAdmin() {
       element={<AdminLayout />}
     >
       <Route
+        index
+        element={
+          <Navigate
+            to="/app/admin/a-traiter"
+            replace
+          />
+        }
+      />
+      <Route
+        path="a-traiter"
+        element={<AdminATraiter />}
+      />
+      <Route
+        path="statistiques"
+        element={<AdminStatistiques />}
+      />
+      <Route
         path="dashboard"
-        element={<AdminDashboard />}
+        element={
+          <Navigate
+            to="/app/admin/a-traiter"
+            replace
+          />
+        }
       />
       <Route
         path="users"
